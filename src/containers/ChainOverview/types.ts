@@ -1,8 +1,11 @@
+import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import type { RawRaise } from '~/containers/Raises/api.types'
 import type { FeeExtraTotals } from '~/metrics/feeExtras'
 import type { IChainMetadata, IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
 import type { ChainChartLabels } from './constants'
+
+export type ChainOverviewChartData = Partial<Record<ChainChartLabels, Array<[number, number]>>>
 
 export interface IChainOverviewData {
 	chain: string
@@ -109,17 +112,7 @@ interface IChainWarningBanner {
 	level: 'low' | 'alert' | 'rug'
 }
 
-export interface ILiteChart {
-	tvl: Array<[string, number]>
-	staking: Array<[string, number]>
-	borrowed: Array<[string, number]>
-	pool2: Array<[string, number]>
-	vesting: Array<[string, number]>
-	offers: Array<[string, number]>
-	doublecounted: Array<[string, number]>
-	liquidstaking: Array<[string, number]>
-	dcAndLsOverlap: Array<[string, number]>
-}
+export type ILiteChart = ChainChartResponse
 
 export interface IFormattedChainAsset {
 	canonical?: {

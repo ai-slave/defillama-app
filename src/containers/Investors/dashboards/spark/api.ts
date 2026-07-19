@@ -1,3 +1,4 @@
+import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { EXTENDED_COLOR_PALETTE } from '~/containers/ProDashboard/utils/colorManager'
 
 interface DuneResponse<T> {
@@ -18,7 +19,7 @@ export async function fetchDuneQuery<T>(queryId: string): Promise<DuneResponse<T
 }
 
 export function assignColors(names: string[]): Record<string, string> {
-	const colors: Record<string, string> = {}
+	const colors = createChartRecord<string>()
 	const sorted = names.toSorted()
 	for (let i = 0; i < sorted.length; i++) {
 		colors[sorted[i]] = EXTENDED_COLOR_PALETTE[i % EXTENDED_COLOR_PALETTE.length]
@@ -34,9 +35,11 @@ export function pivotByDate<T extends { dt: string }>(
 	const map = new Map<number, Record<string, number>>()
 
 	for (const row of rows) {
-		const ts = Math.floor(new Date(row.dt).getTime() / 1000)
+		const ts = Math.floor(Date.parse(row.dt) / 1000)
 		if (!map.has(ts)) {
-			map.set(ts, { date: ts })
+			const entry = createChartRecord<number>()
+			entry.date = ts
+			map.set(ts, entry)
 		}
 		const entry = map.get(ts)!
 		const key = String(row[groupKey])

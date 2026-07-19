@@ -17,7 +17,10 @@ import { Select } from '~/components/Select/Select'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { StablecoinAssetChartConfig } from '~/containers/ProDashboard/types'
-import type { StablecoinChartSeriesPayload } from '~/containers/Stablecoins/chartSeries'
+import {
+	STABLECOIN_BREAKDOWN_SERIES_LIMIT,
+	type StablecoinChartSeriesPayload
+} from '~/containers/Stablecoins/chartSeries'
 import {
 	getStablecoinAssetDashboardChartType,
 	getStablecoinAssetSeriesChart,
@@ -229,6 +232,7 @@ export const PeggedAssetInfo = ({
 		scope: 'asset',
 		stablecoin: slug(name),
 		chart: selectedSeriesChart,
+		seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
 		includeUnreleased,
 		enabled: selectedSeriesChart != null && !usesDefaultChartData
 	})

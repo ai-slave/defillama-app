@@ -1,4 +1,13 @@
 import type { Table } from '@tanstack/react-table'
+import { createCategoryChartOptions } from '~/components/ECharts/categoryChartOptions'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+
+export const MAPLE_USD_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('$')
+export const MAPLE_PERCENT_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('%')
+export const MAPLE_DOLLAR_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('$')
+export const MAPLE_UNITLESS_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('')
+
+export const MAPLE_CSV_ONLY_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
 
 export function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (

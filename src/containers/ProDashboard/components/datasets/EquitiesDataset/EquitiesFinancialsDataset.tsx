@@ -1,8 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { useContext, useMemo, useState } from 'react'
-import type { IEquitiesStatementsResponse } from '~/containers/Equities/api.types'
 import { formatEquitiesStatementCellValue } from '~/containers/Equities/financialsFormatting'
+import {
+	buildEquitiesStatementRows,
+	EQUITIES_STATEMENT_PERIOD_OPTIONS,
+	equitiesStatementPeriodMap,
+	equitiesStatementSectionMap,
+	flattenEquitiesStatementRows,
+	getAvailableEquitiesStatementOptions,
+	getEquitiesStatementHeaderIndexes,
+	resolveEquitiesStatementOption,
+	type EquitiesStatementOption,
+	type EquitiesStatementPeriodOption
+} from '~/containers/Equities/financialStatements'
+import type { IEquitiesStatementTableRow } from '~/containers/Equities/types'
 import {
 	buildEquityTickerCountrySlug,
 	formatEquitiesDate,
@@ -15,99 +27,8 @@ import { downloadCSV } from '~/utils/download'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 
-const STATEMENT_OPTIONS = ['Income Statement', 'Balance Sheet', 'Cash Flow'] as const
-const PERIOD_OPTIONS = ['Quarterly', 'Annual'] as const
-
-type StatementOption = (typeof STATEMENT_OPTIONS)[number]
-type PeriodOption = (typeof PERIOD_OPTIONS)[number]
-type StatementSectionKey = 'incomeStatement' | 'balanceSheet' | 'cashflow'
-type StatementPeriodKey = 'quarterly' | 'annual'
-
-const statementSectionMap: Record<StatementOption, StatementSectionKey> = {
-	'Income Statement': 'incomeStatement',
-	'Balance Sheet': 'balanceSheet',
-	'Cash Flow': 'cashflow'
-}
-
-const periodKeyMap: Record<PeriodOption, StatementPeriodKey> = {
-	Quarterly: 'quarterly',
-	Annual: 'annual'
-}
-
-interface StatementTableRow {
-	id: string
-	label: string
-	values: Array<number | null>
-	depth: number
-	subRows?: StatementTableRow[]
-}
-
-function buildStatementRows(
-	statements: IEquitiesStatementsResponse,
-	statementType: StatementOption,
-	periodType: PeriodOption
-): StatementTableRow[] {
-	const section = statements[statementSectionMap[statementType]]
-	const periodData = section[periodKeyMap[periodType]]
-	const childrenMeta = section.children[periodKeyMap[periodType]]
-	const rows: StatementTableRow[] = []
-
-	for (let rowIndex = 0; rowIndex < section.labels.length; rowIndex++) {
-		const label = section.labels[rowIndex]
-		const childLabels = childrenMeta[label]?.labels ?? []
-		const childValues = periodData.children[label]?.values ?? []
-		let subRows: StatementTableRow[] | undefined
-
-		if (childLabels.length > 0) {
-			subRows = []
-			for (let childIndex = 0; childIndex < childLabels.length; childIndex++) {
-				const childLabel = childLabels[childIndex]
-				subRows.push({
-					id: `${label}-${childLabel}`,
-					label: childLabel,
-					values: childValues[childIndex] ?? [],
-					depth: 1
-				})
-			}
-		}
-
-		rows.push({
-			id: label,
-			label,
-			values: periodData.values[rowIndex] ?? [],
-			depth: 0,
-			subRows
-		})
-	}
-
-	return rows
-}
-
-function getHeaderIndexes(periodEnding: string[]): number[] {
-	const indexes: number[] = []
-	for (let index = 0; index < periodEnding.length; index++) {
-		indexes.push(index)
-	}
-	return indexes.sort((a, b) => {
-		const aTime = new Date(`${periodEnding[a] ?? ''}T00:00:00Z`).getTime()
-		const bTime = new Date(`${periodEnding[b] ?? ''}T00:00:00Z`).getTime()
-		return bTime - aTime
-	})
-}
-
 function formatStatementPeriodLabel(periodEnding: string): string {
 	return formatEquitiesDate(periodEnding)
-}
-
-function flattenStatementRows(rows: StatementTableRow[]): StatementTableRow[] {
-	const flattened: StatementTableRow[] = []
-	for (const row of rows) {
-		flattened.push(row)
-		if (row.subRows?.length) {
-			flattened.push(...row.subRows)
-		}
-	}
-	return flattened
 }
 
 function FinancialRow({
@@ -115,7 +36,7 @@ function FinancialRow({
 	headerIndexes,
 	showExpandPlaceholder
 }: {
-	row: StatementTableRow
+	row: IEquitiesStatementTableRow
 	headerIndexes: number[]
 	showExpandPlaceholder: boolean
 }) {
@@ -205,20 +126,28 @@ function useEquitiesStatementsData(ticker: string) {
 }
 
 export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
-	const [statementType, setStatementType] = useState<StatementOption>('Income Statement')
-	const [periodType, setPeriodType] = useState<PeriodOption>('Quarterly')
+	const [statementType, setStatementType] = useState<EquitiesStatementOption>('Income Statement')
+	const [periodType, setPeriodType] = useState<EquitiesStatementPeriodOption>('Quarterly')
 
 	const { data: statements, isLoading, error } = useEquitiesStatementsData(ticker)
 
-	const section = statements ? statements[statementSectionMap[statementType]] : null
-	const periodData = section ? section[periodKeyMap[periodType]] : null
+	const availableStatementOptions = useMemo(
+		() => (statements ? getAvailableEquitiesStatementOptions(statements) : []),
+		[statements]
+	)
+	const resolvedStatementType = statements ? resolveEquitiesStatementOption(statements, statementType) : statementType
+	const section = statements ? statements[equitiesStatementSectionMap[resolvedStatementType]] : null
+	const periodData = section ? section[equitiesStatementPeriodMap[periodType]] : null
 
 	const rows = useMemo(
-		() => (statements ? buildStatementRows(statements, statementType, periodType) : []),
-		[statements, statementType, periodType]
+		() => (statements ? buildEquitiesStatementRows(statements, resolvedStatementType, periodType) : []),
+		[statements, resolvedStatementType, periodType]
 	)
 
-	const headerIndexes = useMemo(() => (periodData ? getHeaderIndexes(periodData.periodEnding) : []), [periodData])
+	const headerIndexes = useMemo(
+		() => (periodData ? getEquitiesStatementHeaderIndexes(periodData.periodEnding) : []),
+		[periodData]
+	)
 
 	const hasAnyBreakdownRows = rows.some((row) => (row.subRows?.length ?? 0) > 0)
 
@@ -269,13 +198,13 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">Financials — {ticker}</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<div className="flex items-center gap-1 rounded-md border pro-border p-0.5">
-							{STATEMENT_OPTIONS.map((option) => (
+							{availableStatementOptions.map((option) => (
 								<button
 									key={option}
 									type="button"
 									onClick={() => setStatementType(option)}
 									className={`rounded-sm px-2 py-1 text-xs font-medium transition ${
-										statementType === option
+										resolvedStatementType === option
 											? 'bg-brand/10 text-brand'
 											: 'text-pro-text-secondary hover:text-pro-text-primary'
 									}`}
@@ -285,7 +214,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 							))}
 						</div>
 						<div className="flex items-center gap-1 rounded-md border pro-border p-0.5">
-							{PERIOD_OPTIONS.map((option) => (
+							{EQUITIES_STATEMENT_PERIOD_OPTIONS.map((option) => (
 								<button
 									key={option}
 									type="button"
@@ -306,7 +235,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 								for (const index of headerIndexes) {
 									headers.push(`"${formatStatementPeriodLabel(periodData!.periodEnding[index])}"`)
 								}
-								const flattenedRows = flattenStatementRows(rows)
+								const flattenedRows = flattenEquitiesStatementRows(rows)
 								const csvRows: string[] = []
 								for (const row of flattenedRows) {
 									const csvRow: Array<string | number> = [`"${row.depth > 0 ? '  ' + row.label : row.label}"`]
@@ -317,7 +246,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 								}
 								const csv = [headers.join(','), ...csvRows].join('\n')
 								downloadCSV(
-									`equities-${ticker}-${statementType.toLowerCase().replaceAll(' ', '-')}-${periodType.toLowerCase()}.csv`,
+									`equities-${ticker}-${resolvedStatementType.toLowerCase().replaceAll(' ', '-')}-${periodType.toLowerCase()}.csv`,
 									csv,
 									{ addTimestamp: true }
 								)
@@ -336,7 +265,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 							</th>
 							{headerIndexes.map((index) => (
 								<th
-									key={`${statementType}-${periodType}-${periodData!.periodEnding[index]}`}
+									key={`${resolvedStatementType}-${periodType}-${periodData!.periodEnding[index]}`}
 									className="min-w-[132px] truncate border border-medium bg-pro-app-bg p-2 text-left font-semibold"
 								>
 									{formatStatementPeriodLabel(periodData!.periodEnding[index])}

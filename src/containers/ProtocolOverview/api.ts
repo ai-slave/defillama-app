@@ -34,10 +34,10 @@ const normalizeProtocolValueChart = (values: IProtocolValueChartRaw | null | und
 	if (values == null) return null
 	const points: IProtocolValueChart = []
 	for (const [timestamp, value] of values) {
-		points.push([Number(timestamp) * 1e3, value])
+		points.push([+timestamp * 1e3, value])
 	}
 
-	return points.sort((a, b) => a[0] - b[0])
+	return points
 }
 
 const normalizeProtocolChainBreakdownChart = (
@@ -46,10 +46,10 @@ const normalizeProtocolChainBreakdownChart = (
 	if (values == null) return null
 	const points: IProtocolChainBreakdownChart = []
 	for (const [timestamp, value] of values) {
-		points.push([Number(timestamp) * 1e3, value])
+		points.push([+timestamp * 1e3, value])
 	}
 
-	return points.sort((a, b) => a[0] - b[0])
+	return points
 }
 
 const normalizeProtocolTokenBreakdownChart = (
@@ -58,10 +58,10 @@ const normalizeProtocolTokenBreakdownChart = (
 	if (values == null) return null
 	const points: IProtocolTokenBreakdownChart = []
 	for (const [timestamp, value] of values) {
-		points.push([Number(timestamp) * 1e3, value])
+		points.push([+timestamp * 1e3, value])
 	}
 
-	return points.sort((a, b) => a[0] - b[0])
+	return points
 }
 
 /**

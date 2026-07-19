@@ -615,7 +615,7 @@ function readStoredColumnVisibility(): VisibilityState | null {
 	}
 }
 
-export default function TokensPage({ initialData }: TokensPageProps) {
+export default function TokensPage({ initialData, initialChartData }: TokensPageProps) {
 	const router = useRouter()
 	const serverTable = useTokensServerTable(initialData)
 	const filters = React.useMemo(() => parseTokensFiltersFromQuery(router.query), [router.query])
@@ -727,7 +727,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 	return (
 		<div className="flex flex-col gap-2">
 			<TokensStats stats={serverTable.data.statsDisplay} />
-			<TokensChartsSection />
+			<TokensChartsSection data={initialChartData} />
 			<Panel padding="none">
 				<TokensControls
 					search={serverTable.pageQuery.search}

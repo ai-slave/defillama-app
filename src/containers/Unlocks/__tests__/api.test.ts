@@ -57,4 +57,26 @@ describe('unlocks api', () => {
 		expect(result).toBeNull()
 		expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
 	})
+
+	it('normalizes numeric-string event timestamps once at the list API boundary', async () => {
+		mocks.fetchJson.mockResolvedValue([
+			{
+				name: 'Chainlink',
+				token: 'LINK',
+				events: [
+					{ timestamp: 100, noOfTokens: [1] },
+					{ timestamp: '200', noOfTokens: [2] },
+					{ timestamp: 'invalid', noOfTokens: [3] }
+				]
+			}
+		])
+
+		const api = await import('../api')
+		const result = await api.fetchAllProtocolEmissions()
+
+		expect(result[0].events).toEqual([
+			{ timestamp: 100, noOfTokens: [1] },
+			{ timestamp: 200, noOfTokens: [2] }
+		])
+	})
 })

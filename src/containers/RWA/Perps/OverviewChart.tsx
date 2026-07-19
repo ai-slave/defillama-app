@@ -259,6 +259,7 @@ export function RWAPerpsOverviewChart({
 			),
 		[chartSeries, visibleCharts]
 	)
+	const chartOptions = useMemo(() => ({ legend: { data: legendSeriesNames } }), [legendSeriesNames])
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
 	const onSelectChartType = (nextChartType: RWAPerpsChartMetricKey) => {
@@ -342,7 +343,7 @@ export function RWAPerpsOverviewChart({
 					<MultiSeriesChart2
 						dataset={selectedDataset}
 						charts={chartSeries}
-						chartOptions={{ legend: { data: legendSeriesNames } }}
+						chartOptions={chartOptions}
 						hideDefaultLegend={false}
 						showTotalInTooltip={!dataset.dimensions.includes('Total')}
 						selectedCharts={visibleCharts}

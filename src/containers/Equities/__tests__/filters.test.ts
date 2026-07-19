@@ -32,7 +32,7 @@ function company(overrides: Partial<IEquitiesListCompanyRow>): IEquitiesListComp
 		priceToBook: null,
 		enterpriseValueToEbitda: null,
 		holdersYield: null,
-		updatedAt: null,
+		updatedAt: '2026-01-01T00:00:00Z',
 		revenueTTM: null,
 		grossProfitTTM: null,
 		earningsTTM: null,

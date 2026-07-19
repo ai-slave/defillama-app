@@ -36,21 +36,39 @@ export type TokenPnlComparisonResult = Pick<
 >
 
 export function formatPriceSeriesFromCoinsChart(
-	prices: Array<{ timestamp?: number; price?: number }> | undefined
+	prices: Array<{ timestamp: number; price: number }> | undefined
 ): PricePoint[] {
-	return (prices ?? [])
-		.flatMap((entry): PricePoint[] => {
-			if (
-				typeof entry.timestamp !== 'number' ||
-				!Number.isFinite(entry.timestamp) ||
-				typeof entry.price !== 'number' ||
-				!Number.isFinite(entry.price)
-			) {
-				return []
-			}
-			return [{ timestamp: entry.timestamp, price: entry.price }]
-		})
-		.sort((a, b) => a.timestamp - b.timestamp)
+	return prices ?? []
+}
+
+export function buildAscendingPriceChartSource(series: PricePoint[], start: number, end: number) {
+	const source: Array<{ timestamp: number; 'Token Price': number }> = []
+	const firstPrice = series[0].price
+	const lastPrice = series[series.length - 1].price
+	let addedStart = false
+	let addedEnd = false
+	const pushPoint = (timestamp: number, price: number) =>
+		source.push({ timestamp: timestamp * 1e3, 'Token Price': price })
+
+	// The API series is ascending. Merge the two synthetic range boundaries into that stream
+	// instead of sorting the completed array, including when search-width points cross a boundary.
+	for (const point of series) {
+		if (!addedStart && start < point.timestamp) {
+			pushPoint(start, firstPrice)
+			addedStart = true
+		}
+		if (!addedEnd && end < point.timestamp) {
+			pushPoint(end, lastPrice)
+			addedEnd = true
+		}
+		if (point.timestamp === start) addedStart = true
+		if (point.timestamp === end) addedEnd = true
+		pushPoint(point.timestamp, point.price)
+	}
+
+	if (!addedStart) pushPoint(start, firstPrice)
+	if (!addedEnd) pushPoint(end, lastPrice)
+	return source
 }
 
 export async function fetchPriceSeries(
@@ -203,11 +221,8 @@ export async function computeTokenPnl(params: {
 	const annualizedReturn = (Math.pow(annualizedBase, 365 / holdingPeriodDays) - 1) * 100
 
 	const timeline: TimelinePoint[] = []
-	const dataPoints: Array<[number, number]> = []
 	let rangeHigh = Number.NEGATIVE_INFINITY
 	let rangeLow = Number.POSITIVE_INFINITY
-	const firstPoint = series[0]
-	if (firstPoint.timestamp !== start) dataPoints.push([start * 1000, firstPoint.price])
 
 	for (let index = 0; index < series.length; index++) {
 		const point = series[index]
@@ -221,16 +236,11 @@ export async function computeTokenPnl(params: {
 			const pct = prev.price !== 0 ? (delta / prev.price) * 100 : 0
 			timeline.push({ ...point, change: delta, percentChange: pct })
 		}
-		dataPoints.push([point.timestamp * 1000, point.price])
 	}
-
-	const lastPoint = series[series.length - 1]
-	if (lastPoint.timestamp !== end) dataPoints.push([end * 1000, lastPoint.price])
-	dataPoints.sort((a, b) => a[0] - b[0])
 
 	const chartData = {
 		dataset: {
-			source: dataPoints.map(([timestamp, value]) => ({ timestamp, 'Token Price': value })),
+			source: buildAscendingPriceChartSource(series, start, end),
 			dimensions: ['timestamp', 'Token Price']
 		},
 		charts: [

@@ -1,32 +1,53 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useContext, useMemo, type ReactElement } from 'react'
+import { lazy, Suspense, useContext, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { IChartProps, IPieChartProps } from '~/components/ECharts/types'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import { materializeZeroFilledDataset, type TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
+import type {
+	IMultiSeriesChart2Props,
+	IPieChartProps,
+	MultiSeriesChart2Dataset,
+	MultiSeriesChart2SeriesConfig
+} from '~/components/ECharts/types'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
+	buildProtocolV1ChartConfigs,
 	formatProtocolV1TvlsByChain,
 	useFetchProtocolV1AddlChartsData
 } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
+import { useSelectedValues } from '~/hooks/useSelectedValues'
 import { toNiceCsvDate } from '~/utils'
 import { download } from '~/utils/download'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPE_LABELS } from '../borrowedChartConstants'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
-import { filterDataByTimePeriod, ProxyAuthTokenContext, StreamDoneContext } from '../queries'
+import { ProxyAuthTokenContext, StreamDoneContext } from '../queries'
 import { fetchProtocolFullViaProxy } from '../services/fetchViaProxy'
 import type { BorrowedChartConfig } from '../types'
+import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-const EMPTY_CHART_DATA: any[] = []
+
+const EMPTY_DATASET: TimestampDataset = {
+	source: [],
+	dimensions: ['timestamp']
+}
 const EMPTY_STACKS: string[] = []
-const EMPTY_ADDL_DATA: {
-	tokensUnique?: string[]
-	tokenBreakdownUSD?: any[]
-	tokenBreakdownPieChart?: any[]
-	tokenBreakdown?: any[]
-} = {}
+const EMPTY_CHARTS: MultiSeriesChart2SeriesConfig[] = []
+const HIDDEN_EXPORTS = 'hidden' as const
+const DOLLAR_CHART_OPTIONS = {
+	...BORROWED_CHART_OPTIONS,
+	...createTimeSeriesChartOptions('$')
+}
+const UNITLESS_CHART_OPTIONS = {
+	...BORROWED_CHART_OPTIONS,
+	...createTimeSeriesChartOptions('')
+}
 
 interface BorrowedChartCardProps {
 	config: BorrowedChartConfig
@@ -36,7 +57,6 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 	const { protocol, protocolName, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useChartImageExport()
-
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
 
@@ -54,97 +74,105 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		isLoading
 	} = useFetchProtocolV1AddlChartsData(protocol, true, undefined, streamDone)
 
-	const { chainsSplit, chainsUnique } = useMemo(() => {
-		if (!historicalChainTvls) return { chainsSplit: null, chainsUnique: [] }
-		const chainsSplit = formatProtocolV1TvlsByChain({ historicalChainTvls, extraTvlsEnabled: {} })
-		const lastEntry = chainsSplit[chainsSplit.length - 1] ?? {}
-		const chainsUnique: string[] = []
-		for (const key in lastEntry) {
-			if (key !== 'date') chainsUnique.push(key)
+	const { dataset: chainsDataset, chainsUnique } = useMemo(() => {
+		if (chartType !== 'chainsBorrowed' || !historicalChainTvls) {
+			return { dataset: EMPTY_DATASET, chainsUnique: EMPTY_STACKS }
 		}
-		return { chainsSplit, chainsUnique }
-	}, [historicalChainTvls])
+		return formatProtocolV1TvlsByChain({
+			historicalChainTvls,
+			extraTvlsEnabled: {}
+		})
+	}, [historicalChainTvls, chartType])
 
-	const { tokensUnique, tokenBreakdownUSD, tokenBreakdownPieChart, tokenBreakdown } = addlData ?? EMPTY_ADDL_DATA
+	const { tokensUnique, rawTokensUnique, tokenBreakdownUSDDataset, tokenBreakdownPieChart, tokenBreakdownDataset } =
+		addlData ?? {}
 	const resolvedTokensUnique = tokensUnique ?? EMPTY_STACKS
-	const resolvedTokenBreakdownUSD = tokenBreakdownUSD ?? EMPTY_CHART_DATA
-	const resolvedTokenBreakdownPieChart = tokenBreakdownPieChart ?? EMPTY_CHART_DATA
-	const resolvedTokenBreakdown = tokenBreakdown ?? EMPTY_CHART_DATA
-	const resolvedChainsSplit = chainsSplit ?? EMPTY_CHART_DATA
+	const resolvedRawTokensUnique = rawTokensUnique ?? resolvedTokensUnique
+	const resolvedTokenBreakdownUSDDataset = tokenBreakdownUSDDataset ?? EMPTY_DATASET
+	const resolvedTokenBreakdownPieChart = tokenBreakdownPieChart ?? []
+	const resolvedTokenBreakdownDataset = tokenBreakdownDataset ?? EMPTY_DATASET
+	const visibleCharts = useMemo(() => {
+		const seriesNames =
+			chartType === 'chainsBorrowed'
+				? chainsUnique
+				: chartType === 'tokenBorrowedRaw'
+					? resolvedRawTokensUnique
+					: resolvedTokensUnique
+		if (chartType === 'tokensBorrowedPie') return EMPTY_CHARTS
+		return buildProtocolV1ChartConfigs({ seriesNames, type: 'line', hideAreaStyle: true })
+	}, [chartType, chainsUnique, resolvedRawTokensUnique, resolvedTokensUnique])
 
-	const filteredChartData = useMemo(() => {
-		if (!timePeriod || timePeriod === 'all') {
-			return {
-				chainsSplit: resolvedChainsSplit,
-				tokenBreakdownUSD: resolvedTokenBreakdownUSD,
-				tokenBreakdown: resolvedTokenBreakdown
-			}
+	const selectorValues =
+		chartType === 'chainsBorrowed'
+			? chainsUnique
+			: chartType === 'tokenBorrowedRaw'
+				? resolvedRawTokensUnique
+				: resolvedTokensUnique
+	const [selectedSeries, setSelectedSeries] = useSelectedValues(selectorValues)
+	const selectedCharts = useMemo(() => new Set(selectedSeries), [selectedSeries])
+	const selectorLabel = chartType === 'chainsBorrowed' ? 'Chain' : 'Token'
+
+	const rawVisibleDataset = useMemo(() => {
+		switch (chartType) {
+			case 'chainsBorrowed':
+				return chainsDataset
+			case 'tokenBorrowedUsd':
+				return resolvedTokenBreakdownUSDDataset
+			case 'tokenBorrowedRaw':
+				return resolvedTokenBreakdownDataset
+			default:
+				return EMPTY_DATASET
 		}
-
-		const filterTimeSeries = (data: any[]) => {
-			if (!data || data.length === 0) return data
-			const hasDateField = data[0]?.date !== undefined
-			if (!hasDateField) return data
-
-			const points: [number, number][] = data.map((el) => [el.date, 1])
-			const filtered = filterDataByTimePeriod(points, timePeriod, customTimePeriod)
-			const filteredTimestamps = new Set(filtered.map(([ts]) => ts))
-			return data.filter((el) => filteredTimestamps.has(el.date))
+	}, [chartType, chainsDataset, resolvedTokenBreakdownUSDDataset, resolvedTokenBreakdownDataset])
+	const filteredDataset = useMemo(
+		() => filterChartDatasetByTimePeriod(rawVisibleDataset, timePeriod, customTimePeriod),
+		[rawVisibleDataset, timePeriod, customTimePeriod]
+	)
+	const visibleDataset = useMemo(() => {
+		switch (chartType) {
+			case 'chainsBorrowed':
+				return materializeZeroFilledDataset(filteredDataset, selectedSeries)
+			case 'tokenBorrowedUsd':
+				return materializeZeroFilledDataset(filteredDataset, selectedSeries)
+			case 'tokenBorrowedRaw':
+				return materializeZeroFilledDataset(filteredDataset, selectedSeries)
+			default:
+				return EMPTY_DATASET
 		}
-
-		return {
-			chainsSplit: filterTimeSeries(resolvedChainsSplit),
-			tokenBreakdownUSD: filterTimeSeries(resolvedTokenBreakdownUSD),
-			tokenBreakdown: filterTimeSeries(resolvedTokenBreakdown)
-		}
-	}, [resolvedChainsSplit, resolvedTokenBreakdownUSD, resolvedTokenBreakdown, timePeriod, customTimePeriod])
+	}, [chartType, filteredDataset, selectedSeries])
 
 	const handleCsvExport = () => {
 		let rows: (string | number)[][] = []
 		let filename = ''
 		const protocolSlug = protocol.toLowerCase().replace(/\s+/g, '-')
+		const buildRows = (dataset: MultiSeriesChart2Dataset, seriesNames: string[]) => [
+			['Date', ...seriesNames],
+			...dataset.source.map((row) => [
+				toNiceCsvDate((row.timestamp as number) / 1000),
+				...seriesNames.map((name) => row[name] ?? '')
+			])
+		]
 
 		switch (chartType) {
 			case 'chainsBorrowed':
-				rows = [
-					['Date', ...chainsUnique],
-					...(filteredChartData.chainsSplit?.map((el: any) => [
-						toNiceCsvDate(el.date),
-						...chainsUnique.map((c) => el[c] ?? '')
-					]) ?? [])
-				]
+				rows = buildRows(filteredDataset, chainsUnique)
 				filename = `${protocolSlug}-borrowed-by-chain`
 				break
 			case 'tokenBorrowedUsd':
-				rows = [
-					['Date', ...resolvedTokensUnique],
-					...(filteredChartData.tokenBreakdownUSD?.map((el: any) => [
-						toNiceCsvDate(el.date),
-						...resolvedTokensUnique.map((t) => el[t] ?? '')
-					]) ?? [])
-				]
+				rows = buildRows(filteredDataset, resolvedTokensUnique)
 				filename = `${protocolSlug}-borrowed-by-token-usd`
 				break
 			case 'tokensBorrowedPie':
-				rows = [['Token', 'Value'], ...(resolvedTokenBreakdownPieChart.map((el: any) => [el.name, el.value]) ?? [])]
+				rows = [['Token', 'Value'], ...resolvedTokenBreakdownPieChart.map((row) => [row.name, row.value])]
 				filename = `${protocolSlug}-borrowed-tokens-breakdown`
 				break
 			case 'tokenBorrowedRaw':
-				rows = [
-					['Date', ...resolvedTokensUnique],
-					...(filteredChartData.tokenBreakdown?.map((el: any) => [
-						toNiceCsvDate(el.date),
-						...resolvedTokensUnique.map((t) => el[t] ?? '')
-					]) ?? [])
-				]
+				rows = buildRows(filteredDataset, resolvedRawTokensUnique)
 				filename = `${protocolSlug}-borrowed-by-token-raw`
 				break
 		}
 
-		if (rows.length > 0) {
-			const csvContent = rows.map((row) => row.join(',')).join('\n')
-			download(filename, csvContent)
-		}
+		if (rows.length > 0) download(filename, rows.map((row) => row.join(',')).join('\n'))
 	}
 
 	const chartTypeLabel = BORROWED_CHART_TYPE_LABELS[chartType] || chartType
@@ -159,102 +187,69 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		)
 	}
 
-	let chartContent: ReactElement | null = null
-	switch (chartType) {
-		case 'chainsBorrowed':
-			chartContent = (
-				<Suspense
-					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LoadingSpinner />
-						</div>
-					}
-				>
-					<AreaChart
+	const chartContent = (() => {
+		switch (chartType) {
+			case 'chainsBorrowed':
+				return (
+					<MultiSeriesChart2
 						title=""
-						chartData={filteredChartData.chainsSplit ?? EMPTY_CHART_DATA}
-						stacks={chainsUnique}
+						dataset={visibleDataset}
+						charts={visibleCharts}
+						selectedCharts={selectedCharts}
 						valueSymbol="$"
-						customLegendName="Chain"
-						customLegendOptions={chainsUnique}
-						hideDownloadButton={true}
-						hideGradient={true}
-						chartOptions={BORROWED_CHART_OPTIONS}
+						hideDefaultLegend
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORTS}
 						onReady={handleChartReady}
 					/>
-				</Suspense>
-			)
-			break
-		case 'tokenBorrowedUsd':
-			chartContent = (
-				<Suspense
-					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LoadingSpinner />
-						</div>
-					}
-				>
-					<AreaChart
+				)
+			case 'tokenBorrowedUsd':
+				return (
+					<MultiSeriesChart2
 						title=""
-						chartData={filteredChartData.tokenBreakdownUSD ?? EMPTY_CHART_DATA}
-						stacks={resolvedTokensUnique}
+						dataset={visibleDataset}
+						charts={visibleCharts}
+						selectedCharts={selectedCharts}
 						valueSymbol="$"
-						customLegendName="Token"
-						customLegendOptions={resolvedTokensUnique}
-						hideDownloadButton={true}
-						hideGradient={true}
-						chartOptions={BORROWED_CHART_OPTIONS}
+						hideDefaultLegend
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORTS}
 						onReady={handleChartReady}
 					/>
-				</Suspense>
-			)
-			break
-		case 'tokensBorrowedPie':
-			chartContent = (
-				<Suspense
-					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LoadingSpinner />
-						</div>
-					}
-				>
+				)
+			case 'tokensBorrowedPie':
+				return (
 					<PieChart
 						chartData={resolvedTokenBreakdownPieChart}
-						exportButtons={{ png: true, csv: false, filename: imageFilename, pngTitle: imageTitle }}
+						exportButtons={{
+							png: true,
+							csv: false,
+							filename: imageFilename,
+							pngTitle: imageTitle
+						}}
 					/>
-				</Suspense>
-			)
-			break
-		case 'tokenBorrowedRaw':
-			chartContent = (
-				<Suspense
-					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LoadingSpinner />
-						</div>
-					}
-				>
-					<AreaChart
+				)
+			case 'tokenBorrowedRaw':
+				return (
+					<MultiSeriesChart2
 						title=""
-						chartData={filteredChartData.tokenBreakdown ?? EMPTY_CHART_DATA}
-						stacks={resolvedTokensUnique}
-						customLegendName="Token"
-						customLegendOptions={resolvedTokensUnique}
-						hideDownloadButton={true}
-						hideGradient={true}
-						chartOptions={BORROWED_CHART_OPTIONS}
+						dataset={visibleDataset}
+						charts={visibleCharts}
+						selectedCharts={selectedCharts}
+						valueSymbol=""
+						hideDefaultLegend
+						chartOptions={UNITLESS_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORTS}
 						onReady={handleChartReady}
 					/>
-				</Suspense>
-			)
-			break
-	}
+				)
+			default:
+				return null
+		}
+	})()
 
 	const hasChartData =
-		(chartType === 'chainsBorrowed' && (filteredChartData.chainsSplit?.length ?? 0) > 0) ||
-		(chartType === 'tokenBorrowedUsd' && (filteredChartData.tokenBreakdownUSD?.length ?? 0) > 0) ||
-		(chartType === 'tokensBorrowedPie' && (tokenBreakdownPieChart?.length ?? 0) > 0) ||
-		(chartType === 'tokenBorrowedRaw' && (filteredChartData.tokenBreakdown?.length ?? 0) > 0)
+		chartType === 'tokensBorrowedPie' ? resolvedTokenBreakdownPieChart.length > 0 : filteredDataset.source.length > 0
 
 	return (
 		<div className="flex h-full flex-col p-2">
@@ -264,7 +259,18 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 					<p className="text-xs text-pro-text-secondary">{protocolName}</p>
 				</div>
 				{hasChartData ? (
-					<div className="flex gap-2">
+					<div className="flex items-center gap-2">
+						{chartType !== 'tokensBorrowedPie' && selectorValues.length > 1 ? (
+							<SelectWithCombobox
+								allValues={selectorValues}
+								selectedValues={selectedSeries}
+								setSelectedValues={setSelectedSeries}
+								label={selectorLabel}
+								labelType="smol"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
 						{chartType !== 'tokensBorrowedPie' ? (
 							<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 						) : null}
@@ -277,7 +283,9 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 				) : null}
 			</div>
 
-			<div className="flex-1">{chartContent}</div>
+			<div className="flex-1">
+				<Suspense fallback={<div className="min-h-[360px]" />}>{chartContent}</Suspense>
+			</div>
 		</div>
 	)
 }

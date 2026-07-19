@@ -1,50 +1,32 @@
+import type { TreemapNode } from '~/components/ECharts/types'
 import type { TimeSeriesEntry } from './api.types'
 import type { IPctChangeRow } from './types'
 
-export type NarrativeTreemapTreeData = Array<{
-	value: [number, number | null, number | null]
-	name: string
-	path: string
-	children: Array<{
-		value: [number, number, number]
-		name: string
-		path: string
-	}>
-}>
+type NarrativeTreemapCategory = TreemapNode & { path: string; children: TreemapNode[] }
+type NarrativeTreemapGroup = { node: NarrativeTreemapCategory; min: number; max: number }
 
-export function normalizeNarrativeTimeSeries(data: TimeSeriesEntry[] | undefined): TimeSeriesEntry[] {
-	const rows = data ?? []
-	if (rows.length < 2) return rows
-
-	let prevDate = rows[0].date
-	for (let i = 1; i < rows.length; i++) {
-		const date = rows[i].date
-		if (date < prevDate) return rows.toSorted((a, b) => a.date - b.date)
-		prevDate = date
-	}
-
-	return rows
-}
+export type NarrativeTreemapTreeData = NarrativeTreemapCategory[]
+export type NarrativeTreemapReturnField = 'change1W' | 'change1M' | 'change1Y' | 'changeYtd' | 'returnField'
 
 export function calculateDenominatedTimeSeries(
 	data: TimeSeriesEntry[] | undefined,
 	denominatedCoin: string
 ): TimeSeriesEntry[] {
-	const sortedData = normalizeNarrativeTimeSeries(data)
-	if (sortedData.length === 0) return sortedData
+	const rows = data ?? []
+	if (rows.length === 0) return rows
 
 	let hasDenominatedCoin = false
-	for (const row of sortedData) {
+	for (const row of rows) {
 		if (row[denominatedCoin] != null) {
 			hasDenominatedCoin = true
 			break
 		}
 	}
-	if (!hasDenominatedCoin) return sortedData
+	if (!hasDenominatedCoin) return rows
 
 	const denominatedReturns: TimeSeriesEntry[] = []
 
-	for (const dayData of sortedData) {
+	for (const dayData of rows) {
 		const newDayData: TimeSeriesEntry = { date: dayData.date }
 		const denominatedCoinValue = dayData[denominatedCoin] ?? null
 		const denominatedCoinPerformance = denominatedCoinValue == null ? null : 1 + denominatedCoinValue / 100
@@ -75,32 +57,53 @@ function safeTreemapReturn(value: number | null | undefined): number {
 	return value == null ? 0 : Math.round(value * 100) / 100
 }
 
-export function buildNarrativeTreemapTreeData(rows: IPctChangeRow[]): NarrativeTreemapTreeData {
+export function buildNarrativeTreemapTreeData(
+	rows: IPctChangeRow[],
+	returnField: NarrativeTreemapReturnField = 'returnField'
+): NarrativeTreemapTreeData {
 	const treeData: NarrativeTreemapTreeData = []
-	const categoryGroups = new Map<string, NarrativeTreemapTreeData[number]>()
+	const categoryGroups = new Map<string, NarrativeTreemapGroup>()
 
 	for (const row of rows) {
 		const categoryName = row.categoryName ?? ''
 		const marketCap = row.mcap ?? 0
-		let category = categoryGroups.get(categoryName)
-		if (!category) {
-			category = {
-				value: [0, null, null],
+		let group = categoryGroups.get(categoryName)
+		if (!group) {
+			const node: NarrativeTreemapCategory = {
+				value: [0, null, null, 0],
 				name: categoryName,
 				path: categoryName,
 				children: []
 			}
-			categoryGroups.set(categoryName, category)
-			treeData.push(category)
+			group = { node, min: Infinity, max: -Infinity }
+			categoryGroups.set(categoryName, group)
+			treeData.push(node)
 		}
 
-		category.value[0] += marketCap
-		const returnValue = safeTreemapReturn(row.returnField)
-		category.children.push({
+		group.node.value[0] += marketCap
+		const returnValue = safeTreemapReturn(row[returnField])
+		if (returnValue < group.min) group.min = returnValue
+		if (returnValue > group.max) group.max = returnValue
+		group.node.children.push({
 			value: [marketCap, returnValue, returnValue],
 			name: row.name,
 			path: `${categoryName}/${row.name}`
 		})
+	}
+
+	// Value colors are normalized within each category, matching ECharts' previous
+	// recursive sibling-local mapping without cloning the finished tree in the chart.
+	for (const { node, min, max } of categoryGroups.values()) {
+		for (const child of node.children) {
+			const value = child.value[2] ?? 0
+			if (value > 0) {
+				child.value[3] = value === max ? 100 : (value / max) * 60 + 40
+			} else if (value < 0) {
+				child.value[3] = value === min ? -100 : ((value - min) / -min) * 60 - 100
+			} else {
+				child.value[3] = 0
+			}
+		}
 	}
 
 	return treeData

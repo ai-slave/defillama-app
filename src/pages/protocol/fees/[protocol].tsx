@@ -7,19 +7,17 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
-import { ensureChronologicalRows, formatBarChart } from '~/components/ECharts/utils'
 import { feesOptions } from '~/components/Filters/options'
 import { Select } from '~/components/Select/Select'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
-import { CHART_COLORS } from '~/constants/colors'
 import { DimensionProtocolChartByType } from '~/containers/AdapterMetrics/ProtocolChart'
 import { getAdapterProtocolOverview } from '~/containers/AdapterMetrics/queries'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { formatAdapterData } from '~/containers/ProtocolOverview/formatAdapterData'
 import { KeyMetrics } from '~/containers/ProtocolOverview/KeyMetrics'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
-import { mergeProtocolFeeExtraChartSeries } from '~/containers/ProtocolOverview/protocolFeeCharts'
+import { buildProtocolFeeChartPresentation } from '~/containers/ProtocolOverview/protocolFeeCharts'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
@@ -187,21 +185,12 @@ export const getStaticProps = withPerformanceLogging(
 			}
 		}
 
-		const bribesCharts: Record<string, number> = {}
-		for (const [date, value] of bribeRevenueData?.totalDataChart ?? []) {
-			bribesCharts[date] = value
-		}
-		const tokenTaxCharts: Record<string, number> = {}
-		for (const [date, value] of tokenTaxData?.totalDataChart ?? []) {
-			tokenTaxCharts[date] = value
-		}
-
 		const charts = {
 			fees: feesData?.totalDataChart ?? [],
 			revenue: revenueData?.totalDataChart ?? [],
 			holdersRevenue: holdersRevenueData?.totalDataChart ?? [],
-			bribeRevenue: bribeRevenueData && bribeRevenueData.totalAllTime ? bribesCharts : null,
-			tokenTax: tokenTaxData && tokenTaxData.totalAllTime ? tokenTaxCharts : null
+			bribeRevenue: bribeRevenueData && bribeRevenueData.totalAllTime ? bribeRevenueData.totalDataChart : null,
+			tokenTax: tokenTaxData && tokenTaxData.totalAllTime ? tokenTaxData.totalDataChart : null
 		}
 
 		const defaultCharts = []
@@ -303,84 +292,15 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 	const finalCharts = useMemo(() => {
 		const includeBribes = !!(feesSettings.bribes && props.bribeRevenue?.totalAllTime)
 		const includeTokenTax = !!(feesSettings.tokentax && props.tokenTax?.totalAllTime)
-		const chartExtraOptions = {
-			bribeRevenue: props.charts.bribeRevenue,
-			tokenTax: props.charts.tokenTax,
-			includeBribes,
-			includeTokenTax
-		}
-		const feesChart = mergeProtocolFeeExtraChartSeries({ base: props.charts.fees, ...chartExtraOptions })
-		const revenueChart = mergeProtocolFeeExtraChartSeries({ base: props.charts.revenue, ...chartExtraOptions })
-		const holdersRevenueChart = mergeProtocolFeeExtraChartSeries({
-			base: props.charts.holdersRevenue,
-			...chartExtraOptions
+		return buildProtocolFeeChartPresentation({
+			fees: props.charts.fees,
+			revenue: props.charts.revenue,
+			holdersRevenue: props.charts.holdersRevenue,
+			bribes: includeBribes ? props.charts.bribeRevenue : null,
+			tokenTaxes: includeTokenTax ? props.charts.tokenTax : null,
+			selectedCharts: charts,
+			groupBy
 		})
-
-		const seriesType = (groupBy === 'cumulative' ? 'line' : 'bar') as 'line' | 'bar'
-		const seriesData: Record<string, Array<[number, number]>> = {}
-		const chartsConfig = []
-
-		if (charts.includes('Fees')) {
-			seriesData['Fees'] = formatBarChart({ data: feesChart, groupBy, denominationPriceHistory: null, dateInMs: false })
-			chartsConfig.push({
-				type: seriesType,
-				name: 'Fees',
-				encode: { x: 'timestamp', y: 'Fees' },
-				color: CHART_COLORS[0],
-				stack: 'Fees'
-			})
-		}
-		if (charts.includes('Revenue')) {
-			seriesData['Revenue'] = formatBarChart({
-				data: revenueChart,
-				groupBy,
-				denominationPriceHistory: null,
-				dateInMs: false
-			})
-			chartsConfig.push({
-				type: seriesType,
-				name: 'Revenue',
-				encode: { x: 'timestamp', y: 'Revenue' },
-				color: CHART_COLORS[1],
-				stack: 'Revenue'
-			})
-		}
-		if (charts.includes('Holders Revenue')) {
-			seriesData['Holders Revenue'] = formatBarChart({
-				data: holdersRevenueChart,
-				groupBy,
-				denominationPriceHistory: null,
-				dateInMs: false
-			})
-			chartsConfig.push({
-				type: seriesType,
-				name: 'Holders Revenue',
-				encode: { x: 'timestamp', y: 'Holders Revenue' },
-				color: CHART_COLORS[2],
-				stack: 'Holders Revenue'
-			})
-		}
-
-		const rowMap = new Map<number, Record<string, number>>()
-		const seriesNames: string[] = []
-		for (const seriesName in seriesData) {
-			seriesNames.push(seriesName)
-		}
-		for (const name of seriesNames) {
-			for (const [timestamp, value] of seriesData[name]) {
-				const row = rowMap.get(timestamp) ?? { timestamp }
-				row[name] = value
-				rowMap.set(timestamp, row)
-			}
-		}
-
-		return {
-			dataset: {
-				source: ensureChronologicalRows(Array.from(rowMap.values())),
-				dimensions: ['timestamp', ...seriesNames]
-			},
-			charts: chartsConfig
-		}
 	}, [props.charts, charts, feesSettings, groupBy, props.bribeRevenue?.totalAllTime, props.tokenTax?.totalAllTime])
 	const deferredFinalCharts = useDeferredValue(finalCharts)
 

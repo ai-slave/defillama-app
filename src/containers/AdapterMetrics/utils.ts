@@ -1,9 +1,10 @@
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import type {
 	ChartTimeGroupingWithCumulative,
 	MultiSeriesChart2Dataset,
 	MultiSeriesChart2SeriesConfig
 } from '~/components/ECharts/types'
-import { ensureChronologicalRows, formatBarChart } from '~/components/ECharts/utils'
+import { getBucketTimestampMs } from '~/components/ECharts/utils'
 import type { FeeExtraPeriodTotals } from '~/metrics/feeExtras'
 import { getNDistinctColors, slug } from '~/utils'
 import { parseExcludeParam } from '~/utils/routerQuery'
@@ -16,6 +17,14 @@ export type BribesData = FeeExtraPeriodTotals
 export type OpenInterestData = { total24h: number | null; doublecounted: boolean }
 export type ActiveLiquidityData = { total24h: number | null; doublecounted: boolean }
 export type NormalizedVolumeData = { total24h: number | null }
+
+function setChartRowValue(row: Record<string, number | null>, name: string, value: number | null) {
+	if (name === '__proto__') {
+		Object.defineProperty(row, name, { value, enumerable: true, configurable: true, writable: true })
+	} else {
+		row[name] = value
+	}
+}
 
 type AggregatedProtocol = Omit<
 	IAdapterChainMetrics['protocols'][0],
@@ -88,13 +97,13 @@ export function aggregateProtocolVersions(protocolVersions: IAdapterChainMetrics
 }
 
 export function mergeBreakdowns(breakdowns: Record<string, Record<string, number>>[]) {
-	const merged: Record<string, Record<string, number>> = {}
+	const merged = createChartRecord<Record<string, number>>()
 	for (const breakdown of breakdowns) {
 		if (!breakdown) continue
 		for (const chainName in breakdown) {
 			const protocolData = breakdown[chainName]
 			if (!merged[chainName]) {
-				merged[chainName] = {}
+				merged[chainName] = createChartRecord<number>()
 			}
 			for (const protocolName in protocolData) {
 				const value = protocolData[protocolName]
@@ -306,7 +315,7 @@ export function matchRevenueToEarnings(
 		displayName: string
 	}>
 ) {
-	const matchedData: Record<string, BribesData> = {}
+	const matchedData = createChartRecord<BribesData>()
 
 	for (const revenueProtocol of revenueData) {
 		const matchingEarningsProtocol = earningsProtocols.find((earningsProto) => {
@@ -438,7 +447,7 @@ export function mergeSingleDimensionChartDataset({
 
 	for (const row of chartData.source) {
 		const value = row[dimension] as number | null | undefined
-		rows.set(Number(row.timestamp), value ?? null)
+		rows.set(row.timestamp as number, value ?? null)
 	}
 
 	for (const extraChart of extraCharts) {
@@ -474,7 +483,7 @@ export function mergeBreakdownCharts({
 
 	const mergeChart = (input: Array<[number, Record<string, number>]>) => {
 		for (const [timestamp, values] of input) {
-			const row = rows.get(timestamp) ?? {}
+			const row = rows.get(timestamp) ?? createChartRecord<number>()
 			for (const key in values) {
 				row[key] = (row[key] ?? 0) + values[key]
 			}
@@ -521,14 +530,14 @@ export function buildProtocolBreakdownNormalization(protocols: IProtocol[]): Pro
 		walk(protocol)
 	}
 
-	const canonicalRecord: Record<string, string> = {}
+	const canonicalRecord = createChartRecord<string>()
 	for (const [seriesName, canonicalName] of Array.from(canonicalBySeriesName.entries()).toSorted((a, b) =>
 		a[0].localeCompare(b[0])
 	)) {
 		canonicalRecord[seriesName] = canonicalName
 	}
 
-	const aliasesRecord: Record<string, string[]> = {}
+	const aliasesRecord = createChartRecord<string[]>()
 	for (const [canonicalName, aliases] of Array.from(aliasesByCanonicalName.entries()).toSorted((a, b) =>
 		a[0].localeCompare(b[0])
 	)) {
@@ -556,7 +565,7 @@ export function normalizeProtocolBreakdownChartData({
 	const protocolTotals = new Map<string, number>()
 
 	for (const [timestamp, protocolValues] of chart) {
-		const valuesAtTimestamp: Record<string, number> = {}
+		const valuesAtTimestamp = createChartRecord<number>()
 
 		let hasValues = false
 		for (const protocolName in protocolValues) {
@@ -586,13 +595,12 @@ export function normalizeProtocolBreakdownChartData({
 		}
 	}
 
-	const sortedTimestamps = Array.from(protocolValuesByTimestamp.keys()).sort((a, b) => a - b)
 	const source: MultiSeriesChart2Dataset['source'] = []
-	for (const timestamp of sortedTimestamps) {
-		const row: Record<string, number | null> = { timestamp }
-		const valuesAtTimestamp = protocolValuesByTimestamp.get(timestamp)
-		for (const protocolName of protocolDimensions) {
-			row[protocolName] = valuesAtTimestamp?.[protocolName] ?? null
+	// The endpoint is ascending and sparse. Keep that shape until the final visible series are known.
+	for (const [timestamp, valuesAtTimestamp] of protocolValuesByTimestamp) {
+		const row = createChartRow<number | null>(timestamp)
+		for (const protocolName in valuesAtTimestamp) {
+			setChartRowValue(row, protocolName, valuesAtTimestamp[protocolName])
 		}
 		source.push(row)
 	}
@@ -630,12 +638,13 @@ export function mergeNamedDimensionChartDataset({
 	const rows = new Map<number, Record<string, number | null>>()
 
 	for (const row of chartData.source) {
-		const nextRow: Record<string, number | null> = { timestamp: Number(row.timestamp) }
+		const timestamp = row.timestamp as number
+		const nextRow = createChartRow<number | null>(timestamp)
 		for (const dimension of dimensions) {
 			const value = row[dimension] as number | null | undefined
 			nextRow[dimension] = value ?? null
 		}
-		rows.set(Number(row.timestamp), nextRow)
+		rows.set(timestamp, nextRow)
 	}
 
 	const getExtraDimension = (key: string) => {
@@ -655,7 +664,7 @@ export function mergeNamedDimensionChartDataset({
 	for (const extraChart of extraCharts) {
 		for (const [timestamp, values] of extraChart) {
 			const chartTimestamp = toChartTimestamp(timestamp)
-			const row = rows.get(chartTimestamp) ?? { timestamp: chartTimestamp }
+			const row = rows.get(chartTimestamp) ?? createChartRow<number | null>(chartTimestamp)
 
 			for (const key in values) {
 				const dimension = getExtraDimension(key)
@@ -668,8 +677,8 @@ export function mergeNamedDimensionChartDataset({
 	}
 
 	const source: MultiSeriesChart2Dataset['source'] = []
-	for (const row of Array.from(rows.values()).sort((a, b) => Number(a.timestamp) - Number(b.timestamp))) {
-		const nextRow: Record<string, number | null> = { timestamp: Number(row.timestamp) }
+	for (const row of Array.from(rows.values()).sort((a, b) => a.timestamp - b.timestamp)) {
+		const nextRow = createChartRow<number | null>(row.timestamp)
 		for (const dimension of dimensions) {
 			nextRow[dimension] = row[dimension] ?? null
 		}
@@ -765,6 +774,8 @@ const VALID_GROUPINGS = new Set<ChartTimeGroupingWithCumulative>([
 	'cumulative'
 ])
 const MAX_BREAKDOWN_SERIES = 10
+const MAX_PROTOCOL_BREAKDOWN_SERIES = 30
+const MAX_TREEMAP_ITEMS = 100
 const MAX_CHAINS_BY_ADAPTER_HBAR_ITEMS = 9
 const MIN_COMPLETE_DAILY_GAP_MS = 23 * 60 * 60 * 1000
 
@@ -784,12 +795,8 @@ function getRollingWindowMsForTreemapGrouping(groupBy: 'weekly' | 'monthly' | 'q
 }
 
 function getLatestTimestampMsInDataset(chartData: MultiSeriesChart2Dataset): number | null {
-	let max: number | null = null
-	for (const row of chartData.source) {
-		const ts = Number(row.timestamp)
-		if (max == null || ts > max) max = ts
-	}
-	return max
+	const lastRow = chartData.source[chartData.source.length - 1]
+	return lastRow ? (lastRow.timestamp as number) : null
 }
 
 function assertNever(value: never): never {
@@ -849,7 +856,7 @@ export function normalizeChainsByAdapterChartState({
 	}
 }
 
-function createSeriesUniverse({
+function createRankedSeriesUniverse({
 	chartData,
 	selectedNames,
 	rankingScores
@@ -859,20 +866,12 @@ function createSeriesUniverse({
 	rankingScores?: Map<string, number>
 }) {
 	const entityTotals = new Map<string, number>()
-	const entitySeries = new Map<string, Array<[number, number]>>()
 
 	for (const row of chartData.source) {
-		const timestamp = Number(row.timestamp)
 		for (const entity of selectedNames) {
-			const value = row[entity] as number | null | undefined
+			const value = getOwnSeriesValue(row, entity)
 			if (value != null) {
 				entityTotals.set(entity, (entityTotals.get(entity) ?? 0) + value)
-				let series = entitySeries.get(entity)
-				if (!series) {
-					series = []
-					entitySeries.set(entity, series)
-				}
-				series.push([timestamp, value])
 			}
 		}
 	}
@@ -896,39 +895,40 @@ function createSeriesUniverse({
 			otherEntityNames.push(entity)
 		}
 	}
-	const topSeries = new Map<string, Array<[number, number]>>()
-
-	for (const entity of topEntityNames) {
-		const series = entitySeries.get(entity)
-		if (series) {
-			topSeries.set(entity, series)
-		}
+	// A real series named "Others" belongs in the aggregate instead of colliding with its output dimension.
+	const existingOthersIndex = topEntityNames.indexOf('Others')
+	if (existingOthersIndex >= 0 && otherEntityNames.length > 0) {
+		topEntityNames.splice(existingOthersIndex, 1)
+		otherEntityNames.unshift('Others')
 	}
 
-	if (otherEntityNames.length > 0) {
-		const othersMap = new Map<number, number>()
-		for (const entity of otherEntityNames) {
-			for (const [ts, value] of entitySeries.get(entity) ?? []) {
-				othersMap.set(ts, (othersMap.get(ts) ?? 0) + value)
-			}
-		}
-		topSeries.set(
-			'Others',
-			Array.from(othersMap.entries()).sort((a, b) => a[0] - b[0])
-		)
-	}
-
-	const topSeriesNames = Array.from(topSeries.keys())
+	const topSeriesNames = otherEntityNames.length > 0 ? [...topEntityNames, 'Others'] : topEntityNames
 	const topColors = getNDistinctColors(topSeriesNames.length || 1)
-	const topColorBySeriesName: Record<string, string> = {}
+	const topColorBySeriesName: Record<string, string> = Object.create(null)
 	for (let i = 0; i < topSeriesNames.length; i++) {
 		topColorBySeriesName[topSeriesNames[i]] = topColors[i]
 	}
 
 	return {
-		topSeries,
+		topEntityNames,
+		otherEntityNames,
 		topSeriesNames,
 		topColorBySeriesName
+	}
+}
+
+function getOwnSeriesValue(
+	row: MultiSeriesChart2Dataset['source'][number],
+	seriesName: string
+): number | null | undefined {
+	return Object.hasOwn(row, seriesName) ? (row[seriesName] as number | null | undefined) : undefined
+}
+
+function setOwnSeriesValue(row: Record<string, number | null>, seriesName: string, value: number | null) {
+	if (seriesName === '__proto__') {
+		Object.defineProperty(row, seriesName, { configurable: true, enumerable: true, value, writable: true })
+	} else {
+		row[seriesName] = value
 	}
 }
 
@@ -960,12 +960,24 @@ function orderSelectedNamesByRankingScores({
 }) {
 	const selectedSeriesNames = getOrderedSelectedSeriesNames({ chartData, selectedNames })
 	const totals = new Map<string, number>()
+	const availableSeriesCount = Math.max(0, chartData.dimensions.length - 1)
+	// Sparse rows favor key scans for broad selections; direct lookups avoid enumerating every row key for narrow filters.
+	const isNarrowSelection = selectedSeriesNames.length * 4 <= availableSeriesCount
 
-	for (const row of chartData.source) {
-		for (const seriesName of selectedSeriesNames) {
-			const value = row[seriesName] as number | null | undefined
-			if (value != null) {
-				totals.set(seriesName, (totals.get(seriesName) ?? 0) + value)
+	if (isNarrowSelection) {
+		for (const row of chartData.source) {
+			for (const seriesName of selectedSeriesNames) {
+				const value = getOwnSeriesValue(row, seriesName)
+				if (value != null) totals.set(seriesName, (totals.get(seriesName) ?? 0) + value)
+			}
+		}
+	} else {
+		const selectedSeriesSet = new Set(selectedSeriesNames)
+		for (const row of chartData.source) {
+			for (const seriesName in row) {
+				if (!selectedSeriesSet.has(seriesName)) continue
+				const value = row[seriesName] as number | null | undefined
+				if (value != null) totals.set(seriesName, (totals.get(seriesName) ?? 0) + value)
 			}
 		}
 	}
@@ -983,131 +995,128 @@ function orderSelectedNamesByRankingScores({
 	})
 }
 
-function buildSeriesMapForNames({
+function buildGroupedFlowDataset({
 	chartData,
-	seriesNames
+	topEntityNames,
+	otherEntityNames,
+	seriesNames,
+	groupBy,
+	relative
 }: {
 	chartData: MultiSeriesChart2Dataset
+	topEntityNames: string[]
+	otherEntityNames: string[]
 	seriesNames: string[]
-}) {
-	const seriesMap = new Map<string, Array<[number, number]>>()
-
-	for (const seriesName of seriesNames) {
-		seriesMap.set(seriesName, [])
-	}
-
-	for (const row of chartData.source) {
-		const timestamp = Number(row.timestamp)
-
-		for (const seriesName of seriesNames) {
-			const value = row[seriesName] as number | null | undefined
-			if (value != null) {
-				seriesMap.get(seriesName)!.push([timestamp, value])
-			}
-		}
-	}
-
-	for (const seriesName of seriesNames) {
-		if (seriesMap.get(seriesName)!.length === 0) {
-			seriesMap.delete(seriesName)
-		}
-	}
-
-	return seriesMap
-}
-
-function buildDenseRowsFromGroupedSeries(
-	groupedSeries: Map<string, Array<[number, number | null]>>,
-	seriesNames: string[]
-): MultiSeriesChart2Dataset {
-	const rowMap = new Map<number, Record<string, number | null>>()
-
-	for (const seriesName of seriesNames) {
-		for (const [timestamp, value] of groupedSeries.get(seriesName) ?? []) {
-			const row = rowMap.get(timestamp) ?? { timestamp }
-			row[seriesName] = value
-			rowMap.set(timestamp, row)
-		}
-	}
-
-	const source = ensureChronologicalRows(Array.from(rowMap.values()))
-	for (const row of source) {
-		for (const seriesName of seriesNames) {
-			if (!(seriesName in row)) row[seriesName] = null
-		}
-	}
-
-	return {
-		source,
-		dimensions: ['timestamp', ...seriesNames]
-	}
-}
-
-function normalizeDatasetToPercent(dataset: MultiSeriesChart2Dataset, seriesNames: string[]): MultiSeriesChart2Dataset {
+	groupBy: ChartTimeGroupingWithCumulative
+	relative: boolean
+}): MultiSeriesChart2Dataset {
+	const isDaily = groupBy === 'daily'
+	const isCumulative = groupBy === 'cumulative'
+	const cumulativeTotals = isCumulative ? new Array<number>(seriesNames.length).fill(0) : null
+	const otherEntitySet = otherEntityNames.length > 0 ? new Set(otherEntityNames) : null
 	const source: MultiSeriesChart2Dataset['source'] = []
+	let bucketTimestamp: number | null = null
+	let bucketValues: Array<number | undefined> | null = null
 
-	for (const row of dataset.source) {
-		const nextRow: Record<string, number | null> = { timestamp: Number(row.timestamp) }
-		let total = 0
-		for (const seriesName of seriesNames) {
-			const value = row[seriesName] as number | null | undefined
-			if (value != null) total += value > 0 ? value : 0
-		}
-		for (const seriesName of seriesNames) {
-			const value = row[seriesName] as number | null | undefined
-			if (value == null) {
-				nextRow[seriesName] = null
-				continue
+	const pushBucket = () => {
+		if (bucketTimestamp == null || !bucketValues) return
+		let relativeTotal = 0
+
+		for (let index = 0; index < seriesNames.length; index++) {
+			let value = bucketValues[index]
+			if (value == null) continue
+			if (cumulativeTotals) {
+				cumulativeTotals[index] += value
+				value = cumulativeTotals[index]
+				bucketValues[index] = value
 			}
-			const clampedValue = value > 0 ? value : 0
-			nextRow[seriesName] = total > 0 ? (clampedValue / total) * 100 : 0
+			if (relative && value > 0) relativeTotal += value
+		}
+
+		const nextRow = createChartRow<number | null>(bucketTimestamp)
+		for (let index = 0; index < seriesNames.length; index++) {
+			const value = bucketValues[index]
+			const finalValue =
+				relative && value != null ? (relativeTotal > 0 ? (Math.max(value, 0) / relativeTotal) * 100 : 0) : value
+			setOwnSeriesValue(nextRow, seriesNames[index], finalValue ?? null)
 		}
 		source.push(nextRow)
 	}
-
-	return {
-		dimensions: dataset.dimensions,
-		source
+	const ensureBucket = (nextBucketTimestamp: number) => {
+		if (bucketTimestamp === nextBucketTimestamp && bucketValues) return bucketValues
+		pushBucket()
+		bucketTimestamp = nextBucketTimestamp
+		bucketValues = []
+		return bucketValues
 	}
+
+	for (const row of chartData.source) {
+		const timestamp = row.timestamp as number
+		const nextBucketTimestamp = isDaily || isCumulative ? timestamp : getBucketTimestampMs(timestamp, groupBy)
+
+		for (let index = 0; index < topEntityNames.length; index++) {
+			const value = getOwnSeriesValue(row, topEntityNames[index])
+			if (value == null) continue
+			const values = ensureBucket(nextBucketTimestamp)
+			values[index] = isDaily ? value : (values[index] ?? 0) + value
+		}
+
+		if (otherEntitySet) {
+			let othersValue = 0
+			let hasOthersValue = false
+			for (const name in row) {
+				if (!otherEntitySet.has(name)) continue
+				const value = row[name] as number | null | undefined
+				if (value == null) continue
+				othersValue += value
+				hasOthersValue = true
+			}
+			if (hasOthersValue) {
+				const values = ensureBucket(nextBucketTimestamp)
+				const othersIndex = seriesNames.length - 1
+				values[othersIndex] = (values[othersIndex] ?? 0) + othersValue
+			}
+		}
+	}
+	pushBucket()
+
+	return { source, dimensions: ['timestamp', ...seriesNames] }
 }
 
 function buildBarPresentation({
-	topSeries,
+	chartData,
+	topEntityNames,
+	otherEntityNames,
 	topSeriesNames,
 	topColorBySeriesName,
 	state
 }: {
-	topSeries: Map<string, Array<[number, number]>>
+	chartData: MultiSeriesChart2Dataset
+	topEntityNames: string[]
+	otherEntityNames: string[]
 	topSeriesNames: string[]
 	topColorBySeriesName: Record<string, string>
 	state: ChainsByAdapterBarState
 }): ChainsByAdapterBarPresentation {
-	const groupedSeries = new Map<string, Array<[number, number | null]>>()
-
-	for (const seriesName of topSeriesNames) {
-		groupedSeries.set(
-			seriesName,
-			formatBarChart({
-				data: topSeries.get(seriesName) ?? [],
-				groupBy: state.groupBy,
-				dateInMs: true,
-				denominationPriceHistory: null
-			})
-		)
-	}
-
-	const absoluteDataset = buildDenseRowsFromGroupedSeries(groupedSeries, topSeriesNames)
-	const finalDataset =
-		state.valueMode === 'relative' ? normalizeDatasetToPercent(absoluteDataset, topSeriesNames) : absoluteDataset
+	const finalDataset = buildGroupedFlowDataset({
+		chartData,
+		topEntityNames,
+		otherEntityNames,
+		seriesNames: topSeriesNames,
+		groupBy: state.groupBy,
+		relative: state.valueMode === 'relative'
+	})
+	const isCumulative = state.groupBy === 'cumulative'
 
 	return {
 		kind: 'bar',
 		dataset: finalDataset,
 		charts: topSeriesNames.map((seriesName) => ({
-			type: 'bar',
+			type: isCumulative ? 'line' : 'bar',
 			name: seriesName,
 			encode: { x: 'timestamp', y: seriesName },
-			...(state.barLayout === 'stacked' ? { stack: 'chain' as const, large: false } : {}),
+			...(!isCumulative && state.barLayout === 'stacked' ? { stack: 'chain' as const, large: false } : {}),
+			...(isCumulative && topSeriesNames.length > 1 ? { hideAreaStyle: true } : {}),
 			color: topColorBySeriesName[seriesName]
 		})),
 		valueMode: state.valueMode,
@@ -1118,32 +1127,28 @@ function buildBarPresentation({
 }
 
 function buildDominancePresentation({
-	topSeries,
+	chartData,
+	topEntityNames,
+	otherEntityNames,
 	topSeriesNames,
 	topColorBySeriesName,
 	state
 }: {
-	topSeries: Map<string, Array<[number, number]>>
+	chartData: MultiSeriesChart2Dataset
+	topEntityNames: string[]
+	otherEntityNames: string[]
 	topSeriesNames: string[]
 	topColorBySeriesName: Record<string, string>
 	state: ChainsByAdapterDominanceState
 }): ChainsByAdapterDominancePresentation {
-	const groupedSeries = new Map<string, Array<[number, number | null]>>()
-
-	for (const seriesName of topSeriesNames) {
-		groupedSeries.set(
-			seriesName,
-			formatBarChart({
-				data: topSeries.get(seriesName) ?? [],
-				groupBy: state.groupBy,
-				dateInMs: true,
-				denominationPriceHistory: null
-			})
-		)
-	}
-
-	const groupedDataset = buildDenseRowsFromGroupedSeries(groupedSeries, topSeriesNames)
-	const relativeDataset = normalizeDatasetToPercent(groupedDataset, topSeriesNames)
+	const relativeDataset = buildGroupedFlowDataset({
+		chartData,
+		topEntityNames,
+		otherEntityNames,
+		seriesNames: topSeriesNames,
+		groupBy: state.groupBy,
+		relative: true
+	})
 
 	return {
 		kind: 'dominance',
@@ -1183,6 +1188,14 @@ function buildTreemapPresentation({
 		total += rawValue
 	}
 	values.sort((a, b) => b.value - a.value)
+	if (values.length > MAX_TREEMAP_ITEMS) {
+		let othersValue = 0
+		for (let index = MAX_TREEMAP_ITEMS - 1; index < values.length; index++) othersValue += values[index].value
+		values.length = MAX_TREEMAP_ITEMS - 1
+		const existingOthers = values.find((item) => item.name === 'Others')
+		if (existingOthers) existingOthers.value += othersValue
+		else values.push({ name: 'Others', value: othersValue })
+	}
 
 	const colors = getNDistinctColors(values.length || 1)
 
@@ -1218,9 +1231,11 @@ function buildCumulativeLatestValueRowsFromChartData({
 }): BreakdownLatestValueRow[] {
 	const totals = new Map<string, number>()
 	const pointCounts = new Map<string, number>()
+	const selectedNameSet = new Set(selectedNames)
 
 	for (const row of chartData.source) {
-		for (const name of selectedNames) {
+		for (const name in row) {
+			if (!selectedNameSet.has(name)) continue
 			const value = row[name] as number | null | undefined
 			if (value == null) continue
 			totals.set(name, (totals.get(name) ?? 0) + value)
@@ -1256,7 +1271,7 @@ function buildLatestValueRowsFromChartData({
 
 		const rows: BreakdownLatestValueRow[] = []
 		for (const name of selectedNames) {
-			const value = sourceRow[name] as number | null | undefined
+			const value = getOwnSeriesValue(sourceRow, name)
 			rows.push({
 				name,
 				total24h: value ?? null
@@ -1279,11 +1294,13 @@ function buildLatestValueRowsFromChartData({
 	const cutoffMs = latestTsMs - windowMs
 	const sums = new Map<string, number>()
 	const pointCounts = new Map<string, number>()
+	const selectedNameSet = new Set(selectedNames)
 
 	for (const row of chartData.source) {
-		const timestamp = Number(row.timestamp)
+		const timestamp = row.timestamp as number
 		if (timestamp < cutoffMs) continue
-		for (const name of selectedNames) {
+		for (const name in row) {
+			if (!selectedNameSet.has(name)) continue
 			const value = row[name] as number | null | undefined
 			if (value == null) continue
 			sums.set(name, (sums.get(name) ?? 0) + value)
@@ -1302,37 +1319,16 @@ function buildLatestValueRowsFromChartData({
 }
 
 function getEffectiveDailyLatestRow(chartData: MultiSeriesChart2Dataset): MultiSeriesChart2Dataset['source'][0] | null {
-	let lastTimestamp = Number.NEGATIVE_INFINITY
-	let previousTimestamp = Number.NEGATIVE_INFINITY
-	let lastTimestampRow: MultiSeriesChart2Dataset['source'][0] | null = null
-	let previousTimestampRow: MultiSeriesChart2Dataset['source'][0] | null = null
-	let count = 0
-	for (const row of chartData.source) {
-		const timestamp = Number(row.timestamp)
-		count++
-		if (timestamp > lastTimestamp) {
-			previousTimestamp = lastTimestamp
-			previousTimestampRow = lastTimestampRow
-			lastTimestamp = timestamp
-			lastTimestampRow = row
-		} else if (timestamp === lastTimestamp) {
-			previousTimestamp = lastTimestamp
-			previousTimestampRow = lastTimestampRow
-		} else if (timestamp > previousTimestamp) {
-			previousTimestamp = timestamp
-			previousTimestampRow = row
-		}
-	}
+	const source = chartData.source
+	const lastTimestampRow = source[source.length - 1]
+	if (!lastTimestampRow) return null
+	if (source.length === 1) return lastTimestampRow
 
-	if (count === 0) return null
-	if (count === 1) return lastTimestampRow
-
-	const lastDate = new Date(lastTimestamp)
-	const isUtcMidnight =
-		lastDate.getUTCHours() === 0 &&
-		lastDate.getUTCMinutes() === 0 &&
-		lastDate.getUTCSeconds() === 0 &&
-		lastDate.getUTCMilliseconds() === 0
+	// Canonical chart datasets are ascending, so only the final two rows are needed.
+	const previousTimestampRow = source[source.length - 2]
+	const lastTimestamp = lastTimestampRow.timestamp as number
+	const previousTimestamp = previousTimestampRow.timestamp as number
+	const isUtcMidnight = lastTimestamp % (24 * 60 * 60 * 1000) === 0
 	const gapMs = lastTimestamp - previousTimestamp
 
 	return !isUtcMidnight || gapMs < MIN_COMPLETE_DAILY_GAP_MS ? previousTimestampRow : lastTimestampRow
@@ -1420,18 +1416,32 @@ export function buildChainsByAdapterChartPresentation({
 			}
 		}
 		case 'dominance': {
-			const { topSeries, topSeriesNames, topColorBySeriesName } = createSeriesUniverse({
+			const { topEntityNames, otherEntityNames, topSeriesNames, topColorBySeriesName } = createRankedSeriesUniverse({
 				chartData,
 				selectedNames: selectedChains
 			})
-			return buildDominancePresentation({ topSeries, topSeriesNames, topColorBySeriesName, state })
+			return buildDominancePresentation({
+				chartData,
+				topEntityNames,
+				otherEntityNames,
+				topSeriesNames,
+				topColorBySeriesName,
+				state
+			})
 		}
 		case 'bar': {
-			const { topSeries, topSeriesNames, topColorBySeriesName } = createSeriesUniverse({
+			const { topEntityNames, otherEntityNames, topSeriesNames, topColorBySeriesName } = createRankedSeriesUniverse({
 				chartData,
 				selectedNames: selectedChains
 			})
-			return buildBarPresentation({ topSeries, topSeriesNames, topColorBySeriesName, state })
+			return buildBarPresentation({
+				chartData,
+				topEntityNames,
+				otherEntityNames,
+				topSeriesNames,
+				topColorBySeriesName,
+				state
+			})
 		}
 		default:
 			return assertNever(state)
@@ -1465,18 +1475,43 @@ export function buildAdapterByChainBreakdownPresentation({
 		selectedNames: selectedProtocols,
 		rankingScores
 	})
-	const topSeries = buildSeriesMapForNames({ chartData, seriesNames: orderedSeriesNames })
-	const topColors = getNDistinctColors(orderedSeriesNames.length || 1)
-	const topColorBySeriesName: Record<string, string> = {}
-	for (let i = 0; i < orderedSeriesNames.length; i++) {
-		topColorBySeriesName[orderedSeriesNames[i]] = topColors[i]
+	const shouldAggregateOthers = orderedSeriesNames.length > MAX_PROTOCOL_BREAKDOWN_SERIES
+	const topEntityNames = shouldAggregateOthers
+		? orderedSeriesNames.slice(0, MAX_PROTOCOL_BREAKDOWN_SERIES - 1)
+		: orderedSeriesNames
+	const otherEntityNames = shouldAggregateOthers ? orderedSeriesNames.slice(MAX_PROTOCOL_BREAKDOWN_SERIES - 1) : []
+	// A real series named "Others" belongs in the aggregate instead of colliding with its output dimension.
+	const existingOthersIndex = topEntityNames.indexOf('Others')
+	if (existingOthersIndex >= 0 && otherEntityNames.length > 0) {
+		topEntityNames.splice(existingOthersIndex, 1)
+		otherEntityNames.unshift('Others')
+	}
+	const renderedSeriesNames = otherEntityNames.length > 0 ? [...topEntityNames, 'Others'] : topEntityNames
+	const topColors = getNDistinctColors(renderedSeriesNames.length || 1)
+	const topColorBySeriesName: Record<string, string> = Object.create(null)
+	for (let i = 0; i < renderedSeriesNames.length; i++) {
+		topColorBySeriesName[renderedSeriesNames[i]] = topColors[i]
 	}
 
 	switch (state.chartKind) {
 		case 'dominance':
-			return buildDominancePresentation({ topSeries, topSeriesNames: orderedSeriesNames, topColorBySeriesName, state })
+			return buildDominancePresentation({
+				chartData,
+				topEntityNames,
+				otherEntityNames,
+				topSeriesNames: renderedSeriesNames,
+				topColorBySeriesName,
+				state
+			})
 		case 'bar':
-			return buildBarPresentation({ topSeries, topSeriesNames: orderedSeriesNames, topColorBySeriesName, state })
+			return buildBarPresentation({
+				chartData,
+				topEntityNames,
+				otherEntityNames,
+				topSeriesNames: renderedSeriesNames,
+				topColorBySeriesName,
+				state
+			})
 		default:
 			return assertNever(state)
 	}

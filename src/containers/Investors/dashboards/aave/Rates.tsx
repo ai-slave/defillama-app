@@ -1,7 +1,7 @@
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IBarChartProps, IChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { formattedNum } from '~/utils'
 import { useAaveMarkets, useAaveAPYHistory } from './api'
 import type { TimeWindow } from './api'
@@ -14,11 +14,16 @@ import {
 	MetricStrip,
 	SectionHeader,
 	WindowToggle,
-	formatPct
+	formatPct,
+	AAVE_AREA_EXPORT,
+	AAVE_BAR_EXPORT,
+	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
+	AAVE_PERCENT_TIME_CHART_OPTIONS
 } from './shared'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 
 const WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
 	{ value: 'LAST_DAY', label: '1D' },
@@ -26,6 +31,39 @@ const WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
 	{ value: 'LAST_MONTH', label: '1M' },
 	{ value: 'LAST_SIX_MONTHS', label: '6M' },
 	{ value: 'LAST_YEAR', label: '1Y' }
+]
+
+const SUPPLY_APY_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Supply APY',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'Supply APY' },
+		color: '#66BB6A'
+	}
+]
+const BORROW_APY_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Borrow APY',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'Borrow APY' },
+		color: '#EF5350'
+	}
+]
+const RATE_CURVE_CHARTS: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Borrow Rate',
+		type: 'bar',
+		encode: { x: 'Name', y: 'Borrow Rate' },
+		color: '#EF5350',
+		stack: 'a'
+	},
+	{
+		name: 'Supply Rate',
+		type: 'bar',
+		encode: { x: 'Name', y: 'Supply Rate' },
+		color: '#66BB6A',
+		stack: 'b'
+	}
 ]
 
 interface RateComparisonRow {
@@ -123,7 +161,7 @@ export default function Rates() {
 
 	const primaryReserve = sortedAssetReserves[0] ?? null
 
-	const { chartData: supplyChartData, isLoading: supplyLoading } = useAaveAPYHistory(
+	const { dataset: supplyDataset, isLoading: supplyLoading } = useAaveAPYHistory(
 		primaryReserve?.chainId,
 		primaryReserve?.marketAddress,
 		primaryReserve?.tokenAddress,
@@ -131,22 +169,12 @@ export default function Rates() {
 		'supply'
 	)
 
-	const { chartData: borrowChartData, isLoading: borrowLoading } = useAaveAPYHistory(
+	const { dataset: borrowDataset, isLoading: borrowLoading } = useAaveAPYHistory(
 		primaryReserve?.chainId,
 		primaryReserve?.marketAddress,
 		primaryReserve?.tokenAddress,
 		selectedWindow,
 		'borrow'
-	)
-
-	const supplyAreaData = useMemo(
-		() => supplyChartData.map((d) => ({ date: d.date, 'Supply APY': d.APY })),
-		[supplyChartData]
-	)
-
-	const borrowAreaData = useMemo(
-		() => borrowChartData.map((d) => ({ date: d.date, 'Borrow APY': d.APY })),
-		[borrowChartData]
 	)
 
 	const rateComparisonRows = useMemo<RateComparisonRow[]>(
@@ -162,7 +190,7 @@ export default function Rates() {
 		[sortedAssetReserves]
 	)
 
-	const rateCurveData = useMemo(() => {
+	const rateCurveDataset = useMemo<MultiSeriesChart2Dataset | null>(() => {
 		if (!primaryReserve) return null
 		const { baseVariableBorrowRate, variableRateSlope1, variableRateSlope2, optimalUsageRate } = primaryReserve
 		if (
@@ -174,7 +202,7 @@ export default function Rates() {
 			return null
 		if (optimalUsageRate === 0) return null
 
-		const points: { name: string; 'Borrow Rate': number; 'Supply Rate': number }[] = []
+		const source: { Name: string; 'Borrow Rate': number; 'Supply Rate': number }[] = []
 		for (let u = 0; u <= 100; u += 1) {
 			let borrowRate: number
 			if (u <= optimalUsageRate) {
@@ -186,13 +214,13 @@ export default function Rates() {
 					((u - optimalUsageRate) / (100 - optimalUsageRate)) * variableRateSlope2
 			}
 			const supplyRate = borrowRate * (u / 100)
-			points.push({
-				name: `${u}%`,
+			source.push({
+				Name: `${u}%`,
 				'Borrow Rate': Math.round(borrowRate * 100) / 100,
 				'Supply Rate': Math.round(supplyRate * 100) / 100
 			})
 		}
-		return points
+		return { source, dimensions: ['Name', 'Borrow Rate', 'Supply Rate'] }
 	}, [primaryReserve])
 
 	const kpis = useMemo(() => {
@@ -247,36 +275,38 @@ export default function Rates() {
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
 				{supplyLoading ? (
 					<CardSkeleton title="Supply APY History" />
-				) : supplyAreaData.length > 0 ? (
+				) : supplyDataset.source.length > 0 ? (
 					<ChartCard title={`${activeAsset} Supply APY \u00b7 ${primaryReserve?.chain}`}>
-						<AreaChart
-							chartData={supplyAreaData}
-							stacks={['Supply APY']}
-							stackColors={{ 'Supply APY': '#66BB6A' }}
+						<MultiSeriesChart2
+							dataset={supplyDataset}
+							charts={SUPPLY_APY_CHART}
 							valueSymbol="%"
 							title=""
 							height="400px"
+							chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
+							exportButtons={AAVE_AREA_EXPORT}
 						/>
 					</ChartCard>
 				) : null}
 
 				{borrowLoading ? (
 					<CardSkeleton title="Borrow APY History" />
-				) : borrowAreaData.length > 0 ? (
+				) : borrowDataset.source.length > 0 ? (
 					<ChartCard title={`${activeAsset} Borrow APY \u00b7 ${primaryReserve?.chain}`}>
-						<AreaChart
-							chartData={borrowAreaData}
-							stacks={['Borrow APY']}
-							stackColors={{ 'Borrow APY': '#EF5350' }}
+						<MultiSeriesChart2
+							dataset={borrowDataset}
+							charts={BORROW_APY_CHART}
 							valueSymbol="%"
 							title=""
 							height="400px"
+							chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
+							exportButtons={AAVE_AREA_EXPORT}
 						/>
 					</ChartCard>
 				) : null}
 			</div>
 
-			{rateCurveData ? (
+			{rateCurveDataset ? (
 				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
 					<div className="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
 						<h3 className="text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase">
@@ -299,14 +329,15 @@ export default function Rates() {
 							</span>
 						)}
 					</div>
-					<BarChart
-						chartData={rateCurveData}
-						stacks={{ 'Borrow Rate': 'a', 'Supply Rate': 'b' }}
-						stackColors={{ 'Borrow Rate': '#EF5350', 'Supply Rate': '#66BB6A' }}
+					<MultiSeriesChart2
+						dataset={rateCurveDataset}
+						charts={RATE_CURVE_CHARTS}
 						valueSymbol="%"
 						title=""
 						height="400px"
-						xAxisType="category"
+						hideDefaultLegend={false}
+						chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
+						exportButtons={AAVE_BAR_EXPORT}
 					/>
 				</div>
 			) : null}

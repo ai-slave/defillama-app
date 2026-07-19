@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { createAggregateTooltipFormatter, createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
+import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
 import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -21,8 +21,8 @@ const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSer
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 const INFLOWS_TOOLTIP_FORMATTER_USD = createInflowsTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
-const AGG_TOOLTIP_FORMATTER_USD = createAggregateTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 const EMPTY_CHART_KEYS: string[] = []
+const USD_INFLOWS_SERIES = new Set(['USD Inflows'])
 
 type MultiSeriesCharts = NonNullable<IMultiSeriesChart2Props['charts']>
 
@@ -100,7 +100,7 @@ function ChainsChartCard({
 					charts={charts}
 					valueSymbol="$"
 					selectedCharts={selectedChainsSet}
-					chartOptions={{ tooltip: { formatter: AGG_TOOLTIP_FORMATTER_USD } }}
+					showTotalInTooltip
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -159,7 +159,7 @@ function TokenValuesUSDChartCard({
 					charts={charts}
 					valueSymbol="$"
 					selectedCharts={selectedTokensUSDSet}
-					chartOptions={{ tooltip: { formatter: AGG_TOOLTIP_FORMATTER_USD } }}
+					showTotalInTooltip
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -286,8 +286,6 @@ function TokenBalancesRawChartCard({
 }
 
 function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; dataset: MultiSeriesChart2Dataset }) {
-	const allSeries = React.useMemo(() => ['USD Inflows'], [])
-
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-usd-inflows`
@@ -310,7 +308,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 					dataset={dataset}
 					charts={USD_INFLOWS_CHARTS}
 					valueSymbol="$"
-					selectedCharts={new Set(allSeries)}
+					selectedCharts={USD_INFLOWS_SERIES}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -404,6 +402,7 @@ export function ReserveAssetsCharts({
 		isLoading,
 		chainsUnique,
 		tokensUnique,
+		rawTokensUnique,
 		chainsDataset,
 		chainsCharts,
 		tokenUSDDataset,
@@ -427,7 +426,7 @@ export function ReserveAssetsCharts({
 		(chainsDataset && chainsUnique?.length > 1) ||
 		(tokenUSDDataset && tokensUnique?.length > 0) ||
 		(tokenBreakdownUSD?.length > 1 && tokensUnique?.length > 0 && tokenBreakdownPieChart?.length > 0) ||
-		(tokenRawDataset && tokensUnique?.length > 0) ||
+		(tokenRawDataset && rawTokensUnique.length > 0) ||
 		usdInflowsDataset ||
 		(tokenInflowsDataset && tokensUnique?.length > 0)
 
@@ -464,10 +463,10 @@ export function ReserveAssetsCharts({
 				<TokensBreakdownPieChartCard tokenBreakdownLatest={tokenBreakdownLatest} protocolName={displayName} />
 			) : null}
 
-			{tokenRawDataset && tokensUnique?.length > 0 ? (
+			{tokenRawDataset && rawTokensUnique.length > 0 ? (
 				<TokenBalancesRawChartCard
 					protocolName={displayName}
-					allTokens={tokensUnique}
+					allTokens={rawTokensUnique}
 					dataset={tokenRawDataset}
 					charts={tokenRawCharts}
 				/>

@@ -1,4 +1,5 @@
 import { fetchCoinPrices as fetchCoinPricesBatched } from '~/api/pricing'
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import { DATASETS_SERVER_URL } from '~/constants'
 import { buildUnlocksMultiSeriesChartForDateRange } from '~/containers/Unlocks/buildUnlocksMultiSeriesChart'
 import type { PrecomputedData, UnlocksData } from '~/containers/Unlocks/calendarTypes'
@@ -31,9 +32,8 @@ const TOKEN_LIST_API_URL = `${DATASETS_SERVER_URL}/tokenlist/rankings.json`
 let unlockTokenlistPromise: Promise<UnlockTokenlist> | null = null
 
 function buildEmissionsDataset(chartData: Array<EmissionsChartRow>, stacks: string[]): EmissionsDataset {
-	const source: Array<Record<string, number | null>> = chartData.map((row) => ({ ...row }))
 	return {
-		source,
+		source: chartData,
 		dimensions: ['timestamp', ...stacks]
 	}
 }
@@ -66,14 +66,17 @@ function roundEmissionEvents(events: EmissionEvent[] | undefined | null): Emissi
 		}))
 }
 
-const EMPTY_TOKEN_ALLOCATION_SPLIT: TokenAllocationSplit = { current: {}, final: {} }
+const EMPTY_TOKEN_ALLOCATION_SPLIT: TokenAllocationSplit = {
+	current: createChartRecord<number>(),
+	final: createChartRecord<number>()
+}
 
 function isStringKeyedObject(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function toNumberRecord(obj: Record<string, unknown>): Record<string, number> {
-	const result: Record<string, number> = {}
+	const result = createChartRecord<number>()
 	for (const key in obj) {
 		if (!Object.prototype.hasOwnProperty.call(obj, key)) continue
 		const val = obj[key]
@@ -89,8 +92,8 @@ function normalizeTokenAllocation(input: unknown): TokenAllocationSplit {
 
 	if ('current' in input || 'final' in input) {
 		return {
-			current: isStringKeyedObject(input.current) ? toNumberRecord(input.current) : {},
-			final: isStringKeyedObject(input.final) ? toNumberRecord(input.final) : {}
+			current: isStringKeyedObject(input.current) ? toNumberRecord(input.current) : createChartRecord<number>(),
+			final: isStringKeyedObject(input.final) ? toNumberRecord(input.final) : createChartRecord<number>()
 		}
 	}
 
@@ -102,7 +105,7 @@ function normalizeTokenAllocation(input: unknown): TokenAllocationSplit {
 function normalizeCategoriesBreakdown(input: unknown): Record<string, string[]> | null {
 	if (!input || typeof input !== 'object') return null
 
-	const normalized: Record<string, string[]> = {}
+	const normalized = createChartRecord<string[]>()
 	for (const [group, value] of Object.entries(input)) {
 		if (Array.isArray(value)) {
 			normalized[group] = value.filter((item): item is string => typeof item === 'string')
@@ -244,7 +247,7 @@ function buildEmissionsSeriesAndCategories(input: EmissionsDataInput | null | un
 	series: Record<number, Record<string, number | null>>
 	categories: string[]
 } {
-	const series: Record<number, Record<string, number | null>> = {}
+	const series = createChartRecord<Record<string, number | null>>()
 	const categories: string[] = []
 	const seen = new Set<string>()
 
@@ -260,7 +263,7 @@ function buildEmissionsSeriesAndCategories(input: EmissionsDataInput | null | un
 		for (const value of emission?.data ?? []) {
 			const ts = value?.timestamp
 			if (typeof ts !== 'number' || !Number.isFinite(ts)) continue
-			const entry = series[ts] ?? (series[ts] = {})
+			const entry = series[ts] ?? (series[ts] = createChartRecord<number | null>())
 			entry[label] = value?.unlocked ?? null
 		}
 	}
@@ -273,17 +276,20 @@ function seriesToChartRows(series: Record<number, Record<string, number | null>>
 	for (const tsStr in series) {
 		const tsSeconds = Number(tsStr)
 		if (!Number.isFinite(tsSeconds)) continue
-		rows.push({ timestamp: tsSeconds * 1e3, ...series[tsSeconds] })
+		const row = createChartRow<number | null>(tsSeconds * 1e3)
+		const values = series[tsSeconds]
+		for (const label of Object.keys(values)) row[label] = values[label]
+		rows.push(row)
 	}
 	rows.sort((a, b) => a.timestamp - b.timestamp)
 	return rows
 }
 
-function buildPieFromChart(chart: EmissionsChartRow[]): Array<{ name: string; value: number | string }> {
+function buildPieFromChart(chart: EmissionsChartRow[]): Array<{ name: string; value: number }> {
 	if (!chart.length) return []
 	const last = chart[chart.length - 1]
 	if (!last) return []
-	const pie: Array<{ name: string; value: number | string }> = []
+	const pie: Array<{ name: string; value: number }> = []
 	for (const key in last) {
 		if (key !== 'timestamp') {
 			const value = last[key]
@@ -299,7 +305,7 @@ function buildColorsForPie(
 	pie: Array<{ name: string }>,
 	colorFrom: Record<string, string> = {}
 ): Record<string, string> {
-	const colors: Record<string, string> = {}
+	const colors = createChartRecord<string>()
 	const names = new Set(pie.map((p) => p.name))
 	const baseNameCache = new Map<string, string>()
 	const baseNameOf = (name: string): string => {
@@ -311,7 +317,7 @@ function buildColorsForPie(
 		let current = name
 
 		for (;;) {
-			const next = colorFrom[current]
+			const next = Object.hasOwn(colorFrom, current) ? colorFrom[current] : undefined
 			if (!next || !names.has(next)) break
 			if (seen.has(next)) {
 				const cycle = [...visited, current, next].filter((item, index, arr) => arr.indexOf(item) === index)
@@ -401,12 +407,12 @@ export async function getProtocolEmissionsScheduleData(protocolName: string): Pr
 
 	// Assign colors by category order to keep schedule charts fully colored.
 	const documentedPalette = getNDistinctColors(categories.documented.length)
-	const documentedColors: Record<string, string> = {}
+	const documentedColors = createChartRecord<string>()
 	for (let i = 0; i < categories.documented.length; i++)
 		documentedColors[categories.documented[i]] = documentedPalette[i]
 
 	const realtimePalette = getNDistinctColors(categories.realtime.length)
-	const realtimeColors: Record<string, string> = {}
+	const realtimeColors = createChartRecord<string>()
 	for (let i = 0; i < categories.realtime.length; i++) realtimeColors[categories.realtime[i]] = realtimePalette[i]
 
 	const datasets = {
@@ -446,8 +452,8 @@ interface ProtocolEmissionMeta {
 
 export async function getProtocolEmissionsPieData(protocolName: string): Promise<{
 	pieChartData: {
-		documented: Array<{ name: string; value: number | string }>
-		realtime: Array<{ name: string; value: number | string }>
+		documented: Array<{ name: string; value: number }>
+		realtime: Array<{ name: string; value: number }>
 	}
 	stackColors: { documented: Record<string, string>; realtime: Record<string, string> }
 	meta: ProtocolEmissionMeta
@@ -485,30 +491,25 @@ export async function getProtocolEmissionsPieData(protocolName: string): Promise
 
 type UnlockCalendarProtocolEvent = { timestamp: number; noOfTokens: number[]; description?: string; category?: string }
 
-function determineUnlockType(
-	event: UnlockCalendarProtocolEvent,
-	allEventsForProtocol: UnlockCalendarProtocolEvent[]
-): string {
+export function buildUnlockTypesByTimestamp(
+	allEventsForProtocol: readonly UnlockCalendarProtocolEvent[]
+): Map<number, string> {
 	const nowSec = Math.floor(Date.now() / 1000)
-	const futureEvents = allEventsForProtocol
-		.filter((e) => typeof e.timestamp === 'number' && e.timestamp > nowSec)
-		.toSorted((a, b) => a.timestamp - b.timestamp)
+	const unlockTypes = new Map<number, string>()
+	// The emissions API contract is timestamp-ascending. Filtering preserves that
+	// order, so classify adjacent future events without copying or re-sorting.
+	for (let index = 0; index < allEventsForProtocol.length - 1; index++) {
+		const event = allEventsForProtocol[index]
+		if (event.timestamp <= nowSec || unlockTypes.has(event.timestamp)) continue
 
-	const diffsInDays: number[] = []
-	for (let i = 0; i < futureEvents.length - 1; i++) {
-		const diffSeconds = futureEvents[i + 1].timestamp - futureEvents[i].timestamp
-		diffsInDays.push(diffSeconds / (60 * 60 * 24))
+		const diffToNextEventDays = (allEventsForProtocol[index + 1].timestamp - event.timestamp) / (60 * 60 * 24)
+		let unlockType = ''
+		if (diffToNextEventDays > 6.5 && diffToNextEventDays < 7.5) unlockType = 'Weekly'
+		else if (diffToNextEventDays > 28 && diffToNextEventDays < 32) unlockType = 'Monthly'
+		else if (diffToNextEventDays > 88 && diffToNextEventDays < 92) unlockType = 'Quarterly'
+		unlockTypes.set(event.timestamp, unlockType)
 	}
-
-	const currentEventIndex = futureEvents.findIndex((e) => e.timestamp === event.timestamp)
-	if (currentEventIndex !== -1 && currentEventIndex < futureEvents.length - 1) {
-		const diffToNextEventDays = diffsInDays[currentEventIndex]
-		if (diffToNextEventDays > 6.5 && diffToNextEventDays < 7.5) return 'Weekly'
-		if (diffToNextEventDays > 28 && diffToNextEventDays < 32) return 'Monthly'
-		if (diffToNextEventDays > 88 && diffToNextEventDays < 92) return 'Quarterly'
-	}
-
-	return ''
+	return unlockTypes
 }
 
 export async function getUnlocksCalendarStaticPropsData(): Promise<{
@@ -536,6 +537,7 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 		const validEvents = protocol.events.filter(
 			(event: EmissionEvent) => event.timestamp !== null && event.noOfTokens && event.noOfTokens.length > 0
 		)
+		const unlockTypesByTimestamp = buildUnlockTypesByTimestamp(validEvents)
 
 		const protocolUnlocksByDate: Record<
 			string,
@@ -548,7 +550,7 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 
 			const valueUSD = totalTokens * protocol.tPrice
 			const dateStr = new Date(event.timestamp * 1000).toISOString().split('T')[0]
-			const unlockType = determineUnlockType(event, validEvents)
+			const unlockType = unlockTypesByTimestamp.get(event.timestamp) ?? ''
 
 			const entry =
 				protocolUnlocksByDate[dateStr] ??
@@ -664,8 +666,6 @@ const getAllProtocolEmissionsWithHistory = async ({
 					if (endDate) {
 						filteredEvents = filteredEvents.filter((e: EmissionEvent) => e.timestamp <= endDate)
 					}
-
-					filteredEvents = filteredEvents.toSorted((a: EmissionEvent, b: EmissionEvent) => a.timestamp - b.timestamp)
 
 					const coin = coinPrices[`coingecko:${protocol.gecko_id}`]
 
@@ -808,7 +808,7 @@ export const getAllProtocolEmissions = async ({
 
 				const formattedHistoricalPrice: Array<[number, number]> = []
 				if (lastEvent.length > 0 && historicalPrice?.prices) {
-					for (const price of historicalPrice.prices.toSorted((a, b) => a.timestamp - b.timestamp)) {
+					for (const price of historicalPrice.prices) {
 						formattedHistoricalPrice.push([price.timestamp * 1000, price.price])
 					}
 				}
@@ -868,8 +868,8 @@ function extractSections(res: ProtocolEmissionDetail, flag: string): string[] {
 
 function extractColorFromMap(res: ProtocolEmissionDetail): Record<string, string> {
 	const sections = res.componentData?.sections
-	if (!sections) return {}
-	const map: Record<string, string> = {}
+	if (!sections) return createChartRecord<string>()
+	const map = createChartRecord<string>()
 	for (const [name, section] of Object.entries(sections)) {
 		const target = section?.colorFrom
 		if (typeof target === 'string' && target && target !== name && sections[target]) {

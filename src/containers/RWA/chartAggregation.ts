@@ -1,3 +1,4 @@
+import { createChartRow } from '~/components/ECharts/dynamicRow'
 import type { IRWAAssetsOverview, IRWAChartMetricRows, RWAChartMetricKey } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import {
@@ -185,7 +186,7 @@ function aggregateMetricRows(
 	const out: RWAChartRow[] = []
 
 	for (const row of rows ?? []) {
-		const outRow: RWAChartRow = { timestamp: row.timestamp }
+		const outRow = createChartRow<number | null>(row.timestamp) as RWAChartRow
 		let hasData = false
 
 		for (const assetKey in row) {

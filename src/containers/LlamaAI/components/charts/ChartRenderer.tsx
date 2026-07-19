@@ -20,8 +20,9 @@ import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/A
 import { ChartControls } from '~/containers/LlamaAI/components/charts/ChartControls'
 import { ChartStyleEditor } from '~/containers/LlamaAI/components/charts/ChartStyleEditor'
 import type { ChartConfiguration, ChartDataByKey, ChartDataSeries, ChartStylePatch } from '~/containers/LlamaAI/types'
-import type { AdaptedChartData } from '~/containers/LlamaAI/utils/chartAdapter'
-import { adaptCandlestickData, adaptChartData } from '~/containers/LlamaAI/utils/chartAdapter'
+import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
+import { adaptChartData } from '~/containers/LlamaAI/utils/chartAdapter'
+import { adaptCandlestickData } from '~/containers/LlamaAI/utils/chartAdapters/candlestick'
 import {
 	deriveCapabilities,
 	normalizeViewState,
@@ -646,7 +647,11 @@ function ChartRendererImpl({
 	onLocalStyleSave
 }: ChartRendererProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
-	const [activeTabIndex, setActiveTab] = useReducer((state: number, action: number) => action, 0)
+	const [selectedChartId, setSelectedChartId] = useState(charts[0]?.id)
+	const activeChartId = charts.some((chart) => chart.id === selectedChartId) ? selectedChartId : charts[0]?.id
+	useEffect(() => {
+		if (activeChartId !== selectedChartId) setSelectedChartId(activeChartId)
+	}, [activeChartId, selectedChartId])
 
 	useEffect(() => {
 		const el = containerRef.current
@@ -696,12 +701,12 @@ function ChartRendererImpl({
 		<div ref={containerRef} className="flex flex-col gap-2 rounded-md border border-brand pt-2">
 			{hasMultipleCharts ? (
 				<div className="-mt-2 flex border-b border-ai-line">
-					{charts.map((chart, index) => (
+					{charts.map((chart) => (
 						<button
 							key={`toggle-${chart.id}`}
-							onClick={() => setActiveTab(index)}
+							onClick={() => setSelectedChartId(chart.id)}
 							className={`border-b-2 px-2 py-1.5 text-sm transition-colors ${
-								activeTabIndex === index
+								activeChartId === chart.id
 									? 'border-brand text-brand'
 									: 'border-transparent text-ai-tertiary hover:text-ai-primary'
 							}`}
@@ -711,7 +716,7 @@ function ChartRendererImpl({
 					))}
 				</div>
 			) : null}
-			{charts.map((chart, index) => {
+			{charts.map((chart) => {
 				// Backend sessions before the keyed chart-data transition (commit a6035b1)
 				// stored one flat row array. PR #2666 kept this branch load-bearing.
 				const data = Array.isArray(chartData) ? chartData : chartData?.[chart.datasetName || chart.id] || []
@@ -720,7 +725,7 @@ function ChartRendererImpl({
 						key={chart.id}
 						config={chart}
 						data={data}
-						isActive={!hasMultipleCharts || activeTabIndex === index}
+						isActive={!hasMultipleCharts || activeChartId === chart.id}
 						title={chart.title}
 						sessionId={sessionId}
 						messageId={messageId}

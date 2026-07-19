@@ -1,87 +1,10 @@
 import type * as echarts from 'echarts/core'
 
 type Value = string | number | boolean
-
 type EChartsFormatterParams = unknown
-
-type ChartDataItem = any
 
 export type ChartTimeGrouping = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
 export type ChartTimeGroupingWithCumulative = ChartTimeGrouping | 'cumulative'
-
-export interface IChartProps {
-	chartData: ChartDataItem[]
-	stacks?: Array<string>
-	valueSymbol?: string
-	title?: string
-	headingAs?: 'h1' | 'h2' | 'h3'
-	color?: string
-	hallmarks?: [number, string][]
-	style?: React.CSSProperties
-	hideDefaultLegend?: boolean
-	customLegendName?: string
-	customLegendOptions?: Array<string>
-	tooltipSort?: boolean
-	tooltipOrderBottomUp?: boolean
-	tooltipValuesRelative?: boolean
-	hideLegend?: boolean
-	chartOptions?: {
-		[key: string]: {
-			[key: string]: Value | Array<Value> | ((params: EChartsFormatterParams) => string) | Record<string, Value>
-		}
-	}
-	height?: string
-	stackColors?: {
-		[stack: string]: string
-	}
-	expandTo100Percent?: boolean
-	isStackedChart?: boolean
-	chartType?: 'line' | 'bar'
-	hideGradient?: boolean
-	unlockTokenSymbol?: string
-	isThemeDark?: boolean
-	groupBy?: ChartTimeGrouping
-	customYAxis?: Array<string>
-	hideOthersInTooltip?: boolean
-	hideDataZoom?: boolean
-	hideDownloadButton?: boolean
-	containerClassName?: string
-	connectNulls?: boolean
-	alwaysShowTooltip?: boolean
-	onReady?: (instance: echarts.ECharts | null) => void
-	enableImageExport?: boolean
-	imageExportFilename?: string
-	imageExportTitle?: string
-}
-
-export interface ISingleSeriesChartProps extends Omit<
-	IChartProps,
-	| 'stacks'
-	| 'stackColors'
-	| 'customLegendOptions'
-	| 'customLegendName'
-	| 'customYAxis'
-	| 'groupBy'
-	| 'tooltipOrderBottomUp'
-	| 'hideDownloadButton'
-	| 'containerClassName'
-	| 'enableImageExport'
-	| 'imageExportFilename'
-	| 'imageExportTitle'
-> {
-	chartName?: string
-	chartType: 'line' | 'bar'
-	symbolOnChart?: 'circle' | 'rect' | 'roundRect' | 'triangle' | 'diamond' | 'pin' | 'arrow' | 'none'
-}
-
-export interface IBarChartProps extends Omit<IChartProps, 'stacks' | 'expandTo100Percent' | 'groupBy'> {
-	stacks?: {
-		[stack: string]: string
-	}
-	groupBy?: ChartTimeGrouping
-	orientation?: 'vertical' | 'horizontal'
-	xAxisType?: 'time' | 'category'
-}
 
 export interface IHBarChartProps {
 	categories: string[]
@@ -101,11 +24,21 @@ export interface IHBarChartProps {
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
-export type TreemapVariant = 'yields' | 'narrative' | 'rwa'
+export type TreemapValue = [size: number, secondary: number | null, color: number | null, gradient?: number]
+
+export type TreemapNode = {
+	name: string
+	value: TreemapValue
+	path?: string
+	itemStyle?: { color?: string }
+	children?: TreemapNode[]
+}
+
+export type TreemapVariant = 'narrative' | 'rwa'
 
 export interface ITreemapChartProps {
-	treeData: any[]
-	variant?: TreemapVariant
+	treeData: TreemapNode[]
+	variant: TreemapVariant
 	colorMode?: 'value' | 'categorical'
 	height?: string
 	onReady?: (instance: echarts.ECharts | null) => void
@@ -114,6 +47,7 @@ export interface ITreemapChartProps {
 }
 
 export type MultiSeriesChart2Dataset = {
+	/** Time-series datasets use an ascending millisecond `timestamp`; category datasets may use another first dimension. */
 	source: Array<
 		Record<
 			string,
@@ -127,6 +61,7 @@ export type MultiSeriesChart2Dataset = {
 
 export type MultiSeriesChart2SeriesConfig = {
 	type: 'line' | 'bar'
+	/** Stable series identity: `selectedCharts` entries must match this exactly; `encode.y` identifies the data dimension. */
 	name: string
 	stack?: string
 	encode: {
@@ -186,6 +121,7 @@ type MultiSeriesChartOptions = Record<string, MultiSeriesChartOption | MultiSeri
 
 type MultiSeriesChart2BaseProps = {
 	charts?: MultiSeriesChart2SeriesConfig[]
+	/** Exact series names to render; these are identifiers, not independent display labels. */
 	selectedCharts?: Set<string>
 	chartOptions?: MultiSeriesChartOptions
 	height?: string
@@ -231,11 +167,6 @@ export type IMultiSeriesChart2Props = MultiSeriesChart2BaseProps & {
 	 */
 	showTotalInTooltip?: boolean
 	/**
-	 * Placement for the total line when `showTotalInTooltip` is enabled.
-	 * Defaults to `'top'`.
-	 */
-	tooltipTotalPosition?: 'top' | 'bottom'
-	/**
 	 * Controls the built-in export toolbar.
 	 * - `'auto'` (default): show exports when the chart has series, unless `onReady` is provided.
 	 * - `'hidden'`: never show exports.
@@ -273,20 +204,15 @@ export interface IMultiSeriesChartProps {
 		yAxisIndex?: number
 	}>
 	chartOptions?: {
-		[key: string]: {
-			[key: string]: Value | Array<Value> | ((params: EChartsFormatterParams) => string)
-		}
+		[key: string]: Record<string, unknown> | Array<Record<string, unknown>> | undefined
 	}
 	height?: string
 	groupBy?: ChartTimeGrouping
-	hallmarks?: [number, string][]
 	valueSymbol?: string
 	yAxisSymbols?: string[]
 	alwaysShowTooltip?: boolean
 	showAggregateInTooltip?: boolean
 	hideDataZoom?: boolean
-	hideDownloadButton?: boolean
-	title?: string
 	xAxisType?: 'time' | 'category'
 	onReady?: (instance: echarts.ECharts | null) => void
 }

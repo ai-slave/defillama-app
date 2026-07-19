@@ -10,117 +10,52 @@ import { Tooltip } from '~/ui/Tooltip'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IEquitiesStatementsResponse } from './api.types'
 import { formatEquitiesStatementCellValue } from './financialsFormatting'
+import {
+	buildEquitiesStatementRows,
+	EQUITIES_STATEMENT_OPTIONS,
+	EQUITIES_STATEMENT_PERIOD_OPTIONS,
+	equitiesStatementPeriodMap,
+	equitiesStatementSectionMap,
+	flattenEquitiesStatementRows,
+	getAvailableEquitiesStatementOptions,
+	getEquitiesStatementHeaderIndexes,
+	resolveEquitiesStatementOption,
+	type EquitiesStatementOption,
+	type EquitiesStatementPeriodOption
+} from './financialStatements'
 import type { IEquitiesStatementTableRow } from './types'
 import { formatEquitiesDate } from './utils'
 
-const STATEMENT_OPTIONS = ['Income Statement', 'Balance Sheet', 'Cash Flow'] as const
-const PERIOD_OPTIONS = ['Quarterly', 'Annual'] as const
-
-type StatementOption = (typeof STATEMENT_OPTIONS)[number]
-type PeriodOption = (typeof PERIOD_OPTIONS)[number]
-type StatementSectionKey = 'incomeStatement' | 'balanceSheet' | 'cashflow'
-type StatementPeriodKey = 'quarterly' | 'annual'
-
-const statementSectionMap: Record<StatementOption, StatementSectionKey> = {
-	'Income Statement': 'incomeStatement',
-	'Balance Sheet': 'balanceSheet',
-	'Cash Flow': 'cashflow'
-}
-
-const statementQueryValueMap: Record<StatementOption, string> = {
+const statementQueryValueMap: Record<EquitiesStatementOption, string> = {
 	'Income Statement': 'income-statement',
 	'Balance Sheet': 'balance-sheet',
 	'Cash Flow': 'cash-flow'
 }
 
-const periodKeyMap: Record<PeriodOption, StatementPeriodKey> = {
+const periodQueryValueMap: Record<EquitiesStatementPeriodOption, string> = {
 	Quarterly: 'quarterly',
 	Annual: 'annual'
 }
 
-const periodQueryValueMap: Record<PeriodOption, string> = {
-	Quarterly: 'quarterly',
-	Annual: 'annual'
+function getStatementTypeFromQueryValue(
+	value: string | undefined,
+	statements: IEquitiesStatementsResponse
+): EquitiesStatementOption {
+	const requested = EQUITIES_STATEMENT_OPTIONS.find((option) => statementQueryValueMap[option] === value)
+	return resolveEquitiesStatementOption(statements, requested ?? 'Income Statement')
 }
 
-function getStatementTypeFromQueryValue(value?: string): StatementOption {
-	const statementType = STATEMENT_OPTIONS.find((option) => statementQueryValueMap[option] === value)
-	return statementType ?? 'Income Statement'
-}
-
-function getPeriodTypeFromQueryValue(value?: string): PeriodOption {
-	const periodType = PERIOD_OPTIONS.find((option) => periodQueryValueMap[option] === value)
+function getPeriodTypeFromQueryValue(value?: string): EquitiesStatementPeriodOption {
+	const periodType = EQUITIES_STATEMENT_PERIOD_OPTIONS.find((option) => periodQueryValueMap[option] === value)
 	return periodType ?? 'Quarterly'
 }
 
-function buildStatementRows(
-	statements: IEquitiesStatementsResponse,
-	statementType: StatementOption,
-	periodType: PeriodOption
-): IEquitiesStatementTableRow[] {
-	const section = statements[statementSectionMap[statementType]]
-	const periodData = section[periodKeyMap[periodType]]
-	const childrenMeta = section.children[periodKeyMap[periodType]]
-	const rows: IEquitiesStatementTableRow[] = []
-
-	for (let rowIndex = 0; rowIndex < section.labels.length; rowIndex++) {
-		const label = section.labels[rowIndex]
-		const childLabels = childrenMeta[label]?.labels ?? []
-		const childValues = periodData.children[label]?.values ?? []
-		let subRows: IEquitiesStatementTableRow[] | undefined
-
-		if (childLabels.length > 0) {
-			subRows = []
-			for (let childIndex = 0; childIndex < childLabels.length; childIndex++) {
-				const childLabel = childLabels[childIndex]
-				subRows.push({
-					id: `${label}-${childLabel}`,
-					label: childLabel,
-					values: childValues[childIndex] ?? [],
-					depth: 1
-				})
-			}
-		}
-
-		rows.push({
-			id: label,
-			label,
-			values: periodData.values[rowIndex] ?? [],
-			depth: 0,
-			subRows
-		})
-	}
-
-	return rows
-}
-
 export function getStatementHeaderIndexes(periodEnding: string[]): number[] {
-	const indexes: number[] = []
-	for (let index = 0; index < periodEnding.length; index++) {
-		indexes.push(index)
-	}
-	return indexes.sort((a, b) => {
-		const aTime = new Date(`${periodEnding[a] ?? ''}T00:00:00Z`).getTime()
-		const bTime = new Date(`${periodEnding[b] ?? ''}T00:00:00Z`).getTime()
-		return bTime - aTime
-	})
+	return getEquitiesStatementHeaderIndexes(periodEnding)
 }
 
 function formatStatementPeriodLabel(periodEnding: string): string {
 	return formatEquitiesDate(periodEnding)
-}
-
-function flattenStatementRows(rows: IEquitiesStatementTableRow[]): IEquitiesStatementTableRow[] {
-	const flattened: IEquitiesStatementTableRow[] = []
-
-	for (const row of rows) {
-		flattened.push(row)
-		if (row.subRows?.length) {
-			flattened.push(...row.subRows)
-		}
-	}
-
-	return flattened
 }
 
 function FinancialRow({
@@ -200,27 +135,28 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 	const router = useRouter()
 	const statementQueryValue = readSingleQueryValue(router.query['financials-table'])
 	const periodQueryValue = readSingleQueryValue(router.query['financials-timeframe'])
-	const statementType = useMemo<StatementOption>(() => {
-		return getStatementTypeFromQueryValue(statementQueryValue)
-	}, [statementQueryValue])
-	const periodType = useMemo<PeriodOption>(() => {
+	const availableStatementOptions = useMemo(() => getAvailableEquitiesStatementOptions(statements), [statements])
+	const statementType = useMemo<EquitiesStatementOption>(() => {
+		return getStatementTypeFromQueryValue(statementQueryValue, statements)
+	}, [statementQueryValue, statements])
+	const periodType = useMemo<EquitiesStatementPeriodOption>(() => {
 		return getPeriodTypeFromQueryValue(periodQueryValue)
 	}, [periodQueryValue])
 
-	const section = statements[statementSectionMap[statementType]]
-	const periodData = section[periodKeyMap[periodType]]
+	const section = statements[equitiesStatementSectionMap[statementType]]!
+	const periodData = section[equitiesStatementPeriodMap[periodType]]
 	const rows = useMemo(
-		() => buildStatementRows(statements, statementType, periodType),
+		() => buildEquitiesStatementRows(statements, statementType, periodType),
 		[statements, statementType, periodType]
 	)
 	const headerIndexes = useMemo(() => getStatementHeaderIndexes(periodData.periodEnding), [periodData.periodEnding])
 	const hasAnyBreakdownRows = rows.some((row) => (row.subRows?.length ?? 0) > 0)
-	const setStatementType = (value: StatementOption) => {
+	const setStatementType = (value: EquitiesStatementOption) => {
 		void pushShallowQuery(router, {
 			'financials-table': value === 'Income Statement' ? undefined : statementQueryValueMap[value]
 		})
 	}
-	const setPeriodType = (value: PeriodOption) => {
+	const setPeriodType = (value: EquitiesStatementPeriodOption) => {
 		void pushShallowQuery(router, {
 			'financials-timeframe': value === 'Quarterly' ? undefined : periodQueryValueMap[value]
 		})
@@ -230,7 +166,7 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 		for (const index of headerIndexes) {
 			headers.push(formatStatementPeriodLabel(periodData.periodEnding[index]))
 		}
-		const flattenedRows = flattenStatementRows(rows)
+		const flattenedRows = flattenEquitiesStatementRows(rows)
 		const csvRows: Array<Array<string | number>> = []
 		for (const row of flattenedRows) {
 			const csvRow: Array<string | number> = [row.depth > 0 ? `  ${row.label}` : row.label]
@@ -256,14 +192,14 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 						size="md"
 						selectedValue={statementType}
 						setValue={(value) => startTransition(() => setStatementType(value))}
-						values={STATEMENT_OPTIONS}
+						values={availableStatementOptions}
 					/>
 					<TagGroup
 						variant="default"
 						size="md"
 						selectedValue={periodType}
 						setValue={(value) => startTransition(() => setPeriodType(value))}
-						values={PERIOD_OPTIONS}
+						values={EQUITIES_STATEMENT_PERIOD_OPTIONS}
 					/>
 					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
 				</TableToolbarControlGroup>

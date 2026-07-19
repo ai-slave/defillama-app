@@ -409,20 +409,9 @@ describe('getRWAPerpsContractData', () => {
 		})
 	})
 
-	it('normalizes funding history numeric strings, malformed values, and chronological ordering', async () => {
+	it('normalizes ascending funding history numeric strings and malformed values', async () => {
 		fetchRWAPerpsMarketsByContract.mockResolvedValue([{ ...baseMarket, id: 'xyz:meta', venue: 'xyz' }])
 		fetchRWAPerpsFundingHistory.mockResolvedValueOnce([
-			{
-				timestamp: 1774569600000,
-				id: 'xyz:meta',
-				contract: 'xyz:META',
-				venue: 'xyz',
-				funding_rate: '0.00001250',
-				premium: '0.00030000',
-				open_interest: '7000.5',
-				funding_payment: '0.08750625',
-				created_at: '2026-03-27T00:00:00.000Z'
-			},
 			{
 				timestamp: 1774454400,
 				id: 'xyz:meta',
@@ -433,6 +422,17 @@ describe('getRWAPerpsContractData', () => {
 				open_interest: 'not-a-number',
 				funding_payment: '',
 				created_at: '2026-03-26T16:00:00.000Z'
+			},
+			{
+				timestamp: 1774569600000,
+				id: 'xyz:meta',
+				contract: 'xyz:META',
+				venue: 'xyz',
+				funding_rate: '0.00001250',
+				premium: '0.00030000',
+				open_interest: '7000.5',
+				funding_payment: '0.08750625',
+				created_at: '2026-03-27T00:00:00.000Z'
 			}
 		])
 

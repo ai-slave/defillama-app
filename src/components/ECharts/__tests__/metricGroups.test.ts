@@ -76,6 +76,16 @@ describe('resolveSeriesAxisLayout', () => {
 		expect(layout.seriesAxisIndexes).toEqual([0, 1])
 	})
 
+	it('assigns units to sparse explicit axis indexes', () => {
+		const layout = resolveSeriesAxisLayout([{ metricType: 'fees' }, { metricType: 'medianApy', yAxisIndex: 2 }])
+
+		expect(layout.axisCount).toBe(3)
+		expect(layout.seriesAxisIndexes).toEqual([0, 2])
+		expect(layout.axisUnitGroups[0]).toBe('usd')
+		expect(layout.axisUnitGroups[1]).toBeUndefined()
+		expect(layout.axisUnitGroups[2]).toBe('percent')
+	})
+
 	it('uses a single axis for a single repeated metric', () => {
 		const layout = resolveSeriesAxisLayout([{ metricType: 'volume' }, { metricType: 'volume' }])
 

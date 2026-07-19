@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { createChartRow } from '~/components/ECharts/dynamicRow'
+import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { V2_SERVER_URL } from '~/constants'
 import {
 	fetchAdapterProtocolChartData,
@@ -11,9 +13,13 @@ import { YIELD_EARN_DATASET_API } from '~/containers/Yields/constants'
 import type { EarnPageRow } from '~/containers/Yields/data/types'
 import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { fetchJson } from '~/utils/async'
+import { createSeriesConfigs } from './chartDefaults'
 
 const PROTOCOL_SLUG = 'sparklend'
 const STALE_TIME = 10 * 60 * 1000
+const EMPTY_TVL_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp', 'TVL'] }
+const EMPTY_INFLOWS_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp', 'USD Inflows'] }
+const EMPTY_BORROWED_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp', 'Borrowed'] }
 
 export function useSparklendMetrics() {
 	const fees = useQuery({
@@ -62,27 +68,37 @@ export function useSparklendTvlChart() {
 	return useMemo(() => {
 		const raw = query.data
 		if (!raw || !Array.isArray(raw) || raw.length === 0) {
-			return { ...query, tvlChart: [], inflowsChart: [] }
+			return {
+				tvlDataset: EMPTY_TVL_DATASET,
+				inflowsDataset: EMPTY_INFLOWS_DATASET,
+				previousTvl: null,
+				isLoading: query.isLoading
+			}
 		}
 
-		const tvlChart = raw.map(([ts, value]: [number, number]) => ({
-			date: Math.floor(ts / 1e3),
-			TVL: value
-		}))
-
-		const inflowsChart: Array<{ date: number; 'USD Inflows': number }> = []
-		for (let i = 1; i < raw.length; i++) {
-			const [ts, value] = raw[i]
-			const prevValue = raw[i - 1][1]
-			if (value == null || prevValue == null || !Number.isFinite(value) || !Number.isFinite(prevValue)) continue
-			inflowsChart.push({
-				date: Math.floor(ts / 1e3),
-				'USD Inflows': value - prevValue
-			})
+		const source = new Array<MultiSeriesChart2Dataset['source'][number]>(raw.length)
+		const inflowSource: MultiSeriesChart2Dataset['source'] = []
+		for (let i = 0; i < raw.length; i++) {
+			const [timestamp, value] = raw[i]
+			const row: MultiSeriesChart2Dataset['source'][number] = {
+				timestamp: Math.floor(timestamp / 1e3) * 1e3,
+				TVL: value
+			}
+			if (i > 0) {
+				const previousValue = raw[i - 1][1]
+				row['USD Inflows'] = value - previousValue
+				inflowSource.push(row)
+			}
+			source[i] = row
 		}
 
-		return { ...query, tvlChart, inflowsChart }
-	}, [query])
+		return {
+			tvlDataset: { source, dimensions: ['timestamp', 'TVL'] },
+			inflowsDataset: { source: inflowSource, dimensions: ['timestamp', 'USD Inflows'] },
+			previousTvl: raw.length >= 2 ? raw[raw.length - 2][1] : null,
+			isLoading: query.isLoading
+		}
+	}, [query.data, query.isLoading])
 }
 
 export function useSparklendBorrowedChart() {
@@ -90,7 +106,7 @@ export function useSparklendBorrowedChart() {
 		queryKey: ['sparklend-borrowed-chart'],
 		queryFn: async () => {
 			const res = await fetch(`${V2_SERVER_URL}/metrics/tvl/protocol/${PROTOCOL_SLUG}`)
-			if (!res.ok) return { chart: [], current: null }
+			if (!res.ok) return { dataset: EMPTY_BORROWED_DATASET, current: null }
 			const data = await res.json()
 			const chainTvls = data?.chainTvls || {}
 			const store: Record<number, number> = {}
@@ -104,11 +120,13 @@ export function useSparklendBorrowedChart() {
 					store[d] = (store[d] ?? 0) + v
 				}
 			}
-			const chart = Object.entries(store)
-				.map(([d, v]) => ({ date: Number(d), Borrowed: v }))
-				.sort((a, b) => a.date - b.date)
+			const source: MultiSeriesChart2Dataset['source'] = []
+			for (const dateKey in store) {
+				source.push({ timestamp: +dateKey * 1e3, Borrowed: store[dateKey] })
+			}
+			source.sort((a, b) => (a.timestamp as number) - (b.timestamp as number))
 			const current = data?.currentChainTvls?.borrowed ?? null
-			return { chart, current }
+			return { dataset: { source, dimensions: ['timestamp', 'Borrowed'] }, current }
 		},
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
@@ -116,12 +134,34 @@ export function useSparklendBorrowedChart() {
 
 	return useMemo(
 		() => ({
-			borrowedChart: query.data?.chart ?? [],
+			borrowedDataset: query.data?.dataset ?? EMPTY_BORROWED_DATASET,
 			currentBorrowed: query.data?.current ?? null,
 			isLoading: query.isLoading
 		}),
 		[query.data, query.isLoading]
 	)
+}
+
+function buildMetricDataset(data: Array<[number, number]>, name: string): MultiSeriesChart2Dataset {
+	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(data.length)
+	for (let i = 0; i < data.length; i++) {
+		source[i] = { timestamp: data[i][0] * 1e3, [name]: data[i][1] }
+	}
+	return { source, dimensions: ['timestamp', name] }
+}
+
+function areMetricsAligned(series: Array<Array<[number, number]>>) {
+	const length = series[0].length
+	for (let i = 1; i < series.length; i++) {
+		if (series[i].length !== length) return false
+	}
+	for (let i = 0; i < length; i++) {
+		const timestamp = series[0][i][0]
+		for (let j = 1; j < series.length; j++) {
+			if (series[j][i][0] !== timestamp) return false
+		}
+	}
+	return true
 }
 
 export function useSparklendFeesCharts() {
@@ -153,16 +193,39 @@ export function useSparklendFeesCharts() {
 	})
 
 	return useMemo(() => {
-		const toChart = (data: Array<[number, number]> | undefined, key: string) =>
-			(data ?? []).map(([ts, value]) => ({ date: ts, [key]: value }))
+		const feesData = fees.data ?? []
+		const revenueData = revenue.data ?? []
+		const supplySideRevenueData = supplySideRevenue.data ?? []
+		let feesDataset: MultiSeriesChart2Dataset
+		let revenueDataset: MultiSeriesChart2Dataset
+		let supplySideRevenueDataset: MultiSeriesChart2Dataset
+
+		if (areMetricsAligned([feesData, revenueData, supplySideRevenueData])) {
+			const source = new Array<MultiSeriesChart2Dataset['source'][number]>(feesData.length)
+			for (let i = 0; i < feesData.length; i++) {
+				source[i] = {
+					timestamp: feesData[i][0] * 1e3,
+					Fees: feesData[i][1],
+					Revenue: revenueData[i][1],
+					'Supply Side Revenue': supplySideRevenueData[i][1]
+				}
+			}
+			feesDataset = { source, dimensions: ['timestamp', 'Fees'] }
+			revenueDataset = { source, dimensions: ['timestamp', 'Revenue'] }
+			supplySideRevenueDataset = { source, dimensions: ['timestamp', 'Supply Side Revenue'] }
+		} else {
+			feesDataset = buildMetricDataset(feesData, 'Fees')
+			revenueDataset = buildMetricDataset(revenueData, 'Revenue')
+			supplySideRevenueDataset = buildMetricDataset(supplySideRevenueData, 'Supply Side Revenue')
+		}
 
 		return {
-			feesChart: toChart(fees.data, 'Fees'),
-			revenueChart: toChart(revenue.data, 'Revenue'),
-			supplySideRevenueChart: toChart(supplySideRevenue.data, 'Supply Side Revenue'),
+			feesDataset,
+			revenueDataset,
+			supplySideRevenueDataset,
 			isLoading: fees.isLoading || revenue.isLoading || supplySideRevenue.isLoading
 		}
-	}, [fees, revenue, supplySideRevenue])
+	}, [fees.data, fees.isLoading, revenue.data, revenue.isLoading, supplySideRevenue.data, supplySideRevenue.isLoading])
 }
 
 interface YieldPool {
@@ -206,15 +269,32 @@ export function useSparklendYieldPools() {
 	return { pools: query.data ?? [], isLoading: query.isLoading }
 }
 
-function breakdownToChart(data: Array<[number, Record<string, number>]> | null | undefined) {
-	if (!data || data.length === 0) return { chart: [], stacks: [] }
+function breakdownToChart(
+	data: Array<[number, Record<string, number>]> | null | undefined,
+	type: 'line' | 'bar',
+	timestampMultiplier: 1 | 1000
+) {
+	if (!data || data.length === 0) {
+		return {
+			dataset: { source: [], dimensions: ['timestamp'] } satisfies MultiSeriesChart2Dataset,
+			charts: [] as ReturnType<typeof createSeriesConfigs>
+		}
+	}
 
 	const lastEntry = data[data.length - 1]?.[1] ?? {}
 	const stacks = Object.keys(lastEntry).sort((a, b) => (lastEntry[b] ?? 0) - (lastEntry[a] ?? 0))
+	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(data.length)
+	for (let i = 0; i < data.length; i++) {
+		const [timestamp, values] = data[i]
+		const row = createChartRow<number>(timestamp * timestampMultiplier)
+		for (const name of stacks) row[name] = values[name] || 0
+		source[i] = row
+	}
 
-	const chart = data.map(([ts, values]) => ({ date: ts, ...values }))
-
-	return { chart, stacks }
+	return {
+		dataset: { source, dimensions: ['timestamp', ...stacks] },
+		charts: createSeriesConfigs(stacks, type, undefined, 'a')
+	}
 }
 
 export function useSparklendChainBreakdown() {
@@ -234,14 +314,13 @@ export function useSparklendChainBreakdown() {
 	})
 
 	return useMemo(() => {
-		const tvl = breakdownToChart(tvlByChainQuery.data)
-		const fees = breakdownToChart(feesByChainQuery.data)
+		// TVL chart timestamps are normalized by fetchProtocolTvlChart; adapter fee timestamps remain seconds.
+		const tvlByChain = breakdownToChart(tvlByChainQuery.data, 'line', 1)
+		const feesByChain = breakdownToChart(feesByChainQuery.data, 'bar', 1000)
 
 		return {
-			tvlByChain: tvl.chart,
-			tvlByChainStacks: tvl.stacks,
-			feesByChain: fees.chart,
-			feesByChainStacks: fees.stacks,
+			tvlByChain,
+			feesByChain,
 			isLoading: tvlByChainQuery.isLoading || feesByChainQuery.isLoading
 		}
 	}, [tvlByChainQuery.data, tvlByChainQuery.isLoading, feesByChainQuery.data, feesByChainQuery.isLoading])

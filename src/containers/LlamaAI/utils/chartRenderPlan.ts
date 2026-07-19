@@ -1,7 +1,7 @@
 import type { IPieChartProps, IScatterChartProps, IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { oldBlue } from '~/constants/colors'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
-import type { AdaptedChartData } from '~/containers/LlamaAI/utils/chartAdapter'
+import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import {
 	buildControlsModel,
 	type ChartCapabilities,

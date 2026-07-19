@@ -1,6 +1,7 @@
 import type { TokenRightsPieTone } from '~/containers/TokenRights/utils'
 
 export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 11
+export const TOKENS_CHART_GECKO_LOGO_PREFIX = '@'
 
 export const TOKENS_SORT_KEYS = [
 	'rank',
@@ -141,6 +142,20 @@ export interface TokensTableRow extends TokensRowCore {
 	display: TokensTableRowDisplay
 }
 
+export interface TokensChartDataset {
+	names: string[]
+	symbols: string[]
+	logoSources: string[]
+	hrefs: Array<string | null>
+	marketCaps: number[]
+	priceChanges: {
+		'24h': Array<number | null>
+		'7d': Array<number | null>
+		'30d': Array<number | null>
+	}
+	stablecoins: boolean[]
+}
+
 export interface TokensSourceRow extends TokensRowCore {
 	searchKey: string
 }
@@ -199,4 +214,5 @@ export interface TokensPageQuery {
 
 export interface TokensPageProps {
 	initialData: TokensPageResponse
+	initialChartData: TokensChartDataset
 }

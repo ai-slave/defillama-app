@@ -13,8 +13,8 @@ import { getChartMetricLabel } from '~/containers/RWA/chartState'
 import { buildRwaTreemapTreeData } from '~/containers/RWA/treemap'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
-import { filterDataByTimePeriod } from '../queries'
 import type { RWAOverviewChartConfig, RWAOverviewChartBreakdown } from '../types'
+import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWABreakdownChartData } from './datasets/RWADataset/useRWAChartData'
 import { LoadingSpinner } from './LoadingSpinner'
 
@@ -53,13 +53,7 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 
 	const chartDataset = useMemo(() => {
 		if (!rawDataset || !timePeriod || timePeriod === 'all') return rawDataset
-		const points: [number, number][] = rawDataset.source.map((row: any) => [row.timestamp, 1])
-		const filtered = filterDataByTimePeriod(points, timePeriod, customTimePeriod)
-		const filteredTimestamps = new Set(filtered.map(([ts]) => ts))
-		return {
-			...rawDataset,
-			source: rawDataset.source.filter((row: any) => filteredTimestamps.has(row.timestamp))
-		}
+		return filterChartDatasetByTimePeriod(rawDataset, timePeriod, customTimePeriod)
 	}, [rawDataset, timePeriod, customTimePeriod])
 
 	const metricLabel = getChartMetricLabel(metric as any)

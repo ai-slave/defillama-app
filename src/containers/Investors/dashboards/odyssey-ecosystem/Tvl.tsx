@@ -210,8 +210,7 @@ export default function Tvl() {
 									type: 'line' as const,
 									color: '#6366f1',
 									data: m.series.map(
-										(p) =>
-											[Math.floor(new Date(p.date + 'T00:00:00Z').getTime() / 1000), p.supplyUsd] as [number, number]
+										(p) => [Math.floor(Date.parse(p.date + 'T00:00:00Z') / 1000), p.supplyUsd] as [number, number]
 									),
 									yAxisIndex: 0
 								},
@@ -220,8 +219,7 @@ export default function Tvl() {
 									type: 'line' as const,
 									color: '#fb923c',
 									data: m.series.map(
-										(p) =>
-											[Math.floor(new Date(p.date + 'T00:00:00Z').getTime() / 1000), p.borrowUsd] as [number, number]
+										(p) => [Math.floor(Date.parse(p.date + 'T00:00:00Z') / 1000), p.borrowUsd] as [number, number]
 									),
 									yAxisIndex: 0
 								},
@@ -230,8 +228,7 @@ export default function Tvl() {
 									type: 'line' as const,
 									color: '#34d399',
 									data: m.series.map(
-										(p) =>
-											[Math.floor(new Date(p.date + 'T00:00:00Z').getTime() / 1000), p.utilization] as [number, number]
+										(p) => [Math.floor(Date.parse(p.date + 'T00:00:00Z') / 1000), p.utilization] as [number, number]
 									),
 									yAxisIndex: 1
 								}

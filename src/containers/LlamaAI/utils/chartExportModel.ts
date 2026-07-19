@@ -1,6 +1,7 @@
 import type { PngExportProfile } from '~/components/ChartExport/ChartPngExportButton'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
-import type { AdaptedChartData, LlamaAICartesianDatasetRow } from '~/containers/LlamaAI/utils/chartAdapter'
+import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
+import type { LlamaAICartesianDatasetRow } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import { toNiceCsvDate } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
 
@@ -102,12 +103,22 @@ export function buildExportModel(config: ChartConfiguration, adaptedChart: Adapt
 				csvFilename,
 				pngProfile: 'scatterWithImageSymbols'
 			}
-		case 'hbar':
+		case 'hbar': {
+			const groupedSeries = adaptedChart.props.series
 			return {
-				csvRows: [['Category', 'Value'], ...adaptedChart.data.map(([category, value]) => [category, value])],
+				csvRows: groupedSeries
+					? [
+							['Category', ...groupedSeries.map((series) => series.name)],
+							...adaptedChart.data.map(([category], index) => [
+								category,
+								...groupedSeries.map((series) => series.values[index]!)
+							])
+						]
+					: [['Category', 'Value'], ...adaptedChart.data.map(([category, value]) => [category, value])],
 				csvFilename,
 				pngProfile: 'hbar'
 			}
+		}
 		default:
 			return null
 	}

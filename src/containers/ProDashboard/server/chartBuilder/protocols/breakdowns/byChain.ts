@@ -162,9 +162,9 @@ async function getAllProtocolsTopChainsTvlData(
 		const pickedNames = picked.map((c) => c.name)
 
 		const [globalJson, ...chainResponses] = await Promise.all([
-			fetchChainChart<any>(),
+			fetchChainChart(),
 			...pickedNames.map((name) =>
-				fetchChainChart<any>(name)
+				fetchChainChart(name)
 					.then((data) => ({ name, data }))
 					.catch(() => null)
 			)

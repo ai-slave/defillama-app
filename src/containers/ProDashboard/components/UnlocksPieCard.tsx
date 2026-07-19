@@ -33,39 +33,27 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 		staleTime: 60 * 60 * 1000
 	})
 
-	const allocationPieChartData = useMemo(() => {
-		const pieData = data?.pieChartData?.documented ?? EMPTY_PIE_DATA
-		return pieData
-			.map((item: any) => ({ name: item?.name, value: Number(item?.value) }))
-			.filter((item: any) => item.name && Number.isFinite(item.value) && item.value > 0)
-	}, [data])
+	const chartData = useMemo(() => {
+		if (chartType === 'allocation') {
+			const source = data?.pieChartData?.documented ?? EMPTY_PIE_DATA
+			const result: Array<{ name: string; value: number }> = []
+			for (const item of source) {
+				if (item.name && item.value > 0) result.push(item)
+			}
+			return result
+		}
 
-	const allocationColors = useMemo(() => data?.stackColors?.documented ?? {}, [data])
-
-	const unlockedPercent = useMemo(() => {
 		const totalLocked = data?.meta?.totalLocked
 		const maxSupply = data?.meta?.maxSupply
-		if (totalLocked == null || maxSupply == null) return null
-		const totalLockedValue = Number(totalLocked)
-		const maxSupplyValue = Number(maxSupply)
-		if (!Number.isFinite(totalLockedValue) || !Number.isFinite(maxSupplyValue) || maxSupplyValue === 0) return null
-		const percent = 100 - (totalLockedValue / maxSupplyValue) * 100
-		return Math.min(100, Math.max(0, percent))
-	}, [data])
+		if (totalLocked == null || maxSupply == null || maxSupply === 0) return EMPTY_PIE_DATA
+		const unlocked = Math.min(100, Math.max(0, 100 - (totalLocked / maxSupply) * 100))
+		return [
+			{ name: 'Unlocked', value: unlocked },
+			{ name: 'Locked', value: 100 - unlocked }
+		]
+	}, [chartType, data])
 
-	const lockedUnlockedPieChartData = useMemo(
-		() =>
-			unlockedPercent == null
-				? EMPTY_PIE_DATA
-				: [
-						{ name: 'Unlocked', value: unlockedPercent },
-						{ name: 'Locked', value: 100 - unlockedPercent }
-					],
-		[unlockedPercent]
-	)
-
-	const chartData = chartType === 'allocation' ? allocationPieChartData : lockedUnlockedPieChartData
-	const stackColors = chartType === 'allocation' ? allocationColors : LOCKED_UNLOCKED_COLORS
+	const stackColors = chartType === 'allocation' ? (data?.stackColors?.documented ?? {}) : LOCKED_UNLOCKED_COLORS
 	const chartTitle = chartType === 'allocation' ? 'Allocation' : 'Locked/Unlocked %'
 	const valueSymbol = chartType === 'locked-unlocked' ? '%' : '$'
 	const hasChartData = chartData.length > 0

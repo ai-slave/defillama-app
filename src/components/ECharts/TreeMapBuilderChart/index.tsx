@@ -2,10 +2,11 @@ import { TreemapChart as EChartTreemap } from 'echarts/charts'
 import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
+import { clearTreemapFocus, registerTreemapFocusTracking } from '../treemapFocus'
 
 echarts.use([TooltipComponent, GraphicComponent, ToolboxComponent, EChartTreemap, CanvasRenderer])
 
@@ -22,8 +23,7 @@ interface TreeMapBuilderChartProps {
 // Treemap does not clip to the series box when zoomed; outer padding + overflow:hidden preserves the inset.
 const CHART_INSET_PX = 8
 
-const formatValue = (rawValue?: number) => {
-	const value = typeof rawValue === 'number' && Number.isFinite(rawValue) ? rawValue : 0
+const formatValue = (value: number) => {
 	const absValue = Math.abs(value)
 	if (absValue >= 1e9) {
 		return '$' + (value / 1e9).toFixed(1) + 'B'
@@ -36,9 +36,9 @@ const formatValue = (rawValue?: number) => {
 }
 
 export default function TreeMapBuilderChart({ data, height = '450px', onReady }: TreeMapBuilderChartProps) {
-	const id = useId()
 	const [isDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
+	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const onReadyRef = useRef(onReady)
 	useEffect(() => {
@@ -46,57 +46,36 @@ export default function TreeMapBuilderChart({ data, height = '450px', onReady }:
 	})
 
 	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
 	useEffect(() => {
-		const container = document.getElementById(id)
+		const container = containerRef.current
 		if (!container) return
 
 		const instance = echarts.init(container, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		onReadyRef.current?.(instance)
-		const handleTreemapClick = (params: any) => {
-			if (params?.seriesType !== 'treemap') return
-			const seriesModel = (instance as any).getModel?.()?.getSeriesByIndex?.(params.seriesIndex ?? 0)
-			const node = seriesModel?.getData?.()?.tree?.getNodeByDataIndex?.(params.dataIndex)
-			const nodeId = node?.getId?.()
-			const nodePath = node
-				?.getAncestors?.(true)
-				?.map((ancestor: any) => ancestor?.name)
-				?.filter((name: any) => typeof name === 'string' && name)
-			if (typeof nodeId === 'string' && nodeId) {
-				const chartWithTreemapFocus = instance as echarts.ECharts & {
-					__llamaTreemapFocusNode?: { id: string; path?: string[] }
-				}
-				chartWithTreemapFocus.__llamaTreemapFocusNode = {
-					id: nodeId,
-					...(Array.isArray(nodePath) && nodePath.length > 0 ? { path: nodePath } : {})
-				}
-			}
-		}
-		const handleRestore = () => {
-			delete (instance as any).__llamaTreemapFocusNode
-			delete (instance as any).__llamaTreemapFocusNodeId
-		}
-		instance.on('click', handleTreemapClick)
-		instance.on('restore', handleRestore)
+		const unregisterTreemapFocus = registerTreemapFocusTracking(instance)
 
 		return () => {
-			instance.off('click', handleTreemapClick)
-			instance.off('restore', handleRestore)
+			unregisterTreemapFocus()
 			instance.dispose()
 			chartRef.current = null
 			onReadyRef.current?.(null)
 		}
-	}, [id])
+	}, [])
 
 	useEffect(() => {
-		if (!chartRef.current || !data || data.length === 0) return
+		const instance = chartRef.current
+		if (!instance) return
 
-		const total = data.reduce(
-			(sum, item) => sum + (typeof item.value === 'number' && Number.isFinite(item.value) ? item.value : 0),
-			0
-		)
+		if (data.length === 0) {
+			instance.clear()
+			clearTreemapFocus(instance)
+			return
+		}
+
+		const total = data.reduce((sum, item) => sum + item.value, 0)
 
 		const graphic = {
 			type: 'image',
@@ -125,7 +104,7 @@ export default function TreeMapBuilderChart({ data, height = '450px', onReady }:
 				backgroundColor: 'transparent',
 				borderWidth: 0,
 				formatter: function (info: any) {
-					const rawValue = typeof info?.value === 'number' && Number.isFinite(info.value) ? info.value : 0
+					const rawValue = info.value as number
 					const pct = total > 0 ? ((rawValue / total) * 100).toFixed(1) : '0'
 					return `<div style="font-weight:600">${info.name}</div><div>${formatValue(rawValue)} (${pct}%)</div>`
 				}
@@ -148,7 +127,7 @@ export default function TreeMapBuilderChart({ data, height = '450px', onReady }:
 						position: 'insideTopLeft',
 						padding: [4, 6],
 						formatter: function (params: any) {
-							const rawValue = typeof params?.value === 'number' && Number.isFinite(params.value) ? params.value : 0
+							const rawValue = params.value as number
 							const pct = total > 0 ? ((rawValue / total) * 100).toFixed(1) : '0'
 							return `{name|${params.name}}\n{value|${formatValue(rawValue)} (${pct}%)}`
 						},
@@ -188,27 +167,25 @@ export default function TreeMapBuilderChart({ data, height = '450px', onReady }:
 			]
 		}
 
-		chartRef.current.setOption(option, true)
+		clearTreemapFocus(instance)
+		instance.setOption(option, true)
 	}, [data, isDark, isSmall])
-
-	if (!data || data.length === 0) {
-		return (
-			<div className="flex h-full items-center justify-center">
-				<p className="body-sm text-tertiary">No data available for treemap</p>
-			</div>
-		)
-	}
 
 	return (
 		<div
-			className="w-full overflow-hidden"
+			className="relative w-full overflow-hidden"
 			style={{
 				height,
 
 				padding: CHART_INSET_PX
 			}}
 		>
-			<div id={id} className="h-full w-full" />
+			<div ref={containerRef} className="h-full w-full" />
+			{data.length === 0 ? (
+				<div className="absolute inset-0 flex items-center justify-center">
+					<p className="body-sm text-tertiary">No data available for treemap</p>
+				</div>
+			) : null}
 		</div>
 	)
 }

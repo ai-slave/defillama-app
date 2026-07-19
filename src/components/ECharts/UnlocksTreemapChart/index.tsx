@@ -4,250 +4,45 @@ import { TitleComponent, ToolboxComponent, TooltipComponent } from 'echarts/comp
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
+import type { UnlocksData } from '~/containers/Unlocks/calendarTypes'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { formattedNum } from '~/utils'
-import { tokenIconUrl } from '~/utils/icons'
 import { getChartTheme } from '../chartTheme'
+import { buildUnlocksTreemapTreeData, UNLOCKS_TREEMAP_TIME_VIEWS, type UnlocksTreemapTimeView } from './buildTreeData'
 
 echarts.use([TitleComponent, TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer])
 
 interface UnlocksTreemapProps {
-	unlocksData: {
-		[date: string]: {
-			totalValue: number
-			events: Array<{
-				protocol: string
-				value: number
-				details: string
-				unlockType: string
-			}>
-		}
-	}
+	unlocksData: UnlocksData
 	height?: string
 	filterYear?: number
 }
 
-interface YearData {
-	children: {
-		[month: string]: {
-			protocols: {
-				[protocol: string]: number
-			}
-			value: number
-		}
-	}
-	value: number
-}
-
-type YearDataMap = {
-	[year: string]: YearData
-}
-
-const TIME_VIEWS = ['Month', 'Current Year', 'All Years'] as const
-type TimeView = (typeof TIME_VIEWS)[number]
 const TREEMAP_CHART_INSET_PX = 8
 
 export default function UnlocksTreemapChart({ unlocksData, height = '600px', filterYear }: UnlocksTreemapProps) {
 	const [isDark] = useDarkModeManager()
-	const [timeView, setTimeView] = useState<TimeView>('Current Year')
+	const [timeView, setTimeView] = useState<UnlocksTreemapTimeView>('Current Year')
 	const [selectedDate, setSelectedDate] = useState(() => dayjs())
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
 	const currentYear = filterYear ?? dayjs().year()
 
-	const protocolLabel = (protocol: string, value: number, iconUrl: string) => ({
-		show: true,
-		formatter: `{icon|}\n{name|${protocol}}\n{value|${formattedNum(value, true)}}`,
-		position: 'inside' as const,
-		color: '#fff',
-		rich: {
-			icon: {
-				height: 22,
-				width: 22,
-				align: 'center' as const,
-				backgroundColor: { image: iconUrl },
-				lineHeight: 26
-			},
-			name: {
-				fontSize: 12,
-				fontWeight: 600,
-				color: '#fff',
-				align: 'center' as const,
-				lineHeight: 16,
-				padding: [2, 0, 0, 0]
-			},
-			value: {
-				fontSize: 11,
-				fontWeight: 500,
-				color: 'rgba(255, 255, 255, 0.85)',
-				align: 'center' as const,
-				lineHeight: 14
-			}
-		}
-	})
-
 	const chartDataTree = useMemo(() => {
-		const treeData = []
-		const yearData: YearDataMap = {}
-
-		for (const dateStr in unlocksData) {
-			const dailyData = unlocksData[dateStr]
-			const date = dayjs(dateStr)
-			const year = date.year()
-			const monthIndex = date.month()
-			const monthName = date.format('MMMM')
-
-			if (timeView === 'Month') {
-				if (monthIndex !== selectedDate.month() || year !== selectedDate.year()) continue
-			} else if (timeView === 'Current Year') {
-				if (year !== currentYear) continue
-			} else if (timeView === 'All Years') {
-				if (year < currentYear) continue
-			}
-
-			if (!yearData[year]) {
-				yearData[year] = {
-					children: {},
-					value: 0
-				}
-			}
-
-			if (!yearData[year].children[monthName]) {
-				yearData[year].children[monthName] = {
-					protocols: {},
-					value: 0
-				}
-			}
-
-			for (const event of dailyData.events) {
-				if (!yearData[year].children[monthName].protocols[event.protocol]) {
-					yearData[year].children[monthName].protocols[event.protocol] = 0
-				}
-
-				yearData[year].children[monthName].protocols[event.protocol] += event.value
-				yearData[year].children[monthName].value += event.value
-				yearData[year].value += event.value
-			}
-		}
-
-		if (timeView === 'Month') {
-			const targetYear = selectedDate.year()
-			const targetMonthName = selectedDate.format('MMMM')
-			if (yearData[targetYear] && yearData[targetYear].children[targetMonthName]) {
-				const monthInfo = yearData[targetYear].children[targetMonthName]
-				const protocolsData = Object.entries(monthInfo.protocols)
-					.map(([protocol, value]) => {
-						const iconUrl = tokenIconUrl(protocol)
-						return {
-							name: protocol,
-							value: value,
-							iconUrl: iconUrl,
-							label: protocolLabel(protocol, value, iconUrl)
-						}
-					})
-					.toSorted((a, b) => b.value - a.value)
-				return protocolsData
-			} else {
-				return []
-			}
-		}
-
-		if (timeView === 'Current Year' && yearData[currentYear]) {
-			const currentYearData = yearData[currentYear]
-
-			return Object.entries(currentYearData.children)
-				.map(([month, monthInfo]) => {
-					const monthNode: any = {
-						name: month,
-						value: monthInfo.value,
-						children: [],
-						upperLabel: {
-							show: true,
-							formatter: `${month} - ${formattedNum(monthInfo.value, true)}`,
-							color: getChartTheme(isDark).ink(1),
-							fontSize: 13,
-							fontWeight: 600
-						}
-					}
-
-					for (const protocol in monthInfo.protocols) {
-						const value = monthInfo.protocols[protocol]
-						const iconUrl = tokenIconUrl(protocol)
-						monthNode.children.push({
-							name: protocol,
-							value: value,
-							iconUrl: iconUrl,
-							label: protocolLabel(protocol, value, iconUrl)
-						})
-					}
-
-					monthNode.children = monthNode.children.toSorted((a, b) => b.value - a.value)
-					return monthNode
-				})
-				.toSorted((a, b) => b.value - a.value)
-		}
-
-		if (timeView === 'All Years') {
-			for (const year in yearData) {
-				const yearInfo = yearData[year]
-				const yearNode: any = {
-					name: year,
-					value: yearInfo.value,
-					children: [],
-					upperLabel: {
-						show: true,
-						formatter: `${year} - ${formattedNum(yearInfo.value, true)}`,
-						color: getChartTheme(isDark).ink(1),
-						fontSize: 14,
-						fontWeight: 700
-					}
-				}
-
-				for (const month in yearInfo.children) {
-					const monthInfo = yearInfo.children[month]
-					const monthNode: any = {
-						name: month,
-						value: monthInfo.value,
-						children: [],
-						upperLabel: {
-							show: true,
-							formatter: `${month} - ${formattedNum(monthInfo.value, true)}`,
-							color: getChartTheme(isDark).ink(1),
-							fontSize: 12,
-							fontWeight: 600
-						}
-					}
-
-					for (const protocol in monthInfo.protocols) {
-						const value = monthInfo.protocols[protocol]
-						const iconUrl = tokenIconUrl(protocol)
-						monthNode.children.push({
-							name: protocol,
-							value: value,
-							iconUrl: iconUrl,
-							label: protocolLabel(protocol, value, iconUrl)
-						})
-					}
-
-					monthNode.children = monthNode.children.toSorted((a, b) => b.value - a.value)
-					yearNode.children.push(monthNode)
-				}
-
-				yearNode.children = yearNode.children.toSorted((a, b) => b.value - a.value)
-				treeData.push(yearNode)
-			}
-
-			treeData.sort((a, b) => Number(a.name) - Number(b.name))
-			return treeData
-		}
-
-		return []
+		return buildUnlocksTreemapTreeData({
+			unlocksData,
+			timeView,
+			currentYear,
+			selectedYear: selectedDate.format('YYYY'),
+			selectedMonth: selectedDate.format('MM'),
+			isDark
+		})
 	}, [unlocksData, currentYear, timeView, isDark, selectedDate])
 
 	useEffect(() => {
@@ -453,7 +248,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 					size="md"
 					selectedValue={timeView}
 					setValue={(period) => startTransition(() => setTimeView(period))}
-					values={TIME_VIEWS}
+					values={UNLOCKS_TREEMAP_TIME_VIEWS}
 				/>
 			</div>
 

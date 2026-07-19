@@ -1,3 +1,4 @@
+import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { DAY_MS, findTimeSeriesPointNear, getFreshTimeSeriesCurrentPoint, toUnixMsTimestamp } from '~/utils/timeSeries'
 import { fetchCategoryCoinPrices, fetchCategoryInfo, fetchCategoryPerformance, fetchCoinInfo } from './api'
 import type { ICategoryInfoApiItem, PriceEntry, TimeSeriesEntry } from './api.types'
@@ -80,21 +81,20 @@ export function calculateCumulativePercentageChange(
 	timeframe: number | 'ytd',
 	currentTimeMs: number = Date.now()
 ): TimeSeriesEntry[] {
-	const sortedData = data.toSorted((a, b) => new Date(a[1]).getTime() - new Date(b[1]).getTime())
-
-	// group by id
-	const groupedData: Record<string, Array<{ timestamp: number; price: number }>> = {}
-	for (const [id, timestamp, price] of sortedData) {
-		if (!groupedData[id]) groupedData[id] = []
-		groupedData[id].push({
-			timestamp: new Date(timestamp).getTime(),
-			price
-		})
+	// The API groups rows by coin and orders each coin's timestamps ascending.
+	// Keep those streams intact instead of globally sorting the full response.
+	const groupedData = new Map<string, Array<{ timestamp: number; price: number }>>()
+	for (const [id, timestamp, price] of data) {
+		let prices = groupedData.get(id)
+		if (!prices) {
+			prices = []
+			groupedData.set(id, prices)
+		}
+		prices.push({ timestamp: Date.parse(timestamp), price })
 	}
 
-	// calculate cumulative percentage change for each id
-	const results: Record<number, Record<string, number>> = {}
-	for (const [id, prices] of Object.entries(groupedData)) {
+	const results = new Map<number, TimeSeriesEntry>()
+	for (const [id, prices] of groupedData) {
 		const current = getFreshTimeSeriesCurrentPoint(prices, (point) => point.timestamp, { currentTimeMs })
 		if (!current) continue
 		const period = timeframe === 'ytd' ? 'ytd' : String(timeframe)
@@ -112,20 +112,18 @@ export function calculateCumulativePercentageChange(
 		if (!coinName) continue
 		for (const { timestamp, price } of prices) {
 			if (timestamp < initial.timestamp || timestamp > current.timestamp) continue
-			if (!results[timestamp]) results[timestamp] = {}
-			results[timestamp][coinName] = ((price - initialPrice) / initialPrice) * 100
+			let row = results.get(timestamp)
+			if (!row) {
+				row = createChartRecord<number | null>() as TimeSeriesEntry
+				row.date = Math.floor(timestamp / 1e3)
+				results.set(timestamp, row)
+			}
+			row[coinName] = ((price - initialPrice) / initialPrice) * 100
 		}
 	}
 
-	// format for chart
-	const chartData: TimeSeriesEntry[] = []
-	for (const [timestamp, values] of Object.entries(results)) {
-		chartData.push({
-			date: Math.floor(parseInt(timestamp, 10) / 1e3),
-			...values
-		})
-	}
-	return chartData.sort((a, b) => a.date - b.date)
+	// Independent coin streams can have different dates, so order after merging them.
+	return Array.from(results.values()).sort((a, b) => a.date - b.date)
 }
 
 export async function getCoinPerformance(categoryId: string): Promise<CategoryPerformanceProps> {

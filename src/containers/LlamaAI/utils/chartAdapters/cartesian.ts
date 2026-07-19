@@ -33,6 +33,14 @@ export type LlamaAICartesianChartProps = Pick<
 export type LlamaAICartesianDatasetRow = LlamaAICartesianChartProps['dataset']['source'][number]
 export type LlamaAICartesianSeriesConfig = NonNullable<LlamaAICartesianChartProps['charts']>[number]
 
+function setCartesianRowValue(row: LlamaAICartesianDatasetRow, name: string, value: number | string | null) {
+	if (name === '__proto__') {
+		Object.defineProperty(row, name, { value, enumerable: true, configurable: true, writable: true })
+	} else {
+		row[name] = value
+	}
+}
+
 export interface LlamaAICartesianSeriesMeta {
 	name: string
 	seriesIndex: number
@@ -287,98 +295,35 @@ export const createCategoryTooltipFormatter = (
 	valueSymbol: string,
 	charts: LlamaAICartesianSeriesConfig[] = []
 ): ((params: unknown) => string) => {
-	const symbolBySeries = new Map(charts.map((chart) => [chart.name, chart.valueSymbol ?? valueSymbol]))
+	const symbolBySeries = new Map<string, string>()
+	for (const chart of charts) symbolBySeries.set(chart.name, chart.valueSymbol ?? valueSymbol)
 
 	return (params: unknown) => {
 		const items = Array.isArray(params) ? params : params ? [params] : []
 		if (items.length === 0) return ''
 
 		const header = String(items[0]?.name ?? items[0]?.axisValue ?? items[0]?.data?.category ?? '')
-		const values = items
-			.map((item) => {
-				const seriesName = item?.seriesName
-				if (!seriesName) return null
-				const value = getNumericTooltipValueFromParams(item)
-				if (value == null || Number.isNaN(value)) return null
-				return {
-					marker: item?.marker ?? '',
-					seriesName,
-					value,
-					symbol: symbolBySeries.get(seriesName) ?? valueSymbol
-				}
+		const values: Array<{ marker: string; seriesName: string; value: number; symbol: string }> = []
+		for (const item of items) {
+			const seriesName = item?.seriesName
+			if (!seriesName) continue
+			const value = getNumericTooltipValueFromParams(item)
+			if (value == null) continue
+			values.push({
+				marker: item?.marker ?? '',
+				seriesName,
+				value,
+				symbol: symbolBySeries.get(seriesName) ?? valueSymbol
 			})
-			.filter(
-				(
-					item
-				): item is {
-					marker: string
-					seriesName: string
-					value: number
-					symbol: string
-				} => item !== null
-			)
-			.sort((a, b) => b.value - a.value)
+		}
+		values.sort((a, b) => b.value - a.value)
 
-		const lines = values
-			.map(
-				(item) =>
-					`<div>${item.marker} ${item.seriesName}: ${formatChartValue(item.value, item.symbol ?? valueSymbol)}</div>`
-			)
-			.join('')
+		let lines = ''
+		for (const item of values) {
+			lines += `<div>${item.marker} ${item.seriesName}: ${formatChartValue(item.value, item.symbol)}</div>`
+		}
 
 		return `<div style="margin-bottom: 8px; font-weight: 600;">${header}</div>${lines}`
-	}
-}
-
-export const createTimeTooltipFormatter = (
-	valueSymbol: string,
-	charts: LlamaAICartesianSeriesConfig[] = []
-): ((params: unknown) => string) => {
-	const seriesSymbols = new Map(charts.map((c) => [c.name, c.valueSymbol ?? valueSymbol]))
-
-	return (params: unknown) => {
-		const items = Array.isArray(params) ? params : params ? [params] : []
-		if (items.length === 0) return ''
-		const first: any = items[0]
-		const ts = Array.isArray(first?.value) ? Number(first.value[0]) : Number(first?.data?.timestamp ?? first?.axisValue)
-		const dateStr = Number.isFinite(ts)
-			? new Date(ts).toLocaleDateString('en-US', {
-					year: 'numeric',
-					month: 'short',
-					day: 'numeric',
-					timeZone: 'UTC'
-				})
-			: ''
-		const lines = items
-			.map((it: any) => {
-				const name = it?.seriesName
-				if (!name) return null
-				const value = getNumericTooltipValueFromParams(it)
-				if (value == null) return null
-				return {
-					color: it?.color ?? '#888',
-					name,
-					symbol: seriesSymbols.get(name) ?? valueSymbol,
-					value
-				}
-			})
-			.filter(
-				(
-					item
-				): item is {
-					color: string
-					name: string
-					symbol: string
-					value: number
-				} => item !== null
-			)
-			.sort((a, b) => b.value - a.value)
-			.map(
-				(item) =>
-					`<li style="list-style:none;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${item.color};margin-right:6px;"></span>${item.name}: <strong>${formatChartValue(item.value, item.symbol)}</strong></li>`
-			)
-			.join('')
-		return `<div style="font-weight:600;margin-bottom:4px;">${dateStr}</div><ul style="margin:0;padding:0;">${lines}</ul>`
 	}
 }
 
@@ -392,6 +337,14 @@ export function adaptCartesianChartData(
 
 		const axisInference = inferTimeSeriesAxis(config, rawData)
 		const { axisType, dimensionName, normalizeXValue } = axisInference
+		const seriesNames = new Set<string>()
+		for (const series of config.series) {
+			if (series.name === dimensionName) {
+				throw new Error(`Series name "${series.name}" is reserved for the x-axis dimension`)
+			}
+			if (seriesNames.has(series.name)) throw new Error(`Duplicate series name "${series.name}" is not allowed`)
+			seriesNames.add(series.name)
+		}
 		const yAxisIdToIndex = new Map<string, number>()
 		const yAxisIndexToSymbol = new Map<number, string>()
 
@@ -416,31 +369,25 @@ export function adaptCartesianChartData(
 			const apiColor = seriesConfig.styling?.color
 			const isPrimaryAxis = yAxisIndex === 0
 
-			let filteredData = rawData
-			let entityValue: string | undefined
-			if (seriesConfig.dataMapping.entityFilter) {
-				const { field, value } = seriesConfig.dataMapping.entityFilter
-				entityValue = value
-				filteredData = rawData.filter((row) => {
-					const rowValue = asRecord(row)[field]
-					if (typeof rowValue === 'string' && typeof value === 'string') {
-						return rowValue.toLowerCase() === value.toLowerCase()
-					}
-					if (rowValue === value) {
-						return true
-					}
-					if (rowValue == null || value == null) {
-						return false
-					}
-					return String(rowValue).toLowerCase() === String(value).toLowerCase()
-				})
-			}
+			const entityFilter = seriesConfig.dataMapping.entityFilter
+			const entityValue = entityFilter?.value
+			const normalizedEntityValue = entityValue == null ? null : String(entityValue).toLowerCase()
 
 			const resolvedColor = apiColor || getChartColor(entityValue, seriesIndex, oldBlue)
 
 			const seenXValues = new Set<string | number>()
-			for (const row of filteredData) {
+			for (const row of rawData) {
 				const record = asRecord(row)
+				if (entityFilter) {
+					const rowValue = record[entityFilter.field]
+					const filterValue = entityFilter.value
+					const matches =
+						rowValue === filterValue ||
+						(rowValue != null &&
+							normalizedEntityValue != null &&
+							String(rowValue).toLowerCase() === normalizedEntityValue)
+					if (!matches) continue
+				}
 				const xValue = normalizeXValue(record[seriesConfig.dataMapping.xField])
 				const value = record[seriesConfig.dataMapping.yField]
 				const numericValue = value == null ? null : parseStringNumber(value)
@@ -451,11 +398,13 @@ export function adaptCartesianChartData(
 				seenXValues.add(xValue)
 
 				if (!rowsByX.has(xValue)) {
-					rowsByX.set(xValue, { [dimensionName]: xValue })
+					const chartRow = {} as LlamaAICartesianDatasetRow
+					setCartesianRowValue(chartRow, dimensionName, xValue)
+					rowsByX.set(xValue, chartRow)
 					categoryOrder.push(xValue)
 				}
 
-				rowsByX.get(xValue)![chartName] = numericValue
+				setCartesianRowValue(rowsByX.get(xValue)!, chartName, numericValue)
 			}
 
 			charts.push({
@@ -485,8 +434,8 @@ export function adaptCartesianChartData(
 
 		const datasetSource =
 			axisType === 'time'
-				? Array.from(rowsByX.values()).sort((a, b) => Number(a[dimensionName] ?? 0) - Number(b[dimensionName] ?? 0))
-				: categoryOrder.map((key) => rowsByX.get(key)!).filter(Boolean)
+				? Array.from(rowsByX.values()).sort((a, b) => (a.timestamp as number) - (b.timestamp as number))
+				: categoryOrder.map((key) => rowsByX.get(key)!)
 
 		const dataset = {
 			source: datasetSource,
@@ -527,6 +476,7 @@ export function adaptCartesianChartData(
 
 				return {
 					...existingAxis,
+					position: axis.position,
 					axisLabel: {
 						...(existingAxis?.axisLabel ?? {}),
 						formatter: (value: number) => formatChartValue(value, valueSymbol)
@@ -543,12 +493,6 @@ export function adaptCartesianChartData(
 					...(chartOptions.yAxis?.axisLabel ?? {}),
 					formatter: (value: number) => formatChartValue(value, primaryAxisSymbol)
 				}
-			}
-		}
-
-		if (axisType === 'time' && !chartOptions.tooltip) {
-			chartOptions.tooltip = {
-				formatter: createTimeTooltipFormatter(primaryAxisSymbol, charts)
 			}
 		}
 

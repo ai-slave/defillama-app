@@ -1,7 +1,8 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { ISingleSeriesChartProps } from '~/components/ECharts/types'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { Select } from '~/components/Select/Select'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -14,23 +15,23 @@ import {
 	useProDashboardPermissions
 } from '../ProDashboardAPIContext'
 import { type Chain, CHART_TYPES, type ChartConfig, type DashboardGrouping, type Protocol } from '../types'
-import { convertToCumulative, generateChartColor, getItemIconUrl } from '../utils'
+import { generateChartColor, getItemIconUrl } from '../utils'
 import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
+import { buildSingleMetricChartDataset } from './singleMetricChart'
 
-const SingleSeriesChart = lazy(
-	() => import('~/components/ECharts/SingleSeriesChart')
-) as React.FC<ISingleSeriesChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 
 interface ChartCardProps {
 	chart: ChartConfig
 }
 
 interface ChartRendererProps {
-	name: string
 	type: ChartConfig['type']
 	showCumulative: ChartConfig['showCumulative']
-	data: [string, number][]
+	dataset: MultiSeriesChart2Dataset
 	isLoading: boolean
 	hasError: boolean
 	refetch: () => void
@@ -49,7 +50,7 @@ const CUMULATIVE_DISPLAY_OPTIONS = [
 function ChartRenderer({
 	type,
 	showCumulative = false,
-	data,
+	dataset,
 	isLoading,
 	hasError,
 	refetch,
@@ -58,6 +59,25 @@ function ChartRenderer({
 }: ChartRendererProps) {
 	const chartType = CHART_TYPES[type]
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
+	const valueSymbol =
+		userMetricTypes.includes(type) || ratioMetricTypes.includes(type)
+			? ''
+			: percentMetricTypes.includes(type)
+				? '%'
+				: '$'
+	const chartOptions = useMemo(() => createSingleSeriesChartOptions(valueSymbol), [valueSymbol])
+	const seriesName = dataset.dimensions[1]
+	const charts = useMemo<NonNullable<IMultiSeriesChart2Props['charts']>>(() => {
+		return [
+			{
+				type: chartType.chartType === 'bar' && !showCumulative ? 'bar' : 'line',
+				name: seriesName,
+				encode: { x: 'timestamp', y: seriesName },
+				color,
+				stack: 'value'
+			}
+		]
+	}, [chartType.chartType, color, seriesName, showCumulative])
 
 	if (isLoading) {
 		return (
@@ -79,29 +99,25 @@ function ChartRenderer({
 		)
 	}
 
-	if (!data || data.length === 0) {
+	if (dataset.source.length === 0) {
 		return <p className="flex flex-1 items-center justify-center text-pro-text-form">No data available</p>
 	}
 
-	const valueSymbol =
-		userMetricTypes.includes(type) || ratioMetricTypes.includes(type)
-			? ''
-			: percentMetricTypes.includes(type)
-				? '%'
-				: '$'
 	const todayHallmarks: [number, string][] | null =
 		type === 'unlocks' ? [[todayTimestamp, toNiceDayMonthYear(todayTimestamp)]] : null
 
 	return (
 		<Suspense fallback={<div className="h-[300px]" />}>
-			<SingleSeriesChart
-				chartType={chartType.chartType === 'bar' && !showCumulative ? 'bar' : 'line'}
-				chartData={data}
+			<MultiSeriesChart2
+				dataset={dataset}
+				charts={charts}
 				valueSymbol={valueSymbol}
 				height={type === 'unlocks' ? '360px' : '300px'}
-				color={color}
 				hideDataZoom
 				hallmarks={todayHallmarks}
+				hallmarkStyle="mark-line"
+				chartOptions={chartOptions}
+				exportButtons="hidden"
 				onReady={onChartReady}
 			/>
 		</Suspense>
@@ -116,65 +132,62 @@ export function ChartCard({ chart }: ChartCardProps) {
 	const { isReadOnly } = useProDashboardPermissions()
 	const { chartInstance, handleChartReady } = useChartImageExport()
 
-	const {
-		itemName,
-		itemIconUrl,
-		chartTypeDetails,
-		isGroupable,
-		isBarChart,
-		showCumulative,
-		processedData,
-		chartColor
-	} = useMemo(() => {
-		const chartTypeDetails = CHART_TYPES[chart.type]
-		const isGroupable = chartTypeDetails?.groupable
-		const isBarChart = chartTypeDetails?.chartType === 'bar'
-		const showCumulative = chart.showCumulative || false
+	const { itemName, itemIconUrl, chartTypeDetails, isGroupable, isBarChart, showCumulative, chartColor } =
+		useMemo(() => {
+			const chartTypeDetails = CHART_TYPES[chart.type]
+			const isGroupable = chartTypeDetails?.groupable
+			const isBarChart = chartTypeDetails?.chartType === 'bar'
+			const showCumulative = chart.showCumulative || false
 
-		let itemName: string = ''
-		let itemIconUrl: string | undefined = undefined
-		let itemInfo: Chain | Protocol | undefined
-		let itemIdentifier: string = ''
-		if (chart.protocol) {
-			itemInfo = getProtocolInfo(chart.protocol)
-			itemName = itemInfo?.name || chart.protocol
-			itemIconUrl = getItemIconUrl('protocol', itemInfo, chart.protocol)
-			itemIdentifier = chart.protocol
-		} else if (chart.chain) {
-			itemInfo = getChainInfo(chart.chain)
-			itemName = chart.chain
-			itemIconUrl = getItemIconUrl('chain', itemInfo, chart.chain)
-			itemIdentifier = chart.chain
-		} else if (chart.geckoId) {
-			const protocolInfo = protocols.find((p: any) => p.geckoId === chart.geckoId)
-			itemInfo = protocolInfo
-			itemName = protocolInfo?.name || chart.geckoId
-			itemIconUrl = protocolInfo ? getItemIconUrl('protocol', protocolInfo, protocolInfo.slug) : undefined
-			itemIdentifier = chart.geckoId
-		}
+			let itemName: string = ''
+			let itemIconUrl: string | undefined = undefined
+			let itemInfo: Chain | Protocol | undefined
+			let itemIdentifier: string = ''
+			if (chart.protocol) {
+				itemInfo = getProtocolInfo(chart.protocol)
+				itemName = itemInfo?.name || chart.protocol
+				itemIconUrl = getItemIconUrl('protocol', itemInfo, chart.protocol)
+				itemIdentifier = chart.protocol
+			} else if (chart.chain) {
+				itemInfo = getChainInfo(chart.chain)
+				itemName = chart.chain
+				itemIconUrl = getItemIconUrl('chain', itemInfo, chart.chain)
+				itemIdentifier = chart.chain
+			} else if (chart.geckoId) {
+				const protocolInfo = protocols.find((p: any) => p.geckoId === chart.geckoId)
+				itemInfo = protocolInfo
+				itemName = protocolInfo?.name || chart.geckoId
+				itemIconUrl = protocolInfo ? getItemIconUrl('protocol', protocolInfo, protocolInfo.slug) : undefined
+				itemIdentifier = chart.geckoId
+			}
 
-		const chartColor = chart.color || generateChartColor(itemIdentifier, chartTypeDetails?.color)
+			const chartColor = chart.color || generateChartColor(itemIdentifier, chartTypeDetails?.color)
 
-		return {
-			itemName,
-			itemIconUrl,
-			itemInfo,
-			itemIdentifier,
-			chartColor,
-			chartTypeDetails,
-			isGroupable,
-			isBarChart,
-			showCumulative,
-			processedData: showCumulative && chart.data ? convertToCumulative(chart.data) : chart.data
-		}
-	}, [chart, getChainInfo, getProtocolInfo, protocols])
+			return {
+				itemName,
+				itemIconUrl,
+				itemInfo,
+				itemIdentifier,
+				chartColor,
+				chartTypeDetails,
+				isGroupable,
+				isBarChart,
+				showCumulative
+			}
+		}, [chart, getChainInfo, getProtocolInfo, protocols])
+
+	const chartDataset = useMemo(
+		() => buildSingleMetricChartDataset(chart.data, chartTypeDetails.title, showCumulative && isBarChart),
+		[chart.data, chartTypeDetails.title, isBarChart, showCumulative]
+	)
 
 	const handleCsvExport = () => {
-		if (!processedData || processedData.length === 0) return
+		if (chartDataset.source.length === 0) return
 		const headers = ['Date', `${itemName} ${chartTypeDetails.title}`]
-		const rows = processedData.map(([timestamp, value]) => [
-			new Date(Number(timestamp)).toISOString().slice(0, 10),
-			value
+		const valueKey = chartDataset.dimensions[1]
+		const rows = chartDataset.source.map((row) => [
+			new Date(row.timestamp as number).toISOString().slice(0, 10),
+			row[valueKey]
 		])
 		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
 		const fileName = `${itemName}_${chartTypeDetails.title.replace(/\s+/g, '_')}_${
@@ -237,7 +250,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 							) : null}
 						</>
 					) : null}
-					{processedData && processedData.length > 0 ? (
+					{chartDataset.source.length > 0 ? (
 						<>
 							<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 							<ProTableCSVButton
@@ -250,10 +263,9 @@ export function ChartCard({ chart }: ChartCardProps) {
 				</div>
 			</div>
 			<ChartRenderer
-				name={itemName}
 				type={chart.type}
 				showCumulative={chart.showCumulative}
-				data={processedData}
+				dataset={chartDataset}
 				isLoading={chart.isLoading}
 				hasError={chart.hasError}
 				refetch={chart.refetch}

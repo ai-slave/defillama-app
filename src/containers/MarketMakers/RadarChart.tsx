@@ -4,6 +4,8 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsOption } from 'echarts/types/dist/shared'
 import { useEffect, useRef } from 'react'
+import { useChartTheme } from '~/components/ECharts/chartTheme'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 
 echarts.use([ERadarChart, RadarComponent, TooltipComponent, CanvasRenderer])
@@ -61,10 +63,12 @@ export function buildRadarOption(scores: RadarScores, axisColor?: string): EChar
 }
 
 export function RadarChart({ scores }: { scores: RadarScores }) {
+	const [isDark] = useDarkModeManager()
+	const axisColor = useChartTheme(isDark).axisLabel
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
 	useEffect(() => {
 		const chartDom = containerRef.current
@@ -79,12 +83,10 @@ export function RadarChart({ scores }: { scores: RadarScores }) {
 	}, [])
 
 	useEffect(() => {
-		const chartDom = containerRef.current
 		const instance = chartRef.current
-		if (!chartDom || !instance) return
-		const axisColor = getComputedStyle(chartDom).getPropertyValue('--text-tertiary').trim() || undefined
+		if (!instance) return
 		instance.setOption(buildRadarOption(scores, axisColor), { notMerge: true })
-	}, [scores])
+	}, [scores, axisColor])
 
 	return <div ref={containerRef} className="h-[280px] w-full" />
 }

@@ -12,6 +12,8 @@ import type { MetricAggregator, MetricChartType, MetricConfig, MetricWindow } fr
 import { CHART_TYPES } from '../types'
 import { getItemIconUrl } from '../utils'
 
+const EMPTY_CHART_SERIES: [number, number][] = []
+
 const WINDOW_BADGE_LABELS: Record<MetricWindow, string> = {
 	'7d': 'Last 7d',
 	'30d': 'Last 30d',
@@ -186,10 +188,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 		return 'sparkline'
 	}, [metric.chartType, metric.showSparkline])
 
-	const chartSeries = useMemo(() => {
-		if (chartType === 'none' || !Array.isArray(sparklineData)) return []
-		return sparklineData.filter(([, v]) => Number.isFinite(v))
-	}, [chartType, sparklineData])
+	const chartSeries = chartType === 'none' ? EMPTY_CHART_SERIES : sparklineData
 
 	const sparklineColor = deltaPositive ? 'var(--success)' : deltaNegative ? 'var(--error)' : 'var(--bg-brand)'
 

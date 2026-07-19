@@ -6,13 +6,14 @@ import {
 	getPaginationRowModel
 } from '@tanstack/react-table'
 import { lazy, useEffect, useMemo, useState } from 'react'
-import type { IBarChartProps, IChartProps, IPieChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
-import { lastNDaysZoom } from './chartDefaults'
+import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { useEcosystemData, type TopProtocolEntry, type AssetCategory } from './ecosystemApi'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 function KpiCard({
@@ -208,13 +209,11 @@ function ProtocolTable({ data, valueLabel }: { data: TopProtocolEntry[]; valueLa
 
 function AssetBreakdownSection({
 	categories,
-	pieData,
 	pieColors,
 	totalFormatted,
 	title
 }: {
 	categories: AssetCategory[]
-	pieData: Array<{ name: string; value: number }>
 	pieColors: Record<string, string>
 	totalFormatted: string
 	title: string
@@ -236,7 +235,7 @@ function AssetBreakdownSection({
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div className="min-h-[320px]">
 					<PieChart
-						chartData={pieData}
+						chartData={categories}
 						stackColors={pieColors}
 						radius={['40%', '70%']}
 						height="320px"
@@ -309,13 +308,12 @@ export default function Ecosystem() {
 				<SectionHeader>Total Value Locked</SectionHeader>
 				<KpiCard label="Current TVL" value={data.tvl.currentFormatted} />
 				<ChartCard title={data.tvl.title}>
-					<AreaChart
-						chartData={data.tvl.data}
-						stacks={data.tvl.stacks}
+					<MultiSeriesChart2
+						dataset={data.tvl.dataset}
+						charts={data.tvl.charts}
 						valueSymbol="$"
-						title=""
 						height="400px"
-						chartOptions={lastNDaysZoom(data.tvl.data.length)}
+						chartOptions={data.tvl.chartOptions}
 					/>
 				</ChartCard>
 			</div>
@@ -330,13 +328,15 @@ export default function Ecosystem() {
 					<KpiCard label="All-Time Fees" value={data.fees.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartCard title={data.fees.title}>
-					<BarChart
-						chartData={data.fees.data}
-						stacks={data.fees.stacks}
+					<MultiSeriesChart2
+						dataset={data.fees.dataset}
+						charts={data.fees.charts}
 						valueSymbol="$"
-						title=""
 						height="400px"
-						chartOptions={lastNDaysZoom(data.fees.data.length)}
+						hideDefaultLegend={data.fees.charts.length < 2}
+						stacked
+						chartOptions={data.fees.chartOptions}
+						exportButtons={CSV_ONLY_EXPORT}
 					/>
 				</ChartCard>
 				<SectionHeader>Top Protocols by Fees</SectionHeader>
@@ -365,13 +365,15 @@ export default function Ecosystem() {
 					<KpiCard label="All-Time Volume" value={data.dexVolume.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartCard title={data.dexVolume.title}>
-					<BarChart
-						chartData={data.dexVolume.data}
-						stacks={data.dexVolume.stacks}
+					<MultiSeriesChart2
+						dataset={data.dexVolume.dataset}
+						charts={data.dexVolume.charts}
 						valueSymbol="$"
-						title=""
 						height="400px"
-						chartOptions={lastNDaysZoom(data.dexVolume.data.length)}
+						hideDefaultLegend={data.dexVolume.charts.length < 2}
+						stacked
+						chartOptions={data.dexVolume.chartOptions}
+						exportButtons={CSV_ONLY_EXPORT}
 					/>
 				</ChartCard>
 				<SectionHeader>Top DEXes by Volume</SectionHeader>
@@ -387,16 +389,14 @@ export default function Ecosystem() {
 					<KpiCard label="Bridged" value={data.stablecoins.kpis.currentBridged.formatted} />
 				</div>
 				<ChartCard title={data.stablecoins.title}>
-					<AreaChart
-						chartData={data.stablecoins.data}
-						stacks={data.stablecoins.stacks}
-						stackColors={data.stablecoins.colors}
+					<MultiSeriesChart2
+						dataset={data.stablecoins.dataset}
+						charts={data.stablecoins.charts}
 						valueSymbol="$"
-						title=""
-						isStackedChart
-						hideGradient
+						stacked
+						solidChartAreaStyle
 						height="400px"
-						chartOptions={lastNDaysZoom(data.stablecoins.data.length)}
+						chartOptions={data.stablecoins.chartOptions}
 					/>
 				</ChartCard>
 			</div>
@@ -408,7 +408,7 @@ export default function Ecosystem() {
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
 							<PieChart
-								chartData={data.stablecoins.pieData}
+								chartData={data.stablecoins.breakdown}
 								stackColors={data.stablecoins.pieColors}
 								radius={['40%', '70%']}
 								height="320px"
@@ -448,7 +448,6 @@ export default function Ecosystem() {
 				<SectionHeader>Chain Assets</SectionHeader>
 				<AssetBreakdownSection
 					categories={data.chainAssets.categories}
-					pieData={data.chainAssets.pieData}
 					pieColors={data.chainAssets.pieColors}
 					totalFormatted={data.chainAssets.totalFormatted}
 					title={data.chainAssets.title}

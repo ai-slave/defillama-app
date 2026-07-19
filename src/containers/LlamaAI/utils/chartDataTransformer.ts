@@ -1,8 +1,12 @@
 import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
-import { formatBarChart, formatLineChart } from '~/components/ECharts/utils'
-import type { AdaptedLlamaAICartesianChart, LlamaAICartesianDatasetRow } from '~/containers/LlamaAI/utils/chartAdapter'
-import type { AdaptedChartData } from '~/containers/LlamaAI/utils/chartAdapter'
-import { createCategoryTooltipFormatter, createTimeTooltipFormatter } from '~/containers/LlamaAI/utils/chartAdapter'
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
+import { getBucketTimestampMs } from '~/components/ECharts/utils'
+import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
+import {
+	createCategoryTooltipFormatter,
+	type AdaptedLlamaAICartesianChart,
+	type LlamaAICartesianDatasetRow
+} from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import type { ChartCapabilities, ChartViewState } from '~/containers/LlamaAI/utils/chartCapabilities'
 
 type GroupingInterval = 'day' | 'week' | 'month' | 'quarter' | 'year'
@@ -36,12 +40,11 @@ function cloneChartOptions(chartOptions: AdaptedLlamaAICartesianChart['props']['
 }
 
 function sortPrimarySeriesByTotalDesc(chart: AdaptedLlamaAICartesianChart): AdaptedLlamaAICartesianChart {
-	const next = cloneCartesianChart(chart)
-	const primaryNames = new Set(next.seriesMeta.filter((s) => (s.yAxisIndex ?? 0) === 0).map((s) => s.name))
-	if (primaryNames.size < 2) return next
+	const primaryNames = new Set(chart.seriesMeta.filter((s) => (s.yAxisIndex ?? 0) === 0).map((s) => s.name))
+	if (primaryNames.size < 2) return chart
 
 	const totals = new Map<string, number>()
-	for (const row of next.props.dataset.source) {
+	for (const row of chart.props.dataset.source) {
 		for (const name of primaryNames) {
 			const v = row[name]
 			if (typeof v === 'number' && !Number.isNaN(v)) {
@@ -58,24 +61,29 @@ function sortPrimarySeriesByTotalDesc(chart: AdaptedLlamaAICartesianChart): Adap
 		return rank(b) - rank(a)
 	}
 
-	next.props.charts = (next.props.charts ?? [])
+	chart.props.charts = (chart.props.charts ?? [])
 		.slice()
 		.sort((a, b) => cmp(a.name, b.name, primaryNames.has(a.name), primaryNames.has(b.name)))
 
-	next.seriesMeta = next.seriesMeta
+	chart.seriesMeta = chart.seriesMeta
 		.slice()
 		.sort((a, b) => cmp(a.name, b.name, (a.yAxisIndex ?? 0) === 0, (b.yAxisIndex ?? 0) === 0))
 
-	return next
+	return chart
 }
 
-function cloneCartesianChart(chart: AdaptedLlamaAICartesianChart): AdaptedLlamaAICartesianChart {
+function cloneCartesianChart(
+	chart: AdaptedLlamaAICartesianChart,
+	cloneDatasetRows: boolean
+): AdaptedLlamaAICartesianChart {
 	return {
 		...chart,
 		props: {
 			...chart.props,
 			dataset: {
-				source: chart.props.dataset.source.map((row) => ({ ...row })),
+				source: cloneDatasetRows
+					? chart.props.dataset.source.map((row) => ({ ...row }) as LlamaAICartesianDatasetRow)
+					: chart.props.dataset.source,
 				dimensions: [...chart.props.dataset.dimensions]
 			},
 			charts: chart.props.charts?.map((series) => ({ ...series })) ?? [],
@@ -90,97 +98,40 @@ function isTimeChart(chart: AdaptedLlamaAICartesianChart) {
 	return chart.axisType === 'time' && chart.props.dataset.dimensions[0] === 'timestamp'
 }
 
-function bucketTimestamp(timestampMs: number, interval: Exclude<GroupingInterval, 'day'>) {
-	const date = new Date(timestampMs)
-	if (interval === 'week') {
-		const day = date.getUTCDay()
-		return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - day)
+function setDatasetRowValue(row: LlamaAICartesianDatasetRow, name: string, value: number) {
+	if (name === '__proto__') {
+		Object.defineProperty(row, name, { value, enumerable: true, configurable: true, writable: true })
+	} else {
+		row[name] = value
 	}
-	if (interval === 'month') {
-		return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)
-	}
-	if (interval === 'year') {
-		return Date.UTC(date.getUTCFullYear(), 0, 1)
-	}
-	const quarter = Math.floor(date.getUTCMonth() / 3)
-	return Date.UTC(date.getUTCFullYear(), quarter * 3, 1)
 }
 
-function aggregateSeriesValues(values: number[], metricClass: 'flow' | 'stock') {
-	if (values.length === 0) return undefined
-	if (metricClass === 'flow') return values.reduce((acc, value) => acc + value, 0)
-	return values[values.length - 1]
-}
+function readTimestampMs(row: LlamaAICartesianDatasetRow): number | null {
+	const timestamp = row.timestamp
+	if (typeof timestamp === 'number') return Number.isFinite(timestamp) ? timestamp : null
+	if (typeof timestamp !== 'string') return null
 
-function createRowWithSeriesValues(
-	timestamp: number,
-	groupedValues: Map<string, number[]>,
-	seriesMeta: AdaptedLlamaAICartesianChart['seriesMeta']
-) {
-	const row: LlamaAICartesianDatasetRow = { timestamp }
-	for (const meta of seriesMeta) {
-		const values = groupedValues.get(meta.name) ?? []
-		const aggregated = aggregateSeriesValues(values, meta.metricClass)
-		if (aggregated !== undefined) {
-			row[meta.name] = aggregated
-		}
-	}
-	return row
-}
+	// Restored sessions created before timestamps were normalized can still contain strings.
+	const legacyTimestamp = timestamp.trim()
+	if (!legacyTimestamp) return null
+	const parsedTimestamp = Number(legacyTimestamp)
+	if (Number.isFinite(parsedTimestamp)) return parsedTimestamp < 1e12 ? parsedTimestamp * 1e3 : parsedTimestamp
 
-function createRowsFromFormattedSeries(
-	seriesData: Array<{
-		name: string
-		data: Array<[number, number | null]>
-	}>
-) {
-	// Rebuild the canonical dataset row model after formatter utilities return per-series tuples.
-	const rowsByTimestamp = new Map<number, LlamaAICartesianDatasetRow>()
-
-	for (const series of seriesData) {
-		for (const [timestamp, value] of series.data) {
-			if (!rowsByTimestamp.has(timestamp)) {
-				rowsByTimestamp.set(timestamp, { timestamp })
-			}
-			rowsByTimestamp.get(timestamp)![series.name] = value
-		}
-	}
-
-	return Array.from(rowsByTimestamp.values()).sort((a, b) => Number(a.timestamp ?? 0) - Number(b.timestamp ?? 0))
-}
-
-// Mark the eligible y-axes as logarithmic. Only axes in `eligibleAxes` are switched, so a
-// dual-axis chart can keep a zero/negative-bearing axis linear while the other goes log.
-function applyLogScaleToYAxis(
-	chartOptions: Record<string, any> | undefined,
-	eligibleAxes: number[]
-): Record<string, any> | undefined {
-	if (eligibleAxes.length === 0) return chartOptions
-	const options = chartOptions ?? {}
-	const eligible = new Set(eligibleAxes)
-	const yAxis = options.yAxis
-	const toLogAxis = (axis: Record<string, any> | undefined) => {
-		const min = axis?.min
-		return {
-			...(axis ?? {}),
-			type: 'log',
-			min: min === 'dataMin' || (typeof min === 'number' && min > 0) ? min : undefined
-		}
-	}
-
-	if (Array.isArray(yAxis)) {
-		return {
-			...options,
-			yAxis: yAxis.map((axis, index) => (eligible.has(index) ? toLogAxis(axis) : axis))
-		}
-	}
-
-	// Single-object form represents axis 0.
-	if (!eligible.has(0)) return chartOptions
-	return { ...options, yAxis: toLogAxis(yAxis) }
+	const parsedDate = Date.parse(legacyTimestamp)
+	return Number.isFinite(parsedDate) ? parsedDate : null
 }
 
 export class ChartDataTransformer {
+	static applyViewState(
+		adaptedChart: AdaptedLlamaAICartesianChart,
+		state: ChartViewState,
+		capabilities: ChartCapabilities
+	): AdaptedLlamaAICartesianChart
+	static applyViewState(
+		adaptedChart: AdaptedChartData,
+		state: ChartViewState,
+		capabilities: ChartCapabilities
+	): AdaptedChartData
 	static applyViewState(
 		adaptedChart: AdaptedChartData,
 		state: ChartViewState,
@@ -194,51 +145,66 @@ export class ChartDataTransformer {
 			return adaptedChart
 		}
 
-		let transformedChart = cloneCartesianChart(adaptedChart)
+		const shouldGroup = state.grouping !== 'day' && capabilities.allowGrouping
+		const shouldAccumulate = state.cumulative && capabilities.allowCumulative
+		const shouldConvertToPercentage = state.percentage && capabilities.allowPercentage
+		const shouldStack = !shouldConvertToPercentage && state.stacked && capabilities.allowStack
+		const displayedHallmarks = state.showHallmarks ? adaptedChart.props.hallmarks : undefined
+		if (!shouldGroup && !shouldAccumulate && !shouldConvertToPercentage && !shouldStack) {
+			if (displayedHallmarks === adaptedChart.props.hallmarks) return adaptedChart
+			return { ...adaptedChart, props: { ...adaptedChart.props, hallmarks: displayedHallmarks } }
+		}
+
+		let transformedChart = cloneCartesianChart(
+			adaptedChart,
+			shouldGroup || shouldAccumulate || shouldConvertToPercentage
+		)
 
 		// Apply view-state transforms in display order so each step sees canonical input.
-		if (state.grouping !== 'day' && capabilities.allowGrouping) {
+		if (shouldGroup) {
 			transformedChart = this.groupByInterval(transformedChart, state.grouping)
 		}
 
-		if (state.cumulative && capabilities.allowCumulative) {
+		if (shouldAccumulate) {
 			transformedChart = this.applyCumulativeToSeries(transformedChart)
 		}
 
-		if (state.percentage && capabilities.allowPercentage) {
+		if (shouldConvertToPercentage) {
 			transformedChart = this.toPercentage(transformedChart, state.stacked)
-		} else if (state.stacked && capabilities.allowStack) {
+		} else if (shouldStack) {
 			transformedChart = this.toStacked(transformedChart)
 		}
 
-		const hasSecondaryAxis = transformedChart.seriesMeta.some((series) => (series.yAxisIndex ?? 0) > 0)
-		const isPercentage = state.percentage && capabilities.allowPercentage
+		const primarySeries = [] as typeof transformedChart.seriesMeta
+		let hasSecondaryAxis = false
+		for (const series of transformedChart.seriesMeta) {
+			if ((series.yAxisIndex ?? 0) > 0) hasSecondaryAxis = true
+			else primarySeries.push(series)
+		}
+		const isPercentage = shouldConvertToPercentage
 		// Clamp axis to 0-100 only when all percentage values fall within that range
 		// (i.e. classic share-of-total with no negative source values).
-		const canClampAxis =
-			isPercentage &&
-			!hasSecondaryAxis &&
-			transformedChart.props.dataset.source.every((row) =>
-				transformedChart.seriesMeta
-					.filter((s) => (s.yAxisIndex ?? 0) === 0)
-					.every((s) => {
-						const v = row[s.name]
-						return typeof v !== 'number' || (v >= 0 && v <= 100)
-					})
-			)
-		const percentageTooltipFormatter = isPercentage
-			? (() => {
-					const charts = transformedChart.props.charts ?? []
-					return transformedChart.axisType === 'category'
-						? createCategoryTooltipFormatter('%', charts)
-						: createTimeTooltipFormatter('%', charts)
-				})()
-			: undefined
+		let canClampAxis = isPercentage && !hasSecondaryAxis
+		if (canClampAxis) {
+			rows: for (const row of transformedChart.props.dataset.source) {
+				for (const series of primarySeries) {
+					const value = row[series.name]
+					if (typeof value === 'number' && (value < 0 || value > 100)) {
+						canClampAxis = false
+						break rows
+					}
+				}
+			}
+		}
+		const percentageTooltipFormatter =
+			isPercentage && transformedChart.axisType === 'category'
+				? createCategoryTooltipFormatter('%', transformedChart.props.charts ?? [])
+				: undefined
 
 		const percentageChartOptions: Record<string, any> | undefined = isPercentage
 			? {
 					grid: chartGrid({ top: 24, bottom: CHART_ZOOM_RESERVE }),
-					tooltip: { formatter: percentageTooltipFormatter },
+					...(percentageTooltipFormatter ? { tooltip: { formatter: percentageTooltipFormatter } } : {}),
 					...(!hasSecondaryAxis
 						? {
 								yAxis: {
@@ -250,132 +216,115 @@ export class ChartDataTransformer {
 				}
 			: undefined
 
-		const mergedChartOptions = percentageChartOptions
+		const chartOptions = percentageChartOptions
 			? { ...transformedChart.props.chartOptions, ...percentageChartOptions }
 			: transformedChart.props.chartOptions
-
-		// Log scale is an axis-only concern; skip it in percentage mode (share is already bounded).
-		const finalChartOptions =
-			state.logScale && !isPercentage
-				? applyLogScaleToYAxis(mergedChartOptions, capabilities.logEligibleYAxes)
-				: mergedChartOptions
 
 		return {
 			...transformedChart,
 			props: {
 				...transformedChart.props,
-				valueSymbol: state.percentage && capabilities.allowPercentage ? '%' : adaptedChart.props.valueSymbol,
-				hallmarks: state.showHallmarks ? transformedChart.props.hallmarks : undefined,
-				chartOptions: finalChartOptions
+				valueSymbol: shouldConvertToPercentage ? '%' : adaptedChart.props.valueSymbol,
+				hallmarks: displayedHallmarks,
+				// Axis scaling is renderer policy. Keeping it out of this data transformer avoids
+				// stale log options when stacked/percentage modes require a zero baseline.
+				chartOptions
 			}
 		}
 	}
 
-	static groupByInterval(
+	private static groupByInterval(
 		chart: AdaptedLlamaAICartesianChart,
 		interval: GroupingInterval
 	): AdaptedLlamaAICartesianChart {
-		const nextChart = cloneCartesianChart(chart)
+		const nextChart = chart
 		nextChart.props.groupBy = GROUP_BY_LABEL[interval]
 
 		if (!isTimeChart(nextChart) || interval === 'day') {
 			return nextChart
 		}
 
-		if (interval === 'week' || interval === 'month') {
-			const groupBy = interval === 'week' ? 'weekly' : 'monthly'
-			const formattedSeries = nextChart.seriesMeta.map((meta) => {
-				const data: Array<[number, number]> = []
-				for (const row of nextChart.props.dataset.source) {
-					// Pre-March-2026 restored sessions (PR #2666 era) can carry string
-					// timestamps; malformed rows must not produce NaN buckets.
-					const timestamp = Number(row.timestamp)
-					const value = row[meta.name]
-					if (!Number.isFinite(timestamp) || typeof value !== 'number' || Number.isNaN(value)) continue
-					data.push([timestamp, value])
-				}
+		const groupBy =
+			interval === 'week'
+				? 'weekly'
+				: interval === 'month'
+					? 'monthly'
+					: interval === 'quarter'
+						? 'quarterly'
+						: 'yearly'
+		const groupedSource: LlamaAICartesianDatasetRow[] = []
 
-				return {
-					name: meta.name,
-					data:
-						// Aggregation semantics follow the data model, not the chart primitive.
-						// Flow metrics sum across the bucket; stock metrics keep the bucket snapshot.
-						meta.metricClass === 'flow'
-							? formatBarChart({ data, groupBy, dateInMs: true, denominationPriceHistory: null })
-							: formatLineChart({ data, groupBy, dateInMs: true, denominationPriceHistory: null })
-				}
-			})
-
-			nextChart.props.dataset.source = createRowsFromFormattedSeries(formattedSeries)
-			nextChart.rowCount = nextChart.props.dataset.source.length
-			return nextChart
-		}
-
-		const groupedRows = new Map<number, Map<string, number[]>>()
-
-		for (const row of nextChart.props.dataset.source) {
-			const timestamp = Number(row.timestamp)
-			if (!Number.isFinite(timestamp)) continue
-			const bucket = bucketTimestamp(timestamp, interval)
-			if (!groupedRows.has(bucket)) {
-				groupedRows.set(bucket, new Map())
+		// Adapted time datasets are chronological, so equal buckets are contiguous and
+		// can be aggregated without a Map, per-series tuple arrays, or a reconstruction sort.
+		for (const inputRow of nextChart.props.dataset.source) {
+			const timestamp = readTimestampMs(inputRow)
+			if (timestamp == null) continue
+			const bucketTimestamp = getBucketTimestampMs(timestamp, groupBy)
+			let outputRow = groupedSource[groupedSource.length - 1]
+			if (outputRow?.timestamp !== bucketTimestamp) {
+				outputRow = createChartRow<number | null>(bucketTimestamp) as LlamaAICartesianDatasetRow
+				groupedSource.push(outputRow)
 			}
 
-			const groupedValues = groupedRows.get(bucket)!
 			for (const meta of nextChart.seriesMeta) {
-				const rawValue = row[meta.name]
-				if (typeof rawValue !== 'number' || Number.isNaN(rawValue)) continue
-				const values = groupedValues.get(meta.name) ?? []
-				values.push(rawValue)
-				groupedValues.set(meta.name, values)
+				const value = inputRow[meta.name]
+				if (typeof value !== 'number' || Number.isNaN(value)) continue
+
+				if (meta.metricClass === 'flow') {
+					const previousValue = outputRow[meta.name]
+					setDatasetRowValue(outputRow, meta.name, (typeof previousValue === 'number' ? previousValue : 0) + value)
+				} else {
+					setDatasetRowValue(outputRow, meta.name, value)
+				}
 			}
 		}
 
-		nextChart.props.dataset.source = Array.from(groupedRows.entries())
-			.map(([timestamp, groupedValues]) => createRowWithSeriesValues(timestamp, groupedValues, nextChart.seriesMeta))
-			.sort((a, b) => Number(a.timestamp ?? 0) - Number(b.timestamp ?? 0))
+		nextChart.props.dataset.source = groupedSource
 
 		nextChart.rowCount = nextChart.props.dataset.source.length
 		return nextChart
 	}
 
-	static applyCumulativeToSeries(chart: AdaptedLlamaAICartesianChart): AdaptedLlamaAICartesianChart {
-		const nextChart = cloneCartesianChart(chart)
+	private static applyCumulativeToSeries(chart: AdaptedLlamaAICartesianChart): AdaptedLlamaAICartesianChart {
+		const nextChart = chart
 		if (!isTimeChart(nextChart)) return nextChart
+		const cumulativeSeries = nextChart.seriesMeta.filter(
+			(meta) => meta.metricClass === 'flow' && meta.baseType === 'bar'
+		)
+		if (cumulativeSeries.length === 0) return nextChart
+
+		const cumulativeNames = new Set(cumulativeSeries.map((meta) => meta.name))
+		const cumulativeTotals = createChartRecord<number>()
 		const seriesCount = nextChart.seriesMeta.length
+		const source = nextChart.props.dataset.source
+		let writeIndex = 0
 
-		const formattedSeries = nextChart.seriesMeta.map((meta) => {
-			const data: Array<[number, number]> = []
-			for (const row of nextChart.props.dataset.source) {
-				const timestamp = Number(row.timestamp)
-				if (!Number.isFinite(timestamp)) continue
-				const rawValue = row[meta.name]
-				const numericValue = typeof rawValue === 'number' && !Number.isNaN(rawValue) ? rawValue : 0
-				data.push([timestamp, numericValue])
+		for (const row of source) {
+			const timestamp = readTimestampMs(row)
+			if (timestamp == null) continue
+			row.timestamp = timestamp
+
+			for (const meta of cumulativeSeries) {
+				const value = row[meta.name]
+				const total =
+					(cumulativeTotals[meta.name] ?? 0) + (typeof value === 'number' && !Number.isNaN(value) ? value : 0)
+				cumulativeTotals[meta.name] = total
+				row[meta.name] = total
 			}
 
-			return {
-				name: meta.name,
-				data: formatBarChart({
-					data,
-					groupBy: 'cumulative',
-					dateInMs: true,
-					denominationPriceHistory: null
-				})
-			}
-		})
-
-		nextChart.props.dataset.source = createRowsFromFormattedSeries(formattedSeries)
+			source[writeIndex++] = row
+		}
+		source.length = writeIndex
 		nextChart.props.charts =
 			nextChart.props.charts?.map((series) => {
-				const meta = nextChart.seriesMeta.find((item) => item.name === series.name)
+				if (!cumulativeNames.has(series.name)) return series
 				const { hideAreaStyle: _hideAreaStyle, stack: _stack, ...rest } = series
 				return {
 					...rest,
 					type: 'line' as const,
 					// Single-series cumulative charts can use the default gradient area fill.
 					// For multi-series cumulative charts, keep plain lines to avoid overlapping filled areas.
-					...(meta?.baseType === 'bar' && seriesCount > 1 ? { hideAreaStyle: true } : {})
+					...(seriesCount > 1 ? { hideAreaStyle: true } : {})
 				}
 			}) ?? []
 
@@ -383,9 +332,8 @@ export class ChartDataTransformer {
 		return nextChart
 	}
 
-	static toStacked(chart: AdaptedLlamaAICartesianChart): AdaptedLlamaAICartesianChart {
-		const sorted = sortPrimarySeriesByTotalDesc(chart)
-		const nextChart = cloneCartesianChart(sorted)
+	private static toStacked(chart: AdaptedLlamaAICartesianChart): AdaptedLlamaAICartesianChart {
+		const nextChart = sortPrimarySeriesByTotalDesc(chart)
 		nextChart.props.charts =
 			nextChart.props.charts?.map((series) => {
 				const isPrimaryAxis = (series.yAxisIndex ?? 0) === 0
@@ -398,8 +346,11 @@ export class ChartDataTransformer {
 		return nextChart
 	}
 
-	static toPercentage(chart: AdaptedLlamaAICartesianChart, shouldStack: boolean = true): AdaptedLlamaAICartesianChart {
-		const nextChart = cloneCartesianChart(shouldStack ? sortPrimarySeriesByTotalDesc(chart) : chart)
+	private static toPercentage(
+		chart: AdaptedLlamaAICartesianChart,
+		shouldStack: boolean = true
+	): AdaptedLlamaAICartesianChart {
+		const nextChart = shouldStack ? sortPrimarySeriesByTotalDesc(chart) : chart
 		const primarySeries = nextChart.seriesMeta.filter((series) => (series.yAxisIndex ?? 0) === 0)
 		if (primarySeries.length === 0) return nextChart
 
@@ -408,28 +359,22 @@ export class ChartDataTransformer {
 		// Use sum-of-absolutes as denominator so negative values produce signed
 		// percentages (e.g. -200M / 700M → -28.6%).  For all-positive data this
 		// is identical to a plain sum.
-		nextChart.props.dataset.source = nextChart.props.dataset.source.map((row) => {
-			const nextRow = { ...row }
-			const absTotal = primarySeries.reduce((sum, series) => {
-				const value = nextRow[series.name]
-				return sum + (typeof value === 'number' && !Number.isNaN(value) ? Math.abs(value) : 0)
-			}, 0)
-
+		let allPositive = true
+		for (const row of nextChart.props.dataset.source) {
+			let absTotal = 0
 			for (const series of primarySeries) {
-				const value = nextRow[series.name]
-				const numericValue = typeof value === 'number' && !Number.isNaN(value) ? value : 0
-				nextRow[series.name] = absTotal > 0 ? (numericValue / absTotal) * 100 : 0
+				const value = row[series.name]
+				if (typeof value !== 'number' || Number.isNaN(value)) continue
+				absTotal += Math.abs(value)
+				if (value < 0) allPositive = false
 			}
 
-			return nextRow
-		})
-
-		const allPositive = nextChart.props.dataset.source.every((row) =>
-			primarySeries.every((s) => {
-				const v = row[s.name]
-				return typeof v !== 'number' || v >= 0
-			})
-		)
+			for (const series of primarySeries) {
+				const value = row[series.name]
+				const numericValue = typeof value === 'number' && !Number.isNaN(value) ? value : 0
+				row[series.name] = absTotal > 0 ? (numericValue / absTotal) * 100 : 0
+			}
+		}
 
 		// Time-series charts use the legacy stacked-area convention for percentages.
 		// Category-axis charts keep their native primitive (bars stay bars).

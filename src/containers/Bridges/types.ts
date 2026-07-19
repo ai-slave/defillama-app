@@ -1,4 +1,11 @@
-import type { RawBridgeInfo } from './api.types'
+import type { BridgeNetflowPeriod, RawBridgeInfo } from './api.types'
+
+export interface BridgeNetflowChartPoint {
+	chain: string
+	value: number
+}
+
+export type BridgeNetflowChartData = Record<BridgeNetflowPeriod, BridgeNetflowChartPoint[]>
 
 export interface BridgeVolumeChartPoint {
 	date: number

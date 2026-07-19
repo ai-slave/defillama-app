@@ -1,4 +1,3 @@
-import { ensureChronologicalRows } from '~/components/ECharts/utils'
 import { getNDistinctColors } from '~/utils'
 import type { RawProtocolResponse } from './api.types'
 
@@ -49,7 +48,7 @@ export function buildCompareProtocolsChartData({
 		}
 	}
 
-	const source = ensureChronologicalRows(Array.from(rowMap.values()))
+	const source = Array.from(rowMap.values()).sort((a, b) => a.timestamp - b.timestamp)
 	const charts: Array<{
 		type: 'line'
 		name: string

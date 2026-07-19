@@ -1,20 +1,25 @@
 import type * as echarts from 'echarts/core'
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { CHART_INSET } from '~/components/ECharts/chartSpacing'
-import type { IBarChartProps, IChartProps, IMultiSeriesChartProps, IPieChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props, IMultiSeriesChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { assignColors } from './api'
+import {
+	AREA_EXPORT,
+	DOLLAR_CHART_OPTIONS,
+	DOLLAR_SCROLL_CHART_OPTIONS,
+	DOLLAR_STACKED_SCROLL_CHART_OPTIONS,
+	HIDDEN_EXPORT,
+	UNITLESS_CHART_OPTIONS,
+	UNITLESS_STACKED_SCROLL_CHART_OPTIONS
+} from './chartDefaults'
 import { useFinancialsData, type AllocatedAssetsData, type AllocatedAssetsEntry } from './financialsApi'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-
-const SCROLL_LEGEND = {
-	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: CHART_INSET }
-}
 
 function sparkExportTitle(title: string) {
 	const lowerTitle = title.toLowerCase()
@@ -96,9 +101,9 @@ function AllocatedAssetsSection({
 	aaHistorical: Record<
 		AADimension,
 		{
-			data: Array<Record<string, number>>
-			stacks: string[]
-			colors: Record<string, string>
+			dataset: IMultiSeriesChart2Props['dataset']
+			charts: NonNullable<IMultiSeriesChart2Props['charts']>
+			title: string
 		}
 	>
 }) {
@@ -107,7 +112,6 @@ function AllocatedAssetsSection({
 	const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
 
 	const currentEntries: AllocatedAssetsEntry[] = allocatedAssets[dimension]
-	const pieData = useMemo(() => currentEntries.map((e) => ({ name: e.name, value: e.value })), [currentEntries])
 	const pieColors = useMemo(() => assignColors(currentEntries.map((e) => e.name)), [currentEntries])
 
 	const toggleRow = (idx: number) => {
@@ -160,7 +164,7 @@ function AllocatedAssetsSection({
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
 							<PieChart
-								chartData={pieData}
+								chartData={currentEntries}
 								stackColors={pieColors}
 								radius={['40%', '70%']}
 								height="320px"
@@ -208,16 +212,16 @@ function AllocatedAssetsSection({
 						</div>
 					</div>
 				) : (
-					<AreaChart
-						chartData={hist.data}
-						stacks={hist.stacks}
-						stackColors={hist.colors}
+					<MultiSeriesChart2
+						dataset={hist.dataset}
+						charts={hist.charts}
 						valueSymbol="$"
 						title=""
-						isStackedChart
-						hideGradient
+						stacked
+						solidChartAreaStyle
 						height="400px"
-						chartOptions={SCROLL_LEGEND}
+						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+						exportButtons={AREA_EXPORT}
 					/>
 				)}
 			</div>
@@ -244,15 +248,15 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 						/>
 					}
 				>
-					<BarChart
-						chartData={data.monthlyGross.data}
-						stacks={data.monthlyGross.stacks}
-						stackColors={data.monthlyGross.colors}
-						hideDownloadButton
+					<MultiSeriesChart2
+						dataset={data.monthlyGross.dataset}
+						charts={data.monthlyGross.charts}
 						valueSymbol="$"
 						title=""
 						height="400px"
-						chartOptions={SCROLL_LEGEND}
+						hideDefaultLegend={data.monthlyGross.charts.length < 2}
+						chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
 						onReady={gross.onReady}
 					/>
 				</ChartCard>
@@ -267,15 +271,15 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 						/>
 					}
 				>
-					<BarChart
-						chartData={data.monthlyNet.data}
-						stacks={data.monthlyNet.stacks}
-						stackColors={data.monthlyNet.colors}
-						hideDownloadButton
+					<MultiSeriesChart2
+						dataset={data.monthlyNet.dataset}
+						charts={data.monthlyNet.charts}
 						valueSymbol="$"
 						title=""
 						height="400px"
-						chartOptions={SCROLL_LEGEND}
+						hideDefaultLegend={data.monthlyNet.charts.length < 2}
+						chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
 						onReady={net.onReady}
 					/>
 				</ChartCard>
@@ -303,13 +307,14 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 						/>
 					}
 				>
-					<AreaChart
-						chartData={data.supplyTotal.data}
-						stacks={data.supplyTotal.stacks}
-						hideDownloadButton
+					<MultiSeriesChart2
+						dataset={data.supplyTotal.dataset}
+						charts={data.supplyTotal.charts}
 						valueSymbol=""
 						title=""
 						height="400px"
+						chartOptions={UNITLESS_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
 						onReady={total.onReady}
 					/>
 				</ChartCard>
@@ -324,17 +329,16 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 						/>
 					}
 				>
-					<AreaChart
-						chartData={data.supplyByChain.data}
-						stacks={data.supplyByChain.stacks}
-						stackColors={data.supplyByChain.colors}
-						hideDownloadButton
+					<MultiSeriesChart2
+						dataset={data.supplyByChain.dataset}
+						charts={data.supplyByChain.charts}
 						valueSymbol=""
 						title=""
-						isStackedChart
-						hideGradient
+						stacked
+						solidChartAreaStyle
 						height="400px"
-						chartOptions={SCROLL_LEGEND}
+						chartOptions={UNITLESS_STACKED_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
 						onReady={byChain.onReady}
 					/>
 				</ChartCard>
@@ -362,17 +366,16 @@ function TvlSection({ data }: { data: FinData }) {
 					/>
 				}
 			>
-				<AreaChart
-					chartData={data.tvl.data}
-					stacks={data.tvl.stacks}
-					stackColors={data.tvl.colors}
-					hideDownloadButton
+				<MultiSeriesChart2
+					dataset={data.tvl.dataset}
+					charts={data.tvl.charts}
 					valueSymbol="$"
 					title=""
-					isStackedChart
-					hideGradient
+					stacked
+					solidChartAreaStyle
 					height="400px"
-					chartOptions={SCROLL_LEGEND}
+					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+					exportButtons={HIDDEN_EXPORT}
 					onReady={tvl.onReady}
 				/>
 			</ChartCard>
@@ -398,13 +401,14 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 						/>
 					}
 				>
-					<AreaChart
-						chartData={data.deposits.data}
-						stacks={data.deposits.stacks}
-						hideDownloadButton
+					<MultiSeriesChart2
+						dataset={data.deposits.dataset}
+						charts={data.deposits.charts}
 						valueSymbol="$"
 						title=""
 						height="400px"
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
 						onReady={deposits.onReady}
 					/>
 				</ChartCard>
@@ -419,14 +423,14 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 						/>
 					}
 				>
-					<AreaChart
-						chartData={data.borrows.data}
-						stacks={data.borrows.stacks}
-						hideDownloadButton
+					<MultiSeriesChart2
+						dataset={data.borrows.dataset}
+						charts={data.borrows.charts}
 						valueSymbol="$"
 						title=""
 						height="400px"
-						color="#f85149"
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
 						onReady={borrows.onReady}
 					/>
 				</ChartCard>
@@ -451,17 +455,16 @@ function SllTvlSection({ data }: { data: FinData }) {
 					/>
 				}
 			>
-				<AreaChart
-					chartData={data.sllTvl.data}
-					stacks={data.sllTvl.stacks}
-					stackColors={data.sllTvl.colors}
-					hideDownloadButton
+				<MultiSeriesChart2
+					dataset={data.sllTvl.dataset}
+					charts={data.sllTvl.charts}
 					valueSymbol="$"
 					title=""
-					isStackedChart
-					hideGradient
+					stacked
+					solidChartAreaStyle
 					height="400px"
-					chartOptions={SCROLL_LEGEND}
+					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+					exportButtons={HIDDEN_EXPORT}
 					onReady={sllTvl.onReady}
 				/>
 			</ChartCard>
@@ -485,17 +488,16 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 					/>
 				}
 			>
-				<AreaChart
-					chartData={data.savingsTvl.data}
-					stacks={data.savingsTvl.stacks}
-					stackColors={data.savingsTvl.colors}
-					hideDownloadButton
+				<MultiSeriesChart2
+					dataset={data.savingsTvl.dataset}
+					charts={data.savingsTvl.charts}
 					valueSymbol="$"
 					title=""
-					isStackedChart
-					hideGradient
+					stacked
+					solidChartAreaStyle
 					height="400px"
-					chartOptions={SCROLL_LEGEND}
+					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+					exportButtons={HIDDEN_EXPORT}
 					onReady={savingsTvl.onReady}
 				/>
 			</ChartCard>
@@ -571,13 +573,7 @@ function TreasurySection({ data }: { data: FinData }) {
 						/>
 					}
 				>
-					<MultiSeriesChart
-						series={data.treasurySeries}
-						hideDownloadButton
-						valueSymbol="$"
-						height="400px"
-						onReady={treasury.onReady}
-					/>
+					<MultiSeriesChart series={data.treasurySeries} valueSymbol="$" height="400px" onReady={treasury.onReady} />
 				</ChartCard>
 				<ChartCard
 					title="SPK Buybacks"
@@ -592,7 +588,6 @@ function TreasurySection({ data }: { data: FinData }) {
 				>
 					<MultiSeriesChart
 						series={data.buybacksSeries}
-						hideDownloadButton
 						valueSymbol=""
 						yAxisSymbols={['SPK', 'SPK']}
 						height="400px"
@@ -635,7 +630,7 @@ export default function Financials() {
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[300px]">
 							<PieChart
-								chartData={data.breakdownPieData}
+								chartData={data.projectedBreakdown.series}
 								stackColors={data.breakdownColors}
 								radius={['40%', '70%']}
 								height="300px"

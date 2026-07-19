@@ -25,6 +25,8 @@ export const StreamDoneContext = createContext(true)
  */
 export const ProxyAuthTokenContext = createContext<string | null>(null)
 
+export type TimePeriodBounds = { start: number; end: number } | null
+
 // oxlint-disable-next-line no-unused-vars
 function generateChartKey(
 	type: string,
@@ -73,22 +75,47 @@ export function filterDataByTimePeriod(
 	timePeriod: TimePeriod,
 	customPeriod?: CustomTimePeriod | null
 ): [number, number][] {
-	if (timePeriod === 'all' || !data.length) {
-		return data
+	if (!data.length) return data
+	const bounds = getTimePeriodBounds(timePeriod, customPeriod)
+	if (!bounds) return data
+
+	let low = 0
+	let high = data.length
+	while (low < high) {
+		const mid = (low + high) >>> 1
+		if (data[mid][0] < bounds.start) low = mid + 1
+		else high = mid
+	}
+	const startIndex = low
+
+	low = startIndex
+	high = data.length
+	while (low < high) {
+		const mid = (low + high) >>> 1
+		if (data[mid][0] <= bounds.end) low = mid + 1
+		else high = mid
 	}
 
+	if (startIndex === 0 && low === data.length) return data
+	return data.slice(startIndex, low)
+}
+
+export function getTimePeriodBounds(
+	timePeriod: TimePeriod,
+	customPeriod?: CustomTimePeriod | null,
+	now: dayjs.Dayjs = dayjs()
+): TimePeriodBounds {
+	if (timePeriod === 'all') return null
 	if (timePeriod === 'custom' && customPeriod) {
 		if (customPeriod.type === 'relative' && customPeriod.relativeDays) {
-			const cutoff = dayjs().subtract(customPeriod.relativeDays, 'day').unix()
-			return data.filter(([ts]) => ts >= cutoff)
+			return { start: now.subtract(customPeriod.relativeDays, 'day').unix(), end: Infinity }
 		}
 		if (customPeriod.type === 'absolute' && customPeriod.startDate && customPeriod.endDate) {
-			return data.filter(([ts]) => ts >= customPeriod.startDate! && ts <= customPeriod.endDate!)
+			return { start: customPeriod.startDate, end: customPeriod.endDate }
 		}
-		return data
+		return null
 	}
 
-	const now = dayjs()
 	let cutoffDate: dayjs.Dayjs
 
 	switch (timePeriod) {
@@ -108,11 +135,10 @@ export function filterDataByTimePeriod(
 			cutoffDate = now.subtract(3, 'year')
 			break
 		default:
-			return data
+			return null
 	}
 
-	const cutoffTimestamp = cutoffDate.unix()
-	return data.filter(([timestamp]) => timestamp >= cutoffTimestamp)
+	return { start: cutoffDate.unix(), end: Infinity }
 }
 
 function getChartQueryKey(

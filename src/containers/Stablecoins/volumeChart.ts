@@ -1,3 +1,4 @@
+import { createChartRow } from '~/components/ECharts/dynamicRow'
 import type {
 	ChartTimeGroupingWithCumulative,
 	MultiSeriesChart2Dataset,
@@ -11,6 +12,7 @@ import type {
 	StablecoinVolumeChartResponse,
 	StablecoinVolumeTotalChartPoint
 } from './api.types'
+import { getGroupedBarCharts } from './chartGrouping'
 
 export interface StablecoinVolumeChartPayload {
 	dataset: MultiSeriesChart2Dataset
@@ -22,9 +24,8 @@ export interface StablecoinVolumeChartPayload {
 
 interface StablecoinVolumeChartOptions {
 	chart: StablecoinVolumeChartKind
-	selectedDimension?: string
-	fallbackDimension?: string
 	limit?: number
+	trimIncompleteTail?: boolean
 }
 
 const DEFAULT_BREAKDOWN_LIMIT = 20
@@ -59,9 +60,33 @@ const buildCharts = (names: string[], stacked: boolean): MultiSeriesChart2Series
 	return charts
 }
 
-const buildTotalVolumePayload = (data: StablecoinVolumeTotalChartPoint[]): StablecoinVolumeChartPayload => {
+const hasBreakdownVolume = (breakdown: Record<string, number>): boolean => {
+	for (const key in breakdown) {
+		if (breakdown[key] !== 0) return true
+	}
+	return false
+}
+
+const getLastCompletePointIndex = (data: StablecoinVolumeChartResponse, trimIncompleteTail: boolean): number => {
+	if (!trimIncompleteTail) return data.length - 1
+	// The volume APIs can append an unfinished all-zero bucket. Keep interior zeroes, but avoid a false trailing cliff.
+	let index = data.length - 1
+	while (index >= 0) {
+		const value = data[index][1]
+		if (typeof value === 'number' ? value !== 0 : hasBreakdownVolume(value)) break
+		index--
+	}
+	return index
+}
+
+const buildTotalVolumePayload = (
+	data: StablecoinVolumeTotalChartPoint[],
+	trimIncompleteTail: boolean
+): StablecoinVolumeChartPayload => {
 	const source: MultiSeriesChart2Dataset['source'] = []
-	for (const point of data) {
+	const lastCompletePointIndex = getLastCompletePointIndex(data, trimIncompleteTail)
+	for (let i = 0; i <= lastCompletePointIndex; i++) {
+		const point = data[i]
 		source.push({
 			timestamp: point[0] * 1e3,
 			[TOTAL_VOLUME_NAME]: point[1]
@@ -80,25 +105,23 @@ const buildTotalVolumePayload = (data: StablecoinVolumeTotalChartPoint[]): Stabl
 	}
 }
 
-const getLatestBreakdown = (points: StablecoinVolumeBreakdownChartPoint[]): Record<string, number> => {
-	for (let i = points.length - 1; i >= 0; i--) {
+const getLatestBreakdown = (
+	points: StablecoinVolumeBreakdownChartPoint[],
+	lastCompletePointIndex: number
+): Record<string, number> => {
+	for (let i = lastCompletePointIndex; i >= 0; i--) {
 		const breakdown = points[i]?.[1]
-		if (breakdown && typeof breakdown === 'object' && !Array.isArray(breakdown)) return breakdown
+		if (breakdown && hasBreakdownVolume(breakdown)) return breakdown
 	}
 	return {}
 }
 
-const findDimensionKey = (points: StablecoinVolumeBreakdownChartPoint[], selectedDimension: string): string | null => {
-	const latest = getLatestBreakdown(points)
-	if (selectedDimension in latest) return selectedDimension
-	for (const [, breakdown] of points) {
-		if (selectedDimension in breakdown) return selectedDimension
-	}
-	return null
-}
-
-const getTopBreakdownKeys = (points: StablecoinVolumeBreakdownChartPoint[], limit: number): string[] => {
-	const latest = getLatestBreakdown(points)
+const getTopBreakdownKeys = (
+	points: StablecoinVolumeBreakdownChartPoint[],
+	lastCompletePointIndex: number,
+	limit: number
+): string[] => {
+	const latest = getLatestBreakdown(points, lastCompletePointIndex)
 	const entries: Array<{ key: string; value: number }> = []
 	for (const key in latest) {
 		const value = latest[key]
@@ -117,33 +140,23 @@ const buildBreakdownVolumePayload = (
 	options: StablecoinVolumeChartOptions
 ): StablecoinVolumeChartPayload => {
 	const points = data as StablecoinVolumeBreakdownChartPoint[]
-
-	let selectedKey = options.selectedDimension ? findDimensionKey(points, options.selectedDimension) : null
-	if (!selectedKey && options.fallbackDimension) selectedKey = findDimensionKey(points, options.fallbackDimension)
-	if (options.selectedDimension && !selectedKey) {
-		return {
-			dataset: { source: [], dimensions: ['timestamp', TOTAL_VOLUME_NAME] },
-			charts: [],
-			valueSymbol: '$',
-			stacked: false,
-			showTotalInTooltip: false
-		}
-	}
-	const keys = selectedKey ? [selectedKey] : getTopBreakdownKeys(points, clampLimit(options.limit))
+	const lastCompletePointIndex = getLastCompletePointIndex(points, options.trimIncompleteTail === true)
+	const keys = getTopBreakdownKeys(points, lastCompletePointIndex, clampLimit(options.limit))
 	const labelsByKey = new Map<string, string>()
 	const dimensions = ['timestamp']
 	for (const key of keys) {
-		const label = selectedKey ? TOTAL_VOLUME_NAME : formatDimensionLabel(key, options.chart)
+		const label = formatDimensionLabel(key, options.chart)
 		labelsByKey.set(key, label)
 		dimensions.push(label)
 	}
-	const includeOthers = !selectedKey && keys.length > 0
+	const includeOthers = keys.length > 0
 	let hasOthersValue = false
 
 	const selectedKeysSet = new Set(keys)
 	const source: MultiSeriesChart2Dataset['source'] = []
-	for (const [timestamp, breakdown] of points) {
-		const row: Record<string, number> = { timestamp: timestamp * 1e3 }
+	for (let i = 0; i <= lastCompletePointIndex; i++) {
+		const [timestamp, breakdown] = points[i]
+		const row = createChartRow<number>(timestamp * 1e3)
 		for (const key of keys) {
 			const label = labelsByKey.get(key)
 			if (!label) continue
@@ -169,7 +182,7 @@ const buildBreakdownVolumePayload = (
 	for (let i = 1; i < dimensions.length; i++) {
 		seriesNames.push(dimensions[i])
 	}
-	const stacked = !selectedKey && seriesNames.length > 1
+	const stacked = seriesNames.length > 1
 
 	return {
 		dataset: {
@@ -187,7 +200,9 @@ export const buildStablecoinVolumeChartPayload = (
 	data: StablecoinVolumeChartResponse,
 	options: StablecoinVolumeChartOptions
 ): StablecoinVolumeChartPayload => {
-	if (options.chart === 'total') return buildTotalVolumePayload(data as StablecoinVolumeTotalChartPoint[])
+	if (options.chart === 'total') {
+		return buildTotalVolumePayload(data as StablecoinVolumeTotalChartPoint[], options.trimIncompleteTail === true)
+	}
 	return buildBreakdownVolumePayload(data, options)
 }
 
@@ -199,6 +214,7 @@ export const groupStablecoinVolumeChartPayload = (
 
 	return {
 		...payload,
-		dataset: groupMultiSeriesBarChartDataset({ dataset: payload.dataset, groupBy })
+		dataset: groupMultiSeriesBarChartDataset({ dataset: payload.dataset, groupBy }),
+		charts: getGroupedBarCharts(payload.charts, groupBy)
 	}
 }

@@ -2,9 +2,7 @@ import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useReducer, useRef } from 'react'
-import { formatTvlApyTooltip } from '~/components/ECharts/formatters'
-import type { IBarChartProps, IChartProps, IMultiSeriesChart2Props } from '~/components/ECharts/types'
-import { CHART_COLORS } from '~/constants/colors'
+import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import type { ProYieldRow } from '~/containers/ProDashboard/components/datasets/YieldsDataset/data'
 import { useYieldsData } from '~/containers/ProDashboard/components/datasets/YieldsDataset/useYieldsData'
 import { normalizeYieldToken } from '~/containers/Yields/domain/tokenNormalization'
@@ -15,16 +13,35 @@ import { formattedNum } from '~/utils'
 import { getItemIconUrl } from '../../utils'
 import { AriakitMultiSelect } from '../AriakitMultiSelect'
 import { useYieldChartTransformations } from '../useYieldChartTransformations'
+import {
+	borrowApyCharts,
+	netBorrowApyCharts,
+	percentTimeChartOptions,
+	singlePercentTimeChartOptions,
+	supplyApy7dCharts,
+	supplyApyCharts,
+	tvlApyCharts
+} from '../yieldChartConfig'
 
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')
 ) as React.FC<IMultiSeriesChart2Props>
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
 
 interface YieldsChartTabProps {
-	selectedYieldPool: { configID: string; name: string; project: string; chain: string } | null
-	onSelectedYieldPoolChange: (pool: { configID: string; name: string; project: string; chain: string } | null) => void
+	selectedYieldPool: {
+		configID: string
+		name: string
+		project: string
+		chain: string
+	} | null
+	onSelectedYieldPoolChange: (
+		pool: {
+			configID: string
+			name: string
+			project: string
+			chain: string
+		} | null
+	) => void
 	selectedYieldChartType: string
 	onSelectedYieldChartTypeChange: (chartType: string) => void
 	selectedYieldChains: string[]
@@ -99,30 +116,6 @@ const yieldsChartUiReducer = (state: YieldsChartUiState, action: YieldsChartUiAc
 	}
 }
 
-const tvlApyCharts = [
-	{
-		type: 'line' as const,
-		name: 'APY',
-		encode: { x: 'timestamp', y: 'APY' },
-		color: '#cc3e82',
-		yAxisIndex: 0,
-		valueSymbol: '%'
-	},
-	{
-		type: 'line' as const,
-		name: 'TVL',
-		encode: { x: 'timestamp', y: 'TVL' },
-		color: '#3e79cc',
-		yAxisIndex: 1,
-		valueSymbol: '$'
-	}
-]
-const tvlApyChartOptions = { tooltip: { formatter: formatTvlApyTooltip } }
-
-const supplyChartStacks = { Base: 'a', Reward: 'a', Intrinsic: 'a' }
-const supplyChartColors = { Base: CHART_COLORS[0], Reward: CHART_COLORS[1], Intrinsic: CHART_COLORS[2] }
-const borrowChartStacks = { 'Base cost': 'a', 'Reward offset': 'a', Intrinsic: 'a' }
-const borrowChartColors = { 'Base cost': CHART_COLORS[0], 'Reward offset': CHART_COLORS[1], Intrinsic: CHART_COLORS[2] }
 const EMPTY_YIELDS_DATA: ProYieldRow[] = []
 
 export function YieldsChartTab({
@@ -218,7 +211,9 @@ export function YieldsChartTab({
 
 	const filteredProjectOptions = useMemo(() => {
 		if (!deferredProjectSearch) return projectOptions
-		return matchSorter(projectOptions, deferredProjectSearch, { keys: ['label'] })
+		return matchSorter(projectOptions, deferredProjectSearch, {
+			keys: ['label']
+		})
 	}, [projectOptions, deferredProjectSearch])
 
 	const filteredTokenOptions = useMemo(() => {
@@ -446,13 +441,11 @@ export function YieldsChartTab({
 	])
 
 	const {
-		// oxlint-disable-next-line no-unused-vars
-		tvlApyData: yieldsChartData,
 		tvlApyDataset: yieldsChartDataset,
-		supplyApyBarData,
-		supplyApy7dData,
-		borrowApyBarData,
-		netBorrowApyData,
+		supplyApyDataset,
+		supplyApy7dDataset,
+		borrowApyDataset,
+		netBorrowApyDataset,
 		latestData: latestYieldData
 	} = useYieldChartTransformations({
 		chartData: selectedYieldChartData,
@@ -503,7 +496,12 @@ export function YieldsChartTab({
 											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
 										/>
 										<input
-											onInput={(e) => dispatchUi({ type: 'set_chain_search', value: e.currentTarget.value })}
+											onInput={(e) =>
+												dispatchUi({
+													type: 'set_chain_search',
+													value: e.currentTarget.value
+												})
+											}
 											placeholder="Search chains..."
 											className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 										/>
@@ -608,7 +606,12 @@ export function YieldsChartTab({
 											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
 										/>
 										<input
-											onInput={(e) => dispatchUi({ type: 'set_project_search', value: e.currentTarget.value })}
+											onInput={(e) =>
+												dispatchUi({
+													type: 'set_project_search',
+													value: e.currentTarget.value
+												})
+											}
 											placeholder="Search projects..."
 											className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 										/>
@@ -714,7 +717,12 @@ export function YieldsChartTab({
 										/>
 										<input
 											ref={tokenSearchInputRef}
-											onInput={(e) => dispatchUi({ type: 'set_token_search', value: e.currentTarget.value })}
+											onInput={(e) =>
+												dispatchUi({
+													type: 'set_token_search',
+													value: e.currentTarget.value
+												})
+											}
 											placeholder="Search tokens..."
 											className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 										/>
@@ -875,13 +883,19 @@ export function YieldsChartTab({
 											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
 										/>
 										<input
-											onInput={(e) => dispatchUi({ type: 'set_pool_search', value: e.currentTarget.value })}
+											onInput={(e) =>
+												dispatchUi({
+													type: 'set_pool_search',
+													value: e.currentTarget.value
+												})
+											}
 											placeholder="Search pools..."
 											className="w-48 rounded-md border border-pro-form-control-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 										/>
 									</div>
 									<span className="text-xs text-pro-text-tertiary">
-										{filteredPools.length} pool{filteredPools.length !== 1 ? 's' : ''}
+										{filteredPools.length} pool
+										{filteredPools.length !== 1 ? 's' : ''}
 									</span>
 								</div>
 								{selectedYieldPool ? (
@@ -955,7 +969,10 @@ export function YieldsChartTab({
 															project: pool.project,
 															chain: pool.chains[0]
 														})
-														dispatchUi({ type: 'set_show_pool_picker', value: false })
+														dispatchUi({
+															type: 'set_show_pool_picker',
+															value: false
+														})
 													}}
 													className={`grid w-full grid-cols-[1fr_100px_100px_80px] items-center gap-2 px-3 py-2 text-left text-xs transition-all ${
 														isSelected ? 'bg-brand/10' : ''
@@ -1103,47 +1120,50 @@ export function YieldsChartTab({
 													height="280px"
 													dataset={yieldsChartDataset}
 													charts={tvlApyCharts}
-													chartOptions={tvlApyChartOptions}
 													valueSymbol=""
 													alwaysShowTooltip={false}
 												/>
 											) : null}
 											{selectedYieldChartType === 'supply-apy' ? (
-												<BarChart
+												<MultiSeriesChart2
 													height="280px"
-													chartData={supplyApyBarData}
-													stacks={supplyChartStacks}
-													stackColors={supplyChartColors}
+													dataset={supplyApyDataset}
+													charts={supplyApyCharts}
+													chartOptions={percentTimeChartOptions}
 													title="Supply APY"
 													valueSymbol="%"
+													hideDefaultLegend={false}
 												/>
 											) : null}
 											{selectedYieldChartType === 'supply-apy-7d' ? (
-												<AreaChart
+												<MultiSeriesChart2
 													height="280px"
-													chartData={supplyApy7dData}
+													dataset={supplyApy7dDataset}
+													charts={supplyApy7dCharts}
+													chartOptions={singlePercentTimeChartOptions}
 													title="7 Day Avg Supply APY"
 													valueSymbol="%"
-													color={CHART_COLORS[0]}
 												/>
 											) : null}
 											{selectedYieldChartType === 'borrow-apy' ? (
-												<BarChart
+												<MultiSeriesChart2
 													height="280px"
-													chartData={borrowApyBarData}
-													stacks={borrowChartStacks}
-													stackColors={borrowChartColors}
+													dataset={borrowApyDataset}
+													charts={borrowApyCharts}
+													chartOptions={percentTimeChartOptions}
 													title="Borrow Cost APY"
 													valueSymbol="%"
+													hideDefaultLegend={false}
 												/>
 											) : null}
 											{selectedYieldChartType === 'net-borrow-apy' ? (
-												<AreaChart
+												<MultiSeriesChart2
 													height="280px"
-													chartData={netBorrowApyData}
+													dataset={netBorrowApyDataset}
+													charts={netBorrowApyCharts}
+													chartOptions={singlePercentTimeChartOptions}
 													title="Net Borrow Cost"
 													valueSymbol="%"
-													color={CHART_COLORS[0]}
 												/>
 											) : null}
 										</Suspense>

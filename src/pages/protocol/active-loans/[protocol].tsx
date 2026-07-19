@@ -53,6 +53,7 @@ function MultiSeriesChartCard({
 	exportIconUrl?: string
 }) {
 	const [selectedSeries, setSelectedSeries] = useSelectedValues(allSeries)
+	const selectedSeriesSet = React.useMemo(() => new Set(selectedSeries), [selectedSeries])
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -86,7 +87,7 @@ function MultiSeriesChartCard({
 					dataset={dataset}
 					charts={charts}
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}
-					selectedCharts={new Set(selectedSeries)}
+					selectedCharts={selectedSeriesSet}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -227,6 +228,7 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 		isLoading,
 		chainsUnique,
 		tokensUnique,
+		rawTokensUnique,
 		chainsDataset: borrowedByChainDataset,
 		chainsCharts: borrowedByChainCharts,
 		tokenUSDDataset,
@@ -238,13 +240,14 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 		protocol,
 		keys: ['borrowed'],
 		includeBase: false,
-		inflows: props.metrics?.inflows
+		inflows: props.metrics?.inflows,
+		computeInflows: false
 	})
 	const hasBreakdownMetrics =
 		(borrowedByChainDataset && chainsUnique.length > 1) ||
 		(tokenUSDDataset && tokensUnique?.length > 0) ||
 		(tokenBreakdownPieChart?.length ?? 0) > 0 ||
-		(tokenRawDataset && tokensUnique?.length > 0)
+		(tokenRawDataset && rawTokensUnique.length > 0)
 	const protocolIconUrl = tokenIconUrl(props.name)
 
 	return (
@@ -308,11 +311,11 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 						/>
 					) : null}
 
-					{tokenRawDataset && tokensUnique?.length > 0 ? (
+					{tokenRawDataset && rawTokensUnique.length > 0 ? (
 						<MultiSeriesChartCard
 							title="Active Loans by Token (Raw Quantities)"
 							protocolName={props.name}
-							allSeries={tokensUnique}
+							allSeries={rawTokensUnique}
 							seriesLabel="Token"
 							dataset={tokenRawDataset}
 							charts={tokenRawCharts}

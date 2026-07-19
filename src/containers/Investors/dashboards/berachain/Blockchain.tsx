@@ -1,12 +1,14 @@
 import { createColumnHelper, useReactTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table'
 import { lazy, useEffect } from 'react'
-import type { IBarChartProps, IChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { formattedNum } from '~/utils'
 import { useBlockchainData, type TopToken } from './blockchainApi'
+import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 
 function KpiCard({ label, value }: { label: string; value: string | number | null }) {
 	return (
@@ -30,30 +32,73 @@ function SectionHeader({ title }: { title: string }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{title}</h2>
 }
 
-// Convert IR server format {dates, series} → ECharts format [{date, key1, key2}]
-function toChartData(dates: string[], series: { name: string; data: number[] }[]): Record<string, any>[] {
-	return dates.map((date, i) => {
-		const entry: Record<string, any> = { date: Math.floor(new Date(date + 'T00:00:00Z').getTime() / 1000) }
-		for (const s of series) {
-			entry[s.name] = s.data[i] ?? 0
-		}
-		return entry
-	})
-}
+const TRANSACTIONS_CHART = [
+	{
+		type: 'bar',
+		name: 'Transactions',
+		encode: { x: 'timestamp', y: 'Transactions' },
+		color: '#4FC3F7',
+		stack: 'a'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
 
-const ACTIVITY_COLORS = { Transactions: '#4FC3F7', 'Active Addresses': '#FFA726', 'New Addresses': '#66BB6A' }
-const ACTIVITY_STACKS = { Transactions: 'a' }
+const ADDRESSES_CHARTS = [
+	{
+		type: 'line',
+		name: 'Active Addresses',
+		encode: { x: 'timestamp', y: 'Active Addresses' },
+		color: '#FFA726'
+	},
+	{
+		type: 'line',
+		name: 'New Addresses',
+		encode: { x: 'timestamp', y: 'New Addresses' },
+		color: '#66BB6A'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
 
-const GAS_COLORS = { 'Total Fees (USD)': '#AB47BC' }
-const GAS_STACKS = { 'Total Fees (USD)': 'a' }
+const GAS_FEES_CHART = [
+	{
+		type: 'bar',
+		name: 'Total Fees (USD)',
+		encode: { x: 'timestamp', y: 'Total Fees (USD)' },
+		color: '#AB47BC',
+		stack: 'a'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
 
-const UTILIZATION_COLORS = { 'Utilization %': '#4FC3F7' }
+const UTILIZATION_CHART = [
+	{
+		type: 'line',
+		name: 'Utilization %',
+		encode: { x: 'timestamp', y: 'Utilization %' },
+		color: '#4FC3F7'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
 
-const CONTRACT_COLORS = { 'New Contracts': '#FFA726' }
-const CONTRACT_STACKS = { 'New Contracts': 'a' }
+const CONTRACTS_CHART = [
+	{
+		type: 'bar',
+		name: 'New Contracts',
+		encode: { x: 'timestamp', y: 'New Contracts' },
+		color: '#FFA726',
+		stack: 'a'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
 
-const TRANSFER_COLORS = { 'Volume (USD)': '#66BB6A' }
-const TRANSFER_STACKS = { 'Volume (USD)': 'a' }
+const TRANSFERS_CHART = [
+	{
+		type: 'bar',
+		name: 'Volume (USD)',
+		encode: { x: 'timestamp', y: 'Volume (USD)' },
+		color: '#66BB6A',
+		stack: 'a'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
+
+const DEFAULT_CHART_OPTIONS = createChartOptions('')
+const DOLLAR_CHART_OPTIONS = createChartOptions('$')
+const PERCENT_CHART_OPTIONS = createChartOptions('%')
 
 const tokenColumnHelper = createColumnHelper<TopToken>()
 
@@ -100,20 +145,6 @@ export default function Blockchain() {
 
 	if (isLoading || !data) return null
 
-	const activityData = toChartData(data.chainActivity.dates, [
-		data.chainActivity.series[0],
-		data.chainActivity.series[1],
-		data.chainActivity.series[2]
-	])
-
-	const gasData = toChartData(data.gasFees.dates, [data.gasFees.series[0]])
-
-	const utilizationData = toChartData(data.blockUtilization.dates, [data.blockUtilization.series[0]])
-
-	const contractData = toChartData(data.contractDeployments.dates, [data.contractDeployments.series[0]])
-
-	const transferData = toChartData(data.tokenTransfers.dates, [data.tokenTransfers.series[1]])
-
 	return (
 		<div className="flex flex-col gap-6">
 			{/* Chain Activity */}
@@ -126,20 +157,24 @@ export default function Blockchain() {
 			</div>
 
 			<ChartCard title="Daily Transactions">
-				<BarChart
-					chartData={activityData}
-					stacks={ACTIVITY_STACKS}
-					stackColors={ACTIVITY_COLORS}
+				<MultiSeriesChart2
+					dataset={data.chartDatasets.transactions}
+					charts={TRANSACTIONS_CHART}
+					chartOptions={DEFAULT_CHART_OPTIONS}
+					exportButtons={BAR_CHART_EXPORTS}
+					valueSymbol=""
 					title=""
 					height="400px"
 				/>
 			</ChartCard>
 
 			<ChartCard title="Active & New Addresses">
-				<AreaChart
-					chartData={activityData}
-					stacks={['Active Addresses', 'New Addresses']}
-					stackColors={ACTIVITY_COLORS}
+				<MultiSeriesChart2
+					dataset={data.chartDatasets.addresses}
+					charts={ADDRESSES_CHARTS}
+					chartOptions={DEFAULT_CHART_OPTIONS}
+					exportButtons={AREA_CHART_EXPORTS}
+					valueSymbol=""
 					title=""
 					height="400px"
 				/>
@@ -155,10 +190,11 @@ export default function Blockchain() {
 			</div>
 
 			<ChartCard title="Daily Gas Fees (USD)">
-				<BarChart
-					chartData={gasData}
-					stacks={GAS_STACKS}
-					stackColors={GAS_COLORS}
+				<MultiSeriesChart2
+					dataset={data.chartDatasets.gasFees}
+					charts={GAS_FEES_CHART}
+					chartOptions={DOLLAR_CHART_OPTIONS}
+					exportButtons={BAR_CHART_EXPORTS}
 					valueSymbol="$"
 					title=""
 					height="400px"
@@ -166,10 +202,11 @@ export default function Blockchain() {
 			</ChartCard>
 
 			<ChartCard title="Block Utilization (%)">
-				<AreaChart
-					chartData={utilizationData}
-					stacks={['Utilization %']}
-					stackColors={UTILIZATION_COLORS}
+				<MultiSeriesChart2
+					dataset={data.chartDatasets.blockUtilization}
+					charts={UTILIZATION_CHART}
+					chartOptions={PERCENT_CHART_OPTIONS}
+					exportButtons={AREA_CHART_EXPORTS}
 					valueSymbol="%"
 					title=""
 					height="400px"
@@ -179,10 +216,12 @@ export default function Blockchain() {
 			{/* Contract Deployments */}
 			<SectionHeader title="Contract Deployments" />
 			<ChartCard title="New Contracts Deployed (Monthly)">
-				<BarChart
-					chartData={contractData}
-					stacks={CONTRACT_STACKS}
-					stackColors={CONTRACT_COLORS}
+				<MultiSeriesChart2
+					dataset={data.chartDatasets.contractDeployments}
+					charts={CONTRACTS_CHART}
+					chartOptions={DEFAULT_CHART_OPTIONS}
+					exportButtons={BAR_CHART_EXPORTS}
+					valueSymbol=""
 					title=""
 					height="400px"
 				/>
@@ -191,10 +230,11 @@ export default function Blockchain() {
 			{/* Token Transfers */}
 			<SectionHeader title="Token Transfers" />
 			<ChartCard title="Daily Token Transfer Volume (USD)">
-				<BarChart
-					chartData={transferData}
-					stacks={TRANSFER_STACKS}
-					stackColors={TRANSFER_COLORS}
+				<MultiSeriesChart2
+					dataset={data.chartDatasets.tokenTransfers}
+					charts={TRANSFERS_CHART}
+					chartOptions={DOLLAR_CHART_OPTIONS}
+					exportButtons={BAR_CHART_EXPORTS}
 					valueSymbol="$"
 					title=""
 					height="400px"

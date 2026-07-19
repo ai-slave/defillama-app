@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { formatTvlApyTooltip } from '~/components/ECharts/formatters'
-import type { IBarChartProps, IChartProps, IMultiSeriesChart2Props } from '~/components/ECharts/types'
-import { CHART_COLORS } from '~/constants/colors'
+import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import { formattedNum } from '~/utils'
@@ -16,41 +14,23 @@ import { normalizeYieldChartType, type ActiveYieldChartType, type YieldsChartCon
 import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 import { useYieldChartTransformations } from './useYieldChartTransformations'
+import {
+	borrowApyCharts,
+	netBorrowApyCharts,
+	percentTimeChartOptions,
+	singlePercentTimeChartOptions,
+	supplyApy7dCharts,
+	supplyApyCharts,
+	tvlApyCharts
+} from './yieldChartConfig'
 
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')
 ) as React.FC<IMultiSeriesChart2Props>
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
 
 interface YieldsChartCardProps {
 	config: YieldsChartConfig
 }
-
-const tvlApyCharts = [
-	{
-		type: 'line' as const,
-		name: 'APY',
-		encode: { x: 'timestamp', y: 'APY' },
-		color: '#cc3e82',
-		yAxisIndex: 0,
-		valueSymbol: '%'
-	},
-	{
-		type: 'line' as const,
-		name: 'TVL',
-		encode: { x: 'timestamp', y: 'TVL' },
-		color: '#3e79cc',
-		yAxisIndex: 1,
-		valueSymbol: '$'
-	}
-]
-const tvlApyChartOptions = { tooltip: { formatter: formatTvlApyTooltip } }
-
-const supplyChartStacks = { Base: 'a', Reward: 'a', Intrinsic: 'a' }
-const supplyChartColors = { Base: CHART_COLORS[0], Reward: CHART_COLORS[1], Intrinsic: CHART_COLORS[2] }
-const borrowChartStacks = { 'Base cost': 'a', 'Reward offset': 'a', Intrinsic: 'a' }
-const borrowChartColors = { 'Base cost': CHART_COLORS[0], 'Reward offset': CHART_COLORS[1], Intrinsic: CHART_COLORS[2] }
 
 export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const { poolConfigId, poolName, project, chain } = config
@@ -94,40 +74,33 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		enabled: !!borrowPoolId
 	})
 
-	const {
-		tvlApyData,
-		tvlApyDataset,
-		supplyApyBarData,
-		supplyApy7dData,
-		borrowApyBarData,
-		netBorrowApyData,
-		latestData
-	} = useYieldChartTransformations({
-		chartData: chart,
-		borrowData: borrowChart,
-		timePeriod,
-		customTimePeriod
-	})
+	const { tvlApyDataset, supplyApyDataset, supplyApy7dDataset, borrowApyDataset, netBorrowApyDataset, latestData } =
+		useYieldChartTransformations({
+			chartData: chart,
+			borrowData: borrowChart,
+			timePeriod,
+			customTimePeriod
+		})
 
-	const currentChartData = useMemo(() => {
+	const currentChartDataset = useMemo(() => {
 		switch (chartType) {
 			case 'tvl-apy':
-				return tvlApyData
+				return tvlApyDataset
 			case 'supply-apy':
-				return supplyApyBarData
+				return supplyApyDataset
 			case 'supply-apy-7d':
-				return supplyApy7dData
+				return supplyApy7dDataset
 			case 'borrow-apy':
-				return borrowApyBarData
+				return borrowApyDataset
 			case 'net-borrow-apy':
-				return netBorrowApyData
+				return netBorrowApyDataset
 			default:
-				return tvlApyData
+				return tvlApyDataset
 		}
-	}, [chartType, tvlApyData, supplyApyBarData, supplyApy7dData, borrowApyBarData, netBorrowApyData])
+	}, [chartType, tvlApyDataset, supplyApyDataset, supplyApy7dDataset, borrowApyDataset, netBorrowApyDataset])
 
 	const handleCsvExport = () => {
-		if (!currentChartData || currentChartData.length === 0) return
+		if (currentChartDataset.source.length === 0) return
 
 		let headers: string[]
 		let rows: Array<Array<string | number>>
@@ -135,16 +108,16 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		switch (chartType) {
 			case 'tvl-apy':
 				headers = ['Date', 'Supply APY', 'TVL']
-				rows = tvlApyData.map((point) => [
-					new Date(point.date * 1000).toISOString().slice(0, 10),
+				rows = tvlApyDataset.source.map((point) => [
+					new Date(point.timestamp).toISOString().slice(0, 10),
 					point.APY ?? '',
 					point.TVL ?? ''
 				])
 				break
 			case 'supply-apy':
 				headers = ['Date', 'Base', 'Reward', 'Intrinsic']
-				rows = supplyApyBarData.map((point) => [
-					new Date(point.date * 1000).toISOString().slice(0, 10),
+				rows = supplyApyDataset.source.map((point) => [
+					new Date(point.timestamp).toISOString().slice(0, 10),
 					point.Base ?? '',
 					point.Reward ?? '',
 					point.Intrinsic ?? ''
@@ -152,8 +125,8 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				break
 			case 'borrow-apy':
 				headers = ['Date', 'Base cost', 'Reward offset', 'Intrinsic']
-				rows = borrowApyBarData.map((point) => [
-					new Date(point.date * 1000).toISOString().slice(0, 10),
+				rows = borrowApyDataset.source.map((point) => [
+					new Date(point.timestamp).toISOString().slice(0, 10),
 					point['Base cost'] ?? '',
 					point['Reward offset'] ?? '',
 					point.Intrinsic ?? ''
@@ -161,11 +134,17 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				break
 			case 'supply-apy-7d':
 				headers = ['Date', '7d Supply APY']
-				rows = supplyApy7dData.map(([date, value]) => [new Date(date * 1000).toISOString().slice(0, 10), value])
+				rows = supplyApy7dDataset.source.map((point) => [
+					new Date(point.timestamp).toISOString().slice(0, 10),
+					point['7d Supply APY']
+				])
 				break
 			case 'net-borrow-apy':
 				headers = ['Date', 'Net borrow cost']
-				rows = netBorrowApyData.map(([date, value]) => [new Date(date * 1000).toISOString().slice(0, 10), value])
+				rows = netBorrowApyDataset.source.map((point) => [
+					new Date(point.timestamp).toISOString().slice(0, 10),
+					point['Net borrow cost']
+				])
 		}
 
 		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
@@ -181,22 +160,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 
 	const hasError = needsBorrowData ? chartError || borrowError : chartError
 
-	const hasRequiredData = (() => {
-		switch (chartType) {
-			case 'tvl-apy':
-				return tvlApyData.length > 0
-			case 'supply-apy':
-				return supplyApyBarData.length > 0
-			case 'supply-apy-7d':
-				return supplyApy7dData.length > 0
-			case 'borrow-apy':
-				return borrowApyBarData.length > 0
-			case 'net-borrow-apy':
-				return netBorrowApyData.length > 0
-			default:
-				return tvlApyData.length > 0
-		}
-	})()
+	const hasRequiredData = currentChartDataset.source.length > 0
 
 	if (isLoading) {
 		return (
@@ -241,7 +205,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						{chartType !== 'tvl-apy' ? <span className="text-pro-text-tertiary">({chartTitle})</span> : null}
 					</p>
 				</div>
-				{currentChartData && currentChartData.length > 0 ? (
+				{currentChartDataset.source.length > 0 ? (
 					<div className="flex gap-2">
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 						<ProTableCSVButton
@@ -283,7 +247,6 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 							height="320px"
 							dataset={tvlApyDataset}
 							charts={tvlApyCharts}
-							chartOptions={tvlApyChartOptions}
 							valueSymbol=""
 							alwaysShowTooltip={false}
 							hideDefaultLegend={false}
@@ -291,44 +254,44 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						/>
 					) : null}
 					{chartType === 'supply-apy' ? (
-						<BarChart
+						<MultiSeriesChart2
 							height="320px"
-							chartData={supplyApyBarData}
-							stacks={supplyChartStacks}
-							stackColors={supplyChartColors}
-							title=""
+							dataset={supplyApyDataset}
+							charts={supplyApyCharts}
+							chartOptions={percentTimeChartOptions}
 							valueSymbol="%"
+							hideDefaultLegend={false}
 							onReady={handleChartReady}
 						/>
 					) : null}
 					{chartType === 'supply-apy-7d' ? (
-						<AreaChart
+						<MultiSeriesChart2
 							height="320px"
-							chartData={supplyApy7dData}
-							title=""
+							dataset={supplyApy7dDataset}
+							charts={supplyApy7dCharts}
+							chartOptions={singlePercentTimeChartOptions}
 							valueSymbol="%"
-							color={CHART_COLORS[0]}
 							onReady={handleChartReady}
 						/>
 					) : null}
 					{chartType === 'borrow-apy' ? (
-						<BarChart
+						<MultiSeriesChart2
 							height="320px"
-							chartData={borrowApyBarData}
-							stacks={borrowChartStacks}
-							stackColors={borrowChartColors}
-							title=""
+							dataset={borrowApyDataset}
+							charts={borrowApyCharts}
+							chartOptions={percentTimeChartOptions}
 							valueSymbol="%"
+							hideDefaultLegend={false}
 							onReady={handleChartReady}
 						/>
 					) : null}
 					{chartType === 'net-borrow-apy' ? (
-						<AreaChart
+						<MultiSeriesChart2
 							height="320px"
-							chartData={netBorrowApyData}
-							title=""
+							dataset={netBorrowApyDataset}
+							charts={netBorrowApyCharts}
+							chartOptions={singlePercentTimeChartOptions}
 							valueSymbol="%"
-							color={CHART_COLORS[0]}
 							onReady={handleChartReady}
 						/>
 					) : null}

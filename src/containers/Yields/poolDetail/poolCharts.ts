@@ -15,8 +15,7 @@ export const CHART_PALETTE: Record<ChartColorKey, readonly [light: string, dark:
 
 function ms(date: string): number {
 	// Bare YYYY-MM-DD → pin to UTC midnight; anything else parse as-is.
-	const d = /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(`${date}T00:00:00Z`) : new Date(date)
-	return d.getTime()
+	return Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}T00:00:00Z` : date)
 }
 
 // `sign` is applied by the client at render (borrow "reward offset" draws below zero).

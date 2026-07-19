@@ -1,20 +1,29 @@
-import { lazy, Suspense, useMemo } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
-import type { IBarChartProps, IChartProps, IPieChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import {
+	filterStablecoinDatasetByTimePeriod,
+	STABLECOIN_DOLLAR_CHART_OPTIONS,
+	STABLECOIN_INFLOWS_CHART_OPTIONS,
+	STABLECOIN_PERCENT_CHART_OPTIONS,
+	STABLECOIN_SINGLE_UNITLESS_CHART_OPTIONS
+} from '~/containers/ProDashboard/components/datasets/stablecoinChartUtils'
 import { useStablecoinsChartData } from '~/containers/ProDashboard/components/datasets/StablecoinsDataset/useStablecoinsChartData'
 import { generateConsistentChartColor, STABLECOIN_TOKEN_COLORS } from '~/containers/ProDashboard/utils/colorManager'
+import { STABLECOIN_BREAKDOWN_SERIES_LIMIT } from '~/containers/Stablecoins/chartSeries'
 import { formattedNum, toNiceCsvDate } from '~/utils'
 import { download } from '~/utils/download'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
-import { filterDataByTimePeriod } from '../queries'
 import type { StablecoinsChartConfig } from '../types'
 import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 interface StablecoinsChartCardProps {
@@ -30,163 +39,86 @@ const CHART_TYPE_LABELS: Record<string, string> = {
 	tokenInflows: 'Token Inflows'
 }
 
-const chartOptions = {
-	grid: chartGrid({ bottom: CHART_ZOOM_RESERVE })
-}
-
-const inflowsChartOptions = {
-	overrides: {
-		inflow: true
-	}
-}
-
-const MCAP_STACKS = ['Mcap']
 const EMPTY_HALLMARKS: [number, string][] = []
+const SERIES_SELECTION_CHARTS = new Set<StablecoinsChartConfig['chartType']>([
+	'tokenMcaps',
+	'dominance',
+	'tokenInflows'
+])
 
 export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 	const { chain, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useChartImageExport()
+	const [selectedSeries, setSelectedSeries] = useState<string[] | null>(null)
 
-	const {
-		peggedAreaTotalData,
-		peggedAreaChartData,
-		chainsCirculatingValues,
-		dataWithExtraPeggedAndDominanceByDay,
-		usdInflows,
-		tokenInflows,
-		tokenInflowNames,
-		peggedAssetNames,
-		isLoading
-	} = useStablecoinsChartData(chain)
+	useEffect(() => {
+		setSelectedSeries(null)
+	}, [chain, chartType])
+
+	const { chartPayload, chainsCirculatingValues, seriesNames, availableSeries, defaultSeries, isLoading } =
+		useStablecoinsChartData(chain, chartType, selectedSeries)
 
 	const stackColors = useMemo(() => {
 		const colors: Record<string, string> = { ...STABLECOIN_TOKEN_COLORS }
-		for (const name of peggedAssetNames) {
-			if (!colors[name]) {
-				colors[name] = generateConsistentChartColor(name, '#8884d8', 'protocol')
-			}
-		}
-		for (const name of tokenInflowNames) {
-			if (!colors[name]) {
-				colors[name] = generateConsistentChartColor(name, '#8884d8', 'protocol')
-			}
+		for (const name of seriesNames) {
+			if (!colors[name]) colors[name] = generateConsistentChartColor(name, '#8884d8', 'protocol')
 		}
 		return colors
-	}, [peggedAssetNames, tokenInflowNames])
+	}, [seriesNames])
 
-	const filteredChartData = useMemo(() => {
-		if (!timePeriod || timePeriod === 'all') {
-			return {
-				peggedAreaTotalData,
-				peggedAreaChartData,
-				dataWithExtraPeggedAndDominanceByDay,
-				usdInflows,
-				tokenInflows
-			}
-		}
-
-		const filterTimeSeries = (data: any[]) => {
-			if (!data || data.length === 0) return data
-			const hasDateField = data[0]?.date !== undefined
-			if (!hasDateField) return data
-
-			const points: [number, number][] = data.map((el) => [el.date, 1])
-			const filtered = filterDataByTimePeriod(points, timePeriod, customTimePeriod)
-			const filteredTimestamps = new Set(filtered.map(([ts]) => ts))
-			return data.filter((el) => filteredTimestamps.has(el.date))
-		}
-
-		return {
-			peggedAreaTotalData: filterTimeSeries(peggedAreaTotalData),
-			peggedAreaChartData: filterTimeSeries(peggedAreaChartData),
-			dataWithExtraPeggedAndDominanceByDay: filterTimeSeries(dataWithExtraPeggedAndDominanceByDay),
-			usdInflows: filterTimeSeries(usdInflows),
-			tokenInflows: filterTimeSeries(tokenInflows)
-		}
-	}, [
-		peggedAreaTotalData,
-		peggedAreaChartData,
-		dataWithExtraPeggedAndDominanceByDay,
-		usdInflows,
-		tokenInflows,
-		timePeriod,
-		customTimePeriod
-	])
+	const charts = useMemo(
+		() =>
+			chartPayload.charts.map((chart) => ({
+				...chart,
+				color: stackColors[chart.name] ?? chart.color,
+				...(chartType === 'tokenMcaps' ? { hideAreaStyle: true } : {})
+			})),
+		[chartPayload.charts, chartType, stackColors]
+	)
+	const dataset = useMemo(
+		() => filterStablecoinDatasetByTimePeriod(chartPayload.dataset, timePeriod, customTimePeriod),
+		[chartPayload.dataset, timePeriod, customTimePeriod]
+	)
+	const activeSeries = selectedSeries ?? defaultSeries
+	const setActiveSeries: Dispatch<SetStateAction<string[]>> = (next) => {
+		setSelectedSeries((current) => {
+			const values = typeof next === 'function' ? next(current ?? defaultSeries) : next
+			return values.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT)
+		})
+	}
 
 	const latestMcap = useMemo(() => {
-		const data = filteredChartData.peggedAreaTotalData
-		if (!data || data.length === 0) return null
-		return data[data.length - 1]?.Mcap ?? null
-	}, [filteredChartData.peggedAreaTotalData])
+		return (dataset.source.at(-1)?.Mcap as number | undefined) ?? null
+	}, [dataset])
 
 	const handleCsvExport = () => {
 		let rows: (string | number)[][] = []
-		let filename = ''
-
 		const chainSlug = chain === 'All' ? 'all' : chain.toLowerCase().replace(/\s+/g, '-')
+		let filename = `stablecoins-${chainSlug}-${chartType}`
 
-		switch (chartType) {
-			case 'totalMcap':
-				rows = [
-					['Date', 'Market Cap'],
-					...filteredChartData.peggedAreaTotalData.map((el: any) => [toNiceCsvDate(el.date), el.Mcap ?? ''])
-				]
-				filename = `stablecoins-${chainSlug}-total-mcap`
-				break
-			case 'tokenMcaps':
-				rows = [
-					['Date', ...peggedAssetNames],
-					...filteredChartData.peggedAreaChartData.map((el: any) => [
-						toNiceCsvDate(el.date),
-						...peggedAssetNames.map((name) => el[name] ?? '')
-					])
-				]
-				filename = `stablecoins-${chainSlug}-token-mcaps`
-				break
-			case 'dominance':
-				rows = [
-					['Date', ...peggedAssetNames],
-					...filteredChartData.dataWithExtraPeggedAndDominanceByDay.map((el: any) => [
-						toNiceCsvDate(el.date),
-						...peggedAssetNames.map((name) => el[name] ?? '')
-					])
-				]
-				filename = `stablecoins-${chainSlug}-dominance`
-				break
-			case 'usdInflows':
-				rows = [
-					['Date', 'USD Inflows'],
-					...filteredChartData.usdInflows.map((el: any) => [toNiceCsvDate(el.date), el.Inflows ?? ''])
-				]
-				filename = `stablecoins-${chainSlug}-usd-inflows`
-				break
-			case 'tokenInflows':
-				rows = [
-					['Date', ...tokenInflowNames],
-					...filteredChartData.tokenInflows.map((el: any) => [
-						toNiceCsvDate(el.date),
-						...tokenInflowNames.map((name) => el[name] ?? '')
-					])
-				]
-				filename = `stablecoins-${chainSlug}-token-inflows`
-				break
-			case 'pie':
-				rows = [['Token', 'Market Cap'], ...chainsCirculatingValues.map((el: any) => [el.name, el.value])]
-				filename = `stablecoins-${chainSlug}-pie`
-				break
+		if (chartType === 'pie') {
+			rows = [['Token', 'Market Cap'], ...chainsCirculatingValues.map((slice: any) => [slice.name, slice.value])]
+			filename = `stablecoins-${chainSlug}-pie`
+		} else {
+			const dimensions = dataset.dimensions.slice(1)
+			rows = [
+				['Date', ...dimensions],
+				...dataset.source.map((row) => [
+					toNiceCsvDate(Number(row.timestamp) / 1000),
+					...dimensions.map((name) => row[name] ?? '')
+				])
+			]
 		}
 
-		if (rows.length > 0) {
-			const csvContent = rows.map((row) => row.join(',')).join('\n')
-			download(filename, csvContent)
-		}
+		if (rows.length > 0) download(filename, rows.map((row) => row.join(',')).join('\n'))
 	}
 
 	const chartTypeLabel = CHART_TYPE_LABELS[chartType] || chartType
 	const chainLabel = chain === 'All' ? 'All Chains' : chain
 	const imageTitle = `${chainLabel} Stablecoins - ${chartTypeLabel}`
 	const imageFilename = `stablecoins-${chain === 'All' ? 'all' : chain.toLowerCase().replace(/\s+/g, '-')}-${chartType}`
+	const hasChartData = chartType === 'pie' ? chainsCirculatingValues.length > 0 : dataset.source.length > 0
 
 	if (isLoading) {
 		return (
@@ -196,139 +128,14 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		)
 	}
 
-	const chartContent = (() => {
-		switch (chartType) {
-			case 'totalMcap':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LoadingSpinner />
-							</div>
-						}
-					>
-						<AreaChart
-							title=""
-							chartData={filteredChartData.peggedAreaTotalData}
-							stacks={MCAP_STACKS}
-							valueSymbol="$"
-							hideDefaultLegend={true}
-							hideDownloadButton={true}
-							hallmarks={EMPTY_HALLMARKS}
-							color="#3e79cc"
-							chartOptions={chartOptions}
-							onReady={handleChartReady}
-						/>
-					</Suspense>
-				)
-			case 'tokenMcaps':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LoadingSpinner />
-							</div>
-						}
-					>
-						<AreaChart
-							title=""
-							chartData={filteredChartData.peggedAreaChartData}
-							stacks={peggedAssetNames}
-							valueSymbol="$"
-							hideDefaultLegend={true}
-							hideDownloadButton={true}
-							hideGradient={true}
-							stackColors={stackColors}
-							chartOptions={chartOptions}
-							onReady={handleChartReady}
-						/>
-					</Suspense>
-				)
-			case 'pie':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LoadingSpinner />
-							</div>
-						}
-					>
-						<PieChart chartData={chainsCirculatingValues} stackColors={stackColors} />
-					</Suspense>
-				)
-			case 'dominance':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LoadingSpinner />
-							</div>
-						}
-					>
-						<AreaChart
-							title=""
-							valueSymbol="%"
-							chartData={filteredChartData.dataWithExtraPeggedAndDominanceByDay}
-							stacks={peggedAssetNames}
-							hideDefaultLegend={true}
-							hideDownloadButton={true}
-							hideGradient={true}
-							expandTo100Percent={true}
-							stackColors={stackColors}
-							chartOptions={chartOptions}
-							onReady={handleChartReady}
-						/>
-					</Suspense>
-				)
-			case 'usdInflows':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LoadingSpinner />
-							</div>
-						}
-					>
-						<BarChart
-							chartData={filteredChartData.usdInflows}
-							color="#3e79cc"
-							title=""
-							hideDownloadButton={true}
-							onReady={handleChartReady}
-						/>
-					</Suspense>
-				)
-			case 'tokenInflows':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LoadingSpinner />
-							</div>
-						}
-					>
-						<BarChart
-							chartData={filteredChartData.tokenInflows}
-							title=""
-							hideDefaultLegend={true}
-							hideDownloadButton={true}
-							customLegendName="Token"
-							customLegendOptions={tokenInflowNames}
-							chartOptions={inflowsChartOptions}
-							stackColors={stackColors}
-							onReady={handleChartReady}
-						/>
-					</Suspense>
-				)
-			default:
-				return null
-		}
-	})()
-
-	const hasChartData =
-		filteredChartData.peggedAreaTotalData.length > 0 ||
-		filteredChartData.peggedAreaChartData.length > 0 ||
-		chainsCirculatingValues.length > 0
+	const chartOptions =
+		chartType === 'dominance'
+			? STABLECOIN_PERCENT_CHART_OPTIONS
+			: chartType === 'tokenInflows'
+				? STABLECOIN_INFLOWS_CHART_OPTIONS
+				: chartType === 'usdInflows'
+					? STABLECOIN_SINGLE_UNITLESS_CHART_OPTIONS
+					: STABLECOIN_DOLLAR_CHART_OPTIONS
 
 	return (
 		<div className="flex h-full flex-col p-2">
@@ -351,6 +158,21 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 				) : null}
 			</div>
 
+			{SERIES_SELECTION_CHARTS.has(chartType) && availableSeries.length > 1 ? (
+				<div className="mb-2 flex justify-end">
+					<SelectWithCombobox
+						size="sm"
+						allValues={availableSeries}
+						selectedValues={activeSeries}
+						setSelectedValues={setActiveSeries}
+						label="Token"
+						labelType="smol"
+						variant="filter"
+						popoverVariant="legacy"
+					/>
+				</div>
+			) : null}
+
 			{latestMcap !== null && chartType === 'totalMcap' ? (
 				<div className="mb-2 flex gap-4">
 					<div className="flex flex-col">
@@ -370,7 +192,23 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 						</div>
 					}
 				>
-					{chartContent}
+					{chartType === 'pie' ? (
+						<PieChart chartData={chainsCirculatingValues} stackColors={stackColors} />
+					) : (
+						<MultiSeriesChart2
+							title=""
+							dataset={dataset}
+							charts={charts}
+							valueSymbol={chartPayload.valueSymbol ?? ''}
+							stacked={chartPayload.stacked}
+							expandTo100Percent={chartPayload.expandTo100Percent}
+							showTotalInTooltip={chartPayload.showTotalInTooltip}
+							hallmarks={chartType === 'totalMcap' ? EMPTY_HALLMARKS : undefined}
+							chartOptions={chartOptions}
+							exportButtons="hidden"
+							onReady={handleChartReady}
+						/>
+					)}
 				</Suspense>
 			</div>
 		</div>

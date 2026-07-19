@@ -10,9 +10,23 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')
 ) as React.FC<IMultiSeriesChart2Props>
+const MAX_VISIBLE_CHAINS = 30
 
 export function BridgeChainsOverview({ allChains, tableData, chart }) {
-	const [selectedChains, setSelectedChains] = React.useState<string[]>(() => (allChains ? [...allChains] : []))
+	const [selectedChains, setSelectedChains] = React.useState<string[]>(() =>
+		allChains ? allChains.slice(0, MAX_VISIBLE_CHAINS) : []
+	)
+	const setBoundedSelectedChains = React.useCallback((values: string[]) => {
+		setSelectedChains((current) => {
+			if (values.length <= MAX_VISIBLE_CHAINS) return values
+			const addedValues = values.filter((value) => !current.includes(value))
+			if (addedValues.length === 1) {
+				const added = addedValues[0]
+				return [...values.filter((value) => value !== added).slice(0, MAX_VISIBLE_CHAINS - 1), added]
+			}
+			return values.slice(0, MAX_VISIBLE_CHAINS)
+		})
+	}, [])
 
 	const selectedCharts = React.useMemo(() => new Set(selectedChains), [selectedChains])
 
@@ -25,7 +39,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }) {
 					<SelectWithCombobox
 						allValues={allChains}
 						selectedValues={selectedChains}
-						setSelectedValues={setSelectedChains}
+						setSelectedValues={setBoundedSelectedChains}
 						label="Chain"
 						labelType="smol"
 						variant="filter"

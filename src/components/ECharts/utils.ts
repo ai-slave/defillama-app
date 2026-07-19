@@ -4,6 +4,7 @@ import type {
 	MultiSeriesChart2Dataset
 } from '~/components/ECharts/types'
 import { firstDayOfMonth, firstDayOfQuarter, firstDayOfYear, lastDayOfWeek, toNiceCsvDate } from '~/utils'
+import { createChartRecord, createChartRow } from './dynamicRow'
 
 /** Generate a random 6-digit hex colour string (e.g. `"#a3f04c"`). */
 export function stringToColour() {
@@ -65,12 +66,12 @@ export function validateIconUrl(url: string): Promise<boolean> {
  * Values within the same period are **summed** (appropriate for bar/volume charts).
  * When `groupBy` is `'cumulative'`, a running total is computed across all periods.
  *
- * @param data - Raw data as `[date, value]` tuples (date in seconds or ms depending on `dateInMs`).
+ * @param data - Ascending `[date, value]` tuples (date in seconds or ms depending on `dateInMs`).
  * @param groupBy - Temporal bucketing strategy: `'daily'` preserves incoming timestamps,
  *   `'weekly'`/`'monthly'` bucket by week/month end/start, and `'cumulative'` computes a running total.
  * @param dateInMs - When true, incoming dates are already in milliseconds (default: seconds).
  * @param denominationPriceHistory - Optional price map to convert values into an alternative denomination.
- * @returns Chronologically sorted `[timestampMs, value | null]` tuples.
+ * @returns Chronological `[timestampMs, value | null]` tuples.
  */
 type FormatterMode = 'sum' | 'last'
 
@@ -105,12 +106,23 @@ const formatDailyChart = ({
 	dateInMs = false,
 	denominationPriceHistory
 }: Pick<FormatterInput, 'data' | 'dateInMs' | 'denominationPriceHistory'>): Array<[number, number | null]> => {
-	return data.map(([date, value]) => {
+	const formatted = new Array<[number, number | null]>(data.length)
+	if (!denominationPriceHistory) {
+		for (let i = 0; i < data.length; i++) {
+			const point = data[i]
+			formatted[i] = [dateInMs ? +point[0] : +point[0] * 1e3, point[1]]
+		}
+		return formatted
+	}
+
+	for (let i = 0; i < data.length; i++) {
+		const [date, value] = data[i]
 		const timestampSec = dateInMs ? +date / 1e3 : +date
 		const timestampMs = dateInMs ? +date : +date * 1e3
-		const price = denominationPriceHistory?.[String(timestampSec)] ?? denominationPriceHistory?.[String(timestampMs)]
-		return [timestampMs, price ? value / price : denominationPriceHistory ? null : value]
-	})
+		const price = denominationPriceHistory[String(timestampSec)] ?? denominationPriceHistory[String(timestampMs)]
+		formatted[i] = [timestampMs, price ? value / price : null]
+	}
+	return formatted
 }
 
 const formatGroupedChart = ({
@@ -128,32 +140,72 @@ const formatGroupedChart = ({
 		return formatDailyChart({ data, dateInMs, denominationPriceHistory })
 	}
 
-	const valuesByTimestamp = new Map<number, number | null>()
+	const formatted: Array<[number, number | null]> = []
 	let cumulativeTotal = 0
 
-	for (const [date, value] of data) {
+	if (!denominationPriceHistory) {
+		for (let i = 0; i < data.length; i++) {
+			const point = data[i]
+			const timestampMs = dateInMs ? +point[0] : +point[0] * 1e3
+			const bucketTimestampMs =
+				groupBy === 'cumulative'
+					? timestampMs
+					: getBucketTimestampSec(dateInMs ? timestampMs / 1e3 : +point[0], groupBy) * 1e3
+			const previous = formatted[formatted.length - 1]
+
+			if (mode === 'sum') {
+				if (groupBy === 'cumulative') {
+					cumulativeTotal += point[1]
+					if (previous?.[0] === bucketTimestampMs) previous[1] = cumulativeTotal
+					else formatted.push([bucketTimestampMs, cumulativeTotal])
+				} else if (previous?.[0] === bucketTimestampMs) {
+					previous[1] = (previous[1] ?? 0) + point[1]
+				} else {
+					formatted.push([bucketTimestampMs, point[1]])
+				}
+			} else if (previous?.[0] === bucketTimestampMs) {
+				previous[1] = point[1]
+			} else {
+				formatted.push([bucketTimestampMs, point[1]])
+			}
+		}
+		return formatted
+	}
+
+	for (let i = 0; i < data.length; i++) {
+		const [date, value] = data[i]
 		const timestampSec = dateInMs ? +date / 1e3 : +date
 		const timestampMs = dateInMs ? +date : +date * 1e3
 		const bucketTimestampMs =
 			groupBy === 'cumulative' ? timestampMs : getBucketTimestampSec(timestampSec, groupBy) * 1e3
-		const price = denominationPriceHistory?.[String(timestampSec)] ?? denominationPriceHistory?.[String(timestampMs)]
+		const price = denominationPriceHistory[String(timestampSec)] ?? denominationPriceHistory[String(timestampMs)]
 
 		if (mode === 'sum') {
-			if (denominationPriceHistory && !price) continue
-			const nextValue = denominationPriceHistory ? value / price! : value
-			const currentValue = valuesByTimestamp.get(bucketTimestampMs) ?? 0
-			valuesByTimestamp.set(
-				bucketTimestampMs,
-				groupBy === 'cumulative' ? currentValue + nextValue + cumulativeTotal : currentValue + nextValue
-			)
-			if (groupBy === 'cumulative') cumulativeTotal += nextValue
+			if (!price) continue
+			const nextValue = value / price
+			const previous = formatted[formatted.length - 1]
+			if (groupBy === 'cumulative') {
+				cumulativeTotal += nextValue
+				if (previous?.[0] === bucketTimestampMs) previous[1] = cumulativeTotal
+				else formatted.push([bucketTimestampMs, cumulativeTotal])
+			} else if (previous?.[0] === bucketTimestampMs) {
+				previous[1] = (previous[1] ?? 0) + nextValue
+			} else {
+				formatted.push([bucketTimestampMs, nextValue])
+			}
 			continue
 		}
 
-		valuesByTimestamp.set(bucketTimestampMs, denominationPriceHistory ? (price ? value / price : null) : value)
+		const nextValue = price ? value / price : null
+		const previous = formatted[formatted.length - 1]
+		if (previous?.[0] === bucketTimestampMs) {
+			previous[1] = nextValue
+		} else {
+			formatted.push([bucketTimestampMs, nextValue])
+		}
 	}
 
-	return Array.from(valuesByTimestamp.entries()).sort((a, b) => a[0] - b[0])
+	return formatted
 }
 
 export const formatBarChart = ({
@@ -172,11 +224,11 @@ export const formatBarChart = ({
  * `'cumulative'` is intentionally not handled here; callers either precompute running totals
  * or reuse `formatBarChart(..., 'cumulative')` and render the result as a line.
  *
- * @param data - Raw data as `[date, value]` tuples (date in seconds or ms depending on `dateInMs`).
+ * @param data - Ascending `[date, value]` tuples (date in seconds or ms depending on `dateInMs`).
  * @param groupBy - Temporal bucketing strategy.
  * @param dateInMs - When true, incoming dates are already in milliseconds (default: seconds).
  * @param denominationPriceHistory - Optional price map to convert values into an alternative denomination.
- * @returns Chronologically sorted `[timestampMs, value | null]` tuples.
+ * @returns Chronological `[timestampMs, value | null]` tuples.
  */
 export const formatLineChart = ({
 	data,
@@ -196,50 +248,31 @@ export const formatLineChart = ({
  * @returns `{ filename, rows }` where rows include a header row followed by data rows.
  */
 export function prepareChartCsv(data: Record<string, Array<[string | number, number | null]>>, filename: string) {
-	let rows = []
-	const charts = []
-	const dateStore = {}
+	const rows: Array<Array<string | number | null>> = []
+	const charts: string[] = []
+	const dateStore = createChartRecord<Record<string, number | null>>()
 	for (const chartName in data) {
 		charts.push(chartName)
 		for (const [date, value] of data[chartName]) {
 			if (!dateStore[date]) {
-				dateStore[date] = {}
+				dateStore[date] = createChartRecord<number | null>()
 			}
 			dateStore[date][chartName] = value
 		}
 	}
-	rows.push(['Timestamp', 'Date', ...charts])
 	for (const date in dateStore) {
-		const values = []
+		const values: Array<number | string | null> = []
 		for (const chartName in data) {
 			values.push(dateStore[date]?.[chartName] ?? '')
 		}
 		rows.push([date, toNiceCsvDate(+date / 1000), ...values])
 	}
 
-	return { filename, rows: rows.sort((a, b) => a[0] - b[0]) }
+	rows.sort((a, b) => Number(a[0]) - Number(b[0]))
+	return { filename, rows: [['Timestamp', 'Date', ...charts], ...rows] }
 }
 
-/**
- * Return rows sorted by `timestamp` ascending. Performs an optimistic linear scan first —
- * if the rows are already in order the original array is returned without allocating a copy.
- * Only falls back to a full sort when an out-of-order element is detected.
- */
-export function ensureChronologicalRows<T extends { timestamp?: number | string }>(rows: T[]) {
-	if (rows.length < 2) return rows
-
-	let prev = Number(rows[0]?.timestamp)
-	for (let i = 1; i < rows.length; i++) {
-		const curr = Number(rows[i]?.timestamp)
-		if (!Number.isFinite(prev) || !Number.isFinite(curr) || curr < prev) {
-			return rows.toSorted((a, b) => Number(a.timestamp ?? 0) - Number(b.timestamp ?? 0))
-		}
-		prev = curr
-	}
-
-	return rows
-}
-
+/** Group an ascending canonical dataset without re-sorting or allocating an intermediate Map. */
 export function groupMultiSeriesBarChartDataset<TDataset extends MultiSeriesChart2Dataset>({
 	dataset,
 	groupBy
@@ -249,32 +282,41 @@ export function groupMultiSeriesBarChartDataset<TDataset extends MultiSeriesChar
 }): TDataset {
 	if (groupBy === 'daily') return dataset
 
-	const rowsByTimestamp = new Map<number, MultiSeriesChart2Dataset['source'][number]>()
+	const dimensions = dataset.dimensions.filter((dimension) => dimension !== 'timestamp')
+	const source: MultiSeriesChart2Dataset['source'] = []
 
-	for (const dimension of dataset.dimensions) {
-		if (dimension === 'timestamp') continue
+	for (const row of dataset.source) {
+		const timestamp = row.timestamp as number
+		const bucketTimestamp = groupBy === 'cumulative' ? timestamp : getBucketTimestampMs(timestamp, groupBy)
+		let groupedRow = source[source.length - 1]
+		if (groupedRow?.timestamp !== bucketTimestamp) groupedRow = undefined
 
-		const points: Array<[number, number]> = []
-		for (const row of dataset.source) {
+		for (const dimension of dimensions) {
 			const value = row[dimension]
-			if (value != null) points.push([row.timestamp as number, value as number])
+			if (value == null) continue
+			if (!groupedRow) {
+				groupedRow = createChartRow<number | null | undefined>(bucketTimestamp)
+				source.push(groupedRow)
+			}
+			groupedRow[dimension] = ((groupedRow[dimension] as number | undefined) ?? 0) + (value as number)
 		}
+	}
 
-		for (const [timestamp, value] of formatBarChart({
-			data: points,
-			groupBy,
-			dateInMs: true,
-			denominationPriceHistory: null
-		})) {
-			const row = rowsByTimestamp.get(timestamp) ?? { timestamp }
-			row[dimension] = value
-			rowsByTimestamp.set(timestamp, row)
+	if (groupBy === 'cumulative') {
+		const cumulativeTotals = new Array<number>(dimensions.length).fill(0)
+		for (const row of source) {
+			for (let i = 0; i < dimensions.length; i++) {
+				const dimension = dimensions[i]
+				const value = row[dimension]
+				if (value != null) cumulativeTotals[i] += value as number
+				row[dimension] = cumulativeTotals[i]
+			}
 		}
 	}
 
 	return {
 		...dataset,
-		source: ensureChronologicalRows(Array.from(rowsByTimestamp.values()))
+		source
 	} as TDataset
 }
 
@@ -319,34 +361,25 @@ export const preparePieChartData = ({
 		})
 	}
 
-	pieData = pieData.toSorted((a, b) => b.value - a.value)
+	pieData.sort((a, b) => b.value - a.value)
 
 	if (!limit) {
 		return pieData
 	}
 
-	const mainSlices = pieData.slice(0, limit)
-	const otherSlices = pieData.slice(limit)
-
-	const othersIndex = mainSlices.findIndex((slice) => slice.name === 'Others')
-	let othersValueFromMain = 0
-	let filteredMainSlices = mainSlices
-
-	if (othersIndex !== -1) {
-		othersValueFromMain = mainSlices[othersIndex].value
-		filteredMainSlices = mainSlices.filter((_, index) => index !== othersIndex)
+	const mainSlices: Array<{ name: string; value: number }> = []
+	let othersValue = 0
+	for (let i = 0; i < pieData.length; i++) {
+		const slice = pieData[i]
+		if (i < limit && slice.name !== 'Others') mainSlices.push(slice)
+		else othersValue += slice.value
 	}
 
-	const otherSlicesValue =
-		otherSlices.reduce((acc, curr) => {
-			return acc + curr.value
-		}, 0) + othersValueFromMain
-
-	if (otherSlicesValue > 0) {
-		return [...filteredMainSlices, { name: 'Others', value: otherSlicesValue }]
+	if (othersValue > 0) {
+		mainSlices.push({ name: 'Others', value: othersValue })
 	}
 
-	return filteredMainSlices
+	return mainSlices
 }
 
 /**
@@ -364,7 +397,7 @@ export function mergeDeep(target: any, source: any): any {
 
 	const result = { ...target }
 	for (const key in source) {
-		if (source.hasOwnProperty(key)) {
+		if (Object.hasOwn(source, key)) {
 			if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
 				result[key] = mergeDeep(target[key] || {}, source[key])
 			} else {

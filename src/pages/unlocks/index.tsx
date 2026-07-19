@@ -9,15 +9,17 @@ import {
 	DWM_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
-import { buildTimeSeriesChart } from '~/components/ECharts/timeSeriesChartBuilder'
 import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
-import { formatBarChart, getBucketTimestampSec } from '~/components/ECharts/utils'
 import { BasicLink } from '~/components/Link'
-import { CHART_COLORS } from '~/constants/colors'
 import { PastUnlockPriceImpact } from '~/containers/Unlocks/PastUnlockPriceImpact'
 import { getAllProtocolEmissions } from '~/containers/Unlocks/queries'
 import { UnlocksTable } from '~/containers/Unlocks/Table'
 import { TopUnlocks } from '~/containers/Unlocks/TopUnlocks'
+import {
+	buildUpcomingUnlockChart,
+	buildUpcomingUnlockSeries,
+	type UpcomingUnlockChartSeries
+} from '~/containers/Unlocks/upcomingUnlockChart'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
@@ -75,20 +77,6 @@ const calculateUnlockStatistics = (data, nowSec: number) => {
 	}
 }
 
-const buildChartProtocols = (protocols: any[]) => {
-	return protocols.map((protocol) => ({
-		name: protocol.name,
-		tPrice: protocol.tPrice,
-		events: Array.isArray(protocol.events)
-			? protocol.events.map((event) => ({
-					...event,
-					timestamp:
-						typeof event?.timestamp === 'number' ? getBucketTimestampSec(event.timestamp, 'daily') : event?.timestamp
-				}))
-			: []
-	}))
-}
-
 export const getStaticProps = withPerformanceLogging('unlocks', async () => {
 	const generatedAtSec = Math.floor(Date.now() / 1000)
 	const metadataModule = await import('~/utils/metadata')
@@ -102,7 +90,7 @@ export const getStaticProps = withPerformanceLogging('unlocks', async () => {
 	return {
 		props: {
 			data,
-			chartProtocols: buildChartProtocols(data),
+			unlockChartSeries: buildUpcomingUnlockSeries(data, generatedAtSec, END_TIMESTAMP),
 			generatedAtSec
 		},
 		revalidate: maxAgeForNext([22])
@@ -129,7 +117,7 @@ const normalizeChartGroup = (value: string | null | undefined): LowercaseDwmGrou
 	return null
 }
 
-function UpcomingUnlockVolumeChart({ protocols, initialNowSec }: { protocols: any[]; initialNowSec: number }) {
+function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeries[] }) {
 	const router = useRouter()
 
 	const updateQueryParam = React.useCallback(
@@ -150,84 +138,16 @@ function UpcomingUnlockVolumeChart({ protocols, initialNowSec }: { protocols: an
 			? (chartViewParam as ViewMode)
 			: 'Total View'
 
-	const isFullView = false
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
-	const now = initialNowSec
 	const unlockChartData = useMemo(() => {
-		if (!protocols || protocols.length === 0) return EMPTY_CHART_RESULT
-		const endTs = isFullView ? Infinity : END_TIMESTAMP
-		const isTotalView = viewMode === 'Total View'
-
-		const totalByTimestamp = new Map<number, number>()
-		const protocolSeries = new Map<string, Map<number, number>>()
-
-		for (const protocol of protocols) {
-			if (!protocol.events || protocol.tPrice == null || protocol.tPrice <= 0) continue
-			const price = protocol.tPrice
-			const name = protocol.name
-
-			for (const event of protocol.events) {
-				const ts = event.timestamp
-				if (ts == null || ts < now || ts >= endTs) continue
-				const tokens = event.noOfTokens
-				if (!tokens || tokens.length === 0) continue
-
-				let totalTokens = 0
-				for (let i = 0; i < tokens.length; i++) {
-					totalTokens += tokens[i] || 0
-				}
-				if (totalTokens === 0) continue
-
-				const valueUSD = totalTokens * price
-				if (valueUSD <= 0) continue
-				totalByTimestamp.set(ts, (totalByTimestamp.get(ts) ?? 0) + valueUSD)
-				const series = protocolSeries.get(name) ?? new Map<number, number>()
-				series.set(ts, (series.get(ts) ?? 0) + valueUSD)
-				protocolSeries.set(name, series)
-			}
-		}
-
-		if (isTotalView) {
-			const seriesName = 'Total Upcoming Unlock Value'
-			const formattedSeries = formatBarChart({
-				data: Array.from(totalByTimestamp.entries()).sort((a, b) => a[0] - b[0]),
-				groupBy: timePeriod,
-				denominationPriceHistory: null
-			})
-			const source = formattedSeries.map(([timestamp, total]) => ({
-				timestamp,
-				[seriesName]: total
-			}))
-
-			return {
-				dataset: { source, dimensions: ['timestamp', seriesName] } satisfies MultiSeriesChart2Dataset,
-				charts: [
-					{
-						type: 'bar' as const,
-						name: seriesName,
-						encode: { x: 'timestamp', y: seriesName },
-						color: '#8884d8'
-					}
-				]
-			}
-		}
-
-		const sortedNames = Array.from(protocolSeries.keys()).sort()
-
-		return buildTimeSeriesChart({
-			kind: 'periodBars',
+		if (series.length === 0) return EMPTY_CHART_RESULT
+		return buildUpcomingUnlockChart({
+			series,
 			groupBy: timePeriod,
-			series: sortedNames.map((name, i) => ({
-				name,
-				color: CHART_COLORS[i % CHART_COLORS.length],
-				stack: 'A',
-				points: Array.from(protocolSeries.get(name)?.entries() ?? [])
-					.sort((a, b) => a[0] - b[0])
-					.map(([timestamp, value]) => [timestamp * 1e3, value] as const)
-			}))
+			viewMode
 		})
-	}, [protocols, timePeriod, isFullView, viewMode, now])
+	}, [series, timePeriod, viewMode])
 	const deferredChartData = React.useDeferredValue(unlockChartData)
 
 	return (
@@ -276,11 +196,11 @@ function UpcomingUnlockVolumeChart({ protocols, initialNowSec }: { protocols: an
 
 export default function Protocols({
 	data,
-	chartProtocols,
+	unlockChartSeries,
 	generatedAtSec
 }: {
 	data: any[]
-	chartProtocols: any[]
+	unlockChartSeries: UpcomingUnlockChartSeries[]
 	generatedAtSec: number
 }) {
 	const { savedProtocols } = useWatchlistManager('defi')
@@ -327,7 +247,7 @@ export default function Protocols({
 					</BasicLink>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<UpcomingUnlockVolumeChart protocols={chartProtocols} initialNowSec={generatedAtSec} />
+					<UpcomingUnlockVolumeChart series={unlockChartSeries} />
 				</ChartPanel>
 			</SummaryCardGrid>
 

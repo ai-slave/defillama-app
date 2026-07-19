@@ -3,8 +3,8 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
-import { filterDataByTimePeriod } from '../queries'
 import type { RWAAssetChartConfig, RWAOverviewChartMetric } from '../types'
+import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWAAssetChartData } from './datasets/RWADataset/useRWAChartData'
 import { LoadingSpinner } from './LoadingSpinner'
 
@@ -32,24 +32,10 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 		if (!chartDataset) return null
 		const selectedDimensions = ['timestamp', ...metrics.map((m) => METRIC_TO_DIMENSION[m])]
 		const filteredDimensions = chartDataset.dimensions.filter((d) => selectedDimensions.includes(d))
-		let filteredSource = chartDataset.source.map((row) => {
-			const newRow: Record<string, any> = { timestamp: row.timestamp }
-			for (const dim of filteredDimensions) {
-				if (dim !== 'timestamp') {
-					newRow[dim] = (row as any)[dim]
-				}
-			}
-			return newRow
-		})
-
-		if (timePeriod && timePeriod !== 'all') {
-			const points: [number, number][] = filteredSource.map((row: any) => [row.timestamp, 1])
-			const filtered = filterDataByTimePeriod(points, timePeriod, customTimePeriod)
-			const filteredTimestamps = new Set(filtered.map(([ts]) => ts))
-			filteredSource = filteredSource.filter((row: any) => filteredTimestamps.has(row.timestamp))
-		}
-
-		return { source: filteredSource, dimensions: filteredDimensions }
+		const selectedDataset = { source: chartDataset.source, dimensions: filteredDimensions }
+		return timePeriod && timePeriod !== 'all'
+			? filterChartDatasetByTimePeriod(selectedDataset, timePeriod, customTimePeriod)
+			: selectedDataset
 	}, [chartDataset, metrics, timePeriod, customTimePeriod])
 
 	const metricsLabel = metrics.map((m) => METRIC_TO_DIMENSION[m]).join(', ')

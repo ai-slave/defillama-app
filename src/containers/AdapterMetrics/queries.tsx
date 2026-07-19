@@ -1,3 +1,4 @@
+import { createChartRow } from '~/components/ECharts/dynamicRow'
 import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { V2_SERVER_URL } from '~/constants'
 import { getDimensionAdapterChainEarningsOverview } from '~/containers/Incentives/queries'
@@ -45,25 +46,18 @@ function buildChainsChartData({
 	allChains: string[]
 }): MultiSeriesChart2Dataset {
 	const chartDimensions = ['timestamp', ...allChains]
+	const allowedChains = new Set(allChains)
 	const source: MultiSeriesChart2Dataset['source'] = []
 	for (const [timestamp, chainValues] of rawChartData) {
 		const normalizedTimestamp = timestamp < 1e12 ? timestamp * 1e3 : timestamp
-		const row: Record<string, number | null> = { timestamp: normalizedTimestamp }
-
-		for (const chain of allChains) {
-			row[chain] = null
-		}
+		const row = createChartRow<number | null>(normalizedTimestamp)
 
 		for (const chainKey in chainValues) {
-			if (chainKey in row) {
-				row[chainKey] = chainValues[chainKey]
-			}
+			if (allowedChains.has(chainKey)) row[chainKey] = chainValues[chainKey]
 		}
 
 		source.push(row)
 	}
-	source.sort((a, b) => Number(a.timestamp) - Number(b.timestamp))
-
 	return {
 		dimensions: chartDimensions,
 		source

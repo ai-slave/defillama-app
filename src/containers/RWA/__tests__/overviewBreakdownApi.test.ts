@@ -128,7 +128,8 @@ describe('parseOverviewBreakdownRequest', () => {
 
 describe('rwaOverviewBreakdown', () => {
 	it('returns serialized transformed breakdown data', async () => {
-		mocks.fetchRWACategoryBreakdownChartData.mockResolvedValue([{ timestamp: 1, Treasuries: 42 }])
+		const timestampMs = 1_774_483_200_000
+		mocks.fetchRWACategoryBreakdownChartData.mockResolvedValue([{ timestamp: timestampMs, Treasuries: 42 }])
 
 		const result = await rwaOverviewBreakdown.handle({
 			method: 'GET',
@@ -149,7 +150,7 @@ describe('rwaOverviewBreakdown', () => {
 			headers: { 'Content-Type': 'application/json; charset=utf-8' }
 		})
 		expect(resultBody(result)).toEqual({
-			source: [{ timestamp: 1000, Treasuries: 42 }],
+			source: [{ timestamp: timestampMs, Treasuries: 42 }],
 			dimensions: ['timestamp', 'Treasuries']
 		})
 	})

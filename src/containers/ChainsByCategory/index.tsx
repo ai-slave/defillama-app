@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import type { IPieChartProps } from '~/components/ECharts/types'
-import { ensureChronologicalRows, preparePieChartData } from '~/components/ECharts/utils'
+import { preparePieChartData } from '~/components/ECharts/utils'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -199,7 +200,7 @@ const useFormatChartData = ({
 	enabledTvlSettings: readonly TvlSettingsKey[]
 }) => {
 	const data = React.useMemo(() => {
-		const recentTvlByChain: Record<string, number> = {}
+		const recentTvlByChain = createChartRecord<number>()
 		const tvlByChain = tvlChartsByChain['tvl'] ?? {}
 		const chainNames: string[] = []
 		for (const chain in tvlByChain) {
@@ -222,14 +223,14 @@ const useFormatChartData = ({
 					enabledTvlSettings
 				)
 				lastValue = value ?? undefined
-				const row = rowMap.get(+date) ?? { timestamp: +date }
+				const row = rowMap.get(+date) ?? createChartRow<number | null>(+date)
 				row[chain] = value != null && total != null && total !== 0 ? (value / total) * 100 : null
 				rowMap.set(+date, row)
 			}
 			recentTvlByChain[chain] = lastValue ?? 0
 		}
 
-		const allRows = ensureChronologicalRows(Array.from(rowMap.values()))
+		const allRows = Array.from(rowMap.values()).sort((a, b) => a.timestamp - b.timestamp)
 		const source = allRows.filter((_, index) => index % 2 === 1)
 		const dimensions = ['timestamp', ...chainNames]
 		const chartsConfig = chainNames.map((chain) => ({

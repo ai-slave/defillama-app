@@ -5,6 +5,7 @@ import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef } from 'react'
 import { CHART_INSET } from '~/components/ECharts/chartSpacing'
+import { clearTreemapFocus, registerTreemapFocusTracking } from '~/components/ECharts/treemapFocus'
 import { buildWatermarkGraphic } from '~/components/ECharts/utils'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -17,17 +18,18 @@ echarts.use([TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer, 
 const NEGATIVE_COLOR = '#942e38'
 const NEUTRAL_COLOR = '#8b929a'
 const POSITIVE_COLOR = '#269f3c'
+const NEGATIVE_RGB = [148, 46, 56] as const
+const NEUTRAL_RGB = [139, 146, 154] as const
+const POSITIVE_RGB = [38, 159, 60] as const
 const MIN_COLOR_CAP_PERCENT = 0.01
 const COLOR_INTENSITY_EXPONENT = 0.7
 
-function hexToRgb(hex: string): [number, number, number] {
-	return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)]
-}
-
-function lerpHex(from: string, to: string, ratio: number): string {
-	const a = hexToRgb(from)
-	const b = hexToRgb(to)
-	return `rgb(${a.map((channel, index) => Math.round(channel + (b[index] - channel) * ratio)).join(',')})`
+function lerpRgb(
+	from: readonly [red: number, green: number, blue: number],
+	to: readonly [red: number, green: number, blue: number],
+	ratio: number
+): string {
+	return `rgb(${Math.round(from[0] + (to[0] - from[0]) * ratio)},${Math.round(from[1] + (to[1] - from[1]) * ratio)},${Math.round(from[2] + (to[2] - from[2]) * ratio)})`
 }
 
 function getColorCap(nodes: readonly RWAFlowTreemapNode[]): number {
@@ -45,7 +47,16 @@ function getFlowColor(value: number | null, colorCap: number): string {
 	if (value == null || value === 0) return NEUTRAL_COLOR
 	// Lift meaningful mid-range moves while keeping tiny changes close to neutral.
 	const ratio = Math.min(Math.abs(value) / colorCap, 1) ** COLOR_INTENSITY_EXPONENT
-	return value > 0 ? lerpHex(NEUTRAL_COLOR, POSITIVE_COLOR, ratio) : lerpHex(NEUTRAL_COLOR, NEGATIVE_COLOR, ratio)
+	return value > 0 ? lerpRgb(NEUTRAL_RGB, POSITIVE_RGB, ratio) : lerpRgb(NEUTRAL_RGB, NEGATIVE_RGB, ratio)
+}
+
+export function buildRWAFlowTreemapChartData(nodes: readonly RWAFlowTreemapNode[]) {
+	const colorCap = getColorCap(nodes)
+	const data: Array<RWAFlowTreemapNode & { itemStyle: { color: string } }> = []
+	for (const node of nodes) {
+		data.push({ ...node, itemStyle: { color: getFlowColor(node.value[1], colorCap) } })
+	}
+	return data
 }
 
 function formatFlowPercent(value: number | null): string {
@@ -77,49 +88,25 @@ export function RWAFlowTreemapChart({
 	const chartElementRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const onReadyRef = useRef(onReady)
+	useChartResize(chartRef, chartElementRef)
+
 	useEffect(() => {
 		onReadyRef.current = onReady
 	})
-	useChartResize(chartRef)
 
-	const chartData = useMemo(() => {
-		const colorCap = getColorCap(nodes)
-		const data: Array<RWAFlowTreemapNode & { itemStyle: { color: string } }> = []
-		for (const node of nodes) {
-			data.push({ ...node, itemStyle: { color: getFlowColor(node.value[1], colorCap) } })
-		}
-		return data
-	}, [nodes])
+	const chartData = useMemo(() => buildRWAFlowTreemapChartData(nodes), [nodes])
 
 	useEffect(() => {
 		const element = chartElementRef.current
 		if (!element) return
-		const instance = echarts.getInstanceByDom(element) || echarts.init(element, null, { renderer: 'canvas' })
+		const instance = echarts.init(element, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		onReadyRef.current?.(instance)
-		const resizeObserver = new ResizeObserver(() => {
-			if (!instance.isDisposed()) instance.resize()
-		})
-		resizeObserver.observe(element)
 
-		const handleClick = (params: any) => {
-			if (params?.seriesType !== 'treemap') return
-			const node = (instance as any)
-				.getModel?.()
-				?.getSeriesByIndex?.(params.seriesIndex ?? 0)
-				?.getData?.()
-				?.tree?.getNodeByDataIndex?.(params.dataIndex)
-			const nodeId = node?.getId?.()
-			if (typeof nodeId === 'string' && nodeId) (instance as any).__llamaTreemapFocusNode = { id: nodeId }
-		}
-		const handleRestore = () => delete (instance as any).__llamaTreemapFocusNode
-		instance.on('click', handleClick)
-		instance.on('restore', handleRestore)
+		const unregisterTreemapFocus = registerTreemapFocusTracking(instance)
 
 		return () => {
-			resizeObserver.disconnect()
-			instance.off('click', handleClick)
-			instance.off('restore', handleRestore)
+			unregisterTreemapFocus()
 			chartRef.current = null
 			onReadyRef.current?.(null)
 			instance.dispose()
@@ -207,6 +194,7 @@ export function RWAFlowTreemapChart({
 			]
 		}
 
+		clearTreemapFocus(instance)
 		instance.setOption(option, { notMerge: true, lazyUpdate: true })
 	}, [chartData, isDark, periodLabel, sizeLabel])
 

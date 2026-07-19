@@ -7,7 +7,57 @@ import { useChartResize } from '~/hooks/useChartResize'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
 
-type PrimitiveSparklinePoint = [number, number | null | undefined]
+type PrimitiveSparklinePoint = [number, number]
+type RgbColor = [number, number, number]
+
+let colorParserContext: CanvasRenderingContext2D | null | undefined
+const rgbColorCache = new Map<string, RgbColor | null>()
+
+function parseRgbColor(base: string): RgbColor | null {
+	const cached = rgbColorCache.get(base)
+	if (cached !== undefined) return cached
+
+	if (colorParserContext === undefined) {
+		const canvas = document.createElement('canvas')
+		canvas.width = canvas.height = 1
+		colorParserContext = canvas.getContext('2d')
+	}
+	const context = colorParserContext
+	if (!context) return null
+	context.fillStyle = '#000'
+	context.fillStyle = base
+	const computed = context.fillStyle
+	let output: RgbColor | null = null
+
+	if (typeof computed === 'string' && computed.startsWith('#')) {
+		const hex = computed.slice(1)
+		if (hex.length === 3) {
+			output = [
+				Number.parseInt(hex[0] + hex[0], 16),
+				Number.parseInt(hex[1] + hex[1], 16),
+				Number.parseInt(hex[2] + hex[2], 16)
+			]
+		} else if (hex.length === 6 || hex.length === 8) {
+			output = [
+				Number.parseInt(hex.slice(0, 2), 16),
+				Number.parseInt(hex.slice(2, 4), 16),
+				Number.parseInt(hex.slice(4, 6), 16)
+			]
+		}
+	} else if (typeof computed === 'string') {
+		const rgbMatch = computed.match(/rgba?\(([^)]+)\)/)
+		if (rgbMatch) {
+			const values = rgbMatch[1]
+				.split(',')
+				.slice(0, 3)
+				.map((part) => Number.parseInt(part.trim(), 10))
+			if (values.every(Number.isFinite)) output = values as RgbColor
+		}
+	}
+
+	rgbColorCache.set(base, output)
+	return output
+}
 
 interface SparklineChartProps {
 	data?: PrimitiveSparklinePoint[]
@@ -32,13 +82,15 @@ export function SparklineChart({
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
 	const seriesData = useMemo(() => {
 		if (!data) return []
-		return data
-			.filter((point) => Array.isArray(point) && Number.isFinite(point[1] ?? NaN))
-			.map(([timestamp, value]) => [timestamp * 1000, Number(value)])
+		const points: PrimitiveSparklinePoint[] = []
+		for (const [timestamp, value] of data) {
+			points.push([timestamp * 1000, value])
+		}
+		return points
 	}, [data])
 	const hasData = seriesData.length > 0
 
@@ -86,47 +138,7 @@ export function SparklineChart({
 			resolvedArea = resolvedLine
 		}
 
-		const toRgb = (base: string): [number, number, number] | null => {
-			const canvas = document.createElement('canvas')
-			canvas.width = canvas.height = 1
-			const context = canvas.getContext('2d')
-			if (!context) return null
-			context.fillStyle = '#000'
-			context.fillStyle = base
-			const computed = context.fillStyle
-			if (typeof computed !== 'string') return null
-
-			if (computed.startsWith('#')) {
-				const hex = computed.slice(1)
-				if (hex.length === 3) {
-					const r = parseInt(hex[0] + hex[0], 16)
-					const g = parseInt(hex[1] + hex[1], 16)
-					const b = parseInt(hex[2] + hex[2], 16)
-					return [r, g, b]
-				}
-				if (hex.length === 6 || hex.length === 8) {
-					const r = parseInt(hex.slice(0, 2), 16)
-					const g = parseInt(hex.slice(2, 4), 16)
-					const b = parseInt(hex.slice(4, 6), 16)
-					return [r, g, b]
-				}
-				return null
-			}
-
-			const rgbMatch = computed.match(/rgba?\(([^)]+)\)/)
-			if (rgbMatch) {
-				const [r, g, b] = rgbMatch[1]
-					.split(',')
-					.slice(0, 3)
-					.map((part) => parseInt(part.trim(), 10))
-				if ([r, g, b].every((val) => Number.isFinite(val))) {
-					return [r, g, b]
-				}
-			}
-			return null
-		}
-
-		const rgb = areaColor ? null : toRgb(resolvedLine)
+		const rgb = areaColor ? null : parseRgbColor(resolvedLine)
 		const areaFill = areaColor
 			? resolvedArea
 			: rgb

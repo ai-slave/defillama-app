@@ -1,11 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, type ReactNode, useEffect, useMemo, useState } from 'react'
-import type {
-	IMultiSeriesChart2Props,
-	IPieChartProps,
-	ISingleSeriesChartProps,
-	MultiSeriesChart2Dataset
-} from '~/components/ECharts/types'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import { stringToColour } from '~/components/ECharts/utils'
+import type { EmissionsDataset } from '~/containers/Unlocks/api.types'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
@@ -16,12 +14,9 @@ import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../Ariak
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')
 ) as React.FC<IMultiSeriesChart2Props>
-const SingleSeriesChart = lazy(
-	() => import('~/components/ECharts/SingleSeriesChart')
-) as React.FC<ISingleSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
-const EMPTY_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp'] }
+const EMPTY_DATASET: EmissionsDataset = { source: [], dimensions: ['timestamp'] }
 
 interface UnlocksChartTabProps {
 	selectedUnlocksProtocol: string | null
@@ -41,11 +36,17 @@ const UNLOCKS_CHART_TYPES = [
 	{ value: 'locked-unlocked', label: 'Locked/Unlocked %' }
 ]
 
-const EMPTY_CHART_DATA: any[] = []
+const EMPTY_CHART_DATA: Array<{ name: string; value: number }> = []
 const EMPTY_STACKS: string[] = []
 const LOCKED_UNLOCKED_COLORS = {
 	Unlocked: '#0c5dff',
 	Locked: '#ff4e21'
+}
+const TOTAL_UNLOCKS_SERIES_NAME = 'Total Unlocks'
+const TOTAL_UNLOCKS_CHART_OPTIONS = createSingleSeriesChartOptions('$')
+const EMPTY_TOTAL_UNLOCKS_DATASET: MultiSeriesChart2Dataset = {
+	source: [],
+	dimensions: ['timestamp', TOTAL_UNLOCKS_SERIES_NAME]
 }
 
 export function UnlocksChartTab({
@@ -60,6 +61,7 @@ export function UnlocksChartTab({
 }: UnlocksChartTabProps) {
 	const [unlocksEndDate] = useState(() => Date.now() / 1000 + 30 * 24 * 60 * 60)
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
+	const [totalUnlocksColor] = useState(stringToColour)
 	const todayHallmarks = useMemo<[number, string][]>(
 		() => [[todayTimestamp, toNiceDayMonthYear(todayTimestamp)]],
 		[todayTimestamp]
@@ -121,12 +123,18 @@ export function UnlocksChartTab({
 		return EMPTY_STACKS
 	}, [scheduleDataset.dimensions, data])
 
-	const allocationPieChartData = useMemo(() => {
-		const pieData = data?.pieChartData?.documented ?? EMPTY_CHART_DATA
-		return pieData
-			.map((item: any) => ({ name: item?.name, value: Number(item?.value) }))
-			.filter((item: any) => item.name && Number.isFinite(item.value) && item.value > 0)
-	}, [data])
+	const allocationPieChart = useMemo(() => {
+		const source = data?.pieChartData?.documented ?? EMPTY_CHART_DATA
+		const shouldBuildChartData = selectedUnlocksChartType === 'allocation'
+		const chartData: Array<{ name: string; value: number }> = shouldBuildChartData ? [] : EMPTY_CHART_DATA
+		let available = false
+		for (const item of source) {
+			if (!item.name || item.value <= 0) continue
+			available = true
+			if (shouldBuildChartData) chartData.push(item)
+		}
+		return { available, chartData }
+	}, [data, selectedUnlocksChartType])
 
 	const allocationPieChartColors = useMemo(() => {
 		return data?.stackColors?.documented ?? {}
@@ -136,54 +144,58 @@ export function UnlocksChartTab({
 		const totalLocked = data?.meta?.totalLocked
 		const maxSupply = data?.meta?.maxSupply
 		if (totalLocked == null || maxSupply == null) return null
-		const totalLockedValue = Number(totalLocked)
-		const maxSupplyValue = Number(maxSupply)
-		if (!Number.isFinite(totalLockedValue) || !Number.isFinite(maxSupplyValue) || maxSupplyValue === 0) return null
-		const percent = 100 - (totalLockedValue / maxSupplyValue) * 100
+		if (maxSupply === 0) return null
+		const percent = 100 - (totalLocked / maxSupply) * 100
 		return Math.min(100, Math.max(0, percent))
 	}, [data])
 
 	const lockedUnlockedPieChartData = useMemo(
 		() =>
-			unlockedPercent == null
+			unlockedPercent == null || selectedUnlocksChartType !== 'locked-unlocked'
 				? []
 				: [
 						{ name: 'Unlocked', value: unlockedPercent },
 						{ name: 'Locked', value: 100 - unlockedPercent }
 					],
-		[unlockedPercent]
+		[unlockedPercent, selectedUnlocksChartType]
 	)
 
-	const totalSeries = useMemo(() => {
+	const totalCharts = useMemo<NonNullable<IMultiSeriesChart2Props['charts']>>(
+		() => [
+			{
+				type: 'line',
+				name: TOTAL_UNLOCKS_SERIES_NAME,
+				encode: { x: 'timestamp', y: TOTAL_UNLOCKS_SERIES_NAME },
+				color: totalUnlocksColor,
+				stack: 'value'
+			}
+		],
+		[totalUnlocksColor]
+	)
+
+	const totalDataset = useMemo<MultiSeriesChart2Dataset>(() => {
+		if (selectedUnlocksChartType !== 'total') return EMPTY_TOTAL_UNLOCKS_DATASET
 		const source = scheduleDataset.source
-		if (!source.length) return []
-		const valueKeys = scheduleDataset.dimensions.filter((k) => k !== 'timestamp')
-		const result: [number, number][] = []
-		for (const entry of source) {
-			const ts = entry.timestamp as number
-			if (!Number.isFinite(ts)) continue
+		if (!source.length) return EMPTY_TOTAL_UNLOCKS_DATASET
+		const dimensions = scheduleDataset.dimensions
+		const totalSource = new Array<Record<string, number>>(source.length)
+		for (let i = 0; i < source.length; i++) {
+			const entry = source[i]
 			let total = 0
-			for (const key of valueKeys) total += Number(entry[key] ?? 0)
-			// SingleSeriesChart expects [seconds, value]
-			result.push([Math.floor(ts / 1e3), total])
+			for (let j = 1; j < dimensions.length; j++) total += entry[dimensions[j]] ?? 0
+			totalSource[i] = { timestamp: entry.timestamp, [TOTAL_UNLOCKS_SERIES_NAME]: total }
 		}
-		return result
-	}, [scheduleDataset])
+		return { source: totalSource, dimensions: ['timestamp', TOTAL_UNLOCKS_SERIES_NAME] }
+	}, [scheduleDataset, selectedUnlocksChartType])
 
 	const availableChartTypes = useMemo(() => {
 		const available = new Set<'total' | 'schedule' | 'allocation' | 'locked-unlocked'>()
-		if (totalSeries.length > 0) available.add('total')
+		if (scheduleDataset.source.length > 0) available.add('total')
 		if (scheduleDataset.source.length > 0 && stacks.length > 0) available.add('schedule')
-		if (allocationPieChartData.length > 0) available.add('allocation')
-		if (lockedUnlockedPieChartData.length > 0) available.add('locked-unlocked')
+		if (allocationPieChart.available) available.add('allocation')
+		if (unlockedPercent != null) available.add('locked-unlocked')
 		return available
-	}, [
-		totalSeries.length,
-		scheduleDataset.source.length,
-		stacks.length,
-		allocationPieChartData.length,
-		lockedUnlockedPieChartData.length
-	])
+	}, [scheduleDataset.source.length, stacks.length, allocationPieChart.available, unlockedPercent])
 
 	const chartTypeOptions = useMemo(
 		() =>
@@ -222,7 +234,7 @@ export function UnlocksChartTab({
 			</div>
 		)
 	} else if (selectedUnlocksChartType === 'total') {
-		if (totalSeries.length === 0) {
+		if (totalDataset.source.length === 0) {
 			chartContent = (
 				<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
 					No unlocks data.
@@ -231,12 +243,15 @@ export function UnlocksChartTab({
 		} else {
 			chartContent = (
 				<Suspense fallback={<div className="h-[320px]" />}>
-					<SingleSeriesChart
-						chartType="line"
-						chartData={totalSeries}
+					<MultiSeriesChart2
+						dataset={totalDataset}
+						charts={totalCharts}
 						valueSymbol="$"
 						hideDataZoom
 						hallmarks={todayHallmarks}
+						hallmarkStyle="mark-line"
+						chartOptions={TOTAL_UNLOCKS_CHART_OPTIONS}
+						exportButtons="hidden"
 					/>
 				</Suspense>
 			)
@@ -262,7 +277,7 @@ export function UnlocksChartTab({
 			)
 		}
 	} else if (selectedUnlocksChartType === 'allocation') {
-		if (allocationPieChartData.length === 0) {
+		if (allocationPieChart.chartData.length === 0) {
 			chartContent = (
 				<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
 					No unlocks data.
@@ -271,7 +286,7 @@ export function UnlocksChartTab({
 		} else {
 			chartContent = (
 				<Suspense fallback={<div className="h-[320px]" />}>
-					<PieChart chartData={allocationPieChartData} stackColors={allocationPieChartColors} />
+					<PieChart chartData={allocationPieChart.chartData} stackColors={allocationPieChartColors} />
 				</Suspense>
 			)
 		}

@@ -1,5 +1,30 @@
-import { describe, expect, it } from 'vitest'
-import { sanitizeRichImagesForExport, scaleXAxisForExport, scaleYAxisForExport } from '../ChartPngExportButton'
+import { describe, expect, it, vi } from 'vitest'
+import {
+	applyTreemapViewportExportState,
+	mutateAndWaitForChartRender,
+	readTreemapViewportExportState,
+	sanitizeRichImagesForExport,
+	scaleXAxisForExport,
+	scaleYAxisForExport
+} from '../ChartPngExportButton'
+
+describe('mutateAndWaitForChartRender', () => {
+	it('subscribes before a mutation emits rendered synchronously', async () => {
+		let rendered: (() => void) | null = null
+		const chart = {
+			on: vi.fn((_event: string, handler: () => void) => {
+				rendered = handler
+			}),
+			off: vi.fn()
+		} as any
+		const mutate = vi.fn(() => rendered?.())
+
+		await mutateAndWaitForChartRender(chart, mutate)
+
+		expect(chart.on).toHaveBeenCalledBefore(mutate)
+		expect(chart.off).toHaveBeenCalledWith('rendered', expect.any(Function))
+	})
+})
 
 describe('sanitizeRichImagesForExport', () => {
 	it('converts readable canvases to data URLs and removes tainted canvases without mutating the source', () => {
@@ -21,6 +46,40 @@ describe('sanitizeRichImagesForExport', () => {
 		expect(sanitized.tainted.backgroundColor).toBeUndefined()
 		expect(sanitized.text).toBe(rich.text)
 		expect(rich.tainted.backgroundColor.image).toBe(taintedCanvas)
+	})
+})
+
+describe('treemap viewport export', () => {
+	it('resolves a stashed focus path against clone-local node ids before dispatching', () => {
+		const sourceSeries = { id: 'source', getData: () => ({ tree: { root: {} } }) }
+		const originalChart = {
+			__llamaTreemapFocusNode: { id: 'source-node', path: ['All', 'Technology'] },
+			getModel: () => ({ getSeriesByType: () => [sourceSeries] })
+		} as any
+		const state = readTreemapViewportExportState(originalChart)
+		expect(state).toMatchObject({ actionType: 'treemapZoomToNode', targetNodePath: ['All', 'Technology'] })
+
+		const cloneNode = {
+			getAncestors: () => [{ name: 'All' }, { name: 'Technology' }],
+			getId: () => 'clone-node'
+		}
+		const cloneRoot = {
+			getNodeById: () => null,
+			eachNode: (visit: (node: typeof cloneNode) => unknown) => visit(cloneNode)
+		}
+		const cloneSeries = { id: 'clone-series', getData: () => ({ tree: { root: cloneRoot } }) }
+		const dispatchAction = vi.fn()
+		const cloneChart = {
+			getModel: () => ({ getSeriesByType: () => [cloneSeries] }),
+			dispatchAction
+		} as any
+
+		expect(applyTreemapViewportExportState(cloneChart, state!)).toBe(true)
+		expect(dispatchAction).toHaveBeenCalledWith({
+			type: 'treemapZoomToNode',
+			seriesId: 'clone-series',
+			targetNodeId: 'clone-node'
+		})
 	})
 })
 

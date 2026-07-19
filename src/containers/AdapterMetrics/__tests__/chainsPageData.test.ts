@@ -452,8 +452,8 @@ describe('chains by adapter page data', () => {
 
 	it('builds the chart data shape used by the page', async () => {
 		fetchJsonMock.mockResolvedValue([
-			[2, { Ethereum: 20 }],
-			[1, { Ethereum: 10, Optimism: 5 }]
+			[1, { Ethereum: 10, Optimism: 5, Unknown: 999 }],
+			[2, { Ethereum: 20 }]
 		])
 
 		const chartData = await getChainsByAdapterChartData({
@@ -466,9 +466,10 @@ describe('chains by adapter page data', () => {
 			dimensions: ['timestamp', 'Ethereum', 'Optimism'],
 			source: [
 				{ timestamp: 1000, Ethereum: 10, Optimism: 5 },
-				{ timestamp: 2000, Ethereum: 20, Optimism: null }
+				{ timestamp: 2000, Ethereum: 20 }
 			]
 		})
+		expect(Object.hasOwn(chartData.source[1], 'Optimism')).toBe(false)
 	})
 
 	it('throws chart fetch failures by default so API routes do not cache empty charts', async () => {

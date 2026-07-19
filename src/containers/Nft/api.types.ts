@@ -35,10 +35,9 @@ export type RawNftMarketplaceStats = {
 export type RawNftMarketplaceVolume = {
 	day: string
 	exchangeName: string
-	sum: number
-	sumUsd: number
+	sum: number | null
+	sumUsd: number | null
 	count: number
-	date?: number
 }
 
 export type RawCollectionDetail = {

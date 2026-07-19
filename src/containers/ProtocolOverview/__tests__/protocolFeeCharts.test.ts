@@ -1,38 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildProtocolFeeFamilyCharts, mergeProtocolFeeExtraChartSeries } from '../protocolFeeCharts'
-
-describe('mergeProtocolFeeExtraChartSeries', () => {
-	it('adds both enabled fee extras without overwriting the previous extra', () => {
-		expect(
-			mergeProtocolFeeExtraChartSeries({
-				base: [
-					[1, 100],
-					[2, 200]
-				],
-				bribeRevenue: { 1: 10, 3: 30 },
-				tokenTax: { 1: 3, 2: 20 },
-				includeBribes: true,
-				includeTokenTax: true
-			})
-		).toEqual([
-			[1, 113],
-			[2, 220],
-			[3, 30]
-		])
-	})
-
-	it('respects disabled fee-extra toggles', () => {
-		expect(
-			mergeProtocolFeeExtraChartSeries({
-				base: [[1, 100]],
-				bribeRevenue: { 1: 10 },
-				tokenTax: { 1: 3 },
-				includeBribes: false,
-				includeTokenTax: true
-			})
-		).toEqual([[1, 103]])
-	})
-})
+import { buildProtocolFeeChartPresentation, buildProtocolFeeFamilyCharts } from '../protocolFeeCharts'
 
 describe('buildProtocolFeeFamilyCharts', () => {
 	it('returns base fee-family charts without enabled extras', () => {
@@ -229,5 +196,91 @@ describe('buildProtocolFeeFamilyCharts', () => {
 			revenue: [[1000, 22]],
 			holdersRevenue: []
 		})
+	})
+})
+
+describe('buildProtocolFeeChartPresentation', () => {
+	it('skips all grouping when no chart is selected', () => {
+		expect(
+			buildProtocolFeeChartPresentation({
+				fees: [[1, 100]],
+				revenue: [[1, 20]],
+				holdersRevenue: [[1, 5]],
+				bribes: [[1, 2]],
+				tokenTaxes: [[1, 3]],
+				selectedCharts: [],
+				groupBy: 'daily'
+			})
+		).toEqual({ dataset: { source: [], dimensions: ['timestamp'] }, charts: [] })
+	})
+
+	it('builds only selected series and fans enabled extras into them', () => {
+		const result = buildProtocolFeeChartPresentation({
+			fees: [[1, 100]],
+			revenue: [[1, 20]],
+			holdersRevenue: [[1, 5]],
+			bribes: [[1, 2]],
+			tokenTaxes: [[86_400, 3]],
+			selectedCharts: ['Fees', 'Holders Revenue'],
+			groupBy: 'daily'
+		})
+
+		expect(result.dataset).toEqual({
+			dimensions: ['timestamp', 'Fees', 'Holders Revenue'],
+			source: [
+				{ timestamp: 1_000, Fees: 102, 'Holders Revenue': 7 },
+				{ timestamp: 86_400_000, Fees: 3, 'Holders Revenue': 3 }
+			]
+		})
+		expect(result.charts).toMatchObject([
+			{ type: 'bar', name: 'Fees', stack: 'Fees' },
+			{ type: 'bar', name: 'Holders Revenue', stack: 'Holders Revenue' }
+		])
+	})
+
+	it('preserves sparse starts between cumulative fee-family lines', () => {
+		const result = buildProtocolFeeChartPresentation({
+			fees: [
+				[1, 10],
+				[2, 5]
+			],
+			revenue: [[2, 3]],
+			holdersRevenue: [],
+			bribes: null,
+			tokenTaxes: null,
+			selectedCharts: ['Fees', 'Revenue'],
+			groupBy: 'cumulative'
+		})
+
+		expect(result.dataset.source).toEqual([
+			{ timestamp: 1_000, Fees: 10 },
+			{ timestamp: 2_000, Fees: 15, Revenue: 3 }
+		])
+		expect(result.charts.map((chart) => chart.type)).toEqual(['line', 'line'])
+	})
+
+	it('preserves exact daily timestamps and last-writes duplicates within each source', () => {
+		const result = buildProtocolFeeChartPresentation({
+			fees: [
+				[1, 100],
+				[1, 200],
+				[2, 50]
+			],
+			revenue: [],
+			holdersRevenue: [],
+			bribes: [
+				[1, 2],
+				[1, 3],
+				[2, 4]
+			],
+			tokenTaxes: null,
+			selectedCharts: ['Fees'],
+			groupBy: 'daily'
+		})
+
+		expect(result.dataset.source).toEqual([
+			{ timestamp: 1_000, Fees: 203 },
+			{ timestamp: 2_000, Fees: 54 }
+		])
 	})
 })

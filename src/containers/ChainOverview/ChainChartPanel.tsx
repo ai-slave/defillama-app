@@ -28,9 +28,9 @@ import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { type ChainChartLabels, chainCharts, chainOverviewChartColors } from './constants'
-import type { IChainOverviewData } from './types'
+import type { ChainOverviewChartData, IChainOverviewData } from './types'
 
-const ChainCoreChart: any = lazy(() => import('~/containers/ChainOverview/Chart'))
+const ChainCoreChart = lazy(() => import('~/containers/ChainOverview/Chart'))
 
 type ChainMetricOption = {
 	id: ChainChartLabels
@@ -77,7 +77,7 @@ interface ChainChartPanelProps {
 	hasBarChart: boolean
 	groupBy: ChartTimeGroupingWithCumulative
 	chainGeckoId: string | null
-	finalCharts: any
+	finalCharts: ChainOverviewChartData
 	valueSymbol: string
 	isFetchingChartData: boolean
 	failedMetrics: ChainChartLabels[]

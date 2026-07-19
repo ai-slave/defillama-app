@@ -7,7 +7,6 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
-import { formatBarChart } from '~/components/ECharts/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { CHART_COLORS } from '~/constants/colors'
@@ -17,6 +16,7 @@ import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { formatAdapterData } from '~/containers/ProtocolOverview/formatAdapterData'
 import { KeyMetrics } from '~/containers/ProtocolOverview/KeyMetrics'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
+import { buildProtocolFlowChart, normalizeProtocolFlowChart } from '~/containers/ProtocolOverview/protocolFlowChart'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
@@ -97,11 +97,7 @@ export const getStaticProps = withPerformanceLogging(
 			}
 		}
 
-		let chart = (adapterData.totalDataChart ?? []).map(([date, value]) => [+date * 1e3, value] as [number, number])
-		const nonZeroIndex = chart.findIndex(([_date, value]) => value > 0)
-		if (nonZeroIndex !== -1) {
-			chart = chart.slice(nonZeroIndex)
-		}
+		const chart = normalizeProtocolFlowChart(adapterData.totalDataChart ?? [], true)
 
 		return {
 			props: {
@@ -146,28 +142,10 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const finalCharts = useMemo(() => {
-		// todo do not iterate twice
-		const formattedData = formatBarChart({
-			data: props.chart,
+		return buildProtocolFlowChart({
 			groupBy,
-			denominationPriceHistory: null,
-			dateInMs: true
+			series: [{ name: 'Perp Volume', color: CHART_COLORS[0], stack: 'Perp Volume', points: props.chart }]
 		})
-		return {
-			dataset: {
-				source: formattedData.map(([timestamp, value]) => ({ timestamp, 'Perp Volume': value })),
-				dimensions: ['timestamp', 'Perp Volume']
-			},
-			charts: [
-				{
-					type: (groupBy === 'cumulative' ? 'line' : 'bar') as 'line' | 'bar',
-					name: 'Perp Volume',
-					encode: { x: 'timestamp', y: 'Perp Volume' },
-					color: CHART_COLORS[0],
-					stack: 'Perp Volume'
-				}
-			]
-		}
 	}, [props.chart, groupBy])
 	const deferredFinalCharts = useDeferredValue(finalCharts)
 

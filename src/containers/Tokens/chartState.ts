@@ -13,6 +13,12 @@ export type TokensChangeWindow = (typeof TOKENS_CHANGE_WINDOWS)[number]
 export type TokensMapMode = (typeof TOKENS_MAP_MODES)[number]
 export type TokensMoversWindow = (typeof TOKENS_MOVERS_WINDOWS)[number]
 
+export const TOKENS_UNIVERSE_SIZE: Record<TokensUniverse, number> = {
+	'100': 100,
+	'200': 200,
+	'300': 300
+}
+
 export interface TokensChartState {
 	view: TokensChartView
 	universe: TokensUniverse

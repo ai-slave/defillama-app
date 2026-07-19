@@ -1,10 +1,44 @@
 import { lazy, useMemo } from 'react'
-import type { IBarChartProps, IChartProps } from '~/components/ECharts/types'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { formattedNum } from '~/utils'
 import { useEtherfiCashFeesCharts, useEtherfiCashMetrics, useEtherfiCashTvlChart } from './api'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
+
+const AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
+const BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
+const DOLLAR_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('$')
+
+const TVL_CHART: IMultiSeriesChart2Props['charts'] = [
+	{ name: 'TVL', type: 'line', encode: { x: 'timestamp', y: 'TVL' } }
+]
+const FEES_CHART: IMultiSeriesChart2Props['charts'] = [
+	{ name: 'Fees', type: 'bar', encode: { x: 'timestamp', y: 'Fees' }, color: '#4FC3F7', stack: 'a' }
+]
+const REVENUE_CHART: IMultiSeriesChart2Props['charts'] = [
+	{ name: 'Revenue', type: 'bar', encode: { x: 'timestamp', y: 'Revenue' }, color: '#66BB6A', stack: 'a' }
+]
+const HOLDERS_REVENUE_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Holders Revenue',
+		type: 'bar',
+		encode: { x: 'timestamp', y: 'Holders Revenue' },
+		color: '#FFA726',
+		stack: 'a'
+	}
+]
+const INFLOWS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'USD Inflows',
+		type: 'bar',
+		encode: { x: 'timestamp', y: 'USD Inflows' },
+		color: '#AB47BC',
+		stack: 'a'
+	}
+]
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
@@ -46,27 +80,25 @@ function KpiSkeleton({ label }: { label: string }) {
 
 export default function CreditCard() {
 	const { fees, revenue, isLoading: metricsLoading } = useEtherfiCashMetrics()
-	const { tvlChart, inflowsChart, isLoading: tvlLoading } = useEtherfiCashTvlChart()
-	const { feesChart, revenueChart, holdersRevenueChart, isLoading: feesLoading } = useEtherfiCashFeesCharts()
-
-	const hasHoldersRevenue = useMemo(
-		() => holdersRevenueChart.some((d) => d['Holders Revenue'] !== 0),
-		[holdersRevenueChart]
-	)
+	const { tvlDataset, inflowsDataset, previousTvl, previousInflow, isLoading: tvlLoading } = useEtherfiCashTvlChart()
+	const {
+		feesDataset,
+		revenueDataset,
+		holdersRevenueDataset,
+		hasHoldersRevenue,
+		isLoading: feesLoading
+	} = useEtherfiCashFeesCharts()
 
 	const kpis = useMemo(() => {
 		if (metricsLoading || tvlLoading) return null
 
-		const prevTvl = tvlChart.length >= 2 ? tvlChart[tvlChart.length - 2].TVL : null
-		const prevInflow = inflowsChart.length >= 2 ? inflowsChart[inflowsChart.length - 2]['USD Inflows'] : null
-
 		return {
-			tvl: prevTvl != null ? formattedNum(prevTvl, true) : '—',
+			tvl: previousTvl != null ? formattedNum(previousTvl, true) : '—',
 			fees24h: fees?.total48hto24h != null ? formattedNum(fees.total48hto24h, true) : '—',
 			revenue24h: revenue?.total48hto24h != null ? formattedNum(revenue.total48hto24h, true) : '—',
-			inflows: prevInflow != null ? formattedNum(prevInflow, true) : '—'
+			inflows: previousInflow != null ? formattedNum(previousInflow, true) : '—'
 		}
-	}, [fees, revenue, tvlChart, inflowsChart, metricsLoading, tvlLoading])
+	}, [fees, revenue, previousTvl, previousInflow, metricsLoading, tvlLoading])
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -92,7 +124,15 @@ export default function CreditCard() {
 				<CardSkeleton title="TVL" />
 			) : (
 				<ChartCard title="TVL">
-					<AreaChart chartData={tvlChart} stacks={['TVL']} valueSymbol="$" title="" height="400px" />
+					<MultiSeriesChart2
+						dataset={tvlDataset}
+						charts={TVL_CHART}
+						valueSymbol="$"
+						title=""
+						height="400px"
+						chartOptions={DOLLAR_TIME_CHART_OPTIONS}
+						exportButtons={AREA_EXPORT}
+					/>
 				</ChartCard>
 			)}
 
@@ -100,13 +140,14 @@ export default function CreditCard() {
 				<CardSkeleton title="Fees" />
 			) : (
 				<ChartCard title="Fees">
-					<BarChart
-						chartData={feesChart}
-						stacks={{ Fees: 'a' }}
-						stackColors={{ Fees: '#4FC3F7' }}
+					<MultiSeriesChart2
+						dataset={feesDataset}
+						charts={FEES_CHART}
 						valueSymbol="$"
 						title=""
 						height="400px"
+						chartOptions={DOLLAR_TIME_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}
@@ -115,26 +156,28 @@ export default function CreditCard() {
 				<CardSkeleton title="Revenue" />
 			) : (
 				<ChartCard title="Revenue">
-					<BarChart
-						chartData={revenueChart}
-						stacks={{ Revenue: 'a' }}
-						stackColors={{ Revenue: '#66BB6A' }}
+					<MultiSeriesChart2
+						dataset={revenueDataset}
+						charts={REVENUE_CHART}
 						valueSymbol="$"
 						title=""
 						height="400px"
+						chartOptions={DOLLAR_TIME_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}
 
 			{!feesLoading && hasHoldersRevenue && (
 				<ChartCard title="Holders Revenue">
-					<BarChart
-						chartData={holdersRevenueChart}
-						stacks={{ 'Holders Revenue': 'a' }}
-						stackColors={{ 'Holders Revenue': '#FFA726' }}
+					<MultiSeriesChart2
+						dataset={holdersRevenueDataset}
+						charts={HOLDERS_REVENUE_CHART}
 						valueSymbol="$"
 						title=""
 						height="400px"
+						chartOptions={DOLLAR_TIME_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}
@@ -143,13 +186,14 @@ export default function CreditCard() {
 				<CardSkeleton title="USD Inflows" />
 			) : (
 				<ChartCard title="USD Inflows">
-					<BarChart
-						chartData={inflowsChart}
-						stacks={{ 'USD Inflows': 'a' }}
-						stackColors={{ 'USD Inflows': '#AB47BC' }}
+					<MultiSeriesChart2
+						dataset={inflowsDataset}
+						charts={INFLOWS_CHART}
 						valueSymbol="$"
 						title=""
 						height="400px"
+						chartOptions={DOLLAR_TIME_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}

@@ -11,7 +11,8 @@ import { useMedia } from '~/hooks/useMedia'
 import { abbreviateNumber } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
-import { getChartTheme } from '../chartTheme'
+import { useChartTheme } from '../chartTheme'
+import { createChartRecord } from '../dynamicRow'
 import { formatTooltipValue } from '../formatters'
 import type { ISankeyChartProps } from '../types'
 
@@ -35,6 +36,7 @@ export default function SankeyChart({
 }: ISankeyChartProps) {
 	const [isDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
+	const chartTheme = useChartTheme(isDark)
 	const { chartInstance: exportChartInstance, handleChartReady } = useChartImageExport()
 	const exportFilename = imageExportFilename || (title ? title.replace(/\s+/g, '-').toLowerCase() : 'sankey-chart')
 	const exportTitle = imageExportTitle || title
@@ -51,13 +53,13 @@ export default function SankeyChart({
 	})
 
 	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
 	// Create maps for node metadata (descriptions, display values, and percentage labels)
 	const nodeMetadata = useMemo(() => {
-		const descriptions: Record<string, string> = {}
-		const displayValues: Record<string, number | string> = {}
-		const percentageLabels: Record<string, string> = {}
+		const descriptions = createChartRecord<string>()
+		const displayValues = createChartRecord<number | string>()
+		const percentageLabels = createChartRecord<string>()
 		for (const node of nodes) {
 			if (node.description) {
 				descriptions[node.name] = node.description
@@ -101,7 +103,7 @@ export default function SankeyChart({
 				position: orient === 'horizontal' ? 'right' : 'bottom',
 				fontFamily: 'sans-serif',
 				fontSize: 14,
-				color: getChartTheme(isDark).ink(0.9),
+				color: chartTheme.ink(0.9),
 				formatter: (params: any) => {
 					// Use displayValue if provided, otherwise use calculated value
 					const displayValue = nodeMetadata.displayValues[params.name]
@@ -128,11 +130,11 @@ export default function SankeyChart({
 					name: {
 						fontSize: 14,
 						fontWeight: 'normal',
-						color: getChartTheme(isDark).ink(0.9)
+						color: chartTheme.ink(0.9)
 					},
 					desc: {
 						fontSize: 10,
-						color: getChartTheme(isDark).ink(0.5)
+						color: chartTheme.ink(0.5)
 					}
 				}
 			},
@@ -144,7 +146,7 @@ export default function SankeyChart({
 				lineStyle: link.color ? { color: link.color } : undefined
 			}))
 		}
-	}, [nodes, links, nodeColors, nodeAlign, orient, isDark, isSmall, formatSankeyValue, nodeMetadata])
+	}, [nodes, links, nodeColors, nodeAlign, orient, chartTheme, isSmall, formatSankeyValue, nodeMetadata])
 
 	useEffect(() => {
 		const el = containerRef.current

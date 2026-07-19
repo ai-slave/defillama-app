@@ -1,6 +1,9 @@
 import { lazy, Suspense, useEffect, useMemo, type ReactElement } from 'react'
-import type { IChartProps, IPieChartProps } from '~/components/ECharts/types'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import { materializeZeroFilledDataset, type TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
+import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
 import {
+	buildProtocolV1ChartConfigs,
 	formatProtocolV1TvlsByChain,
 	useFetchProtocolV1AddlChartsData
 } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
@@ -12,16 +15,30 @@ import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-const EMPTY_CHART_DATA: any[] = []
+const EMPTY_DATASET: TimestampDataset = {
+	source: [],
+	dimensions: ['timestamp']
+}
 const EMPTY_STACKS: string[] = []
-const EMPTY_ADDL_DATA: {
-	tokensUnique?: string[]
-	tokenBreakdownUSD?: any[]
-	tokenBreakdownPieChart?: any[]
-	tokenBreakdown?: any[]
-} = {}
+const EMPTY_PIE_DATA: Array<{ name: string; value: number }> = []
+const PREVIEW_EXPORTS = {
+	csv: true,
+	png: true,
+	filename: 'chart',
+	pngTitle: ''
+} as const
+const DOLLAR_CHART_OPTIONS = {
+	...BORROWED_CHART_OPTIONS,
+	...createTimeSeriesChartOptions('$')
+}
+const UNITLESS_CHART_OPTIONS = {
+	...BORROWED_CHART_OPTIONS,
+	...createTimeSeriesChartOptions('')
+}
 
 interface BorrowedChartTabProps {
 	selectedBorrowedProtocol: string | null
@@ -61,42 +78,68 @@ export function BorrowedChartTab({
 		isLoading: isAddlLoading
 	} = useFetchProtocolV1AddlChartsData(selectedBorrowedProtocolName || '', true)
 
-	const { chainsSplit, chainsUnique } = useMemo(() => {
-		if (!historicalChainTvls) return { chainsSplit: null, chainsUnique: [] }
-		const chainsSplit = formatProtocolV1TvlsByChain({ historicalChainTvls, extraTvlsEnabled: {} })
-		const lastEntry = chainsSplit[chainsSplit.length - 1] ?? {}
-		const chainsUnique: string[] = []
-		for (const key in lastEntry) {
-			if (key !== 'date') chainsUnique.push(key)
-		}
-		return { chainsSplit, chainsUnique }
+	const { dataset: chainsDataset, chainsUnique } = useMemo(() => {
+		if (!historicalChainTvls) return { dataset: EMPTY_DATASET, chainsUnique: EMPTY_STACKS }
+		return formatProtocolV1TvlsByChain({
+			historicalChainTvls,
+			extraTvlsEnabled: {}
+		})
 	}, [historicalChainTvls])
 
-	const { tokensUnique, tokenBreakdownUSD, tokenBreakdownPieChart, tokenBreakdown } = addlData ?? EMPTY_ADDL_DATA
+	const { tokensUnique, rawTokensUnique, tokenBreakdownUSDDataset, tokenBreakdownPieChart, tokenBreakdownDataset } =
+		addlData ?? {}
 	const resolvedTokensUnique = tokensUnique ?? EMPTY_STACKS
-	const resolvedTokenBreakdownUSD = tokenBreakdownUSD ?? EMPTY_CHART_DATA
-	const resolvedTokenBreakdownPieChart = tokenBreakdownPieChart ?? EMPTY_CHART_DATA
-	const resolvedTokenBreakdown = tokenBreakdown ?? EMPTY_CHART_DATA
-	const resolvedChainsSplit = chainsSplit ?? EMPTY_CHART_DATA
+	const resolvedRawTokensUnique = rawTokensUnique ?? resolvedTokensUnique
+	const resolvedTokenBreakdownUSDDataset = tokenBreakdownUSDDataset ?? EMPTY_DATASET
+	const resolvedTokenBreakdownPieChart = tokenBreakdownPieChart ?? EMPTY_PIE_DATA
+	const resolvedTokenBreakdownDataset = tokenBreakdownDataset ?? EMPTY_DATASET
+	const chainCharts = useMemo(
+		() =>
+			buildProtocolV1ChartConfigs({
+				seriesNames: chainsUnique,
+				type: 'line',
+				hideAreaStyle: true
+			}),
+		[chainsUnique]
+	)
+	const selectedTokenNames =
+		selectedBorrowedChartType === 'tokenBorrowedRaw' ? resolvedRawTokensUnique : resolvedTokensUnique
+	const tokenCharts = useMemo(
+		() =>
+			buildProtocolV1ChartConfigs({
+				seriesNames: selectedTokenNames,
+				type: 'line',
+				hideAreaStyle: true
+			}),
+		[selectedTokenNames]
+	)
 
 	const availableChartTypes = useMemo(() => {
 		const available = new Set<string>()
 
-		if (chainsSplit && chainsUnique?.length > 1) {
+		if (chainsDataset.source.length > 0 && chainsUnique.length > 1) {
 			available.add('chainsBorrowed')
 		}
-		if (tokenBreakdownUSD?.length > 1 && tokensUnique?.length > 0) {
+		if (resolvedTokenBreakdownUSDDataset.source.length > 1 && resolvedTokensUnique.length > 0) {
 			available.add('tokenBorrowedUsd')
 		}
-		if (tokenBreakdownPieChart?.length > 0) {
+		if (resolvedTokenBreakdownPieChart.length > 0) {
 			available.add('tokensBorrowedPie')
 		}
-		if (tokenBreakdown?.length > 1 && tokensUnique?.length > 0) {
+		if (resolvedTokenBreakdownDataset.source.length > 1 && resolvedRawTokensUnique.length > 0) {
 			available.add('tokenBorrowedRaw')
 		}
 
 		return available
-	}, [chainsSplit, chainsUnique, tokenBreakdownUSD, tokenBreakdownPieChart, tokenBreakdown, tokensUnique])
+	}, [
+		chainsDataset,
+		chainsUnique,
+		resolvedTokenBreakdownUSDDataset,
+		resolvedTokenBreakdownPieChart,
+		resolvedTokenBreakdownDataset,
+		resolvedRawTokensUnique,
+		resolvedTokensUnique
+	])
 
 	const chartTypeOptions = useMemo(() => {
 		return BORROWED_CHART_TYPES.map((type) => ({
@@ -132,6 +175,26 @@ export function BorrowedChartTab({
 	}, [hasProtocolSelection, availableChartTypes, selectedBorrowedChartType, onSelectedBorrowedChartTypeChange])
 
 	const chartTypeLabel = BORROWED_CHART_TYPES.find((t) => t.value === selectedBorrowedChartType)?.label || ''
+	const visibleDataset = useMemo(() => {
+		switch (selectedBorrowedChartType) {
+			case 'chainsBorrowed':
+				return materializeZeroFilledDataset(chainsDataset, chainsUnique)
+			case 'tokenBorrowedUsd':
+				return materializeZeroFilledDataset(resolvedTokenBreakdownUSDDataset, resolvedTokensUnique)
+			case 'tokenBorrowedRaw':
+				return materializeZeroFilledDataset(resolvedTokenBreakdownDataset, resolvedRawTokensUnique)
+			default:
+				return EMPTY_DATASET
+		}
+	}, [
+		selectedBorrowedChartType,
+		chainsDataset,
+		chainsUnique,
+		resolvedTokenBreakdownUSDDataset,
+		resolvedTokenBreakdownDataset,
+		resolvedRawTokensUnique,
+		resolvedTokensUnique
+	])
 	const previewTitle = chartTypeLabel
 		? `${selectedBorrowedProtocolName} - ${chartTypeLabel}`
 		: selectedBorrowedProtocolName || ''
@@ -154,14 +217,14 @@ export function BorrowedChartTab({
 							</div>
 						}
 					>
-						<AreaChart
+						<MultiSeriesChart2
 							title=""
-							chartData={resolvedChainsSplit}
-							stacks={chainsUnique}
+							dataset={visibleDataset}
+							charts={chainCharts}
 							valueSymbol="$"
-							hideDefaultLegend={true}
-							hideGradient={true}
-							chartOptions={BORROWED_CHART_OPTIONS}
+							hideDefaultLegend
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={PREVIEW_EXPORTS}
 						/>
 					</Suspense>
 				)
@@ -175,14 +238,14 @@ export function BorrowedChartTab({
 							</div>
 						}
 					>
-						<AreaChart
+						<MultiSeriesChart2
 							title=""
-							chartData={resolvedTokenBreakdownUSD}
-							stacks={resolvedTokensUnique}
+							dataset={visibleDataset}
+							charts={tokenCharts}
 							valueSymbol="$"
-							hideDefaultLegend={true}
-							hideGradient={true}
-							chartOptions={BORROWED_CHART_OPTIONS}
+							hideDefaultLegend
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={PREVIEW_EXPORTS}
 						/>
 					</Suspense>
 				)
@@ -209,13 +272,14 @@ export function BorrowedChartTab({
 							</div>
 						}
 					>
-						<AreaChart
+						<MultiSeriesChart2
 							title=""
-							chartData={resolvedTokenBreakdown}
-							stacks={resolvedTokensUnique}
-							hideDefaultLegend={true}
-							hideGradient={true}
-							chartOptions={BORROWED_CHART_OPTIONS}
+							dataset={visibleDataset}
+							charts={tokenCharts}
+							valueSymbol=""
+							hideDefaultLegend
+							chartOptions={UNITLESS_CHART_OPTIONS}
+							exportButtons={PREVIEW_EXPORTS}
 						/>
 					</Suspense>
 				)

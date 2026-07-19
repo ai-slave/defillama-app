@@ -6,16 +6,14 @@ import {
 	getPaginationRowModel
 } from '@tanstack/react-table'
 import { lazy, useEffect } from 'react'
-import { CHART_INSET } from '~/components/ECharts/chartSpacing'
-import type { IChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { STACKED_UNITLESS_TIME_CHART_OPTIONS } from './chartDefaults'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
-
-const SCROLL_LEGEND = {
-	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: CHART_INSET }
-}
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 
 function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
@@ -111,16 +109,14 @@ export default function YieldsEmissions() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>S Token Emissions</SectionHeader>
 				<ChartCard title={data.emissions.title}>
-					<AreaChart
-						chartData={data.emissions.data}
-						stacks={data.emissions.stacks}
-						stackColors={data.emissions.colors}
+					<MultiSeriesChart2
+						dataset={data.emissions.dataset}
+						charts={data.emissions.charts}
 						valueSymbol=""
-						title=""
-						isStackedChart
-						hideGradient
+						stacked
+						solidChartAreaStyle
+						chartOptions={STACKED_UNITLESS_TIME_CHART_OPTIONS}
 						height="400px"
-						chartOptions={SCROLL_LEGEND}
 					/>
 				</ChartCard>
 			</div>

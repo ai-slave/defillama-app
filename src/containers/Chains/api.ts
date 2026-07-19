@@ -1,6 +1,6 @@
 import { SERVER_URL, V2_SERVER_URL } from '~/constants'
 import { fetchJson } from '~/utils/async'
-import type { ChainListItem, ChainsByCategoryResponse, ChainsCategoriesResponse } from './api.types'
+import type { ChainChartResponse, ChainListItem, ChainsByCategoryResponse, ChainsCategoriesResponse } from './api.types'
 
 const CHAINS_API_URL = `${SERVER_URL}/chains`
 const CHAINS_API_V2_URL = `${SERVER_URL}/chains2`
@@ -27,7 +27,7 @@ export async function fetchChainsTvlOverview(): Promise<Array<{ name: string; tv
 	return fetchJson<Array<{ name: string; tvl: number }>>(CHAIN_TVL_API_URL)
 }
 
-export async function fetchChainChart<T = unknown>(chain?: string): Promise<T> {
+export async function fetchChainChart<T = ChainChartResponse>(chain?: string): Promise<T> {
 	if (!chain || chain === 'All') {
 		return fetchJson<T>(CHART_API_URL, { timeout: 2 * 60 * 1000 })
 	}

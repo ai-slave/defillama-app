@@ -4,7 +4,7 @@ import type { QueryResult } from './exportResults'
 import { inferColumnKind, TypeBadge } from './primitives'
 
 interface SparklineShim {
-	data?: Array<[number, number | null | undefined]>
+	data?: Array<[number, number]>
 	color?: string
 	height?: number | string
 	smooth?: boolean
@@ -122,12 +122,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 										>
 											{isList ? (
 												<Suspense fallback={<span className="text-[10px] text-pro-text-tertiary">…</span>}>
-													<SparklineChart
-														data={(value as Array<number | null>).map(
-															(n, idx) => [idx, n ?? null] as [number, number | null]
-														)}
-														height={20}
-													/>
+													<SparklineChart data={toSparklineData(value as unknown[])} height={20} />
 												</Suspense>
 											) : (
 												<span className="truncate">
@@ -149,6 +144,17 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 			</div>
 		</div>
 	)
+}
+
+function toSparklineData(values: unknown[]): Array<[number, number]> {
+	const data: Array<[number, number]> = []
+	for (let index = 0; index < values.length; index++) {
+		const value = values[index]
+		if (typeof value === 'number' && Number.isFinite(value)) {
+			data.push([index, value])
+		}
+	}
+	return data
 }
 
 function formatCell(value: unknown, kind: ColumnKind): string {

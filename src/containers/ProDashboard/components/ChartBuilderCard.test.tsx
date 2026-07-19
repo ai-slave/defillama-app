@@ -1,0 +1,98 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, it, vi } from 'vitest'
+import { StreamDoneContext } from '../queries'
+import { ChartBuilderCard } from './ChartBuilderCard'
+
+vi.mock('../hooks/useChartImageExport', () => ({
+	useChartImageExport: () => ({ chartInstance: null, handleChartReady: vi.fn() })
+}))
+
+vi.mock('../ProDashboardAPIContext', () => ({
+	useProDashboardCatalog: () => ({ getProtocolInfo: () => null }),
+	useProDashboardEditorActions: () => ({
+		handlePercentageChange: vi.fn(),
+		handleGroupingChange: vi.fn(),
+		handleHideOthersChange: vi.fn(),
+		handleChartTypeChange: vi.fn(),
+		handleEditItem: vi.fn(),
+		handleDuplicateChartBuilder: vi.fn()
+	}),
+	useProDashboardPermissions: () => ({ isReadOnly: true, hideDuplicateButton: true }),
+	useProDashboardTime: () => ({ timePeriod: '3y', customTimePeriod: null })
+}))
+
+const config = {
+	additionalFilters: {},
+	categories: [],
+	chainCategories: [],
+	chainCategoryFilterMode: 'include' as const,
+	chainFilterMode: 'include' as const,
+	chains: ['All'],
+	chartType: 'stackedBar' as const,
+	displayAs: 'timeSeries' as const,
+	filterMode: 'include' as const,
+	groupBy: 'protocol' as const,
+	groupByParent: true,
+	hideOthers: true,
+	limit: 10,
+	metric: 'revenue' as const,
+	mode: 'chains' as const,
+	protocolCategories: [],
+	protocolCategoryFilterMode: 'include' as const
+}
+
+const builder = {
+	id: 'builder-revenue',
+	kind: 'builder' as const,
+	name: 'Top Revenue Protocols',
+	grouping: 'week' as const,
+	config
+}
+
+const queryKey = [
+	'pro-dashboard',
+	'chartBuilder',
+	config.mode,
+	config.metric,
+	undefined,
+	config.chains,
+	config.limit,
+	config.categories,
+	config.chainCategories,
+	config.protocolCategories,
+	config.hideOthers,
+	config.groupByParent,
+	config.chainFilterMode,
+	config.filterMode,
+	config.chainCategoryFilterMode,
+	config.protocolCategoryFilterMode
+]
+
+function renderCard(queryClient: QueryClient) {
+	return renderToStaticMarkup(
+		<QueryClientProvider client={queryClient}>
+			<StreamDoneContext.Provider value={false}>
+				<ChartBuilderCard builder={builder} />
+			</StreamDoneContext.Provider>
+		</QueryClientProvider>
+	)
+}
+
+describe('ChartBuilderCard streamed loading state', () => {
+	it('shows loading before the stream has provided a cache entry', () => {
+		const html = renderCard(new QueryClient())
+
+		expect(html).toContain('Loading chart...')
+		expect(html).not.toContain('No data available')
+	})
+
+	it('shows no data after the stream provides a completed empty result', () => {
+		const queryClient = new QueryClient()
+		queryClient.setQueryData(queryKey, { series: [] })
+		const html = renderCard(queryClient)
+
+		expect(html).not.toContain('Loading chart...')
+		expect(html).toContain('No data available')
+	})
+})

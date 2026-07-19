@@ -1,4 +1,3 @@
-import { ensureChronologicalRows } from '~/components/ECharts/utils'
 import { RWA_SERVER_URL } from '~/constants'
 import { fetchJson } from '~/utils/async'
 import type {
@@ -152,17 +151,32 @@ export async function fetchRWAChartDataByAsset({
 		includeGovernance: String(includeGovernance)
 	})
 
-	return fetchJson<IRWAChartDataByAsset>(`${chartUrl}/asset-breakdown?${searchParams.toString()}`).catch((error) => {
-		console.error('Failed to fetch RWA chart data by asset:', error)
-		return null
-	})
+	return fetchJson<IRWAChartDataByAsset>(`${chartUrl}/asset-breakdown?${searchParams.toString()}`)
+		.then((data) => ({
+			onChainMcap: (data.onChainMcap ?? []).map((row) => ({
+				...row,
+				timestamp: toUnixMsTimestamp(row.timestamp)
+			})),
+			activeMcap: (data.activeMcap ?? []).map((row) => ({
+				...row,
+				timestamp: toUnixMsTimestamp(row.timestamp)
+			})),
+			defiActiveTvl: (data.defiActiveTvl ?? []).map((row) => ({
+				...row,
+				timestamp: toUnixMsTimestamp(row.timestamp)
+			}))
+		}))
+		.catch((error) => {
+			console.error('Failed to fetch RWA chart data by asset:', error)
+			return null
+		})
 }
 
 function normalizeRWABreakdownChartRows(rows: IRWABreakdownChartResponse): IRWABreakdownChartResponse {
 	const normalizedRows: IRWABreakdownChartResponse = []
 
 	for (const row of rows ?? []) {
-		const normalizedRow: IRWABreakdownChartRow = { timestamp: toUnixMsTimestamp(Number(row.timestamp)) }
+		const normalizedRow: IRWABreakdownChartRow = { timestamp: toUnixMsTimestamp(row.timestamp) }
 
 		for (const key in row) {
 			if (key === 'timestamp') continue
@@ -172,7 +186,7 @@ function normalizeRWABreakdownChartRows(rows: IRWABreakdownChartResponse): IRWAB
 		normalizedRows.push(normalizedRow)
 	}
 
-	return ensureChronologicalRows(normalizedRows)
+	return normalizedRows
 }
 
 /**

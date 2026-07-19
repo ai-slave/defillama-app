@@ -1,0 +1,52 @@
+import { describe, expect, it } from 'vitest'
+import { CHART_COLORS } from '~/constants/colors'
+import { buildTokenUsageTreemapTreeData } from './treemap'
+
+describe('buildTokenUsageTreemapTreeData', () => {
+	it('aggregates typed values while preserving category, protocol, share, and color ordering', () => {
+		const tree = buildTokenUsageTreemapTreeData(
+			[
+				{ name: 'Beta', amountUsd: 25, category: ' DeFi ' },
+				{ name: 'Alpha', amountUsd: 25, category: 'DeFi' },
+				{ name: 'Alpha', amountUsd: 50, category: 'DeFi' },
+				{ name: 'Desk', amountUsd: 50, category: '' },
+				{ name: 'Ignored', amountUsd: 0, category: 'DeFi' }
+			],
+			'LINK usage'
+		)
+
+		expect(tree.map((node) => [node.name, node.value[0]])).toEqual([
+			['DeFi', 100],
+			['Other', 50]
+		])
+		expect(tree[0]).toMatchObject({
+			path: 'LINK usage/DeFi',
+			value: [100, 66.67, 66.67],
+			itemStyle: { color: CHART_COLORS[0] }
+		})
+		expect(tree[0].children).toEqual([
+			{
+				name: 'Alpha',
+				path: 'LINK usage/DeFi/Alpha',
+				value: [75, 75, 50],
+				itemStyle: { color: 'rgb(58, 121, 215)' }
+			},
+			{
+				name: 'Beta',
+				path: 'LINK usage/DeFi/Beta',
+				value: [25, 25, 16.67],
+				itemStyle: { color: 'rgb(134, 173, 231)' }
+			}
+		])
+		expect(tree[1].children?.[0].itemStyle?.color).toBe(CHART_COLORS[1])
+	})
+
+	it('returns no nodes when the typed rows have no positive usage', () => {
+		expect(
+			buildTokenUsageTreemapTreeData([
+				{ name: 'Zero', amountUsd: 0, category: 'DeFi' },
+				{ name: 'Negative', amountUsd: -10, category: 'DeFi' }
+			])
+		).toEqual([])
+	})
+})

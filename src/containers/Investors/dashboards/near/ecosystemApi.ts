@@ -93,9 +93,7 @@ export type { FormattedValue, ChartData, EcosystemResponse, ChannelBreakdown, Ch
 function chartToTimeSeries(chart: ChartData): Array<{ name: string; data: Array<[number, number]> }> {
 	return chart.series.map((s) => ({
 		name: s.name,
-		data: chart.dates.map(
-			(d, i) => [Math.floor(new Date(d + 'T00:00:00Z').getTime() / 1000), s.data[i]] as [number, number]
-		)
+		data: chart.dates.map((d, i) => [Math.floor(Date.parse(d + 'T00:00:00Z') / 1000), s.data[i]] as [number, number])
 	}))
 }
 

@@ -1,5 +1,16 @@
 import { flexRender, type RowData, type Table } from '@tanstack/react-table'
+import { createCategoryChartOptions } from '~/components/ECharts/categoryChartOptions'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
 import { SortIcon } from '~/components/Table/SortIcon'
+
+export const AAVE_AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
+export const AAVE_BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
+
+export const AAVE_CATEGORY_DOLLAR_CHART_OPTIONS = createCategoryChartOptions('$')
+
+export const AAVE_CATEGORY_PERCENT_CHART_OPTIONS = createCategoryChartOptions('%')
+
+export const AAVE_PERCENT_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('%')
 
 export function InvestorsTable<T extends RowData>({
 	instance,

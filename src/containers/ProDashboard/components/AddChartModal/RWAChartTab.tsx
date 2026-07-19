@@ -377,23 +377,9 @@ function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: R
 
 	const filteredDataset = useMemo(() => {
 		if (!chartDataset) return null
-		const metricToDimension: Record<RWAOverviewChartMetric, string> = {
-			activeMcap: 'Active Mcap',
-			onChainMcap: 'Onchain Mcap',
-			defiActiveTvl: 'DeFi Active TVL'
-		}
-		const selectedDimensions = ['timestamp', ...metrics.map((m) => metricToDimension[m])]
+		const selectedDimensions = ['timestamp', ...metrics.map((metric) => METRIC_LABELS[metric])]
 		const filteredDimensions = chartDataset.dimensions.filter((d) => selectedDimensions.includes(d))
-		const filteredSource = chartDataset.source.map((row) => {
-			const newRow: Record<string, any> = { timestamp: row.timestamp }
-			for (const dim of filteredDimensions) {
-				if (dim !== 'timestamp') {
-					newRow[dim] = (row as any)[dim]
-				}
-			}
-			return newRow
-		})
-		return { source: filteredSource, dimensions: filteredDimensions }
+		return { source: chartDataset.source, dimensions: filteredDimensions }
 	}, [chartDataset, metrics])
 
 	if (!assetId) {

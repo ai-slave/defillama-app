@@ -13,22 +13,14 @@ import {
 	fetchRWACategoryBreakdownChartData,
 	fetchRWAPlatformBreakdownChartData,
 	fetchRWAAssetGroupBreakdownChartData,
-	fetchRWAChartDataByAsset,
-	toUnixMsTimestamp
+	fetchRWAChartDataByAsset
 } from '~/containers/RWA/api'
-import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
+import type { IFetchedRWAProject, RWAOverviewBreakdownRequest } from '~/containers/RWA/api.types'
 import { toBreakdownChartDataset } from '~/containers/RWA/breakdownDataset'
+import { tokenIconUrl } from '~/utils/icons'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric } from '../../../types'
 
 const STALE_TIME = 60 * 60 * 1000
-
-function normalizeTimestamps(rows: any[] | null): any[] | null {
-	if (!rows) return null
-	return rows.map((row) => ({
-		...row,
-		timestamp: toUnixMsTimestamp(Number(row.timestamp))
-	}))
-}
 
 function getBreakdownFetcher(breakdown: RWAOverviewChartBreakdown) {
 	switch (breakdown) {
@@ -45,7 +37,7 @@ function getBreakdownFetcher(breakdown: RWAOverviewChartBreakdown) {
 	}
 }
 
-function getBreakdownParam(breakdown: RWAOverviewChartBreakdown): RWAOverviewChartBreakdown {
+function getBreakdownParam(breakdown: RWAOverviewChartBreakdown): RWAOverviewBreakdownRequest['breakdown'] {
 	if (breakdown === 'assetClass' || breakdown === 'assetName') {
 		return 'chain'
 	}
@@ -68,8 +60,7 @@ export function useRWABreakdownChartData(
 		queryFn: async () => {
 			if (isChainSpecific) {
 				if (authToken) {
-					const proxyData = await fetchRWABreakdownViaProxy(actualBreakdown, metric, authToken, chain)
-					return normalizeTimestamps(proxyData)
+					return fetchRWABreakdownViaProxy(actualBreakdown, metric, authToken, chain)
 				}
 				const assetData = await fetchRWAChartDataByAsset({
 					target: { kind: 'chain', slug: chain },
@@ -77,7 +68,7 @@ export function useRWABreakdownChartData(
 					includeGovernance: false
 				})
 				if (!assetData) return null
-				return normalizeTimestamps(assetData[metric] ?? null)
+				return assetData[metric] ?? null
 			}
 
 			if (authToken) {
@@ -126,12 +117,16 @@ export function useRWAChainsList() {
 	})
 
 	const chains = useMemo(() => {
-		if (!data || !Array.isArray(data) || data.length === 0) return []
-		const lastRow = data[data.length - 1] as Record<string, number>
-		return Object.entries(lastRow)
-			.filter(([k, v]) => k !== 'timestamp' && Number.isFinite(v) && v > 0)
-			.sort((a, b) => b[1] - a[1])
-			.map(([chain, tvl]) => ({ chain, tvl }))
+		if (!data || data.length === 0) return []
+		const lastRow = data[data.length - 1]
+		const chains: Array<{ chain: string; tvl: number }> = []
+		for (const chain in lastRow) {
+			if (chain === 'timestamp') continue
+			const tvl = lastRow[chain]
+			if (tvl > 0) chains.push({ chain, tvl })
+		}
+		chains.sort((a, b) => b.tvl - a.tvl)
+		return chains
 	}, [data])
 
 	return { chains, isLoading }
@@ -158,8 +153,6 @@ export function useRWAAssetChartData(assetId: string | null) {
 	return { chartDataset: data ?? null, isLoading, error }
 }
 
-import { tokenIconUrl } from '~/utils/icons'
-
 export type RWAAssetOption = {
 	id: string
 	ticker: string
@@ -171,9 +164,7 @@ export type RWAAssetOption = {
 function getTotalFromMap(map: Record<string, number> | null | undefined): number {
 	if (!map) return 0
 	let total = 0
-	for (const v of Object.values(map)) {
-		if (Number.isFinite(v)) total += v
-	}
+	for (const chain in map) total += map[chain]
 	return total
 }
 
@@ -202,16 +193,19 @@ export function useRWAAssetsList() {
 
 	const assets: RWAAssetOption[] = useMemo(() => {
 		if (!data) return []
-		return data
-			.filter((a: IFetchedRWAProject) => a.id && a.ticker && !a.stablecoin && !a.governance)
-			.map((a: IFetchedRWAProject) => ({
-				id: a.id,
-				ticker: a.ticker,
-				assetName: a.assetName ?? null,
-				iconUrl: resolveIconUrl(a),
-				totalActiveMcap: getTotalFromMap(a.activeMcap)
-			}))
-			.sort((a: RWAAssetOption, b: RWAAssetOption) => b.totalActiveMcap - a.totalActiveMcap)
+		const assets: RWAAssetOption[] = []
+		for (const asset of data) {
+			if (!asset.id || !asset.ticker || asset.stablecoin || asset.governance) continue
+			assets.push({
+				id: asset.id,
+				ticker: asset.ticker,
+				assetName: asset.assetName ?? null,
+				iconUrl: resolveIconUrl(asset),
+				totalActiveMcap: getTotalFromMap(asset.activeMcap)
+			})
+		}
+		assets.sort((a, b) => b.totalActiveMcap - a.totalActiveMcap)
+		return assets
 	}, [data])
 
 	return { assets, isLoading }

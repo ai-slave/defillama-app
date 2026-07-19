@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import type { IProtocol } from '../types'
 import {
 	aggregateProtocolVersions,
@@ -254,6 +255,31 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		])
 	})
 
+	it('folds a real Others series into the overflow aggregate without duplicating the dimension', () => {
+		const regularChains = Array.from({ length: 10 }, (_, index) => `Chain ${index + 1}`)
+		const values = Object.fromEntries(regularChains.map((name, index) => [name, 90 - index]))
+		const presentation = buildChainsByAdapterChartPresentation({
+			chartData: {
+				dimensions: ['timestamp', 'Others', ...regularChains],
+				source: [{ timestamp: toMs(2024, 1, 1), Others: 100, ...values }]
+			},
+			selectedChains: ['Others', ...regularChains],
+			state: {
+				chartKind: 'bar',
+				valueMode: 'absolute',
+				barLayout: 'stacked',
+				groupBy: 'daily'
+			}
+		})
+
+		expect(presentation.kind).toBe('bar')
+		if (presentation.kind !== 'bar') return
+
+		expect(presentation.charts.filter((chart) => chart.name === 'Others')).toHaveLength(1)
+		expect(presentation.dataset.dimensions.filter((name) => name === 'Others')).toHaveLength(1)
+		expect(presentation.dataset.source[0].Others).toBe(181)
+	})
+
 	it('builds grouped relative lines normalized to share', () => {
 		const presentation = buildChainsByAdapterChartPresentation({
 			chartData: baseChartData,
@@ -460,6 +486,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 
 		expect(presentation.kind).toBe('bar')
 		expect(presentation.charts.map((chart) => chart.name)).toEqual(['Positive', 'Zero', 'Missing'])
+		expect(presentation.charts.every((chart) => chart.type === 'line' && chart.stack == null)).toBe(true)
 		expect(presentation.dataset.source.at(-1)).toMatchObject({ Positive: 15, Zero: 0, Missing: null })
 	})
 
@@ -547,6 +574,43 @@ describe('buildChainsByAdapterChartPresentation', () => {
 })
 
 describe('buildAdapterByChainBreakdownPresentation', () => {
+	it('groups series names that overlap Object prototype keys', () => {
+		const januaryProtoRow = JSON.parse(
+			`{"timestamp":${toMs(2024, 1, 1)},"__proto__":7}`
+		) as MultiSeriesChart2Dataset['source'][number]
+		const februaryProtoRow = JSON.parse(
+			`{"timestamp":${toMs(2024, 2, 1)},"__proto__":11}`
+		) as MultiSeriesChart2Dataset['source'][number]
+		const presentation = buildAdapterByChainBreakdownPresentation({
+			chartData: {
+				dimensions: ['timestamp', 'constructor', '__proto__', 'Other'],
+				source: [
+					{ timestamp: toMs(2024, 1, 1), constructor: 2 },
+					{ timestamp: toMs(2024, 1, 2), constructor: 3 },
+					januaryProtoRow,
+					februaryProtoRow,
+					{ timestamp: toMs(2024, 2, 1), Other: 4 }
+				]
+			},
+			selectedProtocols: ['constructor', '__proto__', 'Other'],
+			state: {
+				chartKind: 'bar',
+				valueMode: 'absolute',
+				barLayout: 'stacked',
+				groupBy: 'monthly'
+			}
+		})
+
+		const [january, february] = presentation.dataset.source
+		expect(january).toMatchObject({ timestamp: toMs(2024, 1, 1), Other: null, constructor: 5 })
+		expect(february).toMatchObject({ timestamp: toMs(2024, 2, 1), Other: 4, constructor: null })
+		expect(Object.hasOwn(january, '__proto__')).toBe(true)
+		expect(Object.hasOwn(february, '__proto__')).toBe(true)
+		expect(january.__proto__).toBe(7)
+		expect(february.__proto__).toBe(11)
+		expect(presentation.charts.find((chart) => chart.name === '__proto__')?.color).toEqual(expect.any(String))
+	})
+
 	it('builds relative separate bars from selected protocol breakdown series', () => {
 		const presentation = buildAdapterByChainBreakdownPresentation({
 			chartData: adapterBreakdownChartData,
@@ -642,6 +706,74 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 		expect(presentation.dataset.source.at(-1)?.['Protocol 1']).toBeCloseTo((10 / 201) * 100)
 		expect(presentation.dataset.source.at(-1)?.['Protocol 10']).toBeCloseTo((10 / 201) * 100)
 	})
+
+	it('limits oversized protocol breakdowns and aggregates the remaining values into Others', () => {
+		const protocolNames = Array.from({ length: 32 }, (_, index) => `Protocol ${index + 1}`)
+		const timestamp = toMs(2024, 1, 1)
+		const chartData = {
+			dimensions: ['timestamp', ...protocolNames],
+			source: [
+				Object.assign(
+					{ timestamp },
+					Object.fromEntries(protocolNames.map((name, index) => [name, protocolNames.length - index]))
+				)
+			]
+		}
+
+		const presentation = buildAdapterByChainBreakdownPresentation({
+			chartData,
+			selectedProtocols: protocolNames,
+			state: {
+				chartKind: 'bar',
+				valueMode: 'absolute',
+				barLayout: 'stacked',
+				groupBy: 'daily'
+			}
+		})
+
+		expect(presentation.charts).toHaveLength(30)
+		expect(presentation.charts.at(-1)?.name).toBe('Others')
+		expect(presentation.dataset.dimensions).toEqual(['timestamp', ...protocolNames.slice(0, 29), 'Others'])
+		expect(presentation.dataset.source).toEqual([
+			{
+				timestamp,
+				...Object.fromEntries(protocolNames.slice(0, 29).map((name, index) => [name, protocolNames.length - index])),
+				Others: 6
+			}
+		])
+	})
+
+	it('keeps a narrow selection exact when the source has many sparse dimensions', () => {
+		const timestamp = toMs(2024, 1, 1)
+		const chartData = {
+			dimensions: ['timestamp', 'Selected', ...Array.from({ length: 9 }, (_, index) => `Other ${index + 1}`)],
+			source: [
+				{ timestamp, Selected: 10, 'Other 1': 100 },
+				{ timestamp: toMs(2024, 1, 2), Selected: 20, 'Other 2': 200 }
+			]
+		}
+
+		const presentation = buildAdapterByChainBreakdownPresentation({
+			chartData,
+			selectedProtocols: ['Selected'],
+			state: {
+				chartKind: 'bar',
+				valueMode: 'absolute',
+				barLayout: 'stacked',
+				groupBy: 'daily'
+			}
+		})
+
+		expect(presentation.kind).toBe('bar')
+		if (presentation.kind !== 'bar') return
+		expect(presentation.dataset).toEqual({
+			dimensions: ['timestamp', 'Selected'],
+			source: [
+				{ timestamp, Selected: 10 },
+				{ timestamp: toMs(2024, 1, 2), Selected: 20 }
+			]
+		})
+	})
 })
 
 describe('buildAdapterByChainLatestValuePresentation', () => {
@@ -734,6 +866,30 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 		expect(presentation.data[0].value).toBe(70)
 		expect(presentation.data[1].value).toBe(30)
 		expect(presentation.data[2].value).toBe(10)
+	})
+
+	it('bounds treemap items and preserves the omitted total in Others', () => {
+		const protocols = Array.from({ length: 102 }, (_, index) => `Protocol ${index + 1}`)
+		const presentation = buildAdapterByChainLatestValuePresentation({
+			chartKind: 'treemap',
+			selectedProtocols: protocols,
+			groupBy: 'cumulative',
+			chartData: {
+				dimensions: ['timestamp', ...protocols],
+				source: [
+					Object.assign(
+						{ timestamp: toMs(2024, 1, 1) },
+						Object.fromEntries(protocols.map((name, index) => [name, protocols.length - index]))
+					)
+				]
+			}
+		})
+
+		expect(presentation.kind).toBe('treemap')
+		if (presentation.kind !== 'treemap') return
+		expect(presentation.data).toHaveLength(100)
+		expect(presentation.data.at(-1)?.name).toBe('Others')
+		expect(presentation.data.at(-1)?.value).toBe(6)
 	})
 })
 
@@ -923,6 +1079,41 @@ describe('normalizeProtocolBreakdownChartData', () => {
 			{ timestamp: 1704067200 * 1e3, Hyperliquid: 10 },
 			{ timestamp: 1704153600 * 1e3, Hyperliquid: 20 }
 		])
+	})
+
+	it('keeps missing protocol values sparse until the visible series are selected', () => {
+		const normalization = buildProtocolBreakdownNormalization([protocol('Alpha', null), protocol('Beta', null)])
+
+		const result = normalizeProtocolBreakdownChartData({
+			chart: [
+				[1704067200, { Alpha: 20 }],
+				[1704153600, { Beta: 10 }]
+			],
+			normalization
+		})
+
+		expect(result.protocolDimensions).toEqual(['Alpha', 'Beta'])
+		expect(result.chartData.source).toEqual([
+			{ timestamp: 1704067200 * 1e3, Alpha: 20 },
+			{ timestamp: 1704153600 * 1e3, Beta: 10 }
+		])
+		expect(Object.hasOwn(result.chartData.source[0], 'Beta')).toBe(false)
+		expect(Object.hasOwn(result.chartData.source[1], 'Alpha')).toBe(false)
+	})
+
+	it('keeps __proto__ as an own numeric series value', () => {
+		const normalization = buildProtocolBreakdownNormalization([protocol('__proto__', null)])
+		const values = JSON.parse('{"__proto__":20}') as Record<string, number>
+
+		const result = normalizeProtocolBreakdownChartData({
+			chart: [[1704067200, values]],
+			normalization
+		})
+		const row = result.chartData.source[0]
+
+		expect(result.protocolDimensions).toEqual(['__proto__'])
+		expect(Object.hasOwn(row, '__proto__')).toBe(true)
+		expect(row.__proto__).toBe(20)
 	})
 
 	it('aggregates multiple child protocols into the parent canonical protocol', () => {

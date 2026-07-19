@@ -1,4 +1,5 @@
 import { lazy, Suspense, useMemo } from 'react'
+import type { TreemapNode } from '~/components/ECharts/types'
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
@@ -7,8 +8,8 @@ import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { formatterFromConfig } from '../valueFormatters'
 
 interface ITreemapChartShim {
-	treeData: any[]
-	variant?: 'yields' | 'narrative' | 'rwa'
+	treeData: TreemapNode[]
+	variant: 'narrative' | 'rwa'
 	colorMode?: 'value' | 'categorical'
 	height?: string
 	valueLabel?: string
@@ -32,33 +33,7 @@ export function TreemapChartAdapter({ config, result, classified, onReady }: Tre
 	const groupCol = classified.find((c) => c.coarse === 'category' && c.name !== nameCol)?.name ?? null
 
 	const treeData = useMemo(() => {
-		if (!nameCol || !valueCol) return []
-		if (groupCol) {
-			const grouped = new Map<string, Array<{ name: string; value: number }>>()
-			for (const row of result.rows) {
-				const g = row[groupCol] == null ? '∅' : String(row[groupCol])
-				const v = toNumber(row[valueCol])
-				if (v == null) continue
-				const n = row[nameCol] == null ? '∅' : String(row[nameCol])
-				if (!grouped.has(g)) grouped.set(g, [])
-				grouped.get(g)!.push({ name: n, value: v })
-			}
-			return [...grouped.entries()].map(([g, items]) => ({
-				name: g,
-				value: [items.reduce((s, x) => s + x.value, 0), 0, 0],
-				children: items
-					.sort((a, b) => b.value - a.value)
-					.map((item) => ({ name: item.name, value: [item.value, 0, 0] }))
-			}))
-		}
-		const leaves = new Map<string, number>()
-		for (const row of result.rows) {
-			const n = row[nameCol] == null ? '∅' : String(row[nameCol])
-			const v = toNumber(row[valueCol])
-			if (v == null) continue
-			leaves.set(n, (leaves.get(n) ?? 0) + v)
-		}
-		return [...leaves.entries()].sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value: [value, 0, 0] }))
+		return nameCol && valueCol ? buildSqlTreemapNodes(result.rows, nameCol, valueCol, groupCol) : []
 	}, [result, nameCol, valueCol, groupCol])
 
 	if (!nameCol || !valueCol)
@@ -87,6 +62,50 @@ export function TreemapChartAdapter({ config, result, classified, onReady }: Tre
 			/>
 		</Suspense>
 	)
+}
+
+export function buildSqlTreemapNodes(
+	rows: Record<string, unknown>[],
+	nameCol: string,
+	valueCol: string,
+	groupCol: string | null
+): TreemapNode[] {
+	if (groupCol) {
+		const grouped = new Map<string, { total: number; items: Array<{ name: string; value: number }> }>()
+		for (const row of rows) {
+			const value = toNumber(row[valueCol])
+			if (value == null) continue
+			const groupName = row[groupCol] == null ? '∅' : String(row[groupCol])
+			const item = { name: row[nameCol] == null ? '∅' : String(row[nameCol]), value }
+			const group = grouped.get(groupName)
+			if (group) {
+				group.total += value
+				group.items.push(item)
+			} else {
+				grouped.set(groupName, { total: value, items: [item] })
+			}
+		}
+
+		const nodes: TreemapNode[] = []
+		for (const [name, group] of grouped) {
+			group.items.sort((a, b) => b.value - a.value)
+			nodes.push({
+				name,
+				value: [group.total, 0, 0],
+				children: group.items.map((item) => ({ name: item.name, value: [item.value, 0, 0] }))
+			})
+		}
+		return nodes
+	}
+
+	const leaves = new Map<string, number>()
+	for (const row of rows) {
+		const value = toNumber(row[valueCol])
+		if (value == null) continue
+		const name = row[nameCol] == null ? '∅' : String(row[nameCol])
+		leaves.set(name, (leaves.get(name) ?? 0) + value)
+	}
+	return [...leaves.entries()].sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value: [value, 0, 0] }))
 }
 
 function toNumber(v: unknown): number | null {

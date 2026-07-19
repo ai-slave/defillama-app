@@ -1,39 +1,28 @@
+import { getEquitiesTreemapColor } from '~/components/ECharts/EquitiesTreemapChart/colors'
+import type { MarketTreemapGroup, MarketTreemapLeaf } from '~/components/ECharts/marketTreemapTypes'
+import { geckoTokenIconUrl } from '~/utils/icons'
 import type { TokensChangeWindow, TokensMapMode, TokensMoversWindow } from './chartState'
-import type { TokensTableRow } from './types'
+import { TOKENS_CHART_GECKO_LOGO_PREFIX, type TokensChartDataset } from './types'
 
 export const TOKENS_MOVERS_COUNT = 10
 
-const CHANGE_FIELD = {
-	'24h': 'priceChange24h',
-	'7d': 'priceChange7d',
-	'30d': 'priceChange30d'
-} as const satisfies Record<TokensChangeWindow, keyof TokensTableRow>
-
-const ICON_PROXY_HOSTS = new Set(['icons.llamao.fi', 'token-icons.llamao.fi'])
+const ICON_PROXY_PREFIXES = ['https://icons.llamao.fi/', 'https://token-icons.llamao.fi/'] as const
 
 export function toExportSafeIconUrl(logo: string | null): string {
 	if (!logo) return ''
-	if (!logo.startsWith('https://')) return logo
-	try {
-		const parsed = new URL(logo)
-		if (!ICON_PROXY_HOSTS.has(parsed.hostname)) return logo
-	} catch {
-		return logo
+	for (const prefix of ICON_PROXY_PREFIXES) {
+		if (logo.startsWith(prefix)) return `/api/public/icon-proxy?url=${encodeURIComponent(logo)}`
 	}
-	return `/api/public/icon-proxy?url=${encodeURIComponent(logo)}`
+	return logo
 }
 
-export interface TokensTreemapLeaf {
-	name: string
-	value: [number, number | null]
-	companyName: string
-	marketCap: number | null
-	iconUrl: string
+export function resolveTokensChartLogo(source: string): string {
+	return source.startsWith(TOKENS_CHART_GECKO_LOGO_PREFIX) ? geckoTokenIconUrl(source.slice(1)) : source
 }
 
-export interface TokensTreemapGroup {
-	name: string
-	value: [number, null]
+export type TokensTreemapLeaf = MarketTreemapLeaf
+
+export interface TokensTreemapGroup extends Omit<MarketTreemapGroup, 'children'> {
 	children: TokensTreemapLeaf[]
 }
 
@@ -47,59 +36,76 @@ export interface TokensTreemapOptions {
 
 export interface TokensTreemapResult {
 	treeData: TokensTreemapNode[]
-	excludedCount: number
+	leaves: TokensTreemapLeaf[]
 	stablecoinsHidden: number
 }
 
 export function buildTokensTreemap(
-	rows: TokensTableRow[],
+	data: TokensChartDataset,
 	{ colorWindow, mapMode, universe }: TokensTreemapOptions
 ): TokensTreemapResult {
-	const changeField = CHANGE_FIELD[colorWindow]
+	const priceChanges = data.priceChanges[colorWindow]
+	const leaves: TokensTreemapLeaf[] = []
 	const tokenLeaves: TokensTreemapLeaf[] = []
 	const stablecoinLeaves: TokensTreemapLeaf[] = []
-	let excludedCount = 0
+	let tokenMarketCap = 0
+	let stablecoinMarketCap = 0
 	let stablecoinsHidden = 0
 
-	for (const row of (rows ?? []).slice(0, universe)) {
-		const size = row.marketCap
-		if (typeof size !== 'number' || !Number.isFinite(size) || size <= 0) {
-			excludedCount++
-			continue
-		}
-		if (mapMode === 'flat' && row.isStablecoin) {
+	const rowCount = Math.min(data.marketCaps.length, universe)
+	for (let index = 0; index < rowCount; index++) {
+		const isStablecoin = data.stablecoins[index]
+		if (mapMode === 'flat' && isStablecoin) {
 			stablecoinsHidden++
 			continue
 		}
-		const change = row[changeField]
+		const marketCap = data.marketCaps[index]
+		const change = priceChanges[index]
 		const leaf: TokensTreemapLeaf = {
-			name: row.symbol,
-			value: [size, typeof change === 'number' && Number.isFinite(change) ? change : null],
-			companyName: row.name,
-			marketCap: row.marketCap,
-			iconUrl: toExportSafeIconUrl(row.logo)
+			name: data.symbols[index],
+			value: [marketCap, change],
+			iconKey: leaves.length,
+			itemStyle: { color: getEquitiesTreemapColor(change) },
+			companyName: data.names[index],
+			marketCap,
+			iconUrl: toExportSafeIconUrl(resolveTokensChartLogo(data.logoSources[index]))
 		}
-		if (row.isStablecoin) stablecoinLeaves.push(leaf)
-		else tokenLeaves.push(leaf)
+		leaves.push(leaf)
+		if (isStablecoin) {
+			stablecoinMarketCap += marketCap
+			stablecoinLeaves.push(leaf)
+		} else {
+			tokenMarketCap += marketCap
+			tokenLeaves.push(leaf)
+		}
 	}
 
 	if (mapMode === 'flat') {
-		return { treeData: tokenLeaves, excludedCount, stablecoinsHidden }
+		return { treeData: tokenLeaves, leaves, stablecoinsHidden }
 	}
 
 	const treeData: TokensTreemapNode[] = []
-	for (const [name, children] of [
-		['Tokens', tokenLeaves],
-		['Stablecoins', stablecoinLeaves]
-	] as const) {
-		if (children.length === 0) continue
-		treeData.push({
-			name,
-			value: [children.reduce((sum, leaf) => sum + leaf.value[0], 0), null],
-			children
-		})
+	if (tokenLeaves.length > 0) treeData.push({ name: 'Tokens', value: [tokenMarketCap, null], children: tokenLeaves })
+	if (stablecoinLeaves.length > 0) {
+		treeData.push({ name: 'Stablecoins', value: [stablecoinMarketCap, null], children: stablecoinLeaves })
 	}
-	return { treeData, excludedCount, stablecoinsHidden }
+	return { treeData, leaves, stablecoinsHidden }
+}
+
+export function prepareTokensTreemapCsv({
+	leaves,
+	colorWindow,
+	filename
+}: {
+	leaves: readonly TokensTreemapLeaf[]
+	colorWindow: TokensChangeWindow
+	filename: string
+}) {
+	const rows: Array<Array<string | number>> = [['Token', 'Name', 'Market Cap', `Price ${colorWindow.toUpperCase()}`]]
+	for (const leaf of leaves) {
+		rows.push([leaf.name, leaf.companyName, leaf.marketCap ?? '', leaf.value[1] ?? ''])
+	}
+	return { filename, rows }
 }
 
 export interface TokensMoverEntry {
@@ -115,37 +121,36 @@ export interface TokensMoversResult {
 }
 
 export function buildTokensMovers(
-	rows: TokensTableRow[],
+	data: TokensChartDataset,
 	{ window, universe }: { window: TokensMoversWindow; universe: number }
 ): TokensMoversResult {
-	const changeField = CHANGE_FIELD[window]
-	const changed: Array<{ row: TokensTableRow; change: number }> = []
+	const priceChanges = data.priceChanges[window]
+	const gainers: TokensMoverEntry[] = []
+	const losers: TokensMoverEntry[] = []
+	const rowCount = Math.min(data.marketCaps.length, universe)
 
-	for (const row of (rows ?? []).slice(0, universe)) {
-		const change = row[changeField]
-		if (typeof change === 'number' && Number.isFinite(change) && change !== 0) {
-			changed.push({ row, change })
+	for (let index = 0; index < rowCount; index++) {
+		const change = priceChanges[index]
+		if (change == null || change === 0) continue
+		const entry = {
+			name: data.symbols[index],
+			value: change,
+			logo: resolveTokensChartLogo(data.logoSources[index]),
+			href: data.hrefs[index]
 		}
+		insertMover(change > 0 ? gainers : losers, entry, change > 0)
 	}
 
-	changed.sort((a, b) => b.change - a.change)
+	return { gainers, losers }
+}
 
-	const toEntry = ({ row, change }: { row: TokensTableRow; change: number }): TokensMoverEntry => ({
-		name: row.symbol,
-		value: change,
-		logo: row.logo ?? '',
-		href: row.href
-	})
-
-	return {
-		gainers: changed
-			.filter(({ change }) => change > 0)
-			.slice(0, TOKENS_MOVERS_COUNT)
-			.map(toEntry),
-		losers: changed
-			.filter(({ change }) => change < 0)
-			.slice(-TOKENS_MOVERS_COUNT)
-			.reverse()
-			.map(toEntry)
+function insertMover(entries: TokensMoverEntry[], entry: TokensMoverEntry, largestFirst: boolean): void {
+	let index = entries.length
+	while (index > 0) {
+		const previous = entries[index - 1]
+		if (largestFirst ? entry.value <= previous.value : entry.value >= previous.value) break
+		index--
 	}
+	entries.splice(index, 0, entry)
+	if (entries.length > TOKENS_MOVERS_COUNT) entries.pop()
 }

@@ -1,22 +1,38 @@
 import dayjs from 'dayjs'
 import { useMemo } from 'react'
+import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import type { CustomTimePeriod, TimePeriod } from '../ProDashboardAPIContext'
+import {
+	borrowApyDimensions,
+	netBorrowApyDimensions,
+	supplyApy7dDimensions,
+	supplyApyDimensions,
+	tvlApyDimensions
+} from './yieldChartConfig'
 
-export type TvlApyPoint = { date: number; TVL: number | null; APY: number | null }
-export type ApyCompositionPoint = {
-	date: number
+type YieldChartDataset<T> = Omit<MultiSeriesChart2Dataset, 'source'> & {
+	source: T[]
+}
+type TvlApyPoint = {
+	timestamp: number
+	TVL: number | null
+	APY: number | null
+}
+type ApyCompositionPoint = {
+	timestamp: number
 	Base: number | null
 	Reward: number | null
 	Intrinsic: number | null
 }
-export type BorrowCompositionPoint = {
-	date: number
+type SupplyApy7dPoint = { timestamp: number; '7d Supply APY': number }
+type BorrowCompositionPoint = {
+	timestamp: number
 	'Base cost': number | null
 	'Reward offset': number | null
 	Intrinsic: number | null
 }
-export type ApyLinePoint = [date: number, value: number]
+type NetBorrowApyPoint = { timestamp: number; 'Net borrow cost': number }
 type TimeBounds = { start: number; end: number } | null
 
 interface UseYieldChartTransformationsOptions {
@@ -37,10 +53,16 @@ function getTimeBounds(
 	if (!timePeriod || timePeriod === 'all') return null
 	if (timePeriod === 'custom' && customTimePeriod) {
 		if (customTimePeriod.type === 'relative' && customTimePeriod.relativeDays) {
-			return { start: dayjs().subtract(customTimePeriod.relativeDays, 'day').unix(), end: Infinity }
+			return {
+				start: dayjs().subtract(customTimePeriod.relativeDays, 'day').unix(),
+				end: Infinity
+			}
 		}
 		if (customTimePeriod.type === 'absolute' && customTimePeriod.startDate && customTimePeriod.endDate) {
-			return { start: customTimePeriod.startDate, end: customTimePeriod.endDate }
+			return {
+				start: customTimePeriod.startDate,
+				end: customTimePeriod.endDate
+			}
 		}
 		return null
 	}
@@ -71,54 +93,75 @@ function add(value: number | null, extra: number | null | undefined): number | n
 }
 
 export function buildProSupplyHistorySeries(chartData: PoolHistory, bounds: TimeBounds = null) {
-	const tvlApyData: TvlApyPoint[] = []
-	const tvlApySource: Array<{ timestamp: number; APY: number | null; TVL: number | null }> = []
-	const supplyApyBarData: ApyCompositionPoint[] = []
-	const supplyApy7dData: ApyLinePoint[] = []
+	const tvlApyDataset: YieldChartDataset<TvlApyPoint> = {
+		source: [],
+		dimensions: tvlApyDimensions
+	}
+	const supplyApyDataset: YieldChartDataset<ApyCompositionPoint> = {
+		source: [],
+		dimensions: supplyApyDimensions
+	}
+	const supplyApy7dDataset: YieldChartDataset<SupplyApy7dPoint> = {
+		source: [],
+		dimensions: supplyApy7dDimensions
+	}
 	for (const point of chartData) {
 		const date = parseDate(point.date)
 		if (!inBounds(date, bounds)) continue
 		const tvlApyPoint = {
-			date,
+			timestamp: date * 1000,
 			TVL: point.tvl_usd,
 			APY: add(point.apy.avg_1d.total, point.intrinsic?.apy.avg_1d.base)
 		}
-		tvlApyData.push(tvlApyPoint)
-		tvlApySource.push({ timestamp: date * 1000, APY: tvlApyPoint.APY, TVL: tvlApyPoint.TVL })
+		tvlApyDataset.source.push(tvlApyPoint)
 		const intrinsic = point.intrinsic?.apy.avg_1d.base ?? null
 		if (point.apy.avg_1d.base != null || point.apy.avg_1d.reward != null || intrinsic != null) {
-			supplyApyBarData.push({
-				date,
+			supplyApyDataset.source.push({
+				timestamp: date * 1000,
 				Base: point.apy.avg_1d.base,
 				Reward: point.apy.avg_1d.reward,
 				Intrinsic: intrinsic
 			})
 		}
 		const avg7 = add(point.apy.avg_7d.total, point.intrinsic?.apy.avg_7d.base)
-		if (avg7 != null) supplyApy7dData.push([date, avg7])
+		if (avg7 != null)
+			supplyApy7dDataset.source.push({
+				timestamp: date * 1000,
+				'7d Supply APY': avg7
+			})
 	}
-	return { tvlApyData, tvlApySource, supplyApyBarData, supplyApy7dData }
+	return { tvlApyDataset, supplyApyDataset, supplyApy7dDataset }
 }
 
 export function buildProBorrowHistorySeries(borrowData: BorrowMarketHistory, bounds: TimeBounds = null) {
-	const borrowApyBarData: BorrowCompositionPoint[] = []
-	const netBorrowApyData: ApyLinePoint[] = []
+	const borrowApyDataset: YieldChartDataset<BorrowCompositionPoint> = {
+		source: [],
+		dimensions: borrowApyDimensions
+	}
+	const netBorrowApyDataset: YieldChartDataset<NetBorrowApyPoint> = {
+		source: [],
+		dimensions: netBorrowApyDimensions
+	}
 	for (const point of borrowData) {
 		const date = parseDate(point.date)
 		if (!inBounds(date, bounds)) continue
 		const intrinsic = point.intrinsic?.apy.avg_1d.base ?? null
 		if (point.borrow_cost_apy.avg_1d.base != null || point.borrow_cost_apy.avg_1d.reward != null || intrinsic != null) {
-			borrowApyBarData.push({
-				date,
+			borrowApyDataset.source.push({
+				timestamp: date * 1000,
 				'Base cost': point.borrow_cost_apy.avg_1d.base,
 				'Reward offset': point.borrow_cost_apy.avg_1d.reward == null ? null : -point.borrow_cost_apy.avg_1d.reward,
 				Intrinsic: intrinsic
 			})
 		}
 		const netCost = point.borrow_cost_apy.avg_1d.total
-		if (netCost != null) netBorrowApyData.push([date, netCost])
+		if (netCost != null)
+			netBorrowApyDataset.source.push({
+				timestamp: date * 1000,
+				'Net borrow cost': netCost
+			})
 	}
-	return { borrowApyBarData, netBorrowApyData }
+	return { borrowApyDataset, netBorrowApyDataset }
 }
 
 export function useYieldChartTransformations({
@@ -128,30 +171,27 @@ export function useYieldChartTransformations({
 	customTimePeriod
 }: UseYieldChartTransformationsOptions) {
 	const bounds = useMemo(() => getTimeBounds(timePeriod, customTimePeriod), [timePeriod, customTimePeriod])
-	const { tvlApyData, tvlApySource, supplyApyBarData, supplyApy7dData } = useMemo(
+	const { tvlApyDataset, supplyApyDataset, supplyApy7dDataset } = useMemo(
 		() => buildProSupplyHistorySeries(chartData ?? [], bounds),
 		[chartData, bounds]
 	)
-	const { borrowApyBarData, netBorrowApyData } = useMemo(
+	const { borrowApyDataset, netBorrowApyDataset } = useMemo(
 		() => buildProBorrowHistorySeries(borrowData ?? [], bounds),
 		[borrowData, bounds]
 	)
 
-	const tvlApyDataset = useMemo(
-		() => ({ source: tvlApySource, dimensions: ['timestamp', 'APY', 'TVL'] }),
-		[tvlApySource]
-	)
-
-	const latest = tvlApyData.at(-1)
-	const latestData = { apy: latest?.APY?.toFixed(2) ?? null, tvl: latest?.TVL ?? null }
+	const latest = tvlApyDataset.source.at(-1)
+	const latestData = {
+		apy: latest?.APY?.toFixed(2) ?? null,
+		tvl: latest?.TVL ?? null
+	}
 
 	return {
-		tvlApyData,
 		tvlApyDataset,
-		supplyApyBarData,
-		supplyApy7dData,
-		borrowApyBarData,
-		netBorrowApyData,
+		supplyApyDataset,
+		supplyApy7dDataset,
+		borrowApyDataset,
+		netBorrowApyDataset,
 		latestData
 	}
 }

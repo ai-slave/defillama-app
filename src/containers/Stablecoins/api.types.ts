@@ -11,8 +11,8 @@ export interface StablecoinListAsset {
 	chains: string[]
 	pegType: string
 	pegMechanism: string
-	priceSource: string | null
-	price: number | string | null
+	priceSource?: string | null
+	price: number | null
 	circulating: Record<string, number>
 	circulatingPrevDay: Record<string, number>
 	circulatingPrevWeek: Record<string, number>
@@ -32,8 +32,8 @@ export interface StablecoinListAsset {
 }
 
 interface StablecoinListChain {
-	gecko_id: string
-	tokenSymbol: string
+	gecko_id?: string | null
+	tokenSymbol?: string | null
 	name: string
 	totalCirculatingUSD: Record<string, number>
 }
@@ -94,8 +94,9 @@ export type StablecoinBridgeValue =
 	| Record<string, { amount: number }>
 
 export interface StablecoinChartResponse {
-	aggregated?: StablecoinChartPoint[]
-	breakdown?: Record<string, StablecoinChartPoint[]>
+	aggregated: StablecoinChartPoint[]
+	breakdown: Record<string, StablecoinChartPoint[]>
+	/** Omitted only by the reduced `all-llama-app` response. IDs refer to `StablecoinListAsset.id`. */
 	doublecountedIds?: string[]
 }
 
@@ -109,6 +110,10 @@ export type StablecoinVolumeTotalChartPoint = [timestamp: number, volume: number
 export type StablecoinVolumeBreakdownChartPoint = [timestamp: number, breakdown: Record<string, number>]
 
 export type StablecoinVolumeChartResponse = StablecoinVolumeTotalChartPoint[] | StablecoinVolumeBreakdownChartPoint[]
+
+export type StablecoinVolumeChartResponseFor<TChart extends StablecoinVolumeChartKind> = TChart extends 'total'
+	? StablecoinVolumeTotalChartPoint[]
+	: StablecoinVolumeBreakdownChartPoint[]
 
 export type StablecoinChartPoint = {
 	date: string
@@ -124,7 +129,7 @@ export interface StablecoinDominanceResponse {
 	chainChartMap: Record<string, StablecoinDominanceChartPoint[]>
 }
 
-interface StablecoinDominanceEntry {
+export interface StablecoinDominanceEntry {
 	date: string
 	totalCirculatingUSD: Record<string, number>
 	greatestMcap?: {
@@ -134,7 +139,7 @@ interface StablecoinDominanceEntry {
 	}
 }
 
-interface StablecoinDominanceChartPoint {
+export interface StablecoinDominanceChartPoint {
 	date: string
 	totalCirculatingUSD?: Record<string, number>
 	totalCirculating?: Record<string, number>

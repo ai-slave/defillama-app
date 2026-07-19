@@ -1,5 +1,3 @@
-import { useMemo } from 'react'
-import { preparePieChartData } from '~/components/ECharts/utils'
 import { getPercentChange, getPrevVolumeFromChart, keepNeededProperties, slug } from '~/utils'
 import { getCompleteTimeSeriesDailyWindow, getTimeSeriesPeriodPair } from '~/utils/timeSeries'
 import { BRIDGE_PROPERTIES_TO_KEEP } from './constants'
@@ -245,15 +243,6 @@ export const formatChainsData = ({
 	return filteredChains
 }
 
-const groupTokensBySymbol = (tokens: { [token: string]: ITokenData }) => {
-	const group = {}
-	for (const token in tokens) {
-		const symbol = tokens[token].symbol || 'Unknown'
-		group[symbol] = (group[symbol] ?? 0) + (tokens[token].usdValue || 0)
-	}
-	return group
-}
-
 const getTopTokenByUsd = (tokens?: Record<string, ITokenData>) => {
 	if (!tokens) {
 		return { symbol: null, usdValue: 0 }
@@ -270,31 +259,4 @@ const getTopTokenByUsd = (tokens?: Record<string, ITokenData>) => {
 	}
 
 	return { symbol: topSymbol, usdValue: topUsdValue }
-}
-
-export const useBuildBridgeChartData = (bridgeStatsCurrentDay: IDailyBridgeStats) => {
-	const { tokenDeposits, tokenWithdrawals } = useMemo(() => {
-		const tokensDeposited = bridgeStatsCurrentDay?.totalTokensDeposited
-		const tokensWithdrawn = bridgeStatsCurrentDay?.totalTokensWithdrawn
-		let tokenDeposits = [],
-			tokenWithdrawals = []
-		if (tokensDeposited && tokensWithdrawn) {
-			const uniqueTokenDeposits = groupTokensBySymbol(tokensDeposited)
-
-			tokenDeposits = preparePieChartData({
-				data: uniqueTokenDeposits,
-				limit: 10
-			})
-
-			const uniqueTokenWithdrawals = groupTokensBySymbol(tokensWithdrawn)
-
-			tokenWithdrawals = preparePieChartData({
-				data: uniqueTokenWithdrawals,
-				limit: 10
-			})
-		}
-
-		return { tokenDeposits, tokenWithdrawals }
-	}, [bridgeStatsCurrentDay])
-	return { tokenDeposits, tokenWithdrawals }
 }

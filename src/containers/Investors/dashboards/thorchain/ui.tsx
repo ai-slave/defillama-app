@@ -1,11 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy } from 'react'
-import type { IBarChartProps, IChartProps, IHBarChartProps, IPieChartProps } from '~/components/ECharts/types'
+import { lazy, useMemo } from 'react'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import type {
+	IHBarChartProps,
+	IMultiSeriesChart2Props,
+	IPieChartProps,
+	MultiSeriesChart2SeriesConfig
+} from '~/components/ECharts/types'
 import { useMedia } from '~/hooks/useMedia'
 import { formattedNum } from '~/utils'
 import {
-	barStacks,
-	chartToData,
+	chartToDataset,
 	unitSymbol,
 	type ApiTableData,
 	type Chart,
@@ -13,8 +18,9 @@ import {
 	type Kpi as KpiT
 } from './transform'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
 
@@ -93,15 +99,11 @@ const colorMap = (names: string[]): Record<string, string> =>
 	Object.fromEntries(names.map((n, i) => [n, PALETTE[i % PALETTE.length]]))
 
 const THREE_MONTHS = 90
+const CSV_ONLY_EXPORT = { csv: true, png: false } as const
 function lastNDaysZoom(len: number, days = THREE_MONTHS): any {
 	if (len <= days) return undefined
 	const start = ((len - days) / len) * 100
-	return {
-		dataZoom: [
-			{ start, end: 100 },
-			{ start, end: 100 }
-		]
-	}
+	return { dataZoom: { start, end: 100 } }
 }
 
 // ---------------------------------------------------------------- KPI + layout
@@ -305,22 +307,37 @@ export function TimeAreaCard({
 	fullRange?: boolean
 	control?: React.ReactNode
 }) {
-	if (!chart?.series?.length)
-		return <PlaceholderCard title={chart?.title ?? ''} subtitle={subtitle} note="empty series" />
-	const data = chartToData(chart)
-	const stacks = chart.series.map((s) => s.name)
+	const resolvedValueSymbol = valueSymbol ?? unitSymbol(chart.unit)
+	const { dataset, charts, chartOptions } = useMemo(() => {
+		const multipleSeries = chart.series.length > 1
+		const dataset = chartToDataset(chart)
+		return {
+			dataset,
+			charts: chart.series.map(
+				(series, index): MultiSeriesChart2SeriesConfig => ({
+					type: 'line',
+					name: series.name,
+					encode: { x: 'timestamp', y: series.name },
+					color: PALETTE[index % PALETTE.length],
+					hideAreaStyle: multipleSeries
+				})
+			),
+			chartOptions: {
+				...createTimeSeriesChartOptions(resolvedValueSymbol),
+				...(fullRange ? {} : (lastNDaysZoom(dataset.source.length) ?? {}))
+			}
+		}
+	}, [chart, fullRange, resolvedValueSymbol])
+	if (!chart.series.length) return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
 		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
-			<AreaChart
-				chartData={data}
-				stacks={stacks}
-				stackColors={colorMap(stacks)}
-				color={THOR_TEAL}
-				valueSymbol={valueSymbol ?? unitSymbol(chart.unit)}
+			<MultiSeriesChart2
+				dataset={dataset}
+				charts={charts}
+				valueSymbol={resolvedValueSymbol}
 				title=""
 				height="360px"
-				hideGradient={stacks.length > 1}
-				chartOptions={fullRange ? undefined : lastNDaysZoom(data.length)}
+				chartOptions={chartOptions}
 			/>
 		</ChartCard>
 	)
@@ -340,19 +357,39 @@ export function TimeBarCard({
 	valueSymbol?: string
 	control?: React.ReactNode
 }) {
-	if (!chart?.series?.length)
-		return <PlaceholderCard title={chart?.title ?? ''} subtitle={subtitle} note="empty series" />
-	const data = chartToData(chart)
+	const resolvedValueSymbol = valueSymbol ?? unitSymbol(chart.unit)
+	const { dataset, charts, chartOptions } = useMemo(() => {
+		const dataset = chartToDataset(chart)
+		return {
+			dataset,
+			charts: chart.series.map(
+				(series, index): MultiSeriesChart2SeriesConfig => ({
+					type: 'bar',
+					name: series.name,
+					encode: { x: 'timestamp', y: series.name },
+					color: PALETTE[index % PALETTE.length],
+					stack: series.stack ?? series.name,
+					large: false
+				})
+			),
+			chartOptions: {
+				...createTimeSeriesChartOptions(resolvedValueSymbol),
+				...(lastNDaysZoom(dataset.source.length) ?? {})
+			}
+		}
+	}, [chart, resolvedValueSymbol])
+	if (!chart.series.length) return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
 		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
-			<BarChart
-				chartData={data}
-				stacks={barStacks(chart)}
-				stackColors={colorMap(chart.series.map((s) => s.name))}
-				valueSymbol={valueSymbol ?? unitSymbol(chart.unit)}
+			<MultiSeriesChart2
+				dataset={dataset}
+				charts={charts}
+				valueSymbol={resolvedValueSymbol}
 				title=""
 				height="360px"
-				chartOptions={lastNDaysZoom(data.length)}
+				hideDefaultLegend={charts.length < 2}
+				exportButtons={CSV_ONLY_EXPORT}
+				chartOptions={chartOptions}
 			/>
 		</ChartCard>
 	)

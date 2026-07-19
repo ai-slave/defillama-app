@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import type {
 	IMultiSeriesChart2Props,
 	MultiSeriesChart2Dataset,
@@ -24,35 +25,28 @@ function buildDataset(
 	const keysSet = new Set<string>()
 	const entries: [string, Record<string, number>][] = []
 	for (const date in langs) {
-		entries.push([date, langs[date]])
+		const tvlByLang = langs[date]
+		entries.push([date, tvlByLang])
+		for (const lang in tvlByLang) keysSet.add(lang)
 	}
 	entries.sort((a, b) => Number(a[0]) - Number(b[0]))
+	const keys = Array.from(keysSet)
 
-	const source: MultiSeriesChart2Dataset['source'] = []
-	for (const [date, tvlByLang] of entries) {
-		for (const l in tvlByLang) keysSet.add(l)
-
+	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(entries.length)
+	for (let i = 0; i < entries.length; i++) {
+		const [date, tvlByLang] = entries[i]
+		const row = createChartRow<number>(+date * 1e3)
 		if (mode === 'dominance') {
 			let daySum = 0
 			for (const lang in tvlByLang) daySum += tvlByLang[lang]
-			const row: Record<string, number> = { timestamp: +date * 1e3 }
-			for (const lang in tvlByLang) {
-				row[lang] = getDominancePercent(tvlByLang[lang], daySum)
-			}
-			source.push(row)
+			for (const lang of keys) row[lang] = getDominancePercent(tvlByLang[lang] ?? 0, daySum)
 		} else {
-			source.push({ timestamp: +date * 1e3, ...tvlByLang })
+			for (const lang of keys) row[lang] = tvlByLang[lang] ?? 0
 		}
+		source[i] = row
 	}
 
-	const keys = Array.from(keysSet)
-	const filledSource: MultiSeriesChart2Dataset['source'] = source.map((row) => {
-		const out: Record<string, number> = { timestamp: (row as any).timestamp }
-		for (const k of keys) out[k] = (row as any)?.[k] ?? 0
-		return out
-	})
-
-	return { dataset: { source: filledSource, dimensions: ['timestamp', ...keys] }, keys }
+	return { dataset: { source, dimensions: ['timestamp', ...keys] }, keys }
 }
 
 function buildCharts(keys: string[], colors: Record<string, string>, stack?: string): MultiSeriesChart2SeriesConfig[] {
@@ -73,14 +67,14 @@ export const getStaticProps = withPerformanceLogging('languages', async () => {
 	const { dataset: osDataset, keys: osUnique } = buildDataset(data.sumDailySolanaOpenSourceTvls, 'dominance')
 
 	const allColors = getNDistinctColors(langsUnique.length)
-	const colors: Record<string, string> = {}
+	const colors = createChartRecord<string>()
 	for (let i = 0; i < langsUnique.length; i++) {
 		colors[langsUnique[i]] = allColors[i]
 	}
 
 	const tvlCharts = buildCharts(langsUnique, colors, 'A')
 	const dominanceCharts = buildCharts(langsUnique, colors, 'A')
-	const osColors: Record<string, string> = { ...sourceTypeColor }
+	const osColors = Object.assign(createChartRecord<string>(), sourceTypeColor)
 	const missingOsKeys = osUnique.filter((k) => !osColors[k])
 	if (missingOsKeys.length > 0) {
 		const fallback = getNDistinctColors(missingOsKeys.length)

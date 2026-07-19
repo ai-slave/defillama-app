@@ -1,5 +1,6 @@
+import { createChartRow } from './dynamicRow'
 import type { ChartTimeGrouping, MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from './types'
-import { ensureChronologicalRows, getBucketTimestampMs } from './utils'
+import { getBucketTimestampMs } from './utils'
 
 /** Canonical millisecond timestamp used by the time-series builder input/output. */
 export type TimestampMs = number
@@ -10,7 +11,7 @@ export type TimePoint = readonly [timestampMs: TimestampMs, value: number]
 export type PeriodBarSeries = {
 	name: string
 	color: string
-	stack: string
+	stack?: string
 	points: readonly TimePoint[]
 }
 
@@ -42,6 +43,7 @@ export type TimeSeriesChartInput =
 	| {
 			kind: 'cumulativeLines'
 			series: readonly PeriodLineSeries[]
+			carryForwardMissingValues?: boolean
 	  }
 
 /** Exact `MultiSeriesChart2` render shape returned by the builder. */
@@ -50,17 +52,7 @@ export type TimeSeriesChartSpec = {
 	charts: MultiSeriesChart2SeriesConfig[]
 }
 
-type InputSeries = PeriodBarSeries | PeriodLineSeries
-
-type BuiltSeries = {
-	type: 'bar' | 'line'
-	name: string
-	color: string
-	stack?: string
-	points: TimePoint[]
-}
-
-type MissingValueMode = 'null' | 'carry'
+type TimestampRow = { timestamp: number } & Record<string, number | null | undefined>
 
 const EMPTY_CHART_SPEC: TimeSeriesChartSpec = {
 	dataset: { source: [], dimensions: ['timestamp'] },
@@ -72,119 +64,54 @@ function assertNever(value: never): never {
 	throw new Error(`Unhandled time series chart kind: ${JSON.stringify(value)}`)
 }
 
-/** Reject ambiguous output by requiring every rendered series name to be unique. */
-function assertUniqueSeriesNames(series: readonly InputSeries[]) {
-	const seenNames = new Set<string>()
-
-	for (const item of series) {
-		if (seenNames.has(item.name)) {
-			throw new Error(`Duplicate series name "${item.name}" is not allowed`)
-		}
-
-		seenNames.add(item.name)
+function getOrCreateRow(rowsByTimestamp: Map<number, TimestampRow>, timestamp: number): TimestampRow {
+	let row = rowsByTimestamp.get(timestamp)
+	if (!row) {
+		row = createChartRow<number | null | undefined>(timestamp)
+		rowsByTimestamp.set(timestamp, row)
 	}
+	return row
 }
 
-/** Require ascending timestamps so cumulative output and "last value wins" semantics stay predictable. */
-function assertAscendingPoints(series: readonly InputSeries[]) {
-	for (const item of series) {
-		for (let i = 1; i < item.points.length; i++) {
-			if (item.points[i][0] < item.points[i - 1][0]) {
-				throw new Error(`Series "${item.name}" points must be sorted ascending by timestamp`)
+/** Reject ambiguous output while collecting dimensions in input order. */
+function addSeriesName(name: string, seenNames: Set<string>, dimensions: string[]) {
+	if (name === 'timestamp') throw new Error('"timestamp" is reserved for the x-axis dimension')
+	if (seenNames.has(name)) {
+		throw new Error(`Duplicate series name "${name}" is not allowed`)
+	}
+	seenNames.add(name)
+	dimensions.push(name)
+}
+
+/** Sort the shared sparse rows once, then fill every series value in place. */
+function finalizeRows(
+	rowsByTimestamp: Map<number, TimestampRow>,
+	dimensions: string[],
+	isCumulative: boolean,
+	carryForwardMissingValues: boolean
+): TimestampRow[] {
+	const source = Array.from(rowsByTimestamp.values()).sort((a, b) => a.timestamp - b.timestamp)
+
+	if (isCumulative) {
+		const totals = new Array<number>(dimensions.length - 1).fill(0)
+		for (const row of source) {
+			for (let i = 1; i < dimensions.length; i++) {
+				const name = dimensions[i]
+				const value = row[name]
+				if (value !== undefined) totals[i - 1] += value
+				if (value !== undefined || carryForwardMissingValues) row[name] = totals[i - 1]
 			}
 		}
-	}
-}
-
-/** Group points into period buckets and sum all values inside each bucket. */
-function groupSummedPoints(points: readonly TimePoint[], groupBy: ChartTimeGrouping): TimePoint[] {
-	const valuesByTimestamp = new Map<number, number>()
-
-	for (const [timestamp, value] of points) {
-		const bucketTimestamp = getBucketTimestampMs(timestamp, groupBy)
-		valuesByTimestamp.set(bucketTimestamp, (valuesByTimestamp.get(bucketTimestamp) ?? 0) + value)
+		return source
 	}
 
-	return Array.from(valuesByTimestamp.entries()).map(([timestamp, value]) => [timestamp, value] as const)
-}
-
-/** Group points into period buckets and keep only the last value seen in each bucket. */
-function groupLastPoints(points: readonly TimePoint[], groupBy: ChartTimeGrouping): TimePoint[] {
-	const valuesByTimestamp = new Map<number, number>()
-
-	for (const [timestamp, value] of points) {
-		valuesByTimestamp.set(getBucketTimestampMs(timestamp, groupBy), value)
-	}
-
-	return Array.from(valuesByTimestamp.entries()).map(([timestamp, value]) => [timestamp, value] as const)
-}
-
-/** Preserve raw timestamps, merge duplicate timestamps, then compute a running total per series. */
-function buildCumulativePoints(points: readonly TimePoint[]): TimePoint[] {
-	const valuesByTimestamp = new Map<number, number>()
-
-	for (const [timestamp, value] of points) {
-		valuesByTimestamp.set(timestamp, (valuesByTimestamp.get(timestamp) ?? 0) + value)
-	}
-
-	let runningTotal = 0
-	return Array.from(valuesByTimestamp.entries()).map(([timestamp, value]) => {
-		runningTotal += value
-		return [timestamp, runningTotal] as const
-	})
-}
-
-/**
- * Convert normalized per-series point arrays into the dense dataset/charts shape expected by `MultiSeriesChart2`.
- *
- * `carry` mode is used for cumulative lines so every series keeps its last cumulative value at shared timestamps
- * instead of dropping to `null` and creating visual gaps.
- */
-function buildChartSpec(series: BuiltSeries[], missingValueMode: MissingValueMode = 'null'): TimeSeriesChartSpec {
-	if (series.length === 0) {
-		return EMPTY_CHART_SPEC
-	}
-
-	const rowMap = new Map<number, Record<string, number | null>>()
-
-	for (const item of series) {
-		for (const [timestamp, value] of item.points) {
-			const row = rowMap.get(timestamp) ?? { timestamp }
-			row[item.name] = value
-			rowMap.set(timestamp, row)
+	for (const row of source) {
+		for (let i = 1; i < dimensions.length; i++) {
+			const name = dimensions[i]
+			if (row[name] === undefined) row[name] = null
 		}
 	}
-
-	const previousValuesBySeries: Record<string, number> = {}
-	const source = ensureChronologicalRows(Array.from(rowMap.values())).map((row) => {
-		const nextRow: Record<string, number | null> = { timestamp: Number(row.timestamp) }
-		for (const item of series) {
-			const value = row[item.name]
-
-			if (typeof value === 'number') {
-				nextRow[item.name] = value
-				previousValuesBySeries[item.name] = value
-				continue
-			}
-
-			nextRow[item.name] = missingValueMode === 'carry' ? (previousValuesBySeries[item.name] ?? 0) : null
-		}
-		return nextRow
-	})
-
-	return {
-		dataset: {
-			source,
-			dimensions: ['timestamp', ...series.map((item) => item.name)]
-		},
-		charts: series.map((item) => ({
-			type: item.type,
-			name: item.name,
-			encode: { x: 'timestamp', y: item.name },
-			color: item.color,
-			...(item.stack ? { stack: item.stack, ...(item.type === 'bar' ? { large: false } : {}) } : {})
-		}))
-	}
+	return source
 }
 
 /**
@@ -194,48 +121,130 @@ function buildChartSpec(series: BuiltSeries[], missingValueMode: MissingValueMod
  * - dense `dataset.source` rows keyed by `timestamp`
  * - one dimension per input series, preserved in input order
  * - one chart config per input series, preserved in input order
- * - missing values filled with `null`
+ * - missing values filled with `null`, except optional sparse cumulative rows
  *
  * Input requirements:
  * - timestamps are already in milliseconds
- * - points are already sorted ascending per series
+ * - `periodLines` points are sorted ascending per series so the last value in each bucket is chronological
  * - values are already normalized to plain numbers
  */
 export function buildTimeSeriesChart(input: TimeSeriesChartInput): TimeSeriesChartSpec {
-	assertUniqueSeriesNames(input.series)
-	assertAscendingPoints(input.series)
+	if (input.series.length === 0) return EMPTY_CHART_SPEC
+
+	const rowsByTimestamp = new Map<number, TimestampRow>()
+	const seenNames = new Set<string>()
+	const dimensions = ['timestamp']
+	const charts = new Array<MultiSeriesChart2SeriesConfig>(input.series.length)
 
 	switch (input.kind) {
-		case 'periodBars':
-			return buildChartSpec(
-				input.series.map((item) => ({
+		case 'periodBars': {
+			for (let i = 0; i < input.series.length; i++) {
+				const item = input.series[i]
+				addSeriesName(item.name, seenNames, dimensions)
+				charts[i] = {
 					type: 'bar',
 					name: item.name,
+					encode: { x: 'timestamp', y: item.name },
 					color: item.color,
-					stack: item.stack,
-					points: groupSummedPoints(item.points, input.groupBy)
-				}))
-			)
-		case 'periodLines':
-			return buildChartSpec(
-				input.series.map((item) => ({
+					...(item.stack ? { stack: item.stack, large: false } : {})
+				}
+				const points = item.points
+				if (points.length === 0) continue
+
+				let bucketTimestamp = getBucketTimestampMs(points[0][0], input.groupBy)
+				let bucketValue = points[0][1]
+				for (let j = 1; j < points.length; j++) {
+					const point = points[j]
+					const nextBucketTimestamp = getBucketTimestampMs(point[0], input.groupBy)
+					if (nextBucketTimestamp === bucketTimestamp) {
+						bucketValue += point[1]
+						continue
+					}
+					const row = getOrCreateRow(rowsByTimestamp, bucketTimestamp)
+					row[item.name] = (row[item.name] ?? 0) + bucketValue
+					bucketTimestamp = nextBucketTimestamp
+					bucketValue = point[1]
+				}
+				const row = getOrCreateRow(rowsByTimestamp, bucketTimestamp)
+				row[item.name] = (row[item.name] ?? 0) + bucketValue
+			}
+			break
+		}
+		case 'periodLines': {
+			for (let i = 0; i < input.series.length; i++) {
+				const item = input.series[i]
+				addSeriesName(item.name, seenNames, dimensions)
+				charts[i] = {
 					type: 'line',
 					name: item.name,
-					color: item.color,
-					points: groupLastPoints(item.points, input.groupBy)
-				}))
-			)
-		case 'cumulativeLines':
-			return buildChartSpec(
-				input.series.map((item) => ({
+					encode: { x: 'timestamp', y: item.name },
+					color: item.color
+				}
+				const points = item.points
+				if (points.length === 0) continue
+
+				let bucketTimestamp = getBucketTimestampMs(points[0][0], input.groupBy)
+				let bucketValue = points[0][1]
+				for (let j = 1; j < points.length; j++) {
+					const point = points[j]
+					const nextBucketTimestamp = getBucketTimestampMs(point[0], input.groupBy)
+					if (nextBucketTimestamp === bucketTimestamp) {
+						bucketValue = point[1]
+						continue
+					}
+					getOrCreateRow(rowsByTimestamp, bucketTimestamp)[item.name] = bucketValue
+					bucketTimestamp = nextBucketTimestamp
+					bucketValue = point[1]
+				}
+				getOrCreateRow(rowsByTimestamp, bucketTimestamp)[item.name] = bucketValue
+			}
+			break
+		}
+		case 'cumulativeLines': {
+			for (let i = 0; i < input.series.length; i++) {
+				const item = input.series[i]
+				addSeriesName(item.name, seenNames, dimensions)
+				charts[i] = {
 					type: 'line',
 					name: item.name,
-					color: item.color,
-					points: buildCumulativePoints(item.points)
-				})),
-				'carry'
-			)
+					encode: { x: 'timestamp', y: item.name },
+					color: item.color
+				}
+				const points = item.points
+				if (points.length === 0) continue
+
+				let timestamp = points[0][0]
+				let value = points[0][1]
+				for (let j = 1; j < points.length; j++) {
+					const point = points[j]
+					if (point[0] === timestamp) {
+						value += point[1]
+						continue
+					}
+					const row = getOrCreateRow(rowsByTimestamp, timestamp)
+					row[item.name] = (row[item.name] ?? 0) + value
+					timestamp = point[0]
+					value = point[1]
+				}
+				const row = getOrCreateRow(rowsByTimestamp, timestamp)
+				row[item.name] = (row[item.name] ?? 0) + value
+			}
+			break
+		}
 		default:
 			return assertNever(input)
+	}
+
+	return {
+		dataset: {
+			source: finalizeRows(
+				rowsByTimestamp,
+				dimensions,
+				input.kind === 'cumulativeLines',
+				input.kind !== 'cumulativeLines' || input.carryForwardMissingValues !== false
+			),
+			dimensions
+		},
+		charts
 	}
 }

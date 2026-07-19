@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { fetchSingleChartData, withTimeout } from '~/containers/ProDashboard/queries.server'
+import { buildStablecoinsChartCacheValue } from '~/containers/ProDashboard/server/stablecoinFetchers'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
 import {
@@ -8,7 +9,6 @@ import {
 	fetchStablecoinPricesApi,
 	fetchStablecoinRatesApi
 } from '~/containers/Stablecoins/api'
-import { formatPeggedAssetsData } from '~/containers/Stablecoins/utils'
 import { fetchProtocolsByToken } from '~/containers/TokenUsage/api'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import { requireSubscription } from '~/server/api/requireSubscription'
@@ -26,6 +26,7 @@ function dashboardProxyAuthHeader(req: NextApiRequest): string | undefined {
 	return `Bearer ${token}`
 }
 
+// This route multiplexes unrelated payloads; the client-side proxy wrappers own their specific return contracts.
 async function dispatchFetch(type: string, params: any): Promise<any> {
 	switch (type) {
 		case 'chart': {
@@ -44,64 +45,15 @@ async function dispatchFetch(type: string, params: any): Promise<any> {
 				withTimeout(fetchStablecoinRatesApi(), FETCH_TIMEOUT)
 			])
 
-			const { peggedAssets } = peggedData
-			const chainLabel = chain === 'All' ? 'all-llama-app' : chain
+			const chainLabel = chain === 'All' ? 'all' : chain
 			const chainData = await withTimeout(fetchStablecoinChartApi(chainLabel), FETCH_TIMEOUT)
-			const breakdown = chainData?.breakdown
-
-			if (!breakdown) return null
-
-			let chartDataByPeggedAsset: any[] = []
-			let peggedNameToChartDataIndex: Record<string, number> = {}
-			let lastTimestamp = 0
-
-			chartDataByPeggedAsset = peggedAssets.map((elem: any, i: number) => {
-				peggedNameToChartDataIndex[elem.name] = i
-				const charts = breakdown[elem.id] ?? []
-				const formattedCharts = charts
-					.map((c: any) => ({ date: c.date, mcap: c.totalCirculatingUSD }))
-					.filter((c: any) => c.mcap !== undefined)
-
-				if (formattedCharts.length > 0) {
-					lastTimestamp = Math.max(lastTimestamp, formattedCharts[formattedCharts.length - 1].date)
-				}
-				return formattedCharts
-			})
-
-			for (const chart of chartDataByPeggedAsset) {
-				const last = chart[chart.length - 1]
-				if (!last) continue
-				let lastDate = Number(last.date)
-				while (lastDate < lastTimestamp) {
-					lastDate += 24 * 3600
-					chart.push({ ...last, date: lastDate })
-				}
-			}
-
-			const peggedAssetNames = peggedAssets.map((p: any) => p.name)
-			const filteredPeggedAssets = formatPeggedAssetsData({
-				peggedAssets,
-				chartDataByPeggedAsset,
+			return buildStablecoinsChartCacheValue({
+				peggedData,
+				chainData,
 				priceData,
 				rateData,
-				peggedNameToChartDataIndex,
-				chain: chain === 'All' ? null : chain
+				chain
 			})
-
-			const doublecountedIds: number[] = []
-			for (let idx = 0; idx < peggedAssets.length; idx++) {
-				if ((peggedAssets[idx] as any).doublecounted) {
-					doublecountedIds.push(idx)
-				}
-			}
-
-			return {
-				chartDataByPeggedAsset,
-				peggedAssetNames,
-				peggedNameToChartDataIndex,
-				filteredPeggedAssets,
-				doublecountedIds
-			}
 		}
 
 		case 'advancedTvlBasic': {

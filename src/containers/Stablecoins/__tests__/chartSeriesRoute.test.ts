@@ -44,6 +44,7 @@ describe('/api/public/stablecoins/chart-series', () => {
 				scope: 'overview',
 				chain: 'Ethereum',
 				chart: 'tokenMcaps',
+				limit: '10',
 				attribute: ['STABLE', 'YIELDBEARING'],
 				excludePegtype: 'PEGGEDEUR',
 				minMcap: '100'
@@ -56,6 +57,7 @@ describe('/api/public/stablecoins/chart-series', () => {
 		expect(getOverviewMock).toHaveBeenCalledWith({
 			chain: 'Ethereum',
 			chart: 'tokenMcaps',
+			seriesLimit: 10,
 			filters: {
 				attribute: ['STABLE', 'YIELDBEARING'],
 				excludeAttribute: undefined,

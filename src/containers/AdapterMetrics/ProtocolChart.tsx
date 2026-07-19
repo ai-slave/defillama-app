@@ -7,6 +7,7 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import type { ChartTimeGrouping } from '~/components/ECharts/types'
 import { getBucketTimestampMs } from '~/components/ECharts/utils'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -299,7 +300,7 @@ const ChartByType = ({
 					existing[type] = (existing[type] ?? 0) + (versions[type] ?? 0)
 				}
 			} else {
-				const entry: Record<string, number> = {}
+				const entry = createChartRecord<number>()
 				for (const type of selectedTypes) {
 					entry[type] = versions[type] ?? 0
 				}
@@ -317,7 +318,7 @@ const ChartByType = ({
 						existing[type] = (existing[type] ?? 0) + (versions[type] ?? 0)
 					}
 				} else {
-					const entry: Record<string, number> = {}
+					const entry = createChartRecord<number>()
 					for (const type of selectedTypes) {
 						entry[type] = versions[type] ?? 0
 					}
@@ -336,7 +337,7 @@ const ChartByType = ({
 						existing[type] = (existing[type] ?? 0) + (versions[type] ?? 0)
 					}
 				} else {
-					const entry: Record<string, number> = {}
+					const entry = createChartRecord<number>()
 					for (const type of selectedTypes) {
 						entry[type] = versions[type] ?? 0
 					}
@@ -348,7 +349,7 @@ const ChartByType = ({
 		// Sort dates and build dataset rows
 		const sortedDates = Array.from(aggregatedByDate.keys()).sort((a, b) => a - b)
 		const isCumulative = chartInterval === 'cumulative'
-		const cumulative: Record<string, number> = {}
+		const cumulative = createChartRecord<number>()
 
 		for (const type of selectedTypes) {
 			cumulative[type] = 0
@@ -356,7 +357,7 @@ const ChartByType = ({
 
 		const source = sortedDates.map((date) => {
 			const entry = aggregatedByDate.get(date)!
-			const row: Record<string, number | null> = { timestamp: date }
+			const row = createChartRow<number | null>(date)
 			for (const type of selectedTypes) {
 				const value = entry[type] ?? 0
 				if (isCumulative) {
@@ -378,7 +379,7 @@ const ChartByType = ({
 
 		// Build chart config
 		const allColors = getNDistinctColors(uniqueBreakdownNames.length)
-		const stackColors: Record<string, string> = {}
+		const stackColors = createChartRecord<string>()
 		for (let i = 0; i < uniqueBreakdownNames.length; i++) {
 			stackColors[uniqueBreakdownNames[i]] = allColors[i]
 		}

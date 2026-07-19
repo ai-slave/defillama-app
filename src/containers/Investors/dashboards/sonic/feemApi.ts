@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
 
 interface FormattedValue {
 	value: number
@@ -35,7 +35,7 @@ interface TimeSeriesData {
 	series: Array<{ name: string; data: number[] }>
 }
 
-interface FeeMAPIResponse {
+export interface FeeMAPIResponse {
 	metadata: {
 		projectId: number
 		projectName: string
@@ -50,45 +50,57 @@ interface FeeMAPIResponse {
 }
 
 function parseDateToUnix(dateStr: string): number {
-	return Math.floor(new Date(dateStr + 'T00:00:00Z').getTime() / 1000)
+	return Math.floor(Date.parse(dateStr + 'T00:00:00Z') / 1000)
 }
 
+type DailyStatsSeries = NonNullable<IMultiSeriesChartProps['series']>
+
+export function buildFeeMViewModel({ feem }: FeeMAPIResponse) {
+	const timestamps = new Array<number>(feem.dailyStats.dates.length)
+	for (let i = 0; i < feem.dailyStats.dates.length; i++) {
+		timestamps[i] = parseDateToUnix(feem.dailyStats.dates[i])
+	}
+
+	const dailyStatsSeries = new Array<DailyStatsSeries[number]>(feem.dailyStats.series.length)
+	for (let i = 0; i < feem.dailyStats.series.length; i++) {
+		const input = feem.dailyStats.series[i]
+		const data = new Array<[number, number]>(timestamps.length)
+		for (let j = 0; j < timestamps.length; j++) {
+			data[j] = [timestamps[j], input.data[j]]
+		}
+		dailyStatsSeries[i] = {
+			name: input.name,
+			type: i === 0 ? 'bar' : 'line',
+			color: i === 0 ? '#4691ce' : '#4cae4f',
+			data,
+			yAxisIndex: i === 0 ? 0 : 1,
+			areaStyle: i === 1 ? { opacity: 0 } : undefined
+		}
+	}
+
+	return {
+		globalKpis: feem.globalKpis,
+		leaderboard: feem.leaderboard,
+		dailyStatsSeries,
+		dailyStatsTitle: feem.dailyStats.title
+	}
+}
+
+export type FeeMViewModel = ReturnType<typeof buildFeeMViewModel>
+
 export function useFeeMData() {
-	const query = useQuery<FeeMAPIResponse>({
+	const query = useQuery<FeeMViewModel>({
 		queryKey: ['sonic-feem'],
 		queryFn: async () => {
 			const res = await fetch('/api/public/sonic/feem')
 			if (!res.ok) throw new Error(`FeeM API error: ${res.status}`)
-			return res.json()
+			const response: FeeMAPIResponse = await res.json()
+			return buildFeeMViewModel(response)
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
 
-	return useMemo(() => {
-		if (!query.data) {
-			return { data: null, isLoading: query.isLoading || query.isPending }
-		}
-
-		const { feem } = query.data
-
-		const dailyStatsSeries = feem.dailyStats.series.map((s, i) => ({
-			name: s.name,
-			type: (i === 0 ? 'bar' : 'line') as 'bar' | 'line',
-			color: i === 0 ? '#4691ce' : '#4cae4f',
-			data: feem.dailyStats.dates.map((d, j) => [parseDateToUnix(d), s.data[j]] as [number, number]),
-			yAxisIndex: i === 0 ? 0 : 1,
-			areaStyle: i === 1 ? { opacity: 0 } : undefined
-		}))
-
-		return {
-			data: {
-				globalKpis: feem.globalKpis,
-				leaderboard: feem.leaderboard,
-				dailyStatsSeries,
-				dailyStatsTitle: feem.dailyStats.title
-			},
-			isLoading: false
-		}
-	}, [query.data, query.isLoading, query.isPending])
+	if (!query.data) return { data: null, isLoading: query.isLoading || query.isPending }
+	return { data: query.data, isLoading: false }
 }

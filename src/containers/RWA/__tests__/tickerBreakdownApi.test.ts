@@ -134,8 +134,8 @@ describe('rwaAssetBreakdown', () => {
 	it('returns serialized normalized rows for the requested metric', async () => {
 		mocks.fetchJson.mockResolvedValue({
 			onChainMcap: [
-				{ timestamp: 2, Alpha: 20 },
-				{ timestamp: 1, Alpha: 10 }
+				{ timestamp: 1, Alpha: 10 },
+				{ timestamp: 2, Alpha: 20 }
 			]
 		})
 
@@ -188,11 +188,11 @@ describe('buildAssetBreakdownUrl', () => {
 })
 
 describe('normalizeAssetBreakdownRows', () => {
-	it('normalizes timestamps and sorts rows chronologically for the requested metric', () => {
+	it('normalizes timestamps from the ascending API response', () => {
 		expect(
 			normalizeAssetBreakdownRows([
-				{ timestamp: 2, alpha: 20 },
-				{ timestamp: 1, alpha: 10 }
+				{ timestamp: 1, alpha: 10 },
+				{ timestamp: 2, alpha: 20 }
 			])
 		).toEqual([
 			{ timestamp: 1000, alpha: 10 },

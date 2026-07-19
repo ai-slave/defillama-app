@@ -7,6 +7,7 @@ describe('buildStablecoinChartSeriesUrl', () => {
 			scope: 'overview',
 			chain: 'All',
 			chart: 'tokenMcaps',
+			seriesLimit: 10,
 			filters: {
 				attribute: ['STABLE', 'YIELDBEARING'],
 				excludePegtype: 'PEGGEDEUR',
@@ -17,7 +18,7 @@ describe('buildStablecoinChartSeriesUrl', () => {
 		})
 
 		expect(url).toBe(
-			'/api/public/stablecoins/chart-series?scope=overview&chart=tokenMcaps&chain=All&attribute=STABLE&attribute=YIELDBEARING&excludePegtype=PEGGEDEUR&minMcap=100'
+			'/api/public/stablecoins/chart-series?scope=overview&chart=tokenMcaps&limit=10&chain=All&attribute=STABLE&attribute=YIELDBEARING&excludePegtype=PEGGEDEUR&minMcap=100'
 		)
 	})
 

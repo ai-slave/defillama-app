@@ -14,10 +14,12 @@ import {
 	useProDashboardPermissions
 } from '../ProDashboardAPIContext'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
-import { CHART_TYPES, type DashboardGrouping, type MultiChartConfig } from '../types'
-import { convertToCumulative, generateChartColor } from '../utils'
+import { CHART_TYPES, limitMultiChartItems, type DashboardGrouping, type MultiChartConfig } from '../types'
+import { generateChartColor } from '../utils'
 import { COLOR_PALETTE_2, EXTENDED_COLOR_PALETTE } from '../utils/colorManager'
+import { buildProTreemapData } from '../utils/treemap'
 import { ConfirmationModal } from './ConfirmationModal'
+import { alignAscendingSeriesData, buildMultiChartSeriesView } from './multiChartSeries'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -65,6 +67,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 	const showCumulative = multi.showCumulative || false
 	const showPercentage = multi.showPercentage || false
 	const showTreemap = multi.showTreemap || false
+	const limitedItems = useMemo(() => limitMultiChartItems(multi.items), [multi.items])
 
 	const timeKey = useMemo(() => {
 		if (timePeriod === 'custom' && customTimePeriod) {
@@ -78,24 +81,23 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 
 	const validItems = useMemo(
 		() =>
-			multi.items.filter((cfg) => {
+			limitedItems.filter((cfg) => {
 				if (cfg.isLoading || cfg.hasError) return false
-				const rawData = cfg.data as [string, number][] | undefined | null
-				return Array.isArray(rawData) && rawData.length > 0
+				return Boolean(cfg.data?.length)
 			}),
-		[multi.items]
+		[limitedItems]
 	)
 
 	const failedItems = useMemo(
 		() =>
-			multi.items.filter((cfg) => {
+			limitedItems.filter((cfg) => {
 				if (cfg.isLoading) return false
 				return cfg.hasError || !Array.isArray(cfg.data) || (Array.isArray(cfg.data) && cfg.data.length === 0)
 			}),
-		[multi.items]
+		[limitedItems]
 	)
 
-	const loadingItems = useMemo(() => multi.items.filter((cfg) => cfg.isLoading), [multi.items])
+	const loadingItems = useMemo(() => limitedItems.filter((cfg) => cfg.isLoading), [limitedItems])
 
 	const colorContext = useMemo(() => {
 		const uniqueChains = new Set(validItems.filter((item) => !item.protocol).map((item) => item.chain))
@@ -155,18 +157,11 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		}
 
 		return validItems.map((cfg, index) => {
-			const rawData = cfg.data as [string, number][]
+			const data = cfg.data!
 			const meta = CHART_TYPES[cfg.type]
 			const name = cfg.protocol
 				? getProtocolInfo(cfg.protocol)?.name || cfg.protocol
 				: cfg.chain || (cfg.geckoId && protocols.find((p: any) => p.geckoId === cfg.geckoId)?.name) || cfg.geckoId || ''
-
-			const data: [number, number][] = rawData.map(([timestamp, value]) => [
-				typeof timestamp === 'string' && !Number.isNaN(Number(timestamp))
-					? Number(timestamp)
-					: Math.floor(new Date(timestamp).getTime()),
-				value
-			])
 
 			const itemIdentifier = cfg.protocol || cfg.chain || 'unknown'
 			const colorItemId = getColorItemId(cfg)
@@ -215,35 +210,17 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 	}, [validItems])
 
 	const treemapData = useMemo(() => {
-		if (!baseSeries || baseSeries.length === 0) return []
-
-		return baseSeries
-			.map((s) => {
-				const dataLength = s.data?.length || 0
-				const pointIndex = Math.max(0, dataLength - 2)
-				const value = dataLength > 0 ? s.data[pointIndex]?.[1] || 0 : 0
-
-				return {
-					name: s.name,
-					value: value,
-					itemStyle: {
-						color: s.color
-					}
-				}
-			})
-			.filter((item) => item.value > 0)
-	}, [baseSeries])
+		if (!showTreemap) return []
+		return buildProTreemapData(baseSeries, 'latest', (_name, color) => color ?? '#8884d8')
+	}, [baseSeries, showTreemap])
 
 	const series = useMemo(() => {
 		const { allBarType, allAreaType } = chartTypeInfo
 
-		let processedSeries = baseSeries.map((s) => ({
-			...s,
-			type: (s.baseType === 'bar' && !showCumulative ? 'bar' : 'line') as 'bar' | 'line',
-			data: showCumulative ? convertToCumulative(s.data) : s.data
-		}))
+		const processedSeries = baseSeries.map((serie) => buildMultiChartSeriesView(serie, showCumulative))
+		const hasCumulativeFlow = showCumulative && baseSeries.some((serie) => serie.baseType === 'bar')
 
-		if ((allBarType || allAreaType) && showStacked && !showCumulative && !showPercentage) {
+		if ((allBarType || allAreaType) && showStacked && !hasCumulativeFlow && !showPercentage) {
 			const allTimestamps = new Set<number>()
 			for (const serie of processedSeries) {
 				for (const [timestamp] of serie.data) {
@@ -254,15 +231,9 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 			const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b)
 
 			return processedSeries.map((serie) => {
-				const dataMap = new Map(serie.data)
-				const alignedData: [number, number][] = sortedTimestamps.map((timestamp) => [
-					timestamp,
-					dataMap.get(timestamp) || 0
-				])
-
 				return {
 					...serie,
-					data: alignedData,
+					data: alignAscendingSeriesData(serie.data, sortedTimestamps),
 					stack: 'total',
 					...(allAreaType && { areaStyle: { opacity: 0.7 } })
 				}
@@ -272,33 +243,20 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		if (!showPercentage) {
 			return processedSeries.map((serie) => {
 				const { stack: _stack, ...rest } = serie as any
-				if (showCumulative) {
-					return { ...rest, areaStyle: { opacity: 0.2 } }
-				}
 				return rest
 			})
 		}
 
 		const allTimestamps = new Set<number>()
+		const totals = new Map<number, number>()
 		for (const serie of processedSeries) {
-			for (const [timestamp] of serie.data) {
+			for (const [timestamp, value] of serie.data) {
 				allTimestamps.add(timestamp)
+				totals.set(timestamp, (totals.get(timestamp) ?? 0) + value)
 			}
 		}
 
 		const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b)
-
-		const totals = new Map<number, number>()
-		for (const timestamp of sortedTimestamps) {
-			let total = 0
-			for (const serie of processedSeries) {
-				const dataPoint = serie.data.find(([t]) => t === timestamp)
-				if (dataPoint) {
-					total += dataPoint[1]
-				}
-			}
-			totals.set(timestamp, total)
-		}
 
 		const percentageColors = [
 			'#cc3e3e',
@@ -319,15 +277,18 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		]
 
 		const seriesWithAverages = processedSeries.map((serie) => {
-			const percentageData: [number, number][] = sortedTimestamps.map((timestamp) => {
-				const dataPoint = serie.data.find(([t]) => t === timestamp)
-				const value = dataPoint ? dataPoint[1] : 0
+			const alignedData = alignAscendingSeriesData(serie.data, sortedTimestamps)
+			const percentageData = new Array<[number, number]>(alignedData.length)
+			let percentageTotal = 0
+			for (let i = 0; i < alignedData.length; i++) {
+				const [timestamp, value] = alignedData[i]
 				const total = totals.get(timestamp) || 0
 				const percentage = total > 0 ? (value / total) * 100 : 0
-				return [timestamp, percentage]
-			})
+				percentageData[i] = [timestamp, percentage]
+				percentageTotal += percentage
+			}
 
-			const avgPercentage = percentageData.reduce((sum, [_, pct]) => sum + pct, 0) / percentageData.length
+			const avgPercentage = percentageTotal / percentageData.length
 
 			return {
 				...serie,
@@ -379,7 +340,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 	}, [series, multi.name])
 
 	const hasAnyData = validItems.length > 0
-	const isAllLoading = loadingItems.length === multi.items.length
+	const isAllLoading = loadingItems.length === limitedItems.length
 
 	const uniqueMetricTypes = new Set(validItems.map((item) => item.type))
 	const allPercentMetrics =
@@ -388,7 +349,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 	const allRatioMetrics = series.length > 0 && series.every((s: any) => getMetricUnitGroup(s.metricType) === 'ratio')
 	const hasMultipleMetrics = uniqueMetricTypes.size > 1
 
-	const allChartsGroupable = multi.items.every((item) => {
+	const allChartsGroupable = limitedItems.every((item) => {
 		const chartType = CHART_TYPES[item.type]
 		return chartType?.groupable === true
 	})
@@ -518,7 +479,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		<div className="flex min-h-[402px] flex-col p-1 md:min-h-[418px]">
 			<div className="flex flex-wrap items-center justify-end gap-2 p-1 md:p-3">
 				<div className="mr-auto flex items-center gap-2">
-					<h2 className="text-base font-semibold">{multi.name || `Multi-Chart (${multi.items.length})`}</h2>
+					<h2 className="text-base font-semibold">{multi.name || `Multi-Chart (${limitedItems.length})`}</h2>
 				</div>
 				{!isReadOnly && allChartsGroupable && hasAnyData ? (
 					<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-pro-form-control-border text-pro-text-form">
@@ -621,11 +582,11 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 				) : null}
 			</div>
 
-			{loadingItems.length > 0 && failedItems.length < multi.items.length ? (
+			{loadingItems.length > 0 && failedItems.length < limitedItems.length ? (
 				<div className="flex items-center gap-1.5 px-1 text-xs text-pro-text-form md:px-3">
 					<div className="size-3 animate-spin rounded-full border-2 border-pro-text-form border-t-transparent" />
 					<span>
-						{validItems.length}/{multi.items.length - failedItems.length}
+						{validItems.length}/{limitedItems.length - failedItems.length}
 					</span>
 				</div>
 			) : null}
@@ -640,7 +601,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 					<Icon name="alert-triangle" height={24} width={24} className="mx-auto mb-2 text-error" />
 					<p className="text-sm text-pro-text-label">Failed to load chart data</p>
 					<p className="mt-1 text-xs text-pro-text-form">
-						{failedItems.length} of {multi.items.length} charts failed
+						{failedItems.length} of {limitedItems.length} charts failed
 					</p>
 				</div>
 			) : showTreemap && treemapData.length > 0 ? (

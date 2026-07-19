@@ -1,17 +1,13 @@
 import type * as echarts from 'echarts/core'
-import { lazy, useCallback, useMemo, useRef } from 'react'
+import { lazy, useCallback, useRef } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { CHART_INSET } from '~/components/ECharts/chartSpacing'
-import type { IBarChartProps, IChartProps } from '~/components/ECharts/types'
-import { formatBarChart } from '~/components/ECharts/utils'
+import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import { DOLLAR_SCROLL_CHART_OPTIONS, DOLLAR_STACKED_SCROLL_CHART_OPTIONS, HIDDEN_EXPORT } from './chartDefaults'
 import { useDistributionData } from './distributionApi'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
-
-const SCROLL_LEGEND = {
-	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: CHART_INSET }
-}
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 
 function sparkExportTitle(title: string) {
 	const lowerTitle = title.toLowerCase()
@@ -58,55 +54,8 @@ function CardSkeleton({ title }: { title: string }) {
 	)
 }
 
-function makeStacks(keys: string[]): Record<string, string> {
-	const s: Record<string, string> = {}
-	for (const k of keys) s[k] = 'a'
-	return s
-}
-
-function mergeCumulativeStackChartData(
-	chartData: Array<Record<string, number>>,
-	keys: string[]
-): Array<Record<string, number>> {
-	const sorted = chartData.toSorted((a, b) => Number(a.date) - Number(b.date))
-	const bySec = new Map<number, Record<string, number>>()
-	for (const key of keys) {
-		const tuples: Array<[string | number, number]> = sorted.map((row) => [
-			row.date,
-			typeof row[key] === 'number' && Number.isFinite(row[key]) ? row[key] : 0
-		])
-		const cum = formatBarChart({
-			data: tuples,
-			groupBy: 'cumulative',
-			denominationPriceHistory: null
-		})
-		for (const [tsMs, val] of cum) {
-			if (val === null) continue
-			const sec = Math.round(tsMs / 1000)
-			let row = bySec.get(sec)
-			if (!row) {
-				row = { date: sec }
-				bySec.set(sec, row)
-			}
-			row[key] = val
-		}
-	}
-	return Array.from(bySec.entries())
-		.toSorted((a, b) => a[0] - b[0])
-		.map(([, row]) => row)
-}
-
 export default function DistributionRewards() {
 	const { data, isLoading } = useDistributionData()
-
-	const actualRevStacks = useMemo(() => makeStacks(data?.actualRevenue.keys ?? []), [data?.actualRevenue.keys])
-	const xrSusdsStacks = useMemo(() => makeStacks(data?.xrSusds.keys ?? []), [data?.xrSusds.keys])
-	const xrSusdcStacks = useMemo(() => makeStacks(data?.xrSusdc.keys ?? []), [data?.xrSusdc.keys])
-
-	const revenueProjectionCumulativeChartData = useMemo(() => {
-		if (!data?.revenueProjection) return []
-		return mergeCumulativeStackChartData(data.revenueProjection.chartData, data.revenueProjection.keys)
-	}, [data?.revenueProjection])
 
 	const actualRev = useChartInstance()
 	const revProjection = useChartInstance()
@@ -141,15 +90,15 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<BarChart
-					chartData={data.actualRevenue.chartData}
-					stacks={actualRevStacks}
-					stackColors={data.actualRevenue.colors}
-					hideDownloadButton
+				<MultiSeriesChart2
+					dataset={data.actualRevenue.dataset}
+					charts={data.actualRevenue.charts}
 					valueSymbol="$"
 					title=""
 					height="400px"
-					chartOptions={SCROLL_LEGEND}
+					hideDefaultLegend={data.actualRevenue.charts.length < 2}
+					chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
+					exportButtons={HIDDEN_EXPORT}
 					onReady={actualRev.onReady}
 				/>
 			</ChartCard>
@@ -165,17 +114,16 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<AreaChart
-					chartData={revenueProjectionCumulativeChartData}
-					stacks={data.revenueProjection.keys}
-					stackColors={data.revenueProjection.colors}
-					hideDownloadButton
+				<MultiSeriesChart2
+					dataset={data.revenueProjection.dataset}
+					charts={data.revenueProjection.charts}
 					valueSymbol="$"
 					title=""
-					isStackedChart={true}
-					hideGradient={true}
+					stacked
+					solidChartAreaStyle
 					height="400px"
-					chartOptions={SCROLL_LEGEND}
+					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+					exportButtons={HIDDEN_EXPORT}
 					onReady={revProjection.onReady}
 				/>
 			</ChartCard>
@@ -191,17 +139,16 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<AreaChart
-					chartData={data.susdsTvl.chartData}
-					stacks={data.susdsTvl.keys}
-					stackColors={data.susdsTvl.colors}
-					hideDownloadButton
+				<MultiSeriesChart2
+					dataset={data.susdsTvl.dataset}
+					charts={data.susdsTvl.charts}
 					valueSymbol="$"
 					title=""
-					isStackedChart={true}
-					hideGradient={true}
+					stacked
+					solidChartAreaStyle
 					height="400px"
-					chartOptions={SCROLL_LEGEND}
+					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+					exportButtons={HIDDEN_EXPORT}
 					onReady={susdsTvl.onReady}
 				/>
 			</ChartCard>
@@ -217,15 +164,15 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<BarChart
-					chartData={data.xrSusds.chartData}
-					stacks={xrSusdsStacks}
-					stackColors={data.xrSusds.colors}
-					hideDownloadButton
+				<MultiSeriesChart2
+					dataset={data.xrSusds.dataset}
+					charts={data.xrSusds.charts}
 					valueSymbol="$"
 					title=""
 					height="400px"
-					chartOptions={SCROLL_LEGEND}
+					hideDefaultLegend={data.xrSusds.charts.length < 2}
+					chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
+					exportButtons={HIDDEN_EXPORT}
 					onReady={xrSusds.onReady}
 				/>
 			</ChartCard>
@@ -241,15 +188,15 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<BarChart
-					chartData={data.xrSusdc.chartData}
-					stacks={xrSusdcStacks}
-					stackColors={data.xrSusdc.colors}
-					hideDownloadButton
+				<MultiSeriesChart2
+					dataset={data.xrSusdc.dataset}
+					charts={data.xrSusdc.charts}
 					valueSymbol="$"
 					title=""
 					height="400px"
-					chartOptions={SCROLL_LEGEND}
+					hideDefaultLegend={data.xrSusdc.charts.length < 2}
+					chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
+					exportButtons={HIDDEN_EXPORT}
 					onReady={xrSusdc.onReady}
 				/>
 			</ChartCard>
@@ -265,17 +212,16 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<AreaChart
-					chartData={data.stakedUsdsTvl.chartData}
-					stacks={data.stakedUsdsTvl.keys}
-					stackColors={data.stakedUsdsTvl.colors}
-					hideDownloadButton
+				<MultiSeriesChart2
+					dataset={data.stakedUsdsTvl.dataset}
+					charts={data.stakedUsdsTvl.charts}
 					valueSymbol="$"
 					title=""
-					isStackedChart={true}
-					hideGradient={true}
+					stacked
+					solidChartAreaStyle
 					height="400px"
-					chartOptions={SCROLL_LEGEND}
+					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+					exportButtons={HIDDEN_EXPORT}
 					onReady={stakedUsds.onReady}
 				/>
 			</ChartCard>

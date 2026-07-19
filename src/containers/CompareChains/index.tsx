@@ -2,8 +2,8 @@ import { useQueries } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import type { NextRouter } from 'next/router'
 import * as React from 'react'
+import { createChartRow } from '~/components/ECharts/dynamicRow'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
-import { ensureChronologicalRows } from '~/components/ECharts/utils'
 import { feesOptions } from '~/components/Filters/options'
 import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterState'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
@@ -162,14 +162,14 @@ const formatChartData = (
 				| undefined
 			for (const data of chartEntries ?? []) {
 				const ts = !dateInMs ? Number(data[0]) * 1e3 : data[0]
-				const row = rowMap.get(ts) ?? { timestamp: ts }
+				const row = rowMap.get(ts) ?? createChartRow<number>(ts)
 				row[name] = data[1]
 				rowMap.set(ts, row)
 			}
 		}
 	}
 
-	const source = ensureChronologicalRows(Array.from(rowMap.values()))
+	const source = Array.from(rowMap.values()).sort((a, b) => a.timestamp - b.timestamp)
 	return { dataset: { source, dimensions: ['timestamp', ...seriesNames] }, charts: seriesConfigs }
 }
 

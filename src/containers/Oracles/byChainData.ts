@@ -1,3 +1,4 @@
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { calculateTotalWithExtraToggles } from '~/utils/tvlOverlap'
 import type { OracleBreakdownItem, OraclesByChainPageData } from './types'
@@ -16,12 +17,12 @@ function indexExtraChartDataByTimestamp(extraBreakdownsByApiKey: Record<string, 
 	for (const apiKey in extraBreakdownsByApiKey) {
 		for (const dayData of extraBreakdownsByApiKey[apiKey]) {
 			const timestamp = dayData.timestamp
-			const valuesByOracle = indexedByTimestamp.get(timestamp) ?? {}
+			const valuesByOracle = indexedByTimestamp.get(timestamp) ?? createChartRecord<Record<string, number>>()
 
 			for (const oracleName in dayData) {
 				if (oracleName === 'timestamp') continue
 				const value = dayData[oracleName]
-				const currentValues = valuesByOracle[oracleName] ?? {}
+				const currentValues = valuesByOracle[oracleName] ?? createChartRecord<number>()
 				currentValues[apiKey] = value
 				valuesByOracle[oracleName] = currentValues
 			}
@@ -44,7 +45,8 @@ function calculateTotalWithOracleExtras({
 }) {
 	if (!extraTvl) return tvl
 
-	const values: Record<string, number> = { tvl }
+	const values = createChartRecord<number>()
+	values.tvl = tvl
 	for (const extraKey in extraTvl) {
 		values[extraKey] = extraTvl[extraKey]
 	}
@@ -122,7 +124,7 @@ export function buildOraclesByChainDominanceData({
 		const timestampInSeconds = baseDayData.timestamp
 		const extraValuesForTimestamp = extraValuesByTimestamp?.get(timestampInSeconds)
 
-		const point: Record<string, number> = { timestamp: timestampInSeconds * 1e3 }
+		const point = createChartRow<number>(timestampInSeconds * 1e3)
 		let dayTotal = 0
 
 		for (const oracleName of oracles) {

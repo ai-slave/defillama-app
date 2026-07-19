@@ -1,3 +1,6 @@
+import { getEquitiesTreemapColor } from '~/components/ECharts/EquitiesTreemapChart/colors'
+import type { MarketTreemapGroup, MarketTreemapLeaf } from '~/components/ECharts/marketTreemapTypes'
+import { equityIconUrl } from '~/utils/icons'
 import type { IEquitiesListCompanyRow } from './types'
 
 export const EQUITIES_TREEMAP_SIZE_METRICS = [
@@ -29,20 +32,13 @@ export const EQUITIES_TREEMAP_DEFAULT_LIMIT = 500
 
 const FALLBACK_SECTOR = 'Other'
 
-export interface IEquitiesTreemapLeaf {
-	name: string
-	value: [number, number | null]
-	companyName: string
+export interface IEquitiesTreemapLeaf extends MarketTreemapLeaf {
 	country?: string
 	sector?: string
 	industry?: string
-	marketCap: number | null
-	iconUrl?: string
 }
 
-export interface IEquitiesTreemapGroup {
-	name: string
-	value: [number, null]
+export interface IEquitiesTreemapGroup extends Omit<MarketTreemapGroup, 'children'> {
 	children: IEquitiesTreemapLeaf[]
 }
 
@@ -57,17 +53,25 @@ export interface IEquitiesTreemapOptions {
 
 export interface IEquitiesTreemapResult {
 	treeData: EquitiesTreemapNode[]
+	leaves: IEquitiesTreemapLeaf[]
+	excludedCount: number
+	truncatedCount: number
+}
+
+export interface IEquitiesTreemapRanking {
+	rows: IEquitiesListCompanyRow[]
+	sizeMetric: EquitiesTreemapSizeMetric
 	excludedCount: number
 	truncatedCount: number
 }
 
 export function prepareEquitiesTreemapCsv({
-	nodes,
+	leaves,
 	sizeLabel,
 	colorLabel,
 	filename
 }: {
-	nodes: readonly EquitiesTreemapNode[]
+	leaves: readonly IEquitiesTreemapLeaf[]
 	sizeLabel: string
 	colorLabel: string
 	filename: string
@@ -86,7 +90,7 @@ export function prepareEquitiesTreemapCsv({
 			'Market Cap'
 		]
 	]
-	const addLeaf = (leaf: IEquitiesTreemapLeaf) => {
+	for (const leaf of leaves) {
 		rows.push([
 			leaf.name,
 			leaf.companyName,
@@ -101,66 +105,93 @@ export function prepareEquitiesTreemapCsv({
 		])
 	}
 
-	for (const node of nodes) {
-		if ('children' in node) {
-			for (const child of node.children) addLeaf(child)
-		} else {
-			addLeaf(node)
-		}
-	}
-
 	return { filename, rows }
 }
 
-export function buildEquitiesTreemap(
+export function rankEquitiesTreemapRows(
 	rows: IEquitiesListCompanyRow[],
-	{ groupBy, sizeMetric, colorMetric, limit = EQUITIES_TREEMAP_DEFAULT_LIMIT }: IEquitiesTreemapOptions
-): IEquitiesTreemapResult {
-	const sized: Array<{ row: IEquitiesListCompanyRow; size: number }> = []
+	sizeMetric: EquitiesTreemapSizeMetric,
+	limit = EQUITIES_TREEMAP_DEFAULT_LIMIT
+): IEquitiesTreemapRanking {
+	const rankedRows: IEquitiesListCompanyRow[] = []
 	let excludedCount = 0
 
-	for (const row of rows ?? []) {
-		const size = row?.[sizeMetric]
-		if (typeof size === 'number' && Number.isFinite(size) && size > 0) {
-			sized.push({ row, size })
+	for (const row of rows) {
+		const size = row[sizeMetric]
+		if (size !== null && size > 0) {
+			rankedRows.push(row)
 		} else {
 			excludedCount++
 		}
 	}
 
-	sized.sort((a, b) => b.size - a.size)
+	rankedRows.sort((a, b) => b[sizeMetric]! - a[sizeMetric]!)
 
-	const limited = limit != null && limit > 0 ? sized.slice(0, limit) : sized
-	const truncatedCount = sized.length - limited.length
+	const truncatedCount = limit > 0 && rankedRows.length > limit ? rankedRows.length - limit : 0
+	if (truncatedCount > 0) rankedRows.length = limit
 
-	const leaves: IEquitiesTreemapLeaf[] = limited.map(({ row, size }) => {
-		const colorValue = row[colorMetric]
-		const colorPct = typeof colorValue === 'number' && Number.isFinite(colorValue) ? colorValue : null
-		return {
+	return { rows: rankedRows, sizeMetric, excludedCount, truncatedCount }
+}
+
+export function buildEquitiesTreemapLeaves(
+	ranking: IEquitiesTreemapRanking,
+	colorMetric: EquitiesTreemapColorMetric
+): IEquitiesTreemapLeaf[] {
+	const leaves: IEquitiesTreemapLeaf[] = []
+	const { rows, sizeMetric } = ranking
+
+	for (let index = 0; index < rows.length; index++) {
+		const row = rows[index]
+		const changePct = row[colorMetric]
+		leaves.push({
 			name: row.ticker,
-			value: [size, colorPct],
+			value: [row[sizeMetric]!, changePct],
+			iconKey: index,
+			iconUrl: equityIconUrl(row.ticker, row.country),
+			itemStyle: { color: getEquitiesTreemapColor(changePct) },
 			companyName: row.name,
 			country: row.country,
 			sector: row.sector || FALLBACK_SECTOR,
 			industry: row.industry || '',
 			marketCap: row.marketCap
-		}
-	})
-
-	if (groupBy === 'none') {
-		return { treeData: leaves, excludedCount, truncatedCount }
+		})
 	}
 
+	return leaves
+}
+
+export function groupEquitiesTreemapLeaves(
+	leaves: IEquitiesTreemapLeaf[],
+	groupBy: EquitiesTreemapGroupBy
+): EquitiesTreemapNode[] {
+	if (groupBy === 'none') return leaves
+
+	const treeData: IEquitiesTreemapGroup[] = []
 	const groups = new Map<string, IEquitiesTreemapGroup>()
 	for (const leaf of leaves) {
 		let group = groups.get(leaf.sector)
 		if (!group) {
 			group = { name: leaf.sector, value: [0, null], children: [] }
 			groups.set(leaf.sector, group)
+			treeData.push(group)
 		}
 		group.value[0] += leaf.value[0]
 		group.children.push(leaf)
 	}
 
-	return { treeData: Array.from(groups.values()), excludedCount, truncatedCount }
+	return treeData
+}
+
+export function buildEquitiesTreemap(
+	rows: IEquitiesListCompanyRow[],
+	{ groupBy, sizeMetric, colorMetric, limit = EQUITIES_TREEMAP_DEFAULT_LIMIT }: IEquitiesTreemapOptions
+): IEquitiesTreemapResult {
+	const ranking = rankEquitiesTreemapRows(rows, sizeMetric, limit)
+	const leaves = buildEquitiesTreemapLeaves(ranking, colorMetric)
+	return {
+		treeData: groupEquitiesTreemapLeaves(leaves, groupBy),
+		leaves,
+		excludedCount: ranking.excludedCount,
+		truncatedCount: ranking.truncatedCount
+	}
 }

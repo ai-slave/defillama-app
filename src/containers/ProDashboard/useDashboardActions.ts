@@ -19,6 +19,7 @@ import {
 	type DashboardItemConfig,
 	type IncomeStatementConfig,
 	type LlamaAIChartConfig,
+	limitMultiChartItems,
 	type MetricConfig,
 	type MultiChartConfig,
 	type SqlChartConfig,
@@ -385,7 +386,7 @@ export function useDashboardActions(
 					id: generateItemId('multi', ''),
 					kind: 'multi',
 					name: name || `Multi-Chart ${prev.filter((item) => item.kind === 'multi').length + 1}`,
-					items: chartItems.map((chart) => ({
+					items: limitMultiChartItems(chartItems).map((chart) => ({
 						...chart,
 						grouping: chart.grouping || defaultGrouping
 					})),
@@ -525,7 +526,7 @@ export function useDashboardActions(
 			if (isReadOnlyUntilDashboardLoaded) return
 
 			dispatchItemsAndSave((prev) => {
-				const newItems = multi.items.map((item) => {
+				const newItems = limitMultiChartItems(multi.items).map((item) => {
 					const { data: _data, isLoading: _isLoading, hasError: _hasError, refetch: _refetch, ...rest } = item
 					return {
 						...rest,
@@ -548,7 +549,9 @@ export function useDashboardActions(
 		(itemId: string, newItem: DashboardItemConfig) => {
 			if (isReadOnlyUntilDashboardLoaded) return
 
-			dispatchItemsAndSave((prev) => prev.map((item) => (item.id === itemId ? newItem : item)))
+			const boundedItem =
+				newItem.kind === 'multi' ? { ...newItem, items: limitMultiChartItems(newItem.items) } : newItem
+			dispatchItemsAndSave((prev) => prev.map((item) => (item.id === itemId ? boundedItem : item)))
 		},
 		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
 	)

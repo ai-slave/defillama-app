@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 
 export interface AaveReserveSupplyInfo {
 	apy: { value: string }
@@ -204,8 +205,8 @@ export function useAaveMarkets() {
 				}))
 		)
 
-		return { ...query, markets, reserves }
-	}, [query])
+		return { markets, reserves, isLoading: query.isLoading }
+	}, [query.data, query.isLoading])
 }
 
 export function useAaveAPYHistory(
@@ -235,14 +236,20 @@ export function useAaveAPYHistory(
 	return useMemo(() => {
 		const key = type === 'supply' ? 'supplyAPYHistory' : 'borrowAPYHistory'
 		const samples = query.data?.data?.[key] ?? []
-		const chartData = samples
-			.map((s) => ({
-				date: Math.floor(new Date(s.date).getTime() / 1000),
-				APY: pct(s.avgRate.value)
-			}))
-			.sort((a, b) => a.date - b.date)
-		return { ...query, chartData }
-	}, [query, type])
+		const dimension = type === 'supply' ? 'Supply APY' : 'Borrow APY'
+		type ApyRow = Record<string, number> & { timestamp: number }
+		const source = new Array<ApyRow>(samples.length)
+		for (let i = 0; i < samples.length; i++) {
+			const sample = samples[i]
+			// Aave returns newest-first samples; reverse-fill the canonical ascending dataset.
+			source[samples.length - i - 1] = {
+				timestamp: Math.floor(Date.parse(sample.date) / 1000) * 1000,
+				[dimension]: pct(sample.avgRate.value)
+			}
+		}
+		const dataset = { source, dimensions: ['timestamp', dimension] } satisfies MultiSeriesChart2Dataset
+		return { dataset, isLoading: query.isLoading }
+	}, [query.data, query.isLoading, type])
 }
 
 export function useAaveGHOReserve() {
@@ -255,6 +262,6 @@ export function useAaveGHOReserve() {
 
 	return useMemo(() => {
 		const reserve = query.data?.data?.reserve ?? null
-		return { ...query, reserve }
-	}, [query])
+		return { reserve, isLoading: query.isLoading }
+	}, [query.data, query.isLoading])
 }

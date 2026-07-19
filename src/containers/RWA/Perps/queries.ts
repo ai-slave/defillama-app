@@ -1,4 +1,3 @@
-import { ensureChronologicalRows } from '~/components/ECharts/utils'
 import { findByRwaSlug, rwaSlug } from '~/containers/RWA/rwaSlug'
 import { getPercentChange } from '~/utils'
 import { buildRwaChartDatasetTotal, type RWAChartDataset } from '../chartDataset'
@@ -84,12 +83,10 @@ function getPrimaryAssetClass(assetClass: string[] | null): string | null {
 function normalizeMarketChart(points: IRWAPerpsMarketChartPoint[] | null): IRWAPerpsContractMarketChartPoint[] | null {
 	if (!points?.length) return null
 
-	return ensureChronologicalRows(
-		points.map((point) => ({
-			...point,
-			timestamp: toUnixMsTimestamp(point.timestamp)
-		}))
-	)
+	return points.map((point) => ({
+		...point,
+		timestamp: toUnixMsTimestamp(point.timestamp)
+	}))
 }
 
 function normalizeFundingHistory(
@@ -97,15 +94,13 @@ function normalizeFundingHistory(
 ): IRWAPerpsContractFundingHistoryPoint[] | null {
 	if (!points?.length) return null
 
-	return ensureChronologicalRows(
-		points.map((point) => ({
-			timestamp: toUnixMsTimestamp(point.timestamp),
-			fundingRate: safeNumber(point.funding_rate),
-			premium: safeNumber(point.premium),
-			openInterest: safeNumber(point.open_interest),
-			fundingPayment: safeNumber(point.funding_payment)
-		}))
-	)
+	return points.map((point) => ({
+		timestamp: toUnixMsTimestamp(point.timestamp),
+		fundingRate: safeNumber(point.funding_rate),
+		premium: safeNumber(point.premium),
+		openInterest: safeNumber(point.open_interest),
+		fundingPayment: safeNumber(point.funding_payment)
+	}))
 }
 
 function resolveContractMarket(markets: IRWAPerpsMarket[], contract: string): IRWAPerpsMarket | null {

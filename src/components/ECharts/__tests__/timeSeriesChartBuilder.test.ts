@@ -168,6 +168,38 @@ describe('buildTimeSeriesChart', () => {
 		})
 	})
 
+	it('densifies mixed sparse line buckets while keeping the last value per series', () => {
+		expect(
+			buildTimeSeriesChart({
+				kind: 'periodLines',
+				groupBy: 'weekly',
+				series: [
+					{
+						name: 'TVL',
+						color: '#111111',
+						points: [
+							[toMs(2024, 1, 15), 10],
+							[toMs(2024, 1, 17), 12],
+							[toMs(2024, 1, 29), 30]
+						]
+					},
+					{
+						name: 'Price',
+						color: '#222222',
+						points: [
+							[toMs(2024, 1, 22), 20],
+							[toMs(2024, 1, 24), 22]
+						]
+					}
+				]
+			}).dataset.source
+		).toEqual([
+			{ timestamp: toMs(2024, 1, 21), TVL: 12, Price: null },
+			{ timestamp: toMs(2024, 1, 28), TVL: null, Price: 22 },
+			{ timestamp: toMs(2024, 2, 4), TVL: 30, Price: null }
+		])
+	})
+
 	it('preserves input order for dimensions and charts', () => {
 		const result = buildTimeSeriesChart({
 			kind: 'periodBars',
@@ -254,22 +286,31 @@ describe('buildTimeSeriesChart', () => {
 		).toThrow('Duplicate series name "A" is not allowed')
 	})
 
-	it('throws for unsorted point input', () => {
+	it('rejects a series name that would overwrite the timestamp dimension', () => {
 		expect(() =>
 			buildTimeSeriesChart({
 				kind: 'periodLines',
 				groupBy: 'daily',
-				series: [
-					{
-						name: 'TVL',
-						color: '#111111',
-						points: [
-							[toMs(2024, 1, 2), 2],
-							[toMs(2024, 1, 1), 1]
-						]
-					}
-				]
+				series: [{ name: 'timestamp', color: '#111111', points: [[toMs(2024, 1, 1), 2]] }]
 			})
-		).toThrow('Series "TVL" points must be sorted ascending by timestamp')
+		).toThrow('reserved')
+	})
+
+	it('does not mutate input series or point tuples', () => {
+		const points = [
+			[toMs(2024, 1, 1), 2],
+			[toMs(2024, 1, 1), 3],
+			[toMs(2024, 1, 2), 4]
+		] as const
+		const input = {
+			kind: 'cumulativeLines',
+			series: [{ name: 'Inflows', color: '#111111', points }]
+		} as const
+		const before = structuredClone(input)
+
+		buildTimeSeriesChart(input)
+
+		expect(input).toEqual(before)
+		expect(input.series[0].points).toBe(points)
 	})
 })

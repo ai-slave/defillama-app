@@ -1,24 +1,32 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo } from 'react'
-import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
-import type { IBarChartProps, IChartProps, IPieChartProps } from '~/components/ECharts/types'
-import { Icon } from '~/ui/Icon'
-import { LocalLoader } from '~/ui/Loaders'
-import { Tooltip } from '~/ui/Tooltip'
-const dashboardBlue = '#326abd'
+import {
+	buildTimeSeriesDataset,
+	materializeZeroFilledDataset,
+	type TimestampDataset
+} from '~/components/ECharts/timeSeriesDataset'
+import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	formatProtocolV1TvlsByChain,
 	useFetchProtocolV1AddlChartsData
 } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { useSelectedValues } from '~/hooks/useSelectedValues'
+import { Icon } from '~/ui/Icon'
+import { LocalLoader } from '~/ui/Loaders'
+import { Tooltip } from '~/ui/Tooltip'
 import { ProxyAuthTokenContext } from '../../queries'
 import { fetchAdvancedTvlBasicViaProxy, fetchProtocolFullViaProxy } from '../../services/fetchViaProxy'
 import ProtocolCharts from '../../services/ProtocolCharts'
+import type { AdvancedTvlChartType } from '../../types'
+import { buildAdvancedTvlPresentation } from '../advancedTvlPresentation'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 interface AdvancedTvlChartTabProps {
@@ -42,28 +50,23 @@ const ADVANCED_TVL_CHART_TYPES = [
 	{ value: 'tokenInflows', label: 'Inflows by Token' }
 ]
 
-const chartOptions = {
-	grid: chartGrid({ bottom: CHART_ZOOM_RESERVE })
+const AREA_PREVIEW_EXPORTS = {
+	csv: true,
+	png: true,
+	filename: 'chart',
+	pngTitle: ''
+} as const
+const BAR_PREVIEW_EXPORTS = {
+	csv: true,
+	png: false,
+	filename: 'bar-chart-data'
+} as const
+const EMPTY_DATASET: TimestampDataset = {
+	source: [],
+	dimensions: ['timestamp']
 }
-
-const inflowsChartOptions = {
-	overrides: {
-		inflow: true
-	}
-}
-
-const TVL_STACKS = ['TVL']
-const EMPTY_HALLMARKS: [number, string][] = []
-const EMPTY_CHART_DATA: any[] = []
 const EMPTY_STACKS: string[] = []
-const EMPTY_ADDL_DATA: {
-	tokensUnique?: string[]
-	tokenBreakdownUSD?: any[]
-	tokenBreakdownPieChart?: any[]
-	tokenBreakdown?: any[]
-	usdInflows?: any[]
-	tokenInflows?: any[]
-} = {}
+const EMPTY_PIE_DATA: Array<{ name: string; value: number }> = []
 
 export function AdvancedTvlChartTab({
 	selectedAdvancedTvlProtocol,
@@ -79,14 +82,15 @@ export function AdvancedTvlChartTab({
 	const authToken = useContext(ProxyAuthTokenContext)
 	const filteredProtocolOptions = protocolOptions
 
-	const { data: basicTvlData, isLoading: isBasicTvlLoading } = useQuery({
+	const { data: basicTvlDataset, isLoading: isBasicTvlLoading } = useQuery({
 		queryKey: ['pro-dashboard', 'advanced-tvl-preview-basic', selectedAdvancedTvlProtocol],
 		queryFn: () =>
 			authToken
 				? fetchAdvancedTvlBasicViaProxy(selectedAdvancedTvlProtocol!, authToken)
 				: ProtocolCharts.tvl(selectedAdvancedTvlProtocol!),
 		enabled: !!selectedAdvancedTvlProtocol && selectedAdvancedTvlChartType === 'tvl',
-		staleTime: 60 * 60 * 1000
+		staleTime: 60 * 60 * 1000,
+		select: (data) => buildTimeSeriesDataset(data, 'TVL', 1000)
 	})
 
 	// Pre-seed protocol full data via proxy for useFetchProtocolV1AddlChartsData
@@ -106,60 +110,111 @@ export function AdvancedTvlChartTab({
 		isLoading: isAddlLoading
 	} = useFetchProtocolV1AddlChartsData(selectedAdvancedTvlProtocol || '')
 
-	const { chainsSplit, chainsUnique } = useMemo(() => {
-		if (!historicalChainTvls) return { chainsSplit: null, chainsUnique: [] }
-		const chainsSplit = formatProtocolV1TvlsByChain({ historicalChainTvls, extraTvlsEnabled })
-		const lastEntry = chainsSplit[chainsSplit.length - 1] ?? {}
-		const chainsUnique: string[] = []
-		for (const key in lastEntry) {
-			if (!Object.prototype.hasOwnProperty.call(lastEntry, key)) continue
-			if (key !== 'date') chainsUnique.push(key)
-		}
-		return { chainsSplit, chainsUnique }
+	const { dataset: chainsDataset, chainsUnique } = useMemo(() => {
+		if (!historicalChainTvls) return { dataset: EMPTY_DATASET, chainsUnique: EMPTY_STACKS }
+		return formatProtocolV1TvlsByChain({
+			historicalChainTvls,
+			extraTvlsEnabled
+		})
 	}, [historicalChainTvls, extraTvlsEnabled])
 
-	const { tokensUnique, tokenBreakdownUSD, tokenBreakdownPieChart, tokenBreakdown, usdInflows, tokenInflows } =
-		addlData ?? EMPTY_ADDL_DATA
+	const {
+		tokensUnique,
+		rawTokensUnique,
+		tokenBreakdownUSDDataset,
+		tokenBreakdownPieChart,
+		tokenBreakdownDataset,
+		usdInflowsDataset,
+		tokenInflowsDataset
+	} = addlData ?? {}
 	const resolvedTokensUnique = tokensUnique ?? EMPTY_STACKS
-	const resolvedTokenBreakdownUSD = tokenBreakdownUSD ?? EMPTY_CHART_DATA
-	const resolvedTokenBreakdownPieChart = tokenBreakdownPieChart ?? EMPTY_CHART_DATA
-	const resolvedTokenBreakdown = tokenBreakdown ?? EMPTY_CHART_DATA
-	const resolvedUsdInflows = usdInflows ?? EMPTY_CHART_DATA
-	const resolvedTokenInflows = tokenInflows ?? EMPTY_CHART_DATA
-	const resolvedChainsSplit = chainsSplit ?? EMPTY_CHART_DATA
+	const resolvedRawTokensUnique = rawTokensUnique ?? resolvedTokensUnique
+	const resolvedTokenBreakdownUSDDataset = tokenBreakdownUSDDataset ?? EMPTY_DATASET
+	const resolvedTokenBreakdownPieChart = tokenBreakdownPieChart ?? EMPTY_PIE_DATA
+	const resolvedTokenBreakdownDataset = tokenBreakdownDataset ?? EMPTY_DATASET
+	const resolvedUsdInflowsDataset = usdInflowsDataset ?? EMPTY_DATASET
+	const resolvedTokenInflowsDataset = tokenInflowsDataset ?? EMPTY_DATASET
+	const resolvedBasicTvlDataset = basicTvlDataset ?? EMPTY_DATASET
+
+	const chartType = selectedAdvancedTvlChartType as AdvancedTvlChartType
+	const presentationTokenNames = chartType === 'tokenBalances' ? resolvedRawTokensUnique : resolvedTokensUnique
+	const presentation = useMemo(
+		() =>
+			buildAdvancedTvlPresentation({
+				chartType,
+				chainsDataset,
+				chainNames: chainsUnique,
+				tokenNames: presentationTokenNames
+			}),
+		[chartType, chainsDataset, chainsUnique, presentationTokenNames]
+	)
+	const [selectedTokenInflows, setSelectedTokenInflows] = useSelectedValues(
+		resolvedTokensUnique,
+		`${selectedAdvancedTvlProtocol}:${selectedAdvancedTvlChartType}`
+	)
+	const selectedTokenInflowsSet = useMemo(() => new Set(selectedTokenInflows), [selectedTokenInflows])
+	const visibleDataset = useMemo(() => {
+		switch (chartType) {
+			case 'chainsTvl':
+				return materializeZeroFilledDataset(chainsDataset, presentation.orderedChainNames)
+			case 'tokenValuesUsd':
+				return materializeZeroFilledDataset(resolvedTokenBreakdownUSDDataset, resolvedTokensUnique)
+			case 'tokenBalances':
+				return materializeZeroFilledDataset(resolvedTokenBreakdownDataset, resolvedRawTokensUnique)
+			case 'usdInflows':
+				return materializeZeroFilledDataset(resolvedUsdInflowsDataset, ['USD Inflows'])
+			case 'tokenInflows':
+				return materializeZeroFilledDataset(resolvedTokenInflowsDataset, selectedTokenInflows)
+			default:
+				return resolvedBasicTvlDataset
+		}
+	}, [
+		chartType,
+		chainsDataset,
+		presentation.orderedChainNames,
+		resolvedTokenBreakdownUSDDataset,
+		resolvedTokenBreakdownDataset,
+		resolvedRawTokensUnique,
+		resolvedTokensUnique,
+		resolvedUsdInflowsDataset,
+		resolvedTokenInflowsDataset,
+		selectedTokenInflows,
+		resolvedBasicTvlDataset
+	])
 
 	const availableChartTypes = useMemo(() => {
 		const available = new Set<string>(['tvl'])
 
-		if (chainsSplit && chainsUnique?.length > 1) {
+		if (chainsDataset.source.length > 0 && chainsUnique.length > 1) {
 			available.add('chainsTvl')
 		}
-		if (tokenBreakdownUSD?.length > 1 && tokensUnique?.length > 0) {
+		if (resolvedTokenBreakdownUSDDataset.source.length > 1 && resolvedTokensUnique.length > 0) {
 			available.add('tokenValuesUsd')
 		}
-		if (tokenBreakdownPieChart?.length > 0) {
+		if (resolvedTokenBreakdownPieChart.length > 0) {
 			available.add('tokensPie')
 		}
-		if (tokenBreakdown?.length > 1 && tokensUnique?.length > 0) {
+		if (resolvedTokenBreakdownDataset.source.length > 1 && resolvedRawTokensUnique.length > 0) {
 			available.add('tokenBalances')
 		}
-		if (usdInflows?.length > 0) {
+		if (resolvedUsdInflowsDataset.source.length > 0) {
 			available.add('usdInflows')
 		}
-		if (tokenInflows?.length > 0 && tokensUnique?.length > 0) {
+		if (resolvedTokenInflowsDataset.source.length > 0 && resolvedTokensUnique.length > 0) {
 			available.add('tokenInflows')
 		}
 
 		return available
 	}, [
-		chainsSplit,
+		chainsDataset,
 		chainsUnique,
-		tokenBreakdownUSD,
-		tokenBreakdownPieChart,
-		tokenBreakdown,
-		tokensUnique,
-		usdInflows,
-		tokenInflows
+		resolvedTokenBreakdownUSDDataset,
+		resolvedTokenBreakdownPieChart,
+		resolvedTokenBreakdownDataset,
+		resolvedRawTokensUnique,
+		resolvedTokensUnique,
+		resolvedUsdInflowsDataset,
+		resolvedTokenInflowsDataset
 	])
 
 	const chartTypeOptions = useMemo(() => {
@@ -188,140 +243,34 @@ export function AdvancedTvlChartTab({
 			)
 		}
 
-		switch (selectedAdvancedTvlChartType) {
-			case 'tvl': {
-				const tvlData = basicTvlData ? basicTvlData.map(([ts, val]) => ({ date: ts, TVL: val })) : EMPTY_CHART_DATA
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
+		return (
+			<Suspense
+				fallback={
+					<div className="flex h-[320px] items-center justify-center">
+						<LocalLoader />
+					</div>
+				}
+			>
+				{chartType === 'tokensPie' ? (
+					<PieChart chartData={resolvedTokenBreakdownPieChart} stackColors={presentation.stackColors} />
+				) : (
+					<MultiSeriesChart2
+						title=""
+						dataset={visibleDataset}
+						charts={presentation.charts}
+						valueSymbol={presentation.valueSymbol}
+						hideDefaultLegend
+						hideDataZoom={presentation.hideDataZoom}
+						solidChartAreaStyle={presentation.solidChartAreaStyle}
+						selectedCharts={chartType === 'tokenInflows' ? selectedTokenInflowsSet : undefined}
+						chartOptions={presentation.chartOptions}
+						exportButtons={
+							chartType === 'usdInflows' || chartType === 'tokenInflows' ? BAR_PREVIEW_EXPORTS : AREA_PREVIEW_EXPORTS
 						}
-					>
-						<AreaChart
-							title=""
-							chartData={tvlData}
-							stacks={TVL_STACKS}
-							valueSymbol="$"
-							hideDefaultLegend={true}
-							hallmarks={EMPTY_HALLMARKS}
-							color={dashboardBlue}
-							chartOptions={chartOptions}
-						/>
-					</Suspense>
-				)
-			}
-			case 'chainsTvl':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
-						<AreaChart
-							title=""
-							chartData={resolvedChainsSplit}
-							stacks={chainsUnique}
-							valueSymbol="$"
-							hideDefaultLegend={true}
-							hideGradient={true}
-							chartOptions={chartOptions}
-						/>
-					</Suspense>
-				)
-			case 'tokenValuesUsd':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
-						<AreaChart
-							title=""
-							chartData={resolvedTokenBreakdownUSD}
-							stacks={resolvedTokensUnique}
-							valueSymbol="$"
-							hideDefaultLegend={true}
-							isStackedChart
-							chartOptions={chartOptions}
-						/>
-					</Suspense>
-				)
-			case 'tokensPie':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
-						<PieChart chartData={resolvedTokenBreakdownPieChart} />
-					</Suspense>
-				)
-			case 'tokenBalances':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
-						<AreaChart
-							title=""
-							chartData={resolvedTokenBreakdown}
-							stacks={resolvedTokensUnique}
-							hideDefaultLegend={true}
-							hideGradient={true}
-							chartOptions={chartOptions}
-						/>
-					</Suspense>
-				)
-			case 'usdInflows':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
-						<BarChart
-							chartData={resolvedUsdInflows}
-							color={dashboardBlue}
-							title=""
-							chartOptions={inflowsChartOptions}
-						/>
-					</Suspense>
-				)
-			case 'tokenInflows':
-				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
-						<BarChart
-							chartData={resolvedTokenInflows}
-							title=""
-							hideDefaultLegend={true}
-							customLegendName="Token"
-							customLegendOptions={resolvedTokensUnique}
-							chartOptions={inflowsChartOptions}
-						/>
-					</Suspense>
-				)
-			default:
-				return null
-		}
+					/>
+				)}
+			</Suspense>
+		)
 	})()
 
 	const hasProtocolSelection = selectedAdvancedTvlProtocol && selectedAdvancedTvlProtocolName
@@ -370,11 +319,24 @@ export function AdvancedTvlChartTab({
 
 				{hasProtocolSelection ? (
 					<div className="bg-pro-cards-bg p-3">
-						<div className="mb-3">
-							<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">
-								{selectedAdvancedTvlProtocolName} - {chartTypeLabel}
-							</h3>
-							<p className="text-xs text-pro-text-secondary">Advanced TVL Chart</p>
+						<div className="mb-3 flex items-start justify-between gap-2">
+							<div>
+								<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">
+									{selectedAdvancedTvlProtocolName} - {chartTypeLabel}
+								</h3>
+								<p className="text-xs text-pro-text-secondary">Advanced TVL Chart</p>
+							</div>
+							{selectedAdvancedTvlChartType === 'tokenInflows' && resolvedTokensUnique.length > 1 ? (
+								<SelectWithCombobox
+									allValues={resolvedTokensUnique}
+									selectedValues={selectedTokenInflows}
+									setSelectedValues={setSelectedTokenInflows}
+									label="Token"
+									labelType="smol"
+									variant="filter"
+									size="md"
+								/>
+							) : null}
 						</div>
 
 						<div className="h-[320px]" key={selectedAdvancedTvlChartType}>

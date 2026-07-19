@@ -47,7 +47,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 		let allPercentMetrics = true
 
 		for (const item of composerItems) {
-			if (item.data && Array.isArray(item.data) && item.data.length > 0) {
+			if (item.data?.length) {
 				const meta = CHART_TYPES[item.type]
 				const displayName = item.protocol
 					? getProtocolInfo(item.protocol)?.name || item.protocol
@@ -66,18 +66,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 					allPercentMetrics = false
 				}
 
-				const processedData: [number, number][] = item.data
-					.map((dataItem): [number, number] | null => {
-						if (Array.isArray(dataItem) && dataItem.length >= 2) {
-							const [timestamp, value] = dataItem
-							const ts = typeof timestamp === 'string' ? Number(timestamp) : timestamp
-							if (ts > 0) {
-								return [ts, value || 0]
-							}
-						}
-						return null
-					})
-					.filter((dataItem): dataItem is [number, number] => dataItem !== null)
+				const processedData = item.data
 
 				if (processedData.length > 0) {
 					result.push({

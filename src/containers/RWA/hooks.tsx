@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import type { NextRouter } from 'next/router'
 import { useMemo } from 'react'
+import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
@@ -25,7 +26,6 @@ import {
 	type RWAChartDataset,
 	type RWAChartAggregationMode
 } from './chartAggregation'
-import { toFiniteRwaChartValue } from './chartDataset'
 import {
 	getDefaultRWAOverviewInclusion,
 	getDefaultSelectedTypes,
@@ -49,8 +49,20 @@ export { resolveRWAOverviewInclusionFlag } from './filterState'
 
 type PieChartDatum = { name: string; value: number }
 
+const limitPieChartData = (data: PieChartDatum[], maxLabels: number) => {
+	if (data.length <= maxLabels) return data
+
+	let othersValue = 0
+	for (let index = maxLabels - 1; index < data.length; index++) {
+		othersValue += data[index].value
+	}
+	data.length = maxLabels - 1
+	if (othersValue > 0) data.push({ name: 'Others', value: othersValue })
+	return data
+}
+
 const buildStackColors = (order: string[]) => {
-	const stackColors: Record<string, string> = {}
+	const stackColors = createChartRecord<string>()
 	for (const [idx, key] of order.entries()) {
 		stackColors[key] = CHART_COLORS[idx % CHART_COLORS.length]
 	}
@@ -632,286 +644,215 @@ export function useRWAAssetCategoryPieChartData({
 	enabled,
 	assets,
 	categories,
-	selectedCategories
+	selectedCategories,
+	metric
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
 	categories: string[]
 	selectedCategories: string[]
+	metric: RWAChartMetricKey
 }) {
 	return useMemo(() => {
 		if (!enabled) {
 			return {
-				assetCategoryOnChainMcapPieChartData: [] as PieChartDatum[],
-				assetCategoryActiveMcapPieChartData: [] as PieChartDatum[],
-				assetCategoryDefiActiveTvlPieChartData: [] as PieChartDatum[],
+				pieChartData: [] as PieChartDatum[],
 				pieChartStackColors: {}
 			}
 		}
 		const pieChartStackColors = buildStackColors(categories)
 		const selectedCategoriesSet = new Set(selectedCategories)
-		const categoryTotals = new Map<string, { onChain: number; active: number; defi: number }>()
+		const categoryTotals = new Map<string, number>()
 
 		for (const asset of assets) {
 			const primaryCategory = getPrimaryRwaCategory(asset.category)
 			if (!primaryCategory || !selectedCategoriesSet.has(primaryCategory)) continue
 
-			const prev = categoryTotals.get(primaryCategory) ?? { onChain: 0, active: 0, defi: 0 }
-			prev.onChain += asset.onChainMcap?.total ?? 0
-			prev.active += asset.activeMcap?.total ?? 0
-			prev.defi += asset.defiActiveTvl?.total ?? 0
-			categoryTotals.set(primaryCategory, prev)
+			categoryTotals.set(primaryCategory, (categoryTotals.get(primaryCategory) ?? 0) + (asset[metric]?.total ?? 0))
 		}
 
-		const toSortedChartData = (metric: 'onChain' | 'active' | 'defi') => {
-			const rows: PieChartDatum[] = []
-			for (const [name, totals] of categoryTotals.entries()) {
-				const value = totals[metric]
-				if (value > 0) {
-					rows.push({ name, value })
-				}
-			}
-			rows.sort((a, b) => b.value - a.value)
-			return rows
+		const pieChartData: PieChartDatum[] = []
+		for (const [name, value] of categoryTotals) {
+			if (value > 0) pieChartData.push({ name, value })
 		}
+		pieChartData.sort((a, b) => b.value - a.value)
 
 		return {
-			assetCategoryOnChainMcapPieChartData: toSortedChartData('onChain'),
-			assetCategoryActiveMcapPieChartData: toSortedChartData('active'),
-			assetCategoryDefiActiveTvlPieChartData: toSortedChartData('defi'),
+			pieChartData,
 			pieChartStackColors
 		}
-	}, [assets, categories, enabled, selectedCategories])
+	}, [assets, categories, enabled, metric, selectedCategories])
 }
 
 export function useRwaCategoryAssetClassPieChartData({
 	enabled,
 	assets,
 	assetClasses,
-	selectedAssetClasses
+	selectedAssetClasses,
+	metric
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
 	assetClasses: string[]
 	selectedAssetClasses: string[]
+	metric: RWAChartMetricKey
 }) {
 	return useMemo(() => {
 		if (!enabled) {
 			return {
-				assetClassOnChainMcapPieChartData: [] as PieChartDatum[],
-				assetClassActiveMcapPieChartData: [] as PieChartDatum[],
-				assetClassDefiActiveTvlPieChartData: [] as PieChartDatum[],
-				assetClassPieChartStackColors: {}
+				pieChartData: [] as PieChartDatum[],
+				pieChartStackColors: {}
 			}
 		}
 
-		const assetClassPieChartStackColors = buildStackColors(assetClasses)
+		const pieChartStackColors = buildStackColors(assetClasses)
 		const selectedAssetClassesSet = new Set(selectedAssetClasses)
-		const assetClassTotals = new Map<string, { onChain: number; active: number; defi: number }>()
+		const assetClassTotals = new Map<string, number>()
 
 		for (const asset of assets) {
 			for (const { value: assetClass, weight } of computeWeightedGroups(asset.assetClass)) {
 				if (!assetClass || !selectedAssetClassesSet.has(assetClass)) continue
 
-				const prev = assetClassTotals.get(assetClass) ?? { onChain: 0, active: 0, defi: 0 }
-				prev.onChain += (asset.onChainMcap?.total ?? 0) * weight
-				prev.active += (asset.activeMcap?.total ?? 0) * weight
-				prev.defi += (asset.defiActiveTvl?.total ?? 0) * weight
-				assetClassTotals.set(assetClass, prev)
+				assetClassTotals.set(assetClass, (assetClassTotals.get(assetClass) ?? 0) + (asset[metric]?.total ?? 0) * weight)
 			}
 		}
 
-		const toSortedChartData = (metric: 'onChain' | 'active' | 'defi') => {
-			const rows: PieChartDatum[] = []
-			for (const [name, totals] of assetClassTotals.entries()) {
-				const value = totals[metric]
-				if (value > 0) {
-					rows.push({ name, value })
-				}
-			}
-			rows.sort((a, b) => b.value - a.value)
-			return rows
+		const pieChartData: PieChartDatum[] = []
+		for (const [name, value] of assetClassTotals) {
+			if (value > 0) pieChartData.push({ name, value })
 		}
+		pieChartData.sort((a, b) => b.value - a.value)
 
 		return {
-			assetClassOnChainMcapPieChartData: toSortedChartData('onChain'),
-			assetClassActiveMcapPieChartData: toSortedChartData('active'),
-			assetClassDefiActiveTvlPieChartData: toSortedChartData('defi'),
-			assetClassPieChartStackColors
+			pieChartData,
+			pieChartStackColors
 		}
-	}, [assetClasses, assets, enabled, selectedAssetClasses])
+	}, [assetClasses, assets, enabled, metric, selectedAssetClasses])
 }
 
 export function useRwaAssetNamePieChartData({
 	enabled,
 	assets,
-	selectedAssetNames
+	selectedAssetNames,
+	metric
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
 	selectedAssetNames: string[]
+	metric: RWAChartMetricKey
 }) {
 	return useMemo(() => {
 		const MAX_LABELS = 24
 
-		const OTHERS = 'Others'
-
 		if (!enabled) {
 			return {
-				assetNameOnChainMcapPieChartData: [] as PieChartDatum[],
-				assetNameActiveMcapPieChartData: [] as PieChartDatum[],
-				assetNameDefiActiveTvlPieChartData: [] as PieChartDatum[],
-				assetNamePieChartStackColors: {}
+				pieChartData: [] as PieChartDatum[],
+				pieChartStackColors: {}
 			}
 		}
 
 		const selectedAssetNamesSet = new Set(selectedAssetNames)
 		if (selectedAssetNamesSet.size === 0) {
 			return {
-				assetNameOnChainMcapPieChartData: [] as PieChartDatum[],
-				assetNameActiveMcapPieChartData: [] as PieChartDatum[],
-				assetNameDefiActiveTvlPieChartData: [] as PieChartDatum[],
-				assetNamePieChartStackColors: {}
+				pieChartData: [] as PieChartDatum[],
+				pieChartStackColors: {}
 			}
 		}
 
-		const selectedAssets = assets.filter((asset) => {
-			const name = asset.assetName || asset.ticker
-			return selectedAssetNamesSet.has(name)
-		})
-
 		const discoveredNames = new Set<string>()
-		for (const asset of selectedAssets) {
-			discoveredNames.add(asset.assetName || asset.ticker)
+		const totals = new Map<string, number>()
+		for (const asset of assets) {
+			const name = asset.assetName || asset.ticker
+			if (!selectedAssetNamesSet.has(name)) continue
+			discoveredNames.add(name)
+			totals.set(name, (totals.get(name) ?? 0) + (asset[metric]?.total ?? 0))
 		}
 
 		const colorOrder = Array.from(discoveredNames)
 		colorOrder.sort()
 		// Keep existing label colors stable while ensuring "Others" exists.
-		if (!colorOrder.includes(OTHERS)) colorOrder.push(OTHERS)
-		const assetNamePieChartStackColors = buildStackColors(colorOrder)
+		if (!colorOrder.includes('Others')) colorOrder.push('Others')
+		const pieChartStackColors = buildStackColors(colorOrder)
 
-		const totals = new Map<string, { onChain: number; active: number; defi: number }>()
-		for (const asset of selectedAssets) {
-			const name = asset.assetName || asset.ticker
-			const prev = totals.get(name) ?? { onChain: 0, active: 0, defi: 0 }
-			prev.onChain += asset.onChainMcap?.total ?? 0
-			prev.active += asset.activeMcap?.total ?? 0
-			prev.defi += asset.defiActiveTvl?.total ?? 0
-			totals.set(name, prev)
+		const pieChartData: PieChartDatum[] = []
+		for (const [name, value] of totals) {
+			if (value > 0) pieChartData.push({ name, value })
 		}
-
-		const limitChartData = (data: PieChartDatum[]) => {
-			if (data.length <= MAX_LABELS) return data
-			const head = data.slice(0, MAX_LABELS - 1)
-			const othersValue = data.slice(MAX_LABELS - 1).reduce((sum, d) => sum + d.value, 0)
-			return othersValue > 0 ? [...head, { name: OTHERS, value: othersValue }] : head
-		}
-
-		const toSortedChartData = (metric: 'onChain' | 'active' | 'defi') => {
-			const rows: PieChartDatum[] = []
-			for (const [name, values] of totals.entries()) {
-				const value = values[metric]
-				if (value > 0) {
-					rows.push({ name, value })
-				}
-			}
-			rows.sort((a, b) => b.value - a.value)
-			return limitChartData(rows)
-		}
+		pieChartData.sort((a, b) => b.value - a.value)
+		limitPieChartData(pieChartData, MAX_LABELS)
 
 		return {
-			assetNameOnChainMcapPieChartData: toSortedChartData('onChain'),
-			assetNameActiveMcapPieChartData: toSortedChartData('active'),
-			assetNameDefiActiveTvlPieChartData: toSortedChartData('defi'),
-			assetNamePieChartStackColors
+			pieChartData,
+			pieChartStackColors
 		}
-	}, [assets, enabled, selectedAssetNames])
+	}, [assets, enabled, metric, selectedAssetNames])
 }
 
 export function useRwaAssetGroupPieChartData({
 	enabled,
-	assets
+	assets,
+	metric
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
+	metric: RWAChartMetricKey
 }) {
 	return useMemo(() => {
 		const MAX_LABELS = 24
-		const OTHERS = 'Others'
 
 		if (!enabled || assets.length === 0) {
 			return {
-				assetGroupOnChainMcapPieChartData: [] as PieChartDatum[],
-				assetGroupActiveMcapPieChartData: [] as PieChartDatum[],
-				assetGroupDefiActiveTvlPieChartData: [] as PieChartDatum[],
-				assetGroupPieChartStackColors: {}
+				pieChartData: [] as PieChartDatum[],
+				pieChartStackColors: {}
 			}
 		}
 
-		const totalsByGroup = new Map<string, { onChain: number; active: number; defi: number }>()
+		const totalsByGroup = new Map<string, number>()
 		for (const asset of assets) {
 			const assetGroup = normalizeRwaAssetGroup(asset.assetGroup)
-			const prev = totalsByGroup.get(assetGroup) ?? { onChain: 0, active: 0, defi: 0 }
-			prev.onChain += asset.onChainMcap?.total ?? 0
-			prev.active += asset.activeMcap?.total ?? 0
-			prev.defi += asset.defiActiveTvl?.total ?? 0
-			totalsByGroup.set(assetGroup, prev)
+			totalsByGroup.set(assetGroup, (totalsByGroup.get(assetGroup) ?? 0) + (asset[metric]?.total ?? 0))
 		}
 
 		const colorOrder = Array.from(totalsByGroup.keys()).sort()
-		if (!colorOrder.includes(OTHERS)) colorOrder.push(OTHERS)
-		const assetGroupPieChartStackColors = buildStackColors(colorOrder)
+		if (!colorOrder.includes('Others')) colorOrder.push('Others')
+		const pieChartStackColors = buildStackColors(colorOrder)
 
-		const limitChartData = (data: PieChartDatum[]) => {
-			if (data.length <= MAX_LABELS) return data
-			const head = data.slice(0, MAX_LABELS - 1)
-			const othersValue = data.slice(MAX_LABELS - 1).reduce((sum, row) => sum + row.value, 0)
-			return othersValue > 0 ? [...head, { name: OTHERS, value: othersValue }] : head
+		const pieChartData: PieChartDatum[] = []
+		for (const [name, value] of totalsByGroup) {
+			if (value > 0) pieChartData.push({ name, value })
 		}
-
-		const toSortedChartData = (metric: 'onChain' | 'active' | 'defi') => {
-			const rows: PieChartDatum[] = []
-			for (const [name, totals] of totalsByGroup.entries()) {
-				const value = totals[metric]
-				if (value > 0) rows.push({ name, value })
-			}
-			rows.sort((a, b) => b.value - a.value)
-			return limitChartData(rows)
-		}
+		pieChartData.sort((a, b) => b.value - a.value)
+		limitPieChartData(pieChartData, MAX_LABELS)
 
 		return {
-			assetGroupOnChainMcapPieChartData: toSortedChartData('onChain'),
-			assetGroupActiveMcapPieChartData: toSortedChartData('active'),
-			assetGroupDefiActiveTvlPieChartData: toSortedChartData('defi'),
-			assetGroupPieChartStackColors
+			pieChartData,
+			pieChartStackColors
 		}
-	}, [assets, enabled])
+	}, [assets, enabled, metric])
 }
 
 export function useRwaAssetPlatformPieChartData({
 	enabled,
-	assets
+	assets,
+	metric
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
+	metric: RWAChartMetricKey
 }) {
 	return useMemo(() => {
 		const MAX_LABELS = 24
 		const UNKNOWN = 'Unknown'
-		const OTHERS = 'Others'
 
 		if (!enabled || assets.length === 0) {
 			return {
-				assetPlatformOnChainMcapPieChartData: [] as PieChartDatum[],
-				assetPlatformActiveMcapPieChartData: [] as PieChartDatum[],
-				assetPlatformDefiActiveTvlPieChartData: [] as PieChartDatum[],
-				assetPlatformPieChartStackColors: {}
+				pieChartData: [] as PieChartDatum[],
+				pieChartStackColors: {}
 			}
 		}
 
 		// Coalesce by slug to avoid casing/spacing duplicates in platform names.
-		const totalsBySlug = new Map<string, { label: string; onChain: number; active: number; defi: number }>()
+		const totalsBySlug = new Map<string, { label: string; value: number }>()
 		for (const asset of assets) {
 			const platformRaw = asset.parentPlatform as unknown
 			const platformCandidates = Array.isArray(platformRaw) ? platformRaw : [platformRaw]
@@ -923,14 +864,12 @@ export function useRwaAssetPlatformPieChartData({
 
 			for (const platform of platforms) {
 				const key = rwaSlug(platform)
-				const prev = totalsBySlug.get(key) ?? { label: platform, onChain: 0, active: 0, defi: 0 }
+				const prev = totalsBySlug.get(key) ?? { label: platform, value: 0 }
 
 				// Prefer a non-Unknown label if we previously only had Unknown.
 				if (prev.label === UNKNOWN && platform !== UNKNOWN) prev.label = platform
 
-				prev.onChain += (asset.onChainMcap?.total ?? 0) * platformWeight
-				prev.active += (asset.activeMcap?.total ?? 0) * platformWeight
-				prev.defi += (asset.defiActiveTvl?.total ?? 0) * platformWeight
+				prev.value += (asset[metric]?.total ?? 0) * platformWeight
 				totalsBySlug.set(key, prev)
 			}
 		}
@@ -943,97 +882,80 @@ export function useRwaAssetPlatformPieChartData({
 		}
 		colorOrder.sort()
 		// Keep existing label colors stable while ensuring "Others" exists.
-		if (!colorOrder.includes(OTHERS)) colorOrder.push(OTHERS)
-		const assetPlatformPieChartStackColors = buildStackColors(colorOrder)
+		if (!colorOrder.includes('Others')) colorOrder.push('Others')
+		const pieChartStackColors = buildStackColors(colorOrder)
 
-		const limitChartData = (data: PieChartDatum[]) => {
-			if (data.length <= MAX_LABELS) return data
-			const head = data.slice(0, MAX_LABELS - 1)
-			const othersValue = data.slice(MAX_LABELS - 1).reduce((sum, d) => sum + d.value, 0)
-			return othersValue > 0 ? [...head, { name: OTHERS, value: othersValue }] : head
+		const pieChartData: PieChartDatum[] = []
+		for (const { label, value } of totalsBySlug.values()) {
+			if (value > 0) pieChartData.push({ name: label || UNKNOWN, value })
 		}
-
-		const toSortedChartData = (metric: 'onChain' | 'active' | 'defi') => {
-			const rows: PieChartDatum[] = []
-			for (const value of totalsBySlug.values()) {
-				const metricValue = value[metric]
-				if (metricValue > 0) {
-					rows.push({ name: value.label || UNKNOWN, value: metricValue })
-				}
-			}
-			rows.sort((a, b) => b.value - a.value)
-			return limitChartData(rows)
-		}
+		pieChartData.sort((a, b) => b.value - a.value)
+		limitPieChartData(pieChartData, MAX_LABELS)
 
 		return {
-			assetPlatformOnChainMcapPieChartData: toSortedChartData('onChain'),
-			assetPlatformActiveMcapPieChartData: toSortedChartData('active'),
-			assetPlatformDefiActiveTvlPieChartData: toSortedChartData('defi'),
-			assetPlatformPieChartStackColors
+			pieChartData,
+			pieChartStackColors
 		}
-	}, [assets, enabled])
+	}, [assets, enabled, metric])
 }
 
 export function useRwaChainBreakdownPieChartData({
 	enabled,
-	assets
+	assets,
+	metric
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
+	metric: RWAChartMetricKey
 }) {
 	return useMemo(() => {
 		const MAX_LABELS = 10
 		const UNKNOWN = 'Unknown'
-		const OTHERS = 'Others'
 
 		if (!enabled) {
 			return {
-				chainOnChainMcapPieChartData: [] as PieChartDatum[],
-				chainActiveMcapPieChartData: [] as PieChartDatum[],
-				chainDefiActiveTvlPieChartData: [] as PieChartDatum[],
-				chainPieChartStackColors: {}
+				pieChartData: [] as PieChartDatum[],
+				pieChartStackColors: {}
 			}
 		}
 
 		if (assets.length === 0) {
 			return {
-				chainOnChainMcapPieChartData: [] as PieChartDatum[],
-				chainActiveMcapPieChartData: [] as PieChartDatum[],
-				chainDefiActiveTvlPieChartData: [] as PieChartDatum[],
-				chainPieChartStackColors: {}
+				pieChartData: [] as PieChartDatum[],
+				pieChartStackColors: {}
 			}
 		}
 
 		// Aggregate using per-chain breakdowns (prevents "random" chain attribution on multi-chain assets).
-		// We coalesce chains by slug to avoid casing/spacing duplicates.
-		const totalsBySlug = new Map<string, { label: string; onChain: number; active: number; defi: number }>()
+		// We retain the union's insertion order so tied values and label colors stay stable across metric toggles.
+		const totalsBySlug = new Map<string, { label: string; value: number }>()
 		const upsert = (
 			chainRaw: string | null | undefined,
-			metric: 'onChain' | 'active' | 'defi',
+			breakdownMetric: RWAChartMetricKey,
 			valueRaw: number | null | undefined
 		) => {
-			const value = toFiniteRwaChartValue(valueRaw)
+			const value = valueRaw ?? 0
 			if (value <= 0) return
 
 			const chain = (chainRaw ?? '').trim() || UNKNOWN
 			const key = rwaSlug(chain)
-			const prev = totalsBySlug.get(key) ?? { label: chain, onChain: 0, active: 0, defi: 0 }
+			const prev = totalsBySlug.get(key) ?? { label: chain, value: 0 }
 			// Prefer a non-Unknown label if we previously only had Unknown.
 			if (prev.label === UNKNOWN && chain !== UNKNOWN) prev.label = chain
-			prev[metric] += value
+			if (breakdownMetric === metric) prev.value += value
 			totalsBySlug.set(key, prev)
 		}
 
 		for (const asset of assets) {
 			for (const [chain, value] of asset.onChainMcap?.breakdown ?? []) {
-				upsert(chain, 'onChain', value)
+				upsert(chain, 'onChainMcap', value)
 			}
 			for (const [chain, value] of asset.activeMcap?.breakdown ?? []) {
-				upsert(chain, 'active', value)
+				upsert(chain, 'activeMcap', value)
 			}
 			// New: chain-level TVL breakdown (fallback: none if missing).
 			for (const [chain, value] of asset.defiActiveTvlByChain?.breakdown ?? []) {
-				upsert(chain, 'defi', value)
+				upsert(chain, 'defiActiveTvl', value)
 			}
 		}
 
@@ -1045,35 +967,21 @@ export function useRwaChainBreakdownPieChartData({
 		}
 		colorOrder.sort()
 		// Keep existing label colors stable while ensuring "Others" exists.
-		if (!colorOrder.includes(OTHERS)) colorOrder.push(OTHERS)
-		const chainPieChartStackColors = buildStackColors(colorOrder)
+		if (!colorOrder.includes('Others')) colorOrder.push('Others')
+		const pieChartStackColors = buildStackColors(colorOrder)
 
-		const limitChartData = (data: PieChartDatum[]) => {
-			if (data.length <= MAX_LABELS) return data
-			const head = data.slice(0, MAX_LABELS - 1)
-			const othersValue = data.slice(MAX_LABELS - 1).reduce((sum, d) => sum + d.value, 0)
-			return othersValue > 0 ? [...head, { name: OTHERS, value: othersValue }] : head
+		const pieChartData: PieChartDatum[] = []
+		for (const { label, value } of totalsBySlug.values()) {
+			if (value > 0) pieChartData.push({ name: label || UNKNOWN, value })
 		}
-
-		const toSortedChartData = (metric: 'onChain' | 'active' | 'defi') => {
-			const rows: PieChartDatum[] = []
-			for (const value of totalsBySlug.values()) {
-				const metricValue = value[metric]
-				if (metricValue > 0) {
-					rows.push({ name: value.label || UNKNOWN, value: metricValue })
-				}
-			}
-			rows.sort((a, b) => b.value - a.value)
-			return limitChartData(rows)
-		}
+		pieChartData.sort((a, b) => b.value - a.value)
+		limitPieChartData(pieChartData, MAX_LABELS)
 
 		return {
-			chainOnChainMcapPieChartData: toSortedChartData('onChain'),
-			chainActiveMcapPieChartData: toSortedChartData('active'),
-			chainDefiActiveTvlPieChartData: toSortedChartData('defi'),
-			chainPieChartStackColors
+			pieChartData,
+			pieChartStackColors
 		}
-	}, [assets, enabled])
+	}, [assets, enabled, metric])
 }
 
 const CHART_FILTER_QUERY_KEYS = new Set([

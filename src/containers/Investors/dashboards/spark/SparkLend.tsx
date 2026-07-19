@@ -1,9 +1,10 @@
 import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IBarChartProps, IChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
+import { AREA_EXPORT, BAR_EXPORT, DOLLAR_CHART_OPTIONS, DOLLAR_STACKED_CHART_OPTIONS } from './chartDefaults'
 import {
 	useSparklendBorrowedChart,
 	useSparklendChainBreakdown,
@@ -13,8 +14,40 @@ import {
 	useSparklendYieldPools
 } from './sparklendApi'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
+
+const TVL_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+	{ type: 'line', name: 'TVL', encode: { x: 'timestamp', y: 'TVL' } }
+]
+const BORROWED_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+	{ type: 'line', name: 'Borrowed', encode: { x: 'timestamp', y: 'Borrowed' } }
+]
+const FEES_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+	{ type: 'bar', name: 'Fees', encode: { x: 'timestamp', y: 'Fees' }, color: '#4FC3F7', stack: 'a' }
+]
+const REVENUE_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+	{ type: 'bar', name: 'Revenue', encode: { x: 'timestamp', y: 'Revenue' }, color: '#66BB6A', stack: 'a' }
+]
+const SUPPLY_SIDE_REVENUE_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+	{
+		type: 'bar',
+		name: 'Supply Side Revenue',
+		encode: { x: 'timestamp', y: 'Supply Side Revenue' },
+		color: '#FFA726',
+		stack: 'a'
+	}
+]
+const INFLOWS_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+	{
+		type: 'bar',
+		name: 'USD Inflows',
+		encode: { x: 'timestamp', y: 'USD Inflows' },
+		color: '#AB47BC',
+		stack: 'a'
+	}
+]
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
@@ -160,32 +193,24 @@ function Pagination({ table }: { table: ReturnType<typeof useReactTable<PoolRow>
 
 export default function SparkLend() {
 	const { fees, revenue, supplySideRevenue, isLoading: metricsLoading } = useSparklendMetrics()
-	const { tvlChart, inflowsChart, isLoading: tvlLoading } = useSparklendTvlChart()
-	const { borrowedChart, currentBorrowed, isLoading: borrowedLoading } = useSparklendBorrowedChart()
-	const { feesChart, revenueChart, supplySideRevenueChart, isLoading: feesLoading } = useSparklendFeesCharts()
+	const { tvlDataset, inflowsDataset, previousTvl, isLoading: tvlLoading } = useSparklendTvlChart()
+	const { borrowedDataset, currentBorrowed, isLoading: borrowedLoading } = useSparklendBorrowedChart()
+	const { feesDataset, revenueDataset, supplySideRevenueDataset, isLoading: feesLoading } = useSparklendFeesCharts()
 	const { pools, isLoading: poolsLoading } = useSparklendYieldPools()
-	const {
-		tvlByChain,
-		tvlByChainStacks,
-		feesByChain,
-		feesByChainStacks,
-		isLoading: breakdownLoading
-	} = useSparklendChainBreakdown()
+	const { tvlByChain, feesByChain, isLoading: breakdownLoading } = useSparklendChainBreakdown()
 
 	const kpis = useMemo(() => {
 		if (metricsLoading || tvlLoading || borrowedLoading) return null
 
-		const prevTvl = tvlChart.length >= 2 ? tvlChart[tvlChart.length - 2].TVL : null
-
 		return {
-			tvl: prevTvl != null ? formattedNum(prevTvl, true) : '—',
+			tvl: previousTvl != null ? formattedNum(previousTvl, true) : '—',
 			borrowed: currentBorrowed != null ? formattedNum(currentBorrowed, true) : '—',
 			fees24h: fees?.total48hto24h != null ? formattedNum(fees.total48hto24h, true) : '—',
 			revenue24h: revenue?.total48hto24h != null ? formattedNum(revenue.total48hto24h, true) : '—',
 			supplySideRevenue24h:
 				supplySideRevenue?.total48hto24h != null ? formattedNum(supplySideRevenue.total48hto24h, true) : '—'
 		}
-	}, [fees, revenue, supplySideRevenue, tvlChart, currentBorrowed, metricsLoading, tvlLoading, borrowedLoading])
+	}, [fees, revenue, supplySideRevenue, previousTvl, currentBorrowed, metricsLoading, tvlLoading, borrowedLoading])
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -213,21 +238,32 @@ export default function SparkLend() {
 				<CardSkeleton title="TVL" />
 			) : (
 				<ChartCard title="TVL">
-					<AreaChart chartData={tvlChart} stacks={['TVL']} valueSymbol="$" title="" height="400px" />
+					<MultiSeriesChart2
+						dataset={tvlDataset}
+						charts={TVL_CHARTS}
+						valueSymbol="$"
+						title=""
+						height="400px"
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={AREA_EXPORT}
+					/>
 				</ChartCard>
 			)}
 
 			{breakdownLoading ? (
 				<CardSkeleton title="TVL by Chain" />
-			) : tvlByChainStacks.length > 0 ? (
+			) : tvlByChain.charts.length > 0 ? (
 				<ChartCard title="TVL by Chain">
-					<AreaChart
-						chartData={tvlByChain}
-						stacks={tvlByChainStacks}
+					<MultiSeriesChart2
+						dataset={tvlByChain.dataset}
+						charts={tvlByChain.charts}
 						valueSymbol="$"
 						title=""
 						height="400px"
-						isStackedChart
+						stacked
+						solidChartAreaStyle
+						chartOptions={DOLLAR_STACKED_CHART_OPTIONS}
+						exportButtons={AREA_EXPORT}
 					/>
 				</ChartCard>
 			) : null}
@@ -236,7 +272,15 @@ export default function SparkLend() {
 				<CardSkeleton title="Total Borrowed" />
 			) : (
 				<ChartCard title="Total Borrowed">
-					<AreaChart chartData={borrowedChart} stacks={['Borrowed']} valueSymbol="$" title="" height="400px" />
+					<MultiSeriesChart2
+						dataset={borrowedDataset}
+						charts={BORROWED_CHARTS}
+						valueSymbol="$"
+						title=""
+						height="400px"
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={AREA_EXPORT}
+					/>
 				</ChartCard>
 			)}
 
@@ -244,27 +288,31 @@ export default function SparkLend() {
 				<CardSkeleton title="Fees" />
 			) : (
 				<ChartCard title="Fees">
-					<BarChart
-						chartData={feesChart}
-						stacks={{ Fees: 'a' }}
-						stackColors={{ Fees: '#4FC3F7' }}
+					<MultiSeriesChart2
+						dataset={feesDataset}
+						charts={FEES_CHARTS}
 						valueSymbol="$"
 						title=""
 						height="400px"
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}
 
 			{breakdownLoading ? (
 				<CardSkeleton title="Fees by Chain" />
-			) : feesByChainStacks.length > 0 ? (
+			) : feesByChain.charts.length > 0 ? (
 				<ChartCard title="Fees by Chain">
-					<BarChart
-						chartData={feesByChain}
-						stacks={Object.fromEntries(feesByChainStacks.map((s) => [s, 'a']))}
+					<MultiSeriesChart2
+						dataset={feesByChain.dataset}
+						charts={feesByChain.charts}
 						valueSymbol="$"
 						title=""
 						height="400px"
+						hideDefaultLegend={feesByChain.charts.length < 2}
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			) : null}
@@ -273,13 +321,14 @@ export default function SparkLend() {
 				<CardSkeleton title="Revenue" />
 			) : (
 				<ChartCard title="Revenue">
-					<BarChart
-						chartData={revenueChart}
-						stacks={{ Revenue: 'a' }}
-						stackColors={{ Revenue: '#66BB6A' }}
+					<MultiSeriesChart2
+						dataset={revenueDataset}
+						charts={REVENUE_CHARTS}
 						valueSymbol="$"
 						title=""
 						height="400px"
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}
@@ -288,13 +337,14 @@ export default function SparkLend() {
 				<CardSkeleton title="Supply Side Revenue" />
 			) : (
 				<ChartCard title="Supply Side Revenue">
-					<BarChart
-						chartData={supplySideRevenueChart}
-						stacks={{ 'Supply Side Revenue': 'a' }}
-						stackColors={{ 'Supply Side Revenue': '#FFA726' }}
+					<MultiSeriesChart2
+						dataset={supplySideRevenueDataset}
+						charts={SUPPLY_SIDE_REVENUE_CHARTS}
 						valueSymbol="$"
 						title=""
 						height="400px"
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}
@@ -303,13 +353,14 @@ export default function SparkLend() {
 				<CardSkeleton title="USD Inflows" />
 			) : (
 				<ChartCard title="USD Inflows">
-					<BarChart
-						chartData={inflowsChart}
-						stacks={{ 'USD Inflows': 'a' }}
-						stackColors={{ 'USD Inflows': '#AB47BC' }}
+					<MultiSeriesChart2
+						dataset={inflowsDataset}
+						charts={INFLOWS_CHARTS}
 						valueSymbol="$"
 						title=""
 						height="400px"
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}

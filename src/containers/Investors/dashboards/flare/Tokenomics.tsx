@@ -1,50 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useEffect, useMemo, useState } from 'react'
-import type { IBarChartProps, IChartProps } from '~/components/ECharts/types'
+import { lazy, useEffect, useState } from 'react'
+import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
-import { FLARE_BLUE, FLARE_ORANGE, FLARE_PINK, lastNDaysZoom } from './chartDefaults'
-import { chartToData, type UpstreamChart } from './transform'
+import { CSV_ONLY_EXPORT } from './chartDefaults'
+import { buildFlareTokenomicsData, type TokenomicsAPIResponse } from './data'
 import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
-
-interface FormattedValue {
-	value: number
-	formatted: string
-}
-
-interface TokenomicsAPIResponse {
-	narrative?: string
-	burn: {
-		burnChart: UpstreamChart
-		firePool: { status: string; note: string; burnDestination: string }
-		kpis: {
-			latestDailyBurn: FormattedValue
-			burn7d: FormattedValue
-			burn30d: FormattedValue
-			burnYtd: FormattedValue
-			totalGasBurned: FormattedValue
-		}
-	}
-	emissions: {
-		emissionsChart: UpstreamChart
-		burnVsEmitChart: UpstreamChart
-		kpis: {
-			latestEpochEmit: FormattedValue
-			latestEpochBurn: FormattedValue
-			latestNetInflation: FormattedValue
-			latestBurnVsEmitPct: FormattedValue
-			emit30d: FormattedValue
-			burn30d: FormattedValue
-			netInflation30d: FormattedValue
-			burnVsEmit30dPct: FormattedValue
-			cumulativeEmissionsTracked: FormattedValue
-			epochsTracked: FormattedValue
-		}
-		note?: string
-	}
-}
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 
 type BurnView = 'daily' | 'cumulative'
 
@@ -111,12 +75,12 @@ function FaqItem({ q, a }: { q: string; a: React.ReactNode }) {
 }
 
 export default function Tokenomics() {
-	const query = useQuery<TokenomicsAPIResponse>({
+	const query = useQuery({
 		queryKey: ['flare-tokenomics'],
 		queryFn: async () => {
 			const res = await fetch('/api/public/flare/tokenomics')
 			if (!res.ok) throw new Error(`Flare tokenomics API error: ${res.status}`)
-			return res.json()
+			return buildFlareTokenomicsData((await res.json()) as TokenomicsAPIResponse)
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
@@ -129,11 +93,13 @@ export default function Tokenomics() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/flare/supply')
 			if (!res.ok) throw new Error(`Flare supply API error: ${res.status}`)
-			return res.json() as Promise<{ kpis?: { maxSupply?: { value: number; formatted: string } } }>
+			const data = (await res.json()) as {
+				kpis?: { maxSupply?: { value: number; formatted: string } }
+			}
+			return data.kpis?.maxSupply?.formatted ?? null
 		},
 		staleTime: 10 * 60 * 1000,
-		refetchOnWindowFocus: false,
-		select: (d) => d?.kpis?.maxSupply ?? null
+		refetchOnWindowFocus: false
 	})
 
 	const onContentReady = useContentReady()
@@ -143,56 +109,23 @@ export default function Tokenomics() {
 		if (query.data) onContentReady()
 	}, [query.data, onContentReady])
 
-	const data = useMemo(() => {
-		if (!query.data) return null
-		const b = query.data.burn
-		const e = query.data.emissions
-		return {
-			narrative: query.data.narrative,
-			burn: {
-				burnTitle: b.burnChart.title ?? 'FLR Burned (Daily Gas)',
-				dailyData: chartToData({
-					...b.burnChart,
-					series: b.burnChart.series.filter((s) => s.name === 'Daily Burn')
-				}),
-				cumulativeData: chartToData({
-					...b.burnChart,
-					series: b.burnChart.series.filter((s) => s.name === 'Cumulative Burn')
-				}),
-				kpis: b.kpis,
-				firePool: b.firePool
-			},
-			emissions: {
-				emissionsTitle: e.emissionsChart.title ?? 'FLR Emissions per Epoch',
-				burnVsEmitTitle: e.burnVsEmitChart.title ?? 'Burn vs. Emit',
-				burnVsEmitSubtitle: e.burnVsEmitChart.subtitle,
-				perEpochData: chartToData({
-					...e.emissionsChart,
-					series: e.emissionsChart.series.filter((s) => s.name === 'Per Epoch')
-				}),
-				burnVsEmitData: chartToData(e.burnVsEmitChart),
-				kpis: e.kpis
-			}
-		}
-	}, [query.data])
+	if (!query.data) return null
 
-	if (!data) return null
-
-	const { burn: b, emissions: e } = data
+	const { burn: b, emissions: e } = query.data
 	const bk = b.kpis
 	const ek = e.kpis
 
 	return (
 		<div className="flex flex-col gap-6">
-			{data.narrative && <NarrativeCallout>{data.narrative}</NarrativeCallout>}
+			{query.data.narrative && <NarrativeCallout>{query.data.narrative}</NarrativeCallout>}
 
 			<SectionHeader>FLR Burn</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-				<KpiCard label="Latest Daily" value={bk.latestDailyBurn.formatted} />
-				<KpiCard label="Burn 7d" value={bk.burn7d.formatted} />
-				<KpiCard label="Burn 30d" value={bk.burn30d.formatted} />
-				<KpiCard label="Burn YTD" value={bk.burnYtd.formatted} />
-				<KpiCard label="Total Burned" value={bk.totalGasBurned.formatted} />
+				<KpiCard label="Latest Daily" value={bk.latestDailyBurn} />
+				<KpiCard label="Burn 7d" value={bk.burn7d} />
+				<KpiCard label="Burn 30d" value={bk.burn30d} />
+				<KpiCard label="Burn YTD" value={bk.burnYtd} />
+				<KpiCard label="Total Burned" value={bk.totalGasBurned} />
 			</div>
 
 			<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
@@ -213,69 +146,65 @@ export default function Tokenomics() {
 					</div>
 				</div>
 				{burnView === 'daily' ? (
-					<BarChart
-						chartData={b.dailyData}
-						stacks={{ 'Daily Burn': 'a' }}
-						stackColors={{ 'Daily Burn': FLARE_ORANGE }}
+					<MultiSeriesChart2
+						dataset={b.dailyDataset}
+						charts={b.charts.daily}
+						valueSymbol=""
 						title=""
 						height="360px"
-						chartOptions={lastNDaysZoom(b.dailyData.length)}
+						exportButtons={CSV_ONLY_EXPORT}
+						chartOptions={b.chartOptions}
 					/>
 				) : (
-					<AreaChart
-						chartData={b.cumulativeData}
-						stacks={['Cumulative Burn']}
-						stackColors={{ 'Cumulative Burn': FLARE_PINK }}
+					<MultiSeriesChart2
+						dataset={b.cumulativeDataset}
+						charts={b.charts.cumulative}
+						valueSymbol=""
 						title=""
 						height="360px"
-						chartOptions={lastNDaysZoom(b.cumulativeData.length)}
+						chartOptions={b.chartOptions}
 					/>
 				)}
 			</div>
 
 			<SectionHeader>FLR Emissions</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-				{maxSupplyQuery.data && <KpiCard label="Max Supply" value={maxSupplyQuery.data.formatted} />}
-				<KpiCard label="Latest Epoch Emit" value={ek.latestEpochEmit.formatted} />
-				<KpiCard label="Emit 30d" value={ek.emit30d.formatted} />
-				<KpiCard label="Cumulative Emitted" value={ek.cumulativeEmissionsTracked.formatted} />
-				<KpiCard label="Epochs Tracked" value={ek.epochsTracked.formatted} />
-				<KpiCard label="Latest Epoch Burn" value={ek.latestEpochBurn.formatted} />
+				{maxSupplyQuery.data != null && <KpiCard label="Max Supply" value={maxSupplyQuery.data} />}
+				<KpiCard label="Latest Epoch Emit" value={ek.latestEpochEmit} />
+				<KpiCard label="Emit 30d" value={ek.emit30d} />
+				<KpiCard label="Cumulative Emitted" value={ek.cumulativeEmissionsTracked} />
+				<KpiCard label="Epochs Tracked" value={ek.epochsTracked} />
+				<KpiCard label="Latest Epoch Burn" value={ek.latestEpochBurn} />
 			</div>
 			<ChartCard title={e.emissionsTitle}>
-				<BarChart
-					chartData={e.perEpochData}
-					stacks={{ 'Per Epoch': 'a' }}
-					stackColors={{ 'Per Epoch': FLARE_BLUE }}
+				<MultiSeriesChart2
+					dataset={e.perEpochDataset}
+					charts={e.charts.perEpoch}
+					valueSymbol=""
 					title=""
 					height="360px"
-					chartOptions={lastNDaysZoom(e.perEpochData.length)}
+					exportButtons={CSV_ONLY_EXPORT}
+					chartOptions={e.perEpochChartOptions}
 				/>
 			</ChartCard>
 
 			<SectionHeader>Burn vs. Emit & Net Inflation</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-				<KpiCard label="Burn / Emit (latest)" value={ek.latestBurnVsEmitPct.formatted} />
-				<KpiCard label="Net Inflation (latest)" value={ek.latestNetInflation.formatted} />
-				<KpiCard label="Burn / Emit (30d)" value={ek.burnVsEmit30dPct.formatted} />
-				<KpiCard label="Net Inflation (30d)" value={ek.netInflation30d.formatted} />
+				<KpiCard label="Burn / Emit (latest)" value={ek.latestBurnVsEmitPct} />
+				<KpiCard label="Net Inflation (latest)" value={ek.latestNetInflation} />
+				<KpiCard label="Burn / Emit (30d)" value={ek.burnVsEmit30dPct} />
+				<KpiCard label="Net Inflation (30d)" value={ek.netInflation30d} />
 			</div>
 			<ChartCard title={e.burnVsEmitTitle}>
-				<BarChart
-					chartData={e.burnVsEmitData}
-					stacks={{
-						'FLR Emitted': 'a',
-						'FLR Burned': 'b',
-						'Net Inflation': 'c'
-					}}
-					stackColors={{
-						'FLR Emitted': FLARE_BLUE,
-						'FLR Burned': FLARE_ORANGE,
-						'Net Inflation': FLARE_PINK
-					}}
+				<MultiSeriesChart2
+					dataset={e.burnVsEmitDataset}
+					charts={e.charts.burnVsEmit}
+					valueSymbol=""
 					title=""
 					height="400px"
-					chartOptions={lastNDaysZoom(e.burnVsEmitData.length)}
+					hideDefaultLegend={false}
+					exportButtons={CSV_ONLY_EXPORT}
+					chartOptions={e.burnVsEmitChartOptions}
 				/>
 			</ChartCard>
 			{e.burnVsEmitSubtitle && <p className="text-xs leading-relaxed text-pro-text-label">{e.burnVsEmitSubtitle}</p>}
@@ -288,7 +217,7 @@ export default function Tokenomics() {
 					</span>
 					<span className="text-sm font-medium text-pro-text-primary">FIRE pool balance & burns</span>
 				</div>
-				<p className="mt-3 text-xs leading-relaxed text-pro-text-label">{b.firePool.note}</p>
+				<p className="mt-3 text-xs leading-relaxed text-pro-text-label">{b.firePoolNote}</p>
 			</div>
 
 			<SectionHeader>FAQ</SectionHeader>

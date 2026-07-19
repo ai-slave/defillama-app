@@ -326,10 +326,14 @@ export const slug = (name: unknown = ''): string =>
 		.replace(/ /g, '-')
 		.replace(/'/g, '')
 
+const distinctColorsCache = new Map<number, readonly string[]>()
+
 export function getNDistinctColors(n: number): string[] {
 	if (n <= 0) {
 		return []
 	}
+	const cached = distinctColorsCache.get(n)
+	if (cached) return cached.slice()
 
 	const colors: string[] = []
 	const usedColors = new Set<string>()
@@ -416,7 +420,7 @@ export function getNDistinctColors(n: number): string[] {
 
 	for (const baseColor of CHART_COLORS) {
 		if (colors.length === n) {
-			return colors
+			break
 		}
 
 		if (usedColors.has(baseColor)) continue
@@ -469,7 +473,8 @@ export function getNDistinctColors(n: number): string[] {
 		colors.push(candidate)
 	}
 
-	return colors
+	distinctColorsCache.set(n, colors)
+	return colors.slice()
 }
 
 export const getDominancePercent = (value: unknown, total: unknown): number => {

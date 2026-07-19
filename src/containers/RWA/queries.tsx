@@ -1,5 +1,4 @@
 import { fetchBlockExplorers } from '~/api'
-import { ensureChronologicalRows } from '~/components/ECharts/utils'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import type { IRWAList } from '~/utils/metadata/types'
@@ -12,8 +11,7 @@ import {
 	fetchRWAStats,
 	fetchRWAChartDataByAsset,
 	fetchRWAAssetDataById,
-	fetchRWAAssetChartData,
-	toUnixMsTimestamp
+	fetchRWAAssetChartData
 } from './api'
 import type {
 	IFetchedRWAProject,
@@ -181,18 +179,6 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			: params.rwaList.assetGroups
 
 		const chartDataMs: IRWAChartDataByAsset | null = chartData
-			? {
-					onChainMcap: ensureChronologicalRows(
-						(chartData.onChainMcap ?? []).map((row) => ({ ...row, timestamp: toUnixMsTimestamp(row.timestamp) }))
-					),
-					activeMcap: ensureChronologicalRows(
-						(chartData.activeMcap ?? []).map((row) => ({ ...row, timestamp: toUnixMsTimestamp(row.timestamp) }))
-					),
-					defiActiveTvl: ensureChronologicalRows(
-						(chartData.defiActiveTvl ?? []).map((row) => ({ ...row, timestamp: toUnixMsTimestamp(row.timestamp) }))
-					)
-				}
-			: null
 
 		// `selectedChain` comes from the URL and is slugified; resolve a display name (original casing/spaces)
 		// while still filtering breakdown keys by slug for robustness.

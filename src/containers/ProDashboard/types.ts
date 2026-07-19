@@ -36,6 +36,8 @@ export interface MultiChartConfig {
 	showTreemap?: boolean
 }
 
+export const MAX_MULTI_CHART_SERIES = 20
+
 export interface TextConfig {
 	id: string
 	kind: 'text'
@@ -342,7 +344,8 @@ export interface ChartConfig {
 	protocol?: string
 	type: string
 	color?: string
-	data?: [string, number][]
+	/** Strictly ascending, unique Unix-second points returned by the dashboard query layer. */
+	data?: [number, number][]
 	isLoading?: boolean
 	hasError?: boolean
 	refetch?: () => void
@@ -351,6 +354,10 @@ export interface ChartConfig {
 	dataType?: UnlocksDataType
 	colSpan?: StoredColSpan
 	showCumulative?: boolean
+}
+
+export function limitMultiChartItems(items: ChartConfig[]): ChartConfig[] {
+	return items.length > MAX_MULTI_CHART_SERIES ? items.slice(0, MAX_MULTI_CHART_SERIES) : items
 }
 
 export interface TableFilters {

@@ -35,6 +35,55 @@ const baseConfig: ChartConfiguration = {
 }
 
 describe('chart adapters', () => {
+	it('forwards configured y-axis positions to the renderer', () => {
+		const config = {
+			...baseConfig,
+			type: 'line',
+			axes: {
+				x: { field: 'date', label: 'Date', type: 'time' as const },
+				yAxes: [{ id: 'right', fields: ['value'], label: 'Value', position: 'right' as const }]
+			},
+			series: [
+				{
+					...baseConfig.series[0]!,
+					type: 'line' as const,
+					yAxisId: 'right',
+					dataMapping: { xField: 'date', yField: 'value' }
+				}
+			]
+		} satisfies ChartConfiguration
+
+		const result = adaptCartesianChartData(config, [{ date: 1_767_225_600, value: 10 }])
+
+		expect(result.props.chartOptions.yAxis[0].position).toBe('right')
+	})
+
+	it('rejects cartesian series names that collide with dimensions or another series', () => {
+		const timestampCollision = {
+			...baseConfig,
+			type: 'line',
+			axes: { x: { field: 'date', label: 'Date', type: 'time' as const }, yAxes: baseConfig.axes.yAxes },
+			series: [
+				{
+					...baseConfig.series[0]!,
+					name: 'timestamp',
+					type: 'line' as const,
+					dataMapping: { xField: 'date', yField: 'y' }
+				}
+			]
+		} satisfies ChartConfiguration
+		const duplicateNames = {
+			...timestampCollision,
+			series: [
+				{ ...timestampCollision.series[0], name: 'Duplicate' },
+				{ ...timestampCollision.series[0], name: 'Duplicate' }
+			]
+		} satisfies ChartConfiguration
+
+		expect(adaptCartesianChartData(timestampCollision, [{ date: 1, y: 2 }]).description).toContain('reserved')
+		expect(adaptCartesianChartData(duplicateNames, [{ date: 1, y: 2 }]).description).toContain('Duplicate')
+	})
+
 	it('preserves falsy category labels in cartesian, pie, hbar, and scatter adapters', () => {
 		const categoryConfig = {
 			...baseConfig,
@@ -155,6 +204,42 @@ describe('chart adapters', () => {
 		// unspecified slice falls back to the palette (any non-empty color)
 		expect(result.props.stackColors!.Balancer).toMatch(/^#|rgb/)
 		expect(result.props.stackColors!.Balancer).not.toBe('#ff007a')
+	})
+
+	it('preserves Object prototype names in cartesian and pie datasets', () => {
+		const cartesianConfig = {
+			...baseConfig,
+			type: 'bar',
+			axes: { ...baseConfig.axes, x: { field: 'x', label: 'X', type: 'category' as const } },
+			series: [
+				{
+					...baseConfig.series[0]!,
+					name: '__proto__',
+					type: 'bar' as const,
+					dataMapping: { xField: 'x', yField: 'y' }
+				}
+			]
+		} satisfies ChartConfiguration
+		const cartesian = adaptCartesianChartData(cartesianConfig, [{ x: 'A', y: 7 }])
+
+		expect(Object.getPrototypeOf(cartesian.props.dataset.source[0])).toBe(Object.prototype)
+		expect(cartesian.props.dataset.source[0]?.__proto__).toBe(7)
+
+		const pieConfig = {
+			...baseConfig,
+			type: 'pie',
+			series: [{ ...baseConfig.series[0]!, dataMapping: { xField: 'entity', yField: 'value' } }]
+		} satisfies ChartConfiguration
+		const pie = adaptPieChartData(pieConfig, [
+			{ entity: 'constructor', value: 2 },
+			{ entity: '__proto__', value: 3 }
+		])
+
+		expect(pie.props.chartData).toEqual([
+			{ name: '__proto__', value: 3 },
+			{ name: 'constructor', value: 2 }
+		])
+		expect(Object.getPrototypeOf(pie.props.stackColors)).toBeNull()
 	})
 
 	it('rotates a crowded category x-axis so long labels do not drop, and reserves grid bottom', () => {

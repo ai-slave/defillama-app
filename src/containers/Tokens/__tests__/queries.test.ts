@@ -3,7 +3,7 @@ import type { MarketSegmentSummary } from '~/containers/Markets/api.types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import type { TokensRawAdapterChainMetrics, TokensRawCoinGeckoRanking, TokensRawMarketsList } from '../api.types'
-import { buildTokenOverviewCurrentMetricsById, buildTokensSourceRows } from '../queries.server'
+import { buildTokenOverviewCurrentMetricsById, buildTokensChartDataset, buildTokensSourceRows } from '../queries.server'
 
 function marketSegment(overrides: Partial<MarketSegmentSummary>): MarketSegmentSummary {
 	return {
@@ -50,6 +50,48 @@ function tokenRightsEntry(overrides: Partial<IRawTokenRightsEntry>): IRawTokenRi
 		...overrides
 	}
 }
+
+describe('buildTokensChartDataset', () => {
+	it('projects the market-cap index into a compact deterministic chart contract', () => {
+		const result = buildTokensSourceRows({
+			tokens: [
+				{ id: 'beta', name: 'Beta', symbol: 'b', market_cap: 100, price_change_percentage_24h: 2 },
+				{
+					id: 'alpha',
+					name: 'Alpha',
+					symbol: 'a',
+					market_cap: 100,
+					price_change_percentage_7d_in_currency: -3
+				},
+				{ id: 'small', name: 'Small', symbol: 's', market_cap: 50 },
+				{ id: 'missing', name: 'Missing', symbol: 'm', market_cap: null }
+			],
+			markets: { last_updated: '', tokens: [] },
+			tokenRightsEntries: [],
+			stablecoinGeckoIds: new Set(['beta']),
+			fees: [],
+			revenue: [],
+			holdersRevenue: [],
+			unlocks: [],
+			metadata: {
+				tokenDirectory: {},
+				protocolMetadata: {},
+				emissionsSupplyMetrics: {}
+			} as unknown as MetadataCache,
+			nowSec: 1_800_000_000
+		})
+
+		expect(buildTokensChartDataset(result.sortIndexes.marketCap, 2)).toEqual({
+			names: ['Alpha', 'Beta'],
+			symbols: ['A', 'B'],
+			logoSources: ['@alpha', '@beta'],
+			hrefs: [null, null],
+			marketCaps: [100, 100],
+			priceChanges: { '24h': [null, 2], '7d': [-3, null], '30d': [null, null] },
+			stablecoins: [false, true]
+		})
+	})
+})
 
 describe('buildTokensSourceRows', () => {
 	it('precomputes token rows from tokenlist, markets, adapter metrics, unlocks, and rights data', () => {

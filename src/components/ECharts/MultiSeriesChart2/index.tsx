@@ -11,7 +11,8 @@ import {
 } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useEffectEvent, useId, useMemo, useRef } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
+import { buildCsvFromDataset } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	attachEventHoverHandlers,
@@ -20,7 +21,7 @@ import {
 	createEventStripYAxis,
 	type EventHoverState,
 	getMainGridBottom,
-	getSortedDatasetTimeBounds,
+	getDatasetTimeBounds,
 	mergeGraphicWithEventMarkLinePlaceholder
 } from '~/components/ECharts/hallmarkEventRail'
 import { CHART_COLORS } from '~/constants/colors'
@@ -28,7 +29,8 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
-import { formatNum, formattedNum, slug } from '~/utils'
+import { useStableCallback } from '~/hooks/useStableCallback'
+import { slug } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
 import {
@@ -39,13 +41,15 @@ import {
 	chartHorizontalScrollLegend,
 	chartLegendScrollStyle
 } from '../chartSpacing'
-import { getChartTheme } from '../chartTheme'
-import { isTooltipDataRecord, formatChartEmphasisDate, formatTooltipChartDate } from '../formatters'
+import { type ChartTheme, useChartTheme } from '../chartTheme'
+import { formatChartEmphasisDate } from '../formatters'
 import { buildHallmarksMarkLine } from '../hallmarks'
 import type { IMultiSeriesChart2Props } from '../types'
 import { mergeDeep } from '../utils'
-import { applyLogScaleToYAxes } from './logScale'
-import { getTooltipRawYValue } from './tooltipValue'
+import { getDisplayedDatasetDimensions } from './csvExport'
+import { applyConfiguredYAxisScale, applyLogScaleToYAxes, getZeroBaselineYAxisMin } from './logScale'
+import { buildMultiYAxis, formatAxisLabel, normalizeSeriesYAxisIndices } from './multiYAxis'
+import { createTooltipFormatter } from './tooltip'
 
 echarts.use([
 	CanvasRenderer,
@@ -62,33 +66,36 @@ echarts.use([
 	DatasetComponent
 ])
 
-function formatAxisLabel(value: number, symbol: string): string {
-	// For large values we use `formattedNum` for comma separators, but we must still
-	// append units like `%` (live code shows `1,500%`, not `1,500`).
-	if (Math.abs(value) > 1000) {
-		if (symbol === '$') return formattedNum(value, true)
-		const base = formattedNum(value, false) // includes sign, no unit
-		if (!symbol) return base
-		if (symbol === '%') return `${base}%`
-		return `${base} ${symbol}`
-	}
-
-	return formatNum(value, 5, symbol || undefined)
-}
-
-type AxisExtent = {
-	min?: number
-}
-
-function getZeroBaselineYAxisMin(extent: AxisExtent) {
-	return typeof extent.min === 'number' && extent.min < 0 ? extent.min : 0
-}
-
 function isChartDisposed(instance: echarts.ECharts) {
 	return instance.isDisposed()
 }
 
+function dimensionsMatch(a: string[], b: string[]) {
+	if (a.length !== b.length) return false
+	for (let i = 0; i < a.length; i++) {
+		if (a[i] !== b[i]) return false
+	}
+	return true
+}
+
+type EncodedDimensions = NonNullable<IMultiSeriesChart2Props['charts']>[number]['encode']['x']
 type GroupBy = NonNullable<IMultiSeriesChart2Props['groupBy']>
+
+function remapEncodedDimensions(
+	encoded: EncodedDimensions,
+	datasetDimensions: string[],
+	renderedDatasetDimensions: string[]
+): EncodedDimensions {
+	if (typeof encoded === 'string') return encoded
+	const remap = (value: number) => {
+		const dimension = datasetDimensions[value]
+		const renderedIndex = renderedDatasetDimensions.indexOf(dimension)
+		return renderedIndex >= 0 ? renderedIndex : value
+	}
+	if (typeof encoded === 'number') return remap(encoded)
+	if (encoded.length === 0 || typeof encoded[0] === 'string') return encoded
+	return (encoded as number[]).map(remap)
+}
 
 function createHatchPattern(color: string, opacity: number): { image: HTMLCanvasElement; repeat: 'repeat' } | null {
 	if (typeof document === 'undefined') return null
@@ -110,11 +117,11 @@ function createHatchPattern(color: string, opacity: number): { image: HTMLCanvas
 
 function createEndLabel({
 	text,
-	isThemeDark,
+	chartTheme,
 	offset
 }: {
 	text: string
-	isThemeDark: boolean
+	chartTheme: ChartTheme
 	offset: [number, number]
 }) {
 	return {
@@ -122,7 +129,7 @@ function createEndLabel({
 		formatter: text,
 		fontSize: 16,
 		fontWeight: 'bold',
-		color: getChartTheme(isThemeDark).ink(0.3),
+		color: chartTheme.ink(0.3),
 		offset
 	}
 }
@@ -132,14 +139,14 @@ function buildSeries({
 	selectedCharts,
 	expandTo100Percent,
 	solidChartAreaStyle,
-	isThemeDark,
+	chartTheme,
 	hallmarksMarkLine
 }: {
 	effectiveCharts: IMultiSeriesChart2Props['charts']
 	selectedCharts: IMultiSeriesChart2Props['selectedCharts']
 	expandTo100Percent: boolean | undefined
 	solidChartAreaStyle: boolean
-	isThemeDark: boolean
+	chartTheme: ChartTheme
 	hallmarksMarkLine?: ReturnType<typeof buildHallmarksMarkLine>
 }) {
 	const out: any[] = []
@@ -157,7 +164,7 @@ function buildSeries({
 		const showSymbol = chart.type === 'line' ? !!chart.showSymbol : false
 		const symbol = showSymbol ? (chart.symbol ?? 'circle') : 'none'
 		// ECharts large bar mode does not support stack layout.
-		const large = chart.large ?? (chart.type === 'bar' && chart.stack != null ? false : !showSymbol)
+		const large = chart.type === 'bar' ? (chart.large ?? chart.stack == null) : undefined
 		const symbolSize = showSymbol ? (chart.symbolSize ?? 6) : undefined
 
 		const base: any = {
@@ -166,7 +173,7 @@ function buildSeries({
 			symbol,
 			showSymbol,
 			...(symbolSize != null ? { symbolSize } : {}),
-			large,
+			...(large != null ? { large } : {}),
 			encode: chart.encode,
 			emphasis: { focus: 'series', shadowBlur: 10 },
 			itemStyle: { color: resolvedColor },
@@ -195,7 +202,7 @@ function buildSeries({
 								{ offset: 0, color: resolvedColor },
 								{
 									offset: 1,
-									color: getChartTheme(isThemeDark).areaGradientTo
+									color: chartTheme.areaGradientTo
 								}
 							])
 						}
@@ -205,7 +212,7 @@ function buildSeries({
 		if (chart.type === 'line' && chart.hideAreaStyle) {
 			delete base.areaStyle
 		}
-		if (i === 0 && hallmarksMarkLine) {
+		if (out.length === 0 && hallmarksMarkLine) {
 			base.markLine = hallmarksMarkLine
 		}
 		if (chart.isTBD) {
@@ -217,7 +224,7 @@ function buildSeries({
 			base.lineStyle = { ...(base.lineStyle ?? {}), type: 'dashed', width: 1.5, opacity: 0.5 }
 			base.endLabel = createEndLabel({
 				text: 'TBD',
-				isThemeDark,
+				chartTheme,
 				offset: [-40, 10]
 			})
 		} else if (chart.isForecast) {
@@ -229,7 +236,7 @@ function buildSeries({
 			base.lineStyle = { ...(base.lineStyle ?? {}), type: 'dashed', width: 1.5, opacity: 0.5 }
 			base.endLabel = createEndLabel({
 				text: 'Forecast',
-				isThemeDark,
+				chartTheme,
 				offset: [-80, 15]
 			})
 		}
@@ -238,275 +245,20 @@ function buildSeries({
 	}
 
 	if (someSeriesHasYAxisIndex) {
-		return out.map((item) => {
-			item.yAxisIndex = item.yAxisIndex ?? 0
-			return item
-		})
+		for (let i = 0; i < out.length; i++) out[i].yAxisIndex = out[i].yAxisIndex ?? 0
 	}
 
 	return out
-}
-
-function buildMultiYAxis({
-	series,
-	yAxis,
-	expandTo100Percent,
-	effectiveCharts,
-	valueSymbol
-}: {
-	series: any[]
-	yAxis: any
-	expandTo100Percent: boolean | undefined
-	effectiveCharts: IMultiSeriesChart2Props['charts']
-	valueSymbol: string
-}) {
-	const yAxisIndexToColor = new Map<number, string | undefined>()
-	const yAxisIndexToExplicitColor = new Map<number, string | undefined>()
-	const yAxisIndexToSymbol = new Map<number, string | undefined>()
-	let maxIndex = -1
-
-	for (const item of series) {
-		const idx = item?.yAxisIndex
-		if (idx == null) continue
-		if (!yAxisIndexToColor.has(idx)) yAxisIndexToColor.set(idx, item?.itemStyle?.color)
-		if (idx > maxIndex) maxIndex = idx
-	}
-
-	// Derive per-axis symbols and colors from charts config
-	// - symbols: first one wins
-	// - colors: only use if caller explicitly provided a single unique color for that axis
-	const axisColorCandidates = new Map<number, Set<string>>()
-	for (const chart of effectiveCharts ?? []) {
-		const idx = chart.yAxisIndex
-		if (idx == null) continue
-		if (chart.valueSymbol && !yAxisIndexToSymbol.has(idx)) {
-			yAxisIndexToSymbol.set(idx, chart.valueSymbol)
-		}
-		if (chart.color) {
-			const set = axisColorCandidates.get(idx) ?? new Set<string>()
-			set.add(chart.color)
-			axisColorCandidates.set(idx, set)
-		}
-	}
-
-	for (const [idx, set] of axisColorCandidates.entries()) {
-		if (set.size === 1) {
-			yAxisIndexToExplicitColor.set(idx, Array.from(set)[0])
-		}
-	}
-
-	if (maxIndex < 0) return null
-
-	const noOffset = maxIndex < 2
-	const out: any[] = []
-	let prevOffset = 0
-	for (let i = 0; i <= maxIndex; i++) {
-		const isPrimary = i === 0
-		const baseAxis = Array.isArray(yAxis) && yAxis.length > 0 ? (yAxis[i] ?? yAxis[0] ?? {}) : (yAxis ?? {})
-		const baseAxisLabel =
-			baseAxis?.axisLabel && typeof baseAxis.axisLabel === 'object' && !Array.isArray(baseAxis.axisLabel)
-				? baseAxis.axisLabel
-				: {}
-		const baseAxisLine =
-			baseAxis?.axisLine && typeof baseAxis.axisLine === 'object' && !Array.isArray(baseAxis.axisLine)
-				? baseAxis.axisLine
-				: {}
-		const baseAxisLineStyle =
-			baseAxisLine?.lineStyle && typeof baseAxisLine.lineStyle === 'object' && !Array.isArray(baseAxisLine.lineStyle)
-				? baseAxisLine.lineStyle
-				: {}
-		const existingFormatter =
-			typeof baseAxisLabel.formatter === 'function' || typeof baseAxisLabel.formatter === 'string'
-				? baseAxisLabel.formatter
-				: null
-		// Primary axis is intentionally not auto-colored from series colors (can be misleading when multiple series share axis 0).
-		// But if the caller explicitly assigns a unique color to that axis via charts config, apply it.
-		const axisColor = yAxisIndexToExplicitColor.get(i) ?? (isPrimary ? undefined : yAxisIndexToColor.get(i))
-		const axisSymbol = yAxisIndexToSymbol.get(i) ?? valueSymbol
-		const offset = noOffset || i < 2 ? 0 : prevOffset + 40
-		const axisFormatter =
-			isPrimary && existingFormatter ? existingFormatter : (value: number) => formatAxisLabel(value, axisSymbol)
-
-		out.push({
-			...baseAxis,
-			position: isPrimary ? 'left' : 'right',
-			alignTicks: baseAxis.alignTicks ?? true,
-			offset,
-			axisLine: {
-				...baseAxisLine,
-				show: !isPrimary,
-				lineStyle: {
-					...baseAxisLineStyle,
-					type: [5, 10],
-					dashOffset: 5,
-					...(axisColor ? { color: axisColor } : {})
-				}
-			},
-			axisLabel: {
-				...baseAxisLabel,
-				formatter: axisFormatter,
-				...(axisColor ? { color: axisColor } : {})
-			},
-			...(expandTo100Percent ? { max: 100, min: 0 } : {})
-		})
-
-		prevOffset = offset
-	}
-
-	return out
-}
-
-function getAxisValueFromTooltipParams(first: any): number {
-	const data = first?.data
-	if (isTooltipDataRecord(data) && 'timestamp' in data) {
-		const ts = Number(data.timestamp)
-		if (Number.isFinite(ts)) return ts
-	}
-
-	if (Array.isArray(first?.value)) {
-		const ts = Number(first.value[0])
-		if (Number.isFinite(ts)) return ts
-	}
-
-	if (first?.value && typeof first.value === 'object' && 'timestamp' in first.value) {
-		const ts = Number(first.value.timestamp)
-		if (Number.isFinite(ts)) return ts
-	}
-
-	if (typeof first?.axisValue === 'number') return first.axisValue
-
-	const axisValue = first?.axisValue
-	if (axisValue == null) return Number.NaN
-	const numeric = Number(axisValue)
-	if (Number.isFinite(numeric)) return numeric
-	const parsed = Date.parse(String(axisValue))
-	return Number.isFinite(parsed) ? parsed : Number.NaN
-}
-
-type TooltipValueRow = readonly [marker: string, name: string, value: number, symbol: string, hasOverride: boolean]
-
-function compareTooltipRows(a: TooltipValueRow, b: TooltipValueRow) {
-	if (a[4] !== b[4]) return a[4] ? -1 : 1
-	return b[2] - a[2]
-}
-
-function insertTopTooltipValue(rows: TooltipValueRow[], nextRow: TooltipValueRow, limit: number) {
-	if (!Number.isFinite(limit) || limit <= 0) return
-
-	let insertAt = rows.length
-	for (let i = 0; i < rows.length; i++) {
-		if (rows[i][2] < nextRow[2]) {
-			insertAt = i
-			break
-		}
-	}
-
-	if (insertAt === rows.length) {
-		if (rows.length < limit) rows.push(nextRow)
-		return
-	}
-
-	rows.splice(insertAt, 0, nextRow)
-	if (rows.length > limit) rows.pop()
-}
-
-function createTooltipFormatter({
-	groupBy,
-	valueSymbol,
-	seriesSymbols,
-	tooltipTotalExcludedSeries,
-	maxItems,
-	showTotalInTooltip,
-	tooltipTotalPosition
-}: {
-	groupBy: GroupBy
-	valueSymbol: string
-	seriesSymbols?: Map<string, string>
-	tooltipTotalExcludedSeries?: Set<string>
-	maxItems?: number
-	showTotalInTooltip?: boolean
-	tooltipTotalPosition?: 'top' | 'bottom'
-}) {
-	return (params: any) => {
-		const items = Array.isArray(params) ? params : params ? [params] : []
-		if (items.length === 0) return ''
-
-		const axisValue = getAxisValueFromTooltipParams(items[0])
-		const chartdate = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
-
-		const cap = maxItems == null ? 30 : Number(maxItems)
-		const shouldCap = Number.isFinite(cap) && cap > 0
-		let total = 0
-		let totalCount = 0
-		let standardCount = 0
-		let vals: TooltipValueRow[] = []
-		const topOverrideVals: TooltipValueRow[] = []
-		const topStandardVals: TooltipValueRow[] = []
-
-		for (const item of items) {
-			const name = item?.seriesName
-			if (!name) continue
-
-			const rawValue = getTooltipRawYValue(item, name)
-			const value =
-				rawValue == null || rawValue === '-' ? null : typeof rawValue === 'number' ? rawValue : Number(rawValue)
-			if (value == null || Number.isNaN(value)) continue
-
-			const hasOverride = seriesSymbols?.has(name) ?? false
-			const excludeFromTotal = hasOverride || (tooltipTotalExcludedSeries?.has(name) ?? false)
-			const nextRow = [item.marker, name, value, seriesSymbols?.get(name) ?? valueSymbol, hasOverride] as const
-
-			totalCount += 1
-			if (!excludeFromTotal) {
-				total += value
-				standardCount += 1
-			}
-
-			if (!shouldCap) {
-				vals.push(nextRow)
-				continue
-			}
-
-			insertTopTooltipValue(hasOverride ? topOverrideVals : topStandardVals, nextRow, cap)
-		}
-
-		if (!shouldCap) {
-			vals.sort(compareTooltipRows)
-		}
-
-		const cappedVals = shouldCap
-			? topOverrideVals.length >= cap
-				? topOverrideVals.slice(0, cap)
-				: [...topOverrideVals, ...topStandardVals.slice(0, Math.max(0, cap - topOverrideVals.length))]
-			: vals
-		const remaining = shouldCap ? Math.max(0, totalCount - cappedVals.length) : 0
-		const totalLine =
-			showTotalInTooltip && standardCount > 0
-				? `<li style="list-style:none;font-weight:600;">Total: ${formatAxisLabel(total, valueSymbol)}</li>`
-				: ''
-
-		const valueLines = cappedVals.reduce(
-			(prev, curr) =>
-				prev + `<li style="list-style:none;">${curr[0]} ${curr[1]}: ${formatAxisLabel(curr[2], curr[3])}</li>`,
-			''
-		)
-		const remainingLine = remaining > 0 ? `<li style="list-style:none;opacity:0.7;">+${remaining} more</li>` : ''
-
-		if (tooltipTotalPosition === 'top') {
-			return chartdate + totalLine + valueLines + remainingLine
-		}
-
-		return chartdate + valueLines + remainingLine + totalLine
-	}
 }
 
 const CATEGORY_LOGO_SIZE = 22
 const CATEGORY_LOGO_BOTTOM_GAP = 10
+const EMPTY_CHART_OPTIONS: NonNullable<IMultiSeriesChart2Props['chartOptions']> = {}
 
 export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 	const {
 		charts,
-		chartOptions = {},
+		chartOptions = EMPTY_CHART_OPTIONS,
 		height,
 		hallmarks,
 		hallmarkStyle = 'event-rail',
@@ -519,7 +271,6 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 		solidChartAreaStyle = false,
 		hideDataZoom,
 		showTotalInTooltip = false,
-		tooltipTotalPosition = 'top',
 		onReady,
 		hideDefaultLegend = true,
 		selectedCharts,
@@ -531,28 +282,36 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 		categoryLogos
 	} = props
 
-	const id = useId()
-
 	const [isThemeDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isThemeDark)
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
+	const chartDomRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const categoryLogosOverlayRef = useRef<HTMLDivElement>(null)
 	const hasCategoryLogos = !!(categoryLogos && categoryLogos.length > 0 && categoryLogos.some(Boolean))
 	const eventHoverCleanupRef = useRef<(() => void) | null>(null)
-	const globalOutCleanupRef = useRef<(() => void) | null>(null)
+	const eventHoverStateRef = useRef<EventHoverState>({ hoveredEventDate: null })
+	const eventMarkLineGridRef = useRef<{ top: number; bottom: number } | null>(null)
+	const categoryLogosFrameRef = useRef<number | null>(null)
+	const categoryLogosLayoutRef = useRef<{
+		categoryValues: unknown[]
+		categoryLogos: string[]
+		gridBottom: number
+		logoBg: string
+	} | null>(null)
+	const latestTooltipDataIndexRef = useRef<number | null>(null)
 	// Per-component tooltip size cache (used by tooltip.position). Keeping this in a ref avoids
 	// recreating it on effect re-runs and prevents cross-chart interference.
 	const tooltipSizeCacheRef = useRef<{ w: number; h: number; updatedAt: number } | null>(null)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
+	useChartResize(chartRef, chartDomRef)
 
 	const groupBySafe: GroupBy = groupBy ?? 'daily'
 	const tooltipGroupBy = groupBySafe === 'cumulative' ? 'daily' : groupBySafe
 
 	const defaultChartSettings = useMemo(() => {
-		const chartTheme = getChartTheme(isThemeDark)
 		const themeColor = chartTheme.text
 		const axisLabelColor = chartTheme.axisLabel
 
@@ -575,7 +334,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			axisLabel: { color: axisLabelColor, hideOverlap: true },
 			axisLine: { lineStyle: { color: themeColor, opacity: 0.2 } },
 			splitLine: {
-				lineStyle: { color: getChartTheme(isThemeDark).gridline }
+				lineStyle: { color: chartTheme.gridline }
 			}
 		}
 
@@ -590,7 +349,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			},
 			axisLine: { lineStyle: { color: themeColor, opacity: 0.1 } },
 			splitLine: {
-				lineStyle: { color: getChartTheme(isThemeDark).gridline }
+				lineStyle: { color: chartTheme.gridline }
 			}
 		}
 
@@ -610,181 +369,91 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 				end: 100,
 				...chartDataZoomSliderGeometry,
 				textStyle: { color: themeColor },
-				borderColor: getChartTheme(isThemeDark).zoomBorder,
+				borderColor: chartTheme.zoomBorder,
 				handleStyle: {
-					borderColor: getChartTheme(isThemeDark).zoomHandleBorder,
-					color: getChartTheme(isThemeDark).zoomHandleFill
+					borderColor: chartTheme.zoomHandleBorder,
+					color: chartTheme.zoomHandleFill
 				},
 				moveHandleStyle: {
-					color: getChartTheme(isThemeDark).zoomBorder
+					color: chartTheme.zoomBorder
 				},
 				emphasis: {
 					handleStyle: {
-						borderColor: getChartTheme(isThemeDark).zoomEmphasisBorder,
-						color: getChartTheme(isThemeDark).zoomHandleBorder
+						borderColor: chartTheme.zoomEmphasisBorder,
+						color: chartTheme.zoomHandleBorder
 					},
 					moveHandleStyle: {
-						borderColor: getChartTheme(isThemeDark).zoomEmphasisBorder,
-						color: getChartTheme(isThemeDark).zoomEmphasisMoveFill
+						borderColor: chartTheme.zoomEmphasisBorder,
+						color: chartTheme.zoomEmphasisMoveFill
 					}
 				},
-				fillerColor: getChartTheme(isThemeDark).zoomFiller,
+				fillerColor: chartTheme.zoomFiller,
 				labelFormatter: formatChartEmphasisDate
 			}
 		]
 
 		return { graphic, xAxis, yAxis, legend, dataZoom }
-	}, [isThemeDark, valueSymbol, isSmall])
+	}, [chartTheme, isThemeDark, valueSymbol, isSmall])
 
-	const { datasetSource, datasetDimensions, effectiveCharts } = useMemo(() => {
-		const datasetSource = dataset.source
-		const datasetDimensions = dataset.dimensions
-		const seriesKeys = datasetDimensions.filter((k) => k !== 'timestamp')
-		const shouldInferCharts = !charts || charts.length === 0
-		const effectiveCharts = shouldInferCharts
-			? seriesKeys.map((name, i) => ({
-					type: 'line' as const,
-					name,
-					encode: { x: 'timestamp', y: name },
-					color: CHART_COLORS[i % CHART_COLORS.length],
-					yAxisIndex: undefined,
-					...(stacked ? { stack: 'A' } : {})
-				}))
-			: charts
-
-		return { datasetSource, datasetDimensions, effectiveCharts }
-	}, [dataset, charts, stacked])
-
-	// Default exports ON for charts with at least one series unless explicitly disabled by the caller.
-	// (Historically this was limited to line charts, which made `exportButtons="auto"` appear "broken"
-	// on bar-chart pages like Raises.)
-	const hasAnySeries = useMemo(() => (effectiveCharts?.length ?? 0) > 0, [effectiveCharts])
-	// If a caller provides `onReady`, they often manage export instances + buttons outside the chart,
-	// so avoid showing duplicate toolbars by default in that case (auto mode).
-	const autoExportsEnabled = !onReady && hasAnySeries
-
-	const exportButtonsMode = exportButtons ?? 'auto'
-	const exportButtonsConfig =
-		typeof exportButtonsMode === 'object' && exportButtonsMode !== null ? exportButtonsMode : undefined
-	const exportButtonsHidden = exportButtonsMode === 'hidden'
-	const exportButtonsAuto = exportButtonsMode === 'auto'
-
-	const shouldEnableImageExport = exportButtonsHidden
-		? false
-		: exportButtonsConfig
-			? (exportButtonsConfig.png ?? true)
-			: exportButtonsAuto
-				? autoExportsEnabled
-				: false
-
-	const shouldEnableCSVDownload = exportButtonsHidden
-		? false
-		: exportButtonsConfig
-			? (exportButtonsConfig.csv ?? true)
-			: exportButtonsAuto
-				? autoExportsEnabled
-				: false
-
-	const hallmarksMarkLine = useMemo(
-		() =>
-			hallmarkStyle === 'mark-line' && hallmarks?.length
-				? buildHallmarksMarkLine({ hallmarks, isThemeDark, dateInMs: false })
-				: undefined,
-		[hallmarkStyle, hallmarks, isThemeDark]
-	)
-
-	const series = useMemo(() => {
-		return buildSeries({
-			effectiveCharts,
-			selectedCharts,
-			expandTo100Percent,
-			solidChartAreaStyle,
-			isThemeDark,
-			hallmarksMarkLine
-		})
-	}, [effectiveCharts, isThemeDark, expandTo100Percent, solidChartAreaStyle, selectedCharts, hallmarksMarkLine])
-
-	const eventRailData = useMemo(
-		() =>
-			hallmarkStyle === 'event-rail' ? buildEventRailData({ hallmarks, isThemeDark, dateInMs: false }).events : [],
-		[hallmarkStyle, hallmarks, isThemeDark]
-	)
-
-	const seriesSymbols = useMemo(() => {
-		const map = new Map<string, string>()
-		for (const chart of effectiveCharts ?? []) {
-			const sym = 'valueSymbol' in chart ? chart.valueSymbol : undefined
-			if (sym) map.set(chart.name, sym)
+	const datasetSource = dataset.source
+	const datasetDimensions = dataset.dimensions
+	const inferredCharts = useMemo(() => {
+		const inferred: NonNullable<IMultiSeriesChart2Props['charts']> = []
+		const xDimension = datasetDimensions.includes('timestamp') ? 'timestamp' : (datasetDimensions[0] ?? 'timestamp')
+		for (let i = 0; i < datasetDimensions.length; i++) {
+			const name = datasetDimensions[i]
+			if (name === xDimension) continue
+			const colorIndex = inferred.length
+			inferred.push({
+				type: 'line',
+				name,
+				encode: { x: xDimension, y: name },
+				color: CHART_COLORS[colorIndex % CHART_COLORS.length],
+				yAxisIndex: undefined,
+				...(stacked ? { stack: 'A' } : {})
+			})
 		}
-		return map.size > 0 ? map : undefined
-	}, [effectiveCharts])
-	const tooltipTotalExcludedSeries = useMemo(() => {
-		const set = new Set<string>()
-		for (const chart of effectiveCharts ?? []) {
-			if ('excludeFromTooltipTotal' in chart && chart.excludeFromTooltipTotal) {
-				set.add(chart.name)
+		return inferred
+	}, [datasetDimensions, stacked])
+	const effectiveCharts = charts && charts.length > 0 ? charts : inferredCharts
+	const displayedCharts = useMemo(
+		() => (selectedCharts ? effectiveCharts.filter((chart) => selectedCharts.has(chart.name)) : effectiveCharts),
+		[effectiveCharts, selectedCharts]
+	)
+	const renderedDatasetDimensions = useMemo(() => {
+		if (!selectedCharts) return datasetDimensions
+		const displayedDimensions = getDisplayedDatasetDimensions(datasetDimensions, displayedCharts)
+		if (displayedDimensions.length > 0) return displayedDimensions
+		const xDimension = datasetDimensions.includes('timestamp') ? 'timestamp' : datasetDimensions[0]
+		return xDimension == null ? [] : [xDimension]
+	}, [datasetDimensions, displayedCharts, selectedCharts])
+	const renderedDatasetSource = useMemo(() => {
+		const requiresArrayRows =
+			renderedDatasetDimensions.includes('hasOwnProperty') || renderedDatasetDimensions.includes('__proto__')
+		if (!requiresArrayRows && dimensionsMatch(renderedDatasetDimensions, datasetDimensions)) return datasetSource
+		return datasetSource.map((sourceRow) => {
+			if (requiresArrayRows) {
+				return renderedDatasetDimensions.map((dimension) => sourceRow[dimension])
 			}
+			const renderedRow: (typeof datasetSource)[number] = {}
+			for (const dimension of renderedDatasetDimensions) renderedRow[dimension] = sourceRow[dimension]
+			return renderedRow
+		})
+	}, [datasetDimensions, datasetSource, renderedDatasetDimensions])
+	const renderedCharts = useMemo(() => {
+		if (displayedCharts.length === 0 || dimensionsMatch(renderedDatasetDimensions, datasetDimensions)) {
+			return effectiveCharts
 		}
-		return set.size > 0 ? set : undefined
-	}, [effectiveCharts])
+		return effectiveCharts.map((chart) => ({
+			...chart,
+			encode: {
+				x: remapEncodedDimensions(chart.encode.x, datasetDimensions, renderedDatasetDimensions),
+				y: remapEncodedDimensions(chart.encode.y, datasetDimensions, renderedDatasetDimensions)
+			}
+		}))
+	}, [datasetDimensions, displayedCharts.length, effectiveCharts, renderedDatasetDimensions])
 
-	const tooltipFormatter = useMemo(
-		() =>
-			createTooltipFormatter({
-				groupBy: groupBySafe,
-				valueSymbol,
-				seriesSymbols,
-				tooltipTotalExcludedSeries,
-				maxItems: tooltipMaxItems,
-				showTotalInTooltip,
-				tooltipTotalPosition
-			}),
-		[
-			groupBySafe,
-			valueSymbol,
-			seriesSymbols,
-			tooltipTotalExcludedSeries,
-			tooltipMaxItems,
-			showTotalInTooltip,
-			tooltipTotalPosition
-		]
-	)
-
-	const exportFilename = exportButtonsConfig?.filename || (title ? slug(title) : 'multi-series-chart')
-	const exportTitle = exportButtonsConfig?.pngTitle || title
-	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
-		onReady?.(instance)
-	})
-
-	useEffect(() => {
-		const el = document.getElementById(id)
-		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
-		chartRef.current = instance
-		emitReady(instance)
-
-		return () => {
-			globalOutCleanupRef.current?.()
-			globalOutCleanupRef.current = null
-			eventHoverCleanupRef.current?.()
-			eventHoverCleanupRef.current = null
-			chartRef.current = null
-			tooltipSizeCacheRef.current = null
-			instance.dispose()
-			handleChartReady(null)
-			emitReady(null)
-		}
-	}, [id, handleChartReady])
-
-	useEffect(() => {
-		handleChartReady(shouldEnableCSVDownload || shouldEnableImageExport ? chartRef.current : null)
-	}, [handleChartReady, shouldEnableCSVDownload, shouldEnableImageExport])
-
-	useEffect(() => {
-		const instance = chartRef.current
-		const el = document.getElementById(id)
-		if (!instance || !el) return
-
+	const mergedChartSettings = useMemo(() => {
 		// avoid mutating memoized defaults
 		const mergedChartSettings: any = { ...defaultChartSettings }
 
@@ -819,22 +488,270 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			}
 		}
 
-		const { legend, graphic, xAxis, yAxis, dataZoom, dataset: datasetOptions } = mergedChartSettings
-		const finalYAxis = buildMultiYAxis({ series, yAxis, expandTo100Percent, effectiveCharts, valueSymbol })
+		return mergedChartSettings
+	}, [defaultChartSettings, chartOptions])
 
-		const datasetLength = Array.isArray(datasetSource) ? datasetSource.length : 0
+	// Default exports ON for charts with at least one series unless explicitly disabled by the caller.
+	// (Historically this was limited to line charts, which made `exportButtons="auto"` appear "broken"
+	// on bar-chart pages like Raises.)
+	const hasAnySeries = displayedCharts.length > 0
+	// If a caller provides `onReady`, they often manage export instances + buttons outside the chart,
+	// so avoid showing duplicate toolbars by default in that case (auto mode).
+	const autoExportsEnabled = !onReady && hasAnySeries
+
+	const exportButtonsMode = exportButtons ?? 'auto'
+	const exportButtonsConfig =
+		typeof exportButtonsMode === 'object' && exportButtonsMode !== null ? exportButtonsMode : undefined
+	const exportButtonsHidden = exportButtonsMode === 'hidden'
+	const exportButtonsAuto = exportButtonsMode === 'auto'
+
+	const shouldEnableImageExport = exportButtonsHidden
+		? false
+		: exportButtonsConfig
+			? (exportButtonsConfig.png ?? true)
+			: exportButtonsAuto
+				? autoExportsEnabled
+				: false
+
+	const shouldEnableCSVDownload = exportButtonsHidden
+		? false
+		: exportButtonsConfig
+			? (exportButtonsConfig.csv ?? true)
+			: exportButtonsAuto
+				? autoExportsEnabled
+				: false
+
+	const hallmarksMarkLine = useMemo(
+		() =>
+			hallmarkStyle === 'mark-line' && hallmarks?.length
+				? buildHallmarksMarkLine({ hallmarks, textColor: chartTheme.text, dateInMs: false })
+				: undefined,
+		[hallmarkStyle, hallmarks, chartTheme.text]
+	)
+
+	const { series, sourceAxisIndexes } = useMemo(() => {
+		const builtSeries = buildSeries({
+			effectiveCharts: renderedCharts,
+			selectedCharts,
+			expandTo100Percent,
+			solidChartAreaStyle,
+			chartTheme,
+			hallmarksMarkLine
+		})
+		return normalizeSeriesYAxisIndices(builtSeries)
+	}, [renderedCharts, chartTheme, expandTo100Percent, solidChartAreaStyle, selectedCharts, hallmarksMarkLine])
+	const displayValueSymbol = expandTo100Percent ? '%' : valueSymbol
+
+	const eventRailData = useMemo(
+		() =>
+			hallmarkStyle === 'event-rail' ? buildEventRailData({ hallmarks, isThemeDark, dateInMs: false }).events : [],
+		[hallmarkStyle, hallmarks, isThemeDark]
+	)
+
+	const { seriesSymbols, tooltipTotalExcludedSeries } = useMemo(() => {
+		let seriesSymbols: Map<string, string> | undefined
+		let tooltipTotalExcludedSeries: Set<string> | undefined
+		for (const chart of displayedCharts) {
+			if (chart.valueSymbol != null) {
+				seriesSymbols ??= new Map<string, string>()
+				seriesSymbols.set(chart.name, chart.valueSymbol)
+			}
+			if (chart.excludeFromTooltipTotal) {
+				tooltipTotalExcludedSeries ??= new Set<string>()
+				tooltipTotalExcludedSeries.add(chart.name)
+			}
+		}
+		return { seriesSymbols, tooltipTotalExcludedSeries }
+	}, [displayedCharts])
+
+	const finalYAxis = useMemo(
+		() =>
+			buildMultiYAxis({
+				series,
+				yAxis: applyConfiguredYAxisScale(mergedChartSettings.yAxis, chartOptions.yAxis),
+				configuredYAxis: chartOptions.yAxis,
+				expandTo100Percent,
+				effectiveCharts: displayedCharts,
+				valueSymbol: displayValueSymbol,
+				sourceAxisIndexes
+			}),
+		[
+			series,
+			mergedChartSettings.yAxis,
+			chartOptions.yAxis,
+			expandTo100Percent,
+			displayedCharts,
+			displayValueSymbol,
+			sourceAxisIndexes
+		]
+	)
+	const logEligibleYAxes = useMemo(() => {
+		if (!sourceAxisIndexes || !props.logEligibleYAxes) return props.logEligibleYAxes
+		const denseIndexes: number[] = []
+		for (const sourceIndex of props.logEligibleYAxes) {
+			const denseIndex = sourceAxisIndexes.indexOf(sourceIndex)
+			if (denseIndex >= 0) denseIndexes.push(denseIndex)
+		}
+		return denseIndexes
+	}, [props.logEligibleYAxes, sourceAxisIndexes])
+	const finalYAxisBase = useMemo(() => {
+		const yAxis = mergedChartSettings.yAxis
+		const primaryYAxis = Array.isArray(yAxis) ? (yAxis[0] ?? {}) : yAxis
+		return applyLogScaleToYAxes(
+			finalYAxis && finalYAxis.length > 0
+				? finalYAxis
+				: [
+						{
+							...primaryYAxis,
+							...(expandTo100Percent ? { max: 100, min: 0 } : {})
+						}
+					],
+			props.logScale,
+			logEligibleYAxes
+		)
+	}, [finalYAxis, mergedChartSettings.yAxis, expandTo100Percent, props.logScale, logEligibleYAxes])
+
+	const tooltipFormatter = useMemo(
+		() =>
+			createTooltipFormatter({
+				groupBy: groupBySafe,
+				valueSymbol: displayValueSymbol,
+				seriesSymbols,
+				tooltipTotalExcludedSeries,
+				maxItems: tooltipMaxItems,
+				showTotalInTooltip
+			}),
+		[groupBySafe, displayValueSymbol, seriesSymbols, tooltipTotalExcludedSeries, tooltipMaxItems, showTotalInTooltip]
+	)
+
+	const exportFilename = exportButtonsConfig?.filename || (title ? slug(title) : 'multi-series-chart')
+	const exportTitle = exportButtonsConfig?.pngTitle || title
+	const selectedCsvDimensions = useMemo(
+		() => (selectedCharts ? getDisplayedDatasetDimensions(datasetDimensions, displayedCharts) : null),
+		[datasetDimensions, displayedCharts, selectedCharts]
+	)
+	const prepareCsvDirect = useMemo(
+		() =>
+			selectedCsvDimensions
+				? () =>
+						buildCsvFromDataset({
+							dimensions: selectedCsvDimensions,
+							source: datasetSource,
+							filenameBase: exportFilename
+						})
+				: undefined,
+		[selectedCsvDimensions, datasetSource, exportFilename]
+	)
+	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
+		onReady?.(instance)
+	})
+	const syncCategoryLogos = useStableCallback(() => {
+		const layer = categoryLogosOverlayRef.current
+		const instance = chartRef.current
+		const layout = categoryLogosLayoutRef.current
+		if (!layer) return
+		layer.innerHTML = ''
+		if (!layout || !instance || instance.isDisposed()) return
+
+		const chartHeight = instance.getHeight()
+		if (!Number.isFinite(chartHeight)) return
+		const centerY = chartHeight - layout.gridBottom + CATEGORY_LOGO_BOTTOM_GAP / 2 + CATEGORY_LOGO_SIZE / 2
+		for (let i = 0; i < layout.categoryValues.length; i++) {
+			const url = layout.categoryLogos[i]
+			if (!url) continue
+			const categoryValue = layout.categoryValues[i]
+			if (categoryValue == null) continue
+			const x = instance.convertToPixel({ xAxisIndex: 0 }, categoryValue as any)
+			if (!Number.isFinite(x)) continue
+			const img = document.createElement('img')
+			img.src = url
+			img.alt = ''
+			img.loading = 'lazy'
+			img.decoding = 'async'
+			img.title = String(categoryValue)
+			img.style.cssText = `position:absolute;left:${x - CATEGORY_LOGO_SIZE / 2}px;top:${centerY - CATEGORY_LOGO_SIZE / 2}px;width:${CATEGORY_LOGO_SIZE}px;height:${CATEGORY_LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${layout.logoBg};pointer-events:none;`
+			img.onerror = () => img.remove()
+			layer.appendChild(img)
+		}
+	})
+	const showLatestTooltip = useStableCallback(() => {
+		const instance = chartRef.current
+		const dataIndex = latestTooltipDataIndexRef.current
+		if (!instance || instance.isDisposed() || dataIndex == null) return
+		instance.dispatchAction({
+			type: 'showTip',
+			seriesIndex: 0,
+			dataIndex,
+			position: [60, 0]
+		})
+	})
+	const getEventMarkLineShape = useStableCallback((eventDate: number) => {
+		const instance = chartRef.current
+		const grid = eventMarkLineGridRef.current
+		if (!instance || instance.isDisposed() || !grid) return null
+		const x = instance.convertToPixel({ xAxisIndex: 0 }, eventDate)
+		if (!Number.isFinite(x)) return null
+
+		return {
+			x1: x,
+			y1: grid.top,
+			x2: x,
+			y2: instance.getHeight() - grid.bottom
+		}
+	})
+
+	useEffect(() => {
+		const el = chartDomRef.current
+		if (!el) return
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
+		chartRef.current = instance
+		emitReady(instance)
+		instance.on('finished', syncCategoryLogos)
+		instance.on('globalout', showLatestTooltip)
+
+		return () => {
+			instance.off('finished', syncCategoryLogos)
+			instance.off('globalout', showLatestTooltip)
+			eventHoverCleanupRef.current?.()
+			eventHoverCleanupRef.current = null
+			if (categoryLogosFrameRef.current != null) {
+				cancelAnimationFrame(categoryLogosFrameRef.current)
+				categoryLogosFrameRef.current = null
+			}
+			delete (instance as any).__llamaChartLogos
+			chartRef.current = null
+			categoryLogosLayoutRef.current = null
+			eventMarkLineGridRef.current = null
+			latestTooltipDataIndexRef.current = null
+			tooltipSizeCacheRef.current = null
+			instance.dispose()
+			handleChartReady(null)
+			emitReady(null)
+		}
+	}, [handleChartReady, showLatestTooltip, syncCategoryLogos])
+
+	useEffect(() => {
+		handleChartReady(shouldEnableCSVDownload || shouldEnableImageExport ? chartRef.current : null)
+	}, [handleChartReady, shouldEnableCSVDownload, shouldEnableImageExport])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		const el = chartDomRef.current
+		if (!instance || !el) return
+
+		const { legend, graphic, xAxis, dataZoom, dataset: datasetOptions } = mergedChartSettings
+
+		const datasetLength = datasetSource.length
 		const shouldHideDataZoom = datasetLength < 2 || hideDataZoom
 		const shouldShowEventRail = eventRailData.length > 0
-		const hoverState: EventHoverState = { hoveredEventDate: null }
 
 		// Always use a scroll legend when the default legend is enabled. ECharts
 		// decides whether paging is needed; asymmetric padding supplies the left
 		// clip inset without forcing short legends away from right alignment.
-		const legendTheme = getChartTheme(isThemeDark)
 		const legendScrollStyle = chartLegendScrollStyle(
-			legendTheme.legendPageActive,
-			legendTheme.legendPageInactive,
-			legendTheme.axisLabel
+			chartTheme.legendPageActive,
+			chartTheme.legendPageInactive,
+			chartTheme.axisLabel
 		)
 		const getScrollLegend = (legendOption: any) => chartHorizontalScrollLegend(legendOption, legendScrollStyle)
 		const finalLegend = hideDefaultLegend
@@ -847,10 +764,8 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 
 		const datasetForOption = {
 			...(datasetOptions ?? {}),
-			source: datasetSource,
-			...((datasetOptions?.dimensions ?? datasetDimensions)
-				? { dimensions: datasetOptions?.dimensions ?? datasetDimensions }
-				: {})
+			source: renderedDatasetSource,
+			dimensions: selectedCharts ? renderedDatasetDimensions : (datasetOptions?.dimensions ?? datasetDimensions)
 		}
 
 		const clampTooltipToViewport = (point: any, params: any, dom: any, _rect: any, size: any) => {
@@ -965,9 +880,13 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			finalGrid.bottom = Number(finalGrid.bottom ?? 12) + CATEGORY_LOGO_SIZE + CATEGORY_LOGO_BOTTOM_GAP
 			finalGrid.outerBoundsContain = undefined
 		}
+		eventMarkLineGridRef.current = {
+			top: Number(finalGrid.top),
+			bottom: Number(finalGrid.bottom)
+		}
 
 		const { min: timeRangeMin, max: timeRangeMax } = shouldShowEventRail
-			? getSortedDatasetTimeBounds(datasetSource, 'timestamp')
+			? getDatasetTimeBounds(datasetSource, 'timestamp')
 			: { min: undefined, max: undefined }
 		const hasTimeRange =
 			typeof timeRangeMin === 'number' &&
@@ -985,18 +904,6 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 				axisTick: { ...(finalXAxis?.axisTick ?? {}), show: false }
 			}
 		}
-		const finalYAxisBase = applyLogScaleToYAxes(
-			finalYAxis && finalYAxis.length > 0
-				? finalYAxis
-				: [
-						{
-							...yAxis,
-							...(expandTo100Percent ? { max: 100, min: 0 } : {})
-						}
-					],
-			props.logScale,
-			props.logEligibleYAxes
-		)
 		const eventStripYAxisIndex = finalYAxisBase.length
 		const finalYAxisWithEvents = shouldShowEventRail ? [...finalYAxisBase, createEventStripYAxis()] : finalYAxisBase
 		const finalSeries = shouldShowEventRail
@@ -1005,7 +912,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 					createEventRailSeries({
 						eventRailData,
 						eventStripYAxisIndex,
-						hoverState,
+						hoverState: eventHoverStateRef.current,
 						shouldHideDataZoom,
 						tooltipGroupBy
 					})
@@ -1026,26 +933,8 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 				series: finalSeries,
 				dataset: datasetForOption
 			},
-			{ notMerge: true, lazyUpdate: true }
+			{ notMerge: true }
 		)
-
-		eventHoverCleanupRef.current?.()
-		eventHoverCleanupRef.current = attachEventHoverHandlers({
-			instance,
-			eventRailData: shouldShowEventRail ? eventRailData : [],
-			hoverState,
-			getEventMarkLineShape: (eventDate) => {
-				const x = instance.convertToPixel({ xAxisIndex: 0 }, eventDate)
-				if (!Number.isFinite(x)) return null
-
-				return {
-					x1: x,
-					y1: Number(finalGrid.top),
-					x2: x,
-					y2: instance.getHeight() - Number(finalGrid.bottom)
-				}
-			}
-		})
 
 		if (hasCategoryLogos) {
 			const categoryValues = datasetSource.map((row: any) => row?.[datasetDimensions[0]])
@@ -1054,109 +943,80 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 				logos: categoryLogos!,
 				categoryValues
 			}
+			categoryLogosLayoutRef.current = {
+				categoryValues,
+				categoryLogos: categoryLogos!,
+				gridBottom: Number(finalGrid.bottom),
+				logoBg: chartTheme.logoBg
+			}
 		} else {
 			delete (instance as any).__llamaChartLogos
+			categoryLogosLayoutRef.current = null
 		}
-
-		const syncCategoryLogos = () => {
-			const layer = categoryLogosOverlayRef.current
-			const inst = chartRef.current
-			if (!layer) return
-			layer.innerHTML = ''
-			if (!hasCategoryLogos || !inst || inst.isDisposed()) return
-			const categoryValues = datasetSource.map((row: any) => row?.[datasetDimensions[0]])
-			const gridBottom = Number(finalGrid.bottom)
-			const chartHeight = inst.getHeight()
-			if (typeof chartHeight !== 'number' || !Number.isFinite(chartHeight)) return
-			const centerY = chartHeight - gridBottom + CATEGORY_LOGO_BOTTOM_GAP / 2 + CATEGORY_LOGO_SIZE / 2
-			const darkBg = getChartTheme(isThemeDark).logoBg
-			for (let i = 0; i < categoryValues.length; i++) {
-				const url = categoryLogos?.[i]
-				if (!url) continue
-				const catVal = categoryValues[i]
-				if (catVal == null) continue
-				const x = inst.convertToPixel({ xAxisIndex: 0 }, catVal as any)
-				if (typeof x !== 'number' || !Number.isFinite(x)) continue
-				const img = document.createElement('img')
-				img.src = url
-				img.alt = ''
-				img.loading = 'lazy'
-				img.decoding = 'async'
-				img.title = String(catVal)
-				img.style.cssText = `position:absolute;left:${x - CATEGORY_LOGO_SIZE / 2}px;top:${centerY - CATEGORY_LOGO_SIZE / 2}px;width:${CATEGORY_LOGO_SIZE}px;height:${CATEGORY_LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${darkBg};pointer-events:none;`
-				img.onerror = () => img.remove()
-				layer.appendChild(img)
-			}
-		}
-		if (!isChartDisposed(instance)) {
-			instance.on('finished', syncCategoryLogos)
-		}
-		requestAnimationFrame(syncCategoryLogos)
-
-		globalOutCleanupRef.current?.()
-		globalOutCleanupRef.current = null
+		if (categoryLogosFrameRef.current != null) cancelAnimationFrame(categoryLogosFrameRef.current)
+		categoryLogosFrameRef.current = hasCategoryLogos
+			? requestAnimationFrame(() => {
+					categoryLogosFrameRef.current = null
+					syncCategoryLogos()
+				})
+			: null
 
 		if (alwaysShowTooltip && series.length > 0 && datasetLength > 0) {
-			const dataIndex = datasetLength - 1
-			const showTip = () => {
-				if (isChartDisposed(instance)) return
-				instance.dispatchAction({
-					type: 'showTip',
-					// index of series, which is optional when trigger of tooltip is axis
-					seriesIndex: 0,
-					// data index; could assign by name attribute when not defined
-					dataIndex,
-					// Position of tooltip. Only works in this action.
-					// Use tooltip.position in option by default.
-					position: [60, 0]
-				})
-			}
-
-			showTip()
-
-			const onGlobalOut = () => showTip()
-			if (!isChartDisposed(instance)) {
-				instance.on('globalout', onGlobalOut)
-			}
-			globalOutCleanupRef.current = () => {
-				if (isChartDisposed(instance)) return
-				instance.off('globalout', onGlobalOut)
-			}
+			latestTooltipDataIndexRef.current = datasetLength - 1
+			showLatestTooltip()
 		} else {
+			latestTooltipDataIndexRef.current = null
 			if (!isChartDisposed(instance)) {
 				instance.dispatchAction({ type: 'hideTip' })
 			}
 		}
-		return () => {
-			if (isChartDisposed(instance)) return
-			instance.off('finished', syncCategoryLogos)
-		}
 	}, [
-		id,
-		defaultChartSettings,
+		mergedChartSettings,
 		series,
 		chartOptions,
-		expandTo100Percent,
 		alwaysShowTooltip,
 		hideDataZoom,
 		hideDefaultLegend,
+		selectedCharts,
 		datasetSource,
 		datasetDimensions,
+		renderedDatasetSource,
+		renderedDatasetDimensions,
 		valueSymbol,
 		tooltipFormatter,
 		eventRailData,
 		tooltipGroupBy,
 		isThemeDark,
-		effectiveCharts,
+		chartTheme,
+		finalYAxisBase,
 		categoryLogos,
 		hasCategoryLogos,
-		props.logScale,
-		props.logEligibleYAxes
+		showLatestTooltip,
+		syncCategoryLogos
 	])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
+
+		eventHoverCleanupRef.current?.()
+		eventHoverStateRef.current.hoveredEventDate = null
+		eventHoverCleanupRef.current = attachEventHoverHandlers({
+			instance,
+			eventRailData,
+			hoverState: eventHoverStateRef.current,
+			getEventMarkLineShape
+		})
+
+		return () => {
+			eventHoverCleanupRef.current?.()
+			eventHoverCleanupRef.current = null
+		}
+	}, [eventRailData, getEventMarkLineShape])
 
 	return (
 		<ChartContainer
-			id={id}
+			chartRef={chartDomRef}
 			className={containerClassName ? 'flex flex-1 flex-col' : undefined}
 			chartClassName={containerClassName ?? 'h-[360px]'}
 			chartStyle={!containerClassName && height ? { height } : undefined}
@@ -1178,6 +1038,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 								iconUrl={exportButtonsConfig?.pngIconUrl}
 								showCsv={shouldEnableCSVDownload}
 								showPng={shouldEnableImageExport}
+								prepareCsvDirect={prepareCsvDirect}
 							/>
 						}
 					/>

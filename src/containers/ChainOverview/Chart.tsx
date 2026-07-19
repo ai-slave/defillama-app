@@ -1,8 +1,8 @@
 import * as echarts from 'echarts/core'
-import { useEffect, useEffectEvent, useId, useMemo, useRef } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { CHART_INSET, CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
-import { getChartTheme } from '~/components/ECharts/chartTheme'
-import type { ChartTimeGrouping } from '~/components/ECharts/types'
+import { useChartTheme } from '~/components/ECharts/chartTheme'
+import type { ChartTimeGrouping, ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
 import { useDefaults } from '~/components/ECharts/useDefaults'
 import { mergeDeep } from '~/components/ECharts/utils'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -14,29 +14,44 @@ import {
 	DISABLED_CUMULATIVE_CHARTS,
 	yAxisByChart
 } from './constants'
+import type { ChainOverviewChartData } from './types'
 
 const BAR_CHARTS_SET = new Set<ChainChartLabels>(BAR_CHARTS)
 const DISABLED_CUMULATIVE_CHARTS_SET = new Set<ChainChartLabels>(DISABLED_CUMULATIVE_CHARTS)
+
+interface ChainCoreChartProps {
+	chartData: ChainOverviewChartData
+	valueSymbol?: string
+	color?: string
+	chartOptions?: Record<string, Record<string, unknown>>
+	height?: string
+	unlockTokenSymbol?: string
+	isThemeDark: boolean
+	groupBy?: ChartTimeGroupingWithCumulative
+	hideDataZoom?: boolean
+	onReady?: (instance: echarts.ECharts | null) => void
+}
 
 export default function ChainCoreChart({
 	chartData,
 	valueSymbol = '',
 	color,
-	chartOptions,
+	chartOptions = {},
 	height,
 	unlockTokenSymbol = '',
 	isThemeDark,
 	groupBy,
 	hideDataZoom = false,
 	onReady
-}) {
-	const id = useId()
+}: ChainCoreChartProps) {
 	const isCumulative = groupBy === 'cumulative'
+	const chartDomRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const tooltipGroupBy: ChartTimeGrouping = groupBy && groupBy !== 'cumulative' ? groupBy : 'daily'
+	const chartTheme = useChartTheme(isThemeDark)
 
 	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
+	useChartResize(chartRef, chartDomRef)
 
 	const defaultChartSettings = useDefaults({
 		color,
@@ -45,8 +60,20 @@ export default function ChainCoreChart({
 		hideLegend: true,
 		unlockTokenSymbol,
 		isThemeDark,
+		chartTheme,
 		groupBy: tooltipGroupBy
 	})
+	const chartSettings = useMemo(() => {
+		const settings = { ...defaultChartSettings }
+		for (const option in chartOptions) {
+			if (settings[option]) {
+				settings[option] = mergeDeep(settings[option], chartOptions[option])
+			} else {
+				settings[option] = { ...chartOptions[option] }
+			}
+		}
+		return settings
+	}, [defaultChartSettings, chartOptions])
 
 	const { series, allYAxis, chartsInSeries } = useMemo(() => {
 		const indexByYAxis = {} as Record<ChainChartLabels, number | undefined>
@@ -100,7 +127,7 @@ export default function ChainCoreChart({
 									},
 									{
 										offset: 1,
-										color: getChartTheme(isThemeDark).areaGradientTo
+										color: chartTheme.areaGradientTo
 									}
 								])
 							}
@@ -112,16 +139,16 @@ export default function ChainCoreChart({
 		})
 
 		return { series, allYAxis, chartsInSeries }
-	}, [chartData, isThemeDark, isCumulative])
+	}, [chartData, chartTheme, isCumulative])
 
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
 
 	useEffect(() => {
-		const el = document.getElementById(id)
+		const el = chartDomRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		emitReady(instance)
 
@@ -130,29 +157,19 @@ export default function ChainCoreChart({
 			instance.dispose()
 			emitReady(null)
 		}
-	}, [id])
+	}, [])
 
 	useEffect(() => {
 		const instance = chartRef.current
 		if (!instance) return
 
-		const settings = { ...defaultChartSettings }
-
-		for (const option in chartOptions) {
-			if (settings[option]) {
-				settings[option] = mergeDeep(settings[option], chartOptions[option])
-			} else {
-				settings[option] = { ...chartOptions[option] }
-			}
-		}
-
-		const { graphic, tooltip, xAxis, yAxis, dataZoom } = settings
+		const { graphic, tooltip, xAxis, yAxis, dataZoom } = chartSettings
 		const finalYAxis = buildChainYAxis({
 			allYAxis,
 			baseYAxis: yAxis,
 			chartColors: chainOverviewChartColors,
 			chartsInSeries,
-			isThemeDark
+			themeText: chartTheme.text
 		})
 
 		instance.setOption(
@@ -167,7 +184,7 @@ export default function ChainCoreChart({
 			},
 			{ notMerge: true, lazyUpdate: true }
 		)
-	}, [defaultChartSettings, series, chartOptions, allYAxis, chartsInSeries, isThemeDark, hideDataZoom])
+	}, [chartSettings, series, allYAxis, chartsInSeries, chartTheme.text, hideDataZoom])
 
-	return <div id={id} className="h-[360px]" style={height ? { height } : undefined} />
+	return <div ref={chartDomRef} className="h-[360px]" style={height ? { height } : undefined} />
 }

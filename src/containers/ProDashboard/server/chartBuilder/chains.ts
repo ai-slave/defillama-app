@@ -30,6 +30,20 @@ const CHAIN_NATIVE_BREAKDOWN_CONFIG: Record<'chain-fees' | 'chain-revenue', { da
 	'chain-revenue': { dataType: 'dailyRevenue' }
 }
 
+type ChainNativeOverviewResponse = {
+	protocols: Array<{
+		name: string
+		slug: string
+		protocolType?: string
+		total24h?: number | null
+	}>
+	totalDataChart: Array<[number, number]>
+}
+
+type ChainNativeSummaryResponse = {
+	totalDataChart: Array<[number, number]>
+}
+
 const toChainSlugKey = (chain: string): string =>
 	chain
 		.trim()
@@ -73,7 +87,7 @@ async function getChainNativeByChainBreakdownData({
 		let overviewUrl = `${DIMENSIONS_OVERVIEW_API}/fees?excludeTotalDataChartBreakdown=true`
 		if (config?.dataType) overviewUrl += `&dataType=${config.dataType}`
 
-		const overview = await fetchJson<any>(overviewUrl)
+		const overview = await fetchJson<ChainNativeOverviewResponse>(overviewUrl)
 		const includeNames = chains && chains.length > 0 ? new Set(chains) : new Set<string>()
 		const includeSlugKeys = chains && chains.length > 0 ? new Set(chains.map(toChainSlugKey)) : new Set<string>()
 		let allowedCategoryNames: Set<string> | null = null
@@ -84,13 +98,12 @@ async function getChainNativeByChainBreakdownData({
 			allowedCategorySlugKeys = new Set(Array.from(allowedNames, (name) => toChainSlugKey(name)))
 		}
 
-		const protocols: any[] = Array.isArray(overview?.protocols) ? overview.protocols : []
-		const rankedEntries = protocols
-			.filter((p) => (p?.protocolType || '').toLowerCase() === 'chain')
+		const rankedEntries = overview.protocols
+			.filter((protocol) => protocol.protocolType?.toLowerCase() === 'chain')
 			.map((p) => {
-				const name = typeof p.name === 'string' && p.name.length > 0 ? p.name : ''
-				const slug = typeof p.slug === 'string' && p.slug.length > 0 ? p.slug : toChainSlugKey(name)
-				const total24h = Number(p.total24h) || 0
+				const name = p.name
+				const slug = p.slug || toChainSlugKey(name)
+				const total24h = p.total24h ?? 0
 				return {
 					name: name || displayNameFromSlug(slug),
 					slug,
@@ -131,10 +144,9 @@ async function getChainNativeByChainBreakdownData({
 		const chainSeriesPromises = picked.map(async (entry, idx) => {
 			let summaryUrl = `${DIMENSIONS_SUMMARY_API}/fees/${encodeURIComponent(entry.slug)}`
 			if (config?.dataType) summaryUrl += `?dataType=${config.dataType}`
-			const json = await fetchJson<any>(summaryUrl).catch(() => null)
+			const json = await fetchJson<ChainNativeSummaryResponse>(summaryUrl).catch(() => null)
 			if (!json) return null
-			const chart: Array<[number | string, number]> = Array.isArray(json?.totalDataChart) ? json.totalDataChart : []
-			const normalized = filterOutToday(normalizeDailyPairs(chart.map(([ts, value]) => [Number(ts), Number(value)])))
+			const normalized = filterOutToday(normalizeDailyPairs(json.totalDataChart))
 			return {
 				name: entry.name,
 				data: normalized,
@@ -143,12 +155,7 @@ async function getChainNativeByChainBreakdownData({
 		})
 
 		const seriesRaw = (await Promise.all(chainSeriesPromises)).filter(Boolean) as ChartSeries[]
-		const totalChart: Array<[number | string, number]> = Array.isArray(overview?.totalDataChart)
-			? overview.totalDataChart
-			: []
-		const totalNormalized = filterOutToday(
-			normalizeDailyPairs(totalChart.map(([ts, value]) => [Number(ts), Number(value)]))
-		)
+		const totalNormalized = filterOutToday(normalizeDailyPairs(overview.totalDataChart))
 
 		const { alignedTopSeries, othersData } = buildAlignedTopAndOthers(seriesRaw, totalNormalized)
 		const includedTopCount = alignedTopSeries.length

@@ -28,6 +28,7 @@ import { canonicalRouteRedirect } from '~/utils/route'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 const EMPTY_TOGGLE_OPTIONS = []
+const TREASURY_SERIES = new Set(['Treasury'])
 
 const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
 
@@ -108,8 +109,6 @@ function HistoricalTreasuryChartCard({
 	charts: MultiSeriesCharts
 	exportIconUrl?: string
 }) {
-	const allSeries = React.useMemo(() => ['Treasury'], [])
-
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-historical-treasury`
@@ -131,7 +130,7 @@ function HistoricalTreasuryChartCard({
 					dataset={dataset}
 					charts={charts}
 					valueSymbol="$"
-					selectedCharts={new Set(allSeries)}
+					selectedCharts={TREASURY_SERIES}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -159,6 +158,7 @@ function TokensMultiSeriesChartCard({
 	exportIconUrl?: string
 }) {
 	const [selectedTokens, setSelectedTokens] = useSelectedValues(allTokens)
+	const selectedTokensSet = React.useMemo(() => new Set(selectedTokens), [selectedTokens])
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -192,7 +192,7 @@ function TokensMultiSeriesChartCard({
 					dataset={dataset}
 					charts={charts}
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}
-					selectedCharts={new Set(selectedTokens)}
+					selectedCharts={selectedTokensSet}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -281,6 +281,7 @@ export default function Protocols(props: TreasuryPageProps) {
 		valueDataset,
 		valueCharts,
 		tokensUnique,
+		rawTokensUnique,
 		tokenUSDDataset,
 		tokenUSDCharts,
 		tokenRawDataset,
@@ -291,7 +292,8 @@ export default function Protocols(props: TreasuryPageProps) {
 		keys: extraKeys,
 		includeBase: true,
 		source: 'treasury',
-		inflows: true
+		inflows: true,
+		computeInflows: false
 	})
 
 	const { data: ownTokensBreakdown } = useQuery({
@@ -368,11 +370,11 @@ export default function Protocols(props: TreasuryPageProps) {
 						/>
 					) : null}
 
-					{tokenRawDataset && tokensUnique.length > 0 ? (
+					{tokenRawDataset && rawTokensUnique.length > 0 ? (
 						<TokensMultiSeriesChartCard
 							title="Tokens Breakdown"
 							protocolName={props.name}
-							allTokens={tokensUnique}
+							allTokens={rawTokensUnique}
 							dataset={tokenRawDataset}
 							charts={tokenRawCharts}
 							exportSuffix="treasury-tokens-breakdown-raw"

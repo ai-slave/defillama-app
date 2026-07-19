@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { IRWAAssetsOverview, IRWAFlowOverviewSplitPoint } from '../api.types'
+import { getRWAFlowRotationSeriesNames } from '../flows'
 import {
 	aggregateRWAFlowTreemapWindow,
 	buildRWAFlowTreemap,
-	buildRWAFlowTreemapSizeRowsFromAssets
+	buildRWAFlowTreemapSizeRowsFromAssets,
+	buildRWAFlowTreemapWindowData
 } from '../flowTreemap'
 
 const DAY = 86_400
@@ -22,6 +24,32 @@ describe('RWA flow treemap', () => {
 			Bonds: 11,
 			Credit: -2
 		})
+	})
+
+	it('shares one flow analysis across window values and recent-flow ordering', () => {
+		const latest = 1_800_000_000
+		const points: IRWAFlowOverviewSplitPoint[] = [
+			{ timestamp: latest - 40 * DAY, 'No Recent Flow': 10_000 },
+			{ timestamp: latest - 20 * DAY, 'Monthly Flow': 1_000 },
+			{ timestamp: latest - 5 * DAY, 'Weekly Flow': 50 },
+			{ timestamp: latest, 'Recent Inflow': 80, 'Recent Outflow': -100 }
+		]
+
+		for (const groupBy of ['daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'cumulative'] as const) {
+			const result = buildRWAFlowTreemapWindowData(points, groupBy)
+			expect(Object.fromEntries(result.flows)).toEqual(
+				Object.fromEntries(aggregateRWAFlowTreemapWindow(points, groupBy))
+			)
+			expect(result.orderedNames).toEqual(getRWAFlowRotationSeriesNames(points))
+		}
+
+		expect(buildRWAFlowTreemapWindowData(points, 'weekly').orderedNames).toEqual([
+			'Recent Outflow',
+			'Recent Inflow',
+			'Weekly Flow',
+			'Monthly Flow',
+			'No Recent Flow'
+		])
 	})
 
 	it('sizes by the selected metric and preserves missing flow separately from zero', () => {

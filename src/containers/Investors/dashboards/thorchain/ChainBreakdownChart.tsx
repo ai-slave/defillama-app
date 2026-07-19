@@ -48,24 +48,29 @@ const QUERY_OPTS = { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false } as
 function aggregate(series: RawSeries[], view: View, stacked: boolean) {
 	if (!series.length) return []
 	const grouping = view === 'cumulative' ? 'day' : view
-	let agg = series.map((s, i) => {
-		const acc = new Map<number, number>()
+	const isCumulative = view === 'cumulative'
+	const agg = series.map((s, i) => {
+		const points: Pts = []
+		let cumulativeTotal = 0
 		for (const [ts, val] of s.data) {
 			const key = grouping === 'day' ? ts : getGroupedTimestampSec(ts, grouping)
-			acc.set(key, (acc.get(key) ?? 0) + (Number.isFinite(val) ? val : 0))
+			const previous = points[points.length - 1]
+			if (isCumulative) {
+				cumulativeTotal += val
+				if (previous?.[0] === key) previous[1] = cumulativeTotal
+				else points.push([key, cumulativeTotal])
+			} else if (previous?.[0] === key) {
+				previous[1] += val
+			} else {
+				points.push([key, val])
+			}
 		}
 		return {
 			name: s.name,
 			color: s.color || PALETTE[i % PALETTE.length],
-			points: [...acc.entries()].sort((a, b) => a[0] - b[0])
+			points
 		}
 	})
-	if (view === 'cumulative') {
-		agg = agg.map((s) => {
-			let run = 0
-			return { ...s, points: s.points.map(([t, v]) => [t, (run += v)] as [number, number]) }
-		})
-	}
 	const useArea = stacked || agg.length === 1
 	return agg.map((s) => ({
 		name: s.name,

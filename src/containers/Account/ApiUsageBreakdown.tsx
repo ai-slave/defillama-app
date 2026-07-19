@@ -93,11 +93,14 @@ function useChartData(usageStats: any, colors: ChartColors) {
 		const dimensions = ['date', ...seriesNames]
 
 		const source = sortedStats.map((day: any) => {
-			const row: Record<string, string | number | null | undefined> = {
-				date: makeTimestamp(day.date)
-			}
+			const row: Record<string, string | number | null | undefined> = { date: makeTimestamp(day.date) }
 			for (const route of topRoutes) {
-				row[route] = day.routes?.[route] ?? 0
+				const value = day.routes?.[route] ?? 0
+				if (route === '__proto__') {
+					Object.defineProperty(row, route, { value, enumerable: true, configurable: true, writable: true })
+				} else {
+					row[route] = value
+				}
 			}
 			if (hasOthers) {
 				row['Others'] = Object.entries(day.routes ?? {}).reduce((sum: number, [route, count]) => {

@@ -1,7 +1,7 @@
 import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IBarChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
 import {
@@ -13,9 +13,55 @@ import {
 	parseWad,
 	parseTokenAmount
 } from './api'
-import { ChartCard, CardSkeleton, KpiCard, KpiSkeleton, Pagination } from './shared'
+import {
+	ChartCard,
+	CardSkeleton,
+	KpiCard,
+	KpiSkeleton,
+	MAPLE_CSV_ONLY_EXPORT,
+	MAPLE_DOLLAR_TIME_CHART_OPTIONS,
+	MAPLE_UNITLESS_TIME_CHART_OPTIONS,
+	Pagination
+} from './shared'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
+
+const MONTHLY_ACTIVITY_CHARTS: IMultiSeriesChart2Props['charts'] = [
+	{
+		type: 'bar',
+		name: 'Deposits',
+		encode: { x: 'timestamp', y: 'Deposits' },
+		color: '#4CAF50',
+		stack: 'a'
+	},
+	{
+		type: 'bar',
+		name: 'Withdrawals',
+		encode: { x: 'timestamp', y: 'Withdrawals' },
+		color: '#E91E63',
+		stack: 'b'
+	}
+]
+const MIGRATIONS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		type: 'bar',
+		name: 'Tokens Migrated',
+		encode: { x: 'timestamp', y: 'Tokens Migrated' },
+		color: '#9C27B0',
+		stack: 'a'
+	}
+]
+const DRIP_CLAIMS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		type: 'bar',
+		name: 'Claimed',
+		encode: { x: 'timestamp', y: 'Claimed' },
+		color: '#FF7043',
+		stack: 'a'
+	}
+]
 
 interface TxRow {
 	id: string
@@ -164,16 +210,16 @@ function DripTable({ data }: { data: DripRow[] }) {
 	)
 }
 
-function monthKey(ts: number): number {
+function monthTimestampMs(ts: number): number {
 	const d = new Date(ts * 1000)
-	return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) / 1000
+	return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)
 }
 
-function aggregateByMonth(txes: TxRow[]) {
+function aggregateByMonth(txes: TxRow[]): MultiSeriesChart2Dataset {
 	const map = new Map<number, { deposits: number; withdrawals: number }>()
 
 	for (const tx of txes) {
-		const mk = monthKey(tx.timestamp)
+		const mk = monthTimestampMs(tx.timestamp)
 		const entry = map.get(mk) ?? { deposits: 0, withdrawals: 0 }
 		if (tx.type === 'deposit') {
 			entry.deposits += tx.assetsAmount
@@ -183,26 +229,30 @@ function aggregateByMonth(txes: TxRow[]) {
 		map.set(mk, entry)
 	}
 
-	return Array.from(map.entries())
-		.sort(([a], [b]) => a - b)
-		.map(([date, v]) => ({
-			date,
-			Deposits: v.deposits,
-			Withdrawals: v.withdrawals
-		}))
+	const entries = Array.from(map.entries()).sort(([a], [b]) => a - b)
+	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(entries.length)
+	for (let index = 0; index < entries.length; index++) {
+		const [timestamp, value] = entries[index]
+		source[index] = { timestamp, Deposits: value.deposits, Withdrawals: value.withdrawals }
+	}
+	return { dimensions: ['timestamp', 'Deposits', 'Withdrawals'], source }
 }
 
-function aggregateDripByMonth(txes: DripRow[]) {
+function aggregateDripByMonth(txes: DripRow[]): MultiSeriesChart2Dataset {
 	const map = new Map<number, number>()
 
 	for (const tx of txes) {
-		const mk = monthKey(tx.timestamp)
+		const mk = monthTimestampMs(tx.timestamp)
 		map.set(mk, (map.get(mk) ?? 0) + tx.amount)
 	}
 
-	return Array.from(map.entries())
-		.sort(([a], [b]) => a - b)
-		.map(([date, amount]) => ({ date, Claimed: amount }))
+	const entries = Array.from(map.entries()).sort(([a], [b]) => a - b)
+	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(entries.length)
+	for (let index = 0; index < entries.length; index++) {
+		const [timestamp, amount] = entries[index]
+		source[index] = { timestamp, Claimed: amount }
+	}
+	return { dimensions: ['timestamp', 'Claimed'], source }
 }
 
 export default function SyrupActivity() {
@@ -259,45 +309,58 @@ export default function SyrupActivity() {
 	const activityKpis = useMemo(() => {
 		if (stLoading || syrupLoading) return null
 
-		const deposits = txRows.filter((t) => t.type === 'deposit')
-		const withdrawals = txRows.filter((t) => t.type === 'withdraw')
-		const totalMigrated = syrupTxes.reduce((s, tx) => s + parseWad(tx.tokensMigrated, 18), 0)
+		let deposits = 0
+		let withdrawals = 0
+		let totalMigrated = 0
+		for (const tx of txRows) {
+			if (tx.type === 'deposit') deposits++
+			else withdrawals++
+		}
+		for (const tx of syrupTxes) totalMigrated += parseWad(tx.tokensMigrated, 18)
 
 		return {
 			totalMigrations: syrupTxes.length,
 			tokensMigrated: formattedNum(totalMigrated),
-			deposits: deposits.length,
-			withdrawals: withdrawals.length
+			deposits,
+			withdrawals
 		}
 	}, [txRows, syrupTxes, stLoading, syrupLoading])
 
 	const dripKpis = useMemo(() => {
 		if (dripLoading || dripRows.length === 0) return null
 
-		const totalClaimed = dripRows.reduce((s, t) => s + t.amount, 0)
-		const uniqueClaimers = new Set(dripRows.map((t) => t.account)).size
+		let totalClaimed = 0
+		const claimers = new Set<string>()
+		for (const row of dripRows) {
+			totalClaimed += row.amount
+			claimers.add(row.account)
+		}
 
 		return {
 			totalClaims: dripRows.length,
 			totalClaimed: formattedNum(totalClaimed, false),
-			uniqueClaimers
+			uniqueClaimers: claimers.size
 		}
 	}, [dripRows, dripLoading])
 
 	const monthlyChart = useMemo(() => aggregateByMonth(txRows), [txRows])
 	const dripMonthlyChart = useMemo(() => aggregateDripByMonth(dripRows), [dripRows])
 
-	const migrationChart = useMemo(() => {
+	const migrationChart = useMemo<MultiSeriesChart2Dataset>(() => {
 		const map = new Map<number, number>()
 		for (const tx of syrupTxes) {
 			const ts = parseInt(tx.timestamp)
-			const mk = monthKey(ts)
+			const mk = monthTimestampMs(ts)
 			const amount = parseWad(tx.tokensMigrated, 18)
 			map.set(mk, (map.get(mk) ?? 0) + amount)
 		}
-		return Array.from(map.entries())
-			.sort(([a], [b]) => a - b)
-			.map(([date, amount]) => ({ date, 'Tokens Migrated': amount }))
+		const entries = Array.from(map.entries()).sort(([a], [b]) => a - b)
+		const source = new Array<MultiSeriesChart2Dataset['source'][number]>(entries.length)
+		for (let index = 0; index < entries.length; index++) {
+			const [timestamp, amount] = entries[index]
+			source[index] = { timestamp, 'Tokens Migrated': amount }
+		}
+		return { dimensions: ['timestamp', 'Tokens Migrated'], source }
 	}, [syrupTxes])
 
 	const isLoading = stLoading || syrupLoading
@@ -348,29 +411,31 @@ export default function SyrupActivity() {
 
 			{isLoading ? (
 				<CardSkeleton title="Monthly stSyrup Deposits vs Withdrawals" />
-			) : monthlyChart.length > 0 ? (
+			) : monthlyChart.source.length > 0 ? (
 				<ChartCard title="Monthly stSyrup Deposits vs Withdrawals">
-					<BarChart
-						chartData={monthlyChart}
-						stacks={{ Deposits: 'a', Withdrawals: 'b' }}
-						stackColors={{ Deposits: '#4CAF50', Withdrawals: '#E91E63' }}
+					<MultiSeriesChart2
+						dataset={monthlyChart}
+						charts={MONTHLY_ACTIVITY_CHARTS}
 						valueSymbol="$"
-						title=""
 						height="400px"
+						hideDefaultLegend={false}
+						chartOptions={MAPLE_DOLLAR_TIME_CHART_OPTIONS}
+						exportButtons={MAPLE_CSV_ONLY_EXPORT}
 					/>
 				</ChartCard>
 			) : null}
 
 			{isLoading ? (
 				<CardSkeleton title="Monthly Syrup Token Migrations" />
-			) : migrationChart.length > 0 ? (
+			) : migrationChart.source.length > 0 ? (
 				<ChartCard title="Monthly Syrup Token Migrations">
-					<BarChart
-						chartData={migrationChart}
-						stacks={{ 'Tokens Migrated': 'a' }}
-						stackColors={{ 'Tokens Migrated': '#9C27B0' }}
-						title=""
+					<MultiSeriesChart2
+						dataset={migrationChart}
+						charts={MIGRATIONS_CHART}
+						valueSymbol=""
 						height="400px"
+						chartOptions={MAPLE_UNITLESS_TIME_CHART_OPTIONS}
+						exportButtons={MAPLE_CSV_ONLY_EXPORT}
 					/>
 				</ChartCard>
 			) : null}
@@ -397,14 +462,15 @@ export default function SyrupActivity() {
 
 				{dripLoading ? (
 					<CardSkeleton title="Monthly Drip Claims" />
-				) : dripMonthlyChart.length > 0 ? (
+				) : dripMonthlyChart.source.length > 0 ? (
 					<ChartCard title="Monthly Drip Claims">
-						<BarChart
-							chartData={dripMonthlyChart}
-							stacks={{ Claimed: 'a' }}
-							stackColors={{ Claimed: '#FF7043' }}
-							title=""
+						<MultiSeriesChart2
+							dataset={dripMonthlyChart}
+							charts={DRIP_CLAIMS_CHART}
+							valueSymbol=""
 							height="400px"
+							chartOptions={MAPLE_UNITLESS_TIME_CHART_OPTIONS}
+							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</ChartCard>
 				) : null}

@@ -1,3 +1,5 @@
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
+
 export const RWA_OPEN_INTEREST_SERIES_LABEL = 'RWA Perps OI'
 
 export type RWAChartSeriesValue = number | null | undefined
@@ -42,7 +44,7 @@ export function buildRwaChartDatasetTotal({
 
 	const source: RWAChartDataset['source'] = []
 	for (const row of dataset.source) {
-		const nextRow: RWAChartRow = { timestamp: row.timestamp }
+		const nextRow = createChartRow<RWAChartSeriesValue>(row.timestamp)
 		if (!onlyTotal) {
 			for (const key in row) {
 				nextRow[key] = row[key]
@@ -129,7 +131,7 @@ export function getRwaReservedSeriesColorSlot(label: string): number | null {
 }
 
 export function getRwaChartSeriesColorSlots(labels: string[]): Record<string, number> {
-	const colorSlots: Record<string, number> = {}
+	const colorSlots = createChartRecord<number>()
 	let nextNonReservedColorSlot = 2
 
 	for (const label of sortRwaChartSeriesLabels(labels)) {
@@ -144,9 +146,14 @@ export function mergeRwaChartDatasets(primary: RWAChartDataset, overlay: RWAChar
 	if (primary.dimensions.length <= 1 || primary.source.length === 0) return overlay
 
 	const mergedRows = new Map<number, RWAChartRow>()
+	const cloneRow = (row: RWAChartRow) => {
+		const clone = createChartRow<RWAChartSeriesValue>(row.timestamp)
+		for (const key of Object.keys(row)) clone[key] = row[key]
+		return clone
+	}
 
 	for (const row of primary.source) {
-		mergedRows.set(row.timestamp, { ...row })
+		mergedRows.set(row.timestamp, cloneRow(row))
 	}
 
 	for (const row of overlay.source) {
@@ -156,7 +163,7 @@ export function mergeRwaChartDatasets(primary: RWAChartDataset, overlay: RWAChar
 			continue
 		}
 
-		mergedRows.set(row.timestamp, { ...row })
+		mergedRows.set(row.timestamp, cloneRow(row))
 	}
 
 	return {

@@ -542,7 +542,12 @@ export function LiquidationsDistributionChart({
 		const source = selectedChartView.bins.map((liqPrice, index) => {
 			const row: Record<string, number> = { liqPrice }
 			for (const entry of selectedChartView.series) {
-				row[entry.key] = chartState.metric === 'usd' ? (entry.usd[index] ?? 0) : (entry.amount[index] ?? 0)
+				const value = chartState.metric === 'usd' ? (entry.usd[index] ?? 0) : (entry.amount[index] ?? 0)
+				if (entry.key === '__proto__') {
+					Object.defineProperty(row, entry.key, { value, enumerable: true, configurable: true, writable: true })
+				} else {
+					row[entry.key] = value
+				}
 			}
 			return row
 		})

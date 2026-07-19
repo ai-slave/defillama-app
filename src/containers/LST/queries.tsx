@@ -1,3 +1,4 @@
+import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
@@ -101,7 +102,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 	}
 
 	const allColors = getNDistinctColors(lsdProtocols.length)
-	const lsdColors: Record<string, string> = {}
+	const lsdColors = createChartRecord<string>()
 	for (let i = 0; i < lsdProtocols.length; i++) {
 		lsdColors[lsdProtocols[i]] = allColors[i]
 	}
@@ -194,7 +195,8 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 		// skip days after Dec 2020 that are missing lido data
 		if (date > 1608321600 && !hasLido) continue
 
-		const row: Record<string, number> = { date }
+		const row = createChartRecord<number>()
+		row.date = date
 		for (const item of data) {
 			row[item.name] = (item.value / total) * 100
 		}
@@ -327,8 +329,8 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 	})
 
 	// --- Inflows (daily deltas per protocol, using pre-grouped historicByName) ---
-	const inflowsChartData: InflowsChartData = {}
-	const barChartStacks: Record<string, string> = {}
+	const inflowsChartData = createChartRecord<Record<string, number>>() as InflowsChartData
+	const barChartStacks = createChartRecord<string>()
 
 	for (const protocol of tokens) {
 		const series = historicByName.get(protocol)
@@ -336,7 +338,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 
 		for (let i = 1; i < series.length; i++) {
 			const curr = series[i]
-			if (!inflowsChartData[curr.date]) inflowsChartData[curr.date] = {}
+			if (!inflowsChartData[curr.date]) inflowsChartData[curr.date] = createChartRecord<number>()
 			inflowsChartData[curr.date][protocol] = curr.value - series[i - 1].value
 		}
 		barChartStacks[protocol] = 'A'

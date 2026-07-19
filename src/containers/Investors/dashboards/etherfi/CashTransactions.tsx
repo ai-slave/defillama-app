@@ -1,14 +1,49 @@
-import { lazy, useMemo } from 'react'
+import { lazy } from 'react'
 import { CHART_INSET } from '~/components/ECharts/chartSpacing'
-import type { IBarChartProps } from '~/components/ECharts/types'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { formattedNum } from '~/utils'
 import { useEtherfiCashTransactions } from './cashApi'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
+
+const BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
+const UNITLESS_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('')
 
 const SCROLL_LEGEND = {
+	...UNITLESS_TIME_CHART_OPTIONS,
 	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: CHART_INSET }
-}
+} satisfies IMultiSeriesChart2Props['chartOptions']
+
+const WEEKLY_TXNS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Transactions',
+		type: 'bar',
+		encode: { x: 'timestamp', y: 'Transactions' },
+		color: '#4FC3F7',
+		stack: 'a'
+	}
+]
+const WEEKLY_USERS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Active Users',
+		type: 'bar',
+		encode: { x: 'timestamp', y: 'Active Users' },
+		color: '#66BB6A',
+		stack: 'a'
+	}
+]
+const WEEKLY_AVG_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Avg Txns per User',
+		type: 'bar',
+		encode: { x: 'timestamp', y: 'Avg Txns per User' },
+		color: '#AB47BC',
+		stack: 'a'
+	}
+]
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
@@ -48,17 +83,17 @@ function KpiSkeleton({ label }: { label: string }) {
 	)
 }
 
-function makeStacks(keys: string[]): Record<string, string> {
-	const s: Record<string, string> = {}
-	for (const k of keys) s[k] = 'a'
-	return s
-}
-
 export default function CashTransactions() {
-	const { kpis, txnsByClass, usersByClass, txnClasses, colors, weeklyTxns, weeklyUsers, weeklyAvg, isLoading } =
-		useEtherfiCashTransactions()
-
-	const classStacks = useMemo(() => makeStacks(txnClasses), [txnClasses])
+	const {
+		kpis,
+		classCharts,
+		transactionsByClassDataset,
+		usersByClassDataset,
+		weeklyTxnsDataset,
+		weeklyUsersDataset,
+		weeklyAvgDataset,
+		isLoading
+	} = useEtherfiCashTransactions()
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -98,13 +133,15 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Transactions by Class" />
 			) : (
 				<ChartCard title="Weekly Transactions by Class">
-					<BarChart
-						chartData={txnsByClass}
-						stacks={classStacks}
-						stackColors={colors}
+					<MultiSeriesChart2
+						dataset={transactionsByClassDataset}
+						charts={classCharts}
+						valueSymbol=""
 						title=""
 						height="400px"
+						hideDefaultLegend={classCharts.length < 2}
 						chartOptions={SCROLL_LEGEND}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}
@@ -113,13 +150,15 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Users by Class" />
 			) : (
 				<ChartCard title="Weekly Users by Class">
-					<BarChart
-						chartData={usersByClass}
-						stacks={classStacks}
-						stackColors={colors}
+					<MultiSeriesChart2
+						dataset={usersByClassDataset}
+						charts={classCharts}
+						valueSymbol=""
 						title=""
 						height="400px"
+						hideDefaultLegend={classCharts.length < 2}
 						chartOptions={SCROLL_LEGEND}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}
@@ -128,12 +167,14 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Transactions" />
 			) : (
 				<ChartCard title="Weekly Transactions">
-					<BarChart
-						chartData={weeklyTxns}
-						stacks={{ Transactions: 'a' }}
-						stackColors={{ Transactions: '#4FC3F7' }}
+					<MultiSeriesChart2
+						dataset={weeklyTxnsDataset}
+						charts={WEEKLY_TXNS_CHART}
+						valueSymbol=""
 						title=""
 						height="400px"
+						chartOptions={UNITLESS_TIME_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}
@@ -142,12 +183,14 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Active Users" />
 			) : (
 				<ChartCard title="Weekly Active Users">
-					<BarChart
-						chartData={weeklyUsers}
-						stacks={{ 'Active Users': 'a' }}
-						stackColors={{ 'Active Users': '#66BB6A' }}
+					<MultiSeriesChart2
+						dataset={weeklyUsersDataset}
+						charts={WEEKLY_USERS_CHART}
+						valueSymbol=""
 						title=""
 						height="400px"
+						chartOptions={UNITLESS_TIME_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}
@@ -156,12 +199,14 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Average Txns per User" />
 			) : (
 				<ChartCard title="Weekly Average Txns per User">
-					<BarChart
-						chartData={weeklyAvg}
-						stacks={{ 'Avg Txns per User': 'a' }}
-						stackColors={{ 'Avg Txns per User': '#AB47BC' }}
+					<MultiSeriesChart2
+						dataset={weeklyAvgDataset}
+						charts={WEEKLY_AVG_CHART}
+						valueSymbol=""
 						title=""
 						height="400px"
+						chartOptions={UNITLESS_TIME_CHART_OPTIONS}
+						exportButtons={BAR_EXPORT}
 					/>
 				</ChartCard>
 			)}

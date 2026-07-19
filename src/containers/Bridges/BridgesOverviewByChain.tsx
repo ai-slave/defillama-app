@@ -1,12 +1,13 @@
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import type { IPieChartProps } from '~/components/ECharts/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { ChartSelector } from '~/containers/Bridges/ChartSelector'
-import { getCompletedBridgeVolumeTotal, useBuildBridgeChartData } from '~/containers/Bridges/utils'
+import { getCompletedBridgeVolumeTotal } from '~/containers/Bridges/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -18,13 +19,14 @@ import { Switch } from '~/ui/Switch'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formattedNum, slug, toNiceCsvDate } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
+import { buildBridgeOverviewActiveChart, type BridgeOverviewChartType } from './bridgeOverviewChartData'
 import { BridgesLargeTxsTable, type BridgesLargeTxsTableHandle } from './BridgesLargeTxsTable'
 
 const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
-const NetflowChart = React.lazy(() => import('~/components/ECharts/BarChart/NetflowChart')) as React.FC<any>
+const NetflowChart = React.lazy(() => import('~/components/ECharts/NetflowChart'))
 
 const NET_FLOW_CHARTS = [{ type: 'bar' as const, name: 'Net Flow', encode: { x: 'timestamp', y: 'Net Flow' } }]
 
@@ -115,7 +117,9 @@ export function BridgesOverviewByChain({
 	bridgeStatsCurrentDay,
 	largeTxsData
 }) {
-	const [chartType, setChartType] = React.useState(selectedChain === 'All' ? 'Volumes' : 'Bridge Volume')
+	const [chartType, setChartType] = React.useState<BridgeOverviewChartType>(
+		selectedChain === 'All' ? 'Volumes' : 'Bridge Volume'
+	)
 	const [chartView, setChartView] = React.useState<'default' | 'netflow' | 'volume'>('netflow')
 	const [activeTab, setActiveTab] = React.useState<'bridges' | 'messaging' | 'largeTxs'>('bridges')
 	const [includeMessaging, setIncludeMessaging] = React.useState(false)
@@ -130,59 +134,10 @@ export function BridgesOverviewByChain({
 		return ['All', ...uniqueChains].map((label) => ({ label, to: handleRouting(label) }))
 	}, [chains])
 
-	const { tokenDeposits, tokenWithdrawals } = useBuildBridgeChartData(bridgeStatsCurrentDay)
-
-	const chainNetFlowData = React.useMemo(() => {
-		return chainVolumeData.map((entry) => {
-			return {
-				date: entry.date,
-				'Net Flow': entry.Deposits + entry.Withdrawals
-			}
-		})
-	}, [chainVolumeData])
-
-	const chainPercentageNet = React.useMemo(() => {
-		return chainVolumeData.map((entry) => {
-			return {
-				date: entry.date,
-				Inflows: (+entry.Deposits / (entry.Deposits + Math.abs(entry.Withdrawals))) * 100 || 0,
-				Outflows: (Math.abs(entry.Withdrawals) / (entry.Deposits + Math.abs(entry.Withdrawals))) * 100 || 0
-			}
-		})
-	}, [chainVolumeData])
-
-	const netFlowDataset = React.useMemo(
-		() => ({
-			source: chainNetFlowData.map(({ date, ...rest }) => ({ timestamp: +date * 1e3, ...rest })),
-			dimensions: ['timestamp', 'Net Flow']
-		}),
-		[chainNetFlowData]
+	const activeChart = React.useMemo(
+		() => buildBridgeOverviewActiveChart({ selectedChain, chartType, chainVolumeData, bridgeStatsCurrentDay }),
+		[selectedChain, chartType, chainVolumeData, bridgeStatsCurrentDay]
 	)
-
-	const netFlowPctDataset = React.useMemo(
-		() => ({
-			source: chainPercentageNet.map(({ date, ...rest }) => ({ timestamp: +date * 1e3, ...rest })),
-			dimensions: ['timestamp', 'Inflows', 'Outflows']
-		}),
-		[chainPercentageNet]
-	)
-
-	const chainInflowsDataset = React.useMemo(
-		() => ({
-			source: chainVolumeData.map((entry: any) => ({
-				timestamp: +entry.date * 1e3,
-				Deposits: entry.Deposits ?? 0,
-				Withdrawals: entry.Withdrawals ?? 0
-			})),
-			dimensions: ['timestamp', 'Deposits', 'Withdrawals']
-		}),
-		[chainVolumeData]
-	)
-	const deferredNetFlowDataset = React.useDeferredValue(netFlowDataset)
-	const deferredNetFlowPctDataset = React.useDeferredValue(netFlowPctDataset)
-	const deferredChainInflowsDataset = React.useDeferredValue(chainInflowsDataset)
-	const deferredTokenDeposits = React.useDeferredValue(tokenDeposits)
-	const deferredTokenWithdrawals = React.useDeferredValue(tokenWithdrawals)
 
 	const chartFilename = getBridgeChartFilename(selectedChain, chartType)
 	const selectedChainIconUrl = selectedChain !== 'All' ? chainIconUrl(selectedChain) : undefined
@@ -202,13 +157,13 @@ export function BridgesOverviewByChain({
 
 		const fileName = 'bridge-and-messaging-volumes.csv'
 		const rows = [['Timestamp', 'Date', ...filteredBridgeNames, 'Total']]
-		let stackedDatasetObject = {} as any
+		const stackedDatasetObject = createChartRecord<Record<string, number>>()
 		for (const bridgeName of filteredBridgeNames) {
 			const chartDataIndex = bridgeNameToChartDataIndex[bridgeName]
 			const charts = chartDataByBridge[chartDataIndex]
 			for (const chart of charts) {
 				const date = chart.date
-				stackedDatasetObject[date] = stackedDatasetObject[date] || {}
+				stackedDatasetObject[date] = stackedDatasetObject[date] || createChartRecord<number>()
 				stackedDatasetObject[date][bridgeName] = chart.volume
 			}
 		}
@@ -344,7 +299,7 @@ export function BridgesOverviewByChain({
 									<ChartSelector
 										options={BRIDGE_CHAIN_CHART_OPTIONS}
 										selectedChart={chartType}
-										onClick={setChartType}
+										onClick={(value) => setChartType(value as BridgeOverviewChartType)}
 									/>
 									<ChartExportButtons
 										chartInstance={exportChartInstance}
@@ -363,7 +318,7 @@ export function BridgesOverviewByChain({
 										<ChartSelector
 											options={BRIDGE_CHAIN_CHART_OPTIONS}
 											selectedChart={chartType}
-											onClick={setChartType}
+											onClick={(value) => setChartType(value as BridgeOverviewChartType)}
 										/>
 									}
 									headerEnd={
@@ -375,11 +330,11 @@ export function BridgesOverviewByChain({
 										/>
 									}
 								/>
-							) : chartType === 'Net Flow' ? (
-								chainNetFlowData && chainNetFlowData.length > 0 ? (
+							) : activeChart?.kind === 'Net Flow' ? (
+								activeChart.dataset.source.length > 0 ? (
 									<React.Suspense fallback={<ChartPanelBodyFallback />}>
 										<MultiSeriesChart2
-											dataset={deferredNetFlowDataset}
+											dataset={activeChart.dataset}
 											charts={NET_FLOW_CHARTS}
 											hideDefaultLegend={true}
 											valueSymbol="$"
@@ -387,11 +342,11 @@ export function BridgesOverviewByChain({
 										/>
 									</React.Suspense>
 								) : null
-							) : chartType === 'Net Flow (%)' ? (
-								chainPercentageNet && chainPercentageNet.length > 0 ? (
+							) : activeChart?.kind === 'Net Flow (%)' ? (
+								activeChart.dataset.source.length > 0 ? (
 									<React.Suspense fallback={<ChartPanelBodyFallback />}>
 										<MultiSeriesChart2
-											dataset={deferredNetFlowPctDataset}
+											dataset={activeChart.dataset}
 											charts={NET_FLOW_PCT_CHARTS}
 											hideDefaultLegend={true}
 											valueSymbol="%"
@@ -399,11 +354,11 @@ export function BridgesOverviewByChain({
 										/>
 									</React.Suspense>
 								) : null
-							) : chartType === 'Inflows' ? (
-								chainVolumeData && chainVolumeData.length > 0 ? (
+							) : activeChart?.kind === 'Inflows' ? (
+								activeChart.dataset.source.length > 0 ? (
 									<React.Suspense fallback={<ChartPanelBodyFallback />}>
 										<MultiSeriesChart2
-											dataset={deferredChainInflowsDataset}
+											dataset={activeChart.dataset}
 											charts={CHAIN_INFLOW_CHARTS}
 											hideDefaultLegend={true}
 											valueSymbol="$"
@@ -411,13 +366,13 @@ export function BridgesOverviewByChain({
 										/>
 									</React.Suspense>
 								) : null
-							) : chartType === '24h Tokens Deposited' ? (
+							) : activeChart?.kind === '24h Tokens Deposited' ? (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
-									<PieChart chartData={deferredTokenDeposits} onReady={handleChartReady} />
+									<PieChart chartData={activeChart.data} onReady={handleChartReady} />
 								</React.Suspense>
-							) : chartType === '24h Tokens Withdrawn' ? (
+							) : activeChart?.kind === '24h Tokens Withdrawn' ? (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
-									<PieChart chartData={deferredTokenWithdrawals} onReady={handleChartReady} />
+									<PieChart chartData={activeChart.data} onReady={handleChartReady} />
 								</React.Suspense>
 							) : null}
 						</>

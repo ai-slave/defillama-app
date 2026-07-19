@@ -29,6 +29,9 @@ export interface RawBridgeChainInfo {
 
 export interface RawBridgesResponse {
 	bridges: RawBridgeInfo[]
+}
+
+export interface RawBridgesWithChainsResponse extends RawBridgesResponse {
 	chains: RawBridgeChainInfo[]
 }
 

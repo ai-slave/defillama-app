@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo } from 'react'
-import { useIsSqlAllowed } from '../../hooks'
+import { useIsSqlAllowed } from '../../hooks/useIsSqlAllowed'
 import type { VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { SqlChartUpsell } from '../SqlChart/SqlChartUpsell'
 import { ChartTab } from './ChartTab'

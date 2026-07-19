@@ -111,12 +111,11 @@ export function buildBridgeVolumeChartData({
 
 	if (timePeriod === 'daily') {
 		// Bridge volume API returns unix seconds as strings; chart rows use milliseconds.
-		const sortedData = data.toSorted((a, b) => Number(a.date) - Number(b.date))
-		for (const item of sortedData) {
+		for (const item of data) {
 			const { deposits, withdrawals } = getBridgeMetricValues(item, metricType)
 			pushBridgeVolumeDatasetRow({
 				source,
-				timestamp: Number(item.date) * 1e3,
+				timestamp: +item.date * 1e3,
 				deposits,
 				withdrawals,
 				viewType
@@ -140,7 +139,7 @@ export function buildBridgeVolumeChartData({
 
 	// Bridge volume API returns unix seconds as strings.
 	for (const item of data) {
-		const key = getBucketTimestampSec(Number(item.date), timePeriod)
+		const key = getBucketTimestampSec(+item.date, timePeriod)
 		const { deposits, withdrawals } = getBridgeMetricValues(item, metricType)
 		const existing = groupedData.get(key)
 		if (existing) {
@@ -151,8 +150,7 @@ export function buildBridgeVolumeChartData({
 		}
 	}
 
-	const groupedRows = Array.from(groupedData.entries()).sort((a, b) => a[0] - b[0])
-	for (const [date, values] of groupedRows) {
+	for (const [date, values] of groupedData) {
 		pushBridgeVolumeDatasetRow({
 			source,
 			timestamp: date * 1e3,

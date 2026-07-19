@@ -23,19 +23,6 @@ export function useTokensPaginatedTable(queryString: string | null, initialData:
 	})
 }
 
-const TOKENS_CHART_QUERY_STRING = '?pageSize=300'
-
-export function useTokensChartData() {
-	return useQuery<TokensPageResponse>({
-		queryKey: ['tokens-chart', TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, TOKENS_CHART_QUERY_STRING],
-		queryFn: async ({ signal }) =>
-			fetchJson<TokensPageResponse>(`${TOKENS_API}${TOKENS_CHART_QUERY_STRING}`, { signal }),
-		staleTime: 5 * 60 * 1000,
-		refetchOnWindowFocus: false,
-		retry: 1
-	})
-}
-
 export function useWatchlistTokensTable(ids: string[]) {
 	const queryString = ids.length
 		? toQueryString({ ids: ids.join(','), pageSize: String(MAX_TOKENS_TABLE_PAGE_SIZE) })

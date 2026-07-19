@@ -1,4 +1,5 @@
 import type { LlamaConfigResponse } from '~/api/types'
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { CONFIG_API } from '~/constants'
@@ -21,9 +22,16 @@ import type {
 	RawBridgeDayStats,
 	RawBridgeDayStatsResponse,
 	RawBridgeLargeTransactionsResponse,
+	RawBridgeNetflowsResponse,
 	RawBridgeVolumePoint
 } from './api.types'
-import type { BridgePageData, BridgeTableData, BridgeVolumeChartPoint } from './types'
+import type {
+	BridgeNetflowChartData,
+	BridgeNetflowChartPoint,
+	BridgePageData,
+	BridgeTableData,
+	BridgeVolumeChartPoint
+} from './types'
 import { formatBridgesData, formatChainsData } from './utils'
 
 const EMPTY_DAY_STATS: RawBridgeDayStats = {
@@ -36,6 +44,19 @@ const EMPTY_DAY_STATS: RawBridgeDayStats = {
 	totalTokensWithdrawn: {},
 	totalAddressDeposited: {},
 	totalAddressWithdrawn: {}
+}
+
+function prepareBridgeNetflowChartData(data: RawBridgeNetflowsResponse): BridgeNetflowChartPoint[] {
+	const nonZeroData: BridgeNetflowChartPoint[] = []
+	for (const item of data) {
+		if (item.net_flow === '0') continue
+		nonZeroData.push({ chain: item.chain, value: Number(item.net_flow) })
+	}
+
+	nonZeroData.sort((a, b) => Math.abs(a.value) - Math.abs(b.value))
+	const topFlows = nonZeroData.slice(-15)
+	topFlows.sort((a, b) => a.value - b.value)
+	return topFlows
 }
 
 const isBridgeDayStatsResponse = (value: RawBridgeDayStatsResponse): value is RawBridgeDayStats => {
@@ -120,17 +141,22 @@ export function buildVolumeDataByChain({
 	const volumeDataByChain: BridgePageData['volumeDataByChain'] = {}
 	const volumeOnAllChains: VolumeByDate = {}
 	const normalizeDailyBridgePoints = (points: BridgeVolumeChartPoint[]): BridgeVolumeChartPoint[] => {
-		const byDay = new Map<number, BridgeVolumeChartPoint>()
+		const normalized: BridgeVolumeChartPoint[] = []
 		for (const point of points) {
-			const utcDay = Math.floor(Number(point.date) / 86400) * 86400
-			const existing = byDay.get(utcDay) ?? { date: utcDay, Deposited: 0, Withdrawn: 0 }
-			byDay.set(utcDay, {
-				date: utcDay,
-				Deposited: existing.Deposited + Number(point.Deposited ?? 0),
-				Withdrawn: existing.Withdrawn + Number(point.Withdrawn ?? 0)
-			})
+			const utcDay = Math.floor(point.date / 86400) * 86400
+			const last = normalized[normalized.length - 1]
+			if (last?.date === utcDay) {
+				last.Deposited += point.Deposited
+				last.Withdrawn += point.Withdrawn
+			} else {
+				normalized.push({
+					date: utcDay,
+					Deposited: point.Deposited,
+					Withdrawn: point.Withdrawn
+				})
+			}
 		}
-		return Array.from(byDay.values()).sort((a, b) => a.date - b.date)
+		return normalized
 	}
 
 	for (let index = 0; index < volume.length; index++) {
@@ -523,10 +549,16 @@ export async function getBridgeOverviewPageData(chain, options: { includeBridgeT
 
 	const netflowsPromise = !chain
 		? Promise.all([
-				fetchBridgeNetflows('day').catch(() => []),
-				fetchBridgeNetflows('week').catch(() => []),
-				fetchBridgeNetflows('month').catch(() => [])
-			]).then(([day, week, month]) => ({ day, week, month }))
+				fetchBridgeNetflows('day')
+					.then(prepareBridgeNetflowChartData)
+					.catch(() => []),
+				fetchBridgeNetflows('week')
+					.then(prepareBridgeNetflowChartData)
+					.catch(() => []),
+				fetchBridgeNetflows('month')
+					.then(prepareBridgeNetflowChartData)
+					.catch(() => [])
+			]).then(([day, week, month]): BridgeNetflowChartData => ({ day, week, month }))
 		: Promise.resolve(null)
 
 	const [chainVolumeResult, bridgeStatsCurrentDay, unformattedLargeTxsData, netflowsData] = await Promise.all([
@@ -590,16 +622,22 @@ export async function getBridgeChainsPageData() {
 		})
 	)
 
-	let chartData: Record<string, Record<string, number>> = {}
+	const chartData = new Map<number, { date: number } & Record<string, number>>()
 
 	for (let i = 0; i < chains.length; i++) {
 		const chain = chains[i]
 		const charts = chartDataByChain[i]
 		for (const chart of charts) {
-			const date = chart.date
+			const date = Number(chart.date)
+			if (!Number.isFinite(date)) continue
 			const netFlow = chart.depositUSD - chart.withdrawUSD
-			chartData[date] = chartData[date] || {}
-			chartData[date][chain.name] = netFlow
+			let row = chartData.get(date)
+			if (!row) {
+				row = createChartRecord<number>() as { date: number } & Record<string, number>
+				row.date = date
+				chartData.set(date, row)
+			}
+			row[chain.name] = netFlow
 		}
 	}
 
@@ -652,12 +690,7 @@ export async function getBridgeChainsPageData() {
 		...(isDeprecatedChain(metadataCache.chainMetadata, chain.name) ? { deprecated: true } : {})
 	}))
 
-	const chartRows: Array<{ date: number; [key: string]: number }> = []
-	for (const date in chartData) {
-		chartRows.push({ date: Number(date), ...chartData[date] })
-	}
-
-	const chart = buildBridgeChainsMultiSeriesChart({ chartRows, chains: chainList })
+	const chart = buildBridgeChainsMultiSeriesChart({ chartRows: Array.from(chartData.values()), chains: chainList })
 
 	return {
 		allChains: chainList,
@@ -666,7 +699,7 @@ export async function getBridgeChainsPageData() {
 	}
 }
 
-function buildBridgeChainsMultiSeriesChart({
+export function buildBridgeChainsMultiSeriesChart({
 	chartRows,
 	chains
 }: {
@@ -676,16 +709,19 @@ function buildBridgeChainsMultiSeriesChart({
 	dataset: MultiSeriesChart2Dataset
 	charts: NonNullable<IMultiSeriesChart2Props['charts']>
 } {
-	const source = (chartRows ?? [])
-		.map((row) => {
-			const { date, ...rest } = row
-			return {
-				timestamp: date * 1e3,
-				...rest
-			}
-		})
-		.filter((row) => Number.isFinite(Number(row.timestamp)))
-		.toSorted((a, b) => Number(a.timestamp) - Number(b.timestamp))
+	const source = new Array<{ timestamp: number } & Record<string, number>>(chartRows.length)
+	for (let i = 0; i < chartRows.length; i++) {
+		const chartRow = chartRows[i]
+		const row = createChartRow<number>(chartRow.date * 1e3)
+		for (const name of chains) {
+			const value = chartRow[name]
+			if (value != null) row[name] = value
+		}
+		source[i] = row
+	}
+	// Each chain is an independent ascending API stream, so their merged timeline
+	// must be ordered once after materializing the shared rows.
+	source.sort((a, b) => a.timestamp - b.timestamp)
 
 	const dimensions = ['timestamp', ...(chains ?? [])]
 

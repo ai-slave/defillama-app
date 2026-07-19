@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { IEquitiesDimensionsResponse } from '../api.types'
-import { buildEquitiesDimensionsChart } from '../chartData'
+import { buildEquitiesDimensionsChart, buildPriceHistoryChart } from '../chartData'
 
 const dimensions: IEquitiesDimensionsResponse = {
 	revenue: {
@@ -27,7 +27,19 @@ const dimensions: IEquitiesDimensionsResponse = {
 }
 
 describe('equities chart data', () => {
-	it('builds a sorted dataset for the selected metric and period', () => {
+	it('reverses newest-first price history without sorting', () => {
+		expect(
+			buildPriceHistoryChart([
+				['2025-01-02', 20],
+				['2025-01-01', 10]
+			]).dataset.source
+		).toEqual([
+			{ timestamp: Date.parse('2025-01-01'), Close: 10 },
+			{ timestamp: Date.parse('2025-01-02'), Close: 20 }
+		])
+	})
+
+	it('reverses the newest-first API response into a chronological dataset', () => {
 		expect(buildEquitiesDimensionsChart(dimensions, 'holdersRevenue', 'annual').dataset).toEqual({
 			source: [
 				{ timestamp: Date.parse('2024-12-31T00:00:00Z'), 'Holders Revenue': 35 },

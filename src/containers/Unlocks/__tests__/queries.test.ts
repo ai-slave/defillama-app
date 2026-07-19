@@ -30,7 +30,39 @@ vi.mock('../api', () => ({
 }))
 
 import { buildUnlocksHistoricalPriceRequests } from '~/utils/unlocks/historicalPriceRequests'
-import { getAllProtocolEmissions, getProtocolEmissons, isEmptyProtocolEmissionResult } from '../queries'
+import {
+	buildUnlockTypesByTimestamp,
+	getAllProtocolEmissions,
+	getProtocolEmissons,
+	isEmptyProtocolEmissionResult
+} from '../queries'
+
+describe('buildUnlockTypesByTimestamp', () => {
+	it('classifies an ascending event stream in one pass without mutating it', () => {
+		const day = 86_400
+		const nowSec = 1_700_000_000
+		vi.spyOn(Date, 'now').mockReturnValue(nowSec * 1000)
+		const events = [
+			{ timestamp: nowSec - day, noOfTokens: [1] },
+			{ timestamp: nowSec + day, noOfTokens: [1] },
+			{ timestamp: nowSec + 8 * day, noOfTokens: [1] },
+			{ timestamp: nowSec + 38 * day, noOfTokens: [1] },
+			{ timestamp: nowSec + 128 * day, noOfTokens: [1] }
+		]
+		const timestamps = events.map((event) => event.timestamp)
+		const result = buildUnlockTypesByTimestamp(events)
+		vi.restoreAllMocks()
+
+		expect(result).toEqual(
+			new Map([
+				[nowSec + day, 'Weekly'],
+				[nowSec + 8 * day, 'Monthly'],
+				[nowSec + 38 * day, 'Quarterly']
+			])
+		)
+		expect(events.map((event) => event.timestamp)).toEqual(timestamps)
+	})
+})
 
 describe('getProtocolEmissons', () => {
 	afterEach(() => {
@@ -177,6 +209,53 @@ describe('getProtocolEmissons', () => {
 			Charlie: '#0'
 		})
 	})
+
+	it('preserves prototype-named token allocations and category groups as own keys', async () => {
+		fetchProtocolEmissionMock.mockResolvedValue({
+			name: 'Prototype Token',
+			metadata: {
+				events: [],
+				token: 'coingecko:prototype-token',
+				notes: []
+			},
+			documentedData: {
+				data: [],
+				tokenAllocation: {
+					current: { Team: 10, ['__proto__']: 20 },
+					final: { Community: 30, constructor: 40 }
+				}
+			},
+			realTimeData: {
+				data: [],
+				tokenAllocation: {}
+			},
+			categories: {
+				Standard: ['Team'],
+				['__proto__']: ['Community'],
+				constructor: ['Treasury']
+			}
+		})
+
+		const result = await getProtocolEmissons('prototype-token', {
+			skipAvailabilityCheck: true,
+			tokenlist: {}
+		})
+
+		const { current, final } = result.tokenAllocation.documented
+		expect(Object.getPrototypeOf(current)).toBeNull()
+		expect(Object.getPrototypeOf(final)).toBeNull()
+		expect(Object.hasOwn(current, '__proto__')).toBe(true)
+		expect(Object.hasOwn(final, 'constructor')).toBe(true)
+		expect({ ...current }).toEqual({ Team: 10, ['__proto__']: 20 })
+		expect({ ...final }).toEqual({ Community: 30, constructor: 40 })
+		expect(Object.getPrototypeOf(result.categoriesBreakdown)).toBeNull()
+		expect(Object.hasOwn(result.categoriesBreakdown ?? {}, '__proto__')).toBe(true)
+		expect({ ...result.categoriesBreakdown }).toEqual({
+			Standard: ['Team'],
+			['__proto__']: ['Community'],
+			constructor: ['Treasury']
+		})
+	})
 })
 
 describe('getAllProtocolEmissions', () => {
@@ -283,8 +362,8 @@ describe('getAllProtocolEmissions', () => {
 		const emissionsHistoricalPrices = {
 			'coingecko:chainlink': {
 				prices: [
-					{ timestamp: lastPastEvent + day, price: 10 },
-					{ timestamp: lastPastEvent - day, price: 5 }
+					{ timestamp: lastPastEvent - day, price: 5 },
+					{ timestamp: lastPastEvent + day, price: 10 }
 				]
 			}
 		}
@@ -307,8 +386,8 @@ describe('getAllProtocolEmissions', () => {
 			[(lastPastEvent + day) * 1000, 10]
 		])
 		expect(emissionsHistoricalPrices['coingecko:chainlink'].prices).toEqual([
-			{ timestamp: lastPastEvent + day, price: 10 },
-			{ timestamp: lastPastEvent - day, price: 5 }
+			{ timestamp: lastPastEvent - day, price: 5 },
+			{ timestamp: lastPastEvent + day, price: 10 }
 		])
 	})
 

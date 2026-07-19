@@ -4,24 +4,20 @@ import * as echarts from 'echarts/core'
 import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import type {
-	EquitiesTreemapNode,
-	IEquitiesTreemapGroup,
-	IEquitiesTreemapLeaf
-} from '~/containers/Equities/treemapData'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
-import { equityIconUrl } from '~/utils/icons'
 import { CHART_INSET } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
+import type { MarketTreemapGroup, MarketTreemapLeaf, MarketTreemapNode } from '../marketTreemapTypes'
+import { clearTreemapFocus, registerTreemapFocusTracking } from '../treemapFocus'
 import { buildWatermarkGraphic } from '../utils'
-import { EQUITIES_TREEMAP_COLORS } from './colors'
 
 echarts.use([TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer, GraphicComponent, LabelLayout])
 
 export interface IEquitiesTreemapChartProps {
-	treeData: EquitiesTreemapNode[]
+	treeData: MarketTreemapNode[]
+	leaves: MarketTreemapLeaf[]
 	sizeLabel: string
 	colorLabel: string
 	valueSymbol?: string
@@ -29,35 +25,6 @@ export interface IEquitiesTreemapChartProps {
 	showMarketCapRow?: boolean
 	groupItemsLabel?: string
 	onReady?: (instance: echarts.ECharts | null) => void
-}
-
-function hexToRgb(hex: string): [number, number, number] {
-	const normalized = hex.replace('#', '')
-	const expanded =
-		normalized.length === 3
-			? normalized
-					.split('')
-					.map((c) => c + c)
-					.join('')
-			: normalized
-	return [parseInt(expanded.slice(0, 2), 16), parseInt(expanded.slice(2, 4), 16), parseInt(expanded.slice(4, 6), 16)]
-}
-
-function lerpHex(from: string, to: string, t: number): string {
-	const a = hexToRgb(from)
-	const b = hexToRgb(to)
-	const channels = a.map((channel, i) => Math.round(channel + (b[i] - channel) * t))
-	return `rgb(${channels[0]}, ${channels[1]}, ${channels[2]})`
-}
-
-const COLOR_CAP_PCT = 3
-
-function changeToColor(pct: number | null | undefined): string {
-	if (pct == null || !isFinite(pct) || pct === 0) return EQUITIES_TREEMAP_COLORS.neutral
-	const t = Math.min(Math.abs(pct) / COLOR_CAP_PCT, 1)
-	return pct > 0
-		? lerpHex(EQUITIES_TREEMAP_COLORS.neutral, EQUITIES_TREEMAP_COLORS.positive, t)
-		: lerpHex(EQUITIES_TREEMAP_COLORS.negative, EQUITIES_TREEMAP_COLORS.neutral, 1 - t)
 }
 
 const LEAF_TEXT_STYLE = {
@@ -188,16 +155,17 @@ function markIconFailed(url: string) {
 // Hand zrender a per-icon canvas, not the URL: URL strings go through zrender's
 // global LRU(50) image cache which thrashes with 500 logos. The canvas also
 // lets us clip the logo into a circle (rich text has no border-radius).
-function preloadLeafIcon(url: string, onSettled: () => void) {
+function preloadLeafIcon(url: string, onSettled: () => void): HTMLCanvasElement | undefined {
 	if (typeof window === 'undefined') return
 	if (!url) {
 		failedIconUrls.add(url)
 		return
 	}
 	if (failedIconUrls.has(url)) return
-	if (getIconCanvas(url)) {
+	const cached = getIconCanvas(url)
+	if (cached) {
 		iconSettleCallbacks.get(url)?.add(onSettled)
-		return
+		return cached
 	}
 	pendingIconUrls.add(url)
 	const callbacks = new Set([onSettled])
@@ -234,9 +202,11 @@ function preloadLeafIcon(url: string, onSettled: () => void) {
 		settle()
 	}
 	img.src = url
+	return canvas
 }
 
 const LEAF_TEXT_RICH: Record<string, any> = {}
+const LABEL_LINE_HEIGHTS: Record<string, number> = {}
 for (const fontSize of TICKER_SIZES) {
 	LEAF_TEXT_RICH[`ticker${fontSize}`] = {
 		fontSize,
@@ -244,16 +214,19 @@ for (const fontSize of TICKER_SIZES) {
 		lineHeight: lineHeightOf(fontSize),
 		...LEAF_TEXT_STYLE
 	}
+	LABEL_LINE_HEIGHTS[`ticker${fontSize}`] = lineHeightOf(fontSize)
 }
 for (const fontSize of CHG_SIZES) {
 	LEAF_TEXT_RICH[`chg${fontSize}`] = { fontSize, lineHeight: lineHeightOf(fontSize), ...LEAF_TEXT_STYLE }
+	LABEL_LINE_HEIGHTS[`chg${fontSize}`] = lineHeightOf(fontSize)
 }
+for (const iconSize of ICON_SIZES) LABEL_LINE_HEIGHTS[`icon${iconSize}`] = iconLineHeightOf(iconSize)
 
-function buildLeafRich(iconUrl: string) {
-	const rich: Record<string, any> = { ...LEAF_TEXT_RICH }
+function buildLeafIconRich(image: HTMLCanvasElement | undefined) {
+	const rich: Record<string, any> = {}
 	for (const iconSize of ICON_SIZES) {
 		rich[`icon${iconSize}`] = {
-			backgroundColor: { image: getIconCanvas(iconUrl) as any },
+			backgroundColor: { image: image as any },
 			width: iconSize,
 			height: iconSize,
 			lineHeight: iconLineHeightOf(iconSize)
@@ -262,51 +235,29 @@ function buildLeafRich(iconUrl: string) {
 	return rich
 }
 
-function leafIconUrl(node: Pick<IEquitiesTreemapLeaf, 'name' | 'country' | 'iconUrl'>): string {
-	if (typeof node.iconUrl === 'string') return node.iconUrl
-	return equityIconUrl(node.name, node.country || 'US')
-}
-
-type EquitiesTreemapChartLeaf = IEquitiesTreemapLeaf & {
-	itemStyle: { color: string }
+type EquitiesTreemapChartLeaf = MarketTreemapLeaf & {
 	label: { padding: number; rich: Record<string, any> }
 }
 
-type EquitiesTreemapChartGroup = Omit<IEquitiesTreemapGroup, 'children'> & {
+type EquitiesTreemapChartGroup = Omit<MarketTreemapGroup, 'children'> & {
 	children: EquitiesTreemapChartLeaf[]
 }
 
 type EquitiesTreemapChartNode = EquitiesTreemapChartLeaf | EquitiesTreemapChartGroup
 
-function prepareLeaf(node: IEquitiesTreemapLeaf, onIconSettled: () => void): EquitiesTreemapChartLeaf {
-	const iconUrl = leafIconUrl(node)
-	preloadLeafIcon(iconUrl, onIconSettled)
+function prepareLeaf(node: MarketTreemapLeaf, onIconSettled: () => void): EquitiesTreemapChartLeaf {
+	const image = preloadLeafIcon(node.iconUrl, onIconSettled)
 	return {
 		...node,
-		itemStyle: { color: changeToColor(node.value[1]) },
 		label: {
 			padding: LEAF_LABEL_PADDING,
-			rich: buildLeafRich(iconUrl)
+			rich: buildLeafIconRich(image)
 		}
 	}
-}
-
-function prepareChartData(nodes: EquitiesTreemapNode[], onIconSettled: () => void): EquitiesTreemapChartNode[] {
-	const prepared: EquitiesTreemapChartNode[] = []
-	for (const node of nodes) {
-		if ('children' in node) {
-			const children: EquitiesTreemapChartLeaf[] = []
-			for (const child of node.children) children.push(prepareLeaf(child, onIconSettled))
-			prepared.push({ ...node, children })
-		} else {
-			prepared.push(prepareLeaf(node, onIconSettled))
-		}
-	}
-	return prepared
 }
 
 function formatChangePct(value: number | null | undefined): string {
-	if (value == null || !isFinite(value)) return '-'
+	if (value == null) return '-'
 	return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`
 }
 
@@ -356,6 +307,7 @@ function buildLevels(hasGroups: boolean, isDark: boolean) {
 
 export default function EquitiesTreemapChart({
 	treeData,
+	leaves,
 	sizeLabel,
 	colorLabel,
 	valueSymbol = '$',
@@ -372,7 +324,7 @@ export default function EquitiesTreemapChart({
 		onReadyRef.current = onReady
 	})
 
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
 	const applyOptionRef = useRef<(() => void) | null>(null)
 	const iconRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -390,11 +342,28 @@ export default function EquitiesTreemapChart({
 		}
 	}, [])
 
+	// Canvas-backed rich text is the only runtime decoration. Keep it stable when
+	// the same canonical leaves are merely regrouped.
+	const chartLeaves = useMemo(() => {
+		const prepared: EquitiesTreemapChartLeaf[] = []
+		for (const leaf of leaves) prepared.push(prepareLeaf(leaf, scheduleIconRefresh))
+		return prepared
+	}, [leaves, scheduleIconRefresh])
 	const chartDataTree = useMemo(() => {
-		return prepareChartData(treeData, scheduleIconRefresh)
-	}, [scheduleIconRefresh, treeData])
-
-	const hasGroups = useMemo(() => chartDataTree.some((node) => 'children' in node), [chartDataTree])
+		if (treeData === leaves) return chartLeaves
+		const prepared: EquitiesTreemapChartNode[] = []
+		for (const node of treeData) {
+			if ('children' in node) {
+				const children: EquitiesTreemapChartLeaf[] = []
+				for (const child of node.children) children.push(chartLeaves[child.iconKey])
+				prepared.push({ ...node, children })
+			} else {
+				prepared.push(chartLeaves[node.iconKey])
+			}
+		}
+		return prepared
+	}, [chartLeaves, leaves, treeData])
+	const hasGroups = treeData.length > 0 && 'children' in treeData[0]
 
 	const formatSizeValue = useMemo(
 		() => (value: number) => formattedNum(value, valueSymbol.length > 0 ? valueSymbol : false),
@@ -407,8 +376,10 @@ export default function EquitiesTreemapChart({
 		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		onReadyRef.current?.(instance)
+		const unregisterTreemapFocus = registerTreemapFocusTracking(instance)
 
 		return () => {
+			unregisterTreemapFocus()
 			applyOptionRef.current = null
 			chartRef.current = null
 			onReadyRef.current?.(null)
@@ -463,6 +434,7 @@ export default function EquitiesTreemapChart({
 					breadcrumb: { show: false },
 					label: {
 						position: 'inside',
+						rich: LEAF_TEXT_RICH,
 						formatter: function (params) {
 							const data = params?.data ?? {}
 							// upperLabel reuses this formatter; group nodes must return their name.
@@ -474,7 +446,7 @@ export default function EquitiesTreemapChart({
 								?.getItemLayout?.(params.dataIndex)
 							const cellWidth = (layout?.width ?? 0) - LABEL_BOX_PADDING
 							const cellHeight = (layout?.height ?? 0) - LABEL_BOX_PADDING
-							const iconOk = !failedIconUrls.has(leafIconUrl(data))
+							const iconOk = !failedIconUrls.has(data.iconUrl)
 							return pickLeafLabel(cellWidth, cellHeight, params.name ?? '', formatChangePct(params.value?.[1]), iconOk)
 						}
 					},
@@ -486,10 +458,9 @@ export default function EquitiesTreemapChart({
 						if (!rect) return {}
 						let contentHeight = 0
 						for (const line of params.text.split('\n')) {
-							const marker = /^\{(icon|ticker|chg)(\d+)\|/.exec(line)
+							const marker = /^\{((?:icon|ticker|chg)\d+)/.exec(line)
 							if (!marker) continue
-							const size = Number(marker[2])
-							contentHeight += marker[1] === 'icon' ? iconLineHeightOf(size) : lineHeightOf(size)
+							contentHeight += LABEL_LINE_HEIGHTS[marker[1]]
 						}
 						return {
 							dy: (rect.height - contentHeight) / 2 - LEAF_LABEL_PADDING
@@ -508,13 +479,13 @@ export default function EquitiesTreemapChart({
 				}
 			]
 		}
-		instance.setOption(option, { notMerge: true, lazyUpdate: true })
+		clearTreemapFocus(instance)
+		instance.setOption(option, { notMerge: true })
 		applyOptionRef.current = () => {
 			if (instance.isDisposed()) return
-			// hideTip + synchronous setOption: a mousemove between a deferred
-			// (lazyUpdate) rebuild and its flush hits echarts with null series data
-			// (getDataParams -> getRawIndex of undefined).
+			// Hide the tooltip before replacing its backing leaf data.
 			instance.dispatchAction({ type: 'hideTip' })
+			clearTreemapFocus(instance)
 			instance.setOption(option, { notMerge: true })
 		}
 

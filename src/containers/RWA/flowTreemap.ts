@@ -6,7 +6,7 @@ import type {
 	RWAFlowOverviewSplitBy
 } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
-import type { RWAFlowGrouping } from './flows'
+import { sortRWAFlowRotationSeriesNames, type RWAFlowGrouping } from './flows'
 import { getPrimaryRwaCategory, getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
 
 export type RWAFlowTreemapView = 'bar' | 'heatmap'
@@ -28,6 +28,11 @@ export type RWAFlowTreemapNode = {
 export type RWAFlowTreemapResult = {
 	nodes: RWAFlowTreemapNode[]
 	excludedSizeCount: number
+}
+
+export type RWAFlowTreemapWindowData = {
+	flows: Map<string, number>
+	orderedNames: string[]
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -73,27 +78,69 @@ export function getRWAFlowTreemapSizeLabel(sizeMetric: RWAFlowTreemapSizeMetric)
 	return RWA_FLOW_TREEMAP_SIZE_OPTIONS.find((option) => option.key === sizeMetric)?.name ?? sizeMetric
 }
 
-function getFlowWindowStart(points: readonly IRWAFlowOverviewSplitPoint[], groupBy: RWAFlowGrouping): number {
-	let latestTimestamp = 0
-	for (const point of points) latestTimestamp = Math.max(latestTimestamp, toUnixMsTimestamp(point.timestamp))
-	if (groupBy === 'cumulative') return Number.NEGATIVE_INFINITY
-	if (groupBy === 'daily') return latestTimestamp
-	return latestTimestamp - FLOW_WINDOW_DAYS[groupBy] * DAY_MS
+export function buildRWAFlowTreemapWindowData(
+	points: readonly IRWAFlowOverviewSplitPoint[],
+	groupBy: RWAFlowGrouping
+): RWAFlowTreemapWindowData {
+	const seriesNames = new Set<string>()
+	const latestPoint = points[points.length - 1]
+	const latestTimestamp = latestPoint ? toUnixMsTimestamp(latestPoint.timestamp) : 0
+
+	const flow7d = new Map<string, number>()
+	const flow30d = new Map<string, number>()
+	const flows = groupBy === 'weekly' ? flow7d : groupBy === 'monthly' ? flow30d : new Map<string, number>()
+	const cutoff7d = latestTimestamp - 7 * DAY_MS
+	const cutoff30d = latestTimestamp - 30 * DAY_MS
+	const windowStart =
+		groupBy === 'cumulative'
+			? Number.NEGATIVE_INFINITY
+			: groupBy === 'daily'
+				? latestTimestamp
+				: latestTimestamp - FLOW_WINDOW_DAYS[groupBy] * DAY_MS
+
+	for (const point of points) {
+		const timestamp = toUnixMsTimestamp(point.timestamp)
+		const in7d = timestamp > cutoff7d
+		const in30d = timestamp > cutoff30d
+		const inSelectedWindow = groupBy === 'daily' ? timestamp === windowStart : timestamp > windowStart
+		for (const name in point) {
+			if (name === 'timestamp') continue
+			seriesNames.add(name)
+			const value = point[name]
+			if (in30d) flow30d.set(name, (flow30d.get(name) ?? 0) + value)
+			if (in7d) flow7d.set(name, (flow7d.get(name) ?? 0) + value)
+			if (flows !== flow7d && flows !== flow30d && inSelectedWindow) {
+				flows.set(name, (flows.get(name) ?? 0) + value)
+			}
+		}
+	}
+
+	return {
+		flows,
+		orderedNames: sortRWAFlowRotationSeriesNames(seriesNames, flow7d, flow30d)
+	}
 }
 
 export function aggregateRWAFlowTreemapWindow(
 	points: readonly IRWAFlowOverviewSplitPoint[],
 	groupBy: RWAFlowGrouping
 ): Map<string, number> {
-	const startTimestamp = getFlowWindowStart(points, groupBy)
+	const latestPoint = points[points.length - 1]
+	const latestTimestamp = latestPoint ? toUnixMsTimestamp(latestPoint.timestamp) : 0
+	const startTimestamp =
+		groupBy === 'cumulative'
+			? Number.NEGATIVE_INFINITY
+			: groupBy === 'daily'
+				? latestTimestamp
+				: latestTimestamp - FLOW_WINDOW_DAYS[groupBy] * DAY_MS
 	const flows = new Map<string, number>()
 
 	for (const point of points) {
 		const timestamp = toUnixMsTimestamp(point.timestamp)
 		if (groupBy === 'daily' ? timestamp !== startTimestamp : timestamp <= startTimestamp) continue
 		for (const name in point) {
+			if (name === 'timestamp') continue
 			const value = point[name]
-			if (name === 'timestamp' || typeof value !== 'number' || !Number.isFinite(value)) continue
 			flows.set(name, (flows.get(name) ?? 0) + value)
 		}
 	}

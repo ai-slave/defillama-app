@@ -107,7 +107,7 @@ export default class ProtocolCharts {
 				points.push([ts, value])
 			}
 
-			return points.sort((a, b) => a[0] - b[0])
+			return points
 		} catch (e) {
 			recordRuntimeError(e, 'pageBuild')
 			return []
@@ -126,13 +126,11 @@ export default class ProtocolCharts {
 			if (!chart.length) return []
 			const totals: [number, number][] = []
 			for (const { timestamp, ...rest } of chart) {
-				const tsMs = Number(timestamp)
-				if (!Number.isFinite(tsMs)) continue
 				let total = 0
-				for (const key in rest) total += Number((rest as any)[key] ?? 0)
-				totals.push([Math.floor(tsMs / 1e3), total])
+				for (const key in rest) total += rest[key] ?? 0
+				totals.push([Math.floor(timestamp / 1e3), total])
 			}
-			return totals.sort((a, b) => a[0] - b[0])
+			return totals
 		} catch (e) {
 			recordRuntimeError(e, 'pageBuild')
 			return []
@@ -228,10 +226,12 @@ export default class ProtocolCharts {
 
 			const hist = await fetchProtocolTokenLiquidityChart(String(tokenId))
 			if (!Array.isArray(hist)) return []
-			return hist
-				.filter((x) => Array.isArray(x) && x.length >= 2)
-				.map(([ts, val]) => [Number(ts), Number(val)] as [number, number])
-				.sort((a, b) => a[0] - b[0])
+			const points: [number, number][] = []
+			for (const point of hist) {
+				if (!Array.isArray(point) || point.length < 2) continue
+				points.push([Number(point[0]), Number(point[1])])
+			}
+			return points
 		} catch (e) {
 			recordRuntimeError(e, 'pageBuild')
 			return []

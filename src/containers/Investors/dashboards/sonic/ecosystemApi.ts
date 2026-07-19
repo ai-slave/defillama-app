@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/timeSeriesDataset'
 import { assignColors } from '../spark/api'
+import { datasetChartOptions, multiSeriesCharts } from './chartDefaults'
 
 interface FormattedValue {
 	value: number
@@ -42,7 +43,7 @@ interface AssetCategory {
 	breakdown: Record<string, number>
 }
 
-interface EcosystemAPIResponse {
+export interface EcosystemAPIResponse {
 	tvl: {
 		tvl: {
 			title: string
@@ -87,132 +88,122 @@ function formatUsdValue(n: number): string {
 	return `$${n.toFixed(2)}`
 }
 
-function parseDateToUnix(dateStr: string): number {
-	return Math.floor(new Date(dateStr + 'T00:00:00Z').getTime() / 1000)
-}
-
-function transformTimeSeries(
-	dates: string[],
-	series: Array<{ name: string; data: number[] }>
-): Array<Record<string, number>> {
-	return dates.map((dateStr, i) => {
-		const point: Record<string, number> = { date: parseDateToUnix(dateStr) }
-		for (const s of series) {
-			const val = s.data[i]
-			point[s.name] = typeof val === 'number' && Number.isFinite(val) ? val : 0
-		}
-		return point
-	})
+function parseDateToMs(dateStr: string): number {
+	return Date.parse(dateStr + 'T00:00:00Z')
 }
 
 export type { AssetCategory }
 
+export function buildEcosystemViewModel(d: EcosystemAPIResponse) {
+	const tvlDataset = buildColumnarTimeSeriesDataset(d.tvl.tvl.dates, d.tvl.tvl.series, parseDateToMs, 0)
+	const feesDataset = buildColumnarTimeSeriesDataset(d.fees.feesChart.dates, d.fees.feesChart.series, parseDateToMs, 0)
+	const volumeDataset = buildColumnarTimeSeriesDataset(
+		d.dexVolume.volumeChart.dates,
+		d.dexVolume.volumeChart.series,
+		parseDateToMs,
+		0
+	)
+
+	// The aggregate is already Minted + Bridged, so stacking it would count the supply twice.
+	const stableSeries: TimeSeriesData['series'] = []
+	const stableSeriesNames: string[] = []
+	for (const series of d.stablecoins.stablecoinChart.series) {
+		if (series.name === 'Total Circulating') continue
+		stableSeries.push(series)
+		stableSeriesNames.push(series.name)
+	}
+	const stableDataset = buildColumnarTimeSeriesDataset(
+		d.stablecoins.stablecoinChart.dates,
+		stableSeries,
+		parseDateToMs,
+		0
+	)
+	const stableColors = assignColors(stableSeriesNames)
+
+	const latestIndex = d.stablecoins.stablecoinChart.dates.length - 1
+	const stableBreakdown: Array<{ name: string; value: number; formatted: string; pct: string }> = []
+	let stableBreakdownTotal = 0
+	for (const series of stableSeries) {
+		const value = latestIndex >= 0 ? (series.data[latestIndex] ?? 0) : 0
+		if (value <= 0) continue
+		stableBreakdown.push({ name: series.name, value, formatted: formatUsdValue(value), pct: '' })
+		stableBreakdownTotal += value
+	}
+	stableBreakdown.sort((a, b) => b.value - a.value)
+	const stableBreakdownNames = new Array<string>(stableBreakdown.length)
+	for (let i = 0; i < stableBreakdown.length; i++) {
+		const item = stableBreakdown[i]
+		item.pct = ((item.value / stableBreakdownTotal) * 100).toFixed(1)
+		stableBreakdownNames[i] = item.name
+	}
+
+	// The upstream total category is used for the KPI, not as a second pie slice.
+	const assetCategories: AssetCategory[] = []
+	const assetCategoryNames: string[] = []
+	for (const category of d.chainAssets.assetBreakdown.categories) {
+		if (category.name === 'total') continue
+		assetCategories.push(category)
+		assetCategoryNames.push(category.name)
+	}
+
+	return {
+		tvl: {
+			dataset: tvlDataset,
+			charts: multiSeriesCharts(d.tvl.tvl.series, 'line'),
+			chartOptions: datasetChartOptions(tvlDataset.source.length, '$'),
+			title: d.tvl.tvl.title,
+			currentFormatted: d.tvl.tvl.currentFormatted
+		},
+		fees: {
+			dataset: feesDataset,
+			charts: multiSeriesCharts(d.fees.feesChart.series, 'bar', 'a'),
+			chartOptions: datasetChartOptions(feesDataset.source.length, '$'),
+			kpis: d.fees.kpis,
+			topProtocols: d.fees.topProtocols,
+			title: d.fees.feesChart.title
+		},
+		dexVolume: {
+			dataset: volumeDataset,
+			charts: multiSeriesCharts(d.dexVolume.volumeChart.series, 'bar', 'a'),
+			chartOptions: datasetChartOptions(volumeDataset.source.length, '$'),
+			kpis: d.dexVolume.kpis,
+			topDexes: d.dexVolume.topDexes,
+			title: d.dexVolume.volumeChart.title
+		},
+		stablecoins: {
+			dataset: stableDataset,
+			charts: multiSeriesCharts(stableSeries, 'line', 'Total', stableColors),
+			chartOptions: datasetChartOptions(stableDataset.source.length, '$'),
+			kpis: d.stablecoins.kpis,
+			title: d.stablecoins.stablecoinChart.title,
+			breakdown: stableBreakdown,
+			pieColors: assignColors(stableBreakdownNames),
+			breakdownTotalFormatted: formatUsdValue(stableBreakdownTotal)
+		},
+		chainAssets: {
+			categories: assetCategories,
+			pieColors: assignColors(assetCategoryNames),
+			totalFormatted: d.chainAssets.assetBreakdown.totalFormatted,
+			title: d.chainAssets.assetBreakdown.title
+		}
+	}
+}
+
+export type EcosystemViewModel = ReturnType<typeof buildEcosystemViewModel>
+
 export function useEcosystemData() {
-	const query = useQuery<EcosystemAPIResponse>({
+	const query = useQuery<EcosystemViewModel>({
 		queryKey: ['sonic-ecosystem'],
 		queryFn: async () => {
 			const res = await fetch('/api/public/sonic/ecosystem')
 			if (!res.ok) throw new Error(`Ecosystem API error: ${res.status}`)
-			return res.json()
+			const response: EcosystemAPIResponse = await res.json()
+			return buildEcosystemViewModel(response)
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
 
-	return useMemo(() => {
-		if (!query.data) {
-			return { data: null, isLoading: query.isLoading || query.isPending }
-		}
-
-		const d = query.data
-
-		// TVL
-		const tvlData = transformTimeSeries(d.tvl.tvl.dates, d.tvl.tvl.series)
-		const tvlStacks = d.tvl.tvl.series.map((s) => s.name)
-
-		// Fees
-		const feesData = transformTimeSeries(d.fees.feesChart.dates, d.fees.feesChart.series)
-		const feesStacks: Record<string, string> = {}
-		for (const s of d.fees.feesChart.series) feesStacks[s.name] = 'a'
-
-		// DEX Volume
-		const volumeData = transformTimeSeries(d.dexVolume.volumeChart.dates, d.dexVolume.volumeChart.series)
-		const volumeStacks: Record<string, string> = {}
-		for (const s of d.dexVolume.volumeChart.series) volumeStacks[s.name] = 'a'
-
-		// Stablecoins — stack only Minted + Bridged (Total = their sum)
-		const stableSeries = d.stablecoins.stablecoinChart.series.filter((s) => s.name !== 'Total Circulating')
-		const stableData = transformTimeSeries(d.stablecoins.stablecoinChart.dates, stableSeries)
-		const stableStacks = stableSeries.map((s) => s.name)
-		const stableColors = assignColors(stableStacks)
-
-		// Stablecoin breakdown by individual coin
-		const latestIdx = d.stablecoins.stablecoinChart.dates.length - 1
-		const stableBreakdown = stableSeries
-			.map((s) => {
-				const latestValue = latestIdx >= 0 ? (s.data[latestIdx] ?? 0) : 0
-				return { name: s.name, value: latestValue }
-			})
-			.filter((item) => item.value > 0)
-			.sort((a, b) => b.value - a.value)
-		const stableBreakdownTotal = stableBreakdown.reduce((sum, item) => sum + item.value, 0)
-		const stableBreakdownWithPct = stableBreakdown.map((item) => ({
-			...item,
-			formatted: formatUsdValue(item.value),
-			pct: stableBreakdownTotal > 0 ? ((item.value / stableBreakdownTotal) * 100).toFixed(1) : '0'
-		}))
-		const stablePieData = stableBreakdown.map((item) => ({ name: item.name, value: item.value }))
-		const stablePieColors = assignColors(stableBreakdown.map((item) => item.name))
-
-		// Chain Assets — skip "total" category
-		const assetCategories = d.chainAssets.assetBreakdown.categories.filter((c) => c.name !== 'total')
-		const assetPieData = assetCategories.map((c) => ({ name: c.name, value: c.value }))
-		const assetPieColors = assignColors(assetCategories.map((c) => c.name))
-
-		return {
-			data: {
-				tvl: {
-					data: tvlData,
-					stacks: tvlStacks,
-					title: d.tvl.tvl.title,
-					currentFormatted: d.tvl.tvl.currentFormatted
-				},
-				fees: {
-					data: feesData,
-					stacks: feesStacks,
-					kpis: d.fees.kpis,
-					topProtocols: d.fees.topProtocols,
-					title: d.fees.feesChart.title
-				},
-				dexVolume: {
-					data: volumeData,
-					stacks: volumeStacks,
-					kpis: d.dexVolume.kpis,
-					topDexes: d.dexVolume.topDexes,
-					title: d.dexVolume.volumeChart.title
-				},
-				stablecoins: {
-					data: stableData,
-					stacks: stableStacks,
-					colors: stableColors,
-					kpis: d.stablecoins.kpis,
-					title: d.stablecoins.stablecoinChart.title,
-					breakdown: stableBreakdownWithPct,
-					pieData: stablePieData,
-					pieColors: stablePieColors,
-					breakdownTotal: stableBreakdownTotal,
-					breakdownTotalFormatted: formatUsdValue(stableBreakdownTotal)
-				},
-				chainAssets: {
-					categories: assetCategories,
-					pieData: assetPieData,
-					pieColors: assetPieColors,
-					total: d.chainAssets.assetBreakdown.total,
-					totalFormatted: d.chainAssets.assetBreakdown.totalFormatted,
-					title: d.chainAssets.assetBreakdown.title
-				}
-			},
-			isLoading: false
-		}
-	}, [query.data, query.isLoading, query.isPending])
+	if (!query.data) return { data: null, isLoading: query.isLoading || query.isPending }
+	return { data: query.data, isLoading: false }
 }

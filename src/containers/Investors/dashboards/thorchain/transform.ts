@@ -1,3 +1,6 @@
+import { createChartRow } from '~/components/ECharts/dynamicRow'
+import type { TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
+
 // Shapes returned by /api/public/thorchain/<fn>. Everything is pre-computed and
 // pre-formatted server-side; the frontend renders `formatted` and only uses raw
 // `value`/`data` for charts and sorting. See the IR-server API reference.
@@ -46,26 +49,22 @@ export function parseDateToUnix(dateStr: string): number {
 		const n = parseInt(dateStr, 10)
 		return n > 1e12 ? Math.floor(n / 1000) : n
 	}
-	return Math.floor(new Date(dateStr.length === 10 ? dateStr + 'T00:00:00Z' : dateStr).getTime() / 1000)
+	return Math.floor(Date.parse(dateStr.length === 10 ? dateStr + 'T00:00:00Z' : dateStr) / 1000)
 }
 
-// Time charts → [{ date: unix, [seriesName]: value }] for Area/Bar charts.
-export function chartToData(chart: Chart | undefined): Array<Record<string, number>> {
-	if (!chart?.dates || !chart.series) return []
-	return chart.dates.flatMap((dt, i) => {
-		const date = parseDateToUnix(dt)
-		if (!Number.isFinite(date)) return [] // skip malformed labels rather than emit a NaN-dated point
-		const point: Record<string, number> = { date }
-		for (const s of chart.series) {
-			const v = s.data?.[i]
-			point[s.name] = typeof v === 'number' && Number.isFinite(v) ? v : 0
+// Time-chart callers share this broad API type with category charts, so keep date and length guards at this boundary.
+export function chartToDataset(chart: Chart): TimestampDataset {
+	const source: TimestampDataset['source'] = []
+	for (let i = 0; i < chart.dates.length; i++) {
+		const timestamp = parseDateToUnix(chart.dates[i]) * 1000
+		if (!Number.isFinite(timestamp)) continue
+		const row = createChartRow<number>(timestamp)
+		for (let j = 0; j < chart.series.length; j++) {
+			const series = chart.series[j]
+			row[series.name] = series.data[i] ?? 0
 		}
-		return [point]
-	})
-}
+		source.push(row)
+	}
 
-// Map each series name to its ECharts stack key (falls back to its own name so
-// non-stacked series render side by side rather than stacked).
-export function barStacks(chart: Chart): Record<string, string> {
-	return Object.fromEntries(chart.series.map((s) => [s.name, s.stack ?? s.name]))
+	return { source, dimensions: ['timestamp', ...chart.series.map((series) => series.name)] }
 }

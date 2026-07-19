@@ -1,44 +1,16 @@
 import * as echarts from 'echarts/core'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { useChartCleanup } from '~/hooks/useChartCleanup'
 import { useChartResize } from '~/hooks/useChartResize'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { ChartContainer } from '../ChartContainer'
 import { CHART_INSET, CHART_ZOOM_RESERVE, chartGrid, chartHorizontalScrollLegend } from '../chartSpacing'
-import { getChartTheme } from '../chartTheme'
+import { useChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
-import { METRIC_UNIT_GROUP_SYMBOL, resolveSeriesAxisLayout } from '../metricGroups'
+import { getMetricUnitGroup, METRIC_UNIT_GROUP_SYMBOL, resolveSeriesAxisLayout } from '../metricGroups'
+import type { IMultiSeriesChartProps } from '../types'
 import { useDefaults } from '../useDefaults'
 import { isIconUrlValid, mergeDeep, validateIconUrl } from '../utils'
-
-interface IMultiSeriesChartProps {
-	series?: Array<{
-		data: Array<[number | string, number | null]>
-		type: 'line' | 'bar'
-		name: string
-		color: string
-		logo?: string
-		stack?: string
-		areaStyle?: any
-		metricType?: string
-	}>
-	chartOptions?: {
-		[key: string]: {
-			[key: string]: any
-		}
-	}
-	height?: string
-	groupBy?: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
-	valueSymbol?: string
-	yAxisSymbols?: string[]
-	alwaysShowTooltip?: boolean
-	hideDataZoom?: boolean
-	hideDownloadButton?: boolean
-	title?: string
-	xAxisType?: 'time' | 'category'
-	showAggregateInTooltip?: boolean
-	onReady?: (instance: echarts.ECharts | null) => void
-}
 
 const EMPTY_ARRAY = []
 
@@ -50,16 +22,26 @@ export default function MultiSeriesChart({
 	chartOptions,
 	groupBy,
 	hideDataZoom = false,
-	hideDownloadButton: _hideDownloadButton = false,
 	alwaysShowTooltip,
 	xAxisType = 'time',
 	showAggregateInTooltip = false,
 	onReady
 }: IMultiSeriesChartProps) {
-	const id = useId()
-
 	const [isThemeDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isThemeDark)
 	const [logoRevision, setLogoRevision] = useState(0)
+	const axisLayout = useMemo(() => resolveSeriesAxisLayout(series ?? []), [series])
+	const seriesValueSymbols = useMemo(() => {
+		const symbols = Object.create(null) as Record<string, string>
+		for (let i = 0; i < (series?.length ?? 0); i++) {
+			const item = series![i]
+			const axisIndex = axisLayout.seriesAxisIndexes[i] ?? 0
+			symbols[item.name] =
+				yAxisSymbols[axisIndex] ??
+				(item.metricType ? METRIC_UNIT_GROUP_SYMBOL[getMetricUnitGroup(item.metricType)] : valueSymbol)
+		}
+		return symbols
+	}, [axisLayout.seriesAxisIndexes, series, valueSymbol, yAxisSymbols])
 
 	useEffect(() => {
 		const urls = (series ?? []).map((s) => s.logo).filter((u): u is string => !!u)
@@ -78,9 +60,44 @@ export default function MultiSeriesChart({
 		xAxisType,
 		groupBy: groupBy ?? 'daily',
 		isThemeDark,
+		chartTheme,
 		alwaysShowTooltip,
-		showAggregateInTooltip
+		seriesValueSymbols
 	})
+	// Keep presentation overrides stable while only the series data changes.
+	const chartSettings = useMemo(() => {
+		const settings: Record<string, any> = { ...defaultChartSettings }
+		const options = chartOptions ?? {}
+		for (const option in options) {
+			const optionValue = options[option]
+			if (!optionValue) continue
+			if (option === 'overrides') {
+				settings['tooltip'] = { ...settings['inflowsTooltip'] }
+			} else if (option === 'dataZoom' && Array.isArray(optionValue)) {
+				if (settings[option]) {
+					settings[option] = [
+						{ ...settings[option][0], ...(optionValue[0] ?? {}) },
+						{ ...settings[option][1], ...(optionValue[1] ?? {}) }
+					]
+				} else {
+					settings[option] = optionValue
+				}
+			} else if (settings[option]) {
+				settings[option] = mergeDeep(settings[option], optionValue)
+			} else {
+				settings[option] = Array.isArray(optionValue) ? optionValue : { ...optionValue }
+			}
+		}
+
+		const tooltipOptions = options.tooltip
+		if (showAggregateInTooltip && !Array.isArray(tooltipOptions) && !tooltipOptions?.formatter) {
+			settings.tooltip = {
+				...settings.aggregateTooltip
+			}
+		}
+
+		return settings
+	}, [defaultChartSettings, chartOptions, showAggregateInTooltip])
 
 	const processedSeries = useMemo(() => {
 		void logoRevision
@@ -121,7 +138,7 @@ export default function MultiSeriesChart({
 							},
 							{
 								offset: 1,
-								color: getChartTheme(isThemeDark).areaGradientTo
+								color: chartTheme.areaGradientTo
 							}
 						])
 					}
@@ -132,64 +149,52 @@ export default function MultiSeriesChart({
 				return serieConfig
 			}) || []
 		)
-	}, [series, isThemeDark, xAxisType, logoRevision])
+	}, [series, chartTheme, xAxisType, logoRevision])
 
+	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
-	const hasNotifiedReadyRef = useRef(false)
-	const onReadyRef = useRef(onReady)
-	const globalOutCleanupRef = useRef<(() => void) | null>(null)
+	const latestTooltipDataIndexRef = useRef<number | null>(null)
+	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
+		onReady?.(instance)
+	})
+	const showLatestTooltip = useStableCallback(() => {
+		const instance = chartRef.current
+		const dataIndex = latestTooltipDataIndexRef.current
+		if (!instance || instance.isDisposed() || dataIndex == null) return
+		instance.dispatchAction({
+			type: 'showTip',
+			seriesIndex: 0,
+			dataIndex,
+			position: [60, 0]
+		})
+	})
 
 	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
 	useEffect(() => {
-		onReadyRef.current = onReady
-	}, [onReady])
-
-	useEffect(() => {
-		const chartDom = document.getElementById(id)
-		if (!chartDom) return
-
-		let instance = echarts.getInstanceByDom(chartDom)
-		if (!instance) {
-			instance = echarts.init(chartDom, null, { renderer: 'canvas' })
-		}
-
+		const el = containerRef.current
+		if (!el) return
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
-		if (instance && !hasNotifiedReadyRef.current && onReadyRef.current) {
-			onReadyRef.current(instance)
-			hasNotifiedReadyRef.current = true
+		emitReady(instance)
+		instance.on('globalout', showLatestTooltip)
+
+		return () => {
+			instance.off('globalout', showLatestTooltip)
+			chartRef.current = null
+			latestTooltipDataIndexRef.current = null
+			instance.dispose()
+			emitReady(null)
 		}
+	}, [showLatestTooltip])
 
-		const settings = { ...defaultChartSettings }
-		for (const option in chartOptions) {
-			if (option === 'overrides') {
-				settings['tooltip'] = { ...settings['inflowsTooltip'] }
-			} else if (option === 'dataZoom' && Array.isArray(chartOptions[option])) {
-				if (settings[option]) {
-					settings[option] = [
-						{ ...settings[option][0], ...(chartOptions[option][0] ?? {}) },
-						{ ...settings[option][1], ...(chartOptions[option][1] ?? {}) }
-					]
-				} else {
-					settings[option] = chartOptions[option]
-				}
-			} else if (settings[option]) {
-				settings[option] = mergeDeep(settings[option], chartOptions[option])
-			} else {
-				settings[option] = { ...chartOptions[option] }
-			}
-		}
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
-		if (showAggregateInTooltip && !chartOptions?.tooltip?.formatter) {
-			settings.tooltip = {
-				...settings.aggregateTooltip
-			}
-		}
-
-		const { graphic, tooltip, xAxis, yAxis, dataZoom, legend, grid } = settings
-
-		const { needMultipleAxes, axisCount, axisUnitGroups, seriesAxisIndexes } = resolveSeriesAxisLayout(processedSeries)
+		const { graphic, tooltip, xAxis, yAxis, dataZoom, legend, grid, series: seriesOptions } = chartSettings
+		const { needMultipleAxes, axisCount, axisUnitGroups, seriesAxisIndexes } = axisLayout
 
 		let finalYAxis: any = yAxis
 		let seriesWithHallmarks = processedSeries
@@ -210,7 +215,9 @@ export default function MultiSeriesChart({
 						...yAxisAxisLabel,
 						margin: 4,
 						formatter:
-							existingFormatter ?? ((value: number) => formatTooltipValue(value, yAxisSymbols[index] ?? fallbackSymbol))
+							index === 0 && existingFormatter
+								? existingFormatter
+								: (value: number) => formatTooltipValue(value, yAxisSymbols[index] ?? fallbackSymbol)
 					},
 					position: index === 0 ? 'left' : index === 1 ? 'right' : 'left',
 					offset: index === 2 ? 40 : 0
@@ -223,102 +230,79 @@ export default function MultiSeriesChart({
 			}))
 		}
 
+		if (seriesOptions) {
+			seriesWithHallmarks = seriesWithHallmarks.map((item: any, index: number) =>
+				mergeDeep(item, Array.isArray(seriesOptions) ? (seriesOptions[index] ?? {}) : seriesOptions)
+			)
+		}
+
 		const gridLeftPadding = CHART_INSET
 
 		const shouldHideDataZoom = seriesWithHallmarks.every((s: any) => s.data.length < 2) || hideDataZoom
 
-		instance.setOption({
-			graphic,
-			tooltip:
-				showAggregateInTooltip && !alwaysShowTooltip
-					? {
-							...tooltip,
-							position: function (pos: [number, number], params: any, dom: any, rect: any, size: any) {
-								const tooltipWidth = size.contentSize[0]
-								const tooltipHeight = size.contentSize[1]
-								const chartWidth = size.viewSize[0]
-								const chartHeight = size.viewSize[1]
+		instance.setOption(
+			{
+				graphic,
+				tooltip:
+					showAggregateInTooltip && !alwaysShowTooltip
+						? {
+								...tooltip,
+								position: function (pos: [number, number], params: any, dom: any, rect: any, size: any) {
+									const tooltipWidth = size.contentSize[0]
+									const tooltipHeight = size.contentSize[1]
+									const chartWidth = size.viewSize[0]
+									const chartHeight = size.viewSize[1]
 
-								// If tooltip would be cut off at bottom, position it above the cursor
-								if (pos[1] + tooltipHeight > chartHeight - 50) {
-									return [Math.min(pos[0], chartWidth - tooltipWidth - 10), Math.max(10, pos[1] - tooltipHeight - 10)]
+									// If tooltip would be cut off at bottom, position it above the cursor
+									if (pos[1] + tooltipHeight > chartHeight - 50) {
+										return [Math.min(pos[0], chartWidth - tooltipWidth - 10), Math.max(10, pos[1] - tooltipHeight - 10)]
+									}
+
+									// Otherwise use default position
+									return pos
 								}
-
-								// Otherwise use default position
-								return pos
 							}
-						}
-					: tooltip,
-			grid: {
-				...chartGrid({ left: gridLeftPadding, bottom: shouldHideDataZoom ? CHART_INSET : CHART_ZOOM_RESERVE }),
-				...grid
+						: tooltip,
+				grid: {
+					...chartGrid({ left: gridLeftPadding, bottom: shouldHideDataZoom ? CHART_INSET : CHART_ZOOM_RESERVE }),
+					...grid
+				},
+				xAxis,
+				yAxis: finalYAxis,
+				legend: {
+					...chartHorizontalScrollLegend(legend),
+					data: series?.map((s: any) => s.name) || []
+				},
+				dataZoom: shouldHideDataZoom ? [] : [...dataZoom],
+				series: seriesWithHallmarks
 			},
-			xAxis,
-			yAxis: finalYAxis,
-			legend: {
-				...chartHorizontalScrollLegend(legend),
-				data: series?.map((s: any) => s.name) || []
-			},
-			dataZoom: shouldHideDataZoom ? [] : [...dataZoom],
-			series: seriesWithHallmarks
-		})
-
-		globalOutCleanupRef.current?.()
-		globalOutCleanupRef.current = null
-		let globalOutCleanup: (() => void) | null = null
+			{ replaceMerge: ['series', 'yAxis', 'dataZoom'] }
+		)
 
 		if (alwaysShowTooltip && seriesWithHallmarks.length > 0 && seriesWithHallmarks[0].data.length > 0) {
-			const showTip = () => {
-				if (instance.isDisposed()) return
-				instance.dispatchAction({
-					type: 'showTip',
-					seriesIndex: 0,
-					dataIndex: seriesWithHallmarks[0].data.length - 1,
-					position: [60, 0]
-				})
-			}
-
-			showTip()
-
-			const onGlobalOut = () => showTip()
-			if (!instance.isDisposed()) {
-				instance.on('globalout', onGlobalOut)
-			}
-			globalOutCleanupRef.current = () => {
-				if (instance.isDisposed()) return
-				instance.off('globalout', onGlobalOut)
-			}
-			globalOutCleanup = globalOutCleanupRef.current
-		}
-
-		return () => {
-			globalOutCleanup?.()
-			if (globalOutCleanupRef.current === globalOutCleanup) {
-				globalOutCleanupRef.current = null
-			}
+			latestTooltipDataIndexRef.current = seriesWithHallmarks[0].data.length - 1
+			showLatestTooltip()
+		} else {
+			latestTooltipDataIndexRef.current = null
 		}
 	}, [
-		defaultChartSettings,
+		chartSettings,
+		axisLayout,
 		processedSeries,
-		chartOptions,
 		hideDataZoom,
 		alwaysShowTooltip,
 		series,
-		id,
 		showAggregateInTooltip,
+		showLatestTooltip,
 		valueSymbol,
 		yAxisSymbols
 	])
 
-	useChartCleanup(id, () => {
-		globalOutCleanupRef.current?.()
-		globalOutCleanupRef.current = null
-		chartRef.current = null
-		if (hasNotifiedReadyRef.current) {
-			onReadyRef.current?.(null)
-			hasNotifiedReadyRef.current = false
-		}
-	})
-
-	return <ChartContainer id={id} chartClassName="my-auto h-[360px]" chartStyle={height ? { height } : undefined} />
+	return (
+		<ChartContainer
+			chartRef={containerRef}
+			chartClassName="my-auto h-[360px]"
+			chartStyle={height ? { height } : undefined}
+		/>
+	)
 }

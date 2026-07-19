@@ -1,5 +1,6 @@
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
-import type { AdaptedChartData, AdaptedLlamaAICartesianChart } from '~/containers/LlamaAI/utils/chartAdapter'
+import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
+import type { AdaptedLlamaAICartesianChart } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 
 export type ChartViewState = {
 	stacked: boolean
@@ -83,6 +84,9 @@ export function deriveCapabilities(config: ChartConfiguration, adaptedChart: Ada
 			const percentageEligibleSeries = adaptedChart.seriesMeta.filter(
 				(series) => series.isPrimaryAxis && series.canPercentage
 			)
+			const hasCumulativeSeries = adaptedChart.seriesMeta.some(
+				(series) => series.metricClass === 'flow' && series.baseType === 'bar'
+			)
 
 			const allowGrouping = !!config.displayOptions?.supportsGrouping && adaptedChart.groupingPolicy === 'always'
 			const hasCategoryLogos = !!(
@@ -95,7 +99,7 @@ export function deriveCapabilities(config: ChartConfiguration, adaptedChart: Ada
 			return {
 				allowStack: !!config.displayOptions?.canStack && stackEligibleSeries.length > 1,
 				allowPercentage: !!config.displayOptions?.canShowPercentage && percentageEligibleSeries.length > 1,
-				allowCumulative: !!config.displayOptions?.canShowCumulative && adaptedChart.isTimeChart,
+				allowCumulative: !!config.displayOptions?.canShowCumulative && adaptedChart.isTimeChart && hasCumulativeSeries,
 				allowGrouping,
 				allowHallmarks: adaptedChart.hasHallmarks,
 				allowLabels: hasCategoryLogos,
@@ -171,7 +175,8 @@ export function normalizeViewState(chartState: ChartViewState, capabilities: Cha
 		normalized.percentage = false
 	}
 
-	if (normalized.percentage) {
+	if (normalized.percentage || normalized.stacked) {
+		// Percentage and stacked charts both depend on a zero baseline, which a log axis cannot represent.
 		normalized.logScale = false
 	}
 
@@ -192,7 +197,7 @@ export function buildControlsModel(
 		showCumulative: capabilities.allowCumulative,
 		showHallmarks: capabilities.allowHallmarks,
 		showLabels: capabilities.allowLabels,
-		showLogScale: capabilities.allowLogScale && !state.percentage,
+		showLogScale: capabilities.allowLogScale && !state.percentage && !state.stacked,
 		groupingOptions: capabilities.groupingOptions
 	}
 }

@@ -1,0 +1,198 @@
+// @vitest-environment happy-dom
+
+import type * as echarts from 'echarts/core'
+import { act, useRef } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useChartResize } from './useChartResize'
+
+type FakeChart = {
+	isDisposed: ReturnType<typeof vi.fn>
+	resize: ReturnType<typeof vi.fn>
+}
+
+function resizeEntry(target: Element, width = 320, height = 180) {
+	return { target, contentRect: { width, height } } as unknown as ResizeObserverEntry
+}
+
+function ChartHarness({
+	instance,
+	observeElement = false,
+	showElement = true,
+	onElementResize
+}: {
+	instance: FakeChart
+	observeElement?: boolean
+	showElement?: boolean
+	onElementResize?: () => void
+}) {
+	const instanceRef = useRef(instance as unknown as echarts.ECharts)
+	const elementRef = useRef<HTMLDivElement>(null)
+	instanceRef.current = instance as unknown as echarts.ECharts
+	useChartResize(instanceRef, observeElement ? elementRef : undefined, onElementResize)
+	return observeElement && showElement ? <div ref={elementRef} /> : null
+}
+
+describe('useChartResize', () => {
+	let container: HTMLDivElement
+	let root: Root
+	let observerCallback: ResizeObserverCallback | null
+	let observerConstructCount: number
+	let observerObserve: ReturnType<typeof vi.fn>
+	let observerUnobserve: ReturnType<typeof vi.fn>
+	let observerDisconnect: ReturnType<typeof vi.fn>
+
+	beforeEach(() => {
+		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		observerCallback = null
+		observerConstructCount = 0
+		observerObserve = vi.fn()
+		observerUnobserve = vi.fn()
+		observerDisconnect = vi.fn()
+		vi.stubGlobal(
+			'ResizeObserver',
+			class {
+				constructor(callback: ResizeObserverCallback) {
+					observerConstructCount++
+					observerCallback = callback
+				}
+				observe = observerObserve
+				unobserve = observerUnobserve
+				disconnect = observerDisconnect
+			}
+		)
+		container = document.createElement('div')
+		document.body.appendChild(container)
+		root = createRoot(container)
+	})
+
+	afterEach(async () => {
+		await act(async () => root.unmount())
+		container.remove()
+		vi.restoreAllMocks()
+		vi.unstubAllGlobals()
+	})
+
+	it('uses one listener pair to resize every live chart instance', async () => {
+		const addListener = vi.spyOn(window, 'addEventListener')
+		const first = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		const second = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+
+		await act(async () =>
+			root.render(
+				<>
+					<ChartHarness instance={first} />
+					<ChartHarness instance={second} />
+				</>
+			)
+		)
+
+		expect(addListener.mock.calls.filter(([type]) => type === 'resize')).toHaveLength(1)
+		expect(addListener.mock.calls.filter(([type]) => type === 'chartResize')).toHaveLength(1)
+
+		window.dispatchEvent(new Event('resize'))
+		window.dispatchEvent(new Event('chartResize'))
+		expect(first.resize).toHaveBeenCalledTimes(2)
+		expect(second.resize).toHaveBeenCalledTimes(2)
+	})
+
+	it('uses one element observer and resizes only the chart whose container changed', async () => {
+		const first = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		const second = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		const firstElementResize = vi.fn()
+		const secondElementResize = vi.fn()
+
+		await act(async () =>
+			root.render(
+				<>
+					<ChartHarness instance={first} observeElement onElementResize={firstElementResize} />
+					<ChartHarness instance={second} observeElement onElementResize={secondElementResize} />
+				</>
+			)
+		)
+
+		const elements = container.querySelectorAll('div')
+		expect(observerConstructCount).toBe(1)
+		expect(observerObserve).toHaveBeenCalledTimes(2)
+		observerCallback?.([resizeEntry(elements[1])], {} as ResizeObserver)
+		expect(first.resize).not.toHaveBeenCalled()
+		expect(second.resize).toHaveBeenCalledOnce()
+		expect(firstElementResize).not.toHaveBeenCalled()
+		expect(secondElementResize).toHaveBeenCalledOnce()
+
+		window.dispatchEvent(new Event('resize'))
+		expect(first.resize).not.toHaveBeenCalled()
+		expect(second.resize).toHaveBeenCalledOnce()
+
+		window.dispatchEvent(new Event('chartResize'))
+		expect(first.resize).toHaveBeenCalledOnce()
+		expect(second.resize).toHaveBeenCalledTimes(2)
+
+		await act(async () => root.render(null))
+		expect(observerUnobserve).toHaveBeenCalledTimes(2)
+		expect(observerDisconnect).toHaveBeenCalledOnce()
+	})
+
+	it('waits to resize an observed chart until its hidden container becomes visible', async () => {
+		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		const onElementResize = vi.fn()
+		await act(async () =>
+			root.render(<ChartHarness instance={instance} observeElement onElementResize={onElementResize} />)
+		)
+		const element = container.querySelector('div')!
+
+		observerCallback?.([resizeEntry(element, 0, 180)], {} as ResizeObserver)
+		observerCallback?.([resizeEntry(element, 320, 0)], {} as ResizeObserver)
+		expect(instance.resize).not.toHaveBeenCalled()
+		expect(onElementResize).not.toHaveBeenCalled()
+
+		observerCallback?.([resizeEntry(element, 320, 180)], {} as ResizeObserver)
+		expect(instance.resize).toHaveBeenCalledOnce()
+		expect(onElementResize).toHaveBeenCalledOnce()
+	})
+
+	it('moves observation to a chart element recreated after an empty render', async () => {
+		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		await act(async () => root.render(<ChartHarness instance={instance} observeElement />))
+		const firstElement = container.querySelector('div')!
+		expect(observerObserve).toHaveBeenLastCalledWith(firstElement)
+		await act(async () => root.render(<ChartHarness instance={instance} observeElement />))
+		expect(observerObserve).toHaveBeenCalledOnce()
+		expect(observerUnobserve).not.toHaveBeenCalled()
+
+		await act(async () => root.render(<ChartHarness instance={instance} observeElement showElement={false} />))
+		expect(observerUnobserve).toHaveBeenLastCalledWith(firstElement)
+
+		await act(async () => root.render(<ChartHarness instance={instance} observeElement />))
+		const nextElement = container.querySelector('div')!
+		expect(nextElement).not.toBe(firstElement)
+		expect(observerObserve).toHaveBeenLastCalledWith(nextElement)
+
+		observerCallback?.([resizeEntry(firstElement)], {} as ResizeObserver)
+		expect(instance.resize).not.toHaveBeenCalled()
+		observerCallback?.([resizeEntry(nextElement)], {} as ResizeObserver)
+		expect(instance.resize).toHaveBeenCalledOnce()
+	})
+
+	it('skips disposed instances', async () => {
+		const instance = { isDisposed: vi.fn(() => true), resize: vi.fn() }
+		await act(async () => root.render(<ChartHarness instance={instance} />))
+
+		window.dispatchEvent(new Event('resize'))
+
+		expect(instance.resize).not.toHaveBeenCalled()
+	})
+
+	it('removes the shared listener pair after the last chart unregisters', async () => {
+		const removeListener = vi.spyOn(window, 'removeEventListener')
+		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		await act(async () => root.render(<ChartHarness instance={instance} />))
+
+		await act(async () => root.render(null))
+
+		expect(removeListener.mock.calls.filter(([type]) => type === 'resize')).toHaveLength(1)
+		expect(removeListener.mock.calls.filter(([type]) => type === 'chartResize')).toHaveLength(1)
+		window.dispatchEvent(new Event('resize'))
+		expect(instance.resize).not.toHaveBeenCalled()
+	})
+})

@@ -1,7 +1,7 @@
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { formattedNum } from '~/utils'
 import { useAaveGHOReserve, useAaveMarkets, useAaveAPYHistory, num, pct } from './api'
 import type { TimeWindow } from './api'
@@ -13,10 +13,14 @@ import {
 	MetricStrip,
 	SectionHeader,
 	WindowToggle,
-	formatPct
+	formatPct,
+	AAVE_AREA_EXPORT,
+	AAVE_PERCENT_TIME_CHART_OPTIONS
 } from './shared'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 
 const GHO_TOKEN = '0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f'
 const ETH_MAIN_MARKET = '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2'
@@ -26,6 +30,15 @@ const WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
 	{ value: 'LAST_MONTH', label: '1M' },
 	{ value: 'LAST_SIX_MONTHS', label: '6M' },
 	{ value: 'LAST_YEAR', label: '1Y' }
+]
+
+const BORROW_APY_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Borrow APY',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'Borrow APY' },
+		color: '#AB47BC'
+	}
 ]
 
 interface GHOMarketRow {
@@ -106,17 +119,12 @@ export default function GHO() {
 	const { reserves, isLoading: marketsLoading } = useAaveMarkets()
 	const [selectedWindow, setSelectedWindow] = useState<TimeWindow>('LAST_SIX_MONTHS')
 
-	const { chartData: borrowApyChart, isLoading: apyLoading } = useAaveAPYHistory(
+	const { dataset: borrowApyDataset, isLoading: apyLoading } = useAaveAPYHistory(
 		1,
 		ETH_MAIN_MARKET,
 		GHO_TOKEN,
 		selectedWindow,
 		'borrow'
-	)
-
-	const borrowAreaData = useMemo(
-		() => borrowApyChart.map((d) => ({ date: d.date, 'Borrow APY': d.APY })),
-		[borrowApyChart]
 	)
 
 	const ghoMarketRows = useMemo<GHOMarketRow[]>(
@@ -192,15 +200,16 @@ export default function GHO() {
 
 				{apyLoading ? (
 					<CardSkeleton title="" />
-				) : borrowAreaData.length > 0 ? (
+				) : borrowApyDataset.source.length > 0 ? (
 					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
-						<AreaChart
-							chartData={borrowAreaData}
-							stacks={['Borrow APY']}
-							stackColors={{ 'Borrow APY': '#AB47BC' }}
+						<MultiSeriesChart2
+							dataset={borrowApyDataset}
+							charts={BORROW_APY_CHART}
 							valueSymbol="%"
 							title=""
 							height="400px"
+							chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
+							exportButtons={AAVE_AREA_EXPORT}
 						/>
 					</div>
 				) : (

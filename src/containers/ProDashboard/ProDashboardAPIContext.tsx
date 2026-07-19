@@ -17,8 +17,11 @@ import { useAuthContext } from '~/auth'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import pb from '~/utils/pocketbase'
 import { type CustomTimePeriod, dashboardReducer, initDashboardState, type TimePeriod } from './dashboardReducer'
-import { useAutoSave, useDashboardAPI, useDashboardPermissions, useFreeTierStatus } from './hooks'
+import { useAutoSave } from './hooks/useAutoSave'
+import { useDashboardAPI } from './hooks/useDashboardAPI'
+import { useDashboardPermissions } from './hooks/useDashboardPermissions'
 import { useDashboardStream } from './hooks/useDashboardStream'
+import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartsData, useProtocolsAndChains } from './queries'
 import { type Dashboard, matchesDashboardKey } from './services/DashboardAPI'
 import type {
@@ -35,6 +38,7 @@ import type {
 	TableFilters,
 	UnifiedTableConfig
 } from './types'
+import { limitMultiChartItems } from './types'
 import { useDashboardActions } from './useDashboardActions'
 import { cleanItemsForSaving } from './utils/dashboardUtils'
 
@@ -1062,7 +1066,7 @@ function ProDashboardAPIProviderInner({
 			if (item.kind === 'chart') {
 				chartItems.push(item)
 			} else if (item.kind === 'multi') {
-				chartItems.push(...item.items)
+				chartItems.push(...limitMultiChartItems(item.items))
 			}
 		}
 		return chartItems
@@ -1106,7 +1110,7 @@ function ProDashboardAPIProviderInner({
 			if (item.kind === 'multi') {
 				return {
 					...item,
-					items: item.items.map(resolveChartItem)
+					items: limitMultiChartItems(item.items).map(resolveChartItem)
 				}
 			}
 

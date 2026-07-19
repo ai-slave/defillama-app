@@ -15,7 +15,7 @@ import type { TableServerData } from './server/tableQueries'
 import ChainCharts from './services/ChainCharts'
 import type { Dashboard } from './services/DashboardAPI'
 import ProtocolCharts from './services/ProtocolCharts'
-import type { ChartConfig, DashboardItemConfig, YieldsChartConfig } from './types'
+import { type ChartConfig, type DashboardItemConfig, limitMultiChartItems, type YieldsChartConfig } from './types'
 
 export interface ProDashboardServerProps {
 	dashboard: Dashboard | null
@@ -140,7 +140,7 @@ export function extractChartItems(items: DashboardItemConfig[]): ChartConfig[] {
 	const chartItems: ChartConfig[] = []
 	for (const item of items) {
 		if (item.kind === 'chart') chartItems.push(item)
-		else if (item.kind === 'multi') chartItems.push(...item.items)
+		else if (item.kind === 'multi') chartItems.push(...limitMultiChartItems(item.items))
 	}
 	return chartItems
 }

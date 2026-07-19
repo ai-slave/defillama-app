@@ -1,74 +1,125 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { createChartRow } from '~/components/ECharts/dynamicRow'
+import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { assignColors } from './api'
+import { createSeriesConfigs } from './chartDefaults'
 
-interface ChartPayload {
-	data: Array<Record<string, number>>
+type ChartRow = { date: number } & Record<string, number | undefined>
+
+export interface SparkDistributionChartPayload {
+	data: ChartRow[]
 	keys: string[]
 }
 
-interface DistributionResponse {
+export interface DistributionResponse {
 	meta: { updatedAt: string }
 	charts: {
-		actualRevenue: ChartPayload
-		revenueProjection: ChartPayload
-		susdsTvl: ChartPayload
-		xrSusds: ChartPayload
-		xrSusdc: ChartPayload
-		stakedUsdsTvl: ChartPayload
+		actualRevenue: SparkDistributionChartPayload
+		revenueProjection: SparkDistributionChartPayload
+		susdsTvl: SparkDistributionChartPayload
+		xrSusds: SparkDistributionChartPayload
+		xrSusdc: SparkDistributionChartPayload
+		stakedUsdsTvl: SparkDistributionChartPayload
 	}
 }
 
-interface ProcessedChart {
-	chartData: Array<Record<string, number>>
-	keys: string[]
-	colors: Record<string, string>
+export interface ProcessedChart {
+	dataset: MultiSeriesChart2Dataset
+	charts: ReturnType<typeof createSeriesConfigs>
+}
+
+export interface DistributionViewModel {
+	actualRevenue: ProcessedChart
+	revenueProjection: ProcessedChart
+	susdsTvl: ProcessedChart
+	xrSusds: ProcessedChart
+	xrSusdc: ProcessedChart
+	stakedUsdsTvl: ProcessedChart
+}
+
+function getKeys(chart: SparkDistributionChartPayload, fallbackKey: string) {
+	const keys = new Array<string>(chart.keys.length)
+	for (let i = 0; i < chart.keys.length; i++) {
+		keys[i] = chart.keys[i] === 'undefined' ? fallbackKey : chart.keys[i]
+	}
+	return keys
+}
+
+export function buildSparkDistributionChart(
+	chart: SparkDistributionChartPayload,
+	type: 'line' | 'bar',
+	stack: string | undefined,
+	fallbackKey = 'USD'
+): ProcessedChart {
+	const keys = getKeys(chart, fallbackKey)
+	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(chart.data.length)
+
+	for (let i = 0; i < chart.data.length; i++) {
+		const input = chart.data[i]
+		const row = createChartRow<number>(input.date * 1e3)
+		for (let j = 0; j < chart.keys.length; j++) {
+			row[keys[j]] = input[chart.keys[j]] ?? 0
+		}
+		source[i] = row
+	}
+
+	const colors = assignColors(keys)
+	return {
+		dataset: { source, dimensions: ['timestamp', ...keys] },
+		charts: createSeriesConfigs(keys, type, colors, stack)
+	}
+}
+
+export function buildSparkCumulativeBarAsLineChart(
+	chart: SparkDistributionChartPayload,
+	fallbackKey = 'USD'
+): ProcessedChart {
+	const keys = getKeys(chart, fallbackKey)
+	const totals = new Array<number>(keys.length).fill(0)
+	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(chart.data.length)
+
+	// Revenue projection values are daily flows: accumulate them once, then render the result as lines.
+	for (let i = 0; i < chart.data.length; i++) {
+		const input = chart.data[i]
+		const row = createChartRow<number>(input.date * 1e3)
+		for (let j = 0; j < chart.keys.length; j++) {
+			totals[j] += input[chart.keys[j]] ?? 0
+			row[keys[j]] = totals[j]
+		}
+		source[i] = row
+	}
+
+	const colors = assignColors(keys)
+	return {
+		dataset: { source, dimensions: ['timestamp', ...keys] },
+		charts: createSeriesConfigs(keys, 'line', colors, 'a')
+	}
+}
+
+export function buildDistributionViewModel({ charts }: DistributionResponse): DistributionViewModel {
+	return {
+		actualRevenue: buildSparkDistributionChart(charts.actualRevenue, 'bar', 'a'),
+		revenueProjection: buildSparkCumulativeBarAsLineChart(charts.revenueProjection),
+		susdsTvl: buildSparkDistributionChart(charts.susdsTvl, 'line', 'a'),
+		xrSusds: buildSparkDistributionChart(charts.xrSusds, 'bar', 'a'),
+		xrSusdc: buildSparkDistributionChart(charts.xrSusdc, 'bar', 'a'),
+		stakedUsdsTvl: buildSparkDistributionChart(charts.stakedUsdsTvl, 'line', 'a')
+	}
 }
 
 export function useDistributionData() {
-	const query = useQuery<DistributionResponse>({
+	const query = useQuery<DistributionViewModel>({
 		queryKey: ['spark-distribution-rewards'],
 		queryFn: async () => {
 			const res = await fetch('/api/public/spark/distribution-rewards')
 			if (!res.ok) throw new Error(`Distribution API error: ${res.status}`)
-			return res.json()
+			const response: DistributionResponse = await res.json()
+			return buildDistributionViewModel(response)
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
 
-	return useMemo(() => {
-		if (!query.data?.charts) {
-			return { data: null, isLoading: query.isLoading || query.isPending }
-		}
-
-		const { charts } = query.data
-
-		const processChart = (chart: ChartPayload, fallbackKey = 'USD'): ProcessedChart => {
-			const needsRename = chart.keys.includes('undefined')
-			const keys = needsRename ? chart.keys.map((k) => (k === 'undefined' ? fallbackKey : k)) : chart.keys
-			const chartData = needsRename
-				? chart.data.map((row) => {
-						const next: Record<string, number> = {}
-						for (const [k, v] of Object.entries(row)) {
-							next[k === 'undefined' ? fallbackKey : k] = v
-						}
-						return next
-					})
-				: chart.data
-			return { chartData, keys, colors: assignColors(keys) }
-		}
-
-		return {
-			data: {
-				actualRevenue: processChart(charts.actualRevenue),
-				revenueProjection: processChart(charts.revenueProjection),
-				susdsTvl: processChart(charts.susdsTvl),
-				xrSusds: processChart(charts.xrSusds),
-				xrSusdc: processChart(charts.xrSusdc),
-				stakedUsdsTvl: processChart(charts.stakedUsdsTvl)
-			},
-			isLoading: false
-		}
-	}, [query.data, query.isLoading, query.isPending])
+	if (!query.data) return { data: null, isLoading: query.isLoading || query.isPending }
+	return { data: query.data, isLoading: false }
 }

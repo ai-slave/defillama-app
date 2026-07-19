@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getTooltipRawYValue } from '../tooltipValue'
+import { getTooltipRawYValue } from '../../formatters'
 
 describe('getTooltipRawYValue', () => {
 	const row = { timestamp: 1700000000000, '180 day lock-up': 42, Team: 7 }
@@ -31,6 +31,16 @@ describe('getTooltipRawYValue', () => {
 
 	it('reads the y value from [ts, y] value arrays', () => {
 		const item = { seriesName: 'Price', value: [1700000000000, 3.5] }
+		expect(getTooltipRawYValue(item, item.seriesName)).toBe(3.5)
+	})
+
+	it('reads an encoded y dimension from dataset array rows', () => {
+		const item = {
+			seriesName: 'hasOwnProperty',
+			data: [1700000000000, 7, 3.5],
+			value: [1700000000000, 7, 3.5],
+			encode: { x: [0], y: [2] }
+		}
 		expect(getTooltipRawYValue(item, item.seriesName)).toBe(3.5)
 	})
 

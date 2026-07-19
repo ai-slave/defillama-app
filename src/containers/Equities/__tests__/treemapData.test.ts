@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
 	buildEquitiesTreemap,
+	buildEquitiesTreemapLeaves,
+	groupEquitiesTreemapLeaves,
 	prepareEquitiesTreemapCsv,
+	rankEquitiesTreemapRows,
 	type IEquitiesTreemapGroup,
 	type IEquitiesTreemapLeaf
 } from '../treemapData'
@@ -30,7 +33,7 @@ function makeRow(overrides: Partial<IEquitiesListCompanyRow>): IEquitiesListComp
 		priceToBook: null,
 		enterpriseValueToEbitda: null,
 		holdersYield: null,
-		updatedAt: null,
+		updatedAt: '2026-01-01T00:00:00Z',
 		revenueTTM: null,
 		grossProfitTTM: null,
 		earningsTTM: null,
@@ -93,6 +96,17 @@ describe('buildEquitiesTreemap', () => {
 		expect(result.treeData.map((n) => n.name)).toEqual(['BIG', 'MID', 'SMALL'])
 	})
 
+	it('keeps input order for equal sizes and treats a non-positive limit as unlimited', () => {
+		const rows = [
+			makeRow({ ticker: 'FIRST', marketCap: 100 }),
+			makeRow({ ticker: 'SECOND', marketCap: 100 }),
+			makeRow({ ticker: 'SMALL', marketCap: 10 })
+		]
+		const result = buildEquitiesTreemap(rows, { ...baseOptions, limit: 0 })
+		expect(result.treeData.map((node) => node.name)).toEqual(['FIRST', 'SECOND', 'SMALL'])
+		expect(result.truncatedCount).toBe(0)
+	})
+
 	it('applies limit after sorting and reports cut rows as truncated, not excluded', () => {
 		const rows = [
 			makeRow({ ticker: 'A', marketCap: 1 }),
@@ -110,6 +124,26 @@ describe('buildEquitiesTreemap', () => {
 		const result = buildEquitiesTreemap(rows, baseOptions)
 		const leaf = result.treeData[0] as IEquitiesTreemapLeaf
 		expect(leaf.value).toEqual([100, -2.5])
+	})
+
+	it('prepares the exact loss, neutral and gain color scale on canonical leaves', () => {
+		const result = buildEquitiesTreemap(
+			[
+				makeRow({ ticker: 'LOSS_CAP', marketCap: 500, priceChangePercentage1d: -3 }),
+				makeRow({ ticker: 'LOSS_MID', marketCap: 400, priceChangePercentage1d: -1.5 }),
+				makeRow({ ticker: 'FLAT', marketCap: 300, priceChangePercentage1d: 0 }),
+				makeRow({ ticker: 'GAIN_MID', marketCap: 200, priceChangePercentage1d: 1.5 }),
+				makeRow({ ticker: 'GAIN_CAP', marketCap: 100, priceChangePercentage1d: 3 })
+			],
+			baseOptions
+		)
+		expect(result.leaves.map((leaf) => leaf.itemStyle.color)).toEqual([
+			'rgb(148, 46, 56)',
+			'rgb(159, 108, 113)',
+			'#aaaaaa',
+			'rgb(104, 165, 115)',
+			'rgb(38, 159, 60)'
+		])
 	})
 
 	it('uses null color when color metric is missing', () => {
@@ -144,6 +178,24 @@ describe('buildEquitiesTreemap', () => {
 		const groups = result.treeData as IEquitiesTreemapGroup[]
 		expect(groups.map((g) => g.name)).toEqual(['Healthcare', 'Technology'])
 		expect(groups[1].children.map((c) => c.name)).toEqual(['T2', 'T1'])
+	})
+
+	it('reuses canonical leaves between flat and grouped presentation', () => {
+		const ranking = rankEquitiesTreemapRows(
+			[
+				makeRow({ ticker: 'TECH', sector: 'Technology', marketCap: 200 }),
+				makeRow({ ticker: 'HEALTH', sector: 'Healthcare', marketCap: 100 })
+			],
+			'marketCap'
+		)
+		const leaves = buildEquitiesTreemapLeaves(ranking, 'priceChangePercentage1d')
+		const flat = groupEquitiesTreemapLeaves(leaves, 'none')
+		const grouped = groupEquitiesTreemapLeaves(leaves, 'sector') as IEquitiesTreemapGroup[]
+
+		expect(flat).toBe(leaves)
+		expect(grouped.map((group) => group.name)).toEqual(['Technology', 'Healthcare'])
+		expect(grouped[0].children[0]).toBe(leaves[0])
+		expect(grouped[1].children[0]).toBe(leaves[1])
 	})
 
 	it('sets group value to the sum of children sizes', () => {
@@ -190,7 +242,7 @@ describe('buildEquitiesTreemap', () => {
 
 describe('prepareEquitiesTreemapCsv', () => {
 	it('exports the displayed leaves from grouped chart data', () => {
-		const { treeData } = buildEquitiesTreemap(
+		const { leaves } = buildEquitiesTreemap(
 			[
 				makeRow({ ticker: 'BIG', name: 'Big Co', marketCap: 200, priceChangePercentage1d: 2 }),
 				makeRow({ ticker: 'SMALL', name: 'Small Co', marketCap: 100, priceChangePercentage1d: null })
@@ -200,7 +252,7 @@ describe('prepareEquitiesTreemapCsv', () => {
 
 		expect(
 			prepareEquitiesTreemapCsv({
-				nodes: treeData,
+				leaves,
 				sizeLabel: 'Market Cap',
 				colorLabel: 'Price 1D',
 				filename: 'equities-market-map'

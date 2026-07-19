@@ -6,7 +6,6 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
@@ -17,6 +16,7 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
+import { buildETFFlowChartData } from './chartData'
 import type { ETFOverviewProps, IETFSnapshotRow } from './types'
 
 const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
@@ -48,51 +48,10 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const chartData = React.useMemo(() => {
-		const bitcoin: Record<string | number, number> = {}
-		const ethereum: Record<string | number, number> = {}
-		const solana: Record<string | number, number> = {}
-
-		let totalBitcoin = 0
-		let totalEthereum = 0
-		let totalSolana = 0
-
-		// `flows` keys are unix timestamps (integer-like keys), so `Object.entries(flows)` iterates
-		// in ascending numeric order. Cumulative running totals rely on this ordering.
-		// We intentionally use `bitcoin` as the date anchor while iterating `flows` by `groupBy`.
-		// Rendering later iterates `Object.entries(bitcoin)`, so `ethereum`/`solana` values on dates
-		// without Bitcoin are dropped, while `totalBitcoin`/`totalEthereum`/`totalSolana` stay aligned.
-		for (const [flowDate, flowEntry] of Object.entries(flows)) {
-			const date =
-				groupBy === 'daily' || groupBy === 'cumulative' ? flowDate : getBucketTimestampSec(+flowDate, groupBy)
-
-			bitcoin[date] = (bitcoin[date] ?? 0) + (flowEntry['Bitcoin'] ?? 0) + totalBitcoin
-			if (flowEntry['Ethereum'] != null) {
-				ethereum[date] = (ethereum[date] ?? 0) + (flowEntry['Ethereum'] ?? 0) + totalEthereum
-			}
-			if (flowEntry['Solana'] != null) {
-				solana[date] = (solana[date] ?? 0) + (flowEntry['Solana'] ?? 0) + totalSolana
-			}
-
-			if (groupBy === 'cumulative') {
-				totalBitcoin += flowEntry['Bitcoin'] ?? 0
-				totalEthereum += flowEntry['Ethereum'] ?? 0
-				totalSolana += flowEntry['Solana'] ?? 0
-			}
-		}
-
 		const seriesType: 'line' | 'bar' = groupBy === 'cumulative' ? 'line' : 'bar'
-		const source: Array<Record<string, number | null>> = []
-		for (const [date] of Object.entries(bitcoin)) {
-			source.push({
-				timestamp: +date * 1000,
-				Bitcoin: bitcoin[date] ?? null,
-				Ethereum: ethereum[date] ?? null,
-				Solana: solana[date] ?? null
-			})
-		}
 
 		return {
-			source,
+			source: buildETFFlowChartData(flows, groupBy),
 			allCharts: [
 				{
 					type: seriesType,

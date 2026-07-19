@@ -213,4 +213,25 @@ describe('/api/public/protocols/charts', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith([])
 	})
+
+	it('normalizes nullable NFT marketplace volume without changing legitimate zeroes', async () => {
+		fetchNftMarketplaceVolumesMock.mockResolvedValue([
+			{ day: '2026-07-16', exchangeName: 'OpenSea', sumUsd: null },
+			{ day: '2026-07-17', exchangeName: 'OpenSea', sumUsd: 0 },
+			{ day: '2026-07-17', exchangeName: 'Blur', sumUsd: 10 }
+		])
+		const req = {
+			method: 'GET',
+			query: { kind: 'nft-volume', protocol: 'OpenSea' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith([
+			[Date.parse('2026-07-16'), 0],
+			[Date.parse('2026-07-17'), 0]
+		])
+	})
 })

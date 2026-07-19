@@ -20,7 +20,7 @@ type ChartCaptureOptions = {
 	[key: string]: unknown
 }
 
-async function captureChartById(chartId: string, title: string, isDark: boolean): Promise<CapturedChart | null> {
+export async function captureChartById(chartId: string, title: string, isDark: boolean): Promise<CapturedChart | null> {
 	const wrapper = document.querySelector(`[data-chart-id="${chartId}"]`) as HTMLElement
 	if (!wrapper) return null
 
@@ -40,13 +40,15 @@ async function captureChartById(chartId: string, title: string, isDark: boolean)
 		top: 0;
 	`
 	document.body.appendChild(tempContainer)
+	let tempChart: echarts.ECharts | null = null
 
 	try {
-		const tempChart = echarts.init(tempContainer, null, {
+		tempChart = echarts.init(tempContainer, null, {
 			width: CAPTURE_WIDTH,
 			height: CAPTURE_HEIGHT,
 			renderer: 'canvas'
 		})
+		const captureChart = tempChart
 
 		const currentOptions = existingChart.getOption() as ChartCaptureOptions
 
@@ -78,33 +80,39 @@ async function captureChartById(chartId: string, title: string, isDark: boolean)
 					}
 		}
 
-		tempChart.setOption(currentOptions)
-
-		await new Promise<void>((resolve) => {
+		await new Promise<void>((resolve, reject) => {
 			let timeoutId: ReturnType<typeof setTimeout> | null = null
+			const cleanup = () => {
+				if (timeoutId) clearTimeout(timeoutId)
+				captureChart.off('rendered', handler as any)
+			}
 
 			const handler = () => {
-				if (timeoutId) clearTimeout(timeoutId)
-				tempChart.off('rendered', handler as any)
+				cleanup()
 				resolve()
 			}
 
 			timeoutId = setTimeout(() => {
-				tempChart.off('rendered', handler as any)
+				cleanup()
 				resolve()
 			}, CAPTURE_TIMEOUT)
 
-			tempChart.on('rendered', handler as any)
+			// Subscribe before setOption because a canvas render can complete synchronously.
+			captureChart.on('rendered', handler as any)
+			try {
+				captureChart.setOption(currentOptions)
+			} catch (error) {
+				cleanup()
+				reject(error)
+			}
 		})
 
-		const dataURL = tempChart.getDataURL({
+		const dataURL = captureChart.getDataURL({
 			type: 'png',
 			pixelRatio: 2,
 			backgroundColor: isDark ? '#0b1214' : '#ffffff',
 			excludeComponents: ['toolbox', 'dataZoom']
 		})
-
-		tempChart.dispose()
 
 		return {
 			chartId,
@@ -115,7 +123,8 @@ async function captureChartById(chartId: string, title: string, isDark: boolean)
 		console.error('Chart capture error:', error)
 		return null
 	} finally {
-		document.body.removeChild(tempContainer)
+		if (tempChart && !tempChart.isDisposed()) tempChart.dispose()
+		tempContainer.remove()
 	}
 }
 

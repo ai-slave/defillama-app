@@ -11,7 +11,7 @@ import type {
 	StablecoinRatesResponse,
 	StablecoinRecentCoinsDataResponse,
 	StablecoinVolumeChainChartKind,
-	StablecoinVolumeChartResponse,
+	StablecoinVolumeChartResponseFor,
 	StablecoinVolumeGlobalChartKind,
 	StablecoinVolumeTokenChartKind,
 	StablecoinsListResponse
@@ -100,9 +100,9 @@ export const fetchStablecoinChartAllApi = async (): Promise<StablecoinChartRespo
 /**
  * Fetch stablecoin volume chart data.
  */
-export const fetchStablecoinVolumeChartApi = async (
-	chart: StablecoinVolumeGlobalChartKind
-): Promise<StablecoinVolumeChartResponse> => {
+export const fetchStablecoinVolumeChartApi = async <TChart extends StablecoinVolumeGlobalChartKind>(
+	chart: TChart
+): Promise<StablecoinVolumeChartResponseFor<TChart>> => {
 	const pathByChart: Record<StablecoinVolumeGlobalChartKind, string> = {
 		total: '',
 		chain: '/chain-breakdown',
@@ -110,14 +110,14 @@ export const fetchStablecoinVolumeChartApi = async (
 		currency: '/currency-breakdown'
 	}
 
-	return fetchJson<StablecoinVolumeChartResponse>(`${STABLECOIN_VOLUME_CHART_API}${pathByChart[chart]}`)
+	return fetchJson<StablecoinVolumeChartResponseFor<TChart>>(`${STABLECOIN_VOLUME_CHART_API}${pathByChart[chart]}`)
 }
 
-export const fetchStablecoinChainVolumeChartApi = async (
+export const fetchStablecoinChainVolumeChartApi = async <TChart extends StablecoinVolumeChainChartKind>(
 	chain: string,
-	chart: StablecoinVolumeChainChartKind,
+	chart: TChart,
 	chainMetadata: StablecoinVolumeChainMetadata
-): Promise<StablecoinVolumeChartResponse> => {
+): Promise<StablecoinVolumeChartResponseFor<TChart>> => {
 	const chainId = getStablecoinVolumeChainId(chain, chainMetadata)
 	if (!chainId) throw new Error(`Stablecoin volume chain id not found for ${chain}`)
 	const pathByChart: Record<StablecoinVolumeChainChartKind, string> = {
@@ -126,20 +126,20 @@ export const fetchStablecoinChainVolumeChartApi = async (
 		currency: `/chain/${encodeURIComponent(chainId)}/currency-breakdown`
 	}
 
-	return fetchJson<StablecoinVolumeChartResponse>(`${STABLECOIN_VOLUME_CHART_API}${pathByChart[chart]}`)
+	return fetchJson<StablecoinVolumeChartResponseFor<TChart>>(`${STABLECOIN_VOLUME_CHART_API}${pathByChart[chart]}`)
 }
 
-export const fetchStablecoinTokenVolumeChartApi = async (
+export const fetchStablecoinTokenVolumeChartApi = async <TChart extends StablecoinVolumeTokenChartKind>(
 	token: string,
-	chart: StablecoinVolumeTokenChartKind
-): Promise<StablecoinVolumeChartResponse> => {
+	chart: TChart
+): Promise<StablecoinVolumeChartResponseFor<TChart>> => {
 	const encodedToken = encodeURIComponent(token)
 	const pathByChart: Record<StablecoinVolumeTokenChartKind, string> = {
 		total: `/token/${encodedToken}`,
 		chain: `/token/${encodedToken}/chain-breakdown`
 	}
 
-	return fetchJson<StablecoinVolumeChartResponse>(`${STABLECOIN_VOLUME_CHART_API}${pathByChart[chart]}`)
+	return fetchJson<StablecoinVolumeChartResponseFor<TChart>>(`${STABLECOIN_VOLUME_CHART_API}${pathByChart[chart]}`)
 }
 
 /**

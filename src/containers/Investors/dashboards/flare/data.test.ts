@@ -1,0 +1,253 @@
+import { describe, expect, test } from 'vitest'
+import {
+	buildFlareFAssetsData,
+	buildFlareNetworkData,
+	buildFlareOverviewData,
+	buildFlareStakingData,
+	buildFlareTokenomicsData,
+	type FAssetsAPIResponse,
+	type NetworkAPIResponse,
+	type OverviewAPIResponse,
+	type StakingAPIResponse,
+	type TokenomicsAPIResponse
+} from './data'
+import { parseDateToTimestampMs, type UpstreamChart } from './transform'
+
+const formatted = (value: number) => ({ value, formatted: `formatted:${value}` })
+
+function chart(dates: string[], series: UpstreamChart['series'], title?: string): UpstreamChart {
+	return { dates, series, title }
+}
+
+describe('Flare query data builders', () => {
+	test('preserves the mixed date contract for calendar, seconds, and milliseconds values', () => {
+		expect(parseDateToTimestampMs('2026-01-02')).toBe(Date.UTC(2026, 0, 2))
+		expect(parseDateToTimestampMs('1700000000')).toBe(1_700_000_000_000)
+		expect(parseDateToTimestampMs('1700000000000')).toBe(1_700_000_000_000)
+		expect(parseDateToTimestampMs('2026-01-02T12:30:00Z')).toBe(Date.parse('2026-01-02T12:30:00Z'))
+	})
+
+	test('builds overview datasets once while retaining stablecoin filtering and stack order', () => {
+		const result = buildFlareOverviewData({
+			tvl: {
+				tvlChart: chart(
+					['2026-01-02', '1700000000'],
+					[
+						{ name: 'TVL A', data: [10, 11] },
+						{ name: 'TVL B', data: [20, 21] }
+					]
+				),
+				kpis: { currentTvl: formatted(31) }
+			},
+			stablecoins: {
+				stablecoinChart: chart(
+					['1700000000000'],
+					[
+						{ name: 'Native', data: [7] },
+						{ name: 'Total Supply', data: [12] },
+						{ name: 'Bridged', data: [5] }
+					]
+				),
+				kpis: {
+					currentCirculating: formatted(12),
+					currentMinted: formatted(7),
+					currentBridged: formatted(5)
+				}
+			},
+			fxrp: {
+				kpis: {
+					totalFxrpSupply: formatted(9),
+					pctLockedInDefi: formatted(8),
+					valueLockedInDefiUsd: formatted(7)
+				}
+			}
+		} satisfies OverviewAPIResponse)
+
+		expect(result.tvl.dataset.source).toEqual([
+			{ timestamp: Date.UTC(2026, 0, 2), 'TVL A': 10, 'TVL B': 20 },
+			{ timestamp: 1_700_000_000_000, 'TVL A': 11, 'TVL B': 21 }
+		])
+		expect(result.stables.dataset.dimensions).toEqual(['timestamp', 'Native', 'Bridged'])
+		expect(result.stables.charts.map(({ name, stack }) => [name, stack])).toEqual([
+			['Native', 'Total'],
+			['Bridged', 'Total']
+		])
+		expect(result.stables.kpis).toEqual({
+			total: 'formatted:12',
+			native: 'formatted:7',
+			bridged: 'formatted:5'
+		})
+	})
+
+	test('keeps daily and cumulative burn snapshots and exact emissions series semantics', () => {
+		const dates = ['1700000000', '1700086400000']
+		const result = buildFlareTokenomicsData({
+			narrative: 'Tokenomics narrative',
+			burn: {
+				burnChart: chart(dates, [
+					{ name: 'Ignored Burn', data: [999, 999] },
+					{ name: 'Cumulative Burn', data: [100, 103] },
+					{ name: 'Daily Burn', data: [2, 3] }
+				]),
+				firePool: { status: 'soon', note: 'Pool note', burnDestination: '0x0' },
+				kpis: {
+					latestDailyBurn: formatted(3),
+					burn7d: formatted(4),
+					burn30d: formatted(5),
+					burnYtd: formatted(6),
+					totalGasBurned: formatted(103)
+				}
+			},
+			emissions: {
+				emissionsChart: chart(dates, [
+					{ name: 'Cumulative', data: [50, 60] },
+					{ name: 'Per Epoch', data: [5, 6] }
+				]),
+				burnVsEmitChart: {
+					...chart(dates, [
+						{ name: 'Net Inflation', data: [3, 3] },
+						{ name: 'Ignored', data: [99, 99] },
+						{ name: 'FLR Burned', data: [2, 3] },
+						{ name: 'FLR Emitted', data: [5, 6] }
+					]),
+					subtitle: 'Chart subtitle'
+				},
+				kpis: {
+					latestEpochEmit: formatted(1),
+					latestEpochBurn: formatted(2),
+					latestNetInflation: formatted(3),
+					latestBurnVsEmitPct: formatted(4),
+					emit30d: formatted(5),
+					burn30d: formatted(6),
+					netInflation30d: formatted(7),
+					burnVsEmit30dPct: formatted(8),
+					cumulativeEmissionsTracked: formatted(9),
+					epochsTracked: formatted(10)
+				}
+			}
+		} satisfies TokenomicsAPIResponse)
+
+		expect(result.burn.dailyDataset.source).toBe(result.burn.cumulativeDataset.source)
+		expect(result.burn.dailyDataset.source).toEqual([
+			{ timestamp: 1_700_000_000_000, 'Cumulative Burn': 100, 'Daily Burn': 2 },
+			{ timestamp: 1_700_086_400_000, 'Cumulative Burn': 103, 'Daily Burn': 3 }
+		])
+		expect(result.burn.dailyDataset.dimensions).toEqual(['timestamp', 'Daily Burn'])
+		expect(result.burn.cumulativeDataset.dimensions).toEqual(['timestamp', 'Cumulative Burn'])
+		expect(result.burn.charts.daily[0]).toMatchObject({ type: 'bar', name: 'Daily Burn', stack: 'a' })
+		expect(result.burn.charts.cumulative[0]).toMatchObject({ type: 'line', name: 'Cumulative Burn' })
+		expect(result.emissions.perEpochDataset.dimensions).toEqual(['timestamp', 'Per Epoch'])
+		expect(result.emissions.burnVsEmitDataset.dimensions).toEqual([
+			'timestamp',
+			'FLR Emitted',
+			'FLR Burned',
+			'Net Inflation'
+		])
+		expect(result.emissions.charts.burnVsEmit.map(({ name, stack }) => [name, stack])).toEqual([
+			['FLR Emitted', 'a'],
+			['FLR Burned', 'b'],
+			['Net Inflation', 'c']
+		])
+	})
+
+	test('retains FAssets USD preference, fallback, pie order, and line-area styling', () => {
+		const base: Omit<FAssetsAPIResponse, 'lockedOverTimeChart'> = {
+			narrative: 'FAssets narrative',
+			distributionChart: {
+				labels: ['Protocol B', 'Protocol A'],
+				series: [{ name: 'USD', data: [20] }]
+			},
+			kpis: {
+				totalFxrpSupply: formatted(1),
+				pctLockedInDefi: formatted(2),
+				valueLockedInDefiUsd: formatted(3),
+				fxrpLockedInDefi: formatted(4),
+				totalDefiTransactions: formatted(5),
+				totalMinters: formatted(6),
+				mintCount: formatted(7),
+				burnCount: formatted(8),
+				swapCount: formatted(9)
+			}
+		}
+		const usd = buildFlareFAssetsData({
+			...base,
+			lockedOverTimeChart: chart(
+				['2026-01-02'],
+				[
+					{ name: 'FXRP', data: [1] },
+					{ name: 'FXRP USD', data: [2] },
+					{ name: 'Collateral USD', data: [3] }
+				]
+			)
+		})
+		const fallback = buildFlareFAssetsData({
+			...base,
+			lockedOverTimeChart: chart(
+				['2026-01-02'],
+				[
+					{ name: 'FXRP', data: [1] },
+					{ name: 'Collateral', data: [2] }
+				]
+			)
+		})
+
+		expect(usd.charts.locked?.dataset.dimensions).toEqual(['timestamp', 'FXRP USD', 'Collateral USD'])
+		expect(usd.charts.locked?.charts).toMatchObject([
+			{ name: 'FXRP USD', color: '#E62058' },
+			{ name: 'Collateral USD', hideAreaStyle: true }
+		])
+		expect(fallback.charts.locked?.dataset.dimensions).toEqual(['timestamp', 'FXRP'])
+		expect(usd.charts.dist?.data).toEqual([
+			{ name: 'Protocol B', value: 20 },
+			{ name: 'Protocol A', value: 0 }
+		])
+	})
+
+	test('preserves network first-series bars and staking legend/config order', () => {
+		const network = buildFlareNetworkData({
+			transactionsChart: chart(
+				['2026-01-02'],
+				[
+					{ name: 'Transactions API', data: [5] },
+					{ name: 'Ignored', data: [9] }
+				]
+			),
+			activeAccountsChart: chart(['2026-01-02'], [{ name: 'Accounts API', data: [2] }]),
+			kpis: {
+				totalTransactions: formatted(1),
+				transactions24h: formatted(2),
+				avgDailyTxs7d: formatted(3),
+				avgDailyTxs30d: formatted(4),
+				totalAddresses: formatted(5)
+			}
+		} satisfies NetworkAPIResponse)
+		const staking = buildFlareStakingData({
+			stakingDelegationChart: chart(
+				['2026-01-02'],
+				[
+					{ name: 'P-Chain Stake', data: [7] },
+					{ name: 'FTSO Delegation', data: [8] }
+				]
+			),
+			kpis: {
+				pctStakedOrDelegated: formatted(1),
+				ftsoDelegated: formatted(2),
+				totalStake: formatted(3),
+				validatorCount: formatted(4),
+				averageUptime: formatted(5)
+			}
+		} satisfies StakingAPIResponse)
+
+		expect(network.charts.transactions.dataset.dimensions).toEqual(['timestamp', 'Transactions API'])
+		expect(network.charts.transactions.charts[0]).toMatchObject({
+			type: 'bar',
+			name: 'Transactions API',
+			stack: 'a'
+		})
+		expect(staking.chart?.seriesNames).toEqual(['P-Chain Stake', 'FTSO Delegation'])
+		expect(staking.chart?.charts).toMatchObject([
+			{ name: 'P-Chain Stake', color: '#FF7A1A', hideAreaStyle: true },
+			{ name: 'FTSO Delegation', color: '#2D63F6', hideAreaStyle: true }
+		])
+	})
+})

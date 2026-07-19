@@ -236,7 +236,8 @@ export async function getCexAnalyticsMarketShare(
 	}
 
 	const points: CexAnalyticsMarketSharePoint[] = []
-	for (const [date, venueMap] of Array.from(valuesByDate.entries()).toSorted((a, b) => a[0] - b[0])) {
+	// SQL rows are ordered by date, so the Map's insertion order is already chronological.
+	for (const [date, venueMap] of valuesByDate) {
 		let total = 0
 		for (const value of venueMap.values()) {
 			total += value

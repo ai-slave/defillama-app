@@ -3,26 +3,55 @@
  * These functions don't depend on echarts and can be safely imported
  * without pulling echarts into the bundle.
  */
-import { formatNum, formattedNum } from '~/utils'
+import { formattedNum } from '~/utils'
+export const TOOLTIP_OTHERS_ROW_STYLE =
+	'list-style:none;margin-top:6px;padding-top:6px;border-top:1px solid rgba(128,128,128,0.3);'
 
-const SERIES_SYMBOL: Record<string, string> = { APY: '%', TVL: '$' }
-
-type TooltipGroupBy = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'cumulative'
+export type TooltipGroupBy = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'cumulative'
 
 type TooltipRow = { marker: string; name: string; value: number }
+
+/** Preserve the legacy category-axis tooltip header while using object-row datasets. */
+export function createCategoryTooltipFormatter(valueSymbol: string) {
+	return (params: any) => {
+		const items = Array.isArray(params) ? params : params ? [params] : []
+		if (items.length === 0) return ''
+
+		const category = items[0]?.axisValueLabel ?? items[0]?.axisValue ?? items[0]?.name
+		let output = category == null ? '' : `<strong>${category}</strong><br/>`
+		const rows: TooltipRow[] = []
+		for (const item of items) {
+			const name = item?.seriesName
+			if (!name) continue
+			const rawValue = getTooltipRawYValue(item, name)
+			const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
+			if (!value || Number.isNaN(value)) continue
+			rows.push({ marker: item?.marker ?? '', name, value })
+		}
+		rows.sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+		const othersIndex = rows.findIndex((row) => row.name === 'Others')
+		const others = othersIndex >= 0 ? rows.splice(othersIndex, 1)[0] : null
+		const limit = others ? 9 : 10
+		for (let index = 0; index < rows.length && index < limit; index++) {
+			const row = rows[index]
+			output += `<li style="list-style:none">${row.marker}${row.name}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
+		}
+		if (others) {
+			output += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${others.marker}${others.name}&nbsp;&nbsp;${formatTooltipValue(others.value, valueSymbol)}</li>`
+		}
+		return output
+	}
+}
 
 /** Type guard that narrows `value` to a plain object (excludes arrays and nulls). */
 export function isTooltipDataRecord(value: unknown): value is Record<string, unknown> {
 	return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
-/**
- * Safely cast `value` to a shallow-copied record, or return `null` if it isn't a plain object.
- * The shallow copy prevents mutation of the original tooltip data.
- */
+/** Return a narrowed record without copying the dense row on every tooltip item. */
 export function asTooltipDataRecord(value: unknown): Record<string, unknown> | null {
 	if (!isTooltipDataRecord(value)) return null
-	return { ...value }
+	return value
 }
 
 /**
@@ -31,15 +60,17 @@ export function asTooltipDataRecord(value: unknown): Record<string, unknown> | n
  * `[ts, y]` value arrays, nested value objects, and raw `axisValue` strings/numbers.
  * @returns The resolved timestamp, or `NaN` if none could be determined.
  */
-function getAxisValueFromTooltipParams(first: any): number {
+export function getTooltipAxisValue(first: any): number {
 	const dataObj = asTooltipDataRecord(first?.data)
 	if (dataObj && 'timestamp' in dataObj) {
 		const ts = Number(dataObj.timestamp)
 		if (Number.isFinite(ts)) return ts
 	}
 
-	if (Array.isArray(first?.value)) {
-		const ts = Number(first.value[0])
+	const arrayValue = Array.isArray(first?.data) ? first.data : Array.isArray(first?.value) ? first.value : null
+	if (arrayValue) {
+		const xDimensionIndex = first?.encode?.x?.[0]
+		const ts = Number(arrayValue[typeof xDimensionIndex === 'number' ? xDimensionIndex : 0])
 		if (Number.isFinite(ts)) return ts
 	}
 
@@ -60,26 +91,100 @@ function getAxisValueFromTooltipParams(first: any): number {
 
 /**
  * Extract the raw y-value for a named series from an ECharts tooltip item.
- * Tries object-row `data[seriesName]` first, then falls back to `value[1]`
- * (array format) and finally the bare `value` property.
+ * Tries encoded object/array dimensions first, then the display series name,
+ * `[timestamp, value]`, and finally the bare `value` property.
  */
-function getTooltipRawYValue(item: any, seriesName: string): any {
+export function getTooltipRawYValue(item: any, seriesName: string): any {
 	const dataObj = asTooltipDataRecord(item?.data)
+	const yDimensionIndex = item?.encode?.y?.[0]
+	const arrayValue = Array.isArray(item?.data) ? item.data : Array.isArray(item?.value) ? item.value : null
+	if (arrayValue && typeof yDimensionIndex === 'number') return arrayValue[yDimensionIndex]
 
-	// 1) Object-row dataset: `data[seriesName]` is the most reliable.
+	const yDimensionName = yDimensionIndex != null ? item?.dimensionNames?.[yDimensionIndex] : undefined
+	if (dataObj && yDimensionName != null && yDimensionName in dataObj) return dataObj[yDimensionName]
+
+	// Object-row dataset without encode metadata.
 	if (dataObj && seriesName in dataObj) return dataObj[seriesName]
 
-	// 2) Fallback: value array (e.g. [ts, y]).
+	// Conventional two-column tuple fallback.
 	if (Array.isArray(item?.value)) return item.value[1]
 
-	// 3) Final fallback: direct value.
+	// Final fallback: direct value.
 	return item?.value
+}
+
+/** Compact formatter for charts whose only series label would repeat the chart title. */
+export function createSingleSeriesTooltipFormatter(valueSymbol: string) {
+	return (params: any) => {
+		const items = Array.isArray(params) ? params : params ? [params] : []
+		if (items.length === 0) return ''
+
+		const axisValue = getTooltipAxisValue(items[0])
+		const chartdate = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, 'daily') : ''
+		for (const item of items) {
+			const name = item?.seriesName
+			if (!name) continue
+			const rawValue = getTooltipRawYValue(item, name)
+			const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
+			if (rawValue === '-' || !value || Number.isNaN(value)) continue
+			return `${chartdate}<li style="list-style:none">${item?.marker ?? ''}&nbsp;&nbsp;${formatTooltipValue(value, valueSymbol)}</li>`
+		}
+		return chartdate
+	}
+}
+
+/** Signed-flow tooltip: net total first, losses before gains, and a separated remainder last. */
+export function createSignedInflowsTooltipFormatter(valueSymbol: string, hideSeriesName = false) {
+	return (params: any) => {
+		const items = Array.isArray(params) ? params : params ? [params] : []
+		if (items.length === 0) return ''
+
+		const axisValue = getTooltipAxisValue(items[0])
+		let output = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, 'daily') : ''
+		const rows: TooltipRow[] = []
+		let explicitOthers: TooltipRow | null = null
+		let total = 0
+		for (const item of items) {
+			const name = item?.seriesName
+			if (!name) continue
+			const rawValue = getTooltipRawYValue(item, name)
+			const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
+			if (rawValue === '-' || Number.isNaN(value)) continue
+			const row = { marker: item?.marker ?? '', name, value }
+			total += value
+			if (name === 'Others') {
+				explicitOthers = row
+			} else if (rows.length < 10 || value < rows[rows.length - 1].value) {
+				let insertAt = rows.length
+				while (insertAt > 0 && rows[insertAt - 1].value > value) insertAt--
+				rows.splice(insertAt, 0, row)
+				if (rows.length > 10) rows.pop()
+			}
+		}
+
+		output += `<li style="list-style:none;font-weight:600">Total Inflows&nbsp;&nbsp;${formatTooltipValue(total, valueSymbol)}</li>`
+
+		let selectedSum = 0
+		for (let i = 0; i < rows.length; i++) {
+			const row = rows[i]
+			selectedSum += row.value
+			if (row.value === 0) continue
+			output += `<li style="list-style:none">${row.marker}${hideSeriesName ? '' : row.name}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
+		}
+
+		let others = total - selectedSum
+		if (Math.abs(others) < 1e-8) others = 0
+		if (others !== 0) {
+			output += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${explicitOthers?.marker ?? ''}Others&nbsp;&nbsp;${formatTooltipValue(others, valueSymbol)}</li>`
+		}
+		return output
+	}
 }
 
 /**
  * Factory that returns an ECharts tooltip formatter optimised for inflow/outflow charts.
  * Only the top-N series (ranked by absolute value) are shown individually; the rest are
- * collapsed into a single "Others" row. A bolded total line is appended at the bottom.
+ * collapsed into a separated "Others" row at the bottom.
  *
  * @param groupBy - Date grouping used to format the header date.
  * @param valueSymbol - Unit symbol (`'$'`, `'%'`, etc.) passed to {@link formatTooltipValue}.
@@ -104,13 +209,15 @@ export function createInflowsTooltipFormatter({
 		const items = Array.isArray(params) ? params : params ? [params] : []
 		if (items.length === 0) return ''
 
-		const axisValue = getAxisValueFromTooltipParams(items[0])
+		const axisValue = getTooltipAxisValue(items[0])
 		const chartdate = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
 
 		// Keep top-N by absolute value, stored ASC by abs (trim from front; render reversed).
 		const topAbs: TooltipRow[] = []
 
 		let total = 0
+		let regularCount = 0
+		let explicitOthers: TooltipRow | null = null
 
 		for (let i = 0; i < items.length; i++) {
 			const item = items[i]
@@ -122,6 +229,11 @@ export function createInflowsTooltipFormatter({
 			if (value == null || Number.isNaN(value) || value === 0) continue
 
 			total += value
+			if (name === othersLabel) {
+				explicitOthers = { marker: item?.marker ?? '', name, value }
+				continue
+			}
+			regularCount++
 
 			if (topN <= 0) continue
 
@@ -142,9 +254,9 @@ export function createInflowsTooltipFormatter({
 			}
 		}
 
-		// For single-series charts, don't show "Others" / "Total" (it becomes redundant).
-		if (topAbs.length <= 1) {
-			if (topAbs.length === 0) return chartdate
+		// For a true single-series chart, "Others" and "Total" would repeat the same value.
+		if (regularCount === 0 && !explicitOthers) return chartdate
+		if (regularCount === 1 && !explicitOthers && topAbs.length === 1) {
 			const curr = topAbs[0]
 			return (
 				chartdate +
@@ -152,14 +264,15 @@ export function createInflowsTooltipFormatter({
 			)
 		}
 
-		const selectedSum = topAbs.reduce((acc, r) => acc + r.value, 0)
+		let selectedSum = 0
+		for (const row of topAbs) selectedSum += row.value
 
 		let others = total - selectedSum
 		// Guard against floating-point epsilons creating a stray "Others" row.
 		const EPSILON = 1e-8
 		if (Math.abs(others) < EPSILON) others = 0
 
-		let vals = ''
+		let vals = `<li style="list-style:none;font-weight:600">${totalLabel}&nbsp;&nbsp;${formatTooltipValue(total, valueSymbol)}</li>`
 
 		// topAbs is ASC by abs; render it DESC by abs.
 		for (let i = topAbs.length - 1; i >= 0; i--) {
@@ -168,10 +281,8 @@ export function createInflowsTooltipFormatter({
 		}
 
 		if (others !== 0) {
-			vals += `<li style="list-style:none">${othersLabel}&nbsp;&nbsp;${formatTooltipValue(others, valueSymbol)}</li>`
+			vals += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${explicitOthers?.marker ?? ''}${othersLabel}&nbsp;&nbsp;${formatTooltipValue(others, valueSymbol)}</li>`
 		}
-
-		vals += `<li style="list-style:none;font-weight:600">${totalLabel}&nbsp;&nbsp;${formatTooltipValue(total, valueSymbol)}</li>`
 
 		return chartdate + vals
 	}
@@ -179,7 +290,7 @@ export function createInflowsTooltipFormatter({
 
 /**
  * Factory that returns an ECharts tooltip formatter showing all non-zero series
- * sorted by absolute value (descending) with a bolded total row at the bottom.
+ * sorted by absolute value (descending) with a bolded total row at the top.
  *
  * @param groupBy - Date grouping used to format the header date.
  * @param valueSymbol - Unit symbol (`'$'`, `'%'`, etc.) passed to {@link formatTooltipValue}.
@@ -198,7 +309,7 @@ export function createAggregateTooltipFormatter({
 		const items = Array.isArray(params) ? params : params ? [params] : []
 		if (items.length === 0) return ''
 
-		const axisValue = getAxisValueFromTooltipParams(items[0])
+		const axisValue = getTooltipAxisValue(items[0])
 		const chartdate = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
 
 		const parsed = items
@@ -214,6 +325,9 @@ export function createAggregateTooltipFormatter({
 			.filter(Boolean) as Array<{ marker: string; name: string; value: number }>
 
 		parsed.sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+		const total = parsed.reduce((acc, curr) => acc + curr.value, 0)
+		const othersIndex = parsed.findIndex((row) => row.name === 'Others')
+		const others = othersIndex >= 0 ? parsed.splice(othersIndex, 1)[0] : null
 
 		const vals = parsed.reduce(
 			(prev, curr) =>
@@ -221,52 +335,14 @@ export function createAggregateTooltipFormatter({
 				`<li style="list-style:none">${curr.marker}${curr.name}&nbsp;&nbsp;${formatTooltipValue(curr.value, valueSymbol)}</li>`,
 			''
 		)
-		const total = parsed.reduce((acc, curr) => acc + curr.value, 0)
 		const totalLine = `<li style="list-style:none;font-weight:600">${totalLabel}&nbsp;&nbsp;${formatTooltipValue(total, valueSymbol)}</li>`
 
-		return chartdate + vals + totalLine
+		const othersLine = others
+			? `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${others.marker}${others.name}&nbsp;&nbsp;${formatTooltipValue(others.value, valueSymbol)}</li>`
+			: ''
+
+		return chartdate + totalLine + vals + othersLine
 	}
-}
-
-/**
- * Tooltip formatter for dual-axis TVL + APY charts used with MultiSeriesChart2.
- * Shows APY values with '%' and TVL values with '$'.
- */
-export function formatTvlApyTooltip(params: any) {
-	const items = Array.isArray(params) ? params : params ? [params] : []
-	if (items.length === 0) return ''
-
-	const first = items[0]
-	const dataObj = asTooltipDataRecord(first?.data)
-	const timestamp = dataObj?.timestamp ?? first?.axisValue
-	const chartdate =
-		typeof timestamp === 'number' && Number.isFinite(timestamp) ? formatTooltipChartDate(timestamp, 'daily') : ''
-
-	const vals = items
-		.map((item: any) => {
-			const name = item?.seriesName
-			if (!name) return null
-
-			const itemData = asTooltipDataRecord(item?.data)
-			const rawValue = itemData ? itemData[name] : item?.value?.[1]
-			const value = rawValue == null ? null : typeof rawValue === 'number' ? rawValue : Number(rawValue)
-			if (value == null || Number.isNaN(value)) return null
-
-			const symbol = SERIES_SYMBOL[name] ?? ''
-			const formatted = symbol === '$' ? formattedNum(value, true) : formatNum(value, 5, symbol || undefined)
-			return { marker: item.marker, name, value, formatted }
-		})
-		.filter(Boolean)
-		.sort((a: any, b: any) => Math.abs(b.value) - Math.abs(a.value))
-
-	return (
-		chartdate +
-		vals.reduce(
-			(prev: string, curr: any) =>
-				prev + `<li style="list-style:none">${curr.marker}${curr.name}&nbsp;&nbsp;${curr.formatted}</li>`,
-			''
-		)
-	)
 }
 
 /**
@@ -406,9 +482,9 @@ function getStartAndEndDayOfTheWeek(value: number) {
 
 /** @returns The last calendar day (1–31) of the month containing the given timestamp. */
 function lastDayOfMonth(dateString: number) {
-	let date = new Date(dateString)
+	const date = new Date(dateString)
 
-	return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+	return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate()
 }
 
 /**
@@ -422,7 +498,7 @@ function getQuarterDateRange(value: number) {
 	const quarterStartMonth = Math.floor(month / 3) * 3
 	const quarterEndMonth = quarterStartMonth + 2
 
-	const quarterEndDate = new Date(year, quarterEndMonth + 1, 0).getUTCDate()
+	const quarterEndDate = new Date(Date.UTC(year, quarterEndMonth + 1, 0)).getUTCDate()
 
 	return `${monthNames[quarterStartMonth]} 1 - ${monthNames[quarterEndMonth]} ${quarterEndDate}, ${year}`
 }

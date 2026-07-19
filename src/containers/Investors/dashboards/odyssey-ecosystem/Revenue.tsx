@@ -161,7 +161,7 @@ export default function Revenue() {
 					type: 'bar' as const,
 					color: '#fb923c',
 					data: (hbm.metronome || []).map(
-						(r) => [Math.floor(new Date(r.month + '-01T00:00:00Z').getTime() / 1000), r.totalUsd] as [number, number]
+						(r) => [Math.floor(Date.parse(r.month + '-01T00:00:00Z') / 1000), r.totalUsd] as [number, number]
 					)
 				},
 				{
@@ -169,7 +169,7 @@ export default function Revenue() {
 					type: 'bar' as const,
 					color: '#a78bfa',
 					data: (hbm.vesper || []).map(
-						(r) => [Math.floor(new Date(r.month + '-01T00:00:00Z').getTime() / 1000), r.totalUsd] as [number, number]
+						(r) => [Math.floor(Date.parse(r.month + '-01T00:00:00Z') / 1000), r.totalUsd] as [number, number]
 					)
 				}
 			]

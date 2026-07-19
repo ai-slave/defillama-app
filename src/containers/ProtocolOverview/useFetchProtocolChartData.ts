@@ -42,7 +42,7 @@ const buildChartRowsFromTimestampRecord = (
 	for (const timestamp in valuesByTimestamp) {
 		rows.push([+timestamp * timestampMultiplier, valuesByTimestamp[timestamp]])
 	}
-	return rows
+	return rows.sort((a, b) => a[0] - b[0])
 }
 
 const buildProtocolChartApiUrl = (params: Record<string, string | undefined>) => {
@@ -856,7 +856,7 @@ export const useFetchProtocolChartData = ({
 				denominationPriceHistory
 			})
 
-		const filteredCharts: Record<string, Array<[number, number | null]>> = {}
+		const filteredCharts: Partial<Record<ProtocolChartsLabels, Array<[number, number | null]>>> = {}
 		for (const chartLabel in charts) {
 			const queryParamKey = protocolCharts[chartLabel as ProtocolChartsLabels]
 			if (!queryParamKey || toggledMetrics[queryParamKey] === 'true') {

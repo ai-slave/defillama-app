@@ -1,13 +1,52 @@
 import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IBarChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
 import { useMaplePoolsWithLoans, parseInterestRate, parseTokenAmount } from './api'
-import { ChartCard, CardSkeleton, KpiCard, KpiSkeleton, Pagination, formatPct } from './shared'
+import {
+	ChartCard,
+	CardSkeleton,
+	KpiCard,
+	KpiSkeleton,
+	MAPLE_CSV_ONLY_EXPORT,
+	MAPLE_USD_CATEGORY_CHART_OPTIONS,
+	Pagination,
+	formatPct
+} from './shared'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
+
+const PRINCIPAL_BY_POOL_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		type: 'bar',
+		name: 'Principal',
+		encode: { x: 'Name', y: 'Principal' },
+		color: '#4FC3F7',
+		stack: 'a'
+	}
+]
+const RATE_DISTRIBUTION_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		type: 'bar',
+		name: 'Principal',
+		encode: { x: 'Name', y: 'Principal' },
+		color: '#FFA726',
+		stack: 'a'
+	}
+]
+const AGE_DISTRIBUTION_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		type: 'bar',
+		name: 'Principal',
+		encode: { x: 'Name', y: 'Principal' },
+		color: '#7E57C2',
+		stack: 'a'
+	}
+]
 
 interface LoanRow {
 	id: string
@@ -165,60 +204,84 @@ export default function Loans() {
 		return rows.sort((a, b) => b.principal - a.principal)
 	}, [pools, nowSec])
 
-	const kpis = useMemo(() => {
-		if (isLoading || loanRows.length === 0) return null
-
-		const totalPrincipal = loanRows.reduce((s, l) => s + l.principal, 0)
-		const totalInterestPaid = loanRows.reduce((s, l) => s + l.interestPaid, 0)
-		const weightedRateSum = loanRows.reduce((s, l) => s + l.interestRate * l.principal, 0)
-		const avgRate = totalPrincipal > 0 ? weightedRateSum / totalPrincipal : 0
-		const avgAge = loanRows.length > 0 ? loanRows.reduce((s, l) => s + l.ageDays, 0) / loanRows.length : 0
-
-		return {
-			totalLoans: loanRows.length,
-			totalPrincipal: formattedNum(totalPrincipal, true),
-			avgRate: `${avgRate.toFixed(2)}%`,
-			totalInterestPaid: formattedNum(totalInterestPaid, true),
-			avgAge: `${Math.round(avgAge)}d`
-		}
-	}, [loanRows, isLoading])
-
-	const principalByPool = useMemo(() => {
+	const view = useMemo(() => {
 		const poolMap = new Map<string, number>()
+		const ratePrincipal = new Array<number>(RATE_BUCKETS.length).fill(0)
+		const agePrincipal = new Array<number>(AGE_BUCKETS.length).fill(0)
+		let totalPrincipal = 0
+		let totalInterestPaid = 0
+		let weightedRateSum = 0
+		let totalAge = 0
+
 		for (const loan of loanRows) {
 			poolMap.set(loan.pool, (poolMap.get(loan.pool) ?? 0) + loan.principal)
+			totalPrincipal += loan.principal
+			totalInterestPaid += loan.interestPaid
+			weightedRateSum += loan.interestRate * loan.principal
+			totalAge += loan.ageDays
+
+			for (let index = 0; index < RATE_BUCKETS.length; index++) {
+				const bucket = RATE_BUCKETS[index]
+				if (loan.interestRate >= bucket.min && loan.interestRate < bucket.max) {
+					ratePrincipal[index] += loan.principal
+					break
+				}
+			}
+			for (let index = 0; index < AGE_BUCKETS.length; index++) {
+				const bucket = AGE_BUCKETS[index]
+				if (loan.ageDays >= bucket.min && loan.ageDays < bucket.max) {
+					agePrincipal[index] += loan.principal
+					break
+				}
+			}
 		}
-		return Array.from(poolMap.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([name, principal]) => ({ name, Principal: principal }))
-	}, [loanRows])
 
-	const rateDistribution = useMemo(() => {
-		return RATE_BUCKETS.map((bucket) => {
-			const matching = loanRows.filter((l) => l.interestRate >= bucket.min && l.interestRate < bucket.max)
-			const principal = matching.reduce((s, l) => s + l.principal, 0)
-			return { name: bucket.label, Principal: principal }
-		}).filter((b) => b.Principal > 0)
-	}, [loanRows])
+		const principalByPool: MultiSeriesChart2Dataset = {
+			dimensions: ['Name', 'Principal'],
+			source: Array.from(poolMap.entries())
+				.sort((a, b) => b[1] - a[1])
+				.map(([Name, principal]) => ({ Name, Principal: principal }))
+		}
+		const rateDistribution: MultiSeriesChart2Dataset = {
+			dimensions: ['Name', 'Principal'],
+			source: RATE_BUCKETS.flatMap((bucket, index) =>
+				ratePrincipal[index] > 0 ? [{ Name: bucket.label, Principal: ratePrincipal[index] }] : []
+			)
+		}
+		const ageDistribution: MultiSeriesChart2Dataset = {
+			dimensions: ['Name', 'Principal'],
+			source: AGE_BUCKETS.flatMap((bucket, index) =>
+				agePrincipal[index] > 0 ? [{ Name: bucket.label, Principal: agePrincipal[index] }] : []
+			)
+		}
 
-	const ageDistribution = useMemo(() => {
-		return AGE_BUCKETS.map((bucket) => {
-			const matching = loanRows.filter((l) => l.ageDays >= bucket.min && l.ageDays < bucket.max)
-			const principal = matching.reduce((s, l) => s + l.principal, 0)
-			return { name: bucket.label, Principal: principal, Count: matching.length }
-		}).filter((b) => b.Principal > 0)
-	}, [loanRows])
+		return {
+			kpis:
+				isLoading || loanRows.length === 0
+					? null
+					: {
+							totalLoans: loanRows.length,
+							totalPrincipal: formattedNum(totalPrincipal, true),
+							avgRate: `${(totalPrincipal > 0 ? weightedRateSum / totalPrincipal : 0).toFixed(2)}%`,
+							totalInterestPaid: formattedNum(totalInterestPaid, true),
+							avgAge: `${Math.round(totalAge / loanRows.length)}d`
+						},
+			principalByPool,
+			rateDistribution,
+			ageDistribution
+		}
+	}, [loanRows, isLoading])
 
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-				{kpis ? (
+				{view.kpis ? (
 					<>
-						<KpiCard label="Active Loans" value={kpis.totalLoans} />
-						<KpiCard label="Total Principal" value={kpis.totalPrincipal} />
-						<KpiCard label="Avg Interest Rate" value={kpis.avgRate} />
-						<KpiCard label="Total Interest Paid" value={kpis.totalInterestPaid} />
-						<KpiCard label="Avg Loan Age" value={kpis.avgAge} />
+						<KpiCard label="Active Loans" value={view.kpis.totalLoans} />
+						<KpiCard label="Total Principal" value={view.kpis.totalPrincipal} />
+						<KpiCard label="Avg Interest Rate" value={view.kpis.avgRate} />
+						<KpiCard label="Total Interest Paid" value={view.kpis.totalInterestPaid} />
+						<KpiCard label="Avg Loan Age" value={view.kpis.avgAge} />
 					</>
 				) : (
 					<>
@@ -233,16 +296,15 @@ export default function Loans() {
 
 			{isLoading ? (
 				<CardSkeleton title="Principal by Pool" />
-			) : principalByPool.length > 0 ? (
+			) : view.principalByPool.source.length > 0 ? (
 				<ChartCard title="Principal by Pool">
-					<BarChart
-						chartData={principalByPool}
-						stacks={{ Principal: 'a' }}
-						stackColors={{ Principal: '#4FC3F7' }}
+					<MultiSeriesChart2
+						dataset={view.principalByPool}
+						charts={PRINCIPAL_BY_POOL_CHART}
 						valueSymbol="$"
-						title=""
 						height="400px"
-						xAxisType="category"
+						chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
+						exportButtons={MAPLE_CSV_ONLY_EXPORT}
 					/>
 				</ChartCard>
 			) : null}
@@ -250,32 +312,30 @@ export default function Loans() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{isLoading ? (
 					<CardSkeleton title="Interest Rate Distribution" />
-				) : rateDistribution.length > 0 ? (
+				) : view.rateDistribution.source.length > 0 ? (
 					<ChartCard title="Interest Rate Distribution">
-						<BarChart
-							chartData={rateDistribution}
-							stacks={{ Principal: 'a' }}
-							stackColors={{ Principal: '#FFA726' }}
+						<MultiSeriesChart2
+							dataset={view.rateDistribution}
+							charts={RATE_DISTRIBUTION_CHART}
 							valueSymbol="$"
-							title=""
 							height="400px"
-							xAxisType="category"
+							chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
+							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</ChartCard>
 				) : null}
 
 				{isLoading ? (
 					<CardSkeleton title="Loan Age Distribution" />
-				) : ageDistribution.length > 0 ? (
+				) : view.ageDistribution.source.length > 0 ? (
 					<ChartCard title="Loan Age Distribution">
-						<BarChart
-							chartData={ageDistribution}
-							stacks={{ Principal: 'a' }}
-							stackColors={{ Principal: '#7E57C2' }}
+						<MultiSeriesChart2
+							dataset={view.ageDistribution}
+							charts={AGE_DISTRIBUTION_CHART}
 							valueSymbol="$"
-							title=""
 							height="400px"
-							xAxisType="category"
+							chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
+							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</ChartCard>
 				) : null}

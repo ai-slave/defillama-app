@@ -31,7 +31,6 @@ export const usePriceCharts = (geckoIds: string[]) => {
 						return acc
 					}, []) ?? []
 
-				points.sort((a, b) => a.timestamp - b.timestamp)
 				return [geckoIds[i], points]
 			})
 		),

@@ -22,14 +22,18 @@ export interface ChainsByCategoryResponse {
 	[key: string]: unknown
 }
 
+export type ChainChartPoint = [timestamp: string | number, value: number]
+
 export interface ChainChartResponse {
-	tvl: Array<[string | number, number]>
-	staking: Array<[string | number, number]>
-	borrowed: Array<[string | number, number]>
-	pool2: Array<[string | number, number]>
-	vesting: Array<[string | number, number]>
-	offers: Array<[string | number, number]>
-	doublecounted: Array<[string | number, number]>
-	liquidstaking: Array<[string | number, number]>
-	dcAndLsOverlap: Array<[string | number, number]>
+	tvl: ChainChartPoint[]
+	staking?: ChainChartPoint[]
+	borrowed?: ChainChartPoint[]
+	pool2?: ChainChartPoint[]
+	vesting?: ChainChartPoint[]
+	offers?: ChainChartPoint[]
+	doublecounted?: ChainChartPoint[]
+	liquidstaking?: ChainChartPoint[]
+	dcAndLsOverlap?: ChainChartPoint[]
+	/** Adapter-defined TVL sections are forwarded by the API alongside the known sections above. */
+	[section: string]: ChainChartPoint[] | undefined
 }

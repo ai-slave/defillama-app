@@ -18,8 +18,8 @@ describe('ProtocolOverview API chart fetchers', () => {
 
 	it('fetches and normalizes TVL value charts from the TVL namespace', async () => {
 		fetchJsonMock.mockResolvedValue([
-			[2, 20],
-			[1, 10]
+			[1, 10],
+			[2, 20]
 		])
 
 		const result = await fetchProtocolTvlChart({ protocol: 'aave', key: 'pool2', currency: 'ETH' })
@@ -35,8 +35,8 @@ describe('ProtocolOverview API chart fetchers', () => {
 
 	it('fetches and normalizes TVL chain breakdown charts from the TVL namespace', async () => {
 		fetchJsonMock.mockResolvedValue([
-			[2, { Ethereum: 20 }],
-			[1, { Ethereum: 10 }]
+			[1, { Ethereum: 10 }],
+			[2, { Ethereum: 20 }]
 		])
 
 		const result = await fetchProtocolTvlChart({
@@ -56,8 +56,8 @@ describe('ProtocolOverview API chart fetchers', () => {
 
 	it('fetches and normalizes treasury token breakdown charts from the treasury namespace', async () => {
 		fetchJsonMock.mockResolvedValue([
-			[2, { MKR: 20 }],
-			[1, { MKR: 10 }]
+			[1, { MKR: 10 }],
+			[2, { MKR: 20 }]
 		])
 
 		const result = await fetchProtocolTreasuryChart({

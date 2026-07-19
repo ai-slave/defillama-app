@@ -30,32 +30,44 @@ export interface SeriesAxisInput {
 export interface SeriesAxisLayout {
 	needMultipleAxes: boolean
 	axisCount: number
-	axisUnitGroups: MetricUnitGroup[]
+	axisUnitGroups: Array<MetricUnitGroup | undefined>
 	seriesAxisIndexes: number[]
 }
 
 export function resolveSeriesAxisLayout(series: SeriesAxisInput[]): SeriesAxisLayout {
-	const axisUnitGroups: MetricUnitGroup[] = []
-	const seriesUnitGroups = series.map((s) => {
-		const group = getMetricUnitGroup(s.metricType)
-		if (!axisUnitGroups.includes(group)) {
-			axisUnitGroups.push(group)
+	const distinctUnitGroups: MetricUnitGroup[] = []
+	const unitGroupIndex = new Map<MetricUnitGroup, number>()
+	const seriesUnitGroups = new Array<MetricUnitGroup>(series.length)
+	let maxExplicitAxisIndex = 0
+	for (let index = 0; index < series.length; index++) {
+		const item = series[index]
+		const group = getMetricUnitGroup(item.metricType)
+		seriesUnitGroups[index] = group
+		if (!unitGroupIndex.has(group)) {
+			unitGroupIndex.set(group, distinctUnitGroups.length)
+			distinctUnitGroups.push(group)
 		}
-		return group
-	})
+		if (item.yAxisIndex != null && item.yAxisIndex > maxExplicitAxisIndex) {
+			maxExplicitAxisIndex = item.yAxisIndex
+		}
+	}
 
-	const hasExplicitAxisIndex = series.some((s) => s.yAxisIndex != null && s.yAxisIndex > 0)
-	const maxExplicitAxisIndex = hasExplicitAxisIndex ? Math.max(...series.map((s) => s.yAxisIndex ?? 0)) : 0
-
-	const needMultipleAxes = axisUnitGroups.length > 1 || hasExplicitAxisIndex
+	const hasExplicitAxisIndex = maxExplicitAxisIndex > 0
+	const needMultipleAxes = distinctUnitGroups.length > 1 || hasExplicitAxisIndex
 	const axisCount = needMultipleAxes
-		? Math.min(Math.max(axisUnitGroups.length, maxExplicitAxisIndex + 1, 2), MAX_Y_AXES)
+		? Math.min(Math.max(distinctUnitGroups.length, maxExplicitAxisIndex + 1, 2), MAX_Y_AXES)
 		: 1
 
-	const seriesAxisIndexes = series.map((s, index) => {
-		const axisIndex = s.yAxisIndex ?? axisUnitGroups.indexOf(seriesUnitGroups[index])
-		return Math.min(axisIndex >= 0 ? axisIndex : 0, MAX_Y_AXES - 1)
-	})
+	const seriesAxisIndexes = new Array<number>(series.length)
+	for (let index = 0; index < series.length; index++) {
+		const axisIndex = series[index].yAxisIndex ?? unitGroupIndex.get(seriesUnitGroups[index]) ?? 0
+		seriesAxisIndexes[index] = Math.min(Math.max(axisIndex, 0), MAX_Y_AXES - 1)
+	}
+	const axisUnitGroups = new Array<MetricUnitGroup | undefined>(axisCount)
+	for (let index = 0; index < seriesAxisIndexes.length; index++) {
+		const axisIndex = seriesAxisIndexes[index]
+		axisUnitGroups[axisIndex] ??= seriesUnitGroups[index]
+	}
 
 	return { needMultipleAxes, axisCount, axisUnitGroups, seriesAxisIndexes }
 }

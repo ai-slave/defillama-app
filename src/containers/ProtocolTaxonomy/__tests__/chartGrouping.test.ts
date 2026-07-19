@@ -55,6 +55,28 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		expect(result.charts.dataset.source.map((row) => row.Volume)).toEqual([10, null, 40])
 	})
 
+	it('sums bars but keeps the last line snapshot in weekly buckets', () => {
+		const charts = makeCharts()
+		charts.dataset.source = [
+			{ timestamp: toMs(2024, 1, 15), Volume: 10, TVL: 100 },
+			{ timestamp: toMs(2024, 1, 17), Volume: 5, TVL: 120 },
+			{ timestamp: toMs(2024, 1, 22), Volume: 7, TVL: 130 }
+		]
+
+		const result = buildProtocolTaxonomyGroupedCharts({ charts, groupBy: 'weekly' })
+
+		expect(result.charts.dataset.source).toEqual([
+			{ timestamp: toMs(2024, 1, 21), Volume: 15, TVL: 120 },
+			{ timestamp: toMs(2024, 1, 28), Volume: 7, TVL: 130 }
+		])
+	})
+
+	it('never accumulates line snapshots in cumulative mode', () => {
+		const result = buildProtocolTaxonomyGroupedCharts({ charts: makeCharts(), groupBy: 'cumulative' })
+
+		expect(result.charts.dataset.source.map((row) => row.TVL)).toEqual([100, 120, null])
+	})
+
 	it('returns the original chart object and hasBarCharts false when bar series have no numeric values', () => {
 		const charts = makeCharts()
 		charts.dataset.source = [

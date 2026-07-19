@@ -25,7 +25,6 @@ import { formattedNum, getPercentChange, slug } from '~/utils'
 import { getFreshTimeSeriesCurrentPoint } from '~/utils/timeSeries'
 import {
 	buildBridgeProtocolAllChainsVolumeData,
-	buildBridgeProtocolAllChainsVolumePairs,
 	buildBridgeProtocolInflowsData,
 	getBridgeProtocolCompletedDayVolumes,
 	getBridgeProtocolPrevDayVolumeValue
@@ -93,38 +92,39 @@ export const BridgeInfo = ({
 		return { name: chain, route: '' }
 	})
 
-	const allChainsVolumePairs = React.useMemo(
-		() => buildBridgeProtocolAllChainsVolumePairs({ isAllChains, volumeChartDataByChain }),
-		[isAllChains, volumeChartDataByChain]
-	)
-
-	const { groupedAllChainsVolumePairs, volumeDataset } = React.useMemo(
-		() => buildBridgeProtocolAllChainsVolumeData({ groupBy, allChainsVolumePairs }),
-		[groupBy, allChainsVolumePairs]
+	const volumeDataset = React.useMemo(
+		() =>
+			buildBridgeProtocolAllChainsVolumeData({
+				active: chartType === 'Volume' && isAllChains,
+				groupBy,
+				volumeChartDataByChain
+			}),
+		[chartType, isAllChains, groupBy, volumeChartDataByChain]
 	)
 
 	const prevDayVolumeValue = React.useMemo(() => {
 		return getBridgeProtocolPrevDayVolumeValue({
 			isAllChains,
-			allChainsVolumePairs,
+			volumeChartDataByChain,
 			totalDepositedUSD,
 			totalWithdrawnUSD,
 			dataTimestamp
 		})
-	}, [isAllChains, allChainsVolumePairs, totalDepositedUSD, totalWithdrawnUSD, dataTimestamp])
+	}, [isAllChains, volumeChartDataByChain, totalDepositedUSD, totalWithdrawnUSD, dataTimestamp])
 
 	const chartTypes = (
 		isAllChains ? (['Volume', 'Tokens To', 'Tokens From'] as const) : (['Inflows', 'Tokens To', 'Tokens From'] as const)
 	) as readonly ChartType[]
 
-	const { groupedInflowsData, inflowsDataset } = React.useMemo(
-		() => buildBridgeProtocolInflowsData({ isAllChains, groupBy, volumeChartDataByChain }),
-		[isAllChains, groupBy, volumeChartDataByChain]
+	const inflowsDataset = React.useMemo(
+		() =>
+			buildBridgeProtocolInflowsData({
+				active: chartType === 'Inflows' && !isAllChains,
+				groupBy,
+				volumeChartDataByChain
+			}),
+		[chartType, isAllChains, groupBy, volumeChartDataByChain]
 	)
-	const deferredVolumeDataset = React.useDeferredValue(volumeDataset)
-	const deferredInflowsDataset = React.useDeferredValue(inflowsDataset)
-	const deferredTokenWithdrawals = React.useDeferredValue(tokenWithdrawals)
-	const deferredTokenDeposits = React.useDeferredValue(tokenDeposits)
 
 	const chartScopeTitle = isAllChains ? displayName : `${displayName} on ${currentChain}`
 	const chartFilename = `${slug(displayName)}-${isAllChains ? 'all-chains' : slug(currentChain)}-${chartType === 'Volume' ? 'volume' : chartType === 'Inflows' ? 'inflows' : chartType === 'Tokens To' ? 'tokens-to' : 'tokens-from'}`
@@ -209,10 +209,10 @@ export const BridgeInfo = ({
 						/>
 					</ChartPanelToolbar>
 					<>
-						{chartType === 'Volume' && isAllChains && groupedAllChainsVolumePairs.length > 0 ? (
+						{chartType === 'Volume' && isAllChains && volumeDataset.source.length > 0 ? (
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
 								<MultiSeriesChart2
-									dataset={deferredVolumeDataset}
+									dataset={volumeDataset}
 									charts={VOLUME_CHARTS}
 									groupBy={groupBy}
 									valueSymbol="$"
@@ -220,10 +220,10 @@ export const BridgeInfo = ({
 								/>
 							</React.Suspense>
 						) : null}
-						{chartType === 'Inflows' && !isAllChains && groupedInflowsData && groupedInflowsData.length > 0 ? (
+						{chartType === 'Inflows' && !isAllChains && inflowsDataset.source.length > 0 ? (
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
 								<MultiSeriesChart2
-									dataset={deferredInflowsDataset}
+									dataset={inflowsDataset}
 									charts={INFLOW_CHARTS}
 									groupBy={groupBy}
 									valueSymbol="$"
@@ -231,14 +231,14 @@ export const BridgeInfo = ({
 								/>
 							</React.Suspense>
 						) : null}
-						{chartType === 'Tokens To' && deferredTokenWithdrawals && deferredTokenWithdrawals.length > 0 ? (
+						{chartType === 'Tokens To' && tokenWithdrawals.length > 0 ? (
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
-								<PieChart chartData={deferredTokenWithdrawals} onReady={handleChartReady} />
+								<PieChart chartData={tokenWithdrawals} onReady={handleChartReady} />
 							</React.Suspense>
 						) : null}
-						{chartType === 'Tokens From' && deferredTokenDeposits && deferredTokenDeposits.length > 0 ? (
+						{chartType === 'Tokens From' && tokenDeposits.length > 0 ? (
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
-								<PieChart chartData={deferredTokenDeposits} onReady={handleChartReady} />
+								<PieChart chartData={tokenDeposits} onReady={handleChartReady} />
 							</React.Suspense>
 						) : null}
 					</>

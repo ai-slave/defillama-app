@@ -1,9 +1,9 @@
-import { ensureChronologicalRows } from '~/components/ECharts/utils'
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import { CHART_COLORS } from '~/constants/colors'
 import { oldBlue } from '~/constants/colors'
 import { getDominancePercent, getNDistinctColors } from '~/utils'
 import { fetchDATInstitutions, fetchDATInstitutionDetail, toUnixMsTimestamp } from './api'
-import type { IDATInstitutionsResponse } from './api.types'
+import type { IDATInstitutionsResponse, IDATTransaction } from './api.types'
 import type {
 	IDATOverviewPageProps,
 	IDATInstitutionOverview,
@@ -39,7 +39,7 @@ const EXTRA_DYNAMIC_COLOR_BUFFER = RESERVED_DYNAMIC_COLOR_OFFSET + 1
 const EXCLUDED_DISTINCT_COLOR = '#673AB7'
 
 function buildColorByAsset(res: IDATInstitutionsResponse): Record<string, string> {
-	const colorByAsset: Record<string, string> = {}
+	const colorByAsset = createChartRecord<string>()
 	let totalAssets = 0
 	for (const _asset in res.assetMetadata) {
 		totalAssets++
@@ -76,27 +76,47 @@ function buildAllAssetLinks(res: IDATInstitutionsResponse): Array<{ label: strin
 	]
 }
 
+function mergeAscendingFlowPoints(
+	left: IDATOverviewFlowSeries['points'],
+	right: IDATOverviewFlowSeries['points']
+): Array<IDATOverviewFlowSeries['points'][number]> {
+	const merged: Array<IDATOverviewFlowSeries['points'][number]> = []
+	let leftIndex = 0
+	let rightIndex = 0
+	while (leftIndex < left.length || rightIndex < right.length) {
+		if (rightIndex >= right.length || (leftIndex < left.length && left[leftIndex][0] <= right[rightIndex][0])) {
+			merged.push(left[leftIndex++])
+		} else {
+			merged.push(right[rightIndex++])
+		}
+	}
+	return merged
+}
+
 export async function getDATOverviewData(): Promise<IDATOverviewPageProps> {
 	const res = await fetchDATInstitutions()
 
 	const allAssets = buildAllAssetLinks(res)
 	const colorByAsset = buildColorByAsset(res)
 
-	const dailyFlowsByAsset: Record<string, IDATOverviewFlowSeries> = {}
+	const dailyFlowsByAsset = createChartRecord<IDATOverviewFlowSeries>()
 	for (const asset in res.flows) {
 		const name = res.assetMetadata[asset]?.name ?? asset
 		const existing = dailyFlowsByAsset[name]
-		const points: Array<readonly [number, number]> = existing ? [...existing.points] : []
+		const assetFlows = res.flows[asset]
+		const points = new Array<readonly [number, number]>(assetFlows.length)
 
-		for (const [date, _net, _inflow, _outflow, purchasePrice, usdValueOfPurchase] of res.flows[asset]) {
-			points.push([toUnixMsTimestamp(+date), purchasePrice ?? usdValueOfPurchase ?? 0] as const)
+		for (let i = 0; i < assetFlows.length; i++) {
+			const [date, _net, _inflow, _outflow, purchasePrice, usdValueOfPurchase] = assetFlows[i]
+			points[i] = [toUnixMsTimestamp(date), purchasePrice ?? usdValueOfPurchase ?? 0] as const
 		}
 
 		dailyFlowsByAsset[name] = {
 			name,
 			stack: 'asset',
 			color: existing?.color ?? colorByAsset[asset],
-			points: points.sort((a, b) => a[0] - b[0])
+			// Asset streams are ascending; only merge when two asset ids share a display name.
+			points: existing ? mergeAscendingFlowPoints(existing.points, points) : points
 		}
 	}
 
@@ -155,17 +175,17 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 		})
 		.sort((a, b) => (b.holdings.usdValue ?? 0) - (a.holdings.usdValue ?? 0))
 
-	const mNAV_realized: Record<string, Record<string, number | null | undefined>> = {}
-	const mNAV_realistic: Record<string, Record<string, number | null | undefined>> = {}
-	const mNAV_max: Record<string, Record<string, number | null | undefined>> = {}
+	const mNAV_realized = createChartRecord<Record<string, number | null | undefined>>()
+	const mNAV_realistic = createChartRecord<Record<string, number | null | undefined>>()
+	const mNAV_max = createChartRecord<Record<string, number | null | undefined>>()
 
 	const mnavAsset = res.mNAV[asset]
 	if (mnavAsset != null) {
 		for (const institution in mnavAsset) {
 			for (const [date, realized, realistic, max] of mnavAsset[institution]) {
-				mNAV_realized[date] = mNAV_realized[date] ?? {}
-				mNAV_realistic[date] = mNAV_realistic[date] ?? {}
-				mNAV_max[date] = mNAV_max[date] ?? {}
+				mNAV_realized[date] = mNAV_realized[date] ?? createChartRecord<number | null | undefined>()
+				mNAV_realistic[date] = mNAV_realistic[date] ?? createChartRecord<number | null | undefined>()
+				mNAV_max[date] = mNAV_max[date] ?? createChartRecord<number | null | undefined>()
 				mNAV_realized[date][institution] = realized
 				mNAV_realistic[date][institution] = realistic
 				mNAV_max[date][institution] = max
@@ -181,17 +201,27 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 		const source: Array<Record<string, number | null>> = []
 
 		for (const date in mnavByDate) {
-			const row: Record<string, number | null> = { timestamp: toUnixMsTimestamp(+date) }
+			const row = createChartRow<number | null>(toUnixMsTimestamp(+date))
 			for (const inst of finalInstitutions) {
 				row[inst.ticker] = mnavByDate[date]?.[inst.ticker] ?? null
 			}
 			source.push(row)
 		}
 
-		return { source: ensureChronologicalRows(source), dimensions }
+		source.sort((a, b) => a.timestamp - b.timestamp)
+		return { source, dimensions }
 	}
 
 	const chartColors = getNDistinctColors(finalInstitutions.length)
+	const assetFlows = res.flows[asset] ?? []
+	const dailyFlowSource = new Array<Record<string, number>>(assetFlows.length)
+	for (let i = 0; i < assetFlows.length; i++) {
+		const [timestamp, net] = assetFlows[i]
+		const row = createChartRow<number>(toUnixMsTimestamp(timestamp))
+		row[metadata.name] = net
+		dailyFlowSource[i] = row
+	}
+
 	return {
 		institutions: finalInstitutions,
 		asset,
@@ -199,7 +229,7 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 		allAssets,
 		dailyFlowsChart: {
 			dataset: {
-				source: (res.flows[asset] ?? []).map(([timestamp, net]) => ({ timestamp, [metadata.name]: net })),
+				source: dailyFlowSource,
 				dimensions: ['timestamp', metadata.name]
 			},
 			charts: [
@@ -248,38 +278,43 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 
 // ── Company detail page query ───────────────────────────────────────────
 
-function ensureChronologicalPairs<T extends [number, ...unknown[]]>(rows: T[]): T[] {
-	if (rows.length < 2) return rows
-
-	let prev = rows[0][0]
-	for (let i = 1; i < rows.length; i++) {
-		const curr = rows[i][0]
-		if (curr < prev) {
-			return rows.toSorted((a, b) => a[0] - b[0])
+export function buildDATTransactionRowsByAsset(
+	transactions: IDATTransaction[]
+): Map<string, Array<[number, number, number, number]>> {
+	const transactionsByAsset = new Map<string, Array<[number, number, number, number]>>()
+	const assetsToSort = new Set<string>()
+	for (let i = transactions.length - 1; i >= 0; i--) {
+		const item = transactions[i]
+		let rows = transactionsByAsset.get(item.asset)
+		if (!rows) {
+			rows = []
+			transactionsByAsset.set(item.asset, rows)
 		}
-		prev = curr
+		const timestamp = Math.floor(Date.parse(item.end_date ?? item.start_date) / 1000)
+		if (rows.length > 0 && timestamp < rows[rows.length - 1][0]) assetsToSort.add(item.asset)
+		rows.push([
+			timestamp,
+			item.type === 'sale' ? -Number(item.amount) : Number(item.amount),
+			Number(item.avg_price),
+			Number(item.usd_value)
+		])
 	}
-
-	return rows
+	for (const asset of assetsToSort) transactionsByAsset.get(asset)?.sort((a, b) => a[0] - b[0])
+	return transactionsByAsset
 }
 
 export async function getDATCompanyData(company: string): Promise<IDATCompanyPageProps | null> {
 	const data = await fetchDATInstitutionDetail(company)
 	if (!data) return null
 
+	// The endpoint is normally newest-first. The builder walks it backwards and only sorts an asset
+	// when a local ordering anomaly is detected in the live response.
+	const transactionsByAsset = buildDATTransactionRowsByAsset(data.transactions)
+
 	const chartByAsset: IDATCompanyChartByAsset[] = []
 	for (const assetKey in data.assets) {
 		const assetMeta = data.assetsMeta[assetKey]
-		const transactionRows = ensureChronologicalPairs(
-			data.transactions
-				.filter((item) => item.asset === assetKey)
-				.map((item): [number, number, number | null, number | null] => [
-					Math.floor(new Date(item.end_date ?? item.start_date).getTime() / 1000),
-					item.type === 'sale' ? -Number(item.amount) : Number(item.amount),
-					item.avg_price != null ? Number(item.avg_price) : null,
-					item.usd_value != null ? Number(item.usd_value) : null
-				])
-		)
+		const transactionRows = transactionsByAsset.get(assetKey) ?? []
 
 		let totalAmount = 0
 		const seriesName = assetMeta.ticker

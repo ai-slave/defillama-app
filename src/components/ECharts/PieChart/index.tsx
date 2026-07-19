@@ -2,17 +2,19 @@ import { PieChart as EPieChart } from 'echarts/charts'
 import { GraphicComponent, GridComponent, LegendComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useEffectEvent, useId, useMemo, useRef } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { formattedNum } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
 import { CHART_INSET, CHART_VERTICAL_LEGEND_RIGHT_INSET, chartLegendScrollStyle } from '../chartSpacing'
-import { getChartTheme } from '../chartTheme'
+import { useChartTheme } from '../chartTheme'
+import { createChartRecord } from '../dynamicRow'
 import { formatTooltipValue } from '../formatters'
 import type { IPieChartProps } from '../types'
 
@@ -47,8 +49,8 @@ export default function PieChart({
 	onReady,
 	...props
 }: IPieChartProps) {
-	const id = useId()
 	const [isDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isDark)
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -73,16 +75,15 @@ export default function PieChart({
 	const exportFilename =
 		exportButtonsConfig?.filename || (title ? title.replace(/\s+/g, '-').toLowerCase() : 'pie-chart')
 	const exportTitle = exportButtonsConfig?.pngTitle || title
+	const chartDomRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
 
-	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
-
 	const { percentByName, formatPercent } = useMemo(() => {
-		const total = chartData.reduce((acc, item) => acc + item.value, 0)
+		let total = 0
+		for (const item of chartData) total += item.value
 
 		const formatPercent = (value: number) => {
 			if (total === 0) return '0%'
@@ -93,7 +94,8 @@ export default function PieChart({
 			return pct.toFixed(2) + '%'
 		}
 
-		const percentByName = Object.fromEntries(chartData.map((item) => [item.name, formatPercent(item.value)]))
+		const percentByName = createChartRecord<string>()
+		for (const item of chartData) percentByName[item.name] = formatPercent(item.value)
 
 		return { percentByName, formatPercent }
 	}, [chartData])
@@ -174,7 +176,7 @@ export default function PieChart({
 		const needsTruncation = desired > boxWidth
 
 		const availableTextPx = Math.max(0, boxWidth - iconAndPaddingPx)
-		const out: Record<string, string> = {}
+		const out = createChartRecord<string>()
 		for (const item of chartData) {
 			const name = String(item.name)
 			const pct = percentByName[item.name] ?? '0%'
@@ -206,7 +208,7 @@ export default function PieChart({
 			type: 'pie',
 			label: {
 				fontFamily: 'sans-serif',
-				color: getChartTheme(isDark).text,
+				color: chartTheme.text,
 				formatter: (x) => {
 					return `${x.name}: (${formatPercent(x.value)})`
 				},
@@ -253,7 +255,7 @@ export default function PieChart({
 		}
 
 		return series
-	}, [isDark, showLegend, chartData, radius, stackColors, isSmall, reservedRight, formatPercent, customLabel])
+	}, [chartTheme, showLegend, chartData, radius, stackColors, isSmall, reservedRight, formatPercent, customLabel])
 
 	const isChartDisposed = (inst: echarts.ECharts | null) => {
 		if (!inst) return true
@@ -267,9 +269,9 @@ export default function PieChart({
 	}
 
 	useEffect(() => {
-		const el = document.getElementById(id)
+		const el = chartDomRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		handleChartReady(instance)
 		emitReady(instance)
@@ -280,7 +282,7 @@ export default function PieChart({
 			handleChartReady(null)
 			emitReady(null)
 		}
-	}, [id, handleChartReady])
+	}, [handleChartReady])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -310,11 +312,7 @@ export default function PieChart({
 				right: 0
 			},
 			legend: {
-				...chartLegendScrollStyle(
-					getChartTheme(isDark).legendPageActive,
-					getChartTheme(isDark).legendPageInactive,
-					getChartTheme(isDark).axisLabel
-				),
+				...chartLegendScrollStyle(chartTheme.legendPageActive, chartTheme.legendPageInactive, chartTheme.axisLabel),
 				show: showLegend,
 				type: 'scroll',
 				top: CHART_INSET,
@@ -328,7 +326,7 @@ export default function PieChart({
 				// If everything fits, right-align looks cleaner. If truncated, left-align maximizes readable label length.
 				align: legendAlign,
 				textStyle: {
-					color: getChartTheme(isDark).text, // Default color
+					color: chartTheme.text, // Default color
 					...(legendTextStyle || {}) // Apply overrides from prop
 				},
 				formatter: function (name: string) {
@@ -341,7 +339,7 @@ export default function PieChart({
 		})
 	}, [
 		series,
-		isDark,
+		chartTheme,
 		valueSymbol,
 		showLegend,
 		chartData,
@@ -353,117 +351,61 @@ export default function PieChart({
 		legendAlign
 	])
 
-	useEffect(() => {
+	const syncLayout = useStableCallback(() => {
 		const instance = chartRef.current
 		if (!instance || isChartDisposed(instance)) return
-		const computePieCenterPx = (reserved: number) => {
-			const w = instance.getWidth()
-			const h = instance.getHeight()
-			const availableW = Math.max(1, w - reserved)
-
-			// Center within the drawable pie area (excluding reserved legend width).
-			const cx = Math.round(availableW / 2)
-			const cy = Math.round((Number.parseFloat(centerY) / 100) * h)
-			return { cx, cy, w, h }
+		const w = instance.getWidth()
+		const h = instance.getHeight()
+		const availableW = Math.max(1, w - reservedRight)
+		const cx = Math.round(availableW / 2)
+		const cy = Math.round((Number.parseFloat(centerY) / 100) * h)
+		const minDim = Math.max(1, Math.min(h, w - reservedRight))
+		let watermarkHeight = 40
+		let watermarkWidth = Math.round(watermarkHeight * (389 / 133))
+		const maxWidth = minDim * 0.6
+		if (watermarkWidth > maxWidth) {
+			const scale = maxWidth / watermarkWidth
+			watermarkWidth = Math.round(watermarkWidth * scale)
+			watermarkHeight = Math.max(20, Math.round(watermarkHeight * scale))
 		}
 
-		const setWatermark = () => {
-			if (!chartRef.current || isChartDisposed(chartRef.current)) return
-
-			const { cx, cy, w, h } = computePieCenterPx(reservedRight)
-			// Keep the watermark consistent with MultiSeriesChart2 (40px high on desktop),
-			// and only scale down when the chart is extremely small.
-			const minDim = Math.max(1, Math.min(h, w - reservedRight))
-			// Match MultiSeriesChart2: 40px-high watermark with natural aspect ratio.
-			const baseHeight = 40
-			// `defillama-*-neutral.webp` dimensions are 389x133.
-			const aspect = 389 / 133
-
-			let watermarkHeight = baseHeight
-			let watermarkWidth = Math.round(watermarkHeight * aspect)
-
-			// If the chart is tiny, scale watermark down (but keep it readable).
-			const maxWidth = minDim * 0.6
-			if (watermarkWidth > maxWidth) {
-				const scale = maxWidth / watermarkWidth
-				watermarkWidth = Math.round(watermarkWidth * scale)
-				watermarkHeight = Math.max(20, Math.round(watermarkHeight * scale))
-			}
-
-			chartRef.current.setOption(
-				{
-					graphic: [
-						{
-							id: 'defillama-watermark',
-							type: 'image',
-							zlevel: 10,
-							z: 999,
-							silent: true,
-							left: Math.round(cx - watermarkWidth / 2),
-							top: Math.round(cy - watermarkHeight / 2),
-							style: {
-								image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-								width: watermarkWidth,
-								height: watermarkHeight,
-								opacity: 0.3
-							}
-						}
-					]
+		instance.setOption(
+			{
+				series: {
+					center: !showLegend || isSmall || reservedRight <= 0 ? ['50%', centerY] : [cx, centerY]
 				},
-				{ lazyUpdate: true }
-			)
-		}
-
-		const setPieCenter = () => {
-			if (!chartRef.current || isChartDisposed(chartRef.current)) return
-
-			if (!showLegend || isSmall || reservedRight <= 0) {
-				chartRef.current.setOption(
+				graphic: [
 					{
-						series: {
-							center: ['50%', centerY]
+						id: 'defillama-watermark',
+						type: 'image',
+						zlevel: 10,
+						z: 999,
+						silent: true,
+						left: Math.round(cx - watermarkWidth / 2),
+						top: Math.round(cy - watermarkHeight / 2),
+						style: {
+							image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
+							width: watermarkWidth,
+							height: watermarkHeight,
+							opacity: 0.3
 						}
-					},
-					{ lazyUpdate: true }
-				)
-				return
-			}
-
-			const center = computePieCenterPx(reservedRight)
-			chartRef.current.setOption(
-				{
-					series: {
-						// X accounts for the legend reservation; Y may opt into optical centering.
-						center: [center.cx, centerY]
 					}
-				},
-				{ lazyUpdate: true }
-			)
-		}
+				]
+			},
+			{ lazyUpdate: true }
+		)
+	})
 
-		const syncLayout = () => {
-			setPieCenter()
-			setWatermark()
-		}
+	// The shared observer resizes the canvas and then recomputes this chart's pixel-positioned watermark.
+	useChartResize(chartRef, chartDomRef, syncLayout)
 
+	useEffect(() => {
 		syncLayout()
-
-		let raf = 0
-		const onResize = () => {
-			if (raf) cancelAnimationFrame(raf)
-			raf = requestAnimationFrame(syncLayout)
-		}
-		window.addEventListener('resize', onResize)
-
-		return () => {
-			window.removeEventListener('resize', onResize)
-			if (raf) cancelAnimationFrame(raf)
-		}
-	}, [showLegend, isSmall, reservedRight, isDark, centerY])
+	}, [showLegend, isSmall, reservedRight, isDark, centerY, syncLayout])
 
 	return (
 		<ChartContainer
-			id={id}
+			chartRef={chartDomRef}
 			chartClassName="mx-0 my-auto h-[360px]"
 			chartStyle={height ? { height } : undefined}
 			header={

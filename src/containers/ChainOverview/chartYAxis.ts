@@ -1,4 +1,3 @@
-import { getChartTheme } from '~/components/ECharts/chartTheme'
 import { formatTooltipValue } from '~/components/ECharts/formatters'
 import { formattedNum } from '~/utils'
 import type { ChainChartLabels } from './constants'
@@ -10,7 +9,7 @@ type AxisExtent = {
 type AxisBuilderContext = {
 	chartColors: Record<string, string>
 	chartsInSeries: Set<string>
-	isThemeDark: boolean
+	themeText: string
 }
 
 type AxisConfig = {
@@ -58,12 +57,12 @@ const AXIS_CONFIG_BY_TYPE: Partial<Record<ChainChartLabels, AxisConfig>> = {
 	},
 	'Active Addresses': {
 		formatter: (value) => formattedNum(value),
-		resolveColor: ({ chartColors, chartsInSeries, isThemeDark }) =>
+		resolveColor: ({ chartColors, chartsInSeries, themeText }) =>
 			chartsInSeries.has('Active Addresses')
 				? chartColors['Active Addresses']
 				: chartsInSeries.has('New Addresses')
 					? chartColors['New Addresses']
-					: getChartTheme(isThemeDark).text
+					: themeText
 	},
 	Transactions: {
 		formatter: (value) => formattedNum(value),
@@ -102,16 +101,16 @@ export function buildChainYAxis({
 	baseYAxis,
 	chartColors,
 	chartsInSeries,
-	isThemeDark
+	themeText
 }: {
 	allYAxis: Array<[ChainChartLabels, number | undefined]>
 	baseYAxis: Record<string, unknown>
 	chartColors: Record<string, string>
 	chartsInSeries: Set<string>
-	isThemeDark: boolean
+	themeText: string
 }) {
 	const finalYAxis: Array<Record<string, unknown>> = []
-	const context: AxisBuilderContext = { chartColors, chartsInSeries, isThemeDark }
+	const context: AxisBuilderContext = { chartColors, chartsInSeries, themeText }
 	const noOffset = allYAxis.length < 3
 
 	for (const [type, index] of allYAxis) {

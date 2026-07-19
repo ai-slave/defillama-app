@@ -1,3 +1,4 @@
+import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import type { IPieChartProps } from '~/components/ECharts/types'
 import type { ChartConfiguration, ChartDataSeries } from '~/containers/LlamaAI/types'
 import { getChartColor, oldBlue, parseStringNumber } from '~/containers/LlamaAI/utils/chartAdapters/shared'
@@ -20,22 +21,18 @@ export function adaptPieChartData(config: ChartConfiguration, rawData: ChartData
 		const entityField = primarySeries.dataMapping.xField
 		const valueField = primarySeries.dataMapping.yField
 
-		const aggregatedData = rawData.reduce(
-			(acc, row) => {
-				const record = row as Record<string, unknown>
-				const entity = String(record[entityField] ?? 'Unknown')
-				const value = parseStringNumber(record[valueField])
-				acc[entity] = (acc[entity] ?? 0) + value
-				return acc
-			},
-			{} as Record<string, number>
-		)
+		const aggregatedData = createChartRecord<number>()
+		for (const row of rawData) {
+			const record = row as Record<string, unknown>
+			const entity = String(record[entityField] ?? 'Unknown')
+			aggregatedData[entity] = (aggregatedData[entity] ?? 0) + parseStringNumber(record[valueField])
+		}
 
-		const pieData = Object.entries(aggregatedData)
-			.map(([name, value]) => ({ name, value: Number(value) }))
-			.sort((a, b) => b.value - a.value)
+		const pieData: Array<{ name: string; value: number }> = []
+		for (const name in aggregatedData) pieData.push({ name, value: aggregatedData[name] })
+		pieData.sort((a, b) => b.value - a.value)
 
-		const stackColors: Record<string, string> = {}
+		const stackColors = createChartRecord<string>()
 		for (let index = 0; index < pieData.length; index++) {
 			const name = pieData[index].name
 			// Honor an explicit per-slice color from the config; fall back to the palette.

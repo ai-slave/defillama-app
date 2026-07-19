@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { buildTimeSeriesDataset } from '~/components/ECharts/timeSeriesDataset'
+import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { fetchAdapterProtocolChartData, fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 
@@ -40,27 +42,45 @@ export function useEtherfiCashTvlChart() {
 	return useMemo(() => {
 		const raw = query.data
 		if (!raw || !Array.isArray(raw) || raw.length === 0) {
-			return { ...query, tvlChart: [], inflowsChart: [] }
+			return {
+				tvlDataset: { source: [], dimensions: ['timestamp', 'TVL'] } satisfies MultiSeriesChart2Dataset,
+				inflowsDataset: {
+					source: [],
+					dimensions: ['timestamp', 'USD Inflows']
+				} satisfies MultiSeriesChart2Dataset,
+				previousTvl: null,
+				previousInflow: null,
+				isLoading: query.isLoading
+			}
 		}
 
-		const tvlChart = raw.map(([ts, value]: [number, number]) => ({
-			date: Math.floor(ts / 1e3),
-			TVL: value
-		}))
-
-		const inflowsChart: Array<{ date: number; 'USD Inflows': number }> = []
-		for (let i = 1; i < raw.length; i++) {
+		const tvlSource = new Array<{ timestamp: number; TVL: number }>(raw.length)
+		const inflowsSource: Array<{ timestamp: number; 'USD Inflows': number }> = []
+		for (let i = 0; i < raw.length; i++) {
 			const [ts, value] = raw[i]
+			tvlSource[i] = { timestamp: ts, TVL: value }
+			if (i === 0) continue
 			const prevValue = raw[i - 1][1]
 			if (value == null || prevValue == null || !Number.isFinite(value) || !Number.isFinite(prevValue)) continue
-			inflowsChart.push({
-				date: Math.floor(ts / 1e3),
+			inflowsSource.push({
+				timestamp: ts,
 				'USD Inflows': value - prevValue
 			})
 		}
 
-		return { ...query, tvlChart, inflowsChart }
-	}, [query])
+		const tvlDataset = { source: tvlSource, dimensions: ['timestamp', 'TVL'] } satisfies MultiSeriesChart2Dataset
+		const inflowsDataset = {
+			source: inflowsSource,
+			dimensions: ['timestamp', 'USD Inflows']
+		} satisfies MultiSeriesChart2Dataset
+		return {
+			tvlDataset,
+			inflowsDataset,
+			previousTvl: tvlSource.length >= 2 ? tvlSource[tvlSource.length - 2].TVL : null,
+			previousInflow: inflowsSource.length >= 2 ? inflowsSource[inflowsSource.length - 2]['USD Inflows'] : null,
+			isLoading: query.isLoading
+		}
+	}, [query.data, query.isLoading])
 }
 
 export function useEtherfiCashFeesCharts() {
@@ -92,14 +112,27 @@ export function useEtherfiCashFeesCharts() {
 	})
 
 	return useMemo(() => {
-		const toChart = (data: Array<[number, number]> | undefined, key: string) =>
-			(data ?? []).map(([ts, value]) => ({ date: ts, [key]: value }))
+		const feesDataset = buildTimeSeriesDataset(fees.data ?? [], 'Fees', 1000)
+		const revenueDataset = buildTimeSeriesDataset(revenue.data ?? [], 'Revenue', 1000)
+		const holdersPoints = holdersRevenue.data ?? []
+		const holdersSource = new Array<{ timestamp: number; 'Holders Revenue': number }>(holdersPoints.length)
+		let hasHoldersRevenue = false
+		for (let i = 0; i < holdersPoints.length; i++) {
+			const [timestamp, value] = holdersPoints[i]
+			holdersSource[i] = { timestamp: timestamp * 1e3, 'Holders Revenue': value }
+			if (value !== 0) hasHoldersRevenue = true
+		}
+		const holdersRevenueDataset = {
+			source: holdersSource,
+			dimensions: ['timestamp', 'Holders Revenue']
+		} satisfies MultiSeriesChart2Dataset
 
 		return {
-			feesChart: toChart(fees.data, 'Fees'),
-			revenueChart: toChart(revenue.data, 'Revenue'),
-			holdersRevenueChart: toChart(holdersRevenue.data, 'Holders Revenue'),
+			feesDataset,
+			revenueDataset,
+			holdersRevenueDataset,
+			hasHoldersRevenue,
 			isLoading: fees.isLoading || revenue.isLoading || holdersRevenue.isLoading
 		}
-	}, [fees, revenue, holdersRevenue])
+	}, [fees.data, fees.isLoading, revenue.data, revenue.isLoading, holdersRevenue.data, holdersRevenue.isLoading])
 }

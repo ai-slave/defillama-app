@@ -1,5 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
+import type { TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
+import type { MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { fetchProtocolBySlug } from './api'
@@ -7,7 +10,84 @@ import type { IProtocolChainTvlEntry, IProtocolOverviewMetricsV1 } from './api.t
 
 type ChainTvlEntry = IProtocolChainTvlEntry
 type ChainTvls = Record<string, ChainTvlEntry>
-type DateValueRow = { date: number } & Record<string, number>
+type AccumulatedValueRow = Record<string, number>
+
+export const MAX_PROTOCOL_V1_BREAKDOWN_SERIES = 30
+const OTHERS_SERIES_NAME = 'Others'
+
+function getOwnNumber(record: Record<string, number>, key: string) {
+	return Object.hasOwn(record, key) ? record[key] : undefined
+}
+
+function setChartRowValue(row: Record<string, number>, name: string, value: number) {
+	if (name === '__proto__') {
+		Object.defineProperty(row, name, { value, enumerable: true, configurable: true, writable: true })
+	} else {
+		row[name] = value
+	}
+}
+
+export type ProtocolV1AddlChartsData = {
+	tokensUnique?: string[]
+	rawTokensUnique?: string[]
+	tokenBreakdownUSDDataset?: TimestampDataset
+	tokenBreakdownPieChart?: Array<{ name: string; value: number }>
+	tokenBreakdownDataset?: TimestampDataset
+	usdInflowsDataset?: TimestampDataset | null
+	tokenInflowsDataset?: TimestampDataset | null
+}
+
+function getSortedNumericKeys(directory: Record<string, unknown>): number[] {
+	const keys = Object.keys(directory)
+	const dates = new Array<number>(keys.length)
+	for (let i = 0; i < keys.length; i++) dates[i] = +keys[i]
+	dates.sort((a, b) => a - b)
+	return dates
+}
+
+function buildTimestampDataset(
+	directory: Record<string, AccumulatedValueRow>,
+	seriesNames: string[],
+	sortedDates = getSortedNumericKeys(directory)
+): TimestampDataset {
+	const source = new Array<TimestampDataset['source'][number]>(sortedDates.length)
+	for (let i = 0; i < sortedDates.length; i++) {
+		const date = sortedDates[i]
+		const values = directory[date]
+		const nextRow = createChartRow<number>(date * 1e3)
+		for (const name in values) setChartRowValue(nextRow, name, values[name])
+		source[i] = nextRow
+	}
+	return { source, dimensions: ['timestamp', ...seriesNames] }
+}
+
+export function buildProtocolV1ChartConfigs({
+	seriesNames,
+	type,
+	colors,
+	stack,
+	hideAreaStyle = false
+}: {
+	seriesNames: string[]
+	type: MultiSeriesChart2SeriesConfig['type']
+	colors?: Record<string, string>
+	stack?: string
+	hideAreaStyle?: boolean
+}): MultiSeriesChart2SeriesConfig[] {
+	const charts = new Array<MultiSeriesChart2SeriesConfig>(seriesNames.length)
+	for (let i = 0; i < seriesNames.length; i++) {
+		const name = seriesNames[i]
+		charts[i] = {
+			type,
+			name,
+			encode: { x: 'timestamp', y: name },
+			...(colors?.[name] ? { color: colors[name] } : {}),
+			...(stack ? { stack } : {}),
+			...(type === 'line' && hideAreaStyle ? { hideAreaStyle: true } : {})
+		}
+	}
+	return charts
+}
 
 export const formatProtocolV1TvlsByChain = ({
 	historicalChainTvls,
@@ -15,8 +95,8 @@ export const formatProtocolV1TvlsByChain = ({
 }: {
 	historicalChainTvls: ChainTvls
 	extraTvlsEnabled: Record<string, boolean>
-}): DateValueRow[] => {
-	const tvlDictionary: { [data: number]: { [chain: string]: number } } = {}
+}) => {
+	const tvlDictionary = createChartRecord<AccumulatedValueRow>()
 
 	for (const section in historicalChainTvls) {
 		let sectionName = section
@@ -35,7 +115,7 @@ export const formatProtocolV1TvlsByChain = ({
 			}
 		} else {
 			// sum key with staking, ethereum, arbitrum etc but ethereum-staking, arbitrum-vesting
-			if (!(name in extraTvlsEnabled)) {
+			if (!Object.hasOwn(extraTvlsEnabled, name)) {
 				toSumSection = true
 			}
 		}
@@ -45,7 +125,7 @@ export const formatProtocolV1TvlsByChain = ({
 			if (tvl) {
 				for (const { date, totalLiquidityUSD } of tvl) {
 					if (!tvlDictionary[date]) {
-						tvlDictionary[date] = { [sectionName]: 0 }
+						tvlDictionary[date] = createChartRecord<number>()
 					}
 
 					tvlDictionary[date][sectionName] = (tvlDictionary[date][sectionName] || 0) + totalLiquidityUSD
@@ -54,12 +134,16 @@ export const formatProtocolV1TvlsByChain = ({
 		}
 	}
 
-	const result: DateValueRow[] = []
-	for (const date in tvlDictionary) {
-		result.push({ ...tvlDictionary[date], date: Number(date) })
+	const dates = getSortedNumericKeys(tvlDictionary)
+	const lastEntry = dates.length > 0 ? tvlDictionary[dates[dates.length - 1]] : undefined
+	const chainsUnique: string[] = []
+	if (lastEntry) {
+		for (const key in lastEntry) {
+			chainsUnique.push(key)
+		}
 	}
-	result.sort((a, b) => a.date - b.date)
-	return result
+
+	return { dataset: buildTimestampDataset(tvlDictionary, chainsUnique, dates), chainsUnique }
 }
 
 function buildProtocolV1Inflows({
@@ -75,8 +159,8 @@ function buildProtocolV1Inflows({
 	datesToDelete: number[]
 	tokenToExclude?: string | null
 }) {
-	const usdInflows: Record<string, number> = {}
-	const tokenInflows: Record<string, DateValueRow> = {}
+	const usdInflows = createChartRecord<number>()
+	const tokenInflows = createChartRecord<AccumulatedValueRow>()
 	const tokensUniqueSet = new Set(tokensUnique)
 
 	let zeroUsdInfows = 0
@@ -88,24 +172,24 @@ function buildProtocolV1Inflows({
 		// skip sum of keys like ethereum-staking, arbitrum-vesting
 		if (name.includes('-')) continue
 
-		const isEnabled = name in extraTvlsEnabled ? extraTvlsEnabled[name] : true
+		const isEnabled = Object.hasOwn(extraTvlsEnabled, name) ? extraTvlsEnabled[name] : true
 		if (!isEnabled) continue
 
 		// Index per-date maps
-		const tokensInUsdByDate: Record<string, Record<string, number>> = {}
-		const tokensByDate: Record<string, Record<string, number>> = {}
-		const dateSet = new Set<string>()
+		const tokensInUsdByDate: Record<number, Record<string, number>> = {}
+		const tokensByDate: Record<number, Record<string, number>> = {}
+		const dateSet = new Set<number>()
 
 		for (const { date, tokens } of chainTvls[section]?.tokensInUsd ?? []) {
 			tokensInUsdByDate[date] = tokens
-			dateSet.add(String(date))
+			dateSet.add(date)
 		}
 		for (const { date, tokens } of chainTvls[section]?.tokens ?? []) {
 			tokensByDate[date] = tokens
-			dateSet.add(String(date))
+			dateSet.add(date)
 		}
 
-		const dates: string[] = Array.from(dateSet).sort((a, b) => Number(a) - Number(b))
+		const dates = Array.from(dateSet).sort((a, b) => a - b)
 
 		for (let i = 1; i < dates.length; i++) {
 			const currentDate = dates[i]
@@ -117,16 +201,18 @@ function buildProtocolV1Inflows({
 			const oldUsdTokens = tokensInUsdByDate[prevDate] || {}
 
 			// Build price map using larger totalUSD preference
-			const priceMap: Record<string, { value: number; totalUSD: number }> = {}
+			const priceMap = createChartRecord<{ value: number; totalUSD: number }>()
 			for (const token in currentUsdTokens) {
-				const amount = currentTokens[token]
+				if (!Object.hasOwn(currentUsdTokens, token)) continue
+				const amount = getOwnNumber(currentTokens, token)
 				const usd = currentUsdTokens[token]
 				if (amount && amount > 0) {
 					priceMap[token] = { value: usd / amount, totalUSD: usd }
 				}
 			}
 			for (const token in oldUsdTokens) {
-				const amount = oldTokens[token]
+				if (!Object.hasOwn(oldUsdTokens, token)) continue
+				const amount = getOwnNumber(oldTokens, token)
 				const usd = oldUsdTokens[token]
 				if (amount && amount > 0) {
 					if (!priceMap[token] || priceMap[token].totalUSD < usd) {
@@ -136,47 +222,62 @@ function buildProtocolV1Inflows({
 			}
 
 			let dayDifference = 0
-			let tokenDayDifference: Record<string, number> = {}
+			let selectedTokenDifference = 0
+			const tokenDayDifference = createChartRecord<number>()
 
-			// Iterate all tokens that changed
-			const allTokens = new Set<string>()
-			for (const token in currentTokens) {
-				allTokens.add(token)
-			}
-			for (const token in oldTokens) {
-				allTokens.add(token)
-			}
-
-			for (const token of allTokens) {
+			const addTokenDifference = (token: string) => {
 				// Skip excluded token
-				if (tokenToExclude && token === tokenToExclude) continue
+				if (tokenToExclude && token === tokenToExclude) return
 
-				const currentAmount = currentTokens[token] || 0
-				const prevAmount = oldTokens[token] || 0
+				const currentAmount = getOwnNumber(currentTokens, token) ?? 0
+				const prevAmount = getOwnNumber(oldTokens, token) ?? 0
 				const diff = currentAmount - prevAmount
-				if (diff === 0) continue
+				if (diff === 0) return
 
 				let priceInfo = priceMap[token]
 				if (!priceInfo) {
 					// Fallback price from whichever side has info
-					if (currentAmount > 0 && currentUsdTokens[token] != null) {
-						priceInfo = { value: currentUsdTokens[token] / currentAmount, totalUSD: currentUsdTokens[token] }
-					} else if (prevAmount > 0 && oldUsdTokens[token] != null) {
-						priceInfo = { value: oldUsdTokens[token] / prevAmount, totalUSD: oldUsdTokens[token] }
+					const currentUsdValue = getOwnNumber(currentUsdTokens, token)
+					const previousUsdValue = getOwnNumber(oldUsdTokens, token)
+					if (currentAmount > 0 && currentUsdValue != null) {
+						priceInfo = {
+							value: currentUsdValue / currentAmount,
+							totalUSD: currentUsdValue
+						}
+					} else if (prevAmount > 0 && previousUsdValue != null) {
+						priceInfo = {
+							value: previousUsdValue / prevAmount,
+							totalUSD: previousUsdValue
+						}
 					}
 				}
 
-				if (!priceInfo || !isFinite(priceInfo.value)) continue
+				if (!priceInfo || !isFinite(priceInfo.value)) return
 
 				const diffUsd = diff * priceInfo.value
 				// Ignore outliers similar to computeInflowsData
-				if (Math.abs(diffUsd) > 2 * (priceInfo.totalUSD || 0)) continue
+				if (Math.abs(diffUsd) > 2 * (priceInfo.totalUSD || 0)) return
 
 				dayDifference += diffUsd
 
 				// Track token inflows only for tokens in tokensUnique
 				if (tokensUniqueSet.has(token)) {
 					tokenDayDifference[token] = (tokenDayDifference[token] || 0) + diffUsd
+					selectedTokenDifference += diffUsd
+				}
+			}
+
+			for (const token in currentTokens) {
+				if (Object.hasOwn(currentTokens, token)) addTokenDifference(token)
+			}
+			for (const token in oldTokens) {
+				if (Object.hasOwn(oldTokens, token) && !Object.hasOwn(currentTokens, token)) addTokenDifference(token)
+			}
+
+			if (tokensUniqueSet.has(OTHERS_SERIES_NAME)) {
+				const othersDifference = dayDifference - selectedTokenDifference
+				if (othersDifference !== 0) {
+					tokenDayDifference[OTHERS_SERIES_NAME] = (tokenDayDifference[OTHERS_SERIES_NAME] || 0) + othersDifference
 				}
 			}
 
@@ -195,14 +296,10 @@ function buildProtocolV1Inflows({
 
 			usdInflows[currentDate] = (usdInflows[currentDate] || 0) + dayDifference
 
-			if (!tokenInflows[currentDate]) {
-				tokenInflows[currentDate] = { date: Number(currentDate) }
-			}
+			if (!tokenInflows[currentDate]) tokenInflows[currentDate] = createChartRecord<number>()
 			// Merge existing values accumulated from other chains before writing
 			for (const token in tokenInflows[currentDate]) {
-				if (token !== 'date') {
-					tokenDayDifference[token] = (tokenDayDifference[token] || 0) + tokenInflows[currentDate][token]
-				}
+				tokenDayDifference[token] = (tokenDayDifference[token] || 0) + tokenInflows[currentDate][token]
 			}
 			for (const token in tokenDayDifference) {
 				tokenInflows[currentDate][token] = tokenDayDifference[token]
@@ -215,44 +312,48 @@ function buildProtocolV1Inflows({
 		delete tokenInflows[String(date)]
 	}
 
-	const usdFlows: Array<[string, number]> = []
+	const usdFlowRows = createChartRecord<AccumulatedValueRow>()
 	for (const date in usdInflows) {
-		usdFlows.push([date, usdInflows[date]])
+		const row = createChartRecord<number>()
+		row['USD Inflows'] = usdInflows[date]
+		usdFlowRows[date] = row
 	}
-	usdFlows.sort((a, b) => Number(a[0]) - Number(b[0]))
-
-	const tokenFlows: DateValueRow[] = []
-	for (const date in tokenInflows) {
-		tokenFlows.push(tokenInflows[date])
-	}
-	tokenFlows.sort((a, b) => a.date - b.date)
+	const usdFlowDates = getSortedNumericKeys(usdFlowRows)
+	const tokenFlowDates = getSortedNumericKeys(tokenInflows)
 
 	return {
-		usdInflows: (zeroUsdInfows === usdFlows.length ? null : usdFlows) as Array<[string, number]> | null,
-		tokenInflows: zeroTokenInfows === tokenFlows.length ? null : tokenFlows
+		usdInflowsDataset:
+			zeroUsdInfows === usdFlowDates.length ? null : buildTimestampDataset(usdFlowRows, ['USD Inflows'], usdFlowDates),
+		tokenInflowsDataset:
+			zeroTokenInfows === tokenFlowDates.length
+				? null
+				: buildTimestampDataset(tokenInflows, tokensUnique, tokenFlowDates)
 	}
 }
 
 // Helper: get top 10 non-UNKNOWN, non-near-zero tokens by absolute value.
 // Returns [topTokens, totalTokenCount]
 function getTop10Tokens(tokens: Record<string, number>): [Array<[string, number]>, number] {
-	const validTokens: Array<[string, number]> = []
+	const topTokens: Array<[string, number]> = []
 	let totalCount = 0
 
 	for (const token in tokens) {
+		if (!Object.hasOwn(tokens, token)) continue
 		totalCount++
-		if (token.startsWith('UNKNOWN') || tokens[token] < 1) continue
-		validTokens.push([token, tokens[token]])
+		const value = tokens[token]
+		if (token.startsWith('UNKNOWN') || value < 1) continue
+
+		const absoluteValue = Math.abs(value)
+		let insertAt = topTokens.length
+		while (insertAt > 0 && absoluteValue > Math.abs(topTokens[insertAt - 1][1])) insertAt--
+
+		if (insertAt < 10) {
+			topTokens.splice(insertAt, 0, [token, value])
+			if (topTokens.length > 10) topTokens.pop()
+		}
 	}
 
-	if (validTokens.length <= 10) {
-		validTokens.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-		return [validTokens, totalCount]
-	}
-
-	// Partial sort: only sort top 10, more efficient than full sort
-	validTokens.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-	return [validTokens.slice(0, 10), totalCount]
+	return [topTokens, totalCount]
 }
 
 // Helper: accumulate per-token USD flows between consecutive dates into `tokenFlows`.
@@ -267,8 +368,8 @@ function accumulateTokenFlows({
 }) {
 	if (tokensInUsd.length === 0 || tokens.length === 0) return
 
-	const tokensInUsdMap: Record<string, Record<string, number>> = {}
-	const tokensMap: Record<string, Record<string, number>> = {}
+	const tokensInUsdMap: Record<number, Record<string, number>> = {}
+	const tokensMap: Record<number, Record<string, number>> = {}
 
 	for (const { date, tokens: tokenData } of tokensInUsd) {
 		tokensInUsdMap[date] = tokenData
@@ -279,22 +380,10 @@ function accumulateTokenFlows({
 	}
 
 	// Process dates in order (assuming arrays are already sorted by date)
-	const dates: string[] = tokensInUsd.map(({ date }) => String(date))
+	const dates = tokensInUsd.map(({ date }) => date)
 	if (dates.length <= 1) return
 
-	let isSorted = true
-	for (let i = 1; i < dates.length; i++) {
-		if (Number(dates[i]) < Number(dates[i - 1])) {
-			isSorted = false
-			break
-		}
-	}
-
-	if (!isSorted) {
-		dates.sort((a, b) => Number(a) - Number(b))
-	}
-
-	let prevDate: string | null = null
+	let prevDate: number | null = null
 	for (const date of dates) {
 		if (prevDate === null) {
 			prevDate = date
@@ -317,15 +406,10 @@ function accumulateTokenFlows({
 			if (!currAmount || !prevAmount || currAmount === 0) continue
 
 			const price = currTokensUsd[token] / currAmount
-			if (!isFinite(price)) continue
-
 			const diff = currAmount - prevAmount
 			const diffUsd = price * diff
-
-			if (isFinite(diffUsd) && !Number.isNaN(diffUsd)) {
-				const currentFlow = tokenFlows.get(token) || 0
-				tokenFlows.set(token, currentFlow + Math.abs(diffUsd))
-			}
+			const currentFlow = tokenFlows.get(token) || 0
+			tokenFlows.set(token, currentFlow + Math.abs(diffUsd))
 		}
 
 		prevDate = date
@@ -343,6 +427,7 @@ function getUniqueTokens({
 }) {
 	const tokenSet: Set<string> = new Set()
 	const tokenFlows: Map<string, number> = new Map()
+	const latestTokenValues = createChartRecord<number>()
 	const SIGNIFICANT_FLOW_THRESHOLD = 100_000_000 // $100M
 
 	for (const section in chainTvls) {
@@ -352,7 +437,7 @@ function getUniqueTokens({
 		if (name.includes('-')) continue
 
 		// Check if section is enabled
-		const isEnabled = name in extraTvlsEnabled ? extraTvlsEnabled[name] : true
+		const isEnabled = Object.hasOwn(extraTvlsEnabled, name) ? extraTvlsEnabled[name] : true
 		if (!isEnabled) continue
 
 		const sectionTokensInUsd = chainTvls[section].tokensInUsd ?? []
@@ -370,6 +455,13 @@ function getUniqueTokens({
 
 				for (let i = 0; i < topTokens.length && i < 10; i++) {
 					tokenSet.add(topTokens[i][0])
+				}
+			}
+
+			const latestTokens = sectionTokensInUsd[sectionTokensInUsd.length - 1].tokens
+			for (const token in latestTokens) {
+				if (Object.hasOwn(latestTokens, token)) {
+					latestTokenValues[token] = (latestTokenValues[token] ?? 0) + Math.abs(latestTokens[token])
 				}
 			}
 		}
@@ -396,6 +488,13 @@ function getUniqueTokens({
 					tokenSet.add(topTokens[i][0])
 				}
 			}
+
+			const latestTokens = sectionTokens[sectionTokens.length - 1].tokens
+			for (const token in latestTokens) {
+				if (Object.hasOwn(latestTokens, token)) {
+					latestTokenValues[token] = (latestTokenValues[token] ?? 0) + Math.abs(latestTokens[token])
+				}
+			}
 		}
 
 		// if 'others' exist, add it to the end of unique token list
@@ -411,7 +510,14 @@ function getUniqueTokens({
 		}
 	}
 
-	return Array.from(tokenSet)
+	if (tokenSet.size <= MAX_PROTOCOL_V1_BREAKDOWN_SERIES) return Array.from(tokenSet)
+
+	tokenSet.delete(OTHERS_SERIES_NAME)
+	const tokens = Array.from(tokenSet)
+	tokens.sort((a, b) => (latestTokenValues[b] ?? 0) - (latestTokenValues[a] ?? 0))
+	tokens.length = MAX_PROTOCOL_V1_BREAKDOWN_SERIES - 1
+	tokens.push(OTHERS_SERIES_NAME)
+	return tokens
 }
 
 // Helper to aggregate token balances for a given day into the provided directory.
@@ -422,17 +528,19 @@ function storeTokensBreakdown({
 	tokens,
 	tokensUniqueSet,
 	directory,
+	seenSeries,
 	hideBigTokens = false,
 	dateToTokensInUsd = null
 }: {
 	date: number
 	tokens: Record<string, number>
 	tokensUniqueSet: Set<string>
-	directory: Record<string | number, Record<string, number>>
+	directory: Record<string | number, AccumulatedValueRow>
+	seenSeries?: Set<string>
 	hideBigTokens?: boolean
 	dateToTokensInUsd?: Map<number, Record<string, number>> | null
 }) {
-	const tokensOfTheDay: Record<string, number> = {}
+	const tokensOfTheDay = createChartRecord<number>()
 	// filters tokens that have no name or their value is near zero
 	for (const token in tokens) {
 		if (token.startsWith('UNKNOWN') || tokens[token] < 1) continue
@@ -447,7 +555,7 @@ function storeTokensBreakdown({
 			// from the raw-quantity chart to avoid nonsense spikes.
 			if (!usdForDate) continue
 
-			const usdValue = usdForDate[token]
+			const usdValue = getOwnNumber(usdForDate, token)
 
 			// If this token has no USD value at this date, also skip it.
 			if (usdValue === undefined) continue
@@ -459,7 +567,7 @@ function storeTokensBreakdown({
 		tokensOfTheDay[token] = tokens[token]
 	}
 
-	const tokensToShow: Record<string, number> = {}
+	const tokensToShow = createChartRecord<number>()
 	let remainingTokensSum = 0
 
 	// split tokens of the day into tokens present in top 10 tokens list and add tvl of remaining tokens into category named 'Others'
@@ -473,13 +581,14 @@ function storeTokensBreakdown({
 
 	// add "Others" to tokens list
 	if (!hideBigTokens && tokensUniqueSet.has('Others') && remainingTokensSum > 0) {
-		tokensToShow['Others'] = remainingTokensSum
+		tokensToShow['Others'] = (getOwnNumber(tokensToShow, 'Others') ?? 0) + remainingTokensSum
 	}
 
-	const dir: Record<string, number> = { date, ...(directory[date] ?? {}) }
+	const dir: AccumulatedValueRow = directory[date] ?? createChartRecord<number>()
 
 	for (const token in tokensToShow) {
 		dir[token] = (dir[token] ?? 0) + tokensToShow[token]
+		seenSeries?.add(token)
 	}
 
 	directory[date] = dir
@@ -494,9 +603,10 @@ function buildProtocolV1TokensBreakdown({
 	extraTvlsEnabled: Record<string, boolean>
 	tokensUnique: string[]
 }) {
-	const tokensInUsd: Record<string, Record<string, number>> = {}
-	const rawTokens: Record<string, Record<string, number>> = {}
+	const tokensInUsd = createChartRecord<AccumulatedValueRow>()
+	const rawTokens = createChartRecord<AccumulatedValueRow>()
 	const tokensUniqueSet = new Set<string>(tokensUnique)
+	const rawTokensUniqueSet = new Set<string>()
 
 	for (const chain in chainTvls) {
 		const name = chain.toLowerCase()
@@ -504,7 +614,7 @@ function buildProtocolV1TokensBreakdown({
 		// skip sum of keys like ethereum-staking, arbitrum-vesting
 		if (!name.includes('-')) {
 			// sum key with staking, ethereum, arbitrum etc
-			const isEnabled = name in extraTvlsEnabled ? extraTvlsEnabled[name] : true
+			const isEnabled = Object.hasOwn(extraTvlsEnabled, name) ? extraTvlsEnabled[name] : true
 			if (!isEnabled) continue
 
 			// Build a per-chain map from date -> tokensInUsd so we can:
@@ -535,6 +645,7 @@ function buildProtocolV1TokensBreakdown({
 					tokens,
 					tokensUniqueSet,
 					directory: rawTokens,
+					seenSeries: rawTokensUniqueSet,
 					hideBigTokens: true,
 					dateToTokensInUsd
 				})
@@ -542,49 +653,49 @@ function buildProtocolV1TokensBreakdown({
 		}
 	}
 
-	const tokenBreakdownUSD = []
-	for (const date in tokensInUsd) {
-		tokenBreakdownUSD.push(tokensInUsd[date])
-	}
-	tokenBreakdownUSD.sort((a, b) => a.date - b.date)
-
 	const tokenBreakdownPieChart = []
-	if (tokenBreakdownUSD.length > 0) {
-		const lastEntry = tokenBreakdownUSD[tokenBreakdownUSD.length - 1]
+	const usdDates = getSortedNumericKeys(tokensInUsd)
+	if (usdDates.length > 0) {
+		const lastEntry = tokensInUsd[usdDates[usdDates.length - 1]]
 		for (const name in lastEntry) {
-			if (name !== 'date') {
-				tokenBreakdownPieChart.push({ name, value: lastEntry[name] })
-			}
+			tokenBreakdownPieChart.push({ name, value: lastEntry[name] })
 		}
 	}
 
-	const pieChartData = preparePieChartData({ data: tokenBreakdownPieChart, limit: 15 })
+	const pieChartData = preparePieChartData({
+		data: tokenBreakdownPieChart,
+		limit: 15
+	})
+	const rawTokensUnique = tokensUnique.filter((token) => rawTokensUniqueSet.has(token))
 
-	const tokenBreakdown = []
-	for (const date in rawTokens) {
-		tokenBreakdown.push(rawTokens[date])
+	return {
+		tokenBreakdownUSDDataset: buildTimestampDataset(tokensInUsd, tokensUnique, usdDates),
+		tokenBreakdownPieChart: pieChartData,
+		rawTokensUnique,
+		tokenBreakdownDataset: buildTimestampDataset(rawTokens, rawTokensUnique)
 	}
-	tokenBreakdown.sort((a, b) => a.date - b.date)
-
-	return { tokenBreakdownUSD, tokenBreakdownPieChart: pieChartData, tokenBreakdown }
 }
 
-const buildProtocolV1AddlChartsData = ({
+export const buildProtocolV1AddlChartsData = ({
 	protocolData,
 	extraTvlsEnabled,
 	isBorrowed,
 	tokenToExclude
 }: {
-	protocolData: { name: string; chainTvls?: ChainTvls; misrepresentedTokens?: boolean } | null
+	protocolData: {
+		name: string
+		chainTvls?: ChainTvls
+		misrepresentedTokens?: boolean
+	} | null
 	extraTvlsEnabled: Record<string, boolean>
 	isBorrowed?: boolean
 	tokenToExclude?: string | null
-}) => {
+}): ProtocolV1AddlChartsData => {
 	if (!protocolData) return {}
 
 	let chainTvls = protocolData.chainTvls ?? {}
 	if (isBorrowed) {
-		chainTvls = {}
+		chainTvls = createChartRecord<ChainTvlEntry>()
 		const sourceTvls = protocolData.chainTvls ?? {}
 		for (const chain in sourceTvls) {
 			if (chain.endsWith('-borrowed')) {
@@ -616,14 +727,15 @@ const buildProtocolV1AddlChartsData = ({
 			tokensUnique = tokensUnique.filter((token) => token !== tokenToExclude)
 		}
 
-		const { tokenBreakdownUSD, tokenBreakdownPieChart, tokenBreakdown } = buildProtocolV1TokensBreakdown({
-			chainTvls: chainTvls,
-			extraTvlsEnabled,
-			tokensUnique
-		})
+		const { rawTokensUnique, tokenBreakdownUSDDataset, tokenBreakdownPieChart, tokenBreakdownDataset } =
+			buildProtocolV1TokensBreakdown({
+				chainTvls,
+				extraTvlsEnabled,
+				tokensUnique
+			})
 
-		const { usdInflows, tokenInflows } = buildProtocolV1Inflows({
-			chainTvls: chainTvls,
+		const { usdInflowsDataset, tokenInflowsDataset } = buildProtocolV1Inflows({
+			chainTvls,
 			extraTvlsEnabled,
 			tokensUnique,
 			datesToDelete: protocolData.name === 'Binance CEX' ? [1681430400, 1681516800] : [],
@@ -632,11 +744,12 @@ const buildProtocolV1AddlChartsData = ({
 
 		return {
 			tokensUnique,
-			tokenBreakdownUSD,
+			rawTokensUnique,
+			tokenBreakdownUSDDataset,
 			tokenBreakdownPieChart,
-			tokenBreakdown,
-			usdInflows,
-			tokenInflows
+			tokenBreakdownDataset,
+			usdInflowsDataset,
+			tokenInflowsDataset
 		}
 	}
 
@@ -680,12 +793,13 @@ export const useFetchProtocolV1AddlChartsData = (
 		staleTime: Infinity,
 		refetchOnWindowFocus: false,
 		retry: 0,
-		enabled: Boolean(addlProtocolData)
+		enabled: enabled && Boolean(addlProtocolData)
 	})
 
 	const historicalChainTvls = useMemo(() => {
+		if (!enabled) return null
 		if (isBorrowed) {
-			const chainTvls: ChainTvls = {}
+			const chainTvls = createChartRecord<ChainTvlEntry>()
 			const sourceTvls = addlProtocolData?.chainTvls ?? {}
 			for (const chain in sourceTvls) {
 				if (chain.endsWith('-borrowed')) {
@@ -696,7 +810,11 @@ export const useFetchProtocolV1AddlChartsData = (
 			return chainTvls
 		}
 		return addlProtocolData?.chainTvls ?? null
-	}, [addlProtocolData, isBorrowed])
+	}, [addlProtocolData, isBorrowed, enabled])
 
-	return { ...data, historicalChainTvls, isLoading: data.isLoading || isLoading }
+	return {
+		...data,
+		historicalChainTvls,
+		isLoading: data.isLoading || isLoading
+	}
 }

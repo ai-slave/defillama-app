@@ -21,7 +21,7 @@ import {
 	getStablecoinChainsChartSeries,
 	getStablecoinOverviewChartSeries
 } from '~/containers/Stablecoins/queries.server'
-import { getPrevStablecoinTotalFromChart } from '~/containers/Stablecoins/utils'
+import { getStablecoinValueFromPoint } from '~/containers/Stablecoins/utils'
 import { buildStablecoinVolumeChartPayload } from '~/containers/Stablecoins/volumeChart'
 import { queryString } from '~/server/api/params'
 import { badRequest, notFound, ok, upstreamError } from '~/server/api/respond'
@@ -38,15 +38,13 @@ type StablecoinMcapSeriesPoint = [number, number]
 function buildStablecoinMcapSeries(
 	aggregated: Awaited<ReturnType<typeof fetchStablecoinChartApi>>['aggregated']
 ): StablecoinMcapSeriesPoint[] {
-	return (aggregated ?? [])
-		.map((point): StablecoinMcapSeriesPoint | null => {
-			const timestamp = Number(point.date) * 1e3
-			const mcap = getPrevStablecoinTotalFromChart([point], 0, 'totalCirculatingUSD')
-			if (!Number.isFinite(timestamp) || !Number.isFinite(mcap)) return null
-			return [timestamp, mcap]
-		})
-		.filter((point): point is StablecoinMcapSeriesPoint => point !== null)
-		.sort((a, b) => a[0] - b[0])
+	const series: StablecoinMcapSeriesPoint[] = []
+	for (const point of aggregated ?? []) {
+		const timestamp = +point.date * 1e3
+		const mcap = getStablecoinValueFromPoint(point, 'totalCirculatingUSD')
+		if (Number.isFinite(timestamp) && Number.isFinite(mcap)) series.push([timestamp, mcap])
+	}
+	return series
 }
 
 export const stablecoinMcapChart = defineApiRoute({
@@ -76,6 +74,13 @@ export const stablecoinMcapChart = defineApiRoute({
 // /api/public/stablecoins/chart-series
 // ---------------------------------------------------------------------------
 
+const parseLimit = (value: string | string[] | undefined): number | undefined => {
+	const raw = Array.isArray(value) ? value[0] : value
+	if (!raw) return undefined
+	const parsed = Math.trunc(Number(raw))
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+}
+
 const OVERVIEW_CHARTS = new Set<StablecoinOverviewChartType>([
 	'totalMcap',
 	'tokenMcaps',
@@ -95,6 +100,7 @@ export const stablecoinChartSeries = defineApiRoute({
 		if (!scope || !rawChart) {
 			return badRequest('scope and chart parameters are required')
 		}
+		const seriesLimit = parseLimit(req.query.limit)
 
 		try {
 			if (scope === 'overview') {
@@ -113,6 +119,7 @@ export const stablecoinChartSeries = defineApiRoute({
 				const payload = await getStablecoinOverviewChartSeries({
 					chain: isAllChain ? null : chainRoute.canonicalName,
 					chart: rawChart as StablecoinOverviewChartType,
+					...(seriesLimit == null ? {} : { seriesLimit }),
 					filters: {
 						attribute: req.query.attribute,
 						excludeAttribute: req.query.excludeAttribute,
@@ -131,10 +138,12 @@ export const stablecoinChartSeries = defineApiRoute({
 				if (!CHAINS_CHARTS.has(rawChart as StablecoinChainsChartType)) {
 					return badRequest('unsupported chains chart')
 				}
-				const payload = await getStablecoinChainsChartSeries(
-					rawChart as StablecoinChainsChartType,
-					isTruthyQueryParam(req.query.unreleased)
-				)
+				const chart = rawChart as StablecoinChainsChartType
+				const includeUnreleased = isTruthyQueryParam(req.query.unreleased)
+				const payload =
+					seriesLimit == null
+						? await getStablecoinChainsChartSeries(chart, includeUnreleased)
+						: await getStablecoinChainsChartSeries(chart, includeUnreleased, seriesLimit)
 				return ok(payload)
 			}
 
@@ -153,7 +162,8 @@ export const stablecoinChartSeries = defineApiRoute({
 				const payload = await getStablecoinAssetChartSeries({
 					peggedasset: stablecoinSlug,
 					chart: rawChart as StablecoinAssetChartType,
-					includeUnreleased: isTruthyQueryParam(req.query.unreleased)
+					includeUnreleased: isTruthyQueryParam(req.query.unreleased),
+					...(seriesLimit == null ? {} : { seriesLimit })
 				})
 				if (!payload) return notFound('stablecoin not found')
 				return ok(payload)
@@ -174,13 +184,6 @@ export const stablecoinChartSeries = defineApiRoute({
 const GLOBAL_CHARTS = new Set<StablecoinVolumeGlobalChartKind>(['total', 'chain', 'token', 'currency'])
 const CHAIN_CHARTS = new Set<StablecoinVolumeChainChartKind>(['total', 'token', 'currency'])
 const TOKEN_CHARTS = new Set<StablecoinVolumeTokenChartKind>(['total', 'chain'])
-
-const parseLimit = (value: string | string[] | undefined): number | undefined => {
-	const raw = Array.isArray(value) ? value[0] : value
-	if (!raw) return undefined
-	const parsed = Math.trunc(Number(raw))
-	return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
-}
 
 export const stablecoinVolumeChart = defineApiRoute({
 	route: '/api/public/stablecoins/volume-chart',
@@ -229,7 +232,8 @@ export const stablecoinVolumeChart = defineApiRoute({
 
 			const payload = buildStablecoinVolumeChartPayload(data, {
 				chart,
-				limit: parseLimit(req.query.limit)
+				limit: parseLimit(req.query.limit),
+				trimIncompleteTail: scope === 'global'
 			})
 
 			return ok(payload)

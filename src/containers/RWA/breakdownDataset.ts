@@ -1,4 +1,3 @@
-import { toUnixMsTimestamp } from './api'
 import type { IRWABreakdownChartResponse, RWAOverviewBreakdownRequest, RWAChartMetricKey } from './api.types'
 import { getRwaChartTotalLabel, isRwaTotalSeriesLabel } from './chartAggregation'
 import { buildRwaChartDatasetTotal, type RWAChartDataset, type RWAChartRow } from './chartDataset'
@@ -11,7 +10,7 @@ export function toBreakdownChartDataset(rows: IRWABreakdownChartResponse | null)
 
 	for (const row of rows) {
 		const normalizedRow: RWAChartRow = {
-			timestamp: toUnixMsTimestamp(row.timestamp)
+			timestamp: row.timestamp
 		}
 
 		for (const series in row) {

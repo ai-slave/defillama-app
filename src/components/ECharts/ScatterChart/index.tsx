@@ -18,7 +18,7 @@ import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { CHART_INSET } from '../chartSpacing'
-import { getChartTheme } from '../chartTheme'
+import { useChartTheme } from '../chartTheme'
 import type { IScatterChartProps } from '../types'
 import { isIconUrlValid, validateIconUrl } from '../utils'
 
@@ -60,6 +60,7 @@ export default function ScatterChart({
 	onReady
 }: IScatterChartProps) {
 	const [isDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isDark)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
@@ -68,7 +69,7 @@ export default function ScatterChart({
 	const [iconRevision, setIconRevision] = useState(0)
 
 	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
 	useEffect(() => {
 		if (!showLabels) return
@@ -120,24 +121,42 @@ export default function ScatterChart({
 			formatter: (params: any) => params.value?.[2] || '',
 			fontSize: 10,
 			fontWeight: 500,
-			color: getChartTheme(isDark).ink(0.86)
+			color: chartTheme.ink(0.86)
 		}
 
 		if (isYieldData) {
-			const projectNames = [...new Set(chartData.map((p) => p.projectName))]
-			for (const project of projectNames) {
+			const pointsByProject = new Map<
+				string | number | null | undefined,
+				Array<Array<string | number | null | undefined>>
+			>()
+			for (const point of chartData) {
+				let points = pointsByProject.get(point.projectName)
+				if (!points) {
+					points = []
+					pointsByProject.set(point.projectName, points)
+				}
+				points.push([
+					point.sigma,
+					point.mu,
+					point.count,
+					point.symbol,
+					point.pool,
+					point.tvlUsd,
+					point.apy,
+					point.chain
+				])
+			}
+			for (const [project, data] of pointsByProject) {
 				series.push({
 					name: project,
 					type: 'scatter',
-					symbols: 5,
+					symbolSize: 5,
 					large: true,
 					emphasis: {
 						focus: 'series'
 					},
 					label: labelConfig,
-					data: chartData
-						.filter((p) => p.projectName === project)
-						.map((p) => [p.sigma, p.mu, p.count, p.symbol, p.pool, p.tvlUsd, p.apy, p.chain])
+					data
 				})
 			}
 		} else {
@@ -180,7 +199,7 @@ export default function ScatterChart({
 						label: { show: true },
 						itemStyle: {
 							opacity: 1,
-							borderColor: getChartTheme(isDark).ink(0.9),
+							borderColor: chartTheme.ink(0.9),
 							borderWidth: 2
 						}
 					},
@@ -261,7 +280,7 @@ export default function ScatterChart({
 						textStyle: {
 							fontFamily: 'sans-serif',
 							fontWeight: 600,
-							color: getChartTheme(isDark).text
+							color: chartTheme.text
 						}
 					}
 				: undefined,
@@ -276,7 +295,7 @@ export default function ScatterChart({
 						textStyle: {
 							fontFamily: 'sans-serif',
 							fontSize: 11,
-							color: getChartTheme(isDark).text
+							color: chartTheme.text
 						}
 					}
 				: undefined,
@@ -323,13 +342,13 @@ export default function ScatterChart({
 					},
 					axisLabel: {
 						formatter: '{value}',
-						color: getChartTheme(isDark).axisLabel,
+						color: chartTheme.axisLabel,
 						inside: false,
 						margin: 8
 					},
 					splitLine: {
 						lineStyle: {
-							color: getChartTheme(isDark).gridline
+							color: chartTheme.gridline
 						}
 					}
 				}
@@ -348,13 +367,13 @@ export default function ScatterChart({
 					},
 					axisLabel: {
 						formatter: '{value}',
-						color: getChartTheme(isDark).axisLabel,
+						color: chartTheme.axisLabel,
 						inside: false,
 						margin: 8
 					},
 					splitLine: {
 						lineStyle: {
-							color: getChartTheme(isDark).gridline
+							color: chartTheme.gridline
 						}
 					}
 				}
@@ -375,6 +394,7 @@ export default function ScatterChart({
 	}, [
 		chartData,
 		isDark,
+		chartTheme,
 		tooltipFormatter,
 		xAxisLabel,
 		yAxisLabel,

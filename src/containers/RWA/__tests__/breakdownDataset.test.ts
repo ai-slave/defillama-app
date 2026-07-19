@@ -30,21 +30,6 @@ describe('rwa breakdownDataset', () => {
 		})
 	})
 
-	it('converts second timestamps to milliseconds', () => {
-		expect(
-			toBreakdownChartDataset([
-				{ timestamp: 1_774_576_000, Ethereum: 130 },
-				{ timestamp: 1_774_489_600, Solana: 120 }
-			])
-		).toEqual({
-			source: [
-				{ timestamp: 1_774_576_000_000, Ethereum: 130 },
-				{ timestamp: 1_774_489_600_000, Solana: 120 }
-			],
-			dimensions: ['timestamp', 'Ethereum', 'Solana']
-		})
-	})
-
 	it('keeps single-row input unchanged and builds the expected dataset', () => {
 		const singleRow = [{ timestamp: 1_774_489_600_000, Ethereum: 120 }]
 
@@ -57,10 +42,10 @@ describe('rwa breakdownDataset', () => {
 	it('preserves zero values returned by the backend', () => {
 		expect(
 			toBreakdownChartDataset([
-				{ timestamp: 1, PreStocks: 0, Securitize: 10 },
-				{ timestamp: 2, PreStocks: 0, Securitize: 11 },
-				{ timestamp: 3, PreStocks: 12, Securitize: 12 },
-				{ timestamp: 4, PreStocks: 0, Securitize: 13 }
+				{ timestamp: 1_000, PreStocks: 0, Securitize: 10 },
+				{ timestamp: 2_000, PreStocks: 0, Securitize: 11 },
+				{ timestamp: 3_000, PreStocks: 12, Securitize: 12 },
+				{ timestamp: 4_000, PreStocks: 0, Securitize: 13 }
 			])
 		).toEqual({
 			source: [

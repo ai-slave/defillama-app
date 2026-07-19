@@ -1,5 +1,12 @@
-import { lazy } from 'react'
-import type { IChartProps, IHBarChartProps, IMultiSeriesChartProps, IPieChartProps } from '~/components/ECharts/types'
+import { lazy, useMemo } from 'react'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import type {
+	IHBarChartProps,
+	IMultiSeriesChart2Props,
+	IMultiSeriesChartProps,
+	IPieChartProps,
+	MultiSeriesChart2Dataset
+} from '~/components/ECharts/types'
 import { formattedNum } from '~/utils'
 import {
 	useEcosystemData,
@@ -10,10 +17,18 @@ import {
 } from './ecosystemApi'
 import { NearIcon } from './NearHeader'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
+
+const UNITLESS_SINGLE_SERIES_CHART_OPTIONS = createSingleSeriesChartOptions('')
+const NEAR_SINGLE_SERIES_CHART_OPTIONS = createSingleSeriesChartOptions(' NEAR')
+const DOLLAR_SINGLE_SERIES_CHART_OPTIONS = createSingleSeriesChartOptions('$')
+const BAR_MAX_WIDTH_40_CHART_OPTIONS = { series: { barMaxWidth: 40 } }
+const BAR_MAX_WIDTH_30_CHART_OPTIONS = { series: { barMaxWidth: 30 } }
 
 const BREAKDOWN_PALETTE = [
 	'#00C1DE',
@@ -38,6 +53,55 @@ const BREAKDOWN_PALETTE = [
 	'#6366f1'
 ]
 
+const DAILY_TRANSACTIONS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Daily Transactions',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'Daily Transactions' }
+	}
+]
+const ACTIVE_ACCOUNTS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Daily Active Accounts',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'Daily Active Accounts' }
+	}
+]
+const NEW_ACCOUNTS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'New Accounts Created',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'New Accounts Created' }
+	}
+]
+const GAS_FEES_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Daily Gas Fees',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'Daily Gas Fees' }
+	}
+]
+const NEAR_PRICE_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'NEAR Price',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'NEAR Price' },
+		color: '#00C1DE'
+	}
+]
+
+function singleSeriesDataset(chart: ChartData, dimension: string): MultiSeriesChart2Dataset | undefined {
+	const values = chart.series[0]?.data
+	if (!values) return undefined
+	return {
+		dimensions: ['timestamp', dimension],
+		source: chart.dates.map((date, index) => ({
+			timestamp: Date.parse(`${date}T00:00:00Z`),
+			[dimension]: values[index]
+		}))
+	}
+}
+
 function aggregateBreakdown(chart: BreakdownChart, topN: number): { name: string; value: number }[] {
 	const totals = chart.series.map((s) => ({
 		name: s.name,
@@ -51,7 +115,10 @@ function aggregateBreakdown(chart: BreakdownChart, topN: number): { name: string
 	return top
 }
 
-function channelsToBars(breakdown: ChannelBreakdown): { categories: string[]; values: number[] } {
+function channelsToBars(breakdown: ChannelBreakdown): {
+	categories: string[]
+	values: number[]
+} {
 	const sorted = breakdown.channels.toSorted((a, b) => b.fees - a.fees)
 	return {
 		categories: sorted.map((c) => c.referral || 'unknown'),
@@ -71,11 +138,27 @@ function lastSeriesValue(chart: ChartData | undefined, seriesName: string): numb
 }
 
 const PROTOCOL_STATS = [
-	{ label: 'TPS Capacity', value: '1M+', description: 'Transactions per second' },
+	{
+		label: 'TPS Capacity',
+		value: '1M+',
+		description: 'Transactions per second'
+	},
 	{ label: 'Shards', value: '9', description: 'Live shards on mainnet' },
-	{ label: 'Block Time', value: '600ms', description: 'Average block production time' },
-	{ label: 'Finality', value: '1.2s', description: 'Time to transaction finality' },
-	{ label: 'AI Agents', value: '1,300+', description: 'Active agents on NEAR AI' }
+	{
+		label: 'Block Time',
+		value: '600ms',
+		description: 'Average block production time'
+	},
+	{
+		label: 'Finality',
+		value: '1.2s',
+		description: 'Time to transaction finality'
+	},
+	{
+		label: 'AI Agents',
+		value: '1,300+',
+		description: 'Active agents on NEAR AI'
+	}
 ]
 
 function StatCard({ label, value, description }: { label: string; value: string; description: string }) {
@@ -183,11 +266,16 @@ export default function Ecosystem() {
 	const dailyVolumeRaw = lastSeriesValue(intents?.volumeChart, 'Daily Volume')
 	const dailyVolumeFormatted = dailyVolumeRaw != null ? formattedNum(dailyVolumeRaw, true) : undefined
 
-	const txnsSeries = eco ? chartToTimeSeries(eco.txnsChart)[0]?.data : undefined
-	const activeAccountsSeries = eco ? chartToTimeSeries(eco.activeAccountsChart)[0]?.data : undefined
-	const newAccountsSeries = eco ? chartToTimeSeries(eco.newAccountsChart)[0]?.data : undefined
-	const gasSeries = eco ? chartToTimeSeries(eco.gasChart)[0]?.data : undefined
-	const priceSeries = token ? chartToTimeSeries(token.priceChart)[0]?.data : undefined
+	const areaDatasets = useMemo(
+		() => ({
+			transactions: eco ? singleSeriesDataset(eco.txnsChart, 'Daily Transactions') : undefined,
+			activeAccounts: eco ? singleSeriesDataset(eco.activeAccountsChart, 'Daily Active Accounts') : undefined,
+			newAccounts: eco ? singleSeriesDataset(eco.newAccountsChart, 'New Accounts Created') : undefined,
+			gasFees: eco ? singleSeriesDataset(eco.gasChart, 'Daily Gas Fees') : undefined,
+			nearPrice: token ? singleSeriesDataset(token.priceChart, 'NEAR Price') : undefined
+		}),
+		[eco, token]
+	)
 
 	const supplySeries = token
 		? (() => {
@@ -246,7 +334,7 @@ export default function Ecosystem() {
 						yAxisSymbols={['$', '$']}
 						height="400px"
 						showAggregateInTooltip
-						chartOptions={{ series: { barMaxWidth: 40 } }}
+						chartOptions={BAR_MAX_WIDTH_40_CHART_OPTIONS}
 					/>
 				</ChartCard>
 			)}
@@ -262,7 +350,7 @@ export default function Ecosystem() {
 							yAxisSymbols={['$', '$']}
 							height="350px"
 							showAggregateInTooltip
-							chartOptions={{ series: { barMaxWidth: 30 } }}
+							chartOptions={BAR_MAX_WIDTH_30_CHART_OPTIONS}
 						/>
 					</ChartCard>
 				)}
@@ -276,7 +364,7 @@ export default function Ecosystem() {
 							yAxisSymbols={['', '']}
 							height="350px"
 							showAggregateInTooltip
-							chartOptions={{ series: { barMaxWidth: 30 } }}
+							chartOptions={BAR_MAX_WIDTH_30_CHART_OPTIONS}
 						/>
 					</ChartCard>
 				)}
@@ -292,7 +380,11 @@ export default function Ecosystem() {
 							valueSymbol="$"
 							height="380px"
 							showLegend
-							legendPosition={{ orient: 'vertical', left: 'right', top: 'middle' }}
+							legendPosition={{
+								orient: 'vertical',
+								left: 'right',
+								top: 'middle'
+							}}
 						/>
 					</ChartCard>
 				)}
@@ -305,7 +397,11 @@ export default function Ecosystem() {
 							valueSymbol="$"
 							height="380px"
 							showLegend
-							legendPosition={{ orient: 'vertical', left: 'right', top: 'middle' }}
+							legendPosition={{
+								orient: 'vertical',
+								left: 'right',
+								top: 'middle'
+							}}
 						/>
 					</ChartCard>
 				)}
@@ -340,32 +436,56 @@ export default function Ecosystem() {
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				{isLoading || !txnsSeries ? (
+				{isLoading || !areaDatasets.transactions ? (
 					<ChartSkeleton title="Daily Transactions" />
 				) : (
 					<ChartCard title="Daily Transactions">
-						<AreaChart chartData={txnsSeries} title="" height="300px" />
+						<MultiSeriesChart2
+							dataset={areaDatasets.transactions}
+							charts={DAILY_TRANSACTIONS_CHART}
+							valueSymbol=""
+							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+							height="300px"
+						/>
 					</ChartCard>
 				)}
-				{isLoading || !activeAccountsSeries ? (
+				{isLoading || !areaDatasets.activeAccounts ? (
 					<ChartSkeleton title="Daily Active Accounts" />
 				) : (
 					<ChartCard title="Daily Active Accounts">
-						<AreaChart chartData={activeAccountsSeries} title="" height="300px" />
+						<MultiSeriesChart2
+							dataset={areaDatasets.activeAccounts}
+							charts={ACTIVE_ACCOUNTS_CHART}
+							valueSymbol=""
+							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+							height="300px"
+						/>
 					</ChartCard>
 				)}
-				{isLoading || !newAccountsSeries ? (
+				{isLoading || !areaDatasets.newAccounts ? (
 					<ChartSkeleton title="New Accounts Created" />
 				) : (
 					<ChartCard title="New Accounts Created">
-						<AreaChart chartData={newAccountsSeries} title="" height="300px" />
+						<MultiSeriesChart2
+							dataset={areaDatasets.newAccounts}
+							charts={NEW_ACCOUNTS_CHART}
+							valueSymbol=""
+							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+							height="300px"
+						/>
 					</ChartCard>
 				)}
-				{isLoading || !gasSeries ? (
+				{isLoading || !areaDatasets.gasFees ? (
 					<ChartSkeleton title="Daily Gas Fees (NEAR)" />
 				) : (
 					<ChartCard title="Daily Gas Fees (NEAR)">
-						<AreaChart chartData={gasSeries} valueSymbol=" NEAR" title="" height="300px" />
+						<MultiSeriesChart2
+							dataset={areaDatasets.gasFees}
+							charts={GAS_FEES_CHART}
+							valueSymbol=" NEAR"
+							chartOptions={NEAR_SINGLE_SERIES_CHART_OPTIONS}
+							height="300px"
+						/>
 					</ChartCard>
 				)}
 			</div>
@@ -380,11 +500,17 @@ export default function Ecosystem() {
 				<KpiCard label="Locked Supply" value={token?.kpis.lockedSupply.formatted} />
 			</div>
 
-			{isLoading || !priceSeries ? (
+			{isLoading || !areaDatasets.nearPrice ? (
 				<ChartSkeleton title="NEAR Price (USD)" />
 			) : (
 				<ChartCard title="NEAR Price (USD)">
-					<AreaChart chartData={priceSeries} valueSymbol="$" title="" color="#00C1DE" height="350px" />
+					<MultiSeriesChart2
+						dataset={areaDatasets.nearPrice}
+						charts={NEAR_PRICE_CHART}
+						valueSymbol="$"
+						chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
+						height="350px"
+					/>
 				</ChartCard>
 			)}
 

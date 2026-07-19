@@ -22,6 +22,11 @@ let lastTreemapProps: {
 	sizeLabel: string
 	periodLabel: string
 } | null = null
+let lastStackOptions: string[] | null = null
+
+const mocks = vi.hoisted(() => ({
+	buildRWAFlowRotationChart: vi.fn()
+}))
 
 vi.mock('next/router', () => ({
 	useRouter: () => ({ query: routerQuery })
@@ -30,6 +35,17 @@ vi.mock('next/router', () => ({
 vi.mock('@tanstack/react-query', () => ({
 	useQuery: () => queryState
 }))
+
+vi.mock('../flows', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('../flows')>()
+	return {
+		...actual,
+		buildRWAFlowRotationChart: (...args: Parameters<typeof actual.buildRWAFlowRotationChart>) => {
+			mocks.buildRWAFlowRotationChart(...args)
+			return actual.buildRWAFlowRotationChart(...args)
+		}
+	}
+})
 
 vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
 	ChartExportButtons: () => null
@@ -50,7 +66,10 @@ vi.mock('../FlowTreemapChart', () => ({
 }))
 
 vi.mock('~/components/Select/SelectWithCombobox', () => ({
-	SelectWithCombobox: () => null
+	SelectWithCombobox: ({ allValues }: { allValues: string[] }) => {
+		lastStackOptions = allValues
+		return null
+	}
 }))
 
 vi.mock('~/hooks/useGetChartInstance', () => ({
@@ -94,6 +113,8 @@ beforeEach(() => {
 	queryState = { data: null, isLoading: false, error: null }
 	lastChartProps = null
 	lastTreemapProps = null
+	lastStackOptions = null
+	mocks.buildRWAFlowRotationChart.mockClear()
 })
 
 describe('getOverviewBreakdownRequestState', () => {
@@ -192,6 +213,24 @@ describe('getOverviewBreakdownRequestState', () => {
 		expect(Array.from(lastChartProps?.selectedCharts ?? [])).toEqual(['Treasuries', 'Credit'])
 	})
 
+	it('caps time-series selections supplied through the URL', async () => {
+		const stacks = Array.from({ length: 35 }, (_, index) => `Platform ${index + 1}`)
+		routerQuery = { stacks }
+
+		await renderAll(
+			createElement(RWAOverviewBreakdownChart, {
+				page: { kind: 'platform' },
+				initialChartDataset: {
+					source: [{ timestamp: 1, ...Object.fromEntries(stacks.map((name, index) => [name, index + 1])) }],
+					dimensions: ['timestamp', ...stacks]
+				},
+				stackLabel: 'Platforms'
+			})
+		)
+
+		expect(Array.from(lastChartProps?.selectedCharts ?? [])).toEqual(stacks.slice(0, 30))
+	})
+
 	it('renders net flows on overview breakdown pages', async () => {
 		routerQuery = { chartType: 'flows' }
 		queryState = {
@@ -211,6 +250,7 @@ describe('getOverviewBreakdownRequestState', () => {
 		expect(lastChartProps?.groupBy).toBe('monthly')
 		expect(lastChartProps?.charts?.map((chart) => chart.name)).toEqual(['Ethereum', 'Solana'])
 		expect(lastChartProps?.charts?.every((chart) => chart.type === 'bar')).toBe(true)
+		expect(mocks.buildRWAFlowRotationChart).toHaveBeenCalled()
 	})
 
 	it('renders a sized net-flow heatmap for the selected listing entities', async () => {
@@ -241,6 +281,8 @@ describe('getOverviewBreakdownRequestState', () => {
 			{ name: 'Solana', netFlowUsd: -4 },
 			{ name: 'No Coverage', netFlowUsd: null }
 		])
+		expect(lastStackOptions).toEqual(['Ethereum', 'Solana', 'No Coverage'])
+		expect(mocks.buildRWAFlowRotationChart).not.toHaveBeenCalled()
 	})
 
 	it('slices selected stack charts to the first non-null selected value', async () => {

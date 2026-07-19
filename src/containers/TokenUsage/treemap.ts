@@ -16,17 +16,11 @@ export interface TokenUsageTreemapRow {
 
 const UNCATEGORIZED_LABEL = 'Other'
 
-function safeNumber(value: unknown): number {
-	const parsed = typeof value === 'number' ? value : Number(value)
-	return Number.isFinite(parsed) ? parsed : 0
-}
-
 function toShare(value: number, total: number): number {
-	if (!Number.isFinite(value) || !Number.isFinite(total) || total <= 0) return 0
 	return Number(((value / total) * 100).toFixed(2))
 }
 
-function hexToRgb(hex: string) {
+function hexToRgb(hex: string): [red: number, green: number, blue: number] {
 	const normalized = hex.replace('#', '')
 	const expanded =
 		normalized.length === 3
@@ -36,32 +30,23 @@ function hexToRgb(hex: string) {
 					.join('')
 			: normalized
 	const int = Number.parseInt(expanded, 16)
-	return {
-		r: (int >> 16) & 255,
-		g: (int >> 8) & 255,
-		b: int & 255
-	}
+	return [(int >> 16) & 255, (int >> 8) & 255, int & 255]
 }
 
-function blendColor(hex: string, ratio: number): string {
-	const { r, g, b } = hexToRgb(hex)
-	const target = 255
-	const mix = (channel: number) => Math.round(channel + (target - channel) * ratio)
-	return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`
-}
+const CHART_COLOR_RGB = new Array<[number, number, number] | undefined>(CHART_COLORS.length)
 
-function deriveChildColors(parentColor: string, count: number): string[] {
+function deriveChildColors(parentColor: string, [red, green, blue]: [number, number, number], count: number): string[] {
 	if (count <= 1) return [parentColor]
-	return Array.from({ length: count }, (_, index) => {
-		const ratio = 0.12 + (index / Math.max(count - 1, 1)) * 0.34
-		return blendColor(parentColor, ratio)
-	})
-}
 
-function sortEntries(entries: Array<[string, number]>) {
-	return entries
-		.filter(([, value]) => Number.isFinite(value) && value > 0)
-		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+	const colors = new Array<string>(count)
+	for (let index = 0; index < count; index++) {
+		const ratio = 0.12 + (index / (count - 1)) * 0.34
+		const mixedRed = Math.round(red + (255 - red) * ratio)
+		const mixedGreen = Math.round(green + (255 - green) * ratio)
+		const mixedBlue = Math.round(blue + (255 - blue) * ratio)
+		colors[index] = `rgb(${mixedRed}, ${mixedGreen}, ${mixedBlue})`
+	}
+	return colors
 }
 
 // Builds a category -> protocol treemap tree from token usage rows.
@@ -75,47 +60,67 @@ export function buildTokenUsageTreemapTreeData(
 	const parentToChildTotals = new Map<string, Map<string, number>>()
 
 	for (const row of rows) {
-		const value = safeNumber(row.amountUsd)
+		const value = row.amountUsd
 		if (value <= 0) continue
 
-		const parentLabel = row.category && row.category.trim().length > 0 ? row.category.trim() : UNCATEGORIZED_LABEL
+		const parentLabel = row.category?.trim() || UNCATEGORIZED_LABEL
 		const childLabel = row.name
 
-		const childTotals = parentToChildTotals.get(parentLabel) ?? new Map<string, number>()
+		let childTotals = parentToChildTotals.get(parentLabel)
+		if (!childTotals) {
+			childTotals = new Map()
+			parentToChildTotals.set(parentLabel, childTotals)
+		}
 		childTotals.set(childLabel, (childTotals.get(childLabel) ?? 0) + value)
-		parentToChildTotals.set(parentLabel, childTotals)
 	}
 
-	const parentRows = [...parentToChildTotals.entries()]
-		.map(([parentLabel, childTotals]) => ({
-			parentLabel,
-			childRows: sortEntries([...childTotals.entries()])
-		}))
-		.map((row) => ({
-			...row,
-			parentTotal: row.childRows.reduce((sum, [, value]) => sum + value, 0)
-		}))
-		.filter((row) => row.parentTotal > 0)
-		.sort((a, b) => b.parentTotal - a.parentTotal || a.parentLabel.localeCompare(b.parentLabel))
+	const parentRows: Array<{
+		parentLabel: string
+		parentTotal: number
+		childRows: Array<[name: string, value: number]>
+	}> = []
+	for (const [parentLabel, childTotals] of parentToChildTotals) {
+		const childRows = Array.from(childTotals)
+		childRows.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
 
-	const total = parentRows.reduce((sum, row) => sum + row.parentTotal, 0)
+		let parentTotal = 0
+		for (const childRow of childRows) parentTotal += childRow[1]
+		parentRows.push({ parentLabel, parentTotal, childRows })
+	}
+	parentRows.sort((a, b) => b.parentTotal - a.parentTotal || a.parentLabel.localeCompare(b.parentLabel))
 
-	return parentRows.map((row, parentIndex) => {
-		const parentColor = CHART_COLORS[parentIndex % CHART_COLORS.length]
-		const childColors = deriveChildColors(parentColor, row.childRows.length)
+	let total = 0
+	for (const row of parentRows) total += row.parentTotal
+
+	const treeData = new Array<TokenUsageTreemapNode>(parentRows.length)
+	for (let parentIndex = 0; parentIndex < parentRows.length; parentIndex++) {
+		const row = parentRows[parentIndex]
+		const colorIndex = parentIndex % CHART_COLORS.length
+		const parentColor = CHART_COLORS[colorIndex]
+		const parentRgb = CHART_COLOR_RGB[colorIndex] ?? (CHART_COLOR_RGB[colorIndex] = hexToRgb(parentColor))
+		const childColors = deriveChildColors(parentColor, parentRgb, row.childRows.length)
 		const parentPath = `${rootLabel}/${row.parentLabel}`
+		const parentShare = toShare(row.parentTotal, total)
 
-		return {
-			name: row.parentLabel,
-			path: parentPath,
-			value: [row.parentTotal, toShare(row.parentTotal, total), toShare(row.parentTotal, total)],
-			itemStyle: { color: parentColor },
-			children: row.childRows.map(([childLabel, childValue], childIndex) => ({
+		const children = new Array<TokenUsageTreemapNode>(row.childRows.length)
+		for (let childIndex = 0; childIndex < row.childRows.length; childIndex++) {
+			const [childLabel, childValue] = row.childRows[childIndex]
+			children[childIndex] = {
 				name: childLabel,
 				path: `${parentPath}/${childLabel}`,
 				value: [childValue, toShare(childValue, row.parentTotal), toShare(childValue, total)],
 				itemStyle: { color: childColors[childIndex] }
-			}))
+			}
 		}
-	})
+
+		treeData[parentIndex] = {
+			name: row.parentLabel,
+			path: parentPath,
+			value: [row.parentTotal, parentShare, parentShare],
+			itemStyle: { color: parentColor },
+			children
+		}
+	}
+
+	return treeData
 }

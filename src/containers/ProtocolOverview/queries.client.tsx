@@ -90,7 +90,6 @@ const normalizeActivityChart = (values: Array<[number, number]> | null): IActivi
 	for (const [date, val] of values) {
 		normalized.push([date * 1e3, +val])
 	}
-	normalized.sort((a, b) => a[0] - b[0])
 	return normalized
 }
 

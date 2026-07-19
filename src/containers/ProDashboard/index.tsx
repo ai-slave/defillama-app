@@ -26,7 +26,7 @@ import {
 	subscribeSqlRefreshProgress
 } from './components/SqlChart/sqlRefreshBus'
 import type { UnifiedTableFocusSection } from './components/UnifiedTable/types'
-import { useFreeTierStatus } from './hooks'
+import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import {
 	type AIGeneratedData,
 	type TimePeriod,
@@ -44,7 +44,9 @@ import type { DashboardItemConfig, SqlChartConfig } from './types'
 const DemoPreview = lazy(() => import('./components/DemoPreview').then((m) => ({ default: m.DemoPreview })))
 
 import { DashboardPaywallModal, type PaywallReason } from './components/DashboardPaywallModal'
-const AddChartModal = lazy(() => import('./components/AddChartModal').then((m) => ({ default: m.AddChartModal })))
+const AddChartModal = lazy(() =>
+	import('./components/AddChartModal/AddChartModal').then((m) => ({ default: m.AddChartModal }))
+)
 const SqlChartModal = lazy(() =>
 	import('./components/SqlChart/SqlChartModal').then((m) => ({ default: m.SqlChartModal }))
 )

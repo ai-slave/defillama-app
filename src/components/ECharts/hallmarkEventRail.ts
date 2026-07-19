@@ -88,7 +88,7 @@ function isDangerLabel(label: string) {
 }
 
 function normalizeTimestamp(value: number, dateInMs: boolean) {
-	return dateInMs ? +value : +value * 1e3
+	return dateInMs ? value : value * 1e3
 }
 
 function getEventDotPalette(label: string, isThemeDark: boolean, isRange = false) {
@@ -222,56 +222,48 @@ export function createEventStripYAxis() {
 	}
 }
 
-export function getSortedSeriesTimeBounds(data: Array<[number, number] | unknown>) {
+function readTimestampEndpoint(value: unknown) {
+	if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
+	if (typeof value !== 'string' || value.trim() === '') return undefined
+
+	// Some API boundaries expose timestamps as numeric strings. Canonical chart rows
+	// remain numeric, so valid endpoints still take the constant-time fast path.
+	const parsed = Number(value)
+	return Number.isFinite(parsed) ? parsed : undefined
+}
+
+export function getSeriesTimeBounds(data: Array<[number | string, number] | unknown>) {
 	let min: number | undefined
 	let max: number | undefined
-
 	for (let index = 0; index < data.length; index++) {
 		const point = data[index]
 		if (!Array.isArray(point)) continue
-		const timestamp = point[0]
-		if (typeof timestamp === 'number' && Number.isFinite(timestamp)) {
-			min = timestamp
-			break
-		}
+		min = readTimestampEndpoint(point[0])
+		if (min !== undefined) break
 	}
-
 	for (let index = data.length - 1; index >= 0; index--) {
 		const point = data[index]
 		if (!Array.isArray(point)) continue
-		const timestamp = point[0]
-		if (typeof timestamp === 'number' && Number.isFinite(timestamp)) {
-			max = timestamp
-			break
-		}
+		max = readTimestampEndpoint(point[0])
+		if (max !== undefined) break
 	}
-
 	return { min, max }
 }
 
-export function getSortedDatasetTimeBounds(
+export function getDatasetTimeBounds(
 	source: Array<Record<string, string | number | null | undefined>>,
 	timestampKey = 'timestamp'
 ) {
 	let min: number | undefined
 	let max: number | undefined
-
 	for (let index = 0; index < source.length; index++) {
-		const timestamp = Number(source[index]?.[timestampKey])
-		if (Number.isFinite(timestamp)) {
-			min = timestamp
-			break
-		}
+		min = readTimestampEndpoint(source[index]?.[timestampKey])
+		if (min !== undefined) break
 	}
-
 	for (let index = source.length - 1; index >= 0; index--) {
-		const timestamp = Number(source[index]?.[timestampKey])
-		if (Number.isFinite(timestamp)) {
-			max = timestamp
-			break
-		}
+		max = readTimestampEndpoint(source[index]?.[timestampKey])
+		if (max !== undefined) break
 	}
-
 	return { min, max }
 }
 

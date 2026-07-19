@@ -11,7 +11,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import * as React from 'react'
 import { chartGrid } from '~/components/ECharts/chartSpacing'
-import { getChartTheme } from '~/components/ECharts/chartTheme'
+import { useChartTheme } from '~/components/ECharts/chartTheme'
 import { formatTooltipChartDate } from '~/components/ECharts/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -35,10 +35,11 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 
 	const [isDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isDark)
 	const containerRef = React.useRef<HTMLDivElement>(null)
 	const chartRef = React.useRef<echarts.ECharts | null>(null)
 
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
 	React.useEffect(() => {
 		const el = containerRef.current
@@ -63,7 +64,6 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 							name: 'Sale Price',
 							type: 'scatter',
 							large: true,
-							symbols: 5,
 							emphasis: {
 								focus: 'series'
 							},
@@ -71,7 +71,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 								color: '#3b82f6'
 							},
 							symbolSize: 3,
-							data: sales.map((p) => [new Date(p[0]), p[1]])
+							data: sales
 						},
 						{
 							name: 'Moving Average',
@@ -79,14 +79,14 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 							itemStyle: {
 								color: '#ffc300'
 							},
-							data: salesMedian1d.map((p) => [new Date(p[0]), p[1]]),
+							data: salesMedian1d,
 							showSymbol: false,
 							connectNulls: true
 						},
 						{
 							name: 'Volume',
 							type: 'bar',
-							data: volume.map((p) => [new Date(p[0] * 1e3), p[1]]),
+							data: volume.map((p) => [p[0] * 1e3, p[1]]),
 							itemStyle: {
 								color: '#22c55e'
 							},
@@ -128,14 +128,14 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 						'</li>'
 
 					if (params.seriesName !== 'Volume') {
-						const date = new Date(params.value[0]).getTime()
+						const date = params.value[0]
 
 						vals +=
 							'<li style="list-style:none">' +
 							'<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ffc300;"></span>' +
 							'Moving Average:' +
 							'&nbsp;&nbsp;' +
-							findClosest(salesMedian1d, salesMedian1d.length, date, false) +
+							findClosestChartValue(salesMedian1d, date, 1) +
 							'&nbsp;' +
 							'ETH' +
 							'</li>'
@@ -145,7 +145,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 							'<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#22c55e;"></span>' +
 							'Volume:' +
 							'&nbsp;&nbsp;' +
-							findClosest(volume, volume.length, date, true) +
+							findClosestChartValue(volume, date, 1e3) +
 							'&nbsp;' +
 							'ETH' +
 							'</li>'
@@ -157,24 +157,24 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 			xAxis: {
 				type: 'time',
 				boundaryGap: false,
-				min: salesMedian1d.length > 0 ? new Date(salesMedian1d[0][0]) : 0,
+				min: salesMedian1d.length > 0 ? salesMedian1d[0][0] : 0,
 				nameTextStyle: {
 					fontFamily: 'sans-serif',
 					fontSize: 14,
 					fontWeight: 400
 				},
 				axisLabel: {
-					color: getChartTheme(isDark).text
+					color: chartTheme.text
 				},
 				axisLine: {
 					lineStyle: {
-						color: getChartTheme(isDark).text,
+						color: chartTheme.text,
 						opacity: 0.2
 					}
 				},
 				splitLine: {
 					lineStyle: {
-						color: getChartTheme(isDark).gridline
+						color: chartTheme.gridline
 					}
 				}
 			},
@@ -184,11 +184,11 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 					min: 'dataMin',
 					axisLabel: {
 						formatter: (value: number) => Number(value.toFixed(2)) + ' ETH',
-						color: getChartTheme(isDark).text
+						color: chartTheme.text
 					},
 					axisLine: {
 						lineStyle: {
-							color: getChartTheme(isDark).text,
+							color: chartTheme.text,
 							opacity: 0.1
 						}
 					},
@@ -200,7 +200,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 					},
 					splitLine: {
 						lineStyle: {
-							color: getChartTheme(isDark).gridline
+							color: chartTheme.gridline
 						}
 					}
 				},
@@ -233,23 +233,32 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 		}
 
 		instance.setOption(option, { notMerge: true })
-	}, [sales, volume, isDark, isSmall, salesMedian1d])
+	}, [sales, volume, chartTheme, isDark, isSmall, salesMedian1d])
 
 	return <div ref={containerRef} className="h-[360px]" style={height ? { height } : undefined} />
 }
 
-const findClosest = (arr: Array<[number, number]>, n: number, target: number, isDateInSeconds: boolean): string => {
-	let left = 0
-	let right = n - 1
-	while (left < right) {
-		if (
-			Math.abs((isDateInSeconds ? arr[left][0] * 1e3 : arr[left][0]) - target) <=
-			Math.abs((isDateInSeconds ? arr[right][0] * 1e3 : arr[right][0]) - target)
-		) {
-			right--
-		} else {
-			left++
-		}
+export function findClosestChartValue(
+	rows: Array<[number, number]>,
+	targetMs: number,
+	timestampMultiplier: 1 | 1000
+): string {
+	if (rows.length === 0) return '0'
+
+	let low = 0
+	let high = rows.length
+	while (low < high) {
+		const middle = (low + high) >>> 1
+		if (rows[middle][0] * timestampMultiplier < targetMs) low = middle + 1
+		else high = middle
 	}
-	return arr[left]?.[1]?.toFixed(2) ?? '0'
+
+	if (low === 0) return rows[0][1].toFixed(2)
+	if (low === rows.length) return rows[rows.length - 1][1].toFixed(2)
+
+	const previous = rows[low - 1]
+	const next = rows[low]
+	const previousDistance = targetMs - previous[0] * timestampMultiplier
+	const nextDistance = next[0] * timestampMultiplier - targetMs
+	return (previousDistance <= nextDistance ? previous[1] : next[1]).toFixed(2)
 }

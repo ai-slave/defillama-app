@@ -33,12 +33,14 @@ import {
 	TOKENS_SOURCE_CACHE_TTL_MS
 } from './cache.server'
 import type {
+	TokensChartDataset,
 	TokensPageResponse,
 	TokensPageStats,
 	TokensRightsSummary,
 	TokensSortIndexes,
 	TokensSourceRow
 } from './types'
+import { TOKENS_CHART_GECKO_LOGO_PREFIX } from './types'
 import { buildTokensSortIndexes, getTokensPageFromRows } from './utils'
 
 const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60
@@ -72,6 +74,12 @@ export interface TokensPageSnapshot {
 	revision: number
 	data: TokensPageResponse
 }
+
+export interface TokensInitialPageSnapshot extends TokensPageSnapshot {
+	chartData: TokensChartDataset
+}
+
+export const TOKENS_CHART_ROW_LIMIT = 300
 
 interface TokenDirectoryIndexes {
 	byGeckoId: Map<string, TokenDirectoryRecord>
@@ -630,14 +638,70 @@ export async function getTokenOverviewCurrentSnapshot(geckoId: string): Promise<
 	}
 }
 
+export function buildTokensChartDataset(
+	marketCapIndex: TokensSortIndexes['marketCap'],
+	limit = TOKENS_CHART_ROW_LIMIT
+): TokensChartDataset {
+	const chartData: TokensChartDataset = {
+		names: [],
+		symbols: [],
+		logoSources: [],
+		hrefs: [],
+		marketCaps: [],
+		priceChanges: { '24h': [], '7d': [], '30d': [] },
+		stablecoins: []
+	}
+	let index = marketCapIndex.nullStart - 1
+
+	while (index >= 0 && chartData.marketCaps.length < limit) {
+		let groupStart = index
+		while (groupStart > 0 && marketCapIndex.rows[groupStart - 1].marketCap === marketCapIndex.rows[index].marketCap) {
+			groupStart--
+		}
+
+		for (let rowIndex = groupStart; rowIndex <= index && chartData.marketCaps.length < limit; rowIndex++) {
+			const row = marketCapIndex.rows[rowIndex]
+			if (row.marketCap == null || row.marketCap <= 0) continue
+			chartData.names.push(row.name)
+			chartData.symbols.push(row.symbol)
+			chartData.logoSources.push(
+				row.logo === geckoTokenIconUrl(row.id) ? `${TOKENS_CHART_GECKO_LOGO_PREFIX}${row.id}` : (row.logo ?? '')
+			)
+			chartData.hrefs.push(row.href)
+			chartData.marketCaps.push(row.marketCap)
+			chartData.priceChanges['24h'].push(row.priceChange24h)
+			chartData.priceChanges['7d'].push(row.priceChange7d)
+			chartData.priceChanges['30d'].push(row.priceChange30d)
+			chartData.stablecoins.push(row.isStablecoin)
+		}
+
+		index = groupStart - 1
+	}
+
+	return chartData
+}
+
+function getTokensPageResponse(data: TokensSourceData, query: ParsedUrlQuery): TokensPageResponse {
+	return getTokensPageFromRows(data.rows, data.sortIndexes, query, {
+		stats: data.stats,
+		updatedAt: data.updatedAt
+	})
+}
+
 export async function getTokensPageSnapshot(query: ParsedUrlQuery = {}): Promise<TokensPageSnapshot> {
 	const data = await getTokensSourceData()
 	return {
 		revision: data.revision,
-		data: getTokensPageFromRows(data.rows, data.sortIndexes, query, {
-			stats: data.stats,
-			updatedAt: data.updatedAt
-		})
+		data: getTokensPageResponse(data, query)
+	}
+}
+
+export async function getTokensInitialPageSnapshot(): Promise<TokensInitialPageSnapshot> {
+	const data = await getTokensSourceData()
+	return {
+		revision: data.revision,
+		data: getTokensPageResponse(data, {}),
+		chartData: buildTokensChartDataset(data.sortIndexes.marketCap)
 	}
 }
 

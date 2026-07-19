@@ -1,3 +1,4 @@
+import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { formatNum, formattedNum, getPercentChange, keepNeededProperties, slug } from '~/utils'
 import {
 	DAY_MS,
@@ -154,7 +155,17 @@ export type FormattedStablecoinAsset = Omit<
  * via runtime string keys with `typeof` checks (using allowed `as Record<string, unknown>`
  * cast after `typeof === 'object'` validation).
  */
-export type StablecoinChartDataPoint = { date: string | number; isSynthetic?: boolean }
+export type StablecoinChartDataPoint = {
+	date: string | number
+	isSynthetic?: boolean
+	mcap?: number | Record<string, number>
+	circulating?: number | Record<string, number>
+	totalCirculatingUSD?: Record<string, number>
+	totalCirculating?: Record<string, number>
+	totalUnreleased?: Record<string, number>
+	totalBridgedToUSD?: Record<string, number>
+	totalMintedUSD?: Record<string, number>
+}
 
 interface IFormatPeggedAssetsDataParams {
 	chain?: string
@@ -408,11 +419,13 @@ const BACKFILLED_CHAINS = new Set([
 	'Heco'
 ])
 
-type StablecoinChartBuildFlags = {
+export type StablecoinChartBuildFlags = {
 	area?: boolean
 	total?: boolean
 	stacked?: boolean
 	inflows?: boolean
+	tokenInflows?: boolean
+	usdInflows?: boolean
 }
 
 const EMPTY_STABLECOIN_CHART_DATA: IBuildStablecoinChartDataResult = {
@@ -422,6 +435,100 @@ const EMPTY_STABLECOIN_CHART_DATA: IBuildStablecoinChartDataResult = {
 	tokenInflows: [],
 	tokenInflowNames: [],
 	usdInflows: []
+}
+
+interface ICollectedStablecoinChartData {
+	unformattedAreaData: Record<string, Record<string, number>>
+	unformattedTotalData: Record<string, number>
+	unformattedTotalHasRealData: Record<string, boolean>
+	stackedDatasetObject: Record<string, Record<string, IStablecoinStackedValue>>
+	unformattedTokenInflowData: Record<string, Record<string, number>>
+}
+
+const collectStablecoinChartData = (
+	{
+		chartDataByAssetOrChain,
+		assetsOrChainsList,
+		filteredIndexes,
+		issuanceType = 'mcap',
+		selectedChain,
+		doublecountedIds = []
+	}: IBuildStablecoinChartDataParams,
+	flags: StablecoinChartBuildFlags
+): ICollectedStablecoinChartData | null => {
+	if (selectedChain === null) return null
+	const buildInflows = flags.inflows || flags.tokenInflows || flags.usdInflows
+
+	const filteredIndexesSet = filteredIndexes ? new Set(filteredIndexes) : null
+	const doublecountedIdsSet = new Set(doublecountedIds)
+	const unformattedAreaData = createChartRecord<Record<string, number>>()
+	const unformattedTotalData = createChartRecord<number>()
+	const unformattedTotalHasRealData = createChartRecord<boolean>()
+	const stackedDatasetObject = createChartRecord<Record<string, IStablecoinStackedValue>>()
+	const unformattedTokenInflowData = createChartRecord<Record<string, number>>()
+	const assetAddedToInflows = createChartRecord<boolean>()
+
+	if (buildInflows) {
+		for (const name of assetsOrChainsList) assetAddedToInflows[name] = false
+	}
+
+	for (let i = 0; i < chartDataByAssetOrChain.length; i++) {
+		const charts = chartDataByAssetOrChain[i]
+		if (!charts?.length || (filteredIndexesSet && !filteredIndexesSet.has(i)) || doublecountedIdsSet.has(i)) {
+			continue
+		}
+
+		const assetOrChain = assetsOrChainsList[i]
+		let previousMcap: number | null = null
+		for (let j = 0; j < charts.length; j++) {
+			const chart = charts[j]
+			const mcap = getStablecoinValueFromPoint(chart, issuanceType)
+			const previousPointMcap = previousMcap
+			previousMcap = mcap
+			if (mcap == null) continue
+
+			const date = String(chart.date)
+			if (!((selectedChain && BACKFILLED_CHAINS.has(selectedChain)) || +date > 1652241600)) continue
+
+			if (flags.area) {
+				unformattedAreaData[date] = unformattedAreaData[date] || createChartRecord<number>()
+				unformattedAreaData[date][assetOrChain] = mcap
+			}
+
+			if (flags.total) {
+				unformattedTotalData[date] = (unformattedTotalData[date] ?? 0) + mcap
+				if (chart.isSynthetic !== true) unformattedTotalHasRealData[date] = true
+			}
+
+			if (flags.stacked) {
+				stackedDatasetObject[date] = stackedDatasetObject[date] || createChartRecord<IStablecoinStackedValue>()
+				const unreleasedValue =
+					issuanceType === 'circulating' ? (getStablecoinValueFromPoint(chart, 'unreleased') ?? undefined) : undefined
+				stackedDatasetObject[date][assetOrChain] = {
+					...stackedDatasetObject[date][assetOrChain],
+					circulating: mcap,
+					...(unreleasedValue !== undefined ? { unreleased: unreleasedValue } : {})
+				}
+			}
+
+			if (buildInflows) {
+				const diff = mcap - (previousPointMcap ?? 0)
+				if (assetAddedToInflows[assetOrChain]) {
+					unformattedTokenInflowData[date] = unformattedTokenInflowData[date] || createChartRecord<number>()
+					unformattedTokenInflowData[date][assetOrChain] = diff
+				}
+				if (diff) assetAddedToInflows[assetOrChain] = true
+			}
+		}
+	}
+
+	return {
+		unformattedAreaData,
+		unformattedTotalData,
+		unformattedTotalHasRealData,
+		stackedDatasetObject,
+		unformattedTokenInflowData
+	}
 }
 
 const buildStablecoinChartDataInternal = (
@@ -436,95 +543,37 @@ const buildStablecoinChartDataInternal = (
 	}: IBuildStablecoinChartDataParams,
 	flags: StablecoinChartBuildFlags
 ): IBuildStablecoinChartDataResult => {
-	if (selectedChain === null) {
-		return { ...EMPTY_STABLECOIN_CHART_DATA }
-	}
-	const filteredIndexesSet = filteredIndexes ? new Set(filteredIndexes) : null
-	const doublecountedIdsSet = new Set(doublecountedIds)
+	const collected = collectStablecoinChartData(
+		{
+			chartDataByAssetOrChain,
+			assetsOrChainsList,
+			filteredIndexes,
+			issuanceType,
+			selectedChain,
+			totalChartTooltipLabel,
+			doublecountedIds
+		},
+		flags
+	)
+	if (!collected) return { ...EMPTY_STABLECOIN_CHART_DATA }
+	const buildTokenInflows = flags.inflows || flags.tokenInflows
+	const buildUsdInflows = flags.inflows || flags.usdInflows
 
-	const unformattedAreaData: Record<string, Record<string, number>> = {}
-	const unformattedTotalData: Record<string, number> = {}
-	const unformattedTotalHasRealData: Record<string, boolean> = {}
-	const stackedDatasetObject: Record<string, Record<string, IStablecoinStackedValue>> = {}
-	const unformattedTokenInflowData: Record<string, Record<string, number>> = {}
-	const assetAddedToInflows: Record<string, boolean> = {}
-	if (flags.inflows) {
-		for (const name of assetsOrChainsList) {
-			assetAddedToInflows[name] = false
-		}
-	}
+	const {
+		unformattedAreaData,
+		unformattedTotalData,
+		unformattedTotalHasRealData,
+		stackedDatasetObject,
+		unformattedTokenInflowData
+	} = collected
 
-	if (chartDataByAssetOrChain) {
-		for (let i = 0; i < chartDataByAssetOrChain.length; i++) {
-			const charts = chartDataByAssetOrChain[i]
-			if (
-				!charts ||
-				!charts.length ||
-				(filteredIndexesSet && !filteredIndexesSet.has(i)) ||
-				doublecountedIdsSet.has(i)
-			) {
-				continue
-			}
-			for (let j = 0; j < charts.length; j++) {
-				const chart = charts[j]
-				const mcap = getStablecoinValueFromPoint(chart, issuanceType) // 'issuanceType' and 'mcap' here are 'circulating' values on /stablecoin pages, and 'mcap' otherwise
-				const assetOrChain = assetsOrChainsList[i]
-				const date = String(chart.date)
-				const dateNumber = Number(date)
-				const hasMcapValue = typeof mcap === 'number' && Number.isFinite(mcap)
-				if (hasMcapValue) {
-					if ((selectedChain && BACKFILLED_CHAINS.has(selectedChain)) || dateNumber > 1652241600) {
-						// for individual chains data is currently only backfilled to May 11, 2022
-						if (flags.area) {
-							unformattedAreaData[date] = unformattedAreaData[date] || {}
-							unformattedAreaData[date][assetOrChain] = mcap
-						}
-
-						if (flags.total) {
-							unformattedTotalData[date] = (unformattedTotalData[date] ?? 0) + mcap
-							if (chart.isSynthetic !== true) unformattedTotalHasRealData[date] = true
-						}
-
-						if (flags.stacked) {
-							if (stackedDatasetObject[date] == null) {
-								stackedDatasetObject[date] = {}
-							}
-							const unreleasedValue =
-								issuanceType === 'circulating'
-									? (getStablecoinValueFromPoint(chart, 'unreleased') ?? undefined)
-									: undefined
-							const b = stackedDatasetObject[date][assetOrChain]
-							const hasFiniteUnreleased = typeof unreleasedValue === 'number' && Number.isFinite(unreleasedValue)
-							stackedDatasetObject[date][assetOrChain] = {
-								...b,
-								circulating: mcap,
-								...(hasFiniteUnreleased ? { unreleased: unreleasedValue } : {})
-							}
-						}
-
-						if (flags.inflows) {
-							const prevDayMcap = getStablecoinValueFromPoint(charts[j - 1], issuanceType)
-							const diff = mcap - (prevDayMcap ?? 0)
-							// the first day's inflow is not added to prevent large inflows on the day token is first tracked
-							if (assetAddedToInflows[assetOrChain]) {
-								unformattedTokenInflowData[date] = unformattedTokenInflowData[date] || {}
-								unformattedTokenInflowData[date][assetOrChain] = diff
-							}
-							if (diff) {
-								assetAddedToInflows[assetOrChain] = true
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
+	let sharedChartDates: string[] | null = null
 	const peggedAreaChartData: IStablecoinAreaChartPoint[] = []
 	if (flags.area) {
 		const dates: string[] = []
 		for (const date in unformattedAreaData) dates.push(date)
 		dates.sort((a, b) => Number(a) - Number(b))
+		sharedChartDates = dates
 		for (const date of dates) {
 			peggedAreaChartData.push({ date, ...unformattedAreaData[date] })
 		}
@@ -532,9 +581,8 @@ const buildStablecoinChartDataInternal = (
 
 	const peggedAreaTotalData: IStablecoinMcapPoint[] = []
 	if (flags.total) {
-		const dates: string[] = []
-		for (const date in unformattedTotalData) dates.push(date)
-		dates.sort((a, b) => Number(a) - Number(b))
+		const dates = sharedChartDates ?? Object.keys(unformattedTotalData).sort((a, b) => Number(a) - Number(b))
+		sharedChartDates = dates
 		for (const date of dates) {
 			const mcap = unformattedTotalData[date]
 			const normalizedMcap = Number.isFinite(mcap) ? mcap : 0
@@ -549,9 +597,7 @@ const buildStablecoinChartDataInternal = (
 
 	const stackedDataset: IStablecoinStackedPoint[] = []
 	if (flags.stacked) {
-		const dates: string[] = []
-		for (const date in stackedDatasetObject) dates.push(date)
-		dates.sort((a, b) => Number(a) - Number(b))
+		const dates = sharedChartDates ?? Object.keys(stackedDatasetObject).sort((a, b) => Number(a) - Number(b))
 		for (const date of dates) {
 			stackedDataset.push([date, stackedDatasetObject[date]])
 		}
@@ -563,78 +609,77 @@ const buildStablecoinChartDataInternal = (
 	let tokenInflows: IStablecoinTokenInflowPoint[] = []
 	let usdInflows: Array<[string, number]> = []
 	const tokenSet: Set<string> = new Set()
-	if (flags.inflows) {
+	if (buildTokenInflows || buildUsdInflows) {
 		for (const date in unformattedTokenInflowData) {
 			const chart = unformattedTokenInflowData[date]
 			if (typeof chart === 'object') {
 				let dayDifference = 0
-				const tokenDayDifference: Record<string, number> = {}
+				const tokenDayDifference = buildTokenInflows ? createChartRecord<number>() : null
 				for (const token in chart) {
-					tokenSet.add(token)
 					const diff = chart[token]
 					if (!Number.isNaN(diff)) {
 						// Here, the inflow tokens could be restricted to top daily top tokens, but they aren't. Couldn't find good UX doing so.
-						tokenDayDifference[token] = diff
-						dayDifference += diff
+						if (tokenDayDifference) {
+							tokenSet.add(token)
+							tokenDayDifference[token] = diff
+						}
+						if (buildUsdInflows) dayDifference += diff
 					}
-				}
-
-				if (dayDifference === 0) {
-					zeroUsdInflows++
-				}
-
-				let hasTokenDayDifference = false
-				for (const _token in tokenDayDifference) {
-					hasTokenDayDifference = true
-					break
-				}
-				if (!hasTokenDayDifference) {
-					zeroTokenInflows++
 				}
 
 				// the dates on the inflows are all off by 1 (because timestamps are at 00:00), so they are moved back 1 day
 				const adjustedDate = (parseInt(date) - secondsInDay).toString()
 
-				tokenInflows.push({
-					...tokenDayDifference,
-					date: adjustedDate
-				})
-
-				usdInflows.push([adjustedDate, dayDifference])
+				if (tokenDayDifference) {
+					let hasTokenDayDifference = false
+					for (const _token in tokenDayDifference) {
+						hasTokenDayDifference = true
+						break
+					}
+					if (!hasTokenDayDifference) zeroTokenInflows++
+					tokenInflows.push({ ...tokenDayDifference, date: adjustedDate })
+				}
+				if (buildUsdInflows) {
+					if (dayDifference === 0) zeroUsdInflows++
+					usdInflows.push([adjustedDate, dayDifference])
+				}
 			}
 		}
 	}
 
-	const tokenInflowNames = flags.inflows
+	const tokenInflowNames = buildTokenInflows
 		? zeroTokenInflows === tokenInflows.length
 			? ['USDT']
 			: Array.from(tokenSet)
 		: []
 
 	tokenInflows =
-		flags.inflows && zeroTokenInflows === tokenInflows.length ? [{ USDT: 0, date: '1652486400' }] : tokenInflows
-	usdInflows = flags.inflows && zeroUsdInflows === usdInflows.length ? [['1652486400', 0]] : usdInflows
+		buildTokenInflows && zeroTokenInflows === tokenInflows.length ? [{ USDT: 0, date: '1652486400' }] : tokenInflows
+	usdInflows = buildUsdInflows && zeroUsdInflows === usdInflows.length ? [['1652486400', 0]] : usdInflows
 
 	// These series are built from object keys; keep them chronological for charts and "latest" lookups.
-	if (flags.inflows) {
-		tokenInflows.sort((a, b) => Number(a.date) - Number(b.date))
-		usdInflows.sort((a, b) => Number(a[0]) - Number(b[0]))
-	}
+	if (buildTokenInflows) tokenInflows.sort((a, b) => Number(a.date) - Number(b.date))
+	if (buildUsdInflows) usdInflows.sort((a, b) => Number(a[0]) - Number(b[0]))
 
 	return { peggedAreaChartData, peggedAreaTotalData, stackedDataset, tokenInflows, tokenInflowNames, usdInflows }
 }
 
+export const buildStablecoinChartDataWithFlags = (
+	params: IBuildStablecoinChartDataParams,
+	flags: StablecoinChartBuildFlags
+): IBuildStablecoinChartDataResult => buildStablecoinChartDataInternal(params, flags)
+
 export const buildStablecoinTotalChartData = (
 	params: IBuildStablecoinChartDataParams
 ): Pick<IBuildStablecoinChartDataResult, 'peggedAreaTotalData'> => {
-	const { peggedAreaTotalData } = buildStablecoinChartDataInternal(params, { total: true })
+	const { peggedAreaTotalData } = buildStablecoinChartDataWithFlags(params, { total: true })
 	return { peggedAreaTotalData }
 }
 
 export const buildStablecoinAreaChartData = (
 	params: IBuildStablecoinChartDataParams
 ): Pick<IBuildStablecoinChartDataResult, 'peggedAreaChartData' | 'stackedDataset'> => {
-	const { peggedAreaChartData, stackedDataset } = buildStablecoinChartDataInternal(params, {
+	const { peggedAreaChartData, stackedDataset } = buildStablecoinChartDataWithFlags(params, {
 		area: true,
 		stacked: true
 	})
@@ -644,12 +689,12 @@ export const buildStablecoinAreaChartData = (
 export const buildStablecoinInflowsChartData = (
 	params: IBuildStablecoinChartDataParams
 ): Pick<IBuildStablecoinChartDataResult, 'tokenInflows' | 'tokenInflowNames' | 'usdInflows'> => {
-	const { tokenInflows, tokenInflowNames, usdInflows } = buildStablecoinChartDataInternal(params, { inflows: true })
+	const { tokenInflows, tokenInflowNames, usdInflows } = buildStablecoinChartDataWithFlags(params, { inflows: true })
 	return { tokenInflows, tokenInflowNames, usdInflows }
 }
 
 export const buildStablecoinChartData = (params: IBuildStablecoinChartDataParams): IBuildStablecoinChartDataResult => {
-	return buildStablecoinChartDataInternal(params, { area: true, total: true, stacked: true, inflows: true })
+	return buildStablecoinChartDataWithFlags(params, { area: true, total: true, stacked: true, inflows: true })
 }
 
 const getTargetPrice = (

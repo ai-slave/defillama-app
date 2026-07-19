@@ -1,3 +1,4 @@
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import type {
 	ChartTimeGrouping,
 	ChartTimeGroupingWithCumulative,
@@ -133,6 +134,8 @@ export type RWAFlowRotationChart = {
 	groupBy: RWAFlowGrouping
 }
 
+const MAX_FLOW_ROTATION_SERIES = 30
+
 export const RWA_FLOW_COLORS = {
 	inflow: '#3fb950',
 	outflow: '#f85149',
@@ -145,22 +148,26 @@ export function aggregateRWAFlowRows(
 	rows: IRWAFlowAssetBreakdownRow[],
 	assets: IRWAAssetsOverview['assets']
 ): IRWAFlowAggregatePoint[] {
-	const selectedIds = new Set<string>()
+	const selectedIdSet = new Set<string>()
 	for (const asset of assets) {
-		if (asset.kind === 'spot') selectedIds.add(asset.canonicalMarketId)
+		if (asset.kind === 'spot') selectedIdSet.add(asset.canonicalMarketId)
 	}
+	const selectedIds = Array.from(selectedIdSet)
 
-	return rows.map((row) => {
+	const points = new Array<IRWAFlowAggregatePoint>(rows.length)
+	for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+		const row = rows[rowIndex]
 		let netFlowUsd = 0
 		let hasFlow = false
-		for (const id of selectedIds) {
-			const value = row[id]
-			if (typeof value !== 'number' || !Number.isFinite(value)) continue
+		for (let idIndex = 0; idIndex < selectedIds.length; idIndex++) {
+			const value = row[selectedIds[idIndex]]
+			if (value == null) continue
 			netFlowUsd += value
 			hasFlow = true
 		}
-		return { timestamp: row.timestamp, netFlowUsd: hasFlow ? netFlowUsd : null, coverage: hasFlow ? 1 : 0 }
-	})
+		points[rowIndex] = { timestamp: row.timestamp, netFlowUsd: hasFlow ? netFlowUsd : null, coverage: hasFlow ? 1 : 0 }
+	}
+	return points
 }
 
 function getFlowChainKey(assetId: string, chain: string): string {
@@ -172,37 +179,66 @@ export function buildRWAFilteredFlowBreakdown(
 	assets: IRWAAssetsOverview['assets'],
 	splitBy: 'assetGroup' | 'category' | 'platform' | 'chain'
 ): IRWAFlowOverviewSplitPoint[] {
-	const selectedAssets = assets.filter((asset) => asset.kind === 'spot')
-	return rows.map((row) => {
-		const result: IRWAFlowOverviewSplitPoint = { timestamp: row.timestamp }
-		for (const asset of selectedAssets) {
-			if (splitBy === 'chain') {
-				for (const chain of asset.chain ?? []) {
-					const value = row[getFlowChainKey(asset.canonicalMarketId, chain)]
-					if (typeof value === 'number' && Number.isFinite(value)) result[chain] = (result[chain] ?? 0) + value
-				}
-				continue
+	const sourceKeys: string[] = []
+	const targetNames: string[] = []
+	const platformPlans: Array<{ sourceKey: string; targets: string[]; multiplier: number }> = []
+	for (const asset of assets) {
+		if (asset.kind !== 'spot') continue
+		if (splitBy === 'chain') {
+			for (const chain of asset.chain ?? []) {
+				sourceKeys.push(getFlowChainKey(asset.canonicalMarketId, chain))
+				targetNames.push(chain)
 			}
-
-			const value = row[asset.canonicalMarketId]
-			if (typeof value !== 'number' || !Number.isFinite(value)) continue
-			if (splitBy === 'assetGroup') {
-				const group = normalizeRwaAssetGroup(asset.assetGroup)
-				result[group] = (result[group] ?? 0) + value
-				continue
-			}
-			if (splitBy === 'category') {
-				const category = getPrimaryRwaCategory(asset.category)
-				if (category) result[category] = (result[category] ?? 0) + value
-				continue
-			}
-			const platforms = getRwaPlatforms(asset.parentPlatform)
-			if (platforms.length === 1 && platforms[0] === UNKNOWN_PLATFORM) continue
-			const weightedValue = platforms.length > 0 ? value / platforms.length : 0
-			for (const platform of platforms) result[platform] = (result[platform] ?? 0) + weightedValue
+			continue
 		}
-		return result
-	})
+
+		if (splitBy === 'assetGroup') {
+			sourceKeys.push(asset.canonicalMarketId)
+			targetNames.push(normalizeRwaAssetGroup(asset.assetGroup))
+			continue
+		}
+
+		if (splitBy === 'category') {
+			const category = getPrimaryRwaCategory(asset.category)
+			if (category) {
+				sourceKeys.push(asset.canonicalMarketId)
+				targetNames.push(category)
+			}
+			continue
+		}
+
+		const platforms = getRwaPlatforms(asset.parentPlatform)
+		if (platforms.length === 0 || (platforms.length === 1 && platforms[0] === UNKNOWN_PLATFORM)) continue
+		platformPlans.push({
+			sourceKey: asset.canonicalMarketId,
+			targets: platforms,
+			multiplier: 1 / platforms.length
+		})
+	}
+
+	// Resolve grouping labels and encoded chain lookup keys once; the same plan is reused for every timestamp.
+	const breakdown = new Array<IRWAFlowOverviewSplitPoint>(rows.length)
+	for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+		const row = rows[rowIndex]
+		const result = createChartRow<number>(row.timestamp) as IRWAFlowOverviewSplitPoint
+		if (splitBy === 'platform') {
+			for (const plan of platformPlans) {
+				const value = row[plan.sourceKey]
+				if (value == null) continue
+				const weightedValue = value * plan.multiplier
+				for (const target of plan.targets) result[target] = (result[target] ?? 0) + weightedValue
+			}
+		} else {
+			for (let planIndex = 0; planIndex < sourceKeys.length; planIndex++) {
+				const value = row[sourceKeys[planIndex]]
+				if (value == null) continue
+				const target = targetNames[planIndex]
+				result[target] = (result[target] ?? 0) + value
+			}
+		}
+		breakdown[rowIndex] = result
+	}
+	return breakdown
 }
 
 const INFLOWS = definitions.flows.inflows.label
@@ -239,10 +275,6 @@ function getFlowMcap(point: RWAFlowSeriesPoint, mcapByTimestamp?: ReadonlyMap<nu
 	if ('mcap' in point && point.mcap != null) return point.mcap
 	if (!mcapByTimestamp) return null
 	return mcapByTimestamp.get(point.timestamp) ?? mcapByTimestamp.get(toUnixMsTimestamp(point.timestamp)) ?? null
-}
-
-function getSortedFlowPoints(points: readonly RWAFlowSeriesPoint[]): RWAFlowSeriesPoint[] {
-	return [...points].sort((a, b) => a.timestamp - b.timestamp)
 }
 
 function getRWAFlowOverlayOption(metric: RWAFlowOverlayMetric) {
@@ -285,7 +317,7 @@ function groupRWAFlowOverlays(
 	overlays: readonly RWAFlowOverlay[]
 ): RWAFlowOverlay[] {
 	const groupedValues = overlays.map(() => new Map<number, number | null>())
-	for (const point of getSortedFlowPoints(points)) {
+	for (const point of points) {
 		const timestamp = getBucketTimestampMs(toUnixMsTimestamp(point.timestamp), groupBy)
 		for (let index = 0; index < overlays.length; index++) {
 			const value = getRWAFlowOverlayValue(point, overlays[index])
@@ -302,7 +334,7 @@ function buildFlowPeriods(
 ): FlowPeriod[] {
 	const periods = new Map<number, FlowPeriod>()
 
-	for (const point of getSortedFlowPoints(points)) {
+	for (const point of points) {
 		const timestamp = getBucketTimestampMs(toUnixMsTimestamp(point.timestamp), groupBy)
 		let period = periods.get(timestamp)
 		if (!period) {
@@ -369,7 +401,7 @@ function buildDailyFlowChart(points: readonly RWAFlowSeriesPoint[], overlays: re
 	const source: MultiSeriesChart2Dataset['source'] = []
 	const overlayDimensions = getRWAFlowOverlayDimensions(overlays)
 
-	for (const point of getSortedFlowPoints(points)) {
+	for (const point of points) {
 		const flow = point.netFlowUsd
 		const row: MultiSeriesChart2Dataset['source'][number] = {
 			timestamp: toUnixMsTimestamp(point.timestamp),
@@ -418,7 +450,7 @@ function buildCumulativeFlowChart(
 	const overlayDimensions = getRWAFlowOverlayDimensions(overlays)
 	let cumulativeFlow: number | null = null
 
-	for (const point of getSortedFlowPoints(points)) {
+	for (const point of points) {
 		if (point.netFlowUsd != null) cumulativeFlow = (cumulativeFlow ?? 0) + point.netFlowUsd
 		const row: MultiSeriesChart2Dataset['source'][number] = {
 			timestamp: toUnixMsTimestamp(point.timestamp),
@@ -580,54 +612,99 @@ export function getRWAFlowVsPriceSummary(
 	}
 }
 
+export function sortRWAFlowRotationSeriesNames(
+	seriesNames: ReadonlySet<string>,
+	flow7d: ReadonlyMap<string, number>,
+	flow30d: ReadonlyMap<string, number>
+): string[] {
+	return Array.from(seriesNames).sort((a, b) => {
+		const flow7dDifference = Math.abs(flow7d.get(b) ?? 0) - Math.abs(flow7d.get(a) ?? 0)
+		if (flow7dDifference !== 0) return flow7dDifference
+		const flow30dDifference = Math.abs(flow30d.get(b) ?? 0) - Math.abs(flow30d.get(a) ?? 0)
+		return flow30dDifference !== 0 ? flow30dDifference : a.localeCompare(b)
+	})
+}
+
+export function getRWAFlowRotationSeriesNames(points: readonly IRWAFlowOverviewSplitPoint[]): string[] {
+	const seriesNames = new Set<string>()
+	const latestPoint = points[points.length - 1]
+	const latestTimestamp = latestPoint ? toUnixMsTimestamp(latestPoint.timestamp) : 0
+	const flow7d = new Map<string, number>()
+	const flow30d = new Map<string, number>()
+	const cutoff7d = latestTimestamp - 7 * DAY_MS
+	const cutoff30d = latestTimestamp - 30 * DAY_MS
+	for (const point of points) {
+		const pointTimestamp = toUnixMsTimestamp(point.timestamp)
+		for (const name in point) {
+			if (name === 'timestamp') continue
+			seriesNames.add(name)
+			const value = point[name]
+			if (pointTimestamp > cutoff30d) flow30d.set(name, (flow30d.get(name) ?? 0) + value)
+			if (pointTimestamp > cutoff7d) flow7d.set(name, (flow7d.get(name) ?? 0) + value)
+		}
+	}
+
+	return sortRWAFlowRotationSeriesNames(seriesNames, flow7d, flow30d)
+}
+
 export function buildRWAFlowRotationChart(
 	points: readonly IRWAFlowOverviewSplitPoint[],
 	groupBy: RWAFlowGrouping
 ): RWAFlowRotationChart {
 	const seriesNames = new Set<string>()
-	let latestTimestamp = 0
-	for (const point of points) {
-		latestTimestamp = Math.max(latestTimestamp, toUnixMsTimestamp(point.timestamp))
-		for (const [key, value] of Object.entries(point)) {
-			if (key !== 'timestamp' && typeof value === 'number' && Number.isFinite(value)) seriesNames.add(key)
-		}
-	}
-
+	const latestPoint = points[points.length - 1]
+	const latestTimestamp = latestPoint ? toUnixMsTimestamp(latestPoint.timestamp) : 0
 	const flow7d = new Map<string, number>()
 	const flow30d = new Map<string, number>()
 	const cutoff7d = latestTimestamp - 7 * DAY_MS
 	const cutoff30d = latestTimestamp - 30 * DAY_MS
 	const buckets = new Map<number, Record<string, number>>()
-	for (const point of [...points].sort((a, b) => toUnixMsTimestamp(a.timestamp) - toUnixMsTimestamp(b.timestamp))) {
+	for (const point of points) {
 		const pointTimestamp = toUnixMsTimestamp(point.timestamp)
 		const bucketTimestamp = getBucketTimestampMs(pointTimestamp, groupBy === 'cumulative' ? 'daily' : groupBy)
 		let bucket = buckets.get(bucketTimestamp)
 		if (!bucket) {
-			bucket = {}
+			bucket = createChartRecord<number>()
 			buckets.set(bucketTimestamp, bucket)
 		}
-		for (const [seriesName, value] of Object.entries(point)) {
+		for (const seriesName in point) {
 			if (seriesName === 'timestamp') continue
-			if (typeof value !== 'number' || !Number.isFinite(value)) continue
+			const value = point[seriesName]
+			seriesNames.add(seriesName)
 			bucket[seriesName] = (bucket[seriesName] ?? 0) + value
 			if (pointTimestamp > cutoff30d) flow30d.set(seriesName, (flow30d.get(seriesName) ?? 0) + value)
 			if (pointTimestamp > cutoff7d) flow7d.set(seriesName, (flow7d.get(seriesName) ?? 0) + value)
 		}
 	}
 
-	const orderedSeriesNames = Array.from(seriesNames).sort((a, b) => {
-		const flow7dDifference = Math.abs(flow7d.get(b) ?? 0) - Math.abs(flow7d.get(a) ?? 0)
-		if (flow7dDifference !== 0) return flow7dDifference
-		const flow30dDifference = Math.abs(flow30d.get(b) ?? 0) - Math.abs(flow30d.get(a) ?? 0)
-		return flow30dDifference !== 0 ? flow30dDifference : a.localeCompare(b)
-	})
+	const allSeriesNames = sortRWAFlowRotationSeriesNames(seriesNames, flow7d, flow30d)
+	let orderedSeriesNames = allSeriesNames
+	let omittedSeriesNames: string[] = []
+	if (allSeriesNames.length > MAX_FLOW_ROTATION_SERIES) {
+		const rankedWithoutOthers = allSeriesNames.filter((name) => name !== 'Others')
+		orderedSeriesNames = rankedWithoutOthers.slice(0, MAX_FLOW_ROTATION_SERIES - 1)
+		const displayedSet = new Set(orderedSeriesNames)
+		omittedSeriesNames = allSeriesNames.filter((name) => !displayedSet.has(name))
+		orderedSeriesNames.push('Others')
+	}
 
 	const source: MultiSeriesChart2Dataset['source'] = []
 	const cumulativeFlow = new Map<string, number>()
 	for (const [timestamp, bucket] of buckets) {
-		const row: MultiSeriesChart2Dataset['source'][number] = { timestamp }
+		const row = createChartRow<string | number | null | undefined>(timestamp)
 		for (const seriesName of orderedSeriesNames) {
-			const value = bucket[seriesName]
+			let value = bucket[seriesName]
+			if (seriesName === 'Others' && omittedSeriesNames.length > 0) {
+				let total = 0
+				let hasValue = false
+				for (const omittedName of omittedSeriesNames) {
+					const omittedValue = bucket[omittedName]
+					if (omittedValue == null) continue
+					total += omittedValue
+					hasValue = true
+				}
+				value = hasValue ? total : undefined
+			}
 			if (groupBy === 'cumulative' && value != null) {
 				cumulativeFlow.set(seriesName, (cumulativeFlow.get(seriesName) ?? 0) + value)
 			}

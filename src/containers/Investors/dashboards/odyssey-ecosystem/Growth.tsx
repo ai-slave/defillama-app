@@ -1,10 +1,20 @@
-import { lazy, useState } from 'react'
-import type { IChartProps, IMultiSeriesChartProps } from '~/components/ECharts/types'
+import { lazy, useMemo, useState } from 'react'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import type {
+	IMultiSeriesChart2Props,
+	IMultiSeriesChartProps,
+	MultiSeriesChart2Dataset
+} from '~/components/ECharts/types'
 import { useGrowthData, chartToTs, type LooprDailyRow } from './api'
 import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd, dollarPctChartOptions } from './ui'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+
+const UNITLESS_SINGLE_SERIES_CHART_OPTIONS = createSingleSeriesChartOptions('')
+const DOLLAR_SINGLE_SERIES_CHART_OPTIONS = createSingleSeriesChartOptions('$')
 
 const CHAIN_COLORS: Record<string, string> = {
 	Base: '#0052ff',
@@ -18,6 +28,55 @@ const SPEND_VENUES = [
 	{ id: 'aerodrome', label: 'Aerodrome' },
 	{ id: 'velodrome', label: 'Velodrome' },
 	{ id: 'votemarket', label: 'VoteMarket' }
+]
+
+const ACTIVE_ACCOUNTS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Active Accounts',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'Active Accounts' },
+		color: '#6366f1'
+	}
+]
+const ACTIVE_POSITIONS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Active Positions',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'Active Positions' },
+		color: '#34d399'
+	}
+]
+const CUMULATIVE_ACCOUNTS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Cumulative Accounts',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'Cumulative Accounts' },
+		color: '#fb923c'
+	}
+]
+const CUMULATIVE_POSITIONS_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Cumulative Positions',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'Cumulative Positions' },
+		color: '#a78bfa'
+	}
+]
+const MET_PRICE_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'MET Price',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'MET Price' },
+		color: '#fb923c'
+	}
+]
+const VSP_PRICE_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'VSP Price',
+		type: 'line',
+		encode: { x: 'timestamp', y: 'VSP Price' },
+		color: '#a78bfa'
+	}
 ]
 
 function TabBtns({
@@ -51,8 +110,7 @@ function TabBtns({
 function dailyToPairs(rows: LooprDailyRow[] | undefined, metric: keyof LooprDailyRow): Array<[number, number | null]> {
 	if (!rows) return []
 	return rows.map(
-		(r) =>
-			[Math.floor(new Date(r.day + 'T00:00:00Z').getTime() / 1000), Number(r[metric] ?? 0)] as [number, number | null]
+		(r) => [Math.floor(Date.parse(r.day + 'T00:00:00Z') / 1000), Number(r[metric] ?? 0)] as [number, number | null]
 	)
 }
 
@@ -68,10 +126,39 @@ export default function Growth() {
 
 	const [spendVenue, setSpendVenue] = useState('aerodrome')
 
-	const activeAccounts = dailyToPairs(loopr?.total, 'active_users')
-	const activePositions = dailyToPairs(loopr?.total, 'active_positions')
-	const cumulativeAccounts = dailyToPairs(loopr?.total, 'cumulative_users')
-	const cumulativePositions = dailyToPairs(loopr?.total, 'cumulative_positions')
+	const looprTotalDatasets = useMemo(() => {
+		const source: MultiSeriesChart2Dataset['source'] = (loopr?.total ?? []).map((row) => ({
+			timestamp: Date.parse(`${row.day}T00:00:00Z`),
+			'Active Accounts': row.active_users,
+			'Active Positions': row.active_positions,
+			'Cumulative Accounts': row.cumulative_users,
+			'Cumulative Positions': row.cumulative_positions
+		}))
+		return {
+			activeAccounts: { dimensions: ['timestamp', 'Active Accounts'], source },
+			activePositions: { dimensions: ['timestamp', 'Active Positions'], source },
+			cumulativeAccounts: { dimensions: ['timestamp', 'Cumulative Accounts'], source },
+			cumulativePositions: { dimensions: ['timestamp', 'Cumulative Positions'], source }
+		} satisfies Record<string, MultiSeriesChart2Dataset>
+	}, [loopr?.total])
+
+	const tokenPriceDatasets = useMemo(() => {
+		const met: MultiSeriesChart2Dataset = {
+			dimensions: ['timestamp', 'MET Price'],
+			source: (data?.tokenPrices?.MET?.history ?? []).map((point) => ({
+				timestamp: point.timestamp * 1e3,
+				'MET Price': point.price
+			}))
+		}
+		const vsp: MultiSeriesChart2Dataset = {
+			dimensions: ['timestamp', 'VSP Price'],
+			source: (data?.tokenPrices?.VSP?.history ?? []).map((point) => ({
+				timestamp: point.timestamp * 1e3,
+				'VSP Price': point.price
+			}))
+		}
+		return { met, vsp }
+	}, [data?.tokenPrices])
 
 	const perChainActiveUsers = loopr?.chains
 		? Object.entries(loopr.chains).map(([chain, rows]) => ({
@@ -99,9 +186,6 @@ export default function Growth() {
 				data: s.data
 			}))
 		: undefined
-
-	const metHistory = (data?.tokenPrices?.MET?.history || []).map((p) => [p.timestamp, p.price] as [number, number])
-	const vspHistory = (data?.tokenPrices?.VSP?.history || []).map((p) => [p.timestamp, p.price] as [number, number])
 
 	const marketComboSeries = data?.marketComparison?.combined
 		? chartToTs(data.marketComparison.combined).map((s, i) => ({
@@ -145,18 +229,30 @@ export default function Growth() {
 
 			<SectionHeader>Loopr · Daily Activity (Combined)</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				{isLoading || !activeAccounts.length ? (
+				{isLoading || !looprTotalDatasets.activeAccounts.source.length ? (
 					<ChartSkeleton title="Active Accounts" />
 				) : (
 					<ChartCard title="Active Accounts" subtitle="Owner-deduped across chains">
-						<AreaChart chartData={activeAccounts as any} title="" height="280px" color="#6366f1" />
+						<MultiSeriesChart2
+							dataset={looprTotalDatasets.activeAccounts}
+							charts={ACTIVE_ACCOUNTS_CHART}
+							valueSymbol=""
+							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+							height="280px"
+						/>
 					</ChartCard>
 				)}
-				{isLoading || !activePositions.length ? (
+				{isLoading || !looprTotalDatasets.activePositions.source.length ? (
 					<ChartSkeleton title="Active Positions" />
 				) : (
 					<ChartCard title="Active Positions" subtitle="Combined open positions">
-						<AreaChart chartData={activePositions as any} title="" height="280px" color="#34d399" />
+						<MultiSeriesChart2
+							dataset={looprTotalDatasets.activePositions}
+							charts={ACTIVE_POSITIONS_CHART}
+							valueSymbol=""
+							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+							height="280px"
+						/>
 					</ChartCard>
 				)}
 			</div>
@@ -164,10 +260,22 @@ export default function Growth() {
 			<SectionHeader>Loopr · Cumulative Onboarding</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartCard title="Cumulative Accounts" subtitle="Owner-deduped across chains">
-					<AreaChart chartData={cumulativeAccounts as any} title="" height="280px" color="#fb923c" />
+					<MultiSeriesChart2
+						dataset={looprTotalDatasets.cumulativeAccounts}
+						charts={CUMULATIVE_ACCOUNTS_CHART}
+						valueSymbol=""
+						chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+						height="280px"
+					/>
 				</ChartCard>
 				<ChartCard title="Cumulative Positions" subtitle="Across all chains">
-					<AreaChart chartData={cumulativePositions as any} title="" height="280px" color="#a78bfa" />
+					<MultiSeriesChart2
+						dataset={looprTotalDatasets.cumulativePositions}
+						charts={CUMULATIVE_POSITIONS_CHART}
+						valueSymbol=""
+						chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+						height="280px"
+					/>
 				</ChartCard>
 			</div>
 
@@ -210,7 +318,12 @@ export default function Growth() {
 									right: true,
 									render: (r) => r.totalDepositedFormatted || fmtUsd(r.totalDepositedUsd)
 								},
-								{ key: 'performanceFeePct', label: 'Perf Fee', right: true, render: (r) => `${r.performanceFeePct}%` },
+								{
+									key: 'performanceFeePct',
+									label: 'Perf Fee',
+									right: true,
+									render: (r) => `${r.performanceFeePct}%`
+								},
 								{
 									key: 'chains',
 									label: 'Chains',
@@ -227,14 +340,26 @@ export default function Growth() {
 
 			<SectionHeader>Token Prices</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				{metHistory.length > 0 && (
+				{tokenPriceDatasets.met.source.length > 0 && (
 					<ChartCard title="MET Price" subtitle="Metronome governance token">
-						<AreaChart chartData={metHistory as any} title="" valueSymbol="$" height="280px" color="#fb923c" />
+						<MultiSeriesChart2
+							dataset={tokenPriceDatasets.met}
+							charts={MET_PRICE_CHART}
+							valueSymbol="$"
+							chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
+							height="280px"
+						/>
 					</ChartCard>
 				)}
-				{vspHistory.length > 0 && (
+				{tokenPriceDatasets.vsp.source.length > 0 && (
 					<ChartCard title="VSP Price" subtitle="Vesper governance token">
-						<AreaChart chartData={vspHistory as any} title="" valueSymbol="$" height="280px" color="#a78bfa" />
+						<MultiSeriesChart2
+							dataset={tokenPriceDatasets.vsp}
+							charts={VSP_PRICE_CHART}
+							valueSymbol="$"
+							chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
+							height="280px"
+						/>
 					</ChartCard>
 				)}
 			</div>

@@ -11,13 +11,11 @@ import { BarChart, PieChart as EPieChart, ScatterChart as EScatterChart } from '
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { TextLoader } from '../../Logo'
-
-echarts.use([CanvasRenderer, BarChart, EPieChart, EScatterChart, GridComponent, TooltipComponent])
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { VirtualTable } from '~/components/Table/Table'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { formattedNum } from '~/utils'
+import { TextLoader } from '../../Logo'
 import {
 	type PerpMarket,
 	type PredictedFunding,
@@ -28,6 +26,8 @@ import {
 	useHyperliquidWs,
 	type WsSubscription
 } from './api'
+
+echarts.use([CanvasRenderer, BarChart, EPieChart, EScatterChart, GridComponent, TooltipComponent])
 
 const ALL_MIDS_SUB: WsSubscription[] = [{ type: 'allMids' }]
 const TICKER_SPEED_PX_PER_SEC = 52
@@ -53,11 +53,13 @@ function usePersistentChart(enabled: boolean) {
 		if (!container) return
 		const instance = echarts.init(container)
 		chartRef.current = instance
-		const onResize = () => instance.resize()
-		window.addEventListener('resize', onResize)
+		const observer = new ResizeObserver(() => {
+			if (!instance.isDisposed()) instance.resize()
+		})
+		observer.observe(container)
 
 		return () => {
-			window.removeEventListener('resize', onResize)
+			observer.disconnect()
 			chartRef.current = null
 			instance.dispose()
 		}
@@ -707,26 +709,29 @@ export default function Stats() {
 	const { markets: spot, isLoading: spotLoading } = useHyperliquidSpot()
 	const { fundings, isLoading: fundingsLoading } = useHyperliquidPredictedFundings()
 
-	const kpis = useMemo(() => {
-		const totalVolume = perps.reduce((sum, market) => sum + market.dayNtlVlm, 0)
-		const totalOI = perps.reduce((sum, market) => sum + market.openInterest, 0)
-
+	const marketPresentation = useMemo(() => {
+		const byOpenInterest = perps.toSorted((a, b) => b.openInterest - a.openInterest)
+		const fundingChartData: Array<{ name: string; value: number }> = []
+		const oiDistributionData: Array<{ name: string; value: number }> = []
+		let totalVolume = 0
+		let totalOI = 0
+		let otherOI = 0
+		for (let index = 0; index < byOpenInterest.length; index++) {
+			const market = byOpenInterest[index]
+			totalVolume += market.dayNtlVlm
+			totalOI += market.openInterest
+			if (index < 20) fundingChartData.push({ name: market.name, value: market.fundingAnnualized })
+			if (index < 10) oiDistributionData.push({ name: market.name, value: market.openInterest })
+			else otherOI += market.openInterest
+		}
+		if (otherOI > 0) oiDistributionData.push({ name: 'Other', value: otherOI })
 		return {
 			totalVolume: formattedNum(totalVolume, true),
 			totalOI: formattedNum(totalOI, true),
-			perpCount: perps.length,
-			spotCount: spot.length
+			fundingChartData,
+			oiDistributionData
 		}
-	}, [perps, spot])
-
-	const fundingChartData = useMemo(
-		() =>
-			perps
-				.toSorted((a, b) => b.openInterest - a.openInterest)
-				.slice(0, 20)
-				.map((market) => ({ name: market.name, value: market.fundingAnnualized })),
-		[perps]
-	)
+	}, [perps])
 
 	const topCoins = useMemo(
 		() =>
@@ -736,16 +741,6 @@ export default function Stats() {
 				.map((market) => market.name),
 		[perps]
 	)
-
-	const oiDistributionData = useMemo(() => {
-		if (perps.length === 0) return []
-		const sorted = perps.toSorted((a, b) => b.openInterest - a.openInterest)
-		const top = sorted.slice(0, 10)
-		const otherOI = sorted.slice(10).reduce((sum, market) => sum + market.openInterest, 0)
-		const result = top.map((market) => ({ name: market.name, value: market.openInterest }))
-		if (otherOI > 0) result.push({ name: 'Other', value: otherOI })
-		return result
-	}, [perps])
 
 	const isLoading = perpsLoading || spotLoading
 
@@ -762,16 +757,16 @@ export default function Stats() {
 			{topCoins.length > 0 ? <PriceTickerTape coins={topCoins} /> : null}
 
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-				<MetricCard label="24h Perp Volume" value={kpis.totalVolume} />
-				<MetricCard label="Total Open Interest" value={kpis.totalOI} />
-				<MetricCard label="Perp Markets" value={kpis.perpCount} />
-				<MetricCard label="Spot Markets" value={kpis.spotCount} />
+				<MetricCard label="24h Perp Volume" value={marketPresentation.totalVolume} />
+				<MetricCard label="Total Open Interest" value={marketPresentation.totalOI} />
+				<MetricCard label="Perp Markets" value={perps.length} />
+				<MetricCard label="Spot Markets" value={spot.length} />
 			</div>
-			<FundingChart data={fundingChartData} />
+			<FundingChart data={marketPresentation.fundingChartData} />
 			{!fundingsLoading ? <PredictedFundingTable data={fundings} /> : null}
 
 			<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-				<OIDistributionChart data={oiDistributionData} />
+				<OIDistributionChart data={marketPresentation.oiDistributionData} />
 				<VolumeOIScatter data={perps} />
 			</div>
 

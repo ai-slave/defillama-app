@@ -148,8 +148,8 @@ export interface CoinsPricesResponse {
 }
 
 interface CoinChartPricePoint {
-	timestamp?: number
-	price?: number
+	timestamp: number
+	price: number
 }
 
 interface CoinChartEntry {

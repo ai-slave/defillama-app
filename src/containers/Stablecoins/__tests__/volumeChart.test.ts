@@ -23,6 +23,33 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		expect(payload.stacked).toBe(false)
 	})
 
+	it('trims trailing incomplete zero buckets without removing interior zeroes', () => {
+		const payload = buildStablecoinVolumeChartPayload(
+			[
+				[1609459200, 100],
+				[1609545600, 0],
+				[1609632000, 125],
+				[1609718400, 0]
+			],
+			{ chart: 'total', trimIncompleteTail: true }
+		)
+
+		expect(payload.dataset.source).toEqual([
+			{ timestamp: 1609459200000, Volume: 100 },
+			{ timestamp: 1609545600000, Volume: 0 },
+			{ timestamp: 1609632000000, Volume: 125 }
+		])
+		expect(
+			buildStablecoinVolumeChartPayload(
+				[
+					[1609459200, 100],
+					[1609545600, 0]
+				],
+				{ chart: 'total' }
+			).dataset.source
+		).toHaveLength(2)
+	})
+
 	it('limits breakdown series and folds the rest into Others', () => {
 		const payload = buildStablecoinVolumeChartPayload(
 			[
@@ -63,69 +90,32 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		expect(payload.charts.every((chart) => chart.large === false)).toBe(true)
 	})
 
-	it('returns one compact chain series when a selected dimension is requested', () => {
+	it('ranks from the latest non-empty breakdown when the current bucket is empty', () => {
 		const payload = buildStablecoinVolumeChartPayload(
 			[
-				[1609459200, { bsc: 25, ethereum: 100 }],
-				[1609545600, { bsc: 30, ethereum: 120 }]
+				[1609459200, { ethereum: 100, tron: 80 }],
+				[1609545600, {}]
 			],
-			{ chart: 'chain', selectedDimension: 'bsc' }
+			{ chart: 'chain', limit: 2, trimIncompleteTail: true }
+		)
+
+		expect(payload.dataset.dimensions).toEqual(['timestamp', 'ethereum', 'tron'])
+		expect(payload.dataset.source).toEqual([{ timestamp: 1609459200000, ethereum: 100, tron: 80, Others: 0 }])
+	})
+
+	it('returns an empty breakdown payload when every bucket is empty', () => {
+		const payload = buildStablecoinVolumeChartPayload(
+			[
+				[1609459200, {}],
+				[1609545600, {}]
+			],
+			{ chart: 'chain', trimIncompleteTail: true }
 		)
 
 		expect(payload.dataset).toEqual({
-			source: [
-				{ timestamp: 1609459200000, Volume: 25 },
-				{ timestamp: 1609545600000, Volume: 30 }
-			],
-			dimensions: ['timestamp', 'Volume']
+			source: [],
+			dimensions: ['timestamp']
 		})
-		expect(payload.showTotalInTooltip).toBe(false)
-		expect(payload.stacked).toBe(false)
-	})
-
-	it('uses zero for a selected dimension missing from a bucket', () => {
-		const payload = buildStablecoinVolumeChartPayload(
-			[
-				[1609459200, { ethereum: 100 }],
-				[1609545600, { tron: 30 }]
-			],
-			{ chart: 'chain', selectedDimension: 'ethereum' }
-		)
-
-		expect(payload.dataset).toEqual({
-			source: [
-				{ timestamp: 1609459200000, Volume: 100 },
-				{ timestamp: 1609545600000, Volume: 0 }
-			],
-			dimensions: ['timestamp', 'Volume']
-		})
-	})
-
-	it('uses a fallback dimension before returning an empty selected-dimension payload', () => {
-		const payload = buildStablecoinVolumeChartPayload(
-			[
-				[1609459200, { USDC: 25, USDT: 100 }],
-				[1609545600, { USDC: 30, USDT: 120 }]
-			],
-			{ chart: 'token', selectedDimension: 'USD Coin', fallbackDimension: 'USDC' }
-		)
-
-		expect(payload.dataset.source).toEqual([
-			{ timestamp: 1609459200000, Volume: 25 },
-			{ timestamp: 1609545600000, Volume: 30 }
-		])
-	})
-
-	it('does not fall back to global top series when a selected dimension is missing', () => {
-		const payload = buildStablecoinVolumeChartPayload(
-			[
-				[1609459200, { USDC: 25, USDT: 100 }],
-				[1609545600, { USDC: 30, USDT: 120 }]
-			],
-			{ chart: 'token', selectedDimension: 'missing' }
-		)
-
-		expect(payload.dataset.source).toEqual([])
 		expect(payload.charts).toEqual([])
 	})
 
@@ -142,5 +132,25 @@ describe('buildStablecoinVolumeChartPayload', () => {
 
 		expect(grouped.dataset.source).toEqual([{ timestamp: 1609459200000, Volume: 225 }])
 		expect(grouped.charts[0].type).toBe('bar')
+	})
+
+	it('renders cumulative volume totals as lines without bar-only options', () => {
+		const payload = buildStablecoinVolumeChartPayload(
+			[
+				[1609459200, 100],
+				[1609545600, 25]
+			],
+			{ chart: 'total' }
+		)
+
+		const grouped = groupStablecoinVolumeChartPayload(payload, 'cumulative')
+
+		expect(grouped.dataset.source).toEqual([
+			{ timestamp: 1609459200000, Volume: 100 },
+			{ timestamp: 1609545600000, Volume: 125 }
+		])
+		expect(grouped.charts[0]).toMatchObject({ type: 'line', name: 'Volume' })
+		expect(grouped.charts[0]).not.toHaveProperty('barMinWidth')
+		expect(grouped.charts[0]).not.toHaveProperty('barMaxWidth')
 	})
 })

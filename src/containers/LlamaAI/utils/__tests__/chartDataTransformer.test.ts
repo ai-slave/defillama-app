@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { AdaptedLlamaAICartesianChart } from '~/containers/LlamaAI/utils/chartAdapter'
+import type { AdaptedLlamaAICartesianChart } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import type { ChartCapabilities, ChartViewState } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { ChartDataTransformer } from '../chartDataTransformer'
 
@@ -25,17 +25,12 @@ const viewState: ChartViewState = {
 	logScale: false
 }
 
-const logViewState: ChartViewState = {
-	...viewState,
-	percentage: false,
-	logScale: true
-}
-
-const logCapabilities: ChartCapabilities = {
-	...capabilities,
-	allowPercentage: false,
-	allowLogScale: true,
-	logEligibleYAxes: [0]
+function deepFreeze<T>(value: T): T {
+	if (value && typeof value === 'object') {
+		for (const nestedValue of Object.values(value)) deepFreeze(nestedValue)
+		Object.freeze(value)
+	}
+	return value
 }
 
 function makeMixedAxisChart(axisType: 'time' | 'category'): AdaptedLlamaAICartesianChart {
@@ -130,7 +125,7 @@ function makeMixedAxisChart(axisType: 'time' | 'category'): AdaptedLlamaAICartes
 	}
 }
 
-function makeUnsortedTimeChart(): AdaptedLlamaAICartesianChart {
+function makeAscendingBarChart(): AdaptedLlamaAICartesianChart {
 	const mar = Date.UTC(2026, 2, 1)
 	const jan = Date.UTC(2026, 0, 1)
 	const feb = Date.UTC(2026, 1, 1)
@@ -141,14 +136,14 @@ function makeUnsortedTimeChart(): AdaptedLlamaAICartesianChart {
 			dataset: {
 				dimensions: ['timestamp', 'Revenue'],
 				source: [
-					{ timestamp: mar, Revenue: 30 },
 					{ timestamp: jan, Revenue: 10 },
-					{ timestamp: feb, Revenue: 20 }
+					{ timestamp: feb, Revenue: 20 },
+					{ timestamp: mar, Revenue: 30 }
 				]
 			},
 			charts: [
 				{
-					type: 'line',
+					type: 'bar',
 					name: 'Revenue',
 					encode: { x: 'timestamp', y: 'Revenue' },
 					color: '#111',
@@ -159,7 +154,7 @@ function makeUnsortedTimeChart(): AdaptedLlamaAICartesianChart {
 			chartOptions: {},
 			valueSymbol: '$'
 		},
-		title: 'Unsorted',
+		title: 'Revenue',
 		description: '',
 		rowCount: 3,
 		axisType: 'time',
@@ -172,7 +167,7 @@ function makeUnsortedTimeChart(): AdaptedLlamaAICartesianChart {
 				name: 'Revenue',
 				seriesIndex: 0,
 				metricClass: 'flow',
-				baseType: 'line',
+				baseType: 'bar',
 				resolvedColor: '#111',
 				valueSymbol: '$',
 				yAxisIndex: 0,
@@ -186,34 +181,52 @@ function makeUnsortedTimeChart(): AdaptedLlamaAICartesianChart {
 }
 
 function makeLegacyTimestampChart(): AdaptedLlamaAICartesianChart {
-	const chart = makeUnsortedTimeChart()
+	const chart = makeAscendingBarChart()
 	chart.props.dataset.source = [
-		{ timestamp: String(Date.UTC(2026, 0, 1)), Revenue: 10 },
+		{ timestamp: String(Date.UTC(2026, 0, 1) / 1e3), Revenue: 10 },
 		{ timestamp: 'not-a-date', Revenue: 999 },
-		{ timestamp: Date.UTC(2026, 1, 1), Revenue: 20 }
+		{ timestamp: '', Revenue: 999 },
+		{ timestamp: null, Revenue: 999 },
+		{ timestamp: '2026-02-01T00:00:00.000Z', Revenue: 20 },
+		{ timestamp: String(Date.UTC(2026, 2, 1)), Revenue: 30 },
+		{ timestamp: Date.UTC(2026, 3, 1), Revenue: 40 }
 	]
 	chart.rowCount = chart.props.dataset.source.length
 	return chart
 }
 
 describe('ChartDataTransformer', () => {
-	it('keeps secondary-axis symbols in percentage tooltips for time charts', () => {
+	it('reuses canonical data when no view transform is active', () => {
+		const chart = makeAscendingBarChart()
+		const transformed = ChartDataTransformer.applyViewState(chart, { ...viewState, percentage: false }, capabilities)
+
+		expect(transformed).toBe(chart)
+		expect(transformed.props.dataset.source).toBe(chart.props.dataset.source)
+	})
+
+	it('reuses canonical rows when stacking changes only series presentation', () => {
+		const chart = makeMixedAxisChart('time')
+		const transformed = ChartDataTransformer.applyViewState(
+			chart,
+			{ ...viewState, percentage: false, stacked: true },
+			{ ...capabilities, allowStack: true }
+		)
+
+		expect(transformed).not.toBe(chart)
+		expect(transformed.props.dataset.source).toBe(chart.props.dataset.source)
+		expect(transformed.props.charts).not.toBe(chart.props.charts)
+	})
+
+	it('delegates time tooltip formatting while preserving per-series symbols', () => {
 		const transformed = ChartDataTransformer.applyViewState(makeMixedAxisChart('time'), viewState, capabilities)
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
-		const formatter = transformed.props.chartOptions?.tooltip?.formatter
-		if (typeof formatter !== 'function') throw new Error('Expected tooltip formatter')
-
-		const row = transformed.props.dataset.source[0]
-		const tooltip = formatter([
-			{ seriesName: 'Primary A', data: row, color: '#111' },
-			{ seriesName: 'Primary B', data: row, color: '#222' },
-			{ seriesName: 'Secondary', data: row, color: '#333' }
+		expect(transformed.props.chartOptions?.tooltip?.formatter).toBeUndefined()
+		expect(transformed.props.charts?.map((series) => [series.name, series.valueSymbol])).toEqual([
+			['Primary A', '%'],
+			['Primary B', '%'],
+			['Secondary', '$']
 		])
-
-		expect(tooltip).toContain('Primary A: <strong>40%</strong>')
-		expect(tooltip).toContain('Primary B: <strong>60%</strong>')
-		expect(tooltip).toContain('Secondary: <strong>$5</strong>')
 	})
 
 	it('keeps secondary-axis symbols in percentage tooltips for category charts', () => {
@@ -235,9 +248,9 @@ describe('ChartDataTransformer', () => {
 		expect(tooltip).toContain('Secondary: $5')
 	})
 
-	it('keeps grouped rows timestamp-sorted after rebuilding from formatter output', () => {
+	it('preserves chronological order while grouping an ascending dataset', () => {
 		const transformed = ChartDataTransformer.applyViewState(
-			makeUnsortedTimeChart(),
+			makeAscendingBarChart(),
 			{ ...viewState, grouping: 'month', percentage: false },
 			{ ...capabilities, allowGrouping: true }
 		)
@@ -250,9 +263,9 @@ describe('ChartDataTransformer', () => {
 		])
 	})
 
-	it('keeps cumulative rows timestamp-sorted after rebuilding from formatter output', () => {
+	it('preserves chronological order while accumulating an ascending dataset', () => {
 		const transformed = ChartDataTransformer.applyViewState(
-			makeUnsortedTimeChart(),
+			makeAscendingBarChart(),
 			{ ...viewState, cumulative: true, percentage: false },
 			{ ...capabilities, allowCumulative: true }
 		)
@@ -265,6 +278,210 @@ describe('ChartDataTransformer', () => {
 		])
 	})
 
+	it('sums flow buckets and keeps the latest stock snapshot in one pass', () => {
+		const chart = makeAscendingBarChart()
+		chart.props.dataset.dimensions.push('TVL')
+		chart.props.dataset.source = [
+			{ timestamp: Date.UTC(2026, 0, 2), Revenue: 10, TVL: 100 },
+			{ timestamp: Date.UTC(2026, 0, 3), Revenue: 20, TVL: 120 },
+			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 30, TVL: 110 }
+		]
+		chart.props.charts?.push({
+			type: 'line',
+			name: 'TVL',
+			encode: { x: 'timestamp', y: 'TVL' },
+			color: '#222',
+			valueSymbol: '$',
+			yAxisIndex: 0
+		})
+		chart.seriesMeta.push({
+			name: 'TVL',
+			seriesIndex: 1,
+			metricClass: 'stock',
+			baseType: 'line',
+			resolvedColor: '#222',
+			valueSymbol: '$',
+			yAxisIndex: 0,
+			isPrimaryAxis: true,
+			canStack: true,
+			canPercentage: true,
+			canGroup: true
+		})
+
+		const transformed = ChartDataTransformer.applyViewState(
+			chart,
+			{ ...viewState, grouping: 'month', percentage: false },
+			{ ...capabilities, allowGrouping: true }
+		)
+		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
+
+		expect(transformed.props.dataset.source).toEqual([
+			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 30, TVL: 120 },
+			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 30, TVL: 110 }
+		])
+	})
+
+	it('accumulates flow bars without changing stock bars', () => {
+		const chart = makeAscendingBarChart()
+		chart.props.dataset.dimensions.push('TVL')
+		chart.props.dataset.source = [
+			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 10, TVL: 100 },
+			{ timestamp: Date.UTC(2026, 1, 1), TVL: 90 },
+			{ timestamp: Date.UTC(2026, 2, 1), Revenue: 30, TVL: 110 }
+		]
+		chart.props.charts?.push({
+			type: 'bar',
+			name: 'TVL',
+			encode: { x: 'timestamp', y: 'TVL' },
+			color: '#222',
+			valueSymbol: '$',
+			yAxisIndex: 1
+		})
+		chart.seriesMeta.push({
+			name: 'TVL',
+			seriesIndex: 1,
+			metricClass: 'stock',
+			baseType: 'bar',
+			resolvedColor: '#222',
+			valueSymbol: '$',
+			yAxisIndex: 1,
+			isPrimaryAxis: false,
+			canStack: false,
+			canPercentage: false,
+			canGroup: true
+		})
+
+		const transformed = ChartDataTransformer.applyViewState(
+			chart,
+			{ ...viewState, cumulative: true, percentage: false },
+			{ ...capabilities, allowCumulative: true }
+		)
+		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
+
+		expect(transformed.props.dataset.source).toEqual([
+			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 10, TVL: 100 },
+			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 10, TVL: 90 },
+			{ timestamp: Date.UTC(2026, 2, 1), Revenue: 40, TVL: 110 }
+		])
+		expect(transformed.props.charts).toMatchObject([
+			{ name: 'Revenue', type: 'line', hideAreaStyle: true },
+			{ name: 'TVL', type: 'bar' }
+		])
+	})
+
+	it('keeps a line-only cumulative view identical to daily values', () => {
+		const chart = makeMixedAxisChart('time')
+		chart.props.dataset.source = [
+			{ timestamp: Date.UTC(2026, 0, 1), 'Primary A': 20, 'Primary B': 30, Secondary: 5 },
+			{ timestamp: Date.UTC(2026, 0, 2), 'Primary A': 25, 'Primary B': 28, Secondary: 6 }
+		]
+
+		const transformed = ChartDataTransformer.applyViewState(
+			chart,
+			{ ...viewState, cumulative: true, percentage: false },
+			{ ...capabilities, allowCumulative: true }
+		)
+		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
+
+		expect(transformed.props.dataset.source).toEqual(chart.props.dataset.source)
+		expect(transformed.props.charts).toEqual(chart.props.charts)
+	})
+
+	it('groups then accumulates flow buckets without mutating a deeply frozen adapted chart', () => {
+		const chart = makeAscendingBarChart()
+		chart.props.dataset.source.push({ timestamp: Date.UTC(2026, 3, 1), Revenue: 40 })
+		chart.rowCount = chart.props.dataset.source.length
+		deepFreeze(chart)
+
+		const transformed = ChartDataTransformer.applyViewState(
+			chart,
+			{ ...viewState, grouping: 'quarter', cumulative: true, percentage: false, stacked: false },
+			{ ...capabilities, allowGrouping: true, allowCumulative: true }
+		)
+		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
+
+		expect(transformed).not.toBe(chart)
+		expect(transformed.props.dataset).not.toBe(chart.props.dataset)
+		expect(transformed.props.dataset.source).not.toBe(chart.props.dataset.source)
+		expect(transformed.props.dataset.source).toEqual([
+			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 60 },
+			{ timestamp: Date.UTC(2026, 3, 1), Revenue: 100 }
+		])
+		expect(chart.props.dataset.source).toEqual([
+			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 10 },
+			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 20 },
+			{ timestamp: Date.UTC(2026, 2, 1), Revenue: 30 },
+			{ timestamp: Date.UTC(2026, 3, 1), Revenue: 40 }
+		])
+	})
+
+	it('keeps prototype-like series names on ordinary ECharts rows after grouping', () => {
+		const chart = makeAscendingBarChart()
+		chart.props.dataset.dimensions = ['timestamp', '__proto__']
+		chart.props.dataset.source = chart.props.dataset.source.map((row) => {
+			const nextRow: Record<string, number> = { timestamp: row.timestamp as number }
+			Object.defineProperty(nextRow, '__proto__', {
+				value: row.Revenue,
+				enumerable: true,
+				configurable: true,
+				writable: true
+			})
+			return nextRow
+		})
+		chart.props.charts![0] = {
+			...chart.props.charts![0],
+			name: '__proto__',
+			encode: { x: 'timestamp', y: '__proto__' }
+		}
+		chart.seriesMeta[0] = { ...chart.seriesMeta[0], name: '__proto__' }
+
+		const transformed = ChartDataTransformer.applyViewState(
+			chart,
+			{ ...viewState, grouping: 'quarter', percentage: false },
+			{ ...capabilities, allowGrouping: true }
+		)
+		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
+
+		const row = transformed.props.dataset.source[0]
+		expect(Object.getPrototypeOf(row)).toBe(Object.prototype)
+		expect(Object.hasOwn(row, '__proto__')).toBe(true)
+		expect(row.__proto__).toBe(60)
+	})
+
+	it('normalizes negative, missing, and zero percentage buckets without mutating input', () => {
+		const chart = makeMixedAxisChart('time')
+		chart.props.dataset.source = [
+			{ timestamp: Date.UTC(2026, 0, 1), 'Primary A': -20, 'Primary B': 30, Secondary: 5 },
+			{ timestamp: Date.UTC(2026, 0, 2), 'Primary B': 10, Secondary: 6 },
+			{ timestamp: Date.UTC(2026, 0, 3), 'Primary A': 0, 'Primary B': 0, Secondary: 7 }
+		]
+		chart.rowCount = chart.props.dataset.source.length
+		deepFreeze(chart)
+
+		const transformed = ChartDataTransformer.applyViewState(chart, { ...viewState, stacked: true }, capabilities)
+		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
+
+		expect(transformed.props.dataset.source).toEqual([
+			{ timestamp: Date.UTC(2026, 0, 1), 'Primary A': -40, 'Primary B': 60, Secondary: 5 },
+			{ timestamp: Date.UTC(2026, 0, 2), 'Primary A': 0, 'Primary B': 100, Secondary: 6 },
+			{ timestamp: Date.UTC(2026, 0, 3), 'Primary A': 0, 'Primary B': 0, Secondary: 7 }
+		])
+		expect(transformed.props.charts?.filter((series) => (series.yAxisIndex ?? 0) === 0)).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ name: 'Primary A', hideAreaStyle: true, valueSymbol: '%' }),
+				expect.objectContaining({ name: 'Primary B', hideAreaStyle: true, valueSymbol: '%' })
+			])
+		)
+		expect(transformed.props.charts?.find((series) => series.name === 'Primary A')).not.toHaveProperty('stack')
+		expect(transformed.props.charts?.find((series) => series.name === 'Primary B')).not.toHaveProperty('stack')
+		expect(transformed.props.charts?.find((series) => series.name === 'Secondary')).toMatchObject({
+			valueSymbol: '$',
+			yAxisIndex: 1
+		})
+		expect(chart.props.dataset.source[1]).not.toHaveProperty('Primary A')
+		expect(chart.props.dataset.source[0]?.['Primary A']).toBe(-20)
+	})
+
 	it('groups legacy string timestamps and skips malformed timestamps', () => {
 		const transformed = ChartDataTransformer.applyViewState(
 			makeLegacyTimestampChart(),
@@ -275,7 +492,9 @@ describe('ChartDataTransformer', () => {
 
 		expect(transformed.props.dataset.source).toEqual([
 			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 10 },
-			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 20 }
+			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 20 },
+			{ timestamp: Date.UTC(2026, 2, 1), Revenue: 30 },
+			{ timestamp: Date.UTC(2026, 3, 1), Revenue: 40 }
 		])
 	})
 
@@ -289,47 +508,25 @@ describe('ChartDataTransformer', () => {
 
 		expect(transformed.props.dataset.source).toEqual([
 			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 10 },
-			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 30 }
+			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 30 },
+			{ timestamp: Date.UTC(2026, 2, 1), Revenue: 60 },
+			{ timestamp: Date.UTC(2026, 3, 1), Revenue: 100 }
 		])
 	})
 
-	it('clears non-positive lower bounds when applying log scale', () => {
+	it('leaves log-axis policy to the renderer', () => {
 		const chart = makeMixedAxisChart('time')
 		chart.props.chartOptions = { yAxis: [{ min: 0 }, { min: 0 }] } as any
 
-		const transformed = ChartDataTransformer.applyViewState(chart, logViewState, logCapabilities)
+		const transformed = ChartDataTransformer.applyViewState(
+			chart,
+			{ ...viewState, percentage: false, logScale: true },
+			{ ...capabilities, allowPercentage: false, allowLogScale: true, logEligibleYAxes: [0] }
+		)
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
 		const yAxis = transformed.props.chartOptions?.yAxis as unknown as any[]
 
-		expect(yAxis[0].type).toBe('log')
-		expect(Object.prototype.hasOwnProperty.call(yAxis[0], 'min')).toBe(true)
-		expect(yAxis[0].min).toBeUndefined()
-		expect(yAxis[1].type).toBeUndefined()
-		expect(yAxis[1].min).toBe(0)
-	})
-
-	it('preserves valid lower bounds when applying log scale', () => {
-		const chart = makeMixedAxisChart('time')
-		chart.props.chartOptions = { yAxis: { min: 10 } } as any
-
-		const transformed = ChartDataTransformer.applyViewState(chart, logViewState, logCapabilities)
-		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
-
-		const yAxis = transformed.props.chartOptions?.yAxis as any
-
-		expect(yAxis.type).toBe('log')
-		expect(yAxis.min).toBe(10)
-
-		const dataMinChart = makeMixedAxisChart('time')
-		dataMinChart.props.chartOptions = { yAxis: { min: 'dataMin' } } as any
-
-		const dataMinTransformed = ChartDataTransformer.applyViewState(dataMinChart, logViewState, logCapabilities)
-		if (dataMinTransformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
-
-		const dataMinYAxis = dataMinTransformed.props.chartOptions?.yAxis as any
-
-		expect(dataMinYAxis.type).toBe('log')
-		expect(dataMinYAxis.min).toBe('dataMin')
+		expect(yAxis).toEqual([{ min: 0 }, { min: 0 }])
 	})
 })

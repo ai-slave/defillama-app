@@ -1,6 +1,5 @@
 import { formatBarChart } from '~/components/ECharts/utils'
 import { CHART_COLORS } from '~/constants/colors'
-import { getDominancePercent, getNDistinctColors } from '~/utils'
 import {
 	fetchNftCollection,
 	fetchNftCollectionFloorHistory,
@@ -17,6 +16,7 @@ import {
 	fetchParentCompanies
 } from './api'
 import type { RawNftCollection } from './api.types'
+import { buildNFTMarketplaceChartData } from './marketplaceCharts'
 import { NFT_MINT_EARNINGS } from './mintEarnings'
 
 export type VolumeChartEntry = {
@@ -70,39 +70,6 @@ export const getNFTData = async (): Promise<NftDataResult> => {
 	}
 }
 
-type NftVolumeRow = Record<string, number>
-
-const formatNftVolume = (
-	volume: Array<{ date: number; exchangeName: string; sum: number; count: number }>,
-	column: 'sum' | 'count'
-): [Record<string, NftVolumeRow>, Array<Record<string, number>>, Record<string, string>] => {
-	const sumByDay: Record<string, number> = {}
-	const chartStacks: Record<string, string> = {}
-	const volumeData: Record<string, NftVolumeRow> = {}
-
-	for (const curr of volume) {
-		const date = Math.floor(Number(curr.date) / 1000)
-		if (!volumeData[date]) {
-			volumeData[date] = {}
-		}
-
-		chartStacks[curr.exchangeName] = 'stackA'
-		sumByDay[date] = (sumByDay[date] ?? 0) + curr[column]
-		volumeData[date][curr.exchangeName] = Number(curr[column]?.toFixed(3))
-	}
-
-	const dominance: Array<Record<string, number>> = []
-	for (const [date, exchanges] of Object.entries(volumeData)) {
-		const value: Record<string, number> = { date: Math.floor(Number(date)) }
-		for (const [exchangeName, exchangeValue] of Object.entries(exchanges)) {
-			value[exchangeName] = getDominancePercent(exchangeValue, sumByDay[date])
-		}
-		dominance.push(value)
-	}
-
-	return [volumeData, dominance, chartStacks]
-}
-
 export const getNFTMarketplacesData = async () => {
 	const [data, volume] = await Promise.all([
 		fetchNftMarketplaceStats().catch(() => {
@@ -113,44 +80,13 @@ export const getNFTMarketplacesData = async () => {
 		})
 	])
 
-	const volumeSorted = volume.map((v) => ({ ...v, date: new Date(v.day).getTime() })).sort((a, b) => a.date - b.date)
-
-	const [volumeData, dominance, volumeChartStacks] = formatNftVolume(volumeSorted, 'sum')
-	const [tradeData, dominanceTrade, tradeChartStacks] = formatNftVolume(volumeSorted, 'count')
-
-	const marketplaces: string[] = []
-	for (const marketplace in volumeChartStacks) {
-		marketplaces.push(marketplace)
-	}
-	const colors: Record<string, string> = {}
-	const allColors = getNDistinctColors(marketplaces.length)
-	for (let i = 0; i < marketplaces.length; i++) {
-		colors[marketplaces[i]] = allColors[i]
-	}
-	colors['Others'] = '#AAAAAA'
+	const chartData = buildNFTMarketplaceChartData(volume)
 
 	data.sort((a, b) => Number(b['1DayVolume'] ?? 0) - Number(a['1DayVolume'] ?? 0))
 
 	return {
 		data,
-		volume: Object.entries(volumeData)
-			.sort(([a], [b]) => Number(a) - Number(b))
-			.map(([date, values]) => ({
-				date,
-				...values
-			})),
-		dominance,
-		trades: Object.entries(tradeData)
-			.sort(([a], [b]) => Number(a) - Number(b))
-			.map(([date, values]) => ({
-				date,
-				...values
-			})),
-		dominanceTrade,
-		marketplaces,
-		stackColors: colors,
-		volumeChartStacks,
-		tradeChartStacks
+		...chartData
 	}
 }
 
@@ -325,18 +261,27 @@ export const getNFTRoyaltyHistory = async (slug: string) => {
 	}
 }
 
-const flagOutliers = (sales: Array<[number, number]>): Array<[number, number, boolean]> => {
-	if (sales.length < 2) return sales.map((sale) => [sale[0], sale[1], false] as [number, number, boolean])
+const filterOutlierSales = (sales: Array<[number, number]>): Array<[number, number]> => {
+	if (sales.length < 2) return sales.slice()
 
-	const values = sales.map((s) => s[1])
-	const mean = values.reduce((acc, val) => acc + val, 0) / values.length
-	const std = Math.sqrt(values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (values.length - 1))
+	let total = 0
+	for (const sale of sales) total += sale[1]
+	const mean = total / sales.length
+	let squaredDifferenceTotal = 0
+	for (const sale of sales) {
+		const difference = sale[1] - mean
+		squaredDifferenceTotal += difference * difference
+	}
+	const std = Math.sqrt(squaredDifferenceTotal / (sales.length - 1))
 	if (!Number.isFinite(std) || std === 0) {
-		return sales.map((sale) => [sale[0], sale[1], false] as [number, number, boolean])
+		return sales.slice()
 	}
 
-	const scores = values.map((s) => Math.abs((s - mean) / std))
-	return sales.map((s, i) => [s[0], s[1], scores[i] >= 4] as [number, number, boolean])
+	const filtered: Array<[number, number]> = []
+	for (const sale of sales) {
+		if (Math.abs((sale[1] - mean) / std) < 4) filtered.push(sale)
+	}
+	return filtered
 }
 
 const median = (sales: number[]): number => {
@@ -350,6 +295,35 @@ const median = (sales: number[]): number => {
 	return sales[middle]
 }
 
+const ROLLING_MEDIAN_INTERVAL_MS = 6 * 60 * 60 * 1000
+
+/** Build rolling medians from ascending millisecond sales without rescanning the full history per interval. */
+export function buildRollingMedianSeries(sales: Array<[number, number]>): Array<[number, number]> {
+	if (sales.length === 0) return []
+
+	const medianWindowHours = sales.length > 300 ? 24 : 24 * 7
+	const windowMs = medianWindowHours * 60 * 60 * 1000
+	const start = Math.ceil(sales[0][0] / ROLLING_MEDIAN_INTERVAL_MS) * ROLLING_MEDIAN_INTERVAL_MS
+	const stop = Math.ceil(sales[sales.length - 1][0] / ROLLING_MEDIAN_INTERVAL_MS) * ROLLING_MEDIAN_INTERVAL_MS
+	const output: Array<[number, number]> = []
+	let left = 0
+	let right = 0
+
+	for (let timestamp = start; timestamp <= stop; timestamp += ROLLING_MEDIAN_INTERVAL_MS) {
+		const windowStart = timestamp - windowMs
+		while (left < sales.length && sales[left][0] < windowStart) left++
+		if (right < left) right = left
+		while (right < sales.length && sales[right][0] <= timestamp) right++
+
+		const values = new Array<number>(right - left)
+		for (let i = left; i < right; i++) values[i - left] = sales[i][1]
+		values.sort((a, b) => a - b)
+		output.push([timestamp, median(values)])
+	}
+
+	return output
+}
+
 export const getNFTCollection = async (slug: string) => {
 	try {
 		const [data, sales, stats, floorHistory, orderbook] = await Promise.all([
@@ -360,49 +334,24 @@ export const getNFTCollection = async (slug: string) => {
 			fetchNftCollectionOrderbook(slug).catch(() => null)
 		])
 
-		const salesExOutliers = flagOutliers(sales).filter((i) => i[2] === false)
+		const salesExOutliers = filterOutlierSales(sales)
 
 		// sort on timestamp
 		const X = salesExOutliers.sort((a, b) => a[0] - b[0])
 
-		// calc 1d-rolling median at the end of every x-hours
-		const x = 6
-		const u = 3600 * x * 1000
-
-		const hourlyT: number[] = []
-		if (X.length > 0) {
-			const start = Math.ceil(X[0][0] / u) * u
-			const stop = Math.ceil(X[X.length - 1][0] / u) * u
-			for (let timestamp = start; timestamp <= stop; timestamp += u) {
-				hourlyT.push(timestamp)
-			}
-		}
-
-		// calc median - 24h or 7days rolling median depending on nb of datapoints
-		const medianWindow = X.length > 300 ? 24 : 24 * 7
-		const salesMedian1d: Array<[number, number]> = hourlyT.map((hour) => {
-			const offset = hour - 3600 * 1000 * medianWindow
-			const valuesInRange = X.reduce<number[]>((acc, [timestamp, value]) => {
-				if (timestamp >= offset && timestamp <= hour) {
-					acc.push(value)
-				}
-				return acc
-			}, []).sort((a, b) => a - b)
-			const medianValue = median(valuesInRange)
-			return [hour, medianValue]
-		})
+		const salesMedian1d = buildRollingMedianSeries(X)
 
 		return {
 			data,
 			sales,
-			salesExOutliers: salesExOutliers.map((s) => [s[0], s[1]] as [number, number]),
+			salesExOutliers,
 			salesMedian1d,
-			stats: stats.map((item) => [Math.floor(new Date(item.day).getTime() / 1000), item.sum] as [number, number]),
+			stats: stats.map((item) => [Math.floor(Date.parse(item.day) / 1000), item.sum] as [number, number]),
 			name: data?.[0]?.name ?? null,
 			address: slug,
 			floorHistory: {
 				source: floorHistory.map((item) => ({
-					timestamp: Math.floor(new Date(item.timestamp).getTime()),
+					timestamp: Math.floor(Date.parse(item.timestamp)),
 					'Floor Price': item.floorPrice
 				})),
 				dimensions: ['timestamp', 'Floor Price']

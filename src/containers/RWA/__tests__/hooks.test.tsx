@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IRWAAssetsOverview, IRWAInitialChartDatasetRow } from '../api.types'
+import type { IRWAAssetsOverview, IRWAInitialChartDatasetRow, RWAChartMetricKey } from '../api.types'
 import { normalizeRwaAssetGroup } from '../assetGroup'
 import type { RWAChartAggregationMode } from '../chartAggregation'
 import {
@@ -158,8 +158,16 @@ function DatasetProbe({
 	return React.createElement('pre', null, chartDataset.dimensions.join('|'))
 }
 
-function AssetGroupProbe({ enabled, chartAssets }: { enabled: boolean; chartAssets: IRWAAssetsOverview['assets'] }) {
-	const result = useRwaAssetGroupPieChartData({ enabled, assets: chartAssets })
+function AssetGroupProbe({
+	enabled,
+	chartAssets,
+	metric
+}: {
+	enabled: boolean
+	chartAssets: IRWAAssetsOverview['assets']
+	metric: RWAChartMetricKey
+}) {
+	const result = useRwaAssetGroupPieChartData({ enabled, assets: chartAssets, metric })
 	return React.createElement('script', {
 		type: 'application/json',
 		dangerouslySetInnerHTML: { __html: JSON.stringify(result) }
@@ -170,18 +178,21 @@ function CategoryProbe({
 	enabled,
 	chartAssets,
 	categories,
-	selectedCategories
+	selectedCategories,
+	metric
 }: {
 	enabled: boolean
 	chartAssets: IRWAAssetsOverview['assets']
 	categories: string[]
 	selectedCategories: string[]
+	metric: RWAChartMetricKey
 }) {
 	const result = useRWAAssetCategoryPieChartData({
 		enabled,
 		assets: chartAssets,
 		categories,
-		selectedCategories
+		selectedCategories,
+		metric
 	})
 	return React.createElement('script', {
 		type: 'application/json',
@@ -631,7 +642,29 @@ describe('useFilteredRwaAssets', () => {
 })
 
 describe('useRwaAssetGroupPieChartData', () => {
-	it('groups assets by normalized asset group and keeps Unknown', () => {
+	it.each([
+		{
+			metric: 'onChainMcap' as const,
+			expected: [
+				{ name: 'Stablecoins', value: 100 },
+				{ name: 'Unknown', value: 50 }
+			]
+		},
+		{
+			metric: 'activeMcap' as const,
+			expected: [
+				{ name: 'Stablecoins', value: 90 },
+				{ name: 'Unknown', value: 20 }
+			]
+		},
+		{
+			metric: 'defiActiveTvl' as const,
+			expected: [
+				{ name: 'Stablecoins', value: 30 },
+				{ name: 'Unknown', value: 10 }
+			]
+		}
+	])('groups only the selected $metric values and keeps Unknown', ({ metric, expected }) => {
 		const chartAssets: IRWAAssetsOverview['assets'] = [
 			createSpotAsset({
 				assetGroup: 'Stablecoins',
@@ -656,29 +689,19 @@ describe('useRwaAssetGroupPieChartData', () => {
 		]
 
 		const data = readJsonMarkup(
-			renderToStaticMarkup(React.createElement(AssetGroupProbe, { enabled: true, chartAssets }))
+			renderToStaticMarkup(React.createElement(AssetGroupProbe, { enabled: true, chartAssets, metric }))
 		)
-		expect(data.assetGroupOnChainMcapPieChartData).toEqual([
-			{ name: 'Stablecoins', value: 100 },
-			{ name: 'Unknown', value: 50 }
-		])
-		expect(data.assetGroupActiveMcapPieChartData).toEqual([
-			{ name: 'Stablecoins', value: 90 },
-			{ name: 'Unknown', value: 20 }
-		])
-		expect(data.assetGroupDefiActiveTvlPieChartData).toEqual([
-			{ name: 'Stablecoins', value: 30 },
-			{ name: 'Unknown', value: 10 }
-		])
+		expect(data.pieChartData).toEqual(expected)
+		expect(Object.keys(data)).toEqual(['pieChartData', 'pieChartStackColors'])
 	})
 
 	it('returns empty data when disabled', () => {
 		const data = readJsonMarkup(
-			renderToStaticMarkup(React.createElement(AssetGroupProbe, { enabled: false, chartAssets: assets }))
+			renderToStaticMarkup(
+				React.createElement(AssetGroupProbe, { enabled: false, chartAssets: assets, metric: 'onChainMcap' })
+			)
 		)
-		expect(data.assetGroupOnChainMcapPieChartData).toEqual([])
-		expect(data.assetGroupActiveMcapPieChartData).toEqual([])
-		expect(data.assetGroupDefiActiveTvlPieChartData).toEqual([])
+		expect(data).toEqual({ pieChartData: [], pieChartStackColors: {} })
 	})
 })
 
@@ -700,13 +723,12 @@ describe('useRWAAssetCategoryPieChartData', () => {
 					enabled: true,
 					chartAssets,
 					categories: ['Treasuries', 'Private Credit'],
-					selectedCategories: ['Treasuries', 'Private Credit']
+					selectedCategories: ['Treasuries', 'Private Credit'],
+					metric: 'activeMcap'
 				})
 			)
 		)
 
-		expect(data.assetCategoryOnChainMcapPieChartData).toEqual([{ name: 'Treasuries', value: 100 }])
-		expect(data.assetCategoryActiveMcapPieChartData).toEqual([{ name: 'Treasuries', value: 90 }])
-		expect(data.assetCategoryDefiActiveTvlPieChartData).toEqual([{ name: 'Treasuries', value: 30 }])
+		expect(data.pieChartData).toEqual([{ name: 'Treasuries', value: 90 }])
 	})
 })

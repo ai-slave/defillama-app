@@ -59,36 +59,43 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 			const xField = primarySeries.dataMapping.xField
 			const logoByCategory = buildLogoByCategory(config.axes.x)
 			const categories: string[] = []
-			const seen = new Set<string>()
+			const categoryIndex = new Map<string, number>()
 			for (const row of rawData) {
 				const category = String((row as Record<string, unknown>)[xField] ?? 'Unknown')
-				if (!seen.has(category)) {
-					seen.add(category)
+				if (!categoryIndex.has(category)) {
+					categoryIndex.set(category, categories.length)
 					categories.push(category)
 				}
 			}
 			const palette = getNDistinctColors(config.series.length)
-			const series: HBarGroupedSeries[] = config.series.map((seriesConfig, seriesIndex) => {
-				const filter = seriesConfig.dataMapping.entityFilter
-				const byCategory = new Map<string, number>()
-				for (const row of rawData) {
-					const record = row as Record<string, unknown>
-					if (filter && !matchesEntityFilter(record[filter.field], filter.value)) continue
-					byCategory.set(
-						String(record[xField] ?? 'Unknown'),
-						parseStringNumber(record[seriesConfig.dataMapping.yField])
-					)
-				}
-				return {
+			const series = new Array<HBarGroupedSeries>(config.series.length)
+			for (let seriesIndex = 0; seriesIndex < config.series.length; seriesIndex++) {
+				const seriesConfig = config.series[seriesIndex]
+				series[seriesIndex] = {
 					name: seriesConfig.name,
-					values: categories.map((category) => byCategory.get(category) ?? 0),
+					values: new Array<number>(categories.length).fill(0),
 					color: seriesConfig.styling?.color || palette[seriesIndex]
 				}
-			})
+			}
+			for (const row of rawData) {
+				const record = row as Record<string, unknown>
+				const index = categoryIndex.get(String(record[xField] ?? 'Unknown'))
+				if (index == null) continue
+				for (let seriesIndex = 0; seriesIndex < config.series.length; seriesIndex++) {
+					const seriesConfig = config.series[seriesIndex]
+					const filter = seriesConfig.dataMapping.entityFilter
+					if (filter && !matchesEntityFilter(record[filter.field], filter.value)) continue
+					series[seriesIndex].values[index] = parseStringNumber(record[seriesConfig.dataMapping.yField])
+				}
+			}
 			const logos = logoByCategory ? categories.map((c) => logoByCategory.get(c.toLowerCase()) ?? '') : undefined
+			const data = new Array<[string, number]>(categories.length)
+			for (let index = 0; index < categories.length; index++) {
+				data[index] = [categories[index], series[0].values[index]]
+			}
 			return {
 				chartType: 'hbar',
-				data: categories.map((category, index) => [category, series[0]!.values[index]!] as [string, number]),
+				data,
 				props: {
 					height: '360px',
 					valueSymbol: config.valueSymbol ?? '',

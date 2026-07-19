@@ -1,13 +1,53 @@
 import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IBarChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
 import { useMapleActivePools, parseWad, parseFeeRate } from './api'
-import { ChartCard, CardSkeleton, KpiCard, KpiSkeleton, Pagination, formatPct } from './shared'
+import {
+	ChartCard,
+	CardSkeleton,
+	KpiCard,
+	KpiSkeleton,
+	MAPLE_CSV_ONLY_EXPORT,
+	MAPLE_PERCENT_CATEGORY_CHART_OPTIONS,
+	MAPLE_USD_CATEGORY_CHART_OPTIONS,
+	Pagination,
+	formatPct
+} from './shared'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
+
+const TVL_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		type: 'bar',
+		name: 'TVL',
+		encode: { x: 'Name', y: 'TVL' },
+		color: '#4FC3F7',
+		stack: 'a'
+	}
+]
+const UTILIZATION_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		type: 'bar',
+		name: 'Utilization',
+		encode: { x: 'Name', y: 'Utilization' },
+		color: '#AB47BC',
+		stack: 'a'
+	}
+]
+const APY_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		type: 'bar',
+		name: 'Spot APY',
+		encode: { x: 'Name', y: 'Spot APY' },
+		color: '#66BB6A',
+		stack: 'a'
+	}
+]
 
 interface PoolRow {
 	name: string
@@ -122,53 +162,59 @@ export default function PoolsOverview() {
 			.sort((a, b) => b.tvlUsd - a.tvlUsd)
 	}, [pools])
 
-	const kpis = useMemo(() => {
-		if (isLoading || pools.length === 0) return null
+	const view = useMemo(() => {
+		let totalTvl = 0
+		let totalDepositors = 0
+		let weightedApySum = 0
+		let weightedUtilSum = 0
+		const tvlSource: Array<{ Name: string; TVL: number }> = []
+		const utilizationSource: Array<{ Name: string; Utilization: number }> = []
+		const apySource: Array<{ Name: string; 'Spot APY': number }> = []
 
-		const totalTvl = poolRows.reduce((s, p) => s + p.tvlUsd, 0)
-		const totalDepositors = poolRows.reduce((s, p) => s + p.numPositions, 0)
-		const weightedApySum = poolRows.reduce((s, p) => s + p.spotApy * p.tvlUsd, 0)
-		const avgApy = totalTvl > 0 ? weightedApySum / totalTvl : 0
-		const weightedUtilSum = poolRows.reduce((s, p) => s + p.utilization * p.tvlUsd, 0)
-		const avgUtil = totalTvl > 0 ? weightedUtilSum / totalTvl : 0
-
-		return {
-			totalTvl: formattedNum(totalTvl, true),
-			activePools: pools.length,
-			totalDepositors: formattedNum(totalDepositors, false),
-			avgApy: `${avgApy.toFixed(2)}%`,
-			avgUtil: `${avgUtil.toFixed(1)}%`
+		for (const pool of poolRows) {
+			totalTvl += pool.tvlUsd
+			totalDepositors += pool.numPositions
+			weightedApySum += pool.spotApy * pool.tvlUsd
+			weightedUtilSum += pool.utilization * pool.tvlUsd
+			if (pool.tvlUsd >= 10000) {
+				tvlSource.push({ Name: pool.name, TVL: pool.tvlUsd })
+				if (pool.utilization > 0) utilizationSource.push({ Name: pool.name, Utilization: pool.utilization })
+			}
+			if (pool.spotApy > 0) apySource.push({ Name: pool.name, 'Spot APY': pool.spotApy })
 		}
-	}, [pools, poolRows, isLoading])
 
-	const tvlChartData = useMemo(() => {
-		return poolRows.filter((p) => p.tvlUsd >= 10000).map((p) => ({ name: p.name, TVL: p.tvlUsd }))
-	}, [poolRows])
-
-	const utilizationChartData = useMemo(() => {
-		return poolRows
-			.filter((p) => p.tvlUsd >= 10000 && p.utilization > 0)
-			.sort((a, b) => b.utilization - a.utilization)
-			.map((p) => ({ name: p.name, Utilization: p.utilization }))
-	}, [poolRows])
-
-	const apyChartData = useMemo(() => {
-		return poolRows
-			.filter((p) => p.spotApy > 0)
-			.sort((a, b) => b.spotApy - a.spotApy)
-			.map((p) => ({ name: p.name, 'Spot APY': p.spotApy }))
-	}, [poolRows])
+		utilizationSource.sort((a, b) => b.Utilization - a.Utilization)
+		apySource.sort((a, b) => b['Spot APY'] - a['Spot APY'])
+		return {
+			kpis:
+				isLoading || pools.length === 0
+					? null
+					: {
+							totalTvl: formattedNum(totalTvl, true),
+							activePools: pools.length,
+							totalDepositors: formattedNum(totalDepositors, false),
+							avgApy: `${(totalTvl > 0 ? weightedApySum / totalTvl : 0).toFixed(2)}%`,
+							avgUtil: `${(totalTvl > 0 ? weightedUtilSum / totalTvl : 0).toFixed(1)}%`
+						},
+			tvl: { dimensions: ['Name', 'TVL'], source: tvlSource } satisfies MultiSeriesChart2Dataset,
+			utilization: {
+				dimensions: ['Name', 'Utilization'],
+				source: utilizationSource
+			} satisfies MultiSeriesChart2Dataset,
+			apy: { dimensions: ['Name', 'Spot APY'], source: apySource } satisfies MultiSeriesChart2Dataset
+		}
+	}, [isLoading, poolRows, pools.length])
 
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-				{kpis ? (
+				{view.kpis ? (
 					<>
-						<KpiCard label="Total TVL" value={kpis.totalTvl} />
-						<KpiCard label="Active Pools" value={kpis.activePools} />
-						<KpiCard label="Total Depositors" value={kpis.totalDepositors} />
-						<KpiCard label="Avg Pool APY" value={kpis.avgApy} />
-						<KpiCard label="Avg Utilization" value={kpis.avgUtil} />
+						<KpiCard label="Total TVL" value={view.kpis.totalTvl} />
+						<KpiCard label="Active Pools" value={view.kpis.activePools} />
+						<KpiCard label="Total Depositors" value={view.kpis.totalDepositors} />
+						<KpiCard label="Avg Pool APY" value={view.kpis.avgApy} />
+						<KpiCard label="Avg Utilization" value={view.kpis.avgUtil} />
 					</>
 				) : (
 					<>
@@ -186,30 +232,28 @@ export default function PoolsOverview() {
 					<CardSkeleton title="TVL by Pool" />
 				) : (
 					<ChartCard title="TVL by Pool">
-						<BarChart
-							chartData={tvlChartData}
-							stacks={{ TVL: 'a' }}
-							stackColors={{ TVL: '#4FC3F7' }}
+						<MultiSeriesChart2
+							dataset={view.tvl}
+							charts={TVL_CHART}
 							valueSymbol="$"
-							title=""
 							height="400px"
-							xAxisType="category"
+							chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
+							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</ChartCard>
 				)}
 
 				{isLoading ? (
 					<CardSkeleton title="Pool Utilization" />
-				) : utilizationChartData.length > 0 ? (
+				) : view.utilization.source.length > 0 ? (
 					<ChartCard title="Pool Utilization">
-						<BarChart
-							chartData={utilizationChartData}
-							stacks={{ Utilization: 'a' }}
-							stackColors={{ Utilization: '#AB47BC' }}
+						<MultiSeriesChart2
+							dataset={view.utilization}
+							charts={UTILIZATION_CHART}
 							valueSymbol="%"
-							title=""
 							height="400px"
-							xAxisType="category"
+							chartOptions={MAPLE_PERCENT_CATEGORY_CHART_OPTIONS}
+							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</ChartCard>
 				) : null}
@@ -217,16 +261,15 @@ export default function PoolsOverview() {
 
 			{isLoading ? (
 				<CardSkeleton title="Spot APY by Pool" />
-			) : apyChartData.length > 0 ? (
+			) : view.apy.source.length > 0 ? (
 				<ChartCard title="Spot APY by Pool">
-					<BarChart
-						chartData={apyChartData}
-						stacks={{ 'Spot APY': 'a' }}
-						stackColors={{ 'Spot APY': '#66BB6A' }}
+					<MultiSeriesChart2
+						dataset={view.apy}
+						charts={APY_CHART}
 						valueSymbol="%"
-						title=""
 						height="400px"
-						xAxisType="category"
+						chartOptions={MAPLE_PERCENT_CATEGORY_CHART_OPTIONS}
+						exportButtons={MAPLE_CSV_ONLY_EXPORT}
 					/>
 				</ChartCard>
 			) : null}

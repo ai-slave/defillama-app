@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/timeSeriesDataset'
 import { assignColors } from '../spark/api'
+import { multiSeriesCharts } from './chartDefaults'
 
 interface FormattedValue {
 	value: number
@@ -67,8 +69,8 @@ interface YieldsEmissionsAPIResponse {
 	burn: BurnData | null
 }
 
-function parseDateToUnix(dateStr: string): number {
-	return Math.floor(new Date(dateStr + 'T00:00:00Z').getTime() / 1000)
+function parseDateToMs(dateStr: string): number {
+	return Date.parse(dateStr + 'T00:00:00Z')
 }
 
 function formatBurnNumber(n: number): string {
@@ -76,20 +78,6 @@ function formatBurnNumber(n: number): string {
 	if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`
 	if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`
 	return n.toLocaleString('en-US')
-}
-
-function transformTimeSeries(
-	dates: string[],
-	series: Array<{ name: string; data: number[] }>
-): Array<Record<string, number>> {
-	return dates.map((dateStr, i) => {
-		const point: Record<string, number> = { date: parseDateToUnix(dateStr) }
-		for (const s of series) {
-			const val = s.data[i]
-			point[s.name] = typeof val === 'number' && Number.isFinite(val) ? val : 0
-		}
-		return point
-	})
 }
 
 export function useYieldsEmissionsData() {
@@ -112,9 +100,14 @@ export function useYieldsEmissionsData() {
 		const d = query.data
 
 		// Emissions chart
-		const emissionsData = transformTimeSeries(d.emissions.emissionsChart.dates, d.emissions.emissionsChart.series)
-		const emissionsStacks = d.emissions.emissionsChart.series.map((s) => s.name)
-		const emissionsColors = assignColors(emissionsStacks)
+		const emissionsDataset = buildColumnarTimeSeriesDataset(
+			d.emissions.emissionsChart.dates,
+			d.emissions.emissionsChart.series,
+			parseDateToMs,
+			0
+		)
+		const emissionsColors = assignColors(d.emissions.emissionsChart.series.map((s) => s.name))
+		const emissionsCharts = multiSeriesCharts(d.emissions.emissionsChart.series, 'line', 'Total', emissionsColors)
 
 		// Burn data
 		const burn = d.burn
@@ -141,9 +134,8 @@ export function useYieldsEmissionsData() {
 		return {
 			data: {
 				emissions: {
-					data: emissionsData,
-					stacks: emissionsStacks,
-					colors: emissionsColors,
+					dataset: emissionsDataset,
+					charts: emissionsCharts,
 					title: d.emissions.emissionsChart.title,
 					metadata: d.emissions.metadata
 				},

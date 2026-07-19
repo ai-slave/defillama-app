@@ -5,7 +5,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '../chartSpacing'
-import { getChartTheme } from '../chartTheme'
+import { useChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
 import type { IHBarChartProps } from '../types'
 
@@ -49,6 +49,7 @@ export default function HBarChart({
 }: IHBarChartProps) {
 	const grouped = series != null && series.length > 1
 	const [isThemeDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isThemeDark)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const overlayRef = useRef<HTMLDivElement>(null)
@@ -85,7 +86,7 @@ export default function HBarChart({
 	}, [logos, categories])
 
 	const hasLogos = logosAllLoaded
-	const textColor = getChartTheme(isThemeDark).axisLabel
+	const textColor = chartTheme.axisLabel
 	let overlayLabelWidth = 0
 	if (hasLogos) {
 		for (const category of categories) overlayLabelWidth = Math.max(overlayLabelWidth, measureLabelWidth(category))
@@ -112,7 +113,7 @@ export default function HBarChart({
 				img.alt = ''
 				img.loading = 'lazy'
 				img.decoding = 'async'
-				img.style.cssText = `width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${getChartTheme(isThemeDark).logoBg};display:inline-block;vertical-align:middle;`
+				img.style.cssText = `width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${chartTheme.logoBg};display:inline-block;vertical-align:middle;`
 				img.onerror = () => {
 					const spacer = document.createElement('span')
 					spacer.style.cssText = spacerCss
@@ -171,13 +172,6 @@ export default function HBarChart({
 		const instance = chartRef.current
 		if (!chartDom || !instance) return
 
-		const seriesData = values.map((v, i) => {
-			const item: { value: number; itemStyle?: { color: string } } = { value: v }
-			const barColor = colors?.[i] ?? color
-			if (barColor) item.itemStyle = { color: barColor }
-			return item
-		})
-
 		const barSeries = grouped
 			? series!.map((s) => ({
 					name: s.name,
@@ -186,7 +180,18 @@ export default function HBarChart({
 					itemStyle: { color: s.color },
 					barMaxWidth: 22
 				}))
-			: [{ type: 'bar' as const, data: seriesData, emphasis: { focus: 'series' as const } }]
+			: [
+					{
+						type: 'bar' as const,
+						data: values.map((value, index) => {
+							const item: { value: number; itemStyle?: { color: string } } = { value }
+							const barColor = colors?.[index] ?? color
+							if (barColor) item.itemStyle = { color: barColor }
+							return item
+						}),
+						emphasis: { focus: 'series' as const }
+					}
+				]
 
 		const yAxisLabelWidth = getYAxisLabelWidth(chartDom.clientWidth || 600)
 		const watermarkHeight = 40
@@ -217,7 +222,7 @@ export default function HBarChart({
 								show: true,
 								top: 8,
 								left: 'center',
-								textStyle: { color: getChartTheme(isThemeDark).text },
+								textStyle: { color: chartTheme.text },
 								data: series!.map((s) => s.name)
 							}
 						}
@@ -241,7 +246,7 @@ export default function HBarChart({
 					},
 					splitLine: {
 						lineStyle: {
-							color: getChartTheme(isThemeDark).gridline
+							color: chartTheme.gridline
 						}
 					}
 				},
@@ -263,7 +268,14 @@ export default function HBarChart({
 						if (!Array.isArray(params) || !params[0]) return ''
 						const p = params[0]
 						const numericValue = typeof p.value === 'number' ? p.value : (p.data?.value ?? 0)
-						return `<div style="font-weight: 600; margin-bottom: 4px;">${p.name}</div><div>${formatTooltipValue(numericValue, valueSymbol)}</div>`
+						const header = `<div style="font-weight: 600; margin-bottom: 4px;">${p.name}</div>`
+						if (!grouped) return `${header}<div>${formatTooltipValue(numericValue, valueSymbol)}</div>`
+						let rows = ''
+						for (const item of params) {
+							const value = typeof item.value === 'number' ? item.value : (item.data?.value ?? 0)
+							rows += `<div>${item.marker ?? ''}${item.seriesName}: ${formatTooltipValue(value, valueSymbol)}</div>`
+						}
+						return header + rows
 					}
 				},
 				series: barSeries
@@ -300,6 +312,7 @@ export default function HBarChart({
 		valueAxisInterval,
 		hasLogos,
 		isThemeDark,
+		chartTheme,
 		overlayLabelWidth,
 		textColor
 	])

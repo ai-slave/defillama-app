@@ -1,7 +1,7 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { createAggregateTooltipFormatter, createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
+import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
 import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { tvlOptionsMap } from '~/components/Filters/options'
@@ -33,7 +33,7 @@ const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as Re
 const EMPTY_OTHER_PROTOCOLS: string[] = []
 
 const INFLOWS_TOOLTIP_FORMATTER_USD = createInflowsTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
-const AGG_TOOLTIP_FORMATTER_USD = createAggregateTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
+const USD_INFLOWS_SERIES = new Set(['USD Inflows'])
 
 export const getStaticProps = withPerformanceLogging(
 	'protocol/tvl/[protocol]',
@@ -174,7 +174,7 @@ function ChainsChartCard({
 					charts={deferredCharts}
 					valueSymbol="$"
 					selectedCharts={selectedChartsSet}
-					chartOptions={{ tooltip: { formatter: AGG_TOOLTIP_FORMATTER_USD } }}
+					showTotalInTooltip
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -237,7 +237,7 @@ function TokenLineChartCard({
 					charts={deferredCharts}
 					valueSymbol={valueSymbol}
 					selectedCharts={selectedChartsSet}
-					chartOptions={valueSymbol === '$' ? { tooltip: { formatter: AGG_TOOLTIP_FORMATTER_USD } } : undefined}
+					showTotalInTooltip={valueSymbol === '$'}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -319,8 +319,6 @@ function USDInflowsChartCard({
 	exportTitle: string
 	exportIconUrl?: string
 }) {
-	const allSeries = React.useMemo(() => ['USD Inflows'], [])
-
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const deferredDataset = React.useDeferredValue(dataset)
 
@@ -340,7 +338,7 @@ function USDInflowsChartCard({
 					dataset={deferredDataset}
 					charts={USD_INFLOWS_CHARTS}
 					valueSymbol="$"
-					selectedCharts={new Set(allSeries)}
+					selectedCharts={USD_INFLOWS_SERIES}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -425,6 +423,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 		errors,
 		chainsUnique,
 		tokensUnique,
+		rawTokensUnique,
 		chainsDataset,
 		chainsCharts,
 		tokenUSDDataset,
@@ -511,10 +510,10 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 						/>
 					) : null}
 
-					{tokenRawDataset && tokensUnique?.length > 0 ? (
+					{tokenRawDataset && rawTokensUnique.length > 0 ? (
 						<TokenLineChartCard
 							title="Token Balances (Raw Quantities)"
-							allValues={tokensUnique}
+							allValues={rawTokensUnique}
 							dataset={tokenRawDataset}
 							charts={tokenRawCharts}
 							valueSymbol=""

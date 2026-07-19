@@ -13,6 +13,7 @@ import { lazy, useEffect, useMemo, useRef } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { useChartResize } from '~/hooks/useChartResize'
 import { lastNDaysZoom } from './chartDefaults'
 import { useFeeMData, type FeeMLeaderboardEntry } from './feemApi'
 import { SonicIcon } from './SonicHeader'
@@ -91,15 +92,19 @@ function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const [isDark] = useDarkModeManager()
+	useChartResize(chartRef, containerRef)
 
 	const treeData = useMemo(() => {
-		return leaderboard
-			.filter((p) => p.collectedRewards > 0)
-			.map((p, i) => ({
-				name: p.name || 'Sonic',
-				value: p.collectedRewards,
-				itemStyle: { color: TREEMAP_COLORS[i % TREEMAP_COLORS.length] }
-			}))
+		const data: Array<{ name: string; value: number; itemStyle: { color: string } }> = []
+		for (const item of leaderboard) {
+			if (!(item.collectedRewards > 0)) continue
+			data.push({
+				name: item.name || 'Sonic',
+				value: item.collectedRewards,
+				itemStyle: { color: TREEMAP_COLORS[data.length % TREEMAP_COLORS.length] }
+			})
+		}
+		return data
 	}, [leaderboard])
 
 	useEffect(() => {
@@ -164,12 +169,6 @@ function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
 			{ notMerge: true }
 		)
 	}, [treeData, isDark])
-
-	useEffect(() => {
-		const handleResize = () => chartRef.current?.resize()
-		window.addEventListener('resize', handleResize)
-		return () => window.removeEventListener('resize', handleResize)
-	}, [])
 
 	return <div ref={containerRef} className="w-full" style={{ height: '400px' }} />
 }

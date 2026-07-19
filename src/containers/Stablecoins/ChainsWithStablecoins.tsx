@@ -10,11 +10,12 @@ import {
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
 import type { IHBarChartProps, IPieChartProps, ITreemapChartProps } from '~/components/ECharts/types'
-import { preparePieChartData } from '~/components/ECharts/utils'
 import { Select } from '~/components/Select/Select'
-import { CHART_COLORS } from '~/constants/colors'
 import type { StablecoinsChartConfig } from '~/containers/ProDashboard/types'
-import type { StablecoinChartSeriesPayload } from '~/containers/Stablecoins/chartSeries'
+import {
+	STABLECOIN_BREAKDOWN_SERIES_LIMIT,
+	type StablecoinChartSeriesPayload
+} from '~/containers/Stablecoins/chartSeries'
 import {
 	getStablecoinChainsSeriesChart,
 	getStablecoinChainsVolumeChartKind,
@@ -39,6 +40,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum } from '~/utils'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
+import { buildStablecoinMarketCapPresentation } from './marketCapPresentation'
 import { StablecoinChangeStats } from './StablecoinChangeStats'
 import { StablecoinsChainsTable } from './StablecoinsChainsTable'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
@@ -49,8 +51,10 @@ const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as Re
 const HBarChart = React.lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
 const TreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<ITreemapChartProps>
 const UNRELEASED_QUERY_KEY = 'unreleased'
-const MAX_HORIZONTAL_BARS = 9
-const MAX_TREEMAP_ITEMS = 20
+const EMPTY_PIE_DATA: IPieChartProps['chartData'] = []
+const EMPTY_HBAR_CATEGORIES: string[] = []
+const EMPTY_HBAR_VALUES: number[] = []
+const EMPTY_TREEMAP_DATA: ITreemapChartProps['treeData'] = []
 
 interface ChainsWithStablecoinsProps {
 	chainCirculatings: IFormattedStablecoinChainRow[]
@@ -69,6 +73,7 @@ interface ChainsWithStablecoinsProps {
 }
 
 const CHAINS_CHART_MODE = { page: 'chains' } as const
+const getChainName = (chain: { name: string }) => chain.name
 
 export function ChainsWithStablecoins({
 	chainCirculatings,
@@ -146,63 +151,18 @@ export function ChainsWithStablecoins({
 
 	const groupedChains = useGroupChainsPegged(chainTotals, chainsGroupbyParent)
 
-	const chainsCirculatingValues = React.useMemo(() => {
-		return preparePieChartData({ data: groupedChains, sliceIdentifier: 'name', sliceValue: 'mcap', limit: 10 })
-	}, [groupedChains])
-	const hbarMarketCapData = React.useMemo(() => {
-		return preparePieChartData({
-			data: groupedChains,
-			sliceIdentifier: 'name',
-			sliceValue: 'mcap',
-			limit: MAX_HORIZONTAL_BARS
-		})
-	}, [groupedChains])
-	const rankedMarketCapData = React.useMemo(() => {
-		const data: Array<{ name: string; value: number; color: string }> = []
-		for (const chain of groupedChains) {
-			const value = Number(chain.mcap ?? 0)
-			if (!Number.isFinite(value) || value <= 0) continue
-			data.push({
-				name: chain.name,
-				value,
-				color: CHART_COLORS[data.length % CHART_COLORS.length]
-			})
-			if (data.length >= MAX_TREEMAP_ITEMS) break
+	const marketCapPresentation = React.useMemo(() => {
+		if (chartType !== 'marketCap' || (chartView !== 'pie' && chartView !== 'hbar' && chartView !== 'treemap')) {
+			return null
 		}
-		return data
-	}, [groupedChains])
-	const hbarData = React.useMemo(() => {
-		const categories: string[] = []
-		const values: number[] = []
-		const colors: string[] = []
-		for (let i = 0; i < hbarMarketCapData.length; i++) {
-			const item = hbarMarketCapData[i]
-			categories.push(item.name)
-			values.push(item.value)
-			colors.push(CHART_COLORS[i % CHART_COLORS.length])
-		}
-		return { categories, values, colors }
-	}, [hbarMarketCapData])
-	const treemapData = React.useMemo(() => {
-		let total = 0
-		for (const item of rankedMarketCapData) {
-			total += item.value
-		}
-		return rankedMarketCapData.map((item) => {
-			const share = total > 0 ? Number(((item.value / total) * 100).toFixed(2)) : 0
-			return {
-				name: item.name,
-				path: `Stablecoins/${item.name}`,
-				value: [item.value, share, share],
-				itemStyle: { color: item.color }
-			}
-		})
-	}, [rankedMarketCapData])
+		return buildStablecoinMarketCapPresentation({ rows: groupedChains, view: chartView, getName: getChainName })
+	}, [chartType, chartView, groupedChains])
 
 	const selectedSeriesChart = getStablecoinChainsSeriesChart(chartType, chartView)
 	const chartSeriesQuery = useStablecoinChartSeriesData({
 		scope: 'chains',
 		chart: selectedSeriesChart,
+		seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
 		includeUnreleased: selectedSeriesChart === 'dominance' && includeUnreleased,
 		enabled: selectedSeriesChart != null
 	})
@@ -213,7 +173,6 @@ export function ChainsWithStablecoins({
 		[volumeChartQuery.data, volumeGroupBy]
 	)
 	const deferredVolumeChartData = React.useDeferredValue(groupedVolumeChartData)
-	const deferredChainsCirculatingValues = React.useDeferredValue(chainsCirculatingValues)
 	const isSelectedChartLoading =
 		deferredSelectedChartData == null &&
 		(chartSeriesQuery.isLoading || chartSeriesQuery.isFetching || chartSeriesQuery.data != null)
@@ -310,14 +269,19 @@ export function ChainsWithStablecoins({
 					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
-							<PieChart chartData={deferredChainsCirculatingValues} onReady={handleChartReady} />
+							<PieChart
+								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : EMPTY_PIE_DATA}
+								onReady={handleChartReady}
+							/>
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'hbar' ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<HBarChart
-								categories={hbarData.categories}
-								values={hbarData.values}
-								colors={hbarData.colors}
+								categories={
+									marketCapPresentation?.kind === 'hbar' ? marketCapPresentation.categories : EMPTY_HBAR_CATEGORIES
+								}
+								values={marketCapPresentation?.kind === 'hbar' ? marketCapPresentation.values : EMPTY_HBAR_VALUES}
+								colors={marketCapPresentation?.kind === 'hbar' ? marketCapPresentation.colors : EMPTY_HBAR_CATEGORIES}
 								valueSymbol="$"
 								onReady={handleChartReady}
 							/>
@@ -325,7 +289,9 @@ export function ChainsWithStablecoins({
 					) : chartType === 'marketCap' && chartView === 'treemap' ? (
 						<React.Suspense fallback={<div className="min-h-[600px]" />}>
 							<TreemapChart
-								treeData={treemapData}
+								treeData={
+									marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
+								}
 								variant="rwa"
 								height="600px"
 								onReady={handleChartReady}

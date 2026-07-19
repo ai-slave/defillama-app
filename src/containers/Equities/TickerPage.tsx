@@ -42,6 +42,7 @@ const EQUITIES_PRICE_HISTORY_TIMEFRAMES: readonly EquitiesPriceHistoryTimeframe[
 	'MAX'
 ]
 const DEFAULT_PRICE_HISTORY_TIMEFRAME: EquitiesPriceHistoryTimeframe = 'MAX'
+const SCALED_Y_AXIS_CHART_OPTIONS = { yAxis: { scale: true } }
 
 const TABS = ['financials', 'overview', 'filings', 'tokens', 'markets', 'unlocks'] as const
 type EquityTab = (typeof TABS)[number]
@@ -321,7 +322,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							<MultiSeriesChart2
 								dataset={activePriceHistoryChart.dataset}
 								charts={activePriceHistoryChart.charts}
-								chartOptions={{ yAxis: { scale: true } }}
+								chartOptions={SCALED_Y_AXIS_CHART_OPTIONS}
 								valueSymbol="$"
 								title=""
 								hideDataZoom={activePriceHistoryChart.dataset.source.length < 2}
@@ -364,7 +365,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						<MultiSeriesChart2
 							dataset={activeFundamentalsChart.dataset}
 							charts={activeFundamentalsChart.charts}
-							chartOptions={{ yAxis: { scale: true } }}
+							chartOptions={SCALED_Y_AXIS_CHART_OPTIONS}
 							valueSymbol="$"
 							title=""
 							hideDataZoom={activeFundamentalsChart.dataset.source.length < 2}

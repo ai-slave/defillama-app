@@ -13,28 +13,26 @@ import {
 } from '../ProDashboardAPIContext'
 import type { DashboardItemConfig, SqlChartConfig, StoredColSpan, UnifiedTableConfig } from '../types'
 import { ConfirmationModal } from './ConfirmationModal'
-import {
-	AggregatorsDataset,
-	BridgeAggregatorsDataset,
-	CexAnalyticsDataset,
-	ChainsDataset,
-	DexsDataset,
-	EarningsDataset,
-	FeesDataset,
-	HoldersRevenueDataset,
-	OptionsDataset,
-	PerpsDataset,
-	RevenueDataset,
-	StablecoinsDataset,
-	TokenUsageDataset,
-	TrendingContractsDataset,
-	RWAAssetsDataset,
-	RWAChainsDataset,
-	RWAChainAssetsDataset,
-	EquitiesCompaniesDataset,
-	EquitiesFinancialsDataset,
-	EquitiesFilingsDataset
-} from './datasets'
+import { AggregatorsDataset } from './datasets/AggregatorsDataset'
+import { BridgeAggregatorsDataset } from './datasets/BridgeAggregatorsDataset'
+import { CexAnalyticsDataset } from './datasets/CexAnalyticsDataset'
+import { ChainsDataset } from './datasets/ChainsDataset'
+import { DexsDataset } from './datasets/DexsDataset'
+import { EarningsDataset } from './datasets/EarningsDataset'
+import { EquitiesCompaniesDataset } from './datasets/EquitiesDataset/EquitiesCompaniesDataset'
+import { EquitiesFilingsDataset } from './datasets/EquitiesDataset/EquitiesFilingsDataset'
+import { EquitiesFinancialsDataset } from './datasets/EquitiesDataset/EquitiesFinancialsDataset'
+import { FeesDataset } from './datasets/FeesDataset'
+import { HoldersRevenueDataset } from './datasets/HoldersRevenueDataset'
+import { OptionsDataset } from './datasets/OptionsDataset'
+import { PerpsDataset } from './datasets/PerpsDataset'
+import { RevenueDataset } from './datasets/RevenueDataset'
+import { RWAAssetsDataset } from './datasets/RWADataset/RWAAssetsDataset'
+import { RWAChainAssetsDataset } from './datasets/RWADataset/RWAChainAssetsDataset'
+import { RWAChainsDataset } from './datasets/RWADataset/RWAChainsDataset'
+import { StablecoinsDataset } from './datasets/StablecoinsDataset'
+import TokenUsageDataset from './datasets/TokenUsageDataset'
+import { TrendingContractsDataset } from './datasets/TrendingContractsDataset'
 import { YieldsDataset } from './datasets/YieldsDataset'
 import { ProtocolsByChainTable } from './ProTable'
 import { Rating } from './Rating'

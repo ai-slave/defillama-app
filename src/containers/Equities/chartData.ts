@@ -14,13 +14,14 @@ const FUNDAMENTAL_CHART_LABELS: Record<EquitiesDimensionMetric, string> = {
 
 export function buildPriceHistoryChart(priceHistory: EquitiesPriceHistory): IEquitiesPriceHistoryChart {
 	const source: Array<{ timestamp: number; Close: number }> = []
-	for (const point of priceHistory) {
+	// The equities API returns newest-first rows; reverse iteration emits the chart contract in one pass.
+	for (let i = priceHistory.length - 1; i >= 0; i--) {
+		const point = priceHistory[i]
 		source.push({
-			timestamp: new Date(point[0]).getTime(),
+			timestamp: Date.parse(point[0]),
 			Close: point[1]
 		})
 	}
-	source.sort((a, b) => a.timestamp - b.timestamp)
 
 	return {
 		dataset: {
@@ -45,13 +46,13 @@ export function buildEquitiesDimensionsChart(
 	const label = FUNDAMENTAL_CHART_LABELS[metric]
 	const source: Array<Record<string, number | null>> = []
 	const points = dimensions[metric]?.[period] ?? []
-	for (const point of points) {
+	for (let i = points.length - 1; i >= 0; i--) {
+		const point = points[i]
 		source.push({
-			timestamp: new Date(`${point[0]}T00:00:00Z`).getTime(),
+			timestamp: Date.parse(`${point[0]}T00:00:00Z`),
 			[label]: point[1]
 		})
 	}
-	source.sort((a, b) => (a.timestamp as number) - (b.timestamp as number))
 
 	return {
 		dataset: {

@@ -12,10 +12,12 @@ import { useAppMetadata } from '../../AppMetadataContext'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import ProtocolChartBuilderData from '../../services/ProtocolChartBuilderData'
 import { getItemIconUrl } from '../../utils'
+import { buildProTreemapData } from '../../utils/treemap'
 import { AriakitMultiSelect } from '../AriakitMultiSelect'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedMultiSelect } from '../AriakitVirtualizedMultiSelect'
 import { AriakitVirtualizedSelect } from '../AriakitVirtualizedSelect'
+import { createChartBuilderTooltipFormatter } from '../chartBuilderTooltip'
 import type { ChartBuilderConfig } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -332,37 +334,9 @@ export function ChartBuilderTab({
 	const treemapMode = !isTvlMetric ? treemapValue : 'latest'
 
 	const treemapData = useMemo(() => {
-		if (!visibleSeries || visibleSeries.length === 0) return []
-
-		return visibleSeries
-			.map((s) => {
-				const dataLength = s.data?.length || 0
-				const pointIndex = Math.max(0, dataLength - 2)
-				const latestPoint = dataLength > 0 ? s.data[pointIndex] : undefined
-				const latestTimestamp = latestPoint?.[0]
-				let value = latestPoint?.[1] || 0
-
-				if (latestTimestamp !== undefined && treemapMode !== 'latest') {
-					const windowDays = treemapMode === 'sum7d' ? 7 : 30
-					const windowStart = latestTimestamp - windowDays * 24 * 60 * 60 + 1
-					value = s.data.reduce((sum: number, [timestamp, val]: [number, number]) => {
-						if (timestamp >= windowStart && timestamp <= latestTimestamp) {
-							return sum + (val || 0)
-						}
-						return sum
-					}, 0)
-				}
-
-				return {
-					name: s.name,
-					value: value,
-					itemStyle: {
-						color: resolveSeriesColor(s.name, s.color)
-					}
-				}
-			})
-			.filter((item) => item.value > 0)
-	}, [visibleSeries, resolveSeriesColor, treemapMode])
+		if (chartBuilder.chartType !== 'treemap') return []
+		return buildProTreemapData(visibleSeries, treemapMode, resolveSeriesColor)
+	}, [visibleSeries, resolveSeriesColor, treemapMode, chartBuilder.chartType])
 
 	const previewChartOptions = useMemo(
 		() => ({
@@ -377,44 +351,10 @@ export function ChartBuilderTab({
 				data: visibleSeries.map((s) => s.name)
 			},
 			tooltip: {
-				formatter: function (params: any) {
-					const rawTimestamp = params[0].value[0]
-					const millis = rawTimestamp < 10000000000 ? rawTimestamp * 1000 : rawTimestamp
-					const _d = new Date(millis)
-					const chartdate = `${_d.getUTCDate().toString().padStart(2, '0')} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][_d.getUTCMonth()]} ${_d.getUTCFullYear()}`
-
-					let filteredParams = params.filter(
-						(item: any) => item.value[1] !== '-' && item.value[1] !== null && item.value[1] !== undefined
-					)
-					filteredParams.sort((a: any, b: any) => Math.abs(b.value[1]) - Math.abs(a.value[1]))
-
-					const formatValue = (value: number) => {
-						if (chartBuilder.displayAs === 'percentage') {
-							return `${Math.round(value * 100) / 100}%`
-						}
-						const absValue = Math.abs(value)
-						if (absValue >= 1e9) {
-							return '$' + (value / 1e9).toFixed(2) + 'B'
-						} else if (absValue >= 1e6) {
-							return '$' + (value / 1e6).toFixed(2) + 'M'
-						} else if (absValue >= 1e3) {
-							return '$' + (value / 1e3).toFixed(2) + 'K'
-						}
-						return '$' + value.toFixed(2)
-					}
-
-					const vals = filteredParams.reduce((prev: string, curr: any) => {
-						return (prev +=
-							'<li style="list-style:none">' +
-							curr.marker +
-							curr.seriesName +
-							'&nbsp;&nbsp;' +
-							formatValue(curr.value[1]) +
-							'</li>')
-					}, '')
-
-					return chartdate + vals
-				}
+				formatter: createChartBuilderTooltipFormatter({
+					displayAs: chartBuilder.displayAs,
+					useTwoColumns: chartBuilder.limit > 10
+				})
 			},
 			yAxis:
 				chartBuilder.displayAs === 'percentage'
@@ -442,7 +382,7 @@ export function ChartBuilderTab({
 							}
 						}
 		}),
-		[chartBuilder.displayAs, visibleSeries]
+		[chartBuilder.displayAs, chartBuilder.limit, visibleSeries]
 	)
 
 	const protocolOptionsFiltered = useMemo(() => {

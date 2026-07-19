@@ -1,9 +1,9 @@
 import { CustomChart } from 'echarts/charts'
 import { MarkAreaComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
-import { useEffect, useEffectEvent, useId, useMemo, useRef } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { CHART_INSET, chartGrid } from '~/components/ECharts/chartSpacing'
-import { getChartTheme } from '~/components/ECharts/chartTheme'
+import { useChartTheme } from '~/components/ECharts/chartTheme'
 import {
 	attachEventHoverHandlers,
 	buildEventRailData,
@@ -11,13 +11,14 @@ import {
 	createEventStripYAxis,
 	type EventHoverState,
 	getMainGridBottom,
-	getSortedSeriesTimeBounds,
+	getSeriesTimeBounds,
 	mergeGraphicWithEventMarkLinePlaceholder
 } from '~/components/ECharts/hallmarkEventRail'
 import type { ChartTimeGrouping } from '~/components/ECharts/types'
 import { useDefaults } from '~/components/ECharts/useDefaults'
 import { mergeDeep } from '~/components/ECharts/utils'
 import { useChartResize } from '~/hooks/useChartResize'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { buildProtocolYAxis } from './chartYAxis'
 import { BAR_CHARTS, type ProtocolChartsLabels, yAxisByChart } from './constants'
 import type { IProtocolCoreChartProps } from './types'
@@ -25,6 +26,7 @@ import type { IProtocolCoreChartProps } from './types'
 echarts.use([MarkAreaComponent, CustomChart])
 
 const PRIMARY_SERIES_ID_PREFIX = 'protocol-chart-series-'
+const BAR_CHARTS_SET = new Set<ProtocolChartsLabels>(BAR_CHARTS)
 
 export default function ProtocolChart({
 	chartData,
@@ -42,18 +44,21 @@ export default function ProtocolChart({
 	hideDataZoom = false,
 	onReady
 }: IProtocolCoreChartProps) {
-	const id = useId()
 	const isCumulative = groupBy === 'cumulative'
+	const chartDomRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const eventHoverCleanupRef = useRef<(() => void) | null>(null)
+	const eventHoverStateRef = useRef<EventHoverState>({ hoveredEventDate: null })
+	const eventMarkLineGridRef = useRef<{ top: number; bottom: number } | null>(null)
 	const tooltipGroupBy: ChartTimeGrouping = groupBy && groupBy !== 'cumulative' ? groupBy : 'daily'
+	const chartTheme = useChartTheme(isThemeDark)
 	const seriesValueSymbols = useMemo(
 		() => (gasUsedValueSymbol ? { 'Gas Used': gasUsedValueSymbol } : undefined),
 		[gasUsedValueSymbol]
 	)
 
 	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
+	useChartResize(chartRef, chartDomRef)
 
 	const defaultChartSettings = useDefaults({
 		color,
@@ -63,32 +68,50 @@ export default function ProtocolChart({
 		unlockTokenSymbol: unlockTokenSymbol ?? '',
 		seriesValueSymbols,
 		isThemeDark,
+		chartTheme,
 		groupBy: tooltipGroupBy
 	})
+	const mergedChartSettings = useMemo(() => {
+		const mergedSettings = { ...defaultChartSettings } as Record<string, unknown>
+		if (chartOptions) {
+			for (const option in chartOptions) {
+				const opts = chartOptions as Record<string, Record<string, unknown>>
+				if (mergedSettings[option]) {
+					mergedSettings[option] = mergeDeep(mergedSettings[option] as Record<string, unknown>, opts[option])
+				} else {
+					mergedSettings[option] = { ...opts[option] }
+				}
+			}
+		}
+		return mergedSettings as typeof defaultChartSettings
+	}, [defaultChartSettings, chartOptions])
 
 	const eventRailData = useMemo(
 		() => buildEventRailData({ hallmarks, rangeHallmarks, isThemeDark, dateInMs: true }).events,
 		[hallmarks, rangeHallmarks, isThemeDark]
 	)
 
-	const { series, allYAxis } = useMemo(() => {
-		const uniqueYAxis = new Set()
+	const { series, allYAxis, chartsInSeries } = useMemo(() => {
+		const indexByYAxis = {} as Record<ProtocolChartsLabels, number | undefined>
+		const allYAxis: Array<[ProtocolChartsLabels, number | undefined]> = []
+		const chartsInSeries = new Set<ProtocolChartsLabels>()
 		const stacks: ProtocolChartsLabels[] = []
 		for (const stack in chartData) {
-			stacks.push(stack as ProtocolChartsLabels)
+			const chartLabel = stack as ProtocolChartsLabels
+			const yAxis = yAxisByChart[chartLabel]
+			stacks.push(chartLabel)
+			chartsInSeries.add(chartLabel)
+			if (!(yAxis in indexByYAxis)) {
+				const yAxisIndex = allYAxis.length === 0 ? undefined : allYAxis.length
+				indexByYAxis[yAxis] = yAxisIndex
+				allYAxis.push([yAxis, yAxisIndex])
+			}
 		}
-
-		for (const stack of stacks) {
-			uniqueYAxis.add(yAxisByChart[stack])
-		}
-
-		const indexByYAxis = Object.fromEntries(
-			Array.from(uniqueYAxis).map((yAxis, index) => [yAxis, index === 0 ? undefined : index])
-		) as Record<string, number | undefined>
 
 		const series = stacks.map((stack, index) => {
 			const stackColor = chartColors[stack]
-			const type = BAR_CHARTS.includes(stack) && !isCumulative ? 'bar' : 'line'
+			const type = BAR_CHARTS_SET.has(stack) && !isCumulative ? 'bar' : 'line'
+			const data = chartData[stack] ?? []
 
 			const options = {
 				yAxisIndex: indexByYAxis[yAxisByChart[stack]]
@@ -100,7 +123,7 @@ export default function ProtocolChart({
 				type,
 				...options,
 				scale: true,
-				large: true,
+				large: data.length > 0,
 				emphasis: {
 					focus: 'series',
 					shadowBlur: 10
@@ -119,13 +142,13 @@ export default function ProtocolChart({
 									},
 									{
 										offset: 1,
-										color: getChartTheme(isThemeDark).areaGradientTo
+										color: chartTheme.areaGradientTo
 									}
 								])
 							}
 						}
 					: {}),
-				data: chartData[stack] ?? [],
+				data,
 				...(index === 0 && (rangeHallmarks?.length ?? 0) > 0
 					? {
 							markArea: {
@@ -135,7 +158,7 @@ export default function ProtocolChart({
 								label: {
 									fontFamily: 'sans-serif',
 									fontWeight: 600,
-									color: getChartTheme(isThemeDark).text
+									color: chartTheme.text
 								},
 								data: (rangeHallmarks ?? []).map(([date, event]: [[number, number], string]) => [
 									{
@@ -152,57 +175,54 @@ export default function ProtocolChart({
 			}
 		})
 
-		for (const seriesItem of series) {
-			if (seriesItem.data.length === 0) {
-				seriesItem.large = false
-			}
-		}
-
 		return {
 			series,
-			allYAxis: Object.entries(indexByYAxis) as Array<[ProtocolChartsLabels, number | undefined]>
+			allYAxis,
+			chartsInSeries
 		}
-	}, [chartData, chartColors, isThemeDark, isCumulative, rangeHallmarks])
+	}, [chartData, chartColors, chartTheme, isThemeDark, isCumulative, rangeHallmarks])
 
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
+	const getEventMarkLineShape = useStableCallback((eventDate: number) => {
+		const instance = chartRef.current
+		const grid = eventMarkLineGridRef.current
+		if (!instance || instance.isDisposed() || !grid) return null
+		const x = instance.convertToPixel({ xAxisIndex: 0 }, eventDate)
+		if (!Number.isFinite(x)) return null
+
+		return {
+			x1: x,
+			y1: grid.top,
+			x2: x,
+			y2: instance.getHeight() - grid.bottom
+		}
+	})
 
 	useEffect(() => {
-		const el = document.getElementById(id)
+		const el = chartDomRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		emitReady(instance)
 
 		return () => {
 			eventHoverCleanupRef.current?.()
 			eventHoverCleanupRef.current = null
+			eventMarkLineGridRef.current = null
 			chartRef.current = null
 			instance.dispose()
 			emitReady(null)
 		}
-	}, [id])
+	}, [])
 
 	useEffect(() => {
 		const instance = chartRef.current
 		if (!instance) return
 
-		const mergedSettings = { ...defaultChartSettings } as Record<string, unknown>
-		if (chartOptions) {
-			for (const option in chartOptions) {
-				const opts = chartOptions as Record<string, Record<string, unknown>>
-				if (mergedSettings[option]) {
-					mergedSettings[option] = mergeDeep(mergedSettings[option] as Record<string, unknown>, opts[option])
-				} else {
-					mergedSettings[option] = { ...opts[option] }
-				}
-			}
-		}
+		const { graphic, tooltip, xAxis, yAxis, dataZoom } = mergedChartSettings
 
-		const { graphic, tooltip, xAxis, yAxis, dataZoom } = mergedSettings as typeof defaultChartSettings
-
-		const chartsInSeries = new Set(series.map((s) => s.name))
 		const finalYAxis = buildProtocolYAxis({
 			allYAxis,
 			baseYAxis: yAxis,
@@ -220,7 +240,7 @@ export default function ProtocolChart({
 		if (shouldShowEventRail) {
 			for (const s of series) {
 				const data = (s.data ?? []) as Array<[number, number] | unknown>
-				const { min, max } = getSortedSeriesTimeBounds(data)
+				const { min, max } = getSeriesTimeBounds(data)
 				if (typeof min === 'number' && min < timeRangeMin) timeRangeMin = min
 				if (typeof max === 'number' && max > timeRangeMax) timeRangeMax = max
 			}
@@ -233,6 +253,7 @@ export default function ProtocolChart({
 			bottom: mainGridBottom,
 			top: (rangeHallmarks?.length ?? 0) > 0 ? 18 : CHART_INSET
 		})
+		eventMarkLineGridRef.current = shouldShowEventRail ? { top: Number(mainGrid.top), bottom: mainGridBottom } : null
 		const finalGrid = mainGrid
 		const finalXAxis = shouldShowEventRail && hasTimeRange ? { ...xAxis, min: timeRangeMin, max: timeRangeMax } : xAxis
 
@@ -240,15 +261,13 @@ export default function ProtocolChart({
 		const eventStripYAxisIndex = finalYAxis.length
 		const finalYAxisWithEvents = shouldShowEventRail ? [...finalYAxis, eventStripYAxis] : finalYAxis
 		const finalDataZoom = dataZoom
-		const hoverState: EventHoverState = { hoveredEventDate: null }
-
 		const finalSeries = shouldShowEventRail
 			? [
 					...series,
 					createEventRailSeries({
 						eventRailData,
 						eventStripYAxisIndex,
-						hoverState,
+						hoverState: eventHoverStateRef.current,
 						shouldHideDataZoom,
 						tooltipGroupBy
 					})
@@ -269,31 +288,13 @@ export default function ProtocolChart({
 			},
 			{ notMerge: true, lazyUpdate: true }
 		)
-
-		eventHoverCleanupRef.current?.()
-		eventHoverCleanupRef.current = attachEventHoverHandlers({
-			instance,
-			eventRailData: shouldShowEventRail ? eventRailData : [],
-			hoverState,
-			getEventMarkLineShape: (eventDate) => {
-				const x = instance.convertToPixel({ xAxisIndex: 0 }, eventDate)
-				if (!Number.isFinite(x)) return null
-
-				return {
-					x1: x,
-					y1: Number(mainGrid.top),
-					x2: x,
-					y2: instance.getHeight() - mainGridBottom
-				}
-			}
-		})
 	}, [
-		defaultChartSettings,
+		mergedChartSettings,
 		series,
-		chartOptions,
 		unlockTokenSymbol,
 		chartColors,
 		allYAxis,
+		chartsInSeries,
 		rangeHallmarks,
 		eventRailData,
 		isThemeDark,
@@ -303,5 +304,24 @@ export default function ProtocolChart({
 		valueSymbol
 	])
 
-	return <div id={id} className="h-[360px]" style={height ? { height } : undefined} />
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
+
+		eventHoverCleanupRef.current?.()
+		eventHoverStateRef.current.hoveredEventDate = null
+		eventHoverCleanupRef.current = attachEventHoverHandlers({
+			instance,
+			eventRailData,
+			hoverState: eventHoverStateRef.current,
+			getEventMarkLineShape
+		})
+
+		return () => {
+			eventHoverCleanupRef.current?.()
+			eventHoverCleanupRef.current = null
+		}
+	}, [eventRailData, getEventMarkLineShape])
+
+	return <div ref={chartDomRef} className="h-[360px]" style={height ? { height } : undefined} />
 }

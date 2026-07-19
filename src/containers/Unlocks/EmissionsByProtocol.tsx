@@ -2,8 +2,8 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { useGeckoId, usePriceChart } from '~/api/client'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
-import { ensureChronologicalRows } from '~/components/ECharts/utils'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetProtocolEmissions } from '~/containers/Unlocks/queries.client'
@@ -21,6 +21,7 @@ import { Switch } from '~/ui/Switch'
 import { capitalizeFirstLetter, firstDayOfMonth, formattedNum, lastDayOfWeek, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { EmissionsChartConfig, EmissionsDataset, Insider } from './api.types'
+import { processGroupedChartData, sortStacksByVolatility } from './emissionsChartData'
 import { InsidersTable } from './InsidersTable'
 import { Pagination } from './Pagination'
 import type { ProtocolEmissionResult } from './types'
@@ -202,37 +203,6 @@ const formatUnlockLabel = (label: string) =>
 		.map((word) => (word === word.toUpperCase() ? word : capitalizeFirstLetter(word.toLowerCase())))
 		.join(' ')
 
-function processGroupedChartData(
-	chartData: Array<{ timestamp: number; [label: string]: number | null }>,
-	categoriesBreakdown: Record<string, string[]>
-) {
-	return chartData.map((entry) => {
-		const groupedEntry: { timestamp: number } & Record<string, number | null> = {
-			timestamp: entry.timestamp,
-			...(typeof entry['Price'] === 'number' ? { Price: entry['Price'] } : {}),
-			...(typeof entry['Market Cap'] === 'number' ? { 'Market Cap': entry['Market Cap'] } : {})
-		}
-
-		for (const group in categoriesBreakdown) {
-			const categories = categoriesBreakdown[group]
-			groupedEntry[group] = categories.reduce((sum, category) => {
-				let actualKey: string | undefined
-				const lowerCategory = category.toLowerCase()
-				for (const key in entry) {
-					if (key.toLowerCase() === lowerCategory) {
-						actualKey = key
-						break
-					}
-				}
-				const value = actualKey ? Number(entry[actualKey]) || 0 : 0
-				return sum + value
-			}, 0)
-		}
-
-		return groupedEntry
-	})
-}
-
 const DATA_TYPES = ['documented', 'realtime'] as const
 type DataType = (typeof DATA_TYPES)[number]
 
@@ -264,11 +234,9 @@ function groupChartDataByTime(
 ): Array<{ timestamp: number } & Record<string, number | null>> {
 	if (groupBy === 'D') return chartData
 
-	const sorted = ensureChronologicalRows(chartData)
+	const grouped = createChartRecord<Record<string, number | null>>()
 
-	const grouped: Record<number, Record<string, number | null>> = {}
-
-	for (const entry of sorted) {
+	for (const entry of chartData) {
 		const ts = entry.timestamp
 		let groupKey: number
 
@@ -290,7 +258,7 @@ function groupChartDataByTime(
 		}
 
 		if (!grouped[groupKey]) {
-			grouped[groupKey] = {}
+			grouped[groupKey] = createChartRecord<number | null>()
 		}
 
 		for (const key in entry) {
@@ -306,24 +274,6 @@ function groupChartDataByTime(
 		result.push({ timestamp: +groupKey, ...grouped[groupKey] })
 	}
 	return result.sort((a, b) => a.timestamp - b.timestamp)
-}
-
-function sortStacksByVolatility(
-	stacks: string[],
-	chartData: Array<{ timestamp: number } & Record<string, number | null>>
-): string[] {
-	if (!chartData || chartData.length < 2) return stacks
-
-	const volatility: Record<string, number> = {}
-
-	for (const stack of stacks) {
-		const values = chartData.map((d) => (typeof d[stack] === 'number' ? d[stack] : 0))
-		const min = Math.min(...values)
-		const max = Math.max(...values)
-		volatility[stack] = max - min
-	}
-
-	return stacks.toSorted((a, b) => volatility[b] - volatility[a])
 }
 
 const unlockedPieChartRadius = ['50%', '70%'] as [string, string]
@@ -633,11 +583,11 @@ const ChartContainer = ({
 	const normilizePriceChart = useMemo(() => {
 		if (!priceChartForOverlay) return null
 		const sourceData = priceChartForOverlay || {}
-		const result: Record<string, Record<number, number>> = {}
+		const result = createChartRecord<Record<number, number>>()
 		for (const name in sourceData) {
 			const chart = sourceData[name] as Array<[number, number]>
 			if (Array.isArray(chart)) {
-				const innerResult: Record<number, number> = {}
+				const innerResult = createChartRecord<number>() as Record<number, number>
 				for (const [date, price] of chart) {
 					innerResult[Math.floor(date / 1e3)] = price
 				}
@@ -841,28 +791,29 @@ const ChartContainer = ({
 		// In bar (expand-to-100%) mode we need to normalize values per row.
 		// In line mode the displayData rows already contain all needed keys, so pass through directly.
 		if (chartType !== 'bar') {
-			const source: MultiSeriesChart2Dataset['source'] = displayData.map((entry) => ({ ...entry }))
-			return { source, dimensions }
+			return { source: displayData, dimensions }
 		}
 
 		const overlaySet = new Set(chartConfig.customYAxis)
 		const source = new Array(displayData.length)
 		for (let i = 0; i < displayData.length; i++) {
 			const entry = displayData[i]
-			const row: Record<string, number | null> = { timestamp: entry.timestamp }
+			const row = createChartRow<number | null>(entry.timestamp)
 			// Sum only non-overlay (unlock category) series for percentage calculation.
 			// Overlay series like Price / Market Cap use separate Y-axes with dollar values
 			// and must not participate in the normalization.
 			let sum = 0
 			for (const s of stacks) {
-				if (!overlaySet.has(s)) sum += Number(entry[s]) || 0
+				const value = entry[s]
+				if (!overlaySet.has(s) && typeof value === 'number' && Number.isFinite(value)) sum += value
 			}
 			for (const s of stacks) {
 				if (overlaySet.has(s)) {
 					const val = entry[s]
 					row[s] = typeof val === 'number' && Number.isFinite(val) ? val : null
 				} else {
-					const raw = Number(entry[s]) || 0
+					const value = entry[s]
+					const raw = typeof value === 'number' && Number.isFinite(value) ? value : 0
 					row[s] = sum > 0 ? (raw / sum) * 100 : 0
 				}
 			}

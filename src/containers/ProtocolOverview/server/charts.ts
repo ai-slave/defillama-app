@@ -358,7 +358,7 @@ export const protocolCharts = defineApiRoute({
 					.then((response) =>
 						response
 							.filter((item) => slug(item.exchangeName) === slug(protocol))
-							.map(({ day, sumUsd }): [number, number] => [new Date(day).getTime(), sumUsd])
+							.map(({ day, sumUsd }): [number, number] => [new Date(day).getTime(), sumUsd ?? 0])
 					)
 					.catch((): null => null)
 

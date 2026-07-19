@@ -1,4 +1,4 @@
-import type { AdaptedChartData } from '~/containers/LlamaAI/utils/chartAdapter'
+import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import type { ChartViewState } from '~/containers/LlamaAI/utils/chartCapabilities'
 
 export interface ChartStylePolicy {

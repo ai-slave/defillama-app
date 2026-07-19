@@ -7,6 +7,7 @@ import {
 	type DashboardItemConfig,
 	type IncomeStatementConfig,
 	type LlamaAIChartConfig,
+	MAX_MULTI_CHART_SERIES,
 	type MultiChartConfig,
 	type Protocol,
 	type ProtocolsTableConfig,
@@ -187,13 +188,15 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 							? [state.selectedChain]
 							: []
 				for (const chainName of chainsToUse) {
+					const remainingSlots = MAX_MULTI_CHART_SERIES - state.composerItems.length - addedCount
+					if (remainingSlots <= 0) break
 					const chain = chains.find((c: Chain) => c.name === chainName)
 					const filteredTypes = chartTypesToAdd.filter((chartType) => {
 						return !state.composerItems.some((item) => item.chain === chainName && item.type === chartType)
 					})
 					if (filteredTypes.length > 0) {
 						const colorStartIndex = getNextColorIndex() + addedCount
-						const newCharts = filteredTypes.map((chartType, idx) => ({
+						const newCharts = filteredTypes.slice(0, remainingSlots).map((chartType, idx) => ({
 							id: `${chainName}-${chartType}-${Date.now()}-${Math.random()}`,
 							kind: 'chart' as const,
 							chain: chainName,
@@ -203,7 +206,7 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 							color: EXTENDED_COLOR_PALETTE[(colorStartIndex + idx) % EXTENDED_COLOR_PALETTE.length]
 						}))
 						actions.setComposerItems((prev) => [...prev, ...newCharts])
-						addedCount += filteredTypes.length
+						addedCount += newCharts.length
 					}
 				}
 			} else if (effectiveMode === 'protocol' && chartTypesToAdd.length > 0) {
@@ -215,13 +218,15 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 							? [state.selectedProtocol]
 							: []
 				for (const slug of protocolsToUse) {
+					const remainingSlots = MAX_MULTI_CHART_SERIES - state.composerItems.length - addedCount
+					if (remainingSlots <= 0) break
 					const protocol = protocols.find((p: Protocol) => p.slug === slug)
 					const filteredTypes = chartTypesToAdd.filter((chartType) => {
 						return !state.composerItems.some((item) => item.protocol === slug && item.type === chartType)
 					})
 					if (filteredTypes.length > 0) {
 						const colorStartIndex = getNextColorIndex() + addedCount
-						const newCharts = filteredTypes.map((chartType, idx) => ({
+						const newCharts = filteredTypes.slice(0, remainingSlots).map((chartType, idx) => ({
 							id: `${slug}-${chartType}-${Date.now()}-${Math.random()}`,
 							kind: 'chart' as const,
 							protocol: slug,
@@ -233,7 +238,7 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 							dataType: chartType === 'unlocks' ? ('documented' as const) : undefined
 						}))
 						actions.setComposerItems((prev) => [...prev, ...newCharts])
-						addedCount += filteredTypes.length
+						addedCount += newCharts.length
 					}
 				}
 			}

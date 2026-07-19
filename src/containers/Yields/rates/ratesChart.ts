@@ -12,8 +12,7 @@ const RATES_COLORS = {
 } as const
 
 function ms(date: string): number {
-	const d = /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(`${date}T00:00:00Z`) : new Date(date)
-	return d.getTime()
+	return Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}T00:00:00Z` : date)
 }
 
 export interface RatesChartSpec {

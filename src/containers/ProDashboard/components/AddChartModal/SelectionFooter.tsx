@@ -1,5 +1,5 @@
 import { Icon } from '~/ui/Icon'
-import { CHART_TYPES, type ChartConfig } from '../../types'
+import { CHART_TYPES, type ChartConfig, MAX_MULTI_CHART_SERIES } from '../../types'
 
 interface SelectionFooterProps {
 	composerItems: ChartConfig[]
@@ -74,6 +74,7 @@ export function SelectionFooter({
 				{chartCreationMode === 'combined'
 					? `Create 1 multi-chart with ${composerItems.length} chart${composerItems.length !== 1 ? 's' : ''}`
 					: `Create ${composerItems.length} separate chart${composerItems.length !== 1 ? 's' : ''}`}
+				{` (maximum ${MAX_MULTI_CHART_SERIES})`}
 			</div>
 		</div>
 	)

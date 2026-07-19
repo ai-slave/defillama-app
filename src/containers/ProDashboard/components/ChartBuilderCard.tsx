@@ -6,6 +6,7 @@ import { Select } from '~/components/Select/Select'
 import { filterDataByTimePeriod, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { Icon } from '~/ui/Icon'
+import type { ChartSeries } from '~/utils/breakdowns'
 import { download } from '~/utils/download'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import {
@@ -17,6 +18,8 @@ import {
 import ProtocolChartBuilderData from '../services/ProtocolChartBuilderData'
 import type { DashboardGrouping } from '../types'
 import { getGroupedTimestampSec } from '../utils'
+import { buildProTreemapData } from '../utils/treemap'
+import { createChartBuilderTooltipFormatter, dashboardGroupingToTooltipGroupBy } from './chartBuilderTooltip'
 import { ConfirmationModal } from './ConfirmationModal'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
@@ -159,7 +162,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	}, [timePeriod, customTimePeriod])
 
 	const streamDone = useContext(StreamDoneContext)
-	const { data: chartData, isLoading } = useQuery({
+	const { data: chartData, isPending: isChartDataPending } = useQuery({
 		queryKey: [
 			'pro-dashboard',
 			'chartBuilder',
@@ -249,36 +252,27 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	})
 
 	const chartSeries = useMemo(() => {
-		if (!chartData || !chartData.series) return []
+		if (!chartData?.series || config.chartType === 'treemap') return []
 
 		let processedSeries = chartData.series
 		if (builder.grouping && builder.grouping !== 'day') {
-			processedSeries = chartData.series.map((s: any) => {
-				const aggregatedData: Map<number, { value: number; lastTimestamp: number }> = new Map()
+			processedSeries = chartData.series.map((series: ChartSeries) => {
+				const aggregatedData: [number, number][] = []
 
-				for (const [timestamp, value] of s.data as [number, number][]) {
+				// API series are ascending, so equal time buckets are adjacent and need no Map or re-sort.
+				for (const [timestamp, value] of series.data) {
 					const groupKey = getGroupedTimestampSec(timestamp, builder.grouping)
-
-					const existingEntry = aggregatedData.get(groupKey)
-					if (isTvlChart) {
-						if (!existingEntry || timestamp > existingEntry.lastTimestamp) {
-							aggregatedData.set(groupKey, { value, lastTimestamp: timestamp })
-						}
+					const previous = aggregatedData[aggregatedData.length - 1]
+					if (previous?.[0] === groupKey) {
+						previous[1] = isTvlChart ? value : previous[1] + value
 					} else {
-						const currentValue = existingEntry?.value ?? 0
-						const lastTimestamp = existingEntry?.lastTimestamp ?? timestamp
-						aggregatedData.set(groupKey, {
-							value: currentValue + value,
-							lastTimestamp
-						})
+						aggregatedData.push([groupKey, value])
 					}
 				}
 
 				return {
-					...s,
-					data: Array.from(aggregatedData.entries())
-						.sort((a, b) => a[0] - b[0])
-						.map(([periodStart, { value }]) => [periodStart, value])
+					...series,
+					data: aggregatedData
 				}
 			})
 		}
@@ -340,7 +334,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	}, [chartSeries])
 
 	const treemapData = useMemo(() => {
-		if (!chartData?.series || chartData.series.length === 0) return []
+		if (config.chartType !== 'treemap' || !chartData?.series || chartData.series.length === 0) return []
 
 		const resolveColor = (name: string, fallback?: string) => {
 			const override = seriesColors[name]
@@ -349,111 +343,17 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			return DEFAULT_SERIES_COLOR
 		}
 
-		return chartData.series
-			.map((s: any) => {
-				const dataLength = s.data?.length || 0
-				const pointIndex = Math.max(0, dataLength - 2)
-				const latestPoint = dataLength > 0 ? s.data[pointIndex] : undefined
-				const latestTimestamp = latestPoint?.[0]
-				let value = latestPoint?.[1] || 0
-
-				if (latestTimestamp !== undefined && treemapMode !== 'latest') {
-					const windowDays = treemapMode === 'sum7d' ? 7 : 30
-					const windowStart = latestTimestamp - windowDays * 24 * 60 * 60 + 1
-					value = s.data.reduce((sum: number, [timestamp, val]: [number, number]) => {
-						if (timestamp >= windowStart && timestamp <= latestTimestamp) {
-							return sum + (val || 0)
-						}
-						return sum
-					}, 0)
-				}
-
-				return {
-					name: s.name,
-					value: value,
-					itemStyle: {
-						color: resolveColor(s.name, s.color)
-					}
-				}
-			})
-			.filter((item: any) => item.value > 0)
-	}, [chartData, seriesColors, treemapMode])
+		return buildProTreemapData(chartData.series, treemapMode, resolveColor)
+	}, [chartData, config.chartType, seriesColors, treemapMode])
+	const displayedSeries = config.chartType === 'treemap' ? (chartData?.series ?? []) : chartSeries
+	const hasRenderableData = config.chartType === 'treemap' ? treemapData.length > 0 : chartSeries.length > 0
 
 	const chartOptions = useMemo(() => {
-		const tooltipFormatter = (params: any) => {
-			const rawTimestamp = params[0].value[0]
-			const millis = rawTimestamp < 10000000000 ? rawTimestamp * 1000 : rawTimestamp
-			const date = new Date(millis)
-			const chartdate = `${date.getUTCDate().toString().padStart(2, '0')} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getUTCMonth()]} ${date.getUTCFullYear()}`
-
-			let filteredParams = params.filter(
-				(item: any) => item.value[1] !== '-' && item.value[1] !== null && item.value[1] !== undefined
-			)
-			filteredParams.sort((a: any, b: any) => Math.abs(b.value[1]) - Math.abs(a.value[1]))
-
-			const formatValue = (value: number) => {
-				if (config.displayAs === 'percentage') {
-					return `${Math.round(value * 100) / 100}%`
-				}
-				const absValue = Math.abs(value)
-				if (absValue >= 1e9) {
-					return '$' + (value / 1e9).toFixed(1) + 'B'
-				} else if (absValue >= 1e6) {
-					return '$' + (value / 1e6).toFixed(1) + 'M'
-				} else if (absValue >= 1e3) {
-					return '$' + (value / 1e3).toFixed(0) + 'K'
-				}
-				return '$' + value.toFixed(0)
-			}
-
-			const useTwoColumns = config.limit > 10
-
-			const createItem = (curr: any, nameLength: number = 20) => {
-				let name = curr.seriesName
-				if (name.length > nameLength) {
-					name = name.substring(0, nameLength - 2) + '..'
-				}
-
-				return (
-					'<div style="display:flex;align-items:center;font-size:11px;line-height:1.4;white-space:nowrap">' +
-					curr.marker +
-					'<span style="margin-right:4px">' +
-					name +
-					'</span>' +
-					'<span style="margin-left:auto;font-weight:500">' +
-					formatValue(curr.value[1]) +
-					'</span>' +
-					'</div>'
-				)
-			}
-
-			let content = ''
-
-			if (useTwoColumns) {
-				const midpoint = Math.ceil(filteredParams.length / 2)
-				const leftColumn = filteredParams.slice(0, midpoint)
-				const rightColumn = filteredParams.slice(midpoint)
-
-				const leftColumnHtml = leftColumn.map((item: any) => createItem(item, 15)).join('')
-				const rightColumnHtml = rightColumn.map((item: any) => createItem(item, 15)).join('')
-
-				content =
-					`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">` +
-					`<div>${leftColumnHtml}</div>` +
-					`<div>${rightColumnHtml}</div>` +
-					`</div>`
-			} else {
-				const singleColumnHtml = filteredParams.map((item: any) => createItem(item, 20)).join('')
-				content = `<div>${singleColumnHtml}</div>`
-			}
-
-			return (
-				`<div style="max-width:${useTwoColumns ? '400px' : '300px'}">` +
-				`<div style="font-size:12px;margin-bottom:4px;font-weight:500">${chartdate}</div>` +
-				content +
-				`</div>`
-			)
-		}
+		const tooltipFormatter = createChartBuilderTooltipFormatter({
+			displayAs: config.displayAs,
+			groupBy: dashboardGroupingToTooltipGroupBy(builder.grouping),
+			useTwoColumns: config.limit > 10
+		})
 
 		return {
 			grid: chartGrid({ top: CHART_LEGEND_RESERVE }),
@@ -496,30 +396,36 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							}
 						}
 		}
-	}, [chartSeriesNames, config.displayAs, config.limit])
+	}, [builder.grouping, chartSeriesNames, config.displayAs, config.limit])
 
 	const handleCsvExport = () => {
-		if (!chartSeries || chartSeries.length === 0) return
+		const exportSeries = config.chartType === 'treemap' ? (chartData?.series ?? []) : chartSeries
+		if (exportSeries.length === 0) return
 
 		const timestampSet = new Set<number>()
-		for (const s of chartSeries) {
+		for (const s of exportSeries) {
 			for (const [timestamp] of s.data as [number, number][]) {
 				timestampSet.add(timestamp)
 			}
 		}
 		const timestamps = Array.from(timestampSet).sort((a, b) => a - b)
 
-		const headers = ['Date', ...chartSeries.map((s: any) => s.name)]
-
-		const rows = timestamps.map((timestamp) => {
+		const headers = ['Date', ...exportSeries.map((s: ChartSeries) => s.name)]
+		const seriesIndexes = new Array(exportSeries.length).fill(0)
+		const rows: string[][] = []
+		for (const timestamp of timestamps) {
 			const _d = new Date(timestamp * 1000)
 			const row = [_d.toISOString().slice(0, 10)]
-			for (const s of chartSeries) {
-				const dataPoint = s.data.find(([t]: [number, number]) => t === timestamp)
-				row.push(dataPoint ? dataPoint[1].toString() : '0')
+			for (let i = 0; i < exportSeries.length; i++) {
+				const data = exportSeries[i].data as [number, number][]
+				let pointIndex = seriesIndexes[i]
+				while (pointIndex < data.length && data[pointIndex][0] < timestamp) pointIndex++
+				seriesIndexes[i] = pointIndex
+				const point = data[pointIndex]
+				row.push(point?.[0] === timestamp ? point[1].toString() : '0')
 			}
-			return row
-		})
+			rows.push(row)
+		}
 
 		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
 		const fileName = `${builder.name || config.metric}_${config.chains.join(
@@ -605,7 +511,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 								? `${(config.protocol && (getProtocolInfo(config.protocol)?.name || config.protocol)) || 'All Protocols'} ${config.metric} by Chain`
 								: `${config.metric} by Protocol`)}
 					</h2>
-					{!isReadOnly && chartSeries.length > 0 && config.chartType !== 'treemap' ? (
+					{!isReadOnly && hasRenderableData && config.chartType !== 'treemap' ? (
 						<div className="flex overflow-hidden rounded-md border border-pro-form-control-border">
 							{groupingOptions.map((option, index) => (
 								<button
@@ -667,7 +573,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							variant="pro"
 						/>
 					) : null}
-					{chartSeries.length > 0 ? (
+					{hasRenderableData ? (
 						<button
 							type="button"
 							data-btn="colors"
@@ -707,7 +613,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							<span>Duplicate</span>
 						</button>
 					) : null}
-					{chartSeries.length > 0 ? (
+					{hasRenderableData ? (
 						<>
 							<ChartPngExportButton
 								chartInstance={chartInstance}
@@ -724,10 +630,10 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						</>
 					) : null}
 				</div>
-				{effectiveShowColors && chartSeries.length > 0 ? (
+				{effectiveShowColors && hasRenderableData ? (
 					<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2">
 						<span className="shrink-0 text-xs font-medium text-pro-text-label">Series Colors</span>
-						{chartSeries.map((series: any) => {
+						{displayedSeries.map((series: ChartSeries) => {
 							const colorValue = seriesColors[series.name] || series.color || DEFAULT_SERIES_COLOR
 							const hasOverride = Boolean(seriesColors[series.name])
 							return (
@@ -820,12 +726,13 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 				})()}
 			</div>
 
-			{isLoading ? (
+			{/* A disabled React Query is not "loading", but remains pending until the stream seeds its cache. */}
+			{isChartDataPending ? (
 				<div className="flex flex-1 flex-col items-center justify-center">
 					<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-brand"></div>
 					<p className="text-sm text-pro-text-form">Loading chart...</p>
 				</div>
-			) : chartSeries.length > 0 || treemapData.length > 0 ? (
+			) : hasRenderableData ? (
 				<Suspense fallback={<div className="min-h-[300px]" />}>
 					{config.chartType === 'treemap' ? (
 						<TreeMapBuilderChart data={treemapData} height="350px" onReady={handleChartReady} />

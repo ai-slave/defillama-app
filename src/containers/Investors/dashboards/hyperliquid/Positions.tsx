@@ -8,7 +8,8 @@ import {
 } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
-import type { ISingleSeriesChartProps } from '~/components/ECharts/types'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
 import { TextLoader } from '../../Logo'
@@ -24,9 +25,21 @@ import {
 } from './api'
 
 type VaultFilter = 'All' | 'A' | 'B'
-const SingleSeriesChart = lazy(
-	() => import('~/components/ECharts/SingleSeriesChart')
-) as React.FC<ISingleSeriesChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
+
+const PORTFOLIO_SERIES_NAME = 'Portfolio Value'
+const PORTFOLIO_CHARTS: NonNullable<IMultiSeriesChart2Props['charts']> = [
+	{
+		type: 'line',
+		name: PORTFOLIO_SERIES_NAME,
+		encode: { x: 'timestamp', y: PORTFOLIO_SERIES_NAME },
+		color: '#2172e5',
+		stack: 'value'
+	}
+]
+const PORTFOLIO_CHART_OPTIONS = createSingleSeriesChartOptions('$')
 
 function MetricCard({ label, value, helper }: { label: string; value: string | number | null; helper?: string }) {
 	return (
@@ -91,8 +104,16 @@ function PortfolioTrend({
 	points: Array<{ time: number; accountValue: number; pnl: number }>
 	window: 'day' | 'week' | 'month' | 'allTime'
 }) {
+	const dataset = useMemo<MultiSeriesChart2Dataset>(() => {
+		const source = new Array<Record<string, number>>(points.length)
+		for (let i = 0; i < points.length; i++) {
+			const point = points[i]
+			source[i] = { timestamp: point.time, [PORTFOLIO_SERIES_NAME]: point.accountValue }
+		}
+		return { source, dimensions: ['timestamp', PORTFOLIO_SERIES_NAME] }
+	}, [points])
+
 	if (points.length < 2) return null
-	const chartData = points.map((point) => [Math.floor(point.time / 1000), point.accountValue] as [number, number])
 
 	const first = points[0].accountValue
 	const last = points[points.length - 1].accountValue
@@ -108,13 +129,14 @@ function PortfolioTrend({
 				</span>
 			</div>
 			<Suspense fallback={<div className="h-[220px]" />}>
-				<SingleSeriesChart
-					chartType="line"
-					chartData={chartData}
+				<MultiSeriesChart2
+					dataset={dataset}
+					charts={PORTFOLIO_CHARTS}
 					valueSymbol="$"
-					color="#2172e5"
+					chartOptions={PORTFOLIO_CHART_OPTIONS}
 					hideDataZoom
 					height="220px"
+					exportButtons="hidden"
 				/>
 			</Suspense>
 			<div className="mt-2 flex items-center justify-between text-xs text-pro-text-label">

@@ -5,6 +5,7 @@ import type {
 	RawBridgeDayStatsResponse,
 	RawBridgeLargeTransactionsResponse,
 	RawBridgesResponse,
+	RawBridgesWithChainsResponse,
 	RawBridgeTxCountsResponse,
 	RawBridgeTransactionsResponse,
 	RawBridgeVolumeBySlugResponse,
@@ -54,10 +55,12 @@ const unwrapBridgeResponse = <T>(context: string, payload: T | BridgeApiErrorEnv
 	throw new Error(`${context}: [${payload.statusCode}] ${message}`)
 }
 
-export function fetchBridges(includeChains = false): Promise<RawBridgesResponse> {
+export function fetchBridges(includeChains: true): Promise<RawBridgesWithChainsResponse>
+export function fetchBridges(includeChains?: false): Promise<RawBridgesResponse>
+export function fetchBridges(includeChains = false): Promise<RawBridgesResponse | RawBridgesWithChainsResponse> {
 	const query = includeChains ? '?includeChains=true' : ''
 	const url = `${BRIDGES_API}${query}`
-	return fetchJson<RawBridgesResponse | BridgeApiErrorEnvelope>(url).then((response) =>
+	return fetchJson<RawBridgesResponse | RawBridgesWithChainsResponse | BridgeApiErrorEnvelope>(url).then((response) =>
 		unwrapBridgeResponse(url, response)
 	)
 }

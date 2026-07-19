@@ -2,36 +2,40 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { Icon } from '~/ui/Icon'
 import type { ChartConfig, MultiChartConfig, TextConfig } from '../types'
 import { CHART_TYPES } from '../types'
 import { ProtocolsByChainTable } from './ProTable'
 import { TextCard } from './TextCard'
 
-const AreaChart = React.lazy(() => import('~/components/ECharts/AreaChart'))
-
-const BarChart = React.lazy(() => import('~/components/ECharts/BarChart'))
+const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const DEMO_CHAINS = ['Ethereum']
 
-const generateFakeChartData = (baseValue: number, volatility: number = 0.1): [string, number][] => {
-	const data: [string, number][] = []
+type DemoChartPoint = { timestamp: number; Value: number }
+
+const generateFakeChartData = (baseValue: number, volatility: number = 0.1): DemoChartPoint[] => {
+	const data = new Array<DemoChartPoint>(90)
 	const now = new Date()
 	let currentValue = baseValue
 
-	for (let i = 89; i >= 0; i--) {
+	for (let i = 89, dataIndex = 0; i >= 0; i--, dataIndex++) {
 		const date = new Date(now)
 		date.setDate(date.getDate() - i)
-
 		const change = (Math.random() - 0.5) * 2 * volatility * currentValue
 		currentValue = Math.max(0, currentValue + change)
 
 		if (i > 60) currentValue *= 1.0005
 		if (i < 30) currentValue *= 1.001
 
-		data.push([Math.floor(date.getTime() / 1000).toString(), Math.round(currentValue)])
+		data[dataIndex] = {
+			timestamp: date.getTime(),
+			Value: Math.round(currentValue)
+		}
 	}
 
 	return data
@@ -45,9 +49,28 @@ const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
 	}
 	const itemName = chart.protocol || chart.chain || 'Demo'
 
-	const fakeData = generateFakeChartData(
-		chart.type === 'tvl' ? 50000000 : chart.type === 'volume' ? 10000000 : chart.type === 'fees' ? 500000 : 2000000,
-		chart.type === 'tvl' ? 0.05 : 0.15
+	const dataset = React.useMemo<MultiSeriesChart2Dataset>(
+		() => ({
+			source: generateFakeChartData(
+				chart.type === 'tvl' ? 50000000 : chart.type === 'volume' ? 10000000 : chart.type === 'fees' ? 500000 : 2000000,
+				chart.type === 'tvl' ? 0.05 : 0.15
+			),
+			dimensions: ['timestamp', 'Value']
+		}),
+		[chart.type]
+	)
+	const charts = React.useMemo<MultiSeriesChart2SeriesConfig[]>(
+		() => [
+			{
+				type: chartTypeDetails.chartType === 'bar' ? 'bar' : 'line',
+				name: 'Value',
+				encode: { x: 'timestamp', y: 'Value' },
+				color: chartTypeDetails.color,
+				stack: 'value',
+				large: false
+			}
+		],
+		[chartTypeDetails.chartType, chartTypeDetails.color]
 	)
 
 	return (
@@ -61,31 +84,17 @@ const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
 				</h2>
 			</div>
 			<div className="flex-1">
-				{chartTypeDetails.chartType === 'bar' ? (
-					<React.Suspense fallback={<></>}>
-						<BarChart
-							chartData={fakeData}
-							valueSymbol="$"
-							height="300px"
-							color={chartTypeDetails.color}
-							hideDataZoom
-							hideDownloadButton
-							chartOptions={chartOptions}
-						/>
-					</React.Suspense>
-				) : (
-					<React.Suspense fallback={<></>}>
-						<AreaChart
-							chartData={fakeData}
-							valueSymbol="$"
-							color={chartTypeDetails.color}
-							height="300px"
-							hideDataZoom
-							hideDownloadButton
-							chartOptions={chartOptions}
-						/>
-					</React.Suspense>
-				)}
+				<React.Suspense fallback={<></>}>
+					<MultiSeriesChart2
+						dataset={dataset}
+						charts={charts}
+						valueSymbol="$"
+						height="300px"
+						hideDataZoom
+						exportButtons="hidden"
+						chartOptions={chartOptions}
+					/>
+				</React.Suspense>
 			</div>
 		</div>
 	)
@@ -114,7 +123,7 @@ const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 					0.08
 				)
 
-				const data: [number, number][] = fakeData.map(([timestamp, value]) => [parseInt(timestamp), value])
+				const data: [number, number][] = fakeData.map(({ timestamp, Value }) => [Math.floor(timestamp / 1000), Value])
 
 				const chartType = CHART_TYPES[item.type] || { title: item.type, chartType: 'line' }
 
@@ -607,5 +616,6 @@ export const DemoPreview = () => {
 }
 
 const chartOptions = {
+	...createSingleSeriesChartOptions('$'),
 	grid: chartGrid()
 }

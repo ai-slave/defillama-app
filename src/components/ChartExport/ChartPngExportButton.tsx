@@ -57,7 +57,7 @@ const hasSeriesType = (options: Record<string, any>, type: string) =>
 
 type Rect = { x: number; y: number; width: number; height: number }
 
-type TreemapViewportExportState =
+export type TreemapViewportExportState =
 	| {
 			actionType: 'treemapZoomToNode' | 'treemapRootToNode'
 			targetNodeId?: string
@@ -282,7 +282,7 @@ function getFiniteRect(value: any): Rect | null {
 	return { x, y, width, height }
 }
 
-function readTreemapViewportExportState(chart: echarts.ECharts): TreemapViewportExportState | null {
+export function readTreemapViewportExportState(chart: echarts.ECharts): TreemapViewportExportState | null {
 	// Treemap export goals:
 	// 1. Always export from the fixed 1280x720 clone so PNG size/aspect do not depend on browser width.
 	// 2. Preserve the user's current zoom/drill target by transferring treemap state, not by screenshotting the live canvas.
@@ -331,7 +331,7 @@ function readTreemapViewportExportState(chart: echarts.ECharts): TreemapViewport
 	}
 }
 
-function applyTreemapViewportExportState(chart: echarts.ECharts, state: TreemapViewportExportState): boolean {
+export function applyTreemapViewportExportState(chart: echarts.ECharts, state: TreemapViewportExportState): boolean {
 	const seriesModel = getTreemapSeriesModel(chart)
 	if (!seriesModel) return false
 
@@ -1171,19 +1171,35 @@ function buildExportTitle(opts: {
 
 // --- Chart render wait ---
 
-function waitForChartRender(chart: echarts.ECharts, timeoutMs = 1500): Promise<void> {
-	return new Promise<void>((resolve) => {
+export function mutateAndWaitForChartRender(
+	chart: echarts.ECharts,
+	mutate: () => void | boolean,
+	timeoutMs = 1500
+): Promise<void> {
+	return new Promise<void>((resolve, reject) => {
 		let timeoutId: ReturnType<typeof setTimeout> | null = null
-		const handler = () => {
+		let settled = false
+		const finish = () => {
+			if (settled) return
+			settled = true
 			if (timeoutId) clearTimeout(timeoutId)
 			chart.off('rendered', handler)
 			resolve()
 		}
+		const handler = () => {
+			finish()
+		}
 		timeoutId = setTimeout(() => {
-			chart.off('rendered', handler)
-			resolve()
+			finish()
 		}, timeoutMs)
 		chart.on('rendered', handler)
+		try {
+			if (mutate() === false) finish()
+		} catch (error) {
+			if (timeoutId) clearTimeout(timeoutId)
+			chart.off('rendered', handler)
+			reject(error)
+		}
 	})
 }
 
@@ -1289,40 +1305,37 @@ async function renderClonedChartExport(
 			}
 		}
 
-		tempChart.setOption(currentOptions)
-
 		if (layout.hasLegend) {
-			tempChart.setOption({
-				legend: {
-					show: true,
-					textStyle: {
-						fontSize: EXPORT_FONT_SIZE,
-						color: getChartTheme(isDark).text
-					},
-					itemHeight: 24,
-					itemWidth: 48,
-					itemGap: LEGEND_ITEM_GAP,
-					top: layout.legendTop,
-					right: 16,
-					...(expandLegend
-						? { type: 'plain', padding: [0, 0, 0, 0], ...(layout.canShareRow ? {} : { left: 16 }) }
-						: { type: 'scroll', padding: [0, 0, 0, 18] }),
-					pageButtonPosition: 'end'
-				}
-			})
+			currentOptions.legend = {
+				show: true,
+				textStyle: {
+					fontSize: EXPORT_FONT_SIZE,
+					color: getChartTheme(isDark).text
+				},
+				itemHeight: 24,
+				itemWidth: 48,
+				itemGap: LEGEND_ITEM_GAP,
+				top: layout.legendTop,
+				right: 16,
+				...(expandLegend
+					? { type: 'plain', padding: [0, 0, 0, 0], ...(layout.canShareRow ? {} : { left: 16 }) }
+					: { type: 'scroll', padding: [0, 0, 0, 18] }),
+				pageButtonPosition: 'end'
+			}
 		}
 
-		await waitForChartRender(tempChart)
-		if (treemapViewportState && applyTreemapViewportExportState(tempChart, treemapViewportState)) {
-			await waitForChartRender(tempChart)
+		await mutateAndWaitForChartRender(tempChart, () => tempChart.setOption(currentOptions))
+		if (treemapViewportState) {
+			await mutateAndWaitForChartRender(tempChart, () =>
+				applyTreemapViewportExportState(tempChart, treemapViewportState)
+			)
 		}
 
 		if (flags.isTreemapChart) {
 			const labelGraphics = buildTreemapExportLabelGraphics(tempChart, isDark)
 			if (labelGraphics.length > 0) {
 				currentOptions.graphic = [...getGraphicArray(currentOptions.graphic), ...labelGraphics]
-				tempChart.setOption({ graphic: currentOptions.graphic })
-				await waitForChartRender(tempChart)
+				await mutateAndWaitForChartRender(tempChart, () => tempChart.setOption({ graphic: currentOptions.graphic }))
 			}
 		}
 

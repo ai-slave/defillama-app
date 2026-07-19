@@ -51,12 +51,14 @@ type StablecoinChartSeriesQuery =
 			chain: string
 			chart: StablecoinOverviewChartType | null
 			filters?: Record<string, string | string[] | undefined>
+			seriesLimit?: number
 			enabled?: boolean
 	  }
 	| {
 			scope: 'chains'
 			chart: StablecoinChainsChartType | null
 			includeUnreleased?: boolean
+			seriesLimit?: number
 			enabled?: boolean
 	  }
 	| {
@@ -64,12 +66,14 @@ type StablecoinChartSeriesQuery =
 			stablecoin: string
 			chart: StablecoinAssetChartType | null
 			includeUnreleased?: boolean
+			seriesLimit?: number
 			enabled?: boolean
 	  }
 
 export const buildStablecoinChartSeriesUrl = (query: StablecoinChartSeriesQuery): string | null => {
 	if (!query.chart) return null
 	const params = new URLSearchParams({ scope: query.scope, chart: query.chart })
+	if (query.seriesLimit != null) params.set('limit', String(query.seriesLimit))
 	if (query.scope === 'overview') {
 		params.set('chain', query.chain)
 		const filters = query.filters ?? {}

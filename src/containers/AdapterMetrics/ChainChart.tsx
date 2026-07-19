@@ -9,8 +9,7 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
-import { ensureChronologicalRows, formatBarChart, formatLineChart } from '~/components/ECharts/utils'
+import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
@@ -38,6 +37,7 @@ import {
 	fetchAdapterChartDataByChainBreakdown,
 	fetchChainsByAdapterPageChartData
 } from './api'
+import { buildAdapterByChainCombinedChartPresentation, type CombinedChartPresentation } from './combinedChart'
 import { LINE_DIMENSIONS, type ADAPTER_TYPES } from './constants'
 import type { IAdapterByChainPageData, IChainsByAdapterPageData } from './types'
 import {
@@ -87,10 +87,6 @@ const CHART_VIEW_MODE_OPTIONS = [
 	{ key: 'Breakdown', name: 'Breakdown' }
 ] as const
 const EMPTY_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp'] }
-type CombinedChartPresentation = {
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
-}
 const EMPTY_COMBINED_CHART_PRESENTATION: CombinedChartPresentation = { dataset: EMPTY_DATASET, charts: [] }
 type FeesChartMode = { kind: 'plain' } | { kind: 'fees'; extras: FeesExtraMetric[] }
 type BreakdownChartDataState =
@@ -185,160 +181,6 @@ function getChartHeight(chartState: ChainsByAdapterChartState): string {
 			return CHAINS_BY_ADAPTER_TREEMAP_HEIGHT
 		default:
 			return assertNever(chartState)
-	}
-}
-
-function getCombinedChartSeriesConfig({
-	seriesName,
-	type,
-	color,
-	index
-}: {
-	seriesName: string
-	type: 'line' | 'bar'
-	color: string
-	index: number
-}): MultiSeriesChart2SeriesConfig {
-	return {
-		type,
-		name: seriesName,
-		encode: { x: 'timestamp', y: seriesName },
-		color,
-		...(index > 0 && type === 'line' ? { yAxisIndex: 1, hideAreaStyle: true } : {})
-	}
-}
-
-function buildAdapterByChainCombinedChartPresentation({
-	chartData,
-	chartName,
-	groupBy
-}: {
-	chartData: MultiSeriesChart2Dataset
-	chartName: string
-	groupBy: LowercaseDwmcGrouping
-}): CombinedChartPresentation {
-	const isDaily = groupBy === 'daily'
-	const isCumulative = groupBy === 'cumulative'
-	const dimensions: string[] = []
-	for (const dimension of chartData.dimensions) {
-		if (dimension !== 'timestamp') {
-			dimensions.push(dimension)
-		}
-	}
-
-	const seriesDefinitions: Array<{
-		dimension: string
-		seriesName: string
-		type: 'line' | 'bar'
-		data: Array<[number, number | null]>
-		color: string
-	}> = []
-
-	if (isDaily) {
-		for (let index = 0; index < dimensions.length; index++) {
-			const dimension = dimensions[index]
-			const isIntrinsicLineSeries = LINE_DIMENSIONS.has(dimension)
-			const isSnapshotMetric = isIntrinsicLineSeries || LINE_DIMENSIONS.has(chartName)
-			seriesDefinitions.push({
-				dimension,
-				seriesName: dimension,
-				type: isSnapshotMetric || isCumulative ? 'line' : 'bar',
-				data: [],
-				color: CHART_COLORS[index % CHART_COLORS.length]
-			})
-		}
-
-		return {
-			dataset: chartData,
-			charts: seriesDefinitions.map((series, index) =>
-				getCombinedChartSeriesConfig({
-					seriesName: series.seriesName,
-					type: series.type,
-					color: series.color,
-					index
-				})
-			)
-		}
-	}
-
-	const rawSeriesByDimension = new Map<string, Array<[number, number]>>()
-	for (const dimension of dimensions) {
-		rawSeriesByDimension.set(dimension, [])
-	}
-
-	for (const row of chartData.source) {
-		const timestamp = Number(row.timestamp)
-		for (const dimension of dimensions) {
-			const value = row[dimension]
-			if (value == null) continue
-			rawSeriesByDimension.get(dimension)!.push([timestamp, value as number])
-		}
-	}
-
-	for (let index = 0; index < dimensions.length; index++) {
-		const dimension = dimensions[index]
-		const isIntrinsicLineSeries = LINE_DIMENSIONS.has(dimension)
-		const isSnapshotMetric = isIntrinsicLineSeries || LINE_DIMENSIONS.has(chartName)
-		const type = isSnapshotMetric || isCumulative ? 'line' : 'bar'
-		const rawData = rawSeriesByDimension.get(dimension) ?? []
-		const data = isSnapshotMetric
-			? formatLineChart({
-					data: rawData,
-					groupBy,
-					dateInMs: true,
-					denominationPriceHistory: null
-				})
-			: formatBarChart({
-					data: rawData,
-					groupBy,
-					dateInMs: true,
-					denominationPriceHistory: null
-				})
-
-		seriesDefinitions.push({
-			dimension,
-			seriesName: dimension,
-			type,
-			data,
-			color: CHART_COLORS[index % CHART_COLORS.length]
-		})
-	}
-
-	const sourceDataByTimestamp = new Map<number, Record<string, number | null>>()
-	for (const series of seriesDefinitions) {
-		for (const [timestamp, value] of series.data) {
-			const row = sourceDataByTimestamp.get(timestamp) ?? { timestamp }
-			row[series.seriesName] = value
-			sourceDataByTimestamp.set(timestamp, row)
-		}
-	}
-
-	const sourceData: MultiSeriesChart2Dataset['source'] = []
-	for (const row of ensureChronologicalRows(Array.from(sourceDataByTimestamp.values()))) {
-		const normalizedRow: Record<string, number | null> = { timestamp: Number(row.timestamp) }
-		for (const series of seriesDefinitions) {
-			normalizedRow[series.seriesName] = row[series.seriesName] ?? null
-		}
-		sourceData.push(normalizedRow)
-	}
-	const seriesNames: string[] = []
-	for (const series of seriesDefinitions) {
-		seriesNames.push(series.seriesName)
-	}
-
-	return {
-		dataset: {
-			source: sourceData,
-			dimensions: ['timestamp', ...seriesNames]
-		},
-		charts: seriesDefinitions.map((series, index) =>
-			getCombinedChartSeriesConfig({
-				seriesName: series.seriesName,
-				type: series.type,
-				color: series.color,
-				index
-			})
-		)
 	}
 }
 

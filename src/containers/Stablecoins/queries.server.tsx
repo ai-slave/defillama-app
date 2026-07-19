@@ -3,8 +3,7 @@ import {
 	formatPeggedAssetsData,
 	formatPeggedChainsData,
 	getPrevStablecoinTotalFromChart,
-	buildStablecoinAreaChartData,
-	buildStablecoinTotalChartData,
+	buildStablecoinChartDataWithFlags,
 	getFreshStablecoinCurrentPoint,
 	getStablecoinDominance,
 	getStablecoinMcapStatsFromTotals,
@@ -32,10 +31,8 @@ import type { StablecoinChainBalanceToken, StablecoinChartPoint, StablecoinListA
 import {
 	buildAreaPayload,
 	buildDominancePayload,
-	buildStablecoinChartSummary,
-	buildTokenInflowsPayload,
+	buildStablecoinOverviewPayload,
 	buildTotalMcapPayload,
-	buildUsdInflowsPayload,
 	getTopStablecoinFromLatestPoints,
 	type StablecoinAssetChartType,
 	type StablecoinChartSeriesPayload,
@@ -337,10 +334,12 @@ const buildStablecoinOverviewChartSeries = (
 	source: StablecoinOverviewSource,
 	{
 		chart,
-		filters = {}
+		filters = {},
+		seriesLimit
 	}: {
 		chart: StablecoinOverviewChartType
 		filters?: StablecoinFilterQuery
+		seriesLimit?: number
 	}
 ): StablecoinChartSeriesPayload => {
 	const filteredIndexes = resolveStablecoinOverviewFilteredIndexes(source, filters)
@@ -353,41 +352,22 @@ const buildStablecoinOverviewChartSeries = (
 		doublecountedIds: source.doublecountedIds
 	}
 	const topToken = getTopStablecoinFromLatestPoints(baseParams)
-
-	if (chart === 'totalMcap') {
-		return buildTotalMcapPayload(baseParams, { summaryTopToken: topToken })
-	}
-
-	const { peggedAreaTotalData } = buildStablecoinTotalChartData(baseParams)
-	const summary = buildStablecoinChartSummary(peggedAreaTotalData, topToken)
-
-	if (chart === 'tokenMcaps') {
-		const payload = buildAreaPayload(baseParams, { stackName: 'tokenMcaps' })
-		return { ...payload, summary }
-	}
-	if (chart === 'dominance') {
-		const payload = buildDominancePayload(baseParams, { stackName: 'dominance' })
-		return { ...payload, summary }
-	}
-	if (chart === 'usdInflows') {
-		const payload = buildUsdInflowsPayload(baseParams)
-		return { ...payload, summary }
-	}
-	const payload = buildTokenInflowsPayload(baseParams)
-	return { ...payload, summary }
+	return buildStablecoinOverviewPayload(baseParams, chart, topToken, seriesLimit == null ? undefined : { seriesLimit })
 }
 
 export const getStablecoinOverviewChartSeries = async ({
 	chain,
 	chart,
-	filters = {}
+	filters = {},
+	seriesLimit
 }: {
 	chain: string | null
 	chart: StablecoinOverviewChartType
 	filters?: StablecoinFilterQuery
+	seriesLimit?: number
 }): Promise<StablecoinChartSeriesPayload> => {
 	const source = await getStablecoinsOverviewSource(chain)
-	return buildStablecoinOverviewChartSeries(source, { chart, filters })
+	return buildStablecoinOverviewChartSeries(source, { chart, filters, seriesLimit })
 }
 
 export async function getStablecoinChainMcapSummary(chain: string | null): Promise<PeggedChainMcapSummary | null> {
@@ -418,8 +398,10 @@ export async function getStablecoinChainMcapSummary(chain: string | null): Promi
 			selectedChain: chain ?? 'All',
 			doublecountedIds
 		}
-		const { peggedAreaChartData } = buildStablecoinAreaChartData(chartParams)
-		const { peggedAreaTotalData } = buildStablecoinTotalChartData(chartParams)
+		const { peggedAreaChartData, peggedAreaTotalData } = buildStablecoinChartDataWithFlags(chartParams, {
+			area: true,
+			total: true
+		})
 
 		const mcapStats = getStablecoinMcapStatsFromTotals(peggedAreaTotalData)
 		const topToken = getStablecoinTopTokenFromChartData(peggedAreaChartData)
@@ -604,7 +586,8 @@ export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageDat
 
 export const getStablecoinChainsChartSeries = async (
 	chart: StablecoinChainsChartType,
-	includeUnreleased = false
+	includeUnreleased = false,
+	seriesLimit?: number
 ): Promise<StablecoinChartSeriesPayload> => {
 	const source = await getStablecoinChainsSource()
 	const baseParams = {
@@ -620,13 +603,15 @@ export const getStablecoinChainsChartSeries = async (
 		return buildAreaPayload(baseParams, {
 			chartNames: source.chainList,
 			stackName: 'chainMcap',
-			valueSymbol: '$'
+			valueSymbol: '$',
+			seriesLimit
 		})
 	}
 	return buildDominancePayload(baseParams, {
 		chartNames: source.chainList,
 		includeUnreleased,
-		stackName: 'dominance'
+		stackName: 'dominance',
+		seriesLimit
 	})
 }
 
@@ -668,10 +653,12 @@ const buildStablecoinAssetChartSeries = (
 	source: StablecoinAssetSource,
 	{
 		chart,
-		includeUnreleased
+		includeUnreleased,
+		seriesLimit
 	}: {
 		chart: StablecoinAssetChartType
 		includeUnreleased: boolean
+		seriesLimit?: number
 	}
 ): StablecoinChartSeriesPayload => {
 	const chainsUnique: string[] = []
@@ -696,28 +683,32 @@ const buildStablecoinAssetChartSeries = (
 		return buildAreaPayload(baseParams, {
 			chartNames: chainsUnique,
 			stackName: 'chains',
-			valueSymbol: '$'
+			valueSymbol: '$',
+			seriesLimit
 		})
 	}
 	return buildDominancePayload(baseParams, {
 		chartNames: chainsUnique,
 		includeUnreleased,
-		stackName: 'dominance'
+		stackName: 'dominance',
+		seriesLimit
 	})
 }
 
 export const getStablecoinAssetChartSeries = async ({
 	peggedasset,
 	chart,
-	includeUnreleased = false
+	includeUnreleased = false,
+	seriesLimit
 }: {
 	peggedasset: string
 	chart: StablecoinAssetChartType
 	includeUnreleased?: boolean
+	seriesLimit?: number
 }): Promise<StablecoinChartSeriesPayload | null> => {
 	const source = await getStablecoinAssetSource(peggedasset)
 	if (!source) return null
-	return buildStablecoinAssetChartSeries(source, { chart, includeUnreleased })
+	return buildStablecoinAssetChartSeries(source, { chart, includeUnreleased, seriesLimit })
 }
 
 export const getStablecoinAssetPageData = async (

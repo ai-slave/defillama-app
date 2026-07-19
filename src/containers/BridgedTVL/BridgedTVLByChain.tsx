@@ -8,6 +8,7 @@ import {
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
+import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
 import type { IPieChartProps } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
@@ -25,6 +26,7 @@ import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { RawChainAsset } from './api.types'
+import { buildBridgedInflowsChartData } from './inflowChart'
 
 interface BridgedChainRow {
 	name: string
@@ -85,7 +87,7 @@ export function BridgedTVLByChain({
 	const { pieChartData, tableData } = React.useMemo(() => {
 		const category = chartType !== 'inflows' ? chainData?.[chartType] : undefined
 		const rawBreakdown = category?.breakdown ?? {}
-		const breakdown: Record<string, number> = {}
+		const breakdown = createChartRecord<number>()
 		for (const key in rawBreakdown) {
 			breakdown[key] = Number(rawBreakdown[key])
 		}
@@ -101,21 +103,7 @@ export function BridgedTVLByChain({
 
 	const inflowsData = React.useMemo(() => {
 		if (!tokenInflowNames?.length) return null
-		return {
-			dataset: {
-				source: inflows.map(({ date, ...rest }: Record<string, number>) => ({ timestamp: +date * 1e3, ...rest })),
-				dimensions: ['timestamp', ...tokenInflowNames]
-			},
-			charts: tokenInflowNames.map((name: string) => ({
-				type: 'bar' as const,
-				name,
-				encode: { x: 'timestamp', y: name },
-				// BarChart auto-assigned all series to stackA when `customLegendOptions` was present.
-				// MultiSeriesChart2 requires an explicit stack to preserve stacked rendering.
-				stack: 'tokenInflows',
-				large: false
-			}))
-		}
+		return buildBridgedInflowsChartData(inflows, tokenInflowNames)
 	}, [inflows, tokenInflowNames])
 	const deferredPieChartData = React.useDeferredValue(pieChartData)
 	const deferredInflowsData = React.useDeferredValue(inflowsData)
@@ -188,7 +176,9 @@ export function BridgedTVLByChain({
 								...chartTypes
 									.filter(({ type }) => Boolean(chainData?.[type]?.total) && chainData?.[type]?.total !== '0')
 									.map(({ type, name }) => ({ value: type, label: name })),
-								...(inflows ? [{ value: 'inflows' as const, label: 'Inflows' }] : []),
+								...(inflows.length > 0 && tokenInflowNames.length > 0
+									? [{ value: 'inflows' as const, label: 'Inflows' }]
+									: []),
 								...(chainData?.ownTokens?.total ? [{ value: 'ownTokens' as const, label: 'Own Tokens' }] : [])
 							]}
 							label="Chart type"

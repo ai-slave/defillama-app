@@ -138,6 +138,8 @@ const RWA_FLOW_ROTATION_SPLIT_OPTIONS: Array<{
 ]
 
 const EMPTY_FLOW_TREEMAP = { nodes: [], excludedSizeCount: 0 }
+const EMPTY_CHART_STACK_COLORS: Record<string, string> = {}
+const EMPTY_HBAR_PRESENTATION = { categories: [] as string[], values: [] as number[], colors: [] as string[] }
 
 function getRwaFlowRotationSplitBy(value: string | undefined): RWAFlowOverviewSplitBy {
 	if (value === 'category' || value === 'chain') return value
@@ -180,6 +182,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			: getDefaultChartBreakdown(chartMode, 'timeSeries')
 	const nonTimeSeriesBreakdown =
 		chartView === 'timeSeries' ? getDefaultChartBreakdown(chartMode, 'pie') : chartState.breakdown
+	const shouldBuildNonTimeSeriesData = chartView !== 'timeSeries'
 
 	const {
 		selectedAssetNames,
@@ -312,26 +315,27 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeGovernance,
 		showFlowRotation && !activeFilters
 	)
-	const flowRotationData = useMemo(
-		() =>
-			activeFilters && flowAssetRows
-				? buildRWAFilteredFlowBreakdown(flowAssetRows, filteredAssets, flowRotationSplitBy)
-				: routeFlowRotationData,
-		[activeFilters, filteredAssets, flowAssetRows, flowRotationSplitBy, routeFlowRotationData]
-	)
+	const flowRotationData = useMemo(() => {
+		if (!showFlowRotation) return null
+		return activeFilters && flowAssetRows
+			? buildRWAFilteredFlowBreakdown(flowAssetRows, filteredAssets, flowRotationSplitBy)
+			: routeFlowRotationData
+	}, [activeFilters, filteredAssets, flowAssetRows, flowRotationSplitBy, routeFlowRotationData, showFlowRotation])
 	const effectiveFlowRotationError = flowRotationError ?? (activeFilters ? flowError : null)
 	const effectiveFlowRotationLoading = isFlowRotationLoading || (activeFilters && isFlowLoading)
 	const flowTreemapSizeRows = useMemo(
 		() =>
-			flowRotationView === 'heatmap' ? buildRWAFlowTreemapSizeRowsFromAssets(filteredAssets, flowRotationSplitBy) : [],
-		[filteredAssets, flowRotationSplitBy, flowRotationView]
+			showFlowRotation && flowRotationView === 'heatmap'
+				? buildRWAFlowTreemapSizeRowsFromAssets(filteredAssets, flowRotationSplitBy)
+				: [],
+		[filteredAssets, flowRotationSplitBy, flowRotationView, showFlowRotation]
 	)
 	const flowTreemapFlows = useMemo(
 		() =>
-			flowRotationView === 'heatmap'
+			showFlowRotation && flowRotationView === 'heatmap'
 				? aggregateRWAFlowTreemapWindow(flowRotationData ?? [], flowRotationFrequency)
 				: null,
-		[flowRotationData, flowRotationFrequency, flowRotationView]
+		[flowRotationData, flowRotationFrequency, flowRotationView, showFlowRotation]
 	)
 	const flowTreemap = useMemo(
 		() =>
@@ -359,7 +363,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
-		enabled: !isFlowMetric,
+		enabled: !isFlowMetric && chartView === 'timeSeries',
 		useInitialDataset:
 			!activeFilters &&
 			(timeSeriesBreakdown === getDefaultChartBreakdown(chartMode, 'timeSeries') || timeSeriesBreakdown === 'total')
@@ -433,148 +437,107 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const hasFlowMcap = flowOnChainMcapByTimestamp.size > 0
 	const flowMode = parseRWAFlowMode(flowModeQuery, isPlatformMode && hasFlowMcap)
 
-	const {
-		assetCategoryOnChainMcapPieChartData,
-		assetCategoryActiveMcapPieChartData,
-		assetCategoryDefiActiveTvlPieChartData,
-		pieChartStackColors: assetCategoryPieChartStackColors
-	} = useRWAAssetCategoryPieChartData({
-		enabled: nonTimeSeriesBreakdown === 'category',
-		assets: filteredAssets,
-		categories: props.categories,
-		selectedCategories
-	})
+	const { pieChartData: assetCategoryPieChartData, pieChartStackColors: assetCategoryPieChartStackColors } =
+		useRWAAssetCategoryPieChartData({
+			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'category',
+			assets: filteredAssets,
+			categories: props.categories,
+			selectedCategories,
+			metric: chartTypeKey
+		})
 
-	const {
-		assetClassOnChainMcapPieChartData,
-		assetClassActiveMcapPieChartData,
-		assetClassDefiActiveTvlPieChartData,
-		assetClassPieChartStackColors
-	} = useRwaCategoryAssetClassPieChartData({
-		enabled: nonTimeSeriesBreakdown === 'assetClass',
-		assets: filteredAssets,
-		assetClasses: props.assetClasses,
-		selectedAssetClasses
-	})
+	const { pieChartData: assetClassPieChartData, pieChartStackColors: assetClassPieChartStackColors } =
+		useRwaCategoryAssetClassPieChartData({
+			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'assetClass',
+			assets: filteredAssets,
+			assetClasses: props.assetClasses,
+			selectedAssetClasses,
+			metric: chartTypeKey
+		})
 
-	const {
-		assetNameOnChainMcapPieChartData,
-		assetNameActiveMcapPieChartData,
-		assetNameDefiActiveTvlPieChartData,
-		assetNamePieChartStackColors
-	} = useRwaAssetNamePieChartData({
-		enabled: nonTimeSeriesBreakdown === 'assetName',
-		assets: filteredAssets,
-		selectedAssetNames: isAssetGroupMode
-			? filteredAssets.map((asset) => asset.assetName || asset.ticker)
-			: selectedAssetNames
-	})
+	const shouldBuildAssetNamePieChartData = shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'assetName'
+	const { pieChartData: assetNamePieChartData, pieChartStackColors: assetNamePieChartStackColors } =
+		useRwaAssetNamePieChartData({
+			enabled: shouldBuildAssetNamePieChartData,
+			assets: filteredAssets,
+			selectedAssetNames:
+				isAssetGroupMode && shouldBuildAssetNamePieChartData
+					? filteredAssets.map((asset) => asset.assetName || asset.ticker)
+					: selectedAssetNames,
+			metric: chartTypeKey
+		})
 
-	const {
-		assetGroupOnChainMcapPieChartData,
-		assetGroupActiveMcapPieChartData,
-		assetGroupDefiActiveTvlPieChartData,
-		assetGroupPieChartStackColors
-	} = useRwaAssetGroupPieChartData({
-		enabled: nonTimeSeriesBreakdown === 'assetGroup',
-		assets: filteredAssets
-	})
+	const { pieChartData: assetGroupPieChartData, pieChartStackColors: assetGroupPieChartStackColors } =
+		useRwaAssetGroupPieChartData({
+			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'assetGroup',
+			assets: filteredAssets,
+			metric: chartTypeKey
+		})
 
-	const {
-		assetPlatformOnChainMcapPieChartData,
-		assetPlatformActiveMcapPieChartData,
-		assetPlatformDefiActiveTvlPieChartData,
-		assetPlatformPieChartStackColors
-	} = useRwaAssetPlatformPieChartData({
-		enabled: nonTimeSeriesBreakdown === 'platform',
-		assets: filteredAssets
-	})
-	const {
-		chainOnChainMcapPieChartData,
-		chainActiveMcapPieChartData,
-		chainDefiActiveTvlPieChartData,
-		chainPieChartStackColors
-	} = useRwaChainBreakdownPieChartData({
-		enabled: canBreakdownByChain,
-		assets: filteredAssets
-	})
+	const { pieChartData: assetPlatformPieChartData, pieChartStackColors: assetPlatformPieChartStackColors } =
+		useRwaAssetPlatformPieChartData({
+			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'platform',
+			assets: filteredAssets,
+			metric: chartTypeKey
+		})
+	const { pieChartData: chainPieChartData, pieChartStackColors: chainPieChartStackColors } =
+		useRwaChainBreakdownPieChartData({
+			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'chain' && canBreakdownByChain,
+			assets: filteredAssets,
+			metric: chartTypeKey
+		})
 
 	// Select pie chart breakdown based on route mode (same precedence as nav links).
-	const { onChainPieChartData, activeMcapPieChartData, defiActiveTvlPieChartData, pieChartStackColors } =
-		useMemo(() => {
-			switch (nonTimeSeriesBreakdown) {
-				case 'chain':
-					return {
-						onChainPieChartData: chainOnChainMcapPieChartData,
-						activeMcapPieChartData: chainActiveMcapPieChartData,
-						defiActiveTvlPieChartData: chainDefiActiveTvlPieChartData,
-						pieChartStackColors: chainPieChartStackColors
-					}
-				case 'assetGroup':
-					return {
-						onChainPieChartData: assetGroupOnChainMcapPieChartData,
-						activeMcapPieChartData: assetGroupActiveMcapPieChartData,
-						defiActiveTvlPieChartData: assetGroupDefiActiveTvlPieChartData,
-						pieChartStackColors: assetGroupPieChartStackColors
-					}
-				case 'platform':
-					return {
-						onChainPieChartData: assetPlatformOnChainMcapPieChartData,
-						activeMcapPieChartData: assetPlatformActiveMcapPieChartData,
-						defiActiveTvlPieChartData: assetPlatformDefiActiveTvlPieChartData,
-						pieChartStackColors: assetPlatformPieChartStackColors
-					}
-				case 'assetClass':
-					return {
-						onChainPieChartData: assetClassOnChainMcapPieChartData,
-						activeMcapPieChartData: assetClassActiveMcapPieChartData,
-						defiActiveTvlPieChartData: assetClassDefiActiveTvlPieChartData,
-						pieChartStackColors: assetClassPieChartStackColors
-					}
-				case 'assetName':
-					return {
-						onChainPieChartData: assetNameOnChainMcapPieChartData,
-						activeMcapPieChartData: assetNameActiveMcapPieChartData,
-						defiActiveTvlPieChartData: assetNameDefiActiveTvlPieChartData,
-						pieChartStackColors: assetNamePieChartStackColors
-					}
-				case 'category':
-					return {
-						onChainPieChartData: assetCategoryOnChainMcapPieChartData,
-						activeMcapPieChartData: assetCategoryActiveMcapPieChartData,
-						defiActiveTvlPieChartData: assetCategoryDefiActiveTvlPieChartData,
-						pieChartStackColors: assetCategoryPieChartStackColors
-					}
-				default:
-					return assertNever(nonTimeSeriesBreakdown)
-			}
-		}, [
-			assetGroupActiveMcapPieChartData,
-			assetGroupDefiActiveTvlPieChartData,
-			assetGroupOnChainMcapPieChartData,
-			assetGroupPieChartStackColors,
-			assetClassActiveMcapPieChartData,
-			assetClassDefiActiveTvlPieChartData,
-			assetClassOnChainMcapPieChartData,
-			assetClassPieChartStackColors,
-			assetNameActiveMcapPieChartData,
-			assetNameDefiActiveTvlPieChartData,
-			assetNameOnChainMcapPieChartData,
-			assetNamePieChartStackColors,
-			assetPlatformOnChainMcapPieChartData,
-			assetPlatformActiveMcapPieChartData,
-			assetPlatformDefiActiveTvlPieChartData,
-			assetPlatformPieChartStackColors,
-			assetCategoryActiveMcapPieChartData,
-			assetCategoryDefiActiveTvlPieChartData,
-			assetCategoryOnChainMcapPieChartData,
-			assetCategoryPieChartStackColors,
-			nonTimeSeriesBreakdown,
-			chainOnChainMcapPieChartData,
-			chainActiveMcapPieChartData,
-			chainDefiActiveTvlPieChartData,
-			chainPieChartStackColors
-		])
+	const { selectedPieChartData, pieChartStackColors } = useMemo(() => {
+		switch (nonTimeSeriesBreakdown) {
+			case 'chain':
+				return {
+					selectedPieChartData: chainPieChartData,
+					pieChartStackColors: chainPieChartStackColors
+				}
+			case 'assetGroup':
+				return {
+					selectedPieChartData: assetGroupPieChartData,
+					pieChartStackColors: assetGroupPieChartStackColors
+				}
+			case 'platform':
+				return {
+					selectedPieChartData: assetPlatformPieChartData,
+					pieChartStackColors: assetPlatformPieChartStackColors
+				}
+			case 'assetClass':
+				return {
+					selectedPieChartData: assetClassPieChartData,
+					pieChartStackColors: assetClassPieChartStackColors
+				}
+			case 'assetName':
+				return {
+					selectedPieChartData: assetNamePieChartData,
+					pieChartStackColors: assetNamePieChartStackColors
+				}
+			case 'category':
+				return {
+					selectedPieChartData: assetCategoryPieChartData,
+					pieChartStackColors: assetCategoryPieChartStackColors
+				}
+			default:
+				return assertNever(nonTimeSeriesBreakdown)
+		}
+	}, [
+		assetGroupPieChartData,
+		assetGroupPieChartStackColors,
+		assetClassPieChartData,
+		assetClassPieChartStackColors,
+		assetNamePieChartData,
+		assetNamePieChartStackColors,
+		assetPlatformPieChartData,
+		assetPlatformPieChartStackColors,
+		assetCategoryPieChartData,
+		assetCategoryPieChartStackColors,
+		nonTimeSeriesBreakdown,
+		chainPieChartData,
+		chainPieChartStackColors
+	])
 
 	// Preserve filter/toggle query params only in chain mode.
 	// (The chain/category/platform itself is in the pathname, so we strip the dynamic param from the query object.)
@@ -613,15 +576,15 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		useChartImageExport()
 	const { chartInstance: flowRotationChartInstance, handleChartReady: handleFlowRotationChartReady } =
 		useChartImageExport()
-	const hasFlowRotationData = useMemo(
-		() =>
-			flowRotationData?.some((point) =>
-				Object.entries(point).some(
-					([key, value]) => key !== 'timestamp' && typeof value === 'number' && Number.isFinite(value)
-				)
-			) ?? false,
-		[flowRotationData]
-	)
+	const hasFlowRotationData = useMemo(() => {
+		if (!showFlowRotation) return false
+		for (const point of flowRotationData ?? []) {
+			for (const key in point) {
+				if (key !== 'timestamp') return true
+			}
+		}
+		return false
+	}, [flowRotationData, showFlowRotation])
 	const flowTreemapSizeLabel = getRWAFlowTreemapSizeLabel(flowTreemapSizeMetric)
 	const flowRotationFilename = `rwa-net-flow-${flowRotationSplitBy}-${flowRotationFrequency}-${flowRotationView}`
 	const chartMetricLabel = isFlowMetric ? 'Net Flows' : getChartMetricLabel(chartTypeKey)
@@ -646,24 +609,22 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const { chartInstance: treemapChartInstance, handleChartReady: handleTreemapChartReady } = useChartImageExport()
 	const treemapChartFilename = `rwa-treemap-${slug(chartMetricLabel)}-${rwaSlug(selectedModeLabel)}`
 	const flowVsPriceSummary = useMemo(
-		() => (flowData ? getRWAFlowVsPriceSummary(flowData.series, 'monthly', flowOnChainMcapByTimestamp) : null),
-		[flowData, flowOnChainMcapByTimestamp]
+		() =>
+			isFlowMetric && flowMode === 'flowVsPrice' && flowData
+				? getRWAFlowVsPriceSummary(flowData.series, 'monthly', flowOnChainMcapByTimestamp)
+				: null,
+		[flowData, flowMode, flowOnChainMcapByTimestamp, isFlowMetric]
 	)
 
 	const selectedTimeSeriesDataset = chartDataset
 	const timeSeriesCharts = useMemo<Array<MultiSeriesChart2SeriesConfig>>(
-		() => buildRwaTimeSeriesCharts(selectedTimeSeriesDataset.dimensions),
-		[selectedTimeSeriesDataset.dimensions]
+		() => (chartView === 'timeSeries' ? buildRwaTimeSeriesCharts(selectedTimeSeriesDataset.dimensions) : []),
+		[chartView, selectedTimeSeriesDataset.dimensions]
 	)
-	const selectedPieChartData =
-		chartTypeKey === 'onChainMcap'
-			? onChainPieChartData
-			: chartTypeKey === 'activeMcap'
-				? activeMcapPieChartData
-				: defiActiveTvlPieChartData
 	const deferredSelectedTimeSeriesDataset = useDeferredValue(selectedTimeSeriesDataset)
 	const deferredSelectedPieChartData = useDeferredValue(selectedPieChartData)
 	const valueSortedPieChartStackColors = useMemo(() => {
+		if (chartView !== 'pie' && chartView !== 'hbar') return EMPTY_CHART_STACK_COLORS
 		const stackColors = { ...pieChartStackColors }
 		const sortedData: Array<{ name: string; value: number }> = []
 		for (const item of deferredSelectedPieChartData) {
@@ -676,20 +637,21 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		}
 
 		return stackColors
-	}, [pieChartStackColors, deferredSelectedPieChartData])
-	const selectedBarChartData = useMemo(
-		() => limitRwaHorizontalBarData(deferredSelectedPieChartData, { sort: true }),
-		[deferredSelectedPieChartData]
-	)
-	const selectedBarChartCategories = useMemo(
-		() => selectedBarChartData.map((item) => item.name),
-		[selectedBarChartData]
-	)
-	const selectedBarChartValues = useMemo(() => selectedBarChartData.map((item) => item.value), [selectedBarChartData])
-	const selectedBarChartColors = useMemo(
-		() => selectedBarChartData.map((item) => valueSortedPieChartStackColors[item.name] ?? '#1f77b4'),
-		[selectedBarChartData, valueSortedPieChartStackColors]
-	)
+	}, [chartView, pieChartStackColors, deferredSelectedPieChartData])
+	const selectedBarChartPresentation = useMemo(() => {
+		if (chartView !== 'hbar') return EMPTY_HBAR_PRESENTATION
+		const rows = limitRwaHorizontalBarData(deferredSelectedPieChartData, { sort: true })
+		const categories = new Array<string>(rows.length)
+		const values = new Array<number>(rows.length)
+		const colors = new Array<string>(rows.length)
+		for (let index = 0; index < rows.length; index++) {
+			const row = rows[index]
+			categories[index] = row.name
+			values[index] = row.value
+			colors[index] = valueSortedPieChartStackColors[row.name] ?? '#1f77b4'
+		}
+		return { categories, values, colors }
+	}, [chartView, deferredSelectedPieChartData, valueSortedPieChartStackColors])
 
 	const chartTypeSwitch = (
 		<SegmentedControl<RWAOverviewChartMetric>
@@ -1087,9 +1049,9 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									/>
 								) : chartView === 'hbar' ? (
 									<HBarChart
-										categories={selectedBarChartCategories}
-										values={selectedBarChartValues}
-										colors={selectedBarChartColors}
+										categories={selectedBarChartPresentation.categories}
+										values={selectedBarChartPresentation.values}
+										colors={selectedBarChartPresentation.colors}
 										valueSymbol="$"
 										onReady={handleBarChartReady}
 									/>

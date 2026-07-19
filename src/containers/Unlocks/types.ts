@@ -18,8 +18,8 @@ export interface ProtocolEmissionWithHistory extends ProtocolEmission {
 export interface ProtocolEmissionResult {
 	chartData: { documented: EmissionsChartRow[]; realtime: EmissionsChartRow[] }
 	pieChartData: {
-		documented: Array<{ name: string; value: number | string }>
-		realtime: Array<{ name: string; value: number | string }>
+		documented: Array<{ name: string; value: number }>
+		realtime: Array<{ name: string; value: number }>
 	}
 	stackColors: { documented: Record<string, string>; realtime: Record<string, string> }
 	datasets: { documented: EmissionsDataset; realtime: EmissionsDataset }

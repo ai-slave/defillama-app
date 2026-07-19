@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/ChartGroupingSelector'
+import { createChartRow } from '~/components/ECharts/dynamicRow'
 import { formatTooltipChartDate } from '~/components/ECharts/formatters'
 import type {
 	IMultiSeriesChart2Props,
@@ -88,7 +89,7 @@ function buildChartInputs(
 	const rows = new Array<Record<string, number | null>>(total - start)
 
 	for (let sourceIndex = start, rowIndex = 0; sourceIndex < total; sourceIndex++, rowIndex++) {
-		const row: Record<string, number | null> = { timestamp: model.dates[sourceIndex] }
+		const row = createChartRow<number | null>(model.dates[sourceIndex])
 		for (const bar of renderedBars) {
 			const value = bar.values[sourceIndex]
 			row[bar.label] = value == null ? null : value * (bar.sign ?? 1)

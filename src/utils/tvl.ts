@@ -1,8 +1,8 @@
 export interface TvlChartData {
-	tvl?: [number, number][]
-	liquidstaking?: [number, number][]
-	doublecounted?: [number, number][]
-	dcAndLsOverlap?: [number, number][]
+	tvl?: [string | number, number][]
+	liquidstaking?: [string | number, number][]
+	doublecounted?: [string | number, number][]
+	dcAndLsOverlap?: [string | number, number][]
 }
 
 export interface TvlOverlapValues {

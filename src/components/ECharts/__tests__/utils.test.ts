@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-	ensureChronologicalRows,
 	formatBarChart,
 	formatLineChart,
 	getBucketTimestampMs,
@@ -39,6 +38,62 @@ describe('formatBarChart', () => {
 			]
 		})
 		expect(groupMultiSeriesBarChartDataset({ dataset, groupBy: 'daily' })).toBe(dataset)
+	})
+
+	it('groups sparse multi-series rows in one chronological dataset', () => {
+		const dataset = {
+			dimensions: ['timestamp', 'A', 'B'],
+			source: [
+				{ timestamp: toMs(2024, 1, 3), A: 10 },
+				{ timestamp: toMs(2024, 1, 3), A: 2 },
+				{ timestamp: toMs(2024, 1, 20), B: 5 },
+				{ timestamp: toMs(2024, 2, 1), B: 4 }
+			]
+		}
+
+		expect(groupMultiSeriesBarChartDataset({ dataset, groupBy: 'monthly' })).toEqual({
+			dimensions: ['timestamp', 'A', 'B'],
+			source: [
+				{ timestamp: toMs(2024, 1, 1), A: 12, B: 5 },
+				{ timestamp: toMs(2024, 2, 1), B: 4 }
+			]
+		})
+	})
+
+	it('preserves negative flows when grouping multi-series bars', () => {
+		const dataset = {
+			dimensions: ['timestamp', 'Inflows'],
+			source: [
+				{ timestamp: toMs(2024, 1, 3), Inflows: 100 },
+				{ timestamp: toMs(2024, 1, 20), Inflows: -30 }
+			]
+		}
+
+		expect(groupMultiSeriesBarChartDataset({ dataset, groupBy: 'monthly' })).toEqual({
+			dimensions: ['timestamp', 'Inflows'],
+			source: [{ timestamp: toMs(2024, 1, 1), Inflows: 70 }]
+		})
+	})
+
+	it('computes independent cumulative totals for sparse multi-series rows', () => {
+		const dataset = {
+			dimensions: ['timestamp', 'A', 'B'],
+			source: [
+				{ timestamp: toMs(2024, 1, 1), B: 7 },
+				{ timestamp: toMs(2024, 1, 1), A: 10 },
+				{ timestamp: toMs(2024, 1, 2), A: 5 },
+				{ timestamp: toMs(2024, 1, 3), B: -2 }
+			]
+		}
+
+		expect(groupMultiSeriesBarChartDataset({ dataset, groupBy: 'cumulative' })).toEqual({
+			dimensions: ['timestamp', 'A', 'B'],
+			source: [
+				{ timestamp: toMs(2024, 1, 1), A: 10, B: 7 },
+				{ timestamp: toMs(2024, 1, 2), A: 15, B: 7 },
+				{ timestamp: toMs(2024, 1, 3), A: 15, B: 5 }
+			]
+		})
 	})
 
 	it('exports canonical bucket helpers for week/month/quarter/year', () => {
@@ -175,6 +230,44 @@ describe('formatBarChart', () => {
 		])
 	})
 
+	it('sums duplicate timestamps before computing cumulative totals', () => {
+		expect(
+			formatBarChart({
+				data: [
+					[toSec(2024, 1, 1), 10],
+					[toSec(2024, 1, 1), 5],
+					[toSec(2024, 1, 2), 7]
+				],
+				groupBy: 'cumulative',
+				denominationPriceHistory: null
+			})
+		).toEqual([
+			[toMs(2024, 1, 1), 15],
+			[toMs(2024, 1, 2), 22]
+		])
+	})
+
+	it('converts duplicate cumulative deltas and skips missing denomination prices', () => {
+		expect(
+			formatBarChart({
+				data: [
+					[toSec(2024, 1, 1), 10],
+					[toSec(2024, 1, 1), 6],
+					[toSec(2024, 1, 2), 100],
+					[toSec(2024, 1, 3), 8]
+				],
+				groupBy: 'cumulative',
+				denominationPriceHistory: {
+					[String(toSec(2024, 1, 1))]: 2,
+					[String(toSec(2024, 1, 3))]: 4
+				}
+			})
+		).toEqual([
+			[toMs(2024, 1, 1), 8],
+			[toMs(2024, 1, 3), 10]
+		])
+	})
+
 	it('supports millisecond input timestamps', () => {
 		expect(
 			formatBarChart({
@@ -187,23 +280,6 @@ describe('formatBarChart', () => {
 				denominationPriceHistory: null
 			})
 		).toEqual([[toMs(2024, 1, 1), 30]])
-	})
-
-	it('sorts grouped output chronologically even when input is unsorted', () => {
-		expect(
-			formatBarChart({
-				data: [
-					[toSec(2024, 4, 5), 30],
-					[toSec(2024, 1, 15), 10],
-					[toSec(2024, 3, 20), 20]
-				],
-				groupBy: 'quarterly',
-				denominationPriceHistory: null
-			})
-		).toEqual([
-			[toMs(2024, 1, 1), 30],
-			[toMs(2024, 4, 1), 30]
-		])
 	})
 
 	it('accepts string dates', () => {
@@ -454,6 +530,17 @@ describe('formatLineChart', () => {
 })
 
 describe('prepareChartCsv', () => {
+	it('exports prototype-like series names without inherited-value collisions', () => {
+		const data = Object.create(null) as Record<string, Array<[number, number]>>
+		data['constructor'] = [[1_000, 2]]
+		data['__proto__'] = [[1_000, 3]]
+
+		expect(prepareChartCsv(data, 'prototype-names.csv').rows).toEqual([
+			['Timestamp', 'Date', 'constructor', '__proto__'],
+			['1000', '1970-01-01', 2, 3]
+		])
+	})
+
 	it('merges multiple series into timestamped rows', () => {
 		const result = prepareChartCsv(
 			{
@@ -509,39 +596,6 @@ describe('prepareChartCsv', () => {
 
 		const timestamps = result.rows.slice(1).map((r) => Number(r[0]))
 		expect(timestamps).toEqual([toMs(2024, 1, 1), toMs(2024, 1, 3)])
-	})
-})
-
-describe('ensureChronologicalRows', () => {
-	it('returns the same array when already sorted', () => {
-		const rows = [{ timestamp: 1 }, { timestamp: 2 }, { timestamp: 3 }]
-		const result = ensureChronologicalRows(rows)
-		expect(result).toBe(rows) // same reference
-	})
-
-	it('sorts out-of-order rows', () => {
-		const rows = [{ timestamp: 3 }, { timestamp: 1 }, { timestamp: 2 }]
-		const result = ensureChronologicalRows(rows)
-		expect(result).toEqual([{ timestamp: 1 }, { timestamp: 2 }, { timestamp: 3 }])
-		expect(result).not.toBe(rows) // new array
-	})
-
-	it('handles string timestamps', () => {
-		const rows = [{ timestamp: '200' }, { timestamp: '100' }, { timestamp: '300' }]
-		const result = ensureChronologicalRows(rows)
-		expect(result).toEqual([{ timestamp: '100' }, { timestamp: '200' }, { timestamp: '300' }])
-	})
-
-	it('returns input for 0 or 1 element arrays', () => {
-		expect(ensureChronologicalRows([])).toEqual([])
-		const single = [{ timestamp: 42 }]
-		expect(ensureChronologicalRows(single)).toBe(single)
-	})
-
-	it('sorts when a non-finite timestamp is encountered', () => {
-		const rows = [{ timestamp: 1 }, { timestamp: undefined }, { timestamp: 3 }]
-		const result = ensureChronologicalRows(rows)
-		expect(result).not.toBe(rows)
 	})
 })
 

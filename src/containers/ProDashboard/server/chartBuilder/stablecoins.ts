@@ -1,5 +1,6 @@
 import { resolveAllowedChainNamesFromCategories } from '~/containers/ProDashboard/server/chartBuilder/breakdownChains'
 import { fetchStablecoinChartAllApi, fetchStablecoinDominanceAllApi } from '~/containers/Stablecoins/api'
+import type { StablecoinChartPoint, StablecoinDominanceChartPoint } from '~/containers/Stablecoins/api.types'
 import { normalizeCacheList, stableCacheKey } from '~/server/api/cacheKey'
 import { queryFilterMode, queryIntClamped, queryList, queryString } from '~/server/api/params'
 import { addApiRoutePhase, timeApiRoutePhase } from '~/server/api/phaseTelemetry'
@@ -34,30 +35,17 @@ type StablecoinByChainBase = {
 	totalPairs: [number, number][]
 }
 
-const sumStablecoinUsd = (value: any): number => {
-	if (typeof value === 'number') return value || 0
-	if (!value || typeof value !== 'object') return 0
+const sumStablecoinUsd = (value: Record<string, number> | undefined): number => {
 	let total = 0
-	for (const nested of Object.values(value)) {
-		if (typeof nested === 'number') total += nested || 0
-		else if (nested && typeof nested === 'object') total += sumStablecoinUsd(nested)
-	}
+	if (value) for (const pegType in value) total += value[pegType]
 	return total
 }
 
-const toStablecoinPair = (point: any): [number, number] | null => {
-	const rawTs = point?.date ?? point?.timestamp
-	if (rawTs == null) return null
-
-	let ts = Number(rawTs)
-	if (!Number.isFinite(ts)) return null
-	if (ts > 1e12) ts = Math.floor(ts / 1000)
-
-	const usd = sumStablecoinUsd(point?.totalCirculatingUSD)
-	if (!Number.isFinite(usd)) return null
-
-	return [ts, usd]
-}
+// Pegged-assets chart dates are Unix-second strings and USD totals are flat peg-type maps.
+const toStablecoinPair = (point: StablecoinChartPoint | StablecoinDominanceChartPoint): [number, number] => [
+	Number(point.date),
+	sumStablecoinUsd(point.totalCirculatingUSD)
+]
 
 async function getStablecoinByChainBaseData(): Promise<StablecoinByChainBase> {
 	return cachedResult(
@@ -74,16 +62,16 @@ async function getStablecoinByChainBaseData(): Promise<StablecoinByChainBase> {
 			const dominanceJson = await timeApiRoutePhase('stablecoin_fetch_dominance', () =>
 				fetchStablecoinDominanceAllApi()
 			)
-			const chainChartMap: Record<string, any[]> = dominanceJson?.chainChartMap ?? {}
+			const chainChartMap = dominanceJson.chainChartMap
 			const candidates: StablecoinChainCandidate[] = []
 			const candidateStartedAt = Date.now()
 
 			for (const chainName in chainChartMap) {
 				const charts = chainChartMap[chainName]
 				if (chainName === 'All') continue
-				if (!Array.isArray(charts) || charts.length === 0) continue
+				if (charts.length === 0) continue
 
-				const pairs = charts.map(toStablecoinPair).filter(Boolean) as [number, number][]
+				const pairs = charts.map(toStablecoinPair)
 
 				if (pairs.length === 0) continue
 
@@ -105,10 +93,7 @@ async function getStablecoinByChainBaseData(): Promise<StablecoinByChainBase> {
 			const aggregatedJson = await aggregatedJsonPromise
 			if (aggregatedJson) {
 				const aggregateStartedAt = Date.now()
-				const aggregatedArray: any[] = Array.isArray(aggregatedJson?.aggregated) ? aggregatedJson.aggregated : []
-				totalPairs = filterOutToday(
-					normalizeDailyPairs(aggregatedArray.map(toStablecoinPair).filter(Boolean) as [number, number][])
-				)
+				totalPairs = filterOutToday(normalizeDailyPairs(aggregatedJson.aggregated.map(toStablecoinPair)))
 				addApiRoutePhase('stablecoin_base_total', Date.now() - aggregateStartedAt)
 			}
 

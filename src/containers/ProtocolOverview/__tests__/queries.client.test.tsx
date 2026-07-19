@@ -234,10 +234,10 @@ describe('ProtocolOverview client chart queries', () => {
 		expect(mocks.fetchJson).not.toHaveBeenCalled()
 	})
 
-	it('normalizes protocol activity chart rows to sorted millisecond timestamps', async () => {
+	it('normalizes protocol activity chart rows to millisecond timestamps', async () => {
 		mocks.fetchJson.mockResolvedValue([
-			[1_700_000_100, 2],
-			[1_700_000_000, 1]
+			[1_700_000_000, 1],
+			[1_700_000_100, 2]
 		])
 
 		renderToStaticMarkup(<ActivityChartProbe protocol="curve-dex" />)

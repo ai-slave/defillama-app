@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { EXTENDED_COLOR_PALETTE } from '~/containers/ProDashboard/utils/colorManager'
 
 const BASE = '/api/public/odyssey-ecosystem'
@@ -45,7 +46,7 @@ export function chartToTs(
 		name: s.name,
 		color: s.color,
 		data: c.dates.map(
-			(d, i) => [Math.floor(new Date(d + 'T00:00:00Z').getTime() / 1000), s.data[i] ?? null] as [number, number | null]
+			(d, i) => [Math.floor(Date.parse(d + 'T00:00:00Z') / 1000), s.data[i] ?? null] as [number, number | null]
 		)
 	}))
 }
@@ -56,7 +57,7 @@ export function seriesPairs(
 ): Array<[number, number | null]> {
 	if (!dates || !vals) return []
 	return dates.map(
-		(d, i) => [Math.floor(new Date(d + 'T00:00:00Z').getTime() / 1000), vals[i] ?? null] as [number, number | null]
+		(d, i) => [Math.floor(Date.parse(d + 'T00:00:00Z') / 1000), vals[i] ?? null] as [number, number | null]
 	)
 }
 
@@ -78,7 +79,7 @@ export function defaultZoomOptions(start: number): any {
 }
 
 export function assignColors(names: string[]): Record<string, string> {
-	const colors: Record<string, string> = {}
+	const colors = createChartRecord<string>()
 	const sorted = names.toSorted()
 	for (let i = 0; i < sorted.length; i++) {
 		colors[sorted[i]] = EXTENDED_COLOR_PALETTE[i % EXTENDED_COLOR_PALETTE.length]

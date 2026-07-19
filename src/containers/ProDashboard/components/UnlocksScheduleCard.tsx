@@ -8,8 +8,9 @@ import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { slug, toNiceCsvDate, toNiceDayMonthYear } from '~/utils'
 import { download } from '~/utils/download'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
-import { filterDataByTimePeriod, StreamDoneContext } from '../queries'
+import { StreamDoneContext } from '../queries'
 import type { UnlocksScheduleConfig } from '../types'
+import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
@@ -59,15 +60,10 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	const activeCategories = selectedCategories ?? stacks
 
 	// Apply time-period filtering on the pre-built dataset source
-	const dataset = useMemo<MultiSeriesChart2Dataset>(() => {
-		const source = apiDataset.source
-		if (!source.length || !timePeriod || timePeriod === 'all') return apiDataset
-		const points: [number, number][] = source.map((item) => [Math.floor((item.timestamp as number) / 1e3), 1])
-		const filtered = filterDataByTimePeriod(points, timePeriod, customTimePeriod)
-		const filteredSecondsSet = new Set(filtered.map(([ts]) => ts))
-		const filteredSource = source.filter((item) => filteredSecondsSet.has(Math.floor((item.timestamp as number) / 1e3)))
-		return { source: filteredSource, dimensions: apiDataset.dimensions }
-	}, [apiDataset, timePeriod, customTimePeriod])
+	const dataset = useMemo(
+		() => filterChartDatasetByTimePeriod(apiDataset, timePeriod, customTimePeriod),
+		[apiDataset, timePeriod, customTimePeriod]
+	)
 
 	const selectedChartsSet = useMemo(
 		() => (selectedCategories ? new Set(selectedCategories) : undefined),

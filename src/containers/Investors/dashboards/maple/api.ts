@@ -163,8 +163,8 @@ export function useMapleActivePools() {
 	return useMemo(() => {
 		const pools = query.data?.data?.poolV2S ?? []
 		const significant = pools.filter((p) => parseFloat(p.tvlUsd) >= 1000)
-		return { ...query, pools: significant }
-	}, [query])
+		return { pools: significant, isLoading: query.isLoading }
+	}, [query.data, query.isLoading])
 }
 
 export function useMaplePoolsWithLoans() {
@@ -178,8 +178,8 @@ export function useMaplePoolsWithLoans() {
 	return useMemo(() => {
 		const pools = query.data?.data?.poolV2S ?? []
 		const withActiveLoans = pools.filter((p) => p.openTermLoans.length > 0)
-		return { ...query, pools: withActiveLoans }
-	}, [query])
+		return { pools: withActiveLoans, isLoading: query.isLoading }
+	}, [query.data, query.isLoading])
 }
 
 export function useStSyrupTxes() {
@@ -192,8 +192,8 @@ export function useStSyrupTxes() {
 
 	return useMemo(() => {
 		const txes = query.data?.data?.stSyrupTxes ?? []
-		return { ...query, txes }
-	}, [query])
+		return { txes, isLoading: query.isLoading }
+	}, [query.data, query.isLoading])
 }
 
 export function useSyrupTxes() {
@@ -206,8 +206,8 @@ export function useSyrupTxes() {
 
 	return useMemo(() => {
 		const txes = query.data?.data?.syrupTxes ?? []
-		return { ...query, txes }
-	}, [query])
+		return { txes, isLoading: query.isLoading }
+	}, [query.data, query.isLoading])
 }
 
 export function useSyrupGlobals() {
@@ -220,8 +220,8 @@ export function useSyrupGlobals() {
 
 	return useMemo(() => {
 		const globals = query.data?.data?.syrupGlobals ?? null
-		return { ...query, globals }
-	}, [query])
+		return { globals, isLoading: query.isLoading }
+	}, [query.data, query.isLoading])
 }
 
 export function useStSyrupState() {
@@ -234,8 +234,8 @@ export function useStSyrupState() {
 
 	return useMemo(() => {
 		const state = query.data?.data?.stSyrups?.[0] ?? null
-		return { ...query, state }
-	}, [query])
+		return { state, isLoading: query.isLoading }
+	}, [query.data, query.isLoading])
 }
 
 export function useSyrupDripTxes() {
@@ -248,6 +248,6 @@ export function useSyrupDripTxes() {
 
 	return useMemo(() => {
 		const txes = query.data?.data?.syrupDripTxes ?? []
-		return { ...query, txes }
-	}, [query])
+		return { txes, isLoading: query.isLoading }
+	}, [query.data, query.isLoading])
 }

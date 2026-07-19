@@ -9,11 +9,13 @@ import { Button, buttonStyles } from '~/ui/Button'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import {
-	buildEquitiesTreemap,
+	buildEquitiesTreemapLeaves,
 	EQUITIES_TREEMAP_COLOR_METRICS,
 	EQUITIES_TREEMAP_DEFAULT_LIMIT,
 	EQUITIES_TREEMAP_SIZE_METRICS,
+	groupEquitiesTreemapLeaves,
 	prepareEquitiesTreemapCsv,
+	rankEquitiesTreemapRows,
 	type EquitiesTreemapColorMetric,
 	type EquitiesTreemapGroupBy,
 	type EquitiesTreemapSizeMetric
@@ -54,10 +56,10 @@ export function EquitiesTreemapSection({ companies }: { companies: IEquitiesList
 	const [colorMetric, setColorMetric] = useState<EquitiesTreemapColorMetric>('priceChangePercentage1d')
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
-	const { treeData, excludedCount, truncatedCount } = useMemo(
-		() => buildEquitiesTreemap(companies, { groupBy, sizeMetric, colorMetric }),
-		[colorMetric, companies, groupBy, sizeMetric]
-	)
+	const ranking = useMemo(() => rankEquitiesTreemapRows(companies, sizeMetric), [companies, sizeMetric])
+	const leaves = useMemo(() => buildEquitiesTreemapLeaves(ranking, colorMetric), [colorMetric, ranking])
+	const treeData = useMemo(() => groupEquitiesTreemapLeaves(leaves, groupBy), [groupBy, leaves])
+	const { excludedCount, truncatedCount } = ranking
 
 	const sizeLabel = getMetricLabel(sizeMetric)
 	const colorLabel = COLOR_METRIC_LABELS[colorMetric]
@@ -129,7 +131,7 @@ export function EquitiesTreemapSection({ companies }: { companies: IEquitiesList
 								title="Equities Market Map"
 								prepareCsvDirect={() =>
 									prepareEquitiesTreemapCsv({
-										nodes: treeData,
+										leaves,
 										sizeLabel,
 										colorLabel,
 										filename: EXPORT_FILENAME
@@ -145,6 +147,7 @@ export function EquitiesTreemapSection({ companies }: { companies: IEquitiesList
 			<Suspense fallback={<div style={{ height: CHART_HEIGHT }} />}>
 				<EquitiesTreemapChart
 					treeData={treeData}
+					leaves={leaves}
 					sizeLabel={sizeLabel}
 					colorLabel={colorLabel}
 					valueSymbol={sizeMetric === 'employeeCount' ? '' : '$'}

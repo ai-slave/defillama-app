@@ -15,12 +15,13 @@ import { FollowingShelves } from '~/containers/ProDashboard/components/Following
 import { LikedDashboards } from '~/containers/ProDashboard/components/LikedDashboards'
 import { MyProfileTab } from '~/containers/ProDashboard/components/MyProfileTab'
 import { ProDashboardLoader } from '~/containers/ProDashboard/components/ProDashboardLoader'
-import { useFreeTierStatus, useMyDashboards } from '~/containers/ProDashboard/hooks'
 import {
 	DISCOVERY_CATEGORIES,
 	type DiscoveryCategoryResponse,
 	type DiscoveryCategoriesInitialData
 } from '~/containers/ProDashboard/hooks/useDiscoveryCategories'
+import { useFreeTierStatus } from '~/containers/ProDashboard/hooks/useFreeTierStatus'
+import { useMyDashboards } from '~/containers/ProDashboard/hooks/useMyDashboards'
 import {
 	ProDashboardAPIProvider,
 	useProDashboardDashboard,

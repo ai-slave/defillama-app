@@ -118,7 +118,7 @@ export type ProtocolEmissionSupplyMetricsMap = Record<string, ProtocolEmissionSu
 
 // Chart/dataset types used by both API and queries
 export interface EmissionsDataset {
-	source: Array<Record<string, number | null>>
+	source: EmissionsChartRow[]
 	dimensions: string[]
 }
 

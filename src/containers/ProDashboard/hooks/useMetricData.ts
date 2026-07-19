@@ -17,6 +17,29 @@ const DEFAULT_COMPARE = {
 }
 const EMPTY_SERIES: [number, number][] = []
 
+function selectFiniteMetricSeries(data: [number, number][]): [number, number][] {
+	if (!Array.isArray(data)) return EMPTY_SERIES
+
+	let firstInvalidIndex = -1
+	for (let index = 0; index < data.length; index++) {
+		const point = data[index]
+		if (!Array.isArray(point) || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) {
+			firstInvalidIndex = index
+			break
+		}
+	}
+	if (firstInvalidIndex === -1) return data
+
+	const finiteData = data.slice(0, firstInvalidIndex)
+	for (let index = firstInvalidIndex + 1; index < data.length; index++) {
+		const point = data[index]
+		if (Array.isArray(point) && Number.isFinite(point[0]) && Number.isFinite(point[1])) {
+			finiteData.push(point)
+		}
+	}
+	return finiteData
+}
+
 type WindowBounds = {
 	currentStart: number | null
 	previousStart?: number
@@ -80,7 +103,7 @@ function getWindowBounds(window: MetricWindow, reference: Dayjs): WindowBounds {
 }
 
 function filterByWindow(data: [number, number][], window: MetricWindow, reference: Dayjs): [number, number][] {
-	if (!Array.isArray(data) || data.length === 0) return []
+	if (data.length === 0) return []
 
 	const { currentStart } = getWindowBounds(window, reference)
 
@@ -90,7 +113,7 @@ function filterByWindow(data: [number, number][], window: MetricWindow, referenc
 }
 
 function getPreviousWindow(data: [number, number][], window: MetricWindow, reference: Dayjs): [number, number][] {
-	if (!Array.isArray(data) || data.length === 0) return []
+	if (data.length === 0) return []
 
 	const { previousStart, previousEnd } = getWindowBounds(window, reference)
 	if (previousStart === undefined || previousEnd === undefined) {
@@ -121,50 +144,48 @@ function resolveMovingAverageLength(window: MetricWindow, arrLength: number): nu
 }
 
 function aggregate(values: number[], aggregator: MetricAggregator, window: MetricWindow): number | null {
-	const arr = values.filter((v) => Number.isFinite(v))
-	if (arr.length === 0) return null
+	if (values.length === 0) return null
 
 	switch (aggregator) {
 		case 'latest':
-			return arr[arr.length - 1]
+			return values[values.length - 1]
 		case 'avg':
-			return arr.reduce((a, b) => a + b, 0) / arr.length
+			return values.reduce((a, b) => a + b, 0) / values.length
 		case 'max':
-			return Math.max(...arr)
+			return Math.max(...values)
 		case 'min':
-			return Math.min(...arr)
+			return Math.min(...values)
 		case 'sum':
-			return arr.reduce((a, b) => a + b, 0)
+			return values.reduce((a, b) => a + b, 0)
 		case 'median': {
-			const sorted = arr.toSorted((a, b) => a - b)
+			const sorted = values.toSorted((a, b) => a - b)
 			const mid = Math.floor(sorted.length / 2)
 			return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
 		}
 		case 'stddev': {
-			if (arr.length < 2) return null
-			const mean = arr.reduce((a, b) => a + b, 0) / arr.length
-			const variance = arr.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / arr.length
+			if (values.length < 2) return null
+			const mean = values.reduce((a, b) => a + b, 0) / values.length
+			const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
 			return Math.sqrt(variance)
 		}
 		case 'first':
-			return arr[0]
+			return values[0]
 		case 'growth': {
-			const nonZero = arr.filter((value) => value !== 0)
+			const nonZero = values.filter((value) => value !== 0)
 			if (nonZero.length < 2) return null
 			const first = nonZero[0]
 			const last = nonZero[nonZero.length - 1]
 			return ((last - first) / first) * 100
 		}
 		case 'movingavg': {
-			if (arr.length === 0) return null
-			if (arr.length < 7) return arr.reduce((a, b) => a + b, 0) / arr.length
+			if (values.length < 7) return values.reduce((a, b) => a + b, 0) / values.length
 
-			const windowSize = resolveMovingAverageLength(window, arr.length)
-			const recentValues = arr.slice(-windowSize)
+			const windowSize = resolveMovingAverageLength(window, values.length)
+			const recentValues = values.slice(-windowSize)
 			return recentValues.reduce((a, b) => a + b, 0) / recentValues.length
 		}
 		default:
-			return arr[arr.length - 1]
+			return values[values.length - 1]
 	}
 }
 
@@ -210,7 +231,7 @@ export function useMetricData(metric: MetricConfig) {
 		queryKey: ['pro-dashboard', 'metric', ...getChartQueryKey(type, itemType, item, geckoId, undefined)],
 		queryFn: getChartQueryFn(type, itemType, item, geckoId, undefined, parentMapping, undefined, undefined, authToken),
 		staleTime: Infinity,
-		select: (data: [number, number][]) => (Array.isArray(data) ? data : []),
+		select: selectFiniteMetricSeries,
 		enabled:
 			streamDone &&
 			!!item &&
@@ -233,13 +254,11 @@ export function useMetricData(metric: MetricConfig) {
 
 		let delta: number | null = null
 		let deltaPct: number | null = null
-		const finiteValues = values.filter((v) => Number.isFinite(v))
-
 		if (compare.mode === 'previous_value') {
 			if (aggregator === 'latest') {
-				if (finiteValues.length >= 2) {
-					const curr = finiteValues[finiteValues.length - 1]
-					const first = finiteValues[0]
+				if (values.length >= 2) {
+					const curr = values[values.length - 1]
+					const first = values[0]
 					delta = curr - first
 					deltaPct = first !== 0 ? (delta / first) * 100 : null
 				}

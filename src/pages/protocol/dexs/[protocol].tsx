@@ -7,7 +7,6 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
-import { ensureChronologicalRows, formatBarChart } from '~/components/ECharts/utils'
 import { Select } from '~/components/Select/Select'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
@@ -18,6 +17,11 @@ import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { formatAdapterData } from '~/containers/ProtocolOverview/formatAdapterData'
 import { KeyMetrics } from '~/containers/ProtocolOverview/KeyMetrics'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
+import {
+	buildProtocolFlowChart,
+	normalizeProtocolFlowChart,
+	type ProtocolFlowChartSeries
+} from '~/containers/ProtocolOverview/protocolFlowChart'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
@@ -116,12 +120,12 @@ export const getStaticProps = withPerformanceLogging(
 			}
 		}
 
-		const charts: Record<string, Array<[string | number, number]>> = {}
+		const charts: Record<string, Array<readonly [number, number]>> = {}
 		if (volumeData?.totalDataChart?.length > 0) {
-			charts['DEX Volume'] = volumeData.totalDataChart
+			charts['DEX Volume'] = normalizeProtocolFlowChart(volumeData.totalDataChart)
 		}
 		if (notionalVolumeData?.totalDataChart?.length > 0) {
-			charts['Notional Volume'] = notionalVolumeData.totalDataChart
+			charts['Notional Volume'] = normalizeProtocolFlowChart(notionalVolumeData.totalDataChart)
 		}
 
 		const defaultCharts: string[] = []
@@ -172,61 +176,25 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const finalCharts = useMemo(() => {
-		const seriesType = (groupBy === 'cumulative' ? 'line' : 'bar') as 'line' | 'bar'
-		const seriesData: Record<string, Array<[number, number]>> = {}
-		const chartsConfig = []
+		const series: ProtocolFlowChartSeries[] = []
 
 		if (charts.includes('DEX Volume')) {
-			seriesData['DEX Volume'] = formatBarChart({
-				data: props.charts['DEX Volume'],
-				groupBy,
-				denominationPriceHistory: null,
-				dateInMs: false
-			})
-			chartsConfig.push({
-				type: seriesType,
+			series.push({
 				name: 'DEX Volume',
-				encode: { x: 'timestamp', y: 'DEX Volume' },
 				color: CHART_COLORS[0],
-				stack: 'DEX Volume'
+				stack: 'DEX Volume',
+				points: props.charts['DEX Volume']
 			})
 		}
 		if (charts.includes('Notional Volume')) {
-			seriesData['Notional Volume'] = formatBarChart({
-				data: props.charts['Notional Volume'],
-				groupBy,
-				denominationPriceHistory: null,
-				dateInMs: false
-			})
-			chartsConfig.push({
-				type: seriesType,
+			series.push({
 				name: 'Notional Volume',
-				encode: { x: 'timestamp', y: 'Notional Volume' },
 				color: CHART_COLORS[1],
-				stack: 'Notional Volume'
+				stack: 'Notional Volume',
+				points: props.charts['Notional Volume']
 			})
 		}
-
-		const rowMap = new Map<number, Record<string, number>>()
-		const seriesNames: string[] = []
-		for (const seriesName in seriesData) {
-			seriesNames.push(seriesName)
-		}
-		for (const name of seriesNames) {
-			for (const [timestamp, value] of seriesData[name]) {
-				const row = rowMap.get(timestamp) ?? { timestamp }
-				row[name] = value
-				rowMap.set(timestamp, row)
-			}
-		}
-
-		return {
-			dataset: {
-				source: ensureChronologicalRows(Array.from(rowMap.values())),
-				dimensions: ['timestamp', ...seriesNames]
-			},
-			charts: chartsConfig
-		}
+		return buildProtocolFlowChart({ groupBy, series })
 	}, [charts, groupBy, props.charts])
 	const deferredFinalCharts = useDeferredValue(finalCharts)
 

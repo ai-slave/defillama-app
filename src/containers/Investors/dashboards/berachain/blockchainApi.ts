@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { buildColumnarTimeSeriesDataset, type TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
 
 interface FormattedValue {
 	value: number
@@ -55,30 +55,87 @@ interface BlockchainAPIResponse {
 	}
 }
 
-export type { FormattedValue, TopToken, BlockchainAPIResponse }
+type BlockchainViewModel = Pick<BlockchainAPIResponse['blockchain'], 'activityKpis' | 'gasKpis' | 'topTokens'> & {
+	metadata: BlockchainAPIResponse['metadata']
+	chartDatasets: {
+		transactions: TimestampDataset
+		addresses: TimestampDataset
+		gasFees: TimestampDataset
+		blockUtilization: TimestampDataset
+		contractDeployments: TimestampDataset
+		tokenTransfers: TimestampDataset
+	}
+}
+
+export type { FormattedValue, TopToken, BlockchainAPIResponse, BlockchainViewModel }
+
+function parseDateToTimestampMs(date: string) {
+	return Date.parse(`${date}T00:00:00Z`)
+}
+
+export function buildBlockchainViewModel({ metadata, blockchain }: BlockchainAPIResponse): BlockchainViewModel {
+	const activityDataset = buildColumnarTimeSeriesDataset(
+		blockchain.chainActivity.dates,
+		[blockchain.chainActivity.series[0], blockchain.chainActivity.series[1], blockchain.chainActivity.series[2]],
+		parseDateToTimestampMs,
+		0
+	)
+
+	return {
+		metadata,
+		activityKpis: blockchain.activityKpis,
+		gasKpis: blockchain.gasKpis,
+		topTokens: blockchain.topTokens,
+		chartDatasets: {
+			transactions: {
+				...activityDataset,
+				dimensions: ['timestamp', 'Transactions']
+			},
+			addresses: {
+				...activityDataset,
+				dimensions: ['timestamp', 'Active Addresses', 'New Addresses']
+			},
+			gasFees: buildColumnarTimeSeriesDataset(
+				blockchain.gasFees.dates,
+				[blockchain.gasFees.series[0]],
+				parseDateToTimestampMs,
+				0
+			),
+			blockUtilization: buildColumnarTimeSeriesDataset(
+				blockchain.blockUtilization.dates,
+				[blockchain.blockUtilization.series[0]],
+				parseDateToTimestampMs,
+				0
+			),
+			contractDeployments: buildColumnarTimeSeriesDataset(
+				blockchain.contractDeployments.dates,
+				[blockchain.contractDeployments.series[0]],
+				parseDateToTimestampMs,
+				0
+			),
+			tokenTransfers: buildColumnarTimeSeriesDataset(
+				blockchain.tokenTransfers.dates,
+				[blockchain.tokenTransfers.series[1]],
+				parseDateToTimestampMs,
+				0
+			)
+		}
+	}
+}
 
 export function useBlockchainData() {
-	const query = useQuery<BlockchainAPIResponse>({
+	const query = useQuery<BlockchainViewModel>({
 		queryKey: ['berachain-blockchain'],
 		queryFn: async () => {
 			const res = await fetch('/api/public/berachain/blockchain')
 			if (!res.ok) throw new Error(`Berachain Blockchain API error: ${res.status}`)
-			return res.json()
+			const response: BlockchainAPIResponse = await res.json()
+			return buildBlockchainViewModel(response)
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
 
-	return useMemo(() => {
-		if (!query.data) {
-			return { data: null, isLoading: query.isLoading || query.isPending }
-		}
-
-		const { metadata, blockchain } = query.data
-
-		return {
-			data: { metadata, ...blockchain },
-			isLoading: false
-		}
-	}, [query.data, query.isLoading, query.isPending])
+	if (!query.data) return { data: null, isLoading: query.isLoading || query.isPending }
+	return { data: query.data, isLoading: false }
 }

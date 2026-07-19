@@ -235,6 +235,40 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		})
 	})
 
+	it('overwrites exact daily duplicates but sums every point in coarser volume buckets', () => {
+		const duplicateTimestampPoints = [
+			chartPoints[0],
+			{
+				...chartPoints[0],
+				openInterest: 110,
+				volume24h: 15,
+				price: 11
+			},
+			chartPoints[1]
+		]
+
+		const daily = buildRWAPerpsContractChartSpec({
+			marketPoints: duplicateTimestampPoints,
+			fundingHistory: null,
+			groupBy: 'daily',
+			enabledMetrics: ['openInterest', 'volume24h', 'price']
+		})
+		const monthly = buildRWAPerpsContractChartSpec({
+			marketPoints: duplicateTimestampPoints,
+			fundingHistory: null,
+			groupBy: 'monthly',
+			enabledMetrics: ['openInterest', 'volume24h', 'price']
+		})
+
+		expect(daily.dataset.source).toEqual([
+			{ timestamp: Date.UTC(2026, 2, 1), 'Open Interest': 110, 'Volume 24h': 15, Price: 11 },
+			{ timestamp: Date.UTC(2026, 2, 15), 'Open Interest': 120, 'Volume 24h': 20, Price: 12 }
+		])
+		expect(monthly.dataset.source).toEqual([
+			{ timestamp: Date.UTC(2026, 2, 1), 'Open Interest': 120, 'Volume 24h': 45, Price: 12 }
+		])
+	})
+
 	it('keeps grouped volume as a bar series without offering cumulative accumulation', () => {
 		const spec = buildRWAPerpsContractChartSpec({
 			marketPoints: chartPoints,
@@ -255,38 +289,130 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		])
 	})
 
-	it('keeps colors stable regardless of metric selection order', () => {
+	it('preserves full chart config and dimensions in noncanonical selection order', () => {
 		const spec = buildRWAPerpsContractChartSpec({
 			marketPoints: chartPoints,
-			fundingHistory: null,
-			groupBy: 'daily',
-			enabledMetrics: ['premium', 'price'] as RWAPerpsContractChartMetricKey[]
+			fundingHistory: fundingHistoryPoints,
+			groupBy: 'monthly',
+			enabledMetrics: [
+				'premium',
+				'volume24h',
+				'openInterest',
+				'price',
+				'fundingRate',
+				'volume24h'
+			] as RWAPerpsContractChartMetricKey[]
 		})
 
-		expect(spec.charts.map((chart) => [chart.name, chart.color])).toEqual([
-			['Premium', '#EF4444'],
-			['Price', '#22C55E']
+		expect(spec.charts).toEqual([
+			{
+				name: 'Premium',
+				type: 'line',
+				encode: { x: 'timestamp', y: 'Premium' },
+				color: '#EF4444',
+				yAxisIndex: 2,
+				valueSymbol: '%',
+				hideAreaStyle: true
+			},
+			{
+				name: 'Volume 24h',
+				type: 'bar',
+				encode: { x: 'timestamp', y: 'Volume 24h' },
+				color: '#7DD3FC',
+				valueSymbol: '$',
+				hideAreaStyle: true
+			},
+			{
+				name: 'Open Interest',
+				type: 'line',
+				encode: { x: 'timestamp', y: 'Open Interest' },
+				color: '#3B82F6',
+				valueSymbol: '$'
+			},
+			{
+				name: 'Price',
+				type: 'line',
+				encode: { x: 'timestamp', y: 'Price' },
+				color: '#22C55E',
+				yAxisIndex: 1,
+				valueSymbol: '$',
+				hideAreaStyle: true
+			},
+			{
+				name: 'Funding Rate',
+				type: 'line',
+				encode: { x: 'timestamp', y: 'Funding Rate' },
+				color: '#F59E0B',
+				yAxisIndex: 2,
+				valueSymbol: '%',
+				hideAreaStyle: true
+			},
+			{
+				name: 'Volume 24h',
+				type: 'bar',
+				encode: { x: 'timestamp', y: 'Volume 24h' },
+				color: '#7DD3FC',
+				valueSymbol: '$',
+				hideAreaStyle: true
+			}
 		])
+		expect(spec.dataset.dimensions).toEqual([
+			'timestamp',
+			'Premium',
+			'Volume 24h',
+			'Open Interest',
+			'Price',
+			'Funding Rate',
+			'Volume 24h'
+		])
+		expect(spec.dataset.source[0]).toMatchObject({ 'Volume 24h': 30 })
 	})
 
-	it('uses funding history for funding and premium when it is available', () => {
-		const spec = buildRWAPerpsContractChartSpec({
+	it('falls back to market funding fields only when funding history is empty', () => {
+		const fallbackSpec = buildRWAPerpsContractChartSpec({
+			marketPoints: [chartPoints[0]],
+			fundingHistory: [],
+			groupBy: 'daily',
+			enabledMetrics: ['fundingRate', 'premium']
+		})
+		const historySpec = buildRWAPerpsContractChartSpec({
 			marketPoints: chartPoints,
 			fundingHistory: fundingHistoryPoints,
 			groupBy: 'daily',
 			enabledMetrics: ['fundingRate', 'premium']
 		})
 
-		expect(spec.dataset.source).toMatchObject([
+		expect(fallbackSpec.dataset.source).toEqual([{ timestamp: Date.UTC(2026, 2, 1), 'Funding Rate': 1, Premium: 2 }])
+		expect(historySpec.dataset.source).toEqual([
 			{ timestamp: Date.UTC(2026, 2, 1), 'Funding Rate': 0.1, Premium: 1 },
 			{ timestamp: Date.UTC(2026, 2, 2), 'Funding Rate': 0.2, Premium: 2 }
 		])
 	})
 
-	it('sorts source points chronologically before taking last-value grouped buckets', () => {
+	it('omits metrics whose selected source is empty and keeps rows sparse', () => {
 		const spec = buildRWAPerpsContractChartSpec({
-			marketPoints: [chartPoints[1], chartPoints[0], chartPoints[2]],
-			fundingHistory: [fundingHistoryPoints[1], fundingHistoryPoints[0]],
+			marketPoints: null,
+			fundingHistory: fundingHistoryPoints,
+			groupBy: 'daily',
+			enabledMetrics: ['openInterest', 'price', 'fundingRate']
+		})
+
+		expect(spec.charts.map((chart) => chart.name)).toEqual(['Funding Rate'])
+		expect(spec.dataset.dimensions).toEqual(['timestamp', 'Funding Rate'])
+		expect(spec.dataset.source).toEqual([
+			{ timestamp: Date.UTC(2026, 2, 1), 'Funding Rate': 0.1 },
+			{ timestamp: Date.UTC(2026, 2, 2), 'Funding Rate': 0.2 }
+		])
+	})
+
+	it('merges ascending market and funding streams without mutating them', () => {
+		const marketPoints = [...chartPoints]
+		const fundingHistory = [...fundingHistoryPoints]
+		const originalMarketPoints = structuredClone(marketPoints)
+		const originalFundingHistory = structuredClone(fundingHistory)
+		const spec = buildRWAPerpsContractChartSpec({
+			marketPoints,
+			fundingHistory,
 			groupBy: 'monthly',
 			enabledMetrics: ['openInterest', 'fundingRate']
 		})
@@ -302,6 +428,8 @@ describe('buildRWAPerpsContractChartSpec', () => {
 				'Open Interest': 140
 			}
 		])
+		expect(marketPoints).toEqual(originalMarketPoints)
+		expect(fundingHistory).toEqual(originalFundingHistory)
 	})
 
 	it('normalizes second-based timestamps to milliseconds before grouping', () => {

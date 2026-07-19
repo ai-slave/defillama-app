@@ -8,6 +8,7 @@ import {
 	formatSignedRWAFlow,
 	getRWAFlowDefaultStartTimestamp,
 	getRWAFlowOverlayQueryValue,
+	getRWAFlowRotationSeriesNames,
 	getRWAFlowVsPriceSummary,
 	parseRWAFlowGrouping,
 	parseRWAFlowMode,
@@ -56,7 +57,7 @@ describe('RWA flow chart data', () => {
 		expect(getRWAFlowOverlayQueryValue(['activeMcap', 'defiActiveTvl'])).toEqual(['activeMcap', 'defiActiveTvl'])
 	})
 
-	it('sorts daily flows and renders every selected level overlay on the secondary axis', () => {
+	it('renders ascending daily flows and every selected level overlay on the secondary axis', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
 		const onChainMcap = new Map([
@@ -73,7 +74,7 @@ describe('RWA flow chart data', () => {
 		])
 
 		const chart = buildRWAFlowChart({
-			points: [aggregatePoint(jan2 / 1e3, -4), aggregatePoint(jan1 / 1e3, 6)],
+			points: [aggregatePoint(jan1 / 1e3, 6), aggregatePoint(jan2 / 1e3, -4)],
 			selection: {
 				view: 'netFlows',
 				groupBy: 'daily',
@@ -156,7 +157,7 @@ describe('RWA flow chart data', () => {
 		const jan2 = day(2026, 0, 2)
 		const jan3 = day(2026, 0, 3)
 		const chart = buildRWAFlowChart({
-			points: [aggregatePoint(jan3, -3), aggregatePoint(jan1, 10), aggregatePoint(jan2, null)],
+			points: [aggregatePoint(jan1, 10), aggregatePoint(jan2, null), aggregatePoint(jan3, -3)],
 			selection: { view: 'netFlows', groupBy: 'cumulative', overlays: [] }
 		})
 
@@ -276,9 +277,9 @@ describe('RWA flow chart data', () => {
 	it('orders rotation series by recent absolute net flow independently of chart frequency', () => {
 		const latest = day(2026, 2, 31)
 		const points: IRWAFlowOverviewSplitPoint[] = [
-			{ timestamp: latest / 1e3, 'Recent Inflow': 80, 'Recent Outflow': -100 },
+			{ timestamp: (latest - 40 * 86_400_000) / 1e3, 'No Recent Flow': 10_000 },
 			{ timestamp: (latest - 10 * 86_400_000) / 1e3, 'Older Big': 1_000, 'Older Small': -50 },
-			{ timestamp: (latest - 40 * 86_400_000) / 1e3, 'No Recent Flow': 10_000 }
+			{ timestamp: latest / 1e3, 'Recent Inflow': 80, 'Recent Outflow': -100 }
 		]
 
 		const weekly = buildRWAFlowRotationChart(points, 'weekly')
@@ -287,8 +288,27 @@ describe('RWA flow chart data', () => {
 
 		expect(weekly.dataset.dimensions).toEqual(expectedOrder)
 		expect(monthly.dataset.dimensions).toEqual(expectedOrder)
+		expect(getRWAFlowRotationSeriesNames(points)).toEqual(expectedOrder.slice(1))
 		expect(weekly.charts.map((chart) => chart.name)).toEqual(expectedOrder.slice(1))
 		expect(monthly.charts.map((chart) => chart.name)).toEqual(expectedOrder.slice(1))
+	})
+
+	it('bounds rotation series and preserves omitted signed flows in Others', () => {
+		const timestamp = day(2026, 0, 1)
+		const point: IRWAFlowOverviewSplitPoint = { timestamp: timestamp / 1e3 }
+		for (let index = 0; index < 32; index++) point[`Series ${index + 1}`] = 32 - index
+
+		const chart = buildRWAFlowRotationChart([point], 'daily')
+
+		expect(chart.charts).toHaveLength(30)
+		expect(chart.dataset.dimensions.at(-1)).toBe('Others')
+		expect(chart.dataset.source).toEqual([
+			Object.assign(
+				{ timestamp },
+				Object.fromEntries(Array.from({ length: 29 }, (_, index) => [`Series ${index + 1}`, 32 - index])),
+				{ Others: 6 }
+			)
+		])
 	})
 
 	it('aggregates only the assets left by the page filters and preserves missing days', () => {
@@ -315,18 +335,18 @@ describe('RWA flow chart data', () => {
 		const assets = [
 			{
 				kind: 'spot',
-				canonicalMarketId: 'bond-a',
+				canonicalMarketId: 'bond/a',
 				parentPlatform: ['Platform A', 'Platform B'],
-				chain: ['Ethereum', 'Solana']
+				chain: ['Ethereum', 'Solana Mainnet']
 			},
 			{ kind: 'spot', canonicalMarketId: 'no-platform' }
 		] as IRWAAssetsOverview['assets']
 		const rows = [
 			{
 				timestamp: 1,
-				'bond-a': 10,
-				'chain:bond-a:Ethereum': 7,
-				'chain:bond-a:Solana': 3,
+				'bond/a': 10,
+				'chain:bond%2Fa:Ethereum': 7,
+				'chain:bond%2Fa:Solana%20Mainnet': 3,
 				'no-platform': 8,
 				excluded: 100
 			}
@@ -335,6 +355,8 @@ describe('RWA flow chart data', () => {
 		expect(buildRWAFilteredFlowBreakdown(rows, assets, 'platform')).toEqual([
 			{ timestamp: 1, 'Platform A': 5, 'Platform B': 5 }
 		])
-		expect(buildRWAFilteredFlowBreakdown(rows, assets, 'chain')).toEqual([{ timestamp: 1, Ethereum: 7, Solana: 3 }])
+		expect(buildRWAFilteredFlowBreakdown(rows, assets, 'chain')).toEqual([
+			{ timestamp: 1, Ethereum: 7, 'Solana Mainnet': 3 }
+		])
 	})
 })

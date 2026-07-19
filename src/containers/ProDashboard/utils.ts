@@ -24,13 +24,10 @@ export const normalizeHourlyToDaily = (
 	if (!data || data.length === 0) return []
 	if (data.length === 1) return data
 
-	const sortedData = data.toSorted((a, b) => a[0] - b[0])
-
-	const avgTimeDiff =
-		sortedData.slice(0, Math.min(10, sortedData.length - 1)).reduce((sum, point, idx, arr) => {
-			if (idx === arr.length - 1) return sum
-			return sum + (arr[idx + 1][0] - point[0])
-		}, 0) / Math.min(9, sortedData.length - 1)
+	const intervalCount = Math.min(9, data.length - 1)
+	let intervalTotal = 0
+	for (let i = 1; i <= intervalCount; i++) intervalTotal += data[i][0] - data[i - 1][0]
+	const avgTimeDiff = intervalTotal / intervalCount
 
 	const isHourlyData = avgTimeDiff < 24 * 60 * 60 && avgTimeDiff > 30 * 60
 
@@ -38,31 +35,17 @@ export const normalizeHourlyToDaily = (
 		return data
 	}
 
-	const dailyData: { [dayKey: string]: { values: number[]; lastTimestamp: number; lastValue: number } } = {}
-
-	for (const [timestamp, value] of sortedData) {
-		const date = new Date(timestamp * 1000)
-		date.setUTCHours(0, 0, 0, 0)
-		const dayKey = (date.getTime() / 1000).toString()
-
-		if (!dailyData[dayKey]) {
-			dailyData[dayKey] = { values: [], lastTimestamp: timestamp, lastValue: value }
-		}
-
-		dailyData[dayKey].values.push(value)
-		if (timestamp >= dailyData[dayKey].lastTimestamp) {
-			dailyData[dayKey].lastTimestamp = timestamp
-			dailyData[dayKey].lastValue = value
+	const dailyData: [number, number][] = []
+	for (const [timestamp, value] of data) {
+		const dayTimestamp = Math.floor(timestamp / 86_400) * 86_400
+		const previous = dailyData[dailyData.length - 1]
+		if (previous?.[0] === dayTimestamp) {
+			previous[1] = aggregationType === 'sum' ? previous[1] + value : value
+		} else {
+			dailyData.push([dayTimestamp, value])
 		}
 	}
-
-	const result: [number, number][] = []
-	for (const dayTimestamp in dailyData) {
-		const { values, lastValue } = dailyData[dayTimestamp]
-		const aggregatedValue = aggregationType === 'sum' ? values.reduce((sum, v) => sum + v, 0) : lastValue
-		result.push([parseInt(dayTimestamp), aggregatedValue])
-	}
-	return result.sort((a, b) => a[0] - b[0])
+	return dailyData
 }
 
 const GROUPING_TO_CHART_GROUP_BY: Record<Exclude<DashboardGrouping, 'day'>, Exclude<ChartTimeGrouping, 'daily'>> = {
@@ -87,48 +70,38 @@ export const getGroupedTimestampSec = (timestampSec: number, grouping: Dashboard
 }
 
 export const groupData = (
-	data: [string, number][] | undefined,
+	data: [number, number][] | undefined,
 	grouping: DashboardGrouping = 'day'
-): [string, number][] => {
+): [number, number][] => {
 	if (!data || data.length === 0) return []
 
 	if (grouping === 'day') {
 		return data
 	}
 
-	const groupedData: { [key: string]: number } = {}
-
-	for (const [timestampStr, value] of data) {
-		const groupKey = getGroupedTimestampSec(parseInt(timestampStr), grouping).toString()
-
-		if (groupedData[groupKey]) {
-			groupedData[groupKey] += +value
-		} else {
-			groupedData[groupKey] = +value
-		}
+	const groupedData: [number, number][] = []
+	for (const [timestamp, value] of data) {
+		const groupKey = getGroupedTimestampSec(timestamp, grouping)
+		const lastGroup = groupedData[groupedData.length - 1]
+		if (lastGroup?.[0] === groupKey) lastGroup[1] += value
+		else groupedData.push([groupKey, value])
 	}
 
-	const entries: [string, number][] = []
-	for (const key in groupedData) {
-		entries.push([key, groupedData[key]])
-	}
-	return entries.sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+	return groupedData
 }
 
-export const convertToCumulative = <T extends string | number>(data: [T, number][] | undefined): [T, number][] => {
+/** Convert ascending flow points to running totals without re-sorting or coercing the typed input. */
+export const convertToCumulative = (data: [number, number][] | undefined): [number, number][] => {
 	if (!data || data.length === 0) return []
 
-	const sorted = data.toSorted((a, b) => {
-		const aVal = typeof a[0] === 'string' ? parseInt(a[0]) : (a[0] as number)
-		const bVal = typeof b[0] === 'string' ? parseInt(b[0]) : (b[0] as number)
-		return aVal - bVal
-	})
+	const result = new Array<[number, number]>(data.length)
 	let cumulative = 0
-
-	return sorted.map(([timestamp, value]) => {
+	for (let i = 0; i < data.length; i++) {
+		const [timestamp, value] = data[i]
 		cumulative += value
-		return [timestamp, cumulative]
-	})
+		result[i] = [timestamp, cumulative]
+	}
+	return result
 }
 
 // Icon URL helper functions

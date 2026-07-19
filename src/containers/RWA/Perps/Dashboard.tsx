@@ -6,6 +6,7 @@ import { lazy, Suspense, useDeferredValue, useMemo, useState, type ReactNode } f
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { ChartGroupingSelector, DWM_GROUPING_OPTIONS_LOWERCASE } from '~/components/ECharts/ChartGroupingSelector'
+import { createChartRow } from '~/components/ECharts/dynamicRow'
 import type {
 	IHBarChartProps,
 	IMultiSeriesChart2Props,
@@ -119,6 +120,7 @@ const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<ITreemapChartProps>
 
 const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
+const EMPTY_SNAPSHOT_BREAKDOWN_ROWS: Array<{ name: string; value: number }> = []
 const PIE_CHART_RADIUS = ['50%', '70%'] as [string, string]
 const FOREX_ASSET_CLASS = 'Forex Perps'
 const UNKNOWN_FILTER_VALUE = 'Unknown'
@@ -1509,7 +1511,7 @@ export function buildRWAPerpsTimeSeriesDatasetForRows({
 	if (labelBySeries.size === 0) return EMPTY_DATASET
 
 	const source = dataset.source.map((row) => {
-		const nextRow: RWAChartRow = { timestamp: row.timestamp }
+		const nextRow = createChartRow<number | null>(row.timestamp) as RWAChartRow
 
 		for (const [series, label] of labelBySeries) {
 			const value = row[series]
@@ -1655,6 +1657,10 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const chartMetricLabel = getRWAPerpsChartMetricLabel(chartState.metric, d)
 	const chartMetricOptions = getRWAPerpsChartMetricOptions(d)
 	const chartViewOptions = getRWAPerpsChartViewOptions()
+	const isTimeSeriesView = chartState.view === 'timeSeries'
+	const isPieView = chartState.view === 'pie'
+	const isHBarView = chartState.view === 'hbar'
+	const isTreemapView = chartState.view === 'treemap'
 	const chartBreakdownOptions = getRWAPerpsChartBreakdownOptions({ ...chartState, labels: d })
 	const timeSeriesBreakdownOptions =
 		chartState.view === 'timeSeries'
@@ -1863,91 +1869,126 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		chartState.view === 'timeSeries' && shouldUseInitialTimeSeriesDataset
 			? initialChartDataset
 			: (timeSeriesQuery.data ?? EMPTY_DATASET)
-	const rawTimeSeriesDataset = hasActiveMarketFilters
-		? buildRWAPerpsTimeSeriesDatasetForRows({
-				dataset: fetchedTimeSeriesDataset,
-				rows: currentRows,
-				mode: props.mode,
-				breakdown: chartState.breakdown as RWAPerpsTimeSeriesBreakdownForMode,
-				seriesKey: 'id'
-			})
-		: fetchedTimeSeriesDataset
+	const rawTimeSeriesDataset = useMemo(() => {
+		if (!isTimeSeriesView) return EMPTY_DATASET
+		return hasActiveMarketFilters
+			? buildRWAPerpsTimeSeriesDatasetForRows({
+					dataset: fetchedTimeSeriesDataset,
+					rows: currentRows,
+					mode: props.mode,
+					breakdown: chartState.breakdown as RWAPerpsTimeSeriesBreakdownForMode,
+					seriesKey: 'id'
+				})
+			: fetchedTimeSeriesDataset
+	}, [
+		chartState.breakdown,
+		currentRows,
+		fetchedTimeSeriesDataset,
+		hasActiveMarketFilters,
+		isTimeSeriesView,
+		props.mode
+	])
 	const shouldShowTotalOverlay = chartState.timeSeriesMode === 'breakdown' && chartState.metric !== 'volume24h'
-	const ungroupedTimeSeriesDataset =
-		chartState.timeSeriesMode === 'grouped'
+	const ungroupedTimeSeriesDataset = useMemo(() => {
+		if (!isTimeSeriesView) return EMPTY_DATASET
+		return chartState.timeSeriesMode === 'grouped'
 			? groupRWAPerpsTimeSeriesDataset(rawTimeSeriesDataset)
 			: shouldShowTotalOverlay
 				? appendRWAPerpsTimeSeriesDatasetTotal(rawTimeSeriesDataset)
 				: rawTimeSeriesDataset
+	}, [chartState.timeSeriesMode, isTimeSeriesView, rawTimeSeriesDataset, shouldShowTotalOverlay])
 	const selectedTimeSeriesDataset = useMemo(
 		() =>
-			chartState.metric === 'volume24h'
-				? groupMultiSeriesBarChartDataset({ dataset: ungroupedTimeSeriesDataset, groupBy: volumeGroupBy })
-				: ungroupedTimeSeriesDataset,
-		[chartState.metric, ungroupedTimeSeriesDataset, volumeGroupBy]
+			!isTimeSeriesView
+				? EMPTY_DATASET
+				: chartState.metric === 'volume24h'
+					? groupMultiSeriesBarChartDataset({ dataset: ungroupedTimeSeriesDataset, groupBy: volumeGroupBy })
+					: ungroupedTimeSeriesDataset,
+		[chartState.metric, isTimeSeriesView, ungroupedTimeSeriesDataset, volumeGroupBy]
 	)
 
-	const timeSeriesCharts = buildRWAPerpsTimeSeriesCharts({
-		metric: chartState.metric,
-		dimensions: selectedTimeSeriesDataset.dimensions,
-		timeSeriesMode: chartState.timeSeriesMode
-	})
+	const timeSeriesCharts = useMemo(
+		() =>
+			isTimeSeriesView
+				? buildRWAPerpsTimeSeriesCharts({
+						metric: chartState.metric,
+						dimensions: selectedTimeSeriesDataset.dimensions,
+						timeSeriesMode: chartState.timeSeriesMode
+					})
+				: [],
+		[chartState.metric, chartState.timeSeriesMode, isTimeSeriesView, selectedTimeSeriesDataset.dimensions]
+	)
 	const timeSeriesLegendNames = useMemo(
 		() => getLegendSeriesNames(timeSeriesCharts.map((series) => series.name)),
 		[timeSeriesCharts]
 	)
+	const timeSeriesChartOptions = useMemo(() => ({ legend: { data: timeSeriesLegendNames } }), [timeSeriesLegendNames])
 
-	const snapshotBreakdownRows = useMemo(
-		() =>
-			props.mode === 'overview'
-				? buildRWAPerpsOverviewSnapshotBreakdownTotals({
+	const snapshotBreakdownRows = useMemo(() => {
+		if (!isPieView && !isHBarView) return EMPTY_SNAPSHOT_BREAKDOWN_ROWS
+		return props.mode === 'overview'
+			? buildRWAPerpsOverviewSnapshotBreakdownTotals({
+					rows: currentRows,
+					breakdown: chartState.breakdown as RWAPerpsOverviewSnapshotBreakdown,
+					key: chartState.metric
+				})
+			: props.mode === 'venue'
+				? buildRWAPerpsVenueSnapshotBreakdownTotals({
 						rows: currentRows,
-						breakdown: chartState.breakdown as RWAPerpsOverviewSnapshotBreakdown,
+						breakdown: chartState.breakdown as RWAPerpsVenueSnapshotBreakdown,
 						key: chartState.metric
 					})
-				: props.mode === 'venue'
-					? buildRWAPerpsVenueSnapshotBreakdownTotals({
-							rows: currentRows,
-							breakdown: chartState.breakdown as RWAPerpsVenueSnapshotBreakdown,
-							key: chartState.metric
-						})
-					: buildRWAPerpsAssetGroupSnapshotBreakdownTotals({
-							rows: currentRows,
-							breakdown: chartState.breakdown as RWAPerpsAssetGroupSnapshotBreakdown,
-							key: chartState.metric
-						}),
-		[chartState.breakdown, chartState.metric, currentRows, props.mode]
-	)
+				: buildRWAPerpsAssetGroupSnapshotBreakdownTotals({
+						rows: currentRows,
+						breakdown: chartState.breakdown as RWAPerpsAssetGroupSnapshotBreakdown,
+						key: chartState.metric
+					})
+	}, [chartState.breakdown, chartState.metric, currentRows, isHBarView, isPieView, props.mode])
 
 	const pieChartData = useMemo(
-		() => preparePieChartData({ data: snapshotBreakdownRows, limit: 10 }),
-		[snapshotBreakdownRows]
+		() => (isPieView || isHBarView ? preparePieChartData({ data: snapshotBreakdownRows, limit: 10 }) : []),
+		[isHBarView, isPieView, snapshotBreakdownRows]
 	)
 	const deferredPieChartData = useDeferredValue(pieChartData)
 	const deferredTimeSeriesDataset = useDeferredValue(selectedTimeSeriesDataset)
 	const hasTimeSeriesHistory = useMemo(() => hasEnoughTimeSeriesHistory(rawTimeSeriesDataset), [rawTimeSeriesDataset])
 	const pieChartColors = useMemo(() => {
+		if (!isPieView && !isHBarView) return {}
 		const colorMap: Record<string, string> = {}
 		for (const [index, item] of deferredPieChartData.entries()) {
 			colorMap[item.name] = CHART_COLORS[index % CHART_COLORS.length]
 		}
 		return colorMap
-	}, [deferredPieChartData])
+	}, [deferredPieChartData, isHBarView, isPieView])
 
-	const barChartData = useMemo(() => limitRwaHorizontalBarData(deferredPieChartData), [deferredPieChartData])
+	const barChartData = useMemo(
+		() => (isHBarView ? limitRwaHorizontalBarData(deferredPieChartData) : []),
+		[deferredPieChartData, isHBarView]
+	)
 
 	const treemapTreeData = useMemo(
 		() =>
-			buildRWAPerpsTreemapTreeData({
-				mode: props.mode,
-				markets: currentRows,
-				metric: chartState.metric,
-				parentGrouping: treemapBreakdown,
-				nestedBy: chartState.treemapNestedBy,
-				venueLabel
-			}),
-		[chartState.metric, chartState.treemapNestedBy, currentRows, props.mode, treemapBreakdown, venueLabel]
+			isTreemapView
+				? buildRWAPerpsTreemapTreeData({
+						mode: props.mode,
+						markets: currentRows,
+						metric: chartState.metric,
+						parentGrouping: treemapBreakdown,
+						nestedBy: chartState.treemapNestedBy,
+						venueLabel
+					})
+				: [],
+		[
+			chartState.metric,
+			chartState.treemapNestedBy,
+			currentRows,
+			isTreemapView,
+			props.mode,
+			treemapBreakdown,
+			venueLabel
+		]
 	)
+	const hasNonTimeSeriesData = isTreemapView ? treemapTreeData.length > 0 : snapshotBreakdownRows.length > 0
 	const { chartInstance: timeSeriesChartInstance, handleChartReady: handleTimeSeriesChartReady } = useGetChartInstance()
 	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
 	const { chartInstance: barChartInstance, handleChartReady: handleBarChartReady } = useGetChartInstance()
@@ -2188,7 +2229,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							<MultiSeriesChart2
 								dataset={deferredTimeSeriesDataset}
 								charts={timeSeriesCharts}
-								chartOptions={{ legend: { data: timeSeriesLegendNames } }}
+								chartOptions={timeSeriesChartOptions}
 								hideDefaultLegend={false}
 								showTotalInTooltip={!deferredTimeSeriesDataset.dimensions.includes('Total')}
 								groupBy={chartState.metric === 'volume24h' ? volumeGroupBy : undefined}
@@ -2243,7 +2284,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							smol
 						/>
 					</ChartPanelToolbar>
-					{snapshotBreakdownRows.length === 0 ? (
+					{!hasNonTimeSeriesData ? (
 						<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
 							No chart data available.
 						</ChartPanelBodyFallback>

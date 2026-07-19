@@ -1,38 +1,21 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useEffect, useMemo } from 'react'
-import type { IChartProps } from '~/components/ECharts/types'
+import { lazy, useEffect } from 'react'
+import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
-import { FLARE_BLUE, FLARE_ORANGE, lastNDaysZoom } from './chartDefaults'
-import { chartToData, type UpstreamChart } from './transform'
+import { buildFlareStakingData, type StakingAPIResponse } from './data'
 import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
 
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
-
-interface FormattedValue {
-	value: number
-	formatted: string
-}
-
-interface StakingAPIResponse {
-	narrative?: string
-	stakingDelegationChart?: UpstreamChart
-	kpis: {
-		pctStakedOrDelegated: FormattedValue
-		ftsoDelegated: FormattedValue
-		ftsoDelegatedUsd?: FormattedValue
-		totalStake: FormattedValue
-		validatorCount: FormattedValue
-		averageUptime: FormattedValue
-	}
-}
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 
 export default function Staking() {
-	const query = useQuery<StakingAPIResponse>({
+	const query = useQuery({
 		queryKey: ['flare-staking'],
 		queryFn: async () => {
 			const res = await fetch('/api/public/flare/staking')
 			if (!res.ok) throw new Error(`Flare staking API error: ${res.status}`)
-			return res.json()
+			return buildFlareStakingData((await res.json()) as StakingAPIResponse)
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
@@ -44,22 +27,10 @@ export default function Staking() {
 		if (query.data) onContentReady()
 	}, [query.data, onContentReady])
 
-	const chart = useMemo(() => {
-		const c = query.data?.stakingDelegationChart
-		if (!c) return null
-		return {
-			title: c.title ?? 'P-Chain Staking vs. FTSO Delegation',
-			subtitle: c.subtitle,
-			data: chartToData(c),
-			stacks: c.series.map((s) => s.name),
-			// P-chain staking (the FIP.16 winner) in orange, FTSO delegation in blue.
-			colors: Object.fromEntries(c.series.map((s) => [s.name, /ftso|deleg/i.test(s.name) ? FLARE_BLUE : FLARE_ORANGE]))
-		}
-	}, [query.data])
-
 	if (!query.data) return null
 
 	const k = query.data.kpis
+	const chart = query.data.chart
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -67,33 +38,30 @@ export default function Staking() {
 
 			<SectionHeader>Staking &amp; Delegation</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-				<KpiCard label="% of Circ. Supply Staked or Delegated" value={k.pctStakedOrDelegated.formatted} />
-				<KpiCard label="FTSO Delegation" value={k.ftsoDelegated.formatted} sub={k.ftsoDelegatedUsd?.formatted} />
-				<KpiCard label="Total Stake" value={k.totalStake.formatted} />
-				<KpiCard label="Validators" value={k.validatorCount.formatted} />
-				<KpiCard label="Avg Uptime" value={k.averageUptime.formatted} />
+				<KpiCard label="% of Circ. Supply Staked or Delegated" value={k.pctStakedOrDelegated} />
+				<KpiCard label="FTSO Delegation" value={k.ftsoDelegated} sub={k.ftsoDelegatedUsd} />
+				<KpiCard label="Total Stake" value={k.totalStake} />
+				<KpiCard label="Validators" value={k.validatorCount} />
+				<KpiCard label="Avg Uptime" value={k.averageUptime} />
 			</div>
 
-			{chart && chart.data.length > 0 && (
+			{chart && chart.dataset.source.length > 0 && (
 				<ChartCard title={chart.title}>
 					<div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-pro-text-label">
-						{chart.stacks.map((name) => (
+						{chart.seriesNames.map((name) => (
 							<span key={name} className="flex items-center gap-1.5">
 								<span className="size-2.5 rounded-full" style={{ backgroundColor: chart.colors[name] }} />
 								{name}
 							</span>
 						))}
 					</div>
-					<AreaChart
-						chartData={chart.data}
-						stacks={chart.stacks}
-						stackColors={chart.colors}
+					<MultiSeriesChart2
+						dataset={chart.dataset}
+						charts={chart.charts}
 						valueSymbol=""
 						title=""
-						hideGradient
-						hideLegend
 						height="360px"
-						chartOptions={lastNDaysZoom(chart.data.length)}
+						chartOptions={chart.chartOptions}
 					/>
 					{chart.subtitle && <p className="mt-2 text-xs leading-relaxed text-pro-text-label">{chart.subtitle}</p>}
 				</ChartCard>

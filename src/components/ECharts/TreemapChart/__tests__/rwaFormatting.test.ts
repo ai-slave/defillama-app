@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-	formatRwaTreemapBoxLabel,
-	formatRwaTreemapTooltip,
-	formatRwaUpperLabel,
-	normalizeTreemapValue
-} from '../rwaFormatting'
+import { formatRwaTreemapBoxLabel, formatRwaTreemapTooltip, formatRwaUpperLabel } from '../rwaFormatting'
 
 describe('rwa treemap formatting', () => {
 	it('keeps flat box and upper labels name-only', () => {
@@ -47,9 +42,13 @@ describe('rwa treemap formatting', () => {
 		expect(tooltip).toContain('Share of Total: 44.44%<br>')
 	})
 
-	it('normalizes treemap values into a consistent numeric tuple', () => {
-		expect(normalizeTreemapValue([3, '6.12', null])).toEqual([3, 6.12, null])
-		expect(normalizeTreemapValue(5)).toEqual([5, null, null])
-		expect(normalizeTreemapValue(undefined)).toEqual([0, null, null])
+	it('keeps the canonical tuple fallback for incomplete ECharts events', () => {
+		const tooltip = formatRwaTreemapTooltip({
+			info: { name: 'RWA' },
+			valueLabel: 'Market Cap',
+			formatMetricValue: (value) => String(value)
+		})
+
+		expect(tooltip).toBe('RWA<br>Market Cap: 0<br>')
 	})
 })

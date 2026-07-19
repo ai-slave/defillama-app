@@ -1,3 +1,4 @@
+import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import {
 	SERVER_URL,
 	V2_SERVER_URL,
@@ -51,6 +52,12 @@ function recordValue(value: unknown, field: string): unknown {
 
 function stringValue(value: unknown): string | null {
 	return typeof value === 'string' && value ? value : null
+}
+
+function createDownloadChartRow(date: unknown): Record<string, unknown> {
+	const row = createChartRecord<unknown>()
+	row.date = date
+	return row
 }
 
 /**
@@ -218,7 +225,7 @@ const extractLiteChartRows = (json: unknown): Array<Record<string, unknown>> => 
 		return json
 			.filter((item): item is JsonRecord => isRecord(item) && item.date != null)
 			.map((item) => {
-				const row: Record<string, unknown> = { date: item.date }
+				const row = createDownloadChartRow(item.date)
 				for (const [key, val] of Object.entries(item)) {
 					if (key === 'date') continue
 					row[key] = val
@@ -245,7 +252,7 @@ const extractLiteChartRows = (json: unknown): Array<Record<string, unknown>> => 
 					if (!Number.isFinite(ts)) continue
 					let row = tsMap.get(ts)
 					if (!row) {
-						row = { date: ts }
+						row = createDownloadChartRow(ts)
 						tsMap.set(ts, row)
 					}
 					row[metric] = entry[1]
@@ -262,7 +269,7 @@ const extractLiteChartRows = (json: unknown): Array<Record<string, unknown>> => 
 		return [...timestampSet]
 			.sort((a, b) => Number(a) - Number(b))
 			.map((ts) => {
-				const row: Record<string, unknown> = { date: Number(ts) }
+				const row = createDownloadChartRow(Number(ts))
 				for (const metric of metrics) {
 					const series = json[metric]
 					row[metric] = isRecord(series) ? (series[ts] ?? null) : null
@@ -311,7 +318,7 @@ const extractRWACategoryRows = (json: unknown): Array<Record<string, unknown>> =
 	return json
 		.filter((item): item is JsonRecord => isRecord(item) && item.timestamp != null)
 		.map((item) => {
-			const row: Record<string, unknown> = { date: item.timestamp }
+			const row = createDownloadChartRow(item.timestamp)
 			for (const [key, val] of Object.entries(item)) {
 				if (key === 'timestamp') continue
 				row[key] = val
@@ -483,7 +490,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 			return onChainMcap
 				.filter((item) => item.timestamp != null)
 				.map((item) => {
-					const row: Record<string, unknown> = { date: item.timestamp }
+					const row = createDownloadChartRow(item.timestamp)
 					const catTotals = new Map<string, number>()
 					for (const [key, val] of Object.entries(item)) {
 						if (key === 'timestamp') continue
@@ -591,7 +598,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 			return onChainMcap
 				.filter((item) => item.timestamp != null)
 				.map((item) => {
-					const row: Record<string, unknown> = { date: item.timestamp }
+					const row = createDownloadChartRow(item.timestamp)
 					const seen = new Map<string, number>()
 					for (const [key, val] of Object.entries(item)) {
 						if (key === 'timestamp') continue

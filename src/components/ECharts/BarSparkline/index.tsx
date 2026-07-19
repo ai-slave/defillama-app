@@ -7,7 +7,7 @@ import { useChartResize } from '~/hooks/useChartResize'
 
 echarts.use([BarChart, GridComponent, CanvasRenderer])
 
-type PrimitiveBarPoint = [number, number | null | undefined]
+type PrimitiveBarPoint = [number, number]
 
 interface BarSparklineProps {
 	data?: PrimitiveBarPoint[]
@@ -17,59 +17,47 @@ interface BarSparklineProps {
 	maxBars?: number
 }
 
-// Colors for up/down bars
-const SUCCESS_RGB: [number, number, number] = [34, 197, 94] // green-500
-const ERROR_RGB: [number, number, number] = [239, 68, 68] // red-500
+const SUCCESS_COLOR = 'rgb(34, 197, 94)'
+const ERROR_COLOR = 'rgb(239, 68, 68)'
 
 export function BarSparkline({ data, className, height = 48, focusable, maxBars = 60 }: BarSparklineProps) {
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
-	const seriesData = useMemo(() => {
-		if (!data) return []
-		const filtered = data
-			.filter((point) => Array.isArray(point) && Number.isFinite(point[1] ?? NaN))
-			.map(([timestamp, value]) => [timestamp * 1000, Number(value)])
+	const chartData = useMemo(() => {
+		const xAxisData: number[] = []
+		const bars: Array<{ value: number; itemStyle: { color: string; borderRadius: number[] } }> = []
+		if (!data?.length) return { xAxisData, bars }
 
-		// If we have more data points than maxBars, take evenly spaced samples
-		if (filtered.length > maxBars) {
-			const step = Math.ceil(filtered.length / maxBars)
-			const sampled: typeof filtered = []
-			for (let i = 0; i < filtered.length; i += step) {
-				sampled.push(filtered[i])
-			}
-			// Always include the last point
-			if (sampled[sampled.length - 1] !== filtered[filtered.length - 1]) {
-				sampled.push(filtered[filtered.length - 1])
-			}
-			return sampled
-		}
-		return filtered
-	}, [data, maxBars])
-
-	// Calculate per-bar colors based on comparison to previous bar
-	const barDataWithColors = useMemo(() => {
-		return seriesData.map(([, value], index) => {
-			let rgb = SUCCESS_RGB // Default to green
-			if (index > 0) {
-				const prevValue = seriesData[index - 1][1]
-				if (value < prevValue) {
-					rgb = ERROR_RGB
-				}
-			}
-
-			return {
+		const step = data.length > maxBars ? Math.ceil(data.length / maxBars) : 1
+		let previousValue: number | undefined
+		let lastIndex = -1
+		const appendPoint = (index: number) => {
+			const [timestamp, value] = data[index]
+			xAxisData.push(timestamp * 1000)
+			bars.push({
 				value,
 				itemStyle: {
-					color: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+					color: previousValue !== undefined && value < previousValue ? ERROR_COLOR : SUCCESS_COLOR,
 					borderRadius: [2, 2, 0, 0]
 				}
-			}
-		})
-	}, [seriesData])
-	const hasData = seriesData.length > 0
+			})
+			previousValue = value
+			lastIndex = index
+		}
+
+		for (let i = 0; i < data.length; i += step) {
+			appendPoint(i)
+		}
+		if (lastIndex !== data.length - 1) {
+			appendPoint(data.length - 1)
+		}
+
+		return { xAxisData, bars }
+	}, [data, maxBars])
+	const hasData = chartData.xAxisData.length > 0
 
 	useEffect(() => {
 		if (!hasData) return
@@ -91,7 +79,7 @@ export function BarSparkline({ data, className, height = 48, focusable, maxBars 
 		if (instance.isDisposed()) return
 
 		// Dynamic bar sizing based on number of data points
-		const barCount = seriesData.length
+		const barCount = chartData.xAxisData.length
 		// For fewer bars, use thicker bars with less gap
 		const barMaxWidth = barCount <= 7 ? 20 : barCount <= 15 ? 14 : barCount <= 30 ? 8 : barCount <= 60 ? 5 : 3
 		const barCategoryGap = barCount <= 7 ? '25%' : barCount <= 15 ? '35%' : barCount <= 30 ? '40%' : '50%'
@@ -111,7 +99,7 @@ export function BarSparkline({ data, className, height = 48, focusable, maxBars 
 				},
 				xAxis: {
 					type: 'category',
-					data: seriesData.map(([ts]) => ts),
+					data: chartData.xAxisData,
 					axisLine: { show: false },
 					axisTick: { show: false },
 					axisLabel: { show: false },
@@ -130,7 +118,8 @@ export function BarSparkline({ data, className, height = 48, focusable, maxBars 
 							return value.min - pad
 						}
 						const pad = (value.max - value.min) * 0.08
-						return Math.max(0, value.min - pad)
+						const paddedMin = value.min - pad
+						return value.min < 0 ? paddedMin : Math.max(0, paddedMin)
 					},
 					max: (value) => {
 						if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
@@ -145,7 +134,7 @@ export function BarSparkline({ data, className, height = 48, focusable, maxBars 
 				series: [
 					{
 						type: 'bar',
-						data: barDataWithColors,
+						data: chartData.bars,
 						barMaxWidth,
 						barMinWidth: 4,
 						barCategoryGap
@@ -154,7 +143,7 @@ export function BarSparkline({ data, className, height = 48, focusable, maxBars 
 			},
 			true
 		)
-	}, [seriesData, barDataWithColors])
+	}, [chartData])
 
 	if (!hasData) {
 		return null

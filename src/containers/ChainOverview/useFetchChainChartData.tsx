@@ -15,11 +15,17 @@ import { getFeeRevenueChainChartApiParams } from '~/metrics/routeSemantics'
 import { fetchJson } from '~/utils/async'
 import type { ChainChartLabels } from './constants'
 import { buildChainTvlChartState } from './tvlChart'
+import type { ChainOverviewChartData } from './types'
 
-const normalizeActivityChart = (values: Array<[number, number]> | null): Array<[number, number]> | null =>
-	values && values.length > 0
-		? values.map(([date, value]): [number, number] => [date * 1e3, +value]).sort((a, b) => a[0] - b[0])
-		: null
+const normalizeActivityChart = (values: Array<[number, number]> | null): Array<[number, number]> | null => {
+	if (!values?.length) return null
+	const normalized: Array<[number, number]> = new Array(values.length)
+	for (let index = 0; index < values.length; index++) {
+		const point = values[index]
+		normalized[index] = [point[0] * 1e3, point[1]]
+	}
+	return normalized
+}
 
 const buildChainChartApiUrl = (params: Record<string, string | undefined>) => {
 	const searchParams = new URLSearchParams()
@@ -429,7 +435,7 @@ export const useFetchChainChartData = ({
 	const hasAppFeeExtraError = !!(appBribesError || appTokenTaxError)
 
 	const chartData = useMemo(() => {
-		const charts: { [key in ChainChartLabels]?: Array<[number, number]> } = {}
+		const charts: ChainOverviewChartData = {}
 
 		const loadingCharts = []
 
@@ -498,7 +504,7 @@ export const useFetchChainChartData = ({
 
 		if (loadingCharts.length > 0) {
 			return {
-				finalCharts: {} as Record<string, Array<[string | number, number]>>,
+				finalCharts: {} as ChainOverviewChartData,
 				valueSymbol: denomination === 'USD' ? '$' : denomination,
 				loadingCharts: loadingCharts.join(', ').toLowerCase(),
 				failedMetrics: [] as ChainChartLabels[]

@@ -1,5 +1,5 @@
 import { LIQUIDATIONS_SERVER_URL_V2, TOKEN_DIRECTORY_API } from '~/constants'
-import type { RawBridgesResponse } from '~/containers/Bridges/api.types'
+import type { RawBridgesWithChainsResponse } from '~/containers/Bridges/api.types'
 import type { RawCexsResponse } from '~/containers/Cexs/api.types'
 import type { IEquitiesCompanyRoute } from '~/containers/Equities/api.types'
 import { fetchEquitiesCompanyRouteMetadata } from '~/containers/Equities/server/metadata'
@@ -33,7 +33,7 @@ export type CoreMetadataSources = {
 	tokenlistArray: RawTokenListItem[]
 	tokenDirectory: TokenDirectory
 	liquidationsResponse: RawAllLiquidationsResponse
-	bridgesResponse: RawBridgesResponse
+	bridgesResponse: RawBridgesWithChainsResponse
 	emissionsProtocolsList: string[]
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
 	emissions: UnlockHistoricalPriceProtocol[]
@@ -109,7 +109,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		),
 		fetchNamedMetadataSource(
 			'bridges metadata API',
-			fetchMetadataJson<RawBridgesResponse>(`${bridgesBase}/bridges?includeChains=true`)
+			fetchMetadataJson<RawBridgesWithChainsResponse>(`${bridgesBase}/bridges?includeChains=true`)
 		),
 		fetchNamedMetadataSource(
 			'emissions protocols API',

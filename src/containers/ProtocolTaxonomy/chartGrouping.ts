@@ -1,5 +1,6 @@
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
-import { formatBarChart, formatLineChart } from '~/components/ECharts/utils'
+import { getBucketTimestampMs } from '~/components/ECharts/utils'
 import type { IProtocolTaxonomyPageData } from './types'
 
 type ProtocolTaxonomyCharts = IProtocolTaxonomyPageData['charts']
@@ -18,7 +19,6 @@ export function buildProtocolTaxonomyGroupedCharts({
 	groupBy: ChartTimeGroupingWithCumulative
 }): ProtocolTaxonomyGroupedChartsResult {
 	const chartSeries = (charts.charts ?? []) as ProtocolTaxonomyChartSeries[]
-	const dataByDimension = new Map<string, Array<[number, number]>>()
 	const barDimensions = new Set<string>()
 	const dimensionOrder: string[] = []
 
@@ -26,9 +26,6 @@ export function buildProtocolTaxonomyGroupedCharts({
 		const yDimension = series.encode.y
 
 		dimensionOrder.push(yDimension)
-		if (!dataByDimension.has(yDimension)) {
-			dataByDimension.set(yDimension, [])
-		}
 		if (series.type === 'bar') {
 			barDimensions.add(yDimension)
 		}
@@ -38,52 +35,43 @@ export function buildProtocolTaxonomyGroupedCharts({
 
 	let hasBarCharts = false
 	const sourceRows = charts.dataset.source as ProtocolTaxonomyChartRow[]
-	for (const row of sourceRows) {
-		const timestamp = row.timestamp
-		for (const [dimension, rawData] of dataByDimension) {
-			const value = row[dimension]
+	const source: ProtocolTaxonomyChartRow[] = []
+	const cumulativeTotals = createChartRecord<number>()
+	const isCumulative = groupBy === 'cumulative'
+
+	for (const inputRow of sourceRows) {
+		const timestamp = groupBy === 'cumulative' ? inputRow.timestamp : getBucketTimestampMs(inputRow.timestamp, groupBy)
+		let outputRow = source[source.length - 1]
+		let hasOutputAtTimestamp = outputRow?.timestamp === timestamp
+
+		for (const series of chartSeries) {
+			const dimension = series.encode.y
+			const value = inputRow[dimension]
 			if (value == null) continue
-			if (barDimensions.has(dimension)) hasBarCharts = true
-			rawData.push([timestamp, value])
+
+			if (!hasOutputAtTimestamp) {
+				outputRow = createChartRow<number | null>(timestamp)
+				source.push(outputRow)
+				hasOutputAtTimestamp = true
+			}
+
+			if (series.type === 'bar') {
+				hasBarCharts = true
+				if (isCumulative) {
+					const total = (cumulativeTotals[dimension] ?? 0) + value
+					cumulativeTotals[dimension] = total
+					outputRow![dimension] = total
+				} else {
+					outputRow![dimension] = (outputRow![dimension] ?? 0) + value
+				}
+			} else {
+				outputRow![dimension] = value
+			}
 		}
 	}
 
 	if (!hasBarCharts) return { charts, hasBarCharts: false }
 
-	const rowsByTimestamp = new Map<number, Record<string, number | null>>()
-	const groupedSeries: ProtocolTaxonomyCharts['charts'] = []
-
-	for (const series of chartSeries) {
-		const yDimension = series.encode.y
-
-		const groupedData =
-			series.type === 'bar'
-				? formatBarChart({
-						data: dataByDimension.get(yDimension) ?? [],
-						groupBy,
-						dateInMs: true,
-						denominationPriceHistory: null
-					})
-				: formatLineChart({
-						data: dataByDimension.get(yDimension) ?? [],
-						groupBy,
-						dateInMs: true,
-						denominationPriceHistory: null
-					})
-
-		for (const [timestamp, value] of groupedData) {
-			const row = rowsByTimestamp.get(timestamp) ?? { timestamp }
-			row[yDimension] = value
-			rowsByTimestamp.set(timestamp, row)
-		}
-
-		groupedSeries.push({
-			...series,
-			type: series.type === 'bar' && groupBy === 'cumulative' ? 'line' : series.type
-		})
-	}
-
-	const source = Array.from(rowsByTimestamp.values()).sort((a, b) => a.timestamp - b.timestamp)
 	for (const row of source) {
 		for (const dimension of dimensionOrder) {
 			if (!(dimension in row)) row[dimension] = null
@@ -97,7 +85,10 @@ export function buildProtocolTaxonomyGroupedCharts({
 				source,
 				dimensions: ['timestamp', ...dimensionOrder]
 			},
-			charts: groupedSeries
+			charts: chartSeries.map((series) => ({
+				...series,
+				type: series.type === 'bar' && isCumulative ? 'line' : series.type
+			}))
 		},
 		hasBarCharts: true
 	}

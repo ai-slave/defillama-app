@@ -1,27 +1,137 @@
 import { lazy, useMemo } from 'react'
-import type { IBarChartProps, IChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { type BerachainIncomeServerData, useBerachainIncomeData, useHoneyRevenueData } from './api'
+import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
 
-const BERACHAIN_COLORS = { 'Chain Fees': '#4FC3F7', Incentives: '#FFA726' }
-const BERACHAIN_STACKS = { 'Chain Fees': 'a', Incentives: 'a' }
+const TOTAL_REVENUE_CHARTS = [
+	{
+		type: 'line',
+		name: 'Chain Fees',
+		encode: { x: 'timestamp', y: 'Chain Fees' },
+		color: '#4FC3F7',
+		stack: 'Total'
+	},
+	{
+		type: 'line',
+		name: 'Incentives',
+		encode: { x: 'timestamp', y: 'Incentives' },
+		color: '#FFA726',
+		stack: 'Total'
+	},
+	{
+		type: 'line',
+		name: 'BEX Revenue',
+		encode: { x: 'timestamp', y: 'BEX Revenue' },
+		color: '#66BB6A',
+		stack: 'Total'
+	},
+	{
+		type: 'line',
+		name: 'BEND Revenue',
+		encode: { x: 'timestamp', y: 'BEND Revenue' },
+		color: '#EF5350',
+		stack: 'Total'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
 
-const BEX_COLORS = { Revenue: '#66BB6A' }
+const BERACHAIN_MONTHLY_CHARTS = [
+	{
+		type: 'bar',
+		name: 'Chain Fees',
+		encode: { x: 'timestamp', y: 'Chain Fees' },
+		color: '#4FC3F7',
+		stack: 'a'
+	},
+	{
+		type: 'bar',
+		name: 'Incentives',
+		encode: { x: 'timestamp', y: 'Incentives' },
+		color: '#FFA726',
+		stack: 'a'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
 
-const BEND_COLORS = { Fees: '#AB47BC', Revenue: '#EF5350' }
-const BEND_STACKS = { Fees: 'a', Revenue: 'a' }
+const CHAIN_FEES_CHART = [
+	{
+		type: 'line',
+		name: 'Chain Fees',
+		encode: { x: 'timestamp', y: 'Chain Fees' },
+		color: '#4FC3F7'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
 
-const TOTAL_REVENUE_COLORS = {
-	'Chain Fees': BERACHAIN_COLORS['Chain Fees'],
-	Incentives: BERACHAIN_COLORS.Incentives,
-	'BEX Revenue': BEX_COLORS.Revenue,
-	'BEND Revenue': BEND_COLORS.Revenue
-}
+const INCENTIVES_CHART = [
+	{
+		type: 'line',
+		name: 'Incentives',
+		encode: { x: 'timestamp', y: 'Incentives' },
+		color: '#FFA726'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
+
+const BEX_MONTHLY_CHART = [
+	{
+		type: 'bar',
+		name: 'Revenue',
+		encode: { x: 'timestamp', y: 'Revenue' },
+		color: '#66BB6A',
+		stack: 'a'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
+
+const BEX_CUMULATIVE_CHART = [
+	{
+		type: 'line',
+		name: 'Revenue',
+		encode: { x: 'timestamp', y: 'Revenue' },
+		color: '#66BB6A'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
+
+const BEND_MONTHLY_CHARTS = [
+	{
+		type: 'bar',
+		name: 'Fees',
+		encode: { x: 'timestamp', y: 'Fees' },
+		color: '#AB47BC',
+		stack: 'a'
+	},
+	{
+		type: 'bar',
+		name: 'Revenue',
+		encode: { x: 'timestamp', y: 'Revenue' },
+		color: '#EF5350',
+		stack: 'a'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
+
+const BEND_FEES_CHART = [
+	{
+		type: 'line',
+		name: 'Fees',
+		encode: { x: 'timestamp', y: 'Fees' },
+		color: '#AB47BC'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
+
+const BEND_REVENUE_CHART = [
+	{
+		type: 'line',
+		name: 'Revenue',
+		encode: { x: 'timestamp', y: 'Revenue' },
+		color: '#EF5350'
+	}
+] satisfies MultiSeriesChart2SeriesConfig[]
+
+const DOLLAR_CHART_OPTIONS = createChartOptions('$')
+const STACKED_DOLLAR_CHART_OPTIONS = createChartOptions('$', true)
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
@@ -84,9 +194,9 @@ function SectionHeader({ title }: { title: string }) {
 	return <h2 className="heading-xs tracking-tight text-pro-text-primary">{title}</h2>
 }
 
-function getCumulativeTotal(data: Record<string, number>[], key: string) {
-	if (data.length === 0) return null
-	return formattedNum(data[data.length - 1][key], true)
+function getCumulativeTotal(source: Record<string, number>[], key: string) {
+	if (source.length === 0) return null
+	return formattedNum(source[source.length - 1][key], true)
 }
 
 export default function IncomeBreakdown() {
@@ -97,12 +207,12 @@ export default function IncomeBreakdown() {
 	const kpis = useMemo(() => {
 		if (isLoading) return null
 		return {
-			chainFees: getCumulativeTotal(berachain.cumulative, 'Chain Fees'),
-			incentives: getCumulativeTotal(berachain.cumulative, 'Incentives'),
-			bexRevenue: getCumulativeTotal(bex.cumulative, 'Revenue'),
-			bexVolume: getCumulativeTotal(bex.volumeCumulative, 'Volume'),
-			bendFees: getCumulativeTotal(bend.cumulative, 'Fees'),
-			bendRevenue: getCumulativeTotal(bend.cumulative, 'Revenue')
+			chainFees: getCumulativeTotal(berachain.cumulative.source, 'Chain Fees'),
+			incentives: getCumulativeTotal(berachain.cumulative.source, 'Incentives'),
+			bexRevenue: getCumulativeTotal(bex.cumulative.source, 'Revenue'),
+			bexVolume: getCumulativeTotal(bex.volumeCumulative.source, 'Volume'),
+			bendFees: getCumulativeTotal(bend.cumulative.source, 'Fees'),
+			bendRevenue: getCumulativeTotal(bend.cumulative.source, 'Revenue')
 		}
 	}, [isLoading, berachain, bex, bend])
 
@@ -175,14 +285,15 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Cumulative Revenue (all sources)" />
 			) : (
 				<ChartCard title="Cumulative Revenue (all sources)">
-					<AreaChart
-						chartData={totalRevenue.cumulative}
-						stacks={['Chain Fees', 'Incentives', 'BEX Revenue', 'BEND Revenue']}
-						stackColors={TOTAL_REVENUE_COLORS}
+					<MultiSeriesChart2
+						dataset={totalRevenue.cumulative}
+						charts={TOTAL_REVENUE_CHARTS}
+						chartOptions={STACKED_DOLLAR_CHART_OPTIONS}
+						exportButtons={AREA_CHART_EXPORTS}
 						valueSymbol="$"
 						title=""
 						height="400px"
-						isStackedChart
+						solidChartAreaStyle
 					/>
 				</ChartCard>
 			)}
@@ -191,10 +302,12 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Monthly Breakdown" />
 			) : (
 				<ChartCard title="Monthly Breakdown">
-					<BarChart
-						chartData={berachain.monthly}
-						stacks={BERACHAIN_STACKS}
-						stackColors={BERACHAIN_COLORS}
+					<MultiSeriesChart2
+						dataset={berachain.monthly}
+						charts={BERACHAIN_MONTHLY_CHARTS}
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={BAR_CHART_EXPORTS}
+						hideDefaultLegend={false}
 						valueSymbol="$"
 						title=""
 						height="400px"
@@ -206,10 +319,11 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Cumulative Chain Fees" />
 			) : (
 				<ChartCard title="Cumulative Chain Fees">
-					<AreaChart
-						chartData={berachain.cumulative}
-						stacks={['Chain Fees']}
-						stackColors={BERACHAIN_COLORS}
+					<MultiSeriesChart2
+						dataset={berachain.chainFeesCumulative}
+						charts={CHAIN_FEES_CHART}
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={AREA_CHART_EXPORTS}
 						valueSymbol="$"
 						title=""
 						height="400px"
@@ -221,10 +335,11 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Cumulative Incentives" />
 			) : (
 				<ChartCard title="Cumulative Incentives">
-					<AreaChart
-						chartData={berachain.cumulative}
-						stacks={['Incentives']}
-						stackColors={BERACHAIN_COLORS}
+					<MultiSeriesChart2
+						dataset={berachain.incentivesCumulative}
+						charts={INCENTIVES_CHART}
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={AREA_CHART_EXPORTS}
 						valueSymbol="$"
 						title=""
 						height="400px"
@@ -252,10 +367,11 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Monthly Revenue" />
 			) : (
 				<ChartCard title="Monthly Revenue">
-					<BarChart
-						chartData={bex.monthly}
-						stacks={{ Revenue: 'a' }}
-						stackColors={BEX_COLORS}
+					<MultiSeriesChart2
+						dataset={bex.monthly}
+						charts={BEX_MONTHLY_CHART}
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={BAR_CHART_EXPORTS}
 						valueSymbol="$"
 						title=""
 						height="400px"
@@ -267,10 +383,11 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Cumulative Revenue" />
 			) : (
 				<ChartCard title="Cumulative Revenue">
-					<AreaChart
-						chartData={bex.cumulative}
-						stacks={['Revenue']}
-						stackColors={BEX_COLORS}
+					<MultiSeriesChart2
+						dataset={bex.cumulative}
+						charts={BEX_CUMULATIVE_CHART}
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={AREA_CHART_EXPORTS}
 						valueSymbol="$"
 						title=""
 						height="400px"
@@ -298,10 +415,12 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Monthly Breakdown" />
 			) : (
 				<ChartCard title="Monthly Breakdown">
-					<BarChart
-						chartData={bend.monthly}
-						stacks={BEND_STACKS}
-						stackColors={BEND_COLORS}
+					<MultiSeriesChart2
+						dataset={bend.monthly}
+						charts={BEND_MONTHLY_CHARTS}
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={BAR_CHART_EXPORTS}
+						hideDefaultLegend={false}
 						valueSymbol="$"
 						title=""
 						height="400px"
@@ -313,10 +432,11 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Cumulative Fees" />
 			) : (
 				<ChartCard title="Cumulative Fees">
-					<AreaChart
-						chartData={bend.cumulative}
-						stacks={['Fees']}
-						stackColors={BEND_COLORS}
+					<MultiSeriesChart2
+						dataset={bend.feesCumulative}
+						charts={BEND_FEES_CHART}
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={AREA_CHART_EXPORTS}
 						valueSymbol="$"
 						title=""
 						height="400px"
@@ -328,10 +448,11 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Cumulative Revenue" />
 			) : (
 				<ChartCard title="Cumulative Revenue">
-					<AreaChart
-						chartData={bend.cumulative}
-						stacks={['Revenue']}
-						stackColors={BEND_COLORS}
+					<MultiSeriesChart2
+						dataset={bend.revenueCumulative}
+						charts={BEND_REVENUE_CHART}
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={AREA_CHART_EXPORTS}
 						valueSymbol="$"
 						title=""
 						height="400px"

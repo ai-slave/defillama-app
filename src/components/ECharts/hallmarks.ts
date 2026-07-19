@@ -1,12 +1,10 @@
-import { getChartTheme } from './chartTheme'
-
 export function buildHallmarksMarkLine({
 	hallmarks,
-	isThemeDark,
+	textColor,
 	dateInMs = false
 }: {
 	hallmarks: [number, string][]
-	isThemeDark: boolean
+	textColor: string
 	dateInMs?: boolean
 }) {
 	const sorted = hallmarks.toSorted((a, b) => +a[0] - +b[0])
@@ -15,7 +13,7 @@ export function buildHallmarksMarkLine({
 		label: {
 			position: 'end' as const,
 			width: 200,
-			color: getChartTheme(isThemeDark).text,
+			color: textColor,
 			fontFamily: 'sans-serif',
 			overflow: 'truncate' as const,
 			rotate: 0,

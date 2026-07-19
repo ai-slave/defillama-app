@@ -1,4 +1,3 @@
-import { ensureChronologicalRows } from '~/components/ECharts/utils'
 import { RWA_SERVER_URL } from '~/constants'
 import {
 	fetchRWAAssetGroupBreakdownChartData,
@@ -84,7 +83,7 @@ export function buildAssetBreakdownUrl(request: RWAAssetBreakdownRequest): strin
 }
 
 export function normalizeAssetBreakdownRows(rows: IRWAChartMetricRows): IRWAChartMetricRows {
-	return ensureChronologicalRows((rows ?? []).map((row) => ({ ...row, timestamp: toUnixMsTimestamp(row.timestamp) })))
+	return (rows ?? []).map((row) => ({ ...row, timestamp: toUnixMsTimestamp(row.timestamp) }))
 }
 
 function assertNever(value: never): never {

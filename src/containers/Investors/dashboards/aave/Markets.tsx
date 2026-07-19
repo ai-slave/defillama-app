@@ -1,13 +1,45 @@
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IBarChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { formattedNum } from '~/utils'
 import { useAaveMarkets } from './api'
 import type { FlatReserve } from './api'
-import { InvestorsTable, PageLoader, ChartCard, KpiCard, MetricStrip, SectionHeader, formatPct } from './shared'
+import {
+	InvestorsTable,
+	PageLoader,
+	ChartCard,
+	KpiCard,
+	MetricStrip,
+	SectionHeader,
+	formatPct,
+	AAVE_BAR_EXPORT,
+	AAVE_CATEGORY_DOLLAR_CHART_OPTIONS,
+	AAVE_CATEGORY_PERCENT_CHART_OPTIONS
+} from './shared'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
+const MultiSeriesChart2 = lazy(
+	() => import('~/components/ECharts/MultiSeriesChart2')
+) as React.FC<IMultiSeriesChart2Props>
+
+const MARKET_SIZE_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Market Size',
+		type: 'bar',
+		encode: { x: 'Name', y: 'Market Size' },
+		color: '#4FC3F7',
+		stack: 'a'
+	}
+]
+const UTILIZATION_CHART: IMultiSeriesChart2Props['charts'] = [
+	{
+		name: 'Utilization',
+		type: 'bar',
+		encode: { x: 'Name', y: 'Utilization' },
+		color: '#AB47BC',
+		stack: 'a'
+	}
+]
 
 const reserveColumns: ColumnDef<FlatReserve>[] = [
 	{ header: 'Asset', accessorKey: 'symbol', size: 100 },
@@ -179,18 +211,22 @@ export default function Markets() {
 		}
 	}, [markets, reserves])
 
-	const marketSizeByChain = useMemo(() => {
+	const marketSizeDataset = useMemo<MultiSeriesChart2Dataset>(() => {
 		const chainMap = new Map<string, number>()
 		for (const m of markets) {
 			const prev = chainMap.get(m.chain.name) ?? 0
 			chainMap.set(m.chain.name, prev + parseFloat(m.totalMarketSize))
 		}
-		return Array.from(chainMap.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([name, size]) => ({ name, 'Market Size': size }))
+		const entries = Array.from(chainMap.entries()).sort((a, b) => b[1] - a[1])
+		const source = new Array<{ Name: string; 'Market Size': number }>(entries.length)
+		for (let i = 0; i < entries.length; i++) {
+			const [name, size] = entries[i]
+			source[i] = { Name: name, 'Market Size': size }
+		}
+		return { source, dimensions: ['Name', 'Market Size'] }
 	}, [markets])
 
-	const utilizationByAsset = useMemo(() => {
+	const utilizationDataset = useMemo<MultiSeriesChart2Dataset>(() => {
 		const assetMap = new Map<string, { totalBorrowed: number; totalSize: number }>()
 		for (const r of reserves) {
 			if (r.utilization == null) continue
@@ -200,15 +236,22 @@ export default function Markets() {
 				totalSize: prev.totalSize + r.sizeUsd
 			})
 		}
-		return Array.from(assetMap.entries())
-			.map(([symbol, data]) => ({
-				name: symbol,
+		const ranked: Array<{ Name: string; Utilization: number; size: number }> = []
+		for (const [symbol, data] of assetMap) {
+			ranked.push({
+				Name: symbol,
 				Utilization: data.totalSize > 0 ? (data.totalBorrowed / data.totalSize) * 100 : 0,
 				size: data.totalSize
-			}))
-			.sort((a, b) => b.size - a.size)
-			.slice(0, 20)
-			.filter((d) => d.Utilization > 0)
+			})
+		}
+		ranked.sort((a, b) => b.size - a.size)
+		const source: Array<{ Name: string; Utilization: number }> = []
+		const count = Math.min(20, ranked.length)
+		for (let i = 0; i < count; i++) {
+			const row = ranked[i]
+			if (row.Utilization > 0) source.push({ Name: row.Name, Utilization: row.Utilization })
+		}
+		return { source, dimensions: ['Name', 'Utilization'] }
 	}, [reserves])
 
 	if (isLoading) return <PageLoader />
@@ -228,27 +271,27 @@ export default function Markets() {
 
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
 				<ChartCard title="Market Size by Chain">
-					<BarChart
-						chartData={marketSizeByChain}
-						stacks={{ 'Market Size': 'a' }}
-						stackColors={{ 'Market Size': '#4FC3F7' }}
+					<MultiSeriesChart2
+						dataset={marketSizeDataset}
+						charts={MARKET_SIZE_CHART}
 						valueSymbol="$"
 						title=""
 						height="400px"
-						xAxisType="category"
+						chartOptions={AAVE_CATEGORY_DOLLAR_CHART_OPTIONS}
+						exportButtons={AAVE_BAR_EXPORT}
 					/>
 				</ChartCard>
 
-				{utilizationByAsset.length > 0 && (
+				{utilizationDataset.source.length > 0 && (
 					<ChartCard title="Utilization by Top Assets">
-						<BarChart
-							chartData={utilizationByAsset}
-							stacks={{ Utilization: 'a' }}
-							stackColors={{ Utilization: '#AB47BC' }}
+						<MultiSeriesChart2
+							dataset={utilizationDataset}
+							charts={UTILIZATION_CHART}
 							valueSymbol="%"
 							title=""
 							height="400px"
-							xAxisType="category"
+							chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
+							exportButtons={AAVE_BAR_EXPORT}
 						/>
 					</ChartCard>
 				)}

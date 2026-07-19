@@ -1,3 +1,4 @@
+import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { CHART_COLORS } from '~/constants/colors'
 import { getForkToOriginalTvlPercent } from './tvl'
@@ -33,11 +34,13 @@ export function mergeForkOverviewChartData({
 	const mergedRowsByTimestamp = new Map<number, ForkBreakdownChartData[number]>()
 
 	for (const row of chartData) {
-		mergedRowsByTimestamp.set(row.timestamp, { ...row })
+		const clone = createChartRow<number>(row.timestamp)
+		for (const key of Object.keys(row)) clone[key] = row[key]
+		mergedRowsByTimestamp.set(row.timestamp, clone)
 	}
 
 	for (const [timestamp, extraRow] of extraBreakdownByTimestamp) {
-		const mergedRow = mergedRowsByTimestamp.get(timestamp) ?? { timestamp }
+		const mergedRow = mergedRowsByTimestamp.get(timestamp) ?? createChartRow<number>(timestamp)
 
 		for (const key in extraRow) {
 			const value = extraRow[key]
@@ -107,7 +110,7 @@ export function buildForksOverviewDisplayData({
 	}
 
 	const tokenTvls = preparePieChartData({ data: tvls, limit: 5 })
-	const chartColors: Record<string, string> = { ...forkColors }
+	const chartColors = Object.assign(createChartRecord<string>(), forkColors)
 
 	for (let index = 0; index < sortedChartForks.length; index++) {
 		const name = sortedChartForks[index]
@@ -118,7 +121,7 @@ export function buildForksOverviewDisplayData({
 
 	const dominanceSource: Array<Record<string, number>> = []
 	for (const entry of chartData) {
-		const row: Record<string, number> = { timestamp: entry.timestamp * 1000 }
+		const row = createChartRow<number>(entry.timestamp * 1000)
 		let totalTvl = 0
 
 		for (const forkName of sortedChartForks) {

@@ -11,7 +11,7 @@ import {
 import type { ChartConfig } from '../../types'
 import { groupData } from '../../utils'
 
-const EMPTY_SERIES: [string, number][] = []
+const EMPTY_SERIES: [number, number][] = []
 
 export function useComposerItemsData(composerItems: ChartConfig[], timePeriod: TimePeriod) {
 	const streamDone = useContext(StreamDoneContext)
@@ -50,11 +50,10 @@ export function useComposerItemsData(composerItems: ChartConfig[], timePeriod: T
 	const itemsWithData = useMemo(() => {
 		return composerItems.map((item, index) => {
 			const queryResult = queries[index]
-			const rawData = (queryResult?.data ?? EMPTY_SERIES) as [string, number][]
+			const rawData = queryResult?.data ?? EMPTY_SERIES
 
 			const shouldGroup = item.grouping && item.grouping !== 'day'
-			const groupedData =
-				shouldGroup && Array.isArray(rawData) && rawData.length > 0 ? groupData(rawData, item.grouping) : rawData
+			const groupedData = shouldGroup && rawData.length > 0 ? groupData(rawData, item.grouping) : rawData
 
 			return {
 				...item,

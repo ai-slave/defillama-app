@@ -48,7 +48,7 @@ function getDatasetFromOption(option: any): { dimensions: string[] | null; sourc
 	return { dimensions, source }
 }
 
-function buildCsvRowsFromDataset(dimensions: string[] | null, source: unknown[] | null): Array<Array<CsvCell>> {
+export function buildCsvRowsFromDataset(dimensions: string[] | null, source: unknown[] | null): Array<Array<CsvCell>> {
 	if (!source || source.length === 0) return []
 
 	// ECharts dataset.source can be:
@@ -124,6 +124,23 @@ function buildCsvRowsFromDataset(dimensions: string[] | null, source: unknown[] 
 		}
 	}
 	return rows
+}
+
+export function buildCsvFromDataset({
+	dimensions,
+	source,
+	filenameBase
+}: {
+	dimensions: string[] | null
+	source: unknown[] | null
+	filenameBase: string | undefined
+}): { filename: string; rows: Array<Array<CsvCell>> } {
+	const rows = buildCsvRowsFromDataset(dimensions, source)
+	if (rows.length === 0) throw new Error('No chart data available for CSV export')
+
+	const base = filenameBase || 'chart'
+	const date = new Date().toISOString().split('T')[0]
+	return { filename: `${base}-${date}`, rows }
 }
 
 function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {

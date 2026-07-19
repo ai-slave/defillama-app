@@ -1,11 +1,5 @@
 import { TreemapChart as EChartTreemap } from 'echarts/charts'
-import {
-	DataZoomComponent,
-	GraphicComponent,
-	TitleComponent,
-	ToolboxComponent,
-	TooltipComponent
-} from 'echarts/components'
+import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
@@ -15,29 +9,17 @@ import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
 import { CHART_INSET } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
-import type { ITreemapChartProps } from '../types'
+import { clearTreemapFocus, registerTreemapFocusTracking } from '../treemapFocus'
+import type { ITreemapChartProps, TreemapNode, TreemapValue } from '../types'
 import { buildWatermarkGraphic } from '../utils'
-import {
-	formatRwaTreemapBoxLabel,
-	formatRwaTreemapTooltip,
-	formatRwaUpperLabel,
-	normalizeTreemapValue
-} from './rwaFormatting'
-import { addColorGradientField, normalizeTreemapNodes, visualMax, visualMin } from './utils'
+import { formatRwaTreemapBoxLabel, formatRwaTreemapTooltip, formatRwaUpperLabel } from './rwaFormatting'
+import { visualMax, visualMin } from './utils'
 
-echarts.use([
-	TitleComponent,
-	TooltipComponent,
-	ToolboxComponent,
-	DataZoomComponent,
-	EChartTreemap,
-	CanvasRenderer,
-	GraphicComponent
-])
+echarts.use([TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer, GraphicComponent])
 
 export default function TreemapChart({
 	treeData,
-	variant = 'yields',
+	variant,
 	colorMode = 'value',
 	height,
 	onReady,
@@ -46,7 +28,6 @@ export default function TreemapChart({
 }: ITreemapChartProps) {
 	const isNarrativeVariant = variant === 'narrative'
 	const isRwaVariant = variant === 'rwa'
-	const isNarrativeLike = isNarrativeVariant || isRwaVariant
 	const isCategoricalColor = colorMode === 'categorical'
 
 	const [isDark] = useDarkModeManager()
@@ -58,14 +39,9 @@ export default function TreemapChart({
 	})
 
 	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
-	const chartDataTree = useMemo(() => {
-		const cloned = normalizeTreemapNodes(treeData ?? [])
-		// RWA treemaps use caller colors; categorical treemaps use the chart palette.
-		if (!isRwaVariant && !isCategoricalColor) addColorGradientField(cloned)
-		return cloned
-	}, [isCategoricalColor, isRwaVariant, treeData])
+	const chartTheme = useMemo(() => getChartTheme(isDark), [isDark])
 	const formatTreemapMetricValue = useCallback(
 		(value: number) => formattedNum(value, valueSymbol && valueSymbol.length > 0 ? valueSymbol : false),
 		[valueSymbol]
@@ -73,13 +49,13 @@ export default function TreemapChart({
 
 	const rwaRootLabel = useMemo(() => {
 		if (!isRwaVariant) return 'All'
-		for (const node of chartDataTree ?? []) {
-			const path = typeof node?.path === 'string' ? node.path : ''
+		for (const node of treeData) {
+			const path = node.path ?? ''
 			const root = path.split('/')[0]?.trim()
 			if (root) return root
 		}
 		return 'RWA'
-	}, [chartDataTree, isRwaVariant])
+	}, [treeData, isRwaVariant])
 
 	useEffect(() => {
 		const el = containerRef.current
@@ -88,35 +64,10 @@ export default function TreemapChart({
 		chartRef.current = instance
 		onReadyRef.current?.(instance)
 
-		const handleTreemapClick = (params: any) => {
-			if (params?.seriesType !== 'treemap') return
-			const seriesModel = (instance as any).getModel?.()?.getSeriesByIndex?.(params.seriesIndex ?? 0)
-			const node = seriesModel?.getData?.()?.tree?.getNodeByDataIndex?.(params.dataIndex)
-			const nodeId = node?.getId?.()
-			const nodePath = node
-				?.getAncestors?.(true)
-				?.map((ancestor: any) => ancestor?.name)
-				?.filter((name: any) => typeof name === 'string' && name)
-			if (typeof nodeId === 'string' && nodeId) {
-				const chartWithTreemapFocus = instance as echarts.ECharts & {
-					__llamaTreemapFocusNode?: { id: string; path?: string[] }
-				}
-				chartWithTreemapFocus.__llamaTreemapFocusNode = {
-					id: nodeId,
-					...(Array.isArray(nodePath) && nodePath.length > 0 ? { path: nodePath } : {})
-				}
-			}
-		}
-		const handleRestore = () => {
-			delete (instance as any).__llamaTreemapFocusNode
-			delete (instance as any).__llamaTreemapFocusNodeId
-		}
-		instance.on('click', handleTreemapClick)
-		instance.on('restore', handleRestore)
+		const unregisterTreemapFocus = registerTreemapFocusTracking(instance)
 
 		return () => {
-			instance.off('click', handleTreemapClick)
-			instance.off('restore', handleRestore)
+			unregisterTreemapFocus()
 			chartRef.current = null
 			onReadyRef.current?.(null)
 			instance.dispose()
@@ -128,18 +79,6 @@ export default function TreemapChart({
 		if (!instance) return
 
 		const option = {
-			...(isNarrativeLike
-				? {}
-				: {
-						title: {
-							text: 'APY Trends - 1d Change',
-							textStyle: {
-								fontFamily: 'sans-serif',
-								fontWeight: 600,
-								color: getChartTheme(isDark).text
-							}
-						}
-					}),
 			graphic: [buildWatermarkGraphic(isDark)],
 			tooltip: {
 				className: 'defillama-echarts-tooltip',
@@ -171,33 +110,17 @@ export default function TreemapChart({
 							formatMetricValue: formatTreemapMetricValue
 						})
 					}
-
-					if (treePath.length > 1) {
-						return [
-							`Project: ${treePath[0]}<br>`,
-							`Pool: ${treePath[1]}<br>`,
-							`TVL: ${formattedNum(info.value[0], true)}<br>`,
-							`APY: ${info.value[1]}%<br>`,
-							`1d Change: ${info.value[2]}%`
-						].join('')
-					} else {
-						return `Project: ${treePath[0] || info.name || ''}`
-					}
 				}
 			},
-			...(isRwaVariant ? {} : { toolbox: { feature: { restore: {} } } }),
+			...(isNarrativeVariant ? { toolbox: { feature: { restore: {} } } } : {}),
 			series: [
 				{
 					name: isRwaVariant ? rwaRootLabel : 'All',
 					type: 'treemap',
-					...(isNarrativeLike
-						? {
-								top: 0,
-								left: 0,
-								right: 0,
-								bottom: 0
-							}
-						: {}),
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
 					...(isRwaVariant || isCategoricalColor
 						? {}
 						: {
@@ -225,7 +148,7 @@ export default function TreemapChart({
 										textStyle: {
 											fontFamily: 'sans-serif',
 											fontWeight: 400,
-											color: getChartTheme(isDark).text
+											color: chartTheme.text
 										}
 									}
 								}),
@@ -246,32 +169,27 @@ export default function TreemapChart({
 							: {}),
 						formatter: function (params) {
 							let arr
-							const path = typeof params?.data?.path === 'string' ? params.data.path : ''
+							const data = params.data as TreemapNode
+							const path = data.path ?? ''
 							const pathParts = path ? path.split('/') : []
 							if (pathParts.length > 1) {
-								const hasChildren = Array.isArray(params?.data?.children) && params.data.children.length > 0
+								const hasChildren = (data.children?.length ?? 0) > 0
 								if (isRwaVariant && hasChildren) {
 									// Parent nodes: show the group name directly for visibility.
 									return String(params.name ?? '')
 								}
-								const normalizedValue = normalizeTreemapValue(params?.value)
+								const value = params.value as TreemapValue
 
 								if (variant === 'narrative') {
 									arr = [
 										`{name|${pathParts[pathParts.length - 1]}}`,
-										`Return: {apy| ${normalizedValue[1] ?? 0}%}`,
-										`Market Cap: {mcap| ${formattedNum(normalizedValue[0], true)}}`
+										`Return: {apy| ${value[1] ?? 0}%}`,
+										`Market Cap: {mcap| ${formattedNum(value[0], true)}}`
 									]
 								} else if (isRwaVariant) {
 									arr = [
 										`{rwaName|${formatRwaTreemapBoxLabel(params)}}`,
-										`{rwaMetric|${valueLabel}: ${formatTreemapMetricValue(normalizedValue[0] ?? 0)}}`
-									]
-								} else {
-									arr = [
-										`{name|${pathParts[pathParts.length - 1]}}`,
-										`Spot: {apy| ${normalizedValue[1] ?? 0}%}`,
-										`Change {apy| ${normalizedValue[2] ?? 0}%}`
+										`{rwaMetric|${valueLabel}: ${formatTreemapMetricValue(value[0])}}`
 									]
 								}
 							} else {
@@ -305,7 +223,7 @@ export default function TreemapChart({
 					upperLabel: {
 						show: true,
 						height: 20,
-						color: getChartTheme(isDark).treemapLabel,
+						color: chartTheme.treemapLabel,
 						...(isRwaVariant ? { formatter: formatRwaUpperLabel } : {})
 					},
 					itemStyle: {
@@ -394,23 +312,22 @@ export default function TreemapChart({
 									}
 						}
 					],
-					data: chartDataTree
+					data: treeData
 				}
 			]
 		}
-		delete (instance as any).__llamaTreemapFocusNode
-		delete (instance as any).__llamaTreemapFocusNodeId
-		instance.setOption(option, { notMerge: true, lazyUpdate: true })
+		clearTreemapFocus(instance)
+		instance.setOption(option, { notMerge: true })
 	}, [
-		chartDataTree,
+		chartTheme,
 		formatTreemapMetricValue,
 		isCategoricalColor,
 		isDark,
-		isNarrativeLike,
 		isNarrativeVariant,
 		isRwaVariant,
 		rwaRootLabel,
 		valueLabel,
+		treeData,
 		valueSymbol,
 		variant
 	])
@@ -439,9 +356,5 @@ export default function TreemapChart({
 		</div>
 	)
 
-	if (isNarrativeLike) {
-		return chart
-	}
-
-	return <div className="relative flex flex-col items-end rounded-md bg-surface">{chart}</div>
+	return chart
 }

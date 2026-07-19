@@ -2,6 +2,7 @@ import { fetchCoinGeckoChartByIdWithCacheFallback } from '~/api/coingecko'
 import { DIMENSIONS_OVERVIEW_API, DIMENSIONS_SUMMARY_API } from '~/constants'
 import { fetchChainAssetsChart } from '~/containers/BridgedTVL/api'
 import { fetchChainChart } from '~/containers/Chains/api'
+import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import {
 	ONCHAIN_ADDRESSES_API,
 	ONCHAIN_GAS_API,
@@ -9,6 +10,7 @@ import {
 	ONCHAIN_TXS_API
 } from '~/containers/OnchainUsersAndTxs/api'
 import { fetchStablecoinChartApi } from '~/containers/Stablecoins/api'
+import type { StablecoinChartPoint } from '~/containers/Stablecoins/api.types'
 import { slug } from '~/utils'
 import { toDisplayName } from '~/utils/chainNormalizer'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
@@ -52,10 +54,10 @@ const CHART_METADATA = {
 // and calls external APIs that historically accepted mixed chain names. Migrate
 // configs and calls to v2 display-name chain values, then remove normalization.
 export default class ChainCharts {
-	private static async fetchAndMergeChains(
+	private static async fetchAndMergeChains<T>(
 		chains: string[],
-		fetchData: (chainName: string) => Promise<any>,
-		extractData: (data: any) => [number, number][]
+		fetchData: (chainName: string) => Promise<T>,
+		extractData: (data: T) => [number, number][]
 	): Promise<[number, number][]> {
 		if (chains.length === 0) return []
 
@@ -120,7 +122,7 @@ export default class ChainCharts {
 		const chainNames = this.getChainNames(chain)
 
 		if (chainNames.length === 1) {
-			const data = await fetchChainChart<any>(chain).catch(() => null)
+			const data = await fetchChainChart(chain).catch(() => null)
 			if (data == null) return []
 			const adjustedTvl = processAdjustedTvl(data)
 			return convertToNumberFormat(adjustedTvl)
@@ -128,7 +130,7 @@ export default class ChainCharts {
 
 		return this.fetchAndMergeChains(
 			chainNames,
-			(chainName) => fetchChainChart<any>(chainName),
+			(chainName) => fetchChainChart<ChainChartResponse>(chainName),
 			(data) => {
 				const adjustedTvl = processAdjustedTvl(data)
 				return convertToNumberFormat(adjustedTvl)
@@ -142,13 +144,11 @@ export default class ChainCharts {
 		const encodedChain = apiChain.includes(' ') ? encodeURIComponent(apiChain) : apiChain
 		const data = await fetchStablecoinChartApi(encodedChain)
 
-		if (!data.aggregated || !Array.isArray(data.aggregated)) return []
-
 		if (dataType === 'inflows') {
 			return this.calculateInflows(data.aggregated)
 		}
 
-		const formattedData: [number, number][] = data.aggregated.map((item: any) => [
+		const formattedData: [number, number][] = data.aggregated.map((item) => [
 			parseInt(item.date, 10),
 			item.totalCirculatingUSD?.peggedUSD || 0
 		])
@@ -168,7 +168,7 @@ export default class ChainCharts {
 		return convertToNumberFormat(data.totalDataChart ?? [])
 	}
 
-	private static calculateInflows(aggregatedData: any[]): [number, number][] {
+	private static calculateInflows(aggregatedData: StablecoinChartPoint[]): [number, number][] {
 		if (aggregatedData.length < 2) return []
 
 		const inflowsData: [number, number][] = []

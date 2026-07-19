@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { getBucketTimestampSec } from '~/components/ECharts/utils'
 import {
 	buildBridgeProtocolAllChainsVolumeData,
-	buildBridgeProtocolAllChainsVolumePairs,
 	buildBridgeProtocolInflowsData,
 	getBridgeProtocolCompletedDayVolumes,
 	getBridgeProtocolPrevDayVolumeValue
@@ -17,34 +16,30 @@ describe('bridge protocol chart data helpers', () => {
 		const day2 = 1_704_153_600
 		const bucket = getBucketTimestampSec(day1, 'weekly')
 
-		const allChainsVolumePairs = buildBridgeProtocolAllChainsVolumePairs({
-			isAllChains: true,
-			volumeChartDataByChain: [
-				{ date: day2, Deposited: 20, Withdrawn: -6 },
-				{ date: day1, Deposited: 10, Withdrawn: -4 }
-			]
-		})
+		const volumeChartDataByChain = [
+			{ date: day1, Deposited: 10, Withdrawn: -4 },
+			{ date: day2, Deposited: 20, Withdrawn: -6 }
+		]
 		const result = buildBridgeProtocolAllChainsVolumeData({
+			active: true,
 			groupBy: 'weekly',
-			allChainsVolumePairs
+			volumeChartDataByChain
 		})
 
-		expect(allChainsVolumePairs).toEqual([
-			[day2, 13],
-			[day1, 7]
-		])
-		expect(result.groupedAllChainsVolumePairs).toEqual([[bucket, 20]])
-		expect(result.volumeDataset).toEqual({
+		expect(result).toEqual({
 			dimensions: ['timestamp', 'Volume'],
 			source: [{ timestamp: bucket * 1e3, Volume: 20 }]
 		})
+		expect(
+			buildBridgeProtocolAllChainsVolumeData({ active: false, groupBy: 'daily', volumeChartDataByChain }).source
+		).toEqual([])
 	})
 
 	it('calculates all-chain current volume from totals or previous chart rows', () => {
 		expect(
 			getBridgeProtocolPrevDayVolumeValue({
 				isAllChains: true,
-				allChainsVolumePairs: [],
+				volumeChartDataByChain: [],
 				totalDepositedUSD: 50,
 				totalWithdrawnUSD: 10,
 				dataTimestamp: toSeconds('2026-07-14'),
@@ -55,10 +50,10 @@ describe('bridge protocol chart data helpers', () => {
 		expect(
 			getBridgeProtocolPrevDayVolumeValue({
 				isAllChains: true,
-				allChainsVolumePairs: [
-					[toSeconds('2026-07-12'), 10],
-					[toSeconds('2026-07-13'), 20],
-					[toSeconds('2026-07-14'), 30]
+				volumeChartDataByChain: [
+					{ date: toSeconds('2026-07-12'), Deposited: 16, Withdrawn: -4 },
+					{ date: toSeconds('2026-07-13'), Deposited: 30, Withdrawn: -10 },
+					{ date: toSeconds('2026-07-14'), Deposited: 40, Withdrawn: -20 }
 				],
 				totalDepositedUSD: undefined,
 				totalWithdrawnUSD: undefined,
@@ -88,23 +83,35 @@ describe('bridge protocol chart data helpers', () => {
 
 	it('builds non-all-chain inflow datasets without leaking all-chain volume data', () => {
 		const result = buildBridgeProtocolInflowsData({
-			isAllChains: false,
+			active: true,
 			groupBy: 'daily',
 			volumeChartDataByChain: [{ date: 1, Deposited: 10, Withdrawn: -4 }]
 		})
 
-		expect(result.groupedInflowsData).toEqual([{ date: 1, Deposited: 10, Withdrawn: -4 }])
-		expect(result.inflowsDataset).toEqual({
+		expect(result).toEqual({
 			dimensions: ['timestamp', 'Deposited', 'Withdrawn'],
-			source: [{ timestamp: 1_000, Deposited: 10, Withdrawn: 4 }]
+			source: [{ timestamp: 1_000, Deposited: 10, Withdrawn: -4 }]
 		})
+
+		const day1 = 1_704_067_200
+		const day2 = 1_704_153_600
+		expect(
+			buildBridgeProtocolInflowsData({
+				active: true,
+				groupBy: 'weekly',
+				volumeChartDataByChain: [
+					{ date: day1, Deposited: 10, Withdrawn: -4 },
+					{ date: day2, Deposited: 20, Withdrawn: -6 }
+				]
+			}).source
+		).toEqual([{ timestamp: getBucketTimestampSec(day1, 'weekly') * 1e3, Deposited: 30, Withdrawn: -10 }])
 
 		expect(
 			buildBridgeProtocolInflowsData({
-				isAllChains: true,
+				active: false,
 				groupBy: 'daily',
 				volumeChartDataByChain: [{ date: 1, Deposited: 10, Withdrawn: -4 }]
-			}).inflowsDataset.source
+			}).source
 		).toEqual([])
 	})
 })

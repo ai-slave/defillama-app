@@ -163,7 +163,7 @@ function processProposal(proposal: RawProposal): GovernanceProposal {
 	}
 }
 
-function formatGovernanceData(data: RawGovernanceResponse): {
+export function formatGovernanceData(data: RawGovernanceResponse): {
 	proposals: GovernanceProposal[]
 	activity: GovernanceActivityRow[]
 	maxVotes: GovernanceMaxVotesRow[]
@@ -184,10 +184,11 @@ function formatGovernanceData(data: RawGovernanceResponse): {
 	const activity: GovernanceActivityRow[] = []
 	const maxVotes: GovernanceMaxVotesRow[] = []
 	const statsMonths = data.stats?.months ?? {}
+	const chronologicalMonths = Object.entries(statsMonths)
+		.map(([date, values]) => [Math.floor(new Date(date).getTime() / 1000), values] as const)
+		.sort((a, b) => a[0] - b[0])
 	const proposalById = new Map(proposals.map((proposal) => [proposal.id, proposal] as const))
-	for (const [date, values] of Object.entries(statsMonths)) {
-		const timestamp = Math.floor(new Date(date).getTime() / 1000)
-
+	for (const [timestamp, values] of chronologicalMonths) {
 		activity.push({
 			date: timestamp,
 			Total: values.total ?? 0,

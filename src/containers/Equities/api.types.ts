@@ -20,7 +20,7 @@ export interface IEquitiesCompanyApiItem {
 	priceToBook: number | null
 	enterpriseValueToEbitda: number | null
 	holdersYield: number | null
-	updatedAt: string | null
+	updatedAt: string
 	revenueTTM: number | null
 	grossProfitTTM: number | null
 	earningsTTM: number | null
@@ -143,7 +143,8 @@ interface IEquitiesStatementSection {
 }
 
 export interface IEquitiesStatementsResponse {
-	incomeStatement: IEquitiesStatementSection
-	balanceSheet: IEquitiesStatementSection
-	cashflow: IEquitiesStatementSection
+	/** The upstream returns at least one section, but any individual section may be absent. */
+	incomeStatement?: IEquitiesStatementSection
+	balanceSheet?: IEquitiesStatementSection
+	cashflow?: IEquitiesStatementSection
 }

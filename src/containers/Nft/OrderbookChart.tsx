@@ -11,7 +11,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import * as React from 'react'
 import { chartGrid } from '~/components/ECharts/chartSpacing'
-import { getChartTheme } from '~/components/ECharts/chartTheme'
+import { useChartTheme } from '~/components/ECharts/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
@@ -32,12 +32,13 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 
 	const [isDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isDark)
 	const containerRef = React.useRef<HTMLDivElement>(null)
 	const chartRef = React.useRef<echarts.ECharts | null>(null)
 	const hasData = Array.isArray(chartData) && chartData.length > 0
 
 	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef)
+	useChartResize(chartRef, containerRef)
 
 	React.useEffect(() => {
 		if (!hasData) return
@@ -55,6 +56,17 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 	React.useEffect(() => {
 		const instance = chartRef.current
 		if (!instance) return
+
+		const askData: Array<[number, number, number, number, string]> = []
+		const bidData: Array<[number, number, number, number, string]> = []
+		for (const item of chartData) {
+			if (item.price <= 0) continue
+			if (item.orderType === 'ask') {
+				askData.push([item.price, item.amount, item.avgPrice, item.priceTotal, item.orderType])
+			} else if (item.orderType === 'bid' && bidData.length < 62) {
+				bidData.push([item.price, item.amount, item.avgPrice, item.priceTotal, item.orderType])
+			}
+		}
 
 		const series = [
 			{
@@ -80,13 +92,11 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 						},
 						{
 							offset: 1,
-							color: getChartTheme(isDark).areaGradientTo
+							color: chartTheme.areaGradientTo
 						}
 					])
 				},
-				data: chartData
-					.filter((item) => item.orderType === 'ask' && item.price > 0)
-					.map((item) => [item.price, item.amount, item.avgPrice, item.priceTotal, item.orderType])
+				data: askData
 			},
 			{
 				name: 'Bid',
@@ -111,14 +121,11 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 						},
 						{
 							offset: 1,
-							color: getChartTheme(isDark).areaGradientTo
+							color: chartTheme.areaGradientTo
 						}
 					])
 				},
-				data: chartData
-					.filter((item) => item.orderType === 'bid' && item.price > 0)
-					.map((item) => [item.price, item.amount, item.avgPrice, item.priceTotal, item.orderType])
-					.slice(0, 62)
+				data: bidData
 			}
 		]
 
@@ -129,7 +136,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				textStyle: {
 					fontFamily: 'sans-serif',
 					fontWeight: 600,
-					color: getChartTheme(isDark).text
+					color: chartTheme.text
 				},
 				left: 15
 			},
@@ -169,7 +176,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 					fontFamily: 'sans-serif',
 					fontSize: 12,
 					fontWeight: 400,
-					color: getChartTheme(isDark).text
+					color: chartTheme.text
 				},
 				top: isSmall ? 30 : 0,
 				right: isSmall ? null : 20,
@@ -180,7 +187,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				type: 'log',
 				axisLabel: {
 					formatter: (value: number) => Number(value.toFixed(2)) + ' ETH',
-					color: getChartTheme(isDark).text
+					color: chartTheme.text
 				},
 				boundaryGap: false,
 				nameTextStyle: {
@@ -190,13 +197,13 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				},
 				axisLine: {
 					lineStyle: {
-						color: getChartTheme(isDark).text,
+						color: chartTheme.text,
 						opacity: 0.2
 					}
 				},
 				splitLine: {
 					lineStyle: {
-						color: getChartTheme(isDark).gridline
+						color: chartTheme.gridline
 					}
 				}
 			},
@@ -204,11 +211,11 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				name: 'Amount',
 				type: 'value',
 				axisLabel: {
-					color: getChartTheme(isDark).text
+					color: chartTheme.text
 				},
 				axisLine: {
 					lineStyle: {
-						color: getChartTheme(isDark).text,
+						color: chartTheme.text,
 						opacity: 0.1
 					}
 				},
@@ -220,7 +227,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				},
 				splitLine: {
 					lineStyle: {
-						color: getChartTheme(isDark).gridline
+						color: chartTheme.gridline
 					}
 				}
 			},
@@ -236,7 +243,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 		}
 
 		instance.setOption(option, { notMerge: true })
-	}, [chartData, isDark, isSmall])
+	}, [chartData, chartTheme, isDark, isSmall])
 
 	return <div ref={containerRef} className="h-[360px]" style={height ? { height } : undefined} />
 }

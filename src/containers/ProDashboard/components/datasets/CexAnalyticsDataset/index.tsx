@@ -12,6 +12,12 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import { lazy, Suspense, useContext, useEffect, useMemo, useState, type FC, type ReactNode } from 'react'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import type {
+	IMultiSeriesChart2Props,
+	MultiSeriesChart2Dataset,
+	MultiSeriesChart2SeriesConfig
+} from '~/components/ECharts/types'
 import { useTableSearch } from '~/components/Table/utils'
 import type {
 	CexAnalyticsMarketSharePoint,
@@ -20,7 +26,7 @@ import type {
 	CexAnalyticsTotalsPoint
 } from '~/containers/Cexs/api.types'
 import { useProDashboardTime } from '~/containers/ProDashboard/ProDashboardAPIContext'
-import { filterDataByTimePeriod, StreamDoneContext } from '~/containers/ProDashboard/queries'
+import { getTimePeriodBounds, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import type { ProtocolsTableConfig } from '~/containers/ProDashboard/types'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { formattedNum } from '~/utils'
@@ -32,8 +38,7 @@ import { TablePagination } from '../../ProTable/TablePagination'
 import { cexAnalyticsColumns } from './columns'
 import { useCexAnalyticsMarketShare, useCexAnalyticsSnapshot, useCexAnalyticsTotals } from './useCexAnalyticsData'
 
-const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as FC<any>
-const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as FC<any>
+const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2')) as FC<IMultiSeriesChart2Props>
 
 const EMPTY_ROWS: any[] = []
 const STACK_COLORS = {
@@ -51,6 +56,26 @@ const SHARE_PALETTE = [
 	'#577590',
 	'#94a3b8'
 ]
+const SPOT_VS_DERIVATIVES_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+	{
+		type: 'bar',
+		name: 'Spot',
+		encode: { x: 'timestamp', y: 'Spot' },
+		stack: 'stackA',
+		color: STACK_COLORS.Spot,
+		large: false
+	},
+	{
+		type: 'bar',
+		name: 'Derivatives',
+		encode: { x: 'timestamp', y: 'Derivatives' },
+		stack: 'stackA',
+		color: STACK_COLORS.Derivatives,
+		large: false
+	}
+]
+const DOLLAR_CHART_OPTIONS = createTimeSeriesChartOptions('$')
+const STACKED_PERCENT_CHART_OPTIONS = createTimeSeriesChartOptions('%')
 
 type CexAnalyticsDatasetProps = {
 	config: ProtocolsTableConfig
@@ -108,15 +133,25 @@ function filterTimeSeriesRows<T extends { date: number }>(
 		return rows
 	}
 
-	const includedDates = new Set(
-		filterDataByTimePeriod(
-			rows.map((row) => [row.date, 0] as [number, number]),
-			timePeriod,
-			customTimePeriod
-		).map(([date]) => date)
-	)
+	const bounds = getTimePeriodBounds(timePeriod, customTimePeriod)
+	if (!bounds) return rows
 
-	return rows.filter((row) => includedDates.has(row.date))
+	let low = 0
+	let high = rows.length
+	while (low < high) {
+		const mid = (low + high) >>> 1
+		if (rows[mid].date < bounds.start) low = mid + 1
+		else high = mid
+	}
+	const startIndex = low
+	low = startIndex
+	high = rows.length
+	while (low < high) {
+		const mid = (low + high) >>> 1
+		if (rows[mid].date <= bounds.end) low = mid + 1
+		else high = mid
+	}
+	return startIndex === 0 && low === rows.length ? rows : rows.slice(startIndex, low)
 }
 
 function formatRatio(value: number | null) {
@@ -282,12 +317,19 @@ function SpotVsDerivativesChart({ data }: { data: CexAnalyticsTotalsPoint[] }) {
 		() => filterTimeSeriesRows(data, timePeriod, customTimePeriod),
 		[data, timePeriod, customTimePeriod]
 	)
-	const chartData = useMemo(
-		() => filtered.map((point) => ({ date: point.date, Spot: point.spotVolume, Derivatives: point.derivativesVolume })),
+	const dataset = useMemo<MultiSeriesChart2Dataset>(
+		() => ({
+			source: filtered.map((point) => ({
+				timestamp: point.date * 1e3,
+				Spot: point.spotVolume,
+				Derivatives: point.derivativesVolume
+			})),
+			dimensions: ['timestamp', 'Spot', 'Derivatives']
+		}),
 		[filtered]
 	)
 
-	if (chartData.length === 0) {
+	if (dataset.source.length === 0) {
 		return (
 			<div className="flex min-h-[320px] items-center justify-center p-4 text-sm text-pro-text-secondary">
 				No volume data available.
@@ -298,13 +340,14 @@ function SpotVsDerivativesChart({ data }: { data: CexAnalyticsTotalsPoint[] }) {
 	return (
 		<div className="flex h-full w-full flex-col p-4">
 			<Suspense fallback={<div className="h-[360px]" />}>
-				<BarChart
+				<MultiSeriesChart2
 					title="Spot vs Derivatives Volume"
-					chartData={chartData}
-					stacks={{ Spot: 'stackA', Derivatives: 'stackA' }}
-					stackColors={STACK_COLORS}
+					dataset={dataset}
+					charts={SPOT_VS_DERIVATIVES_CHARTS}
+					chartOptions={DOLLAR_CHART_OPTIONS}
 					valueSymbol="$"
 					height="360px"
+					hideDefaultLegend={false}
 				/>
 			</Suspense>
 		</div>
@@ -326,31 +369,63 @@ function VenueMarketShareChart({
 		[data, timePeriod, customTimePeriod]
 	)
 
-	const { chartData, venueOrder, stackColors } = useMemo(() => {
+	const { dataset, charts } = useMemo(() => {
 		const byDate = new Map<number, Record<string, number>>()
 		const order: string[] = []
+		const seenVenues = new Set<string>()
 		for (const point of filtered) {
-			if (!order.includes(point.venue)) {
+			if (!seenVenues.has(point.venue)) {
+				seenVenues.add(point.venue)
 				order.push(point.venue)
 			}
-			const record = byDate.get(point.date) ?? { date: point.date }
-			record[point.venue] = point.share
+			let record = byDate.get(point.date)
+			if (!record) {
+				record = { timestamp: point.date * 1e3 }
+			}
+			if (point.venue === '__proto__') {
+				Object.defineProperty(record, point.venue, {
+					value: point.share,
+					enumerable: true,
+					configurable: true,
+					writable: true
+				})
+			} else {
+				record[point.venue] = point.share
+			}
 			byDate.set(point.date, record)
 		}
 
-		const colors = order.reduce<Record<string, string>>((acc, venue, index) => {
-			acc[venue] = SHARE_PALETTE[index % SHARE_PALETTE.length]
-			return acc
-		}, {})
+		// The server query is ordered by date, and filtering preserves that order.
+		const source = Array.from(byDate.values())
+		for (const record of source) {
+			for (const venue of order) {
+				if (Object.hasOwn(record, venue)) continue
+				if (venue === '__proto__') {
+					Object.defineProperty(record, venue, { value: 0, enumerable: true, configurable: true, writable: true })
+				} else {
+					record[venue] = 0
+				}
+			}
+		}
+		const charts: MultiSeriesChart2SeriesConfig[] = new Array(order.length)
+		for (let index = 0; index < order.length; index++) {
+			const venue = order[index]
+			charts[index] = {
+				type: 'line',
+				name: venue,
+				encode: { x: 'timestamp', y: venue },
+				stack: 'Total',
+				color: SHARE_PALETTE[index % SHARE_PALETTE.length]
+			}
+		}
 
 		return {
-			chartData: [...byDate.entries()].sort((a, b) => a[0] - b[0]).map(([, record]) => record),
-			venueOrder: order,
-			stackColors: colors
+			dataset: { source, dimensions: ['timestamp', ...order] },
+			charts
 		}
 	}, [filtered])
 
-	if (chartData.length === 0 || venueOrder.length === 0) {
+	if (dataset.source.length === 0 || charts.length === 0) {
 		return (
 			<div className="flex min-h-[320px] items-center justify-center p-4 text-sm text-pro-text-secondary">
 				No market share data available.
@@ -361,12 +436,12 @@ function VenueMarketShareChart({
 	return (
 		<div className="flex h-full w-full flex-col p-4">
 			<Suspense fallback={<div className="h-[360px]" />}>
-				<AreaChart
+				<MultiSeriesChart2
 					title={`CEX ${metric === 'spot' ? 'Spot' : 'Derivatives'} Market Share (Top ${topN})`}
-					chartData={chartData}
-					stacks={venueOrder}
-					stackColors={stackColors}
-					isStackedChart
+					dataset={dataset}
+					charts={charts}
+					chartOptions={STACKED_PERCENT_CHART_OPTIONS}
+					solidChartAreaStyle
 					valueSymbol="%"
 					height="360px"
 					hideDefaultLegend={false}

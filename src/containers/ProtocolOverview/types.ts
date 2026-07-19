@@ -228,7 +228,7 @@ export interface IToggledMetrics extends Record<
 }
 
 export interface IProtocolCoreChartProps {
-	chartData: Record<string, Array<[string | number, number | null]>>
+	chartData: Partial<Record<ProtocolChartsLabels, Array<[number, number | null]>>>
 	chartColors: Record<string, string>
 	valueSymbol?: string
 	color?: string

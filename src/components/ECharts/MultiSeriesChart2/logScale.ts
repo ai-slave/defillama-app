@@ -1,8 +1,44 @@
 // Applies logarithmic scaling to the eligible value y-axes of a MultiSeriesChart2 option.
 // The Log/Linear toggle sets `logScale`; `logEligibleYAxes` (from getLogEligibleYAxes) lists the
 // axis indices whose series are all strictly positive — a log axis cannot plot zero/negative
-// values, so ineligible axes are left linear. A log axis also cannot sit on a 0 baseline, so any
-// `min`/`max` (e.g. the 0 baseline or the percentage-mode 0–100 clamp) is dropped for it.
+// values, so ineligible axes are left linear. A log axis cannot sit on a non-positive bound, but
+// positive and data-driven caller bounds remain valid and must survive the final render pass.
+type AxisExtent = {
+	min?: number
+}
+
+export function getZeroBaselineYAxisMin(extent: AxisExtent) {
+	return typeof extent.min === 'number' && extent.min < 0 ? extent.min : 0
+}
+
+type YAxisOption = Record<string, any> | undefined
+
+function removeImplicitMinimum(axis: YAxisOption, configuredAxis: YAxisOption) {
+	if (
+		!axis ||
+		configuredAxis?.scale !== true ||
+		Object.hasOwn(configuredAxis, 'min') ||
+		axis.min !== getZeroBaselineYAxisMin
+	) {
+		return axis
+	}
+
+	const { min: _implicitMin, ...scaledAxis } = axis
+	return scaledAxis
+}
+
+// ECharts `scale: true` opts out of including zero only when no explicit min is present.
+// Remove our shared implicit baseline for callers that request scaling, but keep caller bounds.
+export function applyConfiguredYAxisScale(yAxis: any, configuredYAxis: any) {
+	if (Array.isArray(yAxis)) {
+		return yAxis.map((axis, index) =>
+			removeImplicitMinimum(axis, Array.isArray(configuredYAxis) ? configuredYAxis[index] : configuredYAxis)
+		)
+	}
+
+	return removeImplicitMinimum(yAxis, Array.isArray(configuredYAxis) ? configuredYAxis[0] : configuredYAxis)
+}
+
 export function applyLogScaleToYAxes(
 	axes: any[],
 	logScale: boolean | undefined,
@@ -12,7 +48,9 @@ export function applyLogScaleToYAxes(
 	const eligible = logEligibleYAxes ?? []
 	return axes.map((axis, index) => {
 		if (!eligible.includes(index)) return axis
-		const { min: _min, max: _max, ...rest } = axis ?? {}
-		return { ...rest, type: 'log' }
+		const next = { ...(axis ?? {}), type: 'log' }
+		if (next.min === getZeroBaselineYAxisMin || (typeof next.min === 'number' && next.min <= 0)) delete next.min
+		if (typeof next.max === 'number' && next.max <= 0) delete next.max
+		return next
 	})
 }
