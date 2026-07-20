@@ -1,7 +1,7 @@
-import { useMemo, useState, type RefCallback } from 'react'
+import { Suspense, useMemo, useState, type RefCallback } from 'react'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { AlertArtifact, AlertArtifactLoading } from '~/containers/LlamaAI/components/AlertArtifact'
-import { ChartRenderer } from '~/containers/LlamaAI/components/charts/ChartRenderer'
+import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
 import { CSVExportArtifact } from '~/containers/LlamaAI/components/CSVExportArtifact'
 import { ImagePreviewModal } from '~/containers/LlamaAI/components/ImagePreviewModal'
 import { TextChip } from '~/containers/LlamaAI/components/input/ImageUpload'
@@ -147,13 +147,15 @@ function ArtifactBlockRenderer({
 		}
 		if (artifact.type !== 'chart') return null
 		return (
-			<ChartRenderer
-				charts={artifact.charts}
-				chartData={artifact.chartData}
-				sessionId={sessionId}
-				messageId={messageId}
-				readOnly={readOnly}
-			/>
+			<Suspense fallback={<StreamingChartPlaceholder />}>
+				<DeferredChartRenderer
+					charts={artifact.charts}
+					chartData={artifact.chartData}
+					sessionId={sessionId}
+					messageId={messageId}
+					readOnly={readOnly}
+				/>
+			</Suspense>
 		)
 	}
 

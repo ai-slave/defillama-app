@@ -1,9 +1,6 @@
-import { lazy, Suspense } from 'react'
+import { Suspense } from 'react'
+import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
 import { validateLlamaAIChartConfig, type LlamaAIChartData } from '../llamaaiChart'
-
-const ChartRenderer = lazy(() =>
-	import('~/containers/LlamaAI/components/charts/ChartRenderer').then((m) => ({ default: m.ChartRenderer }))
-)
 
 export function LlamaAIChartBlock({ attrs, index }: { attrs: Record<string, unknown>; index: number | null }) {
 	const config = validateLlamaAIChartConfig(attrs.chartConfig)
@@ -19,7 +16,7 @@ export function LlamaAIChartBlock({ attrs, index }: { attrs: Record<string, unkn
 						<div className="flex h-[380px] items-center justify-center text-xs text-tertiary">Loading chart…</div>
 					}
 				>
-					<ChartRenderer charts={[config]} chartData={chartData} readOnly />
+					<DeferredChartRenderer charts={[config]} chartData={chartData} readOnly />
 				</Suspense>
 			</div>
 			{caption && index !== null ? (

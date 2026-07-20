@@ -1,6 +1,6 @@
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
-import { useEffect, useRef, useState } from 'react'
-import { ChartRenderer } from '~/containers/LlamaAI/components/charts/ChartRenderer'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
 import { validateLlamaAIChartConfig, type LlamaAIChartData } from '../../llamaaiChart'
@@ -112,7 +112,9 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 
 			<div contentEditable={false} ref={chartHostRef}>
 				{config && chartData && attached ? (
-					<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={handleStyleSave} />
+					<Suspense fallback={<div className="h-[338px]" />}>
+						<DeferredChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={handleStyleSave} />
+					</Suspense>
 				) : config && chartData ? (
 					<div className="h-[338px]" />
 				) : (
