@@ -2,20 +2,24 @@ import { describe, expect, it } from 'vitest'
 import type { RWAFlowTreemapNode } from '../flowTreemap'
 import { buildRWAFlowTreemapChartData } from '../FlowTreemapChart'
 
-function node(name: string, flowPercent: number | null): RWAFlowTreemapNode {
-	return { name, value: [100, flowPercent], netFlowUsd: flowPercent }
+function node(name: string, flowPercent: number, size: number): RWAFlowTreemapNode {
+	return { name, value: [size, flowPercent], netFlowUsd: flowPercent }
 }
 
 describe('RWA flow treemap chart data', () => {
-	it('keeps the exact p90 color cap and neutral endpoints', () => {
-		const positiveNodes = Array.from({ length: 10 }, (_, index) => node(String(index + 1), index + 1))
-		const positiveData = buildRWAFlowTreemapChartData(positiveNodes)
+	it('prevents a tiny percentage outlier from washing out economically significant tiles', () => {
+		const { colorCap } = buildRWAFlowTreemapChartData([
+			node('Large', 10, 1_000),
+			node('Medium', 20, 900),
+			node('Tiny outlier', 10_000, 1)
+		])
 
-		expect(positiveData[7].itemStyle.color).not.toBe('rgb(38,159,60)')
-		expect(positiveData[8].itemStyle.color).toBe('rgb(38,159,60)')
-		expect(positiveData[9].itemStyle.color).toBe('rgb(38,159,60)')
+		expect(colorCap).toBe(20)
+	})
 
-		const endpointData = buildRWAFlowTreemapChartData([node('Outflow', -5), node('Zero', 0), node('Missing', null)])
-		expect(endpointData.map((item) => item.itemStyle.color)).toEqual(['rgb(148,46,56)', '#8b929a', '#8b929a'])
+	it('keeps a large extreme move as the scale cap', () => {
+		const { colorCap } = buildRWAFlowTreemapChartData([node('Large extreme', -100, 1_000), node('Small move', 10, 100)])
+
+		expect(colorCap).toBe(100)
 	})
 })

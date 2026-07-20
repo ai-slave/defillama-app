@@ -1179,14 +1179,9 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 										nodes={flowTreemap.nodes}
 										sizeLabel={flowTreemapSizeLabel}
 										periodLabel={getRWAFlowTreemapPeriodLabel(flowRotationFrequency)}
+										excludedSizeCount={flowTreemap.excludedSizeCount}
 										onReady={handleFlowRotationChartReady}
 									/>
-									{flowTreemap.excludedSizeCount > 0 ? (
-										<p className="px-3 pb-2 body-sm text-tertiary">
-											{flowTreemap.excludedSizeCount} {flowTreemap.excludedSizeCount === 1 ? 'tile' : 'tiles'} hidden
-											(zero or missing {flowTreemapSizeLabel})
-										</p>
-									) : null}
 								</>
 							) : (
 								<RWAFlowRotationChart

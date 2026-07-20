@@ -33,14 +33,25 @@ function lerpRgb(
 }
 
 function getColorCap(nodes: readonly RWAFlowTreemapNode[]): number {
-	const values: number[] = []
+	// Weight the percentile by tile area so tiny denominators cannot wash out the visible market.
+	const values: Array<{ value: number; weight: number }> = []
+	let totalWeight = 0
 	for (const node of nodes) {
 		const value = Math.abs(node.value[1] ?? 0)
-		if (value > 0) values.push(value)
+		if (value === 0) continue
+		const weight = node.value[0]
+		values.push({ value, weight })
+		totalWeight += weight
 	}
 	if (values.length === 0) return MIN_COLOR_CAP_PERCENT
-	values.sort((a, b) => a - b)
-	return Math.max(values[Math.ceil(values.length * 0.9) - 1], MIN_COLOR_CAP_PERCENT)
+	values.sort((a, b) => a.value - b.value)
+	const threshold = totalWeight * 0.9
+	let cumulativeWeight = 0
+	for (const entry of values) {
+		cumulativeWeight += entry.weight
+		if (cumulativeWeight >= threshold) return Math.max(entry.value, MIN_COLOR_CAP_PERCENT)
+	}
+	return Math.max(values[values.length - 1].value, MIN_COLOR_CAP_PERCENT)
 }
 
 function getFlowColor(value: number | null, colorCap: number): string {
@@ -56,7 +67,7 @@ export function buildRWAFlowTreemapChartData(nodes: readonly RWAFlowTreemapNode[
 	for (const node of nodes) {
 		data.push({ ...node, itemStyle: { color: getFlowColor(node.value[1], colorCap) } })
 	}
-	return data
+	return { data, colorCap }
 }
 
 function formatFlowPercent(value: number | null): string {
@@ -75,12 +86,14 @@ export function RWAFlowTreemapChart({
 	nodes,
 	sizeLabel,
 	periodLabel,
+	excludedSizeCount = 0,
 	height = '600px',
 	onReady
 }: {
 	nodes: RWAFlowTreemapNode[]
 	sizeLabel: string
 	periodLabel: string
+	excludedSizeCount?: number
 	height?: string
 	onReady?: (instance: echarts.ECharts | null) => void
 }) {
@@ -94,7 +107,7 @@ export function RWAFlowTreemapChart({
 		onReadyRef.current = onReady
 	})
 
-	const chartData = useMemo(() => buildRWAFlowTreemapChartData(nodes), [nodes])
+	const { data: chartData, colorCap } = useMemo(() => buildRWAFlowTreemapChartData(nodes), [nodes])
 
 	useEffect(() => {
 		const element = chartElementRef.current
@@ -204,12 +217,17 @@ export function RWAFlowTreemapChart({
 			style={{ height, padding: CHART_INSET, boxSizing: 'border-box' }}
 		>
 			<div ref={chartElementRef} className="min-h-0 w-full flex-1 overflow-hidden" />
-			<div
-				className="flex shrink-0 justify-end px-1 text-xs text-tertiary"
-				role="img"
-				aria-label="Treemap color scale: outflow through zero to inflow"
-			>
-				<div className="w-40">
+			<div className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 px-1 text-tertiary">
+				{excludedSizeCount > 0 ? (
+					<p className="body-sm">
+						{excludedSizeCount} {excludedSizeCount === 1 ? 'tile' : 'tiles'} hidden (zero or missing {sizeLabel})
+					</p>
+				) : null}
+				<div
+					className="ml-auto w-40 shrink-0 text-xs"
+					role="img"
+					aria-label={`Treemap color scale: outflow through zero to inflow; full intensity at ${formatFlowPercent(colorCap)}`}
+				>
 					<div
 						className="h-1.5 rounded-full border border-subtle"
 						style={{ background: `linear-gradient(to right, ${NEGATIVE_COLOR}, ${NEUTRAL_COLOR}, ${POSITIVE_COLOR})` }}

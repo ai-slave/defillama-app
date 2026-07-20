@@ -437,14 +437,9 @@ export function RWAOverviewBreakdownChart({
 								nodes={flowTreemap.nodes}
 								sizeLabel={flowTreemapSizeLabel}
 								periodLabel={getRWAFlowTreemapPeriodLabel(flowFrequency)}
+								excludedSizeCount={flowTreemap.excludedSizeCount}
 								onReady={handleChartReady}
 							/>
-							{flowTreemap.excludedSizeCount > 0 ? (
-								<p className="px-3 pb-2 body-sm text-tertiary">
-									{flowTreemap.excludedSizeCount} {flowTreemap.excludedSizeCount === 1 ? 'tile' : 'tiles'} hidden (zero
-									or missing {flowTreemapSizeLabel})
-								</p>
-							) : null}
 						</>
 					) : (
 						<MultiSeriesChart2
