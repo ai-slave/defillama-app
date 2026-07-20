@@ -1350,7 +1350,7 @@ export default function VerifiedLanding() {
 										</p>
 										<div className="mt-8 flex flex-wrap items-center gap-5">
 											<a href="#get" className={primaryCtaStyles}>
-												Start a verification review
+												Get verified
 											</a>
 											<a href="#reconcile" className="label-sm font-semibold text-link hover:underline">
 												See the public record ↓
@@ -1425,7 +1425,7 @@ export default function VerifiedLanding() {
 						</section>
 
 						<section id="get" className="scroll-mt-24 border-t border-subtle">
-							<div className="mx-auto flex max-w-[1140px] flex-wrap items-center justify-between gap-x-12 gap-y-8 px-4 py-24 sm:px-6 md:px-8">
+							<div className="mx-auto flex max-w-[1140px] flex-wrap items-center justify-between gap-x-12 gap-y-8 px-4 py-24 sm:px-6 md:px-8 xl:flex-nowrap">
 								<div>
 									<h2 className="max-w-[22ch] text-[clamp(2rem,4.2vw,3rem)] leading-[1.06] font-extrabold tracking-tight">
 										Get your offchain metrics verified by DefiLlama.
@@ -1435,9 +1435,9 @@ export default function VerifiedLanding() {
 										update cadence before you commit.
 									</p>
 								</div>
-								<div className="flex flex-wrap items-center gap-3">
+								<div className="flex flex-wrap items-center gap-3 xl:shrink-0 xl:flex-nowrap">
 									<a href="mailto:patrick@defillama.com" className={primaryCtaStyles}>
-										Start a verification review
+										Get verified
 									</a>
 									<a
 										href="https://calendly.com/patrick-defillama"
