@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
-import { errorToast } from '~/components/Toast'
+import { errorToast } from '~/components/Toast/notifications'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface SelectedImage {

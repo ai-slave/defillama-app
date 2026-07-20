@@ -9,7 +9,7 @@ import type {
 import { formattedNum } from '~/utils'
 import { aggregateBreakdown, channelsToBars, lastSeriesValue, singleSeriesDataset } from './chartData'
 import { useEcosystemData, chartToTimeSeries } from './ecosystemApi'
-import { NearIcon } from './NearHeader'
+import { NearIcon } from './NearIcon'
 
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')

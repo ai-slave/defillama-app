@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { errorToast, successToast } from '~/components/Toast'
+import { errorToast, successToast } from '~/components/Toast/notifications'
 import { AUTH_SERVER } from '~/constants'
 import { handleSimpleFetchResponse } from '~/utils/async'
 import pb, { type AuthModel } from '~/utils/pocketbase'

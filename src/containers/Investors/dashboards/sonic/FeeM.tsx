@@ -16,7 +16,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { lastNDaysZoom } from './chartDefaults'
 import { useFeeMData, type FeeMLeaderboardEntry } from './feemApi'
-import { SonicIcon } from './SonicHeader'
+import { SonicIcon } from './SonicIcon'
 
 echarts.use([EChartsTreemap, TooltipComponent, GraphicComponent, CanvasRenderer])
 

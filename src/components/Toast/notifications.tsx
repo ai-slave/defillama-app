@@ -1,41 +1,5 @@
-import { createPortal } from 'react-dom'
-import toast, { Toaster } from 'react-hot-toast'
-import { useIsClient } from '~/hooks/useIsClient'
+import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
-
-export function Toast() {
-	const isClient = useIsClient()
-	if (!isClient) return null
-
-	return createPortal(
-		<Toaster
-			position="top-center"
-			containerStyle={{ zIndex: 99999 }}
-			toastOptions={{
-				style: {
-					background: 'var(--bg-overlay)',
-					color: 'var(--text-primary)',
-					border: '1px solid var(--border-medium)',
-					borderRadius: '8px',
-					fontSize: '14px'
-				},
-				success: {
-					iconTheme: {
-						primary: 'var(--success)',
-						secondary: 'var(--bg-overlay)'
-					}
-				},
-				error: {
-					iconTheme: {
-						primary: 'var(--error)',
-						secondary: 'var(--bg-overlay)'
-					}
-				}
-			}}
-		/>,
-		document.body
-	)
-}
 
 const SUCCESS_TOAST_DURATION = 4000
 

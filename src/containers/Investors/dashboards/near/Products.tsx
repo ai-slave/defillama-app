@@ -1,4 +1,4 @@
-import { NearIcon } from './NearHeader'
+import { NearIcon } from './NearIcon'
 
 function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
 	return (
