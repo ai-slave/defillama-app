@@ -1,5 +1,57 @@
 import { describe, expect, it } from 'vitest'
-import { areChartDataEqual } from '~/containers/LlamaAI/utils/chartComparison'
+import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import { areChartDataEqual, areChartsEqual } from '~/containers/LlamaAI/utils/chartComparison'
+
+const chart = {
+	id: 'chart-1',
+	type: 'line',
+	title: 'Chart',
+	description: '',
+	axes: {
+		x: { field: 'timestamp', label: 'Date', type: 'time' },
+		yAxes: [{ id: 'value', fields: ['value'], label: 'USD', position: 'left' }]
+	},
+	series: [
+		{
+			name: 'Value',
+			type: 'line',
+			yAxisId: 'value',
+			metricClass: 'stock',
+			dataMapping: { xField: 'timestamp', yField: 'value' },
+			styling: { color: '#123456' }
+		}
+	],
+	dataTransformation: { timeField: 'timestamp', metrics: ['value'] },
+	displayOptions: {
+		canStack: false,
+		canShowPercentage: false,
+		canShowCumulative: false,
+		supportsGrouping: true
+	}
+} satisfies ChartConfiguration
+
+describe('areChartsEqual', () => {
+	it('compares the complete nested chart configuration', () => {
+		expect(areChartsEqual([chart], [structuredClone(chart)])).toBe(true)
+		expect(
+			areChartsEqual(
+				[chart],
+				[{ ...structuredClone(chart), displayOptions: { ...chart.displayOptions!, defaultStacked: true } }]
+			)
+		).toBe(false)
+		expect(
+			areChartsEqual(
+				[chart],
+				[
+					{
+						...structuredClone(chart),
+						series: [{ ...structuredClone(chart.series[0]), styling: { color: '#abcdef' } }]
+					}
+				]
+			)
+		).toBe(false)
+	})
+})
 
 describe('areChartDataEqual', () => {
 	it('treats equivalent keyed chart payloads as equal', () => {

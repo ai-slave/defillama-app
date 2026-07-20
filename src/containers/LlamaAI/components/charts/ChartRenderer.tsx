@@ -16,9 +16,9 @@ import { useAuthContext } from '~/auth'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { saveChartToLibrary } from '~/containers/LlamaAI/api/saveChartToLibrary'
 import { updateChartStyle } from '~/containers/LlamaAI/api/updateChartStyle'
-import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/ArticleExportContext'
+import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/useArticleExport'
 import { ChartControls } from '~/containers/LlamaAI/components/charts/ChartControls'
-import { ChartStyleEditor } from '~/containers/LlamaAI/components/charts/ChartStyleEditor'
+import { ChartStyleEditor, type ChartStyleEditorView } from '~/containers/LlamaAI/components/charts/ChartStyleEditor'
 import type { ChartConfiguration, ChartDataByKey, ChartDataSeries, ChartStylePatch } from '~/containers/LlamaAI/types'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import { adaptChartData } from '~/containers/LlamaAI/utils/chartAdapter'
@@ -29,14 +29,21 @@ import {
 	type ChartCapabilities,
 	type ChartViewState
 } from '~/containers/LlamaAI/utils/chartCapabilities'
-import { areChartDataEqual, areChartsEqual, areStringArraysEqual } from '~/containers/LlamaAI/utils/chartComparison'
+import {
+	areChartConfigsEqual,
+	areChartDataEqual,
+	areChartsEqual,
+	areStringArraysEqual
+} from '~/containers/LlamaAI/utils/chartComparison'
 import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransformer'
 import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/utils/chartRenderPlan'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button, buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const noop = () => {}
+const chartToolbarIconButtonStyles = buttonStyles({ size: 'md', square: true })
 
 const CandlestickChart = lazy(() => import('~/components/ECharts/CandlestickChart'))
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
@@ -78,6 +85,7 @@ type ChartAction =
 	| { type: 'SET_HALLMARKS'; payload: boolean }
 	| { type: 'SET_LABELS'; payload: boolean }
 	| { type: 'SET_LOG_SCALE'; payload: boolean }
+	| { type: 'RESET_VIEW'; payload: ChartViewState }
 
 const chartReducer = (state: ChartViewState, action: ChartAction): ChartViewState => {
 	switch (action.type) {
@@ -95,6 +103,8 @@ const chartReducer = (state: ChartViewState, action: ChartAction): ChartViewStat
 			return { ...state, showLabels: action.payload }
 		case 'SET_LOG_SCALE':
 			return { ...state, logScale: action.payload }
+		case 'RESET_VIEW':
+			return action.payload
 		default:
 			return state
 	}
@@ -109,6 +119,17 @@ function createInitialChartState(config: ChartConfiguration): ChartViewState {
 		showHallmarks: true,
 		showLabels: config.displayOptions?.showLabels || false,
 		logScale: config.displayOptions?.defaultLogScale || false
+	}
+}
+
+function applySavedStyleDefaults(state: ChartViewState, config: ChartConfiguration): ChartViewState {
+	const defaults = createInitialChartState(config)
+	return {
+		...state,
+		stacked: defaults.stacked,
+		percentage: defaults.percentage,
+		showLabels: defaults.showLabels,
+		logScale: defaults.logScale
 	}
 }
 
@@ -230,9 +251,9 @@ function ChartExportButtonsSlot({
 	return (
 		<ChartPngExportButton
 			chartInstance={chartInstance}
+			className={chartToolbarIconButtonStyles}
 			filename={renderPlan.filename}
 			title={chartTitle}
-			smol
 			iconOnly
 			csvMenuItem={
 				exportModel && prepareCsvDirect
@@ -276,6 +297,98 @@ function tryBuildPresentation(
 	}
 }
 
+interface ChartEditorSessionProps {
+	config: ChartConfiguration
+	original: ChartConfiguration
+	data: ChartDataSeries
+	initialViewIntent: ChartViewState
+	resetView: ChartStyleEditorView
+	initialBase: BasePresentationResult | null
+	initialControls: ChartRenderPlan['controls']
+	categories: string[]
+	onSave: (draft: ChartConfiguration, patch: ChartStylePatch) => Promise<void>
+	onCancel: () => void
+}
+
+function ChartEditorSession({
+	config,
+	original,
+	data,
+	initialViewIntent,
+	resetView,
+	initialBase,
+	initialControls,
+	categories,
+	onSave,
+	onCancel
+}: ChartEditorSessionProps) {
+	// Preview changes stay inside the modal. SingleChart only receives the final draft on Save.
+	const [preview, setPreview] = useState<{ config: ChartConfiguration; view: ChartViewState }>(() => ({
+		config,
+		view: initialViewIntent
+	}))
+	const handlePreview = useCallback((draft: ChartConfiguration, view: ChartStyleEditorView) => {
+		setPreview((current) => ({ config: draft, view: { ...current.view, ...view } }))
+	}, [])
+	const previewBase = useMemo(
+		() => (preview.config === config && initialBase ? initialBase : tryBuildPresentationBase(preview.config, data)),
+		[preview.config, config, initialBase, data]
+	)
+	const previewPresentation = useMemo<PresentationResult>(() => {
+		if (previewBase.ok === false) return previewBase
+		return tryBuildPresentation(preview.config, previewBase.base, preview.view)
+	}, [preview.config, preview.view, previewBase])
+	const previewControls = previewPresentation.ok ? previewPresentation.plan.controls : initialControls
+	const previewState = previewControls.state
+	const previewChartKey = `${config.id}-preview-${preview.config.type}-${preview.config.series.map((series) => series.type).join('-')}-${previewState.stacked}-${previewState.percentage}-${previewState.cumulative}-${previewState.grouping}-${previewState.showHallmarks}-${previewState.showLabels}-${previewState.logScale}`
+
+	let previewContent: ReactNode
+	if (previewPresentation.ok === false) {
+		const errorMsg = previewPresentation.error instanceof Error ? previewPresentation.error.message : 'Unknown error'
+		previewContent = (
+			<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-ai-error-bg p-1 py-8 text-ai-error-strong">
+				<Icon name="alert-triangle" height={16} width={16} />
+				<p>{errorMsg}</p>
+			</div>
+		)
+	} else if (!previewPresentation.plan.hasData) {
+		previewContent = (
+			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-ai-tertiary">
+				<Icon name="bar-chart" height={16} width={16} />
+				<p>No data available for chart</p>
+			</div>
+		)
+	} else {
+		previewContent = renderChartContent(previewPresentation.plan, previewChartKey, noop)
+	}
+
+	return (
+		<>
+			<div className="flex h-[360px] min-h-[360px] shrink-0 items-center justify-center overflow-hidden px-5 lg:h-auto lg:min-h-0 lg:flex-1 lg:overflow-auto lg:p-5">
+				<div className="w-full">{previewContent}</div>
+			</div>
+			<div className="flex w-full shrink-0 flex-col border-t border-ai-line bg-ai-surface lg:h-full lg:min-h-0 lg:w-[340px] lg:overflow-y-auto lg:border-t-0 lg:border-l">
+				<ChartStyleEditor
+					config={config}
+					original={original}
+					caps={previewControls}
+					categories={categories}
+					view={{
+						logScale: initialViewIntent.logScale,
+						stacked: initialViewIntent.stacked,
+						showLabels: initialViewIntent.showLabels,
+						percentage: initialViewIntent.percentage
+					}}
+					resetView={resetView}
+					onPreview={handlePreview}
+					onSave={onSave}
+					onCancel={onCancel}
+				/>
+			</div>
+		</>
+	)
+}
+
 function SingleChart({
 	config: baseConfig,
 	data,
@@ -289,11 +402,19 @@ function SingleChart({
 	// authorizedFetch/user come from the shared auth context — real under the LlamaAI provider, an
 	// empty object (→ no editor) in ProDashboard, so this is safe everywhere ChartRenderer renders.
 	const { authorizedFetch, user } = useAuthContext()
-	// Owner style edits render as a local override on top of the persisted config (live preview);
-	// the override is kept after a successful save (the server returns the applied config).
-	const [override, setOverride] = useState<ChartConfiguration | null>(null)
+	// Chat messages retain successful saves locally because their persisted payload does not refresh
+	// until reload. Editor drafts stay inside ChartStyleEditor and never enter this render pipeline.
+	const [appliedConfigOverride, setAppliedConfigOverride] = useState<{
+		config: ChartConfiguration
+		source: ChartConfiguration
+	} | null>(null)
 	const [editing, setEditing] = useState(false)
-	const config = override ?? baseConfig
+	const appliedConfig =
+		appliedConfigOverride && areChartConfigsEqual(appliedConfigOverride.source, baseConfig)
+			? appliedConfigOverride.config
+			: null
+	const config = appliedConfig ?? baseConfig
+	const [chartState, dispatch] = useReducer(chartReducer, config, createInitialChartState)
 	const chatEditContext = !!authorizedFetch && !!user?.id && !!sessionId && !!messageId
 	const canEdit = !readOnly && config.type !== 'candlestick' && (chatEditContext || !!onLocalStyleSave)
 
@@ -317,25 +438,24 @@ function SingleChart({
 	}, [authorizedFetch, savingToLibrary, baseConfig.id, sessionId, messageId])
 
 	const handleSaveStyle = useCallback(
-		async (patch: ChartStylePatch) => {
+		async (draft: ChartConfiguration, patch: ChartStylePatch) => {
 			if (onLocalStyleSave) {
-				// Local mode: the live-preview override already holds the fully edited
-				// config; only the view defaults arrive solely via the patch.
-				const base = override ?? baseConfig
-				const updated: ChartConfiguration = base.displayOptions
+				const updated: ChartConfiguration = draft.displayOptions
 					? {
-							...base,
+							...draft,
 							displayOptions: {
-								...base.displayOptions,
+								...draft.displayOptions,
 								defaultStacked: patch.defaultStacked,
 								defaultPercentage: patch.defaultPercentage,
 								defaultLogScale: patch.defaultLogScale,
 								showLabels: patch.showLabels
 							}
 						}
-					: base
-				setOverride(updated)
+					: draft
 				onLocalStyleSave(updated)
+				setAppliedConfigOverride({ config: updated, source: baseConfig })
+				dispatch({ type: 'RESET_VIEW', payload: applySavedStyleDefaults(chartState, updated) })
+				setEditing(false)
 				return
 			}
 			if (!authorizedFetch || !sessionId || !messageId) return
@@ -345,9 +465,11 @@ function SingleChart({
 				chartId: baseConfig.id,
 				style: patch
 			})
-			setOverride(updated)
+			setAppliedConfigOverride({ config: updated, source: baseConfig })
+			dispatch({ type: 'RESET_VIEW', payload: applySavedStyleDefaults(chartState, updated) })
+			setEditing(false)
 		},
-		[authorizedFetch, sessionId, messageId, onLocalStyleSave, override, baseConfig]
+		[authorizedFetch, sessionId, messageId, onLocalStyleSave, baseConfig, chartState]
 	)
 
 	// category names (bars/slices) for per-category color pickers on single-series hbar & pie
@@ -367,7 +489,6 @@ function SingleChart({
 		return out
 	}, [data, config])
 
-	const [chartState, dispatch] = useReducer(chartReducer, config, createInitialChartState)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	useEffect(() => {
 		if (!editing) return
@@ -399,6 +520,8 @@ function SingleChart({
 		(logScale: boolean) => dispatch({ type: 'SET_LOG_SCALE', payload: logScale }),
 		[]
 	)
+	const handleOpenStyleEditor = useCallback(() => setEditing(true), [])
+	const handleCancelStyleEditor = useCallback(() => setEditing(false), [])
 
 	// The adapted chart and intrinsic capabilities depend only on base inputs. View controls
 	// always transform from this canonical result so state toggles never repeat adaptation.
@@ -452,9 +575,9 @@ function SingleChart({
 
 	const normalizedState = renderPlan.controls.state
 	const exportModel = renderPlan.exportModel
-	// A live style override (post-edit) carries the freshest title; the title prop
+	// A locally applied config carries the freshest title; the title prop
 	// comes from message/node state, which in chat only refreshes on reload.
-	const chartTitle = override?.title ?? title ?? config.title
+	const chartTitle = appliedConfig?.title ?? title ?? config.title
 	const chartKey = `${config.id}-${normalizedState.stacked}-${normalizedState.percentage}-${normalizedState.cumulative}-${normalizedState.grouping}-${normalizedState.showHallmarks}-${normalizedState.showLabels}-${normalizedState.logScale}`
 	const chartContent = renderChartContent(renderPlan, chartKey, handleChartReady)
 
@@ -480,28 +603,34 @@ function SingleChart({
 					messageId={messageId}
 				/>
 				{canEdit ? (
-					<button
+					<Button
 						type="button"
-						onClick={() => setEditing((v) => !v)}
+						size="md"
+						square
+						onClick={handleOpenStyleEditor}
 						title="Edit chart style"
-						className="flex items-center gap-1 rounded-sm px-1.5 py-1 text-xs text-ai-tertiary hover:text-ai-primary"
+						aria-label="Edit chart style"
 					>
 						<Icon name="settings" height={14} width={14} />
-					</button>
+					</Button>
 				) : null}
 				{openArticleExport && messageId && !readOnly ? (
 					<>
-						<button
+						<Button
 							type="button"
+							size="md"
+							square
 							onClick={() => void handleSaveToLibrary()}
 							disabled={savingToLibrary}
 							title="Save chart (frozen data)"
-							className="flex items-center gap-1 rounded-sm px-1.5 py-1 text-xs text-ai-tertiary hover:text-ai-primary disabled:opacity-50"
+							aria-label="Save chart (frozen data)"
 						>
 							<Icon name="bookmark" height={14} width={14} />
-						</button>
-						<button
+						</Button>
+						<Button
 							type="button"
+							size="md"
+							square
 							onClick={() =>
 								openArticleExport({
 									kind: 'chart',
@@ -512,43 +641,35 @@ function SingleChart({
 								})
 							}
 							title="Add to research article"
-							className="flex items-center gap-1 rounded-sm px-1.5 py-1 text-xs text-ai-tertiary hover:text-ai-primary"
+							aria-label="Add to research article"
 						>
 							<Icon name="file-plus" height={14} width={14} />
-						</button>
+						</Button>
 					</>
 				) : null}
 			</ChartControls>
 			{chartContent}
 			{editing && canEdit ? (
-				<ChartEditorModal title={chartTitle} onClose={() => setEditing(false)}>
-					<div className="flex flex-1 items-center justify-center overflow-auto p-5">
-						<div className="w-full">{renderChartContent(renderPlan, `${chartKey}-edit`, noop)}</div>
-					</div>
-					<div className="flex w-full shrink-0 flex-col overflow-y-auto border-t border-ai-line bg-ai-surface lg:w-[340px] lg:border-t-0 lg:border-l">
-						<ChartStyleEditor
-							config={config}
-							original={baseConfig}
-							caps={renderPlan.controls}
-							categories={editorCategories}
-							view={{
-								logScale: normalizedState.logScale,
-								stacked: normalizedState.stacked,
-								showLabels: normalizedState.showLabels,
-								percentage: normalizedState.percentage
-							}}
-							onView={(key, value) => {
-								if (key === 'logScale') handleLogScaleChange(value)
-								else if (key === 'stacked') handleStackedChange(value)
-								else if (key === 'percentage') handlePercentageChange(value)
-								else handleLabelsChange(value)
-							}}
-							onPreview={setOverride}
-							onReset={() => setOverride(null)}
-							onSave={handleSaveStyle}
-							onClose={() => setEditing(false)}
-						/>
-					</div>
+				<ChartEditorModal title={chartTitle} onClose={handleCancelStyleEditor}>
+					<ChartEditorSession
+						config={config}
+						original={baseConfig}
+						data={data}
+						// Keep raw view intent so capabilities introduced by a draft (such as the first
+						// annotation) can become active. The preview pipeline normalizes it per draft.
+						initialViewIntent={chartState}
+						resetView={{
+							logScale: baseConfig.displayOptions?.defaultLogScale ?? false,
+							stacked: baseConfig.displayOptions?.defaultStacked ?? false,
+							showLabels: baseConfig.displayOptions?.showLabels ?? false,
+							percentage: baseConfig.displayOptions?.defaultPercentage ?? false
+						}}
+						initialBase={basePresentation}
+						initialControls={renderPlan.controls}
+						categories={editorCategories}
+						onSave={handleSaveStyle}
+						onCancel={handleCancelStyleEditor}
+					/>
 				</ChartEditorModal>
 			) : null}
 		</div>
@@ -572,30 +693,24 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 	return createPortal(
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
 			<div className="absolute inset-0 bg-ai-backdrop" onClick={onClose} />
-			<div className="relative flex h-[85vh] max-h-[560px] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-ai-line bg-ai-surface-card shadow-2xl lg:flex-row">
-				<div className="flex items-center justify-between border-b border-ai-line px-4 py-2.5 lg:hidden">
+			<div className="relative flex h-[85dvh] max-h-[560px] w-full max-w-5xl flex-col overflow-y-auto overscroll-contain rounded-xl border border-ai-line bg-ai-surface-card shadow-2xl lg:flex-row lg:overflow-hidden">
+				<div className="flex shrink-0 items-center justify-between border-b border-ai-line px-4 py-2.5 lg:hidden">
 					<span className="truncate text-sm font-semibold text-secondary">{title ?? 'Edit chart'}</span>
-					<button
-						type="button"
-						onClick={onClose}
-						aria-label="Close editor"
-						className="rounded-sm p-1 text-ai-muted hover:bg-ai-hover hover:text-ai-primary"
-					>
-						<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
-							<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-						</svg>
-					</button>
+					<Button type="button" variant="ghost" size="md" square onClick={onClose} aria-label="Close editor">
+						<Icon name="x" className="size-4" aria-hidden="true" />
+					</Button>
 				</div>
-				<button
+				<Button
 					type="button"
+					variant="ghost"
+					size="md"
+					square
 					onClick={onClose}
 					aria-label="Close editor"
-					className="absolute top-2.5 right-2.5 z-10 hidden rounded-sm p-1 text-ai-muted hover:bg-ai-hover hover:text-ai-primary lg:block"
+					className="absolute top-2.5 right-2.5 z-10 hidden lg:flex"
 				>
-					<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
-						<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-					</svg>
-				</button>
+					<Icon name="x" className="size-4" aria-hidden="true" />
+				</Button>
 				{children}
 			</div>
 		</div>,

@@ -5,11 +5,10 @@ import { ChainOverview } from '~/containers/ChainOverview'
 import { ChainOverviewAnnouncement } from '~/containers/ChainOverview/Announcement'
 import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
 import { ChainWarningBanners } from '~/containers/ChainOverview/WarningBanners'
-import { fetchEntityQuestions } from '~/containers/LlamaAI/api'
+import { fetchOptionalEntityQuestions } from '~/containers/LlamaAI/entityQuestions'
 import Layout from '~/layout'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
-import { optionalPageData } from '~/utils/optionalPageData'
 import { createRoutePhaseTimer, withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
@@ -66,11 +65,7 @@ export const getStaticProps = withPerformanceLogging('chain/[chain]', async ({ p
 		const { questions: entityQuestions } =
 			normalizedChain !== 'All'
 				? await phaseTimer.time('entity_questions', () =>
-						optionalPageData(
-							`chain:${slug(normalizedChain)}:entity_questions`,
-							() => fetchEntityQuestions(normalizedChain, 'chain', undefined, { throwOnError: true }),
-							{ questions: [], suggestGlobal: false }
-						)
+						fetchOptionalEntityQuestions(normalizedChain, 'chain', slug(normalizedChain))
 					)
 				: { questions: [] }
 

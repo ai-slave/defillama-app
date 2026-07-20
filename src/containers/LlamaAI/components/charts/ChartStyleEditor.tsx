@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/types'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
+import { Button } from '~/ui/Button'
 import { getNDistinctColors } from '~/utils'
 
 const ALL_TYPES: ChartConfiguration['type'][] = ['line', 'area', 'bar', 'hbar', 'combo', 'pie', 'scatter']
@@ -17,6 +18,8 @@ function compatibleTypes(xType: string | undefined): ChartConfiguration['type'][
 }
 
 type ViewKey = 'logScale' | 'stacked' | 'showLabels' | 'percentage'
+export type ChartStyleEditorView = Record<ViewKey, boolean>
+type PreviewMode = 'immediate' | 'debounced'
 
 type EditorCaps = Pick<
 	ChartControlsModel,
@@ -28,12 +31,11 @@ interface ChartStyleEditorProps {
 	original: ChartConfiguration
 	caps: EditorCaps
 	categories?: string[]
-	view: Record<ViewKey, boolean>
-	onView: (key: ViewKey, value: boolean) => void
-	onPreview: (config: ChartConfiguration) => void
-	onReset: () => void
-	onSave: (patch: ChartStylePatch) => Promise<void>
-	onClose: () => void
+	view: ChartStyleEditorView
+	resetView: ChartStyleEditorView
+	onPreview: (draft: ChartConfiguration, view: ChartStyleEditorView) => void
+	onSave: (draft: ChartConfiguration, patch: ChartStylePatch) => Promise<void>
+	onCancel: () => void
 }
 
 const clone = (c: ChartConfiguration): ChartConfiguration => JSON.parse(JSON.stringify(c))
@@ -46,7 +48,7 @@ const toDateInput = (unixSeconds: number): string => {
 }
 const fromDateInput = (value: string): number => Math.floor(new Date(`${value}T00:00:00Z`).getTime() / 1000)
 
-function toPatch(c: ChartConfiguration, view: Record<ViewKey, boolean>): ChartStylePatch {
+function toPatch(c: ChartConfiguration, view: ChartStyleEditorView): ChartStylePatch {
 	return {
 		title: c.title,
 		type: c.type,
@@ -80,6 +82,7 @@ const input =
 const swatch =
 	'size-7 shrink-0 cursor-pointer rounded-md border border-medium bg-transparent p-0.75 transition-transform hover:scale-105'
 const axisTag = 'w-3.5 shrink-0 text-center text-[11px] font-medium text-ai-muted'
+const PREVIEW_DEBOUNCE_MS = 350
 
 export function ChartStyleEditor({
 	config,
@@ -87,24 +90,67 @@ export function ChartStyleEditor({
 	caps,
 	categories = [],
 	view,
-	onView,
+	resetView,
 	onPreview,
-	onReset,
 	onSave,
-	onClose
+	onCancel
 }: ChartStyleEditorProps) {
-	const [draft, setDraft] = useState<ChartConfiguration>(() => clone(config))
+	// The editor owns this config-only draft. Keystrokes rerender the form, never SingleChart or its dataset pipeline.
+	const [draft, setDraft] = useState<ChartConfiguration>(() => config)
+	const [draftView, setDraftView] = useState<ChartStyleEditorView>(() => ({ ...view }))
 	const [saving, setSaving] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+	const pendingPreview = useRef<{ draft: ChartConfiguration; view: ChartStyleEditorView } | null>(null)
 	const isCombo = draft.type === 'combo'
 
-	const update = (mutate: (d: ChartConfiguration) => void) => {
-		setDraft((prev) => {
-			const next = clone(prev)
-			mutate(next)
-			onPreview(next)
-			return next
-		})
+	const clearPreviewTimer = () => {
+		if (previewTimer.current) clearTimeout(previewTimer.current)
+		previewTimer.current = null
+	}
+
+	const publishPreview = (nextDraft: ChartConfiguration, nextView: ChartStyleEditorView, mode: PreviewMode) => {
+		clearPreviewTimer()
+		pendingPreview.current = { draft: nextDraft, view: nextView }
+		if (mode === 'immediate') {
+			pendingPreview.current = null
+			onPreview(nextDraft, nextView)
+			return
+		}
+		previewTimer.current = setTimeout(() => {
+			const pending = pendingPreview.current
+			pendingPreview.current = null
+			previewTimer.current = null
+			if (pending) onPreview(pending.draft, pending.view)
+		}, PREVIEW_DEBOUNCE_MS)
+	}
+
+	const flushPendingPreview = () => {
+		const pending = pendingPreview.current
+		if (!pending) return
+		clearPreviewTimer()
+		pendingPreview.current = null
+		onPreview(pending.draft, pending.view)
+	}
+
+	useEffect(
+		() => () => {
+			if (previewTimer.current) clearTimeout(previewTimer.current)
+		},
+		[]
+	)
+
+	const update = (mutate: (d: ChartConfiguration) => void, mode: PreviewMode = 'debounced') => {
+		const next = clone(draft)
+		mutate(next)
+		setDraft(next)
+		publishPreview(next, draftView, mode)
+	}
+
+	const updateView = (key: ViewKey, value: boolean) => {
+		const nextView = { ...draftView, [key]: value }
+		setDraftView(nextView)
+		publishPreview(draft, nextView, 'immediate')
 	}
 
 	const yAxes = useMemo(() => draft.axes?.yAxes ?? [], [draft])
@@ -137,8 +183,7 @@ export function ChartStyleEditor({
 		setSaving(true)
 		setError(null)
 		try {
-			await onSave(toPatch(draft, view))
-			onClose()
+			await onSave(draft, toPatch(draft, draftView))
 		} catch (e) {
 			setError(e instanceof Error ? e.message : 'Save failed')
 		} finally {
@@ -147,9 +192,12 @@ export function ChartStyleEditor({
 	}
 
 	const reset = () => {
-		setDraft(clone(original))
+		const resetDraft = clone(original)
+		const nextView = { ...resetView }
+		setDraft(resetDraft)
+		setDraftView(nextView)
 		setError(null)
-		onReset()
+		publishPreview(resetDraft, nextView, 'immediate')
 	}
 
 	const toggles = (
@@ -164,7 +212,7 @@ export function ChartStyleEditor({
 		.map(([, key, text]) => [key, text] as [ViewKey, string])
 
 	return (
-		<div className="flex min-h-full flex-col gap-3 p-4 text-secondary">
+		<div className="flex min-h-full flex-col gap-3 p-4 text-secondary" onBlurCapture={flushPendingPreview}>
 			<span className="text-[10.5px] font-semibold tracking-[0.07em] text-ai-muted uppercase">Style</span>
 
 			<div className={section}>
@@ -174,7 +222,7 @@ export function ChartStyleEditor({
 						<button
 							key={t}
 							data-active={draft.type === t}
-							onClick={() => update((d) => (d.type = t))}
+							onClick={() => update((d) => (d.type = t), 'immediate')}
 							className="rounded-md border border-medium px-2.5 py-1 text-xs capitalize transition-colors hover:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
 						>
 							{t}
@@ -187,6 +235,7 @@ export function ChartStyleEditor({
 				<span className={label}>Title</span>
 				<input
 					className={`${input} w-full`}
+					aria-label="Chart title"
 					value={draft.title}
 					onChange={(e) => update((d) => (d.title = e.target.value))}
 				/>
@@ -204,7 +253,7 @@ export function ChartStyleEditor({
 									onChange={(e) =>
 										update((d) => {
 											d.seriesColors = { ...(d.seriesColors ?? {}), [cat]: e.target.value }
-										})
+										}, 'immediate')
 									}
 									className={swatch}
 								/>
@@ -224,20 +273,22 @@ export function ChartStyleEditor({
 									onChange={(e) =>
 										update((d) => {
 											d.series[i].styling = { ...(d.series[i].styling ?? {}), color: e.target.value }
-										})
+										}, 'immediate')
 									}
 									className={swatch}
 								/>
 								<input
 									className={`${input} flex-1`}
+									aria-label={`Series ${i + 1} name`}
 									value={s.name}
 									onChange={(e) => update((d) => (d.series[i].name = e.target.value))}
 								/>
 								{isCombo ? (
 									<select
 										className={`${input} w-24`}
+										aria-label={`Series ${i + 1} type`}
 										value={s.type}
-										onChange={(e) => update((d) => (d.series[i].type = e.target.value as any))}
+										onChange={(e) => update((d) => (d.series[i].type = e.target.value as any), 'immediate')}
 									>
 										{SERIES_TYPES.map((t) => (
 											<option key={t} value={t}>
@@ -333,6 +384,7 @@ export function ChartStyleEditor({
 								<input
 									type="date"
 									className={`${input} w-[140px]`}
+									aria-label={`Annotation ${i + 1} date`}
 									value={toDateInput(h[0])}
 									onChange={(e) =>
 										update((d) => {
@@ -345,6 +397,7 @@ export function ChartStyleEditor({
 								/>
 								<input
 									className={`${input} flex-1`}
+									aria-label={`Annotation ${i + 1} label`}
 									placeholder="label"
 									value={h[1] ?? ''}
 									onChange={(e) =>
@@ -361,7 +414,7 @@ export function ChartStyleEditor({
 											const hs = [...(d.hallmarks ?? [])]
 											hs.splice(i, 1)
 											d.hallmarks = hs
-										})
+										}, 'immediate')
 									}
 									aria-label="Remove annotation"
 									className="shrink-0 rounded-md border border-medium px-2 py-1 text-sm text-ai-muted transition-colors hover:border-ai-error-vivid hover:text-ai-error-vivid"
@@ -375,7 +428,7 @@ export function ChartStyleEditor({
 						onClick={() =>
 							update((d) => {
 								d.hallmarks = [...(d.hallmarks ?? []), [Math.floor(Date.now() / 1000), '']]
-							})
+							}, 'immediate')
 						}
 						className="self-start rounded-md border border-medium px-2.5 py-1 text-xs text-secondary transition-colors hover:border-brand"
 					>
@@ -392,7 +445,7 @@ export function ChartStyleEditor({
 							<button
 								key={s}
 								data-active={(draft.hallmarkStyle ?? 'mark-line') === s}
-								onClick={() => update((d) => (d.hallmarkStyle = s))}
+								onClick={() => update((d) => (d.hallmarkStyle = s), 'immediate')}
 								className="rounded-md border border-medium px-2.5 py-1 text-xs transition-colors hover:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
 							>
 								{s === 'mark-line' ? 'Lines' : 'Event rail'}
@@ -410,8 +463,8 @@ export function ChartStyleEditor({
 								<input
 									type="checkbox"
 									className="size-3.5 accent-brand"
-									checked={view[key]}
-									onChange={(e) => onView(key, e.target.checked)}
+									checked={draftView[key]}
+									onChange={(e) => updateView(key, e.target.checked)}
 								/>
 								{text}
 							</label>
@@ -422,7 +475,7 @@ export function ChartStyleEditor({
 									type="checkbox"
 									className="size-3.5 accent-brand"
 									checked={draft.legend?.show ?? true}
-									onChange={(e) => update((d) => (d.legend = { show: e.target.checked }))}
+									onChange={(e) => update((d) => (d.legend = { show: e.target.checked }), 'immediate')}
 								/>
 								Legend
 							</label>
@@ -431,31 +484,27 @@ export function ChartStyleEditor({
 				</div>
 			) : null}
 
-			<div className="sticky bottom-0 -mx-4 mt-auto -mb-4 flex items-center justify-end gap-2 border-t border-ai-line bg-ai-surface px-4 py-3">
+			<div className="sticky bottom-0 -mx-4 mt-auto -mb-4 flex items-center justify-end gap-2 border-t border-subtle bg-overlay px-4 py-3">
 				{error ? (
-					<span className="mr-auto text-xs text-ai-error-vivid">{error}</span>
+					<span className="mr-auto label-sm text-ai-error-vivid">{error}</span>
 				) : (
-					<button
-						onClick={reset}
-						className="mr-auto rounded-md px-2 py-1.5 text-xs font-medium text-ai-muted transition-colors hover:text-ai-primary"
-					>
+					<Button type="button" variant="ghost" size="md" onClick={reset} className="mr-auto">
 						Reset
-					</button>
+					</Button>
 				)}
-				<button
-					onClick={onClose}
-					className="rounded-md px-3 py-1.5 text-xs font-medium text-ai-tertiary transition-colors hover:text-ai-primary"
-				>
+				<Button type="button" size="md" onClick={onCancel}>
 					Cancel
-				</button>
-				<button
-					onClick={save}
+				</Button>
+				<Button
+					type="button"
+					variant="primary"
+					size="md"
+					onClick={() => void save()}
 					disabled={saving || problems.length > 0}
 					title={problems.length > 0 ? problems[0] : undefined}
-					className="rounded-md bg-brand px-4 py-1.5 text-xs font-medium text-ai-white transition-opacity hover:opacity-90 disabled:opacity-50"
 				>
 					{saving ? 'Saving…' : 'Save'}
-				</button>
+				</Button>
 			</div>
 		</div>
 	)

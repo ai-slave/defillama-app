@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => {
 	return {
 		existingChart,
 		getInstanceByDom: vi.fn(() => existingChart),
-		init: vi.fn(() => tempChart),
+		init: vi.fn((_container: HTMLElement) => tempChart),
 		resetRenderedHandler: () => {
 			renderedHandler = null
 			tempChart.setOption.mockImplementation(() => renderedHandler?.())
@@ -72,6 +72,8 @@ describe('captureChartById', () => {
 
 		await expect(captureChartById('chart', 'Chart', false)).resolves.toBeNull()
 		expect(mocks.tempChart.dispose).toHaveBeenCalledOnce()
-		expect(document.body.querySelectorAll('div')).toHaveLength(2)
+		const captureContainer = mocks.init.mock.calls[0]?.[0]
+		expect(captureContainer).toBeInstanceOf(HTMLElement)
+		expect((captureContainer as HTMLElement).isConnected).toBe(false)
 	})
 })

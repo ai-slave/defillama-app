@@ -5,10 +5,12 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
 import { adaptChartData } from '~/containers/LlamaAI/utils/chartAdapter'
+import type { ChartViewState } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransformer'
 
 interface TestChartControlsProps {
 	children?: ReactNode
+	controls: { state: ChartViewState }
 	onStackedChange: (value: boolean) => void
 	onPercentageChange: (value: boolean) => void
 	onCumulativeChange: (value: boolean) => void
@@ -18,14 +20,25 @@ interface TestChartControlsProps {
 }
 
 vi.mock('~/auth', () => ({ useAuthContext: () => ({}) }))
-vi.mock('~/components/ChartExport/ChartPngExportButton', () => ({ ChartPngExportButton: () => null }))
-vi.mock('~/components/ECharts/MultiSeriesChart2', () => ({ default: () => <div data-testid="cartesian" /> }))
-vi.mock('~/containers/LlamaAI/components/AddToArticle/ArticleExportContext', () => ({
+vi.mock('~/components/ChartExport/ChartPngExportButton', () => ({
+	ChartPngExportButton: () => <button type="button" data-testid="chart-export" />
+}))
+vi.mock('~/components/ECharts/MultiSeriesChart2', () => ({
+	default: ({ charts, hallmarks }: { charts?: Array<{ type: string }>; hallmarks?: [number, string][] }) => (
+		<div
+			data-testid="cartesian"
+			data-series-types={charts?.map((chart) => chart.type).join(',')}
+			data-hallmarks={JSON.stringify(hallmarks ?? [])}
+		/>
+	)
+}))
+vi.mock('~/containers/LlamaAI/components/AddToArticle/useArticleExport', () => ({
 	useArticleExport: () => null
 }))
 vi.mock('~/containers/LlamaAI/components/charts/ChartControls', () => ({
 	ChartControls: ({
 		children,
+		controls,
 		onStackedChange,
 		onPercentageChange,
 		onCumulativeChange,
@@ -33,13 +46,20 @@ vi.mock('~/containers/LlamaAI/components/charts/ChartControls', () => ({
 		onLabelsChange,
 		onLogScaleChange
 	}: TestChartControlsProps) => (
-		<div>
+		<div
+			data-testid="chart-controls"
+			data-stacked={controls.state.stacked}
+			data-percentage={controls.state.percentage}
+			data-log={controls.state.logScale}
+			data-labels={controls.state.showLabels}
+			data-grouping={controls.state.grouping}
+		>
 			<button data-action="grouping" onClick={() => onGroupingChange('month')} />
-			<button data-action="percentage" onClick={() => onPercentageChange(true)} />
+			<button data-action="percentage" onClick={() => onPercentageChange(!controls.state.percentage)} />
 			<button data-action="cumulative" onClick={() => onCumulativeChange(true)} />
-			<button data-action="stacking" onClick={() => onStackedChange(true)} />
-			<button data-action="log" onClick={() => onLogScaleChange(true)} />
-			<button data-action="labels" onClick={() => onLabelsChange(true)} />
+			<button data-action="stacking" onClick={() => onStackedChange(!controls.state.stacked)} />
+			<button data-action="log" onClick={() => onLogScaleChange(!controls.state.logScale)} />
+			<button data-action="labels" onClick={() => onLabelsChange(!controls.state.showLabels)} />
 			{children}
 		</div>
 	)
@@ -150,6 +170,51 @@ const chartData = [
 	{ timestamp: 1_767_312_000, chain: 'Solana', fees: 12, revenue: 5 }
 ]
 
+async function click(scope: ParentNode, selector: string) {
+	const button = scope.querySelector<HTMLButtonElement>(selector)
+	if (!button) throw new Error(`Expected button ${selector}`)
+	await act(async () => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+}
+
+async function clickButton(scope: ParentNode, text: string) {
+	const button = [...scope.querySelectorAll<HTMLButtonElement>('button')].find(
+		(candidate) => candidate.textContent?.trim() === text
+	)
+	if (!button) throw new Error(`Expected ${text} button`)
+	await act(async () => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+}
+
+async function setInputValue(input: HTMLInputElement, value: string) {
+	const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+	if (!setter) throw new Error('Expected native input value setter')
+	await act(async () => {
+		setter.call(input, value)
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+
+async function setSelectValue(select: HTMLSelectElement, value: string) {
+	const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set
+	if (!setter) throw new Error('Expected native select value setter')
+	await act(async () => {
+		setter.call(select, value)
+		select.dispatchEvent(new Event('change', { bubbles: true }))
+	})
+}
+
+function getCheckbox(scope: ParentNode, label: string) {
+	const input = [...scope.querySelectorAll<HTMLLabelElement>('label')]
+		.find((candidate) => candidate.textContent?.trim() === label)
+		?.querySelector<HTMLInputElement>('input[type="checkbox"]')
+	if (!input) throw new Error(`Expected ${label} checkbox`)
+	return input
+}
+
+async function toggleCheckbox(scope: ParentNode, label: string) {
+	const input = getCheckbox(scope, label)
+	await act(async () => input.click())
+}
+
 describe('ChartRenderer', () => {
 	let container: HTMLDivElement
 	let root: Root
@@ -250,5 +315,151 @@ describe('ChartRenderer', () => {
 		expect(container.querySelector('[data-testid="cartesian"]')).not.toBeNull()
 		expect(adaptChartData).toHaveBeenCalledTimes(2)
 		consoleErrorSpy.mockRestore()
+	})
+
+	it('previews a discrete series option without changing the applied chart', async () => {
+		const config = makeCartesianChart()
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
+		)
+		await click(container, '[title="Edit chart style"]')
+		const chartsBefore = document.querySelectorAll('[data-testid="cartesian"]')
+		expect(chartsBefore).toHaveLength(2)
+		expect(chartsBefore[0]?.getAttribute('data-series-types')).toBe('bar,bar')
+		expect(chartsBefore[1]?.getAttribute('data-series-types')).toBe('bar,bar')
+
+		const seriesType = document.querySelector<HTMLSelectElement>('[aria-label="Series 2 type"]')
+		if (!seriesType) throw new Error('Expected second series type select')
+		await setSelectValue(seriesType, 'area')
+		const chartsAfter = document.querySelectorAll('[data-testid="cartesian"]')
+		expect(chartsAfter[0]?.getAttribute('data-series-types')).toBe('bar,bar')
+		expect(chartsAfter[1]?.getAttribute('data-series-types')).toBe('bar,line')
+	})
+
+	it('shows the first draft annotation while keeping the applied chart unchanged', async () => {
+		const config = makeCartesianChart()
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
+		)
+		await click(container, '[title="Edit chart style"]')
+		await clickButton(document, '+ Add annotation')
+		const annotationLabel = document.querySelector<HTMLInputElement>('[aria-label="Annotation 1 label"]')
+		if (!annotationLabel) throw new Error('Expected annotation label input')
+		await setInputValue(annotationLabel, 'Preview note')
+		await act(async () => annotationLabel.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
+
+		const charts = document.querySelectorAll('[data-testid="cartesian"]')
+		expect(charts[0]?.getAttribute('data-hallmarks')).toBe('[]')
+		const previewHallmarks = JSON.parse(charts[1]?.getAttribute('data-hallmarks') ?? '[]')
+		expect(previewHallmarks).toEqual([[expect.any(Number), 'Preview note']])
+	})
+
+	it('keeps editor drafts out of the applied chart and discards them on cancel', async () => {
+		const config = makeCartesianChart()
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
+		)
+		await click(container, '[data-action="stacking"]')
+		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-stacked')).toBe('true')
+
+		await click(container, '[title="Edit chart style"]')
+		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		if (!titleInput) throw new Error('Expected chart title input')
+		await setInputValue(titleInput, 'Unsaved Draft')
+		await toggleCheckbox(document, 'Stacked')
+		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-stacked')).toBe('true')
+
+		await clickButton(document, 'Cancel')
+		expect(document.querySelector('[role="dialog"]')).toBeNull()
+		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-stacked')).toBe('true')
+
+		await click(container, '[title="Edit chart style"]')
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
+	})
+
+	it('keeps reset local until save applies the original defaults', async () => {
+		const config = makeCartesianChart()
+		config.displayOptions = { ...config.displayOptions!, defaultStacked: true }
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
+		)
+		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-stacked')).toBe('true')
+
+		await click(container, '[data-action="stacking"]')
+		await click(container, '[title="Edit chart style"]')
+		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		if (!titleInput) throw new Error('Expected chart title input')
+		await setInputValue(titleInput, 'Unsaved Draft')
+		await clickButton(document, 'Reset')
+
+		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-stacked')).toBe('false')
+		expect(getCheckbox(document, 'Stacked').checked).toBe(true)
+		await clickButton(document, 'Save')
+		expect(document.querySelector('[role="dialog"]')).toBeNull()
+		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-stacked')).toBe('true')
+	})
+
+	it('keeps saved configuration and view changes when the editor closes', async () => {
+		const onLocalStyleSave = vi.fn()
+		const config = makeCartesianChart()
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />)
+		)
+
+		await click(container, '[data-action="grouping"]')
+		await click(container, '[title="Edit chart style"]')
+		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		if (!titleInput) throw new Error('Expected chart title input')
+		await setInputValue(titleInput, 'Unsaved Draft')
+		await toggleCheckbox(document, 'Stacked')
+		await clickButton(document, 'Save')
+
+		expect(document.querySelector('[role="dialog"]')).toBeNull()
+		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-stacked')).toBe('true')
+		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-grouping')).toBe('month')
+		expect(onLocalStyleSave).toHaveBeenCalledWith(
+			expect.objectContaining({
+				title: 'Unsaved Draft',
+				displayOptions: expect.objectContaining({ defaultStacked: true })
+			})
+		)
+
+		await click(container, '[title="Edit chart style"]')
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe('Unsaved Draft')
+		const reopenedTitleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		if (!reopenedTitleInput) throw new Error('Expected chart title input')
+		await setInputValue(reopenedTitleInput, 'Discarded Draft')
+		await clickButton(document, 'Cancel')
+		await click(container, '[title="Edit chart style"]')
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe('Unsaved Draft')
+		await clickButton(document, 'Cancel')
+
+		const externallyUpdated = {
+			...config,
+			axes: {
+				...config.axes,
+				yAxes: [{ ...config.axes.yAxes[0], label: 'Revenue (USD)' }]
+			}
+		}
+		await act(async () =>
+			root.render(
+				<ChartRenderer charts={[externallyUpdated]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />
+			)
+		)
+		await click(container, '[title="Edit chart style"]')
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
+	})
+
+	it('rebuilds adaptation for a nested configuration change', async () => {
+		const config = makeCartesianChart()
+		await act(async () => root.render(<ChartRenderer charts={[config]} chartData={chartData} />))
+		expect(adaptChartData).toHaveBeenCalledTimes(1)
+
+		const updated = {
+			...config,
+			displayOptions: { ...config.displayOptions!, defaultStacked: true }
+		}
+		await act(async () => root.render(<ChartRenderer charts={[updated]} chartData={chartData} />))
+		expect(adaptChartData).toHaveBeenCalledTimes(2)
 	})
 })

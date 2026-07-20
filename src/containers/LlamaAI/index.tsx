@@ -23,10 +23,8 @@ import {
 } from '~/components/LlamaAIFloatingButton'
 import { authorizedFetchAsFetch } from '~/containers/LlamaAI/authorizedFetchAdapter'
 import { LlamaAIChromeContext, useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
-import {
-	ArticleExportProvider,
-	useArticleExport
-} from '~/containers/LlamaAI/components/AddToArticle/ArticleExportContext'
+import { ArticleExportProvider } from '~/containers/LlamaAI/components/AddToArticle/ArticleExportContext'
+import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/useArticleExport'
 import { AlertsModal } from '~/containers/LlamaAI/components/AlertsModal'
 import { ChatSurface, type LandingOverrideApi } from '~/containers/LlamaAI/components/ChatSurface'
 import {

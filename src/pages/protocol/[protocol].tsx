@@ -1,12 +1,11 @@
 import type { GetStaticPropsContext } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
-import { fetchEntityQuestions } from '~/containers/LlamaAI/api'
+import { fetchOptionalEntityQuestions } from '~/containers/LlamaAI/entityQuestions'
 import { ProtocolOverview } from '~/containers/ProtocolOverview'
 import { getProtocolOverviewPageData } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
-import { optionalPageData } from '~/utils/optionalPageData'
 import { createRoutePhaseTimer, withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 import { addRouteTelemetryAttributes } from '~/utils/telemetry'
@@ -76,11 +75,7 @@ export const getStaticProps = withPerformanceLogging(
 			}
 
 			const { questions: entityQuestions } = await phaseTimer.time('entity_questions', () =>
-				optionalPageData(
-					`protocol:${normalizedName}:entity_questions`,
-					() => fetchEntityQuestions(normalizedName, 'protocol', undefined, { throwOnError: true }),
-					{ questions: [], suggestGlobal: false }
-				)
+				fetchOptionalEntityQuestions(normalizedName, 'protocol', normalizedName)
 			)
 
 			return { props: { ...data, entityQuestions }, revalidate: maxAgeForNext([22]) }

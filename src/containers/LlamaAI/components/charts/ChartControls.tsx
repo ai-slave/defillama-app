@@ -71,12 +71,12 @@ export function ChartControls({
 	return (
 		<div className="flex flex-wrap items-center justify-end gap-1 border-b border-ai-line p-2 pt-0">
 			{controls.title ? (
-				<p className="w-full min-w-0 truncate text-base font-semibold" title={controls.title}>
+				<p className="mr-auto min-w-0 truncate text-base font-semibold" title={controls.title}>
 					{controls.title}
 				</p>
 			) : null}
 			{controls.showGrouping ? (
-				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-medium text-secondary">
+				<div className="flex min-h-8 w-fit flex-nowrap items-center overflow-x-auto rounded-lg border border-medium text-secondary">
 					{controls.groupingOptions.map((interval) => (
 						<Tooltip
 							content={capitalizeFirstLetter(interval)}
@@ -97,7 +97,7 @@ export function ChartControls({
 
 			{controls.showCumulative ? (
 				<Select
-					size="sm"
+					size="md"
 					allValues={CUMULATIVE_DISPLAY_OPTIONS}
 					selectedValues={controls.state.cumulative ? 'Cumulative' : 'Individual'}
 					setSelectedValues={(value: string) => {
@@ -116,7 +116,7 @@ export function ChartControls({
 
 			{controls.showStack ? (
 				<Select
-					size="sm"
+					size="md"
 					allValues={STACKING_DISPLAY_OPTIONS}
 					selectedValues={controls.state.stacked ? 'Stacked' : 'Separate'}
 					setSelectedValues={(value: string) => {
@@ -133,7 +133,7 @@ export function ChartControls({
 
 			{controls.showPercentage ? (
 				<Select
-					size="sm"
+					size="md"
 					allValues={VALUE_TYPE_OPTIONS}
 					selectedValues={controls.state.percentage ? '% Percentage' : '$ Absolute'}
 					setSelectedValues={(value: string) => {
@@ -149,7 +149,7 @@ export function ChartControls({
 
 			{controls.showLogScale ? (
 				<Select
-					size="sm"
+					size="md"
 					allValues={SCALE_OPTIONS}
 					selectedValues={controls.state.logScale ? 'Log' : 'Linear'}
 					setSelectedValues={(value: string) => {
@@ -165,7 +165,7 @@ export function ChartControls({
 
 			{controls.showHallmarks ? (
 				<Select
-					size="sm"
+					size="md"
 					allValues={HALLMARK_OPTIONS}
 					selectedValues={controls.state.showHallmarks ? 'Show Hallmarks' : 'Hide Hallmarks'}
 					setSelectedValues={(value: string) => {
@@ -181,7 +181,7 @@ export function ChartControls({
 
 			{controls.showLabels ? (
 				<Select
-					size="sm"
+					size="md"
 					allValues={LABEL_OPTIONS}
 					selectedValues={controls.state.showLabels ? 'Show' : 'Hide'}
 					setSelectedValues={(value: string) => {

@@ -1,124 +1,49 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	fetchEntityQuestions: vi.fn(),
-	getChainOverviewData: vi.fn(),
-	getProtocolOverviewPageData: vi.fn()
+	optionalPageData: vi.fn(async (_label: string, run: () => Promise<unknown>, fallback: unknown) => {
+		try {
+			return await run()
+		} catch {
+			return fallback
+		}
+	})
 }))
 
 vi.mock('~/containers/LlamaAI/api', () => ({
 	fetchEntityQuestions: mocks.fetchEntityQuestions
 }))
 
-vi.mock('~/containers/ChainOverview/queries.server', () => ({
-	getChainOverviewData: mocks.getChainOverviewData
+vi.mock('~/utils/optionalPageData', () => ({
+	optionalPageData: mocks.optionalPageData
 }))
 
-vi.mock('~/containers/ProtocolOverview/queries', () => ({
-	getProtocolOverviewPageData: mocks.getProtocolOverviewPageData
-}))
+import { fetchOptionalEntityQuestions } from '~/containers/LlamaAI/entityQuestions'
 
-vi.mock('~/layout', () => ({
-	default: ({ children }: { children: React.ReactNode }) => children
-}))
+describe('fetchOptionalEntityQuestions', () => {
+	beforeEach(() => vi.clearAllMocks())
 
-vi.mock('~/containers/ChainOverview', () => ({
-	ChainOverview: () => null
-}))
+	it('uses the entity-specific cache key and strict API mode', async () => {
+		mocks.fetchEntityQuestions.mockResolvedValueOnce({ questions: ['Question'], suggestGlobal: false })
 
-vi.mock('~/containers/ChainOverview/Announcement', () => ({
-	ChainOverviewAnnouncement: () => null
-}))
-
-vi.mock('~/containers/ProtocolOverview', () => ({
-	ProtocolOverview: () => null
-}))
-
-vi.mock('~/utils/maxAgeForNext', () => ({
-	maxAgeForNext: vi.fn(() => 22)
-}))
-
-vi.mock('~/utils/perf', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/utils/perf')>()
-	return {
-		...actual,
-		withPerformanceLogging: <T extends (...args: Array<unknown>) => unknown>(_name: string, fn: T) => fn
-	}
-})
-
-vi.mock('~/utils/metadata', () => ({
-	default: {
-		chainMetadata: {
-			ethereum: { id: 'ethereum', name: 'Ethereum' }
-		},
-		chainRouteKeyBySlug: {
-			ethereum: 'ethereum'
-		},
-		protocolMetadata: {
-			aave: { id: 'aave', name: 'Aave', displayName: 'Aave' }
-		},
-		protocolRouteIdBySlug: {
-			aave: 'aave'
-		},
-		categoriesAndTags: { categories: [], tags: [], tagCategoryMap: {}, configs: {} },
-		protocolLlamaswapDataset: {},
-		rwaList: { chains: [] },
-		tokenlist: {},
-		cgExchangeIdentifiers: [],
-		emissionsSupplyMetrics: {},
-		cexRouteIdBySlug: {}
-	}
-}))
-
-vi.mock('~/containers/Cexs/server/routes', () => ({
-	resolveCexParamFromMetadata: vi.fn(() => null)
-}))
-
-const chainPageData = {
-	metadata: { name: 'Ethereum' },
-	description: 'Ethereum overview',
-	tvlAndFeesOptions: []
-}
-
-const protocolPageData = {
-	name: 'Aave',
-	seoTitle: 'Aave Stats',
-	seoDescription: 'Aave overview',
-	metrics: {},
-	token: { symbol: null },
-	chartDenominations: []
-}
-
-describe('overview entity questions', () => {
-	it('keeps chain getStaticProps renderable when entity questions fail', async () => {
-		mocks.getChainOverviewData.mockResolvedValueOnce(chainPageData)
-		mocks.fetchEntityQuestions.mockRejectedValueOnce(new Error('questions unavailable'))
-		const { getStaticProps } = await import('~/pages/chain/[chain]')
-
-		const result = await getStaticProps({ params: { chain: 'ethereum' } } as never)
-
-		expect(result).toMatchObject({
-			props: {
-				...chainPageData,
-				entityQuestions: []
-			}
+		await expect(fetchOptionalEntityQuestions('Ethereum', 'chain', 'ethereum')).resolves.toEqual({
+			questions: ['Question'],
+			suggestGlobal: false
+		})
+		expect(mocks.optionalPageData).toHaveBeenCalledWith('chain:ethereum:entity_questions', expect.any(Function), {
+			questions: [],
+			suggestGlobal: false
 		})
 		expect(mocks.fetchEntityQuestions).toHaveBeenCalledWith('Ethereum', 'chain', undefined, { throwOnError: true })
 	})
 
-	it('keeps protocol getStaticProps renderable when entity questions fail', async () => {
-		mocks.getProtocolOverviewPageData.mockResolvedValueOnce(protocolPageData)
+	it('returns an empty optional payload when the API fails', async () => {
 		mocks.fetchEntityQuestions.mockRejectedValueOnce(new Error('questions unavailable'))
-		const { getStaticProps } = await import('~/pages/protocol/[protocol]')
 
-		const result = await getStaticProps({ params: { protocol: 'aave' } } as never)
-
-		expect(result).toMatchObject({
-			props: {
-				...protocolPageData,
-				entityQuestions: []
-			}
+		await expect(fetchOptionalEntityQuestions('aave', 'protocol', 'aave')).resolves.toEqual({
+			questions: [],
+			suggestGlobal: false
 		})
-		expect(mocks.fetchEntityQuestions).toHaveBeenCalledWith('aave', 'protocol', undefined, { throwOnError: true })
 	})
 })

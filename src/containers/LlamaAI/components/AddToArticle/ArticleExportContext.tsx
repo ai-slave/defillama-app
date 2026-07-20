@@ -1,19 +1,9 @@
 import * as Ariakit from '@ariakit/react'
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useHasArticlesAccess } from '~/containers/Articles/ArticlesAccessGate'
 import type { ArticleExportRequest } from '~/containers/LlamaAI/utils/articleExport'
 import { AddToArticleModal } from './AddToArticleModal'
-
-type OpenArticleExport = (request: ArticleExportRequest) => void
-
-const ArticleExportContext = createContext<{ openArticleExport: OpenArticleExport | null }>({
-	openArticleExport: null
-})
-
-/** Null for non-researchers — entry points hide themselves when this is null. */
-export function useArticleExport(): OpenArticleExport | null {
-	return useContext(ArticleExportContext).openArticleExport
-}
+import { ArticleExportContext, type OpenArticleExport } from './useArticleExport'
 
 export function ArticleExportProvider({ children, sessionTitle }: { children: ReactNode; sessionTitle?: string }) {
 	const { hasAccess } = useHasArticlesAccess()

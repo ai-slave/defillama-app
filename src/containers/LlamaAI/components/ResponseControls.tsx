@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { memo, useCallback, useEffect, useReducer, useRef } from 'react'
-import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/ArticleExportContext'
+import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/useArticleExport'
 import { FeedbackForm } from '~/containers/LlamaAI/components/FeedbackForm'
 import { PDFExportButton } from '~/containers/LlamaAI/components/PDFExportButton'
 import type { MessageMetadata } from '~/containers/LlamaAI/types'
