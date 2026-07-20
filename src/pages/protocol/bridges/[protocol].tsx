@@ -15,7 +15,8 @@ const EMPTY_TOGGLE_OPTIONS = []
 
 export const getStaticProps = withPerformanceLogging(
 	'protocol/bridges/[protocol]',
-	async ({ params }: GetStaticPropsContext<{ protocol: string }>) => {
+	async (context: GetStaticPropsContext<{ protocol: string }>) => {
+		const { params, revalidateReason } = context
 		if (!params?.protocol) {
 			return { notFound: true }
 		}
@@ -45,6 +46,9 @@ export const getStaticProps = withPerformanceLogging(
 		])
 
 		if (!bridgeData) {
+			if (revalidateReason === 'stale') {
+				throw new Error(`No bridge data returned for ${canonicalProtocol}`)
+			}
 			return { notFound: true }
 		}
 

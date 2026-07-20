@@ -8,7 +8,7 @@ const {
 	resolveChainParamMock,
 	resolveProtocolParamMock,
 	fetchChainAssetsChartMock,
-	getBridgeOverviewPageDataMock,
+	fetchBridgeVolumeByChainMock,
 	fetchRaisesMock,
 	getStablecoinOverviewChartSeriesMock,
 	getProtocolUnlockUsdChartMock
@@ -18,7 +18,7 @@ const {
 	resolveChainParamMock: vi.fn(),
 	resolveProtocolParamMock: vi.fn(),
 	fetchChainAssetsChartMock: vi.fn(),
-	getBridgeOverviewPageDataMock: vi.fn(),
+	fetchBridgeVolumeByChainMock: vi.fn(),
 	fetchRaisesMock: vi.fn(),
 	getStablecoinOverviewChartSeriesMock: vi.fn(),
 	getProtocolUnlockUsdChartMock: vi.fn()
@@ -28,8 +28,8 @@ vi.mock('~/containers/BridgedTVL/api', () => ({
 	fetchChainAssetsChart: fetchChainAssetsChartMock
 }))
 
-vi.mock('~/containers/Bridges/queries.server', () => ({
-	getBridgeOverviewPageData: getBridgeOverviewPageDataMock
+vi.mock('~/containers/Bridges/api', () => ({
+	fetchBridgeVolumeByChain: fetchBridgeVolumeByChainMock
 }))
 
 vi.mock('~/containers/AdapterMetrics/api', () => ({
@@ -64,6 +64,7 @@ beforeEach(() => {
 	fetchAdapterChainChartDataMock.mockResolvedValue([])
 	fetchAdapterProtocolChartDataMock.mockResolvedValue([])
 	fetchChainAssetsChartMock.mockResolvedValue([])
+	fetchBridgeVolumeByChainMock.mockResolvedValue([])
 	resolveChainParamMock.mockResolvedValue(null)
 	resolveProtocolParamMock.mockResolvedValue({ canonicalSlug: 'aave', id: '1', metadata: { displayName: 'Aave' } })
 })
@@ -665,6 +666,33 @@ describe('/api/public/chains/charts', () => {
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('base')
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith(null)
+	})
+
+	it('loads bridge net inflows with one focused chain-volume request', async () => {
+		resolveChainParamMock.mockResolvedValue({
+			canonicalName: 'Base',
+			canonicalSlug: 'base',
+			metadata: { name: 'Base' }
+		})
+		fetchBridgeVolumeByChainMock.mockResolvedValue([
+			{ date: '1700000000', depositUSD: 100, withdrawUSD: 40 },
+			{ date: '1700086400', depositUSD: 25, withdrawUSD: 10 }
+		])
+		const req = {
+			method: 'GET',
+			query: { kind: 'net-inflows', chain: 'base' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(fetchBridgeVolumeByChainMock).toHaveBeenCalledOnce()
+		expect(fetchBridgeVolumeByChainMock).toHaveBeenCalledWith('Base')
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith([
+			['1700000000', 100, -40],
+			['1700086400', 25, -10]
+		])
 	})
 
 	it('accepts lowercase all for adapter chain charts', async () => {

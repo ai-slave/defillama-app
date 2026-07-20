@@ -21,7 +21,8 @@ type BridgePageProps =
 
 export const getStaticProps = withPerformanceLogging(
 	'bridge/[bridge]',
-	async ({ params }: GetStaticPropsContext<{ bridge: string }>): Promise<GetStaticPropsResult<BridgePageProps>> => {
+	async (context: GetStaticPropsContext<{ bridge: string }>): Promise<GetStaticPropsResult<BridgePageProps>> => {
+		const { params, revalidateReason } = context
 		if (!params?.bridge) {
 			return { notFound: true }
 		}
@@ -40,6 +41,9 @@ export const getStaticProps = withPerformanceLogging(
 			const data = await getBridgePageDatanew(bridge)
 
 			if (!data) {
+				if (revalidateReason === 'stale') {
+					throw new Error(`No bridge data returned for ${bridge}`)
+				}
 				return {
 					props: { state: 'disabled', bridgeSlug: bridge },
 					revalidate: maxAgeForNext([22])
@@ -52,6 +56,7 @@ export const getStaticProps = withPerformanceLogging(
 			}
 		} catch (error) {
 			console.error(`[bridge] failed to fetch data for ${bridge}:`, error)
+			if (revalidateReason === 'stale') throw error
 
 			return {
 				props: { state: 'disabled', bridgeSlug: bridge },

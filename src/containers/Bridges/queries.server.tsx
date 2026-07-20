@@ -76,32 +76,26 @@ const asBridgeDayStats = (value: RawBridgeDayStatsResponse): RawBridgeDayStats =
 	return isBridgeDayStatsResponse(value) ? value : EMPTY_DAY_STATS
 }
 
-type RetryOptions<T> = {
-	attempts?: number
+type FetchFallbackOptions<T> = {
 	fallback?: T
 	context: string
 	throwOnFailure?: boolean
 	onFailureError?: () => Error
 }
 
-async function retryAsync<T>(operation: () => Promise<T>, options: RetryOptions<T>): Promise<T> {
-	const { attempts = 5, fallback, context, throwOnFailure = false, onFailureError } = options
-	let lastError: unknown = null
-	for (let i = 0; i < attempts; i++) {
-		try {
-			return await operation()
-		} catch (error) {
-			lastError = error
+async function fetchOrFallback<T>(operation: () => Promise<T>, options: FetchFallbackOptions<T>): Promise<T> {
+	const { fallback, context, throwOnFailure = false, onFailureError } = options
+	try {
+		return await operation()
+	} catch (error) {
+		console.log(`[bridges][fetch-failed] ${context}`, error)
+
+		if (throwOnFailure) {
+			throw onFailureError ? onFailureError() : new Error(`${context} failed`)
 		}
+
+		return fallback as T
 	}
-
-	console.log(`[bridges][retry-failed] ${context}`, lastError)
-
-	if (throwOnFailure) {
-		throw onFailureError ? onFailureError() : new Error(`${context} failed`)
-	}
-
-	return fallback as T
 }
 
 type VolumeByDate = {
@@ -417,7 +411,7 @@ export const getBridges = () => fetchBridges(true).then(({ bridges, chains }) =>
 const getChainVolumeData = async (chain: string, chainCoingeckoIds: LlamaConfigResponse['chainCoingeckoIds']) => {
 	if (chain) {
 		if (chainCoingeckoIds[chain]) {
-			const chart: RawBridgeVolumePoint[] = await retryAsync(() => fetchBridgeVolumeByChain(chain), {
+			const chart: RawBridgeVolumePoint[] = await fetchOrFallback(() => fetchBridgeVolumeByChain(chain), {
 				context: `fetchBridgeVolumeByChain(${chain})`,
 				throwOnFailure: true,
 				onFailureError: () => new Error(`bridge volume for chain ${chain} is broken`)
@@ -447,7 +441,7 @@ export const getBridgeChainNetInflows = async (
 	const { chainCoingeckoIds } = await fetchJson<LlamaConfigResponse>(CONFIG_API)
 	if (!chainCoingeckoIds[chain]) return null
 
-	const chart = await retryAsync(() => fetchBridgeVolumeByChain(chain), {
+	const chart = await fetchOrFallback(() => fetchBridgeVolumeByChain(chain), {
 		context: `fetchBridgeVolumeByChain(${chain})`,
 		throwOnFailure: true,
 		onFailureError: () => new Error(`bridge volume for chain ${chain} is broken`)
@@ -463,14 +457,14 @@ export const getBridgeChainNetInflows = async (
 }
 
 const getLargeTransactionsData = async (chain: string, startTimestamp: number, endTimestamp: number) => {
-	return retryAsync(() => fetchBridgeLargeTransactions(startTimestamp, endTimestamp, chain || undefined), {
+	return fetchOrFallback(() => fetchBridgeLargeTransactions(startTimestamp, endTimestamp, chain || undefined), {
 		context: `fetchBridgeLargeTransactions(${chain || 'all'})`,
 		fallback: [] as RawBridgeLargeTransactionsResponse
 	})
 }
 
 const getBridgeTxCounts = async (chain?: string) => {
-	return retryAsync(() => fetchBridgeTxCounts(chain || undefined), {
+	return fetchOrFallback(() => fetchBridgeTxCounts(chain || undefined), {
 		context: `fetchBridgeTxCounts(${chain || 'all'})`,
 		fallback: { bridges: [] }
 	})
@@ -491,14 +485,14 @@ export async function getBridgeOverviewPageData(chain, options: { includeBridgeT
 		txsPrevDay: bridgeTxCountsById.get(Number(bridge.id)) ?? null
 	}))
 
-	let chartDataByBridge: Array<Array<{ date: string; volume: number; txs: number }>> = []
-	let bridgeNames: string[] = []
-	const bridgeNameToChartDataIndex: Record<string, number> = {}
-	chartDataByBridge = await Promise.all(
-		bridgesWithTxCounts.map(async (elem, i) => {
-			bridgeNames.push(elem.displayName)
-			bridgeNameToChartDataIndex[elem.displayName] = i
-			const charts: RawBridgeVolumePoint[] = await retryAsync(
+	const bridgeFetchTargets = chain
+		? bridgesWithTxCounts.filter((bridge) => bridge.chains.some((bridgeChain) => slug(bridgeChain) === slug(chain)))
+		: bridgesWithTxCounts
+	const bridgeNames = bridgeFetchTargets.map((bridge) => bridge.displayName)
+	const bridgeNameToChartDataIndex = Object.fromEntries(bridgeNames.map((name, index) => [name, index]))
+	const chartDataByBridge: Array<Array<{ date: string; volume: number; txs: number }>> = await Promise.all(
+		bridgeFetchTargets.map(async (elem) => {
+			const charts: RawBridgeVolumePoint[] = await fetchOrFallback(
 				() => (!chain ? fetchBridgeVolumeAll(elem.id) : fetchBridgeVolumeByChain(chain, elem.id)),
 				{
 					context: `fetchBridgeVolumeByBridge(${elem.id})`,
@@ -527,7 +521,7 @@ export async function getBridgeOverviewPageData(chain, options: { includeBridgeT
 	const prevDayTimestamp = currentTimestamp
 	const bridgeStatsPromise = chain
 		? (async () => {
-				return retryAsync(() => fetchBridgeDayStats(prevDayTimestamp, chain), {
+				return fetchOrFallback(() => fetchBridgeDayStats(prevDayTimestamp, chain), {
 					context: `fetchBridgeDayStats(${chain})`,
 					fallback: {}
 				})
@@ -610,7 +604,7 @@ export async function getBridgeChainsPageData() {
 	chartDataByChain = await Promise.all(
 		chains.map(async (chain, i) => {
 			chainToChartDataIndex[chain.name] = i
-			return retryAsync(() => fetchBridgeVolumeByChain(chain.name), {
+			return fetchOrFallback(() => fetchBridgeVolumeByChain(chain.name), {
 				context: `fetchBridgeVolumeByChain(${chain.name})`,
 				fallback: [] as RawBridgeVolumePoint[]
 			})
@@ -645,7 +639,7 @@ export async function getBridgeChainsPageData() {
 	prevDayDataByChain = (
 		await Promise.all(
 			chains.map(async (chain) => {
-				const stats = await retryAsync(() => fetchBridgeDayStats(prevDayTimestamp, chain.name), {
+				const stats = await fetchOrFallback(() => fetchBridgeDayStats(prevDayTimestamp, chain.name), {
 					context: `fetchBridgeDayStats(${chain.name})`,
 					fallback: null
 				})
@@ -765,7 +759,7 @@ export async function getBridgePageData(bridge: string): Promise<BridgePageData 
 	const logo = iconType === 'chain' ? chainIconUrl(iconName) : tokenIconUrl(iconName)
 	const volume = await Promise.all(
 		chains.map(async (chain) => {
-			return retryAsync(() => fetchBridgeVolumeByChain(chain, id), {
+			return fetchOrFallback(() => fetchBridgeVolumeByChain(chain, id), {
 				context: `fetchBridgeVolumeByChain(${chain},${id})`,
 				throwOnFailure: true,
 				onFailureError: () => new Error(`bridge volume for chain ${chain} is broken`)
@@ -779,7 +773,7 @@ export async function getBridgePageData(bridge: string): Promise<BridgePageData 
 
 	const statsOnPrevDay: RawBridgeDayStats[] = await Promise.all(
 		chains.map(async (chain) => {
-			const stats = await retryAsync(() => fetchBridgeDayStats(currentTimestamp, chain, { id, rollingHours }), {
+			const stats = await fetchOrFallback(() => fetchBridgeDayStats(currentTimestamp, chain, { id, rollingHours }), {
 				context: `fetchBridgeDayStats(${chain},${id})`,
 				throwOnFailure: true,
 				onFailureError: () => new Error(`bridgedaystats for chain ${chain} is broken`)

@@ -93,6 +93,7 @@ export function fetchBridgeDayStats(
 	chain: string,
 	options?: string | number | { id?: string | number; rollingHours?: number }
 ): Promise<RawBridgeDayStatsResponse> {
+	const utcDayTimestamp = Math.floor(timestamp / 86400) * 86400
 	const params = new URLSearchParams()
 	if (typeof options === 'string' || typeof options === 'number') {
 		params.set('id', String(options))
@@ -101,7 +102,7 @@ export function fetchBridgeDayStats(
 		if (options.rollingHours != null) params.set('rollingHours', String(options.rollingHours))
 	}
 	const query = params.toString() ? `?${params.toString()}` : ''
-	const url = `${BRIDGEDAYSTATS_API}/${encodeURIComponent(String(timestamp))}/${encodeURIComponent(chain)}${query}`
+	const url = `${BRIDGEDAYSTATS_API}/${encodeURIComponent(String(utcDayTimestamp))}/${encodeURIComponent(chain)}${query}`
 	return fetchJson<RawBridgeDayStatsResponse | BridgeApiErrorEnvelope>(url).then((response) =>
 		unwrapBridgeResponse(url, response)
 	)

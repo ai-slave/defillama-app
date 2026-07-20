@@ -1,6 +1,7 @@
 import { fetchAdapterChainChartData, fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { fetchChainAssetsChart } from '~/containers/BridgedTVL/api'
-import { getBridgeOverviewPageData } from '~/containers/Bridges/queries.server'
+import { fetchBridgeVolumeByChain } from '~/containers/Bridges/api'
+import { formatBridgeOverviewVolumeData } from '~/containers/Bridges/bridgeOverviewVolumeData'
 import { fetchRaises } from '~/containers/Raises/api'
 import { getStablecoinOverviewChartSeries } from '~/containers/Stablecoins/queries.server'
 import { getProtocolUnlockUsdChart } from '~/containers/Unlocks/queries'
@@ -251,15 +252,13 @@ export const chainCharts = defineApiRoute({
 					return notFound('chain not found')
 				}
 
-				const data = await getBridgeOverviewPageData(canonicalChain)
-					.then((pageData) =>
-						pageData?.chainVolumeData
-							? pageData.chainVolumeData.map((volume) => [
-									volume?.date ?? null,
-									volume?.Deposits ?? null,
-									volume?.Withdrawals ?? null
-								])
-							: null
+				const data = await fetchBridgeVolumeByChain(canonicalChain)
+					.then((chart) =>
+						formatBridgeOverviewVolumeData(chart).map((volume) => [
+							volume.date ?? null,
+							volume.Deposits ?? null,
+							volume.Withdrawals ?? null
+						])
 					)
 					.catch((error) => {
 						recordRouteRuntimeError(error, 'apiRoute')

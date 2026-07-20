@@ -25,7 +25,8 @@ type BridgesPageProps =
 
 export const getStaticProps = withPerformanceLogging(
 	'bridges/[chain]',
-	async ({ params }: GetStaticPropsContext<{ chain: string }>): Promise<GetStaticPropsResult<BridgesPageProps>> => {
+	async (context: GetStaticPropsContext<{ chain: string }>): Promise<GetStaticPropsResult<BridgesPageProps>> => {
+		const { params, revalidateReason } = context
 		if (!params?.chain) {
 			return { notFound: true }
 		}
@@ -49,6 +50,9 @@ export const getStaticProps = withPerformanceLogging(
 			const data = await getBridgeOverviewPageData(canonicalChain, { includeBridgeTxCounts: true })
 
 			if (!data) {
+				if (revalidateReason === 'stale') {
+					throw new Error(`No bridge overview data returned for ${canonicalChain}`)
+				}
 				return {
 					props: { state: 'disabled', chainSlug, chainLabel: canonicalChain },
 					revalidate: maxAgeForNext([22])
@@ -61,6 +65,7 @@ export const getStaticProps = withPerformanceLogging(
 			}
 		} catch (error) {
 			console.error(`[bridges] failed to fetch data for ${canonicalChain}:`, error)
+			if (revalidateReason === 'stale') throw error
 
 			return {
 				props: { state: 'disabled', chainSlug, chainLabel: canonicalChain },
