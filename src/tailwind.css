@@ -7,7 +7,6 @@
 @import './styles/themes/llamaai.css';
 @import './styles/themes/articles.css';
 @import './styles/llamaai.css';
-@import './styles/articles.css';
 @plugin '@tailwindcss/typography';
 
 /* Documentation and codemod maps mention utility names; they must not

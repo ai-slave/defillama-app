@@ -16,12 +16,12 @@ describe('isSelectionInLlamaProse', () => {
 	beforeEach(() => {
 		document.body.innerHTML = `
 			<div class="message">
-				<div class="llamaai-prose"><p id="p1">First paragraph of segment one.</p></div>
+				<div data-llamaai-prose><p id="p1">First paragraph of segment one.</p></div>
 				<div data-chart-id="c1"><canvas></canvas></div>
-				<div class="llamaai-prose"><p id="p2">Paragraph in segment two.</p></div>
+				<div data-llamaai-prose><p id="p2">Paragraph in segment two.</p></div>
 			</div>
 			<div id="outside"><p id="p3">Sidebar text</p></div>
-			<div contenteditable="true" class="llamaai-prose"><p id="p4">editor</p></div>
+			<div contenteditable="true" data-llamaai-prose><p id="p4">editor</p></div>
 		`
 	})
 

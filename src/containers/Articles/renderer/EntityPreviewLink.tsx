@@ -5,6 +5,7 @@ import { chainIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
 import type { EntityPreview } from '../entityPreviewTypes'
 import { isPreviewableEntityType } from '../entityPreviewTypes'
 import type { ArticleEntityRef, ArticleEntityType } from '../types'
+import styles from './EntityPreviewLink.module.css'
 
 const TYPE_LABEL: Record<ArticleEntityType, string> = {
 	protocol: 'Protocol',
@@ -414,7 +415,7 @@ export function EntityPreviewLink({
 				gutter={8}
 				overflowPadding={16}
 				unmountOnHide
-				className="article-entity-popover z-50 max-h-(--popover-available-height) w-80 max-w-(--popover-available-width) overflow-y-auto rounded-md border border-medium bg-surface shadow-xl outline-hidden"
+				className={`${styles.popover} z-50 max-h-(--popover-available-height) w-80 max-w-(--popover-available-width) overflow-y-auto rounded-md border border-medium bg-surface shadow-xl outline-hidden`}
 			>
 				<div className="flex items-center gap-3 px-3 pt-3 pb-2">
 					<span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-medium bg-page">

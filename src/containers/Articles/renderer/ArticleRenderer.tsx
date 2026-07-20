@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createElement, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { Icon } from '~/ui/Icon'
+import styles from '../ArticleStyles.module.css'
 import { validateArticleChartConfig } from '../chartAdapters'
 import { normalizeArticleContentJson } from '../document'
 import { validateArticlePeoplePanel } from '../editor/peoplePanel'
@@ -888,8 +889,8 @@ export function ArticleRenderer({
 		: []
 	const hasCoverMeta = !!cover && (coverHeadline || coverCaption || coverMetaParts.length > 0)
 	const articlePageClassName = hideSidePanel
-		? 'article-page mx-auto grid w-full max-w-[760px] animate-fadein gap-10 px-4 pb-8 sm:px-6'
-		: 'article-page mx-auto grid w-full max-w-[1300px] animate-fadein gap-10 px-4 pb-8 sm:px-6 lg:grid-cols-[minmax(0,700px)_401px] lg:gap-31.25'
+		? `${styles.root} article-page mx-auto grid w-full max-w-[760px] animate-fadein gap-10 px-4 pb-8 sm:px-6`
+		: `${styles.root} article-page mx-auto grid w-full max-w-[1300px] animate-fadein gap-10 px-4 pb-8 sm:px-6 lg:grid-cols-[minmax(0,700px)_401px] lg:gap-31.25`
 
 	const isInterview = article.section === 'interview'
 	const bylineLabel = isInterview ? 'Interviewer' : 'By'

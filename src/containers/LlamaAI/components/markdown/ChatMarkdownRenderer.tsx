@@ -28,6 +28,7 @@ import { subscribeToLocalStorage } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { equityIconUrl } from '~/utils/icons'
+import styles from '../../LlamaAIChat.module.css'
 import { SANITIZE_REHYPE_PLUGINS } from './sanitizeConfig'
 
 const MARKDOWN_REMARK_PLUGINS: import('unified').PluggableList = [[remarkGfm, { singleTilde: false }]]
@@ -616,7 +617,8 @@ export function ChatMarkdownRenderer({
 
 	return (
 		<div
-			className={`llamaai-prose prose prose-sm flex max-w-none flex-col gap-2.5 overflow-x-auto leading-normal dark:prose-invert prose-a:no-underline${hackerMode ? ' hacker-mode' : ''}`}
+			data-llamaai-prose
+			className={`${styles.prose} prose prose-sm flex max-w-none flex-col gap-2.5 overflow-x-auto leading-normal dark:prose-invert prose-a:no-underline${hackerMode ? ` ${styles.hackerMode}` : ''}`}
 		>
 			<ReactMarkdown
 				remarkPlugins={MARKDOWN_REMARK_PLUGINS}

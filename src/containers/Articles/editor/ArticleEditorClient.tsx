@@ -19,6 +19,7 @@ import {
 	updateArticle as updateRemoteArticle
 } from '../api'
 import { isScheduled } from '../articleSchedule'
+import styles from '../ArticleStyles.module.css'
 import { validateArticleChartConfig } from '../chartAdapters'
 import {
 	applyPendingToLocalArticle,
@@ -926,7 +927,9 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		: '/research'
 
 	return (
-		<div className="article-editor-shell relative mx-auto w-full max-w-[760px] animate-fadein px-4 pb-32 sm:px-6">
+		<div
+			className={`${styles.root} article-editor-shell relative mx-auto w-full max-w-[760px] animate-fadein px-4 pb-32 sm:px-6`}
+		>
 			<ArticleEditorHeader
 				article={article}
 				articleIsScheduled={articleIsScheduled}

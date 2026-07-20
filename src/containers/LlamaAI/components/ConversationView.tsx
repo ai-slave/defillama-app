@@ -25,6 +25,7 @@ import type {
 import { Icon } from '~/ui/Icon'
 import { LoadingDots } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
+import styles from '../LlamaAIChat.module.css'
 
 export interface ConversationViewModel {
 	readOnly: boolean
@@ -172,7 +173,7 @@ function ConversationMessageItem({
 			onTableFullscreenOpen={onTableFullscreenOpen}
 			anchorId={anchorId}
 			anchorRef={anchorRef}
-			anchorClassName={anchorId ? 'message-anchor' : undefined}
+			anchorClassName={anchorId ? styles.messageAnchor : undefined}
 			enterToSend={enterToSend}
 		/>
 	)
@@ -422,14 +423,14 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 	)
 
 	const highlightAnchorNode = (node: HTMLElement) => {
-		node.classList.remove('anchor-highlight')
+		node.classList.remove(styles.anchorHighlight)
 		void node.offsetWidth
-		node.classList.add('anchor-highlight')
+		node.classList.add(styles.anchorHighlight)
 		if (highlightTimeoutRef.current !== null) {
 			window.clearTimeout(highlightTimeoutRef.current)
 		}
 		highlightTimeoutRef.current = window.setTimeout(() => {
-			node.classList.remove('anchor-highlight')
+			node.classList.remove(styles.anchorHighlight)
 			highlightTimeoutRef.current = null
 		}, 2000)
 	}

@@ -1,0 +1,9 @@
+.popover {
+	white-space: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.popover {
+		transition: none;
+	}
+}

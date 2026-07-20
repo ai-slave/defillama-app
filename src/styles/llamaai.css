@@ -81,35 +81,6 @@
 	}
 }
 
-@keyframes anchorHighlight {
-	0% {
-		background-color: color-mix(in srgb, var(--ai-accent-blue-bright) 15%, transparent);
-	}
-	100% {
-		background-color: transparent;
-	}
-}
-
-/* -------------------------- Chat message anchors -------------------------- */
-.message-anchor {
-	scroll-margin-top: 5rem;
-}
-
-.anchor-highlight {
-	position: relative;
-	isolation: isolate;
-}
-
-.anchor-highlight::before {
-	content: '';
-	position: absolute;
-	inset: -4px -6px;
-	border-radius: 10px;
-	pointer-events: none;
-	z-index: -1;
-	animation: anchorHighlight 2s ease-out forwards;
-}
-
 /* ------------------------ Capability browser panel ------------------------ */
 @utility capability-panel {
 	opacity: 0;
@@ -258,61 +229,4 @@
 
 .dark .llamaai-glow-text:hover {
 	text-shadow: 0px 0px 30px color-mix(in srgb, var(--ai-gold-bright) 80%, transparent);
-}
-
-/* ----------------------------- Chat prose tweaks ----------------------------- */
-.prose.llamaai-prose p,
-.prose.llamaai-prose blockquote,
-.prose.llamaai-prose h1,
-.prose.llamaai-prose h2,
-.prose.llamaai-prose h3,
-.prose.llamaai-prose h4,
-.prose.llamaai-prose h5,
-.prose.llamaai-prose h6,
-.prose.llamaai-prose img,
-.prose.llamaai-prose picture,
-.prose.llamaai-prose video,
-.prose.llamaai-prose pre,
-.prose.llamaai-prose ol,
-.prose.llamaai-prose ul,
-.prose.llamaai-prose li,
-.prose.llamaai-prose dl,
-.prose.llamaai-prose dt,
-.prose.llamaai-prose dd,
-.prose.llamaai-prose hr,
-.prose.llamaai-prose figure,
-.prose.llamaai-prose figcaption,
-.prose.llamaai-prose table,
-.prose.llamaai-prose [class~='lead'] {
-	margin-top: 0;
-	margin-bottom: 0;
-}
-
-/* ------------------------- Hacker mode: code blocks ------------------------- */
-.prose.llamaai-prose.hacker-mode pre {
-	background: var(--ai-ink);
-	border: 1px solid color-mix(in srgb, var(--ai-terminal) 20%, transparent);
-	box-shadow: inset 0 0 30px color-mix(in srgb, var(--ai-terminal) 3%, transparent);
-	border-radius: 0.5rem;
-}
-.prose.llamaai-prose.hacker-mode pre code {
-	color: var(--ai-terminal);
-	text-shadow: 0 0 8px color-mix(in srgb, var(--ai-terminal) 40%, transparent);
-	font-family: monospace;
-}
-.prose.llamaai-prose.hacker-mode :not(pre) > code {
-	color: var(--ai-terminal);
-	background: color-mix(in srgb, var(--ai-terminal) 8%, transparent);
-	text-shadow: 0 0 6px color-mix(in srgb, var(--ai-terminal) 30%, transparent);
-}
-
-/* Entity logos: wrapper uses leading-0; keep img optically centered with link text */
-.prose.llamaai-prose a img.inline-block {
-	vertical-align: middle;
-}
-
-/* Scale entity logos to match heading font size */
-.prose.llamaai-prose :is(h1, h2, h3, h4, h5, h6) a img {
-	height: 1em;
-	width: 1em;
 }

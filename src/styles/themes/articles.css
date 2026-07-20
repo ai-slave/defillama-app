@@ -4,7 +4,7 @@
 
    A standing product palette, separate from the design system's tokens in
    semantics.css. Add tokens here as the product evolves.
-   Component CSS for the editor/prose/loader lives in src/styles/articles.css.
+   Component CSS for the editor/prose/loader lives with the Articles container.
 ---------------------------------------------------------------------------- */
 
 @layer base {

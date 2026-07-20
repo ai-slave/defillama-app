@@ -12,7 +12,7 @@ function getElementFromNode(node: Node | null) {
 	return node instanceof Element ? node : node.parentElement
 }
 
-// Messages render one .llamaai-prose block PER markdown segment, with charts,
+// Messages render one data-llamaai-prose block PER markdown segment, with charts,
 // logos, and other widgets between them — so drags routinely start in prose and
 // end on a non-prose element (or span several prose blocks). A selection
 // qualifies when AT LEAST ONE endpoint is in prose and neither endpoint is in
@@ -24,11 +24,11 @@ export function isSelectionInLlamaProse(selection: Selection | null): boolean {
 	if (!anchor || !focus) return false
 	const editable = 'textarea, input, [contenteditable]'
 	if (anchor.closest(editable) || focus.closest(editable)) return false
-	if (anchor.closest('.llamaai-prose') || focus.closest('.llamaai-prose')) return true
+	if (anchor.closest('[data-llamaai-prose]') || focus.closest('[data-llamaai-prose]')) return true
 	// Both endpoints can land on widgets (charts, controls) while the drag sweeps
 	// prose between them — qualify if the range intersects any prose block.
 	const range = selection.getRangeAt(0)
-	for (const prose of Array.from(document.querySelectorAll('.llamaai-prose'))) {
+	for (const prose of Array.from(document.querySelectorAll('[data-llamaai-prose]'))) {
 		try {
 			if (range.intersectsNode(prose)) return true
 		} catch {

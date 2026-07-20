@@ -1,0 +1,82 @@
+@keyframes anchorHighlight {
+	0% {
+		background-color: color-mix(in srgb, var(--ai-accent-blue-bright) 15%, transparent);
+	}
+	100% {
+		background-color: transparent;
+	}
+}
+
+.messageAnchor {
+	scroll-margin-top: 5rem;
+}
+
+.anchorHighlight {
+	position: relative;
+	isolation: isolate;
+}
+
+.anchorHighlight::before {
+	content: '';
+	position: absolute;
+	inset: -4px -6px;
+	border-radius: 10px;
+	pointer-events: none;
+	z-index: -1;
+	animation: anchorHighlight 2s ease-out forwards;
+}
+
+.prose :global(p),
+.prose :global(blockquote),
+.prose :global(h1),
+.prose :global(h2),
+.prose :global(h3),
+.prose :global(h4),
+.prose :global(h5),
+.prose :global(h6),
+.prose :global(img),
+.prose :global(picture),
+.prose :global(video),
+.prose :global(pre),
+.prose :global(ol),
+.prose :global(ul),
+.prose :global(li),
+.prose :global(dl),
+.prose :global(dt),
+.prose :global(dd),
+.prose :global(hr),
+.prose :global(figure),
+.prose :global(figcaption),
+.prose :global(table),
+.prose :global([class~='lead']) {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.hackerMode :global(pre) {
+	background: var(--ai-ink);
+	border: 1px solid color-mix(in srgb, var(--ai-terminal) 20%, transparent);
+	box-shadow: inset 0 0 30px color-mix(in srgb, var(--ai-terminal) 3%, transparent);
+	border-radius: 0.5rem;
+}
+
+.hackerMode :global(pre code) {
+	color: var(--ai-terminal);
+	text-shadow: 0 0 8px color-mix(in srgb, var(--ai-terminal) 40%, transparent);
+	font-family: monospace;
+}
+
+.hackerMode :global(:not(pre) > code) {
+	color: var(--ai-terminal);
+	background: color-mix(in srgb, var(--ai-terminal) 8%, transparent);
+	text-shadow: 0 0 6px color-mix(in srgb, var(--ai-terminal) 30%, transparent);
+}
+
+.prose :global(a img.inline-block) {
+	vertical-align: middle;
+}
+
+.prose :global(:is(h1, h2, h3, h4, h5, h6) a img) {
+	height: 1em;
+	width: 1em;
+}
