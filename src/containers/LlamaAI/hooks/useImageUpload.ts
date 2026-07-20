@@ -18,9 +18,13 @@ const ACCEPTED_TYPES = new Set([
 	'application/pdf',
 	'text/csv',
 	'text/markdown',
-	'text/plain'
+	'text/plain',
+	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	'application/msword',
+	'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+	'application/vnd.ms-excel'
 ])
-const ACCEPTED_EXTENSIONS = new Set(['.pdf', '.csv', '.md', '.txt'])
+const ACCEPTED_EXTENSIONS = new Set(['.pdf', '.csv', '.md', '.txt', '.docx', '.doc', '.xlsx'])
 const IMAGE_MAX_SIZE = 10 * 1024 * 1024
 const FILE_MAX_SIZE = 30 * 1024 * 1024
 const MAX_TOTAL_BYTES = 50 * 1024 * 1024
@@ -131,7 +135,7 @@ export function useImageUpload({
 					queueMicrotask(() => {
 						errorToast({
 							title: 'Unsupported file type',
-							description: 'Supported formats: PNG, JPEG, GIF, WebP, PDF, CSV, MD, TXT'
+							description: 'Supported formats: PNG, JPEG, GIF, WebP, PDF, Word, Excel, CSV, MD, TXT'
 						})
 					})
 				}

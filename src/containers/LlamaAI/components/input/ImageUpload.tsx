@@ -115,7 +115,7 @@ export function ImageUpload({
 			<input
 				ref={fileInputRef}
 				type="file"
-				accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/csv,.pdf,.csv,text/markdown,text/plain,.md,.txt"
+				accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/csv,.pdf,.csv,text/markdown,text/plain,.md,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,.docx,.doc,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,.xlsx"
 				multiple
 				onChange={handleImageSelect}
 				className="hidden"
