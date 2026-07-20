@@ -2,8 +2,8 @@ import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
+import type { Dashboard } from '../dashboardTypes'
 import { useDashboardEngagement } from '../hooks/useDashboardEngagement'
-import type { Dashboard } from '../services/DashboardAPI'
 
 export const LikeDashboardButton = ({
 	currentDashboard,

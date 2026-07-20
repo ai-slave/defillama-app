@@ -664,7 +664,7 @@ export const getProtocolOverviewPageData = async ({
 							}
 						}
 
-						rows.push({ name: protocol.name, tvl: protocol.tvl, commonChains })
+						rows.push({ name: protocol.name, tvl: protocol.tvl ?? 0, commonChains })
 					}
 					rows.sort((a, b) => b.tvl - a.tvl)
 					return rows

@@ -18,6 +18,7 @@ import { useCallback, useContext, useDeferredValue, useEffect, useMemo, useState
 import type { ChainMetrics } from '~/containers/ProDashboard/server/unifiedTable/protocols'
 import { StreamDoneContext } from '../../../queries'
 import type { UnifiedRowHeaderType, UnifiedTableConfig } from '../../../types'
+import { getUnifiedTableQueryIdentity } from '../../../unifiedTableQuery'
 import { getUnifiedTableColumns } from '../config/ColumnRegistry'
 import type { NormalizedRow } from '../types'
 import { filterRowsByConfig, filterRowsBySearch } from '../utils/dataFilters'
@@ -26,7 +27,6 @@ import { setChainMetrics } from './chainMetricsStore'
 import { getGroupingColumnIdsForHeaders } from './grouping'
 import { getRowHeaderFromGroupingColumn, isSelfGroupingValue } from './groupingUtils'
 
-const EMPTY_CHAINS: string[] = []
 const EMPTY_ROWS: NormalizedRow[] = []
 
 interface UseUnifiedTableArgs {
@@ -66,6 +66,7 @@ const buildQueryString = (config: UnifiedTableConfig, rowHeaders: UnifiedRowHead
 			params.append('chains[]', chain)
 		}
 	}
+	if (config.params?.category) params.set('category', config.params.category)
 
 	return params.toString()
 }
@@ -107,13 +108,11 @@ export function useUnifiedTable({
 
 	const sanitizedHeaders = useMemo(() => sanitizeRowHeaders(config.rowHeaders), [config.rowHeaders])
 
-	const paramsChains = config.params?.chains ?? EMPTY_CHAINS
-	const paramsKey = JSON.stringify({ chains: paramsChains })
-	const headersKey = sanitizedHeaders.join('|')
+	const { queryKey } = getUnifiedTableQueryIdentity(config, sanitizedHeaders)
 
 	const streamDone = useContext(StreamDoneContext)
 	const { data, isLoading } = useQuery({
-		queryKey: ['pro-dashboard', 'unified-table', paramsKey, headersKey],
+		queryKey,
 		queryFn: () => fetchUnifiedTableRows(config, sanitizedHeaders),
 		staleTime: Infinity,
 		retry: 1,

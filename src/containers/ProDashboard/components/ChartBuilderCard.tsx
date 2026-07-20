@@ -8,6 +8,7 @@ import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard
 import { Icon } from '~/ui/Icon'
 import type { ChartSeries } from '~/utils/breakdowns'
 import { download } from '~/utils/download'
+import { getChartBuilderQueryKey, resolveChartBuilderFilterMode } from '../chartBuilderQueryKey'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import {
 	useProDashboardCatalog,
@@ -16,19 +17,18 @@ import {
 	useProDashboardTime
 } from '../ProDashboardAPIContext'
 import ProtocolChartBuilderData from '../services/ProtocolChartBuilderData'
-import type { DashboardGrouping } from '../types'
-import { getGroupedTimestampSec } from '../utils'
+import type { ChartBuilderConfig, DashboardGrouping } from '../types'
 import { buildProTreemapData } from '../utils/treemap'
+import { buildChartBuilderSeriesView, isChartBuilderSnapshotMetric } from './chartBuilderSeries'
 import { createChartBuilderTooltipFormatter, dashboardGroupingToTooltipGroupBy } from './chartBuilderTooltip'
 import { ConfirmationModal } from './ConfirmationModal'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
 const TreeMapBuilderChart = lazy(() => import('~/components/ECharts/TreeMapBuilderChart'))
 
 const DEFAULT_SERIES_COLOR = '#3e61cc'
 const EMPTY_SERIES_COLORS: Record<string, string> = {}
-const EMPTY_SERIES_NAMES: string[] = []
 const HEX_COLOR_REGEX = /^#([0-9a-f]{3}){1,2}$/i
 const CHART_TYPE_OPTIONS = [
 	{ name: 'Stacked Bar', key: 'stackedBar' },
@@ -53,60 +53,8 @@ const buildHideOthersOptions = (mode: 'chains' | 'protocol', limit: number) => [
 	}
 ]
 
-const resolveFilterMode = (value?: 'include' | 'exclude', fallback?: 'include' | 'exclude') => {
-	if (value === 'include' || value === 'exclude') return value
-	if (fallback === 'include' || fallback === 'exclude') return fallback
-	return 'include'
-}
-
 interface ChartBuilderCardProps {
-	builder: {
-		id: string
-		kind: 'builder'
-		config: {
-			metric:
-				| 'fees'
-				| 'revenue'
-				| 'volume'
-				| 'perps'
-				| 'open-interest'
-				| 'options-notional'
-				| 'options-premium'
-				| 'bridge-aggregators'
-				| 'dex-aggregators'
-				| 'perps-aggregators'
-				| 'user-fees'
-				| 'holders-revenue'
-				| 'protocol-revenue'
-				| 'supply-side-revenue'
-				| 'tvl'
-				| 'stablecoins'
-				| 'chain-fees'
-				| 'chain-revenue'
-			mode: 'chains' | 'protocol'
-			filterMode?: 'include' | 'exclude'
-			chainFilterMode?: 'include' | 'exclude'
-			categoryFilterMode?: 'include' | 'exclude'
-			chainCategoryFilterMode?: 'include' | 'exclude'
-			protocolCategoryFilterMode?: 'include' | 'exclude'
-			protocol?: string
-			chains: string[]
-			chainCategories?: string[]
-			protocolCategories?: string[]
-			categories: string[]
-			groupBy: 'protocol'
-			limit: number
-			chartType: 'stackedBar' | 'stackedArea' | 'line' | 'treemap'
-			treemapValue?: 'latest' | 'sum7d' | 'sum30d'
-			displayAs: 'timeSeries' | 'percentage'
-			hideOthers?: boolean
-			groupByParent?: boolean
-			additionalFilters?: Record<string, any>
-			seriesColors?: Record<string, string>
-		}
-		name?: string
-		grouping?: DashboardGrouping
-	}
+	builder: ChartBuilderConfig
 }
 
 type BuilderMetric = ChartBuilderCardProps['builder']['config']['metric']
@@ -135,15 +83,15 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		break
 	}
 	const groupingOptions: DashboardGrouping[] = ['day', 'week', 'month', 'quarter', 'year']
-	const chainFilterMode = resolveFilterMode(config.chainFilterMode, config.filterMode)
-	const categoryFilterMode = resolveFilterMode(config.categoryFilterMode, config.filterMode)
-	const chainCategoryFilterMode = resolveFilterMode(config.chainCategoryFilterMode, config.filterMode)
-	const protocolCategoryFilterMode = resolveFilterMode(config.protocolCategoryFilterMode, config.filterMode)
+	const chainFilterMode = resolveChartBuilderFilterMode(config.chainFilterMode, config.filterMode)
+	const categoryFilterMode = resolveChartBuilderFilterMode(config.categoryFilterMode, config.filterMode)
+	const chainCategoryFilterMode = resolveChartBuilderFilterMode(config.chainCategoryFilterMode, config.filterMode)
+	const protocolCategoryFilterMode = resolveChartBuilderFilterMode(config.protocolCategoryFilterMode, config.filterMode)
 	const effectiveShowColors = !isReadOnly && showColors
 
-	const isTvlChart = config.metric === 'tvl' || config.metric === 'stablecoins'
+	const isSnapshotChart = isChartBuilderSnapshotMetric(config.metric)
 	const treemapValue = config.treemapValue || 'latest'
-	const treemapMode = isTvlChart ? 'latest' : treemapValue
+	const treemapMode = isSnapshotChart ? 'latest' : treemapValue
 	const treemapLabel =
 		TREEMAP_VALUE_OPTIONS.find((option) => option.key === treemapMode)?.name || TREEMAP_VALUE_OPTIONS[0].name
 	const hideOthersOptions = useMemo(
@@ -151,36 +99,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		[config.mode, config.limit]
 	)
 
-	const timeKey = useMemo(() => {
-		if (timePeriod === 'custom' && customTimePeriod) {
-			if (customTimePeriod.type === 'relative') {
-				return `custom-relative-${customTimePeriod.relativeDays ?? ''}`
-			}
-			return `custom-absolute-${customTimePeriod.startDate ?? ''}-${customTimePeriod.endDate ?? ''}`
-		}
-		return timePeriod || 'all'
-	}, [timePeriod, customTimePeriod])
-
 	const streamDone = useContext(StreamDoneContext)
 	const { data: chartData, isPending: isChartDataPending } = useQuery({
-		queryKey: [
-			'pro-dashboard',
-			'chartBuilder',
-			config.mode,
-			config.metric,
-			config.protocol,
-			config.chains,
-			config.limit,
-			config.categories,
-			config.chainCategories,
-			config.protocolCategories,
-			config.hideOthers,
-			config.groupByParent,
-			chainFilterMode,
-			categoryFilterMode,
-			chainCategoryFilterMode,
-			protocolCategoryFilterMode
-		],
+		queryKey: getChartBuilderQueryKey(config),
 		queryFn: async () => {
 			if (config.mode === 'protocol') {
 				const data = await ProtocolChartBuilderData.getProtocolChainData(
@@ -240,9 +161,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		select: (data) => {
 			if (!data?.series || !timePeriod || timePeriod === 'all') return data
 			return {
-				series: data.series.map((s: any) => ({
-					...s,
-					data: filterDataByTimePeriod(s.data, timePeriod, customTimePeriod)
+				series: data.series.map((series) => ({
+					...series,
+					data: filterDataByTimePeriod(series.data, timePeriod, customTimePeriod)
 				}))
 			}
 		},
@@ -251,32 +172,16 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		refetchOnWindowFocus: false
 	})
 
-	const chartSeries = useMemo(() => {
-		if (!chartData?.series || config.chartType === 'treemap') return []
-
-		let processedSeries = chartData.series
-		if (builder.grouping && builder.grouping !== 'day') {
-			processedSeries = chartData.series.map((series: ChartSeries) => {
-				const aggregatedData: [number, number][] = []
-
-				// API series are ascending, so equal time buckets are adjacent and need no Map or re-sort.
-				for (const [timestamp, value] of series.data) {
-					const groupKey = getGroupedTimestampSec(timestamp, builder.grouping)
-					const previous = aggregatedData[aggregatedData.length - 1]
-					if (previous?.[0] === groupKey) {
-						previous[1] = isTvlChart ? value : previous[1] + value
-					} else {
-						aggregatedData.push([groupKey, value])
-					}
-				}
-
-				return {
-					...series,
-					data: aggregatedData
-				}
+	const chartView = useMemo(() => {
+		if (!chartData?.series || config.chartType === 'treemap') {
+			return buildChartBuilderSeriesView({
+				series: [],
+				useLastValue: isSnapshotChart,
+				displayAs: config.displayAs,
+				chartType: 'line',
+				resolveColor: () => DEFAULT_SERIES_COLOR
 			})
 		}
-
 		const resolveSeriesColor = (name: string, fallback?: string) => {
 			const override = seriesColors[name]
 			if (override) {
@@ -288,50 +193,17 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			return DEFAULT_SERIES_COLOR
 		}
 
-		if (config.displayAs === 'percentage') {
-			const timestampTotals = new Map<number, number>()
-			for (const s of processedSeries) {
-				for (const [timestamp, value] of s.data as [number, number][]) {
-					timestampTotals.set(timestamp, (timestampTotals.get(timestamp) || 0) + value)
-				}
-			}
+		return buildChartBuilderSeriesView({
+			series: chartData.series,
+			grouping: builder.grouping,
+			useLastValue: isSnapshotChart,
+			displayAs: config.displayAs,
+			chartType: config.chartType,
+			resolveColor: resolveSeriesColor
+		})
+	}, [chartData, config.displayAs, config.chartType, builder.grouping, isSnapshotChart, seriesColors])
 
-			return processedSeries.map((s: any) => ({
-				name: s.name,
-				data: s.data.map(([timestamp, value]: [number, number]) => {
-					const total = timestampTotals.get(timestamp) || 0
-					return [timestamp, total > 0 ? (value / total) * 100 : 0]
-				}),
-				color: resolveSeriesColor(s.name, s.color),
-				type: config.chartType === 'stackedBar' ? 'bar' : 'line',
-				...(config.chartType === 'stackedArea' && {
-					areaStyle: { opacity: 0.7 },
-					stack: 'total'
-				}),
-				...(config.chartType === 'stackedBar' && {
-					stack: 'total'
-				})
-			}))
-		}
-
-		return processedSeries.map((s: any) => ({
-			name: s.name,
-			data: s.data,
-			color: resolveSeriesColor(s.name, s.color),
-			type: config.chartType === 'stackedBar' ? 'bar' : 'line',
-			...(config.chartType === 'stackedArea' && {
-				areaStyle: { opacity: 0.7 },
-				stack: 'total'
-			}),
-			...(config.chartType === 'stackedBar' && {
-				stack: 'total'
-			})
-		}))
-	}, [chartData, config.displayAs, config.chartType, builder.grouping, isTvlChart, seriesColors])
-
-	const chartSeriesNames = useMemo(() => {
-		return chartSeries.length > 0 ? chartSeries.map((s: any) => s.name) : EMPTY_SERIES_NAMES
-	}, [chartSeries])
+	const chartSeriesNames = chartView.seriesNames
 
 	const treemapData = useMemo(() => {
 		if (config.chartType !== 'treemap' || !chartData?.series || chartData.series.length === 0) return []
@@ -345,8 +217,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 
 		return buildProTreemapData(chartData.series, treemapMode, resolveColor)
 	}, [chartData, config.chartType, seriesColors, treemapMode])
-	const displayedSeries = config.chartType === 'treemap' ? (chartData?.series ?? []) : chartSeries
-	const hasRenderableData = config.chartType === 'treemap' ? treemapData.length > 0 : chartSeries.length > 0
+	const displayedSeries = chartData?.series ?? []
+	const hasRenderableData =
+		config.chartType === 'treemap' ? treemapData.length > 0 : chartView.dataset.source.length > 0
 
 	const chartOptions = useMemo(() => {
 		const tooltipFormatter = createChartBuilderTooltipFormatter({
@@ -399,8 +272,30 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	}, [builder.grouping, chartSeriesNames, config.displayAs, config.limit])
 
 	const handleCsvExport = () => {
-		const exportSeries = config.chartType === 'treemap' ? (chartData?.series ?? []) : chartSeries
+		const exportSeries = chartData?.series ?? []
 		if (exportSeries.length === 0) return
+		const fileName = `${builder.name || config.metric}_${config.chains.join(
+			'-'
+		)}_${config.categories.length > 0 ? config.categories.join('-') + '_' : ''}${
+			config.chainCategories && config.chainCategories.length > 0 ? config.chainCategories.join('-') + '_' : ''
+		}${
+			config.protocolCategories && config.protocolCategories.length > 0 ? config.protocolCategories.join('-') + '_' : ''
+		}${new Date().toISOString().split('T')[0]}.csv`
+		if (config.chartType !== 'treemap') {
+			const headers = ['Date', ...chartView.seriesNames]
+			const rows = new Array<string[]>(chartView.dataset.source.length)
+			for (let i = 0; i < chartView.dataset.source.length; i++) {
+				const input = chartView.dataset.source[i]
+				const row = [new Date(input.timestamp as number).toISOString().slice(0, 10)]
+				for (let j = 1; j < chartView.dataset.dimensions.length; j++) {
+					row.push(String(input[chartView.dataset.dimensions[j]] ?? 0))
+				}
+				rows[i] = row
+			}
+			const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
+			download(fileName, csvContent)
+			return
+		}
 
 		const timestampSet = new Set<number>()
 		for (const s of exportSeries) {
@@ -428,13 +323,6 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		}
 
 		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
-		const fileName = `${builder.name || config.metric}_${config.chains.join(
-			'-'
-		)}_${config.categories.length > 0 ? config.categories.join('-') + '_' : ''}${
-			config.chainCategories && config.chainCategories.length > 0 ? config.chainCategories.join('-') + '_' : ''
-		}${
-			config.protocolCategories && config.protocolCategories.length > 0 ? config.protocolCategories.join('-') + '_' : ''
-		}${new Date().toISOString().split('T')[0]}.csv`
 		download(fileName, csvContent)
 	}
 
@@ -549,7 +437,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							variant="pro"
 						/>
 					) : null}
-					{!isReadOnly && config.chartType === 'treemap' && !isTvlChart ? (
+					{!isReadOnly && config.chartType === 'treemap' && !isSnapshotChart ? (
 						<Select
 							size="sm"
 							allValues={TREEMAP_VALUE_OPTIONS}
@@ -737,9 +625,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					{config.chartType === 'treemap' ? (
 						<TreeMapBuilderChart data={treemapData} height="350px" onReady={handleChartReady} />
 					) : (
-						<MultiSeriesChart
-							key={`${builder.id}-${config.displayAs}-${builder.grouping || 'day'}-${config.hideOthers}-${config.limit}-${timeKey}`}
-							series={chartSeries as any}
+						<MultiSeriesChart2
+							dataset={chartView.dataset}
+							charts={chartView.charts}
 							valueSymbol={config.displayAs === 'percentage' ? '%' : '$'}
 							groupBy={
 								builder.grouping === 'week'
@@ -753,6 +641,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 												: 'daily'
 							}
 							hideDataZoom={true}
+							hideDefaultLegend={false}
+							solidChartAreaStyle={config.chartType === 'stackedArea'}
+							exportButtons="hidden"
 							onReady={handleChartReady}
 							chartOptions={chartOptions}
 						/>

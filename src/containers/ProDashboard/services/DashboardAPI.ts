@@ -1,49 +1,9 @@
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import { FEATURES_SERVER } from '../../../constants'
-import type { CustomTimePeriod, TimePeriod } from '../ProDashboardAPIContext'
+import type { AIGeneratedData, CustomTimePeriod, Dashboard, TimePeriod } from '../dashboardTypes'
 import type { DashboardItemConfig } from '../types'
 
-export interface Dashboard {
-	id: string
-	slug?: string
-	user: string
-	data: {
-		items: DashboardItemConfig[]
-		dashboardName: string
-		timePeriod?: TimePeriod
-		customTimePeriod?: CustomTimePeriod | null
-		aiUndoState?: {
-			items: DashboardItemConfig[]
-			timestamp: string
-			sessionId: string
-		}
-	}
-	visibility?: 'private' | 'public'
-	tags?: string[]
-	description?: string
-	viewCount?: number
-	likeCount?: number
-	liked?: boolean
-	author?: PublicDashboardAuthor
-	created: string
-	updated: string
-	editedAt?: string
-	collectionId?: string
-	collectionName?: string
-	aiGenerated?: Record<
-		string,
-		{
-			mode: 'create' | 'iterate'
-			prompt: string
-			rated: boolean
-			rating?: number
-			feedback?: string
-			skipped?: boolean
-			timestamp: string
-			userId: string
-		}
-	> | null
-}
+export type { Dashboard } from '../dashboardTypes'
 
 export interface FollowingShelf {
 	author: PublicDashboardAuthor
@@ -88,7 +48,7 @@ type DashboardSavePayload = {
 	visibility?: 'private' | 'public'
 	tags?: string[]
 	description?: string
-	aiGenerated?: Record<string, any> | null
+	aiGenerated?: AIGeneratedData | null
 }
 
 function dashboardSaveBody(data: DashboardSavePayload) {
@@ -177,7 +137,7 @@ class DashboardAPIService {
 			visibility?: 'private' | 'public'
 			tags?: string[]
 			description?: string
-			aiGenerated?: Record<string, any> | null
+			aiGenerated?: AIGeneratedData | null
 		},
 		authorizedFetch: (url: string, options?: any) => Promise<Response>
 	): Promise<Dashboard> {
@@ -197,7 +157,7 @@ class DashboardAPIService {
 			visibility?: 'private' | 'public'
 			tags?: string[]
 			description?: string
-			aiGenerated?: Record<string, any> | null
+			aiGenerated?: AIGeneratedData | null
 		},
 		authorizedFetch: (url: string, options?: any) => Promise<Response>
 	): Promise<Dashboard> {

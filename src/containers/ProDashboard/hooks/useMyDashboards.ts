@@ -3,7 +3,8 @@ import { useRouter } from 'next/router'
 import { useCallback } from 'react'
 import { useAuthContext } from '~/auth'
 import { pushShallowQuery } from '~/utils/routerQuery'
-import { type Dashboard, dashboardAPI } from '../services/DashboardAPI'
+import type { Dashboard } from '../dashboardTypes'
+import { dashboardAPI } from '../services/DashboardAPI'
 
 const EMPTY_DASHBOARDS: Dashboard[] = []
 

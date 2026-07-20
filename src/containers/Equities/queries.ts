@@ -12,8 +12,8 @@ import {
 } from './api'
 import type { IEquitiesCompanyRoute, IEquitiesOnchainResponse } from './api.types'
 import { buildPriceHistoryChart } from './chartData'
+import { buildEquityTickerCountrySlug } from './tickerCountry'
 import type { IEquitiesListPageProps, IEquitiesOnchainPageData, IEquityTickerPageProps } from './types'
-import { buildEquityTickerCountrySlug } from './utils'
 
 export async function getEquitiesListPageData(): Promise<IEquitiesListPageProps> {
 	const companies = await fetchEquitiesCompanies()

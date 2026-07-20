@@ -1,6 +1,10 @@
 export interface ChainListItem {
 	name: string
-	tvl?: number
+	tvl: number
+	gecko_id: string | null
+	tokenSymbol: string | null
+	cmcId: string | null
+	chainId: number | string | null
 	[key: string]: unknown
 }
 

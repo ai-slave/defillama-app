@@ -14,14 +14,13 @@ import {
 	type EquitiesStatementOption,
 	type EquitiesStatementPeriodOption
 } from '~/containers/Equities/financialStatements'
+import { parseEquityTickerCountryParam } from '~/containers/Equities/tickerCountry'
 import type { IEquitiesStatementTableRow } from '~/containers/Equities/types'
-import {
-	buildEquityTickerCountrySlug,
-	formatEquitiesDate,
-	parseEquityTickerCountryParam
-} from '~/containers/Equities/utils'
+import { formatEquitiesDate } from '~/containers/Equities/utils'
+import { getProEquitiesStatementsQueryKey } from '~/containers/ProDashboard/equitiesTableQueryKeys'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchEquitiesStatementsViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { getProEquitiesStatementsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { Icon } from '~/ui/Icon'
 import { downloadCSV } from '~/utils/download'
 import { LoadingSpinner } from '../../LoadingSpinner'
@@ -110,10 +109,9 @@ function useEquitiesStatementsData(ticker: string) {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
 	const tickerCountry = parseEquityTickerCountryParam(ticker)
-	const queryTicker = tickerCountry ? buildEquityTickerCountrySlug(tickerCountry.ticker, tickerCountry.country) : ticker
 
 	return useQuery({
-		queryKey: ['pro-dashboard', 'equities-statements-table', queryTicker],
+		queryKey: getProEquitiesStatementsQueryKey(ticker) ?? getProEquitiesStatementsCacheKey(ticker),
 		queryFn: async () => {
 			if (!tickerCountry) throw new Error('Missing ticker param')
 			return fetchEquitiesStatementsViaProxy(tickerCountry.ticker, tickerCountry.country, authToken!)

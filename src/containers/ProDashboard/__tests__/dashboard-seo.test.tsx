@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { DashboardSeoSummary } from '../components/DashboardSeoSummary'
 import { ProDashboardLoader } from '../components/ProDashboardLoader'
-import type { Dashboard } from '../services/DashboardAPI'
+import type { Dashboard } from '../dashboardTypes'
 import { buildDashboardSeo, markdownToPlainText, toDashboardSeoPublicDashboard } from '../utils/seo'
 
 function hasNestedUndefined(value: unknown): boolean {
@@ -162,6 +162,28 @@ describe('pro dashboard SEO shell', () => {
 		expect(seo.itemCount).toBe(0)
 		expect(hasNestedUndefined(seo.jsonLd)).toBe(false)
 		expect(html).toContain('This public dashboard does not have any items yet.')
+	})
+
+	it('omits unavailable summary links so public dashboard props stay serializable', () => {
+		const dashboardWithAllChains = {
+			...dashboard,
+			data: {
+				dashboardName: 'Stablecoins Tracker',
+				items: [
+					{
+						id: 'stablecoins-all',
+						kind: 'stablecoins',
+						chain: 'All',
+						chartType: 'tokenMcaps'
+					}
+				]
+			}
+		} satisfies Dashboard
+
+		const seo = buildDashboardSeo(dashboardWithAllChains)
+
+		expect(seo.itemSummaries).toEqual([{ id: 'stablecoins-all', label: 'All Token Mcaps stablecoins chart' }])
+		expect(hasNestedUndefined(seo)).toBe(false)
 	})
 
 	it('converts markdown and raw html to plain text before SEO rendering', () => {

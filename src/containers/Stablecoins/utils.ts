@@ -235,6 +235,7 @@ export interface IBuildStablecoinChartDataResult {
 	tokenInflows: IStablecoinTokenInflowPoint[]
 	tokenInflowNames: string[]
 	usdInflows: Array<[string, number]>
+	latestValues: Record<string, number>
 }
 
 export function getPrevStablecoinTotalFromChart(
@@ -434,7 +435,8 @@ const EMPTY_STABLECOIN_CHART_DATA: IBuildStablecoinChartDataResult = {
 	stackedDataset: [],
 	tokenInflows: [],
 	tokenInflowNames: [],
-	usdInflows: []
+	usdInflows: [],
+	latestValues: {}
 }
 
 interface ICollectedStablecoinChartData {
@@ -443,6 +445,7 @@ interface ICollectedStablecoinChartData {
 	unformattedTotalHasRealData: Record<string, boolean>
 	stackedDatasetObject: Record<string, Record<string, IStablecoinStackedValue>>
 	unformattedTokenInflowData: Record<string, Record<string, number>>
+	latestValues: Record<string, number>
 }
 
 const collectStablecoinChartData = (
@@ -467,6 +470,7 @@ const collectStablecoinChartData = (
 	const stackedDatasetObject = createChartRecord<Record<string, IStablecoinStackedValue>>()
 	const unformattedTokenInflowData = createChartRecord<Record<string, number>>()
 	const assetAddedToInflows = createChartRecord<boolean>()
+	const latestValues = createChartRecord<number>()
 
 	if (buildInflows) {
 		for (const name of assetsOrChainsList) assetAddedToInflows[name] = false
@@ -480,12 +484,14 @@ const collectStablecoinChartData = (
 
 		const assetOrChain = assetsOrChainsList[i]
 		let previousMcap: number | null = null
+		let latestMcap: number | null = null
 		for (let j = 0; j < charts.length; j++) {
 			const chart = charts[j]
 			const mcap = getStablecoinValueFromPoint(chart, issuanceType)
 			const previousPointMcap = previousMcap
 			previousMcap = mcap
 			if (mcap == null) continue
+			latestMcap = mcap
 
 			const date = String(chart.date)
 			if (!((selectedChain && BACKFILLED_CHAINS.has(selectedChain)) || +date > 1652241600)) continue
@@ -520,6 +526,7 @@ const collectStablecoinChartData = (
 				if (diff) assetAddedToInflows[assetOrChain] = true
 			}
 		}
+		if (latestMcap != null) latestValues[assetOrChain] = latestMcap
 	}
 
 	return {
@@ -527,7 +534,8 @@ const collectStablecoinChartData = (
 		unformattedTotalData,
 		unformattedTotalHasRealData,
 		stackedDatasetObject,
-		unformattedTokenInflowData
+		unformattedTokenInflowData,
+		latestValues
 	}
 }
 
@@ -564,7 +572,8 @@ const buildStablecoinChartDataInternal = (
 		unformattedTotalData,
 		unformattedTotalHasRealData,
 		stackedDatasetObject,
-		unformattedTokenInflowData
+		unformattedTokenInflowData,
+		latestValues
 	} = collected
 
 	let sharedChartDates: string[] | null = null
@@ -661,7 +670,15 @@ const buildStablecoinChartDataInternal = (
 	if (buildTokenInflows) tokenInflows.sort((a, b) => Number(a.date) - Number(b.date))
 	if (buildUsdInflows) usdInflows.sort((a, b) => Number(a[0]) - Number(b[0]))
 
-	return { peggedAreaChartData, peggedAreaTotalData, stackedDataset, tokenInflows, tokenInflowNames, usdInflows }
+	return {
+		peggedAreaChartData,
+		peggedAreaTotalData,
+		stackedDataset,
+		tokenInflows,
+		tokenInflowNames,
+		usdInflows,
+		latestValues
+	}
 }
 
 export const buildStablecoinChartDataWithFlags = (

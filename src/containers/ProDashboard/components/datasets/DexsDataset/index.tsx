@@ -21,8 +21,8 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import { useDimensionDatasetData } from '../useDimensionDatasetData'
 import { dexsDatasetColumns } from './columns'
-import { useDexsData } from './useDexsData'
 
 type DexItemWithMarketShare = DexItem & {
 	marketShare7d: number
@@ -39,7 +39,7 @@ export function DexsDataset({ chains }: { chains?: string[] }) {
 		pageSize: 10
 	})
 
-	const { data, isLoading, error } = useDexsData(chains)
+	const { data, isLoading, error } = useDimensionDatasetData<DexItem>('dexs', chains)
 	const width = useBreakpointWidth()
 
 	const enrichedData = React.useMemo<DexItemWithMarketShare[]>(() => {

@@ -1,14 +1,44 @@
 import { useQuery } from '@tanstack/react-query'
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { getDisplayAliases } from '~/utils/chainNormalizer'
-import type { ChartBuilderConfig } from './components/AddChartModal/types'
+import type { IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
+import type { ProDashboardAppMetadata } from './dataContracts'
 import { StreamDoneContext } from './queries'
-import { getChainChartTypes, getProtocolChartTypes } from './types'
+import { type ChartBuilderConfig, getChainChartTypes, getProtocolChartTypes } from './types'
 
-type BuilderMetric = ChartBuilderConfig['metric']
+type BuilderMetric = ChartBuilderConfig['config']['metric']
 
-type ProtocolFlags = Record<string, any>
-type ChainFlags = Record<string, any>
+const PROTOCOL_FLAG_KEYS = [
+	'tvl',
+	'fees',
+	'revenue',
+	'dexs',
+	'perps',
+	'openInterest',
+	'optionsNotionalVolume',
+	'optionsPremiumVolume',
+	'bridgeAggregators',
+	'dexAggregators',
+	'perpsAggregators',
+	'holdersRevenue',
+	'stablecoins',
+	'emissions',
+	'incentives',
+	'liquidity',
+	'treasury',
+	'bribeRevenue',
+	'tokenTax',
+	'yields',
+	'borrowed',
+	'activeUsers',
+	'newUsers',
+	'txCount',
+	'gasUsed'
+] as const satisfies readonly (keyof IProtocolMetadata)[]
+
+type ProtocolFlag = (typeof PROTOCOL_FLAG_KEYS)[number]
+type ProtocolFlags = Partial<Record<ProtocolFlag, true>>
+type ChainFlags = IChainMetadata
 
 type ProtocolRecord = {
 	slug: string
@@ -38,7 +68,7 @@ type AppMetadataContextType = {
 
 const AppMetadataContext = createContext<AppMetadataContextType | undefined>(undefined)
 
-const PROTOCOL_FLAG_BY_BUILDER_METRIC: Record<BuilderMetric, keyof ProtocolFlags> = {
+const PROTOCOL_FLAG_BY_BUILDER_METRIC: Record<BuilderMetric, ProtocolFlag | null> = {
 	tvl: 'tvl',
 	fees: 'fees',
 	revenue: 'revenue',
@@ -55,8 +85,8 @@ const PROTOCOL_FLAG_BY_BUILDER_METRIC: Record<BuilderMetric, keyof ProtocolFlags
 	'protocol-revenue': 'revenue',
 	'supply-side-revenue': 'fees',
 	stablecoins: 'stablecoins',
-	'chain-fees': 'chainFees',
-	'chain-revenue': 'chainRevenue'
+	'chain-fees': null,
+	'chain-revenue': null
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -65,16 +95,55 @@ async function fetchJson<T>(url: string): Promise<T> {
 	return res.json()
 }
 
+export function buildProtocolMetadataIndex(protocolsRaw: Record<string, IProtocolMetadata>) {
+	const aggregatedProtocols = new Map<string, { flags: ProtocolFlags; chains: Set<string>; displayName?: string }>()
+
+	for (const key in protocolsRaw) {
+		const item = protocolsRaw[key]
+		const slug = item.name
+		if (!slug) continue
+
+		let aggregate = aggregatedProtocols.get(slug)
+		if (!aggregate) {
+			aggregate = { flags: {}, chains: new Set<string>() }
+			aggregatedProtocols.set(slug, aggregate)
+		}
+		if (item.chains) {
+			for (const chain of item.chains) aggregate.chains.add(chain)
+		}
+		if (item.displayName && !aggregate.displayName) aggregate.displayName = item.displayName
+		for (const flag of PROTOCOL_FLAG_KEYS) {
+			if (item[flag]) aggregate.flags[flag] = true
+		}
+	}
+
+	const protocolsBySlug = new Map<string, ProtocolRecord>()
+	for (const [slug, aggregate] of aggregatedProtocols) {
+		const builderMetrics = new Set<BuilderMetric>()
+		for (const metric in PROTOCOL_FLAG_BY_BUILDER_METRIC) {
+			const flagKey = PROTOCOL_FLAG_BY_BUILDER_METRIC[metric as BuilderMetric]
+			if (flagKey && aggregate.flags[flagKey]) builderMetrics.add(metric as BuilderMetric)
+		}
+		const record: ProtocolRecord = {
+			slug,
+			displayName: aggregate.displayName,
+			chains: Array.from(aggregate.chains),
+			builderMetrics,
+			flags: aggregate.flags
+		}
+		protocolsBySlug.set(slug, record)
+		protocolsBySlug.set(slug.toLowerCase(), record)
+	}
+
+	return protocolsBySlug
+}
+
 export function AppMetadataProvider({
 	children,
 	initialData
 }: {
 	children: React.ReactNode
-	initialData?: {
-		protocols: Record<string, any>
-		chains: Record<string, any>
-		pfPs: { pf: string[]; ps: string[] }
-	} | null
+	initialData?: ProDashboardAppMetadata | null
 }) {
 	const streamDone = useContext(StreamDoneContext)
 	const [mountedAt] = useState(Date.now)
@@ -96,8 +165,8 @@ export function AppMetadataProvider({
 			}
 
 			const [protocols, chains, pfPs] = await Promise.all([
-				fetchJson<Record<string, any>>('https://api.llama.fi/config/smol/appMetadata-protocols.json'),
-				fetchJson<Record<string, any>>('https://api.llama.fi/config/smol/appMetadata-chains.json'),
+				fetchJson<Record<string, IProtocolMetadata>>('https://api.llama.fi/config/smol/appMetadata-protocols.json'),
+				fetchJson<Record<string, IChainMetadata>>('https://api.llama.fi/config/smol/appMetadata-chains.json'),
 				fetchPfPs()
 			])
 
@@ -122,62 +191,13 @@ export function AppMetadataProvider({
 	)
 
 	const { protocolsBySlug, chainsByName } = useMemo(() => {
-		const protocolsBySlug = new Map<string, ProtocolRecord>()
+		const protocolsBySlug = protocolsRaw ? buildProtocolMetadataIndex(protocolsRaw) : new Map<string, ProtocolRecord>()
 		const chainsByName = new Map<string, ChainRecord>()
-
-		if (protocolsRaw) {
-			const tmp: Record<string, { flags: any; chains: Set<string>; displayName?: string }> = {}
-
-			for (const key in protocolsRaw) {
-				const item = protocolsRaw[key]
-				if (!item || typeof item !== 'object') continue
-				const slug: string | undefined = item.name
-				if (!slug) continue
-
-				if (!tmp[slug]) {
-					tmp[slug] = { flags: {}, chains: new Set<string>(), displayName: undefined }
-				}
-
-				for (const k in item) {
-					const v = (item as any)[k]
-					if (k === 'chains' && Array.isArray(v)) {
-						for (const c of v) {
-							tmp[slug].chains.add(c)
-						}
-					} else if (k === 'displayName' && v && !tmp[slug].displayName) {
-						tmp[slug].displayName = v
-					} else if (typeof v === 'boolean') {
-						tmp[slug].flags[k] = Boolean(tmp[slug].flags[k]) || v
-					} else if (tmp[slug].flags[k] === undefined) {
-						tmp[slug].flags[k] = v
-					}
-				}
-			}
-
-			for (const slug in tmp) {
-				const agg = tmp[slug]
-				const builderMetrics = new Set<BuilderMetric>()
-				for (const metric in PROTOCOL_FLAG_BY_BUILDER_METRIC) {
-					const flagKey = PROTOCOL_FLAG_BY_BUILDER_METRIC[metric as BuilderMetric]
-					if (agg.flags?.[flagKey]) builderMetrics.add(metric as BuilderMetric)
-				}
-				const record: ProtocolRecord = {
-					slug,
-					displayName: agg.displayName,
-					chains: Array.from(agg.chains),
-					builderMetrics,
-					flags: agg.flags
-				}
-				protocolsBySlug.set(slug, record)
-				protocolsBySlug.set(slug.toLowerCase(), record)
-			}
-		}
 
 		if (chainsRaw) {
 			for (const key in chainsRaw) {
 				const item = chainsRaw[key]
-				if (!item || typeof item !== 'object') continue
-				const name: string | undefined = item.name
+				const name = item.name
 				if (!name) continue
 				const record: ChainRecord = {
 					name,
@@ -234,6 +254,10 @@ export function AppMetadataProvider({
 			if (flags.bridgeAggregators) types.add('bridgeAggregators')
 			if (flags.optionsPremiumVolume) types.add('optionsPremium')
 			if (flags.optionsNotionalVolume) types.add('optionsNotional')
+			if (flags.activeUsers) types.add('activeUsers')
+			if (flags.newUsers) types.add('newUsers')
+			if (flags.txCount) types.add('txs')
+			if (flags.gasUsed) types.add('gasUsed')
 			if (flags.yields) types.add('medianApy')
 			if (flags.borrowed) types.add('borrowed')
 			if (opts?.hasGeckoId) {
@@ -270,14 +294,14 @@ export function AppMetadataProvider({
 			if (flags.perps) types.add('perps')
 			if (flags.bridgeAggregators) types.add('bridgeAggregators')
 			if (flags.perpsAggregators) types.add('perpsAggregators')
-			if (flags.optionsNotionalVolume || flags.optionsPremiumVolume) types.add('options')
-			if (flags.activeUsers) {
+			if (flags.optionsPremiumVolume) types.add('optionsPremium')
+			if (flags.optionsNotionalVolume) types.add('optionsNotional')
+			if (flags.chainActiveUsers) {
 				types.add('activeUsers')
 				types.add('users')
-				types.add('newUsers')
-				types.add('txs')
-				types.add('gasUsed')
 			}
+			if (flags.chainNewUsers) types.add('newUsers')
+			if (flags.txCount) types.add('txs')
 			if (flags.chainAssets) {
 				types.add('bridgedTvl')
 			}

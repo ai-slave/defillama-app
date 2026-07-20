@@ -1,4 +1,5 @@
-import { type Dashboard, dashboardAPI } from '../services/DashboardAPI'
+import type { Dashboard } from '../dashboardTypes'
+import { dashboardAPI } from '../services/DashboardAPI'
 import type { DashboardItemConfig } from '../types'
 import { cleanItemsForSaving } from './dashboardUtils'
 

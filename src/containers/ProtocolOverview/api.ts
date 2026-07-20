@@ -4,7 +4,6 @@ import type {
 	IProtocolChainBreakdownChart,
 	IProtocolChainBreakdownChartRaw,
 	IProtocolExpenses,
-	IProtocolMiniResponse,
 	IProtocolTokenBreakdownChart,
 	IProtocolTokenBreakdownChartRaw,
 	IProtocolValueChart,
@@ -14,7 +13,6 @@ import type {
 } from './api.types'
 
 const PROTOCOL_API_URL = `${SERVER_URL}/updatedProtocol`
-const PROTOCOL_API_MINI_URL = `${SERVER_URL}/_fe/updatedProtocol-mini`
 
 const appendOptionalQueryParams = (
 	url: string,
@@ -423,8 +421,4 @@ export async function fetchProtocolBySlug<TProtocolResponse = unknown>(
 	protocolSlug: string
 ): Promise<TProtocolResponse> {
 	return fetchJson<TProtocolResponse>(`${PROTOCOL_API_URL}/${encodeURIComponent(protocolSlug)}`)
-}
-
-export async function fetchProtocolMiniBySlug(protocolSlug: string): Promise<IProtocolMiniResponse> {
-	return fetchJson<IProtocolMiniResponse>(`${PROTOCOL_API_MINI_URL}/${encodeURIComponent(protocolSlug)}`)
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useEffectEvent, useRef } from 'react'
 import pb from '~/utils/pocketbase'
-import type { CustomTimePeriod, TimePeriod } from '../ProDashboardAPIContext'
+import type { CustomTimePeriod, TimePeriod } from '../dashboardTypes'
 import { buildDashboardSaveRequest } from '../services/DashboardAPI'
 import type { DashboardItemConfig } from '../types'
 

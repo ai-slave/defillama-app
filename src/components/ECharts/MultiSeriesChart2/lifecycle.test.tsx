@@ -160,6 +160,27 @@ describe('MultiSeriesChart2 lifecycle', () => {
 		expect(bar.large).toBe(true)
 	})
 
+	it('connects requested line gaps without changing bar gap behavior', async () => {
+		const charts: MultiSeriesChart2SeriesConfig[] = [
+			{ type: 'line', name: 'Value', encode: { x: 'timestamp', y: 'Value' }, connectNulls: true },
+			{ type: 'bar', name: 'Volume', encode: { x: 'timestamp', y: 'Volume' }, connectNulls: true }
+		]
+		const dataset: MultiSeriesChart2Dataset = {
+			dimensions: ['timestamp', 'Value', 'Volume'],
+			source: [
+				{ timestamp: 1, Value: 10, Volume: 5 },
+				{ timestamp: 2, Value: null, Volume: null },
+				{ timestamp: 3, Value: 20, Volume: 10 }
+			]
+		}
+
+		await act(async () => root.render(<MultiSeriesChart2 dataset={dataset} charts={charts} exportButtons="hidden" />))
+
+		const [line, bar] = mocks.instance.setOption.mock.calls[0][0].series
+		expect(line.connectNulls).toBe(true)
+		expect(bar).not.toHaveProperty('connectNulls')
+	})
+
 	it('uses the selected series unit after a sparse y-axis remaps to the primary display axis', async () => {
 		const charts: MultiSeriesChart2SeriesConfig[] = [
 			{

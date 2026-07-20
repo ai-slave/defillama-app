@@ -20,8 +20,8 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import { useDimensionDatasetData } from '../useDimensionDatasetData'
 import { perpsDatasetColumns } from './columns'
-import { usePerpsData } from './usePerpsData'
 
 const EMPTY_DATA: any[] = []
 
@@ -36,7 +36,7 @@ export function PerpsDataset({ chains }: { chains?: string[] }) {
 		pageSize: 10
 	})
 
-	const { data, isLoading, error, refetch: _refetch } = usePerpsData(chains)
+	const { data, isLoading, error } = useDimensionDatasetData('perps', chains)
 	const width = useBreakpointWidth()
 
 	const instance = useReactTable({

@@ -1,19 +1,41 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ProDashboardServerProps } from '../queries.server'
+import { parseDashboardQueryKey } from '../dashboardQueryKey'
+import type { DashboardStreamChunk } from '../dashboardStreamContract'
+import type { Dashboard } from '../dashboardTypes'
+import type { ProDashboardAppMetadata } from '../dataContracts'
+import type { ProDashboardProtocolCatalog } from '../protocolCatalog'
+import { getProRwaBreakdownQueryKey } from '../rwaBreakdown'
 import type { TableServerData } from '../server/tableQueries'
-import type { Dashboard } from '../services/DashboardAPI'
-
-const PROTOCOLS_LIST_QUERY_KEY = ['protocols-lite']
+import {
+	getProEquitiesFilingsCacheKey,
+	getProEquitiesStatementsCacheKey,
+	getProLegacyTableChainQueryKey,
+	getProRwaChainAssetsTableQueryKey,
+	PRO_EQUITIES_COMPANIES_QUERY_KEY,
+	PRO_RWA_ASSETS_TABLE_QUERY_KEY,
+	PRO_RWA_CHAINS_TABLE_QUERY_KEY,
+	PROTOCOLS_LIST_QUERY_KEY
+} from '../tableQueryKeys'
 
 export interface DashboardStreamState {
 	isStreaming: boolean
 	/** undefined = not received yet, null = received as null, Dashboard = received */
 	dashboard: Dashboard | null | undefined
-	protocolsAndChains: { protocols: any[]; chains: any[] } | null
-	appMetadata: ProDashboardServerProps['appMetadata'] | null
+	protocolsAndChains: ProDashboardProtocolCatalog | null
+	appMetadata: ProDashboardAppMetadata | null
 	isDone: boolean
 	error: string | null
+}
+
+function seedSerializedQueryData(
+	queryClient: ReturnType<typeof useQueryClient>,
+	serializedKey: string,
+	data: unknown,
+	now: number
+) {
+	const queryKey = parseDashboardQueryKey(serializedKey)
+	if (queryKey) queryClient.setQueryData(queryKey, data, { updatedAt: now })
 }
 
 function seedTableDataIntoCache(
@@ -25,28 +47,22 @@ function seedTableDataIntoCache(
 		queryClient.setQueryData(PROTOCOLS_LIST_QUERY_KEY, tableData.protocolsList, { updatedAt: now })
 	}
 	for (const [chain, data] of Object.entries(tableData.volumeByChain)) {
-		queryClient.setQueryData(['pro-dashboard', 'protocols-volume-by-chain', chain], data, { updatedAt: now })
+		queryClient.setQueryData(getProLegacyTableChainQueryKey('volume', chain), data, { updatedAt: now })
 	}
 	for (const [chain, data] of Object.entries(tableData.feesByChain)) {
-		queryClient.setQueryData(['pro-dashboard', 'protocols-fees-revenue-by-chain', chain], data, { updatedAt: now })
+		queryClient.setQueryData(getProLegacyTableChainQueryKey('fees', chain), data, { updatedAt: now })
 	}
 	for (const [chain, data] of Object.entries(tableData.perpsByChain)) {
-		queryClient.setQueryData(['pro-dashboard', 'protocols-perps-volume-by-chain', chain], data, { updatedAt: now })
+		queryClient.setQueryData(getProLegacyTableChainQueryKey('perps', chain), data, { updatedAt: now })
 	}
 	for (const [chain, data] of Object.entries(tableData.openInterestByChain)) {
-		queryClient.setQueryData(['pro-dashboard', 'protocols-open-interest-by-chain', chain], data, { updatedAt: now })
+		queryClient.setQueryData(getProLegacyTableChainQueryKey('open-interest', chain), data, { updatedAt: now })
 	}
 	for (const [keyJson, data] of Object.entries(tableData.datasetsByQueryKey)) {
-		try {
-			const queryKey = JSON.parse(keyJson)
-			queryClient.setQueryData(queryKey, data, { updatedAt: now })
-		} catch {}
+		seedSerializedQueryData(queryClient, keyJson, data, now)
 	}
 	for (const [keyJson, data] of Object.entries(tableData.tokenUsageByQueryKey)) {
-		try {
-			const queryKey = JSON.parse(keyJson)
-			queryClient.setQueryData(queryKey, data, { updatedAt: now })
-		} catch {}
+		seedSerializedQueryData(queryClient, keyJson, data, now)
 	}
 }
 
@@ -73,7 +89,7 @@ export function useDashboardStream(
 			if (!line.trim()) return
 
 			try {
-				const chunk = JSON.parse(line)
+				const chunk = JSON.parse(line) as DashboardStreamChunk
 				const now = Date.now()
 
 				switch (chunk.type) {
@@ -99,9 +115,7 @@ export function useDashboardStream(
 						break
 
 					case 'chartData':
-						if (chunk.queryKey) {
-							queryClient.setQueryData(chunk.queryKey, chunk.data ?? [], { updatedAt: now })
-						}
+						queryClient.setQueryData(chunk.queryKey, chunk.data, { updatedAt: now })
 						break
 
 					case 'tableData':
@@ -125,34 +139,12 @@ export function useDashboardStream(
 						}
 						break
 
-					case 'protocolFullData':
-						if (chunk.data) {
-							queryClient.setQueryData(['protocol-overview-v1', chunk.id, 'metrics'], chunk.data, {
-								updatedAt: now
-							})
-						}
-						break
-
-					case 'metricData':
-						if (chunk.key && chunk.data) {
-							try {
-								queryClient.setQueryData(JSON.parse(chunk.key), chunk.data, { updatedAt: now })
-							} catch {}
-						}
-						break
-
-					case 'advancedTvlBasicData':
-						queryClient.setQueryData(['pro-dashboard', 'advanced-tvl-basic', chunk.id], chunk.data ?? [], {
-							updatedAt: now
-						})
+					case 'protocolTvlChartData':
+						queryClient.setQueryData(chunk.queryKey, chunk.data, { updatedAt: now })
 						break
 
 					case 'unifiedTableData':
-						if (chunk.key && chunk.data) {
-							try {
-								queryClient.setQueryData(JSON.parse(chunk.key), chunk.data, { updatedAt: now })
-							} catch {}
-						}
+						seedSerializedQueryData(queryClient, chunk.key, chunk.data, now)
 						break
 
 					case 'stablecoinsChartData':
@@ -166,7 +158,7 @@ export function useDashboardStream(
 					case 'rwaBreakdownData':
 						if (chunk.data) {
 							queryClient.setQueryData(
-								['pro-dashboard', 'rwa-breakdown-chart', chunk.breakdown, chunk.metric, chunk.chain],
+								getProRwaBreakdownQueryKey(chunk.breakdown, chunk.metric, chunk.chain),
 								chunk.data,
 								{ updatedAt: now }
 							)
@@ -183,7 +175,7 @@ export function useDashboardStream(
 
 					case 'rwaAssetsTableData':
 						if (chunk.data) {
-							queryClient.setQueryData(['pro-dashboard', 'rwa-assets-table'], chunk.data, {
+							queryClient.setQueryData(PRO_RWA_ASSETS_TABLE_QUERY_KEY, chunk.data, {
 								updatedAt: now
 							})
 						}
@@ -191,7 +183,7 @@ export function useDashboardStream(
 
 					case 'rwaChainsTableData':
 						if (chunk.data) {
-							queryClient.setQueryData(['pro-dashboard', 'rwa-chains-table'], chunk.data, {
+							queryClient.setQueryData(PRO_RWA_CHAINS_TABLE_QUERY_KEY, chunk.data, {
 								updatedAt: now
 							})
 						}
@@ -199,7 +191,7 @@ export function useDashboardStream(
 
 					case 'rwaChainAssetsTableData':
 						if (chunk.data && chunk.chain) {
-							queryClient.setQueryData(['pro-dashboard', 'rwa-chain-assets-table', chunk.chain], chunk.data, {
+							queryClient.setQueryData(getProRwaChainAssetsTableQueryKey(chunk.chain), chunk.data, {
 								updatedAt: now
 							})
 						}
@@ -207,7 +199,7 @@ export function useDashboardStream(
 
 					case 'equitiesCompaniesData':
 						if (chunk.data) {
-							queryClient.setQueryData(['pro-dashboard', 'equities-companies-table'], chunk.data, {
+							queryClient.setQueryData(PRO_EQUITIES_COMPANIES_QUERY_KEY, chunk.data, {
 								updatedAt: now
 							})
 						}
@@ -215,7 +207,7 @@ export function useDashboardStream(
 
 					case 'equitiesStatementsData':
 						if (chunk.data && chunk.ticker) {
-							queryClient.setQueryData(['pro-dashboard', 'equities-statements-table', chunk.ticker], chunk.data, {
+							queryClient.setQueryData(getProEquitiesStatementsCacheKey(chunk.ticker), chunk.data, {
 								updatedAt: now
 							})
 						}
@@ -223,18 +215,14 @@ export function useDashboardStream(
 
 					case 'equitiesFilingsData':
 						if (chunk.data && chunk.ticker) {
-							queryClient.setQueryData(['pro-dashboard', 'equities-filings-table', chunk.ticker], chunk.data, {
+							queryClient.setQueryData(getProEquitiesFilingsCacheKey(chunk.ticker), chunk.data, {
 								updatedAt: now
 							})
 						}
 						break
 
 					case 'emissionData':
-						if (chunk.key && chunk.data) {
-							try {
-								queryClient.setQueryData(JSON.parse(chunk.key), chunk.data, { updatedAt: now })
-							} catch {}
-						}
+						seedSerializedQueryData(queryClient, chunk.key, chunk.data, now)
 						break
 
 					case 'dimensionDatasetData':
@@ -245,11 +233,7 @@ export function useDashboardStream(
 					case 'yieldsDatasetData':
 					case 'stablecoinsTableData':
 					case 'stablecoinAssetData':
-						if (chunk.key && chunk.data) {
-							try {
-								queryClient.setQueryData(JSON.parse(chunk.key), chunk.data, { updatedAt: now })
-							} catch {}
-						}
+						seedSerializedQueryData(queryClient, chunk.key, chunk.data, now)
 						break
 
 					case 'done':

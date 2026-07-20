@@ -2,12 +2,13 @@ import { lazy, Suspense, useMemo } from 'react'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { CHART_TYPES, type ChartConfig, type DashboardGrouping } from '../../types'
 import { EXTENDED_COLOR_PALETTE } from '../../utils/colorManager'
+import { buildMultiChartSeriesView, type MultiChartInputSeries } from '../multiChartSeries'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
 
 const CHART_OPTIONS = {
 	xAxis: { show: true },
-	yAxis: { show: true }
+	yAxis: { show: true, min: undefined, max: undefined }
 }
 
 interface CombinedChartPreviewProps {
@@ -40,11 +41,9 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 		return allMatch ? firstGrouping : 'day'
 	}, [composerItems])
 
-	const { series, valueSymbol } = useMemo(() => {
-		const result = []
+	const chartView = useMemo(() => {
+		const series: MultiChartInputSeries[] = []
 		let colorIndex = 0
-		let hasNonMonetaryMetrics = false
-		let allPercentMetrics = true
 
 		for (const item of composerItems) {
 			if (item.data?.length) {
@@ -52,27 +51,15 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 				const displayName = item.protocol
 					? getProtocolInfo(item.protocol)?.name || item.protocol
 					: item.chain ||
-						(item.geckoId && protocols.find((p: any) => p.geckoId === item.geckoId)?.name) ||
+						(item.geckoId && protocols.find((protocol) => protocol.geckoId === item.geckoId)?.name) ||
 						item.geckoId ||
 						''
 
-				const nonMonetaryTypes = ['users', 'activeUsers', 'newUsers', 'txs', 'gasUsed']
-				const percentMetricTypes = ['medianApy']
-				if (nonMonetaryTypes.includes(item.type)) {
-					hasNonMonetaryMetrics = true
-				}
-
-				if (!percentMetricTypes.includes(item.type)) {
-					allPercentMetrics = false
-				}
-
-				const processedData = item.data
-
-				if (processedData.length > 0) {
-					result.push({
+				if (item.data.length > 0) {
+					series.push({
 						name: `${displayName} ${meta?.title || item.type}`,
-						type: (meta?.chartType === 'bar' ? 'bar' : 'line') as 'bar' | 'line',
-						data: processedData,
+						baseType: meta?.chartType as MultiChartInputSeries['baseType'],
+						data: item.data,
 						color: item.color || EXTENDED_COLOR_PALETTE[colorIndex % EXTENDED_COLOR_PALETTE.length],
 						metricType: item.type
 					})
@@ -81,14 +68,17 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 			}
 		}
 
-		const symbol = result.length > 0 && allPercentMetrics ? '%' : hasNonMonetaryMetrics ? '' : '$'
-
-		return { series: result, valueSymbol: symbol }
+		return buildMultiChartSeriesView({
+			series,
+			showCumulative: false,
+			showPercentage: false,
+			stackSeries: false
+		})
 	}, [getProtocolInfo, protocols, composerItems])
 
 	const anyLoading = composerItems.some((item) => item.isLoading)
 
-	if (series.length === 0 && composerItems.length > 0) {
+	if (chartView.charts.length === 0 && composerItems.length > 0) {
 		return (
 			<div className="flex size-full items-center justify-center">
 				<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-4 text-center">
@@ -120,7 +110,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 		)
 	}
 
-	if (series.length === 0) return null
+	if (chartView.charts.length === 0) return null
 
 	return (
 		<div className="size-full">
@@ -129,12 +119,13 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 					<div className="h-[450px] w-full animate-pulse rounded-md border border-pro-cards-border bg-pro-cards-bg"></div>
 				}
 			>
-				<MultiSeriesChart
-					key={`combined-${composerItems.map((i) => i.id).join('-')}-${previewGrouping}`}
-					series={series}
-					valueSymbol={valueSymbol}
+				<MultiSeriesChart2
+					dataset={chartView.dataset}
+					charts={chartView.charts}
 					groupBy={mapGroupingToGroupBy(previewGrouping)}
-					hideDataZoom={true}
+					hideDataZoom
+					hideDefaultLegend={false}
+					exportButtons="hidden"
 					height="450px"
 					chartOptions={CHART_OPTIONS}
 				/>

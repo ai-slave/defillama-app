@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
@@ -10,23 +9,20 @@ import type {
 	MultiSeriesChart2SeriesConfig
 } from '~/components/ECharts/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import {
-	buildProtocolV1ChartConfigs,
-	formatProtocolV1TvlsByChain,
-	useFetchProtocolV1AddlChartsData
-} from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
+import { buildProtocolV1ChartConfigs } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
 import { useSelectedValues } from '~/hooks/useSelectedValues'
 import { toNiceCsvDate } from '~/utils'
 import { download } from '~/utils/download'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPE_LABELS } from '../borrowedChartConstants'
 import { useChartImageExport } from '../hooks/useChartImageExport'
-import { useProDashboardTime } from '../ProDashboardAPIContext'
-import { ProxyAuthTokenContext, StreamDoneContext } from '../queries'
-import { fetchProtocolFullViaProxy } from '../services/fetchViaProxy'
+import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
+import { StreamDoneContext } from '../queries'
+import { shouldSuppressBorrowedTokenBreakdown } from '../services/protocolTvl'
 import type { BorrowedChartConfig } from '../types'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
+import { useBorrowedChartData } from './useBorrowedChartData'
 
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')
@@ -37,7 +33,6 @@ const EMPTY_DATASET: TimestampDataset = {
 	source: [],
 	dimensions: ['timestamp']
 }
-const EMPTY_STACKS: string[] = []
 const EMPTY_CHARTS: MultiSeriesChart2SeriesConfig[] = []
 const HIDDEN_EXPORTS = 'hidden' as const
 const DOLLAR_CHART_OPTIONS = {
@@ -58,72 +53,31 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useChartImageExport()
 	const streamDone = useContext(StreamDoneContext)
-	const authToken = useContext(ProxyAuthTokenContext)
-
-	// Pre-seed protocol full data via proxy so useFetchProtocolV1AddlChartsData uses cached data
-	useQuery({
-		queryKey: ['protocol-overview-v1', protocol, 'metrics'],
-		queryFn: () => (authToken ? fetchProtocolFullViaProxy(protocol, authToken) : null),
-		enabled: streamDone && !!authToken,
+	const { getProtocolInfo } = useProDashboardCatalog()
+	const suppressTokenBreakdown = shouldSuppressBorrowedTokenBreakdown(
+		chartType,
+		getProtocolInfo(protocol)?.misrepresentedTokens
+	)
+	const { data: borrowedData, isLoading } = useBorrowedChartData({
+		protocol,
+		chartType,
+		enabled: streamDone && !suppressTokenBreakdown,
 		staleTime: Infinity
 	})
-
-	const {
-		data: addlData,
-		historicalChainTvls,
-		isLoading
-	} = useFetchProtocolV1AddlChartsData(protocol, true, undefined, streamDone)
-
-	const { dataset: chainsDataset, chainsUnique } = useMemo(() => {
-		if (chartType !== 'chainsBorrowed' || !historicalChainTvls) {
-			return { dataset: EMPTY_DATASET, chainsUnique: EMPTY_STACKS }
-		}
-		return formatProtocolV1TvlsByChain({
-			historicalChainTvls,
-			extraTvlsEnabled: {}
-		})
-	}, [historicalChainTvls, chartType])
-
-	const { tokensUnique, rawTokensUnique, tokenBreakdownUSDDataset, tokenBreakdownPieChart, tokenBreakdownDataset } =
-		addlData ?? {}
-	const resolvedTokensUnique = tokensUnique ?? EMPTY_STACKS
-	const resolvedRawTokensUnique = rawTokensUnique ?? resolvedTokensUnique
-	const resolvedTokenBreakdownUSDDataset = tokenBreakdownUSDDataset ?? EMPTY_DATASET
-	const resolvedTokenBreakdownPieChart = tokenBreakdownPieChart ?? []
-	const resolvedTokenBreakdownDataset = tokenBreakdownDataset ?? EMPTY_DATASET
+	const rawDataset = borrowedData.dataset ?? EMPTY_DATASET
+	const seriesNames = borrowedData.seriesNames
+	const pieChart = borrowedData.pieChart
 	const visibleCharts = useMemo(() => {
-		const seriesNames =
-			chartType === 'chainsBorrowed'
-				? chainsUnique
-				: chartType === 'tokenBorrowedRaw'
-					? resolvedRawTokensUnique
-					: resolvedTokensUnique
 		if (chartType === 'tokensBorrowedPie') return EMPTY_CHARTS
 		return buildProtocolV1ChartConfigs({ seriesNames, type: 'line', hideAreaStyle: true })
-	}, [chartType, chainsUnique, resolvedRawTokensUnique, resolvedTokensUnique])
+	}, [chartType, seriesNames])
 
-	const selectorValues =
-		chartType === 'chainsBorrowed'
-			? chainsUnique
-			: chartType === 'tokenBorrowedRaw'
-				? resolvedRawTokensUnique
-				: resolvedTokensUnique
+	const selectorValues = seriesNames
 	const [selectedSeries, setSelectedSeries] = useSelectedValues(selectorValues)
 	const selectedCharts = useMemo(() => new Set(selectedSeries), [selectedSeries])
 	const selectorLabel = chartType === 'chainsBorrowed' ? 'Chain' : 'Token'
 
-	const rawVisibleDataset = useMemo(() => {
-		switch (chartType) {
-			case 'chainsBorrowed':
-				return chainsDataset
-			case 'tokenBorrowedUsd':
-				return resolvedTokenBreakdownUSDDataset
-			case 'tokenBorrowedRaw':
-				return resolvedTokenBreakdownDataset
-			default:
-				return EMPTY_DATASET
-		}
-	}, [chartType, chainsDataset, resolvedTokenBreakdownUSDDataset, resolvedTokenBreakdownDataset])
+	const rawVisibleDataset = chartType === 'tokensBorrowedPie' ? EMPTY_DATASET : rawDataset
 	const filteredDataset = useMemo(
 		() => filterChartDatasetByTimePeriod(rawVisibleDataset, timePeriod, customTimePeriod),
 		[rawVisibleDataset, timePeriod, customTimePeriod]
@@ -145,29 +99,29 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		let rows: (string | number)[][] = []
 		let filename = ''
 		const protocolSlug = protocol.toLowerCase().replace(/\s+/g, '-')
-		const buildRows = (dataset: MultiSeriesChart2Dataset, seriesNames: string[]) => [
-			['Date', ...seriesNames],
+		const buildRows = (dataset: MultiSeriesChart2Dataset, columnNames: string[]) => [
+			['Date', ...columnNames],
 			...dataset.source.map((row) => [
 				toNiceCsvDate((row.timestamp as number) / 1000),
-				...seriesNames.map((name) => row[name] ?? '')
+				...columnNames.map((name) => row[name] ?? '')
 			])
 		]
 
 		switch (chartType) {
 			case 'chainsBorrowed':
-				rows = buildRows(filteredDataset, chainsUnique)
+				rows = buildRows(filteredDataset, seriesNames)
 				filename = `${protocolSlug}-borrowed-by-chain`
 				break
 			case 'tokenBorrowedUsd':
-				rows = buildRows(filteredDataset, resolvedTokensUnique)
+				rows = buildRows(filteredDataset, seriesNames)
 				filename = `${protocolSlug}-borrowed-by-token-usd`
 				break
 			case 'tokensBorrowedPie':
-				rows = [['Token', 'Value'], ...resolvedTokenBreakdownPieChart.map((row) => [row.name, row.value])]
+				rows = [['Token', 'Value'], ...pieChart.map((row) => [row.name, row.value])]
 				filename = `${protocolSlug}-borrowed-tokens-breakdown`
 				break
 			case 'tokenBorrowedRaw':
-				rows = buildRows(filteredDataset, resolvedRawTokensUnique)
+				rows = buildRows(filteredDataset, seriesNames)
 				filename = `${protocolSlug}-borrowed-by-token-raw`
 				break
 		}
@@ -220,7 +174,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 			case 'tokensBorrowedPie':
 				return (
 					<PieChart
-						chartData={resolvedTokenBreakdownPieChart}
+						chartData={pieChart}
 						exportButtons={{
 							png: true,
 							csv: false,
@@ -248,8 +202,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		}
 	})()
 
-	const hasChartData =
-		chartType === 'tokensBorrowedPie' ? resolvedTokenBreakdownPieChart.length > 0 : filteredDataset.source.length > 0
+	const hasChartData = chartType === 'tokensBorrowedPie' ? pieChart.length > 0 : filteredDataset.source.length > 0
 
 	return (
 		<div className="flex h-full flex-col p-2">

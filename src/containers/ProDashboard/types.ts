@@ -14,11 +14,12 @@ const dashboardBlue = '#326abd'
 export type DashboardGrouping = 'day' | 'week' | 'month' | 'quarter' | 'year'
 
 export interface Chain {
-	gecko_id: string
+	gecko_id: string | null
 	tvl: number
-	tokenSymbol: string
+	tokenSymbol: string | null
 	name: string
-	chainId?: string
+	chainId: number | string | null
+	cmcId: string | null
 }
 
 export type StoredColSpan = 0.5 | 1 | 1.5 | 2
@@ -131,7 +132,7 @@ export interface ChartBuilderConfig {
 		displayAs: 'timeSeries' | 'percentage'
 		hideOthers?: boolean
 		groupByParent?: boolean
-		additionalFilters?: Record<string, any>
+		additionalFilters?: Record<string, unknown>
 		seriesColors?: Record<string, string>
 	}
 	grouping?: DashboardGrouping
@@ -569,12 +570,14 @@ export interface UnifiedTableConfig {
 export interface Protocol {
 	id: string
 	name: string
+	symbol?: string
 	logo?: string
 	slug: string
 	tvl: number
 	geckoId?: string | null
 	parentProtocol?: string | null
 	category?: string
+	misrepresentedTokens?: boolean
 }
 
 export const CHART_TYPES = {
@@ -583,7 +586,7 @@ export const CHART_TYPES = {
 	fees: { id: 'fees', title: 'Fees', chartType: 'bar', color: '#cc803e', groupable: true },
 	users: { id: 'users', title: 'Users', chartType: 'bar', color: '#8942cd', groupable: true },
 	txs: { id: 'txs', title: 'Transactions', chartType: 'bar', color: '#cc533e', groupable: true },
-	options: { id: 'options', title: 'Options', chartType: 'bar', color: '#cc3e87', groupable: true },
+	options: { id: 'options', title: 'Options Premium Volume', chartType: 'bar', color: '#cc3e87', groupable: true },
 	revenue: { id: 'revenue', title: 'Revenue', chartType: 'bar', color: '#cb8e3a', groupable: true },
 	incentives: { id: 'incentives', title: 'Incentives', chartType: 'bar', color: '#2a9d77', groupable: true },
 	unlocks: { id: 'unlocks', title: 'Unlocks', chartType: 'line', color: '#3e6dcc' },
@@ -660,6 +663,13 @@ export const CHART_TYPES = {
 	psRatio: { id: 'psRatio', title: 'P/S Ratio (30d Run Rate)', chartType: 'line', color: '#2e9aad' }
 }
 
+export type ProDashboardChartType = keyof typeof CHART_TYPES
+
+/** Saved dashboards are unvalidated JSON, so narrow chart types at the lookup boundary. */
+export function isProDashboardChartType(type: string): type is ProDashboardChartType {
+	return Object.hasOwn(CHART_TYPES, type)
+}
+
 // Helper functions to extract chart types from CHART_TYPES
 export const getProtocolChartTypes = (): string[] => {
 	return [
@@ -680,6 +690,10 @@ export const getProtocolChartTypes = (): string[] => {
 		'bridgeAggregators',
 		'optionsPremium',
 		'optionsNotional',
+		'activeUsers',
+		'newUsers',
+		'txs',
+		'gasUsed',
 		'tokenMcap',
 		'tokenPrice',
 		'tokenVolume',
@@ -701,7 +715,8 @@ export const getChainChartTypes = (): string[] => {
 		'perps',
 		'bridgeAggregators',
 		'perpsAggregators',
-		'options',
+		'optionsPremium',
+		'optionsNotional',
 		'revenue',
 		'bribes',
 		'tokenTax',
@@ -751,10 +766,3 @@ export interface DexItem extends BaseDatasetItem {
 
 // oxlint-disable-next-line typescript/no-empty-object-type
 export interface AggregatorItem extends BaseDatasetItem {}
-
-// oxlint-disable-next-line no-unused-vars
-const isMulti = (x: DashboardItemConfig): x is MultiChartConfig => x.kind === 'multi'
-// oxlint-disable-next-line no-unused-vars
-const isText = (x: DashboardItemConfig): x is TextConfig => x.kind === 'text'
-// oxlint-disable-next-line no-unused-vars
-const isMetric = (x: DashboardItemConfig): x is MetricConfig => x.kind === 'metric'

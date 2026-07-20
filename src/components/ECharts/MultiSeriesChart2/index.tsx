@@ -179,6 +179,7 @@ function buildSeries({
 			itemStyle: { color: resolvedColor },
 			...(chart.type === 'bar' && chart.barMinWidth != null ? { barMinWidth: chart.barMinWidth } : {}),
 			...(chart.type === 'bar' && chart.barMaxWidth != null ? { barMaxWidth: chart.barMaxWidth } : {}),
+			...(chart.type === 'line' && chart.connectNulls != null ? { connectNulls: chart.connectNulls } : {}),
 			...(chart.yAxisIndex != null ? { yAxisIndex: chart.yAxisIndex } : {})
 		}
 

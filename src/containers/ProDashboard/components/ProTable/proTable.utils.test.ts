@@ -114,4 +114,35 @@ describe('formatProtocolsList fee ratios', () => {
 			pf: null
 		})
 	})
+
+	it('groups known siblings without dropping solo or unknown-parent protocols', () => {
+		const protocol = (name: string, parentProtocol: string, tvl: number) => ({
+			name,
+			parentProtocol,
+			tvl,
+			tvlPrevDay: tvl,
+			tvlPrevWeek: tvl,
+			tvlPrevMonth: tvl,
+			mcap: 0,
+			chainTvls: {},
+			chains: []
+		})
+		const result = formatProtocolsList({
+			protocols: [
+				protocol('Child A', 'parent#grouped', 20),
+				protocol('Child B', 'parent#grouped', 30),
+				protocol('Solo Child', 'parent#solo', 10),
+				protocol('Unknown Child', 'parent#unknown', 5)
+			] as any,
+			parentProtocols: [
+				{ id: 'parent#grouped', name: 'Grouped Parent', chains: [] },
+				{ id: 'parent#solo', name: 'Solo Parent', chains: [] }
+			] as any,
+			extraTvlsEnabled: {}
+		})
+
+		expect(result.map((row) => row.name)).toEqual(['Grouped Parent', 'Solo Child', 'Unknown Child'])
+		const groupedParent = result[0] as { subRows?: Array<{ name: string }> }
+		expect(groupedParent.subRows?.map((row) => row.name)).toEqual(['Child A', 'Child B'])
+	})
 })

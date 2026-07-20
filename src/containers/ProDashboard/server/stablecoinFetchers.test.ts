@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { StablecoinChartResponse, StablecoinsListResponse } from '~/containers/Stablecoins/api.types'
-import { buildStablecoinsChartCacheValue } from './stablecoinFetchers'
+import { buildStablecoinsChartCacheValue, buildStablecoinsTableData } from './stablecoinFetchers'
 
 const peggedData: StablecoinsListResponse = {
 	peggedAssets: [
@@ -51,5 +51,23 @@ describe('buildStablecoinsChartCacheValue', () => {
 
 	it('does not exclude assets when the response omits double-count metadata', () => {
 		expect(build({ ...chartData, doublecountedIds: undefined }).doublecountedIds).toEqual([])
+	})
+
+	it('constructs table rows from a shared baseline without changing values', () => {
+		const rows = buildStablecoinsTableData({
+			baseline: { peggedData, priceData: [], rateData: [] },
+			chainData: chartData,
+			chain: 'All'
+		})
+
+		expect(rows).toHaveLength(1)
+		expect(rows[0]).toMatchObject({
+			name: 'Stable One',
+			symbol: 'ONE',
+			mcap: 10,
+			price: 1,
+			chains: ['Ethereum'],
+			pegType: 'peggedUSD'
+		})
 	})
 })

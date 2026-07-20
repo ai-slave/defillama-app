@@ -19,6 +19,7 @@ export enum ADAPTER_TYPES {
 export enum ADAPTER_DATA_TYPES {
 	DAILY_FEES = 'dailyFees',
 	DAILY_REVENUE = 'dailyRevenue',
+	DAILY_PROTOCOL_REVENUE = 'dailyProtocolRevenue',
 	DAILY_HOLDERS_REVENUE = 'dailyHoldersRevenue',
 	DAILY_SUPPLY_SIDE_REVENUE = 'dailySupplySideRevenue',
 	DAILY_BRIBES_REVENUE = 'dailyBribesRevenue',
@@ -44,6 +45,7 @@ export enum ADAPTER_DATA_TYPES {
 export const ADAPTER_DATA_TYPE_KEYS = {
 	dailyFees: 'df',
 	dailyRevenue: 'dr',
+	dailyProtocolRevenue: 'dpr',
 	dailyHoldersRevenue: 'dhr',
 	dailySupplySideRevenue: 'dssr',
 	dailyBribesRevenue: 'dbr',
@@ -81,6 +83,7 @@ const CHAIN_METADATA_KEYS: Record<string, ChainMetadataKey> = {
 	// unambiguous data types
 	[ADAPTER_DATA_TYPES.DAILY_FEES]: 'fees',
 	[ADAPTER_DATA_TYPES.DAILY_REVENUE]: 'revenue',
+	[ADAPTER_DATA_TYPES.DAILY_PROTOCOL_REVENUE]: 'revenue',
 	[ADAPTER_DATA_TYPES.DAILY_PREMIUM_VOLUME]: 'optionsPremiumVolume',
 	[ADAPTER_DATA_TYPES.OPEN_INTEREST_AT_END]: 'openInterest',
 	[ADAPTER_DATA_TYPES.DAILY_BRIDGE_VOLUME]: 'bridgeAggregators',

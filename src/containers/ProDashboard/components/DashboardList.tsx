@@ -1,5 +1,5 @@
 import { Icon } from '~/ui/Icon'
-import type { Dashboard } from '../services/DashboardAPI'
+import type { Dashboard } from '../dashboardTypes'
 import { DashboardCard } from './DashboardCard'
 import { LoadingSpinner } from './LoadingSpinner'
 

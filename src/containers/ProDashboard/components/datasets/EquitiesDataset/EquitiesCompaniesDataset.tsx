@@ -19,6 +19,7 @@ import { useTableSearch } from '~/components/Table/utils'
 import type { IEquitiesCompanyApiItem } from '~/containers/Equities/api.types'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchEquitiesCompaniesViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { PRO_EQUITIES_COMPANIES_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { formattedNum } from '~/utils'
 import { downloadCSV } from '~/utils/download'
@@ -166,7 +167,7 @@ function useEquitiesCompaniesTableData() {
 	const streamDone = useContext(StreamDoneContext)
 
 	return useQuery({
-		queryKey: ['pro-dashboard', 'equities-companies-table'],
+		queryKey: PRO_EQUITIES_COMPANIES_QUERY_KEY,
 		queryFn: () => fetchEquitiesCompaniesViaProxy(authToken!),
 		enabled: streamDone && Boolean(authToken),
 		staleTime: STALE_TIME,

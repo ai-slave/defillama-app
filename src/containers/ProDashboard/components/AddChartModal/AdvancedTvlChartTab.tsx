@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useContext, useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import {
 	buildTimeSeriesDataset,
 	materializeZeroFilledDataset,
@@ -7,22 +7,22 @@ import {
 } from '~/components/ECharts/timeSeriesDataset'
 import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import {
-	formatProtocolV1TvlsByChain,
-	useFetchProtocolV1AddlChartsData
-} from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useSelectedValues } from '~/hooks/useSelectedValues'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
-import { ProxyAuthTokenContext } from '../../queries'
-import { fetchAdvancedTvlBasicViaProxy, fetchProtocolFullViaProxy } from '../../services/fetchViaProxy'
-import ProtocolCharts from '../../services/ProtocolCharts'
+import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
+import {
+	fetchProtocolTvlValueForDashboard,
+	getProtocolTvlValueQueryKey,
+	shouldSuppressAdvancedTvlTokenBreakdown
+} from '../../services/protocolTvl'
 import type { AdvancedTvlChartType } from '../../types'
 import { buildAdvancedTvlPresentation } from '../advancedTvlPresentation'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
+import { useAdvancedTvlChartData } from '../useAdvancedTvlChartData'
 
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')
@@ -40,7 +40,7 @@ interface AdvancedTvlChartTabProps {
 	protocolsLoading: boolean
 }
 
-const ADVANCED_TVL_CHART_TYPES = [
+const ADVANCED_TVL_CHART_TYPES: Array<{ value: AdvancedTvlChartType; label: string }> = [
 	{ value: 'tvl', label: 'TVL' },
 	{ value: 'chainsTvl', label: 'TVL by Chains' },
 	{ value: 'tokenValuesUsd', label: 'Token Values (USD)' },
@@ -66,7 +66,6 @@ const EMPTY_DATASET: TimestampDataset = {
 	dimensions: ['timestamp']
 }
 const EMPTY_STACKS: string[] = []
-const EMPTY_PIE_DATA: Array<{ name: string; value: number }> = []
 
 export function AdvancedTvlChartTab({
 	selectedAdvancedTvlProtocol,
@@ -79,152 +78,79 @@ export function AdvancedTvlChartTab({
 	protocolsLoading
 }: AdvancedTvlChartTabProps) {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl_fees')
-	const authToken = useContext(ProxyAuthTokenContext)
-	const filteredProtocolOptions = protocolOptions
+	const { getProtocolInfo } = useProDashboardCatalog()
+	const chartType = selectedAdvancedTvlChartType as AdvancedTvlChartType
+	const protocolMisrepresentsTokens =
+		selectedAdvancedTvlProtocol != null && getProtocolInfo(selectedAdvancedTvlProtocol)?.misrepresentedTokens === true
+	const suppressTokenBreakdowns = shouldSuppressAdvancedTvlTokenBreakdown(chartType, protocolMisrepresentsTokens)
 
 	const { data: basicTvlDataset, isLoading: isBasicTvlLoading } = useQuery({
-		queryKey: ['pro-dashboard', 'advanced-tvl-preview-basic', selectedAdvancedTvlProtocol],
-		queryFn: () =>
-			authToken
-				? fetchAdvancedTvlBasicViaProxy(selectedAdvancedTvlProtocol!, authToken)
-				: ProtocolCharts.tvl(selectedAdvancedTvlProtocol!),
+		queryKey: getProtocolTvlValueQueryKey(selectedAdvancedTvlProtocol ?? ''),
+		queryFn: () => fetchProtocolTvlValueForDashboard(selectedAdvancedTvlProtocol!),
 		enabled: !!selectedAdvancedTvlProtocol && selectedAdvancedTvlChartType === 'tvl',
 		staleTime: 60 * 60 * 1000,
-		select: (data) => buildTimeSeriesDataset(data, 'TVL', 1000)
+		select: (data) => buildTimeSeriesDataset(data ?? [], 'TVL', 1)
 	})
-
-	// Pre-seed protocol full data via proxy for useFetchProtocolV1AddlChartsData
-	useQuery({
-		queryKey: ['protocol-overview-v1', selectedAdvancedTvlProtocol, 'metrics'],
-		queryFn: () =>
-			authToken && selectedAdvancedTvlProtocol
-				? fetchProtocolFullViaProxy(selectedAdvancedTvlProtocol, authToken)
-				: null,
-		enabled: !!selectedAdvancedTvlProtocol && !!authToken,
-		staleTime: Infinity
+	const { data: advancedData, isLoading: isAdvancedLoading } = useAdvancedTvlChartData({
+		protocol: selectedAdvancedTvlProtocol ?? '',
+		protocolName: selectedAdvancedTvlProtocolName ?? '',
+		chartType,
+		extraTvlsEnabled,
+		enabled: !!selectedAdvancedTvlProtocol && chartType !== 'tvl' && !suppressTokenBreakdowns
 	})
-
-	const {
-		data: addlData,
-		historicalChainTvls,
-		isLoading: isAddlLoading
-	} = useFetchProtocolV1AddlChartsData(selectedAdvancedTvlProtocol || '')
-
-	const { dataset: chainsDataset, chainsUnique } = useMemo(() => {
-		if (!historicalChainTvls) return { dataset: EMPTY_DATASET, chainsUnique: EMPTY_STACKS }
-		return formatProtocolV1TvlsByChain({
-			historicalChainTvls,
-			extraTvlsEnabled
-		})
-	}, [historicalChainTvls, extraTvlsEnabled])
-
-	const {
-		tokensUnique,
-		rawTokensUnique,
-		tokenBreakdownUSDDataset,
-		tokenBreakdownPieChart,
-		tokenBreakdownDataset,
-		usdInflowsDataset,
-		tokenInflowsDataset
-	} = addlData ?? {}
-	const resolvedTokensUnique = tokensUnique ?? EMPTY_STACKS
-	const resolvedRawTokensUnique = rawTokensUnique ?? resolvedTokensUnique
-	const resolvedTokenBreakdownUSDDataset = tokenBreakdownUSDDataset ?? EMPTY_DATASET
-	const resolvedTokenBreakdownPieChart = tokenBreakdownPieChart ?? EMPTY_PIE_DATA
-	const resolvedTokenBreakdownDataset = tokenBreakdownDataset ?? EMPTY_DATASET
-	const resolvedUsdInflowsDataset = usdInflowsDataset ?? EMPTY_DATASET
-	const resolvedTokenInflowsDataset = tokenInflowsDataset ?? EMPTY_DATASET
+	const advancedDataset = advancedData.dataset ?? EMPTY_DATASET
+	const advancedSeriesNames = advancedData.seriesNames
 	const resolvedBasicTvlDataset = basicTvlDataset ?? EMPTY_DATASET
 
-	const chartType = selectedAdvancedTvlChartType as AdvancedTvlChartType
-	const presentationTokenNames = chartType === 'tokenBalances' ? resolvedRawTokensUnique : resolvedTokensUnique
 	const presentation = useMemo(
 		() =>
 			buildAdvancedTvlPresentation({
 				chartType,
-				chainsDataset,
-				chainNames: chainsUnique,
-				tokenNames: presentationTokenNames
+				chainsDataset: chartType === 'chainsTvl' ? advancedDataset : EMPTY_DATASET,
+				chainNames: chartType === 'chainsTvl' ? advancedSeriesNames : EMPTY_STACKS,
+				tokenNames: chartType === 'chainsTvl' ? EMPTY_STACKS : advancedSeriesNames
 			}),
-		[chartType, chainsDataset, chainsUnique, presentationTokenNames]
+		[chartType, advancedDataset, advancedSeriesNames]
 	)
 	const [selectedTokenInflows, setSelectedTokenInflows] = useSelectedValues(
-		resolvedTokensUnique,
+		advancedSeriesNames,
 		`${selectedAdvancedTvlProtocol}:${selectedAdvancedTvlChartType}`
 	)
 	const selectedTokenInflowsSet = useMemo(() => new Set(selectedTokenInflows), [selectedTokenInflows])
 	const visibleDataset = useMemo(() => {
 		switch (chartType) {
 			case 'chainsTvl':
-				return materializeZeroFilledDataset(chainsDataset, presentation.orderedChainNames)
+				return materializeZeroFilledDataset(advancedDataset, presentation.orderedChainNames)
 			case 'tokenValuesUsd':
-				return materializeZeroFilledDataset(resolvedTokenBreakdownUSDDataset, resolvedTokensUnique)
+				return materializeZeroFilledDataset(advancedDataset, advancedSeriesNames)
 			case 'tokenBalances':
-				return materializeZeroFilledDataset(resolvedTokenBreakdownDataset, resolvedRawTokensUnique)
+				return materializeZeroFilledDataset(advancedDataset, advancedSeriesNames)
 			case 'usdInflows':
-				return materializeZeroFilledDataset(resolvedUsdInflowsDataset, ['USD Inflows'])
+				return materializeZeroFilledDataset(advancedDataset, ['USD Inflows'])
 			case 'tokenInflows':
-				return materializeZeroFilledDataset(resolvedTokenInflowsDataset, selectedTokenInflows)
+				return materializeZeroFilledDataset(advancedDataset, selectedTokenInflows)
 			default:
 				return resolvedBasicTvlDataset
 		}
 	}, [
 		chartType,
-		chainsDataset,
+		advancedDataset,
+		advancedSeriesNames,
 		presentation.orderedChainNames,
-		resolvedTokenBreakdownUSDDataset,
-		resolvedTokenBreakdownDataset,
-		resolvedRawTokensUnique,
-		resolvedTokensUnique,
-		resolvedUsdInflowsDataset,
-		resolvedTokenInflowsDataset,
 		selectedTokenInflows,
 		resolvedBasicTvlDataset
 	])
 
-	const availableChartTypes = useMemo(() => {
-		const available = new Set<string>(['tvl'])
+	const chartTypeOptions = useMemo(
+		() =>
+			ADVANCED_TVL_CHART_TYPES.map((option) => ({
+				...option,
+				disabled: shouldSuppressAdvancedTvlTokenBreakdown(option.value, protocolMisrepresentsTokens)
+			})),
+		[protocolMisrepresentsTokens]
+	)
 
-		if (chainsDataset.source.length > 0 && chainsUnique.length > 1) {
-			available.add('chainsTvl')
-		}
-		if (resolvedTokenBreakdownUSDDataset.source.length > 1 && resolvedTokensUnique.length > 0) {
-			available.add('tokenValuesUsd')
-		}
-		if (resolvedTokenBreakdownPieChart.length > 0) {
-			available.add('tokensPie')
-		}
-		if (resolvedTokenBreakdownDataset.source.length > 1 && resolvedRawTokensUnique.length > 0) {
-			available.add('tokenBalances')
-		}
-		if (resolvedUsdInflowsDataset.source.length > 0) {
-			available.add('usdInflows')
-		}
-		if (resolvedTokenInflowsDataset.source.length > 0 && resolvedTokensUnique.length > 0) {
-			available.add('tokenInflows')
-		}
-
-		return available
-	}, [
-		chainsDataset,
-		chainsUnique,
-		resolvedTokenBreakdownUSDDataset,
-		resolvedTokenBreakdownPieChart,
-		resolvedTokenBreakdownDataset,
-		resolvedRawTokensUnique,
-		resolvedTokensUnique,
-		resolvedUsdInflowsDataset,
-		resolvedTokenInflowsDataset
-	])
-
-	const chartTypeOptions = useMemo(() => {
-		return ADVANCED_TVL_CHART_TYPES.map((type) => ({
-			...type,
-			disabled: !availableChartTypes.has(type.value)
-		}))
-	}, [availableChartTypes])
-
-	const isLoading = selectedAdvancedTvlChartType === 'tvl' ? isBasicTvlLoading : isAddlLoading
+	const isLoading = selectedAdvancedTvlChartType === 'tvl' ? isBasicTvlLoading : isAdvancedLoading
 
 	const handleProtocolChange = (option: VirtualizedSelectOption) => {
 		onSelectedAdvancedTvlProtocolChange(option.value)
@@ -243,6 +169,15 @@ export function AdvancedTvlChartTab({
 			)
 		}
 
+		const hasData = chartType === 'tokensPie' ? advancedData.pieChart.length > 0 : visibleDataset.source.length > 0
+		if (!hasData) {
+			return (
+				<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
+					No data available for this chart type.
+				</div>
+			)
+		}
+
 		return (
 			<Suspense
 				fallback={
@@ -252,7 +187,7 @@ export function AdvancedTvlChartTab({
 				}
 			>
 				{chartType === 'tokensPie' ? (
-					<PieChart chartData={resolvedTokenBreakdownPieChart} stackColors={presentation.stackColors} />
+					<PieChart chartData={advancedData.pieChart} stackColors={presentation.stackColors} />
 				) : (
 					<MultiSeriesChart2
 						title=""
@@ -280,7 +215,7 @@ export function AdvancedTvlChartTab({
 			<div className="space-y-3">
 				<AriakitVirtualizedSelect
 					label="Protocol"
-					options={filteredProtocolOptions}
+					options={protocolOptions}
 					selectedValue={selectedAdvancedTvlProtocol || ''}
 					onChange={handleProtocolChange}
 					placeholder="Select protocol..."
@@ -299,16 +234,8 @@ export function AdvancedTvlChartTab({
 					</div>
 				</Tooltip>
 
-				{hasProtocolSelection && isAddlLoading ? (
-					<p className="text-xs text-pro-text-tertiary">Loading available chart types...</p>
-				) : null}
-
-				{hasProtocolSelection && !isAddlLoading ? (
-					<div className="text-xs text-pro-text-tertiary">
-						<p>
-							Available charts: <span className="font-semibold text-pro-text-primary">{availableChartTypes.size}</span>
-						</p>
-					</div>
+				{hasProtocolSelection && isLoading ? (
+					<p className="text-xs text-pro-text-tertiary">Loading selected chart...</p>
 				) : null}
 			</div>
 
@@ -326,9 +253,9 @@ export function AdvancedTvlChartTab({
 								</h3>
 								<p className="text-xs text-pro-text-secondary">Advanced TVL Chart</p>
 							</div>
-							{selectedAdvancedTvlChartType === 'tokenInflows' && resolvedTokensUnique.length > 1 ? (
+							{selectedAdvancedTvlChartType === 'tokenInflows' && advancedSeriesNames.length > 1 ? (
 								<SelectWithCombobox
-									allValues={resolvedTokensUnique}
+									allValues={advancedSeriesNames}
 									selectedValues={selectedTokenInflows}
 									setSelectedValues={setSelectedTokenInflows}
 									label="Token"

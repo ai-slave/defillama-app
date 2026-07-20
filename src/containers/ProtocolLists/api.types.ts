@@ -18,16 +18,17 @@ export interface ProtocolLite {
 	referralUrl?: string | null
 	chains: string[]
 	chainTvls: Record<string, ProtocolLiteTvlEntry>
-	tvl: number
+	tvl: number | null
 	tvlPrevDay: number | null
 	tvlPrevWeek: number | null
 	tvlPrevMonth: number | null
 	mcap: number | null
 	defillamaId: string
-	geckoId?: string
+	geckoId?: string | null
 	parentProtocol?: string
 	listedAt?: number
 	deprecated?: boolean
+	misrepresentedTokens?: boolean
 	forkedFrom?: string[]
 	oracles?: string[]
 	oraclesByChain?: Record<string, string[]>
@@ -37,9 +38,10 @@ export interface ProtocolLite {
 export interface ParentProtocolLite {
 	id: string
 	name: string
+	symbol?: string
 	chains: string[]
-	gecko_id?: string
-	mcap?: number
+	gecko_id?: string | null
+	mcap?: number | null
 	referralUrl?: string | null
 	logo?: string
 }

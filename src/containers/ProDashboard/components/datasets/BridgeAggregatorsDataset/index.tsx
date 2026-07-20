@@ -19,8 +19,8 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import { useDimensionDatasetData } from '../useDimensionDatasetData'
 import { bridgeAggregatorsDatasetColumns } from './columns'
-import { useBridgeAggregatorsData } from './useBridgeAggregatorsData'
 
 const EMPTY_DATA: any[] = []
 
@@ -34,7 +34,7 @@ export function BridgeAggregatorsDataset({ chains }: { chains?: string[] }) {
 		pageIndex: 0,
 		pageSize: 10
 	})
-	const { data, isLoading, error } = useBridgeAggregatorsData(chains)
+	const { data, isLoading, error } = useDimensionDatasetData('bridge-aggregators', chains)
 
 	const instance = useReactTable({
 		data: data ?? EMPTY_DATA,

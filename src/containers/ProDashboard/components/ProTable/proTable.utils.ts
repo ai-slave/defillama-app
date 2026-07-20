@@ -1,3 +1,4 @@
+import type { DimensionDatasetProtocol } from '~/containers/AdapterMetrics/server/datasets'
 import type {
 	ChainMetricSnapshot,
 	IFormattedProtocol,
@@ -328,36 +329,32 @@ const groupProtocols = (
 	parentProtocols: Readonly<IParentProtocol[]>,
 	noSubrows?: boolean
 ) => {
-	let data = [...protocols]
-
-	for (const item of parentProtocols) {
-		const list = protocols.filter((p) => p.parentProtocol === item.id)
-
-		if (list.length >= 2) {
-			// groupProtocols always de-duplicates by removing child rows from top-level data;
-			// noSubrows only controls whether groupData includes those children as subRows on the parent.
-			data = data.filter((p) => p.parentProtocol !== item.id)
-
-			data.push(groupData(list, item, noSubrows))
-		}
+	const childrenByParent = new Map<string, IFormattedProtocol[]>()
+	for (const protocol of protocols) {
+		if (!protocol.parentProtocol) continue
+		const siblings = childrenByParent.get(protocol.parentProtocol)
+		if (siblings) siblings.push(protocol)
+		else childrenByParent.set(protocol.parentProtocol, [protocol])
 	}
+
+	const groupedParentIds = new Set<string>()
+	const groupedParents: IFormattedProtocol[] = []
+	for (const parent of parentProtocols) {
+		const children = childrenByParent.get(parent.id)
+		if (!children || children.length < 2) continue
+		groupedParentIds.add(parent.id)
+		groupedParents.push(groupData(children, parent, noSubrows))
+	}
+
+	const data = protocols.filter(
+		(protocol) => !protocol.parentProtocol || !groupedParentIds.has(protocol.parentProtocol)
+	)
+	data.push(...groupedParents)
 
 	return data.sort((a, b) => (b.tvl ?? 0) - (a.tvl ?? 0))
 }
 
-type DimensionDatasetItem = {
-	name?: string
-	displayName?: string
-	total24h?: number
-	total7d?: number
-	total30d?: number
-	total1y?: number
-	change_1d?: number
-	change_7d?: number
-	change_1m?: number
-	chains?: string[]
-	chainBreakdown?: Record<string, unknown>
-}
+type DimensionDatasetItem = DimensionDatasetProtocol
 
 export const formatProtocolsList = ({
 	protocols,

@@ -19,8 +19,8 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import { useDimensionDatasetData } from '../useDimensionDatasetData'
 import { feesDatasetColumns } from './columns'
-import { useFeesData } from './useFeesData'
 
 const EMPTY_DATA: any[] = []
 
@@ -35,7 +35,7 @@ export function FeesDataset({ chains }: { chains?: string[] }) {
 	})
 	const width = useBreakpointWidth()
 
-	const { data, isLoading, error } = useFeesData(chains)
+	const { data, isLoading, error } = useDimensionDatasetData('fees', chains)
 
 	const instance = useReactTable({
 		data: data ?? EMPTY_DATA,

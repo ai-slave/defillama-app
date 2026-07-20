@@ -1,8 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { useContext, useMemo } from 'react'
+import { useContext, useRef } from 'react'
 import { preparePieChartData } from '~/components/ECharts/utils'
+import { useIdleChartComputation } from '~/containers/ProDashboard/hooks/useIdleChartComputation'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
-import { buildStablecoinsChartCacheValue } from '~/containers/ProDashboard/server/stablecoinFetchers'
+import {
+	buildStablecoinsChartCacheValue,
+	type StablecoinsChartCacheValue
+} from '~/containers/ProDashboard/server/stablecoinFetchers'
 import {
 	fetchStablecoinsListViaProxy,
 	fetchStablecoinsViaProxy
@@ -14,12 +18,14 @@ import {
 	fetchStablecoinRatesApi
 } from '~/containers/Stablecoins/api'
 import {
-	buildStablecoinBreakdownPayloadPresentation,
-	buildStablecoinOverviewPayload,
-	getTopStablecoinFromLatestPoints,
+	buildStablecoinOverviewChartData,
+	buildStablecoinOverviewPayloadFromChartData,
+	getTopStablecoinFromCollectedValues,
+	STABLECOIN_BREAKDOWN_SERIES_LIMIT,
 	type StablecoinChartSeriesPayload,
 	type StablecoinOverviewChartType
 } from '~/containers/Stablecoins/chartSeries'
+import type { IBuildStablecoinChartDataParams, IBuildStablecoinChartDataResult } from '~/containers/Stablecoins/utils'
 import type { StablecoinChartType } from '../../../types'
 
 interface UseStablecoinsChartDataResult {
@@ -37,6 +43,113 @@ const EMPTY_CHART_PAYLOAD: StablecoinChartSeriesPayload = {
 	dataset: { source: [], dimensions: ['timestamp'] },
 	charts: []
 }
+const EMPTY_STABLECOIN_PRESENTATION = {
+	chartPayload: EMPTY_CHART_PAYLOAD,
+	chainsCirculatingValues: [] as Array<{ name: string; value: number }>,
+	seriesNames: [] as string[],
+	availableSeries: [] as string[],
+	defaultSeries: [] as string[],
+	totalMcapCurrent: null as number | null
+}
+
+export function buildProStablecoinOverviewPayload(
+	params: IBuildStablecoinChartDataParams,
+	chart: StablecoinOverviewChartType,
+	topToken: { symbol: string; mcap: number },
+	chartData: IBuildStablecoinChartDataResult,
+	selectedNames: string[] | null
+): StablecoinChartSeriesPayload {
+	return buildStablecoinOverviewPayloadFromChartData(params, chart, topToken, chartData, {
+		selectedNames,
+		seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
+	})
+}
+
+export function buildProStablecoinChartPresentation({
+	rawData,
+	chain,
+	chartType,
+	selectedNames
+}: {
+	rawData: StablecoinsChartCacheValue
+	chain: string
+	chartType: StablecoinChartType
+	selectedNames: string[] | null
+}) {
+	let chartPayload = EMPTY_CHART_PAYLOAD
+	if (chartType !== 'pie') {
+		const filteredIndexes = Object.values(rawData.peggedNameToChartDataIndex) as number[]
+		const params = {
+			chartDataByAssetOrChain: rawData.chartDataByPeggedAsset,
+			assetsOrChainsList: rawData.peggedAssetNames,
+			filteredIndexes,
+			issuanceType: 'mcap',
+			selectedChain: chain,
+			doublecountedIds: rawData.doublecountedIds
+		}
+		const overviewChartType = chartType as StablecoinOverviewChartType
+		const chartData = buildStablecoinOverviewChartData(params, overviewChartType)
+		chartPayload = buildProStablecoinOverviewPayload(
+			params,
+			overviewChartType,
+			getTopStablecoinFromCollectedValues(chartData),
+			chartData,
+			selectedNames
+		)
+
+		if (chartType === 'usdInflows') {
+			// Keep the Pro label stable while reusing the public active-only builder.
+			chartPayload = {
+				...chartPayload,
+				dataset: {
+					dimensions: ['timestamp', 'USD Inflows'],
+					source: chartPayload.dataset.source.map((row) => ({
+						timestamp: row.timestamp,
+						'USD Inflows': row.Inflows
+					}))
+				},
+				charts: chartPayload.charts.map((chart) => ({
+					...chart,
+					name: 'USD Inflows',
+					encode: { x: 'timestamp', y: 'USD Inflows' }
+				}))
+			}
+		}
+	}
+
+	const chainsCirculatingValues =
+		chartType === 'pie'
+			? preparePieChartData({
+					data: rawData.filteredPeggedAssets,
+					sliceIdentifier: 'symbol',
+					sliceValue: 'mcap',
+					limit: 10
+				})
+			: []
+
+	let totalMcapCurrent: number | null = null
+	if (chartPayload.summary?.totalMcapCurrent != null) {
+		totalMcapCurrent = chartPayload.summary.totalMcapCurrent
+	} else {
+		const lastEntry = chartPayload.dataset.source.at(-1)
+		if (lastEntry?.Mcap != null) {
+			totalMcapCurrent = lastEntry.Mcap as number
+		} else if (chartType === 'pie') {
+			let total = 0
+			for (const slice of chainsCirculatingValues) total += slice.value
+			totalMcapCurrent = chainsCirculatingValues.length > 0 ? total : null
+		}
+	}
+
+	return {
+		chartPayload,
+		chainsCirculatingValues,
+		seriesNames: rawData.peggedAssetNames,
+		availableSeries: chartPayload.availableSeries ?? [],
+		defaultSeries: chartPayload.defaultSeries ?? [],
+		totalMcapCurrent
+	}
+}
 
 export function useStablecoinsChartData(
 	chain: string,
@@ -49,7 +162,8 @@ export function useStablecoinsChartData(
 	const {
 		data: rawData,
 		isLoading,
-		error
+		error,
+		dataUpdatedAt
 	} = useQuery({
 		queryKey: ['pro-dashboard', 'stablecoins-chart-data', chain],
 		enabled: enabled && streamDone,
@@ -77,76 +191,31 @@ export function useStablecoinsChartData(
 		refetchInterval: 5 * 60 * 1000
 	})
 
-	const canonicalChartPayload = useMemo<StablecoinChartSeriesPayload>(() => {
-		if (!enabled || !rawData || chartType === 'pie') return EMPTY_CHART_PAYLOAD
+	const computeSignature = [chain, chartType, dataUpdatedAt, JSON.stringify(selectedNames)].join('::')
+	const latestInputRef = useRef({ rawData, chain, chartType, selectedNames })
+	latestInputRef.current = { rawData, chain, chartType, selectedNames }
+	const { value: presentation, isComputing } = useIdleChartComputation({
+		enabled: enabled && rawData != null && !isLoading,
+		signature: computeSignature,
+		compute: () => {
+			const input = latestInputRef.current
+			return input.rawData
+				? buildProStablecoinChartPresentation({
+						rawData: input.rawData,
+						chain: input.chain,
+						chartType: input.chartType,
+						selectedNames: input.selectedNames
+					})
+				: EMPTY_STABLECOIN_PRESENTATION
+		},
+		emptyValue: EMPTY_STABLECOIN_PRESENTATION
+	})
 
-		const filteredIndexes = Object.values(rawData.peggedNameToChartDataIndex) as number[]
-		const params = {
-			chartDataByAssetOrChain: rawData.chartDataByPeggedAsset,
-			assetsOrChainsList: rawData.peggedAssetNames,
-			filteredIndexes,
-			issuanceType: 'mcap',
-			selectedChain: chain,
-			doublecountedIds: rawData.doublecountedIds
-		}
-		const topToken = getTopStablecoinFromLatestPoints(params)
-		return buildStablecoinOverviewPayload(params, chartType as StablecoinOverviewChartType, topToken)
-	}, [enabled, rawData, chain, chartType])
-
-	const chartPayload = useMemo<StablecoinChartSeriesPayload>(() => {
-		const payload =
-			chartType === 'tokenMcaps' || chartType === 'dominance' || chartType === 'tokenInflows'
-				? buildStablecoinBreakdownPayloadPresentation({ payload: canonicalChartPayload, selectedNames })
-				: canonicalChartPayload
-		if (chartType !== 'usdInflows') return payload
-
-		// Keep the Pro label stable while reusing the public active-only builder.
-		return {
-			...payload,
-			dataset: {
-				dimensions: ['timestamp', 'USD Inflows'],
-				source: payload.dataset.source.map((row) => ({
-					timestamp: row.timestamp,
-					'USD Inflows': row.Inflows
-				}))
-			},
-			charts: payload.charts.map((chart) => ({
-				...chart,
-				name: 'USD Inflows',
-				encode: { x: 'timestamp', y: 'USD Inflows' }
-			}))
-		}
-	}, [canonicalChartPayload, chartType, selectedNames])
-
-	const chainsCirculatingValues = useMemo(() => {
-		if (!enabled || chartType !== 'pie') return []
-		const assets = rawData?.filteredPeggedAssets ?? []
-		return preparePieChartData({ data: assets, sliceIdentifier: 'symbol', sliceValue: 'mcap', limit: 10 })
-	}, [enabled, chartType, rawData?.filteredPeggedAssets])
-
-	const totalMcapCurrent: number | null = useMemo(() => {
-		if (chartPayload.summary?.totalMcapCurrent != null) return chartPayload.summary.totalMcapCurrent
-		const lastEntry = chartPayload.dataset.source.at(-1)
-		if (lastEntry?.Mcap != null) return lastEntry.Mcap as number
-		if (chartType !== 'pie') return null
-		let total = 0
-		for (const slice of chainsCirculatingValues) total += slice.value
-		return chainsCirculatingValues.length > 0 ? total : null
-	}, [chartPayload, chartType, chainsCirculatingValues])
-
-	return useMemo(
-		() => ({
-			chartPayload,
-			chainsCirculatingValues,
-			seriesNames: enabled ? rawData?.peggedAssetNames || [] : [],
-			availableSeries: chartPayload.availableSeries ?? [],
-			defaultSeries: chartPayload.defaultSeries ?? [],
-			totalMcapCurrent,
-			isLoading: enabled && (isLoading || (!streamDone && !rawData)),
-			error
-		}),
-		[chartPayload, chainsCirculatingValues, totalMcapCurrent, isLoading, streamDone, rawData, error, enabled]
-	)
+	return {
+		...presentation,
+		isLoading: enabled && (isLoading || (!streamDone && !rawData) || isComputing),
+		error
+	}
 }
 
 export interface StablecoinChainInfo {

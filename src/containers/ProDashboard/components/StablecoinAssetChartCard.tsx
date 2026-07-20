@@ -132,7 +132,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				filename = `${assetSlug}-chain-dominance`
 				break
 			case 'chainPie':
-				rows = [['Chain', 'Circulating'], ...chainsCirculatingValues.map((el: any) => [el.name, el.value])]
+				rows = [['Chain', 'Circulating'], ...chainsCirculatingValues.map((slice) => [slice.name, slice.value])]
 				filename = `${assetSlug}-chain-pie`
 				break
 		}

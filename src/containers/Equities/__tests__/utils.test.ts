@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { buildEquityTickerCountrySlug, parseEquityTickerCountryParam, parseEquityTickerCountrySlug } from '../utils'
+import {
+	buildEquityTickerCountrySlug,
+	parseEquityTickerCountryParam,
+	parseEquityTickerCountrySlug
+} from '../tickerCountry'
 
 describe('equities slug helpers', () => {
 	it('builds ticker-country slugs from provided values', () => {

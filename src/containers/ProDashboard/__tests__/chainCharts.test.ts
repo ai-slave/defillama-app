@@ -1,11 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { fetchChainAssetsChartMock } = vi.hoisted(() => ({
-	fetchChainAssetsChartMock: vi.fn()
+const {
+	fetchAdapterChainChartDataMock,
+	fetchAdapterProtocolChartDataMock,
+	fetchChainAssetsChartMock,
+	fetchStablecoinChartApiMock
+} = vi.hoisted(() => ({
+	fetchAdapterChainChartDataMock: vi.fn(),
+	fetchAdapterProtocolChartDataMock: vi.fn(),
+	fetchChainAssetsChartMock: vi.fn(),
+	fetchStablecoinChartApiMock: vi.fn()
+}))
+
+vi.mock('~/containers/AdapterMetrics/api', () => ({
+	fetchAdapterChainChartData: fetchAdapterChainChartDataMock,
+	fetchAdapterProtocolChartData: fetchAdapterProtocolChartDataMock
 }))
 
 vi.mock('~/containers/BridgedTVL/api', () => ({
 	fetchChainAssetsChart: fetchChainAssetsChartMock
+}))
+
+vi.mock('~/containers/Stablecoins/api', () => ({
+	fetchStablecoinChartApi: fetchStablecoinChartApiMock
 }))
 
 import ChainCharts from '../services/ChainCharts'
@@ -13,6 +30,8 @@ import ChainCharts from '../services/ChainCharts'
 describe('ChainCharts Bridged TVL', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		fetchAdapterChainChartDataMock.mockResolvedValue([])
+		fetchAdapterProtocolChartDataMock.mockResolvedValue([])
 		fetchChainAssetsChartMock.mockResolvedValue([{ timestamp: 1_700_000_000, data: { total: '42' } }])
 	})
 
@@ -81,5 +100,88 @@ describe('ChainCharts Bridged TVL', () => {
 
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(1)
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('unknown-chain')
+	})
+})
+
+describe('ChainCharts adapter metrics', () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+		fetchAdapterChainChartDataMock.mockResolvedValue([[1_700_000_000, 42]])
+		fetchAdapterProtocolChartDataMock.mockResolvedValue([[1_700_000_000, 7]])
+	})
+
+	it('uses the focused chain adapter chart for options premium volume', async () => {
+		await expect(ChainCharts.options('Ethereum')).resolves.toEqual([[1_700_000_000, 42]])
+
+		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
+			adapterType: 'options',
+			chain: 'Ethereum',
+			dataType: 'dailyPremiumVolume'
+		})
+	})
+
+	it('uses the focused chain adapter chart for options notional volume', async () => {
+		await expect(ChainCharts.getData('optionsNotional', 'Ethereum')).resolves.toEqual([[1_700_000_000, 42]])
+
+		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
+			adapterType: 'options',
+			chain: 'Ethereum',
+			dataType: 'dailyNotionalVolume'
+		})
+	})
+
+	it('uses chain pseudo-protocol activity instead of retired userData endpoints', async () => {
+		await expect(ChainCharts.users('Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
+		await expect(ChainCharts.activeUsers('Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
+		await expect(ChainCharts.newUsers('Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
+		await expect(ChainCharts.txs('Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
+
+		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(1, {
+			adapterType: 'active-users',
+			protocol: 'Ethereum',
+			dataType: undefined
+		})
+		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(2, {
+			adapterType: 'active-users',
+			protocol: 'Ethereum',
+			dataType: undefined
+		})
+		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(3, {
+			adapterType: 'new-users',
+			protocol: 'Ethereum',
+			dataType: undefined
+		})
+		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(4, {
+			adapterType: 'active-users',
+			protocol: 'Ethereum',
+			dataType: 'dailyTransactionsCount'
+		})
+	})
+})
+
+describe('ChainCharts stablecoins', () => {
+	it('shares one raw chain response between concurrent supply and inflow charts', async () => {
+		fetchStablecoinChartApiMock.mockResolvedValue({
+			aggregated: [
+				{ date: '1', totalCirculatingUSD: { peggedUSD: 10 } },
+				{ date: '2', totalCirculatingUSD: { peggedUSD: 15 } }
+			]
+		})
+
+		await expect(
+			Promise.all([
+				ChainCharts.getData('stablecoins', 'Ethereum'),
+				ChainCharts.getData('stablecoinInflows', 'Ethereum')
+			])
+		).resolves.toEqual([
+			[
+				[1, 10],
+				[2, 15]
+			],
+			[[2, 5]]
+		])
+
+		expect(fetchStablecoinChartApiMock).toHaveBeenCalledTimes(1)
+		expect(fetchStablecoinChartApiMock).toHaveBeenCalledWith('Ethereum')
 	})
 })

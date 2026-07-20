@@ -98,7 +98,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		let filename = `stablecoins-${chainSlug}-${chartType}`
 
 		if (chartType === 'pie') {
-			rows = [['Token', 'Market Cap'], ...chainsCirculatingValues.map((slice: any) => [slice.name, slice.value])]
+			rows = [['Token', 'Market Cap'], ...chainsCirculatingValues.map((slice) => [slice.name, slice.value])]
 			filename = `stablecoins-${chainSlug}-pie`
 		} else {
 			const dimensions = dataset.dimensions.slice(1)

@@ -1,15 +1,8 @@
 import type { SetStateAction } from 'react'
-import type { Dashboard } from './services/DashboardAPI'
+import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
 import type { DashboardItemConfig } from './types'
 
-export type TimePeriod = '30d' | '90d' | '365d' | 'ytd' | '3y' | 'all' | 'custom'
-
-export interface CustomTimePeriod {
-	type: 'relative' | 'absolute'
-	relativeDays?: number
-	startDate?: number
-	endDate?: number
-}
+export type { CustomTimePeriod, TimePeriod } from './dashboardTypes'
 
 export interface DashboardState {
 	items: DashboardItemConfig[]

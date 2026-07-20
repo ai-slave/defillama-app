@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
-import type { CustomTimePeriod, TimePeriod } from '../ProDashboardAPIContext'
+import type { CustomTimePeriod, TimePeriod } from '../dashboardTypes'
 import {
 	borrowApyDimensions,
 	netBorrowApyDimensions,

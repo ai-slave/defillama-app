@@ -12,6 +12,7 @@ import { useDeferredValue, useMemo, useState } from 'react'
 import { components } from 'react-select'
 import { ReactSelect } from '~/components/MultiSelect/ReactSelect'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { normalizeProTokenSymbols } from '~/containers/ProDashboard/tableQueryKeys'
 import { formattedNum } from '~/utils'
 import { download } from '~/utils/download'
 import { reactSelectStyles } from '../../../utils/reactSelectStyles'
@@ -86,7 +87,10 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 	const [tokenSearchInput, setTokenSearchInput] = useState('')
 	const includeCex = config.includeCex ?? false
 
-	const tokenSymbols = config.tokenSymbols ?? EMPTY_TOKEN_SYMBOLS
+	const tokenSymbols = useMemo(
+		() => normalizeProTokenSymbols(config.tokenSymbols ?? EMPTY_TOKEN_SYMBOLS),
+		[config.tokenSymbols]
+	)
 
 	const tokenSymbolSelectValue = useMemo(
 		() => tokenSymbols.map((symbol) => ({ label: symbol.toUpperCase(), value: symbol })),

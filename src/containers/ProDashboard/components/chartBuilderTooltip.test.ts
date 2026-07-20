@@ -6,9 +6,27 @@ describe('Pro chart builder tooltip', () => {
 		const formatter = createChartBuilderTooltipFormatter({ displayAs: 'timeSeries' })
 		const timestamp = 1767225600000
 		const output = formatter([
-			{ seriesName: 'Small', marker: 'S', value: [timestamp, 20] },
-			{ seriesName: 'Others', marker: 'O', value: [timestamp, 10] },
-			{ seriesName: 'Large', marker: 'L', value: [timestamp, 70] }
+			{
+				seriesName: 'Small',
+				marker: 'S',
+				data: { timestamp, 'series-0': 20 },
+				encode: { y: [1] },
+				dimensionNames: ['timestamp', 'series-0']
+			},
+			{
+				seriesName: 'Others (8 protocols)',
+				marker: 'O',
+				data: { timestamp, 'series-1': 10 },
+				encode: { y: [2] },
+				dimensionNames: ['timestamp', 'series-0', 'series-1']
+			},
+			{
+				seriesName: 'Large',
+				marker: 'L',
+				data: { timestamp, 'series-2': 70 },
+				encode: { y: [3] },
+				dimensionNames: ['timestamp', 'series-0', 'series-1', 'series-2']
+			}
 		])
 
 		expect(output.indexOf('Total')).toBeLessThan(output.indexOf('Large'))

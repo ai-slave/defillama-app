@@ -13,16 +13,15 @@ import {
 	useProDashboardEditorActions,
 	useProDashboardPermissions
 } from '../ProDashboardAPIContext'
-import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { CHART_TYPES, limitMultiChartItems, type DashboardGrouping, type MultiChartConfig } from '../types'
 import { generateChartColor } from '../utils'
 import { COLOR_PALETTE_2, EXTENDED_COLOR_PALETTE } from '../utils/colorManager'
 import { buildProTreemapData } from '../utils/treemap'
 import { ConfirmationModal } from './ConfirmationModal'
-import { alignAscendingSeriesData, buildMultiChartSeriesView } from './multiChartSeries'
+import { buildMultiChartCsvRows, buildMultiChartSeriesView } from './multiChartSeries'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
 const TreeMapBuilderChart = lazy(() => import('~/components/ECharts/TreeMapBuilderChart'))
 
 const CUMULATIVE_DISPLAY_OPTIONS = [
@@ -60,7 +59,6 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		handleDuplicateMultiChart
 	} = useProDashboardEditorActions()
 	const { isReadOnly, hideDuplicateButton } = useProDashboardPermissions()
-	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useChartImageExport()
 	const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false)
 	const showStacked = multi.showStacked !== false
@@ -68,16 +66,6 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 	const showPercentage = multi.showPercentage || false
 	const showTreemap = multi.showTreemap || false
 	const limitedItems = useMemo(() => limitMultiChartItems(multi.items), [multi.items])
-
-	const timeKey = useMemo(() => {
-		if (timePeriod === 'custom' && customTimePeriod) {
-			if (customTimePeriod.type === 'relative') {
-				return `custom-relative-${customTimePeriod.relativeDays ?? ''}`
-			}
-			return `custom-absolute-${customTimePeriod.startDate ?? ''}-${customTimePeriod.endDate ?? ''}`
-		}
-		return timePeriod || 'all'
-	}, [timePeriod, customTimePeriod])
 
 	const validItems = useMemo(
 		() =>
@@ -100,55 +88,62 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 	const loadingItems = useMemo(() => limitedItems.filter((cfg) => cfg.isLoading), [limitedItems])
 
 	const colorContext = useMemo(() => {
-		const uniqueChains = new Set(validItems.filter((item) => !item.protocol).map((item) => item.chain))
-		const uniqueProtocols = new Set(validItems.filter((item) => item.protocol).map((item) => item.protocol))
-		const isSingleChain = uniqueChains.size === 1 && validItems.every((item) => !item.protocol)
-		const isSingleProtocol = uniqueProtocols.size === 1 && validItems.every((item) => item.protocol)
-
-		const color_uniqueItemIdsPerProtocol = new Map<string, string[]>()
-		const color_uniqueItemIdsPerChain = new Map<string, string[]>()
-		const color_uniqueItemIds = new Set<string>()
+		const uniqueChains = new Set<string | undefined>()
+		const uniqueProtocols = new Set<string>()
+		const itemIdsByProtocol = new Map<string, string[]>()
+		const itemIdsByChain = new Map<string, string[]>()
+		let onlyChains = true
+		let onlyProtocols = true
 
 		for (const item of validItems) {
 			if (item.protocol) {
-				color_uniqueItemIdsPerProtocol.set(item.protocol, [
-					...(color_uniqueItemIdsPerProtocol.get(item.protocol) || []),
-					item.id
-				])
+				onlyChains = false
+				uniqueProtocols.add(item.protocol)
+				const ids = itemIdsByProtocol.get(item.protocol)
+				if (ids) ids.push(item.id)
+				else itemIdsByProtocol.set(item.protocol, [item.id])
+			} else {
+				onlyProtocols = false
+				uniqueChains.add(item.chain)
 			}
 			if (item.chain) {
-				color_uniqueItemIdsPerChain.set(item.chain, [...(color_uniqueItemIdsPerChain.get(item.chain) || []), item.id])
+				const ids = itemIdsByChain.get(item.chain)
+				if (ids) ids.push(item.id)
+				else itemIdsByChain.set(item.chain, [item.id])
 			}
 		}
+		const isSingleChain = onlyChains && uniqueChains.size === 1
+		const isSingleProtocol = onlyProtocols && uniqueProtocols.size === 1
+		const colorItemIds = new Set<string>()
 
-		for (const [item, ids] of color_uniqueItemIdsPerProtocol) {
+		for (const [item, ids] of itemIdsByProtocol) {
 			if (ids.length > 1) {
-				for (const id of ids) {
-					color_uniqueItemIds.add(id)
-				}
+				for (const id of ids) colorItemIds.add(id)
 			} else {
-				color_uniqueItemIds.add(item)
+				colorItemIds.add(item)
 			}
 		}
 
-		for (const [item, ids] of color_uniqueItemIdsPerChain) {
+		for (const [item, ids] of itemIdsByChain) {
 			if (ids.length > 1) {
-				for (const id of ids) {
-					color_uniqueItemIds.add(id)
-				}
+				for (const id of ids) colorItemIds.add(id)
 			} else {
-				color_uniqueItemIds.add(item)
+				colorItemIds.add(item)
 			}
 		}
 
-		const color_sortedItemIds = Array.from(color_uniqueItemIds).sort()
+		const colorIndexByItemId = new Map<string, number>()
+		const sortedItemIds = Array.from(colorItemIds).sort()
+		for (let index = 0; index < sortedItemIds.length; index++) {
+			colorIndexByItemId.set(sortedItemIds[index], index)
+		}
 
-		return { isSingleChain, isSingleProtocol, color_sortedItemIds }
+		return { isSingleChain, isSingleProtocol, colorIndexByItemId }
 	}, [validItems])
 
 	const baseSeries = useMemo(() => {
-		const { isSingleChain, isSingleProtocol, color_sortedItemIds } = colorContext
-		const color_indexesTaken = new Set<number>()
+		const { isSingleChain, isSingleProtocol, colorIndexByItemId } = colorContext
+		const colorIndexesTaken = new Set<number>()
 
 		const getColorItemId = (item: (typeof validItems)[0]) => {
 			if (isSingleProtocol) return `${item.chain}_${item.type}`
@@ -161,7 +156,10 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 			const meta = CHART_TYPES[cfg.type]
 			const name = cfg.protocol
 				? getProtocolInfo(cfg.protocol)?.name || cfg.protocol
-				: cfg.chain || (cfg.geckoId && protocols.find((p: any) => p.geckoId === cfg.geckoId)?.name) || cfg.geckoId || ''
+				: cfg.chain ||
+					(cfg.geckoId && protocols.find((protocol) => protocol.geckoId === cfg.geckoId)?.name) ||
+					cfg.geckoId ||
+					''
 
 			const itemIdentifier = cfg.protocol || cfg.chain || 'unknown'
 			const colorItemId = getColorItemId(cfg)
@@ -172,14 +170,14 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 					? EXTENDED_COLOR_PALETTE[index % EXTENDED_COLOR_PALETTE.length]
 					: generateChartColor(colorItemId, meta?.color || '#8884d8'))
 
-			let color_indexOfItemId = color_sortedItemIds.indexOf(itemIdentifier)
-			if (color_indexesTaken.has(color_indexOfItemId)) {
-				color_indexOfItemId = color_sortedItemIds.findIndex((id) => cfg.id === id)
+			let colorIndex = colorIndexByItemId.get(itemIdentifier) ?? -1
+			if (colorIndexesTaken.has(colorIndex)) {
+				colorIndex = colorIndexByItemId.get(cfg.id) ?? -1
 			}
 
-			if (!cfg.color && color_indexOfItemId !== -1) {
-				color = COLOR_PALETTE_2[color_indexOfItemId % COLOR_PALETTE_2.length]
-				color_indexesTaken.add(color_indexOfItemId)
+			if (!cfg.color && colorIndex !== -1) {
+				color = COLOR_PALETTE_2[colorIndex % COLOR_PALETTE_2.length]
+				colorIndexesTaken.add(colorIndex)
 			}
 
 			return {
@@ -214,139 +212,37 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		return buildProTreemapData(baseSeries, 'latest', (_name, color) => color ?? '#8884d8')
 	}, [baseSeries, showTreemap])
 
-	const series = useMemo(() => {
+	const chartView = useMemo(() => {
 		const { allBarType, allAreaType } = chartTypeInfo
-
-		const processedSeries = baseSeries.map((serie) => buildMultiChartSeriesView(serie, showCumulative))
 		const hasCumulativeFlow = showCumulative && baseSeries.some((serie) => serie.baseType === 'bar')
-
-		if ((allBarType || allAreaType) && showStacked && !hasCumulativeFlow && !showPercentage) {
-			const allTimestamps = new Set<number>()
-			for (const serie of processedSeries) {
-				for (const [timestamp] of serie.data) {
-					allTimestamps.add(timestamp)
-				}
-			}
-
-			const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b)
-
-			return processedSeries.map((serie) => {
-				return {
-					...serie,
-					data: alignAscendingSeriesData(serie.data, sortedTimestamps),
-					stack: 'total',
-					...(allAreaType && { areaStyle: { opacity: 0.7 } })
-				}
-			})
-		}
-
-		if (!showPercentage) {
-			return processedSeries.map((serie) => {
-				const { stack: _stack, ...rest } = serie as any
-				return rest
-			})
-		}
-
-		const allTimestamps = new Set<number>()
-		const totals = new Map<number, number>()
-		for (const serie of processedSeries) {
-			for (const [timestamp, value] of serie.data) {
-				allTimestamps.add(timestamp)
-				totals.set(timestamp, (totals.get(timestamp) ?? 0) + value)
-			}
-		}
-
-		const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b)
-
-		const percentageColors = [
-			'#cc3e3e',
-			'#4ccdc4',
-			'#4ab6cf',
-			'#59b188',
-			'#ccaa3e',
-			'#be4bbe',
-			'#4ebca0',
-			'#ccaf3e',
-			'#9855b4',
-			'#3e93cc',
-			'#cc953e',
-			'#3ecc7b',
-			'#cc4c3e',
-			'#778592',
-			'#a56abe'
-		]
-
-		const seriesWithAverages = processedSeries.map((serie) => {
-			const alignedData = alignAscendingSeriesData(serie.data, sortedTimestamps)
-			const percentageData = new Array<[number, number]>(alignedData.length)
-			let percentageTotal = 0
-			for (let i = 0; i < alignedData.length; i++) {
-				const [timestamp, value] = alignedData[i]
-				const total = totals.get(timestamp) || 0
-				const percentage = total > 0 ? (value / total) * 100 : 0
-				percentageData[i] = [timestamp, percentage]
-				percentageTotal += percentage
-			}
-
-			const avgPercentage = percentageTotal / percentageData.length
-
-			return {
-				...serie,
-				data: percentageData,
-				type: 'line' as const,
-				stack: 'total',
-				avgPercentage
-			}
-		})
-
-		const sortedSeries = seriesWithAverages.sort((a, b) => a.avgPercentage - b.avgPercentage)
-
-		return sortedSeries.map((serie, index) => {
-			const color = serie.color || percentageColors[index % percentageColors.length]
-			return {
-				...serie,
-				color: color,
-				areaStyle: { color: color, opacity: 0.7 }
-			}
+		return buildMultiChartSeriesView({
+			series: baseSeries,
+			showCumulative,
+			showPercentage,
+			stackSeries: (allBarType || allAreaType) && showStacked && !hasCumulativeFlow && !showPercentage
 		})
 	}, [baseSeries, chartTypeInfo, showPercentage, showStacked, showCumulative])
 
 	const handleCsvExport = useCallback(() => {
-		if (!series || series.length === 0) return
-
-		const timestampSet = new Set<number>()
-		for (const s of series) {
-			for (const [timestamp] of s.data) {
-				timestampSet.add(timestamp)
-			}
-		}
-		const timestamps = Array.from(timestampSet).sort((a, b) => a - b)
-
-		const headers = ['Date', ...series.map((s) => s.name)]
-
-		const rows = timestamps.map((timestamp) => {
-			const _d = new Date(timestamp * 1000)
-			const row = [_d.toISOString().slice(0, 10)]
-			for (const s of series) {
-				const dataPoint = s.data.find(([t]) => t === timestamp)
-				row.push(dataPoint ? dataPoint[1].toString() : '0')
-			}
-			return row
-		})
-
-		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
+		if (chartView.charts.length === 0) return
+		const csvContent = buildMultiChartCsvRows(chartView)
+			.map((row) => row.join(','))
+			.join('\n')
 		const fileName = `${multi.name || 'multi_chart'}_${new Date().toISOString().split('T')[0]}.csv`
 		download(fileName, csvContent)
-	}, [series, multi.name])
+	}, [chartView, multi.name])
 
 	const hasAnyData = validItems.length > 0
 	const isAllLoading = loadingItems.length === limitedItems.length
 
 	const uniqueMetricTypes = new Set(validItems.map((item) => item.type))
 	const allPercentMetrics =
-		series.length > 0 && series.every((s: any) => getMetricUnitGroup(s.metricType) === 'percent')
-	const allCountMetrics = series.length > 0 && series.every((s: any) => getMetricUnitGroup(s.metricType) === 'count')
-	const allRatioMetrics = series.length > 0 && series.every((s: any) => getMetricUnitGroup(s.metricType) === 'ratio')
+		baseSeries.length > 0 && baseSeries.every((series) => getMetricUnitGroup(series.metricType) === 'percent')
+	const allCountMetrics =
+		baseSeries.length > 0 && baseSeries.every((series) => getMetricUnitGroup(series.metricType) === 'count')
+	const allRatioMetrics =
+		baseSeries.length > 0 && baseSeries.every((series) => getMetricUnitGroup(series.metricType) === 'ratio')
+	const hasMultipleUnitGroups = new Set(baseSeries.map((series) => getMetricUnitGroup(series.metricType))).size > 1
 	const hasMultipleMetrics = uniqueMetricTypes.size > 1
 
 	const allChartsGroupable = limitedItems.every((item) => {
@@ -370,8 +266,15 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 
 	const canStack = allChartsAreBarType || allChartsAreAreaType
 
-	const seriesCount = series.length
+	const seriesCount = chartView.charts.length
 	const chartOptions = useMemo(() => {
+		const grid = chartGrid({ top: seriesCount > 5 ? 80 : CHART_LEGEND_RESERVE })
+		const legend = {
+			top: CHART_INSET,
+			type: 'scroll',
+			pageButtonPosition: 'end',
+			height: seriesCount > 5 ? 80 : 40
+		}
 		if (showPercentage) {
 			return {
 				yAxis: {
@@ -381,18 +284,11 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 						formatter: '{value}%'
 					}
 				},
-				tooltip: {
-					valueFormatter: (value: number) => value.toFixed(2) + '%'
-				},
 				grid: chartGrid({ top: 80 }),
-				legend: {
-					top: CHART_INSET,
-					type: 'scroll',
-					pageButtonPosition: 'end',
-					height: seriesCount > 5 ? 80 : 40
-				}
+				legend
 			}
 		}
+		if (hasMultipleUnitGroups) return { yAxis: { min: undefined, max: undefined }, grid, legend }
 
 		if (allPercentMetrics) {
 			return {
@@ -403,16 +299,8 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 						formatter: '{value}%'
 					}
 				},
-				tooltip: {
-					valueFormatter: (value: number) => value.toFixed(2) + '%'
-				},
-				grid: chartGrid({ top: seriesCount > 5 ? 80 : CHART_LEGEND_RESERVE }),
-				legend: {
-					top: CHART_INSET,
-					type: 'scroll',
-					pageButtonPosition: 'end',
-					height: seriesCount > 5 ? 80 : 40
-				}
+				grid,
+				legend
 			}
 		}
 
@@ -435,13 +323,8 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 						}
 					}
 				},
-				grid: chartGrid({ top: seriesCount > 5 ? 80 : CHART_LEGEND_RESERVE }),
-				legend: {
-					top: CHART_INSET,
-					type: 'scroll',
-					pageButtonPosition: 'end',
-					height: seriesCount > 5 ? 80 : 40
-				}
+				grid,
+				legend
 			}
 		}
 
@@ -463,15 +346,10 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 					}
 				}
 			},
-			grid: chartGrid({ top: seriesCount > 5 ? 80 : CHART_LEGEND_RESERVE }),
-			legend: {
-				top: CHART_INSET,
-				type: 'scroll',
-				pageButtonPosition: 'end',
-				height: seriesCount > 5 ? 80 : 40
-			}
+			grid,
+			legend
 		}
-	}, [allCountMetrics, allPercentMetrics, allRatioMetrics, seriesCount, showPercentage])
+	}, [allCountMetrics, allPercentMetrics, allRatioMetrics, hasMultipleUnitGroups, seriesCount, showPercentage])
 
 	const groupingOptions: DashboardGrouping[] = ['day', 'week', 'month', 'quarter', 'year']
 
@@ -565,7 +443,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 						<span>Duplicate</span>
 					</button>
 				) : null}
-				{series.length > 0 ? (
+				{chartView.charts.length > 0 ? (
 					<>
 						<ChartPngExportButton
 							chartInstance={chartInstance}
@@ -610,9 +488,9 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 				</Suspense>
 			) : (
 				<Suspense fallback={<div className="min-h-[360px]" />}>
-					<MultiSeriesChart
-						key={`${multi.id}-${showStacked}-${showPercentage}-${multi.grouping || 'day'}-${timeKey}`}
-						series={series}
+					<MultiSeriesChart2
+						dataset={chartView.dataset}
+						charts={chartView.charts}
 						valueSymbol={showPercentage ? '%' : allPercentMetrics ? '%' : allCountMetrics || allRatioMetrics ? '' : '$'}
 						groupBy={
 							multi.grouping === 'week'
@@ -625,7 +503,10 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 											? 'yearly'
 											: 'daily'
 						}
-						hideDataZoom={true}
+						hideDataZoom
+						hideDefaultLegend={false}
+						solidChartAreaStyle={chartView.solidChartAreaStyle}
+						exportButtons="hidden"
 						onReady={handleChartReady}
 						chartOptions={chartOptions}
 					/>

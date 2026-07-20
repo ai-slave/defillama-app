@@ -115,7 +115,7 @@ const computeMarketCapToAnnualizedMetricRatio = (
 	return Number((marketCap / annualizedMetric).toFixed(2))
 }
 
-const totalsPromise = llamaDb.one<{
+type ProtocolMetricTotals = {
 	tvl_base: number | null
 	volume_dexs_1d: number | null
 	volume_dexs_7d: number | null
@@ -124,8 +124,10 @@ const totalsPromise = llamaDb.one<{
 	volume_derivatives_1d: number | null
 	volume_aggr_derivatives_1d: number | null
 	volume_options_1d: number | null
-}>(
-	`
+}
+
+const PROTOCOL_METRIC_TOTALS_TTL_MS = 5 * 60 * 1000
+const PROTOCOL_METRIC_TOTALS_QUERY = `
 	SELECT
 		tvl_base,
 		volume_dexs_1d,
@@ -137,18 +139,35 @@ const totalsPromise = llamaDb.one<{
 		volume_options_1d
 	FROM lens.metrics_total_current
 `
-)
+
+let protocolMetricTotalsCache: { value: Promise<ProtocolMetricTotals>; expiresAt: number } | null = null
+
+function getProtocolMetricTotals(): Promise<ProtocolMetricTotals> {
+	const now = Date.now()
+	if (protocolMetricTotalsCache && protocolMetricTotalsCache.expiresAt > now) {
+		return protocolMetricTotalsCache.value
+	}
+
+	// Share concurrent table requests, but refresh alongside the route's five-minute cache window.
+	const value = llamaDb.one<ProtocolMetricTotals>(PROTOCOL_METRIC_TOTALS_QUERY).catch((error) => {
+		if (protocolMetricTotalsCache?.value === value) protocolMetricTotalsCache = null
+		throw error
+	})
+	protocolMetricTotalsCache = { value, expiresAt: now + PROTOCOL_METRIC_TOTALS_TTL_MS }
+	return value
+}
 
 export async function fetchProtocolsTable(options: ProtocolQueryOptions): Promise<ProtocolsTableResult> {
 	const chainFilters = extractChainFilters(options.config)
-	const totals = await totalsPromise
+	const category = options.config.params?.category
+	const totals = await getProtocolMetricTotals()
 	const shouldExplodeByChain = options.rowHeaders.includes('chain') || chainFilters.length > 0
 	if (shouldExplodeByChain) {
 		const [rows, chainMetrics] = await Promise.all([
 			fetchProtocolChainRows(chainFilters, totals),
 			fetchChainMetricsForGrouping(chainFilters, totals)
 		])
-		return { rows, chainMetrics }
+		return { rows: filterRowsByCategory(rows, category), chainMetrics }
 	}
 	const [parentRows, childRows] = await Promise.all([
 		fetchProtocolAggregateRows(chainFilters, totals),
@@ -173,10 +192,16 @@ export async function fetchProtocolsTable(options: ProtocolQueryOptions): Promis
 		}
 	}
 
-	return { rows: Array.from(uniqueRows.values()) }
+	return { rows: filterRowsByCategory(Array.from(uniqueRows.values()), category) }
 }
 
-const baseMetricsMapping = (row: ProtocolAggregateRow, totals: Awaited<typeof totalsPromise>): NumericMetrics => {
+function filterRowsByCategory(rows: NormalizedRow[], category: string | null | undefined): NormalizedRow[] {
+	if (!category) return rows
+	const normalizedCategory = formatDisplayName(category).toLowerCase()
+	return rows.filter((row) => row.category?.toLowerCase() === normalizedCategory)
+}
+
+const baseMetricsMapping = (row: ProtocolAggregateRow, totals: ProtocolMetricTotals): NumericMetrics => {
 	const tvl = row.tvl_base ?? null
 	const volume24h = row.volume_dexs_1d ?? null
 	const volume7d = row.volume_dexs_7d ?? null
@@ -268,7 +293,7 @@ const baseMetricsMapping = (row: ProtocolAggregateRow, totals: Awaited<typeof to
 
 const buildBaseRow = (
 	row: ProtocolAggregateRow,
-	totals: Awaited<typeof totalsPromise>,
+	totals: ProtocolMetricTotals,
 	options: {
 		slug: string
 		parentSlug?: string | null
@@ -303,7 +328,7 @@ const buildBaseRow = (
 
 const fetchProtocolAggregateRows = async (
 	chainFilters: string[],
-	totals: Awaited<typeof totalsPromise>
+	totals: ProtocolMetricTotals
 ): Promise<NormalizedRow[]> => {
 	const conditions: string[] = []
 	const values: any[] = []
@@ -439,10 +464,7 @@ const fetchProtocolAggregateRows = async (
 	)
 }
 
-const fetchSubProtocolRows = async (
-	chainFilters: string[],
-	totals: Awaited<typeof totalsPromise>
-): Promise<NormalizedRow[]> => {
+const fetchSubProtocolRows = async (chainFilters: string[], totals: ProtocolMetricTotals): Promise<NormalizedRow[]> => {
 	const conditions: string[] = []
 	const values: any[] = []
 
@@ -575,7 +597,7 @@ const fetchSubProtocolRows = async (
 
 const fetchProtocolChainRows = async (
 	chainFilters: string[],
-	totals: Awaited<typeof totalsPromise>
+	totals: ProtocolMetricTotals
 ): Promise<NormalizedRow[]> => {
 	const [parentChainRows, subProtocolChainRows] = await Promise.all([
 		fetchParentProtocolsByChain(chainFilters, totals),
@@ -605,7 +627,7 @@ const fetchProtocolChainRows = async (
 
 const fetchParentProtocolsByChain = async (
 	chainFilters: string[],
-	totals: Awaited<typeof totalsPromise>
+	totals: ProtocolMetricTotals
 ): Promise<NormalizedRow[]> => {
 	const rows = await llamaDb.any<ProtocolAggregateRow>(
 		`
@@ -745,7 +767,7 @@ type SubProtocolChainRow = ProtocolAggregateRow & {
 
 const fetchSubProtocolsByChain = async (
 	chainFilters: string[],
-	totals: Awaited<typeof totalsPromise>
+	totals: ProtocolMetricTotals
 ): Promise<NormalizedRow[]> => {
 	const rows = await llamaDb.any<SubProtocolChainRow>(
 		`
@@ -885,7 +907,7 @@ type ChainMetricsRow = {
 
 const fetchChainMetricsForGrouping = async (
 	chainFilters: string[],
-	totals: Awaited<typeof totalsPromise>
+	totals: ProtocolMetricTotals
 ): Promise<Record<string, ChainMetrics>> => {
 	const conditions: string[] = []
 	const values: any[] = []

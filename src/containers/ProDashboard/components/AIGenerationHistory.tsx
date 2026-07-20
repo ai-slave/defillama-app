@@ -1,5 +1,5 @@
 import { Icon } from '~/ui/Icon'
-import type { AIGeneratedData } from '../ProDashboardAPIContext'
+import type { AIGeneratedData } from '../dashboardTypes'
 
 interface AIGenerationHistoryProps {
 	aiGenerated: AIGeneratedData

@@ -1,6 +1,6 @@
 import { fetchChainChart } from '~/containers/Chains/api'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
-import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
+import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import { fetchCategoryChart } from '~/containers/ProtocolTaxonomy/api'
 import {
 	alignSeries,
@@ -12,7 +12,8 @@ import {
 	type ChartSeries,
 	type ProtocolBreakdownData
 } from '~/utils/breakdowns'
-import { processAdjustedProtocolTvl, processAdjustedTvl, type TvlChartData } from '~/utils/tvl'
+import { processAdjustedTvl, type TvlChartData } from '~/utils/tvl'
+import { sumProtocolTvlBreakdown } from './protocolTvlBreakdown'
 
 // Some protocol responses include synthetic keys that shouldn't be counted in TVL totals
 // Ensure we ignore them consistently when aggregating per‑protocol TVL series
@@ -268,20 +269,15 @@ export const getTvlBreakdownData = async (
 				const useChildrenOnly = groupByParent && !!t.parentId && categoriesFilter.length > 0
 
 				const buildSeriesForSlug = async (slug: string): Promise<[number, number][]> => {
-					const json = await fetchProtocolBySlug<{ chainTvls?: Record<string, unknown> }>(slug)
-					const chainTvls = json?.chainTvls || {}
-
-					const opts: any = {}
-					if (chainFilterMode === 'exclude' && hasRealExcludedChains) {
-						opts.filterMode = 'exclude'
-						opts.excludeChains = Array.from(excludedChainSetForProtocols).filter((c) => c.toLowerCase() !== 'all')
-					}
-					if (chainFilterMode === 'include' && !isAll && includedChainSetForProtocols.size > 0) {
-						opts.filterMode = 'include'
-						opts.includeChains = Array.from(includedChainSetForProtocols)
-					}
-
-					return processAdjustedProtocolTvl(chainTvls, opts)
+					const chart = await fetchProtocolTvlChart({ protocol: slug, breakdownType: 'chain-breakdown' })
+					return sumProtocolTvlBreakdown(chart, {
+						...(chainFilterMode === 'exclude' && hasRealExcludedChains
+							? { excludeChains: excludedChainSetForProtocols }
+							: null),
+						...(chainFilterMode === 'include' && !isAll && includedChainSetForProtocols.size > 0
+							? { includeChains: includedChainSetForProtocols }
+							: null)
+					})
 				}
 
 				if (useChildrenOnly) {

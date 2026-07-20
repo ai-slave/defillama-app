@@ -1,19 +1,18 @@
-import { lazy, Suspense, useEffect, useMemo, type ReactElement } from 'react'
+import { lazy, Suspense, useMemo, type ReactElement } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
 import { materializeZeroFilledDataset, type TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
 import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
-import {
-	buildProtocolV1ChartConfigs,
-	formatProtocolV1TvlsByChain,
-	useFetchProtocolV1AddlChartsData
-} from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
+import { buildProtocolV1ChartConfigs } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPES } from '../../borrowedChartConstants'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
+import { shouldSuppressBorrowedTokenBreakdown } from '../../services/protocolTvl'
+import type { BorrowedChartType } from '../../types'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
+import { useBorrowedChartData } from '../useBorrowedChartData'
 
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')
@@ -23,8 +22,6 @@ const EMPTY_DATASET: TimestampDataset = {
 	source: [],
 	dimensions: ['timestamp']
 }
-const EMPTY_STACKS: string[] = []
-const EMPTY_PIE_DATA: Array<{ name: string; value: number }> = []
 const PREVIEW_EXPORTS = {
 	csv: true,
 	png: true,
@@ -61,92 +58,30 @@ export function BorrowedChartTab({
 	protocolOptions,
 	protocolsLoading
 }: BorrowedChartTabProps) {
-	const { protocols } = useProDashboardCatalog()
-
-	const filteredProtocolOptions = useMemo(() => {
-		const parentIds = new Set(protocols.filter((p: any) => p.parentProtocol).map((p: any) => p.parentProtocol))
-		const parentIdToSlug = new Map(protocols.filter((p: any) => parentIds.has(p.id)).map((p: any) => [p.id, p.slug]))
-		const parentSlugs = new Set(parentIdToSlug.values())
-		return protocolOptions
-			.filter((opt: any) => !parentSlugs.has(opt.value))
-			.map((opt: any) => ({ ...opt, isChild: false }))
-	}, [protocolOptions, protocols])
-
-	const {
-		data: addlData,
-		historicalChainTvls,
-		isLoading: isAddlLoading
-	} = useFetchProtocolV1AddlChartsData(selectedBorrowedProtocolName || '', true)
-
-	const { dataset: chainsDataset, chainsUnique } = useMemo(() => {
-		if (!historicalChainTvls) return { dataset: EMPTY_DATASET, chainsUnique: EMPTY_STACKS }
-		return formatProtocolV1TvlsByChain({
-			historicalChainTvls,
-			extraTvlsEnabled: {}
-		})
-	}, [historicalChainTvls])
-
-	const { tokensUnique, rawTokensUnique, tokenBreakdownUSDDataset, tokenBreakdownPieChart, tokenBreakdownDataset } =
-		addlData ?? {}
-	const resolvedTokensUnique = tokensUnique ?? EMPTY_STACKS
-	const resolvedRawTokensUnique = rawTokensUnique ?? resolvedTokensUnique
-	const resolvedTokenBreakdownUSDDataset = tokenBreakdownUSDDataset ?? EMPTY_DATASET
-	const resolvedTokenBreakdownPieChart = tokenBreakdownPieChart ?? EMPTY_PIE_DATA
-	const resolvedTokenBreakdownDataset = tokenBreakdownDataset ?? EMPTY_DATASET
-	const chainCharts = useMemo(
+	const activeChartType = BORROWED_CHART_TYPES.some((type) => type.value === selectedBorrowedChartType)
+		? (selectedBorrowedChartType as BorrowedChartType)
+		: 'chainsBorrowed'
+	const { getProtocolInfo } = useProDashboardCatalog()
+	const protocolMisrepresentsTokens =
+		selectedBorrowedProtocol != null && getProtocolInfo(selectedBorrowedProtocol)?.misrepresentedTokens === true
+	const suppressTokenBreakdown = shouldSuppressBorrowedTokenBreakdown(activeChartType, protocolMisrepresentsTokens)
+	const { data: borrowedData, isLoading } = useBorrowedChartData({
+		protocol: selectedBorrowedProtocol ?? '',
+		chartType: activeChartType,
+		enabled: !!selectedBorrowedProtocol && !suppressTokenBreakdown,
+		staleTime: 60 * 60 * 1000
+	})
+	const dataset = borrowedData.dataset ?? EMPTY_DATASET
+	const seriesNames = borrowedData.seriesNames
+	const charts = useMemo(
 		() =>
 			buildProtocolV1ChartConfigs({
-				seriesNames: chainsUnique,
+				seriesNames,
 				type: 'line',
 				hideAreaStyle: true
 			}),
-		[chainsUnique]
+		[seriesNames]
 	)
-	const selectedTokenNames =
-		selectedBorrowedChartType === 'tokenBorrowedRaw' ? resolvedRawTokensUnique : resolvedTokensUnique
-	const tokenCharts = useMemo(
-		() =>
-			buildProtocolV1ChartConfigs({
-				seriesNames: selectedTokenNames,
-				type: 'line',
-				hideAreaStyle: true
-			}),
-		[selectedTokenNames]
-	)
-
-	const availableChartTypes = useMemo(() => {
-		const available = new Set<string>()
-
-		if (chainsDataset.source.length > 0 && chainsUnique.length > 1) {
-			available.add('chainsBorrowed')
-		}
-		if (resolvedTokenBreakdownUSDDataset.source.length > 1 && resolvedTokensUnique.length > 0) {
-			available.add('tokenBorrowedUsd')
-		}
-		if (resolvedTokenBreakdownPieChart.length > 0) {
-			available.add('tokensBorrowedPie')
-		}
-		if (resolvedTokenBreakdownDataset.source.length > 1 && resolvedRawTokensUnique.length > 0) {
-			available.add('tokenBorrowedRaw')
-		}
-
-		return available
-	}, [
-		chainsDataset,
-		chainsUnique,
-		resolvedTokenBreakdownUSDDataset,
-		resolvedTokenBreakdownPieChart,
-		resolvedTokenBreakdownDataset,
-		resolvedRawTokensUnique,
-		resolvedTokensUnique
-	])
-
-	const chartTypeOptions = useMemo(() => {
-		return BORROWED_CHART_TYPES.map((type) => ({
-			...type,
-			disabled: !availableChartTypes.has(type.value)
-		}))
-	}, [availableChartTypes])
 
 	const handleProtocolChange = (option: VirtualizedSelectOption) => {
 		onSelectedBorrowedProtocolChange(option.value)
@@ -154,53 +89,28 @@ export function BorrowedChartTab({
 		onSelectedBorrowedChartTypeChange('chainsBorrowed')
 	}
 
-	const hasProtocolSelection = selectedBorrowedProtocol && selectedBorrowedProtocolName
-
-	useEffect(() => {
-		if (!hasProtocolSelection) return
-
-		if (availableChartTypes.size === 0) {
-			if (selectedBorrowedChartType !== '') {
-				onSelectedBorrowedChartTypeChange('')
-			}
-			return
-		}
-
-		if (!availableChartTypes.has(selectedBorrowedChartType)) {
-			const nextChartType = BORROWED_CHART_TYPES.find((type) => availableChartTypes.has(type.value))?.value
-			if (nextChartType && nextChartType !== selectedBorrowedChartType) {
-				onSelectedBorrowedChartTypeChange(nextChartType)
-			}
-		}
-	}, [hasProtocolSelection, availableChartTypes, selectedBorrowedChartType, onSelectedBorrowedChartTypeChange])
-
 	const chartTypeLabel = BORROWED_CHART_TYPES.find((t) => t.value === selectedBorrowedChartType)?.label || ''
-	const visibleDataset = useMemo(() => {
-		switch (selectedBorrowedChartType) {
-			case 'chainsBorrowed':
-				return materializeZeroFilledDataset(chainsDataset, chainsUnique)
-			case 'tokenBorrowedUsd':
-				return materializeZeroFilledDataset(resolvedTokenBreakdownUSDDataset, resolvedTokensUnique)
-			case 'tokenBorrowedRaw':
-				return materializeZeroFilledDataset(resolvedTokenBreakdownDataset, resolvedRawTokensUnique)
-			default:
-				return EMPTY_DATASET
-		}
-	}, [
-		selectedBorrowedChartType,
-		chainsDataset,
-		chainsUnique,
-		resolvedTokenBreakdownUSDDataset,
-		resolvedTokenBreakdownDataset,
-		resolvedRawTokensUnique,
-		resolvedTokensUnique
-	])
+	const chartTypeOptions = useMemo(
+		() =>
+			BORROWED_CHART_TYPES.map((option) => ({
+				...option,
+				disabled: shouldSuppressBorrowedTokenBreakdown(option.value, protocolMisrepresentsTokens)
+			})),
+		[protocolMisrepresentsTokens]
+	)
+	const visibleDataset = useMemo(
+		() =>
+			activeChartType === 'tokensBorrowedPie' ? EMPTY_DATASET : materializeZeroFilledDataset(dataset, seriesNames),
+		[activeChartType, dataset, seriesNames]
+	)
 	const previewTitle = chartTypeLabel
 		? `${selectedBorrowedProtocolName} - ${chartTypeLabel}`
 		: selectedBorrowedProtocolName || ''
+	const hasProtocolSelection = Boolean(selectedBorrowedProtocol && selectedBorrowedProtocolName)
+	const hasData = activeChartType === 'tokensBorrowedPie' ? borrowedData.pieChart.length > 0 : dataset.source.length > 0
 
 	let chartContent: ReactElement | null = null
-	if (isAddlLoading) {
+	if (isLoading) {
 		chartContent = (
 			<div className="flex h-[320px] items-center justify-center">
 				<LocalLoader />
@@ -220,7 +130,7 @@ export function BorrowedChartTab({
 						<MultiSeriesChart2
 							title=""
 							dataset={visibleDataset}
-							charts={chainCharts}
+							charts={charts}
 							valueSymbol="$"
 							hideDefaultLegend
 							chartOptions={DOLLAR_CHART_OPTIONS}
@@ -241,7 +151,7 @@ export function BorrowedChartTab({
 						<MultiSeriesChart2
 							title=""
 							dataset={visibleDataset}
-							charts={tokenCharts}
+							charts={charts}
 							valueSymbol="$"
 							hideDefaultLegend
 							chartOptions={DOLLAR_CHART_OPTIONS}
@@ -259,7 +169,7 @@ export function BorrowedChartTab({
 							</div>
 						}
 					>
-						<PieChart chartData={resolvedTokenBreakdownPieChart} />
+						<PieChart chartData={borrowedData.pieChart} />
 					</Suspense>
 				)
 				break
@@ -275,7 +185,7 @@ export function BorrowedChartTab({
 						<MultiSeriesChart2
 							title=""
 							dataset={visibleDataset}
-							charts={tokenCharts}
+							charts={charts}
 							valueSymbol=""
 							hideDefaultLegend
 							chartOptions={UNITLESS_CHART_OPTIONS}
@@ -292,7 +202,7 @@ export function BorrowedChartTab({
 			<div className="space-y-3">
 				<AriakitVirtualizedSelect
 					label="Protocol"
-					options={filteredProtocolOptions}
+					options={protocolOptions}
 					selectedValue={selectedBorrowedProtocol || ''}
 					onChange={handleProtocolChange}
 					placeholder="Select protocol..."
@@ -311,20 +221,12 @@ export function BorrowedChartTab({
 					</div>
 				</Tooltip>
 
-				{hasProtocolSelection && isAddlLoading ? (
-					<p className="text-xs text-pro-text-tertiary">Loading available chart types...</p>
+				{hasProtocolSelection && isLoading ? (
+					<p className="text-xs text-pro-text-tertiary">Loading selected chart...</p>
 				) : null}
 
-				{hasProtocolSelection && !isAddlLoading && availableChartTypes.size > 0 ? (
-					<div className="text-xs text-pro-text-tertiary">
-						<p>
-							Available charts: <span className="font-semibold text-pro-text-primary">{availableChartTypes.size}</span>
-						</p>
-					</div>
-				) : null}
-
-				{hasProtocolSelection && !isAddlLoading && availableChartTypes.size === 0 ? (
-					<p className="text-xs text-pro-text-tertiary">No borrowed data available for this protocol.</p>
+				{hasProtocolSelection && !isLoading && !hasData ? (
+					<p className="text-xs text-pro-text-tertiary">No data available for this chart type.</p>
 				) : null}
 			</div>
 
@@ -340,9 +242,9 @@ export function BorrowedChartTab({
 							<p className="text-xs text-pro-text-secondary">Borrowed Chart</p>
 						</div>
 
-						{availableChartTypes.size === 0 && !isAddlLoading ? (
+						{!hasData && !isLoading ? (
 							<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
-								No borrowed data available.
+								No data available for this chart type.
 							</div>
 						) : (
 							<div className="h-[320px]">{chartContent}</div>

@@ -2,11 +2,13 @@ import * as Ariakit from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, useState } from 'react'
 import { useAppMetadata } from '~/containers/ProDashboard/AppMetadataContext'
+import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import { ChartTypePills } from '~/containers/ProDashboard/components/AddChartModal/ChartTypePills'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardReducer'
+import { buildProDashboardParentMapping, buildProtocolSymbolMap } from '~/containers/ProDashboard/protocolCatalog'
 import {
+	filterDataByTimePeriod,
 	getChartQueryFn,
-	getChartQueryKey,
 	ProxyAuthTokenContext,
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
@@ -123,23 +125,30 @@ function MultiPreview({
 	height: number
 }) {
 	const authToken = useContext(ProxyAuthTokenContext)
+	const { data: catalog } = useProtocolsAndChains()
+	const protocolSymbols = useMemo(() => buildProtocolSymbolMap(catalog?.protocols ?? []), [catalog])
+	const parentMapping = useMemo(() => buildProDashboardParentMapping(catalog?.protocols ?? []), [catalog])
 	const queries = useQueries({
 		queries: series.map((s) => ({
-			queryKey: [
-				'pro-dashboard',
-				...getChartQueryKey(s.chartType, s.entityType, s.slug, s.geckoId ?? null, range as TimePeriod)
-			],
+			queryKey: getProDashboardChartSourceQueryKey({
+				type: s.chartType,
+				protocol: s.entityType === 'protocol' ? s.slug : '',
+				chain: s.entityType === 'chain' ? s.slug : '',
+				geckoId: s.geckoId ?? null
+			}),
 			queryFn: getChartQueryFn(
 				s.chartType,
 				s.entityType,
 				s.slug,
 				s.geckoId ?? null,
-				range as TimePeriod,
+				undefined,
+				parentMapping,
 				undefined,
 				undefined,
-				undefined,
-				authToken
+				authToken,
+				s.entityType === 'protocol' ? protocolSymbols : undefined
 			),
+			select: (data: [number, number][]) => filterDataByTimePeriod(data, range as TimePeriod),
 			staleTime: 1000 * 60 * 5,
 			gcTime: 1000 * 60 * 30,
 			refetchOnWindowFocus: false

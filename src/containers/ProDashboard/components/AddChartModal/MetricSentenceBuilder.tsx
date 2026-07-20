@@ -244,12 +244,12 @@ export function MetricSentenceBuilder({
 	const globalAvailableMetricTypes = useMemo(() => {
 		const set = new Set<string>()
 		for (const chain of chains) {
-			const geckoId = (chain as any).gecko_id
+			const geckoId = chain.gecko_id
 			for (const t of availableChainChartTypes(chain.name, { hasGeckoId: !!geckoId })) set.add(t)
 		}
 		for (const protocol of protocols) {
 			if (!protocol.slug) continue
-			const geckoId = (protocol as any).geckoId
+			const geckoId = protocol.geckoId
 			for (const t of availableProtocolChartTypes(protocol.slug, { hasGeckoId: !!geckoId })) set.add(t)
 		}
 		return Array.from(set)
@@ -257,16 +257,11 @@ export function MetricSentenceBuilder({
 
 	const baseMetricTypes = availableMetricTypes.length > 0 ? availableMetricTypes : globalAvailableMetricTypes
 
-	const _selectedProtocolOption = useMemo(
-		() => protocolOptions.find((option) => option.value === metricProtocol) || null,
-		[protocolOptions, metricProtocol]
-	)
-
 	const allowedChainNamesForMetric = useMemo(() => {
 		if (!metricType) return null as Set<string> | null
 		const s = new Set<string>()
 		for (const chain of chains) {
-			const geckoId = (chain as any).gecko_id
+			const geckoId = chain.gecko_id
 			const types = availableChainChartTypes(chain.name, { hasGeckoId: !!geckoId })
 			if (types.includes(metricType)) s.add(chain.name)
 		}
@@ -288,7 +283,7 @@ export function MetricSentenceBuilder({
 		const s = new Set<string>()
 		for (const protocol of protocols) {
 			if (!protocol.slug) continue
-			const geckoId = (protocol as any).geckoId
+			const geckoId = protocol.geckoId
 			const types = availableProtocolChartTypes(protocol.slug, { hasGeckoId: !!geckoId })
 			if (types.includes(metricType)) s.add(protocol.slug)
 		}
@@ -373,12 +368,12 @@ export function MetricSentenceBuilder({
 		popover.setOpen(true)
 	}
 
-	const handleChainSelect = (option: any) => {
+	const handleChainSelect = (option: { value: string; label: string }) => {
 		onSubjectTypeChange('chain')
 		onChainChange(option)
 	}
 
-	const handleProtocolSelect = (option: any) => {
+	const handleProtocolSelect = (option: { value: string; label: string }) => {
 		onSubjectTypeChange('protocol')
 		onProtocolChange(option)
 	}

@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { useState } from 'react'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Icon } from '~/ui/Icon'
-import type { CustomTimePeriod } from '../ProDashboardAPIContext'
+import type { CustomTimePeriod } from '../dashboardTypes'
 
 interface CustomTimePeriodPickerProps {
 	isActive: boolean

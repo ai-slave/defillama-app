@@ -1,14 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useContext, useMemo } from 'react'
+import { isChainTokenChartType, isProtocolTokenChartType } from '../chartSource'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
-import {
-	getChartQueryFn,
-	getChartQueryKey,
-	ProxyAuthTokenContext,
-	StreamDoneContext,
-	useParentChildMapping
-} from '../queries'
+import { buildProDashboardParentMapping, buildProtocolSymbolMap } from '../protocolCatalog'
+import { getChartQueryFn, getMetricQueryKey, ProxyAuthTokenContext, StreamDoneContext } from '../queries'
 import type { MetricAggregator, MetricConfig, MetricWindow } from '../types'
 
 const DEFAULT_COMPARE = {
@@ -214,29 +210,38 @@ export function useMetricData(metric: MetricConfig) {
 	const geckoId =
 		subject.geckoId ??
 		(subject.itemType === 'protocol'
-			? (protocols.find((p: any) => p.slug === subject.protocol)?.geckoId as string | undefined)
-			: (chains.find((c: any) => c.name === subject.chain)?.gecko_id as string | undefined))
-	const { data: parentMapping } = useParentChildMapping()
+			? protocols.find((protocol) => protocol.slug === subject.protocol)?.geckoId
+			: chains.find((chain) => chain.name === subject.chain)?.gecko_id)
+	const protocolSymbols = useMemo(() => buildProtocolSymbolMap(protocols), [protocols])
+	const parentMapping = useMemo(() => buildProDashboardParentMapping(protocols), [protocols])
 
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
-	const tokenTypes = ['tokenMcap', 'tokenPrice', 'tokenVolume']
-	const chainTokenTypes = ['chainMcap', 'chainPrice']
-
 	const {
 		data: series,
 		isLoading,
 		isError
 	} = useQuery({
-		queryKey: ['pro-dashboard', 'metric', ...getChartQueryKey(type, itemType, item, geckoId, undefined)],
-		queryFn: getChartQueryFn(type, itemType, item, geckoId, undefined, parentMapping, undefined, undefined, authToken),
+		queryKey: getMetricQueryKey(type, itemType, item, geckoId),
+		queryFn: getChartQueryFn(
+			type,
+			itemType,
+			item,
+			geckoId,
+			undefined,
+			parentMapping,
+			undefined,
+			undefined,
+			authToken,
+			itemType === 'protocol' ? protocolSymbols : undefined
+		),
 		staleTime: Infinity,
 		select: selectFiniteMetricSeries,
 		enabled:
 			streamDone &&
 			!!item &&
-			((itemType === 'protocol' && (!tokenTypes.includes(type) || !!geckoId)) ||
-				(itemType === 'chain' && (!chainTokenTypes.includes(type) || !!geckoId)))
+			((itemType === 'protocol' && (!isProtocolTokenChartType(type) || !!geckoId)) ||
+				(itemType === 'chain' && (!isChainTokenChartType(type) || !!geckoId)))
 	})
 
 	const resolvedSeries = series ?? EMPTY_SERIES

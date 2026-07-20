@@ -24,8 +24,9 @@ export function resolveProtocolCategory({
 			continue
 		}
 
-		if (protocol.tvl > topChildTvl) {
-			topChildTvl = protocol.tvl
+		const protocolTvl = protocol.tvl ?? 0
+		if (protocolTvl > topChildTvl) {
+			topChildTvl = protocolTvl
 			topChildCategory = protocol.category
 		}
 	}

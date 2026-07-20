@@ -1,45 +1,92 @@
 import { fetchCoinGeckoChartByIdWithCacheFallback } from '~/api/coingecko'
-import { DIMENSIONS_OVERVIEW_API, DIMENSIONS_SUMMARY_API } from '~/constants'
+import { fetchAdapterChainChartData, fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
+import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchChainAssetsChart } from '~/containers/BridgedTVL/api'
 import { fetchChainChart } from '~/containers/Chains/api'
 import type { ChainChartResponse } from '~/containers/Chains/api.types'
-import {
-	ONCHAIN_ADDRESSES_API,
-	ONCHAIN_GAS_API,
-	ONCHAIN_NEW_ADDRESSES_API,
-	ONCHAIN_TXS_API
-} from '~/containers/OnchainUsersAndTxs/api'
 import { fetchStablecoinChartApi } from '~/containers/Stablecoins/api'
-import type { StablecoinChartPoint } from '~/containers/Stablecoins/api.types'
+import type { StablecoinChartPoint, StablecoinChartResponse } from '~/containers/Stablecoins/api.types'
 import { slug } from '~/utils'
 import { toDisplayName } from '~/utils/chainNormalizer'
-import { fetchWithPoolingOnServer } from '~/utils/http-client'
 import { recordRuntimeError } from '~/utils/telemetry'
 import { processAdjustedTvl } from '~/utils/tvl'
 import { convertToNumberFormat, normalizeHourlyToDaily } from '../utils'
 
+const stablecoinChartRequests = new Map<string, Promise<StablecoinChartResponse>>()
+
+function fetchStablecoinChartOnce(chain: string): Promise<StablecoinChartResponse> {
+	const existing = stablecoinChartRequests.get(chain)
+	if (existing) return existing
+
+	const request = fetchStablecoinChartApi(chain).finally(() => {
+		if (stablecoinChartRequests.get(chain) === request) stablecoinChartRequests.delete(chain)
+	})
+	stablecoinChartRequests.set(chain, request)
+	return request
+}
+
 const CHART_METADATA = {
 	tvl: { type: 'tvl' },
 
-	volume: { type: 'dimensions', endpoint: 'dexs' },
-	fees: { type: 'dimensions', endpoint: 'fees', dataType: 'dailyAppFees' },
-	revenue: { type: 'dimensions', endpoint: 'fees', dataType: 'dailyAppRevenue' },
-	bribes: { type: 'dimensions', endpoint: 'fees', dataType: 'dailyBribesRevenue' },
-	tokenTax: { type: 'dimensions', endpoint: 'fees', dataType: 'dailyTokenTaxes' },
-	aggregators: { type: 'dimensions', endpoint: 'aggregators' },
-	perps: { type: 'dimensions', endpoint: 'derivatives' },
-	bridgeAggregators: { type: 'dimensions', endpoint: 'bridge-aggregators' },
-	perpsAggregators: { type: 'dimensions', endpoint: 'aggregator-derivatives' },
-	options: { type: 'dimensions', endpoint: 'options' },
+	volume: { type: 'dimensions', adapterType: ADAPTER_TYPES.DEXS },
+	fees: { type: 'dimensions', adapterType: ADAPTER_TYPES.FEES, dataType: ADAPTER_DATA_TYPES.DAILY_APP_FEES },
+	revenue: {
+		type: 'dimensions',
+		adapterType: ADAPTER_TYPES.FEES,
+		dataType: ADAPTER_DATA_TYPES.DAILY_APP_REVENUE
+	},
+	bribes: {
+		type: 'dimensions',
+		adapterType: ADAPTER_TYPES.FEES,
+		dataType: ADAPTER_DATA_TYPES.DAILY_BRIBES_REVENUE
+	},
+	tokenTax: {
+		type: 'dimensions',
+		adapterType: ADAPTER_TYPES.FEES,
+		dataType: ADAPTER_DATA_TYPES.DAILY_TOKEN_TAXES
+	},
+	aggregators: { type: 'dimensions', adapterType: ADAPTER_TYPES.AGGREGATORS },
+	perps: { type: 'dimensions', adapterType: ADAPTER_TYPES.PERPS },
+	bridgeAggregators: { type: 'dimensions', adapterType: ADAPTER_TYPES.BRIDGE_AGGREGATORS },
+	perpsAggregators: { type: 'dimensions', adapterType: ADAPTER_TYPES.PERPS_AGGREGATOR },
+	// Persisted `options` cards predate the premium/notional split and mean premium volume.
+	options: {
+		type: 'dimensions',
+		adapterType: ADAPTER_TYPES.OPTIONS,
+		dataType: ADAPTER_DATA_TYPES.DAILY_PREMIUM_VOLUME
+	},
+	optionsPremium: {
+		type: 'dimensions',
+		adapterType: ADAPTER_TYPES.OPTIONS,
+		dataType: ADAPTER_DATA_TYPES.DAILY_PREMIUM_VOLUME
+	},
+	optionsNotional: {
+		type: 'dimensions',
+		adapterType: ADAPTER_TYPES.OPTIONS,
+		dataType: ADAPTER_DATA_TYPES.DAILY_NOTIONAL_VOLUME
+	},
 
-	chainFees: { type: 'protocol', endpoint: 'fees' },
-	chainRevenue: { type: 'protocol', endpoint: 'fees', dataType: 'dailyRevenue' },
+	chainFees: { type: 'protocol', adapterType: ADAPTER_TYPES.FEES },
+	chainRevenue: {
+		type: 'protocol',
+		adapterType: ADAPTER_TYPES.FEES,
+		dataType: ADAPTER_DATA_TYPES.DAILY_REVENUE
+	},
 
-	users: { type: 'userMetrics', api: ONCHAIN_ADDRESSES_API },
-	activeUsers: { type: 'userMetrics', api: ONCHAIN_ADDRESSES_API },
-	newUsers: { type: 'userMetrics', api: ONCHAIN_NEW_ADDRESSES_API },
-	txs: { type: 'userMetrics', api: ONCHAIN_TXS_API },
-	gasUsed: { type: 'userMetrics', api: ONCHAIN_GAS_API },
+	// Chain activity totals are stored as chain pseudo-protocols, not chain-filtered app aggregates.
+	users: { type: 'activity', adapterType: ADAPTER_TYPES.ACTIVE_USERS },
+	activeUsers: { type: 'activity', adapterType: ADAPTER_TYPES.ACTIVE_USERS },
+	newUsers: { type: 'activity', adapterType: ADAPTER_TYPES.NEW_USERS },
+	txs: {
+		type: 'activity',
+		adapterType: ADAPTER_TYPES.ACTIVE_USERS,
+		dataType: ADAPTER_DATA_TYPES.DAILY_TRANSACTIONS_COUNT
+	},
+	gasUsed: {
+		type: 'activity',
+		adapterType: ADAPTER_TYPES.ACTIVE_USERS,
+		dataType: ADAPTER_DATA_TYPES.DAILY_GAS_USED
+	},
 
 	stablecoins: { type: 'stablecoins' },
 	stablecoinInflows: { type: 'stablecoins', dataType: 'inflows' },
@@ -48,7 +95,7 @@ const CHART_METADATA = {
 
 	chainMcap: { type: 'chainToken' },
 	chainPrice: { type: 'chainToken' }
-}
+} as const
 
 // TODO(chain-normalizer): this service accepts saved chart-builder chain values
 // and calls external APIs that historically accepted mixed chain names. Migrate
@@ -95,25 +142,26 @@ export default class ChainCharts {
 		return [chain]
 	}
 
-	private static async dimensionsData(chain: string, endpoint: string, dataType?: string): Promise<[number, number][]> {
+	private static async dimensionsData(
+		chain: string,
+		adapterType: `${ADAPTER_TYPES}`,
+		dataType?: `${ADAPTER_DATA_TYPES}`
+	): Promise<[number, number][]> {
 		if (!chain) return []
 		const apiChain = toDisplayName(chain)
-		const encodedChain = apiChain.includes(' ') ? encodeURIComponent(apiChain) : apiChain
-		const url = dataType
-			? `${DIMENSIONS_OVERVIEW_API}/${endpoint}/${encodedChain}?dataType=${dataType}`
-			: `${DIMENSIONS_OVERVIEW_API}/${endpoint}/${encodedChain}`
-		const response = await fetchWithPoolingOnServer(url)
-		const data = await response.json()
-		return convertToNumberFormat(data.totalDataChart ?? [])
+		const data = await fetchAdapterChainChartData({ adapterType, chain: apiChain, dataType })
+		return convertToNumberFormat(data)
 	}
 
-	private static async userMetrics(chain: string, api: string): Promise<[number, number][]> {
+	private static async protocolData(
+		chain: string,
+		adapterType: `${ADAPTER_TYPES}`,
+		dataType?: `${ADAPTER_DATA_TYPES}`
+	): Promise<[number, number][]> {
 		if (!chain) return []
 		const apiChain = toDisplayName(chain)
-		const encodedChain = apiChain.includes(' ') ? encodeURIComponent(apiChain) : apiChain
-		const response = await fetchWithPoolingOnServer(`${api}/chain$${encodedChain}`)
-		const data = await response.json()
-		return convertToNumberFormat(data ?? [])
+		const data = await fetchAdapterProtocolChartData({ adapterType, protocol: apiChain, dataType })
+		return convertToNumberFormat(data)
 	}
 
 	private static async tvlData(chain: string): Promise<[number, number][]> {
@@ -142,7 +190,7 @@ export default class ChainCharts {
 		if (!chain) return []
 		const apiChain = toDisplayName(chain)
 		const encodedChain = apiChain.includes(' ') ? encodeURIComponent(apiChain) : apiChain
-		const data = await fetchStablecoinChartApi(encodedChain)
+		const data = await fetchStablecoinChartOnce(encodedChain)
 
 		if (dataType === 'inflows') {
 			return this.calculateInflows(data.aggregated)
@@ -154,18 +202,6 @@ export default class ChainCharts {
 		])
 
 		return formattedData
-	}
-
-	private static async protocolData(chain: string, endpoint: string, dataType?: string): Promise<[number, number][]> {
-		if (!chain) return []
-		const apiChain = toDisplayName(chain)
-		const encodedChain = apiChain.includes(' ') ? encodeURIComponent(apiChain) : apiChain
-		const url = dataType
-			? `${DIMENSIONS_SUMMARY_API}/${endpoint}/${encodedChain}?dataType=${dataType}`
-			: `${DIMENSIONS_SUMMARY_API}/${endpoint}/${encodedChain}`
-		const response = await fetchWithPoolingOnServer(url)
-		const data = await response.json()
-		return convertToNumberFormat(data.totalDataChart ?? [])
 	}
 
 	private static calculateInflows(aggregatedData: StablecoinChartPoint[]): [number, number][] {
@@ -250,11 +286,10 @@ export default class ChainCharts {
 			case 'tvl':
 				return this.tvlData(chain)
 			case 'dimensions':
-				return this.dimensionsData(chain, metadata.endpoint, metadata.dataType)
+				return this.dimensionsData(chain, metadata.adapterType, metadata.dataType)
 			case 'protocol':
-				return this.protocolData(chain, metadata.endpoint, metadata.dataType)
-			case 'userMetrics':
-				return this.userMetrics(chain, metadata.api)
+			case 'activity':
+				return this.protocolData(chain, metadata.adapterType, metadata.dataType)
 			case 'stablecoins':
 				return this.stablecoinsData(chain, metadata.dataType)
 			case 'chainAssets':

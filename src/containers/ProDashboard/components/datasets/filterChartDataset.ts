@@ -1,6 +1,6 @@
 import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { getTimePeriodBounds } from '~/containers/ProDashboard/queries'
-import type { CustomTimePeriod, TimePeriod } from '../../ProDashboardAPIContext'
+import type { CustomTimePeriod, TimePeriod } from '../../dashboardTypes'
 
 /** Slice an ascending canonical chart dataset without rebuilding its rows. */
 export function filterChartDatasetByTimePeriod<TDataset extends MultiSeriesChart2Dataset>(

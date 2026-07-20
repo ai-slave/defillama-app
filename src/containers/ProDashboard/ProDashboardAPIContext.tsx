@@ -16,14 +16,23 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import pb from '~/utils/pocketbase'
-import { type CustomTimePeriod, dashboardReducer, initDashboardState, type TimePeriod } from './dashboardReducer'
+import { dashboardReducer, initDashboardState } from './dashboardReducer'
+import type {
+	AIGeneratedData,
+	AISessionData,
+	CustomTimePeriod,
+	Dashboard,
+	DashboardMode,
+	TimePeriod
+} from './dashboardTypes'
+import type { ProDashboardAppMetadata } from './dataContracts'
 import { useAutoSave } from './hooks/useAutoSave'
 import { useDashboardAPI } from './hooks/useDashboardAPI'
 import { useDashboardPermissions } from './hooks/useDashboardPermissions'
 import { useDashboardStream } from './hooks/useDashboardStream'
 import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartsData, useProtocolsAndChains } from './queries'
-import { type Dashboard, matchesDashboardKey } from './services/DashboardAPI'
+import { matchesDashboardKey } from './services/DashboardAPI'
 import type {
 	Chain,
 	ChartBuilderConfig,
@@ -71,37 +80,7 @@ function getDashboardInitialUpdatedAt(dashboard?: Dashboard | null) {
 	return Number.isFinite(updatedAt) ? updatedAt : undefined
 }
 
-export type { TimePeriod, CustomTimePeriod } from './dashboardReducer'
-
-interface AISessionData {
-	rating?: number
-	feedback?: string
-	mode: 'create' | 'iterate'
-	timestamp: string
-	userId: string
-	rated: boolean
-	skipped?: boolean
-	prompt: string
-}
-
-// oxlint-disable-next-line no-unused-vars
-interface AISessionState {
-	sessionId: string
-	mode: 'create' | 'iterate'
-	timestamp: string
-	prompt: string
-	rated?: boolean
-}
-
-export type AIGeneratedData = Record<string, AISessionData>
-
-// oxlint-disable-next-line no-unused-vars
-interface AIGenerationContext {
-	sessionId: string
-	mode: 'create' | 'iterate'
-	timestamp: string
-	prompt?: string
-}
+export type { AIGeneratedData, CustomTimePeriod, DashboardMode, TimePeriod } from './dashboardTypes'
 
 type DialogStore = ReturnType<typeof Ariakit.useDialogStore>
 
@@ -125,8 +104,6 @@ interface ProDashboardPermissionsContextType {
 	dashboardOwnerId: string | null
 	hideDuplicateButton: boolean
 }
-
-export type DashboardMode = 'view' | 'edit'
 
 interface ProDashboardModeContextType {
 	mode: DashboardMode
@@ -316,11 +293,7 @@ const ProDashboardEditorActionsContext = createContext<ProDashboardEditorActions
 const ProDashboardItemsStateContext = createContext<ProDashboardItemsStateContextType | undefined>(undefined)
 const ProDashboardChartsDataContext = createContext<ProDashboardChartsDataContextType | undefined>(undefined)
 const ProDashboardUIContext = createContext<ProDashboardUIContextType | undefined>(undefined)
-const ProDashboardServerAppMetadataContext = createContext<
-	| { protocols: Record<string, any>; chains: Record<string, any>; pfPs: { pf: string[]; ps: string[] } }
-	| null
-	| undefined
->(undefined)
+const ProDashboardServerAppMetadataContext = createContext<ProDashboardAppMetadata | null | undefined>(undefined)
 
 export function ProDashboardAPIProvider({
 	children,
@@ -1076,7 +1049,7 @@ function ProDashboardAPIProviderInner({
 	const chartQueries = useChartsData(allChartItems, timePeriod, customTimePeriod, proxyAuthToken)
 
 	const queryById = useMemo(() => {
-		const map = new Map<string, any>()
+		const map = new Map<string, (typeof chartQueries)[number]>()
 		for (let index = 0; index < allChartItems.length; index++) {
 			const chartConfig = allChartItems[index]
 			if (chartQueries[index]) {

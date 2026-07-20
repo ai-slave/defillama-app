@@ -26,10 +26,9 @@ import {
 	subscribeSqlRefreshProgress
 } from './components/SqlChart/sqlRefreshBus'
 import type { UnifiedTableFocusSection } from './components/UnifiedTable/types'
+import type { AIGeneratedData, TimePeriod } from './dashboardTypes'
 import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import {
-	type AIGeneratedData,
-	type TimePeriod,
 	useDashboardMode,
 	useProDashboardCatalog,
 	useProDashboardDashboard,

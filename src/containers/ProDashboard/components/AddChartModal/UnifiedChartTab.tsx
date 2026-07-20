@@ -2,7 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
-import { CHART_TYPES, type ChartConfig, getChainChartTypes, getProtocolChartTypes } from '../../types'
+import {
+	CHART_TYPES,
+	type ChartConfig,
+	getChainChartTypes,
+	getProtocolChartTypes,
+	type RWAOverviewChartBreakdown,
+	type RWAOverviewChartMetric,
+	type RWAOverviewChartView
+} from '../../types'
 import { AdvancedTvlChartTab } from './AdvancedTvlChartTab'
 import { BorrowedChartTab } from './BorrowedChartTab'
 import { CategoryCardsGrid } from './CategoryCardsGrid'
@@ -25,20 +33,14 @@ const CHAIN_CHART_TYPES = getChainChartTypes()
 
 interface UnifiedChartTabProps {
 	selectedChartTab: ChartTabType
-	selectedChain: string | null
-	selectedProtocol: string | null
 	selectedChartTypes: string[]
 	chainOptions: Array<{ value: string; label: string }>
 	protocolOptions: Array<{ value: string; label: string; logo?: string }>
-	availableChartTypes: string[]
-	chartTypesLoading: boolean
 	protocolsLoading: boolean
 	unifiedChartName: string
 	chartCreationMode: 'separate' | 'combined'
 	composerItems: ChartConfig[]
 	onChartTabChange: (tab: ChartTabType) => void
-	onChainChange: (option: any) => void
-	onProtocolChange: (option: any) => void
 	onChartTypesChange: (types: string[]) => void
 	onBulkChartTypeChange: (nextType: string) => void
 	onUnifiedChartNameChange: (name: string) => void
@@ -49,11 +51,7 @@ interface UnifiedChartTabProps {
 }
 
 interface UnifiedChartTabPropsExtended extends UnifiedChartTabProps {
-	selectedChains?: string[]
-	selectedProtocols?: string[]
 	selectedYieldPool?: { configID: string; name: string; project: string; chain: string } | null
-	onSelectedChainsChange?: (values: string[]) => void
-	onSelectedProtocolsChange?: (values: string[]) => void
 	onSelectedYieldPoolChange?: (pool: { configID: string; name: string; project: string; chain: string } | null) => void
 	selectedYieldChains?: string[]
 	selectedYieldProjects?: string[]
@@ -105,40 +103,34 @@ interface UnifiedChartTabPropsExtended extends UnifiedChartTabProps {
 	onSelectedUnlocksChartTypeChange?: (type: 'total' | 'schedule' | 'allocation' | 'locked-unlocked') => void
 	rwaMode?: 'overview' | 'asset'
 	selectedRwaChain?: string
-	selectedRwaMetric?: any
-	selectedRwaChartView?: any
-	selectedRwaBreakdown?: any
+	selectedRwaMetric?: RWAOverviewChartMetric
+	selectedRwaChartView?: RWAOverviewChartView
+	selectedRwaBreakdown?: RWAOverviewChartBreakdown
 	selectedRwaTreemapNestedBy?: string
 	selectedRwaAssetId?: string | null
 	selectedRwaAssetName?: string | null
-	selectedRwaAssetMetrics?: any[]
+	selectedRwaAssetMetrics?: RWAOverviewChartMetric[]
 	onRwaModeChange?: (mode: 'overview' | 'asset') => void
 	onSelectedRwaChainChange?: (chain: string) => void
-	onSelectedRwaMetricChange?: (metric: any) => void
-	onSelectedRwaChartViewChange?: (view: any) => void
-	onSelectedRwaBreakdownChange?: (breakdown: any) => void
+	onSelectedRwaMetricChange?: (metric: RWAOverviewChartMetric) => void
+	onSelectedRwaChartViewChange?: (view: RWAOverviewChartView) => void
+	onSelectedRwaBreakdownChange?: (breakdown: RWAOverviewChartBreakdown) => void
 	onSelectedRwaTreemapNestedByChange?: (nestedBy: string) => void
 	onSelectedRwaAssetIdChange?: (id: string | null) => void
 	onSelectedRwaAssetNameChange?: (name: string | null) => void
-	onSelectedRwaAssetMetricsChange?: (metrics: any[]) => void
+	onSelectedRwaAssetMetricsChange?: (metrics: RWAOverviewChartMetric[]) => void
 }
 
 export function UnifiedChartTab({
 	selectedChartTab,
-	selectedChain,
-	selectedProtocol,
 	selectedChartTypes,
 	chainOptions,
 	protocolOptions,
-	availableChartTypes: _availableChartTypes,
-	chartTypesLoading: _chartTypesLoading,
 	protocolsLoading,
 	unifiedChartName,
 	chartCreationMode,
 	composerItems,
 	onChartTabChange,
-	onChainChange: _onChainChange,
-	onProtocolChange: _onProtocolChange,
 	onChartTypesChange,
 	onBulkChartTypeChange,
 	onUnifiedChartNameChange,
@@ -146,11 +138,7 @@ export function UnifiedChartTab({
 	onComposerItemColorChange,
 	onAddToComposer,
 	onRemoveFromComposer,
-	selectedChains: _selectedChains = EMPTY_ARRAY,
-	selectedProtocols: _selectedProtocols = EMPTY_ARRAY,
 	selectedYieldPool = null,
-	onSelectedChainsChange: _onSelectedChainsChange,
-	onSelectedProtocolsChange: _onSelectedProtocolsChange,
 	onSelectedYieldPoolChange,
 	selectedYieldChains = EMPTY_ARRAY,
 	selectedYieldProjects = EMPTY_ARRAY,
@@ -321,44 +309,15 @@ export function UnifiedChartTab({
 		}
 	}, [selectedChartTypeSingle, composerItems, onRemoveFromComposer])
 
-	const _instantAvailableChartTypes = useMemo(() => {
-		let available: string[] = []
-		if (selectedChartTab === 'protocol' && selectedProtocol) {
-			const geckoId = protocols.find((p: any) => p.slug === selectedProtocol)?.geckoId
-			available = availableProtocolChartTypes(selectedProtocol, { hasGeckoId: !!geckoId })
-		} else if (selectedChartTab === 'chain' && selectedChain) {
-			const geckoId = chains.find((c: any) => c.name === selectedChain)?.gecko_id
-			available = availableChainChartTypes(selectedChain, { hasGeckoId: !!geckoId })
-		}
-
-		if (!available || available.length === 0) {
-			return []
-		}
-
-		const order = selectedChartTab === 'protocol' ? protocolChartTypes : chainChartTypes
-		const availableSet = new Set(available)
-		return order.filter((type) => availableSet.has(type))
-	}, [
-		selectedChartTab,
-		selectedProtocol,
-		selectedChain,
-		protocols,
-		chains,
-		availableProtocolChartTypes,
-		availableChainChartTypes,
-		protocolChartTypes,
-		chainChartTypes
-	])
-
 	const globalAvailableChartTypes = useMemo(() => {
 		const set = new Set<string>()
 		for (const c of chains) {
-			const geckoId = (c as any).gecko_id
+			const geckoId = c.gecko_id
 			for (const t of availableChainChartTypes(c.name, { hasGeckoId: !!geckoId })) set.add(t)
 		}
 		for (const p of protocols) {
 			if (!p.slug) continue
-			const geckoId = (p as any).geckoId
+			const geckoId = p.geckoId
 			for (const t of availableProtocolChartTypes(p.slug, { hasGeckoId: !!geckoId })) set.add(t)
 		}
 		return Array.from(set)
@@ -366,7 +325,7 @@ export function UnifiedChartTab({
 
 	const chainHasGeckoIdByName = useMemo(() => {
 		const map = new Map<string, boolean>()
-		for (const chain of chains as any[]) {
+		for (const chain of chains) {
 			map.set(chain.name, !!chain.gecko_id)
 		}
 		return map
@@ -374,7 +333,7 @@ export function UnifiedChartTab({
 
 	const protocolHasGeckoIdBySlug = useMemo(() => {
 		const map = new Map<string, boolean>()
-		for (const protocol of protocols as any[]) {
+		for (const protocol of protocols) {
 			if (!protocol.slug) continue
 			map.set(protocol.slug, !!protocol.geckoId)
 		}
@@ -603,7 +562,7 @@ export function UnifiedChartTab({
 						onSelectedAdvancedTvlProtocolChange={onSelectedAdvancedTvlProtocolChange || (() => {})}
 						onSelectedAdvancedTvlProtocolNameChange={onSelectedAdvancedTvlProtocolNameChange || (() => {})}
 						onSelectedAdvancedTvlChartTypeChange={onSelectedAdvancedTvlChartTypeChange || (() => {})}
-						protocolOptions={protocolOptions as any}
+						protocolOptions={protocolOptions}
 						protocolsLoading={protocolsLoading}
 					/>
 				</div>
@@ -632,7 +591,7 @@ export function UnifiedChartTab({
 						onSelectedBorrowedProtocolChange={onSelectedBorrowedProtocolChange || (() => {})}
 						onSelectedBorrowedProtocolNameChange={onSelectedBorrowedProtocolNameChange || (() => {})}
 						onSelectedBorrowedChartTypeChange={onSelectedBorrowedChartTypeChange || (() => {})}
-						protocolOptions={protocolOptions as any}
+						protocolOptions={protocolOptions}
 						protocolsLoading={protocolsLoading}
 					/>
 				</div>
@@ -659,7 +618,7 @@ export function UnifiedChartTab({
 						selectedIncomeStatementProtocolName={selectedIncomeStatementProtocolName}
 						onSelectedIncomeStatementProtocolChange={onSelectedIncomeStatementProtocolChange || (() => {})}
 						onSelectedIncomeStatementProtocolNameChange={onSelectedIncomeStatementProtocolNameChange || (() => {})}
-						protocolOptions={protocolOptions as any}
+						protocolOptions={protocolOptions}
 						protocolsLoading={protocolsLoading}
 					/>
 				</div>
@@ -688,7 +647,7 @@ export function UnifiedChartTab({
 						onSelectedUnlocksProtocolChange={onSelectedUnlocksProtocolChange || (() => {})}
 						onSelectedUnlocksProtocolNameChange={onSelectedUnlocksProtocolNameChange || (() => {})}
 						onSelectedUnlocksChartTypeChange={onSelectedUnlocksChartTypeChange || (() => {})}
-						protocolOptions={protocolOptions as any}
+						protocolOptions={protocolOptions}
 						protocolsLoading={protocolsLoading}
 					/>
 				</div>

@@ -4,8 +4,8 @@ import { useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
-import type { TimePeriod } from '../ProDashboardAPIContext'
-import { type Dashboard, DashboardError, dashboardAPI, dashboardUrlKey } from '../services/DashboardAPI'
+import type { Dashboard, TimePeriod } from '../dashboardTypes'
+import { DashboardError, dashboardAPI, dashboardUrlKey } from '../services/DashboardAPI'
 import type { DashboardItemConfig } from '../types'
 
 const EMPTY_DASHBOARDS: Dashboard[] = []

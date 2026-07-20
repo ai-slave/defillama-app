@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useContext } from 'react'
 import { StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchStablecoinsTableData } from '~/containers/ProDashboard/server/stablecoinFetchers'
+import { getProStablecoinsTableQueryKey } from '~/containers/ProDashboard/tableQueryKeys'
 
 export function useStablecoinsData(chain: string) {
 	const streamDone = useContext(StreamDoneContext)
 	return useQuery({
-		queryKey: ['pro-dashboard', 'stablecoins-overview', chain],
+		queryKey: getProStablecoinsTableQueryKey(chain),
 		queryFn: () => fetchStablecoinsTableData(chain),
 		enabled: streamDone,
 		staleTime: 5 * 60 * 1000, // 5 minutes

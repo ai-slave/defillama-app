@@ -5,7 +5,9 @@ import {
 	buildStablecoinBreakdownPayloadPresentation,
 	buildStablecoinChartSummary,
 	buildDominancePayload,
+	buildStablecoinOverviewChartData,
 	buildStablecoinOverviewPayload,
+	buildStablecoinOverviewPayloadFromChartData,
 	buildTokenInflowsPayload,
 	buildTotalMcapPayload,
 	buildUsdInflowsPayload,
@@ -116,6 +118,48 @@ describe('stablecoin chart series builders', () => {
 			['1660000000', 25],
 			['1660086400', -5]
 		])
+	})
+
+	it('reuses collected overview rows when the visible stablecoin selection changes', () => {
+		let reads = 0
+		const point = (date: number, value: number) => ({
+			date,
+			get mcap() {
+				reads++
+				return { peggedUSD: value }
+			}
+		})
+		const selectionParams = {
+			chartDataByAssetOrChain: [
+				[point(1660000000, 100), point(1660086400, 125)],
+				[point(1660000000, 50), point(1660086400, 75)]
+			],
+			assetsOrChainsList: ['USDT', 'USDC'],
+			filteredIndexes: [0, 1],
+			issuanceType: 'mcap',
+			selectedChain: 'All'
+		}
+		const topToken = { symbol: 'USDT', mcap: 125 }
+		const chartData = buildStablecoinOverviewChartData(selectionParams, 'tokenMcaps')
+
+		expect(reads).toBe(4)
+		expect(
+			buildStablecoinOverviewPayloadFromChartData(selectionParams, 'tokenMcaps', topToken, chartData, {
+				selectedNames: ['USDT']
+			}).dataset.source
+		).toEqual([
+			{ timestamp: 1660000000000, USDT: 100, Others: 50 },
+			{ timestamp: 1660086400000, USDT: 125, Others: 75 }
+		])
+		expect(
+			buildStablecoinOverviewPayloadFromChartData(selectionParams, 'tokenMcaps', topToken, chartData, {
+				selectedNames: ['USDC']
+			}).dataset.source
+		).toEqual([
+			{ timestamp: 1660000000000, USDC: 50, Others: 100 },
+			{ timestamp: 1660086400000, USDC: 75, Others: 125 }
+		])
+		expect(reads).toBe(4)
 	})
 
 	it('keeps total-only collection scoped to total output', () => {

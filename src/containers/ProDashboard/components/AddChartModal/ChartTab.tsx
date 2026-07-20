@@ -1,33 +1,25 @@
 import { Icon } from '~/ui/Icon'
+import type { CustomTimePeriod, TimePeriod } from '../../dashboardTypes'
+import type { ChartConfig, RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
 import { ChartBuilderTab } from './ChartBuilderTab'
-import type { ChartModeType, ChartTabType } from './types'
+import type { ChartBuilderConfig, ChartModeType, ChartTabType } from './types'
 import { UnifiedChartTab } from './UnifiedChartTab'
 
 interface ChartTabProps {
 	chartMode: ChartModeType
 	onChartModeChange: (mode: ChartModeType) => void
 	selectedChartTab: ChartTabType
-	selectedChain: string | null
-	selectedProtocol: string | null
 	selectedChartTypes: string[]
-	selectedChains: string[]
-	selectedProtocols: string[]
 	selectedYieldPool?: { configID: string; name: string; project: string; chain: string } | null
 	chainOptions: Array<{ value: string; label: string }>
 	protocolOptions: Array<{ value: string; label: string; logo?: string }>
-	availableChartTypes: string[]
-	chartTypesLoading: boolean
 	protocolsLoading: boolean
 	unifiedChartName: string
 	chartCreationMode: 'separate' | 'combined'
-	composerItems: any[]
+	composerItems: ChartConfig[]
 	onChartTabChange: (tab: ChartTabType) => void
-	onChainChange: (option: any) => void
-	onProtocolChange: (option: any) => void
 	onChartTypesChange: (types: string[]) => void
 	onBulkChartTypeChange: (nextType: string) => void
-	onSelectedChainsChange?: (chains: string[]) => void
-	onSelectedProtocolsChange?: (protocols: string[]) => void
 	onSelectedYieldPoolChange?: (pool: { configID: string; name: string; project: string; chain: string } | null) => void
 	selectedYieldChains?: string[]
 	selectedYieldProjects?: string[]
@@ -79,33 +71,33 @@ interface ChartTabProps {
 	onSelectedUnlocksChartTypeChange?: (type: 'total' | 'schedule' | 'allocation' | 'locked-unlocked') => void
 	rwaMode?: 'overview' | 'asset'
 	selectedRwaChain?: string
-	selectedRwaMetric?: any
-	selectedRwaChartView?: any
-	selectedRwaBreakdown?: any
+	selectedRwaMetric?: RWAOverviewChartMetric
+	selectedRwaChartView?: RWAOverviewChartView
+	selectedRwaBreakdown?: RWAOverviewChartBreakdown
 	selectedRwaTreemapNestedBy?: string
 	selectedRwaAssetId?: string | null
 	selectedRwaAssetName?: string | null
-	selectedRwaAssetMetrics?: any[]
+	selectedRwaAssetMetrics?: RWAOverviewChartMetric[]
 	onRwaModeChange?: (mode: 'overview' | 'asset') => void
 	onSelectedRwaChainChange?: (chain: string) => void
-	onSelectedRwaMetricChange?: (metric: any) => void
-	onSelectedRwaChartViewChange?: (view: any) => void
-	onSelectedRwaBreakdownChange?: (breakdown: any) => void
+	onSelectedRwaMetricChange?: (metric: RWAOverviewChartMetric) => void
+	onSelectedRwaChartViewChange?: (view: RWAOverviewChartView) => void
+	onSelectedRwaBreakdownChange?: (breakdown: RWAOverviewChartBreakdown) => void
 	onSelectedRwaTreemapNestedByChange?: (nestedBy: string) => void
 	onSelectedRwaAssetIdChange?: (id: string | null) => void
 	onSelectedRwaAssetNameChange?: (name: string | null) => void
-	onSelectedRwaAssetMetricsChange?: (metrics: any[]) => void
+	onSelectedRwaAssetMetricsChange?: (metrics: RWAOverviewChartMetric[]) => void
 	onUnifiedChartNameChange: (name: string) => void
 	onChartCreationModeChange: (mode: 'separate' | 'combined') => void
 	onComposerItemColorChange: (id: string, color: string) => void
-	onAddToComposer: (types?: string[]) => void
+	onAddToComposer: (types?: string[], options?: { entity?: string; mode?: 'chain' | 'protocol' }) => void
 	onRemoveFromComposer: (id: string) => void
-	chartBuilder: any
+	chartBuilder: ChartBuilderConfig
 	chartBuilderName: string
-	onChartBuilderChange: (updates: any) => void
+	onChartBuilderChange: (updates: Partial<ChartBuilderConfig>) => void
 	onChartBuilderNameChange: (name: string) => void
-	timePeriod: any
-	customTimePeriod?: any
+	timePeriod: TimePeriod
+	customTimePeriod?: CustomTimePeriod | null
 }
 
 export function ChartTab(props: ChartTabProps) {
@@ -169,27 +161,17 @@ export function ChartTab(props: ChartTabProps) {
 			) : (
 				<UnifiedChartTab
 					selectedChartTab={props.selectedChartTab}
-					selectedChain={props.selectedChain}
-					selectedProtocol={props.selectedProtocol}
 					selectedChartTypes={props.selectedChartTypes}
-					selectedChains={props.selectedChains}
-					selectedProtocols={props.selectedProtocols}
 					selectedYieldPool={props.selectedYieldPool}
 					chainOptions={props.chainOptions}
 					protocolOptions={props.protocolOptions}
-					availableChartTypes={props.availableChartTypes}
-					chartTypesLoading={props.chartTypesLoading}
 					protocolsLoading={props.protocolsLoading}
 					unifiedChartName={props.unifiedChartName}
 					chartCreationMode={props.chartCreationMode}
 					composerItems={props.composerItems}
 					onChartTabChange={props.onChartTabChange}
-					onChainChange={props.onChainChange}
-					onProtocolChange={props.onProtocolChange}
 					onChartTypesChange={props.onChartTypesChange}
 					onBulkChartTypeChange={props.onBulkChartTypeChange}
-					onSelectedChainsChange={props.onSelectedChainsChange}
-					onSelectedProtocolsChange={props.onSelectedProtocolsChange}
 					onSelectedYieldPoolChange={props.onSelectedYieldPoolChange}
 					selectedYieldChains={props.selectedYieldChains}
 					selectedYieldProjects={props.selectedYieldProjects}

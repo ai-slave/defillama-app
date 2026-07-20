@@ -18,6 +18,7 @@ import { useContext } from 'react'
 import { useTableSearch } from '~/components/Table/utils'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchRWAAssetsListViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { getProRwaChainAssetsTableQueryKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { fetchRWAActiveTVLs } from '~/containers/RWA/api'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
@@ -149,7 +150,7 @@ function useRWAChainAssetsTableData(chain: string) {
 	const streamDone = useContext(StreamDoneContext)
 
 	return useQuery({
-		queryKey: ['pro-dashboard', 'rwa-chain-assets-table', chain],
+		queryKey: getProRwaChainAssetsTableQueryKey(chain),
 		enabled: streamDone && !!chain,
 		queryFn: async () => {
 			if (authToken) {

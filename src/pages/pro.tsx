@@ -4,7 +4,6 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
-import { FEATURES_SERVER } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { AuthorProfileStrip } from '~/containers/ProDashboard/components/AuthorProfileStrip'
 import type { ComparisonPreset } from '~/containers/ProDashboard/components/ComparisonWizard/types'
@@ -15,11 +14,12 @@ import { FollowingShelves } from '~/containers/ProDashboard/components/Following
 import { LikedDashboards } from '~/containers/ProDashboard/components/LikedDashboards'
 import { MyProfileTab } from '~/containers/ProDashboard/components/MyProfileTab'
 import { ProDashboardLoader } from '~/containers/ProDashboard/components/ProDashboardLoader'
+import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'
 import {
 	DISCOVERY_CATEGORIES,
 	type DiscoveryCategoryResponse,
 	type DiscoveryCategoriesInitialData
-} from '~/containers/ProDashboard/hooks/useDiscoveryCategories'
+} from '~/containers/ProDashboard/discoveryCategories'
 import { useFreeTierStatus } from '~/containers/ProDashboard/hooks/useFreeTierStatus'
 import { useMyDashboards } from '~/containers/ProDashboard/hooks/useMyDashboards'
 import {
@@ -28,7 +28,7 @@ import {
 	useProDashboardUI
 } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
-import type { Dashboard } from '~/containers/ProDashboard/services/DashboardAPI'
+import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
@@ -118,20 +118,19 @@ async function fetchDiscoveryCategory(
 ): Promise<DiscoveryCategoryResponse> {
 	const controller = new AbortController()
 	const timeout = setTimeout(() => controller.abort(), DISCOVERY_FETCH_TIMEOUT_MS)
-	const params = new URLSearchParams({
-		visibility: 'public',
-		sortBy: category.sortBy,
-		page: '1',
-		limit: String(category.limit)
-	})
-	if (category.timeFrame) params.set('timeFrame', category.timeFrame)
 
 	try {
-		const response = await fetch(`${FEATURES_SERVER}/dashboards/search?${params.toString()}`, {
-			signal: controller.signal
-		})
-		if (!response.ok) throw new Error(`features-server responded with ${response.status}`)
-		return compactDiscoveryResponse((await response.json()) as DiscoveryCategoryResponse)
+		const response = await dashboardAPI.searchDashboards(
+			{
+				visibility: 'public',
+				sortBy: category.sortBy,
+				timeFrame: category.timeFrame,
+				page: 1,
+				limit: category.limit
+			},
+			(url, options) => fetch(url, { ...options, signal: controller.signal })
+		)
+		return compactDiscoveryResponse(response)
 	} finally {
 		clearTimeout(timeout)
 	}

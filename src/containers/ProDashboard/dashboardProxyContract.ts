@@ -1,0 +1,72 @@
+import type {
+	IEquitiesCompanyApiItem,
+	IEquitiesFilingApiItem,
+	IEquitiesStatementsResponse
+} from '~/containers/Equities/api.types'
+import type { StablecoinsChartCacheValue } from '~/containers/ProDashboard/server/stablecoinFetchers'
+import type {
+	IFetchedRWAProject,
+	IRWAAssetData,
+	IRWABreakdownChartResponse,
+	IRWAStatsResponse,
+	RWAChartMetricKey,
+	RWAOverviewBreakdownRequest
+} from '~/containers/RWA/api.types'
+import type { StablecoinDetailResponse, StablecoinsListResponse } from '~/containers/Stablecoins/api.types'
+import type { RawProtocolTokenUsageEntry } from '~/containers/TokenUsage/api.types'
+import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
+import type { ProDashboardChartRequest } from './dataContracts'
+
+interface ProDashboardProxyContract {
+	chart: { params: { chart: ProDashboardChartRequest }; response: [number, number][] }
+	stablecoins: { params: { chain: string }; response: StablecoinsChartCacheValue }
+	yields: { params: { poolConfigId: string }; response: PoolHistory }
+	yieldsLendBorrow: { params: { poolConfigId: string }; response: BorrowMarketHistory }
+	tokenUsage: { params: { symbol: string }; response: RawProtocolTokenUsageEntry[] }
+	rwaBreakdown: {
+		params: {
+			breakdown: RWAOverviewBreakdownRequest['breakdown']
+			metric: RWAChartMetricKey
+			chain?: string
+		}
+		response: IRWABreakdownChartResponse | null
+	}
+	rwaAssetChart: { params: { assetId: string }; response: IRWAAssetData['chartDataset'] }
+	rwaAssetsList: { params: Record<string, never>; response: IFetchedRWAProject[] }
+	rwaStats: { params: Record<string, never>; response: IRWAStatsResponse }
+	equitiesCompanies: { params: Record<string, never>; response: IEquitiesCompanyApiItem[] }
+	equitiesStatements: { params: { ticker: string; country: string }; response: IEquitiesStatementsResponse }
+	equitiesFilings: { params: { ticker: string; country: string }; response: IEquitiesFilingApiItem[] }
+	stablecoinsList: { params: Record<string, never>; response: StablecoinsListResponse }
+	stablecoinAsset: { params: { slug: string }; response: StablecoinDetailResponse | null }
+}
+
+export type ProDashboardProxyType = keyof ProDashboardProxyContract
+export type ProDashboardProxyParams<TType extends ProDashboardProxyType> = ProDashboardProxyContract[TType]['params']
+export type ProDashboardProxyResponse<TType extends ProDashboardProxyType> =
+	ProDashboardProxyContract[TType]['response']
+export type ProDashboardProxyResponseValue = ProDashboardProxyContract[ProDashboardProxyType]['response']
+export type ProDashboardProxyRequest = {
+	[TType in ProDashboardProxyType]: { type: TType; params: ProDashboardProxyParams<TType> }
+}[ProDashboardProxyType]
+
+const PRO_DASHBOARD_PROXY_TYPES: ReadonlySet<string> = new Set<ProDashboardProxyType>([
+	'chart',
+	'stablecoins',
+	'yields',
+	'yieldsLendBorrow',
+	'tokenUsage',
+	'rwaBreakdown',
+	'rwaAssetChart',
+	'rwaAssetsList',
+	'rwaStats',
+	'equitiesCompanies',
+	'equitiesStatements',
+	'equitiesFilings',
+	'stablecoinsList',
+	'stablecoinAsset'
+])
+
+export function isProDashboardProxyType(value: unknown): value is ProDashboardProxyType {
+	return typeof value === 'string' && PRO_DASHBOARD_PROXY_TYPES.has(value)
+}

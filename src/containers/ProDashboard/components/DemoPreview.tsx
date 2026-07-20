@@ -7,12 +7,11 @@ import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/
 import { Icon } from '~/ui/Icon'
 import type { ChartConfig, MultiChartConfig, TextConfig } from '../types'
 import { CHART_TYPES } from '../types'
+import { buildMultiChartSeriesView, type MultiChartInputSeries } from './multiChartSeries'
 import { ProtocolsByChainTable } from './ProTable'
 import { TextCard } from './TextCard'
 
 const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
-
-const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const DEMO_CHAINS = ['Ethereum']
 
@@ -115,27 +114,32 @@ const formatDemoValue = (value: number) => {
 }
 
 const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
-	const series = React.useMemo(
-		() =>
-			multi.items.map((item, index) => {
-				const fakeData = generateFakeChartData(
-					30000000 + index * 10000000, // Different base values for each series
-					0.08
-				)
+	const chartView = React.useMemo(() => {
+		const series: MultiChartInputSeries[] = multi.items.map((item, index) => {
+			const fakeData = generateFakeChartData(
+				30000000 + index * 10000000, // Different base values for each series
+				0.08
+			)
 
-				const data: [number, number][] = fakeData.map(({ timestamp, Value }) => [Math.floor(timestamp / 1000), Value])
+			const data: [number, number][] = fakeData.map(({ timestamp, Value }) => [Math.floor(timestamp / 1000), Value])
 
-				const chartType = CHART_TYPES[item.type] || { title: item.type, chartType: 'line' }
+			const chartType = CHART_TYPES[item.type] || { title: item.type, chartType: 'line' }
 
-				return {
-					name: `${item.chain} ${chartType.title}`,
-					type: (chartType.chartType === 'bar' ? 'bar' : 'line') as 'bar' | 'line',
-					data,
-					color: DEMO_CHART_COLORS[index] || DEMO_CHART_COLORS[0]
-				}
-			}),
-		[multi.items]
-	)
+			return {
+				name: `${item.chain} ${chartType.title}`,
+				baseType: chartType.chartType as MultiChartInputSeries['baseType'],
+				data,
+				color: DEMO_CHART_COLORS[index] || DEMO_CHART_COLORS[0],
+				metricType: item.type
+			}
+		})
+		return buildMultiChartSeriesView({
+			series,
+			showCumulative: false,
+			showPercentage: false,
+			stackSeries: false
+		})
+	}, [multi.items])
 
 	const chartOptions = React.useMemo(
 		() => ({
@@ -144,15 +148,15 @@ const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 				min: undefined,
 				axisLabel: { formatter: formatDemoValue }
 			},
-			grid: chartGrid({ top: series.length > 5 ? 80 : CHART_LEGEND_RESERVE }),
+			grid: chartGrid({ top: chartView.charts.length > 5 ? 80 : CHART_LEGEND_RESERVE }),
 			legend: {
 				top: CHART_INSET,
 				type: 'scroll',
 				pageButtonPosition: 'end',
-				height: series.length > 5 ? 80 : 40
+				height: chartView.charts.length > 5 ? 80 : 40
 			}
 		}),
-		[series.length]
+		[chartView.charts.length]
 	)
 
 	return (
@@ -160,7 +164,15 @@ const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 			<h2 className="p-1 text-base font-semibold md:p-3">{multi.name}</h2>
 			<div className="flex-1">
 				<React.Suspense fallback={<></>}>
-					<MultiSeriesChart series={series} valueSymbol="$" hideDataZoom={true} chartOptions={chartOptions} />
+					<MultiSeriesChart2
+						dataset={chartView.dataset}
+						charts={chartView.charts}
+						valueSymbol="$"
+						hideDataZoom
+						hideDefaultLegend={false}
+						exportButtons="hidden"
+						chartOptions={chartOptions}
+					/>
 				</React.Suspense>
 			</div>
 		</div>

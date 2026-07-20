@@ -1,90 +1,31 @@
 import { useQuery } from '@tanstack/react-query'
-import { useContext } from 'react'
+import { useContext, useMemo } from 'react'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchTokenUsageViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { getProTokenUsageQueryKey, normalizeProTokenSymbols } from '~/containers/ProDashboard/tableQueryKeys'
+import { aggregateProtocolTokenUsage } from '~/containers/TokenUsage/aggregate'
 import { fetchProtocolsByTokenClient } from '~/containers/TokenUsage/api'
+import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 
-export interface TokenUsageData {
-	name: string
-	category: string
-	amountUsd: number
-	amountUsdByChain?: Record<string, number>
-	logo?: string
-	misrepresentedTokens?: boolean
-	tokens?: Record<string, number>
-}
+export type TokenUsageData = ProtocolTokenUsageData
 
 export function useTokenUsageData(tokenSymbols: string[], includeCex: boolean = false) {
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
+	const normalizedTokenSymbols = useMemo(() => normalizeProTokenSymbols(tokenSymbols), [tokenSymbols])
 	const query = useQuery<TokenUsageData[]>({
-		queryKey: [
-			'pro-dashboard',
-			'token-usage',
-			tokenSymbols
-				.filter((t) => t != null)
-				.map((t) => t.toUpperCase())
-				.sort(),
-			includeCex
-		],
+		queryKey: getProTokenUsageQueryKey(normalizedTokenSymbols, includeCex),
 		queryFn: async () => {
-			if (!tokenSymbols || tokenSymbols.length === 0) {
-				return []
-			}
+			const promises = normalizedTokenSymbols.map(async (symbol) => {
+				const data = authToken
+					? await fetchTokenUsageViaProxy(symbol, authToken)
+					: await fetchProtocolsByTokenClient(symbol)
+				return { symbol, data }
+			})
 
-			try {
-				const promises = tokenSymbols.map(async (symbol) => {
-					const data = authToken
-						? await fetchTokenUsageViaProxy(symbol, authToken)
-						: await fetchProtocolsByTokenClient(symbol)
-					return { symbol, data }
-				})
-
-				const results = await Promise.all(promises)
-
-				const protocolMap = new Map<string, TokenUsageData>()
-
-				for (const { symbol, data } of results) {
-					if (data) {
-						for (const p of data) {
-							const key = p.name
-
-							if (protocolMap.has(key)) {
-								const existing = protocolMap.get(key)!
-								existing.tokens = existing.tokens || {}
-								existing.tokens[symbol] = Object.values(p.amountUsd as Record<string, number>).reduce(
-									(s: number, a: number) => s + a,
-									0
-								)
-								existing.amountUsd += existing.tokens[symbol]
-							} else {
-								const tokenAmount = Object.values(p.amountUsd as Record<string, number>).reduce(
-									(s: number, a: number) => s + a,
-									0
-								)
-								protocolMap.set(key, {
-									...p,
-									amountUsdByChain: p.amountUsd,
-									amountUsd: tokenAmount,
-									tokens: { [symbol]: tokenAmount }
-								})
-							}
-						}
-					}
-				}
-
-				const processed = Array.from(protocolMap.values())
-
-				return processed.filter(
-					(protocol: TokenUsageData) =>
-						!protocol.misrepresentedTokens && (protocol.category?.toLowerCase() === 'cex' ? includeCex : true)
-				)
-			} catch (error) {
-				console.log('Error fetching token usage data:', error)
-				throw error
-			}
+			return aggregateProtocolTokenUsage(await Promise.all(promises), includeCex)
 		},
-		enabled: streamDone && tokenSymbols.length > 0,
+		enabled: streamDone && normalizedTokenSymbols.length > 0,
 		staleTime: Infinity,
 		retry: 1
 	})

@@ -513,6 +513,50 @@ describe('chains by adapter page data', () => {
 		).rejects.toThrow('backend contract failed')
 	})
 
+	it('uses protocol revenue methodology and falls back to revenue methodology', async () => {
+		fetchJsonMock.mockImplementation((url: string) => {
+			const parsedUrl = new URL(url)
+			const dataType = parsedUrl.searchParams.get('dataType')
+
+			if (parsedUrl.pathname.includes('/chart/')) return Promise.resolve([])
+			if (dataType === ADAPTER_DATA_TYPES.DAILY_BRIBES_REVENUE || dataType === ADAPTER_DATA_TYPES.DAILY_TOKEN_TAXES) {
+				return Promise.resolve(adapterMetricsResponse({ protocols: [] }))
+			}
+
+			return Promise.resolve(
+				adapterMetricsResponse({
+					protocols: [
+						adapterProtocolRow({
+							name: 'Protocol Revenue Method',
+							displayName: 'Protocol Revenue Method',
+							methodology: {
+								ProtocolRevenue: 'Revenue retained by the protocol.',
+								Revenue: 'All revenue.'
+							}
+						}),
+						adapterProtocolRow({
+							name: 'Revenue Fallback Method',
+							displayName: 'Revenue Fallback Method',
+							methodology: { Revenue: 'Fallback revenue.' }
+						})
+					]
+				})
+			)
+		})
+
+		const data = await getAdapterByChainPageData({
+			adapterType: ADAPTER_TYPES.FEES,
+			chain: 'Base',
+			dataType: ADAPTER_DATA_TYPES.DAILY_PROTOCOL_REVENUE,
+			route: 'protocol-revenue',
+			metricName: 'Protocol Revenue'
+		})
+		const protocolsByName = new Map(data?.protocols.map((protocol) => [protocol.name, protocol]))
+
+		expect(protocolsByName.get('Protocol Revenue Method')?.methodology).toBe('Revenue retained by the protocol')
+		expect(protocolsByName.get('Revenue Fallback Method')?.methodology).toBe('Fallback revenue')
+	})
+
 	it('builds bribes and token-tax only protocol rows without changing base totals', async () => {
 		fetchProtocolsMock.mockResolvedValue({
 			protocols: [{ name: 'Core Fees', mcap: 12_000 }],

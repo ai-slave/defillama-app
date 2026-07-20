@@ -1,29 +1,32 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, type ComponentProps } from 'react'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
 import { fetchChainsCategories } from '~/containers/Chains/api'
-import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/ProDashboardAPIContext'
+import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
 import { filterDataByTimePeriod } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
+import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { Icon } from '~/ui/Icon'
 import { useAppMetadata } from '../../AppMetadataContext'
+import { resolveChartBuilderFilterMode } from '../../chartBuilderQueryKey'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import ProtocolChartBuilderData from '../../services/ProtocolChartBuilderData'
 import { getItemIconUrl } from '../../utils'
 import { buildProTreemapData } from '../../utils/treemap'
 import { AriakitMultiSelect } from '../AriakitMultiSelect'
-import { AriakitSelect } from '../AriakitSelect'
+import { AriakitSelect, type SelectOption } from '../AriakitSelect'
 import { AriakitVirtualizedMultiSelect } from '../AriakitVirtualizedMultiSelect'
 import { AriakitVirtualizedSelect } from '../AriakitVirtualizedSelect'
+import { buildChartBuilderSeriesView, isChartBuilderSnapshotMetric } from '../chartBuilderSeries'
 import { createChartBuilderTooltipFormatter } from '../chartBuilderTooltip'
 import type { ChartBuilderConfig } from './types'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
 const TreeMapBuilderChart = lazy(() => import('~/components/ECharts/TreeMapBuilderChart'))
 
-const EMPTY_PROTOCOLS: any[] = []
+const EMPTY_PROTOCOLS: ProtocolLite[] = []
 const EMPTY_CATEGORIES: string[] = []
 const EMPTY_SELECT_OPTIONS: Array<{ value: string; label: string }> = []
 
@@ -63,14 +66,18 @@ const METRIC_OPTIONS = [
 	{ value: 'chain-revenue', label: 'Chain Revenue (Chains only)' }
 ]
 
-const CHART_TYPE_OPTIONS = [
+const CHART_TYPE_OPTIONS: Array<{
+	value: ChartBuilderConfig['chartType']
+	label: string
+	icon: ComponentProps<typeof Icon>['name']
+}> = [
 	{ value: 'stackedBar', label: 'Bar', icon: 'bar-chart-2' },
 	{ value: 'stackedArea', label: 'Area', icon: 'trending-up' },
 	{ value: 'line', label: 'Line', icon: 'activity' },
 	{ value: 'treemap', label: 'Tree Map', icon: 'layout-grid' }
 ]
 
-const DISPLAY_OPTIONS = [
+const DISPLAY_OPTIONS: Array<{ value: ChartBuilderConfig['displayAs']; label: string }> = [
 	{ value: 'timeSeries', label: 'Time Series' },
 	{ value: 'percentage', label: 'Percentage' }
 ]
@@ -87,7 +94,7 @@ const LIMIT_OPTIONS = [
 	{ value: '20', label: 'Top 20' }
 ]
 
-const MODE_OPTIONS = [
+const MODE_OPTIONS: Array<{ value: ChartBuilderConfig['mode']; label: string }> = [
 	{ value: 'chains', label: 'Group by Protocol' }, // group by protocol filter by chains
 	{ value: 'protocol', label: 'Group by Chains' } // group by chains filter by protocol
 ]
@@ -96,12 +103,6 @@ const FILTER_MODE_OPTIONS = [
 	{ value: 'include', label: 'Include' },
 	{ value: 'exclude', label: 'Exclude' }
 ]
-
-const resolveFilterMode = (value?: 'include' | 'exclude', fallback?: 'include' | 'exclude') => {
-	if (value === 'include' || value === 'exclude') return value
-	if (fallback === 'include' || fallback === 'exclude') return fallback
-	return 'include'
-}
 
 const FilterModeToggle = ({
 	value,
@@ -163,7 +164,7 @@ export function ChartBuilderTab({
 	const categoryOptions = useMemo(() => {
 		if (!protocols) return EMPTY_SELECT_OPTIONS
 		const categoriesSet = new Set<string>()
-		for (const protocol of protocols as any[]) {
+		for (const protocol of protocols) {
 			if (protocol.category) {
 				categoriesSet.add(protocol.category)
 			}
@@ -190,10 +191,16 @@ export function ChartBuilderTab({
 		)
 	}, [chartBuilder.mode, chartBuilder.metric])
 
-	const chainFilterMode = resolveFilterMode(chartBuilder.chainFilterMode, chartBuilder.filterMode)
-	const categoryFilterMode = resolveFilterMode(chartBuilder.categoryFilterMode, chartBuilder.filterMode)
-	const chainCategoryFilterMode = resolveFilterMode(chartBuilder.chainCategoryFilterMode, chartBuilder.filterMode)
-	const protocolCategoryFilterMode = resolveFilterMode(chartBuilder.protocolCategoryFilterMode, chartBuilder.filterMode)
+	const chainFilterMode = resolveChartBuilderFilterMode(chartBuilder.chainFilterMode, chartBuilder.filterMode)
+	const categoryFilterMode = resolveChartBuilderFilterMode(chartBuilder.categoryFilterMode, chartBuilder.filterMode)
+	const chainCategoryFilterMode = resolveChartBuilderFilterMode(
+		chartBuilder.chainCategoryFilterMode,
+		chartBuilder.filterMode
+	)
+	const protocolCategoryFilterMode = resolveChartBuilderFilterMode(
+		chartBuilder.protocolCategoryFilterMode,
+		chartBuilder.filterMode
+	)
 
 	const { data: previewData, isLoading: previewLoading } = useQuery({
 		queryKey: [
@@ -233,14 +240,15 @@ export function ChartBuilderTab({
 					protocolCategoryFilterMode
 				)
 
-				if (data && data.series.length > 0) {
-					data.series = data.series.map((serie) => ({
-						...serie,
-						data: filterDataByTimePeriod(serie.data, timePeriod, customTimePeriod)
-					}))
-				}
-
-				return data
+				return data?.series.length
+					? {
+							...data,
+							series: data.series.map((serie) => ({
+								...serie,
+								data: filterDataByTimePeriod(serie.data, timePeriod, customTimePeriod)
+							}))
+						}
+					: data
 			}
 
 			if (PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS.has(chartBuilder.metric)) {
@@ -269,14 +277,15 @@ export function ChartBuilderTab({
 				categoryFilterMode
 			)
 
-			if (data && data.series.length > 0) {
-				data.series = data.series.map((serie) => ({
-					...serie,
-					data: filterDataByTimePeriod(serie.data, timePeriod, customTimePeriod)
-				}))
-			}
-
-			return data
+			return data?.series.length
+				? {
+						...data,
+						series: data.series.map((serie) => ({
+							...serie,
+							data: filterDataByTimePeriod(serie.data, timePeriod, customTimePeriod)
+						}))
+					}
+				: data
 		},
 		enabled: !!chartBuilder.metric,
 		staleTime: 5 * 60 * 1000,
@@ -329,14 +338,26 @@ export function ChartBuilderTab({
 	const isProtocolUnsupportedMetric = chartBuilder.metric
 		? PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS.has(chartBuilder.metric)
 		: false
-	const isTvlMetric = chartBuilder.metric === 'tvl' || chartBuilder.metric === 'stablecoins'
+	const isSnapshotMetric = isChartBuilderSnapshotMetric(chartBuilder.metric)
 	const treemapValue = chartBuilder.treemapValue || 'latest'
-	const treemapMode = !isTvlMetric ? treemapValue : 'latest'
+	const treemapMode = !isSnapshotMetric ? treemapValue : 'latest'
 
 	const treemapData = useMemo(() => {
 		if (chartBuilder.chartType !== 'treemap') return []
 		return buildProTreemapData(visibleSeries, treemapMode, resolveSeriesColor)
 	}, [visibleSeries, resolveSeriesColor, treemapMode, chartBuilder.chartType])
+
+	const previewChart = useMemo(
+		() =>
+			buildChartBuilderSeriesView({
+				series: chartBuilder.chartType === 'treemap' ? [] : visibleSeries,
+				useLastValue: isSnapshotMetric,
+				displayAs: chartBuilder.displayAs,
+				chartType: chartBuilder.chartType === 'treemap' ? 'line' : chartBuilder.chartType,
+				resolveColor: resolveSeriesColor
+			}),
+		[visibleSeries, isSnapshotMetric, chartBuilder.chartType, chartBuilder.displayAs, resolveSeriesColor]
+	)
 
 	const previewChartOptions = useMemo(
 		() => ({
@@ -348,7 +369,7 @@ export function ChartBuilderTab({
 				selectedMode: 'multiple',
 				pageButtonItemGap: 5,
 				pageButtonGap: 20,
-				data: visibleSeries.map((s) => s.name)
+				data: previewChart.seriesNames
 			},
 			tooltip: {
 				formatter: createChartBuilderTooltipFormatter({
@@ -382,7 +403,7 @@ export function ChartBuilderTab({
 							}
 						}
 		}),
-		[chartBuilder.displayAs, chartBuilder.limit, visibleSeries]
+		[chartBuilder.displayAs, chartBuilder.limit, previewChart.seriesNames]
 	)
 
 	const protocolOptionsFiltered = useMemo(() => {
@@ -392,8 +413,8 @@ export function ChartBuilderTab({
 		return protocolOptions.filter((opt) => hasProtocolBuilderMetric(opt.value, metric))
 	}, [protocolOptions, chartBuilder.mode, chartBuilder.metric, hasProtocolBuilderMetric, metaLoading, metaError])
 
-	const handleMetricChange = (option: any) => {
-		const newMetric = option?.value || 'tvl'
+	const handleMetricChange = (option: SelectOption) => {
+		const newMetric = option.value as ChartBuilderConfig['metric']
 		let newChartType: 'stackedBar' | 'stackedArea' | 'line' = 'stackedBar'
 		if (newMetric === 'tvl' || newMetric === 'stablecoins') {
 			newChartType = 'stackedArea'
@@ -427,11 +448,11 @@ export function ChartBuilderTab({
 		onChartBuilderChange({ protocolCategories })
 	}
 
-	const handleLimitChange = (option: any) => {
-		onChartBuilderChange({ limit: parseInt(option?.value) || 10 })
+	const handleLimitChange = (option: SelectOption) => {
+		onChartBuilderChange({ limit: parseInt(option.value) || 10 })
 	}
 
-	const handleChartTypeChange = (type: 'stackedBar' | 'stackedArea' | 'line') => {
+	const handleChartTypeChange = (type: ChartBuilderConfig['chartType']) => {
 		onChartBuilderChange({ chartType: type })
 	}
 
@@ -439,8 +460,8 @@ export function ChartBuilderTab({
 		onChartBuilderChange({ displayAs: display })
 	}
 
-	const handleTreemapValueChange = (option: any) => {
-		const nextValue = option?.value
+	const handleTreemapValueChange = (option: SelectOption) => {
+		const nextValue = option.value
 		if (nextValue === 'sum7d' || nextValue === 'sum30d' || nextValue === 'latest') {
 			onChartBuilderChange({ treemapValue: nextValue })
 			return
@@ -536,11 +557,11 @@ export function ChartBuilderTab({
 		onChartBuilderChange
 	])
 
-	const handleProtocolChange = (option: any) => {
+	const handleProtocolChange = (option: SelectOption) => {
 		const updates: Partial<ChartBuilderConfig> = {
-			protocol: option?.value || undefined
+			protocol: option.value || undefined
 		}
-		if (option?.value) {
+		if (option.value) {
 			updates.protocolCategories = undefined
 		}
 		onChartBuilderChange(updates)
@@ -580,7 +601,7 @@ export function ChartBuilderTab({
 								{MODE_OPTIONS.map((option) => (
 									<button
 										key={option.value}
-										onClick={() => handleModeChange(option.value as any)}
+										onClick={() => handleModeChange(option.value)}
 										className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all duration-200 ${
 											chartBuilder.mode === option.value
 												? 'bg-pro-accent text-on-brand shadow-sm'
@@ -815,21 +836,21 @@ export function ChartBuilderTab({
 							{CHART_TYPE_OPTIONS.map((option) => (
 								<button
 									key={option.value}
-									onClick={() => handleChartTypeChange(option.value as any)}
+									onClick={() => handleChartTypeChange(option.value)}
 									className={`flex flex-col items-center gap-0.5 rounded-md border p-1 transition-colors ${
 										chartBuilder.chartType === option.value
 											? 'border-pro-info-100 bg-pro-info-300/20 text-pro-info-400 dark:border-pro-info-300/20 dark:bg-pro-info-300/20 dark:text-pro-info-200'
 											: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'
 									}`}
 								>
-									<Icon name={option.icon as any} height={14} width={14} />
+									<Icon name={option.icon} height={14} width={14} />
 									<span className="text-[10px]">{option.label}</span>
 								</button>
 							))}
 						</div>
 					</div>
 
-					{chartBuilder.chartType === 'treemap' && !isTvlMetric ? (
+					{chartBuilder.chartType === 'treemap' && !isSnapshotMetric ? (
 						<div className="border-t pro-border pt-1.5">
 							<AriakitSelect
 								label="Treemap value"
@@ -849,7 +870,7 @@ export function ChartBuilderTab({
 								{DISPLAY_OPTIONS.map((option) => (
 									<button
 										key={option.value}
-										onClick={() => handleDisplayChange(option.value as any)}
+										onClick={() => handleDisplayChange(option.value)}
 										className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all duration-200 ${
 											chartBuilder.displayAs === option.value
 												? 'bg-pro-accent text-on-brand shadow-sm'
@@ -892,77 +913,15 @@ export function ChartBuilderTab({
 									{chartBuilder.chartType === 'treemap' ? (
 										<TreeMapBuilderChart data={treemapData} height="450px" />
 									) : (
-										<MultiSeriesChart
+										<MultiSeriesChart2
 											height="450px"
-											key={`chart-${chartBuilder.displayAs}-${chartBuilder.chartType}-${chartBuilder.hideOthers}`}
-											series={(() => {
-												let filteredSeries = visibleSeries
-
-												if (chartBuilder.metric !== 'tvl' && chartBuilder.mode === 'chains') {
-													filteredSeries = filteredSeries.map((s) => {
-														const aggregatedData: Map<number, number> = new Map()
-
-														for (const [timestamp, value] of s.data as [number, number][]) {
-															const date = new Date(timestamp * 1000)
-															const weekDate = new Date(date)
-															const day = weekDate.getDay()
-															const diff = weekDate.getDate() - day + (day === 0 ? -6 : 1)
-															weekDate.setDate(diff)
-															weekDate.setHours(0, 0, 0, 0)
-															const weekKey = Math.floor(weekDate.getTime() / 1000)
-
-															aggregatedData.set(weekKey, (aggregatedData.get(weekKey) || 0) + value)
-														}
-
-														return {
-															...s,
-															data: Array.from(aggregatedData.entries()).sort((a, b) => a[0] - b[0])
-														}
-													})
-												}
-
-												if (chartBuilder.displayAs === 'percentage') {
-													const timestampTotals = new Map<number, number>()
-													for (const s of filteredSeries) {
-														for (const [timestamp, value] of s.data) {
-															timestampTotals.set(timestamp, (timestampTotals.get(timestamp) || 0) + value)
-														}
-													}
-
-													return filteredSeries.map((s) => ({
-														name: s.name,
-														data: s.data.map(([timestamp, value]) => {
-															const total = timestampTotals.get(timestamp) || 0
-															return [timestamp, total > 0 ? (value / total) * 100 : 0]
-														}),
-														color: resolveSeriesColor(s.name, s.color),
-														type: chartBuilder.chartType === 'stackedBar' ? 'bar' : 'line',
-														...(chartBuilder.chartType === 'stackedArea' && {
-															areaStyle: { opacity: 0.7 },
-															stack: 'total'
-														}),
-														...(chartBuilder.chartType === 'stackedBar' && {
-															stack: 'total'
-														})
-													}))
-												}
-
-												return filteredSeries.map((s) => ({
-													name: s.name,
-													data: s.data,
-													color: resolveSeriesColor(s.name, s.color),
-													type: chartBuilder.chartType === 'stackedBar' ? 'bar' : 'line',
-													...(chartBuilder.chartType === 'stackedArea' && {
-														areaStyle: { opacity: 0.7 },
-														stack: 'total'
-													}),
-													...(chartBuilder.chartType === 'stackedBar' && {
-														stack: 'total'
-													})
-												}))
-											})()}
+											dataset={previewChart.dataset}
+											charts={previewChart.charts}
 											valueSymbol={chartBuilder.displayAs === 'percentage' ? '%' : '$'}
 											hideDataZoom={true}
+											hideDefaultLegend={false}
+											solidChartAreaStyle={chartBuilder.chartType === 'stackedArea'}
+											exportButtons="hidden"
 											chartOptions={previewChartOptions}
 										/>
 									)}

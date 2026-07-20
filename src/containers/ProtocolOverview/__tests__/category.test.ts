@@ -51,6 +51,22 @@ describe('resolveProtocolCategory', () => {
 		).toBe('DEX Aggregator')
 	})
 
+	it('treats a nullable lite TVL as zero when ranking child categories', () => {
+		expect(
+			resolveProtocolCategory({
+				protocolData: {
+					id: 'parent#interface',
+					category: null,
+					isParentProtocol: true
+				},
+				liteProtocols: [
+					{ parentProtocol: 'parent#interface', category: 'Unknown TVL', tvl: null },
+					{ parentProtocol: 'parent#interface', category: 'Known TVL', tvl: 1 }
+				]
+			})
+		).toBe('Known TVL')
+	})
+
 	it('returns null when no eligible child category exists', () => {
 		expect(
 			resolveProtocolCategory({

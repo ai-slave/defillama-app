@@ -1,20 +1,25 @@
 import type { ChartTimeGrouping } from '~/components/ECharts/types'
 import { getBucketTimestampSec } from '~/components/ECharts/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
-import type { DashboardGrouping } from './types'
+import type { Chain, DashboardGrouping, Protocol } from './types'
 import { generateConsistentChartColor } from './utils/colorManager'
 
-export const convertToNumberFormat = (data: any[], convertToSeconds: boolean = false): [number, number][] => {
-	if (!Array.isArray(data)) return []
+type NumericChartTuple = readonly [timestamp: string | number, value: string | number]
 
-	return data.map(([date, value]) => [
-		typeof date === 'string'
-			? convertToSeconds
-				? parseInt(date, 10) / 1000
-				: parseInt(date, 10) / 1
-			: date / (convertToSeconds ? 1000 : 1),
-		typeof value === 'string' ? parseFloat(value) : value
-	])
+export const convertToNumberFormat = (
+	data: readonly NumericChartTuple[],
+	convertToSeconds: boolean = false
+): [number, number][] => {
+	const divisor = convertToSeconds ? 1000 : 1
+	const points = new Array<[number, number]>(data.length)
+	for (let index = 0; index < data.length; index++) {
+		const [timestamp, value] = data[index]
+		points[index] = [
+			(typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp) / divisor,
+			typeof value === 'string' ? parseFloat(value) : value
+		]
+	}
+	return points
 }
 
 export const normalizeHourlyToDaily = (
@@ -105,12 +110,16 @@ export const convertToCumulative = (data: [number, number][] | undefined): [numb
 }
 
 // Icon URL helper functions
-export const getItemIconUrl = (itemType: 'chain' | 'protocol', itemInfo: any, itemIdentifier: string): string => {
+export const getItemIconUrl = (
+	itemType: 'chain' | 'protocol',
+	itemInfo: Chain | Protocol | { id?: string; logo?: string } | null | undefined,
+	itemIdentifier: string
+): string => {
 	if (itemType === 'chain') {
 		return chainIconUrl(itemIdentifier)
 	} else {
-		if (itemInfo?.logo) return itemInfo.logo
-		const key = (itemInfo?.id || itemIdentifier)?.toString()
+		if (itemInfo && 'logo' in itemInfo && itemInfo.logo) return itemInfo.logo
+		const key = (itemInfo && 'id' in itemInfo ? itemInfo.id : itemIdentifier)?.toString()
 		return tokenIconUrl(key)
 	}
 }

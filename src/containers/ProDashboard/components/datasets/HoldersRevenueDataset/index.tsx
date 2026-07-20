@@ -22,8 +22,8 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import { useDimensionDatasetData } from '../useDimensionDatasetData'
 import { holdersRevenueDatasetColumns } from './columns'
-import { useHoldersRevenueData } from './useHoldersRevenueData'
 
 const EMPTY_CATEGORIES: string[] = []
 const EMPTY_TABLE_DATA: any[] = []
@@ -45,7 +45,7 @@ export function HoldersRevenueDataset({ chains, tableId, filters }: HoldersReven
 	})
 
 	const { handleTableFiltersChange } = useProDashboardEditorActions()
-	const { data, isLoading, error } = useHoldersRevenueData(chains)
+	const { data, isLoading, error } = useDimensionDatasetData('holders-revenue', chains)
 	const width = useBreakpointWidth()
 
 	const [showFilterModal, setShowFilterModal] = React.useState(false)

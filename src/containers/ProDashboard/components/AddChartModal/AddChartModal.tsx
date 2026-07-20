@@ -16,7 +16,6 @@ import { useComposerItemsData } from './useComposerItemsData'
 import { useModalActions } from './useModalActions'
 
 const EMPTY_CHAIN_OPTIONS: VirtualizedSelectOption[] = []
-const EMPTY_CHART_TYPES: string[] = []
 const PRIMARY_TABLE_TYPES: CombinedTableType[] = [
 	'protocols',
 	'stablecoins',
@@ -98,27 +97,17 @@ export function AddChartModal({
 							chartMode={state.chartMode}
 							onChartModeChange={actions.setChartMode}
 							selectedChartTab={state.selectedChartTab}
-							selectedChain={state.selectedChain}
-							selectedProtocol={state.selectedProtocol}
 							selectedChartTypes={state.selectedChartTypes}
-							selectedChains={state.selectedChains}
-							selectedProtocols={state.selectedProtocols}
 							selectedYieldPool={state.selectedYieldPool}
 							chainOptions={computed.chainOptions}
 							protocolOptions={computed.protocolOptions}
-							availableChartTypes={EMPTY_CHART_TYPES}
-							chartTypesLoading={chartTypesLoading}
 							protocolsLoading={computed.protocolsLoading}
 							unifiedChartName={state.unifiedChartName}
 							chartCreationMode={state.chartCreationMode}
 							composerItems={composerItemsWithData}
 							onChartTabChange={actions.handleChartTabChange}
-							onChainChange={actions.handleChainChange}
-							onProtocolChange={actions.handleProtocolChange}
 							onChartTypesChange={actions.setSelectedChartTypes}
 							onBulkChartTypeChange={actions.handleBulkChartTypeChange}
-							onSelectedChainsChange={actions.setSelectedChains}
-							onSelectedProtocolsChange={actions.setSelectedProtocols}
 							onSelectedYieldPoolChange={actions.setSelectedYieldPool}
 							selectedYieldChains={state.selectedYieldChains}
 							selectedYieldProjects={state.selectedYieldProjects}

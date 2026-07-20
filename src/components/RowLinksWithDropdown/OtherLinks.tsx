@@ -19,11 +19,12 @@ import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 interface IProps {
 	options: { label: string; to: string }[]
 	name: string
+	keyPrefix?: string
 	isActive: boolean
 	className?: string
 }
 
-export function OtherLinks({ options, name, isActive, className }: IProps) {
+export function OtherLinks({ options, name, keyPrefix = 'row-links', isActive, className }: IProps) {
 	const [searchValue, setSearchValue] = useState('')
 	const matches = useMemo(() => {
 		if (!searchValue) return options
@@ -81,7 +82,7 @@ export function OtherLinks({ options, name, isActive, className }: IProps) {
 					{matches.length > 0 ? (
 						<Ariakit.ComboboxList ref={comboboxRef}>
 							{matches.slice(0, viewableMatches).map((value) => (
-								<Item label={value.label} to={value.to} key={`other-link-${value.to}`} />
+								<Item label={value.label} to={value.to} key={`${keyPrefix}:${value.label}:${value.to}`} />
 							))}
 							{matches.length > viewableMatches ? (
 								<Ariakit.ComboboxItem

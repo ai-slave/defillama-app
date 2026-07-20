@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Icon, type IIcon } from '~/ui/Icon'
-import type { Dashboard } from '../services/DashboardAPI'
+import type { Dashboard } from '../dashboardTypes'
 import { DashboardCard } from './DashboardCard'
 
 interface DiscoverySectionProps {

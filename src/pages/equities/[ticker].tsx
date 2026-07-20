@@ -5,8 +5,8 @@ import {
 	getEquitiesTickerPaths,
 	getEquitiesTickerRedirectSlug
 } from '~/containers/Equities/queries'
+import { buildEquityTickerCountrySlug, parseEquityTickerCountrySlug } from '~/containers/Equities/tickerCountry'
 import { EquityTickerPage } from '~/containers/Equities/TickerPage'
-import { buildEquityTickerCountrySlug, parseEquityTickerCountrySlug } from '~/containers/Equities/utils'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'

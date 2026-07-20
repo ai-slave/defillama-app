@@ -27,7 +27,7 @@ function byTvlDesc(left: ProEarnRow, right: ProEarnRow) {
 
 export async function fetchProYieldsDataset(snapshot: YieldsSnapshot, chains: string[]): Promise<ProYieldRow[]> {
 	const [earnRows, marketRows] = await Promise.all([getEntityEarn(snapshot), getEntityMarkets(snapshot)])
-	const selectedChains = chains.length > 0 ? new Set(chains) : null
+	const selectedChains = chains.length > 0 && !chains.includes('All') ? new Set(chains) : null
 	const earn: ProEarnRow[] = []
 	const markets: ProBorrowMarketRow[] = []
 

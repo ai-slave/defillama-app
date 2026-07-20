@@ -21,8 +21,8 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import { useDimensionDatasetData } from '../useDimensionDatasetData'
 import { aggregatorsDatasetColumns } from './columns'
-import { useAggregatorsData } from './useAggregatorsData'
 
 type AggregatorItemWithMarketShare = AggregatorItem & {
 	marketShare7d: number
@@ -39,7 +39,7 @@ export function AggregatorsDataset({ chains }: { chains?: string[] }) {
 		pageSize: 10
 	})
 
-	const { data, isLoading, error } = useAggregatorsData(chains)
+	const { data, isLoading, error } = useDimensionDatasetData<AggregatorItem>('aggregators', chains)
 	const width = useBreakpointWidth()
 
 	const enrichedData = React.useMemo<AggregatorItemWithMarketShare[]>(() => {

@@ -284,7 +284,7 @@ export function AdapterByChain(props: IProps) {
 
 	return (
 		<>
-			<RowLinksWithDropdown links={props.chains} activeLink={props.chain} />
+			<RowLinksWithDropdown name={`${props.type}-chains`} links={props.chains} activeLink={props.chain} />
 			{props.entityQuestions && props.entityQuestions.length > 0 ? (
 				<EntityQuestionsStrip
 					questions={props.entityQuestions}

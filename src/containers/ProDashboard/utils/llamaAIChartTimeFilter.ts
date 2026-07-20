@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
-import type { CustomTimePeriod, TimePeriod } from '../dashboardReducer'
+import type { CustomTimePeriod, TimePeriod } from '../dashboardTypes'
 
 const DATE_LIKE_FIELD_RE = /(^|_)(date|day|month|time|timestamp)$/i
 

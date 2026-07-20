@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext } from 'react'
 import { StreamDoneContext } from '~/containers/ProDashboard/queries'
+import { getProYieldsDatasetQueryKey } from '~/containers/ProDashboard/tableQueryKeys'
 import type { EarnPageRow, MarketTableRow } from '~/containers/Yields/data/types'
 import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { fetchJson } from '~/utils/async'
@@ -20,11 +21,11 @@ export async function fetchProYieldsData(chains: string[] = []): Promise<ProYiel
 
 export function useYieldsData(chains?: string[]) {
 	const streamDone = useContext(StreamDoneContext)
-	const sortedChains = chains?.length ? chains.toSorted() : []
+	const selectedChains = chains ?? []
 
 	return useQuery({
-		queryKey: ['pro-dashboard', 'yields-v2', sortedChains.join(',')],
-		queryFn: () => fetchProYieldsData(sortedChains),
+		queryKey: getProYieldsDatasetQueryKey(selectedChains),
+		queryFn: () => fetchProYieldsData(selectedChains),
 		enabled: streamDone,
 		staleTime: Infinity,
 		retry: 1

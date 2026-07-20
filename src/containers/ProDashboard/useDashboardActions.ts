@@ -5,8 +5,8 @@ import {
 	DEFAULT_ROW_HEADERS,
 	DEFAULT_UNIFIED_TABLE_SORTING
 } from './components/UnifiedTable/constants'
-import type { CustomTimePeriod, DashboardAction, DashboardState, TimePeriod } from './dashboardReducer'
-import type { Dashboard } from './services/DashboardAPI'
+import type { DashboardAction, DashboardState } from './dashboardReducer'
+import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
 import {
 	type AdvancedTvlChartConfig,
 	type AdvancedTvlChartType,

@@ -18,6 +18,7 @@ import { useContext } from 'react'
 import { useTableSearch } from '~/components/Table/utils'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchRWAStatsViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { PRO_RWA_CHAINS_TABLE_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import { fetchRWAStats } from '~/containers/RWA/api'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
@@ -91,7 +92,7 @@ function useRWAChainsTableData() {
 	const streamDone = useContext(StreamDoneContext)
 
 	return useQuery({
-		queryKey: ['pro-dashboard', 'rwa-chains-table'],
+		queryKey: PRO_RWA_CHAINS_TABLE_QUERY_KEY,
 		enabled: streamDone,
 		queryFn: async () => {
 			if (authToken) {

@@ -1,40 +1,27 @@
 import { CONFIG_API, FEATURES_SERVER } from '~/constants'
 import { fetchChainsList } from '~/containers/Chains/api'
-import type { ChainMetrics } from '~/containers/ProDashboard/server/unifiedTable/protocols'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
-import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
-import { sluggifyProtocol } from '~/utils/cache-client'
-import { toDisplayName } from '~/utils/chainNormalizer'
+import { sumSeriesByTimestamp } from '~/utils/breakdowns'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
-import type { NormalizedRow } from './components/UnifiedTable/types'
-import type { CustomTimePeriod, TimePeriod } from './dashboardReducer'
+import { isProtocolTokenChartType, normalizeUnlocksDataType } from './chartSource'
+import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
+import type { ProDashboardAppMetadata, ProDashboardChartRequest } from './dataContracts'
+import {
+	buildProDashboardProtocolCatalog,
+	type ProDashboardProtocolCatalog,
+	type ProDashboardProtocolRelations
+} from './protocolCatalog'
 import { filterDataByTimePeriod } from './queries'
 import { createServerAuthorizedFetch } from './server/auth'
 import { fetchPfPsChartData, fetchPfPsProtocols } from './server/pfPsQueries'
-import type { TableServerData } from './server/tableQueries'
 import ChainCharts from './services/ChainCharts'
-import type { Dashboard } from './services/DashboardAPI'
 import ProtocolCharts from './services/ProtocolCharts'
-import { type ChartConfig, type DashboardItemConfig, limitMultiChartItems, type YieldsChartConfig } from './types'
-
-export interface ProDashboardServerProps {
-	dashboard: Dashboard | null
-	chartData: Record<string, [number, number][]>
-	protocolsAndChains: { protocols: any[]; chains: any[] } | null
-	appMetadata: {
-		protocols: Record<string, any>
-		chains: Record<string, any>
-		pfPs: { pf: string[]; ps: string[] }
-	} | null
-	tableData: TableServerData | null
-	yieldsChartData: Record<string, { supply: PoolHistory | null; borrow: BorrowMarketHistory | null }>
-	protocolFullData: Record<string, any>
-	metricData: Record<string, [number, number][]>
-	advancedTvlBasicData: Record<string, [number, number][]>
-	unifiedTableData: Record<string, { rows: NormalizedRow[]; chainMetrics?: Record<string, ChainMetrics> }>
-	stablecoinsChartData: Record<string, any>
-	emissionData: Record<string, any>
-}
+import {
+	isProDashboardChartType,
+	type DashboardItemConfig,
+	type ProDashboardChartType,
+	type YieldsChartConfig
+} from './types'
 
 export async function fetchDashboardConfig(dashboardId: string, authToken: string | null): Promise<Dashboard | null> {
 	try {
@@ -42,7 +29,7 @@ export async function fetchDashboardConfig(dashboardId: string, authToken: strin
 		const fetchFn = authToken ? createServerAuthorizedFetch(authToken) : fetch
 		const response = await fetchFn(url)
 		if (!response.ok) return null
-		return response.json()
+		return (await response.json()) as Dashboard
 	} catch {
 		return null
 	}
@@ -57,75 +44,30 @@ export async function fetchDashboardConfigWithStatus(
 		const fetchFn = authToken ? createServerAuthorizedFetch(authToken) : fetch
 		const response = await fetchFn(url)
 		if (!response.ok) return { dashboard: null, status: response.status }
-		return { dashboard: await response.json(), status: response.status }
+		return { dashboard: (await response.json()) as Dashboard, status: response.status }
 	} catch {
 		return { dashboard: null, status: 500 }
 	}
 }
 
-export async function fetchProtocolsAndChains(): Promise<{ protocols: any[]; chains: any[] } | null> {
+export async function fetchProtocolsAndChains(): Promise<ProDashboardProtocolCatalog | null> {
 	try {
 		const [protocolsData, chainsData] = await Promise.all([fetchProtocols(), fetchChainsList()])
-
-		// TODO(chain-normalizer): chain metadata still comes from /chains here.
-		// Prefer v2/app metadata display names before removing alias support.
-		const transformedChains = chainsData.map((chain: any) => ({
-			...chain,
-			name: toDisplayName(chain.name)
-		}))
-
-		const parentProtocols = Array.isArray(protocolsData.parentProtocols) ? protocolsData.parentProtocols : []
-		const parentGeckoIds = new Map(parentProtocols.map((pp: any) => [pp.id, pp.gecko_id || null]))
-
-		const baseProtocols = (protocolsData.protocols || []).map((p: any) => ({
-			...p,
-			slug: sluggifyProtocol(p.name),
-			geckoId: p.geckoId || parentGeckoIds.get(p.parentProtocol) || null,
-			parentProtocol: p.parentProtocol || null
-		}))
-
-		const parentTotals = new Map<string, number>()
-		for (const p of protocolsData.protocols || []) {
-			if (p.parentProtocol) {
-				parentTotals.set(
-					p.parentProtocol,
-					(parentTotals.get(p.parentProtocol) || 0) + (typeof p.tvl === 'number' ? p.tvl : 0)
-				)
-			}
-		}
-
-		const syntheticParents = parentProtocols.map((pp: any) => {
-			const nameSlug = sluggifyProtocol(pp.name ?? '')
-			return {
-				id: pp.id ?? null,
-				name: pp.name ?? null,
-				logo: pp.logo ?? null,
-				slug: nameSlug || `id-${pp.id}`,
-				tvl: parentTotals.get(pp.id) || 0,
-				geckoId: pp.gecko_id || null,
-				parentProtocol: null
-			}
-		})
-
-		const mergedBySlug = new Map<string, any>()
-		for (const p of [...baseProtocols, ...syntheticParents]) {
-			if (!mergedBySlug.has(p.slug)) mergedBySlug.set(p.slug, p)
-		}
-
-		return {
-			protocols: Array.from(mergedBySlug.values()),
-			chains: transformedChains.sort((a: any, b: any) => b.tvl - a.tvl)
-		}
+		return buildProDashboardProtocolCatalog(protocolsData, chainsData)
 	} catch {
 		return null
 	}
 }
 
-export async function fetchAppMetadata(): Promise<ProDashboardServerProps['appMetadata']> {
+export async function fetchAppMetadata(): Promise<ProDashboardAppMetadata | null> {
 	try {
 		const [protocols, chains, pfPs] = await Promise.all([
-			fetchWithPoolingOnServer(`${CONFIG_API}/smol/appMetadata-protocols.json`).then((r) => (r.ok ? r.json() : null)),
-			fetchWithPoolingOnServer(`${CONFIG_API}/smol/appMetadata-chains.json`).then((r) => (r.ok ? r.json() : null)),
+			fetchWithPoolingOnServer(`${CONFIG_API}/smol/appMetadata-protocols.json`).then(async (response) =>
+				response.ok ? ((await response.json()) as ProDashboardAppMetadata['protocols']) : null
+			),
+			fetchWithPoolingOnServer(`${CONFIG_API}/smol/appMetadata-chains.json`).then(async (response) =>
+				response.ok ? ((await response.json()) as ProDashboardAppMetadata['chains']) : null
+			),
 			fetchPfPsProtocols().catch(() => ({ pf: [] as string[], ps: [] as string[] }))
 		])
 
@@ -136,22 +78,17 @@ export async function fetchAppMetadata(): Promise<ProDashboardServerProps['appMe
 	}
 }
 
-export function extractChartItems(items: DashboardItemConfig[]): ChartConfig[] {
-	const chartItems: ChartConfig[] = []
-	for (const item of items) {
-		if (item.kind === 'chart') chartItems.push(item)
-		else if (item.kind === 'multi') chartItems.push(...limitMultiChartItems(item.items))
-	}
-	return chartItems
-}
-
 export function extractYieldsItems(items: DashboardItemConfig[]): YieldsChartConfig[] {
 	return items.filter((item): item is YieldsChartConfig => item.kind === 'yields')
 }
-const protocolChartFetchers: Record<
-	string,
-	(item: string, geckoId?: string | null, dataType?: string) => Promise<[number, number][]>
-> = {
+type ProtocolChartFetcher = (
+	item: string,
+	geckoId?: string | null,
+	dataType?: string,
+	protocolSymbol?: string | null
+) => Promise<[number, number][]>
+
+const protocolChartFetchers: Partial<Record<ProDashboardChartType, ProtocolChartFetcher>> = {
 	tvl: (item) => ProtocolCharts.tvl(item),
 	volume: (item) => ProtocolCharts.volume(item),
 	fees: (item) => ProtocolCharts.fees(item),
@@ -166,10 +103,14 @@ const protocolChartFetchers: Record<
 	bridgeAggregators: (item) => ProtocolCharts.bridgeAggregators(item),
 	optionsPremium: (item) => ProtocolCharts.optionsPremium(item),
 	optionsNotional: (item) => ProtocolCharts.optionsNotional(item),
-	liquidity: (item) => ProtocolCharts.liquidity(item),
+	activeUsers: (item) => ProtocolCharts.activeUsers(item),
+	newUsers: (item) => ProtocolCharts.newUsers(item),
+	txs: (item) => ProtocolCharts.txs(item),
+	gasUsed: (item) => ProtocolCharts.gasUsed(item),
+	liquidity: (item, _geckoId, _dataType, protocolSymbol) => ProtocolCharts.liquidity(item, protocolSymbol),
 	treasury: (item) => ProtocolCharts.treasury(item),
 	incentives: (item) => ProtocolCharts.incentives(item),
-	unlocks: (item, _, dataType) => ProtocolCharts.unlocks(item, (dataType as 'documented' | 'realtime') || 'documented'),
+	unlocks: (item, _, dataType) => ProtocolCharts.unlocks(item, normalizeUnlocksDataType(dataType)),
 	tokenMcap: (item, geckoId) => ProtocolCharts.tokenMcap(item, geckoId!),
 	tokenPrice: (item, geckoId) => ProtocolCharts.tokenPrice(item, geckoId!),
 	tokenVolume: (item, geckoId) => ProtocolCharts.tokenVolume(item, geckoId!),
@@ -184,34 +125,52 @@ export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 export async function fetchSingleChartData(
-	chart: ChartConfig,
+	chart: ProDashboardChartRequest,
 	timePeriod: TimePeriod,
-	customTimePeriod: CustomTimePeriod | null
+	customTimePeriod: CustomTimePeriod | null,
+	protocolRelations?: ProDashboardProtocolRelations
 ): Promise<[number, number][]> {
-	const tokenTypes = new Set(['tokenMcap', 'tokenPrice', 'tokenVolume'])
 	const itemType = chart.protocol ? 'protocol' : 'chain'
 	const item = chart.protocol || chart.chain
 
-	if (tokenTypes.has(chart.type) && chart.geckoId) {
-		const fetcher = protocolChartFetchers[chart.type]
+	if (isProtocolTokenChartType(chart.type) && chart.geckoId) {
+		const fetcher = isProDashboardChartType(chart.type) ? protocolChartFetchers[chart.type] : undefined
 		if (!fetcher) return []
-		const data = await fetcher(item ?? '', chart.geckoId, chart.dataType)
+		const data = await fetcher(item ?? '', chart.geckoId, chart.dataType, chart.protocolSymbol)
 		return filterDataByTimePeriod(data, timePeriod || 'all', customTimePeriod)
 	}
 
 	if (!item) return []
 
+	if (itemType === 'chain') {
+		const data = await ChainCharts.getData(chart.type, item, chart.geckoId)
+		return filterDataByTimePeriod(data, timePeriod || 'all', customTimePeriod)
+	}
+
+	const fetcher = isProDashboardChartType(chart.type) ? protocolChartFetchers[chart.type] : undefined
+	if (!fetcher) return []
+	if (isProtocolTokenChartType(chart.type)) return []
+
+	const parent = protocolRelations?.protocolsBySlug.get(item)
+	const children = parent ? (protocolRelations?.childrenByParentId.get(parent.id) ?? []) : []
+
 	let data: [number, number][]
+	try {
+		data = await fetcher(item, chart.geckoId, chart.dataType, chart.protocolSymbol ?? parent?.symbol)
+	} catch (error) {
+		if (children.length === 0) throw error
+		data = []
+	}
 
-	if (itemType === 'protocol') {
-		const fetcher = protocolChartFetchers[chart.type]
-		if (!fetcher) return []
-
-		if (tokenTypes.has(chart.type) && !chart.geckoId) return []
-
-		data = await fetcher(item, chart.geckoId, chart.dataType)
-	} else {
-		data = await ChainCharts.getData(chart.type, item, chart.geckoId)
+	if (data.length === 0 && children.length > 0) {
+		const childResults = await Promise.allSettled(
+			children.map((child) => fetcher(child.slug, child.geckoId, chart.dataType, child.symbol))
+		)
+		const childSeries: [number, number][][] = []
+		for (const result of childResults) {
+			if (result.status === 'fulfilled' && result.value.length > 0) childSeries.push(result.value)
+		}
+		data = Array.from(sumSeriesByTimestamp(childSeries).entries()).sort((a, b) => a[0] - b[0])
 	}
 
 	return filterDataByTimePeriod(data, timePeriod || 'all', customTimePeriod)

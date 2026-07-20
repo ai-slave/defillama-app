@@ -1,17 +1,45 @@
 import { fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
+import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
-import { mergeMetricPeriods } from '~/containers/AdapterMetrics/metricPeriods'
+import { mergeMetricPeriods, type MetricPeriodFields } from '~/containers/AdapterMetrics/metricPeriods'
 import { getAdapterByChainPageData, getAdapterChainOverview } from '~/containers/AdapterMetrics/queries'
+import type { IAdapterByChainPageData } from '~/containers/AdapterMetrics/types'
 import { slug } from '~/utils'
+import type { IChainMetadata } from '~/utils/metadata/types'
+
+type DimensionDatasetSourceProtocol =
+	| IAdapterChainMetrics['protocols'][number]
+	| IAdapterByChainPageData['protocols'][number]
+
+export interface DimensionDatasetProtocol extends MetricPeriodFields {
+	name: string
+	displayName?: string
+	defillamaId?: string
+	category?: string | null
+	logo?: string
+	slug?: string
+	chains: string[]
+	chainBreakdown?: Record<string, DimensionDatasetProtocol & { chain: string }>
+}
+
+function toDimensionDatasetProtocol(protocol: DimensionDatasetSourceProtocol): DimensionDatasetProtocol {
+	return {
+		...protocol,
+		name: protocol.name,
+		displayName: 'displayName' in protocol ? protocol.displayName : protocol.name,
+		defillamaId: 'defillamaId' in protocol ? protocol.defillamaId : undefined,
+		chains: protocol.chains ?? []
+	}
+}
 
 interface DimensionDatasetOptions {
 	adapterType: `${ADAPTER_TYPES}`
 	route: string
 	metricName: string
 	chains?: string[]
-	dataType?: string
+	dataType?: `${ADAPTER_DATA_TYPES}` | 'dailyEarnings'
 	allCaseFetcher?: 'chainMetrics' | 'chainOverview'
-	chainGuard?: string
+	chainGuard?: keyof IChainMetadata
 	hasOpenInterestByChain?: boolean
 	withChainBreakdown?: boolean
 }
@@ -26,22 +54,23 @@ export async function fetchDimensionDataset({
 	chainGuard,
 	hasOpenInterestByChain,
 	withChainBreakdown
-}: DimensionDatasetOptions): Promise<any[]> {
+}: DimensionDatasetOptions): Promise<DimensionDatasetProtocol[]> {
 	const chainList = chains ?? []
 	const allChains = chainList.length === 0 || chainList.includes('All')
 
 	if (allChains) {
 		const data =
 			allCaseFetcher === 'chainOverview'
-				? await getAdapterChainOverview({ adapterType, chain: 'All', excludeTotalDataChart: true, dataType } as any)
-				: await fetchAdapterChainMetrics({ adapterType, dataType, chain: 'All' } as any)
-		return (data.protocols || [])
-			.filter((p: any) => p.total24h > 0)
-			.sort((a: any, b: any) => (b.total24h || 0) - (a.total24h || 0))
+				? await getAdapterChainOverview({ adapterType, chain: 'All', excludeTotalDataChart: true, dataType })
+				: await fetchAdapterChainMetrics({ adapterType, dataType, chain: 'All' })
+		return (data.protocols ?? [])
+			.map(toDimensionDatasetProtocol)
+			.filter((protocol) => (protocol.total24h ?? 0) > 0)
+			.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))
 	}
 
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
-	const allProtocolsMap = new Map<string, any>()
+	const allProtocolsMap = new Map<string, DimensionDatasetProtocol>()
 
 	for (const chainName of chainList) {
 		const chainSlug = slug(chainName)
@@ -56,22 +85,23 @@ export async function fetchDimensionDataset({
 			route,
 			metricName,
 			...(hasOpenInterestByChain ? { hasOpenInterest: chainData.openInterest } : {})
-		} as any).catch((e) => {
+		}).catch((e) => {
 			console.info(`Chain page data not found ${adapterType} : chain:${chainName}`, e)
 			return null
 		})
 
 		if (!data?.protocols) continue
 
-		for (const protocol of data.protocols) {
-			const key = protocol.defillamaId || protocol.name
-			if (allProtocolsMap.has(key)) {
-				const existing = allProtocolsMap.get(key)
+		for (const sourceProtocol of data.protocols) {
+			const protocol = toDimensionDatasetProtocol(sourceProtocol)
+			const key = protocol.defillamaId ?? protocol.slug ?? protocol.name
+			const existing = allProtocolsMap.get(key)
+			if (existing) {
 				mergeMetricPeriods(existing, protocol)
-				existing.chains = Array.from(new Set([...(existing.chains || []), chainName]))
+				existing.chains = Array.from(new Set([...existing.chains, chainName]))
 				if (withChainBreakdown) {
 					const normalizedChainKey = chainName.trim().toLowerCase()
-					existing.chainBreakdown = existing.chainBreakdown || {}
+					existing.chainBreakdown ??= {}
 					existing.chainBreakdown[normalizedChainKey] = {
 						...protocol,
 						change_7d: protocol.change_7d ?? protocol.change_7dover7d,
@@ -79,11 +109,9 @@ export async function fetchDimensionDataset({
 					}
 				}
 			} else {
-				const entry: any = {
+				const entry: DimensionDatasetProtocol = {
 					...protocol,
-					chains: [chainName],
-					logo: protocol.logo,
-					slug: protocol.slug
+					chains: [chainName]
 				}
 				if (withChainBreakdown) {
 					const normalizedChainKey = chainName.trim().toLowerCase()
@@ -101,28 +129,22 @@ export async function fetchDimensionDataset({
 	}
 
 	return Array.from(allProtocolsMap.values())
-		.filter((p: any) => p.total24h > 0)
-		.sort((a: any, b: any) => (b.total24h || 0) - (a.total24h || 0))
+		.filter((protocol) => (protocol.total24h ?? 0) > 0)
+		.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))
 }
 
 export interface DimensionDatasetSpec {
 	datasetType: string
-	hookPrefix: string
-	keyChainsMode: 'raw' | 'filtered'
 	options: Omit<DimensionDatasetOptions, 'chains'>
 }
 
-export const DIMENSION_DATASET_SPECS: DimensionDatasetSpec[] = [
+export const DIMENSION_DATASET_SPECS = [
 	{
 		datasetType: 'dexs',
-		hookPrefix: 'dexs-overview',
-		keyChainsMode: 'raw',
 		options: { adapterType: ADAPTER_TYPES.DEXS, route: 'dexs', metricName: 'DEX Volume' }
 	},
 	{
 		datasetType: 'perps',
-		hookPrefix: 'perps-overview',
-		keyChainsMode: 'raw',
 		options: {
 			adapterType: ADAPTER_TYPES.PERPS,
 			route: 'perps',
@@ -132,8 +154,6 @@ export const DIMENSION_DATASET_SPECS: DimensionDatasetSpec[] = [
 	},
 	{
 		datasetType: 'aggregators',
-		hookPrefix: 'aggregators-overview',
-		keyChainsMode: 'raw',
 		options: {
 			adapterType: ADAPTER_TYPES.AGGREGATORS,
 			route: 'dex-aggregators',
@@ -143,14 +163,10 @@ export const DIMENSION_DATASET_SPECS: DimensionDatasetSpec[] = [
 	},
 	{
 		datasetType: 'fees',
-		hookPrefix: 'fees-overview',
-		keyChainsMode: 'raw',
 		options: { adapterType: ADAPTER_TYPES.FEES, route: 'fees', metricName: 'Fees' }
 	},
 	{
 		datasetType: 'revenue',
-		hookPrefix: 'revenue-overview',
-		keyChainsMode: 'raw',
 		options: {
 			adapterType: ADAPTER_TYPES.FEES,
 			route: 'revenue',
@@ -160,8 +176,6 @@ export const DIMENSION_DATASET_SPECS: DimensionDatasetSpec[] = [
 	},
 	{
 		datasetType: 'earnings',
-		hookPrefix: 'earnings-overview',
-		keyChainsMode: 'raw',
 		options: {
 			adapterType: ADAPTER_TYPES.FEES,
 			route: 'earnings',
@@ -174,8 +188,6 @@ export const DIMENSION_DATASET_SPECS: DimensionDatasetSpec[] = [
 	},
 	{
 		datasetType: 'holders-revenue',
-		hookPrefix: 'holders-revenue-overview',
-		keyChainsMode: 'raw',
 		options: {
 			adapterType: ADAPTER_TYPES.FEES,
 			route: 'holders-revenue',
@@ -186,8 +198,6 @@ export const DIMENSION_DATASET_SPECS: DimensionDatasetSpec[] = [
 	},
 	{
 		datasetType: 'options',
-		hookPrefix: 'options-overview',
-		keyChainsMode: 'filtered',
 		options: {
 			adapterType: ADAPTER_TYPES.OPTIONS,
 			route: 'options',
@@ -197,8 +207,6 @@ export const DIMENSION_DATASET_SPECS: DimensionDatasetSpec[] = [
 	},
 	{
 		datasetType: 'bridge-aggregators',
-		hookPrefix: 'bridge-aggregators-overview',
-		keyChainsMode: 'raw',
 		options: {
 			adapterType: ADAPTER_TYPES.BRIDGE_AGGREGATORS,
 			route: 'bridge-aggregators',
@@ -206,7 +214,7 @@ export const DIMENSION_DATASET_SPECS: DimensionDatasetSpec[] = [
 			withChainBreakdown: true
 		}
 	}
-]
+] as const satisfies readonly DimensionDatasetSpec[]
 
 export const DIMENSION_DATASET_SPEC_BY_TYPE: Record<string, DimensionDatasetSpec> = Object.fromEntries(
 	DIMENSION_DATASET_SPECS.map((spec) => [spec.datasetType, spec])

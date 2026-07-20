@@ -8,6 +8,11 @@ import { getMarketCapToAnnualizedMetricRatio } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { StreamDoneContext } from '../../queries'
 import {
+	getProLegacyTableChainQueryKey,
+	getProLegacyTableDatasetQueryKey,
+	PROTOCOLS_LIST_QUERY_KEY
+} from '../../tableQueryKeys'
+import {
 	getDexVolumeByChain,
 	getFeesAndRevenueProtocolsByChain,
 	getOpenInterestByChain,
@@ -20,9 +25,7 @@ type WeightedStore = Record<string, WeightedAccumulator>
 const WEIGHTED_ACC_SYMBOL: unique symbol = Symbol('weightedAccumulators')
 
 const toFiniteNumber = (value: unknown): number | null => {
-	if (value == null) return null
-	const num = typeof value === 'number' ? value : Number(value)
-	return Number.isFinite(num) ? num : null
+	return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
 const addCompleteNumber = (left: number | null | undefined, right: number | null | undefined) => {
@@ -57,14 +60,6 @@ const applyWeightedChange = (target: Record<string | symbol, any>, key: string, 
 
 const finalizeAggregatedProtocol = (entry: Record<string | symbol, any>, options?: { computeRatios?: boolean }) => {
 	const result = { ...entry }
-	const store = entry[WEIGHTED_ACC_SYMBOL] as WeightedStore | undefined
-	if (store) {
-		for (const key in store) {
-			const accumulator = store[key]
-			result[key] = accumulator.denominator > 0 ? accumulator.numerator / accumulator.denominator : undefined
-		}
-		delete result[WEIGHTED_ACC_SYMBOL]
-	}
 
 	if (options?.computeRatios) {
 		const mcap = toFiniteNumber(result.mcap ?? result.marketCap)
@@ -160,7 +155,7 @@ export function aggregateFeesAndRevenueProtocolsByChain(queryDatas: ChainProtoco
 export function useGetProtocolsListMultiChain(chains: string[]) {
 	const streamDone = useContext(StreamDoneContext)
 	const { data: allProtocolsData, isLoading: isLoadingAll } = useQuery({
-		queryKey: ['protocols-lite'],
+		queryKey: PROTOCOLS_LIST_QUERY_KEY,
 		queryFn: () => fetchProtocols(),
 		staleTime: Infinity,
 		retry: 0,
@@ -244,7 +239,7 @@ export function useGetProtocolsVolumeByMultiChain(chains: string[]) {
 
 	const queries = useQueries({
 		queries: chainsToFetch.map((chain) => ({
-			queryKey: ['pro-dashboard', 'protocols-volume-by-chain', chain],
+			queryKey: getProLegacyTableChainQueryKey('volume', chain),
 			queryFn: () =>
 				getDexVolumeByChain({ chain, excludeTotalDataChart: false, excludeTotalDataChartBreakdown: true }).then(
 					(data) => ({ chain, protocols: data?.protocols ?? [] })
@@ -328,7 +323,7 @@ export function useGetProtocolsFeesAndRevenueByMultiChain(chains: string[]) {
 
 	const queries = useQueries({
 		queries: chainsToFetch.map((chain) => ({
-			queryKey: ['pro-dashboard', 'protocols-fees-revenue-by-chain', chain],
+			queryKey: getProLegacyTableChainQueryKey('fees', chain),
 			queryFn: () => getFeesAndRevenueProtocolsByChain({ chain }).then((data) => ({ chain, protocols: data ?? [] })),
 			staleTime: Infinity,
 			retry: 1,
@@ -363,7 +358,7 @@ export function useGetProtocolsPerpsVolumeByMultiChain(chains: string[]) {
 
 	const queries = useQueries({
 		queries: chainsToFetch.map((chain) => ({
-			queryKey: ['pro-dashboard', 'protocols-perps-volume-by-chain', chain],
+			queryKey: getProLegacyTableChainQueryKey('perps', chain),
 			queryFn: () =>
 				getPerpsVolumeByChain({ chain, excludeTotalDataChart: false, excludeTotalDataChartBreakdown: true }).then(
 					(data) => ({ chain, protocols: data?.protocols ?? [] })
@@ -442,7 +437,7 @@ export function useGetProtocolsOpenInterestByMultiChain(chains: string[]) {
 
 	const queries = useQueries({
 		queries: chainsToFetch.map((chain) => ({
-			queryKey: ['pro-dashboard', 'protocols-open-interest-by-chain', chain],
+			queryKey: getProLegacyTableChainQueryKey('open-interest', chain),
 			queryFn: () => getOpenInterestByChain({ chain }).then((data) => ({ chain, protocols: data?.protocols ?? [] })),
 			staleTime: Infinity,
 			retry: 1,
@@ -503,19 +498,13 @@ export function useGetProtocolsOpenInterestByMultiChain(chains: string[]) {
 }
 
 const buildChainsQuery = (chains: string[]) => {
-	if (!chains || chains.length === 0 || chains.includes('All')) return ''
-	const uniq = Array.from(new Set(chains)).sort((a, b) => a.localeCompare(b))
-	if (uniq.length === 0) return ''
-	return `?${uniq.map((chain) => `chains=${encodeURIComponent(chain)}`).join('&')}`
+	if (chains.length === 0 || chains.includes('All')) return ''
+	return `?${chains.map((chain) => `chains=${encodeURIComponent(chain)}`).join('&')}`
 }
 
 export function useGetProtocolsEarningsByMultiChain(chains: string[]) {
 	const streamDone = useContext(StreamDoneContext)
-	const queryKey = [
-		'pro-dashboard',
-		'protocols-earnings-multi-chain',
-		...(chains.includes('All') || chains.length === 0 ? ['All'] : chains.toSorted())
-	]
+	const queryKey = getProLegacyTableDatasetQueryKey('protocols-earnings-multi-chain', chains)
 	const query = useQuery({
 		queryKey,
 		queryFn: () => fetchJson(`/api/dynamic/adapter-metrics/earnings${buildChainsQuery(chains)}`) as Promise<any[]>,
@@ -528,11 +517,7 @@ export function useGetProtocolsEarningsByMultiChain(chains: string[]) {
 
 export function useGetProtocolsAggregatorsByMultiChain(chains: string[]) {
 	const streamDone = useContext(StreamDoneContext)
-	const queryKey = [
-		'pro-dashboard',
-		'protocols-aggregators-multi-chain',
-		...(chains.includes('All') || chains.length === 0 ? ['All'] : chains.toSorted())
-	]
+	const queryKey = getProLegacyTableDatasetQueryKey('protocols-aggregators-multi-chain', chains)
 	const query = useQuery({
 		queryKey,
 		queryFn: () =>
@@ -546,11 +531,7 @@ export function useGetProtocolsAggregatorsByMultiChain(chains: string[]) {
 
 export function useGetProtocolsBridgeAggregatorsByMultiChain(chains: string[]) {
 	const streamDone = useContext(StreamDoneContext)
-	const queryKey = [
-		'pro-dashboard',
-		'protocols-bridge-aggregators-multi-chain',
-		...(chains.includes('All') || chains.length === 0 ? ['All'] : chains.toSorted())
-	]
+	const queryKey = getProLegacyTableDatasetQueryKey('protocols-bridge-aggregators-multi-chain', chains)
 	const query = useQuery({
 		queryKey,
 		queryFn: () =>
@@ -564,11 +545,7 @@ export function useGetProtocolsBridgeAggregatorsByMultiChain(chains: string[]) {
 
 export function useGetProtocolsOptionsVolumeByMultiChain(chains: string[]) {
 	const streamDone = useContext(StreamDoneContext)
-	const queryKey = [
-		'pro-dashboard',
-		'protocols-options-multi-chain',
-		...(chains.includes('All') || chains.length === 0 ? ['All'] : chains.toSorted())
-	]
+	const queryKey = getProLegacyTableDatasetQueryKey('protocols-options-multi-chain', chains)
 	const query = useQuery({
 		queryKey,
 		queryFn: () => fetchJson(`/api/dynamic/adapter-metrics/options${buildChainsQuery(chains)}`) as Promise<any[]>,

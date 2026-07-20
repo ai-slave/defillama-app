@@ -8,6 +8,7 @@ interface ILink {
 
 interface IRowLinksProps {
 	links: ILink[]
+	name?: string
 	activeLink?: string
 	alternativeOthersText?: string
 }
@@ -23,6 +24,7 @@ export const RowLinksWithDropdown = (props: IRowLinksProps) => {
 						'Others'
 					}
 					options={props.links}
+					keyPrefix={props.name}
 					isActive={true}
 					className="min-h-8 w-full justify-between"
 				/>

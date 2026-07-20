@@ -147,6 +147,14 @@ function getProtocolMethodology({
 			protocol.methodology?.['TokenTaxes']
 		)
 	}
+	if (dataType === 'dailyProtocolRevenue') {
+		return (
+			protocol.methodology?.['ProtocolRevenue'] ??
+			protocol.methodology?.['Revenue'] ??
+			protocol.methodology?.['BribesRevenue'] ??
+			protocol.methodology?.['TokenTaxes']
+		)
+	}
 	if (dataType === 'dailyHoldersRevenue') {
 		return (
 			protocol.methodology?.['HoldersRevenue'] ??

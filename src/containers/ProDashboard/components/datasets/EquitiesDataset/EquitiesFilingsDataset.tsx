@@ -17,13 +17,12 @@ import * as React from 'react'
 import { useContext, useMemo, useState } from 'react'
 import { useTableSearch } from '~/components/Table/utils'
 import type { IEquitiesFilingApiItem } from '~/containers/Equities/api.types'
-import {
-	buildEquityTickerCountrySlug,
-	formatEquitiesDate,
-	parseEquityTickerCountryParam
-} from '~/containers/Equities/utils'
+import { parseEquityTickerCountryParam } from '~/containers/Equities/tickerCountry'
+import { formatEquitiesDate } from '~/containers/Equities/utils'
+import { getProEquitiesFilingsQueryKey } from '~/containers/ProDashboard/equitiesTableQueryKeys'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchEquitiesFilingsViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { getProEquitiesFilingsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { Icon } from '~/ui/Icon'
 import { downloadCSV } from '~/utils/download'
@@ -87,10 +86,9 @@ function useEquitiesFilingsData(ticker: string) {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
 	const tickerCountry = parseEquityTickerCountryParam(ticker)
-	const queryTicker = tickerCountry ? buildEquityTickerCountrySlug(tickerCountry.ticker, tickerCountry.country) : ticker
 
 	return useQuery({
-		queryKey: ['pro-dashboard', 'equities-filings-table', queryTicker],
+		queryKey: getProEquitiesFilingsQueryKey(ticker) ?? getProEquitiesFilingsCacheKey(ticker),
 		queryFn: async () => {
 			if (!tickerCountry) throw new Error('Missing ticker param')
 			return fetchEquitiesFilingsViaProxy(tickerCountry.ticker, tickerCountry.country, authToken!)

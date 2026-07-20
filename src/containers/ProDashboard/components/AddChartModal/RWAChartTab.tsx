@@ -33,6 +33,7 @@ const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as 
 
 interface RWAChartTabProps {
 	rwaMode: 'overview' | 'asset'
+	selectedRwaChain: string
 	selectedRwaMetric: RWAOverviewChartMetric
 	selectedRwaChartView: RWAOverviewChartView
 	selectedRwaBreakdown: RWAOverviewChartBreakdown
@@ -41,6 +42,7 @@ interface RWAChartTabProps {
 	selectedRwaAssetName: string | null
 	selectedRwaAssetMetrics: RWAOverviewChartMetric[]
 	onRwaModeChange: (mode: 'overview' | 'asset') => void
+	onSelectedRwaChainChange: (chain: string) => void
 	onSelectedRwaMetricChange: (metric: RWAOverviewChartMetric) => void
 	onSelectedRwaChartViewChange: (view: RWAOverviewChartView) => void
 	onSelectedRwaBreakdownChange: (breakdown: RWAOverviewChartBreakdown) => void
@@ -48,7 +50,6 @@ interface RWAChartTabProps {
 	onSelectedRwaAssetIdChange: (id: string | null) => void
 	onSelectedRwaAssetNameChange: (name: string | null) => void
 	onSelectedRwaAssetMetricsChange: (metrics: RWAOverviewChartMetric[]) => void
-	[key: string]: any
 }
 
 const BREAKDOWN_OPTIONS = [
@@ -82,6 +83,7 @@ export function RWAChartTab(props: RWAChartTabProps) {
 
 function RWAChartTabInner({
 	rwaMode,
+	selectedRwaChain,
 	selectedRwaMetric,
 	selectedRwaChartView,
 	selectedRwaBreakdown,
@@ -90,18 +92,15 @@ function RWAChartTabInner({
 	selectedRwaAssetName,
 	selectedRwaAssetMetrics,
 	onRwaModeChange,
+	onSelectedRwaChainChange,
 	onSelectedRwaMetricChange,
 	onSelectedRwaChartViewChange,
 	onSelectedRwaBreakdownChange,
 	onSelectedRwaTreemapNestedByChange: _onSelectedRwaTreemapNestedByChange,
 	onSelectedRwaAssetIdChange,
 	onSelectedRwaAssetNameChange,
-	onSelectedRwaAssetMetricsChange,
-	...rest
+	onSelectedRwaAssetMetricsChange
 }: RWAChartTabProps) {
-	const selectedRwaChain: string = (rest as any).selectedRwaChain ?? 'All'
-	const onSelectedRwaChainChange: (chain: string) => void = (rest as any).onSelectedRwaChainChange ?? (() => {})
-
 	const { chains: rwaChains } = useRWAChainsList()
 
 	const chainOptions = useMemo(() => {

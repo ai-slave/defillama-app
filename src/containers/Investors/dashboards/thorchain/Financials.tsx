@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
@@ -100,10 +101,10 @@ export default function Financials() {
 	const fees = useAdapterSeries('dex-fees', () => ProtocolCharts.fees(DEX))
 	const holdersRev = useAdapterSeries('dex-holders-revenue', () => ProtocolCharts.holdersRevenue(DEX))
 	const supplySide = useAdapterSeries('dex-supply-side-revenue', () =>
-		ProtocolCharts.summary(DEX, 'fees', 'dailySupplySideRevenue')
+		ProtocolCharts.summary(DEX, ADAPTER_TYPES.FEES, ADAPTER_DATA_TYPES.DAILY_SUPPLY_SIDE_REVENUE)
 	)
 	const protocolRev = useAdapterSeries('dex-protocol-revenue', () =>
-		ProtocolCharts.summary(DEX, 'fees', 'dailyProtocolRevenue')
+		ProtocolCharts.summary(DEX, ADAPTER_TYPES.FEES, ADAPTER_DATA_TYPES.DAILY_PROTOCOL_REVENUE)
 	)
 	if (!data) return <PageLoader />
 

@@ -1,7 +1,7 @@
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import { slug } from '~/utils'
 import { sluggifyProtocol } from '~/utils/cache-client'
-import type { Dashboard } from '../services/DashboardAPI'
+import type { Dashboard } from '../dashboardTypes'
 import type { DashboardItemConfig } from '../types'
 
 const SITE_URL = 'https://defillama.com'
@@ -152,6 +152,12 @@ function subjectLabel(item: DashboardItemConfig): { label: string; href?: string
 	return { label: 'DefiLlama' }
 }
 
+function createDashboardItemSummary(id: string, label: string, href?: string): DashboardItemSummary {
+	// `getServerSideProps` must return JSON-serializable values. Omit optional links
+	// instead of emitting `href: undefined`, which makes the whole dashboard return 500.
+	return { id, label, ...(href ? { href } : {}) }
+}
+
 function summarizeSingleItem(item: DashboardItemConfig, index: number): DashboardItemSummary {
 	const subject = subjectLabel(item)
 	const fallbackId = `${item.kind}-${index}`
@@ -159,11 +165,7 @@ function summarizeSingleItem(item: DashboardItemConfig, index: number): Dashboar
 
 	switch (item.kind) {
 		case 'chart':
-			return {
-				id,
-				label: `${subject.label} ${titleCaseToken(item.type)} chart`,
-				href: subject.href
-			}
+			return createDashboardItemSummary(id, `${subject.label} ${titleCaseToken(item.type)} chart`, subject.href)
 		case 'multi':
 			return {
 				id,
@@ -182,42 +184,42 @@ function summarizeSingleItem(item: DashboardItemConfig, index: number): Dashboar
 		}
 		case 'metric': {
 			const label = item.label || `${subject.label} ${titleCaseToken(item.type)} metric`
-			return { id, label, href: subject.href }
+			return createDashboardItemSummary(id, label, subject.href)
 		}
 		case 'builder':
 			return { id, label: item.name || `${titleCaseToken(item.config.metric)} ${item.config.mode} chart builder` }
 		case 'yields':
 			return { id, label: `${item.project} ${item.poolName} ${titleCaseToken(item.chartType || 'yield')} chart` }
 		case 'stablecoins':
-			return {
+			return createDashboardItemSummary(
 				id,
-				label: `${item.chain} ${titleCaseToken(item.chartType)} stablecoins chart`,
-				href: chainHref(item.chain)
-			}
+				`${item.chain} ${titleCaseToken(item.chartType)} stablecoins chart`,
+				chainHref(item.chain)
+			)
 		case 'stablecoin-asset':
 			return { id, label: `${item.stablecoin} ${titleCaseToken(item.chartType)} chart` }
 		case 'advanced-tvl':
-			return {
+			return createDashboardItemSummary(
 				id,
-				label: `${item.protocolName} ${titleCaseToken(item.chartType)} chart`,
-				href: protocolHref(item.protocol)
-			}
+				`${item.protocolName} ${titleCaseToken(item.chartType)} chart`,
+				protocolHref(item.protocol)
+			)
 		case 'advanced-borrowed':
-			return {
+			return createDashboardItemSummary(
 				id,
-				label: `${item.protocolName} ${titleCaseToken(item.chartType)} borrowed chart`,
-				href: protocolHref(item.protocol)
-			}
+				`${item.protocolName} ${titleCaseToken(item.chartType)} borrowed chart`,
+				protocolHref(item.protocol)
+			)
 		case 'income-statement':
-			return { id, label: `${item.protocolName} income statement`, href: protocolHref(item.protocol) }
+			return createDashboardItemSummary(id, `${item.protocolName} income statement`, protocolHref(item.protocol))
 		case 'unlocks-schedule':
-			return { id, label: `${item.protocolName} unlocks schedule`, href: protocolHref(item.protocol) }
+			return createDashboardItemSummary(id, `${item.protocolName} unlocks schedule`, protocolHref(item.protocol))
 		case 'unlocks-pie':
-			return {
+			return createDashboardItemSummary(
 				id,
-				label: `${item.protocolName} ${titleCaseToken(item.chartType)} unlocks chart`,
-				href: protocolHref(item.protocol)
-			}
+				`${item.protocolName} ${titleCaseToken(item.chartType)} unlocks chart`,
+				protocolHref(item.protocol)
+			)
 		case 'llamaai-chart':
 			return { id, label: item.title || 'LlamaAI chart' }
 		case 'rwa-overview':

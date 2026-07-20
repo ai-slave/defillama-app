@@ -1,18 +1,16 @@
 import { fetchChainChart, fetchChainsTvlOverview } from '~/containers/Chains/api'
 import { resolveAllowedChainNamesFromCategories } from '~/containers/ProDashboard/server/chartBuilder/breakdownChains'
-import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
+import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import {
 	BREAKDOWN_COLOR_PALETTE,
 	buildAlignedTopAndOthers,
 	filterOutToday,
 	normalizeDailyPairs,
-	sumSeriesByTimestamp,
 	type ChartSeries,
 	type ProtocolChainData
 } from '~/utils/breakdowns'
-import { processAdjustedProtocolTvl, processAdjustedTvl } from '~/utils/tvl'
-
-const keysToSkip = new Set(['staking', 'pool2', 'borrowed', 'doublecounted', 'liquidstaking', 'vesting'])
+import { processAdjustedTvl } from '~/utils/tvl'
+import { buildTopProtocolChainSeries } from './protocolTvlBreakdown'
 
 async function getTvlProtocolChainData(
 	protocol: string,
@@ -23,96 +21,32 @@ async function getTvlProtocolChainData(
 	chainCategories?: string[]
 ): Promise<ProtocolChainData> {
 	try {
-		const data = await fetchProtocolBySlug<{ name?: string; chainTvls?: Record<string, unknown> }>(protocol)
-		const chainTvls = data?.chainTvls || {}
-
-		const series: ChartSeries[] = []
-		const availableChains: string[] = []
-		let colorIndex = 0
-
-		const chainSet = chains && chains.length > 0 ? new Set(chains) : new Set<string>()
-
+		const chart = await fetchProtocolTvlChart({ protocol, breakdownType: 'chain-breakdown' })
+		const chainSet = chains?.length ? new Set(chains) : undefined
 		let allowNamesFromCategories: Set<string> | null = null
-		if (chainCategories && chainCategories.length > 0) {
+		if (chainCategories?.length) {
 			allowNamesFromCategories = await resolveAllowedChainNamesFromCategories(chainCategories)
 		}
-		for (const chainKey in chainTvls) {
-			if (
-				keysToSkip.has(chainKey) ||
-				chainKey
-					.split('-')
-					.slice(1)
-					.some((seg) => keysToSkip.has(seg))
-			) {
-				continue
-			}
 
-			if (chains && chains.length > 0) {
-				const matches = chainSet.has(chainKey)
-				if (chainFilterMode === 'include') {
-					if (!matches) continue
-				} else {
-					if (matches) continue
-				}
+		const result = buildTopProtocolChainSeries({
+			chart,
+			topN,
+			filter: {
+				...(chainFilterMode === 'include' ? { includeChains: chainSet } : { excludeChains: chainSet }),
+				categoryChains: allowNamesFromCategories,
+				categoryFilterMode: chainCategoryFilterMode
 			}
-
-			if (allowNamesFromCategories && allowNamesFromCategories.size > 0) {
-				if (chainCategoryFilterMode === 'include') {
-					if (!allowNamesFromCategories.has(chainKey)) continue
-				} else {
-					if (allowNamesFromCategories.has(chainKey)) continue
-				}
-			}
-
-			const adjustedForChain = processAdjustedProtocolTvl(chainTvls as any, {
-				filterMode: 'include',
-				includeChains: [chainKey]
-			})
-			if (adjustedForChain.length > 0) {
-				series.push({
-					name: chainKey,
-					data: adjustedForChain,
-					color: BREAKDOWN_COLOR_PALETTE[colorIndex % BREAKDOWN_COLOR_PALETTE.length]
-				})
-				availableChains.push(chainKey)
-				colorIndex++
-			}
-		}
-
-		const sortedSeries = series.toSorted((a, b) => {
-			const lastA = a.data[a.data.length - 1]?.[1] || 0
-			const lastB = b.data[b.data.length - 1]?.[1] || 0
-			return lastB - lastA
 		})
 
-		const topSeries = sortedSeries.slice(0, Math.min(topN, sortedSeries.length))
-		const othersSeries = sortedSeries.slice(Math.min(topN, sortedSeries.length))
-
-		const totalSeries = Array.from(sumSeriesByTimestamp(sortedSeries.map((s) => s.data)).entries()).sort(
-			(a, b) => a[0] - b[0]
-		) as [number, number][]
-		const { alignedTopSeries, othersData } = buildAlignedTopAndOthers(topSeries, totalSeries)
-
-		const hasOthers = othersSeries.length > 0 && othersData.some(([, v]) => v > 0)
-
-		const finalSeries: ChartSeries[] = [...alignedTopSeries]
-		if (hasOthers) {
-			finalSeries.push({
-				name: `Others (${othersSeries.length} chains)`,
-				data: othersData,
-				color: '#999999'
-			})
-		}
-
 		return {
-			series: finalSeries,
+			series: result.series,
 			metadata: {
-				protocol: data.name || protocol,
+				protocol,
 				metric: 'TVL',
-				chains: availableChains,
-				totalChains: availableChains.length,
-				topN: Math.min(topN, sortedSeries.length),
-				othersCount: Math.max(0, sortedSeries.length - Math.min(topN, sortedSeries.length))
+				chains: result.chains,
+				totalChains: result.totalChains,
+				topN: result.topN,
+				othersCount: result.othersCount
 			}
 		}
 	} catch (error) {

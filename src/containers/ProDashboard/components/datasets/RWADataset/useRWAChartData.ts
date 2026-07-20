@@ -15,9 +15,10 @@ import {
 	fetchRWAAssetGroupBreakdownChartData,
 	fetchRWAChartDataByAsset
 } from '~/containers/RWA/api'
-import type { IFetchedRWAProject, RWAOverviewBreakdownRequest } from '~/containers/RWA/api.types'
+import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
 import { toBreakdownChartDataset } from '~/containers/RWA/breakdownDataset'
 import { tokenIconUrl } from '~/utils/icons'
+import { getProRwaBreakdown, getProRwaBreakdownQueryKey } from '../../../rwaBreakdown'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric } from '../../../types'
 
 const STALE_TIME = 60 * 60 * 1000
@@ -37,13 +38,6 @@ function getBreakdownFetcher(breakdown: RWAOverviewChartBreakdown) {
 	}
 }
 
-function getBreakdownParam(breakdown: RWAOverviewChartBreakdown): RWAOverviewBreakdownRequest['breakdown'] {
-	if (breakdown === 'assetClass' || breakdown === 'assetName') {
-		return 'chain'
-	}
-	return breakdown
-}
-
 export function useRWABreakdownChartData(
 	breakdown: RWAOverviewChartBreakdown,
 	metric: RWAOverviewChartMetric,
@@ -51,11 +45,11 @@ export function useRWABreakdownChartData(
 ) {
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
-	const actualBreakdown = getBreakdownParam(breakdown)
+	const actualBreakdown = getProRwaBreakdown(breakdown)
 	const isChainSpecific = chain && chain !== 'All'
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['pro-dashboard', 'rwa-breakdown-chart', actualBreakdown, metric, chain || 'All'],
+		queryKey: getProRwaBreakdownQueryKey(actualBreakdown, metric, chain),
 		enabled: streamDone,
 		queryFn: async () => {
 			if (isChainSpecific) {

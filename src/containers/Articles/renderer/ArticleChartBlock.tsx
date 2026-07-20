@@ -1,7 +1,14 @@
 import { useQueries } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, type ReactNode } from 'react'
+import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardReducer'
-import { getChartQueryFn, getChartQueryKey, ProxyAuthTokenContext } from '~/containers/ProDashboard/queries'
+import { buildProDashboardParentMapping, buildProtocolSymbolMap } from '~/containers/ProDashboard/protocolCatalog'
+import {
+	filterDataByTimePeriod,
+	getChartQueryFn,
+	ProxyAuthTokenContext,
+	useProtocolsAndChains
+} from '~/containers/ProDashboard/queries'
 import { CHART_TYPES } from '~/containers/ProDashboard/types'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { getArticleEntityRoute } from '../entityLinks'
@@ -73,24 +80,31 @@ export function ArticleChartBlock({
 	const chartLabel = uniqueChartTypeTitles(series).join(' / ')
 
 	const authToken = useContext(ProxyAuthTokenContext)
+	const { data: catalog } = useProtocolsAndChains()
+	const protocolSymbols = useMemo(() => buildProtocolSymbolMap(catalog?.protocols ?? []), [catalog])
+	const parentMapping = useMemo(() => buildProDashboardParentMapping(catalog?.protocols ?? []), [catalog])
 
 	const queries = useQueries({
 		queries: series.map((s) => ({
-			queryKey: [
-				'pro-dashboard',
-				...getChartQueryKey(s.chartType, s.entityType, s.slug, s.geckoId ?? null, timePeriod)
-			],
+			queryKey: getProDashboardChartSourceQueryKey({
+				type: s.chartType,
+				protocol: s.entityType === 'protocol' ? s.slug : '',
+				chain: s.entityType === 'chain' ? s.slug : '',
+				geckoId: s.geckoId ?? null
+			}),
 			queryFn: getChartQueryFn(
 				s.chartType,
 				s.entityType,
 				s.slug,
 				s.geckoId ?? null,
-				timePeriod,
+				undefined,
+				parentMapping,
 				undefined,
 				undefined,
-				undefined,
-				authToken
+				authToken,
+				s.entityType === 'protocol' ? protocolSymbols : undefined
 			),
+			select: (data: [number, number][]) => filterDataByTimePeriod(data, timePeriod),
 			staleTime: 1000 * 60 * 5,
 			gcTime: 1000 * 60 * 30,
 			refetchOnWindowFocus: false

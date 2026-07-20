@@ -20,8 +20,8 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import { useDimensionDatasetData } from '../useDimensionDatasetData'
 import { optionsDatasetColumns } from './columns'
-import { useOptionsData } from './useOptionsData'
 
 const EMPTY_DATA: any[] = []
 
@@ -36,7 +36,7 @@ export function OptionsDataset({ chains }: { chains?: string[] }) {
 		pageSize: 10
 	})
 
-	const { data, isLoading, error, refetch: _refetch } = useOptionsData(chains)
+	const { data, isLoading, error } = useDimensionDatasetData('options', chains)
 	const width = useBreakpointWidth()
 
 	const instance = useReactTable({

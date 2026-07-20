@@ -7,12 +7,14 @@ const {
 	fetchDashboardConfigMock,
 	fetchDashboardConfigWithStatusMock,
 	fetchProtocolsAndChainsMock,
-	fetchAppMetadataMock
+	fetchAppMetadataMock,
+	fetchTableServerDataMock
 } = vi.hoisted(() => ({
 	fetchDashboardConfigMock: vi.fn(),
 	fetchDashboardConfigWithStatusMock: vi.fn(),
 	fetchProtocolsAndChainsMock: vi.fn(),
-	fetchAppMetadataMock: vi.fn()
+	fetchAppMetadataMock: vi.fn(),
+	fetchTableServerDataMock: vi.fn()
 }))
 
 vi.mock('~/utils/telemetry', () => ({
@@ -76,7 +78,7 @@ vi.mock('~/containers/ProDashboard/queries.server', () => ({
 }))
 
 vi.mock('~/containers/ProDashboard/server/tableQueries', () => ({
-	fetchTableServerData: vi.fn()
+	fetchTableServerData: fetchTableServerDataMock
 }))
 
 vi.mock('~/containers/ProDashboard/services/ProtocolCharts', () => ({
@@ -182,6 +184,7 @@ describe('pro dashboard cache headers', () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({ dashboard: publicDashboard, status: 200 })
 		fetchProtocolsAndChainsMock.mockResolvedValue({ protocols: [], chains: [] })
 		fetchAppMetadataMock.mockResolvedValue({})
+		fetchTableServerDataMock.mockResolvedValue(null)
 	})
 
 	afterEach(() => {
@@ -336,6 +339,23 @@ describe('pro dashboard cache headers', () => {
 		expect(res.setHeader).toHaveBeenCalledWith('X-Accel-Buffering', 'no')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', PUBLIC_DASHBOARD_CACHE_CONTROL)
 		expect(fetchDashboardConfigMock).toHaveBeenCalledWith('dashboard-1', null)
+		expect(res.end).toHaveBeenCalled()
+	})
+
+	it('starts item fetches without waiting for app metadata', async () => {
+		let resolveAppMetadata: (value: null) => void = () => {}
+		fetchAppMetadataMock.mockReturnValue(
+			new Promise<null>((resolve) => {
+				resolveAppMetadata = resolve
+			})
+		)
+		const res = createMockNextApiResponse()
+
+		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
+		await vi.waitFor(() => expect(fetchTableServerDataMock).toHaveBeenCalled())
+		resolveAppMetadata(null)
+		await streamPromise
+
 		expect(res.end).toHaveBeenCalled()
 	})
 

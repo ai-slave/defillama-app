@@ -1,22 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import { formattedNum, slug } from '~/utils'
 
-interface TokenUsageRow {
-	name: string
-	category: string
-	amountUsd: number
-	amountUsdByChain?: Record<string, number>
-	logo?: string
-	misrepresentedTokens?: boolean
-	tokens?: Record<string, number>
-}
-
-export const getColumns = (tokenSymbols: string[]): ColumnDef<TokenUsageRow>[] => {
+export const getColumns = (tokenSymbols: string[]): ColumnDef<ProtocolTokenUsageData>[] => {
 	const isMultiToken = tokenSymbols.length > 1
 
-	const baseColumns: ColumnDef<TokenUsageRow>[] = [
+	const baseColumns: ColumnDef<ProtocolTokenUsageData>[] = [
 		{
 			header: 'Protocol',
 			accessorKey: 'name',
@@ -51,7 +42,7 @@ export const getColumns = (tokenSymbols: string[]): ColumnDef<TokenUsageRow>[] =
 		for (const symbol of tokenSymbols) {
 			baseColumns.push({
 				header: symbol.toUpperCase(),
-				accessorFn: (row) => row.tokens?.[symbol] || 0,
+				accessorFn: (row) => row.tokens[symbol] || 0,
 				cell: ({ getValue }) => {
 					const value = getValue() as number
 					return value > 0 ? (

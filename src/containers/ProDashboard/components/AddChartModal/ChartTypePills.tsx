@@ -29,7 +29,8 @@ const PROTOCOL_GROUPS: Record<string, string[]> = {
 
 const CHAIN_GROUPS: Record<string, string[]> = {
 	Value: ['tvl', 'bridgedTvl'],
-	Volume: ['volume', 'aggregators', 'perps', 'perpsAggregators', 'bridgeAggregators', 'options'],
+	Volume: ['volume', 'aggregators', 'perps', 'perpsAggregators', 'bridgeAggregators'],
+	Derivatives: ['optionsPremium', 'optionsNotional'],
 	'Fees & Revenue': ['fees', 'revenue', 'chainFees', 'chainRevenue', 'bribes', 'tokenTax'],
 	Activity: ['users', 'txs', 'activeUsers', 'newUsers', 'gasUsed'],
 	Stablecoins: ['stablecoins', 'stablecoinInflows'],

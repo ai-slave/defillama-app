@@ -154,7 +154,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 				itemIconUrl = getItemIconUrl('chain', itemInfo, chart.chain)
 				itemIdentifier = chart.chain
 			} else if (chart.geckoId) {
-				const protocolInfo = protocols.find((p: any) => p.geckoId === chart.geckoId)
+				const protocolInfo = protocols.find((protocol) => protocol.geckoId === chart.geckoId)
 				itemInfo = protocolInfo
 				itemName = protocolInfo?.name || chart.geckoId
 				itemIconUrl = protocolInfo ? getItemIconUrl('protocol', protocolInfo, protocolInfo.slug) : undefined

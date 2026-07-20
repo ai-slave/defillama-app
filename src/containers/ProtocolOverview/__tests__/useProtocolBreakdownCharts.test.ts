@@ -102,6 +102,219 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		})
 	})
 
+	it('uses the price from the side with the larger USD notional', () => {
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [
+				[
+					[DAY_MS, { TOKEN: 2_000 }],
+					[DAY_MS * 2, { TOKEN: 1_000 }]
+				]
+			],
+			tokenBreakdownRawCharts: [
+				[
+					[DAY_MS, { TOKEN: 100 }],
+					[DAY_MS * 2, { TOKEN: 10 }]
+				]
+			],
+			valueSeriesName: 'Total'
+		})
+
+		// Previous notional is larger, so the withdrawal uses its $20 price instead of the current $100 price.
+		expect(result.tokenInflowsDataset?.source).toEqual([{ timestamp: DAY_MS * 2, TOKEN: -1_800 }])
+		expect(result.usdInflowsDataset?.source).toEqual([{ timestamp: DAY_MS * 2, 'USD Inflows': -1_800 }])
+	})
+
+	it('rejects a balance jump larger than twice its price reference', () => {
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [
+				[
+					[DAY_MS, { TOKEN: 100 }],
+					[DAY_MS * 2, { TOKEN: 10 }]
+				]
+			],
+			tokenBreakdownRawCharts: [
+				[
+					[DAY_MS, { TOKEN: 1 }],
+					[DAY_MS * 2, { TOKEN: 1_000 }]
+				]
+			],
+			valueSeriesName: 'Total'
+		})
+
+		expect(result.tokenInflowsDataset).toBeNull()
+		expect(result.usdInflowsDataset).toBeNull()
+	})
+
+	it('keeps a normal balance flow below the outlier threshold', () => {
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [
+				[
+					[DAY_MS, { TOKEN: 100 }],
+					[DAY_MS * 2, { TOKEN: 150 }]
+				]
+			],
+			tokenBreakdownRawCharts: [
+				[
+					[DAY_MS, { TOKEN: 10 }],
+					[DAY_MS * 2, { TOKEN: 15 }]
+				]
+			],
+			valueSeriesName: 'Total'
+		})
+
+		expect(result.tokenInflowsDataset?.source).toEqual([{ timestamp: DAY_MS * 2, TOKEN: 50 }])
+		expect(result.usdInflowsDataset?.source).toEqual([{ timestamp: DAY_MS * 2, 'USD Inflows': 50 }])
+	})
+
+	it('does not derive a token price from non-positive raw balances', () => {
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [
+				[
+					[DAY_MS, { TOKEN: 100 }],
+					[DAY_MS * 2, { TOKEN: 50 }]
+				]
+			],
+			tokenBreakdownRawCharts: [
+				[
+					[DAY_MS, { TOKEN: -10 }],
+					[DAY_MS * 2, { TOKEN: -5 }]
+				]
+			],
+			valueSeriesName: 'Total'
+		})
+
+		expect(result.tokenInflowsDataset).toBeNull()
+		expect(result.usdInflowsDataset).toBeNull()
+	})
+
+	it('computes each source inflow before summing sources with different token prices', () => {
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [
+				[
+					[DAY_MS, { TOKEN: 100 }],
+					[DAY_MS * 2, { TOKEN: 150 }]
+				],
+				[
+					[DAY_MS, { TOKEN: 20 }],
+					[DAY_MS * 2, { TOKEN: 10 }]
+				]
+			],
+			tokenBreakdownRawCharts: [
+				[
+					[DAY_MS, { TOKEN: 10 }],
+					[DAY_MS * 2, { TOKEN: 15 }]
+				],
+				[
+					[DAY_MS, { TOKEN: 20 }],
+					[DAY_MS * 2, { TOKEN: 10 }]
+				]
+			],
+			valueSeriesName: 'Total'
+		})
+
+		// Source flows are +$50 and -$10. Calculating after aggregation would incorrectly produce -$32.
+		expect(result.tokenInflowsDataset?.source).toEqual([{ timestamp: DAY_MS * 2, TOKEN: 40 }])
+		expect(result.usdInflowsDataset?.source).toEqual([{ timestamp: DAY_MS * 2, 'USD Inflows': 40 }])
+	})
+
+	it('filters raw rows against each source USD row before aggregating sources', () => {
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [
+				[
+					[DAY_MS, { TOKEN: 500_000, MISSING: 2_000_000, FILTERED: 400_000 }],
+					[DAY_MS * 2, {}]
+				],
+				[
+					[DAY_MS, { TOKEN: 2_000_000 }],
+					[DAY_MS * 2, { TOKEN: 2_100_000 }]
+				]
+			],
+			tokenBreakdownRawCharts: [
+				[
+					[DAY_MS, { TOKEN: 200_000_000, MISSING: 1, FILTERED: 200_000_000 }],
+					[DAY_MS * 2, { TOKEN: 200_000_000, MISSING: 2, FILTERED: 200_000_000 }]
+				],
+				[
+					[DAY_MS, { TOKEN: 1 }],
+					[DAY_MS * 2, { TOKEN: 2 }]
+				]
+			],
+			valueSeriesName: 'Total',
+			computeInflows: false
+		})
+
+		expect(result.tokenUSDDataset?.source).toEqual([
+			{ timestamp: DAY_MS, TOKEN: 2_500_000, MISSING: 2_000_000, FILTERED: 400_000 },
+			{ timestamp: DAY_MS * 2, TOKEN: 2_100_000 }
+		])
+		expect(result.tokenRawDataset?.source).toEqual([
+			{ timestamp: DAY_MS, MISSING: 1, TOKEN: 1 },
+			{ timestamp: DAY_MS * 2, TOKEN: 2 }
+		])
+		expect(result.rawTokensUnique).toEqual(['TOKEN', 'MISSING'])
+		expect(result.tokenRawDataset?.dimensions).not.toContain('FILTERED')
+	})
+
+	it('keeps a raw-only source when that source has no USD history', () => {
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [null],
+			tokenBreakdownRawCharts: [
+				[
+					[DAY_MS, { TOKEN: 200_000_000 }],
+					[DAY_MS * 2, { TOKEN: 210_000_000 }]
+				]
+			],
+			valueSeriesName: 'Total',
+			computeInflows: false
+		})
+
+		expect(result.tokenRawDataset?.source).toEqual([
+			{ timestamp: DAY_MS, TOKEN: 200_000_000 },
+			{ timestamp: DAY_MS * 2, TOKEN: 210_000_000 }
+		])
+	})
+
+	it('excludes unknown and non-positive balances from raw display data', () => {
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [
+				[
+					[DAY_MS, { TOKEN: 100, USDT0: 200, UNKNOWN_A: 300 }],
+					[DAY_MS * 2, { TOKEN: 110, USDT0: 210, UNKNOWN_A: 310 }]
+				]
+			],
+			tokenBreakdownRawCharts: [
+				[
+					[DAY_MS, { TOKEN: 10, USDT0: -132_666_022, UNKNOWN_A: 30 }],
+					[DAY_MS * 2, { TOKEN: 11, USDT0: -132_666_023, UNKNOWN_A: 31 }]
+				]
+			],
+			valueSeriesName: 'Total',
+			computeInflows: false
+		})
+
+		expect(result.rawTokensUnique).toEqual(['TOKEN'])
+		expect(result.tokenRawDataset?.source).toEqual([
+			{ timestamp: DAY_MS, TOKEN: 10 },
+			{ timestamp: DAY_MS * 2, TOKEN: 11 }
+		])
+	})
+
 	it('omits token and inflow datasets when inflows are disabled', () => {
 		const result = buildComputedBreakdownResult({
 			tvlCharts: [

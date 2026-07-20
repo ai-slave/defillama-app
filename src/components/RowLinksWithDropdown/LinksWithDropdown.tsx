@@ -10,6 +10,7 @@ interface ILink {
 
 interface IRowLinksProps {
 	links: ILink[]
+	name?: string
 	activeLink?: string
 	alternativeOthersText?: string
 }
@@ -143,6 +144,7 @@ function recalculateFromCache(containerWidth: number, cached: CachedLayout, link
 // Resize uses cached widths for instant recalculation — no DOM churn.
 export function LinksWithDropdown({
 	links = EMPTY_LINKS,
+	name = 'row-links',
 	activeLink,
 	alternativeOthersText,
 	...props
@@ -241,6 +243,7 @@ export function LinksWithDropdown({
 		return (
 			<OtherLinks
 				name={alternativeOthersText ?? 'Others'}
+				keyPrefix={name}
 				isActive={isActiveLinkInList}
 				options={links}
 				className="w-full justify-between"
@@ -253,7 +256,7 @@ export function LinksWithDropdown({
 			<div className="flex max-h-8 flex-1 flex-wrap gap-2 overflow-hidden p-1" ref={priorityNavRef} {...props}>
 				{visibleLinks.map((option, index) => (
 					<LinkItem
-						key={`link-outside-${option.to}`}
+						key={`${name}:${option.label}:${option.to}`}
 						option={option}
 						isActive={index === activeLinkIndex}
 						data-priority-nav-item
@@ -271,6 +274,7 @@ export function LinksWithDropdown({
 					}
 					isActive={isLinkInDropdown}
 					options={links}
+					keyPrefix={name}
 					className="mr-1 ml-1 data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-on-brand"
 				/>
 			) : null}

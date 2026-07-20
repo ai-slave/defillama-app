@@ -1,10 +1,13 @@
 import { useQueries } from '@tanstack/react-query'
 import { useContext, useMemo } from 'react'
-import type { TimePeriod } from '../../ProDashboardAPIContext'
+import { chartNeedsGeckoId } from '../../chartSource'
+import type { TimePeriod } from '../../dashboardTypes'
+import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
+import { buildProDashboardParentMapping, buildProtocolSymbolMap } from '../../protocolCatalog'
 import {
 	filterDataByTimePeriod,
+	getChartCardQueryKey,
 	getChartQueryFn,
-	getChartQueryKey,
 	ProxyAuthTokenContext,
 	StreamDoneContext
 } from '../../queries'
@@ -16,29 +19,30 @@ const EMPTY_SERIES: [number, number][] = []
 export function useComposerItemsData(composerItems: ChartConfig[], timePeriod: TimePeriod) {
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
+	const { protocols } = useProDashboardCatalog()
+	const protocolSymbols = useMemo(() => buildProtocolSymbolMap(protocols), [protocols])
+	const parentMapping = useMemo(() => buildProDashboardParentMapping(protocols), [protocols])
 	const queries = useQueries({
 		queries: composerItems.map((item) => {
 			const itemType = item.protocol ? 'protocol' : 'chain'
 			const itemName = item.protocol || item.chain || ''
 
-			const needsGeckoId =
-				(itemType === 'protocol' && ['tokenMcap', 'tokenPrice', 'tokenVolume'].includes(item.type)) ||
-				(itemType === 'chain' && ['chainMcap', 'chainPrice'].includes(item.type))
-
-			const isEnabled = streamDone && !!itemName && !!item.type && (!needsGeckoId || !!item.geckoId)
+			const isEnabled =
+				streamDone && !!itemName && !!item.type && (!chartNeedsGeckoId(item.type, itemType) || !!item.geckoId)
 
 			return {
-				queryKey: getChartQueryKey(item.type, itemType, itemName, item.geckoId, timePeriod),
+				queryKey: getChartCardQueryKey(item),
 				queryFn: getChartQueryFn(
 					item.type,
 					itemType,
 					itemName,
 					item.geckoId,
-					timePeriod,
 					undefined,
+					parentMapping,
 					undefined,
 					item.dataType,
-					authToken
+					authToken,
+					itemType === 'protocol' ? protocolSymbols : undefined
 				),
 				staleTime: 5 * 60 * 1000,
 				enabled: isEnabled,

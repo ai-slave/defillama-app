@@ -1,5 +1,6 @@
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import type {
+	ChartBuilderConfig as StoredChartBuilderConfig,
 	ChartConfig,
 	DashboardItemConfig,
 	MetricAggregator,
@@ -56,47 +57,7 @@ export type CombinedTableType =
 	| 'equities-financials'
 	| 'equities-filings'
 
-export interface ChartBuilderConfig {
-	metric:
-		| 'tvl'
-		| 'fees'
-		| 'revenue'
-		| 'volume'
-		| 'perps'
-		| 'open-interest'
-		| 'options-notional'
-		| 'options-premium'
-		| 'bridge-aggregators'
-		| 'dex-aggregators'
-		| 'perps-aggregators'
-		| 'user-fees'
-		| 'holders-revenue'
-		| 'protocol-revenue'
-		| 'supply-side-revenue'
-		| 'stablecoins'
-		| 'chain-fees'
-		| 'chain-revenue'
-	mode: 'chains' | 'protocol'
-	filterMode?: 'include' | 'exclude'
-	chainFilterMode?: 'include' | 'exclude'
-	categoryFilterMode?: 'include' | 'exclude'
-	chainCategoryFilterMode?: 'include' | 'exclude'
-	protocolCategoryFilterMode?: 'include' | 'exclude'
-	protocol?: string
-	chains: string[]
-	chainCategories?: string[]
-	protocolCategories?: string[]
-	categories: string[]
-	groupBy: 'protocol'
-	limit: number
-	chartType: 'stackedBar' | 'stackedArea' | 'line' | 'treemap'
-	treemapValue?: 'latest' | 'sum7d' | 'sum30d'
-	displayAs: 'timeSeries' | 'percentage'
-	hideOthers?: boolean
-	groupByParent?: boolean
-	additionalFilters?: Record<string, any>
-	seriesColors?: Record<string, string>
-}
+export type ChartBuilderConfig = StoredChartBuilderConfig['config']
 
 export interface ModalState {
 	selectedMainTab: MainTabType
@@ -166,88 +127,4 @@ export interface ModalState {
 	selectedRwaAssetId: string | null
 	selectedRwaAssetName: string | null
 	selectedRwaAssetMetrics: RWAOverviewChartMetric[]
-}
-
-// oxlint-disable-next-line no-unused-vars
-interface ModalActions {
-	setSelectedMainTab: (tab: MainTabType) => void
-	setSelectedChartTab: (tab: ChartTabType) => void
-	setChartMode: (mode: ChartModeType) => void
-	setComposerItems: React.Dispatch<React.SetStateAction<ChartConfig[]>>
-	setSelectedChain: (chain: string | null) => void
-	setSelectedChains: (chains: string[]) => void // New action for multi-chain selection
-	setSelectedProtocols: (protocols: string[]) => void
-	setSelectedProtocol: (protocol: string | null) => void
-	setSelectedChartType: (type: string) => void
-	setSelectedChartTypes: (types: string[]) => void
-	setUnifiedChartName: (name: string) => void
-	setChartCreationMode: (mode: 'separate' | 'combined') => void
-	setTextTitle: (title: string) => void
-	setTextContent: (content: string) => void
-	setSelectedTableType: (type: CombinedTableType) => void
-	setSelectedDatasetChain: (chain: string | null) => void
-	setSelectedDatasetTimeframe: (timeframe: string | null) => void
-	setSelectedCexAnalyticsView: (view: CexAnalyticsView | 'starter') => void
-	setSelectedCexAnalyticsMetric: (metric: CexAnalyticsMetric) => void
-	setSelectedCexAnalyticsTopN: (topN: number) => void
-	setSelectedTokens: (tokens: string[]) => void
-	setIncludeCex: (include: boolean) => void
-	setChartBuilderName: (name: string) => void
-	handleChainChange: (option: any) => void
-	handleChainsChange: (values: string[]) => void // New handler for multi-chain selection
-	handleProtocolChange: (option: any) => void
-	handleDatasetChainChange: (value: string | null) => void
-	handleTokensChange: (tokens: string[]) => void
-	handleAddToComposer: (typesToAdd?: string[], options?: { entity?: string; mode?: 'chain' | 'protocol' }) => void
-	handleRemoveFromComposer: (id: string) => void
-	handleUpdateComposerItemColor: (id: string, color: string) => void
-	handleBulkChartTypeChange: (nextType: string) => void
-	handleMainTabChange: (tab: MainTabType) => void
-	handleSubmit: () => void
-	handleChartTabChange: (tab: ChartTabType) => void
-	setChartBuilder: React.Dispatch<React.SetStateAction<ChartBuilderConfig>>
-	updateChartBuilder: (updates: Partial<ChartBuilderConfig>) => void
-	setMetricSubjectType: (t: 'chain' | 'protocol') => void
-	setMetricChain: (v: string | null) => void
-	setMetricProtocol: (v: string | null) => void
-	setMetricType: (t: string) => void
-	setMetricAggregator: (a: MetricAggregator) => void
-	setMetricWindow: (w: '7d' | '30d' | '90d' | '365d' | 'ytd' | '3y' | 'all') => void
-	setMetricLabel: (s: string) => void
-	setMetricChartType: (v: MetricChartType) => void
-	setSelectedYieldPool: (pool: { configID: string; name: string; project: string; chain: string } | null) => void
-	setSelectedYieldChartType: (chartType: string) => void
-	setSelectedYieldChains: (chains: string[]) => void
-	setSelectedYieldProjects: (projects: string[]) => void
-	setSelectedYieldCategories: (categories: string[]) => void
-	setSelectedYieldTokens: (tokens: string[]) => void
-	setMinTvl: (tvl: number | null) => void
-	setMaxTvl: (tvl: number | null) => void
-	setSelectedStablecoinChain: (chain: string) => void
-	setSelectedStablecoinChartType: (chartType: string) => void
-	setStablecoinMode: (mode: 'chain' | 'asset') => void
-	setSelectedStablecoinAsset: (asset: string | null) => void
-	setSelectedStablecoinAssetId: (id: string | null) => void
-	setSelectedStablecoinAssetChartType: (chartType: string) => void
-	setSelectedAdvancedTvlProtocol: (protocol: string | null) => void
-	setSelectedAdvancedTvlProtocolName: (name: string | null) => void
-	setSelectedAdvancedTvlChartType: (chartType: string) => void
-	setSelectedBorrowedProtocol: (protocol: string | null) => void
-	setSelectedBorrowedProtocolName: (name: string | null) => void
-	setSelectedBorrowedChartType: (chartType: string) => void
-	setSelectedIncomeStatementProtocol: (protocol: string | null) => void
-	setSelectedIncomeStatementProtocolName: (name: string | null) => void
-	setSelectedLlamaAIChart: (chart: { id: string; title: string } | null) => void
-	setSelectedUnlocksProtocol: (protocol: string | null) => void
-	setSelectedUnlocksProtocolName: (name: string | null) => void
-	setSelectedUnlocksChartType: (type: 'total' | 'schedule' | 'allocation' | 'locked-unlocked') => void
-	setRwaMode: (mode: 'overview' | 'asset') => void
-	setSelectedRwaChain: (chain: string) => void
-	setSelectedRwaMetric: (metric: RWAOverviewChartMetric) => void
-	setSelectedRwaChartView: (view: RWAOverviewChartView) => void
-	setSelectedRwaBreakdown: (breakdown: RWAOverviewChartBreakdown) => void
-	setSelectedRwaTreemapNestedBy: (nestedBy: string) => void
-	setSelectedRwaAssetId: (id: string | null) => void
-	setSelectedRwaAssetName: (name: string | null) => void
-	setSelectedRwaAssetMetrics: (metrics: RWAOverviewChartMetric[]) => void
 }

@@ -126,19 +126,20 @@ export function useStablecoinAssetChartData(
 		}
 
 		let latestTimestamp = 0
-		for (const chain of rawData.chainsData) {
-			const point = chain[chain.length - 1]
-			if (point && Number(point.date) > latestTimestamp) latestTimestamp = Number(point.date)
-		}
 		let total = 0
 		let hasValue = false
 		for (const chain of rawData.chainsData) {
 			const point = chain[chain.length - 1]
-			if (!point || Number(point.date) !== latestTimestamp) continue
+			if (!point) continue
 			const value = getStablecoinValueFromPoint(point, 'circulating')
-			if (value == null) continue
-			total += value
-			hasValue = true
+			if (point.date > latestTimestamp) {
+				latestTimestamp = point.date
+				total = value ?? 0
+				hasValue = value != null
+			} else if (point.date === latestTimestamp && value != null) {
+				total += value
+				hasValue = true
+			}
 		}
 		return hasValue ? total : null
 	}, [chartData.totalDataset, chartData.areaDataset, rawData])

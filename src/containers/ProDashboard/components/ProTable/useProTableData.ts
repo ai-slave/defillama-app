@@ -407,8 +407,8 @@ export function useProTableData({ chains, filters }: UseProTableDataParams): Use
 		useGetProtocolsBridgeAggregatorsByMultiChain(chains)
 	const { data: chainProtocolsOptions, isLoading: isLoadingOptions } = useGetProtocolsOptionsVolumeByMultiChain(chains)
 
-	const fullProtocolsList = normalizeProtocolRows(rawProtocols)
-	const parentProtocols = normalizeParentProtocols(rawParentProtocols)
+	const fullProtocolsList = React.useMemo(() => normalizeProtocolRows(rawProtocols), [rawProtocols])
+	const parentProtocols = React.useMemo(() => normalizeParentProtocols(rawParentProtocols), [rawParentProtocols])
 
 	const isLoading =
 		isLoadingProtocols ||

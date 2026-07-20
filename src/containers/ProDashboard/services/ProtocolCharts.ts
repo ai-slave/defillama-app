@@ -3,37 +3,28 @@ import { fetchLiquidityTokensDataset, fetchProtocolTokenLiquidityChart } from '~
 import { fetchCoinGeckoChartByIdWithCacheFallback } from '~/api/coingecko'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
-import {
-	fetchProtocolBySlug,
-	fetchProtocolMiniBySlug,
-	fetchProtocolTreasuryChart
-} from '~/containers/ProtocolOverview/api'
+import { fetchProtocolTvlChart, fetchProtocolTreasuryChart } from '~/containers/ProtocolOverview/api'
+import type { IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
 import { fetchProtocolEmission } from '~/containers/Unlocks/api'
 import { getProtocolEmissionsCharts } from '~/containers/Unlocks/queries'
 import { getYieldsHistoryUrl } from '~/containers/Yields/constants'
 import { slug } from '~/utils'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 import { recordRuntimeError } from '~/utils/telemetry'
-import { processAdjustedProtocolTvl, type ProtocolChainTvls } from '~/utils/tvl'
 import { convertToNumberFormat, normalizeHourlyToDaily } from '../utils'
 
-interface DateTvl {
-	date: number
-	totalLiquidityUSD: number
+interface MedianApyHistoryResponse {
+	data: Array<{ date: string; median_apy: number }>
 }
 
-interface ChainTvlData {
-	tvl: DateTvl[] | [number, number][]
-}
-
-// oxlint-disable-next-line no-unused-vars
-interface ProtocolApiResponse {
-	chainTvls: Record<string, ChainTvlData>
-}
-
-interface ProtocolApiMiniResponse {
-	chainTvls: Record<string, { tvl: [number, number][] }>
-	tvl: [number, number][]
+function toProChartSeconds(data: IProtocolValueChart | null): [number, number][] {
+	if (!data) return []
+	const points = new Array<[number, number]>(data.length)
+	// Protocol V2 charts are canonical milliseconds; Pro's tuple pipeline is seconds.
+	for (let index = 0; index < data.length; index++) {
+		points[index] = [Math.floor(data[index][0] / 1e3), data[index][1]]
+	}
+	return points
 }
 
 const LIQUIDITY_TOKENS_TTL_MS = 10 * 60 * 1000
@@ -60,29 +51,24 @@ async function getCachedLiquidityTokens() {
 
 export default class ProtocolCharts {
 	static async tvl(protocolId: string): Promise<[number, number][]> {
-		if (!protocolId) {
-			return []
-		}
+		if (!protocolId) return []
 		try {
-			const data: ProtocolApiMiniResponse = await fetchProtocolMiniBySlug(protocolId)
-
-			if (Array.isArray(data?.tvl) && data.tvl.length > 0 && Array.isArray(data.tvl[0])) {
-				return data.tvl as [number, number][]
-			}
-
-			const adjusted = processAdjustedProtocolTvl(data?.chainTvls as unknown as ProtocolChainTvls)
-			return adjusted
+			return toProChartSeconds(await fetchProtocolTvlChart({ protocol: protocolId }))
 		} catch (error) {
 			recordRuntimeError(error, 'pageBuild')
 			return []
 		}
 	}
-	static async summary(protocol: string, type: string, dataType?: string): Promise<[number, number][]> {
+	static async summary(
+		protocol: string,
+		type: `${ADAPTER_TYPES}`,
+		dataType?: `${ADAPTER_DATA_TYPES}`
+	): Promise<[number, number][]> {
 		if (!protocol) return []
 		const data = await fetchAdapterProtocolChartData({
-			adapterType: type as `${ADAPTER_TYPES}`,
+			adapterType: type,
 			protocol,
-			dataType: dataType as `${ADAPTER_DATA_TYPES}`
+			dataType
 		})
 		return convertToNumberFormat(data ?? [])
 	}
@@ -185,6 +171,22 @@ export default class ProtocolCharts {
 		return this.summary(protocol, 'options', 'dailyNotionalVolume')
 	}
 
+	static async activeUsers(protocol: string): Promise<[number, number][]> {
+		return this.summary(protocol, ADAPTER_TYPES.ACTIVE_USERS)
+	}
+
+	static async newUsers(protocol: string): Promise<[number, number][]> {
+		return this.summary(protocol, ADAPTER_TYPES.NEW_USERS)
+	}
+
+	static async txs(protocol: string): Promise<[number, number][]> {
+		return this.summary(protocol, ADAPTER_TYPES.ACTIVE_USERS, ADAPTER_DATA_TYPES.DAILY_TRANSACTIONS_COUNT)
+	}
+
+	static async gasUsed(protocol: string): Promise<[number, number][]> {
+		return this.summary(protocol, ADAPTER_TYPES.ACTIVE_USERS, ADAPTER_DATA_TYPES.DAILY_GAS_USED)
+	}
+
 	static async getTokenData(geckoId: string) {
 		if (!geckoId) return { mcaps: [], prices: [], volumes: [] }
 
@@ -210,26 +212,20 @@ export default class ProtocolCharts {
 		return normalizeHourlyToDaily(converted, 'sum')
 	}
 
-	static async liquidity(protocol: string): Promise<[number, number][]> {
-		if (!protocol) return []
+	static async liquidity(protocol: string, symbol?: string | null): Promise<[number, number][]> {
+		if (!protocol || !symbol) return []
 		try {
-			const proto = await fetchProtocolBySlug<{ symbol?: string }>(protocol)
-			const symbol: string | undefined = proto?.symbol
-			if (!symbol) return []
-
 			const tokens = await getCachedLiquidityTokens()
-			const entry = Array.isArray(tokens)
-				? tokens.find((t: any) => String(t?.symbol).toUpperCase() === String(symbol).toUpperCase())
-				: null
+			const normalizedSymbol = symbol.toUpperCase()
+			const entry = tokens.find((token) => token.symbol?.toUpperCase() === normalizedSymbol)
 			const tokenId = entry?.id
 			if (!tokenId) return []
 
 			const hist = await fetchProtocolTokenLiquidityChart(String(tokenId))
-			if (!Array.isArray(hist)) return []
-			const points: [number, number][] = []
-			for (const point of hist) {
-				if (!Array.isArray(point) || point.length < 2) continue
-				points.push([Number(point[0]), Number(point[1])])
+			if (!hist) return []
+			const points = new Array<[number, number]>(hist.length)
+			for (let index = 0; index < hist.length; index++) {
+				points[index] = [Number(hist[index][0]), hist[index][1]]
 			}
 			return points
 		} catch (e) {
@@ -254,7 +250,7 @@ export default class ProtocolCharts {
 		const response = await fetchWithPoolingOnServer(
 			getYieldsHistoryUrl(`/v2/protocol-median/${encodeURIComponent(protocol)}/history`)
 		)
-		const { data } = await response.json()
+		const { data } = (await response.json()) as MedianApyHistoryResponse
 		const res: [number, number][] = []
 		for (const item of data) {
 			res.push([dayjs(item.date).unix(), item.median_apy])
@@ -265,25 +261,7 @@ export default class ProtocolCharts {
 	static async borrowed(protocol: string): Promise<[number, number][]> {
 		if (!protocol) return []
 		try {
-			const data = await fetchProtocolBySlug<ProtocolApiResponse>(protocol)
-			const chainTvls = data?.chainTvls || {}
-			const store: Record<number, number> = {}
-			for (const key in chainTvls) {
-				if (!key.endsWith('-borrowed')) continue
-				const arr = chainTvls[key]?.tvl || []
-				for (const item of arr) {
-					const d = Array.isArray(item) ? Number(item[0]) : Number(item?.date)
-					const v = Array.isArray(item) ? Number(item[1]) : Number(item?.totalLiquidityUSD ?? 0)
-					if (!Number.isFinite(d) || !Number.isFinite(v)) continue
-					store[d] = (store[d] ?? 0) + v
-				}
-			}
-			const result: [number, number][] = []
-			for (const d in store) {
-				result.push([Number(d), store[d]])
-			}
-			result.sort((a, b) => a[0] - b[0])
-			return result
+			return toProChartSeconds(await fetchProtocolTvlChart({ protocol, key: 'borrowed' }))
 		} catch (e) {
 			recordRuntimeError(e, 'pageBuild')
 			return []
@@ -297,8 +275,7 @@ export default class ProtocolCharts {
 				`/api/public/pro-dashboard/pf-ps-chart?protocol=${encodeURIComponent(protocol)}&type=pf`
 			)
 			if (!res.ok) return []
-			const data = await res.json()
-			return Array.isArray(data) ? data : []
+			return (await res.json()) as [number, number][]
 		} catch (e) {
 			recordRuntimeError(e, 'pageBuild')
 			return []
@@ -312,8 +289,7 @@ export default class ProtocolCharts {
 				`/api/public/pro-dashboard/pf-ps-chart?protocol=${encodeURIComponent(protocol)}&type=ps`
 			)
 			if (!res.ok) return []
-			const data = await res.json()
-			return Array.isArray(data) ? data : []
+			return (await res.json()) as [number, number][]
 		} catch (e) {
 			recordRuntimeError(e, 'pageBuild')
 			return []

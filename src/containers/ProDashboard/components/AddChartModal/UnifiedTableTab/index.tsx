@@ -13,7 +13,7 @@ const SubscribeProModal = lazy(() =>
 )
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import type { IEquitiesCompanyApiItem } from '~/containers/Equities/api.types'
-import { buildEquityTickerCountrySlug } from '~/containers/Equities/utils'
+import { buildEquityTickerCountrySlug } from '~/containers/Equities/tickerCountry'
 import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '~/containers/ProDashboard/components/UnifiedTable/config/ColumnDictionary'
 import {
 	UNIFIED_TABLE_PRESETS,

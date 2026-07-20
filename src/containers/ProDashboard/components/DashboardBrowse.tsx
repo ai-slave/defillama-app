@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Icon, type IIcon } from '~/ui/Icon'
+import type { Dashboard } from '../dashboardTypes'
 import { type DiscoveryCategoriesInitialData, useDiscoveryCategories } from '../hooks/useDiscoveryCategories'
-import type { Dashboard } from '../services/DashboardAPI'
 import { DiscoverySection } from './DiscoverySection'
 import { TopAuthorsRail } from './TopAuthorsRail'
 

@@ -1,46 +1,16 @@
-import type { ChartConfig, DashboardItemConfig, MultiChartConfig, ProtocolsTableConfig, TextConfig } from '../types'
+import {
+	getChainChartTypes,
+	getProtocolChartTypes,
+	type ChartConfig,
+	type DashboardItemConfig,
+	type MultiChartConfig,
+	type ProtocolsTableConfig,
+	type TextConfig
+} from '../types'
 
 // Valid chart types accepted by the API
-const VALID_PROTOCOL_CHART_TYPES = new Set([
-	'tvl',
-	'volume',
-	'fees',
-	'revenue',
-	'tokenMcap',
-	'tokenPrice',
-	'tokenVolume',
-	'medianApy',
-	'holdersRevenue',
-	'aggregators',
-	'perps',
-	'options'
-])
-
-const VALID_CHAIN_CHART_TYPES = new Set([
-	'tvl',
-	'volume',
-	'fees',
-	'users',
-	'txs',
-	'revenue',
-	'stablecoins',
-	'stablecoinInflows',
-	'chainMcap',
-	'chainPrice',
-	'bridgedTvl',
-	'perps',
-	'aggregators',
-	'bridgeAggregators',
-	'perpsAggregators',
-	'options',
-	'bribes',
-	'tokenTax',
-	'activeUsers',
-	'newUsers',
-	'gasUsed',
-	'chainFees',
-	'chainRevenue'
-])
+const VALID_PROTOCOL_CHART_TYPES = new Set(getProtocolChartTypes())
+const VALID_CHAIN_CHART_TYPES = new Set([...getChainChartTypes(), 'options'])
 
 // Valid item kinds accepted by the API
 const VALID_ITEM_KINDS = new Set([

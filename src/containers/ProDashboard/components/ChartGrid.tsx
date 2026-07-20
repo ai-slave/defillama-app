@@ -353,7 +353,15 @@ function DashboardItemRenderer({ item, onEditItem, handleEditItem }: DashboardIt
 			if (item.datasetType === 'equities-financials')
 				return <EquitiesFinancialsDataset ticker={item.datasetChain || ''} />
 			if (item.datasetType === 'equities-filings') return <EquitiesFilingsDataset ticker={item.datasetChain || ''} />
-			return <StablecoinsDataset chain={item.datasetChain || 'All'} />
+			// Old saved stablecoin tables predate datasetType. Keep that compatibility without treating unknown types as stables.
+			if (item.datasetType === 'stablecoins' || item.datasetType == null) {
+				return <StablecoinsDataset chain={item.datasetChain || 'All'} />
+			}
+			return (
+				<p className="flex min-h-[360px] items-center justify-center text-sm text-pro-text-tertiary">
+					Unsupported dataset: {item.datasetType}
+				</p>
+			)
 		}
 
 		const tableColSpan = (item.colSpan ?? 2) >= 2 ? 2 : 1

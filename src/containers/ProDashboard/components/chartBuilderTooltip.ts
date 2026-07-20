@@ -71,7 +71,7 @@ export function createChartBuilderTooltipFormatter({
 
 			const row = { marker: item?.marker ?? '', name, value }
 			total += value
-			if (name === 'Others') {
+			if (name.startsWith('Others')) {
 				explicitOthers = row
 			} else {
 				rows.push(row)

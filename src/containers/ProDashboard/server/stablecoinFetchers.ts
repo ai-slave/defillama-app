@@ -26,6 +26,21 @@ export type StablecoinsChartCacheValue = StablecoinOverviewChartInputs & {
 	filteredPeggedAssets: FormattedStablecoinAsset[]
 }
 
+export interface StablecoinBaselineData {
+	peggedData: StablecoinsListResponse
+	priceData: StablecoinPricesResponse
+	rateData: StablecoinRatesResponse
+}
+
+export async function fetchStablecoinBaselineData(): Promise<StablecoinBaselineData> {
+	const [peggedData, priceData, rateData] = await Promise.all([
+		fetchStablecoinAssetsApi(),
+		fetchStablecoinPricesApi(),
+		fetchStablecoinRatesApi()
+	])
+	return { peggedData, priceData, rateData }
+}
+
 /** Use the full `/all` chart response when double-count exclusions matter; `all-llama-app` omits those IDs. */
 export function buildStablecoinsChartCacheValue({
 	peggedData,
@@ -93,20 +108,18 @@ export function buildStablecoinsChartCacheValue({
 	}
 }
 
-export async function fetchStablecoinsTableData(chain: string) {
-	const [peggedData, chainData, priceData, rateData] = await Promise.all([
-		fetchStablecoinAssetsApi(),
-		// The table does not apply chart double-count exclusions, so keep its reduced payload.
-		fetchStablecoinChartApi(chain === 'All' ? 'all-llama-app' : chain),
-		fetchStablecoinPricesApi(),
-		fetchStablecoinRatesApi()
-	])
-
+export function buildStablecoinsTableData({
+	baseline,
+	chainData,
+	chain
+}: {
+	baseline: StablecoinBaselineData
+	chainData: StablecoinChartResponse
+	chain: string
+}) {
 	const { filteredPeggedAssets } = buildStablecoinsChartCacheValue({
-		peggedData,
+		...baseline,
 		chainData,
-		priceData,
-		rateData,
 		chain
 	})
 
@@ -125,6 +138,15 @@ export async function fetchStablecoinsTableData(chain: string) {
 			gecko_id: asset.gecko_id
 		}
 	})
+}
+
+export async function fetchStablecoinsTableData(chain: string) {
+	const [baseline, chainData] = await Promise.all([
+		fetchStablecoinBaselineData(),
+		// The table does not apply chart double-count exclusions, so keep its reduced payload.
+		fetchStablecoinChartApi(chain === 'All' ? 'all-llama-app' : chain)
+	])
+	return buildStablecoinsTableData({ baseline, chainData, chain })
 }
 
 export interface StablecoinAssetCacheValue {
