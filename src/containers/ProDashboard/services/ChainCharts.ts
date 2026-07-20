@@ -83,7 +83,7 @@ const CHART_METADATA = {
 		dataType: ADAPTER_DATA_TYPES.DAILY_TRANSACTIONS_COUNT
 	},
 	gasUsed: {
-		type: 'activity',
+		type: 'dimensions',
 		adapterType: ADAPTER_TYPES.ACTIVE_USERS,
 		dataType: ADAPTER_DATA_TYPES.DAILY_GAS_USED
 	},

@@ -97,12 +97,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	}
 
 	const authToken = getAuthToken(req)
+	let streamEnded = false
 
 	const writeLine = (chunk: DashboardStreamChunk) => {
-		if (res.destroyed) return
+		if (streamEnded || res.destroyed) return
 		try {
 			res.write(JSON.stringify(chunk) + '\n')
 		} catch {}
+	}
+	const endStream = () => {
+		if (streamEnded) return
+		streamEnded = true
+		res.end()
 	}
 
 	try {
@@ -135,23 +141,24 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 				return d
 			})
 			.catch(() => null)
-		const appMetadataPromise = fetchAppMetadata()
+		let resolvedAppMetadata: Awaited<ReturnType<typeof fetchAppMetadata>> = null
+		void fetchAppMetadata()
 			.then((d) => {
+				resolvedAppMetadata = d
 				writeLine({ type: 'appMetadata', data: d })
-				return d
 			})
-			.catch(() => null)
+			.catch(() => {})
 
 		const items = dashboard?.data?.items
 		if (!items?.length) {
-			await Promise.allSettled([protocolsAndChainsPromise, appMetadataPromise])
+			await Promise.allSettled([protocolsAndChainsPromise])
 			writeLine({ type: 'done' })
-			res.end()
+			endStream()
 			return
 		}
 
 		// Phase 2: fire all item-level fetches in parallel, stream each as it resolves
-		const phase2Promises: Promise<unknown>[] = [protocolsAndChainsPromise, appMetadataPromise]
+		const phase2Promises: Promise<unknown>[] = [protocolsAndChainsPromise]
 		type DatasetType = NonNullable<ProtocolsTableConfig['datasetType']>
 		const tableItemsByDataset = new Map<DatasetType, ProtocolsTableConfig[]>()
 		for (const item of items) {
@@ -169,17 +176,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		// Chart and metric cards share the same raw source and observer-local presentation.
 		phase2Promises.push(
 			(async () => {
-				const [catalog, appMetadata] = await Promise.all([protocolsAndChainsPromise, appMetadataPromise])
+				const catalog = await protocolsAndChainsPromise
 				const protocolRelations = buildProDashboardProtocolRelations(catalog)
-				const chartSourcePromises = buildProDashboardChartSourcePlan(items, catalog, appMetadata).map((source) =>
-					(source.skipReason
-						? Promise.resolve([])
-						: withTimeout(fetchSingleChartData(source.request, 'all', null, protocolRelations), 10_000)
-					)
-						.then((data) => {
-							writeLine({ type: 'chartData', queryKey: source.queryKey, data })
-						})
-						.catch(() => {})
+				const chartSourcePromises = buildProDashboardChartSourcePlan(items, catalog, resolvedAppMetadata).map(
+					(source) =>
+						(source.skipReason
+							? Promise.resolve([])
+							: withTimeout(fetchSingleChartData(source.request, 'all', null, protocolRelations), 10_000)
+						)
+							.then((data) => {
+								writeLine({ type: 'chartData', queryKey: source.queryKey, data })
+							})
+							.catch(() => {})
 				)
 				await Promise.allSettled(chartSourcePromises)
 			})()
@@ -808,12 +816,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		await Promise.allSettled(phase2Promises)
 
 		writeLine({ type: 'done' })
-		res.end()
+		endStream()
 	} catch (error) {
 		recordRouteRuntimeError(error, 'apiRoute')
 		if (!res.destroyed) {
 			writeLine({ type: 'done' })
-			res.end()
+			endStream()
 		}
 	}
 }

@@ -4,7 +4,7 @@ import {
 	type ProDashboardChartSourceQueryKey
 } from './chartSource'
 import type { ProDashboardAppMetadata, ProDashboardChartRequest } from './dataContracts'
-import type { ProDashboardProtocolCatalog } from './protocolCatalog'
+import { buildProDashboardParentMapping, type ProDashboardProtocolCatalog } from './protocolCatalog'
 import {
 	type ChartConfig,
 	type DashboardItemConfig,
@@ -76,17 +76,32 @@ function buildProtocolMetadataBySlug(appMetadata: ProDashboardAppMetadata | null
 
 function getUnsupportedProtocolSourceReason(
 	request: ProDashboardChartRequest,
-	protocolsBySlug: Map<string, ProtocolMetadata[]>
+	protocolsBySlug: Map<string, ProtocolMetadata[]>,
+	childrenByParentSlug: ReadonlyMap<string, string[]>
 ): string | undefined {
 	if (!request.protocol || protocolsBySlug.size === 0) return undefined
-	const metadata = protocolsBySlug.get(request.protocol.toLowerCase())
+	const protocolSlug = request.protocol.toLowerCase()
+	const metadata = protocolsBySlug.get(protocolSlug)
 	if (!metadata) return undefined
 	const requiredFlags = PROTOCOL_SOURCE_FLAGS[request.type as ProDashboardChartType]
 	if (!requiredFlags) return undefined
+	// Liquidity is resolved by the catalog symbol rather than an adapter capability.
+	if (request.type === 'liquidity' && request.protocolSymbol) return undefined
 
 	for (const protocol of metadata) {
 		for (const flag of requiredFlags) {
 			if (protocol[flag]) return undefined
+		}
+	}
+
+	for (const childSlug of childrenByParentSlug.get(protocolSlug) ?? []) {
+		const childMetadata = protocolsBySlug.get(childSlug.toLowerCase())
+		// Missing child metadata is unknown, not proof that the whole parent is unsupported.
+		if (!childMetadata) return undefined
+		for (const protocol of childMetadata) {
+			for (const flag of requiredFlags) {
+				if (protocol[flag]) return undefined
+			}
 		}
 	}
 	return `protocol does not support ${request.type}`
@@ -166,6 +181,7 @@ export function buildProDashboardChartSourcePlan(
 	for (const chain of catalog?.chains ?? []) chainsByName.set(chain.name, chain)
 	const chainMetadataByName = buildChainMetadataByName(appMetadata)
 	const protocolMetadataBySlug = buildProtocolMetadataBySlug(appMetadata)
+	const childrenByParentSlug = buildProDashboardParentMapping(catalog?.protocols ?? [])
 
 	const plan = new Map<string, ProDashboardChartSourcePlanEntry>()
 	const addRequest = (request: ProDashboardChartRequest) => {
@@ -180,7 +196,7 @@ export function buildProDashboardChartSourcePlan(
 				queryKey,
 				request,
 				skipReason:
-					getUnsupportedProtocolSourceReason(request, protocolMetadataBySlug) ??
+					getUnsupportedProtocolSourceReason(request, protocolMetadataBySlug, childrenByParentSlug) ??
 					getUnsupportedChainSourceReason(request, chainMetadataByName)
 			})
 		}

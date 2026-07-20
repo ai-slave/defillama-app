@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import type { IChainMetadata } from '~/utils/metadata/types'
+import { getAvailableChainChartTypes } from './appMetadataChartTypes'
 import { buildProtocolMetadataIndex } from './AppMetadataContext'
 
 describe('buildProtocolMetadataIndex', () => {
@@ -20,5 +22,13 @@ describe('buildProtocolMetadataIndex', () => {
 
 		expect(record?.builderMetrics.has('chain-fees')).toBe(false)
 		expect(record?.builderMetrics.has('chain-revenue')).toBe(false)
+	})
+})
+
+describe('Pro dashboard chain chart availability', () => {
+	it('exposes Gas Used when chain metadata advertises it', () => {
+		const flags = { name: 'Avalanche', gasUsed: true } as IChainMetadata
+
+		expect(getAvailableChainChartTypes(flags)).toContain('gasUsed')
 	})
 })

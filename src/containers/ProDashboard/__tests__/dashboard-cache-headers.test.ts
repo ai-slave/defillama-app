@@ -8,12 +8,14 @@ const {
 	fetchDashboardConfigWithStatusMock,
 	fetchProtocolsAndChainsMock,
 	fetchAppMetadataMock,
+	fetchSingleChartDataMock,
 	fetchTableServerDataMock
 } = vi.hoisted(() => ({
 	fetchDashboardConfigMock: vi.fn(),
 	fetchDashboardConfigWithStatusMock: vi.fn(),
 	fetchProtocolsAndChainsMock: vi.fn(),
 	fetchAppMetadataMock: vi.fn(),
+	fetchSingleChartDataMock: vi.fn(),
 	fetchTableServerDataMock: vi.fn()
 }))
 
@@ -73,7 +75,7 @@ vi.mock('~/containers/ProDashboard/queries.server', () => ({
 	fetchDashboardConfig: fetchDashboardConfigMock,
 	fetchDashboardConfigWithStatus: fetchDashboardConfigWithStatusMock,
 	fetchProtocolsAndChains: fetchProtocolsAndChainsMock,
-	fetchSingleChartData: vi.fn(),
+	fetchSingleChartData: fetchSingleChartDataMock,
 	withTimeout: (promise: Promise<unknown>) => promise
 }))
 
@@ -184,6 +186,7 @@ describe('pro dashboard cache headers', () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({ dashboard: publicDashboard, status: 200 })
 		fetchProtocolsAndChainsMock.mockResolvedValue({ protocols: [], chains: [] })
 		fetchAppMetadataMock.mockResolvedValue({})
+		fetchSingleChartDataMock.mockResolvedValue([[1_700_000_000, 1]])
 		fetchTableServerDataMock.mockResolvedValue(null)
 	})
 
@@ -342,7 +345,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalled()
 	})
 
-	it('starts item fetches without waiting for app metadata', async () => {
+	it('starts chart fetches and ends the stream without waiting for app metadata', async () => {
 		let resolveAppMetadata: (value: null) => void = () => {}
 		fetchAppMetadataMock.mockReturnValue(
 			new Promise<null>((resolve) => {
@@ -352,11 +355,11 @@ describe('pro dashboard cache headers', () => {
 		const res = createMockNextApiResponse()
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(fetchTableServerDataMock).toHaveBeenCalled())
-		resolveAppMetadata(null)
+		await vi.waitFor(() => expect(fetchSingleChartDataMock).toHaveBeenCalled())
 		await streamPromise
 
 		expect(res.end).toHaveBeenCalled()
+		resolveAppMetadata(null)
 	})
 
 	it('uses private no-store cache headers for authenticated dashboard streams', async () => {

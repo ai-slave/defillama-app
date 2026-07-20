@@ -5,7 +5,15 @@ import type { DashboardItemConfig } from './types'
 
 const catalog: ProDashboardProtocolCatalog = {
 	protocols: [
-		{ id: '1', name: 'Aave V3', slug: 'aave-v3', symbol: 'AAVE', tvl: 1, geckoId: 'aave' },
+		{
+			id: '1',
+			name: 'Aave V3',
+			slug: 'aave-v3',
+			symbol: 'AAVE',
+			tvl: 1,
+			geckoId: 'aave',
+			parentProtocol: 'parent#aave'
+		},
 		{ id: 'parent#aave', name: 'Aave', slug: 'aave', symbol: 'AAVE', tvl: 1, geckoId: 'aave' }
 	],
 	chains: []
@@ -122,5 +130,42 @@ describe('Pro dashboard chart source planning', () => {
 			'protocol does not support fees',
 			'protocol does not support revenue'
 		])
+	})
+
+	it('keeps a parent source fetchable when child metadata advertises the capability', () => {
+		const items: DashboardItemConfig[] = [{ id: 'fees', kind: 'chart', type: 'fees', protocol: 'aave', chain: '' }]
+		const appMetadata = {
+			protocols: {
+				parent: { name: 'aave', displayName: 'Aave' },
+				child: { name: 'aave-v3', displayName: 'Aave V3', fees: true }
+			},
+			pfPs: { pf: [], ps: [] },
+			chains: {}
+		}
+
+		const plan = buildProDashboardChartSourcePlan(items, catalog, appMetadata)
+
+		expect(plan[0].skipReason).toBeUndefined()
+	})
+
+	it('keeps symbol-backed parent liquidity fetchable without a metadata flag', () => {
+		const items: DashboardItemConfig[] = [
+			{ id: 'liquidity', kind: 'chart', type: 'liquidity', protocol: 'aave', chain: '' }
+		]
+		const parentOnlyCatalog: ProDashboardProtocolCatalog = {
+			protocols: [catalog.protocols[1]],
+			chains: []
+		}
+		const appMetadata = {
+			protocols: {
+				parent: { name: 'aave', displayName: 'Aave' }
+			},
+			pfPs: { pf: [], ps: [] },
+			chains: {}
+		}
+
+		const plan = buildProDashboardChartSourcePlan(items, parentOnlyCatalog, appMetadata)
+
+		expect(plan[0].skipReason).toBeUndefined()
 	})
 })

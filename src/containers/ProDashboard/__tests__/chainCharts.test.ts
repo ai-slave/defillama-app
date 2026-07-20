@@ -157,6 +157,17 @@ describe('ChainCharts adapter metrics', () => {
 			dataType: 'dailyTransactionsCount'
 		})
 	})
+
+	it('uses the chain aggregate endpoint for gas used', async () => {
+		await expect(ChainCharts.gasUsed('Avalanche')).resolves.toEqual([[1_700_000_000, 42]])
+
+		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
+			adapterType: 'active-users',
+			chain: 'Avalanche',
+			dataType: 'dailyGasUsed'
+		})
+		expect(fetchAdapterProtocolChartDataMock).not.toHaveBeenCalled()
+	})
 })
 
 describe('ChainCharts stablecoins', () => {
