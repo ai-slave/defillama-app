@@ -81,10 +81,6 @@ vi.mock('next/dynamic', () => {
 					return <DynamicLiquidationsDistributionChart {...props} />
 				}
 
-				if ('placeholder' in (props ?? {})) {
-					return <DynamicTableWithSearch {...props} />
-				}
-
 				return options?.loading?.(props) ?? null
 			}
 		}
@@ -123,8 +119,8 @@ vi.mock('~/components/TokenLogo', () => ({
 	TokenLogo: ({ alt }: { alt: string }) => <span>{alt}</span>
 }))
 
-vi.mock('~/components/Table/TableWithSearch', () => ({
-	TableWithSearch: DynamicTableWithSearch
+vi.mock('../deferred/DeferredTableWithSearch', () => ({
+	DeferredTableWithSearch: DynamicTableWithSearch
 }))
 
 vi.mock('~/containers/LiquidationsV2/Summary', () => ({

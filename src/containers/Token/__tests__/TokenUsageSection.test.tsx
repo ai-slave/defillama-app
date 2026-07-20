@@ -114,8 +114,8 @@ vi.mock('~/components/Table/utils', () => ({
 	prepareTableCsv: vi.fn(() => ({ filename: 'token-usage', rows: [] }))
 }))
 
-vi.mock('~/components/Table/PaginatedTable', () => ({
-	PaginatedTable: DynamicPaginatedTable
+vi.mock('../deferred/DeferredPaginatedTable', () => ({
+	DeferredPaginatedTable: DynamicPaginatedTable
 }))
 
 vi.mock('~/components/TokenLogo', () => ({

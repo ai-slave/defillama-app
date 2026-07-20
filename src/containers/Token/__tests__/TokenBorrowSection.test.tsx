@@ -48,8 +48,8 @@ vi.mock('~/components/Select/SelectWithCombobox', () => ({
 	SelectWithCombobox: ({ label }: { label: string }) => <div>{label}</div>
 }))
 
-vi.mock('~/containers/Yields/Tables/Borrow', () => ({
-	PaginatedBorrowRoutesTable: ({
+vi.mock('../deferred/DeferredPaginatedBorrowRoutesTable', () => ({
+	DeferredPaginatedBorrowRoutesTable: ({
 		data,
 		appearance,
 		initialPageSize,

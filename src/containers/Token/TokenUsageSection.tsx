@@ -9,7 +9,7 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import dynamic from 'next/dynamic'
-import { startTransition, useMemo, useState } from 'react'
+import { startTransition, Suspense, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
@@ -24,6 +24,7 @@ import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formattedNum } from '~/utils'
+import { DeferredPaginatedTable } from './deferred/DeferredPaginatedTable'
 import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
 import { TokenPrivateSectionGate, useTokenPrivateSectionAccess } from './TokenPrivateSectionGate'
 import { buildTokenUsageRows, filterTokenUsageRows, type TokenUsageSectionRow } from './TokenUsageSection.utils'
@@ -34,13 +35,6 @@ const DEFAULT_SORTING: SortingState = [{ desc: true, id: 'amountUsd' }]
 const TOKEN_USAGE_SECTION_ID = 'token-usage'
 const columnHelper = createColumnHelper<TokenUsageSectionRow>()
 const TOKEN_USAGE_NAME_MAX_WIDTH = 'max-sm:max-w-[clamp(160px,40vw,260px)]'
-
-const DeferredPaginatedTable = dynamic(
-	() => import('~/components/Table/PaginatedTable').then((mod) => mod.PaginatedTable),
-	{
-		loading: () => <div className="min-h-[360px]" />
-	}
-) as typeof import('~/components/Table/PaginatedTable').PaginatedTable
 
 const TreemapChart = dynamic(() => import('~/components/ECharts/TreemapChart'), {
 	loading: () => <div className="min-h-[480px]" />
@@ -254,12 +248,14 @@ export function TokenUsageSection({
 					onReady={handleTreemapChartReady}
 				/>
 			) : (
-				<DeferredPaginatedTable
-					table={table}
-					pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
-					tableClassName="mx-auto w-auto min-w-[720px] max-w-full"
-					shell="none"
-				/>
+				<Suspense fallback={<div className="min-h-[360px]" />}>
+					<DeferredPaginatedTable
+						table={table}
+						pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+						tableClassName="mx-auto w-auto min-w-[720px] max-w-full"
+						shell="none"
+					/>
+				</Suspense>
 			)}
 		</TokenPrivateSectionGate>
 	)

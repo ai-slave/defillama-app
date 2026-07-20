@@ -81,8 +81,8 @@ vi.mock('~/containers/Yields/hooks', () => ({
 	useFormatYieldQueryParams: () => yieldsQueryState
 }))
 
-vi.mock('~/containers/Yields/Tables/Pools', () => ({
-	PaginatedYieldsPoolTable: ({
+vi.mock('../deferred/DeferredPaginatedYieldsPoolTable', () => ({
+	DeferredPaginatedYieldsPoolTable: ({
 		data,
 		appearance,
 		initialPageSize,

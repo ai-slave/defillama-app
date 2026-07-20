@@ -8,7 +8,6 @@ import { YIELD_EARN_DATASET_API } from '~/containers/Yields/constants'
 import { APYRange } from '~/containers/Yields/Filters/APYRange'
 import { FilterByChain } from '~/containers/Yields/Filters/Chains'
 import { useFormatYieldQueryParams } from '~/containers/Yields/hooks'
-import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -18,6 +17,7 @@ import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/
 import { TableToolbar } from '~/ui/Toolbar'
 import { fetchJson } from '~/utils/async'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { DeferredPaginatedYieldsPoolTable } from './deferred/DeferredPaginatedYieldsPoolTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 import { TokenDeferredPaginationControls } from './TokenDeferredPaginationControls'
 import type { TokenYieldsHydration } from './types'
@@ -230,17 +230,19 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 							<SurfaceBodyStatus variant="empty">No pools match current filters</SurfaceBodyStatus>
 						) : (
 							<div className="relative flex flex-col gap-3">
-								<PaginatedYieldsPoolTable
-									key={`${fetchedRows ? 'full' : 'initial'}-${requestedPageIndex}-${tableSortingKey}`}
-									data={filteredPools}
-									initialPageSize={hydrationPageSize}
-									initialPageIndex={fetchedRows ? requestedPageIndex : 0}
-									sortingState={tableSorting}
-									onSortingChange={handleSortingChange}
-									interactionDisabled={showBackgroundLoading}
-									loadingLabel="Loading full dataset..."
-									appearance="embedded"
-								/>
+								<React.Suspense fallback={<div className="min-h-[360px]" />}>
+									<DeferredPaginatedYieldsPoolTable
+										key={`${fetchedRows ? 'full' : 'initial'}-${requestedPageIndex}-${tableSortingKey}`}
+										data={filteredPools}
+										initialPageSize={hydrationPageSize}
+										initialPageIndex={fetchedRows ? requestedPageIndex : 0}
+										sortingState={tableSorting}
+										onSortingChange={handleSortingChange}
+										interactionDisabled={showBackgroundLoading}
+										loadingLabel="Loading full dataset..."
+										appearance="embedded"
+									/>
+								</React.Suspense>
 								{hasPartialData && !hasActiveFilters ? (
 									<div className={showBackgroundLoading ? 'opacity-60' : ''}>
 										<TokenDeferredPaginationControls

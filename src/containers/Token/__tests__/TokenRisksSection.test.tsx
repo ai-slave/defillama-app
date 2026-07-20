@@ -11,8 +11,8 @@ vi.mock('~/components/TokenLogo', () => ({
 	TokenLogo: ({ name }: { name: string }) => <span>{`logo:${name}`}</span>
 }))
 
-vi.mock('~/components/Table/PaginatedTable', () => ({
-	PaginatedTable: ({
+vi.mock('../deferred/DeferredPaginatedTable', () => ({
+	DeferredPaginatedTable: ({
 		table
 	}: {
 		table: {

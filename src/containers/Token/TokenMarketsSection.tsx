@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import type { SortingState } from '@tanstack/react-table'
 import dayjs from 'dayjs'
-import { type KeyboardEvent, useMemo, useReducer, useRef } from 'react'
+import { type KeyboardEvent, Suspense, useMemo, useReducer, useRef } from 'react'
 import { mapExchangePair } from '~/containers/Exchanges/master.mappers'
-import { PairTable, type PairTableRow } from '~/containers/Exchanges/PairTable'
+import type { PairTableRow } from '~/containers/Exchanges/PairTable'
 import type {
 	MarketCategoryTotals,
 	MarketPair,
@@ -18,6 +18,7 @@ import { LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TabLink } from '~/ui/Tab'
 import { formattedNum } from '~/utils'
 import { fetchTokenMarkets } from './api'
+import { DeferredPairTable } from './deferred/DeferredPairTable'
 
 const DEFAULT_SORTING: SortingState = [{ id: 'volume24h', desc: true }]
 const NO_SORTING: SortingState = []
@@ -377,30 +378,32 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 			    CEX and All start with no active sort — rows already come pre-ranked (bybit's top pair
 			    first, then volume) from rankRowsBybitFirst — so no header shows a sort indicator until
 			    the user picks a column. DEX keeps the plain volume-desc default sort. */}
-			<PairTable
-				key={`${selectedVenueTab}-${selectedCategoryTab}`}
-				pairs={tableRows}
-				segment={selectedCategoryTab}
-				capabilities={{ openInterest: isPerpCategory, funding: isPerpCategory, depth: true }}
-				csvFileName={`token-markets-${tokenSymbol}-${selectedVenueTab}-${selectedCategoryTab}`}
-				showVenue
-				omitColumns={TOKEN_PAGE_OMITTED_COLUMNS}
-				columnOrder={TOKEN_PAGE_COLUMN_ORDER}
-				initialVisibleColumns={TOKEN_PAGE_VISIBLE_COLUMNS[selectedCategoryTab]}
-				sorting={selectedVenueTab === 'dex' ? DEFAULT_SORTING : NO_SORTING}
-				columnToSearch="venue"
-				placeholder="Search exchanges..."
-				header={null}
-				embedded
-				leadingControls={
-					<Tabs
-						tabs={visibleCategoryTabs}
-						activeTab={selectedCategoryTab}
-						onChange={(id) => setCategoryTab(id)}
-						ariaLabel="Market category"
-					/>
-				}
-			/>
+			<Suspense fallback={<div className="min-h-[360px]" />}>
+				<DeferredPairTable
+					key={`${selectedVenueTab}-${selectedCategoryTab}`}
+					pairs={tableRows}
+					segment={selectedCategoryTab}
+					capabilities={{ openInterest: isPerpCategory, funding: isPerpCategory, depth: true }}
+					csvFileName={`token-markets-${tokenSymbol}-${selectedVenueTab}-${selectedCategoryTab}`}
+					showVenue
+					omitColumns={TOKEN_PAGE_OMITTED_COLUMNS}
+					columnOrder={TOKEN_PAGE_COLUMN_ORDER}
+					initialVisibleColumns={TOKEN_PAGE_VISIBLE_COLUMNS[selectedCategoryTab]}
+					sorting={selectedVenueTab === 'dex' ? DEFAULT_SORTING : NO_SORTING}
+					columnToSearch="venue"
+					placeholder="Search exchanges..."
+					header={null}
+					embedded
+					leadingControls={
+						<Tabs
+							tabs={visibleCategoryTabs}
+							activeTab={selectedCategoryTab}
+							onChange={(id) => setCategoryTab(id)}
+							ariaLabel="Market category"
+						/>
+					}
+				/>
+			</Suspense>
 		</>
 	)
 

@@ -7,14 +7,14 @@ import {
 	getSortedRowModel,
 	useReactTable
 } from '@tanstack/react-table'
-import { startTransition, useMemo, useState } from 'react'
-import { PaginatedTable } from '~/components/Table/PaginatedTable'
+import { startTransition, Suspense, useMemo, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { formattedNum } from '~/utils'
+import { DeferredPaginatedTable } from './deferred/DeferredPaginatedTable'
 import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
 import type {
 	TokenRiskChainExposureSummary,
@@ -349,12 +349,14 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 						Each row is one protocol-chain exposure for {tokenSymbol} as collateral. Bad debt at $0 totals remain lower
 						bounds when a row is marked partial.
 					</p>
-					<PaginatedTable
-						table={exposureTable}
-						pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
-						className="mt-3"
-						shell="none"
-					/>
+					<Suspense fallback={<div className="min-h-[360px]" />}>
+						<DeferredPaginatedTable
+							table={exposureTable}
+							pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+							className="mt-3"
+							shell="none"
+						/>
+					</Suspense>
 				</Card>
 			</div>
 		</Panel>

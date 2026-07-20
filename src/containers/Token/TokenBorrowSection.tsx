@@ -4,7 +4,6 @@ import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
-import { PaginatedBorrowRoutesTable } from '~/containers/Yields/Tables/Borrow'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -13,6 +12,7 @@ import { nestedMenuActionStyles } from '~/ui/Popover'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
+import { DeferredPaginatedBorrowRoutesTable } from './deferred/DeferredPaginatedBorrowRoutesTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 import { filterBorrowRoutes } from './TokenBorrowSection.utils'
 import { TokenDeferredPaginationControls } from './TokenDeferredPaginationControls'
@@ -369,19 +369,21 @@ export function TokenBorrowSection({
 								<SurfaceBodyStatus variant="empty">{`No ${tabLabel.toLowerCase()} routes match current filters.`}</SurfaceBodyStatus>
 							) : (
 								<div className="relative flex flex-col gap-3">
-									<PaginatedBorrowRoutesTable
-										key={`${activeTab}-${data ? 'full' : 'initial'}-${requestedPageIndexByTab[activeTab]}-${sortingKey}`}
-										data={filteredRows}
-										manualPagination={false}
-										manualSorting={false}
-										initialPageSize={hydrationPageSize}
-										initialPageIndex={data ? requestedPageIndexByTab[activeTab] : 0}
-										sortingState={sortingByTab[activeTab]}
-										onSortingChange={handleSortingChange}
-										interactionDisabled={showBackgroundLoading}
-										loadingLabel="Loading full dataset..."
-										appearance="embedded"
-									/>
+									<React.Suspense fallback={<div className="min-h-[360px]" />}>
+										<DeferredPaginatedBorrowRoutesTable
+											key={`${activeTab}-${data ? 'full' : 'initial'}-${requestedPageIndexByTab[activeTab]}-${sortingKey}`}
+											data={filteredRows}
+											manualPagination={false}
+											manualSorting={false}
+											initialPageSize={hydrationPageSize}
+											initialPageIndex={data ? requestedPageIndexByTab[activeTab] : 0}
+											sortingState={sortingByTab[activeTab]}
+											onSortingChange={handleSortingChange}
+											interactionDisabled={showBackgroundLoading}
+											loadingLabel="Loading full dataset..."
+											appearance="embedded"
+										/>
+									</React.Suspense>
 									{hasPartialData && !hasActiveFilters ? (
 										<div className={showBackgroundLoading ? 'opacity-60' : ''}>
 											<TokenDeferredPaginationControls

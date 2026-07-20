@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { LiquidationsTableTabs } from '~/containers/LiquidationsV2/TableTabs'
@@ -9,6 +9,7 @@ import { Panel } from '~/ui/Panel'
 import { formattedNum } from '~/utils'
 import { fetchTokenLiquidationsForAliases } from '../LiquidationsV2/api'
 import type { OverviewChainRow, OverviewProtocolRow, TokenLiquidationsSectionData } from '../LiquidationsV2/api.types'
+import { DeferredTableWithSearch } from './deferred/DeferredTableWithSearch'
 import { TokenPrivateSectionGate, useTokenPrivateSectionAccess } from './TokenPrivateSectionGate'
 
 const TOKEN_LIQUIDATIONS_SECTION_ID = 'token-liquidations'
@@ -33,13 +34,6 @@ const DeferredLiquidationsDistributionChart = dynamic(
 		loading: () => <div className="min-h-[360px]" />
 	}
 )
-
-const DeferredTableWithSearch = dynamic(
-	() => import('~/components/Table/TableWithSearch').then((mod) => mod.TableWithSearch),
-	{
-		loading: () => <div className="min-h-[360px]" />
-	}
-) as typeof import('~/components/Table/TableWithSearch').TableWithSearch
 
 const protocolColumnHelper = createColumnHelper<OverviewProtocolRow>()
 const chainColumnHelper = createColumnHelper<OverviewChainRow>()
@@ -203,29 +197,31 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 					/>
 
 					<Panel padding="none">
-						{activeTab === 'protocols' ? (
-							<DeferredTableWithSearch
-								data={data.protocolRows}
-								columns={protocolColumns}
-								leadingControls={tabs}
-								columnToSearch="name"
-								placeholder="Search protocols..."
-								csvFileName={`token-liquidations-protocols-${tokenSymbol}`}
-								embedded
-								sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
-							/>
-						) : (
-							<DeferredTableWithSearch
-								data={data.chainRows}
-								columns={chainColumns}
-								leadingControls={tabs}
-								columnToSearch="name"
-								placeholder="Search chains..."
-								csvFileName={`token-liquidations-chains-${tokenSymbol}`}
-								embedded
-								sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
-							/>
-						)}
+						<Suspense fallback={<div className="min-h-[360px]" />}>
+							{activeTab === 'protocols' ? (
+								<DeferredTableWithSearch
+									data={data.protocolRows}
+									columns={protocolColumns}
+									leadingControls={tabs}
+									columnToSearch="name"
+									placeholder="Search protocols..."
+									csvFileName={`token-liquidations-protocols-${tokenSymbol}`}
+									embedded
+									sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
+								/>
+							) : (
+								<DeferredTableWithSearch
+									data={data.chainRows}
+									columns={chainColumns}
+									leadingControls={tabs}
+									columnToSearch="name"
+									placeholder="Search chains..."
+									csvFileName={`token-liquidations-chains-${tokenSymbol}`}
+									embedded
+									sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
+								/>
+							)}
+						</Suspense>
 					</Panel>
 				</>
 			) : null}
