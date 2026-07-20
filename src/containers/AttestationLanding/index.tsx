@@ -2,6 +2,7 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
+import { ResearchIcon } from '~/components/ResearchIcon'
 import { Button } from '~/ui/Button'
 
 const pageCss = `
@@ -170,6 +171,9 @@ function VerifiedByDefiLlamaMark() {
 
 const primaryCtaStyles =
 	'inline-flex items-center justify-center rounded-lg bg-brand px-7 py-3.5 text-sm font-semibold text-on-brand transition-[filter] hover:brightness-110 focus-visible:brightness-110 focus-visible:focus-ring-on-brand'
+
+const secondaryCtaStyles =
+	'inline-flex items-center justify-center gap-2 rounded-lg border border-subtle px-7 py-3.5 text-sm font-semibold text-primary transition-colors hover:bg-hover-row focus-visible:focus-ring'
 
 function SiteHeader() {
 	return (
@@ -1431,9 +1435,20 @@ export default function VerifiedLanding() {
 										update cadence before you commit.
 									</p>
 								</div>
-								<a href="mailto:verified@defillama.com" className={primaryCtaStyles}>
-									Start a verification review
-								</a>
+								<div className="flex flex-wrap items-center gap-3">
+									<a href="mailto:patrick@defillama.com" className={primaryCtaStyles}>
+										Start a verification review
+									</a>
+									<a
+										href="https://calendly.com/patrick-defillama"
+										target="_blank"
+										rel="noopener noreferrer"
+										className={secondaryCtaStyles}
+									>
+										<span>Book a call</span>
+										<ResearchIcon name="calendly-mark" className="size-5 shrink-0" aria-hidden />
+									</a>
+								</div>
 							</div>
 						</section>
 					</main>
