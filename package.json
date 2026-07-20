@@ -61,7 +61,6 @@
 		"@tiptap/suggestion": "3.22.5",
 		"clsx": "2.1.1",
 		"dayjs": "1.11.21",
-		"dompurify": "3.4.2",
 		"echarts": "6.1.0",
 		"expr-eval": "2.0.2",
 		"ioredis": "5.10.1",
