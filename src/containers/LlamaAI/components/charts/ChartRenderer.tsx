@@ -26,6 +26,7 @@ import { adaptCandlestickData } from '~/containers/LlamaAI/utils/chartAdapters/c
 import {
 	deriveCapabilities,
 	normalizeViewState,
+	type ChartCapabilities,
 	type ChartViewState
 } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { areChartDataEqual, areChartsEqual, areStringArraysEqual } from '~/containers/LlamaAI/utils/chartComparison'
@@ -117,18 +118,25 @@ function removeAdaptedChartTitle<T extends AdaptedChartData>(adaptedChart: T): T
 	return { ...adaptedChart, props: restProps } as T
 }
 
-function buildChartPresentation(
-	config: ChartConfiguration,
-	data: ChartDataSeries,
-	chartState: ChartViewState
-): ChartRenderPlan {
-	// Pipeline order matters:
-	// adapt base data -> derive intrinsic capabilities -> normalize view state -> transform -> render plan.
+interface ChartPresentationBase {
+	adaptedChart: AdaptedChartData
+	capabilities: ChartCapabilities
+}
+
+function buildChartPresentationBase(config: ChartConfiguration, data: ChartDataSeries): ChartPresentationBase {
 	const baseAdaptedChart = removeAdaptedChartTitle(adaptChartData(config, data))
 	const capabilities = deriveCapabilities(config, baseAdaptedChart)
-	const normalizedState = normalizeViewState(chartState, capabilities)
-	const transformedChart = ChartDataTransformer.applyViewState(baseAdaptedChart, normalizedState, capabilities)
-	return buildRenderPlan(config, transformedChart, normalizedState, capabilities)
+	return { adaptedChart: baseAdaptedChart, capabilities }
+}
+
+function buildChartPresentation(
+	config: ChartConfiguration,
+	base: ChartPresentationBase,
+	chartState: ChartViewState
+): ChartRenderPlan {
+	const normalizedState = normalizeViewState(chartState, base.capabilities)
+	const transformedChart = ChartDataTransformer.applyViewState(base.adaptedChart, normalizedState, base.capabilities)
+	return buildRenderPlan(config, transformedChart, normalizedState, base.capabilities)
 }
 
 function renderChartContent(renderPlan: ChartRenderPlan, chartKey: string, onChartReady: (instance: any) => void) {
@@ -244,14 +252,24 @@ function ChartExportButtonsSlot({
 }
 
 type PresentationResult = { ok: true; plan: ChartRenderPlan } | { ok: false; error: unknown }
+type BasePresentationResult = { ok: true; base: ChartPresentationBase } | { ok: false; error: unknown }
+
+function tryBuildPresentationBase(config: ChartConfiguration, data: ChartDataSeries): BasePresentationResult {
+	try {
+		return { ok: true, base: buildChartPresentationBase(config, data) }
+	} catch (error) {
+		console.error('Chart render error:', error)
+		return { ok: false, error }
+	}
+}
 
 function tryBuildPresentation(
 	config: ChartConfiguration,
-	data: ChartDataSeries,
+	base: ChartPresentationBase,
 	chartState: ChartViewState
 ): PresentationResult {
 	try {
-		return { ok: true, plan: buildChartPresentation(config, data, chartState) }
+		return { ok: true, plan: buildChartPresentation(config, base, chartState) }
 	} catch (error) {
 		console.error('Chart render error:', error)
 		return { ok: false, error }
@@ -382,10 +400,17 @@ function SingleChart({
 		[]
 	)
 
-	const presentation = useMemo(
-		() => (config.type === 'candlestick' ? null : tryBuildPresentation(config, data, chartState)),
-		[config, data, chartState]
+	// The adapted chart and intrinsic capabilities depend only on base inputs. View controls
+	// always transform from this canonical result so state toggles never repeat adaptation.
+	const basePresentation = useMemo(
+		() => (config.type === 'candlestick' ? null : tryBuildPresentationBase(config, data)),
+		[config, data]
 	)
+	const presentation = useMemo<PresentationResult | null>(() => {
+		if (!basePresentation) return null
+		if (basePresentation.ok === false) return basePresentation
+		return tryBuildPresentation(config, basePresentation.base, chartState)
+	}, [config, basePresentation, chartState])
 
 	if (!isActive) return null
 
