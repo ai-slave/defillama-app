@@ -17,6 +17,7 @@ interface IMenuProps {
 	options: string[] | string
 	name: string
 	isExternal?: boolean
+	getItemAttributes?: (value: string) => Record<string, string>
 	onItemClick?: (value: string) => void
 	className?: string
 	portal?: boolean
@@ -27,6 +28,7 @@ export function Menu({
 	options,
 	name,
 	isExternal,
+	getItemAttributes,
 	onItemClick,
 	className,
 	portal,
@@ -76,7 +78,7 @@ export function Menu({
 						</Ariakit.MenuItem>
 					) : isExternal ? (
 						<Ariakit.MenuItem
-							render={<a href={value} target="_blank" rel="noopener noreferrer" />}
+							render={<a href={value} target="_blank" rel="noopener noreferrer" {...getItemAttributes?.(value)} />}
 							key={value + i}
 							className={externalRowStyles}
 						>

@@ -126,9 +126,19 @@ function venueList(value: unknown): Venue[] {
 	return venues
 }
 
-function WebsiteButton({ href }: { href: string }) {
+function WebsiteButton({ href, name }: { href: string; name: string }) {
 	return (
-		<Button as={BasicLink} href={href} target="_blank" rel="noopener noreferrer" size="md">
+		<Button
+			as={BasicLink}
+			href={href}
+			target="_blank"
+			rel="noopener noreferrer"
+			size="md"
+			data-umami-event="market-maker-website-click"
+			data-umami-event-mm={name}
+			data-umami-event-placement="drawer"
+			data-umami-event-url={href}
+		>
 			<Icon name="globe" height={14} width={14} />
 			Website
 			<Icon name="arrow-up-right" height={14} width={14} />
@@ -255,7 +265,7 @@ function DrawerBody({
 				<div className="flex flex-wrap items-center gap-2">
 					<StatusBadge status={status ?? 'none'} label={integrationLabel(status)} className="h-8 px-3" />
 					{country ? <SecondaryBadge className="h-8">{`HQ: ${country.flag} ${country.name}`}</SecondaryBadge> : null}
-					{website ? <WebsiteButton href={website} /> : null}
+					{website ? <WebsiteButton href={website} name={name} /> : null}
 				</div>
 			</section>
 

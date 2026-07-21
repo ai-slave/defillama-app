@@ -5,6 +5,7 @@ import { Bookmark } from '~/components/Bookmark'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
+import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
@@ -163,15 +164,12 @@ function ProtocolHeader({
 				{props.deprecated ? <DeprecatedProtocolMarker size={18} /> : null}
 				<span className="-m-2 ml-auto flex items-center justify-end gap-1">
 					{props.website ? (
-						<a
-							href={props.website}
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label={`${props.name} website`}
-							className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
-						>
-							<Icon name="globe" width={16} height={16} className="shrink-0" />
-						</a>
+						<WebsiteGlobeLink
+							url={props.website}
+							name={props.name}
+							event="protocol-website-click"
+							eventData={{ protocol: props.name, referral: String(!!props.isWebsiteReferral) }}
+						/>
 					) : null}
 					<Bookmark
 						readableName={props.name}

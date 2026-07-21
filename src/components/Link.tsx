@@ -13,26 +13,20 @@ interface BasicLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
 const UMAMI_EVENT_ATTRIBUTE = 'data-umami-event'
 const UMAMI_EVENT_DATA_PREFIX = 'data-umami-event-'
 
-function isExternalHref(href: string): boolean {
-	return /^https?:\/\//.test(href)
-}
-
 export function BasicLink({ ref, onClick, href, ...props }: BasicLinkProps) {
-	const isExternal = isExternalHref(href)
 	const propsRecord = props as Record<string, unknown>
 	const umamiEvent = typeof propsRecord[UMAMI_EVENT_ATTRIBUTE] === 'string' ? propsRecord[UMAMI_EVENT_ATTRIBUTE] : null
 
-	const umamiData =
-		isExternal && umamiEvent
-			? Object.fromEntries(
-					Object.entries(propsRecord)
-						.filter(([key, value]) => key.startsWith(UMAMI_EVENT_DATA_PREFIX) && value !== undefined)
-						.map(([key, value]) => [key.slice(UMAMI_EVENT_DATA_PREFIX.length), value])
-				)
-			: null
+	const umamiData = umamiEvent
+		? Object.fromEntries(
+				Object.entries(propsRecord)
+					.filter(([key, value]) => key.startsWith(UMAMI_EVENT_DATA_PREFIX) && value !== undefined)
+					.map(([key, value]) => [key.slice(UMAMI_EVENT_DATA_PREFIX.length), value])
+			)
+		: null
 
 	const linkProps = { ...propsRecord }
-	if (isExternal && umamiEvent) {
+	if (umamiEvent) {
 		delete linkProps[UMAMI_EVENT_ATTRIBUTE]
 		for (const key of Object.keys(linkProps)) {
 			if (key.startsWith(UMAMI_EVENT_DATA_PREFIX)) {
@@ -44,7 +38,7 @@ export function BasicLink({ ref, onClick, href, ...props }: BasicLinkProps) {
 	const handleClick: React.MouseEventHandler<HTMLAnchorElement> = (event) => {
 		onClick?.(event)
 		if (event.defaultPrevented) return
-		if (isExternal && umamiEvent) {
+		if (umamiEvent) {
 			trackUmamiEvent(umamiEvent, umamiData && Object.keys(umamiData).length > 0 ? umamiData : undefined)
 		}
 	}

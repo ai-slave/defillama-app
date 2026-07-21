@@ -5,6 +5,7 @@ import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { FormattedName } from '~/components/FormattedName'
 import { TokenLogo } from '~/components/TokenLogo'
+import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { getNFTCollection } from '~/containers/Nft/queries'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
@@ -72,6 +73,16 @@ export function NFTCollectionContainer() {
 							size={48}
 						/>
 						<FormattedName text={name ?? ''} fontWeight={700} />
+						{primaryCollection?.projectUrl ? (
+							<span className="-m-2 ml-auto flex items-center justify-end gap-1">
+								<WebsiteGlobeLink
+									url={primaryCollection.projectUrl}
+									name={name}
+									event="nft-collection-website-click"
+									eventData={{ collection: name }}
+								/>
+							</span>
+						) : null}
 					</h1>
 
 					<StatItem label="Floor Price" value={floorPrice != null ? floorPrice.toFixed(2) + ' ETH' : ''} />

@@ -212,6 +212,8 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 						data-umami-event="protocol-website-click"
 						data-umami-event-protocol={props.name}
 						data-umami-event-referral={props.isWebsiteReferral ? 'true' : 'false'}
+						data-umami-event-placement="info"
+						data-umami-event-url={props.website}
 					>
 						Website
 					</ExternalLinkButton>

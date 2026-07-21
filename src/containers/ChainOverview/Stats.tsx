@@ -8,10 +8,10 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { DWMC_GROUPING_OPTIONS_LOWERCASE, type LowercaseDwmcGrouping } from '~/components/ECharts/ChartGroupingSelector'
 import { TokenLogo } from '~/components/TokenLogo'
+import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
 import { TVL_SETTINGS_KEYS, useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { buttonStyles } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
@@ -140,15 +140,12 @@ export function Stats(props: IStatsProps) {
 						{props.metadata.deprecated ? <DeprecatedEntityText /> : null}
 						<span className="-m-2 ml-auto flex items-center justify-end gap-1">
 							{props.website ? (
-								<a
-									href={props.website}
-									target="_blank"
-									rel="noopener noreferrer"
-									aria-label={`${props.metadata.name} website`}
-									className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
-								>
-									<Icon name="globe" width={16} height={16} className="shrink-0" />
-								</a>
+								<WebsiteGlobeLink
+									url={props.website}
+									name={props.metadata.name}
+									event="chain-website-click"
+									eventData={{ chain: props.metadata.name }}
+								/>
 							) : null}
 							<Bookmark
 								readableName={props.metadata.name}

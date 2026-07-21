@@ -16,6 +16,7 @@ import { Menu } from '~/components/Menu'
 import { Select } from '~/components/Select/Select'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
+import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import type { StablecoinAssetChartConfig } from '~/containers/ProDashboard/types'
 import {
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT,
@@ -146,9 +147,14 @@ export const PeggedAssetInfo = ({
 		[router]
 	)
 
-	const includeUnreleased = React.useMemo(() => isTruthyQueryParam(router.query[UNRELEASED_QUERY_KEY]), [router.query])
+	// Static pages do not receive query parameters during SSR, so defer this URL-driven state until after hydration.
+	const [includeUnreleased, setIncludeUnreleased] = React.useState(false)
+	React.useEffect(() => {
+		if (router.isReady) setIncludeUnreleased(isTruthyQueryParam(router.query[UNRELEASED_QUERY_KEY]))
+	}, [router.isReady, router.query])
 	const onUnreleasedToggle = React.useCallback(() => {
 		const nextValue = !includeUnreleased
+		setIncludeUnreleased(nextValue)
 		const nextQuery: Record<string, string | string[]> = {}
 		for (const key in router.query) {
 			const value = router.query[key]
@@ -254,7 +260,8 @@ export const PeggedAssetInfo = ({
 		(volumeChartQuery.isLoading || volumeChartQuery.isFetching || volumeChartQuery.data != null)
 	const showDefaultLegend = chartType === 'marketCap' && (chartView === 'breakdown' || chartView === 'dominance')
 
-	const hasInfo = description || pegMechanism || mintRedeemDescription || (auditLinks != null && auditLinks.length > 0)
+	const hasInfo =
+		description || pegMechanism || mintRedeemDescription || (auditLinks != null && auditLinks.length > 0) || url
 
 	return (
 		<>
@@ -266,6 +273,16 @@ export const PeggedAssetInfo = ({
 						<span className="font-bold">{name}</span>
 						{symbol && symbol !== '-' ? <span className="font-normal">({symbol})</span> : null}
 						{peggedAssetData.deprecated ? <DeprecatedProtocolMarker size={18} /> : null}
+						{url ? (
+							<span className="-m-2 ml-auto flex items-center justify-end gap-1">
+								<WebsiteGlobeLink
+									url={url}
+									name={name}
+									event="stablecoin-website-click"
+									eventData={{ stablecoin: name }}
+								/>
+							</span>
+						) : null}
 					</h1>
 
 					<p className="flex flex-col">
@@ -398,7 +415,14 @@ export const PeggedAssetInfo = ({
 							</p>
 							<div className="flex flex-wrap gap-3">
 								{url ? (
-									<ExternalLinkButton href={url} icon="globe">
+									<ExternalLinkButton
+										href={url}
+										icon="globe"
+										data-umami-event="stablecoin-website-click"
+										data-umami-event-stablecoin={name}
+										data-umami-event-placement="info"
+										data-umami-event-url={url}
+									>
 										Website
 									</ExternalLinkButton>
 								) : null}

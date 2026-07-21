@@ -230,27 +230,12 @@ const AssetHeader = ({
 	displayName: string
 	headingAs?: 'h1' | 'div'
 }) => {
-	const websiteUrl = asset.website?.[0]
-
 	return (
 		<>
 			<Tag className="flex flex-wrap items-center gap-2 heading-sm">
 				{asset.logo ? <TokenLogo src={asset.logo} size={24} /> : null}
 				<span>{displayName}</span>
 				{asset.ticker ? <span className="font-normal text-tertiary">({asset.ticker})</span> : null}
-				{websiteUrl ? (
-					<span className="-m-2 ml-auto flex items-center justify-end gap-1">
-						<a
-							href={websiteUrl}
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label={`${displayName} website`}
-							className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
-						>
-							<Icon name="globe" width={16} height={16} className="shrink-0" />
-						</a>
-					</span>
-				) : null}
 			</Tag>
 			<AssetPrimaryValue
 				label={definitions.onChainMcap.label}
@@ -816,9 +801,28 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							<div className="flex flex-wrap gap-3">
 								{asset.website ? (
 									asset.website.length > 1 ? (
-										<Menu name="Website" options={asset.website} isExternal className={assetHeaderLinkButtonStyles} />
+										<Menu
+											name="Website"
+											options={asset.website}
+											isExternal
+											className={assetHeaderLinkButtonStyles}
+											getItemAttributes={(url) => ({
+												'data-umami-event': 'rwa-asset-website-click',
+												'data-umami-event-asset': displayName,
+												'data-umami-event-placement': 'info',
+												'data-umami-event-url': url
+											})}
+										/>
 									) : (
-										<ExternalLinkButton key={asset.website[0]} href={asset.website[0]} icon="globe">
+										<ExternalLinkButton
+											key={asset.website[0]}
+											href={asset.website[0]}
+											icon="globe"
+											data-umami-event="rwa-asset-website-click"
+											data-umami-event-asset={displayName}
+											data-umami-event-placement="info"
+											data-umami-event-url={asset.website[0]}
+										>
 											Website
 										</ExternalLinkButton>
 									)

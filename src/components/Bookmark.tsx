@@ -2,6 +2,8 @@ import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
+import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { BasicLink } from './Link'
 
@@ -29,6 +31,7 @@ export function Bookmark({
 	watchlistType: watchlistTypeProp,
 	itemKey,
 	className,
+	onClick: onButtonClick,
 	...props
 }: IBookmarkProps) {
 	const router = useRouter()
@@ -42,6 +45,7 @@ export function Bookmark({
 	const { savedProtocols, addProtocol, removeProtocol } = useBookmarks(watchlistType)
 
 	const isSaved: boolean = savedProtocols.has(watchlistNameKey)
+	const label = isSaved ? 'Remove from watchlist' : 'Add to watchlist'
 
 	const showToast = (action: 'Added' | 'Removed') => {
 		toast.success(
@@ -57,10 +61,12 @@ export function Bookmark({
 	const onClick = isSaved
 		? () => {
 				removeProtocol(watchlistNameKey)
+				trackUmamiEvent('watchlist-remove', { type: watchlistType, entity: readableName })
 				showToast('Removed')
 			}
 		: () => {
 				addProtocol(watchlistNameKey)
+				trackUmamiEvent('watchlist-add', { type: watchlistType, entity: readableName })
 				showToast('Added')
 				if (isYieldsPage) {
 					trackYieldsEvent(YIELDS_EVENTS.WATCHLIST_POOL_ADD, { pool: readableName })
@@ -70,16 +76,26 @@ export function Bookmark({
 	const buttonStyle: React.CSSProperties & Record<'--fill-icon', string> = {
 		'--fill-icon': isSaved ? 'var(--text-primary)' : 'none'
 	}
+	const classNames = `-left-0.5 shrink-0 data-[bookmark=true]:absolute data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block ${className ?? ''}`
 
 	return (
-		<button
-			onClick={onClick}
-			style={buttonStyle}
-			{...props}
-			className={`-left-0.5 shrink-0 data-[bookmark=true]:absolute data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block ${className ?? ''}`}
+		<Tooltip
+			content={label}
+			className={classNames}
+			render={
+				<button
+					{...props}
+					style={buttonStyle}
+					className={classNames}
+					onClick={(event) => {
+						onButtonClick?.(event)
+						if (!event.defaultPrevented) onClick()
+					}}
+				/>
+			}
 		>
 			<Icon name="bookmark" width={16} height={16} className="shrink-0" />
-			<span className="sr-only">Bookmark</span>
-		</button>
+			<span className="sr-only">{label}</span>
+		</Tooltip>
 	)
 }

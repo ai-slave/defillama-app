@@ -66,7 +66,7 @@ function MetadataOnlyExchangeProfile({ profile, asOfDate }: { profile: ExchangeP
 				<ReportIncorrectData subject={{ type: 'exchange', name: profile.name, slug: profile.slug }} />
 			</Card>
 			<ProfilePromotions promotions={profile.metadata.promotions} asOfDate={asOfDate} />
-			<MetadataGroups groups={profile.metadata.groups} />
+			<MetadataGroups groups={profile.metadata.groups} exchangeName={profile.name} />
 		</>
 	)
 }
@@ -130,7 +130,7 @@ function MarketsExchangeProfile({
 				) : tab === 'information' && hasInformation ? (
 					<div className="flex flex-col gap-2">
 						<ProfilePromotions promotions={profile.metadata.promotions} asOfDate={asOfDate} />
-						<MetadataGroups groups={profile.metadata.groups} />
+						<MetadataGroups groups={profile.metadata.groups} exchangeName={profile.name} />
 					</div>
 				) : segment && active ? (
 					<PairTable

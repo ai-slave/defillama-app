@@ -378,6 +378,14 @@ function AuthorHero({
 								target="_blank"
 								rel="noreferrer noopener"
 								className="inline-flex items-center gap-1.5 rounded-md border border-medium bg-page px-3 py-2 text-xs font-medium text-secondary transition-colors hover:border-link/50 hover:text-link"
+								{...(key === 'website'
+									? {
+											'data-umami-event': 'author-website-click',
+											'data-umami-event-author': author.displayName,
+											'data-umami-event-placement': 'info',
+											'data-umami-event-url': value
+										}
+									: {})}
 							>
 								<Icon name={socialIconName(key)} className="size-3.5" />
 								{socialLabel(key)}

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { TokenLogo } from '~/components/TokenLogo'
+import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
 import { Card } from '~/ui/Card'
@@ -187,16 +188,24 @@ export function EquityKeyMetrics({ summary }: { summary: IEquitiesSummaryRespons
 	)
 }
 
-function EquityTitle({ ticker, country, name }: Pick<IEquityTickerPageProps, 'ticker' | 'country' | 'name'>) {
+function EquityTitle({
+	ticker,
+	country,
+	name,
+	website
+}: Pick<IEquityTickerPageProps, 'ticker' | 'country' | 'name'> & { website: string | null }) {
 	return (
 		<span className="flex items-center gap-2">
 			<TokenLogo kind="equities" name={ticker} country={country} alt={`Logo of ${ticker}`} />
-			<h1 className="flex flex-wrap items-center gap-2 text-xl">
+			<h1 className="flex flex-1 flex-wrap items-center gap-2 text-xl">
 				<span className="font-bold">{name}</span>
 				<span className="font-normal text-secondary">
 					({ticker}:{country})
 				</span>
 			</h1>
+			{website ? (
+				<WebsiteGlobeLink url={website} name={name} event="equities-website-click" eventData={{ ticker }} />
+			) : null}
 		</span>
 	)
 }
@@ -284,7 +293,12 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				{/* Desktop: left stats panel */}
 				<Card padding="sm" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
-					<EquityTitle ticker={props.ticker} country={props.country} name={props.name} />
+					<EquityTitle
+						ticker={props.ticker}
+						country={props.country}
+						name={props.name}
+						website={props.metadata.website}
+					/>
 					<p className="flex flex-col">
 						<span className="text-secondary">{defs.marketCap.label}</span>
 						<span className="min-h-8 font-jetbrains text-2xl font-semibold">
@@ -298,7 +312,12 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 					<Panel padding="none" className="col-span-full">
 						{/* Mobile: name + market cap */}
 						<div className="flex flex-col gap-6 p-2 pb-0 xl:hidden">
-							<EquityTitle ticker={props.ticker} country={props.country} name={props.name} />
+							<EquityTitle
+								ticker={props.ticker}
+								country={props.country}
+								name={props.name}
+								website={props.metadata.website}
+							/>
 							<p className="flex flex-col">
 								<span className="text-secondary">{defs.marketCap.label}</span>
 								<span className="min-h-8 font-jetbrains text-2xl font-semibold">
@@ -519,6 +538,10 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 											target="_blank"
 											rel="noopener noreferrer"
 											className="text-link hover:underline"
+											data-umami-event="equities-website-click"
+											data-umami-event-ticker={props.ticker}
+											data-umami-event-placement="info"
+											data-umami-event-url={props.metadata.website}
 										>
 											{props.metadata.website}
 										</a>

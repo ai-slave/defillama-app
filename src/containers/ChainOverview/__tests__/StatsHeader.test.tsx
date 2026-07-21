@@ -91,7 +91,10 @@ describe('ChainOverview Stats header', () => {
 		const markup = renderToStaticMarkup(React.createElement(Stats, { ...statsProps, hideChart: true }))
 
 		expect(markup).toContain('href="https://ethereum.org/"')
-		expect(markup).toContain('aria-label="Ethereum website"')
-		expect(markup.indexOf('aria-label="Ethereum website"')).toBeLessThan(markup.indexOf('BOOKMARK'))
+		expect(markup).toContain('aria-label="Open Ethereum website"')
+		expect(markup).toContain('data-umami-event="chain-website-click"')
+		expect(markup).toContain('data-umami-event-chain="Ethereum"')
+		expect(markup).toContain('data-umami-event-placement="header"')
+		expect(markup.indexOf('aria-label="Open Ethereum website"')).toBeLessThan(markup.indexOf('BOOKMARK'))
 	})
 })

@@ -9,6 +9,7 @@ import type { IPieChartProps } from '~/components/ECharts/types'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
+import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { BridgeAddressesTable } from '~/containers/Bridges/BridgeAddressesTable'
 import { BridgeChainSelector } from '~/containers/Bridges/BridgeChainSelector'
 import { BridgeTokensTable } from '~/containers/Bridges/BridgeTokensTable'
@@ -135,18 +136,28 @@ export const BridgeInfo = ({
 				media={<TokenLogo src={logo} size={28} alt={`Logo of ${displayName}`} />}
 				title={displayName}
 				actions={
-					<BridgeChainSelector
-						currentChain={currentChain}
-						options={chainOptions}
-						handleClick={(chain) => {
-							setChain(chain)
-							if (chain === 'All Chains') {
-								setChartType('Volume')
-							} else {
-								setChartType('Inflows')
-							}
-						}}
-					/>
+					<>
+						{config?.url ? (
+							<WebsiteGlobeLink
+								url={config.url}
+								name={displayName}
+								event="bridge-website-click"
+								eventData={{ bridge: displayName }}
+							/>
+						) : null}
+						<BridgeChainSelector
+							currentChain={currentChain}
+							options={chainOptions}
+							handleClick={(chain) => {
+								setChain(chain)
+								if (chain === 'All Chains') {
+									setChartType('Volume')
+								} else {
+									setChartType('Inflows')
+								}
+							}}
+						/>
+					</>
 				}
 			/>
 			<SummaryCardGrid>
@@ -182,7 +193,15 @@ export const BridgeInfo = ({
 						<StatItem label="Volume Change (prev day)" value={`${volPercentChange}%`} />
 					) : null}
 					{config?.url ? (
-						<ExternalLinkButton href={config.url} icon="globe" className="mt-auto mr-auto">
+						<ExternalLinkButton
+							href={config.url}
+							icon="globe"
+							className="mt-auto mr-auto"
+							data-umami-event="bridge-website-click"
+							data-umami-event-bridge={displayName}
+							data-umami-event-placement="info"
+							data-umami-event-url={config.url}
+						>
 							Website
 						</ExternalLinkButton>
 					) : null}

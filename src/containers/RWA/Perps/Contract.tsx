@@ -96,24 +96,9 @@ function RWAPerpsContractHeader({
 	contract: IRWAPerpsContractData
 	headingAs?: 'h1' | 'div'
 }) {
-	const link = contract.contract.link
-
 	return (
 		<Tag className="flex min-w-0 items-center justify-between gap-2 heading-xs">
 			<span className="min-w-0 truncate">{contract.contract.contract}</span>
-			{link ? (
-				<Tooltip content="Open market website" placement="top">
-					<a
-						href={link}
-						target="_blank"
-						rel="noopener noreferrer"
-						aria-label={`Open ${contract.contract.contract} website`}
-						className={`${buttonStyles({ variant: 'ghost', size: 'sm', square: true })} ml-auto`}
-					>
-						<Icon name="external-link" className="size-4" />
-					</a>
-				</Tooltip>
-			) : null}
 		</Tag>
 	)
 }
@@ -211,7 +196,16 @@ function RWAPerpsContractInfoCard({ contract }: { contract: IRWAPerpsContractDat
 				{row.value}
 			</BasicLink>
 		) : row.label === 'Website' ? (
-			<a href={row.value} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
+			<a
+				href={row.value}
+				target="_blank"
+				rel="noopener noreferrer"
+				className="text-link hover:underline"
+				data-umami-event="rwa-perps-website-click"
+				data-umami-event-contract={contract.contract.contract}
+				data-umami-event-placement="info"
+				data-umami-event-url={row.value}
+			>
 				{row.value}
 			</a>
 		) : (

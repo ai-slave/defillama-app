@@ -114,17 +114,38 @@ function formatScalar(value: ExchangeMetadataCell | undefined, type: ExchangeMet
 	return typeof value === 'object' ? '–' : String(value)
 }
 
-export function MetadataFieldValue({ field }: { field: ExchangeMetadataFieldModel }) {
+export function MetadataFieldValue({
+	field,
+	exchangeName
+}: {
+	field: ExchangeMetadataFieldModel
+	exchangeName?: string
+}) {
 	// A founding year is a calendar value, not a quantity that needs digit grouping.
 	if (field.key === 'founded' && field.type === 'number') return <>{String(field.value)}</>
 	if (field.type === 'links') {
 		return (
 			<span className="flex flex-wrap gap-2">
-				{field.value.map((link) => (
-					<ExternalLinkButton key={`${link.label}-${link.url}`} href={link.url} icon={metadataLinkIcon(link.label)}>
-						{metadataValueLabel(link.label)}
-					</ExternalLinkButton>
-				))}
+				{field.value.map((link) => {
+					const icon = metadataLinkIcon(link.label)
+					return (
+						<ExternalLinkButton
+							key={`${link.label}-${link.url}`}
+							href={link.url}
+							icon={icon}
+							{...(icon === 'globe' && exchangeName
+								? {
+										'data-umami-event': 'exchange-website-click',
+										'data-umami-event-exchange': exchangeName,
+										'data-umami-event-placement': 'info',
+										'data-umami-event-url': link.url
+									}
+								: {})}
+						>
+							{metadataValueLabel(link.label)}
+						</ExternalLinkButton>
+					)
+				})}
 			</span>
 		)
 	}
@@ -271,12 +292,14 @@ function MetadataTableField({
 function MetadataScalarField({
 	field,
 	group,
+	exchangeName,
 	isDescription,
 	secondColumn,
 	startsRow
 }: {
 	field: Exclude<ExchangeMetadataFieldModel, { type: 'table' }>
 	group: ExchangeMetadataGroupModel
+	exchangeName: string
 	isDescription: boolean
 	secondColumn: boolean
 	startsRow: boolean
@@ -293,13 +316,21 @@ function MetadataScalarField({
 				<MetadataSource source={source} />
 			</div>
 			<div className={`${isDescription ? 'max-w-5xl text-secondary' : 'mt-1'} body-md`}>
-				<MetadataFieldValue field={field} />
+				<MetadataFieldValue field={field} exchangeName={exchangeName} />
 			</div>
 		</div>
 	)
 }
 
-function MetadataFields({ group, singleColumn }: { group: ExchangeMetadataGroupModel; singleColumn?: boolean }) {
+function MetadataFields({
+	group,
+	exchangeName,
+	singleColumn
+}: {
+	group: ExchangeMetadataGroupModel
+	exchangeName: string
+	singleColumn?: boolean
+}) {
 	// Fields auto-flow into a two-column grid; tables and the description span both
 	// columns, so the column a scalar lands in is deterministic from render order.
 	let column = 0
@@ -322,6 +353,7 @@ function MetadataFields({ group, singleColumn }: { group: ExchangeMetadataGroupM
 						key={field.key}
 						field={field}
 						group={group}
+						exchangeName={exchangeName}
 						isDescription={isDescription}
 						secondColumn={secondColumn}
 						startsRow={startsRow}
@@ -355,16 +387,18 @@ function MetadataGroupHeader({ group }: { group: ExchangeMetadataGroupModel }) {
 function MetadataGroup({
 	group,
 	nestedGroup,
+	exchangeName,
 	singleColumn
 }: {
 	group: ExchangeMetadataGroupModel
 	nestedGroup?: ExchangeMetadataGroupModel
+	exchangeName: string
 	singleColumn?: boolean
 }) {
 	return (
 		<Card as="section" padding="none" className="overflow-hidden">
 			<MetadataGroupHeader group={group} />
-			<MetadataFields group={group} singleColumn={singleColumn} />
+			<MetadataFields group={group} exchangeName={exchangeName} singleColumn={singleColumn} />
 			{nestedGroup ? (
 				<>
 					<div className="flex flex-wrap items-center gap-2 border-b border-subtle px-3 py-2.5">
@@ -374,7 +408,7 @@ function MetadataGroup({
 							<MetadataSource source={nestedGroup.source} />
 						</span>
 					</div>
-					<MetadataFields group={nestedGroup} />
+					<MetadataFields group={nestedGroup} exchangeName={exchangeName} />
 				</>
 			) : null}
 		</Card>
@@ -390,7 +424,13 @@ function isCompactGroup(group: ExchangeMetadataGroupModel): boolean {
 	return group.fields.every((field) => field.type !== 'table')
 }
 
-export function MetadataGroups({ groups }: { groups: ExchangeMetadataGroupModel[] }) {
+export function MetadataGroups({
+	groups,
+	exchangeName
+}: {
+	groups: ExchangeMetadataGroupModel[]
+	exchangeName: string
+}) {
 	const groupsByKey = new Map(groups.map((group) => [group.key, group]))
 	const overview = groupsByKey.get('identity')
 	const links = groupsByKey.get('links')
@@ -413,19 +453,29 @@ export function MetadataGroups({ groups }: { groups: ExchangeMetadataGroupModel[
 	return (
 		<section className="flex flex-col gap-2" aria-label="Exchange information">
 			{overview ? (
-				<MetadataGroup group={overview} nestedGroup={links} />
+				<MetadataGroup group={overview} nestedGroup={links} exchangeName={exchangeName} />
 			) : links ? (
-				<MetadataGroup group={links} />
+				<MetadataGroup group={links} exchangeName={exchangeName} />
 			) : null}
 			{rows.map((row) =>
 				row.length === 2 ? (
 					<div key={row[0].key} className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 						{row.map((group) => (
-							<MetadataGroup key={group.key} group={group} singleColumn={group.fields.length === 1} />
+							<MetadataGroup
+								key={group.key}
+								group={group}
+								exchangeName={exchangeName}
+								singleColumn={group.fields.length === 1}
+							/>
 						))}
 					</div>
 				) : (
-					<MetadataGroup key={row[0].key} group={row[0]} singleColumn={row[0].fields.length === 1} />
+					<MetadataGroup
+						key={row[0].key}
+						group={row[0]}
+						exchangeName={exchangeName}
+						singleColumn={row[0].fields.length === 1}
+					/>
 				)
 			)}
 		</section>
