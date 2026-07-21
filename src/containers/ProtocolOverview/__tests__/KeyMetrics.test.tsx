@@ -135,6 +135,24 @@ describe('KeyMetrics', () => {
 		expect(markup.indexOf('Base')).toBeLessThan(markup.indexOf('Ethereum'))
 	})
 
+	it('does not repeat StableJack perp volume after promoting it to the primary metric', async () => {
+		const markup = await renderKeyMetrics({
+			...baseProps,
+			name: 'StableJack',
+			perpVolume: {
+				total24h: 2_000,
+				total7d: 14_000,
+				total30d: 68_290,
+				total1y: null,
+				annualized1y: null,
+				totalAllTime: 100_000,
+				chainBreakdown: null
+			}
+		})
+
+		expect(markup).not.toContain('Perp Volume 30d')
+	})
+
 	it('renders liquidation adapter summaries like other standard adapter metrics', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,

@@ -16,6 +16,7 @@ import { AdditionalInfo } from './AdditionalInfo'
 import { getPrimaryValueLabelType, useFinalTVL } from './helpers'
 import { KeyMetrics } from './KeyMetrics'
 import { ProtocolOverviewLayout } from './Layout'
+import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
 import { ProtocolChartPanel } from './ProtocolChartPanel'
 import type { IProtocolOverviewPageData } from './types'
 
@@ -153,6 +154,8 @@ function ProtocolHeader({
 	formatPrice: (value?: number | string | null) => string | number | null
 	headingAs?: 'h1' | 'div'
 }) {
+	const primaryMetricOverride = getProtocolPrimaryMetricOverride(props)
+
 	return (
 		<>
 			<Tag className="flex flex-wrap items-center gap-2 heading-sm">
@@ -177,7 +180,18 @@ function ProtocolHeader({
 					/>
 				</span>
 			</Tag>
-			{props.oracleTvs ? (
+			{primaryMetricOverride ? (
+				<PrimaryValue
+					hasTvl={true}
+					value={primaryMetricOverride.value}
+					name={props.name}
+					category={props.category ?? ''}
+					valueByChain={primaryMetricOverride.valueByChain}
+					formatPrice={formatPrice}
+					title={primaryMetricOverride.title}
+					byChainTitle={primaryMetricOverride.byChainTitle}
+				/>
+			) : props.oracleTvs ? (
 				<PrimaryValue
 					hasTvl={true}
 					value={oracleTvs}
@@ -206,7 +220,9 @@ const PrimaryValue = ({
 	name,
 	category,
 	formatPrice,
-	valueByChain
+	valueByChain,
+	title: titleOverride,
+	byChainTitle: byChainTitleOverride
 }: {
 	hasTvl: boolean
 	value: number
@@ -214,10 +230,14 @@ const PrimaryValue = ({
 	category: string
 	formatPrice: (value: number | string | null) => string | number | null
 	valueByChain?: [string, number][]
+	title?: string
+	byChainTitle?: string
 }) => {
 	if (!hasTvl) return null
 
-	const { title, byChainTitle } = getPrimaryValueLabelType(category)
+	const defaultLabels = getPrimaryValueLabelType(category)
+	const title = titleOverride ?? defaultLabels.title
+	const byChainTitle = byChainTitleOverride ?? defaultLabels.byChainTitle
 
 	if (!valueByChain || valueByChain.length === 0) {
 		return (

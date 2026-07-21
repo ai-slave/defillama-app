@@ -9,6 +9,7 @@ import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/M
 import { formattedNum } from '~/utils'
 import { getAdjustedTotals, getPrimaryValueLabelType } from './helpers'
 import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
+import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
 import type { IProtocolOverviewPageData } from './types'
 
 type KeyMetricsRequiredFields = Pick<IProtocolOverviewPageData, 'name' | 'metrics'>
@@ -221,17 +222,21 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 
 	if (!props.hasKeyMetrics) return null
 
+	const primaryMetricOverride = getProtocolPrimaryMetricOverride(props)
 	const isOracleProtocol = props.oracleTvs != null
-	const primaryValue = isOracleProtocol ? props.computedOracleTvs : props.tvl
-	const { title: primaryLabel } = getPrimaryValueLabelType(isOracleProtocol ? 'Oracle' : (props.category ?? ''))
+	const primaryValue = primaryMetricOverride?.value ?? (isOracleProtocol ? props.computedOracleTvs : props.tvl)
+	const { title: defaultPrimaryLabel } = getPrimaryValueLabelType(isOracleProtocol ? 'Oracle' : (props.category ?? ''))
+	const primaryLabel = primaryMetricOverride?.title ?? defaultPrimaryLabel
 
-	const hasTvlData = isOracleProtocol
-		? props.oracleTvs != null
-		: (() => {
-				if (!props.metrics.tvl || props.currentTvlByChain == null) return false
-				for (const _chain in props.currentTvlByChain) return true
-				return false
-			})()
+	const hasPrimaryMetricData =
+		primaryMetricOverride != null ||
+		(isOracleProtocol
+			? props.oracleTvs != null
+			: (() => {
+					if (!props.metrics.tvl || props.currentTvlByChain == null) return false
+					for (const _chain in props.currentTvlByChain) return true
+					return false
+				})())
 
 	return (
 		<div className="flex flex-1 flex-col gap-2">
@@ -252,7 +257,7 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 					primaryValue={primaryValue}
 					primaryLabel={primaryLabel}
 					formatPrice={props.formatPrice}
-					hasTvlData={hasTvlData}
+					hasTvlData={hasPrimaryMetricData}
 				/>
 			</div>
 			<div className="flex flex-col" ref={containerRef}>
@@ -263,6 +268,7 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 				<Incentives {...props} />
 				<Earnings {...props} />
 				{STANDARD_METRICS.map((config) => {
+					if (config.dataProp === primaryMetricOverride?.source) return null
 					const data = props[config.dataProp]
 					if (!data) return null
 					const metrics = buildStandardVolumeMetrics(data, config.definitionKey, config.label)
