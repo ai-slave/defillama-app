@@ -1,7 +1,8 @@
-import type { EChartsOption } from 'echarts'
+import type { EChartsOption, LabelLayoutOptionCallbackParams } from 'echarts'
 import { SankeyChart as ESankeyChart, type SankeySeriesOption } from 'echarts/charts'
 import { GraphicComponent, GridComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
+import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
@@ -16,7 +17,96 @@ import { useChartTheme } from '../shared/chartTheme'
 import { formatTooltipValue } from '../shared/formatters'
 import type { ISankeyChartProps } from './types'
 
-echarts.use([CanvasRenderer, ESankeyChart, TooltipComponent, TitleComponent, GridComponent, GraphicComponent])
+echarts.use([
+	CanvasRenderer,
+	ESankeyChart,
+	TooltipComponent,
+	TitleComponent,
+	GridComponent,
+	GraphicComponent,
+	LabelLayout
+])
+
+const MOBILE_LABEL_WIDTH = 132
+const MOBILE_LABEL_PADDING = 6
+const MOBILE_LABEL_GAP = 4
+
+type LabelRect = Pick<LabelLayoutOptionCallbackParams['labelRect'], 'x' | 'y' | 'width' | 'height'>
+
+function labelsOverlap(a: LabelRect, b: LabelRect) {
+	return (
+		a.x < b.x + b.width + MOBILE_LABEL_GAP &&
+		a.x + a.width + MOBILE_LABEL_GAP > b.x &&
+		a.y < b.y + b.height + MOBILE_LABEL_GAP &&
+		a.y + a.height + MOBILE_LABEL_GAP > b.y
+	)
+}
+
+function createMobileLabelLayout(
+	nodes: ISankeyChartProps['nodes'],
+	getChartSize: () => { width: number; height: number }
+) {
+	let placedLabels: LabelRect[] = []
+	const seenNodeIndexes = new Set<number>()
+
+	return (params: LabelLayoutOptionCallbackParams) => {
+		if (params.dataType !== 'node' || params.dataIndex == null) return { hideOverlap: false }
+
+		if (seenNodeIndexes.has(params.dataIndex)) {
+			seenNodeIndexes.clear()
+			placedLabels = []
+		}
+		seenNodeIndexes.add(params.dataIndex)
+
+		const { width: chartWidth, height: chartHeight } = getChartSize()
+		const labelRect = params.labelRect
+		const maxLeft = Math.max(MOBILE_LABEL_PADDING, chartWidth - labelRect.width - MOBILE_LABEL_PADDING)
+		const left = Math.min(Math.max(labelRect.x, MOBILE_LABEL_PADDING), maxLeft)
+		const maxTop = Math.max(MOBILE_LABEL_PADDING, chartHeight - labelRect.height - MOBILE_LABEL_PADDING)
+		const originalTop = Math.min(Math.max(labelRect.y, MOBILE_LABEL_PADDING), maxTop)
+		const levelHeight = labelRect.height + MOBILE_LABEL_GAP
+		const depth = nodes[params.dataIndex]?.depth ?? params.dataIndex
+		const direction = depth % 2 === 0 ? 1 : -1
+		const startingLevel = (depth % 3) - 1
+		const levelCount = Math.ceil(chartHeight / Math.max(levelHeight, 1)) + 2
+		const levels = [startingLevel, 0]
+
+		for (let level = 1; level <= levelCount; level += 1) {
+			levels.push(startingLevel + level * direction, startingLevel - level * direction)
+		}
+
+		let selectedTop = originalTop
+		let fewestCollisions = Number.POSITIVE_INFINITY
+		const checkedTops = new Set<number>()
+
+		for (const level of levels) {
+			const top = Math.min(Math.max(originalTop + level * levelHeight, MOBILE_LABEL_PADDING), maxTop)
+			if (checkedTops.has(top)) continue
+			checkedTops.add(top)
+
+			const candidate = { x: left, y: top, width: labelRect.width, height: labelRect.height }
+			const collisions = placedLabels.reduce((count, placed) => count + Number(labelsOverlap(candidate, placed)), 0)
+			if (collisions === 0) {
+				selectedTop = top
+				break
+			}
+			if (collisions < fewestCollisions) {
+				fewestCollisions = collisions
+				selectedTop = top
+			}
+		}
+
+		placedLabels.push({ x: left, y: selectedTop, width: labelRect.width, height: labelRect.height })
+
+		return {
+			x: left,
+			y: selectedTop + labelRect.height / 2,
+			align: 'left' as const,
+			verticalAlign: 'middle' as const,
+			hideOverlap: false
+		}
+	}
+}
 
 interface SankeyFormatterParams {
 	data?: { source?: string; target?: string; value?: number }
@@ -53,6 +143,7 @@ export default function SankeyChart({
 }: ISankeyChartProps) {
 	const [isDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
+	const useMobileLayout = isSmall && orient === 'horizontal'
 	const chartTheme = useChartTheme(isDark)
 	const { chartInstance: exportChartInstance, handleChartReady } = useChartImageExport()
 	const exportFilename = imageExportFilename || (title ? title.replace(/\s+/g, '-').toLowerCase() : 'sankey-chart')
@@ -91,14 +182,22 @@ export default function SankeyChart({
 	}, [nodes])
 
 	const series = useMemo<SankeySeriesOption>(() => {
-		const nodeData = nodes.map((node) => ({
-			name: node.name,
-			itemStyle: {
-				color: nodeColors?.[node.name] ?? node.color ?? undefined
-			},
-			...(node.depth !== undefined ? { depth: node.depth } : {})
-		}))
-
+		const depthRanks = new Map<number, number>()
+		const maxDepth = Math.max(0, ...nodes.map((node) => node.depth ?? 0))
+		const nodeData = nodes.map((node) => {
+			const color = nodeColors?.[node.name] ?? node.color ?? undefined
+			const depth = node.depth ?? 0
+			const depthRank = depthRanks.get(depth) ?? 0
+			depthRanks.set(depth, depthRank + 1)
+			const mobileLabelPosition: 'left' | 'right' =
+				depth === maxDepth || (depth >= 2 && depthRank % 2 === 1) ? 'left' : 'right'
+			return {
+				name: node.name,
+				itemStyle: { color },
+				...(useMobileLayout ? { label: { position: mobileLabelPosition } } : {}),
+				...(node.depth !== undefined ? { depth: node.depth } : {})
+			}
+		})
 		return {
 			type: 'sankey',
 			layout: 'none',
@@ -107,7 +206,7 @@ export default function SankeyChart({
 			emphasis: {
 				focus: 'adjacency'
 			},
-			nodeGap: 24,
+			nodeGap: useMobileLayout ? 32 : 24,
 			nodeWidth: 16,
 			lineStyle: {
 				color: 'gradient',
@@ -120,6 +219,13 @@ export default function SankeyChart({
 				fontFamily: 'sans-serif',
 				fontSize: 14,
 				color: chartTheme.ink(0.9),
+				...(useMobileLayout
+					? {
+							lineHeight: 16,
+							width: MOBILE_LABEL_WIDTH,
+							overflow: 'break' as const
+						}
+					: {}),
 				formatter: (rawParams: unknown) => {
 					const params = normalizeSankeyFormatterParams(rawParams)
 					// Use displayValue if provided, otherwise use calculated value
@@ -163,7 +269,18 @@ export default function SankeyChart({
 				lineStyle: link.color ? { color: link.color } : undefined
 			}))
 		}
-	}, [nodes, links, nodeColors, nodeAlign, orient, chartTheme, isSmall, formatSankeyValue, nodeMetadata])
+	}, [
+		nodes,
+		links,
+		nodeColors,
+		nodeAlign,
+		orient,
+		chartTheme,
+		useMobileLayout,
+		isSmall,
+		formatSankeyValue,
+		nodeMetadata
+	])
 
 	const option = useMemo<EChartsOption>(() => {
 		const graphic = {
@@ -182,9 +299,12 @@ export default function SankeyChart({
 			graphic,
 			tooltip: {
 				trigger: 'item',
-				triggerOn: 'mousemove',
+				triggerOn: isSmall ? 'click' : 'mousemove',
 				confine: true,
 				className: 'defillama-echarts-tooltip',
+				extraCssText: useMobileLayout
+					? 'max-width: calc(100% - 8px); white-space: normal; overflow-wrap: anywhere;'
+					: undefined,
 				backgroundColor: 'transparent',
 				borderWidth: 0,
 				formatter: (rawParams: unknown) => {
@@ -212,7 +332,24 @@ export default function SankeyChart({
 			},
 			series
 		}
-	}, [series, isDark, isSmall, nodeMetadata, formatSankeyValue])
+	}, [series, isDark, isSmall, useMobileLayout, nodeMetadata, formatSankeyValue])
+
+	const getOption = useCallback(
+		(element: HTMLDivElement): EChartsOption => {
+			if (!useMobileLayout) return option
+			return {
+				...option,
+				series: {
+					...series,
+					labelLayout: createMobileLabelLayout(nodes, () => ({
+						width: element.clientWidth || 320,
+						height: element.clientHeight || 450
+					}))
+				}
+			}
+		},
+		[nodes, option, series, useMobileLayout]
+	)
 
 	const initializeChart = useCallback(() => {
 		const currentInstance = chartRef.current
@@ -230,8 +367,8 @@ export default function SankeyChart({
 		chartRef.current = instance
 		handleChartReady(instance)
 		onReadyRef.current?.(instance)
-		instance.setOption(option, { notMerge: true })
-	}, [handleChartReady, option])
+		instance.setOption(getOption(element), { notMerge: true })
+	}, [getOption, handleChartReady])
 
 	// The observer both resizes an existing chart and performs deferred initialization when
 	// a chart's hidden tab is shown for the first time.
@@ -243,8 +380,10 @@ export default function SankeyChart({
 			initializeChart()
 			return
 		}
-		instance.setOption(option, { notMerge: true })
-	}, [initializeChart, option])
+		const element = containerRef.current
+		if (!element) return
+		instance.setOption(getOption(element), { notMerge: true })
+	}, [getOption, initializeChart])
 
 	useEffect(() => {
 		return () => {
@@ -260,7 +399,7 @@ export default function SankeyChart({
 		<ChartContainer
 			chartRef={containerRef}
 			chartClassName=""
-			chartStyle={{ height }}
+			chartStyle={{ height, minHeight: useMobileLayout ? `${Math.max(450, nodes.length * 64)}px` : undefined }}
 			header={
 				title || enableImageExport ? (
 					<ChartHeader
