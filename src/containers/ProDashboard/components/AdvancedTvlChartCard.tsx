@@ -5,8 +5,9 @@ import {
 	buildTimeSeriesDataset,
 	materializeZeroFilledDataset,
 	type TimestampDataset
-} from '~/components/ECharts/timeSeriesDataset'
-import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+} from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useSelectedValues } from '~/hooks/useSelectedValues'
@@ -27,9 +28,7 @@ import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 import { useAdvancedTvlChartData } from './useAdvancedTvlChartData'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 const EMPTY_DATASET: TimestampDataset = {
@@ -132,13 +131,16 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		let rows: (string | number)[][] = []
 		let filename = ''
 		const protocolSlug = protocol.toLowerCase().replace(/\s+/g, '-')
-		const buildRows = (dataset: MultiSeriesChart2Dataset, columnNames: string[]) => [
-			['Date', ...columnNames],
-			...dataset.source.map((row) => [
-				toNiceCsvDate((row.timestamp as number) / 1000),
-				...columnNames.map((name) => row[name] ?? '')
-			])
-		]
+		const buildRows = (dataset: MultiSeriesChartDataset, columnNames: string[]) => {
+			const indexes = columnNames.map((name) => dataset.dimensions.indexOf(name))
+			return [
+				['Date', ...columnNames],
+				...dataset.source.map((row) => [
+					toNiceCsvDate((row[0] as number) / 1000),
+					...indexes.map((index) => row[index] ?? '')
+				])
+			]
+		}
 
 		switch (chartType) {
 			case 'tvl':
@@ -201,7 +203,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				height="360px"
 			/>
 		) : (
-			<MultiSeriesChart2
+			<MultiSeriesChart
 				title=""
 				dataset={visibleDataset}
 				charts={presentation.charts}

@@ -1,15 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, useEffect } from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareNetworkData, type NetworkAPIResponse } from './data'
 import { ChartCard, KpiCard, SectionHeader } from './ui'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 export default function Network() {
 	const query = useQuery({
@@ -50,7 +48,7 @@ export default function Network() {
 					title={c.transactions.title ?? 'Daily Transactions'}
 					subtitle="Transactions settled on Flare each day."
 				>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={c.transactions.dataset}
 						charts={c.transactions.charts}
 						valueSymbol=""
@@ -67,7 +65,7 @@ export default function Network() {
 					title={c.activeAccounts.title ?? 'Daily Active Accounts'}
 					subtitle="Unique accounts active on Flare each day."
 				>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={c.activeAccounts.dataset}
 						charts={c.activeAccounts.charts}
 						valueSymbol=""

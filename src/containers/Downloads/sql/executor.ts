@@ -3,8 +3,9 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { ChartOptionsMap } from '../chart-datasets'
 import { datasets } from '../datasets'
 import { extractTableRefs, matchTableRef } from './completions'
+import type { QueryResult } from './exportResults'
+import { normalizeSqlResultRows } from './resultNormalization'
 import type { PendingTable } from './TableChipRail'
-import type { QueryResult } from './useSqlTabs'
 import {
 	identifierize,
 	prettyLabelForSource,
@@ -186,15 +187,21 @@ export async function runSql(
 			: await queryPromise
 
 		const columns = arrow.schema.fields.map((f: any) => ({ name: f.name, type: String(f.type) }))
-		const rows = arrow.toArray().map((r: any) => {
-			const obj: Record<string, unknown> = {}
-			for (const col of columns) obj[col.name] = r[col.name]
-			return obj
-		})
+		const arrowRows = arrow.toArray()
+		const rows = new Array<unknown[]>(arrowRows.length)
+		for (let rowIndex = 0; rowIndex < arrowRows.length; rowIndex++) {
+			const input = arrowRows[rowIndex]
+			const row = new Array<unknown>(columns.length)
+			for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+				row[columnIndex] = input[columns[columnIndex].name] ?? null
+			}
+			rows[rowIndex] = row
+		}
+		const result = normalizeSqlResultRows({ columns, rows })
 		const durationMs = Math.round(performance.now() - started)
 		return {
 			ok: true,
-			result: { columns, rows },
+			result,
 			durationMs,
 			justLoaded: plan.length > 0
 		}

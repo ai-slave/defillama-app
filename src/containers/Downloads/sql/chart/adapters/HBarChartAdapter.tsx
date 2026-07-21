@@ -1,3 +1,4 @@
+import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -5,50 +6,26 @@ import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
 import { SQL_CHART_HEIGHT } from '../chartLayout'
-import { formatterFromConfig } from '../valueFormatters'
+import { readSqlNumber } from '../rowValues'
+import { makeValueFormatter } from '../valueFormatters'
 
-interface IHBarChartShim {
-	categories: string[]
-	values: number[]
-	title?: string
-	valueSymbol?: string
-	height?: string
-	color?: string
-	colors?: string[]
-	onReady?: (instance: any) => void
-}
-
-const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as unknown as React.FC<IHBarChartShim>
+const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
 
 interface HBarChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
 	classified: ClassifiedColumn[]
-	onReady?: (instance: any) => void
+	onReady?: (instance: echarts.ECharts | null) => void
 }
 
 export function HBarChartAdapter({ config, result, classified, onReady }: HBarChartAdapterProps) {
-	const formatter = formatterFromConfig(config)
+	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 
 	const { categories, values } = useMemo(() => {
 		if (!config.xCol || config.yCols.length === 0) return { categories: [], values: [] }
-		const yCol = config.yCols[0]
+		const yCol = classified.find((column) => column.name === config.yCols[0])
 		const labelCol = classified.find((c) => c.name === config.xCol && c.coarse !== 'number')
-		const pairs: Array<{ name: string; value: number }> = []
-		for (const row of result.rows) {
-			const nameRaw = row[config.xCol] as unknown
-			const name = nameRaw == null ? '' : String(nameRaw)
-			const n = toNumber(row[yCol])
-			if (!labelCol || name === '' || n == null) continue
-			pairs.push({ name, value: n })
-		}
-		pairs.sort((a, b) => b.value - a.value)
-		const cap = 40
-		const top = pairs.slice(0, cap)
-		return {
-			categories: top.map((p) => p.name).reverse(),
-			values: top.map((p) => p.value).reverse()
-		}
+		return labelCol && yCol ? buildSqlHBarData(result.rows, labelCol.index, yCol.index) : { categories: [], values: [] }
 	}, [result, config, classified])
 
 	const colors = useMemo(
@@ -76,12 +53,22 @@ export function HBarChartAdapter({ config, result, classified, onReady }: HBarCh
 	)
 }
 
-function toNumber(value: unknown): number | null {
-	if (typeof value === 'number') return Number.isFinite(value) ? value : null
-	if (typeof value === 'bigint') return Number(value)
-	if (typeof value === 'string') {
-		const n = Number(value.trim())
-		return Number.isFinite(n) ? n : null
+export function buildSqlHBarData(rows: unknown[][], labelIndex: number, valueIndex: number, cap = 40) {
+	const topPairs: Array<{ name: string; value: number }> = []
+	for (const row of rows) {
+		const nameRaw = row[labelIndex]
+		const name = nameRaw == null ? '' : String(nameRaw)
+		const value = readSqlNumber(row[valueIndex])
+		if (name === '' || value == null) continue
+
+		let insertAt = topPairs.length
+		while (insertAt > 0 && topPairs[insertAt - 1].value < value) insertAt--
+		if (insertAt >= cap) continue
+		topPairs.splice(insertAt, 0, { name, value })
+		if (topPairs.length > cap) topPairs.pop()
 	}
-	return null
+	return {
+		categories: topPairs.map((pair) => pair.name).reverse(),
+		values: topPairs.map((pair) => pair.value).reverse()
+	}
 }

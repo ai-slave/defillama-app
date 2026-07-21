@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useRef } from 'react'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import { useIdleChartComputation } from '~/containers/ProDashboard/hooks/useIdleChartComputation'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import {
@@ -103,15 +103,12 @@ export function buildProStablecoinChartPresentation({
 				...chartPayload,
 				dataset: {
 					dimensions: ['timestamp', 'USD Inflows'],
-					source: chartPayload.dataset.source.map((row) => ({
-						timestamp: row.timestamp,
-						'USD Inflows': row.Inflows
-					}))
+					source: chartPayload.dataset.source.map((row) => [row[0], row[1]])
 				},
 				charts: chartPayload.charts.map((chart) => ({
 					...chart,
 					name: 'USD Inflows',
-					encode: { x: 'timestamp', y: 'USD Inflows' }
+					encode: { x: 0, y: 1 }
 				}))
 			}
 		}
@@ -132,8 +129,9 @@ export function buildProStablecoinChartPresentation({
 		totalMcapCurrent = chartPayload.summary.totalMcapCurrent
 	} else {
 		const lastEntry = chartPayload.dataset.source.at(-1)
-		if (lastEntry?.Mcap != null) {
-			totalMcapCurrent = lastEntry.Mcap as number
+		const mcapIndex = chartPayload.dataset.dimensions.indexOf('Mcap')
+		if (lastEntry && mcapIndex >= 0 && lastEntry[mcapIndex] != null) {
+			totalMcapCurrent = lastEntry[mcapIndex] as number
 		} else if (chartType === 'pie') {
 			let total = 0
 			for (const slice of chainsCirculatingValues) total += slice.value

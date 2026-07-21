@@ -4,6 +4,7 @@ export type FineKind = 'date' | 'int' | 'float' | 'text' | 'bool' | 'list' | 'ot
 export type CoarseKind = 'date' | 'number' | 'category' | 'other'
 
 export interface ClassifiedColumn {
+	index: number
 	name: string
 	fine: FineKind
 	coarse: CoarseKind
@@ -41,14 +42,15 @@ export function looksLikeNumericArray(value: unknown): boolean {
 export function classifyColumn(
 	typeString: string | undefined,
 	name: string,
-	rows: Record<string, unknown>[]
+	rows: unknown[][],
+	index = 0
 ): ClassifiedColumn {
 	let fine = inferFineKindFromArrowType(typeString)
 
 	if (fine === 'text') {
 		const sample: unknown[] = []
 		for (const row of rows) {
-			const v = row[name]
+			const v = row[index]
 			if (v != null && v !== '') {
 				sample.push(v)
 				if (sample.length >= 20) break
@@ -57,18 +59,20 @@ export function classifyColumn(
 		if (sample.length > 0 && sample.every(looksLikeISODate)) fine = 'date'
 	}
 
-	if (fine !== 'list' && fine !== 'date') {
+	// Arrow/DuckDB types are authoritative. Inspect values only when the driver
+	// could not classify the column type.
+	if (fine === 'other') {
 		for (const row of rows) {
-			const v = row[name]
+			const v = row[index]
 			if (v == null) continue
 			if (looksLikeNumericArray(v)) fine = 'list'
 			break
 		}
 	}
 
-	return { name, fine, coarse: coarsen(fine) }
+	return { index, name, fine, coarse: coarsen(fine) }
 }
 
 export function classifyColumns(result: QueryResult): ClassifiedColumn[] {
-	return result.columns.map((c) => classifyColumn(c.type, c.name, result.rows))
+	return result.columns.map((c, index) => classifyColumn(c.type, c.name, result.rows, index))
 }

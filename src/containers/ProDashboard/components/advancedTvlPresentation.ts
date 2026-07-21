@@ -1,8 +1,8 @@
-import { chartGrid } from '~/components/ECharts/chartSpacing'
-import { createSignedInflowsTooltipFormatter } from '~/components/ECharts/formatters'
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type { TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
-import type { MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import { chartGrid } from '~/components/ECharts/shared/chartSpacing'
+import { createSignedInflowsTooltipFormatter } from '~/components/ECharts/shared/tooltip'
 import { buildProtocolV1ChartConfigs } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
 import type { AdvancedTvlChartType } from '../types'
 import { generateConsistentChartColor } from '../utils/colorManager'
@@ -30,7 +30,7 @@ const SINGLE_INFLOWS_CHART_OPTIONS = {
 	grid: chartGrid()
 }
 
-const TVL_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+const TVL_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{
 		type: 'line',
 		name: 'TVL',
@@ -38,7 +38,7 @@ const TVL_CHARTS: MultiSeriesChart2SeriesConfig[] = [
 		color: DASHBOARD_BLUE
 	}
 ]
-const USD_INFLOWS_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+const USD_INFLOWS_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{
 		type: 'bar',
 		name: 'USD Inflows',
@@ -51,9 +51,14 @@ const USD_INFLOWS_CHARTS: MultiSeriesChart2SeriesConfig[] = [
 export function orderAdvancedTvlChains(dataset: TimestampDataset, chainNames: string[]): string[] {
 	const latest = dataset.source[dataset.source.length - 1]
 	if (!latest) return chainNames
-	return chainNames.toSorted(
-		(a, b) => ((latest[b] as number | undefined) ?? 0) - ((latest[a] as number | undefined) ?? 0)
-	)
+	const dimensionIndex = new Map(dataset.dimensions.map((dimension, index) => [dimension, index]))
+	return chainNames.toSorted((a, b) => {
+		const bIndex = dimensionIndex.get(b)
+		const aIndex = dimensionIndex.get(a)
+		const bValue = bIndex === undefined ? undefined : (latest[bIndex] as number | null | undefined)
+		const aValue = aIndex === undefined ? undefined : (latest[aIndex] as number | null | undefined)
+		return (bValue ?? 0) - (aValue ?? 0)
+	})
 }
 
 export function buildAdvancedTvlPresentation({
@@ -78,12 +83,11 @@ export function buildAdvancedTvlPresentation({
 				? tokenNames
 				: []
 	const itemType = chartType === 'chainsTvl' ? 'chain' : 'protocol'
-	const stackColors = Object.create(null) as Record<string, string>
-	for (const name of colorNames) {
-		stackColors[name] = generateConsistentChartColor(name, '#8884d8', itemType)
-	}
+	const stackColors = Object.fromEntries(
+		colorNames.map((name) => [name, generateConsistentChartColor(name, '#8884d8', itemType)])
+	)
 
-	let charts: MultiSeriesChart2SeriesConfig[] = []
+	let charts: MultiSeriesChartSeriesConfig[] = []
 	let chartOptions = DOLLAR_CHART_OPTIONS
 	let valueSymbol = '$'
 	let solidChartAreaStyle = false

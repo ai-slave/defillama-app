@@ -1,5 +1,5 @@
-import type { ChartTimeGrouping } from '~/components/ECharts/types'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
+import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import type { Chain, DashboardGrouping, Protocol } from './types'
 import { generateConsistentChartColor } from './utils/colorManager'

@@ -58,10 +58,57 @@ function getCumulativeCapability(metricClass: 'flow' | 'stock') {
 	return deriveCapabilities(config, adaptCartesianChartData(config, [{ date: Date.UTC(2026, 0, 1), value: 10 }]))
 }
 
+function getLogScaleCapability(values: number[]) {
+	const config = {
+		id: 'log-scale',
+		type: 'line',
+		title: 'Metric',
+		description: '',
+		axes: {
+			x: { field: 'date', label: 'Date', type: 'time' },
+			yAxes: [{ id: 'value', fields: ['value'], label: 'Value', position: 'left' }]
+		},
+		series: [
+			{
+				name: 'Metric',
+				type: 'line',
+				yAxisId: 'value',
+				metricClass: 'stock',
+				dataMapping: { xField: 'date', yField: 'value' },
+				styling: {}
+			}
+		],
+		dataTransformation: { timeField: 'date', metrics: ['value'] },
+		displayOptions: {
+			canStack: false,
+			canShowPercentage: false,
+			canShowCumulative: false,
+			supportsGrouping: false
+		}
+	} satisfies ChartConfiguration
+
+	const rows = values.map((value, index) => ({ date: Date.UTC(2026, 0, index + 1), value }))
+	return deriveCapabilities(config, adaptCartesianChartData(config, rows))
+}
+
 describe('chartCapabilities', () => {
 	it('offers cumulative mode for flow bars but not stock bars', () => {
 		expect(getCumulativeCapability('flow').allowCumulative).toBe(true)
 		expect(getCumulativeCapability('stock').allowCumulative).toBe(false)
+	})
+
+	it('offers log scale for positive positional chart rows', () => {
+		const result = getLogScaleCapability([1, 10, 100])
+
+		expect(result.allowLogScale).toBe(true)
+		expect(result.logEligibleYAxes).toEqual([0])
+	})
+
+	it.each([0, -1])('hides log scale when a positional chart row contains %s', (value) => {
+		const result = getLogScaleCapability([1, value, 100])
+
+		expect(result.allowLogScale).toBe(false)
+		expect(result.logEligibleYAxes).toEqual([])
 	})
 
 	it('hides log scale while percentage mode is active', () => {

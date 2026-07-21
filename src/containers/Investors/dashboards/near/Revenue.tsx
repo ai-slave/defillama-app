@@ -1,14 +1,11 @@
 import { createColumnHelper, useReactTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table'
 import { lazy, useEffect, useMemo, useState } from 'react'
+import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import {
 	createSingleSeriesChartOptions,
 	createTimeSeriesChartOptions
-} from '~/components/ECharts/timeSeriesChartOptions'
-import type {
-	IMultiSeriesChart2Props,
-	IMultiSeriesChartProps,
-	MultiSeriesChart2Dataset
-} from '~/components/ECharts/types'
+} from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import {
 	aggregateTimeSeries,
@@ -19,16 +16,12 @@ import {
 } from './chartData'
 import { useRevenueData, getValidTimeframeForAggregation, type WalletEntry } from './revenueApi'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const EMISSIONS_PERCENTAGE_CHART_OPTIONS = createSingleSeriesChartOptions('%')
 const EMISSIONS_ABSOLUTE_CHART_OPTIONS = createTimeSeriesChartOptions(' NEAR')
-const BAR_MAX_WIDTH_40_CHART_OPTIONS = { series: { barMaxWidth: 40 } }
 
-const EMISSIONS_PERCENTAGE_CHART: IMultiSeriesChart2Props['charts'] = [
+const EMISSIONS_PERCENTAGE_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Revenue as % of Emissions',
 		type: 'line',
@@ -36,7 +29,7 @@ const EMISSIONS_PERCENTAGE_CHART: IMultiSeriesChart2Props['charts'] = [
 	}
 ]
 
-const EMISSIONS_ABSOLUTE_CHARTS: IMultiSeriesChart2Props['charts'] = [
+const EMISSIONS_ABSOLUTE_CHARTS: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Cumulative Revenue',
 		type: 'line',
@@ -180,31 +173,31 @@ export default function Revenue() {
 		}
 	})
 
-	const emissionsDataset = useMemo<MultiSeriesChart2Dataset | null>(() => {
+	const emissionsDataset = useMemo<MultiSeriesChartDataset | null>(() => {
 		if (!data) return null
 
 		const start = timeframeStartIndex(data.rawData.emissionsDates, globalTimeframe)
 		const length = data.rawData.emissionsDates.length - start
-		const source = new Array<MultiSeriesChart2Dataset['source'][number]>(length)
+		const source = new Array<MultiSeriesChartDataset['source'][number]>(length)
 
 		if (emissionsView === 'percentage') {
 			for (let index = 0; index < length; index++) {
 				const sourceIndex = start + index
-				source[index] = {
-					timestamp: Date.parse(`${data.rawData.emissionsDates[sourceIndex]}T00:00:00Z`),
-					'Revenue as % of Emissions': data.rawData.percentageFromCumulative[sourceIndex] || 0
-				}
+				source[index] = [
+					Date.parse(`${data.rawData.emissionsDates[sourceIndex]}T00:00:00Z`),
+					data.rawData.percentageFromCumulative[sourceIndex] || 0
+				]
 			}
 			return { dimensions: ['timestamp', 'Revenue as % of Emissions'], source }
 		}
 
 		for (let index = 0; index < length; index++) {
 			const sourceIndex = start + index
-			source[index] = {
-				timestamp: Date.parse(`${data.rawData.emissionsDates[sourceIndex]}T00:00:00Z`),
-				'Cumulative Revenue': data.rawData.cumulativeRevenue[sourceIndex] || 0,
-				'Cumulative Emissions': data.rawData.cumulativeEmissions[sourceIndex] || 0
-			}
+			source[index] = [
+				Date.parse(`${data.rawData.emissionsDates[sourceIndex]}T00:00:00Z`),
+				data.rawData.cumulativeRevenue[sourceIndex] || 0,
+				data.rawData.cumulativeEmissions[sourceIndex] || 0
+			]
 		}
 		return { dimensions: ['timestamp', 'Cumulative Revenue', 'Cumulative Emissions'], source }
 	}, [data, emissionsView, globalTimeframe])
@@ -213,7 +206,7 @@ export default function Revenue() {
 		if (!data) return null
 
 		return {
-			feesChartSeries: [
+			feesModel: buildSparseCartesianChartModel([
 				{
 					name: 'Cumulative Fees',
 					type: 'line' as const,
@@ -232,7 +225,8 @@ export default function Revenue() {
 						aggregation
 					),
 					yAxisIndex: 1,
-					stack: 'fees'
+					stack: 'fees',
+					barMaxWidth: 40
 				},
 				{
 					name: 'Intent Fees',
@@ -245,10 +239,11 @@ export default function Revenue() {
 						aggregation
 					),
 					yAxisIndex: 1,
-					stack: 'fees'
+					stack: 'fees',
+					barMaxWidth: 40
 				}
-			],
-			revenueChartSeries: [
+			]),
+			revenueModel: buildSparseCartesianChartModel([
 				{
 					name: 'Cumulative Revenue',
 					type: 'line' as const,
@@ -267,7 +262,8 @@ export default function Revenue() {
 						aggregation
 					),
 					yAxisIndex: 1,
-					stack: 'revenue'
+					stack: 'revenue',
+					barMaxWidth: 40
 				},
 				{
 					name: 'Intent Revenue',
@@ -280,9 +276,10 @@ export default function Revenue() {
 						aggregation
 					),
 					yAxisIndex: 1,
-					stack: 'revenue'
+					stack: 'revenue',
+					barMaxWidth: 40
 				}
-			]
+			])
 		}
 	}, [aggregation, data, globalTimeframe])
 
@@ -394,12 +391,13 @@ export default function Revenue() {
 					subtitle={`Converted from USD to NEAR at daily prices. Line shows cumulative (left axis), bars show ${aggregation} breakdown (right axis).`}
 				>
 					<MultiSeriesChart
-						series={chartView.feesChartSeries}
+						dataset={chartView.feesModel.dataset}
+						charts={chartView.feesModel.charts}
 						valueSymbol=" NEAR"
-						yAxisSymbols={[' NEAR', ' NEAR']}
 						height="400px"
-						showAggregateInTooltip={true}
-						chartOptions={BAR_MAX_WIDTH_40_CHART_OPTIONS}
+						showTotalInTooltip
+						hideDefaultLegend={false}
+						exportButtons="hidden"
 					/>
 				</ChartCard>
 			</div>
@@ -411,12 +409,13 @@ export default function Revenue() {
 					subtitle={`Intents fee wallets (fefundsadmin + 1csfundsadmin) plus protocol transaction fees (70% burned). Line shows cumulative (left axis), bars show ${aggregation} breakdown (right axis).`}
 				>
 					<MultiSeriesChart
-						series={chartView.revenueChartSeries}
+						dataset={chartView.revenueModel.dataset}
+						charts={chartView.revenueModel.charts}
 						valueSymbol=" NEAR"
-						yAxisSymbols={[' NEAR', ' NEAR']}
 						height="400px"
-						showAggregateInTooltip={true}
-						chartOptions={BAR_MAX_WIDTH_40_CHART_OPTIONS}
+						showTotalInTooltip
+						hideDefaultLegend={false}
+						exportButtons="hidden"
 					/>
 				</ChartCard>
 			</div>
@@ -442,7 +441,7 @@ export default function Revenue() {
 					}
 				>
 					{emissionsView === 'percentage' ? (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={emissionsDataset}
 							charts={EMISSIONS_PERCENTAGE_CHART}
 							valueSymbol="%"
@@ -450,7 +449,7 @@ export default function Revenue() {
 							height="400px"
 						/>
 					) : (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={emissionsDataset}
 							charts={EMISSIONS_ABSOLUTE_CHARTS}
 							valueSymbol=" NEAR"

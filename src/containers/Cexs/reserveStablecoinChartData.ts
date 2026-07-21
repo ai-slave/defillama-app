@@ -1,12 +1,10 @@
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IProtocolTokenBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import type { StablecoinListAsset } from '~/containers/Stablecoins/api.types'
 
-type NumericRow = { timestamp: number } & Record<string, number>
 type ChartSpec = {
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 }
 
 export type StablecoinBreakdownPoint = {
@@ -30,30 +28,29 @@ export interface ReserveStablecoinChartData {
 
 export const TOTAL_STABLECOINS_SERIES_NAME = 'Total Stablecoins'
 
-function buildLineChartSpec(rows: NumericRow[], names: string[]): ChartSpec | null {
-	if (rows.length <= 1 || names.length === 0) return null
+function buildLineChartSpec(source: MultiSeriesChartDataset['source'], names: string[]): ChartSpec | null {
+	if (source.length <= 1 || names.length === 0) return null
 	return {
-		dataset: { source: rows, dimensions: ['timestamp', ...names] },
-		charts: names.map((name) => ({
+		dataset: { source, dimensions: ['timestamp', ...names] },
+		charts: names.map((name, index) => ({
 			type: 'line',
 			name,
-			encode: { x: 'timestamp', y: name }
+			encode: { x: 0, y: index + 1 }
 		}))
 	}
 }
 
-function buildPegMechanismSummary(latestRow: NumericRow | undefined) {
+function buildPegMechanismSummary(latestRow: MultiSeriesChartDataset['source'][number] | undefined, names: string[]) {
 	if (!latestRow) return { stablecoinBreakdown: [], pegMechanismPieChart: [] }
 
 	let total = 0
-	for (const name in latestRow) {
-		if (name !== 'timestamp') total += latestRow[name]
-	}
+	for (let i = 1; i < latestRow.length; i++) total += (latestRow[i] as number | undefined) ?? 0
 
 	const stablecoinBreakdown: StablecoinBreakdownPoint[] = []
-	for (const name in latestRow) {
-		if (name === 'timestamp') continue
-		const value = latestRow[name]
+	for (let i = 0; i < names.length; i++) {
+		const name = names[i]
+		const value = latestRow[i + 1] as number | undefined
+		if (value == null) continue
 		stablecoinBreakdown.push({ mechanism: name, value, percentage: (value / total) * 100 })
 	}
 	stablecoinBreakdown.sort((a, b) => b.value - a.value)
@@ -91,19 +88,22 @@ export function buildReserveStablecoinChartData(
 		pegMechanismMap.set(asset.symbol, asset.pegMechanism)
 	}
 
-	const stablecoinTokensUniqueSet = new Set<string>()
-	const pegTypesUniqueSet = new Set<string>()
-	const pegMechanismsUniqueSet = new Set<string>()
-	const stablecoinsByPegMechanismRows: NumericRow[] = []
-	const stablecoinsByPegTypeRows: NumericRow[] = []
-	const stablecoinsByTokenRows: NumericRow[] = []
-	const totalStablecoinRows: NumericRow[] = []
+	const stablecoinTokensUnique: string[] = []
+	const pegTypesUnique: string[] = []
+	const pegMechanismsUnique: string[] = []
+	const tokenIndex = new Map<string, number>()
+	const pegTypeIndex = new Map<string, number>()
+	const pegMechanismIndex = new Map<string, number>()
+	const stablecoinsByPegMechanismSource: MultiSeriesChartDataset['source'] = []
+	const stablecoinsByPegTypeSource: MultiSeriesChartDataset['source'] = []
+	const stablecoinsByTokenSource: MultiSeriesChartDataset['source'] = []
+	const totalStablecoinSource: MultiSeriesChartDataset['source'] = []
 
 	let activeTimestamp = -1
-	let mechanismRow: NumericRow | null = null
-	let pegTypeRow: NumericRow | null = null
-	let tokenRow: NumericRow | null = null
-	let totalRow: NumericRow | null = null
+	let mechanismRow: MultiSeriesChartDataset['source'][number] | null = null
+	let pegTypeRow: MultiSeriesChartDataset['source'][number] | null = null
+	let tokenRow: MultiSeriesChartDataset['source'][number] | null = null
+	let totalRow: MultiSeriesChartDataset['source'][number] | null = null
 
 	for (const [timestamp, tokens] of tokenBreakdownData) {
 		if (timestamp !== activeTimestamp) {
@@ -117,54 +117,66 @@ export function buildReserveStablecoinChartData(
 		for (const token in tokens) {
 			if (!stablecoinSymbols.has(token)) continue
 			if (!tokenRow) {
-				mechanismRow = createChartRow<number>(timestamp)
-				pegTypeRow = createChartRow<number>(timestamp)
-				tokenRow = createChartRow<number>(timestamp)
-				totalRow = createChartRow<number>(timestamp)
-				totalRow[TOTAL_STABLECOINS_SERIES_NAME] = 0
-				stablecoinsByPegMechanismRows.push(mechanismRow)
-				stablecoinsByPegTypeRows.push(pegTypeRow)
-				stablecoinsByTokenRows.push(tokenRow)
-				totalStablecoinRows.push(totalRow)
+				mechanismRow = [timestamp]
+				pegTypeRow = [timestamp]
+				tokenRow = [timestamp]
+				totalRow = [timestamp, 0]
+				stablecoinsByPegMechanismSource.push(mechanismRow)
+				stablecoinsByPegTypeSource.push(pegTypeRow)
+				stablecoinsByTokenSource.push(tokenRow)
+				totalStablecoinSource.push(totalRow)
 			}
 
 			const value = tokens[token]
-			stablecoinTokensUniqueSet.add(token)
-			tokenRow[token] = (tokenRow[token] ?? 0) + value
-			totalRow![TOTAL_STABLECOINS_SERIES_NAME] += value
+			let outputIndex = tokenIndex.get(token)
+			if (outputIndex == null) {
+				outputIndex = stablecoinTokensUnique.length + 1
+				tokenIndex.set(token, outputIndex)
+				stablecoinTokensUnique.push(token)
+			}
+			tokenRow[outputIndex] = ((tokenRow[outputIndex] as number | undefined) ?? 0) + value
+			totalRow![1] = ((totalRow![1] as number | undefined) ?? 0) + value
 
 			const pegType = pegTypeMap.get(token)
 			if (pegType) {
-				pegTypesUniqueSet.add(pegType)
-				pegTypeRow![pegType] = (pegTypeRow![pegType] ?? 0) + value
+				let pegTypeOutputIndex = pegTypeIndex.get(pegType)
+				if (pegTypeOutputIndex == null) {
+					pegTypeOutputIndex = pegTypesUnique.length + 1
+					pegTypeIndex.set(pegType, pegTypeOutputIndex)
+					pegTypesUnique.push(pegType)
+				}
+				pegTypeRow![pegTypeOutputIndex] = ((pegTypeRow![pegTypeOutputIndex] as number | undefined) ?? 0) + value
 			}
 
 			const pegMechanism = pegMechanismMap.get(token)
 			if (pegMechanism) {
-				pegMechanismsUniqueSet.add(pegMechanism)
-				mechanismRow![pegMechanism] = (mechanismRow![pegMechanism] ?? 0) + value
+				let mechanismOutputIndex = pegMechanismIndex.get(pegMechanism)
+				if (mechanismOutputIndex == null) {
+					mechanismOutputIndex = pegMechanismsUnique.length + 1
+					pegMechanismIndex.set(pegMechanism, mechanismOutputIndex)
+					pegMechanismsUnique.push(pegMechanism)
+				}
+				mechanismRow![mechanismOutputIndex] = ((mechanismRow![mechanismOutputIndex] as number | undefined) ?? 0) + value
 			}
 		}
 	}
 
-	const stablecoinTokensUnique = Array.from(stablecoinTokensUniqueSet)
-	const pegTypesUnique = Array.from(pegTypesUniqueSet)
-	const pegMechanismsUnique = Array.from(pegMechanismsUniqueSet)
 	const { stablecoinBreakdown, pegMechanismPieChart } = buildPegMechanismSummary(
-		stablecoinsByPegMechanismRows[stablecoinsByPegMechanismRows.length - 1]
+		stablecoinsByPegMechanismSource[stablecoinsByPegMechanismSource.length - 1],
+		pegMechanismsUnique
 	)
-	const latestTotalRow = totalStablecoinRows[totalStablecoinRows.length - 1]
+	const latestTotalRow = totalStablecoinSource[totalStablecoinSource.length - 1]
 
 	return {
-		totalStablecoins: buildLineChartSpec(totalStablecoinRows, [TOTAL_STABLECOINS_SERIES_NAME]),
-		stablecoinsByPegMechanism: buildLineChartSpec(stablecoinsByPegMechanismRows, pegMechanismsUnique),
-		stablecoinsByPegType: buildLineChartSpec(stablecoinsByPegTypeRows, pegTypesUnique),
-		stablecoinsByToken: buildLineChartSpec(stablecoinsByTokenRows, stablecoinTokensUnique),
+		totalStablecoins: buildLineChartSpec(totalStablecoinSource, [TOTAL_STABLECOINS_SERIES_NAME]),
+		stablecoinsByPegMechanism: buildLineChartSpec(stablecoinsByPegMechanismSource, pegMechanismsUnique),
+		stablecoinsByPegType: buildLineChartSpec(stablecoinsByPegTypeSource, pegTypesUnique),
+		stablecoinsByToken: buildLineChartSpec(stablecoinsByTokenSource, stablecoinTokensUnique),
 		pegMechanismPieChart,
 		stablecoinBreakdown,
 		stablecoinTokensUnique,
 		pegTypesUnique,
 		pegMechanismsUnique,
-		currentTotal: latestTotalRow?.[TOTAL_STABLECOINS_SERIES_NAME] ?? null
+		currentTotal: (latestTotalRow?.[1] as number | undefined) ?? null
 	}
 }

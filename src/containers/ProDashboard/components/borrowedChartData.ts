@@ -1,4 +1,4 @@
-import type { TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
+import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { buildComputedBreakdownResult } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import type { BorrowedBreakdownSource } from '../services/protocolTvl'

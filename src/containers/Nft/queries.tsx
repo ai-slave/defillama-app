@@ -1,4 +1,4 @@
-import { formatBarChart } from '~/components/ECharts/utils'
+import { formatBarChart } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	fetchNftCollection,
@@ -216,14 +216,14 @@ export const getNFTRoyaltyHistory = async (slug: string) => {
 		})
 		const earningsChart = {
 			dataset: {
-				source: formattedData.map(([timestamp, value]) => ({ timestamp, Earnings: value ?? 0 })),
+				source: formattedData.map(([timestamp, value]) => [timestamp, value ?? 0]),
 				dimensions: ['timestamp', 'Earnings']
 			},
 			charts: [
 				{
 					type: 'bar' as const,
 					name: 'Earnings',
-					encode: { x: 'timestamp', y: 'Earnings' },
+					encode: { x: 0, y: 1 },
 					color: CHART_COLORS[0],
 					stack: 'Earnings'
 				}
@@ -350,10 +350,7 @@ export const getNFTCollection = async (slug: string) => {
 			name: data?.[0]?.name ?? null,
 			address: slug,
 			floorHistory: {
-				source: floorHistory.map((item) => ({
-					timestamp: Math.floor(Date.parse(item.timestamp)),
-					'Floor Price': item.floorPrice
-				})),
+				source: floorHistory.map((item) => [Math.floor(Date.parse(item.timestamp)), item.floorPrice]),
 				dimensions: ['timestamp', 'Floor Price']
 			},
 			orderbook

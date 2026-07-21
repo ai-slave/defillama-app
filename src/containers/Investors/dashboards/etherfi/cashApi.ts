@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { assignColors, fetchDuneQuery } from '../spark/api'
 
 export interface EtherfiCashTxnRow {
@@ -39,8 +38,8 @@ export function buildEtherfiCashTransactions(rows: EtherfiCashTxnRow[]) {
 	const weekMap = new Map<
 		number,
 		{
-			transactions: Record<string, number>
-			users: Record<string, number>
+			transactions: Map<string, number>
+			users: Map<string, number>
 			totalTxns: number
 			totalUsers: number
 			totalAvgPerUser: number
@@ -52,49 +51,54 @@ export function buildEtherfiCashTransactions(rows: EtherfiCashTxnRow[]) {
 		let week = weekMap.get(timestamp)
 		if (!week) {
 			week = {
-				transactions: createChartRecord<number>(),
-				users: createChartRecord<number>(),
+				transactions: new Map(),
+				users: new Map(),
 				totalTxns: row.total_txns,
 				totalUsers: row.total_users,
 				totalAvgPerUser: row.total_avg_per_user
 			}
 			weekMap.set(timestamp, week)
 		}
-		week.transactions[row.txn_class] = (week.transactions[row.txn_class] ?? 0) + row.num_txns
-		week.users[row.txn_class] = (week.users[row.txn_class] ?? 0) + row.num_users
+		week.transactions.set(row.txn_class, (week.transactions.get(row.txn_class) ?? 0) + row.num_txns)
+		week.users.set(row.txn_class, (week.users.get(row.txn_class) ?? 0) + row.num_users)
 	}
 
 	const txnClasses = Array.from(classSet).sort()
 	const colors = assignColors(txnClasses)
-	const classCharts = new Array<MultiSeriesChart2SeriesConfig>(txnClasses.length)
+	const classCharts = new Array<MultiSeriesChartSeriesConfig>(txnClasses.length)
 	for (let i = 0; i < txnClasses.length; i++) {
 		const name = txnClasses[i]
 		classCharts[i] = {
 			name,
 			type: 'bar',
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: i + 1 },
 			color: colors[name],
 			stack: 'a'
 		}
 	}
 
 	const sortedWeeks = Array.from(weekMap.entries()).sort(([a], [b]) => a - b)
-	const transactionsByClassSource: MultiSeriesChart2Dataset['source'] = new Array(sortedWeeks.length)
-	const usersByClassSource: MultiSeriesChart2Dataset['source'] = new Array(sortedWeeks.length)
-	const weeklyTxnsSource = new Array<{ timestamp: number; Transactions: number }>(sortedWeeks.length)
-	const weeklyUsersSource = new Array<{ timestamp: number; 'Active Users': number }>(sortedWeeks.length)
-	const weeklyAvgSource = new Array<{ timestamp: number; 'Avg Txns per User': number }>(sortedWeeks.length)
+	const transactionsByClassSource: MultiSeriesChartDataset['source'] = new Array(sortedWeeks.length)
+	const usersByClassSource: MultiSeriesChartDataset['source'] = new Array(sortedWeeks.length)
+	const weeklyTxnsSource = new Array<number[]>(sortedWeeks.length)
+	const weeklyUsersSource = new Array<number[]>(sortedWeeks.length)
+	const weeklyAvgSource = new Array<number[]>(sortedWeeks.length)
 	for (let i = 0; i < sortedWeeks.length; i++) {
 		const [timestamp, week] = sortedWeeks[i]
-		const transactionRow = createChartRow<number | null>(timestamp)
-		const userRow = createChartRow<number | null>(timestamp)
-		for (const name in week.transactions) transactionRow[name] = week.transactions[name]
-		for (const name in week.users) userRow[name] = week.users[name]
+		const transactionRow = new Array<number | null>(txnClasses.length + 1).fill(null)
+		const userRow = new Array<number | null>(txnClasses.length + 1).fill(null)
+		transactionRow[0] = timestamp
+		userRow[0] = timestamp
+		for (let classIndex = 0; classIndex < txnClasses.length; classIndex++) {
+			const name = txnClasses[classIndex]
+			transactionRow[classIndex + 1] = week.transactions.get(name) ?? null
+			userRow[classIndex + 1] = week.users.get(name) ?? null
+		}
 		transactionsByClassSource[i] = transactionRow
 		usersByClassSource[i] = userRow
-		weeklyTxnsSource[i] = { timestamp, Transactions: week.totalTxns }
-		weeklyUsersSource[i] = { timestamp, 'Active Users': week.totalUsers }
-		weeklyAvgSource[i] = { timestamp, 'Avg Txns per User': week.totalAvgPerUser }
+		weeklyTxnsSource[i] = [timestamp, week.totalTxns]
+		weeklyUsersSource[i] = [timestamp, week.totalUsers]
+		weeklyAvgSource[i] = [timestamp, week.totalAvgPerUser]
 	}
 
 	return {
@@ -103,23 +107,23 @@ export function buildEtherfiCashTransactions(rows: EtherfiCashTxnRow[]) {
 		transactionsByClassDataset: {
 			source: transactionsByClassSource,
 			dimensions: ['timestamp', ...txnClasses]
-		} satisfies MultiSeriesChart2Dataset,
+		} satisfies MultiSeriesChartDataset,
 		usersByClassDataset: {
 			source: usersByClassSource,
 			dimensions: ['timestamp', ...txnClasses]
-		} satisfies MultiSeriesChart2Dataset,
+		} satisfies MultiSeriesChartDataset,
 		weeklyTxnsDataset: {
 			source: weeklyTxnsSource,
 			dimensions: ['timestamp', 'Transactions']
-		} satisfies MultiSeriesChart2Dataset,
+		} satisfies MultiSeriesChartDataset,
 		weeklyUsersDataset: {
 			source: weeklyUsersSource,
 			dimensions: ['timestamp', 'Active Users']
-		} satisfies MultiSeriesChart2Dataset,
+		} satisfies MultiSeriesChartDataset,
 		weeklyAvgDataset: {
 			source: weeklyAvgSource,
 			dimensions: ['timestamp', 'Avg Txns per User']
-		} satisfies MultiSeriesChart2Dataset
+		} satisfies MultiSeriesChartDataset
 	}
 }
 

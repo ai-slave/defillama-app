@@ -48,11 +48,17 @@ function buildResponse(): FeeMAPIResponse {
 }
 
 describe('buildFeeMViewModel', () => {
-	it('caches only the KPIs, leaderboard, title, and legacy chart series', () => {
+	it('caches only the KPIs, leaderboard, title, and canonical chart model', () => {
 		const response = buildResponse()
 		const result = buildFeeMViewModel(response)
 
-		expect(Object.keys(result)).toEqual(['globalKpis', 'leaderboard', 'dailyStatsSeries', 'dailyStatsTitle'])
+		expect(Object.keys(result)).toEqual([
+			'globalKpis',
+			'leaderboard',
+			'dailyStatsModel',
+			'dailyStatsLength',
+			'dailyStatsTitle'
+		])
 		expect(result.globalKpis).toBe(response.feem.globalKpis)
 		expect(result.leaderboard).toBe(response.feem.leaderboard)
 		expect(result.dailyStatsTitle).toBe('Daily FeeM Activity')
@@ -62,44 +68,40 @@ describe('buildFeeMViewModel', () => {
 
 	it('preserves series order, UTC-second timestamps, axes, colors, and area styles', () => {
 		const result = buildFeeMViewModel(buildResponse())
-		const firstTimestamp = Date.UTC(2026, 6, 16) / 1000
-		const secondTimestamp = Date.UTC(2026, 6, 17) / 1000
+		const firstTimestamp = Date.UTC(2026, 6, 16)
+		const secondTimestamp = Date.UTC(2026, 6, 17)
 
-		expect(result.dailyStatsSeries).toEqual([
-			{
+		expect(result.dailyStatsModel.dataset).toEqual({
+			dimensions: ['timestamp', 'Transactions', 'Rewards', 'Other'],
+			source: [
+				[firstTimestamp, 10, 1, 3],
+				[secondTimestamp, 20, 2, 4]
+			]
+		})
+		expect(result.dailyStatsModel.charts).toEqual([
+			expect.objectContaining({
 				name: 'Transactions',
 				type: 'bar',
 				color: '#4691ce',
-				data: [
-					[firstTimestamp, 10],
-					[secondTimestamp, 20]
-				],
 				yAxisIndex: 0,
-				areaStyle: undefined
-			},
-			{
+				valueSymbol: ''
+			}),
+			expect.objectContaining({
 				name: 'Rewards',
 				type: 'line',
 				color: '#4cae4f',
-				data: [
-					[firstTimestamp, 1],
-					[secondTimestamp, 2]
-				],
 				yAxisIndex: 1,
+				valueSymbol: 'S',
 				areaStyle: { opacity: 0 }
-			},
-			{
+			}),
+			expect.objectContaining({
 				name: 'Other',
 				type: 'line',
 				color: '#4cae4f',
-				data: [
-					[firstTimestamp, 3],
-					[secondTimestamp, 4]
-				],
-				yAxisIndex: 1,
-				areaStyle: undefined
-			}
+				yAxisIndex: 1
+			})
 		])
+		expect(result.dailyStatsLength).toBe(2)
 	})
 
 	it('preserves chart configs when the daily history is empty', () => {
@@ -108,15 +110,9 @@ describe('buildFeeMViewModel', () => {
 		response.feem.dailyStats.series = [{ name: 'Transactions', data: [] }]
 		const result = buildFeeMViewModel(response)
 
-		expect(result.dailyStatsSeries).toEqual([
-			{
-				name: 'Transactions',
-				type: 'bar',
-				color: '#4691ce',
-				data: [],
-				yAxisIndex: 0,
-				areaStyle: undefined
-			}
+		expect(result.dailyStatsModel.dataset.source).toEqual([])
+		expect(result.dailyStatsModel.charts).toEqual([
+			expect.objectContaining({ name: 'Transactions', type: 'bar', color: '#4691ce', yAxisIndex: 0 })
 		])
 	})
 })

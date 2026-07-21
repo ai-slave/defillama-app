@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
+import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
@@ -160,15 +161,18 @@ function VenueChartView({ chart }: { chart: ExchangeOverviewChartModel }) {
 	const requestedMetric = getVenueHistoryMetric(router.query)
 	const active = tabs.find((tab) => tab.id === requestedMetric) ?? tabs[0]
 
-	const series = React.useMemo(
+	const chartModel = React.useMemo(
 		() =>
-			(active?.series ?? []).map(({ spec, values }) => ({
-				name: spec.label,
-				type: active?.type ?? 'line',
-				color: spec.color,
-				stack: active?.type === 'bar' ? active.stack : undefined,
-				data: chart.days.map((day, index) => [day, values[index] ?? null] as [number, number | null])
-			})),
+			buildAlignedCartesianChartModel(
+				chart.days,
+				(active?.series ?? []).map(({ spec, values }) => ({
+					name: spec.label,
+					type: active?.type ?? 'line',
+					color: spec.color,
+					stack: active?.type === 'bar' ? active.stack : undefined,
+					values
+				}))
+			),
 		[active, chart.days]
 	)
 
@@ -193,7 +197,15 @@ function VenueChartView({ chart }: { chart: ExchangeOverviewChartModel }) {
 				}
 			>
 				<ChartPanelBody role="img" aria-label={`${active.label} history for this venue.`}>
-					<MultiSeriesChart key={active.id} series={series} valueSymbol={active.valueSymbol} height="360px" />
+					<MultiSeriesChart
+						key={active.id}
+						dataset={chartModel.dataset}
+						charts={chartModel.charts}
+						valueSymbol={active.valueSymbol}
+						height="360px"
+						hideDefaultLegend={false}
+						exportButtons="hidden"
+					/>
 				</ChartPanelBody>
 			</React.Suspense>
 		</VenueChartFrame>

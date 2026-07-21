@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useState } from 'react'
-import type { IMultiSeriesChartProps, IPieChartProps } from '~/components/ECharts/types'
+import { lazy, useMemo, useState } from 'react'
+import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { readInvestorApiJson } from '../../api.types'
-import { useRevenueData, chartToTs } from './api'
+import { useRevenueData, chartToModel } from './api'
 import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -140,46 +142,68 @@ export default function Revenue() {
 	const hbm = data?.holdersByMonth
 	const [holderMode, setHolderMode] = useState<'daily' | 'monthly'>('monthly')
 
-	const dailySeries = data?.llamaDailyChart
-		? chartToTs(data.llamaDailyChart).map((s) => ({
-				name: s.name,
-				type: 'bar' as const,
-				stack: 'rev',
-				color: PROTO_COLORS[s.name] || '#6366f1',
-				data: s.data
-			}))
-		: undefined
+	const dailyModel = useMemo(
+		() =>
+			data?.llamaDailyChart
+				? (() => {
+						const model = chartToModel(data.llamaDailyChart)
+						return {
+							...model,
+							charts: model.charts.map((chart) => ({
+								...chart,
+								type: 'bar' as const,
+								stack: 'rev',
+								color: PROTO_COLORS[chart.name] || '#6366f1'
+							}))
+						}
+					})()
+				: undefined,
+		[data?.llamaDailyChart]
+	)
 
-	const holderSeries = data?.holderRevenueChart
-		? chartToTs(data.holderRevenueChart).map((s) => ({
-				name: s.name,
-				type: 'bar' as const,
-				stack: 'hr',
-				color: PROTO_COLORS[s.name] || '#a78bfa',
-				data: s.data
-			}))
-		: undefined
+	const holderModel = useMemo(
+		() =>
+			data?.holderRevenueChart
+				? (() => {
+						const model = chartToModel(data.holderRevenueChart)
+						return {
+							...model,
+							charts: model.charts.map((chart) => ({
+								...chart,
+								type: 'bar' as const,
+								stack: 'hr',
+								color: PROTO_COLORS[chart.name] || '#a78bfa'
+							}))
+						}
+					})()
+				: undefined,
+		[data?.holderRevenueChart]
+	)
 
-	const holdersByMonthSeries = hbm
-		? [
-				{
-					name: 'Metronome',
-					type: 'bar' as const,
-					color: '#fb923c',
-					data: (hbm.metronome || []).map(
-						(r) => [Math.floor(Date.parse(r.month + '-01T00:00:00Z') / 1000), r.totalUsd] as [number, number]
-					)
-				},
-				{
-					name: 'Vesper',
-					type: 'bar' as const,
-					color: '#a78bfa',
-					data: (hbm.vesper || []).map(
-						(r) => [Math.floor(Date.parse(r.month + '-01T00:00:00Z') / 1000), r.totalUsd] as [number, number]
-					)
-				}
-			]
-		: undefined
+	const holdersByMonthModel = useMemo(
+		() =>
+			hbm
+				? buildSparseCartesianChartModel([
+						{
+							name: 'Metronome',
+							type: 'bar' as const,
+							color: '#fb923c',
+							data: (hbm.metronome || []).map(
+								(r) => [Math.floor(Date.parse(r.month + '-01T00:00:00Z') / 1000), r.totalUsd] as [number, number]
+							)
+						},
+						{
+							name: 'Vesper',
+							type: 'bar' as const,
+							color: '#a78bfa',
+							data: (hbm.vesper || []).map(
+								(r) => [Math.floor(Date.parse(r.month + '-01T00:00:00Z') / 1000), r.totalUsd] as [number, number]
+							)
+						}
+					])
+				: undefined,
+		[hbm]
+	)
 
 	const lpTotal = sumUsd(up.treasuryLps, (row) => row.rewardsUsd)
 	const ethUniv3Total = sumUsd(up.ethUniv3, (row) => row.usd)
@@ -216,14 +240,21 @@ export default function Revenue() {
 				<KpiCard label="Vesper 30d" value={cm.vesper?.formatted} sub={vc ? `${vc.windowDays}d window` : undefined} />
 				<KpiCard label="Odyssey 30d" value={cm.odyssey?.formatted} sub={oc ? `${oc.windowDays}d window` : undefined} />
 			</div>
-			{isLoading || !dailySeries ? (
+			{isLoading || !dailyModel ? (
 				<ChartSkeleton title="Daily Revenue" />
 			) : (
 				<ChartCard title="Daily Claimed Revenue" subtitle="Stacked by protocol">
-					<MultiSeriesChart series={dailySeries} valueSymbol="$" height="320px" />
+					<MultiSeriesChart
+						dataset={dailyModel.dataset}
+						charts={dailyModel.charts}
+						valueSymbol="$"
+						height="320px"
+						hideDefaultLegend={false}
+						exportButtons="hidden"
+					/>
 				</ChartCard>
 			)}
-			{isLoading || (!holderSeries && !holdersByMonthSeries) ? (
+			{isLoading || (!holderModel && !holdersByMonthModel) ? (
 				<ChartSkeleton title="Holder Buybacks" />
 			) : (
 				<ChartCard title="Holder Buybacks" subtitle="Revenue routed to token holders (MET / VSP)">
@@ -238,13 +269,29 @@ export default function Revenue() {
 						/>
 					</div>
 					{holderMode === 'monthly' ? (
-						holdersByMonthSeries ? (
-							<MultiSeriesChart key="hb-monthly" series={holdersByMonthSeries} valueSymbol="$" height="300px" />
+						holdersByMonthModel ? (
+							<MultiSeriesChart
+								key="hb-monthly"
+								dataset={holdersByMonthModel.dataset}
+								charts={holdersByMonthModel.charts}
+								valueSymbol="$"
+								height="300px"
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
 						) : (
 							<div className="px-2 py-6 text-xs text-pro-text-secondary">No monthly holder data</div>
 						)
-					) : holderSeries ? (
-						<MultiSeriesChart key="hb-daily" series={holderSeries} valueSymbol="$" height="300px" />
+					) : holderModel ? (
+						<MultiSeriesChart
+							key="hb-daily"
+							dataset={holderModel.dataset}
+							charts={holderModel.charts}
+							valueSymbol="$"
+							height="300px"
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
 					) : (
 						<div className="px-2 py-6 text-xs text-pro-text-secondary">No daily holder data</div>
 					)}

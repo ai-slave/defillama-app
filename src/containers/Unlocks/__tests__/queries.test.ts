@@ -210,51 +210,39 @@ describe('getProtocolEmissons', () => {
 		})
 	})
 
-	it('preserves prototype-named token allocations and category groups as own keys', async () => {
+	it('returns renderable raw and grouped forecast sections without exposing metadata-only TBD sections', async () => {
 		fetchProtocolEmissionMock.mockResolvedValue({
-			name: 'Prototype Token',
-			metadata: {
-				events: [],
-				token: 'coingecko:prototype-token',
-				notes: []
-			},
+			name: 'Canton',
+			metadata: { events: [], notes: [] },
 			documentedData: {
-				data: [],
-				tokenAllocation: {
-					current: { Team: 10, ['__proto__']: 20 },
-					final: { Community: 30, constructor: 40 }
-				}
-			},
-			realTimeData: {
-				data: [],
+				data: [
+					{ label: 'app rewards', data: [{ timestamp: 1, unlocked: 10 }] },
+					{ label: 'app rewards (forecast)', data: [{ timestamp: 1, unlocked: 4, isForecast: true }] }
+				],
 				tokenAllocation: {}
 			},
+			realTimeData: { data: [], tokenAllocation: {} },
 			categories: {
-				Standard: ['Team'],
-				['__proto__']: ['Community'],
-				constructor: ['Treasury']
+				farming: ['App Rewards'],
+				noncirculating: ['Unscheduled Reserve (TBD)']
+			},
+			componentData: {
+				sections: {
+					'App Rewards': {},
+					'App Rewards (forecast)': { colorFrom: 'App Rewards' },
+					'Unscheduled Reserve (TBD)': { isTBD: true }
+				}
 			}
 		})
 
-		const result = await getProtocolEmissons('prototype-token', {
-			skipAvailabilityCheck: true,
-			tokenlist: {}
-		})
+		const result = await getProtocolEmissons('canton', { skipAvailabilityCheck: true })
 
-		const { current, final } = result.tokenAllocation.documented
-		expect(Object.getPrototypeOf(current)).toBeNull()
-		expect(Object.getPrototypeOf(final)).toBeNull()
-		expect(Object.hasOwn(current, '__proto__')).toBe(true)
-		expect(Object.hasOwn(final, 'constructor')).toBe(true)
-		expect({ ...current }).toEqual({ Team: 10, ['__proto__']: 20 })
-		expect({ ...final }).toEqual({ Community: 30, constructor: 40 })
-		expect(Object.getPrototypeOf(result.categoriesBreakdown)).toBeNull()
-		expect(Object.hasOwn(result.categoriesBreakdown ?? {}, '__proto__')).toBe(true)
-		expect({ ...result.categoriesBreakdown }).toEqual({
-			Standard: ['Team'],
-			['__proto__']: ['Community'],
-			constructor: ['Treasury']
+		expect(result.categoriesBreakdown).toEqual({
+			farming: ['App Rewards'],
+			'farming (forecast)': ['App Rewards (forecast)']
 		})
+		expect(result.forecastSections).toEqual(['App Rewards (forecast)', 'farming (forecast)'])
+		expect(result.tbdSections).toEqual([])
 	})
 })
 

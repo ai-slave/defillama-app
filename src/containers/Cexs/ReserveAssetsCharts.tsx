@@ -1,9 +1,10 @@
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
-import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { oldBlue } from '~/constants/colors'
 import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
@@ -16,7 +17,7 @@ import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
@@ -24,7 +25,7 @@ const INFLOWS_TOOLTIP_FORMATTER_USD = createInflowsTooltipFormatter({ groupBy: '
 const EMPTY_CHART_KEYS: string[] = []
 const USD_INFLOWS_SERIES = new Set(['USD Inflows'])
 
-type MultiSeriesCharts = NonNullable<IMultiSeriesChart2Props['charts']>
+type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
 
 /** includeOwnTokens is off by default and only enabled via URL query. Read after router is ready to avoid hydration mismatch. */
 export function useIncludeOwnTokens() {
@@ -57,7 +58,7 @@ function ChainsChartCard({
 }: {
 	protocolName: string
 	allChains: string[]
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 }) {
 	const [selectedChains, setSelectedChains] = useSelectedValues(allChains)
@@ -95,7 +96,7 @@ function ChainsChartCard({
 			}
 		>
 			<React.Suspense fallback={cexChartFallback}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
 					valueSymbol="$"
@@ -116,7 +117,7 @@ function TokenValuesUSDChartCard({
 }: {
 	protocolName: string
 	allTokens: string[]
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 }) {
 	const [selectedTokensUSD, setSelectedTokensUSD] = useSelectedValues(allTokens)
@@ -154,7 +155,7 @@ function TokenValuesUSDChartCard({
 			}
 		>
 			<React.Suspense fallback={cexChartFallback}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
 					valueSymbol="$"
@@ -235,7 +236,7 @@ function TokenBalancesRawChartCard({
 }: {
 	protocolName: string
 	allTokens: string[]
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 }) {
 	const [selectedTokensRaw, setSelectedTokensRaw] = useSelectedValues(allTokens)
@@ -273,7 +274,7 @@ function TokenBalancesRawChartCard({
 			}
 		>
 			<React.Suspense fallback={cexChartFallback}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
 					valueSymbol=""
@@ -285,7 +286,7 @@ function TokenBalancesRawChartCard({
 	)
 }
 
-function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; dataset: MultiSeriesChart2Dataset }) {
+function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; dataset: MultiSeriesChartDataset }) {
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const exportFilenameBase = `${slug(protocolName)}-usd-inflows`
@@ -304,7 +305,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 			}
 		>
 			<React.Suspense fallback={cexChartFallback}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={dataset}
 					charts={USD_INFLOWS_CHARTS}
 					valueSymbol="$"
@@ -324,7 +325,7 @@ function InflowsByTokenChartCard({
 }: {
 	protocolName: string
 	allTokens: string[]
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 }) {
 	const [selectedTokenInflows, setSelectedTokenInflows] = useSelectedValues(allTokens)
@@ -362,7 +363,7 @@ function InflowsByTokenChartCard({
 			}
 		>
 			<React.Suspense fallback={cexChartFallback}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
 					hideDefaultLegend={true}

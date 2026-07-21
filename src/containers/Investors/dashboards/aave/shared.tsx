@@ -1,6 +1,6 @@
 import { flexRender, type RowData, type Table } from '@tanstack/react-table'
-import { createCategoryChartOptions } from '~/components/ECharts/categoryChartOptions'
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import { SortIcon } from '~/components/Table/SortIcon'
 
 export const AAVE_AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const

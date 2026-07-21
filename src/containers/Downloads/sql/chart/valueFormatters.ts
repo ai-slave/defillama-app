@@ -1,6 +1,6 @@
-import { formatChartValue, formatTooltipValue } from '~/components/ECharts/formatters'
+import { formatChartValue, formatTooltipValue } from '~/components/ECharts/shared/formatters'
 import { formattedNum } from '~/utils'
-import type { ChartConfig, NumberFormat } from '../chartConfig'
+import type { NumberFormat } from '../chartConfig'
 
 export interface ValueFormatter {
 	axis: (value: number) => string
@@ -36,8 +36,4 @@ export function makeValueFormatter(format: NumberFormat): ValueFormatter {
 				valueSymbol: ''
 			}
 	}
-}
-
-export function formatterFromConfig(config: ChartConfig): ValueFormatter {
-	return makeValueFormatter(config.numberFormat)
 }

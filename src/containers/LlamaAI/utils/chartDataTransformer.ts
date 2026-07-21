@@ -1,6 +1,5 @@
-import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
-import { getBucketTimestampMs } from '~/components/ECharts/utils'
+import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
+import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import {
 	createCategoryTooltipFormatter,
@@ -45,10 +44,11 @@ function sortPrimarySeriesByTotalDesc(chart: AdaptedLlamaAICartesianChart): Adap
 
 	const totals = new Map<string, number>()
 	for (const row of chart.props.dataset.source) {
-		for (const name of primaryNames) {
-			const v = row[name]
+		for (const series of chart.seriesMeta) {
+			if (!primaryNames.has(series.name)) continue
+			const v = row[series.seriesIndex + 1]
 			if (typeof v === 'number' && !Number.isNaN(v)) {
-				totals.set(name, (totals.get(name) ?? 0) + Math.abs(v))
+				totals.set(series.name, (totals.get(series.name) ?? 0) + Math.abs(v))
 			}
 		}
 	}
@@ -82,7 +82,7 @@ function cloneCartesianChart(
 			...chart.props,
 			dataset: {
 				source: cloneDatasetRows
-					? chart.props.dataset.source.map((row) => ({ ...row }) as LlamaAICartesianDatasetRow)
+					? chart.props.dataset.source.map((row) => [...row] as LlamaAICartesianDatasetRow)
 					: chart.props.dataset.source,
 				dimensions: [...chart.props.dataset.dimensions]
 			},
@@ -98,16 +98,8 @@ function isTimeChart(chart: AdaptedLlamaAICartesianChart) {
 	return chart.axisType === 'time' && chart.props.dataset.dimensions[0] === 'timestamp'
 }
 
-function setDatasetRowValue(row: LlamaAICartesianDatasetRow, name: string, value: number) {
-	if (name === '__proto__') {
-		Object.defineProperty(row, name, { value, enumerable: true, configurable: true, writable: true })
-	} else {
-		row[name] = value
-	}
-}
-
 function readTimestampMs(row: LlamaAICartesianDatasetRow): number | null {
-	const timestamp = row.timestamp
+	const timestamp = row[0]
 	if (typeof timestamp === 'number') return Number.isFinite(timestamp) ? timestamp : null
 	if (typeof timestamp !== 'string') return null
 
@@ -188,7 +180,7 @@ export class ChartDataTransformer {
 		if (canClampAxis) {
 			rows: for (const row of transformedChart.props.dataset.source) {
 				for (const series of primarySeries) {
-					const value = row[series.name]
+					const value = row[series.seriesIndex + 1]
 					if (typeof value === 'number' && (value < 0 || value > 100)) {
 						canClampAxis = false
 						break rows
@@ -261,20 +253,22 @@ export class ChartDataTransformer {
 			if (timestamp == null) continue
 			const bucketTimestamp = getBucketTimestampMs(timestamp, groupBy)
 			let outputRow = groupedSource[groupedSource.length - 1]
-			if (outputRow?.timestamp !== bucketTimestamp) {
-				outputRow = createChartRow<number | null>(bucketTimestamp) as LlamaAICartesianDatasetRow
+			if (outputRow?.[0] !== bucketTimestamp) {
+				outputRow = new Array<number | null>(nextChart.seriesMeta.length + 1)
+				outputRow[0] = bucketTimestamp
 				groupedSource.push(outputRow)
 			}
 
 			for (const meta of nextChart.seriesMeta) {
-				const value = inputRow[meta.name]
+				const valueIndex = meta.seriesIndex + 1
+				const value = inputRow[valueIndex]
 				if (typeof value !== 'number' || Number.isNaN(value)) continue
 
 				if (meta.metricClass === 'flow') {
-					const previousValue = outputRow[meta.name]
-					setDatasetRowValue(outputRow, meta.name, (typeof previousValue === 'number' ? previousValue : 0) + value)
+					const previousValue = outputRow[valueIndex]
+					outputRow[valueIndex] = (typeof previousValue === 'number' ? previousValue : 0) + value
 				} else {
-					setDatasetRowValue(outputRow, meta.name, value)
+					outputRow[valueIndex] = value
 				}
 			}
 		}
@@ -294,7 +288,7 @@ export class ChartDataTransformer {
 		if (cumulativeSeries.length === 0) return nextChart
 
 		const cumulativeNames = new Set(cumulativeSeries.map((meta) => meta.name))
-		const cumulativeTotals = createChartRecord<number>()
+		const cumulativeTotals = new Array<number>(nextChart.seriesMeta.length).fill(0)
 		const seriesCount = nextChart.seriesMeta.length
 		const source = nextChart.props.dataset.source
 		let writeIndex = 0
@@ -302,14 +296,15 @@ export class ChartDataTransformer {
 		for (const row of source) {
 			const timestamp = readTimestampMs(row)
 			if (timestamp == null) continue
-			row.timestamp = timestamp
+			row[0] = timestamp
 
 			for (const meta of cumulativeSeries) {
-				const value = row[meta.name]
+				const valueIndex = meta.seriesIndex + 1
+				const value = row[valueIndex]
 				const total =
-					(cumulativeTotals[meta.name] ?? 0) + (typeof value === 'number' && !Number.isNaN(value) ? value : 0)
-				cumulativeTotals[meta.name] = total
-				row[meta.name] = total
+					cumulativeTotals[meta.seriesIndex] + (typeof value === 'number' && !Number.isNaN(value) ? value : 0)
+				cumulativeTotals[meta.seriesIndex] = total
+				row[valueIndex] = total
 			}
 
 			source[writeIndex++] = row
@@ -363,16 +358,17 @@ export class ChartDataTransformer {
 		for (const row of nextChart.props.dataset.source) {
 			let absTotal = 0
 			for (const series of primarySeries) {
-				const value = row[series.name]
+				const value = row[series.seriesIndex + 1]
 				if (typeof value !== 'number' || Number.isNaN(value)) continue
 				absTotal += Math.abs(value)
 				if (value < 0) allPositive = false
 			}
 
 			for (const series of primarySeries) {
-				const value = row[series.name]
+				const valueIndex = series.seriesIndex + 1
+				const value = row[valueIndex]
 				const numericValue = typeof value === 'number' && !Number.isNaN(value) ? value : 0
-				row[series.name] = absTotal > 0 ? (numericValue / absTotal) * 100 : 0
+				row[valueIndex] = absTotal > 0 ? (numericValue / absTotal) * 100 : 0
 			}
 		}
 

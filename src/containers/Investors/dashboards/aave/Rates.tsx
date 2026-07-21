@@ -1,7 +1,7 @@
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { formattedNum } from '~/utils'
 import { useAaveMarkets, useAaveAPYHistory } from './api'
 import type { TimeWindow } from './api'
@@ -21,9 +21,7 @@ import {
 	AAVE_PERCENT_TIME_CHART_OPTIONS
 } from './shared'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
 	{ value: 'LAST_DAY', label: '1D' },
@@ -33,7 +31,7 @@ const WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
 	{ value: 'LAST_YEAR', label: '1Y' }
 ]
 
-const SUPPLY_APY_CHART: IMultiSeriesChart2Props['charts'] = [
+const SUPPLY_APY_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Supply APY',
 		type: 'line',
@@ -41,7 +39,7 @@ const SUPPLY_APY_CHART: IMultiSeriesChart2Props['charts'] = [
 		color: '#66BB6A'
 	}
 ]
-const BORROW_APY_CHART: IMultiSeriesChart2Props['charts'] = [
+const BORROW_APY_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Borrow APY',
 		type: 'line',
@@ -49,7 +47,7 @@ const BORROW_APY_CHART: IMultiSeriesChart2Props['charts'] = [
 		color: '#EF5350'
 	}
 ]
-const RATE_CURVE_CHARTS: IMultiSeriesChart2Props['charts'] = [
+const RATE_CURVE_CHARTS: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Borrow Rate',
 		type: 'bar',
@@ -190,7 +188,7 @@ export default function Rates() {
 		[sortedAssetReserves]
 	)
 
-	const rateCurveDataset = useMemo<MultiSeriesChart2Dataset | null>(() => {
+	const rateCurveDataset = useMemo<MultiSeriesChartDataset | null>(() => {
 		if (!primaryReserve) return null
 		const { baseVariableBorrowRate, variableRateSlope1, variableRateSlope2, optimalUsageRate } = primaryReserve
 		if (
@@ -202,7 +200,7 @@ export default function Rates() {
 			return null
 		if (optimalUsageRate === 0) return null
 
-		const source: { Name: string; 'Borrow Rate': number; 'Supply Rate': number }[] = []
+		const source: Array<Array<string | number>> = []
 		for (let u = 0; u <= 100; u += 1) {
 			let borrowRate: number
 			if (u <= optimalUsageRate) {
@@ -214,11 +212,7 @@ export default function Rates() {
 					((u - optimalUsageRate) / (100 - optimalUsageRate)) * variableRateSlope2
 			}
 			const supplyRate = borrowRate * (u / 100)
-			source.push({
-				Name: `${u}%`,
-				'Borrow Rate': Math.round(borrowRate * 100) / 100,
-				'Supply Rate': Math.round(supplyRate * 100) / 100
-			})
+			source.push([`${u}%`, Math.round(borrowRate * 100) / 100, Math.round(supplyRate * 100) / 100])
 		}
 		return { source, dimensions: ['Name', 'Borrow Rate', 'Supply Rate'] }
 	}, [primaryReserve])
@@ -277,7 +271,7 @@ export default function Rates() {
 					<CardSkeleton title="Supply APY History" />
 				) : supplyDataset.source.length > 0 ? (
 					<ChartCard title={`${activeAsset} Supply APY \u00b7 ${primaryReserve?.chain}`}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={supplyDataset}
 							charts={SUPPLY_APY_CHART}
 							valueSymbol="%"
@@ -293,7 +287,7 @@ export default function Rates() {
 					<CardSkeleton title="Borrow APY History" />
 				) : borrowDataset.source.length > 0 ? (
 					<ChartCard title={`${activeAsset} Borrow APY \u00b7 ${primaryReserve?.chain}`}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={borrowDataset}
 							charts={BORROW_APY_CHART}
 							valueSymbol="%"
@@ -329,7 +323,7 @@ export default function Rates() {
 							</span>
 						)}
 					</div>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={rateCurveDataset}
 						charts={RATE_CURVE_CHARTS}
 						valueSymbol="%"

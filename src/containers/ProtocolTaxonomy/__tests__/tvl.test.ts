@@ -38,15 +38,15 @@ const makeCharts = (): IProtocolTaxonomyPageData['charts'] => ({
 	dataset: {
 		dimensions: ['timestamp', 'TVL', 'Active Loans'],
 		source: [
-			{ timestamp: 1_000, TVL: 100, 'Active Loans': 5 },
-			{ timestamp: 2_000, TVL: '200', 'Active Loans': 10 }
+			[1_000, 100, 5],
+			[2_000, 200, 10]
 		]
 	},
 	charts: [
 		{
 			type: 'line',
 			name: 'TVL',
-			encode: { x: 'timestamp', y: 'TVL' }
+			encode: { x: 0, y: 1 }
 		}
 	]
 })
@@ -137,8 +137,8 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 		expect(result.finalProtocols[0].tvl).toBe(125)
 		expect(result.finalProtocols[0].subRows?.[0].tvl).toBe(10)
 		expect(result.charts.dataset.source).toEqual([
-			{ timestamp: 1_000, TVL: 125, 'Active Loans': 5 },
-			{ timestamp: 2_000, TVL: 230, 'Active Loans': 10 }
+			[1_000, 125, 5],
+			[2_000, 230, 10]
 		])
 	})
 
@@ -165,7 +165,7 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 		})
 
 		expect(result.finalProtocols[0].tvl).toBe(170)
-		expect(result.charts.dataset.source[0]).toMatchObject({ TVL: 170 })
+		expect(result.charts.dataset.source[0][1]).toBe(170)
 	})
 
 	it('mirrors borrowed TVL into Active Loans only on Lending pages', () => {
@@ -185,8 +185,8 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 			effectiveCategory: 'Dexes'
 		})
 
-		expect(lendingResult.charts.dataset.source[0]).toMatchObject({ TVL: 150, 'Active Loans': 150 })
-		expect(dexResult.charts.dataset.source[0]).toMatchObject({ TVL: 150, 'Active Loans': 5 })
+		expect(lendingResult.charts.dataset.source[0]).toEqual([1_000, 150, 150])
+		expect(dexResult.charts.dataset.source[0]).toEqual([1_000, 150, 5])
 	})
 
 	it('excludes double counted and liquid staking from categories page enabled extras', () => {
@@ -220,13 +220,13 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Dexes'],
-			source: [{ timestamp: 1_000, Dexes: 125 }]
+			source: [[1_000, 125]]
 		})
 		expect(result.charts).toEqual([
 			{
 				type: 'line',
 				name: 'Dexes',
-				encode: { x: 'timestamp', y: 'Dexes' },
+				encode: { x: 0, y: 1 },
 				stack: 'stackA',
 				color: '#f00'
 			}

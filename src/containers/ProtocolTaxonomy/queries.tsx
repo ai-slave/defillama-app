@@ -1,4 +1,3 @@
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchAdapterChainChartData, fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
@@ -235,10 +234,10 @@ export const buildCategoryCharts = ({
 	const metricLabels = finalMetrics.map((metric) => getProtocolCategoryChartMetricLabel(metric, effectiveCategory))
 	const dimensions = ['timestamp', ...metricLabels]
 	const source = sortedTimestamps.map((timestamp) => {
-		const row = createChartRow<number | null>(timestamp)
-		for (const [index, metric] of finalMetrics.entries()) {
-			const dimension = metricLabels[index]
-			row[dimension] = chartMapsByMetric[metric].get(timestamp) ?? null
+		const row = new Array<number | null>(finalMetrics.length + 1)
+		row[0] = timestamp
+		for (let index = 0; index < finalMetrics.length; index++) {
+			row[index + 1] = chartMapsByMetric[finalMetrics[index]].get(timestamp) ?? null
 		}
 		return row
 	})
@@ -253,7 +252,7 @@ export const buildCategoryCharts = ({
 			return {
 				type: CHART_METRIC_SERIES_TYPE[metric],
 				name: dimension,
-				encode: { x: 'timestamp', y: dimension },
+				encode: { x: 0, y: index + 1 },
 				color: CHART_COLORS[index],
 				yAxisIndex: CHART_METRIC_Y_AXIS_INDEX[metric],
 				valueSymbol: '$'
@@ -887,7 +886,7 @@ export async function getProtocolTaxonomyPageData(
 	}
 
 	const tvlChart: Array<[number, number | null]> = []
-	const extraTvlCharts = createChartRecord<Record<string | number, number | null>>()
+	const extraTvlCharts: Record<string, Record<string | number, number | null>> = {}
 	for (const chartType in chartData) {
 		if (['doublecounted', 'liquidstaking', 'dcAndLsOverlap'].includes(chartType)) continue
 
@@ -897,7 +896,7 @@ export async function getProtocolTaxonomyPageData(
 			}
 		} else {
 			if (!extraTvlCharts[chartType]) {
-				extraTvlCharts[chartType] = createChartRecord<number | null>()
+				extraTvlCharts[chartType] = {} as Record<string, number | null>
 			}
 			for (const date in chartData[chartType]) {
 				extraTvlCharts[chartType][+date * 1e3] = chartData[chartType][date] ?? null
@@ -1067,12 +1066,12 @@ function buildProtocolsCategoriesChartData({
 	extraTvlTypes?: readonly string[]
 }): IProtocolsCategoriesChartData {
 	const includedExtraTvlKeys = CATEGORIES_PAGE_INCLUDED_EXTRA_TVL_KEYS.filter((key) => extraTvlTypes.includes(key))
-	const extraTvlCharts = createChartRecord<Record<string, Record<number, number>>>()
+	const extraTvlCharts = {}
 	if (includedExtraTvlKeys.length > 0) {
 		for (const categoryName of categoryKeys) {
-			extraTvlCharts[categoryName] = createChartRecord<Record<number, number>>()
+			extraTvlCharts[categoryName] = {}
 			for (const extraTvlKey of includedExtraTvlKeys) {
-				extraTvlCharts[categoryName][extraTvlKey] = createChartRecord<number>()
+				extraTvlCharts[categoryName][extraTvlKey] = {}
 			}
 		}
 	}
@@ -1081,7 +1080,7 @@ function buildProtocolsCategoriesChartData({
 	for (const [date, chartByCategory] of Object.entries(chart ?? {})) {
 		const timestamp = Number(date) * 1e3
 
-		const chartRow = createChartRow<number | null>(timestamp)
+		const chartRow = { timestamp: timestamp } as { timestamp: number } & Record<string, number | null>
 		for (const categoryName of categoryKeys) {
 			const categoryChartMetrics = chartByCategory?.[categoryName]
 			const tvlValue = categoryChartMetrics?.tvl
@@ -1223,7 +1222,7 @@ export async function getProtocolsCategoriesPageData(): Promise<IProtocolsCatego
 	)
 
 	const allColors = getNDistinctColors(categoryKeys.length)
-	const categoryColors = createChartRecord<string>()
+	const categoryColors = {}
 	for (const [index, categoryName] of categoryKeys.entries()) {
 		categoryColors[categoryName] = allColors[index] ?? '#999999'
 	}

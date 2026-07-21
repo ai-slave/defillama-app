@@ -1,7 +1,10 @@
 import type { GetStaticPropsContext } from 'next'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useMemo } from 'react'
-import { DWMC_GROUPING_OPTIONS_LOWERCASE, type LowercaseDwmcGrouping } from '~/components/ECharts/ChartGroupingSelector'
+import {
+	DWMC_GROUPING_OPTIONS_LOWERCASE,
+	type LowercaseDwmcGrouping
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
 import { BAR_CHARTS, type ChainChartLabels, chainCharts } from '~/containers/ChainOverview/constants'

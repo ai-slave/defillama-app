@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, useEffect } from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareStakingData, type StakingAPIResponse } from './data'
 import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 export default function Staking() {
 	const query = useQuery({
@@ -56,7 +54,7 @@ export default function Staking() {
 							</span>
 						))}
 					</div>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={chart.dataset}
 						charts={chart.charts}
 						valueSymbol=""

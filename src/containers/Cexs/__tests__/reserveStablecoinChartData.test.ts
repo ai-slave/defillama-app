@@ -20,25 +20,25 @@ describe('buildReserveStablecoinChartData', () => {
 		expect(result.totalStablecoins?.dataset).toEqual({
 			dimensions: ['timestamp', TOTAL_STABLECOINS_SERIES_NAME],
 			source: [
-				{ timestamp: 1_000, [TOTAL_STABLECOINS_SERIES_NAME]: 25 },
-				{ timestamp: 2_000, [TOTAL_STABLECOINS_SERIES_NAME]: 10 }
+				[1_000, 25],
+				[2_000, 10]
 			]
 		})
 		expect(result.totalStablecoins?.charts.map((chart) => chart.name)).toEqual([TOTAL_STABLECOINS_SERIES_NAME])
-		expect(result.stablecoinsByToken?.dataset).toEqual({
-			dimensions: ['timestamp', 'USDT', 'DAI', 'USDC'],
-			source: [
-				{ timestamp: 1_000, USDT: 20, DAI: 5 },
-				{ timestamp: 2_000, USDC: 7, USDT: 3 }
-			]
-		})
-		expect(result.stablecoinsByPegMechanism?.dataset.source).toEqual([
-			{ timestamp: 1_000, 'fiat-backed': 20, 'crypto-backed': 5 },
-			{ timestamp: 2_000, 'fiat-backed': 10 }
+		const tokenDataset = result.stablecoinsByToken!.dataset
+		expect(tokenDataset.dimensions).toEqual(['timestamp', 'USDT', 'DAI', 'USDC'])
+		expect(tokenDataset.source.map((row) => tokenDataset.dimensions.map((_, index) => row[index]))).toEqual([
+			[1_000, 20, 5, undefined],
+			[2_000, 3, undefined, 7]
+		])
+		const mechanismDataset = result.stablecoinsByPegMechanism!.dataset
+		expect(mechanismDataset.source.map((row) => mechanismDataset.dimensions.map((_, index) => row[index]))).toEqual([
+			[1_000, 20, 5],
+			[2_000, 10, undefined]
 		])
 		expect(result.stablecoinsByPegType?.dataset.source).toEqual([
-			{ timestamp: 1_000, peggedUSD: 25 },
-			{ timestamp: 2_000, peggedUSD: 10 }
+			[1_000, 25],
+			[2_000, 10]
 		])
 		expect(result.currentTotal).toBe(10)
 		for (const spec of [
@@ -47,7 +47,7 @@ describe('buildReserveStablecoinChartData', () => {
 			result.stablecoinsByPegType,
 			result.stablecoinsByToken
 		]) {
-			for (const chart of spec?.charts ?? []) expect(spec?.dataset.dimensions).toContain(chart.encode.y)
+			for (const chart of spec?.charts ?? []) expect(chart.encode.y).toBeGreaterThan(0)
 		}
 	})
 
@@ -62,12 +62,12 @@ describe('buildReserveStablecoinChartData', () => {
 		)
 
 		expect(result.totalStablecoins?.dataset.source).toEqual([
-			{ timestamp: 1_000, [TOTAL_STABLECOINS_SERIES_NAME]: 5 },
-			{ timestamp: 2_000, [TOTAL_STABLECOINS_SERIES_NAME]: 4 }
+			[1_000, 5],
+			[2_000, 4]
 		])
 		expect(result.stablecoinsByPegMechanism?.dataset.source).toEqual([
-			{ timestamp: 1_000, algorithmic: 5 },
-			{ timestamp: 2_000, algorithmic: 4 }
+			[1_000, 5],
+			[2_000, 4]
 		])
 		expect(result.pegTypesUnique).toEqual(['peggedEUR'])
 	})

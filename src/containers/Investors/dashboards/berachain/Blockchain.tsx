@@ -1,14 +1,12 @@
 import { createColumnHelper, useReactTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table'
 import { lazy, useEffect } from 'react'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { formattedNum } from '~/utils'
 import { useBlockchainData, type TopToken } from './blockchainApi'
 import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 function KpiCard({ label, value }: { label: string; value: string | number | null }) {
 	return (
@@ -36,65 +34,65 @@ const TRANSACTIONS_CHART = [
 	{
 		type: 'bar',
 		name: 'Transactions',
-		encode: { x: 'timestamp', y: 'Transactions' },
+		encode: { x: 0, y: 1 },
 		color: '#4FC3F7',
 		stack: 'a'
 	}
-] satisfies MultiSeriesChart2SeriesConfig[]
+] satisfies MultiSeriesChartSeriesConfig[]
 
 const ADDRESSES_CHARTS = [
 	{
 		type: 'line',
 		name: 'Active Addresses',
-		encode: { x: 'timestamp', y: 'Active Addresses' },
+		encode: { x: 0, y: 1 },
 		color: '#FFA726'
 	},
 	{
 		type: 'line',
 		name: 'New Addresses',
-		encode: { x: 'timestamp', y: 'New Addresses' },
+		encode: { x: 0, y: 2 },
 		color: '#66BB6A'
 	}
-] satisfies MultiSeriesChart2SeriesConfig[]
+] satisfies MultiSeriesChartSeriesConfig[]
 
 const GAS_FEES_CHART = [
 	{
 		type: 'bar',
 		name: 'Total Fees (USD)',
-		encode: { x: 'timestamp', y: 'Total Fees (USD)' },
+		encode: { x: 0, y: 1 },
 		color: '#AB47BC',
 		stack: 'a'
 	}
-] satisfies MultiSeriesChart2SeriesConfig[]
+] satisfies MultiSeriesChartSeriesConfig[]
 
 const UTILIZATION_CHART = [
 	{
 		type: 'line',
 		name: 'Utilization %',
-		encode: { x: 'timestamp', y: 'Utilization %' },
+		encode: { x: 0, y: 1 },
 		color: '#4FC3F7'
 	}
-] satisfies MultiSeriesChart2SeriesConfig[]
+] satisfies MultiSeriesChartSeriesConfig[]
 
 const CONTRACTS_CHART = [
 	{
 		type: 'bar',
 		name: 'New Contracts',
-		encode: { x: 'timestamp', y: 'New Contracts' },
+		encode: { x: 0, y: 1 },
 		color: '#FFA726',
 		stack: 'a'
 	}
-] satisfies MultiSeriesChart2SeriesConfig[]
+] satisfies MultiSeriesChartSeriesConfig[]
 
 const TRANSFERS_CHART = [
 	{
 		type: 'bar',
 		name: 'Volume (USD)',
-		encode: { x: 'timestamp', y: 'Volume (USD)' },
+		encode: { x: 0, y: 1 },
 		color: '#66BB6A',
 		stack: 'a'
 	}
-] satisfies MultiSeriesChart2SeriesConfig[]
+] satisfies MultiSeriesChartSeriesConfig[]
 
 const DEFAULT_CHART_OPTIONS = createChartOptions('')
 const DOLLAR_CHART_OPTIONS = createChartOptions('$')
@@ -157,7 +155,7 @@ export default function Blockchain() {
 			</div>
 
 			<ChartCard title="Daily Transactions">
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.chartDatasets.transactions}
 					charts={TRANSACTIONS_CHART}
 					chartOptions={DEFAULT_CHART_OPTIONS}
@@ -169,7 +167,7 @@ export default function Blockchain() {
 			</ChartCard>
 
 			<ChartCard title="Active & New Addresses">
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.chartDatasets.addresses}
 					charts={ADDRESSES_CHARTS}
 					chartOptions={DEFAULT_CHART_OPTIONS}
@@ -190,7 +188,7 @@ export default function Blockchain() {
 			</div>
 
 			<ChartCard title="Daily Gas Fees (USD)">
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.chartDatasets.gasFees}
 					charts={GAS_FEES_CHART}
 					chartOptions={DOLLAR_CHART_OPTIONS}
@@ -202,7 +200,7 @@ export default function Blockchain() {
 			</ChartCard>
 
 			<ChartCard title="Block Utilization (%)">
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.chartDatasets.blockUtilization}
 					charts={UTILIZATION_CHART}
 					chartOptions={PERCENT_CHART_OPTIONS}
@@ -216,7 +214,7 @@ export default function Blockchain() {
 			{/* Contract Deployments */}
 			<SectionHeader title="Contract Deployments" />
 			<ChartCard title="New Contracts Deployed (Monthly)">
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.chartDatasets.contractDeployments}
 					charts={CONTRACTS_CHART}
 					chartOptions={DEFAULT_CHART_OPTIONS}
@@ -230,7 +228,7 @@ export default function Blockchain() {
 			{/* Token Transfers */}
 			<SectionHeader title="Token Transfers" />
 			<ChartCard title="Daily Token Transfer Volume (USD)">
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.chartDatasets.tokenTransfers}
 					charts={TRANSFERS_CHART}
 					chartOptions={DOLLAR_CHART_OPTIONS}

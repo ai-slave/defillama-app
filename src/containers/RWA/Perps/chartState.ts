@@ -1,5 +1,8 @@
 import type { ParsedUrlQuery } from 'querystring'
-import { DWM_GROUPING_OPTIONS_LOWERCASE, type LowercaseDwmGrouping } from '~/components/ECharts/ChartGroupingSelector'
+import {
+	DWM_GROUPING_OPTIONS_LOWERCASE,
+	type LowercaseDwmGrouping
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import type {
 	RWAPerpsAssetGroupNonTimeSeriesBreakdown,

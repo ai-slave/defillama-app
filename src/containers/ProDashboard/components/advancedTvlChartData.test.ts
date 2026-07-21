@@ -45,18 +45,14 @@ describe('buildAdvancedTvlChartData', () => {
 		const result = buildAdvancedTvlChartData('tokenBalances', sources, [usdBreakdown, rawBreakdown], 'Aave')
 
 		expect(result.seriesNames).toEqual(['USDC', 'ETH'])
-		expect(result.dataset?.source.at(-1)).toEqual({
-			timestamp: 1_681_603_200_000,
-			USDC: 145,
-			ETH: 1
-		})
+		expect(result.dataset?.source.at(-1)).toEqual([1_681_603_200_000, 145, 1])
 	})
 
 	it('preserves the Binance CEX inflow exclusions from the legacy presentation', () => {
 		const sources = getAdvancedTvlBreakdownSources('binance-cex', 'usdInflows', {})
 		const result = buildAdvancedTvlChartData('usdInflows', sources, [usdBreakdown, rawBreakdown], 'Binance CEX')
 
-		expect(result.dataset?.source.map((row) => row.timestamp)).not.toContain(1_681_430_400_000)
-		expect(result.dataset?.source.map((row) => row.timestamp)).not.toContain(1_681_516_800_000)
+		expect(result.dataset?.source.map((row) => row[0])).not.toContain(1_681_430_400_000)
+		expect(result.dataset?.source.map((row) => row[0])).not.toContain(1_681_516_800_000)
 	})
 })

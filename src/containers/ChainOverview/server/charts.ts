@@ -112,10 +112,7 @@ const buildChainStablecoinMcapSeries = async (chain: string): Promise<Stablecoin
 		const data = await getStablecoinOverviewChartSeries({ chain: chain === 'All' ? null : chain, chart: 'totalMcap' })
 		const series: StablecoinMcapSeriesPoint[] = []
 		for (const point of data.dataset.source) {
-			const timestamp = Number(point.timestamp)
-			const mcap = Number(point.Mcap)
-			if (!Number.isFinite(timestamp) || !Number.isFinite(mcap)) continue
-			series.push([timestamp, mcap])
+			series.push([point[0] as number, point[1] as number])
 		}
 		return series
 	} catch (error) {

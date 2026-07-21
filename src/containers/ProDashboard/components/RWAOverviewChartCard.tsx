@@ -1,14 +1,12 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type {
-	IHBarChartProps,
-	IMultiSeriesChart2Props,
-	IPieChartProps,
-	ITreemapChartProps
-} from '~/components/ECharts/types'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
-import { toFiniteRwaChartValue } from '~/containers/RWA/chartDataset'
+import { toFiniteRwaChartValue, toRwaMultiSeriesChartDataset } from '~/containers/RWA/chartDataset'
 import { getChartMetricLabel } from '~/containers/RWA/chartState'
 import { buildRwaTreemapTreeData } from '~/containers/RWA/treemap'
 import { useChartImageExport } from '../hooks/useChartImageExport'
@@ -18,12 +16,10 @@ import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWABreakdownChartData } from './datasets/RWADataset/useRWAChartData'
 import { LoadingSpinner } from './LoadingSpinner'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
-const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<ITreemapChartProps>
+const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
 const BREAKDOWN_LABELS: Record<RWAOverviewChartBreakdown, string> = {
 	chain: 'Chain',
@@ -52,8 +48,10 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	const { chartDataset: rawDataset, isLoading } = useRWABreakdownChartData(breakdown, metric, chain)
 
 	const chartDataset = useMemo(() => {
-		if (!rawDataset || !timePeriod || timePeriod === 'all') return rawDataset
-		return filterChartDatasetByTimePeriod(rawDataset, timePeriod, customTimePeriod)
+		if (!rawDataset) return null
+		const dataset = toRwaMultiSeriesChartDataset(rawDataset)
+		if (!timePeriod || timePeriod === 'all') return dataset
+		return filterChartDatasetByTimePeriod(dataset, timePeriod, customTimePeriod)
 	}, [rawDataset, timePeriod, customTimePeriod])
 
 	const metricLabel = getChartMetricLabel(metric as any)
@@ -68,9 +66,9 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 		const lastRow = chartDataset.source[chartDataset.source.length - 1]
 		if (!lastRow) return []
 		const items: Array<{ name: string; value: number }> = []
-		for (const dimension of chartDataset.dimensions) {
-			if (dimension === 'timestamp') continue
-			const value = toFiniteRwaChartValue(lastRow[dimension])
+		for (let dimensionIndex = 1; dimensionIndex < chartDataset.dimensions.length; dimensionIndex++) {
+			const dimension = chartDataset.dimensions[dimensionIndex]
+			const value = toFiniteRwaChartValue(lastRow[dimensionIndex])
 			if (value > 0) items.push({ name: dimension, value })
 		}
 		items.sort((a, b) => b.value - a.value)
@@ -90,9 +88,9 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 		const lastRow = chartDataset.source[chartDataset.source.length - 1]
 		if (!lastRow) return { categories: [] as string[], values: [] as number[] }
 		const items: Array<{ name: string; value: number }> = []
-		for (const dimension of chartDataset.dimensions) {
-			if (dimension === 'timestamp') continue
-			const value = toFiniteRwaChartValue(lastRow[dimension])
+		for (let dimensionIndex = 1; dimensionIndex < chartDataset.dimensions.length; dimensionIndex++) {
+			const dimension = chartDataset.dimensions[dimensionIndex]
+			const value = toFiniteRwaChartValue(lastRow[dimensionIndex])
 			if (value > 0) items.push({ name: dimension, value })
 		}
 		items.sort((a, b) => b.value - a.value)
@@ -105,9 +103,9 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 		const lastRow = chartDataset.source[chartDataset.source.length - 1]
 		if (!lastRow) return []
 		const pieItems: Array<{ name: string; value: number }> = []
-		for (const dimension of chartDataset.dimensions) {
-			if (dimension === 'timestamp') continue
-			const value = toFiniteRwaChartValue(lastRow[dimension])
+		for (let dimensionIndex = 1; dimensionIndex < chartDataset.dimensions.length; dimensionIndex++) {
+			const dimension = chartDataset.dimensions[dimensionIndex]
+			const value = toFiniteRwaChartValue(lastRow[dimensionIndex])
 			if (value > 0) pieItems.push({ name: dimension, value })
 		}
 		return buildRwaTreemapTreeData(pieItems, breakdownLabel)
@@ -148,7 +146,7 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 					}
 				>
 					{chartView === 'timeSeries' && chartDataset ? (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={chartDataset}
 							hideDefaultLegend={false}
 							stacked

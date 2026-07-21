@@ -4,13 +4,13 @@ import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
-import type { IPieChartProps } from '~/components/ECharts/types'
-import { preparePieChartData } from '~/components/ECharts/utils'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Menu } from '~/components/Menu'
 import { Select } from '~/components/Select/Select'
@@ -53,7 +53,7 @@ import { StablecoinByChainUsageTable } from './StablecoinUsageByChainTable'
 import type { PeggedAssetPageProps } from './types'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
@@ -496,7 +496,7 @@ function SelectedAssetChart({
 	}
 	return (
 		<React.Suspense fallback={<ChartPanelBodyFallback className="w-full" />}>
-			<MultiSeriesChart2
+			<MultiSeriesChart
 				dataset={data.dataset}
 				charts={data.charts}
 				stacked={data.stacked}

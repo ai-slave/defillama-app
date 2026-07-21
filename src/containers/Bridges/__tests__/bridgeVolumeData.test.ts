@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import {
 	BRIDGE_VOLUME_COMBINED_CHARTS,
 	BRIDGE_VOLUME_SPLIT_CHARTS,
@@ -22,8 +22,8 @@ describe('buildBridgeVolumeChartData', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Deposits', 'Withdrawals'],
 			source: [
-				{ timestamp: 1_000, Deposits: 10, Withdrawals: -3 },
-				{ timestamp: 2_000, Deposits: 20, Withdrawals: -5 }
+				[1_000, 10, -3],
+				[2_000, 20, -5]
 			]
 		})
 		expect(result.charts).toBe(BRIDGE_VOLUME_SPLIT_CHARTS)
@@ -34,7 +34,7 @@ describe('buildBridgeVolumeChartData', () => {
 			{
 				type: 'bar',
 				name: 'Deposits',
-				encode: { x: 'timestamp', y: 'Deposits' },
+				encode: { x: 0, y: 1 },
 				color: '#3b82f6',
 				stack: 'metric',
 				large: false
@@ -42,7 +42,7 @@ describe('buildBridgeVolumeChartData', () => {
 			{
 				type: 'bar',
 				name: 'Withdrawals',
-				encode: { x: 'timestamp', y: 'Withdrawals' },
+				encode: { x: 0, y: 2 },
 				color: '#ef4444',
 				stack: 'metric',
 				large: false
@@ -70,8 +70,8 @@ describe('buildBridgeVolumeChartData', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Total'],
 			source: [
-				{ timestamp: bucket * 1e3, Total: 13 },
-				{ timestamp: nextBucket * 1e3, Total: 7 }
+				[bucket * 1e3, 13],
+				[nextBucket * 1e3, 7]
 			]
 		})
 		expect(result.charts).toBe(BRIDGE_VOLUME_COMBINED_CHARTS)
@@ -89,8 +89,8 @@ describe('buildBridgeVolumeChartData', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			{ timestamp: 1_000, Total: 10 },
-			{ timestamp: 2_000, Total: 5 }
+			[1_000, 10],
+			[2_000, 5]
 		])
 	})
 

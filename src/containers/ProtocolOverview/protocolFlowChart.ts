@@ -1,5 +1,9 @@
-import { buildTimeSeriesChart, type PeriodBarSeries, type TimePoint } from '~/components/ECharts/timeSeriesChartBuilder'
-import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
+import {
+	buildTimeSeriesChart,
+	type PeriodBarSeries,
+	type TimePoint
+} from '~/components/ECharts/MultiSeriesChart/timeSeriesBuilder'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 
 export type ProtocolFlowChartSeries = PeriodBarSeries
 

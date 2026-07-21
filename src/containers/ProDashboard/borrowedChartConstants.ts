@@ -1,4 +1,4 @@
-import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
+import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 
 export const BORROWED_CHART_OPTIONS = {
 	grid: chartGrid({ bottom: CHART_ZOOM_RESERVE })

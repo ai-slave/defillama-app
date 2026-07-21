@@ -1,7 +1,7 @@
 import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
 import { useMapleActivePools } from './api'
@@ -18,11 +18,9 @@ import {
 	formatPct
 } from './shared'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-const TVL_CHART: IMultiSeriesChart2Props['charts'] = [
+const TVL_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		type: 'bar',
 		name: 'TVL',
@@ -31,7 +29,7 @@ const TVL_CHART: IMultiSeriesChart2Props['charts'] = [
 		stack: 'a'
 	}
 ]
-const UTILIZATION_CHART: IMultiSeriesChart2Props['charts'] = [
+const UTILIZATION_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		type: 'bar',
 		name: 'Utilization',
@@ -40,7 +38,7 @@ const UTILIZATION_CHART: IMultiSeriesChart2Props['charts'] = [
 		stack: 'a'
 	}
 ]
-const APY_CHART: IMultiSeriesChart2Props['charts'] = [
+const APY_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		type: 'bar',
 		name: 'Spot APY',
@@ -166,7 +164,7 @@ export default function PoolsOverview() {
 					<CardSkeleton title="TVL by Pool" />
 				) : (
 					<ChartCard title="TVL by Pool">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={data.tvl}
 							charts={TVL_CHART}
 							valueSymbol="$"
@@ -181,7 +179,7 @@ export default function PoolsOverview() {
 					<CardSkeleton title="Pool Utilization" />
 				) : data.utilization.source.length > 0 ? (
 					<ChartCard title="Pool Utilization">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={data.utilization}
 							charts={UTILIZATION_CHART}
 							valueSymbol="%"
@@ -197,7 +195,7 @@ export default function PoolsOverview() {
 				<CardSkeleton title="Spot APY by Pool" />
 			) : data.apy.source.length > 0 ? (
 				<ChartCard title="Spot APY by Pool">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.apy}
 						charts={APY_CHART}
 						valueSymbol="%"

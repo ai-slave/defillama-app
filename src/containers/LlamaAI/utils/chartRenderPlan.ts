@@ -1,4 +1,7 @@
-import type { IPieChartProps, IScatterChartProps, IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import type { IScatterChartProps } from '~/components/ECharts/ScatterChart/types'
 import { oldBlue } from '~/constants/colors'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
@@ -11,19 +14,6 @@ import {
 import { buildExportModel, type ChartExportModel } from '~/containers/LlamaAI/utils/chartExportModel'
 import { resolveStylePolicy, type ChartStylePolicy } from '~/containers/LlamaAI/utils/chartStylePolicy'
 
-interface HBarRendererProps {
-	categories: string[]
-	values: number[]
-	valueSymbol?: string
-	color?: string
-	colors?: string[]
-	logos?: string[]
-	series?: Array<{ name: string; values: number[]; color: string }>
-	valueAxisMin?: number | 'dataMin'
-	valueAxisMax?: number | 'dataMax'
-	valueAxisInterval?: number
-}
-
 interface BaseChartRenderPlan {
 	controls: ChartControlsModel
 	exportModel: ChartExportModel | null
@@ -35,7 +25,7 @@ interface BaseChartRenderPlan {
 export type ChartRenderPlan =
 	| (BaseChartRenderPlan & {
 			rendererKind: 'cartesian'
-			rendererProps: IMultiSeriesChart2Props
+			rendererProps: IMultiSeriesChartProps
 	  })
 	| (BaseChartRenderPlan & {
 			rendererKind: 'pie'
@@ -47,7 +37,7 @@ export type ChartRenderPlan =
 	  })
 	| (BaseChartRenderPlan & {
 			rendererKind: 'hbar'
-			rendererProps: HBarRendererProps
+			rendererProps: IHBarChartProps
 	  })
 
 function getChartFilename(title: string) {
@@ -82,6 +72,9 @@ export function buildRenderPlan(
 				rendererKind: 'cartesian',
 				rendererProps: {
 					...adaptedChart.props,
+					// Server axis labels remain editable config metadata. Do not map them to visible
+					// Cartesian axis names: legends and colored/unit ticks already identify the series,
+					// while generic x labels such as "date" only add visual noise.
 					solidChartAreaStyle: stylePolicy.solidAreaFill,
 					categoryLogos: state.showLabels ? adaptedChart.props.categoryLogos : undefined,
 					// Match legacy LlamaAI behavior only for charts that previously rendered through

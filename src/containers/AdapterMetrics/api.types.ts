@@ -1,4 +1,4 @@
-import type { ChartTimeGrouping } from '~/components/ECharts/types'
+import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
 
 // Full type for single protocol metrics response
 export interface IAdapterProtocolMetrics {

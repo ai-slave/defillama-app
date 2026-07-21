@@ -3,14 +3,14 @@ import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
 import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
-import { ChartGroupingSelector, DWMC_GROUPING_OPTIONS_LOWERCASE } from '~/components/ECharts/ChartGroupingSelector'
-import type {
-	IHBarChartProps,
-	IMultiSeriesChart2Props,
-	IPieChartProps,
-	ITreemapChartProps,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import {
+	ChartGroupingSelector,
+	DWMC_GROUPING_OPTIONS_LOWERCASE
+} from '~/components/ECharts/shared/ChartGroupingSelector'
+import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { Select } from '~/components/Select/Select'
 import { CHART_COLORS } from '~/constants/colors'
@@ -34,7 +34,7 @@ import {
 	sortRwaChartSeriesLabels,
 	type RWAChartAggregationMode
 } from './chartAggregation'
-import { limitRwaHorizontalBarData, type RWAChartDataset } from './chartDataset'
+import { limitRwaHorizontalBarData, toRwaMultiSeriesChartDataset, type RWAChartDataset } from './chartDataset'
 import {
 	createRwaChartModeState,
 	getBreakdownLabel,
@@ -104,11 +104,9 @@ import { rwaSlug } from './rwaSlug'
 import { buildRwaNestedTreemapTreeData, buildRwaTreemapTreeData, canBuildRwaNestedTreemap } from './treemap'
 
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
-const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<ITreemapChartProps>
+const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ default: module.RWAFlowsChart })))
 const RWAFlowRotationChart = lazy(() =>
 	import('./FlowRotationChart').then((module) => ({ default: module.RWAFlowRotationChart }))
@@ -572,7 +570,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 
 	const showCharts = props.assets.length > 1 || isPlatformMode || isFlowMetric
 
-	const { chartInstance: multiSeriesChart2Instance, handleChartReady: handleMultiSeriesChart2Ready } =
+	const { chartInstance: multiSeriesChart2Instance, handleChartReady: handleMultiSeriesChartReady } =
 		useChartImageExport()
 	const { chartInstance: flowRotationChartInstance, handleChartReady: handleFlowRotationChartReady } =
 		useChartImageExport()
@@ -616,8 +614,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		[flowData, flowMode, flowOnChainMcapByTimestamp, isFlowMetric]
 	)
 
-	const selectedTimeSeriesDataset = chartDataset
-	const timeSeriesCharts = useMemo<Array<MultiSeriesChart2SeriesConfig>>(
+	const selectedTimeSeriesDataset = useMemo(() => toRwaMultiSeriesChartDataset(chartDataset), [chartDataset])
+	const timeSeriesCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() => (chartView === 'timeSeries' ? buildRwaTimeSeriesCharts(selectedTimeSeriesDataset.dimensions) : []),
 		[chartView, selectedTimeSeriesDataset.dimensions]
 	)
@@ -987,7 +985,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 													: { view: 'netFlows', groupBy: flowMode, overlays: flowOverlays }
 											}
 											defaultRangeDays={flowMode === 'daily' ? 365 : undefined}
-											onReady={handleMultiSeriesChart2Ready}
+											onReady={handleMultiSeriesChartReady}
 										/>
 									</Suspense>
 								) : (
@@ -1006,12 +1004,12 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 								</ChartPanelBodyFallback>
 							) : (
 								<Suspense fallback={<ChartPanelBodyFallback />}>
-									<MultiSeriesChart2
+									<MultiSeriesChart
 										dataset={deferredSelectedTimeSeriesDataset}
 										charts={timeSeriesCharts}
 										hideDefaultLegend={false}
 										showTotalInTooltip={!deferredSelectedTimeSeriesDataset.dimensions.includes('Total')}
-										onReady={handleMultiSeriesChart2Ready}
+										onReady={handleMultiSeriesChartReady}
 									/>
 								</Suspense>
 							)}
@@ -1212,7 +1210,7 @@ function assertNever(value: never): never {
 	throw new Error(`Unexpected value: ${String(value)}`)
 }
 
-export function buildRwaTimeSeriesCharts(dimensions: string[]): Array<MultiSeriesChart2SeriesConfig> {
+export function buildRwaTimeSeriesCharts(dimensions: string[]): Array<MultiSeriesChartSeriesConfig> {
 	const seriesDimensions = sortRwaChartSeriesLabels(dimensions.filter((dimension) => dimension !== 'timestamp'))
 	const colorSlots = getRwaChartSeriesColorSlots(seriesDimensions)
 

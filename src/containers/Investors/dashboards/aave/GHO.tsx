@@ -1,7 +1,7 @@
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { formattedNum } from '~/utils'
 import { useAaveGHOReserve, useAaveMarkets, useAaveAPYHistory, num, pct } from './api'
 import type { TimeWindow } from './api'
@@ -18,9 +18,7 @@ import {
 	AAVE_PERCENT_TIME_CHART_OPTIONS
 } from './shared'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const GHO_TOKEN = '0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f'
 const ETH_MAIN_MARKET = '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2'
@@ -32,7 +30,7 @@ const WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
 	{ value: 'LAST_YEAR', label: '1Y' }
 ]
 
-const BORROW_APY_CHART: IMultiSeriesChart2Props['charts'] = [
+const BORROW_APY_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Borrow APY',
 		type: 'line',
@@ -202,7 +200,7 @@ export default function GHO() {
 					<CardSkeleton title="" />
 				) : borrowApyDataset.source.length > 0 ? (
 					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={borrowApyDataset}
 							charts={BORROW_APY_CHART}
 							valueSymbol="%"

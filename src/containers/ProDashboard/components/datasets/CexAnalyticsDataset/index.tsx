@@ -12,12 +12,12 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import { lazy, Suspense, useContext, useEffect, useMemo, useState, type FC, type ReactNode } from 'react'
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type {
-	IMultiSeriesChart2Props,
-	MultiSeriesChart2Dataset,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
+	IMultiSeriesChartProps,
+	MultiSeriesChartDataset,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
 import { useTableSearch } from '~/components/Table/utils'
 import type {
 	CexAnalyticsMarketSharePoint,
@@ -38,7 +38,7 @@ import { TablePagination } from '../../ProTable/TablePagination'
 import { cexAnalyticsColumns } from './columns'
 import { useCexAnalyticsMarketShare, useCexAnalyticsSnapshot, useCexAnalyticsTotals } from './useCexAnalyticsData'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2')) as FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as FC<IMultiSeriesChartProps>
 
 const EMPTY_ROWS: any[] = []
 const STACK_COLORS = {
@@ -56,7 +56,7 @@ const SHARE_PALETTE = [
 	'#577590',
 	'#94a3b8'
 ]
-const SPOT_VS_DERIVATIVES_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+const SPOT_VS_DERIVATIVES_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{
 		type: 'bar',
 		name: 'Spot',
@@ -317,13 +317,9 @@ function SpotVsDerivativesChart({ data }: { data: CexAnalyticsTotalsPoint[] }) {
 		() => filterTimeSeriesRows(data, timePeriod, customTimePeriod),
 		[data, timePeriod, customTimePeriod]
 	)
-	const dataset = useMemo<MultiSeriesChart2Dataset>(
+	const dataset = useMemo<MultiSeriesChartDataset>(
 		() => ({
-			source: filtered.map((point) => ({
-				timestamp: point.date * 1e3,
-				Spot: point.spotVolume,
-				Derivatives: point.derivativesVolume
-			})),
+			source: filtered.map((point) => [point.date * 1e3, point.spotVolume, point.derivativesVolume]),
 			dimensions: ['timestamp', 'Spot', 'Derivatives']
 		}),
 		[filtered]
@@ -340,7 +336,7 @@ function SpotVsDerivativesChart({ data }: { data: CexAnalyticsTotalsPoint[] }) {
 	return (
 		<div className="flex h-full w-full flex-col p-4">
 			<Suspense fallback={<div className="h-[360px]" />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					title="Spot vs Derivatives Volume"
 					dataset={dataset}
 					charts={SPOT_VS_DERIVATIVES_CHARTS}
@@ -370,7 +366,7 @@ function VenueMarketShareChart({
 	)
 
 	const { dataset, charts } = useMemo(() => {
-		const byDate = new Map<number, Record<string, number>>()
+		const byDate = new Map<number, Map<string, number>>()
 		const order: string[] = []
 		const seenVenues = new Set<string>()
 		for (const point of filtered) {
@@ -378,42 +374,32 @@ function VenueMarketShareChart({
 				seenVenues.add(point.venue)
 				order.push(point.venue)
 			}
-			let record = byDate.get(point.date)
-			if (!record) {
-				record = { timestamp: point.date * 1e3 }
+			let values = byDate.get(point.date)
+			if (!values) {
+				values = new Map()
+				byDate.set(point.date, values)
 			}
-			if (point.venue === '__proto__') {
-				Object.defineProperty(record, point.venue, {
-					value: point.share,
-					enumerable: true,
-					configurable: true,
-					writable: true
-				})
-			} else {
-				record[point.venue] = point.share
-			}
-			byDate.set(point.date, record)
+			values.set(point.venue, point.share)
 		}
 
 		// The server query is ordered by date, and filtering preserves that order.
-		const source = Array.from(byDate.values())
-		for (const record of source) {
-			for (const venue of order) {
-				if (Object.hasOwn(record, venue)) continue
-				if (venue === '__proto__') {
-					Object.defineProperty(record, venue, { value: 0, enumerable: true, configurable: true, writable: true })
-				} else {
-					record[venue] = 0
-				}
+		const source: MultiSeriesChartDataset['source'] = new Array(byDate.size)
+		let rowIndex = 0
+		for (const [date, values] of byDate) {
+			const row = new Array<number>(order.length + 1)
+			row[0] = date * 1e3
+			for (let venueIndex = 0; venueIndex < order.length; venueIndex++) {
+				row[venueIndex + 1] = values.get(order[venueIndex]) ?? 0
 			}
+			source[rowIndex++] = row
 		}
-		const charts: MultiSeriesChart2SeriesConfig[] = new Array(order.length)
+		const charts: MultiSeriesChartSeriesConfig[] = new Array(order.length)
 		for (let index = 0; index < order.length; index++) {
 			const venue = order[index]
 			charts[index] = {
 				type: 'line',
 				name: venue,
-				encode: { x: 'timestamp', y: venue },
+				encode: { x: 0, y: index + 1 },
 				stack: 'Total',
 				color: SHARE_PALETTE[index % SHARE_PALETTE.length]
 			}
@@ -436,7 +422,7 @@ function VenueMarketShareChart({
 	return (
 		<div className="flex h-full w-full flex-col p-4">
 			<Suspense fallback={<div className="h-[360px]" />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					title={`CEX ${metric === 'spot' ? 'Spot' : 'Derivatives'} Market Share (Top ${topN})`}
 					dataset={dataset}
 					charts={charts}

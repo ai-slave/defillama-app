@@ -6,14 +6,12 @@ import {
 	getPaginationRowModel
 } from '@tanstack/react-table'
 import { lazy, useEffect } from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { STACKED_UNITLESS_TIME_CHART_OPTIONS } from './chartDefaults'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
@@ -109,7 +107,7 @@ export default function YieldsEmissions() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>S Token Emissions</SectionHeader>
 				<ChartCard title={data.emissions.title}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.emissions.dataset}
 						charts={data.emissions.charts}
 						valueSymbol=""

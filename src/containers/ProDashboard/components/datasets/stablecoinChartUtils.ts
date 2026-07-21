@@ -1,9 +1,9 @@
-import { CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
-import { createSignedInflowsTooltipFormatter } from '~/components/ECharts/formatters'
 import {
 	createSingleSeriesChartOptions,
 	createTimeSeriesChartOptions
-} from '~/components/ECharts/timeSeriesChartOptions'
+} from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import { CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
+import { createSignedInflowsTooltipFormatter } from '~/components/ECharts/shared/tooltip'
 import { filterChartDatasetByTimePeriod } from './filterChartDataset'
 
 export const STABLECOIN_DOLLAR_CHART_OPTIONS = {

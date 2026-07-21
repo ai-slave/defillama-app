@@ -1,7 +1,6 @@
 import type { LlamaConfigResponse } from '~/api/types'
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import { CONFIG_API } from '~/constants'
 import { CHART_COLORS } from '~/constants/colors'
 import { getNDistinctColors, slug } from '~/utils'
@@ -677,8 +676,8 @@ export function buildBridgeChainsChartRows({
 }: {
 	chains: Array<{ name: string }>
 	chartDataByChain: RawBridgeVolumePoint[][]
-}): Array<{ date: number } & Record<string, number>> {
-	const chartData = new Map<number, { date: number } & Record<string, number>>()
+}): Map<number, Map<string, number>> {
+	const chartData = new Map<number, Map<string, number>>()
 
 	for (let i = 0; i < chains.length; i++) {
 		const chain = chains[i]
@@ -686,49 +685,49 @@ export function buildBridgeChainsChartRows({
 		for (const chart of charts) {
 			const date = Number(chart.date)
 			if (!Number.isFinite(date)) continue
-			let row = chartData.get(date)
-			if (!row) {
-				row = createChartRecord<number>() as { date: number } & Record<string, number>
-				row.date = date
-				chartData.set(date, row)
+			let values = chartData.get(date)
+			if (!values) {
+				values = new Map()
+				chartData.set(date, values)
 			}
-			row[chain.name] = (chart.depositUSD ?? 0) - (chart.withdrawUSD ?? 0)
+			values.set(chain.name, (chart.depositUSD ?? 0) - (chart.withdrawUSD ?? 0))
 		}
 	}
 
-	return Array.from(chartData.values())
+	return chartData
 }
 
 export function buildBridgeChainsMultiSeriesChart({
 	chartRows,
 	chains
 }: {
-	chartRows: Array<{ date: number; [key: string]: number }>
+	chartRows: Map<number, Map<string, number>>
 	chains: string[]
 }): {
-	dataset: MultiSeriesChart2Dataset
-	charts: NonNullable<IMultiSeriesChart2Props['charts']>
+	dataset: MultiSeriesChartDataset
+	charts: NonNullable<IMultiSeriesChartProps['charts']>
 } {
-	const source = new Array<{ timestamp: number } & Record<string, number>>(chartRows.length)
-	for (let i = 0; i < chartRows.length; i++) {
-		const chartRow = chartRows[i]
-		const row = createChartRow<number>(chartRow.date * 1e3)
-		for (const name of chains) {
-			const value = chartRow[name]
-			if (value != null) row[name] = value
+	const source = new Array<number[]>(chartRows.size)
+	let rowIndex = 0
+	for (const [date, values] of chartRows) {
+		const row = new Array<number>(chains.length + 1)
+		row[0] = date * 1e3
+		for (let chainIndex = 0; chainIndex < chains.length; chainIndex++) {
+			const value = values.get(chains[chainIndex])
+			if (value != null) row[chainIndex + 1] = value
 		}
-		source[i] = row
+		source[rowIndex++] = row
 	}
 	// Each chain is an independent ascending API stream, so their merged timeline
 	// must be ordered once after materializing the shared rows.
-	source.sort((a, b) => a.timestamp - b.timestamp)
+	source.sort((a, b) => a[0] - b[0])
 
 	const dimensions = ['timestamp', ...(chains ?? [])]
 
 	const charts = (chains ?? []).map((name, i) => ({
 		type: 'bar' as const,
 		name,
-		encode: { x: 'timestamp', y: name },
+		encode: { x: 0, y: i + 1 },
 		// Use per-series stacks so selected chains render as clustered bars (not stacked).
 		stack: name,
 		color: CHART_COLORS[i % CHART_COLORS.length],
@@ -736,7 +735,7 @@ export function buildBridgeChainsMultiSeriesChart({
 	}))
 
 	return {
-		dataset: { source, dimensions } satisfies MultiSeriesChart2Dataset,
+		dataset: { source, dimensions } satisfies MultiSeriesChartDataset,
 		charts
 	}
 }

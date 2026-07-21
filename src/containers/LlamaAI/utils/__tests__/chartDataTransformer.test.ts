@@ -42,13 +42,13 @@ function makeMixedAxisChart(axisType: 'time' | 'category'): AdaptedLlamaAICartes
 		props: {
 			dataset: {
 				dimensions: [dimensionName, 'Primary A', 'Primary B', 'Secondary'],
-				source: [{ [dimensionName]: xValue, 'Primary A': 20, 'Primary B': 30, Secondary: 5 }]
+				source: [[xValue, 20, 30, 5]]
 			},
 			charts: [
 				{
 					type: 'line',
 					name: 'Primary A',
-					encode: { x: dimensionName, y: 'Primary A' },
+					encode: { x: 0, y: 1 },
 					color: '#111',
 					valueSymbol: '$',
 					yAxisIndex: 0
@@ -56,7 +56,7 @@ function makeMixedAxisChart(axisType: 'time' | 'category'): AdaptedLlamaAICartes
 				{
 					type: 'line',
 					name: 'Primary B',
-					encode: { x: dimensionName, y: 'Primary B' },
+					encode: { x: 0, y: 2 },
 					color: '#222',
 					valueSymbol: '$',
 					yAxisIndex: 0
@@ -64,7 +64,7 @@ function makeMixedAxisChart(axisType: 'time' | 'category'): AdaptedLlamaAICartes
 				{
 					type: 'line',
 					name: 'Secondary',
-					encode: { x: dimensionName, y: 'Secondary' },
+					encode: { x: 0, y: 3 },
 					color: '#333',
 					valueSymbol: '$',
 					yAxisIndex: 1
@@ -136,16 +136,16 @@ function makeAscendingBarChart(): AdaptedLlamaAICartesianChart {
 			dataset: {
 				dimensions: ['timestamp', 'Revenue'],
 				source: [
-					{ timestamp: jan, Revenue: 10 },
-					{ timestamp: feb, Revenue: 20 },
-					{ timestamp: mar, Revenue: 30 }
+					[jan, 10],
+					[feb, 20],
+					[mar, 30]
 				]
 			},
 			charts: [
 				{
 					type: 'bar',
 					name: 'Revenue',
-					encode: { x: 'timestamp', y: 'Revenue' },
+					encode: { x: 0, y: 1 },
 					color: '#111',
 					valueSymbol: '$',
 					yAxisIndex: 0
@@ -183,13 +183,13 @@ function makeAscendingBarChart(): AdaptedLlamaAICartesianChart {
 function makeLegacyTimestampChart(): AdaptedLlamaAICartesianChart {
 	const chart = makeAscendingBarChart()
 	chart.props.dataset.source = [
-		{ timestamp: String(Date.UTC(2026, 0, 1) / 1e3), Revenue: 10 },
-		{ timestamp: 'not-a-date', Revenue: 999 },
-		{ timestamp: '', Revenue: 999 },
-		{ timestamp: null, Revenue: 999 },
-		{ timestamp: '2026-02-01T00:00:00.000Z', Revenue: 20 },
-		{ timestamp: String(Date.UTC(2026, 2, 1)), Revenue: 30 },
-		{ timestamp: Date.UTC(2026, 3, 1), Revenue: 40 }
+		[String(Date.UTC(2026, 0, 1) / 1e3), 10],
+		['not-a-date', 999],
+		['', 999],
+		[null, 999],
+		['2026-02-01T00:00:00.000Z', 20],
+		[String(Date.UTC(2026, 2, 1)), 30],
+		[Date.UTC(2026, 3, 1), 40]
 	]
 	chart.rowCount = chart.props.dataset.source.length
 	return chart
@@ -221,7 +221,10 @@ describe('ChartDataTransformer', () => {
 		const transformed = ChartDataTransformer.applyViewState(makeMixedAxisChart('time'), viewState, capabilities)
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
-		expect(transformed.props.chartOptions?.tooltip?.formatter).toBeUndefined()
+		const tooltipOption = Array.isArray(transformed.props.chartOptions?.tooltip)
+			? transformed.props.chartOptions.tooltip[0]
+			: transformed.props.chartOptions?.tooltip
+		expect(tooltipOption?.formatter).toBeUndefined()
 		expect(transformed.props.charts?.map((series) => [series.name, series.valueSymbol])).toEqual([
 			['Primary A', '%'],
 			['Primary B', '%'],
@@ -233,15 +236,21 @@ describe('ChartDataTransformer', () => {
 		const transformed = ChartDataTransformer.applyViewState(makeMixedAxisChart('category'), viewState, capabilities)
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
-		const formatter = transformed.props.chartOptions?.tooltip?.formatter
+		const tooltipOption = Array.isArray(transformed.props.chartOptions?.tooltip)
+			? transformed.props.chartOptions.tooltip[0]
+			: transformed.props.chartOptions?.tooltip
+		const formatter = tooltipOption?.formatter
 		if (typeof formatter !== 'function') throw new Error('Expected tooltip formatter')
 
 		const row = transformed.props.dataset.source[0]
-		const tooltip = formatter([
-			{ seriesName: 'Primary A', data: row, marker: '' },
-			{ seriesName: 'Primary B', data: row, marker: '' },
-			{ seriesName: 'Secondary', data: row, marker: '' }
-		])
+		const tooltip = formatter(
+			[
+				{ seriesName: 'Primary A', data: row, marker: '' },
+				{ seriesName: 'Primary B', data: row, marker: '' },
+				{ seriesName: 'Secondary', data: row, marker: '' }
+			] as Parameters<typeof formatter>[0],
+			''
+		)
 
 		expect(tooltip).toContain('Primary A: 40%')
 		expect(tooltip).toContain('Primary B: 60%')
@@ -256,7 +265,7 @@ describe('ChartDataTransformer', () => {
 		)
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
-		expect(transformed.props.dataset.source.map((row) => row.timestamp)).toEqual([
+		expect(transformed.props.dataset.source.map((row) => row[0])).toEqual([
 			Date.UTC(2026, 0, 1),
 			Date.UTC(2026, 1, 1),
 			Date.UTC(2026, 2, 1)
@@ -271,7 +280,7 @@ describe('ChartDataTransformer', () => {
 		)
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
-		expect(transformed.props.dataset.source.map((row) => row.timestamp)).toEqual([
+		expect(transformed.props.dataset.source.map((row) => row[0])).toEqual([
 			Date.UTC(2026, 0, 1),
 			Date.UTC(2026, 1, 1),
 			Date.UTC(2026, 2, 1)
@@ -282,14 +291,14 @@ describe('ChartDataTransformer', () => {
 		const chart = makeAscendingBarChart()
 		chart.props.dataset.dimensions.push('TVL')
 		chart.props.dataset.source = [
-			{ timestamp: Date.UTC(2026, 0, 2), Revenue: 10, TVL: 100 },
-			{ timestamp: Date.UTC(2026, 0, 3), Revenue: 20, TVL: 120 },
-			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 30, TVL: 110 }
+			[Date.UTC(2026, 0, 2), 10, 100],
+			[Date.UTC(2026, 0, 3), 20, 120],
+			[Date.UTC(2026, 1, 1), 30, 110]
 		]
 		chart.props.charts?.push({
 			type: 'line',
 			name: 'TVL',
-			encode: { x: 'timestamp', y: 'TVL' },
+			encode: { x: 0, y: 2 },
 			color: '#222',
 			valueSymbol: '$',
 			yAxisIndex: 0
@@ -316,8 +325,8 @@ describe('ChartDataTransformer', () => {
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
 		expect(transformed.props.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 30, TVL: 120 },
-			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 30, TVL: 110 }
+			[Date.UTC(2026, 0, 1), 30, 120],
+			[Date.UTC(2026, 1, 1), 30, 110]
 		])
 	})
 
@@ -325,14 +334,14 @@ describe('ChartDataTransformer', () => {
 		const chart = makeAscendingBarChart()
 		chart.props.dataset.dimensions.push('TVL')
 		chart.props.dataset.source = [
-			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 10, TVL: 100 },
-			{ timestamp: Date.UTC(2026, 1, 1), TVL: 90 },
-			{ timestamp: Date.UTC(2026, 2, 1), Revenue: 30, TVL: 110 }
+			[Date.UTC(2026, 0, 1), 10, 100],
+			[Date.UTC(2026, 1, 1), undefined, 90],
+			[Date.UTC(2026, 2, 1), 30, 110]
 		]
 		chart.props.charts?.push({
 			type: 'bar',
 			name: 'TVL',
-			encode: { x: 'timestamp', y: 'TVL' },
+			encode: { x: 0, y: 2 },
 			color: '#222',
 			valueSymbol: '$',
 			yAxisIndex: 1
@@ -359,9 +368,9 @@ describe('ChartDataTransformer', () => {
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
 		expect(transformed.props.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 10, TVL: 100 },
-			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 10, TVL: 90 },
-			{ timestamp: Date.UTC(2026, 2, 1), Revenue: 40, TVL: 110 }
+			[Date.UTC(2026, 0, 1), 10, 100],
+			[Date.UTC(2026, 1, 1), 10, 90],
+			[Date.UTC(2026, 2, 1), 40, 110]
 		])
 		expect(transformed.props.charts).toMatchObject([
 			{ name: 'Revenue', type: 'line', hideAreaStyle: true },
@@ -372,8 +381,8 @@ describe('ChartDataTransformer', () => {
 	it('keeps a line-only cumulative view identical to daily values', () => {
 		const chart = makeMixedAxisChart('time')
 		chart.props.dataset.source = [
-			{ timestamp: Date.UTC(2026, 0, 1), 'Primary A': 20, 'Primary B': 30, Secondary: 5 },
-			{ timestamp: Date.UTC(2026, 0, 2), 'Primary A': 25, 'Primary B': 28, Secondary: 6 }
+			[Date.UTC(2026, 0, 1), 20, 30, 5],
+			[Date.UTC(2026, 0, 2), 25, 28, 6]
 		]
 
 		const transformed = ChartDataTransformer.applyViewState(
@@ -389,7 +398,7 @@ describe('ChartDataTransformer', () => {
 
 	it('groups then accumulates flow buckets without mutating a deeply frozen adapted chart', () => {
 		const chart = makeAscendingBarChart()
-		chart.props.dataset.source.push({ timestamp: Date.UTC(2026, 3, 1), Revenue: 40 })
+		chart.props.dataset.source.push([Date.UTC(2026, 3, 1), 40])
 		chart.rowCount = chart.props.dataset.source.length
 		deepFreeze(chart)
 
@@ -404,56 +413,23 @@ describe('ChartDataTransformer', () => {
 		expect(transformed.props.dataset).not.toBe(chart.props.dataset)
 		expect(transformed.props.dataset.source).not.toBe(chart.props.dataset.source)
 		expect(transformed.props.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 60 },
-			{ timestamp: Date.UTC(2026, 3, 1), Revenue: 100 }
+			[Date.UTC(2026, 0, 1), 60],
+			[Date.UTC(2026, 3, 1), 100]
 		])
 		expect(chart.props.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 10 },
-			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 20 },
-			{ timestamp: Date.UTC(2026, 2, 1), Revenue: 30 },
-			{ timestamp: Date.UTC(2026, 3, 1), Revenue: 40 }
+			[Date.UTC(2026, 0, 1), 10],
+			[Date.UTC(2026, 1, 1), 20],
+			[Date.UTC(2026, 2, 1), 30],
+			[Date.UTC(2026, 3, 1), 40]
 		])
-	})
-
-	it('keeps prototype-like series names on ordinary ECharts rows after grouping', () => {
-		const chart = makeAscendingBarChart()
-		chart.props.dataset.dimensions = ['timestamp', '__proto__']
-		chart.props.dataset.source = chart.props.dataset.source.map((row) => {
-			const nextRow: Record<string, number> = { timestamp: row.timestamp as number }
-			Object.defineProperty(nextRow, '__proto__', {
-				value: row.Revenue,
-				enumerable: true,
-				configurable: true,
-				writable: true
-			})
-			return nextRow
-		})
-		chart.props.charts![0] = {
-			...chart.props.charts![0],
-			name: '__proto__',
-			encode: { x: 'timestamp', y: '__proto__' }
-		}
-		chart.seriesMeta[0] = { ...chart.seriesMeta[0], name: '__proto__' }
-
-		const transformed = ChartDataTransformer.applyViewState(
-			chart,
-			{ ...viewState, grouping: 'quarter', percentage: false },
-			{ ...capabilities, allowGrouping: true }
-		)
-		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
-
-		const row = transformed.props.dataset.source[0]
-		expect(Object.getPrototypeOf(row)).toBe(Object.prototype)
-		expect(Object.hasOwn(row, '__proto__')).toBe(true)
-		expect(row.__proto__).toBe(60)
 	})
 
 	it('normalizes negative, missing, and zero percentage buckets without mutating input', () => {
 		const chart = makeMixedAxisChart('time')
 		chart.props.dataset.source = [
-			{ timestamp: Date.UTC(2026, 0, 1), 'Primary A': -20, 'Primary B': 30, Secondary: 5 },
-			{ timestamp: Date.UTC(2026, 0, 2), 'Primary B': 10, Secondary: 6 },
-			{ timestamp: Date.UTC(2026, 0, 3), 'Primary A': 0, 'Primary B': 0, Secondary: 7 }
+			[Date.UTC(2026, 0, 1), -20, 30, 5],
+			[Date.UTC(2026, 0, 2), undefined, 10, 6],
+			[Date.UTC(2026, 0, 3), 0, 0, 7]
 		]
 		chart.rowCount = chart.props.dataset.source.length
 		deepFreeze(chart)
@@ -462,9 +438,9 @@ describe('ChartDataTransformer', () => {
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
 		expect(transformed.props.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 0, 1), 'Primary A': -40, 'Primary B': 60, Secondary: 5 },
-			{ timestamp: Date.UTC(2026, 0, 2), 'Primary A': 0, 'Primary B': 100, Secondary: 6 },
-			{ timestamp: Date.UTC(2026, 0, 3), 'Primary A': 0, 'Primary B': 0, Secondary: 7 }
+			[Date.UTC(2026, 0, 1), -40, 60, 5],
+			[Date.UTC(2026, 0, 2), 0, 100, 6],
+			[Date.UTC(2026, 0, 3), 0, 0, 7]
 		])
 		expect(transformed.props.charts?.filter((series) => (series.yAxisIndex ?? 0) === 0)).toEqual(
 			expect.arrayContaining([
@@ -478,8 +454,8 @@ describe('ChartDataTransformer', () => {
 			valueSymbol: '$',
 			yAxisIndex: 1
 		})
-		expect(chart.props.dataset.source[1]).not.toHaveProperty('Primary A')
-		expect(chart.props.dataset.source[0]?.['Primary A']).toBe(-20)
+		expect(chart.props.dataset.source[1][1]).toBeUndefined()
+		expect(chart.props.dataset.source[0]?.[1]).toBe(-20)
 	})
 
 	it('groups legacy string timestamps and skips malformed timestamps', () => {
@@ -491,10 +467,10 @@ describe('ChartDataTransformer', () => {
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
 		expect(transformed.props.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 10 },
-			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 20 },
-			{ timestamp: Date.UTC(2026, 2, 1), Revenue: 30 },
-			{ timestamp: Date.UTC(2026, 3, 1), Revenue: 40 }
+			[Date.UTC(2026, 0, 1), 10],
+			[Date.UTC(2026, 1, 1), 20],
+			[Date.UTC(2026, 2, 1), 30],
+			[Date.UTC(2026, 3, 1), 40]
 		])
 	})
 
@@ -507,10 +483,10 @@ describe('ChartDataTransformer', () => {
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
 		expect(transformed.props.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 0, 1), Revenue: 10 },
-			{ timestamp: Date.UTC(2026, 1, 1), Revenue: 30 },
-			{ timestamp: Date.UTC(2026, 2, 1), Revenue: 60 },
-			{ timestamp: Date.UTC(2026, 3, 1), Revenue: 100 }
+			[Date.UTC(2026, 0, 1), 10],
+			[Date.UTC(2026, 1, 1), 30],
+			[Date.UTC(2026, 2, 1), 60],
+			[Date.UTC(2026, 3, 1), 100]
 		])
 	})
 

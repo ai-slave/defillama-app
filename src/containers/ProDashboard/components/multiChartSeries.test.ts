@@ -33,11 +33,11 @@ describe('buildMultiChartSeriesView', () => {
 		})
 
 		expect(result.dataset).toEqual({
-			dimensions: ['timestamp', 'series-0', 'series-1'],
+			dimensions: ['timestamp', 'Fees', 'TVL'],
 			source: [
-				{ timestamp: 1_000, 'series-0': 10, 'series-1': 100 },
-				{ timestamp: 2_000, 'series-0': null, 'series-1': 90 },
-				{ timestamp: 3_000, 'series-0': 7, 'series-1': null }
+				[1_000, 10, 100],
+				[2_000, null, 90],
+				[3_000, 7, null]
 			]
 		})
 		expect(result.charts).toEqual([
@@ -55,9 +55,9 @@ describe('buildMultiChartSeriesView', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			{ timestamp: 1_000, 'series-0': 10, 'series-1': 0 },
-			{ timestamp: 2_000, 'series-0': 0, 'series-1': 4 },
-			{ timestamp: 3_000, 'series-0': -3, 'series-1': 0 }
+			[1_000, 10, 0],
+			[2_000, 0, 4],
+			[3_000, -3, 0]
 		])
 		expect(result.charts.every((chart) => chart.type === 'bar' && chart.stack === 'total')).toBe(true)
 		expect(result.charts.every((chart) => !('connectNulls' in chart))).toBe(true)
@@ -86,7 +86,7 @@ describe('buildMultiChartSeriesView', () => {
 			stackSeries: false
 		})
 
-		expect(result.dataset.source).toEqual([{ timestamp: 1_000, 'series-0': 75, 'series-1': 25 }])
+		expect(result.dataset.source).toEqual([[1_000, 75, 25]])
 		expect(result.charts.map((chart) => chart.name)).toEqual(['Small', 'Large'])
 		expect(result.charts.every((chart) => chart.valueSymbol === '%' && chart.yAxisIndex === 0)).toBe(true)
 		expect(result.solidChartAreaStyle).toBe(true)

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/timeSeriesDataset'
+import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { readInvestorApiJson, type ApiDate, type ApiDateOrMonth, type ApiIsoTimestamp } from '../../api.types'
 import { assignColors } from './api'
 import { createSeriesConfigs } from './chartDefaults'
@@ -143,9 +144,9 @@ function parseDateToUnix(date: string) {
 	return Date.parse(date.length === 7 ? `${date}-01T00:00:00Z` : `${date}T00:00:00Z`) / 1000
 }
 
-function parseDatesToUnix(dates: readonly string[]) {
+function parseDatesToMilliseconds(dates: readonly string[]) {
 	const timestamps = new Array<number>(dates.length)
-	for (let i = 0; i < dates.length; i++) timestamps[i] = parseDateToUnix(dates[i])
+	for (let i = 0; i < dates.length; i++) timestamps[i] = parseDateToUnix(dates[i]) * 1e3
 	return timestamps
 }
 
@@ -170,58 +171,43 @@ function buildTimeSeriesChart(
 	}
 }
 
-type LegacySeries = {
-	name: string
-	type: 'line' | 'bar'
-	color: string
-	data: Array<[number, number]>
-	yAxisIndex?: number
-	areaStyle?: { opacity: number }
+function buildTreasuryModel(chart: TreasuryData): CartesianChartModel {
+	const thresholdValues = new Array<number>(chart.dates.length).fill(chart.threshold)
+	return buildAlignedCartesianChartModel(
+		parseDatesToMilliseconds(chart.dates),
+		[
+			...chart.series.map((series) => ({
+				name: series.name,
+				type: 'line' as const,
+				color: '#4FC3F7',
+				values: series.data
+			})),
+			{
+				name: 'Buyback Threshold',
+				type: 'line' as const,
+				color: '#EF5350',
+				areaStyle: { opacity: 0 },
+				values: thresholdValues
+			}
+		],
+		{ timestampMultiplier: 1 }
+	)
 }
 
-function buildTreasurySeries(chart: TreasuryData): LegacySeries[] {
-	const timestamps = parseDatesToUnix(chart.dates)
-	const output = new Array<LegacySeries>(chart.series.length + 1)
-
-	for (let i = 0; i < chart.series.length; i++) {
-		const input = chart.series[i]
-		const data = new Array<[number, number]>(timestamps.length)
-		for (let j = 0; j < timestamps.length; j++) data[j] = [timestamps[j], input.data[j]]
-		output[i] = { name: input.name, type: 'line', color: '#4FC3F7', data }
-	}
-
-	const thresholdData = new Array<[number, number]>(timestamps.length)
-	for (let i = 0; i < timestamps.length; i++) thresholdData[i] = [timestamps[i], chart.threshold]
-	output[chart.series.length] = {
-		name: 'Buyback Threshold',
-		type: 'line',
-		color: '#EF5350',
-		areaStyle: { opacity: 0 },
-		data: thresholdData
-	}
-
-	return output
-}
-
-function buildBuybacksSeries(chart: BuybacksData): LegacySeries[] {
-	const timestamps = parseDatesToUnix(chart.dates)
-	const output = new Array<LegacySeries>(chart.series.length)
-
-	for (let i = 0; i < chart.series.length; i++) {
-		const input = chart.series[i]
-		const data = new Array<[number, number]>(timestamps.length)
-		for (let j = 0; j < timestamps.length; j++) data[j] = [timestamps[j], input.data[j]]
-		output[i] = {
-			name: input.name,
-			type: input.type,
-			color: input.type === 'bar' ? '#1f6feb' : '#3fb950',
-			data,
-			yAxisIndex: input.type === 'line' ? 1 : 0,
-			areaStyle: input.type === 'line' ? { opacity: 0 } : undefined
-		}
-	}
-
-	return output
+function buildBuybacksModel(chart: BuybacksData): CartesianChartModel {
+	return buildAlignedCartesianChartModel(
+		parseDatesToMilliseconds(chart.dates),
+		chart.series.map((series) => ({
+			name: series.name,
+			type: series.type,
+			color: series.type === 'bar' ? '#1f6feb' : '#3fb950',
+			values: series.data,
+			yAxisIndex: series.type === 'line' ? 1 : 0,
+			areaStyle: series.type === 'line' ? { opacity: 0 } : undefined,
+			valueSymbol: 'SPK'
+		})),
+		{ timestampMultiplier: 1 }
+	)
 }
 
 type TimeSeriesChart = ReturnType<typeof buildTimeSeriesChart>
@@ -243,8 +229,8 @@ export interface FinancialsViewModel {
 	borrows: TimeSeriesChart
 	sllTvl: TimeSeriesChart
 	savingsTvl: TimeSeriesChart
-	treasurySeries: LegacySeries[]
-	buybacksSeries: LegacySeries[]
+	treasuryModel: CartesianChartModel
+	buybacksModel: CartesianChartModel
 	quarterlyReports?: QuarterlyReport[]
 }
 
@@ -280,8 +266,8 @@ export function buildFinancialsViewModel(response: FinancialsAPIResponse): Finan
 		borrows: buildTimeSeriesChart(charts.sparklendBorrows, 'line', undefined, false, '#f85149'),
 		sllTvl: buildTimeSeriesChart(charts.sllTvl, 'line', 'a', true),
 		savingsTvl: buildTimeSeriesChart(charts.savingsTvl, 'line', 'a', true),
-		treasurySeries: buildTreasurySeries(charts.treasury),
-		buybacksSeries: buildBuybacksSeries(charts.buybacks),
+		treasuryModel: buildTreasuryModel(charts.treasury),
+		buybacksModel: buildBuybacksModel(charts.buybacks),
 		quarterlyReports: response.meta.quarterlyReports
 	}
 }

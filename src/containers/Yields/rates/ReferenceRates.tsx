@@ -1,9 +1,9 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useRef, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/ChartGroupingSelector'
-import { formatTooltipChartDate } from '~/components/ECharts/formatters'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/shared/ChartGroupingSelector'
+import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { Select } from '~/components/Select/Select'
 import {
 	TokenPageTable,
@@ -33,9 +33,7 @@ import {
 } from './fetch'
 import { buildRatesChart } from './ratesChart'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 type SortDir = 'asc' | 'desc'
 type SortKey = 'supply' | 'borrow' | 'spread' | 'markets'
@@ -119,7 +117,7 @@ function RatesChart({ points, onReady }: { points: RefRatePoint[]; onReady?: (in
 				</ChartPanelBodyFallback>
 			}
 		>
-			<MultiSeriesChart2
+			<MultiSeriesChart
 				dataset={spec.dataset}
 				charts={spec.charts}
 				chartOptions={RATES_CHART_OPTIONS}

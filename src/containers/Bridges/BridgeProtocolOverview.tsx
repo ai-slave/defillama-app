@@ -1,11 +1,11 @@
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
-import type { IPieChartProps } from '~/components/ECharts/types'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -32,7 +32,7 @@ import {
 } from './bridgeProtocolChartData'
 import type { BridgePageData } from './types'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const CHART_TYPES = ['Inflows', 'Volume', 'Tokens To', 'Tokens From'] as const
 type ChartType = (typeof CHART_TYPES)[number]
@@ -230,7 +230,7 @@ export const BridgeInfo = ({
 					<>
 						{chartType === 'Volume' && isAllChains && volumeDataset.source.length > 0 ? (
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
-								<MultiSeriesChart2
+								<MultiSeriesChart
 									dataset={volumeDataset}
 									charts={VOLUME_CHARTS}
 									groupBy={groupBy}
@@ -241,7 +241,7 @@ export const BridgeInfo = ({
 						) : null}
 						{chartType === 'Inflows' && !isAllChains && inflowsDataset.source.length > 0 ? (
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
-								<MultiSeriesChart2
+								<MultiSeriesChart
 									dataset={inflowsDataset}
 									charts={INFLOW_CHARTS}
 									groupBy={groupBy}

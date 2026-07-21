@@ -1,5 +1,4 @@
 import { fetchCoinPrices as fetchCoinPricesBatched } from '~/api/pricing'
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import { DATASETS_SERVER_URL } from '~/constants'
 import { buildUnlocksMultiSeriesChartForDateRange } from '~/containers/Unlocks/buildUnlocksMultiSeriesChart'
 import type { PrecomputedData, UnlocksData } from '~/containers/Unlocks/calendarTypes'
@@ -18,6 +17,7 @@ import type {
 	TokenAllocationSplit
 } from './api.types'
 import type { CalendarUnlockEvent } from './calendarTypes'
+import { buildEmissionProjectionModel } from './emissionsChartData'
 import type { ProtocolEmissionResult } from './types'
 
 type UnlockTokenlistEntry = Pick<ITokenListEntry, 'current_price' | 'symbol'>
@@ -32,17 +32,27 @@ const TOKEN_LIST_API_URL = `${DATASETS_SERVER_URL}/tokenlist/rankings.json`
 let unlockTokenlistPromise: Promise<UnlockTokenlist> | null = null
 
 function buildEmissionsDataset(chartData: Array<EmissionsChartRow>, stacks: string[]): EmissionsDataset {
+	const source = new Array<EmissionsDataset['source'][number]>(chartData.length)
+	for (let rowIndex = 0; rowIndex < chartData.length; rowIndex++) {
+		const input = chartData[rowIndex]
+		const row = new Array<number | null>(stacks.length + 1)
+		row[0] = input.timestamp
+		for (let stackIndex = 0; stackIndex < stacks.length; stackIndex++) {
+			row[stackIndex + 1] = input[stacks[stackIndex]] ?? null
+		}
+		source[rowIndex] = row
+	}
 	return {
-		source: chartData,
+		source,
 		dimensions: ['timestamp', ...stacks]
 	}
 }
 
 function buildEmissionsCharts(stacks: string[], colors: Record<string, string>): EmissionsChartConfig {
-	return stacks.map((name) => ({
+	return stacks.map((name, index) => ({
 		type: 'line' as const,
 		name,
-		encode: { x: 'timestamp' as const, y: name },
+		encode: { x: 0 as const, y: index + 1 },
 		color: colors[name],
 		stack: 'A'
 	}))
@@ -67,8 +77,8 @@ function roundEmissionEvents(events: EmissionEvent[] | undefined | null): Emissi
 }
 
 const EMPTY_TOKEN_ALLOCATION_SPLIT: TokenAllocationSplit = {
-	current: createChartRecord<number>(),
-	final: createChartRecord<number>()
+	current: {},
+	final: {}
 }
 
 function isStringKeyedObject(value: unknown): value is Record<string, unknown> {
@@ -76,7 +86,7 @@ function isStringKeyedObject(value: unknown): value is Record<string, unknown> {
 }
 
 function toNumberRecord(obj: Record<string, unknown>): Record<string, number> {
-	const result = createChartRecord<number>()
+	const result = {}
 	for (const key in obj) {
 		if (!Object.prototype.hasOwnProperty.call(obj, key)) continue
 		const val = obj[key]
@@ -92,8 +102,8 @@ function normalizeTokenAllocation(input: unknown): TokenAllocationSplit {
 
 	if ('current' in input || 'final' in input) {
 		return {
-			current: isStringKeyedObject(input.current) ? toNumberRecord(input.current) : createChartRecord<number>(),
-			final: isStringKeyedObject(input.final) ? toNumberRecord(input.final) : createChartRecord<number>()
+			current: isStringKeyedObject(input.current) ? toNumberRecord(input.current) : {},
+			final: isStringKeyedObject(input.final) ? toNumberRecord(input.final) : {}
 		}
 	}
 
@@ -105,7 +115,7 @@ function normalizeTokenAllocation(input: unknown): TokenAllocationSplit {
 function normalizeCategoriesBreakdown(input: unknown): Record<string, string[]> | null {
 	if (!input || typeof input !== 'object') return null
 
-	const normalized = createChartRecord<string[]>()
+	const normalized = {}
 	for (const [group, value] of Object.entries(input)) {
 		if (Array.isArray(value)) {
 			normalized[group] = value.filter((item): item is string => typeof item === 'string')
@@ -236,6 +246,8 @@ interface EmissionsDataInput {
 							unlocked?: number | null | undefined
 							rawEmission?: number | null | undefined
 							burned?: number | null | undefined
+							isTBD?: boolean | undefined
+							isForecast?: boolean | undefined
 					  }>
 					| undefined
 		  }>
@@ -246,10 +258,14 @@ interface EmissionsDataInput {
 function buildEmissionsSeriesAndCategories(input: EmissionsDataInput | null | undefined): {
 	series: Record<number, Record<string, number | null>>
 	categories: string[]
+	tbdSections: string[]
+	forecastSections: string[]
 } {
-	const series = createChartRecord<Record<string, number | null>>()
+	const series = {}
 	const categories: string[] = []
 	const seen = new Set<string>()
+	const tbdSections: string[] = []
+	const forecastSections: string[] = []
 
 	for (const emission of input?.data ?? []) {
 		const label = formatEmissionLabel(emission?.label)
@@ -259,16 +275,21 @@ function buildEmissionsSeriesAndCategories(input: EmissionsDataInput | null | un
 			seen.add(label)
 			categories.push(label)
 		}
+		// Projection is a series-level property duplicated on every live API point.
+		// Read the first point once instead of checking it in the row-construction loop.
+		const firstValue = emission.data?.[0]
+		if (firstValue?.isTBD) tbdSections.push(label)
+		else if (firstValue?.isForecast) forecastSections.push(label)
 
 		for (const value of emission?.data ?? []) {
 			const ts = value?.timestamp
 			if (typeof ts !== 'number' || !Number.isFinite(ts)) continue
-			const entry = series[ts] ?? (series[ts] = createChartRecord<number | null>())
+			const entry = series[ts] ?? (series[ts] = {})
 			entry[label] = value?.unlocked ?? null
 		}
 	}
 
-	return { series, categories }
+	return { series, categories, tbdSections, forecastSections }
 }
 
 function seriesToChartRows(series: Record<number, Record<string, number | null>>): EmissionsChartRow[] {
@@ -276,7 +297,7 @@ function seriesToChartRows(series: Record<number, Record<string, number | null>>
 	for (const tsStr in series) {
 		const tsSeconds = Number(tsStr)
 		if (!Number.isFinite(tsSeconds)) continue
-		const row = createChartRow<number | null>(tsSeconds * 1e3)
+		const row = { timestamp: tsSeconds * 1e3 } as { timestamp: number } & Record<string, number | null>
 		const values = series[tsSeconds]
 		for (const label of Object.keys(values)) row[label] = values[label]
 		rows.push(row)
@@ -305,7 +326,7 @@ function buildColorsForPie(
 	pie: Array<{ name: string }>,
 	colorFrom: Record<string, string> = {}
 ): Record<string, string> {
-	const colors = createChartRecord<string>()
+	const colors = {}
 	const names = new Set(pie.map((p) => p.name))
 	const baseNameCache = new Map<string, string>()
 	const baseNameOf = (name: string): string => {
@@ -407,12 +428,12 @@ export async function getProtocolEmissionsScheduleData(protocolName: string): Pr
 
 	// Assign colors by category order to keep schedule charts fully colored.
 	const documentedPalette = getNDistinctColors(categories.documented.length)
-	const documentedColors = createChartRecord<string>()
+	const documentedColors = {}
 	for (let i = 0; i < categories.documented.length; i++)
 		documentedColors[categories.documented[i]] = documentedPalette[i]
 
 	const realtimePalette = getNDistinctColors(categories.realtime.length)
-	const realtimeColors = createChartRecord<string>()
+	const realtimeColors = {}
 	for (let i = 0; i < categories.realtime.length; i++) realtimeColors[categories.realtime[i]] = realtimePalette[i]
 
 	const datasets = {
@@ -620,7 +641,7 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 		)
 	}
 
-	// Precompute chart payloads for the current week/month so the client can render MultiSeriesChart2
+	// Precompute chart payloads for the current week/month so the client can render MultiSeriesChart
 	// without recomputing on first paint (still falls back to client computation for filtered views).
 	const weekStart = dayjs().startOf('week')
 	const weekKey = weekStart.format('YYYY-MM-DD')
@@ -856,20 +877,10 @@ export const getAllProtocolEmissions = async ({
 const EMPTY_TBD_SECTIONS: string[] = []
 const EMPTY_FORECAST_SECTIONS: string[] = []
 
-function extractSections(res: ProtocolEmissionDetail, flag: string): string[] {
-	const sections = res.componentData?.sections
-	if (!sections) return []
-	const matches: string[] = []
-	for (const [name, section] of Object.entries(sections)) {
-		if (section?.[flag]) matches.push(name)
-	}
-	return matches
-}
-
 function extractColorFromMap(res: ProtocolEmissionDetail): Record<string, string> {
 	const sections = res.componentData?.sections
-	if (!sections) return createChartRecord<string>()
-	const map = createChartRecord<string>()
+	if (!sections) return {}
+	const map = {}
 	for (const [name, section] of Object.entries(sections)) {
 		const target = section?.colorFrom
 		if (typeof target === 'string' && target && target !== name && sections[target]) {
@@ -956,6 +967,13 @@ export const getProtocolEmissons = async (
 		const documentedBuilt = buildEmissionsSeriesAndCategories(documentedData)
 		const realtimeBuilt = buildEmissionsSeriesAndCategories(realTimeData)
 		const emissionCategories = { documented: documentedBuilt.categories, realtime: realtimeBuilt.categories }
+		const projectionModel = buildEmissionProjectionModel({
+			chartSections: documentedBuilt.categories.concat(realtimeBuilt.categories),
+			categoriesBreakdown: normalizeCategoriesBreakdown(res.categories),
+			sectionMetadata: res.componentData?.sections,
+			seriesTbdSections: documentedBuilt.tbdSections.concat(realtimeBuilt.tbdSections),
+			seriesForecastSections: documentedBuilt.forecastSections.concat(realtimeBuilt.forecastSections)
+		})
 
 		const chartData = {
 			documented: seriesToChartRows(documentedBuilt.series),
@@ -1012,7 +1030,7 @@ export const getProtocolEmissons = async (
 			tokenPrice.symbol = 'LOOKS'
 		}
 
-		// Pre-build MultiSeriesChart2-ready datasets so consumers don't duplicate this work.
+		// Pre-build MultiSeriesChart-ready datasets so consumers don't duplicate this work.
 		const datasets = {
 			documented: buildEmissionsDataset(chartData.documented, emissionCategories.documented),
 			realtime: buildEmissionsDataset(chartData.realtime, emissionCategories.realtime)
@@ -1040,7 +1058,7 @@ export const getProtocolEmissons = async (
 			},
 			futures: futures ?? {},
 			categories: emissionCategories,
-			categoriesBreakdown: normalizeCategoriesBreakdown(res.categories),
+			categoriesBreakdown: projectionModel.categoriesBreakdown,
 			hallmarks: {
 				documented: (documentedData.data?.length ?? 0) > 0 ? [[nowSec, 'Today']] : [],
 				realtime: (realTimeData.data?.length ?? 0) > 0 ? [[nowSec, 'Today']] : []
@@ -1048,8 +1066,8 @@ export const getProtocolEmissons = async (
 			name: name || null,
 			tokenPrice,
 			unlockUsdChart: res.unlockUsdChart ?? null,
-			tbdSections: extractSections(res, 'isTBD'),
-			forecastSections: extractSections(res, 'isForecast'),
+			tbdSections: projectionModel.tbdSections,
+			forecastSections: projectionModel.forecastSections,
 			insiders: {
 				methodology: res.insiders?.methodology ?? '',
 				addresses: res.insiders?.addresses ?? []

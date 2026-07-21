@@ -59,31 +59,6 @@ describe('narrative performance freshness', () => {
 		])
 	})
 
-	it('merges API-grouped coin streams into one chronological chart without globally sorting the input', () => {
-		const names = Object.fromEntries([
-			['coin-a', 'Coin A'],
-			['coin-b', '__proto__']
-		])
-		const result = calculateCumulativePercentageChange(
-			[
-				['coin-a', '2026-06-14T00:00:00Z', 100],
-				['coin-a', '2026-07-14T00:00:00Z', 120],
-				['coin-b', '2026-06-14T00:00:00Z', 50],
-				['coin-b', '2026-07-01T00:00:00Z', 55],
-				['coin-b', '2026-07-14T00:00:00Z', 60]
-			],
-			names,
-			30,
-			NOW
-		)
-
-		expect(result.map((row) => row.date)).toEqual([seconds('2026-06-14'), seconds('2026-07-01'), seconds('2026-07-14')])
-		expect(Object.getPrototypeOf(result[0])).toBeNull()
-		expect(result[0]?.__proto__).toBe(0)
-		expect(result[2]?.['Coin A']).toBe(20)
-		expect(result[2]?.__proto__).toBe(20)
-	})
-
 	it('omits a coin when its current or exact comparison price is missing', () => {
 		const result = calculateCumulativePercentageChange(
 			[

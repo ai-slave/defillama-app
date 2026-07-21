@@ -6,13 +6,13 @@ import type { IProtocolTaxonomyPageData, IProtocolsCategoriesPageData, IProtocol
 type ProtocolTaxonomyProtocol = IProtocolTaxonomyPageData['protocols'][number]
 type ProtocolsCategoriesChartState = {
 	dataset: {
-		source: IProtocolsCategoriesPageData['chartSource']
+		source: Array<Array<number | null>>
 		dimensions: Array<string>
 	}
 	charts: Array<{
 		type: 'line'
 		name: string
-		encode: { x: 'timestamp'; y: string }
+		encode: { x: 0; y: number }
 		stack: 'stackA'
 		color: string
 	}>
@@ -96,20 +96,19 @@ export function applyProtocolTaxonomyTvlSettings({
 
 	const finalProtocols = protocols.map((protocol) => applyProtocolRowTvlSettings(protocol, enabledTvls))
 	const shouldMirrorBorrowedChart = effectiveCategory === 'Lending' && enabledTvls.includes('borrowed')
+	const tvlIndex = charts.dataset.dimensions.indexOf('TVL')
+	const activeLoansIndex = charts.dataset.dimensions.indexOf('Active Loans')
 	const finalSource: IProtocolTaxonomyPageData['charts']['dataset']['source'] = charts.dataset.source.map((row) => {
-		const timestampKey = row.timestamp
+		const timestampKey = row[0] as number
 		const extraSum = timestampKey == null ? 0 : sumEnabledExtraTvlChartValues(extraTvlCharts, enabledTvls, timestampKey)
 
-		const currentTvlValue = typeof row.TVL === 'number' ? row.TVL : Number(row.TVL ?? 0)
-		const safeCurrentTvlValue = Number.isFinite(currentTvlValue) ? currentTvlValue : 0
-		const nextTvlValue = safeCurrentTvlValue + extraSum
-		const timestamp = row.timestamp
+		const nextTvlValue = ((row[tvlIndex] as number | null | undefined) ?? 0) + extraSum
+		const nextRow = [...row]
+		nextRow[tvlIndex] = nextTvlValue
 
-		if (shouldMirrorBorrowedChart) {
-			return { ...row, timestamp, TVL: nextTvlValue, 'Active Loans': nextTvlValue }
-		}
+		if (shouldMirrorBorrowedChart && activeLoansIndex >= 0) nextRow[activeLoansIndex] = nextTvlValue
 
-		return { ...row, timestamp, TVL: nextTvlValue }
+		return nextRow
 	})
 
 	return {
@@ -153,29 +152,30 @@ export function buildProtocolsCategoriesTvlCharts({
 	const selectedCategoriesSet = new Set(selectedCategories)
 	const filteredCategories = categories.filter((categoryName) => selectedCategoriesSet.has(categoryName))
 
-	const source: IProtocolsCategoriesPageData['chartSource'] = chartSource.map((row) => {
-		if (enabledTvls.length === 0) return row
+	const source = chartSource.map((row) => {
+		const adjustedRow = new Array<number | null>(filteredCategories.length + 1)
+		adjustedRow[0] = row.timestamp
 
-		const adjustedRow: IProtocolsCategoriesPageData['chartSource'][number] = {
-			timestamp: row.timestamp
-		}
-
-		for (const categoryName of filteredCategories) {
+		for (let index = 0; index < filteredCategories.length; index++) {
+			const categoryName = filteredCategories[index]
 			const baseValue = row[categoryName]
 			const safeBaseValue = typeof baseValue === 'number' ? baseValue : 0
-			const extraTvlValue = sumEnabledExtraTvlChartValues(extraTvlCharts[categoryName], enabledTvls, row.timestamp)
+			const extraTvlValue =
+				enabledTvls.length === 0
+					? 0
+					: sumEnabledExtraTvlChartValues(extraTvlCharts[categoryName], enabledTvls, row.timestamp)
 
-			adjustedRow[categoryName] = safeBaseValue + extraTvlValue
+			adjustedRow[index + 1] = safeBaseValue + extraTvlValue
 		}
 
 		return adjustedRow
 	})
 
 	const dimensions = ['timestamp', ...filteredCategories]
-	const charts = filteredCategories.map((categoryName) => ({
+	const charts = filteredCategories.map((categoryName, index) => ({
 		type: 'line' as const,
 		name: categoryName,
-		encode: { x: 'timestamp' as const, y: categoryName },
+		encode: { x: 0 as const, y: index + 1 },
 		stack: 'stackA' as const,
 		color: categoryColors[categoryName]
 	}))

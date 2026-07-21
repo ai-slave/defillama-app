@@ -91,10 +91,10 @@ describe('Maple chart data', () => {
 		})
 		expect(result.tvl).toEqual({
 			dimensions: ['Name', 'TVL'],
-			source: [{ Name: 'High Yield', TVL: 250_000 }]
+			source: [['High Yield', 250_000]]
 		})
-		expect(result.utilization.source).toEqual([{ Name: 'High Yield', Utilization: 20 }])
-		expect(result.apy.source).toEqual([{ Name: 'High Yield', 'Spot APY': 7.5 }])
+		expect(result.utilization.source).toEqual([['High Yield', 20]])
+		expect(result.apy.source).toEqual([['High Yield', 7.5]])
 	})
 
 	it('normalizes raw loan amounts and Unix seconds into every chart dataset', () => {
@@ -136,14 +136,14 @@ describe('Maple chart data', () => {
 			weightedAverageRate: 5.75,
 			averageAgeDays: 74
 		})
-		expect(result.principalByPool.source).toEqual([{ Name: 'Blue Chip', Principal: 3_000 }])
+		expect(result.principalByPool.source).toEqual([['Blue Chip', 3_000]])
 		expect(result.rateDistribution.source).toEqual([
-			{ Name: '4-6%', Principal: 2_500 },
-			{ Name: '10%+', Principal: 500 }
+			['4-6%', 2_500],
+			['10%+', 500]
 		])
 		expect(result.ageDistribution.source).toEqual([
-			{ Name: '< 1mo', Principal: 2_500 },
-			{ Name: '3-6mo', Principal: 500 }
+			['< 1mo', 2_500],
+			['3-6mo', 500]
 		])
 	})
 
@@ -165,8 +165,8 @@ describe('Maple chart data', () => {
 		).toEqual({
 			dimensions: ['timestamp', 'Deposits', 'Withdrawals'],
 			source: [
-				{ timestamp: Date.parse('2026-01-01T00:00:00Z'), Deposits: 10, Withdrawals: 3 },
-				{ timestamp: Date.parse('2026-02-01T00:00:00Z'), Deposits: 7, Withdrawals: 0 }
+				[Date.parse('2026-01-01T00:00:00Z'), 10, 3],
+				[Date.parse('2026-02-01T00:00:00Z'), 7, 0]
 			]
 		})
 	})
@@ -178,7 +178,7 @@ describe('Maple chart data', () => {
 		]
 		expect(aggregateDripByMonth(rows)).toEqual({
 			dimensions: ['timestamp', 'Claimed'],
-			source: [{ timestamp: Date.parse('2026-01-01T00:00:00Z'), Claimed: 5 }]
+			source: [[Date.parse('2026-01-01T00:00:00Z'), 5]]
 		})
 	})
 })

@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { V2_SERVER_URL } from '~/constants'
 import {
 	fetchAdapterProtocolChartData,
@@ -18,9 +17,9 @@ import { createSeriesConfigs } from './chartDefaults'
 
 const PROTOCOL_SLUG = 'sparklend'
 const STALE_TIME = 10 * 60 * 1000
-const EMPTY_TVL_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp', 'TVL'] }
-const EMPTY_INFLOWS_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp', 'USD Inflows'] }
-const EMPTY_BORROWED_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp', 'Borrowed'] }
+const EMPTY_TVL_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp', 'TVL'] }
+const EMPTY_INFLOWS_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp', 'USD Inflows'] }
+const EMPTY_BORROWED_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp', 'Borrowed'] }
 
 interface SparklendTvlResponse {
 	chainTvls?: Record<string, { tvl?: Array<{ date: number | string; totalLiquidityUSD?: number | string | null }> }>
@@ -82,20 +81,16 @@ export function useSparklendTvlChart() {
 			}
 		}
 
-		const source = new Array<MultiSeriesChart2Dataset['source'][number]>(raw.length)
-		const inflowSource: MultiSeriesChart2Dataset['source'] = []
+		const source = new Array<number[]>(raw.length)
+		const inflowSource: MultiSeriesChartDataset['source'] = []
 		for (let i = 0; i < raw.length; i++) {
 			const [timestamp, value] = raw[i]
-			const row: MultiSeriesChart2Dataset['source'][number] = {
-				timestamp: Math.floor(timestamp / 1e3) * 1e3,
-				TVL: value
-			}
+			const chartTimestamp = Math.floor(timestamp / 1e3) * 1e3
+			source[i] = [chartTimestamp, value]
 			if (i > 0) {
 				const previousValue = raw[i - 1][1]
-				row['USD Inflows'] = value - previousValue
-				inflowSource.push(row)
+				inflowSource.push([chartTimestamp, value - previousValue])
 			}
-			source[i] = row
 		}
 
 		return {
@@ -115,7 +110,7 @@ export function useSparklendBorrowedChart() {
 			if (!res.ok) return { dataset: EMPTY_BORROWED_DATASET, current: null }
 			const data = await readInvestorApiJson<SparklendTvlResponse>(res)
 			const chainTvls = data?.chainTvls || {}
-			const store: Record<number, number> = {}
+			const store = new Map<number, number>()
 			for (const key in chainTvls) {
 				if (!key.endsWith('-borrowed')) continue
 				const arr = chainTvls[key]?.tvl || []
@@ -123,14 +118,14 @@ export function useSparklendBorrowedChart() {
 					const d = Number(item?.date)
 					const v = Number(item?.totalLiquidityUSD ?? 0)
 					if (!Number.isFinite(d) || !Number.isFinite(v)) continue
-					store[d] = (store[d] ?? 0) + v
+					store.set(d, (store.get(d) ?? 0) + v)
 				}
 			}
-			const source: MultiSeriesChart2Dataset['source'] = []
-			for (const dateKey in store) {
-				source.push({ timestamp: +dateKey * 1e3, Borrowed: store[dateKey] })
+			const source: MultiSeriesChartDataset['source'] = []
+			for (const [date, value] of store) {
+				source.push([date * 1e3, value])
 			}
-			source.sort((a, b) => (a.timestamp as number) - (b.timestamp as number))
+			source.sort((a, b) => (a[0] as number) - (b[0] as number))
 			const current = data?.currentChainTvls?.borrowed ?? null
 			return { dataset: { source, dimensions: ['timestamp', 'Borrowed'] }, current }
 		},
@@ -148,10 +143,10 @@ export function useSparklendBorrowedChart() {
 	)
 }
 
-function buildMetricDataset(data: Array<[number, number]>, name: string): MultiSeriesChart2Dataset {
-	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(data.length)
+function buildMetricDataset(data: Array<[number, number]>, name: string): MultiSeriesChartDataset {
+	const source = new Array<MultiSeriesChartDataset['source'][number]>(data.length)
 	for (let i = 0; i < data.length; i++) {
-		source[i] = { timestamp: data[i][0] * 1e3, [name]: data[i][1] }
+		source[i] = [data[i][0] * 1e3, data[i][1]]
 	}
 	return { source, dimensions: ['timestamp', name] }
 }
@@ -202,23 +197,23 @@ export function useSparklendFeesCharts() {
 		const feesData = fees.data ?? []
 		const revenueData = revenue.data ?? []
 		const supplySideRevenueData = supplySideRevenue.data ?? []
-		let feesDataset: MultiSeriesChart2Dataset
-		let revenueDataset: MultiSeriesChart2Dataset
-		let supplySideRevenueDataset: MultiSeriesChart2Dataset
+		let feesDataset: MultiSeriesChartDataset
+		let revenueDataset: MultiSeriesChartDataset
+		let supplySideRevenueDataset: MultiSeriesChartDataset
 
 		if (areMetricsAligned([feesData, revenueData, supplySideRevenueData])) {
-			const source = new Array<MultiSeriesChart2Dataset['source'][number]>(feesData.length)
+			const feesSource = new Array<number[]>(feesData.length)
+			const revenueSource = new Array<number[]>(feesData.length)
+			const supplySideRevenueSource = new Array<number[]>(feesData.length)
 			for (let i = 0; i < feesData.length; i++) {
-				source[i] = {
-					timestamp: feesData[i][0] * 1e3,
-					Fees: feesData[i][1],
-					Revenue: revenueData[i][1],
-					'Supply Side Revenue': supplySideRevenueData[i][1]
-				}
+				const timestamp = feesData[i][0] * 1e3
+				feesSource[i] = [timestamp, feesData[i][1]]
+				revenueSource[i] = [timestamp, revenueData[i][1]]
+				supplySideRevenueSource[i] = [timestamp, supplySideRevenueData[i][1]]
 			}
-			feesDataset = { source, dimensions: ['timestamp', 'Fees'] }
-			revenueDataset = { source, dimensions: ['timestamp', 'Revenue'] }
-			supplySideRevenueDataset = { source, dimensions: ['timestamp', 'Supply Side Revenue'] }
+			feesDataset = { source: feesSource, dimensions: ['timestamp', 'Fees'] }
+			revenueDataset = { source: revenueSource, dimensions: ['timestamp', 'Revenue'] }
+			supplySideRevenueDataset = { source: supplySideRevenueSource, dimensions: ['timestamp', 'Supply Side Revenue'] }
 		} else {
 			feesDataset = buildMetricDataset(feesData, 'Fees')
 			revenueDataset = buildMetricDataset(revenueData, 'Revenue')
@@ -282,18 +277,21 @@ function breakdownToChart(
 ) {
 	if (!data || data.length === 0) {
 		return {
-			dataset: { source: [], dimensions: ['timestamp'] } satisfies MultiSeriesChart2Dataset,
+			dataset: { source: [], dimensions: ['timestamp'] } satisfies MultiSeriesChartDataset,
 			charts: [] as ReturnType<typeof createSeriesConfigs>
 		}
 	}
 
 	const lastEntry = data[data.length - 1]?.[1] ?? {}
 	const stacks = Object.keys(lastEntry).sort((a, b) => (lastEntry[b] ?? 0) - (lastEntry[a] ?? 0))
-	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(data.length)
+	const source = new Array<MultiSeriesChartDataset['source'][number]>(data.length)
 	for (let i = 0; i < data.length; i++) {
 		const [timestamp, values] = data[i]
-		const row = createChartRow<number>(timestamp * timestampMultiplier)
-		for (const name of stacks) row[name] = values[name] || 0
+		const row = new Array<number>(stacks.length + 1)
+		row[0] = timestamp * timestampMultiplier
+		for (let stackIndex = 0; stackIndex < stacks.length; stackIndex++) {
+			row[stackIndex + 1] = values[stacks[stackIndex]] || 0
+		}
 		source[i] = row
 	}
 

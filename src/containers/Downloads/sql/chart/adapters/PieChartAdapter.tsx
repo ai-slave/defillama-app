@@ -1,71 +1,47 @@
+import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
+import type { PieTooltipParams } from '~/components/ECharts/PieChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
 import { SQL_CHART_HEIGHT } from '../chartLayout'
-import { formatterFromConfig } from '../valueFormatters'
+import { escapeSqlChartHtml, readSqlNumber } from '../rowValues'
+import { makeValueFormatter } from '../valueFormatters'
 
-interface IPieChartShim {
-	chartData: Array<{ name: string; value: number }>
-	stackColors?: Record<string, string>
-	valueSymbol?: string
-	radius?: [string, string]
-	showLegend?: boolean
-	height?: string
-	title?: string
-	onReady?: (instance: any) => void
-	formatTooltip?: (params: any) => string
-}
-
-const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as unknown as React.FC<IPieChartShim>
+const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 
 interface PieChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
 	classified: ClassifiedColumn[]
-	onReady?: (instance: any) => void
+	onReady?: (instance: echarts.ECharts | null) => void
 }
 
 const TOP_N_SLICES = 12
 
 export function PieChartAdapter({ config, result, classified, onReady }: PieChartAdapterProps) {
-	const formatter = formatterFromConfig(config)
-	const nameCol = config.xCol ?? classified.find((c) => c.coarse === 'category')?.name ?? null
-	const valueCol = config.yCols[0] ?? classified.find((c) => c.coarse === 'number')?.name ?? null
+	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
+	const nameCol = classified.find(
+		(column) => column.name === (config.xCol ?? classified.find((c) => c.coarse === 'category')?.name)
+	)
+	const valueCol = classified.find(
+		(column) => column.name === (config.yCols[0] ?? classified.find((c) => c.coarse === 'number')?.name)
+	)
 
 	const { chartData, stackColors, truncated } = useMemo(() => {
-		if (!nameCol || !valueCol) return { chartData: [], stackColors: {}, truncated: 0 }
-		const acc = new Map<string, number>()
-		for (const row of result.rows) {
-			const rawName = row[nameCol]
-			const name = rawName == null ? '∅' : String(rawName)
-			const v = toNumber(row[valueCol])
-			if (v == null) continue
-			acc.set(name, (acc.get(name) ?? 0) + v)
-		}
-		const entries = [...acc.entries()].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-		const top = entries.slice(0, TOP_N_SLICES)
-		const rest = entries.slice(TOP_N_SLICES)
-		const chart = top.map(([name, value]) => ({ name, value }))
-		if (rest.length > 0) {
-			const otherValue = rest.reduce((s, [, v]) => s + v, 0)
-			chart.push({ name: 'Other', value: otherValue })
-		}
-		const colors: Record<string, string> = {}
-		chart.forEach((item, i) => {
-			colors[item.name] = config.seriesColors[item.name] ?? CHART_COLORS[i % CHART_COLORS.length]
-		})
-		return { chartData: chart, stackColors: colors, truncated: rest.length }
+		return nameCol && valueCol
+			? buildSqlPieData(result.rows, nameCol.index, valueCol.index, config.seriesColors)
+			: { chartData: [], stackColors: {}, truncated: 0 }
 	}, [result, nameCol, valueCol, config.seriesColors])
 
 	const isDonut = config.chartType === 'donut'
 
-	const formatTooltip = (params: any) => {
-		const value = params?.value
-		const pct = params?.percent
-		return `<strong>${escape(String(params?.name ?? ''))}</strong><br/>${formatter.tooltip(value)} (${pct}%)`
+	const formatTooltip = (params: PieTooltipParams) => {
+		const value = readSqlNumber(params.value) ?? 0
+		const percent = typeof params.percent === 'number' ? params.percent : 0
+		return `<strong>${escapeSqlChartHtml(String(params.name ?? ''))}</strong><br/>${formatter.tooltip(value)} (${percent}%)`
 	}
 
 	if (!nameCol || !valueCol)
@@ -104,16 +80,38 @@ export function PieChartAdapter({ config, result, classified, onReady }: PieChar
 	)
 }
 
-function toNumber(v: unknown): number | null {
-	if (typeof v === 'number') return Number.isFinite(v) ? v : null
-	if (typeof v === 'bigint') return Number(v)
-	if (typeof v === 'string') {
-		const n = Number(v.trim())
-		return Number.isFinite(n) ? n : null
+export function buildSqlPieData(
+	rows: unknown[][],
+	nameIndex: number,
+	valueIndex: number,
+	seriesColors: Record<string, string>
+) {
+	const totals = new Map<string, number>()
+	for (const row of rows) {
+		const rawName = row[nameIndex]
+		const name = rawName == null ? '∅' : String(rawName)
+		const value = readSqlNumber(row[valueIndex])
+		if (value == null) continue
+		totals.set(name, (totals.get(name) ?? 0) + value)
 	}
-	return null
-}
 
-function escape(s: string): string {
-	return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+	const entries = [...totals.entries()].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+	const top = entries.slice(0, TOP_N_SLICES)
+	const rest = entries.slice(TOP_N_SLICES)
+	const chartData = top.map(([name, value]) => ({ name, value }))
+	if (rest.length > 0) {
+		let otherValue = 0
+		for (const [, value] of rest) otherValue += value
+		const existingOther = chartData.find((item) => item.name === 'Other')
+		if (existingOther) existingOther.value += otherValue
+		else chartData.push({ name: 'Other', value: otherValue })
+	}
+
+	const configuredColors = new Map(Object.entries(seriesColors))
+	const colorEntries = new Array<[string, string]>(chartData.length)
+	for (let index = 0; index < chartData.length; index++) {
+		const name = chartData[index].name
+		colorEntries[index] = [name, configuredColors.get(name) ?? CHART_COLORS[index % CHART_COLORS.length]]
+	}
+	return { chartData, stackColors: Object.fromEntries(colorEntries), truncated: rest.length }
 }

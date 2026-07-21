@@ -1,8 +1,8 @@
 import { lazy, memo, Suspense, useCallback, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
-import { getMetricUnitGroup } from '~/components/ECharts/metricGroups'
+import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { Select } from '~/components/Select/Select'
+import { getMetricUnitGroup } from '~/containers/ProDashboard/components/metricGroups'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { capitalizeFirstLetter } from '~/utils'
@@ -21,8 +21,8 @@ import { ConfirmationModal } from './ConfirmationModal'
 import { buildMultiChartCsvRows, buildMultiChartSeriesView } from './multiChartSeries'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
-const TreeMapBuilderChart = lazy(() => import('~/components/ECharts/TreeMapBuilderChart'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const BuilderTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/Builder'))
 
 const CUMULATIVE_DISPLAY_OPTIONS = [
 	{ name: 'Show individual values', key: 'Individual' },
@@ -484,11 +484,11 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 				</div>
 			) : showTreemap && treemapData.length > 0 ? (
 				<Suspense fallback={<div className="min-h-[360px]" />}>
-					<TreeMapBuilderChart key={multi.id} data={treemapData} height="360px" onReady={handleChartReady} />
+					<BuilderTreemapChart key={multi.id} data={treemapData} height="360px" onReady={handleChartReady} />
 				</Suspense>
 			) : (
 				<Suspense fallback={<div className="min-h-[360px]" />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={chartView.dataset}
 						charts={chartView.charts}
 						valueSymbol={showPercentage ? '%' : allPercentMetrics ? '%' : allCountMetrics || allRatioMetrics ? '' : '$'}

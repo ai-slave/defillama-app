@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IProtocol } from '../types'
 import {
 	aggregateProtocolVersions,
@@ -19,52 +19,62 @@ import {
 
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
 
-const baseChartData = {
+type NamedChartRow = Record<string, string | number | null | undefined>
+
+function toDataset({ dimensions, source }: { dimensions: string[]; source: NamedChartRow[] }): MultiSeriesChartDataset {
+	return { dimensions, source: source.map((row) => dimensions.map((dimension) => row[dimension])) }
+}
+
+function datasetValue(dataset: MultiSeriesChartDataset, rowIndex: number, dimension: string) {
+	return dataset.source[rowIndex][dataset.dimensions.indexOf(dimension)]
+}
+
+const baseChartData = toDataset({
 	dimensions: ['timestamp', 'Ethereum', 'Solana', 'Base'],
 	source: [
 		{ timestamp: toMs(2024, 1, 1), Ethereum: 10, Solana: 0, Base: 0 },
 		{ timestamp: toMs(2024, 1, 2), Ethereum: 10, Solana: 20, Base: 0 },
 		{ timestamp: toMs(2024, 1, 3), Ethereum: 10, Solana: 0, Base: 30 }
 	]
-}
+})
 
-const nonMidnightDailyChartData = {
+const nonMidnightDailyChartData = toDataset({
 	dimensions: ['timestamp', 'Ethereum', 'Solana'],
 	source: [
 		{ timestamp: toMs(2024, 1, 1), Ethereum: 10, Solana: 20 },
 		{ timestamp: toMs(2024, 1, 2) + 12 * 60 * 60 * 1000, Ethereum: 30, Solana: 40 }
 	]
-}
+})
 
-const shortGapDailyChartData = {
+const shortGapDailyChartData = toDataset({
 	dimensions: ['timestamp', 'Ethereum', 'Solana'],
 	source: [
 		{ timestamp: toMs(2024, 1, 1), Ethereum: 10, Solana: 20 },
 		{ timestamp: toMs(2024, 1, 1) + 22 * 60 * 60 * 1000, Ethereum: 30, Solana: 40 }
 	]
-}
+})
 
-const singlePointDailyChartData = {
+const singlePointDailyChartData = toDataset({
 	dimensions: ['timestamp', 'Ethereum', 'Solana'],
 	source: [{ timestamp: toMs(2024, 1, 1) + 12 * 60 * 60 * 1000, Ethereum: 30, Solana: 40 }]
-}
+})
 
-const sparseChartData = {
+const sparseChartData = toDataset({
 	dimensions: ['timestamp', 'Ethereum', 'Solana'],
 	source: [
 		{ timestamp: toMs(2024, 1, 1), Ethereum: 10 },
 		{ timestamp: toMs(2024, 1, 2), Ethereum: 10, Solana: 20 }
 	]
-}
+})
 
-const adapterBreakdownChartData = {
+const adapterBreakdownChartData = toDataset({
 	dimensions: ['timestamp', 'Hyperliquid Perps', 'dYdX', 'GMX'],
 	source: [
 		{ timestamp: toMs(2024, 1, 1), 'Hyperliquid Perps': 10, dYdX: 20, GMX: 0 },
 		{ timestamp: toMs(2024, 1, 2), 'Hyperliquid Perps': 20, dYdX: 10, GMX: 10 },
 		{ timestamp: toMs(2024, 1, 3), 'Hyperliquid Perps': 30, dYdX: 0, GMX: 10 }
 	]
-}
+})
 
 describe('normalizeChainsByAdapterChartState', () => {
 	it('returns the default bar state when no query params are present', () => {
@@ -164,11 +174,16 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.groupBy).toBe('daily')
 		expect(presentation.charts.every((chart) => chart.stack === 'chain')).toBe(true)
 		expect(presentation.charts.every((chart) => chart.large === false)).toBe(true)
-		expect(presentation.dataset.source).toEqual([
-			{ timestamp: toMs(2024, 1, 1), Ethereum: 10, Solana: 0 },
-			{ timestamp: toMs(2024, 1, 2), Ethereum: 10, Solana: 20 },
-			{ timestamp: toMs(2024, 1, 3), Ethereum: 10, Solana: 0 }
-		])
+		expect(presentation.dataset.source).toEqual(
+			toDataset({
+				dimensions: presentation.dataset.dimensions,
+				source: [
+					{ timestamp: toMs(2024, 1, 1), Ethereum: 10, Solana: 0 },
+					{ timestamp: toMs(2024, 1, 2), Ethereum: 10, Solana: 20 },
+					{ timestamp: toMs(2024, 1, 3), Ethereum: 10, Solana: 0 }
+				]
+			}).source
+		)
 	})
 
 	it('builds relative separate bars that sum to 100 per timestamp', () => {
@@ -195,12 +210,12 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.charts.every((chart) => chart.large == null)).toBe(true)
 
 		const [day1, day2, day3] = presentation.dataset.source
-		expect(day1.Ethereum).toBe(100)
-		expect(day1.Solana).toBe(0)
-		expect(day2.Ethereum).toBeCloseTo(33.3333333333)
-		expect(day2.Solana).toBeCloseTo(66.6666666667)
-		expect(day3.Ethereum).toBe(100)
-		expect(day3.Solana).toBe(0)
+		expect(day1[1]).toBe(100)
+		expect(day1[2]).toBe(0)
+		expect(day2[1]).toBeCloseTo(33.3333333333)
+		expect(day2[2]).toBeCloseTo(66.6666666667)
+		expect(day3[1]).toBe(100)
+		expect(day3[2]).toBe(0)
 	})
 
 	it('clamps negative values to zero when normalizing relative shares', () => {
@@ -211,13 +226,13 @@ describe('buildChainsByAdapterChartPresentation', () => {
 			groupBy: 'daily'
 		}
 		const presentation = buildChainsByAdapterChartPresentation({
-			chartData: {
+			chartData: toDataset({
 				dimensions: ['timestamp', 'Ethereum', 'Solana', 'Base'],
 				source: [
 					{ timestamp: toMs(2024, 1, 1), Ethereum: -10, Solana: 20, Base: null },
 					{ timestamp: toMs(2024, 1, 2), Ethereum: 0, Solana: 0, Base: 5 }
 				]
-			},
+			}),
 			selectedChains: ['Ethereum', 'Solana', 'Base'],
 			state
 		})
@@ -225,13 +240,12 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.kind).toBe('bar')
 		if (presentation.kind !== 'bar') return
 
-		const [day1, day2] = presentation.dataset.source
-		expect(day1.Ethereum).toBe(0)
-		expect(day1.Solana).toBe(100)
-		expect(day1.Base).toBeNull()
-		expect(day2.Ethereum).toBe(0)
-		expect(day2.Solana).toBe(0)
-		expect(day2.Base).toBe(100)
+		expect(datasetValue(presentation.dataset, 0, 'Ethereum')).toBe(0)
+		expect(datasetValue(presentation.dataset, 0, 'Solana')).toBe(100)
+		expect(datasetValue(presentation.dataset, 0, 'Base')).toBeNull()
+		expect(datasetValue(presentation.dataset, 1, 'Ethereum')).toBe(0)
+		expect(datasetValue(presentation.dataset, 1, 'Solana')).toBe(0)
+		expect(datasetValue(presentation.dataset, 1, 'Base')).toBe(100)
 	})
 
 	it('keeps missing chain values null so tooltips do not show fake zeroes', () => {
@@ -249,20 +263,25 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.kind).toBe('bar')
 		if (presentation.kind !== 'bar') return
 
-		expect(presentation.dataset.source).toEqual([
-			{ timestamp: toMs(2024, 1, 1), Ethereum: 10, Solana: null },
-			{ timestamp: toMs(2024, 1, 2), Ethereum: 10, Solana: 20 }
-		])
+		expect(presentation.dataset.source).toEqual(
+			toDataset({
+				dimensions: presentation.dataset.dimensions,
+				source: [
+					{ timestamp: toMs(2024, 1, 1), Ethereum: 10, Solana: null },
+					{ timestamp: toMs(2024, 1, 2), Ethereum: 10, Solana: 20 }
+				]
+			}).source
+		)
 	})
 
 	it('folds a real Others series into the overflow aggregate without duplicating the dimension', () => {
 		const regularChains = Array.from({ length: 10 }, (_, index) => `Chain ${index + 1}`)
 		const values = Object.fromEntries(regularChains.map((name, index) => [name, 90 - index]))
 		const presentation = buildChainsByAdapterChartPresentation({
-			chartData: {
+			chartData: toDataset({
 				dimensions: ['timestamp', 'Others', ...regularChains],
 				source: [{ timestamp: toMs(2024, 1, 1), Others: 100, ...values }]
-			},
+			}),
 			selectedChains: ['Others', ...regularChains],
 			state: {
 				chartKind: 'bar',
@@ -277,7 +296,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 
 		expect(presentation.charts.filter((chart) => chart.name === 'Others')).toHaveLength(1)
 		expect(presentation.dataset.dimensions.filter((name) => name === 'Others')).toHaveLength(1)
-		expect(presentation.dataset.source[0].Others).toBe(181)
+		expect(datasetValue(presentation.dataset, 0, 'Others')).toBe(181)
 	})
 
 	it('builds grouped relative lines normalized to share', () => {
@@ -294,8 +313,8 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.charts.every((chart) => chart.type === 'line' && chart.hideAreaStyle == null)).toBe(true)
 
 		const [week1] = presentation.dataset.source
-		expect(week1.Ethereum).toBeCloseTo(60)
-		expect(week1.Solana).toBeCloseTo(40)
+		expect(week1[1]).toBeCloseTo(60)
+		expect(week1[2]).toBeCloseTo(40)
 	})
 
 	it('builds treemap data from the last complete daily chart timestamp', () => {
@@ -363,13 +382,13 @@ describe('buildChainsByAdapterChartPresentation', () => {
 	it('keeps first-row selection for duplicate latest daily timestamps', () => {
 		const timestamp = toMs(2024, 1, 2)
 		const presentation = buildChainsByAdapterChartPresentation({
-			chartData: {
+			chartData: toDataset({
 				dimensions: ['timestamp', 'Ethereum'],
 				source: [
 					{ timestamp, Ethereum: 10 },
 					{ timestamp, Ethereum: 20 }
 				]
-			},
+			}),
 			selectedChains: ['Ethereum'],
 			state: { chartKind: 'treemap', groupBy: 'daily' }
 		})
@@ -388,7 +407,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 	})
 
 	it('builds hbar data from the latest-value ranking and groups overflow into Others', () => {
-		const extendedChainChartData = {
+		const extendedChainChartData = toDataset({
 			dimensions: ['timestamp', ...Array.from({ length: 11 }, (_, index) => `Chain ${index + 1}`)],
 			source: [
 				{
@@ -406,7 +425,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 					'Chain 11': 5
 				}
 			]
-		}
+		})
 		const presentation = buildChainsByAdapterChartPresentation({
 			chartData: extendedChainChartData,
 			selectedChains: Array.from({ length: 11 }, (_, index) => `Chain ${index + 1}`),
@@ -468,13 +487,13 @@ describe('buildChainsByAdapterChartPresentation', () => {
 
 	it('keeps zero cumulative totals distinct from missing selected series for ranking', () => {
 		const presentation = buildAdapterByChainBreakdownPresentation({
-			chartData: {
+			chartData: toDataset({
 				dimensions: ['timestamp', 'Positive', 'Missing', 'Zero'],
 				source: [
 					{ timestamp: toMs(2024, 1, 1), Positive: 5, Zero: 0 },
 					{ timestamp: toMs(2024, 1, 2), Positive: 10, Zero: 0 }
 				]
-			},
+			}),
 			selectedProtocols: ['Positive', 'Missing', 'Zero'],
 			state: {
 				chartKind: 'bar',
@@ -487,18 +506,18 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.kind).toBe('bar')
 		expect(presentation.charts.map((chart) => chart.name)).toEqual(['Positive', 'Zero', 'Missing'])
 		expect(presentation.charts.every((chart) => chart.type === 'line' && chart.stack == null)).toBe(true)
-		expect(presentation.dataset.source.at(-1)).toMatchObject({ Positive: 15, Zero: 0, Missing: null })
+		expect(presentation.dataset.source.at(-1)).toEqual([toMs(2024, 1, 2), 15, 0, null])
 	})
 
 	it('sums rolling-window values for dominance-backed latest-value charts (weekly = last 7 days)', () => {
-		const lineBackedChartData = {
+		const lineBackedChartData = toDataset({
 			dimensions: ['timestamp', 'Hyperliquid', 'dYdX'],
 			source: [
 				{ timestamp: toMs(2024, 1, 1), Hyperliquid: 10, dYdX: 5 },
 				{ timestamp: toMs(2024, 1, 2), Hyperliquid: 20, dYdX: 15 },
 				{ timestamp: toMs(2024, 1, 3), Hyperliquid: 15, dYdX: 25 }
 			]
-		}
+		})
 
 		const presentation = buildAdapterByChainLatestValuePresentation({
 			chartKind: 'hbar',
@@ -519,13 +538,13 @@ describe('buildChainsByAdapterChartPresentation', () => {
 	it('excludes protocols with no data in the yearly rolling window from treemap', () => {
 		const latest = toMs(2026, 3, 15)
 		const olderThanOneYear = latest - 400 * 24 * 60 * 60 * 1000
-		const yearlyStoppedProtocolChartData = {
+		const yearlyStoppedProtocolChartData = toDataset({
 			dimensions: ['timestamp', 'Active', 'StoppedLongAgo'],
 			source: [
 				{ timestamp: olderThanOneYear, Active: 1, StoppedLongAgo: 999 },
 				{ timestamp: latest, Active: 100 }
 			]
-		}
+		})
 
 		const presentation = buildChainsByAdapterChartPresentation({
 			chartData: yearlyStoppedProtocolChartData,
@@ -544,14 +563,14 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		const t0 = toMs(2025, 1, 1)
 		const t1 = toMs(2025, 6, 1)
 		const t2 = toMs(2026, 3, 1)
-		const yearlyRollingChartData = {
+		const yearlyRollingChartData = toDataset({
 			dimensions: ['timestamp', 'Ethereum', 'Solana'],
 			source: [
 				{ timestamp: t0, Ethereum: 10, Solana: 5 },
 				{ timestamp: t1, Ethereum: 20, Solana: 10 },
 				{ timestamp: t2, Ethereum: 30, Solana: 15 }
 			]
-		}
+		})
 
 		const presentation = buildChainsByAdapterChartPresentation({
 			chartData: yearlyRollingChartData,
@@ -574,43 +593,6 @@ describe('buildChainsByAdapterChartPresentation', () => {
 })
 
 describe('buildAdapterByChainBreakdownPresentation', () => {
-	it('groups series names that overlap Object prototype keys', () => {
-		const januaryProtoRow = JSON.parse(
-			`{"timestamp":${toMs(2024, 1, 1)},"__proto__":7}`
-		) as MultiSeriesChart2Dataset['source'][number]
-		const februaryProtoRow = JSON.parse(
-			`{"timestamp":${toMs(2024, 2, 1)},"__proto__":11}`
-		) as MultiSeriesChart2Dataset['source'][number]
-		const presentation = buildAdapterByChainBreakdownPresentation({
-			chartData: {
-				dimensions: ['timestamp', 'constructor', '__proto__', 'Other'],
-				source: [
-					{ timestamp: toMs(2024, 1, 1), constructor: 2 },
-					{ timestamp: toMs(2024, 1, 2), constructor: 3 },
-					januaryProtoRow,
-					februaryProtoRow,
-					{ timestamp: toMs(2024, 2, 1), Other: 4 }
-				]
-			},
-			selectedProtocols: ['constructor', '__proto__', 'Other'],
-			state: {
-				chartKind: 'bar',
-				valueMode: 'absolute',
-				barLayout: 'stacked',
-				groupBy: 'monthly'
-			}
-		})
-
-		const [january, february] = presentation.dataset.source
-		expect(january).toMatchObject({ timestamp: toMs(2024, 1, 1), Other: null, constructor: 5 })
-		expect(february).toMatchObject({ timestamp: toMs(2024, 2, 1), Other: 4, constructor: null })
-		expect(Object.hasOwn(january, '__proto__')).toBe(true)
-		expect(Object.hasOwn(february, '__proto__')).toBe(true)
-		expect(january.__proto__).toBe(7)
-		expect(february.__proto__).toBe(11)
-		expect(presentation.charts.find((chart) => chart.name === '__proto__')?.color).toEqual(expect.any(String))
-	})
-
 	it('builds relative separate bars from selected protocol breakdown series', () => {
 		const presentation = buildAdapterByChainBreakdownPresentation({
 			chartData: adapterBreakdownChartData,
@@ -629,14 +611,14 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 		expect(presentation.charts.every((chart) => chart.stack == null)).toBe(true)
 		expect(presentation.charts.every((chart) => chart.large == null)).toBe(true)
 		expect(presentation.dataset.source).toEqual([
-			{ timestamp: toMs(2024, 1, 1), 'Hyperliquid Perps': 33.33333333333333, dYdX: 66.66666666666666 },
-			{ timestamp: toMs(2024, 1, 2), 'Hyperliquid Perps': 66.66666666666666, dYdX: 33.33333333333333 },
-			{ timestamp: toMs(2024, 1, 3), 'Hyperliquid Perps': 100, dYdX: 0 }
+			[toMs(2024, 1, 1), 33.33333333333333, 66.66666666666666],
+			[toMs(2024, 1, 2), 66.66666666666666, 33.33333333333333],
+			[toMs(2024, 1, 3), 100, 0]
 		])
 	})
 
 	it('ranks visible protocol series by the latest selected window instead of lifetime totals', () => {
-		const recentLeaderChartData = {
+		const recentLeaderChartData = toDataset({
 			dimensions: ['timestamp', ...Array.from({ length: 10 }, (_, index) => `Protocol ${index + 1}`), 'Hyperliquid'],
 			source: [
 				Object.assign(
@@ -648,7 +630,7 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 					Object.fromEntries(Array.from({ length: 10 }, (_, index) => [`Protocol ${index + 1}`, 1]))
 				)
 			]
-		}
+		})
 
 		const presentation = buildAdapterByChainBreakdownPresentation({
 			chartData: recentLeaderChartData,
@@ -668,13 +650,13 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 			'Hyperliquid',
 			...Array.from({ length: 10 }, (_, index) => `Protocol ${index + 1}`)
 		])
-		expect(presentation.dataset.source.at(-1)?.Hyperliquid).toBe(50)
-		expect(presentation.dataset.source.at(-1)?.['Protocol 10']).toBe(1)
+		expect(datasetValue(presentation.dataset, 1, 'Hyperliquid')).toBe(50)
+		expect(datasetValue(presentation.dataset, 1, 'Protocol 10')).toBe(1)
 	})
 
 	it('ranks cumulative dominance series by cumulative totals without collapsing overflow into Others', () => {
 		const selectedProtocols = ['History Giant', ...Array.from({ length: 10 }, (_, index) => `Protocol ${index + 1}`)]
-		const cumulativeLineChartData = {
+		const cumulativeLineChartData = toDataset({
 			dimensions: ['timestamp', 'History Giant', ...Array.from({ length: 10 }, (_, index) => `Protocol ${index + 1}`)],
 			source: [
 				Object.assign(
@@ -686,7 +668,7 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 					Object.fromEntries(Array.from({ length: 10 }, (_, index) => [`Protocol ${index + 1}`, 10]))
 				)
 			]
-		}
+		})
 
 		const presentation = buildAdapterByChainBreakdownPresentation({
 			chartData: cumulativeLineChartData,
@@ -702,15 +684,15 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 
 		expect(presentation.charts.map((chart) => chart.name)).toEqual(selectedProtocols)
 		expect(presentation.charts).toHaveLength(11)
-		expect(presentation.dataset.source.at(-1)?.['History Giant']).toBeCloseTo((101 / 201) * 100)
-		expect(presentation.dataset.source.at(-1)?.['Protocol 1']).toBeCloseTo((10 / 201) * 100)
-		expect(presentation.dataset.source.at(-1)?.['Protocol 10']).toBeCloseTo((10 / 201) * 100)
+		expect(datasetValue(presentation.dataset, 1, 'History Giant')).toBeCloseTo((101 / 201) * 100)
+		expect(datasetValue(presentation.dataset, 1, 'Protocol 1')).toBeCloseTo((10 / 201) * 100)
+		expect(datasetValue(presentation.dataset, 1, 'Protocol 10')).toBeCloseTo((10 / 201) * 100)
 	})
 
 	it('limits oversized protocol breakdowns and aggregates the remaining values into Others', () => {
 		const protocolNames = Array.from({ length: 32 }, (_, index) => `Protocol ${index + 1}`)
 		const timestamp = toMs(2024, 1, 1)
-		const chartData = {
+		const chartData = toDataset({
 			dimensions: ['timestamp', ...protocolNames],
 			source: [
 				Object.assign(
@@ -718,7 +700,7 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 					Object.fromEntries(protocolNames.map((name, index) => [name, protocolNames.length - index]))
 				)
 			]
-		}
+		})
 
 		const presentation = buildAdapterByChainBreakdownPresentation({
 			chartData,
@@ -735,23 +717,19 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 		expect(presentation.charts.at(-1)?.name).toBe('Others')
 		expect(presentation.dataset.dimensions).toEqual(['timestamp', ...protocolNames.slice(0, 29), 'Others'])
 		expect(presentation.dataset.source).toEqual([
-			{
-				timestamp,
-				...Object.fromEntries(protocolNames.slice(0, 29).map((name, index) => [name, protocolNames.length - index])),
-				Others: 6
-			}
+			[timestamp, ...protocolNames.slice(0, 29).map((_, index) => protocolNames.length - index), 6]
 		])
 	})
 
 	it('keeps a narrow selection exact when the source has many sparse dimensions', () => {
 		const timestamp = toMs(2024, 1, 1)
-		const chartData = {
+		const chartData = toDataset({
 			dimensions: ['timestamp', 'Selected', ...Array.from({ length: 9 }, (_, index) => `Other ${index + 1}`)],
 			source: [
 				{ timestamp, Selected: 10, 'Other 1': 100 },
 				{ timestamp: toMs(2024, 1, 2), Selected: 20, 'Other 2': 200 }
 			]
-		}
+		})
 
 		const presentation = buildAdapterByChainBreakdownPresentation({
 			chartData,
@@ -769,8 +747,8 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 		expect(presentation.dataset).toEqual({
 			dimensions: ['timestamp', 'Selected'],
 			source: [
-				{ timestamp, Selected: 10 },
-				{ timestamp: toMs(2024, 1, 2), Selected: 20 }
+				[timestamp, 10],
+				[toMs(2024, 1, 2), 20]
 			]
 		})
 	})
@@ -778,13 +756,13 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 
 describe('buildAdapterByChainLatestValuePresentation', () => {
 	it('uses the last complete daily chart timestamp', () => {
-		const chartData = {
+		const chartData = toDataset({
 			dimensions: ['timestamp', 'Hyperliquid', 'dYdX', 'GMX'],
 			source: [
 				{ timestamp: toMs(2024, 1, 1), Hyperliquid: 20, dYdX: 10, GMX: 0 },
 				{ timestamp: toMs(2024, 1, 2), Hyperliquid: 70, dYdX: 30, GMX: 10 }
 			]
-		}
+		})
 
 		const presentation = buildAdapterByChainLatestValuePresentation({
 			chartKind: 'treemap',
@@ -802,10 +780,10 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 	})
 
 	it('returns no rows when selected protocols are missing from the chosen daily timestamp', () => {
-		const chartData = {
+		const chartData = toDataset({
 			dimensions: ['timestamp', 'Hyperliquid', 'dYdX'],
 			source: [{ timestamp: toMs(2024, 1, 2), Hyperliquid: 70, dYdX: 30 }]
-		}
+		})
 
 		const presentation = buildAdapterByChainLatestValuePresentation({
 			chartKind: 'hbar',
@@ -821,7 +799,7 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 	})
 
 	it('builds hbar data from selected protocols and groups overflow into Others', () => {
-		const manyProtocolChartData = {
+		const manyProtocolChartData = toDataset({
 			dimensions: ['timestamp', ...Array.from({ length: 11 }, (_, index) => `Protocol ${index + 1}`)],
 			source: [
 				Object.assign(
@@ -829,7 +807,7 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 					Object.fromEntries(Array.from({ length: 11 }, (_, index) => [`Protocol ${index + 1}`, 110 - index * 10]))
 				)
 			]
-		}
+		})
 
 		const presentation = buildAdapterByChainLatestValuePresentation({
 			chartKind: 'hbar',
@@ -847,10 +825,10 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 	})
 
 	it('uses the selected daily chart protocols directly', () => {
-		const chartData = {
+		const chartData = toDataset({
 			dimensions: ['timestamp', 'Hyperliquid', 'dYdX', 'GMX'],
 			source: [{ timestamp: toMs(2024, 1, 2), Hyperliquid: 70, dYdX: 30, GMX: 10 }]
-		}
+		})
 
 		const presentation = buildAdapterByChainLatestValuePresentation({
 			chartKind: 'hbar',
@@ -874,7 +852,7 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 			chartKind: 'treemap',
 			selectedProtocols: protocols,
 			groupBy: 'cumulative',
-			chartData: {
+			chartData: toDataset({
 				dimensions: ['timestamp', ...protocols],
 				source: [
 					Object.assign(
@@ -882,7 +860,7 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 						Object.fromEntries(protocols.map((name, index) => [name, protocols.length - index]))
 					)
 				]
-			}
+			})
 		})
 
 		expect(presentation.kind).toBe('treemap')
@@ -897,13 +875,13 @@ describe('mergeSingleDimensionChartDataset', () => {
 	it('adds bribes and token tax data into the base series', () => {
 		expect(
 			mergeSingleDimensionChartDataset({
-				chartData: {
+				chartData: toDataset({
 					dimensions: ['timestamp', 'Fees'],
 					source: [
 						{ timestamp: toMs(2024, 1, 1), Fees: 10 },
 						{ timestamp: toMs(2024, 1, 2), Fees: 20 }
 					]
-				},
+				}),
 				extraCharts: [
 					[
 						[Math.floor(toMs(2024, 1, 1) / 1e3), 1],
@@ -916,23 +894,23 @@ describe('mergeSingleDimensionChartDataset', () => {
 				]
 			}).source
 		).toEqual([
-			{ timestamp: toMs(2024, 1, 1), Fees: 14 },
-			{ timestamp: toMs(2024, 1, 2), Fees: 26 }
+			[toMs(2024, 1, 1), 14],
+			[toMs(2024, 1, 2), 26]
 		])
 	})
 
 	it('keeps extra-only timestamps when fee extras are enabled', () => {
 		expect(
 			mergeSingleDimensionChartDataset({
-				chartData: {
+				chartData: toDataset({
 					dimensions: ['timestamp', 'Fees'],
 					source: [{ timestamp: toMs(2024, 1, 1), Fees: 10 }]
-				},
+				}),
 				extraCharts: [[[Math.floor(toMs(2024, 1, 2) / 1e3), 2]], [[Math.floor(toMs(2024, 1, 2) / 1e3), 4]]]
 			}).source
 		).toEqual([
-			{ timestamp: toMs(2024, 1, 1), Fees: 10 },
-			{ timestamp: toMs(2024, 1, 2), Fees: 6 }
+			[toMs(2024, 1, 1), 10],
+			[toMs(2024, 1, 2), 6]
 		])
 	})
 })
@@ -976,13 +954,13 @@ describe('mergeNamedDimensionChartDataset', () => {
 	it('adds extra chain values into the matching named dimensions', () => {
 		expect(
 			mergeNamedDimensionChartDataset({
-				chartData: {
+				chartData: toDataset({
 					dimensions: ['timestamp', 'Ethereum', 'Solana'],
 					source: [
 						{ timestamp: toMs(2024, 1, 1), Ethereum: 10, Solana: 20 },
 						{ timestamp: toMs(2024, 1, 2), Ethereum: 30, Solana: 40 }
 					]
-				},
+				}),
 				extraCharts: [
 					[
 						[Math.floor(toMs(2024, 1, 1) / 1e3), { ethereum: 1, solana: 2 }],
@@ -992,17 +970,17 @@ describe('mergeNamedDimensionChartDataset', () => {
 				]
 			}).source
 		).toEqual([
-			{ timestamp: toMs(2024, 1, 1), Ethereum: 10, Solana: 20 },
-			{ timestamp: toMs(2024, 1, 2), Ethereum: 33, Solana: 44 }
+			[toMs(2024, 1, 1), 10, 20],
+			[toMs(2024, 1, 2), 33, 44]
 		])
 	})
 
 	it('keeps extra-only timestamps for known named dimensions', () => {
 		const result = mergeNamedDimensionChartDataset({
-			chartData: {
+			chartData: toDataset({
 				dimensions: ['timestamp', 'Ethereum', 'Solana'],
 				source: [{ timestamp: toMs(2024, 1, 1), Ethereum: 10, Solana: 20 }]
-			},
+			}),
 			allowedDimensions: ['Ethereum', 'Solana', 'Base'],
 			extraCharts: [
 				[[Math.floor(toMs(2024, 1, 2) / 1e3), { ethereum: 100, Ethereum: 2 }]],
@@ -1012,8 +990,8 @@ describe('mergeNamedDimensionChartDataset', () => {
 
 		expect(result.dimensions).toEqual(['timestamp', 'Ethereum', 'Solana', 'Base'])
 		expect(result.source).toEqual([
-			{ timestamp: toMs(2024, 1, 1), Ethereum: 10, Solana: 20, Base: null },
-			{ timestamp: toMs(2024, 1, 2), Ethereum: 2, Solana: 4, Base: 99 }
+			[toMs(2024, 1, 1), 10, 20, null],
+			[toMs(2024, 1, 2), 2, 4, 99]
 		])
 	})
 })
@@ -1076,8 +1054,8 @@ describe('normalizeProtocolBreakdownChartData', () => {
 
 		expect(result.protocolDimensions).toEqual(['Hyperliquid'])
 		expect(result.chartData.source).toEqual([
-			{ timestamp: 1704067200 * 1e3, Hyperliquid: 10 },
-			{ timestamp: 1704153600 * 1e3, Hyperliquid: 20 }
+			[1704067200 * 1e3, 10],
+			[1704153600 * 1e3, 20]
 		])
 	})
 
@@ -1094,26 +1072,9 @@ describe('normalizeProtocolBreakdownChartData', () => {
 
 		expect(result.protocolDimensions).toEqual(['Alpha', 'Beta'])
 		expect(result.chartData.source).toEqual([
-			{ timestamp: 1704067200 * 1e3, Alpha: 20 },
-			{ timestamp: 1704153600 * 1e3, Beta: 10 }
+			[1704067200 * 1e3, 20, null],
+			[1704153600 * 1e3, null, 10]
 		])
-		expect(Object.hasOwn(result.chartData.source[0], 'Beta')).toBe(false)
-		expect(Object.hasOwn(result.chartData.source[1], 'Alpha')).toBe(false)
-	})
-
-	it('keeps __proto__ as an own numeric series value', () => {
-		const normalization = buildProtocolBreakdownNormalization([protocol('__proto__', null)])
-		const values = JSON.parse('{"__proto__":20}') as Record<string, number>
-
-		const result = normalizeProtocolBreakdownChartData({
-			chart: [[1704067200, values]],
-			normalization
-		})
-		const row = result.chartData.source[0]
-
-		expect(result.protocolDimensions).toEqual(['__proto__'])
-		expect(Object.hasOwn(row, '__proto__')).toBe(true)
-		expect(row.__proto__).toBe(20)
 	})
 
 	it('aggregates multiple child protocols into the parent canonical protocol', () => {
@@ -1133,8 +1094,8 @@ describe('normalizeProtocolBreakdownChartData', () => {
 
 		expect(result.protocolDimensions).toEqual(['Aster'])
 		expect(result.chartData.source).toEqual([
-			{ timestamp: 1704067200 * 1e3, Aster: 15 },
-			{ timestamp: 1704153600 * 1e3, Aster: 20 }
+			[1704067200 * 1e3, 15],
+			[1704153600 * 1e3, 20]
 		])
 	})
 

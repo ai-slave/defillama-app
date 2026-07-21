@@ -5,16 +5,16 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo, useState, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
-import { ChartGroupingSelector, DWM_GROUPING_OPTIONS_LOWERCASE } from '~/components/ECharts/ChartGroupingSelector'
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import type {
-	IHBarChartProps,
-	IMultiSeriesChart2Props,
-	IPieChartProps,
-	ITreemapChartProps,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
-import { groupMultiSeriesBarChartDataset, preparePieChartData } from '~/components/ECharts/utils'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
+import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import {
+	ChartGroupingSelector,
+	DWM_GROUPING_OPTIONS_LOWERCASE
+} from '~/components/ECharts/shared/ChartGroupingSelector'
+import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { getQueryUpdatesFromSelected } from '~/components/Select/query'
@@ -24,7 +24,12 @@ import { type ExcludeQueryKey } from '~/components/Select/types'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { CHART_COLORS } from '~/constants/colors'
-import { limitRwaHorizontalBarData, type RWAChartDataset, type RWAChartRow } from '~/containers/RWA/chartDataset'
+import {
+	limitRwaHorizontalBarData,
+	toRwaMultiSeriesChartDataset,
+	type RWAChartDataset,
+	type RWAChartRow
+} from '~/containers/RWA/chartDataset'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
@@ -113,11 +118,9 @@ import type {
 } from './types'
 
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
-const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<ITreemapChartProps>
+const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
 const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
 const EMPTY_SNAPSHOT_BREAKDOWN_ROWS: Array<{ name: string; value: number }> = []
@@ -1511,7 +1514,7 @@ export function buildRWAPerpsTimeSeriesDatasetForRows({
 	if (labelBySeries.size === 0) return EMPTY_DATASET
 
 	const source = dataset.source.map((row) => {
-		const nextRow = createChartRow<number | null>(row.timestamp) as RWAChartRow
+		const nextRow = { timestamp: row.timestamp } as { timestamp: number } & Record<string, number | null> as RWAChartRow
 
 		for (const [series, label] of labelBySeries) {
 			const value = row[series]
@@ -1535,8 +1538,8 @@ export function buildRWAPerpsTimeSeriesCharts({
 	metric: 'openInterest' | 'volume24h' | 'markets'
 	dimensions: string[]
 	timeSeriesMode: 'grouped' | 'breakdown'
-}): Array<MultiSeriesChart2SeriesConfig> {
-	const seriesType: MultiSeriesChart2SeriesConfig['type'] = metric === 'volume24h' ? 'bar' : 'line'
+}): Array<MultiSeriesChartSeriesConfig> {
+	const seriesType: MultiSeriesChartSeriesConfig['type'] = metric === 'volume24h' ? 'bar' : 'line'
 	const seriesKeys = dimensions.filter((dimension) => dimension !== 'timestamp')
 	const hasTotalOverlay = timeSeriesMode === 'breakdown' && metric !== 'volume24h' && seriesKeys.includes('Total')
 	const breakdownSeries = seriesKeys.filter((seriesName) => !(hasTotalOverlay && seriesName === 'Total'))
@@ -1897,15 +1900,12 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				? appendRWAPerpsTimeSeriesDatasetTotal(rawTimeSeriesDataset)
 				: rawTimeSeriesDataset
 	}, [chartState.timeSeriesMode, isTimeSeriesView, rawTimeSeriesDataset, shouldShowTotalOverlay])
-	const selectedTimeSeriesDataset = useMemo(
-		() =>
-			!isTimeSeriesView
-				? EMPTY_DATASET
-				: chartState.metric === 'volume24h'
-					? groupMultiSeriesBarChartDataset({ dataset: ungroupedTimeSeriesDataset, groupBy: volumeGroupBy })
-					: ungroupedTimeSeriesDataset,
-		[chartState.metric, isTimeSeriesView, ungroupedTimeSeriesDataset, volumeGroupBy]
-	)
+	const selectedTimeSeriesDataset = useMemo(() => {
+		const dataset = toRwaMultiSeriesChartDataset(isTimeSeriesView ? ungroupedTimeSeriesDataset : EMPTY_DATASET)
+		return chartState.metric === 'volume24h'
+			? groupMultiSeriesBarChartDataset({ dataset, groupBy: volumeGroupBy })
+			: dataset
+	}, [chartState.metric, isTimeSeriesView, ungroupedTimeSeriesDataset, volumeGroupBy])
 
 	const timeSeriesCharts = useMemo(
 		() =>
@@ -2226,7 +2226,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 						</ChartPanelBodyFallback>
 					) : (
 						<Suspense fallback={<ChartPanelBodyFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={deferredTimeSeriesDataset}
 								charts={timeSeriesCharts}
 								chartOptions={timeSeriesChartOptions}

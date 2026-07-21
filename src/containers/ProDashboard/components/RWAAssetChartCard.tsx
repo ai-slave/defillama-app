@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { toRwaMultiSeriesChartDataset } from '~/containers/RWA/chartDataset'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { RWAAssetChartConfig, RWAOverviewChartMetric } from '../types'
@@ -8,9 +9,7 @@ import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWAAssetChartData } from './datasets/RWADataset/useRWAChartData'
 import { LoadingSpinner } from './LoadingSpinner'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const METRIC_TO_DIMENSION: Record<RWAOverviewChartMetric, string> = {
 	activeMcap: 'Active Mcap',
@@ -32,7 +31,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 		if (!chartDataset) return null
 		const selectedDimensions = ['timestamp', ...metrics.map((m) => METRIC_TO_DIMENSION[m])]
 		const filteredDimensions = chartDataset.dimensions.filter((d) => selectedDimensions.includes(d))
-		const selectedDataset = { source: chartDataset.source, dimensions: filteredDimensions }
+		const selectedDataset = toRwaMultiSeriesChartDataset(chartDataset, filteredDimensions)
 		return timePeriod && timePeriod !== 'all'
 			? filterChartDatasetByTimePeriod(selectedDataset, timePeriod, customTimePeriod)
 			: selectedDataset
@@ -72,7 +71,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 					}
 				>
 					{filteredDataset ? (
-						<MultiSeriesChart2 dataset={filteredDataset} hideDefaultLegend={false} onReady={handleChartReady} />
+						<MultiSeriesChart dataset={filteredDataset} hideDefaultLegend={false} onReady={handleChartReady} />
 					) : (
 						<div className="flex h-[320px] items-center justify-center text-sm text-pro-text-secondary">
 							No data available

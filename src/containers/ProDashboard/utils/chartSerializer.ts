@@ -1,4 +1,4 @@
-import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import type { ChainChartLabels } from '~/containers/ChainOverview/constants'
 import type { ProtocolChartsLabels } from '~/containers/ProtocolOverview/constants'
 import type { ChartConfig, MultiChartConfig } from '../types'

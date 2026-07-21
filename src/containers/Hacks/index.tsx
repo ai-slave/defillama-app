@@ -11,8 +11,9 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { VirtualTable } from '~/components/Table/Table'
@@ -33,9 +34,9 @@ import { HacksFilters } from './Filters'
 import type { IHacksPageData } from './types'
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
 
 function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -302,14 +303,14 @@ export const HacksContainer = ({
 			totalRugs: formattedNum(totalBridgeHackRaw, true),
 			monthlyHacksChartData: {
 				dataset: {
-					source: monthlySeries.map(([timestamp, value]) => ({ timestamp, 'Total Value Hacked': value })),
+					source: monthlySeries,
 					dimensions: ['timestamp', 'Total Value Hacked']
 				},
 				charts: [
 					{
 						type: 'bar' as const,
 						name: 'Total Value Hacked',
-						encode: { x: 'timestamp', y: 'Total Value Hacked' },
+						encode: { x: 0, y: 1 },
 						color: CHART_COLORS[0],
 						stack: 'Total Value Hacked'
 					}
@@ -363,7 +364,7 @@ export const HacksContainer = ({
 					</ChartPanelToolbar>
 					{chartType === 'Monthly Sum' ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={deferredMonthlyHacksChartData.dataset}
 								charts={deferredMonthlyHacksChartData.charts}
 								groupBy="monthly"

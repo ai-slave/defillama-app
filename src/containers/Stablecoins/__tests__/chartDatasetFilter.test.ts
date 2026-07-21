@@ -6,9 +6,9 @@ describe('filterStablecoinDatasetByTimePeriod', () => {
 		const dataset = {
 			dimensions: ['timestamp', 'USD Inflows'],
 			source: [
-				{ timestamp: 1704067200000, 'USD Inflows': 10 },
-				{ timestamp: 1704153600000, 'USD Inflows': -5 },
-				{ timestamp: 1704240000000, 'USD Inflows': 20 }
+				[1704067200000, 10],
+				[1704153600000, -5],
+				[1704240000000, 20]
 			]
 		}
 
@@ -18,6 +18,6 @@ describe('filterStablecoinDatasetByTimePeriod', () => {
 				startDate: 1704153600,
 				endDate: 1704153600
 			}).source
-		).toEqual([{ timestamp: 1704153600000, 'USD Inflows': -5 }])
+		).toEqual([[1704153600000, -5]])
 	})
 })

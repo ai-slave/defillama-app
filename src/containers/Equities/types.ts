@@ -1,4 +1,4 @@
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type {
 	IEquitiesCompanyApiItem,
 	IEquitiesDimensionsResponse,
@@ -11,8 +11,8 @@ import type {
 } from './api.types'
 
 export interface IEquitiesPriceHistoryChart {
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 }
 
 export interface IEquitiesListCompanyRow extends IEquitiesCompanyApiItem {

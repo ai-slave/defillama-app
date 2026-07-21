@@ -4,13 +4,13 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
-import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
-import { prepareChartCsv } from '~/components/ECharts/utils'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
+import { prepareChartCsv } from '~/components/ECharts/shared/csv'
 import { EmbedChart } from '~/components/EmbedChart'
 import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useChartImageExport } from '~/hooks/useChartImageExport'

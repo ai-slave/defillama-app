@@ -1,10 +1,11 @@
+import type * as echarts from 'echarts/core'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Icon } from '~/ui/Icon'
 import { ChartRouter } from './chart'
 import { ChartExportButton } from './chart/ChartExportButton'
 import { ChartToolbar } from './chart/ChartToolbar'
 import { defaultChartConfig, migrateChartConfig, type ChartConfig } from './chartConfig'
-import { classifyColumns, type ClassifiedColumn } from './columnKind'
+import { classifyColumns } from './columnKind'
 import type { QueryResult } from './exportResults'
 
 interface ResultsChartProps {
@@ -14,8 +15,8 @@ interface ResultsChartProps {
 }
 
 export function ResultsChart({ result, chartConfig, onChartConfigChange }: ResultsChartProps) {
-	const chartInstanceRef = useRef<any>(null)
-	const handleChartReady = useCallback((instance: any) => {
+	const chartInstanceRef = useRef<echarts.ECharts | null>(null)
+	const handleChartReady = useCallback((instance: echarts.ECharts | null) => {
 		chartInstanceRef.current = instance
 	}, [])
 	const getChartInstance = useCallback(() => chartInstanceRef.current, [])
@@ -63,12 +64,7 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 						filename="sql-chart"
 					/>
 				</div>
-				<ChartRouter
-					config={resolvedConfig}
-					result={result}
-					classified={classified as ClassifiedColumn[]}
-					onReady={handleChartReady}
-				/>
+				<ChartRouter config={resolvedConfig} result={result} classified={classified} onReady={handleChartReady} />
 			</div>
 		</div>
 	)

@@ -31,8 +31,8 @@ describe('protocol v1 additional chart datasets', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Ethereum', 'Arbitrum'],
 			source: [
-				{ timestamp: 100_000, Ethereum: 12 },
-				{ timestamp: 200_000, Ethereum: 23, Arbitrum: 5 }
+				[100_000, 12, undefined],
+				[200_000, 23, 5]
 			]
 		})
 	})
@@ -62,24 +62,24 @@ describe('protocol v1 additional chart datasets', () => {
 		expect(result.tokenBreakdownUSDDataset).toEqual({
 			dimensions: ['timestamp', 'ETH', 'USDC'],
 			source: [
-				{ timestamp: 100_000, ETH: 200, USDC: 10 },
-				{ timestamp: 200_000, ETH: 330 }
+				[100_000, 200, 10],
+				[200_000, 330, undefined]
 			]
 		})
 		expect(result.tokenBreakdownDataset).toEqual({
 			dimensions: ['timestamp', 'ETH', 'USDC'],
 			source: [
-				{ timestamp: 100_000, ETH: 2, USDC: 10 },
-				{ timestamp: 200_000, ETH: 3 }
+				[100_000, 2, 10],
+				[200_000, 3, undefined]
 			]
 		})
 		expect(result.usdInflowsDataset).toEqual({
 			dimensions: ['timestamp', 'USD Inflows'],
-			source: [{ timestamp: 200_000, 'USD Inflows': 100 }]
+			source: [[200_000, 100]]
 		})
 		expect(result.tokenInflowsDataset).toEqual({
 			dimensions: ['timestamp', 'ETH', 'USDC'],
-			source: [{ timestamp: 200_000, ETH: 110, USDC: -10 }]
+			source: [[200_000, 110, -10]]
 		})
 	})
 
@@ -96,7 +96,7 @@ describe('protocol v1 additional chart datasets', () => {
 			{
 				type: 'line',
 				name: 'ETH',
-				encode: { x: 'timestamp', y: 'ETH' },
+				encode: { x: 0, y: 1 },
 				color: '#123456',
 				stack: 'Total',
 				hideAreaStyle: true
@@ -107,7 +107,7 @@ describe('protocol v1 additional chart datasets', () => {
 			{
 				type: 'bar',
 				name: 'ETH',
-				encode: { x: 'timestamp', y: 'ETH' },
+				encode: { x: 0, y: 1 },
 				stack: 'stackA'
 			}
 		])
@@ -156,7 +156,7 @@ describe('protocol v1 additional chart datasets', () => {
 			'TOKEN_10'
 		])
 		expect(result.tokenBreakdownDataset?.dimensions).not.toContain('Others')
-		expect(result.tokenBreakdownUSDDataset?.source[0]).toMatchObject({ Others: 55 })
+		expect(result.tokenBreakdownUSDDataset?.source[0]?.at(-1)).toBe(55)
 	})
 
 	it('combines a real Others token with omitted daily tokens', () => {
@@ -176,7 +176,8 @@ describe('protocol v1 additional chart datasets', () => {
 			extraTvlsEnabled: {}
 		})
 
-		expect(result.tokenBreakdownUSDDataset?.source[0]).toMatchObject({ Others: 103 })
+		const othersIndex = result.tokenBreakdownUSDDataset?.dimensions.indexOf('Others') ?? -1
+		expect(result.tokenBreakdownUSDDataset?.source[0]?.[othersIndex]).toBe(103)
 	})
 
 	it('bounds rotating token series and keeps Others inflows equal to aggregate inflows', () => {
@@ -208,9 +209,7 @@ describe('protocol v1 additional chart datasets', () => {
 		expect(result.rawTokensUnique).not.toContain('Others')
 		for (const [index, row] of (result.tokenBreakdownUSDDataset?.source ?? []).entries()) {
 			let total = 0
-			for (const name in row) {
-				if (name !== 'timestamp') total += row[name]
-			}
+			for (let columnIndex = 1; columnIndex < row.length; columnIndex++) total += (row[columnIndex] as number) ?? 0
 			expect(total).toBe(550 * (index + 1))
 		}
 
@@ -219,46 +218,10 @@ describe('protocol v1 additional chart datasets', () => {
 		expect(tokenInflows).toHaveLength(aggregateInflows.length)
 		for (let i = 0; i < tokenInflows.length; i++) {
 			let tokenTotal = 0
-			for (const name in tokenInflows[i]) {
-				if (name !== 'timestamp') tokenTotal += tokenInflows[i][name]
+			for (let columnIndex = 1; columnIndex < tokenInflows[i].length; columnIndex++) {
+				tokenTotal += (tokenInflows[i][columnIndex] as number) ?? 0
 			}
-			expect(tokenTotal).toBe(aggregateInflows[i]['USD Inflows'])
+			expect(tokenTotal).toBe(aggregateInflows[i][1])
 		}
-	})
-
-	it('keeps prototype-like token names as own dataset properties', () => {
-		const usdDayOne = JSON.parse('{"__proto__":100,"constructor":200}') as Record<string, number>
-		const usdDayTwo = JSON.parse('{"__proto__":120,"constructor":240}') as Record<string, number>
-		const rawDayOne = JSON.parse('{"__proto__":10,"constructor":20}') as Record<string, number>
-		const rawDayTwo = JSON.parse('{"__proto__":12,"constructor":24}') as Record<string, number>
-		const result = buildProtocolV1AddlChartsData({
-			protocolData: {
-				name: 'Example',
-				chainTvls: {
-					Ethereum: {
-						tokensInUsd: [
-							{ date: 100, tokens: usdDayOne },
-							{ date: 200, tokens: usdDayTwo }
-						],
-						tokens: [
-							{ date: 100, tokens: rawDayOne },
-							{ date: 200, tokens: rawDayTwo }
-						]
-					}
-				}
-			},
-			extraTvlsEnabled: {}
-		})
-
-		const usdRow = result.tokenBreakdownUSDDataset?.source[1] as Record<string, number>
-		const inflowRow = result.tokenInflowsDataset?.source[0] as Record<string, number>
-		expect(Object.getPrototypeOf(usdRow)).toBe(Object.prototype)
-		expect(Object.getPrototypeOf(inflowRow)).toBe(Object.prototype)
-		expect(Object.hasOwn(usdRow, '__proto__')).toBe(true)
-		expect(usdRow.__proto__).toBe(120)
-		expect(usdRow.constructor).toBe(240)
-		expect(Object.hasOwn(inflowRow, '__proto__')).toBe(true)
-		expect(inflowRow.__proto__).toBe(20)
-		expect(inflowRow.constructor).toBe(40)
 	})
 })

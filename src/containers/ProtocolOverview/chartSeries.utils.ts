@@ -1,5 +1,5 @@
-import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
+import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import type { IProtocolOverviewPageData } from './types'
 
 export type IProtocolNumericSeries = Array<[number, number]>

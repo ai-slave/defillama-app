@@ -1,8 +1,8 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { Select } from '~/components/Select/Select'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -20,9 +20,7 @@ import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 import { buildSingleMetricChartDataset } from './singleMetricChart'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 interface ChartCardProps {
 	chart: ChartConfig
@@ -31,7 +29,7 @@ interface ChartCardProps {
 interface ChartRendererProps {
 	type: ChartConfig['type']
 	showCumulative: ChartConfig['showCumulative']
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	isLoading: boolean
 	hasError: boolean
 	refetch: () => void
@@ -67,7 +65,7 @@ function ChartRenderer({
 				: '$'
 	const chartOptions = useMemo(() => createSingleSeriesChartOptions(valueSymbol), [valueSymbol])
 	const seriesName = dataset.dimensions[1]
-	const charts = useMemo<NonNullable<IMultiSeriesChart2Props['charts']>>(() => {
+	const charts = useMemo<NonNullable<IMultiSeriesChartProps['charts']>>(() => {
 		return [
 			{
 				type: chartType.chartType === 'bar' && !showCumulative ? 'bar' : 'line',
@@ -108,7 +106,7 @@ function ChartRenderer({
 
 	return (
 		<Suspense fallback={<div className="h-[300px]" />}>
-			<MultiSeriesChart2
+			<MultiSeriesChart
 				dataset={dataset}
 				charts={charts}
 				valueSymbol={valueSymbol}
@@ -184,11 +182,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 	const handleCsvExport = () => {
 		if (chartDataset.source.length === 0) return
 		const headers = ['Date', `${itemName} ${chartTypeDetails.title}`]
-		const valueKey = chartDataset.dimensions[1]
-		const rows = chartDataset.source.map((row) => [
-			new Date(row.timestamp as number).toISOString().slice(0, 10),
-			row[valueKey]
-		])
+		const rows = chartDataset.source.map((row) => [new Date(row[0] as number).toISOString().slice(0, 10), row[1]])
 		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
 		const fileName = `${itemName}_${chartTypeDetails.title.replace(/\s+/g, '_')}_${
 			new Date().toISOString().split('T')[0]

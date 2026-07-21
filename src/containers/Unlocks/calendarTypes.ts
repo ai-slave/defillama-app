@@ -1,9 +1,9 @@
 import type { Dayjs } from 'dayjs'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 
 export type UnlocksMultiSeriesChart = {
-	dataset: MultiSeriesChart2Dataset
-	charts: NonNullable<IMultiSeriesChart2Props['charts']>
+	dataset: MultiSeriesChartDataset
+	charts: NonNullable<IMultiSeriesChartProps['charts']>
 }
 
 export interface CalendarUnlockEvent {

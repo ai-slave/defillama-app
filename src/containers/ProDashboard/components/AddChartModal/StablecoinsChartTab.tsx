@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	type StablecoinAssetInfo,
@@ -35,9 +36,7 @@ import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 interface StablecoinsChartTabProps {
@@ -74,7 +73,7 @@ const STABLECOIN_ASSET_CHART_TYPES = [
 const EMPTY_HALLMARKS: [number, string][] = []
 const EMPTY_CHAIN_LIST: StablecoinChainInfo[] = []
 const EMPTY_ASSET_LIST: StablecoinAssetInfo[] = []
-const TOTAL_CIRCULATING_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+const TOTAL_CIRCULATING_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{ type: 'line', name: 'Circulating', encode: { x: 'timestamp', y: 'Circulating' }, color: '#3e79cc' }
 ]
 const AREA_EXPORT_BUTTONS = { csv: true, png: true, filename: 'chart' }
@@ -194,7 +193,7 @@ export function StablecoinsChartTab({
 		return colors
 	}, [seriesNames])
 
-	const chainCharts = useMemo<MultiSeriesChart2SeriesConfig[]>(
+	const chainCharts = useMemo<MultiSeriesChartSeriesConfig[]>(
 		() =>
 			chainChartPayload.charts.map((chart) => ({
 				...chart,
@@ -203,7 +202,7 @@ export function StablecoinsChartTab({
 			})),
 		[chainChartPayload.charts, selectedStablecoinChartType, stackColors]
 	)
-	const assetChainCharts = useMemo<MultiSeriesChart2SeriesConfig[]>(
+	const assetChainCharts = useMemo<MultiSeriesChartSeriesConfig[]>(
 		() =>
 			(assetBreakdownPresentation?.visibleSeries ?? []).map((name) => ({
 				type: 'line',
@@ -214,7 +213,7 @@ export function StablecoinsChartTab({
 			})),
 		[assetBreakdownPresentation?.visibleSeries, assetChainColors]
 	)
-	const assetChainDominanceCharts = useMemo<MultiSeriesChart2SeriesConfig[]>(
+	const assetChainDominanceCharts = useMemo<MultiSeriesChartSeriesConfig[]>(
 		() =>
 			(assetBreakdownPresentation?.visibleSeries ?? []).map((name) => ({
 				type: 'line',
@@ -285,7 +284,7 @@ export function StablecoinsChartTab({
 
 		return (
 			<Suspense fallback={<LocalLoader />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					title=""
 					dataset={chainChartPayload.dataset}
 					charts={chainCharts}
@@ -320,7 +319,7 @@ export function StablecoinsChartTab({
 							</div>
 						}
 					>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							title=""
 							dataset={assetTotalDataset}
 							charts={TOTAL_CIRCULATING_CHARTS}
@@ -340,7 +339,7 @@ export function StablecoinsChartTab({
 							</div>
 						}
 					>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							title=""
 							dataset={assetBreakdownPresentation?.dataset ?? assetAreaDataset}
 							charts={assetChainCharts}
@@ -371,7 +370,7 @@ export function StablecoinsChartTab({
 							</div>
 						}
 					>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							title=""
 							valueSymbol="%"
 							dataset={assetBreakdownPresentation?.dataset ?? assetDominanceDataset}

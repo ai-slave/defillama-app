@@ -2,7 +2,6 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useEffect, useEffectEvent, useMemo, useState } from 'react'
-import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import {
 	getGeckoIdFromSearchId,
 	getTokenSearchFallback,
@@ -121,7 +120,7 @@ interface CorrelationsProps {
 }
 
 function buildTokenOptionMap(tokens: TokenSearchResult[]): Record<string, TokenSearchResult> {
-	const map = createChartRecord<TokenSearchResult>()
+	const map = {}
 	for (const token of tokens) {
 		map[token.id] = token
 	}
@@ -168,8 +167,8 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 	}, [hydratedTokenOptions.data, tokenOptionsById])
 
 	const selectedCoins = useMemo<Record<string, TokenSearchResult>>(() => {
-		if (queryCoins.length === 0) return createChartRecord<TokenSearchResult>()
-		const selected = createChartRecord<TokenSearchResult>()
+		if (queryCoins.length === 0) return {}
+		const selected = {}
 
 		for (const coinId of queryCoins) {
 			const token = resolvedTokenOptionsById[coinId] ?? getTokenSearchFallback(coinId)
@@ -198,9 +197,9 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 	const { correlations, alignedPointCounts, returnPointCounts } = useMemo<CorrelationData>(() => {
 		if (isLoading || coins.length === 0) {
 			return {
-				correlations: createChartRecord<Record<string, number | null>>(),
-				alignedPointCounts: createChartRecord<Record<string, number>>(),
-				returnPointCounts: createChartRecord<Record<string, number>>()
+				correlations: {},
+				alignedPointCounts: {},
+				returnPointCounts: {}
 			}
 		}
 		let latestTimestamp = 0
@@ -212,23 +211,23 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 			}
 		}
 		const fromTimestamp = Math.max(0, latestTimestamp - PERIOD_MS[period])
-		const correlationResult = createChartRecord<Record<string, number | null>>()
-		const pointCountResult = createChartRecord<Record<string, number>>()
-		const returnCountResult = createChartRecord<Record<string, number>>()
-		const bucketedSeriesById = createChartRecord<Map<number, number>>()
+		const correlationResult = {}
+		const pointCountResult = {}
+		const returnCountResult = {}
+		const bucketedSeriesById = new Map<string, Map<number, number>>()
 		for (const coin of coins) {
-			bucketedSeriesById[coin.id] = bucketPointsByTime(priceChart[coin.id] ?? [], fromTimestamp)
+			bucketedSeriesById.set(coin.id, bucketPointsByTime(priceChart[coin.id] ?? [], fromTimestamp))
 		}
 
 		for (let i = 0; i < coins.length; i++) {
 			const id0 = coins[i].id
-			correlationResult[id0] = createChartRecord<number | null>()
-			pointCountResult[id0] = createChartRecord<number>()
-			returnCountResult[id0] = createChartRecord<number>()
+			correlationResult[id0] = {}
+			pointCountResult[id0] = {}
+			returnCountResult[id0] = {}
 			for (let j = i + 1; j < coins.length; j++) {
 				const id1 = coins[j].id
-				const bucketed0 = bucketedSeriesById[id0] ?? new Map<number, number>()
-				const bucketed1 = bucketedSeriesById[id1] ?? new Map<number, number>()
+				const bucketed0 = bucketedSeriesById.get(id0)!
+				const bucketed1 = bucketedSeriesById.get(id1)!
 				const [smallerSeries, largerSeries] =
 					bucketed0.size <= bucketed1.size ? [bucketed0, bucketed1] : [bucketed1, bucketed0]
 				const prices0: number[] = []

@@ -31,11 +31,12 @@ describe('buildEtherfiCashTransactions', () => {
 		expect(result.kpis).toMatchObject({ allTimeTxns: 100, lastWeekTxns: 5 })
 		expect(result.transactionsByClassDataset).toEqual({
 			dimensions: ['timestamp', 'Card', 'Transfer'],
-			source: [{ timestamp, Transfer: 3, Card: 2 }]
+			source: [[timestamp, 2, 3]]
 		})
-		expect(result.usersByClassDataset.source).toEqual([{ timestamp, Transfer: 2, Card: 1 }])
+		expect(result.usersByClassDataset.source).toEqual([[timestamp, 1, 2]])
 		for (const chart of result.classCharts) {
-			expect(result.transactionsByClassDataset.dimensions).toContain(chart.encode.y)
+			expect(chart.encode.y).toBeTypeOf('number')
+			expect(chart.encode.y).toBeLessThan(result.transactionsByClassDataset.dimensions.length)
 		}
 	})
 })

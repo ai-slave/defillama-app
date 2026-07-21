@@ -77,25 +77,25 @@ describe('looksLikeNumericArray', () => {
 
 describe('classifyColumn', () => {
 	it('promotes text column of ISO dates to date', () => {
-		const rows = [{ x: '2024-01-17' }, { x: '2024-01-18' }, { x: '2024-01-19' }]
+		const rows = [['2024-01-17'], ['2024-01-18'], ['2024-01-19']]
 		const result = classifyColumn('Utf8', 'x', rows)
 		expect(result.fine).toBe('date')
 		expect(result.coarse).toBe('date')
 	})
 	it('keeps text column as category when any sample is not ISO', () => {
-		const rows = [{ x: '2024-01-17' }, { x: 'not-a-date' }]
+		const rows = [['2024-01-17'], ['not-a-date']]
 		const result = classifyColumn('Utf8', 'x', rows)
 		expect(result.fine).toBe('text')
 		expect(result.coarse).toBe('category')
 	})
 	it('detects numeric-array columns as list', () => {
-		const rows = [{ x: [1, 2, 3] }, { x: null }]
+		const rows = [[[1, 2, 3]], [null]]
 		const result = classifyColumn('Map<String, Double>', 'x', rows)
 		expect(result.fine).toBe('list')
 		expect(result.coarse).toBe('other')
 	})
 	it('skips empty text samples', () => {
-		const rows = [{ x: '' }, { x: null }]
+		const rows = [[''], [null]]
 		const result = classifyColumn('Utf8', 'x', rows)
 		expect(result.fine).toBe('text')
 	})
@@ -110,8 +110,8 @@ describe('classifyColumns', () => {
 				{ name: 'chain', type: 'Utf8' }
 			],
 			rows: [
-				{ date: '2024-01-01', tvl: 1.0, chain: 'ethereum' },
-				{ date: '2024-01-02', tvl: 2.0, chain: 'arbitrum' }
+				['2024-01-01', 1.0, 'ethereum'],
+				['2024-01-02', 2.0, 'arbitrum']
 			]
 		}
 		const classified = classifyColumns(result)
@@ -127,7 +127,7 @@ describe('classifyColumns', () => {
 				{ name: 'tvl', type: 'DOUBLE' },
 				{ name: 'change_7d', type: 'DOUBLE' }
 			],
-			rows: [{ name: 'Aave', tvl: 19.46, change_7d: 1.2 }]
+			rows: [['Aave', 19.46, 1.2]]
 		}
 		const classified = classifyColumns(result)
 		expect(classified.map((column) => column.coarse)).toEqual(['category', 'number', 'number'])

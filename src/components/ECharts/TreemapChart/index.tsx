@@ -1,3 +1,4 @@
+import type { EChartsOption } from 'echarts'
 import { TreemapChart as EChartTreemap } from 'echarts/charts'
 import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
@@ -7,13 +8,15 @@ import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
-import { CHART_INSET } from '../chartSpacing'
-import { getChartTheme } from '../chartTheme'
-import { clearTreemapFocus, registerTreemapFocusTracking } from '../treemapFocus'
-import type { ITreemapChartProps, TreemapNode, TreemapValue } from '../types'
-import { buildWatermarkGraphic } from '../utils'
+import { CHART_INSET } from '../shared/chartSpacing'
+import { getChartTheme } from '../shared/chartTheme'
+import { buildWatermarkGraphic } from '../shared/watermark'
+import { clearTreemapFocus, registerTreemapFocusTracking } from './focus'
 import { formatRwaTreemapBoxLabel, formatRwaTreemapTooltip, formatRwaUpperLabel } from './rwaFormatting'
-import { visualMax, visualMin } from './utils'
+import type { TreemapChartProps, TreemapNode, TreemapValue } from './types'
+
+const VISUAL_MIN = -100
+const VISUAL_MAX = 100
 
 echarts.use([TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer, GraphicComponent])
 
@@ -25,7 +28,7 @@ export default function TreemapChart({
 	onReady,
 	valueLabel = 'Market Cap',
 	valueSymbol = '$'
-}: ITreemapChartProps) {
+}: TreemapChartProps) {
 	const isNarrativeVariant = variant === 'narrative'
 	const isRwaVariant = variant === 'rwa'
 	const isCategoricalColor = colorMode === 'categorical'
@@ -78,7 +81,7 @@ export default function TreemapChart({
 		const instance = chartRef.current
 		if (!instance) return
 
-		const option = {
+		const option: EChartsOption = {
 			graphic: [buildWatermarkGraphic(isDark)],
 			tooltip: {
 				className: 'defillama-echarts-tooltip',
@@ -124,8 +127,8 @@ export default function TreemapChart({
 					...(isRwaVariant || isCategoricalColor
 						? {}
 						: {
-								visualMin: visualMin,
-								visualMax: visualMax,
+								visualMin: VISUAL_MIN,
+								visualMax: VISUAL_MAX,
 								visualDimension: 3
 							}),
 					...(isNarrativeVariant

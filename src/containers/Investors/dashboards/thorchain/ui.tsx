@@ -1,12 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, useMemo } from 'react'
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type {
-	IHBarChartProps,
-	IMultiSeriesChart2Props,
-	IPieChartProps,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useMedia } from '~/hooks/useMedia'
 import { formattedNum } from '~/utils'
 import { readInvestorApiJson } from '../../api.types'
@@ -19,9 +16,7 @@ import {
 	type Kpi as KpiT
 } from './transform'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
 
@@ -315,7 +310,7 @@ export function TimeAreaCard({
 		return {
 			dataset,
 			charts: chart.series.map(
-				(series, index): MultiSeriesChart2SeriesConfig => ({
+				(series, index): MultiSeriesChartSeriesConfig => ({
 					type: 'line',
 					name: series.name,
 					encode: { x: 'timestamp', y: series.name },
@@ -332,7 +327,7 @@ export function TimeAreaCard({
 	if (!chart.series.length) return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
 		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
-			<MultiSeriesChart2
+			<MultiSeriesChart
 				dataset={dataset}
 				charts={charts}
 				valueSymbol={resolvedValueSymbol}
@@ -364,7 +359,7 @@ export function TimeBarCard({
 		return {
 			dataset,
 			charts: chart.series.map(
-				(series, index): MultiSeriesChart2SeriesConfig => ({
+				(series, index): MultiSeriesChartSeriesConfig => ({
 					type: 'bar',
 					name: series.name,
 					encode: { x: 'timestamp', y: series.name },
@@ -382,7 +377,7 @@ export function TimeBarCard({
 	if (!chart.series.length) return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
 		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
-			<MultiSeriesChart2
+			<MultiSeriesChart
 				dataset={dataset}
 				charts={charts}
 				valueSymbol={resolvedValueSymbol}

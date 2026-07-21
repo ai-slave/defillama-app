@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import * as React from 'react'
+import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
@@ -116,18 +117,21 @@ export function DirectoryChart({ chart, status }: DirectoryChartProps) {
 				: [],
 		[tab, chart]
 	)
-	const series = React.useMemo(
+	const chartModel = React.useMemo(
 		() =>
 			chart
-				? resolved.map(({ spec, values }) => ({
-						name: spec.label,
-						type: spec.type,
-						color: spec.color,
-						stack: spec.type === 'bar' ? spec.stack : undefined,
-						yAxisIndex: spec.right ? 1 : 0,
-						data: chart.days.map((day, index) => [day, values[index] ?? null] as [number, number | null])
-					}))
-				: [],
+				? buildAlignedCartesianChartModel(
+						chart.days,
+						resolved.map(({ spec, values }) => ({
+							name: spec.label,
+							type: spec.type,
+							color: spec.color,
+							stack: spec.type === 'bar' ? spec.stack : undefined,
+							yAxisIndex: spec.right ? 1 : 0,
+							values
+						}))
+					)
+				: buildAlignedCartesianChartModel([], []),
 		[resolved, chart]
 	)
 
@@ -158,7 +162,15 @@ export function DirectoryChart({ chart, status }: DirectoryChartProps) {
 					}
 				>
 					<ChartPanelBody role="img" aria-label={overviewAriaLabel(chart, resolved)}>
-						<MultiSeriesChart key={tab} series={series} valueSymbol="$" height="360px" />
+						<MultiSeriesChart
+							key={tab}
+							dataset={chartModel.dataset}
+							charts={chartModel.charts}
+							valueSymbol="$"
+							height="360px"
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
 					</ChartPanelBody>
 				</React.Suspense>
 			) : (

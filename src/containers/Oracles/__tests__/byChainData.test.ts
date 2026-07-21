@@ -73,7 +73,7 @@ describe('buildOraclesByChainDominanceData', () => {
 
 		expect(result.dominanceDataset).toEqual({
 			dimensions: ['timestamp', 'Chainlink', 'Pyth'],
-			source: [{ timestamp: 1_000, Chainlink: (100 / 150) * 100, Pyth: (50 / 150) * 100 }]
+			source: [[1_000, (100 / 150) * 100, (50 / 150) * 100]]
 		})
 	})
 
@@ -96,17 +96,17 @@ describe('buildOraclesByChainDominanceData', () => {
 
 		expect(result.dominanceDataset).toEqual({
 			dimensions: ['timestamp', 'Chainlink', 'Pyth'],
-			source: [{ timestamp: 1_000, Chainlink: 70, Pyth: 30 }]
+			source: [[1_000, 70, 30]]
 		})
 		expect(result.dominanceCharts).toEqual([
 			{
 				type: 'line',
 				name: 'Chainlink',
-				encode: { x: 'timestamp', y: 'Chainlink' },
+				encode: { x: 0, y: 1 },
 				color: '#111',
 				stack: 'dominance'
 			},
-			{ type: 'line', name: 'Pyth', encode: { x: 'timestamp', y: 'Pyth' }, color: '#222', stack: 'dominance' }
+			{ type: 'line', name: 'Pyth', encode: { x: 0, y: 2 }, color: '#222', stack: 'dominance' }
 		])
 	})
 })

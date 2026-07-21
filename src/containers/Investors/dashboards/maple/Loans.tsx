@@ -1,7 +1,7 @@
 import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
 import { useMaplePoolsWithLoans } from './api'
@@ -17,11 +17,9 @@ import {
 	formatPct
 } from './shared'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-const PRINCIPAL_BY_POOL_CHART: IMultiSeriesChart2Props['charts'] = [
+const PRINCIPAL_BY_POOL_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		type: 'bar',
 		name: 'Principal',
@@ -30,7 +28,7 @@ const PRINCIPAL_BY_POOL_CHART: IMultiSeriesChart2Props['charts'] = [
 		stack: 'a'
 	}
 ]
-const RATE_DISTRIBUTION_CHART: IMultiSeriesChart2Props['charts'] = [
+const RATE_DISTRIBUTION_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		type: 'bar',
 		name: 'Principal',
@@ -39,7 +37,7 @@ const RATE_DISTRIBUTION_CHART: IMultiSeriesChart2Props['charts'] = [
 		stack: 'a'
 	}
 ]
-const AGE_DISTRIBUTION_CHART: IMultiSeriesChart2Props['charts'] = [
+const AGE_DISTRIBUTION_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		type: 'bar',
 		name: 'Principal',
@@ -184,7 +182,7 @@ export default function Loans() {
 				<CardSkeleton title="Principal by Pool" />
 			) : data.principalByPool.source.length > 0 ? (
 				<ChartCard title="Principal by Pool">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.principalByPool}
 						charts={PRINCIPAL_BY_POOL_CHART}
 						valueSymbol="$"
@@ -200,7 +198,7 @@ export default function Loans() {
 					<CardSkeleton title="Interest Rate Distribution" />
 				) : data.rateDistribution.source.length > 0 ? (
 					<ChartCard title="Interest Rate Distribution">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={data.rateDistribution}
 							charts={RATE_DISTRIBUTION_CHART}
 							valueSymbol="$"
@@ -215,7 +213,7 @@ export default function Loans() {
 					<CardSkeleton title="Loan Age Distribution" />
 				) : data.ageDistribution.source.length > 0 ? (
 					<ChartCard title="Loan Age Distribution">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={data.ageDistribution}
 							charts={AGE_DISTRIBUTION_CHART}
 							valueSymbol="$"

@@ -2,18 +2,18 @@ import { describe, expect, it } from 'vitest'
 import { buildSqlTreemapNodes } from '../TreemapChartAdapter'
 
 describe('buildSqlTreemapNodes', () => {
-	it('normalizes SQL scalar values once and emits canonical grouped nodes', () => {
+	it('aggregates executor-normalized SQL values into canonical grouped nodes', () => {
 		expect(
 			buildSqlTreemapNodes(
 				[
-					{ protocol: 'Aave', category: 'Lending', tvl: '12.5' },
-					{ protocol: 'Compound', category: 'Lending', tvl: 20n },
-					{ protocol: 'Broken', category: 'Lending', tvl: 'unknown' },
-					{ protocol: null, category: null, tvl: 3 }
+					['Aave', 'Lending', 12.5],
+					['Compound', 'Lending', 20],
+					['Broken', 'Lending', 'unknown'],
+					[null, null, 3]
 				],
-				'protocol',
-				'tvl',
-				'category'
+				0,
+				2,
+				1
 			)
 		).toEqual([
 			{
@@ -32,17 +32,21 @@ describe('buildSqlTreemapNodes', () => {
 		expect(
 			buildSqlTreemapNodes(
 				[
-					{ protocol: 'Aave', tvl: '2' },
-					{ protocol: 'Aave', tvl: 3 },
-					{ protocol: 'Lido', tvl: 10 }
+					['Aave', 2],
+					['Aave', 3],
+					['Lido', 10]
 				],
-				'protocol',
-				'tvl',
+				0,
+				1,
 				null
 			)
 		).toEqual([
 			{ name: 'Lido', value: [10, 0, 0] },
 			{ name: 'Aave', value: [5, 0, 0] }
 		])
+	})
+
+	it('keeps null names in the empty bucket', () => {
+		expect(buildSqlTreemapNodes([[null, 10]], 0, 1, null)).toEqual([{ name: '∅', value: [10, 0, 0] }])
 	})
 })

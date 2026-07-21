@@ -5,7 +5,7 @@ import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
@@ -19,7 +19,7 @@ import { tokenIconUrl } from '~/utils/icons'
 import { buildETFChartSpec, ETF_ASSET_NAMES, type ETFAssetName } from './chartData'
 import type { ETFOverviewProps, IETFSnapshotRow } from './types'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const ASSETS = [
 	{ key: 'bitcoin', name: 'Bitcoin', iconUrl: tokenIconUrl('bitcoin') },
@@ -103,7 +103,7 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 						<ChartExportButtons chartInstance={chartInstance} filename="etf-flows" title="ETF Flows" />
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={finalCharts.dataset}
 							charts={finalCharts.charts}
 							groupBy={groupBy}

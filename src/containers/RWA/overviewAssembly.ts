@@ -1,4 +1,3 @@
-import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { rwaSlug } from './rwaSlug'
 
 export type ChainMetricBreakdown = Record<string, number> | null
@@ -47,12 +46,12 @@ export function aggregateRwaMetrics({
 	let filteredOnChainMcap = 0
 	let filteredActiveMcap = 0
 	let filteredDeFiActiveTvl = 0
-	const onChainMcapByChain = createChartRecord<number>()
-	const activeMcapByChain = createChartRecord<number>()
-	const defiActiveTvlByProtocol = createChartRecord<number>()
-	const defiActiveTvlByProtocolFiltered = createChartRecord<number>()
-	const defiActiveTvlByChain = createChartRecord<number>()
-	const defiActiveTvlByChainFiltered = createChartRecord<number>()
+	const onChainMcapByChain = {}
+	const activeMcapByChain = {}
+	const defiActiveTvlByProtocol = {}
+	const defiActiveTvlByProtocolFiltered = {}
+	const defiActiveTvlByChain = {}
+	const defiActiveTvlByChainFiltered = {}
 	let hasSelectedChainInOnChainMcap = false
 	let hasSelectedChainInActiveMcap = false
 	let hasSelectedChainInDeFiActiveTvl = false

@@ -1,4 +1,4 @@
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { FeeExtraPeriodTotals } from '~/metrics/feeExtras'
 import type { IAdapterChainMetrics, IAdapterChart, IAdapterProtocolMetrics } from './api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
@@ -58,7 +58,7 @@ export interface IAdapterByChainPageData {
 	categories: Array<string>
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: `${ADAPTER_DATA_TYPES}` | null
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	total24h: number | null
 	total7d: number | null
 	total30d: number | null
@@ -75,7 +75,7 @@ export interface IAdapterByChainPageData {
 export interface IChainsByAdapterPageData {
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: `${ADAPTER_DATA_TYPES}` | null
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	chains: Array<{
 		name: string
 		logo: string

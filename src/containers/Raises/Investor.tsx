@@ -10,7 +10,8 @@ import {
 import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { RaisesFilters } from '~/containers/Raises/Filters'
@@ -25,9 +26,9 @@ import { useRaisesData } from './hooks'
 import { raisesColumnOrders, raisesColumns } from './Table'
 import type { IRaise } from './types'
 
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
@@ -173,7 +174,7 @@ export const InvestorContainer = ({
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={deferredFundingRoundsByMonthChart.dataset}
 							charts={deferredFundingRoundsByMonthChart.charts}
 							groupBy="monthly"

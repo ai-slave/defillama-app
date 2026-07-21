@@ -2,12 +2,12 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildTimeSeriesChart } from '~/components/ECharts/MultiSeriesChart/timeSeriesBuilder'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
-import { buildTimeSeriesChart } from '~/components/ECharts/timeSeriesChartBuilder'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -19,7 +19,7 @@ import { formattedNum } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IDATOverviewFlowSeries, IDATOverviewPageProps } from './types'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const DEFAULT_SORTING_STATE = [{ id: 'totalUsdValue', desc: true }]
 
@@ -81,7 +81,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 					/>
 				</ChartPanelToolbar>
 				<Suspense fallback={<ChartPanelBodyFallback />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={deferredChartData.dataset}
 						charts={deferredChartData.charts}
 						groupBy={groupBy}

@@ -1,4 +1,6 @@
-import { formatTooltipValue } from '~/components/ECharts/formatters'
+import type { MultiSeriesYAxisOption } from '~/components/ECharts/MultiSeriesChart/types'
+import { formatTooltipValue } from '~/components/ECharts/shared/formatters'
+import { mergeDeep } from '~/components/ECharts/shared/merge'
 import { formattedNum } from '~/utils'
 import type { ProtocolChartsLabels } from './constants'
 
@@ -28,7 +30,7 @@ const CUSTOM_OFFSETS: Record<string, number> = {
 const DASHED_AXIS_LINE_STYLE = {
 	type: [5, 10],
 	dashOffset: 5
-} as const
+}
 
 function getZeroBaselineYAxisMin(extent: AxisExtent) {
 	return typeof extent.min === 'number' && extent.min < 0 ? extent.min : 0
@@ -133,13 +135,13 @@ export function buildProtocolYAxis({
 	gasUsedValueSymbol
 }: {
 	allYAxis: Array<[ProtocolChartsLabels, number | undefined]>
-	baseYAxis: Record<string, unknown>
+	baseYAxis: MultiSeriesYAxisOption
 	chartColors: Record<string, string>
 	chartsInSeries: Set<string>
 	unlockTokenSymbol: string
 	gasUsedValueSymbol: string
 }) {
-	const finalYAxis: Array<Record<string, unknown>> = []
+	const finalYAxis: MultiSeriesYAxisOption[] = []
 	const context: AxisBuilderContext = { chartColors, chartsInSeries, unlockTokenSymbol, gasUsedValueSymbol }
 	const noOffset = allYAxis.length < 3
 
@@ -152,22 +154,20 @@ export function buildProtocolYAxis({
 			continue
 		}
 
-		const prevOffset = (finalYAxis[finalYAxis.length - 1]?.offset as number | undefined) ?? 0
-		const axisOptions: Record<string, unknown> = {
-			...baseYAxis,
+		const prevOffset = finalYAxis[finalYAxis.length - 1]?.offset ?? 0
+		const axisOptions = mergeDeep(baseYAxis, {
 			name: '',
 			type: 'value',
 			min: getZeroBaselineYAxisMin,
 			alignTicks: true,
 			offset: noOffset || index == null || index < 2 ? 0 : prevOffset + (CUSTOM_OFFSETS[type] ?? 40)
-		}
+		})
 		const axisConfig = AXIS_CONFIG_BY_TYPE[type]
 
 		if (axisConfig?.formatter) {
-			axisOptions.axisLabel = {
-				...(axisOptions.axisLabel as Record<string, unknown>),
+			axisOptions.axisLabel = mergeDeep(axisOptions.axisLabel ?? {}, {
 				formatter: (value: number) => axisConfig.formatter!(value, context)
-			}
+			})
 		}
 
 		if (axisConfig?.resolveColor) {

@@ -43,21 +43,21 @@ const GROUPING_OPTIONS: readonly ChartViewState['grouping'][] = ['day', 'week', 
 // A y-axis can render on a log scale only when every plotted value on it is strictly positive.
 // Returns the axis indices that qualify; an empty result means the chart can't offer log scale.
 function getLogEligibleYAxes(adaptedChart: AdaptedLlamaAICartesianChart): number[] {
-	const seriesNamesByAxis = new Map<number, string[]>()
+	const valueIndexesByAxis = new Map<number, number[]>()
 	for (const series of adaptedChart.seriesMeta) {
 		const axisIndex = series.yAxisIndex ?? 0
-		const names = seriesNamesByAxis.get(axisIndex) ?? []
-		names.push(series.name)
-		seriesNamesByAxis.set(axisIndex, names)
+		const valueIndexes = valueIndexesByAxis.get(axisIndex) ?? []
+		valueIndexes.push(series.seriesIndex + 1)
+		valueIndexesByAxis.set(axisIndex, valueIndexes)
 	}
 
 	const eligible: number[] = []
-	for (const [axisIndex, names] of seriesNamesByAxis) {
+	for (const [axisIndex, valueIndexes] of valueIndexesByAxis) {
 		let hasNumericValue = false
 		let allPositive = true
 		for (const row of adaptedChart.props.dataset.source) {
-			for (const name of names) {
-				const value = row[name]
+			for (const valueIndex of valueIndexes) {
+				const value = row[valueIndex]
 				if (typeof value !== 'number') continue
 				hasNumericValue = true
 				if (value <= 0) allPositive = false

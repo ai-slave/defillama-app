@@ -1,5 +1,7 @@
 import { useQueries } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, type ReactNode } from 'react'
+import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardReducer'
 import { buildProDashboardParentMapping, buildProtocolSymbolMap } from '~/containers/ProDashboard/protocolCatalog'
@@ -11,12 +13,14 @@ import {
 } from '~/containers/ProDashboard/queries'
 import { CHART_TYPES } from '~/containers/ProDashboard/types'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
+import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
 import { getArticleEntityRoute } from '../entityLinks'
 import type { ArticleChartConfig, ArticleChartEntityType, ArticleChartRange, ArticleChartSeries } from '../types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const SERIES_COLORS = ['#3e6dcc', '#e07b39', '#16a34a', '#a855f7']
+const ARTICLE_TOOLTIP_FORMATTER = createCappedRemainderTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 
 function entityLogo(entity: { entityType: ArticleChartEntityType; slug: string }) {
 	return entity.entityType === 'chain' ? chainIconUrl(entity.slug) : tokenIconUrl(entity.slug)
@@ -43,10 +47,10 @@ function compactUsd(value: number | null | undefined) {
 	return `$${value.toFixed(2)}`
 }
 
-function lastValue(data: Array<[number, number | null]> | undefined): number | null {
+function lastValue(data: [number, number][] | undefined): number | null {
 	if (!data || data.length === 0) return null
 	const last = data[data.length - 1]
-	return Array.isArray(last) ? (last[1] as number | null) : null
+	return Array.isArray(last) ? last[1] : null
 }
 
 function seriesDisplayName(s: ArticleChartSeries) {
@@ -114,10 +118,10 @@ export function ArticleChartBlock({
 	const isLoading = queries.some((q) => q.isLoading)
 	const isError = queries.length > 0 && queries.every((q) => q.isError)
 
-	const chartSeries = useMemo(() => {
-		return series
+	const chartModel = useMemo(() => {
+		const chartSeries = series
 			.map((s, i) => {
-				const data = queries[i]?.data as Array<[number, number | null]> | undefined
+				const data = queries[i]?.data as [number, number][] | undefined
 				if (!data || data.length === 0) return null
 				const meta = CHART_TYPES[s.chartType as keyof typeof CHART_TYPES]
 				const seriesType = (meta?.chartType === 'bar' ? 'bar' : 'line') as 'line' | 'bar'
@@ -126,14 +130,17 @@ export function ArticleChartBlock({
 					type: seriesType,
 					color: SERIES_COLORS[i % SERIES_COLORS.length],
 					data,
+					// Each API series owns its calendar; connect across union rows belonging only to sibling series.
+					...(seriesType === 'line' ? { connectNulls: true } : {}),
 					...(meta?.chartType === 'area' && series.length === 1 ? { areaStyle: {} } : {})
 				}
 			})
 			.filter(<T,>(v: T | null): v is T => v !== null)
+		return buildSparseCartesianChartModel(chartSeries)
 	}, [queries, series])
 
 	const primaryLatest = useMemo(() => {
-		const data = queries[0]?.data as Array<[number, number | null]> | undefined
+		const data = queries[0]?.data as [number, number][] | undefined
 		return lastValue(data)
 	}, [queries])
 
@@ -156,32 +163,15 @@ export function ArticleChartBlock({
 		return out
 	}, [series])
 
-	const annotationMarkLine = useMemo(() => {
-		if (!config.annotations || config.annotations.length === 0) return null
-		return {
-			silent: false,
-			symbol: ['none', 'none'] as const,
-			lineStyle: { color: '#9ca3af', type: 'dashed' as const, width: 1 },
-			label: {
-				color: '#6b7280',
-				fontSize: 10,
-				formatter: (params: { dataIndex?: number }) => {
-					const idx = typeof params.dataIndex === 'number' ? params.dataIndex : 0
-					return String.fromCharCode(65 + idx)
-				}
-			},
-			data: config.annotations.map((a) => ({ xAxis: new Date(a.date).getTime() }))
-		}
-	}, [config.annotations])
-
-	const seriesWithMarkers = useMemo(() => {
-		if (!annotationMarkLine || chartSeries.length === 0) return chartSeries
-		const [first, ...rest] = chartSeries
-		return [{ ...first, markLine: annotationMarkLine }, ...rest]
-	}, [chartSeries, annotationMarkLine])
+	const charts = useMemo(() => {
+		const markLine = buildArticleAnnotationMarkLine(config.annotations ?? [])
+		if (!markLine || chartModel.charts.length === 0) return chartModel.charts
+		return [{ ...chartModel.charts[0], markLine }, ...chartModel.charts.slice(1)]
+	}, [chartModel.charts, config.annotations])
 
 	const chartOptions = useMemo(
 		() => ({
+			tooltip: { formatter: ARTICLE_TOOLTIP_FORMATTER },
 			xAxis: { show: true },
 			yAxis: { show: true, type: config.logScale ? ('log' as const) : ('value' as const) }
 		}),
@@ -255,14 +245,17 @@ export function ArticleChartBlock({
 				<div className="h-[380px] w-full">
 					{isLoading ? (
 						<div className="flex h-full items-center justify-center text-xs text-tertiary">Loading chart…</div>
-					) : isError || seriesWithMarkers.length === 0 ? (
+					) : isError || chartModel.charts.length === 0 ? (
 						<div className="flex h-full items-center justify-center text-xs text-tertiary">No data available</div>
 					) : (
 						<Suspense fallback={<div className="flex h-full items-center justify-center text-xs text-tertiary">…</div>}>
 							<MultiSeriesChart
-								series={seriesWithMarkers}
+								dataset={chartModel.dataset}
+								charts={charts}
 								valueSymbol="$"
 								groupBy="daily"
+								hideDefaultLegend={false}
+								exportButtons="hidden"
 								hideDataZoom
 								height="380px"
 								chartOptions={chartOptions}

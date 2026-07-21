@@ -1,6 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, useState } from 'react'
+import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import { useAppMetadata } from '~/containers/ProDashboard/AppMetadataContext'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import { ChartTypePills } from '~/containers/ProDashboard/components/AddChartModal/ChartTypePills'
@@ -15,6 +17,7 @@ import {
 import { CHART_TYPES, getChainChartTypes, getProtocolChartTypes } from '~/containers/ProDashboard/types'
 import { Icon } from '~/ui/Icon'
 import { tokenIconUrl, chainIconUrl } from '~/utils/icons'
+import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
 import { validateArticleChartConfig } from '../chartAdapters'
 import type {
 	ArticleChartAnnotation,
@@ -30,6 +33,7 @@ const PROTOCOL_CHART_TYPES = getProtocolChartTypes()
 const CHAIN_CHART_TYPES = getChainChartTypes()
 
 const SERIES_COLORS = ['#3e6dcc', '#e07b39', '#16a34a', '#a855f7']
+const ARTICLE_TOOLTIP_FORMATTER = createCappedRemainderTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 const MAX_SERIES = 4
 const MAX_ANNOTATIONS = 5
 
@@ -158,50 +162,35 @@ function MultiPreview({
 	const isLoading = queries.some((q) => q.isLoading)
 	const isError = queries.length > 0 && queries.every((q) => q.isError)
 
-	const chartSeries = useMemo(() => {
-		return series
+	const chartModel = useMemo(() => {
+		const chartSeries = series
 			.map((s, i) => {
-				const data = queries[i]?.data as Array<[number, number | null]> | undefined
+				const data = queries[i]?.data as [number, number][] | undefined
 				if (!data || data.length === 0) return null
 				const meta = CHART_TYPES[s.chartType as keyof typeof CHART_TYPES]
+				const type = (meta?.chartType === 'bar' ? 'bar' : 'line') as 'line' | 'bar'
 				return {
 					name: `${s.name} · ${meta?.title || s.chartType}`,
-					type: (meta?.chartType === 'bar' ? 'bar' : 'line') as 'line' | 'bar',
+					type,
 					color: SERIES_COLORS[i % SERIES_COLORS.length],
 					data,
+					// Each API series owns its calendar; connect across union rows belonging only to sibling series.
+					...(type === 'line' ? { connectNulls: true } : {}),
 					...(meta?.chartType === 'area' && series.length === 1 ? { areaStyle: {} } : {})
 				}
 			})
 			.filter(<T,>(v: T | null): v is T => v !== null)
+		return buildSparseCartesianChartModel(chartSeries)
 	}, [queries, series])
-
-	const seriesWithMarkers = useMemo(() => {
-		if (annotations.length === 0 || chartSeries.length === 0) return chartSeries
-		const [first, ...rest] = chartSeries
-		return [
-			{
-				...first,
-				markLine: {
-					silent: false,
-					symbol: ['none', 'none'] as const,
-					lineStyle: { color: '#9ca3af', type: 'dashed' as const, width: 1 },
-					label: {
-						color: '#6b7280',
-						fontSize: 10,
-						formatter: (params: { dataIndex?: number }) => {
-							const idx = typeof params.dataIndex === 'number' ? params.dataIndex : 0
-							return String.fromCharCode(65 + idx)
-						}
-					},
-					data: annotations.map((a) => ({ xAxis: new Date(a.date).getTime() }))
-				}
-			},
-			...rest
-		]
-	}, [chartSeries, annotations])
+	const charts = useMemo(() => {
+		const markLine = buildArticleAnnotationMarkLine(annotations)
+		if (!markLine || chartModel.charts.length === 0) return chartModel.charts
+		return [{ ...chartModel.charts[0], markLine }, ...chartModel.charts.slice(1)]
+	}, [annotations, chartModel.charts])
 
 	const chartOptions = useMemo(
 		() => ({
+			tooltip: { formatter: ARTICLE_TOOLTIP_FORMATTER },
 			xAxis: { show: true },
 			yAxis: { show: true, type: logScale ? ('log' as const) : ('value' as const) }
 		}),
@@ -217,7 +206,7 @@ function MultiPreview({
 			</div>
 		)
 	}
-	if (isError || seriesWithMarkers.length === 0) {
+	if (isError || chartModel.charts.length === 0) {
 		return (
 			<div className="flex items-center justify-center text-xs text-tertiary" style={{ height: heightPx }}>
 				No data available
@@ -233,9 +222,12 @@ function MultiPreview({
 			}
 		>
 			<MultiSeriesChart
-				series={seriesWithMarkers}
+				dataset={chartModel.dataset}
+				charts={charts}
 				valueSymbol="$"
 				groupBy="daily"
+				hideDefaultLegend={false}
+				exportButtons="hidden"
 				hideDataZoom
 				height={heightPx}
 				chartOptions={chartOptions}
@@ -278,22 +270,22 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 		if (!catalog) return []
 		if (tab === 'protocol') {
 			return (catalog.protocols || [])
-				.filter((p: any) => p.slug)
-				.map((p: any) => ({
+				.filter((protocol) => protocol.slug)
+				.map((protocol) => ({
 					entityType: 'protocol' as const,
-					slug: p.slug,
-					name: p.name,
-					logo: p.logo,
-					tvl: p.tvl,
-					geckoId: p.geckoId ?? null
+					slug: protocol.slug,
+					name: protocol.name,
+					logo: protocol.logo,
+					tvl: protocol.tvl,
+					geckoId: protocol.geckoId ?? null
 				}))
 		}
-		return (catalog.chains || []).map((c: any) => ({
+		return (catalog.chains || []).map((chain) => ({
 			entityType: 'chain' as const,
-			slug: c.name,
-			name: c.name,
-			tvl: c.tvl,
-			geckoId: c.gecko_id ?? null
+			slug: chain.name,
+			name: chain.name,
+			tvl: chain.tvl,
+			geckoId: chain.gecko_id ?? null
 		}))
 	}, [catalog, tab])
 

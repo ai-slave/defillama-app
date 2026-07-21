@@ -278,7 +278,7 @@ describe('ProtocolTaxonomy queries', () => {
 		})
 
 		expect(chart.dataset.dimensions).toEqual(['timestamp', 'TVL', 'Spot Volume', 'Perp Volume'])
-		expect(chart.dataset.source).toEqual([{ timestamp: 1710000000000, TVL: 100, 'Spot Volume': 10, 'Perp Volume': 4 }])
+		expect(chart.dataset.source).toEqual([[1710000000000, 100, 10, 4]])
 		expect(chart.charts.map((series) => series.name)).toEqual(['TVL', 'Spot Volume', 'Perp Volume'])
 	})
 

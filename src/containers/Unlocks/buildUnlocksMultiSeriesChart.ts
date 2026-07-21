@@ -1,6 +1,5 @@
 import dayjs from 'dayjs'
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { COLOR_PALETTE } from './constants'
 
 type UnlockEvent = { protocol: string; value: number }
@@ -13,8 +12,8 @@ type UnlocksLikeData = Record<
 >
 
 type UnlocksMultiSeriesChartResult = {
-	dataset: MultiSeriesChart2Dataset
-	charts: NonNullable<IMultiSeriesChart2Props['charts']>
+	dataset: MultiSeriesChartDataset
+	charts: NonNullable<IMultiSeriesChartProps['charts']>
 }
 
 export function buildUnlocksMultiSeriesChartForDateRange({
@@ -24,7 +23,7 @@ export function buildUnlocksMultiSeriesChartForDateRange({
 	dates: string[]
 	unlocksData: UnlocksLikeData
 }): UnlocksMultiSeriesChartResult {
-	const protocolTotals = createChartRecord<number>()
+	const protocolTotals = new Map<string, number>()
 
 	for (const dateStr of dates) {
 		const dayData = unlocksData?.[dateStr]
@@ -35,26 +34,24 @@ export function buildUnlocksMultiSeriesChartForDateRange({
 			const name = event?.protocol
 			const value = Number(event?.value)
 			if (!name || !Number.isFinite(value) || value <= 0) continue
-			protocolTotals[name] = (protocolTotals[name] || 0) + value
+			protocolTotals.set(name, (protocolTotals.get(name) ?? 0) + value)
 		}
 	}
 
-	const sortedProtocols: string[] = []
-	for (const protocol in protocolTotals) {
-		sortedProtocols.push(protocol)
-	}
-	sortedProtocols.sort((a, b) => protocolTotals[b] - protocolTotals[a])
+	const sortedProtocols = Array.from(protocolTotals.keys()).sort(
+		(a, b) => (protocolTotals.get(b) ?? 0) - (protocolTotals.get(a) ?? 0)
+	)
 
 	// Keep rendering behavior consistent with the old BarChart:
 	// if there are no protocol series, still render a 0-valued series.
 	const hasProtocolSeries = sortedProtocols.length > 0
 	const seriesNames: string[] = hasProtocolSeries ? sortedProtocols : ['Unlocks']
 
-	const source = dates.map((dateStr) => {
+	const protocolIndex = new Map(seriesNames.map((name, index) => [name, index + 1]))
+	const source: MultiSeriesChartDataset['source'] = dates.map((dateStr) => {
 		const parsedDate = dayjs(dateStr)
-		const row = createChartRow<number>(parsedDate.unix() * 1e3)
-
-		for (let j = 0; j < seriesNames.length; j++) row[seriesNames[j]] = 0
+		const row = new Array<number>(seriesNames.length + 1).fill(0)
+		row[0] = parsedDate.unix() * 1e3
 
 		const events = unlocksData?.[dateStr]?.events
 		if (hasProtocolSeries && events && events.length > 0) {
@@ -62,7 +59,8 @@ export function buildUnlocksMultiSeriesChartForDateRange({
 				const name = event?.protocol
 				const value = Number(event?.value)
 				if (!name || !Number.isFinite(value) || value <= 0) continue
-				if (row[name] != null) row[name] += value
+				const valueIndex = protocolIndex.get(name)
+				if (valueIndex != null) row[valueIndex] += value
 			}
 		}
 
@@ -74,14 +72,14 @@ export function buildUnlocksMultiSeriesChartForDateRange({
 	const charts = seriesNames.map((name, i) => ({
 		type: 'bar' as const,
 		name,
-		encode: { x: 'timestamp', y: name },
+		encode: { x: 0, y: i + 1 },
 		stack: 'unlocks',
 		color: COLOR_PALETTE[i % COLOR_PALETTE.length],
 		large: false
 	}))
 
 	return {
-		dataset: { source, dimensions } satisfies MultiSeriesChart2Dataset,
+		dataset: { source, dimensions } satisfies MultiSeriesChartDataset,
 		charts
 	}
 }

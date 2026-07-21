@@ -39,16 +39,19 @@ const caps = {
 
 const view = { logScale: false, stacked: false, showLabels: false, percentage: false }
 const resetView = { logScale: false, stacked: true, showLabels: false, percentage: false }
+const PREVIEW_DELAY = 350
 
 function EditorHarness({
 	onSave,
-	onPreview
+	onPreview,
+	editorConfig = config
 }: {
 	onSave: (config: ChartConfiguration, patch: ChartStylePatch) => Promise<void>
 	onPreview?: (config: ChartConfiguration) => void
+	editorConfig?: ChartConfiguration
 }) {
-	const [saved, setSaved] = useState<ChartConfiguration>(config)
-	const [preview, setPreview] = useState<ChartConfiguration>(config)
+	const [saved, setSaved] = useState<ChartConfiguration>(editorConfig)
+	const [preview, setPreview] = useState<ChartConfiguration>(editorConfig)
 	const handleSave = async (next: ChartConfiguration, patch: ChartStylePatch) => {
 		await onSave(next, patch)
 		setSaved(next)
@@ -64,9 +67,10 @@ function EditorHarness({
 			<span data-testid="preview-annotation">{preview.hallmarks?.[0]?.[1]}</span>
 			<span data-testid="preview-annotation-count">{preview.hallmarks?.length ?? 0}</span>
 			<span data-testid="preview-type">{preview.type}</span>
+			<span data-testid="preview-series-names">{preview.series.map((series) => series.name).join('|')}</span>
 			<ChartStyleEditor
-				config={config}
-				original={config}
+				config={editorConfig}
+				original={editorConfig}
 				caps={caps}
 				view={view}
 				resetView={resetView}
@@ -172,5 +176,57 @@ describe('ChartStyleEditor', () => {
 		await act(async () => addAnnotationButton.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 		expect(container.querySelector('[data-testid="preview-annotation-count"]')?.textContent).toBe('2')
 		expect(onPreview).toHaveBeenCalledTimes(2)
+	})
+
+	it('keeps the last valid preview and disables save while series names are duplicated', async () => {
+		vi.useFakeTimers()
+		const editorConfig = {
+			...config,
+			type: 'combo',
+			series: [
+				config.series[0],
+				{
+					...config.series[0],
+					name: 'Fees',
+					type: 'bar',
+					dataMapping: { xField: 'timestamp', yField: 'fees' }
+				}
+			]
+		} satisfies ChartConfiguration
+		const onPreview = vi.fn()
+		const onSave = vi.fn(async () => undefined)
+		await act(async () =>
+			root.render(<EditorHarness editorConfig={editorConfig} onSave={onSave} onPreview={onPreview} />)
+		)
+
+		const secondName = container.querySelector<HTMLInputElement>('[aria-label="Series 2 name"]')
+		if (!secondName) throw new Error('Expected second series name input')
+		const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+		if (!setInputValue) throw new Error('Expected native input value setter')
+
+		await act(async () => {
+			setInputValue.call(secondName, 'Revenue')
+			secondName.dispatchEvent(new Event('input', { bubbles: true }))
+			vi.advanceTimersByTime(PREVIEW_DELAY)
+		})
+
+		const saveButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+			(button) => button.textContent === 'Save'
+		)
+		if (!saveButton) throw new Error('Expected save button')
+		expect(saveButton.disabled).toBe(true)
+		expect(saveButton.title).toContain('must be unique')
+		expect(onPreview).not.toHaveBeenCalled()
+		expect(container.querySelector('[data-testid="preview-series-names"]')?.textContent).toBe('Revenue|Fees')
+
+		await act(async () => {
+			setInputValue.call(secondName, 'Net Revenue')
+			secondName.dispatchEvent(new Event('input', { bubbles: true }))
+			vi.advanceTimersByTime(PREVIEW_DELAY)
+		})
+
+		expect(saveButton.disabled).toBe(false)
+		expect(onPreview).toHaveBeenCalledOnce()
+		expect(container.querySelector('[data-testid="preview-series-names"]')?.textContent).toBe('Revenue|Net Revenue')
 	})
 })

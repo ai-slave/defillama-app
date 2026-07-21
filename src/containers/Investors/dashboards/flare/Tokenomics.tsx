@@ -1,15 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, useEffect, useState } from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareTokenomicsData, type TokenomicsAPIResponse } from './data'
 import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 type BurnView = 'daily' | 'cumulative'
 
@@ -147,7 +145,7 @@ export default function Tokenomics() {
 					</div>
 				</div>
 				{burnView === 'daily' ? (
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={b.dailyDataset}
 						charts={b.charts.daily}
 						valueSymbol=""
@@ -157,7 +155,7 @@ export default function Tokenomics() {
 						chartOptions={b.chartOptions}
 					/>
 				) : (
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={b.cumulativeDataset}
 						charts={b.charts.cumulative}
 						valueSymbol=""
@@ -178,7 +176,7 @@ export default function Tokenomics() {
 				<KpiCard label="Latest Epoch Burn" value={ek.latestEpochBurn} />
 			</div>
 			<ChartCard title={e.emissionsTitle}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={e.perEpochDataset}
 					charts={e.charts.perEpoch}
 					valueSymbol=""
@@ -197,7 +195,7 @@ export default function Tokenomics() {
 				<KpiCard label="Net Inflation (30d)" value={ek.netInflation30d} />
 			</div>
 			<ChartCard title={e.burnVsEmitTitle}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={e.burnVsEmitDataset}
 					charts={e.charts.burnVsEmit}
 					valueSymbol=""

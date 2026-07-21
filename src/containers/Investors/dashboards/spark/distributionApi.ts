@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { readInvestorApiJson, type ApiIsoTimestamp, type ApiUnixSeconds } from '../../api.types'
 import { assignColors } from './api'
 import { createSeriesConfigs } from './chartDefaults'
@@ -26,7 +25,7 @@ export interface DistributionResponse {
 }
 
 export interface ProcessedChart {
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: ReturnType<typeof createSeriesConfigs>
 }
 
@@ -54,13 +53,14 @@ export function buildSparkDistributionChart(
 	fallbackKey = 'USD'
 ): ProcessedChart {
 	const keys = getKeys(chart, fallbackKey)
-	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(chart.data.length)
+	const source = new Array<MultiSeriesChartDataset['source'][number]>(chart.data.length)
 
 	for (let i = 0; i < chart.data.length; i++) {
 		const input = chart.data[i]
-		const row = createChartRow<number>(input.date * 1e3)
+		const row = new Array<number>(keys.length + 1)
+		row[0] = input.date * 1e3
 		for (let j = 0; j < chart.keys.length; j++) {
-			row[keys[j]] = input[chart.keys[j]] ?? 0
+			row[j + 1] = input[chart.keys[j]] ?? 0
 		}
 		source[i] = row
 	}
@@ -78,15 +78,16 @@ export function buildSparkCumulativeBarAsLineChart(
 ): ProcessedChart {
 	const keys = getKeys(chart, fallbackKey)
 	const totals = new Array<number>(keys.length).fill(0)
-	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(chart.data.length)
+	const source = new Array<MultiSeriesChartDataset['source'][number]>(chart.data.length)
 
 	// Revenue projection values are daily flows: accumulate them once, then render the result as lines.
 	for (let i = 0; i < chart.data.length; i++) {
 		const input = chart.data[i]
-		const row = createChartRow<number>(input.date * 1e3)
+		const row = new Array<number>(keys.length + 1)
+		row[0] = input.date * 1e3
 		for (let j = 0; j < chart.keys.length; j++) {
 			totals[j] += input[chart.keys[j]] ?? 0
-			row[keys[j]] = totals[j]
+			row[j + 1] = totals[j]
 		}
 		source[i] = row
 	}

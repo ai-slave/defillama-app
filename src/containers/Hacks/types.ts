@@ -1,4 +1,4 @@
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 
 export interface IHacksPageData {
 	data: Array<{
@@ -12,7 +12,7 @@ export interface IHacksPageData {
 		bridge: boolean
 		language: string
 	}>
-	monthlyHacksChartData: { dataset: MultiSeriesChart2Dataset; charts: IMultiSeriesChart2Props['charts'] }
+	monthlyHacksChartData: { dataset: MultiSeriesChartDataset; charts: IMultiSeriesChartProps['charts'] }
 	totalHacked: string
 	totalHackedDefi: string
 	totalRugs: string

@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, useEffect } from 'react'
-import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareFAssetsData, type FAssetsAPIResponse } from './data'
 import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 export default function FAssets() {
@@ -48,7 +47,7 @@ export default function FAssets() {
 
 			{charts.locked && (
 				<ChartCard title={charts.locked.title} subtitle="USD value of FXRP locked in Flare DeFi over time.">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={charts.locked.dataset}
 						charts={charts.locked.charts}
 						valueSymbol="$"

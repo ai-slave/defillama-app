@@ -1,5 +1,4 @@
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import { CHART_COLORS } from '~/constants/colors'
 import { getForkToOriginalTvlPercent } from './tvl'
 import type { ForkBreakdownChartData, ForkOverviewPageData } from './types'
@@ -34,13 +33,15 @@ export function mergeForkOverviewChartData({
 	const mergedRowsByTimestamp = new Map<number, ForkBreakdownChartData[number]>()
 
 	for (const row of chartData) {
-		const clone = createChartRow<number>(row.timestamp)
+		const clone = { timestamp: row.timestamp } as { timestamp: number } & Record<string, number>
 		for (const key of Object.keys(row)) clone[key] = row[key]
 		mergedRowsByTimestamp.set(row.timestamp, clone)
 	}
 
 	for (const [timestamp, extraRow] of extraBreakdownByTimestamp) {
-		const mergedRow = mergedRowsByTimestamp.get(timestamp) ?? createChartRow<number>(timestamp)
+		const mergedRow =
+			mergedRowsByTimestamp.get(timestamp) ??
+			({ timestamp: timestamp } as { timestamp: number } & Record<string, number>)
 
 		for (const key in extraRow) {
 			const value = extraRow[key]
@@ -110,7 +111,7 @@ export function buildForksOverviewDisplayData({
 	}
 
 	const tokenTvls = preparePieChartData({ data: tvls, limit: 5 })
-	const chartColors = Object.assign(createChartRecord<string>(), forkColors)
+	const chartColors = Object.assign({}, forkColors)
 
 	for (let index = 0; index < sortedChartForks.length; index++) {
 		const name = sortedChartForks[index]
@@ -119,23 +120,25 @@ export function buildForksOverviewDisplayData({
 		}
 	}
 
-	const dominanceSource: Array<Record<string, number>> = []
+	const dominanceSource: Array<Array<number | undefined>> = []
 	for (const entry of chartData) {
-		const row = createChartRow<number>(entry.timestamp * 1000)
+		const row = new Array<number | undefined>(sortedChartForks.length + 1)
+		row[0] = entry.timestamp * 1000
 		let totalTvl = 0
 
-		for (const forkName of sortedChartForks) {
+		for (let forkIndex = 0; forkIndex < sortedChartForks.length; forkIndex++) {
+			const forkName = sortedChartForks[forkIndex]
 			const value = getFiniteForkTvl(entry, forkName)
 			if (value == null || value <= 0) continue
-			row[forkName] = value
+			row[forkIndex + 1] = value
 			totalTvl += value
 		}
 
 		if (totalTvl > 0) {
-			for (const forkName of sortedChartForks) {
-				const value = row[forkName]
+			for (let forkIndex = 0; forkIndex < sortedChartForks.length; forkIndex++) {
+				const value = row[forkIndex + 1]
 				if (value != null) {
-					row[forkName] = (value / totalTvl) * 100
+					row[forkIndex + 1] = (value / totalTvl) * 100
 				}
 			}
 		}
@@ -146,7 +149,7 @@ export function buildForksOverviewDisplayData({
 	const dominanceCharts: Array<{
 		type: 'line'
 		name: string
-		encode: { x: string; y: string }
+		encode: { x: number; y: number }
 		color: string
 		stack: string
 	}> = []
@@ -155,7 +158,7 @@ export function buildForksOverviewDisplayData({
 		dominanceCharts.push({
 			type: 'line',
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: index + 1 },
 			color: chartColors[name] ?? CHART_COLORS[index % CHART_COLORS.length],
 			stack: 'dominance'
 		})

@@ -2,9 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { ChartGroupingSelector, DWM_GROUPING_OPTIONS_LOWERCASE } from '~/components/ECharts/ChartGroupingSelector'
-import type { MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
-import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/utils'
+import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
+import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import {
+	ChartGroupingSelector,
+	DWM_GROUPING_OPTIONS_LOWERCASE
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { type ExcludeQueryKey } from '~/components/Select/types'
@@ -16,7 +19,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
-import type { RWAChartDataset } from '../chartDataset'
+import { toRwaMultiSeriesChartDataset, type RWAChartDataset } from '../chartDataset'
 import { getRWAPerpsVolumeGroupByQueryValue, parseRWAPerpsVolumeGroupBy } from './chartState'
 import { perpsDefinitions as d } from './definitions'
 import {
@@ -26,7 +29,7 @@ import {
 } from './queries'
 import type { IRWAPerpsOverviewBreakdownRequest, RWAPerpsChartMetricKey, RWAPerpsTimeSeriesMode } from './types'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const CHART_TYPE_OPTIONS: Array<{ key: RWAPerpsChartMetricKey; label: string }> = [
 	{ key: 'openInterest', label: d.openInterest.label },
@@ -134,8 +137,8 @@ export function buildRWAPerpsOverviewChartSeries({
 	chartType: RWAPerpsChartMetricKey
 	stackOptions: string[]
 	timeSeriesMode: RWAPerpsTimeSeriesMode
-}): Array<MultiSeriesChart2SeriesConfig> {
-	const seriesType: MultiSeriesChart2SeriesConfig['type'] = chartType === 'volume24h' ? 'bar' : 'line'
+}): Array<MultiSeriesChartSeriesConfig> {
+	const seriesType: MultiSeriesChartSeriesConfig['type'] = chartType === 'volume24h' ? 'bar' : 'line'
 	const hasTotalOverlay = timeSeriesMode === 'breakdown' && chartType !== 'volume24h' && stackOptions.includes('Total')
 	const breakdownSeries = stackOptions.filter((seriesName) => !(hasTotalOverlay && seriesName === 'Total'))
 
@@ -196,22 +199,15 @@ export function RWAPerpsOverviewChart({
 			: shouldShowTotalOverlay
 				? appendRWAPerpsTimeSeriesDatasetTotal(rawDataset)
 				: rawDataset
-	const dataset = useMemo(
-		() =>
-			chartType === 'volume24h'
-				? groupMultiSeriesBarChartDataset({ dataset: ungroupedDataset, groupBy: volumeGroupBy })
-				: ungroupedDataset,
-		[chartType, ungroupedDataset, volumeGroupBy]
-	)
 	const showLoadingState = !isDefaultState && isLoading
-	const chartSeries = useMemo<Array<MultiSeriesChart2SeriesConfig>>(
+	const chartSeries = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
 			buildRWAPerpsOverviewChartSeries({
 				chartType,
-				stackOptions: dataset.dimensions.filter((dimension) => dimension !== 'timestamp'),
+				stackOptions: ungroupedDataset.dimensions.filter((dimension) => dimension !== 'timestamp'),
 				timeSeriesMode
 			}),
-		[chartType, dataset.dimensions, timeSeriesMode]
+		[chartType, timeSeriesMode, ungroupedDataset.dimensions]
 	)
 	const selectedStacksQ = router.query[STACKS_QUERY_KEY] as string | string[] | undefined
 	const excludeStacksQ = router.query[EXCLUDE_STACKS_QUERY_KEY] as string | string[] | undefined
@@ -224,26 +220,20 @@ export function RWAPerpsOverviewChart({
 			}),
 		[excludeStacksQ, selectedStacksQ, stackOptions]
 	)
-	const selectedDataset = useMemo(
+	const selectedRawDataset = useMemo(
 		() =>
 			timeSeriesMode === 'breakdown'
-				? getRWAPerpsChartDatasetForSelectedStacks(dataset, selectedStacks, stackOptions)
-				: dataset,
-		[dataset, selectedStacks, stackOptions, timeSeriesMode]
-	)
-	const selectedHistoryDataset = useMemo(
-		() =>
-			chartType === 'volume24h' && timeSeriesMode === 'breakdown'
 				? getRWAPerpsChartDatasetForSelectedStacks(ungroupedDataset, selectedStacks, stackOptions)
-				: chartType === 'volume24h'
-					? ungroupedDataset
-					: selectedDataset,
-		[chartType, selectedDataset, selectedStacks, stackOptions, timeSeriesMode, ungroupedDataset]
+				: ungroupedDataset,
+		[selectedStacks, stackOptions, timeSeriesMode, ungroupedDataset]
 	)
-	const hasTimeSeriesHistory = useMemo(
-		() => hasEnoughTimeSeriesHistory(selectedHistoryDataset),
-		[selectedHistoryDataset]
-	)
+	const selectedDataset = useMemo(() => {
+		const canonicalDataset = toRwaMultiSeriesChartDataset(selectedRawDataset)
+		return chartType === 'volume24h'
+			? groupMultiSeriesBarChartDataset({ dataset: canonicalDataset, groupBy: volumeGroupBy })
+			: canonicalDataset
+	}, [chartType, selectedRawDataset, volumeGroupBy])
+	const hasTimeSeriesHistory = useMemo(() => hasEnoughTimeSeriesHistory(selectedRawDataset), [selectedRawDataset])
 	const showStackSelect = timeSeriesMode === 'breakdown' && stackOptions.length > 1
 	const visibleCharts = useMemo(
 		() =>
@@ -340,12 +330,12 @@ export function RWAPerpsOverviewChart({
 				</ChartPanelBodyFallback>
 			) : (
 				<Suspense fallback={<ChartPanelBodyFallback />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={selectedDataset}
 						charts={chartSeries}
 						chartOptions={chartOptions}
 						hideDefaultLegend={false}
-						showTotalInTooltip={!dataset.dimensions.includes('Total')}
+						showTotalInTooltip={!selectedDataset.dimensions.includes('Total')}
 						selectedCharts={visibleCharts}
 						onReady={handleChartReady}
 						valueSymbol={chartType === 'markets' ? '' : '$'}

@@ -1,9 +1,18 @@
 import * as Ariakit from '@ariakit/react'
+import type {
+	EChartsOption,
+	SeriesOption,
+	TitleComponentOption,
+	XAXisComponentOption,
+	YAXisComponentOption
+} from 'echarts'
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { getChartTheme } from '~/components/ECharts/chartTheme'
+import { getChartLogoMetadata, type ChartLogoMetadata } from '~/components/ECharts/shared/chartLogoMetadata'
+import { getChartTheme } from '~/components/ECharts/shared/chartTheme'
+import { mergeDeep } from '~/components/ECharts/shared/merge'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -51,9 +60,13 @@ const parsePixelValue = (value: unknown) => {
 	return null
 }
 
-const hasSeriesType = (options: Record<string, any>, type: string) =>
-	Array.isArray(options.series) &&
-	options.series.some((s: any) => s != null && typeof s === 'object' && s.type === type)
+function getSeriesOptions(options: EChartsOption): SeriesOption[] {
+	if (!options.series) return []
+	return Array.isArray(options.series) ? options.series : [options.series]
+}
+
+const hasSeriesType = (options: EChartsOption, type: SeriesOption['type']) =>
+	getSeriesOptions(options).some((series) => series.type === type)
 
 type Rect = { x: number; y: number; width: number; height: number }
 
@@ -62,6 +75,7 @@ export type TreemapViewportExportState =
 			actionType: 'treemapZoomToNode' | 'treemapRootToNode'
 			targetNodeId?: string
 			targetNodePath?: string[]
+			targetNodeIndexPath?: number[]
 	  }
 	| { rootRect: Rect; sourceLayout: { width: number; height: number } }
 
@@ -171,11 +185,27 @@ function findTreemapDataNodeByPath(data: any[], path: string[], seriesName: stri
 	return match
 }
 
-function getTreemapTargetDataRoot(series: any, state: TreemapViewportExportState | null) {
-	if (!state || !('actionType' in state) || !state.targetNodePath || state.targetNodePath.length === 0) return null
+function findTreemapDataNodeByIndexPath(data: any[], indexPath: number[]): any | null {
+	let nodes = data
+	let match: any | null = null
+	for (const index of indexPath) {
+		match = nodes[index]
+		if (!match || typeof match !== 'object' || Array.isArray(match)) return null
+		nodes = Array.isArray(match.children) ? match.children : []
+	}
+	return match
+}
+
+export function getTreemapTargetDataRoot(series: any, state: TreemapViewportExportState | null) {
+	if (!state || !('actionType' in state)) return null
 	if (!Array.isArray(series.data)) return null
 
-	const target = findTreemapDataNodeByPath(series.data, state.targetNodePath, series.name)
+	const target =
+		state.targetNodeIndexPath && state.targetNodeIndexPath.length > 0
+			? findTreemapDataNodeByIndexPath(series.data, state.targetNodeIndexPath)
+			: state.targetNodePath && state.targetNodePath.length > 0
+				? findTreemapDataNodeByPath(series.data, state.targetNodePath, series.name)
+				: null
 	if (!target || typeof target !== 'object' || Array.isArray(target)) return null
 
 	return {
@@ -198,16 +228,32 @@ function getTreemapNodePath(node: any): string[] {
 	return path
 }
 
+function getTreemapNodeIndexPath(node: any): number[] {
+	const ancestors = node?.getAncestors?.(true)
+	if (!Array.isArray(ancestors)) return []
+	const indexPath: number[] = []
+	for (let index = 1; index < ancestors.length; index++) {
+		const childIndex = ancestors[index]?.getChildIndex?.()
+		if (typeof childIndex !== 'number' || childIndex < 0) return []
+		indexPath.push(childIndex)
+	}
+	return indexPath
+}
+
 function getStashedTreemapTarget(chart: echarts.ECharts): TreemapViewportExportState | null {
 	const target = (chart as any).__llamaTreemapFocusNode
 	if (target && typeof target === 'object') {
 		const targetNodeId = typeof target.id === 'string' && target.id ? target.id : undefined
 		const targetNodePath = Array.isArray(target.path) ? target.path.filter((item: any) => typeof item === 'string') : []
-		if (targetNodeId || targetNodePath.length > 0) {
+		const targetNodeIndexPath = Array.isArray(target.indexPath)
+			? target.indexPath.filter((item: any) => Number.isInteger(item) && item >= 0)
+			: []
+		if (targetNodeId || targetNodePath.length > 0 || targetNodeIndexPath.length > 0) {
 			return {
 				actionType: 'treemapZoomToNode',
 				...(targetNodeId ? { targetNodeId } : {}),
-				...(targetNodePath.length > 0 ? { targetNodePath } : {})
+				...(targetNodePath.length > 0 ? { targetNodePath } : {}),
+				...(targetNodeIndexPath.length > 0 ? { targetNodeIndexPath } : {})
 			}
 		}
 	}
@@ -226,10 +272,10 @@ interface SeriesFlags {
 	isTreemapChart: boolean
 	isScatterChart: boolean
 	isHorizontalBarChart: boolean
-	yAxisConfig: any
+	yAxisConfig: YAXisComponentOption | undefined
 }
 
-function detectSeriesFlags(options: Record<string, any>): SeriesFlags {
+function detectSeriesFlags(options: EChartsOption): SeriesFlags {
 	const yAxisConfig = Array.isArray(options.yAxis) ? options.yAxis[0] : options.yAxis
 	return {
 		isSankeyChart: hasSeriesType(options, 'sankey'),
@@ -254,6 +300,15 @@ function resolveTreemapTargetNodeId(seriesModel: any, state: TreemapViewportExpo
 	if (!root) return state.targetNodeId ?? null
 
 	if (state.targetNodeId && root.getNodeById?.(state.targetNodeId)) return state.targetNodeId
+	if (state.targetNodeIndexPath && state.targetNodeIndexPath.length > 0) {
+		let target = root
+		for (const index of state.targetNodeIndexPath) {
+			target = target?.children?.[index]
+			if (!target) break
+		}
+		const id = target?.getId?.()
+		if (typeof id === 'string' && id) return id
+	}
 
 	if (!state.targetNodePath || state.targetNodePath.length === 0) return null
 
@@ -299,11 +354,13 @@ export function readTreemapViewportExportState(chart: echarts.ECharts): TreemapV
 	const rawRoot = seriesModel.getData?.()?.tree?.root
 	const viewRootId = viewRoot && viewRoot !== rawRoot ? viewRoot.getId?.() : undefined
 	const viewRootPath = viewRoot && viewRoot !== rawRoot ? getTreemapNodePath(viewRoot) : []
+	const viewRootIndexPath = viewRoot && viewRoot !== rawRoot ? getTreemapNodeIndexPath(viewRoot) : []
 	if (typeof viewRootId === 'string' && viewRootId) {
 		return {
 			actionType: 'treemapRootToNode',
 			targetNodeId: viewRootId,
-			...(viewRootPath.length > 0 ? { targetNodePath: viewRootPath } : {})
+			...(viewRootPath.length > 0 ? { targetNodePath: viewRootPath } : {}),
+			...(viewRootIndexPath.length > 0 ? { targetNodeIndexPath: viewRootIndexPath } : {})
 		}
 	}
 
@@ -513,12 +570,8 @@ const EXPORT_HBAR_LEFT_PAD = 16
 const EXPORT_HBAR_LABEL_FONT = `${EXPORT_FONT_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
 const EXPORT_HBAR_LABEL_MAX_WIDTH = 360
 
-type ChartLogosData =
-	| { kind: 'cartesian-x'; logos: string[]; categoryValues: any[] }
-	| { kind: 'hbar'; logos: string[]; categories: string[] }
-
-function readStashedChartLogos(chart: echarts.ECharts): ChartLogosData | undefined {
-	const data = (chart as any).__llamaChartLogos
+function readStashedChartLogos(chart: echarts.ECharts): ChartLogoMetadata | undefined {
+	const data = getChartLogoMetadata(chart)
 	if (!data || typeof data !== 'object') return undefined
 	if (data.kind === 'cartesian-x' && Array.isArray(data.logos) && Array.isArray(data.categoryValues)) {
 		return data
@@ -571,7 +624,7 @@ function truncateToWidth(ctx: CanvasRenderingContext2D, text: string, maxWidth: 
 async function composeLogoOverlay(opts: {
 	baseDataURL: string
 	tempChart: echarts.ECharts
-	logosData: ChartLogosData
+	logosData: ChartLogoMetadata
 	isDark: boolean
 	gridBottom: number
 	chartCssWidth: number
@@ -781,15 +834,14 @@ async function loadCircularIcon(url: string): Promise<string | null> {
 
 // --- Axis scaling for export ---
 
-export function scaleXAxisForExport(xAxis: any[]): any[] {
+export function scaleXAxisForExport(xAxis: XAXisComponentOption[]): XAXisComponentOption[] {
 	return xAxis.map((axis) => {
 		const sourceLabel = axis.axisLabel ?? {}
 		// A crowded category axis rotates its labels and forces every one on (interval:0). Keep them
 		// all in the export — re-hiding overlaps at the doubled font would silently drop the very
 		// labels the rotation was added to save.
 		const isRotated = typeof sourceLabel.rotate === 'number' && sourceLabel.rotate !== 0
-		const scaled: any = {
-			...axis,
+		const scaled = mergeDeep(axis, {
 			nameTextStyle: { ...(axis.nameTextStyle ?? {}), fontSize: EXPORT_FONT_SIZE },
 			axisLabel: {
 				...sourceLabel,
@@ -797,7 +849,7 @@ export function scaleXAxisForExport(xAxis: any[]): any[] {
 				inside: false,
 				hideOverlap: !isRotated
 			}
-		}
+		})
 		if (axis.name) {
 			scaled.nameGap = Math.max(axis.nameGap ?? 15, 36)
 		}
@@ -805,7 +857,10 @@ export function scaleXAxisForExport(xAxis: any[]): any[] {
 	})
 }
 
-export function scaleYAxisForExport(yAxis: any[], isHorizontalBarChart: boolean): any[] {
+export function scaleYAxisForExport(
+	yAxis: YAXisComponentOption[],
+	isHorizontalBarChart: boolean
+): YAXisComponentOption[] {
 	return yAxis.map((axis) => {
 		const sourceAxisLabel = axis.axisLabel ?? {}
 		// The on-screen axisLabel.width is a truncation cap sized for the on-screen font. Export doubles the
@@ -817,8 +872,7 @@ export function scaleYAxisForExport(yAxis: any[], isHorizontalBarChart: boolean)
 			typeof sourceAxisLabel.width === 'number' && Number.isFinite(sourceAxisLabel.width)
 				? Math.round((sourceAxisLabel.width * EXPORT_FONT_SIZE) / sourceLabelFontSize)
 				: sourceAxisLabel.width
-		const scaled: any = {
-			...axis,
+		const scaled = mergeDeep(axis, {
 			nameTextStyle: { ...(axis.nameTextStyle ?? {}), fontSize: EXPORT_FONT_SIZE },
 			axisLabel: {
 				...sourceAxisLabel,
@@ -831,7 +885,7 @@ export function scaleYAxisForExport(yAxis: any[], isHorizontalBarChart: boolean)
 				...(axis.axisLine ?? {}),
 				lineStyle: { ...(axis.axisLine?.lineStyle ?? {}), width: 2 }
 			}
-		}
+		})
 		if (axis.offset) {
 			scaled.offset = axis.offset * 2
 		}
@@ -839,7 +893,7 @@ export function scaleYAxisForExport(yAxis: any[], isHorizontalBarChart: boolean)
 			scaled.nameGap = Math.max(axis.nameGap ?? 15, 36)
 		}
 		if (isHorizontalBarChart && axis.type === 'category') {
-			scaled.boundaryGap = ['4%', '4%']
+			scaled.boundaryGap = true
 		}
 		return scaled
 	})
@@ -869,35 +923,34 @@ function scaleGraphicForExport(graphic: any[]): any[] {
 
 // --- Legend item collection ---
 
-function collectLegendItems(options: Record<string, any>, isPieChart: boolean): string[] {
+function collectLegendItems(options: EChartsOption, isPieChart: boolean): string[] {
 	const legendConfig = options.legend
 	const legendArray = Array.isArray(legendConfig) ? legendConfig : legendConfig ? [legendConfig] : []
 
 	if (legendArray.length > 0 && Array.isArray(legendArray[0]?.data)) {
-		return legendArray[0].data.filter((x: any) => typeof x === 'string')
+		return legendArray[0].data.filter((item): item is string => typeof item === 'string')
 	}
-	if (isPieChart && Array.isArray(options.series)) {
+	if (isPieChart) {
 		const items: string[] = []
-		for (const s of options.series) {
+		for (const s of getSeriesOptions(options)) {
 			if (s?.type !== 'pie' || !Array.isArray(s.data)) continue
-			for (const d of s.data) {
-				if (d?.name) items.push(d.name)
+			for (const item of s.data) {
+				if (item && typeof item === 'object' && !Array.isArray(item) && item.name != null) {
+					items.push(String(item.name))
+				}
 			}
 		}
 		return items
 	}
-	if (Array.isArray(options.series)) {
-		return options.series.flatMap((s: any) => (s.name ? [s.name] : []))
-	}
-	return []
+	return getSeriesOptions(options).flatMap((series) => (series.name ? [String(series.name)] : []))
 }
 
-function isLegendVisibleForExport(flags: SeriesFlags, options: Record<string, any>): boolean {
+function isLegendVisibleForExport(flags: SeriesFlags, options: EChartsOption): boolean {
 	if (flags.isSankeyChart || flags.isTreemapChart) return false
 	if (flags.isPieChart) {
 		const legendConfig = options.legend
 		const legendArray = Array.isArray(legendConfig) ? legendConfig : legendConfig ? [legendConfig] : []
-		return legendArray.length > 0 ? legendArray.some((l: any) => l?.show !== false) : false
+		return legendArray.length > 0 ? legendArray.some((legend) => legend?.show !== false) : false
 	}
 	return true
 }
@@ -905,7 +958,7 @@ function isLegendVisibleForExport(flags: SeriesFlags, options: Record<string, an
 // --- Series adjustments for export ---
 
 function adjustSeriesForExport(opts: {
-	series: any[]
+	series: SeriesOption[]
 	flags: SeriesFlags
 	layout: ExportLayout
 	isDark: boolean
@@ -914,7 +967,7 @@ function adjustSeriesForExport(opts: {
 	pngProfile?: PngExportProfile
 	exportHeight?: number
 	treemapViewportState?: TreemapViewportExportState | null
-}): any[] {
+}): SeriesOption[] {
 	const { flags, layout, isDark, title, expandLegend, exportHeight, treemapViewportState } = opts
 	let series = [...opts.series]
 
@@ -1010,13 +1063,16 @@ function adjustSeriesForExport(opts: {
 
 	// HBar: scale bar widths to fill the fixed 720px canvas
 	if (flags.isHorizontalBarChart) {
-		const categoryCount = Array.isArray(flags.yAxisConfig?.data) ? flags.yAxisConfig.data.length : 0
+		const categoryCount =
+			flags.yAxisConfig?.type === 'category' && Array.isArray(flags.yAxisConfig.data)
+				? flags.yAxisConfig.data.length
+				: 0
 		const bottomPadding = expandLegend ? 32 : 16
 		const plotHeight = Math.max(1, (exportHeight ?? IMAGE_EXPORT_HEIGHT) - layout.gridTop - bottomPadding)
 		const bandHeight = categoryCount > 0 ? plotHeight / categoryCount : plotHeight
 		const barStacks = new Set<string>()
 		for (const s of series) {
-			if (s?.type === 'bar') barStacks.add(s.stack ?? s.name ?? '')
+			if (s?.type === 'bar') barStacks.add(String(s.stack ?? s.name ?? ''))
 		}
 		const barSeriesCount = Math.max(1, barStacks.size)
 		const barWidth = Math.max(8, Math.min(80, Math.floor((bandHeight * 0.65) / barSeriesCount)))
@@ -1144,7 +1200,7 @@ function buildExportTitle(opts: {
 	title: string | undefined
 	iconBase64: string | null
 	isDark: boolean
-}): Record<string, any> {
+}): TitleComponentOption {
 	const { title, iconBase64, isDark } = opts
 	return {
 		text: iconBase64 ? `{icon|} ${title}` : title,
@@ -1215,14 +1271,19 @@ async function renderClonedChartExport(
 	pngProfile?: PngExportProfile
 ): Promise<string> {
 	const { echarts: echartsCore } = await import('./chartExportEcharts')
-	const currentOptions = originalChart.getOption()
+	// getOption() exposes ECharts' uncomposed core type, even though this app registers
+	// the full option set. Normalize it once, then keep every export transform typed.
+	const currentOptions = originalChart.getOption() as EChartsOption
 
 	const flags = detectSeriesFlags(currentOptions)
 	const stashedLogos = readStashedChartLogos(originalChart)
 	const treemapViewportState = flags.isTreemapChart ? readTreemapViewportExportState(originalChart) : null
 	let exportHeight = IMAGE_EXPORT_HEIGHT
 	if (pngProfile === 'hbar' && flags.isHorizontalBarChart) {
-		const categoryCount = Array.isArray(flags.yAxisConfig?.data) ? flags.yAxisConfig.data.length : 0
+		const categoryCount =
+			flags.yAxisConfig?.type === 'category' && Array.isArray(flags.yAxisConfig.data)
+				? flags.yAxisConfig.data.length
+				: 0
 		if (categoryCount > 0) {
 			const minBarHeight = 36
 			exportHeight = Math.max(IMAGE_EXPORT_HEIGHT, categoryCount * minBarHeight + 120)
@@ -1246,10 +1307,15 @@ async function renderClonedChartExport(
 		}
 
 		if (currentOptions.xAxis) {
-			currentOptions.xAxis = scaleXAxisForExport(currentOptions.xAxis as any[])
+			currentOptions.xAxis = scaleXAxisForExport(
+				Array.isArray(currentOptions.xAxis) ? currentOptions.xAxis : [currentOptions.xAxis]
+			)
 		}
 		if (currentOptions.yAxis) {
-			currentOptions.yAxis = scaleYAxisForExport(currentOptions.yAxis as any[], flags.isHorizontalBarChart)
+			currentOptions.yAxis = scaleYAxisForExport(
+				Array.isArray(currentOptions.yAxis) ? currentOptions.yAxis : [currentOptions.yAxis],
+				flags.isHorizontalBarChart
+			)
 		}
 		if (currentOptions.graphic) {
 			currentOptions.graphic = scaleGraphicForExport(currentOptions.graphic as any[])
@@ -1266,7 +1332,7 @@ async function renderClonedChartExport(
 		})
 
 		currentOptions.series = adjustSeriesForExport({
-			series: (currentOptions.series as any[]) ?? [],
+			series: getSeriesOptions(currentOptions),
 			flags,
 			layout,
 			isDark,
@@ -1281,13 +1347,13 @@ async function renderClonedChartExport(
 		currentOptions.animation = false
 
 		if (!flags.isSankeyChart) {
-			const hasYAxisName = Array.isArray(currentOptions.yAxis) && currentOptions.yAxis.some((a: any) => !!a?.name)
-			const hasXAxisName = Array.isArray(currentOptions.xAxis) && currentOptions.xAxis.some((a: any) => !!a?.name)
+			const hasYAxisName = Array.isArray(currentOptions.yAxis) && currentOptions.yAxis.some((axis) => !!axis?.name)
+			const hasXAxisName = Array.isArray(currentOptions.xAxis) && currentOptions.xAxis.some((axis) => !!axis?.name)
 			const scatterLeftPad = flags.isScatterChart && hasYAxisName ? 48 : 16
 			const scatterBottomPad = flags.isScatterChart && hasXAxisName ? 48 : expandLegend ? 32 : 16
 			let gridLeft: number = scatterLeftPad
 			let gridBottom: number = scatterBottomPad
-			let outerBoundsContain: string | undefined = 'axisLabel'
+			let outerBoundsContain: 'axisLabel' | undefined = 'axisLabel'
 			if (stashedLogos?.kind === 'cartesian-x') {
 				gridBottom = scatterBottomPad + EXPORT_CATEGORY_LOGO_SIZE + EXPORT_CATEGORY_LOGO_GAP
 				outerBoundsContain = undefined
@@ -1306,7 +1372,7 @@ async function renderClonedChartExport(
 		}
 
 		if (layout.hasLegend) {
-			currentOptions.legend = {
+			const legendBase = {
 				show: true,
 				textStyle: {
 					fontSize: EXPORT_FONT_SIZE,
@@ -1316,12 +1382,11 @@ async function renderClonedChartExport(
 				itemWidth: 48,
 				itemGap: LEGEND_ITEM_GAP,
 				top: layout.legendTop,
-				right: 16,
-				...(expandLegend
-					? { type: 'plain', padding: [0, 0, 0, 0], ...(layout.canShareRow ? {} : { left: 16 }) }
-					: { type: 'scroll', padding: [0, 0, 0, 18] }),
-				pageButtonPosition: 'end'
+				right: 16
 			}
+			currentOptions.legend = expandLegend
+				? { ...legendBase, type: 'plain', padding: [0, 0, 0, 0], ...(layout.canShareRow ? {} : { left: 16 }) }
+				: { ...legendBase, type: 'scroll', padding: [0, 0, 0, 18], pageButtonPosition: 'end' }
 		}
 
 		await mutateAndWaitForChartRender(tempChart, () => tempChart.setOption(currentOptions))
@@ -1335,7 +1400,8 @@ async function renderClonedChartExport(
 			const labelGraphics = buildTreemapExportLabelGraphics(tempChart, isDark)
 			if (labelGraphics.length > 0) {
 				currentOptions.graphic = [...getGraphicArray(currentOptions.graphic), ...labelGraphics]
-				await mutateAndWaitForChartRender(tempChart, () => tempChart.setOption({ graphic: currentOptions.graphic }))
+				const graphicOption: EChartsOption = { graphic: currentOptions.graphic }
+				await mutateAndWaitForChartRender(tempChart, () => tempChart.setOption(graphicOption))
 			}
 		}
 
@@ -1365,7 +1431,9 @@ async function renderClonedChartExport(
 				tempChart,
 				logosData: stashedLogos,
 				isDark,
-				gridBottom: Number((currentOptions.grid as any)?.bottom ?? 16),
+				gridBottom: Number(
+					(Array.isArray(currentOptions.grid) ? currentOptions.grid[0]?.bottom : currentOptions.grid?.bottom) ?? 16
+				),
 				chartCssWidth: IMAGE_EXPORT_WIDTH,
 				chartCssHeight: exportHeight
 			})

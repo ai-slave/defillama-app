@@ -2,7 +2,7 @@ import { Writable } from 'node:stream'
 import { createElement, type ReactElement } from 'react'
 import { renderToPipeableStream } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	buildOverviewBreakdownChartSeries,
 	getOverviewBreakdownChartDatasetForSelectedStacks,
@@ -16,7 +16,7 @@ let queryState: { data: any; isLoading: boolean; error: any } = {
 	isLoading: false,
 	error: null
 }
-let lastChartProps: IMultiSeriesChart2Props | null = null
+let lastChartProps: IMultiSeriesChartProps | null = null
 let lastTreemapProps: {
 	nodes: Array<{ name: string; netFlowUsd: number | null }>
 	sizeLabel: string
@@ -51,8 +51,8 @@ vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
 	ChartExportButtons: () => null
 }))
 
-vi.mock('~/components/ECharts/MultiSeriesChart2', () => ({
-	default: (props: IMultiSeriesChart2Props) => {
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
+	default: (props: IMultiSeriesChartProps) => {
 		lastChartProps = props
 		return null
 	}
@@ -183,7 +183,10 @@ describe('getOverviewBreakdownRequestState', () => {
 			})
 		)
 
-		expect(lastChartProps?.dataset).toBe(dataset)
+		expect(lastChartProps?.dataset).toEqual({
+			dimensions: dataset.dimensions,
+			source: [[1, 15, 10, 5]]
+		})
 		expect(lastChartProps?.hideDefaultLegend).toBe(false)
 		expect(lastChartProps?.stacked).toBeUndefined()
 		expect(lastChartProps?.showTotalInTooltip).toBe(false)
@@ -209,7 +212,10 @@ describe('getOverviewBreakdownRequestState', () => {
 			})
 		)
 
-		expect(lastChartProps?.dataset).toBe(dataset)
+		expect(lastChartProps?.dataset).toEqual({
+			dimensions: dataset.dimensions,
+			source: [[1, 10, 5]]
+		})
 		expect(Array.from(lastChartProps?.selectedCharts ?? [])).toEqual(['Treasuries', 'Credit'])
 	})
 
@@ -306,8 +312,8 @@ describe('getOverviewBreakdownRequestState', () => {
 		)
 
 		expect(lastChartProps?.dataset.source).toEqual([
-			{ timestamp: 3, 'Total Active Mcap': 23, PreStocks: 12, Securitize: 11 },
-			{ timestamp: 4, 'Total Active Mcap': 11, PreStocks: 0, Securitize: 11 }
+			[3, 23, 12, 11],
+			[4, 11, 0, 11]
 		])
 		expect(Array.from(lastChartProps?.selectedCharts ?? [])).toEqual(['PreStocks'])
 	})
@@ -316,9 +322,9 @@ describe('getOverviewBreakdownRequestState', () => {
 describe('getOverviewBreakdownChartDatasetForSelectedStacks', () => {
 	const dataset = {
 		source: [
-			{ timestamp: 1, PreStocks: null, Securitize: 10 },
-			{ timestamp: 2, PreStocks: 12, Securitize: 11 },
-			{ timestamp: 3, PreStocks: 0, Securitize: 12 }
+			[1, null, 10],
+			[2, 12, 11],
+			[3, 0, 12]
 		],
 		dimensions: ['timestamp', 'PreStocks', 'Securitize']
 	}
@@ -337,8 +343,8 @@ describe('getOverviewBreakdownChartDatasetForSelectedStacks', () => {
 		expect(
 			getOverviewBreakdownChartDatasetForSelectedStacks(dataset, ['PreStocks'], ['PreStocks', 'Securitize']).source
 		).toEqual([
-			{ timestamp: 2, PreStocks: 12, Securitize: 11 },
-			{ timestamp: 3, PreStocks: 0, Securitize: 12 }
+			[2, 12, 11],
+			[3, 0, 12]
 		])
 	})
 })

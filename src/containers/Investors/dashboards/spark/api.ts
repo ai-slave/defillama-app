@@ -1,4 +1,3 @@
-import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { EXTENDED_COLOR_PALETTE } from '~/containers/ProDashboard/utils/colorManager'
 import { readInvestorApiJson } from '../../api.types'
 
@@ -20,32 +19,10 @@ export async function fetchDuneQuery<T>(queryId: string): Promise<DuneResponse<T
 }
 
 export function assignColors(names: string[]): Record<string, string> {
-	const colors = createChartRecord<string>()
+	const colors = {}
 	const sorted = names.toSorted()
 	for (let i = 0; i < sorted.length; i++) {
 		colors[sorted[i]] = EXTENDED_COLOR_PALETTE[i % EXTENDED_COLOR_PALETTE.length]
 	}
 	return colors
-}
-
-export function pivotByDate<T extends { dt: string }>(
-	rows: T[],
-	groupKey: keyof T,
-	valueKey: keyof T
-): Array<Record<string, number>> {
-	const map = new Map<number, Record<string, number>>()
-
-	for (const row of rows) {
-		const ts = Math.floor(Date.parse(row.dt) / 1000)
-		if (!map.has(ts)) {
-			const entry = createChartRecord<number>()
-			entry.date = ts
-			map.set(ts, entry)
-		}
-		const entry = map.get(ts)!
-		const key = String(row[groupKey])
-		entry[key] = (entry[key] ?? 0) + Number(row[valueKey])
-	}
-
-	return Array.from(map.values()).sort((a, b) => a.date - b.date)
 }

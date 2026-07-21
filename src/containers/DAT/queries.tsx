@@ -1,4 +1,4 @@
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { oldBlue } from '~/constants/colors'
 import { getDominancePercent, getNDistinctColors } from '~/utils'
@@ -39,7 +39,7 @@ const EXTRA_DYNAMIC_COLOR_BUFFER = RESERVED_DYNAMIC_COLOR_OFFSET + 1
 const EXCLUDED_DISTINCT_COLOR = '#673AB7'
 
 function buildColorByAsset(res: IDATInstitutionsResponse): Record<string, string> {
-	const colorByAsset = createChartRecord<string>()
+	const colorByAsset = {}
 	let totalAssets = 0
 	for (const _asset in res.assetMetadata) {
 		totalAssets++
@@ -99,10 +99,10 @@ export async function getDATOverviewData(): Promise<IDATOverviewPageProps> {
 	const allAssets = buildAllAssetLinks(res)
 	const colorByAsset = buildColorByAsset(res)
 
-	const dailyFlowsByAsset = createChartRecord<IDATOverviewFlowSeries>()
+	const dailyFlowSeriesByAsset = new Map<string, IDATOverviewFlowSeries>()
 	for (const asset in res.flows) {
 		const name = res.assetMetadata[asset]?.name ?? asset
-		const existing = dailyFlowsByAsset[name]
+		const existing = dailyFlowSeriesByAsset.get(name)
 		const assetFlows = res.flows[asset]
 		const points = new Array<readonly [number, number]>(assetFlows.length)
 
@@ -111,13 +111,13 @@ export async function getDATOverviewData(): Promise<IDATOverviewPageProps> {
 			points[i] = [toUnixMsTimestamp(date), purchasePrice ?? usdValueOfPurchase ?? 0] as const
 		}
 
-		dailyFlowsByAsset[name] = {
+		dailyFlowSeriesByAsset.set(name, {
 			name,
 			stack: 'asset',
 			color: existing?.color ?? colorByAsset[asset],
 			// Asset streams are ascending; only merge when two asset ids share a display name.
 			points: existing ? mergeAscendingFlowPoints(existing.points, points) : points
-		}
+		})
 	}
 
 	const institutions: IDATInstitutionOverview[] = res.institutions.map((institution) => {
@@ -139,7 +139,7 @@ export async function getDATOverviewData(): Promise<IDATOverviewPageProps> {
 		}
 	})
 
-	return { allAssets, institutions, dailyFlowsByAsset }
+	return { allAssets, institutions, dailyFlowsByAsset: Object.fromEntries(dailyFlowSeriesByAsset) }
 }
 
 export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOverviewDataByAssetProps | null> {
@@ -175,51 +175,56 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 		})
 		.sort((a, b) => (b.holdings.usdValue ?? 0) - (a.holdings.usdValue ?? 0))
 
-	const mNAV_realized = createChartRecord<Record<string, number | null | undefined>>()
-	const mNAV_realistic = createChartRecord<Record<string, number | null | undefined>>()
-	const mNAV_max = createChartRecord<Record<string, number | null | undefined>>()
+	const mNAVRealized = new Map<number, Map<string, number | null | undefined>>()
+	const mNAVRealistic = new Map<number, Map<string, number | null | undefined>>()
+	const mNAVMax = new Map<number, Map<string, number | null | undefined>>()
 
 	const mnavAsset = res.mNAV[asset]
 	if (mnavAsset != null) {
 		for (const institution in mnavAsset) {
 			for (const [date, realized, realistic, max] of mnavAsset[institution]) {
-				mNAV_realized[date] = mNAV_realized[date] ?? createChartRecord<number | null | undefined>()
-				mNAV_realistic[date] = mNAV_realistic[date] ?? createChartRecord<number | null | undefined>()
-				mNAV_max[date] = mNAV_max[date] ?? createChartRecord<number | null | undefined>()
-				mNAV_realized[date][institution] = realized
-				mNAV_realistic[date][institution] = realistic
-				mNAV_max[date][institution] = max
+				let realizedByInstitution = mNAVRealized.get(date)
+				let realisticByInstitution = mNAVRealistic.get(date)
+				let maxByInstitution = mNAVMax.get(date)
+				if (!realizedByInstitution) {
+					realizedByInstitution = new Map()
+					realisticByInstitution = new Map()
+					maxByInstitution = new Map()
+					mNAVRealized.set(date, realizedByInstitution)
+					mNAVRealistic.set(date, realisticByInstitution)
+					mNAVMax.set(date, maxByInstitution)
+				}
+				realizedByInstitution.set(institution, realized)
+				realisticByInstitution!.set(institution, realistic)
+				maxByInstitution!.set(institution, max)
 			}
 		}
 	}
 
 	const dimensions = ['timestamp', ...finalInstitutions.map((inst) => inst.ticker)]
 
-	const buildDataset = (
-		mnavByDate: Record<string, Record<string, number | null | undefined>>
-	): { source: Array<Record<string, number | null>>; dimensions: string[] } => {
-		const source: Array<Record<string, number | null>> = []
+	const buildDataset = (mnavByDate: Map<number, Map<string, number | null | undefined>>): MultiSeriesChartDataset => {
+		const source: Array<Array<number | null>> = []
 
-		for (const date in mnavByDate) {
-			const row = createChartRow<number | null>(toUnixMsTimestamp(+date))
-			for (const inst of finalInstitutions) {
-				row[inst.ticker] = mnavByDate[date]?.[inst.ticker] ?? null
+		for (const [date, values] of mnavByDate) {
+			const row = new Array<number | null>(finalInstitutions.length + 1)
+			row[0] = toUnixMsTimestamp(date)
+			for (let i = 0; i < finalInstitutions.length; i++) {
+				row[i + 1] = values.get(finalInstitutions[i].ticker) ?? null
 			}
 			source.push(row)
 		}
 
-		source.sort((a, b) => a.timestamp - b.timestamp)
+		source.sort((a, b) => a[0]! - b[0]!)
 		return { source, dimensions }
 	}
 
 	const chartColors = getNDistinctColors(finalInstitutions.length)
 	const assetFlows = res.flows[asset] ?? []
-	const dailyFlowSource = new Array<Record<string, number>>(assetFlows.length)
+	const dailyFlowSource = new Array<number[]>(assetFlows.length)
 	for (let i = 0; i < assetFlows.length; i++) {
 		const [timestamp, net] = assetFlows[i]
-		const row = createChartRow<number>(toUnixMsTimestamp(timestamp))
-		row[metadata.name] = net
-		dailyFlowSource[i] = row
+		dailyFlowSource[i] = [toUnixMsTimestamp(timestamp), net]
 	}
 
 	return {
@@ -236,7 +241,7 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 				{
 					type: 'bar' as const,
 					name: metadata.name,
-					encode: { x: 'timestamp', y: metadata.name },
+					encode: { x: 0, y: 1 },
 					stack: metadata.name,
 					color: oldBlue
 				}
@@ -249,9 +254,9 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 				stack: inst.ticker,
 				type: 'line' as const,
 				color: chartColors[i],
-				encode: { x: 'timestamp', y: inst.ticker }
+				encode: { x: 0, y: i + 1 }
 			})),
-			dataset: buildDataset(mNAV_realized)
+			dataset: buildDataset(mNAVRealized)
 		},
 		mNAVRealisticChart: {
 			charts: finalInstitutions.map((inst, i) => ({
@@ -259,9 +264,9 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 				stack: inst.ticker,
 				type: 'line' as const,
 				color: chartColors[i],
-				encode: { x: 'timestamp', y: inst.ticker }
+				encode: { x: 0, y: i + 1 }
 			})),
-			dataset: buildDataset(mNAV_realistic)
+			dataset: buildDataset(mNAVRealistic)
 		},
 		mNAVMaxChart: {
 			charts: finalInstitutions.map((inst, i) => ({
@@ -269,9 +274,9 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 				stack: inst.ticker,
 				type: 'line' as const,
 				color: chartColors[i],
-				encode: { x: 'timestamp', y: inst.ticker }
+				encode: { x: 0, y: i + 1 }
 			})),
-			dataset: buildDataset(mNAV_max)
+			dataset: buildDataset(mNAVMax)
 		}
 	}
 }
@@ -320,13 +325,7 @@ export async function getDATCompanyData(company: string): Promise<IDATCompanyPag
 		const seriesName = assetMeta.ticker
 		const source = transactionRows.map(([timestamp, amount, avgPrice, usdValue]) => {
 			totalAmount += amount
-			return {
-				timestamp: timestamp * 1000,
-				[seriesName]: totalAmount,
-				delta: amount,
-				avgPrice,
-				usdValue
-			}
+			return [timestamp * 1000, totalAmount, amount, avgPrice, usdValue]
 		})
 		const holdingsChart = {
 			dataset: {
@@ -359,12 +358,7 @@ export async function getDATCompanyData(company: string): Promise<IDATCompanyPag
 		data.stats.length > 0
 			? {
 					dataset: {
-						source: data.stats.map((item) => ({
-							timestamp: item[0],
-							'Realized mNAV': item[7],
-							'Realistic mNAV': item[8],
-							'Max mNAV': item[9]
-						})),
+						source: data.stats.map((item) => [item[0], item[7], item[8], item[9]]),
 						dimensions: ['timestamp', 'Realized mNAV', 'Realistic mNAV', 'Max mNAV']
 					},
 					charts: [
@@ -397,12 +391,7 @@ export async function getDATCompanyData(company: string): Promise<IDATCompanyPag
 		data.stats.length > 0
 			? {
 					dataset: {
-						source: data.stats.map((item) => ({
-							timestamp: item[0],
-							'FD Realized': item[1],
-							'FD Realistic': item[2],
-							'FD Max': item[3]
-						})),
+						source: data.stats.map((item) => [item[0], item[1], item[2], item[3]]),
 						dimensions: ['timestamp', 'FD Realized', 'FD Realistic', 'FD Max']
 					},
 					charts: [
@@ -435,10 +424,7 @@ export async function getDATCompanyData(company: string): Promise<IDATCompanyPag
 		data.assetValue.length > 0
 			? {
 					dataset: {
-						source: data.assetValue.map(([timestamp, value]) => ({
-							timestamp,
-							'Total Asset Value': value
-						})),
+						source: data.assetValue.map(([timestamp, value]) => [timestamp, value]),
 						dimensions: ['timestamp', 'Total Asset Value']
 					},
 					charts: [

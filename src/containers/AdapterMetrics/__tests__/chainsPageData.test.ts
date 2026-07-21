@@ -465,11 +465,11 @@ describe('chains by adapter page data', () => {
 		expect(chartData).toEqual({
 			dimensions: ['timestamp', 'Ethereum', 'Optimism'],
 			source: [
-				{ timestamp: 1000, Ethereum: 10, Optimism: 5 },
-				{ timestamp: 2000, Ethereum: 20 }
+				[1000, 10, 5],
+				[2000, 20, null]
 			]
 		})
-		expect(Object.hasOwn(chartData.source[1], 'Optimism')).toBe(false)
+		expect(chartData.source[1][2]).toBeNull()
 	})
 
 	it('throws chart fetch failures by default so API routes do not cache empty charts', async () => {

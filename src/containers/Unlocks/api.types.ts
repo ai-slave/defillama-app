@@ -1,3 +1,5 @@
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+
 // Raw API request/response types for emissions/unlocks API endpoints
 
 export interface EmissionEvent {
@@ -76,6 +78,8 @@ export interface ProtocolEmissionDetail {
 				unlocked?: number | null
 				rawEmission?: number | null
 				burned?: number | null
+				isTBD?: boolean
+				isForecast?: boolean
 			}>
 		}> | null
 		tokenAllocation?: TokenAllocationPayload | null
@@ -88,6 +92,8 @@ export interface ProtocolEmissionDetail {
 				unlocked?: number | null
 				rawEmission?: number | null
 				burned?: number | null
+				isTBD?: boolean
+				isForecast?: boolean
 			}>
 		}> | null
 		tokenAllocation?: TokenAllocationPayload | null
@@ -96,9 +102,16 @@ export interface ProtocolEmissionDetail {
 	futures?: Record<string, unknown> | null
 	categories?: Record<string, string[]> | null
 	componentData?: {
-		sections?: Record<string, { isTBD?: boolean; isForecast?: boolean; colorFrom?: string; [key: string]: unknown }>
+		sections?: Record<string, EmissionSectionMetadata>
 	} | null
 	insiders?: InsidersPayload | null
+}
+
+export interface EmissionSectionMetadata {
+	isTBD?: boolean
+	isForecast?: boolean
+	colorFrom?: string
+	[key: string]: unknown
 }
 
 export interface EmissionSupplyMetrics {
@@ -116,9 +129,10 @@ export interface ProtocolEmissionSupplyMetricsEntry {
 
 export type ProtocolEmissionSupplyMetricsMap = Record<string, ProtocolEmissionSupplyMetricsEntry>
 
-// Chart/dataset types used by both API and queries
+// Chart data is kept object-shaped while categories are still dynamic. Renderer
+// datasets are materialized as positional rows once the dimension order is known.
 export interface EmissionsDataset {
-	source: EmissionsChartRow[]
+	source: MultiSeriesChartDataset['source']
 	dimensions: string[]
 }
 
@@ -130,7 +144,7 @@ export interface EmissionsChartRow {
 interface EmissionsChartConfigItem {
 	type: 'line'
 	name: string
-	encode: { x: 'timestamp'; y: string }
+	encode: { x: 0; y: number }
 	color: string | undefined
 	stack: string
 }

@@ -1,8 +1,8 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import type { IMultiSeriesChart2Props, ITreemapChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -14,10 +14,10 @@ import { formattedNum } from '~/utils'
 import { buildNarrativeTreemapTreeData, calculateDenominatedTimeSeries } from './chartData'
 import type { CategoryPerformanceProps, IPctChangeRow } from './types'
 
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
-const TreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<ITreemapChartProps>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
+const TreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
 const DEFAULT_SORTING_STATE = [{ id: 'change', desc: true }]
 const MAX_VISIBLE_TIME_SERIES = 30
@@ -154,8 +154,8 @@ export const CategoryPerformanceContainer = ({
 
 	// Keep axis on the right like before; avoid `yAxis.name` because it renders
 	// at the top of the axis and can get clipped by the chart container.
-	const barChartOptions = React.useMemo(() => ({ yAxis: { position: 'right' } }), [])
-	const lineChartOptions = React.useMemo(() => ({ yAxis: { position: 'right' } }), [])
+	const barChartOptions = React.useMemo<MultiSeriesChartOptions>(() => ({ yAxis: { position: 'right' } }), [])
+	const lineChartOptions = React.useMemo<MultiSeriesChartOptions>(() => ({ yAxis: { position: 'right' } }), [])
 
 	const { sortedPctChanges, timeSeries } = React.useMemo(() => {
 		const { field, seriesKey } = PERIOD_CONFIG[groupBy]
@@ -184,10 +184,13 @@ export const CategoryPerformanceContainer = ({
 		const seriesKeys = selectedSeries
 		const dimensions = ['timestamp', ...seriesKeys]
 
-		const source: Array<Record<string, string | number | null | undefined>> = []
+		const source: Array<Array<string | number | null | undefined>> = []
 		for (const row of timeSeries ?? []) {
-			const out = createChartRow<string | number | null | undefined>(row.date * 1e3)
-			for (const key of seriesKeys) out[key] = row[key] ?? null
+			const out = new Array<string | number | null>(seriesKeys.length + 1)
+			out[0] = row.date * 1e3
+			for (let seriesIndex = 0; seriesIndex < seriesKeys.length; seriesIndex++) {
+				out[seriesIndex + 1] = row[seriesKeys[seriesIndex]] ?? null
+			}
 			source.push(out)
 		}
 
@@ -203,7 +206,7 @@ export const CategoryPerformanceContainer = ({
 		return seriesKeys.map((name, index) => ({
 			type: 'line' as const,
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: index + 1 },
 			// Keep colors stable across tabs.
 			color: CHART_COLORS[(canonicalColorIndex.get(name) ?? index) % CHART_COLORS.length],
 			yAxisIndex: undefined,
@@ -216,7 +219,7 @@ export const CategoryPerformanceContainer = ({
 		return seriesKeys.map((name, index) => ({
 			type: 'bar' as const,
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: index + 1 },
 			color: CHART_COLORS[(canonicalColorIndex.get(name) ?? index) % CHART_COLORS.length],
 			stack: 'A',
 			large: false
@@ -311,7 +314,7 @@ export const CategoryPerformanceContainer = ({
 				<div className="min-h-[360px]">
 					{tab === 'barchart' ? (
 						<React.Suspense fallback={<div className="h-[533px]" />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={deferredChartData.dataset}
 								charts={deferredChartData.barCharts}
 								valueSymbol={chartValueSymbol}
@@ -324,7 +327,7 @@ export const CategoryPerformanceContainer = ({
 						</React.Suspense>
 					) : tab === 'linechart' ? (
 						<React.Suspense fallback={<div className="h-[533px]" />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={deferredChartData.dataset}
 								charts={deferredChartData.lineCharts}
 								valueSymbol={chartValueSymbol}

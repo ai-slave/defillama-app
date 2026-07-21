@@ -1,11 +1,5 @@
-import {
-	formatTooltipChartDate,
-	formatTooltipValue,
-	getTooltipAxisValue,
-	getTooltipRawYValue,
-	TOOLTIP_OTHERS_ROW_STYLE,
-	type TooltipGroupBy
-} from '~/components/ECharts/formatters'
+import { formatTooltipChartDate, formatTooltipValue, type TooltipGroupBy } from '~/components/ECharts/shared/formatters'
+import { getTooltipAxisValue, getTooltipRawYValue, TOOLTIP_OTHERS_ROW_STYLE } from '~/components/ECharts/shared/tooltip'
 import type { DashboardGrouping } from '../types'
 
 type ChartBuilderTooltipRow = {

@@ -1,9 +1,5 @@
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type {
-	IMultiSeriesChart2Props,
-	IMultiSeriesChartProps,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 
 const THREE_MONTH_DAYS = 90
 
@@ -13,16 +9,16 @@ type TimeSeries = { name: string }
 
 export function multiSeriesCharts(
 	series: readonly TimeSeries[],
-	type: MultiSeriesChart2SeriesConfig['type'],
+	type: MultiSeriesChartSeriesConfig['type'],
 	stack?: string,
 	colors?: Record<string, string>
-): MultiSeriesChart2SeriesConfig[] {
+): MultiSeriesChartSeriesConfig[] {
 	return series.map((item, index) => {
 		const color = colors?.[item.name]
 		return {
 			type,
 			name: item.name,
-			encode: { x: 'timestamp', y: item.name },
+			encode: { x: 0, y: index + 1 },
 			...(stack ? { stack } : {}),
 			...(color ? { color } : {}),
 			...(type === 'line' && !stack && index > 0 && !color ? { hideAreaStyle: true } : {})
@@ -47,13 +43,13 @@ export function lastNDaysZoom(
 export function lastNDaysDatasetZoom(
 	dataLength: number,
 	days: number = THREE_MONTH_DAYS
-): IMultiSeriesChart2Props['chartOptions'] | undefined {
+): IMultiSeriesChartProps['chartOptions'] | undefined {
 	if (dataLength <= days) return undefined
 	const start = ((dataLength - days) / dataLength) * 100
 	return { dataZoom: { start, end: 100 } }
 }
 
-export function datasetChartOptions(dataLength: number, valueSymbol: string): IMultiSeriesChart2Props['chartOptions'] {
+export function datasetChartOptions(dataLength: number, valueSymbol: string): IMultiSeriesChartProps['chartOptions'] {
 	return {
 		...createTimeSeriesChartOptions(valueSymbol),
 		...(lastNDaysDatasetZoom(dataLength) ?? {})

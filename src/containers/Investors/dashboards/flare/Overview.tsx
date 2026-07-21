@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, useEffect } from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareOverviewData, type OverviewAPIResponse } from './data'
 import { ChartCard, KpiCard, SectionHeader } from './ui'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 export default function Overview() {
 	const query = useQuery({
@@ -40,7 +38,7 @@ export default function Overview() {
 				subtitle="Total value locked across Flare DeFi protocols."
 				value={tvl.currentFormatted}
 			>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={tvl.dataset}
 					charts={tvl.charts}
 					valueSymbol="$"
@@ -69,7 +67,7 @@ export default function Overview() {
 			</div>
 
 			<ChartCard title={stables.title} subtitle="Stablecoin supply circulating on Flare — native-minted vs. bridged.">
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={stables.dataset}
 					charts={stables.charts}
 					valueSymbol="$"

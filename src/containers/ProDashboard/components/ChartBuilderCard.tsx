@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
+import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { Select } from '~/components/Select/Select'
 import { filterDataByTimePeriod, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
@@ -24,8 +25,8 @@ import { createChartBuilderTooltipFormatter, dashboardGroupingToTooltipGroupBy }
 import { ConfirmationModal } from './ConfirmationModal'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
-const TreeMapBuilderChart = lazy(() => import('~/components/ECharts/TreeMapBuilderChart'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const BuilderTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/Builder'))
 
 const DEFAULT_SERIES_COLOR = '#3e61cc'
 const EMPTY_SERIES_COLORS: Record<string, string> = {}
@@ -221,7 +222,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	const hasRenderableData =
 		config.chartType === 'treemap' ? treemapData.length > 0 : chartView.dataset.source.length > 0
 
-	const chartOptions = useMemo(() => {
+	const chartOptions = useMemo<MultiSeriesChartOptions>(() => {
 		const tooltipFormatter = createChartBuilderTooltipFormatter({
 			displayAs: config.displayAs,
 			groupBy: dashboardGroupingToTooltipGroupBy(builder.grouping),
@@ -286,9 +287,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			const rows = new Array<string[]>(chartView.dataset.source.length)
 			for (let i = 0; i < chartView.dataset.source.length; i++) {
 				const input = chartView.dataset.source[i]
-				const row = [new Date(input.timestamp as number).toISOString().slice(0, 10)]
+				const row = [new Date(input[0] as number).toISOString().slice(0, 10)]
 				for (let j = 1; j < chartView.dataset.dimensions.length; j++) {
-					row.push(String(input[chartView.dataset.dimensions[j]] ?? 0))
+					row.push(String(input[j] ?? 0))
 				}
 				rows[i] = row
 			}
@@ -623,9 +624,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			) : hasRenderableData ? (
 				<Suspense fallback={<div className="min-h-[300px]" />}>
 					{config.chartType === 'treemap' ? (
-						<TreeMapBuilderChart data={treemapData} height="350px" onReady={handleChartReady} />
+						<BuilderTreemapChart data={treemapData} height="350px" onReady={handleChartReady} />
 					) : (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={chartView.dataset}
 							charts={chartView.charts}
 							valueSymbol={config.displayAs === 'percentage' ? '%' : '$'}

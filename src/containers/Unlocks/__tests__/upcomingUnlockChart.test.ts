@@ -73,13 +73,13 @@ describe('buildUpcomingUnlockChart', () => {
 
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Total Upcoming Unlock Value'],
-			source: [{ timestamp: Date.UTC(2024, 0, 7), 'Total Upcoming Unlock Value': 16 }]
+			source: [[Date.UTC(2024, 0, 7), 16]]
 		})
 		expect(result.charts).toEqual([
 			{
 				type: 'bar',
 				name: 'Total Upcoming Unlock Value',
-				encode: { x: 'timestamp', y: 'Total Upcoming Unlock Value' },
+				encode: { x: 0, y: 1 },
 				color: '#8884d8'
 			}
 		])
@@ -94,8 +94,8 @@ describe('buildUpcomingUnlockChart', () => {
 
 		expect(result.dataset.dimensions).toEqual(['timestamp', 'Alpha', 'Zeta'])
 		expect(result.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2024, 0, 2), Alpha: 4, Zeta: 10 },
-			{ timestamp: Date.UTC(2024, 0, 3), Alpha: null, Zeta: 2 }
+			[Date.UTC(2024, 0, 2), 4, 10],
+			[Date.UTC(2024, 0, 3), null, 2]
 		])
 		expect(result.charts.map(({ name, stack }) => ({ name, stack }))).toEqual([
 			{ name: 'Alpha', stack: 'A' },

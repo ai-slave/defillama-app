@@ -1,16 +1,8 @@
-import { lazy } from 'react'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
-import { useTvlData, chartToTs, seriesPairs, zoomStartPct, defaultZoomOptions } from './api'
-import {
-	KpiCard,
-	ChartCard,
-	SectionHeader,
-	ChartSkeleton,
-	SimpleTable,
-	UtilBar,
-	fmtUsd,
-	dollarPctChartOptions
-} from './ui'
+import { lazy, useMemo } from 'react'
+import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { useTvlData, chartToModel, zoomStartPct, defaultZoomOptions, type MorphoMarketHistory } from './api'
+import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, UtilBar, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -27,40 +19,134 @@ const CHAIN_COLORS: Record<string, string> = {
 	Plasma: '#10b981'
 }
 
+const MORPHO_HISTORY_CHARTS: IMultiSeriesChartProps['charts'] = [
+	{
+		name: 'Supply',
+		type: 'line',
+		color: '#6366f1',
+		encode: { x: 'timestamp', y: 'Supply' },
+		yAxisIndex: 0,
+		valueSymbol: '$'
+	},
+	{
+		name: 'Borrow',
+		type: 'line',
+		color: '#fb923c',
+		encode: { x: 'timestamp', y: 'Borrow' },
+		yAxisIndex: 0,
+		valueSymbol: '$'
+	},
+	{
+		name: 'Utilization %',
+		type: 'line',
+		color: '#34d399',
+		encode: { x: 'timestamp', y: 'Utilization %' },
+		yAxisIndex: 1,
+		valueSymbol: '%'
+	}
+]
+
+function buildMorphoHistoryModel(market: MorphoMarketHistory): CartesianChartModel {
+	const source = new Array<MultiSeriesChartDataset['source'][number]>(market.series.length)
+	for (let index = 0; index < market.series.length; index++) {
+		const point = market.series[index]
+		source[index] = [Date.parse(`${point.date}T00:00:00Z`), point.supplyUsd, point.borrowUsd, point.utilization]
+	}
+	return {
+		dataset: { dimensions: ['timestamp', 'Supply', 'Borrow', 'Utilization %'], source },
+		charts: MORPHO_HISTORY_CHARTS
+	}
+}
+
 export default function Tvl() {
 	const { data, isLoading } = useTvlData()
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
 	const fromDate = data?.defaultFrom || '2025-01-01'
 
-	const ecoSeries = data?.ecosystemChart
-		? chartToTs(data.ecosystemChart).map((s) => ({
-				name: s.name,
-				type: 'line' as const,
-				color: PROTO_COLORS[s.name] || s.color || '#6366f1',
-				data: s.data
-			}))
-		: undefined
-	const ecoZoom = defaultZoomOptions(zoomStartPct(data?.ecosystemChart?.dates, fromDate))
+	const ecoModel = useMemo(
+		() =>
+			data?.ecosystemChart
+				? (() => {
+						const model = chartToModel(data.ecosystemChart)
+						return {
+							...model,
+							charts: model.charts.map((chart) => ({
+								...chart,
+								type: 'line' as const,
+								color: PROTO_COLORS[chart.name] || chart.color || '#6366f1'
+							}))
+						}
+					})()
+				: undefined,
+		[data?.ecosystemChart]
+	)
+	const ecoZoom = useMemo(
+		() => defaultZoomOptions(zoomStartPct(data?.ecosystemChart?.dates, fromDate)),
+		[data?.ecosystemChart?.dates, fromDate]
+	)
 
-	const ethOverlay = data?.marketOverlay
-		? [
-				{
-					name: 'Total TVL',
-					type: 'line' as const,
-					color: '#6366f1',
-					data: seriesPairs(data.marketOverlay.dates, data.marketOverlay.series[0]?.data),
-					yAxisIndex: 0
-				},
-				{
-					name: 'ETH Price',
-					type: 'line' as const,
-					color: '#f59e0b',
-					data: seriesPairs(data.marketOverlay.dates, data.marketOverlay.series[1]?.data),
-					yAxisIndex: 1
+	const ethOverlay = useMemo(
+		() =>
+			data?.marketOverlay
+				? buildAlignedCartesianChartModel(
+						data.marketOverlay.dates.map((date) => Date.parse(`${date}T00:00:00Z`)),
+						[
+							{
+								name: 'Total TVL',
+								type: 'line' as const,
+								color: '#6366f1',
+								values: data.marketOverlay.series[0]?.data ?? [],
+								yAxisIndex: 0,
+								valueSymbol: '$'
+							},
+							{
+								name: 'ETH Price',
+								type: 'line' as const,
+								color: '#f59e0b',
+								values: data.marketOverlay.series[1]?.data ?? [],
+								yAxisIndex: 1,
+								valueSymbol: '$'
+							}
+						],
+						{ timestampMultiplier: 1 }
+					)
+				: undefined,
+		[data?.marketOverlay]
+	)
+	const ethZoom = useMemo(
+		() => defaultZoomOptions(zoomStartPct(data?.marketOverlay?.dates, fromDate)),
+		[data?.marketOverlay?.dates, fromDate]
+	)
+
+	const protocolByChainModels = useMemo(
+		() =>
+			(data?.protocolByChain ?? []).map((protocol) => {
+				const model = chartToModel(protocol)
+				return {
+					protocol,
+					model: {
+						...model,
+						charts: model.charts.map((chart) => ({
+							...chart,
+							type: 'bar' as const,
+							stack: 'chain',
+							color: CHAIN_COLORS[chart.name] || '#6366f1'
+						}))
+					},
+					zoom: defaultZoomOptions(zoomStartPct(protocol.dates, fromDate))
 				}
-			]
-		: undefined
-	const ethZoom = defaultZoomOptions(zoomStartPct(data?.marketOverlay?.dates, fromDate))
+			}),
+		[data?.protocolByChain, fromDate]
+	)
+
+	const morphoHistoryModels = useMemo(
+		() =>
+			(data?.morphoMarketHistory?.markets ?? []).map((market) => ({
+				market,
+				model: buildMorphoHistoryModel(market)
+			})),
+		[data?.morphoMarketHistory?.markets]
+	)
 
 	const u = data?.utilization
 	const uk = u?.kpis ?? ({} as Partial<NonNullable<typeof u>['kpis']>)
@@ -84,14 +170,22 @@ export default function Tvl() {
 			</div>
 
 			<SectionHeader>Total Ecosystem TVL</SectionHeader>
-			{isLoading || !ecoSeries ? (
+			{isLoading || !ecoModel ? (
 				<ChartSkeleton title="Ecosystem TVL" />
 			) : (
 				<ChartCard
 					title="Ecosystem TVL"
 					subtitle="Metronome, Vesper, Odyssey and Morpho markets — drag the slider for full history"
 				>
-					<MultiSeriesChart series={ecoSeries} valueSymbol="$" height="400px" chartOptions={ecoZoom} />
+					<MultiSeriesChart
+						dataset={ecoModel.dataset}
+						charts={ecoModel.charts}
+						valueSymbol="$"
+						height="400px"
+						chartOptions={ecoZoom}
+						hideDefaultLegend={false}
+						exportButtons="hidden"
+					/>
 				</ChartCard>
 			)}
 
@@ -101,29 +195,31 @@ export default function Tvl() {
 			) : (
 				<ChartCard title="Ecosystem TVL vs ETH/USD" subtitle="Correlation overlay">
 					<MultiSeriesChart
-						series={ethOverlay}
+						dataset={ethOverlay.dataset}
+						charts={ethOverlay.charts}
 						valueSymbol="$"
-						yAxisSymbols={['$', '$']}
 						height="350px"
 						chartOptions={ethZoom}
+						hideDefaultLegend={false}
+						exportButtons="hidden"
 					/>
 				</ChartCard>
 			)}
 
 			<SectionHeader>TVL by Chain</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-				{(data?.protocolByChain || []).map((p) => {
-					const series = chartToTs(p).map((s) => ({
-						name: s.name,
-						type: 'bar' as const,
-						stack: 'chain',
-						color: CHAIN_COLORS[s.name] || '#6366f1',
-						data: s.data
-					}))
-					const z = defaultZoomOptions(zoomStartPct(p.dates, fromDate))
+				{protocolByChainModels.map(({ protocol, model, zoom }) => {
 					return (
-						<ChartCard key={p.protocol} title={p.protocol} subtitle="Stacked by chain">
-							<MultiSeriesChart series={series} valueSymbol="$" height="280px" chartOptions={z} />
+						<ChartCard key={protocol.protocol} title={protocol.protocol} subtitle="Stacked by chain">
+							<MultiSeriesChart
+								dataset={model.dataset}
+								charts={model.charts}
+								valueSymbol="$"
+								height="280px"
+								chartOptions={zoom}
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
 						</ChartCard>
 					)
 				})}
@@ -197,54 +293,26 @@ export default function Tvl() {
 				</>
 			)}
 
-			{data?.morphoMarketHistory?.markets?.length ? (
+			{morphoHistoryModels.length ? (
 				<>
 					<SectionHeader>
 						{data.morphoMarketHistory.title || 'Morpho Market · Supply / Borrow / Utilization'}
 					</SectionHeader>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-						{data.morphoMarketHistory.markets.map((m) => {
-							const series = [
-								{
-									name: 'Supply',
-									type: 'line' as const,
-									color: '#6366f1',
-									data: m.series.map(
-										(p) => [Math.floor(Date.parse(p.date + 'T00:00:00Z') / 1000), p.supplyUsd] as [number, number]
-									),
-									yAxisIndex: 0
-								},
-								{
-									name: 'Borrow',
-									type: 'line' as const,
-									color: '#fb923c',
-									data: m.series.map(
-										(p) => [Math.floor(Date.parse(p.date + 'T00:00:00Z') / 1000), p.borrowUsd] as [number, number]
-									),
-									yAxisIndex: 0
-								},
-								{
-									name: 'Utilization %',
-									type: 'line' as const,
-									color: '#34d399',
-									data: m.series.map(
-										(p) => [Math.floor(Date.parse(p.date + 'T00:00:00Z') / 1000), p.utilization] as [number, number]
-									),
-									yAxisIndex: 1
-								}
-							]
+						{morphoHistoryModels.map(({ market, model }) => {
 							return (
 								<ChartCard
-									key={m.marketId}
-									title={m.name || m.marketId}
-									subtitle={`${m.chain}${m.source ? ` · ${m.source}` : ''}`}
+									key={market.marketId}
+									title={market.name || market.marketId}
+									subtitle={`${market.chain}${market.source ? ` · ${market.source}` : ''}`}
 								>
 									<MultiSeriesChart
-										series={series}
+										dataset={model.dataset}
+										charts={model.charts}
 										valueSymbol="$"
-										yAxisSymbols={['$', '%']}
 										height="300px"
-										chartOptions={dollarPctChartOptions}
+										hideDefaultLegend={false}
+										exportButtons="hidden"
 									/>
 								</ChartCard>
 							)

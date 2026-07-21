@@ -118,16 +118,14 @@ describe('buildFinancialsViewModel', () => {
 		const result = buildFinancialsViewModel(buildResponse())
 
 		expect(result.monthlyGross.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 0, 1), 'Gross A': 4, 'Gross B': 2 },
-			{ timestamp: Date.UTC(2026, 0, 2), 'Gross A': 5, 'Gross B': 0 }
+			[Date.UTC(2026, 0, 1), 4, 2],
+			[Date.UTC(2026, 0, 2), 5, 0]
 		])
 		expect(result.monthlyGross.charts).toMatchObject([
-			{ name: 'Gross A', type: 'bar', stack: 'a', encode: { x: 'timestamp', y: 'Gross A' } },
-			{ name: 'Gross B', type: 'bar', stack: 'a', encode: { x: 'timestamp', y: 'Gross B' } }
+			{ name: 'Gross A', type: 'bar', stack: 'a', encode: { x: 0, y: 1 } },
+			{ name: 'Gross B', type: 'bar', stack: 'a', encode: { x: 0, y: 2 } }
 		])
-		expect(result.borrows.charts).toEqual([
-			{ name: 'Borrows', type: 'line', color: '#f85149', encode: { x: 'timestamp', y: 'Borrows' } }
-		])
+		expect(result.borrows.charts).toEqual([{ name: 'Borrows', type: 'line', color: '#f85149', encode: { x: 0, y: 1 } }])
 		expect(result.aaHistorical.byProtocol.charts[0]).toMatchObject({
 			name: 'Protocol',
 			type: 'line',
@@ -135,7 +133,7 @@ describe('buildFinancialsViewModel', () => {
 		})
 	})
 
-	it('parses each legacy date array once and preserves axes, colors, order, and threshold opacity', () => {
+	it('parses each aligned date array once and preserves axes, colors, order, and threshold opacity', () => {
 		const parse = vi.spyOn(Date, 'parse')
 		const result = buildFinancialsViewModel(buildResponse())
 		const treasuryCalls = parse.mock.calls.filter(([value]) => String(value).startsWith('2030-'))
@@ -143,58 +141,28 @@ describe('buildFinancialsViewModel', () => {
 
 		expect(treasuryCalls).toHaveLength(2)
 		expect(buybackCalls).toHaveLength(2)
-		expect(result.treasurySeries).toEqual([
-			{
-				name: 'Assets A',
-				type: 'line',
-				color: '#4FC3F7',
-				data: [
-					[Date.UTC(2030, 0, 1) / 1000, 100],
-					[Date.UTC(2030, 1, 1) / 1000, 110]
-				]
-			},
-			{
-				name: 'Assets B',
-				type: 'line',
-				color: '#4FC3F7',
-				data: [
-					[Date.UTC(2030, 0, 1) / 1000, 20],
-					[Date.UTC(2030, 1, 1) / 1000, 30]
-				]
-			},
-			{
-				name: 'Buyback Threshold',
-				type: 'line',
-				color: '#EF5350',
-				areaStyle: { opacity: 0 },
-				data: [
-					[Date.UTC(2030, 0, 1) / 1000, 80],
-					[Date.UTC(2030, 1, 1) / 1000, 80]
-				]
-			}
+		expect(result.treasuryModel.dataset.source).toEqual([
+			[Date.UTC(2030, 0, 1), 100, 20, 80],
+			[Date.UTC(2030, 1, 1), 110, 30, 80]
 		])
-		expect(result.buybacksSeries).toEqual([
-			{
-				name: 'SPK Bought',
-				type: 'bar',
-				color: '#1f6feb',
-				data: [
-					[Date.UTC(2031, 0, 1) / 1000, 2],
-					[Date.UTC(2031, 0, 2) / 1000, 3]
-				],
-				yAxisIndex: 0,
-				areaStyle: undefined
-			},
+		expect(result.treasuryModel.charts).toMatchObject([
+			{ name: 'Assets A', type: 'line', color: '#4FC3F7' },
+			{ name: 'Assets B', type: 'line', color: '#4FC3F7' },
+			{ name: 'Buyback Threshold', type: 'line', color: '#EF5350', areaStyle: { opacity: 0 } }
+		])
+		expect(result.buybacksModel.dataset.source).toEqual([
+			[Date.UTC(2031, 0, 1), 2, 1],
+			[Date.UTC(2031, 0, 2), 3, 1.5]
+		])
+		expect(result.buybacksModel.charts).toMatchObject([
+			{ name: 'SPK Bought', type: 'bar', color: '#1f6feb', yAxisIndex: 0, valueSymbol: 'SPK' },
 			{
 				name: 'Average Price',
 				type: 'line',
 				color: '#3fb950',
-				data: [
-					[Date.UTC(2031, 0, 1) / 1000, 1],
-					[Date.UTC(2031, 0, 2) / 1000, 1.5]
-				],
 				yAxisIndex: 1,
-				areaStyle: { opacity: 0 }
+				areaStyle: { opacity: 0 },
+				valueSymbol: 'SPK'
 			}
 		])
 	})

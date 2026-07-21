@@ -18,7 +18,7 @@ import type { ForkOverviewPageData } from './types'
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart'))
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const columnHelper = createColumnHelper<ReturnType<typeof buildForksOverviewDisplayData>['tableData'][number]>()
 
@@ -125,7 +125,7 @@ export const ForksOverview = ({
 						</ChartPanel>
 						<ChartPanel className="flex-1">
 							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-								<MultiSeriesChart2
+								<MultiSeriesChart
 									dataset={dominanceDataset}
 									charts={dominanceCharts}
 									stacked={true}

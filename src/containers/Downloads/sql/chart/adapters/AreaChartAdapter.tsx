@@ -1,3 +1,4 @@
+import type * as echarts from 'echarts/core'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
@@ -7,7 +8,7 @@ interface AreaChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
 	classified: ClassifiedColumn[]
-	onReady?: (instance: any) => void
+	onReady?: (instance: echarts.ECharts | null) => void
 }
 
 export function AreaChartAdapter({ config, result, classified, onReady }: AreaChartAdapterProps) {

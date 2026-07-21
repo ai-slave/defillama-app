@@ -1,9 +1,10 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
-import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { tvlOptionsMap } from '~/components/Filters/options'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -26,7 +27,7 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
@@ -119,7 +120,7 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-type MultiSeriesCharts = NonNullable<IMultiSeriesChart2Props['charts']>
+type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
 
 function ChainsChartCard({
 	title,
@@ -132,7 +133,7 @@ function ChainsChartCard({
 }: {
 	title: string
 	allValues: string[]
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 	exportFilenameBase: string
 	exportTitle: string
@@ -169,7 +170,7 @@ function ChainsChartCard({
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={deferredDataset}
 					charts={deferredCharts}
 					valueSymbol="$"
@@ -194,7 +195,7 @@ function TokenLineChartCard({
 }: {
 	title: string
 	allValues: string[]
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 	valueSymbol?: string
 	exportFilenameBase: string
@@ -232,7 +233,7 @@ function TokenLineChartCard({
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={deferredDataset}
 					charts={deferredCharts}
 					valueSymbol={valueSymbol}
@@ -314,7 +315,7 @@ function USDInflowsChartCard({
 	exportIconUrl
 }: {
 	title: string
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	exportFilenameBase: string
 	exportTitle: string
 	exportIconUrl?: string
@@ -334,7 +335,7 @@ function USDInflowsChartCard({
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={deferredDataset}
 					charts={USD_INFLOWS_CHARTS}
 					valueSymbol="$"
@@ -357,7 +358,7 @@ function InflowsByTokenChartCard({
 }: {
 	title: string
 	allValues: string[]
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 	exportFilenameBase: string
 	exportTitle: string
@@ -394,7 +395,7 @@ function InflowsByTokenChartCard({
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={deferredDataset}
 					charts={deferredCharts}
 					hideDefaultLegend={true}

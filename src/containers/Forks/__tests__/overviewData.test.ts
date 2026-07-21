@@ -76,17 +76,20 @@ describe('buildForksOverviewDisplayData', () => {
 		})
 
 		expect(display.dominanceDataset.dimensions).toEqual(['timestamp', 'Curve', 'Uniswap', 'NewFork', 'EmptyFork'])
-		expect(display.dominanceDataset.source[0]).toEqual({
-			timestamp: 10_000,
-			Uniswap: (100 / 150) * 100,
-			Curve: (50 / 150) * 100
-		})
-		expect(display.dominanceDataset.source[1]).toEqual({
-			timestamp: 20_000,
-			Curve: (120 / 230) * 100,
-			Uniswap: (80 / 230) * 100,
-			NewFork: (30 / 230) * 100
-		})
+		expect(display.dominanceDataset.source[0]).toEqual([
+			10_000,
+			(50 / 150) * 100,
+			(100 / 150) * 100,
+			undefined,
+			undefined
+		])
+		expect(display.dominanceDataset.source[1]).toEqual([
+			20_000,
+			(120 / 230) * 100,
+			(80 / 230) * 100,
+			(30 / 230) * 100,
+			undefined
+		])
 		expect(display.dominanceCharts.map((chart) => chart.name)).toEqual(['Curve', 'Uniswap', 'NewFork', 'EmptyFork'])
 	})
 
@@ -101,7 +104,7 @@ describe('buildForksOverviewDisplayData', () => {
 			{ name: 'Curve', forkedProtocols: 2, parentTvl: 400, tvl: 0, ftot: 0 }
 		])
 		expect(display.tokenTvls).toEqual([{ name: 'Uniswap', value: 100 }])
-		expect(display.dominanceDataset.source).toEqual([{ timestamp: 10_000, Uniswap: 100 }])
+		expect(display.dominanceDataset.source).toEqual([[10_000, 100, undefined]])
 	})
 
 	it('keeps fork rows with zero tvl when base chart data is empty', () => {

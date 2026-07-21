@@ -1,8 +1,7 @@
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import { createChartRecord } from '~/components/ECharts/dynamicRow'
-import type { IPieChartProps } from '~/components/ECharts/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
@@ -25,7 +24,7 @@ import {
 } from './bridgeOverviewChartData'
 import { BridgesLargeTxsTable, type BridgesLargeTxsTableHandle } from './BridgesLargeTxsTable'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
@@ -160,28 +159,29 @@ export function BridgesOverviewByChain({
 
 		const fileName = 'bridge-and-messaging-volumes.csv'
 		const rows = [['Timestamp', 'Date', ...filteredBridgeNames, 'Total']]
-		const stackedDatasetObject = createChartRecord<Record<string, number>>()
+		const valuesByDate = new Map<number, Map<string, number>>()
 		for (const bridgeName of filteredBridgeNames) {
 			const chartDataIndex = bridgeNameToChartDataIndex[bridgeName]
 			const charts = chartDataByBridge[chartDataIndex]
 			for (const chart of charts) {
-				const date = chart.date
-				stackedDatasetObject[date] = stackedDatasetObject[date] || createChartRecord<number>()
-				stackedDatasetObject[date][bridgeName] = chart.volume
+				let values = valuesByDate.get(chart.date)
+				if (!values) {
+					values = new Map()
+					valuesByDate.set(chart.date, values)
+				}
+				values.set(bridgeName, chart.volume)
 			}
 		}
-		const stackedData = Object.entries(stackedDatasetObject).map((data: [string, object]) => {
-			return { date: parseInt(data[0]), ...data[1] }
-		})
-		const sortedStackedData = stackedData.sort((a, b) => a.date - b.date)
-		for (const day of sortedStackedData) {
+		const sortedDates = Array.from(valuesByDate.keys()).sort((a, b) => a - b)
+		for (const date of sortedDates) {
+			const values = valuesByDate.get(date)!
+			let total = 0
+			for (const value of values.values()) total += value
 			rows.push([
-				day.date,
-				toNiceCsvDate(day.date),
-				...filteredBridgeNames.map((chain) => day[chain] ?? ''),
-				filteredBridgeNames.reduce((acc, curr) => {
-					return (acc += day[curr] ?? 0)
-				}, 0)
+				date,
+				toNiceCsvDate(date),
+				...filteredBridgeNames.map((bridgeName) => values.get(bridgeName) ?? ''),
+				total
 			])
 		}
 
@@ -314,7 +314,7 @@ export function BridgesOverviewByChain({
 							) : activeChart?.kind === 'Net Flow' ? (
 								activeChart.dataset.source.length > 0 ? (
 									<React.Suspense fallback={<ChartPanelBodyFallback />}>
-										<MultiSeriesChart2
+										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_CHARTS}
 											hideDefaultLegend={true}
@@ -326,7 +326,7 @@ export function BridgesOverviewByChain({
 							) : activeChart?.kind === 'Net Flow (%)' ? (
 								activeChart.dataset.source.length > 0 ? (
 									<React.Suspense fallback={<ChartPanelBodyFallback />}>
-										<MultiSeriesChart2
+										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_PCT_CHARTS}
 											hideDefaultLegend={true}
@@ -338,7 +338,7 @@ export function BridgesOverviewByChain({
 							) : activeChart?.kind === 'Inflows' ? (
 								activeChart.dataset.source.length > 0 ? (
 									<React.Suspense fallback={<ChartPanelBodyFallback />}>
-										<MultiSeriesChart2
+										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={CHAIN_INFLOW_CHARTS}
 											hideDefaultLegend={true}

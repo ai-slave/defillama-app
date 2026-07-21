@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import type { NextRouter } from 'next/router'
 import { useMemo } from 'react'
-import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
@@ -62,7 +61,7 @@ const limitPieChartData = (data: PieChartDatum[], maxLabels: number) => {
 }
 
 const buildStackColors = (order: string[]) => {
-	const stackColors = createChartRecord<string>()
+	const stackColors = {}
 	for (const [idx, key] of order.entries()) {
 		stackColors[key] = CHART_COLORS[idx % CHART_COLORS.length]
 	}

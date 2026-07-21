@@ -6,8 +6,9 @@ import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
+import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -33,7 +34,7 @@ import {
 import { perpsDefinitions as d } from './definitions'
 import type { IRWAPerpsContractData } from './types'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const normalizeChartGroup = (value: string | null | undefined): LowercaseDwmGrouping | null => {
 	const normalizedValue = value?.toLowerCase() ?? null
@@ -96,9 +97,21 @@ function RWAPerpsContractHeader({
 	contract: IRWAPerpsContractData
 	headingAs?: 'h1' | 'div'
 }) {
+	const link = contract.contract.link
+
 	return (
 		<Tag className="flex min-w-0 items-center justify-between gap-2 heading-xs">
 			<span className="min-w-0 truncate">{contract.contract.contract}</span>
+			{link ? (
+				<WebsiteGlobeLink
+					url={link}
+					name={contract.contract.contract}
+					event="rwa-perps-website-click"
+					eventData={{ contract: contract.contract.contract }}
+					size="sm"
+					className="ml-auto"
+				/>
+			) : null}
 		</Tag>
 	)
 }
@@ -344,7 +357,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 
 			{deferredChartSpec.charts.length > 0 && deferredChartSpec.dataset.source.length > 0 ? (
 				<Suspense fallback={<ChartPanelBodyFallback />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={deferredChartSpec.dataset}
 						charts={deferredChartSpec.charts}
 						hideDefaultLegend={false}

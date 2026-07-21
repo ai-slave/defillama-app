@@ -1,0 +1,104 @@
+import type {
+	EChartsOption,
+	GridComponentOption,
+	TooltipComponentOption,
+	XAXisComponentOption,
+	YAXisComponentOption
+} from 'echarts'
+import type { LineSeriesOption } from 'echarts/charts'
+import type * as echarts from 'echarts/core'
+import type { ChartExportButtonsMode } from '~/components/ChartExport/types'
+
+export type ChartTimeGrouping = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
+export type ChartTimeGroupingWithCumulative = ChartTimeGrouping | 'cumulative'
+
+type MultiSeriesChartValue = string | number | null | undefined
+export type MultiSeriesChartArrayRow = MultiSeriesChartValue[]
+
+export type MultiSeriesChartDataset = {
+	/** Time-series rows use an ascending millisecond `timestamp`; category datasets may use another first dimension. */
+	source: MultiSeriesChartArrayRow[]
+	/** Logical dimensions used by chart encodes and CSV labels. ECharts receives private internal dimensions. */
+	dimensions: string[]
+}
+
+export type CanonicalMultiSeriesChartDataset = MultiSeriesChartDataset
+
+export type MultiSeriesChartSeriesConfig = {
+	type: 'line' | 'bar'
+	/** Stable display identity. `selectedCharts` entries must match this name exactly. */
+	name: string
+	stack?: string
+	/** `encode.y` is the canonical dataset dimension and may differ from the display name. */
+	encode: {
+		x: number | number[] | string | string[]
+		y: number | number[] | string | string[]
+	}
+	color?: string
+	legendIconUrl?: string
+	yAxisIndex?: number
+	/** Per-series axis and tooltip unit. Falls back to the chart-level value symbol. */
+	valueSymbol?: string
+	hideAreaStyle?: boolean
+	areaStyle?: LineSeriesOption['areaStyle']
+	markLine?: LineSeriesOption['markLine']
+	connectNulls?: boolean
+	excludeFromTooltipTotal?: boolean
+	isTBD?: boolean
+	isForecast?: boolean
+	showSymbol?: boolean
+	symbol?: string
+	symbolSize?: number
+	barMinWidth?: number
+	barMaxWidth?: number
+	large?: boolean
+}
+
+export type MultiSeriesYAxisOption = Extract<YAXisComponentOption, { type?: 'value' | 'log' }>
+
+/**
+ * Only options backed by components registered in MultiSeriesChart are exposed.
+ * This prevents a typed option from being silently ignored by the modular ECharts
+ * runtime; series and dataset remain canonical renderer props.
+ */
+export type MultiSeriesChartOptions = Pick<EChartsOption, 'dataZoom' | 'graphic' | 'legend'> & {
+	series?: never
+	dataset?: never
+	/** The renderer owns one Cartesian coordinate system. */
+	grid?: GridComponentOption
+	tooltip?: TooltipComponentOption
+	xAxis?: XAXisComponentOption
+	/** MultiSeriesChart owns a Cartesian numeric y scale; category/time y-axes are unsupported. */
+	yAxis?: MultiSeriesYAxisOption | MultiSeriesYAxisOption[]
+}
+
+export interface IMultiSeriesChartProps {
+	charts?: MultiSeriesChartSeriesConfig[]
+	selectedCharts?: Set<string>
+	chartOptions?: MultiSeriesChartOptions
+	height?: string
+	groupBy?: ChartTimeGroupingWithCumulative
+	hallmarks?: [number, string][]
+	hallmarkStyle?: 'event-rail' | 'mark-line'
+	expandTo100Percent?: boolean
+	valueSymbol?: string
+	alwaysShowTooltip?: boolean
+	containerClassName?: string
+	stacked?: boolean
+	solidChartAreaStyle?: boolean
+	hideDataZoom?: boolean
+	onReady?: (instance: echarts.ECharts | null) => void
+	hideDefaultLegend?: boolean
+	dataset: MultiSeriesChartDataset
+	title?: string
+	headingAs?: 'h1' | 'h2' | 'h3'
+	/** One logo per category dimension, rendered below a category x-axis. */
+	categoryLogos?: string[]
+	/** Maximum tooltip series rows; non-positive values disable the cap. */
+	tooltipMaxItems?: number
+	/** Adds a total for same-unit series. Per-series unit overrides are excluded. */
+	showTotalInTooltip?: boolean
+	exportButtons?: ChartExportButtonsMode
+	logScale?: boolean
+	logEligibleYAxes?: number[]
+}

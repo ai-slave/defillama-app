@@ -1,12 +1,13 @@
+import type { EChartsOption } from 'echarts'
 import { TreemapChart as EChartTreemap } from 'echarts/charts'
 import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef } from 'react'
-import { CHART_INSET } from '~/components/ECharts/chartSpacing'
-import { clearTreemapFocus, registerTreemapFocusTracking } from '~/components/ECharts/treemapFocus'
-import { buildWatermarkGraphic } from '~/components/ECharts/utils'
+import { CHART_INSET } from '~/components/ECharts/shared/chartSpacing'
+import { buildWatermarkGraphic } from '~/components/ECharts/shared/watermark'
+import { clearTreemapFocus, registerTreemapFocusTracking } from '~/components/ECharts/TreemapChart/focus'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
@@ -130,7 +131,7 @@ export function RWAFlowTreemapChart({
 		const instance = chartRef.current
 		if (!instance) return
 
-		const option = {
+		const option: EChartsOption = {
 			graphic: [buildWatermarkGraphic(isDark)],
 			toolbox: { show: false, feature: { restore: {} } },
 			tooltip: {

@@ -1,6 +1,6 @@
 import { createColumnHelper, sortingFns } from '@tanstack/react-table'
 import * as React from 'react'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { CHART_COLORS } from '~/constants/colors'
 import Layout from '~/layout'
@@ -8,9 +8,9 @@ import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { formattedNum, toNiceDateYear } from '~/utils'
 import data from './final.json'
 
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
 
 type BankRow = Record<string, string | number> & {
 	'1': string
@@ -70,12 +70,12 @@ for (const year in data.years) {
 }
 const DEFAULT_SORTING_STATE = [{ id: 'date', desc: true }]
 
-const chartDataset: MultiSeriesChart2Dataset = {
-	source: chartData.map(([ts, value]) => ({ timestamp: ts * 1e3, Assets: value })),
+const chartDataset: MultiSeriesChartDataset = {
+	source: chartData.map(([ts, value]) => [ts * 1e3, value]),
 	dimensions: ['timestamp', 'Assets']
 }
 
-const chartCharts: IMultiSeriesChart2Props['charts'] = [
+const chartCharts: IMultiSeriesChartProps['charts'] = [
 	{
 		type: 'bar',
 		name: 'Assets',
@@ -93,7 +93,7 @@ const Banks = () => {
 		>
 			<ChartPanel className="relative col-span-2">
 				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						title="Assets of failed banks (inflation adjusted)"
 						dataset={chartDataset}
 						charts={chartCharts}

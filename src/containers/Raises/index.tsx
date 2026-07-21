@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { RaisesFilters } from '~/containers/Raises/Filters'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
@@ -10,9 +10,9 @@ import { useRaisesData } from './hooks'
 import { RaisesTable } from './Table'
 import type { IRaise } from './types'
 
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
 
 interface RaisesContainerProps {
 	raises: IRaise[]
@@ -86,7 +86,7 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 
 				<ChartPanel className="col-span-2">
 					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={deferredMonthlyInvestmentChart.dataset}
 							charts={deferredMonthlyInvestmentChart.charts}
 							valueSymbol="$"

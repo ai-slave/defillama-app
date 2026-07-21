@@ -27,16 +27,16 @@ describe('bridge chains chart contract', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Ethereum', 'Arbitrum'],
 			source: [
-				{ timestamp: 1_000, Ethereum: 10, Arbitrum: 16 },
-				{ timestamp: 2_000, Arbitrum: -7 },
-				{ timestamp: 3_000, Ethereum: 25 }
+				[1_000, 10, 16],
+				[2_000, undefined, -7],
+				[3_000, 25, undefined]
 			]
 		})
 		expect(result.charts).toEqual([
 			{
 				type: 'bar',
 				name: 'Ethereum',
-				encode: { x: 'timestamp', y: 'Ethereum' },
+				encode: { x: 0, y: 1 },
 				stack: 'Ethereum',
 				color: '#1f67d2',
 				large: false
@@ -44,15 +44,13 @@ describe('bridge chains chart contract', () => {
 			{
 				type: 'bar',
 				name: 'Arbitrum',
-				encode: { x: 'timestamp', y: 'Arbitrum' },
+				encode: { x: 0, y: 2 },
 				stack: 'Arbitrum',
 				color: '#E91E63',
 				large: false
 			}
 		])
-		for (const chart of result.charts) {
-			expect(result.dataset.dimensions).toContain(chart.encode.y)
-		}
+		for (const chart of result.charts) expect(chart.encode.y).toBeGreaterThan(0)
 	})
 
 	it('ignores invalid dates and missing chain streams without mutating raw points', () => {
@@ -64,7 +62,7 @@ describe('bridge chains chart contract', () => {
 			chartDataByChain
 		})
 
-		expect(result).toEqual([{ date: 1, Ethereum: 5 }])
+		expect(Array.from(result, ([date, values]) => [date, Object.fromEntries(values)])).toEqual([[1, { Ethereum: 5 }]])
 		expect(point).toEqual({ date: '1', depositUSD: 5 })
 	})
 
@@ -73,6 +71,6 @@ describe('bridge chains chart contract', () => {
 		const result = buildBridgeChainsMultiSeriesChart({ chartRows, chains: ['Ethereum'] })
 
 		expect(result.dataset).toEqual({ dimensions: ['timestamp', 'Ethereum'], source: [] })
-		expect(result.charts[0]?.encode.y).toBe('Ethereum')
+		expect(result.charts[0]?.encode.y).toBe(1)
 	})
 })

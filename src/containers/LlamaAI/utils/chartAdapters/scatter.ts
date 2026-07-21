@@ -1,5 +1,5 @@
-import { formatChartValue } from '~/components/ECharts/formatters'
-import type { IScatterChartProps } from '~/components/ECharts/types'
+import type { IScatterChartProps, ScatterTooltipParams } from '~/components/ECharts/ScatterChart/types'
+import { formatChartValue } from '~/components/ECharts/shared/formatters'
 import type { ChartConfiguration, ChartDataSeries } from '~/containers/LlamaAI/types'
 
 export interface AdaptedScatterChartData {
@@ -68,14 +68,14 @@ export function adaptScatterChartData(config: ChartConfiguration, rawData: Chart
 		return {
 			chartType: 'scatter',
 			props: {
-				chartData: scatterData as unknown as IScatterChartProps['chartData'],
+				chartData: scatterData,
 				title: config.title,
 				xAxisLabel,
 				yAxisLabel,
 				valueSymbol: config.valueSymbol || '',
 				height: '360px',
 				entityType,
-				tooltipFormatter: (params: any) => {
+				tooltipFormatter: (params: ScatterTooltipParams) => {
 					if (params.value.length < 2) return ''
 					const entityName = escapeHtml(String(params.value[2] ?? 'Unknown'))
 					return `<strong style="color: #000;">${entityName}</strong><br/>${xAxisLabel}: ${formatChartValue(params.value[0], xAxisSymbol)}<br/>${yAxisLabel}: ${formatChartValue(params.value[1], yAxisSymbol)}`

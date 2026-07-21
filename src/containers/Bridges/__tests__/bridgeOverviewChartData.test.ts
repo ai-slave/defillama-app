@@ -25,8 +25,8 @@ describe('buildBridgeOverviewActiveChart', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Net Flow'],
 				source: [
-					{ timestamp: 1_000, 'Net Flow': 6 },
-					{ timestamp: 2_000, 'Net Flow': 5 }
+					[1_000, 6],
+					[2_000, 5]
 				]
 			}
 		})
@@ -82,8 +82,8 @@ describe('buildBridgeOverviewActiveChart', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Net Flow'],
 				source: [
-					{ timestamp: 1_000, 'Net Flow': 6 },
-					{ timestamp: 2_000, 'Net Flow': 0 }
+					[1_000, 6],
+					[2_000, 0]
 				]
 			}
 		})
@@ -95,8 +95,8 @@ describe('buildBridgeOverviewActiveChart', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Inflows', 'Outflows'],
 				source: [
-					{ timestamp: 1_000, Inflows: (10 / 14) * 100, Outflows: (4 / 14) * 100 },
-					{ timestamp: 2_000, Inflows: 0, Outflows: 0 }
+					[1_000, (10 / 14) * 100, (4 / 14) * 100],
+					[2_000, 0, 0]
 				]
 			}
 		})
@@ -108,8 +108,8 @@ describe('buildBridgeOverviewActiveChart', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Deposits', 'Withdrawals'],
 				source: [
-					{ timestamp: 1_000, Deposits: 10, Withdrawals: -4 },
-					{ timestamp: 2_000, Deposits: 0, Withdrawals: 0 }
+					[1_000, 10, -4],
+					[2_000, 0, 0]
 				]
 			}
 		})

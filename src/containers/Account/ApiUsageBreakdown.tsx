@@ -1,15 +1,27 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { formatTooltipChartDate } from '~/components/ECharts/formatters'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type {
+	IMultiSeriesChartProps,
+	MultiSeriesChartDataset,
+	MultiSeriesChartOptions
+} from '~/components/ECharts/MultiSeriesChart/types'
+import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
+import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formattedNum } from '~/utils'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+
+export interface ApiUsageStats {
+	windowDays?: number
+	stats: Array<{
+		date: string
+		totalRequests: number
+		routes?: Record<string, number>
+	}>
+}
 
 interface ApiUsageBreakdownProps {
-	usageStats: any | null | undefined
+	usageStats: ApiUsageStats | null | undefined
 	isLoading: boolean
 	isError: boolean
 }
@@ -51,16 +63,13 @@ function resolveChartColors() {
 
 type ChartColors = ReturnType<typeof resolveChartColors>
 
-function useChartData(usageStats: any, colors: ChartColors) {
+function useChartData(usageStats: ApiUsageStats | null | undefined, colors: ChartColors) {
 	const sortedStats = useMemo(
-		() => (usageStats?.stats ?? []).toSorted((a: any, b: any) => Date.parse(a.date) - Date.parse(b.date)),
+		() => (usageStats?.stats ?? []).toSorted((a, b) => Date.parse(a.date) - Date.parse(b.date)),
 		[usageStats?.stats]
 	)
 
-	const totalRequests = useMemo(
-		() => sortedStats.reduce((sum: number, day: any) => sum + day.totalRequests, 0),
-		[sortedStats]
-	)
+	const totalRequests = useMemo(() => sortedStats.reduce((sum, day) => sum + day.totalRequests, 0), [sortedStats])
 
 	const averageRequests = useMemo(() => {
 		if (!sortedStats.length) return 0
@@ -68,8 +77,8 @@ function useChartData(usageStats: any, colors: ChartColors) {
 	}, [sortedStats.length, totalRequests])
 
 	const { dataset, charts } = useMemo<{
-		dataset: MultiSeriesChart2Dataset
-		charts: IMultiSeriesChart2Props['charts']
+		dataset: MultiSeriesChartDataset
+		charts: IMultiSeriesChartProps['charts']
 	}>(() => {
 		if (!sortedStats.length) {
 			return { dataset: { source: [], dimensions: ['date'] }, charts: [] }
@@ -78,7 +87,7 @@ function useChartData(usageStats: any, colors: ChartColors) {
 		const routeTotals = new Map<string, number>()
 		for (const day of sortedStats) {
 			for (const [route, count] of Object.entries(day.routes ?? {})) {
-				routeTotals.set(route, (routeTotals.get(route) ?? 0) + (count as number))
+				routeTotals.set(route, (routeTotals.get(route) ?? 0) + count)
 			}
 		}
 
@@ -92,30 +101,29 @@ function useChartData(usageStats: any, colors: ChartColors) {
 		const seriesNames = hasOthers ? [...topRoutes, 'Others'] : topRoutes
 		const dimensions = ['date', ...seriesNames]
 
-		const source = sortedStats.map((day: any) => {
-			const row: Record<string, string | number | null | undefined> = { date: makeTimestamp(day.date) }
-			for (const route of topRoutes) {
-				const value = day.routes?.[route] ?? 0
-				if (route === '__proto__') {
-					Object.defineProperty(row, route, { value, enumerable: true, configurable: true, writable: true })
-				} else {
-					row[route] = value
-				}
+		const source = new Array<MultiSeriesChartDataset['source'][number]>(sortedStats.length)
+		for (let dayIndex = 0; dayIndex < sortedStats.length; dayIndex++) {
+			const day = sortedStats[dayIndex]
+			const row = new Array<number>(dimensions.length)
+			row[0] = makeTimestamp(day.date)
+			for (let routeIndex = 0; routeIndex < topRoutes.length; routeIndex++) {
+				row[routeIndex + 1] = day.routes?.[topRoutes[routeIndex]] ?? 0
 			}
 			if (hasOthers) {
-				row['Others'] = Object.entries(day.routes ?? {}).reduce((sum: number, [route, count]) => {
-					if (topRoutesSet.has(route)) return sum
-					return sum + (count as number)
-				}, 0)
+				let others = 0
+				for (const [route, count] of Object.entries(day.routes ?? {})) {
+					if (!topRoutesSet.has(route)) others += count
+				}
+				row[dimensions.length - 1] = others
 			}
-			return row
-		})
+			source[dayIndex] = row
+		}
 
-		const charts: IMultiSeriesChart2Props['charts'] = seriesNames.map((name, index) => ({
+		const charts: IMultiSeriesChartProps['charts'] = seriesNames.map((name, index) => ({
 			type: 'bar' as const,
 			name,
 			stack: 'routes',
-			encode: { x: 'date', y: name },
+			encode: { x: 0, y: index + 1 },
 			color: name === 'Others' ? colors.others : (colors.routes[index % colors.routes.length] ?? colors.routes[0]),
 			large: false
 		}))
@@ -163,7 +171,7 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 	const totalLabel = hasData ? formattedNum(totalRequests) : '--'
 	const avgLabel = hasData ? formattedNum(averageRequests) : '--'
 
-	const chartOptions = useMemo(
+	const chartOptions = useMemo<MultiSeriesChartOptions>(
 		() => ({
 			graphic: [],
 			grid: {
@@ -193,22 +201,21 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 				borderWidth: 1,
 				extraCssText: `box-shadow: 0 4px 12px rgba(0,0,0,0.3);`,
 				textStyle: { color: '#fff', fontSize: 12 },
-				formatter: (params: any) => {
-					const list = Array.isArray(params) ? params : [params]
+				formatter: (params: unknown) => {
+					const list = normalizeTooltipItems(params)
 					if (list.length === 0) return ''
 
-					const firstValue = list[0]?.value ?? list[0]?.data
-					const dateKey = firstValue?.date ?? firstValue?.[0]
-					const dateLabel = typeof dateKey === 'number' ? formatTooltipChartDate(dateKey, 'daily') : ''
+					const dateKey = getTooltipAxisValue(list[0])
+					const dateLabel = Number.isFinite(dateKey) ? formatTooltipChartDate(dateKey, 'daily') : ''
 
 					const items: Array<{ name: string; value: number; marker: string }> = []
 					let total = 0
 					for (const item of list) {
-						const row = item?.value ?? item?.data ?? {}
-						const val = Number(row[item.seriesName] ?? 0)
+						const name = item.seriesName ?? ''
+						const val = Number(getTooltipRawYValue(item, name) ?? 0)
 						total += val
 						if (!Number.isFinite(val) || val <= 0) continue
-						items.push({ name: item.seriesName, value: val, marker: item.marker ?? '' })
+						items.push({ name, value: val, marker: item.marker ?? '' })
 					}
 					items.sort((a, b) => b.value - a.value)
 
@@ -275,7 +282,7 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 				</div>
 			) : (
 				<Suspense fallback={<div className="min-h-[200px]" />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={dataset}
 						charts={charts}
 						height="200px"
@@ -283,7 +290,7 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 						hideDataZoom
 						hideDefaultLegend
 						exportButtons="hidden"
-						chartOptions={chartOptions as unknown as IMultiSeriesChart2Props['chartOptions']}
+						chartOptions={chartOptions}
 					/>
 				</Suspense>
 			)}

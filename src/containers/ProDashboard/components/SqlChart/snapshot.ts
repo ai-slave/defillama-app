@@ -1,4 +1,5 @@
 import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
+import { normalizeSqlResultRows } from '~/containers/Downloads/sql/resultNormalization'
 import type { SqlSnapshot } from '../../types'
 
 export const SQL_SNAPSHOT_ROW_CAP = 1000
@@ -11,7 +12,9 @@ export function clampRowCap(value: number | undefined): number {
 }
 
 function toJsonSafe(value: unknown): unknown {
-	if (typeof value === 'bigint') return Number(value)
+	if (typeof value === 'bigint') {
+		return value <= Number.MAX_SAFE_INTEGER && value >= Number.MIN_SAFE_INTEGER ? Number(value) : value.toString()
+	}
 	if (value instanceof Date) return value.toISOString()
 	if (Array.isArray(value)) return value.map(toJsonSafe)
 	if (value !== null && typeof value === 'object') {
@@ -24,12 +27,6 @@ function toJsonSafe(value: unknown): unknown {
 	return value
 }
 
-function sanitizeRow(row: Record<string, unknown>): Record<string, unknown> {
-	const out: Record<string, unknown> = {}
-	for (const key of Object.keys(row)) out[key] = toJsonSafe(row[key])
-	return out
-}
-
 export function captureSnapshot(
 	result: QueryResult,
 	engine: SqlSnapshot['engine'] = 'browser',
@@ -39,7 +36,16 @@ export function captureSnapshot(
 	const cap = clampRowCap(rowCap)
 	const rowCount = result.rows.length
 	const truncated = rowCount > cap
-	const rows = (truncated ? result.rows.slice(0, cap) : result.rows).map(sanitizeRow)
+	const inputRows = truncated ? result.rows.slice(0, cap) : result.rows
+	const rows = new Array<unknown[]>(inputRows.length)
+	for (let rowIndex = 0; rowIndex < inputRows.length; rowIndex++) {
+		const input = inputRows[rowIndex]
+		const row = new Array<unknown>(input.length)
+		for (let columnIndex = 0; columnIndex < input.length; columnIndex++) {
+			row[columnIndex] = toJsonSafe(input[columnIndex])
+		}
+		rows[rowIndex] = row
+	}
 	return {
 		columns: result.columns.map((c) => ({ name: c.name, type: c.type })),
 		rows,
@@ -51,5 +57,20 @@ export function captureSnapshot(
 }
 
 export function snapshotToResult(snapshot: SqlSnapshot): QueryResult {
-	return { columns: snapshot.columns, rows: snapshot.rows }
+	const firstRow = snapshot.rows[0]
+	if (firstRow == null || Array.isArray(firstRow)) {
+		return { columns: snapshot.columns, rows: snapshot.rows as unknown[][] }
+	}
+
+	const legacyRows = snapshot.rows as Record<string, unknown>[]
+	const rows = new Array<unknown[]>(legacyRows.length)
+	for (let rowIndex = 0; rowIndex < legacyRows.length; rowIndex++) {
+		const input = legacyRows[rowIndex]
+		const row = new Array<unknown>(snapshot.columns.length)
+		for (let columnIndex = 0; columnIndex < snapshot.columns.length; columnIndex++) {
+			row[columnIndex] = input[snapshot.columns[columnIndex].name]
+		}
+		rows[rowIndex] = row
+	}
+	return normalizeSqlResultRows({ columns: snapshot.columns, rows })
 }

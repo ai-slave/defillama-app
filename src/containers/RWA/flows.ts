@@ -1,11 +1,10 @@
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import type {
 	ChartTimeGrouping,
 	ChartTimeGroupingWithCumulative,
-	MultiSeriesChart2Dataset,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
-import { getBucketTimestampMs } from '~/components/ECharts/utils'
+	MultiSeriesChartDataset,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
+import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS } from '~/constants/colors'
 import { formattedNum } from '~/utils'
 import { toUnixMsTimestamp } from './api'
@@ -116,8 +115,8 @@ export function parseRWAFlowGrouping(value: string | undefined): RWAFlowGrouping
 export type RWAFlowSeriesPoint = IRWAFlowPoint | IRWAFlowAggregatePoint
 
 export type RWAFlowChart = {
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 	groupBy: ChartTimeGrouping
 }
 
@@ -129,8 +128,8 @@ export type RWAFlowVsPriceSummary = {
 }
 
 export type RWAFlowRotationChart = {
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 	groupBy: RWAFlowGrouping
 }
 
@@ -220,7 +219,10 @@ export function buildRWAFilteredFlowBreakdown(
 	const breakdown = new Array<IRWAFlowOverviewSplitPoint>(rows.length)
 	for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
 		const row = rows[rowIndex]
-		const result = createChartRow<number>(row.timestamp) as IRWAFlowOverviewSplitPoint
+		const result = { timestamp: row.timestamp } as { timestamp: number } & Record<
+			string,
+			number
+		> as IRWAFlowOverviewSplitPoint
 		if (splitBy === 'platform') {
 			for (const plan of platformPlans) {
 				const value = row[plan.sourceKey]
@@ -297,13 +299,16 @@ function getRWAFlowOverlayDimensions(overlays: readonly RWAFlowOverlay[]): strin
 	return overlays.map((overlay) => getRWAFlowOverlayOption(overlay.metric).name)
 }
 
-function buildRWAFlowOverlayCharts(overlays: readonly RWAFlowOverlay[]): MultiSeriesChart2SeriesConfig[] {
-	return overlays.map((overlay) => {
+function buildRWAFlowOverlayCharts(
+	overlays: readonly RWAFlowOverlay[],
+	firstDimensionIndex: number
+): MultiSeriesChartSeriesConfig[] {
+	return overlays.map((overlay, index) => {
 		const option = getRWAFlowOverlayOption(overlay.metric)
 		return {
 			type: 'line',
 			name: option.name,
-			encode: { x: 'timestamp', y: option.name },
+			encode: { x: 0, y: firstDimensionIndex + index },
 			color: option.color,
 			yAxisIndex: 1,
 			hideAreaStyle: true
@@ -398,18 +403,18 @@ export function getRWAFlowDefaultStartTimestamp(
 }
 
 function buildDailyFlowChart(points: readonly RWAFlowSeriesPoint[], overlays: readonly RWAFlowOverlay[]): RWAFlowChart {
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const source: MultiSeriesChartDataset['source'] = []
 	const overlayDimensions = getRWAFlowOverlayDimensions(overlays)
 
 	for (const point of points) {
 		const flow = point.netFlowUsd
-		const row: MultiSeriesChart2Dataset['source'][number] = {
-			timestamp: toUnixMsTimestamp(point.timestamp),
-			[INFLOWS]: flow != null && flow >= 0 ? flow : null,
-			[OUTFLOWS]: flow != null && flow < 0 ? flow : null
-		}
+		const row: MultiSeriesChartDataset['source'][number] = [
+			toUnixMsTimestamp(point.timestamp),
+			flow != null && flow >= 0 ? flow : null,
+			flow != null && flow < 0 ? flow : null
+		]
 		for (let index = 0; index < overlays.length; index++) {
-			row[overlayDimensions[index]] = getRWAFlowOverlayValue(point, overlays[index])
+			row[index + 3] = getRWAFlowOverlayValue(point, overlays[index])
 		}
 		source.push(row)
 	}
@@ -424,7 +429,7 @@ function buildDailyFlowChart(points: readonly RWAFlowSeriesPoint[], overlays: re
 				type: 'bar',
 				name: INFLOWS,
 				stack: 'flows',
-				encode: { x: 'timestamp', y: INFLOWS },
+				encode: { x: 0, y: 1 },
 				color: RWA_FLOW_COLORS.inflow,
 				barMaxWidth: 16
 			},
@@ -432,11 +437,11 @@ function buildDailyFlowChart(points: readonly RWAFlowSeriesPoint[], overlays: re
 				type: 'bar',
 				name: OUTFLOWS,
 				stack: 'flows',
-				encode: { x: 'timestamp', y: OUTFLOWS },
+				encode: { x: 0, y: 2 },
 				color: RWA_FLOW_COLORS.outflow,
 				barMaxWidth: 16
 			},
-			...buildRWAFlowOverlayCharts(overlays)
+			...buildRWAFlowOverlayCharts(overlays, 3)
 		],
 		groupBy: 'daily'
 	}
@@ -446,18 +451,15 @@ function buildCumulativeFlowChart(
 	points: readonly RWAFlowSeriesPoint[],
 	overlays: readonly RWAFlowOverlay[]
 ): RWAFlowChart {
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const source: MultiSeriesChartDataset['source'] = []
 	const overlayDimensions = getRWAFlowOverlayDimensions(overlays)
 	let cumulativeFlow: number | null = null
 
 	for (const point of points) {
 		if (point.netFlowUsd != null) cumulativeFlow = (cumulativeFlow ?? 0) + point.netFlowUsd
-		const row: MultiSeriesChart2Dataset['source'][number] = {
-			timestamp: toUnixMsTimestamp(point.timestamp),
-			[CUMULATIVE_FLOWS]: cumulativeFlow
-		}
+		const row: MultiSeriesChartDataset['source'][number] = [toUnixMsTimestamp(point.timestamp), cumulativeFlow]
 		for (let index = 0; index < overlays.length; index++) {
-			row[overlayDimensions[index]] = getRWAFlowOverlayValue(point, overlays[index])
+			row[index + 2] = getRWAFlowOverlayValue(point, overlays[index])
 		}
 		source.push(row)
 	}
@@ -471,11 +473,11 @@ function buildCumulativeFlowChart(
 			{
 				type: 'line',
 				name: CUMULATIVE_FLOWS,
-				encode: { x: 'timestamp', y: CUMULATIVE_FLOWS },
+				encode: { x: 0, y: 1 },
 				color: RWA_FLOW_COLORS.cumulative,
 				hideAreaStyle: true
 			},
-			...buildRWAFlowOverlayCharts(overlays)
+			...buildRWAFlowOverlayCharts(overlays, 2)
 		],
 		groupBy: 'daily'
 	}
@@ -507,19 +509,19 @@ function buildFlowVsPriceChart(
 	groupBy: ChartTimeGrouping,
 	mcapByTimestamp?: ReadonlyMap<number, number | null>
 ): RWAFlowChart {
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const source: MultiSeriesChartDataset['source'] = []
 	let previousMcap: number | null = null
 	for (const period of buildFlowPeriods(points, groupBy, mcapByTimestamp)) {
 		const mcapChange = previousMcap != null && period.mcap != null ? period.mcap - previousMcap : null
 		const netCapital = mcapChange != null && period.hasFlow ? period.flow : null
 		const price = netCapital != null && mcapChange != null ? mcapChange - netCapital : null
-		source.push({
-			timestamp: period.timestamp,
-			[NET_CAPITAL_INFLOWS]: netCapital != null && netCapital >= 0 ? netCapital : null,
-			[NET_CAPITAL_OUTFLOWS]: netCapital != null && netCapital < 0 ? netCapital : null,
-			[PRICE]: price,
-			[MCAP_CHANGE]: mcapChange
-		})
+		source.push([
+			period.timestamp,
+			netCapital != null && netCapital >= 0 ? netCapital : null,
+			netCapital != null && netCapital < 0 ? netCapital : null,
+			price,
+			mcapChange
+		])
 		if (period.mcap != null) previousMcap = period.mcap
 	}
 
@@ -530,7 +532,7 @@ function buildFlowVsPriceChart(
 				type: 'bar',
 				name: NET_CAPITAL_INFLOWS,
 				stack: 'mcap-change',
-				encode: { x: 'timestamp', y: NET_CAPITAL_INFLOWS },
+				encode: { x: 0, y: 1 },
 				color: RWA_FLOW_COLORS.inflow,
 				barMaxWidth: 22
 			},
@@ -538,7 +540,7 @@ function buildFlowVsPriceChart(
 				type: 'bar',
 				name: NET_CAPITAL_OUTFLOWS,
 				stack: 'mcap-change',
-				encode: { x: 'timestamp', y: NET_CAPITAL_OUTFLOWS },
+				encode: { x: 0, y: 2 },
 				color: RWA_FLOW_COLORS.outflow,
 				barMaxWidth: 22
 			},
@@ -546,14 +548,14 @@ function buildFlowVsPriceChart(
 				type: 'bar',
 				name: PRICE,
 				stack: 'mcap-change',
-				encode: { x: 'timestamp', y: PRICE },
+				encode: { x: 0, y: 3 },
 				color: RWA_FLOW_COLORS.level,
 				barMaxWidth: 22
 			},
 			{
 				type: 'line',
 				name: MCAP_CHANGE,
-				encode: { x: 'timestamp', y: MCAP_CHANGE },
+				encode: { x: 0, y: 4 },
 				color: RWA_FLOW_COLORS.change,
 				hideAreaStyle: true
 			}
@@ -591,9 +593,9 @@ export function getRWAFlowVsPriceSummary(
 	let count = 0
 
 	for (const row of chart.dataset.source) {
-		const rowMcapChange = row[MCAP_CHANGE]
-		const rowNetCapital = row[NET_CAPITAL_INFLOWS] ?? row[NET_CAPITAL_OUTFLOWS]
-		const rowPrice = row[PRICE]
+		const rowMcapChange = row[4]
+		const rowNetCapital = row[1] ?? row[2]
+		const rowPrice = row[3]
 		if (typeof rowMcapChange !== 'number' || typeof rowNetCapital !== 'number' || typeof rowPrice !== 'number') {
 			continue
 		}
@@ -658,20 +660,20 @@ export function buildRWAFlowRotationChart(
 	const flow30d = new Map<string, number>()
 	const cutoff7d = latestTimestamp - 7 * DAY_MS
 	const cutoff30d = latestTimestamp - 30 * DAY_MS
-	const buckets = new Map<number, Record<string, number>>()
+	const buckets = new Map<number, Map<string, number>>()
 	for (const point of points) {
 		const pointTimestamp = toUnixMsTimestamp(point.timestamp)
 		const bucketTimestamp = getBucketTimestampMs(pointTimestamp, groupBy === 'cumulative' ? 'daily' : groupBy)
 		let bucket = buckets.get(bucketTimestamp)
 		if (!bucket) {
-			bucket = createChartRecord<number>()
+			bucket = new Map()
 			buckets.set(bucketTimestamp, bucket)
 		}
 		for (const seriesName in point) {
 			if (seriesName === 'timestamp') continue
 			const value = point[seriesName]
 			seriesNames.add(seriesName)
-			bucket[seriesName] = (bucket[seriesName] ?? 0) + value
+			bucket.set(seriesName, (bucket.get(seriesName) ?? 0) + value)
 			if (pointTimestamp > cutoff30d) flow30d.set(seriesName, (flow30d.get(seriesName) ?? 0) + value)
 			if (pointTimestamp > cutoff7d) flow7d.set(seriesName, (flow7d.get(seriesName) ?? 0) + value)
 		}
@@ -688,17 +690,19 @@ export function buildRWAFlowRotationChart(
 		orderedSeriesNames.push('Others')
 	}
 
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const source: MultiSeriesChartDataset['source'] = []
 	const cumulativeFlow = new Map<string, number>()
 	for (const [timestamp, bucket] of buckets) {
-		const row = createChartRow<string | number | null | undefined>(timestamp)
-		for (const seriesName of orderedSeriesNames) {
-			let value = bucket[seriesName]
+		const row = new Array<number | null>(orderedSeriesNames.length + 1)
+		row[0] = timestamp
+		for (let seriesIndex = 0; seriesIndex < orderedSeriesNames.length; seriesIndex++) {
+			const seriesName = orderedSeriesNames[seriesIndex]
+			let value = bucket.get(seriesName)
 			if (seriesName === 'Others' && omittedSeriesNames.length > 0) {
 				let total = 0
 				let hasValue = false
 				for (const omittedName of omittedSeriesNames) {
-					const omittedValue = bucket[omittedName]
+					const omittedValue = bucket.get(omittedName)
 					if (omittedValue == null) continue
 					total += omittedValue
 					hasValue = true
@@ -708,7 +712,7 @@ export function buildRWAFlowRotationChart(
 			if (groupBy === 'cumulative' && value != null) {
 				cumulativeFlow.set(seriesName, (cumulativeFlow.get(seriesName) ?? 0) + value)
 			}
-			row[seriesName] = groupBy === 'cumulative' ? (cumulativeFlow.get(seriesName) ?? null) : (value ?? null)
+			row[seriesIndex + 1] = groupBy === 'cumulative' ? (cumulativeFlow.get(seriesName) ?? null) : (value ?? null)
 		}
 		source.push(row)
 	}
@@ -719,7 +723,7 @@ export function buildRWAFlowRotationChart(
 			type: groupBy === 'cumulative' ? 'line' : 'bar',
 			name,
 			...(groupBy === 'cumulative' ? { hideAreaStyle: true } : { stack: 'capital-rotation' }),
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: index + 1 },
 			color: CHART_COLORS[index % CHART_COLORS.length],
 			...(groupBy === 'cumulative' ? {} : { barMaxWidth: 24 })
 		})),

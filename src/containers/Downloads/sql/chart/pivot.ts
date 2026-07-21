@@ -1,3 +1,5 @@
+import { readSqlNumber } from './rowValues'
+
 export interface PivotOptions {
 	topN?: number
 	otherLabel?: string
@@ -5,21 +7,8 @@ export interface PivotOptions {
 
 export interface PivotResult {
 	keys: string[]
-	rows: Array<Record<string, number | string | null>>
+	rows: Array<Array<number | string | null>>
 	truncatedCount: number
-}
-
-function toNumber(v: unknown): number | null {
-	if (v == null) return null
-	if (typeof v === 'number') return Number.isFinite(v) ? v : null
-	if (typeof v === 'bigint') return Number(v)
-	if (typeof v === 'string') {
-		const trimmed = v.trim()
-		if (trimmed === '') return null
-		const n = Number(trimmed)
-		return Number.isFinite(n) ? n : null
-	}
-	return null
 }
 
 function splitKey(v: unknown): string {
@@ -29,10 +18,10 @@ function splitKey(v: unknown): string {
 }
 
 export function pivotRowsForSplit(
-	rows: Record<string, unknown>[],
-	xCol: string,
-	yCol: string,
-	splitCol: string,
+	rows: unknown[][],
+	xIndex: number,
+	yIndex: number,
+	splitIndex: number,
 	opts: PivotOptions = {}
 ): PivotResult {
 	const topN = opts.topN ?? 20
@@ -40,8 +29,8 @@ export function pivotRowsForSplit(
 
 	const magnitudeByKey = new Map<string, number>()
 	for (const row of rows) {
-		const key = splitKey(row[splitCol])
-		const yn = toNumber(row[yCol])
+		const key = splitKey(row[splitIndex])
+		const yn = readSqlNumber(row[yIndex])
 		if (yn == null) continue
 		magnitudeByKey.set(key, (magnitudeByKey.get(key) ?? 0) + Math.abs(yn))
 	}
@@ -51,27 +40,30 @@ export function pivotRowsForSplit(
 	const truncated = ranked.slice(topN)
 	const truncatedSet = new Set(truncated)
 	const hasOther = truncated.length > 0
-	const keys = hasOther ? [...topKeys, otherLabel] : [...topKeys]
+	const keys = hasOther && !topKeys.includes(otherLabel) ? [...topKeys, otherLabel] : [...topKeys]
 
-	const byX = new Map<string | number, Record<string, number | string | null>>()
+	const seriesIndexByKey = new Map<string, number>()
+	for (let i = 0; i < keys.length; i++) seriesIndexByKey.set(keys[i], i + 1)
+	const byX = new Map<string | number, Array<number | string | null>>()
 	for (const row of rows) {
-		const xv = row[xCol]
-		const xKey = typeof xv === 'number' ? xv : xv == null ? '∅' : String(xv)
-		let bucket = byX.get(xKey)
+		const xv = row[xIndex]
+		const mapKey = typeof xv === 'number' ? xv : xv == null ? '∅' : String(xv)
+		let bucket = byX.get(mapKey)
 		if (!bucket) {
-			bucket = { [xCol]: (xv as number | string | null) ?? null }
-			for (const k of keys) bucket[k] = null
-			byX.set(xKey, bucket)
+			bucket = new Array<number | string | null>(keys.length + 1).fill(null)
+			bucket[0] = (xv as number | string | null) ?? null
+			byX.set(mapKey, bucket)
 		}
-		const sk = splitKey(row[splitCol])
+		const sk = splitKey(row[splitIndex])
 		const target = truncatedSet.has(sk) ? otherLabel : topKeys.includes(sk) ? sk : null
 		if (target == null) continue
-		const yn = toNumber(row[yCol])
+		const yn = readSqlNumber(row[yIndex])
 		if (yn == null) continue
-		bucket[target] = ((bucket[target] as number | null) ?? 0) + yn
+		const targetIndex = seriesIndexByKey.get(target)!
+		bucket[targetIndex] = ((bucket[targetIndex] as number | null) ?? 0) + yn
 	}
 
-	const sortedX = [...byX.values()].sort((a, b) => compareX(a[xCol], b[xCol]))
+	const sortedX = [...byX.values()].sort((a, b) => compareX(a[0], b[0]))
 
 	return { keys, rows: sortedX, truncatedCount: truncated.length }
 }

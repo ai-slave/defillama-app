@@ -1,13 +1,12 @@
-import type { LowercaseDwmcGrouping } from '~/components/ECharts/ChartGroupingSelector'
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
-import { getBucketTimestampMs } from '~/components/ECharts/utils'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type { LowercaseDwmcGrouping } from '~/components/ECharts/shared/ChartGroupingSelector'
+import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS } from '~/constants/colors'
 import { LINE_DIMENSIONS } from './constants'
 
 export type CombinedChartPresentation = {
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 }
 
 type SeriesDefinition = {
@@ -17,11 +16,11 @@ type SeriesDefinition = {
 	color: string
 }
 
-function getCombinedChartSeriesConfig(series: SeriesDefinition, index: number): MultiSeriesChart2SeriesConfig {
+function getCombinedChartSeriesConfig(series: SeriesDefinition, index: number): MultiSeriesChartSeriesConfig {
 	return {
 		type: series.type,
 		name: series.dimension,
-		encode: { x: 'timestamp', y: series.dimension },
+		encode: { x: 0, y: index + 1 },
 		color: series.color,
 		...(index > 0 && series.type === 'line' ? { yAxisIndex: 1, hideAreaStyle: true } : {})
 	}
@@ -32,7 +31,7 @@ export function buildAdapterByChainCombinedChartPresentation({
 	chartName,
 	groupBy
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	chartName: string
 	groupBy: LowercaseDwmcGrouping
 }): CombinedChartPresentation {
@@ -55,7 +54,7 @@ export function buildAdapterByChainCombinedChartPresentation({
 		})
 	}
 
-	const charts: MultiSeriesChart2SeriesConfig[] = []
+	const charts: MultiSeriesChartSeriesConfig[] = []
 	for (let index = 0; index < seriesDefinitions.length; index++) {
 		charts.push(getCombinedChartSeriesConfig(seriesDefinitions[index], index))
 	}
@@ -64,25 +63,27 @@ export function buildAdapterByChainCombinedChartPresentation({
 		return { dataset: chartData, charts }
 	}
 
-	const rowsByTimestamp = new Map<number, MultiSeriesChart2Dataset['source'][number]>()
+	const rowsByTimestamp = new Map<number, MultiSeriesChartDataset['source'][number]>()
 	for (const sourceRow of chartData.source) {
-		const timestamp = sourceRow.timestamp as number
+		const timestamp = sourceRow[0] as number
 		const bucketTimestamp = isCumulative ? timestamp : getBucketTimestampMs(timestamp, groupBy)
 		let bucketRow = rowsByTimestamp.get(bucketTimestamp)
 
-		for (const series of seriesDefinitions) {
-			const value = sourceRow[series.dimension]
+		for (let seriesIndex = 0; seriesIndex < seriesDefinitions.length; seriesIndex++) {
+			const series = seriesDefinitions[seriesIndex]
+			const value = sourceRow[seriesIndex + 1]
 			if (value == null) continue
 
 			if (!bucketRow) {
-				bucketRow = createChartRow<number | null>(bucketTimestamp)
+				bucketRow = new Array<number | null>(seriesDefinitions.length + 1).fill(null)
+				bucketRow[0] = bucketTimestamp
 				rowsByTimestamp.set(bucketTimestamp, bucketRow)
 			}
 
 			// Snapshot series keep the last observation in a bucket; flow series add every observation.
-			bucketRow[series.dimension] = series.isSnapshotMetric
+			bucketRow[seriesIndex + 1] = series.isSnapshotMetric
 				? value
-				: ((bucketRow[series.dimension] as number | undefined) ?? 0) + (value as number)
+				: ((bucketRow[seriesIndex + 1] as number | undefined) ?? 0) + (value as number)
 		}
 	}
 
@@ -95,25 +96,16 @@ export function buildAdapterByChainCombinedChartPresentation({
 				const series = seriesDefinitions[index]
 				if (series.isSnapshotMetric) continue
 
-				const value = row[series.dimension]
+				const value = row[index + 1]
 				if (value == null) continue
 				cumulativeTotals[index] += value as number
-				row[series.dimension] = cumulativeTotals[index]
+				row[index + 1] = cumulativeTotals[index]
 			}
 		}
 	}
 
-	const source: MultiSeriesChart2Dataset['source'] = []
-	for (const row of groupedRows) {
-		const denseRow = createChartRow<number | null>(row.timestamp as number)
-		for (const series of seriesDefinitions) {
-			denseRow[series.dimension] = (row[series.dimension] as number | null | undefined) ?? null
-		}
-		source.push(denseRow)
-	}
-
 	return {
-		dataset: { source, dimensions: ['timestamp', ...dimensions] },
+		dataset: { source: groupedRows, dimensions: ['timestamp', ...dimensions] },
 		charts
 	}
 }

@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import dayjs from 'dayjs'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import type { ICandlestickChartProps } from '~/components/ECharts/types'
+import type { ICandlestickChartProps } from '~/components/ECharts/CandlestickChart/types'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -19,7 +19,7 @@ import type { IDATCompanyPageProps } from './types'
 
 const DEFAULT_SORTING_STATE = [{ id: 'report_date', desc: true }]
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const CandlestickChart: React.LazyExoticComponent<React.ComponentType<ICandlestickChartProps>> = lazy(
 	() => import('~/components/ECharts/CandlestickChart')
 )
@@ -185,7 +185,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>
 						{chartData != null ? (
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={chartData.holdingsChart.dataset}
 								charts={chartData.holdingsChart.charts}
 								valueSymbol={chartData.ticker}
@@ -203,7 +203,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 				{props.mNAVChart != null ? (
 					<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 						<Suspense fallback={<ChartPanelExportShellFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={props.mNAVChart.dataset}
 								charts={props.mNAVChart.charts}
 								valueSymbol=""
@@ -222,7 +222,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 				{props.fdChart != null ? (
 					<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 						<Suspense fallback={<ChartPanelExportShellFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={props.fdChart.dataset}
 								charts={props.fdChart.charts}
 								valueSymbol=""
@@ -250,7 +250,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 				{props.totalAssetValueChart != null ? (
 					<ChartPanel className="col-span-full">
 						<Suspense fallback={<ChartPanelExportShellFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={props.totalAssetValueChart.dataset}
 								charts={props.totalAssetValueChart.charts}
 								valueSymbol="$"

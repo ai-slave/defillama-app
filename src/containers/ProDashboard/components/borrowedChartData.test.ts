@@ -43,8 +43,8 @@ describe('buildBorrowedChartData', () => {
 		])
 
 		expect(result.dataset?.source).toEqual([
-			{ timestamp: 1_000, ETH: 10, USDC: 20 },
-			{ timestamp: 2_000, ETH: 30, USDC: 40 }
+			[1_000, 20, 10],
+			[2_000, 40, 30]
 		])
 		expect(result.pieChart).toEqual([])
 	})
@@ -75,6 +75,6 @@ describe('buildBorrowedChartData', () => {
 
 		expect(result.seriesNames).toContain('TOKEN_0')
 		expect(result.seriesNames).not.toContain('RAW_WHALE')
-		expect(result.dataset?.source[1]).not.toHaveProperty('RAW_WHALE')
+		expect(result.dataset?.dimensions).not.toContain('RAW_WHALE')
 	})
 })

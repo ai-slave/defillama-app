@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type {
 	StablecoinVolumeChainChartKind,
 	StablecoinVolumeGlobalChartKind,
@@ -17,8 +17,8 @@ import { fetchJson } from '~/utils/async'
 type StablecoinMcapSeriesPoint = [number, number]
 
 export interface StablecoinVolumeChartPayload {
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 	valueSymbol: '$'
 	stacked: boolean
 	showTotalInTooltip: boolean

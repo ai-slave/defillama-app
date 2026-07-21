@@ -14,16 +14,16 @@ describe('Ether.fi chart data', () => {
 			tvlDataset: {
 				dimensions: ['timestamp', 'TVL'],
 				source: [
-					{ timestamp: 1_000, TVL: 100 },
-					{ timestamp: 2_000, TVL: 130 },
-					{ timestamp: 3_000, TVL: 120 }
+					[1_000, 100],
+					[2_000, 130],
+					[3_000, 120]
 				]
 			},
 			inflowsDataset: {
 				dimensions: ['timestamp', 'USD Inflows'],
 				source: [
-					{ timestamp: 2_000, 'USD Inflows': 30 },
-					{ timestamp: 3_000, 'USD Inflows': -10 }
+					[2_000, 30],
+					[3_000, -10]
 				]
 			},
 			previousTvl: 130,

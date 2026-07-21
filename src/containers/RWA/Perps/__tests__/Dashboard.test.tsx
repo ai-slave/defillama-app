@@ -79,7 +79,7 @@ vi.mock('~/components/ECharts/TreemapChart', () => ({
 	default: () => <div>treemap</div>
 }))
 
-vi.mock('~/components/ECharts/MultiSeriesChart2', () => ({
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
 	default: () => <div>timeseries</div>
 }))
 

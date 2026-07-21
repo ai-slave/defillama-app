@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import { protocolCharts } from '../constants'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics, IToggledMetrics } from '../types'
 

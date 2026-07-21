@@ -1,13 +1,18 @@
+import type { EChartsOption } from 'echarts'
 import { BarChart } from 'echarts/charts'
 import { GraphicComponent, GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { CHART_INSET, CHART_LEGEND_RESERVE } from '../chartSpacing'
-import { useChartTheme } from '../chartTheme'
-import { formatTooltipValue } from '../formatters'
-import type { IHBarChartProps } from '../types'
+import { useChartResize } from '~/hooks/useChartResize'
+import { setChartLogoMetadata } from '../shared/chartLogoMetadata'
+import { CHART_INSET, CHART_LEGEND_RESERVE } from '../shared/chartSpacing'
+import { useChartTheme } from '../shared/chartTheme'
+import { formatTooltipValue } from '../shared/formatters'
+import { getTooltipRawYValue, normalizeTooltipItems } from '../shared/tooltip'
+import { buildWatermarkGraphic } from '../shared/watermark'
+import type { IHBarChartProps } from './types'
 
 echarts.use([CanvasRenderer, BarChart, GraphicComponent, GridComponent, LegendComponent, TooltipComponent])
 
@@ -92,18 +97,42 @@ export default function HBarChart({
 		for (const category of categories) overlayLabelWidth = Math.max(overlayLabelWidth, measureLabelWidth(category))
 		overlayLabelWidth = Math.min(LABEL_MAX_WIDTH, overlayLabelWidth)
 	}
+	const logoRenderStateRef = useRef({
+		hasLogos,
+		categories,
+		logos,
+		logoBg: chartTheme.logoBg,
+		textColor,
+		overlayLabelWidth
+	})
+	logoRenderStateRef.current = {
+		hasLogos,
+		categories,
+		logos,
+		logoBg: chartTheme.logoBg,
+		textColor,
+		overlayLabelWidth
+	}
 
-	const syncLogos = useEffectEvent(() => {
+	const syncLogos = useCallback(() => {
 		const layer = overlayRef.current
 		const instance = chartRef.current
+		const {
+			hasLogos: shouldRenderLogos,
+			categories: currentCategories,
+			logos: currentLogos,
+			logoBg,
+			textColor: currentTextColor,
+			overlayLabelWidth: currentLabelWidth
+		} = logoRenderStateRef.current
 		if (!layer) return
 		layer.innerHTML = ''
-		if (!instance || instance.isDisposed() || !hasLogos) return
+		if (!instance || instance.isDisposed() || !shouldRenderLogos) return
 
-		for (let i = 0; i < categories.length; i++) {
+		for (let i = 0; i < currentCategories.length; i++) {
 			const y = instance.convertToPixel({ yAxisIndex: 0 }, i)
 			if (typeof y !== 'number' || !Number.isFinite(y)) continue
-			const url = logos![i]
+			const url = currentLogos?.[i]
 			const row = document.createElement('div')
 			row.style.cssText = `position:absolute;left:${LEFT_PAD}px;top:${y - LOGO_SIZE / 2}px;height:${LOGO_SIZE}px;pointer-events:none;white-space:nowrap;`
 			const spacerCss = `display:inline-block;width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;vertical-align:middle;`
@@ -113,7 +142,7 @@ export default function HBarChart({
 				img.alt = ''
 				img.loading = 'lazy'
 				img.decoding = 'async'
-				img.style.cssText = `width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${chartTheme.logoBg};display:inline-block;vertical-align:middle;`
+				img.style.cssText = `width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${logoBg};display:inline-block;vertical-align:middle;`
 				img.onerror = () => {
 					const spacer = document.createElement('span')
 					spacer.style.cssText = spacerCss
@@ -126,23 +155,25 @@ export default function HBarChart({
 				row.appendChild(spacer)
 			}
 			const text = document.createElement('span')
-			text.textContent = categories[i]
-			text.title = categories[i]
-			text.style.cssText = `display:inline-block;vertical-align:middle;color:${textColor};font-size:12px;line-height:${LOGO_SIZE}px;margin-left:${LOGO_GAP}px;max-width:${overlayLabelWidth}px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`
+			text.textContent = currentCategories[i]
+			text.title = currentCategories[i]
+			text.style.cssText = `display:inline-block;vertical-align:middle;color:${currentTextColor};font-size:12px;line-height:${LOGO_SIZE}px;margin-left:${LOGO_GAP}px;max-width:${currentLabelWidth}px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`
 			row.appendChild(text)
 			layer.appendChild(row)
 		}
-	})
+	}, [])
 
-	const handleResize = useEffectEvent((width: number) => {
+	const handleElementResize = useCallback(() => {
+		const chartDom = containerRef.current
 		const instance = chartRef.current
-		if (!instance || instance.isDisposed()) return
-		instance.resize()
-		if (!hasLogos) {
-			instance.setOption({ yAxis: { axisLabel: { width: getYAxisLabelWidth(width) } } })
+		if (!chartDom || !instance || instance.isDisposed()) return
+		if (!logoRenderStateRef.current.hasLogos) {
+			const option: EChartsOption = { yAxis: { axisLabel: { width: getYAxisLabelWidth(chartDom.clientWidth) } } }
+			instance.setOption(option)
 		}
 		syncLogos()
-	})
+	}, [syncLogos])
+	useChartResize(chartRef, containerRef, handleElementResize)
 
 	useEffect(() => {
 		const chartDom = containerRef.current
@@ -150,22 +181,22 @@ export default function HBarChart({
 		const instance = echarts.init(chartDom, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		emitReady(instance)
-		instance.on('finished', syncLogos)
-
-		const observer = new ResizeObserver((entries) => {
-			const entry = entries[0]
-			if (entry) handleResize(entry.contentRect.width)
-		})
-		observer.observe(chartDom)
 
 		return () => {
-			observer.disconnect()
-			instance.off('finished', syncLogos)
 			chartRef.current = null
 			emitReady(null)
 			instance.dispose()
 		}
 	}, [])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance || instance.isDisposed()) return
+		instance.on('finished', syncLogos)
+		return () => {
+			if (!instance.isDisposed()) instance.off('finished', syncLogos)
+		}
+	}, [syncLogos])
 
 	useEffect(() => {
 		const chartDom = containerRef.current
@@ -194,103 +225,88 @@ export default function HBarChart({
 				]
 
 		const yAxisLabelWidth = getYAxisLabelWidth(chartDom.clientWidth || 600)
-		const watermarkHeight = 40
-		const watermarkWidth = Math.round((389 / 133) * watermarkHeight)
 		const leftGridWidth = hasLogos ? LEFT_PAD + LOGO_SIZE + LOGO_GAP + overlayLabelWidth + 8 : CHART_INSET
 
-		instance.setOption(
-			{
-				graphic: [
-					{
-						type: 'image',
-						zlevel: 10,
-						z: 999,
-						silent: true,
-						left: 'center',
-						top: 'middle',
-						style: {
-							image: isThemeDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-							width: watermarkWidth,
-							height: watermarkHeight,
-							opacity: 0.3
+		const option: EChartsOption = {
+			graphic: [buildWatermarkGraphic(isThemeDark)],
+			...(grouped
+				? {
+						legend: {
+							show: true,
+							top: 8,
+							left: 'center',
+							textStyle: { color: chartTheme.text },
+							data: series!.map((s) => s.name)
 						}
 					}
-				],
-				...(grouped
-					? {
-							legend: {
-								show: true,
-								top: 8,
-								left: 'center',
-								textStyle: { color: chartTheme.text },
-								data: series!.map((s) => s.name)
-							}
-						}
-					: {}),
-				grid: {
-					left: leftGridWidth,
-					right: CHART_INSET,
-					top: grouped ? CHART_LEGEND_RESERVE : CHART_INSET,
-					bottom: CHART_INSET,
-					outerBoundsMode: 'same',
-					outerBoundsContain: hasLogos ? undefined : 'axisLabel'
-				},
-				xAxis: {
-					type: 'value',
-					...(valueAxisMin !== undefined ? { min: valueAxisMin } : {}),
-					...(valueAxisMax !== undefined ? { max: valueAxisMax } : {}),
-					...(valueAxisInterval !== undefined ? { interval: valueAxisInterval } : {}),
-					axisLabel: {
-						color: textColor,
-						formatter: (value: number) => formatTooltipValue(value, valueSymbol)
-					},
-					splitLine: {
-						lineStyle: {
-							color: chartTheme.gridline
-						}
-					}
-				},
-				yAxis: {
-					type: 'category',
-					data: categories,
-					inverse: true,
-					axisLine: { show: !hasLogos },
-					axisTick: { show: !hasLogos },
-					axisLabel: hasLogos ? { show: false } : { color: textColor, width: yAxisLabelWidth, overflow: 'truncate' }
-				},
-				tooltip: {
-					trigger: 'axis',
-					className: 'defillama-echarts-tooltip',
-					backgroundColor: 'transparent',
-					borderWidth: 0,
-					axisPointer: { type: 'shadow' },
-					formatter: (params: any) => {
-						if (!Array.isArray(params) || !params[0]) return ''
-						const p = params[0]
-						const numericValue = typeof p.value === 'number' ? p.value : (p.data?.value ?? 0)
-						const header = `<div style="font-weight: 600; margin-bottom: 4px;">${p.name}</div>`
-						if (!grouped) return `${header}<div>${formatTooltipValue(numericValue, valueSymbol)}</div>`
-						let rows = ''
-						for (const item of params) {
-							const value = typeof item.value === 'number' ? item.value : (item.data?.value ?? 0)
-							rows += `<div>${item.marker ?? ''}${item.seriesName}: ${formatTooltipValue(value, valueSymbol)}</div>`
-						}
-						return header + rows
-					}
-				},
-				series: barSeries
+				: {}),
+			grid: {
+				left: leftGridWidth,
+				right: CHART_INSET,
+				top: grouped ? CHART_LEGEND_RESERVE : CHART_INSET,
+				bottom: CHART_INSET,
+				outerBoundsMode: 'same',
+				outerBoundsContain: hasLogos ? undefined : 'axisLabel'
 			},
-			true
-		)
+			xAxis: {
+				type: 'value',
+				...(valueAxisMin !== undefined ? { min: valueAxisMin } : {}),
+				...(valueAxisMax !== undefined ? { max: valueAxisMax } : {}),
+				...(valueAxisInterval !== undefined ? { interval: valueAxisInterval } : {}),
+				axisLabel: {
+					color: textColor,
+					formatter: (value: number) => formatTooltipValue(value, valueSymbol)
+				},
+				splitLine: {
+					lineStyle: {
+						color: chartTheme.gridline
+					}
+				}
+			},
+			yAxis: {
+				type: 'category',
+				data: categories,
+				inverse: true,
+				axisLine: { show: !hasLogos },
+				axisTick: { show: !hasLogos },
+				axisLabel: hasLogos ? { show: false } : { color: textColor, width: yAxisLabelWidth, overflow: 'truncate' }
+			},
+			tooltip: {
+				trigger: 'axis',
+				className: 'defillama-echarts-tooltip',
+				backgroundColor: 'transparent',
+				borderWidth: 0,
+				axisPointer: { type: 'shadow' },
+				formatter: (params: unknown) => {
+					const items = normalizeTooltipItems(params)
+					const first = items[0]
+					if (!first) return ''
+					const firstRawValue = getTooltipRawYValue(first, first.seriesName ?? '')
+					const numericValue = typeof firstRawValue === 'number' ? firstRawValue : Number(firstRawValue ?? 0)
+					const header = `<div style="font-weight: 600; margin-bottom: 4px;">${first.name ?? ''}</div>`
+					if (!grouped) return `${header}<div>${formatTooltipValue(numericValue, valueSymbol)}</div>`
+					let rows = ''
+					for (const item of items) {
+						const name = item.seriesName ?? ''
+						const rawValue = getTooltipRawYValue(item, name)
+						const value = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? 0)
+						rows += `<div>${item.marker ?? ''}${name}: ${formatTooltipValue(value, valueSymbol)}</div>`
+					}
+					return header + rows
+				}
+			},
+			series: barSeries
+		}
+		instance.setOption(option, true)
 
 		if (hasLogos) {
-			;(instance as any).__llamaChartLogos = {
+			setChartLogoMetadata(instance, {
 				kind: 'hbar',
 				logos: logos!,
 				categories
-			}
+			})
 		} else {
-			delete (instance as any).__llamaChartLogos
+			setChartLogoMetadata(instance, undefined)
 		}
 
 		const syncLogosFrame = requestAnimationFrame(syncLogos)
@@ -314,7 +330,8 @@ export default function HBarChart({
 		isThemeDark,
 		chartTheme,
 		overlayLabelWidth,
-		textColor
+		textColor,
+		syncLogos
 	])
 
 	return (

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { NftsMarketplaceTable } from '~/containers/Nft/NftsMarketplaceTable'
 import { getNFTMarketplacesData } from '~/containers/Nft/queries'
 import Layout from '~/layout'
@@ -9,9 +9,9 @@ import { TagGroup } from '~/ui/SegmentedControl'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
 
 export const getStaticProps = withPerformanceLogging('nfts/marketplaces', async () => {
 	const data = await getNFTMarketplacesData()
@@ -60,7 +60,7 @@ function Marketplaces({
 				</div>
 				<div className="grid grid-cols-1 *:col-span-1 xl:min-h-[400px] xl:grid-cols-2">
 					<React.Suspense fallback={<ChartPanelExportShellFallback className="w-full" />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							title="Volume"
 							dataset={viewType === 'Relative' ? relativeVolumeDataset : absoluteVolumeDataset}
 							charts={viewType === 'Relative' ? relativeAreaCharts : absoluteBarCharts}
@@ -80,7 +80,7 @@ function Marketplaces({
 					</React.Suspense>
 
 					<React.Suspense fallback={<ChartPanelExportShellFallback className="w-full" />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							title="Trades"
 							dataset={viewType === 'Relative' ? relativeTradesDataset : absoluteTradesDataset}
 							charts={viewType === 'Relative' ? relativeAreaCharts : absoluteBarCharts}

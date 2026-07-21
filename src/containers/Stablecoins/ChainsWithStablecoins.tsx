@@ -4,12 +4,14 @@ import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
-import type { IHBarChartProps, IPieChartProps, ITreemapChartProps } from '~/components/ECharts/types'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
+import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { Select } from '~/components/Select/Select'
 import type { StablecoinsChartConfig } from '~/containers/ProDashboard/types'
 import {
@@ -45,16 +47,16 @@ import { StablecoinChangeStats } from './StablecoinChangeStats'
 import { StablecoinsChainsTable } from './StablecoinsChainsTable'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const HBarChart = React.lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
-const TreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<ITreemapChartProps>
+const TreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 const UNRELEASED_QUERY_KEY = 'unreleased'
 const EMPTY_PIE_DATA: IPieChartProps['chartData'] = []
 const EMPTY_HBAR_CATEGORIES: string[] = []
 const EMPTY_HBAR_VALUES: number[] = []
-const EMPTY_TREEMAP_DATA: ITreemapChartProps['treeData'] = []
+const EMPTY_TREEMAP_DATA: TreemapChartProps['treeData'] = []
 
 interface ChainsWithStablecoinsProps {
 	chainCirculatings: IFormattedStablecoinChainRow[]
@@ -362,7 +364,7 @@ function SelectedChainsChart({
 	}
 	return (
 		<React.Suspense fallback={<ChartPanelBodyFallback />}>
-			<MultiSeriesChart2
+			<MultiSeriesChart
 				dataset={data.dataset}
 				charts={data.charts}
 				stacked={data.stacked}

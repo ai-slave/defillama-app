@@ -1,4 +1,4 @@
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 
 // ---------------------------------------------------------------------------
 // ExtraTvl pages (total-borrowed, total-staked, pool2)
@@ -22,8 +22,8 @@ export interface IExtraTvlByChainPageData {
 	protocols: IExtraTvlProtocolRow[]
 	chain: string
 	chains: Array<{ label: string; to: string }>
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 	totalValue: number
 	change24h: number | null
 	metric: ExtraTvlMetric

@@ -84,6 +84,17 @@ const swatch =
 const axisTag = 'w-3.5 shrink-0 text-center text-[11px] font-medium text-ai-muted'
 const PREVIEW_DEBOUNCE_MS = 350
 
+function getSeriesNameProblem(series: ChartConfiguration['series']): string | null {
+	const names = new Set<string>()
+	for (let index = 0; index < series.length; index++) {
+		const name = series[index].name.trim()
+		if (!name) return `Series ${index + 1} name cannot be empty`
+		if (names.has(name)) return `Series name "${name}" must be unique`
+		names.add(name)
+	}
+	return null
+}
+
 export function ChartStyleEditor({
 	config,
 	original,
@@ -144,6 +155,13 @@ export function ChartStyleEditor({
 		const next = clone(draft)
 		mutate(next)
 		setDraft(next)
+		// Invalid display identities make the adapter reject the entire chart. Keep the
+		// last valid preview visible while the user finishes editing the draft.
+		if (getSeriesNameProblem(next.series)) {
+			clearPreviewTimer()
+			pendingPreview.current = null
+			return
+		}
 		publishPreview(next, draftView, mode)
 	}
 
@@ -165,6 +183,8 @@ export function ChartStyleEditor({
 	const problems = useMemo(() => {
 		const out: string[] = []
 		if (!draft.title.trim()) out.push('Title cannot be empty')
+		const seriesNameProblem = getSeriesNameProblem(draft.series)
+		if (seriesNameProblem) out.push(seriesNameProblem)
 		for (const a of yAxes) {
 			const lo = typeof a.min === 'number' ? a.min : undefined
 			const hi = typeof a.max === 'number' ? a.max : undefined
@@ -173,7 +193,7 @@ export function ChartStyleEditor({
 			}
 		}
 		return out
-	}, [draft.title, yAxes])
+	}, [draft.series, draft.title, yAxes])
 
 	const save = async () => {
 		if (problems.length > 0) {

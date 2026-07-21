@@ -1,7 +1,8 @@
 import type * as echarts from 'echarts/core'
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { IMultiSeriesChart2Props, IMultiSeriesChartProps, IPieChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { assignColors } from './api'
 import {
@@ -15,11 +16,8 @@ import {
 } from './chartDefaults'
 import { useFinancialsData, type AllocatedAssetsData, type AllocatedAssetsEntry } from './financialsApi'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
-const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 function sparkExportTitle(title: string) {
 	const lowerTitle = title.toLowerCase()
@@ -101,8 +99,8 @@ function AllocatedAssetsSection({
 	aaHistorical: Record<
 		AADimension,
 		{
-			dataset: IMultiSeriesChart2Props['dataset']
-			charts: NonNullable<IMultiSeriesChart2Props['charts']>
+			dataset: IMultiSeriesChartProps['dataset']
+			charts: NonNullable<IMultiSeriesChartProps['charts']>
 			title: string
 		}
 	>
@@ -212,7 +210,7 @@ function AllocatedAssetsSection({
 						</div>
 					</div>
 				) : (
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={hist.dataset}
 						charts={hist.charts}
 						valueSymbol="$"
@@ -248,7 +246,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 						/>
 					}
 				>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.monthlyGross.dataset}
 						charts={data.monthlyGross.charts}
 						valueSymbol="$"
@@ -271,7 +269,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 						/>
 					}
 				>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.monthlyNet.dataset}
 						charts={data.monthlyNet.charts}
 						valueSymbol="$"
@@ -307,7 +305,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 						/>
 					}
 				>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.supplyTotal.dataset}
 						charts={data.supplyTotal.charts}
 						valueSymbol=""
@@ -329,7 +327,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 						/>
 					}
 				>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.supplyByChain.dataset}
 						charts={data.supplyByChain.charts}
 						valueSymbol=""
@@ -366,7 +364,7 @@ function TvlSection({ data }: { data: FinData }) {
 					/>
 				}
 			>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.tvl.dataset}
 					charts={data.tvl.charts}
 					valueSymbol="$"
@@ -401,7 +399,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 						/>
 					}
 				>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.deposits.dataset}
 						charts={data.deposits.charts}
 						valueSymbol="$"
@@ -423,7 +421,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 						/>
 					}
 				>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.borrows.dataset}
 						charts={data.borrows.charts}
 						valueSymbol="$"
@@ -455,7 +453,7 @@ function SllTvlSection({ data }: { data: FinData }) {
 					/>
 				}
 			>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.sllTvl.dataset}
 					charts={data.sllTvl.charts}
 					valueSymbol="$"
@@ -488,7 +486,7 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 					/>
 				}
 			>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.savingsTvl.dataset}
 					charts={data.savingsTvl.charts}
 					valueSymbol="$"
@@ -573,7 +571,15 @@ function TreasurySection({ data }: { data: FinData }) {
 						/>
 					}
 				>
-					<MultiSeriesChart series={data.treasurySeries} valueSymbol="$" height="400px" onReady={treasury.onReady} />
+					<MultiSeriesChart
+						dataset={data.treasuryModel.dataset}
+						charts={data.treasuryModel.charts}
+						valueSymbol="$"
+						height="400px"
+						onReady={treasury.onReady}
+						hideDefaultLegend={false}
+						exportButtons="hidden"
+					/>
 				</ChartCard>
 				<ChartCard
 					title="SPK Buybacks"
@@ -587,11 +593,13 @@ function TreasurySection({ data }: { data: FinData }) {
 					}
 				>
 					<MultiSeriesChart
-						series={data.buybacksSeries}
+						dataset={data.buybacksModel.dataset}
+						charts={data.buybacksModel.charts}
 						valueSymbol=""
-						yAxisSymbols={['SPK', 'SPK']}
 						height="400px"
 						onReady={buybacks.onReady}
+						hideDefaultLegend={false}
+						exportButtons="hidden"
 					/>
 				</ChartCard>
 			</div>

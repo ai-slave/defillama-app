@@ -34,16 +34,16 @@ describe('equities chart data', () => {
 				['2025-01-01', 10]
 			]).dataset.source
 		).toEqual([
-			{ timestamp: Date.parse('2025-01-01'), Close: 10 },
-			{ timestamp: Date.parse('2025-01-02'), Close: 20 }
+			[Date.parse('2025-01-01'), 10],
+			[Date.parse('2025-01-02'), 20]
 		])
 	})
 
 	it('reverses the newest-first API response into a chronological dataset', () => {
 		expect(buildEquitiesDimensionsChart(dimensions, 'holdersRevenue', 'annual').dataset).toEqual({
 			source: [
-				{ timestamp: Date.parse('2024-12-31T00:00:00Z'), 'Holders Revenue': 35 },
-				{ timestamp: Date.parse('2025-12-31T00:00:00Z'), 'Holders Revenue': 40 }
+				[Date.parse('2024-12-31T00:00:00Z'), 35],
+				[Date.parse('2025-12-31T00:00:00Z'), 40]
 			],
 			dimensions: ['timestamp', 'Holders Revenue']
 		})

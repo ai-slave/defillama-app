@@ -1,5 +1,7 @@
-import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/formatters'
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/shared/formatters'
+import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 
 export const AREA_CHART_EXPORTS = {
 	csv: true,
@@ -12,21 +14,25 @@ export const BAR_CHART_EXPORTS = {
 	filename: 'bar-chart-data'
 } as const
 
-export function createChartOptions(valueSymbol: string, reverseSeries = false) {
+export function createChartOptions(valueSymbol: string, reverseSeries = false): MultiSeriesChartOptions {
 	return {
 		...createTimeSeriesChartOptions(valueSymbol),
 		...(reverseSeries
 			? {
 					tooltip: {
-						formatter(params: Array<{ data: Record<string, number>; seriesName: string; marker: string }>) {
-							if (params.length === 0) return ''
+						formatter(params: unknown) {
+							const items = normalizeTooltipItems(params)
+							if (items.length === 0) return ''
 
-							let content = formatTooltipChartDate(params[0].data.timestamp, 'daily')
-							for (let index = params.length - 1; index >= 0; index--) {
-								const item = params[index]
-								const value = item.data[item.seriesName]
-								if (!value) continue
-								content += `<li style="list-style:none">${item.marker}${item.seriesName}&nbsp;&nbsp;${formatTooltipValue(value, valueSymbol)}</li>`
+							let content = formatTooltipChartDate(getTooltipAxisValue(items[0]), 'daily')
+							for (let index = items.length - 1; index >= 0; index--) {
+								const item = items[index]
+								const name = item.seriesName
+								if (!name) continue
+								const rawValue = getTooltipRawYValue(item, name)
+								const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
+								if (!value || !Number.isFinite(value)) continue
+								content += `<li style="list-style:none">${item.marker ?? ''}${name}&nbsp;&nbsp;${formatTooltipValue(value, valueSymbol)}</li>`
 							}
 							return content
 						}

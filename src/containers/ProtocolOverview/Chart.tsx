@@ -1,9 +1,9 @@
+import type { BarSeriesOption, EChartsOption, LineSeriesOption } from 'echarts'
 import { CustomChart } from 'echarts/charts'
 import { MarkAreaComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
-import { CHART_INSET, chartGrid } from '~/components/ECharts/chartSpacing'
-import { useChartTheme } from '~/components/ECharts/chartTheme'
+import { useDefaults } from '~/components/ECharts/LegacyChart/useDefaults'
 import {
 	attachEventHoverHandlers,
 	buildEventRailData,
@@ -13,10 +13,11 @@ import {
 	getMainGridBottom,
 	getSeriesTimeBounds,
 	mergeGraphicWithEventMarkLinePlaceholder
-} from '~/components/ECharts/hallmarkEventRail'
-import type { ChartTimeGrouping } from '~/components/ECharts/types'
-import { useDefaults } from '~/components/ECharts/useDefaults'
-import { mergeDeep } from '~/components/ECharts/utils'
+} from '~/components/ECharts/MultiSeriesChart/eventRail'
+import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_INSET, chartGrid } from '~/components/ECharts/shared/chartSpacing'
+import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
+import { mergeDeep } from '~/components/ECharts/shared/merge'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { buildProtocolYAxis } from './chartYAxis'
@@ -71,20 +72,10 @@ export default function ProtocolChart({
 		chartTheme,
 		groupBy: tooltipGroupBy
 	})
-	const mergedChartSettings = useMemo(() => {
-		const mergedSettings = { ...defaultChartSettings } as Record<string, unknown>
-		if (chartOptions) {
-			for (const option in chartOptions) {
-				const opts = chartOptions as Record<string, Record<string, unknown>>
-				if (mergedSettings[option]) {
-					mergedSettings[option] = mergeDeep(mergedSettings[option] as Record<string, unknown>, opts[option])
-				} else {
-					mergedSettings[option] = { ...opts[option] }
-				}
-			}
-		}
-		return mergedSettings as typeof defaultChartSettings
-	}, [defaultChartSettings, chartOptions])
+	const mergedChartSettings = useMemo(
+		() => mergeDeep(defaultChartSettings, chartOptions),
+		[defaultChartSettings, chartOptions]
+	)
 
 	const eventRailData = useMemo(
 		() => buildEventRailData({ hallmarks, rangeHallmarks, isThemeDark, dateInMs: true }).events,
@@ -108,46 +99,19 @@ export default function ProtocolChart({
 			}
 		}
 
-		const series = stacks.map((stack, index) => {
+		const series: Array<BarSeriesOption | LineSeriesOption> = stacks.map((stack, index) => {
 			const stackColor = chartColors[stack]
 			const type = BAR_CHARTS_SET.has(stack) && !isCumulative ? 'bar' : 'line'
 			const data = chartData[stack] ?? []
 
-			const options = {
-				yAxisIndex: indexByYAxis[yAxisByChart[stack]]
-			}
-
-			return {
+			const common = {
 				id: `${PRIMARY_SERIES_ID_PREFIX}${index}`,
 				name: stack,
-				type,
-				...options,
-				scale: true,
-				large: data.length > 0,
-				emphasis: {
-					focus: 'series',
-					shadowBlur: 10
-				},
-				symbol: 'none',
+				yAxisIndex: indexByYAxis[yAxisByChart[stack]],
+				emphasis: { focus: 'series' as const },
 				itemStyle: {
-					color: stackColor || null
+					color: stackColor || undefined
 				},
-				...(type === 'line'
-					? {
-							areaStyle: {
-								color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-									{
-										offset: 0,
-										color: stackColor ? stackColor : index === 0 ? chartColors[stack] : 'transparent'
-									},
-									{
-										offset: 1,
-										color: chartTheme.areaGradientTo
-									}
-								])
-							}
-						}
-					: {}),
 				data,
 				...(index === 0 && (rangeHallmarks?.length ?? 0) > 0
 					? {
@@ -160,18 +124,30 @@ export default function ProtocolChart({
 									fontWeight: 600,
 									color: chartTheme.text
 								},
-								data: (rangeHallmarks ?? []).map(([date, event]: [[number, number], string]) => [
-									{
-										name: event,
-										xAxis: date[0]
-									},
-									{
-										xAxis: date[1]
-									}
-								])
+								data: (rangeHallmarks ?? []).map(
+									([date, event]: [[number, number], string]): [{ name: string; xAxis: number }, { xAxis: number }] => [
+										{ name: event, xAxis: date[0] },
+										{ xAxis: date[1] }
+									]
+								)
 							}
 						}
 					: {})
+			}
+			if (type === 'bar') return { ...common, type: 'bar', large: data.length > 0 }
+			return {
+				...common,
+				type: 'line',
+				symbol: 'none',
+				areaStyle: {
+					color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+						{
+							offset: 0,
+							color: stackColor ? stackColor : index === 0 ? chartColors[stack] : 'transparent'
+						},
+						{ offset: 1, color: chartTheme.areaGradientTo }
+					])
+				}
 			}
 		})
 
@@ -276,18 +252,16 @@ export default function ProtocolChart({
 
 		const finalGraphic = shouldShowEventRail ? mergeGraphicWithEventMarkLinePlaceholder(graphic, isThemeDark) : graphic
 
-		instance.setOption(
-			{
-				graphic: finalGraphic,
-				tooltip,
-				grid: finalGrid,
-				xAxis: finalXAxis,
-				yAxis: finalYAxisWithEvents,
-				...(shouldHideDataZoom ? {} : { dataZoom: finalDataZoom }),
-				series: finalSeries
-			},
-			{ notMerge: true, lazyUpdate: true }
-		)
+		const option: EChartsOption = {
+			graphic: finalGraphic,
+			tooltip,
+			grid: finalGrid,
+			xAxis: finalXAxis,
+			yAxis: finalYAxisWithEvents,
+			...(shouldHideDataZoom ? {} : { dataZoom: finalDataZoom }),
+			series: finalSeries
+		}
+		instance.setOption(option, { notMerge: true, lazyUpdate: true })
 	}, [
 		mergedChartSettings,
 		series,

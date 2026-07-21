@@ -1,10 +1,9 @@
 import * as React from 'react'
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import type {
-	IMultiSeriesChart2Props,
-	MultiSeriesChart2Dataset,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
+	CanonicalMultiSeriesChartDataset,
+	IMultiSeriesChartProps,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
 import { SERVER_URL } from '~/constants'
 import Layout from '~/layout'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
@@ -14,14 +13,14 @@ import { fetchJson } from '~/utils/async'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
 
 function buildDataset(
 	langs: Record<string, Record<string, number>>,
 	mode: 'absolute' | 'dominance'
-): { dataset: MultiSeriesChart2Dataset; keys: string[] } {
+): { dataset: CanonicalMultiSeriesChartDataset; keys: string[] } {
 	const keysSet = new Set<string>()
 	const entries: [string, Record<string, number>][] = []
 	for (const date in langs) {
@@ -32,16 +31,21 @@ function buildDataset(
 	entries.sort((a, b) => Number(a[0]) - Number(b[0]))
 	const keys = Array.from(keysSet)
 
-	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(entries.length)
+	const source = new Array<number[]>(entries.length)
 	for (let i = 0; i < entries.length; i++) {
 		const [date, tvlByLang] = entries[i]
-		const row = createChartRow<number>(+date * 1e3)
+		const row = new Array<number>(keys.length + 1)
+		row[0] = +date * 1e3
 		if (mode === 'dominance') {
 			let daySum = 0
 			for (const lang in tvlByLang) daySum += tvlByLang[lang]
-			for (const lang of keys) row[lang] = getDominancePercent(tvlByLang[lang] ?? 0, daySum)
+			for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
+				row[keyIndex + 1] = getDominancePercent(tvlByLang[keys[keyIndex]] ?? 0, daySum)
+			}
 		} else {
-			for (const lang of keys) row[lang] = tvlByLang[lang] ?? 0
+			for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
+				row[keyIndex + 1] = tvlByLang[keys[keyIndex]] ?? 0
+			}
 		}
 		source[i] = row
 	}
@@ -49,7 +53,7 @@ function buildDataset(
 	return { dataset: { source, dimensions: ['timestamp', ...keys] }, keys }
 }
 
-function buildCharts(keys: string[], colors: Record<string, string>, stack?: string): MultiSeriesChart2SeriesConfig[] {
+function buildCharts(keys: string[], colors: Record<string, string>, stack?: string): MultiSeriesChartSeriesConfig[] {
 	return keys.map((name) => ({
 		type: 'line' as const,
 		name,
@@ -67,14 +71,14 @@ export const getStaticProps = withPerformanceLogging('languages', async () => {
 	const { dataset: osDataset, keys: osUnique } = buildDataset(data.sumDailySolanaOpenSourceTvls, 'dominance')
 
 	const allColors = getNDistinctColors(langsUnique.length)
-	const colors = createChartRecord<string>()
+	const colors = {}
 	for (let i = 0; i < langsUnique.length; i++) {
 		colors[langsUnique[i]] = allColors[i]
 	}
 
 	const tvlCharts = buildCharts(langsUnique, colors, 'A')
 	const dominanceCharts = buildCharts(langsUnique, colors, 'A')
-	const osColors = Object.assign(createChartRecord<string>(), sourceTypeColor)
+	const osColors = Object.assign({}, sourceTypeColor)
 	const missingOsKeys = osUnique.filter((k) => !osColors[k])
 	if (missingOsKeys.length > 0) {
 		const fallback = getNDistinctColors(missingOsKeys.length)
@@ -112,7 +116,7 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 
 			<ChartPanel className="relative">
 				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={tvlDataset}
 						charts={tvlCharts}
 						title="TVL"
@@ -124,7 +128,7 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 			</ChartPanel>
 			<ChartPanel className="relative">
 				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={dominanceDataset}
 						charts={dominanceCharts}
 						title="TVL Dominance"
@@ -137,7 +141,7 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 
 			<ChartPanel className="relative">
 				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={osDataset}
 						charts={osCharts}
 						valueSymbol="%"

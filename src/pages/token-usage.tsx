@@ -14,7 +14,7 @@ import { Announcement } from '~/components/Announcement'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import type { ITreemapChartProps } from '~/components/ECharts/types'
+import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv } from '~/components/Table/utils'
@@ -42,7 +42,7 @@ import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formattedNum } from '~/utils'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
-const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<ITreemapChartProps>
+const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
 const pageName = ['Token', 'usage in', 'Protocols']
 

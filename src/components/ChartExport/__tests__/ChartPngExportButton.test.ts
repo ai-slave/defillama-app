@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
 	applyTreemapViewportExportState,
+	getTreemapTargetDataRoot,
 	mutateAndWaitForChartRender,
 	readTreemapViewportExportState,
 	sanitizeRichImagesForExport,
@@ -50,6 +51,21 @@ describe('sanitizeRichImagesForExport', () => {
 })
 
 describe('treemap viewport export', () => {
+	it('uses an index path to distinguish duplicate sibling names in a focused export', () => {
+		const first = { name: 'Duplicate', value: 1 }
+		const second = { name: 'Duplicate', value: 2, children: [{ name: 'Target', value: 2 }] }
+		expect(
+			getTreemapTargetDataRoot(
+				{ name: 'All', data: [first, second] },
+				{
+					actionType: 'treemapZoomToNode',
+					targetNodePath: ['All', 'Duplicate'],
+					targetNodeIndexPath: [1]
+				}
+			)
+		).toEqual({ name: 'Duplicate', data: second.children })
+	})
+
 	it('resolves a stashed focus path against clone-local node ids before dispatching', () => {
 		const sourceSeries = { id: 'source', getData: () => ({ tree: { root: {} } }) }
 		const originalChart = {

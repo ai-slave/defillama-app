@@ -1,5 +1,5 @@
-import type { ChartTimeGrouping } from '~/components/ECharts/types'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
+import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import { getFreshTimeSeriesCurrentPoint, toUnixMsTimestamp } from '~/utils/timeSeries'
 import type { RawBridgeVolumePoint } from './api.types'
 
@@ -32,7 +32,7 @@ export const BRIDGE_VOLUME_SPLIT_CHARTS = [
 	{
 		type: 'bar' as const,
 		name: 'Deposits',
-		encode: { x: 'timestamp', y: 'Deposits' },
+		encode: { x: 0, y: 1 },
 		color: '#3b82f6',
 		stack: 'metric',
 		large: false
@@ -40,7 +40,7 @@ export const BRIDGE_VOLUME_SPLIT_CHARTS = [
 	{
 		type: 'bar' as const,
 		name: 'Withdrawals',
-		encode: { x: 'timestamp', y: 'Withdrawals' },
+		encode: { x: 0, y: 2 },
 		color: '#ef4444',
 		stack: 'metric',
 		large: false
@@ -48,7 +48,7 @@ export const BRIDGE_VOLUME_SPLIT_CHARTS = [
 ]
 
 export const BRIDGE_VOLUME_COMBINED_CHARTS = [
-	{ type: 'bar' as const, name: 'Total', encode: { x: 'timestamp', y: 'Total' }, color: '#22c55e' }
+	{ type: 'bar' as const, name: 'Total', encode: { x: 0, y: 1 }, color: '#22c55e' }
 ]
 
 function getBridgeMetricValues(item: BridgeVolumeInputPoint, metricType: BridgeVolumeMetricType) {
@@ -66,24 +66,13 @@ function pushBridgeVolumeDatasetRow({
 	withdrawals,
 	viewType
 }: {
-	source: Array<Record<string, number>>
+	source: number[][]
 	timestamp: number
 	deposits: number
 	withdrawals: number
 	viewType: BridgeVolumeViewType
 }) {
-	source.push(
-		viewType === 'Split'
-			? {
-					timestamp,
-					Deposits: deposits,
-					Withdrawals: -1 * withdrawals
-				}
-			: {
-					timestamp,
-					Total: deposits + withdrawals
-				}
-	)
+	source.push(viewType === 'Split' ? [timestamp, deposits, -withdrawals] : [timestamp, deposits + withdrawals])
 }
 
 export function buildBridgeVolumeChartData({
@@ -99,7 +88,7 @@ export function buildBridgeVolumeChartData({
 }) {
 	const isSplit = viewType === 'Split'
 	const dimensions = isSplit ? ['timestamp', 'Deposits', 'Withdrawals'] : ['timestamp', 'Total']
-	const source: Array<Record<string, number>> = []
+	const source: number[][] = []
 
 	if (!data?.length) {
 		return {

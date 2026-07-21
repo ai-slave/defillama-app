@@ -1,12 +1,11 @@
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import { calculateTotalWithExtraToggles } from '~/utils/tvlOverlap'
 import type { OracleBreakdownItem, OraclesByChainPageData } from './types'
 
 interface OracleDominanceChart {
 	type: 'line'
 	name: string
-	encode: { x: string; y: string }
+	encode: { x: number; y: number }
 	color: string
 	stack: string
 }
@@ -17,12 +16,12 @@ function indexExtraChartDataByTimestamp(extraBreakdownsByApiKey: Record<string, 
 	for (const apiKey in extraBreakdownsByApiKey) {
 		for (const dayData of extraBreakdownsByApiKey[apiKey]) {
 			const timestamp = dayData.timestamp
-			const valuesByOracle = indexedByTimestamp.get(timestamp) ?? createChartRecord<Record<string, number>>()
+			const valuesByOracle = indexedByTimestamp.get(timestamp) ?? {}
 
 			for (const oracleName in dayData) {
 				if (oracleName === 'timestamp') continue
 				const value = dayData[oracleName]
-				const currentValues = valuesByOracle[oracleName] ?? createChartRecord<number>()
+				const currentValues = valuesByOracle[oracleName] ?? {}
 				currentValues[apiKey] = value
 				valuesByOracle[oracleName] = currentValues
 			}
@@ -45,8 +44,7 @@ function calculateTotalWithOracleExtras({
 }) {
 	if (!extraTvl) return tvl
 
-	const values = createChartRecord<number>()
-	values.tvl = tvl
+	const values: Record<string, number> = { tvl }
 	for (const extraKey in extraTvl) {
 		values[extraKey] = extraTvl[extraKey]
 	}
@@ -118,16 +116,18 @@ export function buildOraclesByChainDominanceData({
 		? indexExtraChartDataByTimestamp(extraBreakdownsByApiKey)
 		: null
 	const dimensions = ['timestamp', ...oracles]
-	const source: Array<Record<string, number>> = []
+	const source: number[][] = []
 
 	for (const baseDayData of chartData) {
 		const timestampInSeconds = baseDayData.timestamp
 		const extraValuesForTimestamp = extraValuesByTimestamp?.get(timestampInSeconds)
 
-		const point = createChartRow<number>(timestampInSeconds * 1e3)
+		const point = new Array<number>(oracles.length + 1)
+		point[0] = timestampInSeconds * 1e3
 		let dayTotal = 0
 
-		for (const oracleName of oracles) {
+		for (let oracleIndex = 0; oracleIndex < oracles.length; oracleIndex++) {
+			const oracleName = oracles[oracleIndex]
 			const oracleTvs = shouldApplyExtraTvlFormatting
 				? calculateTotalWithOracleExtras({
 						tvl: baseDayData[oracleName] ?? 0,
@@ -135,24 +135,25 @@ export function buildOraclesByChainDominanceData({
 						extraTvlsEnabled
 					})
 				: (baseDayData[oracleName] ?? 0)
-			point[oracleName] = oracleTvs
+			point[oracleIndex + 1] = oracleTvs
 			dayTotal += oracleTvs
 		}
 
 		if (dayTotal === 0) continue
 
-		for (const oracleName of oracles) {
-			point[oracleName] = (point[oracleName] / dayTotal) * 100
+		for (let oracleIndex = 0; oracleIndex < oracles.length; oracleIndex++) {
+			point[oracleIndex + 1] = (point[oracleIndex + 1] / dayTotal) * 100
 		}
 		source.push(point)
 	}
 
 	const dominanceCharts: Array<OracleDominanceChart> = []
-	for (const name of oracles) {
+	for (let oracleIndex = 0; oracleIndex < oracles.length; oracleIndex++) {
+		const name = oracles[oracleIndex]
 		dominanceCharts.push({
 			type: 'line',
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: oracleIndex + 1 },
 			color: oraclesColors[name] ?? '#ccc',
 			stack: 'dominance'
 		})

@@ -22,7 +22,7 @@ import {
 import { useOracleOverviewExtraSeries } from './queries.client'
 import type { OracleOverviewPageData } from './types'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 type IProtocolTableRow = OracleOverviewPageData['protocolTableData'][number]
 const columnHelper = createColumnHelper<IProtocolTableRow>()
@@ -171,7 +171,7 @@ export const OracleOverview = ({
 		const selectedOracle = oracle ?? firstOracle
 		const shouldApplyExtraSeries = enabledExtraChartApiKeys.length > 0 && !isFetchingExtraSeries
 
-		const datasetSource: Array<{ timestamp: number; TVS: number }> = []
+		const datasetSource: Array<[number, number]> = []
 
 		for (const point of chartBreakdownByTimestamp) {
 			const timestampInSeconds = point.timestamp
@@ -179,10 +179,7 @@ export const OracleOverview = ({
 			const extraTvs = shouldApplyExtraSeries ? (extraTvsByTimestamp.get(timestampInSeconds) ?? 0) : 0
 			const tvsValue = baseTvs + extraTvs
 
-			datasetSource.push({
-				timestamp: timestampInSeconds * 1e3,
-				TVS: tvsValue
-			})
+			datasetSource.push([timestampInSeconds * 1e3, tvsValue])
 		}
 		return {
 			dataset: {
@@ -193,7 +190,7 @@ export const OracleOverview = ({
 				{
 					type: 'line' as const,
 					name: 'TVS',
-					encode: { x: 'timestamp', y: 'TVS' },
+					encode: { x: 0, y: 1 },
 					color: CHART_COLORS[0],
 					stack: 'TVS'
 				}
@@ -232,7 +229,7 @@ export const OracleOverview = ({
 						</ChartPanelExportShellFallback>
 					) : (
 						<Suspense fallback={<ChartPanelExportShellFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={dataset}
 								charts={charts}
 								alwaysShowTooltip

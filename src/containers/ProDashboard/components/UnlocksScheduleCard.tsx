@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
@@ -14,12 +14,10 @@ import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const EMPTY_STACKS: string[] = []
-const EMPTY_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp'] }
+const EMPTY_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp'] }
 
 interface UnlocksScheduleCardProps {
 	config: UnlocksScheduleConfig
@@ -78,7 +76,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 		if (!hasChartData) return
 		const headers = ['Date', ...stacks]
 		const rows = dataset.source.map((item) => {
-			return [toNiceCsvDate(Math.floor((item.timestamp as number) / 1e3)), ...stacks.map((stack) => item[stack] ?? '')]
+			return [toNiceCsvDate(Math.floor((item[0] as number) / 1e3)), ...stacks.map((_, index) => item[index + 1] ?? '')]
 		})
 		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
 		const filename = `${protocolName || protocol}-unlock-schedule-${resolvedDataType}`
@@ -127,7 +125,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 			<div>
 				{hasChartData ? (
 					<Suspense fallback={<div className="min-h-[360px]" />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={dataset}
 							charts={apiCharts}
 							selectedCharts={selectedChartsSet}

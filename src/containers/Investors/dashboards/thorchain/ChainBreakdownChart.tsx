@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, useMemo, useState } from 'react'
-import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/chartSpacing'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
+import { buildSparseCartesianChartModel, type SparseCartesianSeries } from '~/components/ECharts/MultiSeriesChart/model'
+import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import ProtocolChartBuilderData from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
@@ -77,6 +79,7 @@ function aggregate(series: RawSeries[], view: View, stacked: boolean) {
 		data: s.points,
 		color: s.color,
 		type: (view === 'cumulative' ? 'line' : 'bar') as 'line' | 'bar',
+		...(view === 'cumulative' ? { connectNulls: true } : {}),
 		...(stacked ? { stack: 'total' } : {}),
 		...(view === 'cumulative' && useArea ? { areaStyle: {} } : {})
 	}))
@@ -102,6 +105,14 @@ function TrendCard({
 	isError?: boolean
 }) {
 	const groupBy = view === 'month' ? 'monthly' : view === 'quarter' ? 'quarterly' : 'daily'
+	const model = useMemo(() => buildSparseCartesianChartModel(chartSeries), [chartSeries])
+	const chartOptions = useMemo(
+		() => ({
+			...CHART_OPTIONS,
+			tooltip: { formatter: createCappedRemainderTooltipFormatter({ groupBy, valueSymbol }) }
+		}),
+		[groupBy, valueSymbol]
+	)
 	return (
 		<ChartCard
 			title={title}
@@ -118,11 +129,14 @@ function TrendCard({
 				<div className="flex h-[360px] items-center justify-center text-xs text-pro-text-tertiary">No data</div>
 			) : (
 				<MultiSeriesChart
-					series={chartSeries}
+					dataset={model.dataset}
+					charts={model.charts}
 					valueSymbol={valueSymbol}
 					groupBy={groupBy}
 					height="360px"
-					chartOptions={CHART_OPTIONS}
+					chartOptions={chartOptions}
+					hideDefaultLegend={false}
+					exportButtons="hidden"
 				/>
 			)}
 		</ChartCard>
@@ -220,10 +234,10 @@ export function ApiTrendChart({
 // RUNE price line over swap-volume bars. Expects an ir-server Chart whose first
 // series is the bar (left axis) and second the line (right axis).
 export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subtitle?: string }) {
-	const series = useMemo(() => {
-		if (!chart?.dates?.length) return []
+	const model = useMemo(() => {
+		if (!chart?.dates?.length || !chart.series.length) return undefined
 		const colors = [THOR_TEAL, GOLD]
-		return chart.series.map((s, i) => ({
+		const series: SparseCartesianSeries[] = chart.series.map((s, i) => ({
 			name: s.name,
 			type: (s.type ?? 'line') as 'line' | 'bar',
 			color: colors[i % colors.length],
@@ -232,17 +246,20 @@ export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subti
 			...(s.type === 'line' ? { areaStyle: { opacity: 0 } } : {}),
 			data: chart.dates.map((d, j) => [parseDateToUnix(d), s.data?.[j] ?? 0] as [number, number])
 		}))
+		return buildSparseCartesianChartModel(series)
 	}, [chart])
-	if (!chart?.series?.length) return null
+	if (!model) return null
 	return (
 		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle}>
 			<MultiSeriesChart
-				series={series}
+				dataset={model.dataset}
+				charts={model.charts}
 				valueSymbol="$"
-				yAxisSymbols={['$', '$']}
 				groupBy="daily"
 				height="360px"
 				chartOptions={CHART_OPTIONS}
+				hideDefaultLegend={false}
+				exportButtons="hidden"
 			/>
 		</ChartCard>
 	)

@@ -6,7 +6,7 @@ import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { feesOptions } from '~/components/Filters/options'
 import { Select } from '~/components/Select/Select'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -41,7 +41,7 @@ import type { IProtocolMetadata } from '~/utils/metadata/types'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 type OptionalAdapterOverviewResult = {
 	data: Awaited<ReturnType<typeof getAdapterProtocolOverview>> | null
@@ -347,7 +347,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
 							groupBy={groupBy}

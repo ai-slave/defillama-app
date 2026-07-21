@@ -1,3 +1,4 @@
+import type * as echarts from 'echarts/core'
 import { Icon } from '~/ui/Icon'
 import type { ChartConfig } from '../chartConfig'
 import type { ClassifiedColumn } from '../columnKind'
@@ -17,7 +18,7 @@ interface ChartRouterProps {
 	config: ChartConfig
 	result: QueryResult
 	classified: ClassifiedColumn[]
-	onReady?: (instance: any) => void
+	onReady?: (instance: echarts.ECharts | null) => void
 }
 
 export function ChartRouter({ config, result, classified, onReady }: ChartRouterProps) {

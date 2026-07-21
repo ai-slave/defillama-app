@@ -22,7 +22,7 @@ const chainsTable: RegisteredTable = {
 
 const result = {
 	columns: [{ name: 'tvl', type: 'DOUBLE' }],
-	rows: [{ tvl: 1 }, { tvl: 2 }]
+	rows: [[1], [2]]
 }
 
 const chartConfig = { chartType: 'bar', xCol: null, yCols: ['tvl'] } as any
@@ -82,7 +82,7 @@ describe('buildSqlChartConfig', () => {
 	it('truncates oversized results to the row cap', () => {
 		const bigResult = {
 			columns: result.columns,
-			rows: Array.from({ length: SQL_SNAPSHOT_ROW_CAP + 5 }, (_, i) => ({ tvl: i }))
+			rows: Array.from({ length: SQL_SNAPSHOT_ROW_CAP + 5 }, (_, i) => [i])
 		}
 		const config = buildSqlChartConfig({ ...baseParams, result: bigResult })
 		expect(config.snapshot?.rows.length).toBe(SQL_SNAPSHOT_ROW_CAP)
@@ -110,7 +110,7 @@ describe('buildSqlChartConfig', () => {
 	it('truncates the snapshot to a custom row cap and stores it', () => {
 		const bigResult = {
 			columns: result.columns,
-			rows: Array.from({ length: 300 }, (_, i) => ({ tvl: i }))
+			rows: Array.from({ length: 300 }, (_, i) => [i])
 		}
 		const config = buildSqlChartConfig({ ...baseParams, result: bigResult, rowCap: 200 })
 		expect(config.rowCap).toBe(200)

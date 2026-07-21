@@ -1,7 +1,7 @@
 import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
 import { AREA_EXPORT, BAR_EXPORT, DOLLAR_CHART_OPTIONS, DOLLAR_STACKED_CHART_OPTIONS } from './chartDefaults'
@@ -14,23 +14,19 @@ import {
 	useSparklendYieldPools
 } from './sparklendApi'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-const TVL_CHARTS: MultiSeriesChart2SeriesConfig[] = [
-	{ type: 'line', name: 'TVL', encode: { x: 'timestamp', y: 'TVL' } }
-]
-const BORROWED_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+const TVL_CHARTS: MultiSeriesChartSeriesConfig[] = [{ type: 'line', name: 'TVL', encode: { x: 'timestamp', y: 'TVL' } }]
+const BORROWED_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{ type: 'line', name: 'Borrowed', encode: { x: 'timestamp', y: 'Borrowed' } }
 ]
-const FEES_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+const FEES_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{ type: 'bar', name: 'Fees', encode: { x: 'timestamp', y: 'Fees' }, color: '#4FC3F7', stack: 'a' }
 ]
-const REVENUE_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+const REVENUE_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{ type: 'bar', name: 'Revenue', encode: { x: 'timestamp', y: 'Revenue' }, color: '#66BB6A', stack: 'a' }
 ]
-const SUPPLY_SIDE_REVENUE_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+const SUPPLY_SIDE_REVENUE_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{
 		type: 'bar',
 		name: 'Supply Side Revenue',
@@ -39,7 +35,7 @@ const SUPPLY_SIDE_REVENUE_CHARTS: MultiSeriesChart2SeriesConfig[] = [
 		stack: 'a'
 	}
 ]
-const INFLOWS_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+const INFLOWS_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{
 		type: 'bar',
 		name: 'USD Inflows',
@@ -238,7 +234,7 @@ export default function SparkLend() {
 				<CardSkeleton title="TVL" />
 			) : (
 				<ChartCard title="TVL">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={tvlDataset}
 						charts={TVL_CHARTS}
 						valueSymbol="$"
@@ -254,7 +250,7 @@ export default function SparkLend() {
 				<CardSkeleton title="TVL by Chain" />
 			) : tvlByChain.charts.length > 0 ? (
 				<ChartCard title="TVL by Chain">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={tvlByChain.dataset}
 						charts={tvlByChain.charts}
 						valueSymbol="$"
@@ -272,7 +268,7 @@ export default function SparkLend() {
 				<CardSkeleton title="Total Borrowed" />
 			) : (
 				<ChartCard title="Total Borrowed">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={borrowedDataset}
 						charts={BORROWED_CHARTS}
 						valueSymbol="$"
@@ -288,7 +284,7 @@ export default function SparkLend() {
 				<CardSkeleton title="Fees" />
 			) : (
 				<ChartCard title="Fees">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={feesDataset}
 						charts={FEES_CHARTS}
 						valueSymbol="$"
@@ -304,7 +300,7 @@ export default function SparkLend() {
 				<CardSkeleton title="Fees by Chain" />
 			) : feesByChain.charts.length > 0 ? (
 				<ChartCard title="Fees by Chain">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={feesByChain.dataset}
 						charts={feesByChain.charts}
 						valueSymbol="$"
@@ -321,7 +317,7 @@ export default function SparkLend() {
 				<CardSkeleton title="Revenue" />
 			) : (
 				<ChartCard title="Revenue">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={revenueDataset}
 						charts={REVENUE_CHARTS}
 						valueSymbol="$"
@@ -337,7 +333,7 @@ export default function SparkLend() {
 				<CardSkeleton title="Supply Side Revenue" />
 			) : (
 				<ChartCard title="Supply Side Revenue">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={supplySideRevenueDataset}
 						charts={SUPPLY_SIDE_REVENUE_CHARTS}
 						valueSymbol="$"
@@ -353,7 +349,7 @@ export default function SparkLend() {
 				<CardSkeleton title="USD Inflows" />
 			) : (
 				<ChartCard title="USD Inflows">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={inflowsDataset}
 						charts={INFLOWS_CHARTS}
 						valueSymbol="$"

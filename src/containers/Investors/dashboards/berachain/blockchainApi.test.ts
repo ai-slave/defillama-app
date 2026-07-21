@@ -96,30 +96,24 @@ describe('buildBlockchainViewModel', () => {
 
 		expect(chartDatasets.transactions.dimensions).toEqual(['timestamp', 'Transactions'])
 		expect(chartDatasets.addresses.dimensions).toEqual(['timestamp', 'Active Addresses', 'New Addresses'])
-		expect(chartDatasets.transactions.source).toBe(chartDatasets.addresses.source)
+		expect(chartDatasets.transactions.source).not.toBe(chartDatasets.addresses.source)
 		expect(chartDatasets.transactions.source).toEqual([
-			{
-				timestamp: Date.UTC(2026, 6, 16),
-				Transactions: 10,
-				'Active Addresses': 4,
-				'New Addresses': 2
-			},
-			{
-				timestamp: Date.UTC(2026, 6, 17),
-				Transactions: 20,
-				'Active Addresses': 8,
-				'New Addresses': 0
-			}
+			[Date.UTC(2026, 6, 16), 10],
+			[Date.UTC(2026, 6, 17), 20]
+		])
+		expect(chartDatasets.addresses.source).toEqual([
+			[Date.UTC(2026, 6, 16), 4, 2],
+			[Date.UTC(2026, 6, 17), 8, 0]
 		])
 		expect(chartDatasets.gasFees).toEqual({
 			dimensions: ['timestamp', 'Total Fees (USD)'],
-			source: [{ timestamp: Date.UTC(2026, 6, 16), 'Total Fees (USD)': 3 }]
+			source: [[Date.UTC(2026, 6, 16), 3]]
 		})
 		expect(chartDatasets.blockUtilization.dimensions).toEqual(['timestamp', 'Utilization %'])
 		expect(chartDatasets.contractDeployments.dimensions).toEqual(['timestamp', 'New Contracts'])
 		expect(chartDatasets.tokenTransfers).toEqual({
 			dimensions: ['timestamp', 'Volume (USD)'],
-			source: [{ timestamp: Date.UTC(2026, 6, 16), 'Volume (USD)': 7 }]
+			source: [[Date.UTC(2026, 6, 16), 7]]
 		})
 	})
 })

@@ -17,7 +17,9 @@ function reply(payload) {
 }
 
 function toJsonSafe(value) {
-	if (typeof value === 'bigint') return Number(value)
+	if (typeof value === 'bigint') {
+		return value <= Number.MAX_SAFE_INTEGER && value >= Number.MIN_SAFE_INTEGER ? Number(value) : value.toString()
+	}
 	if (value === null || value === undefined) return null
 	if (value instanceof Date) return value.toISOString()
 	if (Array.isArray(value)) return value.map(toJsonSafe)

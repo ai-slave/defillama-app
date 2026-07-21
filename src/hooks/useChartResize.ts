@@ -9,8 +9,8 @@ type ChartElementRegistration = {
 	onResize?: () => void
 }
 
-const chartInstanceRefs = new Set<ChartInstanceRef>()
-const observedChartInstanceRefs = new Set<ChartInstanceRef>()
+// A null element identifies charts that only use the global resize dispatcher.
+const chartElementsByInstanceRef = new Map<ChartInstanceRef, Element | null>()
 const chartRegistrationsByElement = new Map<Element, ChartElementRegistration>()
 let chartElementResizeObserver: ResizeObserver | null = null
 
@@ -21,26 +21,27 @@ function resizeChart(instanceRef: ChartInstanceRef) {
 }
 
 function resizeCharts() {
-	for (const instanceRef of chartInstanceRefs) {
+	for (const [instanceRef, element] of chartElementsByInstanceRef) {
+		if (element) {
+			if (!element.isConnected) continue
+			const bounds = element.getBoundingClientRect()
+			if (bounds.width <= 0 || bounds.height <= 0) continue
+		}
 		resizeChart(instanceRef)
 	}
 }
 
-function resizeChartsWithoutObservedElements() {
-	for (const instanceRef of chartInstanceRefs) {
-		if (!observedChartInstanceRefs.has(instanceRef)) resizeChart(instanceRef)
-	}
-}
-
 function addGlobalResizeListeners() {
-	if (chartInstanceRefs.size !== 1) return
-	window.addEventListener('resize', resizeChartsWithoutObservedElements)
+	if (chartElementsByInstanceRef.size !== 1) return
+	// ResizeObserver handles layout changes, while window.resize also covers a
+	// device-pixel-ratio change where the CSS box itself does not change.
+	window.addEventListener('resize', resizeCharts)
 	window.addEventListener('chartResize', resizeCharts)
 }
 
 function removeGlobalResizeListeners() {
-	if (chartInstanceRefs.size !== 0) return
-	window.removeEventListener('resize', resizeChartsWithoutObservedElements)
+	if (chartElementsByInstanceRef.size !== 0) return
+	window.removeEventListener('resize', resizeCharts)
 	window.removeEventListener('chartResize', resizeCharts)
 }
 
@@ -59,14 +60,14 @@ function observeChartElement(instanceRef: ChartInstanceRef, element: Element, on
 			}
 		})
 	}
-	observedChartInstanceRefs.add(instanceRef)
 	chartRegistrationsByElement.set(element, { instanceRef, onResize })
+	chartElementsByInstanceRef.set(instanceRef, element)
 	chartElementResizeObserver.observe(element)
 }
 
 function unobserveChartElement(instanceRef: ChartInstanceRef, element: Element) {
-	observedChartInstanceRefs.delete(instanceRef)
 	chartRegistrationsByElement.delete(element)
+	if (chartElementsByInstanceRef.get(instanceRef) === element) chartElementsByInstanceRef.set(instanceRef, null)
 	chartElementResizeObserver?.unobserve(element)
 	if (chartRegistrationsByElement.size === 0) {
 		chartElementResizeObserver?.disconnect()
@@ -113,7 +114,7 @@ export function useChartResize(
 	const observedElementRef = useRef<Element | null>(null)
 
 	useEffect(() => {
-		chartInstanceRefs.add(instanceRef)
+		chartElementsByInstanceRef.set(instanceRef, null)
 		addGlobalResizeListeners()
 		return () => {
 			const observedElement = observedElementRef.current
@@ -121,7 +122,7 @@ export function useChartResize(
 				unobserveChartElement(instanceRef, observedElement)
 				observedElementRef.current = null
 			}
-			chartInstanceRefs.delete(instanceRef)
+			chartElementsByInstanceRef.delete(instanceRef)
 			removeGlobalResizeListeners()
 		}
 	}, [instanceRef])

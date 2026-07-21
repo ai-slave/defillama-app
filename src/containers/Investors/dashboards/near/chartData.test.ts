@@ -19,8 +19,8 @@ describe('NEAR chart data', () => {
 		expect(singleSeriesDataset(chart, 'Daily Transactions')).toEqual({
 			dimensions: ['timestamp', 'Daily Transactions'],
 			source: [
-				{ timestamp: Date.parse('2026-01-01T00:00:00Z'), 'Daily Transactions': 1 },
-				{ timestamp: Date.parse('2026-01-02T00:00:00Z'), 'Daily Transactions': 2 }
+				[Date.parse('2026-01-01T00:00:00Z'), 1],
+				[Date.parse('2026-01-02T00:00:00Z'), 2]
 			]
 		})
 	})

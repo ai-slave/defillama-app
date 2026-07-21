@@ -4,12 +4,12 @@ import * as React from 'react'
 import { lazy, useMemo } from 'react'
 import { Announcement } from '~/components/Announcement'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
 import { PastUnlockPriceImpact } from '~/containers/Unlocks/PastUnlockPriceImpact'
 import { getAllProtocolEmissions } from '~/containers/Unlocks/queries'
@@ -33,9 +33,7 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const calculateUnlockStatistics = (data, nowSec: number) => {
 	let upcomingUnlocks30dValue = 0
@@ -105,8 +103,8 @@ type ViewMode = (typeof VIEW_MODES)[number]
 const END_TIMESTAMP = dayjs('2031-01-01').unix()
 
 const EMPTY_CHART_RESULT = {
-	dataset: { source: [], dimensions: ['timestamp'] } satisfies MultiSeriesChart2Dataset,
-	charts: [] as NonNullable<IMultiSeriesChart2Props['charts']>
+	dataset: { source: [], dimensions: ['timestamp'] } satisfies MultiSeriesChartDataset,
+	charts: [] as NonNullable<IMultiSeriesChartProps['charts']>
 }
 
 const normalizeChartGroup = (value: string | null | undefined): LowercaseDwmGrouping | null => {
@@ -175,7 +173,7 @@ function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeri
 						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={deferredChartData.dataset}
 							charts={deferredChartData.charts}
 							hideDefaultLegend={viewMode === 'Total View'}

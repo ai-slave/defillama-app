@@ -46,8 +46,8 @@ describe('buildProtocolFlowChart', () => {
 	it('sums flow buckets and renders them as bars', () => {
 		const result = buildProtocolFlowChart({ groupBy: 'daily', series })
 		expect(result.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2024, 0, 1), Fees: 5 },
-			{ timestamp: Date.UTC(2024, 0, 2), Fees: 4 }
+			[Date.UTC(2024, 0, 1), 5],
+			[Date.UTC(2024, 0, 2), 4]
 		])
 		expect(result.charts[0]).toMatchObject({ type: 'bar', name: 'Fees', stack: 'Fees' })
 	})
@@ -67,9 +67,9 @@ describe('buildProtocolFlowChart', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2024, 0, 1), Fees: 5 },
-			{ timestamp: Date.UTC(2024, 0, 2), Fees: 9 },
-			{ timestamp: Date.UTC(2024, 0, 3), Revenue: 7 }
+			[Date.UTC(2024, 0, 1), 5, undefined],
+			[Date.UTC(2024, 0, 2), 9, undefined],
+			[Date.UTC(2024, 0, 3), undefined, 7]
 		])
 		expect(result.charts.map((chart) => chart.type)).toEqual(['line', 'line'])
 	})

@@ -1,19 +1,14 @@
 import { lazy, useMemo } from 'react'
-import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type {
-	IHBarChartProps,
-	IMultiSeriesChart2Props,
-	IMultiSeriesChartProps,
-	IPieChartProps
-} from '~/components/ECharts/types'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { formattedNum } from '~/utils'
 import { aggregateBreakdown, channelsToBars, lastSeriesValue, singleSeriesDataset } from './chartData'
-import { useEcosystemData, chartToTimeSeries } from './ecosystemApi'
+import { useEcosystemData, type ChartData } from './ecosystemApi'
 import { NearIcon } from './NearIcon'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
@@ -21,8 +16,6 @@ const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.
 const UNITLESS_SINGLE_SERIES_CHART_OPTIONS = createSingleSeriesChartOptions('')
 const NEAR_SINGLE_SERIES_CHART_OPTIONS = createSingleSeriesChartOptions(' NEAR')
 const DOLLAR_SINGLE_SERIES_CHART_OPTIONS = createSingleSeriesChartOptions('$')
-const BAR_MAX_WIDTH_40_CHART_OPTIONS = { series: { barMaxWidth: 40 } }
-const BAR_MAX_WIDTH_30_CHART_OPTIONS = { series: { barMaxWidth: 30 } }
 
 const BREAKDOWN_PALETTE = [
 	'#00C1DE',
@@ -47,35 +40,35 @@ const BREAKDOWN_PALETTE = [
 	'#6366f1'
 ]
 
-const DAILY_TRANSACTIONS_CHART: IMultiSeriesChart2Props['charts'] = [
+const DAILY_TRANSACTIONS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Daily Transactions',
 		type: 'line',
 		encode: { x: 'timestamp', y: 'Daily Transactions' }
 	}
 ]
-const ACTIVE_ACCOUNTS_CHART: IMultiSeriesChart2Props['charts'] = [
+const ACTIVE_ACCOUNTS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Daily Active Accounts',
 		type: 'line',
 		encode: { x: 'timestamp', y: 'Daily Active Accounts' }
 	}
 ]
-const NEW_ACCOUNTS_CHART: IMultiSeriesChart2Props['charts'] = [
+const NEW_ACCOUNTS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'New Accounts Created',
 		type: 'line',
 		encode: { x: 'timestamp', y: 'New Accounts Created' }
 	}
 ]
-const GAS_FEES_CHART: IMultiSeriesChart2Props['charts'] = [
+const GAS_FEES_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Daily Gas Fees',
 		type: 'line',
 		encode: { x: 'timestamp', y: 'Daily Gas Fees' }
 	}
 ]
-const NEAR_PRICE_CHART: IMultiSeriesChart2Props['charts'] = [
+const NEAR_PRICE_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'NEAR Price',
 		type: 'line',
@@ -107,6 +100,60 @@ const PROTOCOL_STATS = [
 		description: 'Active agents on NEAR AI'
 	}
 ]
+
+function parseChartDates(chart: ChartData): number[] {
+	const timestamps = new Array<number>(chart.dates.length)
+	for (let i = 0; i < chart.dates.length; i++) timestamps[i] = Date.parse(`${chart.dates[i]}T00:00:00Z`)
+	return timestamps
+}
+
+function buildDailyCumulativeModel(
+	chart: ChartData | undefined,
+	dailyName: string,
+	cumulativeName: string,
+	barMaxWidth: number
+): CartesianChartModel | undefined {
+	if (!chart) return undefined
+	const daily = chart.series.find((series) => series.name === dailyName)
+	const cumulative = chart.series.find((series) => series.name === cumulativeName)
+	if (!daily || !cumulative) return undefined
+
+	return buildAlignedCartesianChartModel(
+		parseChartDates(chart),
+		[
+			{
+				name: cumulativeName,
+				type: 'line',
+				color: '#00C1DE',
+				values: cumulative.data,
+				yAxisIndex: 0
+			},
+			{
+				name: dailyName,
+				type: 'bar',
+				color: '#4cae4f',
+				values: daily.data,
+				yAxisIndex: 1,
+				barMaxWidth
+			}
+		],
+		{ timestampMultiplier: 1 }
+	)
+}
+
+function buildSupplyModel(chart: ChartData | undefined): CartesianChartModel | undefined {
+	if (!chart) return undefined
+	return buildAlignedCartesianChartModel(
+		parseChartDates(chart),
+		chart.series.map((series, index) => ({
+			name: series.name,
+			type: 'line' as const,
+			color: index === 0 ? '#00C1DE' : '#4cae4f',
+			values: series.data
+		})),
+		{ timestampMultiplier: 1 }
+	)
+}
 
 function StatCard({ label, value, description }: { label: string; value: string; description: string }) {
 	return (
@@ -175,36 +222,14 @@ export default function Ecosystem() {
 	const eco = data?.ecosystem
 	const token = data?.tokenEconomics
 
-	const buildDailyCumulativeSeries = (
-		chart: typeof intents.volumeChart | undefined,
-		dailyName: string,
-		cumulativeName: string
-	) => {
-		if (!chart) return undefined
-		const ts = chartToTimeSeries(chart)
-		const daily = ts.find((s) => s.name === dailyName)
-		const cumulative = ts.find((s) => s.name === cumulativeName)
-		return [
-			cumulative && {
-				name: cumulativeName,
-				type: 'line' as const,
-				color: '#00C1DE',
-				data: cumulative.data,
-				yAxisIndex: 0
-			},
-			daily && {
-				name: dailyName,
-				type: 'bar' as const,
-				color: '#4cae4f',
-				data: daily.data,
-				yAxisIndex: 1
-			}
-		].filter(Boolean)
-	}
-
-	const volumeSeries = buildDailyCumulativeSeries(intents?.volumeChart, 'Daily Volume', 'Cumulative Volume')
-	const feesSeries = buildDailyCumulativeSeries(intents?.feesChart, 'Daily Fees', 'Cumulative Fees')
-	const activitySeries = buildDailyCumulativeSeries(intents?.activityChart, 'Daily Swaps', 'Cumulative Swaps')
+	const intentModels = useMemo(
+		() => ({
+			volume: buildDailyCumulativeModel(intents?.volumeChart, 'Daily Volume', 'Cumulative Volume', 40),
+			fees: buildDailyCumulativeModel(intents?.feesChart, 'Daily Fees', 'Cumulative Fees', 30),
+			activity: buildDailyCumulativeModel(intents?.activityChart, 'Daily Swaps', 'Cumulative Swaps', 30)
+		}),
+		[intents]
+	)
 
 	const tokenPie = intents ? aggregateBreakdown(intents.tokenBreakdown, 15) : undefined
 	const blockchainPie = intents ? aggregateBreakdown(intents.blockchainBreakdown, 15) : undefined
@@ -224,18 +249,7 @@ export default function Ecosystem() {
 		[eco, token]
 	)
 
-	const supplySeries = token
-		? (() => {
-				const ts = chartToTimeSeries(token.supplyChart)
-				return ts.map((s, i) => ({
-					name: s.name,
-					type: 'line' as const,
-					color: i === 0 ? '#00C1DE' : '#4cae4f',
-					data: s.data,
-					yAxisIndex: 0
-				}))
-			})()
-		: undefined
+	const supplyModel = useMemo(() => buildSupplyModel(token?.supplyChart), [token])
 
 	return (
 		<div className="flex flex-col gap-8">
@@ -271,47 +285,50 @@ export default function Ecosystem() {
 				<KpiCard label="1-Day Unique Users" value={intents?.kpis.uniqueUsers1d.formatted} />
 			</div>
 
-			{isLoading || !volumeSeries ? (
+			{isLoading || !intentModels.volume ? (
 				<ChartSkeleton title="NEAR Intents Daily Volume" />
 			) : (
 				<ChartCard title="NEAR Intents Daily Volume">
 					<MultiSeriesChart
-						series={volumeSeries}
+						dataset={intentModels.volume.dataset}
+						charts={intentModels.volume.charts}
 						valueSymbol="$"
-						yAxisSymbols={['$', '$']}
 						height="400px"
-						showAggregateInTooltip
-						chartOptions={BAR_MAX_WIDTH_40_CHART_OPTIONS}
+						showTotalInTooltip
+						hideDefaultLegend={false}
+						exportButtons="hidden"
 					/>
 				</ChartCard>
 			)}
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				{isLoading || !feesSeries ? (
+				{isLoading || !intentModels.fees ? (
 					<ChartSkeleton title="NEAR Intents Fees" />
 				) : (
 					<ChartCard title="NEAR Intents Fees">
 						<MultiSeriesChart
-							series={feesSeries}
+							dataset={intentModels.fees.dataset}
+							charts={intentModels.fees.charts}
 							valueSymbol="$"
-							yAxisSymbols={['$', '$']}
 							height="350px"
-							showAggregateInTooltip
-							chartOptions={BAR_MAX_WIDTH_30_CHART_OPTIONS}
+							showTotalInTooltip
+							hideDefaultLegend={false}
+							exportButtons="hidden"
 						/>
 					</ChartCard>
 				)}
-				{isLoading || !activitySeries ? (
+				{isLoading || !intentModels.activity ? (
 					<ChartSkeleton title="NEAR Intents Swap Activity" />
 				) : (
 					<ChartCard title="NEAR Intents Swap Activity">
 						<MultiSeriesChart
-							series={activitySeries}
+							dataset={intentModels.activity.dataset}
+							charts={intentModels.activity.charts}
 							valueSymbol=""
-							yAxisSymbols={['', '']}
 							height="350px"
-							showAggregateInTooltip
-							chartOptions={BAR_MAX_WIDTH_30_CHART_OPTIONS}
+							showTotalInTooltip
+							hideDefaultLegend={false}
+							exportButtons="hidden"
 						/>
 					</ChartCard>
 				)}
@@ -387,7 +404,7 @@ export default function Ecosystem() {
 					<ChartSkeleton title="Daily Transactions" />
 				) : (
 					<ChartCard title="Daily Transactions">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={areaDatasets.transactions}
 							charts={DAILY_TRANSACTIONS_CHART}
 							valueSymbol=""
@@ -400,7 +417,7 @@ export default function Ecosystem() {
 					<ChartSkeleton title="Daily Active Accounts" />
 				) : (
 					<ChartCard title="Daily Active Accounts">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={areaDatasets.activeAccounts}
 							charts={ACTIVE_ACCOUNTS_CHART}
 							valueSymbol=""
@@ -413,7 +430,7 @@ export default function Ecosystem() {
 					<ChartSkeleton title="New Accounts Created" />
 				) : (
 					<ChartCard title="New Accounts Created">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={areaDatasets.newAccounts}
 							charts={NEW_ACCOUNTS_CHART}
 							valueSymbol=""
@@ -426,7 +443,7 @@ export default function Ecosystem() {
 					<ChartSkeleton title="Daily Gas Fees (NEAR)" />
 				) : (
 					<ChartCard title="Daily Gas Fees (NEAR)">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={areaDatasets.gasFees}
 							charts={GAS_FEES_CHART}
 							valueSymbol=" NEAR"
@@ -451,7 +468,7 @@ export default function Ecosystem() {
 				<ChartSkeleton title="NEAR Price (USD)" />
 			) : (
 				<ChartCard title="NEAR Price (USD)">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={areaDatasets.nearPrice}
 						charts={NEAR_PRICE_CHART}
 						valueSymbol="$"
@@ -461,11 +478,18 @@ export default function Ecosystem() {
 				</ChartCard>
 			)}
 
-			{isLoading || !supplySeries ? (
+			{isLoading || !supplyModel ? (
 				<ChartSkeleton title="Token Supply" />
 			) : (
 				<ChartCard title="Token Supply">
-					<MultiSeriesChart series={supplySeries} valueSymbol=" NEAR" height="350px" />
+					<MultiSeriesChart
+						dataset={supplyModel.dataset}
+						charts={supplyModel.charts}
+						valueSymbol=" NEAR"
+						height="350px"
+						hideDefaultLegend={false}
+						exportButtons="hidden"
+					/>
 				</ChartCard>
 			)}
 

@@ -23,8 +23,8 @@ describe('Spark distribution chart construction', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'USDS', 'USDC'],
 			source: [
-				{ timestamp: 1000, USDS: 0, USDC: 5 },
-				{ timestamp: 2000, USDS: 20, USDC: 0 }
+				[1000, 0, 5],
+				[2000, 20, 0]
 			]
 		})
 	})
@@ -44,13 +44,11 @@ describe('Spark distribution chart construction', () => {
 		)
 
 		expect(result.dataset.source).toEqual([
-			{ timestamp: 1000, TVL: 10 },
-			{ timestamp: 2000, TVL: 15 },
-			{ timestamp: 3000, TVL: 12 }
+			[1000, 10],
+			[2000, 15],
+			[3000, 12]
 		])
-		expect(result.charts).toMatchObject([
-			{ type: 'line', name: 'TVL', stack: 'a', encode: { x: 'timestamp', y: 'TVL' } }
-		])
+		expect(result.charts).toMatchObject([{ type: 'line', name: 'TVL', stack: 'a', encode: { x: 0, y: 1 } }])
 	})
 
 	it('cumulates flow values once and emits chronological line rows', () => {
@@ -66,14 +64,14 @@ describe('Spark distribution chart construction', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Revenue', 'Costs'],
 			source: [
-				{ timestamp: 1000, Revenue: 2, Costs: 0 },
-				{ timestamp: 2000, Revenue: 5, Costs: 1 },
-				{ timestamp: 3000, Revenue: 9, Costs: -1 }
+				[1000, 2, 0],
+				[2000, 5, 1],
+				[3000, 9, -1]
 			]
 		})
 		expect(result.charts).toMatchObject([
-			{ type: 'line', name: 'Revenue', stack: 'a', encode: { x: 'timestamp', y: 'Revenue' } },
-			{ type: 'line', name: 'Costs', stack: 'a', encode: { x: 'timestamp', y: 'Costs' } }
+			{ type: 'line', name: 'Revenue', stack: 'a', encode: { x: 0, y: 1 } },
+			{ type: 'line', name: 'Costs', stack: 'a', encode: { x: 0, y: 2 } }
 		])
 	})
 
@@ -87,7 +85,7 @@ describe('Spark distribution chart construction', () => {
 
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'USD'],
-			source: [{ timestamp: 1000, USD: 7 }]
+			source: [[1000, 7]]
 		})
 	})
 
@@ -127,18 +125,18 @@ describe('Spark distribution chart construction', () => {
 		expect(result).not.toHaveProperty('charts')
 		expect(result.actualRevenue.charts[0]).toMatchObject({ type: 'bar', stack: 'a' })
 		expect(result.revenueProjection.dataset.source).toEqual([
-			{ timestamp: 1000, Projection: 3 },
-			{ timestamp: 2000, Projection: 8 }
+			[1000, 3],
+			[2000, 8]
 		])
 		expect(result.revenueProjection.charts[0]).toMatchObject({ type: 'line', stack: 'a' })
 		expect(result.susdsTvl.dataset.source).toEqual([
-			{ timestamp: 1000, 'sUSDS TVL': 10 },
-			{ timestamp: 2000, 'sUSDS TVL': 8 }
+			[1000, 10],
+			[2000, 8]
 		])
 		expect(result.susdsTvl.charts[0]).toMatchObject({ type: 'line', stack: 'a' })
 		expect(result.stakedUsdsTvl.dataset.source).toEqual([
-			{ timestamp: 1000, 'Staked TVL': 6 },
-			{ timestamp: 2000, 'Staked TVL': 4 }
+			[1000, 6],
+			[2000, 4]
 		])
 		expect(result.stakedUsdsTvl.charts[0]).toMatchObject({ type: 'line', stack: 'a' })
 	})

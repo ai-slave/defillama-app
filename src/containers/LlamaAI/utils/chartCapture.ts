@@ -1,4 +1,6 @@
+import type { EChartsOption } from 'echarts'
 import * as echarts from 'echarts/core'
+import { mergeDeep } from '~/components/ECharts/shared/merge'
 
 export interface CapturedChart {
 	chartId: string
@@ -9,16 +11,6 @@ export interface CapturedChart {
 const CAPTURE_WIDTH = 1280
 const CAPTURE_HEIGHT = 720
 const CAPTURE_TIMEOUT = 1500
-
-type ChartAxisOption = { axisLabel?: Record<string, unknown>; [key: string]: unknown }
-type ChartLegendOption = { textStyle?: Record<string, unknown>; [key: string]: unknown }
-type ChartCaptureOptions = {
-	animation?: boolean
-	xAxis?: ChartAxisOption[]
-	yAxis?: ChartAxisOption[]
-	legend?: ChartLegendOption | ChartLegendOption[]
-	[key: string]: unknown
-}
 
 export async function captureChartById(chartId: string, title: string, isDark: boolean): Promise<CapturedChart | null> {
 	const wrapper = document.querySelector(`[data-chart-id="${chartId}"]`) as HTMLElement
@@ -50,41 +42,33 @@ export async function captureChartById(chartId: string, title: string, isDark: b
 		})
 		const captureChart = tempChart
 
-		const currentOptions = existingChart.getOption() as ChartCaptureOptions
+		// ECharts returns its uncomposed core option type; this app registers the full
+		// option surface, so normalize once and keep the capture renderer strictly typed.
+		const currentOptions = existingChart.getOption() as EChartsOption
 
 		currentOptions.animation = false
 
 		if (currentOptions.xAxis) {
-			currentOptions.xAxis = currentOptions.xAxis.map((xAxis: ChartAxisOption) => ({
-				...xAxis,
-				axisLabel: { ...(xAxis.axisLabel ?? {}), fontSize: 20 }
-			}))
+			const axes = Array.isArray(currentOptions.xAxis) ? currentOptions.xAxis : [currentOptions.xAxis]
+			currentOptions.xAxis = axes.map((axis) => mergeDeep(axis, { axisLabel: { fontSize: 20 } }))
 		}
 
 		if (currentOptions.yAxis) {
-			currentOptions.yAxis = currentOptions.yAxis.map((yAxis: ChartAxisOption) => ({
-				...yAxis,
-				axisLabel: { ...(yAxis.axisLabel ?? {}), fontSize: 20 }
-			}))
+			const axes = Array.isArray(currentOptions.yAxis) ? currentOptions.yAxis : [currentOptions.yAxis]
+			currentOptions.yAxis = axes.map((axis) => mergeDeep(axis, { axisLabel: { fontSize: 20 } }))
 		}
 
 		if (currentOptions.legend) {
 			currentOptions.legend = Array.isArray(currentOptions.legend)
-				? currentOptions.legend.map((legendItem: ChartLegendOption) => ({
-						...legendItem,
-						textStyle: { ...(legendItem.textStyle ?? {}), fontSize: 18 }
-					}))
-				: {
-						...currentOptions.legend,
-						textStyle: { ...(currentOptions.legend.textStyle ?? {}), fontSize: 18 }
-					}
+				? currentOptions.legend.map((legend) => mergeDeep(legend, { textStyle: { fontSize: 18 } }))
+				: mergeDeep(currentOptions.legend, { textStyle: { fontSize: 18 } })
 		}
 
 		await new Promise<void>((resolve, reject) => {
 			let timeoutId: ReturnType<typeof setTimeout> | null = null
 			const cleanup = () => {
 				if (timeoutId) clearTimeout(timeoutId)
-				captureChart.off('rendered', handler as any)
+				captureChart.off('rendered', handler)
 			}
 
 			const handler = () => {
@@ -98,7 +82,7 @@ export async function captureChartById(chartId: string, title: string, isDark: b
 			}, CAPTURE_TIMEOUT)
 
 			// Subscribe before setOption because a canvas render can complete synchronously.
-			captureChart.on('rendered', handler as any)
+			captureChart.on('rendered', handler)
 			try {
 				captureChart.setOption(currentOptions)
 			} catch (error) {

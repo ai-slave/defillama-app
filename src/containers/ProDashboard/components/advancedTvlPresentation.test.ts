@@ -4,8 +4,8 @@ import { buildAdvancedTvlPresentation, orderAdvancedTvlChains } from './advanced
 const chainsDataset = {
 	dimensions: ['timestamp', 'Ethereum', 'Base'],
 	source: [
-		{ timestamp: 1_000, Ethereum: 10, Base: 5 },
-		{ timestamp: 2_000, Ethereum: 20, Base: 30 }
+		[1_000, 10, 5],
+		[2_000, 20, 30]
 	]
 }
 

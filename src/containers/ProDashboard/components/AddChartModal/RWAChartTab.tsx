@@ -1,11 +1,9 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { useAuthContext } from '~/auth'
-import type {
-	IHBarChartProps,
-	IMultiSeriesChart2Props,
-	IPieChartProps,
-	ITreemapChartProps
-} from '~/components/ECharts/types'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	useRWAAssetChartData,
@@ -14,7 +12,7 @@ import {
 	useRWAChainsList
 } from '~/containers/ProDashboard/components/datasets/RWADataset/useRWAChartData'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
-import { toFiniteRwaChartValue } from '~/containers/RWA/chartDataset'
+import { toFiniteRwaChartValue, toRwaMultiSeriesChartDataset } from '~/containers/RWA/chartDataset'
 import { getChartMetricOptions, getChartViewOptions, getChartMetricLabel } from '~/containers/RWA/chartState'
 import { buildRwaTreemapTreeData } from '~/containers/RWA/treemap'
 import { LocalLoader } from '~/ui/Loaders'
@@ -24,12 +22,10 @@ import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
-const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<ITreemapChartProps>
+const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
 interface RWAChartTabProps {
 	rwaMode: 'overview' | 'asset'
@@ -288,6 +284,10 @@ function OverviewPreview({
 	chain?: string
 }) {
 	const { chartDataset, isLoading } = useRWABreakdownChartData(breakdown, metric, chain)
+	const timeSeriesDataset = useMemo(
+		() => (chartDataset && chartView === 'timeSeries' ? toRwaMultiSeriesChartDataset(chartDataset) : null),
+		[chartDataset, chartView]
+	)
 
 	const pieData = useMemo(() => {
 		if (!chartDataset || chartView !== 'pie') return []
@@ -349,9 +349,9 @@ function OverviewPreview({
 
 	return (
 		<Suspense fallback={<div className="min-h-[320px]" />}>
-			{chartView === 'timeSeries' ? (
-				<MultiSeriesChart2
-					dataset={chartDataset}
+			{chartView === 'timeSeries' && timeSeriesDataset ? (
+				<MultiSeriesChart
+					dataset={timeSeriesDataset}
 					hideDefaultLegend={false}
 					stacked
 					showTotalInTooltip={!chartDataset.dimensions.some(isRwaTotalSeriesLabel)}
@@ -378,7 +378,7 @@ function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: R
 		if (!chartDataset) return null
 		const selectedDimensions = ['timestamp', ...metrics.map((metric) => METRIC_LABELS[metric])]
 		const filteredDimensions = chartDataset.dimensions.filter((d) => selectedDimensions.includes(d))
-		return { source: chartDataset.source, dimensions: filteredDimensions }
+		return toRwaMultiSeriesChartDataset(chartDataset, filteredDimensions)
 	}, [chartDataset, metrics])
 
 	if (!assetId) {
@@ -399,7 +399,7 @@ function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: R
 
 	return (
 		<Suspense fallback={<div className="min-h-[320px]" />}>
-			<MultiSeriesChart2 dataset={filteredDataset} hideDefaultLegend={false} />
+			<MultiSeriesChart dataset={filteredDataset} hideDefaultLegend={false} />
 		</Suspense>
 	)
 }

@@ -23,10 +23,10 @@ describe('Token PnL price chart data', () => {
 				105
 			)
 		).toEqual([
-			{ timestamp: 90_000, 'Token Price': 9 },
-			{ timestamp: 100_000, 'Token Price': 9 },
-			{ timestamp: 105_000, 'Token Price': 11 },
-			{ timestamp: 110_000, 'Token Price': 11 }
+			[90_000, 9],
+			[100_000, 9],
+			[105_000, 11],
+			[110_000, 11]
 		])
 	})
 })

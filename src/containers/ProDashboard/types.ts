@@ -293,7 +293,8 @@ export interface RWAAssetChartConfig {
 
 export interface SqlSnapshot {
 	columns: { name: string; type: string }[]
-	rows: Record<string, unknown>[]
+	/** New snapshots are positional; object rows remain readable for persisted legacy snapshots. */
+	rows: unknown[][] | Record<string, unknown>[]
 	computedAt: string
 	rowCount: number
 	truncated?: boolean

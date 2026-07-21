@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
-import { ApiUsageBreakdown } from './ApiUsageBreakdown'
+import { ApiUsageBreakdown, type ApiUsageStats } from './ApiUsageBreakdown'
 import { ToggleSwitch } from './ToggleSwitch'
 
 const API_CREDITS_LIMIT = 1_000_000
@@ -9,7 +9,7 @@ const API_CREDITS_LIMIT = 1_000_000
 interface ApiAccessCardProps {
 	apiKey: string | null
 	credits: number | null
-	usageStats: any
+	usageStats: ApiUsageStats | null | undefined
 	isUsageStatsLoading: boolean
 	isUsageStatsError: boolean
 	onRegenerateKey: () => void

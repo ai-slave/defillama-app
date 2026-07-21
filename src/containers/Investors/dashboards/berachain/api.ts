@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import ChainCharts from '~/containers/ProDashboard/services/ChainCharts'
 import { readInvestorApiJson } from '../../api.types'
@@ -81,42 +80,40 @@ export async function fetchBerachainIncomeServerData(): Promise<BerachainIncomeS
 	return { chainFees, bribes, bexRevenue, bexVolume, bendFees, bendRevenue }
 }
 
-type TimestampRow = { timestamp: number } & Record<string, number>
+type TimestampRow = number[]
 
-function buildTimeSeries(data: [number, number][], label: string) {
+function buildTimeSeries(data: [number, number][]) {
 	const source = new Array<TimestampRow>(data.length)
 	for (let i = 0; i < data.length; i++) {
 		const [timestamp, value] = data[i]
-		const row = createChartRow<number>(timestamp * 1000)
-		row[label] = value ?? 0
-		source[i] = row
+		source[i] = [timestamp * 1000, value ?? 0]
 	}
 	return source
 }
 
-function buildMonthlyAndCumulative(daily: TimestampRow[], keys: string[]) {
+function buildMonthlyAndCumulative(daily: TimestampRow[], seriesCount: number) {
 	const monthMap = new Map<number, TimestampRow>()
-	const totals = createChartRecord<number>()
-	for (const key of keys) totals[key] = 0
+	const totals = new Array<number>(seriesCount).fill(0)
 
 	const cumulative = new Array<TimestampRow>(daily.length)
 	for (let i = 0; i < daily.length; i++) {
 		const entry = daily[i]
-		const date = new Date(entry.timestamp)
+		const date = new Date(entry[0])
 		const monthTimestamp = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)
 		let month = monthMap.get(monthTimestamp)
 		if (!month) {
-			month = createChartRow<number>(monthTimestamp)
-			for (const key of keys) month[key] = 0
+			month = new Array(seriesCount + 1).fill(0)
+			month[0] = monthTimestamp
 			monthMap.set(monthTimestamp, month)
 		}
 
-		const cumulativeEntry = createChartRow<number>(entry.timestamp)
-		for (const key of keys) {
-			const value = entry[key] ?? 0
-			month[key] += value
-			totals[key] += value
-			cumulativeEntry[key] = totals[key]
+		const cumulativeEntry = new Array<number>(seriesCount + 1)
+		cumulativeEntry[0] = entry[0]
+		for (let seriesIndex = 0; seriesIndex < seriesCount; seriesIndex++) {
+			const value = entry[seriesIndex + 1] ?? 0
+			month[seriesIndex + 1] += value
+			totals[seriesIndex] += value
+			cumulativeEntry[seriesIndex + 1] = totals[seriesIndex]
 		}
 		cumulative[i] = cumulativeEntry
 	}
@@ -127,44 +124,50 @@ function buildMonthlyAndCumulative(daily: TimestampRow[], keys: string[]) {
 	}
 }
 
-function buildCumulative(daily: TimestampRow[], keys: string[]) {
-	const totals = createChartRecord<number>()
-	for (const key of keys) totals[key] = 0
+function buildCumulative(daily: TimestampRow[], seriesCount: number) {
+	const totals = new Array<number>(seriesCount).fill(0)
 
 	const cumulative = new Array<TimestampRow>(daily.length)
 	for (let i = 0; i < daily.length; i++) {
 		const entry = daily[i]
-		const cumulativeEntry = createChartRow<number>(entry.timestamp)
-		for (const key of keys) {
-			totals[key] += entry[key] ?? 0
-			cumulativeEntry[key] = totals[key]
+		const cumulativeEntry = new Array<number>(seriesCount + 1)
+		cumulativeEntry[0] = entry[0]
+		for (let seriesIndex = 0; seriesIndex < seriesCount; seriesIndex++) {
+			totals[seriesIndex] += entry[seriesIndex + 1] ?? 0
+			cumulativeEntry[seriesIndex + 1] = totals[seriesIndex]
 		}
 		cumulative[i] = cumulativeEntry
 	}
 	return cumulative
 }
 
-function mergeSeries(series: { data: [number, number][]; label: string }[], keys: string[]) {
+function mergeSeries(series: Array<[number, number][]>) {
 	const dateMap = new Map<number, TimestampRow>()
 
-	for (const { data, label } of series) {
+	for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
+		const data = series[seriesIndex]
 		for (const [timestampSeconds, value] of data) {
 			const timestamp = timestampSeconds * 1000
 			let entry = dateMap.get(timestamp)
 			if (!entry) {
-				entry = createChartRow<number>(timestamp)
-				for (const key of keys) entry[key] = 0
+				entry = new Array(series.length + 1).fill(0)
+				entry[0] = timestamp
 				dateMap.set(timestamp, entry)
 			}
-			entry[label] = value ?? 0
+			entry[seriesIndex + 1] = value ?? 0
 		}
 	}
 
-	return Array.from(dateMap.values()).sort((a, b) => a.timestamp - b.timestamp)
+	return Array.from(dateMap.values()).sort((a, b) => a[0] - b[0])
 }
 
-function datasetView(source: TimestampRow[], keys: string[]) {
-	return { source, dimensions: ['timestamp', ...keys] }
+function datasetView(source: TimestampRow[], allKeys: string[], selectedKeys: string[] = allKeys) {
+	if (selectedKeys === allKeys) return { source, dimensions: ['timestamp', ...allKeys] }
+	const indexes = selectedKeys.map((key) => allKeys.indexOf(key) + 1)
+	return {
+		source: source.map((row) => [row[0], ...indexes.map((index) => row[index])]),
+		dimensions: ['timestamp', ...selectedKeys]
+	}
 }
 
 export function useBerachainIncomeData(serverData?: BerachainIncomeServerData) {
@@ -257,54 +260,34 @@ export function useBerachainIncomeData(serverData?: BerachainIncomeServerData) {
 		const bendRevenueData = bendRevenue.data ?? []
 
 		const berachainKeys = ['Chain Fees', 'Incentives']
-		const berachainDaily = mergeSeries(
-			[
-				{ data: chainFeesData, label: 'Chain Fees' },
-				{ data: bribesData, label: 'Incentives' }
-			],
-			berachainKeys
-		)
-		const berachainSeries = buildMonthlyAndCumulative(berachainDaily, berachainKeys)
+		const berachainDaily = mergeSeries([chainFeesData, bribesData])
+		const berachainSeries = buildMonthlyAndCumulative(berachainDaily, berachainKeys.length)
 
 		// BEX section
 		const bexKeys = ['Revenue']
-		const bexDaily = buildTimeSeries(bexRevenueData, 'Revenue')
-		const bexSeries = buildMonthlyAndCumulative(bexDaily, bexKeys)
+		const bexDaily = buildTimeSeries(bexRevenueData)
+		const bexSeries = buildMonthlyAndCumulative(bexDaily, bexKeys.length)
 
 		// BEX volume
-		const bexVolumeDaily = buildTimeSeries(bexVolumeData, 'Volume')
-		const bexVolumeCumulative = buildCumulative(bexVolumeDaily, ['Volume'])
+		const bexVolumeDaily = buildTimeSeries(bexVolumeData)
+		const bexVolumeCumulative = buildCumulative(bexVolumeDaily, 1)
 
 		// Bend section: Fees + Revenue
 		const bendKeys = ['Fees', 'Revenue']
-		const bendDaily = mergeSeries(
-			[
-				{ data: bendFeesData, label: 'Fees' },
-				{ data: bendRevenueData, label: 'Revenue' }
-			],
-			bendKeys
-		)
-		const bendSeries = buildMonthlyAndCumulative(bendDaily, bendKeys)
+		const bendDaily = mergeSeries([bendFeesData, bendRevenueData])
+		const bendSeries = buildMonthlyAndCumulative(bendDaily, bendKeys.length)
 
 		const totalRevenueKeys = ['Chain Fees', 'Incentives', 'BEX Revenue', 'BEND Revenue']
-		const totalRevenueDaily = mergeSeries(
-			[
-				{ data: chainFeesData, label: 'Chain Fees' },
-				{ data: bribesData, label: 'Incentives' },
-				{ data: bexRevenueData, label: 'BEX Revenue' },
-				{ data: bendRevenueData, label: 'BEND Revenue' }
-			],
-			totalRevenueKeys
-		)
-		const totalRevenueCumulative = buildCumulative(totalRevenueDaily, totalRevenueKeys)
+		const totalRevenueDaily = mergeSeries([chainFeesData, bribesData, bexRevenueData, bendRevenueData])
+		const totalRevenueCumulative = buildCumulative(totalRevenueDaily, totalRevenueKeys.length)
 
 		return {
 			isLoading,
 			berachain: {
 				monthly: datasetView(berachainSeries.monthly, berachainKeys),
 				cumulative: datasetView(berachainSeries.cumulative, berachainKeys),
-				chainFeesCumulative: datasetView(berachainSeries.cumulative, ['Chain Fees']),
-				incentivesCumulative: datasetView(berachainSeries.cumulative, ['Incentives'])
+				chainFeesCumulative: datasetView(berachainSeries.cumulative, berachainKeys, ['Chain Fees']),
+				incentivesCumulative: datasetView(berachainSeries.cumulative, berachainKeys, ['Incentives'])
 			},
 			bex: {
 				monthly: datasetView(bexSeries.monthly, bexKeys),
@@ -314,8 +297,8 @@ export function useBerachainIncomeData(serverData?: BerachainIncomeServerData) {
 			bend: {
 				monthly: datasetView(bendSeries.monthly, bendKeys),
 				cumulative: datasetView(bendSeries.cumulative, bendKeys),
-				feesCumulative: datasetView(bendSeries.cumulative, ['Fees']),
-				revenueCumulative: datasetView(bendSeries.cumulative, ['Revenue'])
+				feesCumulative: datasetView(bendSeries.cumulative, bendKeys, ['Fees']),
+				revenueCumulative: datasetView(bendSeries.cumulative, bendKeys, ['Revenue'])
 			},
 			totalRevenue: {
 				cumulative: datasetView(totalRevenueCumulative, totalRevenueKeys)

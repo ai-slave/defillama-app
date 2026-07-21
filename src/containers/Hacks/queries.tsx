@@ -1,4 +1,4 @@
-import { preparePieChartData } from '~/components/ECharts/utils'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import { CHART_COLORS } from '~/constants/colors'
 import { firstDayOfMonth, formattedNum, slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
@@ -79,7 +79,7 @@ export async function getHacksPageData(): Promise<IHacksPageData> {
 		data,
 		monthlyHacksChartData: {
 			dataset: {
-				source: monthlyHacksChartData.map(([timestamp, value]) => ({ timestamp, 'Total Value Hacked': value })),
+				source: monthlyHacksChartData.map(([timestamp, value]) => [timestamp, value]),
 				dimensions: ['timestamp', 'Total Value Hacked']
 			},
 			charts: [

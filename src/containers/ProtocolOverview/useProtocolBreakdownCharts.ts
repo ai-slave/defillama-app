@@ -1,21 +1,17 @@
 import * as React from 'react'
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
-import type { TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IProtocolTokenBreakdownChart, IProtocolValueChart } from './api.types'
 import { useFetchProtocolChartsByKeys } from './queries.client'
 
-type MultiSeriesCharts = NonNullable<IMultiSeriesChart2Props['charts']>
+type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
 type MultiSeriesChart = MultiSeriesCharts[number]
 type BreakdownPoint = [number, Record<string, number>]
 type BreakdownChart = BreakdownPoint[]
-type TokenInflowPoint = { timestamp: number } & Record<string, number>
+type TokenInflowPoint = [number, Map<string, number>]
 type TokenBreakdownLatest = Record<string, number>
-type InflowsDataset = {
-	source: Array<{ timestamp: number; 'USD Inflows': number }>
-	dimensions: ['timestamp', 'USD Inflows']
-}
+type InflowsDataset = TimestampDataset
 type BuiltTokenInflows = {
 	tokenInflows: TokenInflowPoint[]
 	usdInflows: Array<[number, number]>
@@ -153,23 +149,26 @@ const aggregateBreakdownCharts = (charts: Array<BreakdownChart | null | undefine
 	if (chartCount === 0) return null
 	if (chartCount === 1) return onlyChart
 
-	const summedByTimestamp = new Map<number, Record<string, number>>()
+	const summedByTimestamp = new Map<number, Map<string, number>>()
 	const alignment = buildTimestampAlignment(charts)
 
 	for (const [chartIndex, chart] of charts.entries()) {
 		if (!chart?.length) continue
 		for (const [timestamp, values] of chart) {
 			const aligned = alignTimestamp(timestamp, chartIndex, alignment, MAX_BREAKDOWN_TIMESTAMP_ALIGNMENT_DIFF_MS)
-			const current = summedByTimestamp.get(aligned) ?? createChartRecord<number>()
+			const current = summedByTimestamp.get(aligned) ?? new Map<string, number>()
 			for (const key in values) {
-				current[key] = (current[key] ?? 0) + values[key]
+				current.set(key, (current.get(key) ?? 0) + values[key])
 			}
 			summedByTimestamp.set(aligned, current)
 		}
 	}
 
 	if (summedByTimestamp.size === 0) return null
-	return Array.from(summedByTimestamp.entries()).sort((a, b) => a[0] - b[0])
+	return Array.from(
+		summedByTimestamp,
+		([timestamp, values]) => [timestamp, Object.fromEntries(values)] as BreakdownPoint
+	).sort((a, b) => a[0] - b[0])
 }
 
 const buildBreakdownKeys = (breakdown: BreakdownChart | null | undefined): string[] => {
@@ -182,22 +181,7 @@ const buildBreakdownKeys = (breakdown: BreakdownChart | null | undefined): strin
 		for (const key in values) allKeys.add(key)
 	}
 
-	return Array.from(allKeys).sort(
-		(a, b) =>
-			Math.abs(Object.hasOwn(latestPoint, b) ? latestPoint[b] : 0) -
-			Math.abs(Object.hasOwn(latestPoint, a) ? latestPoint[a] : 0)
-	)
-}
-
-const buildBreakdownSource = (breakdown: BreakdownChart | null | undefined) => {
-	if (!breakdown?.length) return null
-
-	const source = new Array<TokenInflowPoint>(breakdown.length)
-	for (let i = 0; i < breakdown.length; i++) {
-		const [timestamp, values] = breakdown[i]
-		source[i] = { timestamp, ...values }
-	}
-	return source
+	return Array.from(allKeys).sort((a, b) => Math.abs(latestPoint[b] ?? 0) - Math.abs(latestPoint[a] ?? 0))
 }
 
 export const MAX_PROTOCOL_BREAKDOWN_SERIES = 30
@@ -227,17 +211,6 @@ const selectBreakdownSeries = (keys: string[]): BreakdownSeriesSelection => {
 	}
 }
 
-const setChartRowValue = (row: Record<string, number>, name: string, value: number) => {
-	if (name === '__proto__') {
-		Object.defineProperty(row, name, { value, enumerable: true, configurable: true, writable: true })
-	} else {
-		row[name] = value
-	}
-}
-
-const getOwnChartValue = (row: Record<string, number>, name: string) =>
-	Object.hasOwn(row, name) ? row[name] : undefined
-
 const RAW_TOKEN_SIZE_FILTER_THRESHOLD = 100_000_000
 const RAW_TOKEN_USD_FILTER_THRESHOLD = 1_000_000
 
@@ -255,9 +228,8 @@ const filterRawBreakdownChartByUsd = (
 	for (let i = 0; i < rawBreakdown.length; i++) {
 		const [timestamp, rawValues] = rawBreakdown[i]
 		const usdValues = usdByTimestamp.get(timestamp)
-		const values = createChartRecord<number>()
+		const values = {}
 		for (const token in rawValues) {
-			if (!Object.hasOwn(rawValues, token)) continue
 			const rawValue = rawValues[token]
 			if (token.startsWith('UNKNOWN') || rawValue < 1) continue
 
@@ -265,7 +237,7 @@ const filterRawBreakdownChartByUsd = (
 			// every raw row and token must have a matching USD value.
 			if (hasUsdHistory) {
 				if (!usdValues) continue
-				const usdValue = getOwnChartValue(usdValues, token)
+				const usdValue = usdValues[token]
 				if (usdValue == null) continue
 				if (rawValue > RAW_TOKEN_SIZE_FILTER_THRESHOLD && usdValue < RAW_TOKEN_USD_FILTER_THRESHOLD) continue
 			}
@@ -287,66 +259,63 @@ const filterRawBreakdownChartsByUsd = (
 	return filtered
 }
 
-const projectBreakdownSource = (
-	source: Array<{ timestamp: number } & Record<string, number>> | null,
-	selection: BreakdownSeriesSelection,
-	aggregateOthers: boolean
-) => {
-	if (!source || !selection.aggregatesOthers) return source
-
-	const projected = new Array<TokenInflowPoint>(source.length)
-	for (let i = 0; i < source.length; i++) {
-		const point = source[i]
-		const nextPoint = createChartRow<number>(point.timestamp)
-		let others = 0
-		let hasOthers = false
-
-		for (const name in point) {
-			if (name === 'timestamp' || !Object.hasOwn(point, name)) continue
-			if (selection.selectedKeys.has(name)) {
-				setChartRowValue(nextPoint, name, point[name])
-			} else if (aggregateOthers) {
-				others += point[name]
-				hasOthers = true
-			}
-		}
-
-		if (hasOthers) setChartRowValue(nextPoint, OTHERS_SERIES_NAME, others)
-		projected[i] = nextPoint
-	}
-
-	return projected
-}
-
-const buildProjectedBreakdownSource = (
+const buildProjectedBreakdownDataset = (
 	breakdown: BreakdownChart | null | undefined,
-	selection: BreakdownSeriesSelection,
+	seriesNames: string[],
 	aggregateOthers: boolean
-) => {
+): TimestampDataset | null => {
 	if (!breakdown?.length) return null
-	if (!selection.aggregatesOthers) return buildBreakdownSource(breakdown)
-
-	const source = new Array<TokenInflowPoint>(breakdown.length)
+	const outputIndexByName = new Map<string, number>()
+	for (let i = 0; i < seriesNames.length; i++) outputIndexByName.set(seriesNames[i], i + 1)
+	const othersIndex = outputIndexByName.get(OTHERS_SERIES_NAME)
+	const source = new Array<TimestampDataset['source'][number]>(breakdown.length)
 	for (let i = 0; i < breakdown.length; i++) {
 		const [timestamp, values] = breakdown[i]
-		const point = createChartRow<number>(timestamp)
+		const point = new Array<number | undefined>(seriesNames.length + 1)
+		point[0] = timestamp
 		let others = 0
 		let hasOthers = false
 
 		for (const name in values) {
-			if (!Object.hasOwn(values, name)) continue
-			if (selection.selectedKeys.has(name)) {
-				setChartRowValue(point, name, values[name])
-			} else if (aggregateOthers) {
+			const outputIndex = outputIndexByName.get(name)
+			if (outputIndex != null && outputIndex !== othersIndex) {
+				point[outputIndex] = values[name]
+			} else if (aggregateOthers && othersIndex != null) {
 				others += values[name]
 				hasOthers = true
 			}
 		}
 
-		if (hasOthers) setChartRowValue(point, OTHERS_SERIES_NAME, others)
+		if (hasOthers && othersIndex != null) point[othersIndex] = others
 		source[i] = point
 	}
-	return source
+	return { source, dimensions: ['timestamp', ...seriesNames] }
+}
+
+const buildProjectedTokenInflowsDataset = (
+	points: TokenInflowPoint[] | null,
+	seriesNames: string[],
+	aggregateOthers: boolean
+): TimestampDataset | null => {
+	if (!points?.length) return null
+	const outputIndexByName = new Map<string, number>()
+	for (let i = 0; i < seriesNames.length; i++) outputIndexByName.set(seriesNames[i], i + 1)
+	const othersIndex = outputIndexByName.get(OTHERS_SERIES_NAME)
+	const source = new Array<TimestampDataset['source'][number]>(points.length)
+	for (let i = 0; i < points.length; i++) {
+		const [timestamp, values] = points[i]
+		const row = new Array<number | undefined>(seriesNames.length + 1)
+		row[0] = timestamp
+		let others = 0
+		for (const [name, value] of values) {
+			const outputIndex = outputIndexByName.get(name)
+			if (outputIndex != null && outputIndex !== othersIndex) row[outputIndex] = value
+			else if (aggregateOthers && othersIndex != null) others += value
+		}
+		if (othersIndex != null) row[othersIndex] = others
+		source[i] = row
+	}
+	return { source, dimensions: ['timestamp', ...seriesNames] }
 }
 
 const buildTokenInflowsFromBreakdowns = (
@@ -373,22 +342,22 @@ const buildTokenInflowsFromBreakdowns = (
 		const currentUsd = usdByTimestamp.get(timestamp) ?? {}
 		const previousUsd = usdByTimestamp.get(previousTimestamp) ?? {}
 
-		const point = createChartRow<number>(timestamp)
+		const point = new Map<string, number>()
 		let hasTokenInflows = false
 		let usdInflow = 0
 
 		const addTokenInflow = (token: string) => {
 			if (!tokensSet.has(token)) return
 
-			const currentAmount = getOwnChartValue(currentRaw, token) ?? 0
-			const previousAmount = getOwnChartValue(previousRaw, token) ?? 0
+			const currentAmount = currentRaw[token] ?? 0
+			const previousAmount = previousRaw[token] ?? 0
 			const amountDiff = currentAmount - previousAmount
 			if (amountDiff === 0) return
 
 			let price: number | null = null
 			let referenceUsd = 0
-			const currentUsdValue = getOwnChartValue(currentUsd, token)
-			const previousUsdValue = getOwnChartValue(previousUsd, token)
+			const currentUsdValue = currentUsd[token]
+			const previousUsdValue = previousUsd[token]
 			if (currentAmount > 0 && currentUsdValue != null) {
 				price = currentUsdValue / currentAmount
 				referenceUsd = currentUsdValue
@@ -402,20 +371,18 @@ const buildTokenInflowsFromBreakdowns = (
 			const inflow = amountDiff * price
 			if (Math.abs(inflow) > 2 * referenceUsd) return
 
-			setChartRowValue(point, token, inflow)
+			point.set(token, inflow)
 			usdInflow += inflow
 			hasTokenInflows = true
 		}
 
-		for (const token in currentRaw) {
-			if (Object.hasOwn(currentRaw, token)) addTokenInflow(token)
-		}
+		for (const token in currentRaw) addTokenInflow(token)
 		for (const token in previousRaw) {
-			if (Object.hasOwn(previousRaw, token) && !Object.hasOwn(currentRaw, token)) addTokenInflow(token)
+			if (currentRaw[token] == null) addTokenInflow(token)
 		}
 
 		if (hasTokenInflows) {
-			tokenInflows.push(point)
+			tokenInflows.push([timestamp, point])
 			usdInflows.push([timestamp, usdInflow])
 		}
 	}
@@ -433,19 +400,18 @@ const buildTokenInflowsFromChartPairs = (
 		return buildTokenInflowsFromBreakdowns(tokenBreakdownUsdCharts[0], tokenBreakdownRawCharts[0], tokensUnique)
 	}
 
-	const tokenInflowsByTimestamp = new Map<number, Record<string, number>>()
+	const tokenInflowsByTimestamp = new Map<number, Map<string, number>>()
 	const usdInflowsByTimestamp = new Map<number, number>()
 	for (let i = 0; i < pairCount; i++) {
 		const result = buildTokenInflowsFromBreakdowns(tokenBreakdownUsdCharts[i], tokenBreakdownRawCharts[i], tokensUnique)
 		if (!result) continue
 
-		for (const point of result.tokenInflows) {
-			const values = tokenInflowsByTimestamp.get(point.timestamp) ?? createChartRecord<number>()
-			for (const token in point) {
-				if (token === 'timestamp' || !Object.hasOwn(point, token)) continue
-				values[token] = (values[token] ?? 0) + point[token]
+		for (const [timestamp, point] of result.tokenInflows) {
+			const values = tokenInflowsByTimestamp.get(timestamp) ?? new Map<string, number>()
+			for (const [token, value] of point) {
+				values.set(token, (values.get(token) ?? 0) + value)
 			}
-			tokenInflowsByTimestamp.set(point.timestamp, values)
+			tokenInflowsByTimestamp.set(timestamp, values)
 		}
 		for (const [timestamp, value] of result.usdInflows) {
 			usdInflowsByTimestamp.set(timestamp, (usdInflowsByTimestamp.get(timestamp) ?? 0) + value)
@@ -458,27 +424,24 @@ const buildTokenInflowsFromChartPairs = (
 	const usdInflows = new Array<[number, number]>(timestamps.length)
 	for (let i = 0; i < timestamps.length; i++) {
 		const timestamp = timestamps[i]
-		const point = createChartRow<number>(timestamp)
-		const values = tokenInflowsByTimestamp.get(timestamp)!
-		for (const token in values) setChartRowValue(point, token, values[token])
-		tokenInflows[i] = point
+		tokenInflows[i] = [timestamp, tokenInflowsByTimestamp.get(timestamp)!]
 		usdInflows[i] = [timestamp, usdInflowsByTimestamp.get(timestamp) ?? 0]
 	}
 	return { tokenInflows, usdInflows }
 }
 
 const EMPTY_MULTI_SERIES_CHARTS: MultiSeriesCharts = []
-const EMPTY_TOKEN_BREAKDOWN_LATEST = createChartRecord<number>()
+const EMPTY_TOKEN_BREAKDOWN_LATEST = {}
 const EMPTY_PIE_CHART_DATA: Array<{ name: string; value: number }> = []
 
 const buildChartsForKeys = (keys: string[], type: 'line' | 'bar', stack?: string): MultiSeriesCharts => {
 	if (keys.length === 0) return EMPTY_MULTI_SERIES_CHARTS
 
 	return keys.map(
-		(name): MultiSeriesChart => ({
+		(name, index): MultiSeriesChart => ({
 			type,
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: index + 1 },
 			...(stack ? { stack } : {})
 		})
 	)
@@ -532,14 +495,9 @@ export const buildComputedBreakdownResult = ({
 
 	const chainSelection = selectBreakdownSeries(buildBreakdownKeys(chainBreakdownChart))
 	const chainsUnique = chainSelection.seriesNames
-	const chainSource = buildProjectedBreakdownSource(chainBreakdownChart, chainSelection, true)
-
 	const chainsDataset =
-		chainSource && chainsUnique.length > 0
-			? {
-					source: chainSource,
-					dimensions: ['timestamp', ...chainsUnique]
-				}
+		chainsUnique.length > 0
+			? buildProjectedBreakdownDataset(chainBreakdownChart, chainsUnique, chainSelection.aggregatesOthers)
 			: null
 	const chainsCharts = chainsDataset != null ? buildChartsForKeys(chainsUnique, 'line') : EMPTY_MULTI_SERIES_CHARTS
 
@@ -547,7 +505,7 @@ export const buildComputedBreakdownResult = ({
 	if (tvlChart && tvlChart.length > 1) {
 		const source: TimestampDataset['source'] = []
 		for (const [timestamp, value] of tvlChart) {
-			source.push({ timestamp, [valueSeriesName]: value })
+			source.push([timestamp, value])
 		}
 		valueDataset = { source, dimensions: ['timestamp', valueSeriesName] }
 	}
@@ -557,7 +515,7 @@ export const buildComputedBreakdownResult = ({
 					{
 						type: 'line' as const,
 						name: valueSeriesName,
-						encode: { x: 'timestamp', y: valueSeriesName }
+						encode: { x: 0, y: 1 }
 					}
 				]
 			: EMPTY_MULTI_SERIES_CHARTS
@@ -604,39 +562,29 @@ export const buildComputedBreakdownResult = ({
 	for (const token of rawTokenCandidates) {
 		if (rawTokenKeys.has(token)) rawTokenSeries.push(token)
 	}
-	const projectedTokenUsdSource = buildTokenUSDDataset
-		? buildProjectedBreakdownSource(tokenBreakdownUSD, tokenSeriesSelection, true)
+	const projectedTokenUsdDataset = buildTokenUSDDataset
+		? buildProjectedBreakdownDataset(tokenBreakdownUSD, tokensUnique, tokenSeriesSelection.aggregatesOthers)
 		: null
 	// Raw quantities from different tokens cannot be meaningfully summed into an Others series.
-	const projectedTokenRawSource = buildTokenRawDataset
-		? buildProjectedBreakdownSource(tokenBreakdown, tokenSeriesSelection, false)
+	const projectedTokenRawDataset = buildTokenRawDataset
+		? buildProjectedBreakdownDataset(tokenBreakdown, rawTokenSeries, false)
 		: null
 
 	const tokenUSDDataset =
-		projectedTokenUsdSource && projectedTokenUsdSource.length > 1
-			? {
-					source: projectedTokenUsdSource,
-					dimensions: ['timestamp', ...tokensUnique]
-				}
-			: null
+		projectedTokenUsdDataset && projectedTokenUsdDataset.source.length > 1 ? projectedTokenUsdDataset : null
 	const tokenUSDCharts = tokenUSDDataset != null ? buildChartsForKeys(tokensUnique, 'line') : EMPTY_MULTI_SERIES_CHARTS
 
 	const tokenRawDataset =
-		projectedTokenRawSource && projectedTokenRawSource.length > 1
-			? {
-					source: projectedTokenRawSource,
-					dimensions: ['timestamp', ...rawTokenSeries]
-				}
-			: null
+		projectedTokenRawDataset && projectedTokenRawDataset.source.length > 1 ? projectedTokenRawDataset : null
 	const tokenRawCharts =
 		tokenRawDataset != null ? buildChartsForKeys(rawTokenSeries, 'line') : EMPTY_MULTI_SERIES_CHARTS
 
 	let tokenBreakdownLatest = EMPTY_TOKEN_BREAKDOWN_LATEST
-	const tokenBreakdownPieSource = createChartRecord<number>()
+	const tokenBreakdownPieSource = {}
 	let hasTokenBreakdownPieSource = false
 	if (buildTokenPieChart && tokenBreakdownUSD?.length) {
 		const latestTokens = tokenBreakdownUSD[tokenBreakdownUSD.length - 1]?.[1] ?? {}
-		const filteredLatestTokens = createChartRecord<number>()
+		const filteredLatestTokens = {}
 		for (const name in latestTokens) {
 			const value = latestTokens[name]
 			if (name.startsWith('UNKNOWN') || !value || value <= 0) continue
@@ -679,23 +627,21 @@ export const buildComputedBreakdownResult = ({
 	const inflowsResult = buildTokenInflowsFromChartPairs(tokenBreakdownUsdCharts, tokenBreakdownRawCharts, allTokenKeys)
 	const tokenInflows = inflowsResult?.tokenInflows ?? null
 	const usdInflows = inflowsResult?.usdInflows ?? null
-	const projectedTokenInflows = projectBreakdownSource(tokenInflows, tokenSeriesSelection, true)
+	const tokenInflowsDataset = buildProjectedTokenInflowsDataset(
+		tokenInflows,
+		tokensUnique,
+		tokenSeriesSelection.aggregatesOthers
+	)
 
 	let usdInflowsDataset: InflowsDataset | null = null
 	if (usdInflows?.length) {
 		const source: InflowsDataset['source'] = []
 		for (const [timestamp, value] of usdInflows) {
-			source.push({ timestamp, 'USD Inflows': value })
+			source.push([timestamp, value])
 		}
 		usdInflowsDataset = { source, dimensions: ['timestamp', 'USD Inflows'] }
 	}
 
-	const tokenInflowsDataset = projectedTokenInflows?.length
-		? {
-				source: projectedTokenInflows,
-				dimensions: ['timestamp', ...tokensUnique]
-			}
-		: null
 	const tokenInflowsCharts =
 		tokenInflowsDataset != null ? buildChartsForKeys(tokensUnique, 'bar', 'tokenInflows') : EMPTY_MULTI_SERIES_CHARTS
 

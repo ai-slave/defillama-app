@@ -6,7 +6,10 @@ import { useAuthContext } from '~/auth'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
-import { DWMC_GROUPING_OPTIONS_LOWERCASE, type LowercaseDwmcGrouping } from '~/components/ECharts/ChartGroupingSelector'
+import {
+	DWMC_GROUPING_OPTIONS_LOWERCASE,
+	type LowercaseDwmcGrouping
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'

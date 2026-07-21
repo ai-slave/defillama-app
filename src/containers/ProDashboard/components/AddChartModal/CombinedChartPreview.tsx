@@ -4,7 +4,7 @@ import { CHART_TYPES, type ChartConfig, type DashboardGrouping } from '../../typ
 import { EXTENDED_COLOR_PALETTE } from '../../utils/colorManager'
 import { buildMultiChartSeriesView, type MultiChartInputSeries } from '../multiChartSeries'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const CHART_OPTIONS = {
 	xAxis: { show: true },
@@ -119,7 +119,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 					<div className="h-[450px] w-full animate-pulse rounded-md border border-pro-cards-border bg-pro-cards-bg"></div>
 				}
 			>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={chartView.dataset}
 					charts={chartView.charts}
 					groupBy={mapGroupingToGroupBy(previewGrouping)}

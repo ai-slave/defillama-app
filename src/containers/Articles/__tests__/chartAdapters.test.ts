@@ -45,6 +45,17 @@ describe('validateArticleChartConfig', () => {
 		expect(config?.chartType).toBeDefined()
 	})
 
+	it('deduplicates persisted series by the identity enforced in the editor', () => {
+		const config = validateArticleChartConfig({
+			series: [
+				{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'tvl' },
+				{ entityType: 'protocol', slug: 'aave', name: 'Renamed Aave', chartType: 'tvl' }
+			]
+		})
+
+		expect(config?.series).toEqual([{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'tvl' }])
+	})
+
 	it('migrates legacy entities + chartType into series', () => {
 		const config = validateArticleChartConfig({
 			entities: [

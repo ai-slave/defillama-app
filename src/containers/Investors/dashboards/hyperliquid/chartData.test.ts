@@ -11,8 +11,8 @@ describe('Hyperliquid chart data', () => {
 		expect(buildPortfolioTrendDataset(points)).toEqual({
 			dimensions: ['timestamp', 'Portfolio Value'],
 			source: [
-				{ timestamp: 1_000, 'Portfolio Value': 100 },
-				{ timestamp: 2_000, 'Portfolio Value': 110 }
+				[1_000, 100],
+				[2_000, 110]
 			]
 		})
 		expect(points[0]).toEqual({ time: 1_000, accountValue: 100, pnl: -5 })

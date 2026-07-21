@@ -1,3 +1,4 @@
+import type { EChartsOption } from 'echarts'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
@@ -152,77 +153,75 @@ export function SparklineChart({
 
 		if (instance.isDisposed()) return
 
-		instance.setOption(
-			{
-				grid: {
-					left: 0,
-					right: 0,
-					top: 2,
-					bottom: 0,
-					containLabel: false
-				},
-				animation: false,
-				tooltip: {
-					show: false
-				},
-				xAxis: {
-					type: 'time',
-					boundaryGap: false,
-					axisLine: { show: false },
-					axisTick: { show: false },
-					axisLabel: { show: false },
-					splitLine: { show: false },
-					min: seriesData[0]?.[0],
-					max: seriesData[seriesData.length - 1]?.[0]
-				},
-				yAxis: {
-					type: 'value',
-					axisLine: { show: false },
-					axisTick: { show: false },
-					axisLabel: { show: false },
-					splitLine: { show: false },
-					min: (value) => {
-						if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
-						if (value.min === value.max) {
-							const pad = Math.abs(value.min) * 0.05 || 1
-							return value.min - pad
-						}
-						const pad = (value.max - value.min) * 0.08
+		const option: EChartsOption = {
+			grid: {
+				left: 0,
+				right: 0,
+				top: 2,
+				bottom: 0,
+				containLabel: false
+			},
+			animation: false,
+			tooltip: {
+				show: false
+			},
+			xAxis: {
+				type: 'time',
+				boundaryGap: [0, 0],
+				axisLine: { show: false },
+				axisTick: { show: false },
+				axisLabel: { show: false },
+				splitLine: { show: false },
+				min: seriesData[0]?.[0],
+				max: seriesData[seriesData.length - 1]?.[0]
+			},
+			yAxis: {
+				type: 'value',
+				axisLine: { show: false },
+				axisTick: { show: false },
+				axisLabel: { show: false },
+				splitLine: { show: false },
+				min: (value) => {
+					if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
+					if (value.min === value.max) {
+						const pad = Math.abs(value.min) * 0.05 || 1
 						return value.min - pad
-					},
-					max: (value) => {
-						if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
-						if (value.min === value.max) {
-							const pad = Math.abs(value.max) * 0.05 || 1
-							return value.max + pad
-						}
-						const pad = (value.max - value.min) * 0.08
+					}
+					const pad = (value.max - value.min) * 0.08
+					return value.min - pad
+				},
+				max: (value) => {
+					if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
+					if (value.min === value.max) {
+						const pad = Math.abs(value.max) * 0.05 || 1
 						return value.max + pad
 					}
-				},
-				series: [
-					{
-						type: 'line',
-						data: seriesData,
-						showSymbol: false,
-						lineStyle: {
-							color: resolvedLine,
-							width: 2,
-							cap: 'round',
-							join: 'round',
-							shadowBlur: rgb ? 6 : 0,
-							shadowColor
-						},
-						smooth,
-						smoothMonotone: 'x',
-						areaStyle: {
-							color: areaFill
-						}
-					}
-				]
+					const pad = (value.max - value.min) * 0.08
+					return value.max + pad
+				}
 			},
-			true
-		)
+			series: [
+				{
+					type: 'line',
+					data: seriesData,
+					showSymbol: false,
+					lineStyle: {
+						color: resolvedLine,
+						width: 2,
+						cap: 'round',
+						join: 'round',
+						shadowBlur: rgb ? 6 : 0,
+						shadowColor
+					},
+					smooth,
+					smoothMonotone: 'x',
+					areaStyle: {
+						color: areaFill
+					}
+				}
+			]
+		}
+		instance.setOption(option, true)
 	}, [seriesData, color, areaColor, smooth])
 
 	if (!hasData) {

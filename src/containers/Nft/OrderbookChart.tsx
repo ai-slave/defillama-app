@@ -1,4 +1,5 @@
-import { LineChart as EChartLine } from 'echarts/charts'
+import type { EChartsOption } from 'echarts'
+import { LineChart as EChartLine, type LineSeriesOption } from 'echarts/charts'
 import {
 	DataZoomComponent,
 	GraphicComponent,
@@ -10,8 +11,9 @@ import {
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import * as React from 'react'
-import { chartGrid } from '~/components/ECharts/chartSpacing'
-import { useChartTheme } from '~/components/ECharts/chartTheme'
+import { chartGrid } from '~/components/ECharts/shared/chartSpacing'
+import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
+import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
@@ -68,18 +70,13 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 			}
 		}
 
-		const series = [
+		const series: LineSeriesOption[] = [
 			{
 				name: 'Ask',
 				type: 'line',
 				stack: 'Ask',
-				step: true,
-				scale: true,
-				large: true,
-				emphasis: {
-					focus: 'series',
-					shadowBlur: 10
-				},
+				step: 'start',
+				emphasis: { focus: 'series' },
 				symbol: 'none',
 				itemStyle: {
 					color: '#3b82f6'
@@ -102,13 +99,8 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				name: 'Bid',
 				type: 'line',
 				stack: 'Bid',
-				step: true,
-				scale: true,
-				large: true,
-				emphasis: {
-					focus: 'series',
-					shadowBlur: 10
-				},
+				step: 'start',
+				emphasis: { focus: 'series' },
 				symbol: 'none',
 				itemStyle: {
 					color: '#22c55e'
@@ -129,7 +121,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 			}
 		]
 
-		const option = {
+		const option: EChartsOption = {
 			animation: false,
 			title: {
 				text: 'Orderbook',
@@ -155,18 +147,17 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 			tooltip: {
 				trigger: 'axis',
 				confine: true,
-				formatter: function (
-					params: Array<{ marker: string; seriesName: string; value: [number, number, number, number, string] }>
-				) {
-					const point = params?.[0]
+				formatter: function (rawParams: unknown) {
+					const point = normalizeTooltipItems(rawParams)[0]
 					if (!point) return ''
+					const value = Array.isArray(point.value) ? point.value : Array.isArray(point.data) ? point.data : []
 
 					let vals = `<li style="list-style:none">${point.marker}${point.seriesName}</li>`
 
-					vals += `<li style="list-style:none">Amount :  ${point.value[1]}</li>`
-					vals += `<li style="list-style:none">Price :  ${point.value[0]} ETH</li>`
-					vals += `<li style="list-style:none">Avg Price :  ${point.value[2]} ETH</li>`
-					vals += `<li style="list-style:none">Total Price :  ${point.value[3]} ETH</li>`
+					vals += `<li style="list-style:none">Amount :  ${value[1] ?? ''}</li>`
+					vals += `<li style="list-style:none">Price :  ${value[0] ?? ''} ETH</li>`
+					vals += `<li style="list-style:none">Avg Price :  ${value[2] ?? ''} ETH</li>`
+					vals += `<li style="list-style:none">Total Price :  ${value[3] ?? ''} ETH</li>`
 					return vals
 				},
 				showDelay: 0
@@ -189,7 +180,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 					formatter: (value: number) => Number(value.toFixed(2)) + ' ETH',
 					color: chartTheme.text
 				},
-				boundaryGap: false,
+				boundaryGap: [0, 0],
 				nameTextStyle: {
 					fontFamily: 'sans-serif',
 					fontSize: 14,
@@ -219,7 +210,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 						opacity: 0.1
 					}
 				},
-				boundaryGap: false,
+				boundaryGap: [0, 0],
 				nameTextStyle: {
 					fontFamily: 'sans-serif',
 					fontSize: 14,

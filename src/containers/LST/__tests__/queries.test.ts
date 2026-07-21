@@ -182,14 +182,14 @@ describe('getLSTPageData', () => {
 		expect(inflowsChart.dataset).toEqual({
 			dimensions: ['timestamp', 'Lido', 'Rocket Pool', 'diva'],
 			source: [
-				{ timestamp: missingLidoDate * 1_000, 'Rocket Pool': 20 },
-				{ timestamp: latestDate * 1_000, Lido: 10, 'Rocket Pool': 10 }
+				[missingLidoDate * 1_000, undefined, 20, undefined],
+				[latestDate * 1_000, 10, 10, undefined]
 			]
 		})
 		expect(inflowsChart.barCharts.map(({ name, encode, stack }) => ({ name, encode, stack }))).toEqual([
-			{ name: 'Lido', encode: { x: 'timestamp', y: 'Lido' }, stack: 'A' },
-			{ name: 'Rocket Pool', encode: { x: 'timestamp', y: 'Rocket Pool' }, stack: 'A' },
-			{ name: 'diva', encode: { x: 'timestamp', y: 'diva' }, stack: undefined }
+			{ name: 'Lido', encode: { x: 0, y: 1 }, stack: 'A' },
+			{ name: 'Rocket Pool', encode: { x: 0, y: 2 }, stack: 'A' },
+			{ name: 'diva', encode: { x: 0, y: 3 }, stack: undefined }
 		])
 
 		mocks.fetchLsdRates.mockRejectedValueOnce(new Error('legacy rates unavailable'))

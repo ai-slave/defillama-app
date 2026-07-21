@@ -1,4 +1,4 @@
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { BridgeOverviewVolumeChartPoint, BridgePieChartSlice } from './types'
 import { getCompletedBridgeVolumeTotals } from './utils'
 
@@ -22,9 +22,9 @@ interface BridgeDailyTokenStats {
 }
 
 export type BridgeOverviewActiveChart =
-	| { kind: 'Net Flow'; dataset: MultiSeriesChart2Dataset }
-	| { kind: 'Net Flow (%)'; dataset: MultiSeriesChart2Dataset }
-	| { kind: 'Inflows'; dataset: MultiSeriesChart2Dataset }
+	| { kind: 'Net Flow'; dataset: MultiSeriesChartDataset }
+	| { kind: 'Net Flow (%)'; dataset: MultiSeriesChartDataset }
+	| { kind: 'Inflows'; dataset: MultiSeriesChartDataset }
 	| { kind: '24h Tokens Deposited'; data: BridgePieChartSlice[] }
 	| { kind: '24h Tokens Withdrawn'; data: BridgePieChartSlice[] }
 	| null
@@ -87,16 +87,25 @@ export function getBridgeOverviewSummaryTotals({
 }
 
 function buildTokenPieData(tokens: Record<string, BridgeTokenData>): BridgePieChartSlice[] {
-	const totalsBySymbol: Record<string, number> = Object.create(null)
+	const totalsBySymbol = new Map<string, number>()
 	for (const token in tokens) {
 		const { symbol, usdValue } = tokens[token]
 		const name = symbol || 'Unknown'
-		totalsBySymbol[name] = (totalsBySymbol[name] ?? 0) + usdValue
+		totalsBySymbol.set(name, (totalsBySymbol.get(name) ?? 0) + usdValue)
 	}
 
 	const sorted: BridgePieChartSlice[] = []
-	for (const name of Object.keys(totalsBySymbol)) sorted.push({ name, value: totalsBySymbol[name] })
-	sorted.sort((a, b) => b.value - a.value)
+	for (const [name, value] of totalsBySymbol) sorted.push({ name, value })
+	sorted.sort((a, b) => {
+		const valueDifference = b.value - a.value
+		if (valueDifference !== 0) return valueDifference
+		const aIndex = /^(0|[1-9]\d*)$/.test(a.name) ? Number(a.name) : null
+		const bIndex = /^(0|[1-9]\d*)$/.test(b.name) ? Number(b.name) : null
+		if (aIndex !== null && bIndex !== null) return aIndex - bIndex
+		if (aIndex !== null) return -1
+		if (bIndex !== null) return 1
+		return 0
+	})
 	if (sorted.length <= 10 && !sorted.some((slice) => slice.name === 'Others')) return sorted
 
 	const mainSlices = sorted.slice(0, 10)
@@ -133,10 +142,7 @@ export function buildBridgeOverviewActiveChart({
 			kind: chartType,
 			dataset: {
 				dimensions: ['timestamp', 'Net Flow'],
-				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => ({
-					timestamp: Number(date) * 1e3,
-					'Net Flow': Deposits + Withdrawals
-				}))
+				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => [Number(date) * 1e3, Deposits + Withdrawals])
 			}
 		}
 	}
@@ -148,11 +154,7 @@ export function buildBridgeOverviewActiveChart({
 				dimensions: ['timestamp', 'Inflows', 'Outflows'],
 				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => {
 					const volume = Deposits + Math.abs(Withdrawals)
-					return {
-						timestamp: Number(date) * 1e3,
-						Inflows: (Deposits / volume) * 100 || 0,
-						Outflows: (Math.abs(Withdrawals) / volume) * 100 || 0
-					}
+					return [Number(date) * 1e3, (Deposits / volume) * 100 || 0, (Math.abs(Withdrawals) / volume) * 100 || 0]
 				})
 			}
 		}
@@ -163,11 +165,7 @@ export function buildBridgeOverviewActiveChart({
 			kind: chartType,
 			dataset: {
 				dimensions: ['timestamp', 'Deposits', 'Withdrawals'],
-				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => ({
-					timestamp: Number(date) * 1e3,
-					Deposits,
-					Withdrawals
-				}))
+				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => [Number(date) * 1e3, Deposits, Withdrawals])
 			}
 		}
 	}

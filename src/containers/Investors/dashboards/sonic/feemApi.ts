@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
+import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp } from '../../api.types'
 
 interface FormattedValue {
@@ -54,35 +54,31 @@ function parseDateToUnix(dateStr: string): number {
 	return Math.floor(Date.parse(dateStr + 'T00:00:00Z') / 1000)
 }
 
-type DailyStatsSeries = NonNullable<IMultiSeriesChartProps['series']>
-
 export function buildFeeMViewModel({ feem }: FeeMAPIResponse) {
 	const timestamps = new Array<number>(feem.dailyStats.dates.length)
 	for (let i = 0; i < feem.dailyStats.dates.length; i++) {
 		timestamps[i] = parseDateToUnix(feem.dailyStats.dates[i])
 	}
 
-	const dailyStatsSeries = new Array<DailyStatsSeries[number]>(feem.dailyStats.series.length)
-	for (let i = 0; i < feem.dailyStats.series.length; i++) {
-		const input = feem.dailyStats.series[i]
-		const data = new Array<[number, number]>(timestamps.length)
-		for (let j = 0; j < timestamps.length; j++) {
-			data[j] = [timestamps[j], input.data[j]]
-		}
-		dailyStatsSeries[i] = {
+	const dailyStatsModel = buildAlignedCartesianChartModel(
+		timestamps,
+		feem.dailyStats.series.map((input, index) => ({
 			name: input.name,
-			type: i === 0 ? 'bar' : 'line',
-			color: i === 0 ? '#4691ce' : '#4cae4f',
-			data,
-			yAxisIndex: i === 0 ? 0 : 1,
-			areaStyle: i === 1 ? { opacity: 0 } : undefined
-		}
-	}
+			type: index === 0 ? ('bar' as const) : ('line' as const),
+			color: index === 0 ? '#4691ce' : '#4cae4f',
+			values: input.data,
+			yAxisIndex: index === 0 ? 0 : 1,
+			valueSymbol: index === 0 ? '' : 'S',
+			areaStyle: index === 1 ? { opacity: 0 } : undefined
+		})),
+		{ timestampMultiplier: 1000 }
+	)
 
 	return {
 		globalKpis: feem.globalKpis,
 		leaderboard: feem.leaderboard,
-		dailyStatsSeries,
+		dailyStatsModel,
+		dailyStatsLength: timestamps.length,
 		dailyStatsTitle: feem.dailyStats.title
 	}
 }

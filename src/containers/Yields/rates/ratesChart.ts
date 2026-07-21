@@ -1,4 +1,4 @@
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type { RefRatePoint } from './fetch'
 
 // Chart series colors, [light, dark] per theme. Supply/Borrow mirror the ONE yields green/red —
@@ -16,24 +16,19 @@ function ms(date: string): number {
 }
 
 export interface RatesChartSpec {
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 }
 
 export function buildRatesChart(points: RefRatePoint[], isDark = true): RatesChartSpec | null {
 	if (!points.length) return null
 	const theme = isDark ? 1 : 0
-	const source = points.map((p) => ({
-		timestamp: ms(p.date),
-		Supply: p.rates.supply.apy,
-		Borrow: p.rates.borrow.apy,
-		Spread: p.rates.spread.apy
-	}))
-	const charts: MultiSeriesChart2SeriesConfig[] = [
+	const source = points.map((p) => [ms(p.date), p.rates.supply.apy, p.rates.borrow.apy, p.rates.spread.apy])
+	const charts: MultiSeriesChartSeriesConfig[] = [
 		{
 			type: 'line',
 			name: 'Supply',
-			encode: { x: 'timestamp', y: 'Supply' },
+			encode: { x: 0, y: 1 },
 			color: RATES_COLORS.supply[theme],
 			valueSymbol: '%',
 			hideAreaStyle: true
@@ -41,7 +36,7 @@ export function buildRatesChart(points: RefRatePoint[], isDark = true): RatesCha
 		{
 			type: 'line',
 			name: 'Borrow',
-			encode: { x: 'timestamp', y: 'Borrow' },
+			encode: { x: 0, y: 2 },
 			color: RATES_COLORS.borrow[theme],
 			valueSymbol: '%',
 			hideAreaStyle: true
@@ -49,7 +44,7 @@ export function buildRatesChart(points: RefRatePoint[], isDark = true): RatesCha
 		{
 			type: 'line',
 			name: 'Spread',
-			encode: { x: 'timestamp', y: 'Spread' },
+			encode: { x: 0, y: 3 },
 			color: RATES_COLORS.spread[theme],
 			valueSymbol: '%',
 			hideAreaStyle: true

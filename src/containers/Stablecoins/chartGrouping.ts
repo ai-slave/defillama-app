@@ -1,13 +1,16 @@
-import type { ChartTimeGroupingWithCumulative, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type {
+	ChartTimeGroupingWithCumulative,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
 
 export function getGroupedBarCharts(
-	charts: MultiSeriesChart2SeriesConfig[],
+	charts: MultiSeriesChartSeriesConfig[],
 	groupBy: ChartTimeGroupingWithCumulative
-): MultiSeriesChart2SeriesConfig[] {
+): MultiSeriesChartSeriesConfig[] {
 	if (groupBy !== 'cumulative') return charts
 
 	return charts.map((chart) => {
-		const lineChart: MultiSeriesChart2SeriesConfig = { ...chart, type: 'line' }
+		const lineChart: MultiSeriesChartSeriesConfig = { ...chart, type: 'line' }
 		delete lineChart.large
 		delete lineChart.barMinWidth
 		delete lineChart.barMaxWidth

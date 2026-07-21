@@ -2,8 +2,8 @@ import type { ECharts } from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { CHART_INSET, CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE } from '~/components/ECharts/chartSpacing'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_INSET, CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
@@ -18,9 +18,9 @@ import type {
 	LiquidationsDistributionChartView
 } from './api.types'
 
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
 
 type Metric = 'usd' | 'amount'
 type BreakdownMode = 'total' | 'protocol' | 'chain'
@@ -68,9 +68,9 @@ function LiquidationsDistributionChartCard({
 	chartInstanceRef
 }: {
 	breakdownOptions: Array<{ key: BreakdownMode; name: string }>
-	chartOptions: IMultiSeriesChart2Props['chartOptions']
+	chartOptions: IMultiSeriesChartProps['chartOptions']
 	chartState: LiquidationsChartState
-	deferredChartModel: { dataset: MultiSeriesChart2Dataset; charts: IMultiSeriesChart2Props['charts'] }
+	deferredChartModel: { dataset: MultiSeriesChartDataset; charts: IMultiSeriesChartProps['charts'] }
 	displayOptions: {
 		hideTokenSelector: boolean
 		shouldHideDataZoom: boolean
@@ -169,7 +169,7 @@ function LiquidationsDistributionChartCard({
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={deferredChartModel.dataset}
 					charts={deferredChartModel.charts}
 					chartOptions={chartOptions}
@@ -540,14 +540,12 @@ export function LiquidationsDistributionChart({
 	const chartModel = React.useMemo(() => {
 		const dimensions = ['liqPrice', ...selectedChartView.series.map((entry) => entry.key)]
 		const source = selectedChartView.bins.map((liqPrice, index) => {
-			const row: Record<string, number> = { liqPrice }
-			for (const entry of selectedChartView.series) {
+			const row = new Array<number>(dimensions.length)
+			row[0] = liqPrice
+			for (let seriesIndex = 0; seriesIndex < selectedChartView.series.length; seriesIndex++) {
+				const entry = selectedChartView.series[seriesIndex]
 				const value = chartState.metric === 'usd' ? (entry.usd[index] ?? 0) : (entry.amount[index] ?? 0)
-				if (entry.key === '__proto__') {
-					Object.defineProperty(row, entry.key, { value, enumerable: true, configurable: true, writable: true })
-				} else {
-					row[entry.key] = value
-				}
+				row[seriesIndex + 1] = value
 			}
 			return row
 		})
@@ -555,14 +553,14 @@ export function LiquidationsDistributionChart({
 		const charts = selectedChartView.series.map((entry, index) => ({
 			type: 'bar' as const,
 			name: entry.label,
-			encode: { x: 'liqPrice', y: entry.key },
+			encode: { x: 0, y: index + 1 },
 			stack: 'liquidations',
 			color: CHART_COLORS[index % CHART_COLORS.length],
 			large: false
 		}))
 
 		return {
-			dataset: { source, dimensions } satisfies MultiSeriesChart2Dataset,
+			dataset: { source, dimensions } satisfies MultiSeriesChartDataset,
 			charts
 		}
 	}, [chartState.metric, selectedChartView.bins, selectedChartView.series])
@@ -632,7 +630,7 @@ export function LiquidationsDistributionChart({
 			}
 		}
 
-		return options as unknown as IMultiSeriesChart2Props['chartOptions']
+		return options as unknown as IMultiSeriesChartProps['chartOptions']
 	}, [chartState.metric, chartState.tokenLabel, shouldHideDataZoom, showBreakdownLegend])
 
 	const deferredChartModel = React.useDeferredValue(chartModel)

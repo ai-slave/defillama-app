@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatLineChart } from '~/components/ECharts/utils'
+import { formatLineChart } from '~/components/ECharts/shared/timeSeries'
 import { buildBridgedTvlChart, buildDenominationPriceHistory } from '../useFetchChainChartData'
 
 describe('ChainOverview chart data transforms', () => {

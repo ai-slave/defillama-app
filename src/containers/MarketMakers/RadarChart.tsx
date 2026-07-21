@@ -1,10 +1,10 @@
+import type { EChartsOption } from 'echarts'
 import { RadarChart as ERadarChart } from 'echarts/charts'
 import { RadarComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import type { EChartsOption } from 'echarts/types/dist/shared'
 import { useEffect, useRef } from 'react'
-import { useChartTheme } from '~/components/ECharts/chartTheme'
+import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 

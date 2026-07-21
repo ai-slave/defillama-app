@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useContext, useMemo } from 'react'
-import type { IPieChartProps } from '~/components/ECharts/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { getProtocolEmissionsPieData } from '~/containers/Unlocks/queries'
 import { slug } from '~/utils'
 import { download } from '~/utils/download'

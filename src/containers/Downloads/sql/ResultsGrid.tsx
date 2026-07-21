@@ -35,20 +35,20 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 
 	const columnMeta = useMemo(
 		() =>
-			result.columns.map((c) => {
+			result.columns.map((c, columnIndex) => {
 				let kind = inferColumnKind(c.type)
 				if (kind === 'other') {
-					const sample = result.rows.find((row) => row[c.name] != null)
+					const sample = result.rows.find((row) => row[columnIndex] != null)
 					if (
 						sample &&
-						Array.isArray(sample[c.name]) &&
-						(sample[c.name] as any[]).every((v) => v == null || typeof v === 'number')
+						Array.isArray(sample[columnIndex]) &&
+						(sample[columnIndex] as any[]).every((v) => v == null || typeof v === 'number')
 					) {
 						kind = 'list'
 					}
 				}
-				const width = kind === 'list' ? 140 : estimateColumnWidth(c.name, result.rows, kind)
-				return { ...c, kind, width }
+				const width = kind === 'list' ? 140 : estimateColumnWidth(c.name, result.rows, columnIndex, kind)
+				return { ...c, columnIndex, kind, width }
 			}),
 		[result]
 	)
@@ -107,7 +107,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 								}}
 							>
 								{columnMeta.map((col, i) => {
-									const value = row[col.name]
+									const value = row[col.columnIndex]
 									const isNull = value === null || value === undefined || value === ''
 									const isNumeric = col.kind === 'int' || col.kind === 'float'
 									const isList = col.kind === 'list' && Array.isArray(value)
@@ -185,11 +185,11 @@ function cellToTitle(value: unknown): string {
 	return formatted.length > 60 ? formatted : ''
 }
 
-function estimateColumnWidth(header: string, rows: Record<string, unknown>[], kind: ColumnKind): number {
+function estimateColumnWidth(header: string, rows: unknown[][], columnIndex: number, kind: ColumnKind): number {
 	const sample = rows.slice(0, 40)
 	let max = header.length + 3
 	for (const row of sample) {
-		const rendered = formatCell(row[header], kind)
+		const rendered = formatCell(row[columnIndex], kind)
 		if (rendered.length > max) max = rendered.length
 	}
 	const charWidth = kind === 'int' || kind === 'float' ? 7.2 : 7

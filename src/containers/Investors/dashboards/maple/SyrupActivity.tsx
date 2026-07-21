@@ -1,7 +1,7 @@
 import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
 import {
@@ -25,11 +25,9 @@ import {
 	Pagination
 } from './shared'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-const MONTHLY_ACTIVITY_CHARTS: IMultiSeriesChart2Props['charts'] = [
+const MONTHLY_ACTIVITY_CHARTS: IMultiSeriesChartProps['charts'] = [
 	{
 		type: 'bar',
 		name: 'Deposits',
@@ -45,7 +43,7 @@ const MONTHLY_ACTIVITY_CHARTS: IMultiSeriesChart2Props['charts'] = [
 		stack: 'b'
 	}
 ]
-const MIGRATIONS_CHART: IMultiSeriesChart2Props['charts'] = [
+const MIGRATIONS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		type: 'bar',
 		name: 'Tokens Migrated',
@@ -54,7 +52,7 @@ const MIGRATIONS_CHART: IMultiSeriesChart2Props['charts'] = [
 		stack: 'a'
 	}
 ]
-const DRIP_CLAIMS_CHART: IMultiSeriesChart2Props['charts'] = [
+const DRIP_CLAIMS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		type: 'bar',
 		name: 'Claimed',
@@ -286,7 +284,7 @@ export default function SyrupActivity() {
 	const monthlyChart = useMemo(() => aggregateByMonth(txRows), [txRows])
 	const dripMonthlyChart = useMemo(() => aggregateDripByMonth(dripRows), [dripRows])
 
-	const migrationChart = useMemo<MultiSeriesChart2Dataset>(() => {
+	const migrationChart = useMemo<MultiSeriesChartDataset>(() => {
 		const map = new Map<number, number>()
 		for (const tx of syrupTxes) {
 			const ts = parseInt(tx.timestamp)
@@ -295,10 +293,10 @@ export default function SyrupActivity() {
 			map.set(mk, (map.get(mk) ?? 0) + amount)
 		}
 		const entries = Array.from(map.entries()).sort(([a], [b]) => a - b)
-		const source = new Array<MultiSeriesChart2Dataset['source'][number]>(entries.length)
+		const source = new Array<MultiSeriesChartDataset['source'][number]>(entries.length)
 		for (let index = 0; index < entries.length; index++) {
 			const [timestamp, amount] = entries[index]
-			source[index] = { timestamp, 'Tokens Migrated': amount }
+			source[index] = [timestamp, amount]
 		}
 		return { dimensions: ['timestamp', 'Tokens Migrated'], source }
 	}, [syrupTxes])
@@ -353,7 +351,7 @@ export default function SyrupActivity() {
 				<CardSkeleton title="Monthly stSyrup Deposits vs Withdrawals" />
 			) : monthlyChart.source.length > 0 ? (
 				<ChartCard title="Monthly stSyrup Deposits vs Withdrawals">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={monthlyChart}
 						charts={MONTHLY_ACTIVITY_CHARTS}
 						valueSymbol="$"
@@ -369,7 +367,7 @@ export default function SyrupActivity() {
 				<CardSkeleton title="Monthly Syrup Token Migrations" />
 			) : migrationChart.source.length > 0 ? (
 				<ChartCard title="Monthly Syrup Token Migrations">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={migrationChart}
 						charts={MIGRATIONS_CHART}
 						valueSymbol=""
@@ -404,7 +402,7 @@ export default function SyrupActivity() {
 					<CardSkeleton title="Monthly Drip Claims" />
 				) : dripMonthlyChart.source.length > 0 ? (
 					<ChartCard title="Monthly Drip Claims">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={dripMonthlyChart}
 							charts={DRIP_CLAIMS_CHART}
 							valueSymbol=""

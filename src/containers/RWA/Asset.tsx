@@ -2,12 +2,12 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	DWM_GROUPING_OPTIONS_LOWERCASE
-} from '~/components/ECharts/ChartGroupingSelector'
-import type { ChartTimeGrouping } from '~/components/ECharts/types'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
@@ -31,6 +31,7 @@ import { formattedNum, truncateAddress } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IRWAAssetData, IRWAAssetFlowSummary } from './api.types'
+import { toRwaMultiSeriesChartDataset } from './chartDataset'
 import { definitions } from './definitions'
 import { RWAFlowCoverageTag, RWAFlowSummaryTooltip, RWAFlowVsPriceStrip } from './FlowPanelParts'
 import { formatSignedRWAFlow, getRWAFlowTextClass, getRWAFlowVsPriceSummary, parseRWAFlowGrouping } from './flows'
@@ -39,7 +40,7 @@ import { getRwaPlatforms } from './grouping'
 import { rwaSlug } from './rwaSlug'
 import { useNativeYieldHistory } from './useNativeYieldChart'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ default: module.RWAFlowsChart })))
 const assetHeaderLinkButtonStyles = buttonStyles({ variant: 'secondary', size: 'md' })
 
@@ -441,14 +442,14 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 	const nativeYieldDataset = useMemo(() => {
 		const series = yieldHistory
 		if (!series) return null
-		const source: Array<{ timestamp: number; 'Native Yield': number }> = []
+		const source: Array<[number, number]> = []
 		for (const point of series) {
 			const base = point.apy?.avg_1d?.base
 			if (base == null || !point.date) continue
 			const ts = new Date(point.date).getTime()
 			// v2 history dates are ISO date strings; skip invalid parses before charting.
 			if (!Number.isFinite(ts)) continue
-			source.push({ timestamp: Math.floor(ts), 'Native Yield': Math.round(base * 100) / 100 })
+			source.push([Math.floor(ts), Math.round(base * 100) / 100])
 		}
 		return source.length > 0 ? { source, dimensions: ['timestamp', 'Native Yield'] } : null
 	}, [yieldHistory])
@@ -456,6 +457,10 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 	const displayPools = asset.yieldPools ?? []
 
 	const chartDimensions = (asset.chartDataset?.dimensions ?? []) as string[]
+	const assetChartDataset = useMemo(
+		() => (asset.chartDataset ? toRwaMultiSeriesChartDataset(asset.chartDataset) : null),
+		[asset.chartDataset]
+	)
 	const timeSeriesCharts =
 		chartDimensions.length > 0
 			? BASE_TIME_SERIES_CHARTS.filter((chart) => chartDimensions.includes(String(chart.encode.y)))
@@ -572,11 +577,11 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									No flow data available.
 								</ChartPanelBodyFallback>
 							)
-						) : asset.chartDataset ? (
+						) : assetChartDataset ? (
 							<Suspense fallback={<ChartPanelExportShellFallback />}>
-								<MultiSeriesChart2
+								<MultiSeriesChart
 									charts={timeSeriesCharts}
-									dataset={asset.chartDataset}
+									dataset={assetChartDataset}
 									hideDefaultLegend={false}
 									exportButtons="hidden"
 									onReady={onAssetChartReady}
@@ -962,7 +967,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								</ChartPanelBodyFallback>
 							) : (
 								<Suspense fallback={<ChartPanelBodyFallback className="flex-1" />}>
-									<MultiSeriesChart2
+									<MultiSeriesChart
 										charts={NATIVE_YIELD_CHARTS}
 										dataset={nativeYieldDataset ?? { source: [], dimensions: [] }}
 										valueSymbol="%"

@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
-import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/EquitiesTreemapChart/colors'
+import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/TreemapChart/Market/colors'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
@@ -22,7 +22,7 @@ import {
 } from './treemapData'
 import type { IEquitiesListCompanyRow } from './types'
 
-const EquitiesTreemapChart = lazy(() => import('~/components/ECharts/EquitiesTreemapChart'))
+const MarketTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/Market'))
 
 const CHART_HEIGHT = '600px'
 const EXPORT_FILENAME = 'equities-market-map'
@@ -145,7 +145,7 @@ export function EquitiesTreemapSection({ companies }: { companies: IEquitiesList
 				</TableToolbarControlGroup>
 			</TableToolbar>
 			<Suspense fallback={<div style={{ height: CHART_HEIGHT }} />}>
-				<EquitiesTreemapChart
+				<MarketTreemapChart
 					treeData={treeData}
 					leaves={leaves}
 					sizeLabel={sizeLabel}

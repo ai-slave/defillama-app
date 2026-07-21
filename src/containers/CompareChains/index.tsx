@@ -2,8 +2,7 @@ import { useQueries } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import type { NextRouter } from 'next/router'
 import * as React from 'react'
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { feesOptions } from '~/components/Filters/options'
 import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterState'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
@@ -27,9 +26,9 @@ import {
 } from './feeExtras'
 import { buildCompareChainsTvlChartState, type CompareChainsTvlChartState } from './tvlChart'
 
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
 
 interface ChainOption {
 	value: string
@@ -120,7 +119,7 @@ const chartsMap = new Map(supportedCharts.map((c) => [c.key, c]))
 type ChartSeriesConfig = {
 	type: 'line' | 'bar'
 	name: string
-	encode: { x: string; y: string }
+	encode: { x: number; y: number }
 	stack: string
 	color: string
 }
@@ -128,7 +127,7 @@ type ChartSeriesConfig = {
 const formatChartData = (
 	chainsData: Array<ChainDataResult & { tvlChart: Array<[number, number]> | null }>,
 	selectedCharts: string[]
-): { dataset: { source: Array<Record<string, number>>; dimensions: string[] }; charts: ChartSeriesConfig[] } => {
+): { dataset: MultiSeriesChartDataset; charts: ChartSeriesConfig[] } => {
 	if (chainsData.length === 0 || !chainsData.every(Boolean))
 		return { dataset: { source: [], dimensions: ['timestamp'] }, charts: [] }
 
@@ -136,7 +135,7 @@ const formatChartData = (
 	let colorIndex = 0
 	const seriesNames: string[] = []
 	const seriesConfigs: ChartSeriesConfig[] = []
-	const rowMap = new Map<number, Record<string, number>>()
+	const seriesData: Array<{ entries: Array<[number, number]>; dateInMs: boolean; dimensionIndex: number }> = []
 
 	for (const chart of selectedCharts) {
 		const targetChart = chartsMap.get(chart)
@@ -147,10 +146,11 @@ const formatChartData = (
 		for (const chainData of chainsData) {
 			const name = `${chainData.chain} - ${targetChart.name}`
 			seriesNames.push(name)
+			const dimensionIndex = seriesNames.length
 			seriesConfigs.push({
 				type: chart === 'tvlChart' ? 'line' : 'bar',
 				name,
-				encode: { x: 'timestamp', y: name },
+				encode: { x: 0, y: dimensionIndex },
 				stack: name,
 				color: colors[colorIndex]
 			})
@@ -160,16 +160,25 @@ const formatChartData = (
 				| Array<[number, number]>
 				| null
 				| undefined
-			for (const data of chartEntries ?? []) {
-				const ts = !dateInMs ? Number(data[0]) * 1e3 : data[0]
-				const row = rowMap.get(ts) ?? createChartRow<number>(ts)
-				row[name] = data[1]
-				rowMap.set(ts, row)
-			}
+			seriesData.push({ entries: chartEntries ?? [], dateInMs, dimensionIndex })
 		}
 	}
 
-	const source = Array.from(rowMap.values()).sort((a, b) => a.timestamp - b.timestamp)
+	const rowMap = new Map<number, MultiSeriesChartDataset['source'][number]>()
+	for (const { entries, dateInMs, dimensionIndex } of seriesData) {
+		for (const data of entries) {
+			const ts = !dateInMs ? Number(data[0]) * 1e3 : data[0]
+			let row = rowMap.get(ts)
+			if (!row) {
+				row = new Array(seriesNames.length + 1)
+				row[0] = ts
+				rowMap.set(ts, row)
+			}
+			row[dimensionIndex] = data[1]
+		}
+	}
+
+	const source = Array.from(rowMap.values()).sort((a, b) => (a[0] as number) - (b[0] as number))
 	return { dataset: { source, dimensions: ['timestamp', ...seriesNames] }, charts: seriesConfigs }
 }
 
@@ -388,7 +397,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 					) : (
 						<ChartPanel>
 							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-								<MultiSeriesChart2
+								<MultiSeriesChart
 									dataset={chartData.dataset}
 									charts={chartData.charts}
 									showTotalInTooltip

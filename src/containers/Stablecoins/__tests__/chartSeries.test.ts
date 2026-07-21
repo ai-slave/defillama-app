@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	buildAreaPayload,
 	buildStablecoinBreakdownDatasetPresentation,
@@ -15,6 +16,10 @@ import {
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT
 } from '../chartSeries'
 import { buildStablecoinChartDataWithFlags, formatPeggedChainsData } from '../utils'
+
+function datasetValue(dataset: MultiSeriesChartDataset, rowIndex: number, dimension: string) {
+	return dataset.source[rowIndex][dataset.dimensions.indexOf(dimension)]
+}
 
 const chartDataByAssetOrChain = [
 	[
@@ -148,16 +153,16 @@ describe('stablecoin chart series builders', () => {
 				selectedNames: ['USDT']
 			}).dataset.source
 		).toEqual([
-			{ timestamp: 1660000000000, USDT: 100, Others: 50 },
-			{ timestamp: 1660086400000, USDT: 125, Others: 75 }
+			[1660000000000, 100, 50],
+			[1660086400000, 125, 75]
 		])
 		expect(
 			buildStablecoinOverviewPayloadFromChartData(selectionParams, 'tokenMcaps', topToken, chartData, {
 				selectedNames: ['USDC']
 			}).dataset.source
 		).toEqual([
-			{ timestamp: 1660000000000, USDC: 50, Others: 100 },
-			{ timestamp: 1660086400000, USDC: 75, Others: 125 }
+			[1660000000000, 50, 100],
+			[1660086400000, 75, 125]
 		])
 		expect(reads).toBe(4)
 	})
@@ -211,9 +216,9 @@ describe('stablecoin chart series builders', () => {
 		const payload = buildTotalMcapPayload(mixedCurrencyParams)
 
 		expect(payload.dataset.source).toEqual([
-			{ timestamp: 1609459200000, Mcap: 15 },
-			{ timestamp: 1609545600000, Mcap: 4 },
-			{ timestamp: 1609632000000, Mcap: 40 }
+			[1609459200000, 15],
+			[1609545600000, 4],
+			[1609632000000, 40]
 		])
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'Mcap'])
 	})
@@ -237,16 +242,16 @@ describe('stablecoin chart series builders', () => {
 		}
 
 		expect(buildTotalMcapPayload(stringDateParams).dataset.source).toEqual([
-			{ timestamp: 1609459200000, Mcap: 15 },
-			{ timestamp: 1609545600000, Mcap: 30 }
+			[1609459200000, 15],
+			[1609545600000, 30]
 		])
 		expect(buildAreaPayload(stringDateParams, { stackName: 'tokenMcaps' }).dataset.source).toEqual([
-			{ timestamp: 1609459200000, USDT: 10, USDC: 5 },
-			{ timestamp: 1609545600000, USDT: 20, USDC: 10 }
+			[1609459200000, 10, 5],
+			[1609545600000, 20, 10]
 		])
 		expect(buildDominancePayload(stringDateParams).dataset.source).toEqual([
-			{ timestamp: 1609459200000, USDT: 66.67, USDC: 33.33 },
-			{ timestamp: 1609545600000, USDT: 66.67, USDC: 33.33 }
+			[1609459200000, 66.67, 33.33],
+			[1609545600000, 66.67, 33.33]
 		])
 	})
 
@@ -257,8 +262,8 @@ describe('stablecoin chart series builders', () => {
 		})
 
 		expect(payload.dataset.source).toEqual([
-			{ timestamp: 1660000000000, Circulating: 165 },
-			{ timestamp: 1660086400000, Circulating: 210 }
+			[1660000000000, 165],
+			[1660086400000, 210]
 		])
 		expect(payload.valueSymbol).toBe('')
 		expect(JSON.parse(JSON.stringify(payload)).valueSymbol).toBe('')
@@ -281,8 +286,8 @@ describe('stablecoin chart series builders', () => {
 		const payload = buildAreaPayload(sparseAreaParams, { stackName: 'tokenMcaps' })
 
 		expect(payload.dataset.source).toEqual([
-			{ timestamp: 1609459200000, USDT: 10 },
-			{ timestamp: 1609545600000, USDT: 20, USDC: 5 }
+			[1609459200000, 10, undefined],
+			[1609545600000, 20, 5]
 		])
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'USDT', 'USDC'])
 	})
@@ -295,11 +300,7 @@ describe('stablecoin chart series builders', () => {
 		expect(payload.stacked).toBe(true)
 		expect(payload.charts.every((chart) => chart.type === 'line' && chart.stack === 'dominance')).toBe(true)
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'USDT', 'USDC'])
-		expect(payload.dataset.source.at(-1)).toMatchObject({
-			timestamp: 1609632000000,
-			USDT: 62.5,
-			USDC: 37.5
-		})
+		expect(payload.dataset.source.at(-1)).toEqual([1609632000000, 62.5, 37.5])
 	})
 
 	it('preserves dense asset rows and exactly normalized dominance when requested', () => {
@@ -318,9 +319,9 @@ describe('stablecoin chart series builders', () => {
 		const area = buildAreaPayload(assetParams, { stackName: 'chains', fillMissingValues: true })
 		const dominance = buildDominancePayload(assetParams, { normalizeTo100: true })
 
-		expect(area.dataset.source[0]).toEqual({ timestamp: 1659913600000, A: 0, B: 0, C: 2 })
+		expect(area.dataset.source[0]).toEqual([1659913600000, 0, 0, 2])
 		const row = dominance.dataset.source.at(-1)!
-		expect(Number(row.A) + Number(row.B) + Number(row.C)).toBe(100)
+		expect((row[1] as number) + (row[2] as number) + (row[3] as number)).toBe(100)
 	})
 
 	it('keeps token inflows stacked because they render as bars', () => {
@@ -374,10 +375,8 @@ describe('stablecoin chart series builders', () => {
 		])
 		expect(area.charts).toHaveLength(STABLECOIN_BREAKDOWN_SERIES_LIMIT + 1)
 		expect(area.dataset.dimensions).toEqual(['timestamp', ...area.defaultSeries!, 'Others'])
-		expect(area.dataset.source).toEqual([
-			expect.objectContaining({ timestamp: 1700000000000, Others: 8 }),
-			expect.objectContaining({ timestamp: 1700086400000, Others: 80 })
-		])
+		expect(datasetValue(area.dataset, 0, 'Others')).toBe(8)
+		expect(datasetValue(area.dataset, 1, 'Others')).toBe(80)
 		expect(
 			buildStablecoinBreakdownPayloadPresentation({
 				payload: uncapped,
@@ -386,14 +385,14 @@ describe('stablecoin chart series builders', () => {
 		).toEqual(area.dataset)
 
 		const dominance = buildDominancePayload(largeParams, { seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT })
-		expect(dominance.dataset.source.at(-1)).toMatchObject({ Token12: 14.46, Others: 9.64 })
+		expect(datasetValue(dominance.dataset, 1, 'Token12')).toBe(14.46)
+		expect(datasetValue(dominance.dataset, 1, 'Others')).toBe(9.64)
 		const tokenInflows = buildTokenInflowsPayload(largeParams, {
 			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
 		})
 		expect(tokenInflows.charts).toHaveLength(STABLECOIN_BREAKDOWN_SERIES_LIMIT + 1)
-		expect(tokenInflows.dataset.source).toEqual([
-			expect.objectContaining({ timestamp: 1700000000000, Token12: 108, Others: 72 })
-		])
+		expect(datasetValue(tokenInflows.dataset, 0, 'Token12')).toBe(108)
+		expect(datasetValue(tokenInflows.dataset, 0, 'Others')).toBe(72)
 
 		const selected = buildAreaPayload(largeParams, {
 			stackName: 'tokenMcaps',
@@ -401,11 +400,7 @@ describe('stablecoin chart series builders', () => {
 			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
 		})
 		expect(selected.dataset.dimensions).toEqual(['timestamp', 'Token1', 'Others'])
-		expect(selected.dataset.source.at(-1)).toEqual({
-			timestamp: 1700086400000,
-			Token1: 10,
-			Others: 820
-		})
+		expect(selected.dataset.source.at(-1)).toEqual([1700086400000, 10, 820])
 
 		const selectAll = buildAreaPayload(largeParams, {
 			stackName: 'tokenMcaps',
@@ -426,7 +421,9 @@ describe('stablecoin chart series builders', () => {
 			'Token10',
 			'Others'
 		])
-		expect(selectAll.dataset.source.at(-1)).toMatchObject({ Token1: 10, Token10: 100, Others: 280 })
+		expect(datasetValue(selectAll.dataset, 1, 'Token1')).toBe(10)
+		expect(datasetValue(selectAll.dataset, 1, 'Token10')).toBe(100)
+		expect(datasetValue(selectAll.dataset, 1, 'Others')).toBe(280)
 	})
 
 	it('applies the same top-N and reserved Others contract to an existing Pro dataset', () => {
@@ -434,8 +431,8 @@ describe('stablecoin chart series builders', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Small', 'Large', 'Others'],
 				source: [
-					{ timestamp: '1700000000000', Small: 2, Large: 10, Others: 3 },
-					{ timestamp: '1700086400000', Small: 4, Large: 20, Others: 6 }
+					[1700000000000, 2, 10, 3],
+					[1700086400000, 4, 20, 6]
 				]
 			},
 			seriesNames: ['Small', 'Large', 'Others'],
@@ -447,27 +444,10 @@ describe('stablecoin chart series builders', () => {
 		expect(presentation.dataset).toEqual({
 			dimensions: ['timestamp', 'Large', 'Others'],
 			source: [
-				{ timestamp: 1700000000000, Large: 10, Others: 5 },
-				{ timestamp: 1700086400000, Large: 20, Others: 10 }
+				[1700000000000, 10, 5],
+				[1700086400000, 20, 10]
 			]
 		})
-	})
-
-	it('keeps __proto__ as an own stablecoin series value', () => {
-		const payload = buildAreaPayload(
-			{
-				chartDataByAssetOrChain: [[{ date: '1700000000', mcap: { peggedUSD: 25 } }]],
-				assetsOrChainsList: ['__proto__'],
-				issuanceType: 'mcap',
-				selectedChain: 'All'
-			},
-			{ stackName: 'tokenMcaps' }
-		)
-		const row = payload.dataset.source[0]
-
-		expect(payload.dataset.dimensions).toEqual(['timestamp', '__proto__'])
-		expect(Object.hasOwn(row, '__proto__')).toBe(true)
-		expect(row.__proto__).toBe(25)
 	})
 
 	it('keeps the rendered series count constant for a 400-series input', () => {
@@ -486,9 +466,8 @@ describe('stablecoin chart series builders', () => {
 
 		expect(payload.charts).toHaveLength(STABLECOIN_BREAKDOWN_SERIES_LIMIT + 1)
 		expect(payload.dataset.dimensions).toHaveLength(STABLECOIN_BREAKDOWN_SERIES_LIMIT + 2)
-		expect(payload.dataset.source).toEqual([
-			expect.objectContaining({ timestamp: 1700000000000, Token400: 400, Others: 76_245 })
-		])
+		expect(datasetValue(payload.dataset, 0, 'Token400')).toBe(400)
+		expect(datasetValue(payload.dataset, 0, 'Others')).toBe(76_245)
 	})
 
 	it('groups stablecoin inflow bar payloads by the selected interval', () => {
@@ -496,9 +475,9 @@ describe('stablecoin chart series builders', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Inflows'],
 				source: [
-					{ timestamp: Date.UTC(2024, 0, 3), Inflows: 100 },
-					{ timestamp: Date.UTC(2024, 0, 20), Inflows: -25 },
-					{ timestamp: Date.UTC(2024, 1, 1), Inflows: 50 }
+					[Date.UTC(2024, 0, 3), 100],
+					[Date.UTC(2024, 0, 20), -25],
+					[Date.UTC(2024, 1, 1), 50]
 				]
 			},
 			charts: [{ type: 'bar' as const, name: 'Inflows', encode: { x: 'timestamp', y: 'Inflows' } }],
@@ -511,8 +490,8 @@ describe('stablecoin chart series builders', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Inflows'],
 				source: [
-					{ timestamp: Date.UTC(2024, 0, 1), Inflows: 75 },
-					{ timestamp: Date.UTC(2024, 1, 1), Inflows: 50 }
+					[Date.UTC(2024, 0, 1), 75],
+					[Date.UTC(2024, 1, 1), 50]
 				]
 			}
 		})
@@ -522,9 +501,9 @@ describe('stablecoin chart series builders', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Inflows'],
 				source: [
-					{ timestamp: Date.UTC(2024, 0, 3), Inflows: 100 },
-					{ timestamp: Date.UTC(2024, 0, 20), Inflows: 75 },
-					{ timestamp: Date.UTC(2024, 1, 1), Inflows: 125 }
+					[Date.UTC(2024, 0, 3), 100],
+					[Date.UTC(2024, 0, 20), 75],
+					[Date.UTC(2024, 1, 1), 125]
 				]
 			}
 		})

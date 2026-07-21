@@ -10,7 +10,7 @@ describe('chartToDataset', () => {
 
 		expect(dataset).toEqual({
 			dimensions: ['timestamp', 'Revenue'],
-			source: [{ timestamp: 1_767_225_600_000, Revenue: 0 }]
+			source: [[1_767_225_600_000, 0]]
 		})
 	})
 })

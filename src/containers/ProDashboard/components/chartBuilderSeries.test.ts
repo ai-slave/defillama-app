@@ -39,8 +39,8 @@ describe('buildChartBuilderSeriesView', () => {
 			resolveColor: color
 		})
 
-		expect(flow.dataset.source).toEqual([{ timestamp: Date.UTC(2024, 0, 1), 'series-0': 30 }])
-		expect(snapshot.dataset.source).toEqual([{ timestamp: Date.UTC(2024, 0, 1), 'series-0': 20 }])
+		expect(flow.dataset.source).toEqual([[Date.UTC(2024, 0, 1), 30]])
+		expect(snapshot.dataset.source).toEqual([[Date.UTC(2024, 0, 1), 20]])
 		expect(flow.charts[0]).toMatchObject({ type: 'bar', stack: 'total' })
 		expect(snapshot.charts[0]).toMatchObject({ type: 'line', stack: 'total' })
 	})
@@ -73,33 +73,17 @@ describe('buildChartBuilderSeriesView', () => {
 		})
 
 		expect(result.dataset).toEqual({
-			dimensions: ['timestamp', 'series-0', 'series-1'],
+			dimensions: ['timestamp', 'A', 'B'],
 			source: [
-				{ timestamp: 1_000, 'series-0': 25, 'series-1': 75 },
-				{ timestamp: 2_000, 'series-0': 0, 'series-1': 100 },
-				{ timestamp: 3_000, 'series-0': 100, 'series-1': 0 }
+				[1_000, 25, 75],
+				[2_000, 0, 100],
+				[3_000, 100, 0]
 			]
 		})
 		expect(result.charts).toEqual([
-			{ type: 'line', name: 'A', encode: { x: 'timestamp', y: 'series-0' }, color: 'color:A' },
-			{ type: 'line', name: 'B', encode: { x: 'timestamp', y: 'series-1' }, color: '#123456' }
+			{ type: 'line', name: 'A', encode: { x: 0, y: 1 }, color: 'color:A' },
+			{ type: 'line', name: 'B', encode: { x: 0, y: 2 }, color: '#123456' }
 		])
-	})
-
-	it('preserves special external series names as display identities', () => {
-		const result = buildChartBuilderSeriesView({
-			series: [{ name: '__proto__', data: [[1, 10]] }],
-			useLastValue: false,
-			displayAs: 'timeSeries',
-			chartType: 'line',
-			resolveColor: color
-		})
-
-		expect(result.dataset).toEqual({
-			dimensions: ['timestamp', 'series-0'],
-			source: [{ timestamp: 1_000, 'series-0': 10 }]
-		})
-		expect(result.charts[0]).toMatchObject({ name: '__proto__', encode: { y: 'series-0' } })
 	})
 
 	it('keeps the reserved timestamp series name separate from the x-axis dimension', () => {
@@ -112,9 +96,9 @@ describe('buildChartBuilderSeriesView', () => {
 		})
 
 		expect(result.dataset).toEqual({
-			dimensions: ['timestamp', 'series-0'],
-			source: [{ timestamp: 1_000, 'series-0': 10 }]
+			dimensions: ['timestamp', 'timestamp'],
+			source: [[1_000, 10]]
 		})
-		expect(result.charts[0]).toMatchObject({ name: 'timestamp', encode: { x: 'timestamp', y: 'series-0' } })
+		expect(result.charts[0]).toMatchObject({ name: 'timestamp', encode: { x: 0, y: 1 } })
 	})
 })

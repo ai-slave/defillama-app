@@ -1,9 +1,10 @@
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { downloadTabular, type CsvCell, type DownloadFormat } from '~/utils/download'
+import { classifyColumns } from './columnKind'
 
 export interface QueryResult {
 	columns: Array<{ name: string; type: string }>
-	rows: Record<string, unknown>[]
+	rows: unknown[][]
 }
 
 // LlamaSQL/Arrow results contain native types that the CSV writer can't round-trip directly.
@@ -17,12 +18,16 @@ export function exportQueryResult(result: QueryResult, format: DownloadFormat, f
 		return
 	}
 	const header: CsvCell[] = result.columns.map((c) => c.name)
-	const data: CsvCell[][] = result.rows.map((row) => result.columns.map((c) => toCell(row[c.name])))
+	const columnKinds = classifyColumns(result)
+	const data: CsvCell[][] = result.rows.map((row) =>
+		result.columns.map((_, index) => toCell(row[index], columnKinds[index].fine === 'date'))
+	)
 	downloadTabular(format, filename, [header, ...data], { addTimestamp: true })
 }
 
-function toCell(value: unknown): CsvCell {
+function toCell(value: unknown, isDate: boolean): CsvCell {
 	if (value === null || value === undefined) return ''
+	if (isDate && typeof value === 'number' && Number.isFinite(value)) return new Date(value).toISOString()
 	if (typeof value === 'bigint') return value.toString()
 	if (value instanceof Date) return value.toISOString()
 	if (typeof value === 'object') {

@@ -1,4 +1,4 @@
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IDATInstitutionHolding, IDATInstitutionMetadata } from './api.types'
 
 // ── Overview page (digital-asset-treasuries/index) ──────────────────────
@@ -39,16 +39,13 @@ export interface IDATInstitutionOverviewByAsset extends Omit<
 }
 
 export interface IDATChartPayload {
-	charts: MultiSeriesChart2SeriesConfig[]
-	dataset: MultiSeriesChart2Dataset
+	charts: MultiSeriesChartSeriesConfig[]
+	dataset: MultiSeriesChartDataset
 }
 
 export interface IDATMNAVChartPayload {
-	charts: MultiSeriesChart2SeriesConfig[]
-	dataset: {
-		source: Array<Record<string, number | null>>
-		dimensions: string[]
-	}
+	charts: MultiSeriesChartSeriesConfig[]
+	dataset: MultiSeriesChartDataset
 }
 
 export interface IDATOverviewDataByAssetProps {

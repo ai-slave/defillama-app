@@ -29,7 +29,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 			...assetNames.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT),
 			'Others'
 		])
-		expect(result.dataset.source.at(-1)?.Others).toBe(379)
+		expect(result.dataset.source.at(-1)?.[result.dataset.dimensions.indexOf('Others')]).toBe(379)
 	})
 
 	it('keeps an explicit asset outside the default top set selectable', () => {
@@ -39,7 +39,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 		expect(result.availableSeries).toContain(selectedName)
 		expect(result.defaultSeries).toEqual(assetNames.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT))
 		expect(result.charts.map((chart) => chart.name)).toEqual([selectedName, 'Others'])
-		expect(result.dataset.source.at(-1)?.[selectedName]).toBe(189)
-		expect(result.dataset.source.at(-1)?.Others).toBe(2_145)
+		expect(result.dataset.source.at(-1)?.[result.dataset.dimensions.indexOf(selectedName)]).toBe(189)
+		expect(result.dataset.source.at(-1)?.[result.dataset.dimensions.indexOf('Others')]).toBe(2_145)
 	})
 })

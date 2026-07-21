@@ -2,7 +2,7 @@ import type { ECharts } from 'echarts/core'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useBlockExplorers } from '~/api/client'
-import type { IPieChartProps } from '~/components/ECharts/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	TokenPageTable,
 	TokenPageTableBodyCell,

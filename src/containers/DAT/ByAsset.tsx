@@ -1,7 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
+import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -15,7 +15,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import type { IDATOverviewDataByAssetProps } from './types'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const DEFAULT_SORTING_STATE = [{ id: 'totalAssetAmount', desc: true }]
 
@@ -68,7 +68,7 @@ export function DATByAsset({
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={dailyFlowsChart.dataset}
 							charts={dailyFlowsChart.charts}
 							valueSymbol={metadata.ticker}
@@ -334,7 +334,7 @@ function MNAVChart({
 				/>
 			</ChartPanelToolbar>
 			<Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					charts={data.charts}
 					selectedCharts={selectedCharts}
 					dataset={data.dataset}

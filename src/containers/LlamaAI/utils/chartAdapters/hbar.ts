@@ -89,6 +89,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 				}
 			}
 			const logos = logoByCategory ? categories.map((c) => logoByCategory.get(c.toLowerCase()) ?? '') : undefined
+			const completeLogos = logos?.every(Boolean) ? logos : undefined
 			const data = new Array<[string, number]>(categories.length)
 			for (let index = 0; index < categories.length; index++) {
 				data[index] = [categories[index], series[0].values[index]]
@@ -100,7 +101,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 					height: '360px',
 					valueSymbol: config.valueSymbol ?? '',
 					series,
-					...(logos && { logos }),
+					...(completeLogos && { logos: completeLogos }),
 					...valueAxisControls(config)
 				},
 				title: config.title,
@@ -112,7 +113,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 		// matched by lowercased category value rather than row index so logos can't drift off their bars
 		const logoByCategory = buildLogoByCategory(config.axes.x)
 		const chartData: Array<[string, number]> = []
-		const logos = logoByCategory ? [] : undefined
+		const logos: string[] | undefined = logoByCategory ? [] : undefined
 		for (let index = 0; index < rawData.length; index++) {
 			const record = rawData[index] as Record<string, unknown>
 			const category = record[primarySeries.dataMapping.xField] ?? 'Unknown'
@@ -120,6 +121,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 			chartData.push([String(category), value])
 			if (logos) logos.push(logoByCategory!.get(String(category).toLowerCase()) ?? '')
 		}
+		const completeLogos = logos?.every(Boolean) ? logos : undefined
 
 		// Distinct color per bar by default; honor an explicit per-category override from the editor.
 		const distinct = getNDistinctColors(chartData.length)
@@ -132,7 +134,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 				height: '360px',
 				valueSymbol: config.valueSymbol ?? '',
 				colors,
-				...(logos && { logos }),
+				...(completeLogos && { logos: completeLogos }),
 				...valueAxisControls(config)
 			},
 			title: config.title,

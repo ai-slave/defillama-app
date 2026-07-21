@@ -1,5 +1,9 @@
-import { formatChartValue } from '~/components/ECharts/formatters'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type {
+	IMultiSeriesChartProps,
+	MultiSeriesChartArrayRow,
+	MultiSeriesChartDataset
+} from '~/components/ECharts/MultiSeriesChart/types'
+import { formatChartValue } from '~/components/ECharts/shared/formatters'
 import type { ChartConfiguration, ChartDataSeries } from '~/containers/LlamaAI/types'
 import {
 	buildLogoByCategory,
@@ -17,29 +21,24 @@ const normalizeHallmarks = (hallmarks?: Array<[number] | [number, string]>): Arr
 	return hallmarks.map((h) => [h[0], h[1] || ''])
 }
 
-export type LlamaAICartesianChartProps = Pick<
-	IMultiSeriesChart2Props,
-	| 'dataset'
-	| 'charts'
-	| 'chartOptions'
-	| 'valueSymbol'
-	| 'groupBy'
-	| 'hallmarks'
-	| 'hallmarkStyle'
-	| 'hideDataZoom'
-	| 'categoryLogos'
->
+export type LlamaAICartesianChartProps = Omit<
+	Pick<
+		IMultiSeriesChartProps,
+		| 'dataset'
+		| 'charts'
+		| 'chartOptions'
+		| 'valueSymbol'
+		| 'groupBy'
+		| 'hallmarks'
+		| 'hallmarkStyle'
+		| 'hideDataZoom'
+		| 'categoryLogos'
+	>,
+	'dataset'
+> & { dataset: MultiSeriesChartDataset }
 
-export type LlamaAICartesianDatasetRow = LlamaAICartesianChartProps['dataset']['source'][number]
+export type LlamaAICartesianDatasetRow = MultiSeriesChartArrayRow
 export type LlamaAICartesianSeriesConfig = NonNullable<LlamaAICartesianChartProps['charts']>[number]
-
-function setCartesianRowValue(row: LlamaAICartesianDatasetRow, name: string, value: number | string | null) {
-	if (name === '__proto__') {
-		Object.defineProperty(row, name, { value, enumerable: true, configurable: true, writable: true })
-	} else {
-		row[name] = value
-	}
-}
 
 export interface LlamaAICartesianSeriesMeta {
 	name: string
@@ -275,18 +274,17 @@ const isValidCartesianPoint = (
 	return value != null && !Number.isNaN(value)
 }
 
-const getTooltipValueFromParams = (item: any) => {
+const getTooltipValueFromParams = (item: any, valueIndex: number | undefined) => {
 	const seriesName = item?.seriesName
 	const data = item?.data
-	if (data && typeof data === 'object' && !Array.isArray(data) && seriesName && seriesName in data) {
-		return data[seriesName]
-	}
-	if (Array.isArray(item?.value)) return item.value[1]
+	if (Array.isArray(item?.value)) return item.value[valueIndex ?? 1]
+	if (Array.isArray(data)) return data[valueIndex ?? 1]
+	if (data && typeof data === 'object' && seriesName && seriesName in data) return data[seriesName]
 	return item?.value
 }
 
-const getNumericTooltipValueFromParams = (item: any): number | null => {
-	const rawValue = getTooltipValueFromParams(item)
+const getNumericTooltipValueFromParams = (item: any, valueIndex: number | undefined): number | null => {
+	const rawValue = getTooltipValueFromParams(item, valueIndex)
 	const value = rawValue == null || rawValue === '-' ? null : typeof rawValue === 'number' ? rawValue : Number(rawValue)
 	return value == null || Number.isNaN(value) ? null : value
 }
@@ -296,7 +294,11 @@ export const createCategoryTooltipFormatter = (
 	charts: LlamaAICartesianSeriesConfig[] = []
 ): ((params: unknown) => string) => {
 	const symbolBySeries = new Map<string, string>()
-	for (const chart of charts) symbolBySeries.set(chart.name, chart.valueSymbol ?? valueSymbol)
+	const valueIndexBySeries = new Map<string, number>()
+	for (const chart of charts) {
+		symbolBySeries.set(chart.name, chart.valueSymbol ?? valueSymbol)
+		if (typeof chart.encode.y === 'number') valueIndexBySeries.set(chart.name, chart.encode.y)
+	}
 
 	return (params: unknown) => {
 		const items = Array.isArray(params) ? params : params ? [params] : []
@@ -307,7 +309,7 @@ export const createCategoryTooltipFormatter = (
 		for (const item of items) {
 			const seriesName = item?.seriesName
 			if (!seriesName) continue
-			const value = getNumericTooltipValueFromParams(item)
+			const value = getNumericTooltipValueFromParams(item, valueIndexBySeries.get(seriesName))
 			if (value == null) continue
 			values.push({
 				marker: item?.marker ?? '',
@@ -339,9 +341,6 @@ export function adaptCartesianChartData(
 		const { axisType, dimensionName, normalizeXValue } = axisInference
 		const seriesNames = new Set<string>()
 		for (const series of config.series) {
-			if (series.name === dimensionName) {
-				throw new Error(`Series name "${series.name}" is reserved for the x-axis dimension`)
-			}
 			if (seriesNames.has(series.name)) throw new Error(`Duplicate series name "${series.name}" is not allowed`)
 			seriesNames.add(series.name)
 		}
@@ -355,9 +354,15 @@ export function adaptCartesianChartData(
 		}
 
 		const rowsByX = new Map<string | number, LlamaAICartesianDatasetRow>()
-		const categoryOrder: Array<string | number> = []
+		const categoryOrderKey = new Map<string | number, number>()
 		const charts: LlamaAICartesianSeriesConfig[] = []
 		const seriesMeta: LlamaAICartesianSeriesMeta[] = []
+		const seenXValues = config.series.map(() => new Set<string | number>())
+		const runtimeSeries = new Array<{
+			config: ChartConfiguration['series'][number]
+			baseType: 'line' | 'area' | 'bar'
+			normalizedEntityValue: string | null
+		}>(config.series.length)
 
 		for (let seriesIndex = 0; seriesIndex < config.series.length; seriesIndex++) {
 			const seriesConfig = config.series[seriesIndex]
@@ -375,42 +380,12 @@ export function adaptCartesianChartData(
 
 			const resolvedColor = apiColor || getChartColor(entityValue, seriesIndex, oldBlue)
 
-			const seenXValues = new Set<string | number>()
-			for (const row of rawData) {
-				const record = asRecord(row)
-				if (entityFilter) {
-					const rowValue = record[entityFilter.field]
-					const filterValue = entityFilter.value
-					const matches =
-						rowValue === filterValue ||
-						(rowValue != null &&
-							normalizedEntityValue != null &&
-							String(rowValue).toLowerCase() === normalizedEntityValue)
-					if (!matches) continue
-				}
-				const xValue = normalizeXValue(record[seriesConfig.dataMapping.xField])
-				const value = record[seriesConfig.dataMapping.yField]
-				const numericValue = value == null ? null : parseStringNumber(value)
-
-				if (xValue == null) continue
-				if (!isValidCartesianPoint(xValue, numericValue, baseType, axisType)) continue
-				if (seenXValues.has(xValue)) continue
-				seenXValues.add(xValue)
-
-				if (!rowsByX.has(xValue)) {
-					const chartRow = {} as LlamaAICartesianDatasetRow
-					setCartesianRowValue(chartRow, dimensionName, xValue)
-					rowsByX.set(xValue, chartRow)
-					categoryOrder.push(xValue)
-				}
-
-				setCartesianRowValue(rowsByX.get(xValue)!, chartName, numericValue)
-			}
+			runtimeSeries[seriesIndex] = { config: seriesConfig, baseType, normalizedEntityValue }
 
 			charts.push({
 				type: chartType,
 				name: chartName,
-				encode: { x: dimensionName, y: chartName },
+				encode: { x: 0, y: seriesIndex + 1 },
 				color: resolvedColor,
 				valueSymbol: seriesValueSymbol,
 				yAxisIndex
@@ -432,12 +407,54 @@ export function adaptCartesianChartData(
 			})
 		}
 
+		for (let rawRowIndex = 0; rawRowIndex < rawData.length; rawRowIndex++) {
+			const record = asRecord(rawData[rawRowIndex])
+			for (let seriesIndex = 0; seriesIndex < runtimeSeries.length; seriesIndex++) {
+				const { config: seriesConfig, baseType, normalizedEntityValue } = runtimeSeries[seriesIndex]
+				const entityFilter = seriesConfig.dataMapping.entityFilter
+				if (entityFilter) {
+					const rowValue = record[entityFilter.field]
+					const filterValue = entityFilter.value
+					const matches =
+						rowValue === filterValue ||
+						(rowValue != null &&
+							normalizedEntityValue != null &&
+							String(rowValue).toLowerCase() === normalizedEntityValue)
+					if (!matches) continue
+				}
+				const xValue = normalizeXValue(record[seriesConfig.dataMapping.xField])
+				const value = record[seriesConfig.dataMapping.yField]
+				const numericValue = value == null ? null : parseStringNumber(value)
+
+				if (xValue == null) continue
+				if (!isValidCartesianPoint(xValue, numericValue, baseType, axisType)) continue
+				if (seenXValues[seriesIndex].has(xValue)) continue
+				seenXValues[seriesIndex].add(xValue)
+				const orderKey = seriesIndex * rawData.length + rawRowIndex
+
+				let chartRow = rowsByX.get(xValue)
+				if (!chartRow) {
+					chartRow = new Array<number | string | null | undefined>(config.series.length + 1)
+					chartRow[0] = xValue
+					rowsByX.set(xValue, chartRow)
+				}
+				const previousOrderKey = categoryOrderKey.get(xValue)
+				if (previousOrderKey == null || orderKey < previousOrderKey) categoryOrderKey.set(xValue, orderKey)
+
+				chartRow[seriesIndex + 1] = numericValue
+			}
+		}
+
+		const categoryOrder =
+			axisType === 'category'
+				? Array.from(rowsByX.keys()).sort((a, b) => categoryOrderKey.get(a)! - categoryOrderKey.get(b)!)
+				: []
 		const datasetSource =
 			axisType === 'time'
-				? Array.from(rowsByX.values()).sort((a, b) => (a.timestamp as number) - (b.timestamp as number))
+				? Array.from(rowsByX.values()).sort((a, b) => (a[0] as number) - (b[0] as number))
 				: categoryOrder.map((key) => rowsByX.get(key)!)
 
-		const dataset = {
+		const dataset: MultiSeriesChartDataset = {
 			source: datasetSource,
 			dimensions: [dimensionName, ...charts.map((chart) => chart.name)]
 		}
@@ -502,7 +519,16 @@ export function adaptCartesianChartData(
 			// logo data is per-row, so index matching attaches logos to the wrong categories.
 			const logoByCategory = buildLogoByCategory(config.axes.x)
 			if (logoByCategory) {
-				categoryLogos = categoryOrder.map((cat) => logoByCategory.get(String(cat).toLowerCase()) ?? '')
+				const logos = new Array<string>(categoryOrder.length)
+				let complete = true
+				for (let index = 0; index < categoryOrder.length; index++) {
+					const logo = logoByCategory.get(String(categoryOrder[index]).toLowerCase())
+					if (!logo) complete = false
+					logos[index] = logo ?? ''
+				}
+				// The renderer replaces native category labels with logos. A partial set would
+				// therefore make unmapped categories anonymous, so keep text labels instead.
+				if (complete) categoryLogos = logos
 			}
 		}
 

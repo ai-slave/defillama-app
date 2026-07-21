@@ -1,6 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { useMemo } from 'react'
-import MultiSeriesChart2 from '~/components/ECharts/MultiSeriesChart2'
+import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
 import type { IRWAFlowAggregatePoint, IRWAFlowPoint } from './api.types'
 import {
 	buildRWAFlowChart,
@@ -29,7 +29,7 @@ export function RWAFlowsChart({
 	})
 
 	return (
-		<MultiSeriesChart2
+		<MultiSeriesChart
 			dataset={chart.dataset}
 			charts={chart.charts}
 			groupBy={chart.groupBy}

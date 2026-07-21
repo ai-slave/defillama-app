@@ -15,8 +15,6 @@ describe('buildRatesChart', () => {
 			}
 		]
 
-		expect(buildRatesChart(points, false)?.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 0, 1), Supply: 3, Borrow: null, Spread: -2 }
-		])
+		expect(buildRatesChart(points, false)?.dataset.source).toEqual([[Date.UTC(2026, 0, 1), 3, null, -2]])
 	})
 })

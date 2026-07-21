@@ -1,5 +1,4 @@
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import type { TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
+import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 
 // Shapes returned by /api/public/thorchain/<fn>. Everything is pre-computed and
 // pre-formatted server-side; the frontend renders `formatted` and only uses raw
@@ -58,11 +57,9 @@ export function chartToDataset(chart: Chart): TimestampDataset {
 	for (let i = 0; i < chart.dates.length; i++) {
 		const timestamp = parseDateToUnix(chart.dates[i]) * 1000
 		if (!Number.isFinite(timestamp)) continue
-		const row = createChartRow<number>(timestamp)
-		for (let j = 0; j < chart.series.length; j++) {
-			const series = chart.series[j]
-			row[series.name] = series.data[i] ?? 0
-		}
+		const row = new Array<number>(chart.series.length + 1)
+		row[0] = timestamp
+		for (let j = 0; j < chart.series.length; j++) row[j + 1] = chart.series[j].data[i] ?? 0
 		source.push(row)
 	}
 

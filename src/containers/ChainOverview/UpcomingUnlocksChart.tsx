@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { formatTooltipChartDate } from '~/components/ECharts/formatters'
+import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { CHART_COLORS } from '~/constants/colors'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formattedNum } from '~/utils'

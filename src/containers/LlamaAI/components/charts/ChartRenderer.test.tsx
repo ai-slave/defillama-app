@@ -23,7 +23,7 @@ vi.mock('~/auth', () => ({ useAuthContext: () => ({}) }))
 vi.mock('~/components/ChartExport/ChartPngExportButton', () => ({
 	ChartPngExportButton: () => <button type="button" data-testid="chart-export" />
 }))
-vi.mock('~/components/ECharts/MultiSeriesChart2', () => ({
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
 	default: ({ charts, hallmarks }: { charts?: Array<{ type: string }>; hallmarks?: [number, string][] }) => (
 		<div
 			data-testid="cartesian"

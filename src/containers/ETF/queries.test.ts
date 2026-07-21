@@ -74,13 +74,13 @@ describe('ETF API response to chart contract', () => {
 		expect(chart.dataset).toEqual({
 			dimensions: ['timestamp', 'Bitcoin', 'Ethereum'],
 			source: [
-				{ timestamp: Date.parse('2026-07-16T00:00:00Z'), Bitcoin: 100, Ethereum: 25, Solana: null },
-				{ timestamp: Date.parse('2026-07-17T00:00:00Z'), Bitcoin: -10, Ethereum: null, Solana: null }
+				[Date.parse('2026-07-16T00:00:00Z'), 100, 25],
+				[Date.parse('2026-07-17T00:00:00Z'), -10, null]
 			]
 		})
 		expect(chart.charts.map(({ name, encode }) => ({ name, encode }))).toEqual([
-			{ name: 'Bitcoin', encode: { x: 'timestamp', y: 'Bitcoin' } },
-			{ name: 'Ethereum', encode: { x: 'timestamp', y: 'Ethereum' } }
+			{ name: 'Bitcoin', encode: { x: 0, y: 1 } },
+			{ name: 'Ethereum', encode: { x: 0, y: 2 } }
 		])
 	})
 

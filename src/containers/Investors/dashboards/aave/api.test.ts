@@ -82,8 +82,8 @@ describe('Aave dashboard data contracts', () => {
 		expect(result).toEqual({
 			dimensions: ['timestamp', 'Borrow APY'],
 			source: [
-				{ timestamp: Date.parse('2026-01-01T00:00:00Z'), 'Borrow APY': 3 },
-				{ timestamp: Date.parse('2026-01-02T00:00:00Z'), 'Borrow APY': 4 }
+				[Date.parse('2026-01-01T00:00:00Z'), 3],
+				[Date.parse('2026-01-02T00:00:00Z'), 4]
 			]
 		})
 	})

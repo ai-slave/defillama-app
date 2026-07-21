@@ -1,4 +1,4 @@
-import type { TreemapValue } from '../types'
+import type { TreemapValue } from './types'
 
 type TreemapPathInfo = Array<{ name?: unknown }>
 

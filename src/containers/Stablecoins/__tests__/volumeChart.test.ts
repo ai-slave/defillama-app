@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildStablecoinVolumeChartPayload, groupStablecoinVolumeChartPayload } from '../volumeChart'
 
 describe('buildStablecoinVolumeChartPayload', () => {
-	it('formats total volume as a single MultiSeriesChart2 bar', () => {
+	it('formats total volume as a single MultiSeriesChart bar', () => {
 		const payload = buildStablecoinVolumeChartPayload(
 			[
 				[1609459200, 100],
@@ -13,8 +13,8 @@ describe('buildStablecoinVolumeChartPayload', () => {
 
 		expect(payload.dataset).toEqual({
 			source: [
-				{ timestamp: 1609459200000, Volume: 100 },
-				{ timestamp: 1609545600000, Volume: 125 }
+				[1609459200000, 100],
+				[1609545600000, 125]
 			],
 			dimensions: ['timestamp', 'Volume']
 		})
@@ -35,9 +35,9 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		)
 
 		expect(payload.dataset.source).toEqual([
-			{ timestamp: 1609459200000, Volume: 100 },
-			{ timestamp: 1609545600000, Volume: 0 },
-			{ timestamp: 1609632000000, Volume: 125 }
+			[1609459200000, 100],
+			[1609545600000, 0],
+			[1609632000000, 125]
 		])
 		expect(
 			buildStablecoinVolumeChartPayload(
@@ -60,12 +60,7 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		)
 
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'ethereum', 'tron', 'Others'])
-		expect(payload.dataset.source[1]).toEqual({
-			timestamp: 1609545600000,
-			ethereum: 120,
-			tron: 90,
-			Others: 90
-		})
+		expect(payload.dataset.source[1]).toEqual([1609545600000, 120, 90, 90])
 		expect(payload.showTotalInTooltip).toBe(true)
 		expect(payload.stacked).toBe(true)
 		expect(payload.charts.every((chart) => chart.large === false)).toBe(true)
@@ -82,8 +77,8 @@ describe('buildStablecoinVolumeChartPayload', () => {
 
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'tron', 'Others'])
 		expect(payload.dataset.source).toEqual([
-			{ timestamp: 1609459200000, tron: 0, Others: 105 },
-			{ timestamp: 1609545600000, tron: 10, Others: 0 }
+			[1609459200000, 0, 105],
+			[1609545600000, 10, 0]
 		])
 		expect(payload.showTotalInTooltip).toBe(true)
 		expect(payload.stacked).toBe(true)
@@ -100,7 +95,7 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		)
 
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'ethereum', 'tron'])
-		expect(payload.dataset.source).toEqual([{ timestamp: 1609459200000, ethereum: 100, tron: 80, Others: 0 }])
+		expect(payload.dataset.source).toEqual([[1609459200000, 100, 80]])
 	})
 
 	it('returns an empty breakdown payload when every bucket is empty', () => {
@@ -130,7 +125,7 @@ describe('buildStablecoinVolumeChartPayload', () => {
 
 		const grouped = groupStablecoinVolumeChartPayload(payload, 'yearly')
 
-		expect(grouped.dataset.source).toEqual([{ timestamp: 1609459200000, Volume: 225 }])
+		expect(grouped.dataset.source).toEqual([[1609459200000, 225]])
 		expect(grouped.charts[0].type).toBe('bar')
 	})
 
@@ -146,8 +141,8 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		const grouped = groupStablecoinVolumeChartPayload(payload, 'cumulative')
 
 		expect(grouped.dataset.source).toEqual([
-			{ timestamp: 1609459200000, Volume: 100 },
-			{ timestamp: 1609545600000, Volume: 125 }
+			[1609459200000, 100],
+			[1609545600000, 125]
 		])
 		expect(grouped.charts[0]).toMatchObject({ type: 'line', name: 'Volume' })
 		expect(grouped.charts[0]).not.toHaveProperty('barMinWidth')

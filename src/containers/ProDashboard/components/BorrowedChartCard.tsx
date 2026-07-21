@@ -1,13 +1,16 @@
 import { lazy, Suspense, useContext, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import { materializeZeroFilledDataset, type TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
+import {
+	materializeZeroFilledDataset,
+	type TimestampDataset
+} from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type {
-	IMultiSeriesChart2Props,
-	IPieChartProps,
-	MultiSeriesChart2Dataset,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
+	IMultiSeriesChartProps,
+	MultiSeriesChartDataset,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { buildProtocolV1ChartConfigs } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
 import { useSelectedValues } from '~/hooks/useSelectedValues'
@@ -24,16 +27,14 @@ import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 import { useBorrowedChartData } from './useBorrowedChartData'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 const EMPTY_DATASET: TimestampDataset = {
 	source: [],
 	dimensions: ['timestamp']
 }
-const EMPTY_CHARTS: MultiSeriesChart2SeriesConfig[] = []
+const EMPTY_CHARTS: MultiSeriesChartSeriesConfig[] = []
 const HIDDEN_EXPORTS = 'hidden' as const
 const DOLLAR_CHART_OPTIONS = {
 	...BORROWED_CHART_OPTIONS,
@@ -99,13 +100,16 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		let rows: (string | number)[][] = []
 		let filename = ''
 		const protocolSlug = protocol.toLowerCase().replace(/\s+/g, '-')
-		const buildRows = (dataset: MultiSeriesChart2Dataset, columnNames: string[]) => [
-			['Date', ...columnNames],
-			...dataset.source.map((row) => [
-				toNiceCsvDate((row.timestamp as number) / 1000),
-				...columnNames.map((name) => row[name] ?? '')
-			])
-		]
+		const buildRows = (dataset: MultiSeriesChartDataset, columnNames: string[]) => {
+			const indexes = columnNames.map((name) => dataset.dimensions.indexOf(name))
+			return [
+				['Date', ...columnNames],
+				...dataset.source.map((row) => [
+					toNiceCsvDate((row[0] as number) / 1000),
+					...indexes.map((index) => row[index] ?? '')
+				])
+			]
+		}
 
 		switch (chartType) {
 			case 'chainsBorrowed':
@@ -145,7 +149,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		switch (chartType) {
 			case 'chainsBorrowed':
 				return (
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						title=""
 						dataset={visibleDataset}
 						charts={visibleCharts}
@@ -159,7 +163,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 				)
 			case 'tokenBorrowedUsd':
 				return (
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						title=""
 						dataset={visibleDataset}
 						charts={visibleCharts}
@@ -185,7 +189,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 				)
 			case 'tokenBorrowedRaw':
 				return (
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						title=""
 						dataset={visibleDataset}
 						charts={visibleCharts}

@@ -1,4 +1,12 @@
-import { BarChart, CandlestickChart, LineChart } from 'echarts/charts'
+import type { EChartsOption, GridComponentOption, XAXisComponentOption, YAXisComponentOption } from 'echarts'
+import {
+	BarChart,
+	CandlestickChart,
+	LineChart,
+	type BarSeriesOption,
+	type CandlestickSeriesOption,
+	type LineSeriesOption
+} from 'echarts/charts'
 import {
 	DatasetComponent,
 	DataZoomComponent,
@@ -10,15 +18,21 @@ import {
 } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { oldBlue } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
-import { CHART_INSET, CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE, chartDataZoomSliderGeometry } from '../chartSpacing'
-import { useChartTheme } from '../chartTheme'
-import { formatChartEmphasisDate, formatTooltipChartDate, formatTooltipValue } from '../formatters'
-import type { ICandlestickChartProps } from '../types'
+import {
+	CHART_INSET,
+	CHART_LEGEND_RESERVE,
+	CHART_ZOOM_RESERVE,
+	chartDataZoomSliderGeometry
+} from '../shared/chartSpacing'
+import { useChartTheme } from '../shared/chartTheme'
+import { formatChartEmphasisDate, formatTooltipChartDate, formatTooltipValue } from '../shared/formatters'
+import { normalizeTooltipItems } from '../shared/tooltip'
+import type { ICandlestickChartProps } from './types'
 
 echarts.use([
 	CanvasRenderer,
@@ -45,13 +59,17 @@ const BASE_BOTTOM = CHART_ZOOM_RESERVE
 export default function CandleStickAndVolumeChart({
 	data,
 	height,
-	indicators = EMPTY_INDICATORS
+	indicators = EMPTY_INDICATORS,
+	onReady
 }: ICandlestickChartProps) {
 	const [isThemeDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const chartTheme = useChartTheme(isThemeDark)
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
+	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
+		onReady?.(instance)
+	})
 
 	// Stable resize listener - never re-attaches when dependencies change
 	useChartResize(chartRef, containerRef)
@@ -64,13 +82,13 @@ export default function CandleStickAndVolumeChart({
 		return 480 + panelTotalHeight
 	}, [panels.length])
 
-	const defaultChartSettings = useMemo(() => {
+	const defaultChartSettings = useMemo<EChartsOption>(() => {
 		const panelCount = panels.length
 		const volumeBottom = BASE_BOTTOM + panelCount * PANEL_HEIGHT
 		const priceBottom = volumeBottom + VOLUME_HEIGHT + 20
 		const showLegend = overlays.length > 0 || panels.length > 0
 
-		const grids: any[] = [
+		const grids: GridComponentOption[] = [
 			{
 				left: 48,
 				bottom: priceBottom,
@@ -85,10 +103,10 @@ export default function CandleStickAndVolumeChart({
 			}
 		]
 
-		const xAxes: any[] = [
+		const xAxes: XAXisComponentOption[] = [
 			{
 				type: 'time',
-				boundaryGap: false,
+				boundaryGap: [0, 0],
 				axisLine: {
 					onZero: false,
 					lineStyle: { color: chartTheme.text, opacity: 0.2 }
@@ -101,7 +119,7 @@ export default function CandleStickAndVolumeChart({
 			{
 				type: 'time',
 				gridIndex: 1,
-				boundaryGap: false,
+				boundaryGap: [0, 0],
 				axisLine: {
 					onZero: false,
 					lineStyle: { color: chartTheme.text, opacity: 0.2 }
@@ -114,7 +132,7 @@ export default function CandleStickAndVolumeChart({
 			}
 		]
 
-		const yAxes: any[] = [
+		const yAxes: YAXisComponentOption[] = [
 			{
 				scale: true,
 				splitArea: {
@@ -156,7 +174,7 @@ export default function CandleStickAndVolumeChart({
 			xAxes.push({
 				type: 'time',
 				gridIndex: gridIdx,
-				boundaryGap: false,
+				boundaryGap: [0, 0],
 				axisLine: { show: false },
 				axisTick: { show: false },
 				splitLine: { show: false },
@@ -180,6 +198,14 @@ export default function CandleStickAndVolumeChart({
 		}
 
 		const allAxisIndices = Array.from({ length: grids.length }, (_, i) => i)
+		const legendData = ['Volume']
+		for (const overlay of overlays) legendData.push(overlay.name)
+		for (const panel of panels) {
+			const panelName = panel.name.toLowerCase()
+			if (panel.values && panelName.includes('macd')) legendData.push('MACD', 'Signal', 'MACD Line')
+			else if (panel.values && panelName.includes('stoch')) legendData.push('%K', '%D')
+			else legendData.push(panel.name)
+		}
 
 		return {
 			graphic: {
@@ -195,6 +221,8 @@ export default function CandleStickAndVolumeChart({
 			},
 			legend: {
 				show: showLegend,
+				// Bollinger upper/lower series shape the band but are controlled by the middle-series legend item.
+				data: legendData,
 				top: CHART_INSET,
 				right: CHART_INSET,
 				textStyle: { color: chartTheme.text, fontSize: 11 }
@@ -205,19 +233,22 @@ export default function CandleStickAndVolumeChart({
 				className: 'defillama-echarts-tooltip',
 				backgroundColor: 'transparent',
 				borderWidth: 0,
-				formatter: (params) => {
-					const chartdate = formatTooltipChartDate(params[0].value[0], 'daily')
+				formatter: (params: unknown) => {
+					const items = normalizeTooltipItems(params)
+					const firstValues = Array.isArray(items[0]?.value) ? items[0].value : []
+					const chartdate = formatTooltipChartDate(Number(firstValues[0]), 'daily')
 					let vals = ''
-					for (const param of params) {
+					for (const param of items) {
+						const values = Array.isArray(param.value) ? param.value : []
 						if (param.componentSubType === 'candlestick') {
-							vals += `<li style="list-style:none">Open: <b>${formatTooltipValue(param.value[1], '$')}</b></li>`
-							vals += `<li style="list-style:none">High: <b>${formatTooltipValue(param.value[4], '$')}</b></li>`
-							vals += `<li style="list-style:none">Low: <b>${formatTooltipValue(param.value[3], '$')}</b></li>`
-							vals += `<li style="list-style:none">Close: <b>${formatTooltipValue(param.value[2], '$')}</b></li>`
+							vals += `<li style="list-style:none">Open: <b>${formatTooltipValue(Number(values[1]), '$')}</b></li>`
+							vals += `<li style="list-style:none">High: <b>${formatTooltipValue(Number(values[4]), '$')}</b></li>`
+							vals += `<li style="list-style:none">Low: <b>${formatTooltipValue(Number(values[3]), '$')}</b></li>`
+							vals += `<li style="list-style:none">Close: <b>${formatTooltipValue(Number(values[2]), '$')}</b></li>`
 						} else if (param.seriesName === 'Volume') {
-							vals += `<li style="list-style:none">${param.marker}Vol: <b>${formatTooltipValue(param.value[5], '$')}</b></li>`
+							vals += `<li style="list-style:none">${param.marker ?? ''}Vol: <b>${formatTooltipValue(Number(values[5]), '$')}</b></li>`
 						} else {
-							vals += `<li style="list-style:none">${param.marker}${param.seriesName}: <b>${formatTooltipValue(param.value[1], '')}</b></li>`
+							vals += `<li style="list-style:none">${param.marker ?? ''}${param.seriesName ?? ''}: <b>${formatTooltipValue(Number(values[1]), '')}</b></li>`
 						}
 					}
 					return chartdate + vals
@@ -248,13 +279,12 @@ export default function CandleStickAndVolumeChart({
 				}
 			]
 		}
-	}, [isSmall, isThemeDark, chartTheme, panels, overlays.length])
+	}, [isSmall, isThemeDark, chartTheme, panels, overlays])
 
 	const series = useMemo(() => {
-		const result: any[] = [
+		const result: Array<CandlestickSeriesOption | BarSeriesOption | LineSeriesOption> = [
 			{
 				type: 'candlestick',
-				symbol: 'none',
 				large: true,
 				itemStyle: {
 					color: chartTheme.up,
@@ -267,7 +297,6 @@ export default function CandleStickAndVolumeChart({
 			{
 				name: 'Volume',
 				type: 'bar',
-				symbol: 'none',
 				large: true,
 				xAxisIndex: 1,
 				yAxisIndex: 1,
@@ -285,8 +314,7 @@ export default function CandleStickAndVolumeChart({
 					type: 'line',
 					data: ind.values.map((v) => [v[0], v[1]?.upper]),
 					lineStyle: { color, opacity: 0.5, width: 1 },
-					symbol: 'none',
-					showInLegend: false
+					symbol: 'none'
 				})
 				result.push({
 					name: ind.name,
@@ -301,7 +329,6 @@ export default function CandleStickAndVolumeChart({
 					data: ind.values.map((v) => [v[0], v[1]?.lower]),
 					lineStyle: { color, opacity: 0.5, width: 1 },
 					symbol: 'none',
-					showInLegend: false,
 					areaStyle: { color, opacity: 0.1 }
 				})
 			} else {
@@ -389,10 +416,12 @@ export default function CandleStickAndVolumeChart({
 		if (!el) return
 		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		emitReady(instance)
 
 		return () => {
 			chartRef.current = null
 			instance.dispose()
+			emitReady(null)
 		}
 	}, [])
 
@@ -400,12 +429,13 @@ export default function CandleStickAndVolumeChart({
 		const instance = chartRef.current
 		if (!instance) return
 
+		const option: EChartsOption = {
+			...defaultChartSettings,
+			dataset: { source: data },
+			series
+		}
 		instance.setOption(
-			{
-				...defaultChartSettings,
-				dataset: { source: data },
-				series
-			},
+			option,
 			// When indicators change we change the number of grids/axes/series.
 			// ECharts merges arrays by index by default, which can leave stale layout components
 			// (making grid.left/right look like they "don't apply"). Replace-merge fixes that.

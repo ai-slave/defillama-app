@@ -1,4 +1,4 @@
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 
 interface IProtocolMetricTotals {
 	total24h: number | null
@@ -48,7 +48,7 @@ export interface IProtocolTaxonomyPageData {
 	effectiveCategory: string | null
 	chains: Array<{ label: string; to: string }>
 	chain: string
-	charts: { dataset: IMultiSeriesChart2Props['dataset']; charts: NonNullable<IMultiSeriesChart2Props['charts']> }
+	charts: { dataset: MultiSeriesChartDataset; charts: NonNullable<IMultiSeriesChartProps['charts']> }
 	fees7d: number | null
 	revenue7d: number | null
 	dexVolume7d: number | null

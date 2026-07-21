@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { toYearMonth } from '~/utils'
 import { parseExcludeParam } from '~/utils/routerQuery'
@@ -249,38 +249,37 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 		}
 		finalFundingRoundsByMonth.sort((a, b) => a[0] - b[0])
 
-		const monthlyInvestmentChart: { dataset: MultiSeriesChart2Dataset; charts: IMultiSeriesChart2Props['charts'] } = {
+		const monthlyInvestmentChart: { dataset: MultiSeriesChartDataset; charts: IMultiSeriesChartProps['charts'] } = {
 			dataset: {
-				source: finalMonthlyInvestment.map(([timestamp, value]) => ({ timestamp, 'Funding Amount': value })),
+				source: finalMonthlyInvestment,
 				dimensions: ['timestamp', 'Funding Amount']
 			},
 			charts: [
 				{
 					type: 'bar' as const,
 					name: 'Funding Amount',
-					encode: { x: 'timestamp', y: 'Funding Amount' },
+					encode: { x: 0, y: 1 },
 					color: CHART_COLORS[0],
 					stack: 'Funding Amount'
 				}
 			]
 		}
 
-		const fundingRoundsByMonthChart: { dataset: MultiSeriesChart2Dataset; charts: IMultiSeriesChart2Props['charts'] } =
-			{
-				dataset: {
-					source: finalFundingRoundsByMonth.map(([timestamp, value]) => ({ timestamp, 'Funding Rounds': value })),
-					dimensions: ['timestamp', 'Funding Rounds']
-				},
-				charts: [
-					{
-						type: 'bar' as const,
-						name: 'Funding Rounds',
-						encode: { x: 'timestamp', y: 'Funding Rounds' },
-						color: CHART_COLORS[0],
-						stack: 'Funding Rounds'
-					}
-				]
-			}
+		const fundingRoundsByMonthChart: { dataset: MultiSeriesChartDataset; charts: IMultiSeriesChartProps['charts'] } = {
+			dataset: {
+				source: finalFundingRoundsByMonth,
+				dimensions: ['timestamp', 'Funding Rounds']
+			},
+			charts: [
+				{
+					type: 'bar' as const,
+					name: 'Funding Rounds',
+					encode: { x: 0, y: 1 },
+					color: CHART_COLORS[0],
+					stack: 'Funding Rounds'
+				}
+			]
+		}
 
 		return {
 			selectedInvestors,

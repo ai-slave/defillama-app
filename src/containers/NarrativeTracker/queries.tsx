@@ -1,4 +1,3 @@
-import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { DAY_MS, findTimeSeriesPointNear, getFreshTimeSeriesCurrentPoint, toUnixMsTimestamp } from '~/utils/timeSeries'
 import { fetchCategoryCoinPrices, fetchCategoryInfo, fetchCategoryPerformance, fetchCoinInfo } from './api'
 import type { ICategoryInfoApiItem, PriceEntry, TimeSeriesEntry } from './api.types'
@@ -114,7 +113,7 @@ export function calculateCumulativePercentageChange(
 			if (timestamp < initial.timestamp || timestamp > current.timestamp) continue
 			let row = results.get(timestamp)
 			if (!row) {
-				row = createChartRecord<number | null>() as TimeSeriesEntry
+				row = {} as TimeSeriesEntry
 				row.date = Math.floor(timestamp / 1e3)
 				results.set(timestamp, row)
 			}

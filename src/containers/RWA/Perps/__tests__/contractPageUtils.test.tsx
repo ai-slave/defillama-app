@@ -220,19 +220,10 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			['Price', 'line', '#22C55E']
 		])
 
-		const marchRow = spec.dataset.source.find((row) => row.timestamp === Date.UTC(2026, 2, 1))
-		const aprilRow = spec.dataset.source.find((row) => row.timestamp === Date.UTC(2026, 3, 1))
-
-		expect(marchRow).toMatchObject({
-			'Open Interest': 120,
-			'Volume 24h': 30,
-			Price: 12
-		})
-		expect(aprilRow).toMatchObject({
-			'Open Interest': 140,
-			'Volume 24h': 30,
-			Price: 14
-		})
+		expect(spec.dataset.source).toEqual([
+			[Date.UTC(2026, 2, 1), 120, 30, 12],
+			[Date.UTC(2026, 3, 1), 140, 30, 14]
+		])
 	})
 
 	it('overwrites exact daily duplicates but sums every point in coarser volume buckets', () => {
@@ -261,12 +252,10 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		})
 
 		expect(daily.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 2, 1), 'Open Interest': 110, 'Volume 24h': 15, Price: 11 },
-			{ timestamp: Date.UTC(2026, 2, 15), 'Open Interest': 120, 'Volume 24h': 20, Price: 12 }
+			[Date.UTC(2026, 2, 1), 110, 15, 11],
+			[Date.UTC(2026, 2, 15), 120, 20, 12]
 		])
-		expect(monthly.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 2, 1), 'Open Interest': 120, 'Volume 24h': 45, Price: 12 }
-		])
+		expect(monthly.dataset.source).toEqual([[Date.UTC(2026, 2, 1), 120, 45, 12]])
 	})
 
 	it('keeps grouped volume as a bar series without offering cumulative accumulation', () => {
@@ -283,9 +272,9 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			['Funding Rate', 'line']
 		])
 
-		expect(spec.dataset.source).toMatchObject([
-			{ timestamp: Date.UTC(2026, 2, 1), 'Volume 24h': 30, Price: 12, 'Funding Rate': 2 },
-			{ timestamp: Date.UTC(2026, 3, 1), 'Volume 24h': 30, Price: 14, 'Funding Rate': 3 }
+		expect(spec.dataset.source).toEqual([
+			[Date.UTC(2026, 2, 1), 30, 12, 2],
+			[Date.UTC(2026, 3, 1), 30, 14, 3]
 		])
 	})
 
@@ -308,7 +297,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			{
 				name: 'Premium',
 				type: 'line',
-				encode: { x: 'timestamp', y: 'Premium' },
+				encode: { x: 0, y: 1 },
 				color: '#EF4444',
 				yAxisIndex: 2,
 				valueSymbol: '%',
@@ -317,7 +306,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			{
 				name: 'Volume 24h',
 				type: 'bar',
-				encode: { x: 'timestamp', y: 'Volume 24h' },
+				encode: { x: 0, y: 2 },
 				color: '#7DD3FC',
 				valueSymbol: '$',
 				hideAreaStyle: true
@@ -325,14 +314,14 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			{
 				name: 'Open Interest',
 				type: 'line',
-				encode: { x: 'timestamp', y: 'Open Interest' },
+				encode: { x: 0, y: 3 },
 				color: '#3B82F6',
 				valueSymbol: '$'
 			},
 			{
 				name: 'Price',
 				type: 'line',
-				encode: { x: 'timestamp', y: 'Price' },
+				encode: { x: 0, y: 4 },
 				color: '#22C55E',
 				yAxisIndex: 1,
 				valueSymbol: '$',
@@ -341,7 +330,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			{
 				name: 'Funding Rate',
 				type: 'line',
-				encode: { x: 'timestamp', y: 'Funding Rate' },
+				encode: { x: 0, y: 5 },
 				color: '#F59E0B',
 				yAxisIndex: 2,
 				valueSymbol: '%',
@@ -350,7 +339,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			{
 				name: 'Volume 24h',
 				type: 'bar',
-				encode: { x: 'timestamp', y: 'Volume 24h' },
+				encode: { x: 0, y: 6 },
 				color: '#7DD3FC',
 				valueSymbol: '$',
 				hideAreaStyle: true
@@ -365,7 +354,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			'Funding Rate',
 			'Volume 24h'
 		])
-		expect(spec.dataset.source[0]).toMatchObject({ 'Volume 24h': 30 })
+		expect(spec.dataset.source[0][6]).toBe(30)
 	})
 
 	it('falls back to market funding fields only when funding history is empty', () => {
@@ -382,10 +371,10 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			enabledMetrics: ['fundingRate', 'premium']
 		})
 
-		expect(fallbackSpec.dataset.source).toEqual([{ timestamp: Date.UTC(2026, 2, 1), 'Funding Rate': 1, Premium: 2 }])
+		expect(fallbackSpec.dataset.source).toEqual([[Date.UTC(2026, 2, 1), 1, 2]])
 		expect(historySpec.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 2, 1), 'Funding Rate': 0.1, Premium: 1 },
-			{ timestamp: Date.UTC(2026, 2, 2), 'Funding Rate': 0.2, Premium: 2 }
+			[Date.UTC(2026, 2, 1), 0.1, 1],
+			[Date.UTC(2026, 2, 2), 0.2, 2]
 		])
 	})
 
@@ -400,8 +389,8 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		expect(spec.charts.map((chart) => chart.name)).toEqual(['Funding Rate'])
 		expect(spec.dataset.dimensions).toEqual(['timestamp', 'Funding Rate'])
 		expect(spec.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 2, 1), 'Funding Rate': 0.1 },
-			{ timestamp: Date.UTC(2026, 2, 2), 'Funding Rate': 0.2 }
+			[Date.UTC(2026, 2, 1), 0.1],
+			[Date.UTC(2026, 2, 2), 0.2]
 		])
 	})
 
@@ -417,16 +406,9 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			enabledMetrics: ['openInterest', 'fundingRate']
 		})
 
-		expect(spec.dataset.source).toMatchObject([
-			{
-				timestamp: Date.UTC(2026, 2, 1),
-				'Open Interest': 120,
-				'Funding Rate': 0.2
-			},
-			{
-				timestamp: Date.UTC(2026, 3, 1),
-				'Open Interest': 140
-			}
+		expect(spec.dataset.source).toEqual([
+			[Date.UTC(2026, 2, 1), 120, 0.2],
+			[Date.UTC(2026, 3, 1), 140, undefined]
 		])
 		expect(marketPoints).toEqual(originalMarketPoints)
 		expect(fundingHistory).toEqual(originalFundingHistory)
@@ -451,8 +433,8 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		})
 
 		expect(spec.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 2, 1), 'Open Interest': 100 },
-			{ timestamp: Date.UTC(2026, 2, 2), 'Funding Rate': 0.1 }
+			[Date.UTC(2026, 2, 1), 100, undefined],
+			[Date.UTC(2026, 2, 2), undefined, 0.1]
 		])
 	})
 })

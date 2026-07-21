@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import type { ChartConfig } from './chartConfig'
+import type { QueryResult } from './exportResults'
 import type { PendingTable } from './TableChipRail'
 
 const STORAGE_KEY = 'sql-studio:tabs:v2'
@@ -437,11 +438,6 @@ More in the **Docs** panel: \`ASOF JOIN\` (nearest-prior temporal match), \`PIVO
 Delete this notebook whenever you're ready — a new one is always one click away.`
 		)
 	]
-}
-
-export interface QueryResult {
-	columns: Array<{ name: string; type: string }>
-	rows: Record<string, unknown>[]
 }
 
 export interface LastRunMeta {

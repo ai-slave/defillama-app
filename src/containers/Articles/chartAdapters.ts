@@ -96,6 +96,19 @@ function deriveLegacyChartType(series: ArticleChartSeries[]): string {
 	return best
 }
 
+function dedupeSeries(series: ArticleChartSeries[]): ArticleChartSeries[] {
+	const seen = new Set<string>()
+	const unique: ArticleChartSeries[] = []
+	for (const item of series) {
+		// This is the same identity enforced by the editor; persisted JSON still needs a runtime guard.
+		const key = `${item.entityType}:${item.slug}:${item.chartType}`
+		if (seen.has(key)) continue
+		seen.add(key)
+		unique.push(item)
+	}
+	return unique
+}
+
 export function validateArticleChartConfig(value: unknown): ArticleChartConfig | null {
 	if (!value || typeof value !== 'object') return null
 	const candidate = value as Partial<ArticleChartConfig> & Record<string, unknown>
@@ -126,7 +139,7 @@ export function validateArticleChartConfig(value: unknown): ArticleChartConfig |
 			}))
 	}
 
-	series = series.slice(0, MAX_SERIES)
+	series = dedupeSeries(series).slice(0, MAX_SERIES)
 	if (series.length === 0) return null
 
 	const range =

@@ -2,14 +2,13 @@ import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/ChartGroupingSelector'
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import { formatTooltipChartDate } from '~/components/ECharts/formatters'
 import type {
-	IMultiSeriesChart2Props,
-	MultiSeriesChart2Dataset,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
+	IMultiSeriesChartProps,
+	MultiSeriesChartDataset,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
+import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/shared/ChartGroupingSelector'
+import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { metricSeriesToggleStyles } from '~/ui/MetricChip'
@@ -35,9 +34,7 @@ import {
 } from './queryState'
 import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue, type ChartTooltipItem } from './tooltip'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 type Range = '30d' | '90d' | 'max'
 
@@ -74,7 +71,7 @@ function buildChartInputs(
 	showBars: boolean,
 	range: Range,
 	isDark: boolean
-): { dataset: MultiSeriesChart2Dataset; charts: MultiSeriesChart2SeriesConfig[] } {
+): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } {
 	const resolve = (key: ChartColorKey) => CHART_PALETTE[key][isDark ? 1 : 0]
 	const total = model.dates.length
 	const start = total - rangeCount(range, total)
@@ -85,19 +82,88 @@ function buildChartInputs(
 	const averageKeys = AVG_KEYS.filter((key) => avgEnabled[key])
 	const netLine = model.net && model.netLine && (enabled[model.netLine.key] ?? true) ? model.netLine : null
 	const enabledLines = model.lines.filter((line) => enabled[line.key] ?? false)
-	const averageHasValue: Record<AvgKey, boolean> = { '7d': false, '30d': false }
-	const rows = new Array<Record<string, number | null>>(total - start)
+	const hasValueInRange = (values: Array<number | null>) => {
+		for (let index = start; index < total; index++) if (values[index] != null) return true
+		return false
+	}
+	const visibleAverageKeys = averageKeys.filter((averageKey) => {
+		if (model.net && model.netLine) {
+			return hasValueInRange(averageKey === '7d' ? model.netLine.avg7 : model.netLine.avg30)
+		}
+		return enabledBars.some((bar) => hasValueInRange(averageKey === '7d' ? bar.avg7 : bar.avg30))
+	})
 
+	const dimensions: string[] = ['timestamp']
+	const charts: MultiSeriesChartSeriesConfig[] = []
+
+	for (const b of renderedBars) {
+		const dimensionIndex = dimensions.length
+		dimensions.push(b.label)
+		charts.push({
+			type: 'bar',
+			name: b.label,
+			encode: { x: 0, y: dimensionIndex },
+			stack: 'apy',
+			color: resolve(b.colorKey),
+			yAxisIndex: 0,
+			barMaxWidth: 16,
+			...(model.net ? { excludeFromTooltipTotal: true } : {})
+		})
+	}
+
+	for (const avgKey of visibleAverageKeys) {
+		const name = `${avgKey} avg`
+		const dimensionIndex = dimensions.length
+		dimensions.push(name)
+		charts.push({
+			type: 'line',
+			name,
+			encode: { x: 0, y: dimensionIndex },
+			color: AVG_COLORS[avgKey],
+			yAxisIndex: 0,
+			hideAreaStyle: true,
+			excludeFromTooltipTotal: true
+		})
+	}
+
+	if (netLine) {
+		const dimensionIndex = dimensions.length
+		dimensions.push(netLine.label)
+		charts.push({
+			type: 'line',
+			name: netLine.label,
+			encode: { x: 0, y: dimensionIndex },
+			color: resolve(netLine.colorKey),
+			yAxisIndex: 0,
+			hideAreaStyle: true
+		})
+	}
+
+	for (const line of enabledLines) {
+		const dimensionIndex = dimensions.length
+		dimensions.push(line.label)
+		charts.push({
+			type: 'line',
+			name: line.label,
+			encode: { x: 0, y: dimensionIndex },
+			color: resolve(line.colorKey),
+			yAxisIndex: 1,
+			valueSymbol: '$'
+		})
+	}
+
+	const rows = new Array<MultiSeriesChartDataset['source'][number]>(total - start)
 	for (let sourceIndex = start, rowIndex = 0; sourceIndex < total; sourceIndex++, rowIndex++) {
-		const row = createChartRow<number | null>(model.dates[sourceIndex])
+		const row = new Array<number | null>(dimensions.length)
+		row[0] = model.dates[sourceIndex]
+		let dimensionIndex = 1
 		for (const bar of renderedBars) {
 			const value = bar.values[sourceIndex]
-			row[bar.label] = value == null ? null : value * (bar.sign ?? 1)
+			row[dimensionIndex++] = value == null ? null : value * (bar.sign ?? 1)
 		}
-		for (const averageKey of averageKeys) {
-			const name = `${averageKey} avg`
+		for (const averageKey of visibleAverageKeys) {
 			if (model.net && model.netLine) {
-				row[name] = (averageKey === '7d' ? model.netLine.avg7 : model.netLine.avg30)[sourceIndex]
+				row[dimensionIndex++] = (averageKey === '7d' ? model.netLine.avg7 : model.netLine.avg30)[sourceIndex]
 			} else {
 				let sum = 0
 				let hasValue = false
@@ -108,69 +174,12 @@ function buildChartInputs(
 						hasValue = true
 					}
 				}
-				row[name] = hasValue ? sum : null
+				row[dimensionIndex++] = hasValue ? sum : null
 			}
-			averageHasValue[averageKey] ||= row[name] != null
 		}
-		if (netLine) row[netLine.label] = netLine.values[sourceIndex]
-		for (const line of enabledLines) row[line.label] = line.values[sourceIndex]
+		if (netLine) row[dimensionIndex++] = netLine.values[sourceIndex]
+		for (const line of enabledLines) row[dimensionIndex++] = line.values[sourceIndex]
 		rows[rowIndex] = row
-	}
-
-	const dimensions: string[] = ['timestamp']
-	const charts: MultiSeriesChart2SeriesConfig[] = []
-
-	for (const b of renderedBars) {
-		dimensions.push(b.label)
-		charts.push({
-			type: 'bar',
-			name: b.label,
-			encode: { x: 'timestamp', y: b.label },
-			stack: 'apy',
-			color: resolve(b.colorKey),
-			yAxisIndex: 0,
-			barMaxWidth: 16,
-			...(model.net ? { excludeFromTooltipTotal: true } : {})
-		})
-	}
-
-	for (const avgKey of averageKeys) {
-		if (!averageHasValue[avgKey]) continue
-		const name = `${avgKey} avg`
-		dimensions.push(name)
-		charts.push({
-			type: 'line',
-			name,
-			encode: { x: 'timestamp', y: name },
-			color: AVG_COLORS[avgKey],
-			yAxisIndex: 0,
-			hideAreaStyle: true,
-			excludeFromTooltipTotal: true
-		})
-	}
-
-	if (netLine) {
-		dimensions.push(netLine.label)
-		charts.push({
-			type: 'line',
-			name: netLine.label,
-			encode: { x: 'timestamp', y: netLine.label },
-			color: resolve(netLine.colorKey),
-			yAxisIndex: 0,
-			hideAreaStyle: true
-		})
-	}
-
-	for (const line of enabledLines) {
-		dimensions.push(line.label)
-		charts.push({
-			type: 'line',
-			name: line.label,
-			encode: { x: 'timestamp', y: line.label },
-			color: resolve(line.colorKey),
-			yAxisIndex: 1,
-			valueSymbol: '$'
-		})
 	}
 
 	return { dataset: { source: rows, dimensions }, charts }
@@ -343,7 +352,7 @@ export function PoolApyChart({
 	}, [kind, model.lines, poolId, range, widest.range])
 
 	const currentModel = widest.model
-	// MultiSeriesChart2 reapplies its ECharts model when these input references change, so keep
+	// MultiSeriesChart reapplies its ECharts model when these input references change, so keep
 	// the history transform and chart props stable across unrelated renders.
 	const { hasBreakdownControls, enabled, avgEnabled, showBars, dataset, charts } = useMemo(() => {
 		const hasBreakdownControls = currentModel.bars.length > 1
@@ -482,7 +491,7 @@ export function PoolApyChart({
 							</ChartPanelBodyFallback>
 						}
 					>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={dataset}
 							charts={charts}
 							chartOptions={chartOptions}

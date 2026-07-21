@@ -112,6 +112,9 @@ describe('useChartResize', () => {
 		)
 
 		const elements = container.querySelectorAll('div')
+		for (const element of elements) {
+			vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width: 320, height: 180 } as DOMRect)
+		}
 		expect(observerConstructCount).toBe(1)
 		expect(observerObserve).toHaveBeenCalledTimes(2)
 		observerCallback?.([resizeEntry(elements[1])], {} as ResizeObserver)
@@ -121,12 +124,12 @@ describe('useChartResize', () => {
 		expect(secondElementResize).toHaveBeenCalledOnce()
 
 		window.dispatchEvent(new Event('resize'))
-		expect(first.resize).not.toHaveBeenCalled()
-		expect(second.resize).toHaveBeenCalledOnce()
-
-		window.dispatchEvent(new Event('chartResize'))
 		expect(first.resize).toHaveBeenCalledOnce()
 		expect(second.resize).toHaveBeenCalledTimes(2)
+
+		window.dispatchEvent(new Event('chartResize'))
+		expect(first.resize).toHaveBeenCalledTimes(2)
+		expect(second.resize).toHaveBeenCalledTimes(3)
 
 		await act(async () => root.render(null))
 		expect(observerUnobserve).toHaveBeenCalledTimes(2)
@@ -149,6 +152,23 @@ describe('useChartResize', () => {
 		observerCallback?.([resizeEntry(element, 320, 180)], {} as ResizeObserver)
 		expect(instance.resize).toHaveBeenCalledOnce()
 		expect(onElementResize).toHaveBeenCalledOnce()
+	})
+
+	it('globally resizes visible observed charts but skips hidden containers', async () => {
+		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		await act(async () => root.render(<ChartHarness instance={instance} observeElement />))
+		const element = container.querySelector('div')!
+		const getBounds = vi.spyOn(element, 'getBoundingClientRect')
+
+		getBounds.mockReturnValue({ width: 0, height: 180 } as DOMRect)
+		window.dispatchEvent(new Event('resize'))
+		window.dispatchEvent(new Event('chartResize'))
+		expect(instance.resize).not.toHaveBeenCalled()
+
+		getBounds.mockReturnValue({ width: 320, height: 180 } as DOMRect)
+		window.dispatchEvent(new Event('resize'))
+		window.dispatchEvent(new Event('chartResize'))
+		expect(instance.resize).toHaveBeenCalledTimes(2)
 	})
 
 	it('moves observation to a chart element recreated after an empty render', async () => {

@@ -1,7 +1,6 @@
 import type { PngExportProfile } from '~/components/ChartExport/ChartPngExportButton'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
-import type { LlamaAICartesianDatasetRow } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import { toNiceCsvDate } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
 
@@ -47,12 +46,12 @@ function buildCartesianCsvRows(
 	if (adaptedChart.isTimeChart) {
 		const csvRows: CsvCell[][] = [['Timestamp', 'Date', ...seriesKeys]]
 		for (const row of rows) {
-			const timestamp = row.timestamp
+			const timestamp = row[0]
 			const seconds = normalizeTimestampToSeconds(timestamp)
 			csvRows.push([
 				toCsvCell(timestamp),
 				seconds != null ? toNiceCsvDate(seconds) : '',
-				...seriesKeys.map((key) => toCsvCell(row[key]))
+				...seriesKeys.map((_, index) => toCsvCell(row[index + 1]))
 			])
 		}
 		return csvRows
@@ -61,10 +60,7 @@ function buildCartesianCsvRows(
 	const categoryHeader = config.axes.x.label || 'Category'
 	const csvRows: CsvCell[][] = [[categoryHeader, ...seriesKeys]]
 	for (const row of rows) {
-		csvRows.push([
-			toCsvCell((row as LlamaAICartesianDatasetRow).category),
-			...seriesKeys.map((key) => toCsvCell(row[key]))
-		])
+		csvRows.push([toCsvCell(row[0]), ...seriesKeys.map((_, index) => toCsvCell(row[index + 1]))])
 	}
 	return csvRows
 }

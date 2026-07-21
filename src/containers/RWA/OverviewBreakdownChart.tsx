@@ -4,8 +4,11 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
-import { ChartGroupingSelector, DWMC_GROUPING_OPTIONS_LOWERCASE } from '~/components/ECharts/ChartGroupingSelector'
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import {
+	ChartGroupingSelector,
+	DWMC_GROUPING_OPTIONS_LOWERCASE
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { type ExcludeQueryKey } from '~/components/Select/types'
@@ -24,7 +27,7 @@ import {
 	isRwaTotalSeriesLabel,
 	sortRwaChartSeriesLabels
 } from './chartAggregation'
-import type { RWAChartDataset } from './chartDataset'
+import { toRwaMultiSeriesChartDataset, type RWAChartDataset } from './chartDataset'
 import { definitions } from './definitions'
 import { buildRWAFlowRotationChart, parseRWAFlowGrouping, type RWAFlowGrouping } from './flows'
 import { useRWAFlowOverviewSplitWithFilters } from './flows.hooks'
@@ -41,7 +44,7 @@ import {
 	type RWAFlowTreemapSizeRow
 } from './flowTreemap'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const RWAFlowTreemapChart = lazy(() =>
 	import('./FlowTreemapChart').then((module) => ({ default: module.RWAFlowTreemapChart }))
 )
@@ -58,6 +61,7 @@ const CHART_TYPE_OPTIONS: Array<{ key: RWAOverviewBreakdownChartType; label: str
 const VALID_CHART_TYPES = new Set<RWAChartMetricKey>(['activeMcap', 'onChainMcap', 'defiActiveTvl'])
 const DEFAULT_CHART_TYPE: RWAChartMetricKey = 'activeMcap'
 const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
+const EMPTY_MULTI_SERIES_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp'] }
 const STACKS_QUERY_KEY = 'stacks'
 const EXCLUDE_STACKS_QUERY_KEY: ExcludeQueryKey = 'excludeStacks'
 const MAX_VISIBLE_TIME_SERIES = 30
@@ -155,7 +159,7 @@ function fetchOverviewBreakdownDataset(request: RWAOverviewBreakdownRequest): Pr
 	return fetchJson<RWAChartDataset>(`/api/public/rwa/overview-breakdown?${searchParams.toString()}`)
 }
 
-export function buildOverviewBreakdownChartSeries(dimensions: string[]): Array<MultiSeriesChart2SeriesConfig> {
+export function buildOverviewBreakdownChartSeries(dimensions: string[]): Array<MultiSeriesChartSeriesConfig> {
 	const seriesDimensions = sortRwaChartSeriesLabels(dimensions.filter((dimension) => dimension !== 'timestamp'))
 	const colorSlots = getRwaChartSeriesColorSlots(seriesDimensions)
 
@@ -166,7 +170,7 @@ export function buildOverviewBreakdownChartSeries(dimensions: string[]): Array<M
 		return {
 			type: 'line',
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: dimensions.indexOf(name) },
 			color: CHART_COLORS[colorSlots[name] % CHART_COLORS.length],
 			...(reservedColorSlot !== null
 				? {
@@ -179,16 +183,17 @@ export function buildOverviewBreakdownChartSeries(dimensions: string[]): Array<M
 }
 
 export function getOverviewBreakdownChartDatasetForSelectedStacks(
-	dataset: MultiSeriesChart2Dataset,
+	dataset: MultiSeriesChartDataset,
 	selectedStacks: string[],
 	stackOptions: string[]
-): MultiSeriesChart2Dataset {
+): MultiSeriesChartDataset {
 	if (selectedStacks.length === 0 || selectedStacks.length === stackOptions.length) return dataset
+	const selectedDimensionIndexes = selectedStacks.map((stack) => dataset.dimensions.indexOf(stack))
 
 	for (let i = 0; i < dataset.source.length; i++) {
 		const row = dataset.source[i]
-		for (const stack of selectedStacks) {
-			if (row[stack] != null) {
+		for (const dimensionIndex of selectedDimensionIndexes) {
+			if (dimensionIndex >= 0 && row[dimensionIndex] != null) {
 				return {
 					...dataset,
 					source: dataset.source.slice(i)
@@ -252,11 +257,11 @@ export function RWAOverviewBreakdownChart({
 		() => (isFlowChart && !isFlowHeatmap ? buildRWAFlowRotationChart(flowData ?? [], flowFrequency) : null),
 		[flowData, flowFrequency, isFlowChart, isFlowHeatmap]
 	)
-	const dataset = isFlowChart
-		? (flowChart?.dataset ?? EMPTY_DATASET)
-		: isDefaultState
-			? initialChartDataset
-			: (data ?? EMPTY_DATASET)
+	const rawDataset = isDefaultState ? initialChartDataset : (data ?? EMPTY_DATASET)
+	const dataset = useMemo(
+		() => (isFlowChart ? (flowChart?.dataset ?? EMPTY_MULTI_SERIES_DATASET) : toRwaMultiSeriesChartDataset(rawDataset)),
+		[flowChart?.dataset, isFlowChart, rawDataset]
+	)
 	const showLoadingState = isFlowChart ? isFlowLoading : !isDefaultState && isLoading
 	const chartError = isFlowChart ? flowError : error
 	const flowTreemapWindow = useMemo(
@@ -442,7 +447,7 @@ export function RWAOverviewBreakdownChart({
 							/>
 						</>
 					) : (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={selectedDataset}
 							charts={chartSeries}
 							hideDefaultLegend={false}

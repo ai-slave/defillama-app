@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
 import {
@@ -18,11 +19,11 @@ import { InlineStatStrip } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
-type MultiSeriesCharts = NonNullable<IMultiSeriesChart2Props['charts']>
+type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
 
 function MultiSeriesChartCard({
 	title,
@@ -37,7 +38,7 @@ function MultiSeriesChartCard({
 }: {
 	title: string
 	filterLabel: string
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 	valueSymbol?: string
 	hideDefaultLegend?: boolean
@@ -78,7 +79,7 @@ function MultiSeriesChartCard({
 			}
 		>
 			<React.Suspense fallback={cexChartFallback}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
 					valueSymbol={valueSymbol}

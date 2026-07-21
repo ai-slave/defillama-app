@@ -1,3 +1,4 @@
+import type { EChartsOption } from 'echarts'
 import { BarChart } from 'echarts/charts'
 import { GridComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
@@ -84,65 +85,63 @@ export function BarSparkline({ data, className, height = 48, focusable, maxBars 
 		const barMaxWidth = barCount <= 7 ? 20 : barCount <= 15 ? 14 : barCount <= 30 ? 8 : barCount <= 60 ? 5 : 3
 		const barCategoryGap = barCount <= 7 ? '25%' : barCount <= 15 ? '35%' : barCount <= 30 ? '40%' : '50%'
 
-		instance.setOption(
-			{
-				grid: {
-					left: 0,
-					right: 0,
-					top: 2,
-					bottom: 0,
-					containLabel: false
+		const option: EChartsOption = {
+			grid: {
+				left: 0,
+				right: 0,
+				top: 2,
+				bottom: 0,
+				containLabel: false
+			},
+			animation: false,
+			tooltip: {
+				show: false
+			},
+			xAxis: {
+				type: 'category',
+				data: chartData.xAxisData,
+				axisLine: { show: false },
+				axisTick: { show: false },
+				axisLabel: { show: false },
+				splitLine: { show: false }
+			},
+			yAxis: {
+				type: 'value',
+				axisLine: { show: false },
+				axisTick: { show: false },
+				axisLabel: { show: false },
+				splitLine: { show: false },
+				min: (value) => {
+					if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
+					if (value.min === value.max) {
+						const pad = Math.abs(value.min) * 0.05 || 1
+						return value.min - pad
+					}
+					const pad = (value.max - value.min) * 0.08
+					const paddedMin = value.min - pad
+					return value.min < 0 ? paddedMin : Math.max(0, paddedMin)
 				},
-				animation: false,
-				tooltip: {
-					show: false
-				},
-				xAxis: {
-					type: 'category',
-					data: chartData.xAxisData,
-					axisLine: { show: false },
-					axisTick: { show: false },
-					axisLabel: { show: false },
-					splitLine: { show: false }
-				},
-				yAxis: {
-					type: 'value',
-					axisLine: { show: false },
-					axisTick: { show: false },
-					axisLabel: { show: false },
-					splitLine: { show: false },
-					min: (value) => {
-						if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
-						if (value.min === value.max) {
-							const pad = Math.abs(value.min) * 0.05 || 1
-							return value.min - pad
-						}
-						const pad = (value.max - value.min) * 0.08
-						const paddedMin = value.min - pad
-						return value.min < 0 ? paddedMin : Math.max(0, paddedMin)
-					},
-					max: (value) => {
-						if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
-						if (value.min === value.max) {
-							const pad = Math.abs(value.max) * 0.05 || 1
-							return value.max + pad
-						}
-						const pad = (value.max - value.min) * 0.08
+				max: (value) => {
+					if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
+					if (value.min === value.max) {
+						const pad = Math.abs(value.max) * 0.05 || 1
 						return value.max + pad
 					}
-				},
-				series: [
-					{
-						type: 'bar',
-						data: chartData.bars,
-						barMaxWidth,
-						barMinWidth: 4,
-						barCategoryGap
-					}
-				]
+					const pad = (value.max - value.min) * 0.08
+					return value.max + pad
+				}
 			},
-			true
-		)
+			series: [
+				{
+					type: 'bar',
+					data: chartData.bars,
+					barMaxWidth,
+					barMinWidth: 4,
+					barCategoryGap
+				}
+			]
+		}
+		instance.setOption(option, true)
 	}, [chartData])
 
 	if (!hasData) {

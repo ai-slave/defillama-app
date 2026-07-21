@@ -1,4 +1,4 @@
-import type { ICandlestickChartProps } from '~/components/ECharts/types'
+import type { ICandlestickChartProps } from '~/components/ECharts/CandlestickChart/types'
 import type { ChartConfiguration, ChartDataSeries } from '~/containers/LlamaAI/types'
 
 export function adaptCandlestickData(

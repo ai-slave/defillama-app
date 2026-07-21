@@ -1,14 +1,11 @@
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { getNDistinctColors } from '~/utils'
 import type { RawNftMarketplaceVolume } from './api.types'
 
-type ChartRow = { timestamp: number } & Record<string, number>
-
 type DailyMarketplaceValues = {
 	timestamp: number
-	volume: ChartRow
-	trades: ChartRow
+	volume: Map<string, number>
+	trades: Map<string, number>
 	volumeTotal: number
 	tradeTotal: number
 }
@@ -16,12 +13,12 @@ type DailyMarketplaceValues = {
 const MAX_MARKETPLACE_SERIES = 30
 
 export type NFTMarketplaceChartData = {
-	absoluteVolumeDataset: MultiSeriesChart2Dataset
-	relativeVolumeDataset: MultiSeriesChart2Dataset
-	absoluteTradesDataset: MultiSeriesChart2Dataset
-	relativeTradesDataset: MultiSeriesChart2Dataset
-	absoluteBarCharts: MultiSeriesChart2SeriesConfig[]
-	relativeAreaCharts: MultiSeriesChart2SeriesConfig[]
+	absoluteVolumeDataset: MultiSeriesChartDataset
+	relativeVolumeDataset: MultiSeriesChartDataset
+	absoluteTradesDataset: MultiSeriesChartDataset
+	relativeTradesDataset: MultiSeriesChartDataset
+	absoluteBarCharts: MultiSeriesChartSeriesConfig[]
+	relativeAreaCharts: MultiSeriesChartSeriesConfig[]
 }
 
 function roundToThreeDecimals(value: number): number {
@@ -34,16 +31,8 @@ function getNumericDominance(value: number, total: number): number {
 	return Math.round(ratio * 10_000) / 100
 }
 
-function setMarketplaceValue(row: ChartRow, name: string, value: number) {
-	if (name === '__proto__') {
-		Object.defineProperty(row, name, { value, enumerable: true, configurable: true, writable: true })
-	} else {
-		row[name] = value
-	}
-}
-
 export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]): NFTMarketplaceChartData {
-	const days: DailyMarketplaceValues[] = []
+	const daysByTimestamp = new Map<number, DailyMarketplaceValues>()
 	const marketplaces: string[] = []
 	const seenMarketplaces = new Set<string>()
 	const volumeByMarketplace = new Map<string, number>()
@@ -53,22 +42,22 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 		const volumeValue = entry.sum ?? 0
 		// Preserve the legacy second-level dataset timestamp while parsing each API date only once.
 		const timestamp = Math.floor(parsedTimestamp / 1_000) * 1_000
-		let day = days[days.length - 1]
-		if (day?.timestamp !== timestamp) {
+		let day = daysByTimestamp.get(timestamp)
+		if (!day) {
 			day = {
 				timestamp,
-				volume: createChartRow<number>(timestamp),
-				trades: createChartRow<number>(timestamp),
+				volume: new Map(),
+				trades: new Map(),
 				volumeTotal: 0,
 				tradeTotal: 0
 			}
-			days.push(day)
+			daysByTimestamp.set(timestamp, day)
 		}
 
 		day.volumeTotal += volumeValue
 		day.tradeTotal += entry.count
-		setMarketplaceValue(day.volume, entry.exchangeName, roundToThreeDecimals(volumeValue))
-		setMarketplaceValue(day.trades, entry.exchangeName, roundToThreeDecimals(entry.count))
+		day.volume.set(entry.exchangeName, (day.volume.get(entry.exchangeName) ?? 0) + roundToThreeDecimals(volumeValue))
+		day.trades.set(entry.exchangeName, (day.trades.get(entry.exchangeName) ?? 0) + roundToThreeDecimals(entry.count))
 		volumeByMarketplace.set(entry.exchangeName, (volumeByMarketplace.get(entry.exchangeName) ?? 0) + volumeValue)
 
 		if (!seenMarketplaces.has(entry.exchangeName)) {
@@ -76,6 +65,7 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 			marketplaces.push(entry.exchangeName)
 		}
 	}
+	const days = Array.from(daysByTimestamp.values()).sort((a, b) => a.timestamp - b.timestamp)
 
 	let displayedMarketplaces = marketplaces
 	let omittedMarketplaceSet: Set<string> | null = null
@@ -89,37 +79,41 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 	}
 
 	const dimensions = ['timestamp', ...displayedMarketplaces]
-	const absoluteVolumeSource = new Array<ChartRow>(days.length)
-	const relativeVolumeSource = new Array<ChartRow>(days.length)
-	const absoluteTradesSource = new Array<ChartRow>(days.length)
-	const relativeTradesSource = new Array<ChartRow>(days.length)
+	const absoluteVolumeSource = new Array<MultiSeriesChartDataset['source'][number]>(days.length)
+	const relativeVolumeSource = new Array<MultiSeriesChartDataset['source'][number]>(days.length)
+	const absoluteTradesSource = new Array<MultiSeriesChartDataset['source'][number]>(days.length)
+	const relativeTradesSource = new Array<MultiSeriesChartDataset['source'][number]>(days.length)
 
 	for (let i = 0; i < days.length; i++) {
 		const day = days[i]
-		const absoluteVolume = createChartRow<number>(day.timestamp)
-		const absoluteTrades = createChartRow<number>(day.timestamp)
-		const relativeVolume = createChartRow<number>(day.timestamp)
-		const relativeTrades = createChartRow<number>(day.timestamp)
+		const absoluteVolume = new Array<number>(dimensions.length)
+		const absoluteTrades = new Array<number>(dimensions.length)
+		const relativeVolume = new Array<number>(dimensions.length)
+		const relativeTrades = new Array<number>(dimensions.length)
+		absoluteVolume[0] = day.timestamp
+		absoluteTrades[0] = day.timestamp
+		relativeVolume[0] = day.timestamp
+		relativeTrades[0] = day.timestamp
 		let otherVolume = 0
 		let otherTrades = 0
 		if (omittedMarketplaceSet) {
-			for (const marketplace in day.volume) {
+			for (const [marketplace, volumeValue] of day.volume) {
 				if (!omittedMarketplaceSet.has(marketplace)) continue
-				otherVolume += day.volume[marketplace]
-				otherTrades += day.trades[marketplace] ?? 0
+				otherVolume += volumeValue
+				otherTrades += day.trades.get(marketplace) ?? 0
 			}
 		}
 
 		for (let j = 0; j < displayedMarketplaces.length; j++) {
 			const marketplace = displayedMarketplaces[j]
 			const volumeValue =
-				marketplace === 'Others' && omittedMarketplaceSet ? otherVolume : (day.volume[marketplace] ?? 0)
+				marketplace === 'Others' && omittedMarketplaceSet ? otherVolume : (day.volume.get(marketplace) ?? 0)
 			const tradeValue =
-				marketplace === 'Others' && omittedMarketplaceSet ? otherTrades : (day.trades[marketplace] ?? 0)
-			setMarketplaceValue(absoluteVolume, marketplace, volumeValue)
-			setMarketplaceValue(absoluteTrades, marketplace, tradeValue)
-			setMarketplaceValue(relativeVolume, marketplace, getNumericDominance(volumeValue, day.volumeTotal))
-			setMarketplaceValue(relativeTrades, marketplace, getNumericDominance(tradeValue, day.tradeTotal))
+				marketplace === 'Others' && omittedMarketplaceSet ? otherTrades : (day.trades.get(marketplace) ?? 0)
+			absoluteVolume[j + 1] = volumeValue
+			absoluteTrades[j + 1] = tradeValue
+			relativeVolume[j + 1] = getNumericDominance(volumeValue, day.volumeTotal)
+			relativeTrades[j + 1] = getNumericDominance(tradeValue, day.tradeTotal)
 		}
 
 		absoluteVolumeSource[i] = absoluteVolume
@@ -129,15 +123,15 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 	}
 
 	const colors = getNDistinctColors(displayedMarketplaces.length)
-	const absoluteBarCharts = new Array<MultiSeriesChart2SeriesConfig>(displayedMarketplaces.length)
-	const relativeAreaCharts = new Array<MultiSeriesChart2SeriesConfig>(displayedMarketplaces.length)
+	const absoluteBarCharts = new Array<MultiSeriesChartSeriesConfig>(displayedMarketplaces.length)
+	const relativeAreaCharts = new Array<MultiSeriesChartSeriesConfig>(displayedMarketplaces.length)
 	for (let i = 0; i < displayedMarketplaces.length; i++) {
 		const name = displayedMarketplaces[i]
 		const color = name === 'Others' ? '#AAAAAA' : colors[i]
 		absoluteBarCharts[i] = {
 			type: 'bar',
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: i + 1 },
 			stack: 'stackA',
 			color,
 			large: false
@@ -145,7 +139,7 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 		relativeAreaCharts[i] = {
 			type: 'line',
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: i + 1 },
 			color
 		}
 	}

@@ -1,4 +1,14 @@
+import type { LineSeriesOption } from 'echarts/charts'
+import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
+import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
+import type {
+	CanonicalMultiSeriesChartDataset,
+	MultiSeriesChartOptions,
+	MultiSeriesChartSeriesConfig,
+	MultiSeriesYAxisOption
+} from '~/components/ECharts/MultiSeriesChart/types'
+import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SPLIT_TOP_N, type ChartConfig } from '../../chartConfig'
@@ -6,39 +16,28 @@ import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
 import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { pivotRowsForSplit } from '../pivot'
-import { formatterFromConfig } from '../valueFormatters'
+import { escapeSqlChartHtml, readSqlNumber, readSqlTimestampMs } from '../rowValues'
+import { makeValueFormatter, type ValueFormatter } from '../valueFormatters'
 
-type ChartSeriesEntry = {
-	data: Array<[number | string, number | null]>
-	type: 'line' | 'bar'
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+
+type SqlSeriesSpec = {
 	name: string
+	sourceIndex: number
+	type: 'line' | 'bar'
 	color: string
 	stack?: string
 	yAxisIndex?: number
-	areaStyle?: unknown
+	areaStyle?: LineSeriesOption['areaStyle']
 }
 
-interface IMultiSeriesChartShim {
-	series: ChartSeriesEntry[]
-	xAxisType?: 'time' | 'category'
-	height?: string
-	hideDataZoom?: boolean
-	valueSymbol?: string
-	yAxisSymbols?: string[]
-	chartOptions?: Record<string, unknown>
-	title?: string
-	onReady?: (instance: any) => void
-}
-
-const MultiSeriesChart = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart')
-) as unknown as React.FC<IMultiSeriesChartShim>
+const SQL_X_DIMENSION = 'x'
 
 interface LineBarChartProps {
 	config: ChartConfig
 	result: QueryResult
 	classified: ClassifiedColumn[]
-	onReady?: (instance: any) => void
+	onReady?: (instance: echarts.ECharts | null) => void
 	forceType?: 'line' | 'bar'
 	forceArea?: boolean
 	forceStack?: string
@@ -55,67 +54,71 @@ export function LineBarChart({
 }: LineBarChartProps) {
 	const xColumn = classified.find((c) => c.name === config.xCol) ?? null
 	const xAxisType: 'time' | 'category' = xColumn?.coarse === 'date' ? 'time' : 'category'
-	const formatter = formatterFromConfig(config)
+	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 
-	const { series, truncatedCount } = useMemo<{ series: ChartSeriesEntry[]; truncatedCount: number }>(() => {
-		if (!xColumn) return { series: [], truncatedCount: 0 }
+	const { chartModel, truncatedCount } = useMemo(() => {
+		if (!xColumn)
+			return {
+				chartModel: { dataset: { dimensions: [], source: [] }, charts: [] },
+				truncatedCount: 0
+			}
 
 		const areaOpacity = forceStack ? 0.55 : 0.35
+		const colorBySeries = new Map(Object.entries(config.seriesColors))
+		const kindBySeries = new Map(Object.entries(config.seriesKinds))
+		const rightAxisSeries = new Set(config.rightAxisCols)
 
 		if (config.splitByCol && config.yCols.length === 1) {
 			const yCol = config.yCols[0]
-			const pivot = pivotRowsForSplit(result.rows, xColumn.name, yCol, config.splitByCol, { topN: SPLIT_TOP_N })
+			const yColumn = classified.find((column) => column.name === yCol)
+			const splitColumn = classified.find((column) => column.name === config.splitByCol)
+			if (!yColumn || !splitColumn) {
+				return { chartModel: { dataset: { dimensions: [], source: [] }, charts: [] }, truncatedCount: 0 }
+			}
+			const pivot = pivotRowsForSplit(result.rows, xColumn.index, yColumn.index, splitColumn.index, {
+				topN: SPLIT_TOP_N
+			})
 			let rows = pivot.rows
-			if (config.stackMode === 'expand') rows = normalizeRowsToPercent(rows, pivot.keys)
-			const base = pivot.keys.map<ChartSeriesEntry>((key, i) => ({
+			if (config.stackMode === 'expand') rows = normalizeRowsToPercent(rows)
+			const specs = pivot.keys.map<SqlSeriesSpec>((key, i) => ({
 				name: key,
-				type: forceType ?? seriesKind(config, key, 'line'),
-				color: config.seriesColors[key] ?? CHART_COLORS[i % CHART_COLORS.length],
-				stack: resolveStack(config, forceStack, key),
-				yAxisIndex: config.rightAxisCols.includes(key) ? 1 : undefined,
-				areaStyle: forceArea ? { opacity: areaOpacity } : undefined,
-				data: rows.map((row) => {
-					const xVal = toXValue(row[xColumn.name], xAxisType)
-					const yVal = toYValue(row[key])
-					return [xVal ?? '', yVal] as [number | string, number | null]
-				})
+				sourceIndex: i + 1,
+				type: forceType ?? seriesKind(config.chartType, kindBySeries.get(key), 'line'),
+				color: colorBySeries.get(key) ?? CHART_COLORS[i % CHART_COLORS.length],
+				stack: resolveStack(config.stackMode, forceStack, rightAxisSeries.has(key)),
+				yAxisIndex: rightAxisSeries.has(key) ? 1 : undefined,
+				areaStyle: forceArea ? { opacity: areaOpacity } : undefined
 			}))
-			return { series: base, truncatedCount: pivot.truncatedCount }
+			return {
+				chartModel: buildSqlChartModel(rows, 0, xAxisType, specs, xAxisType === 'category'),
+				truncatedCount: pivot.truncatedCount
+			}
 		}
 
-		const rawRows =
-			config.stackMode === 'expand' ? normalizeWideRowsToPercent(result.rows, xColumn.name, config.yCols) : result.rows
+		const valueIndexes = config.yCols.map((name) => classified.find((column) => column.name === name)?.index ?? -1)
+		const rawRows = config.stackMode === 'expand' ? normalizeWideRowsToPercent(result.rows, valueIndexes) : result.rows
 
-		const base = config.yCols.map<ChartSeriesEntry>((yName, i) => {
-			const data: Array<[number | string, number | null]> = []
-			for (const row of rawRows) {
-				const xVal = toXValue(row[xColumn.name], xAxisType)
-				if (xVal == null) continue
-				const yVal = toYValue(row[yName])
-				data.push([xVal, yVal])
-			}
+		const specs = config.yCols.map<SqlSeriesSpec>((yName, i) => {
 			return {
 				name: yName,
-				type: forceType ?? seriesKind(config, yName, 'line'),
-				color: config.seriesColors[yName] ?? CHART_COLORS[i % CHART_COLORS.length],
-				stack: resolveStack(config, forceStack, yName),
-				yAxisIndex: config.rightAxisCols.includes(yName) ? 1 : undefined,
-				areaStyle: forceArea ? { opacity: areaOpacity } : undefined,
-				data
+				sourceIndex: valueIndexes[i],
+				type: forceType ?? seriesKind(config.chartType, kindBySeries.get(yName), 'line'),
+				color: colorBySeries.get(yName) ?? CHART_COLORS[i % CHART_COLORS.length],
+				stack: resolveStack(config.stackMode, forceStack, rightAxisSeries.has(yName)),
+				yAxisIndex: rightAxisSeries.has(yName) ? 1 : undefined,
+				areaStyle: forceArea ? { opacity: areaOpacity } : undefined
 			}
 		})
-		return { series: base, truncatedCount: 0 }
-	}, [result, config, xColumn, xAxisType, forceType, forceArea, forceStack])
+		return {
+			chartModel: buildSqlChartModel(rawRows, xColumn.index, xAxisType, specs),
+			truncatedCount: 0
+		}
+	}, [result, config, classified, xColumn, xAxisType, forceType, forceArea, forceStack])
 
 	const chartOptions = useMemo(
-		() => buildChartOptions(config, series, xAxisType, formatter),
-		[config, series, xAxisType, formatter]
+		() => buildChartOptions(config, xAxisType, formatter, truncatedCount > 0 ? 'Other' : null),
+		[config, xAxisType, formatter, truncatedCount]
 	)
-
-	const yAxisSymbols = useMemo(() => {
-		if (config.rightAxisCols.length === 0) return undefined
-		return [formatter.valueSymbol, formatter.valueSymbol]
-	}, [config.rightAxisCols.length, formatter.valueSymbol])
 
 	if (!xColumn) return null
 
@@ -129,14 +132,15 @@ export function LineBarChart({
 				}
 			>
 				<MultiSeriesChart
-					series={series}
-					xAxisType={xAxisType}
+					dataset={chartModel.dataset}
+					charts={chartModel.charts}
 					height={SQL_CHART_HEIGHT}
 					valueSymbol={formatter.valueSymbol}
-					yAxisSymbols={yAxisSymbols}
-					hideDataZoom={series.every((s) => s.data.length < 2)}
+					hideDataZoom={chartModel.dataset.source.length < 2}
 					chartOptions={chartOptions}
 					onReady={onReady}
+					hideDefaultLegend={false}
+					exportButtons="hidden"
 				/>
 			</Suspense>
 			{truncatedCount > 0 ? (
@@ -148,151 +152,156 @@ export function LineBarChart({
 	)
 }
 
-function seriesKind(config: ChartConfig, name: string, fallback: 'line' | 'bar'): 'line' | 'bar' {
-	if (config.seriesKinds[name]) return config.seriesKinds[name]
-	if (config.chartType === 'bar') return 'bar'
-	if (config.chartType === 'line') return 'line'
+export function buildSqlChartModel(
+	rows: ReadonlyArray<readonly unknown[]>,
+	xIndex: number,
+	xAxisType: 'time' | 'category',
+	series: SqlSeriesSpec[],
+	preserveNullCategory = false
+): { dataset: CanonicalMultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } {
+	const source: CanonicalMultiSeriesChartDataset['source'] = []
+	for (const input of rows) {
+		const parsedX = toXValue(input[xIndex], xAxisType)
+		if (parsedX == null && !(preserveNullCategory && xAxisType === 'category')) continue
+		const inputX = parsedX ?? ''
+		const row = new Array<number | string | null>(series.length + 1)
+		row[0] = inputX
+		for (let i = 0; i < series.length; i++) {
+			row[i + 1] = toYValue(input[series[i].sourceIndex])
+		}
+		source.push(row)
+	}
+
+	const charts = new Array<MultiSeriesChartSeriesConfig>(series.length)
+	for (let i = 0; i < series.length; i++) {
+		const item = series[i]
+		const { sourceIndex: _sourceIndex, ...chart } = item
+		charts[i] = {
+			...chart,
+			encode: { x: 0, y: i + 1 }
+		}
+	}
+	return { dataset: { dimensions: [SQL_X_DIMENSION, ...series.map((item) => item.name)], source }, charts }
+}
+
+function seriesKind(
+	chartType: ChartConfig['chartType'],
+	configuredKind: 'line' | 'bar' | undefined,
+	fallback: 'line' | 'bar'
+): 'line' | 'bar' {
+	if (configuredKind) return configuredKind
+	if (chartType === 'bar') return 'bar'
+	if (chartType === 'line') return 'line'
 	return fallback
 }
 
-function normalizeRowsToPercent(
-	rows: Array<Record<string, number | string | null>>,
-	keys: string[]
-): Array<Record<string, number | string | null>> {
+function normalizeRowsToPercent(rows: Array<Array<number | string | null>>): Array<Array<number | string | null>> {
 	return rows.map((row) => {
 		let total = 0
-		for (const k of keys) {
-			const v = row[k]
+		for (let index = 1; index < row.length; index++) {
+			const v = row[index]
 			if (typeof v === 'number' && Number.isFinite(v)) total += v
 		}
 		if (total <= 0) return row
-		const out: Record<string, number | string | null> = { ...row }
-		for (const k of keys) {
-			const v = row[k]
-			out[k] = typeof v === 'number' && Number.isFinite(v) ? v / total : null
+		const out = row.slice()
+		for (let index = 1; index < row.length; index++) {
+			const v = row[index]
+			out[index] = typeof v === 'number' && Number.isFinite(v) ? v / total : null
 		}
 		return out
 	})
 }
 
-function normalizeWideRowsToPercent(
-	rows: Record<string, unknown>[],
-	xCol: string,
-	yCols: string[]
-): Record<string, unknown>[] {
+function normalizeWideRowsToPercent(rows: unknown[][], valueIndexes: number[]): unknown[][] {
 	return rows.map((row) => {
 		let total = 0
-		for (const k of yCols) {
-			const n = toYValue(row[k])
+		for (const index of valueIndexes) {
+			const n = toYValue(row[index])
 			if (n != null) total += n
 		}
 		if (total <= 0) return row
-		const out: Record<string, unknown> = { ...row }
-		for (const k of yCols) {
-			const n = toYValue(row[k])
-			out[k] = n == null ? null : n / total
+		const out = row.slice()
+		for (const index of valueIndexes) {
+			const n = toYValue(row[index])
+			out[index] = n == null ? null : n / total
 		}
-		out[xCol] = row[xCol]
 		return out
 	})
 }
 
-function resolveStack(config: ChartConfig, forceStack: string | undefined, name: string): string | undefined {
+function resolveStack(
+	stackMode: ChartConfig['stackMode'],
+	forceStack: string | undefined,
+	isRightAxisSeries: boolean
+): string | undefined {
 	if (forceStack) return forceStack
-	if (config.stackMode === 'stacked' || config.stackMode === 'expand') {
-		return config.rightAxisCols.includes(name) ? 'right' : 'left'
+	if (stackMode === 'stacked' || stackMode === 'expand') {
+		return isRightAxisSeries ? 'right' : 'left'
 	}
 	return undefined
 }
 
 function buildChartOptions(
 	config: ChartConfig,
-	_series: ChartSeriesEntry[],
 	xAxisType: 'time' | 'category',
-	formatter: ReturnType<typeof formatterFromConfig>
-): Record<string, unknown> {
-	const opts: Record<string, any> = {}
-
-	const yAxisBase: Record<string, any> = { axisLabel: { formatter: (v: number) => formatter.axis(v) } }
+	formatter: ValueFormatter,
+	explicitRemainderLabel: string | null
+): MultiSeriesChartOptions {
+	const yAxisBase: MultiSeriesYAxisOption = { axisLabel: { formatter: (value: number) => formatter.axis(value) } }
+	const opts: MultiSeriesChartOptions = { yAxis: yAxisBase }
 	if (config.stackMode === 'expand') {
 		opts.yAxis = { ...yAxisBase, max: 1, axisLabel: { formatter: (v: number) => `${Math.round(v * 100)}%` } }
-	} else {
-		opts.yAxis = yAxisBase
 	}
 
 	if (xAxisType === 'category') {
+		opts.xAxis = { type: 'category' }
 		opts.tooltip = {
 			trigger: 'axis',
 			confine: true,
-			formatter: (params: Array<{ marker: string; seriesName: string; value: [string, number | null] }>) => {
-				if (!Array.isArray(params) || params.length === 0) return ''
-				const header = escapeHtml(String(params[0]?.value?.[0] ?? ''))
-				const rows = [...params]
-					.filter((p) => p.value?.[1] != null && p.value?.[1] !== 0)
-					.sort((a, b) => Math.abs((b.value?.[1] as number) ?? 0) - Math.abs((a.value?.[1] as number) ?? 0))
-					.slice(0, 10)
-					.map(
-						(p) =>
-							`<li style="list-style:none">${p.marker}${escapeHtml(p.seriesName)}&nbsp;&nbsp;${formatter.tooltip(
-								(p.value?.[1] as number) ?? 0
-							)}</li>`
-					)
-					.join('')
-				return `<div style="font-weight:600;margin-bottom:4px">${header}</div>${rows || '<div style="color:#999">No data</div>'}`
+			formatter: (params: unknown) => {
+				const items = normalizeTooltipItems(params)
+				if (items.length === 0) return ''
+				const header = escapeSqlChartHtml(String(items[0].axisValue ?? items[0].name ?? ''))
+				const rows: Array<{ marker: string; name: string; value: number }> = []
+				for (const item of items) {
+					const name = item.seriesName
+					if (!name) continue
+					const rawValue = getTooltipRawYValue(item, name)
+					const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
+					if (!value || !Number.isFinite(value)) continue
+					rows.push({ marker: item.marker ?? '', name, value })
+				}
+				rows.sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+
+				let content = ''
+				for (let index = 0; index < rows.length && index < 10; index++) {
+					const row = rows[index]
+					content += `<li style="list-style:none">${row.marker}${escapeSqlChartHtml(row.name)}&nbsp;&nbsp;${formatter.tooltip(row.value)}</li>`
+				}
+				return `<div style="font-weight:600;margin-bottom:4px">${header}</div>${content || '<div style="color:#999">No data</div>'}`
 			}
+		}
+	} else {
+		opts.tooltip = {
+			trigger: 'axis',
+			confine: true,
+			formatter: createCappedRemainderTooltipFormatter({
+				valueSymbol: formatter.valueSymbol,
+				explicitRemainderLabel
+			})
 		}
 	}
 
 	return opts
 }
 
-function escapeHtml(s: string): string {
-	return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
 function toXValue(value: unknown, axisType: 'time' | 'category'): number | string | null {
 	if (value == null) return null
-	if (axisType === 'time') return toSeconds(value)
+	if (axisType === 'time') return readSqlTimestampMs(value)
 	const s = typeof value === 'string' ? value : String(value)
 	return s === '' ? null : s
 }
 
 function toYValue(value: unknown): number | null {
-	if (value == null) return null
-	const n = toNumber(value)
-	return Number.isFinite(n as number) ? (n as number) : null
-}
-
-function toNumber(value: unknown): number | null {
-	if (typeof value === 'number') return value
-	if (typeof value === 'bigint') return Number(value)
-	if (typeof value === 'boolean') return value ? 1 : 0
-	if (typeof value === 'string') {
-		const trimmed = value.trim()
-		if (trimmed === '') return null
-		const n = Number(trimmed)
-		return Number.isFinite(n) ? n : null
-	}
-	return null
-}
-
-function toSeconds(value: unknown): number | null {
-	if (value instanceof Date) {
-		const t = value.getTime()
-		return Number.isFinite(t) ? t / 1000 : null
-	}
-	if (typeof value === 'bigint') {
-		const n = Number(value)
-		if (!Number.isFinite(n)) return null
-		return Math.abs(n) > 1e12 ? n / 1000 : n
-	}
-	if (typeof value === 'number') {
-		if (!Number.isFinite(value)) return null
-		return Math.abs(value) > 1e12 ? value / 1000 : value
-	}
-	if (typeof value === 'string') {
-		const t = Date.parse(value)
-		return Number.isFinite(t) ? t / 1000 : null
-	}
-	return null
+	return readSqlNumber(value, true)
 }

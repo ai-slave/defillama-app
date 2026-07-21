@@ -1,9 +1,9 @@
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { getTimePeriodBounds } from '~/containers/ProDashboard/queries'
 import type { CustomTimePeriod, TimePeriod } from '../../dashboardTypes'
 
 /** Slice an ascending canonical chart dataset without rebuilding its rows. */
-export function filterChartDatasetByTimePeriod<TDataset extends MultiSeriesChart2Dataset>(
+export function filterChartDatasetByTimePeriod<TDataset extends MultiSeriesChartDataset>(
 	dataset: TDataset,
 	timePeriod: TimePeriod,
 	customTimePeriod?: CustomTimePeriod | null
@@ -19,7 +19,7 @@ export function filterChartDatasetByTimePeriod<TDataset extends MultiSeriesChart
 	let high = source.length
 	while (low < high) {
 		const middle = (low + high) >>> 1
-		if ((source[middle].timestamp as number) < startTimestamp) low = middle + 1
+		if ((source[middle][0] as number) < startTimestamp) low = middle + 1
 		else high = middle
 	}
 	const startIndex = low
@@ -27,7 +27,7 @@ export function filterChartDatasetByTimePeriod<TDataset extends MultiSeriesChart
 	high = source.length
 	while (low < high) {
 		const middle = (low + high) >>> 1
-		if ((source[middle].timestamp as number) <= endTimestamp) low = middle + 1
+		if ((source[middle][0] as number) <= endTimestamp) low = middle + 1
 		else high = middle
 	}
 

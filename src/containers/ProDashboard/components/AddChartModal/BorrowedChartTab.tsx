@@ -1,7 +1,11 @@
 import { lazy, Suspense, useMemo, type ReactElement } from 'react'
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import { materializeZeroFilledDataset, type TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
-import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
+import {
+	materializeZeroFilledDataset,
+	type TimestampDataset
+} from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { buildProtocolV1ChartConfigs } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
@@ -14,9 +18,7 @@ import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { useBorrowedChartData } from '../useBorrowedChartData'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const EMPTY_DATASET: TimestampDataset = {
 	source: [],
@@ -127,7 +129,7 @@ export function BorrowedChartTab({
 							</div>
 						}
 					>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							title=""
 							dataset={visibleDataset}
 							charts={charts}
@@ -148,7 +150,7 @@ export function BorrowedChartTab({
 							</div>
 						}
 					>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							title=""
 							dataset={visibleDataset}
 							charts={charts}
@@ -182,7 +184,7 @@ export function BorrowedChartTab({
 							</div>
 						}
 					>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							title=""
 							dataset={visibleDataset}
 							charts={charts}

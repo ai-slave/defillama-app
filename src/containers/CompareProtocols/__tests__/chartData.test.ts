@@ -40,8 +40,8 @@ describe('buildCompareProtocolsChartData', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Aave', 'Compound'],
 			source: [
-				{ timestamp: 1_000, Aave: 100 },
-				{ timestamp: 2_000, Aave: 120, Compound: 50 }
+				[1_000, 100, undefined],
+				[2_000, 120, 50]
 			]
 		})
 		expect(result.charts.map((chart) => chart.name)).toEqual(['Aave', 'Compound'])
@@ -66,7 +66,7 @@ describe('buildCompareProtocolsChartData', () => {
 			extraTvlEnabled: { borrowed: true }
 		})
 
-		expect(result.dataset.source).toEqual([{ timestamp: 1_000, Aave: 125 }])
+		expect(result.dataset.source).toEqual([[1_000, 125]])
 	})
 
 	it('skips protocol detail chain sections without tvl chart rows', () => {
@@ -90,7 +90,7 @@ describe('buildCompareProtocolsChartData', () => {
 
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Aave'],
-			source: [{ timestamp: 1_000, Aave: 75 }]
+			source: [[1_000, 75]]
 		})
 	})
 })

@@ -6,7 +6,7 @@ import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -32,7 +32,7 @@ import {
 import { applyProtocolTaxonomyTvlSettings } from './tvl'
 import type { IProtocolTaxonomyPageData } from './types'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 	const name = props.category ?? props.tag ?? ''
@@ -99,7 +99,10 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							<MetricRow
 								label="Total Value Locked"
 								tooltip="Sum of value of all coins held in smart contracts of all the protocols on the chain"
-								value={formattedNum(charts.dataset?.source[charts.dataset?.source.length - 1]?.TVL, true)}
+								value={formattedNum(
+									charts.dataset?.source[charts.dataset?.source.length - 1]?.[charts.dataset.dimensions.indexOf('TVL')],
+									true
+								)}
 							/>
 						) : null}
 						{props.optionsPremium7d != null ? (
@@ -169,7 +172,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={deferredGroupedCharts.dataset}
 							charts={deferredGroupedCharts.charts}
 							groupBy={chartGroupBy}

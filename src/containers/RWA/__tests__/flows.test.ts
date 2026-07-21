@@ -87,22 +87,8 @@ describe('RWA flow chart data', () => {
 		})
 
 		expect(chart.dataset.source).toEqual([
-			{
-				timestamp: jan1,
-				Inflows: 6,
-				Outflows: null,
-				'Onchain Mcap': 100,
-				'Active Mcap': 80,
-				'DeFi Active TVL': 20
-			},
-			{
-				timestamp: jan2,
-				Inflows: null,
-				Outflows: -4,
-				'Onchain Mcap': 90,
-				'Active Mcap': 70,
-				'DeFi Active TVL': 25
-			}
+			[jan1, 6, null, 100, 80, 20],
+			[jan2, null, -4, 90, 70, 25]
 		])
 		expect(chart.charts).toEqual(
 			expect.arrayContaining([
@@ -140,8 +126,8 @@ describe('RWA flow chart data', () => {
 		})
 
 		expect(chart.dataset.source).toEqual([
-			{ timestamp: jan1, Inflows: 3, Outflows: null, 'Onchain Mcap': 110 },
-			{ timestamp: feb1, Inflows: null, Outflows: null, 'Onchain Mcap': 120 }
+			[jan1, 3, null, 110],
+			[feb1, null, null, 120]
 		])
 	})
 
@@ -162,9 +148,9 @@ describe('RWA flow chart data', () => {
 		})
 
 		expect(chart.dataset.source).toEqual([
-			{ timestamp: jan1, 'Cumulative Net Flows': 10 },
-			{ timestamp: jan2, 'Cumulative Net Flows': 10 },
-			{ timestamp: jan3, 'Cumulative Net Flows': 7 }
+			[jan1, 10],
+			[jan2, 10],
+			[jan3, 7]
 		])
 	})
 
@@ -206,13 +192,7 @@ describe('RWA flow chart data', () => {
 			selection: { view: 'flowVsPrice', groupBy: 'monthly', mcapByTimestamp }
 		})
 
-		expect(daily.dataset.source[1]).toEqual({
-			timestamp: jan2,
-			'Net Capital Inflows': 20,
-			'Net Capital Outflows': null,
-			'Price & Unattributed': 10,
-			'Delta Onchain Mcap': 30
-		})
+		expect(daily.dataset.source[1]).toEqual([jan2, 20, null, 10, 30])
 		expect(monthly.dataset.source).toHaveLength(1)
 	})
 
@@ -228,8 +208,8 @@ describe('RWA flow chart data', () => {
 		expect(chart.dataset).toEqual({
 			dimensions: ['timestamp', 'Bonds', 'Credit'],
 			source: [
-				{ timestamp: day(2026, 0, 1), Bonds: 7, Credit: -3 },
-				{ timestamp: day(2026, 1, 1), Bonds: 4, Credit: null }
+				[day(2026, 0, 1), 7, -3],
+				[day(2026, 1, 1), 4, null]
 			]
 		})
 	})
@@ -243,12 +223,10 @@ describe('RWA flow chart data', () => {
 		]
 
 		expect(buildRWAFlowRotationChart(points, 'daily').dataset.source).toEqual([
-			{ timestamp: jan5, Bonds: 10 },
-			{ timestamp: dec5, Bonds: -3 }
+			[jan5, 10],
+			[dec5, -3]
 		])
-		expect(buildRWAFlowRotationChart(points, 'yearly').dataset.source).toEqual([
-			{ timestamp: day(2026, 0, 1), Bonds: 7 }
-		])
+		expect(buildRWAFlowRotationChart(points, 'yearly').dataset.source).toEqual([[day(2026, 0, 1), 7]])
 	})
 
 	it('carries each cumulative net-flow breakdown across missing observations', () => {
@@ -267,9 +245,9 @@ describe('RWA flow chart data', () => {
 		expect(chart.dataset).toEqual({
 			dimensions: ['timestamp', 'Bonds', 'Credit'],
 			source: [
-				{ timestamp: jan1, Bonds: 10, Credit: 5 },
-				{ timestamp: jan2, Bonds: 10, Credit: 3 },
-				{ timestamp: jan3, Bonds: 6, Credit: 3 }
+				[jan1, 10, 5],
+				[jan2, 10, 3],
+				[jan3, 6, 3]
 			]
 		})
 	})
@@ -302,13 +280,7 @@ describe('RWA flow chart data', () => {
 
 		expect(chart.charts).toHaveLength(30)
 		expect(chart.dataset.dimensions.at(-1)).toBe('Others')
-		expect(chart.dataset.source).toEqual([
-			Object.assign(
-				{ timestamp },
-				Object.fromEntries(Array.from({ length: 29 }, (_, index) => [`Series ${index + 1}`, 32 - index])),
-				{ Others: 6 }
-			)
-		])
+		expect(chart.dataset.source).toEqual([[timestamp, ...Array.from({ length: 29 }, (_, index) => 32 - index), 6]])
 	})
 
 	it('aggregates only the assets left by the page filters and preserves missing days', () => {

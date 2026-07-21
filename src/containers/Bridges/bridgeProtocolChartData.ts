@@ -1,5 +1,5 @@
-import type { ChartTimeGrouping } from '~/components/ECharts/types'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
+import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import { getFreshTimeSeriesCurrentPoint, getTimeSeriesPeriodPair } from '~/utils/timeSeries'
 import type { BridgeVolumeChartPoint } from './types'
 
@@ -22,7 +22,7 @@ export function buildBridgeProtocolAllChainsVolumeData({
 	groupBy: ChartTimeGrouping
 	volumeChartDataByChain: BridgeVolumeChartPoint[] | null | undefined
 }) {
-	const source: Array<{ timestamp: number; Volume: number }> = []
+	const source: Array<[number, number]> = []
 
 	if (!active || !volumeChartDataByChain) {
 		return { source, dimensions: ['timestamp', 'Volume'] }
@@ -30,10 +30,7 @@ export function buildBridgeProtocolAllChainsVolumeData({
 
 	if (groupBy === 'daily') {
 		for (const point of volumeChartDataByChain) {
-			source.push({
-				timestamp: point.date * 1e3,
-				Volume: (point.Deposited + Math.abs(point.Withdrawn)) / 2
-			})
+			source.push([point.date * 1e3, (point.Deposited + Math.abs(point.Withdrawn)) / 2])
 		}
 	} else {
 		const groupedValues = new Map<number, number>()
@@ -44,7 +41,7 @@ export function buildBridgeProtocolAllChainsVolumeData({
 		}
 
 		for (const [date, value] of groupedValues) {
-			source.push({ timestamp: date * 1e3, Volume: value })
+			source.push([date * 1e3, value])
 		}
 	}
 
@@ -90,7 +87,7 @@ export function buildBridgeProtocolInflowsData({
 	groupBy: ChartTimeGrouping
 	volumeChartDataByChain: BridgeVolumeChartPoint[] | null | undefined
 }) {
-	const source: Array<{ timestamp: number; Deposited: number; Withdrawn: number }> = []
+	const source: Array<[number, number, number]> = []
 
 	if (!active || !volumeChartDataByChain || volumeChartDataByChain.length === 0) {
 		return { source, dimensions: ['timestamp', 'Deposited', 'Withdrawn'] }
@@ -98,11 +95,7 @@ export function buildBridgeProtocolInflowsData({
 
 	if (groupBy === 'daily') {
 		for (const point of volumeChartDataByChain) {
-			source.push({
-				timestamp: point.date * 1e3,
-				Deposited: point.Deposited,
-				Withdrawn: point.Withdrawn
-			})
+			source.push([point.date * 1e3, point.Deposited, point.Withdrawn])
 		}
 	} else {
 		const groupedValues = new Map<number, { Deposited: number; Withdrawn: number }>()
@@ -121,11 +114,7 @@ export function buildBridgeProtocolInflowsData({
 		}
 
 		for (const [date, values] of groupedValues) {
-			source.push({
-				timestamp: date * 1e3,
-				Deposited: values.Deposited,
-				Withdrawn: values.Withdrawn
-			})
+			source.push([date * 1e3, values.Deposited, values.Withdrawn])
 		}
 	}
 

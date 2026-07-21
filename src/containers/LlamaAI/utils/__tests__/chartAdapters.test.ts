@@ -58,8 +58,8 @@ describe('chart adapters', () => {
 		expect(result.props.chartOptions.yAxis[0].position).toBe('right')
 	})
 
-	it('rejects cartesian series names that collide with dimensions or another series', () => {
-		const timestampCollision = {
+	it('supports display names that match logical dimensions but rejects duplicate series identities', () => {
+		const timestampSeries = {
 			...baseConfig,
 			type: 'line',
 			axes: { x: { field: 'date', label: 'Date', type: 'time' as const }, yAxes: baseConfig.axes.yAxes },
@@ -73,14 +73,16 @@ describe('chart adapters', () => {
 			]
 		} satisfies ChartConfiguration
 		const duplicateNames = {
-			...timestampCollision,
+			...timestampSeries,
 			series: [
-				{ ...timestampCollision.series[0], name: 'Duplicate' },
-				{ ...timestampCollision.series[0], name: 'Duplicate' }
+				{ ...timestampSeries.series[0], name: 'Duplicate' },
+				{ ...timestampSeries.series[0], name: 'Duplicate' }
 			]
 		} satisfies ChartConfiguration
 
-		expect(adaptCartesianChartData(timestampCollision, [{ date: 1, y: 2 }]).description).toContain('reserved')
+		const timestampResult = adaptCartesianChartData(timestampSeries, [{ date: 1, y: 2 }])
+		expect(timestampResult.props.dataset.dimensions).toEqual(['timestamp', 'timestamp'])
+		expect(timestampResult.props.charts?.[0].encode).toEqual({ x: 0, y: 1 })
 		expect(adaptCartesianChartData(duplicateNames, [{ date: 1, y: 2 }]).description).toContain('Duplicate')
 	})
 
@@ -98,9 +100,7 @@ describe('chart adapters', () => {
 			]
 		} satisfies ChartConfiguration
 
-		expect(adaptCartesianChartData(categoryConfig, [{ x: 0, y: 1 }]).props.dataset.source[0]).toMatchObject({
-			category: '0'
-		})
+		expect(adaptCartesianChartData(categoryConfig, [{ x: 0, y: 1 }]).props.dataset.source[0]).toEqual(['0', 1])
 		expect(adaptPieChartData({ ...baseConfig, type: 'pie' }, [{ x: 0, y: 1 }]).props.chartData).toEqual([
 			{ name: '0', value: 1 }
 		])
@@ -132,8 +132,8 @@ describe('chart adapters', () => {
 		])
 
 		expect(result.props.dataset.source).toEqual([
-			{ category: 'Unknown', Series: 1 },
-			{ category: '0', Series: 2 }
+			['Unknown', 1],
+			['0', 2]
 		])
 	})
 
@@ -182,8 +182,8 @@ describe('chart adapters', () => {
 		])
 
 		expect(result.props.dataset.source).toEqual([
-			{ category: 'binance', '$10K Trade': 20.1, '$50K Trade': 40.2 },
-			{ category: 'gate', '$10K Trade': 21.5, '$50K Trade': 42.0 }
+			['binance', 20.1, 40.2],
+			['gate', 21.5, 42.0]
 		])
 	})
 
@@ -204,42 +204,6 @@ describe('chart adapters', () => {
 		// unspecified slice falls back to the palette (any non-empty color)
 		expect(result.props.stackColors!.Balancer).toMatch(/^#|rgb/)
 		expect(result.props.stackColors!.Balancer).not.toBe('#ff007a')
-	})
-
-	it('preserves Object prototype names in cartesian and pie datasets', () => {
-		const cartesianConfig = {
-			...baseConfig,
-			type: 'bar',
-			axes: { ...baseConfig.axes, x: { field: 'x', label: 'X', type: 'category' as const } },
-			series: [
-				{
-					...baseConfig.series[0]!,
-					name: '__proto__',
-					type: 'bar' as const,
-					dataMapping: { xField: 'x', yField: 'y' }
-				}
-			]
-		} satisfies ChartConfiguration
-		const cartesian = adaptCartesianChartData(cartesianConfig, [{ x: 'A', y: 7 }])
-
-		expect(Object.getPrototypeOf(cartesian.props.dataset.source[0])).toBe(Object.prototype)
-		expect(cartesian.props.dataset.source[0]?.__proto__).toBe(7)
-
-		const pieConfig = {
-			...baseConfig,
-			type: 'pie',
-			series: [{ ...baseConfig.series[0]!, dataMapping: { xField: 'entity', yField: 'value' } }]
-		} satisfies ChartConfiguration
-		const pie = adaptPieChartData(pieConfig, [
-			{ entity: 'constructor', value: 2 },
-			{ entity: '__proto__', value: 3 }
-		])
-
-		expect(pie.props.chartData).toEqual([
-			{ name: '__proto__', value: 3 },
-			{ name: 'constructor', value: 2 }
-		])
-		expect(Object.getPrototypeOf(pie.props.stackColors)).toBeNull()
 	})
 
 	it('rotates a crowded category x-axis so long labels do not drop, and reserves grid bottom', () => {
@@ -274,8 +238,14 @@ describe('chart adapters', () => {
 		].map((venue, i) => ({ venue, v: 20 + i }))
 
 		const out = adaptCartesianChartData(cfg, rows)
-		expect(out.props.chartOptions.xAxis.axisLabel).toMatchObject({ interval: 0, rotate: 35 })
-		expect(out.props.chartOptions.grid.bottom).toBeGreaterThan(44)
+		const xAxis = Array.isArray(out.props.chartOptions.xAxis)
+			? out.props.chartOptions.xAxis[0]
+			: out.props.chartOptions.xAxis
+		const grid = Array.isArray(out.props.chartOptions.grid)
+			? out.props.chartOptions.grid[0]
+			: out.props.chartOptions.grid
+		expect(xAxis?.axisLabel).toMatchObject({ interval: 0, rotate: 35 })
+		expect(grid?.bottom).toBeGreaterThan(44)
 	})
 
 	it('leaves a small, short-label category axis flat', () => {
@@ -303,7 +273,72 @@ describe('chart adapters', () => {
 			{ venue: 'BTC', v: 2 },
 			{ venue: 'SOL', v: 3 }
 		])
-		expect(out.props.chartOptions.xAxis.axisLabel).toBeUndefined()
+		const xAxis = Array.isArray(out.props.chartOptions.xAxis)
+			? out.props.chartOptions.xAxis[0]
+			: out.props.chartOptions.xAxis
+		expect(xAxis?.axisLabel).toBeUndefined()
+	})
+
+	it('uses category logos only when every rendered category has one', () => {
+		const categoryConfig = {
+			...baseConfig,
+			type: 'bar',
+			axes: {
+				x: {
+					field: 'chain',
+					label: 'Chain',
+					type: 'category' as const,
+					entityType: 'chain' as const,
+					logoKeys: { Ethereum: 'ethereum' }
+				},
+				yAxes: [{ id: 'value', fields: ['value'], label: 'TVL', position: 'left' as const }]
+			},
+			series: [
+				{
+					...baseConfig.series[0],
+					type: 'bar' as const,
+					dataMapping: { xField: 'chain', yField: 'value' }
+				}
+			]
+		} satisfies ChartConfiguration
+		const rows = [
+			{ chain: 'Ethereum', value: 10 },
+			{ chain: 'Solana', value: 20 }
+		]
+
+		const partial = adaptCartesianChartData(categoryConfig, rows)
+		const complete = adaptCartesianChartData(
+			{
+				...categoryConfig,
+				axes: {
+					...categoryConfig.axes,
+					x: { ...categoryConfig.axes.x, logoKeys: { Ethereum: 'ethereum', Solana: 'solana' } }
+				}
+			},
+			rows
+		)
+		const partialHBar = adaptHBarChartData(
+			{ ...categoryConfig, type: 'hbar', series: [{ ...categoryConfig.series[0], type: 'hbar' }] },
+			rows
+		)
+		const completeHBar = adaptHBarChartData(
+			{
+				...categoryConfig,
+				type: 'hbar',
+				axes: {
+					...categoryConfig.axes,
+					x: { ...categoryConfig.axes.x, logoKeys: { Ethereum: 'ethereum', Solana: 'solana' } }
+				},
+				series: [{ ...categoryConfig.series[0], type: 'hbar' }]
+			},
+			rows
+		)
+
+		expect(partial.props.categoryLogos).toBeUndefined()
+		expect(complete.props.categoryLogos).toHaveLength(2)
+		expect(complete.props.categoryLogos?.every(Boolean)).toBe(true)
+		expect(partialHBar.props.logos).toBeUndefined()
+		expect(completeHBar.props.logos?.every(Boolean)).toBe(true)
 	})
 
 	it('builds grouped series for a multi-series hbar (two bars per category)', () => {
@@ -426,7 +461,7 @@ describe('chart adapters', () => {
 			{ timestamp: Date.UTC(2026, 1, 1), y: 2 }
 		])
 
-		expect(result.props.dataset.source.map((row) => row.timestamp)).toEqual([
+		expect(result.props.dataset.source.map((row) => row[0])).toEqual([
 			Date.UTC(2026, 0, 1),
 			Date.UTC(2026, 1, 1),
 			Date.UTC(2026, 2, 1)

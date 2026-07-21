@@ -1,55 +1,47 @@
+import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
+import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
 import { SQL_CHART_HEIGHT } from '../chartLayout'
-import { formatterFromConfig } from '../valueFormatters'
+import { escapeSqlChartHtml, readSqlNumber } from '../rowValues'
+import { makeValueFormatter } from '../valueFormatters'
 
-interface IMultiSeriesChartShim {
-	series: Array<{
-		data: Array<[number | string, number | null]>
-		type: 'line' | 'bar'
-		name: string
-		color: string
-	}>
-	xAxisType?: 'time' | 'category'
-	height?: string
-	valueSymbol?: string
-	chartOptions?: Record<string, unknown>
-	hideDataZoom?: boolean
-	onReady?: (instance: any) => void
-	title?: string
-}
-
-const MultiSeriesChart = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart')
-) as unknown as React.FC<IMultiSeriesChartShim>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 interface HistogramChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
 	classified: ClassifiedColumn[]
-	onReady?: (instance: any) => void
+	onReady?: (instance: echarts.ECharts | null) => void
 }
 
 export function HistogramChartAdapter({ config, result, classified, onReady }: HistogramChartAdapterProps) {
-	const formatter = formatterFromConfig(config)
-	const valueCol =
+	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
+	const valueColName =
 		config.histogram?.valueCol ?? config.yCols[0] ?? classified.find((c) => c.coarse === 'number')?.name ?? null
+	const valueCol = classified.find((column) => column.name === valueColName) ?? null
 	const binCount = Math.max(5, Math.min(200, config.histogram?.binCount ?? 30))
 
-	const { series, chartOptions } = useMemo(() => {
-		if (!valueCol) return { series: [] as any[], chartOptions: {} }
+	const { chartModel, chartOptions } = useMemo(() => {
+		if (!valueCol) return { chartModel: buildAlignedCartesianChartModel([], []), chartOptions: {} }
+		const configuredColors = new Map(Object.entries(config.seriesColors))
 		const values: number[] = []
+		let min = Infinity
+		let max = -Infinity
 		for (const row of result.rows) {
-			const v = toNumber(row[valueCol])
-			if (v != null) values.push(v)
+			const value = readSqlNumber(row[valueCol.index])
+			if (value == null) continue
+			values.push(value)
+			if (value < min) min = value
+			if (value > max) max = value
 		}
-		if (values.length === 0) return { series: [] as any[], chartOptions: {} }
-		const min = Math.min(...values)
-		const max = Math.max(...values)
+		if (values.length === 0) return { chartModel: buildAlignedCartesianChartModel([], []), chartOptions: {} }
 		const span = max - min || 1
 		const width = span / binCount
 		const counts = new Array(binCount).fill(0)
@@ -57,36 +49,43 @@ export function HistogramChartAdapter({ config, result, classified, onReady }: H
 			const idx = Math.min(binCount - 1, Math.max(0, Math.floor((v - min) / width)))
 			counts[idx] += 1
 		}
-		const data: Array<[string, number]> = counts.map((c, i) => {
+		const categories = new Array<string>(counts.length)
+		for (let i = 0; i < counts.length; i++) {
 			const lo = min + i * width
 			const hi = lo + width
-			return [`${formatter.axis(lo)} – ${formatter.axis(hi)}`, c]
-		})
+			categories[i] = `${formatter.axis(lo)} – ${formatter.axis(hi)}`
+		}
 		return {
-			series: [
-				{
-					name: valueCol,
-					type: 'bar' as const,
-					color: config.seriesColors[valueCol] ?? CHART_COLORS[0],
-					data
-				}
-			],
+			chartModel: buildAlignedCartesianChartModel(
+				categories,
+				[
+					{
+						name: valueCol.name,
+						type: 'bar' as const,
+						color: configuredColors.get(valueCol.name) ?? CHART_COLORS[0],
+						values: counts
+					}
+				],
+				{ xDimension: 'bin', timestampMultiplier: 1 }
+			),
 			chartOptions: {
 				yAxis: { axisLabel: { formatter: (v: number) => String(v) } },
-				xAxis: { axisLabel: { rotate: binCount > 12 ? 35 : 0, fontSize: 10 } },
+				xAxis: { type: 'category', axisLabel: { rotate: binCount > 12 ? 35 : 0, fontSize: 10 } },
 				grid: { bottom: 60 },
 				tooltip: {
 					trigger: 'axis',
 					confine: true,
-					formatter: (params: Array<{ marker: string; seriesName: string; value: [string, number] }>) => {
-						if (!Array.isArray(params) || params.length === 0) return ''
-						const p = params[0]
-						const bin = escapeHtml(String(p?.value?.[0] ?? ''))
-						const count = Number(p?.value?.[1] ?? 0)
-						return `<div style="font-weight:600;margin-bottom:4px">${bin}</div><div>${p.marker}${escapeHtml(p.seriesName)}&nbsp;&nbsp;${count.toLocaleString()}</div>`
+					formatter: (params: unknown) => {
+						const items = normalizeTooltipItems(params)
+						if (items.length === 0) return ''
+						const p = items[0]
+						const bin = escapeSqlChartHtml(String(p.axisValue ?? p.name ?? ''))
+						const name = p.seriesName ?? ''
+						const count = Number(getTooltipRawYValue(p, name) ?? 0)
+						return `<div style="font-weight:600;margin-bottom:4px">${bin}</div><div>${p.marker ?? ''}${escapeSqlChartHtml(name)}&nbsp;&nbsp;${count.toLocaleString()}</div>`
 					}
 				}
-			}
+			} satisfies MultiSeriesChartOptions
 		}
 	}, [result, valueCol, binCount, formatter, config.seriesColors])
 
@@ -106,27 +105,15 @@ export function HistogramChartAdapter({ config, result, classified, onReady }: H
 			}
 		>
 			<MultiSeriesChart
-				series={series}
-				xAxisType="category"
+				dataset={chartModel.dataset}
+				charts={chartModel.charts}
 				height={SQL_CHART_HEIGHT}
 				hideDataZoom
 				chartOptions={chartOptions}
 				onReady={onReady}
+				hideDefaultLegend={false}
+				exportButtons="hidden"
 			/>
 		</Suspense>
 	)
-}
-
-function toNumber(v: unknown): number | null {
-	if (typeof v === 'number') return Number.isFinite(v) ? v : null
-	if (typeof v === 'bigint') return Number(v)
-	if (typeof v === 'string') {
-		const n = Number(v.trim())
-		return Number.isFinite(n) ? n : null
-	}
-	return null
-}
-
-function escapeHtml(s: string): string {
-	return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }

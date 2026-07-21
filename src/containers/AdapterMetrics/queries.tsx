@@ -1,5 +1,4 @@
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { V2_SERVER_URL } from '~/constants'
 import { getDimensionAdapterChainEarningsOverview } from '~/containers/Incentives/queries'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
@@ -44,16 +43,19 @@ function buildChainsChartData({
 }: {
 	rawChartData: Array<[number, Record<string, number>]>
 	allChains: string[]
-}): MultiSeriesChart2Dataset {
+}): MultiSeriesChartDataset {
 	const chartDimensions = ['timestamp', ...allChains]
-	const allowedChains = new Set(allChains)
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const chainIndexes = new Map<string, number>()
+	for (let i = 0; i < allChains.length; i++) chainIndexes.set(allChains[i], i + 1)
+	const source: MultiSeriesChartDataset['source'] = []
 	for (const [timestamp, chainValues] of rawChartData) {
 		const normalizedTimestamp = timestamp < 1e12 ? timestamp * 1e3 : timestamp
-		const row = createChartRow<number | null>(normalizedTimestamp)
+		const row = new Array<number | null>(chartDimensions.length).fill(null)
+		row[0] = normalizedTimestamp
 
 		for (const chainKey in chainValues) {
-			if (allowedChains.has(chainKey)) row[chainKey] = chainValues[chainKey]
+			const index = chainIndexes.get(chainKey)
+			if (index != null) row[index] = chainValues[chainKey]
 		}
 
 		source.push(row)
@@ -96,7 +98,7 @@ export async function getChainsByAdapterChartData({
 	dataType: `${ADAPTER_DATA_TYPES}`
 	allChains: string[]
 	allowEmptyOnError?: boolean
-}): Promise<MultiSeriesChart2Dataset> {
+}): Promise<MultiSeriesChartDataset> {
 	let rawChartData: Array<[number, Record<string, number>]>
 	try {
 		rawChartData = await fetchJson<Array<[number, Record<string, number>]>>(
@@ -440,7 +442,7 @@ export const getChainsByAdapterPageData = async ({
 
 		const [chainsData, chartData, bribesData, tokenTaxesData, openInterestData, activeLiquidityData]: [
 			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>,
-			MultiSeriesChart2Dataset,
+			MultiSeriesChartDataset,
 			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>,
 			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>,
 			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>,

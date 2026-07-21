@@ -1,13 +1,11 @@
 import { lazy } from 'react'
-import { CHART_INSET } from '~/components/ECharts/chartSpacing'
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_INSET } from '~/components/ECharts/shared/chartSpacing'
 import { formattedNum } from '~/utils'
 import { useEtherfiCashTransactions } from './cashApi'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
 const UNITLESS_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('')
@@ -15,9 +13,9 @@ const UNITLESS_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('')
 const SCROLL_LEGEND = {
 	...UNITLESS_TIME_CHART_OPTIONS,
 	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: CHART_INSET }
-} satisfies IMultiSeriesChart2Props['chartOptions']
+} satisfies IMultiSeriesChartProps['chartOptions']
 
-const WEEKLY_TXNS_CHART: IMultiSeriesChart2Props['charts'] = [
+const WEEKLY_TXNS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Transactions',
 		type: 'bar',
@@ -26,7 +24,7 @@ const WEEKLY_TXNS_CHART: IMultiSeriesChart2Props['charts'] = [
 		stack: 'a'
 	}
 ]
-const WEEKLY_USERS_CHART: IMultiSeriesChart2Props['charts'] = [
+const WEEKLY_USERS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Active Users',
 		type: 'bar',
@@ -35,7 +33,7 @@ const WEEKLY_USERS_CHART: IMultiSeriesChart2Props['charts'] = [
 		stack: 'a'
 	}
 ]
-const WEEKLY_AVG_CHART: IMultiSeriesChart2Props['charts'] = [
+const WEEKLY_AVG_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Avg Txns per User',
 		type: 'bar',
@@ -133,7 +131,7 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Transactions by Class" />
 			) : (
 				<ChartCard title="Weekly Transactions by Class">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={transactionsByClassDataset}
 						charts={classCharts}
 						valueSymbol=""
@@ -150,7 +148,7 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Users by Class" />
 			) : (
 				<ChartCard title="Weekly Users by Class">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={usersByClassDataset}
 						charts={classCharts}
 						valueSymbol=""
@@ -167,7 +165,7 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Transactions" />
 			) : (
 				<ChartCard title="Weekly Transactions">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={weeklyTxnsDataset}
 						charts={WEEKLY_TXNS_CHART}
 						valueSymbol=""
@@ -183,7 +181,7 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Active Users" />
 			) : (
 				<ChartCard title="Weekly Active Users">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={weeklyUsersDataset}
 						charts={WEEKLY_USERS_CHART}
 						valueSymbol=""
@@ -199,7 +197,7 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Average Txns per User" />
 			) : (
 				<ChartCard title="Weekly Average Txns per User">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={weeklyAvgDataset}
 						charts={WEEKLY_AVG_CHART}
 						valueSymbol=""

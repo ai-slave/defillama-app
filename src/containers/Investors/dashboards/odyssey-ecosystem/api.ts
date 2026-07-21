@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createChartRecord } from '~/components/ECharts/dynamicRow'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
+import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { EXTENDED_COLOR_PALETTE } from '~/containers/ProDashboard/utils/colorManager'
 import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp, type ApiUnixSeconds } from '../../api.types'
 
@@ -44,27 +43,22 @@ export interface ChartData {
 
 /* ──────────────────────────── chart helpers ──────────────────────────── */
 
-export function chartToTs(c: ChartData | undefined): NonNullable<IMultiSeriesChartProps['series']> {
-	if (!c?.dates) return []
-	return c.series.map((s) => ({
-		name: s.name,
-		type: s.type ?? 'line',
-		color: s.color ?? '#6366f1',
-		...(s.stack != null ? { stack: s.stack } : {}),
-		...(s.yAxisIndex != null ? { yAxisIndex: s.yAxisIndex } : {}),
-		data: c.dates.map(
-			(d, i) => [Math.floor(Date.parse(d + 'T00:00:00Z') / 1000), s.data[i] ?? null] as [number, number | null]
-		)
-	}))
-}
-
-export function seriesPairs(
-	dates: string[] | undefined,
-	vals: Array<number | null> | undefined
-): Array<[number, number | null]> {
-	if (!dates || !vals) return []
-	return dates.map(
-		(d, i) => [Math.floor(Date.parse(d + 'T00:00:00Z') / 1000), vals[i] ?? null] as [number, number | null]
+/** Build shared-date Odyssey responses directly into the canonical row-major chart model. */
+export function chartToModel(c: ChartData | undefined): CartesianChartModel {
+	if (!c?.dates) return buildAlignedCartesianChartModel([], [])
+	const timestamps = new Array<number>(c.dates.length)
+	for (let i = 0; i < c.dates.length; i++) timestamps[i] = Date.parse(`${c.dates[i]}T00:00:00Z`)
+	return buildAlignedCartesianChartModel(
+		timestamps,
+		c.series.map((series) => ({
+			name: series.name,
+			type: series.type ?? 'line',
+			color: series.color ?? '#6366f1',
+			stack: series.stack,
+			yAxisIndex: series.yAxisIndex,
+			values: series.data
+		})),
+		{ timestampMultiplier: 1 }
 	)
 }
 
@@ -86,7 +80,7 @@ export function defaultZoomOptions(start: number) {
 }
 
 export function assignColors(names: string[]): Record<string, string> {
-	const colors = createChartRecord<string>()
+	const colors = {}
 	const sorted = names.toSorted()
 	for (let i = 0; i < sorted.length; i++) {
 		colors[sorted[i]] = EXTENDED_COLOR_PALETTE[i % EXTENDED_COLOR_PALETTE.length]

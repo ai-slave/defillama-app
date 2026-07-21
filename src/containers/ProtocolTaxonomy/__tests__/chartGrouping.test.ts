@@ -9,14 +9,14 @@ function makeCharts(): IProtocolTaxonomyPageData['charts'] {
 		dataset: {
 			dimensions: ['timestamp', 'Volume', 'TVL'],
 			source: [
-				{ timestamp: toMs(2024, 1, 1), Volume: 10, TVL: 100 },
-				{ timestamp: toMs(2024, 1, 2), Volume: null, TVL: 120 },
-				{ timestamp: toMs(2024, 1, 3), Volume: 30, TVL: null }
+				[toMs(2024, 1, 1), 10, 100],
+				[toMs(2024, 1, 2), null, 120],
+				[toMs(2024, 1, 3), 30, null]
 			]
 		},
 		charts: [
-			{ type: 'bar', name: 'Volume', encode: { x: 'timestamp', y: 'Volume' } },
-			{ type: 'line', name: 'TVL', encode: { x: 'timestamp', y: 'TVL' } }
+			{ type: 'bar', name: 'Volume', encode: { x: 0, y: 1 } },
+			{ type: 'line', name: 'TVL', encode: { x: 0, y: 2 } }
 		]
 	}
 }
@@ -29,9 +29,9 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		expect(result.charts.dataset).toEqual({
 			dimensions: ['timestamp', 'Volume', 'TVL'],
 			source: [
-				{ timestamp: toMs(2024, 1, 1), Volume: 10, TVL: 100 },
-				{ timestamp: toMs(2024, 1, 2), TVL: 120, Volume: null },
-				{ timestamp: toMs(2024, 1, 3), Volume: 30, TVL: null }
+				[toMs(2024, 1, 1), 10, 100],
+				[toMs(2024, 1, 2), null, 120],
+				[toMs(2024, 1, 3), 30, null]
 			]
 		})
 		expect(result.charts.charts.map((series) => series.type)).toEqual(['bar', 'line'])
@@ -52,36 +52,36 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 
 		expect(result.hasBarCharts).toBe(true)
 		expect(result.charts.charts[0].type).toBe('line')
-		expect(result.charts.dataset.source.map((row) => row.Volume)).toEqual([10, null, 40])
+		expect(result.charts.dataset.source.map((row) => row[1])).toEqual([10, null, 40])
 	})
 
 	it('sums bars but keeps the last line snapshot in weekly buckets', () => {
 		const charts = makeCharts()
 		charts.dataset.source = [
-			{ timestamp: toMs(2024, 1, 15), Volume: 10, TVL: 100 },
-			{ timestamp: toMs(2024, 1, 17), Volume: 5, TVL: 120 },
-			{ timestamp: toMs(2024, 1, 22), Volume: 7, TVL: 130 }
+			[toMs(2024, 1, 15), 10, 100],
+			[toMs(2024, 1, 17), 5, 120],
+			[toMs(2024, 1, 22), 7, 130]
 		]
 
 		const result = buildProtocolTaxonomyGroupedCharts({ charts, groupBy: 'weekly' })
 
 		expect(result.charts.dataset.source).toEqual([
-			{ timestamp: toMs(2024, 1, 21), Volume: 15, TVL: 120 },
-			{ timestamp: toMs(2024, 1, 28), Volume: 7, TVL: 130 }
+			[toMs(2024, 1, 21), 15, 120],
+			[toMs(2024, 1, 28), 7, 130]
 		])
 	})
 
 	it('never accumulates line snapshots in cumulative mode', () => {
 		const result = buildProtocolTaxonomyGroupedCharts({ charts: makeCharts(), groupBy: 'cumulative' })
 
-		expect(result.charts.dataset.source.map((row) => row.TVL)).toEqual([100, 120, null])
+		expect(result.charts.dataset.source.map((row) => row[2])).toEqual([100, 120, null])
 	})
 
 	it('returns the original chart object and hasBarCharts false when bar series have no numeric values', () => {
 		const charts = makeCharts()
 		charts.dataset.source = [
-			{ timestamp: toMs(2024, 1, 1), Volume: null, TVL: 100 },
-			{ timestamp: toMs(2024, 1, 2), Volume: null, TVL: 120 }
+			[toMs(2024, 1, 1), null, 100],
+			[toMs(2024, 1, 2), null, 120]
 		]
 		const result = buildProtocolTaxonomyGroupedCharts({ charts, groupBy: 'daily' })
 

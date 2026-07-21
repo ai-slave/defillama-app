@@ -4,8 +4,9 @@ import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/formatters'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/shared/formatters'
+import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { TokenLogo } from '~/components/TokenLogo'
 import {
 	getGeckoIdFromSearchId,
@@ -36,7 +37,7 @@ import { StatsCard } from './StatsCard'
 import type { ComparisonEntry } from './types'
 
 const EMPTY_SELECTED_COINS: Record<string, TokenSearchResult> = {}
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 export const DEFAULT_TOKEN_PNL_TOKEN_IDS = ['bitcoin', 'ethereum', 'solana'] as const
 const DEFAULT_COMPARISON_IDS = DEFAULT_TOKEN_PNL_TOKEN_IDS
@@ -80,52 +81,12 @@ type TokenPnlContentProps = {
 	quantity: number
 	start: number
 	end: number
-	chartOptions: TokenPnlChartOptions | undefined
+	chartOptions: MultiSeriesChartOptions | undefined
 	exportChartInstance: () => echarts.ECharts | null
 	handleChartReady: (instance: echarts.ECharts | null) => void
 	comparisonData: ComparisonEntry[]
 	selectedCoinId: string
 	selectedCoinInfo: TokenSearchResult | null
-}
-
-type TooltipItem = {
-	data?: Record<string, unknown>
-	value?: unknown
-	seriesName?: string
-}
-
-type TokenPnlChartOptions = {
-	xAxis: {
-		type: 'time'
-		min: number
-		max: number
-		axisLabel: {
-			formatter: (value: number) => string
-			showMinLabel: boolean
-			showMaxLabel: boolean
-			hideOverlap: boolean
-		}
-		boundaryGap: boolean
-	}
-	yAxis: {
-		min: number
-		max: number
-		interval: number
-	}
-	legend: {
-		show: boolean
-	}
-	tooltip: {
-		backgroundColor: string
-		borderWidth: number
-		padding: number
-		axisPointer: {
-			type: 'line'
-			lineStyle: { color: string; width: number; type: 'solid' }
-			z: number
-		}
-		formatter: (items: TooltipItem | TooltipItem[]) => string
-	}
 }
 
 const TokenPnlContent = ({
@@ -242,11 +203,11 @@ const TokenPnlContent = ({
 					/>
 				</PanelHeader>
 				<Suspense fallback={<ChartPanelBodyFallback />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={chartData.dataset}
 						charts={chartData.charts}
 						hideDataZoom
-						chartOptions={chartOptions as unknown as IMultiSeriesChart2Props['chartOptions']}
+						chartOptions={chartOptions}
 						onReady={handleChartReady}
 					/>
 				</Suspense>
@@ -408,7 +369,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: TokenSe
 		return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
 	}, [quantityInput])
 
-	const chartOptions = useMemo<TokenPnlChartOptions | undefined>(() => {
+	const chartOptions = useMemo<MultiSeriesChartOptions | undefined>(() => {
 		if (!pnlData || start == null || end == null) return undefined
 
 		const { metrics, yAxisConfig: yAxis } = pnlData
@@ -425,7 +386,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: TokenSe
 					showMaxLabel: true,
 					hideOverlap: true
 				},
-				boundaryGap: false
+				boundaryGap: [0, 0]
 			},
 			yAxis: {
 				min: yAxis.min,
@@ -444,24 +405,19 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: TokenSe
 					lineStyle: { color: 'rgba(148,163,184,0.5)', width: 1.5, type: 'solid' },
 					z: 0
 				},
-				formatter: (items: TooltipItem | TooltipItem[]) => {
-					const itemsArray = Array.isArray(items) ? items : [items]
+				formatter: (params: unknown) => {
+					const itemsArray = normalizeTooltipItems(params)
 					if (itemsArray.length === 0) return ''
 
 					const point = itemsArray[0]
-					const row = point?.data ?? {}
-					const timestamp =
-						(typeof row.timestamp === 'number' ? row.timestamp : undefined) ??
-						(Array.isArray(point?.value) ? point.value[0] : undefined)
-					const seriesValue =
-						(typeof point?.seriesName === 'string' ? row[point.seriesName] : undefined) ??
-						(Array.isArray(point?.value) ? point.value[1] : undefined)
+					const timestamp = getTooltipAxisValue(point)
+					const seriesValue = getTooltipRawYValue(point, point.seriesName ?? '')
 					const price = typeof seriesValue === 'number' ? seriesValue : Number(seriesValue ?? 0)
 					const changeFromStart = startPrice !== 0 ? ((price - startPrice) / startPrice) * 100 : 0
 					const changeColor = changeFromStart >= 0 ? 'var(--text-data-up)' : 'var(--text-data-down)'
 					const changeSign = changeFromStart >= 0 ? '+' : ''
 
-					const chartdate = timestamp != null ? formatTooltipChartDate(Number(timestamp), 'daily') : ''
+					const chartdate = Number.isFinite(timestamp) ? formatTooltipChartDate(timestamp, 'daily') : ''
 
 					return `<div style="background: var(--bg-surface); border: 1px solid var(--border-medium); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16); color: var(--text-primary); border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.35; white-space: nowrap;">
 						<div style="color: var(--text-secondary); margin-bottom: 2px;">${chartdate}</div>

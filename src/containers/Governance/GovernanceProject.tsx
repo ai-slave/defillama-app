@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { GovernanceTable } from '~/containers/Governance/GovernanceTable'
@@ -9,22 +9,22 @@ import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { formattedNum } from '~/utils'
 import type { GovernanceDataEntry, GovernanceType } from './types'
 
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
 
-const EMPTY_ACTIVITY_DATASET: MultiSeriesChart2Dataset = {
+const EMPTY_ACTIVITY_DATASET: MultiSeriesChartDataset = {
 	source: [],
 	dimensions: ['timestamp', 'Total', 'Successful']
 }
-const EMPTY_MAXVOTES_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp', 'Max Votes'] }
+const EMPTY_MAXVOTES_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp', 'Max Votes'] }
 
-const ACTIVITY_CHARTS: IMultiSeriesChart2Props['charts'] = [
+const ACTIVITY_CHARTS: IMultiSeriesChartProps['charts'] = [
 	{ type: 'bar', name: 'Total', encode: { x: 'timestamp', y: 'Total' }, color: CHART_COLORS[0] },
 	{ type: 'bar', name: 'Successful', encode: { x: 'timestamp', y: 'Successful' }, color: CHART_COLORS[1] }
 ]
 
-const MAX_VOTES_CHARTS: IMultiSeriesChart2Props['charts'] = [
+const MAX_VOTES_CHARTS: IMultiSeriesChartProps['charts'] = [
 	{ type: 'bar', name: 'Max Votes', encode: { x: 'timestamp', y: 'Max Votes' }, color: CHART_COLORS[2] }
 ]
 
@@ -76,20 +76,16 @@ export default function GovernanceProject({
 			/>
 		) : null
 
-	const activityDataset = React.useMemo<MultiSeriesChart2Dataset>(() => {
-		const source = (data?.activity ?? []).map((row) => ({
-			timestamp: Number(row.date) * 1e3,
-			Total: row.Total ?? 0,
-			Successful: row.Successful ?? 0
-		}))
+	const activityDataset = React.useMemo<MultiSeriesChartDataset>(() => {
+		const source = (data?.activity ?? []).map((row) => [Number(row.date) * 1e3, row.Total ?? 0, row.Successful ?? 0])
 		return { source, dimensions: ['timestamp', 'Total', 'Successful'] }
 	}, [data?.activity])
 
-	const maxVotesDataset = React.useMemo<MultiSeriesChart2Dataset>(() => {
-		const source = (data?.maxVotes ?? []).map((row) => ({
-			timestamp: Number(row.date) * 1e3,
-			'Max Votes': row['Max Votes'] == null ? 0 : Number(row['Max Votes'])
-		}))
+	const maxVotesDataset = React.useMemo<MultiSeriesChartDataset>(() => {
+		const source = (data?.maxVotes ?? []).map((row) => [
+			Number(row.date) * 1e3,
+			row['Max Votes'] == null ? 0 : Number(row['Max Votes'])
+		])
 		return { source, dimensions: ['timestamp', 'Max Votes'] }
 	}, [data?.maxVotes])
 
@@ -140,7 +136,7 @@ export default function GovernanceProject({
 				<div className="grid grid-cols-2 gap-2">
 					<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								title="Activity"
 								dataset={activityDataset?.source?.length > 0 ? activityDataset : EMPTY_ACTIVITY_DATASET}
 								charts={ACTIVITY_CHARTS}
@@ -156,7 +152,7 @@ export default function GovernanceProject({
 					</ChartPanel>
 					<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								title="Max Votes"
 								dataset={maxVotesDataset?.source?.length > 0 ? maxVotesDataset : EMPTY_MAXVOTES_DATASET}
 								charts={MAX_VOTES_CHARTS}

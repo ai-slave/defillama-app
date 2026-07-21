@@ -15,7 +15,7 @@ import { formattedNum, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { ExtraTvlMetric, IExtraTvlByChainPageData, IExtraTvlProtocolRow } from './types'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const METRIC_LABELS: Record<ExtraTvlMetric, { header: string; headerHelperText: string }> = {
 	borrowed: {
@@ -73,7 +73,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							exportButtons={{
 								png: true,
 								csv: true,

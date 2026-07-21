@@ -98,15 +98,15 @@ describe('buildEcosystemViewModel', () => {
 		expect(result.tvl.dataset).toEqual({
 			dimensions: ['timestamp', 'Sonic TVL', 'Short TVL'],
 			source: [
-				{ timestamp: Date.UTC(2026, 6, 16), 'Sonic TVL': 10, 'Short TVL': 4 },
-				{ timestamp: Date.UTC(2026, 6, 17), 'Sonic TVL': 20, 'Short TVL': 0 }
+				[Date.UTC(2026, 6, 16), 10, 4],
+				[Date.UTC(2026, 6, 17), 20, 0]
 			]
 		})
 		expect(result.fees.charts[0]).toMatchObject({
 			name: 'Protocol Fees',
 			type: 'bar',
 			stack: 'a',
-			encode: { x: 'timestamp', y: 'Protocol Fees' }
+			encode: { x: 0, y: 1 }
 		})
 		expect(result).not.toHaveProperty('stablecoinChart')
 		expect(result).not.toHaveProperty('assetBreakdown')
@@ -118,8 +118,8 @@ describe('buildEcosystemViewModel', () => {
 		expect(result.stablecoins.dataset).toEqual({
 			dimensions: ['timestamp', 'DAI', 'USDC', 'USDT', 'EURC'],
 			source: [
-				{ timestamp: Date.UTC(2026, 6, 16), DAI: 40, USDC: 100, USDT: 30, EURC: 50 },
-				{ timestamp: Date.UTC(2026, 6, 17), DAI: 100, USDC: 200, USDT: 0, EURC: 0 }
+				[Date.UTC(2026, 6, 16), 40, 100, 30, 50],
+				[Date.UTC(2026, 6, 17), 100, 200, 0, 0]
 			]
 		})
 		expect(result.stablecoins.charts).toMatchObject([

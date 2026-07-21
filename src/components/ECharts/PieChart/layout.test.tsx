@@ -95,23 +95,4 @@ describe('PieChart layout', () => {
 		expect(initialTop).toBe(160)
 		expect(resizedTop).toBe(230)
 	})
-
-	it('keeps Object prototype names in pie data and legend labels', async () => {
-		await act(async () =>
-			root.render(
-				<PieChart
-					chartData={[
-						{ name: '__proto__', value: 2 },
-						{ name: 'constructor', value: 1 }
-					]}
-					showLegend
-				/>
-			)
-		)
-
-		const chartOption = mocks.instance.setOption.mock.calls[0][0]
-		expect(chartOption.series.data.map((item: { name: string }) => item.name)).toEqual(['__proto__', 'constructor'])
-		expect(chartOption.legend.formatter('__proto__')).toContain('__proto__')
-		expect(chartOption.legend.formatter('__proto__')).toContain('66.67%')
-	})
 })

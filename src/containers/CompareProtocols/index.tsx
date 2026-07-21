@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { applyProtocolTvlSettings } from '~/containers/ProtocolLists/utils'
 import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
@@ -15,9 +15,9 @@ import type { RawProtocolResponse } from './api.types'
 import { buildCompareProtocolsChartData } from './chartData'
 import type { CompareProtocolsProps } from './types'
 
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
 
 export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsProps) {
 	const router = useRouter()
@@ -117,7 +117,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 							</ChartPanelExportShellFallback>
 						) : (
 							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-								<MultiSeriesChart2
+								<MultiSeriesChart
 									dataset={dataset}
 									charts={charts}
 									valueSymbol="$"

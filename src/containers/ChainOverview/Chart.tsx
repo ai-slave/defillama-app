@@ -1,10 +1,12 @@
+import type { BarSeriesOption, EChartsOption, LineSeriesOption } from 'echarts'
 import * as echarts from 'echarts/core'
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
-import { CHART_INSET, CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
-import { useChartTheme } from '~/components/ECharts/chartTheme'
-import type { ChartTimeGrouping, ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
-import { useDefaults } from '~/components/ECharts/useDefaults'
-import { mergeDeep } from '~/components/ECharts/utils'
+import type { LegacyCartesianChartOptions } from '~/components/ECharts/LegacyChart/types'
+import { useDefaults } from '~/components/ECharts/LegacyChart/useDefaults'
+import type { ChartTimeGrouping, ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_INSET, CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
+import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
+import { mergeDeep } from '~/components/ECharts/shared/merge'
 import { useChartResize } from '~/hooks/useChartResize'
 import { buildChainYAxis } from './chartYAxis'
 import {
@@ -23,7 +25,7 @@ interface ChainCoreChartProps {
 	chartData: ChainOverviewChartData
 	valueSymbol?: string
 	color?: string
-	chartOptions?: Record<string, Record<string, unknown>>
+	chartOptions?: LegacyCartesianChartOptions
 	height?: string
 	unlockTokenSymbol?: string
 	isThemeDark: boolean
@@ -63,17 +65,10 @@ export default function ChainCoreChart({
 		chartTheme,
 		groupBy: tooltipGroupBy
 	})
-	const chartSettings = useMemo(() => {
-		const settings = { ...defaultChartSettings }
-		for (const option in chartOptions) {
-			if (settings[option]) {
-				settings[option] = mergeDeep(settings[option], chartOptions[option])
-			} else {
-				settings[option] = { ...chartOptions[option] }
-			}
-		}
-		return settings
-	}, [defaultChartSettings, chartOptions])
+	const chartSettings = useMemo(
+		() => mergeDeep(defaultChartSettings, chartOptions),
+		[defaultChartSettings, chartOptions]
+	)
 
 	const { series, allYAxis, chartsInSeries } = useMemo(() => {
 		const indexByYAxis = {} as Record<ChainChartLabels, number | undefined>
@@ -92,49 +87,36 @@ export default function ChainCoreChart({
 			}
 		}
 
-		const series = stacks.map((stack, index) => {
+		const series: Array<BarSeriesOption | LineSeriesOption> = stacks.map((stack, index) => {
 			const stackColor = chainOverviewChartColors[stack]
 			const data = chartData[stack] ?? []
 
-			let type = BAR_CHARTS_SET.has(stack) && !isCumulative ? 'bar' : 'line'
-			type = DISABLED_CUMULATIVE_CHARTS_SET.has(stack) ? 'bar' : type
-
-			const options = {
-				yAxisIndex: indexByYAxis[yAxisByChart[stack]]
-			}
-
-			return {
+			const type =
+				BAR_CHARTS_SET.has(stack) && !isCumulative ? 'bar' : DISABLED_CUMULATIVE_CHARTS_SET.has(stack) ? 'bar' : 'line'
+			const common = {
 				name: stack,
-				type,
-				...options,
-				scale: true,
-				large: data.length > 0,
-				emphasis: {
-					focus: 'series',
-					shadowBlur: 10
-				},
-				symbol: 'none',
+				yAxisIndex: indexByYAxis[yAxisByChart[stack]],
+				emphasis: { focus: 'series' as const },
 				itemStyle: {
 					color: stackColor
 				},
-				...(type === 'line'
-					? {
-							areaStyle: {
-								color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-									{
-										offset: 0,
-										color: stackColor ? stackColor : index === 0 ? chainOverviewChartColors[stack] : 'transparent'
-									},
-									{
-										offset: 1,
-										color: chartTheme.areaGradientTo
-									}
-								])
-							}
-						}
-					: {}),
 				markLine: {},
 				data
+			}
+			if (type === 'bar') return { ...common, type: 'bar', large: data.length > 0 }
+			return {
+				...common,
+				type: 'line',
+				symbol: 'none',
+				areaStyle: {
+					color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+						{
+							offset: 0,
+							color: stackColor ? stackColor : index === 0 ? chainOverviewChartColors[stack] : 'transparent'
+						},
+						{ offset: 1, color: chartTheme.areaGradientTo }
+					])
+				}
 			}
 		})
 
@@ -172,18 +154,16 @@ export default function ChainCoreChart({
 			themeText: chartTheme.text
 		})
 
-		instance.setOption(
-			{
-				graphic,
-				tooltip,
-				grid: chartGrid({ bottom: hideDataZoom ? CHART_INSET : CHART_ZOOM_RESERVE }),
-				xAxis,
-				yAxis: finalYAxis,
-				dataZoom,
-				series
-			},
-			{ notMerge: true, lazyUpdate: true }
-		)
+		const option: EChartsOption = {
+			graphic,
+			tooltip,
+			grid: chartGrid({ bottom: hideDataZoom ? CHART_INSET : CHART_ZOOM_RESERVE }),
+			xAxis,
+			yAxis: finalYAxis,
+			dataZoom,
+			series
+		}
+		instance.setOption(option, { notMerge: true, lazyUpdate: true })
 	}, [chartSettings, series, allYAxis, chartsInSeries, chartTheme.text, hideDataZoom])
 
 	return <div ref={chartDomRef} className="h-[360px]" style={height ? { height } : undefined} />

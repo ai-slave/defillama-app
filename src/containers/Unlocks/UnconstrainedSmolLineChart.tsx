@@ -1,6 +1,6 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { formatTooltipChartDate } from '~/components/ECharts/formatters'
+import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { formattedNum } from '~/utils'
 import type { EmissionEvent } from './api.types'

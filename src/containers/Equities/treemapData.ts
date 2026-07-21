@@ -1,5 +1,5 @@
-import { getEquitiesTreemapColor } from '~/components/ECharts/EquitiesTreemapChart/colors'
-import type { MarketTreemapGroup, MarketTreemapLeaf } from '~/components/ECharts/marketTreemapTypes'
+import { getEquitiesTreemapColor } from '~/components/ECharts/TreemapChart/Market/colors'
+import type { MarketTreemapGroup, MarketTreemapLeaf } from '~/components/ECharts/TreemapChart/Market/types'
 import { equityIconUrl } from '~/utils/icons'
 import type { IEquitiesListCompanyRow } from './types'
 

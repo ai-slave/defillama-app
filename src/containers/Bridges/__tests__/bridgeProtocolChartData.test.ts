@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import {
 	buildBridgeProtocolAllChainsVolumeData,
 	buildBridgeProtocolInflowsData,
@@ -28,7 +28,7 @@ describe('bridge protocol chart data helpers', () => {
 
 		expect(result).toEqual({
 			dimensions: ['timestamp', 'Volume'],
-			source: [{ timestamp: bucket * 1e3, Volume: 20 }]
+			source: [[bucket * 1e3, 20]]
 		})
 		expect(
 			buildBridgeProtocolAllChainsVolumeData({ active: false, groupBy: 'daily', volumeChartDataByChain }).source
@@ -90,7 +90,7 @@ describe('bridge protocol chart data helpers', () => {
 
 		expect(result).toEqual({
 			dimensions: ['timestamp', 'Deposited', 'Withdrawn'],
-			source: [{ timestamp: 1_000, Deposited: 10, Withdrawn: -4 }]
+			source: [[1_000, 10, -4]]
 		})
 
 		const day1 = 1_704_067_200
@@ -104,7 +104,7 @@ describe('bridge protocol chart data helpers', () => {
 					{ date: day2, Deposited: 20, Withdrawn: -6 }
 				]
 			}).source
-		).toEqual([{ timestamp: getBucketTimestampSec(day1, 'weekly') * 1e3, Deposited: 30, Withdrawn: -10 }])
+		).toEqual([[getBucketTimestampSec(day1, 'weekly') * 1e3, 30, -10]])
 
 		expect(
 			buildBridgeProtocolInflowsData({

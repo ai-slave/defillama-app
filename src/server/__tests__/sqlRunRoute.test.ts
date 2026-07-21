@@ -129,7 +129,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 		const body = res.json.mock.calls[0][0]
 		expect(body.engine).toBe('server')
-		expect(body.rows).toEqual([{ x: 1 }])
+		expect(body.rows).toEqual([[1]])
 
 		const putCall = fetchImpl.mock.calls.find(([, init]) => (init as RequestInit)?.method === 'PUT')
 		expect(putCall).toBeTruthy()
@@ -145,7 +145,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		const res = createMockNextApiResponse()
 		await sqlRunHandler(request(), res)
 		expect(runServerSqlMock).toHaveBeenCalled()
-		expect(res.json.mock.calls[0][0].rows).toEqual([{ x: 2 }])
+		expect(res.json.mock.calls[0][0].rows).toEqual([[2]])
 	})
 
 	it('falls back to stale stored result when execution fails', async () => {

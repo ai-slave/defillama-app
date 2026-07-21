@@ -2,8 +2,8 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import type { DenominationPriceHistory } from '~/api/coingecko.types'
-import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
-import { formatBarChart, formatLineChart } from '~/components/ECharts/utils'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
+import { formatBarChart, formatLineChart } from '~/components/ECharts/shared/timeSeries'
 import { useFetchProtocolGovernanceData } from '~/containers/Governance/queries.client'
 import {
 	useFetchProtocolActivityChart,

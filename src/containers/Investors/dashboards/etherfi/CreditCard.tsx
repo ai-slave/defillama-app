@@ -1,27 +1,25 @@
 import { lazy, useMemo } from 'react'
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { formattedNum } from '~/utils'
 import { useEtherfiCashFeesCharts, useEtherfiCashMetrics, useEtherfiCashTvlChart } from './api'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
 const BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
 const DOLLAR_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('$')
 
-const TVL_CHART: IMultiSeriesChart2Props['charts'] = [
+const TVL_CHART: IMultiSeriesChartProps['charts'] = [
 	{ name: 'TVL', type: 'line', encode: { x: 'timestamp', y: 'TVL' } }
 ]
-const FEES_CHART: IMultiSeriesChart2Props['charts'] = [
+const FEES_CHART: IMultiSeriesChartProps['charts'] = [
 	{ name: 'Fees', type: 'bar', encode: { x: 'timestamp', y: 'Fees' }, color: '#4FC3F7', stack: 'a' }
 ]
-const REVENUE_CHART: IMultiSeriesChart2Props['charts'] = [
+const REVENUE_CHART: IMultiSeriesChartProps['charts'] = [
 	{ name: 'Revenue', type: 'bar', encode: { x: 'timestamp', y: 'Revenue' }, color: '#66BB6A', stack: 'a' }
 ]
-const HOLDERS_REVENUE_CHART: IMultiSeriesChart2Props['charts'] = [
+const HOLDERS_REVENUE_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Holders Revenue',
 		type: 'bar',
@@ -30,7 +28,7 @@ const HOLDERS_REVENUE_CHART: IMultiSeriesChart2Props['charts'] = [
 		stack: 'a'
 	}
 ]
-const INFLOWS_CHART: IMultiSeriesChart2Props['charts'] = [
+const INFLOWS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'USD Inflows',
 		type: 'bar',
@@ -124,7 +122,7 @@ export default function CreditCard() {
 				<CardSkeleton title="TVL" />
 			) : (
 				<ChartCard title="TVL">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={tvlDataset}
 						charts={TVL_CHART}
 						valueSymbol="$"
@@ -140,7 +138,7 @@ export default function CreditCard() {
 				<CardSkeleton title="Fees" />
 			) : (
 				<ChartCard title="Fees">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={feesDataset}
 						charts={FEES_CHART}
 						valueSymbol="$"
@@ -156,7 +154,7 @@ export default function CreditCard() {
 				<CardSkeleton title="Revenue" />
 			) : (
 				<ChartCard title="Revenue">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={revenueDataset}
 						charts={REVENUE_CHART}
 						valueSymbol="$"
@@ -170,7 +168,7 @@ export default function CreditCard() {
 
 			{!feesLoading && hasHoldersRevenue && (
 				<ChartCard title="Holders Revenue">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={holdersRevenueDataset}
 						charts={HOLDERS_REVENUE_CHART}
 						valueSymbol="$"
@@ -186,7 +184,7 @@ export default function CreditCard() {
 				<CardSkeleton title="USD Inflows" />
 			) : (
 				<ChartCard title="USD Inflows">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={inflowsDataset}
 						charts={INFLOWS_CHART}
 						valueSymbol="$"

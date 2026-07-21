@@ -4,8 +4,9 @@ import {
 	buildTimeSeriesDataset,
 	materializeZeroFilledDataset,
 	type TimestampDataset
-} from '~/components/ECharts/timeSeriesDataset'
-import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
+} from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useSelectedValues } from '~/hooks/useSelectedValues'
@@ -24,9 +25,7 @@ import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { useAdvancedTvlChartData } from '../useAdvancedTvlChartData'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 interface AdvancedTvlChartTabProps {
@@ -189,7 +188,7 @@ export function AdvancedTvlChartTab({
 				{chartType === 'tokensPie' ? (
 					<PieChart chartData={advancedData.pieChart} stackColors={presentation.stackColors} />
 				) : (
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						title=""
 						dataset={visibleDataset}
 						charts={presentation.charts}

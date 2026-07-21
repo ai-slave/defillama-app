@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { buildAdapterByChainCombinedChartPresentation } from '../combinedChart'
 
@@ -7,11 +7,11 @@ const toMs = (year: number, month: number, day: number) => Date.UTC(year, month 
 
 describe('buildAdapterByChainCombinedChartPresentation', () => {
 	it('keeps daily data unchanged and preserves dimension, chart, and color ordering', () => {
-		const chartData: MultiSeriesChart2Dataset = {
-			dimensions: ['Flow B', 'timestamp', 'Open Interest', 'Flow A'],
+		const chartData: MultiSeriesChartDataset = {
+			dimensions: ['timestamp', 'Flow B', 'Open Interest', 'Flow A'],
 			source: [
-				{ timestamp: toMs(2024, 1, 1), 'Flow B': 2, 'Open Interest': 100, 'Flow A': null },
-				{ timestamp: toMs(2024, 1, 2), 'Flow B': 3, 'Open Interest': 110, 'Flow A': 4 }
+				[toMs(2024, 1, 1), 2, 100, null],
+				[toMs(2024, 1, 2), 3, 110, 4]
 			]
 		}
 
@@ -26,13 +26,13 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 			{
 				type: 'bar',
 				name: 'Flow B',
-				encode: { x: 'timestamp', y: 'Flow B' },
+				encode: { x: 0, y: 1 },
 				color: CHART_COLORS[0]
 			},
 			{
 				type: 'line',
 				name: 'Open Interest',
-				encode: { x: 'timestamp', y: 'Open Interest' },
+				encode: { x: 0, y: 2 },
 				color: CHART_COLORS[1],
 				yAxisIndex: 1,
 				hideAreaStyle: true
@@ -40,7 +40,7 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 			{
 				type: 'bar',
 				name: 'Flow A',
-				encode: { x: 'timestamp', y: 'Flow A' },
+				encode: { x: 0, y: 3 },
 				color: CHART_COLORS[2]
 			}
 		])
@@ -53,10 +53,10 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 			chartData: {
 				dimensions: ['timestamp', 'Volume', 'Open Interest'],
 				source: [
-					{ timestamp: toMs(2024, 1, 1), Volume: 10, 'Open Interest': 100 },
-					{ timestamp: toMs(2024, 1, 2), Volume: 20, 'Open Interest': 110 },
-					{ timestamp: toMs(2024, 1, 8), Volume: 7 },
-					{ timestamp: toMs(2024, 1, 15), 'Open Interest': 140 }
+					[toMs(2024, 1, 1), 10, 100],
+					[toMs(2024, 1, 2), 20, 110],
+					[toMs(2024, 1, 8), 7],
+					[toMs(2024, 1, 15), undefined, 140]
 				]
 			}
 		})
@@ -64,9 +64,9 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 		expect(presentation.dataset).toEqual({
 			dimensions: ['timestamp', 'Volume', 'Open Interest'],
 			source: [
-				{ timestamp: toMs(2024, 1, 7), Volume: 30, 'Open Interest': 110 },
-				{ timestamp: toMs(2024, 1, 14), Volume: 7, 'Open Interest': null },
-				{ timestamp: toMs(2024, 1, 21), Volume: null, 'Open Interest': 140 }
+				[toMs(2024, 1, 7), 30, 110],
+				[toMs(2024, 1, 14), 7, null],
+				[toMs(2024, 1, 21), null, 140]
 			]
 		})
 		expect(presentation.charts.map(({ name, type }) => ({ name, type }))).toEqual([
@@ -82,10 +82,10 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 			chartData: {
 				dimensions: ['timestamp', 'Volume', 'Open Interest'],
 				source: [
-					{ timestamp: toMs(2024, 1, 1), Volume: 5, 'Open Interest': 100 },
-					{ timestamp: toMs(2024, 1, 2), Volume: null, 'Open Interest': 110 },
-					{ timestamp: toMs(2024, 1, 3), Volume: 7, 'Open Interest': 115 },
-					{ timestamp: toMs(2024, 1, 3), Volume: 3, 'Open Interest': 120 }
+					[toMs(2024, 1, 1), 5, 100],
+					[toMs(2024, 1, 2), null, 110],
+					[toMs(2024, 1, 3), 7, 115],
+					[toMs(2024, 1, 3), 3, 120]
 				]
 			}
 		})
@@ -93,9 +93,9 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 		expect(presentation.dataset).toEqual({
 			dimensions: ['timestamp', 'Volume', 'Open Interest'],
 			source: [
-				{ timestamp: toMs(2024, 1, 1), Volume: 5, 'Open Interest': 100 },
-				{ timestamp: toMs(2024, 1, 2), Volume: null, 'Open Interest': 110 },
-				{ timestamp: toMs(2024, 1, 3), Volume: 15, 'Open Interest': 120 }
+				[toMs(2024, 1, 1), 5, 100],
+				[toMs(2024, 1, 2), null, 110],
+				[toMs(2024, 1, 3), 15, 120]
 			]
 		})
 		expect(presentation.charts.map(({ name, type }) => ({ name, type }))).toEqual([
@@ -109,17 +109,17 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 			chartName: 'Active Liquidity',
 			groupBy: 'monthly',
 			chartData: {
-				dimensions: ['Series B', 'timestamp', 'Series A'],
+				dimensions: ['timestamp', 'Series B', 'Series A'],
 				source: [
-					{ timestamp: toMs(2024, 1, 1), 'Series B': 10, 'Series A': 20 },
-					{ timestamp: toMs(2024, 1, 31), 'Series B': 30, 'Series A': 40 }
+					[toMs(2024, 1, 1), 10, 20],
+					[toMs(2024, 1, 31), 30, 40]
 				]
 			}
 		})
 
 		expect(presentation.dataset).toEqual({
 			dimensions: ['timestamp', 'Series B', 'Series A'],
-			source: [{ timestamp: toMs(2024, 1, 1), 'Series B': 30, 'Series A': 40 }]
+			source: [[toMs(2024, 1, 1), 30, 40]]
 		})
 		expect(presentation.charts.map(({ name, type }) => ({ name, type }))).toEqual([
 			{ name: 'Series B', type: 'line' },

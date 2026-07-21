@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/timeSeriesDataset'
+import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { readInvestorApiJson, type ApiDate } from '../../api.types'
 import { assignColors } from '../spark/api'
 import { multiSeriesCharts } from './chartDefaults'

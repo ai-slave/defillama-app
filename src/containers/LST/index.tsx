@@ -2,13 +2,13 @@ import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
+import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
-import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
-import type { IPieChartProps } from '~/components/ECharts/types'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -24,7 +24,7 @@ import { buildLstBreakdownChartData, buildLstInflowsData, buildLstInflowsSeriesD
 import type { ILSTTokenRow, LSTOverviewProps } from './types'
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const DEFAULT_SORTING_STATE = [{ id: 'stakedEth', desc: true }]
 
@@ -284,7 +284,7 @@ export const LSTOverview = ({
 									/>
 								</div>
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
-									<MultiSeriesChart2
+									<MultiSeriesChart
 										dataset={deferredBreakdownData.dataset}
 										charts={deferredBreakdownData.charts}
 										stacked={true}
@@ -324,7 +324,7 @@ export const LSTOverview = ({
 
 							{groupBy === 'cumulative' ? (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
-									<MultiSeriesChart2
+									<MultiSeriesChart
 										dataset={deferredInflowsData.dataset}
 										charts={deferredInflowsData.cumulativeCharts}
 										hideDefaultLegend
@@ -340,7 +340,7 @@ export const LSTOverview = ({
 								</React.Suspense>
 							) : (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
-									<MultiSeriesChart2
+									<MultiSeriesChart
 										dataset={deferredInflowsData.dataset}
 										charts={deferredInflowsData.barCharts}
 										hideDefaultLegend

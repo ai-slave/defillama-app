@@ -345,14 +345,14 @@ export async function getExtraTvlByChain({
 			...chainsList.map((c) => ({ label: c, to: `${config.basePath}/chain/${slug(c)}` }))
 		],
 		dataset: {
-			source: chart.map(([timestamp, value]) => ({ timestamp, [config.label]: value })),
+			source: chart.map(([timestamp, value]) => [timestamp, value]),
 			dimensions: ['timestamp', config.label]
 		},
 		charts: [
 			{
 				type: 'line' as const,
 				name: config.label,
-				encode: { x: 'timestamp', y: config.label },
+				encode: { x: 0, y: 1 },
 				color: CHART_COLORS[0],
 				stack: config.label
 			}

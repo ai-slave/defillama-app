@@ -1,4 +1,3 @@
-import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import {
 	SERVER_URL,
 	V2_SERVER_URL,
@@ -55,9 +54,7 @@ function stringValue(value: unknown): string | null {
 }
 
 function createDownloadChartRow(date: unknown): Record<string, unknown> {
-	const row = createChartRecord<unknown>()
-	row.date = date
-	return row
+	return { date }
 }
 
 /**

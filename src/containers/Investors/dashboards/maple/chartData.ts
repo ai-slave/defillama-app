@@ -1,4 +1,4 @@
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { MaplePool, MaplePoolWithLoans } from './api'
 import { parseFeeRate, parseInterestRate, parseTokenAmount, parseWad } from './api'
 
@@ -71,9 +71,9 @@ export function buildMaplePoolsData(pools: MaplePool[]) {
 	let totalDepositors = 0
 	let weightedApySum = 0
 	let weightedUtilizationSum = 0
-	const tvlSource: Array<{ Name: string; TVL: number }> = []
-	const utilizationSource: Array<{ Name: string; Utilization: number }> = []
-	const apySource: Array<{ Name: string; 'Spot APY': number }> = []
+	const tvlSource: Array<Array<string | number>> = []
+	const utilizationSource: Array<Array<string | number>> = []
+	const apySource: Array<Array<string | number>> = []
 
 	for (const pool of rows) {
 		totalTvl += pool.tvlUsd
@@ -81,14 +81,14 @@ export function buildMaplePoolsData(pools: MaplePool[]) {
 		weightedApySum += pool.spotApy * pool.tvlUsd
 		weightedUtilizationSum += pool.utilization * pool.tvlUsd
 		if (pool.tvlUsd >= 10_000) {
-			tvlSource.push({ Name: pool.name, TVL: pool.tvlUsd })
-			if (pool.utilization > 0) utilizationSource.push({ Name: pool.name, Utilization: pool.utilization })
+			tvlSource.push([pool.name, pool.tvlUsd])
+			if (pool.utilization > 0) utilizationSource.push([pool.name, pool.utilization])
 		}
-		if (pool.spotApy > 0) apySource.push({ Name: pool.name, 'Spot APY': pool.spotApy })
+		if (pool.spotApy > 0) apySource.push([pool.name, pool.spotApy])
 	}
 
-	utilizationSource.sort((a, b) => b.Utilization - a.Utilization)
-	apySource.sort((a, b) => b['Spot APY'] - a['Spot APY'])
+	utilizationSource.sort((a, b) => (b[1] as number) - (a[1] as number))
+	apySource.sort((a, b) => (b[1] as number) - (a[1] as number))
 
 	return {
 		rows,
@@ -98,12 +98,12 @@ export function buildMaplePoolsData(pools: MaplePool[]) {
 			weightedAverageApy: totalTvl > 0 ? weightedApySum / totalTvl : 0,
 			weightedAverageUtilization: totalTvl > 0 ? weightedUtilizationSum / totalTvl : 0
 		},
-		tvl: { dimensions: ['Name', 'TVL'], source: tvlSource } satisfies MultiSeriesChart2Dataset,
+		tvl: { dimensions: ['Name', 'TVL'], source: tvlSource } satisfies MultiSeriesChartDataset,
 		utilization: {
 			dimensions: ['Name', 'Utilization'],
 			source: utilizationSource
-		} satisfies MultiSeriesChart2Dataset,
-		apy: { dimensions: ['Name', 'Spot APY'], source: apySource } satisfies MultiSeriesChart2Dataset
+		} satisfies MultiSeriesChartDataset,
+		apy: { dimensions: ['Name', 'Spot APY'], source: apySource } satisfies MultiSeriesChartDataset
 	}
 }
 
@@ -153,11 +153,9 @@ export function buildMapleLoansData(pools: MaplePoolWithLoans[], nowSec: number)
 		if (ageIndex >= 0) agePrincipal[ageIndex] += loan.principal
 	}
 
-	const bucketDataset = (buckets: typeof RATE_BUCKETS, values: number[]): MultiSeriesChart2Dataset => ({
+	const bucketDataset = (buckets: typeof RATE_BUCKETS, values: number[]): MultiSeriesChartDataset => ({
 		dimensions: ['Name', 'Principal'],
-		source: buckets.flatMap((bucket, index) =>
-			values[index] > 0 ? [{ Name: bucket.label, Principal: values[index] }] : []
-		)
+		source: buckets.flatMap((bucket, index) => (values[index] > 0 ? [[bucket.label, values[index]]] : []))
 	})
 
 	return {
@@ -172,8 +170,8 @@ export function buildMapleLoansData(pools: MaplePoolWithLoans[], nowSec: number)
 			dimensions: ['Name', 'Principal'],
 			source: Array.from(principalByPool.entries())
 				.sort((a, b) => b[1] - a[1])
-				.map(([Name, Principal]) => ({ Name, Principal }))
-		} satisfies MultiSeriesChart2Dataset,
+				.map(([name, principal]) => [name, principal])
+		} satisfies MultiSeriesChartDataset,
 		rateDistribution: bucketDataset(RATE_BUCKETS, ratePrincipal),
 		ageDistribution: bucketDataset(AGE_BUCKETS, agePrincipal)
 	}
@@ -200,7 +198,7 @@ export function monthTimestampMs(ts: number): number {
 	return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)
 }
 
-export function aggregateByMonth(txes: TxRow[]): MultiSeriesChart2Dataset {
+export function aggregateByMonth(txes: TxRow[]): MultiSeriesChartDataset {
 	const map = new Map<number, { deposits: number; withdrawals: number }>()
 
 	for (const tx of txes) {
@@ -212,15 +210,15 @@ export function aggregateByMonth(txes: TxRow[]): MultiSeriesChart2Dataset {
 	}
 
 	const entries = Array.from(map.entries()).sort(([a], [b]) => a - b)
-	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(entries.length)
+	const source = new Array<MultiSeriesChartDataset['source'][number]>(entries.length)
 	for (let index = 0; index < entries.length; index++) {
 		const [timestamp, value] = entries[index]
-		source[index] = { timestamp, Deposits: value.deposits, Withdrawals: value.withdrawals }
+		source[index] = [timestamp, value.deposits, value.withdrawals]
 	}
 	return { dimensions: ['timestamp', 'Deposits', 'Withdrawals'], source }
 }
 
-export function aggregateDripByMonth(txes: DripRow[]): MultiSeriesChart2Dataset {
+export function aggregateDripByMonth(txes: DripRow[]): MultiSeriesChartDataset {
 	const map = new Map<number, number>()
 
 	for (const tx of txes) {
@@ -229,10 +227,10 @@ export function aggregateDripByMonth(txes: DripRow[]): MultiSeriesChart2Dataset 
 	}
 
 	const entries = Array.from(map.entries()).sort(([a], [b]) => a - b)
-	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(entries.length)
+	const source = new Array<MultiSeriesChartDataset['source'][number]>(entries.length)
 	for (let index = 0; index < entries.length; index++) {
 		const [timestamp, amount] = entries[index]
-		source[index] = { timestamp, Claimed: amount }
+		source[index] = [timestamp, amount]
 	}
 	return { dimensions: ['timestamp', 'Claimed'], source }
 }

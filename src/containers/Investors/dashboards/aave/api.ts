@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { readInvestorApiJson, type ApiIsoTimestamp, type ApiNumericString } from '../../api.types'
 
 // Aave GraphQL serializes monetary values and decimal rates as strings; normalization happens below.
@@ -184,16 +184,12 @@ export function formatAaveMarkets(markets: AaveMarket[]): FlatReserve[] {
 	)
 }
 
-export function buildAaveApyDataset(samples: APYSample[], type: 'supply' | 'borrow'): MultiSeriesChart2Dataset {
+export function buildAaveApyDataset(samples: APYSample[], type: 'supply' | 'borrow'): MultiSeriesChartDataset {
 	const dimension = type === 'supply' ? 'Supply APY' : 'Borrow APY'
-	type ApyRow = Record<string, number> & { timestamp: number }
-	const source = new Array<ApyRow>(samples.length)
+	const source = new Array<number[]>(samples.length)
 	for (let i = 0; i < samples.length; i++) {
 		const sample = samples[i]
-		source[samples.length - i - 1] = {
-			timestamp: Math.floor(Date.parse(sample.date) / 1000) * 1000,
-			[dimension]: pct(sample.avgRate.value)
-		}
+		source[samples.length - i - 1] = [Math.floor(Date.parse(sample.date) / 1000) * 1000, pct(sample.avgRate.value)]
 	}
 	return { source, dimensions: ['timestamp', dimension] }
 }

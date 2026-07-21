@@ -1,10 +1,9 @@
-import { createChartRow } from '~/components/ECharts/dynamicRow'
+import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
 import type {
 	ChartTimeGroupingWithCumulative,
-	MultiSeriesChart2Dataset,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
-import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/utils'
+	MultiSeriesChartDataset,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import type {
 	StablecoinVolumeBreakdownChartPoint,
@@ -15,8 +14,8 @@ import type {
 import { getGroupedBarCharts } from './chartGrouping'
 
 export interface StablecoinVolumeChartPayload {
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 	valueSymbol: '$'
 	stacked: boolean
 	showTotalInTooltip: boolean
@@ -43,8 +42,8 @@ const clampLimit = (limit: number | undefined): number => {
 	return Math.min(MAX_BREAKDOWN_LIMIT, limit)
 }
 
-const buildCharts = (names: string[], stacked: boolean): MultiSeriesChart2SeriesConfig[] => {
-	const charts: MultiSeriesChart2SeriesConfig[] = []
+const buildCharts = (names: string[], stacked: boolean): MultiSeriesChartSeriesConfig[] => {
+	const charts: MultiSeriesChartSeriesConfig[] = []
 	for (let i = 0; i < names.length; i++) {
 		const name = names[i]
 		charts.push({
@@ -83,14 +82,11 @@ const buildTotalVolumePayload = (
 	data: StablecoinVolumeTotalChartPoint[],
 	trimIncompleteTail: boolean
 ): StablecoinVolumeChartPayload => {
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const source: MultiSeriesChartDataset['source'] = []
 	const lastCompletePointIndex = getLastCompletePointIndex(data, trimIncompleteTail)
 	for (let i = 0; i <= lastCompletePointIndex; i++) {
 		const point = data[i]
-		source.push({
-			timestamp: point[0] * 1e3,
-			[TOTAL_VOLUME_NAME]: point[1]
-		})
+		source.push([point[0] * 1e3, point[1]])
 	}
 
 	return {
@@ -142,25 +138,22 @@ const buildBreakdownVolumePayload = (
 	const points = data as StablecoinVolumeBreakdownChartPoint[]
 	const lastCompletePointIndex = getLastCompletePointIndex(points, options.trimIncompleteTail === true)
 	const keys = getTopBreakdownKeys(points, lastCompletePointIndex, clampLimit(options.limit))
-	const labelsByKey = new Map<string, string>()
 	const dimensions = ['timestamp']
 	for (const key of keys) {
 		const label = formatDimensionLabel(key, options.chart)
-		labelsByKey.set(key, label)
 		dimensions.push(label)
 	}
 	const includeOthers = keys.length > 0
 	let hasOthersValue = false
 
 	const selectedKeysSet = new Set(keys)
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const source: MultiSeriesChartDataset['source'] = []
 	for (let i = 0; i <= lastCompletePointIndex; i++) {
 		const [timestamp, breakdown] = points[i]
-		const row = createChartRow<number>(timestamp * 1e3)
-		for (const key of keys) {
-			const label = labelsByKey.get(key)
-			if (!label) continue
-			row[label] = breakdown[key] ?? 0
+		const row = new Array<number>(keys.length + 2)
+		row[0] = timestamp * 1e3
+		for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
+			row[keyIndex + 1] = breakdown[keys[keyIndex]] ?? 0
 		}
 
 		if (includeOthers) {
@@ -170,13 +163,16 @@ const buildBreakdownVolumePayload = (
 				others += breakdown[key]
 			}
 			if (others > 0) hasOthersValue = true
-			row[OTHERS_NAME] = others
+			row[keys.length + 1] = others
 		}
 
 		source.push(row)
 	}
 
 	if (includeOthers && hasOthersValue) dimensions.push(OTHERS_NAME)
+	if (!hasOthersValue) {
+		for (const row of source) row.length = dimensions.length
+	}
 
 	const seriesNames: string[] = []
 	for (let i = 1; i < dimensions.length; i++) {

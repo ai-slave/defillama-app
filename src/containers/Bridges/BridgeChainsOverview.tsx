@@ -1,22 +1,20 @@
 import * as React from 'react'
 import { lazy, Suspense } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { BridgeChainsTable } from '~/containers/Bridges/BridgeChainsTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { boundBridgeChainSelection, MAX_VISIBLE_CHAINS } from './bridgeChainsSelection'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 type BridgeChainsOverviewProps = {
 	allChains: string[]
 	tableData: React.ComponentProps<typeof BridgeChainsTable>['data']
 	chart: {
-		dataset: MultiSeriesChart2Dataset
-		charts: NonNullable<IMultiSeriesChart2Props['charts']>
+		dataset: MultiSeriesChartDataset
+		charts: NonNullable<IMultiSeriesChartProps['charts']>
 	}
 }
 
@@ -54,7 +52,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 
 				{chart?.dataset?.source?.length > 0 ? (
 					<Suspense fallback={<ChartPanelBodyFallback />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={chart.dataset}
 							charts={chart.charts}
 							selectedCharts={selectedCharts}

@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { normalizeSqlResultRows } from '~/containers/Downloads/sql/resultNormalization'
 import { captureSnapshot } from '~/containers/ProDashboard/components/SqlChart/snapshot'
 import type { SqlChartConfig, SqlSnapshot } from '~/containers/ProDashboard/types'
 import { authorizationHeader, featuresServerUrl, parseJsonObject } from '~/server/dashboardPurgeProxy'
@@ -44,7 +45,17 @@ async function executeAndStore(hash: string, item: SqlChartConfig): Promise<SqlS
 	if (pending) return pending
 
 	const promise = (async () => {
-		const result = await runServerSql(item.query)
+		const serverResult = await runServerSql(item.query)
+		const rows = new Array<unknown[]>(serverResult.rows.length)
+		for (let rowIndex = 0; rowIndex < serverResult.rows.length; rowIndex++) {
+			const input = serverResult.rows[rowIndex]
+			const row = new Array<unknown>(serverResult.columns.length)
+			for (let columnIndex = 0; columnIndex < serverResult.columns.length; columnIndex++) {
+				row[columnIndex] = input[serverResult.columns[columnIndex].name]
+			}
+			rows[rowIndex] = row
+		}
+		const result = normalizeSqlResultRows({ columns: serverResult.columns, rows })
 		const snapshot = captureSnapshot(result, 'server', undefined, item.rowCap)
 		await putStoredSqlResult(hash, snapshot)
 		return snapshot

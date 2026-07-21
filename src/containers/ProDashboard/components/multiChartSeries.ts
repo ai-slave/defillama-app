@@ -1,10 +1,9 @@
-import { createChartRow } from '~/components/ECharts/dynamicRow'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	getMetricUnitGroup,
 	METRIC_UNIT_GROUP_SYMBOL,
 	resolveSeriesAxisLayout
-} from '~/components/ECharts/metricGroups'
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+} from '~/containers/ProDashboard/components/metricGroups'
 
 export type MultiChartInputSeries = {
 	name: string
@@ -15,8 +14,8 @@ export type MultiChartInputSeries = {
 }
 
 export type MultiChartSeriesView = {
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 	solidChartAreaStyle: boolean
 }
 
@@ -26,10 +25,10 @@ export function buildMultiChartCsvRows({ dataset, charts }: MultiChartSeriesView
 	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
 		const sourceRow = dataset.source[rowIndex]
 		const row = new Array<string>(charts.length + 1)
-		row[0] = new Date(sourceRow.timestamp as number).toISOString().slice(0, 10)
+		row[0] = new Date(sourceRow[0] as number).toISOString().slice(0, 10)
 		for (let chartIndex = 0; chartIndex < charts.length; chartIndex++) {
 			const dimension = charts[chartIndex].encode.y
-			const value = typeof dimension === 'string' ? sourceRow[dimension] : null
+			const value = typeof dimension === 'number' ? sourceRow[dimension] : null
 			row[chartIndex + 1] = value == null ? '0' : String(value)
 		}
 		rows[rowIndex + 1] = row
@@ -50,19 +49,16 @@ export function buildMultiChartSeriesView({
 	stackSeries: boolean
 }): MultiChartSeriesView {
 	const dimensions = new Array<string>(series.length + 1)
-	const dataDimensions = new Array<string>(series.length)
 	const indexes = new Uint32Array(series.length)
 	const runningTotals = new Float64Array(series.length)
 	const percentageTotals = new Float64Array(series.length)
 	dimensions[0] = 'timestamp'
 	for (let i = 0; i < series.length; i++) {
-		const dimension = `series-${i}`
-		dataDimensions[i] = dimension
-		dimensions[i + 1] = dimension
+		dimensions[i + 1] = series[i].name
 	}
 
 	const shouldZeroFill = stackSeries || showPercentage
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const source: MultiSeriesChartDataset['source'] = []
 	const pointCount = series[0]?.data.length ?? 0
 	let usesAlignedFastPath = series.length > 0
 	for (let i = 1; i < series.length && usesAlignedFastPath; i++) {
@@ -74,7 +70,8 @@ export function buildMultiChartSeriesView({
 	if (usesAlignedFastPath) {
 		alignedRows: for (let pointIndex = 0; pointIndex < pointCount; pointIndex++) {
 			const timestamp = series[0].data[pointIndex][0]
-			const row = createChartRow<number>(timestamp * 1e3)
+			const row = new Array<number>(series.length + 1)
+			row[0] = timestamp * 1e3
 			let rowTotal = 0
 			for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
 				const item = series[seriesIndex]
@@ -88,14 +85,13 @@ export function buildMultiChartSeriesView({
 					runningTotals[seriesIndex] += value
 					value = runningTotals[seriesIndex]
 				}
-				row[dataDimensions[seriesIndex]] = value
+				row[seriesIndex + 1] = value
 				rowTotal += value
 			}
 			if (showPercentage) {
 				for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
-					const dimension = dataDimensions[seriesIndex]
-					const percentage = rowTotal > 0 ? (row[dimension] / rowTotal) * 100 : 0
-					row[dimension] = percentage
+					const percentage = rowTotal > 0 ? (row[seriesIndex + 1] / rowTotal) * 100 : 0
+					row[seriesIndex + 1] = percentage
 					percentageTotals[seriesIndex] += percentage
 				}
 			}
@@ -115,7 +111,8 @@ export function buildMultiChartSeriesView({
 			}
 			if (timestamp === Number.POSITIVE_INFINITY) break
 
-			const row = createChartRow<number | null>(timestamp * 1e3)
+			const row = new Array<number | null>(series.length + 1)
+			row[0] = timestamp * 1e3
 			let rowTotal = 0
 			for (let i = 0; i < series.length; i++) {
 				const item = series[i]
@@ -130,16 +127,15 @@ export function buildMultiChartSeriesView({
 						value = point[1]
 					}
 				}
-				row[dataDimensions[i]] = value
+				row[i + 1] = value
 				if (value != null) rowTotal += value
 			}
 
 			if (showPercentage) {
 				for (let i = 0; i < series.length; i++) {
-					const dimension = dataDimensions[i]
-					const value = row[dimension] ?? 0
+					const value = row[i + 1] ?? 0
 					const percentage = rowTotal > 0 ? (value / rowTotal) * 100 : 0
-					row[dimension] = percentage
+					row[i + 1] = percentage
 					percentageTotals[i] += percentage
 				}
 			}
@@ -154,7 +150,7 @@ export function buildMultiChartSeriesView({
 		chartOrder.sort((a, b) => percentageTotals[a] - percentageTotals[b])
 	}
 
-	const charts = new Array<MultiSeriesChart2SeriesConfig>(series.length)
+	const charts = new Array<MultiSeriesChartSeriesConfig>(series.length)
 	for (let outputIndex = 0; outputIndex < chartOrder.length; outputIndex++) {
 		const inputIndex = chartOrder[outputIndex]
 		const item = series[inputIndex]
@@ -165,7 +161,7 @@ export function buildMultiChartSeriesView({
 		charts[outputIndex] = {
 			type,
 			name: item.name,
-			encode: { x: 'timestamp', y: dataDimensions[inputIndex] },
+			encode: { x: 0, y: inputIndex + 1 },
 			color: item.color,
 			valueSymbol: METRIC_UNIT_GROUP_SYMBOL[unitGroup],
 			...(type === 'line' ? { connectNulls: true } : {}),

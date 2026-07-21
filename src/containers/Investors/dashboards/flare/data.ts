@@ -1,6 +1,5 @@
-import { createChartRecord } from '~/components/ECharts/dynamicRow'
-import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/timeSeriesDataset'
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { FLARE_BLUE, FLARE_GREEN, FLARE_ORANGE, FLARE_PINK, timeSeriesChartOptions } from './chartDefaults'
 import { parseDateToTimestampMs, type UpstreamChart, type UpstreamSeries } from './transform'
 
@@ -111,26 +110,26 @@ export interface TokenomicsAPIResponse {
 	}
 }
 
-const DAILY_BURN_CHART: MultiSeriesChart2SeriesConfig[] = [
+const DAILY_BURN_CHART: MultiSeriesChartSeriesConfig[] = [
 	{
 		type: 'bar',
 		name: 'Daily Burn',
-		encode: { x: 'timestamp', y: 'Daily Burn' },
+		encode: { x: 0, y: 1 },
 		color: FLARE_ORANGE,
 		stack: 'a'
 	}
 ]
 
-const CUMULATIVE_BURN_CHART: MultiSeriesChart2SeriesConfig[] = [
+const CUMULATIVE_BURN_CHART: MultiSeriesChartSeriesConfig[] = [
 	{
 		type: 'line',
 		name: 'Cumulative Burn',
-		encode: { x: 'timestamp', y: 'Cumulative Burn' },
+		encode: { x: 0, y: 1 },
 		color: FLARE_PINK
 	}
 ]
 
-const PER_EPOCH_CHART: MultiSeriesChart2SeriesConfig[] = [
+const PER_EPOCH_CHART: MultiSeriesChartSeriesConfig[] = [
 	{
 		type: 'bar',
 		name: 'Per Epoch',
@@ -141,7 +140,7 @@ const PER_EPOCH_CHART: MultiSeriesChart2SeriesConfig[] = [
 ]
 
 const BURN_VS_EMIT_SERIES = ['FLR Emitted', 'FLR Burned', 'Net Inflation'] as const
-const BURN_VS_EMIT_CHARTS: MultiSeriesChart2SeriesConfig[] = [
+const BURN_VS_EMIT_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{
 		type: 'bar',
 		name: 'FLR Emitted',
@@ -168,7 +167,7 @@ const BURN_VS_EMIT_CHARTS: MultiSeriesChart2SeriesConfig[] = [
 const DONUT_PALETTE = [FLARE_ORANGE, FLARE_PINK, '#7C2D9C', FLARE_BLUE, FLARE_GREEN, '#FBBF24', '#06B6D4', '#A855F7']
 
 export function buildFlareOverviewData(data: OverviewAPIResponse) {
-	const tvlChartConfigs = new Array<MultiSeriesChart2SeriesConfig>(data.tvl.tvlChart.series.length)
+	const tvlChartConfigs = new Array<MultiSeriesChartSeriesConfig>(data.tvl.tvlChart.series.length)
 	for (let i = 0; i < data.tvl.tvlChart.series.length; i++) {
 		const name = data.tvl.tvlChart.series[i].name
 		tvlChartConfigs[i] = {
@@ -180,7 +179,7 @@ export function buildFlareOverviewData(data: OverviewAPIResponse) {
 	}
 
 	const stableSeries: UpstreamSeries[] = []
-	const stableChartConfigs: MultiSeriesChart2SeriesConfig[] = []
+	const stableChartConfigs: MultiSeriesChartSeriesConfig[] = []
 	for (const series of data.stablecoins.stablecoinChart.series) {
 		if (/total/i.test(series.name)) continue
 		stableSeries.push(series)
@@ -248,7 +247,7 @@ function buildNetworkChart(chart: UpstreamChart, fallbackName: string, color: st
 				color,
 				stack: 'a'
 			}
-		] satisfies MultiSeriesChart2SeriesConfig[]
+		] satisfies MultiSeriesChartSeriesConfig[]
 	}
 }
 
@@ -272,9 +271,9 @@ export function buildFlareStakingData(data: StakingAPIResponse) {
 	const upstreamChart = data.stakingDelegationChart
 	let chart = null
 	if (upstreamChart) {
-		const colors = createChartRecord<string>()
+		const colors = {}
 		const seriesNames = new Array<string>(upstreamChart.series.length)
-		const charts = new Array<MultiSeriesChart2SeriesConfig>(upstreamChart.series.length)
+		const charts = new Array<MultiSeriesChartSeriesConfig>(upstreamChart.series.length)
 		for (let i = 0; i < upstreamChart.series.length; i++) {
 			const name = upstreamChart.series[i].name
 			const color = /ftso|deleg/i.test(name) ? FLARE_BLUE : FLARE_ORANGE
@@ -325,7 +324,7 @@ export function buildFlareFAssetsData(data: FAssetsAPIResponse) {
 
 	let lockedChart = null
 	if (locked && lockedSeries.length > 0) {
-		const charts = new Array<MultiSeriesChart2SeriesConfig>(lockedSeries.length)
+		const charts = new Array<MultiSeriesChartSeriesConfig>(lockedSeries.length)
 		for (let i = 0; i < lockedSeries.length; i++) {
 			const name = lockedSeries[i].name
 			charts[i] = {
@@ -347,7 +346,7 @@ export function buildFlareFAssetsData(data: FAssetsAPIResponse) {
 	let distribution = null
 	if (dist && dist.series[0] && dist.labels.length > 0) {
 		const rows = new Array<{ name: string; value: number }>(dist.labels.length)
-		const colors = createChartRecord<string>()
+		const colors = {}
 		for (let i = 0; i < dist.labels.length; i++) {
 			const name = dist.labels[i]
 			rows[i] = { name, value: dist.series[0].data[i] ?? 0 }
@@ -380,12 +379,20 @@ export function buildFlareFAssetsData(data: FAssetsAPIResponse) {
 export function buildFlareTokenomicsData(data: TokenomicsAPIResponse) {
 	const burn = data.burn
 	const emissions = data.emissions
-	const burnSeries: UpstreamSeries[] = []
+	let dailyBurn: UpstreamSeries | undefined
+	let cumulativeBurn: UpstreamSeries | undefined
 	for (const series of burn.burnChart.series) {
-		if (series.name === 'Daily Burn' || series.name === 'Cumulative Burn') burnSeries.push(series)
+		if (series.name === 'Daily Burn' && !dailyBurn) dailyBurn = series
+		else if (series.name === 'Cumulative Burn' && !cumulativeBurn) cumulativeBurn = series
 	}
-	// Both burn columns are API snapshots. The cumulative column must not be summed again.
-	const burnDataset = buildColumnarTimeSeriesDataset(burn.burnChart.dates, burnSeries, parseDateToTimestampMs, 0)
+	const dailyBurnSource: MultiSeriesChartDataset['source'] = []
+	const cumulativeBurnSource: MultiSeriesChartDataset['source'] = []
+	for (let i = 0; i < burn.burnChart.dates.length; i++) {
+		const timestamp = parseDateToTimestampMs(burn.burnChart.dates[i])
+		dailyBurnSource.push([timestamp, dailyBurn?.data[i] ?? 0])
+		// Cumulative Burn is already an API snapshot and must not be summed again.
+		cumulativeBurnSource.push([timestamp, cumulativeBurn?.data[i] ?? 0])
+	}
 
 	const perEpochSeries: UpstreamSeries[] = []
 	for (const series of emissions.emissionsChart.series) {
@@ -411,13 +418,13 @@ export function buildFlareTokenomicsData(data: TokenomicsAPIResponse) {
 		burn: {
 			burnTitle: burn.burnChart.title ?? 'FLR Burned (Daily Gas)',
 			dailyDataset: {
-				source: burnDataset.source,
+				source: dailyBurnSource,
 				dimensions: ['timestamp', 'Daily Burn']
-			} satisfies MultiSeriesChart2Dataset,
+			} satisfies MultiSeriesChartDataset,
 			cumulativeDataset: {
-				source: burnDataset.source,
+				source: cumulativeBurnSource,
 				dimensions: ['timestamp', 'Cumulative Burn']
-			} satisfies MultiSeriesChart2Dataset,
+			} satisfies MultiSeriesChartDataset,
 			chartOptions,
 			charts: {
 				daily: DAILY_BURN_CHART,

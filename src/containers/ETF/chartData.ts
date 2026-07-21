@@ -1,14 +1,7 @@
-import type { LowercaseDwmcGrouping } from '~/components/ECharts/ChartGroupingSelector'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { LowercaseDwmcGrouping } from '~/components/ECharts/shared/ChartGroupingSelector'
+import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import type { IProcessedFlows } from './types'
-
-type ETFFlowChartRow = {
-	timestamp: number
-	Bitcoin: number
-	Ethereum: number | null
-	Solana: number | null
-}
 
 export const ETF_ASSET_NAMES = ['Bitcoin', 'Ethereum', 'Solana'] as const
 export type ETFAssetName = (typeof ETF_ASSET_NAMES)[number]
@@ -19,14 +12,21 @@ const ETF_CHART_COLORS: Record<ETFAssetName, string> = {
 	Solana: '#9945FF'
 }
 
-export function buildETFFlowChartData(flows: IProcessedFlows, groupBy: LowercaseDwmcGrouping): ETFFlowChartRow[] {
-	const source: ETFFlowChartRow[] = []
+export function buildETFFlowChartData(
+	flows: IProcessedFlows,
+	groupBy: LowercaseDwmcGrouping,
+	assets: readonly ETFAssetName[] = ETF_ASSET_NAMES
+): MultiSeriesChartDataset['source'] {
+	const source: MultiSeriesChartDataset['source'] = []
 	const isCumulative = groupBy === 'cumulative'
+	const bitcoinIndex = assets.indexOf('Bitcoin') + 1
+	const ethereumIndex = assets.indexOf('Ethereum') + 1
+	const solanaIndex = assets.indexOf('Solana') + 1
 	let totalBitcoin = 0
 	let totalEthereum = 0
 	let totalSolana = 0
 	let activeBucket: string | number | null = null
-	let activeRow: ETFFlowChartRow | null = null
+	let activeRow: MultiSeriesChartDataset['source'][number] | null = null
 
 	// Flow timestamps are integer-like object keys, so JavaScript iterates them chronologically.
 	for (const flowDate in flows) {
@@ -34,26 +34,29 @@ export function buildETFFlowChartData(flows: IProcessedFlows, groupBy: Lowercase
 		const bucket = groupBy === 'daily' || isCumulative ? flowDate : getBucketTimestampSec(+flowDate, groupBy)
 		if (!activeRow || bucket !== activeBucket) {
 			activeBucket = bucket
-			activeRow = {
-				timestamp: +bucket * 1e3,
-				Bitcoin: isCumulative ? totalBitcoin : 0,
-				Ethereum: null,
-				Solana: null
-			}
+			activeRow = new Array(assets.length + 1).fill(null)
+			activeRow[0] = +bucket * 1e3
+			if (bitcoinIndex > 0) activeRow[bitcoinIndex] = isCumulative ? totalBitcoin : 0
 			source.push(activeRow)
 		}
 
-		const bitcoinFlow = flowEntry.Bitcoin ?? 0
-		if (isCumulative) totalBitcoin += bitcoinFlow
-		activeRow.Bitcoin = isCumulative ? totalBitcoin : activeRow.Bitcoin + bitcoinFlow
-
-		if (flowEntry.Ethereum != null) {
-			if (isCumulative) totalEthereum += flowEntry.Ethereum
-			activeRow.Ethereum = isCumulative ? totalEthereum : (activeRow.Ethereum ?? 0) + flowEntry.Ethereum
+		if (bitcoinIndex > 0) {
+			const bitcoinFlow = flowEntry.Bitcoin ?? 0
+			if (isCumulative) totalBitcoin += bitcoinFlow
+			activeRow[bitcoinIndex] = isCumulative ? totalBitcoin : (activeRow[bitcoinIndex] as number) + bitcoinFlow
 		}
-		if (flowEntry.Solana != null) {
+
+		if (ethereumIndex > 0 && flowEntry.Ethereum != null) {
+			if (isCumulative) totalEthereum += flowEntry.Ethereum
+			activeRow[ethereumIndex] = isCumulative
+				? totalEthereum
+				: ((activeRow[ethereumIndex] as number | null) ?? 0) + flowEntry.Ethereum
+		}
+		if (solanaIndex > 0 && flowEntry.Solana != null) {
 			if (isCumulative) totalSolana += flowEntry.Solana
-			activeRow.Solana = isCumulative ? totalSolana : (activeRow.Solana ?? 0) + flowEntry.Solana
+			activeRow[solanaIndex] = isCumulative
+				? totalSolana
+				: ((activeRow[solanaIndex] as number | null) ?? 0) + flowEntry.Solana
 		}
 	}
 
@@ -69,21 +72,21 @@ export function buildETFChartSpec({
 	groupBy: LowercaseDwmcGrouping
 	assets: ETFAssetName[]
 }): {
-	dataset: MultiSeriesChart2Dataset
-	charts: NonNullable<IMultiSeriesChart2Props['charts']>
+	dataset: MultiSeriesChartDataset
+	charts: NonNullable<IMultiSeriesChartProps['charts']>
 } {
 	const type: 'line' | 'bar' = groupBy === 'cumulative' ? 'line' : 'bar'
-	const charts = assets.map((name) => ({
+	const charts = assets.map((name, index) => ({
 		type,
 		name,
-		encode: { x: 'timestamp', y: name },
+		encode: { x: 0, y: index + 1 },
 		stack: name,
 		color: ETF_CHART_COLORS[name]
 	}))
 
 	return {
 		dataset: {
-			source: buildETFFlowChartData(flows, groupBy),
+			source: buildETFFlowChartData(flows, groupBy, assets),
 			dimensions: ['timestamp', ...assets]
 		},
 		charts

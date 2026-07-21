@@ -8,8 +8,8 @@ import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
-import { prepareChartCsv } from '~/components/ECharts/utils'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
+import { prepareChartCsv } from '~/components/ECharts/shared/csv'
 import { EmbedChart } from '~/components/EmbedChart'
 import { serializeProtocolChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'

@@ -1,6 +1,5 @@
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
-import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
+import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import type { InflowsChartData } from './types'
 
 export function buildLstInflowsData({
@@ -10,39 +9,32 @@ export function buildLstInflowsData({
 	inflowsChartData: InflowsChartData
 	groupBy: ChartTimeGroupingWithCumulative
 }) {
-	const store = new Map<number, Record<string, number>>()
+	const store = new Map<number, Map<string, number>>()
 	const isCumulative = groupBy === 'cumulative'
-	const totalByToken = createChartRecord<number>()
+	const totalByToken = new Map<string, number>()
 
 	for (const date in inflowsChartData) {
 		const dateEntry = inflowsChartData[date]
 		const dateKey = isCumulative ? +date : getBucketTimestampSec(+date, groupBy)
 		let dateStore = store.get(dateKey)
+		if (!dateStore) {
+			dateStore = new Map()
+			store.set(dateKey, dateStore)
+		}
 		for (const token in dateEntry) {
 			const value = dateEntry[token]
-			if (!dateStore) {
-				dateStore = createChartRecord<number>()
-				store.set(dateKey, dateStore)
-			}
 
 			if (isCumulative) {
-				const carry = totalByToken[token] ?? 0
-				dateStore[token] = (dateStore[token] ?? 0) + value + carry
-				totalByToken[token] = (totalByToken[token] ?? 0) + value
+				const total = (totalByToken.get(token) ?? 0) + value
+				totalByToken.set(token, total)
+				dateStore.set(token, total)
 			} else {
-				dateStore[token] = (dateStore[token] ?? 0) + value
+				dateStore.set(token, (dateStore.get(token) ?? 0) + value)
 			}
 		}
 	}
 
-	const finalData: Array<Record<string, number>> = []
-	const entries = Array.from(store.entries()).sort((a, b) => a[0] - b[0])
-	for (const [date, dateStore] of entries) {
-		dateStore.date = date
-		finalData.push(dateStore)
-	}
-
-	return finalData
+	return Array.from(store.entries()).sort((a, b) => a[0] - b[0])
 }
 
 export function buildLstBreakdownChartData({
@@ -54,13 +46,13 @@ export function buildLstBreakdownChartData({
 	tokens: string[]
 	lsdColors: Record<string, string>
 }) {
-	const selectedTokens = new Set(tokens)
-	const source = new Array<Record<string, number>>(areaChartData.length)
+	const source = new Array<Array<number | undefined>>(areaChartData.length)
 	for (let i = 0; i < areaChartData.length; i++) {
 		const row = areaChartData[i]
-		const chartRow = createChartRow<number>(row.date * 1e3)
-		for (const name in row) {
-			if (name !== 'date' && selectedTokens.has(name)) chartRow[name] = row[name]
+		const chartRow = new Array<number | undefined>(tokens.length + 1)
+		chartRow[0] = row.date * 1e3
+		for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+			chartRow[tokenIndex + 1] = row[tokens[tokenIndex]]
 		}
 		source[i] = chartRow
 	}
@@ -68,15 +60,16 @@ export function buildLstBreakdownChartData({
 	const charts: Array<{
 		type: 'line'
 		name: string
-		encode: { x: string; y: string }
+		encode: { x: number; y: number }
 		color: string
 		stack: string
 	}> = []
-	for (const name of tokens) {
+	for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+		const name = tokens[tokenIndex]
 		charts.push({
 			type: 'line',
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: tokenIndex + 1 },
 			color: lsdColors[name],
 			stack: 'breakdown'
 		})
@@ -97,18 +90,18 @@ export function buildLstInflowsSeriesData({
 	lsdColors,
 	barChartStacks
 }: {
-	inflowsData: Array<Record<string, number>>
+	inflowsData: Array<[number, Map<string, number>]>
 	tokens: string[]
 	lsdColors: Record<string, string>
 	barChartStacks: Record<string, string>
 }) {
-	const selectedTokens = new Set(tokens)
-	const source = new Array<Record<string, number>>(inflowsData.length)
+	const source = new Array<Array<number | undefined>>(inflowsData.length)
 	for (let i = 0; i < inflowsData.length; i++) {
-		const row = inflowsData[i]
-		const chartRow = createChartRow<number>(row.date * 1e3)
-		for (const name in row) {
-			if (name !== 'date' && selectedTokens.has(name)) chartRow[name] = row[name]
+		const [date, values] = inflowsData[i]
+		const chartRow = new Array<number | undefined>(tokens.length + 1)
+		chartRow[0] = date * 1e3
+		for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+			chartRow[tokenIndex + 1] = values.get(tokens[tokenIndex])
 		}
 		source[i] = chartRow
 	}
@@ -116,29 +109,30 @@ export function buildLstInflowsSeriesData({
 	const cumulativeCharts: Array<{
 		type: 'line'
 		name: string
-		encode: { x: string; y: string }
+		encode: { x: number; y: number }
 		color: string
 	}> = []
 	const barCharts: Array<{
 		type: 'bar'
 		name: string
-		encode: { x: string; y: string }
+		encode: { x: number; y: number }
 		color: string
 		stack: string
 		large: false
 	}> = []
 
-	for (const name of tokens) {
+	for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+		const name = tokens[tokenIndex]
 		cumulativeCharts.push({
 			type: 'line',
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: tokenIndex + 1 },
 			color: lsdColors[name]
 		})
 		barCharts.push({
 			type: 'bar',
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: { x: 0, y: tokenIndex + 1 },
 			color: lsdColors[name],
 			stack: barChartStacks[name],
 			large: false

@@ -5,12 +5,14 @@ import {
 	getSortedRowModel,
 	getPaginationRowModel
 } from '@tanstack/react-table'
+import type { EChartsOption } from 'echarts'
 import { TreemapChart as EChartsTreemap } from 'echarts/charts'
 import { TooltipComponent, GraphicComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { lazy, useEffect, useMemo, useRef } from 'react'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -53,6 +55,11 @@ function formatNumber(n: number): string {
 
 function formatS(n: number): string {
 	return `${formatNumber(n)} S`
+}
+
+function getTreemapValue(value: unknown): number {
+	const rawValue = Array.isArray(value) ? value[0] : value
+	return typeof rawValue === 'number' && Number.isFinite(rawValue) ? rawValue : 0
 }
 
 const TREEMAP_COLORS = [
@@ -123,51 +130,50 @@ function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
 		const instance = chartRef.current
 		if (!instance) return
 
-		instance.setOption(
-			{
-				tooltip: {
-					formatter(info: { name: string; value: number }) {
-						return `<b>${info.name}</b><br/>Collected: ${formatS(info.value)}`
-					}
-				},
-				series: [
-					{
-						type: 'treemap',
-						top: 4,
-						left: 4,
-						right: 4,
-						bottom: 4,
-						roam: false,
-						nodeClick: false,
-						breadcrumb: { show: false },
-						label: {
-							show: true,
-							position: 'insideTopLeft',
-							color: '#fff',
-							textBorderColor: 'rgba(0,0,0,0.3)',
-							textBorderWidth: 2,
-							formatter(params: { name: string; value: number }) {
-								return `{name|${params.name}}\n{val|${formatS(params.value)}}`
-							},
-							rich: {
-								name: { fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 20 },
-								val: { fontSize: 11, color: 'rgba(255,255,255,0.85)', lineHeight: 18 }
-							}
-						},
-						itemStyle: {
-							borderColor: isDark ? '#1a1a2e' : '#fff',
-							borderWidth: 2,
-							gapWidth: 1
-						},
-						emphasis: {
-							itemStyle: { borderColor: isDark ? '#444' : '#ccc' }
-						},
-						data: treeData
-					}
-				]
+		const option: EChartsOption = {
+			tooltip: {
+				formatter(rawInfo: unknown) {
+					const info = normalizeTooltipItems(rawInfo)[0]
+					return `<b>${info?.name ?? ''}</b><br/>Collected: ${formatS(getTreemapValue(info?.value))}`
+				}
 			},
-			{ notMerge: true }
-		)
+			series: [
+				{
+					type: 'treemap',
+					top: 4,
+					left: 4,
+					right: 4,
+					bottom: 4,
+					roam: false,
+					nodeClick: false,
+					breadcrumb: { show: false },
+					label: {
+						show: true,
+						position: 'insideTopLeft',
+						color: '#fff',
+						textBorderColor: 'rgba(0,0,0,0.3)',
+						textBorderWidth: 2,
+						formatter(params) {
+							return `{name|${params.name}}\n{val|${formatS(getTreemapValue(params.value))}}`
+						},
+						rich: {
+							name: { fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 20 },
+							val: { fontSize: 11, color: 'rgba(255,255,255,0.85)', lineHeight: 18 }
+						}
+					},
+					itemStyle: {
+						borderColor: isDark ? '#1a1a2e' : '#fff',
+						borderWidth: 2,
+						gapWidth: 1
+					},
+					emphasis: {
+						itemStyle: { borderColor: isDark ? '#444' : '#ccc' }
+					},
+					data: treeData
+				}
+			]
+		}
+		instance.setOption(option, { notMerge: true })
 	}, [treeData, isDark])
 
 	return <div ref={containerRef} className="w-full" style={{ height: '400px' }} />
@@ -322,11 +328,13 @@ export default function FeeM() {
 				<SectionHeader>Daily Activity</SectionHeader>
 				<ChartCard title={data.dailyStatsTitle}>
 					<MultiSeriesChart
-						series={data.dailyStatsSeries}
+						dataset={data.dailyStatsModel.dataset}
+						charts={data.dailyStatsModel.charts}
 						valueSymbol=""
-						yAxisSymbols={['', 'S']}
 						height="400px"
-						chartOptions={lastNDaysZoom(data.dailyStatsSeries[0]?.data.length ?? 0)}
+						chartOptions={lastNDaysZoom(data.dailyStatsLength)}
+						hideDefaultLegend={false}
+						exportButtons="hidden"
 					/>
 				</ChartCard>
 			</div>

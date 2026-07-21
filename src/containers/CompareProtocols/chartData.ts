@@ -1,3 +1,4 @@
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { getNDistinctColors } from '~/utils'
 import type { RawProtocolResponse } from './api.types'
 
@@ -35,33 +36,32 @@ export function buildCompareProtocolsChartData({
 	}
 
 	const distinctColors = getNDistinctColors(totalProtocols)
-	const rowMap = new Map<number, Record<string, number>>()
-	for (const protocolName of seriesNames) {
+	const rowMap = new Map<number, MultiSeriesChartDataset['source'][number]>()
+	for (let seriesIndex = 0; seriesIndex < seriesNames.length; seriesIndex++) {
+		const protocolName = seriesNames[seriesIndex]
 		const protocolChart = chartsByProtocol.get(protocolName)
 		if (!protocolChart) continue
 
 		for (const [date, value] of protocolChart) {
 			const timestamp = date * 1e3
-			const row = rowMap.get(timestamp) ?? { timestamp }
-			row[protocolName] = value
-			rowMap.set(timestamp, row)
+			let row = rowMap.get(timestamp)
+			if (!row) {
+				row = new Array(seriesNames.length + 1)
+				row[0] = timestamp
+				rowMap.set(timestamp, row)
+			}
+			row[seriesIndex + 1] = value
 		}
 	}
 
-	const source = Array.from(rowMap.values()).sort((a, b) => a.timestamp - b.timestamp)
-	const charts: Array<{
-		type: 'line'
-		name: string
-		encode: { x: string; y: string }
-		stack: string
-		color: string
-	}> = []
+	const source = Array.from(rowMap.values()).sort((a, b) => (a[0] as number) - (b[0] as number))
+	const charts: MultiSeriesChartSeriesConfig[] = []
 	for (let index = 0; index < seriesNames.length; index++) {
 		const protocolName = seriesNames[index]
 		charts.push({
 			type: 'line',
 			name: protocolName,
-			encode: { x: 'timestamp', y: protocolName },
+			encode: { x: 0, y: index + 1 },
 			stack: protocolName,
 			color: distinctColors[index]
 		})

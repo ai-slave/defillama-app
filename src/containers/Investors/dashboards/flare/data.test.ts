@@ -64,8 +64,8 @@ describe('Flare query data builders', () => {
 		} satisfies OverviewAPIResponse)
 
 		expect(result.tvl.dataset.source).toEqual([
-			{ timestamp: Date.UTC(2026, 0, 2), 'TVL A': 10, 'TVL B': 20 },
-			{ timestamp: 1_700_000_000_000, 'TVL A': 11, 'TVL B': 21 }
+			[Date.UTC(2026, 0, 2), 10, 20],
+			[1_700_000_000_000, 11, 21]
 		])
 		expect(result.stables.dataset.dimensions).toEqual(['timestamp', 'Native', 'Bridged'])
 		expect(result.stables.charts.map(({ name, stack }) => [name, stack])).toEqual([
@@ -127,10 +127,13 @@ describe('Flare query data builders', () => {
 			}
 		} satisfies TokenomicsAPIResponse)
 
-		expect(result.burn.dailyDataset.source).toBe(result.burn.cumulativeDataset.source)
 		expect(result.burn.dailyDataset.source).toEqual([
-			{ timestamp: 1_700_000_000_000, 'Cumulative Burn': 100, 'Daily Burn': 2 },
-			{ timestamp: 1_700_086_400_000, 'Cumulative Burn': 103, 'Daily Burn': 3 }
+			[1_700_000_000_000, 2],
+			[1_700_086_400_000, 3]
+		])
+		expect(result.burn.cumulativeDataset.source).toEqual([
+			[1_700_000_000_000, 100],
+			[1_700_086_400_000, 103]
 		])
 		expect(result.burn.dailyDataset.dimensions).toEqual(['timestamp', 'Daily Burn'])
 		expect(result.burn.cumulativeDataset.dimensions).toEqual(['timestamp', 'Cumulative Burn'])

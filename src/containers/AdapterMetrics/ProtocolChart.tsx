@@ -2,14 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
-import type { ChartTimeGrouping } from '~/components/ECharts/types'
-import { getBucketTimestampMs } from '~/components/ECharts/utils'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
+import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ChartBuilderConfig } from '~/containers/ProDashboard/types'
 import { getAdapterBuilderMetric } from '~/containers/ProDashboard/utils/adapterChartMapping'
@@ -24,7 +23,7 @@ import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const buildAdapterProtocolBreakdownApiUrl = ({
 	adapterType,
@@ -288,107 +287,64 @@ const ChartByType = ({
 				: getBucketTimestampMs(+date * 1e3, chartInterval as ChartTimeGrouping)
 
 		// Aggregate by date with interval grouping
-		const aggregatedByDate: Map<number, Record<string, number>> = new Map()
-
-		// Process main data
-		for (const [date, versions] of data) {
-			const finalDate = computeFinalDate(date)
-
-			const existing = aggregatedByDate.get(finalDate)
-			if (existing) {
-				for (const type of selectedTypes) {
-					existing[type] = (existing[type] ?? 0) + (versions[type] ?? 0)
-				}
-			} else {
-				const entry = createChartRecord<number>()
-				for (const type of selectedTypes) {
-					entry[type] = versions[type] ?? 0
-				}
-				aggregatedByDate.set(finalDate, entry)
-			}
-		}
-
-		// Add bribe data values
-		if (bribeData) {
-			for (const [date, versions] of bribeData) {
+		const aggregatedByDate = new Map<number, number[]>()
+		const addChart = (chart: Array<[number, Record<string, number>]> | undefined) => {
+			for (const [date, versions] of chart ?? []) {
 				const finalDate = computeFinalDate(date)
-				const existing = aggregatedByDate.get(finalDate)
-				if (existing) {
-					for (const type of selectedTypes) {
-						existing[type] = (existing[type] ?? 0) + (versions[type] ?? 0)
-					}
-				} else {
-					const entry = createChartRecord<number>()
-					for (const type of selectedTypes) {
-						entry[type] = versions[type] ?? 0
-					}
-					aggregatedByDate.set(finalDate, entry)
+				let values = aggregatedByDate.get(finalDate)
+				if (!values) {
+					values = new Array(selectedTypes.length).fill(0)
+					aggregatedByDate.set(finalDate, values)
+				}
+				for (let typeIndex = 0; typeIndex < selectedTypes.length; typeIndex++) {
+					values[typeIndex] += versions[selectedTypes[typeIndex]] ?? 0
 				}
 			}
 		}
-
-		// Add token tax data values
-		if (tokenTaxData) {
-			for (const [date, versions] of tokenTaxData) {
-				const finalDate = computeFinalDate(date)
-				const existing = aggregatedByDate.get(finalDate)
-				if (existing) {
-					for (const type of selectedTypes) {
-						existing[type] = (existing[type] ?? 0) + (versions[type] ?? 0)
-					}
-				} else {
-					const entry = createChartRecord<number>()
-					for (const type of selectedTypes) {
-						entry[type] = versions[type] ?? 0
-					}
-					aggregatedByDate.set(finalDate, entry)
-				}
-			}
-		}
+		addChart(data)
+		addChart(bribeData)
+		addChart(tokenTaxData)
 
 		// Sort dates and build dataset rows
 		const sortedDates = Array.from(aggregatedByDate.keys()).sort((a, b) => a - b)
 		const isCumulative = chartInterval === 'cumulative'
-		const cumulative = createChartRecord<number>()
-
-		for (const type of selectedTypes) {
-			cumulative[type] = 0
-		}
+		const cumulative = new Array<number>(selectedTypes.length).fill(0)
 
 		const source = sortedDates.map((date) => {
 			const entry = aggregatedByDate.get(date)!
-			const row = createChartRow<number | null>(date)
-			for (const type of selectedTypes) {
-				const value = entry[type] ?? 0
+			const row = new Array<number | null>(selectedTypes.length + 1)
+			row[0] = date
+			for (let typeIndex = 0; typeIndex < selectedTypes.length; typeIndex++) {
+				const value = entry[typeIndex]
 				if (isCumulative) {
-					cumulative[type] += value
-					row[type] = cumulative[type]
+					cumulative[typeIndex] += value
+					row[typeIndex + 1] = cumulative[typeIndex]
 				} else {
-					row[type] = value
+					row[typeIndex + 1] = value
 				}
 			}
 			return row
 		})
 
 		// Replace leading zeros with null for cleaner charts
-		for (const type of selectedTypes) {
-			for (let i = 0; i < source.length && source[i][type] === 0; i++) {
-				source[i][type] = null
+		for (let typeIndex = 0; typeIndex < selectedTypes.length; typeIndex++) {
+			for (let i = 0; i < source.length && source[i][typeIndex + 1] === 0; i++) {
+				source[i][typeIndex + 1] = null
 			}
 		}
 
 		// Build chart config
 		const allColors = getNDistinctColors(uniqueBreakdownNames.length)
-		const stackColors = createChartRecord<string>()
+		const stackColors = {}
 		for (let i = 0; i < uniqueBreakdownNames.length; i++) {
 			stackColors[uniqueBreakdownNames[i]] = allColors[i]
 		}
 
 		const chartType2: 'line' | 'bar' = isCumulative ? 'line' : 'bar'
-		const chartsConfig = selectedTypes.map((type) => ({
+		const chartsConfig = selectedTypes.map((type, index) => ({
 			type: chartType2,
 			name: type,
-			encode: { x: 'timestamp', y: type },
+			encode: { x: 0, y: index + 1 },
 			stack: 'chartType',
 			color: stackColors[type]
 		}))
@@ -431,7 +387,7 @@ const ChartByType = ({
 				{chartBuilderConfig ? <AddToDashboardButton chartConfig={chartBuilderConfig} smol /> : null}
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={deferredMainChartData.dataset}
 					charts={deferredMainChartData.charts}
 					groupBy={chartInterval}

@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
 
 const timestampMs = Date.UTC(2024, 0, 1)
@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
 		tokentax: false
 	},
 	presentationInputs: [] as Array<{
-		chartData: MultiSeriesChart2Dataset
+		chartData: MultiSeriesChartDataset
 		selectedChains: string[]
 	}>,
 	queryCalls: [] as Array<{ queryKey: unknown[]; enabled?: boolean }>,
@@ -68,7 +68,7 @@ vi.mock('~/components/ChartExport/ChartRestoreButton', () => ({
 	ChartRestoreButton: () => null
 }))
 
-vi.mock('~/components/ECharts/ChartGroupingSelector', () => ({
+vi.mock('~/components/ECharts/shared/ChartGroupingSelector', () => ({
 	ChartGroupingSelector: () => null,
 	DWMC_GROUPING_OPTIONS_LOWERCASE: [{ label: 'Daily', value: 'daily' }]
 }))
@@ -77,11 +77,11 @@ vi.mock('~/components/ECharts/HBarChart', () => ({
 	default: () => null
 }))
 
-vi.mock('~/components/ECharts/MultiSeriesChart2', () => ({
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
 	default: () => null
 }))
 
-vi.mock('~/components/ECharts/TreeMapBuilderChart', () => ({
+vi.mock('~/components/ECharts/TreemapChart/Builder', () => ({
 	default: () => null
 }))
 
@@ -110,7 +110,7 @@ vi.mock('../utils', async (importOriginal) => {
 	return {
 		...actual,
 		buildChainsByAdapterChartPresentation: (input: {
-			chartData: MultiSeriesChart2Dataset
+			chartData: MultiSeriesChartDataset
 			selectedChains: string[]
 		}) => {
 			mocks.presentationInputs.push({
@@ -133,9 +133,9 @@ vi.mock('../utils', async (importOriginal) => {
 
 import { ChainsByAdapterChart } from '../ChainChart'
 
-const baseChartData: MultiSeriesChart2Dataset = {
+const baseChartData: MultiSeriesChartDataset = {
 	dimensions: ['timestamp', 'Base', 'Ethereum'],
-	source: [{ timestamp: timestampMs, Base: 100, Ethereum: 50 }]
+	source: [[timestampMs, 100, 50]]
 }
 
 function renderChart({
@@ -148,7 +148,7 @@ function renderChart({
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: `${ADAPTER_DATA_TYPES}`
 	chartName: string
-	chartData?: MultiSeriesChart2Dataset
+	chartData?: MultiSeriesChartDataset
 	allChains?: string[]
 }) {
 	renderToStaticMarkup(
@@ -186,7 +186,7 @@ describe('ChainsByAdapterChart fee extras', () => {
 
 		expect(chartData).toEqual({
 			dimensions: ['timestamp', 'Base', 'Ethereum'],
-			source: [{ timestamp: timestampMs, Base: 123, Ethereum: 55 }]
+			source: [[timestampMs, 123, 55]]
 		})
 		expect(
 			mocks.queryCalls
@@ -210,7 +210,7 @@ describe('ChainsByAdapterChart fee extras', () => {
 
 		expect(chartData).toEqual({
 			dimensions: ['timestamp', 'Base', 'Ethereum'],
-			source: [{ timestamp: timestampMs, Base: 123, Ethereum: 55 }]
+			source: [[timestampMs, 123, 55]]
 		})
 		expect(
 			mocks.queryCalls
@@ -234,7 +234,7 @@ describe('ChainsByAdapterChart fee extras', () => {
 
 		expect(chartData).toEqual({
 			dimensions: ['timestamp', 'Base', 'Ethereum'],
-			source: [{ timestamp: timestampMs, Base: 123, Ethereum: 55 }]
+			source: [[timestampMs, 123, 55]]
 		})
 		expect(
 			mocks.queryCalls
@@ -255,14 +255,14 @@ describe('ChainsByAdapterChart fee extras', () => {
 			chartName: 'App Fees',
 			chartData: {
 				dimensions: ['timestamp', 'Ethereum'],
-				source: [{ timestamp: timestampMs, Ethereum: 50 }]
+				source: [[timestampMs, 50]]
 			},
 			allChains: ['Base', 'Ethereum']
 		})
 
 		expect(chartData).toEqual({
 			dimensions: ['timestamp', 'Ethereum', 'Base'],
-			source: [{ timestamp: timestampMs, Ethereum: 55, Base: 20 }]
+			source: [[timestampMs, 55, 20]]
 		})
 	})
 
@@ -300,7 +300,7 @@ describe('ChainsByAdapterChart fee extras', () => {
 
 		expect(chartData).toEqual({
 			dimensions: ['timestamp', 'Base', 'Ethereum'],
-			source: [{ timestamp: timestampMs, Base: 103, Ethereum: 50 }]
+			source: [[timestampMs, 103, 50]]
 		})
 	})
 })

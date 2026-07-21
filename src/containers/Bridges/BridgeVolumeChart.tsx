@@ -3,7 +3,7 @@ import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { TagGroup } from '~/ui/SegmentedControl'
@@ -17,7 +17,7 @@ import {
 	type BridgeVolumeViewType
 } from './bridgeVolumeData'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 interface BridgeVolumeChartProps {
 	data: BridgeVolumeInputPoint[] | null | undefined
@@ -71,7 +71,7 @@ export function BridgeVolumeChart({ data, height, onReady, headerStart, headerEn
 			) : null}
 
 			<Suspense fallback={<div style={{ height: height ?? '360px' }} />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={deferredChartData.dataset}
 					charts={deferredChartData.charts}
 					height={height}

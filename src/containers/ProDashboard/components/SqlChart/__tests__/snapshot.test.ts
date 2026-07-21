@@ -8,7 +8,7 @@ function resultWithRows(n: number): QueryResult {
 			{ name: 'ts', type: 'VARCHAR' },
 			{ name: 'value', type: 'DOUBLE' }
 		],
-		rows: Array.from({ length: n }, (_, i) => ({ ts: `2026-01-${i}`, value: i }))
+		rows: Array.from({ length: n }, (_, i) => [`2026-01-${i}`, i])
 	}
 }
 
@@ -61,11 +61,11 @@ describe('captureSnapshot', () => {
 				{ name: 'n', type: 'BIGINT' },
 				{ name: 'd', type: 'DATE' }
 			],
-			rows: [{ n: 42n, d: new Date('2026-06-24T00:00:00.000Z') }]
+			rows: [[42n, new Date('2026-06-24T00:00:00.000Z')]]
 		}
 		const snap = captureSnapshot(result, 'browser', AT)
-		expect(snap.rows[0].n).toBe(42)
-		expect(snap.rows[0].d).toBe('2026-06-24T00:00:00.000Z')
+		expect(snap.rows[0][0]).toBe(42)
+		expect(snap.rows[0][1]).toBe('2026-06-24T00:00:00.000Z')
 		expect(() => JSON.stringify(snap)).not.toThrow()
 	})
 })

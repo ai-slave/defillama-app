@@ -26,28 +26,28 @@ describe('NFT marketplace chart data', () => {
 		expect(result.absoluteVolumeDataset).toEqual({
 			dimensions,
 			source: [
-				{ timestamp: Date.UTC(2024, 0, 1), OpenSea: 1, Blur: 3, Others: 0 },
-				{ timestamp: Date.UTC(2024, 0, 2), OpenSea: 0, Blur: 2.346, Others: 0 },
-				{ timestamp: Date.UTC(2024, 0, 3), OpenSea: 0, Blur: 0, Others: 0 }
+				[Date.UTC(2024, 0, 1), 1, 3, 0],
+				[Date.UTC(2024, 0, 2), 0, 2.346, 0],
+				[Date.UTC(2024, 0, 3), 0, 0, 0]
 			]
 		})
 		expect(result.absoluteTradesDataset).toEqual({
 			dimensions,
 			source: [
-				{ timestamp: Date.UTC(2024, 0, 1), OpenSea: 2, Blur: 4, Others: 0 },
-				{ timestamp: Date.UTC(2024, 0, 2), OpenSea: 0, Blur: 2.346, Others: 0 },
-				{ timestamp: Date.UTC(2024, 0, 3), OpenSea: 0, Blur: 0, Others: 0 }
+				[Date.UTC(2024, 0, 1), 2, 4, 0],
+				[Date.UTC(2024, 0, 2), 0, 2.346, 0],
+				[Date.UTC(2024, 0, 3), 0, 0, 0]
 			]
 		})
 		expect(result.relativeVolumeDataset.source).toEqual([
-			{ timestamp: Date.UTC(2024, 0, 1), OpenSea: 25, Blur: 75, Others: 0 },
-			{ timestamp: Date.UTC(2024, 0, 2), OpenSea: 0, Blur: 100.02, Others: 0 },
-			{ timestamp: Date.UTC(2024, 0, 3), OpenSea: 0, Blur: 0, Others: 0 }
+			[Date.UTC(2024, 0, 1), 25, 75, 0],
+			[Date.UTC(2024, 0, 2), 0, 100.02, 0],
+			[Date.UTC(2024, 0, 3), 0, 0, 0]
 		])
 		expect(result.relativeTradesDataset.source).toEqual([
-			{ timestamp: Date.UTC(2024, 0, 1), OpenSea: 33.33, Blur: 66.67, Others: 0 },
-			{ timestamp: Date.UTC(2024, 0, 2), OpenSea: 0, Blur: 100.02, Others: 0 },
-			{ timestamp: Date.UTC(2024, 0, 3), OpenSea: 0, Blur: 0, Others: 0 }
+			[Date.UTC(2024, 0, 1), 33.33, 66.67, 0],
+			[Date.UTC(2024, 0, 2), 0, 100.02, 0],
+			[Date.UTC(2024, 0, 3), 0, 0, 0]
 		])
 		expect(result.relativeVolumeDataset.dimensions).toBe(result.absoluteVolumeDataset.dimensions)
 		expect(result.relativeTradesDataset.dimensions).toBe(result.absoluteVolumeDataset.dimensions)
@@ -66,7 +66,7 @@ describe('NFT marketplace chart data', () => {
 			{
 				type: 'bar',
 				name: 'OpenSea',
-				encode: { x: 'timestamp', y: 'OpenSea' },
+				encode: { x: 0, y: 1 },
 				stack: 'stackA',
 				color: colors[0],
 				large: false
@@ -74,7 +74,7 @@ describe('NFT marketplace chart data', () => {
 			{
 				type: 'bar',
 				name: 'Blur',
-				encode: { x: 'timestamp', y: 'Blur' },
+				encode: { x: 0, y: 2 },
 				stack: 'stackA',
 				color: colors[1],
 				large: false
@@ -82,7 +82,7 @@ describe('NFT marketplace chart data', () => {
 			{
 				type: 'bar',
 				name: 'Others',
-				encode: { x: 'timestamp', y: 'Others' },
+				encode: { x: 0, y: 3 },
 				stack: 'stackA',
 				color: '#AAAAAA',
 				large: false
@@ -100,10 +100,10 @@ describe('NFT marketplace chart data', () => {
 			row('2024-01-01T00:00:00.900Z', 'OpenSea', 9, 18)
 		])
 
-		expect(result.absoluteVolumeDataset.source).toEqual([{ timestamp: Date.UTC(2024, 0, 1), OpenSea: 9 }])
-		expect(result.absoluteTradesDataset.source).toEqual([{ timestamp: Date.UTC(2024, 0, 1), OpenSea: 18 }])
-		expect(result.relativeVolumeDataset.source).toEqual([{ timestamp: Date.UTC(2024, 0, 1), OpenSea: 90 }])
-		expect(result.relativeTradesDataset.source).toEqual([{ timestamp: Date.UTC(2024, 0, 1), OpenSea: 90 }])
+		expect(result.absoluteVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 10]])
+		expect(result.absoluteTradesDataset.source).toEqual([[Date.UTC(2024, 0, 1), 20]])
+		expect(result.relativeVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 100]])
+		expect(result.relativeTradesDataset.source).toEqual([[Date.UTC(2024, 0, 1), 100]])
 	})
 
 	it('returns serializable empty canonical payloads', () => {
@@ -123,18 +123,9 @@ describe('NFT marketplace chart data', () => {
 			row('2024-01-01', 'Blur', 0, 3)
 		])
 
-		expect(result.absoluteVolumeDataset.source).toEqual([{ timestamp: Date.UTC(2024, 0, 1), OpenSea: 0, Blur: 0 }])
-		expect(result.absoluteTradesDataset.source).toEqual([{ timestamp: Date.UTC(2024, 0, 1), OpenSea: 2, Blur: 3 }])
-		expect(result.relativeVolumeDataset.source).toEqual([{ timestamp: Date.UTC(2024, 0, 1), OpenSea: 0, Blur: 0 }])
-	})
-
-	it('keeps __proto__ as an own marketplace series value', () => {
-		const result = buildNFTMarketplaceChartData([row('2024-01-01', '__proto__', 4, 2)])
-		const volumeRow = result.absoluteVolumeDataset.source[0]
-
-		expect(result.absoluteVolumeDataset.dimensions).toEqual(['timestamp', '__proto__'])
-		expect(Object.hasOwn(volumeRow, '__proto__')).toBe(true)
-		expect(volumeRow.__proto__).toBe(4)
+		expect(result.absoluteVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 0, 0]])
+		expect(result.absoluteTradesDataset.source).toEqual([[Date.UTC(2024, 0, 1), 2, 3]])
+		expect(result.relativeVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 0, 0]])
 	})
 
 	it('limits rendered marketplaces and aggregates every omitted value into Others', () => {
@@ -147,8 +138,8 @@ describe('NFT marketplace chart data', () => {
 
 		expect(result.absoluteBarCharts).toHaveLength(30)
 		expect(result.absoluteVolumeDataset.dimensions).toEqual(['timestamp', ...marketplaces.slice(0, 29), 'Others'])
-		expect(result.absoluteVolumeDataset.source[0]?.Others).toBe(3)
-		expect(result.absoluteTradesDataset.source[0]?.Others).toBe(3)
-		expect(result.relativeVolumeDataset.source[0]?.Others).toBe(0.6)
+		expect(result.absoluteVolumeDataset.source[0]?.[30]).toBe(3)
+		expect(result.absoluteTradesDataset.source[0]?.[30]).toBe(3)
+		expect(result.relativeVolumeDataset.source[0]?.[30]).toBe(0.6)
 	})
 })

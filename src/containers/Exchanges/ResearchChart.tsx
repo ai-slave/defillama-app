@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
 import { formattedNum } from '~/utils'
@@ -48,21 +49,21 @@ export function researchChartAriaLabel(chart: ExchangeResearchChartModel): strin
 }
 
 export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChartModel; toolbar?: React.ReactNode }) {
-	const series = React.useMemo(
+	const chartModel = React.useMemo(
 		() =>
-			chart.lines.map((line, index) => ({
-				name: line.label,
-				type: 'line' as const,
-				color: researchSeriesColor(line.id, index),
-				areaStyle: { opacity: 0 },
-				data: chart.days.map((day, dayIndex) => {
-					const value = line.values[dayIndex]
-					return [day, value == null ? null : researchChartDisplayValue(value, chart.valueSymbol)] as [
-						number,
-						number | null
-					]
-				})
-			})),
+			buildAlignedCartesianChartModel(
+				chart.days,
+				chart.lines.map((line, index) => ({
+					name: line.label,
+					type: 'line' as const,
+					color: researchSeriesColor(line.id, index),
+					areaStyle: { opacity: 0 },
+					values: chart.days.map((_, dayIndex) => {
+						const value = line.values[dayIndex]
+						return value == null ? null : researchChartDisplayValue(value, chart.valueSymbol)
+					})
+				}))
+			),
 		[chart]
 	)
 	return (
@@ -75,7 +76,14 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 				}
 			>
 				<ChartPanelBody role="img" aria-label={researchChartAriaLabel(chart)}>
-					<MultiSeriesChart series={series} valueSymbol={chart.valueSymbol} height="360px" />
+					<MultiSeriesChart
+						dataset={chartModel.dataset}
+						charts={chartModel.charts}
+						valueSymbol={chart.valueSymbol}
+						height="360px"
+						hideDefaultLegend={false}
+						exportButtons="hidden"
+					/>
 				</ChartPanelBody>
 			</React.Suspense>
 		</ResearchChartFrame>

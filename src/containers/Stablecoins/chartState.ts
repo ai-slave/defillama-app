@@ -1,5 +1,8 @@
 import type { ParsedUrlQuery } from 'querystring'
-import { DWMC_GROUPING_OPTIONS_LOWERCASE, type LowercaseDwmcGrouping } from '~/components/ECharts/ChartGroupingSelector'
+import {
+	DWMC_GROUPING_OPTIONS_LOWERCASE,
+	type LowercaseDwmcGrouping
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import type {
 	StablecoinAssetChartType as StablecoinDashboardAssetChartType,
 	StablecoinChartType as StablecoinDashboardChartType

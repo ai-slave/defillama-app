@@ -10,7 +10,7 @@ import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 export default function Collection() {
 	const router = useRouter()
@@ -88,7 +88,7 @@ export default function Collection() {
 
 				<ChartPanel className="col-span-full">
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={chartData.dataset}
 							charts={chartData.charts}
 							valueSymbol="$"

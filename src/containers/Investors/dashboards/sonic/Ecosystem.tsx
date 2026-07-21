@@ -6,14 +6,13 @@ import {
 	getPaginationRowModel
 } from '@tanstack/react-table'
 import { lazy, useEffect, useMemo, useState } from 'react'
-import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { useEcosystemData, type TopProtocolEntry, type AssetCategory } from './ecosystemApi'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 function KpiCard({
@@ -308,7 +307,7 @@ export default function Ecosystem() {
 				<SectionHeader>Total Value Locked</SectionHeader>
 				<KpiCard label="Current TVL" value={data.tvl.currentFormatted} />
 				<ChartCard title={data.tvl.title}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.tvl.dataset}
 						charts={data.tvl.charts}
 						valueSymbol="$"
@@ -328,7 +327,7 @@ export default function Ecosystem() {
 					<KpiCard label="All-Time Fees" value={data.fees.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartCard title={data.fees.title}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.fees.dataset}
 						charts={data.fees.charts}
 						valueSymbol="$"
@@ -365,7 +364,7 @@ export default function Ecosystem() {
 					<KpiCard label="All-Time Volume" value={data.dexVolume.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartCard title={data.dexVolume.title}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.dexVolume.dataset}
 						charts={data.dexVolume.charts}
 						valueSymbol="$"
@@ -389,7 +388,7 @@ export default function Ecosystem() {
 					<KpiCard label="Bridged" value={data.stablecoins.kpis.currentBridged.formatted} />
 				</div>
 				<ChartCard title={data.stablecoins.title}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={data.stablecoins.dataset}
 						charts={data.stablecoins.charts}
 						valueSymbol="$"

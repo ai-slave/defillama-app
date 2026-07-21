@@ -1,6 +1,9 @@
-import { createChartRow } from '~/components/ECharts/dynamicRow'
-import type { ChartTimeGrouping, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
-import { getBucketTimestampMs } from '~/components/ECharts/utils'
+import type {
+	ChartTimeGrouping,
+	MultiSeriesChartDataset,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
+import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { formatPercentChangeText } from '~/ui/PercentChange'
 import { formattedNum, toNiceDayMonthAndYearAndTime } from '~/utils'
 import { perpsDefinitions as d } from './definitions'
@@ -359,11 +362,8 @@ function getFundingHistoryMetricValue(
 }
 
 type ChartSpec = {
-	dataset: {
-		source: Array<Record<string, string | number | null>>
-		dimensions: string[]
-	}
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 }
 
 export function buildRWAPerpsContractChartSpec({
@@ -382,25 +382,25 @@ export function buildRWAPerpsContractChartSpec({
 	const hasMarketPoints = Boolean(marketPoints?.length)
 	const hasFundingHistory = Boolean(fundingHistory?.length)
 	// Maps dedupe data ingestion while charts and dimensions still follow the runtime selection order.
-	const marketMetrics = new Map<RWAPerpsContractChartMetricKey, RWAPerpsContractChartMetricConfig>()
-	const fundingMetrics = new Map<FundingMetricKey, RWAPerpsContractChartMetricConfig>()
-	const charts: MultiSeriesChart2SeriesConfig[] = []
+	const marketMetrics = new Map<RWAPerpsContractChartMetricKey, number>()
+	const fundingMetrics = new Map<FundingMetricKey, number>()
+	const charts: MultiSeriesChartSeriesConfig[] = []
 
 	for (const metricKey of enabledMetrics) {
 		const metric = RWA_PERPS_CONTRACT_CHART_METRICS.find((item) => item.key === metricKey)
 		if (!metric) continue
 
 		if ((metric.key === 'fundingRate' || metric.key === 'premium') && hasFundingHistory) {
-			fundingMetrics.set(metric.key, metric)
+			fundingMetrics.set(metric.key, charts.length + 1)
 		} else {
 			if (!hasMarketPoints) continue
-			marketMetrics.set(metric.key, metric)
+			marketMetrics.set(metric.key, charts.length + 1)
 		}
 
 		charts.push({
 			name: metric.label,
 			type: metric.defaultType,
-			encode: { x: 'timestamp', y: metric.label },
+			encode: { x: 0, y: charts.length + 1 },
 			color: metric.color,
 			...(metric.yAxisIndex != null ? { yAxisIndex: metric.yAxisIndex } : {}),
 			...(metric.valueSymbol ? { valueSymbol: metric.valueSymbol } : {}),
@@ -408,28 +408,35 @@ export function buildRWAPerpsContractChartSpec({
 		})
 	}
 
-	const rowMap = new Map<number, Record<string, string | number | null>>()
+	const rowMap = new Map<number, MultiSeriesChartDataset['source'][number]>()
+	const getRow = (timestamp: number) => {
+		let row = rowMap.get(timestamp)
+		if (!row) {
+			row = new Array(charts.length + 1)
+			row[0] = timestamp
+			rowMap.set(timestamp, row)
+		}
+		return row
+	}
 	const addMarketPoint = (point: IRWAPerpsContractMarketChartPoint, timestampMs: number) => {
 		const timestamp = groupBy === 'daily' ? timestampMs : getBucketTimestampMs(timestampMs, groupBy)
-		const row = rowMap.get(timestamp) ?? createChartRow<string | number | null>(timestamp)
-		for (const [metricKey, metric] of marketMetrics) {
+		const row = getRow(timestamp)
+		for (const [metricKey, dimensionIndex] of marketMetrics) {
 			const value = getMetricValue(point, metricKey)
 			// Daily duplicates overwrite; coarser volume buckets accumulate every source point.
 			if (metricKey === 'volume24h' && groupBy !== 'daily') {
-				row[metric.label] = ((row[metric.label] as number | undefined) ?? 0) + value
+				row[dimensionIndex] = ((row[dimensionIndex] as number | undefined) ?? 0) + value
 			} else {
-				row[metric.label] = value
+				row[dimensionIndex] = value
 			}
 		}
-		rowMap.set(timestamp, row)
 	}
 	const addFundingPoint = (point: IRWAPerpsContractFundingHistoryPoint, timestampMs: number) => {
 		const timestamp = groupBy === 'daily' ? timestampMs : getBucketTimestampMs(timestampMs, groupBy)
-		const row = rowMap.get(timestamp) ?? createChartRow<string | number | null>(timestamp)
-		for (const [metricKey, metric] of fundingMetrics) {
-			row[metric.label] = getFundingHistoryMetricValue(point, metricKey)
+		const row = getRow(timestamp)
+		for (const [metricKey, dimensionIndex] of fundingMetrics) {
+			row[dimensionIndex] = getFundingHistoryMetricValue(point, metricKey)
 		}
-		rowMap.set(timestamp, row)
 	}
 
 	// Both endpoint streams are ascending. Merge them directly so Map insertion order

@@ -1,18 +1,15 @@
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { BreakdownChart, ChannelBreakdown, ChartData } from './ecosystemApi'
 
 export type Timeframe = '7d' | '30d' | 'ytd' | '1y' | 'all'
 export type Aggregation = 'daily' | 'weekly' | 'monthly'
 
-export function singleSeriesDataset(chart: ChartData, dimension: string): MultiSeriesChart2Dataset | undefined {
+export function singleSeriesDataset(chart: ChartData, dimension: string): MultiSeriesChartDataset | undefined {
 	const values = chart.series[0]?.data
 	if (!values) return undefined
 	return {
 		dimensions: ['timestamp', dimension],
-		source: chart.dates.map((date, index) => ({
-			timestamp: Date.parse(`${date}T00:00:00Z`),
-			[dimension]: values[index]
-		}))
+		source: chart.dates.map((date, index) => [Date.parse(`${date}T00:00:00Z`), values[index]])
 	}
 }
 

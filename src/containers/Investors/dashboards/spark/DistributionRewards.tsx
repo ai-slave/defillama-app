@@ -1,13 +1,11 @@
 import type * as echarts from 'echarts/core'
 import { lazy, useCallback, useRef } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { DOLLAR_SCROLL_CHART_OPTIONS, DOLLAR_STACKED_SCROLL_CHART_OPTIONS, HIDDEN_EXPORT } from './chartDefaults'
 import { useDistributionData } from './distributionApi'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 function sparkExportTitle(title: string) {
 	const lowerTitle = title.toLowerCase()
@@ -90,7 +88,7 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.actualRevenue.dataset}
 					charts={data.actualRevenue.charts}
 					valueSymbol="$"
@@ -114,7 +112,7 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.revenueProjection.dataset}
 					charts={data.revenueProjection.charts}
 					valueSymbol="$"
@@ -139,7 +137,7 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.susdsTvl.dataset}
 					charts={data.susdsTvl.charts}
 					valueSymbol="$"
@@ -164,7 +162,7 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.xrSusds.dataset}
 					charts={data.xrSusds.charts}
 					valueSymbol="$"
@@ -188,7 +186,7 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.xrSusdc.dataset}
 					charts={data.xrSusdc.charts}
 					valueSymbol="$"
@@ -212,7 +210,7 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={data.stakedUsdsTvl.dataset}
 					charts={data.stakedUsdsTvl.charts}
 					valueSymbol="$"

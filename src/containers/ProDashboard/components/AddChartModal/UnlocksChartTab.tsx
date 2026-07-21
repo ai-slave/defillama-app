@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, type ReactNode, useEffect, useMemo, useState } from 'react'
-import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
-import { stringToColour } from '~/components/ECharts/utils'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import type { EmissionsDataset } from '~/containers/Unlocks/api.types'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
 import { Icon } from '~/ui/Icon'
@@ -11,9 +11,7 @@ import { slug, toNiceDayMonthYear } from '~/utils'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 const EMPTY_DATASET: EmissionsDataset = { source: [], dimensions: ['timestamp'] }
@@ -44,9 +42,13 @@ const LOCKED_UNLOCKED_COLORS = {
 }
 const TOTAL_UNLOCKS_SERIES_NAME = 'Total Unlocks'
 const TOTAL_UNLOCKS_CHART_OPTIONS = createSingleSeriesChartOptions('$')
-const EMPTY_TOTAL_UNLOCKS_DATASET: MultiSeriesChart2Dataset = {
+const EMPTY_TOTAL_UNLOCKS_DATASET: MultiSeriesChartDataset = {
 	source: [],
 	dimensions: ['timestamp', TOTAL_UNLOCKS_SERIES_NAME]
+}
+
+function createRandomColor() {
+	return '#' + ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, '0')
 }
 
 export function UnlocksChartTab({
@@ -61,7 +63,7 @@ export function UnlocksChartTab({
 }: UnlocksChartTabProps) {
 	const [unlocksEndDate] = useState(() => Date.now() / 1000 + 30 * 24 * 60 * 60)
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
-	const [totalUnlocksColor] = useState(stringToColour)
+	const [totalUnlocksColor] = useState(createRandomColor)
 	const todayHallmarks = useMemo<[number, string][]>(
 		() => [[todayTimestamp, toNiceDayMonthYear(todayTimestamp)]],
 		[todayTimestamp]
@@ -160,7 +162,7 @@ export function UnlocksChartTab({
 		[unlockedPercent, selectedUnlocksChartType]
 	)
 
-	const totalCharts = useMemo<NonNullable<IMultiSeriesChart2Props['charts']>>(
+	const totalCharts = useMemo<NonNullable<IMultiSeriesChartProps['charts']>>(
 		() => [
 			{
 				type: 'line',
@@ -173,17 +175,17 @@ export function UnlocksChartTab({
 		[totalUnlocksColor]
 	)
 
-	const totalDataset = useMemo<MultiSeriesChart2Dataset>(() => {
+	const totalDataset = useMemo<MultiSeriesChartDataset>(() => {
 		if (selectedUnlocksChartType !== 'total') return EMPTY_TOTAL_UNLOCKS_DATASET
 		const source = scheduleDataset.source
 		if (!source.length) return EMPTY_TOTAL_UNLOCKS_DATASET
 		const dimensions = scheduleDataset.dimensions
-		const totalSource = new Array<Record<string, number>>(source.length)
+		const totalSource = new Array<MultiSeriesChartDataset['source'][number]>(source.length)
 		for (let i = 0; i < source.length; i++) {
 			const entry = source[i]
 			let total = 0
-			for (let j = 1; j < dimensions.length; j++) total += entry[dimensions[j]] ?? 0
-			totalSource[i] = { timestamp: entry.timestamp, [TOTAL_UNLOCKS_SERIES_NAME]: total }
+			for (let j = 1; j < dimensions.length; j++) total += (entry[j] as number | null) ?? 0
+			totalSource[i] = [entry[0], total]
 		}
 		return { source: totalSource, dimensions: ['timestamp', TOTAL_UNLOCKS_SERIES_NAME] }
 	}, [scheduleDataset, selectedUnlocksChartType])
@@ -243,7 +245,7 @@ export function UnlocksChartTab({
 		} else {
 			chartContent = (
 				<Suspense fallback={<div className="h-[320px]" />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={totalDataset}
 						charts={totalCharts}
 						valueSymbol="$"
@@ -266,7 +268,7 @@ export function UnlocksChartTab({
 		} else {
 			chartContent = (
 				<Suspense fallback={<div className="h-[320px]" />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={scheduleDataset}
 						charts={scheduleCharts}
 						hideDataZoom

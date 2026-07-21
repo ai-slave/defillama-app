@@ -1,6 +1,6 @@
 import type { Table } from '@tanstack/react-table'
-import { createCategoryChartOptions } from '~/components/ECharts/categoryChartOptions'
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
+import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 
 export const MAPLE_USD_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('$')
 export const MAPLE_PERCENT_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('%')

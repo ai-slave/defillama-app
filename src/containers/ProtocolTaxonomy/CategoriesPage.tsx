@@ -26,7 +26,7 @@ import type { IProtocolsCategoriesChartData, IProtocolsCategoriesPageData, IProt
 const DEFAULT_SORTING_STATE = [{ id: 'tvl', desc: true }]
 const columnHelper = createColumnHelper<IProtocolsCategoriesTableRow>()
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const categoriesColumns = [
 	columnHelper.accessor('name', {
@@ -204,7 +204,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 					</ChartPanelBodyFallback>
 				) : (
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
 							valueSymbol="$"

@@ -1,4 +1,4 @@
-import type { TreemapNode } from '~/components/ECharts/types'
+import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import type { TimeSeriesEntry } from './api.types'
 import type { IPctChangeRow } from './types'
 

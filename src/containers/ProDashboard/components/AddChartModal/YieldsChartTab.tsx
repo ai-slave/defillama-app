@@ -2,7 +2,7 @@ import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useReducer, useRef } from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { ProYieldRow } from '~/containers/ProDashboard/components/datasets/YieldsDataset/data'
 import { useYieldsData } from '~/containers/ProDashboard/components/datasets/YieldsDataset/useYieldsData'
 import { normalizeYieldToken } from '~/containers/Yields/domain/tokenNormalization'
@@ -23,9 +23,7 @@ import {
 	tvlApyCharts
 } from '../yieldChartConfig'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 interface YieldsChartTabProps {
 	selectedYieldPool: {
@@ -1116,7 +1114,7 @@ export function YieldsChartTab({
 											}
 										>
 											{selectedYieldChartType === 'tvl-apy' ? (
-												<MultiSeriesChart2
+												<MultiSeriesChart
 													height="280px"
 													dataset={yieldsChartDataset}
 													charts={tvlApyCharts}
@@ -1125,7 +1123,7 @@ export function YieldsChartTab({
 												/>
 											) : null}
 											{selectedYieldChartType === 'supply-apy' ? (
-												<MultiSeriesChart2
+												<MultiSeriesChart
 													height="280px"
 													dataset={supplyApyDataset}
 													charts={supplyApyCharts}
@@ -1136,7 +1134,7 @@ export function YieldsChartTab({
 												/>
 											) : null}
 											{selectedYieldChartType === 'supply-apy-7d' ? (
-												<MultiSeriesChart2
+												<MultiSeriesChart
 													height="280px"
 													dataset={supplyApy7dDataset}
 													charts={supplyApy7dCharts}
@@ -1146,7 +1144,7 @@ export function YieldsChartTab({
 												/>
 											) : null}
 											{selectedYieldChartType === 'borrow-apy' ? (
-												<MultiSeriesChart2
+												<MultiSeriesChart
 													height="280px"
 													dataset={borrowApyDataset}
 													charts={borrowApyCharts}
@@ -1157,7 +1155,7 @@ export function YieldsChartTab({
 												/>
 											) : null}
 											{selectedYieldChartType === 'net-borrow-apy' ? (
-												<MultiSeriesChart2
+												<MultiSeriesChart
 													height="280px"
 													dataset={netBorrowApyDataset}
 													charts={netBorrowApyCharts}

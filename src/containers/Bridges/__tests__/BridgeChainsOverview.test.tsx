@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 	selectedCharts: vi.fn<(values: string[]) => void>()
 }))
 
-vi.mock('~/components/ECharts/MultiSeriesChart2', () => ({
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
 	default: ({ selectedCharts }: { selectedCharts: Set<string> }) => {
 		mocks.selectedCharts([...selectedCharts])
 		return <div data-testid="bridge-chart" />
@@ -79,7 +79,7 @@ describe('BridgeChainsOverview selection wiring', () => {
 				<BridgeChainsOverview
 					allChains={allChains}
 					tableData={[]}
-					chart={{ dataset: { dimensions: ['timestamp', ...allChains], source: [{ timestamp: 1 }] }, charts }}
+					chart={{ dataset: { dimensions: ['timestamp', ...allChains], source: [[1]] }, charts }}
 				/>
 			)
 		})

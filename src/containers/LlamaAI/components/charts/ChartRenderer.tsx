@@ -47,7 +47,7 @@ const chartToolbarIconButtonStyles = buttonStyles({ size: 'md', square: true })
 
 const CandlestickChart = lazy(() => import('~/components/ECharts/CandlestickChart'))
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 const ScatterChart = lazy(() => import('~/components/ECharts/ScatterChart'))
 
@@ -165,7 +165,7 @@ function renderChartContent(renderPlan: ChartRenderPlan, chartKey: string, onCha
 		case 'cartesian':
 			return (
 				<Suspense fallback={<div className="h-[338px]" />}>
-					<MultiSeriesChart2 key={chartKey} {...renderPlan.rendererProps} onReady={onChartReady} />
+					<MultiSeriesChart key={chartKey} {...renderPlan.rendererProps} onReady={onChartReady} />
 				</Suspense>
 			)
 		case 'hbar':

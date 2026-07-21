@@ -1,4 +1,4 @@
-import type { TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
+import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { buildComputedBreakdownResult } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import type { ProtocolTvlBreakdownSource } from '../services/protocolTvl'
@@ -23,10 +23,7 @@ function excludeBinanceCexInflows(
 
 	const source: TimestampDataset['source'] = []
 	for (const row of dataset.source) {
-		if (
-			row.timestamp !== BINANCE_CEX_EXCLUDED_INFLOW_TIMESTAMPS[0] &&
-			row.timestamp !== BINANCE_CEX_EXCLUDED_INFLOW_TIMESTAMPS[1]
-		) {
+		if (row[0] !== BINANCE_CEX_EXCLUDED_INFLOW_TIMESTAMPS[0] && row[0] !== BINANCE_CEX_EXCLUDED_INFLOW_TIMESTAMPS[1]) {
 			source.push(row)
 		}
 	}

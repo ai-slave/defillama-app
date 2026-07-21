@@ -1,4 +1,5 @@
-import { PieChart as EPieChart } from 'echarts/charts'
+import type { EChartsOption } from 'echarts'
+import { PieChart as EPieChart, type PieSeriesOption } from 'echarts/charts'
 import { GraphicComponent, GridComponent, LegendComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -10,13 +11,12 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { formattedNum } from '~/utils'
-import { ChartContainer } from '../ChartContainer'
-import { ChartHeader } from '../ChartHeader'
-import { CHART_INSET, CHART_VERTICAL_LEGEND_RIGHT_INSET, chartLegendScrollStyle } from '../chartSpacing'
-import { useChartTheme } from '../chartTheme'
-import { createChartRecord } from '../dynamicRow'
-import { formatTooltipValue } from '../formatters'
-import type { IPieChartProps } from '../types'
+import { ChartContainer } from '../shared/ChartContainer'
+import { ChartHeader } from '../shared/ChartHeader'
+import { CHART_INSET, CHART_VERTICAL_LEGEND_RIGHT_INSET, chartLegendScrollStyle } from '../shared/chartSpacing'
+import { useChartTheme } from '../shared/chartTheme'
+import { formatTooltipValue } from '../shared/formatters'
+import type { IPieChartProps, PieTooltipParams } from './types'
 
 echarts.use([
 	CanvasRenderer,
@@ -29,6 +29,11 @@ echarts.use([
 ])
 
 const DEFAULT_PIE_CENTER_Y = '50%' as const
+
+function normalizePieTooltipParams(params: unknown): PieTooltipParams {
+	const value = Array.isArray(params) ? params[0] : params
+	return value && typeof value === 'object' ? (value as PieTooltipParams) : {}
+}
 
 export default function PieChart({
 	height,
@@ -75,6 +80,7 @@ export default function PieChart({
 	const exportFilename =
 		exportButtonsConfig?.filename || (title ? title.replace(/\s+/g, '-').toLowerCase() : 'pie-chart')
 	const exportTitle = exportButtonsConfig?.pngTitle || title
+	const stackColorByName = useMemo(() => new Map(Object.entries(stackColors ?? {})), [stackColors])
 	const chartDomRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
@@ -94,19 +100,23 @@ export default function PieChart({
 			return pct.toFixed(2) + '%'
 		}
 
-		const percentByName = createChartRecord<string>()
-		for (const item of chartData) percentByName[item.name] = formatPercent(item.value)
+		const percentByName = new Map<string, string>()
+		for (const item of chartData) percentByName.set(item.name, formatPercent(item.value))
 
 		return { percentByName, formatPercent }
 	}, [chartData])
 
-	const { legendBoxWidth, legendLabelByName, legendAlign } = useMemo(() => {
+	const { legendBoxWidth, legendLabelByName, legendAlign } = useMemo<{
+		legendBoxWidth: number
+		legendLabelByName: Map<string, string>
+		legendAlign: 'left' | 'right' | undefined
+	}>(() => {
 		// Shrink legend width to its content when possible to avoid big empty columns.
 		// When labels must be truncated, use the full available width and left-align so text stays close to the pie.
 		if (!showLegend || isSmall)
 			return {
 				legendBoxWidth: 0,
-				legendLabelByName: {} as Record<string, string>,
+				legendLabelByName: new Map(),
 				legendAlign: undefined as 'left' | 'right' | undefined
 			}
 		const legendOrient = legendPosition?.orient ?? 'vertical'
@@ -114,7 +124,7 @@ export default function PieChart({
 		if (legendOrient !== 'vertical' || !legendIsRight)
 			return {
 				legendBoxWidth: 0,
-				legendLabelByName: {} as Record<string, string>,
+				legendLabelByName: new Map(),
 				legendAlign: undefined as 'left' | 'right' | undefined
 			}
 
@@ -167,7 +177,7 @@ export default function PieChart({
 		const maxWidth = typeof toRight === 'number' ? Math.max(toRight, 420) : 200
 		let maxTextW = 0
 		for (const item of chartData) {
-			const pct = percentByName[item.name] ?? '0%'
+			const pct = percentByName.get(item.name) ?? '0%'
 			const full = `${item.name} (${pct})`
 			maxTextW = Math.max(maxTextW, safeMeasure(full))
 		}
@@ -176,20 +186,20 @@ export default function PieChart({
 		const needsTruncation = desired > boxWidth
 
 		const availableTextPx = Math.max(0, boxWidth - iconAndPaddingPx)
-		const out = createChartRecord<string>()
+		const labelByName = new Map<string, string>()
 		for (const item of chartData) {
 			const name = String(item.name)
-			const pct = percentByName[item.name] ?? '0%'
+			const pct = percentByName.get(item.name) ?? '0%'
 			const pctText = ` (${pct})`
 			const pctW = safeMeasure(pctText)
 			const maxNamePx = Math.max(0, availableTextPx - pctW)
 			const finalName = truncateToWidth(name, maxNamePx)
-			out[item.name] = `${finalName}${pctText}`
+			labelByName.set(item.name, `${finalName}${pctText}`)
 		}
 
 		return {
 			legendBoxWidth: boxWidth,
-			legendLabelByName: out,
+			legendLabelByName: labelByName,
 			legendAlign: needsTruncation ? 'left' : 'right'
 		}
 	}, [showLegend, isSmall, legendPosition, legendTextStyle, toRight, chartData, percentByName])
@@ -203,14 +213,14 @@ export default function PieChart({
 	}, [legendBoxWidth])
 
 	const series = useMemo(() => {
-		const series: Record<string, any> = {
+		const series: PieSeriesOption = {
 			name: '',
 			type: 'pie',
 			label: {
 				fontFamily: 'sans-serif',
 				color: chartTheme.text,
 				formatter: (x) => {
-					return `${x.name}: (${formatPercent(x.value)})`
+					return `${x.name}: (${formatPercent(Number(x.value))})`
 				},
 				show: !showLegend
 			},
@@ -225,7 +235,7 @@ export default function PieChart({
 				name: item.name,
 				value: item.value,
 				itemStyle: {
-					color: stackColors?.[item.name] ?? undefined
+					color: stackColorByName.get(item.name)
 				}
 			}))
 		}
@@ -255,7 +265,7 @@ export default function PieChart({
 		}
 
 		return series
-	}, [chartTheme, showLegend, chartData, radius, stackColors, isSmall, reservedRight, formatPercent, customLabel])
+	}, [chartTheme, showLegend, chartData, radius, stackColorByName, isSmall, reservedRight, formatPercent, customLabel])
 
 	const isChartDisposed = (inst: echarts.ECharts | null) => {
 		if (!inst) return true
@@ -288,19 +298,19 @@ export default function PieChart({
 		const instance = chartRef.current
 		if (!instance || isChartDisposed(instance)) return
 
-		instance.setOption({
+		const option: EChartsOption = {
 			tooltip: {
 				trigger: 'item',
 				className: 'defillama-echarts-tooltip',
 				backgroundColor: 'transparent',
 				borderWidth: 0,
 				confine: true,
-				formatter: (params: any) => {
-					if (formatTooltip) return formatTooltip(params)
-					const p = Array.isArray(params) ? params[0] : params
+				formatter: (params: unknown) => {
+					const p = normalizePieTooltipParams(params)
+					if (formatTooltip) return formatTooltip(p)
 					const rawValue = typeof p?.value === 'number' ? p.value : Number(p?.value ?? 0)
 					const formattedValue = formatTooltipValue(rawValue, valueSymbol)
-					return `${p?.marker ?? ''}${p?.name ?? ''}: <b>${formattedValue}</b> (${params.percent}%)`
+					return `${p.marker ?? ''}${p.name ?? ''}: <b>${formattedValue}</b> (${p.percent ?? 0}%)`
 				}
 			},
 			grid: {
@@ -330,13 +340,14 @@ export default function PieChart({
 					...(legendTextStyle || {}) // Apply overrides from prop
 				},
 				formatter: function (name: string) {
-					return legendLabelByName[name] ?? String(name)
+					return legendLabelByName.get(String(name)) ?? String(name)
 				},
 				...(legendBoxWidth > 0 ? { width: legendBoxWidth } : {}),
 				...legendPosition // Apply overrides from prop (left/right/top/bottom/orient)
 			},
 			series
-		})
+		}
+		instance.setOption(option)
 	}, [
 		series,
 		chartTheme,
@@ -369,31 +380,29 @@ export default function PieChart({
 			watermarkHeight = Math.max(20, Math.round(watermarkHeight * scale))
 		}
 
-		instance.setOption(
-			{
-				series: {
-					center: !showLegend || isSmall || reservedRight <= 0 ? ['50%', centerY] : [cx, centerY]
-				},
-				graphic: [
-					{
-						id: 'defillama-watermark',
-						type: 'image',
-						zlevel: 10,
-						z: 999,
-						silent: true,
-						left: Math.round(cx - watermarkWidth / 2),
-						top: Math.round(cy - watermarkHeight / 2),
-						style: {
-							image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-							width: watermarkWidth,
-							height: watermarkHeight,
-							opacity: 0.3
-						}
-					}
-				]
+		const option: EChartsOption = {
+			series: {
+				center: !showLegend || isSmall || reservedRight <= 0 ? ['50%', centerY] : [cx, centerY]
 			},
-			{ lazyUpdate: true }
-		)
+			graphic: [
+				{
+					id: 'defillama-watermark',
+					type: 'image',
+					zlevel: 10,
+					z: 999,
+					silent: true,
+					left: Math.round(cx - watermarkWidth / 2),
+					top: Math.round(cy - watermarkHeight / 2),
+					style: {
+						image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
+						width: watermarkWidth,
+						height: watermarkHeight,
+						opacity: 0.3
+					}
+				}
+			]
+		}
+		instance.setOption(option, { lazyUpdate: true })
 	})
 
 	// The shared observer resizes the canvas and then recomputes this chart's pixel-positioned watermark.

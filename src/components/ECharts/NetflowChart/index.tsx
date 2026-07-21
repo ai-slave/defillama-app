@@ -1,3 +1,4 @@
+import type { EChartsOption } from 'echarts'
 import { BarChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
@@ -9,8 +10,8 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { capitalizeFirstLetter, formattedNum } from '~/utils'
-import { chartGrid } from '../chartSpacing'
-import { useChartTheme } from '../chartTheme'
+import { chartGrid } from '../shared/chartSpacing'
+import { useChartTheme } from '../shared/chartTheme'
 
 echarts.use([BarChart, TooltipComponent, GridComponent, CanvasRenderer])
 
@@ -84,7 +85,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 		const instance = chartRef.current
 		if (!instance) return
 
-		const option = {
+		const option: EChartsOption = {
 			tooltip: {
 				trigger: 'axis',
 				className: 'defillama-echarts-tooltip',

@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
-import type { IPieChartProps } from '~/components/ECharts/types'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -24,7 +23,7 @@ import { applyChainsTvlSettings } from './tvl'
 import type { IChain, IChainsByCategoryData } from './types'
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 type ChainsChartData = Pick<IChainsByCategoryData, 'tvlChartsByChain' | 'totalTvlByDate'>
 const EMPTY_CHAINS_CHART_DATA: ChainsChartData = { tvlChartsByChain: { tvl: {} }, totalTvlByDate: { tvl: {} } }
 
@@ -164,7 +163,7 @@ export function ChainsByCategory({
 					</ChartPanel>
 					<ChartPanel className="relative isolate">
 						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={dominanceCharts.dataset}
 								charts={dominanceCharts.charts}
 								valueSymbol="%"
@@ -200,18 +199,19 @@ const useFormatChartData = ({
 	enabledTvlSettings: readonly TvlSettingsKey[]
 }) => {
 	const data = React.useMemo(() => {
-		const recentTvlByChain = createChartRecord<number>()
+		const recentTvlByChain = {}
 		const tvlByChain = tvlChartsByChain['tvl'] ?? {}
 		const chainNames: string[] = []
 		for (const chain in tvlByChain) {
 			chainNames.push(chain)
 		}
 
-		const rowMap = new Map<number, Record<string, number | null>>()
-
-		for (const chain of chainNames) {
-			let lastValue: number | undefined
-			for (const date in totalTvlByDate['tvl']) {
+		const source: Array<Array<number | null>> = []
+		for (const date in totalTvlByDate['tvl']) {
+			const row = new Array<number | null>(chainNames.length + 1)
+			row[0] = +date
+			for (let chainIndex = 0; chainIndex < chainNames.length; chainIndex++) {
+				const chain = chainNames[chainIndex]
 				const value = applyChainsTvlSettings(
 					tvlChartsByChain['tvl']?.[chain]?.[date],
 					getChartExtraValues({ tvlChartsByChain, chain, date }),
@@ -222,27 +222,23 @@ const useFormatChartData = ({
 					getTotalExtraValues({ totalTvlByDate, date }),
 					enabledTvlSettings
 				)
-				lastValue = value ?? undefined
-				const row = rowMap.get(+date) ?? createChartRow<number | null>(+date)
-				row[chain] = value != null && total != null && total !== 0 ? (value / total) * 100 : null
-				rowMap.set(+date, row)
+				recentTvlByChain[chain] = value ?? 0
+				row[chainIndex + 1] = value != null && total != null && total !== 0 ? (value / total) * 100 : null
 			}
-			recentTvlByChain[chain] = lastValue ?? 0
+			source.push(row)
 		}
-
-		const allRows = Array.from(rowMap.values()).sort((a, b) => a.timestamp - b.timestamp)
-		const source = allRows.filter((_, index) => index % 2 === 1)
+		const sampledSource = source.filter((_, index) => index % 2 === 1)
 		const dimensions = ['timestamp', ...chainNames]
-		const chartsConfig = chainNames.map((chain) => ({
+		const chartsConfig = chainNames.map((chain, index) => ({
 			type: 'line' as const,
 			name: chain,
-			encode: { x: 'timestamp', y: chain },
+			encode: { x: 0, y: index + 1 },
 			stack: chain,
 			color: colorsByChain[chain]
 		}))
 
 		return {
-			dominanceCharts: { dataset: { source, dimensions }, charts: chartsConfig },
+			dominanceCharts: { dataset: { source: sampledSource, dimensions }, charts: chartsConfig },
 			pieChartData: preparePieChartData({ data: recentTvlByChain, limit: 10 })
 		}
 	}, [enabledTvlSettings, totalTvlByDate, tvlChartsByChain, colorsByChain])

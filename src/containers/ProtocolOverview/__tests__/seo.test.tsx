@@ -481,7 +481,7 @@ describe('ProtocolOverview SEO contract', () => {
 		const markup = renderToStaticMarkup(React.createElement(ProtocolOverview, props))
 
 		expect(markup).toContain('href="https://aave.com"')
-		expect(markup).toContain('aria-label="Aave website"')
+		expect(markup).toContain('aria-label="Open Aave website"')
 	})
 })
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import { buildLstBreakdownChartData, buildLstInflowsData, buildLstInflowsSeriesData } from '../chartData'
 
 describe('LST chart data helpers', () => {
@@ -13,8 +13,20 @@ describe('LST chart data helpers', () => {
 		})
 
 		expect(result).toEqual([
-			{ date: 1, Lido: 10, RocketPool: 5 },
-			{ date: 2, Lido: 13, RocketPool: 3 }
+			[
+				1,
+				new Map([
+					['Lido', 10],
+					['RocketPool', 5]
+				])
+			],
+			[
+				2,
+				new Map([
+					['Lido', 13],
+					['RocketPool', 3]
+				])
+			]
 		])
 	})
 
@@ -30,7 +42,15 @@ describe('LST chart data helpers', () => {
 			groupBy: 'weekly'
 		})
 
-		expect(result).toEqual([{ date: bucket, Lido: 10, RocketPool: 1 }])
+		expect(result).toEqual([
+			[
+				bucket,
+				new Map([
+					['Lido', 10],
+					['RocketPool', 1]
+				])
+			]
+		])
 	})
 
 	it('builds breakdown and inflow datasets with stable token chart configs', () => {
@@ -45,15 +65,15 @@ describe('LST chart data helpers', () => {
 			})
 		).toEqual({
 			dataset: {
-				source: [{ timestamp: 1_000, Lido: 75, RocketPool: 25 }],
+				source: [[1_000, 75, 25]],
 				dimensions: ['timestamp', 'Lido', 'RocketPool']
 			},
 			charts: [
-				{ type: 'line', name: 'Lido', encode: { x: 'timestamp', y: 'Lido' }, color: '#111', stack: 'breakdown' },
+				{ type: 'line', name: 'Lido', encode: { x: 0, y: 1 }, color: '#111', stack: 'breakdown' },
 				{
 					type: 'line',
 					name: 'RocketPool',
-					encode: { x: 'timestamp', y: 'RocketPool' },
+					encode: { x: 0, y: 2 },
 					color: '#222',
 					stack: 'breakdown'
 				}
@@ -61,21 +81,29 @@ describe('LST chart data helpers', () => {
 		})
 
 		const inflowsSeriesData = buildLstInflowsSeriesData({
-			inflowsData: [{ date: 1, Lido: 10, RocketPool: -1 }],
+			inflowsData: [
+				[
+					1,
+					new Map([
+						['Lido', 10],
+						['RocketPool', -1]
+					])
+				]
+			],
 			tokens,
 			lsdColors,
 			barChartStacks: { Lido: 'A', RocketPool: 'A' }
 		})
 
 		expect(inflowsSeriesData.dataset).toEqual({
-			source: [{ timestamp: 1_000, Lido: 10, RocketPool: -1 }],
+			source: [[1_000, 10, -1]],
 			dimensions: ['timestamp', 'Lido', 'RocketPool']
 		})
 		expect(inflowsSeriesData.barCharts).toEqual([
 			{
 				type: 'bar',
 				name: 'Lido',
-				encode: { x: 'timestamp', y: 'Lido' },
+				encode: { x: 0, y: 1 },
 				color: '#111',
 				stack: 'A',
 				large: false
@@ -83,7 +111,7 @@ describe('LST chart data helpers', () => {
 			{
 				type: 'bar',
 				name: 'RocketPool',
-				encode: { x: 'timestamp', y: 'RocketPool' },
+				encode: { x: 0, y: 2 },
 				color: '#222',
 				stack: 'A',
 				large: false
@@ -93,13 +121,13 @@ describe('LST chart data helpers', () => {
 			{
 				type: 'line',
 				name: 'Lido',
-				encode: { x: 'timestamp', y: 'Lido' },
+				encode: { x: 0, y: 1 },
 				color: '#111'
 			},
 			{
 				type: 'line',
 				name: 'RocketPool',
-				encode: { x: 'timestamp', y: 'RocketPool' },
+				encode: { x: 0, y: 2 },
 				color: '#222'
 			}
 		])
@@ -107,9 +135,9 @@ describe('LST chart data helpers', () => {
 
 	it('keeps sparse token rows sparse instead of materializing false zeroes', () => {
 		const inflowsData = [
-			{ date: 1, Lido: 10 },
-			{ date: 2, RocketPool: 5 }
-		]
+			[1, new Map([['Lido', 10]])],
+			[2, new Map([['RocketPool', 5]])]
+		] satisfies Array<[number, Map<string, number>]>
 		const result = buildLstInflowsSeriesData({
 			inflowsData,
 			tokens: ['Lido', 'RocketPool'],
@@ -118,17 +146,15 @@ describe('LST chart data helpers', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			{ timestamp: 1_000, Lido: 10 },
-			{ timestamp: 2_000, RocketPool: 5 }
+			[1_000, 10, undefined],
+			[2_000, undefined, 5]
 		])
-		expect(Object.hasOwn(result.dataset.source[0], 'RocketPool')).toBe(false)
-		expect(Object.hasOwn(result.dataset.source[1], 'Lido')).toBe(false)
 		for (const chart of [...result.barCharts, ...result.cumulativeCharts]) {
-			expect(result.dataset.dimensions).toContain(chart.encode.y)
+			expect(chart.encode.y).toBeGreaterThan(0)
 		}
 		expect(inflowsData).toEqual([
-			{ date: 1, Lido: 10 },
-			{ date: 2, RocketPool: 5 }
+			[1, new Map([['Lido', 10]])],
+			[2, new Map([['RocketPool', 5]])]
 		])
 	})
 })

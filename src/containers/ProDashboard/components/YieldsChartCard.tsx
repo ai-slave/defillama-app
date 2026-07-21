@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import { formattedNum } from '~/utils'
@@ -24,9 +24,7 @@ import {
 	tvlApyCharts
 } from './yieldChartConfig'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 interface YieldsChartCardProps {
 	config: YieldsChartConfig
@@ -109,41 +107,41 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 			case 'tvl-apy':
 				headers = ['Date', 'Supply APY', 'TVL']
 				rows = tvlApyDataset.source.map((point) => [
-					new Date(point.timestamp).toISOString().slice(0, 10),
-					point.APY ?? '',
-					point.TVL ?? ''
+					new Date(point[0] as number).toISOString().slice(0, 10),
+					point[1] ?? '',
+					point[2] ?? ''
 				])
 				break
 			case 'supply-apy':
 				headers = ['Date', 'Base', 'Reward', 'Intrinsic']
 				rows = supplyApyDataset.source.map((point) => [
-					new Date(point.timestamp).toISOString().slice(0, 10),
-					point.Base ?? '',
-					point.Reward ?? '',
-					point.Intrinsic ?? ''
+					new Date(point[0] as number).toISOString().slice(0, 10),
+					point[1] ?? '',
+					point[2] ?? '',
+					point[3] ?? ''
 				])
 				break
 			case 'borrow-apy':
 				headers = ['Date', 'Base cost', 'Reward offset', 'Intrinsic']
 				rows = borrowApyDataset.source.map((point) => [
-					new Date(point.timestamp).toISOString().slice(0, 10),
-					point['Base cost'] ?? '',
-					point['Reward offset'] ?? '',
-					point.Intrinsic ?? ''
+					new Date(point[0] as number).toISOString().slice(0, 10),
+					point[1] ?? '',
+					point[2] ?? '',
+					point[3] ?? ''
 				])
 				break
 			case 'supply-apy-7d':
 				headers = ['Date', '7d Supply APY']
 				rows = supplyApy7dDataset.source.map((point) => [
-					new Date(point.timestamp).toISOString().slice(0, 10),
-					point['7d Supply APY']
+					new Date(point[0] as number).toISOString().slice(0, 10),
+					point[1]
 				])
 				break
 			case 'net-borrow-apy':
 				headers = ['Date', 'Net borrow cost']
 				rows = netBorrowApyDataset.source.map((point) => [
-					new Date(point.timestamp).toISOString().slice(0, 10),
-					point['Net borrow cost']
+					new Date(point[0] as number).toISOString().slice(0, 10),
+					point[1]
 				])
 		}
 
@@ -243,7 +241,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 					}
 				>
 					{chartType === 'tvl-apy' ? (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							height="320px"
 							dataset={tvlApyDataset}
 							charts={tvlApyCharts}
@@ -254,7 +252,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						/>
 					) : null}
 					{chartType === 'supply-apy' ? (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							height="320px"
 							dataset={supplyApyDataset}
 							charts={supplyApyCharts}
@@ -265,7 +263,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						/>
 					) : null}
 					{chartType === 'supply-apy-7d' ? (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							height="320px"
 							dataset={supplyApy7dDataset}
 							charts={supplyApy7dCharts}
@@ -275,7 +273,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						/>
 					) : null}
 					{chartType === 'borrow-apy' ? (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							height="320px"
 							dataset={borrowApyDataset}
 							charts={borrowApyCharts}
@@ -286,7 +284,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						/>
 					) : null}
 					{chartType === 'net-borrow-apy' ? (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							height="320px"
 							dataset={netBorrowApyDataset}
 							charts={netBorrowApyCharts}

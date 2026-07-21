@@ -228,8 +228,8 @@ describe('buildProtocolFeeChartPresentation', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Fees', 'Holders Revenue'],
 			source: [
-				{ timestamp: 1_000, Fees: 102, 'Holders Revenue': 7 },
-				{ timestamp: 86_400_000, Fees: 3, 'Holders Revenue': 3 }
+				[1_000, 102, 7],
+				[86_400_000, 3, 3]
 			]
 		})
 		expect(result.charts).toMatchObject([
@@ -253,8 +253,8 @@ describe('buildProtocolFeeChartPresentation', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			{ timestamp: 1_000, Fees: 10 },
-			{ timestamp: 2_000, Fees: 15, Revenue: 3 }
+			[1_000, 10, null],
+			[2_000, 15, 3]
 		])
 		expect(result.charts.map((chart) => chart.type)).toEqual(['line', 'line'])
 	})
@@ -279,8 +279,8 @@ describe('buildProtocolFeeChartPresentation', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			{ timestamp: 1_000, Fees: 203 },
-			{ timestamp: 2_000, Fees: 54 }
+			[1_000, 203],
+			[2_000, 54]
 		])
 	})
 })

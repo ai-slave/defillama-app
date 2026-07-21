@@ -16,7 +16,7 @@ import { useOraclesByChainExtraBreakdowns } from './queries.client'
 import type { OraclesByChainPageData } from './types'
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart'))
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const DEFAULT_SORTING_STATE = [{ id: 'tvl', desc: true }]
 
@@ -87,7 +87,7 @@ export const OraclesByChain = ({
 						</ChartPanelExportShellFallback>
 					) : (
 						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={dominanceData.dominanceDataset}
 								charts={dominanceData.dominanceCharts}
 								stacked={true}

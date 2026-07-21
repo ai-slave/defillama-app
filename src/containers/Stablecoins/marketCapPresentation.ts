@@ -1,4 +1,4 @@
-import type { TreemapNode } from '~/components/ECharts/types'
+import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 
 const PIE_SLICE_LIMIT = 10

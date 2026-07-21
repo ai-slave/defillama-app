@@ -1,5 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { buildColumnarTimeSeriesDataset, type TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
+import {
+	buildColumnarTimeSeriesDataset,
+	type TimestampDataset
+} from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp } from '../../api.types'
 
 interface FormattedValue {
@@ -75,12 +78,17 @@ function parseDateToTimestampMs(date: string) {
 }
 
 export function buildBlockchainViewModel({ metadata, blockchain }: BlockchainAPIResponse): BlockchainViewModel {
-	const activityDataset = buildColumnarTimeSeriesDataset(
-		blockchain.chainActivity.dates,
-		[blockchain.chainActivity.series[0], blockchain.chainActivity.series[1], blockchain.chainActivity.series[2]],
-		parseDateToTimestampMs,
-		0
-	)
+	const activityDates = blockchain.chainActivity.dates
+	const transactions = blockchain.chainActivity.series[0].data
+	const activeAddresses = blockchain.chainActivity.series[1].data
+	const newAddresses = blockchain.chainActivity.series[2].data
+	const transactionRows = new Array<(number | null)[]>(activityDates.length)
+	const addressRows = new Array<(number | null)[]>(activityDates.length)
+	for (let i = 0; i < activityDates.length; i++) {
+		const timestamp = parseDateToTimestampMs(activityDates[i])
+		transactionRows[i] = [timestamp, transactions[i] ?? 0]
+		addressRows[i] = [timestamp, activeAddresses[i] ?? 0, newAddresses[i] ?? 0]
+	}
 
 	return {
 		metadata,
@@ -89,11 +97,11 @@ export function buildBlockchainViewModel({ metadata, blockchain }: BlockchainAPI
 		topTokens: blockchain.topTokens,
 		chartDatasets: {
 			transactions: {
-				...activityDataset,
+				source: transactionRows,
 				dimensions: ['timestamp', 'Transactions']
 			},
 			addresses: {
-				...activityDataset,
+				source: addressRows,
 				dimensions: ['timestamp', 'Active Addresses', 'New Addresses']
 			},
 			gasFees: buildColumnarTimeSeriesDataset(

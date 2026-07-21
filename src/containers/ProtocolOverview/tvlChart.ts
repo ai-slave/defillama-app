@@ -1,5 +1,5 @@
-import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
-import { formatLineChart } from '~/components/ECharts/utils'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
+import { formatLineChart } from '~/components/ECharts/shared/timeSeries'
 import { getGroupedTimestampSec } from './chartSeries.utils'
 
 type ChartInterval = ChartTimeGroupingWithCumulative

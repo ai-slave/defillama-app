@@ -8,10 +8,9 @@ import {
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
-import { createChartRecord } from '~/components/ECharts/dynamicRow'
-import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
-import type { IPieChartProps } from '~/components/ECharts/types'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { FormattedName } from '~/components/FormattedName'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -46,7 +45,7 @@ interface BridgedTVLByChainProps {
 }
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const INFLOWS_TOOLTIP_FORMATTER_USD = createInflowsTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 
@@ -87,7 +86,7 @@ export function BridgedTVLByChain({
 	const { pieChartData, tableData } = React.useMemo(() => {
 		const category = chartType !== 'inflows' ? chainData?.[chartType] : undefined
 		const rawBreakdown = category?.breakdown ?? {}
-		const breakdown = createChartRecord<number>()
+		const breakdown = {}
 		for (const key in rawBreakdown) {
 			breakdown[key] = Number(rawBreakdown[key])
 		}
@@ -210,7 +209,7 @@ export function BridgedTVLByChain({
 						</React.Suspense>
 					) : deferredInflowsData ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={deferredInflowsData.dataset}
 								charts={deferredInflowsData.charts}
 								hideDefaultLegend={true}

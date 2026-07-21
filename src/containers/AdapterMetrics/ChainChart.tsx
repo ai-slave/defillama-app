@@ -4,12 +4,12 @@ import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
@@ -54,9 +54,9 @@ import {
 	type ChainsByAdapterChartState
 } from './utils'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const HBarChart = React.lazy(() => import('~/components/ECharts/HBarChart'))
-const TreeMapBuilderChart = React.lazy(() => import('~/components/ECharts/TreeMapBuilderChart'))
+const BuilderTreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart/Builder'))
 
 const CHART_VIEW_MODES_ADAPTER_BY_CHAIN = ['Combined', 'Breakdown'] as const
 type AdapterByChainViewMode = (typeof CHART_VIEW_MODES_ADAPTER_BY_CHAIN)[number]
@@ -86,7 +86,7 @@ const CHART_VIEW_MODE_OPTIONS = [
 	{ key: 'Combined', name: 'Combined' },
 	{ key: 'Breakdown', name: 'Breakdown' }
 ] as const
-const EMPTY_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp'] }
+const EMPTY_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp'] }
 const EMPTY_COMBINED_CHART_PRESENTATION: CombinedChartPresentation = { dataset: EMPTY_DATASET, charts: [] }
 type FeesChartMode = { kind: 'plain' } | { kind: 'fees'; extras: FeesExtraMetric[] }
 type BreakdownChartDataState =
@@ -94,7 +94,7 @@ type BreakdownChartDataState =
 	| { kind: 'error'; message: string }
 	| {
 			kind: 'ready'
-			chartData: MultiSeriesChart2Dataset
+			chartData: MultiSeriesChartDataset
 			protocolDimensions: string[]
 			failedMetrics: FeesExtraMetric[]
 	  }
@@ -738,7 +738,7 @@ export const AdapterByChainChart = ({
 					}
 				>
 					{deferredBreakdownPresentation.kind === 'treemap' ? (
-						<TreeMapBuilderChart
+						<BuilderTreemapChart
 							data={deferredBreakdownPresentation.data}
 							height={breakdownChartHeight}
 							onReady={handleChartReady}
@@ -753,7 +753,7 @@ export const AdapterByChainChart = ({
 							onReady={handleChartReady}
 						/>
 					) : (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={deferredBreakdownPresentation.dataset}
 							charts={deferredBreakdownPresentation.charts}
 							height={breakdownChartHeight}
@@ -775,7 +775,7 @@ export const AdapterByChainChart = ({
 				</React.Suspense>
 			) : (
 				<React.Suspense fallback={<ChartPanelBodyFallback />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={deferredCombinedFinalCharts.dataset}
 						charts={deferredCombinedFinalCharts.charts}
 						hideDefaultLegend={deferredCombinedFinalCharts.charts.length === 1}
@@ -1256,7 +1256,7 @@ export const ChainsByAdapterChart = ({
 						Failed to load chart data: {baseChartErrorMessage}
 					</div>
 				) : deferredChartPresentation.kind === 'treemap' ? (
-					<TreeMapBuilderChart data={deferredChartPresentation.data} height={chartHeight} onReady={handleChartReady} />
+					<BuilderTreemapChart data={deferredChartPresentation.data} height={chartHeight} onReady={handleChartReady} />
 				) : deferredChartPresentation.kind === 'hbar' ? (
 					<HBarChart
 						categories={deferredChartPresentation.data.map((item) => item.name)}
@@ -1267,7 +1267,7 @@ export const ChainsByAdapterChart = ({
 						onReady={handleChartReady}
 					/>
 				) : (
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={deferredChartPresentation.dataset}
 						charts={deferredChartPresentation.charts}
 						height={chartHeight}

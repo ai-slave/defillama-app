@@ -1,7 +1,10 @@
 import type { GetStaticPropsContext } from 'next'
 import { useRouter } from 'next/router'
 import { type ComponentType, lazy, Suspense, useEffect, useMemo } from 'react'
-import { DWMC_GROUPING_OPTIONS_LOWERCASE, type LowercaseDwmcGrouping } from '~/components/ECharts/ChartGroupingSelector'
+import {
+	DWMC_GROUPING_OPTIONS_LOWERCASE,
+	type LowercaseDwmcGrouping
+} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { BAR_CHARTS, protocolCharts } from '~/containers/ProtocolOverview/constants'
 import { getProtocolOverviewPageData } from '~/containers/ProtocolOverview/queries'

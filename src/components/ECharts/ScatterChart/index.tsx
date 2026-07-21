@@ -1,4 +1,5 @@
-import { ScatterChart as EChartScatter } from 'echarts/charts'
+import type { EChartsOption } from 'echarts'
+import { ScatterChart as EChartScatter, type ScatterSeriesOption } from 'echarts/charts'
 import {
 	AxisPointerComponent,
 	BrushComponent,
@@ -17,10 +18,17 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
-import { CHART_INSET } from '../chartSpacing'
-import { useChartTheme } from '../chartTheme'
-import type { IScatterChartProps } from '../types'
-import { isIconUrlValid, validateIconUrl } from '../utils'
+import { CHART_INSET } from '../shared/chartSpacing'
+import { useChartTheme } from '../shared/chartTheme'
+import { isIconUrlValid, validateIconUrl } from '../shared/icon'
+import type {
+	IScatterChartProps,
+	ScatterChartDatum,
+	ScatterChartPoint,
+	ScatterChartValue,
+	ScatterTooltipParams,
+	YieldScatterChartPoint
+} from './types'
 
 echarts.use([
 	CanvasRenderer,
@@ -41,9 +49,32 @@ const getEntityIcon = (type: string, slug: string) => {
 	return tokenIconUrl(slug)
 }
 
-function getPointValue(point: any): any[] {
+function isScatterChartPoint(point: ScatterChartDatum): point is ScatterChartPoint {
+	return !Array.isArray(point) && 'value' in point
+}
+
+function isYieldScatterChartPoint(point: ScatterChartDatum): point is YieldScatterChartPoint {
+	return !Array.isArray(point) && 'projectName' in point
+}
+
+function getPointValue(point: ScatterChartDatum): ScatterChartValue {
 	if (Array.isArray(point)) return point
-	return Array.isArray(point?.value) ? point.value : []
+	return isScatterChartPoint(point) ? point.value : [Number.NaN, Number.NaN]
+}
+
+function normalizeScatterTooltipParams(params: unknown): ScatterTooltipParams {
+	if (!params || typeof params !== 'object') return { value: [Number.NaN, Number.NaN] }
+	const candidate = params as Partial<ScatterTooltipParams>
+	const rawValue = candidate.value
+	const value: ScatterChartValue = [
+		typeof rawValue?.[0] === 'number' ? rawValue[0] : Number(rawValue?.[0]),
+		typeof rawValue?.[1] === 'number' ? rawValue[1] : Number(rawValue?.[1]),
+		...(rawValue?.slice(2) ?? [])
+	]
+	return {
+		...candidate,
+		value
+	}
 }
 
 export default function ScatterChart({
@@ -74,9 +105,9 @@ export default function ScatterChart({
 	useEffect(() => {
 		if (!showLabels) return
 		const slugs = new Set<string>()
-		for (const point of chartData as any[]) {
-			if (point?.showLabel === false) continue
-			const slug = point?.entitySlug ?? getPointValue(point)[3]
+		for (const point of chartData) {
+			if (isScatterChartPoint(point) && point.showLabel === false) continue
+			const slug = (isScatterChartPoint(point) ? point.entitySlug : undefined) ?? getPointValue(point)[3]
 			if (slug && typeof slug === 'string' && slug.toLowerCase() !== 'unknown') slugs.add(slug)
 		}
 		const pending: Promise<boolean>[] = []
@@ -111,25 +142,24 @@ export default function ScatterChart({
 		const instance = chartRef.current
 		if (!instance) return
 
-		let series = []
-		const isYieldData = chartData.length > 0 && chartData[0].projectName !== undefined
+		const series: ScatterSeriesOption[] = []
+		const isYieldData = chartData[0] != null && isYieldScatterChartPoint(chartData[0])
 
 		const labelConfig = {
 			show: showLabels,
 			position: 'right' as const,
 			distance: 5,
-			formatter: (params: any) => params.value?.[2] || '',
+			formatter: (params: unknown) => String(normalizeScatterTooltipParams(params).value[2] ?? ''),
 			fontSize: 10,
 			fontWeight: 500,
 			color: chartTheme.ink(0.86)
 		}
 
 		if (isYieldData) {
-			const pointsByProject = new Map<
-				string | number | null | undefined,
-				Array<Array<string | number | null | undefined>>
-			>()
+			const pointsByProject = new Map<string, ScatterChartValue[]>()
 			for (const point of chartData) {
+				if (!isYieldScatterChartPoint(point)) continue
+				if (typeof point.sigma !== 'number' || typeof point.mu !== 'number') continue
 				let points = pointsByProject.get(point.projectName)
 				if (!points) {
 					points = []
@@ -160,37 +190,47 @@ export default function ScatterChart({
 				})
 			}
 		} else {
-			const dataWithSymbols = showLabels
-				? chartData.map((point: any) => {
-						const normalizedPoint = Array.isArray(point) ? { value: point } : point
-						if (point?.showLabel === false) return normalizedPoint
-						const slug = point?.entitySlug ?? getPointValue(point)[3] ?? ''
-						if (!slug || typeof slug !== 'string' || slug.toLowerCase() === 'unknown') return normalizedPoint
-						const url = getEntityIcon(entityType, slug)
-						if (!isIconUrlValid(url)) return normalizedPoint
-						return {
-							...normalizedPoint,
-							symbol: `image://${url}`,
-							symbolSize: Math.max(Number(normalizedPoint?.symbolSize) || 20, 18)
+			const groupedData = new Map<string, { data: Array<ScatterChartValue | ScatterChartPoint>; groupColor?: string }>()
+			for (const inputPoint of chartData) {
+				if (isYieldScatterChartPoint(inputPoint)) continue
+				let point: ScatterChartValue | ScatterChartPoint = inputPoint
+				if (showLabels) {
+					const normalizedPoint = Array.isArray(point) ? { value: point } : point
+					point = normalizedPoint
+					if (normalizedPoint.showLabel !== false) {
+						const slug = normalizedPoint.entitySlug ?? normalizedPoint.value[3] ?? ''
+						if (typeof slug === 'string' && slug && slug.toLowerCase() !== 'unknown') {
+							const url = getEntityIcon(entityType, slug)
+							if (isIconUrlValid(url)) {
+								point = {
+									...normalizedPoint,
+									symbol: `image://${url}`,
+									symbolSize: Math.max(normalizedPoint.symbolSize ?? 20, 18)
+								}
+							}
 						}
-					})
-				: chartData
+					}
+				}
 
-			const groupedData = new Map<string, any[]>()
-			for (const point of dataWithSymbols as any[]) {
-				const seriesName = typeof point?.seriesName === 'string' ? point.seriesName : title || 'Data'
-				if (!groupedData.has(seriesName)) groupedData.set(seriesName, [])
-				groupedData.get(seriesName)!.push(point)
+				const seriesName = isScatterChartPoint(point) && point.seriesName ? point.seriesName : title || 'Data'
+				let group = groupedData.get(seriesName)
+				if (!group) {
+					group = { data: [] }
+					groupedData.set(seriesName, group)
+				}
+				group.data.push(point)
+				if (group.groupColor == null && isScatterChartPoint(point) && typeof point.groupColor === 'string') {
+					group.groupColor = point.groupColor
+				}
 			}
 
-			series = [...groupedData.entries()].map(([seriesName, data]) => {
-				const groupColor = data.find((point) => typeof point?.groupColor === 'string')?.groupColor
-				return {
+			for (const [seriesName, group] of groupedData) {
+				series.push({
 					name: seriesName,
 					type: 'scatter',
 					symbolSize: showLabels ? 20 : 8,
 					itemStyle: {
-						...(groupColor ? { color: groupColor } : {}),
+						...(group.groupColor ? { color: group.groupColor } : {}),
 						opacity: 0.84
 					},
 					emphasis: {
@@ -204,15 +244,18 @@ export default function ScatterChart({
 						}
 					},
 					label: labelConfig,
-					data
-				}
-			})
+					data: group.data
+				})
+			}
 		}
 
 		const showCategoricalLegend = !isYieldData && series.length > 1
 
-		const yieldTooltipFormatter = (params) => {
+		const yieldTooltipFormatter = (params: ScatterTooltipParams) => {
 			if (params.value.length > 1) {
+				const apy = typeof params.value[6] === 'number' ? params.value[6].toFixed(2) : '—'
+				const average = typeof params.value[1] === 'number' ? params.value[1].toFixed(2) : '—'
+				const deviation = typeof params.value[0] === 'number' ? params.value[0].toFixed(2) : '—'
 				return (
 					'Symbol: ' +
 					params.value[3] +
@@ -224,7 +267,7 @@ export default function ScatterChart({
 					formattedNum(params.value[5], true) +
 					'<br/>' +
 					'APY Spot: ' +
-					params.value[6].toFixed(2) +
+					apy +
 					'%' +
 					'<br/>' +
 					'Chain: ' +
@@ -234,30 +277,32 @@ export default function ScatterChart({
 					params.seriesName +
 					'<br/>' +
 					'APY Geometric Average: ' +
-					params.value[1].toFixed(2) +
+					average +
 					'%' +
 					'<br/>' +
 					'APY Standard Deviation: ' +
-					params.value[0].toFixed(2) +
+					deviation +
 					'%' +
 					'<br/>' +
 					'Nb of collected daily datapoints: ' +
 					params.value[2]
 				)
 			} else {
-				return params.seriesName + ' :<br/>' + params.name + ' : ' + params.value.toFixed(5) + 'mean '
+				return params.seriesName + ' :<br/>' + params.name
 			}
 		}
 
-		const genericTooltipFormatter = (params) => {
+		const genericTooltipFormatter = (params: ScatterTooltipParams) => {
 			if (params.value && params.value.length >= 2) {
 				const xValue = params.value[0]
 				const yValue = params.value[1]
 				const entityName = params.value[2]
-				const formatValue = (val) => {
-					if (valueSymbol === '$') return formattedNum(val, true)
-					if (valueSymbol === '%') return val.toFixed(2) + '%'
-					return formattedNum(val)
+				const formatValue = (val: string | number | null | undefined) => {
+					const numericValue = typeof val === 'number' ? val : Number(val)
+					if (!Number.isFinite(numericValue)) return '—'
+					if (valueSymbol === '$') return formattedNum(numericValue, true)
+					if (valueSymbol === '%') return numericValue.toFixed(2) + '%'
+					return formattedNum(numericValue)
 				}
 				let tooltip = ''
 				if (entityName) {
@@ -273,7 +318,7 @@ export default function ScatterChart({
 		const effectiveTooltipFormatter =
 			tooltipFormatter || (isYieldData ? yieldTooltipFormatter : genericTooltipFormatter)
 
-		const option = {
+		const option: EChartsOption = {
 			title: title
 				? {
 						text: title,
@@ -312,7 +357,7 @@ export default function ScatterChart({
 				backgroundColor: 'transparent',
 				borderWidth: 0,
 				confine: true,
-				formatter: effectiveTooltipFormatter,
+				formatter: (params: unknown) => effectiveTooltipFormatter(normalizeScatterTooltipParams(params)),
 				axisPointer: {
 					show: true,
 					type: 'cross',

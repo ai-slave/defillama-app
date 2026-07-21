@@ -8,8 +8,8 @@ import {
 } from '@tanstack/react-table'
 import type { ColumnDef, Table } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
-import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
 import { TextLoader } from '../../Logo'
@@ -26,11 +26,9 @@ import {
 import { buildPortfolioTrendDataset, PORTFOLIO_SERIES_NAME } from './chartData'
 
 type VaultFilter = 'All' | 'A' | 'B'
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-const PORTFOLIO_CHARTS: NonNullable<IMultiSeriesChart2Props['charts']> = [
+const PORTFOLIO_CHARTS: NonNullable<IMultiSeriesChartProps['charts']> = [
 	{
 		type: 'line',
 		name: PORTFOLIO_SERIES_NAME,
@@ -122,7 +120,7 @@ function PortfolioTrend({
 				</span>
 			</div>
 			<Suspense fallback={<div className="h-[220px]" />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={dataset}
 					charts={PORTFOLIO_CHARTS}
 					valueSymbol="$"

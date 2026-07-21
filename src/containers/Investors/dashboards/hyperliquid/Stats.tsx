@@ -7,11 +7,13 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import type { ColumnDef, Table } from '@tanstack/react-table'
+import type { EChartsOption } from 'echarts'
 import { BarChart, PieChart as EPieChart, ScatterChart as EScatterChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { VirtualTable } from '~/components/Table/Table'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { formattedNum } from '~/utils'
@@ -247,45 +249,47 @@ function FundingChart({ data }: { data: { name: string; value: number }[] }) {
 
 		const sorted = data.toSorted((a, b) => a.value - b.value)
 
-		instance.setOption(
-			{
-				grid: { left: 70, right: 16, top: 8, bottom: 8, containLabel: false },
-				tooltip: {
-					trigger: 'axis',
-					axisPointer: { type: 'shadow' },
-					formatter: (params: Array<{ name: string; value: number }>) => {
-						const p = params[0]
-						return `<b>${p.name}</b><br/>Funding (ann.): ${p.value >= 0 ? '+' : ''}${p.value.toFixed(2)}%`
-					}
-				},
-				xAxis: {
-					type: 'value',
-					axisLabel: { formatter: '{value}%', color: c.axisLabel, fontSize: 11 },
-					splitLine: { lineStyle: { color: c.splitLine } }
-				},
-				yAxis: {
-					type: 'category',
-					data: sorted.map((d) => d.name),
-					axisLabel: { color: c.label, fontSize: 11 },
-					axisLine: { show: false },
-					axisTick: { show: false }
-				},
-				series: [
-					{
-						type: 'bar',
-						data: sorted.map((d) => ({
-							value: d.value,
-							itemStyle: {
-								color: d.value >= 0 ? '#10b981' : '#ef4444'
-							}
-						})),
-						barMaxWidth: 18
-					}
-				],
-				animation: false
+		const option: EChartsOption = {
+			grid: { left: 70, right: 16, top: 8, bottom: 8, containLabel: false },
+			tooltip: {
+				trigger: 'axis',
+				axisPointer: { type: 'shadow' },
+				formatter: (rawParams: unknown) => {
+					const item = normalizeTooltipItems(rawParams)[0]
+					if (!item) return ''
+					const rawValue = getTooltipRawYValue(item, item.seriesName ?? '')
+					const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
+					if (!Number.isFinite(value)) return ''
+					return `<b>${item.name ?? ''}</b><br/>Funding (ann.): ${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
+				}
 			},
-			{ notMerge: true }
-		)
+			xAxis: {
+				type: 'value',
+				axisLabel: { formatter: '{value}%', color: c.axisLabel, fontSize: 11 },
+				splitLine: { lineStyle: { color: c.splitLine } }
+			},
+			yAxis: {
+				type: 'category',
+				data: sorted.map((d) => d.name),
+				axisLabel: { color: c.label, fontSize: 11 },
+				axisLine: { show: false },
+				axisTick: { show: false }
+			},
+			series: [
+				{
+					type: 'bar',
+					data: sorted.map((d) => ({
+						value: d.value,
+						itemStyle: {
+							color: d.value >= 0 ? '#10b981' : '#ef4444'
+						}
+					})),
+					barMaxWidth: 18
+				}
+			],
+			animation: false
+		}
+		instance.setOption(option, { notMerge: true })
 	}, [data, c, chartRef])
 
 	if (data.length === 0) return null
@@ -517,32 +521,34 @@ function OIDistributionChart({ data }: { data: { name: string; value: number }[]
 
 		const colors = ['#2172e5', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#a78bfa', '#94a3b8']
 
-		instance.setOption(
-			{
-				tooltip: {
-					trigger: 'item',
-					formatter: (params: { name: string; value: number; percent: number }) =>
-						`<b>${params.name}</b><br/>OI: $${formattedNum(params.value)}<br/>${params.percent}%`
-				},
-				series: [
-					{
-						type: 'pie',
-						radius: ['45%', '70%'],
-						center: ['50%', '50%'],
-						data: data.map((d, i) => ({
-							name: d.name,
-							value: d.value,
-							itemStyle: { color: colors[i % colors.length] }
-						})),
-						label: { color: c.label, fontSize: 11, formatter: '{b}: {d}%' },
-						labelLine: { lineStyle: { color: c.labelLine } },
-						emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } }
-					}
-				],
-				animation: false
+		const option: EChartsOption = {
+			tooltip: {
+				trigger: 'item',
+				formatter: (rawParams: unknown) => {
+					const item = normalizeTooltipItems(rawParams)[0]
+					const value = typeof item?.value === 'number' ? item.value : Number(item?.value)
+					const percent = item && 'percent' in item && typeof item.percent === 'number' ? item.percent : 0
+					return `<b>${item?.name ?? ''}</b><br/>OI: $${formattedNum(value)}<br/>${percent}%`
+				}
 			},
-			{ notMerge: true }
-		)
+			series: [
+				{
+					type: 'pie',
+					radius: ['45%', '70%'],
+					center: ['50%', '50%'],
+					data: data.map((d, i) => ({
+						name: d.name,
+						value: d.value,
+						itemStyle: { color: colors[i % colors.length] }
+					})),
+					label: { color: c.label, fontSize: 11, formatter: '{b}: {d}%' },
+					labelLine: { lineStyle: { color: c.labelLine } },
+					emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } }
+				}
+			],
+			animation: false
+		}
+		instance.setOption(option, { notMerge: true })
 	}, [data, c, chartRef])
 
 	if (data.length === 0) return null
@@ -564,58 +570,66 @@ function VolumeOIScatter({ data }: { data: PerpMarket[] }) {
 		const instance = chartRef.current
 		if (!instance) return
 
-		instance.setOption(
-			{
-				grid: { left: 80, right: 30, top: 20, bottom: 50, containLabel: false },
-				tooltip: {
-					trigger: 'item',
-					formatter: (params: { data: [number, number, number, string] }) => {
-						const d = params.data
-						return `<b>${d[3]}</b><br/>Volume: $${formattedNum(d[0])}<br/>OI: $${formattedNum(d[1])}<br/>Funding: ${d[2] >= 0 ? '+' : ''}${d[2].toFixed(2)}%`
-					}
-				},
-				xAxis: {
-					type: 'log',
-					name: '24h Volume ($)',
-					nameLocation: 'center',
-					nameGap: 30,
-					nameTextStyle: { color: c.axisLabel, fontSize: 11 },
-					axisLabel: { color: c.axisLabel, fontSize: 11 },
-					splitLine: { lineStyle: { color: c.splitLine } }
-				},
-				yAxis: {
-					type: 'log',
-					name: 'Open Interest ($)',
-					nameLocation: 'center',
-					nameGap: 55,
-					nameTextStyle: { color: c.axisLabel, fontSize: 11 },
-					axisLabel: { color: c.axisLabel, fontSize: 11 },
-					splitLine: { lineStyle: { color: c.splitLine } }
-				},
-				series: [
-					{
-						type: 'scatter',
-						data: (() => {
-							const points: Array<[number, number, number, string]> = []
-							for (const market of data) {
-								if (market.dayNtlVlm > 0 && market.openInterest > 0) {
-									points.push([market.dayNtlVlm, market.openInterest, market.fundingAnnualized, market.name])
-								}
-							}
-							return points
-						})(),
-						symbolSize: (val: number[]) => Math.max(6, Math.min(24, Math.abs(val[2]) * 2)),
-						itemStyle: {
-							color: (params: { data: [number, number, number, string] }) =>
-								params.data[2] >= 0 ? '#10b981' : '#ef4444',
-							opacity: 0.75
-						}
-					}
-				],
-				animation: false
+		const option: EChartsOption = {
+			grid: { left: 80, right: 30, top: 20, bottom: 50, containLabel: false },
+			tooltip: {
+				trigger: 'item',
+				formatter: (rawParams: unknown) => {
+					const item = normalizeTooltipItems(rawParams)[0]
+					const d = Array.isArray(item?.data) ? item.data : Array.isArray(item?.value) ? item.value : []
+					if (
+						typeof d[0] !== 'number' ||
+						typeof d[1] !== 'number' ||
+						typeof d[2] !== 'number' ||
+						typeof d[3] !== 'string'
+					)
+						return ''
+					return `<b>${d[3]}</b><br/>Volume: $${formattedNum(d[0])}<br/>OI: $${formattedNum(d[1])}<br/>Funding: ${d[2] >= 0 ? '+' : ''}${d[2].toFixed(2)}%`
+				}
 			},
-			{ notMerge: true }
-		)
+			xAxis: {
+				type: 'log',
+				name: '24h Volume ($)',
+				nameLocation: 'center',
+				nameGap: 30,
+				nameTextStyle: { color: c.axisLabel, fontSize: 11 },
+				axisLabel: { color: c.axisLabel, fontSize: 11 },
+				splitLine: { lineStyle: { color: c.splitLine } }
+			},
+			yAxis: {
+				type: 'log',
+				name: 'Open Interest ($)',
+				nameLocation: 'center',
+				nameGap: 55,
+				nameTextStyle: { color: c.axisLabel, fontSize: 11 },
+				axisLabel: { color: c.axisLabel, fontSize: 11 },
+				splitLine: { lineStyle: { color: c.splitLine } }
+			},
+			series: [
+				{
+					type: 'scatter',
+					data: (() => {
+						const points: Array<[number, number, number, string]> = []
+						for (const market of data) {
+							if (market.dayNtlVlm > 0 && market.openInterest > 0) {
+								points.push([market.dayNtlVlm, market.openInterest, market.fundingAnnualized, market.name])
+							}
+						}
+						return points
+					})(),
+					symbolSize: (val: number[]) => Math.max(6, Math.min(24, Math.abs(val[2]) * 2)),
+					itemStyle: {
+						color: (params) =>
+							Array.isArray(params.data) && typeof params.data[2] === 'number' && params.data[2] >= 0
+								? '#10b981'
+								: '#ef4444',
+						opacity: 0.75
+					}
+				}
+			],
+			animation: false
+		}
+		instance.setOption(option, { notMerge: true })
 	}, [data, c, chartRef])
 
 	if (data.length === 0) return null

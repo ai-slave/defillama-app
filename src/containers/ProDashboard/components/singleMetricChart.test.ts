@@ -16,8 +16,8 @@ describe('buildSingleMetricChartDataset', () => {
 		).toEqual({
 			dimensions: ['timestamp', 'Value'],
 			source: [
-				{ timestamp: timestampSec * 1e3, Value: 10 },
-				{ timestamp: (timestampSec + 1) * 1e3, Value: 20 }
+				[timestampSec * 1e3, 10],
+				[(timestampSec + 1) * 1e3, 20]
 			]
 		})
 		expect(new Date(timestampSec * 1e3).toISOString().slice(0, 10)).toBe('2024-02-01')
@@ -31,14 +31,14 @@ describe('buildSingleMetricChartDataset', () => {
 		]
 
 		expect(buildSingleMetricChartDataset(points, 'Flow', true).source).toEqual([
-			{ timestamp: 1_000, Flow: 10 },
-			{ timestamp: 2_000, Flow: 7 },
-			{ timestamp: 3_000, Flow: 12 }
+			[1_000, 10],
+			[2_000, 7],
+			[3_000, 12]
 		])
 		expect(buildSingleMetricChartDataset(points, 'Snapshot', false).source).toEqual([
-			{ timestamp: 1_000, Snapshot: 10 },
-			{ timestamp: 2_000, Snapshot: -3 },
-			{ timestamp: 3_000, Snapshot: 5 }
+			[1_000, 10],
+			[2_000, -3],
+			[3_000, 5]
 		])
 	})
 })

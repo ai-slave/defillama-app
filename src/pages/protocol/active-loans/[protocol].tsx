@@ -1,7 +1,8 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { tvlOptionsMap } from '~/components/Filters/options'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -23,13 +24,13 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 const EMPTY_OTHER_PROTOCOLS: string[] = []
 
-type MultiSeriesCharts = NonNullable<IMultiSeriesChart2Props['charts']>
+type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
 
 function MultiSeriesChartCard({
 	title,
@@ -46,7 +47,7 @@ function MultiSeriesChartCard({
 	protocolName: string
 	allSeries: string[]
 	seriesLabel: string
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 	exportSuffix: string
 	valueSymbol?: string
@@ -83,7 +84,7 @@ function MultiSeriesChartCard({
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}

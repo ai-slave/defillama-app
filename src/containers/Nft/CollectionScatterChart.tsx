@@ -1,4 +1,12 @@
-import { BarChart as EChartBar, LineChart as EChartLine, ScatterChart as EChartScatter } from 'echarts/charts'
+import type { EChartsOption } from 'echarts'
+import {
+	BarChart as EChartBar,
+	LineChart as EChartLine,
+	ScatterChart as EChartScatter,
+	type BarSeriesOption,
+	type LineSeriesOption,
+	type ScatterSeriesOption
+} from 'echarts/charts'
 import {
 	DataZoomComponent,
 	GraphicComponent,
@@ -10,9 +18,10 @@ import {
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import * as React from 'react'
-import { chartGrid } from '~/components/ECharts/chartSpacing'
-import { useChartTheme } from '~/components/ECharts/chartTheme'
-import { formatTooltipChartDate } from '~/components/ECharts/formatters'
+import { chartGrid } from '~/components/ECharts/shared/chartSpacing'
+import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
+import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
+import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
@@ -57,7 +66,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 		const instance = chartRef.current
 		if (!instance) return
 
-		const series =
+		const series: Array<ScatterSeriesOption | LineSeriesOption | BarSeriesOption> =
 			sales.length > 0
 				? [
 						{
@@ -95,7 +104,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 					]
 				: []
 
-		const option = {
+		const option: EChartsOption = {
 			animation: false,
 			graphic: {
 				type: 'image',
@@ -112,8 +121,13 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 			tooltip: {
 				showDelay: 0,
 				confine: true,
-				formatter: function (params: { value: [number, number]; marker: string; seriesName: string }) {
-					const chartdate = formatTooltipChartDate(params.value[0], 'daily')
+				formatter: function (rawParams: unknown) {
+					const params = normalizeTooltipItems(rawParams)[0]
+					const value = Array.isArray(params?.value) ? params.value : Array.isArray(params?.data) ? params.data : []
+					const timestamp = typeof value[0] === 'number' ? value[0] : Number(value[0])
+					const amount = typeof value[1] === 'number' ? value[1] : Number(value[1])
+					if (!params || !Number.isFinite(timestamp) || !Number.isFinite(amount)) return ''
+					const chartdate = formatTooltipChartDate(timestamp, 'daily')
 
 					let vals =
 						chartdate +
@@ -122,13 +136,13 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 						params.seriesName +
 						':' +
 						'&nbsp;&nbsp;' +
-						params.value[1].toFixed(2) +
+						amount.toFixed(2) +
 						'&nbsp;' +
 						'ETH' +
 						'</li>'
 
 					if (params.seriesName !== 'Volume') {
-						const date = params.value[0]
+						const date = timestamp
 
 						vals +=
 							'<li style="list-style:none">' +
@@ -156,7 +170,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 			},
 			xAxis: {
 				type: 'time',
-				boundaryGap: false,
+				boundaryGap: [0, 0],
 				min: salesMedian1d.length > 0 ? salesMedian1d[0][0] : 0,
 				nameTextStyle: {
 					fontFamily: 'sans-serif',
@@ -192,7 +206,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 							opacity: 0.1
 						}
 					},
-					boundaryGap: false,
+					boundaryGap: [0, 0],
 					nameTextStyle: {
 						fontFamily: 'sans-serif',
 						fontSize: 14,

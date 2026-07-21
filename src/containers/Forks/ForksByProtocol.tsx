@@ -15,7 +15,7 @@ import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
 import { useForkByProtocolExtraSeries } from './queries.client'
 import type { ForkByProtocolPageData } from './types'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData }: ForkByProtocolPageData) => {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
@@ -33,20 +33,17 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 		const dataset = {
 			source: chartData.map(([timestampInSeconds, baseValue]) => {
 				const extraValue = enabledExtraApiKeys.length > 0 ? (extraTvsByTimestamp.get(timestampInSeconds) ?? 0) : 0
-				return {
-					timestamp: timestampInSeconds * 1000,
-					TVL: baseValue + extraValue
-				}
+				return [timestampInSeconds * 1000, baseValue + extraValue]
 			}),
 			dimensions: ['timestamp', 'TVL']
 		}
-		const totalValue = dataset.source.length > 0 ? dataset.source[dataset.source.length - 1].TVL : 0
+		const totalValue = (dataset.source[dataset.source.length - 1]?.[1] as number | undefined) ?? 0
 
 		const charts = [
 			{
 				type: 'line' as const,
 				name: 'TVL',
-				encode: { x: 'timestamp', y: 'TVL' },
+				encode: { x: 0, y: 1 },
 				color: CHART_COLORS[0],
 				stack: 'TVL'
 			}
@@ -86,7 +83,7 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 
 						<ChartPanel className="col-span-2">
 							<Suspense fallback={<ChartPanelExportShellFallback />}>
-								<MultiSeriesChart2
+								<MultiSeriesChart
 									dataset={dataset}
 									charts={charts}
 									alwaysShowTooltip

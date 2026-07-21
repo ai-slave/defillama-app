@@ -1,5 +1,5 @@
-import { createTimeSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 
 const THREE_MONTH_DAYS = 90
 
@@ -12,7 +12,7 @@ export function lastNDaysZoom(dataLength: number, days: number = THREE_MONTH_DAY
 export function timeSeriesChartOptions(
 	dataLength: number,
 	valueSymbol: string
-): IMultiSeriesChart2Props['chartOptions'] {
+): IMultiSeriesChartProps['chartOptions'] {
 	return {
 		...createTimeSeriesChartOptions(valueSymbol),
 		...(lastNDaysZoom(dataLength) ?? {})

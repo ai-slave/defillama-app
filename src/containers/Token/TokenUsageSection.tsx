@@ -13,7 +13,7 @@ import { startTransition, Suspense, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import type { ITreemapChartProps } from '~/components/ECharts/types'
+import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -38,7 +38,7 @@ const TOKEN_USAGE_NAME_MAX_WIDTH = 'max-sm:max-w-[clamp(160px,40vw,260px)]'
 
 const TreemapChart = dynamic(() => import('~/components/ECharts/TreemapChart'), {
 	loading: () => <div className="min-h-[480px]" />
-}) as React.FC<ITreemapChartProps>
+}) as React.FC<TreemapChartProps>
 
 const columns = [
 	columnHelper.accessor('name', {

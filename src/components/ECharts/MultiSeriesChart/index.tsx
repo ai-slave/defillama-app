@@ -1,161 +1,504 @@
+import type {
+	DataZoomComponentOption,
+	EChartsOption,
+	LegendComponentOption,
+	TooltipComponentOption,
+	TooltipComponentPositionCallback,
+	XAXisComponentOption
+} from 'echarts'
+import { BarChart, CustomChart, LineChart } from 'echarts/charts'
+import {
+	DataZoomComponent,
+	GraphicComponent,
+	GridComponent,
+	LegendComponent,
+	MarkLineComponent,
+	TooltipComponent,
+	DatasetComponent
+} from 'echarts/components'
 import * as echarts from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import { buildCsvFromDataset } from '~/components/ChartExport/ChartCsvExportButton'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
-import { ChartContainer } from '../ChartContainer'
-import { CHART_INSET, CHART_ZOOM_RESERVE, chartGrid, chartHorizontalScrollLegend } from '../chartSpacing'
-import { useChartTheme } from '../chartTheme'
-import { formatTooltipValue } from '../formatters'
-import { getMetricUnitGroup, METRIC_UNIT_GROUP_SYMBOL, resolveSeriesAxisLayout } from '../metricGroups'
-import type { IMultiSeriesChartProps } from '../types'
-import { useDefaults } from '../useDefaults'
-import { isIconUrlValid, mergeDeep, validateIconUrl } from '../utils'
+import { slug } from '~/utils'
+import { ChartContainer } from '../shared/ChartContainer'
+import { ChartHeader } from '../shared/ChartHeader'
+import { setChartLogoMetadata } from '../shared/chartLogoMetadata'
+import {
+	CHART_INSET,
+	CHART_LEGEND_RESERVE,
+	chartDataZoomSliderGeometry,
+	chartGrid,
+	chartHorizontalScrollLegend,
+	chartLegendScrollStyle
+} from '../shared/chartSpacing'
+import { useChartTheme } from '../shared/chartTheme'
+import { formatChartEmphasisDate } from '../shared/formatters'
+import { validateIconUrl } from '../shared/icon'
+import { mergeDeep } from '../shared/merge'
+import { prepareMultiSeriesDataset } from './datasetAdapter'
+import {
+	attachEventHoverHandlers,
+	buildEventRailData,
+	createEventRailSeries,
+	createEventStripYAxis,
+	type EventHoverState,
+	getMainGridBottom,
+	getDatasetTimeBounds,
+	mergeGraphicWithEventMarkLinePlaceholder
+} from './eventRail'
+import { buildHallmarksMarkLine } from './hallmarks'
+import { applyConfiguredYAxisScale, applyLogScaleToYAxes, getZeroBaselineYAxisMin } from './logScale'
+import { buildMultiYAxis, formatAxisLabel, normalizeSeriesYAxisIndices } from './multiYAxis'
+import { buildMultiSeries } from './series'
+import { createTooltipFormatter } from './tooltip'
+import type { IMultiSeriesChartProps, MultiSeriesChartOptions, MultiSeriesYAxisOption } from './types'
 
-const EMPTY_ARRAY = []
+echarts.use([
+	CanvasRenderer,
+	LineChart,
+	BarChart,
+	CustomChart,
+	TooltipComponent,
+	GridComponent,
+	DataZoomComponent,
+	GraphicComponent,
+	MarkLineComponent,
+	LegendComponent,
+	DatasetComponent
+])
 
-export default function MultiSeriesChart({
-	series,
-	valueSymbol = '',
-	yAxisSymbols = EMPTY_ARRAY,
-	height,
-	chartOptions,
-	groupBy,
-	hideDataZoom = false,
-	alwaysShowTooltip,
-	xAxisType = 'time',
-	showAggregateInTooltip = false,
-	onReady
-}: IMultiSeriesChartProps) {
-	const [isThemeDark] = useDarkModeManager()
-	const chartTheme = useChartTheme(isThemeDark)
-	const [logoRevision, setLogoRevision] = useState(0)
-	const axisLayout = useMemo(() => resolveSeriesAxisLayout(series ?? []), [series])
-	const seriesValueSymbols = useMemo(() => {
-		const symbols = Object.create(null) as Record<string, string>
-		for (let i = 0; i < (series?.length ?? 0); i++) {
-			const item = series![i]
-			const axisIndex = axisLayout.seriesAxisIndexes[i] ?? 0
-			symbols[item.name] =
-				yAxisSymbols[axisIndex] ??
-				(item.metricType ? METRIC_UNIT_GROUP_SYMBOL[getMetricUnitGroup(item.metricType)] : valueSymbol)
+function isChartDisposed(instance: echarts.ECharts) {
+	return instance.isDisposed()
+}
+
+type GroupBy = NonNullable<IMultiSeriesChartProps['groupBy']>
+
+const CATEGORY_LOGO_SIZE = 22
+const CATEGORY_LOGO_BOTTOM_GAP = 10
+const EMPTY_CHART_OPTIONS: NonNullable<IMultiSeriesChartProps['chartOptions']> = {}
+
+function mergeChartOptions(
+	defaults: MultiSeriesChartOptions,
+	overrides: MultiSeriesChartOptions
+): MultiSeriesChartOptions {
+	const merged: Record<string, unknown> = { ...defaults }
+
+	for (const [option, override] of Object.entries(overrides)) {
+		if (option === 'dataZoom' && Array.isArray(defaults.dataZoom) && override) {
+			merged.dataZoom = defaults.dataZoom.map((zoomOption, index) =>
+				mergeDeep(zoomOption, Array.isArray(override) ? (override[index] ?? {}) : override)
+			)
+			continue
 		}
-		return symbols
-	}, [axisLayout.seriesAxisIndexes, series, valueSymbol, yAxisSymbols])
+		if (option === 'yAxis' && Array.isArray(overrides.yAxis)) {
+			const baseAxes = Array.isArray(defaults.yAxis) ? defaults.yAxis : [defaults.yAxis ?? {}]
+			merged.yAxis = overrides.yAxis.map((axisOption, index) =>
+				mergeDeep(baseAxes[index] ?? baseAxes[0] ?? {}, axisOption)
+			)
+			continue
+		}
 
+		const base = merged[option]
+		merged[option] = base
+			? mergeDeep(base, override)
+			: override && typeof override === 'object' && !Array.isArray(override)
+				? { ...override }
+				: override
+	}
+
+	// Object.entries necessarily erases keys while performing the generic deep merge.
+	// Both inputs are already checked MultiSeriesChartOptions at the public boundary.
+	return merged as MultiSeriesChartOptions
+}
+
+export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
+	const {
+		charts,
+		chartOptions = EMPTY_CHART_OPTIONS,
+		height,
+		hallmarks,
+		hallmarkStyle = 'event-rail',
+		expandTo100Percent,
+		valueSymbol = '$',
+		tooltipMaxItems,
+		groupBy,
+		alwaysShowTooltip,
+		stacked = false,
+		solidChartAreaStyle = false,
+		hideDataZoom,
+		showTotalInTooltip = false,
+		onReady,
+		hideDefaultLegend = true,
+		selectedCharts,
+		dataset,
+		exportButtons,
+		title,
+		headingAs,
+		containerClassName,
+		categoryLogos
+	} = props
+
+	const [isThemeDark] = useDarkModeManager()
+	const [legendIconRevision, setLegendIconRevision] = useState(0)
+	const chartTheme = useChartTheme(isThemeDark)
+	const isSmall = useMedia(`(max-width: 37.5rem)`)
+	const chartDomRef = useRef<HTMLDivElement>(null)
+	const chartRef = useRef<echarts.ECharts | null>(null)
+	const categoryLogosOverlayRef = useRef<HTMLDivElement>(null)
+	const hasCategoryLogos = !!(categoryLogos && categoryLogos.length > 0 && categoryLogos.some(Boolean))
+	const eventHoverCleanupRef = useRef<(() => void) | null>(null)
+	const eventHoverStateRef = useRef<EventHoverState>({ hoveredEventDate: null })
+	const eventMarkLineGridRef = useRef<{ top: number; bottom: number } | null>(null)
+	const categoryLogosFrameRef = useRef<number | null>(null)
+	const categoryLogosLayoutRef = useRef<{
+		categoryValues: Array<string | number | null | undefined>
+		categoryLogos: string[]
+		gridBottom: number
+		logoBg: string
+	} | null>(null)
+	const latestTooltipDataIndexRef = useRef<number | null>(null)
+	// Per-component tooltip size cache (used by tooltip.position). Keeping this in a ref avoids
+	// recreating it on effect re-runs and prevents cross-chart interference.
+	const tooltipSizeCacheRef = useRef<{ w: number; h: number; updatedAt: number } | null>(null)
+	const { chartInstance, handleChartReady } = useGetChartInstance()
+
+	// Stable resize listener - never re-attaches when dependencies change
+	useChartResize(chartRef, chartDomRef)
+
+	const groupBySafe: GroupBy = groupBy ?? 'daily'
+	const tooltipGroupBy = groupBySafe === 'cumulative' ? 'daily' : groupBySafe
+
+	const defaultChartSettings = useMemo<MultiSeriesChartOptions>(() => {
+		const themeColor = chartTheme.text
+		const axisLabelColor = chartTheme.axisLabel
+
+		const graphic = {
+			type: 'image',
+			z: 0,
+			style: {
+				image: isThemeDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
+				height: 40,
+				opacity: 0.3
+			},
+			left: isSmall ? '40%' : '45%',
+			top: '130px'
+		}
+
+		const xAxis: XAXisComponentOption = {
+			type: 'time',
+			boundaryGap: [0, 0],
+			nameTextStyle: { fontFamily: 'sans-serif', fontSize: 14, fontWeight: 400 },
+			axisLabel: { color: axisLabelColor, hideOverlap: true },
+			axisLine: { lineStyle: { color: themeColor, opacity: 0.2 } },
+			splitLine: {
+				lineStyle: { color: chartTheme.gridline }
+			}
+		}
+
+		const yAxis: MultiSeriesYAxisOption = {
+			type: 'value',
+			boundaryGap: [0, 0],
+			min: getZeroBaselineYAxisMin,
+			nameTextStyle: { fontFamily: 'sans-serif', fontSize: 14, fontWeight: 400 },
+			axisLabel: {
+				formatter: (value: number) => formatAxisLabel(value, valueSymbol),
+				color: axisLabelColor
+			},
+			axisLine: { lineStyle: { color: themeColor, opacity: 0.1 } },
+			splitLine: {
+				lineStyle: { color: chartTheme.gridline }
+			}
+		}
+
+		const legend: LegendComponentOption = {
+			textStyle: {
+				fontFamily: 'sans-serif',
+				fontSize: 12,
+				fontWeight: 400,
+				color: themeColor
+			}
+		}
+
+		const dataZoom: DataZoomComponentOption[] = [
+			{ type: 'inside', start: 0, end: 100 },
+			{
+				start: 0,
+				end: 100,
+				...chartDataZoomSliderGeometry,
+				textStyle: { color: themeColor },
+				borderColor: chartTheme.zoomBorder,
+				handleStyle: {
+					borderColor: chartTheme.zoomHandleBorder,
+					color: chartTheme.zoomHandleFill
+				},
+				moveHandleStyle: {
+					color: chartTheme.zoomBorder
+				},
+				selectedDataBackground: {
+					lineStyle: { color: chartTheme.ink(0.65), opacity: 1 },
+					areaStyle: { color: chartTheme.ink(0.2), opacity: 1 }
+				},
+				emphasis: {
+					handleStyle: {
+						borderColor: chartTheme.zoomEmphasisBorder,
+						color: chartTheme.zoomHandleBorder
+					},
+					moveHandleStyle: {
+						borderColor: chartTheme.zoomEmphasisBorder,
+						color: chartTheme.zoomEmphasisMoveFill
+					}
+				},
+				fillerColor: chartTheme.zoomFiller,
+				labelFormatter: formatChartEmphasisDate
+			}
+		]
+
+		return { graphic, xAxis, yAxis, legend, dataZoom }
+	}, [chartTheme, isThemeDark, valueSymbol, isSmall])
+
+	const datasetSource = dataset.source
+	const datasetDimensions = dataset.dimensions
+	const inferredCharts = useMemo(() => {
+		const inferred: NonNullable<IMultiSeriesChartProps['charts']> = []
+		const xDimensionIndex = Math.max(0, datasetDimensions.indexOf('timestamp'))
+		for (let i = 0; i < datasetDimensions.length; i++) {
+			const name = datasetDimensions[i]
+			if (i === xDimensionIndex) continue
+			const colorIndex = inferred.length
+			inferred.push({
+				type: 'line',
+				name,
+				encode: { x: xDimensionIndex, y: i },
+				color: CHART_COLORS[colorIndex % CHART_COLORS.length],
+				yAxisIndex: undefined,
+				...(stacked ? { stack: 'A' } : {})
+			})
+		}
+		return inferred
+	}, [datasetDimensions, stacked])
+	const effectiveCharts = charts && charts.length > 0 ? charts : inferredCharts
 	useEffect(() => {
-		const urls = (series ?? []).map((s) => s.logo).filter((u): u is string => !!u)
+		const urls = effectiveCharts.map((chart) => chart.legendIconUrl).filter((url): url is string => !!url)
 		if (urls.length === 0) return
 		let cancelled = false
 		Promise.all(urls.map(validateIconUrl)).then(() => {
-			if (!cancelled) setLogoRevision((v) => v + 1)
+			if (!cancelled) setLegendIconRevision((revision) => revision + 1)
 		})
 		return () => {
 			cancelled = true
 		}
-	}, [series])
+	}, [effectiveCharts])
+	const displayedCharts = useMemo(
+		() => (selectedCharts ? effectiveCharts.filter((chart) => selectedCharts.has(chart.name)) : effectiveCharts),
+		[effectiveCharts, selectedCharts]
+	)
+	const preparedDataset = useMemo(
+		() => prepareMultiSeriesDataset(dataset, effectiveCharts, selectedCharts),
+		[dataset, effectiveCharts, selectedCharts]
+	)
+	const renderedDatasetDimensions = preparedDataset.logicalDimensions
+	const echartsDatasetDimensions = preparedDataset.dimensions
+	const renderedDatasetSource = preparedDataset.source
+	const renderedCharts = preparedDataset.charts
 
-	const defaultChartSettings = useDefaults({
-		valueSymbol,
-		xAxisType,
-		groupBy: groupBy ?? 'daily',
-		isThemeDark,
+	const mergedChartSettings = useMemo(
+		() => mergeChartOptions(defaultChartSettings, chartOptions),
+		[defaultChartSettings, chartOptions]
+	)
+
+	// Default exports ON for charts with at least one series unless explicitly disabled by the caller.
+	// (Historically this was limited to line charts, which made `exportButtons="auto"` appear "broken"
+	// on bar-chart pages like Raises.)
+	const hasAnySeries = displayedCharts.length > 0
+	// If a caller provides `onReady`, they often manage export instances + buttons outside the chart,
+	// so avoid showing duplicate toolbars by default in that case (auto mode).
+	const autoExportsEnabled = !onReady && hasAnySeries
+
+	const exportButtonsMode = exportButtons ?? 'auto'
+	const exportButtonsConfig =
+		typeof exportButtonsMode === 'object' && exportButtonsMode !== null ? exportButtonsMode : undefined
+	const exportButtonsHidden = exportButtonsMode === 'hidden'
+	const exportButtonsAuto = exportButtonsMode === 'auto'
+
+	const shouldEnableImageExport = exportButtonsHidden
+		? false
+		: exportButtonsConfig
+			? (exportButtonsConfig.png ?? true)
+			: exportButtonsAuto
+				? autoExportsEnabled
+				: false
+
+	const shouldEnableCSVDownload = exportButtonsHidden
+		? false
+		: exportButtonsConfig
+			? (exportButtonsConfig.csv ?? true)
+			: exportButtonsAuto
+				? autoExportsEnabled
+				: false
+
+	const hallmarksMarkLine = useMemo(
+		() =>
+			hallmarkStyle === 'mark-line' && hallmarks?.length
+				? buildHallmarksMarkLine({ hallmarks, textColor: chartTheme.text, dateInMs: false })
+				: undefined,
+		[hallmarkStyle, hallmarks, chartTheme.text]
+	)
+
+	const { series, sourceAxisIndexes } = useMemo(() => {
+		void legendIconRevision
+		const builtSeries = buildMultiSeries({
+			charts: renderedCharts,
+			selectedCharts,
+			expandTo100Percent,
+			solidChartAreaStyle,
+			chartTheme,
+			hallmarksMarkLine,
+			chartRef
+		})
+		return normalizeSeriesYAxisIndices(builtSeries)
+	}, [
+		renderedCharts,
 		chartTheme,
-		alwaysShowTooltip,
-		seriesValueSymbols
-	})
-	// Keep presentation overrides stable while only the series data changes.
-	const chartSettings = useMemo(() => {
-		const settings: Record<string, any> = { ...defaultChartSettings }
-		const options = chartOptions ?? {}
-		for (const option in options) {
-			const optionValue = options[option]
-			if (!optionValue) continue
-			if (option === 'overrides') {
-				settings['tooltip'] = { ...settings['inflowsTooltip'] }
-			} else if (option === 'dataZoom' && Array.isArray(optionValue)) {
-				if (settings[option]) {
-					settings[option] = [
-						{ ...settings[option][0], ...(optionValue[0] ?? {}) },
-						{ ...settings[option][1], ...(optionValue[1] ?? {}) }
-					]
-				} else {
-					settings[option] = optionValue
-				}
-			} else if (settings[option]) {
-				settings[option] = mergeDeep(settings[option], optionValue)
-			} else {
-				settings[option] = Array.isArray(optionValue) ? optionValue : { ...optionValue }
+		expandTo100Percent,
+		solidChartAreaStyle,
+		selectedCharts,
+		hallmarksMarkLine,
+		legendIconRevision
+	])
+	const displayValueSymbol = expandTo100Percent ? '%' : valueSymbol
+
+	const eventRailData = useMemo(
+		() =>
+			hallmarkStyle === 'event-rail' ? buildEventRailData({ hallmarks, isThemeDark, dateInMs: false }).events : [],
+		[hallmarkStyle, hallmarks, isThemeDark]
+	)
+
+	const { seriesSymbols, tooltipTotalExcludedSeries } = useMemo(() => {
+		let seriesSymbols: Map<string, string> | undefined
+		let tooltipTotalExcludedSeries: Set<string> | undefined
+		for (const chart of displayedCharts) {
+			if (chart.valueSymbol != null) {
+				seriesSymbols ??= new Map<string, string>()
+				seriesSymbols.set(chart.name, chart.valueSymbol)
+			}
+			if (chart.excludeFromTooltipTotal) {
+				tooltipTotalExcludedSeries ??= new Set<string>()
+				tooltipTotalExcludedSeries.add(chart.name)
 			}
 		}
+		return { seriesSymbols, tooltipTotalExcludedSeries }
+	}, [displayedCharts])
 
-		const tooltipOptions = options.tooltip
-		if (showAggregateInTooltip && !Array.isArray(tooltipOptions) && !tooltipOptions?.formatter) {
-			settings.tooltip = {
-				...settings.aggregateTooltip
-			}
+	const finalYAxis = useMemo(
+		() =>
+			buildMultiYAxis({
+				series,
+				yAxis: applyConfiguredYAxisScale(mergedChartSettings.yAxis, chartOptions.yAxis),
+				configuredYAxis: chartOptions.yAxis,
+				expandTo100Percent,
+				effectiveCharts: displayedCharts,
+				valueSymbol: displayValueSymbol,
+				sourceAxisIndexes
+			}),
+		[
+			series,
+			mergedChartSettings.yAxis,
+			chartOptions.yAxis,
+			expandTo100Percent,
+			displayedCharts,
+			displayValueSymbol,
+			sourceAxisIndexes
+		]
+	)
+	const logEligibleYAxes = useMemo(() => {
+		if (!sourceAxisIndexes || !props.logEligibleYAxes) return props.logEligibleYAxes
+		const denseIndexes: number[] = []
+		for (const sourceIndex of props.logEligibleYAxes) {
+			const denseIndex = sourceAxisIndexes.indexOf(sourceIndex)
+			if (denseIndex >= 0) denseIndexes.push(denseIndex)
 		}
-
-		return settings
-	}, [defaultChartSettings, chartOptions, showAggregateInTooltip])
-
-	const processedSeries = useMemo(() => {
-		void logoRevision
-		return (
-			series?.map((serie: any) => {
-				const serieConfig: any = {
-					name: serie.name,
-					type: serie.type,
-					symbol: serie.type === 'line' ? 'none' : undefined,
-					emphasis: {
-						focus: 'series',
-						shadowBlur: 10
-					},
-					itemStyle: {
-						color: serie.color
-					},
-					data:
-						serie.data?.map(([x, y]: [number | string, number | null]) =>
-							xAxisType === 'time' ? [+x * 1e3, y] : [x, y]
-						) || [],
-					metricType: serie.metricType,
-					yAxisIndex: serie.yAxisIndex,
-					...(serie.logo &&
-						isIconUrlValid(serie.logo) && {
-							legendIcon: 'image://' + serie.logo
-						}),
-					...(serie.stack && {
-						stack: serie.stack
-					})
-				}
-
-				if (serie.type === 'line' && !serie.areaStyle) {
-					serieConfig.areaStyle = {
-						color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-							{
-								offset: 0,
-								color: serie.color
-							},
-							{
-								offset: 1,
-								color: chartTheme.areaGradientTo
-							}
-						])
-					}
-				} else if (serie.areaStyle !== undefined) {
-					serieConfig.areaStyle = serie.areaStyle
-				}
-
-				return serieConfig
-			}) || []
+		return denseIndexes
+	}, [props.logEligibleYAxes, sourceAxisIndexes])
+	const finalYAxisBase = useMemo(() => {
+		const yAxis = mergedChartSettings.yAxis
+		const primaryYAxis = Array.isArray(yAxis) ? (yAxis[0] ?? {}) : yAxis
+		return applyLogScaleToYAxes(
+			finalYAxis && finalYAxis.length > 0
+				? finalYAxis
+				: [
+						{
+							...primaryYAxis,
+							...(expandTo100Percent ? { max: 100, min: 0 } : {})
+						}
+					],
+			props.logScale,
+			logEligibleYAxes
 		)
-	}, [series, chartTheme, xAxisType, logoRevision])
+	}, [finalYAxis, mergedChartSettings.yAxis, expandTo100Percent, props.logScale, logEligibleYAxes])
 
-	const containerRef = useRef<HTMLDivElement>(null)
-	const chartRef = useRef<echarts.ECharts | null>(null)
-	const latestTooltipDataIndexRef = useRef<number | null>(null)
+	const tooltipFormatter = useMemo(
+		() =>
+			createTooltipFormatter({
+				groupBy: groupBySafe,
+				valueSymbol: displayValueSymbol,
+				seriesSymbols,
+				tooltipTotalExcludedSeries,
+				maxItems: tooltipMaxItems,
+				showTotalInTooltip
+			}),
+		[groupBySafe, displayValueSymbol, seriesSymbols, tooltipTotalExcludedSeries, tooltipMaxItems, showTotalInTooltip]
+	)
+
+	const exportFilename = exportButtonsConfig?.filename || (title ? slug(title) : 'multi-series-chart')
+	const exportTitle = exportButtonsConfig?.pngTitle || title
+	const prepareCsvDirect = useMemo(
+		() => () =>
+			buildCsvFromDataset({
+				dimensions: renderedDatasetDimensions,
+				source: renderedDatasetSource,
+				filenameBase: exportFilename
+			}),
+		[renderedDatasetDimensions, renderedDatasetSource, exportFilename]
+	)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
+	})
+	const syncCategoryLogos = useStableCallback(() => {
+		const layer = categoryLogosOverlayRef.current
+		const instance = chartRef.current
+		const layout = categoryLogosLayoutRef.current
+		if (!layer) return
+		layer.innerHTML = ''
+		if (!layout || !instance || instance.isDisposed()) return
+
+		const chartHeight = instance.getHeight()
+		if (!Number.isFinite(chartHeight)) return
+		const centerY = chartHeight - layout.gridBottom + CATEGORY_LOGO_BOTTOM_GAP / 2 + CATEGORY_LOGO_SIZE / 2
+		for (let i = 0; i < layout.categoryValues.length; i++) {
+			const url = layout.categoryLogos[i]
+			if (!url) continue
+			const categoryValue = layout.categoryValues[i]
+			if (categoryValue == null) continue
+			const x = instance.convertToPixel({ xAxisIndex: 0 }, categoryValue)
+			if (!Number.isFinite(x)) continue
+			const img = document.createElement('img')
+			img.src = url
+			img.alt = ''
+			img.loading = 'lazy'
+			img.decoding = 'async'
+			img.title = String(categoryValue)
+			img.style.cssText = `position:absolute;left:${x - CATEGORY_LOGO_SIZE / 2}px;top:${centerY - CATEGORY_LOGO_SIZE / 2}px;width:${CATEGORY_LOGO_SIZE}px;height:${CATEGORY_LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${layout.logoBg};pointer-events:none;`
+			img.onerror = () => img.remove()
+			layer.appendChild(img)
+		}
 	})
 	const showLatestTooltip = useStableCallback(() => {
 		const instance = chartRef.current
@@ -168,141 +511,369 @@ export default function MultiSeriesChart({
 			position: [60, 0]
 		})
 	})
+	const getEventMarkLineShape = useStableCallback((eventDate: number) => {
+		const instance = chartRef.current
+		const grid = eventMarkLineGridRef.current
+		if (!instance || instance.isDisposed() || !grid) return null
+		const x = instance.convertToPixel({ xAxisIndex: 0 }, eventDate)
+		if (!Number.isFinite(x)) return null
 
-	// Stable resize listener - never re-attaches when dependencies change
-	useChartResize(chartRef, containerRef)
+		return {
+			x1: x,
+			y1: grid.top,
+			x2: x,
+			y2: instance.getHeight() - grid.bottom
+		}
+	})
 
 	useEffect(() => {
-		const el = containerRef.current
+		const el = chartDomRef.current
 		if (!el) return
 		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		emitReady(instance)
+		instance.on('finished', syncCategoryLogos)
 		instance.on('globalout', showLatestTooltip)
 
 		return () => {
+			instance.off('finished', syncCategoryLogos)
 			instance.off('globalout', showLatestTooltip)
+			eventHoverCleanupRef.current?.()
+			eventHoverCleanupRef.current = null
+			if (categoryLogosFrameRef.current != null) {
+				cancelAnimationFrame(categoryLogosFrameRef.current)
+				categoryLogosFrameRef.current = null
+			}
+			setChartLogoMetadata(instance, undefined)
 			chartRef.current = null
+			categoryLogosLayoutRef.current = null
+			eventMarkLineGridRef.current = null
 			latestTooltipDataIndexRef.current = null
+			tooltipSizeCacheRef.current = null
 			instance.dispose()
+			handleChartReady(null)
 			emitReady(null)
 		}
-	}, [showLatestTooltip])
+	}, [handleChartReady, showLatestTooltip, syncCategoryLogos])
+
+	useEffect(() => {
+		handleChartReady(shouldEnableCSVDownload || shouldEnableImageExport ? chartRef.current : null)
+	}, [handleChartReady, shouldEnableCSVDownload, shouldEnableImageExport])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		const el = chartDomRef.current
+		if (!instance || !el) return
+
+		const {
+			legend,
+			graphic,
+			xAxis,
+			yAxis: _configuredYAxis,
+			grid: _configuredGrid,
+			tooltip: _configuredTooltip,
+			dataZoom
+		} = mergedChartSettings
+
+		const datasetLength = datasetSource.length
+		const shouldHideDataZoom = datasetLength < 2 || hideDataZoom
+		const shouldShowEventRail = eventRailData.length > 0
+
+		// Always use a scroll legend when the default legend is enabled. ECharts
+		// decides whether paging is needed; asymmetric padding supplies the left
+		// clip inset without forcing short legends away from right alignment.
+		const legendScrollStyle = chartLegendScrollStyle(
+			chartTheme.legendPageActive,
+			chartTheme.legendPageInactive,
+			chartTheme.axisLabel
+		)
+		const getScrollLegend = (legendOption: LegendComponentOption) =>
+			chartHorizontalScrollLegend(legendOption, legendScrollStyle)
+		const finalLegend = hideDefaultLegend
+			? undefined
+			: Array.isArray(legend)
+				? legend.map(getScrollLegend)
+				: legend
+					? getScrollLegend(legend)
+					: undefined
+
+		const datasetForOption = {
+			source: renderedDatasetSource,
+			dimensions: echartsDatasetDimensions
+		}
+
+		const clampTooltipToViewport: TooltipComponentPositionCallback = (point, params, dom, _rect, size) => {
+			// ECharts expects `position` to be in *container coordinates* (even with `appendToBody`).
+			// We clamp in viewport coordinates, then translate back to container coordinates.
+			const margin = 12
+			const offset = 16
+			const containerRect = el.getBoundingClientRect()
+
+			const px = Array.isArray(point) ? Number(point[0]) : Number.NaN
+			const py = Array.isArray(point) ? Number(point[1]) : Number.NaN
+
+			const [tw, th] = Array.isArray(size?.contentSize) ? size.contentSize : [0, 0]
+			let tooltipW = Number(tw) || 0
+			let tooltipH = Number(th) || 0
+
+			const rows = Array.isArray(params) ? params.length : 1
+
+			if (tooltipW > 0 && tooltipH > 0) {
+				tooltipSizeCacheRef.current = { w: tooltipW, h: tooltipH, updatedAt: Date.now() }
+			} else if (tooltipSizeCacheRef.current && Date.now() - tooltipSizeCacheRef.current.updatedAt < 10_000) {
+				// Reuse cached size for a short window (e.g. during hover), no layout read.
+				tooltipW = tooltipSizeCacheRef.current.w
+				tooltipH = tooltipSizeCacheRef.current.h
+			} else if (rows > 20 && dom instanceof HTMLElement) {
+				// Large tooltips benefit from accurate size; measure once if needed.
+				const domRect = dom.getBoundingClientRect()
+				tooltipW = Number(domRect?.width) || tooltipW
+				tooltipH = Number(domRect?.height) || tooltipH
+				if (tooltipW > 0 && tooltipH > 0) {
+					tooltipSizeCacheRef.current = { w: tooltipW, h: tooltipH, updatedAt: Date.now() }
+				}
+			} else {
+				// Small tooltips: avoid any DOM measurement. Over-estimate so clamping is safe.
+				tooltipW = 420
+				tooltipH = Math.min(300, 44 + rows * 18)
+			}
+
+			// Clamp against the layout viewport (excludes scrollbar width).
+			const vw = document.documentElement?.clientWidth || window.innerWidth
+			const vh = document.documentElement?.clientHeight || window.innerHeight
+
+			const pX = Number.isFinite(px) ? px : 0
+			const pY = Number.isFinite(py) ? py : 0
+
+			// Prefer positioning away from cursor so the tooltip never blocks hover tracking.
+			let x = pX + offset
+			let y = pY - tooltipH - offset
+
+			// Flip horizontally/vertically when near edges.
+			if (containerRect.left + x + tooltipW + margin > vw) {
+				x = pX - tooltipW - offset
+			}
+			if (containerRect.top + y < margin) {
+				y = pY + offset
+			}
+
+			const absX = containerRect.left + x
+			const absY = containerRect.top + y
+
+			const clampedAbsX = Math.min(Math.max(margin, absX), Math.max(margin, vw - tooltipW - margin))
+			const clampedAbsY = Math.min(Math.max(margin, absY), Math.max(margin, vh - tooltipH - margin))
+
+			return [clampedAbsX - containerRect.left, clampedAbsY - containerRect.top]
+		}
+
+		const baseTooltip = mergedChartSettings.tooltip ?? {}
+		const tooltipOverride = Array.isArray(chartOptions?.tooltip) ? chartOptions.tooltip[0] : chartOptions?.tooltip
+		const customTooltipFormatter = tooltipOverride?.formatter
+		const enterable = typeof baseTooltip?.enterable === 'boolean' ? baseTooltip.enterable : false
+		const baseExtraCssText = typeof baseTooltip?.extraCssText === 'string' ? baseTooltip.extraCssText : ''
+		const extraCssText = [
+			baseExtraCssText,
+			'z-index: 2147483647',
+			'box-sizing: border-box',
+			'max-height: calc(100vh - 24px)',
+			'max-width: calc(100vw - 24px)',
+			'overflow-y: auto',
+			'overflow-x: hidden',
+			'white-space: normal',
+			'word-break: break-word',
+			// Keep hover tracking smooth (tooltip should never intercept pointer events)
+			...(enterable ? [] : ['pointer-events: none'])
+		]
+			.filter(Boolean)
+			.join('; ')
+
+		const tooltipConfig: TooltipComponentOption = {
+			...baseTooltip,
+			appendToBody: alwaysShowTooltip ? undefined : true,
+			renderMode: 'html',
+			className: alwaysShowTooltip ? undefined : 'defillama-echarts-tooltip',
+			...(alwaysShowTooltip ? {} : { backgroundColor: 'transparent', borderWidth: 0 }),
+			enterable,
+			// Clamp to the browser viewport (not the chart grid).
+			confine: false,
+			position: clampTooltipToViewport,
+			extraCssText,
+			trigger: 'axis',
+			formatter: customTooltipFormatter ?? tooltipFormatter
+		}
+
+		const baseGrid = chartGrid({
+			bottom: getMainGridBottom({ shouldShowEventRail, shouldHideDataZoom }),
+			top: hideDefaultLegend ? CHART_INSET : CHART_LEGEND_RESERVE
+		})
+		const finalGrid = mergedChartSettings.grid ? mergeDeep(baseGrid, mergedChartSettings.grid) : baseGrid
+		const hasExplicitGridBottom = mergedChartSettings.grid?.bottom != null
+		if (!hasExplicitGridBottom) {
+			finalGrid.bottom = getMainGridBottom({ shouldShowEventRail, shouldHideDataZoom })
+		}
+		if (hasCategoryLogos) {
+			finalGrid.bottom = Number(finalGrid.bottom ?? 12) + CATEGORY_LOGO_SIZE + CATEGORY_LOGO_BOTTOM_GAP
+			finalGrid.outerBoundsContain = undefined
+		}
+		eventMarkLineGridRef.current = {
+			top: Number(finalGrid.top),
+			bottom: Number(finalGrid.bottom)
+		}
+
+		const timestampIndex = renderedDatasetDimensions.indexOf('timestamp')
+		const { min: timeRangeMin, max: timeRangeMax } = shouldShowEventRail
+			? getDatasetTimeBounds(renderedDatasetSource, timestampIndex)
+			: { min: undefined, max: undefined }
+		const hasTimeRange =
+			typeof timeRangeMin === 'number' &&
+			Number.isFinite(timeRangeMin) &&
+			typeof timeRangeMax === 'number' &&
+			Number.isFinite(timeRangeMax) &&
+			timeRangeMin < timeRangeMax
+
+		let finalXAxis: XAXisComponentOption | undefined =
+			shouldShowEventRail && hasTimeRange ? { ...xAxis, min: timeRangeMin, max: timeRangeMax } : xAxis
+		if (hasCategoryLogos) {
+			finalXAxis = mergeDeep(finalXAxis ?? {}, { axisLabel: { show: false }, axisTick: { show: false } })
+		}
+		const eventStripYAxisIndex = finalYAxisBase.length
+		const finalYAxisWithEvents = shouldShowEventRail ? [...finalYAxisBase, createEventStripYAxis()] : finalYAxisBase
+		const finalSeries = shouldShowEventRail
+			? [
+					...series,
+					createEventRailSeries({
+						eventRailData,
+						eventStripYAxisIndex,
+						hoverState: eventHoverStateRef.current,
+						shouldHideDataZoom,
+						tooltipGroupBy
+					})
+				]
+			: series
+		const finalGraphic = shouldShowEventRail ? mergeGraphicWithEventMarkLinePlaceholder(graphic, isThemeDark) : graphic
+
+		const option: EChartsOption = {
+			...(hideDefaultLegend ? {} : { legend: finalLegend ?? legend }),
+			graphic: finalGraphic,
+			tooltip: tooltipConfig,
+			grid: finalGrid,
+			xAxis: finalXAxis,
+			yAxis: finalYAxisWithEvents,
+			...(shouldHideDataZoom ? {} : { dataZoom }),
+			series: finalSeries,
+			dataset: datasetForOption
+		}
+		instance.setOption(option, { notMerge: true })
+
+		if (hasCategoryLogos) {
+			const categoryValues = renderedDatasetSource.map((row) => row[0])
+			setChartLogoMetadata(instance, {
+				kind: 'cartesian-x',
+				logos: categoryLogos!,
+				categoryValues
+			})
+			categoryLogosLayoutRef.current = {
+				categoryValues,
+				categoryLogos: categoryLogos!,
+				gridBottom: Number(finalGrid.bottom),
+				logoBg: chartTheme.logoBg
+			}
+		} else {
+			setChartLogoMetadata(instance, undefined)
+			categoryLogosLayoutRef.current = null
+		}
+		if (categoryLogosFrameRef.current != null) cancelAnimationFrame(categoryLogosFrameRef.current)
+		categoryLogosFrameRef.current = hasCategoryLogos
+			? requestAnimationFrame(() => {
+					categoryLogosFrameRef.current = null
+					syncCategoryLogos()
+				})
+			: null
+
+		if (alwaysShowTooltip && series.length > 0 && datasetLength > 0) {
+			latestTooltipDataIndexRef.current = datasetLength - 1
+			showLatestTooltip()
+		} else {
+			latestTooltipDataIndexRef.current = null
+			if (!isChartDisposed(instance)) {
+				instance.dispatchAction({ type: 'hideTip' })
+			}
+		}
+	}, [
+		mergedChartSettings,
+		series,
+		chartOptions,
+		alwaysShowTooltip,
+		hideDataZoom,
+		hideDefaultLegend,
+		selectedCharts,
+		datasetSource,
+		datasetDimensions,
+		renderedDatasetSource,
+		renderedDatasetDimensions,
+		echartsDatasetDimensions,
+		valueSymbol,
+		tooltipFormatter,
+		eventRailData,
+		tooltipGroupBy,
+		isThemeDark,
+		chartTheme,
+		finalYAxisBase,
+		categoryLogos,
+		hasCategoryLogos,
+		showLatestTooltip,
+		syncCategoryLogos
+	])
 
 	useEffect(() => {
 		const instance = chartRef.current
 		if (!instance) return
 
-		const { graphic, tooltip, xAxis, yAxis, dataZoom, legend, grid, series: seriesOptions } = chartSettings
-		const { needMultipleAxes, axisCount, axisUnitGroups, seriesAxisIndexes } = axisLayout
+		eventHoverCleanupRef.current?.()
+		eventHoverStateRef.current.hoveredEventDate = null
+		eventHoverCleanupRef.current = attachEventHoverHandlers({
+			instance,
+			eventRailData,
+			hoverState: eventHoverStateRef.current,
+			getEventMarkLineShape
+		})
 
-		let finalYAxis: any = yAxis
-		let seriesWithHallmarks = processedSeries
-
-		if (needMultipleAxes) {
-			const yAxisBase = yAxis && typeof yAxis === 'object' ? (Array.isArray(yAxis) ? yAxis[0] || {} : yAxis) : {}
-			const yAxisAxisLabel = yAxisBase.axisLabel && typeof yAxisBase.axisLabel === 'object' ? yAxisBase.axisLabel : {}
-			const existingFormatter =
-				typeof yAxisAxisLabel.formatter === 'function' || typeof yAxisAxisLabel.formatter === 'string'
-					? yAxisAxisLabel.formatter
-					: null
-			finalYAxis = Array.from({ length: axisCount }, (_, index) => {
-				const axisGroup = axisUnitGroups[index]
-				const fallbackSymbol = axisGroup != null ? METRIC_UNIT_GROUP_SYMBOL[axisGroup] : valueSymbol
-				return {
-					...yAxisBase,
-					axisLabel: {
-						...yAxisAxisLabel,
-						margin: 4,
-						formatter:
-							index === 0 && existingFormatter
-								? existingFormatter
-								: (value: number) => formatTooltipValue(value, yAxisSymbols[index] ?? fallbackSymbol)
-					},
-					position: index === 0 ? 'left' : index === 1 ? 'right' : 'left',
-					offset: index === 2 ? 40 : 0
-				}
-			})
-
-			seriesWithHallmarks = seriesWithHallmarks.map((s: any, index: number) => ({
-				...s,
-				yAxisIndex: seriesAxisIndexes[index]
-			}))
+		return () => {
+			eventHoverCleanupRef.current?.()
+			eventHoverCleanupRef.current = null
 		}
-
-		if (seriesOptions) {
-			seriesWithHallmarks = seriesWithHallmarks.map((item: any, index: number) =>
-				mergeDeep(item, Array.isArray(seriesOptions) ? (seriesOptions[index] ?? {}) : seriesOptions)
-			)
-		}
-
-		const gridLeftPadding = CHART_INSET
-
-		const shouldHideDataZoom = seriesWithHallmarks.every((s: any) => s.data.length < 2) || hideDataZoom
-
-		instance.setOption(
-			{
-				graphic,
-				tooltip:
-					showAggregateInTooltip && !alwaysShowTooltip
-						? {
-								...tooltip,
-								position: function (pos: [number, number], params: any, dom: any, rect: any, size: any) {
-									const tooltipWidth = size.contentSize[0]
-									const tooltipHeight = size.contentSize[1]
-									const chartWidth = size.viewSize[0]
-									const chartHeight = size.viewSize[1]
-
-									// If tooltip would be cut off at bottom, position it above the cursor
-									if (pos[1] + tooltipHeight > chartHeight - 50) {
-										return [Math.min(pos[0], chartWidth - tooltipWidth - 10), Math.max(10, pos[1] - tooltipHeight - 10)]
-									}
-
-									// Otherwise use default position
-									return pos
-								}
-							}
-						: tooltip,
-				grid: {
-					...chartGrid({ left: gridLeftPadding, bottom: shouldHideDataZoom ? CHART_INSET : CHART_ZOOM_RESERVE }),
-					...grid
-				},
-				xAxis,
-				yAxis: finalYAxis,
-				legend: {
-					...chartHorizontalScrollLegend(legend),
-					data: series?.map((s: any) => s.name) || []
-				},
-				dataZoom: shouldHideDataZoom ? [] : [...dataZoom],
-				series: seriesWithHallmarks
-			},
-			{ replaceMerge: ['series', 'yAxis', 'dataZoom'] }
-		)
-
-		if (alwaysShowTooltip && seriesWithHallmarks.length > 0 && seriesWithHallmarks[0].data.length > 0) {
-			latestTooltipDataIndexRef.current = seriesWithHallmarks[0].data.length - 1
-			showLatestTooltip()
-		} else {
-			latestTooltipDataIndexRef.current = null
-		}
-	}, [
-		chartSettings,
-		axisLayout,
-		processedSeries,
-		hideDataZoom,
-		alwaysShowTooltip,
-		series,
-		showAggregateInTooltip,
-		showLatestTooltip,
-		valueSymbol,
-		yAxisSymbols
-	])
+	}, [eventRailData, getEventMarkLineShape])
 
 	return (
 		<ChartContainer
-			chartRef={containerRef}
-			chartClassName="my-auto h-[360px]"
-			chartStyle={height ? { height } : undefined}
+			chartRef={chartDomRef}
+			className={containerClassName ? 'flex flex-1 flex-col' : undefined}
+			chartClassName={containerClassName ?? 'h-[360px]'}
+			chartStyle={!containerClassName && height ? { height } : undefined}
+			overlay={
+				hasCategoryLogos ? (
+					<div ref={categoryLogosOverlayRef} className="pointer-events-none absolute inset-0" aria-hidden />
+				) : null
+			}
+			header={
+				title || shouldEnableCSVDownload || shouldEnableImageExport ? (
+					<ChartHeader
+						title={title}
+						headingAs={headingAs}
+						exportButtons={
+							<ChartExportButtons
+								chartInstance={chartInstance}
+								filename={exportFilename}
+								title={exportTitle}
+								iconUrl={exportButtonsConfig?.pngIconUrl}
+								showCsv={shouldEnableCSVDownload}
+								showPng={shouldEnableImageExport}
+								prepareCsvDirect={prepareCsvDirect}
+							/>
+						}
+					/>
+				) : null
+			}
 		/>
 	)
 }

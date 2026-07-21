@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useMemo } from 'react'
-import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { buildStablecoinAssetCacheValue } from '~/containers/ProDashboard/server/stablecoinFetchers'
 import {
@@ -19,9 +19,9 @@ import { getStablecoinValueFromPoint } from '~/containers/Stablecoins/utils'
 import type { StablecoinAssetChartType } from '../../../types'
 
 interface UseStablecoinAssetChartDataResult {
-	totalDataset: MultiSeriesChart2Dataset
-	areaDataset: MultiSeriesChart2Dataset
-	dominanceDataset: MultiSeriesChart2Dataset
+	totalDataset: MultiSeriesChartDataset
+	areaDataset: MultiSeriesChartDataset
+	dominanceDataset: MultiSeriesChartDataset
 	chainsCirculatingValues: Array<{ name: string; value: number }>
 	chainsUnique: string[]
 	stablecoinName: string
@@ -106,9 +106,9 @@ export function useStablecoinAssetChartData(
 		const latestData = chartData.areaDataset.source.at(-1)
 		if (!rawData || !latestData) return []
 
-		const chainData = rawData.chainsUnique.map((name: string) => ({
+		const chainData = rawData.chainsUnique.map((name: string, index: number) => ({
 			name,
-			circulating: (latestData[name] as number | undefined) ?? 0
+			circulating: (latestData[index + 1] as number | undefined) ?? 0
 		}))
 
 		return preparePieChartData({ data: chainData, sliceIdentifier: 'name', sliceValue: 'circulating', limit: 10 })
@@ -116,12 +116,14 @@ export function useStablecoinAssetChartData(
 
 	const totalCirculating: number | null = useMemo(() => {
 		const lastEntry = chartData.totalDataset.source.at(-1)
-		if (lastEntry) return (lastEntry.Circulating as number | undefined) ?? null
+		if (lastEntry) return (lastEntry[1] as number | undefined) ?? null
 		if (!rawData) return null
 		const lastAreaEntry = chartData.areaDataset.source.at(-1)
 		if (lastAreaEntry) {
 			let total = 0
-			for (const chain of rawData.chainsUnique) total += (lastAreaEntry[chain] as number | undefined) ?? 0
+			for (let index = 0; index < rawData.chainsUnique.length; index++) {
+				total += (lastAreaEntry[index + 1] as number | undefined) ?? 0
+			}
 			return total
 		}
 

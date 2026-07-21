@@ -1,10 +1,10 @@
-import type { LowercaseDwmGrouping } from '~/components/ECharts/ChartGroupingSelector'
 import {
 	buildTimeSeriesChart,
 	type TimePoint,
 	type TimeSeriesChartSpec
-} from '~/components/ECharts/timeSeriesChartBuilder'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
+} from '~/components/ECharts/MultiSeriesChart/timeSeriesBuilder'
+import type { LowercaseDwmGrouping } from '~/components/ECharts/shared/ChartGroupingSelector'
+import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS } from '~/constants/colors'
 
 export type UpcomingUnlockChartProtocol = {

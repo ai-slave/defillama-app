@@ -3,8 +3,8 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
-import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/EquitiesTreemapChart/colors'
-import type { IHBarChartProps } from '~/components/ECharts/types'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/TreemapChart/Market/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { buttonStyles } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -32,7 +32,7 @@ import {
 } from './chartState'
 import type { TokensChartDataset } from './types'
 
-const EquitiesTreemapChart = React.lazy(() => import('~/components/ECharts/EquitiesTreemapChart'))
+const MarketTreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart/Market'))
 const HBarChart = React.lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
 
 const MAP_HEIGHT = '600px'
@@ -178,7 +178,7 @@ export function TokensChartsSection({ data }: { data: TokensChartDataset }) {
 			) : view === 'map' && treemap ? (
 				<>
 					<React.Suspense fallback={<div style={{ height: MAP_HEIGHT }} />}>
-						<EquitiesTreemapChart
+						<MarketTreemapChart
 							treeData={treemap.treeData}
 							leaves={treemap.leaves}
 							sizeLabel="MCap"

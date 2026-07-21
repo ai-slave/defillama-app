@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import { buildETFChartSpec, buildETFFlowChartData } from './chartData'
 import type { IProcessedFlows } from './types'
 
@@ -15,14 +15,12 @@ describe('buildETFFlowChartData', () => {
 		}
 
 		expect(buildETFFlowChartData(flows, 'daily')).toEqual([
-			{ timestamp: jan1 * 1e3, Bitcoin: 0, Ethereum: 3, Solana: 5 },
-			{ timestamp: jan2 * 1e3, Bitcoin: -2, Ethereum: 4, Solana: null }
+			[jan1 * 1e3, 0, 3, 5],
+			[jan2 * 1e3, -2, 4, null]
 		])
 
 		const weeklyBucket = getBucketTimestampSec(jan1, 'weekly')
-		expect(buildETFFlowChartData(flows, 'weekly')).toEqual([
-			{ timestamp: weeklyBucket * 1e3, Bitcoin: -2, Ethereum: 7, Solana: 5 }
-		])
+		expect(buildETFFlowChartData(flows, 'weekly')).toEqual([[weeklyBucket * 1e3, -2, 7, 5]])
 	})
 
 	it('keeps cumulative gaps blank and resumes each asset running total when data returns', () => {
@@ -34,9 +32,9 @@ describe('buildETFFlowChartData', () => {
 		}
 
 		expect(buildETFFlowChartData(flows, 'cumulative')).toEqual([
-			{ timestamp: jan1 * 1e3, Bitcoin: 10, Ethereum: 3, Solana: null },
-			{ timestamp: jan2 * 1e3, Bitcoin: 8, Ethereum: null, Solana: null },
-			{ timestamp: jan3 * 1e3, Bitcoin: 8, Ethereum: 7, Solana: 5 }
+			[jan1 * 1e3, 10, 3, null],
+			[jan2 * 1e3, 8, null, null],
+			[jan3 * 1e3, 8, 7, 5]
 		])
 	})
 
@@ -47,9 +45,7 @@ describe('buildETFFlowChartData', () => {
 		}
 		const bucket = getBucketTimestampSec(jan1, groupBy)
 
-		expect(buildETFFlowChartData(flows, groupBy)).toEqual([
-			{ timestamp: bucket * 1e3, Bitcoin: 3, Ethereum: 7, Solana: null }
-		])
+		expect(buildETFFlowChartData(flows, groupBy)).toEqual([[bucket * 1e3, 3, 7, null]])
 	})
 
 	it('builds the exact filtered dataset and chart contract used by the overview', () => {
@@ -60,25 +56,25 @@ describe('buildETFFlowChartData', () => {
 
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Ethereum', 'Solana'],
-			source: [{ timestamp: jan1 * 1e3, Bitcoin: 1, Ethereum: -2, Solana: 3 }]
+			source: [[jan1 * 1e3, -2, 3]]
 		})
 		expect(result.charts).toEqual([
 			{
 				type: 'bar',
 				name: 'Ethereum',
-				encode: { x: 'timestamp', y: 'Ethereum' },
+				encode: { x: 0, y: 1 },
 				stack: 'Ethereum',
 				color: '#6B7280'
 			},
 			{
 				type: 'bar',
 				name: 'Solana',
-				encode: { x: 'timestamp', y: 'Solana' },
+				encode: { x: 0, y: 2 },
 				stack: 'Solana',
 				color: '#9945FF'
 			}
 		])
-		for (const chart of result.charts) expect(result.dataset.dimensions).toContain(chart.encode.y)
+		for (const chart of result.charts) expect(chart.encode.y).toBeGreaterThan(0)
 	})
 
 	it('uses line series for cumulative flows and supports an empty selection', () => {

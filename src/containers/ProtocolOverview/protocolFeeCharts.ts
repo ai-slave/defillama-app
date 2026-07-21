@@ -1,22 +1,16 @@
-import { createChartRow } from '~/components/ECharts/dynamicRow'
 import type {
 	ChartTimeGroupingWithCumulative,
-	MultiSeriesChart2Dataset,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
+	MultiSeriesChartDataset,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { getGroupedTimestampSec } from './chartSeries.utils'
 
 export type ProtocolFeeChartSeries = Array<[number, number]>
 export type ProtocolFeeChartRows = Array<[number, number | null]>
 
-const toRows = (store: Record<string, number | null>): ProtocolFeeChartRows => {
-	const rows: ProtocolFeeChartRows = []
-	for (const date in store) {
-		rows.push([+date * 1e3, store[date]])
-	}
-	return rows
-}
+const toRows = (store: Map<number, number | null>): ProtocolFeeChartRows =>
+	Array.from(store, ([date, value]) => [date * 1e3, value] as [number, number | null]).sort((a, b) => a[0] - b[0])
 
 interface ICumulativeBucket {
 	fees: number
@@ -33,8 +27,10 @@ interface ICumulativeBucket {
 	extrasNull: boolean
 }
 
-const getCumulativeBucket = (buckets: Record<string, ICumulativeBucket>, dateKey: number) => {
-	return (buckets[dateKey] ??= {
+const getCumulativeBucket = (buckets: Map<number, ICumulativeBucket>, dateKey: number) => {
+	let bucket = buckets.get(dateKey)
+	if (bucket) return bucket
+	bucket = {
 		fees: 0,
 		revenue: 0,
 		holdersRevenue: 0,
@@ -47,7 +43,9 @@ const getCumulativeBucket = (buckets: Record<string, ICumulativeBucket>, dateKey
 		revenueNull: false,
 		holdersRevenueNull: false,
 		extrasNull: false
-	})
+	}
+	buckets.set(dateKey, bucket)
+	return bucket
 }
 
 export function buildProtocolFeeFamilyCharts({
@@ -67,9 +65,9 @@ export function buildProtocolFeeFamilyCharts({
 	groupBy: ChartTimeGroupingWithCumulative
 	denominationPriceHistory: Record<string, number> | null
 }) {
-	const feesStore: Record<string, number | null> = {}
-	const revenueStore: Record<string, number | null> = {}
-	const holdersRevenueStore: Record<string, number | null> = {}
+	const feesStore = new Map<number, number | null>()
+	const revenueStore = new Map<number, number | null>()
+	const holdersRevenueStore = new Map<number, number | null>()
 	const isCumulative = groupBy === 'cumulative'
 
 	const applyValue = (date: number, value: number) => {
@@ -79,7 +77,7 @@ export function buildProtocolFeeFamilyCharts({
 	}
 
 	if (isCumulative) {
-		const buckets: Record<string, ICumulativeBucket> = {}
+		const buckets = new Map<number, ICumulativeBucket>()
 
 		const applyBaseChart = (
 			chart: ProtocolFeeChartSeries | null | undefined,
@@ -125,32 +123,30 @@ export function buildProtocolFeeFamilyCharts({
 		let feesTotal = 0
 		let revenueTotal = 0
 		let holdersRevenueTotal = 0
-		for (const dateKey of Object.keys(buckets)
-			.map(Number)
-			.sort((a, b) => a - b)) {
-			const bucket = buckets[dateKey]
+		for (const dateKey of Array.from(buckets.keys()).sort((a, b) => a - b)) {
+			const bucket = buckets.get(dateKey)!
 			if (fees && (bucket.feesEvent || bucket.extrasEvent)) {
 				if (bucket.feesNull || bucket.extrasNull) {
-					feesStore[dateKey] = null
+					feesStore.set(dateKey, null)
 				} else {
 					feesTotal += bucket.fees + bucket.extras
-					feesStore[dateKey] = feesTotal
+					feesStore.set(dateKey, feesTotal)
 				}
 			}
 			if (revenue && (bucket.revenueEvent || bucket.extrasEvent)) {
 				if (bucket.revenueNull || bucket.extrasNull) {
-					revenueStore[dateKey] = null
+					revenueStore.set(dateKey, null)
 				} else {
 					revenueTotal += bucket.revenue + bucket.extras
-					revenueStore[dateKey] = revenueTotal
+					revenueStore.set(dateKey, revenueTotal)
 				}
 			}
 			if (holdersRevenue && (bucket.holdersRevenueEvent || bucket.extrasEvent)) {
 				if (bucket.holdersRevenueNull || bucket.extrasNull) {
-					holdersRevenueStore[dateKey] = null
+					holdersRevenueStore.set(dateKey, null)
 				} else {
 					holdersRevenueTotal += bucket.holdersRevenue + bucket.extras
-					holdersRevenueStore[dateKey] = holdersRevenueTotal
+					holdersRevenueStore.set(dateKey, holdersRevenueTotal)
 				}
 			}
 		}
@@ -162,18 +158,18 @@ export function buildProtocolFeeFamilyCharts({
 		}
 	}
 
-	const applyBaseChart = (chart: ProtocolFeeChartSeries | null | undefined, store: Record<string, number | null>) => {
+	const applyBaseChart = (chart: ProtocolFeeChartSeries | null | undefined, store: Map<number, number | null>) => {
 		if (!chart) return
 		let total = 0
 		for (const [date, value] of chart) {
 			const dateKey = getGroupedTimestampSec(date, groupBy)
 			const finalValue = applyValue(date, value)
 			if (finalValue == null) {
-				store[dateKey] = null
+				store.set(dateKey, null)
 				continue
 			}
-			if (store[dateKey] === null) continue
-			store[dateKey] = (store[dateKey] ?? 0) + finalValue + total
+			if (store.get(dateKey) === null) continue
+			store.set(dateKey, (store.get(dateKey) ?? 0) + finalValue + total)
 			if (isCumulative) total += finalValue
 		}
 	}
@@ -185,16 +181,17 @@ export function buildProtocolFeeFamilyCharts({
 			const dateKey = getGroupedTimestampSec(date, groupBy)
 			const finalValue = applyValue(date, value)
 			if (finalValue == null) {
-				if (fees) feesStore[dateKey] = null
-				if (revenue) revenueStore[dateKey] = null
-				if (holdersRevenue) holdersRevenueStore[dateKey] = null
+				if (fees) feesStore.set(dateKey, null)
+				if (revenue) revenueStore.set(dateKey, null)
+				if (holdersRevenue) holdersRevenueStore.set(dateKey, null)
 				continue
 			}
-			if (fees && feesStore[dateKey] !== null) feesStore[dateKey] = (feesStore[dateKey] ?? 0) + finalValue + total
-			if (revenue && revenueStore[dateKey] !== null)
-				revenueStore[dateKey] = (revenueStore[dateKey] ?? 0) + finalValue + total
-			if (holdersRevenue && holdersRevenueStore[dateKey] !== null)
-				holdersRevenueStore[dateKey] = (holdersRevenueStore[dateKey] ?? 0) + finalValue + total
+			if (fees && feesStore.get(dateKey) !== null)
+				feesStore.set(dateKey, (feesStore.get(dateKey) ?? 0) + finalValue + total)
+			if (revenue && revenueStore.get(dateKey) !== null)
+				revenueStore.set(dateKey, (revenueStore.get(dateKey) ?? 0) + finalValue + total)
+			if (holdersRevenue && holdersRevenueStore.get(dateKey) !== null)
+				holdersRevenueStore.set(dateKey, (holdersRevenueStore.get(dateKey) ?? 0) + finalValue + total)
 			if (isCumulative) total += finalValue
 		}
 	}
@@ -221,7 +218,7 @@ const FEE_CHART_DEFINITIONS = [
 const EMPTY_FEE_CHART_PRESENTATION = {
 	dataset: { source: [], dimensions: ['timestamp'] },
 	charts: []
-} satisfies { dataset: MultiSeriesChart2Dataset; charts: MultiSeriesChart2SeriesConfig[] }
+} satisfies { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] }
 
 function buildDailyFeeExtraTotals(
 	bribes: ProtocolFeeChartSeries | null,
@@ -254,21 +251,22 @@ export function buildProtocolFeeChartPresentation({
 	tokenTaxes: ProtocolFeeChartSeries | null
 	selectedCharts: readonly string[]
 	groupBy: ChartTimeGroupingWithCumulative
-}): { dataset: MultiSeriesChart2Dataset; charts: MultiSeriesChart2SeriesConfig[] } {
+}): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } {
 	const selected = new Set(selectedCharts)
 	if (selected.size === 0) return EMPTY_FEE_CHART_PRESENTATION
-	const rowsByTimestamp = new Map<number, Record<string, number | null>>()
+	const rowsByTimestamp = new Map<number, Array<number | null>>()
 	const dimensions = ['timestamp']
-	const charts: MultiSeriesChart2SeriesConfig[] = []
+	const charts: MultiSeriesChartSeriesConfig[] = []
 	const seriesType = groupBy === 'cumulative' ? 'line' : 'bar'
 	const selectedDefinitions = FEE_CHART_DEFINITIONS.filter((definition) => selected.has(definition.name))
 
-	for (const definition of selectedDefinitions) {
+	for (let index = 0; index < selectedDefinitions.length; index++) {
+		const definition = selectedDefinitions[index]
 		dimensions.push(definition.name)
 		charts.push({
 			type: seriesType,
 			name: definition.name,
-			encode: { x: 'timestamp', y: definition.name },
+			encode: { x: 0, y: index + 1 },
 			color: definition.color,
 			stack: definition.name
 		})
@@ -276,19 +274,23 @@ export function buildProtocolFeeChartPresentation({
 
 	if (groupBy === 'daily') {
 		const baseByKey = { fees, revenue, holdersRevenue }
-		for (const definition of selectedDefinitions) {
+		for (let definitionIndex = 0; definitionIndex < selectedDefinitions.length; definitionIndex++) {
+			const definition = selectedDefinitions[definitionIndex]
 			for (const [timestampSec, value] of baseByKey[definition.key]) {
 				const timestamp = timestampSec * 1e3
-				const row = rowsByTimestamp.get(timestamp) ?? createChartRow<number | null>(timestamp)
-				row[definition.name] = value
+				const row =
+					rowsByTimestamp.get(timestamp) ?? new Array<number | null>(selectedDefinitions.length + 1).fill(null)
+				row[0] = timestamp
+				row[definitionIndex + 1] = value
 				rowsByTimestamp.set(timestamp, row)
 			}
 		}
 		for (const [timestampSec, value] of buildDailyFeeExtraTotals(bribes, tokenTaxes)) {
 			const timestamp = timestampSec * 1e3
-			const row = rowsByTimestamp.get(timestamp) ?? createChartRow<number | null>(timestamp)
-			for (const definition of selectedDefinitions) {
-				row[definition.name] = (row[definition.name] ?? 0) + value
+			const row = rowsByTimestamp.get(timestamp) ?? new Array<number | null>(selectedDefinitions.length + 1).fill(null)
+			row[0] = timestamp
+			for (let definitionIndex = 0; definitionIndex < selectedDefinitions.length; definitionIndex++) {
+				row[definitionIndex + 1] = (row[definitionIndex + 1] ?? 0) + value
 			}
 			rowsByTimestamp.set(timestamp, row)
 		}
@@ -303,10 +305,13 @@ export function buildProtocolFeeChartPresentation({
 			denominationPriceHistory: null
 		})
 
-		for (const definition of selectedDefinitions) {
+		for (let definitionIndex = 0; definitionIndex < selectedDefinitions.length; definitionIndex++) {
+			const definition = selectedDefinitions[definitionIndex]
 			for (const [timestamp, value] of grouped[definition.key]) {
-				const row = rowsByTimestamp.get(timestamp) ?? createChartRow<number | null>(timestamp)
-				row[definition.name] = value
+				const row =
+					rowsByTimestamp.get(timestamp) ?? new Array<number | null>(selectedDefinitions.length + 1).fill(null)
+				row[0] = timestamp
+				row[definitionIndex + 1] = value
 				rowsByTimestamp.set(timestamp, row)
 			}
 		}
@@ -314,7 +319,7 @@ export function buildProtocolFeeChartPresentation({
 
 	return {
 		dataset: {
-			source: Array.from(rowsByTimestamp.values()).sort((a, b) => a.timestamp - b.timestamp),
+			source: Array.from(rowsByTimestamp.values()).sort((a, b) => a[0]! - b[0]!),
 			dimensions
 		},
 		charts

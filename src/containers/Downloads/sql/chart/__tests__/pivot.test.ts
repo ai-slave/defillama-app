@@ -4,68 +4,87 @@ import { pivotRowsForSplit } from '../pivot'
 describe('pivotRowsForSplit', () => {
 	it('pivots long into wide', () => {
 		const rows = [
-			{ date: 1, value: 10, chain: 'eth' },
-			{ date: 1, value: 5, chain: 'arb' },
-			{ date: 2, value: 12, chain: 'eth' },
-			{ date: 2, value: 6, chain: 'arb' }
+			[1, 10, 'eth'],
+			[1, 5, 'arb'],
+			[2, 12, 'eth'],
+			[2, 6, 'arb']
 		]
-		const result = pivotRowsForSplit(rows, 'date', 'value', 'chain')
+		const result = pivotRowsForSplit(rows, 0, 1, 2)
 		expect(result.keys).toEqual(['eth', 'arb'])
 		expect(result.rows).toHaveLength(2)
-		expect(result.rows[0]).toEqual({ date: 1, eth: 10, arb: 5 })
-		expect(result.rows[1]).toEqual({ date: 2, eth: 12, arb: 6 })
+		expect(result.rows[0]).toEqual([1, 10, 5])
+		expect(result.rows[1]).toEqual([2, 12, 6])
 		expect(result.truncatedCount).toBe(0)
 	})
 
 	it('sums duplicate (x, split) pairs', () => {
 		const rows = [
-			{ d: 1, v: 1, s: 'a' },
-			{ d: 1, v: 2, s: 'a' },
-			{ d: 1, v: 3, s: 'b' }
+			[1, 1, 'a'],
+			[1, 2, 'a'],
+			[1, 3, 'b']
 		]
-		const result = pivotRowsForSplit(rows, 'd', 'v', 's')
-		expect(result.rows[0].a).toBe(3)
-		expect(result.rows[0].b).toBe(3)
+		const result = pivotRowsForSplit(rows, 0, 1, 2)
+		expect(result.rows[0][1]).toBe(3)
+		expect(result.rows[0][2]).toBe(3)
 	})
 
 	it('folds beyond top-N into Other', () => {
-		const rows: Array<Record<string, any>> = []
-		for (let i = 0; i < 25; i++) rows.push({ d: 1, v: 10 - i / 100, s: `k${i}` })
-		const result = pivotRowsForSplit(rows, 'd', 'v', 's', { topN: 5 })
+		const rows: unknown[][] = []
+		for (let i = 0; i < 25; i++) rows.push([1, 10 - i / 100, `k${i}`])
+		const result = pivotRowsForSplit(rows, 0, 1, 2, { topN: 5 })
 		expect(result.keys).toHaveLength(6) // 5 + Other
 		expect(result.keys[5]).toBe('Other')
 		expect(result.truncatedCount).toBe(20)
-		const otherValue = result.rows[0].Other as number
+		const otherValue = result.rows[0][6] as number
 		expect(otherValue).toBeGreaterThan(0)
 	})
 
 	it('handles all-in-one bucket', () => {
 		const rows = [
-			{ d: 1, v: 5, s: 'only' },
-			{ d: 2, v: 6, s: 'only' }
+			[1, 5, 'only'],
+			[2, 6, 'only']
 		]
-		const result = pivotRowsForSplit(rows, 'd', 'v', 's')
+		const result = pivotRowsForSplit(rows, 0, 1, 2)
 		expect(result.keys).toEqual(['only'])
 		expect(result.truncatedCount).toBe(0)
 	})
 
 	it('preserves numeric X sort order', () => {
 		const rows = [
-			{ d: 2, v: 1, s: 'a' },
-			{ d: 1, v: 2, s: 'a' },
-			{ d: 3, v: 3, s: 'a' }
+			[2, 1, 'a'],
+			[1, 2, 'a'],
+			[3, 3, 'a']
 		]
-		const result = pivotRowsForSplit(rows, 'd', 'v', 's')
-		expect(result.rows.map((r) => r.d)).toEqual([1, 2, 3])
+		const result = pivotRowsForSplit(rows, 0, 1, 2)
+		expect(result.rows.map((r) => r[0])).toEqual([1, 2, 3])
 	})
 
 	it('treats null splits as a distinct bucket', () => {
 		const rows = [
-			{ d: 1, v: 1, s: null },
-			{ d: 1, v: 2, s: 'a' }
+			[1, 1, null],
+			[1, 2, 'a']
 		]
-		const result = pivotRowsForSplit(rows, 'd', 'v', 's')
+		const result = pivotRowsForSplit(rows, 0, 1, 2)
 		expect(result.keys).toContain('∅')
 		expect(result.keys).toContain('a')
+	})
+
+	it('keeps split labels separate from the x value', () => {
+		const result = pivotRowsForSplit([['2026-01-01', 5, 'date']], 0, 1, 2)
+
+		expect(result.keys).toEqual(['date'])
+		expect(result.rows[0]).toEqual(['2026-01-01', 5])
+	})
+
+	it('folds the tail into an existing Other bucket without duplicating it', () => {
+		const rows = [
+			['A', 10, 'Other'],
+			['A', 5, 'small']
+		]
+		const result = pivotRowsForSplit(rows, 0, 1, 2, { topN: 1 })
+
+		expect(result.keys).toEqual(['Other'])
+		expect(result.rows[0]).toEqual(['A', 15])
+		expect(result.truncatedCount).toBe(1)
 	})
 })

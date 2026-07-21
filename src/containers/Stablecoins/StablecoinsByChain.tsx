@@ -5,18 +5,16 @@ import { AddToDashboardButton } from '~/components/AddToDashboard'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
-} from '~/components/ECharts/ChartGroupingSelector'
-import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
-import type {
-	IHBarChartProps,
-	IMultiSeriesChart2Props,
-	IPieChartProps,
-	ITreemapChartProps
-} from '~/components/ECharts/types'
+} from '~/components/ECharts/shared/ChartGroupingSelector'
+import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -62,18 +60,18 @@ import { StablecoinChangeStats, type StablecoinChangeStat } from './StablecoinCh
 import { StablecoinsTable } from './StablecoinsAssetsTable'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const HBarChart = React.lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
-const TreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<ITreemapChartProps>
+const TreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
 const EMPTY_CHAINS: string[] = []
 const UNRELEASED_QUERY_KEY = 'unreleased'
 const EMPTY_PIE_DATA: IPieChartProps['chartData'] = []
 const EMPTY_HBAR_CATEGORIES: string[] = []
 const EMPTY_HBAR_VALUES: number[] = []
-const EMPTY_TREEMAP_DATA: ITreemapChartProps['treeData'] = []
+const EMPTY_TREEMAP_DATA: TreemapChartProps['treeData'] = []
 const getStablecoinSymbol = (asset: FormattedStablecoinAsset) => asset.symbol
 const getStablecoinTreemapName = (asset: FormattedStablecoinAsset) => asset.symbol || asset.name
 
@@ -547,9 +545,9 @@ function MultiSeriesChartPanel({
 }: {
 	state: MultiSeriesChartState
 	selectedCharts?: Set<string>
-	chartOptions?: IMultiSeriesChart2Props['chartOptions']
+	chartOptions?: IMultiSeriesChartProps['chartOptions']
 	hideDefaultLegend?: boolean
-	groupBy?: IMultiSeriesChart2Props['groupBy']
+	groupBy?: IMultiSeriesChartProps['groupBy']
 	onReady: (instance: echarts.ECharts | null) => void
 }) {
 	if (state.status === 'loading') {
@@ -575,7 +573,7 @@ function MultiSeriesChartPanel({
 	}
 	return (
 		<React.Suspense fallback={<ChartPanelBodyFallback />}>
-			<MultiSeriesChart2
+			<MultiSeriesChart
 				dataset={state.data.dataset}
 				charts={state.data.charts}
 				selectedCharts={selectedCharts}

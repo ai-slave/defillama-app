@@ -3,7 +3,8 @@ import type { GetStaticPropsContext } from 'next'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
@@ -30,11 +31,11 @@ import { pushShallowQuery } from '~/utils/routerQuery'
 const EMPTY_TOGGLE_OPTIONS = []
 const TREASURY_SERIES = new Set(['Treasury'])
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
-type MultiSeriesCharts = NonNullable<IMultiSeriesChart2Props['charts']>
+type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
 
 interface TreasuryPageProps {
 	name: string
@@ -105,7 +106,7 @@ function HistoricalTreasuryChartCard({
 	exportIconUrl
 }: {
 	protocolName: string
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 	exportIconUrl?: string
 }) {
@@ -126,7 +127,7 @@ function HistoricalTreasuryChartCard({
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
 					valueSymbol="$"
@@ -151,7 +152,7 @@ function TokensMultiSeriesChartCard({
 	title: string
 	protocolName: string
 	allTokens: string[]
-	dataset: MultiSeriesChart2Dataset
+	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 	exportSuffix: string
 	valueSymbol?: string
@@ -188,7 +189,7 @@ function TokensMultiSeriesChartCard({
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart2
+				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}

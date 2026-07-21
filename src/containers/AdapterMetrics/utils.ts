@@ -1,10 +1,9 @@
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import type {
 	ChartTimeGroupingWithCumulative,
-	MultiSeriesChart2Dataset,
-	MultiSeriesChart2SeriesConfig
-} from '~/components/ECharts/types'
-import { getBucketTimestampMs } from '~/components/ECharts/utils'
+	MultiSeriesChartDataset,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
+import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import type { FeeExtraPeriodTotals } from '~/metrics/feeExtras'
 import { getNDistinctColors, slug } from '~/utils'
 import { parseExcludeParam } from '~/utils/routerQuery'
@@ -17,14 +16,6 @@ export type BribesData = FeeExtraPeriodTotals
 export type OpenInterestData = { total24h: number | null; doublecounted: boolean }
 export type ActiveLiquidityData = { total24h: number | null; doublecounted: boolean }
 export type NormalizedVolumeData = { total24h: number | null }
-
-function setChartRowValue(row: Record<string, number | null>, name: string, value: number | null) {
-	if (name === '__proto__') {
-		Object.defineProperty(row, name, { value, enumerable: true, configurable: true, writable: true })
-	} else {
-		row[name] = value
-	}
-}
 
 type AggregatedProtocol = Omit<
 	IAdapterChainMetrics['protocols'][0],
@@ -97,13 +88,13 @@ export function aggregateProtocolVersions(protocolVersions: IAdapterChainMetrics
 }
 
 export function mergeBreakdowns(breakdowns: Record<string, Record<string, number>>[]) {
-	const merged = createChartRecord<Record<string, number>>()
+	const merged = {}
 	for (const breakdown of breakdowns) {
 		if (!breakdown) continue
 		for (const chainName in breakdown) {
 			const protocolData = breakdown[chainName]
 			if (!merged[chainName]) {
-				merged[chainName] = createChartRecord<number>()
+				merged[chainName] = {}
 			}
 			for (const protocolName in protocolData) {
 				const value = protocolData[protocolName]
@@ -315,7 +306,7 @@ export function matchRevenueToEarnings(
 		displayName: string
 	}>
 ) {
-	const matchedData = createChartRecord<BribesData>()
+	const matchedData = {}
 
 	for (const revenueProtocol of revenueData) {
 		const matchingEarningsProtocol = earningsProtocols.find((earningsProto) => {
@@ -362,7 +353,7 @@ export function buildAdapterByChainChartDataset({
 	primaryChartData: Array<[number, number]>
 	openInterestChartData: Array<[number, number]>
 	activeLiquidityChartData: Array<[number, number]>
-}): MultiSeriesChart2Dataset {
+}): MultiSeriesChartDataset {
 	const toChartPointMap = (points: Array<[number, number]>) => {
 		const map = new Map<number, number>()
 		for (const [timestamp, value] of points) {
@@ -396,21 +387,14 @@ export function buildAdapterByChainChartDataset({
 	}
 	const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b)
 
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const source: MultiSeriesChartDataset['source'] = []
 	for (const timestamp of sortedTimestamps) {
 		if (hasSecondarySeries && secondaryDimensionLabel) {
-			source.push({
-				timestamp,
-				[primaryDimensionLabel]: primaryDataMap.get(timestamp) ?? null,
-				[secondaryDimensionLabel]: secondaryDataMap.get(timestamp) ?? null
-			})
+			source.push([timestamp, primaryDataMap.get(timestamp) ?? null, secondaryDataMap.get(timestamp) ?? null])
 			continue
 		}
 
-		source.push({
-			timestamp,
-			[primaryDimensionLabel]: primaryDataMap.get(timestamp) ?? null
-		})
+		source.push([timestamp, primaryDataMap.get(timestamp) ?? null])
 	}
 
 	return {
@@ -435,9 +419,9 @@ export function mergeSingleDimensionChartDataset({
 	chartData,
 	extraCharts
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	extraCharts: Array<Array<[number, number]>>
-}): MultiSeriesChart2Dataset {
+}): MultiSeriesChartDataset {
 	assert(chartData.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
 	assert(chartData.dimensions.length === 2, 'Expected a single chart dimension')
 	if (extraCharts.every((chart) => chart.length === 0)) return chartData
@@ -446,8 +430,7 @@ export function mergeSingleDimensionChartDataset({
 	const rows = new Map<number, number | null>()
 
 	for (const row of chartData.source) {
-		const value = row[dimension] as number | null | undefined
-		rows.set(row.timestamp as number, value ?? null)
+		rows.set(row[0] as number, (row[1] as number | null | undefined) ?? null)
 	}
 
 	for (const extraChart of extraCharts) {
@@ -457,13 +440,10 @@ export function mergeSingleDimensionChartDataset({
 		}
 	}
 
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const source: MultiSeriesChartDataset['source'] = []
 	const sortedRows = Array.from(rows.entries()).sort((a, b) => a[0] - b[0])
 	for (const [timestamp, value] of sortedRows) {
-		source.push({
-			timestamp,
-			[dimension]: value
-		})
+		source.push([timestamp, value])
 	}
 
 	return {
@@ -483,7 +463,7 @@ export function mergeBreakdownCharts({
 
 	const mergeChart = (input: Array<[number, Record<string, number>]>) => {
 		for (const [timestamp, values] of input) {
-			const row = rows.get(timestamp) ?? createChartRecord<number>()
+			const row = rows.get(timestamp) ?? {}
 			for (const key in values) {
 				row[key] = (row[key] ?? 0) + values[key]
 			}
@@ -530,14 +510,14 @@ export function buildProtocolBreakdownNormalization(protocols: IProtocol[]): Pro
 		walk(protocol)
 	}
 
-	const canonicalRecord = createChartRecord<string>()
+	const canonicalRecord = {}
 	for (const [seriesName, canonicalName] of Array.from(canonicalBySeriesName.entries()).toSorted((a, b) =>
 		a[0].localeCompare(b[0])
 	)) {
 		canonicalRecord[seriesName] = canonicalName
 	}
 
-	const aliasesRecord = createChartRecord<string[]>()
+	const aliasesRecord = {}
 	for (const [canonicalName, aliases] of Array.from(aliasesByCanonicalName.entries()).toSorted((a, b) =>
 		a[0].localeCompare(b[0])
 	)) {
@@ -558,14 +538,14 @@ export function normalizeProtocolBreakdownChartData({
 	chart: Array<[number, Record<string, number>]>
 	normalization: ProtocolBreakdownNormalization
 }): {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	protocolDimensions: string[]
 } {
-	const protocolValuesByTimestamp = new Map<number, Record<string, number>>()
+	const protocolValuesByTimestamp = new Map<number, Map<string, number>>()
 	const protocolTotals = new Map<string, number>()
 
 	for (const [timestamp, protocolValues] of chart) {
-		const valuesAtTimestamp = createChartRecord<number>()
+		const valuesAtTimestamp = new Map<string, number>()
 
 		let hasValues = false
 		for (const protocolName in protocolValues) {
@@ -573,7 +553,7 @@ export function normalizeProtocolBreakdownChartData({
 			const canonicalName = normalization.canonicalBySeriesName[protocolName]
 			if (!canonicalName) continue
 
-			valuesAtTimestamp[canonicalName] = (valuesAtTimestamp[canonicalName] ?? 0) + value
+			valuesAtTimestamp.set(canonicalName, (valuesAtTimestamp.get(canonicalName) ?? 0) + value)
 			protocolTotals.set(canonicalName, (protocolTotals.get(canonicalName) ?? 0) + value)
 			hasValues = true
 		}
@@ -595,12 +575,13 @@ export function normalizeProtocolBreakdownChartData({
 		}
 	}
 
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const source: MultiSeriesChartDataset['source'] = []
 	// The endpoint is ascending and sparse. Keep that shape until the final visible series are known.
 	for (const [timestamp, valuesAtTimestamp] of protocolValuesByTimestamp) {
-		const row = createChartRow<number | null>(timestamp)
-		for (const protocolName in valuesAtTimestamp) {
-			setChartRowValue(row, protocolName, valuesAtTimestamp[protocolName])
+		const row = new Array<number | null>(protocolDimensions.length + 1).fill(null)
+		row[0] = timestamp
+		for (let i = 0; i < protocolDimensions.length; i++) {
+			row[i + 1] = valuesAtTimestamp.get(protocolDimensions[i]) ?? null
 		}
 		source.push(row)
 	}
@@ -619,10 +600,10 @@ export function mergeNamedDimensionChartDataset({
 	extraCharts,
 	allowedDimensions
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	extraCharts: Array<Array<[number, Record<string, number>]>>
 	allowedDimensions?: string[]
-}): MultiSeriesChart2Dataset {
+}): MultiSeriesChartDataset {
 	assert(chartData.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
 	if (extraCharts.every((chart) => chart.length === 0)) return chartData
 
@@ -635,14 +616,13 @@ export function mergeNamedDimensionChartDataset({
 	for (const dimension of dimensions) {
 		dimensionByLowercase.set(dimension.toLowerCase(), dimension)
 	}
-	const rows = new Map<number, Record<string, number | null>>()
+	const rows = new Map<number, Map<string, number | null>>()
 
 	for (const row of chartData.source) {
-		const timestamp = row.timestamp as number
-		const nextRow = createChartRow<number | null>(timestamp)
-		for (const dimension of dimensions) {
-			const value = row[dimension] as number | null | undefined
-			nextRow[dimension] = value ?? null
+		const timestamp = row[0] as number
+		const nextRow = new Map<string, number | null>()
+		for (let i = 0; i < dimensions.length; i++) {
+			nextRow.set(dimensions[i], (row[i + 1] as number | null | undefined) ?? null)
 		}
 		rows.set(timestamp, nextRow)
 	}
@@ -664,23 +644,24 @@ export function mergeNamedDimensionChartDataset({
 	for (const extraChart of extraCharts) {
 		for (const [timestamp, values] of extraChart) {
 			const chartTimestamp = toChartTimestamp(timestamp)
-			const row = rows.get(chartTimestamp) ?? createChartRow<number | null>(chartTimestamp)
+			const row = rows.get(chartTimestamp) ?? new Map<string, number | null>()
 
 			for (const key in values) {
 				const dimension = getExtraDimension(key)
 				if (!dimension) continue
-				row[dimension] = (row[dimension] ?? 0) + values[key]
+				row.set(dimension, (row.get(dimension) ?? 0) + values[key])
 			}
 
 			rows.set(chartTimestamp, row)
 		}
 	}
 
-	const source: MultiSeriesChart2Dataset['source'] = []
-	for (const row of Array.from(rows.values()).sort((a, b) => a.timestamp - b.timestamp)) {
-		const nextRow = createChartRow<number | null>(row.timestamp)
-		for (const dimension of dimensions) {
-			nextRow[dimension] = row[dimension] ?? null
+	const source: MultiSeriesChartDataset['source'] = []
+	for (const [timestamp, values] of Array.from(rows.entries()).sort((a, b) => a[0] - b[0])) {
+		const nextRow = new Array<number | null>(dimensions.length + 1)
+		nextRow[0] = timestamp
+		for (let i = 0; i < dimensions.length; i++) {
+			nextRow[i + 1] = values.get(dimensions[i]) ?? null
 		}
 		source.push(nextRow)
 	}
@@ -729,8 +710,8 @@ type BreakdownLatestValueRow = {
 
 type ChainsByAdapterBarPresentation = {
 	kind: 'bar'
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 	valueMode: ChainsByAdapterValueMode
 	barLayout: ChainsByAdapterBarLayout
 	showTotalInTooltip: boolean
@@ -739,8 +720,8 @@ type ChainsByAdapterBarPresentation = {
 
 type ChainsByAdapterDominancePresentation = {
 	kind: 'dominance'
-	dataset: MultiSeriesChart2Dataset
-	charts: MultiSeriesChart2SeriesConfig[]
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
 	groupBy: ChartTimeGroupingWithCumulative
 }
 
@@ -794,9 +775,9 @@ function getRollingWindowMsForTreemapGrouping(groupBy: 'weekly' | 'monthly' | 'q
 	}
 }
 
-function getLatestTimestampMsInDataset(chartData: MultiSeriesChart2Dataset): number | null {
+function getLatestTimestampMsInDataset(chartData: MultiSeriesChartDataset): number | null {
 	const lastRow = chartData.source[chartData.source.length - 1]
-	return lastRow ? (lastRow.timestamp as number) : null
+	return lastRow ? (lastRow[0] as number) : null
 }
 
 function assertNever(value: never): never {
@@ -861,15 +842,17 @@ function createRankedSeriesUniverse({
 	selectedNames,
 	rankingScores
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	selectedNames: string[]
 	rankingScores?: Map<string, number>
 }) {
 	const entityTotals = new Map<string, number>()
+	const selectedIndexes = selectedNames.map((name) => chartData.dimensions.indexOf(name))
 
 	for (const row of chartData.source) {
-		for (const entity of selectedNames) {
-			const value = getOwnSeriesValue(row, entity)
+		for (let i = 0; i < selectedNames.length; i++) {
+			const entity = selectedNames[i]
+			const value = row[selectedIndexes[i]] as number | null | undefined
 			if (value != null) {
 				entityTotals.set(entity, (entityTotals.get(entity) ?? 0) + value)
 			}
@@ -904,10 +887,7 @@ function createRankedSeriesUniverse({
 
 	const topSeriesNames = otherEntityNames.length > 0 ? [...topEntityNames, 'Others'] : topEntityNames
 	const topColors = getNDistinctColors(topSeriesNames.length || 1)
-	const topColorBySeriesName: Record<string, string> = Object.create(null)
-	for (let i = 0; i < topSeriesNames.length; i++) {
-		topColorBySeriesName[topSeriesNames[i]] = topColors[i]
-	}
+	const topColorBySeriesName = Object.fromEntries(topSeriesNames.map((name, index) => [name, topColors[index]]))
 
 	return {
 		topEntityNames,
@@ -917,26 +897,11 @@ function createRankedSeriesUniverse({
 	}
 }
 
-function getOwnSeriesValue(
-	row: MultiSeriesChart2Dataset['source'][number],
-	seriesName: string
-): number | null | undefined {
-	return Object.hasOwn(row, seriesName) ? (row[seriesName] as number | null | undefined) : undefined
-}
-
-function setOwnSeriesValue(row: Record<string, number | null>, seriesName: string, value: number | null) {
-	if (seriesName === '__proto__') {
-		Object.defineProperty(row, seriesName, { configurable: true, enumerable: true, value, writable: true })
-	} else {
-		row[seriesName] = value
-	}
-}
-
 function getOrderedSelectedSeriesNames({
 	chartData,
 	selectedNames
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	selectedNames: string[]
 }) {
 	const selectedSet = new Set(selectedNames)
@@ -954,31 +919,17 @@ function orderSelectedNamesByRankingScores({
 	selectedNames,
 	rankingScores
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	selectedNames: string[]
 	rankingScores?: Map<string, number>
 }) {
 	const selectedSeriesNames = getOrderedSelectedSeriesNames({ chartData, selectedNames })
 	const totals = new Map<string, number>()
-	const availableSeriesCount = Math.max(0, chartData.dimensions.length - 1)
-	// Sparse rows favor key scans for broad selections; direct lookups avoid enumerating every row key for narrow filters.
-	const isNarrowSelection = selectedSeriesNames.length * 4 <= availableSeriesCount
-
-	if (isNarrowSelection) {
-		for (const row of chartData.source) {
-			for (const seriesName of selectedSeriesNames) {
-				const value = getOwnSeriesValue(row, seriesName)
-				if (value != null) totals.set(seriesName, (totals.get(seriesName) ?? 0) + value)
-			}
-		}
-	} else {
-		const selectedSeriesSet = new Set(selectedSeriesNames)
-		for (const row of chartData.source) {
-			for (const seriesName in row) {
-				if (!selectedSeriesSet.has(seriesName)) continue
-				const value = row[seriesName] as number | null | undefined
-				if (value != null) totals.set(seriesName, (totals.get(seriesName) ?? 0) + value)
-			}
+	const selectedIndexes = selectedSeriesNames.map((name) => chartData.dimensions.indexOf(name))
+	for (const row of chartData.source) {
+		for (let i = 0; i < selectedSeriesNames.length; i++) {
+			const value = row[selectedIndexes[i]] as number | null | undefined
+			if (value != null) totals.set(selectedSeriesNames[i], (totals.get(selectedSeriesNames[i]) ?? 0) + value)
 		}
 	}
 
@@ -1003,18 +954,24 @@ function buildGroupedFlowDataset({
 	groupBy,
 	relative
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	topEntityNames: string[]
 	otherEntityNames: string[]
 	seriesNames: string[]
 	groupBy: ChartTimeGroupingWithCumulative
 	relative: boolean
-}): MultiSeriesChart2Dataset {
+}): MultiSeriesChartDataset {
 	const isDaily = groupBy === 'daily'
 	const isCumulative = groupBy === 'cumulative'
 	const cumulativeTotals = isCumulative ? new Array<number>(seriesNames.length).fill(0) : null
 	const otherEntitySet = otherEntityNames.length > 0 ? new Set(otherEntityNames) : null
-	const source: MultiSeriesChart2Dataset['source'] = []
+	const dimensionIndexes = new Map<string, number>()
+	for (let i = 1; i < chartData.dimensions.length; i++) dimensionIndexes.set(chartData.dimensions[i], i)
+	const topEntityIndexes = topEntityNames.map((name) => dimensionIndexes.get(name)!)
+	const otherEntityIndexes = otherEntitySet
+		? otherEntityNames.map((name) => dimensionIndexes.get(name)).filter((index): index is number => index != null)
+		: []
+	const source: MultiSeriesChartDataset['source'] = []
 	let bucketTimestamp: number | null = null
 	let bucketValues: Array<number | undefined> | null = null
 
@@ -1033,12 +990,13 @@ function buildGroupedFlowDataset({
 			if (relative && value > 0) relativeTotal += value
 		}
 
-		const nextRow = createChartRow<number | null>(bucketTimestamp)
+		const nextRow = new Array<number | null>(seriesNames.length + 1)
+		nextRow[0] = bucketTimestamp
 		for (let index = 0; index < seriesNames.length; index++) {
 			const value = bucketValues[index]
 			const finalValue =
 				relative && value != null ? (relativeTotal > 0 ? (Math.max(value, 0) / relativeTotal) * 100 : 0) : value
-			setOwnSeriesValue(nextRow, seriesNames[index], finalValue ?? null)
+			nextRow[index + 1] = finalValue ?? null
 		}
 		source.push(nextRow)
 	}
@@ -1051,11 +1009,11 @@ function buildGroupedFlowDataset({
 	}
 
 	for (const row of chartData.source) {
-		const timestamp = row.timestamp as number
+		const timestamp = row[0] as number
 		const nextBucketTimestamp = isDaily || isCumulative ? timestamp : getBucketTimestampMs(timestamp, groupBy)
 
 		for (let index = 0; index < topEntityNames.length; index++) {
-			const value = getOwnSeriesValue(row, topEntityNames[index])
+			const value = row[topEntityIndexes[index]] as number | null | undefined
 			if (value == null) continue
 			const values = ensureBucket(nextBucketTimestamp)
 			values[index] = isDaily ? value : (values[index] ?? 0) + value
@@ -1064,9 +1022,8 @@ function buildGroupedFlowDataset({
 		if (otherEntitySet) {
 			let othersValue = 0
 			let hasOthersValue = false
-			for (const name in row) {
-				if (!otherEntitySet.has(name)) continue
-				const value = row[name] as number | null | undefined
+			for (const dimensionIndex of otherEntityIndexes) {
+				const value = row[dimensionIndex] as number | null | undefined
 				if (value == null) continue
 				othersValue += value
 				hasOthersValue = true
@@ -1091,7 +1048,7 @@ function buildBarPresentation({
 	topColorBySeriesName,
 	state
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	topEntityNames: string[]
 	otherEntityNames: string[]
 	topSeriesNames: string[]
@@ -1134,7 +1091,7 @@ function buildDominancePresentation({
 	topColorBySeriesName,
 	state
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	topEntityNames: string[]
 	otherEntityNames: string[]
 	topSeriesNames: string[]
@@ -1226,17 +1183,17 @@ function buildCumulativeLatestValueRowsFromChartData({
 	chartData,
 	selectedNames
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	selectedNames: string[]
 }): BreakdownLatestValueRow[] {
 	const totals = new Map<string, number>()
 	const pointCounts = new Map<string, number>()
-	const selectedNameSet = new Set(selectedNames)
+	const selectedIndexes = selectedNames.map((name) => chartData.dimensions.indexOf(name))
 
 	for (const row of chartData.source) {
-		for (const name in row) {
-			if (!selectedNameSet.has(name)) continue
-			const value = row[name] as number | null | undefined
+		for (let i = 0; i < selectedNames.length; i++) {
+			const name = selectedNames[i]
+			const value = row[selectedIndexes[i]] as number | null | undefined
 			if (value == null) continue
 			totals.set(name, (totals.get(name) ?? 0) + value)
 			pointCounts.set(name, (pointCounts.get(name) ?? 0) + 1)
@@ -1258,7 +1215,7 @@ function buildLatestValueRowsFromChartData({
 	selectedNames,
 	groupBy
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	selectedNames: string[]
 	groupBy: ChartTimeGroupingWithCumulative
 	seriesType: LatestValueSeriesType
@@ -1271,7 +1228,7 @@ function buildLatestValueRowsFromChartData({
 
 		const rows: BreakdownLatestValueRow[] = []
 		for (const name of selectedNames) {
-			const value = getOwnSeriesValue(sourceRow, name)
+			const value = sourceRow[chartData.dimensions.indexOf(name)] as number | null | undefined
 			rows.push({
 				name,
 				total24h: value ?? null
@@ -1294,14 +1251,14 @@ function buildLatestValueRowsFromChartData({
 	const cutoffMs = latestTsMs - windowMs
 	const sums = new Map<string, number>()
 	const pointCounts = new Map<string, number>()
-	const selectedNameSet = new Set(selectedNames)
+	const selectedIndexes = selectedNames.map((name) => chartData.dimensions.indexOf(name))
 
 	for (const row of chartData.source) {
-		const timestamp = row.timestamp as number
+		const timestamp = row[0] as number
 		if (timestamp < cutoffMs) continue
-		for (const name in row) {
-			if (!selectedNameSet.has(name)) continue
-			const value = row[name] as number | null | undefined
+		for (let i = 0; i < selectedNames.length; i++) {
+			const name = selectedNames[i]
+			const value = row[selectedIndexes[i]] as number | null | undefined
 			if (value == null) continue
 			sums.set(name, (sums.get(name) ?? 0) + value)
 			pointCounts.set(name, (pointCounts.get(name) ?? 0) + 1)
@@ -1318,7 +1275,7 @@ function buildLatestValueRowsFromChartData({
 	return rows
 }
 
-function getEffectiveDailyLatestRow(chartData: MultiSeriesChart2Dataset): MultiSeriesChart2Dataset['source'][0] | null {
+function getEffectiveDailyLatestRow(chartData: MultiSeriesChartDataset): MultiSeriesChartDataset['source'][0] | null {
 	const source = chartData.source
 	const lastTimestampRow = source[source.length - 1]
 	if (!lastTimestampRow) return null
@@ -1326,8 +1283,8 @@ function getEffectiveDailyLatestRow(chartData: MultiSeriesChart2Dataset): MultiS
 
 	// Canonical chart datasets are ascending, so only the final two rows are needed.
 	const previousTimestampRow = source[source.length - 2]
-	const lastTimestamp = lastTimestampRow.timestamp as number
-	const previousTimestamp = previousTimestampRow.timestamp as number
+	const lastTimestamp = lastTimestampRow[0] as number
+	const previousTimestamp = previousTimestampRow[0] as number
 	const isUtcMidnight = lastTimestamp % (24 * 60 * 60 * 1000) === 0
 	const gapMs = lastTimestamp - previousTimestamp
 
@@ -1453,7 +1410,7 @@ export function buildAdapterByChainBreakdownPresentation({
 	selectedProtocols,
 	state
 }: {
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	selectedProtocols: string[]
 	state: ChainsByAdapterBarState | ChainsByAdapterDominanceState
 }): ChainsByAdapterBarPresentation | ChainsByAdapterDominancePresentation {
@@ -1488,10 +1445,7 @@ export function buildAdapterByChainBreakdownPresentation({
 	}
 	const renderedSeriesNames = otherEntityNames.length > 0 ? [...topEntityNames, 'Others'] : topEntityNames
 	const topColors = getNDistinctColors(renderedSeriesNames.length || 1)
-	const topColorBySeriesName: Record<string, string> = Object.create(null)
-	for (let i = 0; i < renderedSeriesNames.length; i++) {
-		topColorBySeriesName[renderedSeriesNames[i]] = topColors[i]
-	}
+	const topColorBySeriesName = Object.fromEntries(renderedSeriesNames.map((name, index) => [name, topColors[index]]))
 
 	switch (state.chartKind) {
 		case 'dominance':
@@ -1527,7 +1481,7 @@ export function buildAdapterByChainLatestValuePresentation({
 	chartKind: 'treemap' | 'hbar'
 	selectedProtocols: string[]
 	groupBy: ChartTimeGroupingWithCumulative
-	chartData: MultiSeriesChart2Dataset
+	chartData: MultiSeriesChartDataset
 	seriesType?: LatestValueSeriesType
 }): ChainsByAdapterTreemapPresentation | ChainsByAdapterHBarPresentation {
 	const latestRows = buildLatestValueRowsFromChartData({

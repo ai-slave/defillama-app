@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { lazy, Suspense } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
@@ -21,10 +21,8 @@ import { UnlocksListView } from './UnlocksListView'
 import { useUnlockChartData } from './useUnlockChartData'
 import { WeekDayColumn } from './WeekDayColumn'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
-const UnlocksTreemapChart = lazy(() => import('~/components/ECharts/UnlocksTreemapChart'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+const UnlocksTreemapChart = lazy(() => import('./TreemapChart'))
 
 const VIEW_MODES = ['Month', 'Week', 'TreeMap', 'List'] as const
 
@@ -247,7 +245,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 
 			{viewMode === 'Week' && weeklyChart ? (
 				<Suspense fallback={<ChartPanelBodyFallback />}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={weeklyChart.dataset}
 						charts={weeklyChart.charts}
 						hideDefaultLegend={weeklyChart.charts.length < 2}
@@ -267,7 +265,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 				<>
 					{monthlyChart ? (
 						<Suspense fallback={<ChartPanelBodyFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={monthlyChart.dataset}
 								charts={monthlyChart.charts}
 								hideDefaultLegend={monthlyChart.charts.length < 2}
@@ -375,4 +373,4 @@ const chartOptions = {
 			return `<div style="font-size: 0.75rem; line-height: 1rem;">${tooltipContent}</div>`
 		}
 	}
-}
+} satisfies MultiSeriesChartOptions

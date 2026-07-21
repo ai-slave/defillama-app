@@ -1,9 +1,14 @@
-import { lazy, useState } from 'react'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
-import { useIncentivesData, chartToTs, type EpochRow, type SpendWindowRow } from './api'
+import { lazy, useMemo, useState } from 'react'
+import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { useIncentivesData, chartToModel, type EpochRow, type SpendWindowRow } from './api'
 import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd, type Col } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+
+const POOL_CHART_OPTIONS = {
+	tooltip: { formatter: createCappedRemainderTooltipFormatter({ valueSymbol: '$' }) }
+} satisfies NonNullable<IMultiSeriesChartProps['chartOptions']>
 
 const PALETTE = [
 	'#6366f1',
@@ -124,18 +129,28 @@ export default function Incentives() {
 	const [epochTab, setEpochTab] = useState<VenueId>('aerodrome')
 
 	const poolChart = data?.weeklyPoolCharts?.[poolTab]
-	const poolSeries = poolChart
-		? chartToTs(poolChart).map((s, i) => {
-				const isAggregate = s.name === '__historical_aggregate__'
-				return {
-					name: isAggregate ? 'Historical Aggregate (pre-breakdown)' : s.name,
-					type: 'bar' as const,
-					stack: 'pool',
-					color: isAggregate ? '#71717a' : PALETTE[i % PALETTE.length],
-					data: s.data
-				}
-			})
-		: []
+	const poolModel = useMemo(
+		() =>
+			poolChart
+				? (() => {
+						const model = chartToModel(poolChart)
+						return {
+							...model,
+							charts: model.charts.map((chart, index) => {
+								const isAggregate = chart.name === '__historical_aggregate__'
+								return {
+									...chart,
+									name: isAggregate ? 'Historical Aggregate (pre-breakdown)' : chart.name,
+									type: 'bar' as const,
+									stack: 'pool',
+									color: isAggregate ? '#71717a' : PALETTE[index % PALETTE.length]
+								}
+							})
+						}
+					})()
+				: undefined,
+		[poolChart]
+	)
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -163,8 +178,17 @@ export default function Incentives() {
 			<SectionHeader>Weekly Spend per Pool</SectionHeader>
 			<ChartCard title="Per-pool weekly spend">
 				<TabBtns<VenueId> active={poolTab} onChange={setPoolTab} options={VENUES} />
-				{poolSeries.length ? (
-					<MultiSeriesChart key={poolTab} series={poolSeries} valueSymbol="$" height="360px" />
+				{poolModel?.dataset.source.length ? (
+					<MultiSeriesChart
+						key={poolTab}
+						dataset={poolModel.dataset}
+						charts={poolModel.charts}
+						chartOptions={POOL_CHART_OPTIONS}
+						valueSymbol="$"
+						height="360px"
+						hideDefaultLegend={false}
+						exportButtons="hidden"
+					/>
 				) : (
 					<div className="px-2 py-6 text-xs text-pro-text-secondary">No weekly pool data</div>
 				)}

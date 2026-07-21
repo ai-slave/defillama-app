@@ -1,25 +1,10 @@
 import { lazy, useMemo, useState } from 'react'
-import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type {
-	IMultiSeriesChart2Props,
-	IMultiSeriesChartProps,
-	MultiSeriesChart2Dataset
-} from '~/components/ECharts/types'
-import { useGrowthData, chartToTs, type LooprDailyRow } from './api'
-import {
-	KpiCard,
-	ChartCard,
-	SectionHeader,
-	ChartSkeleton,
-	SimpleTable,
-	fmtUsd,
-	dollarPctChartOptions,
-	formatNullablePercent
-} from './ui'
+import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { useGrowthData, chartToModel, type LooprDailyRow } from './api'
+import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd, formatNullablePercent } from './ui'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const UNITLESS_SINGLE_SERIES_CHART_OPTIONS = createSingleSeriesChartOptions('')
@@ -39,7 +24,7 @@ const SPEND_VENUES = [
 	{ id: 'votemarket', label: 'VoteMarket' }
 ]
 
-const ACTIVE_ACCOUNTS_CHART: IMultiSeriesChart2Props['charts'] = [
+const ACTIVE_ACCOUNTS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Active Accounts',
 		type: 'line',
@@ -47,7 +32,7 @@ const ACTIVE_ACCOUNTS_CHART: IMultiSeriesChart2Props['charts'] = [
 		color: '#6366f1'
 	}
 ]
-const ACTIVE_POSITIONS_CHART: IMultiSeriesChart2Props['charts'] = [
+const ACTIVE_POSITIONS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Active Positions',
 		type: 'line',
@@ -55,7 +40,7 @@ const ACTIVE_POSITIONS_CHART: IMultiSeriesChart2Props['charts'] = [
 		color: '#34d399'
 	}
 ]
-const CUMULATIVE_ACCOUNTS_CHART: IMultiSeriesChart2Props['charts'] = [
+const CUMULATIVE_ACCOUNTS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Cumulative Accounts',
 		type: 'line',
@@ -63,7 +48,7 @@ const CUMULATIVE_ACCOUNTS_CHART: IMultiSeriesChart2Props['charts'] = [
 		color: '#fb923c'
 	}
 ]
-const CUMULATIVE_POSITIONS_CHART: IMultiSeriesChart2Props['charts'] = [
+const CUMULATIVE_POSITIONS_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'Cumulative Positions',
 		type: 'line',
@@ -71,7 +56,7 @@ const CUMULATIVE_POSITIONS_CHART: IMultiSeriesChart2Props['charts'] = [
 		color: '#a78bfa'
 	}
 ]
-const MET_PRICE_CHART: IMultiSeriesChart2Props['charts'] = [
+const MET_PRICE_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'MET Price',
 		type: 'line',
@@ -79,7 +64,7 @@ const MET_PRICE_CHART: IMultiSeriesChart2Props['charts'] = [
 		color: '#fb923c'
 	}
 ]
-const VSP_PRICE_CHART: IMultiSeriesChart2Props['charts'] = [
+const VSP_PRICE_CHART: IMultiSeriesChartProps['charts'] = [
 	{
 		name: 'VSP Price',
 		type: 'line',
@@ -116,11 +101,17 @@ function TabBtns({
 	)
 }
 
-function dailyToPairs(rows: LooprDailyRow[] | undefined, metric: keyof LooprDailyRow): Array<[number, number | null]> {
+function dailyToPairs(
+	rows: LooprDailyRow[] | undefined,
+	metric: 'active_users' | 'active_positions'
+): Array<[number, number | null]> {
 	if (!rows) return []
-	return rows.map(
-		(r) => [Math.floor(Date.parse(r.day + 'T00:00:00Z') / 1000), Number(r[metric] ?? 0)] as [number, number | null]
-	)
+	const points = new Array<[number, number | null]>(rows.length)
+	for (let i = 0; i < rows.length; i++) {
+		const row = rows[i]
+		points[i] = [Math.floor(Date.parse(`${row.day}T00:00:00Z`) / 1000), row[metric]]
+	}
+	return points
 }
 
 function capitalize(s: string) {
@@ -136,96 +127,150 @@ export default function Growth() {
 	const [spendVenue, setSpendVenue] = useState('aerodrome')
 
 	const looprTotalDatasets = useMemo(() => {
-		const source: MultiSeriesChart2Dataset['source'] = (loopr?.total ?? []).map((row) => ({
-			timestamp: Date.parse(`${row.day}T00:00:00Z`),
-			'Active Accounts': row.active_users,
-			'Active Positions': row.active_positions,
-			'Cumulative Accounts': row.cumulative_users,
-			'Cumulative Positions': row.cumulative_positions
-		}))
+		const activeAccounts: number[][] = []
+		const activePositions: number[][] = []
+		const cumulativeAccounts: number[][] = []
+		const cumulativePositions: number[][] = []
+		for (const row of loopr?.total ?? []) {
+			const timestamp = Date.parse(`${row.day}T00:00:00Z`)
+			activeAccounts.push([timestamp, row.active_users])
+			activePositions.push([timestamp, row.active_positions])
+			cumulativeAccounts.push([timestamp, row.cumulative_users])
+			cumulativePositions.push([timestamp, row.cumulative_positions])
+		}
 		return {
-			activeAccounts: { dimensions: ['timestamp', 'Active Accounts'], source },
-			activePositions: { dimensions: ['timestamp', 'Active Positions'], source },
-			cumulativeAccounts: { dimensions: ['timestamp', 'Cumulative Accounts'], source },
-			cumulativePositions: { dimensions: ['timestamp', 'Cumulative Positions'], source }
-		} satisfies Record<string, MultiSeriesChart2Dataset>
+			activeAccounts: { dimensions: ['timestamp', 'Active Accounts'], source: activeAccounts },
+			activePositions: { dimensions: ['timestamp', 'Active Positions'], source: activePositions },
+			cumulativeAccounts: { dimensions: ['timestamp', 'Cumulative Accounts'], source: cumulativeAccounts },
+			cumulativePositions: { dimensions: ['timestamp', 'Cumulative Positions'], source: cumulativePositions }
+		} satisfies Record<string, MultiSeriesChartDataset>
 	}, [loopr?.total])
 
 	const tokenPriceDatasets = useMemo(() => {
-		const met: MultiSeriesChart2Dataset = {
+		const met: MultiSeriesChartDataset = {
 			dimensions: ['timestamp', 'MET Price'],
-			source: (data?.tokenPrices?.MET?.history ?? []).map((point) => ({
-				timestamp: point.timestamp * 1e3,
-				'MET Price': point.price
-			}))
+			source: (data?.tokenPrices?.MET?.history ?? []).map((point) => [point.timestamp * 1e3, point.price])
 		}
-		const vsp: MultiSeriesChart2Dataset = {
+		const vsp: MultiSeriesChartDataset = {
 			dimensions: ['timestamp', 'VSP Price'],
-			source: (data?.tokenPrices?.VSP?.history ?? []).map((point) => ({
-				timestamp: point.timestamp * 1e3,
-				'VSP Price': point.price
-			}))
+			source: (data?.tokenPrices?.VSP?.history ?? []).map((point) => [point.timestamp * 1e3, point.price])
 		}
 		return { met, vsp }
 	}, [data?.tokenPrices])
 
-	const perChainActiveUsers = loopr?.chains
-		? Object.entries(loopr.chains).map(([chain, rows]) => ({
-				name: capitalize(chain),
-				type: 'line' as const,
-				color: CHAIN_COLORS[capitalize(chain)] || '#6366f1',
-				data: dailyToPairs(rows, 'active_users')
-			}))
-		: undefined
+	const perChainModels = useMemo(() => {
+		if (!loopr?.chains) return undefined
+		const entries = Object.entries(loopr.chains)
+		const build = (metric: 'active_users' | 'active_positions') =>
+			buildSparseCartesianChartModel(
+				entries.map(([chain, rows]) => {
+					const name = capitalize(chain)
+					return {
+						name,
+						type: 'line' as const,
+						color: CHAIN_COLORS[name] || '#6366f1',
+						connectNulls: true,
+						data: dailyToPairs(rows, metric)
+					}
+				})
+			)
+		return { activeUsers: build('active_users'), activePositions: build('active_positions') }
+	}, [loopr?.chains])
 
-	const perChainActivePositions = loopr?.chains
-		? Object.entries(loopr.chains).map(([chain, rows]) => ({
-				name: capitalize(chain),
-				type: 'line' as const,
-				color: CHAIN_COLORS[capitalize(chain)] || '#6366f1',
-				data: dailyToPairs(rows, 'active_positions')
-			}))
-		: undefined
+	const depositsModel = useMemo(
+		() =>
+			data?.depositsByChain
+				? (() => {
+						const model = chartToModel(data.depositsByChain)
+						return {
+							...model,
+							charts: model.charts.map((chart) => ({
+								...chart,
+								type: 'line' as const,
+								color: CHAIN_COLORS[chart.name] || '#6366f1'
+							}))
+						}
+					})()
+				: undefined,
+		[data?.depositsByChain]
+	)
 
-	const deposits = data?.depositsByChain
-		? chartToTs(data.depositsByChain).map((s) => ({
-				name: s.name,
-				type: 'line' as const,
-				color: CHAIN_COLORS[s.name] || '#6366f1',
-				data: s.data
-			}))
-		: undefined
+	const marketComboModel = useMemo(
+		() =>
+			data?.marketComparison?.combined
+				? (() => {
+						const model = chartToModel(data.marketComparison.combined)
+						return {
+							...model,
+							charts: model.charts.map((chart, index) => ({
+								...chart,
+								type: 'line' as const,
+								color: index === 0 ? '#6366f1' : '#f59e0b'
+							}))
+						}
+					})()
+				: undefined,
+		[data?.marketComparison?.combined]
+	)
 
-	const marketComboSeries = data?.marketComparison?.combined
-		? chartToTs(data.marketComparison.combined).map((s, i) => ({
-				name: s.name,
-				type: 'line' as const,
-				color: i === 0 ? '#6366f1' : '#f59e0b',
-				data: s.data
-			}))
-		: undefined
+	const morphoMarketModel = useMemo(
+		() =>
+			cs.morphoMarket
+				? (() => {
+						const model = chartToModel(cs.morphoMarket)
+						return {
+							...model,
+							charts: model.charts.map((chart, index) => ({
+								...chart,
+								type: 'line' as const,
+								color: ['#6366f1', '#fb923c', '#34d399'][index] || '#6366f1',
+								yAxisIndex: chart.name.includes('%') ? 1 : 0,
+								valueSymbol: chart.name.includes('%') ? '%' : '$'
+							}))
+						}
+					})()
+				: undefined,
+		[cs.morphoMarket]
+	)
 
-	const morphoMarket = cs.morphoMarket
-		? chartToTs(cs.morphoMarket).map((s, i) => ({
-				name: s.name,
-				type: 'line' as const,
-				color: ['#6366f1', '#fb923c', '#34d399'][i] || '#6366f1',
-				data: s.data,
-				yAxisIndex: s.name.includes('%') ? 1 : 0
-			}))
-		: undefined
+	const morphoMarkets = useMemo(
+		() =>
+			(cs.morphoMarkets ?? []).map((market) => {
+				const model = chartToModel(market)
+				return {
+					market,
+					model: {
+						...model,
+						charts: model.charts.map((chart, index) => ({
+							...chart,
+							type: 'line' as const,
+							color: ['#6366f1', '#fb923c', '#34d399'][index] || '#6366f1',
+							yAxisIndex: chart.name.includes('%') ? 1 : 0,
+							valueSymbol: chart.name.includes('%') ? '%' : '$'
+						}))
+					}
+				}
+			}),
+		[cs.morphoMarkets]
+	)
 
-	const morphoMarkets = cs.morphoMarkets ?? []
-	const spendVsTvlBlock = (cs.spendVsTvl || []).find((s) => s.venue === spendVenue)
-	const spendVsTvlSeries = spendVsTvlBlock
-		? chartToTs(spendVsTvlBlock).map((s, i) => ({
-				name: s.name,
-				type: i === 0 ? ('line' as const) : ('bar' as const),
-				color: i === 0 ? '#6366f1' : '#fb923c',
-				data: s.data,
-				yAxisIndex: i
-			}))
-		: undefined
+	const spendVsTvl = useMemo(() => {
+		const block = (cs.spendVsTvl ?? []).find((item) => item.venue === spendVenue)
+		if (!block) return undefined
+		const model = chartToModel(block)
+		return {
+			block,
+			model: {
+				...model,
+				charts: model.charts.map((chart, index) => ({
+					...chart,
+					type: index === 0 ? ('line' as const) : ('bar' as const),
+					color: index === 0 ? '#6366f1' : '#fb923c',
+					yAxisIndex: index
+				}))
+			}
+		}
+	}, [cs.spendVsTvl, spendVenue])
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -242,7 +287,7 @@ export default function Growth() {
 					<ChartSkeleton title="Active Accounts" />
 				) : (
 					<ChartCard title="Active Accounts" subtitle="Owner-deduped across chains">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={looprTotalDatasets.activeAccounts}
 							charts={ACTIVE_ACCOUNTS_CHART}
 							valueSymbol=""
@@ -255,7 +300,7 @@ export default function Growth() {
 					<ChartSkeleton title="Active Positions" />
 				) : (
 					<ChartCard title="Active Positions" subtitle="Combined open positions">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={looprTotalDatasets.activePositions}
 							charts={ACTIVE_POSITIONS_CHART}
 							valueSymbol=""
@@ -269,7 +314,7 @@ export default function Growth() {
 			<SectionHeader>Loopr · Cumulative Onboarding</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartCard title="Cumulative Accounts" subtitle="Owner-deduped across chains">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={looprTotalDatasets.cumulativeAccounts}
 						charts={CUMULATIVE_ACCOUNTS_CHART}
 						valueSymbol=""
@@ -278,7 +323,7 @@ export default function Growth() {
 					/>
 				</ChartCard>
 				<ChartCard title="Cumulative Positions" subtitle="Across all chains">
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={looprTotalDatasets.cumulativePositions}
 						charts={CUMULATIVE_POSITIONS_CHART}
 						valueSymbol=""
@@ -290,23 +335,44 @@ export default function Growth() {
 
 			<SectionHeader>Loopr · Per-Chain Activity</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				{perChainActiveUsers && (
+				{perChainModels?.activeUsers && (
 					<ChartCard title="Active Users by Chain">
-						<MultiSeriesChart series={perChainActiveUsers} height="280px" />
+						<MultiSeriesChart
+							dataset={perChainModels.activeUsers.dataset}
+							charts={perChainModels.activeUsers.charts}
+							valueSymbol=""
+							height="280px"
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
 					</ChartCard>
 				)}
-				{perChainActivePositions && (
+				{perChainModels?.activePositions && (
 					<ChartCard title="Active Positions by Chain">
-						<MultiSeriesChart series={perChainActivePositions} height="280px" />
+						<MultiSeriesChart
+							dataset={perChainModels.activePositions.dataset}
+							charts={perChainModels.activePositions.charts}
+							valueSymbol=""
+							height="280px"
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
 					</ChartCard>
 				)}
 			</div>
 
-			{deposits && (
+			{depositsModel && (
 				<>
 					<SectionHeader>Loopr · Deposits by Chain</SectionHeader>
 					<ChartCard title="Total deposits over time" subtitle="USD deposits per chain">
-						<MultiSeriesChart series={deposits} valueSymbol="$" height="320px" />
+						<MultiSeriesChart
+							dataset={depositsModel.dataset}
+							charts={depositsModel.charts}
+							valueSymbol="$"
+							height="320px"
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
 					</ChartCard>
 				</>
 			)}
@@ -351,7 +417,7 @@ export default function Growth() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{tokenPriceDatasets.met.source.length > 0 && (
 					<ChartCard title="MET Price" subtitle="Metronome governance token">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={tokenPriceDatasets.met}
 							charts={MET_PRICE_CHART}
 							valueSymbol="$"
@@ -362,7 +428,7 @@ export default function Growth() {
 				)}
 				{tokenPriceDatasets.vsp.source.length > 0 && (
 					<ChartCard title="VSP Price" subtitle="Vesper governance token">
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={tokenPriceDatasets.vsp}
 							charts={VSP_PRICE_CHART}
 							valueSymbol="$"
@@ -373,28 +439,36 @@ export default function Growth() {
 				)}
 			</div>
 
-			{marketComboSeries && (
+			{marketComboModel && (
 				<>
 					<SectionHeader>Ecosystem TVL Change vs ETH (cumulative)</SectionHeader>
 					<ChartCard
 						title="Cumulative % change since baseline"
 						subtitle="Combined ecosystem TVL change vs ETH/USD change — 2y window"
 					>
-						<MultiSeriesChart series={marketComboSeries} valueSymbol="%" height="320px" />
+						<MultiSeriesChart
+							dataset={marketComboModel.dataset}
+							charts={marketComboModel.charts}
+							valueSymbol="%"
+							height="320px"
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
 					</ChartCard>
 				</>
 			)}
 
-			{morphoMarket && (
+			{morphoMarketModel && (
 				<>
 					<SectionHeader>Morpho Market · Supply / Borrow / Utilization</SectionHeader>
 					<ChartCard title="Featured Morpho market" subtitle="Daily supply / borrow / utilization">
 						<MultiSeriesChart
-							series={morphoMarket}
+							dataset={morphoMarketModel.dataset}
+							charts={morphoMarketModel.charts}
 							valueSymbol="$"
-							yAxisSymbols={['$', '%']}
 							height="340px"
-							chartOptions={dollarPctChartOptions}
+							hideDefaultLegend={false}
+							exportButtons="hidden"
 						/>
 					</ChartCard>
 				</>
@@ -404,22 +478,20 @@ export default function Growth() {
 				<>
 					<SectionHeader>Metronome Morpho Markets</SectionHeader>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-						{morphoMarkets.map((m) => {
-							const series = chartToTs(m).map((s, i) => ({
-								name: s.name,
-								type: 'line' as const,
-								color: ['#6366f1', '#fb923c', '#34d399'][i] || '#6366f1',
-								data: s.data,
-								yAxisIndex: s.name.includes('%') ? 1 : 0
-							}))
+						{morphoMarkets.map(({ market, model }) => {
 							return (
-								<ChartCard key={m.id} title={m.title || m.label} subtitle="Daily supply / borrow / utilization">
+								<ChartCard
+									key={market.id}
+									title={market.title || market.label}
+									subtitle="Daily supply / borrow / utilization"
+								>
 									<MultiSeriesChart
-										series={series}
+										dataset={model.dataset}
+										charts={model.charts}
 										valueSymbol="$"
-										yAxisSymbols={['$', '%']}
 										height="300px"
-										chartOptions={dollarPctChartOptions}
+										hideDefaultLegend={false}
+										exportButtons="hidden"
 									/>
 								</ChartCard>
 							)
@@ -428,7 +500,7 @@ export default function Growth() {
 				</>
 			)}
 
-			{spendVsTvlBlock && (
+			{spendVsTvl && (
 				<>
 					<SectionHeader>Incentive Spend vs Pool TVL · Efficiency</SectionHeader>
 					<ChartCard
@@ -438,10 +510,12 @@ export default function Growth() {
 						<TabBtns active={spendVenue} onChange={setSpendVenue} options={SPEND_VENUES} />
 						<MultiSeriesChart
 							key={spendVenue}
-							series={spendVsTvlSeries}
+							dataset={spendVsTvl.model.dataset}
+							charts={spendVsTvl.model.charts}
 							valueSymbol="$"
-							yAxisSymbols={['$', '$']}
 							height="340px"
+							hideDefaultLegend={false}
+							exportButtons="hidden"
 						/>
 					</ChartCard>
 				</>

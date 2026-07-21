@@ -1,7 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useEffect, useMemo, type ComponentProps } from 'react'
-import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
+import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { fetchChainsCategories } from '~/containers/Chains/api'
 import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
 import { filterDataByTimePeriod } from '~/containers/ProDashboard/queries'
@@ -23,8 +24,8 @@ import { buildChartBuilderSeriesView, isChartBuilderSnapshotMetric } from '../ch
 import { createChartBuilderTooltipFormatter } from '../chartBuilderTooltip'
 import type { ChartBuilderConfig } from './types'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
-const TreeMapBuilderChart = lazy(() => import('~/components/ECharts/TreeMapBuilderChart'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const BuilderTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/Builder'))
 
 const EMPTY_PROTOCOLS: ProtocolLite[] = []
 const EMPTY_CATEGORIES: string[] = []
@@ -359,7 +360,7 @@ export function ChartBuilderTab({
 		[visibleSeries, isSnapshotMetric, chartBuilder.chartType, chartBuilder.displayAs, resolveSeriesColor]
 	)
 
-	const previewChartOptions = useMemo(
+	const previewChartOptions = useMemo<MultiSeriesChartOptions>(
 		() => ({
 			grid: chartGrid({ top: CHART_LEGEND_RESERVE }),
 			legend: {
@@ -911,9 +912,9 @@ export function ChartBuilderTab({
 									}
 								>
 									{chartBuilder.chartType === 'treemap' ? (
-										<TreeMapBuilderChart data={treemapData} height="450px" />
+										<BuilderTreemapChart data={treemapData} height="450px" />
 									) : (
-										<MultiSeriesChart2
+										<MultiSeriesChart
 											height="450px"
 											dataset={previewChart.dataset}
 											charts={previewChart.charts}

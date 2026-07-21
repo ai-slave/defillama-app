@@ -1,9 +1,9 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
-import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { Icon } from '~/ui/Icon'
 import type { ChartConfig, MultiChartConfig, TextConfig } from '../types'
 import { CHART_TYPES } from '../types'
@@ -11,14 +11,12 @@ import { buildMultiChartSeriesView, type MultiChartInputSeries } from './multiCh
 import { ProtocolsByChainTable } from './ProTable'
 import { TextCard } from './TextCard'
 
-const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const DEMO_CHAINS = ['Ethereum']
 
-type DemoChartPoint = { timestamp: number; Value: number }
-
-const generateFakeChartData = (baseValue: number, volatility: number = 0.1): DemoChartPoint[] => {
-	const data = new Array<DemoChartPoint>(90)
+const generateFakeChartData = (baseValue: number, volatility: number = 0.1): MultiSeriesChartDataset['source'] => {
+	const data = new Array<MultiSeriesChartDataset['source'][number]>(90)
 	const now = new Date()
 	let currentValue = baseValue
 
@@ -31,10 +29,7 @@ const generateFakeChartData = (baseValue: number, volatility: number = 0.1): Dem
 		if (i > 60) currentValue *= 1.0005
 		if (i < 30) currentValue *= 1.001
 
-		data[dataIndex] = {
-			timestamp: date.getTime(),
-			Value: Math.round(currentValue)
-		}
+		data[dataIndex] = [date.getTime(), Math.round(currentValue)]
 	}
 
 	return data
@@ -48,7 +43,7 @@ const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
 	}
 	const itemName = chart.protocol || chart.chain || 'Demo'
 
-	const dataset = React.useMemo<MultiSeriesChart2Dataset>(
+	const dataset = React.useMemo<MultiSeriesChartDataset>(
 		() => ({
 			source: generateFakeChartData(
 				chart.type === 'tvl' ? 50000000 : chart.type === 'volume' ? 10000000 : chart.type === 'fees' ? 500000 : 2000000,
@@ -58,7 +53,7 @@ const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
 		}),
 		[chart.type]
 	)
-	const charts = React.useMemo<MultiSeriesChart2SeriesConfig[]>(
+	const charts = React.useMemo<MultiSeriesChartSeriesConfig[]>(
 		() => [
 			{
 				type: chartTypeDetails.chartType === 'bar' ? 'bar' : 'line',
@@ -84,7 +79,7 @@ const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
 			</div>
 			<div className="flex-1">
 				<React.Suspense fallback={<></>}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={dataset}
 						charts={charts}
 						valueSymbol="$"
@@ -121,7 +116,7 @@ const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 				0.08
 			)
 
-			const data: [number, number][] = fakeData.map(({ timestamp, Value }) => [Math.floor(timestamp / 1000), Value])
+			const data: [number, number][] = fakeData.map((row) => [Math.floor((row[0] as number) / 1000), row[1] as number])
 
 			const chartType = CHART_TYPES[item.type] || { title: item.type, chartType: 'line' }
 
@@ -164,7 +159,7 @@ const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 			<h2 className="p-1 text-base font-semibold md:p-3">{multi.name}</h2>
 			<div className="flex-1">
 				<React.Suspense fallback={<></>}>
-					<MultiSeriesChart2
+					<MultiSeriesChart
 						dataset={chartView.dataset}
 						charts={chartView.charts}
 						valueSymbol="$"

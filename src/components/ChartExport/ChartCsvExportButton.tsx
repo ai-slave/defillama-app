@@ -13,6 +13,10 @@ function isStringArray(x: unknown): x is string[] {
 	return Array.isArray(x) && x.every((v) => typeof v === 'string')
 }
 
+function getOwnRecordValue(record: Record<string, unknown>, key: string): unknown {
+	return Object.hasOwn(record, key) ? record[key] : undefined
+}
+
 function normalizeEpochSeconds(x: unknown): number | null {
 	if (typeof x !== 'number' && typeof x !== 'string') return null
 	const n = typeof x === 'number' ? x : Number(x)
@@ -67,6 +71,7 @@ export function buildCsvRowsFromDataset(dimensions: string[] | null, source: unk
 			const keys = new Set<string>()
 			let hasTimestamp = false
 			for (const key in first) {
+				if (!Object.hasOwn(first, key)) continue
 				if (key === 'timestamp') {
 					hasTimestamp = true
 					continue
@@ -97,8 +102,8 @@ export function buildCsvRowsFromDataset(dimensions: string[] | null, source: unk
 			let values: CsvCell[] = []
 
 			if (isRecord(row)) {
-				tsRaw = row.timestamp
-				values = seriesDims.map((k) => toChartCsvCell(row[k]))
+				tsRaw = getOwnRecordValue(row, 'timestamp')
+				values = seriesDims.map((k) => toChartCsvCell(getOwnRecordValue(row, k)))
 			} else if (Array.isArray(row)) {
 				tsRaw = tsIndex >= 0 ? row[tsIndex] : ''
 				values = seriesIndexes.map((idx) => toChartCsvCell(idx >= 0 ? row[idx] : ''))
@@ -115,7 +120,7 @@ export function buildCsvRowsFromDataset(dimensions: string[] | null, source: unk
 	rows.push([...dims])
 	for (const row of dataRows) {
 		if (isRecord(row)) {
-			rows.push(dims.map((k) => toChartCsvCell(row[k])))
+			rows.push(dims.map((k) => toChartCsvCell(getOwnRecordValue(row, k))))
 			continue
 		}
 		if (Array.isArray(row)) {

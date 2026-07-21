@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
-import { formatBarChart, formatLineChart } from '~/components/ECharts/utils'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
+import { formatBarChart, formatLineChart } from '~/components/ECharts/shared/timeSeries'
 import { useGetBridgeChartDataByChain } from '~/containers/Bridges/queries.client'
 import { useGetStabelcoinsChartDataByChain } from '~/containers/Stablecoins/queries.client'
 import {

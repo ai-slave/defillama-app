@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
-import { assignColors, chartToTs, defaultZoomOptions, seriesPairs, zoomStartPct, type ChartData } from './api'
+import { assignColors, chartToModel, defaultZoomOptions, zoomStartPct, type ChartData } from './api'
 
 describe('Odyssey chart API contracts', () => {
 	it('aligns date and series arrays while preserving missing observations', () => {
@@ -8,21 +7,16 @@ describe('Odyssey chart API contracts', () => {
 			dates: ['2026-01-01', '2026-01-02'],
 			series: [{ name: 'TVL', data: [10], color: '#123' }]
 		} satisfies ChartData
-		const series: NonNullable<IMultiSeriesChartProps['series']> = chartToTs(chart)
-		expect(series).toEqual([
-			{
-				name: 'TVL',
-				type: 'line',
-				color: '#123',
-				data: [
-					[Date.parse('2026-01-01T00:00:00Z') / 1e3, 10],
-					[Date.parse('2026-01-02T00:00:00Z') / 1e3, null]
-				]
-			}
-		])
-		expect(seriesPairs(chart.dates, [1, null])).toEqual([
-			[Date.parse('2026-01-01T00:00:00Z') / 1e3, 1],
-			[Date.parse('2026-01-02T00:00:00Z') / 1e3, null]
+		const model = chartToModel(chart)
+		expect(model.dataset).toEqual({
+			dimensions: ['timestamp', 'TVL'],
+			source: [
+				[Date.parse('2026-01-01T00:00:00Z'), 10],
+				[Date.parse('2026-01-02T00:00:00Z'), null]
+			]
+		})
+		expect(model.charts).toEqual([
+			expect.objectContaining({ name: 'TVL', type: 'line', color: '#123', encode: { x: 0, y: 1 } })
 		])
 	})
 

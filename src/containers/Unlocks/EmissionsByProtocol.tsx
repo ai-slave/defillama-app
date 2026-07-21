@@ -2,8 +2,8 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { useGeckoId, usePriceChart } from '~/api/client'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
-import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetProtocolEmissions } from '~/containers/Unlocks/queries.client'
@@ -47,9 +47,9 @@ interface IEmission {
 		documented: Array<{ timestamp: number; [label: string]: number }>
 		realtime: Array<{ timestamp: number; [label: string]: number }>
 	}
-	/** Pre-built MultiSeriesChart2 datasets keyed by data type. */
+	/** Pre-built MultiSeriesChart datasets keyed by data type. */
 	datasets: { documented: EmissionsDataset; realtime: EmissionsDataset }
-	/** Pre-built MultiSeriesChart2 chart configs keyed by data type. */
+	/** Pre-built MultiSeriesChart chart configs keyed by data type. */
 	chartsConfigs: { documented: EmissionsChartConfig; realtime: EmissionsChartConfig }
 	notes: Array<string>
 	events: Array<{
@@ -107,9 +107,7 @@ const getExtendedColors = ({
 
 const EXCLUDED_CHART_CATEGORIES = new Set(['Market Cap', 'Price'])
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
@@ -209,7 +207,7 @@ type DataType = (typeof DATA_TYPES)[number]
 const TIME_GROUPINGS = ['D', 'W', 'M', 'Q', 'Y'] as const
 type TimeGrouping = (typeof TIME_GROUPINGS)[number]
 
-const CHART_GROUP_BY: Record<TimeGrouping, NonNullable<IMultiSeriesChart2Props['groupBy']>> = {
+const CHART_GROUP_BY: Record<TimeGrouping, NonNullable<IMultiSeriesChartProps['groupBy']>> = {
 	D: 'daily',
 	W: 'weekly',
 	M: 'monthly',
@@ -234,7 +232,7 @@ function groupChartDataByTime(
 ): Array<{ timestamp: number } & Record<string, number | null>> {
 	if (groupBy === 'D') return chartData
 
-	const grouped = createChartRecord<Record<string, number | null>>()
+	const grouped = {}
 
 	for (const entry of chartData) {
 		const ts = entry.timestamp
@@ -258,7 +256,7 @@ function groupChartDataByTime(
 		}
 
 		if (!grouped[groupKey]) {
-			grouped[groupKey] = createChartRecord<number | null>()
+			grouped[groupKey] = {}
 		}
 
 		for (const key in entry) {
@@ -514,16 +512,6 @@ const ChartContainer = ({
 
 	const setQueryParam = (key: string, value: string | undefined) => pushShallowQuery(router, { [key]: value })
 
-	const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
-		const initialCategoriesFromData = data.categories?.[dataType] ?? EMPTY_STRING_LIST
-		if (allocationMode === 'standard' && data.categoriesBreakdown) {
-			return Object.keys(data.categoriesBreakdown)
-		} else if (initialCategoriesFromData.length > 0) {
-			return initialCategoriesFromData.filter((cat) => !EXCLUDED_CHART_CATEGORIES.has(cat))
-		}
-		return []
-	})
-
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
 	const categoriesFromData = data.categories?.[dataType] ?? EMPTY_STRING_LIST
@@ -583,11 +571,11 @@ const ChartContainer = ({
 	const normilizePriceChart = useMemo(() => {
 		if (!priceChartForOverlay) return null
 		const sourceData = priceChartForOverlay || {}
-		const result = createChartRecord<Record<number, number>>()
+		const result: Record<string, Record<number, number>> = {}
 		for (const name in sourceData) {
 			const chart = sourceData[name] as Array<[number, number]>
 			if (Array.isArray(chart)) {
-				const innerResult = createChartRecord<number>() as Record<number, number>
+				const innerResult = {} as Record<number, number>
 				for (const [date, price] of chart) {
 					innerResult[Math.floor(date / 1e3)] = price
 				}
@@ -690,10 +678,23 @@ const ChartContainer = ({
 		return [...filtered, ...padding]
 	}, [rawChartData, isPriceActive, isMcapActive, normilizePriceChart])
 
-	const availableCategories =
-		allocationMode === 'standard'
-			? Object.keys(data.categoriesBreakdown ?? {})
-			: categoriesFromData.filter((cat) => !EXCLUDED_CHART_CATEGORIES.has(cat))
+	const availableCategories = useMemo(
+		() =>
+			allocationMode === 'standard'
+				? Object.keys(data.categoriesBreakdown ?? {})
+				: categoriesFromData.filter((cat) => !EXCLUDED_CHART_CATEGORIES.has(cat)),
+		[allocationMode, categoriesFromData, data.categoriesBreakdown]
+	)
+	const categorySelectionKey = `${dataType}:${allocationMode}`
+	const [categorySelection, setCategorySelection] = useState(() => ({
+		key: categorySelectionKey,
+		values: availableCategories
+	}))
+	// Shallow route changes preserve React state. Scope the selection to the data and
+	// allocation modes so raw category names are never reused against grouped rows.
+	const selectedCategories =
+		categorySelection.key === categorySelectionKey ? categorySelection.values : availableCategories
+	const setSelectedCategories = (values: string[]) => setCategorySelection({ key: categorySelectionKey, values })
 
 	const displayData = useMemo(() => {
 		let result = chartData
@@ -747,6 +748,19 @@ const ChartContainer = ({
 	}))
 
 	const allocationPieStackColors = allocationMode === 'standard' ? standardGroupColors : stackColors
+	const standardChartColors = useMemo(() => {
+		const colors = { ...standardGroupColors }
+		for (const group in data.categoriesBreakdown ?? {}) {
+			const baseGroup = group.endsWith(' (forecast)')
+				? group.slice(0, -' (forecast)'.length)
+				: group.endsWith(' (TBD)')
+					? group.slice(0, -' (TBD)'.length)
+					: group
+			const baseColor = standardGroupColors[baseGroup]
+			if (baseColor) colors[group] = baseColor
+		}
+		return colors
+	}, [data.categoriesBreakdown])
 
 	const formattedAllocationPieStackColors = Object.fromEntries(
 		Object.entries(allocationPieStackColors).map(([label, color]) => [formatUnlockLabel(label), color])
@@ -776,45 +790,50 @@ const ChartContainer = ({
 			colors:
 				allocationMode === 'standard'
 					? isPriceActive || isMcapActive
-						? getExtendedColors({ baseColors: standardGroupColors, isPriceActive, isMcapActive })
-						: standardGroupColors
+						? getExtendedColors({ baseColors: standardChartColors, isPriceActive, isMcapActive })
+						: standardChartColors
 					: isPriceActive || isMcapActive
 						? getExtendedColors({ baseColors: stackColors, isPriceActive, isMcapActive })
 						: stackColors
 		}
-	}, [isPriceActive, isMcapActive, selectedCategories, stackColors, allocationMode, displayData, chartType])
+	}, [
+		isPriceActive,
+		isMcapActive,
+		selectedCategories,
+		stackColors,
+		standardChartColors,
+		allocationMode,
+		displayData,
+		chartType
+	])
 
-	const dataset = useMemo<MultiSeriesChart2Dataset>(() => {
+	const dataset = useMemo<MultiSeriesChartDataset>(() => {
 		const stacks = chartConfig.stacks
 		const dimensions = ['timestamp', ...stacks]
-
-		// In bar (expand-to-100%) mode we need to normalize values per row.
-		// In line mode the displayData rows already contain all needed keys, so pass through directly.
-		if (chartType !== 'bar') {
-			return { source: displayData, dimensions }
-		}
-
 		const overlaySet = new Set(chartConfig.customYAxis)
-		const source = new Array(displayData.length)
+		const source = new Array<MultiSeriesChartDataset['source'][number]>(displayData.length)
 		for (let i = 0; i < displayData.length; i++) {
 			const entry = displayData[i]
-			const row = createChartRow<number | null>(entry.timestamp)
-			// Sum only non-overlay (unlock category) series for percentage calculation.
-			// Overlay series like Price / Market Cap use separate Y-axes with dollar values
-			// and must not participate in the normalization.
+			const row = new Array<number | null | undefined>(dimensions.length)
+			row[0] = entry.timestamp
 			let sum = 0
-			for (const s of stacks) {
-				const value = entry[s]
-				if (!overlaySet.has(s) && typeof value === 'number' && Number.isFinite(value)) sum += value
+			if (chartType === 'bar') {
+				// Price and market cap use separate axes and are not part of the percentage total.
+				for (const stack of stacks) {
+					const value = entry[stack]
+					if (!overlaySet.has(stack) && typeof value === 'number' && Number.isFinite(value)) sum += value
+				}
 			}
-			for (const s of stacks) {
-				if (overlaySet.has(s)) {
-					const val = entry[s]
-					row[s] = typeof val === 'number' && Number.isFinite(val) ? val : null
+			for (let stackIndex = 0; stackIndex < stacks.length; stackIndex++) {
+				const stack = stacks[stackIndex]
+				const value = entry[stack]
+				if (chartType !== 'bar') {
+					row[stackIndex + 1] = value
+				} else if (overlaySet.has(stack)) {
+					row[stackIndex + 1] = typeof value === 'number' && Number.isFinite(value) ? value : null
 				} else {
-					const value = entry[s]
 					const raw = typeof value === 'number' && Number.isFinite(value) ? value : 0
-					row[s] = sum > 0 ? (raw / sum) * 100 : 0
+					row[stackIndex + 1] = sum > 0 ? (raw / sum) * 100 : 0
 				}
 			}
 			source[i] = row
@@ -822,11 +841,11 @@ const ChartContainer = ({
 		return { source, dimensions }
 	}, [displayData, chartConfig.stacks, chartConfig.customYAxis, chartType])
 
-	const charts = useMemo<IMultiSeriesChart2Props['charts']>(() => {
+	const charts = useMemo<IMultiSeriesChartProps['charts']>(() => {
 		const stacks = chartConfig.stacks
 		const colors = chartConfig.colors
 		const customYAxis = chartConfig.customYAxis
-		return stacks.map((name) => {
+		return stacks.map((name, index) => {
 			const yIdx = customYAxis?.indexOf(name) ?? -1
 			const isOverlay = yIdx !== -1
 			const isTBD = tbdSections.includes(name)
@@ -834,7 +853,7 @@ const ChartContainer = ({
 			return {
 				type: isOverlay ? 'line' : chartType,
 				name: formatUnlockLabel(name),
-				encode: { x: 'timestamp', y: name },
+				encode: { x: 0, y: index + 1 },
 				color: colors[name],
 				...(!isOverlay ? { stack: 'A' } : {}),
 				...(isOverlay ? { yAxisIndex: yIdx + 1, valueSymbol: '$', hideAreaStyle: true } : {}),
@@ -1012,7 +1031,7 @@ const ChartContainer = ({
 							</ChartPanelBodyFallback>
 						) : (
 							<Suspense fallback={<ChartPanelBodyFallback />}>
-								<MultiSeriesChart2
+								<MultiSeriesChart
 									dataset={deferredScheduleChartData.dataset}
 									charts={deferredScheduleChartData.charts}
 									hallmarks={hallmarks}

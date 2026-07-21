@@ -1,5 +1,5 @@
 import { fetchCoinsChart } from '~/api'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { ComparisonEntry, PricePoint, TimelinePoint } from './types'
 
 const DAY_IN_SECONDS = 86_400
@@ -21,7 +21,7 @@ export type TokenPnlResult = {
 		isProfit: boolean
 	}
 	currentPrice: number
-	chartData: { dataset: IMultiSeriesChart2Props['dataset']; charts: IMultiSeriesChart2Props['charts'] }
+	chartData: { dataset: IMultiSeriesChartProps['dataset']; charts: IMultiSeriesChartProps['charts'] }
 	yAxisConfig: {
 		min: number
 		max: number
@@ -42,13 +42,12 @@ export function formatPriceSeriesFromCoinsChart(
 }
 
 export function buildAscendingPriceChartSource(series: PricePoint[], start: number, end: number) {
-	const source: Array<{ timestamp: number; 'Token Price': number }> = []
+	const source: Array<[number, number]> = []
 	const firstPrice = series[0].price
 	const lastPrice = series[series.length - 1].price
 	let addedStart = false
 	let addedEnd = false
-	const pushPoint = (timestamp: number, price: number) =>
-		source.push({ timestamp: timestamp * 1e3, 'Token Price': price })
+	const pushPoint = (timestamp: number, price: number) => source.push([timestamp * 1e3, price])
 
 	// The API series is ascending. Merge the two synthetic range boundaries into that stream
 	// instead of sorting the completed array, including when search-width points cross a boundary.
@@ -247,7 +246,7 @@ export async function computeTokenPnl(params: {
 			{
 				type: 'line' as const,
 				name: 'Token Price',
-				encode: { x: 'timestamp', y: 'Token Price' },
+				encode: { x: 0, y: 1 },
 				stack: 'Token Price',
 				color: primaryColor
 			}

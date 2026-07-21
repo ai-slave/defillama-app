@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { FormattedName } from '~/components/FormattedName'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -19,9 +19,9 @@ const CollectionScatterChart = React.lazy(
 	() => import('./CollectionScatterChart')
 ) as React.FC<ICollectionScatterChartProps>
 
-const MultiSeriesChart2 = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = React.lazy(
+	() => import('~/components/ECharts/MultiSeriesChart')
+) as React.FC<IMultiSeriesChartProps>
 
 const OrderbookChart = React.lazy(() => import('./OrderbookChart')) as React.FC<IOrderBookChartProps>
 
@@ -55,8 +55,7 @@ export function NFTCollectionContainer() {
 		floorHistory?.source != null && Array.isArray(floorHistory.source) && floorHistory.source.length > 0
 			? floorHistory.source[floorHistory.source.length - 1]
 			: null
-	const floorPriceRaw = lastFloorRow != null ? Number(lastFloorRow['Floor Price']) : null
-	const floorPrice = typeof floorPriceRaw === 'number' && Number.isFinite(floorPriceRaw) ? floorPriceRaw : null
+	const floorPrice = lastFloorRow?.[1] ?? null
 	const volume24h = stats.length > 0 ? (stats[stats.length - 1]?.[1] ?? null) : null
 
 	const includeOutliers = router.isReady && router.query.includeOutliers === 'true'
@@ -121,7 +120,7 @@ export function NFTCollectionContainer() {
 				{floorHistory?.source?.length > 0 ? (
 					<ChartPanel className="relative only:col-span-full">
 						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-							<MultiSeriesChart2 dataset={floorHistory} valueSymbol="ETH" title="Floor Price" />
+							<MultiSeriesChart dataset={floorHistory} valueSymbol="ETH" title="Floor Price" />
 						</React.Suspense>
 					</ChartPanel>
 				) : null}

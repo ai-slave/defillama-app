@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	filterStablecoinDatasetByTimePeriod,
@@ -21,9 +22,7 @@ import type { StablecoinsChartConfig } from '../types'
 import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
-const MultiSeriesChart2 = lazy(
-	() => import('~/components/ECharts/MultiSeriesChart2')
-) as React.FC<IMultiSeriesChart2Props>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 interface StablecoinsChartCardProps {
@@ -89,7 +88,8 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 	}
 
 	const latestMcap = useMemo(() => {
-		return (dataset.source.at(-1)?.Mcap as number | undefined) ?? null
+		const index = dataset.dimensions.indexOf('Mcap')
+		return index < 0 ? null : ((dataset.source.at(-1)?.[index] as number | undefined) ?? null)
 	}, [dataset])
 
 	const handleCsvExport = () => {
@@ -105,8 +105,8 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 			rows = [
 				['Date', ...dimensions],
 				...dataset.source.map((row) => [
-					toNiceCsvDate(Number(row.timestamp) / 1000),
-					...dimensions.map((name) => row[name] ?? '')
+					toNiceCsvDate((row[0] as number) / 1000),
+					...dimensions.map((_, index) => row[index + 1] ?? '')
 				])
 			]
 		}
@@ -195,7 +195,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 					{chartType === 'pie' ? (
 						<PieChart chartData={chainsCirculatingValues} stackColors={stackColors} />
 					) : (
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							title=""
 							dataset={dataset}
 							charts={charts}

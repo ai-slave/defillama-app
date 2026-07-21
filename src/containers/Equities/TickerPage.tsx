@@ -28,7 +28,7 @@ import { EquitiesMarketsTable, EquitiesTokensTable } from './OnchainTables'
 import type { IEquityTickerPageProps } from './types'
 import { formatEquitiesDate, formatEquitiesDateTime } from './utils'
 
-const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const TokenUnlocksSection = dynamic(
 	() => import('~/containers/Token/TokenUnlocksSection').then((mod) => mod.TokenUnlocksSection),
 	{ loading: () => <div className="min-h-[572px]" /> }
@@ -245,10 +245,10 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 		if (!duration) return props.priceHistoryChart
 		const latestPoint = props.priceHistoryChart.dataset.source.at(-1)
 		if (!latestPoint) return props.priceHistoryChart
-		const cutoff = (latestPoint.timestamp as number) - duration
+		const cutoff = (latestPoint[0] as number) - duration
 		const source: typeof props.priceHistoryChart.dataset.source = []
 		for (const point of props.priceHistoryChart.dataset.source) {
-			if ((point.timestamp as number) >= cutoff) source.push(point)
+			if ((point[0] as number) >= cutoff) source.push(point)
 		}
 		return { ...props.priceHistoryChart, dataset: { ...props.priceHistoryChart.dataset, source } }
 	}, [activeTimeframe, props.priceHistoryChart])
@@ -338,7 +338,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							<ChartExportButtons chartInstance={priceChartInstance} filename={exportFilename} title={exportTitle} />
 						</ChartPanelToolbar>
 						<Suspense fallback={<ChartPanelBodyFallback />}>
-							<MultiSeriesChart2
+							<MultiSeriesChart
 								dataset={activePriceHistoryChart.dataset}
 								charts={activePriceHistoryChart.charts}
 								chartOptions={SCALED_Y_AXIS_CHART_OPTIONS}
@@ -381,7 +381,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						</div>
 					</ChartPanelToolbar>
 					<Suspense fallback={<div className="min-h-[320px]" />}>
-						<MultiSeriesChart2
+						<MultiSeriesChart
 							dataset={activeFundamentalsChart.dataset}
 							charts={activeFundamentalsChart.charts}
 							chartOptions={SCALED_Y_AXIS_CHART_OPTIONS}
