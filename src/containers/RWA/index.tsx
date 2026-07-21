@@ -1,15 +1,12 @@
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
+import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import {
-	ChartGroupingSelector,
-	DWMC_GROUPING_OPTIONS_LOWERCASE
-} from '~/components/ECharts/shared/ChartGroupingSelector'
+import { ChartGroupingSelector } from '~/components/ECharts/shared/ChartGroupingSelector'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { Select } from '~/components/Select/Select'
@@ -64,15 +61,17 @@ import {
 	aggregateRWAFlowRows,
 	buildRWAFilteredFlowBreakdown,
 	getRWAFlowOverlayQueryValue,
+	getRWAFlowVsPriceAssetSummaries,
 	getRWAFlowVsPriceSummary,
 	parseRWAFlowGrouping,
-	parseRWAFlowMode,
+	parseRWAFlowQueryState,
 	parseRWAFlowOverlayMetrics,
-	RWA_FLOW_MODE_OPTIONS,
+	RWA_FLOW_GROUPING_OPTIONS,
 	RWA_FLOW_OVERLAY_OPTIONS,
-	type RWAFlowChartMode,
+	type RWAFlowChartSelection,
 	type RWAFlowGrouping,
-	type RWAFlowOverlay
+	type RWAFlowOverlay,
+	type RWAFlowVisibleRange
 } from './flows'
 import { type RWAFlowScope, useRWAFlowAssetBreakdown, useRWAFlowOverviewSplitWithFilters } from './flows.hooks'
 import {
@@ -116,9 +115,7 @@ const RWAFlowTreemapChart = lazy(() =>
 )
 const EMPTY_INITIAL_CHART_DATASET = emptyChartDatasets()
 
-type RWAOverviewChartMetric = RWAChartState['metric'] | 'flows'
-
-const RWA_NON_PLATFORM_FLOW_MODE_OPTIONS = RWA_FLOW_MODE_OPTIONS.filter((option) => option.value !== 'flowVsPrice')
+type RWAOverviewChartMetric = RWAChartState['metric'] | 'flows' | 'flowVsPrice'
 
 const RWA_FLOW_ROTATION_SPLIT_OPTIONS: Array<{
 	key: RWAFlowOverviewSplitBy
@@ -160,10 +157,20 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const isCategoryMode = mode === 'category'
 	const isPlatformMode = mode === 'platform'
 	const isAssetGroupMode = mode === 'assetGroup'
+	const chartTypeQuery = readSingleQueryValue(router.query.chartType)
+	const flowModeQuery = readSingleQueryValue(router.query.flowMode)
+	const flowQueryState = parseRWAFlowQueryState(chartTypeQuery, flowModeQuery, isPlatformMode)
+	const isFlowVsPrice = flowQueryState.view === 'flowVsPrice'
+	const [flowVisibleRange, setFlowVisibleRange] = useState<RWAFlowVisibleRange | null>(null)
+	const handleFlowVisibleRangeChange = useCallback((range: RWAFlowVisibleRange | null) => {
+		setFlowVisibleRange((previous) =>
+			previous?.start === range?.start && previous?.end === range?.end ? previous : range
+		)
+	}, [])
 	const canBreakdownByChain = isCategoryMode || isPlatformMode || isAssetGroupMode || props.selectedChain === 'All'
 	const chartMode = createRwaChartModeState(mode, canBreakdownByChain)
 	const chartState = parseRwaChartState(router.query, chartMode)
-	const isFlowMetric = readSingleQueryValue(router.query.chartType) === 'flows'
+	const isFlowMetric = flowQueryState.view != null
 	const chartTypeKey = chartState.metric
 	const chartView = isFlowMetric ? 'timeSeries' : chartState.view
 	const rawTimeSeriesBreakdownQuery = router.query.timeSeriesChartBreakdown
@@ -346,7 +353,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				: EMPTY_FLOW_TREEMAP,
 		[flowTreemapFlows, flowTreemapSizeMetric, flowTreemapSizeRows]
 	)
-	const flowModeQuery = readSingleQueryValue(router.query.flowMode)
+	const flowGroupBy = flowQueryState.groupBy
 	const selectedFlowOverlayMetrics = useMemo(
 		() => parseRWAFlowOverlayMetrics(toNonEmptyArrayParam(router.query.flowOverlays)),
 		[router.query.flowOverlays]
@@ -366,7 +373,12 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			!activeFilters &&
 			(timeSeriesBreakdown === getDefaultChartBreakdown(chartMode, 'timeSeries') || timeSeriesBreakdown === 'total')
 	})
-	const { chartDataset: flowOnChainMcapDataset } = useRwaChartDataset({
+	const {
+		chartDataset: flowOnChainMcapDataset,
+		assetRows: flowOnChainMcapAssetRows,
+		isChartLoading: isFlowMcapLoading,
+		chartError: flowMcapError
+	} = useRwaChartDataset({
 		selectedMetric: 'onChainMcap',
 		initialDataset: initialChartDataset.onChainMcap,
 		initialOpenInterestDataset: null,
@@ -376,10 +388,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps: false,
-		enabled:
-			isFlowMetric &&
-			(selectedFlowOverlayMetrics.includes('onChainMcap') || (isPlatformMode && flowModeQuery === 'flowVsPrice')),
-		useInitialDataset: !activeFilters
+		enabled: isFlowMetric && (selectedFlowOverlayMetrics.includes('onChainMcap') || isFlowVsPrice),
+		useInitialDataset: !activeFilters && !isFlowVsPrice
 	})
 	const { chartDataset: flowActiveMcapDataset } = useRwaChartDataset({
 		selectedMetric: 'activeMcap',
@@ -391,7 +401,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps: false,
-		enabled: isFlowMetric && selectedFlowOverlayMetrics.includes('activeMcap'),
+		enabled: isFlowMetric && !isFlowVsPrice && selectedFlowOverlayMetrics.includes('activeMcap'),
 		useInitialDataset: !activeFilters
 	})
 	const { chartDataset: flowDefiActiveTvlDataset } = useRwaChartDataset({
@@ -404,7 +414,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps: false,
-		enabled: isFlowMetric && selectedFlowOverlayMetrics.includes('defiActiveTvl'),
+		enabled: isFlowMetric && !isFlowVsPrice && selectedFlowOverlayMetrics.includes('defiActiveTvl'),
 		useInitialDataset: !activeFilters
 	})
 	const flowOnChainMcapByTimestamp = useMemo(
@@ -432,9 +442,6 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			})),
 		[selectedFlowOverlayMetrics, flowOnChainMcapByTimestamp, flowActiveMcapByTimestamp, flowDefiActiveTvlByTimestamp]
 	)
-	const hasFlowMcap = flowOnChainMcapByTimestamp.size > 0
-	const flowMode = parseRWAFlowMode(flowModeQuery, isPlatformMode && hasFlowMcap)
-
 	const { pieChartData: assetCategoryPieChartData, pieChartStackColors: assetCategoryPieChartStackColors } =
 		useRWAAssetCategoryPieChartData({
 			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'category',
@@ -585,13 +592,21 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	}, [flowRotationData, showFlowRotation])
 	const flowTreemapSizeLabel = getRWAFlowTreemapSizeLabel(flowTreemapSizeMetric)
 	const flowRotationFilename = `rwa-net-flow-${flowRotationSplitBy}-${flowRotationFrequency}-${flowRotationView}`
-	const chartMetricLabel = isFlowMetric ? 'Net Flows' : getChartMetricLabel(chartTypeKey)
+	const chartMetricLabel = isFlowVsPrice
+		? 'Flow vs Price'
+		: isFlowMetric
+			? 'Net Flows'
+			: getChartMetricLabel(chartTypeKey)
 	const chartMetricOptions = [
 		...getChartMetricOptions(),
-		{ key: 'flows' as const, label: definitions.flows.overviewNetFlows.label }
+		{ key: 'flows' as const, label: definitions.flows.overviewNetFlows.label },
+		...(isPlatformMode ? [{ key: 'flowVsPrice' as const, label: definitions.flows.flowVsPrice.label }] : [])
 	]
-	const selectedChartMetric: RWAOverviewChartMetric = isFlowMetric ? 'flows' : chartTypeKey
-	const flowModeOptions = isPlatformMode && hasFlowMcap ? RWA_FLOW_MODE_OPTIONS : RWA_NON_PLATFORM_FLOW_MODE_OPTIONS
+	const selectedChartMetric: RWAOverviewChartMetric = isFlowVsPrice
+		? 'flowVsPrice'
+		: isFlowMetric
+			? 'flows'
+			: chartTypeKey
 	const chartViewOptions = getChartViewOptions()
 	const selectedModeLabel = getSelectedModeLabel(mode, props)
 	const exportChartTitle = getRwaExportChartTitle({
@@ -608,10 +623,34 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const treemapChartFilename = `rwa-treemap-${slug(chartMetricLabel)}-${rwaSlug(selectedModeLabel)}`
 	const flowVsPriceSummary = useMemo(
 		() =>
-			isFlowMetric && flowMode === 'flowVsPrice' && flowData
-				? getRWAFlowVsPriceSummary(flowData.series, 'monthly', flowOnChainMcapByTimestamp)
+			isFlowVsPrice && flowData
+				? getRWAFlowVsPriceSummary(flowData.series, flowGroupBy, flowOnChainMcapByTimestamp, flowVisibleRange)
 				: null,
-		[flowData, flowMode, flowOnChainMcapByTimestamp, isFlowMetric]
+		[flowData, flowGroupBy, flowOnChainMcapByTimestamp, flowVisibleRange, isFlowVsPrice]
+	)
+	const flowVsPriceBreakdown = useMemo(
+		() =>
+			isFlowVsPrice && flowAssetRows && flowOnChainMcapAssetRows
+				? getRWAFlowVsPriceAssetSummaries(
+						flowAssetRows,
+						flowOnChainMcapAssetRows,
+						filteredAssets,
+						flowGroupBy,
+						flowVisibleRange
+					)
+				: undefined,
+		[filteredAssets, flowAssetRows, flowGroupBy, flowOnChainMcapAssetRows, flowVisibleRange, isFlowVsPrice]
+	)
+	const flowChartSelection = useMemo<RWAFlowChartSelection>(
+		() =>
+			isFlowVsPrice
+				? {
+						view: 'flowVsPrice',
+						groupBy: flowGroupBy,
+						mcapByTimestamp: flowOnChainMcapByTimestamp
+					}
+				: { view: 'netFlows', groupBy: flowGroupBy, overlays: flowOverlays },
+		[flowGroupBy, flowOnChainMcapByTimestamp, flowOverlays, isFlowVsPrice]
 	)
 
 	const selectedTimeSeriesDataset = useMemo(() => toRwaMultiSeriesChartDataset(chartDataset), [chartDataset])
@@ -655,10 +694,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		<SegmentedControl<RWAOverviewChartMetric>
 			value={selectedChartMetric}
 			onValueChange={(key) => {
-				if (key === 'flows') {
+				if (key === 'flows' || key === 'flowVsPrice') {
 					void pushShallowQuery(router, {
-						chartType: 'flows',
-						flowMode: flowMode === 'daily' ? undefined : flowMode
+						chartType: key,
+						flowMode: flowGroupBy === 'daily' ? undefined : flowGroupBy,
+						flowOverlays: key === 'flowVsPrice' ? undefined : getRWAFlowOverlayQueryValue(selectedFlowOverlayMetrics)
 					})
 					return
 				}
@@ -670,7 +710,12 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			options={chartMetricOptions.map(({ key, label }) => ({
 				value: key,
 				label,
-				tooltip: key === 'flows' ? definitions.flows.overviewNetFlows.description : undefined
+				tooltip:
+					key === 'flows'
+						? definitions.flows.overviewNetFlows.description
+						: key === 'flowVsPrice'
+							? definitions.flows.flowVsPrice.description
+							: undefined
 			}))}
 			label="Chart type"
 			variant="default"
@@ -679,17 +724,19 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		/>
 	)
 	const flowOverlaySelect = (
-		<Select
-			allValues={RWA_FLOW_OVERLAY_OPTIONS}
-			selectedValues={selectedFlowOverlayMetrics}
-			setSelectedValues={(values) => {
-				void pushShallowQuery(router, { flowOverlays: getRWAFlowOverlayQueryValue(values) })
-			}}
-			label="Overlays"
-			labelType="smol"
-			variant="filter"
-			size="md"
-		/>
+		<Tooltip content={definitions.flows.marketcapOverlay.description}>
+			<Select
+				allValues={RWA_FLOW_OVERLAY_OPTIONS}
+				selectedValues={selectedFlowOverlayMetrics}
+				setSelectedValues={(values) => {
+					void pushShallowQuery(router, { flowOverlays: getRWAFlowOverlayQueryValue(values) })
+				}}
+				label="Overlays"
+				labelType="smol"
+				variant="filter"
+				size="md"
+			/>
+		</Tooltip>
 	)
 
 	const chartViewSwitch = (
@@ -932,15 +979,15 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 							<ChartPanelToolbar className="justify-end">
 								{chartTypeSwitch}
 								{isFlowMetric ? (
-									<SegmentedControl<RWAFlowChartMode>
-										value={flowMode}
+									<SegmentedControl<RWAFlowGrouping>
+										value={flowGroupBy}
 										onValueChange={(nextFlowMode) => {
 											void pushShallowQuery(router, {
 												flowMode: nextFlowMode === 'daily' ? undefined : nextFlowMode
 											})
 										}}
-										options={flowModeOptions}
-										label="Flow view"
+										options={RWA_FLOW_GROUPING_OPTIONS}
+										label="Flow period"
 										variant="default"
 										size="md"
 									/>
@@ -950,7 +997,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 										{timeSeriesChartBreakdownSwitch}
 									</>
 								)}
-								{isFlowMetric && flowMode !== 'flowVsPrice' ? flowOverlaySelect : null}
+								{isFlowMetric && !isFlowVsPrice ? flowOverlaySelect : null}
 								<ChartCsvExportButton chartInstance={multiSeriesChart2Instance} filename={timeSeriesChartFilename} />
 								<ChartPngExportButton
 									chartInstance={multiSeriesChart2Instance}
@@ -958,33 +1005,30 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									title={exportChartTitle}
 								/>
 							</ChartPanelToolbar>
-							{isFlowMetric && flowMode === 'flowVsPrice' && flowVsPriceSummary ? (
-								<RWAFlowVsPriceStrip summary={flowVsPriceSummary} />
+							{isFlowVsPrice && flowVsPriceSummary ? (
+								<RWAFlowVsPriceStrip summary={flowVsPriceSummary} breakdown={flowVsPriceBreakdown} />
 							) : null}
 							{isFlowMetric ? (
-								isFlowLoading ? (
+								isFlowLoading || (isFlowVsPrice && isFlowMcapLoading) ? (
 									<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
 										Loading
 										<LoadingDots />
 									</ChartPanelBodyFallback>
-								) : flowError ? (
+								) : flowError || (isFlowVsPrice && flowMcapError) ? (
 									<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
-										{flowError instanceof Error ? flowError.message : 'Failed to load flow data.'}
+										{flowError instanceof Error
+											? flowError.message
+											: isFlowVsPrice && flowMcapError
+												? flowMcapError
+												: 'Failed to load flow data.'}
 									</ChartPanelBodyFallback>
 								) : flowData ? (
 									<Suspense fallback={<ChartPanelBodyFallback />}>
 										<RWAFlowsChart
 											points={flowData.series}
-											selection={
-												flowMode === 'flowVsPrice'
-													? {
-															view: 'flowVsPrice',
-															groupBy: 'monthly',
-															mcapByTimestamp: flowOnChainMcapByTimestamp
-														}
-													: { view: 'netFlows', groupBy: flowMode, overlays: flowOverlays }
-											}
-											defaultRangeDays={flowMode === 'daily' ? 365 : undefined}
+											selection={flowChartSelection}
+											defaultRangeDays={flowGroupBy === 'daily' ? 365 : undefined}
+											onVisibleRangeChange={handleFlowVisibleRangeChange}
 											onReady={handleMultiSeriesChartReady}
 										/>
 									</Suspense>
@@ -1129,7 +1173,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									flowRotationFrequency: nextFrequency === 'monthly' ? undefined : nextFrequency
 								})
 							}}
-							options={DWMC_GROUPING_OPTIONS_LOWERCASE}
+							options={RWA_FLOW_GROUPING_OPTIONS}
 						/>
 						{flowRotationView === 'heatmap' ? <ChartRestoreButton chartInstance={flowRotationChartInstance} /> : null}
 						<ChartCsvExportButton

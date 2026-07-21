@@ -235,11 +235,11 @@
 		},
 		"daily": {
 			"label": "Daily",
-			"description": "One bar per day. Days we could not measure are left blank, because unknown is not the same as zero."
+			"description": "One bar per day, week, month, quarter, or year. Periods we could not measure are left blank, because unknown is not the same as zero."
 		},
 		"cumulative": {
 			"label": "Cumulative",
-			"description": "Adds each day's flow to a running total, so you can see how much capital has entered or left overall. Days we could not measure do not move the line."
+			"description": "Adds each period's flow to a running total, so you can see how much capital has entered or left overall. Periods we could not measure do not move the line."
 		},
 		"marketcapOverlay": {
 			"label": "Marketcap overlay",
@@ -247,15 +247,15 @@
 		},
 		"inflows": {
 			"label": "Inflows",
-			"description": "Days when more money came in than left."
+			"description": "Periods when more money came in than left. New capital entered these assets."
 		},
 		"outflows": {
 			"label": "Outflows",
-			"description": "Days when more money left than came in."
+			"description": "Periods when more money left than came in. Capital exited these assets."
 		},
 		"onchainMcap": {
 			"label": "Onchain Mcap",
-			"description": "Total onchain marketcap, drawn as a line so you can compare flows against it."
+			"description": "The total size of these assets, drawn as a line so you can compare the flows against it."
 		},
 		"activeMcap": {
 			"label": "Active Mcap",
@@ -270,12 +270,12 @@
 			"description": "The running total after adding each day's measured flow. Days we could not measure do not move the line."
 		},
 		"capitalRotation": {
-			"label": "Net Flow",
+			"label": "Capital Rotation",
 			"description": "Where money is moving between types of RWAs over time. Bars above the line are money coming in, bars below are money leaving."
 		},
 		"rotationGrouping": {
 			"label": "Asset Groups / Categories",
-			"description": "Groups the rotation bars by asset group or category."
+			"description": "Groups the bars by type of RWA or by category."
 		},
 		"rotationChains": {
 			"label": "Chains",
@@ -291,7 +291,7 @@
 		},
 		"netFlow30d": {
 			"label": "Net Flow 30d",
-			"description": "New tokens created minus tokens redeemed over the last 30 days, in dollar value, counting only the chains where we have price data. Click the header to sort. A dash means we could not measure those days. That is not the same as zero."
+			"description": "Same as 7d, over the last 30 days."
 		},
 		"assetNetFlow7d": {
 			"label": "Net Flows 7d",
@@ -303,11 +303,11 @@
 		},
 		"flowVsPrice": {
 			"label": "Flow vs price",
-			"description": "Shows how much of each selected period's marketcap change came from measured net flows versus price movement and unmeasured days."
+			"description": "Answers one question: did this asset grow because new money came in, or because the price of what it holds went up? Splits each period's marketcap change into those two parts."
 		},
 		"deltaMcap": {
 			"label": "Δ Onchain Mcap",
-			"description": "How much total onchain marketcap changed over the charted period, from all causes combined."
+			"description": "How much the total value of this asset changed over the selected period, from all causes combined."
 		},
 		"netFlowsStat": {
 			"label": "Net flows",

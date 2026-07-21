@@ -1135,6 +1135,7 @@ export function useRwaChartDataset({
 	enabled?: boolean
 }): {
 	chartDataset: RWAChartDataset
+	assetRows: IRWAChartMetricRows | undefined
 	isChartLoading: boolean
 	chartError: string | null
 } {
@@ -1212,6 +1213,7 @@ export function useRwaChartDataset({
 
 	return {
 		chartDataset,
+		assetRows,
 		isChartLoading: enabled && !useInitialDataset && (isLoading || isOpenInterestLoading),
 		chartError: enabled
 			? error

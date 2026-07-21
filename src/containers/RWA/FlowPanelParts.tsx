@@ -2,10 +2,29 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatNum } from '~/utils'
 import type { IRWAAssetFlowSummary, RWAChainFlowSummary } from './api.types'
 import { definitions } from './definitions'
-import { formatSignedRWAFlow, getRWAFlowTextClass, type RWAFlowVsPriceSummary } from './flows'
+import {
+	formatSignedRWAFlow,
+	getRWAFlowTextClass,
+	type RWAFlowVsPriceAssetSummary,
+	type RWAFlowVsPriceSummary
+} from './flows'
 
 /** Coverage below this share of days is flagged amber — flows meaningfully understate reality. */
 const LOW_COVERAGE_THRESHOLD = 0.5
+
+export const RWAFlowValueShimmer = ({ label = 'Loading flow value' }: { label?: string }) => (
+	<span
+		role="status"
+		aria-label={label}
+		className="inline-block h-3 w-12 animate-pulse rounded-sm bg-tertiary opacity-20"
+	/>
+)
+
+export const RWAFlowValueUnavailable = () => (
+	<Tooltip content="Flow data could not be loaded." className="text-secondary underline decoration-dotted">
+		Unavailable
+	</Tooltip>
+)
 
 /**
  * Chart-toolbar metadata tag for flow data coverage. Deliberately NOT a
@@ -72,19 +91,39 @@ export function RWAFlowSummaryTooltip({
 function FlowVsPriceStat({
 	label,
 	value,
-	tooltip
+	tooltip,
+	breakdown,
+	valueKey
 }: {
 	label: string
 	value: number | null | undefined
 	tooltip: string
+	breakdown?: RWAFlowVsPriceAssetSummary[]
+	valueKey: 'mcapChange' | 'netCapital' | 'price'
 }) {
-	return (
-		<span className="inline-flex items-baseline gap-1 whitespace-nowrap">
-			<Tooltip content={tooltip} className="text-secondary underline decoration-dotted">
-				{label}
-			</Tooltip>
-			<span className={getRWAFlowTextClass(value)}>{formatSignedRWAFlow(value)}</span>
+	const content = breakdown?.length ? (
+		<span className="flex flex-col gap-2">
+			<span>{tooltip}</span>
+			<span className="flex flex-col gap-1 border-t border-subtle pt-2">
+				{breakdown.map((asset) => (
+					<span key={asset.key} className="flex justify-between gap-4">
+						<span>{asset.label}</span>
+						<span className={`font-jetbrains ${getRWAFlowTextClass(asset.summary[valueKey])}`}>
+							{formatSignedRWAFlow(asset.summary[valueKey])}
+						</span>
+					</span>
+				))}
+			</span>
 		</span>
+	) : (
+		tooltip
+	)
+
+	return (
+		<Tooltip content={content} className="inline-flex items-baseline gap-1 whitespace-nowrap">
+			<span className="text-secondary underline decoration-dotted">{label}</span>
+			<span className={getRWAFlowTextClass(value)}>{formatSignedRWAFlow(value)}</span>
+		</Tooltip>
 	)
 }
 
@@ -95,23 +134,17 @@ function FlowVsPriceStat({
  */
 export function RWAFlowVsPriceStrip({
 	summary,
-	coverage
+	breakdown
 }: {
 	summary: RWAFlowVsPriceSummary
-	coverage?: number | null
+	breakdown?: RWAFlowVsPriceAssetSummary[]
 }) {
-	const isLowCoverage = coverage != null && coverage < LOW_COVERAGE_THRESHOLD
-
 	return (
 		<p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-2 pt-2 body-sm">
 			{summary.flowDrivenPct != null ? (
 				<>
 					<Tooltip
-						content={`Measured net flows were ${formatNum(summary.flowDrivenPct, 0)} percent of the marketcap change over this period. The marketcap change always splits into measured flows and price plus unmeasured days.${
-							isLowCoverage
-								? ` Only ${formatNum(coverage * 100, 0)}% of days have flow data, so this share is based on incomplete data.`
-								: ''
-						}`}
+						content={`${formatNum(summary.flowDrivenPct, 0)} percent of this asset's growth over this period came from real money entering, not from price going up. The marketcap change always splits into two parts: measured flows, and price plus unmeasured days.`}
 						className="font-medium underline decoration-dotted"
 					>
 						{formatNum(summary.flowDrivenPct, 0)}% flow-driven
@@ -125,6 +158,8 @@ export function RWAFlowVsPriceStrip({
 				label={definitions.flows.deltaMcap.label}
 				value={summary.mcapChange}
 				tooltip={definitions.flows.deltaMcap.description}
+				breakdown={breakdown}
+				valueKey="mcapChange"
 			/>
 			<span aria-hidden className="text-tertiary">
 				·
@@ -133,6 +168,8 @@ export function RWAFlowVsPriceStrip({
 				label={definitions.flows.netFlowsStat.label}
 				value={summary.netCapital}
 				tooltip={definitions.flows.netFlowsStat.description}
+				breakdown={breakdown}
+				valueKey="netCapital"
 			/>
 			<span aria-hidden className="text-tertiary">
 				·
@@ -141,6 +178,8 @@ export function RWAFlowVsPriceStrip({
 				label={definitions.flows.priceUnattributed.label}
 				value={summary.price}
 				tooltip={definitions.flows.priceUnattributed.description}
+				breakdown={breakdown}
+				valueKey="price"
 			/>
 		</p>
 	)

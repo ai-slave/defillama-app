@@ -9,9 +9,10 @@ import {
 	getRWAFlowDefaultStartTimestamp,
 	getRWAFlowOverlayQueryValue,
 	getRWAFlowRotationSeriesNames,
+	getRWAFlowVsPriceAssetSummaries,
 	getRWAFlowVsPriceSummary,
 	parseRWAFlowGrouping,
-	parseRWAFlowMode,
+	parseRWAFlowQueryState,
 	parseRWAFlowOverlayMetrics
 } from '../flows'
 
@@ -28,15 +29,19 @@ describe('RWA flow chart data', () => {
 		expect(formatSignedRWAFlow(0)).toBe('$0')
 	})
 
-	it('parses only flow modes supported by the current chart', () => {
-		expect(parseRWAFlowMode('weekly', false)).toBe('weekly')
-		expect(parseRWAFlowMode('monthly', false)).toBe('monthly')
-		expect(parseRWAFlowMode('quarterly', false)).toBe('quarterly')
-		expect(parseRWAFlowMode('yearly', false)).toBe('yearly')
-		expect(parseRWAFlowMode('cumulative', false)).toBe('cumulative')
-		expect(parseRWAFlowMode('flowVsPrice', true)).toBe('flowVsPrice')
-		expect(parseRWAFlowMode('flowVsPrice', false)).toBe('daily')
-		expect(parseRWAFlowMode('unknown', true)).toBe('daily')
+	it('restores flow view and grouping from canonical deep links', () => {
+		expect(parseRWAFlowQueryState('flows', 'weekly', false)).toEqual({
+			view: 'netFlows',
+			groupBy: 'weekly'
+		})
+		expect(parseRWAFlowQueryState('flowVsPrice', 'cumulative', true)).toEqual({
+			view: 'flowVsPrice',
+			groupBy: 'cumulative'
+		})
+		expect(parseRWAFlowQueryState('flowVsPrice', 'monthly', false)).toEqual({
+			view: null,
+			groupBy: 'monthly'
+		})
 	})
 
 	it('parses every asset flow grouping and defaults unknown values to daily', () => {
@@ -194,6 +199,119 @@ describe('RWA flow chart data', () => {
 
 		expect(daily.dataset.source[1]).toEqual([jan2, 20, null, 10, 30])
 		expect(monthly.dataset.source).toHaveLength(1)
+	})
+
+	it('attributes unmeasured periods to price and keeps cumulative bars equal to delta mcap', () => {
+		const jan1 = day(2026, 0, 1)
+		const jan2 = day(2026, 0, 2)
+		const jan3 = day(2026, 0, 3)
+		const points = [aggregatePoint(jan1, 10), aggregatePoint(jan2, 20), aggregatePoint(jan3, null, 0)]
+		const mcapByTimestamp = new Map([
+			[jan1, 100],
+			[jan2, 130],
+			[jan3, 150]
+		])
+
+		const daily = buildRWAFlowChart({
+			points,
+			selection: { view: 'flowVsPrice', groupBy: 'daily', mcapByTimestamp }
+		})
+		const cumulative = buildRWAFlowChart({
+			points,
+			selection: { view: 'flowVsPrice', groupBy: 'cumulative', mcapByTimestamp }
+		})
+
+		expect(daily.dataset.source[2]).toEqual([jan3, null, null, 20, 20])
+		const measuredCumulativeRows = cumulative.dataset.source.filter((row) => typeof row[4] === 'number')
+		for (const row of measuredCumulativeRows) {
+			expect((Number(row[1]) || Number(row[2]) || 0) + Number(row[3])).toBe(row[4])
+		}
+		expect(measuredCumulativeRows.at(-1)?.slice(1)).toEqual([20, null, 30, 50])
+		expect(getRWAFlowVsPriceSummary(points, 'cumulative', mcapByTimestamp)).toEqual({
+			mcapChange: 50,
+			netCapital: 20,
+			price: 30,
+			flowDrivenPct: 40
+		})
+	})
+
+	it('carries measured flows across a missing market-cap observation', () => {
+		const jan1 = day(2026, 0, 1)
+		const jan2 = day(2026, 0, 2)
+		const jan3 = day(2026, 0, 3)
+		const points = [aggregatePoint(jan1, 5), aggregatePoint(jan2, 10), aggregatePoint(jan3, 20)]
+		const mcapByTimestamp = new Map([
+			[jan1, 100],
+			[jan3, 130]
+		])
+
+		const daily = buildRWAFlowChart({
+			points,
+			selection: { view: 'flowVsPrice', groupBy: 'daily', mcapByTimestamp }
+		})
+
+		expect(daily.dataset.source[2]).toEqual([jan3, 30, null, 0, 30])
+		expect(getRWAFlowVsPriceSummary(points, 'cumulative', mcapByTimestamp)).toEqual({
+			mcapChange: 30,
+			netCapital: 30,
+			price: 0,
+			flowDrivenPct: 100
+		})
+	})
+
+	it('summarizes only decomposition rows inside the visible chart range', () => {
+		const jan1 = day(2026, 0, 1)
+		const jan2 = day(2026, 0, 2)
+		const jan3 = day(2026, 0, 3)
+		const points = [aggregatePoint(jan1, 5), aggregatePoint(jan2, 10), aggregatePoint(jan3, 5)]
+		const mcapByTimestamp = new Map([
+			[jan1, 100],
+			[jan2, 120],
+			[jan3, 150]
+		])
+
+		const summary = getRWAFlowVsPriceSummary(points, 'daily', mcapByTimestamp, { start: jan3, end: jan3 })
+		expect(summary).toMatchObject({
+			mcapChange: 30,
+			netCapital: 5,
+			price: 25
+		})
+		expect(summary?.flowDrivenPct).toBeCloseTo(100 / 6)
+	})
+
+	it('builds platform tooltip summaries from matching per-asset flow and mcap rows', () => {
+		const jan1 = day(2026, 0, 1)
+		const jan2 = day(2026, 0, 2)
+		const assets = [
+			{ kind: 'spot', canonicalMarketId: 'alpha', assetName: 'Alpha' },
+			{ kind: 'spot', canonicalMarketId: 'beta', assetName: 'Beta' }
+		] as IRWAAssetsOverview['assets']
+
+		expect(
+			getRWAFlowVsPriceAssetSummaries(
+				[
+					{ timestamp: jan1 / 1e3, alpha: 5, beta: 2 },
+					{ timestamp: jan2 / 1e3, alpha: 10, beta: 0 }
+				],
+				[
+					{ timestamp: jan1, alpha: 100, beta: 50 },
+					{ timestamp: jan2, alpha: 125, beta: 45 }
+				],
+				assets,
+				'daily'
+			)
+		).toEqual([
+			{
+				key: 'alpha',
+				label: 'Alpha',
+				summary: { mcapChange: 25, netCapital: 10, price: 15, flowDrivenPct: 40 }
+			},
+			{
+				key: 'beta',
+				label: 'Beta',
+				summary: { mcapChange: -5, netCapital: 0, price: -5, flowDrivenPct: 0 }
+			}
+		])
 	})
 
 	it('sums rotation series by month without treating an absent series as zero', () => {

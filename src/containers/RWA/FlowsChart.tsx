@@ -1,32 +1,117 @@
 import type * as echarts from 'echarts/core'
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
 import type { IRWAFlowAggregatePoint, IRWAFlowPoint } from './api.types'
 import {
 	buildRWAFlowChart,
 	getRWAFlowChartOptions,
 	getRWAFlowDefaultStartTimestamp,
-	type RWAFlowChartSelection
+	type RWAFlowChartSelection,
+	type RWAFlowVisibleRange
 } from './flows'
+
+type DataZoomPayload = {
+	start?: number
+	end?: number
+	startValue?: number
+	endValue?: number
+	batch?: DataZoomPayload[]
+}
+
+function getTimestampExtent(
+	source: ReturnType<typeof buildRWAFlowChart>['dataset']['source']
+): RWAFlowVisibleRange | null {
+	let start = Number.POSITIVE_INFINITY
+	let end = Number.NEGATIVE_INFINITY
+	for (const row of source) {
+		const timestamp = row[0]
+		if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) continue
+		start = Math.min(start, timestamp)
+		end = Math.max(end, timestamp)
+	}
+	return Number.isFinite(start) && Number.isFinite(end) ? { start, end } : null
+}
+
+function getVisibleRangeFromZoom(
+	source: ReturnType<typeof buildRWAFlowChart>['dataset']['source'],
+	event: DataZoomPayload
+): RWAFlowVisibleRange | null {
+	const extent = getTimestampExtent(source)
+	if (!extent) return null
+	const zoom = event.batch?.[0] ?? event
+	const span = extent.end - extent.start
+	const start =
+		typeof zoom.startValue === 'number' && Number.isFinite(zoom.startValue)
+			? zoom.startValue
+			: extent.start + (span * (zoom.start ?? 0)) / 100
+	const end =
+		typeof zoom.endValue === 'number' && Number.isFinite(zoom.endValue)
+			? zoom.endValue
+			: extent.start + (span * (zoom.end ?? 100)) / 100
+	return { start: Math.max(extent.start, start), end: Math.min(extent.end, end) }
+}
 
 export function RWAFlowsChart({
 	points,
 	selection,
 	defaultRangeDays,
-	onReady
+	onReady,
+	onVisibleRangeChange
 }: {
 	points: Array<IRWAFlowPoint | IRWAFlowAggregatePoint>
 	selection: RWAFlowChartSelection
 	defaultRangeDays?: number
 	onReady?: (instance: echarts.ECharts | null) => void
+	onVisibleRangeChange?: (range: RWAFlowVisibleRange | null) => void
 }) {
 	const chart = useMemo(() => buildRWAFlowChart({ points, selection }), [points, selection])
+	const defaultStartTimestamp = getRWAFlowDefaultStartTimestamp(points, defaultRangeDays)
 	const hasSecondaryAxis = chart.charts.some((series) => series.yAxisIndex === 1)
-	const chartOptions = getRWAFlowChartOptions({
-		hasOverlayAxis: hasSecondaryAxis,
-		defaultStartTimestamp: getRWAFlowDefaultStartTimestamp(points, defaultRangeDays),
-		legendTooltips: true
-	})
+	const chartOptions = useMemo(
+		() =>
+			getRWAFlowChartOptions({
+				hasOverlayAxis: hasSecondaryAxis,
+				defaultStartTimestamp,
+				legendTooltips: true
+			}),
+		[defaultStartTimestamp, hasSecondaryAxis]
+	)
+	const sourceRef = useRef(chart.dataset.source)
+	const onReadyRef = useRef(onReady)
+	const onVisibleRangeChangeRef = useRef(onVisibleRangeChange)
+	const chartInstanceRef = useRef<echarts.ECharts | null>(null)
+	sourceRef.current = chart.dataset.source
+	onReadyRef.current = onReady
+	onVisibleRangeChangeRef.current = onVisibleRangeChange
+
+	// Keep visible-range tracking local to RWA flows instead of expanding the shared
+	// MultiSeriesChart API. Other charts retain their existing lifecycle and zoom behavior.
+	const handleDataZoom = useCallback((event: DataZoomPayload) => {
+		onVisibleRangeChangeRef.current?.(getVisibleRangeFromZoom(sourceRef.current, event))
+	}, [])
+
+	const handleReady = useCallback(
+		(instance: echarts.ECharts | null) => {
+			const previousInstance = chartInstanceRef.current
+			if (previousInstance && !previousInstance.isDisposed()) previousInstance.off('datazoom', handleDataZoom)
+			chartInstanceRef.current = instance
+			instance?.on('datazoom', handleDataZoom)
+			onReadyRef.current?.(instance)
+		},
+		[handleDataZoom]
+	)
+
+	useEffect(() => {
+		const extent = getTimestampExtent(chart.dataset.source)
+		onVisibleRangeChangeRef.current?.(
+			extent
+				? {
+						start: Math.max(extent.start, defaultStartTimestamp ?? extent.start),
+						end: extent.end
+					}
+				: null
+		)
+	}, [chart.dataset.source, defaultStartTimestamp])
 
 	return (
 		<MultiSeriesChart
@@ -36,7 +121,7 @@ export function RWAFlowsChart({
 			chartOptions={chartOptions}
 			hideDefaultLegend={false}
 			showTotalInTooltip={false}
-			onReady={onReady}
+			onReady={handleReady}
 		/>
 	)
 }

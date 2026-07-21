@@ -29,7 +29,7 @@ import type { IRWAAssetFlowSummary, IRWAAssetsOverview, IRWAFlowSummaryResponse,
 import { normalizeRwaAssetGroup } from './assetGroup'
 import { BreakdownTooltipContent } from './BreakdownTooltipContent'
 import { definitions } from './definitions'
-import { RWAFlowSummaryTooltip } from './FlowPanelParts'
+import { RWAFlowSummaryTooltip, RWAFlowValueShimmer, RWAFlowValueUnavailable } from './FlowPanelParts'
 import { formatSignedRWAFlow, getRWAFlowTextClass } from './flows'
 import { useRWAFlowSummary } from './flows.hooks'
 import { getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
@@ -44,7 +44,7 @@ export function RWAAssetsTable({
 	selectedChain: string
 	includeRwaPerps: boolean
 }) {
-	const { data: flowSummary } = useRWAFlowSummary()
+	const { data: flowSummary, isLoading: isLoadingFlowSummary, isError: isFlowSummaryError } = useRWAFlowSummary()
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'activeMcap.total', desc: true }])
 	const [expanded, setExpanded] = useState<ExpandedState>({})
@@ -64,7 +64,10 @@ export function RWAAssetsTable({
 		})
 	}, [assetsWithFlows, deferredSearchValue])
 
-	const columns = useMemo(() => createColumns(includeRwaPerps), [includeRwaPerps])
+	const columns = useMemo(
+		() => createRWAAssetColumns(includeRwaPerps, isLoadingFlowSummary, isFlowSummaryError && !flowSummary),
+		[flowSummary, includeRwaPerps, isFlowSummaryError, isLoadingFlowSummary]
+	)
 
 	const instance = useReactTable({
 		data: assetsData,
@@ -232,7 +235,7 @@ export function getDefiMetricValue(asset: AssetRow): number | null {
 	}
 }
 
-function createAssetFlowColumn(window: RWAFlowWindow) {
+function createAssetFlowColumn(window: RWAFlowWindow, isLoading: boolean, isUnavailable: boolean) {
 	const is7d = window === '7d'
 	const header = is7d ? definitions.flows.netFlow7d : definitions.flows.netFlow30d
 	const description = is7d
@@ -243,6 +246,10 @@ function createAssetFlowColumn(window: RWAFlowWindow) {
 		id: is7d ? 'netFlow7d' : 'netFlow30d',
 		header: header.label,
 		cell: (info) => {
+			if (isLoading) {
+				return <RWAFlowValueShimmer label={`Loading ${header.label}`} />
+			}
+			if (isUnavailable) return <RWAFlowValueUnavailable />
 			const summary = info.row.original.flowSummaries[window]
 			const value = info.getValue()
 			const display = <span className={getRWAFlowTextClass(value)}>{formatSignedRWAFlow(value)}</span>
@@ -283,7 +290,11 @@ function MixedMetricCell({
 	return value != null ? <span>{formattedNum(value, true)}</span> : null
 }
 
-function createColumns(includeRwaPerps: boolean) {
+function createRWAAssetColumns(
+	includeRwaPerps: boolean,
+	isLoadingFlowSummary: boolean,
+	isFlowSummaryUnavailable: boolean
+) {
 	const metricHeaders = getMetricColumnHeaders(includeRwaPerps)
 
 	return [
@@ -412,8 +423,8 @@ function createColumns(includeRwaPerps: boolean) {
 				}
 			}
 		),
-		createAssetFlowColumn('7d'),
-		createAssetFlowColumn('30d'),
+		createAssetFlowColumn('7d', isLoadingFlowSummary, isFlowSummaryUnavailable),
+		createAssetFlowColumn('30d', isLoadingFlowSummary, isFlowSummaryUnavailable),
 		columnHelper.accessor((asset) => formatAssetPlatforms(asset), {
 			id: 'platform',
 			header: 'Platform',

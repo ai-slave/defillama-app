@@ -44,15 +44,19 @@ const FLOW_WINDOW_DAYS: Record<Exclude<RWAFlowGrouping, 'daily' | 'cumulative'>,
 	yearly: 365
 }
 
-export const RWA_FLOW_TREEMAP_SIZE_OPTIONS: Array<{ key: RWAFlowTreemapSizeMetric; name: string }> = [
-	{ key: 'onChainMcap', name: 'Onchain Mcap' },
-	{ key: 'activeMcap', name: 'Active Mcap' },
-	{ key: 'defiActiveTvl', name: 'DeFi Active TVL' }
+export const RWA_FLOW_TREEMAP_SIZE_OPTIONS: Array<{
+	key: RWAFlowTreemapSizeMetric
+	name: string
+	help: string
+}> = [
+	{ key: 'onChainMcap', name: 'Onchain Mcap', help: 'Sizes each area by its total value represented onchain.' },
+	{ key: 'activeMcap', name: 'Active Mcap', help: 'Sizes each area by the value currently considered active.' },
+	{ key: 'defiActiveTvl', name: 'DeFi Active TVL', help: 'Sizes each area by how much of it is active in DeFi.' }
 ]
 
 export const RWA_FLOW_TREEMAP_VIEW_OPTIONS = [
-	{ key: 'bar', name: 'Bar Chart' },
-	{ key: 'heatmap', name: 'Heatmap Chart' }
+	{ key: 'bar', name: 'Bar Chart', help: 'Shows money entering and leaving each group as bars over time.' },
+	{ key: 'heatmap', name: 'Heatmap Chart', help: 'Compares the latest flow and relative size of every group at once.' }
 ]
 
 export function parseRWAFlowTreemapView(value: string | undefined): RWAFlowTreemapView {

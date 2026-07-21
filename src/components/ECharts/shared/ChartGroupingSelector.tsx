@@ -6,6 +6,7 @@ export type ChartGroupingOption<T extends string> = {
 	value: T
 	label: string
 	shortLabel?: string
+	tooltip?: React.ReactNode
 }
 
 export const DWMC_GROUPING_OPTIONS_LOWERCASE = [
@@ -74,7 +75,7 @@ export function ChartGroupingSelector<T extends string>({
 				value: option.value,
 				label: option.shortLabel ?? option.label.slice(0, 1).toUpperCase(),
 				ariaLabel: option.label,
-				tooltip: option.label
+				tooltip: option.tooltip ?? option.label
 			}))}
 			label="Chart grouping"
 			variant="default"

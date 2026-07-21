@@ -10,6 +10,7 @@ import { formattedNum } from '~/utils'
 import { toUnixMsTimestamp } from './api'
 import type {
 	IRWAAssetsOverview,
+	IRWAChartMetricRows,
 	IRWAFlowAggregatePoint,
 	IRWAFlowAssetBreakdownRow,
 	IRWAFlowOverviewSplitPoint,
@@ -21,7 +22,6 @@ import { definitions } from './definitions'
 import { getPrimaryRwaCategory, getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
 
 export type RWAFlowGrouping = ChartTimeGroupingWithCumulative
-export type RWAFlowChartMode = RWAFlowGrouping | 'flowVsPrice'
 export type RWAFlowOverlayMetric = RWAChartMetricKey
 type RWAFlowOverlayValues = ReadonlyMap<number, number | null>
 export type RWAFlowOverlay =
@@ -29,7 +29,7 @@ export type RWAFlowOverlay =
 	| { metric: 'onChainMcap'; values: null }
 export type RWAFlowChartSelection =
 	| { view: 'netFlows'; groupBy: RWAFlowGrouping; overlays: readonly RWAFlowOverlay[] }
-	| { view: 'flowVsPrice'; groupBy: ChartTimeGrouping; mcapByTimestamp: RWAFlowOverlayValues | null }
+	| { view: 'flowVsPrice'; groupBy: RWAFlowGrouping; mcapByTimestamp: RWAFlowOverlayValues | null }
 
 export const RWA_FLOW_OVERLAY_OPTIONS = [
 	{
@@ -70,34 +70,27 @@ export function getRWAFlowOverlayQueryValue(values: readonly string[]): string |
 	return metrics.length > 0 ? metrics : 'none'
 }
 
-export const RWA_FLOW_MODE_OPTIONS = [
+const FLOW_GROUPING_TOOLTIP =
+	'One bar per day, week, month, quarter, or year. Periods we could not measure are left blank, because unknown is not the same as zero.'
+
+export const RWA_FLOW_GROUPING_OPTIONS = [
 	{
 		value: 'daily' as const,
 		label: 'D',
 		ariaLabel: definitions.flows.daily.label,
-		tooltip: definitions.flows.daily.description
+		tooltip: FLOW_GROUPING_TOOLTIP
 	},
-	{ value: 'weekly' as const, label: 'W', ariaLabel: 'Weekly', tooltip: 'Weekly' },
-	{ value: 'monthly' as const, label: 'M', ariaLabel: 'Monthly', tooltip: 'Monthly' },
-	{ value: 'quarterly' as const, label: 'Q', ariaLabel: 'Quarterly', tooltip: 'Quarterly' },
-	{ value: 'yearly' as const, label: 'Y', ariaLabel: 'Yearly', tooltip: 'Yearly' },
+	{ value: 'weekly' as const, label: 'W', ariaLabel: 'Weekly', tooltip: FLOW_GROUPING_TOOLTIP },
+	{ value: 'monthly' as const, label: 'M', ariaLabel: 'Monthly', tooltip: FLOW_GROUPING_TOOLTIP },
+	{ value: 'quarterly' as const, label: 'Q', ariaLabel: 'Quarterly', tooltip: FLOW_GROUPING_TOOLTIP },
+	{ value: 'yearly' as const, label: 'Y', ariaLabel: 'Yearly', tooltip: FLOW_GROUPING_TOOLTIP },
 	{
 		value: 'cumulative' as const,
 		label: 'C',
 		ariaLabel: definitions.flows.cumulative.label,
 		tooltip: definitions.flows.cumulative.description
-	},
-	{
-		value: 'flowVsPrice' as const,
-		label: definitions.flows.flowVsPrice.label,
-		tooltip: definitions.flows.flowVsPrice.description
 	}
-]
-
-export function parseRWAFlowMode(value: string | undefined, allowFlowVsPrice: boolean): RWAFlowChartMode {
-	if (allowFlowVsPrice && value === 'flowVsPrice') return value
-	return parseRWAFlowGrouping(value)
-}
+] as const
 
 export function parseRWAFlowGrouping(value: string | undefined): RWAFlowGrouping {
 	if (
@@ -112,12 +105,35 @@ export function parseRWAFlowGrouping(value: string | undefined): RWAFlowGrouping
 	return 'daily'
 }
 
+export type RWAFlowQueryState = {
+	view: 'netFlows' | 'flowVsPrice' | null
+	groupBy: RWAFlowGrouping
+}
+
+export type RWAFlowVisibleRange = {
+	start: number
+	end: number
+}
+
+export function parseRWAFlowQueryState(
+	chartType: string | undefined,
+	flowMode: string | undefined,
+	allowFlowVsPrice: boolean
+): RWAFlowQueryState {
+	const view =
+		allowFlowVsPrice && chartType === 'flowVsPrice' ? 'flowVsPrice' : chartType === 'flows' ? 'netFlows' : null
+	return {
+		view,
+		groupBy: parseRWAFlowGrouping(flowMode)
+	}
+}
+
 export type RWAFlowSeriesPoint = IRWAFlowPoint | IRWAFlowAggregatePoint
 
 export type RWAFlowChart = {
 	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesChartSeriesConfig[]
-	groupBy: ChartTimeGrouping
+	groupBy: RWAFlowGrouping
 }
 
 export type RWAFlowVsPriceSummary = {
@@ -125,6 +141,12 @@ export type RWAFlowVsPriceSummary = {
 	netCapital: number
 	price: number
 	flowDrivenPct: number | null
+}
+
+export type RWAFlowVsPriceAssetSummary = {
+	key: string
+	label: string
+	summary: RWAFlowVsPriceSummary
 }
 
 export type RWAFlowRotationChart = {
@@ -506,23 +528,45 @@ function buildGroupedFlowChart(
 
 function buildFlowVsPriceChart(
 	points: readonly RWAFlowSeriesPoint[],
-	groupBy: ChartTimeGrouping,
+	groupBy: RWAFlowGrouping,
 	mcapByTimestamp?: ReadonlyMap<number, number | null>
 ): RWAFlowChart {
 	const source: MultiSeriesChartDataset['source'] = []
 	let previousMcap: number | null = null
-	for (const period of buildFlowPeriods(points, groupBy, mcapByTimestamp)) {
+	let cumulativeMcapChange = 0
+	let cumulativeNetCapital = 0
+	let pendingFlow = 0
+	let hasPendingFlow = false
+	const periodGroupBy = groupBy === 'cumulative' ? 'daily' : groupBy
+	for (const period of buildFlowPeriods(points, periodGroupBy, mcapByTimestamp)) {
+		if (period.hasFlow) {
+			pendingFlow += period.flow
+			hasPendingFlow = true
+		}
+
 		const mcapChange = previousMcap != null && period.mcap != null ? period.mcap - previousMcap : null
-		const netCapital = mcapChange != null && period.hasFlow ? period.flow : null
-		const price = netCapital != null && mcapChange != null ? mcapChange - netCapital : null
+		const netCapital = mcapChange != null && hasPendingFlow ? pendingFlow : null
+		const price = mcapChange != null ? mcapChange - (netCapital ?? 0) : null
+		if (groupBy === 'cumulative' && mcapChange != null) {
+			cumulativeMcapChange += mcapChange
+			if (netCapital != null) cumulativeNetCapital += netCapital
+		}
+		const displayedNetCapital = groupBy === 'cumulative' && mcapChange != null ? cumulativeNetCapital : netCapital
+		const displayedMcapChange = groupBy === 'cumulative' && mcapChange != null ? cumulativeMcapChange : mcapChange
+		const displayedPrice =
+			groupBy === 'cumulative' && mcapChange != null ? cumulativeMcapChange - cumulativeNetCapital : price
 		source.push([
 			period.timestamp,
-			netCapital != null && netCapital >= 0 ? netCapital : null,
-			netCapital != null && netCapital < 0 ? netCapital : null,
-			price,
-			mcapChange
+			displayedNetCapital != null && displayedNetCapital >= 0 ? displayedNetCapital : null,
+			displayedNetCapital != null && displayedNetCapital < 0 ? displayedNetCapital : null,
+			displayedPrice,
+			displayedMcapChange
 		])
-		if (period.mcap != null) previousMcap = period.mcap
+		if (period.mcap != null) {
+			previousMcap = period.mcap
+			pendingFlow = 0
+			hasPendingFlow = false
+		}
 	}
 
 	return {
@@ -583,18 +627,42 @@ export function buildRWAFlowChart({
 
 export function getRWAFlowVsPriceSummary(
 	points: readonly RWAFlowSeriesPoint[],
-	groupBy: ChartTimeGrouping,
-	mcapByTimestamp?: ReadonlyMap<number, number | null>
+	groupBy: RWAFlowGrouping,
+	mcapByTimestamp?: ReadonlyMap<number, number | null>,
+	visibleRange?: RWAFlowVisibleRange | null
 ): RWAFlowVsPriceSummary | null {
 	const chart = buildFlowVsPriceChart(points, groupBy, mcapByTimestamp)
+	const visibleRows = visibleRange
+		? chart.dataset.source.filter((row) => {
+				const timestamp = row[0]
+				return typeof timestamp === 'number' && timestamp >= visibleRange.start && timestamp <= visibleRange.end
+			})
+		: chart.dataset.source
+	if (groupBy === 'cumulative') {
+		for (let index = visibleRows.length - 1; index >= 0; index--) {
+			const row = visibleRows[index]
+			const mcapChange = row[4]
+			const price = row[3]
+			if (typeof mcapChange !== 'number' || typeof price !== 'number') continue
+			const netCapital = typeof row[1] === 'number' ? row[1] : typeof row[2] === 'number' ? row[2] : 0
+			return {
+				mcapChange,
+				netCapital,
+				price,
+				flowDrivenPct: mcapChange === 0 ? null : netCapital === 0 ? 0 : (netCapital / mcapChange) * 100
+			}
+		}
+		return null
+	}
+
 	let mcapChange = 0
 	let netCapital = 0
 	let price = 0
 	let count = 0
 
-	for (const row of chart.dataset.source) {
+	for (const row of visibleRows) {
 		const rowMcapChange = row[4]
-		const rowNetCapital = row[1] ?? row[2]
+		const rowNetCapital = row[1] ?? row[2] ?? 0
 		const rowPrice = row[3]
 		if (typeof rowMcapChange !== 'number' || typeof rowNetCapital !== 'number' || typeof rowPrice !== 'number') {
 			continue
@@ -610,8 +678,52 @@ export function getRWAFlowVsPriceSummary(
 		mcapChange,
 		netCapital,
 		price,
-		flowDrivenPct: mcapChange === 0 ? null : (netCapital / mcapChange) * 100
+		flowDrivenPct: mcapChange === 0 ? null : netCapital === 0 ? 0 : (netCapital / mcapChange) * 100
 	}
+}
+
+export function getRWAFlowVsPriceAssetSummaries(
+	flowRows: readonly IRWAFlowAssetBreakdownRow[],
+	mcapRows: IRWAChartMetricRows,
+	assets: IRWAAssetsOverview['assets'],
+	groupBy: RWAFlowGrouping,
+	visibleRange?: RWAFlowVisibleRange | null
+): RWAFlowVsPriceAssetSummary[] {
+	const selectedAssets: Array<{
+		key: string
+		label: string
+		points: IRWAFlowAggregatePoint[]
+		mcap: Map<number, number>
+	}> = []
+	for (const asset of assets) {
+		if (asset.kind !== 'spot') continue
+		selectedAssets.push({
+			key: asset.canonicalMarketId,
+			label: asset.assetName ?? asset.ticker ?? asset.canonicalMarketId,
+			points: [],
+			mcap: new Map()
+		})
+	}
+
+	const mcapRowsByTimestamp = new Map<number, IRWAChartMetricRows[number]>()
+	for (const row of mcapRows) mcapRowsByTimestamp.set(toUnixMsTimestamp(row.timestamp), row)
+	for (const row of flowRows) {
+		const timestamp = toUnixMsTimestamp(row.timestamp)
+		const mcapRow = mcapRowsByTimestamp.get(timestamp)
+		for (const asset of selectedAssets) {
+			const flow = row[asset.key]
+			asset.points.push({ timestamp, netFlowUsd: flow ?? null, coverage: flow == null ? 0 : 1 })
+			const mcap = mcapRow?.[asset.key]
+			if (mcap != null) asset.mcap.set(timestamp, mcap)
+		}
+	}
+
+	const summaries: RWAFlowVsPriceAssetSummary[] = []
+	for (const asset of selectedAssets) {
+		const summary = getRWAFlowVsPriceSummary(asset.points, groupBy, asset.mcap, visibleRange)
+		if (summary) summaries.push({ key: asset.key, label: asset.label, summary })
+	}
+	return summaries
 }
 
 export function sortRWAFlowRotationSeriesNames(
