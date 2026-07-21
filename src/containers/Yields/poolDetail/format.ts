@@ -16,10 +16,10 @@ export function fmtUsd(n: number | null | undefined): string {
 	return f ? `$${f.value}${f.suffix}` : '—'
 }
 
-// Loan-to-value ratio (0–1) as a whole-percent, matching the borrow markets table.
+// Loan-to-value ratio (0–1) as a percent, matching the borrow markets table.
 export function fmtLtv(n: number | null | undefined): string {
 	if (n == null) return '—'
-	return `${(n * 100).toFixed(0)}%`
+	return `${formattedNum(n * 100)}%`
 }
 
 export function fmtPct(n: number | null | undefined, digits = 2): string {

@@ -33,7 +33,7 @@ function routeNetRows(row: RouteTableRow): SignedTipRow[] {
 
 function LtvCell({ value }: { value: number | null | undefined }) {
 	if (value == null) return <EmptyCell />
-	return <span>{`${(value * 100).toFixed(0)}%`}</span>
+	return <span>{`${formattedNum(value * 100)}%`}</span>
 }
 
 function UsdCell({ value }: { value: number | null | undefined }) {

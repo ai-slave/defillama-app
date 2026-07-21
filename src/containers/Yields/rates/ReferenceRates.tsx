@@ -231,10 +231,6 @@ function ReferenceRatesSummary({
 						excluded.
 					</p>
 				</div>
-				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-					<ChartGroupingSelector value={range} options={RANGE_OPTIONS} onValueChange={onRangeChange} />
-					<ChartExportButtons chartInstance={() => chartRef.current} filename={`stablecoin-rates-${asset}`} />
-				</div>
 			</PanelHeader>
 			<TableToolbar className="border-b border-subtle">
 				<dl className="grid flex-1 grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-3">
@@ -260,6 +256,10 @@ function ReferenceRatesSummary({
 			</TableToolbar>
 			<ChartPanelToolbar>
 				<ChartGroupingSelector value={asset} options={assetOptions} onValueChange={onAssetChange} />
+				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+					<ChartGroupingSelector value={range} options={RANGE_OPTIONS} onValueChange={onRangeChange} />
+					<ChartExportButtons chartInstance={() => chartRef.current} filename={`stablecoin-rates-${asset}`} />
+				</div>
 			</ChartPanelToolbar>
 			<ChartPanelBody>
 				{chartStatus === 'loading' ? (

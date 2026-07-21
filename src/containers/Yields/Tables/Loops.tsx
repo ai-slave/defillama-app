@@ -1,6 +1,7 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
+import { formattedNum } from '~/utils'
 import type { LoopTableRow } from '../data/types'
 import { hasPart } from '../domain/apyPresentation'
 import { NameYield, PoolNameLockup } from './Name'
@@ -41,7 +42,7 @@ function loopLegRows(row: LoopTableRow): SignedTipRow[] {
 
 function LtvCell({ value }: { value: number | null | undefined }) {
 	if (value == null) return <EmptyCell />
-	return <span>{`${(value * 100).toFixed(0)}%`}</span>
+	return <span>{`${formattedNum(value * 100)}%`}</span>
 }
 
 function LeverageCell({ value }: { value: number | null | undefined }) {
@@ -118,7 +119,7 @@ const loopColumns: Array<ColumnDef<LoopTableRow, unknown>> = [
 			const { ltv, loopCount, supplyApy, borrowApy, loopApy, leverage } = row.original
 			const loops = `${loopCount} loop${loopCount === 1 ? '' : 's'}`
 			const note =
-				ltv != null ? `Recursive loop · ${(ltv * 100).toFixed(0)}% LTV · ${loops}` : `Recursive loop · ${loops}`
+				ltv != null ? `Recursive loop · ${formattedNum(ltv * 100)}% LTV · ${loops}` : `Recursive loop · ${loops}`
 			const legRows = loopLegRows(row.original)
 			// Defensive fallback to leg totals if a row somehow carries no component split.
 			const supplyMult = leverage ?? 1
