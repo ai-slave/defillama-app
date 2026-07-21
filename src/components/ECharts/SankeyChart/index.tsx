@@ -190,7 +190,7 @@ export default function SankeyChart({
 			const depthRank = depthRanks.get(depth) ?? 0
 			depthRanks.set(depth, depthRank + 1)
 			const mobileLabelPosition: 'left' | 'right' =
-				depth === maxDepth || (depth >= 2 && depthRank % 2 === 1) ? 'left' : 'right'
+				depth >= 2 && depth < maxDepth && depthRank % 2 === 1 ? 'left' : 'right'
 			return {
 				name: node.name,
 				itemStyle: { color },

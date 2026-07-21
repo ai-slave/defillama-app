@@ -129,6 +129,7 @@ describe('SankeyChart responsive labels', () => {
 		expect(series).not.toHaveProperty('left')
 		expect(series).not.toHaveProperty('right')
 		expect(series.data.every((node: { label?: { position?: string } }) => node.label?.position)).toBe(true)
+		expect(series.data.at(-1)?.label?.position).toBe('right')
 		expect(option.tooltip.triggerOn).toBe('click')
 		expect(option.tooltip.extraCssText).toContain('white-space: normal')
 		expect(container.firstElementChild?.classList.contains('overflow-x-auto')).toBe(false)
