@@ -19,6 +19,7 @@ const actions = {
 
 const baseProps = {
 	enabled: true,
+	defaultInclusion: { includeStablecoins: false, includeGovernance: false, includeRwaPerps: false },
 	modes: {
 		mode: 'chain',
 		isChainMode: true,

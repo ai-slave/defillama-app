@@ -242,10 +242,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		accessModels: props.accessModels,
 		issuers: props.issuers,
 		assetGroups: props.assetGroups,
-		chainSlug: props.chainSlug,
 		categorySlug: props.categorySlug,
-		platformSlug: props.platformSlug,
-		assetGroupSlug: props.assetGroupSlug,
+		defaultInclusion: props.defaultInclusion,
 		mode
 	})
 
@@ -287,13 +285,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		maxDefiActiveTvlToActiveMcapPct
 	})
 
-	const activeFilters = hasActiveChartFilters(router.query, {
-		mode,
-		chainSlug: props.chainSlug,
-		categorySlug: props.categorySlug,
-		platformSlug: props.platformSlug,
-		assetGroupSlug: props.assetGroupSlug
-	})
+	const activeFilters = hasActiveChartFilters(router.query, props.defaultInclusion)
 	const initialChartDataset = props.initialChartDataset
 	const getInitialMetricDataset = (metric: RWAChartMetricKey) =>
 		initialChartDataset?.metric === metric ? initialChartDataset.dataset : null
@@ -579,7 +571,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		router.query
 	])
 
-	const showFilters = props.assets.length > 1
+	const showFilters = props.assets.length > 0
 
 	const showCharts = props.assets.length > 1 || isPlatformMode || isFlowMetric
 
@@ -872,6 +864,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			<RowLinksWithDropdown links={navLinks} activeLink={selectedModeLabel} />
 			<RWAOverviewFilters
 				enabled={showFilters}
+				defaultInclusion={props.defaultInclusion}
 				modes={{
 					mode,
 					isChainMode,

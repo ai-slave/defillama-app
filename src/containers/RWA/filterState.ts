@@ -2,7 +2,7 @@ import type { NextRouter } from 'next/router'
 import { isTrueQueryParam, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { RWAAssetOverviewRow, RWAOverviewDisplayRow, RWAPerpsContractOverlayRow } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
-import { getDefaultRWAOverviewInclusion, type RWAOverviewInclusionContext } from './constants'
+import type { RWAOverviewInclusionDefaults } from './constants'
 import { getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
 
 export const RWA_ATTRIBUTE_FILTER_STATES = ['yes', 'no', 'unknown'] as const
@@ -101,10 +101,8 @@ export function hasActiveInclusionOverride(queryValue: string | string[] | undef
 
 export function hasPerpsOverlayBlockingFiltersFromQuery(
 	query: NextRouter['query'],
-	inclusionContext: RWAOverviewInclusionContext
+	defaultInclusion: RWAOverviewInclusionDefaults
 ): boolean {
-	const defaultInclusion = getDefaultRWAOverviewInclusion(inclusionContext)
-
 	if (hasActiveInclusionOverride(query.includeStablecoins, defaultInclusion.includeStablecoins)) return true
 	if (hasActiveInclusionOverride(query.includeGovernance, defaultInclusion.includeGovernance)) return true
 

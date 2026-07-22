@@ -41,6 +41,7 @@ import {
 import {
 	filterCategoriesForStandardRwaOverview,
 	getDefaultRWAOverviewInclusion,
+	inferPlatformRWAOverviewInclusion,
 	isCategoryIncludedInStandardRwaOverview,
 	type RWAOverviewMode
 } from './constants'
@@ -137,28 +138,28 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 				: selectedCategory
 					? 'category'
 					: 'chain'
-		const defaultInclusion = getDefaultRWAOverviewInclusion({
+		const routeDefaultInclusion = getDefaultRWAOverviewInclusion({
 			mode,
 			chainSlug: selectedChain,
 			categorySlug: selectedCategory,
-			platformSlug: selectedPlatform,
 			assetGroupSlug: selectedAssetGroup
 		})
-
-		const [data, perpsMarkets, chartRows, openInterestChartRows]: [
+		const [data, perpsMarkets, prefetchedChartRows, openInterestChartRows]: [
 			Array<IFetchedRWAProject>,
 			IRWAPerpsMarket[],
-			IRWAChartMetricRows | null,
+			IRWAChartMetricRows | null | undefined,
 			IRWAPerpsBreakdownChartResponse | null
 		] = await Promise.all([
 			fetchRWAActiveTVLs(),
 			fetchRWAPerpsCurrent().catch(() => []),
-			fetchRWAChartMetricDataByAsset({
-				target,
-				metric: 'activeMcap',
-				includeStablecoins: defaultInclusion.includeStablecoins,
-				includeGovernance: defaultInclusion.includeGovernance
-			}),
+			selectedPlatform
+				? Promise.resolve(undefined)
+				: fetchRWAChartMetricDataByAsset({
+						target,
+						metric: 'activeMcap',
+						includeStablecoins: routeDefaultInclusion.includeStablecoins,
+						includeGovernance: routeDefaultInclusion.includeGovernance
+					}),
 			selectedChain ? Promise.resolve(null) : fetchRWAPerpsContractBreakdownChartData({ key: 'openInterest' })
 		])
 
@@ -566,6 +567,17 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		})
 
 		// Pre-aggregate chart data server-side so we don't ship the huge ticker-level payload to the client.
+		const defaultInclusion = selectedPlatform
+			? inferPlatformRWAOverviewInclusion(assets.filter((asset) => asset.kind === 'spot'))
+			: routeDefaultInclusion
+		const chartRows = selectedPlatform
+			? await fetchRWAChartMetricDataByAsset({
+					target,
+					metric: 'activeMcap',
+					includeStablecoins: defaultInclusion.includeStablecoins,
+					includeGovernance: defaultInclusion.includeGovernance
+				})
+			: (prefetchedChartRows ?? null)
 		const aggregationMode: RWAChartAggregationMode = selectedAssetGroup ? 'assetName' : 'assetGroup'
 		const defaultFilteredAssets = applyDefaultAssetFilters(assets, {
 			includeStablecoins: defaultInclusion.includeStablecoins,
@@ -654,6 +666,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			selectedPlatform: actualPlatformName ?? 'All',
 			assetGroupLinks: selectedAssetGroup ? [{ label: 'All', to: '/rwa/asset-groups' }, ...assetGroupNavValues] : [],
 			selectedAssetGroup: actualAssetGroupName ?? 'All',
+			defaultInclusion,
 			totals: {
 				onChainMcap: totalOnChainMcap,
 				activeMcap: totalActiveMcap,

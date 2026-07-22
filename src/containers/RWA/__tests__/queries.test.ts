@@ -357,6 +357,76 @@ describe('rwa queries', () => {
 		})
 	})
 
+	it('infers stablecoin inclusion for a platform whose only spot asset is a stablecoin', async () => {
+		fetchRWAActiveTVLsMock.mockResolvedValue([
+			{
+				id: 'curve-usd',
+				ticker: 'crvUSD',
+				assetName: 'crvUSD',
+				parentPlatform: 'Curve',
+				category: ['Non-RWA Stablecoins'],
+				stablecoin: true,
+				governance: false,
+				onChainMcap: { Ethereum: 100 },
+				activeMcap: { Ethereum: 90 }
+			}
+		])
+
+		const result = await getRWAAssetsOverview({
+			platform: 'curve',
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Non-RWA Stablecoins'],
+				platforms: ['Curve'],
+				assetGroups: []
+			} as never
+		})
+
+		expect(result?.defaultInclusion).toEqual({
+			includeStablecoins: true,
+			includeGovernance: false,
+			includeRwaPerps: false
+		})
+		expect(fetchRWAChartMetricDataByAssetMock).toHaveBeenCalledWith({
+			target: { kind: 'platform', slug: 'curve' },
+			metric: 'activeMcap',
+			includeStablecoins: true,
+			includeGovernance: false
+		})
+	})
+
+	it('keeps stablecoins off when a platform has as many base assets as stablecoins', async () => {
+		fetchRWAActiveTVLsMock.mockResolvedValue([
+			{
+				id: 'base',
+				ticker: 'BASE',
+				assetName: 'Base Asset',
+				parentPlatform: 'Mixed',
+				stablecoin: false,
+				governance: false,
+				onChainMcap: { Ethereum: 100 },
+				activeMcap: { Ethereum: 90 }
+			},
+			{
+				id: 'stable',
+				ticker: 'USD',
+				assetName: 'Stable Asset',
+				parentPlatform: 'Mixed',
+				stablecoin: true,
+				governance: false,
+				onChainMcap: { Ethereum: 50 },
+				activeMcap: { Ethereum: 45 }
+			}
+		])
+
+		const result = await getRWAAssetsOverview({
+			platform: 'mixed',
+			rwaList: { chains: ['Ethereum'], categories: [], platforms: ['Mixed'], assetGroups: [] } as never
+		})
+
+		expect(result?.defaultInclusion.includeStablecoins).toBe(false)
+	})
+
 	it('preserves original category order when filtering by a secondary category', async () => {
 		fetchRWAActiveTVLsMock.mockResolvedValue([
 			{

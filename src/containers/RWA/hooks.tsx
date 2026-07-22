@@ -26,12 +26,7 @@ import {
 	toRwaMultiSeriesChartDataset,
 	type RWAPositionalChartDataset
 } from './chartDataset'
-import {
-	getDefaultRWAOverviewInclusion,
-	getDefaultSelectedTypes,
-	type RWAOverviewInclusionContext,
-	type RWAOverviewMode
-} from './constants'
+import { getDefaultSelectedTypes, type RWAOverviewInclusionDefaults, type RWAOverviewMode } from './constants'
 import {
 	filterRwaOverviewDisplayRows,
 	getEmptyRwaFilteredRowsResult,
@@ -100,10 +95,8 @@ export const useRWATableQueryParams = ({
 	rwaClassifications,
 	accessModels,
 	issuers,
-	chainSlug,
 	categorySlug,
-	platformSlug,
-	assetGroupSlug,
+	defaultInclusion,
 	mode
 }: {
 	assetNames: string[]
@@ -115,10 +108,8 @@ export const useRWATableQueryParams = ({
 	rwaClassifications: string[]
 	accessModels: string[]
 	issuers: string[]
-	chainSlug?: string | null
 	categorySlug?: string | null
-	platformSlug?: string | null
-	assetGroupSlug?: string | null
+	defaultInclusion: RWAOverviewInclusionDefaults
 	mode: RWAOverviewMode
 }) => {
 	const router = useRouter()
@@ -158,14 +149,6 @@ export const useRWATableQueryParams = ({
 		transferableStates: transferableStatesQ,
 		selfCustodyStates: selfCustodyStatesQ
 	} = router.query
-	const defaultInclusion = getDefaultRWAOverviewInclusion({
-		mode,
-		chainSlug,
-		categorySlug,
-		platformSlug,
-		assetGroupSlug
-	})
-
 	const {
 		selectedAssetNames,
 		selectedTypes,
@@ -406,15 +389,8 @@ export const useRWATableQueryParams = ({
 	])
 
 	const hasPerpsOverlayBlockingFilters = useMemo(
-		() =>
-			hasPerpsOverlayBlockingFiltersFromQuery(router.query, {
-				mode,
-				chainSlug,
-				categorySlug,
-				platformSlug,
-				assetGroupSlug
-			}),
-		[router.query, mode, chainSlug, categorySlug, platformSlug, assetGroupSlug]
+		() => hasPerpsOverlayBlockingFiltersFromQuery(router.query, defaultInclusion),
+		[router.query, defaultInclusion]
 	)
 
 	const setDefiActiveTvlToOnChainMcapPctRange = (minValue: string | number | null, maxValue: string | number | null) =>
@@ -1023,10 +999,8 @@ const CHART_FILTER_QUERY_KEYS = new Set([
 
 export function hasActiveChartFilters(
 	query: NextRouter['query'],
-	inclusionContext: RWAOverviewInclusionContext
+	defaultInclusion: RWAOverviewInclusionDefaults
 ): boolean {
-	const defaultInclusion = getDefaultRWAOverviewInclusion(inclusionContext)
-
 	for (const key of CHART_FILTER_QUERY_KEYS) {
 		if (key === 'includeStablecoins') {
 			if (hasActiveInclusionOverride(query.includeStablecoins, defaultInclusion.includeStablecoins)) return true

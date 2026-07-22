@@ -7,6 +7,9 @@ import {
 	type RWAFilterState
 } from '../filterState'
 
+const DEFAULT_INCLUSION = { includeStablecoins: false, includeGovernance: false, includeRwaPerps: false }
+const DEFAULT_ALL_INCLUSION = { includeStablecoins: true, includeGovernance: true, includeRwaPerps: false }
+
 const baseAsset: RWAAssetOverviewRow = {
 	id: 'asset-1',
 	kind: 'spot',
@@ -85,28 +88,23 @@ describe('RWA filter state', () => {
 	})
 
 	it('treats asset-only query filters as perps overlay blockers', () => {
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ types: 'Asset' }, { mode: 'chain' })).toBe(true)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ minActiveMcapToOnChainMcapPct: '10' }, { mode: 'chain' })).toBe(
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ types: 'Asset' }, DEFAULT_INCLUSION)).toBe(true)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ minActiveMcapToOnChainMcapPct: '10' }, DEFAULT_INCLUSION)).toBe(
 			true
 		)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ kycForMintRedeemStates: 'yes' }, { mode: 'chain' })).toBe(true)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ kycForMintRedeemStates: 'yes' }, DEFAULT_INCLUSION)).toBe(true)
 	})
 
 	it('does not treat shared filters or includeRwaPerps as perps overlay blockers', () => {
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ categories: 'Treasuries' }, { mode: 'chain' })).toBe(false)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ platforms: 'Ondo' }, { mode: 'chain' })).toBe(false)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeRwaPerps: 'false' }, { mode: 'chain' })).toBe(false)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ categories: 'Treasuries' }, DEFAULT_INCLUSION)).toBe(false)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ platforms: 'Ondo' }, DEFAULT_INCLUSION)).toBe(false)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeRwaPerps: 'false' }, DEFAULT_INCLUSION)).toBe(false)
 	})
 
 	it('treats stablecoin and governance inclusion overrides as perps overlay blockers', () => {
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'false' }, { mode: 'chain' })).toBe(false)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'true' }, { mode: 'chain' })).toBe(true)
-		expect(
-			hasPerpsOverlayBlockingFiltersFromQuery(
-				{ includeGovernance: 'false' },
-				{ mode: 'category', categorySlug: 'rwa-yield-wrapper' }
-			)
-		).toBe(true)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'false' }, DEFAULT_INCLUSION)).toBe(false)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'true' }, DEFAULT_INCLUSION)).toBe(true)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeGovernance: 'false' }, DEFAULT_ALL_INCLUSION)).toBe(true)
 	})
 
 	it('does not include ratio-filtered rows with invalid numerator or denominator values', () => {

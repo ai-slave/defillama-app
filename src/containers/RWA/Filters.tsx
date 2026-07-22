@@ -13,7 +13,7 @@ import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dial
 import { Icon } from '~/ui/Icon'
 import { parseNumberInput, pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview } from './api.types'
-import { getDefaultRWAOverviewInclusion, getDefaultSelectedTypes, type RWAOverviewMode } from './constants'
+import { getDefaultSelectedTypes, type RWAOverviewMode } from './constants'
 import { definitions } from './definitions'
 import { hasActiveInclusionOverride, updateAttributeFilterStatesQueryValue } from './filterState'
 
@@ -165,6 +165,7 @@ type RWAFilterActions = {
 
 type RWAOverviewFiltersProps = {
 	enabled: boolean
+	defaultInclusion: IRWAAssetsOverview['defaultInclusion']
 	modes: RWAFilterModes
 	options: RWAFilterOptions
 	selections: RWAFilterSelections
@@ -447,18 +448,8 @@ function hasResettableRwaQueryParam(query: ReturnType<typeof useRouter>['query']
 	return false
 }
 
-function getRwaDefaultInclusion(props: RWAOverviewFiltersProps) {
-	return getDefaultRWAOverviewInclusion({
-		mode: props.modes.mode,
-		chainSlug: props.options.chainSlug,
-		categorySlug: props.options.categorySlug,
-		platformSlug: props.options.platformSlug,
-		assetGroupSlug: props.options.assetGroupSlug
-	})
-}
-
 function getRwaInclusionFilters(props: RWAOverviewFiltersProps): RWAInclusionFilterConfig[] {
-	const defaultInclusion = getRwaDefaultInclusion(props)
+	const defaultInclusion = props.defaultInclusion
 
 	return [
 		{

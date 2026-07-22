@@ -18,6 +18,9 @@ import {
 
 const useQueryMock = vi.fn()
 const fetchJsonMock = vi.fn()
+const DEFAULT_INCLUSION = { includeStablecoins: false, includeGovernance: false, includeRwaPerps: false }
+const DEFAULT_ALL_INCLUSION = { includeStablecoins: true, includeGovernance: true, includeRwaPerps: false }
+const DEFAULT_STABLECOIN_INCLUSION = { ...DEFAULT_INCLUSION, includeStablecoins: true }
 
 vi.mock('@tanstack/react-query', () => ({
 	useQuery: (options: unknown) => useQueryMock(options)
@@ -529,57 +532,22 @@ describe('resolveRWAOverviewInclusionFlag', () => {
 
 describe('hasActiveChartFilters', () => {
 	it('ignores inclusion params that resolve to the current defaults', () => {
-		expect(
-			hasActiveChartFilters({ includeStablecoins: 'true' }, { mode: 'category', categorySlug: 'rwa-yield-wrapper' })
-		).toBe(false)
-		expect(
-			hasActiveChartFilters({ includeGovernance: 'true' }, { mode: 'category', categorySlug: 'rwa-yield-wrapper' })
-		).toBe(false)
-		expect(
-			hasActiveChartFilters({ includeStablecoins: 'true' }, { mode: 'category', categorySlug: 'other-rwas' })
-		).toBe(false)
-		expect(hasActiveChartFilters({ includeGovernance: 'true' }, { mode: 'category', categorySlug: 'other-rwas' })).toBe(
-			false
-		)
-		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, { mode: 'platform', platformSlug: 'apyx' })).toBe(
-			false
-		)
-		for (const categorySlug of ['rwa-stablecoins', 'non-rwa-stablecoins', 'fiat-stablecoins']) {
-			expect(hasActiveChartFilters({ includeStablecoins: 'true' }, { mode: 'category', categorySlug })).toBe(false)
-		}
-		expect(hasActiveChartFilters({ includeStablecoins: 'false' }, { mode: 'chain' })).toBe(false)
-		expect(hasActiveChartFilters({ includeRwaPerps: 'false' }, { mode: 'chain' })).toBe(false)
+		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, DEFAULT_ALL_INCLUSION)).toBe(false)
+		expect(hasActiveChartFilters({ includeGovernance: 'true' }, DEFAULT_ALL_INCLUSION)).toBe(false)
+		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, DEFAULT_STABLECOIN_INCLUSION)).toBe(false)
+		expect(hasActiveChartFilters({ includeStablecoins: 'false' }, DEFAULT_INCLUSION)).toBe(false)
+		expect(hasActiveChartFilters({ includeRwaPerps: 'false' }, DEFAULT_INCLUSION)).toBe(false)
 	})
 
 	it('treats inclusion params as active when they override the current defaults', () => {
-		expect(
-			hasActiveChartFilters({ includeStablecoins: 'false' }, { mode: 'category', categorySlug: 'rwa-yield-wrapper' })
-		).toBe(true)
-		expect(
-			hasActiveChartFilters({ includeGovernance: 'false' }, { mode: 'category', categorySlug: 'rwa-yield-wrapper' })
-		).toBe(true)
-		expect(
-			hasActiveChartFilters({ includeStablecoins: 'false' }, { mode: 'category', categorySlug: 'other-rwas' })
-		).toBe(true)
-		expect(
-			hasActiveChartFilters({ includeGovernance: 'false' }, { mode: 'category', categorySlug: 'other-rwas' })
-		).toBe(true)
-		expect(hasActiveChartFilters({ includeStablecoins: 'false' }, { mode: 'platform', platformSlug: 'apyx' })).toBe(
-			true
-		)
-		for (const categorySlug of ['rwa-stablecoins', 'non-rwa-stablecoins', 'fiat-stablecoins']) {
-			expect(hasActiveChartFilters({ includeStablecoins: 'false' }, { mode: 'category', categorySlug })).toBe(true)
-		}
-		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, { mode: 'chain' })).toBe(true)
+		expect(hasActiveChartFilters({ includeStablecoins: 'false' }, DEFAULT_ALL_INCLUSION)).toBe(true)
+		expect(hasActiveChartFilters({ includeGovernance: 'false' }, DEFAULT_ALL_INCLUSION)).toBe(true)
+		expect(hasActiveChartFilters({ includeStablecoins: 'false' }, DEFAULT_STABLECOIN_INCLUSION)).toBe(true)
+		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, DEFAULT_INCLUSION)).toBe(true)
 	})
 
 	it('still treats non-inclusion query filters as active', () => {
-		expect(
-			hasActiveChartFilters(
-				{ minActiveMcapToOnChainMcapPct: '10' },
-				{ mode: 'category', categorySlug: 'rwa-yield-wrapper' }
-			)
-		).toBe(true)
+		expect(hasActiveChartFilters({ minActiveMcapToOnChainMcapPct: '10' }, DEFAULT_ALL_INCLUSION)).toBe(true)
 	})
 })
 

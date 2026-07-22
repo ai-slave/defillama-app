@@ -32,15 +32,55 @@ const STABLECOINS_DEFAULT_RWA_PATHS = new Set<RWAOverviewPath>([
 	'/rwa/category/non-rwa-stablecoins',
 	'/rwa/category/other-rwas',
 	'/rwa/category/rwa-stablecoins',
-	'/rwa/category/rwa-yield-wrapper',
-	'/rwa/platform/apyx',
-	'/rwa/platform/openeden'
+	'/rwa/category/rwa-yield-wrapper'
 ])
 const GOVERNANCE_DEFAULT_RWA_PATHS = new Set<RWAOverviewPath>([
 	'/rwa/category/other-rwas',
-	'/rwa/category/rwa-yield-wrapper',
-	'/rwa/platform/pact'
+	'/rwa/category/rwa-yield-wrapper'
 ])
+
+export function inferPlatformRWAOverviewInclusion(
+	assets: Array<{
+		stablecoin: boolean | null
+		governance: boolean | null
+		onChainMcap: { total: number } | null
+	}>
+): RWAOverviewInclusionDefaults {
+	let baseCount = 0
+	let stablecoinCount = 0
+	let governanceCount = 0
+	let totalMcap = 0
+	let stablecoinMcap = 0
+	let governanceMcap = 0
+
+	for (const asset of assets) {
+		const mcap = asset.onChainMcap?.total ?? 0
+		totalMcap += mcap
+		if (asset.stablecoin) {
+			stablecoinCount += 1
+			stablecoinMcap += mcap
+		}
+		if (asset.governance) {
+			governanceCount += 1
+			governanceMcap += mcap
+		}
+		if (!asset.stablecoin && !asset.governance) baseCount += 1
+	}
+	let includeStablecoins = stablecoinCount > assets.length / 2 || stablecoinMcap > totalMcap / 2
+	let includeGovernance = governanceCount > assets.length / 2 || governanceMcap > totalMcap / 2
+
+	// Avoid an empty initial page when every asset belongs to an evenly split optional classification.
+	if (baseCount === 0 && !includeStablecoins && !includeGovernance) {
+		includeStablecoins = stablecoinCount > 0
+		includeGovernance = governanceCount > 0
+	}
+
+	return {
+		includeStablecoins,
+		includeGovernance,
+		includeRwaPerps: false
+	}
+}
 
 export function isCategoryIncludedInStandardRwaOverview(category: string | null | undefined): boolean {
 	if (!category) return false

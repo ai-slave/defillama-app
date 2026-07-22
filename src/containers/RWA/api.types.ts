@@ -1,5 +1,6 @@
 import type { EarnPageRow } from '~/containers/Yields/data/types'
 import type { RWAChartDataset, RWAPositionalChartDataset } from './chartDataset'
+import type { RWAOverviewInclusionDefaults } from './constants'
 import type { RWAParentPlatform } from './grouping'
 
 type RWANumberMap = Record<string, number>
@@ -189,6 +190,7 @@ export interface IRWAAssetsOverview {
 	selectedPlatform: string
 	assetGroupLinks: Array<{ label: string; to: string }>
 	selectedAssetGroup: string
+	defaultInclusion: RWAOverviewInclusionDefaults
 	chainLinks: Array<{ label: string; to: string }>
 	selectedChain: string
 	categoryLinks: Array<{ label: string; to: string }>
