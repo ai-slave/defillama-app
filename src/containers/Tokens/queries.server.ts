@@ -33,6 +33,7 @@ import {
 	TOKENS_SOURCE_CACHE_TTL_MS
 } from './cache.server'
 import type {
+	TokenMarketSummary,
 	TokensChartDataset,
 	TokensPageResponse,
 	TokensPageStats,
@@ -72,21 +73,6 @@ interface TokensMarketSnapshot extends SharedTokensMarketSnapshot {
 export interface TokenOverviewCurrentSnapshot {
 	revision: number
 	metrics: TokenOverviewCurrentMetrics | null
-}
-
-export interface TokenMarketSummary {
-	symbol: string
-	marketCapRank: number | null
-	currentPrice: number | null
-	priceChange7d: number | null
-	priceChange30d: number | null
-	marketCap: number | null
-	fdv: number | null
-	circulatingSupply: number | null
-	totalSupply: number | null
-	maxSupply: number | null
-	ath: number | null
-	athDate: string | null
 }
 
 export interface TokensPageSnapshot {

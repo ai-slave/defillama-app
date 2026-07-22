@@ -3,6 +3,21 @@ import type { TokenRightsPieTone } from '~/containers/TokenRights/utils'
 export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 11
 export const TOKENS_CHART_GECKO_LOGO_PREFIX = '@'
 
+export interface TokenMarketSummary {
+	symbol: string
+	marketCapRank: number | null
+	currentPrice: number | null
+	priceChange7d: number | null
+	priceChange30d: number | null
+	marketCap: number | null
+	fdv: number | null
+	circulatingSupply: number | null
+	totalSupply: number | null
+	maxSupply: number | null
+	ath: number | null
+	athDate: string | null
+}
+
 export const TOKENS_SORT_KEYS = [
 	'rank',
 	'name',

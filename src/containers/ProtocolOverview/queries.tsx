@@ -16,7 +16,7 @@ import { fetchOracleMetrics, fetchOracleProtocolChart } from '~/containers/Oracl
 import type { IOracleProtocolChart } from '~/containers/Oracles/api.types'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
-import { getTokenMarketSummaryByGeckoId } from '~/containers/Tokens/queries.server'
+import type { TokenMarketSummary } from '~/containers/Tokens/types'
 import { fetchTreasuries } from '~/containers/Treasuries/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { readYieldsMeta, type YieldsSnapshot } from '~/containers/Yields/data/snapshot'
@@ -129,7 +129,8 @@ export const getProtocolOverviewPageData = async ({
 	protocolLlamaswapDataset,
 	tokenDirectory = null,
 	yieldsSnapshot,
-	includeFaq = true
+	includeFaq = true,
+	getTokenMarketSummary = null
 }: {
 	protocolId: string
 	currentProtocolMetadata: IProtocolMetadata
@@ -142,6 +143,7 @@ export const getProtocolOverviewPageData = async ({
 	tokenDirectory?: TokenDirectory | null
 	yieldsSnapshot: YieldsSnapshot | null
 	includeFaq?: boolean
+	getTokenMarketSummary?: ((geckoId: string) => Promise<TokenMarketSummary | null>) | null
 }): Promise<IProtocolOverviewPageData> => {
 	const displayName = currentProtocolMetadata.displayName ?? ''
 	const currentProtocolSlug = slug(displayName)
@@ -198,8 +200,8 @@ export const getProtocolOverviewPageData = async ({
 	)
 	const tokenMarketSummaryPromise = protocolDataPromise.then((data) => {
 		const geckoId = data.gecko_id ?? currentProtocolMetadata.gecko_id ?? null
-		return includeFaq && !isCEX && geckoId
-			? optionalProtocolData('token_market_summary', () => getTokenMarketSummaryByGeckoId(geckoId), null)
+		return includeFaq && !isCEX && geckoId && getTokenMarketSummary
+			? optionalProtocolData('token_market_summary', () => getTokenMarketSummary(geckoId), null)
 			: null
 	})
 
@@ -276,7 +278,7 @@ export const getProtocolOverviewPageData = async ({
 		IOracleProtocolChart | null,
 		IProtocolOverviewPageData['oracleTvs'],
 		BlockExplorersResponse,
-		Awaited<ReturnType<typeof getTokenMarketSummaryByGeckoId>>
+		TokenMarketSummary | null
 	] = await Promise.all([
 		protocolDataPromise,
 		currentProtocolMetadata.tvl && !isOracleProtocol

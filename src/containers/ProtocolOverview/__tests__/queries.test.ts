@@ -52,10 +52,6 @@ vi.mock('~/containers/Treasuries/api', () => ({
 	fetchTreasuries
 }))
 
-vi.mock('~/containers/Tokens/queries.server', () => ({
-	getTokenMarketSummaryByGeckoId
-}))
-
 vi.mock('~/utils/async', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('~/utils/async')>()
 	return {
@@ -190,7 +186,8 @@ describe('getProtocolOverviewPageData', () => {
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
 			protocolLlamaswapDataset: {},
-			yieldsSnapshot
+			yieldsSnapshot,
+			getTokenMarketSummary: getTokenMarketSummaryByGeckoId
 		})
 
 		expect(getTokenMarketSummaryByGeckoId).toHaveBeenCalledWith('test-token')
@@ -198,6 +195,25 @@ describe('getProtocolOverviewPageData', () => {
 			text: 'TEST',
 			href: '/token/TEST'
 		})
+	})
+
+	it('does not load token FAQ data when FAQs are disabled', async () => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: { displayName: 'Test Protocol', gecko_id: 'test-token' } as never,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot,
+			includeFaq: false,
+			getTokenMarketSummary: getTokenMarketSummaryByGeckoId
+		})
+
+		expect(getTokenMarketSummaryByGeckoId).not.toHaveBeenCalled()
 	})
 
 	it('builds protocol page data when the primary TVL chart seed fails', async () => {
