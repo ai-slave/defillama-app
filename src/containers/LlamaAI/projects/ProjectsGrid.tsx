@@ -36,6 +36,7 @@ function relativeTime(iso: string): string {
 }
 
 type SortBy = 'updated' | 'created' | 'name'
+const EMPTY_PROJECTS: ProjectWithStats[] = []
 
 export function ProjectsGrid() {
 	const { user, hasActiveSubscription, isTrial } = useAuthContext()
@@ -51,7 +52,7 @@ export function ProjectsGrid() {
 	const [projectToRename, setProjectToRename] = useState<ProjectWithStats | null>(null)
 	const [projectToDelete, setProjectToDelete] = useState<ProjectWithStats | null>(null)
 	const deferredQuery = useDeferredValue(query)
-	const allProjects = useMemo<ProjectWithStats[]>(() => data ?? [], [data])
+	const allProjects = data ?? EMPTY_PROJECTS
 
 	const visibleProjects = useMemo<ProjectWithStats[]>(() => {
 		const q = deferredQuery.trim()

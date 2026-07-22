@@ -216,9 +216,18 @@ function mergeTokenLiquidations(
 	parts: TokenLiquidationsSectionData[],
 	displaySymbol: string
 ): TokenLiquidationsSectionData {
-	const protocolRows = mergeProtocolRows(parts.flatMap((part) => part.protocolRows))
-	const chainRows = mergeChainRows(parts.flatMap((part) => part.chainRows))
-	const tokens = mergeChartTokens(parts.flatMap((part) => part.distributionChart.tokens))
+	const protocolRowsInput: OverviewProtocolRow[] = []
+	const chainRowsInput: OverviewChainRow[] = []
+	const tokenInput: LiquidationsDistributionChartToken[] = []
+	for (const part of parts) {
+		for (const row of part.protocolRows) protocolRowsInput.push(row)
+		for (const row of part.chainRows) chainRowsInput.push(row)
+		for (const token of part.distributionChart.tokens) tokenInput.push(token)
+	}
+
+	const protocolRows = mergeProtocolRows(protocolRowsInput)
+	const chainRows = mergeChainRows(chainRowsInput)
+	const tokens = mergeChartTokens(tokenInput)
 	const positionCount = protocolRows.reduce((acc, row) => acc + row.positionCount, 0)
 	const totalCollateralUsd = protocolRows.reduce((acc, row) => acc + row.totalCollateralUsd, 0)
 	const timestamp = parts.reduce((acc, part) => Math.max(acc, part.timestamp), 0)

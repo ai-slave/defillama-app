@@ -583,9 +583,10 @@ const fetchSubProtocolRows = async (chainFilters: string[], totals: ProtocolMetr
 		values
 	)
 
-	return rows
-		.filter((row) => row.sub_protocol && row.protocol && row.sub_protocol !== row.protocol)
-		.map((row) =>
+	const normalizedRows: NormalizedRow[] = []
+	for (const row of rows) {
+		if (!row.sub_protocol || !row.protocol || row.sub_protocol === row.protocol) continue
+		normalizedRows.push(
 			buildBaseRow(row, totals, {
 				slug: row.sub_protocol,
 				parentSlug: row.protocol,
@@ -593,6 +594,8 @@ const fetchSubProtocolRows = async (chainFilters: string[], totals: ProtocolMetr
 				chainSlugs: row.chain_slugs
 			})
 		)
+	}
+	return normalizedRows
 }
 
 const fetchProtocolChainRows = async (

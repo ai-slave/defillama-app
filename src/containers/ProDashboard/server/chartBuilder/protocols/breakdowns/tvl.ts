@@ -72,9 +72,8 @@ const fetchCategorySeriesAll = async (category: string, logArgs?: unknown[]): Pr
 	try {
 		const j = await fetchCategoryChart({ category })
 		const tvl = j?.tvl || {}
-		const mapped = Object.entries(tvl).map(
-			([ts, v]: [string, any]) => [parseInt(ts, 10), Number(v) || 0] as [number, number]
-		)
+		const mapped: [number, number][] = []
+		for (const ts in tvl) mapped.push([parseInt(ts, 10), Number(tvl[ts]) || 0])
 		return filterOutToday(normalizeDailyPairs(mapped, 'last'))
 	} catch (error) {
 		if (logArgs?.length) {
@@ -92,9 +91,8 @@ const fetchCategorySeriesPerChain = async (
 	try {
 		const j = await fetchCategoryChart({ category, chain })
 		const tvl = j?.tvl || {}
-		const mapped = Object.entries(tvl).map(
-			([ts, v]: [string, any]) => [parseInt(ts, 10), Number(v) || 0] as [number, number]
-		)
+		const mapped: [number, number][] = []
+		for (const ts in tvl) mapped.push([parseInt(ts, 10), Number(tvl[ts]) || 0])
 		return filterOutToday(normalizeDailyPairs(mapped, 'last'))
 	} catch (error) {
 		if (logArgs?.length) {

@@ -130,10 +130,8 @@ export const InsidersTable = ({
 }) => {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'received', desc: true }])
 	const { data: blockExplorersData } = useBlockExplorers()
-	const tokenChain = useMemo(() => {
-		const chain = token?.includes(':') ? token.split(':')[0] : null
-		return chain && chain !== 'coingecko' ? chain : null
-	}, [token])
+	const tokenChainValue = token?.includes(':') ? token.split(':')[0] : null
+	const tokenChain = tokenChainValue && tokenChainValue !== 'coingecko' ? tokenChainValue : null
 	const columns = useMemo(() => {
 		const cols = getColumns(blockExplorersData ?? [], tokenChain)
 		const hasAllocations = insiders.some((insider) =>

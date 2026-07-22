@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { listArticles, type ArticleListResponse } from '~/containers/Articles/api'
 import type { ArticleDocument } from '~/containers/Articles/types'
@@ -8,6 +8,7 @@ import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
 
 type ListArticlesParams = NonNullable<Parameters<typeof listArticles>[0]>
+const EMPTY_ARTICLE_DOCUMENTS: ArticleDocument[] = []
 
 type Props = {
 	value: string[]
@@ -33,7 +34,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 		enabled: open
 	})
 
-	const items = useMemo<ArticleDocument[]>(() => results?.items ?? [], [results])
+	const items = results?.items ?? EMPTY_ARTICLE_DOCUMENTS
 
 	const hasUnresolved = value.some((id) => !titles[id])
 	const resolveQuery = useQuery<ArticleDocument[]>({

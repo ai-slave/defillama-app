@@ -11,6 +11,8 @@ import { useDeleteProjectFile, useDisconnectSource, useProjectFiles, useProjectS
 import type { ProjectFile, ProjectSource } from './types'
 import { PROJECT_FILE_ACCEPT, useProjectFileUpload } from './useProjectFileUpload'
 
+const EMPTY_PROJECT_SOURCES: ProjectSource[] = []
+
 function formatBytes(bytes: number | string): string {
 	const n = Number(bytes ?? 0)
 	if (n < 1024) return `${n} B`
@@ -58,7 +60,7 @@ export function ProjectFilesPanel({
 		void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
 	}, [autoOpenGitHub, githubStore, router])
 
-	const sources = useMemo(() => sourcesQuery.data ?? [], [sourcesQuery.data])
+	const sources = sourcesQuery.data ?? EMPTY_PROJECT_SOURCES
 	const sourceById = useMemo(() => {
 		const map = new Map<string, ProjectSource>()
 		for (const s of sources) map.set(s.id, s)

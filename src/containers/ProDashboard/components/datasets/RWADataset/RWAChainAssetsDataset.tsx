@@ -164,18 +164,20 @@ function useRWAChainAssetsTableData(chain: string) {
 		select: (data: IFetchedRWAProject[]): RWAChainAssetRow[] => {
 			if (!data) return []
 			const isAll = chain === 'All'
-			return data
-				.filter((a) => a.id && a.ticker && !a.stablecoin && !a.governance && hasChainData(a, chain))
-				.map((a) => ({
-					name: a.assetName || a.ticker || a.id,
-					assetGroup: a.assetGroup || '',
-					activeMcap: isAll ? getTotalFromMap(a.activeMcap) : getChainValue(a.activeMcap, chain),
-					onChainMcap: isAll ? getTotalFromMap(a.onChainMcap) : getChainValue(a.onChainMcap, chain),
-					defiActiveTvl: isAll ? getDefiTvlTotal(a.defiActiveTvl) : getDefiTvlForChain(a.defiActiveTvl, chain),
-					category: Array.isArray(a.category) ? a.category.join(', ') : '',
-					type: a.type || ''
-				}))
-				.sort((a, b) => b.activeMcap - a.activeMcap)
+			const rows: RWAChainAssetRow[] = []
+			for (const asset of data) {
+				if (!asset.id || !asset.ticker || asset.stablecoin || asset.governance || !hasChainData(asset, chain)) continue
+				rows.push({
+					name: asset.assetName || asset.ticker || asset.id,
+					assetGroup: asset.assetGroup || '',
+					activeMcap: isAll ? getTotalFromMap(asset.activeMcap) : getChainValue(asset.activeMcap, chain),
+					onChainMcap: isAll ? getTotalFromMap(asset.onChainMcap) : getChainValue(asset.onChainMcap, chain),
+					defiActiveTvl: isAll ? getDefiTvlTotal(asset.defiActiveTvl) : getDefiTvlForChain(asset.defiActiveTvl, chain),
+					category: Array.isArray(asset.category) ? asset.category.join(', ') : '',
+					type: asset.type || ''
+				})
+			}
+			return rows.sort((a, b) => b.activeMcap - a.activeMcap)
 		}
 	})
 }

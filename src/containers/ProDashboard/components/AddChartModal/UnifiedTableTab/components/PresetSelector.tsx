@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import type { TableFilters } from '~/containers/ProDashboard/types'
 import { Tooltip } from '~/ui/Tooltip'
 import type { FilterPreset, FilterPresetCategory } from '../presets/filterPresets'
@@ -29,8 +28,6 @@ const CATEGORY_ORDER: FilterPresetCategory[] = [
 	'category'
 ]
 
-const EMPTY_PRESETS: FilterPreset[] = []
-
 const normalizeEntries = (filters: Partial<TableFilters>): Array<[string, unknown]> => {
 	const result: Array<[string, unknown]> = []
 	for (const key in filters) {
@@ -52,23 +49,21 @@ const filtersEqual = (current: TableFilters, presetFilters: Partial<TableFilters
 	})
 }
 
-export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelectorProps) {
-	const groupedPresets = useMemo(() => {
-		const filtered = CORE_FILTER_PRESETS.filter((preset) => {
-			if (preset.strategyType && preset.strategyType !== 'protocols' && preset.strategyType !== 'both') {
-				return false
-			}
-			return true
-		})
+const GROUPED_PRESETS = (() => {
+	const filtered = CORE_FILTER_PRESETS.filter(
+		(preset) => !preset.strategyType || preset.strategyType === 'protocols' || preset.strategyType === 'both'
+	)
+	const grouped = new Map<FilterPresetCategory, FilterPreset[]>()
+	for (const preset of filtered) {
+		const existing = grouped.get(preset.category) ?? []
+		existing.push(preset)
+		grouped.set(preset.category, existing)
+	}
+	return grouped
+})()
 
-		const grouped = new Map<FilterPresetCategory, FilterPreset[]>()
-		for (const preset of filtered) {
-			const existing = grouped.get(preset.category) ?? EMPTY_PRESETS
-			existing.push(preset)
-			grouped.set(preset.category, existing)
-		}
-		return grouped
-	}, [])
+export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelectorProps) {
+	const groupedPresets = GROUPED_PRESETS
 
 	if (!groupedPresets.size) {
 		return null

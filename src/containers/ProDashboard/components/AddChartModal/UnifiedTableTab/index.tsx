@@ -313,14 +313,16 @@ function TabContent({
 	const [showRwaSelector, setShowRwaSelector] = useState(isEditing && isRwaType)
 	const [showEquitiesSelector, setShowEquitiesSelector] = useState(isEditing && isEquitiesType)
 
-	const initialTab = useMemo<TabKey>(() => {
-		if (focusedSectionOnly === 'filters') return 'filters'
-		if (focusedSectionOnly === 'columns') return 'columns'
-		if (initialFocusSection === 'filters') return 'filters'
-		if (initialFocusSection === 'columns') return 'columns'
-		if (initialFocusSection === 'strategy') return 'setup'
-		return 'setup'
-	}, [focusedSectionOnly, initialFocusSection])
+	const initialTab: TabKey =
+		focusedSectionOnly === 'filters'
+			? 'filters'
+			: focusedSectionOnly === 'columns'
+				? 'columns'
+				: initialFocusSection === 'filters'
+					? 'filters'
+					: initialFocusSection === 'columns'
+						? 'columns'
+						: 'setup'
 	const [activeTab, setActiveTab] = useState<TabKey>(initialTab)
 
 	const activePreset = UNIFIED_TABLE_PRESETS_BY_ID.get(activePresetId)
@@ -600,11 +602,8 @@ function TabContent({
 		return tabOptions
 	}, [tabOptions, focusedSectionOnly])
 
-	const effectiveActiveTab = useMemo<TabKey>(() => {
-		if (!availableTabs.length) return activeTab
-		if (availableTabs.some((tab) => tab.key === activeTab)) return activeTab
-		return availableTabs[0].key
-	}, [activeTab, availableTabs])
+	const effectiveActiveTab: TabKey =
+		!availableTabs.length || availableTabs.some((tab) => tab.key === activeTab) ? activeTab : availableTabs[0].key
 
 	const tabContent: Record<TabKey, React.ReactNode> = {
 		setup: (

@@ -9,7 +9,6 @@ import { fetchMetadataJson } from './http'
 import { extractLiquidationsTokenSymbols } from './liquidations'
 import { fetchMetadataRouteIndexes } from './routeIndexes'
 import { fetchCoreMetadataSources } from './sources'
-import { dedupeNonEmpty } from './strings'
 import type { IEmissionsHistoricalPrices, ITokenListEntry, ProtocolLlamaswapMetadata } from './types'
 
 const normalizeSlug = (value: unknown): string =>
@@ -104,28 +103,27 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 	}
 
 	const bridgeChainSlugToName: Record<string, string> = {}
-	const bridgeProtocolSlugs = dedupeNonEmpty(
-		(bridgesResponse?.bridges ?? []).flatMap((bridge) => {
-			const fromApiSlug = normalizeSlug(bridge.slug)
-			const fromDisplayName = normalizeSlug(bridge.displayName)
-			if (!fromApiSlug && !fromDisplayName) return []
-			return fromApiSlug ? [fromApiSlug, fromDisplayName] : [fromDisplayName]
-		})
-	)
+	const bridgeProtocolSlugsSet = new Set<string>()
+	const bridgeChainSlugsSet = new Set<string>()
+	for (const bridge of bridgesResponse?.bridges ?? []) {
+		const fromApiSlug = normalizeSlug(bridge.slug)
+		const fromDisplayName = normalizeSlug(bridge.displayName)
+		if (fromApiSlug) bridgeProtocolSlugsSet.add(fromApiSlug)
+		if (fromDisplayName) bridgeProtocolSlugsSet.add(fromDisplayName)
 
-	const bridgeChainSlugs = dedupeNonEmpty(
-		(bridgesResponse?.bridges ?? []).flatMap((bridge) => {
-			const destinationChain =
-				bridge.destinationChain && bridge.destinationChain !== 'false' ? [bridge.destinationChain] : []
-			const chainNames = [...(bridge.chains ?? []), ...destinationChain]
-			for (const chainName of chainNames) {
-				const normalized = normalizeSlug(chainName)
-				if (!normalized || bridgeChainSlugToName[normalized]) continue
-				bridgeChainSlugToName[normalized] = chainName
-			}
-			return chainNames.map(normalizeSlug)
-		})
-	)
+		const chainNames = [...(bridge.chains ?? [])]
+		if (bridge.destinationChain && bridge.destinationChain !== 'false') {
+			chainNames.push(bridge.destinationChain)
+		}
+		for (const chainName of chainNames) {
+			const normalized = normalizeSlug(chainName)
+			if (!normalized) continue
+			bridgeChainSlugsSet.add(normalized)
+			if (!bridgeChainSlugToName[normalized]) bridgeChainSlugToName[normalized] = chainName
+		}
+	}
+	const bridgeProtocolSlugs = Array.from(bridgeProtocolSlugsSet)
+	const bridgeChainSlugs = Array.from(bridgeChainSlugsSet)
 
 	const protocolLlamaswapDataset = {} as ProtocolLlamaswapMetadata
 

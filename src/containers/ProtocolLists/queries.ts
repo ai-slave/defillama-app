@@ -325,7 +325,7 @@ export async function getExtraTvlByChain({
 			logo: parent.logo ?? '',
 			slug: slug(parent.name),
 			category: categories.length > 1 ? null : (categories[0] ?? null),
-			chains: Array.from(new Set(children.flatMap((p) => p.chains))),
+			chains: Array.from(new Set(children.flatMap((child) => child.chains))),
 			value: totalValue,
 			change_1m: pct != null ? Number(pct.toFixed(2)) : null,
 			subRows: children
@@ -405,7 +405,8 @@ function buildTokenMetricProtocols({
 		}
 
 		if (protocol.parentProtocol) {
-			parentChildren[protocol.parentProtocol] = [...(parentChildren[protocol.parentProtocol] ?? []), p]
+			const children = parentChildren[protocol.parentProtocol] ?? (parentChildren[protocol.parentProtocol] = [])
+			children.push(p)
 		} else {
 			finalProtocols.push(p)
 		}
@@ -427,7 +428,7 @@ function buildTokenMetricProtocols({
 			logo: parent.logo ?? '',
 			slug: slug(parent.name),
 			category: cats.length > 1 ? null : (cats[0] ?? null),
-			chains: Array.from(new Set(children.flatMap((p) => p.chains))),
+			chains: Array.from(new Set(children.flatMap((child) => child.chains))),
 			subRows: children,
 			value: getParentValue(parent)
 		})

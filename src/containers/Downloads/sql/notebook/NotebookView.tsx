@@ -35,6 +35,8 @@ interface NotebookViewProps {
 	onDismissCellsDirty: () => void
 }
 
+const EMPTY_NOTEBOOK_CELLS: QueryTab['cells'] = []
+
 export function NotebookView({
 	tab,
 	loadedTables,
@@ -56,14 +58,14 @@ export function NotebookView({
 	onConvertCellType,
 	onDismissCellsDirty
 }: NotebookViewProps) {
-	const cells = useMemo(() => tab.cells ?? [], [tab.cells])
+	const cells = tab.cells ?? EMPTY_NOTEBOOK_CELLS
 	const activeCellId = tab.activeCellId
 
 	const cellRefs = useRef(new Map<string, SqlCellHandle | null>())
 
 	const cellTables = useMemo<CellVirtualTable[]>(() => {
 		const out: CellVirtualTable[] = []
-		;(tab.cells ?? []).forEach((cell, i) => {
+		cells.forEach((cell, i) => {
 			if (cell.type !== 'sql') return
 			const name = `cell_${i + 1}`
 			const cols = cell.result?.columns ?? []
@@ -75,7 +77,7 @@ export function NotebookView({
 			})
 		})
 		return out
-	}, [tab.cells])
+	}, [cells])
 
 	const contextRef = useRef<CompletionContext>({ tables: loadedTables, cellTables })
 	useEffect(() => {

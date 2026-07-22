@@ -40,7 +40,7 @@ function resolveCanonicalName(value: string, options: Array<string>): string | n
 }
 
 function getAllChains(chainsByOracle: Record<string, Array<string>>): Array<string> {
-	return Array.from(new Set(Object.values(chainsByOracle).flat()))
+	return Array.from(new Set(Object.values(chainsByOracle).flatMap((chains) => chains)))
 }
 
 function buildMultiOracleChartDataFromBreakdown(

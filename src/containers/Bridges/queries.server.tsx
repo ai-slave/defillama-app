@@ -290,18 +290,17 @@ function buildTableDataByChain({
 				}
 			}
 
-			tokensTableData = Object.entries(tokensTableUnformatted)
-				.filter(([, volumeData]) => {
-					return (volumeData.volume ?? 0) !== 0
+			tokensTableData = []
+			for (const symbol in tokensTableUnformatted) {
+				const volumeData = tokensTableUnformatted[symbol]
+				if ((volumeData.volume ?? 0) === 0) continue
+				tokensTableData.push({
+					symbol,
+					deposited: volumeData.deposited ?? 0,
+					withdrawn: volumeData.withdrawn ?? 0,
+					volume: volumeData.volume ?? 0
 				})
-				.map((entry) => {
-					return {
-						symbol: entry[0],
-						deposited: entry[1].deposited ?? 0,
-						withdrawn: entry[1].withdrawn ?? 0,
-						volume: entry[1].volume ?? 0
-					}
-				})
+			}
 
 			let fullTokenDeposits: { name: string; value: number }[] = []
 			for (const key in totalTokensDeposited) {
@@ -374,18 +373,17 @@ function buildTableDataByChain({
 				addressesTableUnformatted[address].withdrawn = (addressesTableUnformatted[address].withdrawn ?? 0) + usdValue
 				addressesTableUnformatted[address].txs = (addressesTableUnformatted[address].txs ?? 0) + txs
 			}
-			addressesTableData = Object.entries(addressesTableUnformatted)
-				.filter(([, addressData]) => {
-					return (addressData.txs ?? 0) !== 0
+			addressesTableData = []
+			for (const address in addressesTableUnformatted) {
+				const addressData = addressesTableUnformatted[address]
+				if ((addressData.txs ?? 0) === 0) continue
+				addressesTableData.push({
+					address,
+					deposited: addressData.deposited ?? 0,
+					withdrawn: addressData.withdrawn ?? 0,
+					txs: addressData.txs ?? 0
 				})
-				.map((entry) => {
-					return {
-						address: entry[0],
-						deposited: entry[1].deposited ?? 0,
-						withdrawn: entry[1].withdrawn ?? 0,
-						txs: entry[1].txs ?? 0
-					}
-				})
+			}
 		}
 
 		tableDataByChain[currentChain] = {

@@ -23,26 +23,24 @@ const formatGroupingLabel = (header: UnifiedRowHeaderType) => {
 		.join(' ')
 }
 
+const GROUPING_OPTIONS = PROTOCOL_ROW_HEADER_ORDER.map((header) => ({
+	value: header,
+	label: formatGroupingLabel(header),
+	icon: GROUPING_ICON_BY_KEY[header],
+	description:
+		header === 'chain'
+			? 'Group rows by blockchain ecosystem.'
+			: header === 'category'
+				? 'Break protocols down by sector classification.'
+				: 'Combine child protocols under their parent project.'
+}))
+
 interface GroupingOptionsProps {
 	rowHeaders: UnifiedRowHeaderType[]
 	onToggleRowHeader: (header: UnifiedRowHeaderType) => void
 }
 
 export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptionsProps) {
-	const groupingOptions = useMemo(() => {
-		return PROTOCOL_ROW_HEADER_ORDER.map((header) => ({
-			value: header,
-			label: formatGroupingLabel(header),
-			icon: GROUPING_ICON_BY_KEY[header],
-			description:
-				header === 'chain'
-					? 'Group rows by blockchain ecosystem.'
-					: header === 'category'
-						? 'Break protocols down by sector classification.'
-						: 'Combine child protocols under their parent project.'
-		}))
-	}, [])
-
 	const groupingSummary = useMemo(() => {
 		const labels = rowHeaders.length ? rowHeaders : PROTOCOL_ROW_HEADER_ORDER
 
@@ -55,7 +53,7 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 				<strong className="text-pro-text-secondary">Grouping:</strong> {groupingSummary}
 			</div>
 			<div className="grid gap-2 border-t border-pro-cards-border/70 pt-2 sm:grid-cols-2">
-				{groupingOptions.map((option) => {
+				{GROUPING_OPTIONS.map((option) => {
 					const active = rowHeaders.includes(option.value)
 					return (
 						<button

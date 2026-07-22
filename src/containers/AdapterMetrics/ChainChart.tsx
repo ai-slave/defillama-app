@@ -249,15 +249,11 @@ export const AdapterByChainChart = ({
 		[adapterType, dataType, feesSettings.bribes, feesSettings.tokentax]
 	)
 
-	const combinedChartInterval = React.useMemo<LowercaseDwmcGrouping>(() => {
-		const groupByParam = readSingleQueryValue(router.query.groupBy)?.toLowerCase()
-		const matchedInterval = DWMC_GROUPING_OPTIONS_LOWERCASE.find((option) => option.value === groupByParam)
-		return matchedInterval?.value ?? 'daily'
-	}, [router.query.groupBy])
-	const chartViewMode = React.useMemo<AdapterByChainViewMode>(() => {
-		const chartViewParam = readSingleQueryValue(router.query.chartView)?.toLowerCase()
-		return chartViewParam === 'breakdown' ? 'Breakdown' : 'Combined'
-	}, [router.query.chartView])
+	const combinedGroupByParam = readSingleQueryValue(router.query.groupBy)?.toLowerCase()
+	const combinedInterval = DWMC_GROUPING_OPTIONS_LOWERCASE.find((option) => option.value === combinedGroupByParam)
+	const combinedChartInterval: LowercaseDwmcGrouping = combinedInterval?.value ?? 'daily'
+	const chartViewParam = readSingleQueryValue(router.query.chartView)?.toLowerCase()
+	const chartViewMode: AdapterByChainViewMode = chartViewParam === 'breakdown' ? 'Breakdown' : 'Combined'
 	const breakdownChartState = React.useMemo(
 		() =>
 			normalizeChainsByAdapterChartState({

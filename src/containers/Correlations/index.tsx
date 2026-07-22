@@ -178,11 +178,9 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 		return selected
 	}, [queryCoins, resolvedTokenOptionsById])
 
-	const period = useMemo<Period>(() => {
-		const periodQuery = router.query.period
-		const candidate = Array.isArray(periodQuery) ? periodQuery[0] : periodQuery
-		return candidate && isPeriod(candidate) ? candidate : DEFAULT_PERIOD
-	}, [router.query.period])
+	const periodQuery = router.query.period
+	const periodCandidate = Array.isArray(periodQuery) ? periodQuery[0] : periodQuery
+	const period: Period = periodCandidate && isPeriod(periodCandidate) ? periodCandidate : DEFAULT_PERIOD
 
 	const setPeriod = (nextPeriod: Period) => {
 		if (nextPeriod === period) return

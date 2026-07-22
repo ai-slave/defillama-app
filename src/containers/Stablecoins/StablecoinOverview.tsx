@@ -67,6 +67,7 @@ const risksHelperTexts: Record<string, string> = {
 }
 
 const ASSET_CHART_MODE = { page: 'asset' } as const
+const ASSET_CHART_TYPE_OPTIONS = getStablecoinChartTypeOptions(ASSET_CHART_MODE)
 const UNRELEASED_QUERY_KEY = 'unreleased'
 const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
 
@@ -115,8 +116,8 @@ export const PeggedAssetInfo = ({
 	const chartState = parseStablecoinChartState(router.query, ASSET_CHART_MODE)
 	const chartType = chartState.type
 	const chartView = chartState.view
-	const volumeGroupBy = React.useMemo(() => parseStablecoinVolumeGroupBy(router.query.groupBy), [router.query.groupBy])
-	const chartTypeOptions = React.useMemo(() => getStablecoinChartTypeOptions(ASSET_CHART_MODE), [])
+	const volumeGroupBy = parseStablecoinVolumeGroupBy(router.query.groupBy)
+	const chartTypeOptions = ASSET_CHART_TYPE_OPTIONS
 	const chartViewOptions = React.useMemo(() => getStablecoinChartViewOptions(chartState), [chartState])
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 

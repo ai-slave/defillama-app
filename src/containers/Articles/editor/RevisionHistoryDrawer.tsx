@@ -30,6 +30,7 @@ type Props = {
 type FilterKey = 'all' | 'edits' | 'publishes' | 'pending' | 'restores'
 type ViewMode = 'preview' | 'diff'
 type BaseMode = 'previous' | 'live' | 'pending'
+const EMPTY_ARTICLE_REVISIONS: ArticleRevisionSummary[] = []
 
 const EVENT_LABELS: Record<ArticleRevisionEventType, string> = {
 	create: 'Created',
@@ -240,7 +241,10 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
 		retry: false
 	})
-	const items = useMemo(() => revisionsQuery.data?.pages.flatMap((page) => page.items) ?? [], [revisionsQuery.data])
+	const items = useMemo(
+		() => revisionsQuery.data?.pages.flatMap((page) => page.items) ?? EMPTY_ARTICLE_REVISIONS,
+		[revisionsQuery.data]
+	)
 	const selectedId = selectedIdState ?? items[0]?.id ?? null
 	const selectedRevisionQuery = useQuery({
 		queryKey: ['research', 'article-revision', articleId, selectedId],

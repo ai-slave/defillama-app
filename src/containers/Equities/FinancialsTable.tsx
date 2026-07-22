@@ -136,12 +136,8 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 	const statementQueryValue = readSingleQueryValue(router.query['financials-table'])
 	const periodQueryValue = readSingleQueryValue(router.query['financials-timeframe'])
 	const availableStatementOptions = useMemo(() => getAvailableEquitiesStatementOptions(statements), [statements])
-	const statementType = useMemo<EquitiesStatementOption>(() => {
-		return getStatementTypeFromQueryValue(statementQueryValue, statements)
-	}, [statementQueryValue, statements])
-	const periodType = useMemo<EquitiesStatementPeriodOption>(() => {
-		return getPeriodTypeFromQueryValue(periodQueryValue)
-	}, [periodQueryValue])
+	const statementType: EquitiesStatementOption = getStatementTypeFromQueryValue(statementQueryValue, statements)
+	const periodType: EquitiesStatementPeriodOption = getPeriodTypeFromQueryValue(periodQueryValue)
 
 	const section = statements[equitiesStatementSectionMap[statementType]]!
 	const periodData = section[equitiesStatementPeriodMap[periodType]]

@@ -273,11 +273,8 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: TokenSe
 
 	const [quantityInput, setQuantityInput] = useState('')
 
-	const selectedCoinId = useMemo(() => {
-		const queryCoins = coinParam ?? ['bitcoin']
-		const coins = Array.isArray(queryCoins) ? queryCoins : [queryCoins]
-		return getGeckoIdFromSearchId(coins[0])
-	}, [coinParam])
+	const queryCoins = coinParam ?? ['bitcoin']
+	const selectedCoinId = getGeckoIdFromSearchId(Array.isArray(queryCoins) ? queryCoins[0] : queryCoins)
 	const missingTokenIds = useMemo(() => {
 		const missingIds = new Set<string>()
 		if (selectedCoinId && !tokenOptionsById[selectedCoinId]) missingIds.add(selectedCoinId)
@@ -364,10 +361,8 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: TokenSe
 		[comparisonQueries, coinInfoMap]
 	)
 
-	const quantity = useMemo(() => {
-		const parsed = parseFloat(quantityInput)
-		return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
-	}, [quantityInput])
+	const parsedQuantity = parseFloat(quantityInput)
+	const quantity = Number.isFinite(parsedQuantity) && parsedQuantity > 0 ? parsedQuantity : 0
 
 	const chartOptions = useMemo<MultiSeriesChartOptions | undefined>(() => {
 		if (!pnlData || start == null || end == null) return undefined

@@ -106,7 +106,7 @@ export function StablecoinsByChain({
 	const chartState = parseStablecoinChartState(router.query, chartMode)
 	const chartType = chartState.type
 	const chartView = chartState.view
-	const volumeGroupBy = React.useMemo(() => parseStablecoinVolumeGroupBy(router.query.groupBy), [router.query.groupBy])
+	const volumeGroupBy = parseStablecoinVolumeGroupBy(router.query.groupBy)
 	const chartTypeOptions = React.useMemo(() => getStablecoinChartTypeOptions(chartMode), [chartMode])
 	const chartViewOptions = React.useMemo(() => getStablecoinChartViewOptions(chartState), [chartState])
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()

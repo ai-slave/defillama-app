@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { ArticleRenderer } from '../renderer/ArticleRenderer'
 import type { LocalArticleDocument } from '../types'
 import { ARTICLE_SECTION_SLUGS } from '../types'
@@ -30,7 +29,7 @@ export function ArticleEditorPreview({
 	readMins,
 	wordCount
 }: ArticleEditorPreviewProps) {
-	const shareUrl = useMemo(() => articlePreviewShareUrl(article), [article])
+	const shareUrl = articlePreviewShareUrl(article)
 	const canOpenLive = article.status === 'published' && article.section && article.slug
 
 	return (

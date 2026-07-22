@@ -74,10 +74,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 	const overlays = useMemo(() => indicators.filter((i) => i.category === 'overlay'), [indicators])
 	const panels = useMemo(() => indicators.filter((i) => i.category === 'panel'), [indicators])
 
-	const chartHeight = useMemo(() => {
-		const panelTotalHeight = panels.length * PANEL_HEIGHT
-		return 480 + panelTotalHeight
-	}, [panels.length])
+	const chartHeight = 480 + panels.length * PANEL_HEIGHT
 
 	const defaultChartSettings = useMemo<EChartsOption>(() => {
 		const panelCount = panels.length

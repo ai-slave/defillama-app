@@ -867,6 +867,25 @@ export const getProtocolOverviewPageData = async ({
 				? `${titleMetrics[0]} Stats & Charts`
 				: `${titleMetrics.slice(0, -1).join(', ')} & ${titleMetrics.at(-1)}`
 	const seoTitle = `${name} ${titleMetricSegment}`
+	const formattedExpenses = expenses
+		? (() => {
+				const annualUsdCost: Array<[string, number | null]> = []
+				let total = 0
+				for (const category in expenses.annualUsdCost ?? {}) {
+					const amount = expenses.annualUsdCost?.[category] ?? null
+					annualUsdCost.push([capitalizeFirstLetter(category), amount])
+					total += amount ?? 0
+				}
+				return {
+					headcount: expenses.headcount ?? null,
+					annualUsdCost,
+					total,
+					sources: expenses.sources ?? null,
+					notes: expenses.notes ?? null,
+					lastUpdate: expenses.lastUpdate ?? null
+				}
+			})()
+		: null
 
 	return {
 		id: String(protocolData.id),
@@ -951,19 +970,7 @@ export const getProtocolOverviewPageData = async ({
 					}
 				: null,
 		raises: raises?.length ? raises : null,
-		expenses: expenses
-			? {
-					headcount: expenses.headcount ?? null,
-					annualUsdCost: Object.entries(expenses.annualUsdCost ?? {}).map(([category, amount]) => [
-						capitalizeFirstLetter(category),
-						amount ?? null
-					]),
-					total: Object.values(expenses.annualUsdCost ?? {}).reduce((acc, curr) => acc + curr, 0),
-					sources: expenses.sources ?? null,
-					notes: expenses.notes ?? null,
-					lastUpdate: expenses.lastUpdate ?? null
-				}
-			: null,
+		expenses: formattedExpenses,
 		tokenLiquidity:
 			tokenLiquidity?.length > 0
 				? { pools: tokenLiquidity, total: tokenLiquidity.reduce((acc, curr) => acc + curr[2], 0) }

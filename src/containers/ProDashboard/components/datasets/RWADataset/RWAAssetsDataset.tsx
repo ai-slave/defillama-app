@@ -131,19 +131,21 @@ function useRWAAssetsTableData() {
 		retry: 1,
 		select: (data: IFetchedRWAProject[]): RWAAssetRow[] => {
 			if (!data) return []
-			return data
-				.filter((a) => a.id && a.ticker && !a.stablecoin && !a.governance)
-				.map((a) => ({
-					name: a.assetName || a.ticker || a.id,
-					ticker: a.ticker,
-					assetGroup: a.assetGroup || '',
-					activeMcap: getTotalFromMap(a.activeMcap),
-					onChainMcap: getTotalFromMap(a.onChainMcap),
-					defiActiveTvl: getDefiTvlTotal(a.defiActiveTvl),
-					category: Array.isArray(a.category) ? a.category.join(', ') : '',
-					type: a.type || ''
-				}))
-				.sort((a, b) => b.activeMcap - a.activeMcap)
+			const rows: RWAAssetRow[] = []
+			for (const asset of data) {
+				if (!asset.id || !asset.ticker || asset.stablecoin || asset.governance) continue
+				rows.push({
+					name: asset.assetName || asset.ticker || asset.id,
+					ticker: asset.ticker,
+					assetGroup: asset.assetGroup || '',
+					activeMcap: getTotalFromMap(asset.activeMcap),
+					onChainMcap: getTotalFromMap(asset.onChainMcap),
+					defiActiveTvl: getDefiTvlTotal(asset.defiActiveTvl),
+					category: Array.isArray(asset.category) ? asset.category.join(', ') : '',
+					type: asset.type || ''
+				})
+			}
+			return rows.sort((a, b) => b.activeMcap - a.activeMcap)
 		}
 	})
 }

@@ -116,7 +116,7 @@ export function AdapterByChain(props: IProps) {
 	const excludeCategoryParam = router.query.excludeCategory
 	const hasCategoryParam = Object.prototype.hasOwnProperty.call(router.query, 'category')
 	const columnsByType = useMemo(() => getColumnsByType(isChain), [isChain])
-	const tableColumns = useMemo(() => columnsByType[props.type], [columnsByType, props.type])
+	const tableColumns = columnsByType[props.type]
 	const columnsOptions = useMemo(() => getColumnsOptions(props.type, columnsByType), [props.type, columnsByType])
 
 	const { selectedCategories, protocols } = useMemo(() => {

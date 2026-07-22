@@ -220,25 +220,21 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 		[props.unlocksSlug]
 	)
 
-	const activeTab = useMemo<EquityTab>(() => {
-		const tab = readSingleQueryValue(router.query.tab)
-		return tab && availableTabs.includes(tab as EquityTab) ? (tab as EquityTab) : 'financials'
-	}, [router.query.tab, availableTabs])
+	const tabQueryValue = readSingleQueryValue(router.query.tab)
+	const activeTab: EquityTab =
+		tabQueryValue && availableTabs.includes(tabQueryValue as EquityTab) ? (tabQueryValue as EquityTab) : 'financials'
 
-	const activeTimeframe = useMemo<EquitiesPriceHistoryTimeframe>(() => {
-		return (
-			EQUITIES_PRICE_HISTORY_TIMEFRAMES.find((t) => t === readSingleQueryValue(router.query.timeframe)) ??
-			DEFAULT_PRICE_HISTORY_TIMEFRAME
-		)
-	}, [router.query.timeframe])
+	const activeTimeframe: EquitiesPriceHistoryTimeframe =
+		EQUITIES_PRICE_HISTORY_TIMEFRAMES.find((t) => t === readSingleQueryValue(router.query.timeframe)) ??
+		DEFAULT_PRICE_HISTORY_TIMEFRAME
 
-	const activeFundamentalChart = useMemo<EquityFundamentalChartOption>(() => {
-		return getFundamentalChartFromQuery(readSingleQueryValue(router.query.fundamentals))
-	}, [router.query.fundamentals])
+	const activeFundamentalChart: EquityFundamentalChartOption = getFundamentalChartFromQuery(
+		readSingleQueryValue(router.query.fundamentals)
+	)
 
-	const activeDimensionPeriod = useMemo<EquityDimensionPeriodOption>(() => {
-		return getDimensionPeriodFromQuery(readSingleQueryValue(router.query.fundamentalsPeriod))
-	}, [router.query.fundamentalsPeriod])
+	const activeDimensionPeriod: EquityDimensionPeriodOption = getDimensionPeriodFromQuery(
+		readSingleQueryValue(router.query.fundamentalsPeriod)
+	)
 
 	const activePriceHistoryChart = useMemo(() => {
 		const duration = TIMEFRAME_MS[activeTimeframe]

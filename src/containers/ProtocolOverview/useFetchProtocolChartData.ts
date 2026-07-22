@@ -31,6 +31,10 @@ import {
 	usePrefetchedProtocolChartQuery
 } from './usePrefetchedProtocolChartQuery'
 
+const NON_FEE_ADAPTER_CHART_DESCRIPTORS = ADAPTER_CHART_DESCRIPTORS.filter(
+	(descriptor) => descriptor.renderKind !== 'feeFamily'
+)
+
 type ChartInterval = ChartTimeGroupingWithCumulative
 type AdapterChartState = { data: Array<[number, number]> | null; isLoading: boolean; enabled: boolean }
 
@@ -450,10 +454,7 @@ export const useFetchProtocolChartData = ({
 	const enabledBribesChartError = isBribesEnabled ? bribesChartError : null
 	const enabledTokenTaxesChartError = isTokenTaxesEnabled ? tokenTaxesChartError : null
 
-	const nonFeeAdapterChartDescriptors = useMemo(
-		() => ADAPTER_CHART_DESCRIPTORS.filter((descriptor) => descriptor.renderKind !== 'feeFamily'),
-		[]
-	)
+	const nonFeeAdapterChartDescriptors = NON_FEE_ADAPTER_CHART_DESCRIPTORS
 
 	const isUnlocksEnabled = !!(
 		(toggledMetrics.unlocks === 'true' || toggledMetrics.incentives === 'true') &&

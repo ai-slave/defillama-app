@@ -90,8 +90,9 @@ const sumNestedValues = (value: any): number => {
 		return value.reduce((acc: number, curr) => acc + sumNestedValues(curr), 0)
 	}
 	if (value && typeof value === 'object') {
-		const nestedValues = Object.values(value as Record<string, any>)
-		return nestedValues.reduce((acc: number, curr) => acc + sumNestedValues(curr), 0)
+		let total = 0
+		for (const key in value as Record<string, any>) total += sumNestedValues(value[key])
+		return total
 	}
 	return 0
 }
@@ -202,10 +203,9 @@ async function getDimensionsProtocolChainData(
 
 				if (typeof versions === 'object' && versions !== null) {
 					let chainTotal = 0
-					for (const value of Object.values(versions)) {
-						if (typeof value === 'number') {
-							chainTotal += value
-						}
+					for (const version in versions as Record<string, unknown>) {
+						const value = versions[version]
+						if (typeof value === 'number') chainTotal += value
 					}
 
 					if (chainTotal > 0) {
@@ -361,7 +361,7 @@ async function getAllProtocolsTopChainsDimensionsData(
 				const versions = br24[chainSlug]
 				let sum = 0
 				if (versions && typeof versions === 'object') {
-					for (const v of Object.values(versions as Record<string, number>)) sum += Number(v) || 0
+					for (const version in versions as Record<string, unknown>) sum += Number(versions[version]) || 0
 				} else if (typeof versions === 'number') {
 					sum += Number(versions) || 0
 				}

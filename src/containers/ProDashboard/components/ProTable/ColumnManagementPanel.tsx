@@ -10,6 +10,11 @@ import { protocolsByChainTableColumns, TABLE_CATEGORIES } from './useProTableCol
 
 const EMPTY_CUSTOM_COLUMNS: CustomColumn[] = []
 const EMPTY_CUSTOM_VIEWS: CustomView[] = []
+const PERCENTAGE_SHARE_COLUMNS = SHARE_METRIC_DEFINITIONS.map((metric) => ({
+	key: `${metric.key}_share`,
+	name: metric.name,
+	category: 'PERCENTAGE_SHARE' as const
+}))
 
 const metricDescriptions: Record<string, string> = {
 	name: 'Protocol name',
@@ -242,13 +247,7 @@ export function ColumnManagementPanel({
 		return protocolsByChainTableColumns.filter((column) => column.name.toLowerCase().includes(searchTerm.toLowerCase()))
 	}, [searchTerm])
 
-	const percentageShareColumns = React.useMemo(() => {
-		return SHARE_METRIC_DEFINITIONS.map((metric) => ({
-			key: `${metric.key}_share`,
-			name: metric.name,
-			category: 'PERCENTAGE_SHARE' as const
-		}))
-	}, [])
+	const percentageShareColumns = PERCENTAGE_SHARE_COLUMNS
 
 	// Custom columns formatted for the standard columns view
 	const customColumnsForStandardView = React.useMemo(() => {

@@ -65,6 +65,9 @@ const METRIC_LABELS: Record<RWAOverviewChartMetric, string> = {
 	defiActiveTvl: 'DeFi Active TVL'
 }
 
+const RWA_METRIC_OPTIONS = getChartMetricOptions().map((option) => ({ value: option.key, label: option.label }))
+const RWA_CHART_VIEW_OPTIONS = getChartViewOptions().map((option) => ({ value: option.key, label: option.name }))
+
 export function RWAChartTab(props: RWAChartTabProps) {
 	const { hasActiveSubscription } = useAuthContext()
 
@@ -109,9 +112,8 @@ function RWAChartTabInner({
 		return opts
 	}, [rwaChains])
 
-	const metricOptions = useMemo(() => getChartMetricOptions().map((o) => ({ value: o.key, label: o.label })), [])
-
-	const chartViewOptions = useMemo(() => getChartViewOptions().map((o) => ({ value: o.key, label: o.name })), [])
+	const metricOptions = RWA_METRIC_OPTIONS
+	const chartViewOptions = RWA_CHART_VIEW_OPTIONS
 
 	const isChainSpecific = selectedRwaChain && selectedRwaChain !== 'All'
 

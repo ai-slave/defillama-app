@@ -17,6 +17,7 @@ import type { ProjectWithStats } from './types'
 const VISIBLE_LIMIT = 10
 const NESTED_SESSIONS_LIMIT = 5
 const LAST_SELECTED_PROJECT_KEY_PREFIX = 'llamaai:last-selected-project-id'
+const EMPTY_PROJECTS: ProjectWithStats[] = []
 
 interface ProjectsSidebarSectionProps {
 	sessions?: ChatSession[]
@@ -54,7 +55,7 @@ export function ProjectsSidebarSection({
 	const { data, isLoading } = useProjectList(!isLocked)
 	const expandedProjectId = currentProjectId ?? currentSessionProjectId ?? storedProjectId
 	const projectSessions = useProjectSessions(isLocked ? null : expandedProjectId)
-	const projects = useMemo<ProjectWithStats[]>(() => data ?? [], [data])
+	const projects = data ?? EMPTY_PROJECTS
 	const visible = useMemo(() => {
 		const next = projects.slice(0, VISIBLE_LIMIT)
 		if (!expandedProjectId || next.some((p) => p.id === expandedProjectId)) return next

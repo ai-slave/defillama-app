@@ -78,6 +78,13 @@ type ProtocolMetricOption =
 			type: 'events'
 	  }
 
+const PROTOCOL_CATEGORY_BY_METRIC = new Map<ProtocolChartsLabels, ProtocolChartCategory>()
+for (const category of protocolChartCategoryOrder) {
+	for (const metric of protocolChartCategories[category]) {
+		PROTOCOL_CATEGORY_BY_METRIC.set(metric, category)
+	}
+}
+
 const getProtocolMetricLabel = (chart: ProtocolChartsLabels, tokenSymbol?: string | null) =>
 	chart.replace('Token', tokenSymbol ? `$${tokenSymbol}` : 'Token')
 
@@ -224,15 +231,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 
 	const selectedOptions = useMemo(() => allMetricOptions.filter((o) => o.active), [allMetricOptions])
 
-	const categoryByMetric = useMemo(() => {
-		const map = new Map<ProtocolChartsLabels, ProtocolChartCategory>()
-		for (const category of protocolChartCategoryOrder) {
-			for (const metric of protocolChartCategories[category]) {
-				map.set(metric, category)
-			}
-		}
-		return map
-	}, [])
+	const categoryByMetric = PROTOCOL_CATEGORY_BY_METRIC
 
 	const groupedFilteredOptions = useMemo(() => {
 		const groups = new Map<ProtocolChartCategory | 'Annotations' | 'Other', ProtocolMetricOption[]>()

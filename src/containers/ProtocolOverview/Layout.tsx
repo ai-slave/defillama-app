@@ -144,7 +144,7 @@ export function ProtocolOverviewLayout({
 }) {
 	const { user } = useAuthContext()
 
-	const metricFiltersLabel = useMemo(() => getMetricFiltersLabel(toggleOptions), [toggleOptions])
+	const metricFiltersLabel = getMetricFiltersLabel(toggleOptions)
 
 	const protocolTabs = useMemo(() => {
 		const final = []

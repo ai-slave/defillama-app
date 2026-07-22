@@ -530,17 +530,14 @@ export async function getChainOverviewData({
 				() =>
 					chain === 'All'
 						? getETFData().then((data) => {
-								const recentFlows = Object.entries(data.flows)
-									.slice(-14)
-									.map((item) => [
-										+item[0] * 1000,
-										Object.entries(item[1]).reduce((acc, curr) => {
-											if (curr[0] !== 'date') {
-												acc += curr[1]
-											}
-											return acc
-										}, 0)
-									])
+								const recentFlows: Array<[number, number]> = []
+								for (const [date, values] of Object.entries(data.flows).slice(-14)) {
+									let total = 0
+									for (const key in values) {
+										if (key !== 'date') total += values[key]
+									}
+									recentFlows.push([+date * 1000, total])
+								}
 								return recentFlows
 							})
 						: Promise.resolve(null),

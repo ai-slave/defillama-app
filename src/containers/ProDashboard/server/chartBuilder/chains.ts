@@ -98,33 +98,30 @@ async function getChainNativeByChainBreakdownData({
 			allowedCategorySlugKeys = new Set(Array.from(allowedNames, (name) => toChainSlugKey(name)))
 		}
 
-		const rankedEntries = overview.protocols
-			.filter((protocol) => protocol.protocolType?.toLowerCase() === 'chain')
-			.map((p) => {
-				const name = p.name
-				const slug = p.slug || toChainSlugKey(name)
-				const total24h = p.total24h ?? 0
-				return {
-					name: name || displayNameFromSlug(slug),
-					slug,
-					slugKey: toChainSlugKey(slug),
-					total24h
-				}
-			})
-			.filter((entry) => entry.total24h > 0)
-			.filter((entry) => {
-				if (!chains || chains.length === 0) return true
+		const rankedEntries = []
+		for (const protocol of overview.protocols) {
+			if (protocol.protocolType?.toLowerCase() !== 'chain') continue
+			const name = protocol.name
+			const slug = protocol.slug || toChainSlugKey(name)
+			const total24h = protocol.total24h ?? 0
+			if (total24h <= 0) continue
+			const entry = {
+				name: name || displayNameFromSlug(slug),
+				slug,
+				slugKey: toChainSlugKey(slug),
+				total24h
+			}
+			if (chains && chains.length > 0) {
 				const matches = includeNames.has(entry.name) || includeSlugKeys.has(entry.slugKey)
-				if (chainFilterMode === 'include') return matches
-				return !matches
-			})
-			.filter((entry) => {
-				if (!allowedCategoryNames || !allowedCategorySlugKeys || allowedCategoryNames.size === 0) return true
+				if (chainFilterMode === 'include' ? !matches : matches) continue
+			}
+			if (allowedCategoryNames && allowedCategorySlugKeys && allowedCategoryNames.size > 0) {
 				const matches = allowedCategoryNames.has(entry.name) || allowedCategorySlugKeys.has(entry.slugKey)
-				if (chainCategoryFilterMode === 'include') return matches
-				return !matches
-			})
-			.sort((a, b) => b.total24h - a.total24h)
+				if (chainCategoryFilterMode === 'include' ? !matches : matches) continue
+			}
+			rankedEntries.push(entry)
+		}
+		rankedEntries.sort((a, b) => b.total24h - a.total24h)
 
 		if (rankedEntries.length === 0) {
 			return {

@@ -75,6 +75,8 @@ const DENOM_COIN_MAP: Record<Denom, string> = {
 }
 const DENOM_COIN_NAMES = ['Bitcoin', 'Ethereum', 'Solana'] as const
 const DENOM_COIN_NAME_SET = new Set<string>(DENOM_COIN_NAMES)
+const BAR_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' } }
+const LINE_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' } }
 
 export const CategoryPerformanceContainer = ({
 	pctChanges,
@@ -154,8 +156,8 @@ export const CategoryPerformanceContainer = ({
 
 	// Keep axis on the right like before; avoid `yAxis.name` because it renders
 	// at the top of the axis and can get clipped by the chart container.
-	const barChartOptions = React.useMemo<MultiSeriesChartOptions>(() => ({ yAxis: { position: 'right' } }), [])
-	const lineChartOptions = React.useMemo<MultiSeriesChartOptions>(() => ({ yAxis: { position: 'right' } }), [])
+	const barChartOptions = BAR_CHART_OPTIONS
+	const lineChartOptions = LINE_CHART_OPTIONS
 
 	const { sortedPctChanges, timeSeries } = React.useMemo(() => {
 		const { field, seriesKey } = PERIOD_CONFIG[groupBy]

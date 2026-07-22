@@ -1107,16 +1107,13 @@ export async function getProtocolsCategoriesChartData({
 } = {}): Promise<IProtocolsCategoriesChartData> {
 	const { chart, categories } = await fetchCategoriesSummary()
 	const categoryKeysFromApi = getCategoryKeysFromApi(categories)
-	const fallbackCategoryKeysFromChart = Object.values(chart ?? {}).flatMap((chartByCategory) => {
-		const categoryKeys: string[] = []
-		for (const categoryName in chartByCategory) {
-			categoryKeys.push(categoryName)
+	const categoryKeysSet = new Set(categoryKeysFromApi)
+	if (categoryKeysSet.size === 0) {
+		for (const chartByCategory of Object.values(chart ?? {})) {
+			for (const categoryName in chartByCategory) categoryKeysSet.add(categoryName)
 		}
-		return categoryKeys
-	})
-	const categoryKeys = Array.from(
-		new Set(categoryKeysFromApi.length > 0 ? categoryKeysFromApi : fallbackCategoryKeysFromChart)
-	)
+	}
+	const categoryKeys = Array.from(categoryKeysSet)
 
 	return buildProtocolsCategoriesChartData({ chart, categoryKeys, extraTvlTypes })
 }

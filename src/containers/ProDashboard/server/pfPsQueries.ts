@@ -53,7 +53,11 @@ export async function fetchPfPsChartData(protocol: string, type: 'pf' | 'ps'): P
 		[protocol, type, ROLLING_30D_ANNUALIZATION_FACTOR]
 	)
 
-	return rows.filter((row) => row.ratio !== null).map((row) => [row.timestamp, row.ratio as number] as [number, number])
+	const series: Array<[number, number]> = []
+	for (const row of rows) {
+		if (row.ratio !== null) series.push([row.timestamp, row.ratio])
+	}
+	return series
 }
 
 export async function fetchPfPsProtocols(): Promise<{ pf: string[]; ps: string[] }> {

@@ -68,12 +68,15 @@ function formatEmissionLabel(label: unknown): string {
 
 function roundEmissionEvents(events: EmissionEvent[] | undefined | null): EmissionEvent[] {
 	if (!Array.isArray(events) || events.length === 0) return []
-	return events
-		.filter((event) => typeof event?.timestamp === 'number' && Number.isFinite(event.timestamp))
-		.map((event) => ({
+	const roundedEvents: EmissionEvent[] = []
+	for (const event of events) {
+		if (typeof event?.timestamp !== 'number' || !Number.isFinite(event.timestamp)) continue
+		roundedEvents.push({
 			...event,
 			timestamp: roundToNearestHalfHour(event.timestamp)
-		}))
+		})
+	}
+	return roundedEvents
 }
 
 const EMPTY_TOKEN_ALLOCATION_SPLIT: TokenAllocationSplit = {

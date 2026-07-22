@@ -5,7 +5,6 @@ import {
 	getSortedRowModel,
 	useReactTable
 } from '@tanstack/react-table'
-import { useMemo } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
@@ -228,9 +227,8 @@ function EmptyState({ children }: { children: React.ReactNode }) {
 }
 
 export function EquitiesMarketsTable({ markets, ticker }: { markets: IEquitiesOnchainMarketRow[]; ticker: string }) {
-	const data = useMemo(() => markets, [markets])
 	const table = useReactTable({
-		data,
+		data: markets,
 		columns: marketsColumns,
 		initialState: {
 			pagination: {
@@ -253,16 +251,15 @@ export function EquitiesMarketsTable({ markets, ticker }: { markets: IEquitiesOn
 					size="md"
 				/>
 			</TableToolbar>
-			{data.length === 0 ? <EmptyState>No on-chain markets found for {ticker}.</EmptyState> : null}
+			{markets.length === 0 ? <EmptyState>No on-chain markets found for {ticker}.</EmptyState> : null}
 			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} shell="none" />
 		</Panel>
 	)
 }
 
 export function EquitiesTokensTable({ tokens, ticker }: { tokens: IEquitiesOnchainTokenRow[]; ticker: string }) {
-	const data = useMemo(() => tokens, [tokens])
 	const table = useReactTable({
-		data,
+		data: tokens,
 		columns: tokensColumns,
 		initialState: {
 			pagination: {
@@ -285,7 +282,7 @@ export function EquitiesTokensTable({ tokens, ticker }: { tokens: IEquitiesOncha
 					size="md"
 				/>
 			</TableToolbar>
-			{data.length === 0 ? <EmptyState>No tokenized assets found for {ticker}.</EmptyState> : null}
+			{tokens.length === 0 ? <EmptyState>No tokenized assets found for {ticker}.</EmptyState> : null}
 			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} shell="none" />
 		</Panel>
 	)

@@ -125,16 +125,16 @@ export function MetricCard({ metric }: MetricCardProps) {
 		return { displayTitle, baseTitle, iconUrl, format: fmt }
 	}, [metric, getChainInfo, getProtocolInfo])
 
-	const displayValue = useMemo(() => {
+	const displayValue = (() => {
 		if (value == null) return '-'
 		if (format === 'currency') return formattedNum(value, true)
 		if (format === 'number') return formattedNum(value, false)
 		return `${(value as number).toFixed(2)}%`
-	}, [value, format])
+	})()
 
 	const compareFormat = metric.compare?.format ?? 'percent'
 
-	const deltaText = useMemo(() => {
+	const deltaText = (() => {
 		if (delta == null && deltaPct == null) return null
 		if (compareFormat === 'absolute') {
 			if (delta == null) return null
@@ -155,7 +155,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 		if (Math.abs(deltaPct) < 0.005) return null
 		const sign = deltaPct > 0 ? '+' : ''
 		return `${sign}${deltaPct.toFixed(2)}%`
-	}, [delta, deltaPct, compareFormat, format])
+	})()
 
 	const deltaPositive = (delta ?? deltaPct ?? 0) > 0
 	const deltaNegative = (delta ?? deltaPct ?? 0) < 0
@@ -166,7 +166,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 
 	const isVolumeMetric = VOLUME_METRIC_TYPES.has(metric.type)
 
-	const summaryText = useMemo(() => {
+	const summaryText = (() => {
 		const base = AGGREGATOR_SUMMARY_LABELS[metric.aggregator] ?? aggregatorBadge.toLowerCase()
 		const contextAware = isVolumeMetric ? base.replace('value', 'volume') : base
 		const aggregatorSummary = toSentenceCase(contextAware)
@@ -174,7 +174,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 			return `${displayTitle} ${windowPhrase} (${aggregatorBadge}) has no data available yet.`
 		}
 		return `${displayTitle} — ${aggregatorSummary} ${windowPhrase} is ${displayValue}.`
-	}, [aggregatorBadge, displayValue, displayTitle, isVolumeMetric, metric.aggregator, value, windowPhrase])
+	})()
 
 	const hasCustomLabel = Boolean(metric.label?.trim())
 

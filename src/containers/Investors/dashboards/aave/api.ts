@@ -145,43 +145,51 @@ export function num(value: string | undefined): number {
 }
 
 export function formatAaveMarkets(markets: AaveMarket[]): FlatReserve[] {
-	return markets.flatMap((m) =>
-		m.reserves
-			.filter((r) => num(r.size.usd) >= 1000)
-			.map((r) => ({
-				symbol: r.underlyingToken.symbol,
-				name: r.underlyingToken.name,
-				chain: m.chain.name,
-				chainId: m.chain.chainId,
-				market: m.name,
-				marketAddress: m.address,
-				tokenAddress: r.underlyingToken.address,
-				sizeUsd: num(r.size.usd),
-				oraclePrice: r.usdExchangeRate ? num(r.usdExchangeRate) : null,
-				supplyApy: pct(r.supplyInfo.apy.value),
-				borrowApy: r.borrowInfo ? pct(r.borrowInfo.apy.value) : null,
-				utilization: r.borrowInfo ? pct(r.borrowInfo.utilizationRate.value) : null,
-				maxLTV: pct(r.supplyInfo.maxLTV.value),
-				liquidationThreshold: pct(r.supplyInfo.liquidationThreshold.value),
-				liquidationBonus: pct(r.supplyInfo.liquidationBonus.value),
-				canBeCollateral: r.supplyInfo.canBeCollateral,
-				isFrozen: r.isFrozen,
-				isPaused: r.isPaused,
-				flashLoanEnabled: r.flashLoanEnabled ?? false,
-				borrowingEnabled: r.borrowInfo?.borrowingState === 'ENABLED',
-				totalBorrowedUsd: r.borrowInfo ? num(r.borrowInfo.total.usd) : 0,
-				availableLiquidityUsd: r.borrowInfo ? num(r.borrowInfo.availableLiquidity.usd) : 0,
-				rewardSupplyApr: extractRewardSupplyApr(r.incentives),
-				rewardBorrowDiscount: extractRewardBorrowDiscount(r.incentives),
-				eModeCategories: (r.eModeInfo ?? []).map((e) => e.label),
-				baseVariableBorrowRate: r.borrowInfo?.baseVariableBorrowRate
-					? pct(r.borrowInfo.baseVariableBorrowRate.value)
+	const reserves: FlatReserve[] = []
+	for (const market of markets) {
+		for (const reserve of market.reserves) {
+			const sizeUsd = num(reserve.size.usd)
+			if (!(sizeUsd >= 1000)) continue
+			reserves.push({
+				symbol: reserve.underlyingToken.symbol,
+				name: reserve.underlyingToken.name,
+				chain: market.chain.name,
+				chainId: market.chain.chainId,
+				market: market.name,
+				marketAddress: market.address,
+				tokenAddress: reserve.underlyingToken.address,
+				sizeUsd,
+				oraclePrice: reserve.usdExchangeRate ? num(reserve.usdExchangeRate) : null,
+				supplyApy: pct(reserve.supplyInfo.apy.value),
+				borrowApy: reserve.borrowInfo ? pct(reserve.borrowInfo.apy.value) : null,
+				utilization: reserve.borrowInfo ? pct(reserve.borrowInfo.utilizationRate.value) : null,
+				maxLTV: pct(reserve.supplyInfo.maxLTV.value),
+				liquidationThreshold: pct(reserve.supplyInfo.liquidationThreshold.value),
+				liquidationBonus: pct(reserve.supplyInfo.liquidationBonus.value),
+				canBeCollateral: reserve.supplyInfo.canBeCollateral,
+				isFrozen: reserve.isFrozen,
+				isPaused: reserve.isPaused,
+				flashLoanEnabled: reserve.flashLoanEnabled ?? false,
+				borrowingEnabled: reserve.borrowInfo?.borrowingState === 'ENABLED',
+				totalBorrowedUsd: reserve.borrowInfo ? num(reserve.borrowInfo.total.usd) : 0,
+				availableLiquidityUsd: reserve.borrowInfo ? num(reserve.borrowInfo.availableLiquidity.usd) : 0,
+				rewardSupplyApr: extractRewardSupplyApr(reserve.incentives),
+				rewardBorrowDiscount: extractRewardBorrowDiscount(reserve.incentives),
+				eModeCategories: (reserve.eModeInfo ?? []).map((category) => category.label),
+				baseVariableBorrowRate: reserve.borrowInfo?.baseVariableBorrowRate
+					? pct(reserve.borrowInfo.baseVariableBorrowRate.value)
 					: null,
-				variableRateSlope1: r.borrowInfo?.variableRateSlope1 ? pct(r.borrowInfo.variableRateSlope1.value) : null,
-				variableRateSlope2: r.borrowInfo?.variableRateSlope2 ? pct(r.borrowInfo.variableRateSlope2.value) : null,
-				optimalUsageRate: r.borrowInfo?.optimalUsageRate ? pct(r.borrowInfo.optimalUsageRate.value) : null
-			}))
-	)
+				variableRateSlope1: reserve.borrowInfo?.variableRateSlope1
+					? pct(reserve.borrowInfo.variableRateSlope1.value)
+					: null,
+				variableRateSlope2: reserve.borrowInfo?.variableRateSlope2
+					? pct(reserve.borrowInfo.variableRateSlope2.value)
+					: null,
+				optimalUsageRate: reserve.borrowInfo?.optimalUsageRate ? pct(reserve.borrowInfo.optimalUsageRate.value) : null
+			})
+		}
+	}
+	return reserves
 }
 
 export function buildAaveApyDataset(samples: APYSample[], type: 'supply' | 'borrow'): MultiSeriesChartDataset {

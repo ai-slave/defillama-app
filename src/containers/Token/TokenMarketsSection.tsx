@@ -286,10 +286,9 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 		return CATEGORY_TABS.filter((tab) => available.has(tab.id))
 	}, [availableCategoriesByVenue, selectedVenueTab])
 
-	const selectedCategoryTab = useMemo<Segment>(() => {
-		if (visibleCategoryTabs.some((tab) => tab.id === categoryTab)) return categoryTab
-		return visibleCategoryTabs[0]?.id ?? categoryTab
-	}, [visibleCategoryTabs, categoryTab])
+	const selectedCategoryTab: Segment = visibleCategoryTabs.some((tab) => tab.id === categoryTab)
+		? categoryTab
+		: (visibleCategoryTabs[0]?.id ?? categoryTab)
 
 	const rows = useMemo(
 		() => (data ? getCategoryRows(data, selectedVenueTab, selectedCategoryTab) : []),

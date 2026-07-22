@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
@@ -18,6 +18,7 @@ const TOC_ITEMS = [
 	{ id: 'kpi-adherence-leaderboard', label: '6. KPI Adherence Leaderboard' },
 	{ id: 'glossary', label: '7. Glossary' }
 ] as const
+const TOC_IDS = TOC_ITEMS.map((item) => item.id)
 
 type WeightRow = { metric: string; weighting: string; ranking?: number }
 
@@ -526,8 +527,7 @@ function GlossaryItem({ entry }: { entry: GlossaryEntry }) {
 }
 
 export function MarketMakersDocumentation() {
-	const ids = useMemo(() => TOC_ITEMS.map((i) => i.id), [])
-	const active = useActiveSection(ids)
+	const active = useActiveSection(TOC_IDS)
 
 	return (
 		<>

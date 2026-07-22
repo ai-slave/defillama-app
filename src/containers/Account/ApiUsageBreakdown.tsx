@@ -63,6 +63,16 @@ function resolveChartColors() {
 
 type ChartColors = ReturnType<typeof resolveChartColors>
 
+const FALLBACK_CHART_COLORS: ChartColors = {
+	routes: CSS_VAR_KEYS.routes.map(() => ''),
+	others: '',
+	split: '',
+	muted: '',
+	axis: '',
+	tooltipBg: '',
+	tooltipBorder: ''
+}
+
 function useChartData(usageStats: ApiUsageStats | null | undefined, colors: ChartColors) {
 	const sortedStats = useMemo(
 		() => (usageStats?.stats ?? []).toSorted((a, b) => Date.parse(a.date) - Date.parse(b.date)),
@@ -148,19 +158,7 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 	}, [])
 
 	// Use fallback colors for SSR / first render — will be replaced immediately on mount
-	const fallbackColors = useMemo<ChartColors>(
-		() => ({
-			routes: CSS_VAR_KEYS.routes.map(() => ''),
-			others: '',
-			split: '',
-			muted: '',
-			axis: '',
-			tooltipBg: '',
-			tooltipBorder: ''
-		}),
-		[]
-	)
-	const activeColors = colors ?? fallbackColors
+	const activeColors = colors ?? FALLBACK_CHART_COLORS
 
 	const { sortedStats, totalRequests, averageRequests, dataset, charts, windowDays } = useChartData(
 		usageStats,

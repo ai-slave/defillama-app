@@ -309,9 +309,7 @@ export const getAdapterMetricProtocolSeries = async ({
 
 	const latestProtocolValues = new Map<string, number>()
 	for (const [, protocols] of rankingDays) {
-		for (const [name, value] of Object.entries(protocols || {})) {
-			latestProtocolValues.set(name, value as number)
-		}
+		for (const name in protocols || {}) latestProtocolValues.set(name, protocols[name] as number)
 	}
 
 	const { parentIdToName, protocolCategories, protocolCategoriesBySlug, protocolToParentId } = await getProtocolLookup()

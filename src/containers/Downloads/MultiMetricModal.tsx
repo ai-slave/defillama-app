@@ -44,6 +44,8 @@ export interface ParamOption {
 	isChild?: boolean
 }
 
+const EMPTY_PARAM_OPTIONS: ParamOption[] = []
+
 export type ParamType = 'protocol' | 'chain'
 
 const PARAM_LABELS: Record<ParamType, { singular: string; verb: string; search: string }> = {
@@ -139,8 +141,8 @@ export function MultiMetricModal({
 		initialAppliedRef.current = false
 	}, [initialConfig?.id, initialConfig?.dateRange])
 
-	const protocolOptions = useMemo<ParamOption[]>(() => chartOptionsMap['protocol-tvl-chart'] ?? [], [chartOptionsMap])
-	const chainOptions = useMemo<ParamOption[]>(() => chartOptionsMap['chain-tvl-chart'] ?? [], [chartOptionsMap])
+	const protocolOptions = chartOptionsMap['protocol-tvl-chart'] ?? EMPTY_PARAM_OPTIONS
+	const chainOptions = chartOptionsMap['chain-tvl-chart'] ?? EMPTY_PARAM_OPTIONS
 	const paramOptions = paramType === 'protocol' ? protocolOptions : chainOptions
 
 	// Apply initial config once options are loaded.

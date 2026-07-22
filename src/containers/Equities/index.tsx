@@ -921,10 +921,7 @@ function EquitiesRankingsTable({
 export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProps) {
 	const router = useRouter()
 	const filtersQueryParam = router.query[EQUITY_FILTERS_QUERY_KEY]
-	const selectedPreset = useMemo(
-		() => getPresetFromQuery(readSingleQueryValue(router.query.rankBy)),
-		[router.query.rankBy]
-	)
+	const selectedPreset = getPresetFromQuery(readSingleQueryValue(router.query.rankBy))
 	const filters = useMemo(() => parseEquityFiltersQuery(filtersQueryParam), [filtersQueryParam])
 	const filteredCompanies = useMemo(() => filterEquityCompanies(companies, filters), [companies, filters])
 	const [isMorePresetsManuallyOpen, setIsMorePresetsManuallyOpen] = useState(false)

@@ -75,6 +75,7 @@ interface ChainsWithStablecoinsProps {
 }
 
 const CHAINS_CHART_MODE = { page: 'chains' } as const
+const CHAINS_CHART_TYPE_OPTIONS = getStablecoinChartTypeOptions(CHAINS_CHART_MODE)
 const getChainName = (chain: { name: string }) => chain.name
 
 export function ChainsWithStablecoins({
@@ -96,8 +97,8 @@ export function ChainsWithStablecoins({
 	const chartState = parseStablecoinChartState(router.query, CHAINS_CHART_MODE)
 	const chartType = chartState.type
 	const chartView = chartState.view
-	const volumeGroupBy = React.useMemo(() => parseStablecoinVolumeGroupBy(router.query.groupBy), [router.query.groupBy])
-	const chartTypeOptions = React.useMemo(() => getStablecoinChartTypeOptions(CHAINS_CHART_MODE), [])
+	const volumeGroupBy = parseStablecoinVolumeGroupBy(router.query.groupBy)
+	const chartTypeOptions = CHAINS_CHART_TYPE_OPTIONS
 	const chartViewOptions = React.useMemo(() => getStablecoinChartViewOptions(chartState), [chartState])
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 	const onChartTypeChange = React.useCallback(
@@ -134,7 +135,7 @@ export function ChainsWithStablecoins({
 	})
 
 	const filteredPeggedAssets = chainCirculatings
-	const includeUnreleased = React.useMemo(() => isTruthyQueryParam(router.query[UNRELEASED_QUERY_KEY]), [router.query])
+	const includeUnreleased = isTruthyQueryParam(router.query[UNRELEASED_QUERY_KEY])
 	const chainTotals = useCalcCirculating<Parameters<typeof useGroupChainsPegged>[0][number]>(
 		filteredPeggedAssets,
 		includeUnreleased

@@ -63,6 +63,13 @@ const chainChartCategoryOrder: ChainChartCategory[] = [
 	'Development'
 ]
 
+const CHAIN_CATEGORY_BY_METRIC = new Map<ChainChartLabels, ChainChartCategory>()
+for (const category of chainChartCategoryOrder) {
+	for (const metric of chainChartCategories[category]) {
+		CHAIN_CATEGORY_BY_METRIC.set(metric, category)
+	}
+}
+
 const getQueryValueOnRemove = (isDefaultEnabled: boolean): 'false' | undefined =>
 	isDefaultEnabled ? 'false' : undefined
 
@@ -159,15 +166,7 @@ export function ChainChartPanel({
 
 	const selectedOptions = useMemo(() => allMetricOptions.filter((option) => option.active), [allMetricOptions])
 
-	const categoryByMetric = useMemo(() => {
-		const map = new Map<ChainChartLabels, ChainChartCategory>()
-		for (const category of chainChartCategoryOrder) {
-			for (const metric of chainChartCategories[category]) {
-				map.set(metric, category)
-			}
-		}
-		return map
-	}, [])
+	const categoryByMetric = CHAIN_CATEGORY_BY_METRIC
 
 	const groupedFilteredOptions = useMemo(() => {
 		const groups = new Map<ChainChartCategory | 'Other', ChainMetricOption[]>()

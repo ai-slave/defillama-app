@@ -270,19 +270,23 @@ export const protocolCharts = defineApiRoute({
 				}
 
 				const result = await getProtocolEmissionsCharts(protocolRoute.canonicalSlug)
+				const unlockUsdChart: Array<[number, number]> = []
+				if (Array.isArray(result.unlockUsdChart)) {
+					for (const item of result.unlockUsdChart) {
+						if (
+							!Array.isArray(item) ||
+							item.length < 2 ||
+							!Number.isFinite(Number(item[0])) ||
+							!Number.isFinite(Number(item[1]))
+						) {
+							continue
+						}
+						unlockUsdChart.push([Number(item[0]), Number(item[1])])
+					}
+				}
 				const data = {
 					...result,
-					unlockUsdChart: Array.isArray(result.unlockUsdChart)
-						? result.unlockUsdChart
-								.filter(
-									(item): item is [string | number, string | number] =>
-										Array.isArray(item) &&
-										item.length >= 2 &&
-										Number.isFinite(Number(item[0])) &&
-										Number.isFinite(Number(item[1]))
-								)
-								.map((item): [number, number] => [Number(item[0]), Number(item[1])])
-						: null
+					unlockUsdChart: Array.isArray(result.unlockUsdChart) ? unlockUsdChart : null
 				}
 
 				return ok(data)
@@ -355,11 +359,15 @@ export const protocolCharts = defineApiRoute({
 				}
 
 				const data = await fetchNftMarketplaceVolumes()
-					.then((response) =>
-						response
-							.filter((item) => slug(item.exchangeName) === slug(protocol))
-							.map(({ day, sumUsd }): [number, number] => [new Date(day).getTime(), sumUsd ?? 0])
-					)
+					.then((response) => {
+						const rows: Array<[number, number]> = []
+						const protocolSlug = slug(protocol)
+						for (const item of response) {
+							if (slug(item.exchangeName) !== protocolSlug) continue
+							rows.push([new Date(item.day).getTime(), item.sumUsd ?? 0])
+						}
+						return rows
+					})
 					.catch((): null => null)
 
 				if (data === null) {

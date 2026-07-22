@@ -68,21 +68,49 @@ function mergeBreakdowns(
 	return merged
 }
 
-function aggregateDimensionProtocolVersions(protocolVersions: DimensionEarningsProtocol[]): DimensionEarningsProtocol {
-	const aggregatedRevenue = {
-		total24h: protocolVersions.reduce((sum, p) => sum + (p.total24h ?? 0), 0),
-		total7d: protocolVersions.reduce((sum, p) => sum + (p.total7d ?? 0), 0),
-		total30d: protocolVersions.reduce((sum, p) => sum + (p.total30d ?? 0), 0),
-		total1y: protocolVersions.reduce((sum, p) => sum + (p.total1y ?? 0), 0),
-		totalAllTime: protocolVersions.reduce((sum, p) => sum + (p.totalAllTime ?? 0), 0)
-	}
+function sumRevenueValues(values: Record<string, number> | undefined): number {
+	let total = 0
+	if (!values) return total
+	for (const key in values) total += values[key] || 0
+	return total
+}
 
+function sumRevenueBreakdown(breakdown: Record<string, Record<string, number>> | undefined): number {
+	let total = 0
+	if (!breakdown) return total
+	for (const chain in breakdown) total += sumRevenueValues(breakdown[chain])
+	return total
+}
+
+function aggregateDimensionProtocolVersions(protocolVersions: DimensionEarningsProtocol[]): DimensionEarningsProtocol {
+	let total24h = 0
+	let total7d = 0
+	let total30d = 0
+	let total1y = 0
+	let totalAllTime = 0
+	const chains = new Set<string>()
 	const breakdowns24h: Array<Record<string, Record<string, number>>> = []
 	const breakdowns30d: Array<Record<string, Record<string, number>>> = []
-	for (const p of protocolVersions) {
-		if (p.breakdown24h) breakdowns24h.push(p.breakdown24h)
-		if (p.breakdown30d) breakdowns30d.push(p.breakdown30d)
+
+	for (const protocol of protocolVersions) {
+		total24h += protocol.total24h ?? 0
+		total7d += protocol.total7d ?? 0
+		total30d += protocol.total30d ?? 0
+		total1y += protocol.total1y ?? 0
+		totalAllTime += protocol.totalAllTime ?? 0
+		for (const chain of protocol.chains) chains.add(chain)
+		if (protocol.breakdown24h) breakdowns24h.push(protocol.breakdown24h)
+		if (protocol.breakdown30d) breakdowns30d.push(protocol.breakdown30d)
 	}
+
+	const aggregatedRevenue = {
+		total24h,
+		total7d,
+		total30d,
+		total1y,
+		totalAllTime
+	}
+
 	const mergedBreakdown24h = mergeBreakdowns(breakdowns24h)
 	const mergedBreakdown30d = mergeBreakdowns(breakdowns30d)
 
@@ -95,7 +123,7 @@ function aggregateDimensionProtocolVersions(protocolVersions: DimensionEarningsP
 		displayName: groupedName,
 		slug: slug(groupedName),
 		...aggregatedRevenue,
-		chains: [...new Set(protocolVersions.flatMap((p) => p.chains))],
+		chains: Array.from(chains),
 		breakdown24h: mergedBreakdown24h,
 		breakdown30d: mergedBreakdown30d
 	}
@@ -192,68 +220,43 @@ export async function getDimensionAdapterChainEarningsOverview({
 	if (chain && chain !== 'All') {
 		const internalChainName = resolveInternalChainName(chain, chainNameMap)
 
-		filteredEarningsData = earningsData
-			.filter((protocol) => {
-				return protocol.breakdown24h && protocol.breakdown24h[internalChainName]
+		filteredEarningsData = []
+		for (const protocol of earningsData) {
+			const chainBreakdown24h = protocol.breakdown24h?.[internalChainName]
+			if (!chainBreakdown24h) continue
+
+			const chainRevenue24h = sumRevenueValues(chainBreakdown24h)
+			const chainRevenue30d = sumRevenueValues(protocol.breakdown30d?.[internalChainName])
+			const totalRevenue24h = sumRevenueBreakdown(protocol.breakdown24h)
+			const totalRevenue30d = sumRevenueBreakdown(protocol.breakdown30d)
+
+			const chainRevenueRatio24h = totalRevenue24h > 0 ? chainRevenue24h / totalRevenue24h : 0
+			const chainRevenueRatio30d = totalRevenue30d > 0 ? chainRevenue30d / totalRevenue30d : 0
+
+			const emissions = protocol._emissions
+			const chainEmissions24h = (emissions?.emission24h || 0) * chainRevenueRatio24h
+			const chainEmissions30d = (emissions?.emission30d || 0) * chainRevenueRatio30d
+
+			const chainEarnings24h = chainRevenue24h - chainEmissions24h
+			const chainEarnings30d = chainRevenue30d - chainEmissions30d
+
+			chainSpecificTotal24h += chainEarnings24h
+			chainSpecificTotal30d += chainEarnings30d
+
+			filteredEarningsData.push({
+				...protocol,
+				total24h: chainEarnings24h,
+				total30d: chainEarnings30d,
+				total1y: null
 			})
-			.map((protocol) => {
-				const chainRevenue24h: number = protocol.breakdown24h?.[internalChainName]
-					? (Object.values(protocol.breakdown24h[internalChainName]) as number[]).reduce(
-							(sum: number, val: number) => sum + (val || 0),
-							0
-						)
-					: 0
-				const chainRevenue30d: number = protocol.breakdown30d?.[internalChainName]
-					? (Object.values(protocol.breakdown30d[internalChainName]) as number[]).reduce(
-							(sum: number, val: number) => sum + (val || 0),
-							0
-						)
-					: 0
-
-				const totalRevenue24h: number = (Object.values(protocol.breakdown24h || {}) as Record<string, number>[]).reduce(
-					(sum: number, chainData) =>
-						sum +
-						(Object.values(chainData as Record<string, number>) as number[]).reduce(
-							(s: number, v: number) => s + (v || 0),
-							0
-						),
-					0
-				)
-				const totalRevenue30d: number = (Object.values(protocol.breakdown30d || {}) as Record<string, number>[]).reduce(
-					(sum: number, chainData) =>
-						sum +
-						(Object.values(chainData as Record<string, number>) as number[]).reduce(
-							(s: number, v: number) => s + (v || 0),
-							0
-						),
-					0
-				)
-
-				const chainRevenueRatio24h = totalRevenue24h > 0 ? chainRevenue24h / totalRevenue24h : 0
-				const chainRevenueRatio30d = totalRevenue30d > 0 ? chainRevenue30d / totalRevenue30d : 0
-
-				const emissions = protocol._emissions
-				const chainEmissions24h = (emissions?.emission24h || 0) * chainRevenueRatio24h
-				const chainEmissions30d = (emissions?.emission30d || 0) * chainRevenueRatio30d
-
-				const chainEarnings24h = chainRevenue24h - chainEmissions24h
-				const chainEarnings30d = chainRevenue30d - chainEmissions30d
-
-				chainSpecificTotal24h += chainEarnings24h
-				chainSpecificTotal30d += chainEarnings30d
-
-				return {
-					...protocol,
-					total24h: chainEarnings24h,
-					total30d: chainEarnings30d,
-					total1y: null
-				}
-			})
+		}
 	} else {
-		chainSpecificTotal24h = earningsData.reduce((sum, p) => sum + (p.total24h ?? 0), 0)
-		chainSpecificTotal7d = earningsData.reduce((sum, p) => sum + (p.total7d ?? 0), 0)
-		chainSpecificTotal30d = earningsData.reduce((sum, p) => sum + (p.total30d ?? 0), 0)
-		chainSpecificTotal1y = earningsData.reduce((sum, p) => sum + (p.total1y ?? 0), 0)
+		for (const protocol of earningsData) {
+			chainSpecificTotal24h += protocol.total24h ?? 0
+			chainSpecificTotal7d += protocol.total7d ?? 0
+			chainSpecificTotal30d += protocol.total30d ?? 0
+			chainSpecificTotal1y += protocol.total1y ?? 0
+		}
 		filteredEarningsData = earningsData
 	}
 

@@ -228,10 +228,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 		getPaginationRowModel: getPaginationRowModel()
 	})
 
-	const selectedCandidateDisplayName = useMemo(() => {
-		if (scopeCandidates.length === 1) return scopeCandidates[0].displayName
-		return 'onchain'
-	}, [scopeCandidates])
+	const selectedCandidateDisplayName = scopeCandidates.length === 1 ? scopeCandidates[0].displayName : 'onchain'
 
 	const totalMaxExposureUsd =
 		exposures.summary.totalCurrentMaxBorrowUsd + (exposures.summary.totalMinBadDebtAtPriceZeroUsd ?? 0)

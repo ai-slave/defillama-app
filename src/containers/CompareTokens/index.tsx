@@ -107,14 +107,15 @@ export function CompareTokens({
 		() => new Map<string, IResponseCGMarketsAPI>(coinsData.map((c) => [c.id, c])),
 		[coinsData]
 	)
-	const protocolsByGeckoId = useMemo(
-		() => new Map<string, CompareTokenProtocol>(protocols.flatMap((p) => (p.geckoId ? [[p.geckoId, p] as const] : []))),
-		[protocols]
-	)
-	const protocolsByName = useMemo(
-		() => new Map<string, CompareTokenProtocol>(protocols.map((p) => [p.name, p])),
-		[protocols]
-	)
+	const { protocolsByGeckoId, protocolsByName } = useMemo(() => {
+		const protocolsByGeckoId = new Map<string, CompareTokenProtocol>()
+		const protocolsByName = new Map<string, CompareTokenProtocol>()
+		for (const protocol of protocols) {
+			if (protocol.geckoId) protocolsByGeckoId.set(protocol.geckoId, protocol)
+			protocolsByName.set(protocol.name, protocol)
+		}
+		return { protocolsByGeckoId, protocolsByName }
+	}, [protocols])
 
 	const { selectedCoins, coins, compareType } = useMemo(() => {
 		const queryCoins = coinParam ?? ([] as string[])

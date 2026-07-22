@@ -24,6 +24,7 @@ const TOKEN_BORROW_SECTION_ID = 'token-borrow'
 // `net_apy` is the routes table column id.
 const DEFAULT_BORROW_TABLE_SORTING: SortingState = [{ id: 'net_apy', desc: true }]
 const DEFAULT_BORROW_TABLE_SORTING_KEY = JSON.stringify(DEFAULT_BORROW_TABLE_SORTING)
+const EMPTY_ROUTE_TABLE_ROWS: RouteTableRow[] = []
 
 type BorrowTabKey = 'use' | 'borrow'
 type BorrowTabFilters = {
@@ -134,8 +135,8 @@ export function TokenBorrowSection({
 	})
 	const tokenKeys = hydration?.tokenKeys ?? []
 	const { data, error } = useTokenBorrowRoutes(tokenKeys, { enabled: shouldFetchFullData })
-	const useRows = React.useMemo(() => data?.useAsCollateral ?? hydration?.data.useAsCollateral ?? [], [data, hydration])
-	const borrowRows = React.useMemo(() => data?.borrowThis ?? hydration?.data.borrowThis ?? [], [data, hydration])
+	const useRows = data?.useAsCollateral ?? hydration?.data.useAsCollateral ?? EMPTY_ROUTE_TABLE_ROWS
+	const borrowRows = data?.borrowThis ?? hydration?.data.borrowThis ?? EMPTY_ROUTE_TABLE_ROWS
 	const useChainList = React.useMemo(
 		() => (data ? getBorrowChainList(useRows) : (hydration?.chainLists.useAsCollateral ?? getBorrowChainList(useRows))),
 		[data, hydration, useRows]
@@ -150,15 +151,13 @@ export function TokenBorrowSection({
 	const activeFilters = filtersByTab[activeTab]
 	const rows = activeTab === 'use' ? useRows : borrowRows
 	const chainList = activeTab === 'use' ? useChainList : borrowChainList
-	const totalCount = React.useMemo(() => {
-		if (data) {
-			return activeTab === 'use' ? useRows.length : borrowRows.length
-		}
-
-		return activeTab === 'use'
+	const totalCount = data
+		? activeTab === 'use'
+			? useRows.length
+			: borrowRows.length
+		: activeTab === 'use'
 			? (hydration?.counts.useAsCollateral ?? useRows.length)
 			: (hydration?.counts.borrowThis ?? borrowRows.length)
-	}, [activeTab, borrowRows.length, data, hydration, useRows.length])
 	const selectedChains = React.useMemo(
 		() => getSelectedChains(activeFilters.selectedChains, chainList),
 		[activeFilters.selectedChains, chainList]

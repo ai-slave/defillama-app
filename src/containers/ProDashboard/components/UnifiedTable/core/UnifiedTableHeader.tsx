@@ -61,13 +61,9 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 	const hasFilters = filterChips.length > 0
 	const canMutateFilters = filtersEditable && Boolean(onFilterRemove)
 	const isGroupingInteractive = Boolean(onGroupingChange)
-	const groupingSelectValue = React.useMemo(
-		() =>
-			groupingOptions
-				? groupingOptions.find((option) => option.id === selectedGroupingId)?.id || groupingOptions[0]?.id || ''
-				: '',
-		[groupingOptions, selectedGroupingId]
-	)
+	const groupingSelectValue = groupingOptions
+		? groupingOptions.find((option) => option.id === selectedGroupingId)?.id || groupingOptions[0]?.id || ''
+		: ''
 
 	const handleGroupingSelectChange = React.useCallback(
 		(event: React.ChangeEvent<HTMLSelectElement>) => {

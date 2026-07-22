@@ -81,6 +81,9 @@ export interface SettingsQueryResult {
 	tip: TipDTO | null
 }
 
+const EMPTY_MODEL_OPTIONS: ModelOption[] = []
+const EMPTY_EFFORT_OPTIONS: EffortOption[] = []
+
 const DEFAULT_SETTINGS: LlamaAISettings = {
 	customInstructions: '',
 	enableMemory: true,
@@ -314,11 +317,23 @@ export function useLlamaAISettings() {
 		queryKey: [...LLAMA_AI_SETTINGS_QUERY_KEY, userId],
 		queryFn: async (): Promise<SettingsQueryResult> => {
 			if (!authorizedFetch || !isAuthenticated || !userId) {
-				return { settings: null, availableModels: [], availableEfforts: [], telegramStatus: null, tip: null }
+				return {
+					settings: null,
+					availableModels: EMPTY_MODEL_OPTIONS,
+					availableEfforts: EMPTY_EFFORT_OPTIONS,
+					telegramStatus: null,
+					tip: null
+				}
 			}
 			const response = await authorizedFetch(`${AI_SERVER}/user-settings`)
 			if (!response?.ok)
-				return { settings: null, availableModels: [], availableEfforts: [], telegramStatus: null, tip: null }
+				return {
+					settings: null,
+					availableModels: EMPTY_MODEL_OPTIONS,
+					availableEfforts: EMPTY_EFFORT_OPTIONS,
+					telegramStatus: null,
+					tip: null
+				}
 			const data = (await response.json().catch(() => null)) as {
 				settings?: unknown
 				availableModels?: ModelOption[]
@@ -328,8 +343,8 @@ export function useLlamaAISettings() {
 			} | null
 			return {
 				settings: normalizeServerSettings(data?.settings),
-				availableModels: Array.isArray(data?.availableModels) ? data.availableModels : [],
-				availableEfforts: Array.isArray(data?.availableEfforts) ? data.availableEfforts : [],
+				availableModels: Array.isArray(data?.availableModels) ? data.availableModels : EMPTY_MODEL_OPTIONS,
+				availableEfforts: Array.isArray(data?.availableEfforts) ? data.availableEfforts : EMPTY_EFFORT_OPTIONS,
 				telegramStatus: data?.telegramStatus ?? null,
 				tip: data?.tip ?? null
 			}
@@ -366,8 +381,8 @@ export function useLlamaAISettings() {
 			applyStoredSettings(update)
 			queryClient.setQueryData<SettingsQueryResult>([...LLAMA_AI_SETTINGS_QUERY_KEY, userId], (previous) => ({
 				settings: mergeDefinedSettings(previous?.settings ?? null, update),
-				availableModels: previous?.availableModels ?? [],
-				availableEfforts: previous?.availableEfforts ?? [],
+				availableModels: previous?.availableModels ?? EMPTY_MODEL_OPTIONS,
+				availableEfforts: previous?.availableEfforts ?? EMPTY_EFFORT_OPTIONS,
 				telegramStatus: previous?.telegramStatus ?? null,
 				tip: previous?.tip ?? null
 			}))
@@ -406,14 +421,8 @@ export function useLlamaAISettings() {
 		[persistSettings]
 	)
 
-	const availableModels = useMemo(
-		() => settingsQuery.data?.availableModels ?? [],
-		[settingsQuery.data?.availableModels]
-	)
-	const availableEfforts = useMemo(
-		() => settingsQuery.data?.availableEfforts ?? [],
-		[settingsQuery.data?.availableEfforts]
-	)
+	const availableModels = settingsQuery.data?.availableModels ?? EMPTY_MODEL_OPTIONS
+	const availableEfforts = settingsQuery.data?.availableEfforts ?? EMPTY_EFFORT_OPTIONS
 
 	const settings = useMemo<LlamaAISettings>(() => {
 		const normalizedModel =

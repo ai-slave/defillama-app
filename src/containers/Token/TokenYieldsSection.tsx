@@ -30,6 +30,7 @@ const FILTER_QUERY_PARAMS = ['chain', 'excludeChain', 'minTvl', 'maxTvl', 'minAp
 const TOKEN_YIELDS_SECTION_ID = 'token-yields'
 const DEFAULT_TABLE_SORTING: SortingState = [{ id: 'tvl', desc: true }]
 const DEFAULT_TABLE_SORTING_KEY = JSON.stringify(DEFAULT_TABLE_SORTING)
+const EMPTY_YIELD_TABLE_ROWS: IYieldTableRow[] = []
 
 type EarnRowsResponse = { rows: IYieldTableRow[] }
 
@@ -59,7 +60,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 		retry: false,
 		enabled: tokenKeys.length > 0 && shouldFetchFullData
 	})
-	const poolsList = React.useMemo(() => fetchedRows ?? hydration?.rows ?? [], [fetchedRows, hydration])
+	const poolsList = fetchedRows ?? hydration?.rows ?? EMPTY_YIELD_TABLE_ROWS
 	const hydrationPageSize = hydration?.pageSize ?? DEFAULT_TABLE_PAGE_SIZE
 	const totalRowCount = fetchedRows?.length ?? hydration?.rowCount ?? poolsList.length
 

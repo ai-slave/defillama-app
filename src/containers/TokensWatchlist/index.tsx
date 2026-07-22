@@ -39,6 +39,7 @@ import { mergeMarketsSummary } from './marketsMerge'
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100] as const
 const DEFAULT_SORTING: SortingState = [{ id: 'marketCap', desc: true }]
+const TOKENS_TABLE_COLUMNS = buildTokensColumns({ expandable: true })
 
 export interface TokenUniverseEntry {
 	id: string
@@ -102,7 +103,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 		return mergeMarketsSummary(base, marketsList)
 	}, [data?.rows, savedTokenIds.length, marketsList])
 
-	const columns = useMemo(() => buildTokensColumns({ expandable: true }), [])
+	const columns = TOKENS_TABLE_COLUMNS
 	const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING)
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 

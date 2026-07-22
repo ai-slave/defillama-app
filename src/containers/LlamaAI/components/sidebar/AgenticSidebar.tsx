@@ -277,7 +277,8 @@ export function AgenticSidebar({
 		return Object.entries(
 			unpinnedSessions.reduce((acc: Record<string, Array<ChatSession>>, session) => {
 				const groupName = getGroupName(session.lastActivity, nowMs)
-				acc[groupName] = [...(acc[groupName] || []), session]
+				const group = acc[groupName] ?? (acc[groupName] = [])
+				group.push(session)
 				return acc
 			}, {})
 		).sort((a, b) => Date.parse(b[1][0].lastActivity) - Date.parse(a[1][0].lastActivity)) as Array<

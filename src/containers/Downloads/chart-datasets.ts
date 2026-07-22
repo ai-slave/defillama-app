@@ -91,32 +91,31 @@ function groupProtocolOptions(
 
 	// Build synthetic parent entries from the parentProtocols array
 	const matchedParentIds = new Set<string>()
-	const syntheticParents = parentProtocols
-		.filter((parent) => stringValue(parent.id) != null && childrenByParentId.has(String(parent.id)))
-		.map((parent): JsonRecord => {
-			const parentId = String(parent.id)
-			matchedParentIds.add(parentId)
-			return {
-				name: parent.name,
-				id: parentId,
-				category: childrenByParentId.get(parentId)?.[0]?.category ?? undefined,
-				_syntheticTvl: parentTotals.get(parentId) || 0,
-				parentProtocol: null
-			}
+	const syntheticParents: JsonRecord[] = []
+	for (const parent of parentProtocols) {
+		const parentId = stringValue(parent.id)
+		if (parentId == null || !childrenByParentId.has(parentId)) continue
+		matchedParentIds.add(parentId)
+		syntheticParents.push({
+			name: parent.name,
+			id: parentId,
+			category: childrenByParentId.get(parentId)?.[0]?.category ?? undefined,
+			_syntheticTvl: parentTotals.get(parentId) || 0,
+			parentProtocol: null
 		})
+	}
 
 	// Children whose parent isn't in parentProtocols (e.g. overview APIs) — treat as top-level
-	const orphanedChildren = filtered.filter((protocol) => {
+	const soloProtocols: JsonRecord[] = []
+	const orphanedChildren: JsonRecord[] = []
+	for (const protocol of filtered) {
 		const parentId = stringValue(protocol.parentProtocol)
-		return parentId != null && !matchedParentIds.has(parentId)
-	})
+		if (!parentId) soloProtocols.push(protocol)
+		else if (!matchedParentIds.has(parentId)) orphanedChildren.push(protocol)
+	}
 
 	// Merge: solo protocols + synthetic parents + orphaned children, then sort
-	const parentsOrSolo = [
-		...filtered.filter((protocol) => !stringValue(protocol.parentProtocol)),
-		...syntheticParents,
-		...orphanedChildren
-	]
+	const parentsOrSolo = [...soloProtocols, ...syntheticParents, ...orphanedChildren]
 	parentsOrSolo.sort(
 		(a, b) =>
 			(typeof b._syntheticTvl === 'number' ? b._syntheticTvl : sortValue(b)) -
@@ -198,40 +197,45 @@ const extractActiveLoansProtocolOptions = (json: unknown): ProtocolOption[] => {
 
 const extractOverviewChainOptions = (json: unknown): Array<{ label: string; value: string }> => {
 	const chains = recordValue(json, 'allChains')
-	return [
-		{ label: 'All Chains', value: 'all' },
-		...(Array.isArray(chains) ? chains : [])
-			.filter((chain): chain is string => typeof chain === 'string' && Boolean(chain))
-			.map((c) => ({ label: c, value: toSlug(c) }))
-			.sort((a, b) => a.label.localeCompare(b.label))
-	]
+	const chainOptions = Array.isArray(chains)
+		? chains.flatMap(
+				(chain): Array<{ label: string; value: string }> =>
+					typeof chain === 'string' && chain ? [{ label: chain, value: toSlug(chain) }] : []
+			)
+		: []
+	chainOptions.sort((a, b) => a.label.localeCompare(b.label))
+	return [{ label: 'All Chains', value: 'all' }, ...chainOptions]
 }
 
 const extractTimestampValuePairs = (json: unknown): Array<Record<string, unknown>> => {
 	if (!Array.isArray(json)) return []
-	return json
-		.filter((item): item is unknown[] => Array.isArray(item) && item.length >= 2)
-		.map((item) => ({
-			date: item[0],
-			value: item[1]
-		}))
+	const rows: Array<Record<string, unknown>> = []
+	for (const item of json) {
+		if (!Array.isArray(item) || item.length < 2) continue
+		rows.push({ date: item[0], value: item[1] })
+	}
+	return rows
 }
 
 const extractLiteChartRows = (json: unknown): Array<Record<string, unknown>> => {
 	if (Array.isArray(json)) {
-		return json
-			.filter((item): item is JsonRecord => isRecord(item) && item.date != null)
-			.map((item) => {
-				const row = createDownloadChartRow(item.date)
-				for (const [key, val] of Object.entries(item)) {
-					if (key === 'date') continue
-					row[key] = val
-				}
-				return row
-			})
+		const rows: Array<Record<string, unknown>> = []
+		for (const item of json) {
+			if (!isRecord(item) || item.date == null) continue
+			const row = createDownloadChartRow(item.date)
+			for (const key in item) {
+				if (key === 'date') continue
+				row[key] = item[key]
+			}
+			rows.push(row)
+		}
+		return rows
 	}
 	if (isRecord(json)) {
-		const metrics = Object.keys(json).filter((k) => json[k] && typeof json[k] === 'object')
+		const metrics: string[] = []
+		for (const key in json) {
+			if (json[key] && typeof json[key] === 'object') metrics.push(key)
+		}
 		if (metrics.length === 0) return []
 
 		const isArrayOfPairs = metrics.some(
@@ -261,7 +265,7 @@ const extractLiteChartRows = (json: unknown): Array<Record<string, unknown>> => 
 		const timestampSet = new Set<string>()
 		for (const metric of metrics) {
 			const series = json[metric]
-			if (isRecord(series)) for (const ts of Object.keys(series)) timestampSet.add(ts)
+			if (isRecord(series)) for (const ts in series) timestampSet.add(ts)
 		}
 		return [...timestampSet]
 			.sort((a, b) => Number(a) - Number(b))
@@ -279,15 +283,18 @@ const extractLiteChartRows = (json: unknown): Array<Record<string, unknown>> => 
 
 const extractBridgeVolumeRows = (json: unknown): Array<Record<string, unknown>> => {
 	if (!Array.isArray(json)) return []
-	return json
-		.filter((item): item is JsonRecord => isRecord(item) && item.date != null)
-		.map((item) => ({
+	const rows: Array<Record<string, unknown>> = []
+	for (const item of json) {
+		if (!isRecord(item) || item.date == null) continue
+		rows.push({
 			date: item.date,
 			depositUSD: item.depositUSD ?? null,
 			withdrawUSD: item.withdrawUSD ?? null,
 			depositTxs: item.depositTxs ?? null,
 			withdrawTxs: item.withdrawTxs ?? null
-		}))
+		})
+	}
+	return rows
 }
 
 export function extractYieldsV2HistoryRows(history: PoolHistory): Array<Record<string, unknown>> {
@@ -312,22 +319,24 @@ export function extractYieldsV2HistoryRows(history: PoolHistory): Array<Record<s
 
 const extractRWACategoryRows = (json: unknown): Array<Record<string, unknown>> => {
 	if (!Array.isArray(json)) return []
-	return json
-		.filter((item): item is JsonRecord => isRecord(item) && item.timestamp != null)
-		.map((item) => {
-			const row = createDownloadChartRow(item.timestamp)
-			for (const [key, val] of Object.entries(item)) {
-				if (key === 'timestamp') continue
-				row[key] = val
-			}
-			return row
-		})
+	const rows: Array<Record<string, unknown>> = []
+	for (const item of json) {
+		if (!isRecord(item) || item.timestamp == null) continue
+		const row = createDownloadChartRow(item.timestamp)
+		for (const key in item) {
+			if (key === 'timestamp') continue
+			row[key] = item[key]
+		}
+		rows.push(row)
+	}
+	return rows
 }
 
 function sumRecord(rec: unknown): number {
 	if (!rec || typeof rec !== 'object' || Array.isArray(rec)) return 0
 	let total = 0
-	for (const v of Object.values(rec)) {
+	for (const key in rec) {
+		const v = rec[key]
 		if (typeof v === 'number' && Number.isFinite(v)) total += v
 	}
 	return total

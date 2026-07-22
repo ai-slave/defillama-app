@@ -33,9 +33,11 @@ function extractChainsForDataset(dataset: DatasetDefinition, json: unknown): str
 		for (const protocol of protocols) {
 			const breakdown = recordField(protocol, 'breakdown24h')
 			if (!isRecord(breakdown)) continue
-			for (const [chainSlug, values] of Object.entries(breakdown)) {
+			for (const chainSlug in breakdown) {
+				const values = breakdown[chainSlug]
 				if (!isRecord(values)) continue
-				const total = Object.values(values).reduce<number>((sum, value) => sum + (Number(value) || 0), 0)
+				let total = 0
+				for (const key in values) total += Number(values[key]) || 0
 				for (const [name, current] of chainTotals) {
 					if (toSlug(name) === chainSlug) {
 						chainTotals.set(name, current + total)

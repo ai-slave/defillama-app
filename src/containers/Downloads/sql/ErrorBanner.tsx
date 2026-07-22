@@ -178,7 +178,7 @@ export function analyzeError(error: string, loadedTables: RegisteredTable[]): Er
 		error.match(/column\s+"?([A-Za-z_][\w]*)"?\s+not found/i)
 	if (columnMatch) {
 		const offending = columnMatch[1]!
-		const cols = [...new Set(loadedTables.flatMap((t) => t.columns.map((c) => c.name)))]
+		const cols = [...new Set(loadedTables.flatMap((table) => table.columns.map((column) => column.name)))]
 		const suggestions = matchSorter(cols, offending)
 			.filter((s) => s.toLowerCase() !== offending.toLowerCase())
 			.slice(0, 3)

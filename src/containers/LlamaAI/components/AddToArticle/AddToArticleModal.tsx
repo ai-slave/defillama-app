@@ -8,6 +8,7 @@ import { useAuthContext } from '~/auth'
 import { listMyArticles } from '~/containers/Articles/api'
 import { appendBlocksToArticle, createArticleWithBlocks } from '~/containers/Articles/import/appendToArticle'
 import type { LlamaAIImportImage } from '~/containers/Articles/import/llamaaiToTiptap'
+import type { ArticleDocument } from '~/containers/Articles/types'
 import { useImageUpload } from '~/containers/Articles/upload/useImageUpload'
 import { saveChartToLibrary } from '~/containers/LlamaAI/api/saveChartToLibrary'
 import {
@@ -23,6 +24,7 @@ import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 
 const LAST_TARGET_KEY = 'llamaai-last-article-target'
+const EMPTY_ARTICLE_DOCUMENTS: ArticleDocument[] = []
 
 interface AddToArticleModalProps {
 	dialogStore: Ariakit.DialogStore
@@ -115,7 +117,7 @@ export function AddToArticleModal({ dialogStore, request, sessionTitle }: AddToA
 		staleTime: 60_000
 	})
 
-	const drafts = useMemo(() => data?.items ?? [], [data?.items])
+	const drafts = data?.items ?? EMPTY_ARTICLE_DOCUMENTS
 	const filtered = useMemo(() => {
 		if (!search.trim()) return drafts
 		return matchSorter(drafts, search, { keys: ['title'] })

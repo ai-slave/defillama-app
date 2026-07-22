@@ -33,6 +33,14 @@ const handleDragStart = (e: React.DragEvent) => {
 	e.stopPropagation()
 }
 
+const AVAILABLE_VARIABLES = protocolsByChainTableColumns
+	.filter((column) => column.key !== 'name' && column.key !== 'category')
+	.map((column) => ({
+		key: column.key,
+		name: column.name,
+		description: `Use as: ${column.key}`
+	}))
+
 export function CustomColumnPanel({
 	customColumns,
 	onAddCustomColumn,
@@ -51,15 +59,7 @@ export function CustomColumnPanel({
 	const [autocompleteFilter, setAutocompleteFilter] = React.useState('')
 	const inputRef = React.useRef<HTMLInputElement>(null)
 
-	const availableVariables = React.useMemo(() => {
-		return protocolsByChainTableColumns
-			.filter((col) => col.key !== 'name' && col.key !== 'category')
-			.map((col) => ({
-				key: col.key,
-				name: col.name,
-				description: `Use as: ${col.key}`
-			}))
-	}, [])
+	const availableVariables = AVAILABLE_VARIABLES
 
 	// Autocomplete suggestions data structure
 	const autocompleteSuggestions = React.useMemo(() => {

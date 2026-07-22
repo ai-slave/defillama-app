@@ -38,6 +38,16 @@ type DownloadGroup<T extends { category: string; description: string; name: stri
 	items: T[]
 }
 
+const ALL_DATASETS_BY_CATEGORY = datasetCategories.map((category) => ({
+	category,
+	items: datasets.filter((dataset) => dataset.category === category)
+}))
+
+const ALL_CHARTS_BY_CATEGORY = chartDatasetCategories.map((category) => ({
+	category,
+	items: chartDatasets.filter((dataset) => dataset.category === category)
+}))
+
 function filterDownloadGroups<T extends { category: string; description: string; name: string }>(
 	groups: Array<DownloadGroup<T>>,
 	search: string
@@ -80,19 +90,8 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 
 	const isPreview = !isAuthenticated || !hasActiveSubscription
 
-	const allDatasetsByCategory = useMemo(() => {
-		return datasetCategories.map((category) => ({
-			category,
-			items: datasets.filter((d) => d.category === category)
-		}))
-	}, [])
-
-	const allChartsByCategory = useMemo(() => {
-		return chartDatasetCategories.map((category) => ({
-			category,
-			items: chartDatasets.filter((d) => d.category === category)
-		}))
-	}, [])
+	const allDatasetsByCategory = ALL_DATASETS_BY_CATEGORY
+	const allChartsByCategory = ALL_CHARTS_BY_CATEGORY
 
 	const filteredDatasetsByCategory = useMemo(() => {
 		let grouped = allDatasetsByCategory

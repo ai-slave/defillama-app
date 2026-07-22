@@ -16,6 +16,7 @@ import { LoadingDots } from '~/ui/Loaders'
 import { fetchJson } from '~/utils/async'
 
 const SEARCH_PAGE_SIZE = 20
+const EMPTY_SEARCH_ITEMS: ISearchItem[] = []
 
 async function getDefaultSearchList() {
 	try {
@@ -465,7 +466,7 @@ function useSearch(searchValue: string) {
 		refetchOnWindowFocus: false
 	})
 
-	const data = useMemo(() => query.data?.pages.flat() ?? [], [query.data])
+	const data = useMemo(() => query.data?.pages.flat() ?? EMPTY_SEARCH_ITEMS, [query.data])
 
 	return {
 		data,

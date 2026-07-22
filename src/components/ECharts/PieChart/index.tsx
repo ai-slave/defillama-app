@@ -206,13 +206,8 @@ function PieChart({
 		}
 	}, [showLegend, isSmall, legendPosition, legendTextStyle, toRight, chartData, percentByName])
 
-	const reservedRight = useMemo(() => {
-		// Space reserved for legend + some breathing room to the card border.
-		if (!legendBoxWidth) return 0
-		const LEGEND_EDGE_PADDING = 12
-		const LEGEND_PIE_GAP = 2
-		return legendBoxWidth + LEGEND_EDGE_PADDING + LEGEND_PIE_GAP
-	}, [legendBoxWidth])
+	// Space reserved for legend + some breathing room to the card border.
+	const reservedRight = legendBoxWidth ? legendBoxWidth + 12 + 2 : 0
 
 	const series = useMemo(() => {
 		const series: PieSeriesOption = {
