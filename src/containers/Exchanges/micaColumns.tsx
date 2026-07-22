@@ -1,9 +1,6 @@
 import { type CellContext, type ColumnDef, createColumnHelper, flexRender } from '@tanstack/react-table'
-import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
-import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import { KycRequirementValue } from './ComplianceCells'
 import { FeeValue, feeLabel } from './feePresentation'
@@ -100,9 +97,7 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 										{venue.name}
 									</a>
 								) : (
-									<BasicLink href={venue.profileHref} className="block truncate label-md text-link hover:underline">
-										{venue.name}
-									</BasicLink>
+									<span className="block truncate label-md">{venue.name}</span>
 								)}
 							</span>
 							<span className="ml-auto flex shrink-0 items-center gap-1.5">
@@ -277,28 +272,6 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 			meta: {
 				headerClassName: 'w-[240px] min-w-[200px]',
 				headerHelperText: 'Documents and verification steps required to use the exchange.'
-			}
-		}),
-		columnHelper.display({
-			id: 'profile',
-			header: () => <span className="sr-only">Exchange page</span>,
-			enableSorting: false,
-			cell: ({ row }) => (
-				<Tooltip content="View exchange page" placement="top-end">
-					<BasicLink
-						href={row.original.profileHref}
-						aria-label={`View ${row.original.name} exchange page`}
-						className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
-					>
-						<Icon name="bar-chart-2" className="size-4" />
-					</BasicLink>
-				</Tooltip>
-			),
-			meta: {
-				headerClassName: 'w-[52px] min-w-[52px]',
-				align: 'end',
-				csvHeader: 'Exchange page',
-				csvValue: (row) => row.profileHref
 			}
 		})
 	])

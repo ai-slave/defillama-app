@@ -1,3 +1,4 @@
+import { flexRender } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { RampCostValue } from '../MicaCells'
@@ -126,13 +127,31 @@ describe('mica table columns', () => {
 			'onRampCost',
 			'offRampCost',
 			'marketCount',
-			'kyc',
-			'profile'
+			'kyc'
 		])
 
 		const venue = micaVenue({ rampCost: RAMP_COST })
 		expect((columns.find((column) => column.id === 'onRampCost') as any).accessorFn(venue, 0)).toBe(3.9)
 		expect((columns.find((column) => column.id === 'offRampCost') as any).accessorFn(venue, 0)).toBe(4.9)
+	})
+
+	it('does not link exchange names to gated profile pages', () => {
+		const nameColumn = buildMicaColumns('2026-07-15').find((column) => column.id === 'name')!
+		const venue = micaVenue({ website: null, profileHref: '/exchange/venue' })
+		const html = renderToStaticMarkup(flexRender(nameColumn.cell, { row: { original: venue } } as never))
+
+		expect(html).toContain('Venue')
+		expect(html).not.toContain('/exchange/venue')
+		expect(html).not.toContain('<a')
+	})
+
+	it('keeps authored external exchange destinations', () => {
+		const nameColumn = buildMicaColumns('2026-07-15').find((column) => column.id === 'name')!
+		const venue = micaVenue({ website: 'https://example.com', profileHref: '/exchange/venue' })
+		const html = renderToStaticMarkup(flexRender(nameColumn.cell, { row: { original: venue } } as never))
+
+		expect(html).toContain('href="https://example.com"')
+		expect(html).not.toContain('/exchange/venue')
 	})
 })
 
