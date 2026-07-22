@@ -1100,11 +1100,6 @@
       "isNew": true
     },
     {
-      "name": "Exchanges",
-      "route": "/exchanges",
-      "icon": "bar-chart-2"
-    },
-    {
       "name": "Tokens",
       "route": "/tokens",
       "icon": "tag"
