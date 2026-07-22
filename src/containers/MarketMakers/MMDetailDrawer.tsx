@@ -1,21 +1,25 @@
 import dynamic from 'next/dynamic'
-import { type ComponentProps, useEffect, useState } from 'react'
+import { type ComponentProps, useEffect, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { AccentBadge, SecondaryBadge, StatusBadge, TimeframeBadge } from './badges'
+import type { BreakdownSections } from './breakdown'
 import { BreakdownTables, BreakdownTablesSkeleton } from './BreakdownTable'
+import { ClaimDialog } from './ClaimDialog'
 import {
 	type LeaderboardRange,
 	useMarketMakerBreakdown,
 	useMarketMakerDetail,
 	useMarketMakerPerformance
 } from './client'
+import { ConnectDialog } from './ConnectDialog'
 import { countryFromCode } from './country'
 import { Drawer } from './Drawer'
 import { roundPercentile } from './format'
 import { type RadarScores } from './RadarChart'
+import { forgdCtaPrimaryButtonStyles, forgdCtaSecondaryButtonStyles } from './styles'
 
 const RadarChart = dynamic(() => import('./RadarChart').then((mod) => mod.RadarChart), {
 	ssr: false,
@@ -39,6 +43,44 @@ function asStr(value: unknown): string | null {
 
 const FALLBACK = '—'
 const NA = 'N/A'
+const FOCUS_SCROLL_DURATION_MS = 1400
+
+function scrollParentOf(el: HTMLElement): HTMLElement | null {
+	let node = el.parentElement
+	while (node) {
+		const { overflowY } = getComputedStyle(node)
+		if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) return node
+		node = node.parentElement
+	}
+	return null
+}
+
+function easeInOutCubic(t: number): number {
+	return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+}
+
+function animateScrollTo(target: HTMLElement, duration: number): () => void {
+	const parent = scrollParentOf(target)
+	if (!parent) {
+		target.scrollIntoView()
+		return () => {}
+	}
+	const from = parent.scrollTop
+	const to = Math.min(
+		from + target.getBoundingClientRect().top - parent.getBoundingClientRect().top - 8,
+		parent.scrollHeight - parent.clientHeight
+	)
+	let frame = 0
+	let startedAt: number | null = null
+	const step = (now: number) => {
+		if (startedAt == null) startedAt = now
+		const progress = Math.min(1, (now - startedAt) / duration)
+		parent.scrollTop = from + (to - from) * easeInOutCubic(progress)
+		if (progress < 1) frame = requestAnimationFrame(step)
+	}
+	frame = requestAnimationFrame(step)
+	return () => cancelAnimationFrame(frame)
+}
 const CARD_BORDER = 'rounded-lg border border-subtle bg-surface'
 const EMPTY_SECTIONS = { depth: {}, volume: {}, spread: {}, kpi: {} }
 
@@ -55,7 +97,7 @@ function integrationLabel(status: string | null): string {
 const SCORE_ROWS: { key: keyof RadarScores; label: string }[] = [
 	{ key: 'composite', label: 'Composite Score' },
 	{ key: 'tradingKpis', label: 'Trading KPIs' },
-	{ key: 'trustIntegration', label: 'Trust & Integration' },
+	{ key: 'trustIntegration', label: 'Trust' },
 	{ key: 'coverageCapabilities', label: 'Coverage & Capabilities' },
 	{ key: 'uptime', label: 'Uptime' },
 	{ key: 'integrationLevel', label: 'Integration Level' }
@@ -211,24 +253,61 @@ function DetailSections({ detail }: { detail: Dict }) {
 	)
 }
 
+function ClaimBanner({ onClaim }: { onClaim: () => void }) {
+	return (
+		<section className="flex gap-3 rounded-lg bg-brand p-4">
+			<Icon name="shield-check" height={24} width={24} className="mt-0.5 shrink-0 text-on-brand" />
+			<div className="flex flex-col gap-2">
+				<h3 className="text-base font-semibold text-on-brand">Claim this organization</h3>
+				<p className="text-sm leading-relaxed text-on-brand/70">
+					Claimed organizations have a better chance to improve the leaderboard score. Join Forgd today, complete your
+					profile details, and start tracking your activity.
+				</p>
+				<button type="button" onClick={onClaim} className={`${forgdCtaSecondaryButtonStyles} mt-1`}>
+					Claim Organization
+				</button>
+			</div>
+		</section>
+	)
+}
+
 function DrawerBody({
 	open,
 	marketMakerId,
 	range,
 	badge,
-	fallbackName
+	fallbackName,
+	focusSection,
+	onOpenLead
 }: {
 	open: boolean
 	marketMakerId: string | null
 	range: LeaderboardRange
 	badge: string
 	fallbackName?: string
+	focusSection?: keyof BreakdownSections
+	onOpenLead: (kind: 'connect' | 'claim') => void
 }) {
 	const detail = useMarketMakerDetail(marketMakerId, open)
 	const breakdown = useMarketMakerBreakdown(marketMakerId, range, open)
 	const performance = useMarketMakerPerformance(marketMakerId, range, open)
 
-	if (detail.isPending || breakdown.isPending || performance.isPending) {
+	const isPending = detail.isPending || breakdown.isPending || performance.isPending
+	const bodyRef = useRef<HTMLDivElement | null>(null)
+	useEffect(() => {
+		if (!open || isPending || !focusSection) return
+		let cancelScroll = () => {}
+		const frame = requestAnimationFrame(() => {
+			const target = bodyRef.current?.querySelector<HTMLElement>(`[data-breakdown-section="${focusSection}"]`)
+			if (target) cancelScroll = animateScrollTo(target, FOCUS_SCROLL_DURATION_MS)
+		})
+		return () => {
+			cancelAnimationFrame(frame)
+			cancelScroll()
+		}
+	}, [open, isPending, focusSection, marketMakerId])
+
+	if (isPending) {
 		return (
 			<div className="flex flex-col gap-6 p-4">
 				<div className="h-6 w-2/3 animate-pulse rounded-sm bg-surface-elevated-2" />
@@ -255,7 +334,7 @@ function DrawerBody({
 	const b = asDict(breakdown.data)
 
 	return (
-		<div className="flex flex-col gap-6 p-4">
+		<div ref={bodyRef} className="flex flex-col gap-6 p-4">
 			<section className="flex flex-col gap-3">
 				<div className="flex items-center gap-2">
 					{logo ? <TokenLogo src={logo} size={28} alt={name} /> : null}
@@ -267,9 +346,14 @@ function DrawerBody({
 					{country ? <SecondaryBadge className="h-8">{`HQ: ${country.flag} ${country.name}`}</SecondaryBadge> : null}
 					{website ? <WebsiteButton href={website} name={name} /> : null}
 				</div>
+				<button type="button" className={forgdCtaPrimaryButtonStyles} onClick={() => onOpenLead('connect')}>
+					Connect with {name}
+					<Icon name="arrow-right" height={14} width={14} />
+				</button>
+				{(status ?? 'none') === 'none' ? <ClaimBanner onClaim={() => onOpenLead('claim')} /> : null}
 			</section>
 
-			<section className="flex flex-col gap-3">
+			<section className="-mt-3 flex flex-col gap-3">
 				<div className="flex flex-wrap items-center gap-2">
 					<h3 className="heading-xs">Leaderboards Performance</h3>
 					<TimeframeBadge label={badge} />
@@ -340,7 +424,8 @@ export function MMDetailDrawer({
 	marketMakerId,
 	fallbackName,
 	range,
-	badge
+	badge,
+	focusSection
 }: {
 	open: boolean
 	onClose: () => void
@@ -348,6 +433,7 @@ export function MMDetailDrawer({
 	fallbackName?: string
 	range: LeaderboardRange
 	badge: string
+	focusSection?: keyof BreakdownSections
 }) {
 	// Keep the last opened market maker while the drawer animates closed so the content
 	// does not blank out to N/A before it finishes leaving.
@@ -364,10 +450,45 @@ export function MMDetailDrawer({
 	const name = fallbackName ?? lastName
 	const detail = useMarketMakerDetail(id, open)
 	const title = asStr(asDict(detail.data).name) ?? name ?? id ?? 'Market Maker'
+	const logo = asStr(asDict(detail.data).imageUrl)
+
+	const [leadDialog, setLeadDialog] = useState<'connect' | 'claim' | null>(null)
+	useEffect(() => {
+		if (!open) setLeadDialog(null)
+	}, [open])
 
 	return (
-		<Drawer open={open} onClose={onClose} title={title} widthClassName="sm:max-w-2xl">
-			<DrawerBody open={open} marketMakerId={id} range={range} badge={badge} fallbackName={name} />
-		</Drawer>
+		<>
+			<Drawer
+				open={open}
+				onClose={onClose}
+				title={title}
+				widthClassName="sm:max-w-2xl"
+				dismissible={leadDialog == null}
+			>
+				<DrawerBody
+					open={open}
+					marketMakerId={id}
+					range={range}
+					badge={badge}
+					fallbackName={name}
+					focusSection={focusSection}
+					onOpenLead={setLeadDialog}
+				/>
+			</Drawer>
+			<ConnectDialog
+				open={leadDialog === 'connect'}
+				onClose={() => setLeadDialog(null)}
+				marketMakerId={id}
+				marketMakerName={title}
+			/>
+			<ClaimDialog
+				open={leadDialog === 'claim'}
+				onClose={() => setLeadDialog(null)}
+				marketMakerId={id}
+				marketMakerName={title}
+				marketMakerLogo={logo}
+			/>
+		</>
 	)
 }

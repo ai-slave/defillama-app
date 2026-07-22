@@ -15,7 +15,7 @@ describe('buildRadarOption', () => {
 		expect(radar.indicator.map((i) => i.name)).toEqual([
 			'Composite Score',
 			'Trading KPIs',
-			'Trust & Integration',
+			'Trust',
 			'Coverage & Capabilities',
 			'Uptime',
 			'Integration Level'

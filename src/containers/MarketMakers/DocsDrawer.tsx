@@ -13,7 +13,7 @@ const TOC = [
 
 const WEIGHTS = [
 	{ metric: 'Trading KPIs', weighting: '40%' },
-	{ metric: 'Trust & Integration', weighting: '20%' },
+	{ metric: 'Trust', weighting: '20%' },
 	{ metric: 'Coverage & Capabilities', weighting: '15%' },
 	{ metric: 'Uptime', weighting: '10%' },
 	{ metric: 'Integration Level', weighting: '15%' }
@@ -52,7 +52,7 @@ const TRADING_KPIS = [
 
 const INTERPRET = [
 	{ term: 'Trading KPIs', rest: 'benchmark market makers’ raw performance against one another.' },
-	{ term: 'Trust & Integration', rest: 'provide visibility into their infrastructure and connectivity.' },
+	{ term: 'Trust', rest: 'provides visibility into their infrastructure and connectivity.' },
 	{
 		term: 'Coverage & Capabilities',
 		rest: 'reflects the breadth of participation across CEXs, DEXs, and additional trading functions.'

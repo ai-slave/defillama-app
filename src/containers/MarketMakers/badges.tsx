@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { CompositeGrade } from './format'
 
 const STATUS_STYLES: Record<'full' | 'partial' | 'none', string> = {
 	full: 'border-emerald-500 bg-success/10 text-success',
@@ -28,6 +29,11 @@ export function SecondaryBadge({ children, className = '' }: { children: ReactNo
 			{children}
 		</span>
 	)
+}
+
+export function GradeBadge({ grade, className = '' }: { grade: CompositeGrade | null; className?: string }) {
+	if (grade == null) return <span className="text-tertiary">N/A</span>
+	return <span className={`font-medium ${grade.colorClassName} ${className}`}>{grade.label}</span>
 }
 
 export function StatusBadge({ status, label, className = '' }: { status: string; label: string; className?: string }) {

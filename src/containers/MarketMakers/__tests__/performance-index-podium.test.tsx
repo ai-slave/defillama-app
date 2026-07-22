@@ -16,6 +16,7 @@ const row = (
 	marketMakerName: name,
 	marketMakerImageUrl: null,
 	composite,
+	grade: null,
 	tradingKpis: composite,
 	trustIntegration: composite,
 	coverageCapabilities: composite,

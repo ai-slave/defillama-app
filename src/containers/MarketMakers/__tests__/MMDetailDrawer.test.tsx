@@ -16,6 +16,14 @@ vi.mock('~/components/Link', () => ({
 	BasicLink: ({ href, children }: { href: string; children: ReactNode }) => <a href={href}>{children}</a>
 }))
 vi.mock('../client', () => ({
+	requestLeadClickId: () => Promise.resolve(null),
+	useSubmitLead: () => ({
+		isPending: false,
+		isSuccess: false,
+		isError: false,
+		reset: () => {},
+		mutate: () => {}
+	}),
 	useMarketMakerDetail: () => ({
 		isPending: false,
 		data: {
@@ -83,5 +91,30 @@ describe('MMDetailDrawer', () => {
 		expect(html).toContain('Binance')
 		expect(html).toContain('Uniswap V3')
 		expect(html).toContain('Treasury Management')
+	})
+
+	it('labels the trustIntegration score row as Trust', () => {
+		const html = renderToStaticMarkup(
+			<MMDetailDrawer open onClose={() => {}} marketMakerId="lhava" range={{}} badge="Last 30-day" />
+		)
+		expect(html).toContain('>Trust<')
+		expect(html).not.toContain('Trust &amp; Integration')
+	})
+
+	it('marks each breakdown table with a data-breakdown-section anchor for focus scrolling', () => {
+		const html = renderToStaticMarkup(
+			<MMDetailDrawer
+				open
+				onClose={() => {}}
+				marketMakerId="lhava"
+				range={{}}
+				badge="Last 30-day"
+				focusSection="volume"
+			/>
+		)
+		expect(html).toContain('data-breakdown-section="depth"')
+		expect(html).toContain('data-breakdown-section="volume"')
+		expect(html).toContain('data-breakdown-section="spread"')
+		expect(html).toContain('data-breakdown-section="kpi"')
 	})
 })

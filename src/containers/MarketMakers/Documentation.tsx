@@ -24,7 +24,7 @@ type WeightRow = { metric: string; weighting: string; ranking?: number }
 
 const PERFORMANCE_GLOBAL_WEIGHTS: WeightRow[] = [
 	{ metric: 'Trading KPIs', weighting: '40%' },
-	{ metric: 'Trust & Integration', weighting: '20%' },
+	{ metric: 'Trust', weighting: '20%' },
 	{ metric: 'Coverage & Capabilities', weighting: '15%' },
 	{ metric: 'Uptime', weighting: '10%' },
 	{ metric: 'Integration Level', weighting: '15%' }
@@ -306,7 +306,7 @@ const GLOSSARY: GlossaryEntry[] = [
 		def: 'A pair of assets traded against each other, typically consisting of a base asset and a quote asset.'
 	},
 	{
-		term: 'Trust & Integration',
+		term: 'Trust',
 		def: "A qualitative measure reflecting a market maker's system connectivity, data transparency, and integration with Forgd."
 	},
 	{ term: 'Uptime', def: 'The percentage of time a market maker meets predefined quoting or KPI thresholds.' },
@@ -684,7 +684,7 @@ export function MarketMakersDocumentation() {
 											ordered
 											items={[
 												"Trading KPIs benchmark market makers' raw performance against one another.",
-												'Trust & Integration provide visibility into their infrastructure and connectivity.',
+												'Trust provides visibility into their infrastructure and connectivity.',
 												'Coverage & Capabilities reflects the breadth of participation across CEXs, DEXs, and additional trading functions.',
 												'Uptime indicates operational consistency over the selected period.',
 												"Integration Level reflects the degree of integration with Forgd's data consumption systems."

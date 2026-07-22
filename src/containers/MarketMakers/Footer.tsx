@@ -1,20 +1,9 @@
 export function MarketMakersFooter() {
 	return (
-		<div className="flex flex-col gap-2 border-t border-subtle pt-4 body-sm min-[713px]:flex-row min-[713px]:items-start min-[713px]:justify-between min-[713px]:gap-6">
+		<div className="flex border-t border-subtle pt-4 body-sm">
 			<p className="text-secondary">
-				© 2026 Forgd. All rights reserved.{' '}
-				<a
-					href="https://www.forgd.com/terms-conditions"
-					target="_blank"
-					rel="noreferrer noopener"
-					className="font-medium text-link hover:underline"
-				>
-					Terms & Conditions
-				</a>
-			</p>
-			<p className="text-secondary min-[713px]:max-w-[560px] min-[713px]:text-right">
-				The content on this site is for informational purposes only and should not be construed as financial or legal
-				advice.
+				Data provided by Forgd. The content on this page is for informational purposes only and should not be construed
+				as financial or legal advice.
 			</p>
 		</div>
 	)

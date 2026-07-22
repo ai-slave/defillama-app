@@ -47,6 +47,7 @@ function toPerformanceRow(raw: Record<string, unknown>): PerformanceRow {
 		marketMakerName: asStr(raw.marketMakerName),
 		marketMakerImageUrl: typeof raw.marketMakerImageUrl === 'string' ? raw.marketMakerImageUrl : null,
 		composite: score('composite'),
+		grade: typeof raw.grade === 'string' && raw.grade.length > 0 ? raw.grade : null,
 		tradingKpis: score('tradingKpis'),
 		trustIntegration: score('trustIntegration'),
 		coverageCapabilities: score('coverageCapabilities'),

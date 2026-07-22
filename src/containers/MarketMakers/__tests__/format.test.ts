@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { formatComposite, formatMarketPct, formatMetricValue, normalizeUptime, roundPercentile } from '../format'
+import {
+	formatComposite,
+	formatMarketPct,
+	formatMetricValue,
+	normalizeUptime,
+	resolveGrade,
+	roundPercentile
+} from '../format'
 
 describe('formatComposite', () => {
 	it('renders N/A for null', () => {
@@ -12,6 +19,34 @@ describe('formatComposite', () => {
 	it('renders a two-decimal number for a value of 5 or more', () => {
 		expect(formatComposite(5)).toBe('5.00')
 		expect(formatComposite(9.4)).toBe('9.40')
+	})
+})
+
+describe('resolveGrade', () => {
+	it('returns null when both grade and composite are null', () => {
+		expect(resolveGrade(null, null)).toBeNull()
+	})
+	it('prefers the API grade over the composite value', () => {
+		expect(resolveGrade('D', 9.9)?.label).toBe('D')
+	})
+	it('colors A+/A/B success, C/D warning, F error', () => {
+		expect(resolveGrade('A+', null)?.colorClassName).toBe('text-success')
+		expect(resolveGrade('A', null)?.colorClassName).toBe('text-success')
+		expect(resolveGrade('B', null)?.colorClassName).toBe('text-success')
+		expect(resolveGrade('C', null)?.colorClassName).toBe('text-warning')
+		expect(resolveGrade('D', null)?.colorClassName).toBe('text-warning')
+		expect(resolveGrade('F', null)?.colorClassName).toBe('text-error')
+	})
+	it('returns null for an unrecognized API grade', () => {
+		expect(resolveGrade('X', null)).toBeNull()
+	})
+	it('falls back to composite thresholds when the API grade is missing', () => {
+		expect(resolveGrade(null, 9)?.label).toBe('A+')
+		expect(resolveGrade(null, 8)?.label).toBe('A')
+		expect(resolveGrade(null, 7)?.label).toBe('B')
+		expect(resolveGrade(null, 6)?.label).toBe('C')
+		expect(resolveGrade(null, 5)?.label).toBe('D')
+		expect(resolveGrade(null, 4.99)?.label).toBe('F')
 	})
 })
 

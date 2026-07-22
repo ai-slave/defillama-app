@@ -31,7 +31,7 @@ const SCORE_KEYS: (keyof RadarScores)[] = [
 const INDICATORS = [
 	'Composite Score',
 	'Trading KPIs',
-	'Trust & Integration',
+	'Trust',
 	'Coverage & Capabilities',
 	'Uptime',
 	'Integration Level'

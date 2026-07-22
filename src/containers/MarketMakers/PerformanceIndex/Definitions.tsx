@@ -2,34 +2,39 @@ import { Card } from '~/ui/Card'
 
 const DEFINITIONS: { term: string; description: string }[] = [
 	{
-		term: 'Trading KPIs',
+		term: 'Grade',
 		description:
-			'A data-driven score derived from historical trading activity across 500+ engagements, evaluating execution quality through metrics such as fill volume, depth provision, spread tightness, loan utilization, and market share.'
-	},
-	{
-		term: 'Trust & Integration',
-		description:
-			"Measures the extent of a market maker's integration with Forgd and the reliability of its reported data, with higher scores reflecting broader engagement coverage, verified transparency, and consistent reporting integrity."
-	},
-	{
-		term: 'Coverage & Capabilities',
-		description:
-			"Assesses the breadth of a market maker's operational reach and technical sophistication, including multi-chain support, exchange connectivity, and the ability to execute complex launch and liquidity strategies."
-	},
-	{
-		term: 'Uptime',
-		description:
-			"Reflects a market maker's historical adherence to contractual KPIs, measuring the consistency with which quoted spread and depth obligations are met across tracked engagements."
-	},
-	{
-		term: 'Integration Level',
-		description:
-			"Evaluates the extent of a market maker's operational integration with Forgd, with higher levels reflecting the ability to both participate in RFQs and provide historical and real-time engagement data."
+			'A simplified letter rating that reflects a market maker’s overall standing on the leaderboard. Grades are designed to make performance easier to interpret without relying solely on individual numerical scores.'
 	},
 	{
 		term: 'Composite Score',
 		description:
-			'An overall performance rating calculated as a weighted aggregation of Trading KPIs, Trust & Integration, Coverage & Capabilities, and Uptime, with greater emphasis placed on demonstrated trading performance.'
+			'The weighted overall score used to rank market makers across the leaderboard. It reflects performance across trading KPIs, trust, coverage and capabilities, uptime, and integration level.'
+	},
+	{
+		term: 'Trading KPIs',
+		description:
+			'Measures historical execution quality across 500+ tracked engagements. This includes liquidity depth, trading volume, spread performance, and adherence to agreed-upon trading obligations.'
+	},
+	{
+		term: 'Trust',
+		description:
+			"Reflects Forgd's confidence in a market maker's observed performance. This is based on the number of tracked engagements and whether Forgd has identified potential trading abnormalities."
+	},
+	{
+		term: 'Coverage & Capabilities',
+		description:
+			"Evaluates the breadth of a market maker's exchange coverage, ecosystem reach, and broader service offering. This includes centralized and decentralized exchange connectivity, as well as services beyond standard liquidity provision."
+	},
+	{
+		term: 'Uptime',
+		description:
+			"Measures a market maker's consistency in meeting contractual obligations across tracked engagements. This typically includes maintaining required depth, spreads, and availability across supported venues."
+	},
+	{
+		term: 'Integration Level',
+		description:
+			"Reflects the degree of connectivity between the market maker and Forgd's data systems. Higher integration levels provide greater visibility into tracked engagements, RFQ participation, and ongoing performance."
 	}
 ]
 

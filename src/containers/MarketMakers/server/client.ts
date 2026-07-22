@@ -21,3 +21,16 @@ export async function forgdFetch<T = unknown>(path: string, query?: ForgdQuery):
 		headers
 	})
 }
+
+export async function forgdPost<T = unknown>(path: string, body: Record<string, unknown>): Promise<T> {
+	const key = process.env.API_KEY_FORGD?.trim()
+	return fetchJson<T>(buildForgdUrl(path), {
+		method: 'POST',
+		timeout: 30_000,
+		headers: {
+			'Content-Type': 'application/json',
+			...(key ? { Authorization: `Bearer ${key}` } : {})
+		},
+		body: JSON.stringify(body)
+	})
+}

@@ -4,8 +4,8 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import { StatusBadge } from '../badges'
-import { formatComposite } from '../format'
+import { GradeBadge, StatusBadge } from '../badges'
+import { formatComposite, resolveGrade } from '../format'
 import type { IntegrationStatus, PerformanceRow } from './types'
 
 const columnHelper = createColumnHelper<PerformanceRow>()
@@ -18,6 +18,8 @@ interface IBuildPerformanceColumns {
 const SCORE_TOOLTIPS = {
 	composite:
 		'Weighted average of all performance categories. A higher score indicates better overall performance across trading, trust, coverage, uptime and integration.',
+	grade:
+		'A simplified letter rating that reflects a market maker’s overall standing on the leaderboard. Grades are designed to make performance easier to interpret without relying solely on individual numerical scores.',
 	tradingKpis:
 		"Score derived from the market maker's rank on the aggregated leaderboard, reflecting depth and volume performance relative to peers.",
 	trustIntegration:
@@ -59,7 +61,8 @@ function renderComposite(value: number | null) {
 	return <span>{formatComposite(value)}</span>
 }
 
-const scoreColumn = (
+const buildScoreColumn = (
+	onSelectMM: IBuildPerformanceColumns['onSelectMM'],
 	id: keyof Pick<PerformanceRow, 'composite' | 'tradingKpis' | 'trustIntegration' | 'coverageCapabilities' | 'uptime'>,
 	label: string,
 	tooltip: string,
@@ -68,7 +71,15 @@ const scoreColumn = (
 	columnHelper.accessor((row) => row[id] ?? undefined, {
 		id,
 		header: () => <HeaderWithTooltip label={label} tooltip={tooltip} />,
-		cell: ({ row }) => render(row.original[id]),
+		cell: ({ row }) => (
+			<button
+				type="button"
+				onClick={() => onSelectMM(row.original.marketMakerId, row.original.marketMakerName)}
+				className="-mx-1 rounded-sm px-1 hover:bg-surface-elevated-2"
+			>
+				{render(row.original[id])}
+			</button>
+		),
 		sortUndefined: 'last',
 		meta: { align: 'start' }
 	})
@@ -99,6 +110,14 @@ export function buildPerformanceColumns({ onSelectMM, rankById }: IBuildPerforma
 		meta: { cellClassName: 'truncate' }
 	})
 
+	const gradeColumn = columnHelper.accessor((row) => row.composite ?? undefined, {
+		id: 'grade',
+		header: () => <HeaderWithTooltip label="Grade" tooltip={SCORE_TOOLTIPS.grade} />,
+		cell: ({ row }) => <GradeBadge grade={resolveGrade(row.original.grade, row.original.composite)} />,
+		sortUndefined: 'last',
+		meta: { align: 'start' }
+	})
+
 	const integrationLevelColumn = columnHelper.accessor((row) => row.integrationLevel ?? undefined, {
 		id: 'integrationLevel',
 		header: () => <HeaderWithTooltip label="Integration Level" tooltip={SCORE_TOOLTIPS.integrationLevel} glyph="i" />,
@@ -122,11 +141,17 @@ export function buildPerformanceColumns({ onSelectMM, rankById }: IBuildPerforma
 	return [
 		rankColumn,
 		marketMakerColumn,
-		scoreColumn('composite', 'Composite Score', SCORE_TOOLTIPS.composite, renderComposite),
-		scoreColumn('tradingKpis', 'Trading KPIs', SCORE_TOOLTIPS.tradingKpis),
-		scoreColumn('trustIntegration', 'Trust & Integration', SCORE_TOOLTIPS.trustIntegration),
-		scoreColumn('coverageCapabilities', 'Coverage & Capabilities', SCORE_TOOLTIPS.coverageCapabilities),
-		scoreColumn('uptime', 'Uptime', SCORE_TOOLTIPS.uptime),
+		gradeColumn,
+		buildScoreColumn(onSelectMM, 'composite', 'Composite Score', SCORE_TOOLTIPS.composite, renderComposite),
+		buildScoreColumn(onSelectMM, 'tradingKpis', 'Trading KPIs', SCORE_TOOLTIPS.tradingKpis),
+		buildScoreColumn(onSelectMM, 'trustIntegration', 'Trust', SCORE_TOOLTIPS.trustIntegration),
+		buildScoreColumn(
+			onSelectMM,
+			'coverageCapabilities',
+			'Coverage & Capabilities',
+			SCORE_TOOLTIPS.coverageCapabilities
+		),
+		buildScoreColumn(onSelectMM, 'uptime', 'Uptime', SCORE_TOOLTIPS.uptime),
 		integrationLevelColumn
 	]
 }

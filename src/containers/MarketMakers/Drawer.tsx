@@ -9,13 +9,15 @@ export function Drawer({
 	onClose,
 	title,
 	children,
-	widthClassName = 'sm:max-w-xl'
+	widthClassName = 'sm:max-w-xl',
+	dismissible = true
 }: {
 	open: boolean
 	onClose: () => void
 	title: ReactNode
 	children: ReactNode
 	widthClassName?: string
+	dismissible?: boolean
 }) {
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={(value) => !value && onClose()}>
@@ -24,6 +26,8 @@ export function Drawer({
 				backdrop={
 					<div className="fixed inset-0 z-40 bg-screen-dim opacity-0 transition-opacity duration-300 ease-in-out data-enter:opacity-100" />
 				}
+				hideOnInteractOutside={dismissible}
+				hideOnEscape={dismissible}
 				portal
 				unmountOnHide
 			>

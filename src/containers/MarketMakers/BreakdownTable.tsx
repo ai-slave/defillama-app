@@ -140,12 +140,14 @@ export function BreakdownTable({
 	title,
 	badge,
 	rows,
-	data
+	data,
+	sectionKey
 }: {
 	title: string
 	badge: string
 	rows: BreakdownRowConfig[]
 	data: Dict
+	sectionKey?: string
 }) {
 	const [sort, setSort] = useState<Sort | null>(null)
 
@@ -171,7 +173,7 @@ export function BreakdownTable({
 	}, [rows, data, sort])
 
 	return (
-		<div className="flex flex-col gap-2">
+		<div className="flex scroll-mt-2 flex-col gap-2" data-breakdown-section={sectionKey}>
 			<div className="flex flex-wrap items-center gap-2">
 				<h4 className="label-md">{title}, Detailed Breakdown</h4>
 				<TimeframeBadge label={badge} />
@@ -241,6 +243,7 @@ export function BreakdownTables({ sections, badge }: { sections: BreakdownSectio
 					badge={badge}
 					rows={section.rows}
 					data={sections[section.dataKey]}
+					sectionKey={section.dataKey}
 				/>
 			))}
 		</section>

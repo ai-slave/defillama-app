@@ -9,6 +9,7 @@ const rows: PerformanceRow[] = [
 		marketMakerName: 'Lhava',
 		marketMakerImageUrl: null,
 		composite: 10,
+		grade: 'A+',
 		tradingKpis: 9.5,
 		trustIntegration: 8,
 		coverageCapabilities: 7.25,
@@ -23,6 +24,7 @@ const rows: PerformanceRow[] = [
 		marketMakerName: 'Wintermute',
 		marketMakerImageUrl: null,
 		composite: 5,
+		grade: 'C',
 		tradingKpis: null,
 		trustIntegration: 4,
 		coverageCapabilities: 3,
@@ -37,6 +39,7 @@ const rows: PerformanceRow[] = [
 		marketMakerName: 'GSR',
 		marketMakerImageUrl: null,
 		composite: 1,
+		grade: null,
 		tradingKpis: 1,
 		trustIntegration: 1,
 		coverageCapabilities: 1,
@@ -77,5 +80,32 @@ describe('ScoresTable', () => {
 		expect(html).toContain('Full')
 		expect(html).toContain('Partial')
 		expect(html).toContain('None')
+	})
+
+	it('renders a Grade column between Market Maker and Composite Score', () => {
+		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
+		const order = ['Market Maker', 'Grade', 'Composite Score', 'Trading KPIs', 'Trust', 'Coverage &amp; Capabilities']
+		const positions = order.map((label) => html.indexOf(label))
+		expect(positions.every((p) => p >= 0)).toBe(true)
+		expect([...positions].sort((a, b) => a - b)).toEqual(positions)
+	})
+
+	it('renders the API grade as a colored letter', () => {
+		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
+		expect(html).toContain('>A+</span>')
+		expect(html).toContain('text-success')
+		expect(html).toContain('>C</span>')
+		expect(html).toContain('text-warning')
+	})
+
+	it('falls back to a composite-derived grade when the API grade is missing', () => {
+		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
+		expect(html).toContain('>F</span>')
+		expect(html).toContain('text-error')
+	})
+
+	it('labels the trustIntegration column Trust', () => {
+		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
+		expect(html).not.toContain('Trust &amp; Integration')
 	})
 })

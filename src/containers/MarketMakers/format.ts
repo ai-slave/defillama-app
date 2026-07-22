@@ -12,6 +12,45 @@ export function formatComposite(value: number | null | undefined): string {
 	return value.toFixed(2)
 }
 
+export type CompositeGrade = { label: string; colorClassName: string }
+
+const GRADE_LETTER_COLORS: Record<string, string> = {
+	A: 'text-success',
+	B: 'text-success',
+	C: 'text-warning',
+	D: 'text-warning',
+	F: 'text-error'
+}
+
+const GRADE_FALLBACK_STEPS: { min: number; label: string }[] = [
+	{ min: 9, label: 'A+' },
+	{ min: 8, label: 'A' },
+	{ min: 7, label: 'B' },
+	{ min: 6, label: 'C' },
+	{ min: 5, label: 'D' }
+]
+
+function gradeFromLabel(label: string): CompositeGrade | null {
+	const colorClassName = GRADE_LETTER_COLORS[label.charAt(0).toUpperCase()]
+	return colorClassName ? { label, colorClassName } : null
+}
+
+function gradeFromComposite(value: number): CompositeGrade | null {
+	for (const step of GRADE_FALLBACK_STEPS) {
+		if (value >= step.min) return gradeFromLabel(step.label)
+	}
+	return gradeFromLabel('F')
+}
+
+export function resolveGrade(
+	grade: string | null | undefined,
+	composite: number | null | undefined
+): CompositeGrade | null {
+	if (grade) return gradeFromLabel(grade)
+	if (composite == null) return null
+	return gradeFromComposite(composite)
+}
+
 export function roundPercentile(value: number | null | undefined): number | null {
 	if (value == null) return null
 	return Math.round(value)

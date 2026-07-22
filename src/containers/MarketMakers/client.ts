@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import { fetchJson } from '~/utils/async'
 import { toQueryString } from '~/utils/routerQuery'
 import { type BreakdownPayloads, reconstructBreakdown, type ReconstructedBreakdown } from './breakdown'
@@ -8,20 +8,31 @@ import type { LeaderboardRow } from './types'
 
 export type LeaderboardRange = { start_date?: string; end_date?: string }
 
+// Temporary CDN cache bust; remove when Cloudflare purge covers these routes.
+function withCacheNonce(url: string) {
+	const nonce = String(Date.now())
+	return url.includes('?') ? `${url}&_n=${nonce}` : `${url}?_n=${nonce}`
+}
+
+function fetchFreshJson<T>(url: string) {
+	return fetchJson<T>(withCacheNonce(url))
+}
+
 export function usePerformanceIndex(range: LeaderboardRange, initialData: PerformanceIndexProps) {
 	const queryString = toQueryString(range)
 	return useQuery<PerformanceIndexProps, Error>({
 		queryKey: ['market-makers', 'performance-index', range.start_date ?? null, range.end_date ?? null],
 		queryFn: async () => {
 			const [performance, aggregated] = await Promise.all([
-				fetchJson<unknown>(`/api/public/market-makers/performance${queryString}`),
-				fetchJson<unknown>(`/api/public/market-makers/aggregated${queryString}`)
+				fetchFreshJson<unknown>(`/api/public/market-makers/performance${queryString}`),
+				fetchFreshJson<unknown>(`/api/public/market-makers/aggregated${queryString}`)
 			])
 			return mergePerformanceIndex(performance, aggregated)
 		},
 		initialData: isDefaultRange(range) ? initialData : undefined,
 		placeholderData: keepPreviousData,
-		staleTime: 5 * 60 * 1000,
+		staleTime: 0,
+		refetchOnMount: 'always',
 		refetchOnWindowFocus: false,
 		retry: 1
 	})
@@ -36,11 +47,12 @@ export function useLeaderboardRows(
 	const queryString = toQueryString(range)
 	return useQuery<unknown, Error, LeaderboardRow[]>({
 		queryKey: ['market-makers', fetchPath, range.start_date ?? null, range.end_date ?? null],
-		queryFn: () => fetchJson<unknown>(`/api/public/market-makers/${fetchPath}${queryString}`),
+		queryFn: () => fetchFreshJson<unknown>(`/api/public/market-makers/${fetchPath}${queryString}`),
 		select: shape,
 		initialData: isDefaultRange(range) ? initialData : undefined,
 		placeholderData: keepPreviousData,
-		staleTime: 5 * 60 * 1000,
+		staleTime: 0,
+		refetchOnMount: 'always',
 		refetchOnWindowFocus: false,
 		retry: 1
 	})
@@ -59,10 +71,11 @@ function findById(data: unknown, key: string, id: string | null): MMRecord | nul
 export function useMarketMakerDetail(id: string | null, enabled: boolean) {
 	return useQuery<unknown, Error, MMRecord | null>({
 		queryKey: ['market-makers', 'details-all'],
-		queryFn: () => fetchJson<unknown>('/api/public/market-makers/details'),
+		queryFn: () => fetchFreshJson<unknown>('/api/public/market-makers/details'),
 		select: (data) => findById(data, 'id', id),
 		enabled: enabled && !!id,
-		staleTime: 5 * 60 * 1000,
+		staleTime: 0,
+		refetchOnMount: 'always',
 		refetchOnWindowFocus: false,
 		retry: 1
 	})
@@ -76,19 +89,57 @@ export function useMarketMakerBreakdown(id: string | null, range: LeaderboardRan
 		queryKey: ['market-makers', 'breakdown-all', range.start_date ?? null, range.end_date ?? null],
 		queryFn: async () => {
 			const [aggregated, depth, volume, spread, kpi] = await Promise.all([
-				fetchJson<unknown>(`/api/public/market-makers/aggregated${queryString}`),
-				fetchJson<unknown>(`/api/public/market-makers/depth${queryString}`),
-				fetchJson<unknown>(`/api/public/market-makers/volume${queryString}`),
-				fetchJson<unknown>(`/api/public/market-makers/spread${queryString}`),
-				fetchJson<unknown>(`/api/public/market-makers/kpi${queryString}`)
+				fetchFreshJson<unknown>(`/api/public/market-makers/aggregated${queryString}`),
+				fetchFreshJson<unknown>(`/api/public/market-makers/depth${queryString}`),
+				fetchFreshJson<unknown>(`/api/public/market-makers/volume${queryString}`),
+				fetchFreshJson<unknown>(`/api/public/market-makers/spread${queryString}`),
+				fetchFreshJson<unknown>(`/api/public/market-makers/kpi${queryString}`)
 			])
 			return { aggregated, depth, volume, spread, kpi }
 		},
 		select: (data) => reconstructBreakdown(id, data),
 		enabled: enabled && !!id,
-		staleTime: 5 * 60 * 1000,
+		staleTime: 0,
+		refetchOnMount: 'always',
 		refetchOnWindowFocus: false,
 		retry: 1
+	})
+}
+
+export type LeadKind = 'connect' | 'claim'
+
+async function postJson<T>(url: string, body: Record<string, unknown>): Promise<T> {
+	const res = await fetch(url, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(body)
+	})
+	const data = await res.json().catch(() => null)
+	if (!res.ok) {
+		if (res.status === 429) throw new Error('Too many requests — please try again later')
+		const message = data && typeof data.error === 'string' ? data.error : null
+		throw new Error(message ?? 'Failed to submit the request')
+	}
+	return data as T
+}
+
+export async function requestLeadClickId(kind: LeadKind, marketMakerId: string | null): Promise<string | null> {
+	try {
+		const res = await postJson<{ clickId: string | null }>('/api/public/market-makers/cta', {
+			kind,
+			market_maker_id: marketMakerId,
+			source_url: typeof window === 'undefined' ? null : window.location.href
+		})
+		return res.clickId
+	} catch {
+		return null
+	}
+}
+
+export function useSubmitLead(kind: LeadKind) {
+	return useMutation({
+		mutationFn: (payload: Record<string, unknown>) =>
+			postJson<{ status: string; request_id: string }>(`/api/public/market-makers/lead/${kind}`, payload)
 	})
 }
 
@@ -96,10 +147,11 @@ export function useMarketMakerPerformance(id: string | null, range: LeaderboardR
 	const queryString = toQueryString(range)
 	return useQuery<unknown, Error, MMRecord | null>({
 		queryKey: ['market-makers', 'performance-all', range.start_date ?? null, range.end_date ?? null],
-		queryFn: () => fetchJson<unknown>(`/api/public/market-makers/performance${queryString}`),
+		queryFn: () => fetchFreshJson<unknown>(`/api/public/market-makers/performance${queryString}`),
 		select: (data) => findById(data, 'marketMakerId', id),
 		enabled: enabled && !!id,
-		staleTime: 5 * 60 * 1000,
+		staleTime: 0,
+		refetchOnMount: 'always',
 		refetchOnWindowFocus: false,
 		retry: 1
 	})

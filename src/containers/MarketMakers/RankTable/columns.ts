@@ -75,13 +75,21 @@ export function buildRankColumns({ columns, mode, rowCount, onSelectMM }: IBuild
 			id: c.metricKey,
 			header: c.label,
 			cell: ({ row }) => {
-				const metricCell = createElement(MetricCell, {
-					metric: row.original.metrics[c.metricKey],
-					market: c.marketKey ? row.original.metrics[c.marketKey] : undefined,
-					mode,
-					kind: c.kind,
-					rowCount
-				})
+				const metricCell = createElement(
+					'button',
+					{
+						type: 'button',
+						onClick: () => onSelectMM(row.original.marketMakerId, row.original.marketMakerName),
+						className: '-mx-1 cursor-pointer rounded-sm px-1 text-left hover:bg-surface-elevated-2'
+					},
+					createElement(MetricCell, {
+						metric: row.original.metrics[c.metricKey],
+						market: c.marketKey ? row.original.metrics[c.marketKey] : undefined,
+						mode,
+						kind: c.kind,
+						rowCount
+					})
+				)
 				if (!isLast) return metricCell
 				const heatCls = heat(row.original)
 				return createElement(

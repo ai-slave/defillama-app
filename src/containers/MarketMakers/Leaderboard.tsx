@@ -18,7 +18,7 @@ interface ILeaderboardProps {
 	subtitle: string
 	columns: ColumnConfig[]
 	initialData: unknown
-	fetchPath: string
+	fetchPath: 'depth' | 'volume' | 'spread' | 'kpi'
 	hasThreshold?: boolean
 }
 
