@@ -33,18 +33,13 @@ export function IncomeStatementChartTab({
 		})
 	}, [protocolOptions, protocolsBySlug])
 
-	const selectedRecord = useMemo(() => {
-		if (!selectedIncomeStatementProtocol) return null
-		return (
-			protocolsBySlug.get(selectedIncomeStatementProtocol) ??
+	const selectedRecord = selectedIncomeStatementProtocol
+		? (protocolsBySlug.get(selectedIncomeStatementProtocol) ??
 			protocolsBySlug.get(selectedIncomeStatementProtocol.toLowerCase()) ??
-			null
-		)
-	}, [protocolsBySlug, selectedIncomeStatementProtocol])
-
-	const displayName = useMemo(() => {
-		return selectedRecord?.displayName || selectedIncomeStatementProtocolName || selectedIncomeStatementProtocol || ''
-	}, [selectedRecord?.displayName, selectedIncomeStatementProtocolName, selectedIncomeStatementProtocol])
+			null)
+		: null
+	const displayName =
+		selectedRecord?.displayName || selectedIncomeStatementProtocolName || selectedIncomeStatementProtocol || ''
 
 	const metadata = useMemo(
 		() => ({

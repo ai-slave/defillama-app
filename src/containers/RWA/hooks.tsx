@@ -16,15 +16,16 @@ import type { IRWAAssetsOverview, IRWAChartMetricRows, RWAChartMetricKey, RWAAss
 import { normalizeRwaAssetGroup } from './assetGroup'
 import {
 	aggregateRwaMetricData,
-	appendRwaChartDatasetTotal,
+	buildRwaCanonicalMetricDataset,
 	buildRwaOpenInterestDataset,
-	emptyChartDataset,
-	mergeRwaChartDatasets,
-	renameRwaChartDatasetTotal,
-	selectRwaChartDatasetSeries,
 	type RWAChartDataset,
 	type RWAChartAggregationMode
 } from './chartAggregation'
+import {
+	mergeRwaPositionalChartDatasets,
+	toRwaMultiSeriesChartDataset,
+	type RWAPositionalChartDataset
+} from './chartDataset'
 import {
 	getDefaultRWAOverviewInclusion,
 	getDefaultSelectedTypes,
@@ -1123,7 +1124,7 @@ export function useRwaChartDataset({
 	enabled = true
 }: {
 	selectedMetric: RWAChartMetricKey
-	initialDataset: RWAChartDataset
+	initialDataset: RWAPositionalChartDataset | null
 	initialOpenInterestDataset: RWAChartDataset | null
 	filteredAssets: IRWAAssetsOverview['assets']
 	mode: RWAChartAggregationMode
@@ -1134,7 +1135,7 @@ export function useRwaChartDataset({
 	useInitialDataset: boolean
 	enabled?: boolean
 }): {
-	chartDataset: RWAChartDataset
+	chartDataset: RWAPositionalChartDataset
 	assetRows: IRWAChartMetricRows | undefined
 	isChartLoading: boolean
 	chartError: string | null
@@ -1170,34 +1171,33 @@ export function useRwaChartDataset({
 		enabled: enabled && !useInitialDataset && includeRwaPerps && filteredAssets.some((asset) => asset.kind === 'perps')
 	})
 
-	assert(initialDataset.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
+	assert(initialDataset == null || initialDataset.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
 
 	const chartDataset = useMemo(() => {
-		if (!enabled) return emptyChartDataset()
+		if (!enabled) return { source: [], dimensions: ['timestamp'] }
 
 		const spotDataset = (() => {
-			if (useInitialDataset) {
-				const dataset =
-					mode === 'total'
-						? selectRwaChartDatasetSeries(initialDataset, ['Total'])
-						: appendRwaChartDatasetTotal(initialDataset)
-				return renameRwaChartDatasetTotal(dataset, selectedMetric)
+			if (useInitialDataset && initialDataset) {
+				if (mode !== 'total') return initialDataset
+				return {
+					dimensions: initialDataset.dimensions.slice(0, 2),
+					source: initialDataset.source.map((row) => row.slice(0, 2))
+				}
 			}
-			if (!assetRows) return emptyChartDataset()
+			if (!assetRows) return { source: [], dimensions: ['timestamp'] }
 			const dataset = aggregateRwaMetricData(filteredAssets, assetRows, mode)
-			const datasetWithTotal = mode === 'total' ? dataset : appendRwaChartDatasetTotal(dataset)
-			return renameRwaChartDatasetTotal(datasetWithTotal, selectedMetric)
+			return buildRwaCanonicalMetricDataset(dataset, selectedMetric, mode === 'total')
 		})()
 
 		if (!includeRwaPerps) return spotDataset
 
 		const openInterestDataset = useInitialDataset
-			? (initialOpenInterestDataset ?? emptyChartDataset())
+			? toRwaMultiSeriesChartDataset(initialOpenInterestDataset ?? { source: [], dimensions: ['timestamp'] })
 			: openInterestRows
-				? buildRwaOpenInterestDataset(filteredAssets, openInterestRows)
-				: emptyChartDataset()
+				? toRwaMultiSeriesChartDataset(buildRwaOpenInterestDataset(filteredAssets, openInterestRows))
+				: { source: [], dimensions: ['timestamp'] }
 
-		return mergeRwaChartDatasets(spotDataset, openInterestDataset)
+		return mergeRwaPositionalChartDatasets(spotDataset, openInterestDataset)
 	}, [
 		useInitialDataset,
 		initialDataset,

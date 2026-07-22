@@ -28,8 +28,15 @@ export function buildProtocolTaxonomyGroupedCharts({
 
 	const dimensionCount = charts.dataset.dimensions.length
 	const cumulativeTotals = new Array<number>(dimensionCount).fill(0)
+	const hasCumulativeValue = new Array<boolean>(dimensionCount).fill(false)
 	const source: ProtocolTaxonomyCharts['dataset']['source'] = []
 	const isCumulative = groupBy === 'cumulative'
+	const barDimensionIndexes: number[] = []
+	for (const series of chartSeries) {
+		if (series.type !== 'bar') continue
+		const dimensionIndex = getYDimensionIndex(series, charts.dataset.dimensions)
+		if (dimensionIndex >= 0) barDimensionIndexes.push(dimensionIndex)
+	}
 	let hasBarCharts = false
 
 	for (const inputRow of charts.dataset.source) {
@@ -54,12 +61,20 @@ export function buildProtocolTaxonomyGroupedCharts({
 				hasBarCharts = true
 				if (isCumulative) {
 					cumulativeTotals[dimensionIndex] += value
+					hasCumulativeValue[dimensionIndex] = true
 					outputRow[dimensionIndex] = cumulativeTotals[dimensionIndex]
 				} else {
 					outputRow[dimensionIndex] = ((outputRow[dimensionIndex] as number | null) ?? 0) + value
 				}
 			} else {
 				outputRow[dimensionIndex] = value
+			}
+		}
+		if (isCumulative && outputRow?.[0] === timestamp) {
+			for (const dimensionIndex of barDimensionIndexes) {
+				if (hasCumulativeValue[dimensionIndex] && outputRow[dimensionIndex] == null) {
+					outputRow[dimensionIndex] = cumulativeTotals[dimensionIndex]
+				}
 			}
 		}
 	}

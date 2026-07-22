@@ -91,14 +91,19 @@ export function buildAdapterByChainCombinedChartPresentation({
 
 	if (isCumulative) {
 		const cumulativeTotals = new Array<number>(seriesDefinitions.length).fill(0)
+		const hasCumulativeValue = new Array<boolean>(seriesDefinitions.length).fill(false)
 		for (const row of groupedRows) {
 			for (let index = 0; index < seriesDefinitions.length; index++) {
 				const series = seriesDefinitions[index]
 				if (series.isSnapshotMetric) continue
 
 				const value = row[index + 1]
-				if (value == null) continue
+				if (value == null) {
+					if (hasCumulativeValue[index]) row[index + 1] = cumulativeTotals[index]
+					continue
+				}
 				cumulativeTotals[index] += value as number
+				hasCumulativeValue[index] = true
 				row[index + 1] = cumulativeTotals[index]
 			}
 		}

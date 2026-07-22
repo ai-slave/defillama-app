@@ -9,6 +9,7 @@ import {
 import type { FormattedStablecoinAsset } from '../utils'
 
 const stablecoin = (overrides: Partial<FormattedStablecoinAsset>): FormattedStablecoinAsset => ({
+	id: 'usdc',
 	name: 'USD Coin',
 	symbol: 'USDC',
 	gecko_id: 'usd-coin',

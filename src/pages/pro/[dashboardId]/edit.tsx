@@ -5,15 +5,25 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { ProDashboardLoader } from '~/containers/ProDashboard/components/ProDashboardLoader'
+import {
+	hydrateDashboardInitialRenderPayload,
+	toOwnerDashboardInitialRenderPayload,
+	type DashboardInitialRenderPayload
+} from '~/containers/ProDashboard/initialDashboard'
 import { ProDashboardAPIProvider, useProDashboardDashboard } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { fetchDashboardConfig } from '~/containers/ProDashboard/queries.server'
-import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
+import { fetchAuthenticatedUserId, getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
 import Layout from '~/layout'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 const ProDashboard = lazy(() => import('~/containers/ProDashboard'))
 
-const getServerSidePropsHandler: GetServerSideProps = async (context) => {
+type DashboardEditPageProps = {
+	dashboardId: string
+	initialDashboard: DashboardInitialRenderPayload | null
+}
+
+const getServerSidePropsHandler: GetServerSideProps<DashboardEditPageProps> = async (context) => {
 	const dashboardId = context.params?.dashboardId as string
 
 	context.res.setHeader('Cache-Control', 'private, no-store')
@@ -21,11 +31,14 @@ const getServerSidePropsHandler: GetServerSideProps = async (context) => {
 	const authToken = getAuthTokenFromRequest(context.req)
 	if (!authToken) {
 		context.res.statusCode = 401
-		return { props: { dashboardId } }
+		return { props: { dashboardId, initialDashboard: null } }
 	}
 
 	try {
-		const dashboard = await fetchDashboardConfig(dashboardId, authToken)
+		const [dashboard, authenticatedUserId] = await Promise.all([
+			fetchDashboardConfig(dashboardId, authToken),
+			fetchAuthenticatedUserId(authToken)
+		])
 		if (!dashboard) {
 			return { notFound: true }
 		}
@@ -37,14 +50,25 @@ const getServerSidePropsHandler: GetServerSideProps = async (context) => {
 				}
 			}
 		}
+		return {
+			props: {
+				dashboardId,
+				initialDashboard:
+					authenticatedUserId === dashboard.user ? toOwnerDashboardInitialRenderPayload(dashboard) : null
+			}
+		}
 	} catch {
 		// Fall through; client will surface error
 	}
 
-	return { props: { dashboardId } }
+	return { props: { dashboardId, initialDashboard: null } }
 }
 
-export default function DashboardEditPage({ dashboardId }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function DashboardEditPage({
+	dashboardId,
+	initialDashboard
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+	const providerInitialDashboard = initialDashboard ? hydrateDashboardInitialRenderPayload(initialDashboard) : null
 	return (
 		<Layout
 			title="DefiLlama Pro - Edit Dashboard"
@@ -54,21 +78,28 @@ export default function DashboardEditPage({ dashboardId }: InferGetServerSidePro
 		>
 			<ProDashboardAPIProvider
 				initialDashboardId={dashboardId}
+				initialDashboard={providerInitialDashboard}
 				mode="edit"
 				key={`dashboard-edit-provider-${dashboardId}`}
 			>
-				<DashboardEditPageContent dashboardId={dashboardId} />
+				<DashboardEditPageContent dashboardId={dashboardId} hasInitialDashboard={!!initialDashboard} />
 			</ProDashboardAPIProvider>
 		</Layout>
 	)
 }
 
-function DashboardEditPageContent({ dashboardId }: { dashboardId: string }) {
+function DashboardEditPageContent({
+	dashboardId,
+	hasInitialDashboard
+}: {
+	dashboardId: string
+	hasInitialDashboard: boolean
+}) {
 	const router = useRouter()
 	const { isAuthenticated, loaders, user } = useAuthContext()
 	const { isLoadingDashboard, streamHasResolved, loadError, currentDashboard, dashboardName } =
 		useProDashboardDashboard()
-	const [isValidating, setIsValidating] = useState(true)
+	const [isValidating, setIsValidating] = useState(!hasInitialDashboard)
 	const hasRedirectedRef = useRef(false)
 
 	useEffect(() => {

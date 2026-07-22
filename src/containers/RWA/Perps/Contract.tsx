@@ -271,6 +271,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 		[contract.fundingHistory, contract.marketChart, enabledMetrics, groupBy]
 	)
 	const deferredChartSpec = useDeferredValue(chartSpec)
+	const hasChartData = deferredChartSpec.charts.some((chart) => chart.data && chart.data.length > 0)
 	const contractSlugBase = contract.contract.contract.replace(/:/g, '-').toLowerCase()
 
 	return (
@@ -355,7 +356,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 				</div>
 			</ChartPanelToolbar>
 
-			{deferredChartSpec.charts.length > 0 && deferredChartSpec.dataset.source.length > 0 ? (
+			{hasChartData ? (
 				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
 						dataset={deferredChartSpec.dataset}

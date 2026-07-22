@@ -69,7 +69,7 @@ describe('buildTimeSeriesChart', () => {
 			})
 		).toEqual({
 			dataset: {
-				source: [[toMs(2024, 3, 1), 30]],
+				source: [],
 				dimensions: ['timestamp', 'TVL']
 			},
 			charts: [
@@ -77,7 +77,8 @@ describe('buildTimeSeriesChart', () => {
 					type: 'line',
 					name: 'TVL',
 					encode: { x: 0, y: 1 },
-					color: '#222222'
+					color: '#222222',
+					data: [[toMs(2024, 3, 1), 30]]
 				}
 			]
 		})
@@ -168,7 +169,7 @@ describe('buildTimeSeriesChart', () => {
 		})
 	})
 
-	it('densifies mixed sparse line buckets while keeping the last value per series', () => {
+	it('keeps mixed sparse line buckets independent while retaining the last value per series', () => {
 		expect(
 			buildTimeSeriesChart({
 				kind: 'periodLines',
@@ -192,11 +193,13 @@ describe('buildTimeSeriesChart', () => {
 						]
 					}
 				]
-			}).dataset.source
+			}).charts.map((chart) => chart.data)
 		).toEqual([
-			[toMs(2024, 1, 21), 12, null],
-			[toMs(2024, 1, 28), null, 22],
-			[toMs(2024, 2, 4), 30, null]
+			[
+				[toMs(2024, 1, 21), 12],
+				[toMs(2024, 2, 4), 30]
+			],
+			[[toMs(2024, 1, 28), 22]]
 		])
 	})
 

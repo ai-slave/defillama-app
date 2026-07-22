@@ -146,34 +146,32 @@ export function StablecoinsChartTab({
 	)
 
 	const {
-		totalDataset: assetTotalDataset,
-		areaDataset: assetAreaDataset,
-		dominanceDataset: assetDominanceDataset,
-		chainsCirculatingValues: assetChainsCirculatingValues,
+		presentation: assetPresentation,
 		chainsUnique,
 		stablecoinName,
 		stablecoinSymbol,
-		totalCirculating,
 		isLoading: assetChartDataLoading
 	} = useStablecoinAssetChartData(
 		stablecoinMode === 'asset' ? selectedStablecoinAssetId || '' : '',
 		selectedStablecoinAssetChartType as StablecoinAssetChartType
 	)
+	const assetDataset = 'dataset' in assetPresentation ? assetPresentation.dataset : null
+	const assetChainsCirculatingValues = assetPresentation.chartType === 'chainPie' ? assetPresentation.slices : []
+	const totalCirculating = assetPresentation.totalCirculating
 
 	const assetBreakdownPresentation = useMemo(() => {
-		const dataset =
-			selectedStablecoinAssetChartType === 'chainMcaps'
-				? assetAreaDataset
-				: selectedStablecoinAssetChartType === 'chainDominance'
-					? assetDominanceDataset
-					: null
-		if (!dataset) return null
+		if (
+			!assetDataset ||
+			(assetPresentation.chartType !== 'chainMcaps' && assetPresentation.chartType !== 'chainDominance')
+		) {
+			return null
+		}
 		return buildStablecoinBreakdownDatasetPresentation({
-			dataset,
+			dataset: assetDataset,
 			seriesNames: chainsUnique,
 			selectedNames: selectedAssetSeries
 		})
-	}, [assetAreaDataset, assetDominanceDataset, chainsUnique, selectedAssetSeries, selectedStablecoinAssetChartType])
+	}, [assetDataset, assetPresentation.chartType, chainsUnique, selectedAssetSeries])
 
 	const assetChainColors = useMemo(() => {
 		const colors: Record<string, string> = {}
@@ -321,7 +319,7 @@ export function StablecoinsChartTab({
 					>
 						<MultiSeriesChart
 							title=""
-							dataset={assetTotalDataset}
+							dataset={assetDataset!}
 							charts={TOTAL_CIRCULATING_CHARTS}
 							valueSymbol="$"
 							hallmarks={EMPTY_HALLMARKS}
@@ -341,7 +339,7 @@ export function StablecoinsChartTab({
 					>
 						<MultiSeriesChart
 							title=""
-							dataset={assetBreakdownPresentation?.dataset ?? assetAreaDataset}
+							dataset={assetBreakdownPresentation?.dataset ?? assetDataset!}
 							charts={assetChainCharts}
 							valueSymbol="$"
 							chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
@@ -373,7 +371,7 @@ export function StablecoinsChartTab({
 						<MultiSeriesChart
 							title=""
 							valueSymbol="%"
-							dataset={assetBreakdownPresentation?.dataset ?? assetDominanceDataset}
+							dataset={assetBreakdownPresentation?.dataset ?? assetDataset!}
 							charts={assetChainDominanceCharts}
 							expandTo100Percent={true}
 							chartOptions={STABLECOIN_PERCENT_CHART_OPTIONS}

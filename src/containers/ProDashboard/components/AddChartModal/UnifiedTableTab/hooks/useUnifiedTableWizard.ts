@@ -14,6 +14,7 @@ import {
 	normalizeSorting
 } from '~/containers/ProDashboard/components/UnifiedTable/utils/configHelpers'
 import { getOrderedCustomColumnIds } from '~/containers/ProDashboard/components/UnifiedTable/utils/customColumns'
+import { sanitizeRowHeaders } from '~/containers/ProDashboard/components/UnifiedTable/utils/rowHeaders'
 import type {
 	CustomColumnDefinition,
 	TableFilters,
@@ -94,7 +95,7 @@ const defaultState = (presetId?: string, existingConfig?: UnifiedTableConfig): W
 	}
 
 	const preset = derivePreset(presetId)
-	const rowHeaders = [...(preset.rowHeaders as UnifiedRowHeaderType[])]
+	const rowHeaders = sanitizeRowHeaders(preset.rowHeaders as UnifiedRowHeaderType[])
 	const baseVisibility = { ...DEFAULT_COLUMN_VISIBILITY, ...preset.columnVisibility }
 
 	const sanitized = sanitizeConfigColumns({
@@ -120,17 +121,18 @@ const reducer = (state: WizardState, action: WizardAction): WizardState => {
 		case 'SET_CHAINS':
 			return { ...state, chains: action.chains }
 		case 'SET_ROW_HEADERS': {
+			const rowHeaders = sanitizeRowHeaders(action.rowHeaders)
 			return {
 				...state,
-				rowHeaders: action.rowHeaders,
-				columnVisibility: applyRowHeaderVisibilityRules(action.rowHeaders, state.columnVisibility)
+				rowHeaders,
+				columnVisibility: applyRowHeaderVisibilityRules(rowHeaders, state.columnVisibility)
 			}
 		}
 		case 'SET_FILTERS':
 			return { ...state, filters: action.filters }
 		case 'SET_PRESET': {
 			const preset = derivePreset(action.presetId)
-			const rowHeaders = preset.rowHeaders as UnifiedRowHeaderType[]
+			const rowHeaders = sanitizeRowHeaders(preset.rowHeaders as UnifiedRowHeaderType[])
 			const baseVisibility = { ...DEFAULT_COLUMN_VISIBILITY, ...preset.columnVisibility }
 			const sanitized = sanitizeConfigColumns({
 				order: [...preset.columnOrder],
@@ -230,7 +232,7 @@ export const useUnifiedTableWizard = (presetId?: string, existingConfig?: Unifie
 			columnOrder: state.columnOrder.length ? state.columnOrder : DEFAULT_COLUMN_ORDER,
 			columnVisibility: state.columnVisibility,
 			activePresetId: state.activePresetId,
-			defaultSorting: state.sorting.map((item) => ({ ...item })),
+			defaultSorting: state.sorting,
 			customColumns: state.customColumns.length ? state.customColumns : undefined
 		}
 

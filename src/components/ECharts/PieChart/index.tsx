@@ -11,6 +11,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { formattedNum } from '~/utils'
+import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
 import { CHART_INSET, CHART_VERTICAL_LEGEND_RIGHT_INSET, chartLegendScrollStyle } from '../shared/chartSpacing'
@@ -35,7 +36,7 @@ function normalizePieTooltipParams(params: unknown): PieTooltipParams {
 	return value && typeof value === 'object' ? (value as PieTooltipParams) : {}
 }
 
-export default function PieChart({
+function PieChart({
 	height,
 	stackColors,
 	chartData,
@@ -58,6 +59,7 @@ export default function PieChart({
 	const chartTheme = useChartTheme(isDark)
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const persistentLifecycle = usePersistentEChartsLifecycle()
 
 	const exportButtonsMode = exportButtons ?? 'hidden'
 	const exportButtonsConfig =
@@ -283,16 +285,18 @@ export default function PieChart({
 		if (!el) return
 		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		persistentLifecycle.restore(instance)
 		handleChartReady(instance)
 		emitReady(instance)
 
 		return () => {
+			persistentLifecycle.capture(instance)
 			chartRef.current = null
 			instance.dispose()
 			handleChartReady(null)
 			emitReady(null)
 		}
-	}, [handleChartReady])
+	}, [handleChartReady, persistentLifecycle])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -406,7 +410,7 @@ export default function PieChart({
 	})
 
 	// The shared observer resizes the canvas and then recomputes this chart's pixel-positioned watermark.
-	useChartResize(chartRef, chartDomRef, syncLayout)
+	useChartResize(chartRef, chartDomRef, { onResize: syncLayout })
 
 	useEffect(() => {
 		syncLayout()
@@ -439,3 +443,5 @@ export default function PieChart({
 		/>
 	)
 }
+
+export default withEChartsRenderVisibility(PieChart)

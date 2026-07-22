@@ -1,5 +1,5 @@
 import type { EarnPageRow } from '~/containers/Yields/data/types'
-import type { RWAChartDataset } from './chartDataset'
+import type { RWAChartDataset, RWAPositionalChartDataset } from './chartDataset'
 import type { RWAParentPlatform } from './grouping'
 
 type RWANumberMap = Record<string, number>
@@ -225,7 +225,6 @@ export interface IRWAAssetsOverview {
 	assetGroupSlug: string | null
 }
 
-export type IRWAInitialChartDatasetRow = RWAChartDataset['source'][number]
 export type IRWAInitialTimeSeriesDataset = RWAChartDataset
 export type RWAChartMetricKey = 'onChainMcap' | 'activeMcap' | 'defiActiveTvl'
 export type IRWAChartMetricRows = Array<{ timestamp: number } & Record<string, number>>
@@ -236,7 +235,10 @@ export type RWAAssetChartTarget =
 	| { kind: 'platform'; slug: string }
 	| { kind: 'assetGroup'; slug: string }
 
-export type IRWAInitialChartDataset = Record<RWAChartMetricKey, IRWAInitialTimeSeriesDataset>
+export type IRWAInitialChartDataset = {
+	metric: RWAChartMetricKey
+	dataset: RWAPositionalChartDataset
+}
 
 export interface IRWAChartDataByAsset {
 	onChainMcap: IRWAChartMetricRows
@@ -355,22 +357,22 @@ export type IRWAAssetGroupsOverviewRow = NonNullable<IRWAStatsResponse['byAssetG
 
 export type IRWAChainsOverview = {
 	rows: IRWAChainsOverviewRow[]
-	initialChartDataset: RWAChartDataset
+	initialChartDataset: RWAPositionalChartDataset
 }
 
 export type IRWACategoriesOverview = {
 	rows: IRWACategoriesOverviewRow[]
-	initialChartDataset: RWAChartDataset
+	initialChartDataset: RWAPositionalChartDataset
 }
 
 export type IRWAPlatformsOverview = {
 	rows: IRWAPlatformsOverviewRow[]
-	initialChartDataset: RWAChartDataset
+	initialChartDataset: RWAPositionalChartDataset
 }
 
 export type IRWAAssetGroupsOverview = {
 	rows: IRWAAssetGroupsOverviewRow[]
-	initialChartDataset: RWAChartDataset
+	initialChartDataset: RWAPositionalChartDataset
 }
 
 export type RWADefiTvlProtocolBreakdown = {
@@ -386,17 +388,9 @@ export interface IRWAAssetData extends IRWAProject {
 	accessModelDescription: string | null
 	assetClassDescriptions: Record<string, string>
 	contractUrls: Record<string, Record<string, string>> | null
-	chartDataset: {
-		source: RWAAssetChartRow[]
-		dimensions: RWAAssetChartDimension[]
-	} | null
+	chartDataset: RWAPositionalChartDataset | null
 	yieldPools: EarnPageRow[] | null
 	yieldPoolsTotal: number | null
 	nativeYieldPoolId: string | null
 	nativeYieldCurrent: number | null
 }
-
-const RWA_ASSET_CHART_DIMENSIONS = ['timestamp', 'DeFi Active TVL', 'Active Mcap', 'Onchain Mcap'] as const
-export type RWAAssetChartDimension = (typeof RWA_ASSET_CHART_DIMENSIONS)[number]
-type RWAAssetChartSeriesDimension = Exclude<RWAAssetChartDimension, 'timestamp'>
-export type RWAAssetChartRow = { timestamp: number } & Partial<Record<RWAAssetChartSeriesDimension, number | null>>

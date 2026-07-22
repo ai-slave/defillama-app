@@ -21,14 +21,9 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 	const { protocolsBySlug } = useAppMetadata()
 	const [view, setView] = useState<ViewMode>('sankey')
 
-	const protocolInfo = useMemo(() => getProtocolInfo(config.protocol), [config.protocol, getProtocolInfo])
-	const record = useMemo(() => {
-		return protocolsBySlug.get(config.protocol) ?? protocolsBySlug.get(config.protocol.toLowerCase()) ?? null
-	}, [config.protocol, protocolsBySlug])
-
-	const displayName = useMemo(() => {
-		return record?.displayName || config.protocolName || protocolInfo?.name || config.protocol
-	}, [record?.displayName, config.protocolName, protocolInfo?.name, config.protocol])
+	const protocolInfo = getProtocolInfo(config.protocol)
+	const record = protocolsBySlug.get(config.protocol) ?? protocolsBySlug.get(config.protocol.toLowerCase()) ?? null
+	const displayName = record?.displayName || config.protocolName || protocolInfo?.name || config.protocol
 
 	const metadata = useMemo(
 		() => ({

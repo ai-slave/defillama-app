@@ -94,6 +94,7 @@ export function buildMultiSeries({
 		const common = {
 			name: chart.name,
 			encode: chart.encode,
+			...(chart.data ? { data: chart.data } : {}),
 			emphasis: { focus: 'series' as const, shadowBlur: 10 },
 			itemStyle: { color },
 			...(chart.legendIconUrl && isIconUrlValid(chart.legendIconUrl)
@@ -155,6 +156,7 @@ export function buildMultiSeries({
 		} else if (output.length === 0 && hallmarksMarkLine) {
 			series.markLine = hallmarksMarkLine
 		}
+		if (chart.markArea != null) series.markArea = chart.markArea
 
 		// External emissions metadata can be inconsistent; TBD keeps the legacy precedence over forecast.
 		const projection = chart.isTBD ? 'tbd' : chart.isForecast ? 'forecast' : null

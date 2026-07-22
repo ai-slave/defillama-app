@@ -2,7 +2,11 @@ import type { ECharts } from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type {
+	IMultiSeriesChartProps,
+	MultiSeriesChartDataset,
+	MultiSeriesChartOptions
+} from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -10,19 +14,23 @@ import { CHART_COLORS } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { formatNum, formattedNum, slug } from '~/utils'
+import { formattedNum, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type {
 	LiquidationsDistributionChartBreakdownKey,
 	LiquidationsDistributionChartData,
 	LiquidationsDistributionChartView
 } from './api.types'
+import {
+	formatLiquidationMetricValue,
+	formatLiquidationPrice,
+	getLiquidationsTooltipHtml,
+	type LiquidationsMetric
+} from './chartTooltip'
 
-const MultiSeriesChart = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart')
-) as React.FC<IMultiSeriesChartProps>
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-type Metric = 'usd' | 'amount'
+type Metric = LiquidationsMetric
 type BreakdownMode = 'total' | 'protocol' | 'chain'
 type ChartMode = 'cumulative' | 'distribution'
 type LiquidationsChartState = {
@@ -187,27 +195,6 @@ function LiquidationsDistributionChartCard({
 	)
 }
 
-function formatLiqPrice(value: number): string {
-	if (!Number.isFinite(value) || value <= 0) return '$0'
-	if (value < 0.01) return formatNum(value, 5, '$') ?? '$0'
-	if (value < 1) return formatNum(value, 4, '$') ?? '$0'
-	if (value < 100) return formatNum(value, 2, '$') ?? '$0'
-	return formattedNum(value, true)
-}
-
-function formatMetricValue(value: number, metric: Metric, tokenLabel: string): string {
-	if (metric === 'usd') {
-		if (!Number.isFinite(value) || value <= 0) return '$0'
-		if (value < 0.01) return formatNum(value, 5, '$') ?? '$0'
-		if (value < 1) return formatNum(value, 4, '$') ?? '$0'
-		if (value < 100) return formatNum(value, 2, '$') ?? '$0'
-		return formattedNum(value, true)
-	}
-
-	const amountLabel = !Number.isFinite(value) || value <= 0 ? '0' : formattedNum(value)
-	return `${amountLabel} ${tokenLabel}`
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null
 }
@@ -274,52 +261,6 @@ export function getLiquidationsChartTokenQueryPatch(nextToken: string, defaultTo
 	return {
 		[TOKEN_QUERY_PARAM]: nextToken === defaultToken ? undefined : nextToken
 	}
-}
-
-function getLiquidationsTooltipHtml(params: unknown, metric: Metric, tokenLabel: string): string {
-	const paramList = (Array.isArray(params) ? params : []).filter((param) => {
-		if (!isRecord(param)) return false
-		const value = getTooltipValue(param)
-		return value > 0
-	})
-	const first = paramList[0]
-	const axisValue =
-		isRecord(first) && 'axisValue' in first ? Number((first as { axisValue?: unknown }).axisValue) : Number.NaN
-	const axisLabel = Number.isFinite(axisValue) ? formatLiqPrice(axisValue) : ''
-	const total = paramList.reduce((sum, param) => sum + getTooltipValue(param), 0)
-	const totalLabel = formatMetricValue(total, metric, tokenLabel)
-	const rows: string[] = []
-
-	for (const param of paramList) {
-		if (!isRecord(param)) continue
-		const value = getTooltipValue(param)
-		const rowValue = formatMetricValue(value, metric, tokenLabel)
-		const seriesName = typeof param.seriesName === 'string' ? param.seriesName : ''
-		const marker = typeof param.marker === 'string' ? param.marker : ''
-		rows.push(`<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px;">
-								<span style="display:inline-flex; align-items:center; gap:6px; min-width:0;">
-									${marker}
-									<span style="color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${seriesName}</span>
-								</span>
-								<span style="color:var(--text-primary); text-align:right;">${rowValue}</span>
-							</div>`)
-	}
-
-	return `<div style="min-width:220px; background:var(--bg-surface); border:1px solid var(--border-medium); box-shadow:0 18px 48px var(--tooltip-shadow, rgba(0, 0, 0, 0.24)); backdrop-filter:blur(10px); color:var(--text-primary); border-radius:10px; padding:12px 14px; font-size:12px; line-height:1.45;">
-						<div style="margin-bottom:8px;">
-							<div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.08em;">Liq Price</div>
-							<div style="font-size:15px; font-weight:600; color:var(--text-primary);">${axisLabel}</div>
-						</div>
-						<div style="display:flex; flex-direction:column; gap:6px;">
-							${rows.join('')}
-						</div>
-						<div style="margin-top:8px;">
-							<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:8px; border-top:1px solid var(--border-medium); font-size:12px;">
-								<span style="color:var(--text-secondary);">Total</span>
-								<span style="color:var(--text-primary); font-weight:600;">${totalLabel}</span>
-							</div>
-						</div>
-					</div>`
 }
 
 export function resolveLiquidationsChartTokenKey(
@@ -566,7 +507,7 @@ export function LiquidationsDistributionChart({
 	}, [chartState.metric, selectedChartView.bins, selectedChartView.series])
 
 	const chartOptions = React.useMemo(() => {
-		const options = {
+		const options: MultiSeriesChartOptions = {
 			grid: {
 				top: showBreakdownLegend ? CHART_LEGEND_RESERVE : 24,
 				left: CHART_INSET,
@@ -577,7 +518,7 @@ export function LiquidationsDistributionChart({
 				type: 'category',
 				axisLabel: {
 					hideOverlap: true,
-					formatter: (value: number) => formatLiqPrice(Number(value))
+					formatter: (value: string) => formatLiquidationPrice(Number(value))
 				},
 				axisTick: { alignWithLabel: true }
 			},
@@ -585,11 +526,11 @@ export function LiquidationsDistributionChart({
 				type: 'value',
 				position: 'right',
 				axisLabel: {
-					formatter: (value: number) => formatMetricValue(value, chartState.metric, chartState.tokenLabel)
+					formatter: (value: number) => formatLiquidationMetricValue(value, chartState.metric, chartState.tokenLabel)
 				}
 			},
 			dataZoom: {
-				labelFormatter: (value: number) => formatLiqPrice(Number(value))
+				labelFormatter: (value: number) => formatLiquidationPrice(Number(value))
 			},
 			tooltip: {
 				trigger: 'axis',
@@ -620,9 +561,9 @@ export function LiquidationsDistributionChart({
 									? (value as { axisDimension?: unknown }).axisDimension
 									: undefined
 							if (axisDimension === 'x') {
-								return formatLiqPrice(numeric)
+								return formatLiquidationPrice(numeric)
 							}
-							return formatMetricValue(numeric, chartState.metric, chartState.tokenLabel)
+							return formatLiquidationMetricValue(numeric, chartState.metric, chartState.tokenLabel)
 						}
 					}
 				},
@@ -630,7 +571,7 @@ export function LiquidationsDistributionChart({
 			}
 		}
 
-		return options as unknown as IMultiSeriesChartProps['chartOptions']
+		return options
 	}, [chartState.metric, chartState.tokenLabel, shouldHideDataZoom, showBreakdownLegend])
 
 	const deferredChartModel = React.useDeferredValue(chartModel)
@@ -663,56 +604,4 @@ export function LiquidationsDistributionChart({
 			chartInstanceRef={chartInstanceRef}
 		/>
 	)
-}
-
-function getTooltipRowKey(param: Record<string, unknown>): string | number | null {
-	if (!isRecord(param.encode)) return null
-
-	const encodeY = param.encode.y
-	if (Array.isArray(encodeY)) {
-		const first = encodeY[0]
-		return typeof first === 'string' || typeof first === 'number' ? first : null
-	}
-
-	return typeof encodeY === 'string' || typeof encodeY === 'number' ? encodeY : null
-}
-
-function getNumericValue(record: Record<string, unknown>, keys: Array<string | number | null>): number | null {
-	for (const key of keys) {
-		if (key == null) continue
-		const value = record[String(key)]
-		if (typeof value === 'number') return value
-		const numeric = Number(value)
-		if (Number.isFinite(numeric)) return numeric
-	}
-
-	return null
-}
-
-export function getTooltipValue(param: Record<string, unknown>): number {
-	const dataKey = getTooltipRowKey(param)
-	const seriesName = typeof param.seriesName === 'string' ? param.seriesName : null
-	const seriesId = typeof param.seriesId === 'string' ? param.seriesId : null
-
-	if (isRecord(param.data)) {
-		const value = getNumericValue(param.data, [dataKey, seriesId, seriesName])
-		if (value !== null) return value
-	}
-
-	if (isRecord(param.value)) {
-		const value = getNumericValue(param.value, [dataKey, seriesId, seriesName])
-		if (value !== null) return value
-	}
-
-	if (Array.isArray(param.value)) {
-		const yIndex = typeof dataKey === 'number' ? dataKey : 1
-		const value = param.value[yIndex]
-		if (typeof value === 'number') return value
-		const numeric = Number(value)
-		return Number.isFinite(numeric) ? numeric : 0
-	}
-
-	if (typeof param.value === 'number') return param.value
-	const numeric = Number(param.value)
-	return Number.isFinite(numeric) ? numeric : 0
 }

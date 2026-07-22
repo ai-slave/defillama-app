@@ -103,9 +103,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	const selectedCharts = useMemo(() => new Set(selectedSeries), [selectedSeries])
 	const selectorLabel = chartType === 'chainsTvl' ? 'Chain' : 'Token'
 
-	const rawVisibleDataset = useMemo(() => {
-		return chartType === 'tvl' ? resolvedBasicTvlDataset : advancedDataset
-	}, [chartType, resolvedBasicTvlDataset, advancedDataset])
+	const rawVisibleDataset = chartType === 'tvl' ? resolvedBasicTvlDataset : advancedDataset
 	const filteredDataset = useMemo(
 		() => filterChartDatasetByTimePeriod(rawVisibleDataset, timePeriod, customTimePeriod),
 		[rawVisibleDataset, timePeriod, customTimePeriod]

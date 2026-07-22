@@ -171,7 +171,7 @@ describe('getOverviewBreakdownRequestState', () => {
 
 	it('renders supplied total series with requested aggregate breakdown charts', async () => {
 		const dataset = {
-			source: [{ timestamp: 1, 'Total Active Mcap': 15, Ethereum: 10, Solana: 5 }],
+			source: [[1, 15, 10, 5]],
 			dimensions: ['timestamp', 'Total Active Mcap', 'Ethereum', 'Solana']
 		}
 
@@ -200,7 +200,7 @@ describe('getOverviewBreakdownRequestState', () => {
 
 	it('leaves category breakdown charts unchanged', async () => {
 		const dataset = {
-			source: [{ timestamp: 1, Treasuries: 10, Credit: 5 }],
+			source: [[1, 10, 5]],
 			dimensions: ['timestamp', 'Treasuries', 'Credit']
 		}
 
@@ -227,7 +227,7 @@ describe('getOverviewBreakdownRequestState', () => {
 			createElement(RWAOverviewBreakdownChart, {
 				page: { kind: 'platform' },
 				initialChartDataset: {
-					source: [{ timestamp: 1, ...Object.fromEntries(stacks.map((name, index) => [name, index + 1])) }],
+					source: [[1, ...stacks.map((_, index) => index + 1)]],
 					dimensions: ['timestamp', ...stacks]
 				},
 				stackLabel: 'Platforms'
@@ -295,10 +295,10 @@ describe('getOverviewBreakdownRequestState', () => {
 		routerQuery = { stacks: 'PreStocks' }
 		const dataset = {
 			source: [
-				{ timestamp: 1, 'Total Active Mcap': 10, PreStocks: null, Securitize: 10 },
-				{ timestamp: 2, 'Total Active Mcap': 11, PreStocks: null, Securitize: 11 },
-				{ timestamp: 3, 'Total Active Mcap': 23, PreStocks: 12, Securitize: 11 },
-				{ timestamp: 4, 'Total Active Mcap': 11, PreStocks: 0, Securitize: 11 }
+				[1, 10, null, 10],
+				[2, 11, null, 11],
+				[3, 23, 12, 11],
+				[4, 11, 0, 11]
 			],
 			dimensions: ['timestamp', 'Total Active Mcap', 'PreStocks', 'Securitize']
 		}

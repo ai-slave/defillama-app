@@ -8,6 +8,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
+import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { CHART_INSET } from '../shared/chartSpacing'
 import { getChartTheme } from '../shared/chartTheme'
 import { buildWatermarkGraphic } from '../shared/watermark'
@@ -20,7 +21,7 @@ const VISUAL_MAX = 100
 
 echarts.use([TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer, GraphicComponent])
 
-export default function TreemapChart({
+function TreemapChart({
 	treeData,
 	variant,
 	colorMode = 'value',
@@ -36,6 +37,7 @@ export default function TreemapChart({
 	const [isDark] = useDarkModeManager()
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
+	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const onReadyRef = useRef(onReady)
 	useEffect(() => {
 		onReadyRef.current = onReady
@@ -65,17 +67,19 @@ export default function TreemapChart({
 		if (!el) return
 		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		persistentLifecycle.restore(instance)
 		onReadyRef.current?.(instance)
 
 		const unregisterTreemapFocus = registerTreemapFocusTracking(instance)
 
 		return () => {
+			persistentLifecycle.capture(instance)
 			unregisterTreemapFocus()
 			chartRef.current = null
 			onReadyRef.current?.(null)
 			instance.dispose()
 		}
-	}, [])
+	}, [persistentLifecycle])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -361,3 +365,5 @@ export default function TreemapChart({
 
 	return chart
 }
+
+export default withEChartsRenderVisibility(TreemapChart)

@@ -5,6 +5,7 @@ import {
 	DEFAULT_ROW_HEADERS,
 	DEFAULT_UNIFIED_TABLE_SORTING
 } from './components/UnifiedTable/constants'
+import { sanitizeRowHeaders } from './components/UnifiedTable/utils/rowHeaders'
 import type { DashboardAction, DashboardState } from './dashboardReducer'
 import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
 import {
@@ -353,13 +354,13 @@ export function useDashboardActions(
 
 			const resolvedSorting =
 				configOverrides?.defaultSorting && configOverrides.defaultSorting.length
-					? configOverrides.defaultSorting.map((item) => ({ id: item.id, desc: item.desc ?? false }))
-					: DEFAULT_UNIFIED_TABLE_SORTING.map((item) => ({ ...item }))
+					? configOverrides.defaultSorting
+					: DEFAULT_UNIFIED_TABLE_SORTING
 
 			const newUnifiedTable: UnifiedTableConfig = {
 				id: generateItemId('unified-table', 'protocols'),
 				kind: 'unified-table',
-				rowHeaders: configOverrides?.rowHeaders ?? [...DEFAULT_ROW_HEADERS],
+				rowHeaders: sanitizeRowHeaders(configOverrides?.rowHeaders ?? DEFAULT_ROW_HEADERS),
 				defaultSorting: resolvedSorting,
 				params: configOverrides?.params ?? { chains: ['All'] },
 				filters: configOverrides?.filters,

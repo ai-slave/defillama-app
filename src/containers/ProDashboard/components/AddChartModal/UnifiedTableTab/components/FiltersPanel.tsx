@@ -7,6 +7,7 @@ import { getItemIconUrl } from '~/containers/ProDashboard/utils'
 const EMPTY_CATEGORIES: string[] = []
 const EMPTY_PROTOCOLS: string[] = []
 const EMPTY_ORACLES: string[] = []
+const ALL_CHAINS_SELECTION = ['All']
 
 interface FiltersPanelProps {
 	chains: string[]
@@ -28,13 +29,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 		return [{ value: 'All', label: 'All Chains' }, ...availableChains]
 	}, [availableChains])
 
-	const selectedChainValues = useMemo<string[]>(() => {
-		if (chains.includes('All')) {
-			return ['All']
-		}
-
-		return chains
-	}, [chains])
+	const selectedChainValues = chains.includes('All') ? ALL_CHAINS_SELECTION : chains
 
 	const categoryOptions = useMemo(() => {
 		if (!protocols || protocols.length === 0) return []

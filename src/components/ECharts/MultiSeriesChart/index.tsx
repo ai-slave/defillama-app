@@ -12,6 +12,7 @@ import {
 	GraphicComponent,
 	GridComponent,
 	LegendComponent,
+	MarkAreaComponent,
 	MarkLineComponent,
 	TooltipComponent,
 	DatasetComponent
@@ -28,6 +29,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { slug } from '~/utils'
+import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
 import { setChartLogoMetadata } from '../shared/chartLogoMetadata'
@@ -43,7 +45,7 @@ import { useChartTheme } from '../shared/chartTheme'
 import { formatChartEmphasisDate } from '../shared/formatters'
 import { validateIconUrl } from '../shared/icon'
 import { mergeDeep } from '../shared/merge'
-import { prepareMultiSeriesDataset } from './datasetAdapter'
+import { prepareMultiSeriesDataset, projectMultiSeriesDatasetForCharts } from './datasetAdapter'
 import {
 	attachEventHoverHandlers,
 	buildEventRailData,
@@ -52,12 +54,14 @@ import {
 	type EventHoverState,
 	getMainGridBottom,
 	getDatasetTimeBounds,
+	getSeriesTimeBounds,
 	mergeGraphicWithEventMarkLinePlaceholder
 } from './eventRail'
 import { buildHallmarksMarkLine } from './hallmarks'
 import { applyConfiguredYAxisScale, applyLogScaleToYAxes, getZeroBaselineYAxisMin } from './logScale'
 import { buildMultiYAxis, formatAxisLabel, normalizeSeriesYAxisIndices } from './multiYAxis'
 import { buildMultiSeries } from './series'
+import { buildSparseTimeSeriesDataset } from './timeSeriesDataset'
 import { createTooltipFormatter } from './tooltip'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions, MultiSeriesYAxisOption } from './types'
 
@@ -70,6 +74,7 @@ echarts.use([
 	GridComponent,
 	DataZoomComponent,
 	GraphicComponent,
+	MarkAreaComponent,
 	MarkLineComponent,
 	LegendComponent,
 	DatasetComponent
@@ -119,12 +124,14 @@ function mergeChartOptions(
 	return merged as MultiSeriesChartOptions
 }
 
-export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
+function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const {
 		charts,
 		chartOptions = EMPTY_CHART_OPTIONS,
 		height,
 		hallmarks,
+		rangeHallmarks,
+		hallmarksInMs = false,
 		hallmarkStyle = 'event-rail',
 		expandTo100Percent,
 		valueSymbol = '$',
@@ -134,6 +141,7 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		stacked = false,
 		solidChartAreaStyle = false,
 		hideDataZoom,
+		autoHideDataZoom = true,
 		showTotalInTooltip = false,
 		onReady,
 		hideDefaultLegend = true,
@@ -143,10 +151,12 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		title,
 		headingAs,
 		containerClassName,
-		categoryLogos
+		categoryLogos,
+		isThemeDark: isThemeDarkOverride
 	} = props
 
-	const [isThemeDark] = useDarkModeManager()
+	const [managedIsThemeDark] = useDarkModeManager()
+	const isThemeDark = isThemeDarkOverride ?? managedIsThemeDark
 	const [legendIconRevision, setLegendIconRevision] = useState(0)
 	const chartTheme = useChartTheme(isThemeDark)
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
@@ -169,6 +179,7 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	// recreating it on effect re-runs and prevents cross-chart interference.
 	const tooltipSizeCacheRef = useRef<{ w: number; h: number; updatedAt: number } | null>(null)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const persistentLifecycle = usePersistentEChartsLifecycle()
 
 	// Stable resize listener - never re-attaches when dependencies change
 	useChartResize(chartRef, chartDomRef)
@@ -264,7 +275,6 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		return { graphic, xAxis, yAxis, legend, dataZoom }
 	}, [chartTheme, isThemeDark, valueSymbol, isSmall])
 
-	const datasetSource = dataset.source
 	const datasetDimensions = dataset.dimensions
 	const inferredCharts = useMemo(() => {
 		const inferred: NonNullable<IMultiSeriesChartProps['charts']> = []
@@ -300,14 +310,28 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		() => (selectedCharts ? effectiveCharts.filter((chart) => selectedCharts.has(chart.name)) : effectiveCharts),
 		[effectiveCharts, selectedCharts]
 	)
-	const preparedDataset = useMemo(
-		() => prepareMultiSeriesDataset(dataset, effectiveCharts, selectedCharts),
-		[dataset, effectiveCharts, selectedCharts]
-	)
+	const preparedDataset = useMemo(() => prepareMultiSeriesDataset(dataset, effectiveCharts), [dataset, effectiveCharts])
 	const renderedDatasetDimensions = preparedDataset.logicalDimensions
 	const echartsDatasetDimensions = preparedDataset.dimensions
 	const renderedDatasetSource = preparedDataset.source
 	const renderedCharts = preparedDataset.charts
+	const displayedRenderedCharts = useMemo(
+		() => (selectedCharts ? renderedCharts.filter((chart) => selectedCharts.has(chart.name)) : renderedCharts),
+		[renderedCharts, selectedCharts]
+	)
+	const directSeriesStats = useMemo(() => {
+		let pointCount = 0
+		let min: number | undefined
+		let max: number | undefined
+		for (const chart of displayedRenderedCharts) {
+			if (!chart.data) continue
+			if (chart.data.length > pointCount) pointCount = chart.data.length
+			const bounds = getSeriesTimeBounds(chart.data)
+			if (bounds.min != null && (min == null || bounds.min < min)) min = bounds.min
+			if (bounds.max != null && (max == null || bounds.max > max)) max = bounds.max
+		}
+		return { pointCount, min, max }
+	}, [displayedRenderedCharts])
 
 	const mergedChartSettings = useMemo(
 		() => mergeChartOptions(defaultChartSettings, chartOptions),
@@ -347,9 +371,9 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const hallmarksMarkLine = useMemo(
 		() =>
 			hallmarkStyle === 'mark-line' && hallmarks?.length
-				? buildHallmarksMarkLine({ hallmarks, textColor: chartTheme.text, dateInMs: false })
+				? buildHallmarksMarkLine({ hallmarks, textColor: chartTheme.text, dateInMs: hallmarksInMs })
 				: undefined,
-		[hallmarkStyle, hallmarks, chartTheme.text]
+		[hallmarkStyle, hallmarks, chartTheme.text, hallmarksInMs]
 	)
 
 	const { series, sourceAxisIndexes } = useMemo(() => {
@@ -377,8 +401,10 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 
 	const eventRailData = useMemo(
 		() =>
-			hallmarkStyle === 'event-rail' ? buildEventRailData({ hallmarks, isThemeDark, dateInMs: false }).events : [],
-		[hallmarkStyle, hallmarks, isThemeDark]
+			hallmarkStyle === 'event-rail'
+				? buildEventRailData({ hallmarks, rangeHallmarks, isThemeDark, dateInMs: hallmarksInMs }).events
+				: [],
+		[hallmarkStyle, hallmarks, rangeHallmarks, isThemeDark, hallmarksInMs]
 	)
 
 	const { seriesSymbols, tooltipTotalExcludedSeries } = useMemo(() => {
@@ -460,13 +486,49 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const exportFilename = exportButtonsConfig?.filename || (title ? slug(title) : 'multi-series-chart')
 	const exportTitle = exportButtonsConfig?.pngTitle || title
 	const prepareCsvDirect = useMemo(
-		() => () =>
-			buildCsvFromDataset({
-				dimensions: renderedDatasetDimensions,
-				source: renderedDatasetSource,
+		() => () => {
+			if (!displayedRenderedCharts.some((chart) => chart.data)) {
+				const exportDataset = selectedCharts
+					? projectMultiSeriesDatasetForCharts(
+							{ dimensions: renderedDatasetDimensions, source: renderedDatasetSource },
+							displayedRenderedCharts
+						)
+					: { dimensions: renderedDatasetDimensions, source: renderedDatasetSource }
+				return buildCsvFromDataset({
+					dimensions: exportDataset.dimensions,
+					source: exportDataset.source,
+					filenameBase: exportFilename
+				})
+			}
+			const independentSeries: Array<{
+				name: string
+				data: Array<[timestamp: number, value: number | null]>
+			}> = []
+			for (const chart of displayedRenderedCharts) {
+				if (chart.data) {
+					independentSeries.push({ name: chart.name, data: chart.data })
+					continue
+				}
+				const xIndex = typeof chart.encode.x === 'number' ? chart.encode.x : -1
+				const yIndex = typeof chart.encode.y === 'number' ? chart.encode.y : -1
+				const data: Array<[number, number | null]> = []
+				for (const row of renderedDatasetSource) {
+					const timestamp = row[xIndex]
+					const value = row[yIndex]
+					if (typeof timestamp !== 'number') continue
+					if (typeof value === 'number') data.push([timestamp, value])
+					else if (value === null) data.push([timestamp, null])
+				}
+				independentSeries.push({ name: chart.name, data })
+			}
+			const exportDataset = buildSparseTimeSeriesDataset(independentSeries)
+			return buildCsvFromDataset({
+				dimensions: exportDataset.dimensions,
+				source: exportDataset.source,
 				filenameBase: exportFilename
-			}),
-		[renderedDatasetDimensions, renderedDatasetSource, exportFilename]
+			})
+		},
+		[displayedRenderedCharts, renderedDatasetDimensions, renderedDatasetSource, exportFilename, selectedCharts]
 	)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
@@ -531,11 +593,13 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		if (!el) return
 		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		persistentLifecycle.restore(instance)
 		emitReady(instance)
 		instance.on('finished', syncCategoryLogos)
 		instance.on('globalout', showLatestTooltip)
 
 		return () => {
+			persistentLifecycle.capture(instance)
 			instance.off('finished', syncCategoryLogos)
 			instance.off('globalout', showLatestTooltip)
 			eventHoverCleanupRef.current?.()
@@ -554,7 +618,7 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			handleChartReady(null)
 			emitReady(null)
 		}
-	}, [handleChartReady, showLatestTooltip, syncCategoryLogos])
+	}, [handleChartReady, persistentLifecycle, showLatestTooltip, syncCategoryLogos])
 
 	useEffect(() => {
 		handleChartReady(shouldEnableCSVDownload || shouldEnableImageExport ? chartRef.current : null)
@@ -575,8 +639,8 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			dataZoom
 		} = mergedChartSettings
 
-		const datasetLength = datasetSource.length
-		const shouldHideDataZoom = datasetLength < 2 || hideDataZoom
+		const datasetLength = Math.max(renderedDatasetSource.length, directSeriesStats.pointCount)
+		const shouldHideDataZoom = hideDataZoom || (autoHideDataZoom && datasetLength < 2)
 		const shouldShowEventRail = eventRailData.length > 0
 
 		// Always use a scroll legend when the default legend is enabled. ECharts
@@ -721,9 +785,21 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		}
 
 		const timestampIndex = renderedDatasetDimensions.indexOf('timestamp')
-		const { min: timeRangeMin, max: timeRangeMax } = shouldShowEventRail
+		const datasetTimeBounds = shouldShowEventRail
 			? getDatasetTimeBounds(renderedDatasetSource, timestampIndex)
 			: { min: undefined, max: undefined }
+		const timeRangeMin =
+			datasetTimeBounds.min == null
+				? directSeriesStats.min
+				: directSeriesStats.min == null
+					? datasetTimeBounds.min
+					: Math.min(datasetTimeBounds.min, directSeriesStats.min)
+		const timeRangeMax =
+			datasetTimeBounds.max == null
+				? directSeriesStats.max
+				: directSeriesStats.max == null
+					? datasetTimeBounds.max
+					: Math.max(datasetTimeBounds.max, directSeriesStats.max)
 		const hasTimeRange =
 			typeof timeRangeMin === 'number' &&
 			Number.isFinite(timeRangeMin) &&
@@ -790,8 +866,9 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 				})
 			: null
 
-		if (alwaysShowTooltip && series.length > 0 && datasetLength > 0) {
-			latestTooltipDataIndexRef.current = datasetLength - 1
+		const firstSeriesDataLength = Array.isArray(series[0]?.data) ? series[0].data.length : renderedDatasetSource.length
+		if (alwaysShowTooltip && firstSeriesDataLength > 0) {
+			latestTooltipDataIndexRef.current = firstSeriesDataLength - 1
 			showLatestTooltip()
 		} else {
 			latestTooltipDataIndexRef.current = null
@@ -805,12 +882,13 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		chartOptions,
 		alwaysShowTooltip,
 		hideDataZoom,
+		autoHideDataZoom,
 		hideDefaultLegend,
 		selectedCharts,
-		datasetSource,
 		datasetDimensions,
 		renderedDatasetSource,
 		renderedDatasetDimensions,
+		directSeriesStats,
 		echartsDatasetDimensions,
 		valueSymbol,
 		tooltipFormatter,
@@ -877,3 +955,5 @@ export default function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		/>
 	)
 }
+
+export default withEChartsRenderVisibility(MultiSeriesChart)

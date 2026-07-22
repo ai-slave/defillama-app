@@ -1,5 +1,10 @@
 import { formatTooltipChartDate, formatTooltipValue, type TooltipGroupBy } from '~/components/ECharts/shared/formatters'
-import { getTooltipAxisValue, getTooltipRawYValue, TOOLTIP_OTHERS_ROW_STYLE } from '~/components/ECharts/shared/tooltip'
+import {
+	getTooltipAxisValue,
+	getTooltipRawYValue,
+	normalizeTooltipItems,
+	TOOLTIP_OTHERS_ROW_STYLE
+} from '~/components/ECharts/shared/tooltip'
 import type { DashboardGrouping } from '../types'
 
 type ChartBuilderTooltipRow = {
@@ -44,8 +49,8 @@ export function createChartBuilderTooltipFormatter({
 }) {
 	const valueSymbol = displayAs === 'percentage' ? '%' : '$'
 
-	return (params: any) => {
-		const items = Array.isArray(params) ? params : params ? [params] : []
+	return (params: unknown) => {
+		const items = normalizeTooltipItems(params)
 		if (items.length === 0) return ''
 
 		const rawAxisValue = getTooltipAxisValue(items[0])

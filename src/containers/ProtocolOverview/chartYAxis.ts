@@ -159,7 +159,6 @@ export function buildProtocolYAxis({
 			name: '',
 			type: 'value',
 			min: getZeroBaselineYAxisMin,
-			alignTicks: true,
 			offset: noOffset || index == null || index < 2 ? 0 : prevOffset + (CUSTOM_OFFSETS[type] ?? 40)
 		})
 		const axisConfig = AXIS_CONFIG_BY_TYPE[type]

@@ -25,5 +25,6 @@ describe('protocol chart y-axis layout', () => {
 		expect(gasAxisLine.lineStyle.color).toBe('#333')
 		expect(apyAxisLabel.formatter(5)).toBe('5%')
 		expect(gasAxisLabel.formatter(5)).toContain('GAS')
+		expect(axes.every((axis) => axis.alignTicks == null)).toBe(true)
 	})
 })

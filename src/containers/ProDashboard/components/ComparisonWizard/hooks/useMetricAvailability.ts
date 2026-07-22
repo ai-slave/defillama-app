@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useAppMetadata } from '../../../AppMetadataContext'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
-import { CHART_TYPES, getChainChartTypes, getProtocolChartTypes } from '../../../types'
+import { getChainChartTypes, getProDashboardChartTypeConfig, getProtocolChartTypes } from '../../../types'
 import type { ComparisonType, MetricWithAvailability } from '../types'
 
 export function useMetricAvailability(
@@ -37,7 +37,7 @@ export function useMetricAvailability(
 						? availableCount === 2
 						: availableCount >= 2
 
-			const chartTypeInfo = CHART_TYPES[metric as keyof typeof CHART_TYPES]
+			const chartTypeInfo = getProDashboardChartTypeConfig(metric)
 
 			return {
 				metric,

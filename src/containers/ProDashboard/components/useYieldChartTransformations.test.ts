@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import { normalizeYieldChartType } from '../types'
-import { buildProBorrowHistorySeries, buildProSupplyHistorySeries } from './useYieldChartTransformations'
+import { buildProYieldChartSeries } from './useYieldChartTransformations'
 
 const supplyHistory: PoolHistory = [
 	{
@@ -38,67 +38,92 @@ const borrowHistory: BorrowMarketHistory = [
 ]
 
 describe('Pro Yields V2 chart transforms', () => {
-	it('uses served APY windows and adds intrinsic supply yield', () => {
-		const series = buildProSupplyHistorySeries(supplyHistory)
-		expect(series.tvlApyDataset).toEqual({
-			dimensions: ['timestamp', 'APY', 'TVL'],
-			source: [[Date.UTC(2026, 0, 2), 4.5, 1_000]]
-		})
-		expect(series.supplyApyDataset).toEqual({
-			dimensions: ['timestamp', 'Base', 'Reward', 'Intrinsic'],
-			source: [[Date.UTC(2026, 0, 2), 3, 1, 0.5]]
-		})
-		expect(series.supplyApy7dDataset).toEqual({
-			dimensions: ['timestamp', '7d Supply APY'],
-			source: [[Date.UTC(2026, 0, 2), 4]]
-		})
-	})
-
-	it('keeps borrow cost positive and renders rewards as a negative offset', () => {
-		const series = buildProBorrowHistorySeries(borrowHistory)
-		expect(series.borrowApyDataset).toEqual({
-			dimensions: ['timestamp', 'Base cost', 'Reward offset', 'Intrinsic'],
-			source: [[Date.UTC(2026, 0, 2), 6, -1, null]]
-		})
-		expect(series.netBorrowApyDataset).toEqual({
-			dimensions: ['timestamp', 'Net borrow cost'],
-			source: [[Date.UTC(2026, 0, 2), 5]]
-		})
-	})
-
 	it('maps unsupported saved liquidity charts to the V2 borrow-cost view', () => {
 		expect(normalizeYieldChartType('pool-liquidity')).toBe('borrow-apy')
 		expect(normalizeYieldChartType(undefined)).toBe('tvl-apy')
+	})
+
+	it('builds only the requested canonical dataset for all five chart types', () => {
+		const expected = {
+			'tvl-apy': {
+				dimensions: ['timestamp', 'APY', 'TVL'],
+				source: [[Date.UTC(2026, 0, 2), 4.5, 1_000]]
+			},
+			'supply-apy': {
+				dimensions: ['timestamp', 'Base', 'Reward', 'Intrinsic'],
+				source: [[Date.UTC(2026, 0, 2), 3, 1, 0.5]]
+			},
+			'supply-apy-7d': {
+				dimensions: ['timestamp', '7d Supply APY'],
+				source: [[Date.UTC(2026, 0, 2), 4]]
+			},
+			'borrow-apy': {
+				dimensions: ['timestamp', 'Base cost', 'Reward offset', 'Intrinsic'],
+				source: [[Date.UTC(2026, 0, 2), 6, -1, null]]
+			},
+			'net-borrow-apy': {
+				dimensions: ['timestamp', 'Net borrow cost'],
+				source: [[Date.UTC(2026, 0, 2), 5]]
+			}
+		} as const
+
+		for (const chartType of Object.keys(expected) as Array<keyof typeof expected>) {
+			expect(buildProYieldChartSeries({ chartType, chartData: supplyHistory, borrowData: borrowHistory })).toEqual(
+				expected[chartType]
+			)
+		}
 	})
 
 	it('does not manufacture an APY composition series from all-null components', () => {
 		const point = structuredClone(supplyHistory[0])
 		point.apy.avg_1d = { base: null, reward: null, total: null }
 		point.intrinsic = null
-		expect(buildProSupplyHistorySeries([point]).supplyApyDataset.source).toEqual([])
+		expect(
+			buildProYieldChartSeries({ chartType: 'supply-apy', chartData: [point], borrowData: borrowHistory }).source
+		).toEqual([])
+		expect(buildProYieldChartSeries({ chartType: 'tvl-apy', chartData: [point], borrowData: borrowHistory })).toEqual({
+			dimensions: ['timestamp', 'APY', 'TVL'],
+			source: [[Date.UTC(2026, 0, 2), null, 1_000]]
+		})
 	})
 
 	it('keeps a missing borrow reward null instead of manufacturing a negative offset', () => {
 		const point = structuredClone(borrowHistory[0])
 		point.borrow_cost_apy.avg_1d.reward = null
-		expect(buildProBorrowHistorySeries([point]).borrowApyDataset.source[0][2]).toBeNull()
+		expect(
+			buildProYieldChartSeries({ chartType: 'borrow-apy', chartData: supplyHistory, borrowData: [point] }).source[0][2]
+		).toBeNull()
+	})
+
+	it('omits gap-only supply and borrow lines without manufacturing zeroes', () => {
+		const supplyPoint = structuredClone(supplyHistory[0])
+		supplyPoint.apy.avg_7d.total = null
+		supplyPoint.intrinsic = null
+		const borrowPoint = structuredClone(borrowHistory[0])
+		borrowPoint.borrow_cost_apy.avg_1d = { base: null, reward: null, total: null }
+
+		expect(
+			buildProYieldChartSeries({ chartType: 'supply-apy-7d', chartData: [supplyPoint], borrowData: [] }).source
+		).toEqual([])
+		expect(
+			buildProYieldChartSeries({ chartType: 'borrow-apy', chartData: [], borrowData: [borrowPoint] }).source
+		).toEqual([])
+		expect(
+			buildProYieldChartSeries({ chartType: 'net-borrow-apy', chartData: [], borrowData: [borrowPoint] }).source
+		).toEqual([])
 	})
 
 	it('applies time bounds before adding points to every canonical dataset', () => {
 		const afterHistory = Math.floor(Date.UTC(2026, 0, 3) / 1000)
-		const supply = buildProSupplyHistorySeries(supplyHistory, {
-			start: afterHistory,
-			end: Infinity
-		})
-		const borrow = buildProBorrowHistorySeries(borrowHistory, {
-			start: afterHistory,
-			end: Infinity
-		})
-
-		expect(supply.tvlApyDataset.source).toEqual([])
-		expect(supply.supplyApyDataset.source).toEqual([])
-		expect(supply.supplyApy7dDataset.source).toEqual([])
-		expect(borrow.borrowApyDataset.source).toEqual([])
-		expect(borrow.netBorrowApyDataset.source).toEqual([])
+		for (const chartType of ['tvl-apy', 'supply-apy', 'supply-apy-7d', 'borrow-apy', 'net-borrow-apy'] as const) {
+			expect(
+				buildProYieldChartSeries({
+					chartType,
+					chartData: supplyHistory,
+					borrowData: borrowHistory,
+					bounds: { start: afterHistory, end: Infinity }
+				}).source
+			).toEqual([])
+		}
 	})
 })

@@ -359,8 +359,11 @@ export function adaptCartesianChartData(
 		const seriesMeta: LlamaAICartesianSeriesMeta[] = []
 		const seenXValues = config.series.map(() => new Set<string | number>())
 		const runtimeSeries = new Array<{
-			config: ChartConfiguration['series'][number]
 			baseType: 'line' | 'area' | 'bar'
+			xField: string
+			yField: string
+			filterField: string | null
+			filterValue: unknown
 			normalizedEntityValue: string | null
 		}>(config.series.length)
 
@@ -380,7 +383,14 @@ export function adaptCartesianChartData(
 
 			const resolvedColor = apiColor || getChartColor(entityValue, seriesIndex, oldBlue)
 
-			runtimeSeries[seriesIndex] = { config: seriesConfig, baseType, normalizedEntityValue }
+			runtimeSeries[seriesIndex] = {
+				baseType,
+				xField: seriesConfig.dataMapping.xField,
+				yField: seriesConfig.dataMapping.yField,
+				filterField: entityFilter?.field ?? null,
+				filterValue: entityFilter?.value,
+				normalizedEntityValue
+			}
 
 			charts.push({
 				type: chartType,
@@ -410,11 +420,9 @@ export function adaptCartesianChartData(
 		for (let rawRowIndex = 0; rawRowIndex < rawData.length; rawRowIndex++) {
 			const record = asRecord(rawData[rawRowIndex])
 			for (let seriesIndex = 0; seriesIndex < runtimeSeries.length; seriesIndex++) {
-				const { config: seriesConfig, baseType, normalizedEntityValue } = runtimeSeries[seriesIndex]
-				const entityFilter = seriesConfig.dataMapping.entityFilter
-				if (entityFilter) {
-					const rowValue = record[entityFilter.field]
-					const filterValue = entityFilter.value
+				const { baseType, xField, yField, filterField, filterValue, normalizedEntityValue } = runtimeSeries[seriesIndex]
+				if (filterField) {
+					const rowValue = record[filterField]
 					const matches =
 						rowValue === filterValue ||
 						(rowValue != null &&
@@ -422,8 +430,8 @@ export function adaptCartesianChartData(
 							String(rowValue).toLowerCase() === normalizedEntityValue)
 					if (!matches) continue
 				}
-				const xValue = normalizeXValue(record[seriesConfig.dataMapping.xField])
-				const value = record[seriesConfig.dataMapping.yField]
+				const xValue = normalizeXValue(record[xField])
+				const value = record[yField]
 				const numericValue = value == null ? null : parseStringNumber(value)
 
 				if (xValue == null) continue

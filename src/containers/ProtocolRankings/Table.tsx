@@ -21,10 +21,14 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
-import { applyProtocolTvlSettings } from '~/containers/ProtocolLists/utils'
 import { removedCategoriesFromChainTvlSet } from '~/containers/ProtocolRankings/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
-import { useCustomColumns, useLocalStorageSettingsManager, type CustomColumnDef } from '~/contexts/LocalStorage'
+import {
+	useCustomColumns,
+	useLocalStorageSettingsManager,
+	type CustomColumnDef,
+	type TvlSettingsKey
+} from '~/contexts/LocalStorage'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
@@ -41,6 +45,7 @@ import { formatValue } from '../../utils'
 import { CustomColumnModal } from './CustomColumnModal'
 import { replaceAliases, sampleProtocol } from './customColumnsUtils'
 import { evaluateFormula, getSortableValue } from './formula.service'
+import { prepareProtocolsForTable } from './prepareProtocolsForTable'
 import type { IProtocol } from './types'
 
 const EMPTY_CUSTOM_COLUMN_VALUES: Record<string, unknown> = {}
@@ -63,6 +68,8 @@ type ChainProtocolsTableProps = {
 	useStickyHeader?: boolean
 	borderless?: boolean
 	headingAs?: 'h1' | 'h2'
+	tvlSettings?: Record<TvlSettingsKey, boolean>
+	suppressTvlStrike?: boolean
 }
 
 type TableCategory = (typeof TABLE_CATEGORIES_VALUES)[number]
@@ -91,18 +98,29 @@ const ChainProtocolsTableInner = ({
 	useStickyHeader = true,
 	borderless = false,
 	headingAs = 'h2',
+	tvlSettings,
+	suppressTvlStrike = false,
 	filterState
 }: ChainProtocolsTableInnerProps) => {
 	const { customColumns, setCustomColumns } = useCustomColumns()
 
 	const router = useRouter()
-	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
+	const [globalExtraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
+	const extraTvlsEnabled = tvlSettings ?? globalExtraTvlsEnabled
 	const minTvl = parseNumberQueryParam(router.query.minTvl)
 	const maxTvl = parseNumberQueryParam(router.query.maxTvl)
 
-	const finalProtocols = useMemo(() => {
-		return applyProtocolTvlSettings({ protocols, extraTvlsEnabled, minTvl, maxTvl })
-	}, [protocols, extraTvlsEnabled, minTvl, maxTvl])
+	const finalProtocols = useMemo(
+		() =>
+			prepareProtocolsForTable({
+				protocols,
+				extraTvlsEnabled,
+				minTvl,
+				maxTvl,
+				suppressTvlStrike
+			}),
+		[protocols, extraTvlsEnabled, minTvl, maxTvl, suppressTvlStrike]
+	)
 
 	const rawColumnsInStorage = useStorageItem(tableColumnOptionsKey, defaultColumns)
 	const columnsInStorage = useDeferredValue(rawColumnsInStorage)

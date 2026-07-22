@@ -1,6 +1,9 @@
 import type * as echarts from 'echarts/core'
-import type { LegacyCartesianChartOptions } from '~/components/ECharts/LegacyChart/types'
-import type { ChartTimeGrouping, ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
+import type {
+	ChartTimeGrouping,
+	ChartTimeGroupingWithCumulative,
+	MultiSeriesChartOptions
+} from '~/components/ECharts/MultiSeriesChart/types'
 import type { RawBridgeVolumePoint } from '~/containers/Bridges/api.types'
 import type { IHackApiItem } from '~/containers/Hacks/api.types'
 import type { IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
@@ -233,10 +236,9 @@ export interface IProtocolCoreChartProps {
 	chartData: Partial<Record<ProtocolChartsLabels, Array<[number, number | null]>>>
 	chartColors: Record<string, string>
 	valueSymbol?: string
-	color?: string
 	hallmarks: Array<[number, string]> | null
 	rangeHallmarks: Array<[[number, number], string]> | null
-	chartOptions?: LegacyCartesianChartOptions
+	chartOptions?: MultiSeriesChartOptions
 	height?: string
 	unlockTokenSymbol?: string | null
 	gasUsedValueSymbol?: string

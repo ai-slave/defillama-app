@@ -1,12 +1,41 @@
 import { describe, expect, it } from 'vitest'
 import {
 	buildColumnarTimeSeriesDataset,
+	buildSparseTimeSeriesDataset,
 	buildTimeSeriesDataset,
 	materializeZeroFilledDataset,
 	sliceTimestampDataset
 } from './timeSeriesDataset'
 
 describe('timeSeriesDataset', () => {
+	it('merges independently timed sparse series once and sorts shared Map output', () => {
+		expect(
+			buildSparseTimeSeriesDataset([
+				{
+					name: 'TVL',
+					data: [
+						[3_000, 12],
+						[5_000, null]
+					]
+				},
+				{
+					name: 'Fees',
+					data: [
+						[1_000, 2],
+						[3_000, 3]
+					]
+				}
+			])
+		).toEqual({
+			dimensions: ['timestamp', 'TVL', 'Fees'],
+			source: [
+				[1_000, null, 2],
+				[3_000, 12, 3],
+				[5_000, null, null]
+			]
+		})
+	})
+
 	it('builds columnar data directly into canonical rows', () => {
 		const dataset = buildColumnarTimeSeriesDataset(
 			['2026-01-01', '2026-01-02'],

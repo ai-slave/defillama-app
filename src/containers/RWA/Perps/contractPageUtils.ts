@@ -381,26 +381,28 @@ export function buildRWAPerpsContractChartSpec({
 
 	const hasMarketPoints = Boolean(marketPoints?.length)
 	const hasFundingHistory = Boolean(fundingHistory?.length)
-	// Maps dedupe data ingestion while charts and dimensions still follow the runtime selection order.
-	const marketMetrics = new Map<RWAPerpsContractChartMetricKey, number>()
-	const fundingMetrics = new Map<FundingMetricKey, number>()
+	// Maps retain the last duplicate selection, matching the prior dimension-index behavior.
+	const marketMetrics = new Map<RWAPerpsContractChartMetricKey, Array<[number, number | null]>>()
+	const fundingMetrics = new Map<FundingMetricKey, Array<[number, number | null]>>()
 	const charts: MultiSeriesChartSeriesConfig[] = []
 
 	for (const metricKey of enabledMetrics) {
 		const metric = RWA_PERPS_CONTRACT_CHART_METRICS.find((item) => item.key === metricKey)
 		if (!metric) continue
 
+		const data: Array<[number, number | null]> = []
 		if ((metric.key === 'fundingRate' || metric.key === 'premium') && hasFundingHistory) {
-			fundingMetrics.set(metric.key, charts.length + 1)
+			fundingMetrics.set(metric.key, data)
 		} else {
 			if (!hasMarketPoints) continue
-			marketMetrics.set(metric.key, charts.length + 1)
+			marketMetrics.set(metric.key, data)
 		}
 
 		charts.push({
 			name: metric.label,
 			type: metric.defaultType,
-			encode: { x: 0, y: charts.length + 1 },
+			encode: { x: 0, y: 1 },
+			data,
 			color: metric.color,
 			...(metric.yAxisIndex != null ? { yAxisIndex: metric.yAxisIndex } : {}),
 			...(metric.valueSymbol ? { valueSymbol: metric.valueSymbol } : {}),
@@ -408,61 +410,39 @@ export function buildRWAPerpsContractChartSpec({
 		})
 	}
 
-	const rowMap = new Map<number, MultiSeriesChartDataset['source'][number]>()
-	const getRow = (timestamp: number) => {
-		let row = rowMap.get(timestamp)
-		if (!row) {
-			row = new Array(charts.length + 1)
-			row[0] = timestamp
-			rowMap.set(timestamp, row)
-		}
-		return row
-	}
-	const addMarketPoint = (point: IRWAPerpsContractMarketChartPoint, timestampMs: number) => {
+	const marketCollectors = Array.from(marketMetrics)
+	const fundingCollectors = Array.from(fundingMetrics)
+	for (const point of marketMetrics.size > 0 ? marketPoints! : []) {
+		const timestampMs = toUnixMsTimestamp(point.timestamp)
 		const timestamp = groupBy === 'daily' ? timestampMs : getBucketTimestampMs(timestampMs, groupBy)
-		const row = getRow(timestamp)
-		for (const [metricKey, dimensionIndex] of marketMetrics) {
+		for (let collectorIndex = 0; collectorIndex < marketCollectors.length; collectorIndex++) {
+			const [metricKey, data] = marketCollectors[collectorIndex]
 			const value = getMetricValue(point, metricKey)
-			// Daily duplicates overwrite; coarser volume buckets accumulate every source point.
-			if (metricKey === 'volume24h' && groupBy !== 'daily') {
-				row[dimensionIndex] = ((row[dimensionIndex] as number | undefined) ?? 0) + value
+			const latest = data[data.length - 1]
+			if (latest?.[0] !== timestamp) {
+				data.push([timestamp, value])
+			} else if (metricKey === 'volume24h' && groupBy !== 'daily') {
+				latest[1] = (latest[1] ?? 0) + value
 			} else {
-				row[dimensionIndex] = value
+				latest[1] = value
 			}
 		}
 	}
-	const addFundingPoint = (point: IRWAPerpsContractFundingHistoryPoint, timestampMs: number) => {
+	for (const point of fundingMetrics.size > 0 ? fundingHistory! : []) {
+		const timestampMs = toUnixMsTimestamp(point.timestamp)
 		const timestamp = groupBy === 'daily' ? timestampMs : getBucketTimestampMs(timestampMs, groupBy)
-		const row = getRow(timestamp)
-		for (const [metricKey, dimensionIndex] of fundingMetrics) {
-			row[dimensionIndex] = getFundingHistoryMetricValue(point, metricKey)
+		for (let collectorIndex = 0; collectorIndex < fundingCollectors.length; collectorIndex++) {
+			const [metricKey, data] = fundingCollectors[collectorIndex]
+			const value = getFundingHistoryMetricValue(point, metricKey)
+			const latest = data[data.length - 1]
+			if (latest?.[0] === timestamp) latest[1] = value
+			else data.push([timestamp, value])
 		}
 	}
-
-	// Both endpoint streams are ascending. Merge them directly so Map insertion order
-	// remains chronological without allocating an event array or sorting it again.
-	let marketIndex = 0
-	let fundingIndex = 0
-	const marketSource = marketMetrics.size > 0 ? marketPoints! : []
-	const fundingSource = fundingMetrics.size > 0 ? fundingHistory! : []
-	while (marketIndex < marketSource.length || fundingIndex < fundingSource.length) {
-		const marketTimestamp =
-			marketIndex < marketSource.length ? toUnixMsTimestamp(marketSource[marketIndex].timestamp) : Infinity
-		const fundingTimestamp =
-			fundingIndex < fundingSource.length ? toUnixMsTimestamp(fundingSource[fundingIndex].timestamp) : Infinity
-
-		if (marketTimestamp <= fundingTimestamp) {
-			addMarketPoint(marketSource[marketIndex++], marketTimestamp)
-		} else {
-			addFundingPoint(fundingSource[fundingIndex++], fundingTimestamp)
-		}
-	}
-
-	const source = Array.from(rowMap.values())
 
 	return {
 		dataset: {
-			source,
+			source: [],
 			dimensions: ['timestamp', ...charts.map((chart) => chart.name)]
 		},
 		charts

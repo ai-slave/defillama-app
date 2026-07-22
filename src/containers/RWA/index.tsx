@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
-import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
+import { buildCsvFromDataset, ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
@@ -23,7 +23,6 @@ import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam, toQuerySt
 import type { IRWAAssetsOverview, RWAAssetChartTarget, RWAChartMetricKey, RWAFlowOverviewSplitBy } from './api.types'
 import { RWAAssetsTable } from './AssetsTable'
 import {
-	emptyChartDatasets,
 	getRwaChartTotalLabel,
 	getRwaChartSeriesColorSlots,
 	getRwaReservedSeriesColorSlot,
@@ -31,7 +30,11 @@ import {
 	sortRwaChartSeriesLabels,
 	type RWAChartAggregationMode
 } from './chartAggregation'
-import { limitRwaHorizontalBarData, toRwaMultiSeriesChartDataset, type RWAChartDataset } from './chartDataset'
+import {
+	limitRwaHorizontalBarData,
+	materializeRwaIndependentChartDataset,
+	type RWAPositionalChartDataset
+} from './chartDataset'
 import {
 	createRwaChartModeState,
 	getBreakdownLabel,
@@ -59,7 +62,9 @@ import { RWAOverviewFilters } from './Filters'
 import { RWAFlowVsPriceStrip } from './FlowPanelParts'
 import {
 	aggregateRWAFlowRows,
+	buildRWAFlowChart,
 	buildRWAFilteredFlowBreakdown,
+	getRWAFlowDefaultStartTimestamp,
 	getRWAFlowOverlayQueryValue,
 	getRWAFlowVsPriceAssetSummaries,
 	getRWAFlowVsPriceSummary,
@@ -113,8 +118,6 @@ const RWAFlowRotationChart = lazy(() =>
 const RWAFlowTreemapChart = lazy(() =>
 	import('./FlowTreemapChart').then((module) => ({ default: module.RWAFlowTreemapChart }))
 )
-const EMPTY_INITIAL_CHART_DATASET = emptyChartDatasets()
-
 type RWAOverviewChartMetric = RWAChartState['metric'] | 'flows' | 'flowVsPrice'
 
 const RWA_FLOW_ROTATION_SPLIT_OPTIONS: Array<{
@@ -291,7 +294,9 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		platformSlug: props.platformSlug,
 		assetGroupSlug: props.assetGroupSlug
 	})
-	const initialChartDataset = props.initialChartDataset ?? EMPTY_INITIAL_CHART_DATASET
+	const initialChartDataset = props.initialChartDataset
+	const getInitialMetricDataset = (metric: RWAChartMetricKey) =>
+		initialChartDataset?.metric === metric ? initialChartDataset.dataset : null
 	const chartTarget = getAssetChartTarget(props)
 	const flowScope = getRwaFlowScope(chartTarget)
 	const showFlowRotation = chartTarget.kind === 'all'
@@ -360,7 +365,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	)
 	const { chartDataset, isChartLoading, chartError } = useRwaChartDataset({
 		selectedMetric: chartTypeKey,
-		initialDataset: initialChartDataset[chartTypeKey],
+		initialDataset: getInitialMetricDataset(chartTypeKey),
 		initialOpenInterestDataset: props.initialOpenInterestChartDataset,
 		filteredAssets,
 		mode: getRwaChartAggregationMode(timeSeriesBreakdown),
@@ -370,6 +375,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeRwaPerps,
 		enabled: !isFlowMetric && chartView === 'timeSeries',
 		useInitialDataset:
+			initialChartDataset?.metric === chartTypeKey &&
 			!activeFilters &&
 			(timeSeriesBreakdown === getDefaultChartBreakdown(chartMode, 'timeSeries') || timeSeriesBreakdown === 'total')
 	})
@@ -380,7 +386,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		chartError: flowMcapError
 	} = useRwaChartDataset({
 		selectedMetric: 'onChainMcap',
-		initialDataset: initialChartDataset.onChainMcap,
+		initialDataset: getInitialMetricDataset('onChainMcap'),
 		initialOpenInterestDataset: null,
 		filteredAssets,
 		mode: 'total',
@@ -389,11 +395,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeGovernance,
 		includeRwaPerps: false,
 		enabled: isFlowMetric && (selectedFlowOverlayMetrics.includes('onChainMcap') || isFlowVsPrice),
-		useInitialDataset: !activeFilters && !isFlowVsPrice
+		useInitialDataset: initialChartDataset?.metric === 'onChainMcap' && !activeFilters && !isFlowVsPrice
 	})
 	const { chartDataset: flowActiveMcapDataset } = useRwaChartDataset({
 		selectedMetric: 'activeMcap',
-		initialDataset: initialChartDataset.activeMcap,
+		initialDataset: getInitialMetricDataset('activeMcap'),
 		initialOpenInterestDataset: null,
 		filteredAssets,
 		mode: 'total',
@@ -402,11 +408,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeGovernance,
 		includeRwaPerps: false,
 		enabled: isFlowMetric && !isFlowVsPrice && selectedFlowOverlayMetrics.includes('activeMcap'),
-		useInitialDataset: !activeFilters
+		useInitialDataset: initialChartDataset?.metric === 'activeMcap' && !activeFilters
 	})
 	const { chartDataset: flowDefiActiveTvlDataset } = useRwaChartDataset({
 		selectedMetric: 'defiActiveTvl',
-		initialDataset: initialChartDataset.defiActiveTvl,
+		initialDataset: getInitialMetricDataset('defiActiveTvl'),
 		initialOpenInterestDataset: null,
 		filteredAssets,
 		mode: 'total',
@@ -415,7 +421,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeGovernance,
 		includeRwaPerps: false,
 		enabled: isFlowMetric && !isFlowVsPrice && selectedFlowOverlayMetrics.includes('defiActiveTvl'),
-		useInitialDataset: !activeFilters
+		useInitialDataset: initialChartDataset?.metric === 'defiActiveTvl' && !activeFilters
 	})
 	const flowOnChainMcapByTimestamp = useMemo(
 		() => getRwaTotalMetricByTimestamp(flowOnChainMcapDataset, 'onChainMcap'),
@@ -621,12 +627,27 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const barChartFilename = `rwa-bar-${slug(chartMetricLabel)}-${rwaSlug(selectedModeLabel)}`
 	const { chartInstance: treemapChartInstance, handleChartReady: handleTreemapChartReady } = useChartImageExport()
 	const treemapChartFilename = `rwa-treemap-${slug(chartMetricLabel)}-${rwaSlug(selectedModeLabel)}`
-	const flowVsPriceSummary = useMemo(
+	const flowChartSelection = useMemo<RWAFlowChartSelection>(
 		() =>
-			isFlowVsPrice && flowData
-				? getRWAFlowVsPriceSummary(flowData.series, flowGroupBy, flowOnChainMcapByTimestamp, flowVisibleRange)
-				: null,
-		[flowData, flowGroupBy, flowOnChainMcapByTimestamp, flowVisibleRange, isFlowVsPrice]
+			isFlowVsPrice
+				? {
+						view: 'flowVsPrice',
+						groupBy: flowGroupBy,
+						mcapByTimestamp: flowOnChainMcapByTimestamp
+					}
+				: { view: 'netFlows', groupBy: flowGroupBy, overlays: flowOverlays },
+		[flowGroupBy, flowOnChainMcapByTimestamp, flowOverlays, isFlowVsPrice]
+	)
+	const flowChart = useMemo(
+		() =>
+			isFlowMetric && flowData ? buildRWAFlowChart({ points: flowData.series, selection: flowChartSelection }) : null,
+		[flowChartSelection, flowData, isFlowMetric]
+	)
+	const flowDefaultStartTimestamp =
+		flowGroupBy === 'daily' && flowData ? getRWAFlowDefaultStartTimestamp(flowData.series, 365) : undefined
+	const flowVsPriceSummary = useMemo(
+		() => (isFlowVsPrice && flowChart ? getRWAFlowVsPriceSummary(flowChart, flowVisibleRange) : null),
+		[flowChart, flowVisibleRange, isFlowVsPrice]
 	)
 	const flowVsPriceBreakdown = useMemo(
 		() =>
@@ -641,22 +662,10 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				: undefined,
 		[filteredAssets, flowAssetRows, flowGroupBy, flowOnChainMcapAssetRows, flowVisibleRange, isFlowVsPrice]
 	)
-	const flowChartSelection = useMemo<RWAFlowChartSelection>(
-		() =>
-			isFlowVsPrice
-				? {
-						view: 'flowVsPrice',
-						groupBy: flowGroupBy,
-						mcapByTimestamp: flowOnChainMcapByTimestamp
-					}
-				: { view: 'netFlows', groupBy: flowGroupBy, overlays: flowOverlays },
-		[flowGroupBy, flowOnChainMcapByTimestamp, flowOverlays, isFlowVsPrice]
-	)
-
-	const selectedTimeSeriesDataset = useMemo(() => toRwaMultiSeriesChartDataset(chartDataset), [chartDataset])
+	const selectedTimeSeriesDataset = chartDataset
 	const timeSeriesCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
-		() => (chartView === 'timeSeries' ? buildRwaTimeSeriesCharts(selectedTimeSeriesDataset.dimensions) : []),
-		[chartView, selectedTimeSeriesDataset.dimensions]
+		() => (chartView === 'timeSeries' ? buildRwaTimeSeriesCharts(selectedTimeSeriesDataset) : []),
+		[chartView, selectedTimeSeriesDataset]
 	)
 	const deferredSelectedTimeSeriesDataset = useDeferredValue(selectedTimeSeriesDataset)
 	const deferredSelectedPieChartData = useDeferredValue(selectedPieChartData)
@@ -998,7 +1007,21 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									</>
 								)}
 								{isFlowMetric && !isFlowVsPrice ? flowOverlaySelect : null}
-								<ChartCsvExportButton chartInstance={multiSeriesChart2Instance} filename={timeSeriesChartFilename} />
+								<ChartCsvExportButton
+									chartInstance={multiSeriesChart2Instance}
+									filename={timeSeriesChartFilename}
+									prepareCsvDirect={() => {
+										const exportDataset =
+											isFlowMetric && flowChart
+												? flowChart.dataset
+												: materializeRwaIndependentChartDataset(deferredSelectedTimeSeriesDataset)
+										return buildCsvFromDataset({
+											dimensions: exportDataset.dimensions,
+											source: exportDataset.source,
+											filenameBase: timeSeriesChartFilename
+										})
+									}}
+								/>
 								<ChartPngExportButton
 									chartInstance={multiSeriesChart2Instance}
 									filename={timeSeriesChartFilename}
@@ -1022,12 +1045,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 												? flowMcapError
 												: 'Failed to load flow data.'}
 									</ChartPanelBodyFallback>
-								) : flowData ? (
+								) : flowChart ? (
 									<Suspense fallback={<ChartPanelBodyFallback />}>
 										<RWAFlowsChart
-											points={flowData.series}
-											selection={flowChartSelection}
-											defaultRangeDays={flowGroupBy === 'daily' ? 365 : undefined}
+											chart={flowChart}
+											defaultStartTimestamp={flowDefaultStartTimestamp}
 											onVisibleRangeChange={handleFlowVisibleRangeChange}
 											onReady={handleMultiSeriesChartReady}
 										/>
@@ -1254,20 +1276,23 @@ function assertNever(value: never): never {
 	throw new Error(`Unexpected value: ${String(value)}`)
 }
 
-export function buildRwaTimeSeriesCharts(dimensions: string[]): Array<MultiSeriesChartSeriesConfig> {
-	const seriesDimensions = sortRwaChartSeriesLabels(dimensions.filter((dimension) => dimension !== 'timestamp'))
+export function buildRwaTimeSeriesCharts(dataset: RWAPositionalChartDataset): Array<MultiSeriesChartSeriesConfig> {
+	const seriesDimensions = sortRwaChartSeriesLabels(dataset.dimensions.filter((dimension) => dimension !== 'timestamp'))
 	const colorSlots = getRwaChartSeriesColorSlots(seriesDimensions)
+	const independentSeries = new Map(dataset.independentSeries?.map((series) => [series.name, series.data]) ?? [])
 
 	return seriesDimensions.map((name) => {
 		const reservedColorSlot = getRwaReservedSeriesColorSlot(name)
 		const colorSlot = colorSlots[name]
 		const isReservedSeries = reservedColorSlot !== null
 		const isTotalSeries = isRwaTotalSeriesLabel(name)
+		const data = independentSeries.get(name)
 
 		return {
 			type: 'line',
 			name,
-			encode: { x: 'timestamp', y: name },
+			encode: data ? { x: 0, y: 1 } : { x: 'timestamp', y: name },
+			...(data ? { data } : {}),
 			color: CHART_COLORS[colorSlot % CHART_COLORS.length],
 			...(isReservedSeries
 				? {
@@ -1322,16 +1347,17 @@ const getRwaFlowScope = (target: RWAAssetChartTarget): RWAFlowScope => {
 }
 
 const getRwaTotalMetricByTimestamp = (
-	dataset: RWAChartDataset,
+	dataset: RWAPositionalChartDataset,
 	metric: RWAChartMetricKey
 ): Map<number, number | null> => {
-	const totalLabel = dataset.dimensions.includes('Total') ? 'Total' : getRwaChartTotalLabel(metric)
-	if (!dataset.dimensions.includes(totalLabel)) return new Map()
+	const totalLabel = getRwaChartTotalLabel(metric)
+	const totalIndex = dataset.dimensions.indexOf(totalLabel)
+	if (totalIndex === -1) return new Map()
 
 	const values = new Map<number, number | null>()
 	for (const row of dataset.source) {
-		const value = row[totalLabel]
-		values.set(row.timestamp, typeof value === 'number' && Number.isFinite(value) ? value : null)
+		const value = row[totalIndex] as number | null | undefined
+		values.set(row[0] as number, value ?? null)
 	}
 	return values
 }

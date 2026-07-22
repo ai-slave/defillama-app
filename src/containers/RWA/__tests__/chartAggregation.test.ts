@@ -4,14 +4,50 @@ import type { IRWAAssetsOverview } from '../api.types'
 import {
 	aggregateRwaMetricData,
 	appendRwaChartDatasetTotal,
+	buildRwaCanonicalMetricDataset,
 	buildRwaOpenInterestDataset,
 	getRwaChartSeriesColorSlots,
 	getRwaReservedSeriesColorSlot,
 	mergeRwaChartDatasets,
-	renameRwaChartDatasetTotal,
-	sortRwaChartSeriesLabels,
-	selectRwaChartDatasetSeries
+	sortRwaChartSeriesLabels
 } from '../chartAggregation'
+
+describe('buildRwaCanonicalMetricDataset', () => {
+	it('writes the final metric total directly while preserving sparse, zero, and negative series values', () => {
+		expect(
+			buildRwaCanonicalMetricDataset(
+				{
+					dimensions: ['timestamp', 'Alpha', 'Beta'],
+					source: [
+						{ timestamp: 1, Alpha: 0, Beta: -4 },
+						{ timestamp: 2, Alpha: 5 }
+					]
+				},
+				'activeMcap',
+				false
+			)
+		).toEqual({
+			dimensions: ['timestamp', 'Total Active Mcap', 'Alpha', 'Beta'],
+			source: [
+				[1, -4, 0, -4],
+				[2, 5, 5, null]
+			]
+		})
+	})
+
+	it('produces a JSON-safe server-prop dataset for sparse aggregate series', () => {
+		const result = buildRwaCanonicalMetricDataset(
+			{
+				dimensions: ['timestamp', 'Alpha', 'Beta'],
+				source: [{ timestamp: 1, Alpha: 5 }]
+			},
+			'activeMcap',
+			false
+		)
+
+		expect(JSON.parse(JSON.stringify(result))).toEqual(result)
+	})
+})
 
 function createSpotAsset(
 	overrides: Partial<Extract<IRWAAssetsOverview['assets'][number], { kind: 'spot' }>> = {}
@@ -212,40 +248,6 @@ describe('appendRwaChartDatasetTotal', () => {
 				{ timestamp: 2, Treasuries: 90, Credit: 60, Total: 150 }
 			],
 			dimensions: ['timestamp', 'Total', 'Treasuries', 'Credit']
-		})
-	})
-})
-
-describe('selectRwaChartDatasetSeries', () => {
-	it('projects a dataset down to the requested series dimensions', () => {
-		expect(
-			selectRwaChartDatasetSeries(
-				{
-					source: [{ timestamp: 1, Treasuries: 100, Credit: 40, Total: 140 }],
-					dimensions: ['timestamp', 'Treasuries', 'Credit']
-				},
-				['Total']
-			)
-		).toEqual({
-			source: [{ timestamp: 1, Treasuries: 100, Credit: 40, Total: 140 }],
-			dimensions: ['timestamp', 'Total']
-		})
-	})
-})
-
-describe('renameRwaChartDatasetTotal', () => {
-	it('renames the Total series to the selected metric label', () => {
-		expect(
-			renameRwaChartDatasetTotal(
-				{
-					source: [{ timestamp: 1, Total: 140, Treasuries: 100 }],
-					dimensions: ['timestamp', 'Total', 'Treasuries']
-				},
-				'activeMcap'
-			)
-		).toEqual({
-			source: [{ timestamp: 1, 'Total Active Mcap': 140, Treasuries: 100 }],
-			dimensions: ['timestamp', 'Total Active Mcap', 'Treasuries']
 		})
 	})
 })

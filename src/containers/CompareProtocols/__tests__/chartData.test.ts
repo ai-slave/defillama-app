@@ -1,37 +1,25 @@
 import { describe, expect, it } from 'vitest'
 import { buildCompareProtocolsChartData } from '../chartData'
 
+const FIRST_DAY = 1_728_000_000_000
+const SECOND_DAY = FIRST_DAY + 86_400_000
+
 describe('buildCompareProtocolsChartData', () => {
-	it('aggregates enabled chain tvl into sparse protocol comparison rows', () => {
+	it('keeps independently timed V2 TVL series in chronological sparse comparison rows', () => {
 		const result = buildCompareProtocolsChartData({
-			protocolResponses: [
+			protocolCharts: [
 				{
 					name: 'Aave',
-					chainTvls: {
-						Ethereum: {
-							tvl: [
-								{ date: 1, totalLiquidityUSD: 100 },
-								{ date: 2, totalLiquidityUSD: 120 }
-							]
-						},
-						borrowed: {
-							tvl: [{ date: 1, totalLiquidityUSD: 999 }]
-						},
-						'staking-extra': {
-							tvl: [{ date: 1, totalLiquidityUSD: 999 }]
-						},
-						offers: {
-							tvl: [{ date: 1, totalLiquidityUSD: 999 }]
-						}
-					}
+					tvlChart: [
+						[FIRST_DAY, 100],
+						[SECOND_DAY, 120]
+					],
+					extraTvlCharts: {}
 				},
 				{
 					name: 'Compound',
-					chainTvls: {
-						Ethereum: {
-							tvl: [{ date: 2, totalLiquidityUSD: 50 }]
-						}
-					}
+					tvlChart: [[SECOND_DAY, 50]],
+					extraTvlCharts: {}
 				}
 			],
 			extraTvlEnabled: { borrowed: false }
@@ -40,49 +28,36 @@ describe('buildCompareProtocolsChartData', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Aave', 'Compound'],
 			source: [
-				[1_000, 100, undefined],
-				[2_000, 120, 50]
+				[FIRST_DAY, 100, undefined],
+				[SECOND_DAY, 120, 50]
 			]
 		})
 		expect(result.charts.map((chart) => chart.name)).toEqual(['Aave', 'Compound'])
 		expect(result.charts.every((chart) => chart.type === 'line')).toBe(true)
 	})
 
-	it('keeps enabled extra tvl chain sections in the selected protocol series', () => {
+	it('composes enabled local TVL settings from focused V2 charts', () => {
 		const result = buildCompareProtocolsChartData({
-			protocolResponses: [
+			protocolCharts: [
 				{
 					name: 'Aave',
-					chainTvls: {
-						Ethereum: {
-							tvl: [{ date: 1, totalLiquidityUSD: 100 }]
-						},
-						borrowed: {
-							tvl: [{ date: 1, totalLiquidityUSD: 25 }]
-						}
-					}
+					tvlChart: [[FIRST_DAY, 100]],
+					extraTvlCharts: { borrowed: [[FIRST_DAY, 25]] }
 				}
 			],
 			extraTvlEnabled: { borrowed: true }
 		})
 
-		expect(result.dataset.source).toEqual([[1_000, 125]])
+		expect(result.dataset.source).toEqual([[FIRST_DAY, 125]])
 	})
 
-	it('skips protocol detail chain sections without tvl chart rows', () => {
+	it('keeps a protocol with no focused chart rows as an empty series', () => {
 		const result = buildCompareProtocolsChartData({
-			protocolResponses: [
+			protocolCharts: [
 				{
 					name: 'Aave',
-					chainTvls: {
-						Ethereum: {},
-						Base: {
-							tvl: null
-						},
-						Arbitrum: {
-							tvl: [{ date: 1, totalLiquidityUSD: 75 }]
-						}
-					}
+					tvlChart: null,
+					extraTvlCharts: {}
 				}
 			],
 			extraTvlEnabled: {}
@@ -90,7 +65,7 @@ describe('buildCompareProtocolsChartData', () => {
 
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Aave'],
-			source: [[1_000, 75]]
+			source: []
 		})
 	})
 })

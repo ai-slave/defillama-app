@@ -26,7 +26,7 @@ describe('cartesian chart models', () => {
 		})
 	})
 
-	it('aligns sparse series chronologically', () => {
+	it('keeps independently timed series positional so sibling timestamps do not create line gaps', () => {
 		const model = buildSparseCartesianChartModel([
 			{ name: 'A', type: 'line', connectNulls: true, data: [[3, 30]] },
 			{
@@ -38,11 +38,106 @@ describe('cartesian chart models', () => {
 				]
 			}
 		])
-		expect(model.dataset.source).toEqual([
-			[1000, undefined, 10],
-			[3000, 30, 31]
+		expect(model.dataset.source).toEqual([])
+		expect(model.charts.map((chart) => chart.data)).toEqual([
+			[[3000, 30]],
+			[
+				[1000, 10],
+				[3000, 31]
+			]
 		])
 		expect(model.charts[0].connectNulls).toBe(true)
+	})
+
+	it('retains explicit null line points while omitting sibling-only timestamps', () => {
+		const model = buildSparseCartesianChartModel([
+			{
+				name: 'TVL',
+				type: 'line',
+				data: [
+					[1, 10],
+					[2.5, null],
+					[3, 12]
+				]
+			},
+			{ name: 'Fees', type: 'bar', data: [[2, 5]] }
+		])
+
+		expect(model.charts[0].data).toEqual([
+			[1000, 10],
+			[2500, null],
+			[3000, 12]
+		])
+		expect(model.charts[1].data).toEqual([[2000, 5]])
+	})
+
+	it('aligns mismatched calendars within a stack without changing unrelated lines', () => {
+		const model = buildSparseCartesianChartModel([
+			{
+				name: 'A',
+				type: 'bar',
+				stack: 'total',
+				data: [
+					[1, 10],
+					[3, 30]
+				]
+			},
+			{
+				name: 'B',
+				type: 'bar',
+				stack: 'total',
+				data: [
+					[2, 20],
+					[3, 40]
+				]
+			},
+			{
+				name: 'TVL',
+				type: 'line',
+				data: [
+					[1.5, 100],
+					[3.5, 120]
+				]
+			}
+		])
+
+		expect(model.charts.map((chart) => chart.data)).toEqual([
+			[
+				[1000, 10],
+				[2000, null],
+				[3000, 30]
+			],
+			[
+				[1000, null],
+				[2000, 20],
+				[3000, 40]
+			],
+			[
+				[1500, 100],
+				[3500, 120]
+			]
+		])
+	})
+
+	it('keeps explicit and missing stacked-line values as gaps on the stack calendar', () => {
+		const model = buildSparseCartesianChartModel([
+			{
+				name: 'A',
+				type: 'line',
+				stack: 'total',
+				data: [
+					[1, 10],
+					[3, null]
+				]
+			},
+			{ name: 'B', type: 'line', stack: 'total', data: [[2, 20]] }
+		])
+
+		expect(model.charts[0].data).toEqual([
+			[1000, 10],
+			[2000, null],
+			[3000, null]
+		])
 	})
 
 	it('uses the same canonical output for already aligned sparse series', () => {

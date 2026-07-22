@@ -11,11 +11,11 @@ import type {
 import type {
 	IFetchedRWAProject,
 	IRWAAssetData,
-	IRWABreakdownChartResponse,
 	IRWAStatsResponse,
 	RWAChartMetricKey,
 	RWAOverviewBreakdownRequest
 } from '~/containers/RWA/api.types'
+import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import type { Dashboard } from './dashboardTypes'
 import type { ProDashboardAppMetadata } from './dataContracts'
@@ -56,7 +56,7 @@ export type DashboardStreamChunk =
 			breakdown: RWAOverviewBreakdownRequest['breakdown']
 			metric: RWAChartMetricKey
 			chain: string
-			data: IRWABreakdownChartResponse
+			data: RWAPositionalChartDataset
 	  }
 	| { type: 'rwaAssetChartData'; id: string; data: IRWAAssetData['chartDataset'] }
 	| { type: 'rwaAssetsTableData'; data: IFetchedRWAProject[] }

@@ -134,7 +134,7 @@ describe('stablecoin change freshness', () => {
 			formatPeggedAssetsData({
 				peggedAssets: [asset],
 				chartDataByPeggedAsset: [[point('2026-07-14', 100)]],
-				peggedNameToChartDataIndex: { 'Test USD': 0 },
+				peggedAssetIdToChartDataIndex: { '1': 0 },
 				priceData,
 				currentTimeMs: NOW
 			})[0]

@@ -129,7 +129,6 @@ export function buildChainYAxis({
 			name: '',
 			type: 'value',
 			min: getZeroBaselineYAxisMin,
-			alignTicks: true,
 			offset: noOffset || index == null || index < 2 ? 0 : prevOffset + (CUSTOM_OFFSETS[type] ?? 40)
 		})
 		const axisConfig = AXIS_CONFIG_BY_TYPE[type]
@@ -142,7 +141,6 @@ export function buildChainYAxis({
 
 		if (axisConfig?.resolveColor) {
 			const color = axisConfig.resolveColor(context)
-			axisOptions.axisLabel = mergeDeep(axisOptions.axisLabel ?? {}, { color })
 			axisOptions.axisLine = {
 				show: true,
 				lineStyle: {

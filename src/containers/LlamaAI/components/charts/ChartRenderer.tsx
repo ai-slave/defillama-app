@@ -1,7 +1,10 @@
+import type * as echarts from 'echarts/core'
 import {
+	type Dispatch,
 	lazy,
 	memo,
 	type ReactNode,
+	type SetStateAction,
 	Suspense,
 	useCallback,
 	useEffect,
@@ -160,7 +163,11 @@ function buildChartPresentation(
 	return buildRenderPlan(config, transformedChart, normalizedState, base.capabilities)
 }
 
-function renderChartContent(renderPlan: ChartRenderPlan, chartKey: string, onChartReady: (instance: any) => void) {
+function renderChartContent(
+	renderPlan: ChartRenderPlan,
+	chartKey: string,
+	onChartReady: (instance: echarts.ECharts | null) => void
+) {
 	switch (renderPlan.rendererKind) {
 		case 'cartesian':
 			return (
@@ -205,7 +212,7 @@ function ChartExportButtonsSlot({
 	sessionId,
 	messageId
 }: {
-	chartInstance: () => any
+	chartInstance: () => echarts.ECharts | null
 	exportModel: ChartRenderPlan['exportModel']
 	renderPlan: ChartRenderPlan
 	chartTitle: string | undefined
@@ -472,6 +479,68 @@ function SingleChart({
 		[authorizedFetch, sessionId, messageId, onLocalStyleSave, baseConfig, chartState]
 	)
 
+	if (!isActive) return null
+
+	return (
+		<ActiveSingleChart
+			config={config}
+			baseConfig={baseConfig}
+			data={data}
+			chartState={chartState}
+			dispatch={dispatch}
+			title={title}
+			appliedConfig={appliedConfig}
+			editing={editing}
+			setEditing={setEditing}
+			canEdit={canEdit}
+			openArticleExport={openArticleExport}
+			savingToLibrary={savingToLibrary}
+			handleSaveToLibrary={handleSaveToLibrary}
+			handleSaveStyle={handleSaveStyle}
+			sessionId={sessionId}
+			messageId={messageId}
+			readOnly={readOnly}
+		/>
+	)
+}
+
+function ActiveSingleChart({
+	config,
+	baseConfig,
+	data,
+	chartState,
+	dispatch,
+	title,
+	appliedConfig,
+	editing,
+	setEditing,
+	canEdit,
+	openArticleExport,
+	savingToLibrary,
+	handleSaveToLibrary,
+	handleSaveStyle,
+	sessionId,
+	messageId,
+	readOnly
+}: {
+	config: ChartConfiguration
+	baseConfig: ChartConfiguration
+	data: ChartDataSeries
+	chartState: ChartViewState
+	dispatch: Dispatch<ChartAction>
+	title?: string
+	appliedConfig: ChartConfiguration | null
+	editing: boolean
+	setEditing: Dispatch<SetStateAction<boolean>>
+	canEdit: boolean
+	openArticleExport: ReturnType<typeof useArticleExport>
+	savingToLibrary: boolean
+	handleSaveToLibrary: () => Promise<void>
+	handleSaveStyle: (draft: ChartConfiguration, patch: ChartStylePatch) => Promise<void>
+	sessionId?: string | null
+	messageId?: string
+	readOnly?: boolean
+}) {
 	// category names (bars/slices) for per-category color pickers on single-series hbar & pie
 	const editorCategories = useMemo(() => {
 		const field = config.axes?.x?.field
@@ -495,33 +564,36 @@ function SingleChart({
 		const t = setTimeout(() => window.dispatchEvent(new CustomEvent('chartResize')), 60)
 		return () => clearTimeout(t)
 	}, [editing])
-	const handleStackedChange = useCallback((stacked: boolean) => dispatch({ type: 'SET_STACKED', payload: stacked }), [])
+	const handleStackedChange = useCallback(
+		(stacked: boolean) => dispatch({ type: 'SET_STACKED', payload: stacked }),
+		[dispatch]
+	)
 	const handlePercentageChange = useCallback(
 		(percentage: boolean) => dispatch({ type: 'SET_PERCENTAGE', payload: percentage }),
-		[]
+		[dispatch]
 	)
 	const handleCumulativeChange = useCallback(
 		(cumulative: boolean) => dispatch({ type: 'SET_CUMULATIVE', payload: cumulative }),
-		[]
+		[dispatch]
 	)
 	const handleGroupingChange = useCallback(
 		(grouping: ChartViewState['grouping']) => dispatch({ type: 'SET_GROUPING', payload: grouping }),
-		[]
+		[dispatch]
 	)
 	const handleHallmarksChange = useCallback(
 		(showHallmarks: boolean) => dispatch({ type: 'SET_HALLMARKS', payload: showHallmarks }),
-		[]
+		[dispatch]
 	)
 	const handleLabelsChange = useCallback(
 		(showLabels: boolean) => dispatch({ type: 'SET_LABELS', payload: showLabels }),
-		[]
+		[dispatch]
 	)
 	const handleLogScaleChange = useCallback(
 		(logScale: boolean) => dispatch({ type: 'SET_LOG_SCALE', payload: logScale }),
-		[]
+		[dispatch]
 	)
-	const handleOpenStyleEditor = useCallback(() => setEditing(true), [])
-	const handleCancelStyleEditor = useCallback(() => setEditing(false), [])
+	const handleOpenStyleEditor = useCallback(() => setEditing(true), [setEditing])
+	const handleCancelStyleEditor = useCallback(() => setEditing(false), [setEditing])
 
 	// The adapted chart and intrinsic capabilities depend only on base inputs. View controls
 	// always transform from this canonical result so state toggles never repeat adaptation.
@@ -534,8 +606,6 @@ function SingleChart({
 		if (basePresentation.ok === false) return basePresentation
 		return tryBuildPresentation(config, basePresentation.base, chartState)
 	}, [config, basePresentation, chartState])
-
-	if (!isActive) return null
 
 	if (config.type === 'candlestick') {
 		const candlestickData = adaptCandlestickData(config, data)

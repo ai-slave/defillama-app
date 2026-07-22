@@ -9,10 +9,20 @@ import { formattedNum } from '~/utils'
 import { useMetricData } from '../hooks/useMetricData'
 import { useProDashboardCatalog, useProDashboardPermissions } from '../ProDashboardAPIContext'
 import type { MetricAggregator, MetricChartType, MetricConfig, MetricWindow } from '../types'
-import { CHART_TYPES } from '../types'
+import { getProDashboardChartTypeConfig } from '../types'
 import { getItemIconUrl } from '../utils'
 
 const EMPTY_CHART_SERIES: [number, number][] = []
+const VOLUME_METRIC_TYPES = new Set([
+	'volume',
+	'perps',
+	'aggregators',
+	'perpsAggregators',
+	'bridgeAggregators',
+	'tokenVolume',
+	'optionsPremium',
+	'optionsNotional'
+])
 
 const WINDOW_BADGE_LABELS: Record<MetricWindow, string> = {
 	'7d': 'Last 7d',
@@ -95,7 +105,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 			name = subject.chain || ''
 			iconUrl = getItemIconUrl('chain', info, subject.chain || '')
 		}
-		const typeConfig = CHART_TYPES[metric.type as keyof typeof CHART_TYPES]
+		const typeConfig = getProDashboardChartTypeConfig(metric.type)
 		const typeLabel = typeConfig?.title || metric.type
 		const baseTitle = name ? `${name} ${typeLabel}` : typeLabel
 		const label = metric.label?.trim()
@@ -112,7 +122,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 		}
 
 		const fmt = metric.format?.value && metric.format.value !== 'auto' ? metric.format.value : auto
-		return { displayTitle, baseTitle, iconUrl, format: fmt as 'currency' | 'number' | 'percent' }
+		return { displayTitle, baseTitle, iconUrl, format: fmt }
 	}, [metric, getChainInfo, getProtocolInfo])
 
 	const displayValue = useMemo(() => {
@@ -154,19 +164,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 	const windowPhrase = WINDOW_PHRASES[metric.window]
 	const aggregatorBadge = AGGREGATOR_BADGE[metric.aggregator]
 
-	const isVolumeMetric = useMemo(() => {
-		const volumeTypes = new Set([
-			'volume',
-			'perps',
-			'aggregators',
-			'perpsAggregators',
-			'bridgeAggregators',
-			'tokenVolume',
-			'optionsPremium',
-			'optionsNotional'
-		])
-		return volumeTypes.has(metric.type as any)
-	}, [metric.type])
+	const isVolumeMetric = VOLUME_METRIC_TYPES.has(metric.type)
 
 	const summaryText = useMemo(() => {
 		const base = AGGREGATOR_SUMMARY_LABELS[metric.aggregator] ?? aggregatorBadge.toLowerCase()
@@ -180,13 +178,8 @@ export function MetricCard({ metric }: MetricCardProps) {
 
 	const hasCustomLabel = Boolean(metric.label?.trim())
 
-	// Determine chart type with backward compatibility for showSparkline
-	const chartType: MetricChartType = useMemo(() => {
-		if (metric.chartType) return metric.chartType
-		// Legacy support: showSparkline true/undefined -> sparkline, false -> none
-		if (metric.showSparkline === false) return 'none'
-		return 'sparkline'
-	}, [metric.chartType, metric.showSparkline])
+	// Legacy support: showSparkline true/undefined -> sparkline, false -> none.
+	const chartType: MetricChartType = metric.chartType ?? (metric.showSparkline === false ? 'none' : 'sparkline')
 
 	const chartSeries = chartType === 'none' ? EMPTY_CHART_SERIES : sparklineData
 

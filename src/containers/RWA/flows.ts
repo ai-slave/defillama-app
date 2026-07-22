@@ -129,9 +129,10 @@ export function parseRWAFlowQueryState(
 }
 
 export type RWAFlowSeriesPoint = IRWAFlowPoint | IRWAFlowAggregatePoint
+type RWAFlowChartSource = Array<[timestamp: number, ...values: Array<number | null>]>
 
 export type RWAFlowChart = {
-	dataset: MultiSeriesChartDataset
+	dataset: Omit<MultiSeriesChartDataset, 'source'> & { source: RWAFlowChartSource }
 	charts: MultiSeriesChartSeriesConfig[]
 	groupBy: RWAFlowGrouping
 }
@@ -419,18 +420,19 @@ export function getRWAFlowDefaultStartTimestamp(
 	defaultRangeDays: number | undefined
 ): number | undefined {
 	if (defaultRangeDays == null) return undefined
-	let latestTimestamp = 0
-	for (const point of points) latestTimestamp = Math.max(latestTimestamp, toUnixMsTimestamp(point.timestamp))
+	// Flow endpoints return ascending points; the chart builders preserve that order.
+	const latestPoint = points[points.length - 1]
+	const latestTimestamp = latestPoint ? toUnixMsTimestamp(latestPoint.timestamp) : 0
 	return latestTimestamp > 0 ? latestTimestamp - defaultRangeDays * DAY_MS : undefined
 }
 
 function buildDailyFlowChart(points: readonly RWAFlowSeriesPoint[], overlays: readonly RWAFlowOverlay[]): RWAFlowChart {
-	const source: MultiSeriesChartDataset['source'] = []
+	const source: RWAFlowChartSource = []
 	const overlayDimensions = getRWAFlowOverlayDimensions(overlays)
 
 	for (const point of points) {
 		const flow = point.netFlowUsd
-		const row: MultiSeriesChartDataset['source'][number] = [
+		const row: RWAFlowChartSource[number] = [
 			toUnixMsTimestamp(point.timestamp),
 			flow != null && flow >= 0 ? flow : null,
 			flow != null && flow < 0 ? flow : null
@@ -473,13 +475,13 @@ function buildCumulativeFlowChart(
 	points: readonly RWAFlowSeriesPoint[],
 	overlays: readonly RWAFlowOverlay[]
 ): RWAFlowChart {
-	const source: MultiSeriesChartDataset['source'] = []
+	const source: RWAFlowChartSource = []
 	const overlayDimensions = getRWAFlowOverlayDimensions(overlays)
 	let cumulativeFlow: number | null = null
 
 	for (const point of points) {
 		if (point.netFlowUsd != null) cumulativeFlow = (cumulativeFlow ?? 0) + point.netFlowUsd
-		const row: MultiSeriesChartDataset['source'][number] = [toUnixMsTimestamp(point.timestamp), cumulativeFlow]
+		const row: RWAFlowChartSource[number] = [toUnixMsTimestamp(point.timestamp), cumulativeFlow]
 		for (let index = 0; index < overlays.length; index++) {
 			row[index + 2] = getRWAFlowOverlayValue(point, overlays[index])
 		}
@@ -531,43 +533,7 @@ function buildFlowVsPriceChart(
 	groupBy: RWAFlowGrouping,
 	mcapByTimestamp?: ReadonlyMap<number, number | null>
 ): RWAFlowChart {
-	const source: MultiSeriesChartDataset['source'] = []
-	let previousMcap: number | null = null
-	let cumulativeMcapChange = 0
-	let cumulativeNetCapital = 0
-	let pendingFlow = 0
-	let hasPendingFlow = false
-	const periodGroupBy = groupBy === 'cumulative' ? 'daily' : groupBy
-	for (const period of buildFlowPeriods(points, periodGroupBy, mcapByTimestamp)) {
-		if (period.hasFlow) {
-			pendingFlow += period.flow
-			hasPendingFlow = true
-		}
-
-		const mcapChange = previousMcap != null && period.mcap != null ? period.mcap - previousMcap : null
-		const netCapital = mcapChange != null && hasPendingFlow ? pendingFlow : null
-		const price = mcapChange != null ? mcapChange - (netCapital ?? 0) : null
-		if (groupBy === 'cumulative' && mcapChange != null) {
-			cumulativeMcapChange += mcapChange
-			if (netCapital != null) cumulativeNetCapital += netCapital
-		}
-		const displayedNetCapital = groupBy === 'cumulative' && mcapChange != null ? cumulativeNetCapital : netCapital
-		const displayedMcapChange = groupBy === 'cumulative' && mcapChange != null ? cumulativeMcapChange : mcapChange
-		const displayedPrice =
-			groupBy === 'cumulative' && mcapChange != null ? cumulativeMcapChange - cumulativeNetCapital : price
-		source.push([
-			period.timestamp,
-			displayedNetCapital != null && displayedNetCapital >= 0 ? displayedNetCapital : null,
-			displayedNetCapital != null && displayedNetCapital < 0 ? displayedNetCapital : null,
-			displayedPrice,
-			displayedMcapChange
-		])
-		if (period.mcap != null) {
-			previousMcap = period.mcap
-			pendingFlow = 0
-			hasPendingFlow = false
-		}
-	}
+	const source = buildFlowVsPriceSource(points, groupBy, mcapByTimestamp)
 
 	return {
 		dataset: { source, dimensions: ['timestamp', NET_CAPITAL_INFLOWS, NET_CAPITAL_OUTFLOWS, PRICE, MCAP_CHANGE] },
@@ -608,6 +574,52 @@ function buildFlowVsPriceChart(
 	}
 }
 
+function buildFlowVsPriceSource(
+	points: readonly RWAFlowSeriesPoint[],
+	groupBy: RWAFlowGrouping,
+	mcapByTimestamp?: ReadonlyMap<number, number | null>
+): RWAFlowChartSource {
+	const source: RWAFlowChartSource = []
+	let previousMcap: number | null = null
+	let cumulativeMcapChange = 0
+	let cumulativeNetCapital = 0
+	let pendingFlow = 0
+	let hasPendingFlow = false
+	const periodGroupBy = groupBy === 'cumulative' ? 'daily' : groupBy
+	for (const period of buildFlowPeriods(points, periodGroupBy, mcapByTimestamp)) {
+		if (period.hasFlow) {
+			pendingFlow += period.flow
+			hasPendingFlow = true
+		}
+
+		const mcapChange = previousMcap != null && period.mcap != null ? period.mcap - previousMcap : null
+		const netCapital = mcapChange != null && hasPendingFlow ? pendingFlow : null
+		const price = mcapChange != null ? mcapChange - (netCapital ?? 0) : null
+		if (groupBy === 'cumulative' && mcapChange != null) {
+			cumulativeMcapChange += mcapChange
+			if (netCapital != null) cumulativeNetCapital += netCapital
+		}
+		const displayedNetCapital = groupBy === 'cumulative' && mcapChange != null ? cumulativeNetCapital : netCapital
+		const displayedMcapChange = groupBy === 'cumulative' && mcapChange != null ? cumulativeMcapChange : mcapChange
+		const displayedPrice =
+			groupBy === 'cumulative' && mcapChange != null ? cumulativeMcapChange - cumulativeNetCapital : price
+		source.push([
+			period.timestamp,
+			displayedNetCapital != null && displayedNetCapital >= 0 ? displayedNetCapital : null,
+			displayedNetCapital != null && displayedNetCapital < 0 ? displayedNetCapital : null,
+			displayedPrice,
+			displayedMcapChange
+		])
+		if (period.mcap != null) {
+			previousMcap = period.mcap
+			pendingFlow = 0
+			hasPendingFlow = false
+		}
+	}
+
+	return source
+}
+
 export function buildRWAFlowChart({
 	points,
 	selection
@@ -625,31 +637,67 @@ export function buildRWAFlowChart({
 	return buildGroupedFlowChart(points, selection.groupBy, selection.overlays)
 }
 
-export function getRWAFlowVsPriceSummary(
-	points: readonly RWAFlowSeriesPoint[],
+function summarizeRWAFlowVsPriceSource(
+	source: RWAFlowChartSource,
 	groupBy: RWAFlowGrouping,
-	mcapByTimestamp?: ReadonlyMap<number, number | null>,
 	visibleRange?: RWAFlowVisibleRange | null
 ): RWAFlowVsPriceSummary | null {
-	const chart = buildFlowVsPriceChart(points, groupBy, mcapByTimestamp)
-	const visibleRows = visibleRange
-		? chart.dataset.source.filter((row) => {
-				const timestamp = row[0]
-				return typeof timestamp === 'number' && timestamp >= visibleRange.start && timestamp <= visibleRange.end
-			})
-		: chart.dataset.source
+	let startIndex = 0
+	let endIndex = source.length
+	if (visibleRange) {
+		let low = 0
+		let high = source.length
+		while (low < high) {
+			const middle = (low + high) >>> 1
+			if (source[middle][0] < visibleRange.start) low = middle + 1
+			else high = middle
+		}
+		startIndex = low
+
+		low = startIndex
+		high = source.length
+		while (low < high) {
+			const middle = (low + high) >>> 1
+			if (source[middle][0] <= visibleRange.end) low = middle + 1
+			else high = middle
+		}
+		endIndex = low
+	}
+
 	if (groupBy === 'cumulative') {
-		for (let index = visibleRows.length - 1; index >= 0; index--) {
-			const row = visibleRows[index]
+		for (let index = endIndex - 1; index >= startIndex; index--) {
+			const row = source[index]
 			const mcapChange = row[4]
 			const price = row[3]
 			if (typeof mcapChange !== 'number' || typeof price !== 'number') continue
 			const netCapital = typeof row[1] === 'number' ? row[1] : typeof row[2] === 'number' ? row[2] : 0
+			let baselineMcapChange = 0
+			let baselineNetCapital = 0
+			let baselinePrice = 0
+			if (visibleRange) {
+				for (let baselineIndex = startIndex - 1; baselineIndex >= 0; baselineIndex--) {
+					const baselineRow = source[baselineIndex]
+					if (typeof baselineRow[4] !== 'number' || typeof baselineRow[3] !== 'number') continue
+					baselineMcapChange = baselineRow[4]
+					baselineNetCapital =
+						typeof baselineRow[1] === 'number'
+							? baselineRow[1]
+							: typeof baselineRow[2] === 'number'
+								? baselineRow[2]
+								: 0
+					baselinePrice = baselineRow[3]
+					break
+				}
+			}
+			const visibleMcapChange = mcapChange - baselineMcapChange
+			const visibleNetCapital = netCapital - baselineNetCapital
+			const visiblePrice = price - baselinePrice
 			return {
-				mcapChange,
-				netCapital,
-				price,
-				flowDrivenPct: mcapChange === 0 ? null : netCapital === 0 ? 0 : (netCapital / mcapChange) * 100
+				mcapChange: visibleMcapChange,
+				netCapital: visibleNetCapital,
+				price: visiblePrice,
+				flowDrivenPct:
+					visibleMcapChange === 0 ? null : visibleNetCapital === 0 ? 0 : (visibleNetCapital / visibleMcapChange) * 100
 			}
 		}
 		return null
@@ -660,7 +708,8 @@ export function getRWAFlowVsPriceSummary(
 	let price = 0
 	let count = 0
 
-	for (const row of visibleRows) {
+	for (let index = startIndex; index < endIndex; index++) {
+		const row = source[index]
 		const rowMcapChange = row[4]
 		const rowNetCapital = row[1] ?? row[2] ?? 0
 		const rowPrice = row[3]
@@ -680,6 +729,13 @@ export function getRWAFlowVsPriceSummary(
 		price,
 		flowDrivenPct: mcapChange === 0 ? null : netCapital === 0 ? 0 : (netCapital / mcapChange) * 100
 	}
+}
+
+export function getRWAFlowVsPriceSummary(
+	chart: RWAFlowChart,
+	visibleRange?: RWAFlowVisibleRange | null
+): RWAFlowVsPriceSummary | null {
+	return summarizeRWAFlowVsPriceSource(chart.dataset.source, chart.groupBy, visibleRange)
 }
 
 export function getRWAFlowVsPriceAssetSummaries(
@@ -720,7 +776,8 @@ export function getRWAFlowVsPriceAssetSummaries(
 
 	const summaries: RWAFlowVsPriceAssetSummary[] = []
 	for (const asset of selectedAssets) {
-		const summary = getRWAFlowVsPriceSummary(asset.points, groupBy, asset.mcap, visibleRange)
+		const source = buildFlowVsPriceSource(asset.points, groupBy, asset.mcap)
+		const summary = summarizeRWAFlowVsPriceSource(source, groupBy, visibleRange)
 		if (summary) summaries.push({ key: asset.key, label: asset.label, summary })
 	}
 	return summaries

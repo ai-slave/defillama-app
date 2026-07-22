@@ -1,5 +1,6 @@
 import * as React from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildNFTMarketplaceRelativeChartData } from '~/containers/Nft/marketplaceCharts'
 import { NftsMarketplaceTable } from '~/containers/Nft/NftsMarketplaceTable'
 import { getNFTMarketplacesData } from '~/containers/Nft/queries'
 import Layout from '~/layout'
@@ -32,13 +33,23 @@ type ViewType = (typeof VIEW_TYPES)[number]
 function Marketplaces({
 	data,
 	absoluteVolumeDataset,
-	relativeVolumeDataset,
 	absoluteTradesDataset,
-	relativeTradesDataset,
 	absoluteBarCharts,
-	relativeAreaCharts
+	dailyTotals
 }: Awaited<ReturnType<typeof getNFTMarketplacesData>>) {
 	const [viewType, setViewType] = React.useState<ViewType>('Absolute')
+	const relativeData = React.useMemo(
+		() =>
+			viewType === 'Relative'
+				? buildNFTMarketplaceRelativeChartData({
+						absoluteVolumeDataset,
+						absoluteTradesDataset,
+						absoluteBarCharts,
+						dailyTotals
+					})
+				: null,
+		[absoluteBarCharts, absoluteTradesDataset, absoluteVolumeDataset, dailyTotals, viewType]
+	)
 
 	return (
 		<Layout
@@ -62,8 +73,8 @@ function Marketplaces({
 					<React.Suspense fallback={<ChartPanelExportShellFallback className="w-full" />}>
 						<MultiSeriesChart
 							title="Volume"
-							dataset={viewType === 'Relative' ? relativeVolumeDataset : absoluteVolumeDataset}
-							charts={viewType === 'Relative' ? relativeAreaCharts : absoluteBarCharts}
+							dataset={relativeData?.relativeVolumeDataset ?? absoluteVolumeDataset}
+							charts={relativeData?.relativeAreaCharts ?? absoluteBarCharts}
 							stacked={viewType === 'Relative'}
 							expandTo100Percent={viewType === 'Relative'}
 							valueSymbol={viewType === 'Relative' ? '%' : 'ETH'}
@@ -82,8 +93,8 @@ function Marketplaces({
 					<React.Suspense fallback={<ChartPanelExportShellFallback className="w-full" />}>
 						<MultiSeriesChart
 							title="Trades"
-							dataset={viewType === 'Relative' ? relativeTradesDataset : absoluteTradesDataset}
-							charts={viewType === 'Relative' ? relativeAreaCharts : absoluteBarCharts}
+							dataset={relativeData?.relativeTradesDataset ?? absoluteTradesDataset}
+							charts={relativeData?.relativeAreaCharts ?? absoluteBarCharts}
 							stacked={viewType === 'Relative'}
 							expandTo100Percent={viewType === 'Relative'}
 							valueSymbol={viewType === 'Relative' ? '%' : ''}

@@ -5,6 +5,7 @@ import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import {
 	CHART_TYPES,
 	type ChartConfig,
+	getProDashboardChartTypeConfig,
 	getChainChartTypes,
 	getProtocolChartTypes,
 	type RWAOverviewChartBreakdown,
@@ -238,7 +239,7 @@ export function UnifiedChartTab({
 	const handleChartTypeSelect = useCallback((type: string) => onChartTypesChange([type]), [onChartTypesChange])
 	const handleBulkChartTypeSelect = useCallback((type: string) => onBulkChartTypeChange(type), [onBulkChartTypeChange])
 
-	const selectedChartTypeSingle = useMemo(() => selectedChartTypes[0] || null, [selectedChartTypes])
+	const selectedChartTypeSingle = selectedChartTypes[0] ?? null
 	const bulkChartType = useMemo(() => {
 		if (composerItems.length === 0) return null
 		const firstType = composerItems[0]?.type
@@ -344,7 +345,7 @@ export function UnifiedChartTab({
 		const chartTypesOrder = selectedChartTab === 'chain' ? chainChartTypes : protocolChartTypes
 		return chartTypesOrder.map((type) => ({
 			value: type,
-			label: CHART_TYPES[type as keyof typeof CHART_TYPES]?.title || type,
+			label: getProDashboardChartTypeConfig(type)?.title || type,
 			available: globalAvailableChartTypes.includes(type)
 		}))
 	}, [globalAvailableChartTypes, selectedChartTab, chainChartTypes, protocolChartTypes])

@@ -143,14 +143,22 @@ export function buildMultiYAxis({
 			typeof callerAxisLabel.formatter === 'function' || typeof callerAxisLabel.formatter === 'string'
 				? callerAxisLabel.formatter
 				: null
-		// A lone axis uses the theme's neutral label color. Series colors only help
-		// distinguish axes when two or more scales are visible.
-		const axisColor = maxIndex > 0 ? yAxisIndexToExplicitColor.get(index) : undefined
+		const axisColor = !isPrimary && maxIndex > 0 ? yAxisIndexToExplicitColor.get(index) : undefined
 		const axisSymbol = yAxisIndexToSymbol.get(index) ?? valueSymbol
 		const position = baseAxis.position ?? (isPrimary ? 'left' : 'right')
 		const previousOffset = lastOffsetByPosition.get(position)
 		const defaultOffset = previousOffset == null ? 0 : previousOffset + 40
 		const offset = typeof baseAxis.offset === 'number' ? baseAxis.offset : defaultOffset
+
+		const axisLineStyle = isPrimary
+			? baseAxisLineStyle
+			: {
+					...baseAxisLineStyle,
+					type: [5, 10],
+					dashOffset: 5,
+					...(axisColor ? { color: axisColor } : {})
+				}
+		if (!isPrimary) delete axisLineStyle.opacity
 
 		output.push({
 			...baseAxis,
@@ -159,20 +167,12 @@ export function buildMultiYAxis({
 			axisLine: {
 				...baseAxisLine,
 				show: baseAxisLine.show ?? !isPrimary,
-				lineStyle: {
-					...baseAxisLineStyle,
-					type: [5, 10],
-					dashOffset: 5,
-					...(axisColor ? { color: axisColor } : {})
-				}
+				lineStyle: axisLineStyle
 			},
 			axisLabel: {
 				...baseAxisLabel,
 				formatter:
-					!isPercentageAxis && callerFormatter
-						? callerFormatter
-						: (value: number) => formatAxisLabel(value, axisSymbol),
-				...(axisColor ? { color: axisColor } : {})
+					!isPercentageAxis && callerFormatter ? callerFormatter : (value: number) => formatAxisLabel(value, axisSymbol)
 			},
 			...(isPercentageAxis ? { max: 100, min: 0 } : {})
 		})

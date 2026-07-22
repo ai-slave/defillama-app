@@ -1,13 +1,11 @@
 import { fetchBlockExplorers, fetchLlamaConfig } from '~/api'
 import {
+	buildUniqueStablecoinChartLabels,
 	formatPeggedAssetsData,
 	formatPeggedChainsData,
 	getPrevStablecoinTotalFromChart,
-	buildStablecoinChartDataWithFlags,
 	getFreshStablecoinCurrentPoint,
 	getStablecoinDominance,
-	getStablecoinMcapStatsFromTotals,
-	getStablecoinTopTokenFromChartData,
 	type StablecoinChartDataPoint
 } from '~/containers/Stablecoins/utils'
 import { formattedNum, getPercentChange, slug } from '~/utils'
@@ -31,6 +29,7 @@ import type { StablecoinChainBalanceToken, StablecoinChartPoint, StablecoinListA
 import {
 	buildAreaPayload,
 	buildDominancePayload,
+	buildStablecoinMcapSummary,
 	buildStablecoinOverviewPayload,
 	buildTotalMcapPayload,
 	getTopStablecoinFromLatestPoints,
@@ -54,7 +53,6 @@ import type {
 
 const STABLECOINS_CACHE_TTL = 60 * 60 * 24
 const STABLECOINS_CACHE_PREFIX = 'stablecoins'
-const ONE_DAY_SECONDS = 24 * 3600
 
 async function withStablecoinsCache<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
 	const cacheKey = `${STABLECOINS_CACHE_PREFIX}:${key}`
@@ -145,23 +143,6 @@ const normalizeStablecoinSeries = (charts: StablecoinChartPoint[] | undefined): 
 	return normalized
 }
 
-const getLastSeriesTimestamp = (series: StablecoinSeriesPoint[]): number => {
-	if (series.length === 0) return 0
-	return series[series.length - 1]?.date ?? 0
-}
-
-const padSeriesToTimestamp = (series: StablecoinSeriesPoint[], targetTimestamp: number): void => {
-	if (series.length === 0) return
-	const last = series[series.length - 1]
-	if (!last) return
-
-	let lastDate = Number(last.date)
-	while (lastDate < targetTimestamp) {
-		lastDate += ONE_DAY_SECONDS
-		series.push({ ...last, date: lastDate, isSynthetic: true })
-	}
-}
-
 const readStablecoinNumericFromChart = (
 	chart: StablecoinChartDataPoint[] | null | undefined,
 	daysBefore: number,
@@ -216,27 +197,20 @@ const readStablecoinBridgesFromChart = (
 	return normalizeStablecoinBridges(bridges)
 }
 
-const buildOverviewChartInputs = ({
+export const buildOverviewChartInputs = ({
 	peggedAssets,
 	breakdown,
 	doublecountedSourceIds
 }: PeggedAssetsForChartInput): StablecoinOverviewChartInputs => {
 	const chartDataByPeggedAsset: StablecoinSeriesPoint[][] = []
-	const peggedAssetNamesSet = new Set<string>()
-	const peggedNameToChartDataIndex: Record<string, number> = {}
+	const peggedAssetNames = buildUniqueStablecoinChartLabels(peggedAssets, 'symbol')
+	const peggedAssetIdToChartDataIndex: Record<string, number> = {}
 	const doublecountedIds: number[] = []
-	let lastTimestamp = 0
 
 	for (let i = 0; i < peggedAssets.length; i++) {
 		const asset = peggedAssets[i]
-		let key = asset.symbol
-		if (peggedAssetNamesSet.has(key)) key = asset.name
-		if (!peggedAssetNamesSet.has(key)) peggedAssetNamesSet.add(key)
-		else peggedAssetNamesSet.add(asset.gecko_id ?? `${asset.name}_${i}`)
-
-		peggedNameToChartDataIndex[asset.name] = i
+		peggedAssetIdToChartDataIndex[asset.id] = i
 		const formattedCharts = normalizeStablecoinSeries(breakdown[asset.id])
-		lastTimestamp = Math.max(lastTimestamp, getLastSeriesTimestamp(formattedCharts))
 
 		if (doublecountedSourceIds?.includes(asset.id)) {
 			doublecountedIds.push(i)
@@ -244,24 +218,29 @@ const buildOverviewChartInputs = ({
 		chartDataByPeggedAsset.push(formattedCharts)
 	}
 
-	for (const chart of chartDataByPeggedAsset) padSeriesToTimestamp(chart, lastTimestamp)
-
 	return {
 		chartDataByPeggedAsset,
-		peggedAssetNames: [...peggedAssetNamesSet],
-		peggedNameToChartDataIndex,
+		peggedAssetNames,
+		peggedAssetIdToChartDataIndex,
 		doublecountedIds
 	}
 }
 
-type StablecoinOverviewSource = StablecoinOverviewChartInputs & {
+type StablecoinOverviewChartSource = StablecoinOverviewChartInputs & {
+	peggedAssets: StablecoinListAsset[]
+	chainMetadata: PeggedAssetsInput['chains']
+	filteredIndexes: number[]
+	chain: string
+	filteredPeggedAssets?: ReturnType<typeof formatPeggedAssetsData>
+}
+
+type StablecoinOverviewSource = StablecoinOverviewChartSource & {
 	chains: string[]
 	filteredPeggedAssets: ReturnType<typeof formatPeggedAssetsData>
-	chain: string
 }
 
 const resolveStablecoinOverviewFilteredIndexes = (
-	source: StablecoinOverviewSource,
+	source: Pick<StablecoinOverviewSource, 'filteredPeggedAssets' | 'peggedAssetIdToChartDataIndex'>,
 	filters: StablecoinFilterQuery = {}
 ): number[] => {
 	const filterState = resolveStablecoinFilterState(filters)
@@ -271,7 +250,7 @@ const resolveStablecoinOverviewFilteredIndexes = (
 
 	if (!filterState.hasActiveFilters) {
 		for (const asset of source.filteredPeggedAssets) {
-			const maybeIndex = source.peggedNameToChartDataIndex[asset.name]
+			const maybeIndex = source.peggedAssetIdToChartDataIndex[asset.id]
 			if (maybeIndex == null || seen.has(maybeIndex)) continue
 			seen.add(maybeIndex)
 			indexes.push(maybeIndex)
@@ -282,7 +261,7 @@ const resolveStablecoinOverviewFilteredIndexes = (
 	for (const asset of source.filteredPeggedAssets) {
 		if (!matchesStablecoinFilters(asset, filterState)) continue
 
-		const maybeIndex = source.peggedNameToChartDataIndex[asset.name]
+		const maybeIndex = source.peggedAssetIdToChartDataIndex[asset.id]
 		if (maybeIndex == null || seen.has(maybeIndex)) continue
 		seen.add(maybeIndex)
 		indexes.push(maybeIndex)
@@ -291,15 +270,13 @@ const resolveStablecoinOverviewFilteredIndexes = (
 	return indexes
 }
 
-const getStablecoinsOverviewSource = async (chain: string | null): Promise<StablecoinOverviewSource> => {
+const getStablecoinsOverviewChartSource = async (chain: string | null): Promise<StablecoinOverviewChartSource> => {
 	const chainKey = chain ? slug(chain) : 'all'
-	return withStablecoinsCache(`overview:${chainKey}`, async () => {
+	return withStablecoinsCache(`overview-chart-v3:${chainKey}`, async () => {
 		const chainLabel = chain ?? 'all-llama-app' // custom key to fetch limited data to reduce page size
-		const [{ peggedAssets, chains }, chainData, priceData, rateData] = await Promise.all([
+		const [{ peggedAssets, chains }, chainData] = await Promise.all([
 			getStablecoinAssets(),
-			fetchStablecoinChartApi(chainLabel),
-			getStablecoinPrices().catch(() => null),
-			getStablecoinRates().catch(() => null)
+			fetchStablecoinChartApi(chainLabel)
 		])
 		const breakdown = chainData.breakdown
 		if (!breakdown) {
@@ -312,26 +289,50 @@ const getStablecoinsOverviewSource = async (chain: string | null): Promise<Stabl
 			doublecountedSourceIds: chainData.doublecountedIds
 		})
 
-		const filteredPeggedAssets = formatPeggedAssetsData({
-			peggedAssets,
-			chartDataByPeggedAsset: chartInputs.chartDataByPeggedAsset,
-			priceData,
-			rateData,
-			peggedNameToChartDataIndex: chartInputs.peggedNameToChartDataIndex,
-			chain: chain ?? undefined
-		})
+		const chainSlug = chain ? slug(chain) : null
+		const filteredIndexes: number[] = []
+		for (let index = 0; index < peggedAssets.length; index++) {
+			if (!chainSlug || peggedAssets[index].chains.some((assetChain) => slug(assetChain) === chainSlug)) {
+				filteredIndexes.push(index)
+			}
+		}
 
 		return {
-			chains: fetchGlobalData({ peggedAssets, chains }).chains,
-			filteredPeggedAssets,
 			...chartInputs,
+			peggedAssets,
+			chainMetadata: chains,
+			filteredIndexes,
 			chain: chain ?? 'All'
 		}
 	})
 }
 
+const getStablecoinsOverviewSource = async (chain: string | null): Promise<StablecoinOverviewSource> => {
+	const chainKey = chain ? slug(chain) : 'all'
+	return withStablecoinsCache(`overview-page-v3:${chainKey}`, async () => {
+		const [chartSource, priceData, rateData] = await Promise.all([
+			getStablecoinsOverviewChartSource(chain),
+			getStablecoinPrices().catch(() => null),
+			getStablecoinRates().catch(() => null)
+		])
+		const { peggedAssets, chainMetadata } = chartSource
+		return {
+			...chartSource,
+			chains: fetchGlobalData({ peggedAssets, chains: chainMetadata }).chains,
+			filteredPeggedAssets: formatPeggedAssetsData({
+				peggedAssets,
+				chartDataByPeggedAsset: chartSource.chartDataByPeggedAsset,
+				priceData,
+				rateData,
+				peggedAssetIdToChartDataIndex: chartSource.peggedAssetIdToChartDataIndex,
+				chain: chain ?? undefined
+			})
+		}
+	})
+}
+
 const buildStablecoinOverviewChartSeries = (
-	source: StablecoinOverviewSource,
+	source: StablecoinOverviewChartSource,
 	{
 		chart,
 		filters = {},
@@ -342,14 +343,25 @@ const buildStablecoinOverviewChartSeries = (
 		seriesLimit?: number
 	}
 ): StablecoinChartSeriesPayload => {
-	const filteredIndexes = resolveStablecoinOverviewFilteredIndexes(source, filters)
+	const filterState = resolveStablecoinFilterState(filters)
+	const filteredIndexes =
+		filterState.hasActiveFilters && source.filteredPeggedAssets
+			? resolveStablecoinOverviewFilteredIndexes(
+					{
+						filteredPeggedAssets: source.filteredPeggedAssets,
+						peggedAssetIdToChartDataIndex: source.peggedAssetIdToChartDataIndex
+					},
+					filters
+				)
+			: source.filteredIndexes
 	const baseParams = {
 		chartDataByAssetOrChain: source.chartDataByPeggedAsset,
 		assetsOrChainsList: source.peggedAssetNames,
 		filteredIndexes,
 		issuanceType: 'mcap',
 		selectedChain: source.chain,
-		doublecountedIds: source.doublecountedIds
+		doublecountedIds: source.doublecountedIds,
+		carryForwardAfterSeriesEnd: true
 	}
 	const topToken = getTopStablecoinFromLatestPoints(baseParams)
 	return buildStablecoinOverviewPayload(baseParams, chart, topToken, seriesLimit == null ? undefined : { seriesLimit })
@@ -366,7 +378,8 @@ export const getStablecoinOverviewChartSeries = async ({
 	filters?: StablecoinFilterQuery
 	seriesLimit?: number
 }): Promise<StablecoinChartSeriesPayload> => {
-	const source = await getStablecoinsOverviewSource(chain)
+	const hasFilters = resolveStablecoinFilterState(filters).hasActiveFilters
+	const source = hasFilters ? await getStablecoinsOverviewSource(chain) : await getStablecoinsOverviewChartSource(chain)
 	return buildStablecoinOverviewChartSeries(source, { chart, filters, seriesLimit })
 }
 
@@ -381,14 +394,12 @@ export async function getStablecoinChainMcapSummary(chain: string | null): Promi
 		const breakdown = chainData.breakdown
 		if (!breakdown) return null
 
-		const { chartDataByPeggedAsset, peggedAssetNames, peggedNameToChartDataIndex, doublecountedIds } =
-			buildOverviewChartInputs({
-				peggedAssets,
-				breakdown,
-				doublecountedSourceIds: chainData.doublecountedIds
-			})
-		const filteredIndexes: number[] = []
-		for (const key in peggedNameToChartDataIndex) filteredIndexes.push(peggedNameToChartDataIndex[key])
+		const { chartDataByPeggedAsset, peggedAssetNames, doublecountedIds } = buildOverviewChartInputs({
+			peggedAssets,
+			breakdown,
+			doublecountedSourceIds: chainData.doublecountedIds
+		})
+		const filteredIndexes = chartDataByPeggedAsset.map((_, index) => index)
 
 		const chartParams = {
 			chartDataByAssetOrChain: chartDataByPeggedAsset,
@@ -396,15 +407,10 @@ export async function getStablecoinChainMcapSummary(chain: string | null): Promi
 			filteredIndexes,
 			issuanceType: 'mcap',
 			selectedChain: chain ?? 'All',
-			doublecountedIds
+			doublecountedIds,
+			carryForwardAfterSeriesEnd: true
 		}
-		const { peggedAreaChartData, peggedAreaTotalData } = buildStablecoinChartDataWithFlags(chartParams, {
-			area: true,
-			total: true
-		})
-
-		const mcapStats = getStablecoinMcapStatsFromTotals(peggedAreaTotalData)
-		const topToken = getStablecoinTopTokenFromChartData(peggedAreaChartData)
+		const { mcapStats, topToken } = buildStablecoinMcapSummary(chartParams)
 		const dominanceValue = getStablecoinDominance(topToken, mcapStats.totalMcapCurrent)
 		const dominance = dominanceValue == null ? null : String(dominanceValue)
 

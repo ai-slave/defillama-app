@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => {
 	const instances: Array<{
 		convertToPixel: ReturnType<typeof vi.fn>
 		dispose: ReturnType<typeof vi.fn>
+		getOption: ReturnType<typeof vi.fn>
 		isDisposed: ReturnType<typeof vi.fn>
 		off: ReturnType<typeof vi.fn>
 		on: ReturnType<typeof vi.fn>
@@ -19,6 +20,7 @@ const mocks = vi.hoisted(() => {
 		const instance = {
 			convertToPixel: vi.fn(),
 			dispose: vi.fn(),
+			getOption: vi.fn(() => ({})),
 			isDisposed: vi.fn(() => false),
 			off: vi.fn(),
 			on: vi.fn(),

@@ -10,6 +10,7 @@ import { useYieldChartData, useYieldChartLendBorrow } from '~/containers/Yields/
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { formattedNum } from '~/utils'
+import { normalizeYieldChartType } from '../../types'
 import { getItemIconUrl } from '../../utils'
 import { AriakitMultiSelect } from '../AriakitMultiSelect'
 import { useYieldChartTransformations } from '../useYieldChartTransformations'
@@ -438,14 +439,8 @@ export function YieldsChartTab({
 		selectedYieldChartLoading
 	])
 
-	const {
-		tvlApyDataset: yieldsChartDataset,
-		supplyApyDataset,
-		supplyApy7dDataset,
-		borrowApyDataset,
-		netBorrowApyDataset,
-		latestData: latestYieldData
-	} = useYieldChartTransformations({
+	const { dataset: yieldsChartDataset, latestData: latestYieldData } = useYieldChartTransformations({
+		chartType: normalizeYieldChartType(selectedYieldChartType),
 		chartData: selectedYieldChartData,
 		borrowData: borrowChartData
 	})
@@ -1125,7 +1120,7 @@ export function YieldsChartTab({
 											{selectedYieldChartType === 'supply-apy' ? (
 												<MultiSeriesChart
 													height="280px"
-													dataset={supplyApyDataset}
+													dataset={yieldsChartDataset}
 													charts={supplyApyCharts}
 													chartOptions={percentTimeChartOptions}
 													title="Supply APY"
@@ -1136,7 +1131,7 @@ export function YieldsChartTab({
 											{selectedYieldChartType === 'supply-apy-7d' ? (
 												<MultiSeriesChart
 													height="280px"
-													dataset={supplyApy7dDataset}
+													dataset={yieldsChartDataset}
 													charts={supplyApy7dCharts}
 													chartOptions={singlePercentTimeChartOptions}
 													title="7 Day Avg Supply APY"
@@ -1146,7 +1141,7 @@ export function YieldsChartTab({
 											{selectedYieldChartType === 'borrow-apy' ? (
 												<MultiSeriesChart
 													height="280px"
-													dataset={borrowApyDataset}
+													dataset={yieldsChartDataset}
 													charts={borrowApyCharts}
 													chartOptions={percentTimeChartOptions}
 													title="Borrow Cost APY"
@@ -1157,7 +1152,7 @@ export function YieldsChartTab({
 											{selectedYieldChartType === 'net-borrow-apy' ? (
 												<MultiSeriesChart
 													height="280px"
-													dataset={netBorrowApyDataset}
+													dataset={yieldsChartDataset}
 													charts={netBorrowApyCharts}
 													chartOptions={singlePercentTimeChartOptions}
 													title="Net Borrow Cost"

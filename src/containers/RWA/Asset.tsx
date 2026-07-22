@@ -25,7 +25,6 @@ import { formattedNum, truncateAddress } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IRWAAssetData, IRWAAssetFlowSummary } from './api.types'
-import { toRwaMultiSeriesChartDataset } from './chartDataset'
 import { definitions } from './definitions'
 import {
 	RWAFlowCoverageTag,
@@ -35,6 +34,7 @@ import {
 	RWAFlowVsPriceStrip
 } from './FlowPanelParts'
 import {
+	buildRWAFlowChart,
 	formatSignedRWAFlow,
 	getRWAFlowTextClass,
 	getRWAFlowVsPriceSummary,
@@ -487,28 +487,26 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 	const displayPools = asset.yieldPools ?? []
 
 	const chartDimensions = (asset.chartDataset?.dimensions ?? []) as string[]
-	const assetChartDataset = useMemo(
-		() => (asset.chartDataset ? toRwaMultiSeriesChartDataset(asset.chartDataset) : null),
-		[asset.chartDataset]
-	)
+	const assetChartDataset = asset.chartDataset
 	const timeSeriesCharts =
 		chartDimensions.length > 0
 			? BASE_TIME_SERIES_CHARTS.filter((chart) => chartDimensions.includes(String(chart.encode.y)))
 			: BASE_TIME_SERIES_CHARTS
-	const flowVsPriceSummary = useMemo(
-		() => (assetFlows ? getRWAFlowVsPriceSummary(assetFlows.data, flowGroupBy, undefined, flowVisibleRange) : null),
-		[assetFlows, flowGroupBy, flowVisibleRange]
-	)
-	const flowChartSelection = useMemo<RWAFlowChartSelection>(
-		() =>
+	const flowChart = useMemo(() => {
+		if (!isFlowChart || !assetFlows) return null
+		const selection: RWAFlowChartSelection =
 			chartMetric === 'flowVsPrice'
 				? { view: 'flowVsPrice', groupBy: flowGroupBy, mcapByTimestamp: null }
 				: {
 						view: 'netFlows',
 						groupBy: flowGroupBy,
 						overlays: showMcapOverlay ? [{ metric: 'onChainMcap', values: null }] : []
-					},
-		[chartMetric, flowGroupBy, showMcapOverlay]
+					}
+		return buildRWAFlowChart({ points: assetFlows.data, selection })
+	}, [assetFlows, chartMetric, flowGroupBy, isFlowChart, showMcapOverlay])
+	const flowVsPriceSummary = useMemo(
+		() => (chartMetric === 'flowVsPrice' && flowChart ? getRWAFlowVsPriceSummary(flowChart, flowVisibleRange) : null),
+		[chartMetric, flowChart, flowVisibleRange]
 	)
 
 	const attestationLinks = asset.attestationLinks ?? []
@@ -592,11 +590,10 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
 									{flowError instanceof Error ? flowError.message : 'Failed to load flow data.'}
 								</ChartPanelBodyFallback>
-							) : assetFlows ? (
+							) : flowChart ? (
 								<Suspense fallback={<ChartPanelBodyFallback />}>
 									<RWAFlowsChart
-										points={assetFlows.data}
-										selection={flowChartSelection}
+										chart={flowChart}
 										onVisibleRangeChange={handleFlowVisibleRangeChange}
 										onReady={onAssetChartReady}
 									/>

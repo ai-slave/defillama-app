@@ -1,3 +1,4 @@
+import type * as echarts from 'echarts/core'
 import { lazy, type ReactNode, startTransition, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import {
 	ChartGroupingSelector,
@@ -22,7 +23,7 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 interface BridgeVolumeChartProps {
 	data: BridgeVolumeInputPoint[] | null | undefined
 	height?: string
-	onReady?: (instance: any | null) => void
+	onReady?: (instance: echarts.ECharts | null) => void
 	headerStart?: ReactNode
 	headerEnd?: ReactNode
 }

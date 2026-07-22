@@ -10,12 +10,14 @@ import {
 	useMemo,
 	useReducer,
 	useRef,
+	useState,
 	useSyncExternalStore
 } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import pb from '~/utils/pocketbase'
+import { getDashboardHydrationState, isDashboardEditingLocked } from './dashboardHydrationState'
 import { dashboardReducer, initDashboardState } from './dashboardReducer'
 import type {
 	AIGeneratedData,
@@ -28,10 +30,13 @@ import type {
 import type { ProDashboardAppMetadata } from './dataContracts'
 import { useAutoSave } from './hooks/useAutoSave'
 import { useDashboardAPI } from './hooks/useDashboardAPI'
+import { useDashboardConfigFallback } from './hooks/useDashboardConfigFallback'
 import { useDashboardPermissions } from './hooks/useDashboardPermissions'
 import { useDashboardStream } from './hooks/useDashboardStream'
 import { useFreeTierStatus } from './hooks/useFreeTierStatus'
+import { isDashboardInitialRenderHydration } from './initialDashboard'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartsData, useProtocolsAndChains } from './queries'
+import { createDashboardChartResolutionCache, resolveDashboardChartItems } from './resolveChartItems'
 import { matchesDashboardKey } from './services/DashboardAPI'
 import type {
 	Chain,
@@ -54,7 +59,6 @@ import { cleanItemsForSaving } from './utils/dashboardUtils'
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 const EMPTY_PROTOCOLS: Protocol[] = []
 const EMPTY_CHAINS: Chain[] = []
-const EMPTY_CHART_DATA: ChartConfig['data'] = []
 const NOOP = () => {}
 
 function subscribeToClientReady(onStoreChange: () => void) {
@@ -316,12 +320,15 @@ export function ProDashboardAPIProvider({
 	const authReady = hasMounted && !loaders.userLoading && (!hasStoredToken || !!authToken)
 	const stream = useDashboardStream(initialDashboardId, authToken, authReady)
 	const hasInitialDashboard = matchesDashboardKey(initialDashboard, initialDashboardId)
-	const streamSettled = authReady && stream.isDone
-	const streamFatal = streamSettled && !!stream.error && stream.dashboard == null
-	const dashboardReady =
-		!initialDashboardId || hasInitialDashboard || (streamSettled && !(mode === 'view' && streamFatal))
-	const streamDone = !initialDashboardId || (streamSettled && !(mode === 'view' && streamFatal))
-	const streamHasResolved = !initialDashboardId || hasInitialDashboard || streamSettled
+	const { dashboardReady, streamDone, streamHasResolved, shouldFetchTrustedDashboardFallback } =
+		getDashboardHydrationState({
+			hasDashboardId: !!initialDashboardId,
+			hasInitialDashboard,
+			authReady,
+			streamIsDone: stream.isDone,
+			hasStreamDashboard: stream.dashboard != null,
+			mode
+		})
 	const proxyAuthToken = hasActiveSubscription && pb.authStore.isValid ? pb.authStore.token : null
 	const modeContextValue = useMemo(() => ({ mode }), [mode])
 
@@ -334,6 +341,7 @@ export function ProDashboardAPIProvider({
 						dashboardReady={dashboardReady}
 						streamDone={streamDone}
 						streamHasResolved={streamHasResolved}
+						shouldFetchTrustedDashboardFallback={shouldFetchTrustedDashboardFallback}
 						mode={mode}
 						initialDashboardId={initialDashboardId}
 						initialDashboard={hasInitialDashboard ? initialDashboard : null}
@@ -354,6 +362,7 @@ function ProDashboardAPIProviderInner({
 	dashboardReady,
 	streamDone,
 	streamHasResolved,
+	shouldFetchTrustedDashboardFallback,
 	mode,
 	initialDashboardId,
 	initialDashboard,
@@ -365,6 +374,7 @@ function ProDashboardAPIProviderInner({
 	dashboardReady: boolean
 	streamDone: boolean
 	streamHasResolved: boolean
+	shouldFetchTrustedDashboardFallback: boolean
 	mode: DashboardMode
 	initialDashboardId?: string
 	initialDashboard?: Dashboard | null
@@ -382,13 +392,10 @@ function ProDashboardAPIProviderInner({
 		[initialDashboardId, isAuthenticated, user?.id]
 	)
 	useEffect(() => {
-		if (initialDashboard) {
-			queryClient.setQueryData(dashboardQueryKey, initialDashboard, { updatedAt: Date.now() })
-		}
 		if (stream.dashboard) {
 			queryClient.setQueryData(dashboardQueryKey, stream.dashboard, { updatedAt: Date.now() })
 		}
-	}, [initialDashboard, stream.dashboard, queryClient, dashboardQueryKey])
+	}, [stream.dashboard, queryClient, dashboardQueryKey])
 
 	const protocols = protocolsAndChains?.protocols ?? EMPTY_PROTOCOLS
 	const rawChains = protocolsAndChains?.chains ?? EMPTY_CHAINS
@@ -424,16 +431,27 @@ function ProDashboardAPIProviderInner({
 	const applyDashboard = useCallback((dashboard: Dashboard) => {
 		dispatch({ type: 'APPLY_DASHBOARD', payload: dashboard })
 	}, [])
+	const lastAppliedTrustedDashboardRef = useRef<Dashboard | null>(initialDashboard ?? null)
+	const [hasTrustedDashboard, setHasTrustedDashboard] = useState(!initialDashboard)
+	const applyTrustedDashboard = useCallback(
+		(dashboard: Dashboard | null | undefined) => {
+			if (
+				!dashboard ||
+				isDashboardInitialRenderHydration(dashboard) ||
+				!matchesDashboardKey(dashboard, initialDashboardId) ||
+				lastAppliedTrustedDashboardRef.current === dashboard
+			)
+				return
+			lastAppliedTrustedDashboardRef.current = dashboard
+			setHasTrustedDashboard(true)
+			applyDashboard(dashboard)
+		},
+		[applyDashboard, initialDashboardId]
+	)
 
 	useEffect(() => {
-		if (
-			stream.dashboard &&
-			matchesDashboardKey(stream.dashboard, initialDashboardId) &&
-			currentDashboard?.id !== stream.dashboard.id
-		) {
-			applyDashboard(stream.dashboard)
-		}
-	}, [applyDashboard, currentDashboard, initialDashboardId, stream.dashboard])
+		applyTrustedDashboard(stream.dashboard)
+	}, [applyTrustedDashboard, stream.dashboard])
 
 	const createDashboardDialogStore = Ariakit.useDialogStore()
 
@@ -448,7 +466,14 @@ function ProDashboardAPIProviderInner({
 	// Use the permissions hook
 	const { isReadOnly: rawIsReadOnly, dashboardOwnerId } = useDashboardPermissions(currentDashboard)
 	const isReadOnly = mode === 'view' ? true : rawIsReadOnly
-	const isReadOnlyUntilDashboardLoaded = isReadOnly || (initialDashboardId ? !currentDashboard : false)
+	const isReadOnlyUntilDashboardLoaded = isDashboardEditingLocked({
+		isReadOnly,
+		hasDashboardId: !!initialDashboardId,
+		hasCurrentDashboard: !!currentDashboard,
+		mode,
+		hasInitialDashboard: !!initialDashboard,
+		hasTrustedDashboard
+	})
 
 	// Use the auto-save hook
 	const { autoSave } = useAutoSave({
@@ -563,19 +588,14 @@ function ProDashboardAPIProviderInner({
 		initialData: matchesDashboardKey(initialDashboard, initialDashboardId) ? initialDashboard : undefined,
 		initialDataUpdatedAt: getDashboardInitialUpdatedAt(initialDashboard)
 	})
+	useDashboardConfigFallback(shouldFetchTrustedDashboardFallback, refetchDashboardQuery)
 	// Loading until dashboard config arrives from stream (or query fallback)
 	const isLoadingDashboard =
 		(!!initialDashboardId && stream.dashboard === undefined && !dashboardReady) || isQueryLoadingDashboard
 
 	useEffect(() => {
-		if (
-			currentDashboard2 !== null &&
-			matchesDashboardKey(currentDashboard2, initialDashboardId) &&
-			currentDashboard?.id !== currentDashboard2?.id
-		) {
-			applyDashboard(currentDashboard2)
-		}
-	}, [applyDashboard, currentDashboard2, currentDashboard, initialDashboardId])
+		applyTrustedDashboard(currentDashboard2)
+	}, [applyTrustedDashboard, currentDashboard2])
 
 	const loadError = useMemo<{ status: number; message: string } | null>(() => {
 		if (!initialDashboardId || currentDashboard) return null
@@ -1047,49 +1067,26 @@ function ProDashboardAPIProviderInner({
 
 	const proxyAuthToken = useContext(ProxyAuthTokenContext)
 	const chartQueries = useChartsData(allChartItems, timePeriod, customTimePeriod, proxyAuthToken)
-
-	const queryById = useMemo(() => {
-		const map = new Map<string, (typeof chartQueries)[number]>()
+	const chartIndexById = useMemo(() => {
+		const map = new Map<string, number>()
 		for (let index = 0; index < allChartItems.length; index++) {
-			const chartConfig = allChartItems[index]
-			if (chartQueries[index]) {
-				map.set(chartConfig.id, chartQueries[index])
-			}
+			map.set(allChartItems[index].id, index)
 		}
 		return map
-	}, [allChartItems, chartQueries])
+	}, [allChartItems])
+	const chartResolutionCacheRef = useRef(createDashboardChartResolutionCache())
 
-	const chartsWithData: DashboardItemConfig[] = useMemo(() => {
-		const resolveChartItem = (chartItem: ChartConfig) => {
-			const query = queryById.get(chartItem.id)
-			const data = query?.data ?? EMPTY_CHART_DATA
-			const isLoading = !query || (query?.isLoading ?? false) || (!streamDone && !query?.data)
-			const hasError = query?.isError ?? false
-			const refetch = query?.refetch ?? NOOP
-			return {
-				...chartItem,
-				data,
-				isLoading,
-				hasError,
-				refetch
-			}
-		}
-
-		return items.map((item) => {
-			if (item.kind === 'chart') {
-				return resolveChartItem(item)
-			}
-
-			if (item.kind === 'multi') {
-				return {
-					...item,
-					items: limitMultiChartItems(item.items).map(resolveChartItem)
-				}
-			}
-
-			return item
-		})
-	}, [items, queryById, streamDone])
+	const chartsWithData: DashboardItemConfig[] = useMemo(
+		() =>
+			resolveDashboardChartItems({
+				items,
+				chartIndexById,
+				chartQueries,
+				streamDone,
+				cache: chartResolutionCacheRef.current
+			}),
+		[items, chartIndexById, chartQueries, streamDone]
+	)
 
 	const handlersRef = useRef<{
 		handleAddChart: typeof handleAddChart

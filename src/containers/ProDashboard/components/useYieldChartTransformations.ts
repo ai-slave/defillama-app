@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import type { CustomTimePeriod, TimePeriod } from '../dashboardTypes'
+import type { ActiveYieldChartType } from '../types'
 import {
 	borrowApyDimensions,
 	netBorrowApyDimensions,
@@ -14,6 +15,7 @@ import {
 type TimeBounds = { start: number; end: number } | null
 
 interface UseYieldChartTransformationsOptions {
+	chartType: ActiveYieldChartType
 	chartData: PoolHistory | null | undefined
 	borrowData?: BorrowMarketHistory | null | undefined
 	timePeriod?: TimePeriod | null
@@ -70,79 +72,89 @@ function add(value: number | null, extra: number | null | undefined): number | n
 	return (value ?? 0) + (extra ?? 0)
 }
 
-export function buildProSupplyHistorySeries(chartData: PoolHistory, bounds: TimeBounds = null) {
-	const tvlApyDataset: MultiSeriesChartDataset = {
-		source: [],
-		dimensions: tvlApyDimensions
+export function buildProYieldChartSeries({
+	chartType,
+	chartData,
+	borrowData,
+	bounds = null
+}: {
+	chartType: ActiveYieldChartType
+	chartData: PoolHistory
+	borrowData: BorrowMarketHistory
+	bounds?: TimeBounds
+}): MultiSeriesChartDataset {
+	const dimensions =
+		chartType === 'tvl-apy'
+			? tvlApyDimensions
+			: chartType === 'supply-apy'
+				? supplyApyDimensions
+				: chartType === 'supply-apy-7d'
+					? supplyApy7dDimensions
+					: chartType === 'borrow-apy'
+						? borrowApyDimensions
+						: netBorrowApyDimensions
+	const dataset: MultiSeriesChartDataset = { source: [], dimensions }
+
+	if (chartType === 'borrow-apy' || chartType === 'net-borrow-apy') {
+		for (const point of borrowData) {
+			const date = parseDate(point.date)
+			if (!inBounds(date, bounds)) continue
+			const timestamp = date * 1000
+			if (chartType === 'net-borrow-apy') {
+				const netCost = point.borrow_cost_apy.avg_1d.total
+				if (netCost != null) dataset.source.push([timestamp, netCost])
+				continue
+			}
+			const intrinsic = point.intrinsic?.apy.avg_1d.base ?? null
+			if (
+				point.borrow_cost_apy.avg_1d.base != null ||
+				point.borrow_cost_apy.avg_1d.reward != null ||
+				intrinsic != null
+			) {
+				dataset.source.push([
+					timestamp,
+					point.borrow_cost_apy.avg_1d.base,
+					point.borrow_cost_apy.avg_1d.reward == null ? null : -point.borrow_cost_apy.avg_1d.reward,
+					intrinsic
+				])
+			}
+		}
+		return dataset
 	}
-	const supplyApyDataset: MultiSeriesChartDataset = {
-		source: [],
-		dimensions: supplyApyDimensions
-	}
-	const supplyApy7dDataset: MultiSeriesChartDataset = {
-		source: [],
-		dimensions: supplyApy7dDimensions
-	}
+
 	for (const point of chartData) {
 		const date = parseDate(point.date)
 		if (!inBounds(date, bounds)) continue
 		const timestamp = date * 1000
-		tvlApyDataset.source.push([timestamp, add(point.apy.avg_1d.total, point.intrinsic?.apy.avg_1d.base), point.tvl_usd])
-		const intrinsic = point.intrinsic?.apy.avg_1d.base ?? null
-		if (point.apy.avg_1d.base != null || point.apy.avg_1d.reward != null || intrinsic != null) {
-			supplyApyDataset.source.push([timestamp, point.apy.avg_1d.base, point.apy.avg_1d.reward, intrinsic])
+		if (chartType === 'tvl-apy') {
+			dataset.source.push([timestamp, add(point.apy.avg_1d.total, point.intrinsic?.apy.avg_1d.base), point.tvl_usd])
+		} else if (chartType === 'supply-apy-7d') {
+			const avg7 = add(point.apy.avg_7d.total, point.intrinsic?.apy.avg_7d.base)
+			if (avg7 != null) dataset.source.push([timestamp, avg7])
+		} else {
+			const intrinsic = point.intrinsic?.apy.avg_1d.base ?? null
+			if (point.apy.avg_1d.base != null || point.apy.avg_1d.reward != null || intrinsic != null) {
+				dataset.source.push([timestamp, point.apy.avg_1d.base, point.apy.avg_1d.reward, intrinsic])
+			}
 		}
-		const avg7 = add(point.apy.avg_7d.total, point.intrinsic?.apy.avg_7d.base)
-		if (avg7 != null) supplyApy7dDataset.source.push([timestamp, avg7])
 	}
-	return { tvlApyDataset, supplyApyDataset, supplyApy7dDataset }
-}
-
-export function buildProBorrowHistorySeries(borrowData: BorrowMarketHistory, bounds: TimeBounds = null) {
-	const borrowApyDataset: MultiSeriesChartDataset = {
-		source: [],
-		dimensions: borrowApyDimensions
-	}
-	const netBorrowApyDataset: MultiSeriesChartDataset = {
-		source: [],
-		dimensions: netBorrowApyDimensions
-	}
-	for (const point of borrowData) {
-		const date = parseDate(point.date)
-		if (!inBounds(date, bounds)) continue
-		const timestamp = date * 1000
-		const intrinsic = point.intrinsic?.apy.avg_1d.base ?? null
-		if (point.borrow_cost_apy.avg_1d.base != null || point.borrow_cost_apy.avg_1d.reward != null || intrinsic != null) {
-			borrowApyDataset.source.push([
-				timestamp,
-				point.borrow_cost_apy.avg_1d.base,
-				point.borrow_cost_apy.avg_1d.reward == null ? null : -point.borrow_cost_apy.avg_1d.reward,
-				intrinsic
-			])
-		}
-		const netCost = point.borrow_cost_apy.avg_1d.total
-		if (netCost != null) netBorrowApyDataset.source.push([timestamp, netCost])
-	}
-	return { borrowApyDataset, netBorrowApyDataset }
+	return dataset
 }
 
 export function useYieldChartTransformations({
+	chartType,
 	chartData,
 	borrowData,
 	timePeriod,
 	customTimePeriod
 }: UseYieldChartTransformationsOptions) {
 	const bounds = useMemo(() => getTimeBounds(timePeriod, customTimePeriod), [timePeriod, customTimePeriod])
-	const { tvlApyDataset, supplyApyDataset, supplyApy7dDataset } = useMemo(
-		() => buildProSupplyHistorySeries(chartData ?? [], bounds),
-		[chartData, bounds]
-	)
-	const { borrowApyDataset, netBorrowApyDataset } = useMemo(
-		() => buildProBorrowHistorySeries(borrowData ?? [], bounds),
-		[borrowData, bounds]
+	const dataset = useMemo(
+		() => buildProYieldChartSeries({ chartType, chartData: chartData ?? [], borrowData: borrowData ?? [], bounds }),
+		[borrowData, bounds, chartData, chartType]
 	)
 
-	const latest = tvlApyDataset.source.at(-1)
+	const latest = chartType === 'tvl-apy' ? dataset.source.at(-1) : undefined
 	const latestApy = latest?.[1] as number | null | undefined
 	const latestData = {
 		apy: latestApy?.toFixed(2) ?? null,
@@ -150,11 +162,7 @@ export function useYieldChartTransformations({
 	}
 
 	return {
-		tvlApyDataset,
-		supplyApyDataset,
-		supplyApy7dDataset,
-		borrowApyDataset,
-		netBorrowApyDataset,
+		dataset,
 		latestData
 	}
 }

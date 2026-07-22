@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => {
 		dispatchAction: vi.fn(),
 		dispose: vi.fn(),
 		getHeight: vi.fn(() => 360),
+		getOption: vi.fn(() => ({})),
 		isDisposed: vi.fn(() => false),
 		off: vi.fn(),
 		on: vi.fn(),
@@ -277,7 +278,7 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(options.yAxis[0].axisLabel.color).toBe('#6f6f6f')
 	})
 
-	it('passes only selected string-encoded dimensions to ECharts while preserving the category axis', async () => {
+	it('filters selected string-encoded series without copying dataset rows', async () => {
 		const charts: MultiSeriesChartSeriesConfig[] = [
 			{ type: 'line', name: 'Hidden', encode: { x: 'category', y: 'Hidden' } },
 			{ type: 'line', name: 'Visible', encode: { x: 'category', y: 'Visible' } }
@@ -300,14 +301,14 @@ describe('MultiSeriesChart lifecycle', () => {
 		)
 
 		const options = mocks.instance.setOption.mock.calls[0][0]
-		expect(options.dataset.dimensions).toEqual(['__dimension_0', '__dimension_1'])
-		expect(options.dataset.source).toEqual([['A', 20]])
+		expect(options.dataset.dimensions).toEqual(['__dimension_0', '__dimension_1', '__dimension_2'])
+		expect(options.dataset.source[0]).toBe(sourceRow)
 		expect(options.series).toHaveLength(1)
-		expect(options.series[0].encode).toEqual({ x: 0, y: 1 })
+		expect(options.series[0].encode).toEqual({ x: 0, y: 2 })
 		expect(sourceRow).toEqual(['A', 10, 20])
 	})
 
-	it('remaps numeric encodes after removing hidden dataset dimensions', async () => {
+	it('keeps numeric encodes stable when filtering hidden series', async () => {
 		const charts: MultiSeriesChartSeriesConfig[] = [
 			{ type: 'line', name: 'Hidden', encode: { x: 0, y: 1 } },
 			{ type: 'line', name: 'Visible', encode: { x: 0, y: 2 } }
@@ -329,8 +330,8 @@ describe('MultiSeriesChart lifecycle', () => {
 		)
 
 		const options = mocks.instance.setOption.mock.calls[0][0]
-		expect(options.dataset.dimensions).toEqual(['__dimension_0', '__dimension_1'])
-		expect(options.series[0].encode).toEqual({ x: 0, y: 1 })
+		expect(options.dataset.dimensions).toEqual(['__dimension_0', '__dimension_1', '__dimension_2'])
+		expect(options.series[0].encode).toEqual({ x: 0, y: 2 })
 	})
 
 	it('finishes replacing the model before showing an always-visible tooltip', async () => {
@@ -363,6 +364,54 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(mocks.instance.setOption.mock.invocationCallOrder.at(-1)!).toBeLessThan(
 			mocks.instance.dispatchAction.mock.invocationCallOrder.at(-1)!
 		)
+	})
+
+	it('derives direct-series bounds and sticky tooltip index from the visible shorter series', async () => {
+		const charts: MultiSeriesChartSeriesConfig[] = [
+			{
+				type: 'line',
+				name: 'Short',
+				encode: { x: 0, y: 1 },
+				data: [
+					[10, 1],
+					[20, 2]
+				]
+			},
+			{
+				type: 'line',
+				name: 'Long',
+				encode: { x: 0, y: 1 },
+				data: [
+					[1, 1],
+					[50, 2],
+					[100, 3]
+				]
+			}
+		]
+
+		await act(async () =>
+			root.render(
+				<MultiSeriesChart
+					dataset={{ dimensions: ['timestamp', 'Short', 'Long'], source: [] }}
+					charts={charts}
+					selectedCharts={new Set(['Short'])}
+					hallmarks={[[15, 'Event']]}
+					hallmarksInMs
+					alwaysShowTooltip
+					exportButtons="hidden"
+				/>
+			)
+		)
+
+		const options = mocks.instance.setOption.mock.calls[0][0]
+		expect(options.xAxis).toMatchObject({ min: 10, max: 20 })
+		expect(options.dataZoom).toBeDefined()
+		expect(mocks.instance.dispatchAction).toHaveBeenCalledWith({
+			type: 'showTip',
+			seriesIndex: 0,
+			dataIndex: 1,
+			position: [60, 0]
+		})
 	})
 
 	it('removes the default zero-baseline callback from a log-scaled axis', async () => {

@@ -8,7 +8,7 @@ import { Checkbox } from '~/ui/Checkbox'
 import { formattedNum } from '~/utils'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAAssetGroupsOverviewRow, RWAOverviewPage } from './api.types'
-import type { RWAChartDataset } from './chartDataset'
+import type { RWAPositionalChartDataset } from './chartDataset'
 import { definitions } from './definitions'
 import type { RWAFlowTreemapSizeRow } from './flowTreemap'
 import { RWAOverviewBreakdownChart } from './OverviewBreakdownChart'
@@ -95,7 +95,7 @@ export function RWAAssetGroups({
 	page
 }: {
 	assetGroups: IRWAAssetGroupsOverviewRow[]
-	initialChartDataset: RWAChartDataset
+	initialChartDataset: RWAPositionalChartDataset
 	page: RWAOverviewPage
 }) {
 	const router = useRouter()

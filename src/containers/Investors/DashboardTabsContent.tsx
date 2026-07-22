@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense } from 'react'
 import { ChartGrid } from '~/containers/ProDashboard/components/ChartGrid'
 import { EmptyState } from '~/containers/ProDashboard/components/EmptyState'
 import {
@@ -69,21 +69,21 @@ function ComingSoonSection({ label }: { label: string }) {
 
 export const DEFAULT_TABS: DashboardTabConfig[] = [{ id: 'dashboard', label: 'Overview' }]
 
-function DashboardTabInner({ visible }: { visible: boolean }) {
+function DashboardTabInner() {
 	const { items } = useProDashboardItemsState()
 	const { protocolsLoading } = useProDashboardCatalog()
 	const { isLoadingDashboard, currentDashboard } = useProDashboardDashboard()
 	const dashboardReady = !isLoadingDashboard && !!currentDashboard
 
 	return (
-		<div className={visible ? '' : 'hidden'}>
+		<>
 			{dashboardReady && items.length > 0 && (
 				<div className="w-full">
 					<ChartGrid onAddChartClick={NOOP} />
 				</div>
 			)}
 			{dashboardReady && !protocolsLoading && items.length === 0 && <EmptyState onAddChart={NOOP} isReadOnly />}
-		</div>
+		</>
 	)
 }
 
@@ -102,26 +102,7 @@ export function InvestorsContent({
 	hasCustomHeader?: boolean
 	hideDuplicateButton: boolean
 }) {
-	const prevTab = useRef(activeTab)
-	const [visitedTabsBase, setVisitedTabsBase] = useState<Set<string>>(() => new Set([activeTab]))
-
-	// Always include current activeTab synchronously — no blink waiting for useEffect
-	const visitedTabs = visitedTabsBase.has(activeTab) ? visitedTabsBase : new Set([...visitedTabsBase, activeTab])
-
-	useEffect(() => {
-		setVisitedTabsBase((prev) => {
-			if (prev.has(activeTab)) return prev
-			return new Set(prev).add(activeTab)
-		})
-		if (activeTab !== prevTab.current) {
-			prevTab.current = activeTab
-			requestAnimationFrame(() => {
-				window.dispatchEvent(new Event('resize'))
-			})
-		}
-	}, [activeTab])
-
-	const dashboardVisited = visitedTabs.has('dashboard')
+	const activeCustomTab = tabs.find((tab) => tab.id === activeTab)
 
 	return (
 		<>
@@ -133,36 +114,19 @@ export function InvestorsContent({
 				</header>
 			)}
 
-			{dashboardVisited && (
+			{activeTab === 'dashboard' && (
 				<ProDashboardAPIProvider
 					key={dashboardId}
 					initialDashboardId={dashboardId}
 					hideDuplicateButton={hideDuplicateButton}
 				>
-					<DashboardTabInner visible={activeTab === 'dashboard'} />
+					<DashboardTabInner />
 				</ProDashboardAPIProvider>
 			)}
 
-			{tabs.map((tab) => {
-				if (tab.id === 'dashboard') return null
-				if (tab.externalHref) return null
-				if (!visitedTabs.has(tab.id)) return null
-				if (!tab.component) {
-					return (
-						<div key={tab.id} className={activeTab === tab.id ? '' : 'hidden'}>
-							<ComingSoonSection label={tab.label} />
-						</div>
-					)
-				}
-				const TabComponent = tab.component
-				return (
-					<div key={tab.id} className={activeTab === tab.id ? '' : 'hidden'}>
-						<Suspense fallback={null}>
-							<TabComponent />
-						</Suspense>
-					</div>
-				)
-			})}
+			{activeCustomTab && activeCustomTab.id !== 'dashboard' && !activeCustomTab.externalHref && (
+				<ActiveCustomTab tab={activeCustomTab} />
+			)}
 		</>
 	)
 }
@@ -180,22 +144,7 @@ export function CustomOnlyContent({
 	hasCustomHeader?: boolean
 	hideDuplicateButton: boolean
 }) {
-	const prevTab = useRef(activeTab)
-	const [visitedTabsBase, setVisitedTabsBase] = useState<Set<string>>(() => new Set([activeTab]))
-	const visitedTabs = visitedTabsBase.has(activeTab) ? visitedTabsBase : new Set([...visitedTabsBase, activeTab])
-
-	useEffect(() => {
-		setVisitedTabsBase((prev) => {
-			if (prev.has(activeTab)) return prev
-			return new Set(prev).add(activeTab)
-		})
-		if (activeTab !== prevTab.current) {
-			prevTab.current = activeTab
-			requestAnimationFrame(() => {
-				window.dispatchEvent(new Event('resize'))
-			})
-		}
-	}, [activeTab])
+	const activeCustomTab = tabs.find((tab) => tab.id === activeTab)
 
 	return (
 		<>
@@ -207,32 +156,29 @@ export function CustomOnlyContent({
 				</header>
 			)}
 
-			{tabs.map((tab) => {
-				if (tab.externalHref) return null
-				if (!visitedTabs.has(tab.id)) return null
-				if (tab.proDashboardId) {
-					return (
-						<div key={tab.id} className={activeTab === tab.id ? '' : 'hidden'}>
-							<ProDashboardAPIProvider
-								key={tab.proDashboardId}
-								initialDashboardId={tab.proDashboardId}
-								hideDuplicateButton={hideDuplicateButton}
-							>
-								<DashboardTabInner visible={activeTab === tab.id} />
-							</ProDashboardAPIProvider>
-						</div>
-					)
-				}
-				if (!tab.component) return null
-				const TabComponent = tab.component
-				return (
-					<div key={tab.id} className={activeTab === tab.id ? '' : 'hidden'}>
-						<Suspense fallback={null}>
-							<TabComponent />
-						</Suspense>
-					</div>
-				)
-			})}
+			{activeCustomTab &&
+				!activeCustomTab.externalHref &&
+				(activeCustomTab.proDashboardId ? (
+					<ProDashboardAPIProvider
+						key={activeCustomTab.proDashboardId}
+						initialDashboardId={activeCustomTab.proDashboardId}
+						hideDuplicateButton={hideDuplicateButton}
+					>
+						<DashboardTabInner />
+					</ProDashboardAPIProvider>
+				) : (
+					<ActiveCustomTab tab={activeCustomTab} />
+				))}
 		</>
+	)
+}
+
+function ActiveCustomTab({ tab }: { tab: DashboardTabConfig }) {
+	if (!tab.component) return <ComingSoonSection label={tab.label} />
+	const TabComponent = tab.component
+	return (
+		<Suspense fallback={null}>
+			<TabComponent />
+		</Suspense>
 	)
 }

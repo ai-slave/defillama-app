@@ -364,6 +364,7 @@ export function limitMultiChartItems(items: ChartConfig[]): ChartConfig[] {
 
 export interface TableFilters {
 	protocols?: string[]
+	tokens?: string[]
 	categories?: string[]
 	excludedCategories?: string[]
 	oracles?: string[]
@@ -669,6 +670,10 @@ export type ProDashboardChartType = keyof typeof CHART_TYPES
 /** Saved dashboards are unvalidated JSON, so narrow chart types at the lookup boundary. */
 export function isProDashboardChartType(type: string): type is ProDashboardChartType {
 	return Object.hasOwn(CHART_TYPES, type)
+}
+
+export function getProDashboardChartTypeConfig(type: string) {
+	return isProDashboardChartType(type) ? CHART_TYPES[type] : undefined
 }
 
 // Helper functions to extract chart types from CHART_TYPES

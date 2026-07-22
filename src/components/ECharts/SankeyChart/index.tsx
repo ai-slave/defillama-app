@@ -11,6 +11,7 @@ import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
 import { abbreviateNumber } from '~/utils'
+import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
 import { useChartTheme } from '../shared/chartTheme'
@@ -125,7 +126,7 @@ function normalizeSankeyFormatterParams(params: unknown): SankeyFormatterParams 
 	}
 }
 
-export default function SankeyChart({
+function SankeyChart({
 	height = '500px',
 	nodes,
 	links,
@@ -150,6 +151,8 @@ export default function SankeyChart({
 	const exportTitle = imageExportTitle || title
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
+	const persistentLifecycle = usePersistentEChartsLifecycle()
+	const isVisibleRef = useRef(false)
 	const onReadyRef = useRef(onReady)
 	const formatSankeyValue = useCallback(
 		(value: number): string => {
@@ -351,28 +354,54 @@ export default function SankeyChart({
 		[nodes, option, series, useMobileLayout]
 	)
 
+	const applyOption = useCallback(() => {
+		const instance = chartRef.current
+		const element = containerRef.current
+		if (!isVisibleRef.current || !instance || instance.isDisposed() || !element) return
+		instance.setOption(getOption(element), { notMerge: true })
+	}, [getOption])
+
 	const initializeChart = useCallback(() => {
 		const currentInstance = chartRef.current
-		if (currentInstance && !currentInstance.isDisposed()) return
+		if (currentInstance && !currentInstance.isDisposed()) {
+			applyOption()
+			return
+		}
 
 		const element = containerRef.current
-		if (!element?.isConnected) return
+		if (!element?.isConnected) {
+			isVisibleRef.current = false
+			return
+		}
 		const bounds = element.getBoundingClientRect()
-		// Enterprise dashboard tabs stay mounted under `display: none`. Initializing or laying
-		// out a Sankey at 0x0 can leave ECharts with incomplete renderer state. ResizeObserver
-		// calls this again with real dimensions when the tab becomes visible.
-		if (bounds.width <= 0 || bounds.height <= 0) return
+		if (bounds.width <= 0 || bounds.height <= 0) {
+			isVisibleRef.current = false
+			return
+		}
 
 		const instance = echarts.init(element, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		persistentLifecycle.restore(instance)
+		isVisibleRef.current = true
 		handleChartReady(instance)
 		onReadyRef.current?.(instance)
-		instance.setOption(getOption(element), { notMerge: true })
-	}, [getOption, handleChartReady])
+		applyOption()
+	}, [applyOption, handleChartReady, persistentLifecycle])
 
-	// The observer both resizes an existing chart and performs deferred initialization when
-	// a chart's hidden tab is shown for the first time.
-	useChartResize(chartRef, containerRef, initializeChart)
+	const handleElementResize = useCallback(
+		(isVisible: boolean) => {
+			if (!isVisible) {
+				isVisibleRef.current = false
+				return
+			}
+			if (isVisibleRef.current) return
+			isVisibleRef.current = true
+			initializeChart()
+		},
+		[initializeChart]
+	)
+
+	useChartResize(chartRef, containerRef, { onVisibilityChange: handleElementResize })
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -380,20 +409,20 @@ export default function SankeyChart({
 			initializeChart()
 			return
 		}
-		const element = containerRef.current
-		if (!element) return
-		instance.setOption(getOption(element), { notMerge: true })
-	}, [getOption, initializeChart])
+		applyOption()
+	}, [applyOption, initializeChart])
 
 	useEffect(() => {
 		return () => {
 			const instance = chartRef.current
+			if (instance) persistentLifecycle.capture(instance)
 			chartRef.current = null
+			isVisibleRef.current = false
 			handleChartReady(null)
 			onReadyRef.current?.(null)
 			if (instance && !instance.isDisposed()) instance.dispose()
 		}
-	}, [handleChartReady])
+	}, [handleChartReady, persistentLifecycle])
 
 	return (
 		<ChartContainer
@@ -422,3 +451,5 @@ export default function SankeyChart({
 		/>
 	)
 }
+
+export default withEChartsRenderVisibility(SankeyChart)

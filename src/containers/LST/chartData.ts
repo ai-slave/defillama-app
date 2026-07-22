@@ -13,9 +13,11 @@ export function buildLstInflowsData({
 	const isCumulative = groupBy === 'cumulative'
 	const totalByToken = new Map<string, number>()
 
-	for (const date in inflowsChartData) {
+	const dates = Object.keys(inflowsChartData).map(Number)
+	dates.sort((a, b) => a - b)
+	for (const date of dates) {
 		const dateEntry = inflowsChartData[date]
-		const dateKey = isCumulative ? +date : getBucketTimestampSec(+date, groupBy)
+		const dateKey = isCumulative ? date : getBucketTimestampSec(date, groupBy)
 		let dateStore = store.get(dateKey)
 		if (!dateStore) {
 			dateStore = new Map()
@@ -32,9 +34,14 @@ export function buildLstInflowsData({
 				dateStore.set(token, (dateStore.get(token) ?? 0) + value)
 			}
 		}
+		if (isCumulative) {
+			for (const [token, total] of totalByToken) {
+				if (!dateStore.has(token)) dateStore.set(token, total)
+			}
+		}
 	}
 
-	return Array.from(store.entries()).sort((a, b) => a[0] - b[0])
+	return Array.from(store.entries())
 }
 
 export function buildLstBreakdownChartData({
@@ -146,5 +153,32 @@ export function buildLstInflowsSeriesData({
 		},
 		cumulativeCharts,
 		barCharts
+	}
+}
+
+export function buildActiveLstChartData({
+	view,
+	areaChartData,
+	inflowsChartData,
+	groupBy,
+	tokens,
+	lsdColors,
+	barChartStacks
+}: {
+	view: 'breakdown' | 'inflows'
+	areaChartData: Array<Record<string, number>>
+	inflowsChartData: InflowsChartData
+	groupBy: ChartTimeGroupingWithCumulative
+	tokens: string[]
+	lsdColors: Record<string, string>
+	barChartStacks: Record<string, string>
+}) {
+	if (view === 'breakdown') {
+		return { kind: 'breakdown' as const, data: buildLstBreakdownChartData({ areaChartData, tokens, lsdColors }) }
+	}
+	const inflowsData = buildLstInflowsData({ inflowsChartData, groupBy })
+	return {
+		kind: 'inflows' as const,
+		data: buildLstInflowsSeriesData({ inflowsData, tokens, lsdColors, barChartStacks })
 	}
 }

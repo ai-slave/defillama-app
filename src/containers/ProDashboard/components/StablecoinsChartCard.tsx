@@ -87,10 +87,9 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		})
 	}
 
-	const latestMcap = useMemo(() => {
-		const index = dataset.dimensions.indexOf('Mcap')
-		return index < 0 ? null : ((dataset.source.at(-1)?.[index] as number | undefined) ?? null)
-	}, [dataset])
+	const latestMcapIndex = dataset.dimensions.indexOf('Mcap')
+	const latestMcap =
+		latestMcapIndex < 0 ? null : ((dataset.source.at(-1)?.[latestMcapIndex] as number | undefined) ?? null)
 
 	const handleCsvExport = () => {
 		let rows: (string | number)[][] = []

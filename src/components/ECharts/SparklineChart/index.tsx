@@ -5,6 +5,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef } from 'react'
 import { useChartResize } from '~/hooks/useChartResize'
+import { withEChartsRenderVisibility } from '../renderVisibility'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
 
@@ -70,7 +71,7 @@ interface SparklineChartProps {
 	focusable?: boolean
 }
 
-export function SparklineChart({
+function SparklineChartRenderer({
 	data,
 	color = 'var(--bg-brand)',
 	areaColor,
@@ -237,3 +238,5 @@ export function SparklineChart({
 		/>
 	)
 }
+
+export const SparklineChart = withEChartsRenderVisibility(SparklineChartRenderer)

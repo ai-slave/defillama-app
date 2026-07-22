@@ -15,7 +15,7 @@ import type {
 	StablecoinsListResponse
 } from '~/containers/Stablecoins/api.types'
 import type { StablecoinOverviewChartInputs } from '~/containers/Stablecoins/types'
-import { formatPeggedAssetsData, type FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
+import { buildUniqueStablecoinChartLabels, formatPeggedAssetsData } from '~/containers/Stablecoins/utils'
 
 type StablecoinChartMcapPoint = {
 	date: number
@@ -23,7 +23,7 @@ type StablecoinChartMcapPoint = {
 }
 
 export type StablecoinsChartCacheValue = StablecoinOverviewChartInputs & {
-	filteredPeggedAssets: FormattedStablecoinAsset[]
+	pieAssets: Array<{ symbol: string; mcap: number | null }>
 }
 
 export interface StablecoinBaselineData {
@@ -45,28 +45,22 @@ export async function fetchStablecoinBaselineData(): Promise<StablecoinBaselineD
 export function buildStablecoinsChartCacheValue({
 	peggedData,
 	chainData,
-	priceData,
-	rateData,
 	chain
 }: {
 	peggedData: StablecoinsListResponse
 	chainData: StablecoinChartResponse
-	priceData: StablecoinPricesResponse
-	rateData: StablecoinRatesResponse
 	chain: string
 }): StablecoinsChartCacheValue {
 	const { peggedAssets } = peggedData
 	const chartDataByPeggedAsset: StablecoinChartMcapPoint[][] = []
-	const peggedAssetNames: string[] = []
-	const peggedNameToChartDataIndex: Record<string, number> = {}
+	const peggedAssetNames = buildUniqueStablecoinChartLabels(peggedAssets, 'name')
+	const peggedAssetIdToChartDataIndex: Record<string, number> = {}
 	const doublecountedIds: number[] = []
 	const doublecountedSourceIds = new Set(chainData.doublecountedIds ?? [])
-	let lastTimestamp = 0
 
 	for (let index = 0; index < peggedAssets.length; index++) {
 		const asset = peggedAssets[index]
-		peggedAssetNames.push(asset.name)
-		peggedNameToChartDataIndex[asset.name] = index
+		peggedAssetIdToChartDataIndex[asset.id] = index
 		if (doublecountedSourceIds.has(asset.id)) doublecountedIds.push(index)
 
 		const charts = chainData.breakdown[asset.id] ?? []
@@ -76,35 +70,25 @@ export function buildStablecoinsChartCacheValue({
 			formattedCharts.push({ date: Number(chart.date), mcap: chart.totalCirculatingUSD })
 		}
 
-		const last = formattedCharts[formattedCharts.length - 1]
-		if (last && last.date > lastTimestamp) lastTimestamp = last.date
 		chartDataByPeggedAsset.push(formattedCharts)
 	}
 
-	for (const chart of chartDataByPeggedAsset) {
-		const last = chart[chart.length - 1]
-		if (!last) continue
-
-		let lastDate = last.date
-		while (lastDate < lastTimestamp) {
-			lastDate += 24 * 3600
-			chart.push({ ...last, date: lastDate })
-		}
+	const pieAssets: StablecoinsChartCacheValue['pieAssets'] = []
+	for (let index = 0; index < peggedAssets.length; index++) {
+		const asset = peggedAssets[index]
+		if (chain !== 'All' && !asset.chains.includes(chain)) continue
+		const latestPoint = chartDataByPeggedAsset[index]?.at(-1)
+		let mcap = 0
+		for (const pegType in latestPoint?.mcap) mcap += latestPoint.mcap[pegType]
+		pieAssets.push({ symbol: asset.symbol, mcap: latestPoint ? mcap : null })
 	}
 
 	return {
 		chartDataByPeggedAsset,
 		peggedAssetNames,
-		peggedNameToChartDataIndex,
+		peggedAssetIdToChartDataIndex,
 		doublecountedIds,
-		filteredPeggedAssets: formatPeggedAssetsData({
-			peggedAssets,
-			chartDataByPeggedAsset,
-			priceData,
-			rateData,
-			peggedNameToChartDataIndex,
-			chain: chain === 'All' ? null : chain
-		})
+		pieAssets
 	}
 }
 
@@ -117,10 +101,18 @@ export function buildStablecoinsTableData({
 	chainData: StablecoinChartResponse
 	chain: string
 }) {
-	const { filteredPeggedAssets } = buildStablecoinsChartCacheValue({
-		...baseline,
+	const chartCache = buildStablecoinsChartCacheValue({
+		peggedData: baseline.peggedData,
 		chainData,
 		chain
+	})
+	const filteredPeggedAssets = formatPeggedAssetsData({
+		peggedAssets: baseline.peggedData.peggedAssets,
+		chartDataByPeggedAsset: chartCache.chartDataByPeggedAsset,
+		priceData: baseline.priceData,
+		rateData: baseline.rateData,
+		peggedAssetIdToChartDataIndex: chartCache.peggedAssetIdToChartDataIndex,
+		chain: chain === 'All' ? null : chain
 	})
 
 	return filteredPeggedAssets.map((asset) => {

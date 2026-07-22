@@ -18,6 +18,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
+import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { CHART_INSET } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
 import { isIconUrlValid, validateIconUrl } from '../shared/icon'
@@ -77,7 +78,7 @@ function normalizeScatterTooltipParams(params: unknown): ScatterTooltipParams {
 	}
 }
 
-export default function ScatterChart({
+function ScatterChart({
 	chartData,
 	title,
 	xAxisLabel,
@@ -94,6 +95,7 @@ export default function ScatterChart({
 	const chartTheme = useChartTheme(isDark)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
+	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
@@ -129,14 +131,16 @@ export default function ScatterChart({
 		if (!chartDom) return
 		const instance = echarts.init(chartDom, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		persistentLifecycle.restore(instance)
 		emitReady(instance)
 
 		return () => {
+			persistentLifecycle.capture(instance)
 			chartRef.current = null
 			emitReady(null)
 			instance.dispose()
 		}
-	}, [])
+	}, [persistentLifecycle])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -457,3 +461,5 @@ export default function ScatterChart({
 		</div>
 	)
 }
+
+export default withEChartsRenderVisibility(ScatterChart)

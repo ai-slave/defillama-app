@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import {
-	CHART_TYPES,
 	type ChartConfig,
 	type DashboardItemConfig,
+	getProDashboardChartTypeConfig,
 	type MetricConfig,
 	type MultiChartConfig,
 	type UnifiedTableConfig
@@ -55,7 +55,7 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 
 		return selectedMetrics
 			.map((metric) => {
-				const chartTypeInfo = CHART_TYPES[metric as keyof typeof CHART_TYPES]
+				const chartTypeInfo = getProDashboardChartTypeConfig(metric)
 				const metricInfo = availableMetrics.find((m) => m.metric === metric)
 
 				const chartItems: ChartConfig[] = selectedItems

@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => {
 	const instance = {
 		dispose: vi.fn(),
 		getHeight: vi.fn(() => 360),
+		getOption: vi.fn(() => ({})),
 		getWidth: vi.fn(() => 600),
 		isDisposed: vi.fn(() => false),
 		resize: vi.fn(),
@@ -32,8 +33,8 @@ vi.mock('~/contexts/LocalStorage', () => ({
 }))
 
 vi.mock('~/hooks/useChartResize', () => ({
-	useChartResize: (_instanceRef: unknown, _elementRef: unknown, onElementResize?: () => void) => {
-		mocks.elementResize = onElementResize
+	useChartResize: (_instanceRef: unknown, _elementRef: unknown, options?: { onResize?: () => void }) => {
+		mocks.elementResize = options?.onResize
 	}
 }))
 

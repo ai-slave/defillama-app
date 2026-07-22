@@ -12,20 +12,22 @@ import {
 	useRWAChainsList
 } from '~/containers/ProDashboard/components/datasets/RWADataset/useRWAChartData'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
-import { toFiniteRwaChartValue, toRwaMultiSeriesChartDataset } from '~/containers/RWA/chartDataset'
 import { getChartMetricOptions, getChartViewOptions, getChartMetricLabel } from '~/containers/RWA/chartState'
-import { buildRwaTreemapTreeData } from '~/containers/RWA/treemap'
 import { LocalLoader } from '~/ui/Loaders'
 import { formattedNum } from '~/utils'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
+import { buildProRwaAssetChartSeries } from '../rwaAssetChart'
+import { buildRwaSnapshotPresentation } from '../rwaSnapshot'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
+
+const EMPTY_RWA_SNAPSHOT_ITEMS: Array<{ name: string; value: number }> = []
 
 interface RWAChartTabProps {
 	rwaMode: 'overview' | 'asset'
@@ -284,24 +286,20 @@ function OverviewPreview({
 	chain?: string
 }) {
 	const { chartDataset, isLoading } = useRWABreakdownChartData(breakdown, metric, chain)
-	const timeSeriesDataset = useMemo(
-		() => (chartDataset && chartView === 'timeSeries' ? toRwaMultiSeriesChartDataset(chartDataset) : null),
-		[chartDataset, chartView]
+	const timeSeriesDataset = chartView === 'timeSeries' ? chartDataset : null
+	const snapshot = useMemo(
+		() =>
+			chartDataset && chartView !== 'timeSeries'
+				? buildRwaSnapshotPresentation({
+						dataset: chartDataset,
+						view: chartView,
+						timePeriod: 'all',
+						breakdownLabel: breakdown
+					})
+				: null,
+		[breakdown, chartDataset, chartView]
 	)
-
-	const pieData = useMemo(() => {
-		if (!chartDataset || chartView !== 'pie') return []
-		const lastRow = chartDataset.source[chartDataset.source.length - 1]
-		if (!lastRow) return []
-		const items: Array<{ name: string; value: number }> = []
-		for (const dimension of chartDataset.dimensions) {
-			if (dimension === 'timestamp') continue
-			const value = toFiniteRwaChartValue(lastRow[dimension])
-			if (value > 0) items.push({ name: dimension, value })
-		}
-		items.sort((a, b) => b.value - a.value)
-		return items
-	}, [chartDataset, chartView])
+	const pieData = snapshot?.view === 'pie' ? snapshot.data : EMPTY_RWA_SNAPSHOT_ITEMS
 
 	const pieColors = useMemo(() => {
 		const colors: Record<string, string> = {}
@@ -311,33 +309,8 @@ function OverviewPreview({
 		return colors
 	}, [pieData])
 
-	const barData = useMemo(() => {
-		if (!chartDataset || chartView !== 'hbar') return { categories: [] as string[], values: [] as number[] }
-		const lastRow = chartDataset.source[chartDataset.source.length - 1]
-		if (!lastRow) return { categories: [] as string[], values: [] as number[] }
-		const items: Array<{ name: string; value: number }> = []
-		for (const dimension of chartDataset.dimensions) {
-			if (dimension === 'timestamp') continue
-			const value = toFiniteRwaChartValue(lastRow[dimension])
-			if (value > 0) items.push({ name: dimension, value })
-		}
-		items.sort((a, b) => b.value - a.value)
-		if (items.length > 20) items.length = 20
-		return { categories: items.map((i) => i.name), values: items.map((i) => i.value) }
-	}, [chartDataset, chartView])
-
-	const treemapData = useMemo(() => {
-		if (!chartDataset || chartView !== 'treemap') return []
-		const lastRow = chartDataset.source[chartDataset.source.length - 1]
-		if (!lastRow) return []
-		const pieItems: Array<{ name: string; value: number }> = []
-		for (const dimension of chartDataset.dimensions) {
-			if (dimension === 'timestamp') continue
-			const value = toFiniteRwaChartValue(lastRow[dimension])
-			if (value > 0) pieItems.push({ name: dimension, value })
-		}
-		return buildRwaTreemapTreeData(pieItems, breakdown)
-	}, [chartDataset, chartView, breakdown])
+	const barData = snapshot?.view === 'hbar' ? snapshot : { categories: [] as string[], values: [] as number[] }
+	const treemapData = snapshot?.view === 'treemap' ? snapshot.data : []
 
 	if (isLoading || !chartDataset) {
 		return (
@@ -373,13 +346,7 @@ function OverviewPreview({
 
 function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: RWAOverviewChartMetric[] }) {
 	const { chartDataset, isLoading } = useRWAAssetChartData(assetId)
-
-	const filteredDataset = useMemo(() => {
-		if (!chartDataset) return null
-		const selectedDimensions = ['timestamp', ...metrics.map((metric) => METRIC_LABELS[metric])]
-		const filteredDimensions = chartDataset.dimensions.filter((d) => selectedDimensions.includes(d))
-		return toRwaMultiSeriesChartDataset(chartDataset, filteredDimensions)
-	}, [chartDataset, metrics])
+	const charts = useMemo(() => buildProRwaAssetChartSeries(chartDataset, metrics), [chartDataset, metrics])
 
 	if (!assetId) {
 		return (
@@ -389,7 +356,7 @@ function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: R
 		)
 	}
 
-	if (isLoading || !filteredDataset) {
+	if (isLoading || !chartDataset) {
 		return (
 			<div className="flex h-[320px] items-center justify-center">
 				<LocalLoader />
@@ -399,7 +366,7 @@ function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: R
 
 	return (
 		<Suspense fallback={<div className="min-h-[320px]" />}>
-			<MultiSeriesChart dataset={filteredDataset} hideDefaultLegend={false} />
+			<MultiSeriesChart dataset={chartDataset} charts={charts} hideDefaultLegend={false} />
 		</Suspense>
 	)
 }

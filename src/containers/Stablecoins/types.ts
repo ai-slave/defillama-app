@@ -22,7 +22,7 @@ export interface StablecoinsGlobalDataCache {
 export interface StablecoinOverviewChartInputs {
 	chartDataByPeggedAsset: StablecoinOverviewChartPoint[][]
 	peggedAssetNames: string[]
-	peggedNameToChartDataIndex: Record<string, number>
+	peggedAssetIdToChartDataIndex: Record<string, number>
 	doublecountedIds: number[]
 }
 

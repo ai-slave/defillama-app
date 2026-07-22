@@ -22,9 +22,28 @@ describe('chain chart y-axis layout', () => {
 		expect(axes.map((axis) => axis.offset ?? 0)).toEqual([0, 0, 40])
 		expect(usersAxisLine.lineStyle.color).toBe('#222')
 		expect(priceAxisLine.lineStyle.color).toBe('#333')
-		expect(usersAxisLabel.color).toBe('#222')
-		expect(priceAxisLabel.color).toBe('#333')
+		expect(usersAxisLabel.color).toBe('#aaa')
+		expect(priceAxisLabel.color).toBe('#aaa')
+		expect(usersAxisLine.lineStyle).toMatchObject({ type: [5, 10] })
+		expect(priceAxisLine.lineStyle).toMatchObject({ type: [5, 10] })
+		expect(usersAxisLine.lineStyle).not.toHaveProperty('opacity')
+		expect(priceAxisLine.lineStyle).not.toHaveProperty('opacity')
 		expect(usersAxisLabel.formatter(1_000)).toBe('1,000')
 		expect(priceAxisLabel.formatter(5)).toContain('$')
+		expect(axes.every((axis) => axis.alignTicks == null)).toBe(true)
+	})
+
+	it('preserves explicitly requested tick alignment', () => {
+		const axes = buildChainYAxis({
+			allYAxis: [
+				['TVL', undefined],
+				['Token Price', 1]
+			],
+			baseYAxis: { alignTicks: true },
+			chartColors: { TVL: '#111', 'Token Price': '#333' },
+			chartsInSeries: new Set(['TVL', 'Token Price']),
+			themeText: '#aaa'
+		})
+		expect(axes.every((axis) => axis.alignTicks === true)).toBe(true)
 	})
 })

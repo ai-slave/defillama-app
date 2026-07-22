@@ -120,10 +120,11 @@ function finalizeRows(
  * Build a complete `MultiSeriesChart` spec from normalized multi-series time data.
  *
  * Output guarantees:
- * - dense `dataset.source` rows keyed by `timestamp`
+ * - aligned bars and cumulative lines use row-major `dataset.source` rows
+ * - independently timed period lines retain per-series positional data
  * - one dimension per input series, preserved in input order
  * - one chart config per input series, preserved in input order
- * - missing values filled with `null`, except optional sparse cumulative rows
+ * - row-major missing values are filled with `null`, except optional sparse cumulative rows
  *
  * Input requirements:
  * - timestamps are already in milliseconds
@@ -176,13 +177,14 @@ export function buildTimeSeriesChart(input: TimeSeriesChartInput): TimeSeriesCha
 		case 'periodLines': {
 			for (let i = 0; i < input.series.length; i++) {
 				const item = input.series[i]
-				const valueIndex = i + 1
 				addSeriesName(item.name, seenNames, dimensions)
+				const data: Array<[number, number | null]> = []
 				charts[i] = {
 					type: 'line',
 					name: item.name,
-					encode: { x: 0, y: valueIndex },
-					color: item.color
+					encode: { x: 0, y: 1 },
+					color: item.color,
+					data
 				}
 				const points = item.points
 				if (points.length === 0) continue
@@ -196,13 +198,13 @@ export function buildTimeSeriesChart(input: TimeSeriesChartInput): TimeSeriesCha
 						bucketValue = point[1]
 						continue
 					}
-					getOrCreateRow(rowsByTimestamp, bucketTimestamp, input.series.length)[valueIndex] = bucketValue
+					data.push([bucketTimestamp, bucketValue])
 					bucketTimestamp = nextBucketTimestamp
 					bucketValue = point[1]
 				}
-				getOrCreateRow(rowsByTimestamp, bucketTimestamp, input.series.length)[valueIndex] = bucketValue
+				data.push([bucketTimestamp, bucketValue])
 			}
-			break
+			return { dataset: { source: [], dimensions }, charts }
 		}
 		case 'cumulativeLines': {
 			for (let i = 0; i < input.series.length; i++) {

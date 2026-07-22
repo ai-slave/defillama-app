@@ -1,8 +1,33 @@
 import { describe, expect, it } from 'vitest'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
-import { buildLstBreakdownChartData, buildLstInflowsData, buildLstInflowsSeriesData } from '../chartData'
+import {
+	buildActiveLstChartData,
+	buildLstBreakdownChartData,
+	buildLstInflowsData,
+	buildLstInflowsSeriesData
+} from '../chartData'
 
 describe('LST chart data helpers', () => {
+	it('constructs only the selected view model', () => {
+		const common = {
+			areaChartData: [{ date: 1, Lido: 100 }],
+			inflowsChartData: { 1: { Lido: -5 } },
+			groupBy: 'daily' as const,
+			tokens: ['Lido'],
+			lsdColors: { Lido: '#111' },
+			barChartStacks: { Lido: 'A' }
+		}
+
+		expect(buildActiveLstChartData({ ...common, view: 'breakdown' })).toMatchObject({
+			kind: 'breakdown',
+			data: { dataset: { source: [[1_000, 100]] } }
+		})
+		expect(buildActiveLstChartData({ ...common, view: 'inflows' })).toMatchObject({
+			kind: 'inflows',
+			data: { dataset: { source: [[0, -5]] } }
+		})
+	})
+
 	it('builds cumulative inflows by token', () => {
 		const result = buildLstInflowsData({
 			inflowsChartData: {
@@ -25,6 +50,35 @@ describe('LST chart data helpers', () => {
 				new Map([
 					['Lido', 13],
 					['RocketPool', 3]
+				])
+			]
+		])
+	})
+
+	it('carries cumulative token totals across independently timed protocol histories', () => {
+		const result = buildLstInflowsData({
+			inflowsChartData: {
+				1: { Lido: 10 },
+				2: { RocketPool: 5 },
+				3: { Lido: -2 }
+			},
+			groupBy: 'cumulative'
+		})
+
+		expect(result).toEqual([
+			[1, new Map([['Lido', 10]])],
+			[
+				2,
+				new Map([
+					['RocketPool', 5],
+					['Lido', 10]
+				])
+			],
+			[
+				3,
+				new Map([
+					['Lido', 8],
+					['RocketPool', 5]
 				])
 			]
 		])

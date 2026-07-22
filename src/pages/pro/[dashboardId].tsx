@@ -1,25 +1,24 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
+import ProDashboard from '~/containers/ProDashboard'
 import { DashboardSeoSummary } from '~/containers/ProDashboard/components/DashboardSeoSummary'
 import { ProDashboardLoader } from '~/containers/ProDashboard/components/ProDashboardLoader'
 import { useDashboardEngagement } from '~/containers/ProDashboard/hooks/useDashboardEngagement'
+import {
+	hydrateDashboardInitialRenderPayload,
+	toPublicDashboardInitialRenderPayload,
+	type PublicDashboardInitialRenderPayload
+} from '~/containers/ProDashboard/initialDashboard'
 import { ProDashboardAPIProvider, useProDashboardDashboard } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { fetchDashboardConfigWithStatus } from '~/containers/ProDashboard/queries.server'
 import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
-import {
-	buildDashboardSeo,
-	type DashboardSeo,
-	type DashboardSeoPublicDashboard,
-	toDashboardSeoPublicDashboard
-} from '~/containers/ProDashboard/utils/seo'
+import { buildDashboardSeo, type DashboardSeo } from '~/containers/ProDashboard/utils/seo'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
-
-const ProDashboard = lazy(() => import('~/containers/ProDashboard'))
 
 const PUBLIC_DASHBOARD_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=3600'
 const PRIVATE_DASHBOARD_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate'
@@ -29,7 +28,7 @@ const GENERIC_DESCRIPTION =
 
 type DashboardPageProps = {
 	dashboardId: string
-	initialDashboard: DashboardSeoPublicDashboard | null
+	initialDashboard: PublicDashboardInitialRenderPayload | null
 	seo: DashboardSeo | null
 	noIndex: boolean
 	status: number
@@ -47,22 +46,23 @@ function noIndexProps(dashboardId: string, status: number): DashboardPageProps {
 
 const getServerSidePropsHandler: GetServerSideProps<DashboardPageProps> = async (context) => {
 	const dashboardId = context.params?.dashboardId as string
+	const authToken = getAuthTokenFromRequest(context.req)
+	const isAuthenticatedRequest = !!authToken
 
 	if (dashboardId === 'new') {
 		context.res.setHeader('Cache-Control', 'private, no-store')
+		if (isAuthenticatedRequest) {
+			context.res.setHeader('Vary', 'Cookie, Authorization')
+		}
 		return { props: noIndexProps(dashboardId, 200) }
 	}
 
-	const authToken = getAuthTokenFromRequest(context.req)
-
-	if (authToken) {
+	context.res.setHeader('Vary', 'Cookie, Authorization')
+	if (isAuthenticatedRequest) {
 		context.res.setHeader('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-		context.res.setHeader('Vary', 'Cookie, Authorization')
-		return { props: noIndexProps(dashboardId, 200) }
 	}
 
 	const { dashboard, status } = await fetchDashboardConfigWithStatus(dashboardId, null)
-	context.res.setHeader('Vary', 'Cookie, Authorization')
 
 	if (dashboard?.slug && dashboard.slug !== dashboardId) {
 		return {
@@ -74,17 +74,23 @@ const getServerSidePropsHandler: GetServerSideProps<DashboardPageProps> = async 
 	}
 
 	if (dashboard?.visibility === 'public') {
-		context.res.setHeader('Cache-Control', PUBLIC_DASHBOARD_CACHE_CONTROL)
+		if (!isAuthenticatedRequest) {
+			context.res.setHeader('Cache-Control', PUBLIC_DASHBOARD_CACHE_CONTROL)
+		}
 		const seo = buildDashboardSeo(dashboard)
 		return {
 			props: {
 				dashboardId,
-				initialDashboard: toDashboardSeoPublicDashboard(dashboard),
+				initialDashboard: toPublicDashboardInitialRenderPayload(dashboard),
 				seo,
 				noIndex: false,
 				status: 200
 			}
 		}
+	}
+
+	if (isAuthenticatedRequest) {
+		return { props: noIndexProps(dashboardId, 200) }
 	}
 
 	const responseStatus = status === 404 ? 404 : status === 401 || status === 403 ? status : 500
@@ -104,6 +110,7 @@ export default function DashboardPage({
 	const title = seo?.title ?? GENERIC_TITLE
 	const description = seo?.description ?? GENERIC_DESCRIPTION
 	const canonicalUrl = noIndex ? null : (seo?.canonicalPath ?? `/pro/${dashboardId}`)
+	const providerInitialDashboard = initialDashboard ? hydrateDashboardInitialRenderPayload(initialDashboard) : null
 
 	return (
 		<Layout
@@ -116,6 +123,7 @@ export default function DashboardPage({
 			<div className="flex min-h-0 flex-1 flex-col gap-2">
 				<ProDashboardAPIProvider
 					initialDashboardId={initialId}
+					initialDashboard={providerInitialDashboard}
 					mode={initialId ? 'view' : 'edit'}
 					key={`dashboard-api-provider-${dashboardId}`}
 				>
@@ -139,7 +147,7 @@ function DashboardPageContent({
 }: {
 	dashboardId: string
 	initialStatus: number
-	initialDashboard: DashboardSeoPublicDashboard | null
+	initialDashboard: PublicDashboardInitialRenderPayload | null
 	seo: DashboardSeo | null
 }) {
 	const router = useRouter()
@@ -147,7 +155,7 @@ function DashboardPageContent({
 	const { isAuthenticated, loaders, hasActiveSubscription } = useAuthContext()
 	const { isLoadingDashboard, streamHasResolved, loadError, reloadDashboard, dashboardVisibility, currentDashboard } =
 		useProDashboardDashboard()
-	const [isValidating, setIsValidating] = useState(true)
+	const [isValidating, setIsValidating] = useState(!initialDashboard)
 	const { trackView } = useDashboardEngagement(currentDashboard?.id ?? null)
 	const hasTrackedView = useRef(false)
 
@@ -274,15 +282,7 @@ function DashboardPageContent({
 	}
 
 	if (dashboardVisibility === 'public' && currentDashboard) {
-		return (
-			<Suspense
-				fallback={
-					<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1" />
-				}
-			>
-				<ProDashboard />
-			</Suspense>
-		)
+		return <ProDashboard />
 	}
 
 	if (!isAuthenticated && dashboardVisibility === 'private') {
@@ -341,15 +341,7 @@ function DashboardPageContent({
 		)
 	}
 
-	return (
-		<Suspense
-			fallback={
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1" />
-			}
-		>
-			<ProDashboard />
-		</Suspense>
-	)
+	return <ProDashboard />
 }
 
 export const getServerSideProps = withServerSidePropsTelemetry('/pro/[dashboardId]', getServerSidePropsHandler)

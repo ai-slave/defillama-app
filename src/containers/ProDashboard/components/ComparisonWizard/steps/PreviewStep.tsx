@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
-import { CHART_TYPES, type MetricAggregator, type MetricWindow } from '../../../types'
+import { getProDashboardChartTypeConfig, type MetricAggregator, type MetricWindow } from '../../../types'
 import { AriakitCheckbox } from '../../AriakitCheckbox'
 import { AriakitSelect, type SelectOption } from '../../AriakitSelect'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
@@ -217,7 +217,7 @@ export function PreviewStep() {
 					</div>
 					<div className="flex flex-wrap gap-1.5">
 						{state.selectedMetrics.map((metric) => {
-							const info = CHART_TYPES[metric as keyof typeof CHART_TYPES]
+							const info = getProDashboardChartTypeConfig(metric)
 							const label = info?.title || metric
 							const isSelected = state.metricsForCards.includes(metric)
 							return (

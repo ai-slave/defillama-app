@@ -14,10 +14,14 @@ const MAX_MARKETPLACE_SERIES = 30
 
 export type NFTMarketplaceChartData = {
 	absoluteVolumeDataset: MultiSeriesChartDataset
-	relativeVolumeDataset: MultiSeriesChartDataset
 	absoluteTradesDataset: MultiSeriesChartDataset
-	relativeTradesDataset: MultiSeriesChartDataset
 	absoluteBarCharts: MultiSeriesChartSeriesConfig[]
+	dailyTotals: Array<[volume: number, trades: number]>
+}
+
+export type NFTMarketplaceRelativeChartData = {
+	relativeVolumeDataset: MultiSeriesChartDataset
+	relativeTradesDataset: MultiSeriesChartDataset
 	relativeAreaCharts: MultiSeriesChartSeriesConfig[]
 }
 
@@ -80,20 +84,15 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 
 	const dimensions = ['timestamp', ...displayedMarketplaces]
 	const absoluteVolumeSource = new Array<MultiSeriesChartDataset['source'][number]>(days.length)
-	const relativeVolumeSource = new Array<MultiSeriesChartDataset['source'][number]>(days.length)
 	const absoluteTradesSource = new Array<MultiSeriesChartDataset['source'][number]>(days.length)
-	const relativeTradesSource = new Array<MultiSeriesChartDataset['source'][number]>(days.length)
+	const dailyTotals = new Array<[volume: number, trades: number]>(days.length)
 
 	for (let i = 0; i < days.length; i++) {
 		const day = days[i]
 		const absoluteVolume = new Array<number>(dimensions.length)
 		const absoluteTrades = new Array<number>(dimensions.length)
-		const relativeVolume = new Array<number>(dimensions.length)
-		const relativeTrades = new Array<number>(dimensions.length)
 		absoluteVolume[0] = day.timestamp
 		absoluteTrades[0] = day.timestamp
-		relativeVolume[0] = day.timestamp
-		relativeTrades[0] = day.timestamp
 		let otherVolume = 0
 		let otherTrades = 0
 		if (omittedMarketplaceSet) {
@@ -112,19 +111,15 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 				marketplace === 'Others' && omittedMarketplaceSet ? otherTrades : (day.trades.get(marketplace) ?? 0)
 			absoluteVolume[j + 1] = volumeValue
 			absoluteTrades[j + 1] = tradeValue
-			relativeVolume[j + 1] = getNumericDominance(volumeValue, day.volumeTotal)
-			relativeTrades[j + 1] = getNumericDominance(tradeValue, day.tradeTotal)
 		}
 
 		absoluteVolumeSource[i] = absoluteVolume
-		relativeVolumeSource[i] = relativeVolume
 		absoluteTradesSource[i] = absoluteTrades
-		relativeTradesSource[i] = relativeTrades
+		dailyTotals[i] = [day.volumeTotal, day.tradeTotal]
 	}
 
 	const colors = getNDistinctColors(displayedMarketplaces.length)
 	const absoluteBarCharts = new Array<MultiSeriesChartSeriesConfig>(displayedMarketplaces.length)
-	const relativeAreaCharts = new Array<MultiSeriesChartSeriesConfig>(displayedMarketplaces.length)
 	for (let i = 0; i < displayedMarketplaces.length; i++) {
 		const name = displayedMarketplaces[i]
 		const color = name === 'Others' ? '#AAAAAA' : colors[i]
@@ -136,20 +131,47 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 			color,
 			large: false
 		}
-		relativeAreaCharts[i] = {
-			type: 'line',
-			name,
-			encode: { x: 0, y: i + 1 },
-			color
-		}
 	}
 
 	return {
 		absoluteVolumeDataset: { source: absoluteVolumeSource, dimensions },
-		relativeVolumeDataset: { source: relativeVolumeSource, dimensions },
 		absoluteTradesDataset: { source: absoluteTradesSource, dimensions },
-		relativeTradesDataset: { source: relativeTradesSource, dimensions },
 		absoluteBarCharts,
-		relativeAreaCharts
+		dailyTotals
+	}
+}
+
+export function buildNFTMarketplaceRelativeChartData(
+	absolute: NFTMarketplaceChartData
+): NFTMarketplaceRelativeChartData {
+	const dimensions = absolute.absoluteVolumeDataset.dimensions
+	const relativeVolumeSource = new Array<MultiSeriesChartDataset['source'][number]>(absolute.dailyTotals.length)
+	const relativeTradesSource = new Array<MultiSeriesChartDataset['source'][number]>(absolute.dailyTotals.length)
+
+	for (let i = 0; i < absolute.dailyTotals.length; i++) {
+		const absoluteVolume = absolute.absoluteVolumeDataset.source[i]
+		const absoluteTrades = absolute.absoluteTradesDataset.source[i]
+		const totals = absolute.dailyTotals[i]
+		const relativeVolume = new Array<number>(dimensions.length)
+		const relativeTrades = new Array<number>(dimensions.length)
+		relativeVolume[0] = absoluteVolume[0] as number
+		relativeTrades[0] = absoluteTrades[0] as number
+		for (let j = 1; j < dimensions.length; j++) {
+			relativeVolume[j] = getNumericDominance(absoluteVolume[j] as number, totals[0])
+			relativeTrades[j] = getNumericDominance(absoluteTrades[j] as number, totals[1])
+		}
+		relativeVolumeSource[i] = relativeVolume
+		relativeTradesSource[i] = relativeTrades
+	}
+
+	return {
+		relativeVolumeDataset: { source: relativeVolumeSource, dimensions },
+		relativeTradesDataset: { source: relativeTradesSource, dimensions },
+		relativeAreaCharts: absolute.absoluteBarCharts.map(({ name, encode, color }) => ({
+			type: 'line',
+			name,
+			encode,
+			color
+		}))
 	}
 }

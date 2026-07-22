@@ -222,7 +222,7 @@ function readTimestampEndpoint(value: unknown) {
 	return Number.isFinite(parsed) ? parsed : undefined
 }
 
-export function getSeriesTimeBounds(data: Array<[number | string, number] | unknown>) {
+export function getSeriesTimeBounds(data: ReadonlyArray<readonly [number | string, unknown] | unknown>) {
 	let min: number | undefined
 	let max: number | undefined
 	for (let index = 0; index < data.length; index++) {

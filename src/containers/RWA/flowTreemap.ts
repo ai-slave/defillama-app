@@ -89,6 +89,11 @@ export function buildRWAFlowTreemapWindowData(
 	const seriesNames = new Set<string>()
 	const latestPoint = points[points.length - 1]
 	const latestTimestamp = latestPoint ? toUnixMsTimestamp(latestPoint.timestamp) : 0
+	for (const point of points) {
+		for (const name in point) {
+			if (name !== 'timestamp') seriesNames.add(name)
+		}
+	}
 
 	const flow7d = new Map<string, number>()
 	const flow30d = new Map<string, number>()
@@ -101,15 +106,17 @@ export function buildRWAFlowTreemapWindowData(
 			: groupBy === 'daily'
 				? latestTimestamp
 				: latestTimestamp - FLOW_WINDOW_DAYS[groupBy] * DAY_MS
+	const scanStart = Math.min(cutoff30d, windowStart)
 
-	for (const point of points) {
+	for (let pointIndex = points.length - 1; pointIndex >= 0; pointIndex--) {
+		const point = points[pointIndex]
 		const timestamp = toUnixMsTimestamp(point.timestamp)
+		if (timestamp <= scanStart) break
 		const in7d = timestamp > cutoff7d
 		const in30d = timestamp > cutoff30d
 		const inSelectedWindow = groupBy === 'daily' ? timestamp === windowStart : timestamp > windowStart
 		for (const name in point) {
 			if (name === 'timestamp') continue
-			seriesNames.add(name)
 			const value = point[name]
 			if (in30d) flow30d.set(name, (flow30d.get(name) ?? 0) + value)
 			if (in7d) flow7d.set(name, (flow7d.get(name) ?? 0) + value)
@@ -139,9 +146,10 @@ export function aggregateRWAFlowTreemapWindow(
 				: latestTimestamp - FLOW_WINDOW_DAYS[groupBy] * DAY_MS
 	const flows = new Map<string, number>()
 
-	for (const point of points) {
+	for (let pointIndex = points.length - 1; pointIndex >= 0; pointIndex--) {
+		const point = points[pointIndex]
 		const timestamp = toUnixMsTimestamp(point.timestamp)
-		if (groupBy === 'daily' ? timestamp !== startTimestamp : timestamp <= startTimestamp) continue
+		if (groupBy === 'daily' ? timestamp !== startTimestamp : timestamp <= startTimestamp) break
 		for (const name in point) {
 			if (name === 'timestamp') continue
 			const value = point[name]

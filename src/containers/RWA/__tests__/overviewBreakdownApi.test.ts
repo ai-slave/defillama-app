@@ -150,7 +150,7 @@ describe('rwaOverviewBreakdown', () => {
 			headers: { 'Content-Type': 'application/json; charset=utf-8' }
 		})
 		expect(resultBody(result)).toEqual({
-			source: [{ timestamp: timestampMs, Treasuries: 42 }],
+			source: [[timestampMs, 42]],
 			dimensions: ['timestamp', 'Treasuries']
 		})
 	})

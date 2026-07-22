@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IRWAAssetsOverview, IRWAInitialChartDatasetRow, RWAChartMetricKey } from '../api.types'
+import type { IRWAAssetsOverview, RWAChartMetricKey } from '../api.types'
 import { normalizeRwaAssetGroup } from '../assetGroup'
 import type { RWAChartAggregationMode } from '../chartAggregation'
+import type { RWAChartRow, RWAPositionalChartDataset } from '../chartDataset'
 import {
 	getRwaAssetChartQueryKey,
 	getRwaOpenInterestChartQueryKey,
@@ -134,8 +135,8 @@ function DatasetProbe({
 }: {
 	mode: RWAChartAggregationMode
 	chartAssets?: IRWAAssetsOverview['assets']
-	initialDataset?: { source: IRWAInitialChartDatasetRow[]; dimensions: string[] }
-	initialOpenInterestDataset?: { source: IRWAInitialChartDatasetRow[]; dimensions: string[] } | null
+	initialDataset?: RWAPositionalChartDataset
+	initialOpenInterestDataset?: { source: RWAChartRow[]; dimensions: string[] } | null
 	selectedMetric?: 'onChainMcap' | 'activeMcap' | 'defiActiveTvl'
 	includeStablecoins?: boolean
 	includeGovernance?: boolean
@@ -398,8 +399,8 @@ describe('useRwaChartDataset', () => {
 			React.createElement(DatasetProbe, {
 				mode: 'category',
 				initialDataset: {
-					source: [{ timestamp: 1, Prerendered: 100, Total: 100 }],
-					dimensions: ['timestamp', 'Prerendered']
+					source: [[1, 100, 100]],
+					dimensions: ['timestamp', 'Total Onchain Mcap', 'Prerendered']
 				},
 				useInitialDataset: true
 			})
@@ -430,8 +431,8 @@ describe('useRwaChartDataset', () => {
 				mode: 'category',
 				chartAssets: [createSpotAsset(), createPerpsAsset()],
 				initialDataset: {
-					source: [{ timestamp: 1, Treasuries: 100, Total: 100 }],
-					dimensions: ['timestamp', 'Treasuries']
+					source: [[1, 100, 100]],
+					dimensions: ['timestamp', 'Total Active Mcap', 'Treasuries']
 				},
 				initialOpenInterestDataset: {
 					source: [{ timestamp: 1, 'RWA Perps OI': 25 }],
@@ -466,8 +467,8 @@ describe('useRwaChartDataset', () => {
 			React.createElement(DatasetProbe, {
 				mode: 'total',
 				initialDataset: {
-					source: [{ timestamp: 1, Treasuries: 100, Total: 100 }],
-					dimensions: ['timestamp', 'Treasuries']
+					source: [[1, 100, 100]],
+					dimensions: ['timestamp', 'Total Onchain Mcap', 'Treasuries']
 				},
 				useInitialDataset: true
 			})

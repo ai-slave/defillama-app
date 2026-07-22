@@ -1,19 +1,49 @@
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
+import { buildExtraTvlCharts, buildTvlChart } from '~/containers/ProtocolOverview/tvlChart'
 import { getNDistinctColors } from '~/utils'
-import type { RawProtocolResponse } from './api.types'
+
+export type CompareProtocolTvlCharts = {
+	name: string
+	tvlChart: IProtocolValueChart | null
+	extraTvlCharts: Record<string, IProtocolValueChart | null>
+}
+
+function composeProtocolTvlChart({
+	tvlChart,
+	extraTvlCharts,
+	extraTvlEnabled
+}: Omit<CompareProtocolTvlCharts, 'name'> & { extraTvlEnabled: Record<string, boolean> }) {
+	const currentTvlByChain: Record<string, number> = {}
+	for (const key in extraTvlEnabled) {
+		if (extraTvlEnabled[key]) currentTvlByChain[key] = 0
+	}
+	const tvlChartInSeconds = tvlChart?.map(
+		([timestamp, value]) => [Math.floor(timestamp / 1e3), value] as [number, number]
+	)
+
+	return buildTvlChart({
+		tvlChartData: tvlChartInSeconds ?? [],
+		extraTvlCharts: buildExtraTvlCharts(extraTvlCharts),
+		tvlSettings: extraTvlEnabled,
+		currentTvlByChain,
+		groupBy: 'daily',
+		denominationPriceHistory: null
+	})
+}
 
 export function buildCompareProtocolsChartData({
-	protocolResponses,
+	protocolCharts,
 	extraTvlEnabled
 }: {
-	protocolResponses: RawProtocolResponse[]
+	protocolCharts: CompareProtocolTvlCharts[]
 	extraTvlEnabled: Record<string, boolean>
 }) {
 	const chartsByProtocol = new Map<string, Map<number, number>>()
 	const seriesNames: string[] = []
 	let totalProtocols = 0
 
-	for (const protocolData of protocolResponses) {
+	for (const protocolData of protocolCharts) {
 		const protocolName = protocolData.name
 		let protocolChart = chartsByProtocol.get(protocolName)
 		if (!protocolChart) {
@@ -22,15 +52,8 @@ export function buildCompareProtocolsChartData({
 			seriesNames.push(protocolName)
 		}
 
-		for (const chain in protocolData.chainTvls ?? {}) {
-			if (chain.includes('-') || chain === 'offers') continue
-			if (chain in extraTvlEnabled && !extraTvlEnabled[chain]) continue
-
-			const chainTvl = protocolData.chainTvls[chain].tvl ?? []
-
-			for (const { date, totalLiquidityUSD } of chainTvl) {
-				protocolChart.set(date, (protocolChart.get(date) ?? 0) + totalLiquidityUSD)
-			}
+		for (const [timestamp, value] of composeProtocolTvlChart({ ...protocolData, extraTvlEnabled })) {
+			protocolChart.set(timestamp, value ?? 0)
 		}
 		totalProtocols++
 	}
@@ -43,7 +66,7 @@ export function buildCompareProtocolsChartData({
 		if (!protocolChart) continue
 
 		for (const [date, value] of protocolChart) {
-			const timestamp = date * 1e3
+			const timestamp = date
 			let row = rowMap.get(timestamp)
 			if (!row) {
 				row = new Array(seriesNames.length + 1)

@@ -87,14 +87,14 @@ export function getDefaultRowHeaders(
 	fallbackPreset?: UnifiedTablePreset
 ): UnifiedRowHeaderType[] {
 	if (config.rowHeaders && config.rowHeaders.length) {
-		return [...config.rowHeaders]
+		return sanitizeRowHeaders(config.rowHeaders)
 	}
 
 	if (fallbackPreset) {
-		return [...(fallbackPreset.rowHeaders as UnifiedRowHeaderType[])]
+		return sanitizeRowHeaders(fallbackPreset.rowHeaders as UnifiedRowHeaderType[])
 	}
 
-	return [...DEFAULT_ROW_HEADERS]
+	return sanitizeRowHeaders(DEFAULT_ROW_HEADERS)
 }
 
 export function normalizeSorting(sorting?: Array<{ id: string; desc?: boolean }>): SortingState {
@@ -139,7 +139,7 @@ export function applyPresetToConfig(options: ApplyPresetOptions): {
 } {
 	const { preset, includeRowHeaderRules = true, mergeWithDefaults = true, customColumns } = options
 
-	const rowHeaders = sanitizeRowHeaders([...(preset.rowHeaders as UnifiedRowHeaderType[])])
+	const rowHeaders = sanitizeRowHeaders(preset.rowHeaders as UnifiedRowHeaderType[])
 
 	let columnVisibility = mergeWithDefaults
 		? { ...DEFAULT_COLUMN_VISIBILITY, ...preset.columnVisibility }

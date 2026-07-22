@@ -5,7 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { downloadCSV } from '~/utils/download'
 import { useProDashboardEditorActions, useProDashboardPermissions } from '../../ProDashboardAPIContext'
 import type { CustomColumnDefinition, TableFilters, UnifiedRowHeaderType, UnifiedTableConfig } from '../../types'
-import { DEFAULT_ROW_HEADERS, DEFAULT_UNIFIED_TABLE_SORTING } from './constants'
+import { DEFAULT_UNIFIED_TABLE_SORTING } from './constants'
 import type { CsvExportLevel } from './core/CsvExportDropdown'
 import { isGroupingColumnId } from './core/grouping'
 import { UnifiedTablePagination } from './core/TablePagination'
@@ -238,11 +238,7 @@ function UnifiedTableInner({
 	const [sortingState, setSortingState] = useState<SortingState>(() => normalizeSorting(config.defaultSorting))
 	const hydratingRef = useRef(false)
 	const canEditFilters = !previewMode && !isReadOnly
-	const tableRowHeaders = useMemo(
-		() => (config.rowHeaders && config.rowHeaders.length ? [...config.rowHeaders] : [...DEFAULT_ROW_HEADERS]),
-		[config.rowHeaders]
-	)
-	const resolvedRowHeaders = useMemo(() => sanitizeRowHeaders(tableRowHeaders), [tableRowHeaders])
+	const resolvedRowHeaders = useMemo(() => sanitizeRowHeaders(config.rowHeaders), [config.rowHeaders])
 	const filterChips = useMemo(() => getActiveFilterChips(config.filters), [config.filters])
 	const activeFilterCount = filterChips.length
 	const canEditGrouping = !previewMode && !isReadOnly && PROTOCOL_GROUPING_OPTIONS.length > 0
@@ -294,11 +290,21 @@ function UnifiedTableInner({
 
 		handleEditItem(config.id, {
 			...config,
+			rowHeaders: resolvedRowHeaders,
 			columnOrder: columnOrderState,
 			columnVisibility: columnVisibilityState,
-			defaultSorting: sortingState.map((item) => ({ ...item }))
+			defaultSorting: sortingState
 		})
-	}, [columnOrderState, columnVisibilityState, config, handleEditItem, isReadOnly, previewMode, sortingState])
+	}, [
+		columnOrderState,
+		columnVisibilityState,
+		config,
+		handleEditItem,
+		isReadOnly,
+		previewMode,
+		resolvedRowHeaders,
+		sortingState
+	])
 
 	const handleColumnOrderChange = useCallback(
 		(updater: ColumnOrderState | ((prev: ColumnOrderState) => ColumnOrderState)) => {
@@ -340,16 +346,17 @@ function UnifiedTableInner({
 		() => ({
 			id: config.id,
 			kind: config.kind,
-			rowHeaders: tableRowHeaders,
+			rowHeaders: resolvedRowHeaders,
 			params: config.params,
 			filters: config.filters,
 			customColumns: config.customColumns
 		}),
-		[config.id, config.kind, config.params, config.filters, config.customColumns, tableRowHeaders]
+		[config.id, config.kind, config.params, config.filters, config.customColumns, resolvedRowHeaders]
 	)
 
 	const unifiedTable = useUnifiedTable({
 		config: memoizedConfig,
+		rowHeaders: resolvedRowHeaders,
 		searchTerm,
 		columnOrder: effectiveColumnOrder,
 		columnVisibility: effectiveColumnVisibility,
@@ -373,13 +380,23 @@ function UnifiedTableInner({
 			}
 			handleEditItem(config.id, {
 				...config,
+				rowHeaders: resolvedRowHeaders,
 				columnOrder: columnOrderState,
 				columnVisibility: columnVisibilityState,
-				defaultSorting: sortingState.map((item) => ({ ...item })),
+				defaultSorting: sortingState,
 				...overrides
 			})
 		},
-		[columnOrderState, columnVisibilityState, config, handleEditItem, isReadOnly, previewMode, sortingState]
+		[
+			columnOrderState,
+			columnVisibilityState,
+			config,
+			handleEditItem,
+			isReadOnly,
+			previewMode,
+			resolvedRowHeaders,
+			sortingState
+		]
 	)
 
 	const handleFilterChipRemove = useCallback(
@@ -428,9 +445,8 @@ function UnifiedTableInner({
 			if (!option) {
 				return
 			}
-			const normalizedHeaders = sanitizeRowHeaders(option.headers)
-			const nextVisibility = applyRowHeaderVisibilityRules(normalizedHeaders, { ...columnVisibilityState })
-			persistConfigChanges({ rowHeaders: normalizedHeaders, columnVisibility: nextVisibility })
+			const nextVisibility = applyRowHeaderVisibilityRules(option.headers, { ...columnVisibilityState })
+			persistConfigChanges({ rowHeaders: option.headers, columnVisibility: nextVisibility })
 		},
 		[columnVisibilityState, persistConfigChanges]
 	)

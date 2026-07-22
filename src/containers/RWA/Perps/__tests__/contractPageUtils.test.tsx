@@ -220,10 +220,21 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			['Price', 'line', '#22C55E']
 		])
 
-		expect(spec.dataset.source).toEqual([
-			[Date.UTC(2026, 2, 1), 120, 30, 12],
-			[Date.UTC(2026, 3, 1), 140, 30, 14]
+		expect(spec.charts.map((chart) => chart.data)).toEqual([
+			[
+				[Date.UTC(2026, 2, 1), 120],
+				[Date.UTC(2026, 3, 1), 140]
+			],
+			[
+				[Date.UTC(2026, 2, 1), 30],
+				[Date.UTC(2026, 3, 1), 30]
+			],
+			[
+				[Date.UTC(2026, 2, 1), 12],
+				[Date.UTC(2026, 3, 1), 14]
+			]
 		])
+		expect(spec.dataset.source).toEqual([])
 	})
 
 	it('overwrites exact daily duplicates but sums every point in coarser volume buckets', () => {
@@ -251,11 +262,25 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			enabledMetrics: ['openInterest', 'volume24h', 'price']
 		})
 
-		expect(daily.dataset.source).toEqual([
-			[Date.UTC(2026, 2, 1), 110, 15, 11],
-			[Date.UTC(2026, 2, 15), 120, 20, 12]
+		expect(daily.charts.map((chart) => chart.data)).toEqual([
+			[
+				[Date.UTC(2026, 2, 1), 110],
+				[Date.UTC(2026, 2, 15), 120]
+			],
+			[
+				[Date.UTC(2026, 2, 1), 15],
+				[Date.UTC(2026, 2, 15), 20]
+			],
+			[
+				[Date.UTC(2026, 2, 1), 11],
+				[Date.UTC(2026, 2, 15), 12]
+			]
 		])
-		expect(monthly.dataset.source).toEqual([[Date.UTC(2026, 2, 1), 120, 45, 12]])
+		expect(monthly.charts.map((chart) => chart.data)).toEqual([
+			[[Date.UTC(2026, 2, 1), 120]],
+			[[Date.UTC(2026, 2, 1), 45]],
+			[[Date.UTC(2026, 2, 1), 12]]
+		])
 	})
 
 	it('keeps grouped volume as a bar series without offering cumulative accumulation', () => {
@@ -272,9 +297,19 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			['Funding Rate', 'line']
 		])
 
-		expect(spec.dataset.source).toEqual([
-			[Date.UTC(2026, 2, 1), 30, 12, 2],
-			[Date.UTC(2026, 3, 1), 30, 14, 3]
+		expect(spec.charts.map((chart) => chart.data)).toEqual([
+			[
+				[Date.UTC(2026, 2, 1), 30],
+				[Date.UTC(2026, 3, 1), 30]
+			],
+			[
+				[Date.UTC(2026, 2, 1), 12],
+				[Date.UTC(2026, 3, 1), 14]
+			],
+			[
+				[Date.UTC(2026, 2, 1), 2],
+				[Date.UTC(2026, 3, 1), 3]
+			]
 		])
 	})
 
@@ -293,7 +328,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			] as RWAPerpsContractChartMetricKey[]
 		})
 
-		expect(spec.charts).toEqual([
+		expect(spec.charts.map(({ data: _data, ...chart }) => chart)).toEqual([
 			{
 				name: 'Premium',
 				type: 'line',
@@ -306,7 +341,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			{
 				name: 'Volume 24h',
 				type: 'bar',
-				encode: { x: 0, y: 2 },
+				encode: { x: 0, y: 1 },
 				color: '#7DD3FC',
 				valueSymbol: '$',
 				hideAreaStyle: true
@@ -314,14 +349,14 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			{
 				name: 'Open Interest',
 				type: 'line',
-				encode: { x: 0, y: 3 },
+				encode: { x: 0, y: 1 },
 				color: '#3B82F6',
 				valueSymbol: '$'
 			},
 			{
 				name: 'Price',
 				type: 'line',
-				encode: { x: 0, y: 4 },
+				encode: { x: 0, y: 1 },
 				color: '#22C55E',
 				yAxisIndex: 1,
 				valueSymbol: '$',
@@ -330,7 +365,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			{
 				name: 'Funding Rate',
 				type: 'line',
-				encode: { x: 0, y: 5 },
+				encode: { x: 0, y: 1 },
 				color: '#F59E0B',
 				yAxisIndex: 2,
 				valueSymbol: '%',
@@ -339,7 +374,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			{
 				name: 'Volume 24h',
 				type: 'bar',
-				encode: { x: 0, y: 6 },
+				encode: { x: 0, y: 1 },
 				color: '#7DD3FC',
 				valueSymbol: '$',
 				hideAreaStyle: true
@@ -354,7 +389,26 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			'Funding Rate',
 			'Volume 24h'
 		])
-		expect(spec.dataset.source[0][6]).toBe(30)
+		expect(spec.dataset.source).toEqual([])
+		expect(spec.charts[1].data).toEqual([])
+		expect(spec.charts[5].data?.[0][1]).toBe(30)
+	})
+
+	it('keeps market and funding lines on their independent timestamp calendars', () => {
+		const spec = buildRWAPerpsContractChartSpec({
+			marketPoints: [chartPoints[0], chartPoints[2]],
+			fundingHistory: [fundingHistoryPoints[0]],
+			groupBy: 'daily',
+			enabledMetrics: ['openInterest', 'fundingRate']
+		})
+
+		expect(spec.charts.map((chart) => chart.data)).toEqual([
+			[
+				[Date.UTC(2026, 2, 1), 100],
+				[Date.UTC(2026, 3, 1), 140]
+			],
+			[[Date.UTC(2026, 2, 1), 0.1]]
+		])
 	})
 
 	it('falls back to market funding fields only when funding history is empty', () => {
@@ -371,10 +425,19 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			enabledMetrics: ['fundingRate', 'premium']
 		})
 
-		expect(fallbackSpec.dataset.source).toEqual([[Date.UTC(2026, 2, 1), 1, 2]])
-		expect(historySpec.dataset.source).toEqual([
-			[Date.UTC(2026, 2, 1), 0.1, 1],
-			[Date.UTC(2026, 2, 2), 0.2, 2]
+		expect(fallbackSpec.charts.map((chart) => chart.data)).toEqual([
+			[[Date.UTC(2026, 2, 1), 1]],
+			[[Date.UTC(2026, 2, 1), 2]]
+		])
+		expect(historySpec.charts.map((chart) => chart.data)).toEqual([
+			[
+				[Date.UTC(2026, 2, 1), 0.1],
+				[Date.UTC(2026, 2, 2), 0.2]
+			],
+			[
+				[Date.UTC(2026, 2, 1), 1],
+				[Date.UTC(2026, 2, 2), 2]
+			]
 		])
 	})
 
@@ -388,13 +451,13 @@ describe('buildRWAPerpsContractChartSpec', () => {
 
 		expect(spec.charts.map((chart) => chart.name)).toEqual(['Funding Rate'])
 		expect(spec.dataset.dimensions).toEqual(['timestamp', 'Funding Rate'])
-		expect(spec.dataset.source).toEqual([
+		expect(spec.charts[0].data).toEqual([
 			[Date.UTC(2026, 2, 1), 0.1],
 			[Date.UTC(2026, 2, 2), 0.2]
 		])
 	})
 
-	it('merges ascending market and funding streams without mutating them', () => {
+	it('scans ascending market and funding streams independently without mutating them', () => {
 		const marketPoints = [...chartPoints]
 		const fundingHistory = [...fundingHistoryPoints]
 		const originalMarketPoints = structuredClone(marketPoints)
@@ -406,9 +469,12 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			enabledMetrics: ['openInterest', 'fundingRate']
 		})
 
-		expect(spec.dataset.source).toEqual([
-			[Date.UTC(2026, 2, 1), 120, 0.2],
-			[Date.UTC(2026, 3, 1), 140, undefined]
+		expect(spec.charts.map((chart) => chart.data)).toEqual([
+			[
+				[Date.UTC(2026, 2, 1), 120],
+				[Date.UTC(2026, 3, 1), 140]
+			],
+			[[Date.UTC(2026, 2, 1), 0.2]]
 		])
 		expect(marketPoints).toEqual(originalMarketPoints)
 		expect(fundingHistory).toEqual(originalFundingHistory)
@@ -432,9 +498,9 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			enabledMetrics: ['openInterest', 'fundingRate']
 		})
 
-		expect(spec.dataset.source).toEqual([
-			[Date.UTC(2026, 2, 1), 100, undefined],
-			[Date.UTC(2026, 2, 2), undefined, 0.1]
+		expect(spec.charts.map((chart) => chart.data)).toEqual([
+			[[Date.UTC(2026, 2, 1), 100]],
+			[[Date.UTC(2026, 2, 2), 0.1]]
 		])
 	})
 })

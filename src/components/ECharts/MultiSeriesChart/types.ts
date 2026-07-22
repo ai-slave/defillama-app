@@ -34,6 +34,8 @@ export type MultiSeriesChartSeriesConfig = {
 		x: number | number[] | string | string[]
 		y: number | number[] | string | string[]
 	}
+	/** Independently timed positional data. Use this when a wide union would introduce semantic null gaps. */
+	data?: Array<[timestamp: number, value: number | null]>
 	color?: string
 	legendIconUrl?: string
 	yAxisIndex?: number
@@ -42,6 +44,7 @@ export type MultiSeriesChartSeriesConfig = {
 	hideAreaStyle?: boolean
 	areaStyle?: LineSeriesOption['areaStyle']
 	markLine?: LineSeriesOption['markLine']
+	markArea?: LineSeriesOption['markArea']
 	connectNulls?: boolean
 	excludeFromTooltipTotal?: boolean
 	isTBD?: boolean
@@ -79,6 +82,8 @@ export interface IMultiSeriesChartProps {
 	height?: string
 	groupBy?: ChartTimeGroupingWithCumulative
 	hallmarks?: [number, string][]
+	rangeHallmarks?: Array<[[number, number], string]> | null
+	hallmarksInMs?: boolean
 	hallmarkStyle?: 'event-rail' | 'mark-line'
 	expandTo100Percent?: boolean
 	valueSymbol?: string
@@ -87,6 +92,8 @@ export interface IMultiSeriesChartProps {
 	stacked?: boolean
 	solidChartAreaStyle?: boolean
 	hideDataZoom?: boolean
+	/** Disable only when a caller has an established data-zoom rule independent of dataset row count. */
+	autoHideDataZoom?: boolean
 	onReady?: (instance: echarts.ECharts | null) => void
 	hideDefaultLegend?: boolean
 	dataset: MultiSeriesChartDataset
@@ -101,4 +108,6 @@ export interface IMultiSeriesChartProps {
 	exportButtons?: ChartExportButtonsMode
 	logScale?: boolean
 	logEligibleYAxes?: number[]
+	/** Use an explicit theme for standalone/embed callers; normal pages use the shared theme manager. */
+	isThemeDark?: boolean
 }

@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => {
 	const instance = {
 		dispose: vi.fn(),
+		getOption: vi.fn(() => ({})),
 		isDisposed: vi.fn(() => false),
 		resize: vi.fn(),
 		setOption: vi.fn()
@@ -15,7 +16,7 @@ const mocks = vi.hoisted(() => {
 	return {
 		init: vi.fn(() => instance),
 		instance,
-		onElementResize: undefined as (() => void) | undefined,
+		onElementResize: undefined as ((isVisible: boolean) => void) | undefined,
 		use: vi.fn()
 	}
 })
@@ -30,8 +31,12 @@ vi.mock('~/contexts/LocalStorage', () => ({
 }))
 
 vi.mock('~/hooks/useChartResize', () => ({
-	useChartResize: (_instanceRef: unknown, _elementRef: unknown, onElementResize?: () => void) => {
-		mocks.onElementResize = onElementResize
+	useChartResize: (
+		_instanceRef: unknown,
+		_elementRef: unknown,
+		options?: { onVisibilityChange?: (isVisible: boolean) => void }
+	) => {
+		mocks.onElementResize = options?.onVisibilityChange
 	}
 }))
 
@@ -108,7 +113,7 @@ describe('SankeyChart lifecycle', () => {
 
 		width = 640
 		height = 360
-		await act(async () => mocks.onElementResize?.())
+		await act(async () => mocks.onElementResize?.(true))
 
 		expect(mocks.init).toHaveBeenCalledOnce()
 		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
@@ -118,9 +123,44 @@ describe('SankeyChart lifecycle', () => {
 		expect(onReady).toHaveBeenCalledOnce()
 		expect(onReady).toHaveBeenCalledWith(mocks.instance)
 
-		await act(async () => mocks.onElementResize?.())
+		await act(async () => mocks.onElementResize?.(true))
 
 		expect(mocks.init).toHaveBeenCalledOnce()
 		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
+	})
+
+	it('defers option updates while an initialized chart is hidden', async () => {
+		width = 640
+		height = 360
+
+		await act(async () =>
+			root.render(
+				<SankeyChart
+					nodes={[{ name: 'Revenue' }, { name: 'Protocol' }]}
+					links={[{ source: 'Revenue', target: 'Protocol', value: 10 }]}
+				/>
+			)
+		)
+
+		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
+
+		await act(async () => mocks.onElementResize?.(false))
+		await act(async () =>
+			root.render(
+				<SankeyChart
+					nodes={[{ name: 'Revenue' }, { name: 'Treasury' }]}
+					links={[{ source: 'Revenue', target: 'Treasury', value: 20 }]}
+				/>
+			)
+		)
+
+		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
+
+		await act(async () => mocks.onElementResize?.(true))
+
+		expect(mocks.instance.setOption).toHaveBeenCalledTimes(2)
+		expect(mocks.instance.setOption.mock.calls[1][0].series.links).toEqual([
+			{ source: 'Revenue', target: 'Treasury', value: 20 }
+		])
 	})
 })

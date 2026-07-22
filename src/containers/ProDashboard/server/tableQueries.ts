@@ -139,9 +139,25 @@ export function buildTableServerDataSourcePlan(items: DashboardItemConfig[]): Ta
 	}
 }
 
-export async function fetchTableServerData(items: DashboardItemConfig[]): Promise<TableServerData | null> {
+export async function fetchTableServerData(
+	items: DashboardItemConfig[],
+	claimSource: (kind: string, key: readonly unknown[]) => boolean = () => true
+): Promise<TableServerData | null> {
 	const plan = buildTableServerDataSourcePlan(items)
-	if (plan.chainsToFetch.length === 0 && plan.tokenUsageConfigs.length === 0) return null
+	const fetchProtocolsList = plan.chainsToFetch.length > 0 && claimSource('table-protocols-list', [])
+	const chainsToFetch = plan.chainsToFetch.filter((chain) => claimSource('table-chain-overview', [chain]))
+	const datasetSources = plan.datasetSources.filter((source) => claimSource('table-dataset', [source.cacheKey]))
+	const tokenUsageConfigs = plan.tokenUsageConfigs.filter((source) =>
+		claimSource('table-token-usage', [source.cacheKey])
+	)
+	if (
+		!fetchProtocolsList &&
+		chainsToFetch.length === 0 &&
+		datasetSources.length === 0 &&
+		tokenUsageConfigs.length === 0
+	) {
+		return null
+	}
 
 	const tableData: TableServerData = {
 		protocolsList: null,
@@ -153,10 +169,10 @@ export async function fetchTableServerData(items: DashboardItemConfig[]): Promis
 		tokenUsageByQueryKey: {}
 	}
 
-	if (plan.chainsToFetch.length > 0) {
+	if (fetchProtocolsList || chainsToFetch.length > 0 || datasetSources.length > 0) {
 		const results = await Promise.allSettled([
-			withTimeout(fetchProtocols(), FETCH_TIMEOUT),
-			...plan.chainsToFetch.flatMap((chain) => [
+			fetchProtocolsList ? withTimeout(fetchProtocols(), FETCH_TIMEOUT) : Promise.resolve(null),
+			...chainsToFetch.flatMap((chain) => [
 				withTimeout(
 					getDexVolumeByChain({ chain, excludeTotalDataChart: false, excludeTotalDataChartBreakdown: true }).then(
 						(data) => ({ type: 'volume' as const, chain, data: { chain, protocols: data?.protocols ?? [] } })
@@ -190,7 +206,7 @@ export async function fetchTableServerData(items: DashboardItemConfig[]): Promis
 
 		const [protocolsResult, ...overviewResults] = results
 
-		if (protocolsResult.status === 'fulfilled') {
+		if (protocolsResult.status === 'fulfilled' && protocolsResult.value) {
 			tableData.protocolsList = protocolsResult.value
 		}
 
@@ -214,7 +230,7 @@ export async function fetchTableServerData(items: DashboardItemConfig[]): Promis
 		}
 
 		const datasetFetches: Promise<{ cacheKey: string; data: DimensionDatasetProtocol[] }>[] = []
-		for (const source of plan.datasetSources) {
+		for (const source of datasetSources) {
 			const spec = DIMENSION_DATASET_SPEC_BY_TYPE[source.datasetType]
 			datasetFetches.push(
 				withTimeout(fetchProDimensionDataset(spec, source.chains), FETCH_TIMEOUT * 3).then((data) => ({
@@ -231,9 +247,9 @@ export async function fetchTableServerData(items: DashboardItemConfig[]): Promis
 		}
 	}
 
-	if (plan.tokenUsageConfigs.length > 0) {
+	if (tokenUsageConfigs.length > 0) {
 		const tokenUsageFetches: Promise<{ cacheKey: string; data: ProtocolTokenUsageData[] }>[] = []
-		for (const config of plan.tokenUsageConfigs) {
+		for (const config of tokenUsageConfigs) {
 			tokenUsageFetches.push(
 				withTimeout(fetchTokenUsageData(config.tokenSymbols, config.includeCex), FETCH_TIMEOUT).then((data) => ({
 					cacheKey: config.cacheKey,

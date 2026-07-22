@@ -14,6 +14,7 @@ import { formattedNum, toNiceCsvDate } from '~/utils'
 import { download } from '~/utils/download'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
+import { getTimePeriodBounds } from '../queries'
 import type { StablecoinAssetChartConfig } from '../types'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 
@@ -40,17 +41,16 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	const { stablecoin, stablecoinId, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useChartImageExport()
+	const piePeriodBounds = useMemo(
+		() => (chartType === 'chainPie' ? getTimePeriodBounds(timePeriod, customTimePeriod) : null),
+		[chartType, customTimePeriod, timePeriod]
+	)
 
-	const {
-		totalDataset,
-		areaDataset,
-		dominanceDataset,
-		chainsCirculatingValues,
-		chainsUnique,
-		stablecoinName,
-		stablecoinSymbol,
-		isLoading
-	} = useStablecoinAssetChartData(stablecoinId, chartType)
+	const { presentation, chainsUnique, stablecoinName, stablecoinSymbol, isLoading } = useStablecoinAssetChartData(
+		stablecoinId,
+		chartType,
+		piePeriodBounds
+	)
 
 	const chainColors = useMemo(() => {
 		const colors: Record<string, string> = {}
@@ -81,17 +81,18 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 		[chainsUnique, chainColors]
 	)
 
-	const filteredChartData = useMemo(() => {
-		return {
-			totalDataset: filterStablecoinDatasetByTimePeriod(totalDataset, timePeriod, customTimePeriod),
-			areaDataset: filterStablecoinDatasetByTimePeriod(areaDataset, timePeriod, customTimePeriod),
-			dominanceDataset: filterStablecoinDatasetByTimePeriod(dominanceDataset, timePeriod, customTimePeriod)
-		}
-	}, [totalDataset, areaDataset, dominanceDataset, timePeriod, customTimePeriod])
-
-	const latestCirculating = useMemo(() => {
-		return (filteredChartData.totalDataset.source.at(-1)?.[1] as number | undefined) ?? null
-	}, [filteredChartData.totalDataset])
+	const filteredDataset = useMemo(
+		() =>
+			'dataset' in presentation
+				? filterStablecoinDatasetByTimePeriod(presentation.dataset, timePeriod, customTimePeriod)
+				: null,
+		[presentation, timePeriod, customTimePeriod]
+	)
+	const chainsCirculatingValues = presentation.chartType === 'chainPie' ? presentation.slices : []
+	const latestCirculating =
+		presentation.chartType === 'totalCirc'
+			? ((filteredDataset?.source.at(-1)?.[1] as number | undefined) ?? null)
+			: null
 
 	const handleCsvExport = () => {
 		let rows: (string | number)[][] = []
@@ -103,17 +104,14 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			case 'totalCirc':
 				rows = [
 					['Date', 'Circulating'],
-					...filteredChartData.totalDataset.source.map((row) => [
-						toNiceCsvDate((row[0] as number) / 1000),
-						row[1] ?? ''
-					])
+					...(filteredDataset?.source ?? []).map((row) => [toNiceCsvDate((row[0] as number) / 1000), row[1] ?? ''])
 				]
 				filename = `${assetSlug}-total-circulating`
 				break
 			case 'chainMcaps':
 				rows = [
 					['Date', ...chainsUnique],
-					...filteredChartData.areaDataset.source.map((row) => [
+					...(filteredDataset?.source ?? []).map((row) => [
 						toNiceCsvDate((row[0] as number) / 1000),
 						...chainsUnique.map((_, index) => row[index + 1] ?? '')
 					])
@@ -123,7 +121,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			case 'chainDominance':
 				rows = [
 					['Date', ...chainsUnique],
-					...filteredChartData.dominanceDataset.source.map((row) => [
+					...(filteredDataset?.source ?? []).map((row) => [
 						toNiceCsvDate((row[0] as number) / 1000),
 						...chainsUnique.map((_, index) => row[index + 1] ?? '')
 					])
@@ -168,7 +166,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				>
 					<MultiSeriesChart
 						title=""
-						dataset={filteredChartData.totalDataset}
+						dataset={filteredDataset!}
 						charts={TOTAL_CIRCULATING_CHARTS}
 						valueSymbol="$"
 						hallmarks={EMPTY_HALLMARKS}
@@ -190,7 +188,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				>
 					<MultiSeriesChart
 						title=""
-						dataset={filteredChartData.areaDataset}
+						dataset={filteredDataset!}
 						charts={chainCharts}
 						valueSymbol="$"
 						chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
@@ -225,7 +223,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 					<MultiSeriesChart
 						title=""
 						valueSymbol="%"
-						dataset={filteredChartData.dominanceDataset}
+						dataset={filteredDataset!}
 						charts={chainDominanceCharts}
 						expandTo100Percent={true}
 						chartOptions={STABLECOIN_PERCENT_CHART_OPTIONS}
@@ -237,10 +235,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			break
 	}
 
-	const hasChartData =
-		filteredChartData.totalDataset.source.length > 0 ||
-		filteredChartData.areaDataset.source.length > 0 ||
-		chainsCirculatingValues.length > 0
+	const hasChartData = (filteredDataset?.source.length ?? 0) > 0 || chainsCirculatingValues.length > 0
 
 	return (
 		<div className="flex h-full flex-col p-2">

@@ -5,6 +5,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef } from 'react'
 import { useChartResize } from '~/hooks/useChartResize'
+import { withEChartsRenderVisibility } from '../renderVisibility'
 
 echarts.use([BarChart, GridComponent, CanvasRenderer])
 
@@ -21,7 +22,7 @@ interface BarSparklineProps {
 const SUCCESS_COLOR = 'rgb(34, 197, 94)'
 const ERROR_COLOR = 'rgb(239, 68, 68)'
 
-export function BarSparkline({ data, className, height = 48, focusable, maxBars = 60 }: BarSparklineProps) {
+function BarSparklineRenderer({ data, className, height = 48, focusable, maxBars = 60 }: BarSparklineProps) {
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
@@ -157,3 +158,5 @@ export function BarSparkline({ data, className, height = 48, focusable, maxBars 
 		/>
 	)
 }
+
+export const BarSparkline = withEChartsRenderVisibility(BarSparklineRenderer)

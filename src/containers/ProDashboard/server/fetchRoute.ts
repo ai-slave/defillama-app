@@ -7,12 +7,7 @@ import {
 import { buildProDashboardProtocolRelations } from '~/containers/ProDashboard/protocolCatalog'
 import { fetchProtocolsAndChains, fetchSingleChartData, withTimeout } from '~/containers/ProDashboard/queries.server'
 import { buildStablecoinsChartCacheValue } from '~/containers/ProDashboard/server/stablecoinFetchers'
-import {
-	fetchStablecoinAssetsApi,
-	fetchStablecoinChartApi,
-	fetchStablecoinPricesApi,
-	fetchStablecoinRatesApi
-} from '~/containers/Stablecoins/api'
+import { fetchStablecoinAssetsApi, fetchStablecoinChartApi } from '~/containers/Stablecoins/api'
 import { fetchProtocolsByToken } from '~/containers/TokenUsage/api'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import { requireSubscription } from '~/server/api/requireSubscription'
@@ -43,19 +38,13 @@ async function dispatchFetch(request: ProDashboardProxyRequest): Promise<ProDash
 			const { chain } = request.params
 			if (!chain) throw new Error('Missing chain param')
 
-			const [peggedData, priceData, rateData] = await Promise.all([
-				withTimeout(fetchStablecoinAssetsApi(), FETCH_TIMEOUT),
-				withTimeout(fetchStablecoinPricesApi(), FETCH_TIMEOUT),
-				withTimeout(fetchStablecoinRatesApi(), FETCH_TIMEOUT)
-			])
+			const peggedData = await withTimeout(fetchStablecoinAssetsApi(), FETCH_TIMEOUT)
 
 			const chainLabel = chain === 'All' ? 'all' : chain
 			const chainData = await withTimeout(fetchStablecoinChartApi(chainLabel), FETCH_TIMEOUT)
 			return buildStablecoinsChartCacheValue({
 				peggedData,
 				chainData,
-				priceData,
-				rateData,
 				chain
 			})
 		}
@@ -84,30 +73,35 @@ async function dispatchFetch(request: ProDashboardProxyRequest): Promise<ProDash
 			const rwaApi = await import('~/containers/RWA/api')
 
 			if (chain && chain !== 'All') {
-				const assetData = await withTimeout(
-					rwaApi.fetchRWAChartDataByAsset({
+				const rows = await withTimeout(
+					rwaApi.fetchRWAChartMetricDataByAsset({
 						target: { kind: 'chain', slug: chain },
+						metric: metric || 'activeMcap',
 						includeStablecoins: false,
 						includeGovernance: false
 					}),
 					FETCH_TIMEOUT
 				)
-				if (!assetData) return null
-				const metricKey = (metric || 'activeMcap') as keyof typeof assetData
-				return assetData[metricKey] ?? null
+				return import('~/containers/RWA/breakdownDataset').then(({ toRwaPositionalChartDataset }) =>
+					toRwaPositionalChartDataset(rows)
+				)
 			}
 
 			const breakdownParams = { key: metric || 'activeMcap', includeStablecoin: false, includeGovernance: false }
-			switch (breakdown) {
-				case 'category':
-					return withTimeout(rwaApi.fetchRWACategoryBreakdownChartData(breakdownParams), FETCH_TIMEOUT)
-				case 'platform':
-					return withTimeout(rwaApi.fetchRWAPlatformBreakdownChartData(breakdownParams), FETCH_TIMEOUT)
-				case 'assetGroup':
-					return withTimeout(rwaApi.fetchRWAAssetGroupBreakdownChartData(breakdownParams), FETCH_TIMEOUT)
-				default:
-					return withTimeout(rwaApi.fetchRWAChainBreakdownChartData(breakdownParams), FETCH_TIMEOUT)
-			}
+			const rows = await (async () => {
+				switch (breakdown) {
+					case 'category':
+						return withTimeout(rwaApi.fetchRWACategoryBreakdownChartData(breakdownParams), FETCH_TIMEOUT)
+					case 'platform':
+						return withTimeout(rwaApi.fetchRWAPlatformBreakdownChartData(breakdownParams), FETCH_TIMEOUT)
+					case 'assetGroup':
+						return withTimeout(rwaApi.fetchRWAAssetGroupBreakdownChartData(breakdownParams), FETCH_TIMEOUT)
+					default:
+						return withTimeout(rwaApi.fetchRWAChainBreakdownChartData(breakdownParams), FETCH_TIMEOUT)
+				}
+			})()
+			const { toRwaPositionalChartDataset } = await import('~/containers/RWA/breakdownDataset')
+			return toRwaPositionalChartDataset(rows)
 		}
 
 		case 'rwaAssetChart': {

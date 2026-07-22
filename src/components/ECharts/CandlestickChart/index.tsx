@@ -23,6 +23,7 @@ import { oldBlue } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
+import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import {
 	CHART_INSET,
 	CHART_LEGEND_RESERVE,
@@ -56,17 +57,13 @@ const PANEL_HEIGHT = 60
 const VOLUME_HEIGHT = 80
 const BASE_BOTTOM = CHART_ZOOM_RESERVE
 
-export default function CandleStickAndVolumeChart({
-	data,
-	height,
-	indicators = EMPTY_INDICATORS,
-	onReady
-}: ICandlestickChartProps) {
+function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS, onReady }: ICandlestickChartProps) {
 	const [isThemeDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const chartTheme = useChartTheme(isThemeDark)
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
+	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
@@ -416,14 +413,16 @@ export default function CandleStickAndVolumeChart({
 		if (!el) return
 		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		persistentLifecycle.restore(instance)
 		emitReady(instance)
 
 		return () => {
+			persistentLifecycle.capture(instance)
 			chartRef.current = null
 			instance.dispose()
 			emitReady(null)
 		}
-	}, [])
+	}, [persistentLifecycle])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -445,3 +444,5 @@ export default function CandleStickAndVolumeChart({
 
 	return <div ref={containerRef} style={{ height: height ?? `${chartHeight}px` }}></div>
 }
+
+export default withEChartsRenderVisibility(CandleStickAndVolumeChart)

@@ -302,7 +302,7 @@ export const PeggedAssetInfo = ({
 							</p>
 						) : null}
 						{unreleased != null && unreleased > 0 ? (
-							<p className="flex flex-wrap items-center justify-between gap-4 border-b border-subtle py-1 first:pt-0 last:border-none last:pb-0">
+							<div className="flex flex-wrap items-center justify-between gap-4 border-b border-subtle py-1 first:pt-0 last:border-none last:pb-0">
 								<Checkbox
 									variant="inline"
 									checked={includeUnreleased}
@@ -315,7 +315,7 @@ export const PeggedAssetInfo = ({
 									</span>
 								</Checkbox>
 								<span className="mono-md">{formattedNum(unreleased)}</span>
-							</p>
+							</div>
 						) : null}
 					</div>
 				</SummaryStatsCard>

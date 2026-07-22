@@ -187,7 +187,7 @@ export function ChainsByCategory({
 	)
 }
 
-const useFormatChartData = ({
+export const buildChainsByCategoryChartPresentation = ({
 	tvlChartsByChain,
 	totalTvlByDate,
 	colorsByChain,
@@ -198,52 +198,68 @@ const useFormatChartData = ({
 	colorsByChain: IChainsByCategoryData['colorsByChain']
 	enabledTvlSettings: readonly TvlSettingsKey[]
 }) => {
-	const data = React.useMemo(() => {
-		const recentTvlByChain = {}
-		const tvlByChain = tvlChartsByChain['tvl'] ?? {}
-		const chainNames: string[] = []
-		for (const chain in tvlByChain) {
-			chainNames.push(chain)
-		}
+	const recentTvlByChain = {}
+	const tvlByChain = tvlChartsByChain['tvl'] ?? {}
+	const chainNames: string[] = []
+	for (const chain in tvlByChain) {
+		chainNames.push(chain)
+	}
 
-		const source: Array<Array<number | null>> = []
-		for (const date in totalTvlByDate['tvl']) {
-			const row = new Array<number | null>(chainNames.length + 1)
-			row[0] = +date
-			for (let chainIndex = 0; chainIndex < chainNames.length; chainIndex++) {
-				const chain = chainNames[chainIndex]
-				const value = applyChainsTvlSettings(
-					tvlChartsByChain['tvl']?.[chain]?.[date],
-					getChartExtraValues({ tvlChartsByChain, chain, date }),
-					enabledTvlSettings
-				)
-				const total = applyChainsTvlSettings(
+	const source: Array<Array<number | null>> = []
+	const dates = Object.keys(totalTvlByDate['tvl'])
+	for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
+		const date = dates[dateIndex]
+		const includeRow = dateIndex % 2 === 1
+		const isLatest = dateIndex === dates.length - 1
+		if (!includeRow && !isLatest) continue
+		const row = includeRow ? new Array<number | null>(chainNames.length + 1) : null
+		if (row) row[0] = +date
+		const total = includeRow
+			? applyChainsTvlSettings(
 					totalTvlByDate['tvl'][date],
 					getTotalExtraValues({ totalTvlByDate, date }),
 					enabledTvlSettings
 				)
-				recentTvlByChain[chain] = value ?? 0
-				row[chainIndex + 1] = value != null && total != null && total !== 0 ? (value / total) * 100 : null
-			}
-			source.push(row)
+			: null
+		for (let chainIndex = 0; chainIndex < chainNames.length; chainIndex++) {
+			const chain = chainNames[chainIndex]
+			const value = applyChainsTvlSettings(
+				tvlChartsByChain['tvl']?.[chain]?.[date],
+				getChartExtraValues({ tvlChartsByChain, chain, date }),
+				enabledTvlSettings
+			)
+			if (isLatest) recentTvlByChain[chain] = value ?? 0
+			if (row) row[chainIndex + 1] = value != null && total != null && total !== 0 ? (value / total) * 100 : null
 		}
-		const sampledSource = source.filter((_, index) => index % 2 === 1)
-		const dimensions = ['timestamp', ...chainNames]
-		const chartsConfig = chainNames.map((chain, index) => ({
-			type: 'line' as const,
-			name: chain,
-			encode: { x: 0, y: index + 1 },
-			stack: chain,
-			color: colorsByChain[chain]
-		}))
+		if (row) source.push(row)
+	}
+	const dimensions = ['timestamp', ...chainNames]
+	const chartsConfig = chainNames.map((chain, index) => ({
+		type: 'line' as const,
+		name: chain,
+		encode: { x: 0, y: index + 1 },
+		stack: chain,
+		color: colorsByChain[chain]
+	}))
 
-		return {
-			dominanceCharts: { dataset: { source: sampledSource, dimensions }, charts: chartsConfig },
-			pieChartData: preparePieChartData({ data: recentTvlByChain, limit: 10 })
-		}
-	}, [enabledTvlSettings, totalTvlByDate, tvlChartsByChain, colorsByChain])
+	return {
+		dominanceCharts: { dataset: { source, dimensions }, charts: chartsConfig },
+		pieChartData: preparePieChartData({ data: recentTvlByChain, limit: 10 })
+	}
+}
 
-	return data
+const useFormatChartData = (options: Parameters<typeof buildChainsByCategoryChartPresentation>[0]) => {
+	const { colorsByChain, enabledTvlSettings, totalTvlByDate, tvlChartsByChain } = options
+	return React.useMemo(
+		() =>
+			buildChainsByCategoryChartPresentation({
+				colorsByChain,
+				enabledTvlSettings,
+				totalTvlByDate,
+				tvlChartsByChain
+			}),
+		[colorsByChain, enabledTvlSettings, totalTvlByDate, tvlChartsByChain]
+	)
 }
 
 export const useGroupAndFormatChains = ({

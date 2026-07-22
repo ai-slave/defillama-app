@@ -22,7 +22,6 @@ import { getUnifiedTableQueryIdentity } from '../../../unifiedTableQuery'
 import { getUnifiedTableColumns } from '../config/ColumnRegistry'
 import type { NormalizedRow } from '../types'
 import { filterRowsByConfig, filterRowsBySearch } from '../utils/dataFilters'
-import { sanitizeRowHeaders } from '../utils/rowHeaders'
 import { setChainMetrics } from './chainMetricsStore'
 import { getGroupingColumnIdsForHeaders } from './grouping'
 import { getRowHeaderFromGroupingColumn, isSelfGroupingValue } from './groupingUtils'
@@ -31,6 +30,7 @@ const EMPTY_ROWS: NormalizedRow[] = []
 
 interface UseUnifiedTableArgs {
 	config: UnifiedTableConfig
+	rowHeaders: UnifiedRowHeaderType[]
 	searchTerm: string
 	columnOrder: ColumnOrderState
 	columnVisibility: VisibilityState
@@ -84,6 +84,7 @@ const fetchUnifiedTableRows = async (config: UnifiedTableConfig, rowHeaders: Uni
 
 export function useUnifiedTable({
 	config,
+	rowHeaders,
 	searchTerm,
 	columnOrder,
 	columnVisibility,
@@ -106,14 +107,12 @@ export function useUnifiedTable({
 		[]
 	)
 
-	const sanitizedHeaders = useMemo(() => sanitizeRowHeaders(config.rowHeaders), [config.rowHeaders])
-
-	const { queryKey } = getUnifiedTableQueryIdentity(config, sanitizedHeaders)
+	const { queryKey } = getUnifiedTableQueryIdentity(config, rowHeaders)
 
 	const streamDone = useContext(StreamDoneContext)
 	const { data, isLoading } = useQuery({
 		queryKey,
-		queryFn: () => fetchUnifiedTableRows(config, sanitizedHeaders),
+		queryFn: () => fetchUnifiedTableRows(config, rowHeaders),
 		staleTime: Infinity,
 		retry: 1,
 		enabled: streamDone
@@ -131,7 +130,7 @@ export function useUnifiedTable({
 	}, [data?.rows, config.filters, deferredSearchTerm])
 
 	const columns = useMemo(() => getUnifiedTableColumns(config.customColumns), [config.customColumns])
-	const groupingColumnIds = useMemo(() => getGroupingColumnIdsForHeaders(sanitizedHeaders), [sanitizedHeaders])
+	const groupingColumnIds = useMemo(() => getGroupingColumnIdsForHeaders(rowHeaders), [rowHeaders])
 
 	const groupingColumnSet = useMemo(() => new Set(groupingColumnIds), [groupingColumnIds])
 
@@ -255,7 +254,7 @@ export function useUnifiedTable({
 	return {
 		table,
 		isLoading: isLoading || !streamDone,
-		rowHeaders: sanitizedHeaders,
+		rowHeaders,
 		leafRows: filteredRows,
 		columns,
 		expanded

@@ -19,17 +19,22 @@ function ChartHarness({
 	instance,
 	observeElement = false,
 	showElement = true,
-	onElementResize
+	onElementResize,
+	onElementVisibilityChange
 }: {
 	instance: FakeChart
 	observeElement?: boolean
 	showElement?: boolean
 	onElementResize?: () => void
+	onElementVisibilityChange?: (isVisible: boolean) => void
 }) {
 	const instanceRef = useRef(instance as unknown as echarts.ECharts)
 	const elementRef = useRef<HTMLDivElement>(null)
 	instanceRef.current = instance as unknown as echarts.ECharts
-	useChartResize(instanceRef, observeElement ? elementRef : undefined, onElementResize)
+	useChartResize(instanceRef, observeElement ? elementRef : undefined, {
+		onResize: onElementResize,
+		onVisibilityChange: onElementVisibilityChange
+	})
 	return observeElement && showElement ? <div ref={elementRef} /> : null
 }
 
@@ -139,19 +144,36 @@ describe('useChartResize', () => {
 	it('waits to resize an observed chart until its hidden container becomes visible', async () => {
 		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
 		const onElementResize = vi.fn()
+		const onElementVisibilityChange = vi.fn()
 		await act(async () =>
-			root.render(<ChartHarness instance={instance} observeElement onElementResize={onElementResize} />)
+			root.render(
+				<ChartHarness
+					instance={instance}
+					observeElement
+					onElementResize={onElementResize}
+					onElementVisibilityChange={onElementVisibilityChange}
+				/>
+			)
 		)
 		const element = container.querySelector('div')!
 
 		observerCallback?.([resizeEntry(element, 0, 180)], {} as ResizeObserver)
-		observerCallback?.([resizeEntry(element, 320, 0)], {} as ResizeObserver)
 		expect(instance.resize).not.toHaveBeenCalled()
 		expect(onElementResize).not.toHaveBeenCalled()
+		expect(onElementVisibilityChange).toHaveBeenLastCalledWith(false)
 
+		element.remove()
+		observerCallback?.([resizeEntry(element, 320, 180)], {} as ResizeObserver)
+		expect(instance.resize).not.toHaveBeenCalled()
+		expect(onElementResize).not.toHaveBeenCalled()
+		expect(onElementVisibilityChange).toHaveBeenCalledTimes(2)
+		expect(onElementVisibilityChange).toHaveBeenLastCalledWith(false)
+
+		container.appendChild(element)
 		observerCallback?.([resizeEntry(element, 320, 180)], {} as ResizeObserver)
 		expect(instance.resize).toHaveBeenCalledOnce()
 		expect(onElementResize).toHaveBeenCalledOnce()
+		expect(onElementVisibilityChange).toHaveBeenLastCalledWith(true)
 	})
 
 	it('globally resizes visible observed charts but skips hidden containers', async () => {

@@ -20,7 +20,7 @@ import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
-import { buildLstBreakdownChartData, buildLstInflowsData, buildLstInflowsSeriesData } from './chartData'
+import { buildActiveLstChartData } from './chartData'
 import type { ILSTTokenRow, LSTOverviewProps } from './types'
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -211,22 +211,22 @@ export const LSTOverview = ({
 	const inflowsExportFilenameBase = 'lst-inflows'
 	const inflowsExportTitle = 'LST Inflows'
 
-	const inflowsData = React.useMemo(() => {
-		return buildLstInflowsData({ inflowsChartData, groupBy })
-	}, [inflowsChartData, groupBy])
-
-	const breakdownData = React.useMemo(
-		() => buildLstBreakdownChartData({ areaChartData, tokens, lsdColors }),
-		[areaChartData, tokens, lsdColors]
-	)
-
-	const inflowsSeriesData = React.useMemo(
-		() => buildLstInflowsSeriesData({ inflowsData, tokens, lsdColors, barChartStacks }),
-		[inflowsData, tokens, lsdColors, barChartStacks]
+	const activeChartData = React.useMemo(
+		() =>
+			buildActiveLstChartData({
+				view: tab === 'inflows' ? 'inflows' : 'breakdown',
+				areaChartData,
+				inflowsChartData,
+				groupBy,
+				tokens,
+				lsdColors,
+				barChartStacks
+			}),
+		[areaChartData, barChartStacks, groupBy, inflowsChartData, lsdColors, tab, tokens]
 	)
 	const deferredPieChartData = React.useDeferredValue(pieChartData)
-	const deferredBreakdownData = React.useDeferredValue(breakdownData)
-	const deferredInflowsData = React.useDeferredValue(inflowsSeriesData)
+	const deferredActiveChartData = React.useDeferredValue(activeChartData)
+	const renderedActiveChartData = deferredActiveChartData.kind === tab ? deferredActiveChartData : activeChartData
 
 	return (
 		<>
@@ -285,8 +285,12 @@ export const LSTOverview = ({
 								</div>
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart
-										dataset={deferredBreakdownData.dataset}
-										charts={deferredBreakdownData.charts}
+										dataset={
+											renderedActiveChartData.kind === 'breakdown' ? renderedActiveChartData.data.dataset : undefined
+										}
+										charts={
+											renderedActiveChartData.kind === 'breakdown' ? renderedActiveChartData.data.charts : undefined
+										}
 										stacked={true}
 										expandTo100Percent={true}
 										hideDefaultLegend
@@ -325,8 +329,14 @@ export const LSTOverview = ({
 							{groupBy === 'cumulative' ? (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart
-										dataset={deferredInflowsData.dataset}
-										charts={deferredInflowsData.cumulativeCharts}
+										dataset={
+											renderedActiveChartData.kind === 'inflows' ? renderedActiveChartData.data.dataset : undefined
+										}
+										charts={
+											renderedActiveChartData.kind === 'inflows'
+												? renderedActiveChartData.data.cumulativeCharts
+												: undefined
+										}
 										hideDefaultLegend
 										groupBy={groupBy}
 										valueSymbol="ETH"
@@ -341,8 +351,12 @@ export const LSTOverview = ({
 							) : (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart
-										dataset={deferredInflowsData.dataset}
-										charts={deferredInflowsData.barCharts}
+										dataset={
+											renderedActiveChartData.kind === 'inflows' ? renderedActiveChartData.data.dataset : undefined
+										}
+										charts={
+											renderedActiveChartData.kind === 'inflows' ? renderedActiveChartData.data.barCharts : undefined
+										}
 										hideDefaultLegend
 										groupBy={groupBy}
 										valueSymbol="ETH"

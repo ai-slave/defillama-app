@@ -1,21 +1,15 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { toRwaMultiSeriesChartDataset } from '~/containers/RWA/chartDataset'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
-import type { RWAAssetChartConfig, RWAOverviewChartMetric } from '../types'
+import type { RWAAssetChartConfig } from '../types'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWAAssetChartData } from './datasets/RWADataset/useRWAChartData'
 import { LoadingSpinner } from './LoadingSpinner'
+import { buildProRwaAssetChartSeries, RWA_ASSET_METRIC_DIMENSIONS } from './rwaAssetChart'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-
-const METRIC_TO_DIMENSION: Record<RWAOverviewChartMetric, string> = {
-	activeMcap: 'Active Mcap',
-	onChainMcap: 'Onchain Mcap',
-	defiActiveTvl: 'DeFi Active TVL'
-}
 
 interface RWAAssetChartCardProps {
 	config: RWAAssetChartConfig
@@ -29,15 +23,13 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 
 	const filteredDataset = useMemo(() => {
 		if (!chartDataset) return null
-		const selectedDimensions = ['timestamp', ...metrics.map((m) => METRIC_TO_DIMENSION[m])]
-		const filteredDimensions = chartDataset.dimensions.filter((d) => selectedDimensions.includes(d))
-		const selectedDataset = toRwaMultiSeriesChartDataset(chartDataset, filteredDimensions)
 		return timePeriod && timePeriod !== 'all'
-			? filterChartDatasetByTimePeriod(selectedDataset, timePeriod, customTimePeriod)
-			: selectedDataset
-	}, [chartDataset, metrics, timePeriod, customTimePeriod])
+			? filterChartDatasetByTimePeriod(chartDataset, timePeriod, customTimePeriod)
+			: chartDataset
+	}, [chartDataset, timePeriod, customTimePeriod])
+	const charts = useMemo(() => buildProRwaAssetChartSeries(chartDataset, metrics), [chartDataset, metrics])
 
-	const metricsLabel = metrics.map((m) => METRIC_TO_DIMENSION[m]).join(', ')
+	const metricsLabel = metrics.map((m) => RWA_ASSET_METRIC_DIMENSIONS[m]).join(', ')
 	const imageTitle = `${assetName} - ${metricsLabel}`
 	const imageFilename = `rwa-${assetId}-${metrics.join('-')}`
 
@@ -71,7 +63,12 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 					}
 				>
 					{filteredDataset ? (
-						<MultiSeriesChart dataset={filteredDataset} hideDefaultLegend={false} onReady={handleChartReady} />
+						<MultiSeriesChart
+							dataset={filteredDataset}
+							charts={charts}
+							hideDefaultLegend={false}
+							onReady={handleChartReady}
+						/>
 					) : (
 						<div className="flex h-[320px] items-center justify-center text-sm text-pro-text-secondary">
 							No data available

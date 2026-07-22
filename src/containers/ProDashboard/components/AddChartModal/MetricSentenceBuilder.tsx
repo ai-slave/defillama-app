@@ -15,7 +15,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { Chain, MetricAggregator, MetricChartType, MetricWindow, Protocol } from '../../types'
-import { CHART_TYPES } from '../../types'
+import { getProDashboardChartTypeConfig } from '../../types'
 import { getItemIconUrl } from '../../utils'
 
 const AGGREGATOR_OPTIONS: Array<{ value: MetricAggregator; label: string; description: string }> = [
@@ -40,6 +40,14 @@ const WINDOW_OPTIONS: Array<{ value: MetricWindow; label: string; description: s
 	{ value: '3y', label: '3 years', description: 'Last 3 years' },
 	{ value: 'all', label: 'All time', description: 'Entire history' }
 ]
+
+const AGGREGATOR_LABELS = Object.fromEntries(
+	AGGREGATOR_OPTIONS.map((option) => [option.value, option.label])
+) as Record<MetricAggregator, string>
+const WINDOW_LABELS = Object.fromEntries(WINDOW_OPTIONS.map((option) => [option.value, option.label])) as Record<
+	MetricWindow,
+	string
+>
 
 type ActiveToken = 'aggregator' | 'metric' | 'subject' | 'window' | null
 
@@ -314,20 +322,9 @@ export function MetricSentenceBuilder({
 		overscan: 8
 	})
 
-	const aggregatorLabel = useMemo(
-		() => AGGREGATOR_OPTIONS.find((option) => option.value === aggregator)?.label ?? 'Latest',
-		[aggregator]
-	)
-
-	const metricLabel = useMemo(() => {
-		if (!metricType) return 'metric'
-		return CHART_TYPES[metricType as keyof typeof CHART_TYPES]?.title || metricType
-	}, [metricType])
-
-	const windowLabel = useMemo(
-		() => WINDOW_OPTIONS.find((option) => option.value === metricWindow)?.label ?? 'window',
-		[metricWindow]
-	)
+	const aggregatorLabel = AGGREGATOR_LABELS[aggregator] ?? 'Latest'
+	const metricLabel = metricType ? getProDashboardChartTypeConfig(metricType)?.title || metricType : 'metric'
+	const windowLabel = WINDOW_LABELS[metricWindow] ?? 'window'
 
 	const subjectLabel = useMemo(() => {
 		if (metricSubjectType === 'chain') {
@@ -344,7 +341,7 @@ export function MetricSentenceBuilder({
 		if (!searchTerm) return baseMetricTypes
 		const term = searchTerm.toLowerCase()
 		return baseMetricTypes.filter((value) => {
-			const label = CHART_TYPES[value as keyof typeof CHART_TYPES]?.title || value
+			const label = getProDashboardChartTypeConfig(value)?.title || value
 			return label.toLowerCase().includes(term) || value.toLowerCase().includes(term)
 		})
 	}, [baseMetricTypes, searchTerm])
@@ -451,7 +448,7 @@ export function MetricSentenceBuilder({
 								<p className="px-2 py-3 text-sm text-pro-text-tertiary">No metrics match that search.</p>
 							) : null}
 							{filteredMetrics.map((value) => {
-								const label = CHART_TYPES[value as keyof typeof CHART_TYPES]?.title || value
+								const label = getProDashboardChartTypeConfig(value)?.title || value
 								const isActive = value === metricType
 								return (
 									<button

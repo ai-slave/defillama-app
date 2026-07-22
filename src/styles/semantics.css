@@ -90,7 +90,7 @@
 	/* ------------------------------------------------------------------
 	   Chart tokens.
 	   Chrome tokens carry TODAY'S exact literal values from the ECharts
-	   configs (useDefaults.tsx, ChartPngExportButton.tsx) — deliberately
+	   configs (MultiSeriesChart, ChartPngExportButton.tsx) — deliberately
 	   NOT mapped onto the text/stroke semantics above, so that consuming
 	   them (PR 3) is pixel-identical by construction. Charts must not
 	   change visually as a side effect of the token refresh.

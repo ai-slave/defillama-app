@@ -263,6 +263,43 @@ describe('ChartRenderer', () => {
 		expect(getActiveChartId()).toBe('a')
 	})
 
+	it('constructs only the active tab while retaining inactive chart controls', async () => {
+		const chartA = { ...makeCartesianChart('A'), id: 'a' }
+		const chartB = { ...makeCartesianChart('B'), id: 'b' }
+		await act(async () => root.render(<ChartRenderer charts={[chartA, chartB]} chartData={chartData} />))
+
+		expect(adaptChartData).toHaveBeenCalledTimes(1)
+		await click(container, '[data-action="log"]')
+		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-log')).toBe('true')
+
+		const chartBButton = [...container.querySelectorAll('button')].find((button) => button.textContent === 'B')
+		if (!chartBButton) throw new Error('Expected chart B tab')
+		await act(async () => chartBButton.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+		expect(adaptChartData).toHaveBeenCalledTimes(2)
+
+		const chartAButton = [...container.querySelectorAll('button')].find((button) => button.textContent === 'A')
+		if (!chartAButton) throw new Error('Expected chart A tab')
+		await act(async () => chartAButton.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+		expect(adaptChartData).toHaveBeenCalledTimes(3)
+		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-log')).toBe('true')
+	})
+
+	it('keeps persisted keyed chart data isolated while activating tabs', async () => {
+		const chartA = { ...makeCartesianChart('A'), id: 'a', datasetName: 'dataset-a' }
+		const chartB = { ...makeCartesianChart('B'), id: 'b', datasetName: 'dataset-b' }
+		const dataA = [chartData[0]]
+		const dataB = [chartData[1]]
+		await act(async () =>
+			root.render(<ChartRenderer charts={[chartA, chartB]} chartData={{ 'dataset-a': dataA, 'dataset-b': dataB }} />)
+		)
+
+		expect(adaptChartData).toHaveBeenLastCalledWith(chartA, dataA)
+		const chartBButton = [...container.querySelectorAll('button')].find((button) => button.textContent === 'B')
+		if (!chartBButton) throw new Error('Expected chart B tab')
+		await act(async () => chartBButton.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+		expect(adaptChartData).toHaveBeenLastCalledWith(chartB, dataB)
+	})
+
 	it('reuses base adaptation for view changes and rebuilds it for config and data changes', async () => {
 		const transformSpy = vi.spyOn(ChartDataTransformer, 'applyViewState')
 		const config = makeCartesianChart()

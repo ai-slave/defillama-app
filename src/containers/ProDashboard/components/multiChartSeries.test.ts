@@ -36,13 +36,30 @@ describe('buildMultiChartSeriesView', () => {
 			dimensions: ['timestamp', 'Fees', 'TVL'],
 			source: [
 				[1_000, 10, 100],
-				[2_000, null, 90],
+				[2_000, 10, 90],
 				[3_000, 7, null]
 			]
 		})
 		expect(result.charts).toEqual([
 			expect.objectContaining({ name: 'Fees', type: 'line', connectNulls: true }),
 			expect.objectContaining({ name: 'TVL', type: 'line', connectNulls: true })
+		])
+	})
+
+	it('carries independently timed cumulative flows into percentage rows', () => {
+		const result = buildMultiChartSeriesView({
+			series: [
+				{ ...FLOW, name: 'A', data: [[1, 100]] },
+				{ ...FLOW, name: 'B', data: [[2, 100]] }
+			],
+			showCumulative: true,
+			showPercentage: true,
+			stackSeries: false
+		})
+
+		expect(result.dataset.source).toEqual([
+			[1_000, 100, 0],
+			[2_000, 50, 50]
 		])
 	})
 
@@ -120,6 +137,24 @@ describe('buildMultiChartSeriesView', () => {
 		expect(buildMultiChartCsvRows(result)).toEqual([
 			['Date', 'Small', 'Large'],
 			['1970-01-01', '25', '75']
+		])
+	})
+
+	it('exports missing snapshot observations as empty fields while preserving real flow zeroes', () => {
+		const result = buildMultiChartSeriesView({
+			series: [
+				{ ...SNAPSHOT, data: [[1, 100]] },
+				{ ...FLOW, data: [[2, 0]] }
+			],
+			showCumulative: false,
+			showPercentage: false,
+			stackSeries: false
+		})
+
+		expect(buildMultiChartCsvRows(result)).toEqual([
+			['Date', 'TVL', 'Fees'],
+			['1970-01-01', '100', ''],
+			['1970-01-01', '', '0']
 		])
 	})
 

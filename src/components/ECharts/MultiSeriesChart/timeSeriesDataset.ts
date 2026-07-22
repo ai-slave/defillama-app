@@ -5,7 +5,36 @@ type ColumnarSeries = {
 	data: readonly (number | null | undefined)[]
 }
 
+type SparseTupleSeries = {
+	name: string
+	data: readonly (readonly [timestamp: number, value: number | null])[]
+}
+
 export type TimestampDataset = CanonicalMultiSeriesChartDataset
+
+/** Merge independently timed series into one positional dataset; Map output is sorted once chronologically. */
+export function buildSparseTimeSeriesDataset(series: readonly SparseTupleSeries[]): TimestampDataset {
+	const dimensions = new Array<string>(series.length + 1)
+	dimensions[0] = 'timestamp'
+	const rows = new Map<number, MultiSeriesChartArrayRow>()
+	for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
+		const item = series[seriesIndex]
+		dimensions[seriesIndex + 1] = item.name
+		for (const [timestamp, value] of item.data) {
+			let row = rows.get(timestamp)
+			if (!row) {
+				row = new Array<number | null>(series.length + 1).fill(null)
+				row[0] = timestamp
+				rows.set(timestamp, row)
+			}
+			row[seriesIndex + 1] = value
+		}
+	}
+	return {
+		dimensions,
+		source: Array.from(rows.values()).sort((a, b) => (a[0] as number) - (b[0] as number))
+	}
+}
 
 /** Build canonical ECharts rows directly from the compact dates + series API shape. */
 export function buildColumnarTimeSeriesDataset(

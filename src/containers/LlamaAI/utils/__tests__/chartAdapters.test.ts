@@ -468,6 +468,73 @@ describe('chart adapters', () => {
 		])
 	})
 
+	it('constructs mixed positional series with sparse explicit gaps and stable axes', () => {
+		const config = {
+			...baseConfig,
+			type: 'combo',
+			axes: {
+				x: { field: 'timestamp', label: 'Date', type: 'time' as const },
+				yAxes: [
+					{ id: 'usd', fields: ['tvl', 'fees'], label: 'USD', position: 'left' as const, valueSymbol: '$' },
+					{ id: 'apy', fields: ['apy'], label: 'APY', position: 'right' as const, valueSymbol: '%' }
+				]
+			},
+			series: [
+				{
+					...baseConfig.series[0]!,
+					name: 'TVL',
+					type: 'line' as const,
+					yAxisId: 'usd',
+					dataMapping: { xField: 'timestamp', yField: 'tvl' },
+					styling: { color: '#111111' }
+				},
+				{
+					...baseConfig.series[0]!,
+					name: 'Fees',
+					type: 'bar' as const,
+					yAxisId: 'usd',
+					metricClass: 'flow' as const,
+					dataMapping: { xField: 'timestamp', yField: 'fees' },
+					styling: { color: '#222222' }
+				},
+				{
+					...baseConfig.series[0]!,
+					name: 'APY',
+					type: 'area' as const,
+					yAxisId: 'apy',
+					dataMapping: { xField: 'timestamp', yField: 'apy' },
+					styling: { color: '#333333' }
+				}
+			],
+			dataTransformation: { timeField: 'timestamp', metrics: ['tvl', 'fees', 'apy'] }
+		} satisfies ChartConfiguration
+
+		const result = adaptCartesianChartData(config, [
+			{ timestamp: 3, tvl: 12, fees: null, apy: 4 },
+			{ timestamp: 1, tvl: 10, fees: 2, apy: null },
+			{ timestamp: 2, tvl: null, fees: 3 }
+		])
+
+		expect(result.props.dataset).toEqual({
+			dimensions: ['timestamp', 'TVL', 'Fees', 'APY'],
+			source: [
+				[1_000, 10, 2, null],
+				[2_000, null, 3, null],
+				[3_000, 12, undefined, 4]
+			]
+		})
+		expect(result.props.charts).toMatchObject([
+			{ name: 'TVL', type: 'line', color: '#111111', yAxisIndex: 0 },
+			{ name: 'Fees', type: 'bar', color: '#222222', yAxisIndex: 0 },
+			{ name: 'APY', type: 'line', color: '#333333', yAxisIndex: 1 }
+		])
+		expect(result.seriesMeta.map(({ baseType, valueSymbol }) => [baseType, valueSymbol])).toEqual([
+			['line', '$'],
+			['bar', '$'],
+			['area', '%']
+		])
+	})
+
 	it('filters candlestick rows with invalid timestamps before building indicators', () => {
 		const timestamp = Date.UTC(2026, 0, 1)
 		const config = {

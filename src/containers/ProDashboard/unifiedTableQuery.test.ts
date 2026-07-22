@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { sanitizeRowHeaders } from './components/UnifiedTable/utils/rowHeaders'
 import type { UnifiedTableConfig } from './types'
 import { getUnifiedTableQueryIdentity } from './unifiedTableQuery'
 
@@ -31,5 +32,15 @@ describe('getUnifiedTableQueryIdentity', () => {
 
 		expect(lending.queryKey).not.toEqual(dex.queryKey)
 		expect(lending.queryKey).not.toEqual(grouped.queryKey)
+	})
+
+	it('uses one query identity for equivalent canonical persisted headers', () => {
+		const config = createConfig(['All'])
+		const duplicatePersisted = sanitizeRowHeaders(['protocol', 'parent-protocol', 'protocol'])
+		const canonical = sanitizeRowHeaders(['parent-protocol', 'protocol'])
+
+		expect(getUnifiedTableQueryIdentity(config, duplicatePersisted)).toEqual(
+			getUnifiedTableQueryIdentity(config, canonical)
+		)
 	})
 })

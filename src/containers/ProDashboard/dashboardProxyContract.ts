@@ -7,11 +7,11 @@ import type { StablecoinsChartCacheValue } from '~/containers/ProDashboard/serve
 import type {
 	IFetchedRWAProject,
 	IRWAAssetData,
-	IRWABreakdownChartResponse,
 	IRWAStatsResponse,
 	RWAChartMetricKey,
 	RWAOverviewBreakdownRequest
 } from '~/containers/RWA/api.types'
+import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
 import type { StablecoinDetailResponse, StablecoinsListResponse } from '~/containers/Stablecoins/api.types'
 import type { RawProtocolTokenUsageEntry } from '~/containers/TokenUsage/api.types'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
@@ -29,7 +29,7 @@ interface ProDashboardProxyContract {
 			metric: RWAChartMetricKey
 			chain?: string
 		}
-		response: IRWABreakdownChartResponse | null
+		response: RWAPositionalChartDataset | null
 	}
 	rwaAssetChart: { params: { assetId: string }; response: IRWAAssetData['chartDataset'] }
 	rwaAssetsList: { params: Record<string, never>; response: IFetchedRWAProject[] }

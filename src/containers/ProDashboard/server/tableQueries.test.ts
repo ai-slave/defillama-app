@@ -165,6 +165,26 @@ describe('fetchTableServerData', () => {
 		expect(fetchDimensionDatasetMock).toHaveBeenCalledTimes(4)
 	})
 
+	it('claims legacy table sources once across staged calls', async () => {
+		const claimedSources = new Set<string>()
+		const claimSource = (kind: string, key: readonly unknown[]) => {
+			const source = `${kind}:${JSON.stringify(key)}`
+			if (claimedSources.has(source)) return false
+			claimedSources.add(source)
+			return true
+		}
+
+		await fetchTableServerData([legacyTable], claimSource)
+		await expect(fetchTableServerData([{ ...legacyTable, id: 'later-stage' }], claimSource)).resolves.toBeNull()
+
+		expect(fetchProtocolsMock).toHaveBeenCalledOnce()
+		expect(getDexVolumeByChainMock).toHaveBeenCalledOnce()
+		expect(getFeesAndRevenueProtocolsByChainMock).toHaveBeenCalledOnce()
+		expect(getPerpsVolumeByChainMock).toHaveBeenCalledOnce()
+		expect(getOpenInterestByChainMock).toHaveBeenCalledOnce()
+		expect(fetchDimensionDatasetMock).toHaveBeenCalledTimes(4)
+	})
+
 	it('keeps specific sources when another legacy table requests All', async () => {
 		await fetchTableServerData([allChainsLegacyTable, ethereumLegacyTable])
 

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildRwaDefiTvlProtocolChainBreakdown, getRWAAssetsOverview, getRWACategoriesOverview } from '../queries'
 
 const fetchRWAActiveTVLsMock = vi.fn()
-const fetchRWAChartDataByAssetMock = vi.fn()
+const fetchRWAChartMetricDataByAssetMock = vi.fn()
 const fetchRWAChainBreakdownChartDataMock = vi.fn()
 const fetchRWAStatsMock = vi.fn()
 const fetchRWACategoryBreakdownChartDataMock = vi.fn()
@@ -15,7 +15,7 @@ const fetchRWAPerpsContractBreakdownChartDataMock = vi.fn()
 
 vi.mock('../api', () => ({
 	fetchRWAActiveTVLs: (...args: unknown[]) => fetchRWAActiveTVLsMock(...args),
-	fetchRWAChartDataByAsset: (...args: unknown[]) => fetchRWAChartDataByAssetMock(...args),
+	fetchRWAChartMetricDataByAsset: (...args: unknown[]) => fetchRWAChartMetricDataByAssetMock(...args),
 	fetchRWAChainBreakdownChartData: (...args: unknown[]) => fetchRWAChainBreakdownChartDataMock(...args),
 	fetchRWAStats: (...args: unknown[]) => fetchRWAStatsMock(...args),
 	fetchRWACategoryBreakdownChartData: (...args: unknown[]) => fetchRWACategoryBreakdownChartDataMock(...args),
@@ -34,7 +34,7 @@ vi.mock('../Perps/api', () => ({
 describe('rwa queries', () => {
 	beforeEach(() => {
 		fetchRWAActiveTVLsMock.mockReset()
-		fetchRWAChartDataByAssetMock.mockReset()
+		fetchRWAChartMetricDataByAssetMock.mockReset()
 		fetchRWAChainBreakdownChartDataMock.mockReset()
 		fetchRWAStatsMock.mockReset()
 		fetchRWACategoryBreakdownChartDataMock.mockReset()
@@ -44,7 +44,7 @@ describe('rwa queries', () => {
 		fetchRWAAssetChartDataMock.mockReset()
 		fetchRWAPerpsCurrentMock.mockReset()
 		fetchRWAPerpsContractBreakdownChartDataMock.mockReset()
-		fetchRWAChartDataByAssetMock.mockResolvedValue(null)
+		fetchRWAChartMetricDataByAssetMock.mockResolvedValue(null)
 		fetchRWAChainBreakdownChartDataMock.mockResolvedValue([])
 		fetchRWACategoryBreakdownChartDataMock.mockResolvedValue([])
 		fetchRWAPlatformBreakdownChartDataMock.mockResolvedValue([])
@@ -99,6 +99,41 @@ describe('rwa queries', () => {
 		expect(result?.categories).toEqual(['Treasuries'])
 		expect(result?.categoryValues).toEqual([{ name: 'Treasuries', value: 100 }])
 		expect(result?.categoryLinks).toEqual([])
+	})
+
+	it('serializes one canonical active-mcap history for the initial regular-page chart', async () => {
+		fetchRWAActiveTVLsMock.mockResolvedValue([
+			{
+				id: 'alpha',
+				canonicalMarketId: 'alpha',
+				ticker: 'ALPHA',
+				assetName: 'Alpha',
+				assetGroup: 'Treasuries',
+				category: ['Treasuries'],
+				onChainMcap: { Ethereum: 12 },
+				activeMcap: { Ethereum: 10 },
+				defiActiveTvl: null
+			}
+		])
+		fetchRWAChartMetricDataByAssetMock.mockResolvedValue([{ timestamp: 1_000, alpha: 10 }])
+
+		const result = await getRWAAssetsOverview({
+			rwaList: { chains: ['Ethereum'], categories: ['Treasuries'], platforms: [], assetGroups: ['Treasuries'] } as never
+		})
+
+		expect(fetchRWAChartMetricDataByAssetMock).toHaveBeenCalledWith({
+			target: { kind: 'all' },
+			metric: 'activeMcap',
+			includeStablecoins: false,
+			includeGovernance: false
+		})
+		expect(result?.initialChartDataset).toEqual({
+			metric: 'activeMcap',
+			dataset: {
+				dimensions: ['timestamp', 'Total Active Mcap', 'Treasuries'],
+				source: [[1_000, 10, 10]]
+			}
+		})
 	})
 
 	it('keeps selected-chain table metric breakdowns filtered and sorted', async () => {
@@ -280,7 +315,7 @@ describe('rwa queries', () => {
 		]
 
 		for (const category of stablecoinCategories) {
-			fetchRWAChartDataByAssetMock.mockClear()
+			fetchRWAChartMetricDataByAssetMock.mockClear()
 
 			await getRWAAssetsOverview({
 				category: category.slug,
@@ -292,8 +327,9 @@ describe('rwa queries', () => {
 				} as never
 			})
 
-			expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
+			expect(fetchRWAChartMetricDataByAssetMock).toHaveBeenCalledWith({
 				target: { kind: 'category', slug: category.slug },
+				metric: 'activeMcap',
 				includeStablecoins: true,
 				includeGovernance: false
 			})
@@ -313,8 +349,9 @@ describe('rwa queries', () => {
 			} as never
 		})
 
-		expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
+		expect(fetchRWAChartMetricDataByAssetMock).toHaveBeenCalledWith({
 			target: { kind: 'category', slug: 'other-rwas' },
+			metric: 'activeMcap',
 			includeStablecoins: true,
 			includeGovernance: true
 		})

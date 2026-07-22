@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => {
 	const instance = {
 		dispose: vi.fn(),
+		getOption: vi.fn(() => ({})),
 		isDisposed: vi.fn(() => false),
 		resize: vi.fn(),
 		setOption: vi.fn()

@@ -52,7 +52,7 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 
 		expect(result.hasBarCharts).toBe(true)
 		expect(result.charts.charts[0].type).toBe('line')
-		expect(result.charts.dataset.source.map((row) => row[1])).toEqual([10, null, 40])
+		expect(result.charts.dataset.source.map((row) => row[1])).toEqual([10, 10, 40])
 	})
 
 	it('sums bars but keeps the last line snapshot in weekly buckets', () => {

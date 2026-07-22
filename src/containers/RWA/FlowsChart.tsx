@@ -1,14 +1,7 @@
 import type * as echarts from 'echarts/core'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
-import type { IRWAFlowAggregatePoint, IRWAFlowPoint } from './api.types'
-import {
-	buildRWAFlowChart,
-	getRWAFlowChartOptions,
-	getRWAFlowDefaultStartTimestamp,
-	type RWAFlowChartSelection,
-	type RWAFlowVisibleRange
-} from './flows'
+import { getRWAFlowChartOptions, type RWAFlowChart, type RWAFlowVisibleRange } from './flows'
 
 type DataZoomPayload = {
 	start?: number
@@ -18,22 +11,14 @@ type DataZoomPayload = {
 	batch?: DataZoomPayload[]
 }
 
-function getTimestampExtent(
-	source: ReturnType<typeof buildRWAFlowChart>['dataset']['source']
-): RWAFlowVisibleRange | null {
-	let start = Number.POSITIVE_INFINITY
-	let end = Number.NEGATIVE_INFINITY
-	for (const row of source) {
-		const timestamp = row[0]
-		if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) continue
-		start = Math.min(start, timestamp)
-		end = Math.max(end, timestamp)
-	}
-	return Number.isFinite(start) && Number.isFinite(end) ? { start, end } : null
+function getTimestampExtent(source: RWAFlowChart['dataset']['source']): RWAFlowVisibleRange | null {
+	const firstRow = source[0]
+	const lastRow = source[source.length - 1]
+	return firstRow && lastRow ? { start: firstRow[0], end: lastRow[0] } : null
 }
 
 function getVisibleRangeFromZoom(
-	source: ReturnType<typeof buildRWAFlowChart>['dataset']['source'],
+	source: RWAFlowChart['dataset']['source'],
 	event: DataZoomPayload
 ): RWAFlowVisibleRange | null {
 	const extent = getTimestampExtent(source)
@@ -52,20 +37,16 @@ function getVisibleRangeFromZoom(
 }
 
 export function RWAFlowsChart({
-	points,
-	selection,
-	defaultRangeDays,
+	chart,
+	defaultStartTimestamp,
 	onReady,
 	onVisibleRangeChange
 }: {
-	points: Array<IRWAFlowPoint | IRWAFlowAggregatePoint>
-	selection: RWAFlowChartSelection
-	defaultRangeDays?: number
+	chart: RWAFlowChart
+	defaultStartTimestamp?: number
 	onReady?: (instance: echarts.ECharts | null) => void
 	onVisibleRangeChange?: (range: RWAFlowVisibleRange | null) => void
 }) {
-	const chart = useMemo(() => buildRWAFlowChart({ points, selection }), [points, selection])
-	const defaultStartTimestamp = getRWAFlowDefaultStartTimestamp(points, defaultRangeDays)
 	const hasSecondaryAxis = chart.charts.some((series) => series.yAxisIndex === 1)
 	const chartOptions = useMemo(
 		() =>

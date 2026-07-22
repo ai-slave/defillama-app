@@ -7,7 +7,7 @@ import '@rainbow-me/rainbowkit/styles.css'
 import '~/tailwind.css'
 import Script from 'next/script'
 import type { ReactElement } from 'react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AuthProvider } from '~/auth'
 import { RouteProgressIndicator } from '~/components/RouteProgressIndicator'
 import { UserSettingsSync } from '~/components/UserSettingsSync'
@@ -40,8 +40,6 @@ const isChunkLoadError = (error: unknown) => {
 		message.includes('ChunkLoadError') || message.includes('Loading chunk') || message.includes('Failed to load chunk')
 	)
 }
-
-const client = new QueryClient()
 
 function App({ Component, pageProps }: AppPropsWithLayout) {
 	const reloadInProgressRef = useRef(false)
@@ -127,9 +125,11 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
 }
 
 const AppWrapper = (props: AppPropsWithLayout) => {
+	const [queryClient] = useState(() => new QueryClient())
+
 	return (
 		<>
-			<QueryClientProvider client={client}>
+			<QueryClientProvider client={queryClient}>
 				<AuthProvider>
 					<UserSettingsSync />
 					<App {...props} />

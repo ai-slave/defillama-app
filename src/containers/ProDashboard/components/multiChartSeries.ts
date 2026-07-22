@@ -29,7 +29,7 @@ export function buildMultiChartCsvRows({ dataset, charts }: MultiChartSeriesView
 		for (let chartIndex = 0; chartIndex < charts.length; chartIndex++) {
 			const dimension = charts[chartIndex].encode.y
 			const value = typeof dimension === 'number' ? sourceRow[dimension] : null
-			row[chartIndex + 1] = value == null ? '0' : String(value)
+			row[chartIndex + 1] = value == null ? '' : String(value)
 		}
 		rows[rowIndex + 1] = row
 	}
@@ -51,6 +51,7 @@ export function buildMultiChartSeriesView({
 	const dimensions = new Array<string>(series.length + 1)
 	const indexes = new Uint32Array(series.length)
 	const runningTotals = new Float64Array(series.length)
+	const hasRunningTotal = new Uint8Array(series.length)
 	const percentageTotals = new Float64Array(series.length)
 	dimensions[0] = 'timestamp'
 	for (let i = 0; i < series.length; i++) {
@@ -102,6 +103,7 @@ export function buildMultiChartSeriesView({
 	if (!usesAlignedFastPath) {
 		source.length = 0
 		runningTotals.fill(0)
+		hasRunningTotal.fill(0)
 		percentageTotals.fill(0)
 		while (true) {
 			let timestamp = Number.POSITIVE_INFINITY
@@ -122,10 +124,13 @@ export function buildMultiChartSeriesView({
 					indexes[i]++
 					if (showCumulative && item.baseType === 'bar') {
 						runningTotals[i] += point[1]
+						hasRunningTotal[i] = 1
 						value = runningTotals[i]
 					} else {
 						value = point[1]
 					}
+				} else if (showCumulative && item.baseType === 'bar' && hasRunningTotal[i]) {
+					value = runningTotals[i]
 				}
 				row[i + 1] = value
 				if (value != null) rowTotal += value

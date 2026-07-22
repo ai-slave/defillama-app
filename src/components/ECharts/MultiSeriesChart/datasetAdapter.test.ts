@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { prepareMultiSeriesDataset } from './datasetAdapter'
+import { prepareMultiSeriesDataset, projectMultiSeriesDatasetForCharts } from './datasetAdapter'
 
 describe('prepareMultiSeriesDataset', () => {
 	it('passes positional rows through and assigns private ECharts dimensions', () => {
@@ -17,42 +17,61 @@ describe('prepareMultiSeriesDataset', () => {
 		])
 	})
 
-	it('projects selected positional columns and remaps string encodes', () => {
+	it('keeps selected-series history intact and remaps string encodes without copying rows', () => {
+		const source = [
+			[1_000, 2, 3],
+			[2_000, 4, 5]
+		]
 		const prepared = prepareMultiSeriesDataset(
 			{
 				dimensions: ['timestamp', 'A', 'B'],
-				source: [
-					[1_000, 2, 3],
-					[2_000, 4, 5]
-				]
+				source
 			},
 			[
 				{ type: 'line', name: 'A', encode: { x: 'timestamp', y: 'A' } },
 				{ type: 'line', name: 'B', encode: { x: 'timestamp', y: 'B' } }
-			],
-			new Set(['B'])
+			]
 		)
 
-		expect(prepared.logicalDimensions).toEqual(['timestamp', 'B'])
-		expect(prepared.source).toEqual([
-			[1_000, 3],
-			[2_000, 5]
-		])
+		expect(prepared.logicalDimensions).toEqual(['timestamp', 'A', 'B'])
+		expect(prepared.source).toBe(source)
 		expect(prepared.charts).toMatchObject([
-			{ name: 'A', encode: { x: 0, y: -1 } },
-			{ name: 'B', encode: { x: 0, y: 1 } }
+			{ name: 'A', encode: { x: 0, y: 1 } },
+			{ name: 'B', encode: { x: 0, y: 2 } }
 		])
 	})
 
-	it('projects numeric positions even when display labels are duplicated', () => {
-		const prepared = prepareMultiSeriesDataset(
-			{ dimensions: ['timestamp', 'timestamp', 'B'], source: [[1_000, 2, 3]] },
-			[{ type: 'line', name: 'timestamp', encode: { x: 0, y: 1 } }],
-			new Set(['timestamp'])
-		)
+	it('keeps numeric positions and source identity when display labels are duplicated', () => {
+		const source = [[1_000, 2, 3]]
+		const prepared = prepareMultiSeriesDataset({ dimensions: ['timestamp', 'timestamp', 'B'], source }, [
+			{ type: 'line', name: 'timestamp', encode: { x: 0, y: 1 } }
+		])
 
-		expect(prepared.logicalDimensions).toEqual(['timestamp', 'timestamp'])
-		expect(prepared.source).toEqual([[1_000, 2]])
+		expect(prepared.logicalDimensions).toEqual(['timestamp', 'timestamp', 'B'])
+		expect(prepared.source).toBe(source)
 		expect(prepared.charts[0].encode).toEqual({ x: 0, y: 1 })
+	})
+
+	it('projects selected rows only at the explicit export boundary', () => {
+		const dataset = {
+			dimensions: ['timestamp', 'A', 'B'],
+			source: [
+				[1_000, 2, 3],
+				[2_000, 4, 5]
+			]
+		}
+		const projected = projectMultiSeriesDatasetForCharts(dataset, [{ type: 'line', name: 'B', encode: { x: 0, y: 2 } }])
+
+		expect(projected).toEqual({
+			dimensions: ['timestamp', 'B'],
+			source: [
+				[1_000, 3],
+				[2_000, 5]
+			]
+		})
+		expect(dataset.source).toEqual([
+			[1_000, 2, 3],
+			[2_000, 4, 5]
+		])
 	})
 })

@@ -10,23 +10,16 @@ import {
 	RWA_OPEN_INTEREST_SERIES_LABEL,
 	sortRwaChartSeriesLabels,
 	type RWAChartDataset,
-	type RWAChartRow
+	type RWAChartRow,
+	type RWAPositionalChartDataset
 } from './chartDataset'
 import { isTypeIncludedByDefault, type RWAOverviewMode } from './constants'
 import { computeWeightedGroups, getPrimaryRwaCategory, getRwaPlatforms } from './grouping'
-
-export type RWAChartMetric = RWAChartMetricKey
-
-export type RWAChartDatasetsByMetric = Record<RWAChartMetric, RWAChartDataset>
 
 export type RWAChartAggregationMode = 'total' | 'category' | 'assetClass' | 'assetName' | 'platform' | 'assetGroup'
 
 function assertNever(value: never): never {
 	throw new Error(`Unexpected value: ${String(value)}`)
-}
-
-export function emptyChartDatasets(): RWAChartDatasetsByMetric {
-	return { onChainMcap: emptyChartDataset(), activeMcap: emptyChartDataset(), defiActiveTvl: emptyChartDataset() }
 }
 
 export function getRwaChartTotalLabel(metric: RWAChartMetricKey): string {
@@ -42,45 +35,38 @@ export function getRwaChartTotalLabel(metric: RWAChartMetricKey): string {
 	}
 }
 
-export function renameRwaChartDatasetTotal(dataset: RWAChartDataset, metric: RWAChartMetricKey): RWAChartDataset {
-	if (!dataset.dimensions.includes('Total') && !dataset.source.some((row) => row.Total != null)) {
-		return dataset
-	}
-
+export function buildRwaCanonicalMetricDataset(
+	dataset: RWAChartDataset,
+	metric: RWAChartMetricKey,
+	onlyTotal: boolean
+): RWAPositionalChartDataset {
+	if (dataset.source.length === 0) return { source: [], dimensions: ['timestamp'] }
 	const totalLabel = getRwaChartTotalLabel(metric)
+	const seriesDimensions = dataset.dimensions.filter(
+		(dimension) => dimension !== 'timestamp' && dimension !== 'Total' && !isRwaTotalSeriesLabel(dimension)
+	)
+	const dimensions = onlyTotal ? ['timestamp', totalLabel] : ['timestamp', totalLabel, ...seriesDimensions]
+	const source = new Array<RWAPositionalChartDataset['source'][number]>(dataset.source.length)
 
-	return {
-		source: dataset.source.map((row) => {
-			if (row.Total == null) return row
-
-			const { Total, ...rest } = row
-
-			return {
-				...rest,
-				[totalLabel]: Total
+	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
+		const input = dataset.source[rowIndex]
+		const row = new Array<number | null>(dimensions.length)
+		row[0] = input.timestamp
+		if (onlyTotal) {
+			row[1] = input.Total ?? null
+		} else {
+			let total = 0
+			for (let seriesIndex = 0; seriesIndex < seriesDimensions.length; seriesIndex++) {
+				const value = input[seriesDimensions[seriesIndex]]
+				total += value ?? 0
+				row[seriesIndex + 2] = value ?? null
 			}
-		}),
-		dimensions: dataset.dimensions.map((dimension) => (dimension === 'Total' ? totalLabel : dimension))
-	}
-}
-
-export function selectRwaChartDatasetSeries(dataset: RWAChartDataset, seriesDimensions: string[]): RWAChartDataset {
-	const allowedSeries = new Set(seriesDimensions)
-	const dimensions = dataset.dimensions.filter((dimension) => dimension === 'timestamp' || allowedSeries.has(dimension))
-	for (const dimension of seriesDimensions) {
-		if (
-			dimension !== 'timestamp' &&
-			dataset.source.some((row) => row[dimension] != null) &&
-			!dimensions.includes(dimension)
-		) {
-			dimensions.push(dimension)
+			row[1] = total
 		}
+		source[rowIndex] = row
 	}
 
-	return {
-		source: dataset.source,
-		dimensions
-	}
+	return { source, dimensions }
 }
 
 export function buildRwaOpenInterestDataset(

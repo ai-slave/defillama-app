@@ -4,6 +4,7 @@ import type {
 	IFetchedRWAProject,
 	IRWAStatsResponse,
 	IRWAChartDataByAsset,
+	IRWAChartMetricRows,
 	IRWAAssetData,
 	IRWAAssetChartApiRow,
 	IRWABreakdownChartParams,
@@ -16,9 +17,8 @@ import type {
 	IRWAFlowSummaryResponse,
 	IRWAFlowsRequest,
 	IRWAFlowsResponse,
-	RWAAssetChartDimension,
-	RWAAssetChartRow,
-	RWAAssetChartTarget
+	RWAAssetChartTarget,
+	RWAChartMetricKey
 } from './api.types'
 
 export function toUnixMsTimestamp(ts: number): number {
@@ -116,17 +116,18 @@ export async function fetchRWAFlowAssetBreakdown(target: RWAAssetChartTarget): P
 	)
 }
 
-export async function fetchRWAChartDataByAsset({
+export async function fetchRWAChartMetricDataByAsset({
 	target,
+	metric,
 	includeStablecoins,
 	includeGovernance
 }: {
 	target: RWAAssetChartTarget
+	metric: RWAChartMetricKey
 	includeStablecoins: boolean
 	includeGovernance: boolean
-}): Promise<IRWAChartDataByAsset | null> {
+}): Promise<IRWAChartMetricRows | null> {
 	let chartUrl = `${RWA_SERVER_URL}/chart/chain/all`
-
 	switch (target.kind) {
 		case 'all':
 			break
@@ -150,26 +151,19 @@ export async function fetchRWAChartDataByAsset({
 		includeStablecoin: String(includeStablecoins),
 		includeGovernance: String(includeGovernance)
 	})
-
 	return fetchJson<IRWAChartDataByAsset>(`${chartUrl}/asset-breakdown?${searchParams.toString()}`)
-		.then((data) => ({
-			onChainMcap: (data.onChainMcap ?? []).map((row) => ({
-				...row,
-				timestamp: toUnixMsTimestamp(row.timestamp)
-			})),
-			activeMcap: (data.activeMcap ?? []).map((row) => ({
-				...row,
-				timestamp: toUnixMsTimestamp(row.timestamp)
-			})),
-			defiActiveTvl: (data.defiActiveTvl ?? []).map((row) => ({
-				...row,
-				timestamp: toUnixMsTimestamp(row.timestamp)
-			}))
-		}))
+		.then((data) => normalizeRWAChartMetricRows(data, metric))
 		.catch((error) => {
-			console.error('Failed to fetch RWA chart data by asset:', error)
+			console.error(`Failed to fetch RWA ${metric} chart data by asset:`, error)
 			return null
 		})
+}
+
+export function normalizeRWAChartMetricRows(
+	data: IRWAChartDataByAsset,
+	metric: RWAChartMetricKey
+): IRWAChartMetricRows {
+	return (data[metric] ?? []).map((row) => ({ ...row, timestamp: toUnixMsTimestamp(row.timestamp) }))
 }
 
 function normalizeRWABreakdownChartRows(rows: IRWABreakdownChartResponse): IRWABreakdownChartResponse {
@@ -275,20 +269,23 @@ export async function fetchRWAAssetGroupBreakdownChartData(
 export async function fetchRWAAssetChartData(assetId: string): Promise<IRWAAssetData['chartDataset']> {
 	const encodedAssetId = encodeURIComponent(assetId)
 	return fetchJson<IRWAAssetChartApiRow[]>(`${RWA_SERVER_URL}/chart/asset/${encodedAssetId}`)
-		.then((data) => {
-			const source: RWAAssetChartRow[] = (data ?? []).map((item) => ({
-				timestamp: toUnixMsTimestamp(item.timestamp),
-				'DeFi Active TVL': item.defiActiveTvl ?? null,
-				'Active Mcap': item.activeMcap ?? null,
-				'Onchain Mcap': item.onChainMcap ?? null
-			}))
-
-			const dimensions: RWAAssetChartDimension[] = ['timestamp', 'DeFi Active TVL', 'Active Mcap', 'Onchain Mcap']
-
-			return { source, dimensions }
-		})
+		.then(buildRWAAssetChartDataset)
 		.catch((error) => {
 			console.error('Failed to fetch RWA asset chart data:', error)
 			return null
 		})
+}
+
+export function buildRWAAssetChartDataset(data: IRWAAssetChartApiRow[]): NonNullable<IRWAAssetData['chartDataset']> {
+	const source = new Array<[number, number | null, number | null, number | null]>(data.length)
+	for (let index = 0; index < data.length; index++) {
+		const item = data[index]
+		source[index] = [
+			toUnixMsTimestamp(item.timestamp),
+			item.defiActiveTvl ?? null,
+			item.activeMcap ?? null,
+			item.onChainMcap ?? null
+		]
+	}
+	return { source, dimensions: ['timestamp', 'DeFi Active TVL', 'Active Mcap', 'Onchain Mcap'] }
 }

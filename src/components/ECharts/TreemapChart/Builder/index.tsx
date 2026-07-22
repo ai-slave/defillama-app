@@ -7,6 +7,7 @@ import { useEffect, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
+import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../../renderVisibility'
 import { clearTreemapFocus, registerTreemapFocusTracking } from '../focus'
 
 echarts.use([TooltipComponent, GraphicComponent, ToolboxComponent, EChartTreemap, CanvasRenderer])
@@ -45,11 +46,12 @@ const formatValue = (value: number) => {
 	return '$' + value.toFixed(0)
 }
 
-export default function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemapChartProps) {
+function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemapChartProps) {
 	const [isDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
+	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const onReadyRef = useRef(onReady)
 	useEffect(() => {
 		onReadyRef.current = onReady
@@ -64,16 +66,18 @@ export default function BuilderTreemapChart({ data, height = '450px', onReady }:
 
 		const instance = echarts.init(container, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		persistentLifecycle.restore(instance)
 		onReadyRef.current?.(instance)
 		const unregisterTreemapFocus = registerTreemapFocusTracking(instance)
 
 		return () => {
+			persistentLifecycle.capture(instance)
 			unregisterTreemapFocus()
 			instance.dispose()
 			chartRef.current = null
 			onReadyRef.current?.(null)
 		}
-	}, [])
+	}, [persistentLifecycle])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -201,3 +205,5 @@ export default function BuilderTreemapChart({ data, height = '450px', onReady }:
 		</div>
 	)
 }
+
+export default withEChartsRenderVisibility(BuilderTreemapChart)

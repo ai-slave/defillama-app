@@ -9,13 +9,13 @@ import {
 	fetchRWACategoryBreakdownChartData,
 	fetchRWAPlatformBreakdownChartData,
 	fetchRWAStats,
-	fetchRWAChartDataByAsset,
+	fetchRWAChartMetricDataByAsset,
 	fetchRWAAssetDataById,
 	fetchRWAAssetChartData
 } from './api'
 import type {
 	IFetchedRWAProject,
-	IRWAChartDataByAsset,
+	IRWAChartMetricRows,
 	IRWAAssetsOverview,
 	IRWAAssetData,
 	IRWAChainsOverview,
@@ -31,11 +31,11 @@ import type {
 	RWADefiTvlProtocolBreakdown
 } from './api.types'
 import { UNKNOWN_RWA_ASSET_GROUP, appendUnknownRwaAssetGroup, normalizeRwaAssetGroup } from './assetGroup'
-import { toBreakdownChartDataset, toOverviewBreakdownChartDataset } from './breakdownDataset'
+import { toOverviewBreakdownChartDataset } from './breakdownDataset'
 import {
 	aggregateRwaMetricData,
-	appendRwaChartDatasetTotal,
 	applyDefaultAssetFilters,
+	buildRwaCanonicalMetricDataset,
 	type RWAChartAggregationMode
 } from './chartAggregation'
 import {
@@ -145,16 +145,17 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			assetGroupSlug: selectedAssetGroup
 		})
 
-		const [data, perpsMarkets, chartData, openInterestChartRows]: [
+		const [data, perpsMarkets, chartRows, openInterestChartRows]: [
 			Array<IFetchedRWAProject>,
 			IRWAPerpsMarket[],
-			IRWAChartDataByAsset | null,
+			IRWAChartMetricRows | null,
 			IRWAPerpsBreakdownChartResponse | null
 		] = await Promise.all([
 			fetchRWAActiveTVLs(),
 			fetchRWAPerpsCurrent().catch(() => []),
-			fetchRWAChartDataByAsset({
+			fetchRWAChartMetricDataByAsset({
 				target,
+				metric: 'activeMcap',
 				includeStablecoins: defaultInclusion.includeStablecoins,
 				includeGovernance: defaultInclusion.includeGovernance
 			}),
@@ -177,8 +178,6 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		const assetGroupValues = hasUnknownAssetGroup
 			? appendUnknownRwaAssetGroup(params.rwaList.assetGroups)
 			: params.rwaList.assetGroups
-
-		const chartDataMs: IRWAChartDataByAsset | null = chartData
 
 		// `selectedChain` comes from the URL and is slugified; resolve a display name (original casing/spaces)
 		// while still filtering breakdown keys by slug for robustness.
@@ -575,16 +574,13 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			categorySlug: selectedCategory
 		})
 		const defaultFilteredPerpsRows = defaultFilteredAssets.filter((asset) => asset.kind === 'perps')
-		const initialChartDataset = chartDataMs
+		const initialChartDataset = chartRows
 			? {
-					onChainMcap: appendRwaChartDatasetTotal(
-						aggregateRwaMetricData(defaultFilteredAssets, chartDataMs.onChainMcap, aggregationMode)
-					),
-					activeMcap: appendRwaChartDatasetTotal(
-						aggregateRwaMetricData(defaultFilteredAssets, chartDataMs.activeMcap, aggregationMode)
-					),
-					defiActiveTvl: appendRwaChartDatasetTotal(
-						aggregateRwaMetricData(defaultFilteredAssets, chartDataMs.defiActiveTvl, aggregationMode)
+					metric: 'activeMcap' as const,
+					dataset: buildRwaCanonicalMetricDataset(
+						aggregateRwaMetricData(defaultFilteredAssets, chartRows, aggregationMode),
+						'activeMcap',
+						false
 					)
 				}
 			: null
@@ -746,7 +742,12 @@ export async function getRWACategoriesOverview(): Promise<IRWACategoriesOverview
 
 	return {
 		rows: rows.sort((a, b) => b.base.onChainMcap - a.base.onChainMcap),
-		initialChartDataset: toBreakdownChartDataset(activeMcapRows)
+		initialChartDataset: toOverviewBreakdownChartDataset(activeMcapRows, {
+			breakdown: 'category',
+			key: 'activeMcap',
+			includeStablecoin: false,
+			includeGovernance: false
+		})
 	}
 }
 

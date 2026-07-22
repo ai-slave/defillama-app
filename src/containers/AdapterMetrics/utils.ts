@@ -964,6 +964,7 @@ function buildGroupedFlowDataset({
 	const isDaily = groupBy === 'daily'
 	const isCumulative = groupBy === 'cumulative'
 	const cumulativeTotals = isCumulative ? new Array<number>(seriesNames.length).fill(0) : null
+	const hasCumulativeValue = isCumulative ? new Array<boolean>(seriesNames.length).fill(false) : null
 	const otherEntitySet = otherEntityNames.length > 0 ? new Set(otherEntityNames) : null
 	const dimensionIndexes = new Map<string, number>()
 	for (let i = 1; i < chartData.dimensions.length; i++) dimensionIndexes.set(chartData.dimensions[i], i)
@@ -981,11 +982,17 @@ function buildGroupedFlowDataset({
 
 		for (let index = 0; index < seriesNames.length; index++) {
 			let value = bucketValues[index]
-			if (value == null) continue
 			if (cumulativeTotals) {
-				cumulativeTotals[index] += value
+				if (value != null) {
+					cumulativeTotals[index] += value
+					hasCumulativeValue![index] = true
+				} else if (!hasCumulativeValue![index]) {
+					continue
+				}
 				value = cumulativeTotals[index]
-				bucketValues[index] = value
+				bucketValues[index] = cumulativeTotals[index]
+			} else if (value == null) {
+				continue
 			}
 			if (relative && value > 0) relativeTotal += value
 		}
@@ -1253,9 +1260,10 @@ function buildLatestValueRowsFromChartData({
 	const pointCounts = new Map<string, number>()
 	const selectedIndexes = selectedNames.map((name) => chartData.dimensions.indexOf(name))
 
-	for (const row of chartData.source) {
+	for (let rowIndex = chartData.source.length - 1; rowIndex >= 0; rowIndex--) {
+		const row = chartData.source[rowIndex]
 		const timestamp = row[0] as number
-		if (timestamp < cutoffMs) continue
+		if (timestamp < cutoffMs) break
 		for (let i = 0; i < selectedNames.length; i++) {
 			const name = selectedNames[i]
 			const value = row[selectedIndexes[i]] as number | null | undefined

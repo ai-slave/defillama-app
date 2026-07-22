@@ -1,5 +1,6 @@
 import type { GetServerSidePropsContext, NextApiRequest } from 'next'
-import type { ReactNode } from 'react'
+import { createElement, type ReactNode } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
@@ -9,14 +10,22 @@ const {
 	fetchProtocolsAndChainsMock,
 	fetchAppMetadataMock,
 	fetchSingleChartDataMock,
-	fetchTableServerDataMock
+	fetchTableServerDataMock,
+	fetchProtocolsTableMock,
+	fetchAuthenticatedUserIdMock,
+	providerPropsMock,
+	proDashboardLoaderMock
 } = vi.hoisted(() => ({
 	fetchDashboardConfigMock: vi.fn(),
 	fetchDashboardConfigWithStatusMock: vi.fn(),
 	fetchProtocolsAndChainsMock: vi.fn(),
 	fetchAppMetadataMock: vi.fn(),
 	fetchSingleChartDataMock: vi.fn(),
-	fetchTableServerDataMock: vi.fn()
+	fetchTableServerDataMock: vi.fn(),
+	fetchProtocolsTableMock: vi.fn(),
+	fetchAuthenticatedUserIdMock: vi.fn(),
+	providerPropsMock: vi.fn(),
+	proDashboardLoaderMock: vi.fn()
 }))
 
 vi.mock('~/utils/telemetry', () => ({
@@ -26,7 +35,7 @@ vi.mock('~/utils/telemetry', () => ({
 }))
 
 vi.mock('next/router', () => ({
-	useRouter: () => ({ asPath: '/pro/dashboard-1' })
+	useRouter: () => ({ asPath: '/pro/dashboard-1', query: { dashboardId: 'dashboard-1' }, replace: vi.fn() })
 }))
 
 vi.mock('~/ui/Icon', () => ({
@@ -38,7 +47,10 @@ vi.mock('~/components/Link', () => ({
 }))
 
 vi.mock('~/containers/ProDashboard/components/ProDashboardLoader', () => ({
-	ProDashboardLoader: () => null
+	ProDashboardLoader: (props: unknown) => {
+		proDashboardLoaderMock(props)
+		return null
+	}
 }))
 
 vi.mock('~/containers/ProDashboard/hooks/useDashboardEngagement', () => ({
@@ -46,13 +58,26 @@ vi.mock('~/containers/ProDashboard/hooks/useDashboardEngagement', () => ({
 }))
 
 vi.mock('~/containers/ProDashboard/ProDashboardAPIContext', () => ({
-	ProDashboardAPIProvider: ({ children }: { children: ReactNode }) => children,
+	ProDashboardAPIProvider: ({ children, ...props }: { children: ReactNode }) => {
+		providerPropsMock(props)
+		return children
+	},
 	useProDashboardDashboard: () => ({
 		isLoadingDashboard: false,
 		dashboardVisibility: 'public',
 		currentDashboard: null,
 		dashboardName: 'Dashboard'
-	})
+	}),
+	useProDashboardServerAppMetadata: () => null
+}))
+
+vi.mock('~/containers/ProDashboard/AppMetadataContext', () => ({
+	AppMetadataProvider: () => null
+}))
+
+vi.mock('~/containers/ProDashboard/server/auth', () => ({
+	getAuthTokenFromRequest: (req: { cookies?: Record<string, string> }) => req.cookies?.pb_auth_token ?? null,
+	fetchAuthenticatedUserId: fetchAuthenticatedUserIdMock
 }))
 
 vi.mock('~/auth', () => ({
@@ -109,7 +134,7 @@ vi.mock('~/containers/Unlocks/queries', () => ({
 }))
 
 vi.mock('~/containers/ProDashboard/server/unifiedTable/protocols', () => ({
-	fetchProtocolsTable: vi.fn()
+	fetchProtocolsTable: fetchProtocolsTableMock
 }))
 
 vi.mock('~/utils/http-client', () => ({
@@ -117,7 +142,8 @@ vi.mock('~/utils/http-client', () => ({
 }))
 
 import dashboardStreamHandler from '~/pages/api/dynamic/pro-dashboard/[dashboardId]/stream'
-import { getServerSideProps } from '~/pages/pro/[dashboardId]'
+import DashboardPage, { getServerSideProps } from '~/pages/pro/[dashboardId]'
+import { getServerSideProps as getEditServerSideProps } from '~/pages/pro/[dashboardId]/edit'
 
 const PUBLIC_DASHBOARD_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=3600'
 const PRIVATE_DASHBOARD_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate'
@@ -188,6 +214,8 @@ describe('pro dashboard cache headers', () => {
 		fetchAppMetadataMock.mockResolvedValue({})
 		fetchSingleChartDataMock.mockResolvedValue([[1_700_000_000, 1]])
 		fetchTableServerDataMock.mockResolvedValue(null)
+		fetchProtocolsTableMock.mockResolvedValue({ rows: [] })
+		fetchAuthenticatedUserIdMock.mockResolvedValue('user-1')
 	})
 
 	afterEach(() => {
@@ -208,7 +236,10 @@ describe('pro dashboard cache headers', () => {
 					id: 'dashboard-1',
 					visibility: 'public',
 					tags: ['fees', 'ethereum'],
-					data: { dashboardName: 'Public Fees Dashboard' },
+					data: expect.objectContaining({
+						dashboardName: 'Public Fees Dashboard',
+						items: publicDashboard.data.items
+					}),
 					viewCount: 7,
 					likeCount: 2
 				}),
@@ -226,6 +257,57 @@ describe('pro dashboard cache headers', () => {
 		expect((result as any).props.initialDashboard).not.toHaveProperty('collectionName')
 		expect((result as any).props.initialDashboard).not.toHaveProperty('aiGenerated')
 		expect((result as any).props.initialDashboard).not.toHaveProperty('metrics')
+		expect(fetchProtocolsAndChainsMock).not.toHaveBeenCalled()
+		expect(fetchSingleChartDataMock).not.toHaveBeenCalled()
+		expect(fetchTableServerDataMock).not.toHaveBeenCalled()
+	})
+
+	it('seeds the provider from public config without rendering the config loader', async () => {
+		const result = await getServerSideProps(createSsrContext('dashboard-1'))
+		if (!('props' in result)) throw new Error('Expected dashboard props')
+
+		renderToStaticMarkup(createElement(DashboardPage, result.props as any))
+
+		expect(providerPropsMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				initialDashboardId: 'dashboard-1',
+				initialDashboard: expect.objectContaining({
+					id: 'dashboard-1',
+					user: '',
+					data: expect.objectContaining({ items: publicDashboard.data.items })
+				})
+			})
+		)
+		expect(proDashboardLoaderMock).not.toHaveBeenCalled()
+	})
+
+	it('seeds authenticated edit config only for the verified owner', async () => {
+		const context = createSsrContext('dashboard-1', 'auth-token')
+
+		const result = await getEditServerSideProps(context)
+
+		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
+		expect(fetchAuthenticatedUserIdMock).toHaveBeenCalledWith('auth-token')
+		expect(result).toEqual({
+			props: expect.objectContaining({
+				dashboardId: 'dashboard-1',
+				initialDashboard: expect.objectContaining({
+					id: 'dashboard-1',
+					ownerId: 'user-1',
+					data: expect.objectContaining({ items: publicDashboard.data.items })
+				})
+			})
+		})
+		expect((result as any).props.initialDashboard).not.toHaveProperty('aiGenerated')
+		expect((result as any).props.initialDashboard.data).not.toHaveProperty('aiUndoState')
+	})
+
+	it('does not seed edit config for a non-owner', async () => {
+		fetchAuthenticatedUserIdMock.mockResolvedValue('other-user')
+
+		const result = await getEditServerSideProps(createSsrContext('dashboard-1', 'auth-token'))
+
+		expect(result).toEqual({ props: { dashboardId: 'dashboard-1', initialDashboard: null } })
 	})
 
 	it('redirects anonymous id requests to the canonical slug url', async () => {
@@ -262,6 +344,24 @@ describe('pro dashboard cache headers', () => {
 		})
 	})
 
+	it('redirects authenticated public dashboard ids with private cache headers', async () => {
+		fetchDashboardConfigWithStatusMock.mockResolvedValue({
+			dashboard: { ...publicDashboard, slug: 'public-fees-dashboard' },
+			status: 200
+		})
+		const context = createSsrContext('dashboard-1', 'auth-token')
+
+		const result = await getServerSideProps(context)
+
+		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
+		expect(result).toEqual({
+			redirect: {
+				destination: '/pro/public-fees-dashboard',
+				permanent: true
+			}
+		})
+	})
+
 	it('renders canonical slug requests with a slug-based canonical path', async () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({
 			dashboard: { ...publicDashboard, slug: 'public-fees-dashboard' },
@@ -287,13 +387,48 @@ describe('pro dashboard cache headers', () => {
 		})
 	})
 
-	it('uses private no-store cache headers for authenticated dashboard pages without fetching', async () => {
+	it('hydrates authenticated public dashboard pages with private cache headers', async () => {
 		const context = createSsrContext('dashboard-1', 'auth-token')
 
-		await getServerSideProps(context)
+		const result = await getServerSideProps(context)
 
 		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-		expect(fetchDashboardConfigWithStatusMock).not.toHaveBeenCalled()
+		expect(context.res.setHeader).toHaveBeenCalledWith('Vary', 'Cookie, Authorization')
+		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledWith('dashboard-1', null)
+		expect(result).toEqual({
+			props: expect.objectContaining({
+				dashboardId: 'dashboard-1',
+				initialDashboard: expect.objectContaining({
+					id: 'dashboard-1',
+					visibility: 'public',
+					data: expect.objectContaining({ items: publicDashboard.data.items })
+				}),
+				noIndex: false,
+				status: 200
+			})
+		})
+		expect((result as any).props.initialDashboard).not.toHaveProperty('user')
+		expect((result as any).props.initialDashboard).not.toHaveProperty('aiGenerated')
+	})
+
+	it('keeps authenticated private dashboard pages unseeded', async () => {
+		fetchDashboardConfigWithStatusMock.mockResolvedValue({ dashboard: null, status: 401 })
+		const context = createSsrContext('private-dashboard', 'auth-token')
+
+		const result = await getServerSideProps(context)
+
+		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
+		expect(context.res.setHeader).toHaveBeenCalledWith('Vary', 'Cookie, Authorization')
+		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledWith('private-dashboard', null)
+		expect(result).toEqual({
+			props: {
+				dashboardId: 'private-dashboard',
+				initialDashboard: null,
+				seo: null,
+				noIndex: true,
+				status: 200
+			}
+		})
 	})
 
 	it('uses private no-store cache headers for unauthenticated private-dashboard pages', async () => {
@@ -360,6 +495,94 @@ describe('pro dashboard cache headers', () => {
 
 		expect(res.end).toHaveBeenCalled()
 		resolveAppMetadata(null)
+	})
+
+	it('settles the initial dashboard item window before starting deferred chart sources', async () => {
+		fetchDashboardConfigMock.mockResolvedValue({
+			...publicDashboard,
+			data: {
+				...publicDashboard.data,
+				items: Array.from({ length: 9 }, (_, index) => ({
+					id: `chart-${index}`,
+					kind: 'chart',
+					protocol: `protocol-${index}`,
+					type: 'fees'
+				}))
+			}
+		})
+		const pendingResolutions: Array<(data: [number, number][]) => void> = []
+		fetchSingleChartDataMock.mockImplementation(
+			() =>
+				new Promise<[number, number][]>((resolve) => {
+					pendingResolutions.push(resolve)
+				})
+		)
+		const res = createMockNextApiResponse()
+
+		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
+		await vi.waitFor(() => expect(fetchSingleChartDataMock).toHaveBeenCalledTimes(8))
+		expect(pendingResolutions).toHaveLength(8)
+
+		for (const resolve of pendingResolutions.slice(0, 8)) resolve([[1_700_000_000, 1]])
+		await vi.waitFor(() => expect(fetchSingleChartDataMock).toHaveBeenCalledTimes(9))
+		pendingResolutions[8]([[1_700_000_000, 2]])
+		await streamPromise
+
+		expect(res.end).toHaveBeenCalled()
+	})
+
+	it('does not refetch a shared chart source across stream stages', async () => {
+		fetchDashboardConfigMock.mockResolvedValue({
+			...publicDashboard,
+			data: {
+				...publicDashboard.data,
+				items: Array.from({ length: 9 }, (_, index) => ({
+					id: `chart-${index}`,
+					kind: 'chart',
+					protocol: 'aave',
+					type: 'fees'
+				}))
+			}
+		})
+		const res = createMockNextApiResponse()
+
+		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
+
+		expect(fetchSingleChartDataMock).toHaveBeenCalledOnce()
+		expect(res.end).toHaveBeenCalled()
+	})
+
+	it('shares table and unified-table source claims across stream stages', async () => {
+		const claimedTableSources: boolean[] = []
+		let tableSourceFetches = 0
+		fetchTableServerDataMock.mockImplementation(
+			async (_items: unknown, claimSource: (kind: string, key: readonly unknown[]) => boolean) => {
+				const claimed = claimSource('test-table-source', ['shared'])
+				claimedTableSources.push(claimed)
+				if (claimed) tableSourceFetches += 1
+				return null
+			}
+		)
+		fetchDashboardConfigMock.mockResolvedValue({
+			...publicDashboard,
+			data: {
+				...publicDashboard.data,
+				items: Array.from({ length: 9 }, (_, index) => ({
+					id: `table-${index}`,
+					kind: 'unified-table',
+					rowHeaders: ['protocol'],
+					params: { chains: ['Ethereum'] }
+				}))
+			}
+		})
+		const res = createMockNextApiResponse()
+
+		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
+
+		expect(claimedTableSources).toEqual([true, false])
+		expect(tableSourceFetches).toBe(1)
+		expect(fetchProtocolsTableMock).toHaveBeenCalledOnce()
+		expect(res.end).toHaveBeenCalled()
 	})
 
 	it('uses private no-store cache headers for authenticated dashboard streams', async () => {

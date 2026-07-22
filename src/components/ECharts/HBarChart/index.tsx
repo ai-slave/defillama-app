@@ -6,6 +6,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
+import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { setChartLogoMetadata } from '../shared/chartLogoMetadata'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
@@ -37,7 +38,7 @@ function measureLabelWidth(text: string): number {
 	return Math.ceil(_measureCtx.measureText(text).width)
 }
 
-export default function HBarChart({
+function HBarChart({
 	categories,
 	values,
 	title: _title,
@@ -57,6 +58,7 @@ export default function HBarChart({
 	const chartTheme = useChartTheme(isThemeDark)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
+	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const overlayRef = useRef<HTMLDivElement>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
@@ -173,21 +175,23 @@ export default function HBarChart({
 		}
 		syncLogos()
 	}, [syncLogos])
-	useChartResize(chartRef, containerRef, handleElementResize)
+	useChartResize(chartRef, containerRef, { onResize: handleElementResize })
 
 	useEffect(() => {
 		const chartDom = containerRef.current
 		if (!chartDom) return
 		const instance = echarts.init(chartDom, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		persistentLifecycle.restore(instance)
 		emitReady(instance)
 
 		return () => {
+			persistentLifecycle.capture(instance)
 			chartRef.current = null
 			emitReady(null)
 			instance.dispose()
 		}
-	}, [])
+	}, [persistentLifecycle])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -341,3 +345,5 @@ export default function HBarChart({
 		</div>
 	)
 }
+
+export default withEChartsRenderVisibility(HBarChart)

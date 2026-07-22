@@ -47,6 +47,63 @@ function buildCharts(series: readonly CartesianSeriesSpec[]): MultiSeriesChartSe
 	return charts
 }
 
+function buildIndependentCharts(
+	series: readonly SparseCartesianSeries[],
+	timestampMultiplier: 1 | 1000
+): MultiSeriesChartSeriesConfig[] {
+	const charts = buildCharts(series)
+	for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
+		const input = series[seriesIndex].data
+		const data = new Array<[number, number | null]>(input.length)
+		for (let pointIndex = 0; pointIndex < input.length; pointIndex++) {
+			data[pointIndex] = [(input[pointIndex][0] as number) * timestampMultiplier, input[pointIndex][1]]
+		}
+		charts[seriesIndex] = { ...charts[seriesIndex], encode: { x: 0, y: 1 }, data }
+	}
+	return charts
+}
+
+function alignIndependentStackGroups(
+	series: readonly SparseCartesianSeries[],
+	charts: MultiSeriesChartSeriesConfig[],
+	timestampMultiplier: 1 | 1000
+) {
+	const indexesByStack = new Map<string, number[]>()
+	for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
+		const stack = series[seriesIndex].stack
+		if (!stack) continue
+		const indexes = indexesByStack.get(stack)
+		if (indexes) indexes.push(seriesIndex)
+		else indexesByStack.set(stack, [seriesIndex])
+	}
+
+	for (const indexes of indexesByStack.values()) {
+		if (indexes.length < 2) continue
+		const rows = new Map<number, Array<number | null>>()
+		for (let stackIndex = 0; stackIndex < indexes.length; stackIndex++) {
+			for (const [inputTimestamp, value] of series[indexes[stackIndex]].data) {
+				const timestamp = (inputTimestamp as number) * timestampMultiplier
+				let row = rows.get(timestamp)
+				if (!row) {
+					row = new Array<number | null>(indexes.length).fill(null)
+					rows.set(timestamp, row)
+				}
+				row[stackIndex] = value
+			}
+		}
+		const sortedRows = Array.from(rows, ([timestamp, values]) => ({ timestamp, values })).sort(
+			(a, b) => a.timestamp - b.timestamp
+		)
+		for (let stackIndex = 0; stackIndex < indexes.length; stackIndex++) {
+			const data = new Array<[number, number | null]>(sortedRows.length)
+			for (let rowIndex = 0; rowIndex < sortedRows.length; rowIndex++) {
+				data[rowIndex] = [sortedRows[rowIndex].timestamp, sortedRows[rowIndex].values[stackIndex]]
+			}
+			charts[indexes[stackIndex]] = { ...charts[indexes[stackIndex]], data }
+		}
+	}
+}
+
 function assertUniqueSeriesNames(series: readonly CartesianSeriesSpec[]) {
 	const names = new Set<string>()
 	for (const item of series) {
@@ -83,8 +140,8 @@ export function buildAlignedCartesianChartModel(
 }
 
 /**
- * Merge independently timed series into one row-major dataset. The common aligned
- * case avoids a Map and sort; truly sparse time series are sorted once after merging.
+ * Keep independently timed line calendars positional so sibling timestamps do not become gaps.
+ * Already-aligned inputs retain the compact row-major representation.
  */
 export function buildSparseCartesianChartModel(
 	series: readonly SparseCartesianSeries[],
@@ -124,6 +181,17 @@ export function buildSparseCartesianChartModel(
 		return {
 			dataset: { dimensions: [xDimension, ...series.map((item) => item.name)], source },
 			charts: buildCharts(series)
+		}
+	}
+
+	if (xDimension === 'timestamp') {
+		const charts = buildIndependentCharts(series, timestampMultiplier)
+		// ECharts stacks direct series by data index, so each stack group needs one shared calendar.
+		// Missing stacked-line observations remain null gaps; unrelated non-stacked lines stay independent.
+		alignIndependentStackGroups(series, charts, timestampMultiplier)
+		return {
+			dataset: { dimensions: [xDimension, ...series.map((item) => item.name)], source: [] },
+			charts
 		}
 	}
 

@@ -5,10 +5,8 @@ import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute } from '~/server/api/types'
 import { getObjectCache, setObjectCache } from '~/utils/cache-client'
 
-// fetchChain fans out to many upstream calls and averages multiple seconds,
-// so on top of the shared object cache the assembled response is memoized in
-// process (keyed by canonical chain slug) and concurrent identical requests
-// share one computation.
+// The overview request averages multiple seconds, so the canonical chain slug
+// memoizes the assembled result in process and shares concurrent requests.
 const CHAIN_RESULT_TTL_MS = 5 * 60 * 1000
 const CHAIN_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=600'
 
@@ -29,7 +27,6 @@ export const chainCache = defineApiRoute({
 		if (typeof chainParam !== 'string' || chainParam.length === 0) {
 			return badRequest('Missing chain parameter')
 		}
-
 		const [{ default: metadataCache }, { resolveChainParamFromMetadata }] = await Promise.all([
 			import('~/utils/metadata'),
 			import('~/containers/ChainOverview/server/routes')

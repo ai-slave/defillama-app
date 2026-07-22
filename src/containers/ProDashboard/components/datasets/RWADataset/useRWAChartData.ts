@@ -13,10 +13,10 @@ import {
 	fetchRWACategoryBreakdownChartData,
 	fetchRWAPlatformBreakdownChartData,
 	fetchRWAAssetGroupBreakdownChartData,
-	fetchRWAChartDataByAsset
+	fetchRWAChartMetricDataByAsset
 } from '~/containers/RWA/api'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
-import { toBreakdownChartDataset } from '~/containers/RWA/breakdownDataset'
+import { toRwaPositionalChartDataset } from '~/containers/RWA/breakdownDataset'
 import { tokenIconUrl } from '~/utils/icons'
 import { getProRwaBreakdown, getProRwaBreakdownQueryKey } from '../../../rwaBreakdown'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric } from '../../../types'
@@ -56,36 +56,32 @@ export function useRWABreakdownChartData(
 				if (authToken) {
 					return fetchRWABreakdownViaProxy(actualBreakdown, metric, authToken, chain)
 				}
-				const assetData = await fetchRWAChartDataByAsset({
+				const rows = await fetchRWAChartMetricDataByAsset({
 					target: { kind: 'chain', slug: chain },
+					metric,
 					includeStablecoins: false,
 					includeGovernance: false
 				})
-				if (!assetData) return null
-				return assetData[metric] ?? null
+				return toRwaPositionalChartDataset(rows)
 			}
 
 			if (authToken) {
 				return fetchRWABreakdownViaProxy(actualBreakdown, metric, authToken)
 			}
 			const fetcher = getBreakdownFetcher(actualBreakdown)
-			return fetcher({
+			const rows = await fetcher({
 				key: metric,
 				includeStablecoin: false,
 				includeGovernance: false
 			})
+			return toRwaPositionalChartDataset(rows)
 		},
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 1
 	})
 
-	const chartDataset = useMemo(() => {
-		if (!data) return null
-		return toBreakdownChartDataset(data)
-	}, [data])
-
-	return { chartDataset, isLoading, error }
+	return { chartDataset: data ?? null, isLoading, error }
 }
 
 export function useRWAChainsList() {
@@ -99,11 +95,12 @@ export function useRWAChainsList() {
 			if (authToken) {
 				return fetchRWABreakdownViaProxy('chain', 'activeMcap', authToken)
 			}
-			return fetchRWAChainBreakdownChartData({
+			const rows = await fetchRWAChainBreakdownChartData({
 				key: 'activeMcap',
 				includeStablecoin: false,
 				includeGovernance: false
 			})
+			return toRwaPositionalChartDataset(rows)
 		},
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false,
@@ -111,13 +108,12 @@ export function useRWAChainsList() {
 	})
 
 	const chains = useMemo(() => {
-		if (!data || data.length === 0) return []
-		const lastRow = data[data.length - 1]
+		if (!data || data.source.length === 0) return []
+		const lastRow = data.source[data.source.length - 1]
 		const chains: Array<{ chain: string; tvl: number }> = []
-		for (const chain in lastRow) {
-			if (chain === 'timestamp') continue
-			const tvl = lastRow[chain]
-			if (tvl > 0) chains.push({ chain, tvl })
+		for (let index = 1; index < data.dimensions.length; index++) {
+			const tvl = lastRow[index] as number | null | undefined
+			if (tvl != null && tvl > 0) chains.push({ chain: data.dimensions[index], tvl })
 		}
 		chains.sort((a, b) => b.tvl - a.tvl)
 		return chains

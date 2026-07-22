@@ -4,7 +4,13 @@ import { buildRwaTimeSeriesCharts } from '../index'
 
 describe('buildRwaTimeSeriesCharts', () => {
 	it('excludes renamed total series from tooltip totals without excluding rwa perps open interest', () => {
-		expect(buildRwaTimeSeriesCharts(['timestamp', 'Total Onchain Mcap', 'RWA Perps OI', 'Bonds'])).toEqual([
+		expect(
+			buildRwaTimeSeriesCharts({
+				dimensions: ['timestamp', 'Total Onchain Mcap', 'RWA Perps OI', 'Bonds'],
+				source: [],
+				independentSeries: [{ name: 'RWA Perps OI', data: [[2, 20]] }]
+			})
+		).toEqual([
 			{
 				name: 'Total Onchain Mcap',
 				type: 'line',
@@ -16,7 +22,8 @@ describe('buildRwaTimeSeriesCharts', () => {
 			{
 				name: 'RWA Perps OI',
 				type: 'line',
-				encode: { x: 'timestamp', y: 'RWA Perps OI' },
+				encode: { x: 0, y: 1 },
+				data: [[2, 20]],
 				color: CHART_COLORS[1],
 				hideAreaStyle: true
 			},

@@ -8,6 +8,7 @@ import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterS
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { Select } from '~/components/Select/Select'
 import { selectTriggerStyles } from '~/components/Select/types'
+import { fetchAdapterChainChartData, fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import type { IAdapterChainOverview, IAdapterProtocolOverview } from '~/containers/AdapterMetrics/types'
 import { Stats } from '~/containers/ChainOverview/Stats'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
@@ -24,6 +25,15 @@ import {
 	hasSelectedCompareChainsFeeChart,
 	type CompareChainsFeeExtraChartsByChain
 } from './feeExtras'
+import {
+	buildCompareChainAdapterQueryKey,
+	buildCompareChainOverviewQueryKey,
+	getCompareChainFailedSources,
+	getCompareChainAdapterMetrics,
+	hasPendingCompareChainSources,
+	mergeCompareChainSources,
+	type CompareChainAdapterMetric
+} from './requestPlan'
 import { buildCompareChainsTvlChartState, type CompareChainsTvlChartState } from './tvlChart'
 
 const MultiSeriesChart = React.lazy(
@@ -64,34 +74,37 @@ type CompareResult = {
 	failedChains: string[]
 }
 
-type CompareQueryResult = {
-	queryFnData: ChainDataResult
-	error: Error
-	data: ChainDataResult
-}
-
 const getChainData = async (chain: string): Promise<ChainDataResult> => {
 	const chainData = await fetchJson<{
 		chainOverviewData: IChainOverviewData
-		dexVolumeChart: IAdapterChainOverview['totalDataChart']
-		chainFeesChart: IAdapterProtocolOverview['totalDataChart']
-		chainRevenueChart: IAdapterProtocolOverview['totalDataChart']
-	}>(`/api/dynamic/cache/chain/${chain}?zz=18`)
+	}>(`/api/dynamic/cache/chain/${encodeURIComponent(chain)}`)
 
 	return {
-		chainFeesChart: chainData.chainFeesChart ?? null,
-		chainRevenueChart: chainData.chainRevenueChart ?? null,
-		dexVolumeChart: chainData.dexVolumeChart ?? null,
+		chainFeesChart: null,
+		chainRevenueChart: null,
+		dexVolumeChart: null,
 		chain,
 		chainOverviewData: chainData.chainOverviewData
 	}
 }
 
-const useCompare = ({ chains = [] }: { chains?: string[] }) => {
-	const queries = React.useMemo(
+const getAdapterMetricData = (chain: string, metric: CompareChainAdapterMetric) => {
+	switch (metric) {
+		case 'dexVolumeChart':
+			return fetchAdapterChainChartData({ adapterType: 'dexs', chain })
+		case 'chainFeesChart':
+			return fetchAdapterProtocolChartData({ adapterType: 'fees', protocol: chain })
+		case 'chainRevenueChart':
+			return fetchAdapterProtocolChartData({ adapterType: 'fees', protocol: chain, dataType: 'dailyRevenue' })
+	}
+}
+
+const useCompare = ({ chains = [], selectedCharts }: { chains?: string[]; selectedCharts: readonly string[] }) => {
+	const adapterMetrics = React.useMemo(() => getCompareChainAdapterMetrics(selectedCharts), [selectedCharts])
+	const overviewQueries = React.useMemo(
 		() =>
 			chains.map((chain) => ({
-				queryKey: ['compare-chains', chain],
+				queryKey: buildCompareChainOverviewQueryKey(chain),
 				queryFn: () => getChainData(chain),
 				staleTime: 60 * 60 * 1000,
 				refetchOnWindowFocus: false,
@@ -99,18 +112,50 @@ const useCompare = ({ chains = [] }: { chains?: string[] }) => {
 			})),
 		[chains]
 	)
+	const metricQueries = React.useMemo(
+		() =>
+			chains.flatMap((chain) =>
+				adapterMetrics.map((metric) => ({
+					queryKey: buildCompareChainAdapterQueryKey(chain, metric),
+					queryFn: () => getAdapterMetricData(chain, metric),
+					staleTime: 60 * 60 * 1000,
+					refetchOnWindowFocus: false,
+					retry: 0
+				}))
+			),
+		[chains, adapterMetrics]
+	)
+	const overviewResults = useQueries({ queries: overviewQueries })
+	const metricResults = useQueries({ queries: metricQueries })
 
-	return useQueries<Array<CompareQueryResult>, CompareResult>({
-		queries,
-		combine: React.useCallback(
-			(results) => ({
-				data: results.map((result) => result.data ?? null),
-				isLoading: results.some((result) => result.isLoading),
-				failedChains: results.flatMap((result, index) => (result.error && chains[index] ? [chains[index]] : []))
-			}),
-			[chains]
-		)
-	})
+	return React.useMemo<CompareResult>(() => {
+		const failedChains = getCompareChainFailedSources({
+			chains,
+			adapterMetrics,
+			overviewErrors: overviewResults.map((result) => result.error),
+			metricErrors: metricResults.map((result) => result.error),
+			metricLabels: {
+				dexVolumeChart: 'DEXs Volume',
+				chainFeesChart: 'Chain Fees',
+				chainRevenueChart: 'Chain Revenue'
+			}
+		})
+		const data = overviewResults.map((overviewResult, chainIndex) => {
+			return mergeCompareChainSources({
+				overview: overviewResult.data,
+				adapterMetrics,
+				metricData: adapterMetrics.map(
+					(_, metricIndex) => metricResults[chainIndex * adapterMetrics.length + metricIndex]?.data
+				)
+			})
+		})
+
+		return {
+			data,
+			isLoading: hasPendingCompareChainSources(overviewResults, metricResults),
+			failedChains
+		}
+	}, [adapterMetrics, chains, metricResults, overviewResults])
 }
 
 // Build chart lookup map for O(1) access
@@ -267,7 +312,8 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 	const selectedChainValues = React.useMemo(() => selectedChains.map((chain) => chain.value), [selectedChains])
 
 	const { data, isLoading, failedChains } = useCompare({
-		chains: selectedChainValues
+		chains: selectedChainValues,
+		selectedCharts: selectedChartFilters
 	})
 
 	const loadedChainData = React.useMemo(
@@ -331,6 +377,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 		],
 		[failedChains, feeExtraFetchConfigs, feeExtraResults]
 	)
+	const isChartLoading = isLoading || hasPendingCompareChainSources(feeExtraResults)
 
 	const showFeeExtraFilters = hasSelectedCompareChainsFeeChart(selectedChartFilters)
 
@@ -388,7 +435,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 
 			{selectedChains.length > 1 ? (
 				<div className="relative flex flex-col gap-1">
-					{isLoading || !router.isReady ? (
+					{isChartLoading || !router.isReady ? (
 						<ChartPanel>
 							<ChartPanelExportShellFallback className="flex h-full w-full items-center justify-center">
 								<LoadingIndicator />

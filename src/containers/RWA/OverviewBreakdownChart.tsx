@@ -27,7 +27,7 @@ import {
 	isRwaTotalSeriesLabel,
 	sortRwaChartSeriesLabels
 } from './chartAggregation'
-import { toRwaMultiSeriesChartDataset, type RWAChartDataset } from './chartDataset'
+import type { RWAPositionalChartDataset } from './chartDataset'
 import { definitions } from './definitions'
 import { buildRWAFlowRotationChart, parseRWAFlowGrouping, type RWAFlowGrouping } from './flows'
 import { useRWAFlowOverviewSplitWithFilters } from './flows.hooks'
@@ -60,7 +60,7 @@ const CHART_TYPE_OPTIONS: Array<{ key: RWAOverviewBreakdownChartType; label: str
 
 const VALID_CHART_TYPES = new Set<RWAChartMetricKey>(['activeMcap', 'onChainMcap', 'defiActiveTvl'])
 const DEFAULT_CHART_TYPE: RWAChartMetricKey = 'activeMcap'
-const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
+const EMPTY_DATASET: RWAPositionalChartDataset = { source: [], dimensions: ['timestamp'] }
 const EMPTY_MULTI_SERIES_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp'] }
 const STACKS_QUERY_KEY = 'stacks'
 const EXCLUDE_STACKS_QUERY_KEY: ExcludeQueryKey = 'excludeStacks'
@@ -147,7 +147,7 @@ export function getOverviewBreakdownRequestState(
 	}
 }
 
-function fetchOverviewBreakdownDataset(request: RWAOverviewBreakdownRequest): Promise<RWAChartDataset> {
+function fetchOverviewBreakdownDataset(request: RWAOverviewBreakdownRequest): Promise<RWAPositionalChartDataset> {
 	const searchParams = new URLSearchParams({
 		breakdown: request.breakdown,
 		key: request.key
@@ -156,7 +156,7 @@ function fetchOverviewBreakdownDataset(request: RWAOverviewBreakdownRequest): Pr
 	if (request.includeStablecoin) searchParams.set('includeStablecoin', 'true')
 	if (request.includeGovernance) searchParams.set('includeGovernance', 'true')
 
-	return fetchJson<RWAChartDataset>(`/api/public/rwa/overview-breakdown?${searchParams.toString()}`)
+	return fetchJson<RWAPositionalChartDataset>(`/api/public/rwa/overview-breakdown?${searchParams.toString()}`)
 }
 
 export function buildOverviewBreakdownChartSeries(dimensions: string[]): Array<MultiSeriesChartSeriesConfig> {
@@ -212,7 +212,7 @@ export function RWAOverviewBreakdownChart({
 	treemapSizeRows = []
 }: {
 	page: RWAOverviewPage
-	initialChartDataset: RWAChartDataset
+	initialChartDataset: RWAPositionalChartDataset
 	stackLabel: string
 	treemapSizeRows?: RWAFlowTreemapSizeRow[]
 }) {
@@ -258,10 +258,7 @@ export function RWAOverviewBreakdownChart({
 		[flowData, flowFrequency, isFlowChart, isFlowHeatmap]
 	)
 	const rawDataset = isDefaultState ? initialChartDataset : (data ?? EMPTY_DATASET)
-	const dataset = useMemo(
-		() => (isFlowChart ? (flowChart?.dataset ?? EMPTY_MULTI_SERIES_DATASET) : toRwaMultiSeriesChartDataset(rawDataset)),
-		[flowChart?.dataset, isFlowChart, rawDataset]
-	)
+	const dataset = isFlowChart ? (flowChart?.dataset ?? EMPTY_MULTI_SERIES_DATASET) : rawDataset
 	const showLoadingState = isFlowChart ? isFlowLoading : !isDefaultState && isLoading
 	const chartError = isFlowChart ? flowError : error
 	const flowTreemapWindow = useMemo(

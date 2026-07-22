@@ -4,18 +4,16 @@ import {
 	buildAreaPayload,
 	buildStablecoinBreakdownDatasetPresentation,
 	buildStablecoinBreakdownPayloadPresentation,
-	buildStablecoinChartSummary,
 	buildDominancePayload,
-	buildStablecoinOverviewChartData,
+	buildStablecoinMcapSummary,
 	buildStablecoinOverviewPayload,
-	buildStablecoinOverviewPayloadFromChartData,
 	buildTokenInflowsPayload,
 	buildTotalMcapPayload,
 	buildUsdInflowsPayload,
 	groupStablecoinBarChartPayload,
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT
 } from '../chartSeries'
-import { buildStablecoinChartDataWithFlags, formatPeggedChainsData } from '../utils'
+import { formatPeggedChainsData } from '../utils'
 
 function datasetValue(dataset: MultiSeriesChartDataset, rowIndex: number, dimension: string) {
 	return dataset.source[rowIndex][dataset.dimensions.indexOf(dimension)]
@@ -62,10 +60,20 @@ const circulatingParams = {
 describe('stablecoin chart series builders', () => {
 	it('keeps overview chart payloads identical while adding their shared summary', () => {
 		const topToken = { symbol: 'USDT', mcap: 150 }
-		const summary = buildStablecoinChartSummary(
-			buildStablecoinChartDataWithFlags(params, { total: true }).peggedAreaTotalData,
-			topToken
-		)
+		const { mcapStats } = buildStablecoinMcapSummary(params)
+		const summary = {
+			totalMcapCurrent: mcapStats.totalMcapCurrent,
+			change1d: mcapStats.change1d,
+			change7d: mcapStats.change7d,
+			change30d: mcapStats.change30d,
+			change1dUsd: mcapStats.change1dUsd,
+			change7dUsd: mcapStats.change7dUsd,
+			change30dUsd: mcapStats.change30dUsd,
+			topToken,
+			dominance: '62.50',
+			dataTimestamp: mcapStats.dataTimestamp,
+			isDataStale: mcapStats.isDataStale
+		}
 		const expectedPayloads = {
 			tokenMcaps: buildAreaPayload(params, { stackName: 'tokenMcaps' }),
 			dominance: buildDominancePayload(params, { stackName: 'dominance' }),
@@ -81,59 +89,8 @@ describe('stablecoin chart series builders', () => {
 		}
 	})
 
-	it('collects combined chart outputs with one value read per source point', () => {
-		let reads = 0
-		const point = (date: number, value: number) => ({
-			date,
-			get mcap() {
-				reads++
-				return { peggedUSD: value }
-			}
-		})
-		const combinedParams = {
-			chartDataByAssetOrChain: [[point(1660000000, 100), point(1660086400, 125), point(1660172800, 120)]],
-			assetsOrChainsList: ['USDT'],
-			filteredIndexes: [0],
-			issuanceType: 'mcap',
-			selectedChain: 'All'
-		}
-
-		const result = buildStablecoinChartDataWithFlags(combinedParams, {
-			area: true,
-			total: true,
-			inflows: true
-		})
-
-		expect(reads).toBe(3)
-		expect(result.peggedAreaChartData).toEqual([
-			{ date: '1660000000', USDT: 100 },
-			{ date: '1660086400', USDT: 125 },
-			{ date: '1660172800', USDT: 120 }
-		])
-		expect(result.peggedAreaTotalData).toEqual([
-			{ date: '1660000000', Mcap: 100 },
-			{ date: '1660086400', Mcap: 125 },
-			{ date: '1660172800', Mcap: 120 }
-		])
-		expect(result.tokenInflows).toEqual([
-			{ date: '1660000000', USDT: 25 },
-			{ date: '1660086400', USDT: -5 }
-		])
-		expect(result.usdInflows).toEqual([
-			['1660000000', 25],
-			['1660086400', -5]
-		])
-	})
-
-	it('reuses collected overview rows when the visible stablecoin selection changes', () => {
-		let reads = 0
-		const point = (date: number, value: number) => ({
-			date,
-			get mcap() {
-				reads++
-				return { peggedUSD: value }
-			}
-		})
+	it('constructs the requested stablecoin selection and reconciles Others once', () => {
+		const point = (date: number, value: number) => ({ date, mcap: { peggedUSD: value } })
 		const selectionParams = {
 			chartDataByAssetOrChain: [
 				[point(1660000000, 100), point(1660086400, 125)],
@@ -145,11 +102,8 @@ describe('stablecoin chart series builders', () => {
 			selectedChain: 'All'
 		}
 		const topToken = { symbol: 'USDT', mcap: 125 }
-		const chartData = buildStablecoinOverviewChartData(selectionParams, 'tokenMcaps')
-
-		expect(reads).toBe(4)
 		expect(
-			buildStablecoinOverviewPayloadFromChartData(selectionParams, 'tokenMcaps', topToken, chartData, {
+			buildStablecoinOverviewPayload(selectionParams, 'tokenMcaps', topToken, {
 				selectedNames: ['USDT']
 			}).dataset.source
 		).toEqual([
@@ -157,50 +111,22 @@ describe('stablecoin chart series builders', () => {
 			[1660086400000, 125, 75]
 		])
 		expect(
-			buildStablecoinOverviewPayloadFromChartData(selectionParams, 'tokenMcaps', topToken, chartData, {
+			buildStablecoinOverviewPayload(selectionParams, 'tokenMcaps', topToken, {
 				selectedNames: ['USDC']
 			}).dataset.source
 		).toEqual([
 			[1660000000000, 50, 100],
 			[1660086400000, 75, 125]
 		])
-		expect(reads).toBe(4)
-	})
-
-	it('keeps total-only collection scoped to total output', () => {
-		const result = buildStablecoinChartDataWithFlags(params, { total: true })
-
-		expect(result.peggedAreaTotalData).toHaveLength(3)
-		expect(result.peggedAreaChartData).toEqual([])
-		expect(result.stackedDataset).toEqual([])
-		expect(result.tokenInflows).toEqual([])
-		expect(result.usdInflows).toEqual([])
-	})
-
-	it('builds USD and token inflows independently', () => {
-		const usdOnly = buildStablecoinChartDataWithFlags(params, { usdInflows: true })
-		const tokenOnly = buildStablecoinChartDataWithFlags(params, { tokenInflows: true })
-
-		expect(usdOnly.usdInflows).toEqual([
-			['1609459200', 35],
-			['1609545600', 55]
-		])
-		expect(usdOnly.tokenInflows).toEqual([])
-		expect(usdOnly.tokenInflowNames).toEqual([])
-		expect(tokenOnly.tokenInflows).toEqual([
-			{ date: '1609459200', USDT: 25, USDC: 10 },
-			{ date: '1609545600', USDT: 25, USDC: 30 }
-		])
-		expect(tokenOnly.usdInflows).toEqual([])
 	})
 
 	it('keeps total market cap ordering, currency totals, and missing values exact', () => {
 		const mixedCurrencyParams = {
 			chartDataByAssetOrChain: [
 				[
-					{ date: 1609632000, mcap: { peggedUSD: 30, peggedEUR: 5 } },
 					{ date: 1609459200, mcap: { peggedUSD: 10, peggedEUR: 2 } },
-					{ date: 1609545600 }
+					{ date: 1609545600 },
+					{ date: 1609632000, mcap: { peggedUSD: 30, peggedEUR: 5 } }
 				],
 				[
 					{ date: 1609459200, mcap: { peggedUSD: 3 } },
@@ -221,6 +147,21 @@ describe('stablecoin chart series builders', () => {
 			[1609632000000, 40]
 		])
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'Mcap'])
+	})
+
+	it('derives the summary top token from the latest chronological row', () => {
+		const summary = buildStablecoinMcapSummary({
+			chartDataByAssetOrChain: [
+				[{ date: 1_660_000_000, mcap: { peggedUSD: 1_000 } }],
+				[{ date: 1_660_086_400, mcap: { peggedUSD: 10 } }]
+			],
+			assetsOrChainsList: ['Stale Large', 'Current Small'],
+			issuanceType: 'mcap',
+			selectedChain: 'All'
+		})
+
+		expect(summary.topToken).toEqual({ symbol: 'Current Small', mcap: 10 })
+		expect(summary.mcapStats.totalMcapCurrent).toBe(10)
 	})
 
 	it('parses string epoch dates before shaping mcap chart rows', () => {
@@ -269,6 +210,19 @@ describe('stablecoin chart series builders', () => {
 		expect(JSON.parse(JSON.stringify(payload)).valueSymbol).toBe('')
 	})
 
+	it('adds unreleased values before dominance normalization', () => {
+		const payload = buildDominancePayload(circulatingParams, {
+			includeUnreleased: true,
+			normalizeTo100: true
+		})
+
+		expect(payload.dataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Tron'])
+		expect(payload.dataset.source).toEqual([
+			[1660000000000, 66.67, 33.33],
+			[1660086400000, 66.67, 33.33]
+		])
+	})
+
 	it('keeps area rows sparse when a visible series has no value for a timestamp', () => {
 		const sparseAreaParams = {
 			chartDataByAssetOrChain: [
@@ -290,6 +244,107 @@ describe('stablecoin chart series builders', () => {
 			[1609545600000, 20, 5]
 		])
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'USDT', 'USDC'])
+	})
+
+	it('does not read the next packed series after an area series ends', () => {
+		const sparseEndingParams = {
+			chartDataByAssetOrChain: [[{ date: 1660000000, circulating: 10 }], [{ date: 1660086400, circulating: 20 }]],
+			assetsOrChainsList: ['Ended', 'Current'],
+			issuanceType: 'circulating'
+		}
+
+		expect(buildAreaPayload(sparseEndingParams, { stackName: 'chains' }).dataset.source).toEqual([
+			[1660000000000, 10, undefined],
+			[1660086400000, undefined, 20]
+		])
+		expect(buildDominancePayload(sparseEndingParams).dataset.source).toEqual([
+			[1660000000000, 100, 0],
+			[1660086400000, 0, 100]
+		])
+	})
+
+	it('matches legacy synthetic tails without allocating them or creating false inflows', () => {
+		const stalePoint = { date: 1_660_000_000, mcap: { peggedUSD: 10 } }
+		const currentSeries = [
+			{ date: 1_660_000_000, mcap: { peggedUSD: 20 } },
+			{ date: 1_660_086_400, mcap: { peggedUSD: 25 } },
+			{ date: 1_660_172_800, mcap: { peggedUSD: 30 } }
+		]
+		const baseParams = {
+			assetsOrChainsList: ['Stale', 'Current'],
+			issuanceType: 'mcap' as const,
+			selectedChain: 'All',
+			carryForwardAfterSeriesEnd: true
+		}
+		const compactParams = { ...baseParams, chartDataByAssetOrChain: [[stalePoint], currentSeries] }
+		const paddedParams = {
+			...baseParams,
+			chartDataByAssetOrChain: [
+				[
+					stalePoint,
+					{ ...stalePoint, date: 1_660_086_400, isSynthetic: true },
+					{ ...stalePoint, date: 1_660_172_800, isSynthetic: true }
+				],
+				currentSeries
+			]
+		}
+
+		expect(buildTotalMcapPayload(compactParams).dataset).toEqual(buildTotalMcapPayload(paddedParams).dataset)
+		expect(buildAreaPayload(compactParams, { stackName: 'tokens' }).dataset).toEqual(
+			buildAreaPayload(paddedParams, { stackName: 'tokens' }).dataset
+		)
+		expect(buildDominancePayload(compactParams).dataset).toEqual(buildDominancePayload(paddedParams).dataset)
+		const inflows = buildTokenInflowsPayload(compactParams)
+		expect(inflows.dataset.dimensions).toEqual(['timestamp', 'Current'])
+		expect(inflows.dataset.source).toEqual([
+			[1_660_000_000_000, 5],
+			[1_660_086_400_000, 5]
+		])
+		expect(compactParams.chartDataByAssetOrChain.map((series) => series.length)).toEqual([1, 3])
+	})
+
+	it('keeps token inflow series within their different ending calendars', () => {
+		const tokenInflows = buildTokenInflowsPayload({
+			chartDataByAssetOrChain: [
+				[
+					{ date: 1660000000, mcap: { peggedUSD: 10 } },
+					{ date: 1660086400, mcap: { peggedUSD: 15 } }
+				],
+				[
+					{ date: 1660086400, mcap: { peggedUSD: 20 } },
+					{ date: 1660172800, mcap: { peggedUSD: 12 } }
+				]
+			],
+			assetsOrChainsList: ['Ended', 'Current'],
+			issuanceType: 'mcap',
+			selectedChain: 'All'
+		})
+
+		expect(tokenInflows.dataset.source).toEqual([
+			[1660000000000, 5, undefined],
+			[1660086400000, undefined, -8]
+		])
+	})
+
+	it('does not leak values across three disjoint packed series', () => {
+		const area = buildAreaPayload(
+			{
+				chartDataByAssetOrChain: [
+					[{ date: 1660000000, circulating: 10 }],
+					[{ date: 1660086400, circulating: 20 }],
+					[{ date: 1660172800, circulating: 30 }]
+				],
+				assetsOrChainsList: ['First', 'Second', 'Third'],
+				issuanceType: 'circulating'
+			},
+			{ stackName: 'chains' }
+		)
+
+		expect(area.dataset.source).toEqual([
+			[1660000000000, 10, undefined, undefined],
+			[1660086400000, undefined, 20, undefined],
+			[1660172800000, undefined, undefined, 30]
+		])
 	})
 
 	it('builds dominance rows as a 100 percent stacked payload', () => {

@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => {
 	const instance = {
 		clear: vi.fn(),
 		dispose: vi.fn(),
+		getOption: vi.fn(() => ({})),
+		isDisposed: vi.fn(() => false),
 		off: vi.fn(),
 		on: vi.fn(),
 		resize: vi.fn(),

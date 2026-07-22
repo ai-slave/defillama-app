@@ -35,6 +35,7 @@ const UNLOCKS_CHART_TYPES = [
 ]
 
 const EMPTY_CHART_DATA: Array<{ name: string; value: number }> = []
+const EMPTY_CHART_COLORS: Record<string, string> = {}
 const EMPTY_STACKS: string[] = []
 const LOCKED_UNLOCKED_COLORS = {
 	Unlocked: '#0c5dff',
@@ -138,9 +139,7 @@ export function UnlocksChartTab({
 		return { available, chartData }
 	}, [data, selectedUnlocksChartType])
 
-	const allocationPieChartColors = useMemo(() => {
-		return data?.stackColors?.documented ?? {}
-	}, [data])
+	const allocationPieChartColors = data?.stackColors?.documented ?? EMPTY_CHART_COLORS
 
 	const unlockedPercent = useMemo(() => {
 		const totalLocked = data?.meta?.totalLocked

@@ -171,7 +171,11 @@ describe('RWA flow chart data', () => {
 			[day(2026, 1, 28), 160]
 		])
 
-		expect(getRWAFlowVsPriceSummary(points, 'monthly', mcapByTimestamp)).toEqual({
+		const chart = buildRWAFlowChart({
+			points,
+			selection: { view: 'flowVsPrice', groupBy: 'monthly', mcapByTimestamp }
+		})
+		expect(getRWAFlowVsPriceSummary(chart)).toEqual({
 			mcapChange: 50,
 			netCapital: 20,
 			price: 30,
@@ -227,7 +231,7 @@ describe('RWA flow chart data', () => {
 			expect((Number(row[1]) || Number(row[2]) || 0) + Number(row[3])).toBe(row[4])
 		}
 		expect(measuredCumulativeRows.at(-1)?.slice(1)).toEqual([20, null, 30, 50])
-		expect(getRWAFlowVsPriceSummary(points, 'cumulative', mcapByTimestamp)).toEqual({
+		expect(getRWAFlowVsPriceSummary(cumulative)).toEqual({
 			mcapChange: 50,
 			netCapital: 20,
 			price: 30,
@@ -251,7 +255,11 @@ describe('RWA flow chart data', () => {
 		})
 
 		expect(daily.dataset.source[2]).toEqual([jan3, 30, null, 0, 30])
-		expect(getRWAFlowVsPriceSummary(points, 'cumulative', mcapByTimestamp)).toEqual({
+		const cumulative = buildRWAFlowChart({
+			points,
+			selection: { view: 'flowVsPrice', groupBy: 'cumulative', mcapByTimestamp }
+		})
+		expect(getRWAFlowVsPriceSummary(cumulative)).toEqual({
 			mcapChange: 30,
 			netCapital: 30,
 			price: 0,
@@ -270,7 +278,35 @@ describe('RWA flow chart data', () => {
 			[jan3, 150]
 		])
 
-		const summary = getRWAFlowVsPriceSummary(points, 'daily', mcapByTimestamp, { start: jan3, end: jan3 })
+		const chart = buildRWAFlowChart({
+			points,
+			selection: { view: 'flowVsPrice', groupBy: 'daily', mcapByTimestamp }
+		})
+		const summary = getRWAFlowVsPriceSummary(chart, { start: jan3, end: jan3 })
+		expect(summary).toMatchObject({
+			mcapChange: 30,
+			netCapital: 5,
+			price: 25
+		})
+		expect(summary?.flowDrivenPct).toBeCloseTo(100 / 6)
+	})
+
+	it('rebases cumulative decomposition summaries to the visible chart range', () => {
+		const jan1 = day(2026, 0, 1)
+		const jan2 = day(2026, 0, 2)
+		const jan3 = day(2026, 0, 3)
+		const points = [aggregatePoint(jan1, 5), aggregatePoint(jan2, 10), aggregatePoint(jan3, 5)]
+		const mcapByTimestamp = new Map([
+			[jan1, 100],
+			[jan2, 120],
+			[jan3, 150]
+		])
+		const chart = buildRWAFlowChart({
+			points,
+			selection: { view: 'flowVsPrice', groupBy: 'cumulative', mcapByTimestamp }
+		})
+
+		const summary = getRWAFlowVsPriceSummary(chart, { start: jan3, end: jan3 })
 		expect(summary).toMatchObject({
 			mcapChange: 30,
 			netCapital: 5,

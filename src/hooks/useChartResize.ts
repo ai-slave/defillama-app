@@ -7,7 +7,9 @@ type ChartElementRef = RefObject<Element | null>
 type ChartElementRegistration = {
 	instanceRef: ChartInstanceRef
 	onResize?: () => void
+	onVisibilityChange?: (isVisible: boolean) => void
 }
+type ChartResizeOptions = Pick<ChartElementRegistration, 'onResize' | 'onVisibilityChange'>
 
 // A null element identifies charts that only use the global resize dispatcher.
 const chartElementsByInstanceRef = new Map<ChartInstanceRef, Element | null>()
@@ -45,22 +47,25 @@ function removeGlobalResizeListeners() {
 	window.removeEventListener('chartResize', resizeCharts)
 }
 
-function observeChartElement(instanceRef: ChartInstanceRef, element: Element, onResize?: () => void) {
+function observeChartElement(instanceRef: ChartInstanceRef, element: Element, options: ChartResizeOptions = {}) {
 	if (!chartElementResizeObserver) {
 		chartElementResizeObserver = new ResizeObserver((entries) => {
 			for (const entry of entries) {
 				const registration = chartRegistrationsByElement.get(entry.target)
 				if (!registration) continue
-				// Enterprise dashboard tabs remain mounted under `display: none`. Resizing a
-				// zero-size ECharts canvas can reach partially unavailable renderer state.
-				// ResizeObserver emits another entry with real dimensions when the tab is shown.
-				if (!entry.target.isConnected || entry.contentRect.width <= 0 || entry.contentRect.height <= 0) continue
+				// ECharts cannot resize a disconnected or zero-size canvas. Keep callbacks informed
+				// so renderers that defer option application can resume with their latest option.
+				if (!entry.target.isConnected || entry.contentRect.width <= 0 || entry.contentRect.height <= 0) {
+					registration.onVisibilityChange?.(false)
+					continue
+				}
 				resizeChart(registration.instanceRef)
 				registration.onResize?.()
+				registration.onVisibilityChange?.(true)
 			}
 		})
 	}
-	chartRegistrationsByElement.set(element, { instanceRef, onResize })
+	chartRegistrationsByElement.set(element, { instanceRef, ...options })
 	chartElementsByInstanceRef.set(instanceRef, element)
 	chartElementResizeObserver.observe(element)
 }
@@ -81,7 +86,7 @@ function unobserveChartElement(instanceRef: ChartInstanceRef, element: Element) 
  *
  * @param instanceRef - A ref containing the ECharts instance to resize
  * @param elementRef - The chart element to observe for layout-driven size changes
- * @param onElementResize - Optional stable callback for pixel-positioned overlays after the chart resizes
+ * @param options - Visible resize and visibility callbacks. The resize callback never runs for hidden elements.
  *
  * @example
  * ```tsx
@@ -109,7 +114,7 @@ function unobserveChartElement(instanceRef: ChartInstanceRef, element: Element) 
 export function useChartResize(
 	instanceRef: ChartInstanceRef,
 	elementRef?: ChartElementRef,
-	onElementResize?: () => void
+	options?: ChartResizeOptions
 ) {
 	const observedElementRef = useRef<Element | null>(null)
 
@@ -134,12 +139,16 @@ export function useChartResize(
 		const nextElement = elementRef?.current ?? null
 		if (observedElement !== nextElement) {
 			if (observedElement) unobserveChartElement(instanceRef, observedElement)
-			if (nextElement) observeChartElement(instanceRef, nextElement, onElementResize)
+			if (nextElement) observeChartElement(instanceRef, nextElement, options)
 			observedElementRef.current = nextElement
 		} else if (nextElement) {
 			const registration = chartRegistrationsByElement.get(nextElement)
-			if (registration?.instanceRef !== instanceRef || registration.onResize !== onElementResize) {
-				chartRegistrationsByElement.set(nextElement, { instanceRef, onResize: onElementResize })
+			if (
+				registration?.instanceRef !== instanceRef ||
+				registration.onResize !== options?.onResize ||
+				registration.onVisibilityChange !== options?.onVisibilityChange
+			) {
+				chartRegistrationsByElement.set(nextElement, { instanceRef, ...options })
 			}
 		}
 	})

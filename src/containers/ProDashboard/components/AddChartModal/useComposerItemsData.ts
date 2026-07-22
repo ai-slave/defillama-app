@@ -16,6 +16,12 @@ import { groupData } from '../../utils'
 
 const EMPTY_SERIES: [number, number][] = []
 
+export function isComposerItemQueryEnabled(streamDone: boolean, item: ChartConfig) {
+	const itemType = item.protocol ? 'protocol' : 'chain'
+	const itemName = item.protocol || item.chain || ''
+	return streamDone && !!itemName && !!item.type && (!chartNeedsGeckoId(item.type, itemType) || !!item.geckoId)
+}
+
 export function useComposerItemsData(composerItems: ChartConfig[], timePeriod: TimePeriod) {
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
@@ -26,9 +32,6 @@ export function useComposerItemsData(composerItems: ChartConfig[], timePeriod: T
 		queries: composerItems.map((item) => {
 			const itemType = item.protocol ? 'protocol' : 'chain'
 			const itemName = item.protocol || item.chain || ''
-
-			const isEnabled =
-				streamDone && !!itemName && !!item.type && (!chartNeedsGeckoId(item.type, itemType) || !!item.geckoId)
 
 			return {
 				queryKey: getChartCardQueryKey(item),
@@ -45,7 +48,7 @@ export function useComposerItemsData(composerItems: ChartConfig[], timePeriod: T
 					itemType === 'protocol' ? protocolSymbols : undefined
 				),
 				staleTime: 5 * 60 * 1000,
-				enabled: isEnabled,
+				enabled: isComposerItemQueryEnabled(streamDone, item),
 				select: (data: [number, number][]) => filterDataByTimePeriod(data, timePeriod || 'all')
 			}
 		})

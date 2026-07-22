@@ -1,6 +1,14 @@
-import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import {
+	closestCenter,
+	DndContext,
+	type DragEndEvent,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors
+} from '@dnd-kit/core'
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable'
-import { lazy, Suspense, useState } from 'react'
+import { lazy, memo, Suspense, useState } from 'react'
 import { SortableItem } from '~/containers/ProtocolOverview/ProtocolPro'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
@@ -34,6 +42,7 @@ import { StablecoinsDataset } from './datasets/StablecoinsDataset'
 import TokenUsageDataset from './datasets/TokenUsageDataset'
 import { TrendingContractsDataset } from './datasets/TrendingContractsDataset'
 import { YieldsDataset } from './datasets/YieldsDataset'
+import { InViewDashboardCard } from './InViewDashboardCard'
 import { ProtocolsByChainTable } from './ProTable'
 import { Rating } from './Rating'
 import { TextCard } from './TextCard'
@@ -152,7 +161,11 @@ interface DashboardItemRendererProps {
 	handleEditItem: (itemId: string, newItem: DashboardItemConfig) => void
 }
 
-function DashboardItemRenderer({ item, onEditItem, handleEditItem }: DashboardItemRendererProps) {
+const DashboardItemRenderer = memo(function DashboardItemRenderer({
+	item,
+	onEditItem,
+	handleEditItem
+}: DashboardItemRendererProps) {
 	const handleConfigChange = (newConfig: DashboardItemConfig) => handleEditItem(item.id, newConfig)
 
 	const handleDatasetChainChange = (newChain: string) =>
@@ -180,7 +193,7 @@ function DashboardItemRenderer({ item, onEditItem, handleEditItem }: DashboardIt
 	if (item.kind === 'metric') {
 		return (
 			<Suspense fallback={<div className="flex min-h-[140px] flex-col p-1" />}>
-				<MetricCard metric={item as any} />
+				<MetricCard metric={item} />
 			</Suspense>
 		)
 	}
@@ -317,7 +330,7 @@ function DashboardItemRenderer({ item, onEditItem, handleEditItem }: DashboardIt
 							tableId={item.id}
 							columnOrder={item.columnOrder}
 							columnVisibility={item.columnVisibility}
-							filters={item.filters as any}
+							filters={item.filters}
 						/>
 					</div>
 				)
@@ -381,7 +394,39 @@ function DashboardItemRenderer({ item, onEditItem, handleEditItem }: DashboardIt
 	}
 
 	return null
+})
+
+function getReadOnlyCardMinHeight(item: DashboardItemConfig) {
+	if (item.kind === 'metric') return 140
+	if (item.kind === 'multi') return 418
+	if (item.kind === 'builder') return 438
+	if (item.kind === 'unified-table') return 380
+	return 360
 }
+
+const ReadOnlyDashboardItem = memo(function ReadOnlyDashboardItem({
+	item,
+	onEditItem,
+	handleEditItem
+}: DashboardItemRendererProps) {
+	const spanOptions = item.kind === 'metric' ? METRIC_COL_SPANS : STORED_COL_SPANS
+	const fallbackSpan: StoredColSpan = item.kind === 'metric' ? spanOptions[0] : 1
+	const storedColSpan = normalizeStoredColSpan(item.colSpan, fallbackSpan)
+	const effectiveColSpan = getEffectiveColSpan(storedColSpan)
+	const content = <DashboardItemRenderer item={item} onEditItem={onEditItem} handleEditItem={handleEditItem} />
+
+	return (
+		<div
+			className={`col-span-1 rounded-md border border-pro-cards-border bg-pro-cards-bg ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
+		>
+			{item.kind === 'text' ? (
+				content
+			) : (
+				<InViewDashboardCard minHeight={getReadOnlyCardMinHeight(item)}>{content}</InViewDashboardCard>
+			)}
+		</div>
+	)
+})
 
 export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 	const { chartsWithData } = useProDashboardChartsData()
@@ -416,7 +461,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 		useSensor(KeyboardSensor)
 	)
 
-	const handleDragEnd = (event: any) => {
+	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event
 
 		if (over && active.id !== over.id) {
@@ -445,23 +490,16 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 	if (isReadOnly) {
 		return (
 			<div className="grid grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-4">
-				{chartsWithData.map((item) => {
-					const spanOptions = item.kind === 'metric' ? METRIC_COL_SPANS : STORED_COL_SPANS
-					const fallbackSpan: StoredColSpan = item.kind === 'metric' ? spanOptions[0] : 1
-					const storedColSpan = normalizeStoredColSpan(item.colSpan, fallbackSpan)
-					const effectiveColSpan = getEffectiveColSpan(storedColSpan)
-
-					return (
-						<div
-							key={`${item.id}-${item.colSpan}${
-								item.kind === 'multi' ? `-${item.items?.map((i) => i.id).join('-')}` : ''
-							}`}
-							className={`col-span-1 rounded-md border border-pro-cards-border bg-pro-cards-bg ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
-						>
-							<DashboardItemRenderer item={item} onEditItem={onEditItem} handleEditItem={handleEditItem} />
-						</div>
-					)
-				})}
+				{chartsWithData.map((item) => (
+					<ReadOnlyDashboardItem
+						key={`${item.id}-${item.colSpan}${
+							item.kind === 'multi' ? `-${item.items?.map((i) => i.id).join('-')}` : ''
+						}`}
+						item={item}
+						onEditItem={onEditItem}
+						handleEditItem={handleEditItem}
+					/>
+				))}
 			</div>
 		)
 	}

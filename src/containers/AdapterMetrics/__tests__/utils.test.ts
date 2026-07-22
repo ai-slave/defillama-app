@@ -689,6 +689,37 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 		expect(datasetValue(presentation.dataset, 1, 'Protocol 10')).toBeCloseTo((10 / 201) * 100)
 	})
 
+	it('carries sparse cumulative flows into absolute and dominance rows', () => {
+		const chartData = toDataset({
+			dimensions: ['timestamp', 'A', 'B'],
+			source: [
+				{ timestamp: toMs(2024, 1, 1), A: 100, B: 100 },
+				{ timestamp: toMs(2024, 1, 2), A: 10 }
+			]
+		})
+		const absolute = buildAdapterByChainBreakdownPresentation({
+			chartData,
+			selectedProtocols: ['A', 'B'],
+			state: {
+				chartKind: 'bar',
+				valueMode: 'absolute',
+				barLayout: 'stacked',
+				groupBy: 'cumulative'
+			}
+		})
+		const dominance = buildAdapterByChainBreakdownPresentation({
+			chartData,
+			selectedProtocols: ['A', 'B'],
+			state: { chartKind: 'dominance', groupBy: 'cumulative' }
+		})
+
+		expect(absolute.dataset.source).toEqual([
+			[toMs(2024, 1, 1), 100, 100],
+			[toMs(2024, 1, 2), 110, 100]
+		])
+		expect(dominance.dataset.source[1]).toEqual([toMs(2024, 1, 2), (110 / 210) * 100, (100 / 210) * 100])
+	})
+
 	it('limits oversized protocol breakdowns and aggregates the remaining values into Others', () => {
 		const protocolNames = Array.from({ length: 32 }, (_, index) => `Protocol ${index + 1}`)
 		const timestamp = toMs(2024, 1, 1)

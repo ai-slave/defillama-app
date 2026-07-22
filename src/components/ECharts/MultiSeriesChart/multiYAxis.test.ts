@@ -179,7 +179,10 @@ describe('MultiSeriesChart y-axis layout', () => {
 		const normalized = normalizeSeriesYAxisIndices(series)
 		const axes = buildMultiYAxis({
 			series: normalized.series,
-			yAxis: {},
+			yAxis: {
+				axisLabel: { color: '#neutral' },
+				axisLine: { lineStyle: { color: '#neutral-line', opacity: 0.1 } }
+			},
 			expandTo100Percent: false,
 			effectiveCharts: [
 				{ type: 'line', name: 'TVL', encode: { x: 'timestamp', y: 'TVL' }, yAxisIndex: 0, color: '#111' },
@@ -195,9 +198,36 @@ describe('MultiSeriesChart y-axis layout', () => {
 			{ position: 'right', offset: 0 },
 			{ position: 'right', offset: 40 }
 		])
-		expect(axes.map((axis) => axis.axisLine.lineStyle.color)).toEqual(['#111', '#222', '#333'])
-		expect(axes.map((axis) => axis.axisLabel.color)).toEqual(['#111', '#222', '#333'])
+		expect(axes.map((axis) => axis.axisLine.lineStyle.color)).toEqual(['#neutral-line', '#222', '#333'])
+		expect(axes.map((axis) => axis.axisLabel.color)).toEqual(['#neutral', '#neutral', '#neutral'])
+		expect(axes[0].axisLine.lineStyle.opacity).toBe(0.1)
+		for (const axis of axes.slice(1)) {
+			expect(axis.axisLine.lineStyle.type).toEqual([5, 10])
+			expect(axis.axisLine.lineStyle).not.toHaveProperty('opacity')
+		}
 		expect(axes.map((axis) => axis.alignTicks)).toEqual([undefined, undefined, undefined])
+	})
+
+	it('keeps two-axis labels neutral and makes the secondary series line opaque and dashed', () => {
+		const axes = buildMultiYAxis({
+			series: [renderSeries('TVL', 0, '#111'), renderSeries('APY', 1, '#222')],
+			yAxis: {
+				axisLabel: { color: '#neutral' },
+				axisLine: { lineStyle: { color: '#neutral-line', opacity: 0.1 } }
+			},
+			expandTo100Percent: false,
+			effectiveCharts: [
+				{ type: 'line', name: 'TVL', encode: { x: 0, y: 1 }, yAxisIndex: 0, color: '#111' },
+				{ type: 'line', name: 'APY', encode: { x: 0, y: 1 }, yAxisIndex: 1, color: '#222' }
+			],
+			valueSymbol: '',
+			sourceAxisIndexes: null
+		})!
+
+		expect(axes[0].axisLabel.color).toBe('#neutral')
+		expect(axes[1].axisLabel.color).toBe('#neutral')
+		expect(axes[1].axisLine.lineStyle).toMatchObject({ color: '#222', type: [5, 10] })
+		expect(axes[1].axisLine.lineStyle).not.toHaveProperty('opacity')
 	})
 
 	it('preserves explicit tick alignment without enabling it for other axes', () => {

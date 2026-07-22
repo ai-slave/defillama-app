@@ -94,7 +94,7 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 			dimensions: ['timestamp', 'Volume', 'Open Interest'],
 			source: [
 				[toMs(2024, 1, 1), 5, 100],
-				[toMs(2024, 1, 2), null, 110],
+				[toMs(2024, 1, 2), 5, 110],
 				[toMs(2024, 1, 3), 15, 120]
 			]
 		})
