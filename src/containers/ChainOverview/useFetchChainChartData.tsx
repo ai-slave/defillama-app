@@ -692,7 +692,7 @@ export const useFetchChainChartData = ({
 
 		if (isChainIncentivesEnabled && chainIncentivesData) {
 			const chartName: ChainChartLabels = 'Token Incentives' as const
-			charts[chartName] = formatLineChart({
+			charts[chartName] = formatBarChart({
 				data: chainIncentivesData,
 				groupBy,
 				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null
