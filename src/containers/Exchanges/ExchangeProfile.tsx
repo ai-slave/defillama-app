@@ -5,7 +5,16 @@ import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { Card } from '~/ui/Card'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { pushShallowQuery } from '~/utils/routerQuery'
-import { hasExchangeInformation, MetadataGroups } from './MetadataGroups'
+import { useExchangeCountry } from './ExchangeCountrySelect'
+import {
+	ExchangeRegionalInformation,
+	profileInformationMetadata,
+	ProfileCountryCard,
+	resolveProfileCountryView,
+	type ProfileCountryView,
+	useExchangeRegionalMetadata
+} from './ExchangeRegionalInformation'
+import { hasExchangeInformation } from './MetadataGroups'
 import {
 	EXCHANGE_SEGMENTS,
 	type ExchangeOverviewChartModel,
@@ -13,9 +22,9 @@ import {
 	type ExchangeSegment
 } from './models'
 import { PairTable } from './PairTable'
+import { ProfileHistory } from './ProfileHistory'
 import { ProfileIdentity } from './ProfileIdentity'
 import { ProfileMetrics } from './ProfileMetrics'
-import { ProfilePromotions } from './ProfilePromotions'
 import { ProfileReserves } from './ProfileReserves'
 import { ProfileSegmentTabs } from './ProfileSegmentTabs'
 import {
@@ -23,6 +32,8 @@ import {
 	EXCHANGES_QUERY_KEYS,
 	getProfileSegment,
 	getProfileTab,
+	withCountryParam,
+	type ExchangeResearchRange,
 	type ProfileTab
 } from './queryState'
 import { VenueChart } from './VenueChart'
@@ -42,31 +53,51 @@ export function ExchangeProfile({
 }: {
 	profile: ExchangeProfileModel
 	asOfDate: string
-	loadSeries: (exchange: string) => Promise<ExchangeOverviewChartModel>
+	loadSeries: (exchange: string, range: ExchangeResearchRange) => Promise<ExchangeOverviewChartModel>
 }) {
+	const countryState = useExchangeCountry()
+	const regionalQuery = useExchangeRegionalMetadata(profile.slug, countryState.country)
+	const countryView = resolveProfileCountryView(countryState.country, regionalQuery)
 	return (
 		<div className="flex flex-1 flex-col gap-2">
-			<BasicLink href="/exchanges" className="w-fit body-sm text-link hover:underline">
+			<BasicLink
+				href={withCountryParam('/exchanges', countryState.country)}
+				className="w-fit body-sm text-link hover:underline"
+			>
 				← Exchanges
 			</BasicLink>
+			<ProfileCountryCard profileName={profile.name} view={countryView} countryState={countryState} />
 			{profile.profileMode === 'metadata-only' ? (
-				<MetadataOnlyExchangeProfile profile={profile} asOfDate={asOfDate} />
+				<MetadataOnlyExchangeProfile profile={profile} asOfDate={asOfDate} countryView={countryView} />
 			) : (
-				<MarketsExchangeProfile profile={profile} asOfDate={asOfDate} loadSeries={loadSeries} />
+				<MarketsExchangeProfile
+					profile={profile}
+					asOfDate={asOfDate}
+					loadSeries={loadSeries}
+					countryView={countryView}
+				/>
 			)}
 		</div>
 	)
 }
 
-function MetadataOnlyExchangeProfile({ profile, asOfDate }: { profile: ExchangeProfileModel; asOfDate: string }) {
+function MetadataOnlyExchangeProfile({
+	profile,
+	asOfDate,
+	countryView
+}: {
+	profile: ExchangeProfileModel
+	asOfDate: string
+	countryView: ProfileCountryView
+}) {
 	return (
 		<>
 			<Card as="header" padding="sm" className="flex flex-col gap-6">
 				<ProfileIdentity profile={profile} />
 				<ReportIncorrectData subject={{ type: 'exchange', name: profile.name, slug: profile.slug }} />
 			</Card>
-			<ProfilePromotions promotions={profile.metadata.promotions} asOfDate={asOfDate} />
-			<MetadataGroups groups={profile.metadata.groups} exchangeName={profile.name} />
+			<ExchangeRegionalInformation profile={profile} asOfDate={asOfDate} view={countryView} />
+			{profile.hacks.length > 0 || profile.raises.length > 0 ? <ProfileHistory profile={profile} /> : null}
 		</>
 	)
 }
@@ -74,25 +105,34 @@ function MetadataOnlyExchangeProfile({ profile, asOfDate }: { profile: ExchangeP
 function MarketsExchangeProfile({
 	profile,
 	asOfDate,
-	loadSeries
+	loadSeries,
+	countryView
 }: {
 	profile: ExchangeProfileModel
 	asOfDate: string
-	loadSeries: (exchange: string) => Promise<ExchangeOverviewChartModel>
+	loadSeries: (exchange: string, range: ExchangeResearchRange) => Promise<ExchangeOverviewChartModel>
+	countryView: ProfileCountryView
 }) {
 	const router = useRouter()
-	const hasInformation = hasExchangeInformation(profile.metadata.groups)
+	const hasInformation =
+		hasExchangeInformation(profile.metadata.groups) ||
+		hasExchangeInformation(profileInformationMetadata(profile, countryView)?.groups ?? [])
 	const hasReserves = profile.reserves != null
+	const hasHistory = profile.hacks.length > 0 || profile.raises.length > 0
 	const defaultSegment = resolveProfileSegment(profile, null)
-	// The page is statically generated without query params, so query-derived
-	// state must wait for router.isReady — deep links like ?section=information
-	// would otherwise mismatch the static HTML on hydration.
-	const query = router.isReady ? router.query : {}
-	const segment = resolveProfileSegment(profile, getProfileSegment(query))
+	const countrySegments =
+		countryView.status === 'unavailable'
+			? []
+			: countryView.status === 'available' || countryView.status === 'restricted' || countryView.status === 'leaving'
+				? countryView.regional.segments
+				: null
+	const segment = resolveProfileSegment(profile, getProfileSegment(router.query))
 	const active = segment ? profile.segments[segment] : null
-	const requestedTab = getProfileTab(query)
+	const requestedTab = getProfileTab(router.query)
 	const tab: ProfileTab =
-		(requestedTab === 'information' && hasInformation) || (requestedTab === 'reserves' && hasReserves)
+		(requestedTab === 'information' && hasInformation) ||
+		(requestedTab === 'reserves' && hasReserves) ||
+		(requestedTab === 'history' && hasHistory)
 			? requestedTab
 			: DEFAULT_PROFILE_TAB
 
@@ -112,35 +152,48 @@ function MarketsExchangeProfile({
 	return (
 		<>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<ProfileMetrics profile={profile} />
+				<ProfileMetrics
+					profile={profile}
+					countrySegments={countrySegments}
+					showGlobalLabel={countryView.status !== 'global'}
+				/>
 				<div className="xl:col-[2/-1]">
-					<VenueChart exchange={profile.slug} loadSeries={loadSeries} />
+					<VenueChart
+						exchange={profile.slug}
+						loadSeries={loadSeries}
+						showGlobalDataNotice={countryView.status !== 'global'}
+					/>
 				</div>
 			</div>
 
 			<ProfileSectionTabs
 				activeTab={tab}
 				hasReserves={hasReserves}
+				hasHistory={hasHistory}
 				hasInformation={hasInformation}
 				onTabChange={setTab}
 				panelId={panelId}
 			>
 				{tab === 'reserves' && profile.reserves ? (
 					<ProfileReserves profile={profile} reserves={profile.reserves} />
+				) : tab === 'history' && hasHistory ? (
+					<ProfileHistory profile={profile} />
 				) : tab === 'information' && hasInformation ? (
-					<div className="flex flex-col gap-2">
-						<ProfilePromotions promotions={profile.metadata.promotions} asOfDate={asOfDate} />
-						<MetadataGroups groups={profile.metadata.groups} exchangeName={profile.name} />
-					</div>
+					<ExchangeRegionalInformation profile={profile} asOfDate={asOfDate} view={countryView} />
 				) : segment && active ? (
-					<PairTable
-						pairs={active.pairs}
-						segment={segment}
-						capabilities={active.capabilities}
-						csvFileName={`${profile.slug}-${segment}-markets`}
-						header={null}
-						leadingControls={<ProfileSegmentTabs profile={profile} value={segment} onValueChange={setSegment} />}
-					/>
+					<div className="flex flex-col gap-1">
+						{countryView.status !== 'global' ? (
+							<p className="px-1 body-sm text-tertiary">Markets show global data</p>
+						) : null}
+						<PairTable
+							pairs={active.pairs}
+							segment={segment}
+							capabilities={active.capabilities}
+							csvFileName={`${profile.slug}-${segment}-markets`}
+							header={null}
+							leadingControls={<ProfileSegmentTabs profile={profile} value={segment} onValueChange={setSegment} />}
+						/>
+					</div>
 				) : (
 					<Card padding="sm" className="body-sm text-tertiary">
 						No market segments are present for this venue.
@@ -154,12 +207,23 @@ function MarketsExchangeProfile({
 const PROFILE_TAB_LABELS: Record<ProfileTab, string> = {
 	markets: 'Markets',
 	reserves: 'Reserves',
-	information: 'Information'
+	information: 'Information',
+	history: 'Hacks & raises'
+}
+
+export function visibleProfileTabs(hasReserves: boolean, hasInformation: boolean, hasHistory: boolean): ProfileTab[] {
+	return [
+		'markets',
+		...(hasReserves ? (['reserves'] as const) : []),
+		...(hasInformation ? (['information'] as const) : []),
+		...(hasHistory ? (['history'] as const) : [])
+	]
 }
 
 export function ProfileSectionTabs({
 	activeTab,
 	hasReserves,
+	hasHistory,
 	hasInformation,
 	onTabChange,
 	panelId,
@@ -167,17 +231,14 @@ export function ProfileSectionTabs({
 }: {
 	activeTab: ProfileTab
 	hasReserves?: boolean
+	hasHistory?: boolean
 	hasInformation: boolean
 	onTabChange: (tab: ProfileTab) => void
 	panelId: string
 	children: ReactNode
 }) {
 	const activeTabId = `exchange-profile-tab-${activeTab}`
-	const tabs: ProfileTab[] = [
-		'markets',
-		...(hasReserves ? (['reserves'] as const) : []),
-		...(hasInformation ? (['information'] as const) : [])
-	]
+	const tabs = visibleProfileTabs(!!hasReserves, hasInformation, !!hasHistory)
 	const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentTab: ProfileTab) => {
 		const currentIndex = tabs.indexOf(currentTab)
 		let nextIndex: number | null = null

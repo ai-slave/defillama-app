@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-	formatRegionLabels,
-	getEuStatusPresentation,
-	getKycRequirementIndicators,
-	getMicaLicensePresentation
-} from '../ComplianceCells'
+import { getEuStatusPresentation, getKycRequirementIndicators, getMicaLicensePresentation } from '../ComplianceCells'
 
 describe('exchange compliance presentation', () => {
 	it('uses explicit semantic labels for every EU availability state', () => {
@@ -33,10 +28,5 @@ describe('exchange compliance presentation', () => {
 			'Liveness / selfie check',
 			'Proof of address'
 		])
-	})
-
-	it('labels the producer EU region without generically uppercasing region strings', () => {
-		expect(formatRegionLabels(['eu'])).toBe('EU')
-		expect(formatRegionLabels(['north-america'])).toBe('north-america')
 	})
 })

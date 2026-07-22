@@ -151,10 +151,11 @@ export function getTokenPageSections({
 			riskData: tokenRiskData
 		})
 	}
-	if (hasMarkets) {
+	if (geckoId && hasMarkets) {
 		sections.push({
 			id: 'token-markets',
 			label: 'Markets',
+			geckoId,
 			tokenSymbol: record.symbol
 		})
 	}

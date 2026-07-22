@@ -210,6 +210,7 @@ function mapDirectoryVenue(
 		name: venue.display_name,
 		kind: venue.type,
 		tracked: venue.tracked,
+		totalVolume24h: venue.totals.total_trading_volume_24h,
 		profileHref: venue.links.profile,
 		// Cex-type defillama links now live on the venue's own Reserves tab;
 		// linking /cex/:slug directly would just bounce off a permanent redirect.
@@ -266,9 +267,7 @@ function mapDirectoryVenue(
 							}
 						: null,
 					licenseCount: venue.compliance.license_count,
-					kyc: venue.compliance.kyc,
-					availableRegions: venue.compliance.available_regions,
-					restrictedRegions: venue.compliance.restricted_regions
+					kyc: venue.compliance.kyc
 				}
 			: null,
 		profile: venue.profile
@@ -286,6 +285,9 @@ function mapDirectoryVenue(
 				}
 			: null,
 		warnings: venue.warnings,
+		regional: venue.regional,
+		selectedCountry: null,
+		selectedCountryStatus: null,
 		normalizedVolume: hasNormalizedVolume
 			? {
 					spot: mapNormalizedVolume(venue.nvol.spot),
@@ -369,6 +371,8 @@ export function mapExchangePair(
 		symbol: pair.symbol,
 		base: pair.base,
 		quote: pair.quote,
+		baseGeckoId: pair.base_coingecko_id,
+		quoteGeckoId: pair.quote_coingecko_id,
 		price: pair.price,
 		markPrice: pair.mark_price,
 		indexPrice: pair.index_price,
@@ -424,6 +428,20 @@ function mapMetadataGroup(group: MasterMetadataGroup): ExchangeMetadataGroupMode
 	}
 }
 
+function twitterUrl(groups: MasterMetadataGroup[]): string | null {
+	for (const group of groups) {
+		if (group.key !== 'links') continue
+		for (const field of group.fields) {
+			const links = field.type === 'links' ? field.value : field.type === 'link' ? [field.value] : []
+			for (const link of links) {
+				const label = link.label.toLowerCase()
+				if (label.includes('twitter') || label === 'x') return link.url
+			}
+		}
+	}
+	return null
+}
+
 function mapPromotion(promotion: MasterPromotion): ExchangePromotionModel {
 	return {
 		label: promotion.label,
@@ -469,11 +487,12 @@ function mapRampCost(cost: MasterRampCost): NonNullable<MicaVenueModel['rampCost
 	}
 }
 
-function mapProfileMetadata(metadata: MasterExchangeMetadataResponse): ExchangeProfileModel['metadata'] {
+export function mapMasterProfileMetadata(metadata: MasterExchangeMetadataResponse): ExchangeProfileModel['metadata'] {
 	const { websiteUrl, referralUrl } = websiteDestination(metadata)
 	return {
 		website: websiteUrl,
 		referralUrl,
+		twitterUrl: twitterUrl(metadata.groups),
 		promotions: metadata.promotions.map(mapPromotion),
 		kpis: metadata.kpis.map(mapMetadataKpi),
 		groups: metadata.groups.map(mapMetadataGroup)
@@ -485,6 +504,19 @@ function mapDefillamaCexSlug(metadata: MasterExchangeMetadataResponse): string |
 	return defillama?.type === 'cex' ? defillama.slug : null
 }
 
+function mapNativeToken(metadata: MasterExchangeMetadataResponse): ExchangeProfileModel['nativeToken'] {
+	return metadata.native_token
+		? {
+				coinId: metadata.native_token.coingecko_id,
+				name: metadata.native_token.name,
+				symbol: metadata.native_token.symbol,
+				url: metadata.native_token.url,
+				priceUsd: null,
+				change24h: null
+			}
+		: null
+}
+
 export function mapMasterMetadataOnlyProfile(metadata: MasterExchangeMetadataResponse): ExchangeProfileModel {
 	return {
 		slug: metadata.slug,
@@ -493,9 +525,12 @@ export function mapMasterMetadataOnlyProfile(metadata: MasterExchangeMetadataRes
 		profileMode: metadata.profile_mode,
 		defillamaUrl: metadata.links.defillama?.url ?? null,
 		defillamaCexSlug: mapDefillamaCexSlug(metadata),
+		nativeToken: mapNativeToken(metadata),
+		hacks: [],
+		raises: [],
 		reserves: null,
 		segments: {},
-		metadata: mapProfileMetadata(metadata)
+		metadata: mapMasterProfileMetadata(metadata)
 	}
 }
 
@@ -534,9 +569,12 @@ export function mapMasterProfile(
 		profileMode: metadata.profile_mode,
 		defillamaUrl: metadata.links.defillama?.url ?? null,
 		defillamaCexSlug: mapDefillamaCexSlug(metadata),
+		nativeToken: mapNativeToken(metadata),
+		hacks: [],
+		raises: [],
 		reserves: null,
 		segments,
-		metadata: mapProfileMetadata(metadata)
+		metadata: mapMasterProfileMetadata(metadata)
 	}
 }
 
@@ -893,7 +931,6 @@ export function mapMasterMica(response: MasterMicaResponse): MicaVenueModel[] {
 			return {
 				exchange: venue.slug,
 				name: venue.display_name,
-				logoName: venue.parent_entity?.name ?? venue.display_name,
 				profileHref: venue.links.profile,
 				website: websiteUrl,
 				referralUrl,

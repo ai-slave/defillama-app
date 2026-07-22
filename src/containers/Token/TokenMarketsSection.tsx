@@ -241,24 +241,25 @@ function Tabs<T extends string>({
 }
 
 interface TokenMarketsSectionProps {
+	geckoId: string
 	tokenSymbol: string
 	/** 'section' (default) renders the full page card with an anchored heading. 'embedded' renders just the
 	 *  tabs + table for use inside another surface (e.g. an expandable table row). */
 	variant?: 'section' | 'embedded'
 }
 
-export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenMarketsSectionProps) {
+export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' }: TokenMarketsSectionProps) {
 	const embedded = variant === 'embedded'
 	const [venueTab, setVenueTab] = useReducer((_: VenueTabId, next: VenueTabId) => next, 'all')
 	const [categoryTab, setCategoryTab] = useReducer((_: Segment, next: Segment) => next, 'spot')
 
 	const { data, error, isLoading } = useQuery({
-		queryKey: ['token-markets', tokenSymbol],
-		queryFn: () => fetchTokenMarkets(tokenSymbol),
+		queryKey: ['token-markets', geckoId],
+		queryFn: () => fetchTokenMarkets(geckoId),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: false,
-		enabled: Boolean(tokenSymbol)
+		enabled: Boolean(geckoId)
 	})
 
 	const availableCategoriesByVenue = useMemo(() => {

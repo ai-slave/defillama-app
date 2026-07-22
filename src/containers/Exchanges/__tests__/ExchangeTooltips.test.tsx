@@ -18,7 +18,6 @@ function micaVenue(): MicaVenueModel {
 	return {
 		exchange: 'venue',
 		name: 'Venue',
-		logoName: 'Venue',
 		profileHref: '/exchange/venue',
 		website: null,
 		referralUrl: null,

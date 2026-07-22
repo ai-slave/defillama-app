@@ -1,14 +1,14 @@
 import type { MasterDirectoryResponse } from '~/containers/Exchanges/master.types'
-import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
+import type { TokenExchangeListingsResponse } from '~/containers/Markets/api.types'
 import { slug } from '~/utils'
 
-export type TokenMarketsSymbolIndex = Record<string, true>
+export type TokenMarketsGeckoIdIndex = Record<string, true>
 export type CexExchangeSlugIndexEntry = { exchange: string; defillama_slug: string }
 export type CexExchangeSlugIndex = Record<string, CexExchangeSlugIndexEntry>
 
-export function buildTokenMarketsSymbolIndex(tokensList: TokenMarketsListResponse): TokenMarketsSymbolIndex {
-	const index = Object.create(null) as TokenMarketsSymbolIndex
-	for (const token of tokensList.tokens) index[token.symbol.toLowerCase()] = true
+export function buildTokenMarketsGeckoIdIndex(listings: TokenExchangeListingsResponse): TokenMarketsGeckoIdIndex {
+	const index = Object.create(null) as TokenMarketsGeckoIdIndex
+	for (const token of listings.tokens) index[token.coingecko_id.toLowerCase()] = true
 	return index
 }
 
@@ -31,6 +31,6 @@ export function resolveExchangeByDefillamaCexSlug(
 	return Object.hasOwn(index, key) ? index[key] : null
 }
 
-export function hasTokenMarketsSymbol(index: TokenMarketsSymbolIndex, symbol: string): boolean {
-	return Object.hasOwn(index, symbol.toLowerCase())
+export function hasTokenMarketsGeckoId(index: TokenMarketsGeckoIdIndex, geckoId: string): boolean {
+	return Object.hasOwn(index, geckoId.toLowerCase())
 }

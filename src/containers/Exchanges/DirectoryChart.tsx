@@ -101,10 +101,10 @@ function overviewAriaLabel(chart: ExchangeOverviewChartModel, resolved: Resolved
 }
 
 type DirectoryChartProps =
-	| { chart: ExchangeOverviewChartModel; status?: never }
-	| { chart: null; status: 'loading' | 'error' }
+	| { chart: ExchangeOverviewChartModel; status?: never; showGlobalDataNotice: boolean }
+	| { chart: null; status: 'loading' | 'error'; showGlobalDataNotice: boolean }
 
-export function DirectoryChart({ chart, status }: DirectoryChartProps) {
+export function DirectoryChart({ chart, status, showGlobalDataNotice }: DirectoryChartProps) {
 	const router = useRouter()
 	const tab = getDirectoryOverviewTab(router.query)
 	const resolved = React.useMemo(
@@ -182,13 +182,13 @@ export function DirectoryChart({ chart, status }: DirectoryChartProps) {
 					{status === 'error' ? 'Failed to load the exchange overview.' : <LoadingIndicator />}
 				</ChartPanelBodyFallback>
 			)}
-			{/* Reserve the timestamp line while data loads so only the 360px chart body swaps. */}
-			<p
-				aria-hidden={chart ? undefined : true}
-				className={`px-2 pt-0 pb-2 text-right body-sm text-tertiary ${chart ? '' : 'invisible'}`.trim()}
-			>
-				{chart ? `Last updated ${UTC_TIMESTAMP.format(new Date(chart.lastUpdated))}` : 'Last updated'}
-			</p>
+			<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-2 pt-0 pb-2 body-sm text-tertiary">
+				{showGlobalDataNotice ? <p>Totals and chart show global data</p> : null}
+				{/* Reserve the timestamp line while data loads so only the 360px chart body swaps. */}
+				<p aria-hidden={chart ? undefined : true} className={`ml-auto ${chart ? '' : 'invisible'}`.trim()}>
+					{chart ? `Last updated ${UTC_TIMESTAMP.format(new Date(chart.lastUpdated))}` : 'Last updated'}
+				</p>
+			</div>
 		</ChartPanel>
 	)
 }

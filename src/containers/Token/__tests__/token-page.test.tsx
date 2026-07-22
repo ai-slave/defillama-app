@@ -352,7 +352,7 @@ vi.mock('~/containers/Token/TokenMarketsSection', () => ({
 }))
 
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
-	hasTokenMarkets: vi.fn((symbol: string) => Promise.resolve(symbol.toLowerCase() === 'btc'))
+	hasTokenMarkets: vi.fn((geckoId: string) => Promise.resolve(geckoId === 'bitcoin'))
 }))
 
 vi.mock('~/containers/Token/TokenYieldsSection', () => ({
@@ -655,6 +655,7 @@ describe('token page', () => {
 					{
 						id: 'token-markets',
 						label: 'Markets',
+						geckoId: 'bitcoin',
 						tokenSymbol: 'BTC'
 					},
 					makeUsageSection()
@@ -734,6 +735,7 @@ describe('token page', () => {
 					},
 					{
 						id: 'token-markets',
+						geckoId: 'bitcoin',
 						tokenSymbol: 'BTC'
 					},
 					{
@@ -861,10 +863,6 @@ describe('token page', () => {
 						id: 'token-overview',
 						overview: overviewFixture,
 						geckoId: null
-					},
-					{
-						id: 'token-markets',
-						tokenSymbol: 'BTC'
 					},
 					{
 						id: 'token-usage',

@@ -39,7 +39,7 @@ export async function fetchCoins(query: string, limit: number = 10): Promise<Ent
 	return tokens.map((token) => ({
 		id: token.searchId,
 		name: token.name,
-		logo: null,
+		logo: token.logo,
 		type: 'Coin'
 	}))
 }

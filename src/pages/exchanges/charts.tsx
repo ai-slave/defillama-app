@@ -14,7 +14,7 @@ export const getStaticProps = withPerformanceLogging('exchanges/charts', async (
 export const EXCHANGE_RESEARCH_PAGE_METADATA = {
 	title: 'Exchange Research Charts - DefiLlama',
 	description:
-		'Compare two years of exchange volume, open interest, order-book depth, and liquidity-normalized volume.',
+		'Compare historical exchange volume, open interest, order-book depth, and liquidity-normalized volume across selectable ranges.',
 	canonicalUrl: '/exchanges/charts',
 	pageName: ['Exchanges']
 }

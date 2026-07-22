@@ -73,13 +73,13 @@ describe('master page loaders', () => {
 	})
 
 	it('maps a metadata-only profile without requesting its index', async () => {
-		const metadata = { display_name: 'Coinbase EU', profile_mode: 'metadata-only' }
+		const metadata = { display_name: 'Bitpanda', profile_mode: 'metadata-only' }
 		mocks.metadata.mockResolvedValue(metadata)
-		mocks.mapMetadataOnlyProfile.mockReturnValue({ slug: 'coinbase-eu', profileMode: 'metadata-only' })
+		mocks.mapMetadataOnlyProfile.mockReturnValue({ slug: 'bitpanda', profileMode: 'metadata-only' })
 		const { loadMasterExchangeProfile } = await import('../server/master.loaders')
 
-		await expect(loadMasterExchangeProfile('coinbase-eu')).resolves.toEqual({
-			slug: 'coinbase-eu',
+		await expect(loadMasterExchangeProfile('bitpanda')).resolves.toEqual({
+			slug: 'bitpanda',
 			profileMode: 'metadata-only'
 		})
 		expect(mocks.mapMetadataOnlyProfile).toHaveBeenCalledWith(metadata)

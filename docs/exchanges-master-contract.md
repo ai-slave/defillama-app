@@ -1,9 +1,9 @@
 # Exchanges: canonical contract and data flow
 
 The Exchanges frontend consumes the orderbook-watch exchanges cache served by
-the Markets API (`MARKETS_SERVER_URL`). The backend contract update described
-here is pending merge and cache refresh; live Pro verification must wait until
-that rollout completes. The wire DTOs live in
+the Markets API (`MARKETS_SERVER_URL`). The frontend and backend changes must
+deploy together because the ranged series and CoinGecko-keyed token files have
+no legacy fallback. The wire DTOs live in
 `src/containers/Exchanges/master.types.ts`; `master.mappers.ts` maps that one
 active contract into the backend-neutral read models in `models.ts`.
 Components never import wire types.
@@ -14,14 +14,16 @@ in the orderbook-watch repo.
 
 ## Endpoints and loading
 
-| Product surface            | Canonical endpoint                                                        | Frontend behavior                                                                                                           |
-| -------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `/exchanges`               | `exchanges/directory.json`                                                | Primary static-generation request; fatal on failure. Supplies rows, canonical totals, and per-segment sparklines.           |
-| `/exchanges` overview      | `exchanges/series.json`                                                   | Lazy client request via `/api/public/exchanges/series` when the overview approaches the viewport.                           |
-| `/exchange/<slug>`         | `exchanges/<slug>/metadata.json`; market profiles also use `index.json`   | Metadata selects the profile mode. A metadata 404 identifies an unknown venue; required market-index failures remain fatal. |
-| `/exchange/<slug>` history | `exchanges/<slug>/series.json`                                            | Lazy market-profile request via `/api/public/exchanges/<slug>/history`; metadata-only profiles never request it.            |
-| `/exchanges/charts`        | `charts/{volume,oi,depth,nvol}.json` (cache root, not under `exchanges/`) | Static generation validates all four; the browser loads each visible chart lazily via `/api/public/exchanges/charts/…`.     |
-| `/mica`                    | `exchanges/mica.json`                                                     | Dedicated MiCA payload used during static generation.                                                                       |
+| Product surface            | Canonical endpoint                                                      | Frontend behavior                                                                                                           |
+| -------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `/exchanges`               | `exchanges/directory.json`                                              | Primary static-generation request; fatal on failure. Supplies rows, canonical totals, and per-segment sparklines.           |
+| `/exchanges` overview      | `exchanges/series/1y.json`                                              | Lazy client request via `/api/public/exchanges/series`; the directory overview has a fixed one-year window.                 |
+| `/exchange/<slug>`         | `exchanges/<slug>/metadata.json`; market profiles also use `index.json` | Metadata selects the profile mode. A metadata 404 identifies an unknown venue; required market-index failures remain fatal. |
+| `/exchange/<slug>` history | `exchanges/<slug>/series/<range>.json`                                  | Lazy market-profile request using the URL-derived range; metadata-only profiles never request it.                           |
+| `/exchanges/charts`        | `charts/<part>/<range>.json` (cache root, not under `exchanges/`)       | The browser lazily loads only each visible chart's selected range.                                                          |
+| `/exchanges/tokens`        | `tokens/exchange-listings.json`                                         | One canonical CoinGecko-keyed index supports token selection and all/any venue matching without request fan-out.            |
+| `/token/<token>` markets   | `tokens/by-id/<cache-key>.json`                                         | Token pages request markets only with a CoinGecko ID; symbol fallback is intentionally absent.                              |
+| `/mica`                    | `exchanges/mica.json`                                                   | Dedicated EU/EEA-wide MiCA payload; it is not filtered by the global country selector.                                      |
 
 All routes and filenames use exact curated lowercase public slugs; there are no
 aliases or storage-ID routes.
@@ -99,12 +101,21 @@ fee_token }`.
 `exchanges/<slug>/index.json`: `{ slug, type, liquidity, segments,
 capabilities, freshness, depth_bands, last_updated }`. Segments carry
 `doublecount` and `pairs`; pair rows keep `market_id` as opaque identity and no
-longer carry `exchange`/`exchange_type`. There is no per-pair history endpoint.
+longer carry `exchange`/`exchange_type`. Canonical pair identity uses nullable
+`base_coingecko_id` and `quote_coingecko_id`; logos are not resolved by symbol.
+There is no per-pair history endpoint.
 
-`exchanges/<slug>/metadata.json`: the venue core plus `available_regions`,
-`restricted_regions`, `native_token`, `promotions`, `kpis`, `groups`,
+`exchanges/<slug>/metadata.json`: the venue core plus `native_token`,
+`promotions`, `kpis`, `groups`,
 `last_updated`. The profile page resolves names, website, and DefiLlama links
-from this file alone.
+from this file alone. `native_token` carries `{ symbol, name, coingecko_id,
+url }`; the frontend uses the CoinGecko ID for its current price and logo.
+
+Country-aware pages additionally consume `exchanges/regions.json`,
+`exchanges/<slug>/metadata/regions.json`, and the resolved
+`metadata/<region>.json` variants through the frontend region and metadata API
+routes. The URL `country` value determines availability and served segments;
+it does not rewrite global market observations.
 
 `exchanges/mica.json`: rows extend the core with per-segment
 `fees`/`metrics`/`depth_summary` records (`Record<Segment, … | null>`),
@@ -127,14 +138,14 @@ interface ColumnarSeries {
 }
 ```
 
-- `exchanges/series.json` keys (exact, ordered): `cex/dex/total` ×
+- `exchanges/series/<range>.json` keys (exact, ordered): `cex/dex/total` ×
   `{spot,linear_perp,inverse_perp}_volume` + `{linear,inverse}_perp_oi`, plus
   `total_trading_volume`.
-- `exchanges/<slug>/series.json` keys (19, exact order): per-segment volume,
+- `exchanges/<slug>/series/<range>.json` keys (19, exact order): per-segment volume,
   perp OI + OI delta, ±2% depth, normalized volume, reported volume, and
   market count.
 
-Research files (`charts/<part>.json`) use the compact
+Research files (`charts/<part>/<range>.json`) use the compact
 `[exchange][metric][day]` form with exact per-part key sets:
 
 ```ts
@@ -146,8 +157,10 @@ nvol: ['spot', 'linear_perp', 'inverse_perp', 'reported_spot', 'reported_linear_
 
 `exchanges[]` values and `names` keys are public slugs; `names` is a full
 record covering every listed exchange. All four parts share identical
-exchanges/types/names/day axes. The depth part may carry `btc_depth` keyed by
-all three segments; the frontend renders BTC spot vs a summed perp line.
+exchanges/types/names and carry `range: '30d' | '90d' | '1y' | '2y' | 'all'`.
+Each metric trims its own empty leading period, so day axes may differ; internal
+and trailing gaps remain visible. The depth part may carry `btc_depth` keyed by
+all three segments, which the frontend keeps separate.
 
 ## Metric semantics
 

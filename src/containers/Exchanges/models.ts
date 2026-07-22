@@ -6,6 +6,8 @@
  * import orderbook-watch response types.
  */
 
+import type { MasterExchangeRegionManifestResponse } from './master.types'
+
 export const EXCHANGE_SEGMENTS = ['spot', 'linear_perp', 'inverse_perp'] as const
 
 export type ExchangeSegment = (typeof EXCHANGE_SEGMENTS)[number]
@@ -17,7 +19,8 @@ export const EXCHANGE_SEGMENT_LABELS: Record<ExchangeSegment, string> = {
 	inverse_perp: 'Inverse Perps'
 }
 export type ExchangeVenueKind = 'cex' | 'dex'
-export type ExchangeEuStatus = 'available' | 'restricted' | 'leaving' | 'unavailable'
+export type ExchangeRegionStatus = 'available' | 'restricted' | 'leaving' | 'unavailable'
+export type ExchangeEuStatus = ExchangeRegionStatus
 export type ExchangeMicaStatus = 'active' | 'in-progress'
 export type ExchangeProfileMode = 'markets' | 'metadata-only'
 export type MicaProduct = ExchangeSegment | 'margin' | 'futures' | 'options'
@@ -105,6 +108,8 @@ export interface ExchangeDirectoryRowModel {
 	name: string
 	kind: ExchangeVenueKind
 	tracked: boolean
+	/** Backend-authored total across spot, linear perps, and inverse perps. */
+	totalVolume24h: number | null
 	profileHref: string
 	/** External DefiLlama protocol profile for venues tracked as protocols (dexs). */
 	secondaryUrl: string | null
@@ -145,8 +150,6 @@ export interface ExchangeDirectoryRowModel {
 		} | null
 		licenseCount: number | null
 		kyc: { required: boolean; short: string | null; summary: string | null } | null
-		availableRegions: string[]
-		restrictedRegions: string[]
 	} | null
 	profile: {
 		founded: number | null
@@ -159,6 +162,9 @@ export interface ExchangeDirectoryRowModel {
 		rampCost: MicaVenueModel['rampCost']
 	} | null
 	warnings: Array<{ level: 'info' | 'caution' | 'danger'; text: string; expiry?: string }>
+	regional: Pick<MasterExchangeRegionManifestResponse, 'variants'> | null
+	selectedCountry: string | null
+	selectedCountryStatus: ExchangeRegionStatus | null
 	normalizedVolume: Record<ExchangeSegment, ExchangeNormalizedVolume | null> | null
 }
 
@@ -195,6 +201,8 @@ export interface ExchangePairModel {
 	symbol: string
 	base: string
 	quote: string
+	baseGeckoId: string | null
+	quoteGeckoId: string | null
 	price: number | null
 	markPrice: number | null
 	indexPrice: number | null
@@ -332,6 +340,32 @@ export interface ExchangeReservesModel {
 	ownToken: string | null
 }
 
+export interface ExchangeNativeTokenModel {
+	coinId: string | null
+	name: string
+	symbol: string
+	url: string
+	priceUsd: number | null
+	change24h: number | null
+}
+
+export interface ExchangeHackModel {
+	date: number | null
+	name: string
+	amountUsd: number | null
+	technique: string | null
+	returnedFundsUsd: number | null
+}
+
+export interface ExchangeRaiseModel {
+	date: number
+	round: string
+	amountUsd: number | null
+	valuationUsd: number | null
+	investors: string[]
+	sourceUrl: string | null
+}
+
 export interface ExchangeProfileModel {
 	slug: string
 	name: string
@@ -340,17 +374,40 @@ export interface ExchangeProfileModel {
 	defillamaUrl: string | null
 	/** DefiLlama cex slug from the venue's links; input for reserve gating, not yet validated against protocol metadata. */
 	defillamaCexSlug: string | null
+	nativeToken: ExchangeNativeTokenModel | null
+	hacks: ExchangeHackModel[]
+	raises: ExchangeRaiseModel[]
 	/** Reserve-chart availability, resolved against the protocol metadata cache at build time. */
 	reserves: ExchangeReservesModel | null
 	segments: Partial<Record<ExchangeSegment, ExchangeProfileSegmentModel>>
 	metadata: {
 		website: string | null
 		referralUrl: string | null
+		twitterUrl: string | null
 		promotions: ExchangePromotionModel[]
 		kpis: ExchangeMetadataKpiModel[]
 		groups: ExchangeMetadataGroupModel[]
 	}
 }
+
+export interface ExchangeCountryAvailabilityModel {
+	country: string
+	region: { key: string; label: string }
+	availability: ExchangeRegionStatus
+	segments: ExchangeSegment[]
+	note: string | null
+	source: ExchangeMetadataSource | null
+	usedFallback: boolean
+}
+
+export type ExchangeRegionalMetadataModel =
+	| (ExchangeCountryAvailabilityModel & { availability: 'unavailable'; segments: [] })
+	| {
+			[Status in Exclude<ExchangeRegionStatus, 'unavailable'>]: ExchangeCountryAvailabilityModel & {
+				availability: Status
+				metadata: ExchangeProfileModel['metadata']
+			}
+	  }[Exclude<ExchangeRegionStatus, 'unavailable'>]
 
 /** Directory overview chart: full-history columnar series keyed by cex/dex/total × spot/linear_perp/inverse_perp volume and OI. */
 export interface ExchangeOverviewChartModel {
@@ -409,7 +466,6 @@ export interface ExchangeResearchReportModel {
 export interface MicaVenueModel {
 	exchange: string
 	name: string
-	logoName: string
 	profileHref: string
 	website: string | null
 	referralUrl: string | null

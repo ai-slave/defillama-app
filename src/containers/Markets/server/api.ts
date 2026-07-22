@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import { MARKETS_SERVER_URL } from '~/constants'
 import { isHttpNotFoundMessage, MARKETS_CACHE_CONTROL } from '~/server/api/common'
 import { queryString } from '~/server/api/params'
@@ -5,6 +6,8 @@ import { proxyJsonRoute } from '~/server/api/proxy'
 import { badRequest, notFound } from '~/server/api/respond'
 
 const MARKETS_RESPONSE_CACHE_TTL_MS = 5 * 60 * 1000
+
+const coinGeckoIdCacheKey = (coingeckoId: string) => `cg-${Buffer.from(coingeckoId, 'utf8').toString('hex')}`
 
 export const tokenMarkets = proxyJsonRoute({
 	route: '/api/public/markets/[token]',
@@ -23,10 +26,18 @@ export const tokenMarkets = proxyJsonRoute({
 			return notFound('Token not found')
 		}
 
-		return `${MARKETS_SERVER_URL}/tokens/${encodeURIComponent(normalizedToken)}.json`
+		return `${MARKETS_SERVER_URL}/tokens/by-id/${coinGeckoIdCacheKey(normalizedToken)}.json`
 	},
 	onError: (error) => (isHttpNotFoundMessage(error) ? notFound('Token not found') : null),
 	upstreamErrorMessage: 'Failed to load token markets'
+})
+
+export const tokenExchangeListings = proxyJsonRoute({
+	route: '/api/public/markets/exchange-listings',
+	cacheControl: MARKETS_CACHE_CONTROL,
+	resultTtlMs: MARKETS_RESPONSE_CACHE_TTL_MS,
+	upstreamUrl: () => `${MARKETS_SERVER_URL}/tokens/exchange-listings.json`,
+	upstreamErrorMessage: 'Failed to load token exchange listings'
 })
 
 export const tokenMarketsList = proxyJsonRoute({

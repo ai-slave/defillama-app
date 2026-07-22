@@ -29,6 +29,14 @@ describe('shared markets upstream data', () => {
 		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/tokens/list.json')
 	})
 
+	it('requests canonical token exchange listings', async () => {
+		const upstream = await import('../server/upstream')
+
+		await upstream.fetchTokenExchangeListingsFromNetwork()
+
+		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/tokens/exchange-listings.json')
+	})
+
 	it('requests the exchange directory used by CEX and exchange routes', async () => {
 		const upstream = await import('../server/upstream')
 

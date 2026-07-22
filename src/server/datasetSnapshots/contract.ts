@@ -67,11 +67,11 @@ export const DATASET_SNAPSHOT_CONTRACT = {
 		}
 	},
 	markets: {
-		schemaVersion: 2,
+		schemaVersion: 3,
 		files: {
 			tokensList: 'tokens-list.json',
 			exchangeDirectory: 'exchange-directory.json',
-			tokenSymbols: 'token-symbols.json',
+			tokenGeckoIds: 'token-gecko-ids.json',
 			cexByDefillamaSlug: 'cex-by-defillama-slug.json'
 		}
 	}

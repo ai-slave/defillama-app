@@ -18,6 +18,8 @@ function marketPair(slug: string, displayName: string, volume24h: number): Marke
 		contract_type: '',
 		base: 'btc',
 		quote: 'usdt',
+		base_coingecko_id: 'bitcoin',
+		quote_coingecko_id: 'tether',
 		settle_asset: '',
 		pair_id: 'BTCUSDT',
 		market_id: `${slug}:cex:spot:btcusdt`,
@@ -97,6 +99,8 @@ describe('token markets rows', () => {
 
 	it('maps the curated exchange name and derives its canonical profile route', () => {
 		expect(toPairTableRow(marketPair('binance-us', 'Binance.US', 100), DEPTH_BANDS, 'spot')).toMatchObject({
+			baseGeckoId: 'bitcoin',
+			quoteGeckoId: 'tether',
 			venue: 'Binance.US',
 			venueSlug: 'binance-us',
 			venueUrl: '/exchange/binance-us'

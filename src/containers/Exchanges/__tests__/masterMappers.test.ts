@@ -159,9 +159,7 @@ function directoryVenue(patch: Partial<MasterDirectoryVenue> = {}): MasterDirect
 			eu_status: 'available',
 			mica: { status: 'active', licensed: true, member_state: 'FR', regulator: 'AMF' },
 			license_count: 1,
-			kyc: { required: true, short: 'ID', summary: 'Government ID' },
-			available_regions: ['eu'],
-			restricted_regions: ['us']
+			kyc: { required: true, short: 'ID', summary: 'Government ID' }
 		},
 		profile: {
 			founded: 2020,
@@ -189,6 +187,7 @@ function directoryVenue(patch: Partial<MasterDirectoryVenue> = {}): MasterDirect
 			ramp_cost_1k: RAMP_COST
 		},
 		warnings: [{ level: 'caution', text: 'Limited coverage' }],
+		regional: null,
 		nvol: { spot: null, linear_perp: null, inverse_perp: null },
 		...patch
 	}
@@ -234,6 +233,8 @@ function pair(patch: Partial<MasterExchangePair> = {}): MasterExchangePair {
 		contract_type: 'linear',
 		base: 'btc',
 		quote: 'usdt',
+		base_coingecko_id: 'bitcoin',
+		quote_coingecko_id: 'tether',
 		pair_id: 'BTCUSDT',
 		market_id: 'venue:cex:perpetual:btcusdt',
 		pair_url: 'https://example.com/btc-usdt',
@@ -325,9 +326,7 @@ function indexResponse(): MasterExchangeIndexResponse {
 function metadataResponse(): MasterExchangeMetadataResponse {
 	return {
 		...venueCore('venue', { display_name: 'Venue Display' }),
-		available_regions: ['eu'],
-		restricted_regions: ['us'],
-		native_token: { symbol: 'v', url: '/token/v' },
+		native_token: { symbol: 'V', name: 'Venue Token', coingecko_id: 'venue-token', url: '/token/V' },
 		promotions: [],
 		kpis: [{ key: 'status', label: 'Status', type: 'badge', value: 'Available', tone: 'positive' }],
 		groups: [
@@ -363,8 +362,6 @@ function micaVenue(patch: Partial<MasterMicaVenue> = {}): MasterMicaVenue {
 		mica_licensed: true,
 		mica_member_state: 'FR',
 		mica_regulator: 'AMF',
-		available_regions: ['eu'],
-		restricted_regions: [],
 		products: ['spot'],
 		promotions: [],
 		kyc_required: true,
@@ -423,7 +420,7 @@ describe('master directory mapper', () => {
 			segments: { spot: { volume24h: null, coinCount: 2, volumeUpdatedAt: FRESHNESS.volume } },
 			sparks: { spot: [70, 100] },
 			reserves: { inflows7dUsd: 20, inflows1mUsd: 30, auditor: 'Auditor' },
-			compliance: { availableRegions: ['eu'], restrictedRegions: ['us'], eeaOrderbookOwnership: null },
+			compliance: { eeaOrderbookOwnership: null },
 			funding: {
 				fiatCurrencies: ['EUR'],
 				fiatFees: {
@@ -560,17 +557,17 @@ describe('master directory mapper', () => {
 	})
 
 	it('omits a related EEA entity that is not a directory row', () => {
-		const coinbaseEu = {
-			slug: 'coinbase-eu',
-			name: 'Coinbase EU',
+		const legalEntity = {
+			slug: 'legal-eu',
+			name: 'Legal EU',
 			scope: { kind: 'regional', regions: ['eea'] } as MasterEntityScope,
-			profile_url: '/exchange/coinbase-eu'
+			profile_url: '/exchange/legal-eu'
 		}
-		const [coinbase] = mapMasterDirectory(
-			directoryResponse([directoryVenue({ slug: 'coinbase', related_entities: [coinbaseEu] })])
+		const [venue] = mapMasterDirectory(
+			directoryResponse([directoryVenue({ slug: 'venue', related_entities: [legalEntity] })])
 		).rows
 
-		expect(coinbase.related.euEntity).toBeNull()
+		expect(venue.related.euEntity).toBeNull()
 	})
 
 	it('derives own, shared, and mixed EEA orderbook ownership from exact segment relations', () => {
@@ -730,6 +727,14 @@ describe('master profile mapper', () => {
 		expect(profile.profileMode).toBe('markets')
 		expect(profile.defillamaUrl).toBe('/cex/venue-cex')
 		expect(profile.defillamaCexSlug).toBe('venue-cex')
+		expect(profile.nativeToken).toEqual({
+			coinId: 'venue-token',
+			name: 'Venue Token',
+			symbol: 'V',
+			url: '/token/V',
+			priceUsd: null,
+			change24h: null
+		})
 		expect(profile.reserves).toBeNull()
 		expect(profile.metadata.website).toBe('https://example.com')
 		expect(profile.metadata.referralUrl).toBeNull()
@@ -739,6 +744,8 @@ describe('master profile mapper', () => {
 		})
 		expect(inverse.capabilities).toEqual({ openInterest: false, funding: false, depth: true })
 		expect(mappedPair).toMatchObject({
+			baseGeckoId: 'bitcoin',
+			quoteGeckoId: 'tether',
 			markPrice: 60_300,
 			indexPrice: 60_000,
 			nextFundingAt: 1_721_000_000,
@@ -763,19 +770,41 @@ describe('master profile mapper', () => {
 
 	it('maps a metadata-only profile without manufacturing market segments', () => {
 		const metadata = metadataResponse()
-		metadata.slug = 'coinbase-eu'
-		metadata.display_name = 'Coinbase EU'
+		metadata.slug = 'bitpanda'
+		metadata.display_name = 'Bitpanda'
 		metadata.directory_visibility = 'mica-only'
 		metadata.profile_mode = 'metadata-only'
-		metadata.links.profile = '/exchange/coinbase-eu'
+		metadata.links.profile = '/exchange/bitpanda'
 
 		expect(mapMasterMetadataOnlyProfile(metadata)).toMatchObject({
-			slug: 'coinbase-eu',
-			name: 'Coinbase EU',
+			slug: 'bitpanda',
+			name: 'Bitpanda',
 			profileMode: 'metadata-only',
 			segments: {},
 			metadata: { groups: [{ key: 'identity' }] }
 		})
+	})
+
+	it('promotes the primary Twitter link without selecting staff accounts', () => {
+		const metadata = metadataResponse()
+		metadata.groups.push({
+			key: 'links',
+			title: 'Links',
+			fields: [
+				{
+					key: 'links',
+					label: 'Links',
+					type: 'links',
+					value: [
+						{ label: '@founder · Founder', url: 'https://x.com/founder' },
+						{ label: 'X/Twitter', url: 'https://x.com/venue' }
+					],
+					comparable: true
+				}
+			]
+		})
+
+		expect(mapMasterMetadataOnlyProfile(metadata).metadata.twitterUrl).toBe('https://x.com/venue')
 	})
 
 	it.each([
@@ -810,7 +839,8 @@ describe('canonical research charts', () => {
 			],
 			names: { 'spot-only': 'spot-only', 'perp-only': 'perp-only' },
 			last_updated: '2026-07-14T00:00:00Z',
-			built_at: '2026-07-14T00:02:00Z'
+			built_at: '2026-07-14T00:02:00Z',
+			range: '1y'
 		}
 
 		expect(decodeMasterChart(response)).toEqual([
@@ -828,7 +858,8 @@ describe('canonical research charts', () => {
 			series: [[[10], null, null, null, null, null]],
 			names: { venue: 'venue' },
 			last_updated: '2026-07-14T00:00:00Z',
-			built_at: '2026-07-14T00:02:00Z'
+			built_at: '2026-07-14T00:02:00Z',
+			range: '1y'
 		}
 
 		expect(() => decodeMasterChart(response)).toThrow('Chart column spot for venue does not match the day axis')
@@ -860,7 +891,8 @@ describe('canonical research charts', () => {
 				])
 			),
 			last_updated: '2026-07-14T00:00:00Z',
-			built_at: '2026-07-14T00:02:00Z'
+			built_at: '2026-07-14T00:02:00Z',
+			range: '1y'
 		}
 		const report = mapMasterResearchReport('oi', response)
 		const venues = report.views.find((view) => view.id === 'open-interest-linear-exchanges')!.chart.lines
@@ -899,7 +931,8 @@ describe('canonical research charts', () => {
 			],
 			names: { 'cex-venue': 'cex-venue', 'dex-venue': 'dex-venue' },
 			last_updated: '2026-07-14T00:00:00Z',
-			built_at: '2026-07-14T00:02:00Z'
+			built_at: '2026-07-14T00:02:00Z',
+			range: '1y'
 		}
 		const report = mapMasterResearchReport('volume', response)
 
@@ -945,7 +978,8 @@ describe('canonical research charts', () => {
 			],
 			names: { one: 'one', two: 'two' },
 			last_updated: '2026-07-14T00:00:00Z',
-			built_at: '2026-07-14T00:02:00Z'
+			built_at: '2026-07-14T00:02:00Z',
+			range: '1y'
 		}
 		const report = mapMasterResearchReport('nvol', response)
 
@@ -975,7 +1009,8 @@ describe('canonical research charts', () => {
 			},
 			names: { venue: 'venue' },
 			last_updated: '2026-07-14T00:00:00Z',
-			built_at: '2026-07-14T00:02:00Z'
+			built_at: '2026-07-14T00:02:00Z',
+			range: '1y'
 		}
 		const view = mapMasterResearchReport('depth', response).views.find((item) => item.id === 'btc-depth')!
 
@@ -998,7 +1033,8 @@ describe('canonical research charts', () => {
 			],
 			names: { covered: 'covered', 'missing-reported': 'missing-reported' },
 			last_updated: '2026-07-14T00:00:00Z',
-			built_at: '2026-07-14T00:02:00Z'
+			built_at: '2026-07-14T00:02:00Z',
+			range: '1y'
 		}
 		const report = mapMasterResearchReport('nvol', response)
 		const spotChart = report.views.find((view) => view.id === 'survival-spot-exchanges')!.chart
@@ -1024,7 +1060,8 @@ describe('canonical research charts', () => {
 			}),
 			names: Object.fromEntries(exchanges.map((exchange) => [exchange, exchange])),
 			last_updated: '2026-07-14T00:00:00Z',
-			built_at: '2026-07-14T00:02:00Z'
+			built_at: '2026-07-14T00:02:00Z',
+			range: '1y'
 		}
 		const lines = mapMasterResearchReport('nvol', response).views.find((view) => view.id === 'survival-spot-exchanges')!
 			.chart.lines
@@ -1081,7 +1118,6 @@ describe('MiCA contract', () => {
 		expect(row).toMatchObject({
 			exchange: 'venue',
 			name: 'Venue EU',
-			logoName: 'Venue',
 			profileHref: '/exchange/venue',
 			website: null,
 			referralUrl: 'https://example.com/ref',
@@ -1092,24 +1128,22 @@ describe('MiCA contract', () => {
 		})
 	})
 
-	it('preserves current Coinbase EU and Kraken EU futures products', () => {
+	it('preserves consolidated Coinbase and Kraken EEA futures products', () => {
 		const rows = mapMasterMica({
 			last_updated: '2026-07-14T00:00:00Z',
 			exchanges: [
 				micaVenue({
-					slug: 'coinbase-eu',
-					display_name: 'Coinbase EU',
-					directory_visibility: 'mica-only',
-					profile_mode: 'metadata-only',
+					slug: 'coinbase',
+					display_name: 'Coinbase',
 					products: ['spot', 'futures'],
-					links: { profile: '/exchange/coinbase-eu', website: null, defillama: null },
+					links: { profile: '/exchange/coinbase', website: null, defillama: null },
 					metrics: { spot: null, linear_perp: null, inverse_perp: null }
 				}),
 				micaVenue({
-					slug: 'kraken-eu',
-					display_name: 'Kraken EU',
+					slug: 'kraken',
+					display_name: 'Kraken',
 					products: ['spot', 'margin', 'futures'],
-					links: { profile: '/exchange/kraken-eu', website: null, defillama: null }
+					links: { profile: '/exchange/kraken', website: null, defillama: null }
 				})
 			]
 		})
@@ -1118,14 +1152,14 @@ describe('MiCA contract', () => {
 			rows.map(({ exchange, profileHref, products, marketCount }) => ({ exchange, profileHref, products, marketCount }))
 		).toEqual([
 			{
-				exchange: 'coinbase-eu',
-				profileHref: '/exchange/coinbase-eu',
+				exchange: 'coinbase',
+				profileHref: '/exchange/coinbase',
 				products: ['spot', 'futures'],
 				marketCount: null
 			},
 			{
-				exchange: 'kraken-eu',
-				profileHref: '/exchange/kraken-eu',
+				exchange: 'kraken',
+				profileHref: '/exchange/kraken',
 				products: ['spot', 'margin', 'futures'],
 				marketCount: 2
 			}

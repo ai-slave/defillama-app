@@ -241,14 +241,6 @@ export const exchangeDefinitions = {
 			label: 'All licenses',
 			description: 'Count of recorded regulatory licenses across all jurisdictions, not only MiCA.'
 		},
-		availableRegions: {
-			label: 'Available regions',
-			description: 'Regions explicitly recorded as supported. Product availability may still differ by jurisdiction.'
-		},
-		restrictedRegions: {
-			label: 'Restricted regions',
-			description: 'Regions explicitly recorded as unavailable or restricted. Restrictions may vary by product.'
-		},
 		founded: {
 			label: 'Founded',
 			description: 'Year the exchange or represented venue entity was founded.'

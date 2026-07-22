@@ -1,3 +1,5 @@
+import { resolveCountryAvailability } from './countryAvailability'
+import type { MasterExchangeRegionCatalogResponse } from './master.types'
 import type {
 	ExchangeDirectoryRowModel,
 	ExchangeNormalizedVolume,
@@ -48,12 +50,34 @@ export type DirectoryKind = 'all' | ExchangeVenueKind
 
 export function filterDirectoryRows(
 	rows: ExchangeDirectoryRowModel[],
-	filters: { kind: DirectoryKind; scope: ExchangeSegment }
+	filters: {
+		kind: DirectoryKind
+		scope: ExchangeSegment
+		country?: string | null
+		catalog?: MasterExchangeRegionCatalogResponse | null
+	}
 ): ExchangeDirectoryRowModel[] {
-	return rows.filter((row) => {
-		if (filters.kind !== 'all' && row.kind !== filters.kind) return false
-		return !row.tracked || activityForScope(row, filters.scope) !== null
-	})
+	const result: ExchangeDirectoryRowModel[] = []
+	for (const row of rows) {
+		if (filters.kind !== 'all' && row.kind !== filters.kind) continue
+		// Tracked venues must have tracked activity in the scope; a regional
+		// variant advertising a segment does not waive this gate.
+		if (row.tracked && activityForScope(row, filters.scope) === null) continue
+		if (!filters.country || !filters.catalog) {
+			result.push(row)
+			continue
+		}
+		if (!row.regional) continue
+
+		const availability = resolveCountryAvailability(filters.catalog, row.regional, filters.country)
+		if (availability.availability === 'unavailable' || !availability.segments.includes(filters.scope)) continue
+		result.push({
+			...row,
+			selectedCountry: filters.country,
+			selectedCountryStatus: availability.availability
+		})
+	}
+	return result
 }
 
 export function sumNullable(values: Array<number | null>): number | null {

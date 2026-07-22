@@ -1,3 +1,4 @@
+import { useExchangeCountry } from '~/containers/Exchanges/ExchangeCountrySelect'
 import { ExchangeDirectory } from '~/containers/Exchanges/ExchangeDirectory'
 import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
 import { fetchExchangeDirectoryOverview } from '~/containers/Exchanges/master.api'
@@ -25,10 +26,15 @@ export const EXCHANGES_PAGE_METADATA = {
 }
 
 export default function ExchangesPage({ directory }: ExchangesPageProps) {
+	const countryState = useExchangeCountry()
 	return (
 		<Layout {...EXCHANGES_PAGE_METADATA}>
-			<ExchangesNav activePage="exchanges" />
-			<ExchangeDirectory directory={directory} loadOverview={fetchExchangeDirectoryOverview} />
+			<ExchangesNav activePage="exchanges" country={countryState.country} />
+			<ExchangeDirectory
+				directory={directory}
+				loadOverview={fetchExchangeDirectoryOverview}
+				countryState={countryState}
+			/>
 		</Layout>
 	)
 }

@@ -2,14 +2,13 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { RampCostValue } from '../MicaCells'
 import { buildMicaColumns } from '../micaColumns'
-import { orderMicaVenues } from '../MicaTable'
+import { micaColumnVisibility, orderMicaVenues } from '../MicaTable'
 import type { MicaVenueModel } from '../models'
 
 function micaVenue(patch: Partial<MicaVenueModel> = {}): MicaVenueModel {
 	return {
 		exchange: 'venue',
 		name: 'Venue',
-		logoName: 'Venue',
 		profileHref: '/exchange/venue',
 		website: 'https://example.com',
 		referralUrl: null,
@@ -74,13 +73,42 @@ const RAMP_COST: NonNullable<MicaVenueModel['rampCost']> = {
 describe('contractual Bybit EU placement', () => {
 	it('pins bybit-eu to the first row while keeping the curated backend order otherwise', () => {
 		const rows = [
-			micaVenue({ exchange: 'coinbase-eu', name: 'Coinbase EU' }),
+			micaVenue({ exchange: 'coinbase', name: 'Coinbase' }),
 			micaVenue({ exchange: 'bybit-eu', name: 'Bybit EU' }),
 			micaVenue({ exchange: 'okx-eu', name: 'OKX EU' }),
-			micaVenue({ exchange: 'kraken-eu', name: 'Kraken EU' })
+			micaVenue({ exchange: 'kraken', name: 'Kraken' })
 		]
 
-		expect(orderMicaVenues(rows).map((row) => row.exchange)).toEqual(['bybit-eu', 'coinbase-eu', 'okx-eu', 'kraken-eu'])
+		expect(orderMicaVenues(rows).map((row) => row.exchange)).toEqual(['bybit-eu', 'coinbase', 'okx-eu', 'kraken'])
+	})
+})
+
+describe('product column presets', () => {
+	it('hides unrelated product columns while leaving them available for user overrides', () => {
+		expect(micaColumnVisibility('all')).toEqual({ micaStatus: false, fiatOnramp: false })
+		expect(micaColumnVisibility('spot')).toMatchObject({
+			perpDepth2: false,
+			perpDepth05: false,
+			perpFee: false,
+			onRampCost: false,
+			offRampCost: false
+		})
+		expect(micaColumnVisibility('perp')).toMatchObject({
+			spotDepth2: false,
+			spotDepth05: false,
+			spotFee: false,
+			onRampCost: false,
+			offRampCost: false
+		})
+		expect(micaColumnVisibility('fiat')).toMatchObject({
+			spotDepth2: false,
+			spotDepth05: false,
+			perpDepth2: false,
+			perpDepth05: false,
+			spotFee: false,
+			perpFee: false,
+			marketCount: false
+		})
 	})
 })
 

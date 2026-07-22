@@ -398,15 +398,15 @@ function MarketsMetricSection({
 	)
 }
 
-function TokenMetrics({ overview }: { overview: TokenOverviewData }) {
+function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geckoId: string | null }) {
 	const totalRaised = getTotalRaisedAmount(overview.raises)
 	const { data: markets } = useQuery({
-		queryKey: ['token-markets', overview.symbol],
-		queryFn: () => fetchTokenMarkets(overview.symbol),
+		queryKey: ['token-markets', geckoId],
+		queryFn: geckoId ? () => fetchTokenMarkets(geckoId) : undefined,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: false,
-		enabled: Boolean(overview.symbol)
+		enabled: Boolean(geckoId)
 	})
 	const marketsHasVolume = markets != null && (markets.total_volume_24h ?? 0) > 0
 	const marketsHasOi = markets != null && (markets.total_oi_usd ?? 0) > 0
@@ -771,7 +771,7 @@ export function TokenOverviewSection({
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				<Card padding="sm" className="col-span-1 flex flex-col gap-6 xl:min-h-[360px]">
 					<TokenPageHero overview={overview} logo={logo} issuer={issuer} geckoId={geckoId} />
-					<TokenMetrics overview={overview} />
+					<TokenMetrics overview={overview} geckoId={geckoId} />
 				</Card>
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
 					<ChartPanel className="col-span-full">

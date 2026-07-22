@@ -32,7 +32,7 @@ export interface MarketCategoryTotals {
 export type MarketPairsBySegment = Record<Segment, MarketPair[]>
 export type MarketTotalsBySegment = Record<Segment, MarketCategoryTotals>
 
-interface TokenMarketsListEntry {
+export interface TokenMarketsListEntry {
 	exchange_count: number
 	market_count: number
 	segments: Partial<Record<Segment, MarketSegmentSummary>>
@@ -45,6 +45,25 @@ interface TokenMarketsListEntry {
 export interface TokenMarketsListResponse {
 	last_updated: string
 	tokens: TokenMarketsListEntry[]
+}
+
+export interface TokenExchangeListingVenue {
+	slug: string
+	display_name: string
+	type: MarketVenue
+	segments: Segment[]
+}
+
+export interface TokenExchangeListing {
+	coingecko_id: string
+	name: string
+	symbol: string
+	venues: TokenExchangeListingVenue[]
+}
+
+export interface TokenExchangeListingsResponse {
+	last_updated: string
+	tokens: TokenExchangeListing[]
 }
 
 export interface TokenMarketsResponse {

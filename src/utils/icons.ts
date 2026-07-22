@@ -15,6 +15,10 @@ export function tokenIconUrl(name: string, size: number = 48): string {
 	return `${ICONS_CDN}/protocols/${slug}?w=${size}&h=${size}`
 }
 
+export function exchangeIconUrl(exchange: string, size: number = 48): string {
+	return `${ICONS_CDN}/exchanges/${encodeURIComponent(exchange.toLowerCase())}?w=${size}&h=${size}`
+}
+
 export function chainIconUrl(chain: string, size: number = 48): string {
 	return `${ICONS_CDN}/chains/rsz_${chain.toLowerCase()}?w=${size}&h=${size}`
 }

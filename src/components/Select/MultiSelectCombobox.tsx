@@ -22,23 +22,35 @@ export const MultiSelectCombobox = ({
 	data,
 	placeholder,
 	selectedValues,
-	setSelectedValues
+	setSelectedValues,
+	filterOptions = true,
+	onSearchChange,
+	isLoading = false,
+	emptyMessage = 'No options found'
 }: {
 	data: ReadonlyArray<MultiSelectOption>
 	placeholder: string
 	selectedValues: string[]
 	setSelectedValues: (values: string[]) => void
+	filterOptions?: boolean
+	onSearchChange?: (value: string) => void
+	isLoading?: boolean
+	emptyMessage?: string
 }) => {
 	const [searchValue, setSearchValue] = useState('')
 
 	const matches = useMemo(() => {
-		if (!searchValue) return data
+		if (!filterOptions || !searchValue) return data
 
 		return matchSorter(data, searchValue, {
 			keys: ['label'],
 			threshold: matchSorter.rankings.CONTAINS
 		})
-	}, [data, searchValue])
+	}, [data, filterOptions, searchValue])
+	const labelsByValue = useMemo(
+		() => new Map(data.map((option) => [option.value, option.selectedLabel ?? option.label])),
+		[data]
+	)
 
 	const [viewableMatches, setViewableMatches] = useState(DEFAULT_VIEWABLE_MATCHES)
 
@@ -49,9 +61,17 @@ export const MultiSelectCombobox = ({
 	useEffect(() => {
 		if (!open) {
 			setSearchValue('')
+			onSearchChange?.('')
 			setViewableMatches(DEFAULT_VIEWABLE_MATCHES)
 		}
-	}, [open])
+	}, [onSearchChange, open])
+
+	const updateSearch = (value: string) => {
+		startTransition(() => {
+			setSearchValue(value)
+			onSearchChange?.(value)
+		})
+	}
 
 	const handleSeeMore = (e: React.MouseEvent<HTMLDivElement>) => {
 		e.preventDefault()
@@ -66,11 +86,7 @@ export const MultiSelectCombobox = ({
 			resetValueOnHide
 			selectedValue={selectedValues}
 			setSelectedValue={setSelectedValues}
-			setValue={(value) => {
-				startTransition(() => {
-					setSearchValue(value)
-				})
-			}}
+			setValue={updateSearch}
 			open={open}
 			setOpen={setOpen}
 		>
@@ -85,7 +101,7 @@ export const MultiSelectCombobox = ({
 									setSelectedValues(selectedValues.filter((v) => v !== value))
 								}}
 							>
-								<span>{value}</span>
+								<span>{labelsByValue.get(value) ?? value}</span>
 								<Icon name="x" className="size-3" />
 							</button>
 						))}
@@ -120,13 +136,13 @@ export const MultiSelectCombobox = ({
 						placeholder="Search..."
 						className={`${inputStyles} w-full`}
 						onInput={(e) => {
-							const nextValue = e.currentTarget.value
-							startTransition(() => setSearchValue(nextValue))
+							updateSearch(e.currentTarget.value)
 						}}
 					/>
 				</span>
 
 				<Ariakit.ComboboxList ref={comboboxRef}>
+					{isLoading ? <p className="px-3 py-6 text-center body-sm text-tertiary">Loading...</p> : null}
 					{matches.slice(0, viewableMatches).map((item) => (
 						<Ariakit.ComboboxItem
 							key={`multi-select-${item.value}`}
@@ -141,6 +157,9 @@ export const MultiSelectCombobox = ({
 							</span>
 						</Ariakit.ComboboxItem>
 					))}
+					{!isLoading && matches.length === 0 ? (
+						<p className="px-3 py-6 text-center body-sm text-tertiary">{emptyMessage}</p>
+					) : null}
 					{matches.length > viewableMatches ? (
 						<Ariakit.ComboboxItem
 							value="__see_more__"

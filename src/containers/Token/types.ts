@@ -60,6 +60,7 @@ export type TokenPageSection =
 	| {
 			id: 'token-markets'
 			label: 'Markets'
+			geckoId: string
 			tokenSymbol: string
 	  }
 	| {

@@ -17,7 +17,6 @@ function micaVenue(patch: Partial<MicaVenueModel> = {}): MicaVenueModel {
 	return {
 		exchange: 'spot',
 		name: 'Spot Venue',
-		logoName: 'Spot Venue',
 		profileHref: '/exchange/spot',
 		website: 'https://example.com',
 		referralUrl: null,

@@ -207,8 +207,6 @@ export interface MasterDirectoryVenue extends MasterVenueCore {
 		} | null
 		license_count: number | null
 		kyc: { required: boolean; short: string | null; summary: string | null } | null
-		available_regions: string[]
-		restricted_regions: string[]
 	} | null
 	profile: {
 		founded: number | null
@@ -223,6 +221,7 @@ export interface MasterDirectoryVenue extends MasterVenueCore {
 		ramp_cost_1k: MasterRampCost | null
 	} | null
 	warnings: MasterWarning[]
+	regional: Pick<MasterExchangeRegionManifestResponse, 'variants'> | null
 	nvol: Record<MasterSegment, MasterSegmentNormalizedVolume | null>
 }
 
@@ -243,7 +242,7 @@ export interface MasterDirectoryResponse {
 	last_updated: string
 }
 
-// --- Columnar series (exchanges/series.json and exchanges/{slug}/series.json) ---
+// --- Ranged columnar series (exchanges/series/{range}.json and exchanges/{slug}/series/{range}.json) ---
 
 /**
  * Compact columnar series. `series[i]` is aligned to `days` and named by `key[i]`;
@@ -286,6 +285,8 @@ export interface MasterExchangePair {
 	contract_type: '' | 'linear' | 'inverse'
 	base: string
 	quote: string
+	base_coingecko_id: string | null
+	quote_coingecko_id: string | null
 	pair_id: string
 	market_id: string
 	pair_url: string
@@ -434,14 +435,62 @@ export interface MasterPromotion {
 }
 
 export interface MasterExchangeMetadataResponse extends MasterVenueCore {
-	available_regions: string[]
-	restricted_regions: string[]
-	native_token: { symbol: string; url: string } | null
+	native_token: { symbol: string; name: string; coingecko_id: string | null; url: string } | null
 	promotions: MasterPromotion[]
 	kpis: MasterMetadataKpi[]
 	groups: MasterMetadataGroup[]
 	last_updated: string
 }
+
+export interface MasterExchangeRegionCatalogResponse {
+	version: string
+	countries: string[]
+	country_regions: Record<string, string>
+	regions: Record<string, { label: string; continent: string; countries: string[] }>
+	last_updated: string
+}
+
+type MasterExchangeCountryOverride = {
+	status: 'unavailable' | 'restricted'
+	note?: string
+	source?: MasterMetadataSource
+}
+
+type MasterExchangeRegionVariantBase = {
+	note: string | null
+	source: MasterMetadataSource | null
+	country_overrides: Partial<Record<string, MasterExchangeCountryOverride>>
+}
+
+type MasterExchangeRegionVariant = MasterExchangeRegionVariantBase &
+	(
+		| { status: 'unavailable'; segments: [] }
+		| { status: Exclude<MasterEuStatus, 'unavailable'>; segments: MasterSegment[] }
+	)
+
+export interface MasterExchangeRegionManifestResponse {
+	variants: Partial<Record<string, MasterExchangeRegionVariant>> & { global: MasterExchangeRegionVariant }
+	last_updated: string
+}
+
+/** Response from the app's country-aware metadata route, not a Markets API cache file. */
+interface MasterExchangeRegionalMetadataBase {
+	country: string
+	region: { key: string; label: string }
+	segments: MasterSegment[]
+	note: string | null
+	source: MasterMetadataSource | null
+	used_fallback: boolean
+}
+
+export type MasterExchangeRegionalMetadataResponse =
+	| (MasterExchangeRegionalMetadataBase & { availability: 'unavailable'; segments: [] })
+	| {
+			[Status in Exclude<MasterEuStatus, 'unavailable'>]: MasterExchangeRegionalMetadataBase & {
+				availability: Status
+				metadata: MasterExchangeMetadataResponse
+			}
+	  }[Exclude<MasterEuStatus, 'unavailable'>]
 
 // --- exchanges/mica.json ------------------------------------------------------------
 
@@ -477,8 +526,6 @@ export interface MasterMicaVenue extends MasterVenueCore {
 	mica_licensed: boolean | null
 	mica_member_state: string | null
 	mica_regulator: string | null
-	available_regions: string[]
-	restricted_regions: string[]
 	products: MasterMicaProduct[]
 	promotions: MasterPromotion[]
 	kyc_required: boolean | null
@@ -502,7 +549,7 @@ export interface MasterMicaResponse {
 	last_updated: string
 }
 
-// --- charts/{volume,oi,depth,nvol}.json ----------------------------------------------
+// --- charts/{volume,oi,depth,nvol}/{range}.json --------------------------------------
 
 export const MASTER_CHART_PARTS = ['volume', 'oi', 'depth', 'nvol'] as const
 
@@ -528,12 +575,12 @@ export const MASTER_CHART_KEYS = {
 } as const satisfies Record<MasterChartPart, readonly MasterChartMetric[]>
 
 /**
- * Compact columnar shape of the global chart files (`charts/{part}.json`).
+ * Compact columnar shape of a global chart range (`charts/{part}/{range}.json`).
  * `series[exchangeIdx][keyIdx]` is the per-day array for `exchanges[exchangeIdx]` /
  * `key[keyIdx]`, aligned to `days`, or null when that venue lacks the metric.
  * `exchanges[]` and `names` keys are canonical public slugs; all four parts share
- * identical exchanges/types/names/day axes. `btc_depth` (depth part only) is keyed
- * by all three segments.
+ * identical exchanges/types/names. Each part trims its own empty leading period,
+ * so day axes may differ. `btc_depth` (depth part only) is keyed by all three segments.
  */
 interface MasterChartColumnarBase {
 	days: number[]
@@ -542,6 +589,7 @@ interface MasterChartColumnarBase {
 	series: Array<Array<Array<number | null> | null>>
 	btc_depth?: Record<MasterSegment, Array<number | null>>
 	names: Record<string, string>
+	range: '30d' | '90d' | '1y' | '2y' | 'all'
 	last_updated?: string
 	built_at?: string
 }

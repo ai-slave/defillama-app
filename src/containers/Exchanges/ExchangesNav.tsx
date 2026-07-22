@@ -1,6 +1,7 @@
 import { BasicLink } from '~/components/Link'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { Tooltip } from '~/ui/Tooltip'
+import { withCountryParam } from './queryState'
 
 const EXCHANGES_PAGES = {
 	exchanges: {
@@ -21,28 +22,29 @@ const EXCHANGES_PAGES = {
 		heading: 'Exchange charts',
 		description: 'Historical volume, open interest, depth, and normalized volume across exchanges.'
 	},
-	mica: {
-		href: '/mica',
-		label: 'MiCA venues',
-		heading: 'MiCA-regulated exchanges',
-		description: 'Compare EU-regulated exchanges by liquidity, fees, funding options, and verification requirements.'
+	tokens: {
+		href: '/exchanges/tokens',
+		label: 'Token finder',
+		heading: 'Find exchanges by token',
+		description: 'Find exchanges and market segments listing all or any selected tokens.'
 	}
 } as const
 
-const EXCHANGES_PAGE_ORDER = ['exchanges', 'reserves', 'charts', 'mica'] as const
+const EXCHANGES_PAGE_ORDER = ['exchanges', 'reserves', 'charts', 'tokens'] as const
 
 export type ExchangesPage = keyof typeof EXCHANGES_PAGES
 
-export function ExchangesNav({ activePage }: { activePage: ExchangesPage }) {
+export function ExchangesNav({ activePage, country = null }: { activePage: ExchangesPage; country?: string | null }) {
 	const selectedPage = EXCHANGES_PAGES[activePage]
 	return (
 		<div className="flex flex-col gap-2 pb-2">
 			<nav className={tabTrackStyles} aria-label="Exchanges pages">
 				{EXCHANGES_PAGE_ORDER.map((pageId) => {
 					const page = EXCHANGES_PAGES[pageId]
+					const href = pageId === 'exchanges' || pageId === 'tokens' ? withCountryParam(page.href, country) : page.href
 					if (pageId === activePage) {
 						return (
-							<TabLink as={BasicLink} key={pageId} href={page.href} data-active aria-current="page">
+							<TabLink as={BasicLink} key={pageId} href={href} data-active aria-current="page">
 								{page.label}
 							</TabLink>
 						)
@@ -51,7 +53,7 @@ export function ExchangesNav({ activePage }: { activePage: ExchangesPage }) {
 						<Tooltip
 							key={pageId}
 							content={page.description}
-							render={<TabLink as={BasicLink} href={page.href} data-active={false} />}
+							render={<TabLink as={BasicLink} href={href} data-active={false} />}
 						>
 							{page.label}
 						</Tooltip>

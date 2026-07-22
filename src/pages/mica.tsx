@@ -1,4 +1,3 @@
-import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
 import { MicaTable } from '~/containers/Exchanges/MicaTable'
 import type { MicaVenueModel } from '~/containers/Exchanges/models'
 import { selectActivePromotion } from '~/containers/Exchanges/promotions'
@@ -34,7 +33,12 @@ export default function MicaPage({ exchanges, asOfDate }: MicaPageProps) {
 	const promotionCount = exchanges.filter((exchange) => selectActivePromotion(exchange.promotions, asOfDate)).length
 	return (
 		<Layout {...MICA_PAGE_METADATA}>
-			<ExchangesNav activePage="mica" />
+			<header className="flex flex-col gap-1 px-1 pb-2">
+				<h1 className="heading-sm">MiCA-regulated exchanges</h1>
+				<p className="body-sm text-secondary">
+					Compare EU-regulated exchanges by liquidity, fees, funding options, and verification requirements.
+				</p>
+			</header>
 			{promotionCount > 0 ? (
 				<Card as="aside" padding="sm" className="flex items-center gap-2 body-sm text-secondary">
 					<Icon name="gift" className="size-4 shrink-0 text-link" />

@@ -6,6 +6,8 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { buildDirectoryColumns } from './directoryColumns'
+import { ExchangeCountrySelect } from './ExchangeCountrySelect'
+import type { MasterExchangeRegionCatalogResponse } from './master.types'
 import { filterDirectoryRows, nestDirectoryRows, type DirectoryKind } from './modelHelpers'
 import type { ExchangeDirectoryRowModel, ExchangeSegment } from './models'
 import {
@@ -70,7 +72,7 @@ const GROUP_COLUMN_IDS: Record<DirectoryColumnGroup, string[]> = {
 	compliance: ['headquarters', 'euStatus', 'mica', 'kyc']
 }
 
-const OPTIONAL_COLUMN_IDS = ['licenseCount', 'availableRegions', 'restrictedRegions', 'founded']
+const OPTIONAL_COLUMN_IDS = ['licenseCount', 'founded']
 const ALL_COLUMN_IDS = ['kind', ...new Set([...Object.values(GROUP_COLUMN_IDS).flat(), ...OPTIONAL_COLUMN_IDS])]
 
 // Fee columns follow the active segment scope exactly; perp-only metrics don't apply to spot.
@@ -95,15 +97,27 @@ function sortingFor(group: DirectoryColumnGroup): SortingState {
 	return [{ id: 'volume24h', desc: true }]
 }
 
-export function DirectoryTable({ rows }: { rows: ExchangeDirectoryRowModel[] }) {
+export function DirectoryTable({
+	rows,
+	country,
+	catalog,
+	catalogFailed,
+	onCountryChange
+}: {
+	rows: ExchangeDirectoryRowModel[]
+	country: string | null
+	catalog: MasterExchangeRegionCatalogResponse | null
+	catalogFailed: boolean
+	onCountryChange: (country: string | null) => void
+}) {
 	const router = useRouter()
 	const { kind, scope, group } = getDirectoryQueryState(router.query)
 
 	// TanStack derives table models from reference identity, so keep both inputs stable across unrelated control renders.
 	// Venues whose parent entity is itself listed render as child rows nested under the parent.
 	const filteredRows = React.useMemo(
-		() => nestDirectoryRows(filterDirectoryRows(rows, { kind, scope })),
-		[rows, kind, scope]
+		() => nestDirectoryRows(filterDirectoryRows(rows, { kind, scope, country, catalog })),
+		[rows, kind, scope, country, catalog]
 	)
 	const columns = React.useMemo(() => buildDirectoryColumns(scope), [scope])
 
@@ -146,6 +160,12 @@ export function DirectoryTable({ rows }: { rows: ExchangeDirectoryRowModel[] }) 
 						labelType="regular"
 						variant="filter-responsive"
 						size="md"
+					/>
+					<ExchangeCountrySelect
+						catalog={catalog}
+						catalogFailed={catalogFailed}
+						selectedCountry={country}
+						onCountryChange={onCountryChange}
 					/>
 					<SelectWithCombobox
 						allValues={GROUP_OPTIONS.map((option) => ({ key: option.value, name: option.label }))}

@@ -7,7 +7,14 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { ExchangeOverviewChartModel } from './models'
-import { EXCHANGES_QUERY_KEYS, getVenueHistoryMetric, type VenueHistoryMetric } from './queryState'
+import {
+	DEFAULT_RESEARCH_RANGE,
+	EXCHANGES_QUERY_KEYS,
+	getResearchRange,
+	getVenueHistoryMetric,
+	type ExchangeResearchRange,
+	type VenueHistoryMetric
+} from './queryState'
 import { useLazyVisible } from './useLazyVisible'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -109,16 +116,19 @@ export const hasObservedHistory = (values: Array<number | null> | undefined): bo
 
 export function VenueChart({
 	exchange,
-	loadSeries
+	loadSeries,
+	showGlobalDataNotice
 }: {
 	exchange: string
-	loadSeries: (exchange: string) => Promise<ExchangeOverviewChartModel>
+	loadSeries: (exchange: string, range: ExchangeResearchRange) => Promise<ExchangeOverviewChartModel>
+	showGlobalDataNotice: boolean
 }) {
 	const router = useRouter()
+	const range = getResearchRange(router.query)
 	const { ref, visible } = useLazyVisible<HTMLDivElement>()
 	const query = useQuery({
-		queryKey: ['exchange-venue-series', exchange],
-		queryFn: () => loadSeries(exchange),
+		queryKey: ['exchange-venue-series', exchange, range],
+		queryFn: () => loadSeries(exchange, range),
 		enabled: visible,
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
@@ -129,9 +139,15 @@ export function VenueChart({
 	return (
 		<div ref={ref}>
 			{query.data ? (
-				<VenueChartView chart={query.data} />
+				<VenueChartView chart={query.data} range={range} showGlobalDataNotice={showGlobalDataNotice} />
 			) : (
-				<VenueChartFrame tabs={VENUE_TABS} activeId={fallbackMetric} updatedAt={null}>
+				<VenueChartFrame
+					tabs={VENUE_TABS}
+					activeId={fallbackMetric}
+					range={range}
+					updatedAt={null}
+					showGlobalDataNotice={showGlobalDataNotice}
+				>
 					<ChartPanelBodyFallback
 						role={query.isError ? 'alert' : 'status'}
 						aria-live={query.isError ? undefined : 'polite'}
@@ -145,7 +161,15 @@ export function VenueChart({
 	)
 }
 
-function VenueChartView({ chart }: { chart: ExchangeOverviewChartModel }) {
+function VenueChartView({
+	chart,
+	range,
+	showGlobalDataNotice
+}: {
+	chart: ExchangeOverviewChartModel
+	range: ExchangeResearchRange
+	showGlobalDataNotice: boolean
+}) {
 	const router = useRouter()
 	const tabs = React.useMemo(
 		() =>
@@ -160,7 +184,6 @@ function VenueChartView({ chart }: { chart: ExchangeOverviewChartModel }) {
 	)
 	const requestedMetric = getVenueHistoryMetric(router.query)
 	const active = tabs.find((tab) => tab.id === requestedMetric) ?? tabs[0]
-
 	const chartModel = React.useMemo(
 		() =>
 			buildAlignedCartesianChartModel(
@@ -178,7 +201,12 @@ function VenueChartView({ chart }: { chart: ExchangeOverviewChartModel }) {
 
 	if (!active) {
 		return (
-			<VenueChartFrame tabs={[]} activeId={VENUE_TABS[0].id} updatedAt={chart.lastUpdated}>
+			<VenueChartFrame
+				tabs={[]}
+				activeId={VENUE_TABS[0].id}
+				updatedAt={chart.lastUpdated}
+				showGlobalDataNotice={showGlobalDataNotice}
+			>
 				<ChartPanelBodyFallback className="body-sm text-tertiary">
 					No time-series data is available for this venue.
 				</ChartPanelBodyFallback>
@@ -187,7 +215,13 @@ function VenueChartView({ chart }: { chart: ExchangeOverviewChartModel }) {
 	}
 
 	return (
-		<VenueChartFrame tabs={tabs} activeId={active.id} updatedAt={chart.lastUpdated}>
+		<VenueChartFrame
+			tabs={tabs}
+			activeId={active.id}
+			range={range}
+			updatedAt={chart.lastUpdated}
+			showGlobalDataNotice={showGlobalDataNotice}
+		>
 			{/* key forces a fresh chart per metric so series and value units are replaced, not merged. */}
 			<React.Suspense
 				fallback={
@@ -215,12 +249,16 @@ function VenueChartView({ chart }: { chart: ExchangeOverviewChartModel }) {
 function VenueChartFrame({
 	tabs,
 	activeId,
+	range = DEFAULT_RESEARCH_RANGE,
 	updatedAt,
+	showGlobalDataNotice,
 	children
 }: {
 	tabs: Array<Pick<MetricTab, 'id' | 'label'>>
 	activeId: VenueHistoryMetric
+	range?: ExchangeResearchRange
 	updatedAt: string | null
+	showGlobalDataNotice: boolean
 	children: React.ReactNode
 }) {
 	const router = useRouter()
@@ -241,15 +279,27 @@ function VenueChartFrame({
 						size="md"
 					/>
 				) : null}
+				<SegmentedControl<ExchangeResearchRange>
+					value={range}
+					onValueChange={(nextRange) => {
+						void pushShallowQuery(router, {
+							[EXCHANGES_QUERY_KEYS.researchRange]: nextRange === DEFAULT_RESEARCH_RANGE ? undefined : nextRange
+						})
+					}}
+					options={(['30d', '90d', '1y', '2y', 'all'] as const).map((value) => ({ value, label: value }))}
+					label="Chart range"
+					variant="default"
+					size="md"
+				/>
 			</ChartPanelToolbar>
 			{children}
-			{/* Keep loading, error, empty, and ready panels the same height. */}
-			<p
-				aria-hidden={updatedAt ? undefined : true}
-				className={`px-2 pt-0 pb-2 text-right body-sm text-tertiary ${updatedAt ? '' : 'invisible'}`.trim()}
-			>
-				{updatedAt ? `Last updated ${UTC_TIMESTAMP.format(new Date(updatedAt))}` : 'Last updated'}
-			</p>
+			<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-2 pt-0 pb-2 body-sm text-tertiary">
+				{showGlobalDataNotice ? <p>Totals and chart show global data</p> : null}
+				{/* Keep loading, error, empty, and ready panels the same height. */}
+				<p aria-hidden={updatedAt ? undefined : true} className={`ml-auto ${updatedAt ? '' : 'invisible'}`.trim()}>
+					{updatedAt ? `Last updated ${UTC_TIMESTAMP.format(new Date(updatedAt))}` : 'Last updated'}
+				</p>
+			</div>
 		</ChartPanel>
 	)
 }

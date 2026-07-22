@@ -5,7 +5,7 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
-import { letterLogoDataUri } from '~/utils/icons'
+import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
 import { exchangeDefinitions } from './definitions'
 import { sumNullable } from './modelHelpers'
 import type { ExchangePairModel, ExchangeSegment } from './models'
@@ -87,12 +87,17 @@ function buildColumns(
 			id: 'token',
 			header: definitions.token.label,
 			enableSorting: false,
-			cell: ({ getValue }) => {
+			cell: ({ getValue, row }) => {
 				const base = getValue()
 				const ticker = base.toUpperCase()
 				return (
 					<span className="flex min-w-0 items-center gap-2">
-						<TokenLogo name={base} kind="token" size={20} fallbackSrc={letterLogoDataUri(base)} alt="" />
+						<TokenLogo
+							src={row.original.baseGeckoId ? geckoTokenIconUrl(row.original.baseGeckoId, 20) : null}
+							size={20}
+							fallbackSrc={letterLogoDataUri(base)}
+							alt=""
+						/>
 						{ticker ? (
 							<BasicLink
 								href={`/token/${encodeURIComponent(ticker)}`}
@@ -337,7 +342,7 @@ function buildColumns(
 
 					const content = (
 						<>
-							<TokenLogo name={venueSlug} kind="token" size={20} fallbackSrc={letterLogoDataUri(venueSlug)} alt="" />
+							<TokenLogo name={venueSlug} kind="exchange" size={20} fallbackSrc={letterLogoDataUri(venueSlug)} alt="" />
 							<span className="truncate label-md">{venue}</span>
 						</>
 					)

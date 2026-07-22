@@ -1,6 +1,6 @@
-import { chainIconUrl, equityIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
+import { chainIconUrl, equityIconUrl, exchangeIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
 
-export type LogoKind = 'token' | 'chain' | 'pegged' | 'equities'
+export type LogoKind = 'token' | 'chain' | 'exchange' | 'pegged' | 'equities'
 
 type TokenLogoProps = {
 	size?: number
@@ -22,6 +22,8 @@ function resolveLogoUrl(props: NamedLogoProps): string {
 			return tokenIconUrl(props.name)
 		case 'chain':
 			return chainIconUrl(props.name)
+		case 'exchange':
+			return exchangeIconUrl(props.name)
 		case 'pegged':
 			return peggedAssetIconUrl(props.name)
 		case 'equities':

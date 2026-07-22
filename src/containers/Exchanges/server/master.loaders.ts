@@ -33,7 +33,9 @@ export async function loadMasterMicaVenues(): Promise<MicaVenueModel[]> {
 type ExchangeResearchReports = Record<MasterChartPart, ExchangeResearchReportModel>
 
 export async function loadMasterResearchReports(): Promise<ExchangeResearchReports> {
-	const [volume, oi, depth, nvol] = await Promise.all(MASTER_CHART_PARTS.map(fetchMasterChartFromNetwork))
+	const [volume, oi, depth, nvol] = await Promise.all(
+		MASTER_CHART_PARTS.map((part) => fetchMasterChartFromNetwork(part, '1y'))
+	)
 	return {
 		volume: mapMasterResearchReport('volume', volume),
 		oi: mapMasterResearchReport('oi', oi),

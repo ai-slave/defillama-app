@@ -174,7 +174,9 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 							tableClassName="min-w-(--tokens-table-min-width)"
 							shell="none"
 							interactionDisabled={isFetching}
-							renderSubComponent={(row: Row<TokensTableRow>) => <ExpandedTokenMarkets symbol={row.original.symbol} />}
+							renderSubComponent={(row: Row<TokensTableRow>) => (
+								<ExpandedTokenMarkets geckoId={row.original.id} symbol={row.original.symbol} />
+							)}
 						/>
 					) : (
 						<SurfaceBodyStatus variant="empty" className="p-2" contentClassName="flex flex-col items-center">
@@ -191,7 +193,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 
 // The token table scrolls horizontally, so the expanded markets panel is pinned to the left edge of the
 // scroll viewport and sized to it — keeping it fully visible instead of stretched across the wide table.
-function ExpandedTokenMarkets({ symbol }: { symbol: string }) {
+function ExpandedTokenMarkets({ geckoId, symbol }: { geckoId: string; symbol: string }) {
 	const ref = useRef<HTMLDivElement>(null)
 	const [width, setWidth] = useState<number | null>(null)
 
@@ -213,7 +215,7 @@ function ExpandedTokenMarkets({ symbol }: { symbol: string }) {
 			className="sticky left-0 z-10 border-t border-subtle bg-surface"
 			style={{ width: width ? `${width}px` : undefined }}
 		>
-			<TokenMarketsSection tokenSymbol={symbol} variant="embedded" />
+			<TokenMarketsSection geckoId={geckoId} tokenSymbol={symbol} variant="embedded" />
 		</div>
 	)
 }

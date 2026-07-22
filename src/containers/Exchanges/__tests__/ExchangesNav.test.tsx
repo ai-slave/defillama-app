@@ -42,17 +42,20 @@ const PAGES = [
 		description: 'Historical volume, open interest, depth, and normalized volume across exchanges.'
 	},
 	{
-		id: 'mica',
-		href: '/mica',
-		label: 'MiCA venues',
-		heading: 'MiCA-regulated exchanges',
-		description: 'Compare EU-regulated exchanges by liquidity, fees, funding options, and verification requirements.'
+		id: 'tokens',
+		href: '/exchanges/tokens',
+		label: 'Token finder',
+		heading: 'Find exchanges by token',
+		description: 'Find exchanges and market segments listing all or any selected tokens.'
 	}
 ] as const
 
+const renderNav = (activePage: (typeof PAGES)[number]['id']) =>
+	renderToStaticMarkup(<ExchangesNav activePage={activePage} />)
+
 describe('Exchanges top-level navigation', () => {
 	it.each(PAGES)('marks only the $label page as current and keeps its identity stable', (page) => {
-		const html = renderToStaticMarkup(<ExchangesNav activePage={page.id} />)
+		const html = renderNav(page.id)
 		const currentLink = html.match(/<a[^>]*aria-current="page"[^>]*>[^<]*<\/a>/)?.[0]
 
 		expect(currentLink).toContain(`href="${page.href}"`)
@@ -65,7 +68,7 @@ describe('Exchanges top-level navigation', () => {
 
 	it('uses real route links and exposes descriptions only as inactive-link tooltips', () => {
 		const selected = PAGES[0]
-		const html = renderToStaticMarkup(<ExchangesNav activePage={selected.id} />)
+		const html = renderNav(selected.id)
 
 		for (const page of PAGES) {
 			expect(html).toContain(`href="${page.href}"`)
@@ -76,7 +79,19 @@ describe('Exchanges top-level navigation', () => {
 		}
 
 		expect(html).toContain(`>${selected.description}</p>`)
+		expect(html).not.toContain('/mica')
+		expect(html).not.toContain('MiCA venues')
 		expect(html).not.toContain('role="tab"')
 		expect(html).not.toContain('role="tablist"')
+	})
+
+	it('preserves country only between country-aware pages', () => {
+		const html = renderToStaticMarkup(<ExchangesNav activePage="exchanges" country="DE" />)
+
+		expect(html).toContain('href="/exchanges?country=de"')
+		expect(html).toContain('href="/exchanges/tokens?country=de"')
+		expect(html).toContain('href="/exchanges/charts"')
+		expect(html).not.toContain('/mica')
+		expect(html).not.toContain('/exchanges/charts?country=de')
 	})
 })

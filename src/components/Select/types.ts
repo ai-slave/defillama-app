@@ -16,6 +16,7 @@ export type ExcludeQueryKey = `exclude${string}`
 export type MultiSelectOption = {
 	value: string
 	label: string
+	selectedLabel?: string
 	disabled?: boolean
 	logo?: string
 	isChild?: boolean

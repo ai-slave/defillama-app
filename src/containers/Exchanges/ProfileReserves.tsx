@@ -52,7 +52,7 @@ export function ProfileReserves({
 	reserves: ExchangeReservesModel
 }) {
 	const router = useRouter()
-	const requestedView = getProfileReservesView(router.isReady ? router.query : {})
+	const requestedView = getProfileReservesView(router.query)
 	const view: ProfileReservesView =
 		requestedView === 'stablecoins' && reserves.hasStablecoins ? 'stablecoins' : 'assets'
 

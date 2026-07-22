@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { isCanonicalExchangeSlug } from '../slugs'
 
 describe('canonical exchange slug grammar', () => {
-	it.each(['binance', 'coinbase-eu', 'crypto-com', 'trading-212'])('accepts %s', (slug) => {
+	it.each(['binance', 'bybit-eu', 'crypto-com', 'trading-212'])('accepts %s', (slug) => {
 		expect(isCanonicalExchangeSlug(slug)).toBe(true)
 	})
 

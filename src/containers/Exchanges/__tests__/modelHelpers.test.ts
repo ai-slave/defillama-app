@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { MasterExchangeRegionCatalogResponse } from '../master.types'
 import {
 	activityForScope,
 	combineNormalizedVolume,
@@ -41,6 +42,7 @@ function row(patch: Partial<ExchangeDirectoryRowModel> = {}): ExchangeDirectoryR
 		name: 'Venue',
 		kind: 'cex',
 		tracked: true,
+		totalVolume24h: null,
 		profileHref: '/exchange/venue',
 		secondaryUrl: null,
 		reservesHref: '/exchange/venue?section=reserves',
@@ -57,6 +59,9 @@ function row(patch: Partial<ExchangeDirectoryRowModel> = {}): ExchangeDirectoryR
 		profile: null,
 		funding: null,
 		warnings: [],
+		regional: null,
+		selectedCountry: null,
+		selectedCountryStatus: null,
 		normalizedVolume: null,
 		...patch
 	}
@@ -181,6 +186,105 @@ describe('directory discovery and canonical links', () => {
 	})
 })
 
+describe('country-aware directory filtering', () => {
+	const catalog = {
+		countries: ['DE', 'US'],
+		country_regions: { DE: 'eea', US: 'global' },
+		regions: {
+			eea: { label: 'EU / EEA', continent: 'Europe', countries: ['DE'] },
+			global: { label: 'Global / Other', continent: 'Global', countries: [] }
+		}
+	} as unknown as MasterExchangeRegionCatalogResponse
+	const regional = (
+		status: 'available' | 'restricted' | 'leaving' | 'unavailable',
+		segments: Array<'spot' | 'linear_perp'>
+	) => ({
+		variants: {
+			global: {
+				status: 'available' as const,
+				segments: ['spot' as const],
+				note: null,
+				source: null,
+				country_overrides: {}
+			},
+			eea:
+				status === 'unavailable'
+					? { status, segments: [] as [], note: null, source: null, country_overrides: {} }
+					: { status, segments, note: null, source: null, country_overrides: {} }
+		}
+	})
+
+	it('hides unavailable and unsupported rows while retaining restricted rows', () => {
+		const available = row({
+			slug: 'available',
+			segments: { spot: activity() },
+			regional: regional('available', ['spot'])
+		})
+		const restricted = row({
+			slug: 'restricted',
+			segments: { spot: activity() },
+			regional: regional('restricted', ['spot'])
+		})
+		const unavailable = row({
+			slug: 'unavailable',
+			segments: { spot: activity() },
+			regional: regional('unavailable', ['spot'])
+		})
+
+		const spot = filterDirectoryRows([available, restricted, unavailable], {
+			kind: 'all',
+			scope: 'spot',
+			country: 'DE',
+			catalog
+		})
+		expect(spot.map((venue) => venue.slug)).toEqual(['available', 'restricted'])
+		expect(spot[1].selectedCountryStatus).toBe('restricted')
+		expect(
+			filterDirectoryRows([available, restricted], {
+				kind: 'all',
+				scope: 'linear_perp',
+				country: 'DE',
+				catalog
+			})
+		).toEqual([])
+	})
+
+	it('falls back to the unfiltered global view while the catalog is loading or failed', () => {
+		const tracked = row({ segments: { spot: activity() } })
+		const metadataOnly = row({ slug: 'catalog-only', tracked: false })
+
+		for (const catalogState of [null, undefined]) {
+			const rows = filterDirectoryRows([tracked, metadataOnly], {
+				kind: 'all',
+				scope: 'spot',
+				country: 'DE',
+				catalog: catalogState
+			})
+			expect(rows.map((venue) => venue.slug)).toEqual(['venue', 'catalog-only'])
+			// Global fallback rows carry no country annotation.
+			expect(rows[0].selectedCountry).toBeNull()
+		}
+	})
+
+	it('keeps the tracked-activity gate when a country is selected', () => {
+		// Bitstamp pattern: the eea variant advertises linear_perp, but the venue
+		// has tracked spot activity only — it must not appear as an empty perp row.
+		const bitstampLike = row({
+			slug: 'bitstamp',
+			segments: { spot: activity() },
+			regional: regional('available', ['spot', 'linear_perp'])
+		})
+		expect(filterDirectoryRows([bitstampLike], { kind: 'all', scope: 'linear_perp', country: 'DE', catalog })).toEqual(
+			[]
+		)
+		expect(
+			filterDirectoryRows([bitstampLike], { kind: 'all', scope: 'spot', country: 'DE', catalog }).map(
+				(venue) => venue.slug
+			)
+		).toEqual(['bitstamp'])
+	})
+})
+
 describe('parent/child directory nesting', () => {
 	const parent = row({ segments: { spot: activity({ volume24h: 1_000 }) } })
 	const child = row({
@@ -241,9 +345,7 @@ describe('parent/child directory nesting', () => {
 				eeaOrderbookOwnership: null,
 				mica: null,
 				licenseCount: null,
-				kyc: null,
-				availableRegions: [],
-				restrictedRegions: []
+				kyc: null
 			},
 			profile: { founded: 2017, nativeToken: 'BNB' },
 			funding: { fiatCurrencies: ['USD'], fiatFees: null, hasFiatOnramp: true, rampCost: null },

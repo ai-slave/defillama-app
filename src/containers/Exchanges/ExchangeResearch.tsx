@@ -4,7 +4,15 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { ExchangeResearchReportModel, ExchangeResearchView } from './models'
-import { getResearchView, getResearchViewQueryKey, type ExchangeResearchPart } from './queryState'
+import {
+	DEFAULT_RESEARCH_RANGE,
+	EXCHANGES_QUERY_KEYS,
+	getResearchRange,
+	getResearchView,
+	getResearchViewQueryKey,
+	type ExchangeResearchPart,
+	type ExchangeResearchRange
+} from './queryState'
 import { ResearchChart, ResearchChartStatus } from './ResearchChart'
 import { getResearchPresentation, RESEARCH_VIEWS, resolveResearchView } from './researchPresentation'
 import { SEGMENT_DEFINITIONS } from './segmentPresentation'
@@ -24,10 +32,26 @@ const RESEARCH_SECTIONS: Array<{ title: string; description: string; charts: Exc
 export function ExchangeResearch({
 	loadReport
 }: {
-	loadReport: (part: ExchangeResearchPart) => Promise<ExchangeResearchReportModel>
+	loadReport: (part: ExchangeResearchPart, range: ExchangeResearchRange) => Promise<ExchangeResearchReportModel>
 }) {
+	const router = useRouter()
+	const range = getResearchRange(router.query)
 	return (
 		<div className="flex flex-1 flex-col gap-3">
+			<div className="flex justify-end">
+				<SegmentedControl<ExchangeResearchRange>
+					value={range}
+					onValueChange={(nextRange) => {
+						void pushShallowQuery(router, {
+							[EXCHANGES_QUERY_KEYS.researchRange]: nextRange === DEFAULT_RESEARCH_RANGE ? undefined : nextRange
+						})
+					}}
+					options={(['30d', '90d', '1y', '2y', 'all'] as const).map((value) => ({ value, label: value }))}
+					label="Chart range"
+					variant="default"
+					size="md"
+				/>
+			</div>
 			{RESEARCH_SECTIONS.map((section) => (
 				<section key={section.title} className="flex flex-col gap-2">
 					<div className="flex flex-col gap-0.5 px-1">
@@ -36,7 +60,7 @@ export function ExchangeResearch({
 					</div>
 					<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 						{section.charts.map((part) => (
-							<ResearchChartCard key={part} part={part} loadReport={loadReport} />
+							<ResearchChartCard key={part} part={part} range={range} loadReport={loadReport} />
 						))}
 					</div>
 				</section>
@@ -47,16 +71,18 @@ export function ExchangeResearch({
 
 function ResearchChartCard({
 	part,
+	range,
 	loadReport
 }: {
 	part: ExchangeResearchPart
-	loadReport: (part: ExchangeResearchPart) => Promise<ExchangeResearchReportModel>
+	range: ExchangeResearchRange
+	loadReport: (part: ExchangeResearchPart, range: ExchangeResearchRange) => Promise<ExchangeResearchReportModel>
 }) {
 	const router = useRouter()
 	const { ref, visible } = useLazyVisible<HTMLDivElement>()
 	const query = useQuery({
-		queryKey: ['exchange-research-chart', part],
-		queryFn: () => loadReport(part),
+		queryKey: ['exchange-research-chart', part, range],
+		queryFn: () => loadReport(part, range),
 		enabled: visible,
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false

@@ -20,7 +20,7 @@ export async function getCexsPageData(): Promise<CexsPageData> {
 			oi: c.oi ?? null,
 			derivVolume: c.derivVolume ?? null,
 			leverage: c.leverage ?? null,
-			...(c.slug != null ? { slug: c.slug } : {}),
+			...(c.slug != null ? { defillamaCexSlug: c.slug } : {}),
 			...(c.coin != null ? { coin: c.coin } : {}),
 			...(c.coinSymbol != null ? { coinSymbol: c.coinSymbol } : {}),
 			...(c.walletsLink != null ? { walletsLink: c.walletsLink } : {}),

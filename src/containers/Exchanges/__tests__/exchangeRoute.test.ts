@@ -6,7 +6,7 @@ afterEach(() => {
 })
 
 function setupPageModule() {
-	const loadProfile = vi.fn().mockResolvedValue({ slug: 'coinbase-eu' })
+	const loadProfile = vi.fn().mockResolvedValue({ slug: 'coinbase' })
 	vi.doMock('~/containers/Exchanges/ExchangeProfile', () => ({ ExchangeProfile: () => null }))
 	vi.doMock('~/containers/Exchanges/master.api', () => ({ fetchExchangeVenueSeries: vi.fn() }))
 	vi.doMock('~/containers/Exchanges/server/master.loaders', () => ({
@@ -20,6 +20,27 @@ function setupPageModule() {
 }
 
 describe('exchange profile route slugs', () => {
+	it('matches event names only through the canonical DefiLlama CEX slug', async () => {
+		const { page } = setupPageModule()
+		const { matchesDefillamaCex } = await page
+
+		expect(matchesDefillamaCex('Binance', 'binance-cex')).toBe(true)
+		expect(matchesDefillamaCex('Crypto.com', 'crypto-com')).toBe(true)
+		expect(matchesDefillamaCex('Coinbase Pro', 'coinbase')).toBe(false)
+	})
+
+	it('derives the native token 24h change from canonical price history', async () => {
+		const { page } = setupPageModule()
+		const { nativeTokenChange24h } = await page
+
+		expect(
+			nativeTokenChange24h(110, 'coingecko:venue', {
+				coins: { 'coingecko:venue': { prices: [{ timestamp: 1, price: 100 }] } }
+			})
+		).toBeCloseTo(10)
+		expect(nativeTokenChange24h(110, null, { coins: {} })).toBeNull()
+	})
+
 	it('returns notFound for a noncanonical slug without loading a profile', async () => {
 		const { loadProfile, page } = setupPageModule()
 
@@ -32,10 +53,10 @@ describe('exchange profile route slugs', () => {
 	it('loads an exact canonical lowercase slug unchanged', async () => {
 		const { loadProfile, page } = setupPageModule()
 
-		await expect((await page).getStaticProps({ params: { slug: 'coinbase-eu' } } as never)).resolves.toMatchObject({
-			props: { profile: { slug: 'coinbase-eu' } },
+		await expect((await page).getStaticProps({ params: { slug: 'coinbase' } } as never)).resolves.toMatchObject({
+			props: { profile: { slug: 'coinbase' } },
 			revalidate: 123
 		})
-		expect(loadProfile).toHaveBeenCalledWith('coinbase-eu')
+		expect(loadProfile).toHaveBeenCalledWith('coinbase')
 	})
 })

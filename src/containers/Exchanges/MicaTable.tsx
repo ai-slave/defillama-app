@@ -1,3 +1,4 @@
+import type { VisibilityState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -15,9 +16,41 @@ const FILTER_OPTIONS = [
 	{ value: 'fiat', label: 'Fiat onramp' }
 ] as const
 
-const MICA_DEFAULT_COLUMN_VISIBILITY = {
-	micaStatus: false,
-	fiatOnramp: false
+const MICA_COLUMN_VISIBILITY: Record<MicaFilter, VisibilityState> = {
+	all: { micaStatus: false, fiatOnramp: false },
+	spot: {
+		micaStatus: false,
+		fiatOnramp: false,
+		perpDepth2: false,
+		perpDepth05: false,
+		perpFee: false,
+		onRampCost: false,
+		offRampCost: false
+	},
+	perp: {
+		micaStatus: false,
+		fiatOnramp: false,
+		spotDepth2: false,
+		spotDepth05: false,
+		spotFee: false,
+		onRampCost: false,
+		offRampCost: false
+	},
+	fiat: {
+		micaStatus: false,
+		fiatOnramp: false,
+		spotDepth2: false,
+		spotDepth05: false,
+		perpDepth2: false,
+		perpDepth05: false,
+		spotFee: false,
+		perpFee: false,
+		marketCount: false
+	}
+}
+
+export function micaColumnVisibility(filter: MicaFilter): VisibilityState {
+	return MICA_COLUMN_VISIBILITY[filter]
 }
 
 export function filterMicaVenues(rows: MicaVenueModel[], filter: MicaFilter): MicaVenueModel[] {
@@ -44,6 +77,7 @@ export function MicaTable({ venues, asOfDate }: { venues: MicaVenueModel[]; asOf
 
 	return (
 		<TableWithSearch
+			key={filter}
 			data={rows}
 			columns={columns}
 			columnToSearch="name"
@@ -63,7 +97,7 @@ export function MicaTable({ venues, asOfDate }: { venues: MicaVenueModel[]; asOf
 					size="md"
 				/>
 			}
-			columnVisibility={MICA_DEFAULT_COLUMN_VISIBILITY}
+			columnVisibility={micaColumnVisibility(filter)}
 			showColumnSelect
 			csvExportAllColumns
 			// Open in the curated order (Bybit EU pinned first), not an active column

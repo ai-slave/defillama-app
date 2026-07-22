@@ -11,9 +11,11 @@ export const getStaticProps = withPerformanceLogging('cexs/index', async () => {
 	const { fetchCexExchangeSlugIndex } = await import('~/containers/Markets/server/dataset.server')
 	const [data, cexIndex] = await Promise.all([getCexsPageData(), fetchCexExchangeSlugIndex()])
 	const cexs = data.cexs.map((cex): ICex => {
-		if (!cex.slug) return cex
-		const exchange = resolveExchangeByDefillamaCexSlug(cexIndex, cex.slug)
-		return exchange ? { ...cex, profileUrl: `/exchange/${exchange.exchange}?section=reserves` } : cex
+		if (!cex.defillamaCexSlug) return cex
+		const exchange = resolveExchangeByDefillamaCexSlug(cexIndex, cex.defillamaCexSlug)
+		return exchange
+			? { ...cex, exchangeSlug: exchange.exchange, profileUrl: `/exchange/${exchange.exchange}?section=reserves` }
+			: cex
 	})
 	return {
 		props: { cexs },

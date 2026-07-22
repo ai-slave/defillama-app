@@ -3,12 +3,15 @@ import {
 	getDirectoryOverviewTab,
 	getDirectoryQueryState,
 	getMicaFilter,
+	parseExchangeCountry,
 	getProfileReservesView,
 	getProfileSegment,
 	getProfileTab,
+	getResearchRange,
 	getResearchView,
 	getResearchViewQueryKey,
-	getVenueHistoryMetric
+	getVenueHistoryMetric,
+	withCountryParam
 } from '../queryState'
 
 describe('Exchanges URL query state', () => {
@@ -28,7 +31,10 @@ describe('Exchanges URL query state', () => {
 		expect(getProfileTab({ section: 'news' })).toBe('markets')
 		expect(getProfileReservesView({ reservesView: 'inflows' })).toBe('assets')
 		expect(getProfileSegment({ segment: 'options' })).toBeNull()
+		expect(parseExchangeCountry({ country: 'europe' })).toBeNull()
 		expect(getVenueHistoryMetric({ history: 'funding' })).toBeNull()
+		expect(getResearchRange({ range: '7d' })).toBe('1y')
+		expect(getResearchRange({ range: 'all' })).toBe('all')
 	})
 
 	it('reads directory and overview selections directly from the first query value', () => {
@@ -49,9 +55,21 @@ describe('Exchanges URL query state', () => {
 		expect(getMicaFilter({ product: 'fiat' })).toBe('fiat')
 		expect(getProfileTab({ section: 'information' })).toBe('information')
 		expect(getProfileTab({ section: 'reserves' })).toBe('reserves')
+		expect(getProfileTab({ section: 'history' })).toBe('history')
 		expect(getProfileReservesView({ reservesView: 'stablecoins' })).toBe('stablecoins')
 		expect(getProfileSegment({ segment: 'linear_perp' })).toBe('linear_perp')
+		expect(parseExchangeCountry({ country: 'de' })).toBe('DE')
+		expect(parseExchangeCountry({ country: ['no', 'de'] })).toBe('NO')
 		expect(getVenueHistoryMetric({ history: 'oi' })).toBe('oi')
+		expect(getResearchRange({ range: '90d' })).toBe('90d')
+	})
+
+	it('carries the country selection onto links between country-aware pages', () => {
+		expect(withCountryParam('/exchanges', 'DE')).toBe('/exchanges?country=de')
+		expect(withCountryParam('/exchange/binance?section=information', 'DE')).toBe(
+			'/exchange/binance?section=information&country=de'
+		)
+		expect(withCountryParam('/mica', null)).toBe('/mica')
 	})
 
 	it('keeps each research chart selection independent', () => {

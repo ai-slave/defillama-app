@@ -14,7 +14,7 @@ import { useSelectedValues } from '~/hooks/useSelectedValues'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
-import { tokenIconUrl } from '~/utils/icons'
+import { exchangeIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -24,6 +24,8 @@ const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as Re
 const INFLOWS_TOOLTIP_FORMATTER_USD = createInflowsTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 const EMPTY_CHART_KEYS: string[] = []
 const USD_INFLOWS_SERIES = new Set(['USD Inflows'])
+
+const reserveExchangeIconUrl = (protocolName: string) => exchangeIconUrl(slug(protocolName.replace(/-cex$/, '')))
 
 type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
 
@@ -90,7 +92,7 @@ function ChainsChartCard({
 						chartInstance={chartInstance}
 						filename={exportFilenameBase}
 						title={exportTitle}
-						iconUrl={tokenIconUrl(protocolName)}
+						iconUrl={reserveExchangeIconUrl(protocolName)}
 					/>
 				</>
 			}
@@ -149,7 +151,7 @@ function TokenValuesUSDChartCard({
 						chartInstance={chartInstance}
 						filename={exportFilenameBase}
 						title={exportTitle}
-						iconUrl={tokenIconUrl(protocolName)}
+						iconUrl={reserveExchangeIconUrl(protocolName)}
 					/>
 				</>
 			}
@@ -216,7 +218,7 @@ function TokensBreakdownPieChartCard({
 						chartInstance={chartInstance}
 						filename={exportFilenameBase}
 						title={exportTitle}
-						iconUrl={tokenIconUrl(protocolName)}
+						iconUrl={reserveExchangeIconUrl(protocolName)}
 					/>
 				</>
 			}
@@ -268,7 +270,7 @@ function TokenBalancesRawChartCard({
 						chartInstance={chartInstance}
 						filename={exportFilenameBase}
 						title={exportTitle}
-						iconUrl={tokenIconUrl(protocolName)}
+						iconUrl={reserveExchangeIconUrl(protocolName)}
 					/>
 				</>
 			}
@@ -300,7 +302,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 					chartInstance={chartInstance}
 					filename={exportFilenameBase}
 					title={exportTitle}
-					iconUrl={tokenIconUrl(protocolName)}
+					iconUrl={reserveExchangeIconUrl(protocolName)}
 				/>
 			}
 		>
@@ -357,7 +359,7 @@ function InflowsByTokenChartCard({
 						chartInstance={chartInstance}
 						filename={exportFilenameBase}
 						title={exportTitle}
-						iconUrl={tokenIconUrl(protocolName)}
+						iconUrl={reserveExchangeIconUrl(protocolName)}
 					/>
 				</>
 			}

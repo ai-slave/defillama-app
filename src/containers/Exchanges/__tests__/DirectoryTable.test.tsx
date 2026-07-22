@@ -1,3 +1,4 @@
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { buildDirectoryColumns } from '../directoryColumns'
 import type { ExchangeDirectoryRowModel, ExchangeSegmentActivity } from '../models'
@@ -26,6 +27,7 @@ function row(patch: Partial<ExchangeDirectoryRowModel> = {}): ExchangeDirectoryR
 		name: 'Venue',
 		kind: 'cex',
 		tracked: true,
+		totalVolume24h: null,
 		profileHref: '/exchange/venue',
 		secondaryUrl: null,
 		reservesHref: null,
@@ -42,6 +44,9 @@ function row(patch: Partial<ExchangeDirectoryRowModel> = {}): ExchangeDirectoryR
 		profile: null,
 		funding: null,
 		warnings: [],
+		regional: null,
+		selectedCountry: null,
+		selectedCountryStatus: null,
 		normalizedVolume: null,
 		...patch
 	}
@@ -53,6 +58,25 @@ function volumeAccessor(scope: 'spot' | 'linear_perp' | 'inverse_perp') {
 }
 
 describe('exact segment scopes in directory columns', () => {
+	it('keeps selected-country status out of the exchange name cell', () => {
+		const venue = row({ selectedCountry: 'DE', selectedCountryStatus: 'restricted' })
+		const nameColumn = buildDirectoryColumns('spot').find((item) => item.id === 'name')!
+		const html = renderToStaticMarkup(
+			(nameColumn as any).cell({
+				row: {
+					original: venue,
+					depth: 0,
+					subRows: [],
+					getIsExpanded: () => false,
+					getToggleExpandedHandler: () => undefined
+				}
+			})
+		)
+
+		expect(venue.selectedCountryStatus).toBe('restricted')
+		expect(html).not.toContain('Restricted')
+	})
+
 	it('never renders a summed perp figure for a venue with both perpetual classes', () => {
 		const venue = row({
 			segments: {

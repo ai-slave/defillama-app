@@ -10,7 +10,6 @@ import { formattedNum } from '~/utils'
 import { letterLogoDataUri } from '~/utils/icons'
 import {
 	EuAvailabilityValue,
-	formatRegionLabels,
 	getEuStatusPresentation,
 	getMicaLicensePresentation,
 	KycRequirementValue,
@@ -33,6 +32,7 @@ import {
 } from './modelHelpers'
 import type { ExchangeDirectoryRowModel, ExchangeSegment, ExchangeVenueKind } from './models'
 import { EXCHANGE_SEGMENT_LABELS } from './models'
+import { withCountryParam } from './queryState'
 import { selectVenueDestination } from './venueLinks'
 
 const columnHelper = createColumnHelper<ExchangeDirectoryRowModel>()
@@ -86,6 +86,8 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 			enableSorting: false,
 			cell: ({ row }) => {
 				const venue = row.original
+				const profileHref = withCountryParam(venue.profileHref, venue.selectedCountry)
+				const reservesHref = venue.reservesHref ? withCountryParam(venue.reservesHref, venue.selectedCountry) : null
 				const defillamaPath = venue.secondaryUrl
 				const venueDestination = selectVenueDestination(venue.slug, venue.referralUrl, venue.websiteUrl)
 				const liquidityNote = row.depth > 0 ? describeChildLiquidity(venue) : null
@@ -108,15 +110,15 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 						) : null}
 						<span className="vf-row-index shrink-0" aria-hidden="true" />
 						<TokenLogo
-							name={venue.name}
-							kind="token"
+							name={venue.slug}
+							kind="exchange"
 							size={24}
 							fallbackSrc={letterLogoDataUri(venue.name)}
 							alt={`${venue.name} logo`}
 						/>
 						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 							<div className="flex min-w-0 items-center gap-2">
-								<BasicLink href={venue.profileHref} className="truncate label-md text-link hover:underline">
+								<BasicLink href={profileHref} className="truncate label-md text-link hover:underline">
 									{venue.name}
 								</BasicLink>
 								{liquidityNote ? <QuestionHelper text={liquidityNote} /> : null}
@@ -125,10 +127,10 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 							{venue.tracked ? null : <span className="body-sm text-tertiary">Metadata only</span>}
 						</div>
 						<div className="flex shrink-0 items-center gap-0.5">
-							{venue.reservesHref ? (
+							{reservesHref ? (
 								<Tooltip content="Open reserves">
 									<BasicLink
-										href={venue.reservesHref}
+										href={reservesHref}
 										aria-label={`Open ${venue.name} reserves`}
 										className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
 									>
@@ -612,32 +614,6 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerClassName: 'w-[114px] min-w-[114px]',
 				align: 'end',
 				headerHelperText: definitions.licenseCount.description
-			}
-		}),
-		columnHelper.accessor((row) => (row.compliance ? formatRegionLabels(row.compliance.availableRegions) : ''), {
-			id: 'availableRegions',
-			header: definitions.availableRegions.label,
-			enableSorting: false,
-			cell: ({ getValue }) => {
-				const value = getValue()
-				return value === '' ? '–' : value
-			},
-			meta: {
-				headerClassName: 'w-[166px] min-w-[166px]',
-				headerHelperText: definitions.availableRegions.description
-			}
-		}),
-		columnHelper.accessor((row) => (row.compliance ? formatRegionLabels(row.compliance.restrictedRegions) : ''), {
-			id: 'restrictedRegions',
-			header: definitions.restrictedRegions.label,
-			enableSorting: false,
-			cell: ({ getValue }) => {
-				const value = getValue()
-				return value === '' ? '–' : value
-			},
-			meta: {
-				headerClassName: 'w-[166px] min-w-[166px]',
-				headerHelperText: definitions.restrictedRegions.description
 			}
 		}),
 		columnHelper.accessor((row) => row.profile?.founded ?? undefined, {

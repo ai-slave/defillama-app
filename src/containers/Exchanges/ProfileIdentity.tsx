@@ -11,8 +11,8 @@ export function ProfileIdentity({ profile }: { profile: ExchangeProfileModel }) 
 	return (
 		<h1 className="flex flex-wrap items-center gap-2 heading-sm">
 			<TokenLogo
-				name={profile.name}
-				kind="token"
+				name={profile.slug}
+				kind="exchange"
 				size={24}
 				fallbackSrc={letterLogoDataUri(profile.name)}
 				alt={`${profile.name} logo`}
@@ -34,6 +34,22 @@ export function ProfileIdentity({ profile }: { profile: ExchangeProfileModel }) 
 							className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
 						>
 							<Icon name="globe" className="size-4" />
+						</a>
+					</Tooltip>
+				) : null}
+				{profile.metadata.twitterUrl ? (
+					<Tooltip content={`Open ${profile.name} on X`}>
+						<a
+							href={profile.metadata.twitterUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label={`Open ${profile.name} on X`}
+							data-umami-event="exchange-twitter-click"
+							data-umami-event-exchange={profile.name}
+							data-umami-event-url={profile.metadata.twitterUrl}
+							className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
+						>
+							<Icon name="twitter" className="size-4" />
 						</a>
 					</Tooltip>
 				) : null}

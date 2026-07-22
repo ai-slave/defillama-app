@@ -4,7 +4,12 @@ import type { ExchangeProfileModel } from '../models'
 import { ProfileIdentity } from '../ProfileIdentity'
 import { selectVenueDestination } from '../venueLinks'
 
-function profile(referralUrl: string | null, website: string | null, slug = 'venue'): ExchangeProfileModel {
+function profile(
+	referralUrl: string | null,
+	website: string | null,
+	twitterUrl: string | null = null,
+	slug = 'venue'
+): ExchangeProfileModel {
 	return {
 		slug,
 		name: 'Venue',
@@ -12,9 +17,12 @@ function profile(referralUrl: string | null, website: string | null, slug = 'ven
 		profileMode: 'markets',
 		defillamaUrl: null,
 		defillamaCexSlug: null,
+		nativeToken: null,
+		hacks: [],
+		raises: [],
 		reserves: null,
 		segments: {},
-		metadata: { referralUrl, website, promotions: [], kpis: [], groups: [] }
+		metadata: { referralUrl, website, twitterUrl, promotions: [], kpis: [], groups: [] }
 	}
 }
 
@@ -69,5 +77,16 @@ describe('exchange venue links', () => {
 
 		expect(websiteHtml).toContain('href="https://website.example"')
 		expect(missingHtml).not.toContain('aria-label="Open Venue website"')
+	})
+
+	it('renders the primary Twitter action beside the website action', () => {
+		const html = renderToStaticMarkup(
+			<ProfileIdentity profile={profile(null, 'https://website.example', 'https://x.com/venue')} />
+		)
+
+		expect(html).toContain('href="https://website.example"')
+		expect(html).toContain('href="https://x.com/venue"')
+		expect(html).toContain('aria-label="Open Venue on X"')
+		expect(html).toContain('data-umami-event="exchange-twitter-click"')
 	})
 })

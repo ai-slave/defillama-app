@@ -79,8 +79,8 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 					return (
 						<div className="flex w-full min-w-0 items-center gap-2">
 							<TokenLogo
-								name={venue.logoName}
-								kind="token"
+								name={venue.exchange}
+								kind="exchange"
 								fallbackSrc={letterLogoDataUri(venue.name)}
 								alt={`${venue.name} logo`}
 							/>

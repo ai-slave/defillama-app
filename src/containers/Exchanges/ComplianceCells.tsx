@@ -143,10 +143,6 @@ export function getKycRequirementIndicators(kycShort: string): KycRequirementInd
 	return indicators
 }
 
-export function formatRegionLabels(regions: string[]): string {
-	return regions.map((region) => (region === 'eu' ? 'EU' : region)).join(', ')
-}
-
 function eeaOrderbookTooltip(ownership: ExchangeEeaOrderbookOwnership | null): string | null {
 	if (ownership === null) return null
 	if (ownership.mode === 'own') return 'Uses dedicated regional orderbooks.'

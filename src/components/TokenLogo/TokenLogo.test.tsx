@@ -71,4 +71,12 @@ describe('TokenLogo', () => {
 
 		expect(image?.getAttribute('src')).toBe('/assets/placeholder.png')
 	})
+
+	it('resolves exchange logos from the canonical exchange namespace', async () => {
+		await act(async () => root.render(<TokenLogo name="Binance" kind="exchange" />))
+
+		expect(container.querySelector('img')?.getAttribute('src')).toBe(
+			'https://icons.llamao.fi/icons/exchanges/binance?w=48&h=48'
+		)
+	})
 })

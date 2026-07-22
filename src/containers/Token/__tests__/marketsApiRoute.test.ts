@@ -40,11 +40,11 @@ describe('/api/public/markets/[token]', () => {
 	})
 
 	it('caches and serves serialized token markets through the shared JSON route builder', async () => {
-		fetchJsonMock.mockResolvedValueOnce({ token: 'btc', markets: [] })
+		fetchJsonMock.mockResolvedValueOnce({ token: 'bitcoin', markets: [] })
 		const req = {
 			method: 'GET',
-			query: { token: 'BTC' },
-			url: '/api/public/markets/BTC'
+			query: { token: 'Bitcoin' },
+			url: '/api/public/markets/Bitcoin'
 		} as unknown as NextApiRequest
 		const firstRes = createMockNextApiResponse()
 		const secondRes = createMockNextApiResponse()
@@ -52,15 +52,19 @@ describe('/api/public/markets/[token]', () => {
 		await handler(req, firstRes)
 		await handler(req, secondRes)
 
-		expect(fetchJsonMock).toHaveBeenCalledWith('https://markets.example.com/tokens/btc.json', { timeout: 30_000 })
+		expect(fetchJsonMock).toHaveBeenCalledWith('https://markets.example.com/tokens/by-id/cg-626974636f696e.json', {
+			timeout: 30_000
+		})
 		expect(fetchJsonMock).toHaveBeenCalledTimes(1)
 		expect(firstRes.status).toHaveBeenCalledWith(200)
-		expect(firstRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'btc', markets: [] }))
-		expect(secondRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'btc', markets: [] }))
+		expect(firstRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'bitcoin', markets: [] }))
+		expect(secondRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'bitcoin', markets: [] }))
 	})
 
 	it('keeps upstream 404s as token not found responses', async () => {
-		fetchJsonMock.mockRejectedValueOnce(new Error('https://markets.example.com/tokens/missing.json: [404] Not Found'))
+		fetchJsonMock.mockRejectedValueOnce(
+			new Error('https://markets.example.com/tokens/by-id/cg-6d697373696e67.json: [404] Not Found')
+		)
 		const req = {
 			method: 'GET',
 			query: { token: 'missing' },

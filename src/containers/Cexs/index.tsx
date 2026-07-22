@@ -56,8 +56,8 @@ export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
 	const customRangeCexs = useMemo(
 		() =>
 			cexs
-				.filter((c): c is ICex & { slug: string } => typeof c.slug === 'string')
-				.map((c) => ({ slug: c.slug, tokensToExclude: c.coin ?? '' })),
+				.filter((c): c is ICex & { defillamaCexSlug: string } => typeof c.defillamaCexSlug === 'string')
+				.map((c) => ({ slug: c.defillamaCexSlug, tokensToExclude: c.coin ?? '' })),
 		[cexs]
 	)
 
@@ -76,8 +76,8 @@ export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
 		() =>
 			cexs.map((c) => ({
 				...c,
-				customRange: c.slug ? (customRangeData?.[c.slug]?.outflows ?? null) : null,
-				customRangeEnabled: customRangeEnabled && !!c.slug,
+				customRange: c.defillamaCexSlug ? (customRangeData?.[c.defillamaCexSlug]?.outflows ?? null) : null,
+				customRangeEnabled: customRangeEnabled && !!c.defillamaCexSlug,
 				customRangeLoading: customRangeEnabled && customRangeLoading
 			})),
 		[cexs, customRangeData, customRangeEnabled, customRangeLoading]
@@ -115,12 +115,17 @@ const columns = [
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<TokenLogo name={name} kind="token" fallbackSrc={letterLogoDataUri(name)} alt={`${name} logo`} />
-					{row.original.slug == null ? (
+					<TokenLogo
+						name={row.original.exchangeSlug ?? slug(name)}
+						kind="exchange"
+						fallbackSrc={letterLogoDataUri(name)}
+						alt={`${name} logo`}
+					/>
+					{row.original.defillamaCexSlug == null ? (
 						name
 					) : (
 						<BasicLink
-							href={row.original.profileUrl ?? `/cex/${slug(row.original.slug)}`}
+							href={row.original.profileUrl ?? `/cex/${slug(row.original.defillamaCexSlug)}`}
 							className="truncate label-md text-link hover:underline"
 						>
 							{name}
@@ -136,7 +141,7 @@ const columns = [
 	columnHelper.accessor('currentTvl', {
 		header: 'Assets',
 		cell: (info) => {
-			if (info.row.original.slug == null) {
+			if (info.row.original.defillamaCexSlug == null) {
 				return (
 					<QuestionHelper text="This CEX has not published a list of all hot and cold wallets" className="ml-auto" />
 				)
@@ -155,7 +160,7 @@ const columns = [
 		header: 'Clean Assets',
 		cell: (info) => {
 			const coinSymbol = info.row.original.coinSymbol
-			if (info.row.original.slug == null) {
+			if (info.row.original.defillamaCexSlug == null) {
 				return (
 					<QuestionHelper text="This CEX has not published a list of all hot and cold wallets" className="ml-auto" />
 				)

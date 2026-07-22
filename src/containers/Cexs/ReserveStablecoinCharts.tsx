@@ -17,7 +17,7 @@ import { useSelectedValues } from '~/hooks/useSelectedValues'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
-import { tokenIconUrl } from '~/utils/icons'
+import { exchangeIconUrl } from '~/utils/icons'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -212,7 +212,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 	const exchangeSlug = slug(displayName || 'cex')
 	const buildFilename = (suffix: string) => `${exchangeSlug}-${slug(suffix)}`
 	const stablecoinsExportTitle = displayName ? `${displayName} Stablecoins` : 'Stablecoins'
-	const exchangeIconUrl = tokenIconUrl(displayName)
+	const exchangeLogoUrl = exchangeIconUrl(exchangeSlug)
 
 	if (isLoading) return <PanelLoadingStatus />
 	if (!data) return <PanelStatus variant="empty">No stablecoin data available for this exchange</PanelStatus>
@@ -266,7 +266,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 						valueSymbol="$"
 						exportFilenameBase={buildFilename('total-stablecoin-in-cex')}
 						exportTitle={stablecoinsExportTitle}
-						exportIconUrl={exchangeIconUrl}
+						exportIconUrl={exchangeLogoUrl}
 					/>
 				) : null}
 
@@ -279,7 +279,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 						valueSymbol="$"
 						exportFilenameBase={buildFilename('stablecoins-by-backing-type')}
 						exportTitle={stablecoinsExportTitle}
-						exportIconUrl={exchangeIconUrl}
+						exportIconUrl={exchangeLogoUrl}
 					/>
 				) : null}
 
@@ -289,7 +289,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 						chartData={pegMechanismPieChart}
 						exportFilenameBase={buildFilename('stablecoins-backing-type')}
 						exportTitle={stablecoinsExportTitle}
-						exportIconUrl={exchangeIconUrl}
+						exportIconUrl={exchangeLogoUrl}
 					/>
 				) : null}
 
@@ -302,7 +302,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 						valueSymbol="$"
 						exportFilenameBase={buildFilename('stablecoins-by-currency-peg')}
 						exportTitle={stablecoinsExportTitle}
-						exportIconUrl={exchangeIconUrl}
+						exportIconUrl={exchangeLogoUrl}
 					/>
 				) : null}
 
@@ -316,7 +316,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 						hideDefaultLegend={true}
 						exportFilenameBase={buildFilename('individual-stablecoins')}
 						exportTitle={stablecoinsExportTitle}
-						exportIconUrl={exchangeIconUrl}
+						exportIconUrl={exchangeLogoUrl}
 					/>
 				) : null}
 			</div>

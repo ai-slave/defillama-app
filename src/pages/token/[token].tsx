@@ -132,9 +132,11 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 	const yieldsDatasetSnapshot = await acquireOptionalYieldsSnapshot()
 	const downgradeTokenPageError = <T,>(error: unknown, message: string, fallback: T): T =>
 		downgradeTokenPageDataError(error, message, fallback, isDatasetSnapshotIntegrityError)
-	const marketsAvailablePromise = hasTokenMarkets(record.symbol).catch((error) =>
-		downgradeTokenPageError(error, `Failed to load token markets list for ${record.symbol}`, false)
-	)
+	const marketsAvailablePromise = geckoId
+		? hasTokenMarkets(geckoId).catch((error) =>
+				downgradeTokenPageError(error, `Failed to load token markets index for ${geckoId}`, false)
+			)
+		: Promise.resolve(false)
 	let liquidationsPromise: Promise<boolean> = Promise.resolve(false)
 	if (normalizedLiquidationsSymbol && metadataCache.liquidationsTokenSymbolsSet.has(normalizedLiquidationsSymbol)) {
 		const liquidationsSymbol = normalizedLiquidationsSymbol
@@ -316,7 +318,7 @@ const TOKEN_SECTION_RENDERERS = {
 			issuer={section.issuer}
 		/>
 	),
-	'token-markets': ({ section }) => <TokenMarketsSection tokenSymbol={section.tokenSymbol} />,
+	'token-markets': ({ section }) => <TokenMarketsSection geckoId={section.geckoId} tokenSymbol={section.tokenSymbol} />,
 	'token-income-statement': ({ section }) => (
 		<TokenIncomeStatementSection tokenName={section.tokenName} incomeStatement={section.incomeStatement} />
 	),

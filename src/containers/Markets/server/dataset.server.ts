@@ -4,11 +4,11 @@ import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import { DATASET_SNAPSHOT_CONTRACT } from '~/server/datasetSnapshots/contract'
 import { datasetSnapshotReader } from '~/server/datasetSnapshots/reader.server'
 import {
-	hasTokenMarketsSymbol,
+	hasTokenMarketsGeckoId,
 	resolveExchangeByDefillamaCexSlug as resolveExchangeByDefillamaCexSlugFromIndex,
 	type CexExchangeSlugIndex,
 	type CexExchangeSlugIndexEntry,
-	type TokenMarketsSymbolIndex
+	type TokenMarketsGeckoIdIndex
 } from './dataset.index'
 
 const MARKET_FILES = DATASET_SNAPSHOT_CONTRACT.markets.files
@@ -21,8 +21,8 @@ export function fetchTokenMarketsList(): Promise<TokenMarketsListResponse> {
 	return datasetSnapshotReader.readJson<TokenMarketsListResponse>('markets', MARKET_FILES.tokensList)
 }
 
-function fetchTokenMarketsSymbolIndex(): Promise<TokenMarketsSymbolIndex> {
-	return datasetSnapshotReader.readJson<TokenMarketsSymbolIndex>('markets', MARKET_FILES.tokenSymbols)
+function fetchTokenMarketsGeckoIdIndex(): Promise<TokenMarketsGeckoIdIndex> {
+	return datasetSnapshotReader.readJson<TokenMarketsGeckoIdIndex>('markets', MARKET_FILES.tokenGeckoIds)
 }
 
 export function fetchCexExchangeSlugIndex(): Promise<CexExchangeSlugIndex> {
@@ -36,7 +36,7 @@ export async function resolveExchangeByDefillamaCexSlug(
 	return resolveExchangeByDefillamaCexSlugFromIndex(index, defillamaSlug)
 }
 
-export async function hasTokenMarkets(symbol: string): Promise<boolean> {
-	const index = await fetchTokenMarketsSymbolIndex()
-	return hasTokenMarketsSymbol(index, symbol)
+export async function hasTokenMarkets(geckoId: string): Promise<boolean> {
+	const index = await fetchTokenMarketsGeckoIdIndex()
+	return hasTokenMarketsGeckoId(index, geckoId)
 }

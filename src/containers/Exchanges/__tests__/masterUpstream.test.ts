@@ -23,10 +23,13 @@ describe('master Exchanges upstream', () => {
 		const upstream = await import('../server/master.upstream')
 		const cases = [
 			[upstream.fetchMasterDirectoryFromNetwork, 'https://markets.example.com/exchanges/directory.json'],
-			[upstream.fetchMasterExchangeSeriesFromNetwork, 'https://markets.example.com/exchanges/series.json'],
 			[
-				() => upstream.fetchMasterExchangeHistoryFromNetwork('binance'),
-				'https://markets.example.com/exchanges/binance/series.json'
+				() => upstream.fetchMasterExchangeSeriesFromNetwork('1y'),
+				'https://markets.example.com/exchanges/series/1y.json'
+			],
+			[
+				() => upstream.fetchMasterExchangeHistoryFromNetwork('binance', '30d'),
+				'https://markets.example.com/exchanges/binance/series/30d.json'
 			],
 			[
 				() => upstream.fetchMasterExchangeIndexFromNetwork('binance'),
@@ -36,8 +39,20 @@ describe('master Exchanges upstream', () => {
 				() => upstream.fetchMasterExchangeMetadataFromNetwork('binance'),
 				'https://markets.example.com/exchanges/binance/metadata.json'
 			],
+			[upstream.fetchMasterExchangeRegionCatalogFromNetwork, 'https://markets.example.com/exchanges/regions.json'],
+			[
+				() => upstream.fetchMasterExchangeRegionManifestFromNetwork('binance'),
+				'https://markets.example.com/exchanges/binance/metadata/regions.json'
+			],
+			[
+				() => upstream.fetchMasterExchangeRegionalMetadataFromNetwork('binance', 'eea'),
+				'https://markets.example.com/exchanges/binance/metadata/eea.json'
+			],
 			[upstream.fetchMasterMicaFromNetwork, 'https://markets.example.com/exchanges/mica.json'],
-			[() => upstream.fetchMasterChartFromNetwork('volume'), 'https://markets.example.com/charts/volume.json']
+			[
+				() => upstream.fetchMasterChartFromNetwork('volume', 'all'),
+				'https://markets.example.com/charts/volume/all.json'
+			]
 		] as const
 
 		for (const [fetcher, expectedUrl] of cases) {
