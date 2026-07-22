@@ -76,9 +76,11 @@ export function fetchBridgeVolumeAll(id?: string | number): Promise<RawBridgeVol
 export function fetchBridgeVolumeByChain(chain: string, id?: string | number): Promise<RawBridgeVolumeResponse> {
 	const query = id == null ? '' : `?id=${encodeURIComponent(String(id))}`
 	const url = `${BRIDGEVOLUME_API}/${encodeURIComponent(chain)}${query}`
-	return fetchJson<RawBridgeVolumeResponse | BridgeApiErrorEnvelope>(url).then((response) =>
-		unwrapBridgeResponse(url, response)
-	)
+	return fetchJson<RawBridgeVolumeResponse | BridgeApiErrorEnvelope>(url).then((response) => {
+		const chart = unwrapBridgeResponse(url, response)
+		// The API proxy can temporarily return cache metadata instead of the cached chart.
+		return Array.isArray(chart) ? chart : []
+	})
 }
 
 export function fetchBridgeVolumeBySlug(protocolSlug: string): Promise<RawBridgeVolumeBySlugResponse> {
