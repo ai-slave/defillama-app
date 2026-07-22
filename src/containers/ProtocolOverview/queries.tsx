@@ -16,6 +16,7 @@ import { fetchOracleMetrics, fetchOracleProtocolChart } from '~/containers/Oracl
 import type { IOracleProtocolChart } from '~/containers/Oracles/api.types'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
+import { getTokenMarketSummaryByGeckoId } from '~/containers/Tokens/queries.server'
 import { fetchTreasuries } from '~/containers/Treasuries/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { readYieldsMeta, type YieldsSnapshot } from '~/containers/Yields/data/snapshot'
@@ -35,6 +36,7 @@ import { resolveProtocolCategory } from './category'
 import { normalizeChartPointsToMs } from './chartSeries.utils'
 import { oracleProtocols } from './constants'
 import { buildAvailableCharts, buildDefaultToggledCharts } from './defaultCharts'
+import { buildProtocolFaq, buildProtocolFaqRelationship } from './faq'
 import { formatAdapterData } from './formatAdapterData'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics } from './types'
 import { getProtocolWarningBanners } from './utils'
@@ -126,7 +128,8 @@ export const getProtocolOverviewPageData = async ({
 	emissionsSupplyMetrics,
 	protocolLlamaswapDataset,
 	tokenDirectory = null,
-	yieldsSnapshot
+	yieldsSnapshot,
+	includeFaq = true
 }: {
 	protocolId: string
 	currentProtocolMetadata: IProtocolMetadata
@@ -138,6 +141,7 @@ export const getProtocolOverviewPageData = async ({
 	protocolLlamaswapDataset?: ProtocolLlamaswapMetadata
 	tokenDirectory?: TokenDirectory | null
 	yieldsSnapshot: YieldsSnapshot | null
+	includeFaq?: boolean
 }): Promise<IProtocolOverviewPageData> => {
 	const displayName = currentProtocolMetadata.displayName ?? ''
 	const currentProtocolSlug = slug(displayName)
@@ -174,6 +178,30 @@ export const getProtocolOverviewPageData = async ({
 			),
 		[]
 	)
+	const protocolDataPromise = fetchProtocolOverviewMetrics(currentProtocolSlug).then(
+		async (data): Promise<IProtocolDataExtended> => {
+			try {
+				const geckoId = data.gecko_id ?? currentProtocolMetadata.gecko_id ?? null
+				const tokenEntry = geckoId ? (tokenlist[geckoId] ?? null) : null
+				const tickers =
+					tokenEntry && geckoId
+						? await fetchCoinGeckoChartByIdWithCacheFallback(geckoId)
+								.then((res) => res?.data?.coinData?.tickers)
+								.catch(() => undefined)
+						: undefined
+				return { ...data, tokenCGData: getTokenCGData(tokenEntry, tickers, cgExchangeIdentifiers) }
+			} catch (e) {
+				console.log('[HTTP]:[ERROR]:[TOKEN_CG_DATA]:', e)
+				return data
+			}
+		}
+	)
+	const tokenMarketSummaryPromise = protocolDataPromise.then((data) => {
+		const geckoId = data.gecko_id ?? currentProtocolMetadata.gecko_id ?? null
+		return includeFaq && !isCEX && geckoId
+			? optionalProtocolData('token_market_summary', () => getTokenMarketSummaryByGeckoId(geckoId), null)
+			: null
+	})
 
 	const [
 		protocolData,
@@ -210,7 +238,8 @@ export const getProtocolOverviewPageData = async ({
 		incomeStatement,
 		oracleChartData,
 		oracleTvs,
-		blockExplorersData
+		blockExplorersData,
+		tokenMarketSummary
 	]: [
 		IProtocolDataExtended,
 		IProtocolTvlChartSeedResult,
@@ -246,24 +275,10 @@ export const getProtocolOverviewPageData = async ({
 		IProtocolOverviewPageData['incomeStatement'],
 		IOracleProtocolChart | null,
 		IProtocolOverviewPageData['oracleTvs'],
-		BlockExplorersResponse
+		BlockExplorersResponse,
+		Awaited<ReturnType<typeof getTokenMarketSummaryByGeckoId>>
 	] = await Promise.all([
-		fetchProtocolOverviewMetrics(currentProtocolSlug).then(async (data): Promise<IProtocolDataExtended> => {
-			try {
-				const geckoId = data.gecko_id
-				const tokenEntry = geckoId ? (tokenlist[geckoId] ?? null) : null
-				const tickers =
-					tokenEntry && geckoId
-						? await fetchCoinGeckoChartByIdWithCacheFallback(geckoId)
-								.then((res) => res?.data?.coinData?.tickers)
-								.catch(() => undefined)
-						: undefined
-				return { ...data, tokenCGData: getTokenCGData(tokenEntry, tickers, cgExchangeIdentifiers) }
-			} catch (e) {
-				console.log('[HTTP]:[ERROR]:[TOKEN_CG_DATA]:', e)
-				return data
-			}
-		}),
+		protocolDataPromise,
 		currentProtocolMetadata.tvl && !isOracleProtocol
 			? fetchProtocolTvlChart({ protocol: currentProtocolSlug, timeout: getFastJsonTimeoutMs() })
 					.then((chart): IProtocolTvlChartSeedResult => ({ data: chart ?? [], failed: false }))
@@ -536,7 +551,8 @@ export const getProtocolOverviewPageData = async ({
 					null
 				)
 			: Promise.resolve(null),
-		fetchBlockExplorers().catch((): BlockExplorersResponse => [])
+		fetchBlockExplorers().catch((): BlockExplorersResponse => []),
+		tokenMarketSummaryPromise
 	])
 
 	const resolvedCategory = resolveProtocolCategory({
@@ -635,7 +651,10 @@ export const getProtocolOverviewPageData = async ({
 		protocolData.tokenCGData
 	)
 
-	const protocolChainsSet = new Set(protocolData.chains ?? [])
+	const resolvedProtocolChains = protocolData.chains?.length
+		? protocolData.chains
+		: (currentProtocolMetadata.chains ?? [])
+	const protocolChainsSet = new Set(resolvedProtocolChains)
 
 	const competitors =
 		liteProtocolsData && resolvedCategory
@@ -658,7 +677,7 @@ export const getProtocolOverviewPageData = async ({
 						if (!hasCommonChain) continue
 
 						let commonChains = 0
-						for (const chain of protocolData?.chains ?? []) {
+						for (const chain of resolvedProtocolChains) {
 							if (candidateChainsSet.has(chain)) {
 								commonChains += 1
 							}
@@ -719,7 +738,7 @@ export const getProtocolOverviewPageData = async ({
 			firstChainTvl = tvl
 		}
 	}
-	const tokenGeckoId = currentProtocolMetadata.gecko_id ?? null
+	const tokenGeckoId = protocolData.gecko_id ?? currentProtocolMetadata.gecko_id ?? null
 	const llamaswapChains = !isCEX && tokenGeckoId ? (protocolLlamaswapDataset?.[tokenGeckoId] ?? null) : null
 	const chartDenominations: Array<{ symbol: string; geckoId?: string | null }> = []
 	if (firstChain && !isCEX) {
@@ -887,14 +906,14 @@ export const getProtocolOverviewPageData = async ({
 			})()
 		: null
 
-	return {
+	const pageData: IProtocolOverviewPageData = {
 		id: String(protocolData.id),
 		name: name,
 		category: resolvedCategory,
 		tags: protocolData.tags ?? null,
 		otherProtocols: protocolData.otherProtocols ?? null,
 		deprecated: protocolData.deprecated ?? false,
-		chains: protocolData.chains ?? [],
+		chains: resolvedProtocolChains,
 		currentTvlByChain: currentProtocolMetadata.tvl ? (protocolData.currentChainTvls ?? {}) : {},
 		description: protocolData.description ?? '',
 		website: protocolData.referralUrl?.trim() || protocolData.url?.trim() || null,
@@ -1025,6 +1044,90 @@ export const getProtocolOverviewPageData = async ({
 		oracleTvs,
 		llamaswapChains
 	}
+
+	if (isCEX || !includeFaq) return pageData
+
+	const relationship = buildProtocolFaqRelationship({
+		protocolId,
+		protocolName: name,
+		category: resolvedCategory,
+		isParent: Boolean(protocolData.isParentProtocol || protocolId.startsWith('parent#')),
+		protocols: liteProtocolsData.protocols,
+		parentProtocols: liteProtocolsData.parentProtocols
+	})
+	const chainTvl = protocolData.currentChainTvls ?? {}
+	const hasCurrentChainTvl = resolvedProtocolChains.some((chain) => chainTvl[chain] != null)
+	const currentTvlFromChains = hasCurrentChainTvl
+		? resolvedProtocolChains.reduce((total, chain) => total + (chainTvl[chain] ?? 0), 0)
+		: null
+	const tvlSummary = getProtocolFaqTvlSummary(
+		protocolTvlChartData,
+		currentProtocolMetadata.tvl ? currentTvlFromChains : null
+	)
+	pageData.faqItems = buildProtocolFaq({
+		name,
+		description: protocolData.description ?? null,
+		tvl: tvlSummary,
+		chains: resolvedProtocolChains.map((chain) => ({
+			name: chain,
+			tvl: chainTvl[chain] ?? null,
+			href: chainMetadata[slug(chain)] ? `/chain/${slug(chain)}` : null
+		})),
+		fees: {
+			fees30d: feesData?.total30d ?? null,
+			revenue30d: revenueData?.total30d ?? null,
+			annualizedFees: feesData?.annualized1y ?? null,
+			annualizedRevenue: revenueData?.annualized1y ?? null
+		},
+		token: tokenMarketSummary
+			? {
+					...tokenMarketSummary,
+					tokenPageRoute: pageData.token.tokenPageRoute ?? null
+				}
+			: null,
+		comparison: relationship.comparison,
+		children: relationship.children,
+		useChildrenQuestion: relationship.useChildrenQuestion,
+		treasury,
+		hacks: (hacks ?? []).map((hack) => ({
+			date: hack.date,
+			amount: hack.amount,
+			classification: hack.classification
+		})),
+		metrics: {
+			borrowed: protocolData.currentChainTvls?.borrowed ?? null,
+			dexVolume30d: dexVolumeData?.total30d ?? null,
+			perpVolume30d: perpVolumeData?.total30d ?? null,
+			openInterest: openInterestData?.total24h ?? null,
+			yieldPoolCount: yields?.noOfPoolsTracked ?? null,
+			averageApy: yields?.averageAPY ?? null
+		}
+	})
+
+	return pageData
+}
+
+function getProtocolFaqTvlSummary(
+	chart: IProtocolValueChart,
+	fallbackCurrent: number | null
+): {
+	current: number | null
+	change30d: number | null
+} {
+	const latest = chart.at(-1)
+	if (!latest) return { current: fallbackCurrent, change30d: null }
+
+	const targetTimestamp = latest[0] - 30 * 24 * 60 * 60 * 1000
+	const current = fallbackCurrent ?? latest[1]
+	let previous: [number, number] | null = null
+	for (let index = chart.length - 1; index >= 0; index -= 1) {
+		if (chart[index][0] <= targetTimestamp) {
+			previous = chart[index]
+			break
+		}
+	}
+	const change30d = previous && previous[1] !== 0 ? ((current - previous[1]) / previous[1]) * 100 : null
+	return { current, change30d }
 }
 
 function getTokenCGData(

@@ -18,6 +18,7 @@ import { KeyMetrics } from './KeyMetrics'
 import { ProtocolOverviewLayout } from './Layout'
 import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
 import { ProtocolChartPanel } from './ProtocolChartPanel'
+import { ProtocolFaq } from './ProtocolFaq'
 import type { IProtocolOverviewPageData } from './types'
 
 const IncomeStatement = lazy(() => import('./IncomeStatement').then((module) => ({ default: module.IncomeStatement })))
@@ -133,6 +134,7 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 					</Suspense>
 				) : null}
 			</div>
+			{props.faqItems?.length ? <ProtocolFaq items={props.faqItems} /> : null}
 		</ProtocolOverviewLayout>
 	)
 }

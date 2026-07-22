@@ -5,6 +5,7 @@ const fetchAdapterProtocolChartData = vi.hoisted(() => vi.fn())
 const fetchProtocolTvlChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchTreasuries = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchJson = vi.hoisted(() => vi.fn().mockResolvedValue({ content_elements: [] }))
+const getTokenMarketSummaryByGeckoId = vi.hoisted(() => vi.fn().mockResolvedValue(null))
 const optionalPageData = vi.hoisted(() =>
 	vi.fn(async (_label: string, run: () => Promise<unknown>, fallback: unknown) => {
 		try {
@@ -51,6 +52,10 @@ vi.mock('~/containers/Treasuries/api', () => ({
 	fetchTreasuries
 }))
 
+vi.mock('~/containers/Tokens/queries.server', () => ({
+	getTokenMarketSummaryByGeckoId
+}))
+
 vi.mock('~/utils/async', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('~/utils/async')>()
 	return {
@@ -93,6 +98,7 @@ describe('getProtocolOverviewPageData', () => {
 		fetchJson.mockResolvedValue({ content_elements: [] })
 		fetchJson.mockClear()
 		optionalPageData.mockClear()
+		getTokenMarketSummaryByGeckoId.mockClear()
 	})
 
 	it('default-toggles secondary charts without server-prefetching their series', async () => {
@@ -145,6 +151,52 @@ describe('getProtocolOverviewPageData', () => {
 				[1_700_000_000_000, 10],
 				[1_700_086_400_000, 12]
 			]
+		})
+	})
+
+	it('constructs token FAQ data from the shared token market summary', async () => {
+		getTokenMarketSummaryByGeckoId.mockResolvedValueOnce({
+			symbol: 'TEST',
+			marketCapRank: 10,
+			currentPrice: 2,
+			priceChange7d: 2,
+			priceChange30d: 3,
+			marketCap: 1_000,
+			fdv: 2_000,
+			circulatingSupply: 500,
+			totalSupply: 1_000,
+			maxSupply: 1_000,
+			ath: 5,
+			athDate: '2026-01-01T00:00:00Z'
+		})
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: {
+				displayName: 'Test Protocol',
+				gecko_id: 'test-token'
+			} as never,
+			chainMetadata: {},
+			tokenlist: {},
+			tokenDirectory: {
+				test: {
+					name: 'Test Token',
+					symbol: 'TEST',
+					token_nk: 'coingecko:test-token',
+					route: '/token/TEST'
+				}
+			},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		})
+
+		expect(getTokenMarketSummaryByGeckoId).toHaveBeenCalledWith('test-token')
+		expect(data.faqItems?.find((item) => item.id === 'token-valuation')?.answer).toContainEqual({
+			text: 'TEST',
+			href: '/token/TEST'
 		})
 	})
 

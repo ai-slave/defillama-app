@@ -58,16 +58,35 @@ interface TokensSourceData extends TokensSourceRows {
 	revision: number
 }
 
-interface TokensMarketSnapshot {
+interface SharedTokensMarketSnapshot {
 	revision: number
 	tokens: TokensRawCoinGeckoRanking[]
 	markets: TokensRawMarketsList
 	currentMetricsById: Record<string, TokenOverviewCurrentMetrics>
 }
 
+interface TokensMarketSnapshot extends SharedTokensMarketSnapshot {
+	tokenIndexById: Map<string, number>
+}
+
 export interface TokenOverviewCurrentSnapshot {
 	revision: number
 	metrics: TokenOverviewCurrentMetrics | null
+}
+
+export interface TokenMarketSummary {
+	symbol: string
+	marketCapRank: number | null
+	currentPrice: number | null
+	priceChange7d: number | null
+	priceChange30d: number | null
+	marketCap: number | null
+	fdv: number | null
+	circulatingSupply: number | null
+	totalSupply: number | null
+	maxSupply: number | null
+	ath: number | null
+	athDate: string | null
 }
 
 export interface TokensPageSnapshot {
@@ -387,13 +406,42 @@ export function buildTokenOverviewCurrentMetricsById({
 	return currentMetricsById
 }
 
+export function buildTokenMarketSummary(
+	token: TokensRawCoinGeckoRanking,
+	currentMetrics: TokenOverviewCurrentMetrics | null,
+	fallbackRank: number
+): TokenMarketSummary {
+	return {
+		symbol: token.symbol.toUpperCase(),
+		marketCapRank: token.market_cap_rank_with_rehypothecated ?? token.market_cap_rank ?? fallbackRank,
+		currentPrice: currentMetrics?.currentPrice ?? token.current_price ?? null,
+		priceChange7d: token.price_change_percentage_7d_in_currency ?? null,
+		priceChange30d: token.price_change_percentage_30d_in_currency ?? null,
+		marketCap: currentMetrics?.mcap ?? token.market_cap ?? null,
+		fdv: currentMetrics?.fdv ?? token.fully_diluted_valuation ?? null,
+		circulatingSupply: currentMetrics?.circulatingSupply ?? token.circulating_supply ?? null,
+		totalSupply: currentMetrics?.totalSupply ?? token.total_supply ?? null,
+		maxSupply: currentMetrics?.maxSupply ?? token.max_supply ?? null,
+		ath: token.ath ?? null,
+		athDate: token.ath_date ?? null
+	}
+}
+
+function buildTokenIndexById(tokens: TokensRawCoinGeckoRanking[]): Map<string, number> {
+	const tokenIndexById = new Map<string, number>()
+	for (let index = 0; index < tokens.length; index += 1) {
+		tokenIndexById.set(tokens[index].id.toLowerCase(), index)
+	}
+	return tokenIndexById
+}
+
 async function getTokensMarketSnapshot(revision: number): Promise<TokensMarketSnapshot> {
 	return cachedResult(
 		'tokens-market-snapshot',
-		`v1:${revision}`,
+		`v2:${revision}`,
 		{ ttlMs: TOKENS_MARKET_SNAPSHOT_CACHE_TTL_MS, maxEntries: 2 },
-		() =>
-			getOrCreateSharedTokensSnapshot(revision, async () => {
+		async () => {
+			const sharedSnapshot = await getOrCreateSharedTokensSnapshot<SharedTokensMarketSnapshot>(revision, async () => {
 				const [tokens, markets, metadataModule] = await Promise.all([
 					fetchCoinGeckoTokensListFromDataset(),
 					fetchTokenMarketsList().catch(() => EMPTY_MARKETS_LIST),
@@ -411,6 +459,8 @@ async function getTokensMarketSnapshot(revision: number): Promise<TokensMarketSn
 					})
 				}
 			})
+			return { ...sharedSnapshot, tokenIndexById: buildTokenIndexById(sharedSnapshot.tokens) }
+		}
 	)
 }
 
@@ -635,6 +685,20 @@ export async function getTokenOverviewCurrentSnapshot(geckoId: string): Promise<
 				metrics: marketSnapshot.currentMetricsById[geckoId.toLowerCase()] ?? null
 			}
 		}
+	}
+}
+
+export async function getTokenMarketSummaryByGeckoId(geckoId: string): Promise<TokenMarketSummary | null> {
+	const normalizedGeckoId = geckoId.toLowerCase()
+	while (true) {
+		const revision = getTokensCacheRevision()
+		const marketSnapshot = await getTokensMarketSnapshot(revision)
+		if (marketSnapshot.revision !== getTokensCacheRevision()) continue
+
+		const tokenIndex = marketSnapshot.tokenIndexById.get(normalizedGeckoId)
+		if (tokenIndex == null) return null
+		const token = marketSnapshot.tokens[tokenIndex]
+		return buildTokenMarketSummary(token, marketSnapshot.currentMetricsById[normalizedGeckoId] ?? null, tokenIndex + 1)
 	}
 }
 

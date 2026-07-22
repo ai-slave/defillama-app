@@ -48,6 +48,17 @@ export interface IProtocolPageMetrics {
 	tokenRights: boolean
 }
 
+export interface IProtocolFaqAnswerPart {
+	text: string
+	href?: string
+}
+
+export interface IProtocolFaqItem {
+	id: string
+	question: string
+	answer: IProtocolFaqAnswerPart[]
+}
+
 interface IAdapterOverview {
 	total24h: number | null
 	total7d: number | null
@@ -213,6 +224,7 @@ export interface IProtocolOverviewPageData {
 	defaultToggledCharts: ProtocolChartsLabels[]
 	oracleTvs?: Record<string, number> | null
 	entityQuestions?: string[]
+	faqItems?: IProtocolFaqItem[]
 	treasuryMethodologyUrl?: string | null
 	llamaswapChains?: BuyOnLlamaswapChain[] | null
 }

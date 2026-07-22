@@ -3,7 +3,12 @@ import type { MarketSegmentSummary } from '~/containers/Markets/api.types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import type { TokensRawAdapterChainMetrics, TokensRawCoinGeckoRanking, TokensRawMarketsList } from '../api.types'
-import { buildTokenOverviewCurrentMetricsById, buildTokensChartDataset, buildTokensSourceRows } from '../queries.server'
+import {
+	buildTokenMarketSummary,
+	buildTokenOverviewCurrentMetricsById,
+	buildTokensChartDataset,
+	buildTokensSourceRows
+} from '../queries.server'
 
 function marketSegment(overrides: Partial<MarketSegmentSummary>): MarketSegmentSummary {
 	return {
@@ -89,6 +94,48 @@ describe('buildTokensChartDataset', () => {
 			marketCaps: [100, 100],
 			priceChanges: { '24h': [null, 2], '7d': [-3, null], '30d': [null, null] },
 			stablecoins: [false, true]
+		})
+	})
+})
+
+describe('buildTokenMarketSummary', () => {
+	it('combines ranking-period fields with the current shared token snapshot', () => {
+		const summary = buildTokenMarketSummary(
+			{
+				id: 'aave',
+				name: 'Aave',
+				symbol: 'aave',
+				market_cap_rank: 40,
+				market_cap_rank_with_rehypothecated: 38,
+				current_price: 200,
+				price_change_percentage_7d_in_currency: 8.4,
+				price_change_percentage_30d_in_currency: 3.1,
+				ath: 666.86,
+				ath_date: '2021-05-18T00:00:00Z'
+			},
+			{
+				currentPrice: 214.4,
+				percentChange24h: 2,
+				circulatingSupply: 15_100_000,
+				totalSupply: 16_000_000,
+				maxSupply: 16_000_000,
+				mcap: 3_240_000_000,
+				fdv: 3_430_000_000,
+				volume24h: 200_000_000,
+				outstandingFDV: null
+			},
+			99
+		)
+
+		expect(summary).toMatchObject({
+			symbol: 'AAVE',
+			marketCapRank: 38,
+			currentPrice: 214.4,
+			priceChange7d: 8.4,
+			priceChange30d: 3.1,
+			marketCap: 3_240_000_000,
+			fdv: 3_430_000_000,
+			ath: 666.86
 		})
 	})
 })
