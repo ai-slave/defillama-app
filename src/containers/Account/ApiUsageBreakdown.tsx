@@ -28,6 +28,9 @@ interface ApiUsageBreakdownProps {
 
 const DEFAULT_WINDOW_DAYS = 30
 const TOP_ROUTES = 6
+const DAY_MS = 86_400_000
+
+const toUtcDayStart = (ts: number) => Math.floor(ts / DAY_MS) * DAY_MS
 
 const CSS_VAR_KEYS = {
 	routes: [
@@ -86,6 +89,8 @@ function useChartData(usageStats: ApiUsageStats | null | undefined, colors: Char
 		return Math.round(totalRequests / sortedStats.length)
 	}, [sortedStats.length, totalRequests])
 
+	const windowDays = usageStats?.windowDays ?? DEFAULT_WINDOW_DAYS
+
 	const { dataset, charts } = useMemo<{
 		dataset: MultiSeriesChartDataset
 		charts: IMultiSeriesChartProps['charts']
@@ -111,22 +116,31 @@ function useChartData(usageStats: ApiUsageStats | null | undefined, colors: Char
 		const seriesNames = hasOthers ? [...topRoutes, 'Others'] : topRoutes
 		const dimensions = ['date', ...seriesNames]
 
-		const source = new Array<MultiSeriesChartDataset['source'][number]>(sortedStats.length)
-		for (let dayIndex = 0; dayIndex < sortedStats.length; dayIndex++) {
-			const day = sortedStats[dayIndex]
+		const statsByDay = new Map<number, ApiUsageStats['stats'][number]>()
+		for (const day of sortedStats) {
+			statsByDay.set(toUtcDayStart(makeTimestamp(day.date)), day)
+		}
+
+		// span the full 30d window so empty days are included in the chart, even if they have no data
+		const lastDay = toUtcDayStart(Date.now())
+		const firstDay = lastDay - (windowDays - 1) * DAY_MS
+
+		const source: MultiSeriesChartDataset['source'] = []
+		for (let ts = firstDay; ts <= lastDay; ts += DAY_MS) {
+			const day = statsByDay.get(ts)
 			const row = new Array<number>(dimensions.length)
-			row[0] = makeTimestamp(day.date)
+			row[0] = ts
 			for (let routeIndex = 0; routeIndex < topRoutes.length; routeIndex++) {
-				row[routeIndex + 1] = day.routes?.[topRoutes[routeIndex]] ?? 0
+				row[routeIndex + 1] = day?.routes?.[topRoutes[routeIndex]] ?? 0
 			}
 			if (hasOthers) {
 				let others = 0
-				for (const [route, count] of Object.entries(day.routes ?? {})) {
+				for (const [route, count] of Object.entries(day?.routes ?? {})) {
 					if (!topRoutesSet.has(route)) others += count
 				}
 				row[dimensions.length - 1] = others
 			}
-			source[dayIndex] = row
+			source.push(row)
 		}
 
 		const charts: IMultiSeriesChartProps['charts'] = seriesNames.map((name, index) => ({
@@ -139,9 +153,7 @@ function useChartData(usageStats: ApiUsageStats | null | undefined, colors: Char
 		}))
 
 		return { dataset: { source, dimensions }, charts }
-	}, [sortedStats, colors])
-
-	const windowDays = usageStats?.windowDays ?? DEFAULT_WINDOW_DAYS
+	}, [sortedStats, colors, windowDays])
 
 	return { sortedStats, totalRequests, averageRequests, dataset, charts, windowDays }
 }
