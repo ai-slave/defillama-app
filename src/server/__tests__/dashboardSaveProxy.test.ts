@@ -31,6 +31,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		vi.stubEnv('CF_ZONE', 'zone')
 		vi.stubEnv('CF_PURGE_CACHE_AUTH', 'cf-token')
 		vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://defillama.test')
+		vi.stubEnv('NEXT_BUILD_ID', 'build-test')
 	})
 
 	afterEach(() => {
@@ -72,8 +73,10 @@ describe('/api/private/pro-dashboard/save', () => {
 				files: [
 					'https://defillama.test/pro/new-1',
 					'https://defillama.test/api/dynamic/pro-dashboard/new-1/stream',
+					'https://defillama.test/_next/data/build-test/pro/new-1.json',
 					'https://defillama.test/pro/my-dash',
-					'https://defillama.test/api/dynamic/pro-dashboard/my-dash/stream'
+					'https://defillama.test/api/dynamic/pro-dashboard/my-dash/stream',
+					'https://defillama.test/_next/data/build-test/pro/my-dash.json'
 				]
 			}),
 			headers: { Authorization: 'Bearer cf-token', 'Content-Type': 'application/json' },
@@ -83,16 +86,19 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
 
-	it('creates a private dashboard without purging', async () => {
+	it('creates a private dashboard and purges its urls', async () => {
 		const saved = { id: 'new-2', slug: 'secret', visibility: 'private' }
-		const fetchImpl = vi.fn().mockResolvedValueOnce(dashboardResponse(saved))
+		const fetchImpl = vi
+			.fn()
+			.mockResolvedValueOnce(dashboardResponse(saved))
+			.mockResolvedValueOnce(new Response('{}', { status: 200 }))
 		vi.stubGlobal('fetch', fetchImpl)
 		const res = createMockNextApiResponse()
 
 		await dashboardSaveHandler(request({ body: { visibility: 'private' } }), res)
 
-		expect(fetchImpl).toHaveBeenCalledTimes(1)
-		expect(isCloudflarePurge(lastCall(fetchImpl))).toBe(false)
+		expect(fetchImpl).toHaveBeenCalledTimes(2)
+		expect(isCloudflarePurge(lastCall(fetchImpl))).toBe(true)
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
 
@@ -116,10 +122,13 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(JSON.parse(lastCall(fetchImpl)[1].body).files).toEqual([
 			'https://defillama.test/pro/d1',
 			'https://defillama.test/api/dynamic/pro-dashboard/d1/stream',
+			'https://defillama.test/_next/data/build-test/pro/d1.json',
 			'https://defillama.test/pro/new-name',
 			'https://defillama.test/api/dynamic/pro-dashboard/new-name/stream',
+			'https://defillama.test/_next/data/build-test/pro/new-name.json',
 			'https://defillama.test/pro/old-name',
-			'https://defillama.test/api/dynamic/pro-dashboard/old-name/stream'
+			'https://defillama.test/api/dynamic/pro-dashboard/old-name/stream',
+			'https://defillama.test/_next/data/build-test/pro/old-name.json'
 		])
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
@@ -141,20 +150,21 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
 
-	it('does not purge when a private dashboard stays private', async () => {
+	it('purges when a private dashboard stays private', async () => {
 		const before = { id: 'd3', slug: 'private-dash', visibility: 'private' }
 		const saved = { id: 'd3', slug: 'private-dash', visibility: 'private' }
 		const fetchImpl = vi
 			.fn()
 			.mockResolvedValueOnce(dashboardResponse(before))
 			.mockResolvedValueOnce(dashboardResponse(saved))
+			.mockResolvedValueOnce(new Response('{}', { status: 200 }))
 		vi.stubGlobal('fetch', fetchImpl)
 		const res = createMockNextApiResponse()
 
 		await dashboardSaveHandler(request({ query: { id: 'd3' }, body: { visibility: 'private' } }), res)
 
-		expect(fetchImpl).toHaveBeenCalledTimes(2)
-		expect(isCloudflarePurge(lastCall(fetchImpl))).toBe(false)
+		expect(fetchImpl).toHaveBeenCalledTimes(3)
+		expect(isCloudflarePurge(lastCall(fetchImpl))).toBe(true)
 	})
 
 	it('passes backend save failures through without purging', async () => {
@@ -175,6 +185,7 @@ describe('/api/private/pro-dashboard/delete', () => {
 		vi.stubEnv('CF_ZONE', 'zone')
 		vi.stubEnv('CF_PURGE_CACHE_AUTH', 'cf-token')
 		vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://defillama.test')
+		vi.stubEnv('NEXT_BUILD_ID', 'build-test')
 	})
 
 	afterEach(() => {
@@ -210,26 +221,29 @@ describe('/api/private/pro-dashboard/delete', () => {
 		expect(JSON.parse(lastCall(fetchImpl)[1].body).files).toEqual([
 			'https://defillama.test/pro/d9',
 			'https://defillama.test/api/dynamic/pro-dashboard/d9/stream',
+			'https://defillama.test/_next/data/build-test/pro/d9.json',
 			'https://defillama.test/pro/public-dash',
-			'https://defillama.test/api/dynamic/pro-dashboard/public-dash/stream'
+			'https://defillama.test/api/dynamic/pro-dashboard/public-dash/stream',
+			'https://defillama.test/_next/data/build-test/pro/public-dash.json'
 		])
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({ message: 'Dashboard deleted' })
 	})
 
-	it('deletes a private dashboard without purging', async () => {
+	it('deletes a private dashboard and purges its urls', async () => {
 		const before = { id: 'd10', slug: 'private-dash', visibility: 'private' }
 		const fetchImpl = vi
 			.fn()
 			.mockResolvedValueOnce(dashboardResponse(before))
 			.mockResolvedValueOnce(dashboardResponse({ message: 'Dashboard deleted' }))
+			.mockResolvedValueOnce(new Response('{}', { status: 200 }))
 		vi.stubGlobal('fetch', fetchImpl)
 		const res = createMockNextApiResponse()
 
 		await dashboardDeleteHandler(request({ query: { id: 'd10' } }), res)
 
-		expect(fetchImpl).toHaveBeenCalledTimes(2)
-		expect(isCloudflarePurge(lastCall(fetchImpl))).toBe(false)
+		expect(fetchImpl).toHaveBeenCalledTimes(3)
+		expect(isCloudflarePurge(lastCall(fetchImpl))).toBe(true)
 		expect(res.json).toHaveBeenCalledWith({ message: 'Dashboard deleted' })
 	})
 

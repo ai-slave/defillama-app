@@ -94,7 +94,7 @@ class DashboardAPIService {
 	}
 
 	async listDashboards(authorizedFetch: (url: string, options?: any) => Promise<Response>): Promise<Dashboard[]> {
-		const response = await authorizedFetch(`${FEATURES_SERVER}/dashboards`)
+		const response = await authorizedFetch(`${FEATURES_SERVER}/dashboards?_=${Date.now()}`)
 		const data = await this.handleResponse<{ items: Dashboard[] }>(response)
 		return data.items || []
 	}
@@ -102,7 +102,7 @@ class DashboardAPIService {
 	async listLiteDashboards(
 		authorizedFetch: (url: string, options?: any) => Promise<Response>
 	): Promise<LiteDashboard[]> {
-		const response = await authorizedFetch(`${FEATURES_SERVER}/lite/dashboards`)
+		const response = await authorizedFetch(`${FEATURES_SERVER}/lite/dashboards?_=${Date.now()}`)
 		const data = await this.handleResponse<{ items: LiteDashboard[] }>(response)
 		return data.items || []
 	}
@@ -114,6 +114,7 @@ class DashboardAPIService {
 		const searchParams = new URLSearchParams()
 		if (params.page) searchParams.append('page', params.page.toString())
 		if (params.limit) searchParams.append('limit', params.limit.toString())
+		searchParams.append('_', Date.now().toString())
 
 		const response = await authorizedFetch(`${FEATURES_SERVER}/dashboards?${searchParams.toString()}`)
 		return this.handleResponse(response)
@@ -123,7 +124,7 @@ class DashboardAPIService {
 		id: string,
 		authorizedFetch?: (url: string, options?: any) => Promise<Response>
 	): Promise<Dashboard> {
-		const url = `${FEATURES_SERVER}/dashboards/${id}`
+		const url = `${FEATURES_SERVER}/dashboards/${id}?_=${Date.now()}`
 		const response = authorizedFetch ? await authorizedFetch(url) : await fetch(url)
 		return this.handleResponse<Dashboard>(response)
 	}

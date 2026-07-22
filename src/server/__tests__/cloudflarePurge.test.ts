@@ -76,4 +76,15 @@ describe('dashboard Cloudflare purge helpers', () => {
 			'https://defillama.test/api/dynamic/pro-dashboard/dash-1/stream'
 		])
 	})
+
+	it('purges next data payloads when a build id is known', () => {
+		expect(dashboardPathsToUrls({ id: 'dash-1', slug: 'yield-overview' }, env, 'build-123')).toEqual([
+			'https://defillama.test/pro/dash-1',
+			'https://defillama.test/api/dynamic/pro-dashboard/dash-1/stream',
+			'https://defillama.test/_next/data/build-123/pro/dash-1.json',
+			'https://defillama.test/pro/yield-overview',
+			'https://defillama.test/api/dynamic/pro-dashboard/yield-overview/stream',
+			'https://defillama.test/_next/data/build-123/pro/yield-overview.json'
+		])
+	})
 })

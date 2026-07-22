@@ -10,8 +10,7 @@ describe('Add Chart composer query gate', () => {
 			hasInitialDashboard: false,
 			authReady: false,
 			streamIsDone: false,
-			hasStreamDashboard: false,
-			mode: 'edit'
+			hasStreamDashboard: false
 		})
 		const item = {
 			id: 'preview',

@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
 import toast from 'react-hot-toast'
@@ -30,7 +30,8 @@ const getDashboardName = (datasetType: DatasetType): string => {
 
 export const useDashboardCreation = () => {
 	const router = useRouter()
-	const { authorizedFetch, isAuthenticated } = useAuthContext()
+	const queryClient = useQueryClient()
+	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
 
 	const createMutation = useMutation({
 		mutationFn: async (datasetType: DatasetType) => {
@@ -58,6 +59,10 @@ export const useDashboardCreation = () => {
 			return dashboard
 		},
 		onSuccess: (dashboard) => {
+			queryClient.setQueryData(
+				['pro-dashboard', 'dashboard', dashboardUrlKey(dashboard), isAuthenticated, user?.id],
+				dashboard
+			)
 			toast.success('Dashboard created successfully')
 			void router.push(`/pro/${dashboardUrlKey(dashboard)}`)
 		},

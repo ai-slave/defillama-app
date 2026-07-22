@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Router from 'next/router'
 import { memo, useMemo } from 'react'
 import toast from 'react-hot-toast'
@@ -8,7 +8,7 @@ import type { DashboardArtifact } from '~/containers/LlamaAI/types'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { ChartGrid } from '~/containers/ProDashboard/components/ChartGrid'
 import { ProDashboardAPIProvider } from '~/containers/ProDashboard/ProDashboardAPIContext'
-import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
+import { dashboardAPI, dashboardUrlKey } from '~/containers/ProDashboard/services/DashboardAPI'
 import type { DashboardItemConfig } from '~/containers/ProDashboard/types'
 import { Icon } from '~/ui/Icon'
 
@@ -35,7 +35,8 @@ function DashboardPanelInner({
 	onExited,
 	sessionId
 }: DashboardPanelProps) {
-	const { authorizedFetch, user } = useAuthContext()
+	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
+	const queryClient = useQueryClient()
 
 	const enrichedItems = useMemo(() => {
 		if (!config) return []
@@ -105,7 +106,11 @@ function DashboardPanelInner({
 			)
 		},
 		onSuccess: (dashboard) => {
-			void Router.push(`/pro/${dashboard.slug || dashboard.id}`)
+			queryClient.setQueryData(
+				['pro-dashboard', 'dashboard', dashboardUrlKey(dashboard), isAuthenticated, user?.id],
+				dashboard
+			)
+			void Router.push(`/pro/${dashboardUrlKey(dashboard)}`)
 		},
 		onError: (err) => {
 			toast.error(err instanceof Error ? err.message : 'Failed to create dashboard')

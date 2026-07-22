@@ -9,12 +9,11 @@ const settledStream = {
 } as const
 
 describe('dashboard hydration state', () => {
-	it('keeps successful public streams on the streamed data path', () => {
+	it('keeps successful streams on the streamed data path', () => {
 		expect(
 			getDashboardHydrationState({
 				...settledStream,
-				hasStreamDashboard: true,
-				mode: 'view'
+				hasStreamDashboard: true
 			})
 		).toEqual({
 			dashboardReady: true,
@@ -24,18 +23,17 @@ describe('dashboard hydration state', () => {
 		})
 	})
 
-	it('opens source fallbacks for a public seed when the settled stream has no dashboard', () => {
+	it('refetches the trusted config for a seeded page when the settled stream has no dashboard', () => {
 		expect(
 			getDashboardHydrationState({
 				...settledStream,
-				hasStreamDashboard: false,
-				mode: 'view'
+				hasStreamDashboard: false
 			})
 		).toEqual({
 			dashboardReady: true,
 			streamDone: true,
 			streamHasResolved: true,
-			shouldFetchTrustedDashboardFallback: false
+			shouldFetchTrustedDashboardFallback: true
 		})
 	})
 
@@ -44,8 +42,7 @@ describe('dashboard hydration state', () => {
 			getDashboardHydrationState({
 				...settledStream,
 				streamIsDone: false,
-				hasStreamDashboard: false,
-				mode: 'view'
+				hasStreamDashboard: false
 			})
 		).toEqual({
 			dashboardReady: true,
@@ -55,15 +52,7 @@ describe('dashboard hydration state', () => {
 		})
 	})
 
-	it('requests trusted edit config after a missing stream dashboard and unlocks only after it arrives', () => {
-		const state = getDashboardHydrationState({
-			...settledStream,
-			hasStreamDashboard: false,
-			mode: 'edit'
-		})
-
-		expect(state.shouldFetchTrustedDashboardFallback).toBe(true)
-		expect(state.streamDone).toBe(true)
+	it('unlocks editing only after the trusted config arrives', () => {
 		expect(
 			isDashboardEditingLocked({
 				isReadOnly: false,
@@ -86,34 +75,34 @@ describe('dashboard hydration state', () => {
 		).toBe(false)
 	})
 
-	it('keeps a no-seed view authorization failure blocked', () => {
+	it('opens the trusted config fallback query for a no-seed failure instead of blocking', () => {
 		expect(
 			getDashboardHydrationState({
 				...settledStream,
 				hasInitialDashboard: false,
-				hasStreamDashboard: false,
-				mode: 'view'
-			})
-		).toEqual({
-			dashboardReady: false,
-			streamDone: false,
-			streamHasResolved: true,
-			shouldFetchTrustedDashboardFallback: false
-		})
-	})
-
-	it('opens only the trusted config fallback for a no-seed edit failure', () => {
-		expect(
-			getDashboardHydrationState({
-				...settledStream,
-				hasInitialDashboard: false,
-				hasStreamDashboard: false,
-				mode: 'edit'
+				hasStreamDashboard: false
 			})
 		).toEqual({
 			dashboardReady: true,
 			streamDone: true,
 			streamHasResolved: true,
+			shouldFetchTrustedDashboardFallback: false
+		})
+	})
+
+	it('keeps everything pending until auth and the stream settle', () => {
+		expect(
+			getDashboardHydrationState({
+				...settledStream,
+				hasInitialDashboard: false,
+				authReady: false,
+				streamIsDone: true,
+				hasStreamDashboard: false
+			})
+		).toEqual({
+			dashboardReady: false,
+			streamDone: false,
+			streamHasResolved: false,
 			shouldFetchTrustedDashboardFallback: false
 		})
 	})

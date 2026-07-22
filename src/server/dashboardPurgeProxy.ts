@@ -38,7 +38,9 @@ export async function fetchExistingDashboard(
 	authHeader: Record<string, string>
 ): Promise<ProxiedDashboard | null> {
 	try {
-		const response = await fetch(featuresServerUrl(`/dashboards/${encodeURIComponent(id)}`), { headers: authHeader })
+		const response = await fetch(featuresServerUrl(`/dashboards/${encodeURIComponent(id)}?_=${Date.now()}`), {
+			headers: authHeader
+		})
 		if (!response.ok) return null
 		return parseJsonObject(await response.text()) as ProxiedDashboard | null
 	} catch {
@@ -63,12 +65,6 @@ export async function purgeDashboardCache(params: {
 	before: ProxiedDashboard | null
 	after: ProxiedDashboard | null
 }): Promise<CloudflarePurgeResult> {
-	const wasPublic = params.before?.visibility === 'public'
-	const isPublic = params.after?.visibility === 'public'
-	if (!wasPublic && !isPublic) {
-		return { reason: 'dashboard is not public', status: 'skipped' }
-	}
-
 	const afterSlug = params.after?.slug ?? null
 	const beforeSlug = params.before?.slug ?? null
 	const slug = afterSlug ?? beforeSlug

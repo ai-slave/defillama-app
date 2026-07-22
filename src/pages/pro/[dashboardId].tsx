@@ -8,7 +8,9 @@ import { DashboardSeoSummary } from '~/containers/ProDashboard/components/Dashbo
 import { ProDashboardLoader } from '~/containers/ProDashboard/components/ProDashboardLoader'
 import { useDashboardEngagement } from '~/containers/ProDashboard/hooks/useDashboardEngagement'
 import {
+	type DashboardInitialRenderPayload,
 	hydrateDashboardInitialRenderPayload,
+	toOwnerDashboardInitialRenderPayload,
 	toPublicDashboardInitialRenderPayload,
 	type PublicDashboardInitialRenderPayload
 } from '~/containers/ProDashboard/initialDashboard'
@@ -20,7 +22,7 @@ import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
-const PUBLIC_DASHBOARD_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=3600'
+const PUBLIC_DASHBOARD_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=60'
 const PRIVATE_DASHBOARD_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate'
 const GENERIC_TITLE = 'DefiLlama Pro - Custom DeFi Dashboard'
 const GENERIC_DESCRIPTION =
@@ -28,7 +30,7 @@ const GENERIC_DESCRIPTION =
 
 type DashboardPageProps = {
 	dashboardId: string
-	initialDashboard: PublicDashboardInitialRenderPayload | null
+	initialDashboard: DashboardInitialRenderPayload | null
 	seo: DashboardSeo | null
 	noIndex: boolean
 	status: number
@@ -62,7 +64,10 @@ const getServerSidePropsHandler: GetServerSideProps<DashboardPageProps> = async 
 		context.res.setHeader('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
 	}
 
-	const { dashboard, status } = await fetchDashboardConfigWithStatus(dashboardId, null)
+	let { dashboard, status } = await fetchDashboardConfigWithStatus(dashboardId, authToken)
+	if (!dashboard && isAuthenticatedRequest) {
+		;({ dashboard, status } = await fetchDashboardConfigWithStatus(dashboardId, null))
+	}
 
 	if (dashboard?.slug && dashboard.slug !== dashboardId) {
 		return {
@@ -90,6 +95,17 @@ const getServerSidePropsHandler: GetServerSideProps<DashboardPageProps> = async 
 	}
 
 	if (isAuthenticatedRequest) {
+		if (dashboard) {
+			return {
+				props: {
+					dashboardId,
+					initialDashboard: toOwnerDashboardInitialRenderPayload(dashboard),
+					seo: null,
+					noIndex: true,
+					status: 200
+				}
+			}
+		}
 		return { props: noIndexProps(dashboardId, 200) }
 	}
 
@@ -147,7 +163,7 @@ function DashboardPageContent({
 }: {
 	dashboardId: string
 	initialStatus: number
-	initialDashboard: PublicDashboardInitialRenderPayload | null
+	initialDashboard: DashboardInitialRenderPayload | null
 	seo: DashboardSeo | null
 }) {
 	const router = useRouter()
@@ -198,7 +214,9 @@ function DashboardPageContent({
 	const isAccountLoading = loaders.userLoading
 	const isLoading = isAccountLoading || isValidating || isLoadingDashboard
 	const initialSeoSummary =
-		initialDashboard && seo && !currentDashboard ? <DashboardSeoSummary dashboard={initialDashboard} seo={seo} /> : null
+		initialDashboard && initialDashboard.visibility === 'public' && seo && !currentDashboard ? (
+			<DashboardSeoSummary dashboard={initialDashboard as PublicDashboardInitialRenderPayload} seo={seo} />
+		) : null
 
 	if (isLoading) {
 		return (

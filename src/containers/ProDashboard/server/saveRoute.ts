@@ -47,7 +47,13 @@ export async function dashboardSaveHandler(req: NextApiRequest, res: NextApiResp
 	}
 
 	const after = saved as ProxiedDashboard
-	await purgeDashboardCache({ id: id ?? after.id ?? '', before, after })
+	const purgeResult = await purgeDashboardCache({ id: id ?? after.id ?? '', before, after })
+	if (purgeResult.status !== 'purged') {
+		console.error(
+			`Dashboard save cache purge ${purgeResult.status}: ${'reason' in purgeResult ? purgeResult.reason : 'unknown'}`
+		)
+	}
+	res.setHeader('X-Dashboard-Cache-Purge', purgeResult.status)
 
 	return res.status(saveResponse.status).json(saved)
 }

@@ -82,6 +82,10 @@ export function useDashboardAPI() {
 			return await dashboardAPI.createDashboard(data, authorizedFetch)
 		},
 		onSuccess: (dashboard) => {
+			queryClient.setQueryData(
+				['pro-dashboard', 'dashboard', dashboardUrlKey(dashboard), isAuthenticated, user?.id],
+				dashboard
+			)
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })

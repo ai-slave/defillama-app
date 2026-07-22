@@ -326,8 +326,7 @@ export function ProDashboardAPIProvider({
 			hasInitialDashboard,
 			authReady,
 			streamIsDone: stream.isDone,
-			hasStreamDashboard: stream.dashboard != null,
-			mode
+			hasStreamDashboard: stream.dashboard != null
 		})
 	const proxyAuthToken = hasActiveSubscription && pb.authStore.isValid ? pb.authStore.token : null
 	const modeContextValue = useMemo(() => ({ mode }), [mode])

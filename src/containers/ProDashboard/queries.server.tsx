@@ -25,7 +25,7 @@ import {
 
 export async function fetchDashboardConfig(dashboardId: string, authToken: string | null): Promise<Dashboard | null> {
 	try {
-		const url = `${FEATURES_SERVER}/dashboards/${dashboardId}`
+		const url = `${FEATURES_SERVER}/dashboards/${dashboardId}?_=${Date.now()}`
 		const fetchFn = authToken ? createServerAuthorizedFetch(authToken) : fetch
 		const response = await fetchFn(url)
 		if (!response.ok) return null
@@ -40,7 +40,7 @@ export async function fetchDashboardConfigWithStatus(
 	authToken: string | null
 ): Promise<{ dashboard: Dashboard | null; status: number }> {
 	try {
-		const url = `${FEATURES_SERVER}/dashboards/${dashboardId}`
+		const url = `${FEATURES_SERVER}/dashboards/${dashboardId}?_=${Date.now()}`
 		const fetchFn = authToken ? createServerAuthorizedFetch(authToken) : fetch
 		const response = await fetchFn(url)
 		if (!response.ok) return { dashboard: null, status: response.status }

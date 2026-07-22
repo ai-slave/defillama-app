@@ -145,7 +145,7 @@ import dashboardStreamHandler from '~/pages/api/dynamic/pro-dashboard/[dashboard
 import DashboardPage, { getServerSideProps } from '~/pages/pro/[dashboardId]'
 import { getServerSideProps as getEditServerSideProps } from '~/pages/pro/[dashboardId]/edit'
 
-const PUBLIC_DASHBOARD_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=3600'
+const PUBLIC_DASHBOARD_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=60'
 const PRIVATE_DASHBOARD_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate'
 
 function createSsrContext(dashboardId: string, authToken?: string): GetServerSidePropsContext {
@@ -394,7 +394,7 @@ describe('pro dashboard cache headers', () => {
 
 		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
 		expect(context.res.setHeader).toHaveBeenCalledWith('Vary', 'Cookie, Authorization')
-		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledWith('dashboard-1', null)
+		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledWith('dashboard-1', 'auth-token')
 		expect(result).toEqual({
 			props: expect.objectContaining({
 				dashboardId: 'dashboard-1',
@@ -411,7 +411,38 @@ describe('pro dashboard cache headers', () => {
 		expect((result as any).props.initialDashboard).not.toHaveProperty('aiGenerated')
 	})
 
-	it('keeps authenticated private dashboard pages unseeded', async () => {
+	it('seeds authenticated private dashboard pages from the token-authorized config read', async () => {
+		fetchDashboardConfigWithStatusMock.mockResolvedValue({
+			dashboard: { ...publicDashboard, visibility: 'private' },
+			status: 200
+		})
+		const context = createSsrContext('dashboard-1', 'auth-token')
+
+		const result = await getServerSideProps(context)
+
+		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
+		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledTimes(1)
+		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledWith('dashboard-1', 'auth-token')
+		expect(result).toEqual({
+			props: {
+				dashboardId: 'dashboard-1',
+				initialDashboard: expect.objectContaining({
+					id: 'dashboard-1',
+					ownerId: 'user-1',
+					visibility: 'private',
+					data: expect.objectContaining({ items: publicDashboard.data.items })
+				}),
+				seo: null,
+				noIndex: true,
+				status: 200
+			}
+		})
+		expect((result as any).props.initialDashboard).not.toHaveProperty('user')
+		expect((result as any).props.initialDashboard).not.toHaveProperty('aiGenerated')
+		expect((result as any).props.initialDashboard).not.toHaveProperty('metrics')
+	})
+
+	it('keeps authenticated dashboard pages unseeded when the config read fails', async () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({ dashboard: null, status: 401 })
 		const context = createSsrContext('private-dashboard', 'auth-token')
 
@@ -419,7 +450,8 @@ describe('pro dashboard cache headers', () => {
 
 		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
 		expect(context.res.setHeader).toHaveBeenCalledWith('Vary', 'Cookie, Authorization')
-		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledWith('private-dashboard', null)
+		expect(fetchDashboardConfigWithStatusMock).toHaveBeenNthCalledWith(1, 'private-dashboard', 'auth-token')
+		expect(fetchDashboardConfigWithStatusMock).toHaveBeenNthCalledWith(2, 'private-dashboard', null)
 		expect(result).toEqual({
 			props: {
 				dashboardId: 'private-dashboard',

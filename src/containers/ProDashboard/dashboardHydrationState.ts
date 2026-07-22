@@ -5,15 +5,13 @@ export function getDashboardHydrationState({
 	hasInitialDashboard,
 	authReady,
 	streamIsDone,
-	hasStreamDashboard,
-	mode
+	hasStreamDashboard
 }: {
 	hasDashboardId: boolean
 	hasInitialDashboard: boolean
 	authReady: boolean
 	streamIsDone: boolean
 	hasStreamDashboard: boolean
-	mode: DashboardMode
 }) {
 	if (!hasDashboardId) {
 		return {
@@ -26,16 +24,14 @@ export function getDashboardHydrationState({
 
 	const streamSettled = authReady && streamIsDone
 	const trustedStreamComplete = streamSettled && hasStreamDashboard
-	const canFetchUnseededEditConfig = streamSettled && !hasStreamDashboard && !hasInitialDashboard && mode === 'edit'
-	// A server-authorized render seed may safely fall back to per-source queries, but an
-	// unseeded view must stay blocked when the stream never supplies its trusted config.
+	const canFetchUnseededConfig = streamSettled && !hasStreamDashboard && !hasInitialDashboard
 	const canUseInitialFallback = streamSettled && !hasStreamDashboard && hasInitialDashboard
 
 	return {
-		dashboardReady: hasInitialDashboard || trustedStreamComplete || canFetchUnseededEditConfig,
-		streamDone: trustedStreamComplete || canUseInitialFallback || canFetchUnseededEditConfig,
+		dashboardReady: hasInitialDashboard || trustedStreamComplete || canFetchUnseededConfig,
+		streamDone: trustedStreamComplete || canUseInitialFallback || canFetchUnseededConfig,
 		streamHasResolved: hasInitialDashboard || streamSettled,
-		shouldFetchTrustedDashboardFallback: mode === 'edit' && canUseInitialFallback
+		shouldFetchTrustedDashboardFallback: canUseInitialFallback
 	}
 }
 

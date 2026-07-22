@@ -135,7 +135,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		res.setHeader(
 			'Cache-Control',
 			canCacheAtEdge
-				? 'public, s-maxage=300, stale-while-revalidate=3600'
+				? 'public, s-maxage=300, stale-while-revalidate=60'
 				: 'private, no-cache, no-store, must-revalidate'
 		)
 

@@ -1,9 +1,26 @@
+import { readFileSync } from 'fs'
+import { join } from 'path'
+
 type FetchLike = typeof fetch
 
 type PurgeCloudflareOptions = {
 	env?: NodeJS.ProcessEnv
 	fetchImpl?: FetchLike
 	logger?: Pick<Console, 'log'>
+	buildId?: string | null
+}
+
+let cachedNextBuildId: string | null | undefined
+
+function resolveNextBuildId(env: NodeJS.ProcessEnv): string | null {
+	if (env.NEXT_BUILD_ID) return env.NEXT_BUILD_ID
+	if (cachedNextBuildId !== undefined) return cachedNextBuildId
+	try {
+		cachedNextBuildId = readFileSync(join(process.cwd(), '.next', 'BUILD_ID'), 'utf8').trim() || null
+	} catch {
+		cachedNextBuildId = null
+	}
+	return cachedNextBuildId
 }
 
 export type CloudflarePurgeResult =
@@ -49,13 +66,20 @@ export type DashboardPurgeKeys = {
 	previousSlug?: string | null
 }
 
-export function dashboardPathsToUrls(keys: DashboardPurgeKeys, env: NodeJS.ProcessEnv = process.env): string[] {
+export function dashboardPathsToUrls(
+	keys: DashboardPurgeKeys,
+	env: NodeJS.ProcessEnv = process.env,
+	buildId: string | null = null
+): string[] {
 	const siteUrl = siteUrlFromEnv(env)
 	const distinctKeys = new Set([keys.id, keys.slug, keys.previousSlug].filter((key): key is string => !!key))
 	const urls = new Set<string>()
 	for (const key of distinctKeys) {
 		urls.add(new URL(`/pro/${key}`, siteUrl).toString())
 		urls.add(new URL(`/api/dynamic/pro-dashboard/${key}/stream`, siteUrl).toString())
+		if (buildId) {
+			urls.add(new URL(`/_next/data/${buildId}/pro/${key}.json`, siteUrl).toString())
+		}
 	}
 	return Array.from(urls)
 }
@@ -111,5 +135,6 @@ export async function purgeCloudflareDashboardUrls(
 	keys: DashboardPurgeKeys,
 	options: PurgeCloudflareOptions = {}
 ): Promise<CloudflarePurgeResult> {
-	return purgeCloudflareUrls(dashboardPathsToUrls(keys, options.env), 'dashboard', options)
+	const buildId = options.buildId !== undefined ? options.buildId : resolveNextBuildId(options.env ?? process.env)
+	return purgeCloudflareUrls(dashboardPathsToUrls(keys, options.env, buildId), 'dashboard', options)
 }
