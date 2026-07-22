@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchJson } from '~/utils/async'
-import { fetchBridgeDayStats, fetchBridgeVolumeByChain } from '../api'
+import { fetchBridgeDayStats, fetchBridgeVolumeAll, fetchBridgeVolumeByChain, fetchBridgeVolumeBySlug } from '../api'
 
 vi.mock('~/utils/async', () => ({
 	fetchJson: vi.fn()
@@ -40,5 +40,47 @@ describe('fetchBridgeVolumeByChain', () => {
 
 		await expect(fetchBridgeVolumeByChain('Arbitrum')).resolves.toBe(chart)
 		await expect(fetchBridgeVolumeByChain('Zkfair')).resolves.toEqual([])
+	})
+})
+
+describe('fetchBridgeVolumeAll', () => {
+	beforeEach(() => {
+		vi.mocked(fetchJson).mockReset()
+	})
+
+	it('discards cache metadata returned for a bridge chart', async () => {
+		vi.mocked(fetchJson).mockResolvedValue({ cacheTTL: 4200, storedAt: 1_784_711_608_405 })
+
+		await expect(fetchBridgeVolumeAll(12)).resolves.toEqual([])
+		expect(fetchJson).toHaveBeenCalledWith(expect.stringContaining('/bridgevolume/all?id=12'))
+	})
+
+	it('preserves a valid bridge chart array', async () => {
+		const chart = [{ date: '1784678400', depositUSD: 10, withdrawUSD: 4 }]
+		vi.mocked(fetchJson).mockResolvedValue(chart)
+
+		await expect(fetchBridgeVolumeAll(12)).resolves.toBe(chart)
+	})
+})
+
+describe('fetchBridgeVolumeBySlug', () => {
+	beforeEach(() => {
+		vi.mocked(fetchJson).mockReset()
+	})
+
+	it('rejects cache metadata returned instead of the slug response', async () => {
+		vi.mocked(fetchJson).mockResolvedValue({ cacheTTL: 4200, storedAt: 1_784_711_608_405 })
+
+		await expect(fetchBridgeVolumeBySlug('across')).rejects.toThrow('invalid slug response')
+	})
+
+	it('preserves a valid slug response', async () => {
+		const response = {
+			bridge: { id: 1, displayName: 'Across', slug: 'across', bridgeDbName: 'across' },
+			dailyVolumes: [{ date: '1784678400', depositUSD: 10, withdrawUSD: 4 }]
+		}
+		vi.mocked(fetchJson).mockResolvedValue(response)
+
+		await expect(fetchBridgeVolumeBySlug('across')).resolves.toBe(response)
 	})
 })

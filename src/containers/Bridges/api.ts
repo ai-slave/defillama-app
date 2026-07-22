@@ -55,6 +55,28 @@ const unwrapBridgeResponse = <T>(context: string, payload: T | BridgeApiErrorEnv
 	throw new Error(`${context}: [${payload.statusCode}] ${message}`)
 }
 
+const unwrapBridgeVolumeChart = (context: string, payload: unknown): RawBridgeVolumeResponse => {
+	const chart = unwrapBridgeResponse(context, payload)
+	// The API proxy can temporarily return cache metadata instead of the cached chart.
+	return Array.isArray(chart) ? (chart as RawBridgeVolumeResponse) : []
+}
+
+const unwrapBridgeVolumeBySlug = (context: string, payload: unknown): RawBridgeVolumeBySlugResponse => {
+	const response = unwrapBridgeResponse(context, payload)
+	if (
+		typeof response !== 'object' ||
+		response === null ||
+		!('bridge' in response) ||
+		typeof response.bridge !== 'object' ||
+		response.bridge === null ||
+		!('dailyVolumes' in response) ||
+		!Array.isArray(response.dailyVolumes)
+	) {
+		throw new Error('Bridge volume API returned an invalid slug response')
+	}
+	return response as unknown as RawBridgeVolumeBySlugResponse
+}
+
 export function fetchBridges(includeChains: true): Promise<RawBridgesWithChainsResponse>
 export function fetchBridges(includeChains?: false): Promise<RawBridgesResponse>
 export function fetchBridges(includeChains = false): Promise<RawBridgesResponse | RawBridgesWithChainsResponse> {
@@ -68,26 +90,18 @@ export function fetchBridges(includeChains = false): Promise<RawBridgesResponse 
 export function fetchBridgeVolumeAll(id?: string | number): Promise<RawBridgeVolumeResponse> {
 	const query = id == null ? '' : `?id=${encodeURIComponent(String(id))}`
 	const url = `${BRIDGEVOLUME_API}/all${query}`
-	return fetchJson<RawBridgeVolumeResponse | BridgeApiErrorEnvelope>(url).then((response) =>
-		unwrapBridgeResponse(url, response)
-	)
+	return fetchJson<unknown>(url).then((response) => unwrapBridgeVolumeChart(url, response))
 }
 
 export function fetchBridgeVolumeByChain(chain: string, id?: string | number): Promise<RawBridgeVolumeResponse> {
 	const query = id == null ? '' : `?id=${encodeURIComponent(String(id))}`
 	const url = `${BRIDGEVOLUME_API}/${encodeURIComponent(chain)}${query}`
-	return fetchJson<RawBridgeVolumeResponse | BridgeApiErrorEnvelope>(url).then((response) => {
-		const chart = unwrapBridgeResponse(url, response)
-		// The API proxy can temporarily return cache metadata instead of the cached chart.
-		return Array.isArray(chart) ? chart : []
-	})
+	return fetchJson<unknown>(url).then((response) => unwrapBridgeVolumeChart(url, response))
 }
 
 export function fetchBridgeVolumeBySlug(protocolSlug: string): Promise<RawBridgeVolumeBySlugResponse> {
 	const url = `${BRIDGEVOLUME_API_SLUG}/${encodeURIComponent(protocolSlug)}`
-	return fetchJson<RawBridgeVolumeBySlugResponse | BridgeApiErrorEnvelope>(url).then((response) =>
-		unwrapBridgeResponse(url, response)
-	)
+	return fetchJson<unknown>(url).then((response) => unwrapBridgeVolumeBySlug(url, response))
 }
 
 export function fetchBridgeDayStats(
