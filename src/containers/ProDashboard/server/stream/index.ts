@@ -809,6 +809,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			const seenChartBuilderKeys = new Set<string>()
 			for (const builderItem of chartBuilderItems) {
 				const cfg = builderItem.config
+				if (cfg.mode !== 'protocol' && STREAM_PROTOCOL_SERIES_SKIP_METRICS.has(cfg.metric)) continue
 				const filterMode = cfg.filterMode
 				const chainFilterMode = resolveChartBuilderFilterMode(cfg.chainFilterMode, filterMode)
 				const categoryFilterMode = resolveChartBuilderFilterMode(cfg.categoryFilterMode, filterMode)
@@ -841,7 +842,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 									series = series.filter((entry) => !entry.name.startsWith('Others'))
 								}
 								result = { series }
-							} else if (!STREAM_PROTOCOL_SERIES_SKIP_METRICS.has(cfg.metric)) {
+							} else {
 								const data = await withTimeout(
 									ProtocolChartBuilderData.getProtocolBreakdownData(
 										cfg.metric as Exclude<

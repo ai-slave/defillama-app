@@ -113,6 +113,16 @@ vi.mock('~/containers/ProDashboard/services/ProtocolCharts', () => ({
 	default: {}
 }))
 
+const protocolChartBuilderDataMock = vi.hoisted(() => ({
+	getProtocolChainData: vi.fn(),
+	getProtocolBreakdownData: vi.fn()
+}))
+
+vi.mock('~/containers/ProDashboard/services/ProtocolChartBuilderData', () => ({
+	__esModule: true,
+	default: protocolChartBuilderDataMock
+}))
+
 vi.mock('~/containers/ProtocolOverview/api', () => ({
 	fetchProtocolBySlug: vi.fn()
 }))
@@ -614,6 +624,80 @@ describe('pro dashboard cache headers', () => {
 		expect(claimedTableSources).toEqual([true, false])
 		expect(tableSourceFetches).toBe(1)
 		expect(fetchProtocolsTableMock).toHaveBeenCalledOnce()
+		expect(res.end).toHaveBeenCalled()
+	})
+
+	it('does not seed chart-builder data for stream-skipped metrics', async () => {
+		fetchDashboardConfigMock.mockResolvedValue({
+			...publicDashboard,
+			data: {
+				...publicDashboard.data,
+				items: [
+					{
+						id: 'builder-1',
+						kind: 'builder',
+						config: {
+							mode: 'chains',
+							metric: 'tvl',
+							protocol: null,
+							chains: [],
+							limit: 10,
+							categories: [],
+							chainCategories: [],
+							protocolCategories: [],
+							hideOthers: false,
+							groupByParent: false,
+							filterMode: 'include'
+						}
+					}
+				]
+			}
+		})
+		const res = createMockNextApiResponse()
+
+		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
+
+		const chunks = res.write.mock.calls.map((call) => String(call[0]))
+		expect(chunks.some((chunk) => chunk.includes('"type":"chartBuilderData"'))).toBe(false)
+		expect(protocolChartBuilderDataMock.getProtocolBreakdownData).not.toHaveBeenCalled()
+		expect(res.end).toHaveBeenCalled()
+	})
+
+	it('streams chart-builder data for metrics the stream owns', async () => {
+		protocolChartBuilderDataMock.getProtocolBreakdownData.mockResolvedValue({
+			series: [{ name: 'Aave', data: [[1_700_000_000, 5]] }]
+		})
+		fetchDashboardConfigMock.mockResolvedValue({
+			...publicDashboard,
+			data: {
+				...publicDashboard.data,
+				items: [
+					{
+						id: 'builder-2',
+						kind: 'builder',
+						config: {
+							mode: 'chains',
+							metric: 'fees',
+							protocol: null,
+							chains: [],
+							limit: 10,
+							categories: [],
+							chainCategories: [],
+							protocolCategories: [],
+							hideOthers: false,
+							groupByParent: false,
+							filterMode: 'include'
+						}
+					}
+				]
+			}
+		})
+		const res = createMockNextApiResponse()
+
+		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
+
+		const chunks = res.write.mock.calls.map((call) => String(call[0]))
+		expect(chunks.some((chunk) => chunk.includes('"type":"chartBuilderData"') && chunk.includes('Aave'))).toBe(true)
 		expect(res.end).toHaveBeenCalled()
 	})
 
