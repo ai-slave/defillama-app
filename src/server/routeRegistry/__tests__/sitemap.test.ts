@@ -166,16 +166,21 @@ describe('cache-backed sitemap sections', () => {
 			expect.arrayContaining(['stablecoin/tether', 'stablecoins/ethereum'])
 		)
 		expect(entriesBySection.get('exchanges')).toEqual(expect.arrayContaining(['exchange/binance', 'exchange/coinbase']))
-		// Listing pages (/exchanges, /cexs, /exchanges/charts, /mica) come from the nav data.
-		expect(entriesBySection.get('static')).toEqual(expect.arrayContaining(['exchanges/charts', 'cexs']))
+		// Listing pages that remain in the nav data are included in the static section.
+		expect(entriesBySection.get('static')).toEqual(expect.arrayContaining(['cexs', 'mica']))
+		expect(entriesBySection.get('static')).not.toContain('exchanges')
+		expect(entriesBySection.get('static')).not.toContain('exchanges/charts')
 		expect(entriesBySection.get('static')).not.toContain('markets')
-		// binance-cex maps to an exchange profile so its /cex URLs now redirect
-		// and must stay out of the sitemap; unmapped venues remain listed.
 		expect(entriesBySection.get('cexs')).toEqual(
-			expect.arrayContaining(['cex/no-markets-cex', 'cex/assets/no-markets-cex', 'cex/stablecoins/no-markets-cex'])
+			expect.arrayContaining([
+				'cex/binance-cex',
+				'cex/assets/binance-cex',
+				'cex/stablecoins/binance-cex',
+				'cex/no-markets-cex',
+				'cex/assets/no-markets-cex',
+				'cex/stablecoins/no-markets-cex'
+			])
 		)
-		expect(entriesBySection.get('cexs')).not.toContain('cex/binance-cex')
-		expect(entriesBySection.get('cexs')).not.toContain('cex/markets/binance-cex')
 		expect(entriesBySection.get('bridges')).toEqual(expect.arrayContaining(['bridge/stargate', 'bridges/ethereum']))
 		expect(getSitemapSectionPath('protocols-by-category')).toBe('sitemap/protocols-by-category.xml')
 		expect(entriesBySection.get('dat')).toEqual(

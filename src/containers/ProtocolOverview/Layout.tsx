@@ -380,18 +380,18 @@ export function ProtocolOverviewLayout({
 							) : null}
 						</>
 					)}
-					{protocolTabs
-						.filter((pt) => (isCEX ? pt.id !== 'stablecoins' : true))
-						.map((pt) => (
-							<TabLink
-								as={ButtonLink}
-								key={`${pt.id}-${name}`}
-								href={`${pt.route}/${slug(name)}`}
-								data-active={pt.id === tab}
-							>
-								{pt.name}
-							</TabLink>
-						))}
+					{!isCEX
+						? protocolTabs.map((pt) => (
+								<TabLink
+									as={ButtonLink}
+									key={`${pt.id}-${name}`}
+									href={`${pt.route}/${slug(name)}`}
+									data-active={pt.id === tab}
+								>
+									{pt.name}
+								</TabLink>
+							))
+						: null}
 					{showInvestorRelations && irDashboard ? (
 						<TabLink
 							as={ButtonLink}

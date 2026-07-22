@@ -1,7 +1,6 @@
 import { Cexs } from '~/containers/Cexs'
 import { getCexsPageData } from '~/containers/Cexs/queries'
 import type { ICex } from '~/containers/Cexs/types'
-import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
 import { resolveExchangeByDefillamaCexSlug } from '~/containers/Markets/server/dataset.index'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -13,9 +12,7 @@ export const getStaticProps = withPerformanceLogging('cexs/index', async () => {
 	const cexs = data.cexs.map((cex): ICex => {
 		if (!cex.defillamaCexSlug) return cex
 		const exchange = resolveExchangeByDefillamaCexSlug(cexIndex, cex.defillamaCexSlug)
-		return exchange
-			? { ...cex, exchangeSlug: exchange.exchange, profileUrl: `/exchange/${exchange.exchange}?section=reserves` }
-			: cex
+		return exchange ? { ...cex, exchangeSlug: exchange.exchange } : cex
 	})
 	return {
 		props: { cexs },
@@ -28,13 +25,12 @@ export const CEXS_PAGE_METADATA = {
 	description:
 		'Compare assets held in tracked centralized exchange wallets, clean reserves, and net inflows. Reserve assets do not include exchange liabilities.',
 	canonicalUrl: '/cexs',
-	pageName: ['Exchanges']
+	pageName: ['CEXs']
 }
 
 export default function CexsPage({ cexs }: { cexs: ICex[] }) {
 	return (
 		<Layout {...CEXS_PAGE_METADATA}>
-			<ExchangesNav activePage="reserves" />
 			<Cexs cexs={cexs} />
 		</Layout>
 	)

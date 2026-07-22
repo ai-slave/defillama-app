@@ -1,5 +1,3 @@
-import { resolveExchangeByDefillamaCexSlug, type CexExchangeSlugIndex } from '~/containers/Markets/server/dataset.index'
-import { fetchCexExchangeSlugIndex } from '~/containers/Markets/server/dataset.server'
 import { getMetadataCache, type StaticParamPath } from '~/server/routeRegistry/common'
 import { slug } from '~/utils'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
@@ -45,21 +43,11 @@ export async function getCexStaticPaths(limit = 10): Promise<Array<StaticParamPa
 		.map((cex) => ({ params: { cex } }))
 }
 
-export async function getCexSitemapRoutes(metadataCache: MetadataCache): Promise<string[]> {
+export function getCexSitemapRoutes(metadataCache: MetadataCache): string[] {
 	const routes = new Set<string>()
 	const cexSlugs = getCanonicalCexSlugsFromMetadata(metadataCache)
 
-	let cexIndex: CexExchangeSlugIndex | null = null
-	try {
-		cexIndex = await fetchCexExchangeSlugIndex()
-	} catch (error) {
-		console.warn('[sitemap] cex exchange index unavailable; keeping all /cex routes', error)
-	}
-
 	for (const cexSlug of cexSlugs) {
-		// Venues mapped to an exchange profile redirect to /exchange/:slug — a
-		// sitemap must not advertise redirecting URLs.
-		if (cexIndex && resolveExchangeByDefillamaCexSlug(cexIndex, cexSlug)) continue
 		routes.add(`cex/${cexSlug}`)
 		routes.add(`cex/assets/${cexSlug}`)
 		routes.add(`cex/stablecoins/${cexSlug}`)

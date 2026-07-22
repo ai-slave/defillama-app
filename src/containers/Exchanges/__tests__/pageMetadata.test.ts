@@ -11,7 +11,7 @@ describe('Exchanges page metadata', () => {
 			CEXS_PAGE_METADATA.pageName,
 			EXCHANGE_RESEARCH_PAGE_METADATA.pageName,
 			MICA_PAGE_METADATA.pageName
-		]).toEqual([['Exchanges'], ['Exchanges'], ['Exchanges'], ['Exchanges']])
+		]).toEqual([['Exchanges'], ['CEXs'], ['Exchanges'], ['Exchanges']])
 
 		expect(EXCHANGES_PAGE_METADATA).toMatchObject({
 			title: 'Crypto Exchange Volume, Liquidity and Transparency - DefiLlama',

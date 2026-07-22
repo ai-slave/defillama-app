@@ -1,3 +1,4 @@
+import { ExchangeAccessGate } from '~/containers/Exchanges/ExchangeAccessGate'
 import { ExchangeResearch } from '~/containers/Exchanges/ExchangeResearch'
 import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
 import { fetchExchangeResearchReport } from '~/containers/Exchanges/master.api'
@@ -21,9 +22,11 @@ export const EXCHANGE_RESEARCH_PAGE_METADATA = {
 
 export default function ExchangeChartsPage() {
 	return (
-		<Layout {...EXCHANGE_RESEARCH_PAGE_METADATA}>
-			<ExchangesNav activePage="charts" />
-			<ExchangeResearch loadReport={fetchExchangeResearchReport} />
-		</Layout>
+		<ExchangeAccessGate>
+			<Layout {...EXCHANGE_RESEARCH_PAGE_METADATA}>
+				<ExchangesNav activePage="charts" />
+				<ExchangeResearch loadReport={fetchExchangeResearchReport} />
+			</Layout>
+		</ExchangeAccessGate>
 	)
 }

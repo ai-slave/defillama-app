@@ -2,8 +2,6 @@ export interface ICex {
 	name: string
 	defillamaCexSlug?: string
 	exchangeSlug?: string
-	/** Canonical profile destination: /exchange/:slug?section=reserves when the venue has a markets profile, else the legacy /cex page. */
-	profileUrl?: string
 	coin?: string
 	coinSymbol?: string
 	walletsLink?: string

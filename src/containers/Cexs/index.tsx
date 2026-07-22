@@ -112,6 +112,7 @@ const columns = [
 		enableSorting: false,
 		cell: ({ getValue, row }) => {
 			const name = getValue()
+			const cexSlug = row.original.defillamaCexSlug
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
@@ -121,13 +122,10 @@ const columns = [
 						fallbackSrc={letterLogoDataUri(name)}
 						alt={`${name} logo`}
 					/>
-					{row.original.defillamaCexSlug == null ? (
+					{cexSlug == null ? (
 						name
 					) : (
-						<BasicLink
-							href={row.original.profileUrl ?? `/cex/${slug(row.original.defillamaCexSlug)}`}
-							className="truncate label-md text-link hover:underline"
-						>
+						<BasicLink href={`/cex/${slug(cexSlug)}`} className="truncate label-md text-link hover:underline">
 							{name}
 						</BasicLink>
 					)}

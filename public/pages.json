@@ -501,20 +501,6 @@
       ]
     },
     {
-      "name": "Exchanges",
-      "route": "/exchanges",
-      "category": "Exchanges",
-      "description": "Centralized and decentralized exchange volume, open interest, liquidity, fees, reserves, and compliance metadata",
-      "searchKeywords": [
-        "exchange",
-        "exchanges",
-        "cex",
-        "dex",
-        "orderbook",
-        "open interest"
-      ]
-    },
-    {
       "name": "Exchange Reserves",
       "route": "/cexs",
       "category": "Exchanges",
@@ -526,19 +512,6 @@
         "cex reserves",
         "exchange reserves",
         "proof of reserves"
-      ]
-    },
-    {
-      "name": "Exchange Charts",
-      "route": "/exchanges/charts",
-      "category": "Exchanges",
-      "description": "Historical volume, open interest, depth, and normalized volume across exchanges",
-      "searchKeywords": [
-        "exchange charts",
-        "exchange volume",
-        "exchange open interest",
-        "exchange depth",
-        "normalized volume"
       ]
     },
     {

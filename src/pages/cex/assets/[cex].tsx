@@ -43,14 +43,6 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(`/cex/assets/${cexRoute.canonicalSlug}`, true)
 		}
 
-		// Venues with a markets-server profile are served by the canonical
-		// /exchange page; the legacy page keeps rendering for the rest.
-		const { resolveExchangeByDefillamaCexSlug } = await import('~/containers/Markets/server/dataset.server')
-		const exchange = await resolveExchangeByDefillamaCexSlug(cexRoute.canonicalSlug)
-		if (exchange) {
-			return canonicalRouteRedirect(`/exchange/${exchange.exchange}?section=reserves`)
-		}
-
 		const protocolData = await fetchProtocolOverviewMetrics(cexRoute.canonicalSlug)
 
 		if (!protocolData) {
