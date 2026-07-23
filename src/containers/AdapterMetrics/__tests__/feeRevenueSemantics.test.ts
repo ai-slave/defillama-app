@@ -8,8 +8,7 @@ import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
 
 type CapturedLayoutProps = {
 	canonicalUrl?: string
-	metricFilters?: unknown
-	metricFiltersLabel?: string
+	tvlOptions?: unknown
 }
 
 const mocks = vi.hoisted(() => ({
@@ -19,19 +18,11 @@ const mocks = vi.hoisted(() => ({
 			name: 'Ethereum'
 		}
 	},
-	feesOptions: [
-		{ name: 'Bribes', key: 'bribes', help: null },
-		{ name: 'Token Tax', key: 'tokentax', help: null }
-	],
 	getChainsByAdapterPageData: vi.fn(),
-	getChainsByFeesAdapterPageData: vi.fn(),
+	getChainsByChainNativeFeeRevenuePageData: vi.fn(),
 	getChainsByREVPageData: vi.fn(),
 	layoutProps: [] as Array<CapturedLayoutProps>,
 	maxAgeForNext: vi.fn(() => 22)
-}))
-
-vi.mock('~/components/Filters/options', () => ({
-	feesOptions: mocks.feesOptions
 }))
 
 vi.mock('~/containers/AdapterMetrics/ChainsByAdapter', () => ({
@@ -40,7 +31,7 @@ vi.mock('~/containers/AdapterMetrics/ChainsByAdapter', () => ({
 
 vi.mock('~/containers/AdapterMetrics/queries', () => ({
 	getChainsByAdapterPageData: mocks.getChainsByAdapterPageData,
-	getChainsByFeesAdapterPageData: mocks.getChainsByFeesAdapterPageData,
+	getChainsByChainNativeFeeRevenuePageData: mocks.getChainsByChainNativeFeeRevenuePageData,
 	getChainsByREVPageData: mocks.getChainsByREVPageData
 }))
 
@@ -108,7 +99,7 @@ describe('fees and revenue page semantics', () => {
 		vi.clearAllMocks()
 		mocks.layoutProps = []
 		mocks.getChainsByAdapterPageData.mockResolvedValue({ chains: [] })
-		mocks.getChainsByFeesAdapterPageData.mockResolvedValue({ chains: [] })
+		mocks.getChainsByChainNativeFeeRevenuePageData.mockResolvedValue({ chains: [] })
 		mocks.getChainsByREVPageData.mockResolvedValue({ chains: [] })
 	})
 
@@ -145,7 +136,7 @@ describe('fees and revenue page semantics', () => {
 
 		switch (ranking.builder) {
 			case 'chain-native':
-				expect(mocks.getChainsByFeesAdapterPageData).toHaveBeenCalledWith({
+				expect(mocks.getChainsByChainNativeFeeRevenuePageData).toHaveBeenCalledWith({
 					adapterType: ADAPTER_TYPES.FEES,
 					dataType: ranking.dataType,
 					chainMetadata: mocks.chainMetadata
@@ -160,7 +151,7 @@ describe('fees and revenue page semantics', () => {
 					chainMetadata: mocks.chainMetadata,
 					includeChartData: false
 				})
-				expect(mocks.getChainsByFeesAdapterPageData).not.toHaveBeenCalled()
+				expect(mocks.getChainsByChainNativeFeeRevenuePageData).not.toHaveBeenCalled()
 				expect(mocks.getChainsByREVPageData).not.toHaveBeenCalled()
 				break
 			case 'rev':
@@ -168,7 +159,7 @@ describe('fees and revenue page semantics', () => {
 					chainMetadata: mocks.chainMetadata
 				})
 				expect(mocks.getChainsByAdapterPageData).not.toHaveBeenCalled()
-				expect(mocks.getChainsByFeesAdapterPageData).not.toHaveBeenCalled()
+				expect(mocks.getChainsByChainNativeFeeRevenuePageData).not.toHaveBeenCalled()
 				break
 			default: {
 				const exhaustiveCheck: never = ranking
@@ -177,18 +168,10 @@ describe('fees and revenue page semantics', () => {
 		}
 	})
 
-	it('pins which chain ranking pages expose fee extra controls', async () => {
-		const metricFilterLabelsByRoute = new Map<string, string>([
-			[feeRevenueMetrics.chainFees.ranking.route, 'Include in Fees'],
-			[feeRevenueMetrics.chainRevenue.ranking.route, 'Include in Revenue'],
-			[feeRevenueMetrics.appFees.ranking.route, 'Include in App Fees'],
-			[feeRevenueMetrics.appRevenue.ranking.route, 'Include in App Revenue']
-		])
-
+	it('keeps fee/revenue ranking layouts free of metric filter controls', async () => {
 		for (const row of rankingPageRows) {
 			const page = await row.loadPage()
 			const Page = page.default as unknown as ComponentType<Record<string, unknown>>
-			const expectedMetricFiltersLabel = metricFilterLabelsByRoute.get(row.route)
 
 			mocks.layoutProps = []
 			renderToStaticMarkup(
@@ -201,24 +184,12 @@ describe('fees and revenue page semantics', () => {
 			)
 
 			expect(mocks.layoutProps).toHaveLength(1)
-
-			if (expectedMetricFiltersLabel) {
-				expect(mocks.layoutProps[0]).toMatchObject({
-					canonicalUrl: row.route,
-					metricFilters: mocks.feesOptions,
-					metricFiltersLabel: expectedMetricFiltersLabel
-				})
-			} else {
-				expect(mocks.layoutProps[0]).toMatchObject({
-					canonicalUrl: row.route
-				})
-				expect(mocks.layoutProps[0].metricFilters).toBeUndefined()
-				expect(mocks.layoutProps[0].metricFiltersLabel).toBeUndefined()
-			}
+			expect(mocks.layoutProps[0]).toMatchObject({ canonicalUrl: row.route })
+			expect(mocks.layoutProps[0].tvlOptions).toBeUndefined()
 		}
 	})
 
-	it('exposes fee extra controls on holders revenue chain rankings', async () => {
+	it('keeps holders revenue ranking layouts free of TVL filters', async () => {
 		const page = await import('~/pages/holders-revenue/chains')
 		const Page = page.default as unknown as ComponentType<Record<string, unknown>>
 
@@ -230,10 +201,7 @@ describe('fees and revenue page semantics', () => {
 		)
 
 		expect(mocks.layoutProps).toHaveLength(1)
-		expect(mocks.layoutProps[0]).toMatchObject({
-			canonicalUrl: '/holders-revenue/chains',
-			metricFilters: mocks.feesOptions,
-			metricFiltersLabel: 'Include in Revenue'
-		})
+		expect(mocks.layoutProps[0]).toMatchObject({ canonicalUrl: '/holders-revenue/chains' })
+		expect(mocks.layoutProps[0].tvlOptions).toBeUndefined()
 	})
 })

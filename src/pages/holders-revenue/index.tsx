@@ -1,4 +1,3 @@
-import { feesOptions } from '~/components/Filters/options'
 import { AdapterByChain } from '~/containers/AdapterMetrics/AdapterByChain'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { getAdapterByChainPageData } from '~/containers/AdapterMetrics/queries'
@@ -36,8 +35,6 @@ const RevenueOnAllChains = (props: IAdapterByChainPageData) => {
 			title="Holders Revenue Rankings - DefiLlama"
 			description="Track holder revenue by protocol from buyback and burn, fee burning, and distributions to stakers."
 			canonicalUrl={`/holders-revenue`}
-			metricFilters={feesOptions}
-			metricFiltersLabel="Include in Revenue"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

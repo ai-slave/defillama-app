@@ -35,16 +35,6 @@ const CHART_METADATA = {
 		adapterType: ADAPTER_TYPES.FEES,
 		dataType: ADAPTER_DATA_TYPES.DAILY_APP_REVENUE
 	},
-	bribes: {
-		type: 'dimensions',
-		adapterType: ADAPTER_TYPES.FEES,
-		dataType: ADAPTER_DATA_TYPES.DAILY_BRIBES_REVENUE
-	},
-	tokenTax: {
-		type: 'dimensions',
-		adapterType: ADAPTER_TYPES.FEES,
-		dataType: ADAPTER_DATA_TYPES.DAILY_TOKEN_TAXES
-	},
 	aggregators: { type: 'dimensions', adapterType: ADAPTER_TYPES.AGGREGATORS },
 	perps: { type: 'dimensions', adapterType: ADAPTER_TYPES.PERPS },
 	bridgeAggregators: { type: 'dimensions', adapterType: ADAPTER_TYPES.BRIDGE_AGGREGATORS },
@@ -318,12 +308,6 @@ export default class ChainCharts {
 	}
 	static async revenue(chain: string): Promise<[number, number][]> {
 		return this.getData('revenue', chain)
-	}
-	static async bribes(chain: string): Promise<[number, number][]> {
-		return this.getData('bribes', chain)
-	}
-	static async tokenTax(chain: string): Promise<[number, number][]> {
-		return this.getData('tokenTax', chain)
 	}
 	static async aggregators(chain: string): Promise<[number, number][]> {
 		return this.getData('aggregators', chain)

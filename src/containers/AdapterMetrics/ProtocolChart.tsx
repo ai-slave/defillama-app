@@ -14,10 +14,8 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ChartBuilderConfig } from '~/containers/ProDashboard/types'
 import { getAdapterBuilderMetric } from '~/containers/ProDashboard/utils/adapterChartMapping'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
-import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelectionWithFixedRemainder } from '~/hooks/useSeriesSelection'
-import { FEE_EXTRA_CONFIG_BY_SETTING, FEE_EXTRA_CONFIGS, type FeeExtraConfig } from '~/metrics/feeExtras'
 import { ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
 import { getNDistinctColors, slug } from '~/utils'
@@ -59,7 +57,6 @@ export const DimensionProtocolChartByType = ({
 	dataType,
 	chartType,
 	breakdownNames,
-	metadata,
 	hallmarks,
 	title
 }: {
@@ -69,12 +66,9 @@ export const DimensionProtocolChartByType = ({
 	dataType?: `${ADAPTER_DATA_TYPES}`
 	chartType: 'chain' | 'version'
 	breakdownNames: string[]
-	metadata?: { bribeRevenue?: boolean; tokenTax?: boolean }
 	hallmarks?: [number, string][]
 	title: string
 }) => {
-	const [feesSettings] = useLocalStorageSettingsManager('fees')
-
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['dimension-adapter-chart-breakdown', protocolName, adapterType, dataType ?? null, chartType],
 		queryFn: () =>
@@ -91,79 +85,7 @@ export const DimensionProtocolChartByType = ({
 		retry: 0
 	})
 
-	const feeExtraQueryConfigs = React.useMemo(() => {
-		const buildConfig = (extra: FeeExtraConfig) => {
-			const metricEnabled = metadata?.[extra.protocolMetadataField]
-			const enabled = !!(metricEnabled && feesSettings[extra.setting])
-
-			return {
-				queryKey: [
-					'dimension-adapter-chart-breakdown',
-					protocolName,
-					adapterType,
-					extra.dataType,
-					chartType,
-					metricEnabled ?? false,
-					feesSettings[extra.setting] ?? false
-				],
-				queryFn: () =>
-					enabled
-						? fetchJson<Array<[number, Record<string, number>]>>(
-								buildAdapterProtocolBreakdownApiUrl({
-									adapterType,
-									protocol: protocolName,
-									dataType: extra.dataType,
-									type: chartType
-								})
-							)
-						: Promise.resolve(null),
-				enabled,
-				staleTime: 60 * 60 * 1000,
-				refetchOnWindowFocus: false,
-				retry: 0
-			}
-		}
-
-		return {
-			bribes: buildConfig(FEE_EXTRA_CONFIG_BY_SETTING.bribes),
-			tokentax: buildConfig(FEE_EXTRA_CONFIG_BY_SETTING.tokentax)
-		}
-	}, [adapterType, chartType, feesSettings, metadata, protocolName])
-
-	const {
-		data: bribeData,
-		isLoading: fetchingBribeData,
-		error: fetchingBribeError
-	} = useQuery(feeExtraQueryConfigs.bribes)
-
-	const {
-		data: tokenTaxData,
-		isLoading: fetchingTokenTaxData,
-		error: fetchingTokenTaxError
-	} = useQuery(feeExtraQueryConfigs.tokentax)
-
-	const failedApiErrors = React.useMemo(() => {
-		const errors: string[] = []
-		const pushError = (label: string, value: unknown) => {
-			if (!value) return
-			const message = value instanceof Error ? value.message : typeof value === 'string' ? value : JSON.stringify(value)
-			if (!message) return
-			errors.push(message.startsWith(`${label}:`) ? message : `${label}: ${message}`)
-		}
-
-		pushError('main', error)
-
-		const feeExtraErrors = { bribes: fetchingBribeError, tokentax: fetchingTokenTaxError }
-		for (const extra of FEE_EXTRA_CONFIGS) {
-			if (feeExtraQueryConfigs[extra.setting].enabled) {
-				pushError(extra.dataType, feeExtraErrors[extra.setting])
-			}
-		}
-
-		return errors
-	}, [error, fetchingBribeError, fetchingTokenTaxError, feeExtraQueryConfigs])
-
-	if (isLoading || fetchingBribeData || fetchingTokenTaxData) {
+	if (isLoading) {
 		return (
 			<ChartPanelExportShellFallback
 				role="status"
@@ -176,17 +98,13 @@ export const DimensionProtocolChartByType = ({
 		)
 	}
 
-	if (failedApiErrors.length > 0) {
+	if (error) {
 		return (
 			<ChartPanelExportShellFallback role="alert" className="col-span-2 flex flex-col items-center justify-center">
 				<div className="flex flex-col gap-2 p-2">
-					<ul className="flex flex-col gap-4 text-xs text-error">
-						{failedApiErrors.map((apiError, index) => (
-							<li key={`${apiError}-${index}`} className="break-all">
-								{apiError}
-							</li>
-						))}
-					</ul>
+					<p className="text-xs break-all text-error">
+						{error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error)}
+					</p>
 				</div>
 			</ChartPanelExportShellFallback>
 		)
@@ -195,8 +113,6 @@ export const DimensionProtocolChartByType = ({
 	return (
 		<ChartByType
 			data={data ?? []}
-			bribeData={bribeData ?? undefined}
-			tokenTaxData={tokenTaxData ?? undefined}
 			breakdownNames={breakdownNames}
 			title={title}
 			chartType={chartType}
@@ -210,8 +126,6 @@ export const DimensionProtocolChartByType = ({
 
 const ChartByType = ({
 	data,
-	bribeData,
-	tokenTaxData,
 	title,
 	breakdownNames,
 	chartType,
@@ -221,8 +135,6 @@ const ChartByType = ({
 	hallmarks
 }: {
 	data: Array<[number, Record<string, number>]>
-	bribeData?: Array<[number, Record<string, number>]>
-	tokenTaxData?: Array<[number, Record<string, number>]>
 	title?: string
 	breakdownNames: string[]
 	chartType: 'chain' | 'version'
@@ -309,8 +221,6 @@ const ChartByType = ({
 			}
 		}
 		addChart(data)
-		addChart(bribeData)
-		addChart(tokenTaxData)
 
 		// Sort dates and build dataset rows
 		const sortedDates = Array.from(aggregatedByDate.keys()).sort((a, b) => a - b)
@@ -360,7 +270,7 @@ const ChartByType = ({
 			dataset: { source, dimensions: ['timestamp', ...uniqueBreakdownNames] },
 			charts: chartsConfig
 		}
-	}, [uniqueBreakdownNames, chartInterval, data, bribeData, tokenTaxData])
+	}, [uniqueBreakdownNames, chartInterval, data])
 	const deferredMainChartData = React.useDeferredValue(mainChartData)
 	const exportProtocolName = protocolDisplayName ?? protocolName
 	const exportMetricTitle = title?.replace(/\s+by\s+(?:chain|protocol version)$/i, '')

@@ -11,7 +11,6 @@ import { getProtocolOverviewPageData } from '~/containers/ProtocolOverview/queri
 import type { IProtocolOverviewPageData, IToggledMetrics } from '~/containers/ProtocolOverview/types'
 import { useFetchProtocolChartData } from '~/containers/ProtocolOverview/useFetchProtocolChartData'
 import { TVL_SETTINGS } from '~/contexts/LocalStorage'
-import { FEE_EXTRA_CONFIGS } from '~/metrics/feeExtras'
 import { LocalLoader } from '~/ui/Loaders'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -95,7 +94,7 @@ export default function ProtocolChartPage(props: IProtocolOverviewPageData) {
 		return JSON.stringify(router.query ? (tvl === 'true' ? rest : router.query) : { protocol: slug(props.name) })
 	}, [router.query, props.name])
 
-	const { toggledMetrics, groupBy, tvlSettings, feesSettings } = useMemo(() => {
+	const { toggledMetrics, groupBy, tvlSettings } = useMemo(() => {
 		const queryParams = JSON.parse(queryParamsString)
 		const chartsByVisibility = {}
 		for (const chartLabel in protocolCharts) {
@@ -123,18 +122,12 @@ export default function ProtocolChartPage(props: IProtocolOverviewPageData) {
 			tvlSettings[TVL_SETTINGS[setting]] = isTruthyQueryParam(queryParams[`include_${TVL_SETTINGS[setting]}_in_tvl`])
 		}
 
-		const feesSettings = {}
-		for (const extra of FEE_EXTRA_CONFIGS) {
-			feesSettings[extra.setting] = isTruthyQueryParam(queryParams[extra.queryParam])
-		}
-
 		return {
 			toggledMetrics,
 			toggledCharts,
 			hasAtleasOneBarChart,
 			groupBy: hasAtleasOneBarChart ? (normalizeChartInterval(queryParams.groupBy) ?? 'daily') : 'daily',
-			tvlSettings,
-			feesSettings
+			tvlSettings
 		}
 	}, [queryParamsString, props])
 
@@ -157,8 +150,7 @@ export default function ProtocolChartPage(props: IProtocolOverviewPageData) {
 		...props,
 		toggledMetrics,
 		groupBy: groupBy,
-		tvlSettings,
-		feesSettings
+		tvlSettings
 	})
 	const hasVisibleCharts = Object.keys(finalCharts).length > 0
 

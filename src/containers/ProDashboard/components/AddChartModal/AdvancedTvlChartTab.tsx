@@ -74,7 +74,7 @@ export function AdvancedTvlChartTab({
 	protocolOptions,
 	protocolsLoading
 }: AdvancedTvlChartTabProps) {
-	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl_fees')
+	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const chartType = selectedAdvancedTvlChartType as AdvancedTvlChartType
 	const protocolMisrepresentsTokens =

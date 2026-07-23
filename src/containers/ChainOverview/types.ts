@@ -1,7 +1,6 @@
 import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import type { RawRaise } from '~/containers/Raises/api.types'
-import type { FeeExtraTotals } from '~/metrics/feeExtras'
 import type { IChainMetadata, IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
 import type { ChainChartLabels } from './constants'
 
@@ -54,16 +53,6 @@ export interface IChainOverviewData {
 		totalREV24h: number | null
 	}
 	chainRevenue: { total24h: number | null }
-	feeExtras: {
-		chainNative: {
-			bribes: FeeExtraTotals | null
-			tokenTax: FeeExtraTotals | null
-		}
-		app: {
-			bribes: FeeExtraTotals | null
-			tokenTax: FeeExtraTotals | null
-		}
-	}
 	chainIncentives: {
 		emissions24h: number | null
 		emissions7d: number | null
@@ -92,7 +81,7 @@ export interface IChainOverviewData {
 		chart: Array<{ date: number; total: number; breakdown: Array<{ token: string; value: number; pct: string }> }>
 		total14d: number
 	} | null
-	tvlAndFeesOptions: Array<{ name: string; key: string }>
+	tvlOptions: Array<{ name: string; key: string }>
 	charts: ChainChartLabels[]
 	description: string
 	isDataAvailable: boolean

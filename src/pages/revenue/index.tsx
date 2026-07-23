@@ -1,4 +1,3 @@
-import { feesOptions } from '~/components/Filters/options'
 import { AdapterByChain } from '~/containers/AdapterMetrics/AdapterByChain'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { getAdapterByChainPageData } from '~/containers/AdapterMetrics/queries'
@@ -53,8 +52,6 @@ const RevenueOnAllChains = (props: IAdapterByChainPageData) => {
 			title="Protocol Revenue Rankings - DeFi Fees Retained - DefiLlama"
 			description="Track protocol revenue, the subset of fees retained by DeFi protocols. Compare revenue from trading, lending, and staking across protocols."
 			canonicalUrl={`/revenue`}
-			metricFilters={feesOptions}
-			metricFiltersLabel="Include in Revenue"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

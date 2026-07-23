@@ -54,7 +54,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	const { protocol, protocolName, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useChartImageExport()
-	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl_fees')
+	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const streamDone = useContext(StreamDoneContext)
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const suppressTokenBreakdowns = shouldSuppressAdvancedTvlTokenBreakdown(

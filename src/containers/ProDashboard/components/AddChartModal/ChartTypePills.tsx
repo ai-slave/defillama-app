@@ -20,7 +20,7 @@ interface ChartTypePillsProps {
 const PROTOCOL_GROUPS: Record<string, string[]> = {
 	Value: ['tvl', 'treasury'],
 	Volume: ['volume', 'aggregators', 'perps', 'perpsAggregators', 'bridgeAggregators'],
-	'Fees & Revenue': ['fees', 'revenue', 'unlocks', 'incentives', 'holdersRevenue', 'bribes', 'tokenTax'],
+	'Fees & Revenue': ['fees', 'revenue', 'unlocks', 'incentives', 'holdersRevenue'],
 	Derivatives: ['openInterest', 'optionsPremium', 'optionsNotional'],
 	Token: ['tokenMcap', 'tokenPrice', 'tokenVolume'],
 	DeFi: ['medianApy', 'borrowed'],
@@ -31,7 +31,7 @@ const CHAIN_GROUPS: Record<string, string[]> = {
 	Value: ['tvl', 'bridgedTvl'],
 	Volume: ['volume', 'aggregators', 'perps', 'perpsAggregators', 'bridgeAggregators'],
 	Derivatives: ['optionsPremium', 'optionsNotional'],
-	'Fees & Revenue': ['fees', 'revenue', 'chainFees', 'chainRevenue', 'bribes', 'tokenTax'],
+	'Fees & Revenue': ['fees', 'revenue', 'chainFees', 'chainRevenue'],
 	Activity: ['users', 'txs', 'activeUsers', 'newUsers', 'gasUsed'],
 	Stablecoins: ['stablecoins', 'stablecoinInflows'],
 	'Native Token': ['chainMcap', 'chainPrice']

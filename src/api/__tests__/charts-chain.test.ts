@@ -303,93 +303,30 @@ describe('/api/public/chains/charts', () => {
 		}
 	)
 
-	const chainNativeFeeExtraRows = [
-		{ label: 'Bribes Revenue', dataType: 'dailyBribesRevenue' },
-		{ label: 'Token Tax', dataType: 'dailyTokenTaxes' }
-	] as const
-
-	it.each(chainNativeFeeExtraRows)(
-		'accepts $label as adapter-protocol entity=chain when the chain has fee/revenue metadata',
-		async (row) => {
-			resolveProtocolParamMock.mockResolvedValue(null)
-			resolveChainParamMock.mockResolvedValue({
-				canonicalName: 'Base',
-				canonicalSlug: 'base',
-				metadata: { name: 'Base', chainFees: true }
-			})
-			const req = {
-				method: 'GET',
-				query: {
-					kind: 'adapter-protocol',
-					entity: 'chain',
-					adapterType: 'fees',
-					protocol: 'Base',
-					dataType: row.dataType
-				}
-			} as unknown as NextApiRequest
-			const res = createMockNextApiResponse()
-
-			await handler(req, res)
-
-			expect(resolveProtocolParamMock).not.toHaveBeenCalled()
-			expect(fetchAdapterProtocolChartDataMock).toHaveBeenCalledWith({
-				adapterType: 'fees',
-				protocol: 'Base',
-				dataType: row.dataType
-			})
-			expect(res.status).toHaveBeenCalledWith(200)
+	it.each([
+		{ kind: 'adapter-chain', entityParam: { chain: 'Base' }, fetchMock: fetchAdapterChainChartDataMock },
+		{
+			kind: 'adapter-protocol',
+			entityParam: { protocol: 'Base', entity: 'chain' },
+			fetchMock: fetchAdapterProtocolChartDataMock
 		}
-	)
-
-	it.each(chainNativeFeeExtraRows)(
-		'rejects $label as adapter-protocol entity=chain when fee/revenue metadata is missing',
-		async (row) => {
-			resolveProtocolParamMock.mockResolvedValue(null)
-			resolveChainParamMock.mockResolvedValue({
-				canonicalName: 'Base',
-				canonicalSlug: 'base',
-				metadata: { name: 'Base' }
-			})
-			const req = {
-				method: 'GET',
-				query: {
-					kind: 'adapter-protocol',
-					entity: 'chain',
-					adapterType: 'fees',
-					protocol: 'Base',
-					dataType: row.dataType
-				}
-			} as unknown as NextApiRequest
-			const res = createMockNextApiResponse()
-
-			await handler(req, res)
-
-			expect(fetchAdapterProtocolChartDataMock).not.toHaveBeenCalled()
-			expect(res.status).toHaveBeenCalledWith(404)
-			expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
-		}
-	)
-
-	it.each(chainNativeFeeExtraRows)('rejects all-chain $label adapter-protocol entity=chain requests', async (row) => {
-		resolveProtocolParamMock.mockResolvedValue(null)
+	])('rejects unsupported data types for $kind requests', async ({ kind, entityParam, fetchMock }) => {
 		const req = {
 			method: 'GET',
 			query: {
-				kind: 'adapter-protocol',
-				entity: 'chain',
+				kind,
 				adapterType: 'fees',
-				protocol: 'All',
-				dataType: row.dataType
+				dataType: 'unsupportedDataType',
+				...entityParam
 			}
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
 		await handler(req, res)
 
-		expect(resolveChainParamMock).not.toHaveBeenCalled()
-		expect(fetchAdapterProtocolChartDataMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(404)
-		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
+		expect(fetchMock).not.toHaveBeenCalled()
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Unsupported adapter dataType' })
 	})
 
 	it.each(chainNativeProtocolRows)('does not use chain fallback for explicit protocol $label requests', async (row) => {

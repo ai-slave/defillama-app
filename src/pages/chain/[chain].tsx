@@ -1,5 +1,4 @@
 import type { InferGetStaticPropsType } from 'next'
-import { getMetricFiltersLabel } from '~/components/Filters/options'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { ChainOverview } from '~/containers/ChainOverview'
 import { ChainOverviewAnnouncement } from '~/containers/ChainOverview/Announcement'
@@ -106,8 +105,7 @@ export default function Chain(props: InferGetStaticPropsType<typeof getStaticPro
 			}
 			description={props.description}
 			canonicalUrl={props.metadata.name === 'All' ? '' : `/chain/${slug(props.metadata.name)}`}
-			metricFilters={props.tvlAndFeesOptions}
-			metricFiltersLabel={getMetricFiltersLabel(props.tvlAndFeesOptions) ?? undefined}
+			tvlOptions={props.tvlOptions}
 			pageName={pageName}
 			announcement={
 				<>

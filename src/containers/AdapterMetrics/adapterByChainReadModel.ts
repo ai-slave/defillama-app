@@ -1,49 +1,12 @@
-import { FEE_EXTRA_PERIOD_TOTAL_KEYS } from '~/metrics/feeExtras'
 import { slug, getMarketCapToAnnualizedMetricRatio } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import type { IAdapterChainMetrics } from './api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES, ZERO_FEE_PERPS } from './constants'
 import { mergeParentMetricPeriods } from './metricPeriods'
 import type { IAdapterByChainPageData, IAdapterChainOverview, IProtocol } from './types'
-import {
-	matchRevenueToEarnings,
-	processRevenueDataForMatching,
-	type ActiveLiquidityData,
-	type BribesData,
-	type NormalizedVolumeData,
-	type OpenInterestData
-} from './utils'
+import type { ActiveLiquidityData, NormalizedVolumeData, OpenInterestData } from './utils'
 
 type AdapterChainProtocolMetric = IAdapterChainMetrics['protocols'][number]
-type AdapterByChainSourceProtocol = Pick<
-	AdapterChainProtocolMetric,
-	'name' | 'displayName' | 'slug' | 'protocolType' | 'chains'
-> &
-	Partial<
-		Pick<
-			AdapterChainProtocolMetric,
-			| 'category'
-			| 'methodology'
-			| 'linkedProtocols'
-			| 'doublecounted'
-			| 'total24h'
-			| 'total48hto24h'
-			| 'total7d'
-			| 'total14dto7d'
-			| 'total30d'
-			| 'total60dto30d'
-			| 'total7DaysAgo'
-			| 'total30DaysAgo'
-			| 'total1y'
-			| 'annualized1y'
-			| 'totalAllTime'
-			| 'change_1d'
-			| 'change_7d'
-			| 'change_1m'
-			| 'change_7dover7d'
-			| 'change_30dover30d'
-		>
-	>
 
 type ProtocolMcapData = {
 	protocols: Array<{ name: string; mcap: number | null }>
@@ -58,65 +21,6 @@ type AdapterByChainReadModel = {
 	categories: string[]
 	openInterest: number
 	activeLiquidity: number | null
-}
-
-function buildFeeExtraOnlyProtocolRow(protocol: AdapterChainProtocolMetric): AdapterByChainSourceProtocol {
-	return {
-		name: protocol.name,
-		displayName: protocol.displayName,
-		slug: protocol.slug,
-		protocolType: protocol.protocolType,
-		chains: protocol.chains,
-		category: protocol.category,
-		methodology: protocol.methodology,
-		linkedProtocols: protocol.linkedProtocols,
-		doublecounted: protocol.doublecounted,
-		total24h: null,
-		total48hto24h: null,
-		total7d: null,
-		total14dto7d: null,
-		total30d: null,
-		total60dto30d: null,
-		total7DaysAgo: null,
-		total30DaysAgo: null,
-		total1y: null,
-		annualized1y: null,
-		totalAllTime: null,
-		change_1d: null,
-		change_7d: null,
-		change_1m: null,
-		change_7dover7d: null,
-		change_30dover30d: null
-	}
-}
-
-function getFeeExtraPeriodTotals(protocol: AdapterChainProtocolMetric): BribesData {
-	return {
-		total24h: protocol.total24h ?? null,
-		total48hto24h: protocol.total48hto24h ?? null,
-		total7d: protocol.total7d ?? null,
-		total14dto7d: protocol.total14dto7d ?? null,
-		total30d: protocol.total30d ?? null,
-		total60dto30d: protocol.total60dto30d ?? null,
-		total7DaysAgo: protocol.total7DaysAgo ?? null,
-		total30DaysAgo: protocol.total30DaysAgo ?? null,
-		total1y: protocol.total1y ?? null,
-		annualized1y: protocol.annualized1y ?? null,
-		totalAllTime: protocol.totalAllTime ?? null
-	}
-}
-
-function addFeeExtraPeriodTotals(acc: BribesData, totals: BribesData) {
-	for (const key of FEE_EXTRA_PERIOD_TOTAL_KEYS) {
-		const value = totals[key]
-		if (value == null) {
-			if (acc[key] === undefined) {
-				acc[key] = null
-			}
-			continue
-		}
-		acc[key] = (acc[key] ?? 0) + value
-	}
 }
 
 function buildProtocolsMcap(protocolsData: ProtocolMcapData) {
@@ -137,34 +41,19 @@ function getProtocolMethodology({
 }: {
 	adapterType: `${ADAPTER_TYPES}`
 	dataType?: AdapterByChainDataType
-	protocol: AdapterByChainSourceProtocol
+	protocol: AdapterChainProtocolMetric
 }) {
 	if (adapterType !== 'fees') return null
 	if (dataType === 'dailyRevenue') {
-		return (
-			protocol.methodology?.['Revenue'] ??
-			protocol.methodology?.['BribesRevenue'] ??
-			protocol.methodology?.['TokenTaxes']
-		)
+		return protocol.methodology?.['Revenue']
 	}
 	if (dataType === 'dailyProtocolRevenue') {
-		return (
-			protocol.methodology?.['ProtocolRevenue'] ??
-			protocol.methodology?.['Revenue'] ??
-			protocol.methodology?.['BribesRevenue'] ??
-			protocol.methodology?.['TokenTaxes']
-		)
+		return protocol.methodology?.['ProtocolRevenue'] ?? protocol.methodology?.['Revenue']
 	}
 	if (dataType === 'dailyHoldersRevenue') {
-		return (
-			protocol.methodology?.['HoldersRevenue'] ??
-			protocol.methodology?.['BribesRevenue'] ??
-			protocol.methodology?.['TokenTaxes']
-		)
+		return protocol.methodology?.['HoldersRevenue']
 	}
-	return (
-		protocol.methodology?.['Fees'] ?? protocol.methodology?.['BribesRevenue'] ?? protocol.methodology?.['TokenTaxes']
-	)
+	return protocol.methodology?.['Fees']
 }
 
 function buildProtocolSummary({
@@ -172,19 +61,15 @@ function buildProtocolSummary({
 	adapterType,
 	dataType,
 	protocolMcap,
-	bribesProtocols,
-	tokenTaxesProtocols,
 	openInterestProtocols,
 	activeLiquidityProtocols,
 	normalizedVolumeProtocols,
 	cantonIncentivesWarning
 }: {
-	protocol: AdapterByChainSourceProtocol
+	protocol: AdapterChainProtocolMetric
 	adapterType: `${ADAPTER_TYPES}`
 	dataType?: AdapterByChainDataType
 	protocolMcap: number | null | undefined
-	bribesProtocols: Record<string, BribesData>
-	tokenTaxesProtocols: Record<string, BribesData>
 	openInterestProtocols: Record<string, OpenInterestData>
 	activeLiquidityProtocols: Record<string, ActiveLiquidityData>
 	normalizedVolumeProtocols: Record<string, NormalizedVolumeData>
@@ -220,8 +105,6 @@ function buildProtocolSummary({
 		change_7dover7d: protocol.change_7dover7d ?? null,
 		change_30dover30d: protocol.change_30dover30d ?? null,
 		mcap: protocolMcap ?? null,
-		...(bribesProtocols[protocol.name] ? { bribes: bribesProtocols[protocol.name] } : {}),
-		...(tokenTaxesProtocols[protocol.name] ? { tokenTax: tokenTaxesProtocols[protocol.name] } : {}),
 		...(pfOrPs != null ? { pfOrPs } : {}),
 		...(methodology ? { methodology: methodology.endsWith('.') ? methodology.slice(0, -1) : methodology } : {}),
 		...(protocol.doublecounted ? { doublecounted: protocol.doublecounted } : {}),
@@ -272,8 +155,6 @@ function buildParentProtocolSummary({
 	let doublecounted = false
 	let zeroFeePerp = false
 	let warning: string | null = null
-	let bribes: BribesData | null = null
-	let tokenTax: BribesData | null = null
 	let openInterest: number | null = null
 	let activeLiquidity: number | null = null
 	let normalizedVolume24h: number | null = null
@@ -287,14 +168,6 @@ function buildParentProtocolSummary({
 		if (childProtocol.doublecounted) doublecounted = true
 		if (childProtocol.zeroFeePerp) zeroFeePerp = true
 		if (!warning && childProtocol.warning) warning = childProtocol.warning
-		if (childProtocol.bribes) {
-			bribes ??= {}
-			addFeeExtraPeriodTotals(bribes, childProtocol.bribes)
-		}
-		if (childProtocol.tokenTax) {
-			tokenTax ??= {}
-			addFeeExtraPeriodTotals(tokenTax, childProtocol.tokenTax)
-		}
 		if (childProtocol.openInterest != null) {
 			openInterest = (openInterest ?? 0) + childProtocol.openInterest
 		}
@@ -356,8 +229,6 @@ function buildParentProtocolSummary({
 		mcap: protocolsMcap[protocol] ?? null,
 		breakdownAliases: Array.from(breakdownAliasSet),
 		childProtocols,
-		...(bribes ? { bribes } : {}),
-		...(tokenTax ? { tokenTax } : {}),
 		...(pfOrPs != null ? { pfOrPs } : {}),
 		...(methodologyText ? { methodology: methodologyText } : {}),
 		...(doublecounted ? { doublecounted } : {}),
@@ -408,8 +279,6 @@ function sumSupplementalTotal<T extends { total24h: number | null; doublecounted
 export function buildAdapterByChainReadModel({
 	data,
 	protocolsData,
-	bribesData,
-	tokenTaxesData,
 	openInterestData,
 	activeLiquidityData,
 	normalizedVolumeData,
@@ -420,8 +289,6 @@ export function buildAdapterByChainReadModel({
 }: {
 	data: IAdapterChainOverview
 	protocolsData: ProtocolMcapData
-	bribesData: IAdapterChainMetrics | null
-	tokenTaxesData: IAdapterChainMetrics | null
 	openInterestData: IAdapterChainOverview | null
 	activeLiquidityData: IAdapterChainOverview | null
 	normalizedVolumeData: IAdapterChainMetrics | null
@@ -431,51 +298,9 @@ export function buildAdapterByChainReadModel({
 	cantonIncentivesWarning: string | null
 }): AdapterByChainReadModel {
 	const protocolsMcap = buildProtocolsMcap(protocolsData)
-	const allProtocols: AdapterByChainSourceProtocol[] = [...data.protocols]
-	const allProtocolsByName = new Set<string>()
-	for (const protocol of allProtocols) {
-		allProtocolsByName.add(protocol.name)
-	}
-
-	let bribesProtocols: Record<string, BribesData> = {}
-	let tokenTaxesProtocols: Record<string, BribesData> = {}
 	const openInterestProtocols: Record<string, OpenInterestData> = {}
 	const activeLiquidityProtocols: Record<string, ActiveLiquidityData> = {}
 	const normalizedVolumeProtocols: Record<string, NormalizedVolumeData> = {}
-
-	if (dataType === 'dailyEarnings') {
-		if (bribesData) {
-			const processedBribesData = processRevenueDataForMatching(bribesData.protocols)
-			bribesProtocols = matchRevenueToEarnings(processedBribesData, data.protocols)
-		}
-
-		if (tokenTaxesData) {
-			const processedTokenTaxData = processRevenueDataForMatching(tokenTaxesData.protocols)
-			tokenTaxesProtocols = matchRevenueToEarnings(processedTokenTaxData, data.protocols)
-		}
-	} else {
-		if (bribesData) {
-			for (const protocol of bribesData.protocols) {
-				bribesProtocols[protocol.name] = getFeeExtraPeriodTotals(protocol)
-
-				if (!allProtocolsByName.has(protocol.name)) {
-					allProtocolsByName.add(protocol.name)
-					allProtocols.push(buildFeeExtraOnlyProtocolRow(protocol))
-				}
-			}
-		}
-
-		if (tokenTaxesData) {
-			for (const protocol of tokenTaxesData.protocols) {
-				tokenTaxesProtocols[protocol.name] = getFeeExtraPeriodTotals(protocol)
-
-				if (!allProtocolsByName.has(protocol.name)) {
-					allProtocolsByName.add(protocol.name)
-					allProtocols.push(buildFeeExtraOnlyProtocolRow(protocol))
-				}
-			}
-		}
-	}
 
 	if (openInterestData) {
 		for (const protocol of openInterestData.protocols) {
@@ -507,14 +332,12 @@ export function buildAdapterByChainReadModel({
 	const parentProtocols: Record<string, IProtocol[]> = {}
 	const categories = new Set<string>()
 
-	for (const protocol of allProtocols) {
+	for (const protocol of data.protocols) {
 		const summary = buildProtocolSummary({
 			protocol,
 			adapterType,
 			dataType,
 			protocolMcap: protocolsMcap[protocol.name],
-			bribesProtocols,
-			tokenTaxesProtocols,
 			openInterestProtocols,
 			activeLiquidityProtocols,
 			normalizedVolumeProtocols,

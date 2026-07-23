@@ -1,4 +1,3 @@
-import { feesOptions } from '~/components/Filters/options'
 import { AdapterByChain } from '~/containers/AdapterMetrics/AdapterByChain'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { getAdapterByChainPageData } from '~/containers/AdapterMetrics/queries'
@@ -36,8 +35,6 @@ const EarningsOnAllChains = (props: IAdapterByChainPageData) => {
 			title="DeFi Earnings & Net Profit Rankings - DefiLlama"
 			description="Track DeFi protocol earnings and net profit rankings. Compare sustainable earnings (revenue minus incentives) across 500+ protocols. Real-time earnings analytics showing true profitability after token incentives."
 			canonicalUrl={`/earnings`}
-			metricFilters={feesOptions}
-			metricFiltersLabel="Include in Earnings"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

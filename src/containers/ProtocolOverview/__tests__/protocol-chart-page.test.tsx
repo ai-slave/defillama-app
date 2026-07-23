@@ -95,20 +95,6 @@ describe('chart/protocol/[protocol]', () => {
 		expect(mocks.getProtocolOverviewPageData).toHaveBeenCalledWith(expect.objectContaining({ yieldsSnapshot: null }))
 	})
 
-	it('parses fee include query params as booleans', () => {
-		mocks.routerState.query = {
-			include_bribes_in_fees: 'false',
-			include_tokentax_in_fees: 'yes'
-		}
-
-		renderToStaticMarkup(<ProtocolChartPage {...createProps()} />)
-
-		expect(mocks.useFetchProtocolChartData.mock.calls[0][0].feesSettings).toEqual({
-			bribes: false,
-			tokentax: true
-		})
-	})
-
 	it('parses TVL include query params as booleans', () => {
 		mocks.routerState.query = {
 			include_staking_in_tvl: 'false',
@@ -121,5 +107,6 @@ describe('chart/protocol/[protocol]', () => {
 			staking: false,
 			pool2: true
 		})
+		expect(mocks.useFetchProtocolChartData.mock.calls[0][0]).not.toHaveProperty('feesSettings')
 	})
 })

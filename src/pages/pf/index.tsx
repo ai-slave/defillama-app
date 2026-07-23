@@ -1,4 +1,3 @@
-import { feesOptions } from '~/components/Filters/options'
 import { AdapterByChain } from '~/containers/AdapterMetrics/AdapterByChain'
 import { ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { getAdapterByChainPageData } from '~/containers/AdapterMetrics/queries'
@@ -34,8 +33,6 @@ const FeesOnAllChains = (props: IAdapterByChainPageData) => {
 			title={`Price to Fees Ratio (P/F) Rankings - DefiLlama`}
 			description="Compare DeFi protocols by Price to Fees (P/F) ratio. Evaluate protocol valuations relative to total fees generated."
 			canonicalUrl={`/pf`}
-			metricFilters={feesOptions}
-			metricFiltersLabel="Include in Metrics"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

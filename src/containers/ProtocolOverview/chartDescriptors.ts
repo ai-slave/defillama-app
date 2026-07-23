@@ -20,7 +20,7 @@ type AdapterChartMetricKey = keyof Pick<
 	| 'liquidationVolume'
 	| 'collateralLiquidated'
 >
-export type AdapterChartRenderKind = 'feeFamily' | 'bar' | 'line'
+export type AdapterChartRenderKind = 'bar' | 'line'
 
 interface IAdapterChartDescriptor {
 	label: ProtocolChartsLabels
@@ -40,7 +40,7 @@ export const ADAPTER_CHART_DESCRIPTORS = [
 		methodologyKey: 'Fees',
 		clientQueryKey: 'fees',
 		metricKeys: ['fees'],
-		renderKind: 'feeFamily'
+		renderKind: 'bar'
 	},
 	{
 		label: 'Revenue',
@@ -49,7 +49,7 @@ export const ADAPTER_CHART_DESCRIPTORS = [
 		methodologyKey: 'Revenue',
 		clientQueryKey: 'revenue',
 		metricKeys: ['revenue'],
-		renderKind: 'feeFamily'
+		renderKind: 'bar'
 	},
 	{
 		label: 'Holders Revenue',
@@ -58,7 +58,7 @@ export const ADAPTER_CHART_DESCRIPTORS = [
 		methodologyKey: 'HoldersRevenue',
 		clientQueryKey: 'holders-revenue',
 		metricKeys: ['fees', 'revenue'],
-		renderKind: 'feeFamily'
+		renderKind: 'bar'
 	},
 	{
 		label: 'DEX Volume',

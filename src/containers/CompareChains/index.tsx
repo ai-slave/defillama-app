@@ -3,8 +3,6 @@ import { useRouter } from 'next/router'
 import type { NextRouter } from 'next/router'
 import * as React from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { feesOptions } from '~/components/Filters/options'
-import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterState'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { Select } from '~/components/Select/Select'
 import { selectTriggerStyles } from '~/components/Select/types'
@@ -18,13 +16,6 @@ import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { LoadingIndicator, PanelStatus } from '~/ui/Status'
 import { getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
-import {
-	applyCompareChainsFeeExtras,
-	buildCompareChainsFeeExtraFetchConfigs,
-	getCompareChainsFeeExtraFailedMetrics,
-	hasSelectedCompareChainsFeeChart,
-	type CompareChainsFeeExtraChartsByChain
-} from './feeExtras'
 import {
 	buildCompareChainAdapterQueryKey,
 	buildCompareChainOverviewQueryKey,
@@ -273,30 +264,8 @@ const ChartFilters = () => {
 	)
 }
 
-const FeeExtraFilters = () => {
-	const { selectedValues, setSelectedValues } = useProtocolsFilterState(feesOptions)
-
-	return (
-		<Select
-			allValues={feesOptions}
-			selectedValues={selectedValues}
-			setSelectedValues={setSelectedValues}
-			label="Include in Fees"
-			labelType="none"
-			variant="default"
-			size="md"
-			triggerProps={{
-				className: selectTriggerStyles('default', 'md')
-			}}
-			placement="bottom-end"
-			unmountOnHide={false}
-		/>
-	)
-}
-
 export function CompareChains({ chains }: { chains: ChainOption[] }) {
 	const [tvlSettings] = useLocalStorageSettingsManager('tvl')
-	const [feesSettings] = useLocalStorageSettingsManager('fees')
 	const { selectedValues: selectedChartFilters } = useChainsChartFilterState()
 
 	const router = useRouter()
@@ -316,70 +285,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 		selectedCharts: selectedChartFilters
 	})
 
-	const loadedChainData = React.useMemo(
-		() => (selectedChains.length > 1 ? data.filter((d): d is ChainDataResult => d != null) : []),
-		[data, selectedChains.length]
-	)
-
-	const feeExtraFetchConfigs = React.useMemo(
-		() =>
-			buildCompareChainsFeeExtraFetchConfigs({
-				chainData: loadedChainData,
-				selectedCharts: selectedChartFilters,
-				feesSettings
-			}),
-		[loadedChainData, selectedChartFilters, feesSettings]
-	)
-
-	const feeExtraQueries = React.useMemo(
-		() =>
-			feeExtraFetchConfigs.map((config) => ({
-				queryKey: config.queryKey,
-				queryFn: () => fetchJson<Array<[number, number]>>(config.url),
-				staleTime: 60 * 60 * 1000,
-				refetchOnWindowFocus: false,
-				retry: 0
-			})),
-		[feeExtraFetchConfigs]
-	)
-
-	const feeExtraResults = useQueries({
-		queries: feeExtraQueries,
-		combine: React.useCallback(
-			(results) =>
-				results.map(({ data: queryData, error, isLoading: queryIsLoading }) => ({
-					data: queryData,
-					error,
-					isLoading: queryIsLoading
-				})),
-			[]
-		)
-	})
-
-	const feeExtraChartsByChain = React.useMemo<CompareChainsFeeExtraChartsByChain>(() => {
-		const charts: CompareChainsFeeExtraChartsByChain = {}
-		for (let index = 0; index < feeExtraFetchConfigs.length; index++) {
-			const extraChart = feeExtraResults[index]?.data
-			if (!extraChart) continue
-
-			const config = feeExtraFetchConfigs[index]
-			const chainCharts = charts[config.chain] ?? {}
-			chainCharts[config.dataType] = extraChart
-			charts[config.chain] = chainCharts
-		}
-		return charts
-	}, [feeExtraFetchConfigs, feeExtraResults])
-
-	const failedMetrics = React.useMemo(
-		() => [
-			...failedChains,
-			...getCompareChainsFeeExtraFailedMetrics({ configs: feeExtraFetchConfigs, results: feeExtraResults })
-		],
-		[failedChains, feeExtraFetchConfigs, feeExtraResults]
-	)
-	const isChartLoading = isLoading || hasPendingCompareChainSources(feeExtraResults)
-
-	const showFeeExtraFilters = hasSelectedCompareChainsFeeChart(selectedChartFilters)
+	const isChartLoading = isLoading
 
 	const tvlCharts = React.useMemo(() => {
 		const charts: Record<string, CompareChainsTvlChartState> = {}
@@ -398,18 +304,13 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 		return formatChartData(
 			data
 				.filter((d): d is ChainDataResult => d != null)
-				.map((chainData) => {
-					const feeAdjustedData = applyCompareChainsFeeExtras({
-						chainData,
-						selectedCharts: selectedChartFilters,
-						feesSettings,
-						feeExtraCharts: feeExtraChartsByChain[chainData.chain]
-					})
-					return { ...feeAdjustedData, tvlChart: tvlCharts[chainData.chain]?.finalTvlChart ?? null }
-				}),
+				.map((chainData) => ({
+					...chainData,
+					tvlChart: tvlCharts[chainData.chain]?.finalTvlChart ?? null
+				})),
 			selectedChartFilters
 		)
-	}, [data, selectedChartFilters, tvlCharts, feesSettings, feeExtraChartsByChain])
+	}, [data, selectedChartFilters, tvlCharts])
 
 	return (
 		<>
@@ -428,7 +329,6 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 				{selectedChains.length > 1 ? (
 					<>
 						<ChartFilters />
-						{showFeeExtraFilters ? <FeeExtraFilters /> : null}
 					</>
 				) : null}
 			</div>
@@ -456,7 +356,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 									}}
 								/>
 							</React.Suspense>
-							<FailedCompareChainsPopover failedChains={failedMetrics} />
+							<FailedCompareChainsPopover failedChains={failedChains} />
 						</ChartPanel>
 					)}
 

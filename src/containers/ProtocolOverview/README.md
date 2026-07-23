@@ -78,7 +78,7 @@ Important rules:
 - `getProtocolMetricFlags` maps protocol metadata to chart/section availability.
 - Protocol fees/revenue charts use protocol adapter endpoints, not chain-native fee/revenue ranking semantics.
 - `chartDescriptors.ts` owns protocol-level adapter chart request descriptors.
-- Chain Fees, Chain Revenue, App Fees, App Revenue, REV, and fee-extra semantics live in `src/metrics` only where they cross ChainOverview, AdapterMetrics, CompareChains, and public chart validation. Do not move ProtocolOverview descriptors there unless another container or API endpoint needs the same invariant.
+- Chain Fees, Chain Revenue, App Fees, App Revenue, and REV semantics live in `src/metrics` only where they cross ChainOverview, AdapterMetrics, CompareChains, and public chart validation. Do not move ProtocolOverview descriptors there unless another container or API endpoint needs the same invariant.
 - Annualized fee/revenue cards use `annualized1y` values when available; missing annualized values should stay missing rather than falling back to 30-day totals.
 - TVL chart composition in `useFetchProtocolChartData.ts` is local and has timestamp alignment and denomination behavior. Add characterization tests before extracting it.
 
@@ -94,7 +94,7 @@ Current behavior to preserve before refactoring:
 - Latest base TVL and extra TVL timestamps can be aligned when they are close.
 - Denominated charts drop points when the selected denomination price is missing for the retained timestamp.
 
-`useFinalTVL` reads the `tvl_fees` local storage namespace. That namespace uses the same TVL setting keys as `tvl` and additionally carries fee options such as `bribes` and `tokentax` for adapter-metric totals. `bribes` and `tokentax` should expose fee controls without changing TVL aggregation. Mixed TVL/fee filter labels should use shared metric-filter wording rather than saying only `Include in TVL`.
+`useFinalTVL` reads the `tvl` local storage namespace, shared with the other TVL inclusion surfaces. Its toggle options are derived only from the TVL suffixes present in the protocol data.
 
 Do not model chain overlap adjustment as a ProtocolOverview setting. `dcAndLsOverlap` is chain TVL overlap data, not a toggle key, and ProtocolOverview summary tests should not fabricate `*-doublecounted`, `*-liquidstaking`, or `*-dcAndLsOverlap` chain entries unless the upstream protocol page payload changes.
 

@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
-import { feesOptionsMap, tvlOptionsMap } from '~/components/Filters/options'
-import { FEES_SETTINGS, isTvlSettingsKey, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { addOptionalFeeExtraTotal } from '~/metrics/feeExtras'
+import { tvlOptionsMap } from '~/components/Filters/options'
+import { isTvlSettingsKey, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import type { IProtocolOverviewPageData } from './types'
 
 type ToggleOption = { name: string; key: string }
@@ -70,7 +69,7 @@ const getSortedChainValues = (valuesByChain: Record<string, number>): Array<[str
 }
 
 export const useFinalTVL = (props: IProtocolOverviewPageData) => {
-	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl_fees')
+	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 
 	return useMemo(() => {
 		const tvlByChainMap: Record<string, number> = {}
@@ -93,20 +92,6 @@ export const useFinalTVL = (props: IProtocolOverviewPageData) => {
 			toggleOptions
 		})
 
-		if (hasAnyPeriodTotals(props.bribeRevenue)) {
-			const option = feesOptionsMap.get(FEES_SETTINGS.BRIBES)
-			if (option) {
-				pushToggleOption(toggleOptions, option)
-			}
-		}
-
-		if (hasAnyPeriodTotals(props.tokenTax)) {
-			const option = feesOptionsMap.get(FEES_SETTINGS.TOKENTAX)
-			if (option) {
-				pushToggleOption(toggleOptions, option)
-			}
-		}
-
 		return {
 			tvl,
 			tvlByChain: getSortedChainValues(tvlByChainMap),
@@ -114,7 +99,7 @@ export const useFinalTVL = (props: IProtocolOverviewPageData) => {
 			oracleTvsByChain: getSortedChainValues(oracleTvsByChainMap),
 			toggleOptions
 		}
-	}, [extraTvlsEnabled, props.currentTvlByChain, props.oracleTvs, props.bribeRevenue, props.tokenTax])
+	}, [extraTvlsEnabled, props.currentTvlByChain, props.oracleTvs])
 }
 
 export const getPrimaryValueLabelType = (category: string) => {
@@ -125,51 +110,5 @@ export const getPrimaryValueLabelType = (category: string) => {
 			return { title: 'Total Value Secured', byChainTitle: 'TVS by Chain', dataType: 'TVS' }
 		default:
 			return { title: 'Total Value Locked', byChainTitle: 'TVL by Chain', dataType: 'TVL' }
-	}
-}
-
-interface TotalsByPeriod {
-	total24h?: number | null
-	total7d?: number | null
-	total30d?: number | null
-	total1y?: number | null
-	annualized1y?: number | null
-	totalAllTime?: number | null
-}
-
-const hasAnyPeriodTotals = (totals: TotalsByPeriod | null | undefined) =>
-	totals?.total24h != null ||
-	totals?.total7d != null ||
-	totals?.total30d != null ||
-	totals?.total1y != null ||
-	totals?.annualized1y != null ||
-	totals?.totalAllTime != null
-
-export const getAdjustedTotals = (
-	base: TotalsByPeriod | null | undefined,
-	bribeRevenue: TotalsByPeriod | null | undefined,
-	tokenTax: TotalsByPeriod | null | undefined,
-	extraTvlsEnabled: Record<string, boolean>
-) => {
-	const enabledBribeRevenue = extraTvlsEnabled.bribes ? bribeRevenue : null
-	const enabledTokenTax = extraTvlsEnabled.tokentax ? tokenTax : null
-	const exists =
-		hasAnyPeriodTotals(base) || hasAnyPeriodTotals(enabledBribeRevenue) || hasAnyPeriodTotals(enabledTokenTax)
-	if (!exists) return null
-
-	const sumPeriod = (key: keyof TotalsByPeriod) => {
-		const baseValue = base?.[key]
-		const bribesValue = enabledBribeRevenue?.[key]
-		const tokenTaxValue = enabledTokenTax?.[key]
-		return addOptionalFeeExtraTotal(baseValue, (bribesValue ?? 0) + (tokenTaxValue ?? 0))
-	}
-
-	return {
-		total24h: sumPeriod('total24h'),
-		total7d: sumPeriod('total7d'),
-		total30d: sumPeriod('total30d'),
-		total1y: sumPeriod('total1y'),
-		annualized1y: sumPeriod('annualized1y'),
-		totalAllTime: sumPeriod('totalAllTime')
 	}
 }

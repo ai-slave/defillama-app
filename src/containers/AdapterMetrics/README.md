@@ -65,7 +65,7 @@ Chain ranking table:
 
 ```text
 src/pages/<adapter-route>/chains.tsx
-  -> getChainsByAdapterPageData(...) or getChainsByFeesAdapterPageData(...)
+  -> getChainsByAdapterPageData(...) or getChainsByChainNativeFeeRevenuePageData(...)
   -> ChainsByAdapter
   -> ChainsByAdapterChart
 ```
@@ -98,7 +98,6 @@ Fee/revenue has extra terminology risk:
 - App Fees and App Revenue are app-on-chain aggregation.
 - `/fees/chains` and `/revenue/chains` are not the same concept as `/fees/chain/[chain]` and `/revenue/chain/[chain]`.
 - Chain-native fee/revenue ranking semantics are described in `src/metrics/feesRevenue.ts`.
-- Bribes/token-tax fee-extra config and pure helpers live in `src/metrics/feeExtras.ts`.
 - Public chart validation helpers for that migrated slice live in `src/metrics/routeSemantics.ts`.
 - REV is chain fees plus MEV tips and has its own builder.
 - P/F and P/S ratios use `annualized1y` as the denominator. Do not derive those ratios from 30-day totals. Parent rows stay null when a contributing child is missing the annualized denominator.
@@ -109,27 +108,13 @@ Use the smallest builder that matches the route:
 
 - `getAdapterByChainPageData`: selected-chain or all-chain protocol rows.
 - `getChainsByAdapterPageData`: normal chain ranking rows for app aggregation and non-fee/revenue adapter metrics.
-- `getChainsByFeesAdapterPageData`: chain-native Chain Fees and Chain Revenue rankings.
+- `getChainsByChainNativeFeeRevenuePageData`: chain-native Chain Fees and Chain Revenue rankings.
 - `getChainsByREVPageData`: REV chain ranking.
 - `getAdapterChainOverview`: adapter metrics/chart data for a chain.
 - `getAdapterProtocolOverview`: adapter metrics/chart data for a protocol.
 - `getChainsByAdapterChartData`: chain-breakdown chart dataset for ranking charts.
 
 Do not substitute one ranking builder for another just because the route labels look similar.
-
-## Fee Extras
-
-Fees pages can include bribes and token taxes through the `fees` local storage settings. When a fee-family AdapterMetrics page exposes those controls, displayed table totals and supported charts add the enabled extras.
-
-Current behavior is split across:
-
-- `queries.tsx`: fetches bribes/token tax data for relevant fee paths.
-- `src/metrics/feeExtras.ts`: shared setting-to-data-type mapping, eligibility, totals, and series helpers.
-- `AdapterByChain.tsx`: adds extras into protocol table totals and P/F or P/S calculations.
-- `ChainsByAdapter.tsx`: adds extras into fee-family chain ranking totals.
-- `ChainChart.tsx`: merges extra fee series into supported fee-family charts.
-
-Chain-native fee/revenue ranking pages expose controls but intentionally keep chart panels hidden. App Fees, App Revenue, and Holders Revenue chain ranking charts merge enabled extras. Before changing this behavior, add or update focused tests. Opposite-edge cases matter: enabling bribes or token taxes should not affect unrelated adapter pages.
 
 ## Chart Notes
 
@@ -144,7 +129,7 @@ Relevant tests today:
 
 - `__tests__/chainsPageData.test.ts`: chain ranking builders, metadata flag disambiguation, and selected builder behavior.
 - `__tests__/chainRouteWiring.test.ts`: route module to builder adapter/data-type wiring.
-- `__tests__/ChainsByAdapter.test.tsx` and `__tests__/ChainsByAdapterChart.test.tsx`: chain ranking table/chart behavior, including fee extras.
+- `__tests__/ChainsByAdapter.test.tsx` and `__tests__/ChainsByAdapterChart.test.tsx`: chain ranking table/chart behavior.
 - `__tests__/feeRevenueSemantics.test.ts`: fee/revenue route semantics and `public/pages.json` alignment.
 - `__tests__/metricPeriods.test.ts`: nullable period merging and change derivation.
 - `__tests__/utils.test.ts`: local helper and chart/read-model utilities.

@@ -54,7 +54,7 @@ export default function ForkPage(props: InferGetStaticPropsType<typeof getStatic
 					: `Fork analytics for DeFi protocols, comparing original vs forked TVL, fork counts, and market dominance.`
 			}
 			canonicalUrl={fork ? `/forks/${slug(fork)}` : '/forks'}
-			metricFilters={tvlOptions}
+			tvlOptions={tvlOptions}
 			pageName={pageName}
 		>
 			<ForksByProtocol {...props} />

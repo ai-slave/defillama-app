@@ -9,7 +9,7 @@ export const MobileNav = ({
 	pinnedPages,
 	userDashboards,
 	footerLinks,
-	metricFilters,
+	tvlOptions,
 	oldMetricLinks,
 	asPath
 }: {
@@ -17,7 +17,7 @@ export const MobileNav = ({
 	pinnedPages: Array<TNavLink>
 	userDashboards: Array<TNavLink>
 	footerLinks: TNavLinks
-	metricFilters?: { name: string; key: string }[]
+	tvlOptions?: { name: string; key: string }[]
 	oldMetricLinks: Array<TOldNavLink>
 	asPath: string
 }) => {
@@ -40,7 +40,7 @@ export const MobileNav = ({
 
 			<MobileSearch />
 
-			<Settings metricFilters={metricFilters} />
+			<Settings tvlOptions={tvlOptions} />
 
 			<Menu
 				mainLinks={mainLinks}

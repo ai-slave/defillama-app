@@ -1,5 +1,4 @@
 import type { GetStaticPropsContext } from 'next'
-import { feesOptions } from '~/components/Filters/options'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { AdapterByChain } from '~/containers/AdapterMetrics/AdapterByChain'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
@@ -113,8 +112,6 @@ const HoldersRevenueOnChain = (props: IAdapterByChainPageData) => {
 			title={`${props.chain} Holders Revenue by Protocol - DefiLlama`}
 			description={`Track holder revenue on ${props.chain} by protocol, from buyback and burn, fee burning, and distributions to stakers.`}
 			canonicalUrl={`/holders-revenue/chain/${slug(props.chain)}`}
-			metricFilters={feesOptions}
-			metricFiltersLabel="Include in Revenue"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

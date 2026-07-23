@@ -7,21 +7,21 @@ const expectedDescriptors = {
 		methodologyKey: 'Fees',
 		clientQueryKey: 'fees',
 		metricKeys: ['fees'],
-		renderKind: 'feeFamily'
+		renderKind: 'bar'
 	},
 	Revenue: {
 		request: { adapterType: 'fees', dataType: 'dailyRevenue' },
 		methodologyKey: 'Revenue',
 		clientQueryKey: 'revenue',
 		metricKeys: ['revenue'],
-		renderKind: 'feeFamily'
+		renderKind: 'bar'
 	},
 	'Holders Revenue': {
 		request: { adapterType: 'fees', dataType: 'dailyHoldersRevenue' },
 		methodologyKey: 'HoldersRevenue',
 		clientQueryKey: 'holders-revenue',
 		metricKeys: ['fees', 'revenue'],
-		renderKind: 'feeFamily'
+		renderKind: 'bar'
 	},
 	'DEX Volume': {
 		request: { adapterType: 'dexs' },

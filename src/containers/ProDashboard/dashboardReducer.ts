@@ -1,6 +1,7 @@
 import type { SetStateAction } from 'react'
 import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
 import type { DashboardItemConfig } from './types'
+import { sanitizeItemsForAPI } from './utils/dashboardUtils'
 
 export type { CustomTimePeriod, TimePeriod } from './dashboardTypes'
 
@@ -51,7 +52,7 @@ function stateFromDashboard(dashboard: Dashboard): DashboardState {
 		...INITIAL_DASHBOARD_STATE,
 		dashboardId: dashboard.id,
 		dashboardName: dashboard.data.dashboardName || 'My Dashboard',
-		items: dashboard.data.items,
+		items: sanitizeItemsForAPI(dashboard.data.items),
 		timePeriod: dashboard.data.timePeriod || '365d',
 		customTimePeriod: dashboard.data.customTimePeriod || null,
 		currentDashboard: dashboard,
@@ -71,7 +72,7 @@ export function initDashboardState(
 		return {
 			...INITIAL_DASHBOARD_STATE,
 			dashboardId: arg.dashboardId || null,
-			...(arg.items?.length ? { items: arg.items } : {})
+			...(arg.items?.length ? { items: sanitizeItemsForAPI(arg.items) } : {})
 		}
 	}
 	const id = typeof arg === 'string' ? arg : null
@@ -86,7 +87,7 @@ export function dashboardReducer(state: DashboardState, action: DashboardAction)
 		case 'SET_ITEMS':
 			return {
 				...state,
-				items: action.payload
+				items: sanitizeItemsForAPI(action.payload)
 			}
 
 		case 'SET_TIME_PERIOD':

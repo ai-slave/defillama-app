@@ -870,38 +870,6 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		adapterType: 'fees',
 		dataType: 'dailySupplySideRevenue'
 	}),
-	makeDimensionProtocolChart({
-		slug: 'protocol-bribes-revenue-chart',
-		name: 'Protocol Bribes Revenue',
-		description: 'Historical daily bribes revenue for a specific protocol',
-		category: 'Fees & Revenue',
-		adapterType: 'fees',
-		dataType: 'dailyBribesRevenue'
-	}),
-	makeDimensionChainChart({
-		slug: 'chain-bribes-revenue-chart',
-		name: 'Chain Bribes Revenue',
-		description: 'Historical daily bribes revenue for a specific chain',
-		category: 'Fees & Revenue',
-		adapterType: 'fees',
-		dataType: 'dailyBribesRevenue'
-	}),
-	makeDimensionProtocolChart({
-		slug: 'protocol-token-taxes-chart',
-		name: 'Protocol Token Taxes',
-		description: 'Historical daily token taxes for a specific protocol',
-		category: 'Fees & Revenue',
-		adapterType: 'fees',
-		dataType: 'dailyTokenTaxes'
-	}),
-	makeDimensionChainChart({
-		slug: 'chain-token-taxes-chart',
-		name: 'Chain Token Taxes',
-		description: 'Historical daily token taxes for a specific chain',
-		category: 'Fees & Revenue',
-		adapterType: 'fees',
-		dataType: 'dailyTokenTaxes'
-	}),
 	makeDimensionCategoryChart({
 		slug: 'category-fees-chart',
 		name: 'Category Fees',

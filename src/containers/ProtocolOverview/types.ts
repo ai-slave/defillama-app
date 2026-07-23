@@ -30,8 +30,6 @@ export interface IProtocolPageMetrics {
 	yields: boolean
 	fees: boolean
 	revenue: boolean
-	bribes: boolean
-	tokenTax: boolean
 	forks: boolean
 	governance: boolean
 	nfts: boolean
@@ -109,8 +107,6 @@ export interface IProtocolOverviewPageData {
 	fees: IAdapterOverview | null
 	revenue: IAdapterOverview | null
 	holdersRevenue: IAdapterOverview | null
-	bribeRevenue: IAdapterOverview | null
-	tokenTax: IAdapterOverview | null
 	dexVolume: IAdapterOverview | null
 	dexNotionalVolume: IAdapterOverview | null
 	dexAggregatorVolume: IAdapterOverview | null

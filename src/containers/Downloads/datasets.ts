@@ -560,28 +560,6 @@ export const datasets: DatasetDefinition[] = [
 		extractItems: extractProtocols
 	},
 	{
-		slug: 'bribes-revenue',
-		name: 'Bribes Revenue',
-		description: 'Revenue from bribes and vote incentives across protocols',
-		category: 'Fees & Revenue',
-		url: `${SERVER_URL}/overview/fees?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true&dataType=dailyBribesRevenue`,
-		fields: overviewFields,
-		defaultSortField: 'total24h',
-		chainFilterType: 'overview',
-		extractItems: extractProtocols
-	},
-	{
-		slug: 'token-taxes',
-		name: 'Token Taxes',
-		description: 'Revenue from token transfer taxes across protocols',
-		category: 'Fees & Revenue',
-		url: `${SERVER_URL}/overview/fees?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true&dataType=dailyTokenTaxes`,
-		fields: overviewFields,
-		defaultSortField: 'total24h',
-		chainFilterType: 'overview',
-		extractItems: extractProtocols
-	},
-	{
 		slug: 'hacks',
 		name: 'Hacks',
 		description: 'Historical exploits database with classification, technique, and amounts',

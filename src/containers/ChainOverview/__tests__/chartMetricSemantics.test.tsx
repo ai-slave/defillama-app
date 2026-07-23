@@ -62,13 +62,7 @@ const activityChartRows: Array<{ label: ChainChartLabels; expectedUrl: string }>
 	}
 ]
 
-function Probe({
-	toggledCharts,
-	feesSettings = {}
-}: {
-	toggledCharts: ChainChartLabels[]
-	feesSettings?: { bribes?: boolean; tokentax?: boolean }
-}) {
+function Probe({ toggledCharts }: { toggledCharts: ChainChartLabels[] }) {
 	mocks.lastResult = useFetchChainChartData({
 		denomination: 'USD',
 		selectedChain: 'Base',
@@ -81,7 +75,6 @@ function Probe({
 		},
 		extraTvlCharts: {},
 		tvlSettings: {},
-		feesSettings,
 		toggledCharts,
 		groupBy: 'daily'
 	})
@@ -115,68 +108,18 @@ describe('ChainOverview chart metric semantics', () => {
 		expect(mocks.fetchJson).toHaveBeenCalledWith(expectedUrl)
 	})
 
-	it('fetches chain-native fee extras for Chain Fees charts', () => {
-		renderToStaticMarkup(<Probe toggledCharts={['Chain Fees']} feesSettings={{ bribes: true, tokentax: true }} />)
-
-		expect(mocks.fetchJson).toHaveBeenCalledWith(
-			'/api/public/chains/charts?kind=adapter-protocol&entity=chain&adapterType=fees&protocol=Base'
-		)
-		expect(mocks.fetchJson).toHaveBeenCalledWith(
-			'/api/public/chains/charts?kind=adapter-protocol&entity=chain&adapterType=fees&protocol=Base&dataType=dailyBribesRevenue'
-		)
-		expect(mocks.fetchJson).toHaveBeenCalledWith(
-			'/api/public/chains/charts?kind=adapter-protocol&entity=chain&adapterType=fees&protocol=Base&dataType=dailyTokenTaxes'
-		)
-		expect(mocks.fetchJson).toHaveBeenCalledTimes(3)
-	})
-
-	it('fetches app aggregation fee extras for App Fees charts', () => {
-		renderToStaticMarkup(<Probe toggledCharts={['App Fees']} feesSettings={{ bribes: true, tokentax: true }} />)
-
-		expect(mocks.fetchJson).toHaveBeenCalledWith(
-			'/api/public/chains/charts?kind=adapter-chain&adapterType=fees&chain=Base&dataType=dailyAppFees'
-		)
-		expect(mocks.fetchJson).toHaveBeenCalledWith(
-			'/api/public/chains/charts?kind=adapter-chain&adapterType=fees&chain=Base&dataType=dailyBribesRevenue'
-		)
-		expect(mocks.fetchJson).toHaveBeenCalledWith(
-			'/api/public/chains/charts?kind=adapter-chain&adapterType=fees&chain=Base&dataType=dailyTokenTaxes'
-		)
-		expect(mocks.fetchJson).toHaveBeenCalledTimes(3)
-	})
-
-	it('does not merge cached disabled fee extras into Chain Fees charts', () => {
+	it('uses the chain fee series directly', () => {
 		const timestamp = Date.UTC(2024, 0, 1) / 1e3
-		mocks.useQuery.mockImplementation((options: { queryKey: unknown[]; enabled?: boolean; queryFn: () => unknown }) => {
+		mocks.useQuery.mockImplementation((options: { queryKey: unknown[] }) => {
 			if (options.queryKey[1] === 'chain-fees') {
 				return { data: [[timestamp, 100]], isLoading: false }
-			}
-			if (options.queryKey[1] === 'chain-native-fee-extra' && options.queryKey[2] === 'dailyBribesRevenue') {
-				return { data: [[timestamp, 20]], isLoading: false }
 			}
 			return { data: null, isLoading: false }
 		})
 
-		renderToStaticMarkup(<Probe toggledCharts={['Chain Fees']} feesSettings={{ bribes: false }} />)
+		renderToStaticMarkup(<Probe toggledCharts={['Chain Fees']} />)
 
 		expect(mocks.lastResult?.finalCharts['Chain Fees']).toEqual([[timestamp * 1e3, 100]])
-	})
-
-	it('keeps Chain Fees visible and reports failed enabled fee-extra chart fetches', () => {
-		const timestamp = Date.UTC(2024, 0, 1) / 1e3
-		mocks.useQuery.mockImplementation((options: { queryKey: unknown[]; enabled?: boolean; queryFn: () => unknown }) => {
-			if (options.queryKey[1] === 'chain-fees') {
-				return { data: [[timestamp, 100]], isLoading: false }
-			}
-			if (options.queryKey[1] === 'chain-native-fee-extra' && options.queryKey[2] === 'dailyBribesRevenue') {
-				return { data: undefined, isLoading: false, error: new Error('bribes failed') }
-			}
-			return { data: null, isLoading: false }
-		})
-
-		renderToStaticMarkup(<Probe toggledCharts={['Chain Fees']} feesSettings={{ bribes: true }} />)
-
-		expect(mocks.lastResult?.finalCharts['Chain Fees']).toEqual([[timestamp * 1e3, 100]])
-		expect(mocks.lastResult?.failedMetrics).toEqual(['Chain Fees'])
+		expect(mocks.fetchJson).not.toHaveBeenCalled()
 	})
 })

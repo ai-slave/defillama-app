@@ -2,12 +2,11 @@ import dayjs from 'dayjs'
 import { useMemo, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
-import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { formattedNum } from '~/utils'
-import { getAdjustedTotals, getPrimaryValueLabelType } from './helpers'
+import { getPrimaryValueLabelType } from './helpers'
 import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
 import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
 import type { IProtocolOverviewPageData } from './types'
@@ -41,8 +40,6 @@ type KeyMetricsOptionalFields = Partial<
 		| 'fees'
 		| 'revenue'
 		| 'holdersRevenue'
-		| 'bribeRevenue'
-		| 'tokenTax'
 		| 'incentives'
 		| 'bridgeVolume'
 		| 'expenses'
@@ -496,12 +493,9 @@ const buildMetrics = (
 }
 
 function Fees(props: IKeyMetricsProps) {
-	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl_fees')
+	if (!props.fees) return null
 
-	const adjusted = getAdjustedTotals(props.fees, props.bribeRevenue, props.tokenTax, extraTvlsEnabled)
-	if (!adjusted) return null
-
-	const metrics = buildMetrics(adjusted, definitions.fees.protocol, 'Fees', false, props.fees?.chainBreakdown)
+	const metrics = buildMetrics(props.fees, definitions.fees.protocol, 'Fees', false, props.fees.chainBreakdown)
 	if (metrics.length === 0) return null
 
 	return (
@@ -517,12 +511,15 @@ function Fees(props: IKeyMetricsProps) {
 }
 
 function Revenue(props: IKeyMetricsProps) {
-	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl_fees')
+	if (!props.revenue) return null
 
-	const adjusted = getAdjustedTotals(props.revenue, props.bribeRevenue, props.tokenTax, extraTvlsEnabled)
-	if (!adjusted) return null
-
-	const metrics = buildMetrics(adjusted, definitions.revenue.protocol, 'Revenue', false, props.revenue?.chainBreakdown)
+	const metrics = buildMetrics(
+		props.revenue,
+		definitions.revenue.protocol,
+		'Revenue',
+		false,
+		props.revenue.chainBreakdown
+	)
 	if (metrics.length === 0) return null
 
 	return (
@@ -538,13 +535,10 @@ function Revenue(props: IKeyMetricsProps) {
 }
 
 function HoldersRevenue(props: IKeyMetricsProps) {
-	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl_fees')
-
-	const adjusted = getAdjustedTotals(props.holdersRevenue, props.bribeRevenue, props.tokenTax, extraTvlsEnabled)
-	if (!adjusted) return null
+	if (!props.holdersRevenue) return null
 
 	const metrics = buildMetrics(
-		adjusted,
+		props.holdersRevenue,
 		definitions.holdersRevenue.protocol,
 		'Holders Revenue',
 		false,
@@ -583,34 +577,30 @@ function Incentives(props: IKeyMetricsProps) {
 }
 
 function Earnings(props: IKeyMetricsProps) {
-	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl_fees')
-
 	const revenue = props.revenue
 	const incentivesData = props.incentives
 
 	if (!incentivesData && !revenue) return null
 
-	const adjustedRevenue = getAdjustedTotals(revenue, props.bribeRevenue, props.tokenTax, extraTvlsEnabled)
-
 	const earnings24h =
-		adjustedRevenue?.total24h != null && incentivesData?.emissions24h != null
-			? adjustedRevenue.total24h - incentivesData.emissions24h
+		revenue?.total24h != null && incentivesData?.emissions24h != null
+			? revenue.total24h - incentivesData.emissions24h
 			: null
 	const earnings7d =
-		adjustedRevenue?.total7d != null && incentivesData?.emissions7d != null
-			? adjustedRevenue.total7d - incentivesData.emissions7d
+		revenue?.total7d != null && incentivesData?.emissions7d != null
+			? revenue.total7d - incentivesData.emissions7d
 			: null
 	const earnings30d =
-		adjustedRevenue?.total30d != null && incentivesData?.emissions30d != null
-			? adjustedRevenue.total30d - incentivesData.emissions30d
+		revenue?.total30d != null && incentivesData?.emissions30d != null
+			? revenue.total30d - incentivesData.emissions30d
 			: null
 	const earningsAnnualized1y =
-		adjustedRevenue?.annualized1y != null && incentivesData?.emissions1y != null
-			? adjustedRevenue.annualized1y - incentivesData.emissions1y
+		revenue?.annualized1y != null && incentivesData?.emissions1y != null
+			? revenue.annualized1y - incentivesData.emissions1y
 			: null
 	const earningsAllTime =
-		adjustedRevenue?.totalAllTime != null && incentivesData?.emissionsAllTime != null
-			? adjustedRevenue.totalAllTime - incentivesData.emissionsAllTime
+		revenue?.totalAllTime != null && incentivesData?.emissionsAllTime != null
+			? revenue.totalAllTime - incentivesData.emissionsAllTime
 			: null
 
 	const metrics: VolumeMetric[] = []

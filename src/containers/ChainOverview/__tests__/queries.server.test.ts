@@ -3,7 +3,7 @@ import type { ICategoriesAndTags, IChainMetadata } from '~/utils/metadata/types'
 import { createRoutePhaseTimer } from '~/utils/perf'
 import {
 	getChainOverviewData,
-	getChainOverviewMetricFilterOptions,
+	getChainOverviewTvlOptions,
 	getRwaActiveMcapForChain,
 	hasRwaActiveMcapChain,
 	shouldShowChainOverviewBridgedTvlChart,
@@ -153,11 +153,7 @@ describe('shouldFetchChainPerps', () => {
 	})
 })
 
-describe('getChainOverviewMetricFilterOptions', () => {
-	const emptyFeeExtras = {
-		chainNative: { bribes: null, tokenTax: null },
-		app: { bribes: null, tokenTax: null }
-	}
+describe('getChainOverviewTvlOptions', () => {
 	const makeChartData = (staking: ILiteChart['staking']): ILiteChart => ({
 		tvl: [],
 		staking,
@@ -170,52 +166,11 @@ describe('getChainOverviewMetricFilterOptions', () => {
 		dcAndLsOverlap: []
 	})
 
-	it('exposes fee toggles only when visible fee metrics have matching extras', () => {
-		const options = getChainOverviewMetricFilterOptions({
-			chartData: makeChartData([['1', 1]]),
-			chainFees: { total24h: 100 },
-			chainRevenue: { total24h: null },
-			appRevenue: { total24h: null },
-			appFees: { total24h: null },
-			feeExtras: {
-				...emptyFeeExtras,
-				chainNative: { bribes: { total24h: 20 }, tokenTax: null }
-			}
-		})
+	it('derives filter options only from available TVL series', () => {
+		const options = getChainOverviewTvlOptions(makeChartData([['1', 1]]))
 
-		expect(options.map((option) => option.key)).toEqual(['staking', 'bribes'])
-	})
-
-	it('exposes fee toggles when extras are the only visible fee metric value', () => {
-		const options = getChainOverviewMetricFilterOptions({
-			chartData: makeChartData([]),
-			chainFees: { total24h: null },
-			chainRevenue: { total24h: null },
-			appRevenue: { total24h: null },
-			appFees: { total24h: null },
-			feeExtras: {
-				...emptyFeeExtras,
-				app: { bribes: null, tokenTax: { total24h: 30 } }
-			}
-		})
-
-		expect(options.map((option) => option.key)).toEqual(['tokentax'])
-	})
-
-	it('exposes app-only extras even when chain-native base fee metrics are the only base fee values', () => {
-		const options = getChainOverviewMetricFilterOptions({
-			chartData: makeChartData([]),
-			chainFees: { total24h: 100 },
-			chainRevenue: { total24h: null },
-			appRevenue: { total24h: null },
-			appFees: { total24h: null },
-			feeExtras: {
-				...emptyFeeExtras,
-				app: { bribes: { total24h: 30 }, tokenTax: null }
-			}
-		})
-
-		expect(options.map((option) => option.key)).toEqual(['bribes'])
+		expect(options.map((option) => option.key)).toEqual(['staking'])
+		expect(getChainOverviewTvlOptions(makeChartData([]))).toEqual([])
 	})
 })
 

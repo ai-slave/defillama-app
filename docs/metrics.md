@@ -21,7 +21,6 @@ Current source layout:
 
 - `public/pages.json`: product-facing names, descriptions, route slugs, tabs, and total tracked keys.
 - `src/metrics`: typed internal descriptors for migrated cross-container invariants. It is intentionally not a global registry for every metric.
-- `src/metrics/feeExtras.ts`: shared bribes/token-tax config and small pure helpers for migrated fee-extra behavior.
 - `src/containers/AdapterMetrics/README.md`: adapter-backed page ownership, data flow, and local gotchas.
 - `src/containers/README.md`: route-family to container ownership map.
 - RWA definition files listed below: local source of truth for RWA breakdowns.
@@ -60,14 +59,12 @@ Important files:
 - `src/containers/AdapterMetrics/api.ts`: upstream adapter metrics/chart fetchers.
 - `src/containers/AdapterMetrics/README.md`: local route and change guide.
 - `src/metrics/feesRevenue.ts`: cross-container fee/revenue semantic descriptors for the migrated fee/revenue slice.
-- `src/metrics/feeExtras.ts`: fee-extra setting/data-type mappings, row total helpers, and chart merge helpers.
 - `src/containers/AdapterMetrics/metricPeriods.ts`: nullable period-field merge and change derivation helpers.
 
 Examples of ambiguous pairings:
 
 - `dailyVolume` is used by DEXs, perps, DEX aggregators, and perp aggregators. The metadata flag depends on `adapterType`.
 - `dailyNotionalVolume` is used by DEX notional volume and options notional volume. The metadata flag depends on `adapterType`.
-- Fee subtypes such as bribes and token taxes gate on fee metadata but are not the same product concept as Chain Fees or App Fees. Product fee-family pages may add them to displayed totals when their toggles are enabled.
 
 ### Protocol Liquidations
 
@@ -93,19 +90,6 @@ Fees and revenue have two different chain concepts:
 
 Do not replace chain-level fees/revenue with app aggregation unless the product definition explicitly says `App Fees` or `App Revenue`.
 
-### Fee Extras
-
-Bribes and token taxes are tracked upstream as separate fees adapter data types: `dailyBribesRevenue` and `dailyTokenTaxes`.
-
-Display behavior:
-
-- Fee-family product surfaces that expose `bribes` and `tokentax` toggles add enabled extras into displayed totals and charts.
-- Chain Fees and Chain Revenue use chain-native fee extra records from the adapter protocol chain path.
-- App Fees and App Revenue use app-on-chain fee extra records from the adapter chain path.
-- REV, Pro Dashboard, public raw datasets, raw dimension endpoints, and non-fee adapter pages keep bribes/token taxes separate.
-
-Do not use app-on-chain extras to adjust Chain Fees/Revenue or chain-native extras to adjust App Fees/App Revenue.
-
 ### P/F And P/S
 
 P/F and P/S ratios use annualized fee/revenue values, not 30-day fallback totals.
@@ -114,7 +98,6 @@ P/F and P/S ratios use annualized fee/revenue values, not 30-day fallback totals
 - P/S is market cap divided by `annualized1y` revenue.
 - Public definitions describe annualized values as trailing 12-month totals when enough history exists, otherwise all available tracked history scaled to a 12-month run rate.
 - Parent and multi-chain aggregation must preserve null when any fee- or revenue-contributing child/chain is missing the relevant annualized denominator.
-- Fee extras can adjust annualized values on eligible fee-family display surfaces, but percentage changes should be derived from adjusted period totals rather than stale upstream change fields.
 
 ### Chain Fees
 
@@ -146,7 +129,7 @@ Chain Revenue is chain-level economics.
 
 Implementation notes:
 
-- This may represent chain-retained revenue such as gas fees, bribes, token taxes, or other chain-native economics depending on the adapter methodology.
+- This may represent different forms of chain-retained economics depending on the adapter methodology.
 - Do not redirect Chain Revenue to app revenue aggregation.
 - Client chart requests should pass `entity=chain` for Chain Revenue so the API validates the value against chain metadata and requires the `chainRevenue` flag.
 

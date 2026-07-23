@@ -8,8 +8,6 @@ const { protocolCharts } = vi.hoisted(() => ({
 		fees: vi.fn(),
 		revenue: vi.fn(),
 		holdersRevenue: vi.fn(),
-		bribes: vi.fn(),
-		tokenTax: vi.fn(),
 		perps: vi.fn(),
 		openInterest: vi.fn(),
 		aggregators: vi.fn(),

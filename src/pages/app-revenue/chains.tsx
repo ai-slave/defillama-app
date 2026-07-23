@@ -1,4 +1,3 @@
-import { feesOptions } from '~/components/Filters/options'
 import { ChainsByAdapter } from '~/containers/AdapterMetrics/ChainsByAdapter'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { getChainsByAdapterPageData } from '~/containers/AdapterMetrics/queries'
@@ -34,8 +33,6 @@ const HoldersRevenueByChain = (props: IChainsByAdapterPageData) => {
 			title="App Revenue by Chain - DefiLlama"
 			description="Compare app revenue by chain, excluding stablecoins, liquid staking apps, and gas fees."
 			canonicalUrl={`/app-revenue/chains`}
-			metricFilters={feesOptions}
-			metricFiltersLabel="Include in App Revenue"
 			pageName={pageName}
 		>
 			<ChainsByAdapter {...props} type={type} />

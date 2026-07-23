@@ -1,11 +1,4 @@
-import {
-	TVL_SETTINGS,
-	FEES_SETTINGS,
-	TVL_SETTINGS_KEYS_SET,
-	FEES_SETTINGS_KEYS_SET,
-	type TvlSettingsKey,
-	type FeesSettingKey
-} from '~/contexts/LocalStorage'
+import { TVL_SETTINGS, type TvlSettingsKey } from '~/contexts/LocalStorage'
 import type { ToggleOption } from './types'
 
 export const tvlOptions: Array<ToggleOption<TvlSettingsKey>> = [
@@ -46,20 +39,4 @@ export const tvlOptions: Array<ToggleOption<TvlSettingsKey>> = [
 	}
 ]
 
-export const feesOptions: Array<ToggleOption<FeesSettingKey>> = [
-	{ name: 'Bribes', key: FEES_SETTINGS.BRIBES, help: null },
-	{ name: 'Token Tax', key: FEES_SETTINGS.TOKENTAX, help: null }
-]
-
 export const tvlOptionsMap = new Map(tvlOptions.map((option) => [option.key, option]))
-export const feesOptionsMap = new Map(feesOptions.map((option) => [option.key, option]))
-
-export function getMetricFiltersLabel(options: Array<{ key: string }> | undefined) {
-	const hasTvl = options?.some((option) => TVL_SETTINGS_KEYS_SET.has(option.key))
-	const hasFees = options?.some((option) => FEES_SETTINGS_KEYS_SET.has(option.key))
-
-	if (hasTvl && hasFees) return 'Include TVL & Fees'
-	if (hasTvl) return 'Include in TVL'
-	if (hasFees) return 'Include in Fees'
-	return null
-}

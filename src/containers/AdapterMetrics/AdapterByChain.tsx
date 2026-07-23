@@ -31,9 +31,7 @@ import { FullOldViewButton } from '~/containers/AdapterMetrics/FullOldViewButton
 import { chainCharts } from '~/containers/ChainOverview/constants'
 import { protocolCharts } from '~/containers/ProtocolOverview/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
-import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { setStorageItem } from '~/contexts/localStorageStore'
-import { addFeeExtrasToRowTotals, hasEnabledFeeExtras, isFeeExtraEligibleAdapterMetric } from '~/metrics/feeExtras'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
@@ -43,7 +41,7 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug, getMarketCapToAnnualizedMetricRatio } from '~/utils'
+import { formattedNum, slug } from '~/utils'
 import { parseExcludeParam } from '~/utils/routerQuery'
 import { AdapterByChainChart } from './ChainChart'
 import type { IAdapterByChainPageData, IProtocol } from './types'
@@ -111,7 +109,6 @@ const pageTypeByDefinition: Partial<Record<TPageType, Record<string, string>>> =
 export function AdapterByChain(props: IProps) {
 	const router = useRouter()
 	const isChain = props.chain !== 'All'
-	const [enabledSettings] = useLocalStorageSettingsManager('fees')
 	const categoryParam = router.query.category
 	const excludeCategoryParam = router.query.excludeCategory
 	const hasCategoryParam = Object.prototype.hasOwnProperty.call(router.query, 'category')
@@ -156,58 +153,11 @@ export function AdapterByChain(props: IProps) {
 						? getProtocolsByCategory(props.protocols, categoriesToFilter)
 						: props.protocols
 
-		let finalProtocols = protocols
-		if (
-			hasEnabledFeeExtras(enabledSettings) &&
-			isFeeExtraEligibleAdapterMetric({ adapterType: props.adapterType, dataType: props.dataType })
-		) {
-			finalProtocols = []
-			for (const p of protocols) {
-				const adjustedProtocol = addFeeExtrasToRowTotals(p, enabledSettings)
-				const pfOrPs =
-					adjustedProtocol.mcap != null && adjustedProtocol.annualized1y != null
-						? getMarketCapToAnnualizedMetricRatio(adjustedProtocol.mcap, adjustedProtocol.annualized1y)
-						: null
-
-				let childProtocols: IProtocol['childProtocols'] = p.childProtocols
-				if (p.childProtocols) {
-					childProtocols = []
-					for (const cp of p.childProtocols) {
-						const adjustedChildProtocol = addFeeExtrasToRowTotals(cp, enabledSettings)
-						const cpPfOrPs =
-							adjustedChildProtocol.mcap != null && adjustedChildProtocol.annualized1y != null
-								? getMarketCapToAnnualizedMetricRatio(adjustedChildProtocol.mcap, adjustedChildProtocol.annualized1y)
-								: null
-
-						childProtocols.push({
-							...adjustedChildProtocol,
-							pfOrPs: cpPfOrPs
-						})
-					}
-				}
-
-				finalProtocols.push({
-					...adjustedProtocol,
-					pfOrPs,
-					...(childProtocols ? { childProtocols } : {})
-				})
-			}
-		}
-
 		return {
 			selectedCategories,
-			protocols: finalProtocols
+			protocols
 		}
-	}, [
-		categoryParam,
-		excludeCategoryParam,
-		hasCategoryParam,
-		props.categories,
-		props.protocols,
-		props.adapterType,
-		props.dataType,
-		enabledSettings
-	])
+	}, [categoryParam, excludeCategoryParam, hasCategoryParam, props.categories, props.protocols])
 
 	const [sorting, setSorting] = useState<SortingState>(defaultSortingByType[props.type] ?? defaultSortingByType.default)
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])

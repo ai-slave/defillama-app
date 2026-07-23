@@ -2,7 +2,6 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { FEE_EXTRA_CONFIGS } from '~/metrics/feeExtras'
 import { buttonStyles } from '~/ui/Button'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
@@ -12,7 +11,6 @@ export function EmbedChart() {
 	const router = useRouter()
 
 	const [tvlSettings] = useLocalStorageSettingsManager('tvl')
-	const [feesSettings] = useLocalStorageSettingsManager('fees')
 	const [isDarkTheme] = useDarkModeManager()
 
 	const url = React.useMemo(() => {
@@ -36,18 +34,12 @@ export function EmbedChart() {
 			}
 		}
 
-		for (const extra of FEE_EXTRA_CONFIGS) {
-			if (feesSettings[extra.setting]) {
-				extras.push(`${extra.queryParam}=true`)
-			}
-		}
-
 		extras.push(isDarkTheme ? 'theme=dark' : 'theme=light')
 
 		return `<iframe width="640px" height="360px" src="https://defillama.com/chart${path}${extras.join(
 			'&'
 		)}" title="DefiLlama" frameborder="0"></iframe>`
-	}, [router.asPath, tvlSettings, feesSettings, isDarkTheme])
+	}, [router.asPath, tvlSettings, isDarkTheme])
 
 	return (
 		<Ariakit.PopoverProvider>

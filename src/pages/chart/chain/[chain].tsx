@@ -13,7 +13,6 @@ import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useFetchChainChartData } from '~/containers/ChainOverview/useFetchChainChartData'
 import { TVL_SETTINGS } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
-import { FEE_EXTRA_CONFIGS } from '~/metrics/feeExtras'
 import { LocalLoader } from '~/ui/Loaders'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -101,7 +100,7 @@ export default function ChainChartPage(props: IChainOverviewData) {
 		)
 	}, [router.query, props.metadata.id])
 
-	const { toggledCharts, chainGeckoId, groupBy, denomination, tvlSettings, feesSettings, isThemeDark } = useMemo(() => {
+	const { toggledCharts, chainGeckoId, groupBy, denomination, tvlSettings, isThemeDark } = useMemo(() => {
 		const queryParams = JSON.parse(queryParamsString)
 
 		let chainGeckoId = null
@@ -117,12 +116,6 @@ export default function ChainChartPage(props: IChainOverviewData) {
 
 		for (const setting in TVL_SETTINGS) {
 			tvlSettings[TVL_SETTINGS[setting]] = isTruthyQueryParam(queryParams[`include_${TVL_SETTINGS[setting]}_in_tvl`])
-		}
-
-		const feesSettings = {}
-
-		for (const extra of FEE_EXTRA_CONFIGS) {
-			feesSettings[extra.setting] = isTruthyQueryParam(queryParams[extra.queryParam])
 		}
 
 		const toggledCharts = props.charts.filter((tchart, index) =>
@@ -144,7 +137,6 @@ export default function ChainChartPage(props: IChainOverviewData) {
 			groupBy,
 			denomination,
 			tvlSettings,
-			feesSettings,
 			isThemeDark
 		}
 	}, [queryParamsString, props.charts, props.chainTokenInfo?.gecko_id, selectedChain])
@@ -156,7 +148,6 @@ export default function ChainChartPage(props: IChainOverviewData) {
 		tvlChartSummary: props.tvlChartSummary,
 		extraTvlCharts: props.extraTvlCharts,
 		tvlSettings,
-		feesSettings,
 		chainGeckoId,
 		toggledCharts,
 		groupBy

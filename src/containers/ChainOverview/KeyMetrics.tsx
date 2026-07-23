@@ -2,8 +2,6 @@ import dayjs from 'dayjs'
 import { Fragment, memo, useRef } from 'react'
 import { BasicLink } from '~/components/Link'
 import { definitions as rwaDefinitions } from '~/containers/RWA/definitions'
-import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { addOptionalFeeExtraTotal, getFeeExtraTotal } from '~/metrics/feeExtras'
 import { definitions } from '~/public/definitions'
 import {
 	MetricRow as ChainMetricRow,
@@ -15,11 +13,6 @@ import { formattedNum, slug } from '~/utils'
 import { formatRaiseAmount } from '../Raises/utils'
 import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
 import type { IChainOverviewData } from './types'
-
-const EMPTY_FEE_EXTRAS: IChainOverviewData['feeExtras'] = {
-	chainNative: { bribes: null, tokenTax: null },
-	app: { bribes: null, tokenTax: null }
-}
 
 const formatKeyMetricsValue = (value: number | string | null) => {
 	if (Number.isNaN(Number(value))) return null
@@ -38,7 +31,6 @@ interface KeyMetricsProps {
 	chainStablecoins: IChainOverviewData['chainStablecoins']
 	chainFees: IChainOverviewData['chainFees']
 	chainRevenue: IChainOverviewData['chainRevenue']
-	feeExtras: IChainOverviewData['feeExtras']
 	chainIncentives: IChainOverviewData['chainIncentives']
 	appRevenue: IChainOverviewData['appRevenue']
 	appFees: IChainOverviewData['appFees']
@@ -58,16 +50,8 @@ interface KeyMetricsProps {
 
 export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 	const keyMetricsRef = useRef<HTMLDivElement>(null)
-	const [feesSettings] = useLocalStorageSettingsManager('fees')
 	const keyMetricsTitle = props.metadata.name === 'All' ? 'All Chains' : props.metadata.name
 	const hasKeyMetricsPrimary = props.protocols.length > 0 && props.totalValueUSD != null
-	const feeExtras = props.feeExtras ?? EMPTY_FEE_EXTRAS
-	const chainFeeExtra24h = getFeeExtraTotal(feeExtras.chainNative, 'total24h', feesSettings)
-	const appFeeExtra24h = getFeeExtraTotal(feeExtras.app, 'total24h', feesSettings)
-	const chainFees24h = addOptionalFeeExtraTotal(props.chainFees.total24h, chainFeeExtra24h)
-	const chainRevenue24h = addOptionalFeeExtraTotal(props.chainRevenue.total24h, chainFeeExtra24h)
-	const appRevenue24h = addOptionalFeeExtraTotal(props.appRevenue.total24h, appFeeExtra24h)
-	const appFees24h = addOptionalFeeExtraTotal(props.appFees.total24h, appFeeExtra24h)
 
 	return (
 		<div className="flex flex-1 flex-col gap-2">
@@ -89,18 +73,18 @@ export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 				<StablecoinsMcap stablecoins={props.stablecoins} isAll={props.metadata.name === 'All'} />
 				<RwaActiveMcap rwaActiveMcap={props.rwaActiveMcap} />
 				<NativeStablecoins chainStablecoins={props.chainStablecoins} />
-				{chainFees24h != null ? (
+				{props.chainFees.total24h != null ? (
 					<ChainMetricRow
 						label="Chain Fees (24h)"
 						tooltip={definitions.fees.chain['24h']}
-						value={formattedNum(chainFees24h, true)}
+						value={formattedNum(props.chainFees.total24h, true)}
 					/>
 				) : null}
-				{chainRevenue24h != null ? (
+				{props.chainRevenue.total24h != null ? (
 					<ChainMetricRow
 						label="Chain Revenue (24h)"
 						tooltip={definitions.revenue.chain['24h']}
-						value={formattedNum(chainRevenue24h, true)}
+						value={formattedNum(props.chainRevenue.total24h, true)}
 					/>
 				) : null}
 				{props.chainFees?.totalREV24h != null ? (
@@ -117,18 +101,18 @@ export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 						value={formattedNum(props.chainIncentives.emissions24h, true)}
 					/>
 				) : null}
-				{appRevenue24h != null && appRevenue24h > 1e3 ? (
+				{props.appRevenue.total24h != null && props.appRevenue.total24h > 1e3 ? (
 					<ChainMetricRow
 						label="App Revenue (24h)"
 						tooltip={definitions.appRevenue.chain['24h']}
-						value={formattedNum(appRevenue24h, true)}
+						value={formattedNum(props.appRevenue.total24h, true)}
 					/>
 				) : null}
-				{appFees24h != null && appFees24h > 1e3 ? (
+				{props.appFees.total24h != null && props.appFees.total24h > 1e3 ? (
 					<ChainMetricRow
 						label="App Fees (24h)"
 						tooltip={definitions.appFees.chain['24h']}
-						value={formattedNum(appFees24h, true)}
+						value={formattedNum(props.appFees.total24h, true)}
 					/>
 				) : null}
 				<DexsVolume dexs={props.dexs} />

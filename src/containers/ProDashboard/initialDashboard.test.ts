@@ -100,6 +100,26 @@ describe('dashboard initial render payload', () => {
 		expect(payload).not.toHaveProperty('collectionName')
 	})
 
+	it('drops saved chart types that are no longer supported', () => {
+		const unsupportedChart = {
+			id: 'legacy-chart',
+			kind: 'chart',
+			protocol: 'aave',
+			type: 'legacy-adapter-metric'
+		} as unknown as DashboardItemConfig
+		const source = dashboard([
+			unsupportedChart,
+			{ id: 'text-1', kind: 'text', title: 'Summary', content: 'Still supported' }
+		])
+
+		expect(toPublicDashboardInitialRenderPayload(source).data.items).toEqual([
+			{ id: 'text-1', kind: 'text', title: 'Summary', content: 'Still supported' }
+		])
+		expect(initDashboardState({ dashboard: source }).items).toEqual([
+			{ id: 'text-1', kind: 'text', title: 'Summary', content: 'Still supported' }
+		])
+	})
+
 	it('includes verified owner identity for edit hydration without editor history', () => {
 		const payload = toOwnerDashboardInitialRenderPayload(dashboard([]))
 

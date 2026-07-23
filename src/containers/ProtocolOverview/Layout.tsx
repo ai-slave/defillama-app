@@ -3,7 +3,6 @@ import { useMemo } from 'react'
 import { useAuthContext } from '~/auth'
 import { Announcement } from '~/components/Announcement'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
-import { getMetricFiltersLabel } from '~/components/Filters/options'
 import { BasicLink, ButtonLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
@@ -144,8 +143,6 @@ export function ProtocolOverviewLayout({
 }) {
 	const { user } = useAuthContext()
 
-	const metricFiltersLabel = getMetricFiltersLabel(toggleOptions)
-
 	const protocolTabs = useMemo(() => {
 		const final = []
 		if (metrics.borrowed) {
@@ -234,8 +231,7 @@ export function ProtocolOverviewLayout({
 			canonicalUrl={standaloneCanonicals[tab] ? canonicalUrl : null}
 			noIndex={shouldNoIndex}
 			pageName={isCEX ? ['Exchanges'] : undefined}
-			metricFilters={toggleOptions}
-			metricFiltersLabel={metricFiltersLabel ?? undefined}
+			tvlOptions={toggleOptions}
 		>
 			{category === 'Uncollateralized Lending' || category === 'RWA Lending' ? (
 				<div className="relative rounded-md border border-(--bg-color) bg-surface-elevated-1 p-2 text-center text-xs text-black dark:text-primary">

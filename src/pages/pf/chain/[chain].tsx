@@ -1,5 +1,4 @@
 import type { GetStaticPropsContext } from 'next'
-import { feesOptions } from '~/components/Filters/options'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { AdapterByChain } from '~/containers/AdapterMetrics/AdapterByChain'
 import { ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
@@ -79,8 +78,6 @@ const FeesOnChain = (props: IAdapterByChainPageData) => {
 			title={`Price to Fees (P/F) Ratio on ${props.chain} - DefiLlama`}
 			description={`Compare Price to Fees (P/F) ratios for DeFi protocols on ${props.chain}. Evaluate valuations relative to fees generated.`}
 			canonicalUrl={`/pf/chain/${slug(props.chain)}`}
-			metricFilters={feesOptions}
-			metricFiltersLabel="Include in Metrics"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

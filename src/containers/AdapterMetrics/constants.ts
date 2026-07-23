@@ -22,8 +22,6 @@ export enum ADAPTER_DATA_TYPES {
 	DAILY_PROTOCOL_REVENUE = 'dailyProtocolRevenue',
 	DAILY_HOLDERS_REVENUE = 'dailyHoldersRevenue',
 	DAILY_SUPPLY_SIDE_REVENUE = 'dailySupplySideRevenue',
-	DAILY_BRIBES_REVENUE = 'dailyBribesRevenue',
-	DAILY_TOKEN_TAXES = 'dailyTokenTaxes',
 	DAILY_NOTIONAL_VOLUME = 'dailyNotionalVolume',
 	DAILY_PREMIUM_VOLUME = 'dailyPremiumVolume',
 	DAILY_APP_FEES = 'dailyAppFees',
@@ -48,8 +46,6 @@ export const ADAPTER_DATA_TYPE_KEYS = {
 	dailyProtocolRevenue: 'dpr',
 	dailyHoldersRevenue: 'dhr',
 	dailySupplySideRevenue: 'dssr',
-	dailyBribesRevenue: 'dbr',
-	dailyTokenTaxes: 'dtt',
 	dailyAppRevenue: 'dar',
 	dailyAppFees: 'daf',
 	dailyNotionalVolume: 'dnv',
@@ -96,8 +92,6 @@ const CHAIN_METADATA_KEYS: Record<string, ChainMetadataKey> = {
 	// fee sub-types gate on fees flag, revenue sub-types gate on revenue flag
 	[ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE]: 'revenue',
 	[ADAPTER_DATA_TYPES.DAILY_SUPPLY_SIDE_REVENUE]: 'revenue',
-	[ADAPTER_DATA_TYPES.DAILY_BRIBES_REVENUE]: 'fees',
-	[ADAPTER_DATA_TYPES.DAILY_TOKEN_TAXES]: 'fees',
 	[ADAPTER_DATA_TYPES.DAILY_APP_REVENUE]: 'revenue',
 	[ADAPTER_DATA_TYPES.DAILY_APP_FEES]: 'fees',
 	[ADAPTER_DATA_TYPES.DAILY_EARNINGS]: 'revenue'

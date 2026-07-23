@@ -98,8 +98,6 @@ const CUMULATIVE_METRIC_TYPES = new Set([
 	'aggregators',
 	'bridgeAggregators',
 	'perpsAggregators',
-	'bribes',
-	'tokenTax',
 	'holdersRevenue',
 	'optionsPremium',
 	'optionsNotional',

@@ -135,14 +135,6 @@ export default class ProtocolCharts {
 		return this.summary(protocol, 'fees', 'dailyHoldersRevenue')
 	}
 
-	static async bribes(protocol: string): Promise<[number, number][]> {
-		return this.summary(protocol, 'fees', 'dailyBribesRevenue')
-	}
-
-	static async tokenTax(protocol: string): Promise<[number, number][]> {
-		return this.summary(protocol, 'fees', 'dailyTokenTaxes')
-	}
-
 	static async perps(protocol: string): Promise<[number, number][]> {
 		return this.summary(protocol, 'derivatives')
 	}

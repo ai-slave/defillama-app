@@ -9,7 +9,7 @@ import {
 	type SortingState,
 	useReactTable
 } from '@tanstack/react-table'
-import { startTransition, useMemo, useState } from 'react'
+import { startTransition, useState } from 'react'
 import { Announcement } from '~/components/Announcement'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
@@ -18,8 +18,6 @@ import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import type {} from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
-import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { addFeeExtrasToRowTotals, hasEnabledFeeExtras, isFeeExtraEligibleAdapterMetric } from '~/metrics/feeExtras'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
@@ -52,29 +50,12 @@ interface IProps extends IChainsByAdapterPageData {
 const FEES_CHART_PAGE_TYPES: TPageType[] = ['Holders Revenue', 'App Fees', 'App Revenue']
 
 export function ChainsByAdapter(props: IProps) {
-	const [enabledSettings] = useLocalStorageSettingsManager('fees')
-
 	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'total24h' }])
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
 
-	const chains = useMemo(() => {
-		if (
-			hasEnabledFeeExtras(enabledSettings) &&
-			isFeeExtraEligibleAdapterMetric({ adapterType: props.adapterType, dataType: props.dataType })
-		) {
-			const adjustedChains: IChainsByAdapterPageData['chains'] = []
-			for (const chain of props.chains) {
-				adjustedChains.push(addFeeExtrasToRowTotals(chain, enabledSettings))
-			}
-			return adjustedChains
-		}
-
-		return props.chains
-	}, [props.adapterType, props.dataType, props.chains, enabledSettings])
-
 	const instance = useReactTable({
-		data: chains,
+		data: props.chains,
 		columns: columnsByType[props.type] as any,
 		state: {
 			sorting,

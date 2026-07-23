@@ -86,7 +86,7 @@ function parsePinnedMetrics(value: string): string[] {
 	}
 }
 
-export function Nav({ metricFilters }: { metricFilters?: { name: string; key: string }[] }) {
+export function Nav({ tvlOptions }: { tvlOptions?: { name: string; key: string }[] }) {
 	const { asPath } = useRouter()
 	const { data: liteDashboards } = useGetLiteDashboards()
 
@@ -146,7 +146,7 @@ export function Nav({ metricFilters }: { metricFilters?: { name: string; key: st
 				pinnedPages={pinnedPages}
 				userDashboards={userDashboards}
 				footerLinks={footerLinks}
-				metricFilters={metricFilters}
+				tvlOptions={tvlOptions}
 				oldMetricLinks={oldMetricLinks}
 				asPath={asPath}
 			/>

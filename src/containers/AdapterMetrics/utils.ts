@@ -4,7 +4,6 @@ import type {
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
-import type { FeeExtraPeriodTotals } from '~/metrics/feeExtras'
 import { getNDistinctColors, slug } from '~/utils'
 import { parseExcludeParam } from '~/utils/routerQuery'
 import type { IAdapterChainMetrics } from './api.types'
@@ -12,7 +11,6 @@ import type { ADAPTER_TYPES } from './constants'
 import { mergeMetricPeriods, type MetricPeriodFields } from './metricPeriods'
 import type { IAdapterByChainPageData, IChainsByAdapterPageData, IProtocol } from './types'
 
-export type BribesData = FeeExtraPeriodTotals
 export type OpenInterestData = { total24h: number | null; doublecounted: boolean }
 export type ActiveLiquidityData = { total24h: number | null; doublecounted: boolean }
 export type NormalizedVolumeData = { total24h: number | null }
@@ -258,89 +256,6 @@ export function getCategoryProtocolNameFilterForChart({
 	return { kind: 'unrestricted' }
 }
 
-export function processRevenueDataForMatching(protocols: IAdapterChainMetrics['protocols']) {
-	const protocolGroups = groupProtocolsByParent(protocols)
-
-	return processGroupedProtocols(protocolGroups, (protocolVersions, parentKey) => {
-		if (protocolVersions.length === 1) {
-			return {
-				...protocolVersions[0],
-				parentKey,
-				groupedName:
-					protocolVersions[0].linkedProtocols?.[0] || protocolVersions[0].parentProtocol || protocolVersions[0].name
-			}
-		} else {
-			const aggregatedProtocol = aggregateProtocolVersions(protocolVersions)
-			return {
-				...aggregatedProtocol,
-				parentKey,
-				groupedName:
-					aggregatedProtocol.linkedProtocols?.[0] || aggregatedProtocol.parentProtocol || aggregatedProtocol.name
-			}
-		}
-	})
-}
-
-export function matchRevenueToEarnings(
-	revenueData: Array<{
-		parentKey: string
-		name: string
-		displayName: string
-		defillamaId: string
-		groupedName: string
-		total24h: number | null
-		total48hto24h?: number | null
-		total7d: number | null
-		total14dto7d?: number | null
-		total30d: number | null
-		total60dto30d?: number | null
-		total7DaysAgo?: number | null
-		total30DaysAgo?: number | null
-		total1y: number | null
-		totalAllTime: number | null
-	}>,
-	earningsProtocols: Array<{
-		parentProtocol: string
-		defillamaId: string
-		name: string
-		displayName: string
-	}>
-) {
-	const matchedData = {}
-
-	for (const revenueProtocol of revenueData) {
-		const matchingEarningsProtocol = earningsProtocols.find((earningsProto) => {
-			const earningsParentKey = earningsProto.parentProtocol || earningsProto.defillamaId
-
-			return (
-				earningsParentKey === revenueProtocol.parentKey ||
-				earningsProto.name === revenueProtocol.name ||
-				earningsProto.displayName === revenueProtocol.displayName ||
-				earningsProto.defillamaId === revenueProtocol.defillamaId ||
-				earningsProto.name === revenueProtocol.groupedName ||
-				earningsProto.displayName === revenueProtocol.groupedName
-			)
-		})
-
-		if (matchingEarningsProtocol) {
-			matchedData[matchingEarningsProtocol.name] = {
-				total24h: revenueProtocol.total24h ?? null,
-				total48hto24h: revenueProtocol.total48hto24h ?? null,
-				total7d: revenueProtocol.total7d ?? null,
-				total14dto7d: revenueProtocol.total14dto7d ?? null,
-				total30d: revenueProtocol.total30d ?? null,
-				total60dto30d: revenueProtocol.total60dto30d ?? null,
-				total7DaysAgo: revenueProtocol.total7DaysAgo ?? null,
-				total30DaysAgo: revenueProtocol.total30DaysAgo ?? null,
-				total1y: revenueProtocol.total1y ?? null,
-				totalAllTime: revenueProtocol.totalAllTime ?? null
-			}
-		}
-	}
-
-	return matchedData
-}
-
 export function buildAdapterByChainChartDataset({
 	adapterType,
 	metricName,
@@ -403,80 +318,6 @@ export function buildAdapterByChainChartDataset({
 			? ['timestamp', primaryDimensionLabel, secondaryDimensionLabel as string]
 			: ['timestamp', primaryDimensionLabel]
 	}
-}
-
-function assert(condition: unknown, message: string): asserts condition {
-	if (!condition) {
-		throw new Error(message)
-	}
-}
-
-function toChartTimestamp(timestamp: number) {
-	return timestamp < 1e12 ? timestamp * 1e3 : timestamp
-}
-
-export function mergeSingleDimensionChartDataset({
-	chartData,
-	extraCharts
-}: {
-	chartData: MultiSeriesChartDataset
-	extraCharts: Array<Array<[number, number]>>
-}): MultiSeriesChartDataset {
-	assert(chartData.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
-	assert(chartData.dimensions.length === 2, 'Expected a single chart dimension')
-	if (extraCharts.every((chart) => chart.length === 0)) return chartData
-
-	const dimension = chartData.dimensions[1]
-	const rows = new Map<number, number | null>()
-
-	for (const row of chartData.source) {
-		rows.set(row[0] as number, (row[1] as number | null | undefined) ?? null)
-	}
-
-	for (const extraChart of extraCharts) {
-		for (const [timestamp, value] of extraChart) {
-			const chartTimestamp = toChartTimestamp(timestamp)
-			rows.set(chartTimestamp, (rows.get(chartTimestamp) ?? 0) + value)
-		}
-	}
-
-	const source: MultiSeriesChartDataset['source'] = []
-	const sortedRows = Array.from(rows.entries()).sort((a, b) => a[0] - b[0])
-	for (const [timestamp, value] of sortedRows) {
-		source.push([timestamp, value])
-	}
-
-	return {
-		dimensions: ['timestamp', dimension],
-		source
-	}
-}
-
-export function mergeBreakdownCharts({
-	chart,
-	extraCharts
-}: {
-	chart: Array<[number, Record<string, number>]>
-	extraCharts: Array<Array<[number, Record<string, number>]>>
-}): Array<[number, Record<string, number>]> {
-	const rows = new Map<number, Record<string, number>>()
-
-	const mergeChart = (input: Array<[number, Record<string, number>]>) => {
-		for (const [timestamp, values] of input) {
-			const row = rows.get(timestamp) ?? {}
-			for (const key in values) {
-				row[key] = (row[key] ?? 0) + values[key]
-			}
-			rows.set(timestamp, row)
-		}
-	}
-
-	mergeChart(chart)
-	for (const extraChart of extraCharts) {
-		mergeChart(extraChart)
-	}
-
-	return Array.from(rows.entries()).sort((a, b) => a[0] - b[0])
 }
 
 export type ProtocolBreakdownNormalization = {
@@ -592,83 +433,6 @@ export function normalizeProtocolBreakdownChartData({
 			dimensions: ['timestamp', ...protocolDimensions]
 		},
 		protocolDimensions
-	}
-}
-
-export function mergeNamedDimensionChartDataset({
-	chartData,
-	extraCharts,
-	allowedDimensions
-}: {
-	chartData: MultiSeriesChartDataset
-	extraCharts: Array<Array<[number, Record<string, number>]>>
-	allowedDimensions?: string[]
-}): MultiSeriesChartDataset {
-	assert(chartData.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
-	if (extraCharts.every((chart) => chart.length === 0)) return chartData
-
-	const dimensions: string[] = []
-	for (const dimension of chartData.dimensions) {
-		if (dimension !== 'timestamp') dimensions.push(dimension)
-	}
-	const allowedDimensionSet = allowedDimensions ? new Set(allowedDimensions) : null
-	const dimensionByLowercase = new Map<string, string>()
-	for (const dimension of dimensions) {
-		dimensionByLowercase.set(dimension.toLowerCase(), dimension)
-	}
-	const rows = new Map<number, Map<string, number | null>>()
-
-	for (const row of chartData.source) {
-		const timestamp = row[0] as number
-		const nextRow = new Map<string, number | null>()
-		for (let i = 0; i < dimensions.length; i++) {
-			nextRow.set(dimensions[i], (row[i + 1] as number | null | undefined) ?? null)
-		}
-		rows.set(timestamp, nextRow)
-	}
-
-	const getExtraDimension = (key: string) => {
-		const existingDimension = dimensionByLowercase.get(key.toLowerCase())
-		if (existingDimension != null) {
-			return existingDimension === key ? existingDimension : null
-		}
-		if (allowedDimensionSet && !allowedDimensionSet.has(key)) {
-			return null
-		}
-
-		dimensions.push(key)
-		dimensionByLowercase.set(key.toLowerCase(), key)
-		return key
-	}
-
-	for (const extraChart of extraCharts) {
-		for (const [timestamp, values] of extraChart) {
-			const chartTimestamp = toChartTimestamp(timestamp)
-			const row = rows.get(chartTimestamp) ?? new Map<string, number | null>()
-
-			for (const key in values) {
-				const dimension = getExtraDimension(key)
-				if (!dimension) continue
-				row.set(dimension, (row.get(dimension) ?? 0) + values[key])
-			}
-
-			rows.set(chartTimestamp, row)
-		}
-	}
-
-	const source: MultiSeriesChartDataset['source'] = []
-	for (const [timestamp, values] of Array.from(rows.entries()).sort((a, b) => a[0] - b[0])) {
-		const nextRow = new Array<number | null>(dimensions.length + 1)
-		nextRow[0] = timestamp
-		for (let i = 0; i < dimensions.length; i++) {
-			nextRow[i + 1] = values.get(dimensions[i]) ?? null
-		}
-		source.push(nextRow)
-	}
-
-	return {
-		dimensions: ['timestamp', ...dimensions],
-		source
 	}
 }
 

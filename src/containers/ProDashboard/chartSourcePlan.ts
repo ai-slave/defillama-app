@@ -44,8 +44,6 @@ const PROTOCOL_SOURCE_FLAGS: Partial<Record<ProDashboardChartType, readonly (key
 	liquidity: ['liquidity'],
 	treasury: ['treasury'],
 	holdersRevenue: ['holdersRevenue'],
-	bribes: ['bribeRevenue'],
-	tokenTax: ['tokenTax'],
 	perps: ['perps'],
 	openInterest: ['openInterest'],
 	aggregators: ['dexAggregators'],

@@ -27,8 +27,6 @@ const PROTOCOL_FLAG_KEYS = [
 	'incentives',
 	'liquidity',
 	'treasury',
-	'bribeRevenue',
-	'tokenTax',
 	'yields',
 	'borrowed',
 	'activeUsers',
@@ -246,8 +244,6 @@ export function AppMetadataProvider({
 			if (flags.liquidity) types.add('liquidity')
 			if (flags.treasury) types.add('treasury')
 			if (flags.holdersRevenue) types.add('holdersRevenue')
-			if (flags.bribeRevenue) types.add('bribes')
-			if (flags.tokenTax) types.add('tokenTax')
 			if (flags.perps) types.add('perps')
 			if (flags.openInterest) types.add('openInterest')
 			if (flags.dexAggregators) types.add('aggregators')

@@ -13,10 +13,10 @@ import {
 
 const EMPTY_FILTERS: { name: string; key: string }[] = []
 
-export function Settings({ metricFilters = EMPTY_FILTERS }: { metricFilters?: { name: string; key: string }[] }) {
+export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: { name: string; key: string }[] }) {
 	const [darkMode, toggleDarkMode] = useDarkModeManager()
 
-	const { selectedValues, setSelectedValues } = useProtocolsFilterState(metricFilters)
+	const { selectedValues, setSelectedValues } = useProtocolsFilterState(tvlOptions)
 
 	return (
 		<Ariakit.SelectProvider value={selectedValues} setValue={setSelectedValues}>
@@ -37,7 +37,7 @@ export function Settings({ metricFilters = EMPTY_FILTERS }: { metricFilters?: { 
 				</Ariakit.PopoverDismiss>
 
 				<h2 className="px-3 py-2 label-sm text-secondary">Settings</h2>
-				{metricFilters.map((option) => (
+				{tvlOptions.map((option) => (
 					<Ariakit.SelectItem value={option.key} key={option.key} className={popoverRowWithBorderStyles}>
 						{option.name}
 						<span className={popoverMultiSelectCheckStyles(selectedValues.includes(option.key))} aria-hidden>

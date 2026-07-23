@@ -26,7 +26,7 @@ export default function CompareProtocolsPage({ protocols, protocolsList }: Compa
 			description="Compare DeFi protocols side-by-side by TVL, fees, revenue, and user metrics. Analyze protocol performance across chains and categories. Advanced comparison tool for DeFi investment research."
 			canonicalUrl={`/compare-protocols`}
 			pageName={pageName}
-			metricFilters={compareProtocolTvlOptions}
+			tvlOptions={compareProtocolTvlOptions}
 		>
 			<CompareProtocols protocols={protocols} protocolsList={protocolsList} />
 		</Layout>

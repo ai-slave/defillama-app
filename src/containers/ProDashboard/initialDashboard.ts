@@ -1,7 +1,7 @@
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
 import type { DashboardItemConfig } from './types'
-import { cleanItemsForSaving } from './utils/dashboardUtils'
+import { cleanItemsForSaving, sanitizeItemsForAPI } from './utils/dashboardUtils'
 
 const initialRenderDashboards = new WeakSet<Dashboard>()
 
@@ -38,7 +38,7 @@ export type PublicDashboardInitialRenderPayload = Omit<
 }
 
 function initialRenderItems(items: DashboardItemConfig[]): DashboardItemConfig[] {
-	return cleanItemsForSaving(items).map((item) => {
+	return sanitizeItemsForAPI(cleanItemsForSaving(items)).map((item) => {
 		if (item.kind !== 'llamaai-chart' || !item.inlineChartData) return item
 		const { inlineChartData: _inlineChartData, ...config } = item
 		return config

@@ -1,4 +1,5 @@
 import { fetchAdapterChainChartData, fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
+import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchChainAssetsChart } from '~/containers/BridgedTVL/api'
 import { fetchBridgeVolumeByChain } from '~/containers/Bridges/api'
 import { formatBridgeOverviewVolumeData } from '~/containers/Bridges/bridgeOverviewVolumeData'
@@ -6,10 +7,7 @@ import { fetchRaises } from '~/containers/Raises/api'
 import { getStablecoinOverviewChartSeries } from '~/containers/Stablecoins/queries.server'
 import { getProtocolUnlockUsdChart } from '~/containers/Unlocks/queries'
 import type { ChainNativeFeeRevenueMetric } from '~/metrics/definitions'
-import {
-	getChainNativeFeeRevenueMetricForAdapterProtocol,
-	isChainNativeFeeExtraForAdapterProtocol
-} from '~/metrics/routeSemantics'
+import { getChainNativeFeeRevenueMetricForAdapterProtocol } from '~/metrics/routeSemantics'
 import { queryString } from '~/server/api/params'
 import { badRequest, notFound, ok } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
@@ -20,6 +18,12 @@ const CHART_CACHE_CONTROL = 'public, s-maxage=3600, stale-while-revalidate=600'
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' }
 
 type StablecoinMcapSeriesPoint = [number, number]
+
+const ADAPTER_DATA_TYPE_VALUES = new Set<string>(Object.values(ADAPTER_DATA_TYPES))
+
+function isAdapterDataType(dataType: string | undefined): boolean {
+	return dataType == null || ADAPTER_DATA_TYPE_VALUES.has(dataType)
+}
 
 // ---------------------------------------------------------------------------
 // /api/public/chains/charts
@@ -52,13 +56,6 @@ async function resolveCanonicalChainNativeFeeRevenueProtocolParam(
 	return chainRoute?.metadata[metric.metadataFlag] ? chainRoute.canonicalName : null
 }
 
-async function resolveCanonicalChainNativeFeeExtraProtocolParam(chain: string): Promise<string | null> {
-	if (chain.toLowerCase() === 'all') return null
-	const { resolveChainParam } = await import('~/containers/ChainOverview/server/routes')
-	const chainRoute = await resolveChainParam(chain)
-	return chainRoute?.metadata.chainFees || chainRoute?.metadata.chainRevenue ? chainRoute.canonicalName : null
-}
-
 function isChainActivityProtocolAdapter(adapterType: string, dataType: string | undefined): boolean {
 	if (adapterType === 'active-users') return dataType == null || dataType === 'dailyTransactionsCount'
 	return adapterType === 'new-users' && dataType == null
@@ -78,14 +75,10 @@ async function resolveCanonicalAdapterProtocolParam(
 	entity: string | undefined
 ): Promise<string | null> {
 	const chainNativeFeeRevenueMetric = getChainNativeFeeRevenueMetricForAdapterProtocol({ adapterType, dataType })
-	const isChainNativeFeeExtra = isChainNativeFeeExtraForAdapterProtocol({ adapterType, dataType })
 
 	if (entity === 'chain') {
 		if (chainNativeFeeRevenueMetric) {
 			return resolveCanonicalChainNativeFeeRevenueProtocolParam(protocol, chainNativeFeeRevenueMetric)
-		}
-		if (isChainNativeFeeExtra) {
-			return resolveCanonicalChainNativeFeeExtraProtocolParam(protocol)
 		}
 		if (isChainActivityProtocolAdapter(adapterType, dataType)) {
 			return resolveCanonicalChainActivityProtocolParam(protocol)
@@ -100,9 +93,6 @@ async function resolveCanonicalAdapterProtocolParam(
 	// unknown values still fail route-cache validation before reaching upstream.
 	if (chainNativeFeeRevenueMetric) {
 		return resolveCanonicalChainNativeFeeRevenueProtocolParam(protocol, chainNativeFeeRevenueMetric)
-	}
-	if (isChainNativeFeeExtra) {
-		return resolveCanonicalChainNativeFeeExtraProtocolParam(protocol)
 	}
 	return null
 }
@@ -140,6 +130,9 @@ export const chainCharts = defineApiRoute({
 				if (!adapterType || !chain) {
 					return badRequest('adapterType and chain parameters are required')
 				}
+				if (!isAdapterDataType(dataType)) {
+					return badRequest('Unsupported adapter dataType')
+				}
 				const canonicalChain = await resolveCanonicalChainParam(chain)
 				if (!canonicalChain) {
 					return notFound('chain not found')
@@ -162,6 +155,9 @@ export const chainCharts = defineApiRoute({
 
 				if (!adapterType || !protocol) {
 					return badRequest('adapterType and protocol parameters are required')
+				}
+				if (!isAdapterDataType(dataType)) {
+					return badRequest('Unsupported adapter dataType')
 				}
 				if (entity && entity !== 'chain' && entity !== 'protocol') {
 					return badRequest('entity parameter must be chain or protocol')

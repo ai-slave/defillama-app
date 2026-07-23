@@ -4,16 +4,8 @@ import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
 import type { IChainsByAdapterPageData } from '../types'
 
 const mocks = vi.hoisted(() => ({
-	feesSettings: {
-		bribes: false,
-		tokentax: false
-	},
 	chartProps: [] as Array<Record<string, unknown>>,
 	tableData: [] as Array<Array<Record<string, unknown>>>
-}))
-
-vi.mock('~/contexts/LocalStorage', () => ({
-	useLocalStorageSettingsManager: () => [mocks.feesSettings]
 }))
 
 vi.mock('~/components/CsvDownloadButton', () => ({
@@ -38,34 +30,24 @@ import { ChainsByAdapter } from '../ChainsByAdapter'
 
 type PageType = Parameters<typeof ChainsByAdapter>[0]['type']
 
-const feeExtrasChain = {
+const baseChain = {
 	name: 'Base',
 	logo: '/icons/base.png',
 	total24h: 100,
 	total7d: 700,
-	total30d: 3000,
-	bribes: {
-		total24h: 20,
-		total7d: 140,
-		total30d: 600
-	},
-	tokenTax: {
-		total24h: 3,
-		total7d: 21,
-		total30d: 30
-	}
+	total30d: 3000
 }
 
 function renderRows({
 	type,
 	adapterType,
 	dataType,
-	chains
+	chains = [baseChain]
 }: {
 	type: PageType
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: `${ADAPTER_DATA_TYPES}`
-	chains: IChainsByAdapterPageData['chains']
+	chains?: IChainsByAdapterPageData['chains']
 }) {
 	const tableRenderIndex = mocks.tableData.length
 
@@ -84,86 +66,32 @@ function renderRows({
 	return mocks.tableData[tableRenderIndex]
 }
 
-describe('ChainsByAdapter fee extras', () => {
+describe('ChainsByAdapter', () => {
 	beforeEach(() => {
-		mocks.feesSettings.bribes = false
-		mocks.feesSettings.tokentax = false
 		mocks.chartProps = []
 		mocks.tableData = []
 	})
 
-	it('keeps app fee chain totals unchanged when fee extras are disabled', () => {
+	it('uses the fetched chain totals directly', () => {
 		const rows = renderRows({
 			type: 'App Fees',
 			adapterType: ADAPTER_TYPES.FEES,
-			dataType: ADAPTER_DATA_TYPES.DAILY_APP_FEES,
-			chains: [feeExtrasChain]
+			dataType: ADAPTER_DATA_TYPES.DAILY_APP_FEES
 		})
 
-		expect(rows[0]).toMatchObject({
-			name: 'Base',
-			total24h: 100,
-			total7d: 700,
-			total30d: 3000
-		})
-	})
-
-	it.each([
-		['Fees', ADAPTER_DATA_TYPES.DAILY_FEES],
-		['Revenue', ADAPTER_DATA_TYPES.DAILY_REVENUE],
-		['Holders Revenue', ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE],
-		['App Fees', ADAPTER_DATA_TYPES.DAILY_APP_FEES],
-		['App Revenue', ADAPTER_DATA_TYPES.DAILY_APP_REVENUE]
-	] as const)('adds enabled bribes and token tax into %s chain table totals', (type, dataType) => {
-		mocks.feesSettings.bribes = true
-		mocks.feesSettings.tokentax = true
-
-		const rows = renderRows({
-			type,
-			adapterType: ADAPTER_TYPES.FEES,
-			dataType,
-			chains: [feeExtrasChain]
-		})
-
-		expect(rows[0]).toMatchObject({
-			name: 'Base',
-			total24h: 123,
-			total7d: 861,
-			total30d: 3630
-		})
-	})
-
-	it('does not add fee extras into non-fee adapter chain table totals', () => {
-		mocks.feesSettings.bribes = true
-		mocks.feesSettings.tokentax = true
-
-		const rows = renderRows({
-			type: 'DEX Volume',
-			adapterType: ADAPTER_TYPES.DEXS,
-			dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME,
-			chains: [feeExtrasChain]
-		})
-
-		expect(rows[0]).toMatchObject({
-			name: 'Base',
-			total24h: 100,
-			total7d: 700,
-			total30d: 3000
-		})
+		expect(rows[0]).toMatchObject(baseChain)
 	})
 
 	it('shows chart panels on app fee and holders revenue chain ranking pages', () => {
 		renderRows({
 			type: 'App Fees',
 			adapterType: ADAPTER_TYPES.FEES,
-			dataType: ADAPTER_DATA_TYPES.DAILY_APP_FEES,
-			chains: [feeExtrasChain]
+			dataType: ADAPTER_DATA_TYPES.DAILY_APP_FEES
 		})
 		renderRows({
 			type: 'Holders Revenue',
 			adapterType: ADAPTER_TYPES.FEES,
-			dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE,
-			chains: [feeExtrasChain]
+			dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
 		})
 
 		expect(mocks.chartProps.map((props) => props.chartName)).toEqual(['App Fees', 'Holders Revenue'])
@@ -173,14 +101,12 @@ describe('ChainsByAdapter fee extras', () => {
 		renderRows({
 			type: 'Fees',
 			adapterType: ADAPTER_TYPES.FEES,
-			dataType: ADAPTER_DATA_TYPES.DAILY_FEES,
-			chains: [feeExtrasChain]
+			dataType: ADAPTER_DATA_TYPES.DAILY_FEES
 		})
 		renderRows({
 			type: 'Revenue',
 			adapterType: ADAPTER_TYPES.FEES,
-			dataType: ADAPTER_DATA_TYPES.DAILY_REVENUE,
-			chains: [feeExtrasChain]
+			dataType: ADAPTER_DATA_TYPES.DAILY_REVENUE
 		})
 
 		expect(mocks.chartProps).toEqual([])
@@ -190,8 +116,7 @@ describe('ChainsByAdapter fee extras', () => {
 		renderRows({
 			type: 'DEX Volume',
 			adapterType: ADAPTER_TYPES.DEXS,
-			dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME,
-			chains: [feeExtrasChain]
+			dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME
 		})
 
 		expect(mocks.chartProps.map((props) => props.chartName)).toEqual(['DEX Volume'])

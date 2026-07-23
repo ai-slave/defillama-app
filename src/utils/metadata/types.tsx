@@ -66,8 +66,6 @@ export interface IProtocolMetadata {
 	nfts?: boolean
 	emissions?: boolean
 	incentives?: boolean
-	bribeRevenue?: boolean
-	tokenTax?: boolean
 	bridge?: boolean
 	stablecoins?: boolean
 	safeHarbor?: boolean

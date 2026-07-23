@@ -1,30 +1,8 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { IKeyMetricsProps } from '../KeyMetrics'
 import type { IProtocolPageMetrics } from '../types'
-
-const mocks = vi.hoisted(() => ({
-	tvlFeesSettings: { bribes: false, tokentax: false }
-}))
-
-vi.mock('~/contexts/LocalStorage', () => ({
-	TVL_SETTINGS: {
-		POOL2: 'pool2',
-		STAKING: 'staking',
-		BORROWED: 'borrowed',
-		DOUBLE_COUNT: 'doublecounted',
-		LIQUID_STAKING: 'liquidstaking',
-		VESTING: 'vesting',
-		GOV_TOKENS: 'govtokens'
-	},
-	FEES_SETTINGS: {
-		BRIBES: 'bribes',
-		TOKENTAX: 'tokentax'
-	},
-	isTvlSettingsKey: () => false,
-	useLocalStorageSettingsManager: () => [mocks.tvlFeesSettings]
-}))
 
 vi.mock('~/ui/Icon', () => ({
 	Icon: () => null
@@ -61,8 +39,6 @@ const metrics: IProtocolPageMetrics = {
 	yields: false,
 	fees: true,
 	revenue: false,
-	bribes: false,
-	tokenTax: false,
 	forks: false,
 	governance: false,
 	nfts: false,
@@ -95,11 +71,6 @@ const baseProps = {
 }
 
 describe('KeyMetrics', () => {
-	beforeEach(() => {
-		mocks.tvlFeesSettings.bribes = false
-		mocks.tvlFeesSettings.tokentax = false
-	})
-
 	it('renders chain rows for fee breakdown metrics', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
@@ -255,7 +226,7 @@ describe('KeyMetrics', () => {
 		expect(markup).toContain('$1220')
 	})
 
-	it('does not render zero fee rows for disabled extra-only periods', async () => {
+	it('does not render fee rows for unavailable base periods', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			fees: {
@@ -266,22 +237,6 @@ describe('KeyMetrics', () => {
 				annualized1y: null,
 				totalAllTime: null,
 				chainBreakdown: null
-			},
-			bribeRevenue: {
-				total24h: 10,
-				total7d: null,
-				total30d: 300,
-				total1y: null,
-				annualized1y: null,
-				totalAllTime: 1000
-			},
-			tokenTax: {
-				total24h: 5,
-				total7d: null,
-				total30d: 30,
-				total1y: null,
-				annualized1y: null,
-				totalAllTime: null
 			}
 		})
 
@@ -350,49 +305,5 @@ describe('KeyMetrics', () => {
 		expect(markup).toContain('Earnings (Annualized)')
 		expect(markup).toContain('$3600')
 		expect(markup).not.toContain('$3660')
-	})
-
-	it('uses enabled extra-only adjusted revenue periods for earnings', async () => {
-		mocks.tvlFeesSettings.bribes = true
-
-		const markup = await renderKeyMetrics({
-			...baseProps,
-			revenue: {
-				total24h: null,
-				total7d: null,
-				total30d: null,
-				total1y: null,
-				annualized1y: null,
-				totalAllTime: null,
-				chainBreakdown: null
-			},
-			bribeRevenue: {
-				total24h: 50,
-				total7d: 200,
-				total30d: 600,
-				total1y: null,
-				annualized1y: null,
-				totalAllTime: 1000
-			},
-			incentives: {
-				emissions24h: 10,
-				emissions7d: 20,
-				emissions30d: 100,
-				emissions1y: null,
-				emissionsAllTime: 200,
-				emissionsMonthlyAverage1y: 0
-			}
-		})
-
-		expect(markup).toContain('Earnings 30d')
-		expect(markup).toContain('Earnings (30d Run Rate)')
-		expect(markup).toContain('$6100')
-		expect(markup).toContain('$500')
-		expect(markup).toContain('Earnings 7d')
-		expect(markup).toContain('$180')
-		expect(markup).toContain('Earnings 24h')
-		expect(markup).toContain('$40')
-		expect(markup).toContain('Cumulative Earnings')
-		expect(markup).toContain('$800')
 	})
 })

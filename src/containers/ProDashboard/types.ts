@@ -623,8 +623,6 @@ export const CHART_TYPES = {
 		color: '#cb3a3a',
 		groupable: true
 	},
-	bribes: { id: 'bribes', title: 'Bribes Revenue', chartType: 'bar', color: '#299976', groupable: true },
-	tokenTax: { id: 'tokenTax', title: 'Token Tax', chartType: 'bar', color: '#723ecc', groupable: true },
 	holdersRevenue: {
 		id: 'holdersRevenue',
 		title: 'Holders Revenue',
@@ -694,8 +692,6 @@ export const getProtocolChartTypes = (): string[] => {
 		'incentives',
 		'treasury',
 		'holdersRevenue',
-		'bribes',
-		'tokenTax',
 		'perps',
 		'openInterest',
 		'aggregators',
@@ -731,8 +727,6 @@ export const getChainChartTypes = (): string[] => {
 		'optionsPremium',
 		'optionsNotional',
 		'revenue',
-		'bribes',
-		'tokenTax',
 		'activeUsers',
 		'newUsers',
 		'gasUsed',

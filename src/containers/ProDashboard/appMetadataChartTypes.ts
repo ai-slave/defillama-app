@@ -8,8 +8,6 @@ export function getAvailableChainChartTypes(flags: IChainMetadata | undefined, o
 	if (flags.dexs) types.add('volume')
 	if (flags.fees) {
 		types.add('fees')
-		types.add('bribes')
-		types.add('tokenTax')
 	}
 	if (flags.revenue) types.add('revenue')
 	if (flags.dexAggregators) types.add('aggregators')

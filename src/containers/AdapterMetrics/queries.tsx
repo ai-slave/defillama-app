@@ -186,22 +186,12 @@ export const getAdapterByChainPageData = async ({
 	const rankBy = route === 'pf' || route === 'ps' ? 'pfOrPs' : 'total24h'
 	const cantonIncentivesWarning = metricName === 'Fees' || metricName === 'Revenue' ? CANTON_INCENTIVES_WARNING : null
 
-	const [
-		data,
-		protocolsData,
-		bribesData,
-		tokenTaxesData,
-		openInterestData,
-		activeLiquidityData,
-		normalizedVolumeData
-	]: [
+	const [data, protocolsData, openInterestData, activeLiquidityData, normalizedVolumeData]: [
 		IAdapterChainOverview,
 		{
 			protocols: Array<{ name: string; mcap: number | null }>
 			parentProtocols: Array<{ name: string; mcap?: number | null }>
 		},
-		IAdapterChainMetrics | null,
-		IAdapterChainMetrics | null,
 		IAdapterChainOverview | null,
 		IAdapterChainOverview | null,
 		IAdapterChainMetrics | null
@@ -213,20 +203,6 @@ export const getAdapterByChainPageData = async ({
 			excludeTotalDataChart: adapterType === 'fees' && !showFeesChart
 		}),
 		fetchProtocols().catch(() => ({ protocols: [], parentProtocols: [] })),
-		adapterType === 'fees'
-			? fetchAdapterChainMetrics({
-					adapterType,
-					chain,
-					dataType: 'dailyBribesRevenue'
-				}).catch(() => null)
-			: Promise.resolve(null),
-		adapterType === 'fees'
-			? fetchAdapterChainMetrics({
-					adapterType,
-					chain,
-					dataType: 'dailyTokenTaxes'
-				}).catch(() => null)
-			: Promise.resolve(null),
 		hasOpenInterest
 			? getAdapterChainOverview({
 					adapterType: 'open-interest',
@@ -254,8 +230,6 @@ export const getAdapterByChainPageData = async ({
 	const readModel = buildAdapterByChainReadModel({
 		data,
 		protocolsData,
-		bribesData,
-		tokenTaxesData,
 		openInterestData,
 		activeLiquidityData,
 		normalizedVolumeData,
@@ -301,7 +275,7 @@ export const getAdapterByChainPageData = async ({
 }
 
 // only returns fees paid by users when using the chain (gas ?), not the fees paid by users when using the protocols on chain
-export const getChainsByFeesAdapterPageData = async ({
+export const getChainsByChainNativeFeeRevenuePageData = async ({
 	adapterType,
 	dataType,
 	chainMetadata
@@ -321,50 +295,11 @@ export const getChainsByFeesAdapterPageData = async ({
 			allChainsSet.add(currentChainMetadata.name)
 		}
 
-		const [chainsData, bribesData, tokenTaxesData] = await Promise.all([
-			fetchAdapterChainMetrics({
-				adapterType,
-				dataType,
-				chain: 'All'
-			}).then((res) => res.protocols.filter((p) => p.protocolType === 'chain' && allChainsSet.has(p.name))),
-			fetchAdapterChainMetrics({
-				adapterType,
-				dataType: 'dailyBribesRevenue',
-				chain: 'All'
-			})
-				.then((res) => res.protocols.filter((p) => p.protocolType === 'chain' && allChainsSet.has(p.name)))
-				.catch(() => []),
-			fetchAdapterChainMetrics({
-				adapterType,
-				dataType: 'dailyTokenTaxes',
-				chain: 'All'
-			})
-				.then((res) => res.protocols.filter((p) => p.protocolType === 'chain' && allChainsSet.has(p.name)))
-				.catch(() => [])
-		])
-
-		const bribesByChain: Record<string, { total24h: number | null; total7d: number | null; total30d: number | null }> =
-			{}
-		const tokenTaxesByChain: Record<
-			string,
-			{ total24h: number | null; total7d: number | null; total30d: number | null }
-		> = {}
-
-		for (const chain of bribesData) {
-			bribesByChain[chain.name] = {
-				total24h: chain.total24h ?? null,
-				total7d: chain.total7d ?? null,
-				total30d: chain.total30d ?? null
-			}
-		}
-
-		for (const chain of tokenTaxesData) {
-			tokenTaxesByChain[chain.name] = {
-				total24h: chain.total24h ?? null,
-				total7d: chain.total7d ?? null,
-				total30d: chain.total30d ?? null
-			}
-		}
+		const chainsData = await fetchAdapterChainMetrics({
+			adapterType,
+			dataType,
+			chain: 'All'
+		}).then((res) => res.protocols.filter((p) => p.protocolType === 'chain' && allChainsSet.has(p.name)))
 
 		const chains = chainsData
 			.map((c) => {
@@ -380,9 +315,7 @@ export const getChainsByFeesAdapterPageData = async ({
 					total7d: c.total7d ?? null,
 					total30d: c.total30d ?? null,
 					...(deprecatedChains[c.name] ? { deprecated: true } : {}),
-					...(warning ? { warning } : {}),
-					...(bribesByChain[c.name] ? { bribes: bribesByChain[c.name] } : {}),
-					...(tokenTaxesByChain[c.name] ? { tokenTax: tokenTaxesByChain[c.name] } : {})
+					...(warning ? { warning } : {})
 				}
 			})
 			.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))
@@ -440,11 +373,9 @@ export const getChainsByAdapterPageData = async ({
 			}
 		}
 
-		const [chainsData, chartData, bribesData, tokenTaxesData, openInterestData, activeLiquidityData]: [
+		const [chainsData, chartData, openInterestData, activeLiquidityData]: [
 			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>,
 			MultiSeriesChartDataset,
-			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>,
-			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>,
 			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>,
 			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>
 		] = await Promise.all([
@@ -456,16 +387,6 @@ export const getChainsByAdapterPageData = async ({
 			includeChartData
 				? getChainsByAdapterChartData({ adapterType, dataType, allChains, allowEmptyOnError: true })
 				: Promise.resolve({ dimensions: ['timestamp'], source: [] }),
-			getOptionalOverview({
-				enabled: adapterType === 'fees',
-				adapterType,
-				dataType: 'dailyBribesRevenue'
-			}),
-			getOptionalOverview({
-				enabled: adapterType === 'fees',
-				adapterType,
-				dataType: 'dailyTokenTaxes'
-			}),
 			getOptionalOverview({
 				enabled: adapterType === 'derivatives',
 				adapterType: 'open-interest',
@@ -485,20 +406,6 @@ export const getChainsByAdapterPageData = async ({
 				(dataType === ADAPTER_DATA_TYPES.DAILY_FEES || dataType === ADAPTER_DATA_TYPES.DAILY_REVENUE)
 					? CANTON_INCENTIVES_WARNING
 					: null
-			const bribes = bribesData[chain]
-				? {
-						total24h: bribesData[chain]?.['24h'] ?? null,
-						total7d: bribesData[chain]?.['7d'] ?? null,
-						total30d: bribesData[chain]?.['30d'] ?? null
-					}
-				: null
-			const tokenTax = tokenTaxesData[chain]
-				? {
-						total24h: tokenTaxesData[chain]?.['24h'] ?? null,
-						total7d: tokenTaxesData[chain]?.['7d'] ?? null,
-						total30d: tokenTaxesData[chain]?.['30d'] ?? null
-					}
-				: null
 			const openInterest = openInterestData[chain]?.['24h'] ?? null
 			const activeLiquidity = activeLiquidityData[chain]?.['24h'] ?? null
 
@@ -510,8 +417,6 @@ export const getChainsByAdapterPageData = async ({
 				total30d: chainsData[chain]?.['30d'] ?? null,
 				...(deprecatedChains[chain] ? { deprecated: true } : {}),
 				...(warning ? { warning } : {}),
-				...(bribes ? { bribes } : {}),
-				...(tokenTax ? { tokenTax } : {}),
 				...(openInterest ? { openInterest } : {}),
 				...(activeLiquidity ? { activeLiquidity } : {})
 			})

@@ -8,7 +8,6 @@ type ProbeProps = IProtocolOverviewPageData & {
 	toggledMetrics: IToggledMetrics
 	groupBy: ChartTimeGroupingWithCumulative
 	tvlSettings: Record<string, boolean>
-	feesSettings: Record<string, boolean>
 }
 
 type QueryOptions = { queryKey: Array<string | null> }
@@ -88,8 +87,6 @@ const baseMetrics: IProtocolPageMetrics = {
 	yields: false,
 	fees: false,
 	revenue: false,
-	bribes: false,
-	tokenTax: false,
 	forks: false,
 	governance: false,
 	nfts: false,
@@ -117,9 +114,7 @@ const feeProps: ProbeProps = {
 	metrics: {
 		...baseMetrics,
 		fees: true,
-		revenue: true,
-		bribes: true,
-		tokenTax: false
+		revenue: true
 	},
 	toggledMetrics,
 	groupBy: 'daily',
@@ -128,13 +123,10 @@ const feeProps: ProbeProps = {
 	chartColors: {},
 	governanceApis: [],
 	tvlSettings: {},
-	feesSettings: { bribes: true },
 	isCEX: false,
 	fees: null,
 	revenue: null,
 	holdersRevenue: null,
-	bribeRevenue: null,
-	tokenTax: null,
 	dexVolume: null,
 	dexNotionalVolume: null,
 	dexAggregatorVolume: null,
@@ -184,9 +176,6 @@ describe('ProtocolOverview chart metric semantics', () => {
 			if (options.queryKey[2] === 'fees') return { data: [[timestamp, 100]], isLoading: false }
 			if (options.queryKey[2] === 'revenue') return { data: [[timestamp, 50]], isLoading: false }
 			if (options.queryKey[2] === 'holders-revenue') return { data: [[timestamp, 25]], isLoading: false }
-			if (options.queryKey[2] === 'bribes') {
-				return { data: undefined, isLoading: false, error: new Error('bribes failed') }
-			}
 			return { data: null, isLoading: false }
 		})
 	})
@@ -197,8 +186,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 			...feeProps,
 			metrics: { ...baseMetrics, perps: true },
 			toggledMetrics: makeToggledMetrics({ [protocolCharts['Perp Volume']]: 'true' }),
-			availableCharts: ['Perp Volume'],
-			feesSettings: {}
+			availableCharts: ['Perp Volume']
 		}
 
 		renderToStaticMarkup(<Probe />)
@@ -216,8 +204,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 			initialMultiSeriesChartData: { 'Perp Volume': [[timestamp, 42]] },
 			metrics: { ...baseMetrics, perps: true },
 			toggledMetrics: makeToggledMetrics({ [protocolCharts['Perp Volume']]: 'true' }),
-			availableCharts: ['Perp Volume'],
-			feesSettings: {}
+			availableCharts: ['Perp Volume']
 		}
 
 		renderToStaticMarkup(<Probe />)
@@ -226,13 +213,13 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.loadingCharts).toEqual([])
 	})
 
-	it('keeps fee-family charts visible and reports failed enabled fee-extra chart fetches', () => {
+	it('keeps fee-family charts visible from their base queries', () => {
 		renderToStaticMarkup(<Probe />)
 
 		expect(mocks.lastResult?.finalCharts.Fees).toBeDefined()
 		expect(mocks.lastResult?.finalCharts.Revenue).toBeDefined()
 		expect(mocks.lastResult?.finalCharts['Holders Revenue']).toBeDefined()
-		expect(mocks.lastResult?.failedMetrics).toEqual(['Fees', 'Revenue', 'Holders Revenue'])
+		expect(mocks.lastResult?.failedMetrics).toEqual([])
 	})
 
 	it('builds FDV chart points by applying token supply to price history', () => {
@@ -241,8 +228,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 			geckoId: 'test-token',
 			metrics: baseMetrics,
 			toggledMetrics: { fdv: 'true' } as IToggledMetrics,
-			availableCharts: ['FDV'],
-			feesSettings: {}
+			availableCharts: ['FDV']
 		}
 
 		mocks.useQuery.mockImplementation((options: QueryOptions) => {
@@ -276,8 +262,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 			...feeProps,
 			metrics: { ...baseMetrics, collateralLiquidated: true },
 			toggledMetrics: makeToggledMetrics({ collateralLiquidated: 'true' }),
-			availableCharts: ['Collateral Liquidated'],
-			feesSettings: {}
+			availableCharts: ['Collateral Liquidated']
 		}
 
 		mocks.useQuery.mockImplementation((options: QueryOptions) => {
@@ -303,8 +288,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 			toggledMetrics: {
 				...toggledMetrics,
 				denomination: 'ETH'
-			},
-			feesSettings: {}
+			}
 		}
 
 		mocks.useQuery.mockImplementation((options: QueryOptions) => {

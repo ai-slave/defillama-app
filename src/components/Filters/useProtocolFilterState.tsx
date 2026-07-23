@@ -1,30 +1,24 @@
 import { useMemo } from 'react'
 import {
 	isTvlSettingsKey,
-	isFeesSettingKey,
 	type TvlSettingsKey,
-	type FeesSettingKey,
 	updateAllSettingsInLsAndUrl,
 	useLocalStorageSettingsManager
 } from '~/contexts/LocalStorage'
 
-const isMetricSettingKey = (value: string): value is TvlSettingsKey | FeesSettingKey =>
-	isTvlSettingsKey(value) || isFeesSettingKey(value)
-
 export function useProtocolsFilterState(options: { key: string; name: string }[]) {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
-	const [extraFeesEnabled] = useLocalStorageSettingsManager('fees')
 
 	const selectedValues = useMemo<string[]>(() => {
-		const filters = options.flatMap((o) => (isMetricSettingKey(o.key) ? [o.key] : []))
-		return filters.filter((key) => (isTvlSettingsKey(key) ? extraTvlsEnabled[key] : extraFeesEnabled[key]))
-	}, [extraTvlsEnabled, extraFeesEnabled, options])
+		const filters = options.flatMap((o) => (isTvlSettingsKey(o.key) ? [o.key] : []))
+		return filters.filter((key) => extraTvlsEnabled[key])
+	}, [extraTvlsEnabled, options])
 
 	const setSelectedValues = (values: string[]) => {
-		const newValues: Partial<Record<TvlSettingsKey | FeesSettingKey, boolean>> = {}
+		const newValues: Partial<Record<TvlSettingsKey, boolean>> = {}
 		const selectedValuesSet = new Set(values)
 		for (const o of options) {
-			if (!isMetricSettingKey(o.key)) continue
+			if (!isTvlSettingsKey(o.key)) continue
 			newValues[o.key] = selectedValuesSet.has(o.key)
 		}
 		updateAllSettingsInLsAndUrl(newValues)

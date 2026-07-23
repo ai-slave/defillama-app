@@ -97,8 +97,6 @@ const protocolChartFetchers: Partial<Record<ProDashboardChartType, ProtocolChart
 	fees: (item) => ProtocolCharts.fees(item),
 	revenue: (item) => ProtocolCharts.revenue(item),
 	holdersRevenue: (item) => ProtocolCharts.holdersRevenue(item),
-	bribes: (item) => ProtocolCharts.bribes(item),
-	tokenTax: (item) => ProtocolCharts.tokenTax(item),
 	perps: (item) => ProtocolCharts.perps(item),
 	openInterest: (item) => ProtocolCharts.openInterest(item),
 	aggregators: (item) => ProtocolCharts.aggregators(item),

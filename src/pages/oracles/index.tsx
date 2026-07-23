@@ -27,7 +27,7 @@ export default function OraclesPage(props: InferGetStaticPropsType<typeof getSta
 			title="DeFi Oracle Rankings - Total Value Secured - DefiLlama"
 			description="Track Total Value Secured (TVS) by oracle. Compare chains and protocols secured, where oracle failure would equal TVS."
 			canonicalUrl="/oracles"
-			metricFilters={tvlOptions}
+			tvlOptions={tvlOptions}
 			pageName={pageName}
 		>
 			<OraclesByChain {...props} />

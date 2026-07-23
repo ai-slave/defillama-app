@@ -66,12 +66,6 @@ export const TVL_SETTINGS = {
 	GOV_TOKENS: 'govtokens'
 } as const
 
-// FEES
-export const FEES_SETTINGS = {
-	BRIBES: 'bribes',
-	TOKENTAX: 'tokentax'
-} as const
-
 // YIELDS
 export const YIELDS_SETTINGS = {
 	AUDITED: 'AUDITED',
@@ -124,27 +118,22 @@ export const CHAINS_CATEGORY_GROUP_SETTINGS = [
 const BRIDGES_SETTINGS = { BRIDGES_SHOWING_TXS, BRIDGES_SHOWING_ADDRESSES } as const
 
 export type TvlSettingsKey = (typeof TVL_SETTINGS)[keyof typeof TVL_SETTINGS]
-export type FeesSettingKey = (typeof FEES_SETTINGS)[keyof typeof FEES_SETTINGS]
 export type YieldsSettingKey = (typeof YIELDS_SETTINGS)[keyof typeof YIELDS_SETTINGS]
 type NftSettingKey = (typeof NFT_SETTINGS)[keyof typeof NFT_SETTINGS]
 type BridgesSettingKey = (typeof BRIDGES_SETTINGS)[keyof typeof BRIDGES_SETTINGS]
 type ChainsCategoryGroupKey = (typeof CHAINS_CATEGORY_GROUP_SETTINGS)[number]['key']
 
-type SettingKey = TvlSettingsKey | FeesSettingKey | NftSettingKey | BridgesSettingKey | ChainsCategoryGroupKey
+type SettingKey = TvlSettingsKey | NftSettingKey | BridgesSettingKey | ChainsCategoryGroupKey
 
 type KeysFor<T extends TSETTINGTYPE> = T extends 'tvl'
 	? TvlSettingsKey
-	: T extends 'fees'
-		? FeesSettingKey
-		: T extends 'tvl_fees'
-			? TvlSettingsKey | FeesSettingKey
-			: T extends 'tvl_chains'
-				? ChainsCategoryGroupKey
-				: T extends 'nfts'
-					? NftSettingKey
-					: T extends 'bridges'
-						? BridgesSettingKey
-						: string
+	: T extends 'tvl_chains'
+		? ChainsCategoryGroupKey
+		: T extends 'nfts'
+			? NftSettingKey
+			: T extends 'bridges'
+				? BridgesSettingKey
+				: string
 
 type YieldFilterValue = string | number | boolean
 type YieldSavedFilter = Record<string, YieldFilterValue>
@@ -186,13 +175,10 @@ const CHAINS_CATEGORY_GROUP_KEYS = CHAINS_CATEGORY_GROUP_SETTINGS.map((g) => g.k
 const CHAINS_CATEGORY_GROUP_KEYS_SET = new Set<string>(CHAINS_CATEGORY_GROUP_KEYS)
 export const TVL_SETTINGS_KEYS = valuesOf(TVL_SETTINGS)
 export const TVL_SETTINGS_KEYS_SET = new Set<string>(TVL_SETTINGS_KEYS)
-const FEES_SETTINGS_KEYS = valuesOf(FEES_SETTINGS)
-export const FEES_SETTINGS_KEYS_SET = new Set<string>(FEES_SETTINGS_KEYS)
 const NFT_SETTINGS_KEYS = valuesOf(NFT_SETTINGS)
 const BRIDGES_SETTINGS_KEYS = valuesOf(BRIDGES_SETTINGS)
 
 export const isTvlSettingsKey = (value: string): value is TvlSettingsKey => TVL_SETTINGS_KEYS_SET.has(value)
-export const isFeesSettingKey = (value: string): value is FeesSettingKey => FEES_SETTINGS_KEYS_SET.has(value)
 export const isChainsCategoryGroupKey = (value: string): value is ChainsCategoryGroupKey =>
 	CHAINS_CATEGORY_GROUP_KEYS_SET.has(value)
 
@@ -316,8 +302,6 @@ export const updateAllSettingsInLsAndUrl = (keys: Partial<Record<SettingKey, boo
 
 type TSETTINGTYPE =
 	| 'tvl'
-	| 'fees'
-	| 'tvl_fees'
 	| 'tvl_chains'
 	| 'stablecoins'
 	| 'nfts'
@@ -329,10 +313,6 @@ function getSettingKeys<T extends TSETTINGTYPE>(type: T): KeysFor<T>[] {
 	switch (type) {
 		case 'tvl':
 			return TVL_SETTINGS_KEYS as KeysFor<T>[]
-		case 'fees':
-			return FEES_SETTINGS_KEYS as KeysFor<T>[]
-		case 'tvl_fees':
-			return [...TVL_SETTINGS_KEYS, ...FEES_SETTINGS_KEYS] as KeysFor<T>[]
 		case 'tvl_chains':
 			return CHAINS_CATEGORY_GROUP_KEYS as KeysFor<T>[]
 		case 'nfts':

@@ -160,14 +160,12 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 		])
 
 	const [tvlSettings] = useLocalStorageSettingsManager('tvl')
-	const [feesSettings] = useLocalStorageSettingsManager('fees')
 
 	const { finalCharts, valueSymbol, loadingCharts, failedMetrics } = useFetchProtocolChartData({
 		...props,
 		toggledMetrics,
 		groupBy: groupBy,
 		tvlSettings,
-		feesSettings,
 		isCEX: props.isCEX
 	})
 	const chartRenderModel = useMemo(

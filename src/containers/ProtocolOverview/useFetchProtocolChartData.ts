@@ -12,13 +12,11 @@ import {
 } from '~/containers/ProtocolOverview/queries.client'
 import type { EmissionsChartRow } from '~/containers/Unlocks/api.types'
 import { useIsClient } from '~/hooks/useIsClient'
-import { FEE_EXTRA_CONFIG_BY_SETTING, type FeeExtraConfig } from '~/metrics/feeExtras'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { ADAPTER_CHART_DESCRIPTORS, type AdapterChartDescriptorLabel } from './chartDescriptors'
 import { getGroupedTimestampSec, normalizeSeriesToMilliseconds, normalizeSeriesToSeconds } from './chartSeries.utils'
 import { oracleProtocols, protocolCharts, type ProtocolChartsLabels } from './constants'
-import { buildProtocolFeeFamilyCharts } from './protocolFeeCharts'
 import {
 	buildExtraTvlCharts,
 	buildTvlChart,
@@ -30,10 +28,6 @@ import {
 	getPrefetchedProtocolChartQueryOptions,
 	usePrefetchedProtocolChartQuery
 } from './usePrefetchedProtocolChartQuery'
-
-const NON_FEE_ADAPTER_CHART_DESCRIPTORS = ADAPTER_CHART_DESCRIPTORS.filter(
-	(descriptor) => descriptor.renderKind !== 'feeFamily'
-)
 
 type ChartInterval = ChartTimeGroupingWithCumulative
 type AdapterChartState = { data: Array<[number, number]> | null; isLoading: boolean; enabled: boolean }
@@ -73,13 +67,11 @@ export const useFetchProtocolChartData = ({
 	chartDenominations,
 	governanceApis,
 	tvlSettings,
-	feesSettings,
 	isCEX
 }: IProtocolOverviewPageData & {
 	toggledMetrics: IToggledMetrics
 	groupBy: ChartInterval
 	tvlSettings: Record<string, boolean>
-	feesSettings: Record<string, boolean>
 }) => {
 	const router = useRouter()
 	const canFetchClientCharts = useIsClient() && router.isReady
@@ -386,76 +378,6 @@ export const useFetchProtocolChartData = ({
 		return states
 	}, [adapterChartConfigs, adapterChartQueryResults])
 
-	const feesChartState = adapterChartStates.Fees
-	const revenueChartState = adapterChartStates.Revenue
-	const holdersRevenueChartState = adapterChartStates['Holders Revenue']
-
-	const isFeesEnabled = feesChartState.enabled
-	const feesDataChart = feesChartState.data
-	const fetchingFees = feesChartState.isLoading
-
-	const isRevenueEnabled = revenueChartState.enabled
-	const revenueDataChart = revenueChartState.data
-	const fetchingRevenue = revenueChartState.isLoading
-
-	const isHoldersRevenueEnabled = holdersRevenueChartState.enabled
-	const holdersRevenueDataChart = holdersRevenueChartState.data
-	const fetchingHoldersRevenue = holdersRevenueChartState.isLoading
-
-	const isFeeFamilyChartEnabled =
-		toggledMetrics.fees === 'true' || toggledMetrics.revenue === 'true' || toggledMetrics.holdersRevenue === 'true'
-	const feeExtraQueryConfigs = useMemo(() => {
-		const buildConfig = (extra: FeeExtraConfig) => {
-			const enabled = !!(
-				isFeeFamilyChartEnabled &&
-				feesSettings?.[extra.setting] &&
-				metrics[extra.protocolMetricField] &&
-				canFetchClientCharts
-			)
-
-			return {
-				queryKey: ['protocol-overview', protocolSlug, extra.clientQueryKey],
-				queryFn: () =>
-					fetchJson<Array<[number, number]> | null>(
-						buildProtocolChartApiUrl({
-							kind: 'adapter',
-							adapterType: 'fees',
-							dataType: extra.dataType,
-							protocol: name
-						})
-					),
-				staleTime: 60 * 60 * 1000,
-				refetchOnWindowFocus: false,
-				retry: 0,
-				enabled
-			}
-		}
-
-		return {
-			bribes: buildConfig(FEE_EXTRA_CONFIG_BY_SETTING.bribes),
-			tokentax: buildConfig(FEE_EXTRA_CONFIG_BY_SETTING.tokentax)
-		}
-	}, [isFeeFamilyChartEnabled, feesSettings, metrics, canFetchClientCharts, protocolSlug, name])
-	const isBribesEnabled = feeExtraQueryConfigs.bribes.enabled
-	const {
-		data: bribesDataChart = null,
-		isLoading: fetchingBribes,
-		error: bribesChartError
-	} = useQuery<Array<[number, number]> | null>(feeExtraQueryConfigs.bribes)
-
-	const isTokenTaxesEnabled = feeExtraQueryConfigs.tokentax.enabled
-	const {
-		data: tokenTaxesDataChart = null,
-		isLoading: fetchingTokenTaxes,
-		error: tokenTaxesChartError
-	} = useQuery<Array<[number, number]> | null>(feeExtraQueryConfigs.tokentax)
-	const enabledBribesDataChart = isBribesEnabled ? bribesDataChart : null
-	const enabledTokenTaxesDataChart = isTokenTaxesEnabled ? tokenTaxesDataChart : null
-	const enabledBribesChartError = isBribesEnabled ? bribesChartError : null
-	const enabledTokenTaxesChartError = isTokenTaxesEnabled ? tokenTaxesChartError : null
-
-	const nonFeeAdapterChartDescriptors = NON_FEE_ADAPTER_CHART_DESCRIPTORS
-
 	const isUnlocksEnabled = !!(
 		(toggledMetrics.unlocks === 'true' || toggledMetrics.incentives === 'true') &&
 		(metrics.unlocks || metrics.incentives) &&
@@ -612,13 +534,7 @@ export const useFetchProtocolChartData = ({
 				label: primaryTvlChartLabel
 			},
 			{ isLoading: isTvsToggled && fetchingTvs, label: 'TVS' },
-			{ isLoading: isFeesEnabled && (fetchingFees || fetchingBribes || fetchingTokenTaxes), label: 'Fees' },
-			{ isLoading: isRevenueEnabled && (fetchingRevenue || fetchingBribes || fetchingTokenTaxes), label: 'Revenue' },
-			{
-				isLoading: isHoldersRevenueEnabled && (fetchingHoldersRevenue || fetchingBribes || fetchingTokenTaxes),
-				label: 'Holders Revenue'
-			},
-			...nonFeeAdapterChartDescriptors.map((descriptor) => {
+			...ADAPTER_CHART_DESCRIPTORS.map((descriptor) => {
 				const state = adapterChartStates[descriptor.label]
 				return { isLoading: state.enabled && state.isLoading, label: descriptor.label }
 			}),
@@ -695,20 +611,7 @@ export const useFetchProtocolChartData = ({
 		if (tokenLiquidityData)
 			charts['Token Liquidity'] = formatLineChart({ data: tokenLiquidityData, groupBy, denominationPriceHistory })
 
-		const feeFamilyCharts = buildProtocolFeeFamilyCharts({
-			fees: feesDataChart,
-			revenue: revenueDataChart,
-			holdersRevenue: holdersRevenueDataChart,
-			bribes: enabledBribesDataChart,
-			tokenTaxes: enabledTokenTaxesDataChart,
-			groupBy,
-			denominationPriceHistory
-		})
-		if (feeFamilyCharts.fees.length > 0) charts['Fees'] = feeFamilyCharts.fees
-		if (feeFamilyCharts.revenue.length > 0) charts['Revenue'] = feeFamilyCharts.revenue
-		if (feeFamilyCharts.holdersRevenue.length > 0) charts['Holders Revenue'] = feeFamilyCharts.holdersRevenue
-
-		for (const descriptor of nonFeeAdapterChartDescriptors) {
+		for (const descriptor of ADAPTER_CHART_DESCRIPTORS) {
 			const chart = adapterChartStates[descriptor.label].data
 			if (!chart) continue
 			charts[descriptor.label] =
@@ -871,18 +774,6 @@ export const useFetchProtocolChartData = ({
 			if (loadingChartSet.has(chartLabel)) return false
 			return !Object.prototype.hasOwnProperty.call(filteredCharts, chartLabel)
 		})
-		if (enabledBribesChartError || enabledTokenTaxesChartError) {
-			if (isFeesEnabled && !failedMetrics.includes('Fees')) {
-				failedMetrics.push('Fees')
-			}
-			if (isRevenueEnabled && !failedMetrics.includes('Revenue')) {
-				failedMetrics.push('Revenue')
-			}
-			if (isHoldersRevenueEnabled && !failedMetrics.includes('Holders Revenue')) {
-				failedMetrics.push('Holders Revenue')
-			}
-		}
-
 		return { finalCharts: filteredCharts, valueSymbol, loadingCharts, failedMetrics }
 	}, [
 		tvlChart,
@@ -911,23 +802,7 @@ export const useFetchProtocolChartData = ({
 		fetchingGovTokensTvlChart,
 		shouldFetchGovTokensTvl,
 		denominationGeckoId,
-		isFeesEnabled,
-		isRevenueEnabled,
-		isHoldersRevenueEnabled,
-		nonFeeAdapterChartDescriptors,
 		adapterChartStates,
-		fetchingFees,
-		feesDataChart,
-		fetchingRevenue,
-		revenueDataChart,
-		fetchingHoldersRevenue,
-		holdersRevenueDataChart,
-		fetchingBribes,
-		enabledBribesDataChart,
-		enabledBribesChartError,
-		fetchingTokenTaxes,
-		enabledTokenTaxesDataChart,
-		enabledTokenTaxesChartError,
 		fetchingTvs,
 		tvsData,
 		fetchingUnlocksAndIncentives,

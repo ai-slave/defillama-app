@@ -41,7 +41,6 @@ export function useHoneyRevenueData() {
 
 export interface BerachainIncomeServerData {
 	chainFees: [number, number][]
-	bribes: [number, number][]
 	bexRevenue: [number, number][]
 	bexVolume: [number, number][]
 	bendFees: [number, number][]
@@ -49,13 +48,8 @@ export interface BerachainIncomeServerData {
 }
 
 export async function fetchBerachainIncomeServerData(): Promise<BerachainIncomeServerData> {
-	const [chainFees, bribes, bexRevenue, bexVolume, bendFees, bendRevenue] = await Promise.all([
+	const [chainFees, bexRevenue, bexVolume, bendFees, bendRevenue] = await Promise.all([
 		ChainCharts.chainFees('Berachain').catch(() => [] as [number, number][]),
-		fetchAdapterProtocolChartData({
-			adapterType: 'fees',
-			protocol: 'berachain-incentive-buys',
-			dataType: 'dailyBribesRevenue'
-		}).catch(() => [] as [number, number][]),
 		fetchAdapterProtocolChartData({
 			adapterType: 'fees',
 			protocol: 'bex',
@@ -77,7 +71,7 @@ export async function fetchBerachainIncomeServerData(): Promise<BerachainIncomeS
 		}).catch(() => [] as [number, number][])
 	])
 
-	return { chainFees, bribes, bexRevenue, bexVolume, bendFees, bendRevenue }
+	return { chainFees, bexRevenue, bexVolume, bendFees, bendRevenue }
 }
 
 type TimestampRow = number[]
@@ -179,19 +173,6 @@ export function useBerachainIncomeData(serverData?: BerachainIncomeServerData) {
 		initialData: serverData?.chainFees
 	})
 
-	const bribes = useQuery({
-		queryKey: ['berachain-bribes-chart'],
-		queryFn: () =>
-			fetchAdapterProtocolChartData({
-				adapterType: 'fees',
-				protocol: 'berachain-incentive-buys',
-				dataType: 'dailyBribesRevenue'
-			}),
-		staleTime: STALE_TIME,
-		refetchOnWindowFocus: false,
-		initialData: serverData?.bribes
-	})
-
 	const bexRevenue = useQuery({
 		queryKey: ['berachain-bex-revenue-chart'],
 		queryFn: () =>
@@ -245,22 +226,16 @@ export function useBerachainIncomeData(serverData?: BerachainIncomeServerData) {
 
 	return useMemo(() => {
 		const isLoading =
-			chainFees.isLoading ||
-			bribes.isLoading ||
-			bexRevenue.isLoading ||
-			bexVolume.isLoading ||
-			bendFees.isLoading ||
-			bendRevenue.isLoading
+			chainFees.isLoading || bexRevenue.isLoading || bexVolume.isLoading || bendFees.isLoading || bendRevenue.isLoading
 
 		const chainFeesData = chainFees.data ?? []
-		const bribesData = bribes.data ?? []
 		const bexRevenueData = bexRevenue.data ?? []
 		const bexVolumeData = bexVolume.data ?? []
 		const bendFeesData = bendFees.data ?? []
 		const bendRevenueData = bendRevenue.data ?? []
 
-		const berachainKeys = ['Chain Fees', 'Incentives']
-		const berachainDaily = mergeSeries([chainFeesData, bribesData])
+		const berachainKeys = ['Chain Fees']
+		const berachainDaily = buildTimeSeries(chainFeesData)
 		const berachainSeries = buildMonthlyAndCumulative(berachainDaily, berachainKeys.length)
 
 		// BEX section
@@ -277,8 +252,8 @@ export function useBerachainIncomeData(serverData?: BerachainIncomeServerData) {
 		const bendDaily = mergeSeries([bendFeesData, bendRevenueData])
 		const bendSeries = buildMonthlyAndCumulative(bendDaily, bendKeys.length)
 
-		const totalRevenueKeys = ['Chain Fees', 'Incentives', 'BEX Revenue', 'BEND Revenue']
-		const totalRevenueDaily = mergeSeries([chainFeesData, bribesData, bexRevenueData, bendRevenueData])
+		const totalRevenueKeys = ['Chain Fees', 'BEX Revenue', 'BEND Revenue']
+		const totalRevenueDaily = mergeSeries([chainFeesData, bexRevenueData, bendRevenueData])
 		const totalRevenueCumulative = buildCumulative(totalRevenueDaily, totalRevenueKeys.length)
 
 		return {
@@ -286,8 +261,7 @@ export function useBerachainIncomeData(serverData?: BerachainIncomeServerData) {
 			berachain: {
 				monthly: datasetView(berachainSeries.monthly, berachainKeys),
 				cumulative: datasetView(berachainSeries.cumulative, berachainKeys),
-				chainFeesCumulative: datasetView(berachainSeries.cumulative, berachainKeys, ['Chain Fees']),
-				incentivesCumulative: datasetView(berachainSeries.cumulative, berachainKeys, ['Incentives'])
+				chainFeesCumulative: datasetView(berachainSeries.cumulative, berachainKeys, ['Chain Fees'])
 			},
 			bex: {
 				monthly: datasetView(bexSeries.monthly, bexKeys),
@@ -307,8 +281,6 @@ export function useBerachainIncomeData(serverData?: BerachainIncomeServerData) {
 	}, [
 		chainFees.data,
 		chainFees.isLoading,
-		bribes.data,
-		bribes.isLoading,
 		bexRevenue.data,
 		bexRevenue.isLoading,
 		bexVolume.data,

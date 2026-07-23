@@ -103,7 +103,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			title={title}
 			description={description}
 			canonicalUrl={`/protocols/${slug(props.category ? props.category : props.tag)}${canonicalChainSuffix}`}
-			metricFilters={toggleOptions}
+			tvlOptions={toggleOptions}
 		>
 			<ProtocolTaxonomyPage {...props} />
 		</Layout>

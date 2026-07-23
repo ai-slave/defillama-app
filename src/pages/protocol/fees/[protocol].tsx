@@ -7,7 +7,6 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
-import { feesOptions } from '~/components/Filters/options'
 import { Select } from '~/components/Select/Select'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
@@ -21,15 +20,7 @@ import { buildProtocolFeeChartPresentation } from '~/containers/ProtocolOverview
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
-import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import {
-	FEE_EXTRA_CONFIG_BY_SETTING,
-	FEE_EXTRA_CONFIGS,
-	FEE_EXTRA_METRIC_LABEL,
-	type FeeExtraConfig,
-	type FeeExtraMetric
-} from '~/metrics/feeExtras'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Panel } from '~/ui/Panel'
@@ -37,7 +28,6 @@ import { formattedNum, slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
-import type { IProtocolMetadata } from '~/utils/metadata/types'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
@@ -60,12 +50,6 @@ const fetchOptionalAdapterProtocolOverview = async (
 		return { data: null, failed: true }
 	}
 }
-
-const isProtocolFeeExtraMetadataEnabled = (metadata: IProtocolMetadata, extra: FeeExtraConfig) =>
-	!!metadata[extra.protocolMetadataField]
-
-const isProtocolFeeExtraMetricEnabled = (metrics: IProtocolOverviewPageData['metrics'], extra: FeeExtraConfig) =>
-	!!metrics[extra.protocolMetricField]
 
 export const getStaticProps = withPerformanceLogging(
 	'protocol/fees/[protocol]',
@@ -94,58 +78,31 @@ export const getStaticProps = withPerformanceLogging(
 		const metadata = [protocolRoute.route.id, protocolRoute.route.metadata] as const
 		const canonicalProtocol = protocolRoute.route.canonicalSlug
 
-		const [protocolData, feesData, revenueResult, holdersRevenueResult, bribeRevenueResult, tokenTaxResult] =
-			await Promise.all([
-				fetchProtocolOverviewMetrics(canonicalProtocol),
-				getAdapterProtocolOverview({
-					adapterType: 'fees',
-					protocol: metadata[1].displayName,
-					excludeTotalDataChart: false
-				}),
-				fetchOptionalAdapterProtocolOverview(!!metadata[1].revenue, {
-					adapterType: 'fees',
-					protocol: metadata[1].displayName,
-					excludeTotalDataChart: false,
-					dataType: 'dailyRevenue'
-				}),
-				fetchOptionalAdapterProtocolOverview(!!metadata[1].holdersRevenue, {
-					adapterType: 'fees',
-					protocol: metadata[1].displayName,
-					excludeTotalDataChart: false,
-					dataType: 'dailyHoldersRevenue'
-				}),
-				fetchOptionalAdapterProtocolOverview(
-					isProtocolFeeExtraMetadataEnabled(metadata[1], FEE_EXTRA_CONFIG_BY_SETTING.bribes),
-					{
-						adapterType: 'fees',
-						protocol: metadata[1].displayName,
-						excludeTotalDataChart: false,
-						dataType: FEE_EXTRA_CONFIG_BY_SETTING.bribes.dataType
-					}
-				),
-				fetchOptionalAdapterProtocolOverview(
-					isProtocolFeeExtraMetadataEnabled(metadata[1], FEE_EXTRA_CONFIG_BY_SETTING.tokentax),
-					{
-						adapterType: 'fees',
-						protocol: metadata[1].displayName,
-						excludeTotalDataChart: false,
-						dataType: FEE_EXTRA_CONFIG_BY_SETTING.tokentax.dataType
-					}
-				)
-			])
+		const [protocolData, feesData, revenueResult, holdersRevenueResult] = await Promise.all([
+			fetchProtocolOverviewMetrics(canonicalProtocol),
+			getAdapterProtocolOverview({
+				adapterType: 'fees',
+				protocol: metadata[1].displayName,
+				excludeTotalDataChart: false
+			}),
+			fetchOptionalAdapterProtocolOverview(!!metadata[1].revenue, {
+				adapterType: 'fees',
+				protocol: metadata[1].displayName,
+				excludeTotalDataChart: false,
+				dataType: 'dailyRevenue'
+			}),
+			fetchOptionalAdapterProtocolOverview(!!metadata[1].holdersRevenue, {
+				adapterType: 'fees',
+				protocol: metadata[1].displayName,
+				excludeTotalDataChart: false,
+				dataType: 'dailyHoldersRevenue'
+			})
+		])
 		const revenueData = revenueResult.data
 		const holdersRevenueData = holdersRevenueResult.data
-		const bribeRevenueData = bribeRevenueResult.data
-		const tokenTaxData = tokenTaxResult.data
-		const failedMetrics: Array<string | FeeExtraMetric> = []
+		const failedMetrics: Array<string> = []
 		if (revenueResult.failed) failedMetrics.push('Revenue')
 		if (holdersRevenueResult.failed) failedMetrics.push('Holders Revenue')
-		const feeExtraResults = { bribes: bribeRevenueResult, tokentax: tokenTaxResult }
-		for (const extra of FEE_EXTRA_CONFIGS) {
-			if (feeExtraResults[extra.setting].failed) {
-				failedMetrics.push(extra.dataType)
-			}
-		}
 
 		const metrics = getProtocolMetricFlags({ protocolData, metadata: metadata[1] })
 
@@ -158,15 +115,6 @@ export const getStaticProps = withPerformanceLogging(
 			data: holdersRevenueData,
 			methodologyKey: 'HoldersRevenue'
 		})
-		const bribeRevenue: IProtocolOverviewPageData['bribeRevenue'] = formatAdapterData({
-			data: bribeRevenueData,
-			methodologyKey: FEE_EXTRA_CONFIG_BY_SETTING.bribes.methodologyKey
-		})
-		const tokenTax: IProtocolOverviewPageData['tokenTax'] = formatAdapterData({
-			data: tokenTaxData,
-			methodologyKey: FEE_EXTRA_CONFIG_BY_SETTING.tokentax.methodologyKey
-		})
-
 		const linkedProtocolsSet = new Set((feesData?.linkedProtocols ?? []).slice(1))
 		const linkedProtocolsWithFeesData = []
 		const linkedProtocolsWithRevenueData = []
@@ -188,40 +136,22 @@ export const getStaticProps = withPerformanceLogging(
 		const charts = {
 			fees: feesData?.totalDataChart ?? [],
 			revenue: revenueData?.totalDataChart ?? [],
-			holdersRevenue: holdersRevenueData?.totalDataChart ?? [],
-			bribeRevenue: bribeRevenueData && bribeRevenueData.totalAllTime ? bribeRevenueData.totalDataChart : null,
-			tokenTax: tokenTaxData && tokenTaxData.totalAllTime ? tokenTaxData.totalDataChart : null
+			holdersRevenue: holdersRevenueData?.totalDataChart ?? []
 		}
 
 		const defaultCharts = []
 
-		if (
-			charts.fees.length > 0 ||
-			bribeRevenueData?.totalDataChart?.length > 0 ||
-			tokenTaxData?.totalDataChart?.length > 0
-		) {
+		if (charts.fees.length > 0) {
 			defaultCharts.push('Fees')
 		}
 
-		if (
-			charts.revenue.length > 0 ||
-			bribeRevenueData?.totalDataChart?.length > 0 ||
-			tokenTaxData?.totalDataChart?.length > 0
-		) {
+		if (charts.revenue.length > 0) {
 			defaultCharts.push('Revenue')
 		}
 
-		if (
-			charts.holdersRevenue.length > 0 ||
-			bribeRevenueData?.totalDataChart?.length > 0 ||
-			tokenTaxData?.totalDataChart?.length > 0
-		) {
+		if (charts.holdersRevenue.length > 0) {
 			defaultCharts.push('Holders Revenue')
 		}
-
-		const toggleOptions = feesOptions.filter((option) =>
-			isProtocolFeeExtraMetricEnabled(metrics, FEE_EXTRA_CONFIG_BY_SETTING[option.key])
-		)
 
 		const hallmarks = buildHallmarksWithGenuineSpikes({
 			dimensions: protocolData.dimensions
@@ -240,8 +170,6 @@ export const getStaticProps = withPerformanceLogging(
 				fees,
 				revenue: revenueData && revenueData.totalAllTime ? revenue : null,
 				holdersRevenue: holdersRevenueData && holdersRevenueData.totalAllTime ? holdersRevenue : null,
-				bribeRevenue: bribeRevenueData && bribeRevenueData.totalAllTime ? bribeRevenue : null,
-				tokenTax: tokenTaxData && tokenTaxData.totalAllTime ? tokenTax : null,
 				hasKeyMetrics: true,
 				openSmolStatsSummaryByDefault: true,
 				charts,
@@ -252,13 +180,7 @@ export const getStaticProps = withPerformanceLogging(
 					linkedProtocolsWithRevenueData?.map((versionProtocol) => versionProtocol.displayName) ?? [],
 				warningBanners: getProtocolWarningBanners(protocolData),
 				defaultChartView:
-					fees?.defaultChartView ??
-					revenue?.defaultChartView ??
-					holdersRevenue?.defaultChartView ??
-					bribeRevenue?.defaultChartView ??
-					tokenTax?.defaultChartView ??
-					'daily',
-				toggleOptions,
+					fees?.defaultChartView ?? revenue?.defaultChartView ?? holdersRevenue?.defaultChartView ?? 'daily',
 				hallmarks,
 				seoTitle,
 				seoDescription,
@@ -286,22 +208,17 @@ export const getStaticPaths = () => {
 export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>(props.defaultChartView)
 	const [charts, setCharts] = useState<string[]>(props.defaultCharts)
-	const [feesSettings] = useLocalStorageSettingsManager('fees')
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const finalCharts = useMemo(() => {
-		const includeBribes = !!(feesSettings.bribes && props.bribeRevenue?.totalAllTime)
-		const includeTokenTax = !!(feesSettings.tokentax && props.tokenTax?.totalAllTime)
 		return buildProtocolFeeChartPresentation({
 			fees: props.charts.fees,
 			revenue: props.charts.revenue,
 			holdersRevenue: props.charts.holdersRevenue,
-			bribes: includeBribes ? props.charts.bribeRevenue : null,
-			tokenTaxes: includeTokenTax ? props.charts.tokenTax : null,
 			selectedCharts: charts,
 			groupBy
 		})
-	}, [props.charts, charts, feesSettings, groupBy, props.bribeRevenue?.totalAllTime, props.tokenTax?.totalAllTime])
+	}, [props.charts, charts, groupBy])
 	const deferredFinalCharts = useDeferredValue(finalCharts)
 
 	return (
@@ -312,7 +229,6 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			metrics={props.metrics}
 			tab="fees"
 			warningBanners={props.warningBanners}
-			toggleOptions={props.toggleOptions}
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
@@ -368,10 +284,6 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							protocolDisplayName={props.name}
 							adapterType="fees"
 							breakdownNames={props.protocolChains}
-							metadata={{
-								bribeRevenue: !!props.bribeRevenue,
-								tokenTax: !!props.tokenTax
-							}}
 							hallmarks={props.hallmarks ?? undefined}
 							title="Fees by chain"
 						/>
@@ -385,10 +297,6 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							protocolDisplayName={props.name}
 							adapterType="fees"
 							breakdownNames={props.protocolFeesVersions}
-							metadata={{
-								bribeRevenue: !!props.bribeRevenue,
-								tokenTax: !!props.tokenTax
-							}}
 							hallmarks={props.hallmarks ?? undefined}
 							title="Fees by protocol version"
 						/>
@@ -405,10 +313,6 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 									adapterType="fees"
 									dataType="dailyRevenue"
 									breakdownNames={props.protocolChains}
-									metadata={{
-										bribeRevenue: props.metrics.bribes ?? false,
-										tokenTax: props.metrics.tokenTax ?? false
-									}}
 									hallmarks={props.hallmarks ?? undefined}
 									title="Revenue by chain"
 								/>
@@ -423,10 +327,6 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 								adapterType="fees"
 								dataType="dailyRevenue"
 								breakdownNames={props.protocolRevenueVersions}
-								metadata={{
-									bribeRevenue: props.metrics.bribes ?? false,
-									tokenTax: props.metrics.tokenTax ?? false
-								}}
 								hallmarks={props.hallmarks ?? undefined}
 								title="Revenue by protocol version"
 							/>
@@ -439,13 +339,5 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 }
 
 function FailedProtocolFeeMetricsPopover({ failedMetrics }: { failedMetrics: Array<string> }) {
-	return (
-		<FailedDataPopover
-			items={failedMetrics}
-			ariaLabel="Show failed metric APIs"
-			getLabel={(metric) =>
-				metric in FEE_EXTRA_METRIC_LABEL ? FEE_EXTRA_METRIC_LABEL[metric as FeeExtraMetric] : metric
-			}
-		/>
-	)
+	return <FailedDataPopover items={failedMetrics} ariaLabel="Show failed metric APIs" />
 }

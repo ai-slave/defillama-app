@@ -22,22 +22,15 @@ const TOTAL_REVENUE_CHARTS = [
 	},
 	{
 		type: 'line',
-		name: 'Incentives',
-		encode: { x: 0, y: 2 },
-		color: '#FFA726',
-		stack: 'Total'
-	},
-	{
-		type: 'line',
 		name: 'BEX Revenue',
-		encode: { x: 0, y: 3 },
+		encode: { x: 0, y: 2 },
 		color: '#66BB6A',
 		stack: 'Total'
 	},
 	{
 		type: 'line',
 		name: 'BEND Revenue',
-		encode: { x: 0, y: 4 },
+		encode: { x: 0, y: 3 },
 		color: '#EF5350',
 		stack: 'Total'
 	}
@@ -50,13 +43,6 @@ const BERACHAIN_MONTHLY_CHARTS = [
 		encode: { x: 0, y: 1 },
 		color: '#4FC3F7',
 		stack: 'a'
-	},
-	{
-		type: 'bar',
-		name: 'Incentives',
-		encode: { x: 0, y: 2 },
-		color: '#FFA726',
-		stack: 'a'
 	}
 ] satisfies MultiSeriesChartSeriesConfig[]
 
@@ -66,15 +52,6 @@ const CHAIN_FEES_CHART = [
 		name: 'Chain Fees',
 		encode: { x: 0, y: 1 },
 		color: '#4FC3F7'
-	}
-] satisfies MultiSeriesChartSeriesConfig[]
-
-const INCENTIVES_CHART = [
-	{
-		type: 'line',
-		name: 'Incentives',
-		encode: { x: 0, y: 1 },
-		color: '#FFA726'
 	}
 ] satisfies MultiSeriesChartSeriesConfig[]
 
@@ -211,7 +188,6 @@ export default function IncomeBreakdown() {
 		if (isLoading) return null
 		return {
 			chainFees: getCumulativeTotal(berachain.cumulative, 'Chain Fees'),
-			incentives: getCumulativeTotal(berachain.cumulative, 'Incentives'),
 			bexRevenue: getCumulativeTotal(bex.cumulative, 'Revenue'),
 			bexVolume: getCumulativeTotal(bex.volumeCumulative, 'Volume'),
 			bendFees: getCumulativeTotal(bend.cumulative, 'Fees'),
@@ -269,19 +245,9 @@ export default function IncomeBreakdown() {
 				)}
 			</div>
 
-			<SectionHeader title="Chain Fees & Incentives" />
-			<div className="grid grid-cols-2 gap-4">
-				{kpis ? (
-					<>
-						<KpiCard label="Total Chain Fees" value={kpis.chainFees} />
-						<KpiCard label="Total Incentives" value={kpis.incentives} />
-					</>
-				) : (
-					<>
-						<KpiSkeleton label="Total Chain Fees" />
-						<KpiSkeleton label="Total Incentives" />
-					</>
-				)}
+			<SectionHeader title="Chain Fees" />
+			<div className="grid grid-cols-1 gap-4">
+				{kpis ? <KpiCard label="Total Chain Fees" value={kpis.chainFees} /> : <KpiSkeleton label="Total Chain Fees" />}
 			</div>
 
 			{isLoading ? (
@@ -325,22 +291,6 @@ export default function IncomeBreakdown() {
 					<MultiSeriesChart
 						dataset={berachain.chainFeesCumulative}
 						charts={CHAIN_FEES_CHART}
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={AREA_CHART_EXPORTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-					/>
-				</ChartCard>
-			)}
-
-			{isLoading ? (
-				<CardSkeleton title="Cumulative Incentives" />
-			) : (
-				<ChartCard title="Cumulative Incentives">
-					<MultiSeriesChart
-						dataset={berachain.incentivesCumulative}
-						charts={INCENTIVES_CHART}
 						chartOptions={DOLLAR_CHART_OPTIONS}
 						exportButtons={AREA_CHART_EXPORTS}
 						valueSymbol="$"

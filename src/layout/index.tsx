@@ -12,8 +12,7 @@ const Toaster = React.lazy(() => import('~/components/Toast').then((m) => ({ def
 
 interface ILayoutProps extends ISEOProps {
 	children: React.ReactNode
-	metricFilters?: { name: string; key: string }[]
-	metricFiltersLabel?: string
+	tvlOptions?: { name: string; key: string }[]
 	pageName?: Array<string>
 	announcement?: React.ReactNode
 	hideDesktopSearchLlamaAiButton?: boolean
@@ -28,8 +27,7 @@ function Layout({
 	jsonLd,
 	children,
 	pageName,
-	metricFilters,
-	metricFiltersLabel,
+	tvlOptions,
 	announcement,
 	hideDesktopSearchLlamaAiButton = false,
 	hideDesktopSearch = false,
@@ -39,7 +37,7 @@ function Layout({
 	return (
 		<>
 			<SEO title={title} description={description} canonicalUrl={canonicalUrl} noIndex={noIndex} jsonLd={jsonLd} />
-			<Nav metricFilters={metricFilters} />
+			<Nav tvlOptions={tvlOptions} />
 			<main
 				{...props}
 				className="app-main-shell isolate col-span-full flex min-h-[calc(100dvh-68px)] flex-col gap-2 p-1 text-primary lg:col-span-1 lg:min-h-dvh lg:p-4 lg:pl-0"
@@ -48,9 +46,7 @@ function Layout({
 					<span className="hidden items-center justify-between gap-3 lg:flex lg:min-h-8">
 						<DesktopSearch hideLlamaAiCta={hideDesktopSearchLlamaAiButton} />
 
-						{!metricFilters || metricFilters.length === 0 ? null : (
-							<MetricFilters options={metricFilters} label={metricFiltersLabel} />
-						)}
+						{!tvlOptions || tvlOptions.length === 0 ? null : <TvlFilters options={tvlOptions} />}
 					</span>
 				)}
 				{announcement ?? null}
@@ -66,7 +62,7 @@ function Layout({
 	)
 }
 
-function MetricFilters({ options, label }: { options: { name: string; key: string }[]; label?: string }) {
+function TvlFilters({ options }: { options: { name: string; key: string }[] }) {
 	const { selectedValues, setSelectedValues } = useProtocolsFilterState(options)
 
 	return (
@@ -75,7 +71,7 @@ function MetricFilters({ options, label }: { options: { name: string; key: strin
 				allValues={options}
 				selectedValues={selectedValues}
 				setSelectedValues={setSelectedValues}
-				label={label || 'Include in TVL'}
+				label="Include in TVL"
 				variant="default"
 				size="sm"
 				triggerProps={{

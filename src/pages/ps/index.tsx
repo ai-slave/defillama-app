@@ -1,4 +1,3 @@
-import { feesOptions } from '~/components/Filters/options'
 import { AdapterByChain } from '~/containers/AdapterMetrics/AdapterByChain'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { getAdapterByChainPageData } from '~/containers/AdapterMetrics/queries'
@@ -36,8 +35,6 @@ const RevenueOnAllChains = (props: IAdapterByChainPageData) => {
 			title={`Price to Sales Ratio (P/S) Rankings - DefiLlama`}
 			description="Compare DeFi protocols by Price to Sales (P/S) ratio. Identify undervalued and overvalued protocols based on revenue multiples."
 			canonicalUrl={`/ps`}
-			metricFilters={feesOptions}
-			metricFiltersLabel="Include in Metrics"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

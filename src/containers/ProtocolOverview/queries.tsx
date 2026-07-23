@@ -22,7 +22,6 @@ import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.
 import { readYieldsMeta, type YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import type { EnrichedEarnRow, YieldsMeta } from '~/containers/Yields/data/types'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
-import { FEE_EXTRA_CONFIG_BY_SETTING, type FeeExtraConfig } from '~/metrics/feeExtras'
 import { capitalizeFirstLetter, slug } from '~/utils'
 import { fetchJson, getFastJsonTimeoutMs } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
@@ -96,8 +95,6 @@ export const getProtocolMetricFlags = ({
 		yields: !!metadata.yields,
 		fees: !!metadata.fees,
 		revenue: !!metadata.revenue,
-		bribes: !!metadata.bribeRevenue,
-		tokenTax: !!metadata.tokenTax,
 		forks: !!metadata.forks,
 		governance: !!metadata.governance,
 		nfts: !!metadata.nfts,
@@ -151,21 +148,6 @@ export const getProtocolOverviewPageData = async ({
 	const isOracleProtocol = Boolean(oracleProtocolName)
 	const optionalProtocolData = <T,>(label: string, run: () => Promise<T>, fallback: T): Promise<T> =>
 		optionalPageData(`protocol:${currentProtocolSlug}:${label}`, run, fallback)
-	const feeExtraMetricPromise = (extra: FeeExtraConfig) =>
-		currentProtocolMetadata[extra.protocolMetadataField]
-			? fetchAdapterProtocolMetrics({
-					adapterType: 'fees',
-					dataType: extra.dataType,
-					protocol: displayName
-				}).then((data) =>
-					formatAdapterData({
-						data,
-						methodologyKey: extra.methodologyKey
-					})
-				)
-			: Promise.resolve(null)
-	const bribesDataPromise = feeExtraMetricPromise(FEE_EXTRA_CONFIG_BY_SETTING.bribes)
-	const tokenTaxDataPromise = feeExtraMetricPromise(FEE_EXTRA_CONFIG_BY_SETTING.tokentax)
 	const researchReportsPromise = optionalProtocolData(
 		'research',
 		() =>
@@ -211,8 +193,6 @@ export const getProtocolOverviewPageData = async ({
 		feesData,
 		revenueData,
 		holdersRevenueData,
-		bribesData,
-		tokenTaxData,
 		dexVolumeData,
 		dexNotionalVolumeData,
 		dexAggregatorVolumeData,
@@ -245,8 +225,6 @@ export const getProtocolOverviewPageData = async ({
 	]: [
 		IProtocolDataExtended,
 		IProtocolTvlChartSeedResult,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
 		Awaited<ReturnType<typeof formatAdapterData>>,
 		Awaited<ReturnType<typeof formatAdapterData>>,
 		Awaited<ReturnType<typeof formatAdapterData>>,
@@ -313,8 +291,6 @@ export const getProtocolOverviewPageData = async ({
 					protocol: currentProtocolMetadata.displayName ?? ''
 				}).then((data) => formatAdapterData({ data, methodologyKey: 'HoldersRevenue' }))
 			: Promise.resolve(null),
-		bribesDataPromise,
-		tokenTaxDataPromise,
 		currentProtocolMetadata.dexs
 			? fetchAdapterProtocolMetrics({
 					adapterType: 'dexs',
@@ -647,8 +623,6 @@ export const getProtocolOverviewPageData = async ({
 		collateralLiquidatedData?.totalAllTime ||
 		openInterestData?.total24h != null ||
 		bridgeVolumeData?.length ||
-		bribesData?.totalAllTime ||
-		tokenTaxData?.totalAllTime ||
 		oracleTvs ||
 		protocolData.tokenCGData
 	)
@@ -961,8 +935,6 @@ export const getProtocolOverviewPageData = async ({
 		fees: feesData,
 		revenue: revenueData,
 		holdersRevenue: holdersRevenueData,
-		bribeRevenue: bribesData,
-		tokenTax: tokenTaxData,
 		dexVolume: dexVolumeData,
 		dexNotionalVolume: dexNotionalVolumeData,
 		dexAggregatorVolume: dexAggregatorVolumeData,
@@ -1027,8 +999,6 @@ export const getProtocolOverviewPageData = async ({
 			feesData?.defaultChartView ??
 			revenueData?.defaultChartView ??
 			holdersRevenueData?.defaultChartView ??
-			bribesData?.defaultChartView ??
-			tokenTaxData?.defaultChartView ??
 			dexVolumeData?.defaultChartView ??
 			dexNotionalVolumeData?.defaultChartView ??
 			dexAggregatorVolumeData?.defaultChartView ??

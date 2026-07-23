@@ -174,14 +174,6 @@ const protocolChartHandlers: Partial<Record<ProDashboardChartType, ProtocolChart
 		const data = await ProtocolCharts.holdersRevenue(item)
 		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
 	},
-	bribes: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.bribes(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	tokenTax: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.tokenTax(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
 	perps: (item, geckoId, timePeriod, customPeriod) => async () => {
 		const data = await ProtocolCharts.perps(item)
 		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
@@ -315,14 +307,6 @@ const chainChartHandlers: Partial<Record<ProDashboardChartType, ChainChartHandle
 	},
 	revenue: (item, geckoId, timePeriod, customPeriod) => async () => {
 		const data = await ChainCharts.revenue(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	bribes: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.bribes(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	tokenTax: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.tokenTax(item)
 		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
 	},
 	activeUsers: (item, geckoId, timePeriod, customPeriod) => async () => {

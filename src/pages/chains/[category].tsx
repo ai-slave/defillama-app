@@ -77,8 +77,7 @@ export default function Chains(props: InferGetStaticPropsType<typeof getStaticPr
 			title={`${props.categoryName} Chains DeFi TVL - DefiLlama`}
 			description={props.description}
 			canonicalUrl={`/chains${props.categoryName === 'All' ? '' : `/${props.category}`}`}
-			metricFilters={tvlOptions}
-			metricFiltersLabel="Include in TVL"
+			tvlOptions={tvlOptions}
 			pageName={pageName}
 		>
 			<ChainsByCategory {...props} />
