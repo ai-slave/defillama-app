@@ -8,7 +8,7 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { lazy, startTransition, Suspense, useMemo, useRef, useState } from 'react'
+import { lazy, startTransition, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Announcement } from '~/components/Announcement'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
@@ -19,12 +19,13 @@ import { BasicLink } from '~/components/Link'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
-import { fetchCoins } from '~/containers/LlamaAI/hooks/useGetEntities'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { searchTokens } from '~/containers/TokenSearch/search'
 import { fetchProtocolsByTokenClient } from '~/containers/TokenUsage/api'
 import { buildTokenUsageTreemapTreeData } from '~/containers/TokenUsage/treemap'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useIsClient } from '~/hooks/useIsClient'
 import Layout from '~/layout'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
@@ -59,6 +60,7 @@ const columnHelper = createColumnHelper<TokenUsagePageRow>()
 
 export default function Tokens() {
 	const router = useRouter()
+	const isClient = useIsClient()
 	const { authorizedFetch, hasActiveSubscription, isAuthenticated } = useAuthContext()
 	const { chartInstance: treemapChartInstance, handleChartReady: handleTreemapChartReady } = useGetChartInstance()
 	const signInDialogStore = Ariakit.useDialogStore()
@@ -123,9 +125,9 @@ export default function Tokens() {
 		>
 			<Announcement notCancellable>This is not an exhaustive list</Announcement>
 
-			<Search />
+			<TokenUsageSearch />
 
-			{isLoading || !router.isReady ? (
+			{!isClient || isLoading || !router.isReady ? (
 				<PanelLoadingStatus className="min-h-[380px]" />
 			) : error ? (
 				<PanelStatus variant="error" className="min-h-[380px]">
@@ -252,7 +254,7 @@ const columns = [
 			return (
 				<span className="flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${value}`} />
+					<TokenLogo name={row.original.slug ?? value} kind="token" data-lgonly alt={`Logo of ${value}`} />
 					{href ? (
 						<BasicLink href={href} className="truncate text-sm font-medium text-link hover:underline">
 							{value}
@@ -285,14 +287,26 @@ const columns = [
 	})
 ]
 
-const Search = () => {
+function getPreHydrationTokenSearchValue() {
+	if (typeof window === 'undefined') return ''
+	const input = document.getElementById('token-usage-search-input')
+	return input instanceof HTMLInputElement ? input.value : ''
+}
+
+export const TokenUsageSearch = () => {
 	const router = useRouter()
 
-	const [searchValue, setSearchValue] = useState('')
+	const [searchValue, setSearchValue] = useState(getPreHydrationTokenSearchValue)
+	useEffect(() => {
+		if (!router.isReady) return
+		const token = Array.isArray(router.query.token) ? router.query.token[0] : router.query.token
+		setSearchValue((currentValue) => currentValue || token?.toUpperCase() || '')
+	}, [router.isReady, router.query.token])
+
 	const debouncedSearchValue = useDebouncedValue(searchValue, 200)
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['token-usage', 'search-tokens', debouncedSearchValue],
-		queryFn: () => fetchCoins(debouncedSearchValue, 20),
+		queryFn: () => searchTokens(debouncedSearchValue, 20),
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
@@ -303,7 +317,7 @@ const Search = () => {
 
 	return (
 		<Ariakit.ComboboxProvider
-			resetValueOnHide
+			value={searchValue}
 			setValue={(nextValue) => {
 				startTransition(() => {
 					setSearchValue(nextValue)
@@ -327,7 +341,12 @@ const Search = () => {
 					)}
 				</button>
 
-				<Ariakit.Combobox placeholder="Search tokens..." autoSelect className={searchFieldInputStyles} />
+				<Ariakit.Combobox
+					id="token-usage-search-input"
+					placeholder="Search tokens..."
+					autoSelect
+					className={searchFieldInputStyles}
+				/>
 			</span>
 
 			<Ariakit.ComboboxPopover
@@ -355,7 +374,7 @@ const Search = () => {
 								key={`token-usage-${tokenResult.name}`}
 								value={tokenResult.name}
 								onClick={() => {
-									void pushShallowQuery(router, { token: tokenResult.name }).then(() => {
+									void pushShallowQuery(router, { token: tokenResult.symbol }).then(() => {
 										setOpen(false)
 									})
 								}}
