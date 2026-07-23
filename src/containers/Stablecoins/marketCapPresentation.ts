@@ -3,100 +3,145 @@ import { CHART_COLORS } from '~/constants/colors'
 
 const PIE_SLICE_LIMIT = 10
 const HORIZONTAL_BAR_SLICE_LIMIT = 9
-const TREEMAP_ITEM_LIMIT = 20
 
-type MarketCapRow = { mcap?: number | null }
+type MarketCapSlice = { name: string; value: number; color: string }
 
-type MarketCapSlice = { name: string; value: number }
+export type StablecoinMarketCapSeries = {
+	kind: 'pie' | 'hbar' | 'treemap'
+	peers: MarketCapSlice[]
+	selectionSeries: string[]
+	upstreamRemainderValue: number
+}
 
 export type StablecoinMarketCapPresentation =
-	| { kind: 'pie'; chartData: MarketCapSlice[] }
+	| { kind: 'pie'; chartData: Array<{ name: string; value: number }>; stackColors: Record<string, string> }
 	| { kind: 'hbar'; categories: string[]; values: number[]; colors: string[] }
 	| { kind: 'treemap'; treeData: TreemapNode[] }
 
-/**
- * Builds only the selected market-cap presentation. Callers pass rows already sorted by
- * descending market cap by the stablecoin aggregation hooks, avoiding another full-array sort.
- */
-export function buildStablecoinMarketCapPresentation<T extends MarketCapRow>({
+/** Build one canonical ranked snapshot; every real peer remains selectable. */
+export function prepareStablecoinMarketCapSeries<T>({
 	rows,
 	view,
-	getName
+	getName,
+	getValue
 }: {
 	rows: T[]
-	view: StablecoinMarketCapPresentation['kind']
+	view: StablecoinMarketCapSeries['kind']
 	getName: (row: NoInfer<T>) => string
+	getValue: (row: NoInfer<T>) => number
+}): StablecoinMarketCapSeries {
+	const valueByPeer = new Map<string, number>()
+	let upstreamRemainderValue = 0
+
+	for (const row of rows) {
+		const value = getValue(row)
+		const name = getName(row)
+		if (name === 'Others') {
+			upstreamRemainderValue += value
+			continue
+		}
+		valueByPeer.set(name, (valueByPeer.get(name) ?? 0) + value)
+	}
+	const rankedPeers: Array<{ name: string; value: number }> = []
+	for (const [name, value] of valueByPeer) {
+		if (value > 0) rankedPeers.push({ name, value })
+	}
+	rankedPeers.sort((left, right) => right.value - left.value)
+	const peers = rankedPeers.map<MarketCapSlice>((peer, index) => ({
+		...peer,
+		color: CHART_COLORS[index % CHART_COLORS.length]
+	}))
+
+	const selectionSeries = peers.map((peer) => peer.name)
+	return {
+		kind: view,
+		peers,
+		selectionSeries,
+		upstreamRemainderValue: upstreamRemainderValue > 0 ? upstreamRemainderValue : 0
+	}
+}
+
+/** Rank the selected peers into the renderer's existing top-N presentation. */
+export function buildStablecoinMarketCapPresentation({
+	series,
+	selectedSeries
+}: {
+	series: StablecoinMarketCapSeries
+	selectedSeries?: ReadonlySet<string>
 }): StablecoinMarketCapPresentation {
-	if (view === 'treemap') {
-		const treeData: TreemapNode[] = []
-		let total = 0
-		for (const row of rows) {
-			const value = row.mcap ?? 0
-			if (value <= 0) continue
-			const name = getName(row)
-			treeData.push({
-				name,
-				path: `Stablecoins/${name}`,
-				value: [value, 0, 0],
-				itemStyle: { color: CHART_COLORS[treeData.length % CHART_COLORS.length] }
-			})
-			total += value
-			if (treeData.length >= TREEMAP_ITEM_LIMIT) break
+	if (series.kind === 'treemap') {
+		const visibleSlices: MarketCapSlice[] = []
+		for (const peer of series.peers) {
+			if (peer.value <= 0 || (selectedSeries && !selectedSeries.has(peer.name))) continue
+			visibleSlices.push(peer)
 		}
 
-		if (total > 0) {
-			for (const item of treeData) {
-				const share = Number(((item.value[0] / total) * 100).toFixed(2))
-				item.value[1] = share
-				item.value[2] = share
+		let total = 0
+		for (const slice of visibleSlices) total += slice.value
+		const treeData = new Array<TreemapNode>(visibleSlices.length)
+		for (let i = 0; i < visibleSlices.length; i++) {
+			const slice = visibleSlices[i]
+			const share = total > 0 ? Number(((slice.value / total) * 100).toFixed(2)) : 0
+			treeData[i] = {
+				name: slice.name,
+				path: `Stablecoins/${slice.name}`,
+				value: [slice.value, share, share],
+				itemStyle: { color: slice.color }
 			}
 		}
-
 		return { kind: 'treemap', treeData }
 	}
 
-	const slices = buildLimitedSlices(rows, getName, view === 'pie' ? PIE_SLICE_LIMIT : HORIZONTAL_BAR_SLICE_LIMIT)
-	if (view === 'pie') {
-		return { kind: 'pie', chartData: slices }
+	const limit = series.kind === 'pie' ? PIE_SLICE_LIMIT : HORIZONTAL_BAR_SLICE_LIMIT
+	const visibleSlices: MarketCapSlice[] = []
+	let selectedPeerCount = 0
+	let othersValue = 0
+	for (const peer of series.peers) {
+		if (selectedSeries && !selectedSeries.has(peer.name)) continue
+		selectedPeerCount++
+		if (visibleSlices.length < limit) visibleSlices.push(peer)
+		else othersValue += peer.value
+	}
+	if (selectedPeerCount === series.peers.length) othersValue += series.upstreamRemainderValue
+	if (othersValue > 0) {
+		visibleSlices.push({
+			name: 'Others',
+			value: othersValue,
+			color: '#AAAAAA'
+		})
 	}
 
-	const categories = new Array<string>(slices.length)
-	const values = new Array<number>(slices.length)
-	const colors = new Array<string>(slices.length)
-	for (let i = 0; i < slices.length; i++) {
-		categories[i] = slices[i].name
-		values[i] = slices[i].value
-		colors[i] = CHART_COLORS[i % CHART_COLORS.length]
+	if (series.kind === 'pie') {
+		const chartData = new Array<{ name: string; value: number }>(visibleSlices.length)
+		const stackColors: Record<string, string> = {}
+		for (let i = 0; i < visibleSlices.length; i++) {
+			const slice = visibleSlices[i]
+			chartData[i] = { name: slice.name, value: slice.value }
+			stackColors[slice.name] = slice.color
+		}
+		return { kind: 'pie', chartData, stackColors }
+	}
+
+	const categories = new Array<string>(visibleSlices.length)
+	const values = new Array<number>(visibleSlices.length)
+	const colors = new Array<string>(visibleSlices.length)
+	for (let i = 0; i < visibleSlices.length; i++) {
+		const slice = visibleSlices[i]
+		categories[i] = slice.name
+		values[i] = slice.value
+		colors[i] = slice.color
 	}
 	return { kind: 'hbar', categories, values, colors }
 }
 
-function buildLimitedSlices<T extends MarketCapRow>(rows: T[], getName: (row: T) => string, limit: number) {
-	const slices: MarketCapSlice[] = []
-	let otherSlicesValue = 0
-	let mainOthersIndex = -1
-
-	for (let i = 0; i < rows.length; i++) {
-		const value = rows[i].mcap ?? 0
-		if (i >= limit) {
-			otherSlicesValue += value
-			continue
-		}
-
-		const name = getName(rows[i])
-		if (name === 'Others' && mainOthersIndex === -1) {
-			mainOthersIndex = slices.length
-		}
-		slices.push({ name, value })
-	}
-
-	if (mainOthersIndex !== -1) {
-		otherSlicesValue += slices[mainOthersIndex].value
-		slices.splice(mainOthersIndex, 1)
-	}
-	if (otherSlicesValue > 0) {
-		slices.push({ name: 'Others', value: otherSlicesValue })
-	}
-
-	return slices
+export function prepareStablecoinMarketCapTreemapCsv({
+	treeData,
+	filename
+}: {
+	treeData: TreemapNode[]
+	filename: string
+}) {
+	const rows: Array<Array<string | number>> = [['Name', 'Market Cap', 'Share (%)']]
+	for (const node of treeData) rows.push([node.name, node.value[0], node.value[1] ?? 0])
+	return { filename, rows }
 }

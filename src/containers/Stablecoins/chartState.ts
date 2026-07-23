@@ -112,6 +112,23 @@ export function getStablecoinChartViewLabel(view: StablecoinChartView): string {
 	return VIEW_OPTIONS[view].name
 }
 
+export function getStablecoinSeriesSelectorLabel(
+	mode: StablecoinChartMode,
+	type: StablecoinChartType,
+	view: StablecoinChartView
+): 'Token' | 'Chain' | 'Currency' | null {
+	if (type === 'marketCap' && (view === 'breakdown' || view === 'dominance')) {
+		return mode.page === 'overview' ? 'Token' : 'Chain'
+	}
+	if (type === 'volume') {
+		if (view === 'byToken') return 'Token'
+		if (view === 'byChain') return 'Chain'
+		if (view === 'byCurrency') return 'Currency'
+	}
+	if (type === 'inflows' && view === 'token') return 'Token'
+	return null
+}
+
 export function getStablecoinDashboardChartType(
 	type: StablecoinChartType,
 	view: StablecoinChartView

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { buildNarrativeTreemapTreeData, calculateDenominatedTimeSeries } from '../chartData'
+import {
+	buildNarrativeTreemapTreeData,
+	calculateDenominatedTimeSeries,
+	filterNarrativeTreemapTreeData
+} from '../chartData'
 import type { IPctChangeRow } from '../types'
 
 function row(overrides: Partial<IPctChangeRow>): IPctChangeRow {
@@ -91,6 +95,31 @@ describe('buildNarrativeTreemapTreeData', () => {
 			[12.35, 12.35, 100],
 			[-1.23, -1.23, -100]
 		])
+	})
+
+	it('filters coins without recalculating their full-market color intensity', () => {
+		const tree = buildNarrativeTreemapTreeData([
+			row({ name: 'Low', categoryName: 'Lending', mcap: 3, returnField: 10 }),
+			row({ name: 'High', categoryName: 'Lending', mcap: 7, returnField: 20 })
+		])
+
+		expect(filterNarrativeTreemapTreeData(tree, new Set(['Low']), true)).toEqual([
+			{
+				...tree[0],
+				value: [3, null, null, 0],
+				children: [tree[0].children[0]]
+			}
+		])
+		expect(tree[0].children[0].value[3]).toBe(70)
+	})
+
+	it('filters whole category nodes on the category overview', () => {
+		const tree = buildNarrativeTreemapTreeData([
+			row({ name: 'Lending', categoryName: 'Lending', mcap: 3 }),
+			row({ name: 'DEX', categoryName: 'DEX', mcap: 7 })
+		])
+
+		expect(filterNarrativeTreemapTreeData(tree, new Set(['DEX']), false)).toEqual([tree[1]])
 	})
 })
 

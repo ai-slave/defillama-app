@@ -15,11 +15,18 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocolsByTokenClient } from '~/containers/TokenUsage/api'
-import { buildTokenUsageTreemapTreeData } from '~/containers/TokenUsage/treemap'
+import {
+	buildTokenUsageTreemapTreeData,
+	filterTokenUsageTreemapTreeData,
+	getTokenUsageTreemapProtocolOptions,
+	prepareTokenUsageTreemapCsv
+} from '~/containers/TokenUsage/treemap'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -136,9 +143,29 @@ export function TokenUsageSection({
 	const tokenUsageExportTitle = `${tokenSymbol.toUpperCase()} token usage`
 	const tokenUsageExportFilename = `token-usage-${tokenSymbol.toLowerCase()}`
 
-	const treemapTreeData = useMemo(
+	const canonicalTreemapTreeData = useMemo(
 		() => (view === 'treemap' ? buildTokenUsageTreemapTreeData(filteredRows, tokenUsageTreemapRootLabel) : []),
 		[view, filteredRows, tokenUsageTreemapRootLabel]
+	)
+	const treemapProtocolOptions = useMemo(
+		() => getTokenUsageTreemapProtocolOptions(canonicalTreemapTreeData),
+		[canonicalTreemapTreeData]
+	)
+	const treemapProtocolKeys = useMemo(
+		() => treemapProtocolOptions.map((option) => option.key),
+		[treemapProtocolOptions]
+	)
+	const {
+		activeSeries: selectedTreemapProtocols,
+		selectedCharts: selectedTreemapProtocolSet,
+		setSelectedSeries: setSelectedTreemapProtocols
+	} = useAllSeriesSelection({
+		availableSeries: treemapProtocolKeys,
+		selectionKey: tokenSymbol
+	})
+	const treemapTreeData = useMemo(
+		() => filterTokenUsageTreemapTreeData(canonicalTreemapTreeData, selectedTreemapProtocolSet),
+		[canonicalTreemapTreeData, selectedTreemapProtocolSet]
 	)
 
 	const table = useReactTable({
@@ -214,6 +241,17 @@ export function TokenUsageSection({
 							size="md"
 							buttonClassName="flex items-center gap-1"
 						/>
+						{view === 'treemap' && treemapProtocolOptions.length > 1 ? (
+							<SelectWithCombobox
+								allValues={treemapProtocolOptions}
+								selectedValues={selectedTreemapProtocols}
+								setSelectedValues={setSelectedTreemapProtocols}
+								label="Protocol"
+								labelType="smol"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
 						{view === 'treemap' ? (
 							<>
 								<ChartRestoreButton chartInstance={treemapChartInstance} />
@@ -226,10 +264,12 @@ export function TokenUsageSection({
 						) : null}
 						<CSVDownloadButton
 							prepareCsv={() =>
-								prepareTableCsv({
-									instance: table,
-									filename: `token-usage-${tokenSymbol}`
-								})
+								view === 'treemap'
+									? prepareTokenUsageTreemapCsv(treemapTreeData, tokenUsageExportFilename)
+									: prepareTableCsv({
+											instance: table,
+											filename: `token-usage-${tokenSymbol}`
+										})
 							}
 							smol
 							size="md"

@@ -95,9 +95,6 @@ function BarSparklineRenderer({ data, className, height = 48, focusable, maxBars
 				containLabel: false
 			},
 			animation: false,
-			tooltip: {
-				show: false
-			},
 			xAxis: {
 				type: 'category',
 				data: chartData.xAxisData,

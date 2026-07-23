@@ -15,6 +15,16 @@ describe('advanced TVL presentation', () => {
 
 		expect(orderAdvancedTvlChains(chainsDataset, names)).toEqual(['Base', 'Ethereum'])
 		expect(names).toEqual(['Ethereum', 'Base'])
+		const presentation = buildAdvancedTvlPresentation({
+			chartType: 'chainsTvl',
+			chainsDataset,
+			chainNames: names,
+			tokenNames: []
+		})
+		expect(presentation.charts.map(({ name, encode }) => ({ name, encode }))).toEqual([
+			{ name: 'Base', encode: { x: 0, y: 2 } },
+			{ name: 'Ethereum', encode: { x: 0, y: 1 } }
+		])
 	})
 
 	it('gives preview and saved inflow charts the same dollar semantics', () => {
@@ -42,5 +52,17 @@ describe('advanced TVL presentation', () => {
 				tokenNames: ['TOKEN']
 			}).valueSymbol
 		).toBe('')
+	})
+
+	it('reserves the established Others color without making it a selectable token', () => {
+		const presentation = buildAdvancedTvlPresentation({
+			chartType: 'tokensPie',
+			chainsDataset,
+			chainNames: [],
+			tokenNames: ['USDC']
+		})
+
+		expect(presentation.stackColors.USDC).toBeTruthy()
+		expect(presentation.stackColors.Others).toBeTruthy()
 	})
 })

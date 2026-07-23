@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useMemo, useRef } from 'react'
-import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { useIdleChartComputation } from '~/containers/ProDashboard/hooks/useIdleChartComputation'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import {
@@ -19,6 +19,7 @@ import {
 	getTopStablecoinFromLatestPoints,
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT,
 	type StablecoinChartSeriesPayload,
+	type StablecoinBreakdownSelectionOptions,
 	type StablecoinOverviewChartCollection,
 	type StablecoinOverviewChartType
 } from '~/containers/Stablecoins/chartSeries'
@@ -27,7 +28,7 @@ import type { StablecoinChartType } from '../../../types'
 
 interface UseStablecoinsChartDataResult {
 	chartPayload: StablecoinChartSeriesPayload
-	chainsCirculatingValues: Array<{ name: string; value: number }>
+	pieSeries: RuntimePieChartData
 	seriesNames: string[]
 	availableSeries: string[]
 	defaultSeries: string[]
@@ -40,9 +41,10 @@ const EMPTY_CHART_PAYLOAD: StablecoinChartSeriesPayload = {
 	dataset: { source: [], dimensions: ['timestamp'] },
 	charts: []
 }
+const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 10, upstreamOthersValue: 0 }
 const EMPTY_STABLECOIN_PRESENTATION = {
 	chartPayload: EMPTY_CHART_PAYLOAD,
-	chainsCirculatingValues: [] as Array<{ name: string; value: number }>,
+	pieSeries: EMPTY_PIE_SERIES,
 	seriesNames: [] as string[],
 	availableSeries: [] as string[],
 	defaultSeries: [] as string[],
@@ -71,11 +73,6 @@ type ProStablecoinChartCollection =
 	  }
 	| { kind: 'fixed'; presentation: typeof EMPTY_STABLECOIN_PRESENTATION }
 
-const EMPTY_PRO_STABLECOIN_COLLECTION: ProStablecoinChartCollection = {
-	kind: 'fixed',
-	presentation: EMPTY_STABLECOIN_PRESENTATION
-}
-
 const getProStablecoinChartParams = (rawData: StablecoinsChartCacheValue, chain: string) => ({
 	chartDataByAssetOrChain: rawData.chartDataByPeggedAsset,
 	assetsOrChainsList: rawData.peggedAssetNames,
@@ -91,16 +88,15 @@ const buildProStablecoinPresentationResult = (
 	chartType: StablecoinChartType,
 	chartPayload: StablecoinChartSeriesPayload
 ) => {
-	const chainsCirculatingValues =
+	const pieSeries =
 		chartType === 'pie'
-			? preparePieChartData({
+			? prepareRuntimePieChartData({
 					data: rawData.pieAssets,
 					sliceIdentifier: 'symbol',
 					sliceValue: 'mcap',
 					limit: 10
 				})
-			: []
-
+			: EMPTY_PIE_SERIES
 	let totalMcapCurrent: number | null = null
 	if (chartPayload.summary?.totalMcapCurrent != null) {
 		totalMcapCurrent = chartPayload.summary.totalMcapCurrent
@@ -110,15 +106,15 @@ const buildProStablecoinPresentationResult = (
 		if (lastEntry && mcapIndex >= 0 && lastEntry[mcapIndex] != null) {
 			totalMcapCurrent = lastEntry[mcapIndex] as number
 		} else if (chartType === 'pie') {
-			let total = 0
-			for (const slice of chainsCirculatingValues) total += slice.value
-			totalMcapCurrent = chainsCirculatingValues.length > 0 ? total : null
+			let total = pieSeries.upstreamOthersValue
+			for (const peer of pieSeries.peers) total += peer.value
+			totalMcapCurrent = pieSeries.peers.length > 0 || pieSeries.upstreamOthersValue > 0 ? total : null
 		}
 	}
 
 	return {
 		chartPayload,
-		chainsCirculatingValues,
+		pieSeries,
 		seriesNames: rawData.peggedAssetNames,
 		availableSeries: chartPayload.availableSeries ?? [],
 		defaultSeries: chartPayload.defaultSeries ?? [],
@@ -158,30 +154,21 @@ export function collectProStablecoinChart({
 
 export function buildProStablecoinChartPresentationFromCollection(
 	collected: ProStablecoinChartCollection,
-	selectedNames: string[] | null
+	selectionOptions?: StablecoinBreakdownSelectionOptions
 ) {
 	if (collected.kind === 'fixed') return collected.presentation
 	const chartPayload = buildStablecoinOverviewPayloadFromCollection(collected.collection, {
-		selectedNames,
-		seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
+		seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
+		...selectionOptions
 	})
 	return buildProStablecoinPresentationResult(collected.rawData, collected.chartType, chartPayload)
-}
-
-export function buildProStablecoinChartPresentation(args: {
-	rawData: StablecoinsChartCacheValue
-	chain: string
-	chartType: StablecoinChartType
-	selectedNames: string[] | null
-}) {
-	return buildProStablecoinChartPresentationFromCollection(collectProStablecoinChart(args), args.selectedNames)
 }
 
 export function useStablecoinsChartData(
 	chain: string,
 	chartType: StablecoinChartType,
-	selectedNames: string[] | null = null,
-	enabled = true
+	enabled = true,
+	selectionOptions?: StablecoinBreakdownSelectionOptions
 ): UseStablecoinsChartDataResult {
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
@@ -222,18 +209,14 @@ export function useStablecoinsChartData(
 		compute: () => {
 			const input = latestInputRef.current
 			return input.rawData
-				? collectProStablecoinChart({
-						rawData: input.rawData,
-						chain: input.chain,
-						chartType: input.chartType
-					})
-				: EMPTY_PRO_STABLECOIN_COLLECTION
+				? collectProStablecoinChart({ rawData: input.rawData, chain: input.chain, chartType: input.chartType })
+				: { kind: 'fixed' as const, presentation: EMPTY_STABLECOIN_PRESENTATION }
 		},
-		emptyValue: EMPTY_PRO_STABLECOIN_COLLECTION
+		emptyValue: { kind: 'fixed' as const, presentation: EMPTY_STABLECOIN_PRESENTATION }
 	})
 	const presentation = useMemo(
-		() => buildProStablecoinChartPresentationFromCollection(collected, selectedNames),
-		[collected, selectedNames]
+		() => buildProStablecoinChartPresentationFromCollection(collected, selectionOptions),
+		[collected, selectionOptions]
 	)
 
 	return {

@@ -182,12 +182,12 @@ describe('stablecoin chain consumer caches', () => {
 		expect(mocks.fetchStablecoinChartAllApi).not.toHaveBeenCalled()
 	})
 
-	it('makes six upstream calls for page then chart without duplicating cache payloads', async () => {
+	it('reuses shared upstream results across page and chart caches', async () => {
 		await getStablecoinChainsPageData()
 		await getStablecoinChainsChartSeries('totalMcap')
 
-		expect(mocks.fetchStablecoinAssetsApi).toHaveBeenCalledTimes(2)
-		expect(mocks.fetchStablecoinDominanceAllApi).toHaveBeenCalledTimes(2)
+		expect(mocks.fetchStablecoinAssetsApi).toHaveBeenCalledOnce()
+		expect(mocks.fetchStablecoinDominanceAllApi).toHaveBeenCalledOnce()
 		expect(mocks.fetchLlamaConfig).toHaveBeenCalledOnce()
 		expect(mocks.fetchStablecoinChartAllApi).toHaveBeenCalledOnce()
 	})

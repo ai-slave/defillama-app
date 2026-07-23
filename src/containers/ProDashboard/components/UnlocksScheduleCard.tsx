@@ -5,6 +5,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { slug, toNiceCsvDate, toNiceDayMonthYear } from '~/utils'
 import { download } from '~/utils/download'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
@@ -47,25 +48,24 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	const apiCharts = data?.chartsConfigs?.[resolvedDataType]
 
 	const stacks = useMemo(() => {
-		// dimensions[0] is 'timestamp', the rest are stacks
-		if (apiDataset.dimensions.length > 1) return apiDataset.dimensions.slice(1)
+		if (apiCharts?.length) return apiCharts.map((chart) => chart.name)
 		const categories = data?.categories?.[resolvedDataType] ?? EMPTY_STACKS
 		if (categories.length > 0) return categories
 		return EMPTY_STACKS
-	}, [apiDataset.dimensions, data, resolvedDataType])
-
-	const [selectedCategories, setSelectedCategories] = useState<string[] | null>(null)
-	const activeCategories = selectedCategories ?? stacks
+	}, [apiCharts, data, resolvedDataType])
+	const {
+		activeSeries: activeCategories,
+		selectedCharts: selectedChartsSet,
+		setSelectedSeries
+	} = useSeriesSelection({
+		availableSeries: stacks,
+		selectionKey: `${protocol}:${resolvedDataType}`
+	})
 
 	// Apply time-period filtering on the pre-built dataset source
 	const dataset = useMemo(
 		() => filterChartDatasetByTimePeriod(apiDataset, timePeriod, customTimePeriod),
 		[apiDataset, timePeriod, customTimePeriod]
-	)
-
-	const selectedChartsSet = useMemo(
-		() => (selectedCategories ? new Set(selectedCategories) : undefined),
-		[selectedCategories]
 	)
 
 	const hasChartData = dataset.source.length > 0 && stacks.length > 0
@@ -74,14 +74,18 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 
 	const handleCsvExport = useCallback(() => {
 		if (!hasChartData) return
-		const headers = ['Date', ...stacks]
+		const selectedDimensionIndexes = activeCategories.map((name) => dataset.dimensions.indexOf(name))
+		const headers = ['Date', ...activeCategories]
 		const rows = dataset.source.map((item) => {
-			return [toNiceCsvDate(Math.floor((item[0] as number) / 1e3)), ...stacks.map((_, index) => item[index + 1] ?? '')]
+			return [
+				toNiceCsvDate(Math.floor((item[0] as number) / 1e3)),
+				...selectedDimensionIndexes.map((index) => item[index] ?? '')
+			]
 		})
 		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
 		const filename = `${protocolName || protocol}-unlock-schedule-${resolvedDataType}`
 		download(filename, csvContent)
-	}, [hasChartData, dataset.source, stacks, protocolName, protocol, resolvedDataType])
+	}, [hasChartData, activeCategories, dataset, protocolName, protocol, resolvedDataType])
 
 	if (isLoading || !streamDone) {
 		return (
@@ -98,7 +102,19 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 					<h3 className="text-sm font-semibold text-pro-text-primary">{protocolName} Unlocks Schedule </h3>
 				</div>
 				{hasChartData ? (
-					<div className="flex gap-2">
+					<div className="flex flex-wrap justify-end gap-2">
+						{stacks.length > 1 ? (
+							<SelectWithCombobox
+								size="sm"
+								allValues={stacks}
+								selectedValues={activeCategories}
+								setSelectedValues={setSelectedSeries}
+								label="Category"
+								labelType="smol"
+								variant="filter"
+								popoverVariant="legacy"
+							/>
+						) : null}
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 						<ProTableCSVButton
 							onClick={handleCsvExport}
@@ -108,20 +124,6 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 					</div>
 				) : null}
 			</div>
-			{hasChartData && stacks.length > 1 ? (
-				<div className="mb-2 flex justify-end">
-					<SelectWithCombobox
-						size="sm"
-						allValues={stacks}
-						selectedValues={activeCategories}
-						setSelectedValues={setSelectedCategories}
-						label="Category"
-						labelType="smol"
-						variant="filter"
-						popoverVariant="legacy"
-					/>
-				</div>
-			) : null}
 			<div>
 				{hasChartData ? (
 					<Suspense fallback={<div className="min-h-[360px]" />}>

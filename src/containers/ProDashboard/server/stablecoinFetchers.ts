@@ -54,6 +54,7 @@ export function buildStablecoinsChartCacheValue({
 	const { peggedAssets } = peggedData
 	const chartDataByPeggedAsset: StablecoinChartMcapPoint[][] = []
 	const peggedAssetNames = buildUniqueStablecoinChartLabels(peggedAssets, 'name')
+	const pieAssetLabels = buildUniqueStablecoinChartLabels(peggedAssets, 'symbol')
 	const peggedAssetIdToChartDataIndex: Record<string, number> = {}
 	const doublecountedIds: number[] = []
 	const doublecountedSourceIds = new Set(chainData.doublecountedIds ?? [])
@@ -80,7 +81,7 @@ export function buildStablecoinsChartCacheValue({
 		const latestPoint = chartDataByPeggedAsset[index]?.at(-1)
 		let mcap = 0
 		for (const pegType in latestPoint?.mcap) mcap += latestPoint.mcap[pegType]
-		pieAssets.push({ symbol: asset.symbol, mcap: latestPoint ? mcap : null })
+		pieAssets.push({ symbol: pieAssetLabels[index], mcap: latestPoint ? mcap : null })
 	}
 
 	return {

@@ -12,12 +12,15 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import { lazy, Suspense, useContext, useEffect, useMemo, useState, type FC, type ReactNode } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type {
 	IMultiSeriesChartProps,
 	MultiSeriesChartDataset,
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useTableSearch } from '~/components/Table/utils'
 import type {
 	CexAnalyticsMarketSharePoint,
@@ -29,6 +32,8 @@ import { useProDashboardTime } from '~/containers/ProDashboard/ProDashboardAPICo
 import { getTimePeriodBounds, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import type { ProtocolsTableConfig } from '~/containers/ProDashboard/types'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formattedNum } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 import { LoadingSpinner } from '../../LoadingSpinner'
@@ -360,6 +365,7 @@ function VenueMarketShareChart({
 	topN: number
 }) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const filtered = useMemo(
 		() => filterTimeSeriesRows(data, timePeriod, customTimePeriod),
 		[data, timePeriod, customTimePeriod]
@@ -410,6 +416,12 @@ function VenueMarketShareChart({
 			charts
 		}
 	}, [filtered])
+	const venueSeries = useMemo(() => charts.map((chart) => chart.name), [charts])
+	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({
+		availableSeries: venueSeries,
+		selectionKey: metric
+	})
+	const title = `CEX ${metric === 'spot' ? 'Spot' : 'Derivatives'} Market Share (Top ${topN})`
 
 	if (dataset.source.length === 0 || charts.length === 0) {
 		return (
@@ -421,16 +433,50 @@ function VenueMarketShareChart({
 
 	return (
 		<div className="flex h-full w-full flex-col p-4">
+			<div className="flex flex-wrap items-center justify-between gap-2 pb-2">
+				<h3 className="text-lg font-semibold text-pro-text-primary">{title}</h3>
+				<div className="flex flex-wrap items-center justify-end gap-2">
+					{venueSeries.length > 1 ? (
+						<SelectWithCombobox
+							allValues={venueSeries}
+							selectedValues={activeSeries}
+							setSelectedValues={setSelectedSeries}
+							label="Venue"
+							labelType="smol"
+							variant="filter"
+							size="sm"
+							popoverVariant="legacy"
+						/>
+					) : null}
+					<ChartExportButtons
+						chartInstance={chartInstance}
+						filename={`cex-${metric}-market-share`}
+						title={title}
+						smol
+						prepareCsvDirect={() =>
+							buildSelectedSeriesCsv({
+								dataset,
+								charts,
+								selectedCharts,
+								filename: `cex-${metric}-market-share`
+							})
+						}
+					/>
+				</div>
+			</div>
 			<Suspense fallback={<div className="h-[360px]" />}>
 				<MultiSeriesChart
-					title={`CEX ${metric === 'spot' ? 'Spot' : 'Derivatives'} Market Share (Top ${topN})`}
+					title=""
 					dataset={dataset}
 					charts={charts}
+					selectedCharts={selectedCharts}
 					chartOptions={STACKED_PERCENT_CHART_OPTIONS}
 					solidChartAreaStyle
 					valueSymbol="%"
 					height="360px"
 					hideDefaultLegend={false}
+					exportButtons="hidden"
+					onReady={handleChartReady}
 				/>
 			</Suspense>
 		</div>

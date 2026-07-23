@@ -85,7 +85,7 @@ describe('buildReserveStablecoinChartData', () => {
 		expect(result.stablecoinsByToken).not.toBeNull()
 		expect(result.stablecoinsByPegType).toBeNull()
 		expect(result.stablecoinsByPegMechanism).toBeNull()
-		expect(result.pegMechanismPieChart).toEqual([])
+		expect(result.pegMechanismPieSeries.peers).toEqual([])
 	})
 
 	it('uses the latest mechanism row for the pie and summary', () => {
@@ -101,7 +101,7 @@ describe('buildReserveStablecoinChartData', () => {
 			{ mechanism: 'fiat-backed', value: 75, percentage: 75 },
 			{ mechanism: 'crypto-backed', value: 25, percentage: 25 }
 		])
-		expect(result.pegMechanismPieChart).toEqual([
+		expect(result.pegMechanismPieSeries.peers.map(({ name, value }) => ({ name, value }))).toEqual([
 			{ name: 'fiat-backed', value: 75 },
 			{ name: 'crypto-backed', value: 25 }
 		])
@@ -122,9 +122,7 @@ describe('buildReserveStablecoinChartData', () => {
 			manyAssets
 		)
 
-		expect(result.pegMechanismPieChart).toEqual([
-			...manyAssets.slice(0, 10).map((asset, index) => ({ name: asset.pegMechanism, value: 12 - index })),
-			{ name: 'Others', value: 3 }
-		])
+		expect(result.pegMechanismPieSeries.peers).toHaveLength(12)
+		expect(result.pegMechanismPieSeries.peers.at(-1)).toEqual({ name: 'mechanism-11', value: 1 })
 	})
 })

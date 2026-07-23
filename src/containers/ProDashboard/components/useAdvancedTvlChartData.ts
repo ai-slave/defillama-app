@@ -11,8 +11,10 @@ import { buildAdvancedTvlChartData, type AdvancedTvlChartData } from './advanced
 
 const EMPTY_ADVANCED_TVL_DATA = {
 	dataset: null,
+	breakdown: null,
 	seriesNames: [] as string[],
-	pieChart: [] as Array<{ name: string; value: number }>
+	defaultSeriesNames: [] as string[],
+	pieSeries: { peers: [], limit: 15, upstreamOthersValue: 0 }
 }
 
 export function useAdvancedTvlChartData({

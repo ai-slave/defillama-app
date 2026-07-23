@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { parse as parseEChartsColor } from 'zrender/lib/tool/color'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IProtocol } from '../types'
 import {
@@ -299,7 +300,35 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(datasetValue(presentation.dataset, 0, 'Others')).toBe(181)
 	})
 
-	it('builds grouped relative lines normalized to share', () => {
+	it('preserves tiny and signed overflow values when using the cached complement path', () => {
+		const topChains = Array.from({ length: 10 }, (_, index) => `Top ${index + 1}`)
+		const tailChains = Array.from({ length: 20 }, (_, index) => `Tail ${index + 1}`)
+		for (const { firstTailValue, expectedOthers } of [
+			{ firstTailValue: 1, expectedOthers: 20 },
+			{ firstTailValue: -19, expectedOthers: 0 }
+		]) {
+			const chartData = toDataset({
+				dimensions: ['timestamp', ...topChains, ...tailChains],
+				source: [
+					{
+						timestamp: toMs(2024, 1, 1),
+						...Object.fromEntries(topChains.map((name) => [name, 1e20])),
+						...Object.fromEntries(tailChains.map((name, index) => [name, index === 0 ? firstTailValue : 1]))
+					}
+				]
+			})
+			const presentation = buildChainsByAdapterChartPresentation({
+				chartData,
+				selectedChains: chartData.dimensions.slice(1),
+				state: { chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' }
+			})
+			expect(presentation.kind).toBe('bar')
+			if (presentation.kind !== 'bar') continue
+			expect(datasetValue(presentation.dataset, 0, 'Others')).toBe(expectedOthers)
+		}
+	})
+
+	it('renormalizes grouped dominance over the selected chains', () => {
 		const presentation = buildChainsByAdapterChartPresentation({
 			chartData: baseChartData,
 			selectedChains: ['Ethereum', 'Solana'],
@@ -315,6 +344,146 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		const [week1] = presentation.dataset.source
 		expect(week1[1]).toBeCloseTo(60)
 		expect(week1[2]).toBeCloseTo(40)
+	})
+
+	it('applies negative adjustments before calculating narrowed grouped and cumulative dominance', () => {
+		const chartData = toDataset({
+			dimensions: ['timestamp', 'Adjusted', 'Selected'],
+			source: [
+				{ timestamp: toMs(2024, 1, 1), Adjusted: 100, Selected: 100 },
+				{ timestamp: toMs(2024, 1, 2), Adjusted: -100, Selected: 0 }
+			]
+		})
+
+		for (const groupBy of ['weekly', 'monthly', 'cumulative'] as const) {
+			const presentation = buildChainsByAdapterChartPresentation({
+				chartData,
+				selectedChains: ['Selected'],
+				state: { chartKind: 'dominance', groupBy }
+			})
+
+			expect(presentation.kind).toBe('dominance')
+			if (presentation.kind !== 'dominance') continue
+			expect(datasetValue(presentation.dataset, presentation.dataset.source.length - 1, 'Selected')).toBe(100)
+		}
+	})
+
+	it('renormalizes narrowed dominance even when the full tail cancels out', () => {
+		const topChains = Array.from({ length: 10 }, (_, index) => `Chain ${index + 1}`)
+		const timestamp = toMs(2024, 1, 1)
+
+		for (const overflow of [
+			{ PositiveTail: 100, NegativeTail: -100 },
+			{ Others: 100, NegativeTail: -100 }
+		]) {
+			const chartData = toDataset({
+				dimensions: ['timestamp', ...topChains, ...Object.keys(overflow)],
+				source: [
+					{
+						timestamp,
+						...Object.fromEntries(topChains.map((name) => [name, 200])),
+						...overflow
+					}
+				]
+			})
+			const full = buildChainsByAdapterChartPresentation({
+				chartData,
+				selectedChains: chartData.dimensions.slice(1),
+				state: { chartKind: 'dominance', groupBy: 'daily' }
+			})
+			const narrowed = buildChainsByAdapterChartPresentation({
+				chartData,
+				selectedChains: ['Chain 1'],
+				state: { chartKind: 'dominance', groupBy: 'daily' }
+			})
+
+			expect(full.kind).toBe('dominance')
+			expect(narrowed.kind).toBe('dominance')
+			if (full.kind !== 'dominance' || narrowed.kind !== 'dominance') continue
+			expect(datasetValue(full.dataset, 0, 'Others')).toBe(0)
+			expect(datasetValue(narrowed.dataset, 0, 'Chain 1')).toBe(100)
+		}
+	})
+
+	it('uses dataset order to break tied top-N rankings regardless of selector order', () => {
+		const chains = Array.from({ length: 12 }, (_, index) => `Chain ${index + 1}`)
+		const chartData = toDataset({
+			dimensions: ['timestamp', ...chains],
+			source: [
+				{
+					timestamp: toMs(2024, 1, 1),
+					...Object.fromEntries(chains.slice(0, 10).map((name) => [name, -100])),
+					'Chain 11': 0,
+					'Chain 12': 200
+				},
+				{
+					timestamp: toMs(2024, 1, 2),
+					...Object.fromEntries(chains.slice(0, 10).map((name) => [name, 200])),
+					'Chain 11': 100,
+					'Chain 12': -100
+				}
+			]
+		})
+		const full = buildChainsByAdapterChartPresentation({
+			chartData,
+			selectedChains: chains.toReversed(),
+			state: { chartKind: 'dominance', groupBy: 'daily' }
+		})
+		const narrowed = buildChainsByAdapterChartPresentation({
+			chartData,
+			selectedChains: ['Chain 5'],
+			state: { chartKind: 'dominance', groupBy: 'daily' }
+		})
+
+		expect(full.kind).toBe('dominance')
+		expect(narrowed.kind).toBe('dominance')
+		if (full.kind !== 'dominance' || narrowed.kind !== 'dominance') return
+		expect(datasetValue(full.dataset, 1, 'Chain 5')).toBe(10)
+		expect(datasetValue(narrowed.dataset, 1, 'Chain 5')).toBe(100)
+	})
+
+	it('keeps chain colors stable after filtering', () => {
+		const chartData = toDataset({
+			dimensions: ['timestamp', 'A', 'B', 'C'],
+			source: [{ timestamp: toMs(2024, 1, 1), A: 30, B: 20, C: 10 }]
+		})
+		const state = { chartKind: 'dominance', groupBy: 'daily' } as const
+		const full = buildChainsByAdapterChartPresentation({
+			chartData,
+			selectedChains: ['A', 'B', 'C'],
+			state
+		})
+		const narrowed = buildChainsByAdapterChartPresentation({ chartData, selectedChains: ['B', 'C'], state })
+		if (full.kind !== 'dominance' || narrowed.kind !== 'dominance') return
+		const fullColors = new Map(full.charts.map((chart) => [chart.name, chart.color]))
+		for (const chart of narrowed.charts) expect(chart.color).toBe(fullColors.get(chart.name))
+	})
+
+	it('uses ECharts-parseable colors for selected overflow chains', () => {
+		const chains = Array.from({ length: 12 }, (_, index) => `Chain ${index + 1}`)
+		const chartData = toDataset({
+			dimensions: ['timestamp', ...chains],
+			source: [
+				Object.assign(
+					{ timestamp: toMs(2024, 1, 1) },
+					Object.fromEntries(chains.map((name, index) => [name, chains.length - index]))
+				)
+			]
+		})
+		buildChainsByAdapterChartPresentation({
+			chartData,
+			selectedChains: chains,
+			state: { chartKind: 'dominance', groupBy: 'daily' }
+		})
+		const overflow = buildChainsByAdapterChartPresentation({
+			chartData,
+			selectedChains: ['Chain 12'],
+			state: { chartKind: 'dominance', groupBy: 'daily' }
+		})
+		if (overflow.kind !== 'dominance') return
+		const color = overflow.charts[0].color
+		expect(color).toMatch(/^hsl\([^,]+, 68%, 48%\)$/)
+		expect(parseEChartsColor(color!)).toBeDefined()
 	})
 
 	it('builds treemap data from the last complete daily chart timestamp', () => {
@@ -451,6 +620,69 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.data[8].value).toBe(20)
 		expect(presentation.data[9].value).toBe(15)
 		expect(presentation.data[9].share).toBeCloseTo((15 / 555) * 100)
+	})
+
+	it('keeps latest-value colors stable after filtering and across snapshot views', () => {
+		const chartData = toDataset({
+			dimensions: ['timestamp', 'A', 'B', 'C', 'Others'],
+			source: [{ timestamp: toMs(2024, 1, 1), A: 1, B: 100, C: 10, Others: 5 }]
+		})
+		const hbar = buildChainsByAdapterChartPresentation({
+			chartData,
+			selectedChains: ['B', 'C'],
+			state: { chartKind: 'hbar', groupBy: 'daily' }
+		})
+		const treemap = buildChainsByAdapterChartPresentation({
+			chartData,
+			selectedChains: ['A', 'B', 'C', 'Others'],
+			state: { chartKind: 'treemap', groupBy: 'daily' }
+		})
+		expect(treemap.kind).toBe('treemap')
+		expect(hbar.kind).toBe('hbar')
+		if (treemap.kind !== 'treemap' || hbar.kind !== 'hbar') return
+		const treemapB = treemap.data.find((item) => item.name === 'B')?.itemStyle.color
+		expect(hbar.data.find((item) => item.name === 'B')?.itemStyle.color).toBe(treemapB)
+		expect(treemap.data.find((item) => item.name === 'Others')?.itemStyle.color).not.toBe(treemapB)
+	})
+
+	it('folds a real Others value into one hbar remainder for chain and protocol snapshots', () => {
+		for (const { othersValue, values, expectedOthers } of [
+			{
+				othersValue: 100,
+				values: Object.fromEntries(Array.from({ length: 9 }, (_, index) => [`Peer ${index + 1}`, 9 - index])),
+				expectedOthers: 100
+			},
+			{
+				othersValue: 1,
+				values: Object.fromEntries(Array.from({ length: 10 }, (_, index) => [`Peer ${index + 1}`, 20 - index])),
+				expectedOthers: 12
+			}
+		]) {
+			const peers = Object.keys(values)
+			const chartData = toDataset({
+				dimensions: ['timestamp', 'Others', ...peers],
+				source: [{ timestamp: toMs(2024, 1, 1), Others: othersValue, ...values }]
+			})
+			const chain = buildChainsByAdapterChartPresentation({
+				chartData,
+				selectedChains: ['Others', ...peers],
+				state: { chartKind: 'hbar', groupBy: 'daily' }
+			})
+			const protocol = buildAdapterByChainLatestValuePresentation({
+				chartKind: 'hbar',
+				selectedProtocols: ['Others', ...peers],
+				groupBy: 'daily',
+				chartData
+			})
+
+			for (const presentation of [chain, protocol]) {
+				expect(presentation.kind).toBe('hbar')
+				if (presentation.kind !== 'hbar') continue
+				expect(presentation.data.filter((item) => item.name === 'Others')).toEqual([
+					expect.objectContaining({ value: expectedOthers })
+				])
+			}
+		}
 	})
 
 	it('builds treemap from rolling weekly sums (last 7 days from latest row)', () => {
@@ -593,6 +825,39 @@ describe('buildChainsByAdapterChartPresentation', () => {
 })
 
 describe('buildAdapterByChainBreakdownPresentation', () => {
+	it('keeps protocol colors stable after filtering', () => {
+		const state = { chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' } as const
+		const full = buildAdapterByChainBreakdownPresentation({
+			chartData: adapterBreakdownChartData,
+			selectedProtocols: ['Hyperliquid Perps', 'dYdX', 'GMX'],
+			state
+		})
+		const narrowed = buildAdapterByChainBreakdownPresentation({
+			chartData: adapterBreakdownChartData,
+			selectedProtocols: ['dYdX', 'GMX'],
+			state
+		})
+		const fullColors = new Map(full.charts.map((chart) => [chart.name, chart.color]))
+		for (const chart of narrowed.charts) expect(chart.color).toBe(fullColors.get(chart.name))
+	})
+
+	it('renormalizes protocol dominance after deselection', () => {
+		const presentation = buildAdapterByChainBreakdownPresentation({
+			chartData: adapterBreakdownChartData,
+			selectedProtocols: ['Hyperliquid Perps'],
+			state: { chartKind: 'dominance', groupBy: 'daily' }
+		})
+
+		expect(presentation.kind).toBe('dominance')
+		if (presentation.kind !== 'dominance') return
+
+		expect(presentation.dataset.source).toEqual([
+			[toMs(2024, 1, 1), 100],
+			[toMs(2024, 1, 2), 100],
+			[toMs(2024, 1, 3), 100]
+		])
+	})
+
 	it('builds relative separate bars from selected protocol breakdown series', () => {
 		const presentation = buildAdapterByChainBreakdownPresentation({
 			chartData: adapterBreakdownChartData,
@@ -877,28 +1142,55 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 		expect(presentation.data[2].value).toBe(10)
 	})
 
-	it('bounds treemap items and preserves the omitted total in Others', () => {
+	it('renders every selected treemap item without synthesizing an Others tile', () => {
 		const protocols = Array.from({ length: 102 }, (_, index) => `Protocol ${index + 1}`)
+		const chartData = toDataset({
+			dimensions: ['timestamp', ...protocols],
+			source: [
+				Object.assign(
+					{ timestamp: toMs(2024, 1, 1) },
+					Object.fromEntries(protocols.map((name, index) => [name, protocols.length - index]))
+				)
+			]
+		})
+		const filteredFirst = buildAdapterByChainLatestValuePresentation({
+			chartKind: 'hbar',
+			selectedProtocols: ['Protocol 1', 'Protocol 101'],
+			groupBy: 'cumulative',
+			chartData
+		})
 		const presentation = buildAdapterByChainLatestValuePresentation({
 			chartKind: 'treemap',
 			selectedProtocols: protocols,
 			groupBy: 'cumulative',
-			chartData: toDataset({
-				dimensions: ['timestamp', ...protocols],
-				source: [
-					Object.assign(
-						{ timestamp: toMs(2024, 1, 1) },
-						Object.fromEntries(protocols.map((name, index) => [name, protocols.length - index]))
-					)
-				]
-			})
+			chartData
 		})
 
 		expect(presentation.kind).toBe('treemap')
 		if (presentation.kind !== 'treemap') return
-		expect(presentation.data).toHaveLength(100)
-		expect(presentation.data.at(-1)?.name).toBe('Others')
-		expect(presentation.data.at(-1)?.value).toBe(6)
+		expect(presentation.data).toHaveLength(102)
+		expect(presentation.data.at(-1)?.name).toBe('Protocol 102')
+		expect(presentation.data.at(-1)?.value).toBe(1)
+		expect(presentation.data.at(-1)?.share).toBeCloseTo((1 / 5_253) * 100)
+		expect(presentation.data.some((item) => item.name === 'Others')).toBe(false)
+		expect(filteredFirst.kind).toBe('hbar')
+		if (filteredFirst.kind !== 'hbar') return
+		const firstColor = filteredFirst.data.find((item) => item.name === 'Protocol 1')?.itemStyle.color
+		const hiddenPeerColor = filteredFirst.data.find((item) => item.name === 'Protocol 101')?.itemStyle.color
+		expect(hiddenPeerColor).not.toBe(firstColor)
+		expect(presentation.data.find((item) => item.name === 'Protocol 1')?.itemStyle.color).toBe(firstColor)
+
+		const hbar = buildAdapterByChainLatestValuePresentation({
+			chartKind: 'hbar',
+			selectedProtocols: protocols,
+			groupBy: 'cumulative',
+			chartData
+		})
+		expect(hbar.kind).toBe('hbar')
+		if (hbar.kind !== 'hbar') return
+		expect(hbar.data.at(-1)).toEqual(expect.objectContaining({ name: 'Others', value: 4_371 }))
+		expect(hbar.data.at(-1)?.share).toBeCloseTo((4_371 / 5_253) * 100)
+		expect(hbar.data.at(-1)?.itemStyle.color).not.toBe(hbar.data[8].itemStyle.color)
 	})
 })
 

@@ -1,7 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import {
+	buildSelectedAdditiveChart,
+	buildSelectedSeriesCsv,
+	rankSeriesByPeakAbsoluteValue
+} from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildRuntimePieChartPresentation, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
@@ -13,7 +19,7 @@ import { fetchProtocolTvlTokenBreakdownChart } from '~/containers/ProtocolOvervi
 import type { IProtocolTokenBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSelectedValues } from '~/hooks/useSelectedValues'
+import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
@@ -31,7 +37,6 @@ function MultiSeriesChartCard({
 	dataset,
 	charts,
 	valueSymbol,
-	hideDefaultLegend,
 	exportFilenameBase,
 	exportTitle,
 	exportIconUrl
@@ -41,15 +46,33 @@ function MultiSeriesChartCard({
 	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesCharts
 	valueSymbol?: string
-	hideDefaultLegend?: boolean
 	exportFilenameBase: string
 	exportTitle: string
 	exportIconUrl?: string
 }) {
-	const allValues = React.useMemo(() => charts.map((chart) => chart.name), [charts])
-	const [selected, setSelected] = useSelectedValues(allValues)
-
-	const selectedChartsSet = React.useMemo(() => new Set(selected), [selected])
+	const allValues = React.useMemo(
+		() =>
+			rankSeriesByPeakAbsoluteValue(
+				dataset,
+				charts.map((chart) => chart.name).filter((name) => name !== 'Others')
+			),
+		[charts, dataset]
+	)
+	const { activeSeries, selectedCharts, setSelectedSeries, isDefaultSelection } = useSeriesSelection({
+		availableSeries: allValues,
+		storeDefaultAsIntent: true
+	})
+	const presentation = React.useMemo(
+		() =>
+			buildSelectedAdditiveChart({
+				dataset,
+				charts,
+				seriesOrder: allValues,
+				selectedCharts,
+				includeUpstreamRemainder: isDefaultSelection
+			}),
+		[allValues, charts, dataset, isDefaultSelection, selectedCharts]
+	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -61,8 +84,8 @@ function MultiSeriesChartCard({
 					{allValues.length > 1 ? (
 						<SelectWithCombobox
 							allValues={allValues}
-							selectedValues={selected}
-							setSelectedValues={setSelected}
+							selectedValues={activeSeries}
+							setSelectedValues={setSelectedSeries}
 							label={filterLabel}
 							labelType="smol"
 							variant="filter"
@@ -74,17 +97,24 @@ function MultiSeriesChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={exportIconUrl}
+						prepareCsvDirect={() =>
+							buildSelectedSeriesCsv({
+								dataset: presentation.dataset,
+								charts: presentation.charts,
+								selectedCharts: new Set(presentation.charts.map((chart) => chart.name)),
+								filename: exportFilenameBase
+							})
+						}
 					/>
 				</>
 			}
 		>
 			<React.Suspense fallback={cexChartFallback}>
 				<MultiSeriesChart
-					dataset={dataset}
-					charts={charts}
+					dataset={presentation.dataset}
+					charts={presentation.charts}
 					valueSymbol={valueSymbol}
-					hideDefaultLegend={hideDefaultLegend}
-					selectedCharts={selectedChartsSet}
+					hideDefaultLegend={false}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -94,26 +124,28 @@ function MultiSeriesChartCard({
 
 function PieChartCard({
 	title,
-	chartData,
+	series,
 	exportFilenameBase,
 	exportTitle,
 	exportIconUrl
 }: {
 	title: string
-	chartData: Array<{ name: string; value: number }>
+	series: RuntimePieChartData
 	exportFilenameBase: string
 	exportTitle: string
 	exportIconUrl?: string
 }) {
-	const allValues = React.useMemo(() => chartData.map((d) => d.name), [chartData])
-	const [selectedValues, setSelectedValues] = useSelectedValues(allValues)
-
-	const selectedValuesSet = React.useMemo(() => new Set(selectedValues), [selectedValues])
-
-	const filteredChartData = React.useMemo(() => {
-		if (selectedValues.length === 0) return []
-		return chartData.filter((d) => selectedValuesSet.has(d.name))
-	}, [chartData, selectedValues.length, selectedValuesSet])
+	const selectableSeries = React.useMemo(() => series.peers.map((peer) => peer.name), [series.peers])
+	const {
+		activeSeries: selectedValues,
+		selectedCharts,
+		setSelectedSeries: setSelectedValues,
+		includeUpstreamOthers
+	} = useAllSeriesSelection({ availableSeries: selectableSeries })
+	const presentation = React.useMemo(
+		() => buildRuntimePieChartPresentation({ series, selectedSeries: selectedCharts, includeUpstreamOthers }),
+		[includeUpstreamOthers, selectedCharts, series]
+	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -122,9 +154,9 @@ function PieChartCard({
 			title={title}
 			controls={
 				<>
-					{allValues.length > 1 ? (
+					{selectableSeries.length > 1 ? (
 						<SelectWithCombobox
-							allValues={allValues}
+							allValues={selectableSeries}
 							selectedValues={selectedValues}
 							setSelectedValues={setSelectedValues}
 							label="Backing"
@@ -143,7 +175,11 @@ function PieChartCard({
 			}
 		>
 			<React.Suspense fallback={cexChartFallback}>
-				<PieChart chartData={filteredChartData} onReady={handleChartReady} />
+				<PieChart
+					chartData={presentation.chartData}
+					stackColors={presentation.stackColors}
+					onReady={handleChartReady}
+				/>
 			</React.Suspense>
 		</CexChartPanel>
 	)
@@ -220,7 +256,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 	const {
 		currentTotal,
 		stablecoinBreakdown,
-		pegMechanismPieChart,
+		pegMechanismPieSeries,
 		totalStablecoins,
 		stablecoinsByPegMechanism,
 		stablecoinsByPegType,
@@ -283,10 +319,10 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 					/>
 				) : null}
 
-				{pegMechanismPieChart.length > 0 ? (
+				{pegMechanismPieSeries.peers.length > 0 || pegMechanismPieSeries.upstreamOthersValue > 0 ? (
 					<PieChartCard
 						title="Distribution by Backing Type"
-						chartData={pegMechanismPieChart}
+						series={pegMechanismPieSeries}
 						exportFilenameBase={buildFilename('stablecoins-backing-type')}
 						exportTitle={stablecoinsExportTitle}
 						exportIconUrl={exchangeLogoUrl}
@@ -313,7 +349,6 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 						dataset={stablecoinsByToken.dataset}
 						charts={stablecoinsByToken.charts}
 						valueSymbol="$"
-						hideDefaultLegend={true}
 						exportFilenameBase={buildFilename('individual-stablecoins')}
 						exportTitle={stablecoinsExportTitle}
 						exportIconUrl={exchangeLogoUrl}

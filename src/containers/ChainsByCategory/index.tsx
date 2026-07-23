@@ -1,18 +1,24 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedPercentageChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
+import { buildRuntimePieChartPresentation, prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	CHAINS_CATEGORY_GROUP_SETTINGS,
 	TVL_SETTINGS_KEYS,
 	useLocalStorageSettingsManager,
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
-import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatNum, getPercentChange } from '~/utils'
@@ -43,22 +49,6 @@ const getChartExtraValues = ({
 	borrowed: tvlChartsByChain.borrowed?.[chain]?.[date],
 	pool2: tvlChartsByChain.pool2?.[chain]?.[date],
 	vesting: tvlChartsByChain.vesting?.[chain]?.[date]
-})
-
-const getTotalExtraValues = ({
-	totalTvlByDate,
-	date
-}: {
-	totalTvlByDate: IChainsByCategoryData['totalTvlByDate']
-	date: string
-}) => ({
-	doublecounted: totalTvlByDate.doublecounted?.[date],
-	liquidstaking: totalTvlByDate.liquidstaking?.[date],
-	dcAndLsOverlap: totalTvlByDate.dcAndLsOverlap?.[date],
-	staking: totalTvlByDate.staking?.[date],
-	borrowed: totalTvlByDate.borrowed?.[date],
-	pool2: totalTvlByDate.pool2?.[date],
-	vesting: totalTvlByDate.vesting?.[date]
 })
 
 const getChainRowExtraValues = ({
@@ -110,7 +100,7 @@ export function ChainsByCategory({
 	})
 	const chartData =
 		chartDataQuery.data ?? (shouldFetchChartData ? EMPTY_CHAINS_CHART_DATA : { tvlChartsByChain, totalTvlByDate })
-	const { pieChartData, dominanceCharts } = useFormatChartData({
+	const { pieSeries, dominanceCharts, chainSeries } = useFormatChartData({
 		tvlChartsByChain: chartData.tvlChartsByChain,
 		totalTvlByDate: chartData.totalTvlByDate,
 		colorsByChain,
@@ -118,6 +108,47 @@ export function ChainsByCategory({
 	})
 	const chartErrorMessage = chartDataQuery.error ? getErrorMessage(chartDataQuery.error) : null
 	const showSharedChartState = (shouldFetchChartData && chartDataQuery.isLoading) || chartErrorMessage != null
+	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
+	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({
+		availableSeries: chainSeries,
+		selectionKey: categoryName
+	})
+	const selectedDominance = React.useMemo(
+		() =>
+			buildSelectedPercentageChart({
+				dataset: dominanceCharts.dataset,
+				charts: dominanceCharts.charts,
+				selectedCharts
+			}),
+		[dominanceCharts, selectedCharts]
+	)
+	const {
+		activeSeries: activePieSeries,
+		selectedCharts: selectedPieSeries,
+		setSelectedSeries: setSelectedPieSeries,
+		includeUpstreamOthers: includePieUpstreamOthers
+	} = useAllSeriesSelection({
+		availableSeries: pieSelectableSeries,
+		selectionKey: categoryName
+	})
+	const visiblePieChartData = React.useMemo(
+		() =>
+			buildRuntimePieChartPresentation({
+				series: pieSeries,
+				selectedSeries: selectedPieSeries,
+				includeUpstreamOthers: includePieUpstreamOthers
+			}).chartData,
+		[includePieUpstreamOthers, pieSeries, selectedPieSeries]
+	)
+	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
+	const prepareDominanceCsv = () =>
+		buildSelectedSeriesCsv({
+			dataset: selectedDominance.dataset,
+			charts: selectedDominance.charts,
+			selectedCharts: new Set(activeSeries),
+			filename: 'chains-dominance'
+		})
 
 	const { showByGroup, chainsTableData } = useGroupAndFormatChains({ chains, category: categoryName })
 
@@ -153,23 +184,52 @@ export function ChainsByCategory({
 			) : (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 					<ChartPanel className="relative isolate">
-						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-							<PieChart
-								chartData={pieChartData}
-								stackColors={colorsByChain}
-								exportButtons={{ png: true, csv: true, filename: 'chains-tvl-pie', pngTitle: 'Chains TVL' }}
-							/>
+						<ChartPanelToolbar className="justify-end">
+							{pieSelectableSeries.length > 1 ? (
+								<SelectWithCombobox
+									allValues={pieSelectableSeries}
+									selectedValues={activePieSeries}
+									setSelectedValues={setSelectedPieSeries}
+									label="Chain"
+									labelType="smol"
+									variant="filter"
+									size="md"
+								/>
+							) : null}
+							<ChartExportButtons chartInstance={pieChartInstance} filename="chains-tvl-pie" title="Chains TVL" />
+						</ChartPanelToolbar>
+						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+							<PieChart chartData={visiblePieChartData} stackColors={colorsByChain} onReady={handlePieChartReady} />
 						</React.Suspense>
 					</ChartPanel>
 					<ChartPanel className="relative isolate">
-						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
+						<ChartPanelToolbar className="justify-end">
+							{chainSeries.length > 1 ? (
+								<SelectWithCombobox
+									allValues={chainSeries}
+									selectedValues={activeSeries}
+									setSelectedValues={setSelectedSeries}
+									label="Chain"
+									labelType="smol"
+									variant="filter"
+									size="md"
+								/>
+							) : null}
+							<ChartExportButtons
+								chartInstance={chartInstance}
+								filename="chains-dominance"
+								title="Chains Dominance"
+								prepareCsvDirect={prepareDominanceCsv}
+							/>
+						</ChartPanelToolbar>
+						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
-								dataset={dominanceCharts.dataset}
-								charts={dominanceCharts.charts}
+								dataset={selectedDominance.dataset}
+								charts={selectedDominance.charts}
 								valueSymbol="%"
 								expandTo100Percent
 								solidChartAreaStyle
-								exportButtons={{ png: true, csv: true, filename: 'chains-dominance', pngTitle: 'Chains Dominance' }}
+								onReady={handleChartReady}
 							/>
 						</React.Suspense>
 					</ChartPanel>
@@ -214,13 +274,6 @@ export const buildChainsByCategoryChartPresentation = ({
 		if (!includeRow && !isLatest) continue
 		const row = includeRow ? new Array<number | null>(chainNames.length + 1) : null
 		if (row) row[0] = +date
-		const total = includeRow
-			? applyChainsTvlSettings(
-					totalTvlByDate['tvl'][date],
-					getTotalExtraValues({ totalTvlByDate, date }),
-					enabledTvlSettings
-				)
-			: null
 		for (let chainIndex = 0; chainIndex < chainNames.length; chainIndex++) {
 			const chain = chainNames[chainIndex]
 			const value = applyChainsTvlSettings(
@@ -229,22 +282,29 @@ export const buildChainsByCategoryChartPresentation = ({
 				enabledTvlSettings
 			)
 			if (isLatest) recentTvlByChain[chain] = value ?? 0
-			if (row) row[chainIndex + 1] = value != null && total != null && total !== 0 ? (value / total) * 100 : null
+			if (row) row[chainIndex + 1] = value
 		}
 		if (row) source.push(row)
 	}
 	const dimensions = ['timestamp', ...chainNames]
-	const chartsConfig = chainNames.map((chain, index) => ({
+	const pieSeries = prepareRuntimePieChartData({ data: recentTvlByChain, limit: 10 })
+	const chainSeries = pieSeries.peers.map((peer) => peer.name)
+	const rankedCurrentChains = new Set(chainSeries)
+	for (const chain of chainNames) {
+		if (!rankedCurrentChains.has(chain)) chainSeries.push(chain)
+	}
+	const dimensionIndex = new Map(chainNames.map((chain, index) => [chain, index + 1]))
+	const chartsConfig = chainSeries.map((chain) => ({
 		type: 'line' as const,
 		name: chain,
-		encode: { x: 0, y: index + 1 },
+		encode: { x: 0, y: dimensionIndex.get(chain)! },
 		stack: chain,
 		color: colorsByChain[chain]
 	}))
-
 	return {
 		dominanceCharts: { dataset: { source, dimensions }, charts: chartsConfig },
-		pieChartData: preparePieChartData({ data: recentTvlByChain, limit: 10 })
+		pieSeries,
+		chainSeries
 	}
 }
 

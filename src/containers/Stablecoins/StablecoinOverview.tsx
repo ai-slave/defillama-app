@@ -4,7 +4,7 @@ import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
-import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	ChartGroupingSelector,
@@ -14,12 +14,14 @@ import {
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Menu } from '~/components/Menu'
 import { Select } from '~/components/Select/Select'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import type { StablecoinAssetChartConfig } from '~/containers/ProDashboard/types'
 import {
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT,
+	getStablecoinRuntimeSeries,
 	type StablecoinChartSeriesPayload
 } from '~/containers/Stablecoins/chartSeries'
 import {
@@ -31,6 +33,7 @@ import {
 	getStablecoinChartViewLabel,
 	getStablecoinChartViewOptions,
 	getStablecoinChartViewQueryValue,
+	getStablecoinSeriesSelectorLabel,
 	parseStablecoinChartState,
 	parseStablecoinVolumeGroupBy,
 	type StablecoinChartType as StablecoinChartCategory,
@@ -49,8 +52,10 @@ import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { capitalizeFirstLetter, formattedNum, slug } from '~/utils'
 import { peggedAssetIconUrl } from '~/utils/icons'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
+import { buildStablecoinMarketCapPresentation, prepareStablecoinMarketCapSeries } from './marketCapPresentation'
 import { StablecoinByChainUsageTable } from './StablecoinUsageByChainTable'
 import type { PeggedAssetPageProps } from './types'
+import { useStablecoinChartSelection, useStablecoinSelectionIntent } from './useStablecoinChartSelection'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -70,6 +75,13 @@ const ASSET_CHART_MODE = { page: 'asset' } as const
 const ASSET_CHART_TYPE_OPTIONS = getStablecoinChartTypeOptions(ASSET_CHART_MODE)
 const UNRELEASED_QUERY_KEY = 'unreleased'
 const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
+const EMPTY_SERIES: string[] = []
+const EMPTY_RUNTIME_SERIES = {
+	selectableSeries: EMPTY_SERIES,
+	renderedSelectableSeries: EMPTY_SERIES,
+	fixedRemainderSeries: EMPTY_SERIES,
+	alwaysVisibleSeries: EMPTY_SERIES
+}
 
 export default function PeggedContainer(props: PeggedAssetPageProps) {
 	return (
@@ -116,6 +128,12 @@ export const PeggedAssetInfo = ({
 	const chartState = parseStablecoinChartState(router.query, ASSET_CHART_MODE)
 	const chartType = chartState.type
 	const chartView = chartState.view
+	const seriesSelectorLabel =
+		getStablecoinSeriesSelectorLabel(ASSET_CHART_MODE, chartType, chartView) ??
+		(chartType === 'marketCap' && chartView === 'pie' ? 'Chain' : null)
+	const { selectionIntent, setSelectionIntent } = useStablecoinSelectionIntent(
+		`asset-${slug(name)}-${chartType}-${seriesSelectorLabel ?? 'none'}`
+	)
 	const volumeGroupBy = parseStablecoinVolumeGroupBy(router.query.groupBy)
 	const chartTypeOptions = ASSET_CHART_TYPE_OPTIONS
 	const chartViewOptions = React.useMemo(() => getStablecoinChartViewOptions(chartState), [chartState])
@@ -168,9 +186,18 @@ export const PeggedAssetInfo = ({
 
 	const chainTotals = useCalcCirculating(chainCirculatings, includeUnreleased)
 
-	const chainsCirculatingValues = React.useMemo(() => {
-		return preparePieChartData({ data: chainTotals, sliceIdentifier: 'name', sliceValue: 'circulating', limit: 10 })
-	}, [chainTotals])
+	const marketCapSeries = React.useMemo(
+		() =>
+			chartType === 'marketCap' && chartView === 'pie'
+				? prepareStablecoinMarketCapSeries({
+						rows: chainTotals,
+						view: 'pie',
+						getName: (row) => row.name,
+						getValue: (row) => row.circulating ?? 0
+					})
+				: null,
+		[chainTotals, chartType, chartView]
+	)
 
 	const displayedTotalCirculating = React.useMemo(() => {
 		if (!includeUnreleased) return totalCirculating
@@ -232,6 +259,7 @@ export const PeggedAssetInfo = ({
 		scope: 'token',
 		token: volumeToken,
 		chart: volumeChartKind,
+		selectionIntent,
 		enabled: chartType === 'volume' && volumeToken != null
 	})
 	const usesDefaultChartData = selectedSeriesChart === 'totalCirc' && !includeUnreleased
@@ -240,6 +268,7 @@ export const PeggedAssetInfo = ({
 		stablecoin: slug(name),
 		chart: selectedSeriesChart,
 		seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
+		selectionIntent,
 		includeUnreleased,
 		enabled: selectedSeriesChart != null && !usesDefaultChartData
 	})
@@ -260,6 +289,43 @@ export const PeggedAssetInfo = ({
 		selectedVolumeChartData == null &&
 		(volumeChartQuery.isLoading || volumeChartQuery.isFetching || volumeChartQuery.data != null)
 	const showDefaultLegend = chartType === 'marketCap' && (chartView === 'breakdown' || chartView === 'dominance')
+	const selectedPayload = chartType === 'volume' ? selectedVolumeChartData : selectedChartData
+	const runtimeSeries = React.useMemo(
+		() =>
+			seriesSelectorLabel && !marketCapSeries && selectedPayload
+				? getStablecoinRuntimeSeries(selectedPayload)
+				: EMPTY_RUNTIME_SERIES,
+		[marketCapSeries, selectedPayload, seriesSelectorLabel]
+	)
+	const { activeSeries, selectableSeries, renderedCharts, setSelectedSeries } = useStablecoinChartSelection({
+		marketCapSeries,
+		runtimeSeries,
+		selectionIntent,
+		setSelectionIntent
+	})
+	const marketCapPresentation = React.useMemo(
+		() =>
+			marketCapSeries
+				? buildStablecoinMarketCapPresentation({ series: marketCapSeries, selectedSeries: renderedCharts })
+				: null,
+		[marketCapSeries, renderedCharts]
+	)
+	const selectedChartsWithHelpers = React.useMemo(
+		() => new Set([...renderedCharts, ...runtimeSeries.alwaysVisibleSeries]),
+		[renderedCharts, runtimeSeries.alwaysVisibleSeries]
+	)
+	const activeSelectedCharts =
+		seriesSelectorLabel && selectableSeries.length > 1 ? selectedChartsWithHelpers : undefined
+	const prepareCsvDirect =
+		activeSelectedCharts && selectedPayload
+			? () =>
+					buildSelectedSeriesCsv({
+						dataset: selectedPayload.dataset,
+						charts: selectedPayload.charts,
+						selectedCharts: activeSelectedCharts,
+						filename: getImageExportFilename()
+					})
+			: undefined
 
 	const hasInfo =
 		description || pegMechanism || mintRedeemDescription || (auditLinks != null && auditLinks.length > 0) || url
@@ -342,6 +408,17 @@ export const PeggedAssetInfo = ({
 							variant="filter"
 							size="md"
 						/>
+						{seriesSelectorLabel && selectableSeries.length > 1 ? (
+							<SelectWithCombobox
+								allValues={selectableSeries}
+								selectedValues={activeSeries}
+								setSelectedValues={setSelectedSeries}
+								label={seriesSelectorLabel}
+								labelType="smol"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
 						{chartType === 'volume' ? null : <AddToDashboardButton chartConfig={dashboardChartConfig} smol />}
 						{chartType === 'volume' ? (
 							<ChartGroupingSelector
@@ -355,11 +432,16 @@ export const PeggedAssetInfo = ({
 							filename={getImageExportFilename()}
 							title={getImageExportTitle()}
 							iconUrl={peggedAssetIconUrl(name)}
+							prepareCsvDirect={prepareCsvDirect}
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback className="w-full" />}>
-							<PieChart chartData={chainsCirculatingValues} onReady={handleChartReady} />
+							<PieChart
+								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : []}
+								stackColors={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.stackColors : undefined}
+								onReady={handleChartReady}
+							/>
 						</React.Suspense>
 					) : chartType === 'volume' ? (
 						<SelectedAssetChart
@@ -367,6 +449,7 @@ export const PeggedAssetInfo = ({
 							isLoading={isVolumeChartLoading}
 							isError={!isVolumeChartLoading && volumeChartQuery.error != null}
 							hideDefaultLegend={chartView !== 'byChain'}
+							selectedCharts={activeSelectedCharts}
 							groupBy={volumeGroupBy}
 							onReady={handleChartReady}
 						/>
@@ -376,6 +459,7 @@ export const PeggedAssetInfo = ({
 							isLoading={isSelectedChartLoading}
 							isError={isSelectedChartError}
 							hideDefaultLegend={!showDefaultLegend}
+							selectedCharts={activeSelectedCharts}
 							onReady={handleChartReady}
 						/>
 					)}
@@ -464,6 +548,7 @@ function SelectedAssetChart({
 	isLoading,
 	isError,
 	hideDefaultLegend,
+	selectedCharts,
 	groupBy,
 	onReady
 }: {
@@ -471,6 +556,7 @@ function SelectedAssetChart({
 	isLoading: boolean
 	isError: boolean
 	hideDefaultLegend: boolean
+	selectedCharts?: Set<string>
 	groupBy?: LowercaseDwmcGrouping
 	onReady: (instance: echarts.ECharts | null) => void
 }) {
@@ -500,6 +586,7 @@ function SelectedAssetChart({
 			<MultiSeriesChart
 				dataset={data.dataset}
 				charts={data.charts}
+				selectedCharts={selectedCharts}
 				stacked={data.stacked}
 				expandTo100Percent={data.expandTo100Percent}
 				valueSymbol={data.valueSymbol}

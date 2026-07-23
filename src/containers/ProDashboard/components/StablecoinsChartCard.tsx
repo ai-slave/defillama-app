@@ -1,7 +1,7 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import type { Dispatch, SetStateAction } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
@@ -13,7 +13,12 @@ import {
 } from '~/containers/ProDashboard/components/datasets/stablecoinChartUtils'
 import { useStablecoinsChartData } from '~/containers/ProDashboard/components/datasets/StablecoinsDataset/useStablecoinsChartData'
 import { generateConsistentChartColor, STABLECOIN_TOKEN_COLORS } from '~/containers/ProDashboard/utils/colorManager'
-import { STABLECOIN_BREAKDOWN_SERIES_LIMIT } from '~/containers/Stablecoins/chartSeries'
+import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
+import {
+	useStablecoinChartSelection,
+	useStablecoinSelectionIntent
+} from '~/containers/Stablecoins/useStablecoinChartSelection'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formattedNum, toNiceCsvDate } from '~/utils'
 import { download } from '~/utils/download'
 import { useChartImageExport } from '../hooks/useChartImageExport'
@@ -44,19 +49,45 @@ const SERIES_SELECTION_CHARTS = new Set<StablecoinsChartConfig['chartType']>([
 	'dominance',
 	'tokenInflows'
 ])
-
 export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 	const { chain, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useChartImageExport()
-	const [selectedSeries, setSelectedSeries] = useState<string[] | null>(null)
-
-	useEffect(() => {
-		setSelectedSeries(null)
-	}, [chain, chartType])
-
-	const { chartPayload, chainsCirculatingValues, seriesNames, availableSeries, defaultSeries, isLoading } =
-		useStablecoinsChartData(chain, chartType, selectedSeries)
+	const { selectionIntent, setSelectionIntent } = useStablecoinSelectionIntent(`${chain}:${chartType}`)
+	const selectionOptions = useMemo(
+		() => ({
+			selectedNames: selectionIntent?.mode === 'include' ? selectionIntent.names : null,
+			excludedNames: selectionIntent?.mode === 'exclude' ? selectionIntent.names : null
+		}),
+		[selectionIntent]
+	)
+	const { chartPayload, pieSeries, seriesNames, isLoading } = useStablecoinsChartData(
+		chain,
+		chartType,
+		true,
+		selectionOptions
+	)
+	const runtimeSeries = useMemo(() => getStablecoinRuntimeSeries(chartPayload), [chartPayload])
+	const { activeSeries, selectableSeries, renderedCharts, setSelectedSeries } = useStablecoinChartSelection({
+		marketCapSeries: null,
+		runtimeSeries,
+		selectionIntent,
+		setSelectionIntent
+	})
+	const pieSeriesNames = useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
+	const pieSelection = useAllSeriesSelection({
+		availableSeries: pieSeriesNames,
+		selectionKey: `${chain}:pie`
+	})
+	const piePresentation = useMemo(
+		() =>
+			buildRuntimePieChartPresentation({
+				series: pieSeries,
+				selectedSeries: pieSelection.selectedCharts,
+				includeUpstreamOthers: pieSelection.includeUpstreamOthers
+			}),
+		[pieSelection.includeUpstreamOthers, pieSelection.selectedCharts, pieSeries]
+	)
 
 	const stackColors = useMemo(() => {
 		const colors: Record<string, string> = { ...STABLECOIN_TOKEN_COLORS }
@@ -79,14 +110,6 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		() => filterStablecoinDatasetByTimePeriod(chartPayload.dataset, timePeriod, customTimePeriod),
 		[chartPayload.dataset, timePeriod, customTimePeriod]
 	)
-	const activeSeries = selectedSeries ?? defaultSeries
-	const setActiveSeries: Dispatch<SetStateAction<string[]>> = (next) => {
-		setSelectedSeries((current) => {
-			const values = typeof next === 'function' ? next(current ?? defaultSeries) : next
-			return values.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT)
-		})
-	}
-
 	const latestMcapIndex = dataset.dimensions.indexOf('Mcap')
 	const latestMcap =
 		latestMcapIndex < 0 ? null : ((dataset.source.at(-1)?.[latestMcapIndex] as number | undefined) ?? null)
@@ -97,15 +120,16 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		let filename = `stablecoins-${chainSlug}-${chartType}`
 
 		if (chartType === 'pie') {
-			rows = [['Token', 'Market Cap'], ...chainsCirculatingValues.map((slice) => [slice.name, slice.value])]
+			rows = [['Token', 'Market Cap'], ...piePresentation.chartData.map((slice) => [slice.name, slice.value])]
 			filename = `stablecoins-${chainSlug}-pie`
 		} else {
-			const dimensions = dataset.dimensions.slice(1)
+			const dimensions = charts.filter((chart) => renderedCharts.has(chart.name)).map((chart) => chart.name)
+			const indexes = dimensions.map((name) => dataset.dimensions.indexOf(name))
 			rows = [
 				['Date', ...dimensions],
 				...dataset.source.map((row) => [
 					toNiceCsvDate((row[0] as number) / 1000),
-					...dimensions.map((_, index) => row[index + 1] ?? '')
+					...indexes.map((index) => row[index] ?? '')
 				])
 			]
 		}
@@ -117,7 +141,8 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 	const chainLabel = chain === 'All' ? 'All Chains' : chain
 	const imageTitle = `${chainLabel} Stablecoins - ${chartTypeLabel}`
 	const imageFilename = `stablecoins-${chain === 'All' ? 'all' : chain.toLowerCase().replace(/\s+/g, '-')}-${chartType}`
-	const hasChartData = chartType === 'pie' ? chainsCirculatingValues.length > 0 : dataset.source.length > 0
+	const hasChartData =
+		chartType === 'pie' ? pieSeries.peers.length > 0 || pieSeries.upstreamOthersValue > 0 : dataset.source.length > 0
 
 	if (isLoading) {
 		return (
@@ -144,10 +169,31 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 					<p className="text-xs text-pro-text-secondary">{chainLabel} Stablecoins</p>
 				</div>
 				{hasChartData ? (
-					<div className="flex gap-2">
-						{chartType !== 'pie' ? (
-							<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
+					<div className="flex flex-wrap justify-end gap-2">
+						{chartType === 'pie' && pieSeries.peers.length > 1 ? (
+							<SelectWithCombobox
+								size="sm"
+								allValues={pieSeriesNames}
+								selectedValues={pieSelection.activeSeries}
+								setSelectedValues={pieSelection.setSelectedSeries}
+								label="Token"
+								labelType="smol"
+								variant="filter"
+								popoverVariant="legacy"
+							/>
+						) : SERIES_SELECTION_CHARTS.has(chartType) && selectableSeries.length > 1 ? (
+							<SelectWithCombobox
+								size="sm"
+								allValues={selectableSeries}
+								selectedValues={activeSeries}
+								setSelectedValues={setSelectedSeries}
+								label="Token"
+								labelType="smol"
+								variant="filter"
+								popoverVariant="legacy"
+							/>
 						) : null}
+						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 						<ProTableCSVButton
 							onClick={handleCsvExport}
 							smol
@@ -156,22 +202,6 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 					</div>
 				) : null}
 			</div>
-
-			{SERIES_SELECTION_CHARTS.has(chartType) && availableSeries.length > 1 ? (
-				<div className="mb-2 flex justify-end">
-					<SelectWithCombobox
-						size="sm"
-						allValues={availableSeries}
-						selectedValues={activeSeries}
-						setSelectedValues={setActiveSeries}
-						label="Token"
-						labelType="smol"
-						variant="filter"
-						popoverVariant="legacy"
-					/>
-				</div>
-			) : null}
-
 			{latestMcap !== null && chartType === 'totalMcap' ? (
 				<div className="mb-2 flex gap-4">
 					<div className="flex flex-col">
@@ -192,12 +222,18 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 					}
 				>
 					{chartType === 'pie' ? (
-						<PieChart chartData={chainsCirculatingValues} stackColors={stackColors} />
+						<PieChart
+							chartData={piePresentation.chartData}
+							stackColors={{ ...piePresentation.stackColors, ...stackColors }}
+							exportButtons="hidden"
+							onReady={handleChartReady}
+						/>
 					) : (
 						<MultiSeriesChart
 							title=""
 							dataset={dataset}
 							charts={charts}
+							selectedCharts={SERIES_SELECTION_CHARTS.has(chartType) ? renderedCharts : undefined}
 							valueSymbol={chartPayload.valueSymbol ?? ''}
 							stacked={chartPayload.stacked}
 							expandTo100Percent={chartPayload.expandTo100Percent}

@@ -12,8 +12,10 @@ import { buildBorrowedChartData } from './borrowedChartData'
 
 const EMPTY_BORROWED_CHART_DATA = {
 	dataset: null,
+	breakdown: null,
 	seriesNames: [] as string[],
-	pieChart: [] as Array<{ name: string; value: number }>
+	defaultSeriesNames: [] as string[],
+	pieSeries: { peers: [], limit: 15, upstreamOthersValue: 0 }
 }
 
 export function useBorrowedChartData({

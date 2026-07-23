@@ -1,3 +1,5 @@
+import type { RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+
 /** A processed LST token row for the table */
 export interface ILSTTokenRow {
 	name: string
@@ -25,7 +27,7 @@ export type InflowsChartData = Record<number, Record<string, number>>
 /** Props for the LSTOverview component */
 export interface LSTOverviewProps {
 	areaChartData: Array<Record<string, number>>
-	pieChartData: Array<{ name: string; value: number }>
+	pieSeries: RuntimePieChartData
 	tokensList: ILSTTokenRow[]
 	tokens: string[]
 	stakedEthSum: number

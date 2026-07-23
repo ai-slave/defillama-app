@@ -66,6 +66,25 @@ describe('chains by category tvl helpers', () => {
 		expect(normalized).toBe(0)
 	})
 
+	it('clamps the final independently rounded value without losing exact extra tvl restoration', () => {
+		const doublecounted = 502_682
+		const liquidstaking = 1_499_449
+		const normalized = normalizeChainsBaseTvlValue(2_002_130, { doublecounted, liquidstaking })
+
+		expect(normalized).toBe(-1)
+		expect(applyChainsTvlSettings(normalized, {}, [])).toBe(0)
+		expect(applyChainsTvlSettings(normalized, { doublecounted }, ['doublecounted'])).toBe(502_681)
+		expect(
+			applyChainsTvlSettings(normalized, { doublecounted, liquidstaking }, ['doublecounted', 'liquidstaking'])
+		).toBe(2_002_130)
+
+		const persistentResidual = normalizeChainsBaseTvlValue(1_272_372, {
+			liquidstaking: 1_027_410,
+			doublecounted: 244_963
+		})
+		expect(applyChainsTvlSettings(persistentResidual, {}, [])).toBe(0)
+	})
+
 	it('keeps rows and charts consistent when both doublecounted and liquidstaking are enabled', () => {
 		const normalized = normalizeChainsBaseTvlValue(150, {
 			doublecounted: 30,

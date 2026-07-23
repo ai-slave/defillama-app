@@ -1,14 +1,22 @@
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import type { RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
-import { buildComputedBreakdownResult } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
+import {
+	buildComputedBreakdownResult,
+	type ProtocolBreakdownChart
+} from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import type { ProtocolTvlBreakdownSource } from '../services/protocolTvl'
 import type { AdvancedTvlChartType } from '../types'
 
 export interface AdvancedTvlChartData {
 	dataset: TimestampDataset | null
+	breakdown: ProtocolBreakdownChart | null
 	seriesNames: string[]
-	pieChart: Array<{ name: string; value: number }>
+	defaultSeriesNames: string[]
+	pieSeries: RuntimePieChartData
 }
+
+const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 15, upstreamOthersValue: 0 }
 
 const BINANCE_CEX_EXCLUDED_INFLOW_TIMESTAMPS = [1_681_430_400_000, 1_681_516_800_000] as const
 
@@ -28,6 +36,18 @@ function excludeBinanceCexInflows(
 		}
 	}
 	return { ...dataset, source }
+}
+
+function excludeBinanceCexInflowPoints(
+	breakdown: ProtocolBreakdownChart | null,
+	protocolName: string,
+	chartType: AdvancedTvlChartType
+): ProtocolBreakdownChart | null {
+	if (!breakdown || protocolName !== 'Binance CEX' || chartType !== 'tokenInflows') return breakdown
+	return breakdown.filter(
+		([timestamp]) =>
+			timestamp !== BINANCE_CEX_EXCLUDED_INFLOW_TIMESTAMPS[0] && timestamp !== BINANCE_CEX_EXCLUDED_INFLOW_TIMESTAMPS[1]
+	)
 }
 
 export function buildAdvancedTvlChartData(
@@ -65,41 +85,79 @@ export function buildAdvancedTvlChartData(
 		valueSeriesName: 'TVL',
 		inflows: !isChainView,
 		computeInflows: isInflowsView,
-		buildTokenUSDDataset: chartType === 'tokenValuesUsd',
-		buildTokenRawDataset: chartType === 'tokenBalances',
+		buildTokenRawBreakdown: chartType === 'tokenBalances' || chartType === 'tokenInflows',
 		buildTokenPieChart: chartType === 'tokensPie'
 	})
 
 	let result: AdvancedTvlChartData
 	switch (chartType) {
 		case 'chainsTvl':
-			result = { dataset: computed.chainsDataset, seriesNames: computed.chainsUnique, pieChart: [] }
+			result = {
+				dataset: null,
+				breakdown: computed.chainBreakdown,
+				seriesNames: computed.chainsUnique,
+				defaultSeriesNames: computed.chainsUnique,
+				pieSeries: EMPTY_PIE_SERIES
+			}
 			break
 		case 'tokenValuesUsd':
-			result = { dataset: computed.tokenUSDDataset, seriesNames: computed.tokensUnique, pieChart: [] }
+			result = {
+				dataset: null,
+				breakdown: computed.tokenBreakdownUSD,
+				seriesNames: computed.tokensUnique,
+				defaultSeriesNames: computed.tokensUnique,
+				pieSeries: EMPTY_PIE_SERIES
+			}
 			break
 		case 'tokensPie':
 			result = {
-				dataset: computed.tokenUSDDataset,
+				dataset: null,
+				breakdown: null,
 				seriesNames: computed.tokensUnique,
-				pieChart: computed.tokenBreakdownPieChart
+				defaultSeriesNames: computed.tokensUnique,
+				pieSeries: computed.tokenBreakdownPieSeries
 			}
 			break
 		case 'tokenBalances':
-			result = { dataset: computed.tokenRawDataset, seriesNames: computed.rawTokensUnique, pieChart: [] }
+			result = {
+				dataset: null,
+				breakdown: computed.tokenRawBreakdown,
+				seriesNames: computed.rawTokensUnique,
+				defaultSeriesNames: computed.defaultRawTokens,
+				pieSeries: EMPTY_PIE_SERIES
+			}
 			break
 		case 'usdInflows':
-			result = { dataset: computed.usdInflowsDataset, seriesNames: ['USD Inflows'], pieChart: [] }
+			result = {
+				dataset: computed.usdInflowsDataset,
+				breakdown: null,
+				seriesNames: ['USD Inflows'],
+				defaultSeriesNames: ['USD Inflows'],
+				pieSeries: EMPTY_PIE_SERIES
+			}
 			break
 		case 'tokenInflows':
-			result = { dataset: computed.tokenInflowsDataset, seriesNames: computed.tokensUnique, pieChart: [] }
+			result = {
+				dataset: null,
+				breakdown: computed.tokenInflows,
+				seriesNames: computed.inflowTokensUnique,
+				defaultSeriesNames: computed.inflowTokensUnique,
+				pieSeries: EMPTY_PIE_SERIES
+			}
 			break
 		default:
-			result = { dataset: null, seriesNames: [], pieChart: [] }
+			result = {
+				dataset: null,
+				breakdown: null,
+				seriesNames: [],
+				defaultSeriesNames: [],
+				pieSeries: EMPTY_PIE_SERIES
+			}
 	}
 
 	return {
 		...result,
-		dataset: excludeBinanceCexInflows(result.dataset, protocolName, chartType)
+		dataset: excludeBinanceCexInflows(result.dataset, protocolName, chartType),
+		breakdown: excludeBinanceCexInflowPoints(result.breakdown, protocolName, chartType)
 	}
 }

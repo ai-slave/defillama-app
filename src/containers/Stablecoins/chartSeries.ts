@@ -54,10 +54,48 @@ export interface StablecoinChartSeriesPayload {
 	summary?: StablecoinChartSummary
 }
 
+export interface StablecoinRuntimeSeries {
+	selectableSeries: string[]
+	renderedSelectableSeries: string[]
+	fixedRemainderSeries: string[]
+	alwaysVisibleSeries: string[]
+}
+
+export function getStablecoinRuntimeSeries(payload: StablecoinChartSeriesPayload): StablecoinRuntimeSeries {
+	const configuredSeries = payload.charts.map((chart) => chart.name)
+	const fixedRemainderSeries = configuredSeries.filter((name) => name === STABLECOIN_OTHERS_SERIES_NAME)
+	if (!payload.availableSeries) {
+		return {
+			selectableSeries: configuredSeries.filter((name) => name !== STABLECOIN_OTHERS_SERIES_NAME),
+			renderedSelectableSeries: configuredSeries.filter((name) => name !== STABLECOIN_OTHERS_SERIES_NAME),
+			fixedRemainderSeries,
+			alwaysVisibleSeries: []
+		}
+	}
+
+	const availableSet = new Set(payload.availableSeries)
+	return {
+		selectableSeries: payload.availableSeries.filter((name) => name !== STABLECOIN_OTHERS_SERIES_NAME),
+		renderedSelectableSeries: configuredSeries.filter(
+			(name) => name !== STABLECOIN_OTHERS_SERIES_NAME && availableSet.has(name)
+		),
+		fixedRemainderSeries,
+		alwaysVisibleSeries: configuredSeries.filter(
+			(name) => name !== STABLECOIN_OTHERS_SERIES_NAME && !availableSet.has(name)
+		)
+	}
+}
+
 export type StablecoinBreakdownSelectionOptions = {
 	selectedNames?: string[] | null
+	excludedNames?: string[] | null
 	seriesLimit?: number
 }
+
+export type StablecoinSeriesSelectionIntent =
+	| { mode: 'include'; names: string[] }
+	| { mode: 'exclude'; names: string[] }
+	| null
 
 type StablecoinBreakdownSelection = {
 	availableSeries: string[]
@@ -65,18 +103,22 @@ type StablecoinBreakdownSelection = {
 	explicitSeries: string[]
 	omittedSeries: string[]
 	visibleSeries: string[]
+	includesAllSeries: boolean
+	excludedSeries: string[]
 }
 
 const resolveStablecoinBreakdownSelection = ({
 	seriesNames,
 	selectedNames,
+	excludedNames,
 	seriesLimit,
 	getLatestValue
 }: StablecoinBreakdownSelectionOptions & {
 	seriesNames: string[]
 	getLatestValue: (name: string) => number
 }): StablecoinBreakdownSelection => {
-	if (seriesLimit == null && selectedNames == null) {
+	const hasExclusions = excludedNames != null && excludedNames.length > 0
+	if (seriesLimit == null && selectedNames == null && !hasExclusions) {
 		const visibleSeries: string[] = []
 		const seen = new Set<string>()
 		for (const name of seriesNames) {
@@ -89,7 +131,9 @@ const resolveStablecoinBreakdownSelection = ({
 			defaultSeries: visibleSeries,
 			explicitSeries: visibleSeries,
 			omittedSeries: [],
-			visibleSeries
+			visibleSeries,
+			includesAllSeries: true,
+			excludedSeries: []
 		}
 	}
 
@@ -117,121 +161,34 @@ const resolveStablecoinBreakdownSelection = ({
 	const defaultSeries = availableSeries.slice(0, selectionLimit)
 
 	let explicitSeries = defaultSeries
-	if (selectedNames != null) {
-		const availableSet = new Set(availableSeries)
-		const selectedSet = new Set<string>()
-		explicitSeries = []
-		for (const name of selectedNames) {
-			if (explicitSeries.length >= selectionLimit) break
-			if (!availableSet.has(name) || selectedSet.has(name)) continue
-			selectedSet.add(name)
-			explicitSeries.push(name)
-		}
+	let omittedSeries = availableSeries.slice(selectionLimit)
+	let excludedSeries: string[] = []
+	if (hasExclusions) {
+		const excludedSet = new Set(excludedNames)
+		excludedSeries = availableSeries.filter((name) => excludedSet.has(name))
+		const includedSeries = availableSeries.filter((name) => !excludedSet.has(name))
+		explicitSeries = includedSeries.slice(0, selectionLimit)
+		omittedSeries = includedSeries.length > selectionLimit ? [STABLECOIN_OTHERS_SERIES_NAME] : []
+	} else if (selectedNames != null) {
+		const selectedSet = new Set(selectedNames)
+		const validSelectedSeries = availableSeries.filter((name) => selectedSet.has(name))
+		explicitSeries = validSelectedSeries.slice(0, selectionLimit)
+		omittedSeries = validSelectedSeries.slice(selectionLimit)
 	}
 
-	const explicitSet = new Set(explicitSeries)
-	const omittedSeries = availableSeries.filter((name) => !explicitSet.has(name))
-	if (hasReservedOthers) omittedSeries.push(STABLECOIN_OTHERS_SERIES_NAME)
+	if (selectedNames == null && !hasExclusions && hasReservedOthers) {
+		omittedSeries.push(STABLECOIN_OTHERS_SERIES_NAME)
+	}
 	const visibleSeries = omittedSeries.length > 0 ? [...explicitSeries, STABLECOIN_OTHERS_SERIES_NAME] : explicitSeries
 
-	return { availableSeries, defaultSeries, explicitSeries, omittedSeries, visibleSeries }
-}
-
-export type StablecoinBreakdownDatasetPresentation = {
-	dataset: MultiSeriesChartDataset
-	availableSeries: string[]
-	defaultSeries: string[]
-	visibleSeries: string[]
-}
-
-export const buildStablecoinBreakdownDatasetPresentation = ({
-	dataset,
-	seriesNames,
-	selectedNames,
-	seriesLimit = STABLECOIN_BREAKDOWN_SERIES_LIMIT
-}: StablecoinBreakdownSelectionOptions & {
-	dataset: MultiSeriesChartDataset
-	seriesNames: string[]
-}): StablecoinBreakdownDatasetPresentation => {
-	const latestValues = new Map<string, number>()
-	const seriesIndexes = seriesNames.map((name) => dataset.dimensions.indexOf(name))
-	for (let i = dataset.source.length - 1; i >= 0 && latestValues.size < seriesNames.length; i--) {
-		const row = dataset.source[i]
-		for (let seriesIndex = 0; seriesIndex < seriesNames.length; seriesIndex++) {
-			const name = seriesNames[seriesIndex]
-			if (latestValues.has(name)) continue
-			const value = row[seriesIndexes[seriesIndex]] as number | undefined
-			if (value !== undefined) latestValues.set(name, value)
-		}
-	}
-	const selection = resolveStablecoinBreakdownSelection({
-		seriesNames,
-		selectedNames,
-		seriesLimit,
-		getLatestValue: (name) => latestValues.get(name) ?? 0
-	})
-
-	const source: MultiSeriesChartDataset['source'] = []
-	const explicitIndexes = selection.explicitSeries.map((name) => dataset.dimensions.indexOf(name))
-	const omittedIndexes = selection.omittedSeries.map((name) => dataset.dimensions.indexOf(name))
-	for (const inputRow of dataset.source) {
-		const row = new Array<number | undefined>(selection.visibleSeries.length + 1)
-		row[0] = inputRow[0] as number
-		for (let i = 0; i < explicitIndexes.length; i++) {
-			row[i + 1] = inputRow[explicitIndexes[i]] as number | undefined
-		}
-		if (selection.omittedSeries.length > 0) {
-			let others = 0
-			for (const index of omittedIndexes) others += (inputRow[index] as number | undefined) ?? 0
-			row[row.length - 1] = others
-		}
-		source.push(row)
-	}
-
 	return {
-		dataset: { source, dimensions: ['timestamp', ...selection.visibleSeries] },
-		availableSeries: selection.availableSeries,
-		defaultSeries: selection.defaultSeries,
-		visibleSeries: selection.visibleSeries
-	}
-}
-
-export const buildStablecoinBreakdownPayloadPresentation = ({
-	payload,
-	selectedNames,
-	seriesLimit = STABLECOIN_BREAKDOWN_SERIES_LIMIT
-}: StablecoinBreakdownSelectionOptions & { payload: StablecoinChartSeriesPayload }): StablecoinChartSeriesPayload => {
-	const seriesNames = payload.availableSeries ?? payload.dataset.dimensions.slice(1)
-	const presentation = buildStablecoinBreakdownDatasetPresentation({
-		dataset: payload.dataset,
-		seriesNames,
-		selectedNames,
-		seriesLimit
-	})
-	const chartByName = new Map(payload.charts.map((chart) => [chart.name, chart]))
-	const fallbackChart = payload.charts[0]
-	const charts: MultiSeriesChartSeriesConfig[] = []
-	for (let i = 0; i < presentation.visibleSeries.length; i++) {
-		const name = presentation.visibleSeries[i]
-		const existingChart = chartByName.get(name)
-		if (existingChart) {
-			charts.push({ ...existingChart, encode: { x: 0, y: i + 1 } })
-		} else if (fallbackChart) {
-			charts.push({
-				...fallbackChart,
-				name,
-				encode: { x: 0, y: i + 1 },
-				color: TOKEN_COLORS[name] ?? CHART_COLORS[i % CHART_COLORS.length]
-			})
-		}
-	}
-
-	return {
-		...payload,
-		dataset: presentation.dataset,
-		charts,
-		availableSeries: presentation.availableSeries,
-		defaultSeries: presentation.defaultSeries
+		availableSeries,
+		defaultSeries,
+		explicitSeries,
+		omittedSeries,
+		visibleSeries,
+		includesAllSeries: selectedNames == null && !hasExclusions,
+		excludedSeries
 	}
 }
 
@@ -246,7 +203,7 @@ const TOKEN_COLORS: Record<string, string> = {
 	PYUSD: '#4A90E2',
 	USDTB: '#C0C0C0',
 	FDUSD: '#00FF00',
-	Others: '#FF1493'
+	Others: '#AAAAAA'
 }
 
 const TOTAL_MCAP_CHARTS: MultiSeriesChartSeriesConfig[] = [
@@ -343,7 +300,7 @@ const getEligibleStablecoinIndexes = ({
 	return indexes
 }
 
-const collectCanonicalStablecoinArea = (
+export const collectCanonicalStablecoinArea = (
 	params: IBuildStablecoinChartDataParams,
 	options: {
 		totalName?: string
@@ -633,12 +590,42 @@ const buildStablecoinBreakdownDatasetFromCollection = ({
 		}
 	}
 	const othersIndex = selection.omittedSeries.length ? dimensions.length - 1 : -1
+	const accumulateSeries = (names: readonly string[]): Float64Array | null => {
+		if (names.length === 0) return null
+		const totals = new Float64Array(source.length)
+		for (const name of names) {
+			const series = seriesByName.get(name)
+			if (!series) continue
+			let pointIndex = 0
+			for (let rowIndex = 0; rowIndex < collection.timestamps.length && pointIndex < series.length; rowIndex++) {
+				const timestamp = collection.timestamps[rowIndex]
+				while (pointIndex < series.length && collection.seriesTimestamps[series.offset + pointIndex] < timestamp)
+					pointIndex++
+				if (pointIndex < series.length && collection.seriesTimestamps[series.offset + pointIndex] === timestamp) {
+					totals[rowIndex] += collection.seriesValues[series.offset + pointIndex]
+				}
+			}
+			if (series.carryAfterTimestamp != null) {
+				for (let rowIndex = 0; rowIndex < collection.timestamps.length; rowIndex++) {
+					if (collection.timestamps[rowIndex] > series.carryAfterTimestamp) totals[rowIndex] += series.carryValue
+				}
+			}
+		}
+		return totals
+	}
+	const omittedTotals =
+		!selection.includesAllSeries && selection.excludedSeries.length === 0
+			? accumulateSeries(selection.omittedSeries)
+			: null
+	const excludedTotals = accumulateSeries(selection.excludedSeries)
 	for (let rowIndex = 0; rowIndex < source.length; rowIndex++) {
 		const row = source[rowIndex]
 		if (othersIndex >= 0) {
 			let explicitTotal = 0
 			for (let index = 1; index < othersIndex; index++) explicitTotal += row[index] ?? 0
-			row[othersIndex] = collection.totals[rowIndex] - explicitTotal
+			row[othersIndex] = omittedTotals
+				? omittedTotals[rowIndex]
+				: collection.totals[rowIndex] - explicitTotal - (excludedTotals?.[rowIndex] ?? 0)
 		}
 		if (fillMissingValues) {
 			for (let index = 1; index < row.length; index++) row[index] ??= 0
@@ -656,6 +643,7 @@ const getStablecoinSelectionFromCollection = (
 	return resolveStablecoinBreakdownSelection({
 		seriesNames,
 		selectedNames: options?.selectedNames,
+		excludedNames: options?.excludedNames,
 		seriesLimit: options?.seriesLimit,
 		getLatestValue: (name) => latestValues.get(name) ?? 0
 	})
@@ -760,11 +748,12 @@ type StablecoinAreaPayloadOptions = {
 	summaryTopToken?: { symbol: string; mcap: number }
 } & StablecoinBreakdownSelectionOptions
 
-const buildAreaPayloadFromCollection = (
+export const buildAreaPayloadFromCollection = (
 	collected: StablecoinCanonicalHistory,
 	options: StablecoinAreaPayloadOptions
 ): StablecoinChartSeriesPayload => {
 	const selection = getStablecoinSelectionFromCollection(collected, options, options.chartNames)
+	const canonicalColorIndex = new Map(selection.availableSeries.map((name, index) => [name, index]))
 	const stacked = options.stacked ?? false
 	const payload: StablecoinChartSeriesPayload = {
 		dataset: buildStablecoinBreakdownDatasetFromCollection({
@@ -776,7 +765,7 @@ const buildAreaPayloadFromCollection = (
 			type: 'line',
 			name,
 			encode: { x: 0, y: index + 1 },
-			color: TOKEN_COLORS[name] ?? CHART_COLORS[index % CHART_COLORS.length],
+			color: TOKEN_COLORS[name] ?? CHART_COLORS[(canonicalColorIndex.get(name) ?? index) % CHART_COLORS.length],
 			...(stacked ? { stack: options.stackName } : {})
 		})),
 		availableSeries: selection.availableSeries,
@@ -805,16 +794,16 @@ export const buildAreaPayload = (
 type StablecoinDominancePayloadOptions = {
 	chartNames?: string[]
 	includeUnreleased?: boolean
-	normalizeTo100?: boolean
 	stackName?: string
 	summaryTopToken?: { symbol: string; mcap: number }
 } & StablecoinBreakdownSelectionOptions
 
-const buildDominancePayloadFromCollection = (
+export const buildDominancePayloadFromCollection = (
 	collected: StablecoinCanonicalHistory,
 	options?: StablecoinDominancePayloadOptions
 ): StablecoinChartSeriesPayload => {
 	const selection = getStablecoinSelectionFromCollection(collected, options, options?.chartNames)
+	const canonicalColorIndex = new Map(selection.availableSeries.map((name, index) => [name, index]))
 	const baseDataset = buildStablecoinBreakdownDatasetFromCollection({ collection: collected, selection })
 	const source: MultiSeriesChartDataset['source'] = []
 	for (const inputRow of baseDataset.source) {
@@ -822,29 +811,18 @@ const buildDominancePayloadFromCollection = (
 		row[0] = inputRow[0] as number
 		let total = 0
 		for (let index = 1; index < inputRow.length; index++) total += (inputRow[index] as number | undefined) ?? 0
-		if (options?.normalizeTo100 && !options.includeUnreleased) {
-			const percentages = new Array<number>(inputRow.length - 1)
-			let roundedTotal = 0
+		let lastPositiveIndex = -1
+		for (let index = 1; index < inputRow.length; index++) {
+			const percentage = getDominancePercent((inputRow[index] as number | undefined) ?? 0, total)
+			row[index] = percentage
+			if (percentage > 0) lastPositiveIndex = index
+		}
+		if (lastPositiveIndex !== -1) {
+			let otherSeriesTotal = 0
 			for (let index = 1; index < inputRow.length; index++) {
-				const percentage = getDominancePercent((inputRow[index] as number | undefined) ?? 0, total)
-				percentages[index - 1] = percentage
-				roundedTotal += percentage
+				if (index !== lastPositiveIndex) otherSeriesTotal += row[index]
 			}
-			let normalizedTotal = 0
-			for (let index = 1; index < inputRow.length; index++) {
-				const percentage =
-					roundedTotal === 0
-						? 0
-						: index === inputRow.length - 1
-							? 100 - normalizedTotal
-							: (percentages[index - 1] / roundedTotal) * 100
-				row[index] = percentage
-				normalizedTotal += percentage
-			}
-		} else {
-			for (let index = 1; index < inputRow.length; index++) {
-				row[index] = getDominancePercent((inputRow[index] as number | undefined) ?? 0, total)
-			}
+			row[lastPositiveIndex] = 100 - otherSeriesTotal
 		}
 		source.push(row)
 	}
@@ -854,7 +832,7 @@ const buildDominancePayloadFromCollection = (
 			type: 'line',
 			name,
 			encode: { x: 0, y: index + 1 },
-			color: TOKEN_COLORS[name] ?? CHART_COLORS[index % CHART_COLORS.length],
+			color: TOKEN_COLORS[name] ?? CHART_COLORS[(canonicalColorIndex.get(name) ?? index) % CHART_COLORS.length],
 			stack: options?.stackName ?? 'dominance'
 		})),
 		availableSeries: selection.availableSeries,
@@ -946,13 +924,14 @@ const buildTokenInflowsPayloadFromCollection = (
 		}
 	}
 	const selection = getStablecoinSelectionFromCollection(collected, options)
+	const canonicalColorIndex = new Map(selection.availableSeries.map((name, index) => [name, index]))
 	const payload: StablecoinChartSeriesPayload = {
 		dataset: buildStablecoinBreakdownDatasetFromCollection({ collection: collected, selection }),
 		charts: selection.visibleSeries.map((name, index) => ({
 			type: 'bar',
 			name,
 			encode: { x: 0, y: index + 1 },
-			color: TOKEN_COLORS[name] ?? CHART_COLORS[index % CHART_COLORS.length],
+			color: TOKEN_COLORS[name] ?? CHART_COLORS[(canonicalColorIndex.get(name) ?? index) % CHART_COLORS.length],
 			stack: 'tokenInflows',
 			large: false
 		})),

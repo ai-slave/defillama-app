@@ -8,8 +8,13 @@ import {
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
+import {
+	buildSelectedAdditiveChart,
+	buildSelectedSeriesCsv,
+	rankSeriesByPeakAbsoluteValue
+} from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
-import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import { buildRuntimePieChartPresentation, prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { FormattedName } from '~/components/FormattedName'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -18,6 +23,7 @@ import { LinkPreviewCard } from '~/components/SEO'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -80,32 +86,79 @@ export function BridgedTVLByChain({
 }: BridgedTVLByChainProps) {
 	const [chartType, setChartType] = React.useState<ChainAssetKey | 'inflows'>('total')
 	const { chartInstance: exportChartInstance, handleChartReady: onChartReady } = useGetChartInstance()
-	const [selectedTokens, setSelectedTokens] = React.useState<string[]>(tokenInflowNames ?? [])
-	const selectedChartsSet = React.useMemo(() => new Set(selectedTokens), [selectedTokens])
+	const inflowsData = React.useMemo(() => {
+		if (!tokenInflowNames.length) return null
+		return buildBridgedInflowsChartData(inflows, tokenInflowNames)
+	}, [inflows, tokenInflowNames])
+	const rankedTokenInflowNames = React.useMemo(
+		() => (inflowsData ? rankSeriesByPeakAbsoluteValue(inflowsData.dataset, tokenInflowNames) : tokenInflowNames),
+		[inflowsData, tokenInflowNames]
+	)
+	const {
+		activeSeries: selectedTokens,
+		selectedCharts: selectedChartsSet,
+		setSelectedSeries: setSelectedTokens
+	} = useSeriesSelection({ availableSeries: rankedTokenInflowNames, selectionKey: chain })
 
-	const { pieChartData, tableData } = React.useMemo(() => {
+	const { pieSeries, tableData } = React.useMemo(() => {
 		const category = chartType !== 'inflows' ? chainData?.[chartType] : undefined
 		const rawBreakdown = category?.breakdown ?? {}
 		const breakdown = {}
 		for (const key in rawBreakdown) {
 			breakdown[key] = Number(rawBreakdown[key])
 		}
-		const pieChartData = preparePieChartData({ data: breakdown, limit: 10 })
+		const pieSeries = prepareRuntimePieChartData({ data: breakdown, limit: 10 })
 
 		const tableData: BridgedChainRow[] = Object.entries(rawBreakdown).map(([name, value]) => ({
 			name: name?.toLowerCase() === name ? name?.toUpperCase() : name,
 			value
 		}))
 
-		return { pieChartData, tableData }
+		return { pieSeries, tableData }
 	}, [chainData, chartType])
+	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
+	const pieColorIndex = React.useMemo(() => {
+		const indexByToken = new Map<string, number>()
+		if (!chainData) return indexByToken
+		for (const category of Object.values(chainData)) {
+			if (!category) continue
+			for (const name in category.breakdown) {
+				if (!indexByToken.has(name)) indexByToken.set(name, indexByToken.size)
+			}
+		}
+		return indexByToken
+	}, [chainData])
+	const {
+		activeSeries: selectedPieTokens,
+		selectedCharts: selectedPieTokenSet,
+		setSelectedSeries: setSelectedPieTokens,
+		includeUpstreamOthers
+	} = useAllSeriesSelection({ availableSeries: pieSelectableSeries, selectionKey: chain })
+	const piePresentation = React.useMemo(
+		() =>
+			buildRuntimePieChartPresentation({
+				series: pieSeries,
+				selectedSeries: selectedPieTokenSet,
+				colorIndexByPeer: pieColorIndex,
+				includeUpstreamOthers
+			}),
+		[includeUpstreamOthers, pieColorIndex, pieSeries, selectedPieTokenSet]
+	)
 
-	const inflowsData = React.useMemo(() => {
-		if (!tokenInflowNames?.length) return null
-		return buildBridgedInflowsChartData(inflows, tokenInflowNames)
-	}, [inflows, tokenInflowNames])
-	const deferredPieChartData = React.useDeferredValue(pieChartData)
-	const deferredInflowsData = React.useDeferredValue(inflowsData)
+	const inflowsPresentation = React.useMemo(
+		() =>
+			inflowsData
+				? buildSelectedAdditiveChart({
+						dataset: inflowsData.dataset,
+						charts: inflowsData.charts,
+						seriesOrder: rankedTokenInflowNames,
+						selectedCharts: selectedChartsSet
+					})
+				: null,
+		[inflowsData, rankedTokenInflowNames, selectedChartsSet]
+	)
+	const deferredPiePresentation = React.useDeferredValue(piePresentation)
+	const deferredInflowsPresentation = React.useDeferredValue(inflowsPresentation)
 	const chartTypeName =
 		chartType === 'inflows'
 			? 'Inflows'
@@ -185,11 +238,22 @@ export function BridgedTVLByChain({
 							size="md"
 							className="mr-auto"
 						/>
-						{chartType === 'inflows' && tokenInflowNames?.length > 0 ? (
+						{chartType === 'inflows' && rankedTokenInflowNames.length > 1 ? (
 							<SelectWithCombobox
-								allValues={tokenInflowNames}
+								allValues={rankedTokenInflowNames}
 								selectedValues={selectedTokens}
 								setSelectedValues={setSelectedTokens}
+								label="Token"
+								labelType="smol"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
+						{chartType !== 'inflows' && pieSelectableSeries.length > 1 ? (
+							<SelectWithCombobox
+								allValues={pieSelectableSeries}
+								selectedValues={selectedPieTokens}
+								setSelectedValues={setSelectedPieTokens}
 								label="Token"
 								labelType="smol"
 								variant="filter"
@@ -201,21 +265,37 @@ export function BridgedTVLByChain({
 							filename={`${slug(chainName)}-bridged-tvl-${chartType}`}
 							title={exportTitle}
 							iconUrl={chainIconUrl(chain)}
+							prepareCsvDirect={
+								chartType === 'inflows' && deferredInflowsPresentation
+									? () =>
+											buildSelectedSeriesCsv({
+												dataset: deferredInflowsPresentation.dataset,
+												charts: deferredInflowsPresentation.charts,
+												selectedCharts: new Set(deferredInflowsPresentation.charts.map((chart) => chart.name)),
+												filename: `${slug(chainName)}-bridged-tvl-inflows`
+											})
+									: undefined
+							}
 						/>
 					</ChartPanelToolbar>
 					{chartType !== 'inflows' ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
-							<PieChart chartData={deferredPieChartData} valueSymbol="" centerY="44%" onReady={onChartReady} />
+							<PieChart
+								chartData={deferredPiePresentation.chartData}
+								stackColors={deferredPiePresentation.stackColors}
+								valueSymbol=""
+								centerY="44%"
+								onReady={onChartReady}
+							/>
 						</React.Suspense>
-					) : deferredInflowsData ? (
+					) : deferredInflowsPresentation ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
-								dataset={deferredInflowsData.dataset}
-								charts={deferredInflowsData.charts}
+								dataset={deferredInflowsPresentation.dataset}
+								charts={deferredInflowsPresentation.charts}
 								hideDefaultLegend={true}
 								valueSymbol="$"
 								showTotalInTooltip
-								selectedCharts={selectedChartsSet}
 								chartOptions={
 									selectedTokens.length > 1 ? { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } : undefined
 								}

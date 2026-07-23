@@ -200,7 +200,7 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 		).toEqual(['staking', 'borrowed'])
 	})
 
-	it('builds categories charts with enabled extras for selected categories', () => {
+	it('builds canonical category charts with enabled extras', () => {
 		const result = buildProtocolsCategoriesTvlCharts({
 			categories: ['Dexes', 'Lending'],
 			categoryColors: { Dexes: '#f00', Lending: '#0f0' },
@@ -214,13 +214,12 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 					staking: { 1_000: 75 }
 				}
 			},
-			selectedCategories: ['Dexes'],
 			enabledTvls: ['staking']
 		})
 
 		expect(result.dataset).toEqual({
-			dimensions: ['timestamp', 'Dexes'],
-			source: [[1_000, 125]]
+			dimensions: ['timestamp', 'Dexes', 'Lending'],
+			source: [[1_000, 125, 275]]
 		})
 		expect(result.charts).toEqual([
 			{
@@ -229,6 +228,13 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 				encode: { x: 0, y: 1 },
 				stack: 'stackA',
 				color: '#f00'
+			},
+			{
+				type: 'line',
+				name: 'Lending',
+				encode: { x: 0, y: 2 },
+				stack: 'stackA',
+				color: '#0f0'
 			}
 		])
 	})

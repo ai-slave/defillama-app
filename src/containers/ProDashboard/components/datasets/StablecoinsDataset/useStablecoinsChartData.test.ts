@@ -34,15 +34,39 @@ describe('buildProStablecoinOverviewPayload', () => {
 		expect(result.dataset.source.at(-1)?.[result.dataset.dimensions.indexOf('Others')]).toBe(379)
 	})
 
-	it('keeps an explicit asset outside the default top set selectable', () => {
+	it('keeps every asset addressable without showing unselected peers as Others', () => {
 		const selectedName = assetNames.at(-1)!
 		const result = buildProStablecoinOverviewPayload(params, 'tokenMcaps', topToken, [selectedName])
 
 		expect(result.availableSeries).toContain(selectedName)
 		expect(result.defaultSeries).toEqual(assetNames.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT))
-		expect(result.charts.map((chart) => chart.name)).toEqual([selectedName, 'Others'])
+		expect(result.charts.map((chart) => chart.name)).toEqual([selectedName])
 		expect(result.dataset.source.at(-1)?.[result.dataset.dimensions.indexOf(selectedName)]).toBe(189)
-		expect(result.dataset.source.at(-1)?.[result.dataset.dimensions.indexOf('Others')]).toBe(2_145)
+		expect(result.dataset.dimensions).not.toContain('Others')
+	})
+
+	it('keeps the canonical collection while projecting only the bounded default', () => {
+		const collection = collectProStablecoinChart({
+			rawData: {
+				chartDataByPeggedAsset: params.chartDataByAssetOrChain,
+				peggedAssetNames: params.assetsOrChainsList,
+				peggedAssetIdToChartDataIndex: {},
+				doublecountedIds: [],
+				pieAssets: []
+			},
+			chain: 'All',
+			chartType: 'tokenMcaps'
+		})
+		const result = buildProStablecoinChartPresentationFromCollection(collection)
+
+		expect(result.chartPayload.dataset.dimensions).toEqual([
+			'timestamp',
+			...assetNames.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT),
+			'Others'
+		])
+		expect(result.chartPayload.defaultSeries).toEqual(assetNames.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT))
+		expect(result.chartPayload.dataset.source.at(-1)?.at(-1)).toBe(379)
+		expect(result.chartPayload.charts.every((chart) => chart.stack == null)).toBe(true)
 	})
 
 	it('reuses the canonical history when the token selection changes', () => {
@@ -68,24 +92,47 @@ describe('buildProStablecoinOverviewPayload', () => {
 		const collection = collectProStablecoinChart({ rawData, chain: 'All', chartType: 'tokenMcaps' })
 		expect(reads).toBe(4)
 
-		const usdt = buildProStablecoinChartPresentationFromCollection(collection, ['USDT'])
-		const usdc = buildProStablecoinChartPresentationFromCollection(collection, ['USDC'])
+		const presentation = buildProStablecoinChartPresentationFromCollection(collection)
+		const selectedPresentation = buildProStablecoinChartPresentationFromCollection(collection, {
+			selectedNames: ['USDC']
+		})
 
 		expect(reads).toBe(4)
-		expect(usdt.chartPayload.dataset).toEqual({
-			dimensions: ['timestamp', 'USDT', 'Others'],
+		expect(presentation.chartPayload.dataset).toEqual({
+			dimensions: ['timestamp', 'USDT', 'USDC'],
 			source: [
 				[1_660_000_000_000, 100, 50],
 				[1_660_086_400_000, 125, 75]
 			]
 		})
-		expect(usdc.chartPayload.dataset).toEqual({
-			dimensions: ['timestamp', 'USDC', 'Others'],
+		expect(selectedPresentation.chartPayload.dataset).toEqual({
+			dimensions: ['timestamp', 'USDC'],
 			source: [
-				[1_660_000_000_000, 50, 100],
-				[1_660_086_400_000, 75, 125]
+				[1_660_000_000_000, 50],
+				[1_660_086_400_000, 75]
 			]
 		})
+	})
+
+	it('preserves one backend Others remainder when peers are below the series limit', () => {
+		const rawData = {
+			chartDataByPeggedAsset: [
+				[{ date: 1_660_000_000, mcap: { peggedUSD: 100 } }],
+				[{ date: 1_660_000_000, mcap: { peggedUSD: 50 } }],
+				[{ date: 1_660_000_000, mcap: { peggedUSD: 25 } }]
+			],
+			peggedAssetNames: ['USDT', 'USDC', 'Others'],
+			peggedAssetIdToChartDataIndex: { usdt: 0, usdc: 1 },
+			doublecountedIds: [],
+			pieAssets: []
+		}
+		const collection = collectProStablecoinChart({ rawData, chain: 'All', chartType: 'tokenMcaps' })
+		const result = buildProStablecoinChartPresentationFromCollection(collection).chartPayload
+
+		expect(result.availableSeries).toEqual(['USDT', 'USDC'])
+		expect(result.dataset.dimensions).toEqual(['timestamp', 'USDT', 'USDC', 'Others'])
+		expect(result.dataset.source).toEqual([[1_660_000_000_000, 100, 50, 25]])
+		expect(result.charts.map((chart) => chart.name)).toEqual(['USDT', 'USDC', 'Others'])
 	})
 
 	it('constructs the Pro USD inflow label without projecting the positional rows', () => {
@@ -94,5 +141,26 @@ describe('buildProStablecoinOverviewPayload', () => {
 		expect(result.dataset.dimensions).toEqual(['timestamp', 'USD Inflows'])
 		expect(result.charts).toMatchObject([{ name: 'USD Inflows', encode: { x: 0, y: 1 } }])
 		expect(result.dataset.source).toEqual([[1600000000000, 1_200]])
+	})
+
+	it('keeps every pie token canonical until runtime presentation', () => {
+		const pieAssets = Array.from({ length: 12 }, (_, index) => ({ symbol: `TOKEN_${index}`, mcap: 12 - index }))
+		const result = buildProStablecoinChartPresentationFromCollection(
+			collectProStablecoinChart({
+				rawData: {
+					chartDataByPeggedAsset: [],
+					peggedAssetNames: [],
+					peggedAssetIdToChartDataIndex: {},
+					doublecountedIds: [],
+					pieAssets
+				},
+				chain: 'All',
+				chartType: 'pie'
+			})
+		)
+
+		expect(result.pieSeries.peers).toHaveLength(12)
+		expect(result.pieSeries.peers.at(-1)).toEqual({ name: 'TOKEN_11', value: 1 })
+		expect(result.pieSeries.limit).toBe(10)
 	})
 })

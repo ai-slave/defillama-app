@@ -4,10 +4,12 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/TreemapChart/Market/colors'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import defs from '~/public/equities-definitions.json'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { buildEquityTickerCountrySlug } from './tickerCountry'
 import {
 	buildEquitiesTreemapLeaves,
 	EQUITIES_TREEMAP_COLOR_METRICS,
@@ -56,17 +58,49 @@ export function EquitiesTreemapSection({ companies }: { companies: IEquitiesList
 	const [colorMetric, setColorMetric] = useState<EquitiesTreemapColorMetric>('priceChangePercentage1d')
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
-	const ranking = useMemo(() => rankEquitiesTreemapRows(companies, sizeMetric), [companies, sizeMetric])
-	const leaves = useMemo(() => buildEquitiesTreemapLeaves(ranking, colorMetric), [colorMetric, ranking])
+	const ranking = useMemo(() => rankEquitiesTreemapRows(companies, sizeMetric, 0), [companies, sizeMetric])
+	const companyOptions = useMemo(
+		() =>
+			ranking.rows.map((company) => ({
+				key: buildEquityTickerCountrySlug(company.ticker, company.country),
+				name: `${company.ticker} — ${company.name}`
+			})),
+		[ranking.rows]
+	)
+	const companyTickers = useMemo(() => companyOptions.map((company) => company.key), [companyOptions])
+	const defaultCompanies = useMemo(() => companyTickers.slice(0, EQUITIES_TREEMAP_DEFAULT_LIMIT), [companyTickers])
+	const {
+		activeSeries: selectedCompanies,
+		selectedCharts: selectedCompanySet,
+		setSelectedSeries: setSelectedCompanies
+	} = useSeriesSelection({
+		availableSeries: companyTickers,
+		defaultSeries: defaultCompanies,
+		maxSelectedSeries: EQUITIES_TREEMAP_DEFAULT_LIMIT,
+		allowEmptySelection: true,
+		resetToDefaultWhenStale: true,
+		selectionKey: 'equities-market-map'
+	})
+	const visibleRanking = useMemo(
+		() => ({
+			...ranking,
+			rows: ranking.rows.filter((company) =>
+				selectedCompanySet.has(buildEquityTickerCountrySlug(company.ticker, company.country))
+			),
+			truncatedCount: ranking.rows.length - selectedCompanies.length
+		}),
+		[ranking, selectedCompanies.length, selectedCompanySet]
+	)
+	const leaves = useMemo(() => buildEquitiesTreemapLeaves(visibleRanking, colorMetric), [colorMetric, visibleRanking])
 	const treeData = useMemo(() => groupEquitiesTreemapLeaves(leaves, groupBy), [groupBy, leaves])
-	const { excludedCount, truncatedCount } = ranking
+	const { excludedCount } = ranking
 
 	const sizeLabel = getMetricLabel(sizeMetric)
 	const colorLabel = COLOR_METRIC_LABELS[colorMetric]
 	const chartNote = [
 		excludedCount > 0 ? `${excludedCount} companies hidden (zero, negative or missing ${sizeLabel})` : '',
-		truncatedCount > 0
-			? `showing top ${EQUITIES_TREEMAP_DEFAULT_LIMIT} by ${sizeLabel} (${truncatedCount} more not shown)`
+		ranking.rows.length > leaves.length
+			? `showing ${leaves.length} of ${ranking.rows.length} eligible companies by ${sizeLabel}`
 			: ''
 	]
 		.filter(Boolean)
@@ -92,6 +126,17 @@ export function EquitiesTreemapSection({ companies }: { companies: IEquitiesList
 							</Button>
 						))}
 					</div>
+					{companyOptions.length > 1 ? (
+						<SelectWithCombobox
+							allValues={companyOptions}
+							selectedValues={selectedCompanies}
+							setSelectedValues={setSelectedCompanies}
+							label="Company"
+							labelType="smol"
+							variant="filter-responsive"
+							size="sm"
+						/>
+					) : null}
 					<SelectWithCombobox
 						allValues={SIZE_METRIC_OPTIONS}
 						selectedValues={[sizeMetric]}

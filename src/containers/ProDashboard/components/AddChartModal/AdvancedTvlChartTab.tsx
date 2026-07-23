@@ -1,15 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useMemo } from 'react'
-import {
-	buildTimeSeriesDataset,
-	materializeZeroFilledDataset,
-	type TimestampDataset
-} from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import { buildTimeSeriesDataset, type TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { useSelectedValues } from '~/hooks/useSelectedValues'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
@@ -97,48 +95,57 @@ export function AdvancedTvlChartTab({
 		extraTvlsEnabled,
 		enabled: !!selectedAdvancedTvlProtocol && chartType !== 'tvl' && !suppressTokenBreakdowns
 	})
-	const advancedDataset = advancedData.dataset ?? EMPTY_DATASET
 	const advancedSeriesNames = advancedData.seriesNames
+	const pieSeriesNames = useMemo(
+		() => advancedData.pieSeries.peers.map((peer) => peer.name),
+		[advancedData.pieSeries.peers]
+	)
 	const resolvedBasicTvlDataset = basicTvlDataset ?? EMPTY_DATASET
+	const isRuntimeBreakdown =
+		chartType === 'chainsTvl' ||
+		chartType === 'tokenValuesUsd' ||
+		chartType === 'tokenBalances' ||
+		chartType === 'tokenInflows'
+	const selectorValues = isRuntimeBreakdown ? advancedSeriesNames : EMPTY_STACKS
+	const runtimePresentation = useProtocolBreakdownPresentation({
+		breakdown: advancedData.breakdown ?? [],
+		availableSeries: selectorValues,
+		defaultSeries: advancedData.defaultSeriesNames,
+		aggregateOthers: chartType === 'chainsTvl' || chartType === 'tokenValuesUsd' || chartType === 'tokenInflows',
+		type: chartType === 'tokenInflows' ? 'bar' : 'line',
+		stack: chartType === 'tokenInflows' ? 'stackA' : undefined,
+		fillMissingWithZero: true,
+		selectionKey: `${selectedAdvancedTvlProtocol}:${selectedAdvancedTvlChartType}`
+	})
+	const advancedDataset = isRuntimeBreakdown ? runtimePresentation.dataset : (advancedData.dataset ?? EMPTY_DATASET)
+	const renderedSeries = runtimePresentation.charts.map((chart) => chart.name)
 
 	const presentation = useMemo(
 		() =>
 			buildAdvancedTvlPresentation({
 				chartType,
 				chainsDataset: chartType === 'chainsTvl' ? advancedDataset : EMPTY_DATASET,
-				chainNames: chartType === 'chainsTvl' ? advancedSeriesNames : EMPTY_STACKS,
-				tokenNames: chartType === 'chainsTvl' ? EMPTY_STACKS : advancedSeriesNames
+				chainNames: chartType === 'chainsTvl' ? renderedSeries : EMPTY_STACKS,
+				tokenNames:
+					chartType === 'chainsTvl' ? EMPTY_STACKS : chartType === 'tokensPie' ? pieSeriesNames : renderedSeries
 			}),
-		[chartType, advancedDataset, advancedSeriesNames]
+		[chartType, advancedDataset, pieSeriesNames, renderedSeries]
 	)
-	const [selectedTokenInflows, setSelectedTokenInflows] = useSelectedValues(
-		advancedSeriesNames,
-		`${selectedAdvancedTvlProtocol}:${selectedAdvancedTvlChartType}`
+	const pieSelection = useAllSeriesSelection({
+		availableSeries: pieSeriesNames,
+		selectionKey: `${selectedAdvancedTvlProtocol}:tokensPie`
+	})
+	const piePresentation = useMemo(
+		() =>
+			buildRuntimePieChartPresentation({
+				series: advancedData.pieSeries,
+				selectedSeries: pieSelection.selectedCharts,
+				includeUpstreamOthers: pieSelection.includeUpstreamOthers
+			}),
+		[advancedData.pieSeries, pieSelection.includeUpstreamOthers, pieSelection.selectedCharts]
 	)
-	const selectedTokenInflowsSet = useMemo(() => new Set(selectedTokenInflows), [selectedTokenInflows])
-	const visibleDataset = useMemo(() => {
-		switch (chartType) {
-			case 'chainsTvl':
-				return materializeZeroFilledDataset(advancedDataset, presentation.orderedChainNames)
-			case 'tokenValuesUsd':
-				return materializeZeroFilledDataset(advancedDataset, advancedSeriesNames)
-			case 'tokenBalances':
-				return materializeZeroFilledDataset(advancedDataset, advancedSeriesNames)
-			case 'usdInflows':
-				return materializeZeroFilledDataset(advancedDataset, ['USD Inflows'])
-			case 'tokenInflows':
-				return materializeZeroFilledDataset(advancedDataset, selectedTokenInflows)
-			default:
-				return resolvedBasicTvlDataset
-		}
-	}, [
-		chartType,
-		advancedDataset,
-		advancedSeriesNames,
-		presentation.orderedChainNames,
-		selectedTokenInflows,
-		resolvedBasicTvlDataset
-	])
+	const selectorLabel = chartType === 'chainsTvl' ? 'Chain' : 'Token'
+	const canonicalDataset = chartType === 'tvl' ? resolvedBasicTvlDataset : advancedDataset
 
 	const chartTypeOptions = useMemo(
 		() =>
@@ -168,7 +175,10 @@ export function AdvancedTvlChartTab({
 			)
 		}
 
-		const hasData = chartType === 'tokensPie' ? advancedData.pieChart.length > 0 : visibleDataset.source.length > 0
+		const hasData =
+			chartType === 'tokensPie'
+				? advancedData.pieSeries.peers.length > 0 || advancedData.pieSeries.upstreamOthersValue > 0
+				: canonicalDataset.source.length > 0
 		if (!hasData) {
 			return (
 				<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
@@ -186,17 +196,20 @@ export function AdvancedTvlChartTab({
 				}
 			>
 				{chartType === 'tokensPie' ? (
-					<PieChart chartData={advancedData.pieChart} stackColors={presentation.stackColors} />
+					<PieChart
+						chartData={piePresentation.chartData}
+						stackColors={{ ...piePresentation.stackColors, ...presentation.stackColors }}
+					/>
 				) : (
 					<MultiSeriesChart
 						title=""
-						dataset={visibleDataset}
+						dataset={canonicalDataset}
 						charts={presentation.charts}
 						valueSymbol={presentation.valueSymbol}
 						hideDefaultLegend
 						hideDataZoom={presentation.hideDataZoom}
 						solidChartAreaStyle={presentation.solidChartAreaStyle}
-						selectedCharts={chartType === 'tokenInflows' ? selectedTokenInflowsSet : undefined}
+						selectedCharts={selectorValues.length > 0 ? runtimePresentation.selectedCharts : undefined}
 						chartOptions={presentation.chartOptions}
 						exportButtons={
 							chartType === 'usdInflows' || chartType === 'tokenInflows' ? BAR_PREVIEW_EXPORTS : AREA_PREVIEW_EXPORTS
@@ -245,19 +258,29 @@ export function AdvancedTvlChartTab({
 
 				{hasProtocolSelection ? (
 					<div className="bg-pro-cards-bg p-3">
-						<div className="mb-3 flex items-start justify-between gap-2">
+						<div className="mb-3 flex flex-wrap items-start justify-between gap-2">
 							<div>
 								<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">
 									{selectedAdvancedTvlProtocolName} - {chartTypeLabel}
 								</h3>
 								<p className="text-xs text-pro-text-secondary">Advanced TVL Chart</p>
 							</div>
-							{selectedAdvancedTvlChartType === 'tokenInflows' && advancedSeriesNames.length > 1 ? (
+							{chartType === 'tokensPie' && pieSeriesNames.length > 1 ? (
 								<SelectWithCombobox
-									allValues={advancedSeriesNames}
-									selectedValues={selectedTokenInflows}
-									setSelectedValues={setSelectedTokenInflows}
+									allValues={pieSeriesNames}
+									selectedValues={pieSelection.activeSeries}
+									setSelectedValues={pieSelection.setSelectedSeries}
 									label="Token"
+									labelType="smol"
+									variant="filter"
+									size="md"
+								/>
+							) : selectorValues.length > 1 ? (
+								<SelectWithCombobox
+									allValues={selectorValues}
+									selectedValues={runtimePresentation.activeSeries}
+									setSelectedValues={runtimePresentation.setSelectedSeries}
+									label={selectorLabel}
 									labelType="smol"
 									variant="filter"
 									size="md"
@@ -265,9 +288,7 @@ export function AdvancedTvlChartTab({
 							) : null}
 						</div>
 
-						<div className="h-[320px]" key={selectedAdvancedTvlChartType}>
-							{chartContent}
-						</div>
+						<div className="h-[320px]">{chartContent}</div>
 					</div>
 				) : (
 					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">

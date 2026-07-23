@@ -64,6 +64,7 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		expect(payload.showTotalInTooltip).toBe(true)
 		expect(payload.stacked).toBe(true)
 		expect(payload.charts.every((chart) => chart.large === false)).toBe(true)
+		expect(payload.charts.find((chart) => chart.name === 'Others')?.color).toBe('#AAAAAA')
 	})
 
 	it('keeps zero and missing breakdown values exact while preserving input order', () => {
@@ -75,14 +76,54 @@ describe('buildStablecoinVolumeChartPayload', () => {
 			{ chart: 'chain', limit: 2 }
 		)
 
-		expect(payload.dataset.dimensions).toEqual(['timestamp', 'tron', 'Others'])
+		expect(payload.dataset.dimensions).toEqual(['timestamp', 'tron', 'ethereum', 'Others'])
 		expect(payload.dataset.source).toEqual([
-			[1609459200000, 0, 105],
-			[1609545600000, 10, 0]
+			[1609459200000, 0, 100, 5],
+			[1609545600000, 10, 0, 0]
 		])
+		expect(payload.availableSeries).toEqual(['tron', 'ethereum', 'base'])
 		expect(payload.showTotalInTooltip).toBe(true)
 		expect(payload.stacked).toBe(true)
 		expect(payload.charts.every((chart) => chart.large === false)).toBe(true)
+	})
+
+	it('projects explicit historical peers and aggregates only the selected tail', () => {
+		const data = [
+			[1609459200, { ethereum: 100, base: 5 }],
+			[1609545600, { ethereum: 0, tron: 10, base: 7 }]
+		] as Parameters<typeof buildStablecoinVolumeChartPayload>[0]
+		const selected = buildStablecoinVolumeChartPayload(data, {
+			chart: 'chain',
+			limit: 2,
+			selectedNames: ['base']
+		})
+		expect(selected.dataset.dimensions).toEqual(['timestamp', 'base'])
+		expect(selected.dataset.source).toEqual([
+			[1609459200000, 5],
+			[1609545600000, 7]
+		])
+
+		const overflow = buildStablecoinVolumeChartPayload(data, {
+			chart: 'chain',
+			limit: 1,
+			selectedNames: ['tron', 'base']
+		})
+		expect(overflow.dataset.dimensions).toEqual(['timestamp', 'tron', 'Others'])
+		expect(overflow.dataset.source).toEqual([
+			[1609459200000, 0, 5],
+			[1609545600000, 10, 7]
+		])
+
+		const excluded = buildStablecoinVolumeChartPayload(data, {
+			chart: 'chain',
+			limit: 1,
+			excludedNames: ['ethereum']
+		})
+		expect(excluded.dataset.dimensions).toEqual(['timestamp', 'tron', 'Others'])
+		expect(excluded.dataset.source).toEqual([
+			[1609459200000, 0, 5],
+			[1609545600000, 10, 7]
+		])
 	})
 
 	it('ranks from the latest non-empty breakdown when the current bucket is empty', () => {

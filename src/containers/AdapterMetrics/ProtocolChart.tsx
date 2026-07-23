@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	ChartGroupingSelector,
@@ -15,6 +16,7 @@ import { getAdapterBuilderMetric } from '~/containers/ProDashboard/utils/adapter
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSeriesSelectionWithFixedRemainder } from '~/hooks/useSeriesSelection'
 import { FEE_EXTRA_CONFIG_BY_SETTING, FEE_EXTRA_CONFIGS, type FeeExtraConfig } from '~/metrics/feeExtras'
 import { ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
@@ -231,7 +233,12 @@ const ChartByType = ({
 }) => {
 	const [chartInterval, changeChartInterval] = React.useState<LowercaseDwmcGrouping>('daily')
 	const uniqueBreakdownNames = React.useMemo(() => Array.from(new Set(breakdownNames)), [breakdownNames])
-	const [selectedTypes, setSelectedTypes] = React.useState<string[]>(() => uniqueBreakdownNames)
+	const {
+		activeSeries: selectedTypes,
+		selectableSeries,
+		renderedCharts,
+		setSelectedSeries: setSelectedTypes
+	} = useSeriesSelectionWithFixedRemainder({ availableSeries: uniqueBreakdownNames })
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
 	const chartBuilderConfig = React.useMemo<ChartBuilderConfig | null>(() => {
@@ -278,7 +285,7 @@ const ChartByType = ({
 	}, [protocolName, adapterType, chartInterval, title, chartType])
 
 	const mainChartData = React.useMemo(() => {
-		if (selectedTypes.length === 0) return { dataset: { source: [], dimensions: ['timestamp'] }, charts: [] }
+		if (uniqueBreakdownNames.length === 0) return { dataset: { source: [], dimensions: ['timestamp'] }, charts: [] }
 
 		// Helper to compute final date based on interval
 		const computeFinalDate = (date: number) =>
@@ -293,11 +300,11 @@ const ChartByType = ({
 				const finalDate = computeFinalDate(date)
 				let values = aggregatedByDate.get(finalDate)
 				if (!values) {
-					values = new Array(selectedTypes.length).fill(0)
+					values = new Array(uniqueBreakdownNames.length).fill(0)
 					aggregatedByDate.set(finalDate, values)
 				}
-				for (let typeIndex = 0; typeIndex < selectedTypes.length; typeIndex++) {
-					values[typeIndex] += versions[selectedTypes[typeIndex]] ?? 0
+				for (let typeIndex = 0; typeIndex < uniqueBreakdownNames.length; typeIndex++) {
+					values[typeIndex] += versions[uniqueBreakdownNames[typeIndex]] ?? 0
 				}
 			}
 		}
@@ -308,13 +315,13 @@ const ChartByType = ({
 		// Sort dates and build dataset rows
 		const sortedDates = Array.from(aggregatedByDate.keys()).sort((a, b) => a - b)
 		const isCumulative = chartInterval === 'cumulative'
-		const cumulative = new Array<number>(selectedTypes.length).fill(0)
+		const cumulative = new Array<number>(uniqueBreakdownNames.length).fill(0)
 
 		const source = sortedDates.map((date) => {
 			const entry = aggregatedByDate.get(date)!
-			const row = new Array<number | null>(selectedTypes.length + 1)
+			const row = new Array<number | null>(uniqueBreakdownNames.length + 1)
 			row[0] = date
-			for (let typeIndex = 0; typeIndex < selectedTypes.length; typeIndex++) {
+			for (let typeIndex = 0; typeIndex < uniqueBreakdownNames.length; typeIndex++) {
 				const value = entry[typeIndex]
 				if (isCumulative) {
 					cumulative[typeIndex] += value
@@ -327,7 +334,7 @@ const ChartByType = ({
 		})
 
 		// Replace leading zeros with null for cleaner charts
-		for (let typeIndex = 0; typeIndex < selectedTypes.length; typeIndex++) {
+		for (let typeIndex = 0; typeIndex < uniqueBreakdownNames.length; typeIndex++) {
 			for (let i = 0; i < source.length && source[i][typeIndex + 1] === 0; i++) {
 				source[i][typeIndex + 1] = null
 			}
@@ -341,7 +348,7 @@ const ChartByType = ({
 		}
 
 		const chartType2: 'line' | 'bar' = isCumulative ? 'line' : 'bar'
-		const chartsConfig = selectedTypes.map((type, index) => ({
+		const chartsConfig = uniqueBreakdownNames.map((type, index) => ({
 			type: chartType2,
 			name: type,
 			encode: { x: 0, y: index + 1 },
@@ -350,14 +357,15 @@ const ChartByType = ({
 		}))
 
 		return {
-			dataset: { source, dimensions: ['timestamp', ...selectedTypes] },
+			dataset: { source, dimensions: ['timestamp', ...uniqueBreakdownNames] },
 			charts: chartsConfig
 		}
-	}, [uniqueBreakdownNames, chartInterval, selectedTypes, data, bribeData, tokenTaxData])
+	}, [uniqueBreakdownNames, chartInterval, data, bribeData, tokenTaxData])
 	const deferredMainChartData = React.useDeferredValue(mainChartData)
 	const exportProtocolName = protocolDisplayName ?? protocolName
 	const exportMetricTitle = title?.replace(/\s+by\s+(?:chain|protocol version)$/i, '')
 	const exportTitle = exportMetricTitle ? `${exportProtocolName} ${exportMetricTitle}` : exportProtocolName
+	const exportFilename = title ? title : `${protocolName}-${chartType}`
 
 	return (
 		<>
@@ -369,20 +377,30 @@ const ChartByType = ({
 					options={DWMC_GROUPING_OPTIONS_LOWERCASE}
 					className="ml-auto"
 				/>
-				<SelectWithCombobox
-					allValues={uniqueBreakdownNames}
-					selectedValues={selectedTypes}
-					setSelectedValues={setSelectedTypes}
-					label={chartType === 'version' ? 'Versions' : 'Chains'}
-					labelType="smol"
-					variant="filter"
-					size="md"
-				/>
+				{selectableSeries.length > 1 ? (
+					<SelectWithCombobox
+						allValues={selectableSeries}
+						selectedValues={selectedTypes}
+						setSelectedValues={setSelectedTypes}
+						label={chartType === 'version' ? 'Versions' : 'Chains'}
+						labelType="smol"
+						variant="filter"
+						size="md"
+					/>
+				) : null}
 				<ChartExportButtons
 					chartInstance={exportChartInstance}
-					filename={title ? title : `${protocolName}-${chartType}`}
+					filename={exportFilename}
 					title={exportTitle}
 					iconUrl={tokenIconUrl(exportProtocolName)}
+					prepareCsvDirect={() =>
+						buildSelectedSeriesCsv({
+							dataset: deferredMainChartData.dataset,
+							charts: deferredMainChartData.charts,
+							selectedCharts: renderedCharts,
+							filename: exportFilename
+						})
+					}
 				/>
 				{chartBuilderConfig ? <AddToDashboardButton chartConfig={chartBuilderConfig} smol /> : null}
 			</ChartPanelToolbar>
@@ -390,6 +408,7 @@ const ChartByType = ({
 				<MultiSeriesChart
 					dataset={deferredMainChartData.dataset}
 					charts={deferredMainChartData.charts}
+					selectedCharts={renderedCharts}
 					groupBy={chartInterval}
 					valueSymbol="$"
 					showTotalInTooltip

@@ -1,16 +1,21 @@
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
-import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildRuntimePieChartPresentation, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { oldBlue } from '~/constants/colors'
 import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
-import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
+import {
+	type ProtocolBreakdownChart,
+	useProtocolBreakdownCharts
+} from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
+import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSelectedValues } from '~/hooks/useSelectedValues'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
@@ -26,8 +31,6 @@ const EMPTY_CHART_KEYS: string[] = []
 const USD_INFLOWS_SERIES = new Set(['USD Inflows'])
 
 const reserveExchangeIconUrl = (protocolName: string) => exchangeIconUrl(slug(protocolName.replace(/-cex$/, '')))
-
-type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
 
 /** includeOwnTokens is off by default and only enabled via URL query. Read after router is ready to avoid hydration mismatch. */
 export function useIncludeOwnTokens() {
@@ -55,17 +58,24 @@ export function IncludeOwnTokensSwitch({ ownToken }: { ownToken: string }) {
 function ChainsChartCard({
 	protocolName,
 	allChains,
-	dataset,
-	charts
+	breakdown
 }: {
 	protocolName: string
 	allChains: string[]
-	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesCharts
+	breakdown: ProtocolBreakdownChart
 }) {
-	const [selectedChains, setSelectedChains] = useSelectedValues(allChains)
-
-	const selectedChainsSet = React.useMemo(() => new Set(selectedChains), [selectedChains])
+	const {
+		activeSeries: selectedChains,
+		setSelectedSeries: setSelectedChains,
+		dataset,
+		charts,
+		selectedCharts
+	} = useProtocolBreakdownPresentation({
+		breakdown,
+		availableSeries: allChains,
+		aggregateOthers: true,
+		type: 'line'
+	})
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -93,6 +103,14 @@ function ChainsChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
+						prepareCsvDirect={() =>
+							buildSelectedSeriesCsv({
+								dataset,
+								charts,
+								selectedCharts,
+								filename: exportFilenameBase
+							})
+						}
 					/>
 				</>
 			}
@@ -101,8 +119,9 @@ function ChainsChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					hideDefaultLegend={false}
 					valueSymbol="$"
-					selectedCharts={selectedChainsSet}
+					selectedCharts={selectedCharts}
 					showTotalInTooltip
 					onReady={handleChartReady}
 				/>
@@ -114,17 +133,24 @@ function ChainsChartCard({
 function TokenValuesUSDChartCard({
 	protocolName,
 	allTokens,
-	dataset,
-	charts
+	breakdown
 }: {
 	protocolName: string
 	allTokens: string[]
-	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesCharts
+	breakdown: ProtocolBreakdownChart
 }) {
-	const [selectedTokensUSD, setSelectedTokensUSD] = useSelectedValues(allTokens)
-
-	const selectedTokensUSDSet = React.useMemo(() => new Set(selectedTokensUSD), [selectedTokensUSD])
+	const {
+		activeSeries: selectedTokensUSD,
+		setSelectedSeries: setSelectedTokensUSD,
+		dataset,
+		charts,
+		selectedCharts
+	} = useProtocolBreakdownPresentation({
+		breakdown,
+		availableSeries: allTokens,
+		aggregateOthers: true,
+		type: 'line'
+	})
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -152,6 +178,14 @@ function TokenValuesUSDChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
+						prepareCsvDirect={() =>
+							buildSelectedSeriesCsv({
+								dataset,
+								charts,
+								selectedCharts,
+								filename: exportFilenameBase
+							})
+						}
 					/>
 				</>
 			}
@@ -160,8 +194,9 @@ function TokenValuesUSDChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					hideDefaultLegend={false}
 					valueSymbol="$"
-					selectedCharts={selectedTokensUSDSet}
+					selectedCharts={selectedCharts}
 					showTotalInTooltip
 					onReady={handleChartReady}
 				/>
@@ -171,27 +206,31 @@ function TokenValuesUSDChartCard({
 }
 
 function TokensBreakdownPieChartCard({
-	tokenBreakdownLatest,
+	tokenBreakdownPieSeries,
 	protocolName
 }: {
-	tokenBreakdownLatest: Record<string, number>
+	tokenBreakdownPieSeries: RuntimePieChartData
 	protocolName: string
 }) {
-	const allTokens = React.useMemo(
-		() =>
-			Object.keys(tokenBreakdownLatest).sort((a, b) => (tokenBreakdownLatest[b] ?? 0) - (tokenBreakdownLatest[a] ?? 0)),
-		[tokenBreakdownLatest]
+	const selectableSeries = React.useMemo(
+		() => tokenBreakdownPieSeries.peers.map((peer) => peer.name),
+		[tokenBreakdownPieSeries.peers]
 	)
-	const [selectedTokens, setSelectedTokens] = useSelectedValues(allTokens)
-
-	const chartData = React.useMemo(() => {
-		if (selectedTokens.length === 0) return []
-		const selectedBreakdown: Record<string, number> = {}
-		for (const token of selectedTokens) {
-			selectedBreakdown[token] = tokenBreakdownLatest[token] ?? 0
-		}
-		return preparePieChartData({ data: selectedBreakdown, limit: 15 })
-	}, [selectedTokens, tokenBreakdownLatest])
+	const {
+		activeSeries: selectedTokens,
+		selectedCharts,
+		setSelectedSeries: setSelectedTokens,
+		includeUpstreamOthers
+	} = useAllSeriesSelection({ availableSeries: selectableSeries })
+	const presentation = React.useMemo(
+		() =>
+			buildRuntimePieChartPresentation({
+				series: tokenBreakdownPieSeries,
+				selectedSeries: selectedCharts,
+				includeUpstreamOthers
+			}),
+		[includeUpstreamOthers, selectedCharts, tokenBreakdownPieSeries]
+	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -203,9 +242,9 @@ function TokensBreakdownPieChartCard({
 			title="Tokens Breakdown"
 			controls={
 				<>
-					{allTokens.length > 1 ? (
+					{selectableSeries.length > 1 ? (
 						<SelectWithCombobox
-							allValues={allTokens}
+							allValues={selectableSeries}
 							selectedValues={selectedTokens}
 							setSelectedValues={setSelectedTokens}
 							label="Token"
@@ -224,7 +263,11 @@ function TokensBreakdownPieChartCard({
 			}
 		>
 			<React.Suspense fallback={cexChartFallback}>
-				<PieChart chartData={chartData} onReady={handleChartReady} />
+				<PieChart
+					chartData={presentation.chartData}
+					stackColors={presentation.stackColors}
+					onReady={handleChartReady}
+				/>
 			</React.Suspense>
 		</CexChartPanel>
 	)
@@ -233,17 +276,27 @@ function TokensBreakdownPieChartCard({
 function TokenBalancesRawChartCard({
 	protocolName,
 	allTokens,
-	dataset,
-	charts
+	defaultTokens,
+	breakdown
 }: {
 	protocolName: string
 	allTokens: string[]
-	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesCharts
+	defaultTokens: string[]
+	breakdown: ProtocolBreakdownChart
 }) {
-	const [selectedTokensRaw, setSelectedTokensRaw] = useSelectedValues(allTokens)
-
-	const selectedTokensRawSet = React.useMemo(() => new Set(selectedTokensRaw), [selectedTokensRaw])
+	const {
+		activeSeries: selectedTokensRaw,
+		setSelectedSeries: setSelectedTokensRaw,
+		dataset,
+		charts,
+		selectedCharts
+	} = useProtocolBreakdownPresentation({
+		breakdown,
+		availableSeries: allTokens,
+		defaultSeries: defaultTokens,
+		aggregateOthers: false,
+		type: 'line'
+	})
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -271,6 +324,14 @@ function TokenBalancesRawChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
+						prepareCsvDirect={() =>
+							buildSelectedSeriesCsv({
+								dataset,
+								charts,
+								selectedCharts,
+								filename: exportFilenameBase
+							})
+						}
 					/>
 				</>
 			}
@@ -279,8 +340,9 @@ function TokenBalancesRawChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					hideDefaultLegend={false}
 					valueSymbol=""
-					selectedCharts={selectedTokensRawSet}
+					selectedCharts={selectedCharts}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -322,17 +384,25 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 function InflowsByTokenChartCard({
 	protocolName,
 	allTokens,
-	dataset,
-	charts
+	breakdown
 }: {
 	protocolName: string
 	allTokens: string[]
-	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesCharts
+	breakdown: ProtocolBreakdownChart
 }) {
-	const [selectedTokenInflows, setSelectedTokenInflows] = useSelectedValues(allTokens)
-
-	const selectedTokenInflowsSet = React.useMemo(() => new Set(selectedTokenInflows), [selectedTokenInflows])
+	const {
+		activeSeries: selectedTokenInflows,
+		setSelectedSeries: setSelectedTokenInflows,
+		dataset,
+		charts,
+		selectedCharts
+	} = useProtocolBreakdownPresentation({
+		breakdown,
+		availableSeries: allTokens,
+		aggregateOthers: true,
+		type: 'bar',
+		stack: 'tokenInflows'
+	})
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -360,6 +430,14 @@ function InflowsByTokenChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
+						prepareCsvDirect={() =>
+							buildSelectedSeriesCsv({
+								dataset,
+								charts,
+								selectedCharts,
+								filename: exportFilenameBase
+							})
+						}
 					/>
 				</>
 			}
@@ -368,12 +446,10 @@ function InflowsByTokenChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
-					hideDefaultLegend={true}
+					hideDefaultLegend={false}
 					valueSymbol="$"
-					selectedCharts={selectedTokenInflowsSet}
-					chartOptions={
-						selectedTokenInflowsSet.size > 1 ? { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } : undefined
-					}
+					selectedCharts={selectedCharts}
+					chartOptions={selectedCharts.size > 1 ? { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } : undefined}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -406,32 +482,31 @@ export function ReserveAssetsCharts({
 		chainsUnique,
 		tokensUnique,
 		rawTokensUnique,
-		chainsDataset,
-		chainsCharts,
-		tokenUSDDataset,
-		tokenUSDCharts,
-		tokenRawDataset,
-		tokenRawCharts,
+		inflowTokensUnique,
+		defaultRawTokens,
+		chainBreakdown,
+		tokenRawBreakdown,
 		tokenBreakdownUSD,
-		tokenBreakdownLatest,
-		tokenBreakdownPieChart,
+		tokenBreakdownPieSeries,
 		usdInflowsDataset,
-		tokenInflowsDataset,
-		tokenInflowsCharts
+		tokenInflows
 	} = useProtocolBreakdownCharts({
 		protocol,
 		keys: EMPTY_CHART_KEYS,
 		includeBase: true,
-		tokensToExclude
+		tokensToExclude,
+		tokenPieMinimumValue: 0
 	})
 
 	const hasBreakdownMetrics =
-		(chainsDataset && chainsUnique?.length > 1) ||
-		(tokenUSDDataset && tokensUnique?.length > 0) ||
-		(tokenBreakdownUSD?.length > 1 && tokensUnique?.length > 0 && tokenBreakdownPieChart?.length > 0) ||
-		(tokenRawDataset && rawTokensUnique.length > 0) ||
+		(chainBreakdown && chainsUnique.length > 1) ||
+		(tokenBreakdownUSD && tokensUnique.length > 0) ||
+		(tokenBreakdownUSD?.length > 1 &&
+			tokensUnique?.length > 0 &&
+			(tokenBreakdownPieSeries.peers.length > 0 || tokenBreakdownPieSeries.upstreamOthersValue > 0)) ||
+		(tokenRawBreakdown && rawTokensUnique.length > 0) ||
 		usdInflowsDataset ||
-		(tokenInflowsDataset && tokensUnique?.length > 0)
+		(tokenInflows && inflowTokensUnique.length > 0)
 
 	if (isLoading) return <PanelLoadingStatus />
 	if (!hasBreakdownMetrics) {
@@ -444,46 +519,33 @@ export function ReserveAssetsCharts({
 
 	return (
 		<div className="grid grid-cols-2 gap-2">
-			{chainsDataset && chainsUnique?.length > 1 ? (
-				<ChainsChartCard
-					protocolName={displayName}
-					allChains={chainsUnique}
-					dataset={chainsDataset}
-					charts={chainsCharts}
-				/>
+			{chainBreakdown && chainsUnique.length > 1 ? (
+				<ChainsChartCard protocolName={displayName} allChains={chainsUnique} breakdown={chainBreakdown} />
 			) : null}
 
-			{tokenUSDDataset && tokensUnique?.length > 0 ? (
-				<TokenValuesUSDChartCard
-					protocolName={displayName}
-					allTokens={tokensUnique}
-					dataset={tokenUSDDataset}
-					charts={tokenUSDCharts}
-				/>
+			{tokenBreakdownUSD && tokensUnique.length > 0 ? (
+				<TokenValuesUSDChartCard protocolName={displayName} allTokens={tokensUnique} breakdown={tokenBreakdownUSD} />
 			) : null}
 
-			{tokenBreakdownUSD?.length > 1 && tokensUnique?.length > 0 && tokenBreakdownPieChart?.length > 0 ? (
-				<TokensBreakdownPieChartCard tokenBreakdownLatest={tokenBreakdownLatest} protocolName={displayName} />
+			{tokenBreakdownUSD?.length > 1 &&
+			tokensUnique?.length > 0 &&
+			(tokenBreakdownPieSeries.peers.length > 0 || tokenBreakdownPieSeries.upstreamOthersValue > 0) ? (
+				<TokensBreakdownPieChartCard tokenBreakdownPieSeries={tokenBreakdownPieSeries} protocolName={displayName} />
 			) : null}
 
-			{tokenRawDataset && rawTokensUnique.length > 0 ? (
+			{tokenRawBreakdown && rawTokensUnique.length > 0 ? (
 				<TokenBalancesRawChartCard
 					protocolName={displayName}
 					allTokens={rawTokensUnique}
-					dataset={tokenRawDataset}
-					charts={tokenRawCharts}
+					defaultTokens={defaultRawTokens}
+					breakdown={tokenRawBreakdown}
 				/>
 			) : null}
 
 			{usdInflowsDataset ? <USDInflowsChartCard protocolName={displayName} dataset={usdInflowsDataset} /> : null}
 
-			{tokenInflowsDataset && tokensUnique?.length > 0 ? (
-				<InflowsByTokenChartCard
-					protocolName={displayName}
-					allTokens={tokensUnique}
-					dataset={tokenInflowsDataset}
-					charts={tokenInflowsCharts}
-				/>
+			{tokenInflows && inflowTokensUnique.length > 0 ? (
+				<InflowsByTokenChartCard protocolName={displayName} allTokens={inflowTokensUnique} breakdown={tokenInflows} />
 			) : null}
 		</div>
 	)

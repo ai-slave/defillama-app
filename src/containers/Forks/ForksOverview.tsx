@@ -1,12 +1,18 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
+import { buildSelectedPercentageChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { PanelStatus } from '~/ui/Status'
@@ -97,11 +103,38 @@ export const ForksOverview = ({
 		return mergeForkOverviewChartData({ chartData, extraBreakdownByTimestamp, shouldApplyExtraSeries })
 	}, [chartData, extraBreakdownByTimestamp, shouldApplyExtraSeries])
 
-	const { tableData, tokenTvls, dominanceDataset, dominanceCharts, chartColors } = React.useMemo(() => {
+	const { tableData, pieSeries, dominanceDataset, dominanceCharts, chartColors } = React.useMemo(() => {
 		return buildForksOverviewDisplayData({ forks, forkColors, baseTableData, chartData: mergedChartData })
 	}, [baseTableData, forkColors, forks, mergedChartData])
 
 	const isLoading = enabledExtraApiKeys.length > 0 && isFetchingExtraSeries
+	const forkSeries = React.useMemo(() => dominanceCharts.map((chart) => chart.name), [dominanceCharts])
+	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
+	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({ availableSeries: forkSeries })
+	const selectedDominance = React.useMemo(
+		() => buildSelectedPercentageChart({ dataset: dominanceDataset, charts: dominanceCharts, selectedCharts }),
+		[dominanceCharts, dominanceDataset, selectedCharts]
+	)
+	const {
+		activeSeries: activePieSeries,
+		selectedCharts: selectedPieSeries,
+		setSelectedSeries: setSelectedPieSeries,
+		includeUpstreamOthers: includePieUpstreamOthers
+	} = useAllSeriesSelection({
+		availableSeries: pieSelectableSeries,
+		selectionKey: 'fork-pie'
+	})
+	const visibleTokenTvls = React.useMemo(
+		() =>
+			buildRuntimePieChartPresentation({
+				series: pieSeries,
+				selectedSeries: selectedPieSeries,
+				includeUpstreamOthers: includePieUpstreamOthers
+			}).chartData,
+		[includePieUpstreamOthers, pieSeries, selectedPieSeries]
+	)
+	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
 	return (
 		<>
 			<RowLinksWithDropdown links={forkLinks} activeLink="All" />
@@ -114,31 +147,65 @@ export const ForksOverview = ({
 				<>
 					<div className="flex flex-col gap-2 xl:flex-row">
 						<ChartPanel className="isolate flex-1">
-							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-								<PieChart
-									chartData={tokenTvls}
-									stackColors={chartColors}
-									exportButtons={{ png: true, csv: true, filename: 'forks-tvl-pie', pngTitle: 'Forks TVL Breakdown' }}
+							<ChartPanelToolbar className="justify-end">
+								{pieSelectableSeries.length > 1 ? (
+									<SelectWithCombobox
+										allValues={pieSelectableSeries}
+										selectedValues={activePieSeries}
+										setSelectedValues={setSelectedPieSeries}
+										label="Fork"
+										labelType="smol"
+										variant="filter"
+										size="md"
+									/>
+								) : null}
+								<ChartExportButtons
+									chartInstance={pieChartInstance}
+									filename="forks-tvl-pie"
 									title="Forks TVL Breakdown"
 								/>
+							</ChartPanelToolbar>
+							<React.Suspense fallback={<ChartPanelBodyFallback />}>
+								<PieChart chartData={visibleTokenTvls} stackColors={chartColors} onReady={handlePieChartReady} />
 							</React.Suspense>
 						</ChartPanel>
 						<ChartPanel className="flex-1">
-							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
+							<ChartPanelToolbar className="justify-end">
+								<h2 className="mr-auto heading-xs">Forks TVL Dominance (%)</h2>
+								{forkSeries.length > 1 ? (
+									<SelectWithCombobox
+										allValues={forkSeries}
+										selectedValues={activeSeries}
+										setSelectedValues={setSelectedSeries}
+										label="Fork"
+										labelType="smol"
+										variant="filter"
+										size="md"
+									/>
+								) : null}
+								<ChartExportButtons
+									chartInstance={chartInstance}
+									filename="forks-dominance-chart"
+									title="Forks TVL Dominance (%)"
+									prepareCsvDirect={() =>
+										buildSelectedSeriesCsv({
+											dataset: selectedDominance.dataset,
+											charts: selectedDominance.charts,
+											selectedCharts: new Set(activeSeries),
+											filename: 'forks-dominance-chart'
+										})
+									}
+								/>
+							</ChartPanelToolbar>
+							<React.Suspense fallback={<ChartPanelBodyFallback />}>
 								<MultiSeriesChart
-									dataset={dominanceDataset}
-									charts={dominanceCharts}
+									dataset={selectedDominance.dataset}
+									charts={selectedDominance.charts}
 									stacked={true}
 									expandTo100Percent={true}
 									hideDefaultLegend
 									valueSymbol="%"
-									exportButtons={{
-										png: true,
-										csv: true,
-										filename: 'forks-dominance-chart',
-										pngTitle: 'Forks TVL Dominance (%)'
-									}}
-									title="Forks TVL Dominance (%)"
+									onReady={handleChartReady}
 								/>
 							</React.Suspense>
 						</ChartPanel>

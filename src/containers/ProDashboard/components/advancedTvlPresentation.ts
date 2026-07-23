@@ -3,7 +3,7 @@ import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { createSignedInflowsTooltipFormatter } from '~/components/ECharts/shared/tooltip'
-import { buildProtocolV1ChartConfigs } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
+import { buildProtocolBreakdownChartConfigs } from '~/containers/ProtocolOverview/buildProtocolBreakdownChartConfigs'
 import type { AdvancedTvlChartType } from '../types'
 import { generateConsistentChartColor } from '../utils/colorManager'
 
@@ -86,6 +86,9 @@ export function buildAdvancedTvlPresentation({
 	const stackColors = Object.fromEntries(
 		colorNames.map((name) => [name, generateConsistentChartColor(name, '#8884d8', itemType)])
 	)
+	if (chartType === 'tokensPie') {
+		stackColors.Others = generateConsistentChartColor('Others', '#8884d8', 'protocol')
+	}
 
 	let charts: MultiSeriesChartSeriesConfig[] = []
 	let chartOptions = DOLLAR_CHART_OPTIONS
@@ -97,15 +100,16 @@ export function buildAdvancedTvlPresentation({
 			charts = TVL_CHARTS
 			break
 		case 'chainsTvl':
-			charts = buildProtocolV1ChartConfigs({
+			charts = buildProtocolBreakdownChartConfigs({
 				seriesNames: orderedChainNames,
+				dimensions: chainsDataset.dimensions,
 				type: 'line',
 				colors: stackColors,
 				hideAreaStyle: true
 			})
 			break
 		case 'tokenValuesUsd':
-			charts = buildProtocolV1ChartConfigs({
+			charts = buildProtocolBreakdownChartConfigs({
 				seriesNames: tokenNames,
 				type: 'line',
 				colors: stackColors,
@@ -115,7 +119,7 @@ export function buildAdvancedTvlPresentation({
 			solidChartAreaStyle = true
 			break
 		case 'tokenBalances':
-			charts = buildProtocolV1ChartConfigs({
+			charts = buildProtocolBreakdownChartConfigs({
 				seriesNames: tokenNames,
 				type: 'line',
 				colors: stackColors,
@@ -129,7 +133,7 @@ export function buildAdvancedTvlPresentation({
 			chartOptions = SINGLE_INFLOWS_CHART_OPTIONS
 			break
 		case 'tokenInflows':
-			charts = buildProtocolV1ChartConfigs({
+			charts = buildProtocolBreakdownChartConfigs({
 				seriesNames: tokenNames,
 				type: 'bar',
 				colors: stackColors,

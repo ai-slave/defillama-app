@@ -7,11 +7,6 @@ export function EChartsRenderVisibilityProvider({ children, visible }: { childre
 	return <EChartsRenderVisibilityContext.Provider value={visible}>{children}</EChartsRenderVisibilityContext.Provider>
 }
 
-interface InteractiveChartState {
-	legend?: EChartsOption['legend']
-	dataZoom?: EChartsOption['dataZoom']
-}
-
 interface EChartsLifecycle {
 	capture: (instance: ECharts) => void
 	restore: (instance: ECharts) => void
@@ -27,22 +22,22 @@ export function usePersistentEChartsLifecycle() {
 export function withEChartsRenderVisibility<Props extends object>(Renderer: ComponentType<Props>) {
 	function VisibilityBoundary(props: Props) {
 		const visible = useContext(EChartsRenderVisibilityContext)
-		const interactiveStateRef = useRef<InteractiveChartState | null>(null)
+		const interactiveStateRef = useRef<EChartsOption | null>(null)
 
 		const capture = useCallback((instance: ECharts) => {
 			if (instance.isDisposed()) return
 			const option = instance.getOption()
-			interactiveStateRef.current = {
-				legend: option.legend,
-				dataZoom: option.dataZoom
-			}
+			const interactiveState: EChartsOption = {}
+			if (option.legend != null) interactiveState.legend = option.legend
+			if (option.dataZoom != null) interactiveState.dataZoom = option.dataZoom
+			interactiveStateRef.current = interactiveState
 		}, [])
 
 		const restore = useCallback((instance: ECharts) => {
 			const state = interactiveStateRef.current
-			if (!state) return
+			if (!state || (state.legend == null && state.dataZoom == null)) return
 			requestAnimationFrame(() => {
-				if (!instance.isDisposed()) instance.setOption({ legend: state.legend, dataZoom: state.dataZoom })
+				if (!instance.isDisposed()) instance.setOption(state)
 			})
 		}, [])
 

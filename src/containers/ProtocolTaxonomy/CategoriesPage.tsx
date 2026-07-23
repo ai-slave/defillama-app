@@ -2,11 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedAdditiveChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
@@ -135,7 +137,11 @@ const categoriesColumns = [
 
 export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 	const { categories, tableData, chartSource, categoryColors, extraTvlCharts } = props
-	const [selectedCategories, setSelectedCategories] = React.useState<Array<string>>(categories)
+	const {
+		activeSeries: selectedCategories,
+		selectedCharts,
+		setSelectedSeries: setSelectedCategories
+	} = useSeriesSelection({ availableSeries: categories })
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const enabledTvls = React.useMemo(() => getEnabledProtocolsCategoriesTvls(extraTvlsEnabled), [extraTvlsEnabled])
@@ -167,11 +173,20 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 			categoryColors,
 			chartSource: categoriesChartSource,
 			extraTvlCharts: categoriesExtraTvlCharts,
-			selectedCategories,
 			enabledTvls
 		})
-	}, [categories, categoryColors, categoriesChartSource, enabledTvls, categoriesExtraTvlCharts, selectedCategories])
+	}, [categories, categoryColors, categoriesChartSource, enabledTvls, categoriesExtraTvlCharts])
 	const deferredFinalCharts = React.useDeferredValue(finalCharts)
+	const selectedPresentation = React.useMemo(
+		() =>
+			buildSelectedAdditiveChart({
+				dataset: deferredFinalCharts.dataset,
+				charts: deferredFinalCharts.charts,
+				seriesOrder: categories,
+				selectedCharts
+			}),
+		[categories, deferredFinalCharts, selectedCharts]
+	)
 	const chartErrorMessage = chartDataQuery.error ? getErrorMessage(chartDataQuery.error) : null
 
 	const finalCategoriesList = React.useMemo(() => {
@@ -183,16 +198,30 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 			<ChartPanel>
 				<ChartPanelToolbar className="justify-end">
 					<h1 className="mr-auto heading-xs">TVL by Category</h1>
-					<SelectWithCombobox
-						allValues={categories}
-						selectedValues={selectedCategories}
-						setSelectedValues={setSelectedCategories}
-						label="Categories"
-						labelType="smol"
-						variant="filter"
-						size="md"
+					{categories.length > 1 ? (
+						<SelectWithCombobox
+							allValues={categories}
+							selectedValues={selectedCategories}
+							setSelectedValues={setSelectedCategories}
+							label="Categories"
+							labelType="smol"
+							variant="filter"
+							size="md"
+						/>
+					) : null}
+					<ChartExportButtons
+						chartInstance={chartInstance}
+						filename="categories-tvl"
+						title="Protocol TVL"
+						prepareCsvDirect={() =>
+							buildSelectedSeriesCsv({
+								dataset: selectedPresentation.dataset,
+								charts: selectedPresentation.charts,
+								selectedCharts: new Set(selectedPresentation.charts.map((chart) => chart.name)),
+								filename: 'categories-tvl'
+							})
+						}
 					/>
-					<ChartExportButtons chartInstance={chartInstance} filename="categories-tvl" title="Protocol TVL" />
 				</ChartPanelToolbar>
 				{shouldFetchChartData && chartDataQuery.isLoading ? (
 					<ChartPanelBodyFallback role="status" aria-live="polite" className="text-tertiary">
@@ -205,8 +234,8 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 				) : (
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
-							dataset={deferredFinalCharts.dataset}
-							charts={deferredFinalCharts.charts}
+							dataset={selectedPresentation.dataset}
+							charts={selectedPresentation.charts}
 							valueSymbol="$"
 							solidChartAreaStyle
 							onReady={handleChartReady}

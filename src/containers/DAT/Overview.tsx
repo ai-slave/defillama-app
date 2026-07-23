@@ -2,6 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { buildTimeSeriesChart } from '~/components/ECharts/MultiSeriesChart/timeSeriesBuilder'
 import {
 	ChartGroupingSelector,
@@ -10,8 +11,10 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
 import { Tooltip } from '~/ui/Tooltip'
@@ -56,6 +59,8 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 		}
 	}, [dailyFlowsByAsset, groupBy])
 	const deferredChartData = useDeferredValue(chartData)
+	const assetSeries = useMemo(() => chartData.charts.map((chart) => chart.name), [chartData.charts])
+	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({ availableSeries: assetSeries })
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -74,16 +79,36 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						onValueChange={onChangeGroupBy}
 						options={DWMC_GROUPING_OPTIONS_LOWERCASE}
 					/>
+					{assetSeries.length > 1 ? (
+						<SelectWithCombobox
+							allValues={assetSeries}
+							selectedValues={activeSeries}
+							setSelectedValues={setSelectedSeries}
+							label="Asset"
+							labelType="smol"
+							variant="filter"
+							size="md"
+						/>
+					) : null}
 					<ChartExportButtons
 						chartInstance={chartInstance}
 						filename="digital-asset-treasuries-inflows-by-asset"
 						title="DAT Inflows by Asset"
+						prepareCsvDirect={() =>
+							buildSelectedSeriesCsv({
+								dataset: deferredChartData.dataset,
+								charts: deferredChartData.charts,
+								selectedCharts,
+								filename: 'digital-asset-treasuries-inflows-by-asset'
+							})
+						}
 					/>
 				</ChartPanelToolbar>
 				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
 						dataset={deferredChartData.dataset}
 						charts={deferredChartData.charts}
+						selectedCharts={selectedCharts}
 						groupBy={groupBy}
 						valueSymbol="$"
 						showTotalInTooltip

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { buildChainsByCategoryChartPresentation } from '../index'
 
 describe('chains by category chart presentation', () => {
@@ -23,13 +24,15 @@ describe('chains by category chart presentation', () => {
 		})
 
 		expect(result.dominanceCharts.dataset.source).toEqual([
-			[2, (82 / 105) * 100, (23 / 105) * 100],
-			[4, (44 / 105) * 100, (61 / 105) * 100]
+			[2, 82, 23],
+			[4, 44, 61]
 		])
-		expect(result.pieChartData.map(({ name, value }) => ({ name, value }))).toEqual([
+		expect(buildRuntimePieChartPresentation({ series: result.pieSeries }).chartData).toEqual([
 			{ name: 'Solana', value: 61 },
 			{ name: 'Ethereum', value: 44 }
 		])
+		expect(result.chainSeries).toEqual(['Solana', 'Ethereum'])
+		expect(result.dominanceCharts.charts.map((chart) => chart.name)).toEqual(['Solana', 'Ethereum'])
 	})
 
 	it('retains an unsampled latest date for the pie without appending a dominance row', () => {
@@ -49,9 +52,29 @@ describe('chains by category chart presentation', () => {
 			[2, 80, 20],
 			[4, 40, 60]
 		])
-		expect(result.pieChartData.map(({ name, value }) => ({ name, value }))).toEqual([
+		expect(buildRuntimePieChartPresentation({ series: result.pieSeries }).chartData).toEqual([
 			{ name: 'Solana', value: 75 },
 			{ name: 'Ethereum', value: 25 }
 		])
+		expect(result.chainSeries).toEqual(['Solana', 'Ethereum'])
+	})
+
+	it('appends historical chains with no current TVL after the current-TVL ranking', () => {
+		const result = buildChainsByCategoryChartPresentation({
+			tvlChartsByChain: {
+				tvl: {
+					Ethereum: { 1: 100, 2: 90 },
+					Solana: { 1: 50, 2: 110 },
+					Historical: { 1: 25, 2: 0 }
+				}
+			},
+			totalTvlByDate: { tvl: { 1: 175, 2: 200 } },
+			colorsByChain: {},
+			enabledTvlSettings: []
+		})
+
+		expect(result.pieSeries.peers.map((peer) => peer.name)).toEqual(['Solana', 'Ethereum'])
+		expect(result.chainSeries).toEqual(['Solana', 'Ethereum', 'Historical'])
+		expect(result.dominanceCharts.charts.map((chart) => chart.name)).toEqual(['Solana', 'Ethereum', 'Historical'])
 	})
 })

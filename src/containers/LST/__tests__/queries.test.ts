@@ -160,8 +160,8 @@ describe('getLSTPageData', () => {
 		expect(result.stakedEthSum).toBe(195)
 		expect(result.stakedEthInUsdSum).toBe(390_000)
 		expect(result.areaChartData.map((row) => row.date)).toEqual([earlyDate, latestDate])
-		expect(result.areaChartData[0].Lido).toBeCloseTo((100 / 150) * 100)
-		expect(result.areaChartData[0]['Rocket Pool']).toBeCloseTo((50 / 150) * 100)
+		expect(result.areaChartData[0].Lido).toBe(100)
+		expect(result.areaChartData[0]['Rocket Pool']).toBe(50)
 		expect(result.tokensList[0].marketShare).toBeCloseTo((110 / 195) * 100)
 		expect(result.tokensList[0].apy).toBe(3)
 		expect(result.tokensList[0]).toMatchObject({

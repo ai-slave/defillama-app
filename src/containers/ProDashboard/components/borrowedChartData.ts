@@ -1,14 +1,22 @@
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import type { RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
-import { buildComputedBreakdownResult } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
+import {
+	buildComputedBreakdownResult,
+	type ProtocolBreakdownChart
+} from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import type { BorrowedBreakdownSource } from '../services/protocolTvl'
 import type { BorrowedChartType } from '../types'
 
 interface BorrowedChartData {
 	dataset: TimestampDataset | null
+	breakdown: ProtocolBreakdownChart | null
 	seriesNames: string[]
-	pieChart: Array<{ name: string; value: number }>
+	defaultSeriesNames: string[]
+	pieSeries: RuntimePieChartData
 }
+
+const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 15, upstreamOthersValue: 0 }
 
 export function buildBorrowedChartData(
 	chartType: BorrowedChartType,
@@ -44,20 +52,33 @@ export function buildBorrowedChartData(
 		valueSeriesName: 'Borrowed',
 		inflows: !isChainBreakdown,
 		computeInflows: false,
-		buildTokenUSDDataset: chartType === 'tokenBorrowedUsd',
-		buildTokenRawDataset: isRawTokenBreakdown,
+		buildTokenRawBreakdown: isRawTokenBreakdown,
 		buildTokenPieChart: chartType === 'tokensBorrowedPie'
 	})
 
 	if (isChainBreakdown) {
-		return { dataset: computed.chainsDataset, seriesNames: computed.chainsUnique, pieChart: [] }
+		return {
+			dataset: null,
+			breakdown: computed.chainBreakdown,
+			seriesNames: computed.chainsUnique,
+			defaultSeriesNames: computed.chainsUnique,
+			pieSeries: EMPTY_PIE_SERIES
+		}
 	}
 	if (isRawTokenBreakdown) {
-		return { dataset: computed.tokenRawDataset, seriesNames: computed.rawTokensUnique, pieChart: [] }
+		return {
+			dataset: null,
+			breakdown: computed.tokenRawBreakdown,
+			seriesNames: computed.rawTokensUnique,
+			defaultSeriesNames: computed.defaultRawTokens,
+			pieSeries: EMPTY_PIE_SERIES
+		}
 	}
 	return {
-		dataset: computed.tokenUSDDataset,
+		dataset: null,
+		breakdown: chartType === 'tokenBorrowedUsd' ? computed.tokenBreakdownUSD : null,
 		seriesNames: computed.tokensUnique,
-		pieChart: computed.tokenBreakdownPieChart
+		defaultSeriesNames: computed.tokensUnique,
+		pieSeries: computed.tokenBreakdownPieSeries
 	}
 }

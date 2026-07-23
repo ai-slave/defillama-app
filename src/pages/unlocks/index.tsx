@@ -4,6 +4,11 @@ import * as React from 'react'
 import { lazy, useMemo } from 'react'
 import { Announcement } from '~/components/Announcement'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import {
+	buildSelectedAdditiveChart,
+	buildSelectedSeriesCsv,
+	rankSeriesByPeakAbsoluteValue
+} from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	ChartGroupingSelector,
@@ -11,6 +16,7 @@ import {
 	type LowercaseDwmGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PastUnlockPriceImpact } from '~/containers/Unlocks/PastUnlockPriceImpact'
 import { getAllProtocolEmissions } from '~/containers/Unlocks/queries'
 import { UnlocksTable } from '~/containers/Unlocks/Table'
@@ -22,6 +28,7 @@ import {
 } from '~/containers/Unlocks/upcomingUnlockChart'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -146,11 +153,46 @@ function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeri
 			viewMode
 		})
 	}, [series, timePeriod, viewMode])
-	const deferredChartData = React.useDeferredValue(unlockChartData)
+	const chartPresentation = useMemo(
+		() => ({ chartData: unlockChartData, timePeriod, viewMode }),
+		[timePeriod, unlockChartData, viewMode]
+	)
+	const deferredChartPresentation = React.useDeferredValue(chartPresentation)
+	const {
+		chartData: deferredChartData,
+		timePeriod: deferredTimePeriod,
+		viewMode: deferredViewMode
+	} = deferredChartPresentation
+	const protocolSeries = useMemo(
+		() =>
+			deferredViewMode === 'Breakdown View'
+				? rankSeriesByPeakAbsoluteValue(
+						deferredChartData.dataset,
+						deferredChartData.charts.map((chart) => chart.name)
+					)
+				: [],
+		[deferredChartData, deferredViewMode]
+	)
+	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({
+		availableSeries: protocolSeries,
+		selectionKey: deferredViewMode
+	})
+	const selectedBreakdown = useMemo(
+		() =>
+			deferredViewMode === 'Breakdown View'
+				? buildSelectedAdditiveChart({
+						dataset: deferredChartData.dataset,
+						charts: deferredChartData.charts,
+						seriesOrder: protocolSeries,
+						selectedCharts
+					})
+				: null,
+		[deferredChartData, deferredViewMode, protocolSeries, selectedCharts]
+	)
 
 	return (
 		<>
-			{unlockChartData.dataset.source.length > 0 ? (
+			{deferredChartData.dataset.source.length > 0 ? (
 				<>
 					<ChartPanelToolbar className="justify-end">
 						<h2 className="mr-auto heading-xs">Upcoming Unlocks</h2>
@@ -166,18 +208,40 @@ function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeri
 							setValue={(value) => updateQueryParam('chartView', value, 'Total View')}
 							values={VIEW_MODES}
 						/>
+						{protocolSeries.length > 1 ? (
+							<SelectWithCombobox
+								allValues={protocolSeries}
+								selectedValues={activeSeries}
+								setSelectedValues={setSelectedSeries}
+								label="Protocol"
+								labelType="smol"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
 						<ChartExportButtons
 							chartInstance={exportChartInstance}
 							filename="upcoming-unlocks"
 							title="Upcoming Unlocks"
+							prepareCsvDirect={
+								deferredViewMode === 'Breakdown View'
+									? () =>
+											buildSelectedSeriesCsv({
+												dataset: selectedBreakdown!.dataset,
+												charts: selectedBreakdown!.charts,
+												selectedCharts: new Set(selectedBreakdown!.charts.map((chart) => chart.name)),
+												filename: 'upcoming-unlocks'
+											})
+									: undefined
+							}
 						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
-							dataset={deferredChartData.dataset}
-							charts={deferredChartData.charts}
-							hideDefaultLegend={viewMode === 'Total View'}
-							groupBy={timePeriod}
+							dataset={selectedBreakdown?.dataset ?? deferredChartData.dataset}
+							charts={selectedBreakdown?.charts ?? deferredChartData.charts}
+							hideDefaultLegend={deferredViewMode === 'Total View'}
+							groupBy={deferredTimePeriod}
 							valueSymbol="$"
 							onReady={handleChartReady}
 						/>

@@ -1,9 +1,9 @@
 import type { LlamaConfigResponse } from '~/api/types'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import { prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { CONFIG_API } from '~/constants'
 import { CHART_COLORS } from '~/constants/colors'
-import { getNDistinctColors, slug } from '~/utils'
+import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { isDeprecatedChain } from '~/utils/metadata/deprecatedChains'
@@ -244,7 +244,7 @@ function buildPrevDayDataByChain({
 	return prevDayDataByChain
 }
 
-function buildTableDataByChain({
+export function buildTableDataByChain({
 	prevDayDataByChain,
 	chainsList
 }: {
@@ -257,14 +257,16 @@ function buildTableDataByChain({
 		const prevDayData = prevDayDataByChain[currentChain]
 		let tokensTableData: BridgeTableData['tokensTableData'] = []
 		let addressesTableData: BridgeTableData['addressesTableData'] = []
-		let tokenDeposits: BridgeTableData['tokenDeposits'] = []
-		let tokenWithdrawals: BridgeTableData['tokenWithdrawals'] = []
-		let tokenColor: BridgeTableData['tokenColor'] = {}
+		let tokenDeposits = prepareRuntimePieChartData({ data: {}, limit: 15 })
+		let tokenWithdrawals = prepareRuntimePieChartData({ data: {}, limit: 15 })
 
 		if (prevDayData) {
 			const totalTokensDeposited = prevDayData.totalTokensDeposited
 			const totalTokensWithdrawn = prevDayData.totalTokensWithdrawn
 			const tokensTableUnformatted: Record<string, TokenTableUnformattedRow> = {}
+			// The runtime selector identifies tokens by symbol, so multiple contract rows with one symbol aggregate on every chain.
+			const depositValuesBySymbol = new Map<string, number>()
+			const withdrawalValuesBySymbol = new Map<string, number>()
 
 			for (const token in totalTokensDeposited) {
 				const tokenData = totalTokensDeposited[token] as TokenMapValue
@@ -274,6 +276,7 @@ function buildTableDataByChain({
 				tokensTableUnformatted[key] = tokensTableUnformatted[key] || {}
 				tokensTableUnformatted[key].deposited = (tokensTableUnformatted[key].deposited ?? 0) + usdValue
 				tokensTableUnformatted[key].volume = (tokensTableUnformatted[key].volume ?? 0) + usdValue
+				depositValuesBySymbol.set(symbol, (depositValuesBySymbol.get(symbol) ?? 0) + usdValue)
 				// ensure there are no undefined values for deposited/withdrawn so table can be sorted
 				tokensTableUnformatted[key].withdrawn = 0
 			}
@@ -285,6 +288,7 @@ function buildTableDataByChain({
 				tokensTableUnformatted[key] = tokensTableUnformatted[key] || {}
 				tokensTableUnformatted[key].withdrawn = (tokensTableUnformatted[key].withdrawn ?? 0) + usdValue
 				tokensTableUnformatted[key].volume = (tokensTableUnformatted[key].volume ?? 0) + usdValue
+				withdrawalValuesBySymbol.set(symbol, (withdrawalValuesBySymbol.get(symbol) ?? 0) + usdValue)
 				if (!tokensTableUnformatted[key].deposited) {
 					tokensTableUnformatted[key].deposited = 0
 				}
@@ -302,58 +306,11 @@ function buildTableDataByChain({
 				})
 			}
 
-			let fullTokenDeposits: { name: string; value: number }[] = []
-			for (const key in totalTokensDeposited) {
-				const tokenData = totalTokensDeposited[key] as TokenMapValue
-				fullTokenDeposits.push({ name: tokenData.symbol, value: tokenData.usdValue })
-			}
-			let fullTokenWithdrawals: { name: string; value: number }[] = []
-			for (const key in totalTokensWithdrawn) {
-				const tokenData = totalTokensWithdrawn[key] as TokenMapValue
-				fullTokenWithdrawals.push({ name: tokenData.symbol, value: tokenData.usdValue })
-			}
-
-			if (currentChain === 'All Chains') {
-				// Use for..in instead of Object.values() and Set for deduplication
-				const symbolToDeposits = new Map<string, number>()
-				for (const key in totalTokensDeposited) {
-					const tokenData = totalTokensDeposited[key] as TokenMapValue
-					const existing = symbolToDeposits.get(tokenData.symbol) ?? 0
-					symbolToDeposits.set(tokenData.symbol, existing + tokenData.usdValue)
-				}
-				fullTokenDeposits = []
-				for (const [symbol, value] of symbolToDeposits) {
-					fullTokenDeposits.push({ name: symbol, value })
-				}
-
-				const symbolToWithdrawals = new Map<string, number>()
-				for (const key in totalTokensWithdrawn) {
-					const tokenData = totalTokensWithdrawn[key] as TokenMapValue
-					const existing = symbolToWithdrawals.get(tokenData.symbol) ?? 0
-					symbolToWithdrawals.set(tokenData.symbol, existing + tokenData.usdValue)
-				}
-				fullTokenWithdrawals = []
-				for (const [symbol, value] of symbolToWithdrawals) {
-					fullTokenWithdrawals.push({ name: symbol, value })
-				}
-			}
-
-			tokenDeposits = preparePieChartData({
-				data: fullTokenDeposits,
+			tokenDeposits = prepareRuntimePieChartData({ data: depositValuesBySymbol, limit: 15 })
+			tokenWithdrawals = prepareRuntimePieChartData({
+				data: withdrawalValuesBySymbol,
 				limit: 15
 			})
-			tokenWithdrawals = preparePieChartData({
-				data: fullTokenWithdrawals,
-				limit: 15
-			})
-
-			const colors = getNDistinctColors(tokenDeposits.length + tokenWithdrawals.length)
-
-			tokenColor = Object.fromEntries(
-				[...tokenDeposits, ...tokenWithdrawals, 'Others'].map((token, i) => {
-					return typeof token === 'string' ? ['-', colors[i] ?? '#AAAAAA'] : [token.name, colors[i] ?? '#AAAAAA']
-				})
-			)
 			const totalAddressesDeposited = prevDayData.totalAddressDeposited
 			const totalAddressesWithdrawn = prevDayData.totalAddressWithdrawn
 			const addressesTableUnformatted: Record<string, AddressTableUnformattedRow> = {}
@@ -391,7 +348,6 @@ function buildTableDataByChain({
 			addressesTableData,
 			tokenDeposits,
 			tokenWithdrawals,
-			tokenColor,
 			totalDepositedUSD: prevDayData?.totalDepositedUSD,
 			totalWithdrawnUSD: prevDayData?.totalWithdrawnUSD,
 			totalDepositTxs: prevDayData?.totalDepositTxs,

@@ -10,6 +10,7 @@ import {
 	getStablecoinChartViewOptions,
 	getStablecoinOverviewSeriesChart,
 	getStablecoinOverviewVolumeChartKind,
+	getStablecoinSeriesSelectorLabel,
 	parseStablecoinVolumeGroupBy,
 	parseStablecoinChartState
 } from '../chartState'
@@ -144,5 +145,18 @@ describe('stablecoin chart state', () => {
 		expect(getStablecoinAssetVolumeChartKind('volume', 'byChain')).toBe('chain')
 		expect(getStablecoinAssetVolumeChartKind('volume', 'byToken')).toBe('total')
 		expect(getStablecoinAssetVolumeChartKind('marketCap', 'total')).toBeNull()
+	})
+
+	it('labels only peer-series chart views', () => {
+		expect(getStablecoinSeriesSelectorLabel(createStablecoinOverviewChartMode('All'), 'marketCap', 'breakdown')).toBe(
+			'Token'
+		)
+		expect(getStablecoinSeriesSelectorLabel({ page: 'chains' }, 'marketCap', 'dominance')).toBe('Chain')
+		expect(getStablecoinSeriesSelectorLabel({ page: 'asset' }, 'volume', 'byChain')).toBe('Chain')
+		expect(getStablecoinSeriesSelectorLabel(createStablecoinOverviewChartMode('All'), 'volume', 'byCurrency')).toBe(
+			'Currency'
+		)
+		expect(getStablecoinSeriesSelectorLabel(createStablecoinOverviewChartMode('All'), 'inflows', 'token')).toBe('Token')
+		expect(getStablecoinSeriesSelectorLabel({ page: 'asset' }, 'marketCap', 'total')).toBeNull()
 	})
 })

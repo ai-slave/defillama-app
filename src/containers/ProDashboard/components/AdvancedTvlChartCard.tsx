@@ -1,16 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import {
-	buildTimeSeriesDataset,
-	materializeZeroFilledDataset,
-	type TimestampDataset
-} from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import { buildTimeSeriesDataset, type TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { useSelectedValues } from '~/hooks/useSelectedValues'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { toNiceCsvDate } from '~/utils'
 import { download } from '~/utils/download'
 import { useChartImageExport } from '../hooks/useChartImageExport'
@@ -78,29 +76,55 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		extraTvlsEnabled,
 		enabled: streamDone && chartType !== 'tvl' && !suppressTokenBreakdowns
 	})
-	const advancedDataset = advancedData.dataset ?? EMPTY_DATASET
 	const advancedSeriesNames = advancedData.seriesNames
+	const pieSeriesNames = useMemo(
+		() => advancedData.pieSeries.peers.map((peer) => peer.name),
+		[advancedData.pieSeries.peers]
+	)
 	const resolvedBasicTvlDataset = basicTvlDataset ?? EMPTY_DATASET
+	const isRuntimeBreakdown =
+		chartType === 'chainsTvl' ||
+		chartType === 'tokenValuesUsd' ||
+		chartType === 'tokenBalances' ||
+		chartType === 'tokenInflows'
+	const selectorValues = isRuntimeBreakdown ? advancedSeriesNames : EMPTY_STACKS
+	const runtimePresentation = useProtocolBreakdownPresentation({
+		breakdown: advancedData.breakdown ?? [],
+		availableSeries: selectorValues,
+		defaultSeries: advancedData.defaultSeriesNames,
+		aggregateOthers: chartType === 'chainsTvl' || chartType === 'tokenValuesUsd' || chartType === 'tokenInflows',
+		type: chartType === 'tokenInflows' ? 'bar' : 'line',
+		stack: chartType === 'tokenInflows' ? 'stackA' : undefined,
+		fillMissingWithZero: true,
+		selectionKey: `${protocol}:${chartType}`
+	})
+	const advancedDataset = isRuntimeBreakdown ? runtimePresentation.dataset : (advancedData.dataset ?? EMPTY_DATASET)
+	const renderedSeries = runtimePresentation.charts.map((chart) => chart.name)
 
 	const presentation = useMemo(
 		() =>
 			buildAdvancedTvlPresentation({
 				chartType,
 				chainsDataset: chartType === 'chainsTvl' ? advancedDataset : EMPTY_DATASET,
-				chainNames: chartType === 'chainsTvl' ? advancedSeriesNames : EMPTY_STACKS,
-				tokenNames: chartType === 'chainsTvl' ? EMPTY_STACKS : advancedSeriesNames
+				chainNames: chartType === 'chainsTvl' ? renderedSeries : EMPTY_STACKS,
+				tokenNames:
+					chartType === 'chainsTvl' ? EMPTY_STACKS : chartType === 'tokensPie' ? pieSeriesNames : renderedSeries
 			}),
-		[chartType, advancedDataset, advancedSeriesNames]
+		[chartType, advancedDataset, pieSeriesNames, renderedSeries]
 	)
-
-	const selectorValues =
-		chartType === 'chainsTvl'
-			? presentation.orderedChainNames
-			: chartType === 'tokenValuesUsd' || chartType === 'tokenBalances' || chartType === 'tokenInflows'
-				? advancedSeriesNames
-				: EMPTY_STACKS
-	const [selectedSeries, setSelectedSeries] = useSelectedValues(selectorValues, `${protocol}:${chartType}`)
-	const selectedCharts = useMemo(() => new Set(selectedSeries), [selectedSeries])
+	const pieSelection = useAllSeriesSelection({
+		availableSeries: pieSeriesNames,
+		selectionKey: `${protocol}:tokensPie`
+	})
+	const piePresentation = useMemo(
+		() =>
+			buildRuntimePieChartPresentation({
+				series: advancedData.pieSeries,
+				selectedSeries: pieSelection.selectedCharts,
+				includeUpstreamOthers: pieSelection.includeUpstreamOthers
+			}),
+		[advancedData.pieSeries, pieSelection.includeUpstreamOthers, pieSelection.selectedCharts]
+	)
 	const selectorLabel = chartType === 'chainsTvl' ? 'Chain' : 'Token'
 
 	const rawVisibleDataset = chartType === 'tvl' ? resolvedBasicTvlDataset : advancedDataset
@@ -108,22 +132,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		() => filterChartDatasetByTimePeriod(rawVisibleDataset, timePeriod, customTimePeriod),
 		[rawVisibleDataset, timePeriod, customTimePeriod]
 	)
-	const visibleDataset = useMemo(() => {
-		switch (chartType) {
-			case 'chainsTvl':
-				return materializeZeroFilledDataset(filteredDataset, selectedSeries)
-			case 'tokenValuesUsd':
-				return materializeZeroFilledDataset(filteredDataset, selectedSeries)
-			case 'tokenBalances':
-				return materializeZeroFilledDataset(filteredDataset, selectedSeries)
-			case 'usdInflows':
-				return materializeZeroFilledDataset(filteredDataset, ['USD Inflows'])
-			case 'tokenInflows':
-				return materializeZeroFilledDataset(filteredDataset, selectedSeries)
-			default:
-				return filteredDataset
-		}
-	}, [chartType, filteredDataset, selectedSeries])
+	const canonicalDataset = filteredDataset
 
 	const handleCsvExport = () => {
 		let rows: (string | number)[][] = []
@@ -146,19 +155,19 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				filename = `${protocolSlug}-tvl`
 				break
 			case 'chainsTvl':
-				rows = buildRows(filteredDataset, presentation.orderedChainNames)
+				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-tvl-by-chains`
 				break
 			case 'tokenValuesUsd':
-				rows = buildRows(filteredDataset, advancedSeriesNames)
+				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-token-values-usd`
 				break
 			case 'tokensPie':
-				rows = [['Token', 'Value'], ...advancedData.pieChart.map((row) => [row.name, row.value])]
+				rows = [['Token', 'Value'], ...piePresentation.chartData.map((row) => [row.name, row.value])]
 				filename = `${protocolSlug}-tokens-breakdown`
 				break
 			case 'tokenBalances':
-				rows = buildRows(filteredDataset, advancedSeriesNames)
+				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-token-balances`
 				break
 			case 'usdInflows':
@@ -166,7 +175,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				filename = `${protocolSlug}-usd-inflows`
 				break
 			case 'tokenInflows':
-				rows = buildRows(filteredDataset, advancedSeriesNames)
+				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-token-inflows`
 				break
 		}
@@ -190,22 +199,18 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	const chartContent =
 		chartType === 'tokensPie' ? (
 			<PieChart
-				chartData={advancedData.pieChart}
-				stackColors={presentation.stackColors}
-				exportButtons={{
-					png: true,
-					csv: false,
-					filename: imageFilename,
-					pngTitle: imageTitle
-				}}
+				chartData={piePresentation.chartData}
+				stackColors={{ ...piePresentation.stackColors, ...presentation.stackColors }}
+				exportButtons="hidden"
 				height="360px"
+				onReady={handleChartReady}
 			/>
 		) : (
 			<MultiSeriesChart
 				title=""
-				dataset={visibleDataset}
+				dataset={canonicalDataset}
 				charts={presentation.charts}
-				selectedCharts={selectorValues.length > 0 ? selectedCharts : undefined}
+				selectedCharts={selectorValues.length > 0 ? runtimePresentation.selectedCharts : undefined}
 				valueSymbol={presentation.valueSymbol}
 				hideDefaultLegend
 				hideDataZoom={presentation.hideDataZoom}
@@ -217,7 +222,10 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 			/>
 		)
 
-	const hasChartData = chartType === 'tokensPie' ? advancedData.pieChart.length > 0 : filteredDataset.source.length > 0
+	const hasChartData =
+		chartType === 'tokensPie'
+			? advancedData.pieSeries.peers.length > 0 || advancedData.pieSeries.upstreamOthersValue > 0
+			: filteredDataset.source.length > 0
 
 	return (
 		<div className="flex min-h-[402px] flex-col p-2 md:min-h-[418px]">
@@ -227,21 +235,29 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 					<p className="text-xs text-pro-text-secondary">{protocolName}</p>
 				</div>
 				{hasChartData ? (
-					<div className="flex items-center gap-2">
-						{selectorValues.length > 1 ? (
+					<div className="flex flex-wrap items-center justify-end gap-2">
+						{chartType === 'tokensPie' && pieSeriesNames.length > 1 ? (
+							<SelectWithCombobox
+								allValues={pieSeriesNames}
+								selectedValues={pieSelection.activeSeries}
+								setSelectedValues={pieSelection.setSelectedSeries}
+								label="Token"
+								labelType="smol"
+								variant="filter"
+								size="md"
+							/>
+						) : selectorValues.length > 1 ? (
 							<SelectWithCombobox
 								allValues={selectorValues}
-								selectedValues={selectedSeries}
-								setSelectedValues={setSelectedSeries}
+								selectedValues={runtimePresentation.activeSeries}
+								setSelectedValues={runtimePresentation.setSelectedSeries}
 								label={selectorLabel}
 								labelType="smol"
 								variant="filter"
 								size="md"
 							/>
 						) : null}
-						{chartType !== 'tokensPie' ? (
-							<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-						) : null}
+						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 						<ProTableCSVButton
 							onClick={handleCsvExport}
 							smol
@@ -251,7 +267,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				) : null}
 			</div>
 
-			<div className="flex-1" key={chartType}>
+			<div className="flex-1">
 				<Suspense fallback={<div className="min-h-[360px]" />}>{chartContent}</Suspense>
 			</div>
 		</div>

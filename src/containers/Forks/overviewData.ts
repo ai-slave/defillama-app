@@ -1,4 +1,4 @@
-import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import { prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { CHART_COLORS } from '~/constants/colors'
 import { getForkToOriginalTvlPercent } from './tvl'
 import type { ForkBreakdownChartData, ForkOverviewPageData } from './types'
@@ -107,10 +107,9 @@ export function buildForksOverviewDisplayData({
 			if (value == null) continue
 			tvls.push({ name, value })
 		}
-		tvls.sort((a, b) => b.value - a.value)
 	}
 
-	const tokenTvls = preparePieChartData({ data: tvls, limit: 5 })
+	const pieSeries = prepareRuntimePieChartData({ data: tvls, limit: 5 })
 	const chartColors = Object.assign({}, forkColors)
 
 	for (let index = 0; index < sortedChartForks.length; index++) {
@@ -124,23 +123,11 @@ export function buildForksOverviewDisplayData({
 	for (const entry of chartData) {
 		const row = new Array<number | undefined>(sortedChartForks.length + 1)
 		row[0] = entry.timestamp * 1000
-		let totalTvl = 0
-
 		for (let forkIndex = 0; forkIndex < sortedChartForks.length; forkIndex++) {
 			const forkName = sortedChartForks[forkIndex]
 			const value = getFiniteForkTvl(entry, forkName)
 			if (value == null || value <= 0) continue
 			row[forkIndex + 1] = value
-			totalTvl += value
-		}
-
-		if (totalTvl > 0) {
-			for (let forkIndex = 0; forkIndex < sortedChartForks.length; forkIndex++) {
-				const value = row[forkIndex + 1]
-				if (value != null) {
-					row[forkIndex + 1] = (value / totalTvl) * 100
-				}
-			}
 		}
 
 		dominanceSource.push(row)
@@ -166,7 +153,7 @@ export function buildForksOverviewDisplayData({
 
 	return {
 		tableData,
-		tokenTvls,
+		pieSeries,
 		dominanceDataset: {
 			source: dominanceSource,
 			dimensions: ['timestamp', ...sortedChartForks]

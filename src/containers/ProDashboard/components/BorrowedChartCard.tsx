@@ -1,19 +1,17 @@
 import { lazy, Suspense, useContext, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import {
-	materializeZeroFilledDataset,
-	type TimestampDataset
-} from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type {
 	IMultiSeriesChartProps,
 	MultiSeriesChartDataset,
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { buildProtocolV1ChartConfigs } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
-import { useSelectedValues } from '~/hooks/useSelectedValues'
+import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { toNiceCsvDate } from '~/utils'
 import { download } from '~/utils/download'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPE_LABELS } from '../borrowedChartConstants'
@@ -65,17 +63,42 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		enabled: streamDone && !suppressTokenBreakdown,
 		staleTime: Infinity
 	})
-	const rawDataset = borrowedData.dataset ?? EMPTY_DATASET
 	const seriesNames = borrowedData.seriesNames
-	const pieChart = borrowedData.pieChart
+	const pieSeriesNames = useMemo(
+		() => borrowedData.pieSeries.peers.map((peer) => peer.name),
+		[borrowedData.pieSeries.peers]
+	)
+	const isRuntimeBreakdown = chartType !== 'tokensBorrowedPie'
+	const runtimePresentation = useProtocolBreakdownPresentation({
+		breakdown: borrowedData.breakdown ?? [],
+		availableSeries: isRuntimeBreakdown ? seriesNames : [],
+		defaultSeries: borrowedData.defaultSeriesNames,
+		aggregateOthers: chartType === 'chainsBorrowed' || chartType === 'tokenBorrowedUsd',
+		type: 'line',
+		fillMissingWithZero: true,
+		selectionKey: `${protocol}:${chartType}`
+	})
+	const rawDataset = isRuntimeBreakdown ? runtimePresentation.dataset : EMPTY_DATASET
+	const renderedSeries = runtimePresentation.charts.map((chart) => chart.name)
 	const visibleCharts = useMemo(() => {
 		if (chartType === 'tokensBorrowedPie') return EMPTY_CHARTS
-		return buildProtocolV1ChartConfigs({ seriesNames, type: 'line', hideAreaStyle: true })
-	}, [chartType, seriesNames])
+		return runtimePresentation.charts.map((chart) => ({ ...chart, hideAreaStyle: true }))
+	}, [chartType, runtimePresentation.charts])
 
 	const selectorValues = seriesNames
-	const [selectedSeries, setSelectedSeries] = useSelectedValues(selectorValues)
-	const selectedCharts = useMemo(() => new Set(selectedSeries), [selectedSeries])
+	const pieSelection = useAllSeriesSelection({
+		availableSeries: pieSeriesNames,
+		selectionKey: `${protocol}:tokensBorrowedPie`
+	})
+	const piePresentation = useMemo(
+		() =>
+			buildRuntimePieChartPresentation({
+				series: borrowedData.pieSeries,
+				selectedSeries: pieSelection.selectedCharts,
+				includeUpstreamOthers: pieSelection.includeUpstreamOthers
+			}),
+		[borrowedData.pieSeries, pieSelection.includeUpstreamOthers, pieSelection.selectedCharts]
+	)
 	const selectorLabel = chartType === 'chainsBorrowed' ? 'Chain' : 'Token'
 
 	const rawVisibleDataset = chartType === 'tokensBorrowedPie' ? EMPTY_DATASET : rawDataset
@@ -83,18 +106,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		() => filterChartDatasetByTimePeriod(rawVisibleDataset, timePeriod, customTimePeriod),
 		[rawVisibleDataset, timePeriod, customTimePeriod]
 	)
-	const visibleDataset = useMemo(() => {
-		switch (chartType) {
-			case 'chainsBorrowed':
-				return materializeZeroFilledDataset(filteredDataset, selectedSeries)
-			case 'tokenBorrowedUsd':
-				return materializeZeroFilledDataset(filteredDataset, selectedSeries)
-			case 'tokenBorrowedRaw':
-				return materializeZeroFilledDataset(filteredDataset, selectedSeries)
-			default:
-				return EMPTY_DATASET
-		}
-	}, [chartType, filteredDataset, selectedSeries])
+	const canonicalDataset = chartType === 'tokensBorrowedPie' ? EMPTY_DATASET : filteredDataset
 
 	const handleCsvExport = () => {
 		let rows: (string | number)[][] = []
@@ -113,19 +125,19 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 
 		switch (chartType) {
 			case 'chainsBorrowed':
-				rows = buildRows(filteredDataset, seriesNames)
+				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-borrowed-by-chain`
 				break
 			case 'tokenBorrowedUsd':
-				rows = buildRows(filteredDataset, seriesNames)
+				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-borrowed-by-token-usd`
 				break
 			case 'tokensBorrowedPie':
-				rows = [['Token', 'Value'], ...pieChart.map((row) => [row.name, row.value])]
+				rows = [['Token', 'Value'], ...piePresentation.chartData.map((row) => [row.name, row.value])]
 				filename = `${protocolSlug}-borrowed-tokens-breakdown`
 				break
 			case 'tokenBorrowedRaw':
-				rows = buildRows(filteredDataset, seriesNames)
+				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-borrowed-by-token-raw`
 				break
 		}
@@ -151,9 +163,9 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 				return (
 					<MultiSeriesChart
 						title=""
-						dataset={visibleDataset}
+						dataset={canonicalDataset}
 						charts={visibleCharts}
-						selectedCharts={selectedCharts}
+						selectedCharts={runtimePresentation.selectedCharts}
 						valueSymbol="$"
 						hideDefaultLegend
 						chartOptions={DOLLAR_CHART_OPTIONS}
@@ -165,9 +177,9 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 				return (
 					<MultiSeriesChart
 						title=""
-						dataset={visibleDataset}
+						dataset={canonicalDataset}
 						charts={visibleCharts}
-						selectedCharts={selectedCharts}
+						selectedCharts={runtimePresentation.selectedCharts}
 						valueSymbol="$"
 						hideDefaultLegend
 						chartOptions={DOLLAR_CHART_OPTIONS}
@@ -178,22 +190,19 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 			case 'tokensBorrowedPie':
 				return (
 					<PieChart
-						chartData={pieChart}
-						exportButtons={{
-							png: true,
-							csv: false,
-							filename: imageFilename,
-							pngTitle: imageTitle
-						}}
+						chartData={piePresentation.chartData}
+						stackColors={piePresentation.stackColors}
+						exportButtons="hidden"
+						onReady={handleChartReady}
 					/>
 				)
 			case 'tokenBorrowedRaw':
 				return (
 					<MultiSeriesChart
 						title=""
-						dataset={visibleDataset}
+						dataset={canonicalDataset}
 						charts={visibleCharts}
-						selectedCharts={selectedCharts}
+						selectedCharts={runtimePresentation.selectedCharts}
 						valueSymbol=""
 						hideDefaultLegend
 						chartOptions={UNITLESS_CHART_OPTIONS}
@@ -206,7 +215,10 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		}
 	})()
 
-	const hasChartData = chartType === 'tokensBorrowedPie' ? pieChart.length > 0 : filteredDataset.source.length > 0
+	const hasChartData =
+		chartType === 'tokensBorrowedPie'
+			? borrowedData.pieSeries.peers.length > 0 || borrowedData.pieSeries.upstreamOthersValue > 0
+			: filteredDataset.source.length > 0
 
 	return (
 		<div className="flex h-full flex-col p-2">
@@ -216,21 +228,29 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 					<p className="text-xs text-pro-text-secondary">{protocolName}</p>
 				</div>
 				{hasChartData ? (
-					<div className="flex items-center gap-2">
-						{chartType !== 'tokensBorrowedPie' && selectorValues.length > 1 ? (
+					<div className="flex flex-wrap items-center justify-end gap-2">
+						{chartType === 'tokensBorrowedPie' && pieSeriesNames.length > 1 ? (
+							<SelectWithCombobox
+								allValues={pieSeriesNames}
+								selectedValues={pieSelection.activeSeries}
+								setSelectedValues={pieSelection.setSelectedSeries}
+								label="Token"
+								labelType="smol"
+								variant="filter"
+								size="md"
+							/>
+						) : chartType !== 'tokensBorrowedPie' && selectorValues.length > 1 ? (
 							<SelectWithCombobox
 								allValues={selectorValues}
-								selectedValues={selectedSeries}
-								setSelectedValues={setSelectedSeries}
+								selectedValues={runtimePresentation.activeSeries}
+								setSelectedValues={runtimePresentation.setSelectedSeries}
 								label={selectorLabel}
 								labelType="smol"
 								variant="filter"
 								size="md"
 							/>
 						) : null}
-						{chartType !== 'tokensBorrowedPie' ? (
-							<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-						) : null}
+						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 						<ProTableCSVButton
 							onClick={handleCsvExport}
 							smol

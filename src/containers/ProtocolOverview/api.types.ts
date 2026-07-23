@@ -18,12 +18,6 @@ export interface IProtocolWarningBanner {
 	level: 'low' | 'alert' | 'rug'
 }
 
-export interface IProtocolChainTvlEntry {
-	tvl?: Array<{ date: number; totalLiquidityUSD: number }> | null
-	tokens?: Array<{ date: number; tokens: Record<string, number> }> | null
-	tokensInUsd?: Array<{ date: number; tokens: Record<string, number> }> | null
-}
-
 export interface IProtocolMetricsV2 {
 	id: string
 	name: string
@@ -69,10 +63,6 @@ export interface IProtocolMetricsV2 {
 	wrongLiquidity?: boolean
 	tvlCodePath?: string
 	treasuryCodePath?: string
-}
-
-export interface IProtocolOverviewMetricsV1 extends IProtocolMetricsV2 {
-	chainTvls: Record<string, IProtocolChainTvlEntry>
 }
 
 type ProtocolChartBreakdownType = 'chain-breakdown' | 'token-breakdown'

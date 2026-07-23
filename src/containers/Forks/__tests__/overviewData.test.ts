@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { CHART_COLORS } from '~/constants/colors'
 import { buildForksOverviewDisplayData, mergeForkOverviewChartData } from '../overviewData'
 import type { ForkOverviewPageData } from '../types'
@@ -62,7 +63,7 @@ describe('buildForksOverviewDisplayData', () => {
 			{ name: 'EmptyFork', forkedProtocols: 0, parentTvl: null, tvl: 0, ftot: null }
 		])
 
-		expect(display.tokenTvls).toEqual([
+		expect(buildRuntimePieChartPresentation({ series: display.pieSeries }).chartData).toEqual([
 			{ name: 'Curve', value: 120 },
 			{ name: 'Uniswap', value: 80 },
 			{ name: 'NewFork', value: 30 }
@@ -76,20 +77,8 @@ describe('buildForksOverviewDisplayData', () => {
 		})
 
 		expect(display.dominanceDataset.dimensions).toEqual(['timestamp', 'Curve', 'Uniswap', 'NewFork', 'EmptyFork'])
-		expect(display.dominanceDataset.source[0]).toEqual([
-			10_000,
-			(50 / 150) * 100,
-			(100 / 150) * 100,
-			undefined,
-			undefined
-		])
-		expect(display.dominanceDataset.source[1]).toEqual([
-			20_000,
-			(120 / 230) * 100,
-			(80 / 230) * 100,
-			(30 / 230) * 100,
-			undefined
-		])
+		expect(display.dominanceDataset.source[0]).toEqual([10_000, 50, 100, undefined, undefined])
+		expect(display.dominanceDataset.source[1]).toEqual([20_000, 120, 80, 30, undefined])
 		expect(display.dominanceCharts.map((chart) => chart.name)).toEqual(['Curve', 'Uniswap', 'NewFork', 'EmptyFork'])
 	})
 
@@ -103,7 +92,9 @@ describe('buildForksOverviewDisplayData', () => {
 			{ name: 'Uniswap', forkedProtocols: 3, parentTvl: 1_000, tvl: 100, ftot: 10 },
 			{ name: 'Curve', forkedProtocols: 2, parentTvl: 400, tvl: 0, ftot: 0 }
 		])
-		expect(display.tokenTvls).toEqual([{ name: 'Uniswap', value: 100 }])
+		expect(buildRuntimePieChartPresentation({ series: display.pieSeries }).chartData).toEqual([
+			{ name: 'Uniswap', value: 100 }
+		])
 		expect(display.dominanceDataset.source).toEqual([[10_000, 100, undefined]])
 	})
 
@@ -117,7 +108,7 @@ describe('buildForksOverviewDisplayData', () => {
 			{ name: 'Uniswap', forkedProtocols: 3, parentTvl: 1_000, tvl: 0, ftot: 0 },
 			{ name: 'Curve', forkedProtocols: 2, parentTvl: 400, tvl: 0, ftot: 0 }
 		])
-		expect(display.tokenTvls).toEqual([])
+		expect(buildRuntimePieChartPresentation({ series: display.pieSeries }).chartData).toEqual([])
 		expect(display.dominanceDataset).toEqual({
 			source: [],
 			dimensions: ['timestamp', 'Uniswap', 'Curve']

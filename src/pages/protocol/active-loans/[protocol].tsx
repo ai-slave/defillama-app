@@ -1,7 +1,8 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
+import { buildRuntimePieChartPresentation, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { tvlOptionsMap } from '~/components/Filters/options'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -10,11 +11,15 @@ import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
-import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
+import {
+	type ProtocolBreakdownChart,
+	useProtocolBreakdownCharts
+} from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
+import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSelectedValues } from '~/hooks/useSelectedValues'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -30,15 +35,14 @@ const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as Re
 
 const EMPTY_OTHER_PROTOCOLS: string[] = []
 
-type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
-
 function MultiSeriesChartCard({
 	title,
 	protocolName,
 	allSeries,
 	seriesLabel,
-	dataset,
-	charts,
+	breakdown,
+	defaultSeries,
+	aggregateOthers,
 	exportSuffix,
 	valueSymbol,
 	exportIconUrl
@@ -47,14 +51,26 @@ function MultiSeriesChartCard({
 	protocolName: string
 	allSeries: string[]
 	seriesLabel: string
-	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesCharts
+	breakdown: ProtocolBreakdownChart
+	defaultSeries?: string[]
+	aggregateOthers: boolean
 	exportSuffix: string
 	valueSymbol?: string
 	exportIconUrl?: string
 }) {
-	const [selectedSeries, setSelectedSeries] = useSelectedValues(allSeries)
-	const selectedSeriesSet = React.useMemo(() => new Set(selectedSeries), [selectedSeries])
+	const {
+		activeSeries: selectedSeries,
+		setSelectedSeries,
+		dataset,
+		charts,
+		selectedCharts
+	} = useProtocolBreakdownPresentation({
+		breakdown,
+		availableSeries: allSeries,
+		defaultSeries,
+		aggregateOthers,
+		type: 'line'
+	})
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -81,6 +97,14 @@ function MultiSeriesChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
+					prepareCsvDirect={() =>
+						buildSelectedSeriesCsv({
+							dataset,
+							charts,
+							selectedCharts,
+							filename: exportFilenameBase
+						})
+					}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
@@ -88,7 +112,7 @@ function MultiSeriesChartCard({
 					dataset={dataset}
 					charts={charts}
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}
-					selectedCharts={selectedSeriesSet}
+					selectedCharts={selectedCharts}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -98,21 +122,24 @@ function MultiSeriesChartCard({
 
 function TokensBreakdownPieChartCard({
 	protocolName,
-	chartData,
+	series,
 	exportIconUrl
 }: {
 	protocolName: string
-	chartData: Array<{ name: string; value: number }>
+	series: RuntimePieChartData
 	exportIconUrl?: string
 }) {
-	const allTokens = React.useMemo(() => chartData.map((d) => d.name), [chartData])
-	const [selectedTokens, setSelectedTokens] = useSelectedValues(allTokens)
-
-	const selectedTokensSet = React.useMemo(() => new Set(selectedTokens), [selectedTokens])
-	const filteredChartData = React.useMemo(() => {
-		if (selectedTokens.length === 0) return []
-		return chartData.filter((d) => selectedTokensSet.has(d.name))
-	}, [chartData, selectedTokens.length, selectedTokensSet])
+	const selectableSeries = React.useMemo(() => series.peers.map((peer) => peer.name), [series.peers])
+	const {
+		activeSeries: selectedTokens,
+		selectedCharts,
+		setSelectedSeries: setSelectedTokens,
+		includeUpstreamOthers
+	} = useAllSeriesSelection({ availableSeries: selectableSeries })
+	const presentation = React.useMemo(
+		() => buildRuntimePieChartPresentation({ series, selectedSeries: selectedCharts, includeUpstreamOthers }),
+		[includeUpstreamOthers, selectedCharts, series]
+	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -123,9 +150,9 @@ function TokensBreakdownPieChartCard({
 		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">Active Loans Tokens Breakdown (USD)</h2>
-				{allTokens.length > 1 ? (
+				{selectableSeries.length > 1 ? (
 					<SelectWithCombobox
-						allValues={allTokens}
+						allValues={selectableSeries}
 						selectedValues={selectedTokens}
 						setSelectedValues={setSelectedTokens}
 						label="Token"
@@ -142,7 +169,11 @@ function TokensBreakdownPieChartCard({
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<PieChart chartData={filteredChartData} onReady={handleChartReady} />
+				<PieChart
+					chartData={presentation.chartData}
+					stackColors={presentation.stackColors}
+					onReady={handleChartReady}
+				/>
 			</React.Suspense>
 		</ChartPanel>
 	)
@@ -230,13 +261,11 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 		chainsUnique,
 		tokensUnique,
 		rawTokensUnique,
-		chainsDataset: borrowedByChainDataset,
-		chainsCharts: borrowedByChainCharts,
-		tokenUSDDataset,
-		tokenUSDCharts,
-		tokenRawDataset,
-		tokenRawCharts,
-		tokenBreakdownPieChart
+		defaultRawTokens,
+		chainBreakdown,
+		tokenRawBreakdown,
+		tokenBreakdownUSD,
+		tokenBreakdownPieSeries
 	} = useProtocolBreakdownCharts({
 		protocol,
 		keys: ['borrowed'],
@@ -245,10 +274,11 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 		computeInflows: false
 	})
 	const hasBreakdownMetrics =
-		(borrowedByChainDataset && chainsUnique.length > 1) ||
-		(tokenUSDDataset && tokensUnique?.length > 0) ||
-		(tokenBreakdownPieChart?.length ?? 0) > 0 ||
-		(tokenRawDataset && rawTokensUnique.length > 0)
+		(chainBreakdown && chainsUnique.length > 1) ||
+		(tokenBreakdownUSD && tokensUnique.length > 0) ||
+		tokenBreakdownPieSeries.peers.length > 0 ||
+		tokenBreakdownPieSeries.upstreamOthersValue > 0 ||
+		(tokenRawBreakdown && rawTokensUnique.length > 0)
 	const protocolIconUrl = tokenIconUrl(props.name)
 
 	return (
@@ -276,50 +306,51 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 				</PanelStatus>
 			) : (
 				<div className="grid grid-cols-2 gap-2">
-					{borrowedByChainDataset && chainsUnique.length > 1 ? (
+					{chainBreakdown && chainsUnique.length > 1 ? (
 						<MultiSeriesChartCard
 							title="Active Loans by Chain"
 							protocolName={props.name}
 							allSeries={chainsUnique}
 							seriesLabel="Chain"
-							dataset={borrowedByChainDataset}
-							charts={borrowedByChainCharts}
+							breakdown={chainBreakdown}
+							aggregateOthers
 							exportSuffix="active-loans-by-chain"
 							valueSymbol="$"
 							exportIconUrl={protocolIconUrl}
 						/>
 					) : null}
 
-					{tokenUSDDataset && tokensUnique?.length > 0 ? (
+					{tokenBreakdownUSD && tokensUnique.length > 0 ? (
 						<MultiSeriesChartCard
 							title="Active Loans by Token (USD)"
 							protocolName={props.name}
 							allSeries={tokensUnique}
 							seriesLabel="Token"
-							dataset={tokenUSDDataset}
-							charts={tokenUSDCharts}
+							breakdown={tokenBreakdownUSD}
+							aggregateOthers
 							exportSuffix="active-loans-by-token-usd"
 							valueSymbol="$"
 							exportIconUrl={protocolIconUrl}
 						/>
 					) : null}
 
-					{tokenBreakdownPieChart?.length > 0 ? (
+					{tokenBreakdownPieSeries.peers.length > 0 || tokenBreakdownPieSeries.upstreamOthersValue > 0 ? (
 						<TokensBreakdownPieChartCard
 							protocolName={props.name}
-							chartData={tokenBreakdownPieChart}
+							series={tokenBreakdownPieSeries}
 							exportIconUrl={protocolIconUrl}
 						/>
 					) : null}
 
-					{tokenRawDataset && rawTokensUnique.length > 0 ? (
+					{tokenRawBreakdown && rawTokensUnique.length > 0 ? (
 						<MultiSeriesChartCard
 							title="Active Loans by Token (Raw Quantities)"
 							protocolName={props.name}
 							allSeries={rawTokensUnique}
 							seriesLabel="Token"
-							dataset={tokenRawDataset}
-							charts={tokenRawCharts}
+							breakdown={tokenRawBreakdown}
+							defaultSeries={defaultRawTokens}
+							aggregateOthers={false}
 							exportSuffix="active-loans-by-token-raw"
 							valueSymbol=""
 							exportIconUrl={protocolIconUrl}

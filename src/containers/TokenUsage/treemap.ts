@@ -3,6 +3,7 @@ import { CHART_COLORS } from '~/constants/colors'
 export type TokenUsageTreemapNode = {
 	name: string
 	path: string
+	selectorKey?: string
 	value: [number, number, number]
 	itemStyle?: { color?: string }
 	children?: TokenUsageTreemapNode[]
@@ -14,7 +15,13 @@ export interface TokenUsageTreemapRow {
 	category?: string
 }
 
+type TokenUsageTreemapProtocolOption = { key: string; name: string }
+
 const UNCATEGORIZED_LABEL = 'Other'
+
+function getProtocolSelectionKey(categoryName: string, protocolName: string): string {
+	return JSON.stringify([categoryName, protocolName])
+}
 
 function toShare(value: number, total: number): number {
 	return Number(((value / total) * 100).toFixed(2))
@@ -108,6 +115,7 @@ export function buildTokenUsageTreemapTreeData(
 			children[childIndex] = {
 				name: childLabel,
 				path: `${parentPath}/${childLabel}`,
+				selectorKey: getProtocolSelectionKey(row.parentLabel, childLabel),
 				value: [childValue, toShare(childValue, row.parentTotal), toShare(childValue, total)],
 				itemStyle: { color: childColors[childIndex] }
 			}
@@ -123,4 +131,83 @@ export function buildTokenUsageTreemapTreeData(
 	}
 
 	return treeData
+}
+
+export function getTokenUsageTreemapProtocolOptions(
+	treeData: TokenUsageTreemapNode[]
+): TokenUsageTreemapProtocolOption[] {
+	const nameCounts = new Map<string, number>()
+	for (const category of treeData) {
+		for (const protocol of category.children ?? []) {
+			nameCounts.set(protocol.name, (nameCounts.get(protocol.name) ?? 0) + 1)
+		}
+	}
+
+	const protocols: TokenUsageTreemapProtocolOption[] = []
+	for (const category of treeData) {
+		for (const protocol of category.children ?? []) {
+			protocols.push({
+				key: protocol.selectorKey ?? protocol.path,
+				name: nameCounts.get(protocol.name) === 1 ? protocol.name : `${protocol.name} (${category.name})`
+			})
+		}
+	}
+	return protocols
+}
+
+/** Filter canonical protocol leaves and recompute only the visible-set shares. */
+export function filterTokenUsageTreemapTreeData(
+	treeData: TokenUsageTreemapNode[],
+	selectedProtocolKeys: ReadonlySet<string>
+): TokenUsageTreemapNode[] {
+	let protocolCount = 0
+	for (const category of treeData) protocolCount += category.children?.length ?? 0
+	if (selectedProtocolKeys.size === protocolCount) return treeData
+
+	const selectedCategories: Array<{
+		category: TokenUsageTreemapNode
+		children: TokenUsageTreemapNode[]
+		total: number
+	}> = []
+	let selectedTotal = 0
+	for (const category of treeData) {
+		const children: TokenUsageTreemapNode[] = []
+		let categoryTotal = 0
+		for (const protocol of category.children ?? []) {
+			if (!selectedProtocolKeys.has(protocol.selectorKey ?? protocol.path)) continue
+			children.push(protocol)
+			categoryTotal += protocol.value[0]
+		}
+		if (children.length === 0) continue
+		selectedCategories.push({ category, children, total: categoryTotal })
+		selectedTotal += categoryTotal
+	}
+
+	const filteredTree = new Array<TokenUsageTreemapNode>(selectedCategories.length)
+	for (let categoryIndex = 0; categoryIndex < selectedCategories.length; categoryIndex++) {
+		const { category, children, total } = selectedCategories[categoryIndex]
+		const visibleChildren = new Array<TokenUsageTreemapNode>(children.length)
+		for (let childIndex = 0; childIndex < children.length; childIndex++) {
+			const child = children[childIndex]
+			visibleChildren[childIndex] = {
+				...child,
+				value: [child.value[0], toShare(child.value[0], total), toShare(child.value[0], selectedTotal)]
+			}
+		}
+		const share = toShare(total, selectedTotal)
+		filteredTree[categoryIndex] = { ...category, value: [total, share, share], children: visibleChildren }
+	}
+	return filteredTree
+}
+
+export function prepareTokenUsageTreemapCsv(treeData: TokenUsageTreemapNode[], filename: string) {
+	const rows: Array<Array<string | number>> = [
+		['Protocol', 'Category', 'Amount', 'Category Share (%)', 'Total Share (%)']
+	]
+	for (const category of treeData) {
+		for (const protocol of category.children ?? []) {
+			rows.push([protocol.name, category.name, protocol.value[0], protocol.value[1], protocol.value[2]])
+		}
+	}
+	return { filename, rows }
 }

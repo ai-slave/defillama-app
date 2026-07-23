@@ -1,4 +1,4 @@
-import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import { prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { calculateTotalWithExtraToggles } from '~/utils/tvlOverlap'
 import type { OracleBreakdownItem, OraclesByChainPageData } from './types'
 
@@ -63,13 +63,11 @@ export function buildOraclesByChainTableAndPieData({
 }) {
 	if (!hasEnabledExtras) {
 		const pieInput: Array<{ name: string; value: number }> = []
-		for (const row of tableData) {
-			pieInput.push({ name: row.name, value: row.tvl })
-		}
+		for (const row of tableData) pieInput.push({ name: row.name, value: row.tvl })
 
 		return {
 			tableData,
-			pieData: preparePieChartData({ data: pieInput, limit: 5 })
+			pieSeries: prepareRuntimePieChartData({ data: pieInput, limit: 5 })
 		}
 	}
 
@@ -87,13 +85,11 @@ export function buildOraclesByChainTableAndPieData({
 	tableDataWithAdjustedTvl.sort((a, b) => b.tvl - a.tvl)
 
 	const pieInput: Array<{ name: string; value: number }> = []
-	for (const row of tableDataWithAdjustedTvl) {
-		pieInput.push({ name: row.name, value: row.tvl })
-	}
+	for (const row of tableDataWithAdjustedTvl) pieInput.push({ name: row.name, value: row.tvl })
 
 	return {
 		tableData: tableDataWithAdjustedTvl,
-		pieData: preparePieChartData({ data: pieInput, limit: 5 })
+		pieSeries: prepareRuntimePieChartData({ data: pieInput, limit: 5 })
 	}
 }
 
@@ -124,8 +120,7 @@ export function buildOraclesByChainDominanceData({
 
 		const point = new Array<number>(oracles.length + 1)
 		point[0] = timestampInSeconds * 1e3
-		let dayTotal = 0
-
+		let hasValue = false
 		for (let oracleIndex = 0; oracleIndex < oracles.length; oracleIndex++) {
 			const oracleName = oracles[oracleIndex]
 			const oracleTvs = shouldApplyExtraTvlFormatting
@@ -136,14 +131,9 @@ export function buildOraclesByChainDominanceData({
 					})
 				: (baseDayData[oracleName] ?? 0)
 			point[oracleIndex + 1] = oracleTvs
-			dayTotal += oracleTvs
+			if (oracleTvs > 0) hasValue = true
 		}
-
-		if (dayTotal === 0) continue
-
-		for (let oracleIndex = 0; oracleIndex < oracles.length; oracleIndex++) {
-			point[oracleIndex + 1] = (point[oracleIndex + 1] / dayTotal) * 100
-		}
+		if (!hasValue) continue
 		source.push(point)
 	}
 

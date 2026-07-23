@@ -1,12 +1,12 @@
 import { lazy, Suspense, useMemo, type ReactElement } from 'react'
-import {
-	materializeZeroFilledDataset,
-	type TimestampDataset
-} from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import { buildProtocolV1ChartConfigs } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
@@ -73,17 +73,40 @@ export function BorrowedChartTab({
 		enabled: !!selectedBorrowedProtocol && !suppressTokenBreakdown,
 		staleTime: 60 * 60 * 1000
 	})
-	const dataset = borrowedData.dataset ?? EMPTY_DATASET
 	const seriesNames = borrowedData.seriesNames
-	const charts = useMemo(
-		() =>
-			buildProtocolV1ChartConfigs({
-				seriesNames,
-				type: 'line',
-				hideAreaStyle: true
-			}),
-		[seriesNames]
+	const pieSeriesNames = useMemo(
+		() => borrowedData.pieSeries.peers.map((peer) => peer.name),
+		[borrowedData.pieSeries.peers]
 	)
+	const isRuntimeBreakdown = activeChartType !== 'tokensBorrowedPie'
+	const runtimePresentation = useProtocolBreakdownPresentation({
+		breakdown: borrowedData.breakdown ?? [],
+		availableSeries: isRuntimeBreakdown ? seriesNames : [],
+		defaultSeries: borrowedData.defaultSeriesNames,
+		aggregateOthers: activeChartType === 'chainsBorrowed' || activeChartType === 'tokenBorrowedUsd',
+		type: 'line',
+		fillMissingWithZero: true,
+		selectionKey: `${selectedBorrowedProtocol}:${activeChartType}`
+	})
+	const dataset = isRuntimeBreakdown ? runtimePresentation.dataset : EMPTY_DATASET
+	const charts = useMemo(
+		() => runtimePresentation.charts.map((chart) => ({ ...chart, hideAreaStyle: true })),
+		[runtimePresentation.charts]
+	)
+	const pieSelection = useAllSeriesSelection({
+		availableSeries: pieSeriesNames,
+		selectionKey: `${selectedBorrowedProtocol}:tokensBorrowedPie`
+	})
+	const piePresentation = useMemo(
+		() =>
+			buildRuntimePieChartPresentation({
+				series: borrowedData.pieSeries,
+				selectedSeries: pieSelection.selectedCharts,
+				includeUpstreamOthers: pieSelection.includeUpstreamOthers
+			}),
+		[borrowedData.pieSeries, pieSelection.includeUpstreamOthers, pieSelection.selectedCharts]
+	)
+	const selectorLabel = activeChartType === 'chainsBorrowed' ? 'Chain' : 'Token'
 
 	const handleProtocolChange = (option: VirtualizedSelectOption) => {
 		onSelectedBorrowedProtocolChange(option.value)
@@ -100,16 +123,15 @@ export function BorrowedChartTab({
 			})),
 		[protocolMisrepresentsTokens]
 	)
-	const visibleDataset = useMemo(
-		() =>
-			activeChartType === 'tokensBorrowedPie' ? EMPTY_DATASET : materializeZeroFilledDataset(dataset, seriesNames),
-		[activeChartType, dataset, seriesNames]
-	)
+	const visibleDataset = activeChartType === 'tokensBorrowedPie' ? EMPTY_DATASET : dataset
 	const previewTitle = chartTypeLabel
 		? `${selectedBorrowedProtocolName} - ${chartTypeLabel}`
 		: selectedBorrowedProtocolName || ''
 	const hasProtocolSelection = Boolean(selectedBorrowedProtocol && selectedBorrowedProtocolName)
-	const hasData = activeChartType === 'tokensBorrowedPie' ? borrowedData.pieChart.length > 0 : dataset.source.length > 0
+	const hasData =
+		activeChartType === 'tokensBorrowedPie'
+			? borrowedData.pieSeries.peers.length > 0 || borrowedData.pieSeries.upstreamOthersValue > 0
+			: dataset.source.length > 0
 
 	let chartContent: ReactElement | null = null
 	if (isLoading) {
@@ -133,6 +155,7 @@ export function BorrowedChartTab({
 							title=""
 							dataset={visibleDataset}
 							charts={charts}
+							selectedCharts={runtimePresentation.selectedCharts}
 							valueSymbol="$"
 							hideDefaultLegend
 							chartOptions={DOLLAR_CHART_OPTIONS}
@@ -154,6 +177,7 @@ export function BorrowedChartTab({
 							title=""
 							dataset={visibleDataset}
 							charts={charts}
+							selectedCharts={runtimePresentation.selectedCharts}
 							valueSymbol="$"
 							hideDefaultLegend
 							chartOptions={DOLLAR_CHART_OPTIONS}
@@ -171,7 +195,7 @@ export function BorrowedChartTab({
 							</div>
 						}
 					>
-						<PieChart chartData={borrowedData.pieChart} />
+						<PieChart chartData={piePresentation.chartData} stackColors={piePresentation.stackColors} />
 					</Suspense>
 				)
 				break
@@ -188,6 +212,7 @@ export function BorrowedChartTab({
 							title=""
 							dataset={visibleDataset}
 							charts={charts}
+							selectedCharts={runtimePresentation.selectedCharts}
 							valueSymbol=""
 							hideDefaultLegend
 							chartOptions={UNITLESS_CHART_OPTIONS}
@@ -239,9 +264,32 @@ export function BorrowedChartTab({
 
 				{hasProtocolSelection ? (
 					<div className="bg-pro-cards-bg p-3">
-						<div className="mb-3">
-							<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">{previewTitle}</h3>
-							<p className="text-xs text-pro-text-secondary">Borrowed Chart</p>
+						<div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+							<div>
+								<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">{previewTitle}</h3>
+								<p className="text-xs text-pro-text-secondary">Borrowed Chart</p>
+							</div>
+							{activeChartType === 'tokensBorrowedPie' && pieSeriesNames.length > 1 ? (
+								<SelectWithCombobox
+									allValues={pieSeriesNames}
+									selectedValues={pieSelection.activeSeries}
+									setSelectedValues={pieSelection.setSelectedSeries}
+									label="Token"
+									labelType="smol"
+									variant="filter"
+									size="md"
+								/>
+							) : seriesNames.length > 1 ? (
+								<SelectWithCombobox
+									allValues={seriesNames}
+									selectedValues={runtimePresentation.activeSeries}
+									setSelectedValues={runtimePresentation.setSelectedSeries}
+									label={selectorLabel}
+									labelType="smol"
+									variant="filter"
+									size="md"
+								/>
+							) : null}
 						</div>
 
 						{!hasData && !isLoading ? (

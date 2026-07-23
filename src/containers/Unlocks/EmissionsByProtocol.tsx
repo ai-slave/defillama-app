@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
+import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
 import { useGeckoId, usePriceChart } from '~/api/client'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
@@ -10,6 +10,7 @@ import { useGetProtocolEmissions } from '~/containers/Unlocks/queries.client'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingDots } from '~/ui/Loaders'
@@ -164,14 +165,10 @@ export function EmissionsByProtocol({
 	disableClientTokenStatsFetch?: boolean
 	hideTokenStats?: boolean
 }) {
-	const router = useRouter()
-	const chartKey = `${router.query.dataType ?? 'documented'}-${router.query.groupAllocation ?? 'false'}`
-
 	return (
 		<div className="col-span-full flex flex-col gap-2 xl:col-span-1">
 			{!isEmissionsPage ? <h3>Emissions</h3> : null}
 			<ChartContainer
-				key={chartKey}
 				data={data}
 				isEmissionsPage={isEmissionsPage}
 				initialTokenMarketData={initialTokenMarketData}
@@ -685,16 +682,15 @@ const ChartContainer = ({
 				: categoriesFromData.filter((cat) => !EXCLUDED_CHART_CATEGORIES.has(cat)),
 		[allocationMode, categoriesFromData, data.categoriesBreakdown]
 	)
-	const categorySelectionKey = `${dataType}:${allocationMode}`
-	const [categorySelection, setCategorySelection] = useState(() => ({
-		key: categorySelectionKey,
-		values: availableCategories
-	}))
-	// Shallow route changes preserve React state. Scope the selection to the data and
-	// allocation modes so raw category names are never reused against grouped rows.
-	const selectedCategories =
-		categorySelection.key === categorySelectionKey ? categorySelection.values : availableCategories
-	const setSelectedCategories = (values: string[]) => setCategorySelection({ key: categorySelectionKey, values })
+	// Category names such as "All" and "TBD" are shared by multiple protocols.
+	// Scope selection intent to the protocol so client-side route changes cannot
+	// carry a coincidentally matching subset into the next authored schedule.
+	const protocolSelectionScope = readSingleQueryValue(router.query.protocol) ?? data.name ?? data.token ?? 'emissions'
+	const categorySelectionKey = `${protocolSelectionScope}:${dataType}:${allocationMode}`
+	const { activeSeries: selectedCategories, setSelectedSeries: setSelectedCategories } = useSeriesSelection({
+		availableSeries: availableCategories,
+		selectionKey: categorySelectionKey
+	})
 
 	const displayData = useMemo(() => {
 		let result = chartData
@@ -1009,15 +1005,17 @@ const ChartContainer = ({
 								values={TIME_GROUPINGS}
 								className="min-h-8"
 							/>
-							<SelectWithCombobox
-								allValues={formattedAvailableCategories}
-								selectedValues={selectedCategories}
-								setSelectedValues={setSelectedCategories}
-								label="Categories"
-								labelType="smol"
-								variant="filter"
-								size="md"
-							/>
+							{availableCategories.length > 1 ? (
+								<SelectWithCombobox
+									allValues={formattedAvailableCategories}
+									selectedValues={selectedCategories}
+									setSelectedValues={setSelectedCategories}
+									label="Categories"
+									labelType="smol"
+									variant="filter"
+									size="md"
+								/>
+							) : null}
 							<ChartExportButtons
 								chartInstance={exportChartInstance}
 								filename={`${data.name}-unlock-schedule`}
@@ -1133,8 +1131,6 @@ export const UnlocksCharts = ({
 	isEmissionsPage?: boolean
 	hideTokenStats?: boolean
 }) => {
-	const router = useRouter()
-	const chartKey = `${router.query.dataType ?? 'documented'}-${router.query.groupAllocation ?? 'false'}`
 	const shouldFetch = !initialData
 	const { data = null, isLoading, error } = useGetProtocolEmissions(shouldFetch ? slug(protocolName) : null)
 
@@ -1157,7 +1153,6 @@ export const UnlocksCharts = ({
 
 	return (
 		<ChartContainer
-			key={chartKey}
 			data={resolvedData}
 			isEmissionsPage={isEmissionsPage}
 			initialTokenMarketData={initialTokenMarketData}

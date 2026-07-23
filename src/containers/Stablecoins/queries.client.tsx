@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type {
 	StablecoinVolumeChainChartKind,
 	StablecoinVolumeGlobalChartKind,
@@ -10,19 +9,13 @@ import type {
 	StablecoinAssetChartType,
 	StablecoinChainsChartType,
 	StablecoinChartSeriesPayload,
-	StablecoinOverviewChartType
+	StablecoinOverviewChartType,
+	StablecoinSeriesSelectionIntent
 } from '~/containers/Stablecoins/chartSeries'
 import { fetchJson } from '~/utils/async'
+import type { StablecoinVolumeChartPayload } from './volumeChart'
 
 type StablecoinMcapSeriesPoint = [number, number]
-
-export interface StablecoinVolumeChartPayload {
-	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
-	valueSymbol: '$'
-	stacked: boolean
-	showTotalInTooltip: boolean
-}
 
 const buildStablecoinMcapSeries = async (chain: string): Promise<StablecoinMcapSeriesPoint[] | null> => {
 	try {
@@ -52,6 +45,7 @@ type StablecoinChartSeriesQuery =
 			chart: StablecoinOverviewChartType | null
 			filters?: Record<string, string | string[] | undefined>
 			seriesLimit?: number
+			selectionIntent?: StablecoinSeriesSelectionIntent
 			enabled?: boolean
 	  }
 	| {
@@ -59,6 +53,7 @@ type StablecoinChartSeriesQuery =
 			chart: StablecoinChainsChartType | null
 			includeUnreleased?: boolean
 			seriesLimit?: number
+			selectionIntent?: StablecoinSeriesSelectionIntent
 			enabled?: boolean
 	  }
 	| {
@@ -67,6 +62,7 @@ type StablecoinChartSeriesQuery =
 			chart: StablecoinAssetChartType | null
 			includeUnreleased?: boolean
 			seriesLimit?: number
+			selectionIntent?: StablecoinSeriesSelectionIntent
 			enabled?: boolean
 	  }
 
@@ -74,6 +70,10 @@ export const buildStablecoinChartSeriesUrl = (query: StablecoinChartSeriesQuery)
 	if (!query.chart) return null
 	const params = new URLSearchParams({ scope: query.scope, chart: query.chart })
 	if (query.seriesLimit != null) params.set('limit', String(query.seriesLimit))
+	if (query.selectionIntent) {
+		params.set(query.selectionIntent.mode, 'true')
+		for (const name of query.selectionIntent.names) params.append('series', name)
+	}
 	if (query.scope === 'overview') {
 		params.set('chain', query.chain)
 		const filters = query.filters ?? {}
@@ -118,6 +118,7 @@ type StablecoinVolumeChartQuery =
 			scope?: 'global'
 			chart: StablecoinVolumeGlobalChartKind | null
 			limit?: number
+			selectionIntent?: StablecoinSeriesSelectionIntent
 			enabled?: boolean
 	  }
 	| {
@@ -125,6 +126,7 @@ type StablecoinVolumeChartQuery =
 			chain: string
 			chart: StablecoinVolumeChainChartKind | null
 			limit?: number
+			selectionIntent?: StablecoinSeriesSelectionIntent
 			enabled?: boolean
 	  }
 	| {
@@ -132,6 +134,7 @@ type StablecoinVolumeChartQuery =
 			token: string | null
 			chart: StablecoinVolumeTokenChartKind | null
 			limit?: number
+			selectionIntent?: StablecoinSeriesSelectionIntent
 			enabled?: boolean
 	  }
 
@@ -142,6 +145,10 @@ export const buildStablecoinVolumeChartUrl = (query: StablecoinVolumeChartQuery)
 		chart: query.chart,
 		limit: String(query.limit ?? 20)
 	})
+	if (query.selectionIntent) {
+		params.set(query.selectionIntent.mode, 'true')
+		for (const name of query.selectionIntent.names) params.append('series', name)
+	}
 	if (query.scope === 'chain') {
 		params.set('chain', query.chain)
 	} else if (query.scope === 'token') {

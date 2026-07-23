@@ -1,14 +1,19 @@
 import * as React from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedPercentageChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type {
 	CanonicalMultiSeriesChartDataset,
 	IMultiSeriesChartProps,
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { SERVER_URL } from '~/constants'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import Layout from '~/layout'
-import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PageTitleStrip } from '~/ui/EntityTitleStrip'
-import { getDominancePercent, getNDistinctColors } from '~/utils'
+import { getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -17,10 +22,10 @@ const MultiSeriesChart = React.lazy(
 	() => import('~/components/ECharts/MultiSeriesChart')
 ) as React.FC<IMultiSeriesChartProps>
 
-function buildDataset(
-	langs: Record<string, Record<string, number>>,
-	mode: 'absolute' | 'dominance'
-): { dataset: CanonicalMultiSeriesChartDataset; keys: string[] } {
+function buildDataset(langs: Record<string, Record<string, number>>): {
+	dataset: CanonicalMultiSeriesChartDataset
+	keys: string[]
+} {
 	const keysSet = new Set<string>()
 	const entries: [string, Record<string, number>][] = []
 	for (const date in langs) {
@@ -36,16 +41,8 @@ function buildDataset(
 		const [date, tvlByLang] = entries[i]
 		const row = new Array<number>(keys.length + 1)
 		row[0] = +date * 1e3
-		if (mode === 'dominance') {
-			let daySum = 0
-			for (const lang in tvlByLang) daySum += tvlByLang[lang]
-			for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
-				row[keyIndex + 1] = getDominancePercent(tvlByLang[keys[keyIndex]] ?? 0, daySum)
-			}
-		} else {
-			for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
-				row[keyIndex + 1] = tvlByLang[keys[keyIndex]] ?? 0
-			}
+		for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
+			row[keyIndex + 1] = tvlByLang[keys[keyIndex]] ?? 0
 		}
 		source[i] = row
 	}
@@ -66,9 +63,8 @@ function buildCharts(keys: string[], colors: Record<string, string>, stack?: str
 export const getStaticProps = withPerformanceLogging('languages', async () => {
 	const data = await fetchJson(`${SERVER_URL}/langs`)
 
-	const { dataset: tvlDataset, keys: langsUnique } = buildDataset(data.chart, 'absolute')
-	const { dataset: dominanceDataset } = buildDataset(data.chart, 'dominance')
-	const { dataset: osDataset, keys: osUnique } = buildDataset(data.sumDailySolanaOpenSourceTvls, 'dominance')
+	const { dataset: tvlDataset, keys: langsUnique } = buildDataset(data.chart)
+	const { dataset: osDataset, keys: osUnique } = buildDataset(data.sumDailySolanaOpenSourceTvls)
 
 	const allColors = getNDistinctColors(langsUnique.length)
 	const colors = {}
@@ -93,7 +89,6 @@ export const getStaticProps = withPerformanceLogging('languages', async () => {
 		props: {
 			tvlDataset,
 			tvlCharts,
-			dominanceDataset,
 			dominanceCharts,
 			osDataset,
 			osCharts
@@ -104,7 +99,7 @@ export const getStaticProps = withPerformanceLogging('languages', async () => {
 
 const pageName = ['TVL', 'by', 'Smart Contract Languages']
 
-export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dominanceCharts, osDataset, osCharts }) {
+export default function Protocols({ tvlDataset, tvlCharts, dominanceCharts, osDataset, osCharts }) {
 	return (
 		<Layout
 			title={`DeFi Programming Languages by TVL - DefiLlama`}
@@ -114,43 +109,99 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 		>
 			<PageTitleStrip title="Breakdown by Smart Contract Languages" />
 
-			<ChartPanel className="relative">
-				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-					<MultiSeriesChart
-						dataset={tvlDataset}
-						charts={tvlCharts}
-						title="TVL"
-						valueSymbol="$"
-						stacked
-						hideDefaultLegend={false}
-					/>
-				</React.Suspense>
-			</ChartPanel>
-			<ChartPanel className="relative">
-				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-					<MultiSeriesChart
-						dataset={dominanceDataset}
-						charts={dominanceCharts}
-						title="TVL Dominance"
-						valueSymbol="%"
-						expandTo100Percent
-						hideDefaultLegend={false}
-					/>
-				</React.Suspense>
-			</ChartPanel>
-
-			<ChartPanel className="relative">
-				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-					<MultiSeriesChart
-						dataset={osDataset}
-						charts={osCharts}
-						valueSymbol="%"
-						expandTo100Percent
-						title="Open/Closed Source breakdown of solana protocols"
-					/>
-				</React.Suspense>
-			</ChartPanel>
+			<LanguageSeriesChart dataset={tvlDataset} charts={tvlCharts} title="TVL" label="Language" stacked />
+			<LanguageSeriesChart
+				dataset={tvlDataset}
+				charts={dominanceCharts}
+				title="TVL Dominance"
+				label="Language"
+				expandTo100Percent
+			/>
+			<LanguageSeriesChart
+				dataset={osDataset}
+				charts={osCharts}
+				title="Open/Closed Source breakdown of solana protocols"
+				label="Source"
+				expandTo100Percent
+			/>
 		</Layout>
+	)
+}
+
+function LanguageSeriesChart({
+	dataset,
+	charts,
+	title,
+	label,
+	stacked,
+	expandTo100Percent
+}: {
+	dataset: CanonicalMultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
+	title: string
+	label: 'Language' | 'Source'
+	stacked?: boolean
+	expandTo100Percent?: boolean
+}) {
+	const series = React.useMemo(() => charts.map((chart) => chart.name), [charts])
+	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({ availableSeries: series })
+	const selectedPercentage = React.useMemo(
+		() =>
+			expandTo100Percent ? buildSelectedPercentageChart({ dataset, charts, selectedCharts }) : { dataset, charts },
+		[charts, dataset, expandTo100Percent, selectedCharts]
+	)
+	const displayedSelectedCharts = React.useMemo(
+		() => (expandTo100Percent ? new Set(activeSeries) : selectedCharts),
+		[activeSeries, expandTo100Percent, selectedCharts]
+	)
+	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const filename = title
+		.toLowerCase()
+		.replaceAll(/[^a-z0-9]+/g, '-')
+		.replaceAll(/(^-|-$)/g, '')
+
+	return (
+		<ChartPanel className="relative">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">{title}</h2>
+				{series.length > 1 ? (
+					<SelectWithCombobox
+						allValues={series}
+						selectedValues={activeSeries}
+						setSelectedValues={setSelectedSeries}
+						label={label}
+						labelType="smol"
+						variant="filter"
+						size="md"
+					/>
+				) : null}
+				<ChartExportButtons
+					chartInstance={chartInstance}
+					filename={filename}
+					title={title}
+					prepareCsvDirect={() =>
+						buildSelectedSeriesCsv({
+							dataset: selectedPercentage.dataset,
+							charts: selectedPercentage.charts,
+							selectedCharts: displayedSelectedCharts,
+							filename
+						})
+					}
+				/>
+			</ChartPanelToolbar>
+			<React.Suspense fallback={<ChartPanelBodyFallback />}>
+				<MultiSeriesChart
+					dataset={selectedPercentage.dataset}
+					charts={selectedPercentage.charts}
+					selectedCharts={expandTo100Percent ? undefined : selectedCharts}
+					valueSymbol={expandTo100Percent ? '%' : '$'}
+					stacked={stacked}
+					expandTo100Percent={expandTo100Percent}
+					hideDefaultLegend={false}
+					onReady={handleChartReady}
+				/>
+			</React.Suspense>
+		</ChartPanel>
 	)
 }
 

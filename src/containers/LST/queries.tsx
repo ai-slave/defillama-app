@@ -1,4 +1,4 @@
-import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import { prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
@@ -169,7 +169,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 		}
 	}
 
-	// --- areaChartData (breakdown percentages) ---
+	// --- areaChartData (canonical absolute ETH values; selection determines the percentage denominator) ---
 	const areaChartData: Array<Record<string, number>> = []
 	const sortedHistoricEntries = Array.from(historicByDate.entries()).sort(([a], [b]) => a - b)
 	for (const [date, dayData] of sortedHistoricEntries) {
@@ -186,17 +186,15 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 		}
 
 		let hasLido = false
-		let total = 0
 		for (const item of data) {
 			if (item.name === 'Lido') hasLido = true
-			total += item.value
 		}
 		// skip days after Dec 2020 that are missing lido data
 		if (date > 1608321600 && !hasLido) continue
 
 		const row: Record<string, number> = { date }
 		for (const item of data) {
-			row[item.name] = (item.value / total) * 100
+			row[item.name] = item.value
 		}
 		areaChartData.push(row)
 	}
@@ -319,7 +317,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 		}
 	}
 
-	const pieChartData = preparePieChartData({
+	const pieSeries = prepareRuntimePieChartData({
 		data: tokenTvls,
 		sliceIdentifier: 'name',
 		sliceValue: 'stakedEth',
@@ -344,7 +342,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 
 	return {
 		areaChartData,
-		pieChartData,
+		pieSeries,
 		tokensList: visibleTokensList,
 		tokens,
 		stakedEthSum,

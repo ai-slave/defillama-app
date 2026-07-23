@@ -1,5 +1,6 @@
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import type { BridgeOverviewVolumeChartPoint, BridgePieChartSlice } from './types'
+import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import type { BridgeOverviewVolumeChartPoint } from './types'
 import { getCompletedBridgeVolumeTotals } from './utils'
 
 export type BridgeOverviewChartType =
@@ -25,8 +26,8 @@ export type BridgeOverviewActiveChart =
 	| { kind: 'Net Flow'; dataset: MultiSeriesChartDataset }
 	| { kind: 'Net Flow (%)'; dataset: MultiSeriesChartDataset }
 	| { kind: 'Inflows'; dataset: MultiSeriesChartDataset }
-	| { kind: '24h Tokens Deposited'; data: BridgePieChartSlice[] }
-	| { kind: '24h Tokens Withdrawn'; data: BridgePieChartSlice[] }
+	| { kind: '24h Tokens Deposited'; series: RuntimePieChartData }
+	| { kind: '24h Tokens Withdrawn'; series: RuntimePieChartData }
 	| null
 
 const BRIDGE_OVERVIEW_SUMMARY_PERIODS = [
@@ -86,7 +87,7 @@ export function getBridgeOverviewSummaryTotals({
 	return rowTotals
 }
 
-function buildTokenPieData(tokens: Record<string, BridgeTokenData>): BridgePieChartSlice[] {
+export function buildBridgeOverviewTokenPieSeries(tokens: Record<string, BridgeTokenData>): RuntimePieChartData {
 	const totalsBySymbol = new Map<string, number>()
 	for (const token in tokens) {
 		const { symbol, usdValue } = tokens[token]
@@ -94,46 +95,34 @@ function buildTokenPieData(tokens: Record<string, BridgeTokenData>): BridgePieCh
 		totalsBySymbol.set(name, (totalsBySymbol.get(name) ?? 0) + usdValue)
 	}
 
-	const sorted: BridgePieChartSlice[] = []
-	for (const [name, value] of totalsBySymbol) sorted.push({ name, value })
-	sorted.sort((a, b) => {
-		const valueDifference = b.value - a.value
-		if (valueDifference !== 0) return valueDifference
-		const aIndex = /^(0|[1-9]\d*)$/.test(a.name) ? Number(a.name) : null
-		const bIndex = /^(0|[1-9]\d*)$/.test(b.name) ? Number(b.name) : null
-		if (aIndex !== null && bIndex !== null) return aIndex - bIndex
-		if (aIndex !== null) return -1
-		if (bIndex !== null) return 1
-		return 0
-	})
-	if (sorted.length <= 10 && !sorted.some((slice) => slice.name === 'Others')) return sorted
-
-	const mainSlices = sorted.slice(0, 10)
-	let othersValue = 0
-	let writeIndex = 0
-	for (const slice of mainSlices) {
-		if (slice.name === 'Others') {
-			othersValue += slice.value
-		} else {
-			mainSlices[writeIndex++] = slice
+	return prepareRuntimePieChartData({
+		data: totalsBySymbol,
+		limit: 10,
+		comparePeers: (a, b) => {
+			const valueDifference = b.value - a.value
+			if (valueDifference !== 0) return valueDifference
+			const aIndex = /^(0|[1-9]\d*)$/.test(a.name) ? Number(a.name) : null
+			const bIndex = /^(0|[1-9]\d*)$/.test(b.name) ? Number(b.name) : null
+			if (aIndex !== null && bIndex !== null) return aIndex - bIndex
+			if (aIndex !== null) return -1
+			if (bIndex !== null) return 1
+			return 0
 		}
-	}
-	mainSlices.length = writeIndex
-	for (let index = 10; index < sorted.length; index++) othersValue += sorted[index].value
-	if (othersValue > 0) mainSlices.push({ name: 'Others', value: othersValue })
-	return mainSlices
+	})
 }
 
 export function buildBridgeOverviewActiveChart({
 	selectedChain,
 	chartType,
 	chainVolumeData,
-	bridgeStatsCurrentDay
+	bridgeStatsCurrentDay,
+	tokenPieSeries
 }: {
 	selectedChain: string
 	chartType: BridgeOverviewChartType
 	chainVolumeData: BridgeOverviewVolumeChartPoint[]
 	bridgeStatsCurrentDay?: BridgeDailyTokenStats | null
+	tokenPieSeries?: RuntimePieChartData
 }): BridgeOverviewActiveChart {
 	if (selectedChain === 'All' || chartType === 'Volumes' || chartType === 'Bridge Volume') return null
 
@@ -173,5 +162,5 @@ export function buildBridgeOverviewActiveChart({
 	const tokensDeposited = bridgeStatsCurrentDay?.totalTokensDeposited
 	const tokensWithdrawn = bridgeStatsCurrentDay?.totalTokensWithdrawn
 	const tokens = chartType === '24h Tokens Deposited' ? tokensDeposited : tokensWithdrawn
-	return { kind: chartType, data: tokens ? buildTokenPieData(tokens) : [] }
+	return { kind: chartType, series: tokenPieSeries ?? buildBridgeOverviewTokenPieSeries(tokens ?? {}) }
 }

@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -12,11 +13,12 @@ import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
-import { buildETFChartSpec, ETF_ASSET_NAMES, type ETFAssetName } from './chartData'
+import { buildETFChartSpec, ETF_ASSET_NAMES } from './chartData'
 import type { ETFOverviewProps, IETFSnapshotRow } from './types'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -33,23 +35,16 @@ const DEFAULT_SORTING_STATE = [{ id: 'aum', desc: true }]
 
 export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETFOverviewProps) => {
 	const [groupBy, setGroupBy] = React.useState<GroupBy>('weekly')
-	const [tickers, setTickers] = React.useState<ETFAssetName[]>([...ETF_ASSET_NAMES])
-	const setTickersFromSelect: React.Dispatch<React.SetStateAction<Array<string> | string>> = React.useCallback(
-		(next) => {
-			setTickers((prev) => {
-				const resolved = typeof next === 'function' ? next(prev) : next
-				if (Array.isArray(resolved))
-					return resolved.filter((value): value is ETFAssetName => ETF_ASSET_NAMES.includes(value as ETFAssetName))
-				return ETF_ASSET_NAMES.includes(resolved as ETFAssetName) ? [resolved as ETFAssetName] : []
-			})
-		},
-		[]
-	)
+	const {
+		activeSeries: tickers,
+		selectedCharts,
+		setSelectedSeries: setTickers
+	} = useSeriesSelection({ availableSeries: ETF_ASSET_NAMES })
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const finalCharts = React.useMemo(() => {
-		return buildETFChartSpec({ flows, groupBy, assets: tickers })
-	}, [flows, groupBy, tickers])
+		return buildETFChartSpec({ flows, groupBy, assets: [...ETF_ASSET_NAMES] })
+	}, [flows, groupBy])
 
 	return (
 		<>
@@ -94,18 +89,31 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 						<Select
 							allValues={ETF_ASSET_NAMES}
 							selectedValues={tickers}
-							setSelectedValues={setTickersFromSelect}
-							label={'ETF'}
+							setSelectedValues={setTickers}
+							label="Asset"
 							labelType="smol"
 							variant="filter-responsive"
 							size="md"
 						/>
-						<ChartExportButtons chartInstance={chartInstance} filename="etf-flows" title="ETF Flows" />
+						<ChartExportButtons
+							chartInstance={chartInstance}
+							filename="etf-flows"
+							title="ETF Flows"
+							prepareCsvDirect={() =>
+								buildSelectedSeriesCsv({
+									dataset: finalCharts.dataset,
+									charts: finalCharts.charts,
+									selectedCharts,
+									filename: 'etf-flows'
+								})
+							}
+						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={finalCharts.dataset}
 							charts={finalCharts.charts}
+							selectedCharts={selectedCharts}
 							groupBy={groupBy}
 							onReady={handleChartReady}
 						/>

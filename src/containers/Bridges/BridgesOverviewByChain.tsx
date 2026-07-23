@@ -1,12 +1,15 @@
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { ChartSelector } from '~/containers/Bridges/ChartSelector'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
@@ -19,6 +22,7 @@ import { formattedNum, slug, toNiceCsvDate } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import {
 	buildBridgeOverviewActiveChart,
+	buildBridgeOverviewTokenPieSeries,
 	getBridgeOverviewSummaryTotals,
 	type BridgeOverviewChartType
 } from './bridgeOverviewChartData'
@@ -136,9 +140,65 @@ export function BridgesOverviewByChain({
 		return ['All', ...uniqueChains].map((label) => ({ label, to: handleRouting(label) }))
 	}, [chains])
 
+	const displaysTokenPie = chartType === '24h Tokens Deposited' || chartType === '24h Tokens Withdrawn'
+	const tokenPieSeriesByDirection = React.useMemo(() => {
+		if (!displaysTokenPie) return null
+		return {
+			deposited: buildBridgeOverviewTokenPieSeries(bridgeStatsCurrentDay?.totalTokensDeposited ?? {}),
+			withdrawn: buildBridgeOverviewTokenPieSeries(bridgeStatsCurrentDay?.totalTokensWithdrawn ?? {})
+		}
+	}, [bridgeStatsCurrentDay, displaysTokenPie])
+	const activeTokenPieSeries =
+		chartType === '24h Tokens Deposited'
+			? (tokenPieSeriesByDirection?.deposited ?? null)
+			: chartType === '24h Tokens Withdrawn'
+				? (tokenPieSeriesByDirection?.withdrawn ?? null)
+				: null
 	const activeChart = React.useMemo(
-		() => buildBridgeOverviewActiveChart({ selectedChain, chartType, chainVolumeData, bridgeStatsCurrentDay }),
-		[selectedChain, chartType, chainVolumeData, bridgeStatsCurrentDay]
+		() =>
+			buildBridgeOverviewActiveChart({
+				selectedChain,
+				chartType,
+				chainVolumeData,
+				bridgeStatsCurrentDay,
+				tokenPieSeries: activeTokenPieSeries ?? undefined
+			}),
+		[selectedChain, chartType, chainVolumeData, bridgeStatsCurrentDay, activeTokenPieSeries]
+	)
+	const tokenColorIndex = React.useMemo(() => {
+		const indexByToken = new Map<string, number>()
+		if (!tokenPieSeriesByDirection) return indexByToken
+		for (const series of [tokenPieSeriesByDirection.deposited, tokenPieSeriesByDirection.withdrawn]) {
+			for (const peer of series.peers) {
+				if (!indexByToken.has(peer.name)) indexByToken.set(peer.name, indexByToken.size)
+			}
+		}
+		return indexByToken
+	}, [tokenPieSeriesByDirection])
+	const activeTokenSeriesNames = React.useMemo(
+		() => activeTokenPieSeries?.peers.map((peer) => peer.name) ?? EMPTY_CHAINS,
+		[activeTokenPieSeries]
+	)
+	const {
+		activeSeries: selectedTokens,
+		selectedCharts: selectedTokenSet,
+		setSelectedSeries: setSelectedTokens,
+		includeUpstreamOthers
+	} = useAllSeriesSelection({
+		availableSeries: activeTokenSeriesNames,
+		selectionKey: selectedChain
+	})
+	const visibleTokenPiePresentation = React.useMemo(
+		() =>
+			activeTokenPieSeries
+				? buildRuntimePieChartPresentation({
+						series: activeTokenPieSeries,
+						selectedSeries: selectedTokenSet,
+						colorIndexByPeer: tokenColorIndex,
+						includeUpstreamOthers
+					})
+				: { chartData: [], stackColors: {} },
+		[activeTokenPieSeries, includeUpstreamOthers, selectedTokenSet, tokenColorIndex]
 	)
 
 	const chartFilename = getBridgeChartFilename(selectedChain, chartType)
@@ -282,6 +342,17 @@ export function BridgesOverviewByChain({
 										selectedChart={chartType}
 										onClick={(value) => setChartType(value as BridgeOverviewChartType)}
 									/>
+									{activeTokenPieSeries && activeTokenSeriesNames.length > 1 ? (
+										<SelectWithCombobox
+											allValues={activeTokenSeriesNames}
+											selectedValues={selectedTokens}
+											setSelectedValues={setSelectedTokens}
+											label="Token"
+											labelType="smol"
+											variant="filter"
+											size="md"
+										/>
+									) : null}
 									<ChartExportButtons
 										chartInstance={exportChartInstance}
 										filename={chartFilename}
@@ -349,11 +420,19 @@ export function BridgesOverviewByChain({
 								) : null
 							) : activeChart?.kind === '24h Tokens Deposited' ? (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
-									<PieChart chartData={activeChart.data} onReady={handleChartReady} />
+									<PieChart
+										chartData={visibleTokenPiePresentation.chartData}
+										stackColors={visibleTokenPiePresentation.stackColors}
+										onReady={handleChartReady}
+									/>
 								</React.Suspense>
 							) : activeChart?.kind === '24h Tokens Withdrawn' ? (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
-									<PieChart chartData={activeChart.data} onReady={handleChartReady} />
+									<PieChart
+										chartData={visibleTokenPiePresentation.chartData}
+										stackColors={visibleTokenPiePresentation.stackColors}
+										onReady={handleChartReady}
+									/>
 								</React.Suspense>
 							) : null}
 						</>

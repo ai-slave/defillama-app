@@ -1,12 +1,14 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
@@ -34,7 +36,6 @@ export function DATByAsset({
 		[metadata.ticker]
 	)
 	const columns = useMemo(() => byAssetColumns({ symbol: metadata.ticker }), [metadata.ticker])
-	const stableInstitutionsKey = useMemo(() => JSON.stringify([...institutionsNames].sort()), [institutionsNames])
 
 	return (
 		<>
@@ -91,26 +92,18 @@ export function DATByAsset({
 			</SummaryCardGrid>
 			<div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 				<MNAVChart
-					key={`realized-${stableInstitutionsKey}`}
 					metadata={metadata}
 					title="mNAV Realized"
 					data={mNAVRealizedChart}
 					institutionsNames={institutionsNames}
 				/>
 				<MNAVChart
-					key={`realistic-${stableInstitutionsKey}`}
 					metadata={metadata}
 					title="mNAV Realistic"
 					data={mNAVRealisticChart}
 					institutionsNames={institutionsNames}
 				/>
-				<MNAVChart
-					key={`max-${stableInstitutionsKey}`}
-					metadata={metadata}
-					title="mNAV Max"
-					data={mNAVMaxChart}
-					institutionsNames={institutionsNames}
-				/>
+				<MNAVChart metadata={metadata} title="mNAV Max" data={mNAVMaxChart} institutionsNames={institutionsNames} />
 			</div>
 			<TableWithSearch
 				data={institutions}
@@ -306,11 +299,11 @@ function MNAVChart({
 	institutionsNames: string[]
 	metadata: IDATOverviewDataByAssetProps['metadata']
 }) {
-	const [selectedInstitution, setSelectedInstitution] = useState<string[]>(institutionsNames)
-
-	const selectedCharts = useMemo(() => {
-		return new Set(selectedInstitution)
-	}, [selectedInstitution])
+	const {
+		activeSeries: selectedInstitution,
+		selectedCharts,
+		setSelectedSeries: setSelectedInstitution
+	} = useSeriesSelection({ availableSeries: institutionsNames, selectionKey: title })
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -318,19 +311,29 @@ function MNAVChart({
 		<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
-				<SelectWithCombobox
-					allValues={institutionsNames}
-					selectedValues={selectedInstitution}
-					setSelectedValues={setSelectedInstitution}
-					label="Institutions"
-					labelType="smol"
-					variant="filter"
-					size="md"
-				/>
+				{institutionsNames.length > 1 ? (
+					<SelectWithCombobox
+						allValues={institutionsNames}
+						selectedValues={selectedInstitution}
+						setSelectedValues={setSelectedInstitution}
+						label="Institutions"
+						labelType="smol"
+						variant="filter"
+						size="md"
+					/>
+				) : null}
 				<ChartExportButtons
 					chartInstance={chartInstance}
 					filename={`${metadata.name}-${title}`}
 					title={`${metadata.name} ${title}`}
+					prepareCsvDirect={() =>
+						buildSelectedSeriesCsv({
+							dataset: data.dataset,
+							charts: data.charts,
+							selectedCharts,
+							filename: `${metadata.name}-${title}`
+						})
+					}
 				/>
 			</ChartPanelToolbar>
 			<Suspense fallback={<ChartPanelBodyFallback />}>

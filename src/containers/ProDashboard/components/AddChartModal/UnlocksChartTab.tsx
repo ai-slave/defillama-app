@@ -3,8 +3,10 @@ import { lazy, Suspense, type ReactNode, useEffect, useMemo, useState } from 're
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { EmissionsDataset } from '~/containers/Unlocks/api.types'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { slug, toNiceDayMonthYear } from '~/utils'
@@ -120,11 +122,15 @@ export function UnlocksChartTab({
 	const scheduleCharts = data?.chartsConfigs?.documented
 
 	const stacks = useMemo(() => {
-		if (scheduleDataset.dimensions.length > 1) return scheduleDataset.dimensions.slice(1)
+		if (scheduleCharts?.length) return scheduleCharts.map((chart) => chart.name)
 		const categories = data?.categories?.documented ?? EMPTY_STACKS
 		if (categories.length > 0) return categories
 		return EMPTY_STACKS
-	}, [scheduleDataset.dimensions, data])
+	}, [scheduleCharts, data])
+	const scheduleSelection = useSeriesSelection({
+		availableSeries: stacks,
+		selectionKey: `${selectedUnlocksProtocol}:schedule`
+	})
 
 	const allocationPieChart = useMemo(() => {
 		const source = data?.pieChartData?.documented ?? EMPTY_CHART_DATA
@@ -270,6 +276,7 @@ export function UnlocksChartTab({
 					<MultiSeriesChart
 						dataset={scheduleDataset}
 						charts={scheduleCharts}
+						selectedCharts={scheduleSelection.selectedCharts}
 						hideDataZoom
 						hallmarks={todayHallmarks}
 						valueSymbol=""
@@ -348,11 +355,24 @@ export function UnlocksChartTab({
 				</h4>
 				{hasSelection ? (
 					<div className="bg-pro-cards-bg p-3">
-						<div className="mb-3">
-							<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">
-								{previewTitle} - {selectedChartLabel}
-							</h3>
-							<p className="text-xs text-pro-text-secondary">Unlocks</p>
+						<div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+							<div>
+								<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">
+									{previewTitle} - {selectedChartLabel}
+								</h3>
+								<p className="text-xs text-pro-text-secondary">Unlocks</p>
+							</div>
+							{selectedUnlocksChartType === 'schedule' && stacks.length > 1 ? (
+								<SelectWithCombobox
+									allValues={stacks}
+									selectedValues={scheduleSelection.activeSeries}
+									setSelectedValues={scheduleSelection.setSelectedSeries}
+									label="Category"
+									labelType="smol"
+									variant="filter"
+									size="md"
+								/>
+							) : null}
 						</div>
 						{chartContent}
 					</div>

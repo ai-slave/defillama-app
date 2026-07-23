@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	buildAreaPayload,
-	buildStablecoinBreakdownDatasetPresentation,
-	buildStablecoinBreakdownPayloadPresentation,
 	buildDominancePayload,
 	buildStablecoinMcapSummary,
 	buildStablecoinOverviewPayload,
@@ -11,6 +9,7 @@ import {
 	buildTotalMcapPayload,
 	buildUsdInflowsPayload,
 	groupStablecoinBarChartPayload,
+	getStablecoinRuntimeSeries,
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT
 } from '../chartSeries'
 import { formatPeggedChainsData } from '../utils'
@@ -58,6 +57,43 @@ const circulatingParams = {
 }
 
 describe('stablecoin chart series builders', () => {
+	it('uses canonical availability while keeping aggregate helpers always visible', () => {
+		expect(
+			getStablecoinRuntimeSeries({
+				dataset: { dimensions: ['timestamp', 'USDT', 'USDC', 'Others'], source: [] },
+				charts: [
+					{ type: 'line', name: 'USDT', encode: { x: 0, y: 1 } },
+					{ type: 'line', name: 'USDC', encode: { x: 0, y: 2 } },
+					{ type: 'line', name: 'Others', encode: { x: 0, y: 3 } }
+				],
+				availableSeries: ['USDT', 'USDC', 'DAI']
+			})
+		).toEqual({
+			selectableSeries: ['USDT', 'USDC', 'DAI'],
+			renderedSelectableSeries: ['USDT', 'USDC'],
+			fixedRemainderSeries: ['Others'],
+			alwaysVisibleSeries: []
+		})
+	})
+
+	it('separates a fixed remainder from configured volume series without availability metadata', () => {
+		expect(
+			getStablecoinRuntimeSeries({
+				dataset: { dimensions: ['timestamp', 'USDT', 'USDC', 'Others'], source: [] },
+				charts: [
+					{ type: 'line', name: 'USDT', encode: { x: 0, y: 1 } },
+					{ type: 'line', name: 'USDC', encode: { x: 0, y: 2 } },
+					{ type: 'line', name: 'Others', encode: { x: 0, y: 3 } }
+				]
+			})
+		).toEqual({
+			selectableSeries: ['USDT', 'USDC'],
+			renderedSelectableSeries: ['USDT', 'USDC'],
+			fixedRemainderSeries: ['Others'],
+			alwaysVisibleSeries: []
+		})
+	})
+
 	it('keeps overview chart payloads identical while adding their shared summary', () => {
 		const topToken = { symbol: 'USDT', mcap: 150 }
 		const { mcapStats } = buildStablecoinMcapSummary(params)
@@ -89,7 +125,7 @@ describe('stablecoin chart series builders', () => {
 		}
 	})
 
-	it('constructs the requested stablecoin selection and reconciles Others once', () => {
+	it('constructs an explicit stablecoin subset without a synthetic remainder', () => {
 		const point = (date: number, value: number) => ({ date, mcap: { peggedUSD: value } })
 		const selectionParams = {
 			chartDataByAssetOrChain: [
@@ -107,16 +143,16 @@ describe('stablecoin chart series builders', () => {
 				selectedNames: ['USDT']
 			}).dataset.source
 		).toEqual([
-			[1660000000000, 100, 50],
-			[1660086400000, 125, 75]
+			[1660000000000, 100],
+			[1660086400000, 125]
 		])
 		expect(
 			buildStablecoinOverviewPayload(selectionParams, 'tokenMcaps', topToken, {
 				selectedNames: ['USDC']
 			}).dataset.source
 		).toEqual([
-			[1660000000000, 50, 100],
-			[1660086400000, 75, 125]
+			[1660000000000, 50],
+			[1660086400000, 75]
 		])
 	})
 
@@ -212,8 +248,7 @@ describe('stablecoin chart series builders', () => {
 
 	it('adds unreleased values before dominance normalization', () => {
 		const payload = buildDominancePayload(circulatingParams, {
-			includeUnreleased: true,
-			normalizeTo100: true
+			includeUnreleased: true
 		})
 
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Tron'])
@@ -358,7 +393,7 @@ describe('stablecoin chart series builders', () => {
 		expect(payload.dataset.source.at(-1)).toEqual([1609632000000, 62.5, 37.5])
 	})
 
-	it('preserves dense asset rows and exactly normalized dominance when requested', () => {
+	it('preserves dense asset rows and exactly normalized dominance', () => {
 		const assetParams = {
 			chartDataByAssetOrChain: [
 				[{ date: 1660000000, circulating: 1 }],
@@ -372,7 +407,7 @@ describe('stablecoin chart series builders', () => {
 			issuanceType: 'circulating'
 		}
 		const area = buildAreaPayload(assetParams, { stackName: 'chains', fillMissingValues: true })
-		const dominance = buildDominancePayload(assetParams, { normalizeTo100: true })
+		const dominance = buildDominancePayload(assetParams)
 
 		expect(area.dataset.source[0]).toEqual([1659913600000, 0, 0, 2])
 		const row = dominance.dataset.source.at(-1)!
@@ -432,16 +467,11 @@ describe('stablecoin chart series builders', () => {
 		expect(area.dataset.dimensions).toEqual(['timestamp', ...area.defaultSeries!, 'Others'])
 		expect(datasetValue(area.dataset, 0, 'Others')).toBe(8)
 		expect(datasetValue(area.dataset, 1, 'Others')).toBe(80)
-		expect(
-			buildStablecoinBreakdownPayloadPresentation({
-				payload: uncapped,
-				seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
-			}).dataset
-		).toEqual(area.dataset)
 
 		const dominance = buildDominancePayload(largeParams, { seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT })
 		expect(datasetValue(dominance.dataset, 1, 'Token12')).toBe(14.46)
-		expect(datasetValue(dominance.dataset, 1, 'Others')).toBe(9.64)
+		expect(datasetValue(dominance.dataset, 1, 'Others')).toBeCloseTo(9.65)
+		expect(dominance.dataset.source[1].slice(1).reduce<number>((sum, value) => sum + (value as number), 0)).toBe(100)
 		const tokenInflows = buildTokenInflowsPayload(largeParams, {
 			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
 		})
@@ -454,8 +484,46 @@ describe('stablecoin chart series builders', () => {
 			selectedNames: ['Token1'],
 			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
 		})
-		expect(selected.dataset.dimensions).toEqual(['timestamp', 'Token1', 'Others'])
-		expect(selected.dataset.source.at(-1)).toEqual([1700086400000, 10, 820])
+		expect(selected.dataset.dimensions).toEqual(['timestamp', 'Token1'])
+		expect(selected.dataset.source.at(-1)).toEqual([1700086400000, 10])
+
+		const selectedOverLimit = buildAreaPayload(largeParams, {
+			stackName: 'tokenMcaps',
+			selectedNames: names.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT + 2),
+			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
+		})
+		expect(datasetValue(selectedOverLimit.dataset, 1, 'Others')).toBe(30)
+
+		const selectedSubsetOverLimit = buildAreaPayload(largeParams, {
+			stackName: 'tokenMcaps',
+			selectedNames: names.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT + 1),
+			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
+		})
+		expect(datasetValue(selectedSubsetOverLimit.dataset, 1, 'Others')).toBe(10)
+
+		const allExceptLargest = buildAreaPayload(largeParams, {
+			stackName: 'tokenMcaps',
+			excludedNames: ['Token12'],
+			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
+		})
+		// The source-level reserved Others remains part of an all-except selection.
+		expect(datasetValue(allExceptLargest.dataset, 1, 'Others')).toBe(60)
+		expect(allExceptLargest.dataset.dimensions).not.toContain('Token12')
+
+		const selectedDominance = buildDominancePayload(largeParams, {
+			selectedNames: ['Token1', 'Token2'],
+			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
+		})
+		expect(datasetValue(selectedDominance.dataset, 1, 'Token1')).toBeCloseTo(33.33)
+		expect(datasetValue(selectedDominance.dataset, 1, 'Token2')).toBeCloseTo(66.67)
+		expect(selectedDominance.charts.map((chart) => chart.name)).toEqual(['Token2', 'Token1'])
+
+		const selectedPair = buildAreaPayload(largeParams, {
+			stackName: 'tokenMcaps',
+			selectedNames: ['Token2', 'Token1'],
+			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
+		})
+		expect(selectedPair.charts.find((chart) => chart.name === 'Token1')?.color).toBe(selected.charts[0].color)
 
 		const selectAll = buildAreaPayload(largeParams, {
 			stackName: 'tokenMcaps',
@@ -464,45 +532,21 @@ describe('stablecoin chart series builders', () => {
 		})
 		expect(selectAll.dataset.dimensions).toEqual([
 			'timestamp',
-			'Token1',
-			'Token2',
-			'Token3',
-			'Token4',
-			'Token5',
-			'Token6',
-			'Token7',
-			'Token8',
-			'Token9',
+			'Token12',
+			'Token11',
 			'Token10',
+			'Token9',
+			'Token8',
+			'Token7',
+			'Token6',
+			'Token5',
+			'Token4',
+			'Token3',
 			'Others'
 		])
-		expect(datasetValue(selectAll.dataset, 1, 'Token1')).toBe(10)
+		expect(datasetValue(selectAll.dataset, 1, 'Token12')).toBe(120)
 		expect(datasetValue(selectAll.dataset, 1, 'Token10')).toBe(100)
-		expect(datasetValue(selectAll.dataset, 1, 'Others')).toBe(280)
-	})
-
-	it('applies the same top-N and reserved Others contract to an existing Pro dataset', () => {
-		const presentation = buildStablecoinBreakdownDatasetPresentation({
-			dataset: {
-				dimensions: ['timestamp', 'Small', 'Large', 'Others'],
-				source: [
-					[1700000000000, 2, 10, 3],
-					[1700086400000, 4, 20, 6]
-				]
-			},
-			seriesNames: ['Small', 'Large', 'Others'],
-			seriesLimit: 1
-		})
-
-		expect(presentation.availableSeries).toEqual(['Large', 'Small'])
-		expect(presentation.defaultSeries).toEqual(['Large'])
-		expect(presentation.dataset).toEqual({
-			dimensions: ['timestamp', 'Large', 'Others'],
-			source: [
-				[1700000000000, 10, 5],
-				[1700086400000, 20, 10]
-			]
-		})
+		expect(datasetValue(selectAll.dataset, 1, 'Others')).toBe(30)
 	})
 
 	it('keeps the rendered series count constant for a 400-series input', () => {

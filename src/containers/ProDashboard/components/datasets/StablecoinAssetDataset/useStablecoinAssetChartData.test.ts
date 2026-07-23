@@ -58,12 +58,26 @@ describe('buildStablecoinAssetPresentation', () => {
 
 		expect(result).toEqual({
 			chartType: 'chainPie',
-			slices: [
-				{ name: 'Base', value: 50 },
-				{ name: 'Ethereum', value: 0 }
-			],
+			pieSeries: {
+				peers: [{ name: 'Base', value: 50 }],
+				limit: 10,
+				upstreamOthersValue: 0
+			},
 			totalCirculating: 50
 		})
+	})
+
+	it('renormalizes dominance to the selected chain set', () => {
+		const result = buildStablecoinAssetPresentation(rawData, 'chainDominance', null, {
+			selectedNames: ['Ethereum']
+		})
+
+		expect(result.chartType).toBe('chainDominance')
+		if (result.chartType === 'chainDominance') {
+			expect(result.availableSeries).toEqual(['Ethereum', 'Base'])
+			expect(result.dataset.dimensions).toEqual(['timestamp', 'Ethereum'])
+			expect(result.dataset.source[0]).toEqual([firstDate * 1e3, 100])
+		}
 	})
 
 	it('returns an empty snapshot when the active period has no points', () => {
@@ -72,6 +86,10 @@ describe('buildStablecoinAssetPresentation', () => {
 				start: firstDate - 2 * day,
 				end: firstDate - day
 			})
-		).toEqual({ chartType: 'chainPie', slices: [], totalCirculating: null })
+		).toEqual({
+			chartType: 'chainPie',
+			pieSeries: { peers: [], limit: 10, upstreamOthersValue: 0 },
+			totalCirculating: null
+		})
 	})
 })

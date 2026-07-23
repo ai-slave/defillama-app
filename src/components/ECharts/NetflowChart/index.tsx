@@ -1,6 +1,6 @@
 import type { EChartsOption } from 'echarts'
 import { BarChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent } from 'echarts/components'
+import { DatasetComponent, GraphicComponent, GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
@@ -13,7 +13,7 @@ import { capitalizeFirstLetter, formattedNum } from '~/utils'
 import { chartGrid } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
 
-echarts.use([BarChart, TooltipComponent, GridComponent, CanvasRenderer])
+echarts.use([BarChart, TooltipComponent, GridComponent, DatasetComponent, GraphicComponent, CanvasRenderer])
 
 export interface NetflowChartProps {
 	height?: number | string

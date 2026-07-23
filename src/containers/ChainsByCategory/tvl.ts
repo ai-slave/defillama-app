@@ -52,7 +52,7 @@ export function applyChainsTvlSettings(
 		hasAnyValue = true
 	}
 
-	return hasAnyValue ? value : null
+	return hasAnyValue ? Math.max(0, value) : null
 }
 
 export function removeStaleChainExtraTvlEntries({

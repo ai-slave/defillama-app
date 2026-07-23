@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { buildOraclesByChainDominanceData, buildOraclesByChainTableAndPieData } from '../byChainData'
 import type { OraclesByChainPageData } from '../types'
 
@@ -33,7 +34,7 @@ describe('buildOraclesByChainTableAndPieData', () => {
 		})
 
 		expect(result.tableData).toBe(tableData)
-		expect(result.pieData).toEqual([
+		expect(buildRuntimePieChartPresentation({ series: result.pieSeries }).chartData).toEqual([
 			{ name: 'Pyth', value: 120 },
 			{ name: 'Chainlink', value: 100 }
 		])
@@ -50,7 +51,7 @@ describe('buildOraclesByChainTableAndPieData', () => {
 			{ ...tableData[0], tvl: 140 },
 			{ ...tableData[1], tvl: 120 }
 		])
-		expect(result.pieData).toEqual([
+		expect(buildRuntimePieChartPresentation({ series: result.pieSeries }).chartData).toEqual([
 			{ name: 'Chainlink', value: 140 },
 			{ name: 'Pyth', value: 120 }
 		])
@@ -73,7 +74,7 @@ describe('buildOraclesByChainDominanceData', () => {
 
 		expect(result.dominanceDataset).toEqual({
 			dimensions: ['timestamp', 'Chainlink', 'Pyth'],
-			source: [[1_000, (100 / 150) * 100, (50 / 150) * 100]]
+			source: [[1_000, 100, 50]]
 		})
 	})
 
@@ -96,7 +97,7 @@ describe('buildOraclesByChainDominanceData', () => {
 
 		expect(result.dominanceDataset).toEqual({
 			dimensions: ['timestamp', 'Chainlink', 'Pyth'],
-			source: [[1_000, 70, 30]]
+			source: [[1_000, 140, 60]]
 		})
 		expect(result.dominanceCharts).toEqual([
 			{

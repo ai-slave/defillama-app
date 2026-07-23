@@ -1,6 +1,6 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import type { Dispatch, SetStateAction } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
@@ -25,10 +25,12 @@ import {
 	generateConsistentChartColor,
 	STABLECOIN_TOKEN_COLORS
 } from '~/containers/ProDashboard/utils/colorManager'
+import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
 import {
-	buildStablecoinBreakdownDatasetPresentation,
-	STABLECOIN_BREAKDOWN_SERIES_LIMIT
-} from '~/containers/Stablecoins/chartSeries'
+	useStablecoinChartSelection,
+	useStablecoinSelectionIntent
+} from '~/containers/Stablecoins/useStablecoinChartSelection'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { formattedNum, slug } from '~/utils'
@@ -73,12 +75,12 @@ const STABLECOIN_ASSET_CHART_TYPES = [
 const EMPTY_HALLMARKS: [number, string][] = []
 const EMPTY_CHAIN_LIST: StablecoinChainInfo[] = []
 const EMPTY_ASSET_LIST: StablecoinAssetInfo[] = []
+const EMPTY_SERIES: string[] = []
 const TOTAL_CIRCULATING_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{ type: 'line', name: 'Circulating', encode: { x: 'timestamp', y: 'Circulating' }, color: '#3e79cc' }
 ]
 const AREA_EXPORT_BUTTONS = { csv: true, png: true, filename: 'chart' }
 const BAR_EXPORT_BUTTONS = { csv: true, png: false, filename: 'bar-chart-data' }
-
 export function StablecoinsChartTab({
 	selectedStablecoinChain,
 	selectedStablecoinChartType,
@@ -97,16 +99,6 @@ export function StablecoinsChartTab({
 	const { data: assetsListData, isLoading: assetsLoading } = useStablecoinAssetsList()
 	const chainsList = chainsListData ?? EMPTY_CHAIN_LIST
 	const assetsList = assetsListData ?? EMPTY_ASSET_LIST
-	const [selectedChainSeries, setSelectedChainSeries] = useState<string[] | null>(null)
-	const [selectedAssetSeries, setSelectedAssetSeries] = useState<string[] | null>(null)
-
-	useEffect(() => {
-		setSelectedChainSeries(null)
-	}, [selectedStablecoinChain, selectedStablecoinChartType])
-	useEffect(() => {
-		setSelectedAssetSeries(null)
-	}, [selectedStablecoinAssetId, selectedStablecoinAssetChartType])
-
 	const chainOptions: VirtualizedSelectOption[] = useMemo(() => {
 		const options: VirtualizedSelectOption[] = [{ value: 'All', label: 'All Chains', icon: '🌐' }]
 		for (const chain of chainsList as StablecoinChainInfo[]) {
@@ -129,20 +121,62 @@ export function StablecoinsChartTab({
 			extra: slug(asset.name)
 		}))
 	}, [assetsList])
+	const { selectionIntent: chainSelectionIntent, setSelectionIntent: setChainSelectionIntent } =
+		useStablecoinSelectionIntent(`${selectedStablecoinChain}:${selectedStablecoinChartType}`)
+	const chainSelectionOptions = useMemo(
+		() => ({
+			selectedNames: chainSelectionIntent?.mode === 'include' ? chainSelectionIntent.names : null,
+			excludedNames: chainSelectionIntent?.mode === 'exclude' ? chainSelectionIntent.names : null
+		}),
+		[chainSelectionIntent]
+	)
 
 	const {
 		chartPayload: chainChartPayload,
-		chainsCirculatingValues,
+		pieSeries: chainPieSeries,
 		seriesNames,
-		availableSeries: availableChainSeries,
-		defaultSeries: defaultChainSeries,
 		totalMcapCurrent,
 		isLoading: chainChartDataLoading
 	} = useStablecoinsChartData(
 		selectedStablecoinChain,
 		selectedStablecoinChartType as StablecoinChartType,
-		selectedChainSeries,
-		stablecoinMode === 'chain'
+		stablecoinMode === 'chain',
+		chainSelectionOptions
+	)
+	const chainRuntimeSeries = useMemo(() => getStablecoinRuntimeSeries(chainChartPayload), [chainChartPayload])
+	const {
+		activeSeries: activeChainSeries,
+		selectableSeries: selectableChainSeries,
+		renderedCharts: renderedChainCharts,
+		setSelectedSeries: setActiveChainSeries
+	} = useStablecoinChartSelection({
+		marketCapSeries: null,
+		runtimeSeries: chainRuntimeSeries,
+		selectionIntent: chainSelectionIntent,
+		setSelectionIntent: setChainSelectionIntent
+	})
+	const chainPieSeriesNames = useMemo(() => chainPieSeries.peers.map((peer) => peer.name), [chainPieSeries.peers])
+	const chainPieSelection = useAllSeriesSelection({
+		availableSeries: chainPieSeriesNames,
+		selectionKey: `${selectedStablecoinChain}:pie`
+	})
+	const chainPiePresentation = useMemo(
+		() =>
+			buildRuntimePieChartPresentation({
+				series: chainPieSeries,
+				selectedSeries: chainPieSelection.selectedCharts,
+				includeUpstreamOthers: chainPieSelection.includeUpstreamOthers
+			}),
+		[chainPieSelection.includeUpstreamOthers, chainPieSelection.selectedCharts, chainPieSeries]
+	)
+	const { selectionIntent: assetSelectionIntent, setSelectionIntent: setAssetSelectionIntent } =
+		useStablecoinSelectionIntent(`${selectedStablecoinAssetId}:${selectedStablecoinAssetChartType}`)
+	const assetSelectionOptions = useMemo(
+		() => ({
+			selectedNames: assetSelectionIntent?.mode === 'include' ? assetSelectionIntent.names : null,
+			excludedNames: assetSelectionIntent?.mode === 'exclude' ? assetSelectionIntent.names : null
+		}),
+		[assetSelectionIntent]
 	)
 
 	const {
@@ -153,29 +187,63 @@ export function StablecoinsChartTab({
 		isLoading: assetChartDataLoading
 	} = useStablecoinAssetChartData(
 		stablecoinMode === 'asset' ? selectedStablecoinAssetId || '' : '',
-		selectedStablecoinAssetChartType as StablecoinAssetChartType
+		selectedStablecoinAssetChartType as StablecoinAssetChartType,
+		null,
+		assetSelectionOptions
 	)
 	const assetDataset = 'dataset' in assetPresentation ? assetPresentation.dataset : null
-	const assetChainsCirculatingValues = assetPresentation.chartType === 'chainPie' ? assetPresentation.slices : []
+	const assetPieSeries = assetPresentation.chartType === 'chainPie' ? assetPresentation.pieSeries : null
+	const assetPieSeriesNames = useMemo(
+		() => assetPieSeries?.peers.map((peer) => peer.name) ?? EMPTY_SERIES,
+		[assetPieSeries]
+	)
+	const assetPieSelection = useAllSeriesSelection({
+		availableSeries: assetPieSeriesNames,
+		selectionKey: `${selectedStablecoinAssetId}:chainPie`
+	})
+	const assetPiePresentation = useMemo(
+		() =>
+			assetPieSeries
+				? buildRuntimePieChartPresentation({
+						series: assetPieSeries,
+						selectedSeries: assetPieSelection.selectedCharts,
+						includeUpstreamOthers: assetPieSelection.includeUpstreamOthers
+					})
+				: { chartData: [], stackColors: {} },
+		[assetPieSelection.includeUpstreamOthers, assetPieSelection.selectedCharts, assetPieSeries]
+	)
 	const totalCirculating = assetPresentation.totalCirculating
-
-	const assetBreakdownPresentation = useMemo(() => {
-		if (
-			!assetDataset ||
-			(assetPresentation.chartType !== 'chainMcaps' && assetPresentation.chartType !== 'chainDominance')
-		) {
-			return null
-		}
-		return buildStablecoinBreakdownDatasetPresentation({
-			dataset: assetDataset,
-			seriesNames: chainsUnique,
-			selectedNames: selectedAssetSeries
-		})
-	}, [assetDataset, assetPresentation.chartType, chainsUnique, selectedAssetSeries])
+	const assetRuntimeSeries = useMemo(
+		() =>
+			assetPresentation.chartType === 'chainMcaps' || assetPresentation.chartType === 'chainDominance'
+				? getStablecoinRuntimeSeries({
+						dataset: assetPresentation.dataset,
+						charts: assetPresentation.charts,
+						availableSeries: assetPresentation.availableSeries
+					})
+				: {
+						selectableSeries: EMPTY_SERIES,
+						renderedSelectableSeries: EMPTY_SERIES,
+						fixedRemainderSeries: [],
+						alwaysVisibleSeries: []
+					},
+		[assetPresentation]
+	)
+	const {
+		activeSeries: activeAssetSeries,
+		selectableSeries: selectableAssetSeries,
+		renderedCharts: selectedAssetCharts,
+		setSelectedSeries: setActiveAssetSeries
+	} = useStablecoinChartSelection({
+		marketCapSeries: null,
+		runtimeSeries: assetRuntimeSeries,
+		selectionIntent: assetSelectionIntent,
+		setSelectionIntent: setAssetSelectionIntent
+	})
 
 	const assetChainColors = useMemo(() => {
 		const colors: Record<string, string> = {}
-		for (const chain of [...chainsUnique, 'Others']) {
+		for (const chain of chainsUnique) {
 			colors[chain] = colorManager.getItemColor(chain, 'chain')
 		}
 		return colors
@@ -202,40 +270,31 @@ export function StablecoinsChartTab({
 	)
 	const assetChainCharts = useMemo<MultiSeriesChartSeriesConfig[]>(
 		() =>
-			(assetBreakdownPresentation?.visibleSeries ?? []).map((name) => ({
-				type: 'line',
-				name,
-				encode: { x: 'timestamp', y: name },
-				color: assetChainColors[name],
-				hideAreaStyle: true
-			})),
-		[assetBreakdownPresentation?.visibleSeries, assetChainColors]
+			assetPresentation.chartType === 'chainMcaps'
+				? assetPresentation.charts.map((chart) => ({
+						...chart,
+						color: assetChainColors[chart.name] ?? chart.color,
+						hideAreaStyle: true
+					}))
+				: [],
+		[assetPresentation, assetChainColors]
 	)
 	const assetChainDominanceCharts = useMemo<MultiSeriesChartSeriesConfig[]>(
 		() =>
-			(assetBreakdownPresentation?.visibleSeries ?? []).map((name) => ({
-				type: 'line',
-				name,
-				encode: { x: 'timestamp', y: name },
-				color: assetChainColors[name]
-			})),
-		[assetBreakdownPresentation?.visibleSeries, assetChainColors]
+			assetPresentation.chartType === 'chainDominance'
+				? assetPresentation.charts.map((chart) => ({
+						...chart,
+						color: assetChainColors[chart.name] ?? chart.color
+					}))
+				: [],
+		[assetPresentation, assetChainColors]
 	)
-	const activeChainSeries = selectedChainSeries ?? defaultChainSeries
-	const activeAssetSeries = selectedAssetSeries ?? assetBreakdownPresentation?.defaultSeries ?? []
-	const setActiveChainSeries: Dispatch<SetStateAction<string[]>> = (next) => {
-		setSelectedChainSeries((current) => {
-			const values = typeof next === 'function' ? next(current ?? defaultChainSeries) : next
-			return values.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT)
-		})
-	}
-	const setActiveAssetSeries: Dispatch<SetStateAction<string[]>> = (next) => {
-		setSelectedAssetSeries((current) => {
-			const values =
-				typeof next === 'function' ? next(current ?? assetBreakdownPresentation?.defaultSeries ?? []) : next
-			return values.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT)
-		})
-	}
+	const showsChainSeriesSelection =
+		selectedStablecoinChartType === 'tokenMcaps' ||
+		selectedStablecoinChartType === 'dominance' ||
+		selectedStablecoinChartType === 'tokenInflows'
+	const showsAssetSeriesSelection =
+		selectedStablecoinAssetChartType === 'chainMcaps' || selectedStablecoinAssetChartType === 'chainDominance'
 
 	const isLoading =
 		chainsLoading || assetsLoading || (stablecoinMode === 'chain' ? chainChartDataLoading : assetChartDataLoading)
@@ -262,7 +321,10 @@ export function StablecoinsChartTab({
 		if (selectedStablecoinChartType === 'pie') {
 			return (
 				<Suspense fallback={<LocalLoader />}>
-					<PieChart chartData={chainsCirculatingValues} stackColors={stackColors} />
+					<PieChart
+						chartData={chainPiePresentation.chartData}
+						stackColors={{ ...chainPiePresentation.stackColors, ...stackColors }}
+					/>
 				</Suspense>
 			)
 		}
@@ -286,6 +348,7 @@ export function StablecoinsChartTab({
 					title=""
 					dataset={chainChartPayload.dataset}
 					charts={chainCharts}
+					selectedCharts={showsChainSeriesSelection ? renderedChainCharts : undefined}
 					valueSymbol={chainChartPayload.valueSymbol ?? ''}
 					stacked={chainChartPayload.stacked}
 					expandTo100Percent={chainChartPayload.expandTo100Percent}
@@ -339,8 +402,9 @@ export function StablecoinsChartTab({
 					>
 						<MultiSeriesChart
 							title=""
-							dataset={assetBreakdownPresentation?.dataset ?? assetDataset!}
+							dataset={assetDataset!}
 							charts={assetChainCharts}
+							selectedCharts={selectedAssetCharts}
 							valueSymbol="$"
 							chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
 							exportButtons={AREA_EXPORT_BUTTONS}
@@ -356,7 +420,10 @@ export function StablecoinsChartTab({
 							</div>
 						}
 					>
-						<PieChart chartData={assetChainsCirculatingValues} stackColors={assetChainColors} />
+						<PieChart
+							chartData={assetPiePresentation.chartData}
+							stackColors={{ ...assetPiePresentation.stackColors, ...assetChainColors }}
+						/>
 					</Suspense>
 				)
 			case 'chainDominance':
@@ -371,8 +438,9 @@ export function StablecoinsChartTab({
 						<MultiSeriesChart
 							title=""
 							valueSymbol="%"
-							dataset={assetBreakdownPresentation?.dataset ?? assetDataset!}
+							dataset={assetDataset!}
 							charts={assetChainDominanceCharts}
+							selectedCharts={selectedAssetCharts}
 							expandTo100Percent={true}
 							chartOptions={STABLECOIN_PERCENT_CHART_OPTIONS}
 							exportButtons={AREA_EXPORT_BUTTONS}
@@ -386,13 +454,6 @@ export function StablecoinsChartTab({
 
 	const hasChainSelection = selectedStablecoinChain
 	const hasAssetSelection = selectedStablecoinAsset && selectedStablecoinAssetId
-	const showsChainSeriesSelection =
-		selectedStablecoinChartType === 'tokenMcaps' ||
-		selectedStablecoinChartType === 'dominance' ||
-		selectedStablecoinChartType === 'tokenInflows'
-	const showsAssetSeriesSelection =
-		selectedStablecoinAssetChartType === 'chainMcaps' || selectedStablecoinAssetChartType === 'chainDominance'
-
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="space-y-3">
@@ -478,9 +539,56 @@ export function StablecoinsChartTab({
 			</div>
 
 			<div className="overflow-hidden rounded-lg border pro-border">
-				<h4 className="border-b border-pro-cards-border px-3 py-2 text-xs font-medium text-pro-text-secondary">
-					Preview
-				</h4>
+				<div className="flex flex-wrap items-center justify-between gap-2 border-b border-pro-cards-border px-3 py-2">
+					<h4 className="text-xs font-medium text-pro-text-secondary">Preview</h4>
+					{stablecoinMode === 'chain' && selectedStablecoinChartType === 'pie' && chainPieSeriesNames.length > 1 ? (
+						<SelectWithCombobox
+							size="sm"
+							allValues={chainPieSeriesNames}
+							selectedValues={chainPieSelection.activeSeries}
+							setSelectedValues={chainPieSelection.setSelectedSeries}
+							label="Token"
+							labelType="smol"
+							variant="filter"
+							popoverVariant="legacy"
+						/>
+					) : stablecoinMode === 'chain' && showsChainSeriesSelection && selectableChainSeries.length > 1 ? (
+						<SelectWithCombobox
+							size="sm"
+							allValues={selectableChainSeries}
+							selectedValues={activeChainSeries}
+							setSelectedValues={setActiveChainSeries}
+							label="Token"
+							labelType="smol"
+							variant="filter"
+							popoverVariant="legacy"
+						/>
+					) : stablecoinMode === 'asset' &&
+					  selectedStablecoinAssetChartType === 'chainPie' &&
+					  assetPieSeriesNames.length > 1 ? (
+						<SelectWithCombobox
+							size="sm"
+							allValues={assetPieSeriesNames}
+							selectedValues={assetPieSelection.activeSeries}
+							setSelectedValues={assetPieSelection.setSelectedSeries}
+							label="Chain"
+							labelType="smol"
+							variant="filter"
+							popoverVariant="legacy"
+						/>
+					) : stablecoinMode === 'asset' && showsAssetSeriesSelection && selectableAssetSeries.length > 1 ? (
+						<SelectWithCombobox
+							size="sm"
+							allValues={selectableAssetSeries}
+							selectedValues={activeAssetSeries}
+							setSelectedValues={setActiveAssetSeries}
+							label="Chain"
+							labelType="smol"
+							variant="filter"
+							popoverVariant="legacy"
+						/>
+					) : null}
+				</div>
 
 				{(stablecoinMode === 'chain' && hasChainSelection) || (stablecoinMode === 'asset' && hasAssetSelection) ? (
 					<div className="bg-pro-cards-bg p-3">
@@ -494,43 +602,7 @@ export function StablecoinsChartTab({
 								{stablecoinMode === 'chain' ? 'Stablecoins Market Cap' : 'Circulating by Chain'}
 							</p>
 						</div>
-						{stablecoinMode === 'chain' && showsChainSeriesSelection && availableChainSeries.length > 1 ? (
-							<div className="mb-2 flex justify-end">
-								<SelectWithCombobox
-									size="sm"
-									allValues={availableChainSeries}
-									selectedValues={activeChainSeries}
-									setSelectedValues={setActiveChainSeries}
-									label="Token"
-									labelType="smol"
-									variant="filter"
-									popoverVariant="legacy"
-								/>
-							</div>
-						) : null}
-						{stablecoinMode === 'asset' &&
-						showsAssetSeriesSelection &&
-						(assetBreakdownPresentation?.availableSeries.length ?? 0) > 1 ? (
-							<div className="mb-2 flex justify-end">
-								<SelectWithCombobox
-									size="sm"
-									allValues={assetBreakdownPresentation?.availableSeries ?? []}
-									selectedValues={activeAssetSeries}
-									setSelectedValues={setActiveAssetSeries}
-									label="Chain"
-									labelType="smol"
-									variant="filter"
-									popoverVariant="legacy"
-								/>
-							</div>
-						) : null}
-
-						<div
-							key={stablecoinMode === 'chain' ? selectedStablecoinChartType : selectedStablecoinAssetChartType}
-							className="h-[320px]"
-						>
-							{stablecoinMode === 'chain' ? renderChainChart() : renderAssetChart()}
-						</div>
+						<div className="h-[320px]">{stablecoinMode === 'chain' ? renderChainChart() : renderAssetChart()}</div>
 					</div>
 				) : (
 					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">

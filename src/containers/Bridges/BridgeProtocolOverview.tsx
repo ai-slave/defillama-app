@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	ChartGroupingSelector,
@@ -7,6 +8,7 @@ import {
 	type LowercaseDwmGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
@@ -16,6 +18,7 @@ import { BridgeTokensTable } from '~/containers/Bridges/BridgeTokensTable'
 import { AddressesTableSwitch } from '~/containers/Bridges/TableSwitch'
 import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Panel } from '~/ui/Panel'
@@ -116,6 +119,42 @@ export const BridgeInfo = ({
 	const chartTypes = (
 		isAllChains ? (['Volume', 'Tokens To', 'Tokens From'] as const) : (['Inflows', 'Tokens To', 'Tokens From'] as const)
 	) as readonly ChartType[]
+	const activeTokenSeries =
+		chartType === 'Tokens To' ? tokenWithdrawals : chartType === 'Tokens From' ? tokenDeposits : null
+	const tokenColorIndex = React.useMemo(() => {
+		const indexByToken = new Map<string, number>()
+		for (const series of [tokenWithdrawals, tokenDeposits]) {
+			for (const peer of series.peers) {
+				if (!indexByToken.has(peer.name)) indexByToken.set(peer.name, indexByToken.size)
+			}
+		}
+		return indexByToken
+	}, [tokenDeposits, tokenWithdrawals])
+	const activeTokenSeriesNames = React.useMemo(
+		() => activeTokenSeries?.peers.map((peer) => peer.name) ?? [],
+		[activeTokenSeries]
+	)
+	const {
+		activeSeries: selectedTokens,
+		selectedCharts: selectedTokenSet,
+		setSelectedSeries: setSelectedTokens,
+		includeUpstreamOthers
+	} = useAllSeriesSelection({
+		availableSeries: activeTokenSeriesNames,
+		selectionKey: `${displayName}-${currentChain}`
+	})
+	const visibleTokenPresentation = React.useMemo(
+		() =>
+			activeTokenSeries
+				? buildRuntimePieChartPresentation({
+						series: activeTokenSeries,
+						selectedSeries: selectedTokenSet,
+						colorIndexByPeer: tokenColorIndex,
+						includeUpstreamOthers
+					})
+				: { chartData: [], stackColors: {} },
+		[activeTokenSeries, includeUpstreamOthers, selectedTokenSet, tokenColorIndex]
+	)
 
 	const inflowsDataset = React.useMemo(
 		() =>
@@ -217,6 +256,17 @@ export const BridgeInfo = ({
 							values={chartTypes}
 							className="mr-auto"
 						/>
+						{activeTokenSeries && activeTokenSeriesNames.length > 1 ? (
+							<SelectWithCombobox
+								allValues={activeTokenSeriesNames}
+								selectedValues={selectedTokens}
+								setSelectedValues={setSelectedTokens}
+								label="Token"
+								labelType="smol"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
 						{chartType === 'Volume' || chartType === 'Inflows' ? (
 							<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWM_GROUPING_OPTIONS_LOWERCASE} />
 						) : null}
@@ -250,14 +300,22 @@ export const BridgeInfo = ({
 								/>
 							</React.Suspense>
 						) : null}
-						{chartType === 'Tokens To' && tokenWithdrawals.length > 0 ? (
+						{chartType === 'Tokens To' && tokenWithdrawals.peers.length > 0 ? (
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
-								<PieChart chartData={tokenWithdrawals} onReady={handleChartReady} />
+								<PieChart
+									chartData={visibleTokenPresentation.chartData}
+									stackColors={visibleTokenPresentation.stackColors}
+									onReady={handleChartReady}
+								/>
 							</React.Suspense>
 						) : null}
-						{chartType === 'Tokens From' && tokenDeposits.length > 0 ? (
+						{chartType === 'Tokens From' && tokenDeposits.peers.length > 0 ? (
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
-								<PieChart chartData={tokenDeposits} onReady={handleChartReady} />
+								<PieChart
+									chartData={visibleTokenPresentation.chartData}
+									stackColors={visibleTokenPresentation.stackColors}
+									onReady={handleChartReady}
+								/>
 							</React.Suspense>
 						) : null}
 					</>

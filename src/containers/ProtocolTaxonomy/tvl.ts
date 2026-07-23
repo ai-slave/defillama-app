@@ -139,25 +139,20 @@ export function buildProtocolsCategoriesTvlCharts({
 	categoryColors,
 	chartSource,
 	extraTvlCharts,
-	selectedCategories,
 	enabledTvls
 }: {
 	categories: IProtocolsCategoriesPageData['categories']
 	categoryColors: IProtocolsCategoriesPageData['categoryColors']
 	chartSource: IProtocolsCategoriesPageData['chartSource']
 	extraTvlCharts: IProtocolsCategoriesPageData['extraTvlCharts']
-	selectedCategories: Array<string>
 	enabledTvls: Array<string>
 }): ProtocolsCategoriesChartState {
-	const selectedCategoriesSet = new Set(selectedCategories)
-	const filteredCategories = categories.filter((categoryName) => selectedCategoriesSet.has(categoryName))
-
 	const source = chartSource.map((row) => {
-		const adjustedRow = new Array<number | null>(filteredCategories.length + 1)
+		const adjustedRow = new Array<number | null>(categories.length + 1)
 		adjustedRow[0] = row.timestamp
 
-		for (let index = 0; index < filteredCategories.length; index++) {
-			const categoryName = filteredCategories[index]
+		for (let index = 0; index < categories.length; index++) {
+			const categoryName = categories[index]
 			const baseValue = row[categoryName]
 			const safeBaseValue = typeof baseValue === 'number' ? baseValue : 0
 			const extraTvlValue =
@@ -171,8 +166,8 @@ export function buildProtocolsCategoriesTvlCharts({
 		return adjustedRow
 	})
 
-	const dimensions = ['timestamp', ...filteredCategories]
-	const charts = filteredCategories.map((categoryName, index) => ({
+	const dimensions = ['timestamp', ...categories]
+	const charts = categories.map((categoryName, index) => ({
 		type: 'line' as const,
 		name: categoryName,
 		encode: { x: 0 as const, y: index + 1 },

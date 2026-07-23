@@ -10,8 +10,8 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
-	default: ({ selectedCharts }: { selectedCharts: Set<string> }) => {
-		mocks.selectedCharts([...selectedCharts])
+	default: ({ charts }: { charts: Array<{ name: string }> }) => {
+		mocks.selectedCharts(charts.map((chart) => chart.name))
 		return <div data-testid="bridge-chart" />
 	}
 }))
@@ -26,8 +26,8 @@ vi.mock('~/components/Select/SelectWithCombobox', () => ({
 		selectedValues: string[]
 		setSelectedValues: (values: string[]) => void
 	}) => (
-		<button type="button" onClick={() => setSelectedValues([...selectedValues, allValues[30]])}>
-			Add chain 31
+		<button type="button" onClick={() => setSelectedValues(selectedValues.filter((name) => name !== allValues[0]))}>
+			Remove chain 1
 		</button>
 	)
 }))
@@ -66,7 +66,7 @@ describe('BridgeChainsOverview selection wiring', () => {
 		container.remove()
 	})
 
-	it('passes a bounded selection to the chart when the combobox adds a 31st chain', async () => {
+	it('shows all selection intent as top 30 plus Others and removes Others at 30 selected chains', async () => {
 		const allChains = Array.from({ length: 31 }, (_, index) => `Chain ${index + 1}`)
 		const charts = allChains.map((name) => ({
 			type: 'line' as const,
@@ -84,7 +84,7 @@ describe('BridgeChainsOverview selection wiring', () => {
 			)
 		})
 
-		expect(mocks.selectedCharts).toHaveBeenLastCalledWith(allChains.slice(0, 30))
+		expect(mocks.selectedCharts).toHaveBeenLastCalledWith([...allChains.slice(0, 30), 'Others'])
 
 		await act(async () => {
 			container.querySelector('button')?.click()
@@ -93,6 +93,7 @@ describe('BridgeChainsOverview selection wiring', () => {
 		const finalSelection = mocks.selectedCharts.mock.calls.at(-1)?.[0]
 		expect(finalSelection).toHaveLength(30)
 		expect(finalSelection).toContain('Chain 31')
-		expect(finalSelection).not.toContain('Chain 30')
+		expect(finalSelection).not.toContain('Chain 1')
+		expect(finalSelection).not.toContain('Others')
 	})
 })

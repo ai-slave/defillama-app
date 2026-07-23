@@ -1,3 +1,4 @@
+import type { RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import type { BridgeNetflowPeriod, RawBridgeInfo } from './api.types'
 
 export interface BridgeNetflowChartPoint {
@@ -41,9 +42,8 @@ export interface BridgePieChartSlice {
 export interface BridgeTableData {
 	tokensTableData: BridgeTokenTableRow[]
 	addressesTableData: BridgeAddressTableRow[]
-	tokenDeposits: BridgePieChartSlice[]
-	tokenWithdrawals: BridgePieChartSlice[]
-	tokenColor: Record<string, string>
+	tokenDeposits: RuntimePieChartData
+	tokenWithdrawals: RuntimePieChartData
 	totalDepositedUSD?: number
 	totalWithdrawnUSD?: number
 	totalDepositTxs?: number

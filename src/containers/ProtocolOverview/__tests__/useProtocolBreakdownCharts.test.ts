@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildComputedBreakdownResult, MAX_PROTOCOL_BREAKDOWN_SERIES } from '../useProtocolBreakdownCharts'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import {
+	buildComputedBreakdownResult,
+	buildProtocolBreakdownPresentation,
+	MAX_PROTOCOL_BREAKDOWN_SERIES
+} from '../useProtocolBreakdownCharts'
 
 const DAY_MS = 24 * 60 * 60 * 1e3
 const HOUR_MS = 60 * 60 * 1e3
@@ -56,20 +61,19 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			dimensions: ['timestamp', 'Total']
 		})
 		expect(result.chainsUnique).toEqual(['Ethereum', 'Arbitrum'])
-		expect(result.chainsDataset).toEqual({
-			source: [
-				[DAY_MS, 100, 10],
-				[DAY_MS * 2 + HOUR_MS, 200, 20]
-			],
-			dimensions: ['timestamp', 'Ethereum', 'Arbitrum']
-		})
+		expect(result.chainBreakdown).toEqual([
+			[DAY_MS, { Ethereum: 100, Arbitrum: 10 }],
+			[DAY_MS * 2 + HOUR_MS, { Ethereum: 200, Arbitrum: 20 }]
+		])
 		expect(result.tokensUnique).toEqual(['ETH', 'USDC', 'UNKNOWN0'])
-		expect(result.tokenBreakdownLatest).toEqual({ USDC: 110, ETH: 220 })
-		expect(result.tokenInflowsDataset?.dimensions).toEqual(['timestamp', 'ETH', 'USDC', 'UNKNOWN0'])
-		expect(result.tokenInflowsDataset?.source).toEqual([[DAY_MS * 2, 44, 5.238095238095238, undefined]])
+		expect(result.tokenBreakdownPieSeries.peers).toEqual([
+			{ name: 'ETH', value: 220 },
+			{ name: 'USDC', value: 110 }
+		])
+		expect(result.inflowTokensUnique).toEqual(['ETH', 'USDC', 'MISSING', 'ZERO'])
+		expect(result.tokenInflows).toEqual([[DAY_MS * 2, { ETH: 44, USDC: 5.238095238095238 }]])
 		expect(result.usdInflowsDataset?.source[0]?.[0]).toBe(DAY_MS * 2)
 		expect(result.usdInflowsDataset?.source[0]?.[1] as number).toBeCloseTo(49.23809523809524)
-		expect(result.tokenInflowsCharts.map((chart) => chart.name)).toEqual(['ETH', 'USDC', 'UNKNOWN0'])
 	})
 
 	it('derives USD inflows from token balances instead of TVL value changes', () => {
@@ -100,11 +104,60 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		})
 
 		// A deposit counts even when total TVL is flat; the later price-only gain does not.
-		expect(result.tokenInflowsDataset?.source).toEqual([[DAY_MS * 2, 100]])
+		expect(result.tokenInflows).toEqual([[DAY_MS * 2, { TOKEN: 100 }]])
 		expect(result.usdInflowsDataset).toEqual({
 			source: [[DAY_MS * 2, 100]],
 			dimensions: ['timestamp', 'USD Inflows']
 		})
+	})
+
+	it('keeps every eligible latest token selectable while preserving the pie dust filter', () => {
+		const latest = Object.fromEntries([
+			...Array.from({ length: 17 }, (_, index) => [`Token ${index}`, 20 - index] as const),
+			['Dust', 0.5] as const
+		])
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [[[DAY_MS, latest]]],
+			tokenBreakdownRawCharts: [],
+			valueSeriesName: 'Total',
+			inflows: true,
+			computeInflows: false
+		})
+
+		expect(result.tokenBreakdownPieSeries.peers).toHaveLength(17)
+		expect(result.tokenBreakdownPieSeries.peers.some((peer) => peer.name === 'Dust')).toBe(false)
+		const presentation = buildRuntimePieChartPresentation({ series: result.tokenBreakdownPieSeries })
+		expect(presentation.chartData).toHaveLength(16)
+		expect(presentation.chartData.at(-1)?.name).toBe('Others')
+
+		const fullPositiveResult = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [[[DAY_MS, latest]]],
+			tokenBreakdownRawCharts: [],
+			valueSeriesName: 'Total',
+			inflows: true,
+			computeInflows: false,
+			tokenPieMinimumValue: 0
+		})
+		expect(fullPositiveResult.tokenBreakdownPieSeries.peers.at(-1)).toEqual({ name: 'Dust', value: 0.5 })
+	})
+
+	it('retains an Others-only source for runtime presentation', () => {
+		const input = {
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [[[DAY_MS, { Others: 5 }]]] as Array<Array<[number, Record<string, number>]>>,
+			tokenBreakdownRawCharts: [],
+			valueSeriesName: 'Total',
+			inflows: true,
+			computeInflows: false
+		}
+		const result = buildComputedBreakdownResult(input)
+
+		expect(result.tokenBreakdownPieSeries).toEqual({ peers: [], limit: 15, upstreamOthersValue: 5 })
 	})
 
 	it('uses the price from the side with the larger USD notional', () => {
@@ -127,7 +180,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		})
 
 		// Previous notional is larger, so the withdrawal uses its $20 price instead of the current $100 price.
-		expect(result.tokenInflowsDataset?.source).toEqual([[DAY_MS * 2, -1_800]])
+		expect(result.tokenInflows).toEqual([[DAY_MS * 2, { TOKEN: -1_800 }]])
 		expect(result.usdInflowsDataset?.source).toEqual([[DAY_MS * 2, -1_800]])
 	})
 
@@ -150,7 +203,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			valueSeriesName: 'Total'
 		})
 
-		expect(result.tokenInflowsDataset).toBeNull()
+		expect(result.tokenInflows).toBeNull()
 		expect(result.usdInflowsDataset).toBeNull()
 	})
 
@@ -173,7 +226,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			valueSeriesName: 'Total'
 		})
 
-		expect(result.tokenInflowsDataset?.source).toEqual([[DAY_MS * 2, 50]])
+		expect(result.tokenInflows).toEqual([[DAY_MS * 2, { TOKEN: 50 }]])
 		expect(result.usdInflowsDataset?.source).toEqual([[DAY_MS * 2, 50]])
 	})
 
@@ -196,7 +249,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			valueSeriesName: 'Total'
 		})
 
-		expect(result.tokenInflowsDataset).toBeNull()
+		expect(result.tokenInflows).toBeNull()
 		expect(result.usdInflowsDataset).toBeNull()
 	})
 
@@ -228,11 +281,11 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		})
 
 		// Source flows are +$50 and -$10. Calculating after aggregation would incorrectly produce -$32.
-		expect(result.tokenInflowsDataset?.source).toEqual([[DAY_MS * 2, 40]])
+		expect(result.tokenInflows).toEqual([[DAY_MS * 2, { TOKEN: 40 }]])
 		expect(result.usdInflowsDataset?.source).toEqual([[DAY_MS * 2, 40]])
 	})
 
-	it('filters raw rows against each source USD row before aggregating sources', () => {
+	it('keeps canonical raw rows intact while using peak USD only for default membership', () => {
 		const result = buildComputedBreakdownResult({
 			tvlCharts: [],
 			chainBreakdownCharts: [],
@@ -260,16 +313,16 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			computeInflows: false
 		})
 
-		expect(result.tokenUSDDataset?.source).toEqual([
-			[DAY_MS, 2_500_000, 2_000_000, 400_000],
-			[DAY_MS * 2, 2_100_000, undefined, undefined]
+		expect(result.tokenBreakdownUSD).toEqual([
+			[DAY_MS, { TOKEN: 2_500_000, MISSING: 2_000_000, FILTERED: 400_000 }],
+			[DAY_MS * 2, { TOKEN: 2_100_000 }]
 		])
-		expect(result.tokenRawDataset?.source).toEqual([
-			[DAY_MS, 1, 1],
-			[DAY_MS * 2, 2, undefined]
+		expect(result.tokenRawBreakdown).toEqual([
+			[DAY_MS, { TOKEN: 200_000_001, MISSING: 1, FILTERED: 200_000_000 }],
+			[DAY_MS * 2, { TOKEN: 200_000_002, MISSING: 2, FILTERED: 200_000_000 }]
 		])
-		expect(result.rawTokensUnique).toEqual(['TOKEN', 'MISSING'])
-		expect(result.tokenRawDataset?.dimensions).not.toContain('FILTERED')
+		expect(result.rawTokensUnique).toEqual(['TOKEN', 'FILTERED', 'MISSING'])
+		expect(result.defaultRawTokens).toEqual(['TOKEN', 'MISSING', 'FILTERED'])
 	})
 
 	it('keeps a raw-only source when that source has no USD history', () => {
@@ -287,13 +340,13 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			computeInflows: false
 		})
 
-		expect(result.tokenRawDataset?.source).toEqual([
-			[DAY_MS, 200_000_000],
-			[DAY_MS * 2, 210_000_000]
+		expect(result.tokenRawBreakdown).toEqual([
+			[DAY_MS, { TOKEN: 200_000_000 }],
+			[DAY_MS * 2, { TOKEN: 210_000_000 }]
 		])
 	})
 
-	it('excludes unknown and non-positive balances from raw display data', () => {
+	it('excludes synthetic and never-positive balances from selection without rewriting canonical rows', () => {
 		const result = buildComputedBreakdownResult({
 			tvlCharts: [],
 			chainBreakdownCharts: [],
@@ -314,9 +367,9 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		})
 
 		expect(result.rawTokensUnique).toEqual(['TOKEN'])
-		expect(result.tokenRawDataset?.source).toEqual([
-			[DAY_MS, 10],
-			[DAY_MS * 2, 11]
+		expect(result.tokenRawBreakdown).toEqual([
+			[DAY_MS, { TOKEN: 10, USDT0: -132_666_022, UNKNOWN_A: 30 }],
+			[DAY_MS * 2, { TOKEN: 11, USDT0: -132_666_023, UNKNOWN_A: 31 }]
 		])
 	})
 
@@ -346,10 +399,10 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		})
 
 		expect(result.valueDataset?.dimensions).toEqual(['timestamp', 'Treasury'])
-		expect(result.tokenUSDDataset).toBeNull()
-		expect(result.tokenRawDataset).toBeNull()
+		expect(result.tokenBreakdownUSD).toBeNull()
+		expect(result.tokenRawBreakdown).toBeNull()
 		expect(result.usdInflowsDataset).toBeNull()
-		expect(result.tokenInflowsDataset).toBeNull()
+		expect(result.tokenInflows).toBeNull()
 	})
 
 	it('keeps token datasets but skips inflow construction when the caller does not render inflows', () => {
@@ -372,10 +425,10 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			computeInflows: false
 		})
 
-		expect(result.tokenUSDDataset?.dimensions).toEqual(['timestamp', 'USDC'])
-		expect(result.tokenRawDataset?.dimensions).toEqual(['timestamp', 'USDC'])
+		expect(result.tokensUnique).toEqual(['USDC'])
+		expect(result.rawTokensUnique).toEqual(['USDC'])
 		expect(result.usdInflowsDataset).toBeNull()
-		expect(result.tokenInflowsDataset).toBeNull()
+		expect(result.tokenInflows).toBeNull()
 	})
 
 	it('keeps a disappearing token as a full withdrawal', () => {
@@ -397,7 +450,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			valueSeriesName: 'Total'
 		})
 
-		expect(result.tokenInflowsDataset?.source).toEqual([[DAY_MS * 2, -100]])
+		expect(result.tokenInflows).toEqual([[DAY_MS * 2, { TOKEN: -100 }]])
 		expect(result.usdInflowsDataset?.source).toEqual([[DAY_MS * 2, -100]])
 	})
 
@@ -414,10 +467,60 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			inflows: false
 		})
 
-		expect(result.chainsUnique).toHaveLength(MAX_PROTOCOL_BREAKDOWN_SERIES)
-		expect(result.chainsUnique.at(-1)).toBe('Others')
-		expect(result.chainsDataset?.dimensions).toEqual(['timestamp', ...result.chainsUnique])
-		expect(datasetValue(result.chainsDataset!, 0, 'Others')).toBe(21)
+		expect(result.chainsUnique).toHaveLength(35)
+		expect(result.chainsUnique).not.toContain('Others')
+		const presentation = buildProtocolBreakdownPresentation({
+			breakdown: result.chainBreakdown,
+			availableSeries: result.chainsUnique,
+			activeSeries: result.chainsUnique,
+			aggregateOthers: true,
+			type: 'line'
+		})
+		expect(presentation.dataset?.dimensions).toHaveLength(MAX_PROTOCOL_BREAKDOWN_SERIES + 2)
+		expect(presentation.dataset?.dimensions.at(-1)).toBe('Others')
+		expect(datasetValue(presentation.dataset!, 0, 'Others')).toBe(15)
+	})
+
+	it('preserves a backend Others series when no additional aggregation is needed', () => {
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [[[DAY_MS, { Ethereum: 100, Others: 25 }]]],
+			tokenBreakdownUsdCharts: [
+				[
+					[DAY_MS, { USDC: 100, Others: 25 }],
+					[DAY_MS * 2, { USDC: 110, Others: 30 }]
+				]
+			],
+			tokenBreakdownRawCharts: [
+				[
+					[DAY_MS, { USDC: 100, Others: 25 }],
+					[DAY_MS * 2, { USDC: 105, Others: 30 }]
+				]
+			],
+			valueSeriesName: 'Total'
+		})
+
+		const chains = buildProtocolBreakdownPresentation({
+			breakdown: result.chainBreakdown,
+			availableSeries: result.chainsUnique,
+			activeSeries: result.chainsUnique,
+			aggregateOthers: true,
+			includeUpstreamOthers: true,
+			type: 'line'
+		})
+		const tokens = buildProtocolBreakdownPresentation({
+			breakdown: result.tokenBreakdownUSD,
+			availableSeries: result.tokensUnique,
+			activeSeries: result.tokensUnique,
+			aggregateOthers: true,
+			includeUpstreamOthers: true,
+			type: 'line'
+		})
+		expect(datasetValue(chains.dataset!, 0, 'Others')).toBe(25)
+		expect(datasetValue(tokens.dataset!, 1, 'Others')).toBe(30)
+		expect(result.rawTokensUnique).not.toContain('Others')
+		expect(result.inflowTokensUnique).toEqual(['USDC'])
+		expect(result.usdInflowsDataset?.source).toEqual([[DAY_MS * 2, 5.238095238095238]])
 	})
 
 	it('bounds visible token series and aggregates omitted USD values and inflows exactly', () => {
@@ -451,17 +554,121 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			valueSeriesName: 'Total'
 		})
 
-		expect(result.tokensUnique).toHaveLength(MAX_PROTOCOL_BREAKDOWN_SERIES)
-		expect(result.tokensUnique.at(-1)).toBe('Others')
-		expect(result.rawTokensUnique).toHaveLength(MAX_PROTOCOL_BREAKDOWN_SERIES - 1)
+		expect(result.tokensUnique).toHaveLength(35)
+		expect(result.tokensUnique).not.toContain('Others')
+		expect(result.rawTokensUnique).toHaveLength(35)
 		expect(result.rawTokensUnique).not.toContain('Others')
-		expect(result.tokenUSDCharts).toHaveLength(MAX_PROTOCOL_BREAKDOWN_SERIES)
-		expect(result.tokenRawCharts).toHaveLength(MAX_PROTOCOL_BREAKDOWN_SERIES - 1)
-		expect(result.tokenRawDataset?.dimensions).not.toContain('Others')
-		expect(result.tokenInflowsCharts).toHaveLength(MAX_PROTOCOL_BREAKDOWN_SERIES)
-		expect(datasetValue(result.tokenUSDDataset!, 1, 'Others')).toBe(420)
-		expect(result.tokenRawDataset?.dimensions).not.toContain('Others')
-		expect(datasetValue(result.tokenInflowsDataset!, 0, 'Others')).toBe(210)
+		const usdPresentation = buildProtocolBreakdownPresentation({
+			breakdown: result.tokenBreakdownUSD,
+			availableSeries: result.tokensUnique,
+			activeSeries: result.tokensUnique,
+			aggregateOthers: true,
+			type: 'line'
+		})
+		const rawPresentation = buildProtocolBreakdownPresentation({
+			breakdown: result.tokenRawBreakdown,
+			availableSeries: result.rawTokensUnique,
+			activeSeries: result.defaultRawTokens,
+			aggregateOthers: false,
+			type: 'line'
+		})
+		const inflowPresentation = buildProtocolBreakdownPresentation({
+			breakdown: result.tokenInflows,
+			availableSeries: result.inflowTokensUnique,
+			activeSeries: result.inflowTokensUnique,
+			aggregateOthers: true,
+			type: 'bar'
+		})
+		expect(usdPresentation.charts).toHaveLength(MAX_PROTOCOL_BREAKDOWN_SERIES + 1)
+		expect(rawPresentation.charts).toHaveLength(MAX_PROTOCOL_BREAKDOWN_SERIES)
+		expect(inflowPresentation.charts).toHaveLength(MAX_PROTOCOL_BREAKDOWN_SERIES + 1)
+		expect(datasetValue(usdPresentation.dataset!, 1, 'Others')).toBe(300)
+		expect(rawPresentation.dataset?.dimensions).not.toContain('Others')
+		expect(datasetValue(inflowPresentation.dataset!, 0, 'Others')).toBe(150)
 		expect(result.usdInflowsDataset?.source[0]?.[1]).toBe(6_300)
+	})
+
+	it('ranks raw balances by peak historical USD value and appends tokens without USD history', () => {
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [
+				[
+					[DAY_MS, { PAST_LEADER: 1_000, CURRENT_LEADER: 10, FRACTIONAL: 500 }],
+					[DAY_MS * 2, { PAST_LEADER: 1, CURRENT_LEADER: 100, FRACTIONAL: 400 }]
+				]
+			],
+			tokenBreakdownRawCharts: [
+				[
+					[DAY_MS, { PAST_LEADER: 10_000, CURRENT_LEADER: 1, FRACTIONAL: 0.5, NO_USD: 5 }],
+					[DAY_MS * 2, { PAST_LEADER: 10_000, CURRENT_LEADER: 1, FRACTIONAL: 0.4, NO_USD: 6 }]
+				]
+			],
+			valueSeriesName: 'Total',
+			computeInflows: false
+		})
+
+		expect(result.rawTokensUnique).toEqual(['PAST_LEADER', 'NO_USD', 'CURRENT_LEADER', 'FRACTIONAL'])
+		expect(result.defaultRawTokens).toEqual(['PAST_LEADER', 'FRACTIONAL', 'CURRENT_LEADER'])
+
+		const presentation = buildProtocolBreakdownPresentation({
+			breakdown: result.tokenRawBreakdown,
+			availableSeries: result.rawTokensUnique,
+			activeSeries: result.defaultRawTokens,
+			aggregateOthers: false,
+			type: 'line'
+		})
+		expect(presentation.charts.map((chart) => chart.name)).toEqual(['PAST_LEADER', 'CURRENT_LEADER', 'FRACTIONAL'])
+	})
+
+	it('ranks token inflows by peak absolute USD flow and keeps inactive tokens selectable', () => {
+		const breakdown: Array<[number, Record<string, number>]> = [
+			[DAY_MS, { PAST_LEADER: 0, CURRENT_LEADER: 0, UNCHANGED: 50 }],
+			[DAY_MS * 2, { PAST_LEADER: 1_000, CURRENT_LEADER: 10, UNCHANGED: 50 }],
+			[DAY_MS * 3, { PAST_LEADER: 1_000, CURRENT_LEADER: 110, UNCHANGED: 50 }]
+		]
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [breakdown],
+			tokenBreakdownRawCharts: [breakdown],
+			valueSeriesName: 'Total'
+		})
+
+		expect(result.inflowTokensUnique).toEqual(['PAST_LEADER', 'CURRENT_LEADER', 'UNCHANGED'])
+	})
+
+	it('projects only the selected tail into Others and keeps canonical colors stable', () => {
+		const values = Object.fromEntries(Array.from({ length: 35 }, (_, index) => [`TOKEN_${index}`, index + 1]))
+		const availableSeries = Object.keys(values).toReversed()
+		const full = buildProtocolBreakdownPresentation({
+			breakdown: [[DAY_MS, values]],
+			availableSeries,
+			activeSeries: availableSeries,
+			aggregateOthers: true,
+			type: 'line'
+		})
+		const subset = buildProtocolBreakdownPresentation({
+			breakdown: [[DAY_MS, values]],
+			availableSeries,
+			activeSeries: ['TOKEN_34', 'TOKEN_10'],
+			aggregateOthers: true,
+			type: 'line'
+		})
+		const tailSelection = buildProtocolBreakdownPresentation({
+			breakdown: [[DAY_MS, values]],
+			availableSeries,
+			activeSeries: availableSeries.slice(1, 32),
+			aggregateOthers: true,
+			type: 'line'
+		})
+
+		expect(datasetValue(full.dataset!, 0, 'Others')).toBe(15)
+		expect(subset.dataset?.dimensions).toEqual(['timestamp', 'TOKEN_34', 'TOKEN_10'])
+		expect(subset.charts[0]?.color).toBe(full.charts[0]?.color)
+		expect(tailSelection.charts.find((chart) => chart.name === 'Others')?.color).not.toBe(
+			tailSelection.charts.find((chart) => chart.name === 'TOKEN_5')?.color
+		)
+		expect(subset.dataset?.dimensions).not.toContain('Others')
 	})
 })

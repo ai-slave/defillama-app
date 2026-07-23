@@ -2,7 +2,13 @@ import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
+import {
+	buildSelectedAdditiveChart,
+	buildSelectedPercentageChart,
+	buildSelectedSeriesCsv
+} from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	ChartGroupingSelector,
@@ -14,8 +20,9 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
-import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
@@ -183,7 +190,7 @@ const LST_COLUMNS = [
 
 export const LSTOverview = ({
 	areaChartData,
-	pieChartData,
+	pieSeries,
 	tokensList,
 	tokens,
 	stakedEthSum,
@@ -194,17 +201,42 @@ export const LSTOverview = ({
 }: LSTOverviewProps) => {
 	const [tab, setTab] = React.useState('breakdown')
 	const [groupBy, setGroupBy] = React.useState<LowercaseDwmcGrouping>('weekly')
-	const [selectedBreakdownTokens, setSelectedBreakdownTokens] = React.useState<string[]>(tokens ?? [])
-	const [selectedInflowTokens, setSelectedInflowTokens] = React.useState<string[]>(tokens ?? [])
-	const selectedBreakdownTokensSet = React.useMemo(() => new Set(selectedBreakdownTokens), [selectedBreakdownTokens])
-	const selectedInflowTokensSet = React.useMemo(() => new Set(selectedInflowTokens), [selectedInflowTokens])
-
+	const {
+		activeSeries: selectedBreakdownTokens,
+		selectedCharts: selectedBreakdownTokensSet,
+		setSelectedSeries: setSelectedBreakdownTokens
+	} = useSeriesSelection({ availableSeries: tokens, selectionKey: 'breakdown' })
+	const {
+		activeSeries: selectedInflowTokens,
+		selectedCharts: selectedInflowTokensSet,
+		setSelectedSeries: setSelectedInflowTokens
+	} = useSeriesSelection({ availableSeries: tokens, selectionKey: 'inflows' })
+	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
+	const {
+		activeSeries: selectedPieTokens,
+		selectedCharts: selectedPieTokensSet,
+		setSelectedSeries: setSelectedPieTokens,
+		includeUpstreamOthers: includePieUpstreamOthers
+	} = useAllSeriesSelection({
+		availableSeries: pieSelectableSeries,
+		selectionKey: 'breakdown-pie'
+	})
+	const visiblePieChartData = React.useMemo(
+		() =>
+			buildRuntimePieChartPresentation({
+				series: pieSeries,
+				selectedSeries: selectedPieTokensSet,
+				includeUpstreamOthers: includePieUpstreamOthers
+			}).chartData,
+		[includePieUpstreamOthers, pieSeries, selectedPieTokensSet]
+	)
 	const inflowsTooltipFormatter = React.useMemo(() => {
 		return createInflowsTooltipFormatter({ groupBy, valueSymbol: 'ETH' })
 	}, [groupBy])
 
 	const { chartInstance: breakdownChartInstance, handleChartReady: handleBreakdownReady } = useGetChartInstance()
 	const { chartInstance: inflowsChartInstance, handleChartReady: handleInflowsReady } = useGetChartInstance()
+	const { chartInstance: pieChartInstance, handleChartReady: handlePieReady } = useGetChartInstance()
 
 	const breakdownExportFilenameBase = 'lst-breakdown-dominance'
 	const breakdownExportTitle = 'LST Breakdown (Dominance)'
@@ -224,9 +256,35 @@ export const LSTOverview = ({
 			}),
 		[areaChartData, barChartStacks, groupBy, inflowsChartData, lsdColors, tab, tokens]
 	)
-	const deferredPieChartData = React.useDeferredValue(pieChartData)
+	const deferredPieChartData = React.useDeferredValue(visiblePieChartData)
 	const deferredActiveChartData = React.useDeferredValue(activeChartData)
 	const renderedActiveChartData = deferredActiveChartData.kind === tab ? deferredActiveChartData : activeChartData
+	const selectedBreakdownPresentation = React.useMemo(
+		() =>
+			renderedActiveChartData.kind === 'breakdown'
+				? buildSelectedPercentageChart({
+						dataset: renderedActiveChartData.data.dataset,
+						charts: renderedActiveChartData.data.charts,
+						selectedCharts: selectedBreakdownTokensSet
+					})
+				: null,
+		[renderedActiveChartData, selectedBreakdownTokensSet]
+	)
+	const selectedInflowsPresentation = React.useMemo(
+		() =>
+			renderedActiveChartData.kind === 'inflows'
+				? buildSelectedAdditiveChart({
+						dataset: renderedActiveChartData.data.dataset,
+						charts:
+							groupBy === 'cumulative'
+								? renderedActiveChartData.data.cumulativeCharts
+								: renderedActiveChartData.data.barCharts,
+						seriesOrder: tokens,
+						selectedCharts: selectedInflowTokensSet
+					})
+				: null,
+		[groupBy, renderedActiveChartData, selectedInflowTokensSet, tokens]
+	)
 
 	return (
 		<>
@@ -259,43 +317,63 @@ export const LSTOverview = ({
 				<div className="flex flex-col">
 					{tab === 'breakdown' ? (
 						<div className="grid grid-cols-1 gap-2 pt-2 xl:grid-cols-2">
-							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
-								<PieChart
-									chartData={deferredPieChartData}
-									stackColors={lsdColors}
-									exportButtons={{ png: true, csv: true, filename: 'lst-breakdown', pngTitle: 'LST Breakdown' }}
-								/>
-							</React.Suspense>
+							<div className="flex flex-col">
+								<ChartPanelToolbar className="justify-end">
+									{pieSelectableSeries.length > 1 ? (
+										<SelectWithCombobox
+											allValues={pieSelectableSeries}
+											selectedValues={selectedPieTokens}
+											setSelectedValues={setSelectedPieTokens}
+											label="LST"
+											labelType="smol"
+											variant="filter"
+											size="md"
+										/>
+									) : null}
+									<ChartExportButtons chartInstance={pieChartInstance} filename="lst-breakdown" title="LST Breakdown" />
+								</ChartPanelToolbar>
+								<React.Suspense fallback={<ChartPanelBodyFallback />}>
+									<PieChart chartData={deferredPieChartData} stackColors={lsdColors} onReady={handlePieReady} />
+								</React.Suspense>
+							</div>
 							<div className="flex flex-col">
 								<div className="flex items-center justify-end gap-2 px-2">
-									<SelectWithCombobox
-										allValues={tokens}
-										selectedValues={selectedBreakdownTokens}
-										setSelectedValues={setSelectedBreakdownTokens}
-										label="LST"
-										labelType="smol"
-										variant="filter"
-										size="md"
-									/>
+									{tokens.length > 1 ? (
+										<SelectWithCombobox
+											allValues={tokens}
+											selectedValues={selectedBreakdownTokens}
+											setSelectedValues={setSelectedBreakdownTokens}
+											label="LST"
+											labelType="smol"
+											variant="filter"
+											size="md"
+										/>
+									) : null}
 									<ChartExportButtons
 										chartInstance={breakdownChartInstance}
 										filename={breakdownExportFilenameBase}
 										title={breakdownExportTitle}
+										prepareCsvDirect={
+											renderedActiveChartData.kind === 'breakdown'
+												? () =>
+														buildSelectedSeriesCsv({
+															dataset: selectedBreakdownPresentation!.dataset,
+															charts: selectedBreakdownPresentation!.charts,
+															selectedCharts: new Set(selectedBreakdownTokens),
+															filename: breakdownExportFilenameBase
+														})
+												: undefined
+										}
 									/>
 								</div>
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart
-										dataset={
-											renderedActiveChartData.kind === 'breakdown' ? renderedActiveChartData.data.dataset : undefined
-										}
-										charts={
-											renderedActiveChartData.kind === 'breakdown' ? renderedActiveChartData.data.charts : undefined
-										}
+										dataset={selectedBreakdownPresentation?.dataset}
+										charts={selectedBreakdownPresentation?.charts}
 										stacked={true}
 										expandTo100Percent={true}
 										hideDefaultLegend
 										valueSymbol="%"
-										selectedCharts={selectedBreakdownTokensSet}
 										onReady={handleBreakdownReady}
 									/>
 								</React.Suspense>
@@ -310,38 +388,44 @@ export const LSTOverview = ({
 									options={DWMC_GROUPING_OPTIONS_LOWERCASE}
 									className="mr-auto shrink-0"
 								/>
-								<SelectWithCombobox
-									allValues={tokens}
-									selectedValues={selectedInflowTokens}
-									setSelectedValues={setSelectedInflowTokens}
-									label={groupBy === 'cumulative' ? 'LST' : 'Protocol'}
-									labelType="smol"
-									variant="filter"
-									size="md"
-								/>
+								{tokens.length > 1 ? (
+									<SelectWithCombobox
+										allValues={tokens}
+										selectedValues={selectedInflowTokens}
+										setSelectedValues={setSelectedInflowTokens}
+										label={groupBy === 'cumulative' ? 'LST' : 'Protocol'}
+										labelType="smol"
+										variant="filter"
+										size="md"
+									/>
+								) : null}
 								<ChartExportButtons
 									chartInstance={inflowsChartInstance}
 									filename={inflowsExportFilenameBase}
 									title={inflowsExportTitle}
+									prepareCsvDirect={
+										renderedActiveChartData.kind === 'inflows'
+											? () =>
+													buildSelectedSeriesCsv({
+														dataset: selectedInflowsPresentation!.dataset,
+														charts: selectedInflowsPresentation!.charts,
+														selectedCharts: new Set(selectedInflowsPresentation!.charts.map((chart) => chart.name)),
+														filename: inflowsExportFilenameBase
+													})
+											: undefined
+									}
 								/>
 							</div>
 
 							{groupBy === 'cumulative' ? (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart
-										dataset={
-											renderedActiveChartData.kind === 'inflows' ? renderedActiveChartData.data.dataset : undefined
-										}
-										charts={
-											renderedActiveChartData.kind === 'inflows'
-												? renderedActiveChartData.data.cumulativeCharts
-												: undefined
-										}
+										dataset={selectedInflowsPresentation?.dataset}
+										charts={selectedInflowsPresentation?.charts}
 										hideDefaultLegend
 										groupBy={groupBy}
 										valueSymbol="ETH"
 										showTotalInTooltip
-										selectedCharts={selectedInflowTokensSet}
 										chartOptions={
 											selectedInflowTokens.length > 1 ? { tooltip: { formatter: inflowsTooltipFormatter } } : undefined
 										}
@@ -351,17 +435,12 @@ export const LSTOverview = ({
 							) : (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart
-										dataset={
-											renderedActiveChartData.kind === 'inflows' ? renderedActiveChartData.data.dataset : undefined
-										}
-										charts={
-											renderedActiveChartData.kind === 'inflows' ? renderedActiveChartData.data.barCharts : undefined
-										}
+										dataset={selectedInflowsPresentation?.dataset}
+										charts={selectedInflowsPresentation?.charts}
 										hideDefaultLegend
 										groupBy={groupBy}
 										valueSymbol="ETH"
 										showTotalInTooltip
-										selectedCharts={selectedInflowTokensSet}
 										chartOptions={
 											selectedInflowTokens.length > 1 ? { tooltip: { formatter: inflowsTooltipFormatter } } : undefined
 										}

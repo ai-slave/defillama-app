@@ -2,6 +2,7 @@ import type { ECharts } from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type {
 	IMultiSeriesChartProps,
 	MultiSeriesChartDataset,
@@ -11,6 +12,7 @@ import { CHART_INSET, CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE } from '~/compone
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -59,6 +61,7 @@ const CHART_MODE_OPTIONS: ReadonlyArray<{ key: ChartMode; name: string }> = [
 const DEFAULT_BREAKDOWN_MODES = BREAKDOWN_OPTIONS.map((option) => option.key)
 
 function LiquidationsDistributionChartCard({
+	availableSeries,
 	breakdownOptions,
 	chartOptions,
 	chartState,
@@ -68,13 +71,17 @@ function LiquidationsDistributionChartCard({
 	setBreakdownMode,
 	setChartMode,
 	setMetric,
+	selectedCharts,
+	selectedSeries,
 	setSelectedToken,
+	setSelectedSeries,
 	timestamp,
 	title,
 	iconUrl,
 	tokenOptions,
 	chartInstanceRef
 }: {
+	availableSeries: string[]
 	breakdownOptions: Array<{ key: BreakdownMode; name: string }>
 	chartOptions: IMultiSeriesChartProps['chartOptions']
 	chartState: LiquidationsChartState
@@ -89,13 +96,23 @@ function LiquidationsDistributionChartCard({
 	setBreakdownMode: (mode: BreakdownMode) => void
 	setChartMode: (mode: ChartMode) => void
 	setMetric: (metric: Metric) => void
+	selectedCharts: Set<string>
+	selectedSeries: string[]
 	setSelectedToken: (token: string) => void
+	setSelectedSeries: React.Dispatch<React.SetStateAction<string[]>>
 	timestamp: number
 	title: string | undefined
 	iconUrl?: string
 	tokenOptions: Array<{ key: string; name: string }>
 	chartInstanceRef: React.MutableRefObject<ECharts | null>
 }) {
+	const exportFilename = slug(
+		[title ?? 'liquidation-distribution', chartState.token, chartState.modeLabel, chartState.breakdownLabel]
+			.filter(Boolean)
+			.join('-')
+	)
+	const seriesLabel = chartState.breakdownMode === 'protocol' ? 'Protocol' : 'Chain'
+
 	return (
 		<ChartPanel>
 			<ChartPanelToolbar>
@@ -146,6 +163,17 @@ function LiquidationsDistributionChartCard({
 					variant="default"
 					size="md"
 				/>
+				{availableSeries.length > 1 && chartState.breakdownMode !== 'total' ? (
+					<SelectWithCombobox
+						allValues={availableSeries}
+						selectedValues={selectedSeries}
+						setSelectedValues={setSelectedSeries}
+						label={seriesLabel}
+						labelType="smol"
+						variant="filter"
+						size="md"
+					/>
+				) : null}
 				<SegmentedControl
 					value={chartState.metric}
 					onValueChange={setMetric}
@@ -159,11 +187,7 @@ function LiquidationsDistributionChartCard({
 				/>
 				<ChartExportButtons
 					chartInstance={() => chartInstanceRef.current}
-					filename={slug(
-						[title ?? 'liquidation-distribution', chartState.token, chartState.modeLabel, chartState.breakdownLabel]
-							.filter(Boolean)
-							.join('-')
-					)}
+					filename={exportFilename}
 					title={[
 						title ?? 'Liquidation Distribution',
 						chartState.token,
@@ -173,6 +197,14 @@ function LiquidationsDistributionChartCard({
 						.filter(Boolean)
 						.join(' - ')}
 					iconUrl={iconUrl}
+					prepareCsvDirect={() =>
+						buildSelectedSeriesCsv({
+							dataset: deferredChartModel.dataset,
+							charts: deferredChartModel.charts,
+							selectedCharts,
+							filename: exportFilename
+						})
+					}
 					smol
 				/>
 			</ChartPanelToolbar>
@@ -180,6 +212,7 @@ function LiquidationsDistributionChartCard({
 				<MultiSeriesChart
 					dataset={deferredChartModel.dataset}
 					charts={deferredChartModel.charts}
+					selectedCharts={selectedCharts}
 					chartOptions={chartOptions}
 					containerClassName="min-h-[360px]"
 					hideDataZoom={displayOptions.shouldHideDataZoom}
@@ -466,6 +499,18 @@ export function LiquidationsDistributionChart({
 		const baseView = getLiquidationsChartView(chart, chartState.token, chartState.breakdownMode)
 		return chartState.mode === 'cumulative' ? buildCumulativeLiquidationsChartView(baseView) : baseView
 	}, [chart, chartState.breakdownMode, chartState.mode, chartState.token])
+	const availableSeries = React.useMemo(
+		() => Array.from(new Set(selectedChartView.series.map((series) => series.label))),
+		[selectedChartView.series]
+	)
+	const {
+		activeSeries: selectedSeries,
+		selectedCharts,
+		setSelectedSeries
+	} = useSeriesSelection({
+		availableSeries,
+		selectionKey: `${chartState.token ?? 'none'}:${chartState.breakdownMode}`
+	})
 	const visibleDataPointCount = React.useMemo(() => {
 		return selectedChartView.bins.reduce((count, _, index) => {
 			const hasValueAtIndex = selectedChartView.series.some(
@@ -587,6 +632,7 @@ export function LiquidationsDistributionChart({
 
 	return (
 		<LiquidationsDistributionChartCard
+			availableSeries={availableSeries}
 			breakdownOptions={breakdownOptions}
 			chartOptions={chartOptions}
 			chartState={chartState}
@@ -596,7 +642,10 @@ export function LiquidationsDistributionChart({
 			setBreakdownMode={setBreakdownMode}
 			setChartMode={setChartMode}
 			setMetric={setMetric}
+			selectedCharts={selectedCharts}
+			selectedSeries={selectedSeries}
 			setSelectedToken={setSelectedToken}
+			setSelectedSeries={setSelectedSeries}
 			timestamp={timestamp}
 			title={title}
 			iconUrl={iconUrl}

@@ -1,4 +1,12 @@
+import { CHART_COLORS } from '~/constants/colors'
+
 type PieInputRow = Record<string, unknown>
+
+export interface RuntimePieChartData {
+	peers: Array<{ name: string; value: number }>
+	limit: number
+	upstreamOthersValue: number
+}
 
 /** Normalize and rank pie slices, folding the tail and any explicit remainder into `Others`. */
 export function preparePieChartData({
@@ -37,4 +45,89 @@ export function preparePieChartData({
 	}
 	if (othersValue > 0) mainSlices.push({ name: 'Others', value: othersValue })
 	return mainSlices
+}
+
+/** Prepare canonical additive peers for a runtime-filtered pie capped at presentation time. */
+export function prepareRuntimePieChartData({
+	data,
+	limit,
+	sliceIdentifier = 'name',
+	sliceValue = 'value',
+	comparePeers
+}: {
+	data: Record<string, number> | PieInputRow[] | ReadonlyMap<string, number>
+	limit: number
+	sliceIdentifier?: string
+	sliceValue?: string
+	comparePeers?: (left: { name: string; value: number }, right: { name: string; value: number }) => number
+}): RuntimePieChartData {
+	const peers: Array<{ name: string; value: number }> = []
+	let upstreamOthersValue = 0
+	if (data instanceof Map) {
+		for (const [name, value] of data) {
+			if (name === 'Others') upstreamOthersValue += value
+			else if (value > 0) peers.push({ name, value })
+		}
+	} else {
+		const valueByPeer = new Map<string, number>()
+		if (Array.isArray(data)) {
+			for (const entry of data) {
+				const name = String(Object.hasOwn(entry, sliceIdentifier) ? entry[sliceIdentifier] : undefined)
+				const value = Number(Object.hasOwn(entry, sliceValue) ? entry[sliceValue] : undefined)
+				if (name === 'Others') upstreamOthersValue += value
+				else valueByPeer.set(name, (valueByPeer.get(name) ?? 0) + value)
+			}
+		} else {
+			for (const name in data) {
+				if (!Object.hasOwn(data, name)) continue
+				const value = Number(data[name])
+				if (name === 'Others') upstreamOthersValue += value
+				else valueByPeer.set(name, (valueByPeer.get(name) ?? 0) + value)
+			}
+		}
+		for (const [name, value] of valueByPeer) {
+			if (value > 0) peers.push({ name, value })
+		}
+	}
+	peers.sort(comparePeers ?? ((left, right) => right.value - left.value))
+	return { peers, limit, upstreamOthersValue }
+}
+
+export function buildRuntimePieChartPresentation({
+	series,
+	selectedSeries,
+	colorIndexByPeer,
+	includeUpstreamOthers = true
+}: {
+	series: RuntimePieChartData
+	selectedSeries?: ReadonlySet<string>
+	colorIndexByPeer?: ReadonlyMap<string, number>
+	includeUpstreamOthers?: boolean
+}) {
+	const chartData: Array<{ name: string; value: number }> = []
+	const stackColors: Record<string, string> = {}
+	let selectedPeerCount = 0
+	let othersValue = 0
+	for (let index = 0; index < series.peers.length; index++) {
+		const peer = series.peers[index]
+		if (selectedSeries && !selectedSeries.has(peer.name)) continue
+		selectedPeerCount++
+		if (chartData.length < series.limit) {
+			chartData.push(peer)
+			const canonicalIndex = colorIndexByPeer?.get(peer.name) ?? index
+			const reservedColorIndex = series.limit % CHART_COLORS.length
+			const colorIndexBeforeReservedSlot = canonicalIndex % (CHART_COLORS.length - 1)
+			const colorIndex =
+				colorIndexBeforeReservedSlot < reservedColorIndex
+					? colorIndexBeforeReservedSlot
+					: colorIndexBeforeReservedSlot + 1
+			stackColors[peer.name] = CHART_COLORS[colorIndex % CHART_COLORS.length]
+		} else othersValue += peer.value
+	}
+	if (includeUpstreamOthers && selectedPeerCount === series.peers.length) othersValue += series.upstreamOthersValue
+	if (othersValue > 0) {
+		chartData.push({ name: 'Others', value: othersValue })
+		stackColors.Others = CHART_COLORS[series.limit % CHART_COLORS.length]
+	}
+	return { chartData, stackColors }
 }

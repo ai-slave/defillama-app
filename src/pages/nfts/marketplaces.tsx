@@ -1,8 +1,13 @@
 import * as React from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildNFTMarketplaceRelativeChartData } from '~/containers/Nft/marketplaceCharts'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import {
+	buildNFTMarketplaceChartPresentation,
+	buildNFTMarketplaceRelativeChartData
+} from '~/containers/Nft/marketplaceCharts'
 import { NftsMarketplaceTable } from '~/containers/Nft/NftsMarketplaceTable'
 import { getNFTMarketplacesData } from '~/containers/Nft/queries'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import Layout from '~/layout'
 import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
@@ -35,20 +40,45 @@ function Marketplaces({
 	absoluteVolumeDataset,
 	absoluteTradesDataset,
 	absoluteBarCharts,
-	dailyTotals
+	dailyTotals,
+	upstreamRemainder,
+	availableSeries
 }: Awaited<ReturnType<typeof getNFTMarketplacesData>>) {
 	const [viewType, setViewType] = React.useState<ViewType>('Absolute')
-	const relativeData = React.useMemo(
+	const { activeSeries, setSelectedSeries, includeUpstreamOthers } = useAllSeriesSelection({ availableSeries })
+	const presentation = React.useMemo(
 		() =>
-			viewType === 'Relative'
-				? buildNFTMarketplaceRelativeChartData({
-						absoluteVolumeDataset,
-						absoluteTradesDataset,
-						absoluteBarCharts,
-						dailyTotals
-					})
-				: null,
-		[absoluteBarCharts, absoluteTradesDataset, absoluteVolumeDataset, dailyTotals, viewType]
+			buildNFTMarketplaceChartPresentation(
+				{
+					absoluteVolumeDataset,
+					absoluteTradesDataset,
+					absoluteBarCharts,
+					dailyTotals,
+					upstreamRemainder,
+					availableSeries
+				},
+				activeSeries,
+				includeUpstreamOthers
+			),
+		[
+			absoluteBarCharts,
+			absoluteTradesDataset,
+			absoluteVolumeDataset,
+			activeSeries,
+			availableSeries,
+			dailyTotals,
+			includeUpstreamOthers,
+			upstreamRemainder
+		]
+	)
+	const relativeData = React.useMemo(
+		() => (viewType === 'Relative' ? buildNFTMarketplaceRelativeChartData(presentation) : null),
+		[presentation, viewType]
+	)
+	const selectableSeries = presentation.availableSeries
+	const renderedCharts = React.useMemo(
+		() => new Set(presentation.absoluteBarCharts.map((chart) => chart.name)),
+		[presentation.absoluteBarCharts]
 	)
 
 	return (
@@ -68,13 +98,25 @@ function Marketplaces({
 						values={VIEW_TYPES}
 						className="ml-auto"
 					/>
+					{selectableSeries.length > 1 ? (
+						<SelectWithCombobox
+							allValues={selectableSeries}
+							selectedValues={activeSeries}
+							setSelectedValues={setSelectedSeries}
+							label="Marketplace"
+							labelType="smol"
+							variant="filter"
+							size="md"
+						/>
+					) : null}
 				</div>
 				<div className="grid grid-cols-1 *:col-span-1 xl:min-h-[400px] xl:grid-cols-2">
 					<React.Suspense fallback={<ChartPanelExportShellFallback className="w-full" />}>
 						<MultiSeriesChart
 							title="Volume"
-							dataset={relativeData?.relativeVolumeDataset ?? absoluteVolumeDataset}
-							charts={relativeData?.relativeAreaCharts ?? absoluteBarCharts}
+							dataset={relativeData?.relativeVolumeDataset ?? presentation.absoluteVolumeDataset}
+							charts={relativeData?.relativeAreaCharts ?? presentation.absoluteBarCharts}
+							selectedCharts={renderedCharts}
 							stacked={viewType === 'Relative'}
 							expandTo100Percent={viewType === 'Relative'}
 							valueSymbol={viewType === 'Relative' ? '%' : 'ETH'}
@@ -93,8 +135,9 @@ function Marketplaces({
 					<React.Suspense fallback={<ChartPanelExportShellFallback className="w-full" />}>
 						<MultiSeriesChart
 							title="Trades"
-							dataset={relativeData?.relativeTradesDataset ?? absoluteTradesDataset}
-							charts={relativeData?.relativeAreaCharts ?? absoluteBarCharts}
+							dataset={relativeData?.relativeTradesDataset ?? presentation.absoluteTradesDataset}
+							charts={relativeData?.relativeAreaCharts ?? presentation.absoluteBarCharts}
+							selectedCharts={renderedCharts}
 							stacked={viewType === 'Relative'}
 							expandTo100Percent={viewType === 'Relative'}
 							valueSymbol={viewType === 'Relative' ? '%' : ''}

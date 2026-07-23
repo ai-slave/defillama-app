@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
@@ -8,10 +9,15 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { boundSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { PercentChange } from '~/ui/PercentChange'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { formattedNum } from '~/utils'
-import { buildNarrativeTreemapTreeData, calculateDenominatedTimeSeries } from './chartData'
+import {
+	buildNarrativeTreemapTreeData,
+	calculateDenominatedTimeSeries,
+	filterNarrativeTreemapTreeData
+} from './chartData'
 import type { CategoryPerformanceProps, IPctChangeRow } from './types'
 
 const MultiSeriesChart = React.lazy(
@@ -77,6 +83,7 @@ const DENOM_COIN_NAMES = ['Bitcoin', 'Ethereum', 'Solana'] as const
 const DENOM_COIN_NAME_SET = new Set<string>(DENOM_COIN_NAMES)
 const BAR_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' } }
 const LINE_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' } }
+const EMPTY_SERIES: string[] = []
 
 export const CategoryPerformanceContainer = ({
 	pctChanges,
@@ -89,33 +96,26 @@ export const CategoryPerformanceContainer = ({
 	const [groupBy, setGroupBy] = React.useState<Period>('30D')
 	const [groupByDenom, setGroupByDenom] = React.useState<Denom>('$')
 
-	const [selectedSeries, setSelectedSeries] = React.useState<string[]>(() =>
-		(areaChartLegend ?? []).slice(0, MAX_VISIBLE_TIME_SERIES)
+	const availableSeries = areaChartLegend ?? EMPTY_SERIES
+	const { activeSeries: selectedSeries, setSelectedSeries } = useSeriesSelection({
+		availableSeries,
+		allowEmptySelection: true
+	})
+	const displayedSelectedSeries = React.useMemo(
+		() => (tab === 'heatmap' ? selectedSeries : selectedSeries.slice(0, MAX_VISIBLE_TIME_SERIES)),
+		[selectedSeries, tab]
 	)
-	const setBoundedSelectedSeries = React.useCallback((values: string[]) => {
-		setSelectedSeries((current) => {
-			if (values.length <= MAX_VISIBLE_TIME_SERIES) return values
-			const addedValues = values.filter((value) => !current.includes(value))
-			if (addedValues.length === 1) {
-				const added = addedValues[0]
-				return [...values.filter((value) => value !== added).slice(0, MAX_VISIBLE_TIME_SERIES - 1), added]
+	const setBoundedSelectedSeries = React.useCallback(
+		(values: string[]) => {
+			if (tab === 'heatmap') {
+				setSelectedSeries(values)
+				return
 			}
-			return values.slice(0, MAX_VISIBLE_TIME_SERIES)
-		})
-	}, [])
-
-	// Keep selection in sync when legend options change.
-	React.useEffect(() => {
-		const nextOptions = areaChartLegend ?? []
-		setSelectedSeries((prev) => {
-			// Preserve any existing selection that still exists in the new options.
-			const preserved = prev.filter((s) => nextOptions.includes(s))
-			const next = preserved.length > 0 ? preserved : nextOptions.slice(0, MAX_VISIBLE_TIME_SERIES)
-			// Avoid re-render loops when callers pass a new array instance each render.
-			if (prev.length === next.length && prev.every((v, i) => v === next[i])) return prev
-			return next
-		})
-	}, [areaChartLegend])
+			setSelectedSeries(boundSeriesSelection(displayedSelectedSeries, values, MAX_VISIBLE_TIME_SERIES))
+		},
+		[displayedSelectedSeries, setSelectedSeries, tab]
+	)
+	const displayedSelectedCharts = React.useMemo(() => new Set(displayedSelectedSeries), [displayedSelectedSeries])
 
 	const disabledDenoms = React.useMemo(() => {
 		const { field, seriesKey } = PERIOD_CONFIG[groupBy]
@@ -183,7 +183,7 @@ export const CategoryPerformanceContainer = ({
 	}, [pctChanges, groupBy, performanceTimeSeries, groupByDenom, isCoinPage])
 
 	const dataset = React.useMemo(() => {
-		const seriesKeys = selectedSeries
+		const seriesKeys = availableSeries
 		const dimensions = ['timestamp', ...seriesKeys]
 
 		const source: Array<Array<string | number | null | undefined>> = []
@@ -197,14 +197,14 @@ export const CategoryPerformanceContainer = ({
 		}
 
 		return { dimensions, source }
-	}, [timeSeries, selectedSeries])
+	}, [timeSeries, availableSeries])
 	const canonicalColorIndex = React.useMemo(
-		() => new Map((areaChartLegend ?? []).map((name, index) => [name, index])),
-		[areaChartLegend]
+		() => new Map(availableSeries.map((name, index) => [name, index])),
+		[availableSeries]
 	)
 
 	const lineCharts = React.useMemo(() => {
-		const seriesKeys = selectedSeries
+		const seriesKeys = availableSeries
 		return seriesKeys.map((name, index) => ({
 			type: 'line' as const,
 			name,
@@ -214,10 +214,10 @@ export const CategoryPerformanceContainer = ({
 			yAxisIndex: undefined,
 			large: true
 		}))
-	}, [canonicalColorIndex, selectedSeries])
+	}, [availableSeries, canonicalColorIndex])
 
 	const barCharts = React.useMemo(() => {
-		const seriesKeys = selectedSeries
+		const seriesKeys = availableSeries
 		return seriesKeys.map((name, index) => ({
 			type: 'bar' as const,
 			name,
@@ -226,13 +226,17 @@ export const CategoryPerformanceContainer = ({
 			stack: 'A',
 			large: false
 		}))
-	}, [canonicalColorIndex, selectedSeries])
+	}, [availableSeries, canonicalColorIndex])
 	const chartDataBundle = React.useMemo(() => ({ dataset, barCharts, lineCharts }), [dataset, barCharts, lineCharts])
 	const deferredChartData = React.useDeferredValue(chartDataBundle)
 
-	const treemapTreeData = React.useMemo(
+	const canonicalTreemapTreeData = React.useMemo(
 		() => (tab === 'heatmap' ? buildNarrativeTreemapTreeData(sortedPctChanges, PERIOD_CONFIG[groupBy].field) : []),
-		[tab, sortedPctChanges, groupBy]
+		[groupBy, sortedPctChanges, tab]
+	)
+	const treemapTreeData = React.useMemo(
+		() => filterNarrativeTreemapTreeData(canonicalTreemapTreeData, displayedSelectedCharts, isCoinPage),
+		[canonicalTreemapTreeData, displayedSelectedCharts, isCoinPage]
 	)
 
 	const { chartInstance: exportChartInstance, handleChartReady: onChartReady } = useGetChartInstance()
@@ -291,26 +295,34 @@ export const CategoryPerformanceContainer = ({
 						label="Denom (vs):"
 						disabledValues={disabledDenoms}
 					/>
-					{tab === 'barchart' || tab === 'linechart' ? (
-						<>
-							{areaChartLegend?.length > 1 ? (
-								<SelectWithCombobox
-									allValues={areaChartLegend}
-									selectedValues={selectedSeries}
-									setSelectedValues={setBoundedSelectedSeries}
-									label={isCoinPage ? 'Coins' : 'Categories'}
-									labelType="smol"
-									variant="filter"
-									size="md"
-								/>
-							) : null}
-							<ChartExportButtons
-								chartInstance={exportChartInstance}
-								filename={`category-performance-${tab}`}
-								title={`Category Performance ${tab}`}
-							/>
-						</>
+					{availableSeries.length > 1 ? (
+						<SelectWithCombobox
+							allValues={availableSeries}
+							selectedValues={displayedSelectedSeries}
+							setSelectedValues={setBoundedSelectedSeries}
+							label={isCoinPage ? 'Coin' : 'Category'}
+							labelType="smol"
+							variant="filter"
+							size="md"
+						/>
 					) : null}
+					<ChartExportButtons
+						chartInstance={exportChartInstance}
+						showCsv={tab !== 'heatmap'}
+						filename={`category-performance-${tab}`}
+						title={`Category Performance ${tab}`}
+						prepareCsvDirect={
+							tab === 'heatmap'
+								? undefined
+								: () =>
+										buildSelectedSeriesCsv({
+											dataset: deferredChartData.dataset,
+											charts: tab === 'barchart' ? deferredChartData.barCharts : deferredChartData.lineCharts,
+											selectedCharts: displayedSelectedCharts,
+											filename: `category-performance-${tab}`
+										})
+						}
+					/>
 				</div>
 
 				<div className="min-h-[360px]">
@@ -319,6 +331,7 @@ export const CategoryPerformanceContainer = ({
 							<MultiSeriesChart
 								dataset={deferredChartData.dataset}
 								charts={deferredChartData.barCharts}
+								selectedCharts={displayedSelectedCharts}
 								valueSymbol={chartValueSymbol}
 								height="533px"
 								hideDataZoom={false}
@@ -332,6 +345,7 @@ export const CategoryPerformanceContainer = ({
 							<MultiSeriesChart
 								dataset={deferredChartData.dataset}
 								charts={deferredChartData.lineCharts}
+								selectedCharts={displayedSelectedCharts}
 								valueSymbol={chartValueSymbol}
 								height="533px"
 								solidChartAreaStyle={false}
@@ -343,7 +357,7 @@ export const CategoryPerformanceContainer = ({
 						</React.Suspense>
 					) : (
 						<React.Suspense fallback={<div className="h-[533px]" />}>
-							<TreemapChart treeData={treemapTreeData} variant="narrative" height="533px" />
+							<TreemapChart treeData={treemapTreeData} variant="narrative" height="533px" onReady={onChartReady} />
 						</React.Suspense>
 					)}
 				</div>

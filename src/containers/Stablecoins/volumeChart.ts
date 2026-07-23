@@ -19,12 +19,15 @@ export interface StablecoinVolumeChartPayload {
 	valueSymbol: '$'
 	stacked: boolean
 	showTotalInTooltip: boolean
+	availableSeries?: string[]
 }
 
 interface StablecoinVolumeChartOptions {
 	chart: StablecoinVolumeChartKind
 	limit?: number
 	trimIncompleteTail?: boolean
+	selectedNames?: string[] | null
+	excludedNames?: string[] | null
 }
 
 const DEFAULT_BREAKDOWN_LIMIT = 20
@@ -42,7 +45,11 @@ const clampLimit = (limit: number | undefined): number => {
 	return Math.min(MAX_BREAKDOWN_LIMIT, limit)
 }
 
-const buildCharts = (names: string[], stacked: boolean): MultiSeriesChartSeriesConfig[] => {
+const buildCharts = (
+	names: string[],
+	stacked: boolean,
+	colorIndexByName?: ReadonlyMap<string, number>
+): MultiSeriesChartSeriesConfig[] => {
 	const charts: MultiSeriesChartSeriesConfig[] = []
 	for (let i = 0; i < names.length; i++) {
 		const name = names[i]
@@ -50,7 +57,7 @@ const buildCharts = (names: string[], stacked: boolean): MultiSeriesChartSeriesC
 			type: 'bar',
 			name,
 			encode: { x: 'timestamp', y: name },
-			color: CHART_COLORS[i % CHART_COLORS.length],
+			color: name === OTHERS_NAME ? '#AAAAAA' : CHART_COLORS[(colorIndexByName?.get(name) ?? i) % CHART_COLORS.length],
 			barMinWidth: 1,
 			barMaxWidth: 24,
 			...(stacked ? { stack: 'stablecoin-volume', large: false } : {})
@@ -112,22 +119,22 @@ const getLatestBreakdown = (
 	return {}
 }
 
-const getTopBreakdownKeys = (
+const getRankedBreakdownKeys = (
 	points: StablecoinVolumeBreakdownChartPoint[],
-	lastCompletePointIndex: number,
-	limit: number
+	lastCompletePointIndex: number
 ): string[] => {
 	const latest = getLatestBreakdown(points, lastCompletePointIndex)
-	const entries: Array<{ key: string; value: number }> = []
-	for (const key in latest) {
-		const value = latest[key]
-		if (value > 0) entries.push({ key, value })
-	}
-	entries.sort((a, b) => b.value - a.value)
 	const keys: string[] = []
-	for (let i = 0; i < entries.length && i < limit; i++) {
-		keys.push(entries[i].key)
+	const seen = new Set<string>()
+	for (let i = 0; i <= lastCompletePointIndex; i++) {
+		for (const key in points[i][1] as Record<string, number>) {
+			if (seen.has(key)) continue
+			seen.add(key)
+			keys.push(key)
+		}
 	}
+	const originalOrder = new Map(keys.map((key, index) => [key, index]))
+	keys.sort((a, b) => (latest[b] ?? 0) - (latest[a] ?? 0) || originalOrder.get(a)! - originalOrder.get(b)!)
 	return keys
 }
 
@@ -137,16 +144,29 @@ const buildBreakdownVolumePayload = (
 ): StablecoinVolumeChartPayload => {
 	const points = data as StablecoinVolumeBreakdownChartPoint[]
 	const lastCompletePointIndex = getLastCompletePointIndex(points, options.trimIncompleteTail === true)
-	const keys = getTopBreakdownKeys(points, lastCompletePointIndex, clampLimit(options.limit))
+	const rankedKeys = getRankedBreakdownKeys(points, lastCompletePointIndex)
+	const labelsByKey = new Map(rankedKeys.map((key) => [key, formatDimensionLabel(key, options.chart)]))
+	const availableSeries = rankedKeys.map((key) => labelsByKey.get(key)!)
+	const colorIndexByName = new Map(availableSeries.map((name, index) => [name, index]))
+	const selectedSet = options.selectedNames == null ? null : new Set(options.selectedNames)
+	const excludedSet = options.excludedNames == null ? null : new Set(options.excludedNames)
+	const selectedKeys = selectedSet
+		? rankedKeys.filter((key) => selectedSet.has(labelsByKey.get(key)!))
+		: excludedSet
+			? rankedKeys.filter((key) => !excludedSet.has(labelsByKey.get(key)!))
+			: rankedKeys
+	const limit = clampLimit(options.limit)
+	const keys = selectedKeys.slice(0, limit)
+	const omittedKeys = selectedKeys.slice(limit)
 	const dimensions = ['timestamp']
 	for (const key of keys) {
-		const label = formatDimensionLabel(key, options.chart)
+		const label = labelsByKey.get(key)!
 		dimensions.push(label)
 	}
-	const includeOthers = keys.length > 0
+	const includeOthers = omittedKeys.length > 0
 	let hasOthersValue = false
 
-	const selectedKeysSet = new Set(keys)
+	const omittedKeysSet = new Set(omittedKeys)
 	const source: MultiSeriesChartDataset['source'] = []
 	for (let i = 0; i <= lastCompletePointIndex; i++) {
 		const [timestamp, breakdown] = points[i]
@@ -158,10 +178,7 @@ const buildBreakdownVolumePayload = (
 
 		if (includeOthers) {
 			let others = 0
-			for (const key in breakdown) {
-				if (selectedKeysSet.has(key)) continue
-				others += breakdown[key]
-			}
+			for (const key in breakdown) if (omittedKeysSet.has(key)) others += breakdown[key]
 			if (others > 0) hasOthersValue = true
 			row[keys.length + 1] = others
 		}
@@ -185,10 +202,11 @@ const buildBreakdownVolumePayload = (
 			source,
 			dimensions
 		},
-		charts: buildCharts(seriesNames, stacked),
+		charts: buildCharts(seriesNames, stacked, colorIndexByName),
 		valueSymbol: '$',
 		stacked,
-		showTotalInTooltip: stacked
+		showTotalInTooltip: stacked,
+		availableSeries
 	}
 }
 

@@ -1,4 +1,5 @@
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type { RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IProtocolTokenBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import type { StablecoinListAsset } from '~/containers/Stablecoins/api.types'
 
@@ -18,7 +19,7 @@ export interface ReserveStablecoinChartData {
 	stablecoinsByPegMechanism: ChartSpec | null
 	stablecoinsByPegType: ChartSpec | null
 	stablecoinsByToken: ChartSpec | null
-	pegMechanismPieChart: Array<{ name: string; value: number }>
+	pegMechanismPieSeries: RuntimePieChartData
 	stablecoinBreakdown: StablecoinBreakdownPoint[]
 	stablecoinTokensUnique: string[]
 	pegTypesUnique: string[]
@@ -41,7 +42,12 @@ function buildLineChartSpec(source: MultiSeriesChartDataset['source'], names: st
 }
 
 function buildPegMechanismSummary(latestRow: MultiSeriesChartDataset['source'][number] | undefined, names: string[]) {
-	if (!latestRow) return { stablecoinBreakdown: [], pegMechanismPieChart: [] }
+	if (!latestRow) {
+		return {
+			stablecoinBreakdown: [],
+			pegMechanismPieSeries: { peers: [], limit: 10, upstreamOthersValue: 0 }
+		}
+	}
 
 	let total = 0
 	for (let i = 1; i < latestRow.length; i++) total += (latestRow[i] as number | undefined) ?? 0
@@ -55,20 +61,16 @@ function buildPegMechanismSummary(latestRow: MultiSeriesChartDataset['source'][n
 	}
 	stablecoinBreakdown.sort((a, b) => b.value - a.value)
 
-	const mainCount = Math.min(10, stablecoinBreakdown.length)
-	const pegMechanismPieChart: Array<{ name: string; value: number }> = []
-	let othersValue = 0
-	for (let i = 0; i < stablecoinBreakdown.length; i++) {
-		const item = stablecoinBreakdown[i]
-		if (i < mainCount && item.mechanism !== 'Others') {
-			pegMechanismPieChart.push({ name: item.mechanism, value: item.value })
-		} else {
-			othersValue += item.value
-		}
+	const peers: RuntimePieChartData['peers'] = []
+	let upstreamOthersValue = 0
+	for (const item of stablecoinBreakdown) {
+		if (item.value <= 0) continue
+		if (item.mechanism === 'Others') upstreamOthersValue += item.value
+		else peers.push({ name: item.mechanism, value: item.value })
 	}
-	if (othersValue > 0) pegMechanismPieChart.push({ name: 'Others', value: othersValue })
+	const pegMechanismPieSeries: RuntimePieChartData = { peers, limit: 10, upstreamOthersValue }
 
-	return { stablecoinBreakdown, pegMechanismPieChart }
+	return { stablecoinBreakdown, pegMechanismPieSeries }
 }
 
 /**
@@ -161,7 +163,7 @@ export function buildReserveStablecoinChartData(
 		}
 	}
 
-	const { stablecoinBreakdown, pegMechanismPieChart } = buildPegMechanismSummary(
+	const { stablecoinBreakdown, pegMechanismPieSeries } = buildPegMechanismSummary(
 		stablecoinsByPegMechanismSource[stablecoinsByPegMechanismSource.length - 1],
 		pegMechanismsUnique
 	)
@@ -172,7 +174,7 @@ export function buildReserveStablecoinChartData(
 		stablecoinsByPegMechanism: buildLineChartSpec(stablecoinsByPegMechanismSource, pegMechanismsUnique),
 		stablecoinsByPegType: buildLineChartSpec(stablecoinsByPegTypeSource, pegTypesUnique),
 		stablecoinsByToken: buildLineChartSpec(stablecoinsByTokenSource, stablecoinTokensUnique),
-		pegMechanismPieChart,
+		pegMechanismPieSeries,
 		stablecoinBreakdown,
 		stablecoinTokensUnique,
 		pegTypesUnique,

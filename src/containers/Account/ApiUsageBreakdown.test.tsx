@@ -1,16 +1,29 @@
 // @vitest-environment happy-dom
 
-import { act } from 'react'
+import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 
-const mocks = vi.hoisted(() => ({ chartProps: null as IMultiSeriesChartProps | null }))
+type SelectWithComboboxProps = ComponentProps<typeof SelectWithCombobox>
+
+const mocks = vi.hoisted(() => ({
+	chartProps: null as IMultiSeriesChartProps | null,
+	selectorProps: null as SelectWithComboboxProps | null
+}))
 
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
 	default: (props: IMultiSeriesChartProps) => {
 		mocks.chartProps = props
 		return <div data-testid="api-usage-chart" />
+	}
+}))
+
+vi.mock('~/components/Select/SelectWithCombobox', () => ({
+	SelectWithCombobox: (props: SelectWithComboboxProps) => {
+		mocks.selectorProps = props
+		return <div data-testid="route-selector" />
 	}
 }))
 
@@ -28,6 +41,7 @@ describe('ApiUsageBreakdown', () => {
 		document.body.appendChild(container)
 		root = createRoot(container)
 		mocks.chartProps = null
+		mocks.selectorProps = null
 	})
 
 	afterEach(async () => {
@@ -66,5 +80,13 @@ describe('ApiUsageBreakdown', () => {
 			{ x: 0, y: 6 },
 			{ x: 0, y: 7 }
 		])
+		expect(chartProps.selectedCharts).toEqual(new Set(['a', 'b', 'c', 'd', 'e', 'f', 'Others']))
+		expect(mocks.selectorProps!.allValues).toEqual(['a', 'b', 'c', 'd', 'e', 'f', 'g'])
+
+		await act(async () => mocks.selectorProps!.setSelectedValues(['a']))
+		expect(mocks.chartProps!.selectedCharts).toEqual(new Set(['a']))
+
+		await act(async () => mocks.selectorProps!.setSelectedValues([]))
+		expect(mocks.chartProps!.selectedCharts).toEqual(new Set())
 	})
 })

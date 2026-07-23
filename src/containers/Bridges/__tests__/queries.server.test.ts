@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchJson } from '~/utils/async'
 import { fetchBridgeDayStats, fetchBridgeLargeTransactions, fetchBridges, fetchBridgeVolumeByChain } from '../api'
-import type { RawBridgesWithChainsResponse } from '../api.types'
-import { buildVolumeDataByChain, getBridgeChainNetInflows, getBridgeOverviewPageData } from '../queries.server'
+import type { RawBridgeDayStats, RawBridgesWithChainsResponse } from '../api.types'
+import {
+	buildTableDataByChain,
+	buildVolumeDataByChain,
+	getBridgeChainNetInflows,
+	getBridgeOverviewPageData
+} from '../queries.server'
 
 vi.mock('~/utils/async', () => ({
 	fetchJson: vi.fn()
@@ -124,5 +129,28 @@ describe('buildVolumeDataByChain', () => {
 		})
 
 		expect(result['All Chains']).toEqual([{ date: 1783382400, Deposited: 100, Withdrawn: -20 }])
+	})
+})
+
+describe('buildTableDataByChain token series', () => {
+	it('aggregates contract rows by selectable token symbol on an individual chain', () => {
+		const ethereum: RawBridgeDayStats = {
+			date: 1,
+			totalTokensDeposited: {
+				first: { symbol: 'USDC', usdValue: 7, amount: '7', decimals: 6 },
+				second: { symbol: 'USDC', usdValue: 5, amount: '5', decimals: 6 },
+				third: { symbol: 'ETH', usdValue: 3, amount: '3', decimals: 18 }
+			},
+			totalTokensWithdrawn: {},
+			totalAddressDeposited: {},
+			totalAddressWithdrawn: {}
+		}
+
+		const result = buildTableDataByChain({ prevDayDataByChain: { Ethereum: ethereum }, chainsList: ['Ethereum'] })
+
+		expect(result.Ethereum.tokenDeposits.peers).toEqual([
+			{ name: 'USDC', value: 12 },
+			{ name: 'ETH', value: 3 }
+		])
 	})
 })

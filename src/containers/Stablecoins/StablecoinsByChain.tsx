@@ -6,6 +6,7 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
@@ -23,6 +24,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { StablecoinsChartConfig } from '~/containers/ProDashboard/types'
 import {
 	groupStablecoinBarChartPayload,
+	getStablecoinRuntimeSeries,
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT,
 	type StablecoinChartSeriesPayload
 } from '~/containers/Stablecoins/chartSeries'
@@ -36,6 +38,7 @@ import {
 	getStablecoinChartViewQueryValue,
 	getStablecoinOverviewSeriesChart,
 	getStablecoinOverviewVolumeChartKind,
+	getStablecoinSeriesSelectorLabel,
 	parseStablecoinChartState,
 	parseStablecoinVolumeGroupBy,
 	type StablecoinChartType as StablecoinChartCategory,
@@ -55,9 +58,14 @@ import { formattedNum, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { StablecoinVolumeChainChartKind, StablecoinVolumeGlobalChartKind } from './api.types'
-import { buildStablecoinMarketCapPresentation } from './marketCapPresentation'
+import {
+	buildStablecoinMarketCapPresentation,
+	prepareStablecoinMarketCapSeries,
+	prepareStablecoinMarketCapTreemapCsv
+} from './marketCapPresentation'
 import { StablecoinChangeStats, type StablecoinChangeStat } from './StablecoinChangeStats'
 import { StablecoinsTable } from './StablecoinsAssetsTable'
+import { useStablecoinChartSelection, useStablecoinSelectionIntent } from './useStablecoinChartSelection'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -72,8 +80,14 @@ const EMPTY_PIE_DATA: IPieChartProps['chartData'] = []
 const EMPTY_HBAR_CATEGORIES: string[] = []
 const EMPTY_HBAR_VALUES: number[] = []
 const EMPTY_TREEMAP_DATA: TreemapChartProps['treeData'] = []
-const getStablecoinSymbol = (asset: FormattedStablecoinAsset) => asset.symbol
-const getStablecoinTreemapName = (asset: FormattedStablecoinAsset) => asset.symbol || asset.name
+const EMPTY_SERIES: string[] = []
+const EMPTY_RUNTIME_SERIES = {
+	selectableSeries: EMPTY_SERIES,
+	renderedSelectableSeries: EMPTY_SERIES,
+	fixedRemainderSeries: EMPTY_SERIES,
+	alwaysVisibleSeries: EMPTY_SERIES
+}
+const getStablecoinSnapshotName = (asset: FormattedStablecoinAsset) => asset.symbol || asset.name
 
 type MultiSeriesChartState =
 	| { status: 'loading' }
@@ -106,6 +120,14 @@ export function StablecoinsByChain({
 	const chartState = parseStablecoinChartState(router.query, chartMode)
 	const chartType = chartState.type
 	const chartView = chartState.view
+	const seriesSelectorLabel =
+		getStablecoinSeriesSelectorLabel(chartMode, chartType, chartView) ??
+		(chartType === 'marketCap' && (chartView === 'pie' || chartView === 'hbar' || chartView === 'treemap')
+			? 'Token'
+			: null)
+	const { selectionIntent, setSelectionIntent } = useStablecoinSelectionIntent(
+		`${selectedChain}-${chartType}-${seriesSelectorLabel ?? 'none'}`
+	)
 	const volumeGroupBy = parseStablecoinVolumeGroupBy(router.query.groupBy)
 	const chartTypeOptions = React.useMemo(() => getStablecoinChartTypeOptions(chartMode), [chartMode])
 	const chartViewOptions = React.useMemo(() => getStablecoinChartViewOptions(chartState), [chartState])
@@ -142,12 +164,14 @@ export function StablecoinsByChain({
 			? {
 					scope: 'global',
 					chart: volumeChartKind as StablecoinVolumeGlobalChartKind | null,
+					selectionIntent,
 					enabled: volumeChartKind != null
 				}
 			: {
 					scope: 'chain',
 					chain: selectedChain,
 					chart: volumeChartKind as StablecoinVolumeChainChartKind | null,
+					selectionIntent,
 					enabled: volumeChartKind != null
 				}
 	)
@@ -197,14 +221,15 @@ export function StablecoinsByChain({
 
 	const peggedTotals = useCalcCirculating<FormattedStablecoinAsset>(peggedAssets, includeUnreleased)
 
-	const marketCapPresentation = React.useMemo(() => {
+	const marketCapSeries = React.useMemo(() => {
 		if (chartType !== 'marketCap' || (chartView !== 'pie' && chartView !== 'hbar' && chartView !== 'treemap')) {
 			return null
 		}
-		return buildStablecoinMarketCapPresentation({
+		return prepareStablecoinMarketCapSeries({
 			rows: peggedTotals,
 			view: chartView,
-			getName: chartView === 'treemap' ? getStablecoinTreemapName : getStablecoinSymbol
+			getName: getStablecoinSnapshotName,
+			getValue: (row) => row.mcap ?? 0
 		})
 	}, [chartType, chartView, peggedTotals])
 
@@ -226,6 +251,7 @@ export function StablecoinsByChain({
 		chain: selectedChain,
 		chart: overviewChartType,
 		seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
+		selectionIntent,
 		filters: stablecoinFilterQuery,
 		enabled: shouldFetchOverviewChart
 	})
@@ -338,14 +364,59 @@ export function StablecoinsByChain({
 		activeChartState = { status: 'ready', data: deferredSelectedChartData }
 	}
 
-	let tokenInflowsChartState: MultiSeriesChartState
-	if (isSelectedChartLoading || (selectedChartData != null && deferredSelectedChartData == null)) {
-		tokenInflowsChartState = { status: 'loading' }
-	} else if (isSelectedChartUnavailable || !deferredSelectedChartData)
-		tokenInflowsChartState = { status: 'unavailable' }
-	else tokenInflowsChartState = { status: 'ready', data: deferredSelectedChartData }
-	const tokenInflowNames = selectedChartData?.dataset.dimensions.slice(1) ?? []
-	const tokenInflowsSelectionKey = tokenInflowNames.length ? tokenInflowNames.join('|') : ''
+	const runtimeSeries = React.useMemo(
+		() =>
+			seriesSelectorLabel && !marketCapSeries && activeChartState.status === 'ready'
+				? getStablecoinRuntimeSeries(activeChartState.data)
+				: EMPTY_RUNTIME_SERIES,
+		[activeChartState, marketCapSeries, seriesSelectorLabel]
+	)
+	const { activeSeries, selectableSeries, renderedCharts, setSelectedSeries } = useStablecoinChartSelection({
+		marketCapSeries,
+		runtimeSeries,
+		selectionIntent,
+		setSelectionIntent
+	})
+	const marketCapPresentation = React.useMemo(
+		() =>
+			marketCapSeries
+				? buildStablecoinMarketCapPresentation({ series: marketCapSeries, selectedSeries: renderedCharts })
+				: null,
+		[marketCapSeries, renderedCharts]
+	)
+	const selectedChartsWithHelpers = React.useMemo(
+		() => new Set([...renderedCharts, ...runtimeSeries.alwaysVisibleSeries]),
+		[renderedCharts, runtimeSeries.alwaysVisibleSeries]
+	)
+	const activeSelectedCharts =
+		seriesSelectorLabel && selectableSeries.length > 1 ? selectedChartsWithHelpers : undefined
+	const inflowsTooltipFormatter = React.useMemo(
+		() => createInflowsTooltipFormatter({ groupBy: volumeGroupBy, valueSymbol: '$' }),
+		[volumeGroupBy]
+	)
+	const chartOptions = React.useMemo<IMultiSeriesChartProps['chartOptions']>(
+		() =>
+			chartType === 'inflows' && chartView === 'token' && selectedChartsWithHelpers.size > 1
+				? { tooltip: { formatter: inflowsTooltipFormatter } }
+				: undefined,
+		[chartType, chartView, inflowsTooltipFormatter, selectedChartsWithHelpers.size]
+	)
+	const prepareCsvDirect =
+		marketCapPresentation?.kind === 'treemap'
+			? () =>
+					prepareStablecoinMarketCapTreemapCsv({
+						treeData: marketCapPresentation.treeData,
+						filename: getImageExportFilename()
+					})
+			: activeSelectedCharts && activeChartState.status === 'ready'
+				? () =>
+						buildSelectedSeriesCsv({
+							dataset: activeChartState.data.dataset,
+							charts: activeChartState.data.charts,
+							selectedCharts: activeSelectedCharts,
+							filename: getImageExportFilename()
+						})
+				: undefined
 
 	return (
 		<>
@@ -407,6 +478,17 @@ export function StablecoinsByChain({
 							variant="filter"
 							size="md"
 						/>
+						{seriesSelectorLabel && selectableSeries.length > 1 ? (
+							<SelectWithCombobox
+								allValues={selectableSeries}
+								selectedValues={activeSeries}
+								setSelectedValues={setSelectedSeries}
+								label={seriesSelectorLabel}
+								labelType="smol"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
 						{stablecoinsChartConfig == null ||
 						isVolumeChart ||
 						chartView === 'hbar' ||
@@ -428,12 +510,14 @@ export function StablecoinsByChain({
 							filename={getImageExportFilename()}
 							title={getImageExportTitle()}
 							iconUrl={selectedChain !== 'All' ? chainIconUrl(selectedChain) : undefined}
+							prepareCsvDirect={prepareCsvDirect}
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : EMPTY_PIE_DATA}
+								stackColors={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.stackColors : undefined}
 								onReady={handleChartReady}
 							/>
 						</React.Suspense>
@@ -461,17 +545,11 @@ export function StablecoinsByChain({
 								valueLabel="Market Cap"
 							/>
 						</React.Suspense>
-					) : chartType === 'inflows' && chartView === 'token' ? (
-						<TokenInflowsChartPanel
-							key={tokenInflowsSelectionKey}
-							onReady={handleChartReady}
-							tokenInflowNames={tokenInflowNames}
-							state={tokenInflowsChartState}
-							groupBy={volumeGroupBy}
-						/>
 					) : (
 						<MultiSeriesChartPanel
 							state={activeChartState}
+							selectedCharts={activeSelectedCharts}
+							chartOptions={chartOptions}
 							hideDefaultLegend={!showDefaultLegend}
 							groupBy={isGroupedBarChart ? volumeGroupBy : undefined}
 							onReady={handleChartReady}
@@ -483,54 +561,6 @@ export function StablecoinsByChain({
 			<NewsletterSignup layout="strip" />
 
 			<StablecoinsTable data={peggedTotals} />
-		</>
-	)
-}
-
-function TokenInflowsChartPanel({
-	onReady,
-	tokenInflowNames,
-	state,
-	groupBy
-}: {
-	onReady: (instance: echarts.ECharts | null) => void
-	tokenInflowNames: string[]
-	state: MultiSeriesChartState
-	groupBy: LowercaseDwmcGrouping
-}) {
-	const [selectedTokenInflows, setSelectedTokenInflows] = React.useState<string[]>(() => tokenInflowNames)
-	const selectedTokenInflowsSet = React.useMemo(() => new Set(selectedTokenInflows), [selectedTokenInflows])
-	const inflowsTooltipFormatter = React.useMemo(
-		() => createInflowsTooltipFormatter({ groupBy, valueSymbol: '$' }),
-		[groupBy]
-	)
-	const chartOptions = React.useMemo(
-		() => (selectedTokenInflowsSet.size > 1 ? { tooltip: { formatter: inflowsTooltipFormatter } } : undefined),
-		[inflowsTooltipFormatter, selectedTokenInflowsSet]
-	)
-
-	return (
-		<>
-			<ChartPanelToolbar>
-				{tokenInflowNames.length > 0 ? (
-					<SelectWithCombobox
-						allValues={tokenInflowNames}
-						selectedValues={selectedTokenInflows}
-						setSelectedValues={setSelectedTokenInflows}
-						label="Token"
-						labelType="smol"
-						variant="filter"
-						size="md"
-					/>
-				) : null}
-			</ChartPanelToolbar>
-			<MultiSeriesChartPanel
-				state={state}
-				selectedCharts={selectedTokenInflowsSet}
-				chartOptions={chartOptions}
-				groupBy={groupBy}
-				onReady={onReady}
-			/>
 		</>
 	)
 }

@@ -4,9 +4,12 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { lazy, Suspense } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedAdditiveChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Button } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -127,6 +130,27 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 		// Filtered modes (watchlist/insiders) must be computed client-side.
 		precomputedData: showOnlyWatchlist || showOnlyInsider ? undefined : precomputedData
 	})
+	const currentChart = viewMode === 'Week' ? weeklyChart : viewMode === 'Month' ? monthlyChart : null
+	const protocolSeries = React.useMemo(
+		() => currentChart?.charts.map((chart) => chart.name) ?? [],
+		[currentChart?.charts]
+	)
+	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({
+		availableSeries: protocolSeries,
+		selectionKey: 'calendar-protocols'
+	})
+	const selectedChart = React.useMemo(
+		() =>
+			currentChart
+				? buildSelectedAdditiveChart({
+						dataset: currentChart.dataset,
+						charts: currentChart.charts,
+						seriesOrder: protocolSeries,
+						selectedCharts
+					})
+				: null,
+		[currentChart, protocolSeries, selectedCharts]
+	)
 
 	const maxMonthlyValue = React.useMemo(() => {
 		if (viewMode !== 'Month') return 0
@@ -211,6 +235,17 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 					values={[...VIEW_MODES]}
 					className="ml-auto"
 				/>
+				{protocolSeries.length > 1 ? (
+					<SelectWithCombobox
+						allValues={protocolSeries}
+						selectedValues={activeSeries}
+						setSelectedValues={setSelectedSeries}
+						label="Protocol"
+						labelType="smol"
+						variant="filter"
+						size="md"
+					/>
+				) : null}
 				<Button
 					type="button"
 					onClick={() => setQueryParams({ watchlist: showOnlyWatchlist ? undefined : 'true' })}
@@ -239,16 +274,27 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 						chartInstance={exportChartInstance}
 						filename={`unlocks-${viewMode.toLowerCase()}-view`}
 						title={`Unlocks ${viewMode} View`}
+						prepareCsvDirect={
+							selectedChart
+								? () =>
+										buildSelectedSeriesCsv({
+											dataset: selectedChart.dataset,
+											charts: selectedChart.charts,
+											selectedCharts: new Set(selectedChart.charts.map((chart) => chart.name)),
+											filename: `unlocks-${viewMode.toLowerCase()}-view`
+										})
+								: undefined
+						}
 					/>
 				) : null}
 			</div>
 
-			{viewMode === 'Week' && weeklyChart ? (
+			{viewMode === 'Week' && selectedChart ? (
 				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
-						dataset={weeklyChart.dataset}
-						charts={weeklyChart.charts}
-						hideDefaultLegend={weeklyChart.charts.length < 2}
+						dataset={selectedChart.dataset}
+						charts={selectedChart.charts}
+						hideDefaultLegend={selectedChart.charts.length < 2}
 						chartOptions={chartOptions}
 						tooltipMaxItems={30}
 						exportButtons="hidden"
@@ -263,12 +309,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 				</Suspense>
 			) : viewMode === 'Month' ? (
 				<>
-					{monthlyChart ? (
+					{selectedChart ? (
 						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
-								dataset={monthlyChart.dataset}
-								charts={monthlyChart.charts}
-								hideDefaultLegend={monthlyChart.charts.length < 2}
+								dataset={selectedChart.dataset}
+								charts={selectedChart.charts}
+								hideDefaultLegend={selectedChart.charts.length < 2}
 								chartOptions={chartOptions}
 								tooltipMaxItems={30}
 								exportButtons="hidden"

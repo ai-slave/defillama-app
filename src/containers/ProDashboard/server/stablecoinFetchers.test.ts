@@ -136,6 +136,10 @@ describe('buildStablecoinsChartCacheValue', () => {
 
 		expect(cache.peggedAssetIdToChartDataIndex).toEqual({ '192': 1, '405': 0 })
 		expect(cache.peggedAssetNames).toEqual(['USDA', 'USDA (192)'])
+		expect(cache.pieAssets).toEqual([
+			{ symbol: 'USDA', mcap: 40 },
+			{ symbol: 'USDA (192)', mcap: 85 }
+		])
 		expect(cache.chartDataByPeggedAsset.map((history) => history[0].mcap.peggedUSD)).toEqual([40, 85])
 		expect(rows.map((row) => row.mcap)).toEqual([40, 85])
 		expect(

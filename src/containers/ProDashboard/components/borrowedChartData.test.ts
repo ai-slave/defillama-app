@@ -14,9 +14,10 @@ describe('buildBorrowedChartData', () => {
 			breakdown
 		])
 
-		expect(result.dataset?.dimensions).toEqual(['timestamp', 'USDC', 'ETH'])
+		expect(result.dataset).toBeNull()
+		expect(result.breakdown).toEqual(breakdown)
 		expect(result.seriesNames).toEqual(['USDC', 'ETH'])
-		expect(result.pieChart).toEqual([])
+		expect(result.pieSeries.peers).toEqual([])
 	})
 
 	it('reuses the USD token breakdown for line and pie presentations', () => {
@@ -27,13 +28,14 @@ describe('buildBorrowedChartData', () => {
 			breakdown
 		])
 
-		expect(line.dataset?.source).toHaveLength(2)
+		expect(line.breakdown).toHaveLength(2)
 		expect(pie.dataset).toBeNull()
 		expect(line.seriesNames).toEqual(pie.seriesNames)
-		expect(pie.pieChart).toEqual([
+		expect(pie.pieSeries.peers).toEqual([
 			{ name: 'USDC', value: 40 },
 			{ name: 'ETH', value: 30 }
 		])
+		expect(pie.pieSeries.limit).toBe(15)
 	})
 
 	it('keeps raw token quantities in an unaggregated dataset', () => {
@@ -42,11 +44,8 @@ describe('buildBorrowedChartData', () => {
 			breakdown
 		])
 
-		expect(result.dataset?.source).toEqual([
-			[1_000, 20, 10],
-			[2_000, 40, 30]
-		])
-		expect(result.pieChart).toEqual([])
+		expect(result.breakdown).toEqual(breakdown)
+		expect(result.pieSeries.peers).toEqual([])
 	})
 
 	it('selects raw token series by USD value instead of raw quantity', () => {
@@ -74,7 +73,7 @@ describe('buildBorrowedChartData', () => {
 		])
 
 		expect(result.seriesNames).toContain('TOKEN_0')
-		expect(result.seriesNames).not.toContain('RAW_WHALE')
-		expect(result.dataset?.dimensions).not.toContain('RAW_WHALE')
+		expect(result.seriesNames).toContain('RAW_WHALE')
+		expect(result.defaultSeriesNames).not.toContain('RAW_WHALE')
 	})
 })

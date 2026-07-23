@@ -3,7 +3,9 @@ import type { GetStaticPropsContext } from 'next'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { buildRuntimePieChartPresentation, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -12,10 +14,14 @@ import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
-import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
+import {
+	type ProtocolBreakdownChart,
+	useProtocolBreakdownCharts
+} from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
+import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSelectedValues } from '~/hooks/useSelectedValues'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -49,21 +55,24 @@ interface TreasuryPageProps {
 
 function TokensBreakdownPieChartCard({
 	protocolName,
-	chartData,
+	series,
 	exportIconUrl
 }: {
 	protocolName: string
-	chartData: Array<{ name: string; value: number }>
+	series: RuntimePieChartData
 	exportIconUrl?: string
 }) {
-	const allTokens = React.useMemo(() => chartData.map((d) => d.name), [chartData])
-	const [selectedTokens, setSelectedTokens] = useSelectedValues(allTokens)
-
-	const selectedTokensSet = React.useMemo(() => new Set(selectedTokens), [selectedTokens])
-	const filteredChartData = React.useMemo(() => {
-		if (selectedTokens.length === 0) return []
-		return chartData.filter((d) => selectedTokensSet.has(d.name))
-	}, [chartData, selectedTokens.length, selectedTokensSet])
+	const selectableSeries = React.useMemo(() => series.peers.map((peer) => peer.name), [series.peers])
+	const {
+		activeSeries: selectedTokens,
+		selectedCharts,
+		setSelectedSeries: setSelectedTokens,
+		includeUpstreamOthers
+	} = useAllSeriesSelection({ availableSeries: selectableSeries })
+	const presentation = React.useMemo(
+		() => buildRuntimePieChartPresentation({ series, selectedSeries: selectedCharts, includeUpstreamOthers }),
+		[includeUpstreamOthers, selectedCharts, series]
+	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -74,9 +83,9 @@ function TokensBreakdownPieChartCard({
 		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">Tokens Breakdown</h2>
-				{allTokens.length > 1 ? (
+				{selectableSeries.length > 1 ? (
 					<SelectWithCombobox
-						allValues={allTokens}
+						allValues={selectableSeries}
 						selectedValues={selectedTokens}
 						setSelectedValues={setSelectedTokens}
 						label="Token"
@@ -93,7 +102,11 @@ function TokensBreakdownPieChartCard({
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<PieChart chartData={filteredChartData} onReady={handleChartReady} />
+				<PieChart
+					chartData={presentation.chartData}
+					stackColors={presentation.stackColors}
+					onReady={handleChartReady}
+				/>
 			</React.Suspense>
 		</ChartPanel>
 	)
@@ -130,6 +143,7 @@ function HistoricalTreasuryChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					hideDefaultLegend={false}
 					valueSymbol="$"
 					selectedCharts={TREASURY_SERIES}
 					onReady={handleChartReady}
@@ -143,8 +157,9 @@ function TokensMultiSeriesChartCard({
 	title,
 	protocolName,
 	allTokens,
-	dataset,
-	charts,
+	breakdown,
+	defaultTokens,
+	aggregateOthers,
 	exportSuffix,
 	valueSymbol,
 	exportIconUrl
@@ -152,14 +167,26 @@ function TokensMultiSeriesChartCard({
 	title: string
 	protocolName: string
 	allTokens: string[]
-	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesCharts
+	breakdown: ProtocolBreakdownChart
+	defaultTokens?: string[]
+	aggregateOthers: boolean
 	exportSuffix: string
 	valueSymbol?: string
 	exportIconUrl?: string
 }) {
-	const [selectedTokens, setSelectedTokens] = useSelectedValues(allTokens)
-	const selectedTokensSet = React.useMemo(() => new Set(selectedTokens), [selectedTokens])
+	const {
+		activeSeries: selectedTokens,
+		setSelectedSeries: setSelectedTokens,
+		dataset,
+		charts,
+		selectedCharts
+	} = useProtocolBreakdownPresentation({
+		breakdown,
+		availableSeries: allTokens,
+		defaultSeries: defaultTokens,
+		aggregateOthers,
+		type: 'line'
+	})
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -186,14 +213,23 @@ function TokensMultiSeriesChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
+					prepareCsvDirect={() =>
+						buildSelectedSeriesCsv({
+							dataset,
+							charts,
+							selectedCharts,
+							filename: exportFilenameBase
+						})
+					}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					hideDefaultLegend={false}
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}
-					selectedCharts={selectedTokensSet}
+					selectedCharts={selectedCharts}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -283,11 +319,10 @@ export default function Protocols(props: TreasuryPageProps) {
 		valueCharts,
 		tokensUnique,
 		rawTokensUnique,
-		tokenUSDDataset,
-		tokenUSDCharts,
-		tokenRawDataset,
-		tokenRawCharts,
-		tokenBreakdownPieChart
+		defaultRawTokens,
+		tokenRawBreakdown,
+		tokenBreakdownUSD,
+		tokenBreakdownPieSeries
 	} = useProtocolBreakdownCharts({
 		protocol,
 		keys: extraKeys,
@@ -353,10 +388,10 @@ export default function Protocols(props: TreasuryPageProps) {
 				<PanelLoadingStatus label={`Loading ${props.name} treasury`} />
 			) : (
 				<div className="grid grid-cols-2 gap-2">
-					{tokenBreakdownPieChart?.length ? (
+					{tokenBreakdownPieSeries.peers.length > 0 || tokenBreakdownPieSeries.upstreamOthersValue > 0 ? (
 						<TokensBreakdownPieChartCard
 							protocolName={props.name}
-							chartData={tokenBreakdownPieChart}
+							series={tokenBreakdownPieSeries}
 							exportIconUrl={protocolIconUrl}
 						/>
 					) : null}
@@ -371,26 +406,27 @@ export default function Protocols(props: TreasuryPageProps) {
 						/>
 					) : null}
 
-					{tokenRawDataset && rawTokensUnique.length > 0 ? (
+					{tokenRawBreakdown && rawTokensUnique.length > 0 ? (
 						<TokensMultiSeriesChartCard
 							title="Tokens Breakdown"
 							protocolName={props.name}
 							allTokens={rawTokensUnique}
-							dataset={tokenRawDataset}
-							charts={tokenRawCharts}
+							breakdown={tokenRawBreakdown}
+							defaultTokens={defaultRawTokens}
+							aggregateOthers={false}
 							exportSuffix="treasury-tokens-breakdown-raw"
 							valueSymbol=""
 							exportIconUrl={protocolIconUrl}
 						/>
 					) : null}
 
-					{tokenUSDDataset && tokensUnique.length > 0 ? (
+					{tokenBreakdownUSD && tokensUnique.length > 0 ? (
 						<TokensMultiSeriesChartCard
 							title="Tokens (USD)"
 							protocolName={props.name}
 							allTokens={tokensUnique}
-							dataset={tokenUSDDataset}
-							charts={tokenUSDCharts}
+							breakdown={tokenBreakdownUSD}
+							aggregateOthers
 							exportSuffix="treasury-tokens-usd"
 							valueSymbol="$"
 							exportIconUrl={protocolIconUrl}

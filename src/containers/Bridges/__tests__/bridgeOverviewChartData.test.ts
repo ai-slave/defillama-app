@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import {
 	buildBridgeOverviewActiveChart,
 	getBridgeOverviewSummaryTotals,
@@ -134,44 +135,45 @@ describe('buildBridgeOverviewActiveChart', () => {
 
 		expect(result?.kind).toBe('24h Tokens Deposited')
 		if (result?.kind !== '24h Tokens Deposited') return
-		expect(result.data[0]).toEqual({ name: 'USDC', value: 23 })
-		expect(result.data.at(-1)).toEqual({ name: 'Others', value: 1 })
+		expect(result.series.peers).toHaveLength(11)
+		const chartData = buildRuntimePieChartPresentation({ series: result.series }).chartData
+		expect(chartData[0]).toEqual({ name: 'USDC', value: 23 })
+		expect(chartData.at(-1)).toEqual({ name: 'Others', value: 1 })
 	})
 
 	it('builds the selected token direction when the opposite direction is unavailable', () => {
-		expect(
-			buildBridgeOverviewActiveChart({
-				selectedChain: 'Ethereum',
-				chartType: '24h Tokens Deposited',
-				chainVolumeData,
-				bridgeStatsCurrentDay: {
-					totalTokensDeposited: { deposit: { symbol: 'USDC', usdValue: 10 } }
-				}
-			})
-		).toEqual({ kind: '24h Tokens Deposited', data: [{ name: 'USDC', value: 10 }] })
+		const result = buildBridgeOverviewActiveChart({
+			selectedChain: 'Ethereum',
+			chartType: '24h Tokens Deposited',
+			chainVolumeData,
+			bridgeStatsCurrentDay: {
+				totalTokensDeposited: { deposit: { symbol: 'USDC', usdValue: 10 } }
+			}
+		})
+		expect(result?.kind).toBe('24h Tokens Deposited')
+		if (result?.kind !== '24h Tokens Deposited') return
+		expect(buildRuntimePieChartPresentation({ series: result.series }).chartData).toEqual([{ name: 'USDC', value: 10 }])
 	})
 
 	it('keeps a source Others slice at the end', () => {
-		expect(
-			buildBridgeOverviewActiveChart({
-				selectedChain: 'Ethereum',
-				chartType: '24h Tokens Deposited',
-				chainVolumeData,
-				bridgeStatsCurrentDay: {
-					totalTokensDeposited: {
-						other: { symbol: 'Others', usdValue: 20 },
-						usdc: { symbol: 'USDC', usdValue: 10 }
-					},
-					totalTokensWithdrawn: {}
-				}
-			})
-		).toEqual({
-			kind: '24h Tokens Deposited',
-			data: [
-				{ name: 'USDC', value: 10 },
-				{ name: 'Others', value: 20 }
-			]
+		const result = buildBridgeOverviewActiveChart({
+			selectedChain: 'Ethereum',
+			chartType: '24h Tokens Deposited',
+			chainVolumeData,
+			bridgeStatsCurrentDay: {
+				totalTokensDeposited: {
+					other: { symbol: 'Others', usdValue: 20 },
+					usdc: { symbol: 'USDC', usdValue: 10 }
+				},
+				totalTokensWithdrawn: {}
+			}
 		})
+		expect(result?.kind).toBe('24h Tokens Deposited')
+		if (result?.kind !== '24h Tokens Deposited') return
+		expect(buildRuntimePieChartPresentation({ series: result.series }).chartData).toEqual([
+			{ name: 'USDC', value: 10 },
+			{ name: 'Others', value: 20 }
+		])
 	})
 
 	it('preserves integer-like symbol ordering when values tie', () => {
@@ -188,12 +190,11 @@ describe('buildBridgeOverviewActiveChart', () => {
 			}
 		})
 
-		expect(result).toEqual({
-			kind: '24h Tokens Deposited',
-			data: [
-				{ name: '2', value: 5 },
-				{ name: '10', value: 5 }
-			]
-		})
+		expect(result?.kind).toBe('24h Tokens Deposited')
+		if (result?.kind !== '24h Tokens Deposited') return
+		expect(buildRuntimePieChartPresentation({ series: result.series }).chartData).toEqual([
+			{ name: '2', value: 5 },
+			{ name: '10', value: 5 }
+		])
 	})
 })

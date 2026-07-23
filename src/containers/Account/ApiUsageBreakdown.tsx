@@ -6,6 +6,8 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formattedNum } from '~/utils'
 
@@ -76,7 +78,7 @@ const FALLBACK_CHART_COLORS: ChartColors = {
 	tooltipBorder: ''
 }
 
-function useChartData(usageStats: ApiUsageStats | null | undefined, colors: ChartColors) {
+function useChartSource(usageStats: ApiUsageStats | null | undefined) {
 	const sortedStats = useMemo(
 		() => (usageStats?.stats ?? []).toSorted((a, b) => Date.parse(a.date) - Date.parse(b.date)),
 		[usageStats?.stats]
@@ -90,7 +92,28 @@ function useChartData(usageStats: ApiUsageStats | null | undefined, colors: Char
 	}, [sortedStats.length, totalRequests])
 
 	const windowDays = usageStats?.windowDays ?? DEFAULT_WINDOW_DAYS
+	const routeSeries = useMemo(() => {
+		const totals = new Map<string, number>()
+		for (const day of sortedStats) {
+			for (const [route, count] of Object.entries(day.routes ?? {})) {
+				totals.set(route, (totals.get(route) ?? 0) + count)
+			}
+		}
+		return Array.from(totals, ([route, total]) => ({ route, total }))
+			.sort((a, b) => b.total - a.total || a.route.localeCompare(b.route))
+			.map(({ route }) => route)
+	}, [sortedStats])
 
+	return { sortedStats, totalRequests, averageRequests, windowDays, routeSeries }
+}
+
+function useChartData(
+	sortedStats: ApiUsageStats['stats'],
+	windowDays: number,
+	routeSeries: string[],
+	selectedRoutes: string[],
+	colors: ChartColors
+) {
 	const { dataset, charts } = useMemo<{
 		dataset: MultiSeriesChartDataset
 		charts: IMultiSeriesChartProps['charts']
@@ -99,17 +122,12 @@ function useChartData(usageStats: ApiUsageStats | null | undefined, colors: Char
 			return { dataset: { source: [], dimensions: ['date'] }, charts: [] }
 		}
 
-		const routeTotals = new Map<string, number>()
-		for (const day of sortedStats) {
-			for (const [route, count] of Object.entries(day.routes ?? {})) {
-				routeTotals.set(route, (routeTotals.get(route) ?? 0) + count)
-			}
-		}
-
-		const sortedRoutes = Array.from(routeTotals.entries()).toSorted((a, b) => b[1] - a[1])
-		const topRoutes = sortedRoutes.slice(0, TOP_ROUTES).map(([route]) => route)
-		const topRoutesSet = new Set(topRoutes)
-		const hasOthers = sortedRoutes.length > TOP_ROUTES
+		const selected = new Set(selectedRoutes)
+		const rankedSelection = routeSeries.filter((route) => selected.has(route))
+		const topRoutes = rankedSelection.slice(0, TOP_ROUTES)
+		const omittedRoutes = rankedSelection.slice(TOP_ROUTES)
+		const omittedRoutesSet = new Set(omittedRoutes)
+		const hasOthers = omittedRoutes.length > 0
 
 		const makeTimestamp = (date: string) => (date.includes('T') ? Date.parse(date) : Date.parse(`${date}T00:00:00Z`))
 
@@ -136,26 +154,30 @@ function useChartData(usageStats: ApiUsageStats | null | undefined, colors: Char
 			if (hasOthers) {
 				let others = 0
 				for (const [route, count] of Object.entries(day?.routes ?? {})) {
-					if (!topRoutesSet.has(route)) others += count
+					if (omittedRoutesSet.has(route)) others += count
 				}
 				row[dimensions.length - 1] = others
 			}
 			source.push(row)
 		}
 
+		const canonicalIndex = new Map(routeSeries.map((name, index) => [name, index]))
 		const charts: IMultiSeriesChartProps['charts'] = seriesNames.map((name, index) => ({
 			type: 'bar' as const,
 			name,
 			stack: 'routes',
 			encode: { x: 0, y: index + 1 },
-			color: name === 'Others' ? colors.others : (colors.routes[index % colors.routes.length] ?? colors.routes[0]),
+			color:
+				name === 'Others'
+					? colors.others
+					: (colors.routes[(canonicalIndex.get(name) ?? index) % colors.routes.length] ?? colors.routes[0]),
 			large: false
 		}))
 
 		return { dataset: { source, dimensions }, charts }
-	}, [sortedStats, colors, windowDays])
+	}, [sortedStats, colors, windowDays, routeSeries, selectedRoutes])
 
-	return { sortedStats, totalRequests, averageRequests, dataset, charts, windowDays }
+	return { dataset, charts }
 }
 
 export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBreakdownProps) {
@@ -172,10 +194,13 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 	// Use fallback colors for SSR / first render — will be replaced immediately on mount
 	const activeColors = colors ?? FALLBACK_CHART_COLORS
 
-	const { sortedStats, totalRequests, averageRequests, dataset, charts, windowDays } = useChartData(
-		usageStats,
-		activeColors
-	)
+	const { sortedStats, totalRequests, averageRequests, windowDays, routeSeries } = useChartSource(usageStats)
+	const { activeSeries, setSelectedSeries } = useAllSeriesSelection({
+		availableSeries: routeSeries,
+		selectionKey: String(windowDays)
+	})
+	const { dataset, charts } = useChartData(sortedStats, windowDays, routeSeries, activeSeries, activeColors)
+	const renderedCharts = useMemo(() => new Set(charts.map((chart) => chart.name)), [charts])
 
 	const hasData = sortedStats.length > 0 && !isLoading && !isError
 	const totalLabel = hasData ? formattedNum(totalRequests) : '--'
@@ -252,7 +277,19 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 					<span className="text-sm text-sub-text-primary">API Usage Breakdown</span>
 					<span className="text-xs text-sub-text-muted">Last {windowDays} days</span>
 				</div>
-				<div className="flex items-center gap-6">
+				<div className="flex flex-wrap items-center justify-end gap-3">
+					{hasData && routeSeries.length > 1 ? (
+						<SelectWithCombobox
+							allValues={routeSeries}
+							selectedValues={activeSeries}
+							setSelectedValues={setSelectedSeries}
+							label="Route"
+							labelType="smol"
+							variant="filter"
+							size="sm"
+							popoverVariant="legacy"
+						/>
+					) : null}
 					<div className="flex flex-col items-end">
 						<span className="text-sm font-semibold text-sub-text-primary">{totalLabel}</span>
 						<span className="text-[10px] text-sub-text-muted">Total Requests</span>
@@ -267,12 +304,14 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 			{/* Legend */}
 			{hasData && charts.length > 0 && (
 				<div className="flex flex-wrap gap-x-4 gap-y-1">
-					{charts.map((series) => (
-						<div key={series.name} className="flex items-center gap-1.5">
-							<span className="inline-block size-2 rounded-full" style={{ backgroundColor: series.color }} />
-							<span className="text-[10px] text-sub-text-muted">{series.name}</span>
-						</div>
-					))}
+					{charts
+						.filter((series) => renderedCharts.has(series.name))
+						.map((series) => (
+							<div key={series.name} className="flex items-center gap-1.5">
+								<span className="inline-block size-2 rounded-full" style={{ backgroundColor: series.color }} />
+								<span className="text-[10px] text-sub-text-muted">{series.name}</span>
+							</div>
+						))}
 				</div>
 			)}
 
@@ -295,6 +334,7 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 					<MultiSeriesChart
 						dataset={dataset}
 						charts={charts}
+						selectedCharts={renderedCharts}
 						height="200px"
 						valueSymbol=""
 						hideDataZoom

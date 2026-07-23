@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useMemo } from 'react'
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import {
 	buildStablecoinAssetCacheValue,
@@ -17,15 +17,28 @@ import {
 	fetchStablecoinPeggedConfigApi
 } from '~/containers/Stablecoins/api'
 import type { StablecoinDetailResponse } from '~/containers/Stablecoins/api.types'
-import { buildAreaPayload, buildDominancePayload, buildTotalMcapPayload } from '~/containers/Stablecoins/chartSeries'
+import {
+	buildAreaPayloadFromCollection,
+	buildDominancePayloadFromCollection,
+	buildTotalMcapPayload,
+	collectCanonicalStablecoinArea,
+	STABLECOIN_BREAKDOWN_SERIES_LIMIT,
+	type StablecoinBreakdownSelectionOptions,
+	type StablecoinCanonicalHistory
+} from '~/containers/Stablecoins/chartSeries'
 import { getStablecoinValueFromPoint, isStablecoinChartDateVisible } from '~/containers/Stablecoins/utils'
 import type { StablecoinAssetChartType } from '../../../types'
 
 type StablecoinAssetPresentation =
 	| { chartType: 'totalCirc'; dataset: MultiSeriesChartDataset; totalCirculating: number | null }
-	| { chartType: 'chainMcaps'; dataset: MultiSeriesChartDataset; totalCirculating: number | null }
-	| { chartType: 'chainDominance'; dataset: MultiSeriesChartDataset; totalCirculating: number | null }
-	| { chartType: 'chainPie'; slices: Array<{ name: string; value: number }>; totalCirculating: number | null }
+	| {
+			chartType: 'chainMcaps' | 'chainDominance'
+			dataset: MultiSeriesChartDataset
+			charts: MultiSeriesChartSeriesConfig[]
+			availableSeries: string[]
+			totalCirculating: number | null
+	  }
+	| { chartType: 'chainPie'; pieSeries: RuntimePieChartData; totalCirculating: number | null }
 
 interface UseStablecoinAssetChartDataResult {
 	presentation: StablecoinAssetPresentation
@@ -42,27 +55,43 @@ const EMPTY_ASSET_PRESENTATIONS: Record<StablecoinAssetChartType, StablecoinAsse
 		dataset: { source: [], dimensions: ['timestamp', 'Circulating'] },
 		totalCirculating: null
 	},
-	chainMcaps: { chartType: 'chainMcaps', dataset: { source: [], dimensions: ['timestamp'] }, totalCirculating: null },
+	chainMcaps: {
+		chartType: 'chainMcaps',
+		dataset: { source: [], dimensions: ['timestamp'] },
+		charts: [],
+		availableSeries: [],
+		totalCirculating: null
+	},
 	chainDominance: {
 		chartType: 'chainDominance',
 		dataset: { source: [], dimensions: ['timestamp'] },
+		charts: [],
+		availableSeries: [],
 		totalCirculating: null
 	},
-	chainPie: { chartType: 'chainPie', slices: [], totalCirculating: null }
+	chainPie: {
+		chartType: 'chainPie',
+		pieSeries: { peers: [], limit: 10, upstreamOthersValue: 0 },
+		totalCirculating: null
+	}
 }
+
+const getStablecoinAssetChartParams = (rawData: Pick<StablecoinAssetCacheValue, 'chainsData' | 'chainsUnique'>) => ({
+	chartDataByAssetOrChain: rawData.chainsData,
+	assetsOrChainsList: rawData.chainsUnique,
+	issuanceType: 'circulating' as const,
+	selectedChain: undefined,
+	totalChartTooltipLabel: 'Circulating'
+})
 
 export function buildStablecoinAssetPresentation(
 	rawData: Pick<StablecoinAssetCacheValue, 'chainsData' | 'chainsUnique'>,
 	chartType: StablecoinAssetChartType,
-	periodBounds?: { start: number; end: number } | null
+	periodBounds?: { start: number; end: number } | null,
+	selectionOptions?: StablecoinBreakdownSelectionOptions,
+	canonicalHistory?: StablecoinCanonicalHistory | null
 ): StablecoinAssetPresentation {
-	const params = {
-		chartDataByAssetOrChain: rawData.chainsData,
-		assetsOrChainsList: rawData.chainsUnique,
-		issuanceType: 'circulating',
-		selectedChain: undefined,
-		totalChartTooltipLabel: 'Circulating'
-	}
+	const params = getStablecoinAssetChartParams(rawData)
 	if (chartType === 'totalCirc') {
 		const dataset = buildTotalMcapPayload(params, { totalName: 'Circulating' }).dataset
 		return {
@@ -72,18 +101,36 @@ export function buildStablecoinAssetPresentation(
 		}
 	}
 	if (chartType === 'chainMcaps') {
-		const dataset = buildAreaPayload(params, { stackName: 'chainMcaps', fillMissingValues: true }).dataset
-		const latestRow = dataset.source.at(-1)
-		let totalCirculating: number | null = null
-		if (latestRow) {
-			let total = 0
-			for (let index = 1; index < latestRow.length; index++) total += (latestRow[index] as number) ?? 0
-			totalCirculating = total
-		}
+		const history =
+			canonicalHistory ?? collectCanonicalStablecoinArea(params, { includeSummary: true, seriesMode: 'history' })
+		const payload = buildAreaPayloadFromCollection(history, {
+			stackName: 'chainMcaps',
+			fillMissingValues: true,
+			summary: true,
+			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
+			...selectionOptions
+		})
+		const dataset = payload.dataset
 		return {
 			chartType,
 			dataset,
-			totalCirculating
+			charts: payload.charts,
+			availableSeries: payload.availableSeries ?? [],
+			totalCirculating: payload.summary?.totalMcapCurrent ?? null
+		}
+	}
+	if (chartType === 'chainDominance') {
+		const history = canonicalHistory ?? collectCanonicalStablecoinArea(params, { seriesMode: 'history' })
+		const payload = buildDominancePayloadFromCollection(history, {
+			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
+			...selectionOptions
+		})
+		return {
+			chartType,
+			dataset: payload.dataset,
+			charts: payload.charts,
+			availableSeries: payload.availableSeries ?? [],
+			totalCirculating: history.totals.at(-1) ?? null
 		}
 	}
 
@@ -113,16 +160,14 @@ export function buildStablecoinAssetPresentation(
 		chainData.push({ name: rawData.chainsUnique[chainIndex], circulating: value })
 		totalCirculating += value
 	}
-	if (chartType === 'chainDominance') {
-		return {
-			chartType,
-			dataset: buildDominancePayload(params, { normalizeTo100: true }).dataset,
-			totalCirculating
-		}
-	}
 	return {
 		chartType,
-		slices: preparePieChartData({ data: chainData, sliceIdentifier: 'name', sliceValue: 'circulating', limit: 10 }),
+		pieSeries: prepareRuntimePieChartData({
+			data: chainData,
+			sliceIdentifier: 'name',
+			sliceValue: 'circulating',
+			limit: 10
+		}),
 		totalCirculating
 	}
 }
@@ -130,7 +175,8 @@ export function buildStablecoinAssetPresentation(
 export function useStablecoinAssetChartData(
 	stablecoinSlug: string,
 	chartType: StablecoinAssetChartType,
-	periodBounds?: { start: number; end: number } | null
+	periodBounds?: { start: number; end: number } | null,
+	selectionOptions?: StablecoinBreakdownSelectionOptions
 ): UseStablecoinAssetChartDataResult {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
@@ -159,13 +205,20 @@ export function useStablecoinAssetChartData(
 		refetchInterval: 5 * 60 * 1000,
 		enabled: !!stablecoinSlug && streamDone
 	})
+	const canonicalHistory = useMemo(() => {
+		if (!rawData || (chartType !== 'chainMcaps' && chartType !== 'chainDominance')) return null
+		return collectCanonicalStablecoinArea(getStablecoinAssetChartParams(rawData), {
+			includeSummary: chartType === 'chainMcaps',
+			seriesMode: 'history'
+		})
+	}, [chartType, rawData])
 
 	const presentation = useMemo(
 		() =>
 			rawData
-				? buildStablecoinAssetPresentation(rawData, chartType, periodBounds)
+				? buildStablecoinAssetPresentation(rawData, chartType, periodBounds, selectionOptions, canonicalHistory)
 				: EMPTY_ASSET_PRESENTATIONS[chartType],
-		[rawData, chartType, periodBounds]
+		[rawData, chartType, periodBounds, selectionOptions, canonicalHistory]
 	)
 
 	return useMemo(

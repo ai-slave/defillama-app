@@ -108,3 +108,21 @@ export function buildNarrativeTreemapTreeData(
 
 	return treeData
 }
+
+export function filterNarrativeTreemapTreeData(
+	treeData: NarrativeTreemapTreeData,
+	selectedSeries: ReadonlySet<string>,
+	selectCoins: boolean
+): NarrativeTreemapTreeData {
+	if (!selectCoins) return treeData.filter((category) => selectedSeries.has(category.name))
+
+	const filtered: NarrativeTreemapTreeData = []
+	for (const category of treeData) {
+		const children = category.children.filter((coin) => selectedSeries.has(coin.name))
+		if (children.length === 0) continue
+		let marketCap = 0
+		for (const child of children) marketCap += child.value[0]
+		filtered.push({ ...category, value: [marketCap, null, null, 0], children })
+	}
+	return filtered
+}

@@ -100,6 +100,45 @@ describe('/api/public/stablecoins/chart-series', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
+	it('passes an explicit series selection to the bounded chart builder', async () => {
+		const req = {
+			method: 'GET',
+			query: {
+				scope: 'overview',
+				chain: 'all',
+				chart: 'dominance',
+				limit: '10',
+				selected: 'true',
+				series: ['USDT', 'DAI']
+			}
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(getOverviewMock).toHaveBeenCalledWith(
+			expect.objectContaining({ selectedNames: ['USDT', 'DAI'], seriesLimit: 10 })
+		)
+	})
+
+	it('passes a compact exclusion to the bounded chart builder', async () => {
+		const req = {
+			method: 'GET',
+			query: {
+				scope: 'overview',
+				chain: 'all',
+				chart: 'tokenMcaps',
+				exclude: 'true',
+				series: 'USDT'
+			}
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(getOverviewMock).toHaveBeenCalledWith(expect.objectContaining({ excludedNames: ['USDT'] }))
+	})
+
 	it('returns 404 when an asset chart is missing', async () => {
 		getAssetMock.mockResolvedValue(null)
 		const req = {

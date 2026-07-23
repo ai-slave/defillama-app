@@ -16,16 +16,22 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualTable } from '~/components/Table/Table'
-import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { searchTokens } from '~/containers/TokenSearch/search'
 import { fetchProtocolsByTokenClient } from '~/containers/TokenUsage/api'
-import { buildTokenUsageTreemapTreeData } from '~/containers/TokenUsage/treemap'
+import {
+	buildTokenUsageTreemapTreeData,
+	filterTokenUsageTreemapTreeData,
+	getTokenUsageTreemapProtocolOptions,
+	prepareTokenUsageTreemapCsv
+} from '~/containers/TokenUsage/treemap'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
+import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import Layout from '~/layout'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
@@ -95,9 +101,29 @@ export default function Tokens() {
 	const tokenUsageTreemapRootLabel = tokenSymbol ? `${tokenSymbol.toUpperCase()} usage` : 'Token usage'
 	const tokenUsageExportTitle = tokenSymbol ? `${tokenSymbol.toUpperCase()} token usage` : 'Token usage'
 	const tokenUsageExportFilename = tokenSymbol ? `token-usage-${tokenSymbol.toLowerCase()}` : 'token-usage'
-	const treemapTreeData = useMemo(
+	const canonicalTreemapTreeData = useMemo(
 		() => buildTokenUsageTreemapTreeData(filteredProtocols, tokenUsageTreemapRootLabel),
 		[filteredProtocols, tokenUsageTreemapRootLabel]
+	)
+	const treemapProtocolOptions = useMemo(
+		() => getTokenUsageTreemapProtocolOptions(canonicalTreemapTreeData),
+		[canonicalTreemapTreeData]
+	)
+	const treemapProtocolKeys = useMemo(
+		() => treemapProtocolOptions.map((option) => option.key),
+		[treemapProtocolOptions]
+	)
+	const {
+		activeSeries: selectedTreemapProtocols,
+		selectedCharts: selectedTreemapProtocolSet,
+		setSelectedSeries: setSelectedTreemapProtocols
+	} = useAllSeriesSelection({
+		availableSeries: treemapProtocolKeys,
+		selectionKey: tokenSymbol ?? 'none'
+	})
+	const treemapTreeData = useMemo(
+		() => filterTokenUsageTreemapTreeData(canonicalTreemapTreeData, selectedTreemapProtocolSet),
+		[canonicalTreemapTreeData, selectedTreemapProtocolSet]
 	)
 
 	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'amountUsd' }])
@@ -179,6 +205,17 @@ export default function Tokens() {
 							>
 								Include CEXs
 							</Checkbox>
+							{treemapProtocolOptions.length > 1 ? (
+								<SelectWithCombobox
+									allValues={treemapProtocolOptions}
+									selectedValues={selectedTreemapProtocols}
+									setSelectedValues={setSelectedTreemapProtocols}
+									label="Protocol"
+									labelType="smol"
+									variant="filter"
+									size="md"
+								/>
+							) : null}
 							{treemapTreeData.length > 0 ? (
 								<>
 									<ChartRestoreButton chartInstance={treemapChartInstance} />
@@ -190,12 +227,7 @@ export default function Tokens() {
 								</>
 							) : null}
 							<CSVDownloadButton
-								prepareCsv={() =>
-									prepareTableCsv({
-										instance: tableInstance,
-										filename: `protocols-by-token-${tokenSymbol}`
-									})
-								}
+								prepareCsv={() => prepareTokenUsageTreemapCsv(treemapTreeData, tokenUsageExportFilename)}
 								smol
 								size="md"
 							/>
