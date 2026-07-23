@@ -47,14 +47,14 @@ describe('newsletter and media-kit split', () => {
 
 		expect(html).toContain('Choose your DefiLlama newsletters')
 		expect(html).toContain('Available newsletters')
-		expect(html).toContain('Market updates live, research soon')
+		expect(html).toContain('Market updates and Research Notes')
 		expect(html).toContain('Pick the lists you want to receive at this email.')
 		expect(html).toContain('Pick your publications')
-		expect(html).toContain('Coming soon')
-		expect(html).toContain('Research is marked as coming soon, but the list is open.')
+		expect(html).toContain('Subscribe to either publication below, or select both.')
+		expect(html.toLowerCase()).not.toContain('coming soon')
 		expect(html).toContain('2/2 selected')
 		expect(html).toContain('2 publications selected.')
-		expect(html).toContain('DefiLlama Newsletter + DefiLlama Research')
+		expect(html).toContain('DefiLlama Newsletter + Research Notes')
 		expect(html).toContain('/assets/defillama-newsletter-logo-light.png')
 		expect(html).toContain('/assets/defillama-newsletter-logo-dark.png')
 		expect(html).toContain('/assets/research_logo.webp')
@@ -70,11 +70,13 @@ describe('newsletter and media-kit split', () => {
 		expect(html).not.toContain('We send a confirmation email before adding you to the selected list.')
 	})
 
-	it('links the research hero newsletter icon to the newsletters page', () => {
+	it('renders a research hero subscribe button linked to the newsletters page', () => {
 		const html = renderWithQueryClient(<ResearchHero title="Research" subtitle="Market intelligence" reports={[]} />)
 
 		expect(html).toContain('href="/newsletters"')
 		expect(html).toContain('aria-label="Subscribe to DefiLlama newsletters"')
+		expect(html).toContain('>Subscribe</span>')
+		expect(html.match(/href="\/newsletters"/g)).toHaveLength(1)
 		expect(html).not.toContain('newsletter.defillama.com')
 	})
 

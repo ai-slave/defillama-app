@@ -29,7 +29,21 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 					<h2 className="mb-6 text-center text-base leading-[130%] font-light lg:mb-8.75 lg:text-xl">{subtitle}</h2>
 
 					<div className="flex flex-col items-center gap-9 lg:flex-row">
-						<div className="flex gap-3">
+						<div className="flex flex-wrap justify-center gap-3">
+							<Link
+								href="/newsletters"
+								aria-label="Subscribe to DefiLlama newsletters"
+								className="flex items-center gap-2 rounded-full bg-research-white px-3.5 py-3 text-base leading-[50%] text-research-accent-strong md:px-6 md:py-3.5"
+							>
+								<span>Subscribe</span>
+								<ResearchIcon
+									name="newsletter"
+									width={20}
+									height={20}
+									className="text-research-accent-strong"
+									aria-hidden
+								/>
+							</Link>
 							<a
 								href="mailto:research@defillama.com"
 								className="flex items-center rounded-full bg-research-white px-3.5 py-3 text-base leading-[50%] text-research-accent-strong md:px-6 md:py-3.5"
@@ -75,9 +89,6 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 							</Link>
 							<Link href="/research/feed" aria-label="Subscribe via RSS">
 								<ResearchIcon name="rss" width={36} height={36} aria-hidden />
-							</Link>
-							<Link href="/newsletters" aria-label="Subscribe to DefiLlama newsletters">
-								<ResearchIcon name="newsletter" width={36} height={36} className="text-on-brand" aria-hidden />
 							</Link>
 						</div>
 					</div>

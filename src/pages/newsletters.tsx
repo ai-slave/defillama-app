@@ -16,7 +16,6 @@ const newsletterDetails: Record<
 		eyebrow: string
 		description: string
 		bestFor: string
-		comingSoon?: boolean
 		bullets: string[]
 		logo: {
 			src: string
@@ -46,7 +45,6 @@ const newsletterDetails: Record<
 		eyebrow: 'Research publication',
 		description: 'Reports, interviews, roundtables, and institutional market intelligence from DefiLlama Research.',
 		bestFor: 'For analysts, teams, and institutional readers.',
-		comingSoon: true,
 		bullets: ['New research report releases', 'Interviews and roundtable drops', 'Strategic market analysis'],
 		logo: {
 			src: '/assets/research_logo.webp',
@@ -148,14 +146,13 @@ export default function NewslettersPage() {
 								Choose your DefiLlama newsletters
 							</h1>
 							<p className="max-w-2xl text-base leading-7 text-secondary">
-								Market updates from the DefiLlama team are live now. You can also join the research list before it
-								starts sending.
+								Market updates and Research Notes from the DefiLlama team, delivered to your inbox.
 							</p>
 						</div>
 
 						<div className="flex flex-col gap-2 border-t border-medium pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
 							<p className="text-xs font-semibold tracking-[0.18em] text-link uppercase">Available newsletters</p>
-							<p className="text-xl leading-tight font-semibold text-primary">Market updates live, research soon</p>
+							<p className="text-xl leading-tight font-semibold text-primary">Market updates and Research Notes</p>
 							<p className="text-sm leading-6 text-secondary">Pick the lists you want to receive at this email.</p>
 						</div>
 					</header>
@@ -168,7 +165,7 @@ export default function NewslettersPage() {
 										Pick your publications
 									</h2>
 									<p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
-										Subscribe to either publication below. Research is marked as coming soon, but the list is open.
+										Subscribe to either publication below, or select both.
 									</p>
 								</div>
 								<p className="text-sm font-medium text-link" aria-live="polite">
@@ -185,7 +182,6 @@ export default function NewslettersPage() {
 								{NEWSLETTERS.map(({ key, label }) => {
 									const on = selected[key]
 									const details = newsletterDetails[key]
-									const isComingSoon = details.comingSoon === true
 									return (
 										<button
 											key={key}
@@ -227,11 +223,6 @@ export default function NewslettersPage() {
 														<span className="text-xs font-semibold tracking-[0.14em] text-link uppercase">
 															{details.eyebrow}
 														</span>
-														{isComingSoon ? (
-															<span className="inline-flex h-7 items-center rounded-full border border-medium bg-surface px-2.5 text-[11px] font-semibold whitespace-nowrap text-secondary">
-																Coming soon
-															</span>
-														) : null}
 													</span>
 													<span
 														className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold whitespace-nowrap transition-colors ${
