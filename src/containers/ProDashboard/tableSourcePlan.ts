@@ -59,13 +59,11 @@ export function buildProDashboardTableSourcePlan(items: DashboardItemConfig[]): 
 		addKey(chunkType, serializedKey(queryKey))
 
 	const bulkPlan = buildTableServerDataSourcePlan(items)
-	if (bulkPlan.chainsToFetch.length > 0) {
+	if (bulkPlan.hasProtocolsTable) {
 		add('tableData', PROTOCOLS_LIST_QUERY_KEY)
-		for (const chain of bulkPlan.chainsToFetch) {
-			add('tableData', getProLegacyTableChainQueryKey('volume', chain))
-			add('tableData', getProLegacyTableChainQueryKey('fees', chain))
-			add('tableData', getProLegacyTableChainQueryKey('perps', chain))
-			add('tableData', getProLegacyTableChainQueryKey('open-interest', chain))
+		for (const { source, chain } of bulkPlan.chainSources) {
+			const metric = source === 'openInterest' ? 'open-interest' : source
+			add('tableData', getProLegacyTableChainQueryKey(metric, chain))
 		}
 		for (const source of bulkPlan.datasetSources) {
 			addKey('tableData', source.cacheKey)

@@ -1,6 +1,7 @@
 import { CONFIG_API, FEATURES_SERVER } from '~/constants'
 import { fetchChainsList } from '~/containers/Chains/api'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
+import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import { sumSeriesByTimestamp } from '~/utils/breakdowns'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 import { isProtocolTokenChartType, normalizeUnlocksDataType } from './chartSource'
@@ -50,9 +51,11 @@ export async function fetchDashboardConfigWithStatus(
 	}
 }
 
-export async function fetchProtocolsAndChains(): Promise<ProDashboardProtocolCatalog | null> {
+export async function fetchProtocolsAndChains(
+	protocolsDataPromise: Promise<ProtocolsResponse> = fetchProtocols()
+): Promise<ProDashboardProtocolCatalog | null> {
 	try {
-		const [protocolsData, chainsData] = await Promise.all([fetchProtocols(), fetchChainsList()])
+		const [protocolsData, chainsData] = await Promise.all([protocolsDataPromise, fetchChainsList()])
 		return buildProDashboardProtocolCatalog(protocolsData, chainsData)
 	} catch {
 		return null

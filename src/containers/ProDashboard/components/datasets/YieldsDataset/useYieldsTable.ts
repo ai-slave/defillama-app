@@ -16,6 +16,7 @@ import { useTableSearch } from '~/components/Table/utils'
 import { downloadCSV as downloadCSVFile } from '~/utils/download'
 import { YIELDS_COLUMN_IDS, yieldsDatasetColumns } from './columns'
 import type { ProYieldRow } from './data'
+import { buildYieldsFilterOptions } from './options'
 import type { YieldsFilters } from './YieldsFiltersPanel'
 
 const YIELDS_COLUMN_PRESETS: Record<string, string[]> = {
@@ -278,17 +279,10 @@ export function useYieldsTable({
 
 	const [poolName, setPoolName] = useTableSearch({ instance: table, columnToSearch: 'pool' })
 
-	const availableTokens = React.useMemo(() => {
-		const tokenTvlMap = new Map<string, number>()
-
-		for (const row of data) {
-			for (const token of row.tokenSymbols) tokenTvlMap.set(token, (tokenTvlMap.get(token) ?? 0) + (row.tvl ?? 0))
-		}
-
-		return Array.from(tokenTvlMap.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([token]) => token)
-	}, [data])
+	const { availableTokens, availableProtocols, availableCategories } = React.useMemo(
+		() => buildYieldsFilterOptions(data),
+		[data]
+	)
 
 	const activeFilterCount = React.useMemo(() => {
 		let count = 0
@@ -306,51 +300,6 @@ export function useYieldsTable({
 		if (filters.categories && filters.categories.length > 0) count++
 		return count
 	}, [filters])
-
-	const availableProtocols = React.useMemo(() => {
-		const protocolMap = new Map<string, { value: string; label: string; tvl: number }>()
-
-		for (const row of data) {
-			const slug = (row.projectslug || row.project || '').trim()
-			const name = (row.project || '').trim()
-			if (!slug && !name) continue
-
-			const key = (slug || name).toLowerCase()
-			const existing = protocolMap.get(key)
-			const tvl = typeof row.tvl === 'number' ? row.tvl : 0
-
-			if (existing) {
-				existing.tvl += tvl
-				if (!existing.label && name) {
-					existing.label = name
-				}
-				if (!existing.value && slug) {
-					existing.value = slug
-				}
-			} else {
-				protocolMap.set(key, {
-					value: slug || name,
-					label: name || slug,
-					tvl
-				})
-			}
-		}
-
-		return Array.from(protocolMap.values())
-			.sort((a, b) => {
-				if (b.tvl !== a.tvl) {
-					return b.tvl - a.tvl
-				}
-				return a.label.localeCompare(b.label)
-			})
-			.map(({ value, label }) => ({ value, label }))
-	}, [data])
-
-	const availableCategories = React.useMemo(() => {
-		const categories = new Set<string>()
-		for (const row of data) if (row.category) categories.add(row.category)
-		return [...categories].sort()
-	}, [data])
 
 	const applyFilters = React.useCallback(
 		(newFilters?: YieldsFilters) => {

@@ -90,6 +90,23 @@ export const getNFTMarketplacesData = async () => {
 	}
 }
 
+const normalizeEthereumCollectionId = (collectionId: string) =>
+	`0x${collectionId.replace(/^(?:0x)+/i, '').toLowerCase()}`
+
+type NFTCollectionEarningsRow = {
+	defillamaId: string
+	name: string
+	displayName: string
+	logo: string
+	chains: string[]
+	total24h: number | null
+	total7d: number | null
+	total30d: number | null
+	totalRoyaltyEarnings: number | null
+	totalMintEarnings: number | null
+	totalEarnings: number
+}
+
 export const getNFTCollectionEarnings = async () => {
 	try {
 		const [parentCompanies, royalties, collections] = await Promise.all([
@@ -98,10 +115,9 @@ export const getNFTCollectionEarnings = async () => {
 			fetchNftCollections()
 		])
 
-		// Build lookup maps for O(1) collection access instead of O(n) .find() calls
 		const royaltiesByCollection = new Map<string, (typeof royalties)[0]>()
 		for (const royalty of royalties) {
-			const collectionId = `0x${royalty.collection}`
+			const collectionId = normalizeEthereumCollectionId(royalty.collection)
 			if (!royaltiesByCollection.has(collectionId)) {
 				royaltiesByCollection.set(collectionId, royalty)
 			}
@@ -109,21 +125,22 @@ export const getNFTCollectionEarnings = async () => {
 
 		const mintEarningsByContract = new Map<string, (typeof NFT_MINT_EARNINGS)[0]>()
 		for (const earning of NFT_MINT_EARNINGS) {
-			if (!mintEarningsByContract.has(earning.contractAddress)) {
-				mintEarningsByContract.set(earning.contractAddress, earning)
+			const collectionId = normalizeEthereumCollectionId(earning.contractAddress)
+			if (!mintEarningsByContract.has(collectionId)) {
+				mintEarningsByContract.set(collectionId, earning)
 			}
 		}
 
-		const collectionEarnings = collections
-			.map((c) => {
-				// O(1) Map lookups instead of O(n) .find() calls
-				const royalty = royaltiesByCollection.get(c.collectionId)
-				const mintEarnings = mintEarningsByContract.get(c.collectionId)
+		const collectionEarnings: NFTCollectionEarningsRow[] = []
+		const collectionEarningsById = new Map<string, NFTCollectionEarningsRow>()
+		for (const c of collections) {
+			const collectionId = normalizeEthereumCollectionId(c.collectionId)
+			const royalty = royaltiesByCollection.get(collectionId)
+			const mintEarnings = mintEarningsByContract.get(collectionId)
 
-				if (!royalty && !mintEarnings) return null
-
-				return {
-					defillamaId: c.collectionId,
+			if (royalty || mintEarnings) {
+				const earnings = {
+					defillamaId: collectionId,
 					name: c.name,
 					displayName: c.name,
 					logo: c.image,
@@ -135,20 +152,21 @@ export const getNFTCollectionEarnings = async () => {
 					totalMintEarnings: mintEarnings != null ? Number(mintEarnings.usdSales) || null : null,
 					totalEarnings: (royalty?.usdLifetime ?? 0) + (mintEarnings != null ? Number(mintEarnings.usdSales) || 0 : 0)
 				}
-			})
-			.filter((c): c is NonNullable<typeof c> => c != null)
+				collectionEarnings.push(earnings)
+				if (!collectionEarningsById.has(collectionId)) collectionEarningsById.set(collectionId, earnings)
+			}
+		}
 
 		const duplicateCollections = new Set<string>()
 
 		const parentEarnings = parentCompanies.map((parent) => {
-			const subCollections = parent.nftCollections.map((x) => {
-				const address = x[0].toLowerCase()
+			const subCollections = parent.nftCollections.map(([collectionId]) => {
+				const address = normalizeEthereumCollectionId(collectionId)
 				duplicateCollections.add(address)
 				return address
 			})
-			const subCollectionSet = new Set(subCollections)
-
-			const subCollectionEarnings = collectionEarnings.filter((c) => subCollectionSet.has(c.defillamaId))
+			const subCollectionEarnings: NFTCollectionEarningsRow[] = []
+			const seenCollections = new Set<string>()
 
 			let total24h = 0
 			let total7d = 0
@@ -157,7 +175,12 @@ export const getNFTCollectionEarnings = async () => {
 			let totalMintEarnings = 0
 			let totalEarnings = 0
 
-			for (const c of subCollectionEarnings) {
+			for (const collectionId of subCollections) {
+				if (seenCollections.has(collectionId)) continue
+				seenCollections.add(collectionId)
+				const c = collectionEarningsById.get(collectionId)
+				if (!c) continue
+				subCollectionEarnings.push(c)
 				total24h += c.total24h ?? 0
 				total7d += c.total7d ?? 0
 				total30d += c.total30d ?? 0

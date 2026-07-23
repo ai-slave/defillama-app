@@ -1,11 +1,6 @@
 import { getPercentChange, getPrevVolumeFromChart, keepNeededProperties, slug } from '~/utils'
-import {
-	DAY_MS,
-	getCompleteTimeSeriesDailyWindow,
-	getTimeSeriesPeriodPair,
-	getUtcStartOfDay,
-	toUnixMsTimestamp
-} from '~/utils/timeSeries'
+import { DAY_MS, getCompleteTimeSeriesDailyWindow, getUtcStartOfDay, toUnixMsTimestamp } from '~/utils/timeSeries'
+import type { RawBridgeNetflowEntry } from './api.types'
 import { BRIDGE_PROPERTIES_TO_KEEP } from './constants'
 
 interface ITokenData {
@@ -79,13 +74,22 @@ export function getCompletedBridgeVolumeTotals(
 	useDepositAndWithdrawalVolume = false,
 	currentTimeMs: number = Date.now()
 ): Map<number, number | null> {
+	return getCompletedBridgeVolumeSummary(chart, days, useDepositAndWithdrawalVolume, currentTimeMs).totals
+}
+
+function getCompletedBridgeVolumeSummary(
+	chart: BridgeDailyVolumePoint[] | null | undefined,
+	days: readonly number[],
+	useDepositAndWithdrawalVolume: boolean,
+	currentTimeMs: number
+): { pair: { current: number; previous: number } | null; totals: Map<number, number | null> } {
 	const totals = new Map<number, number | null>()
 	let maxDays = 0
 	for (const periodDays of days) {
 		totals.set(periodDays, null)
 		if (Number.isInteger(periodDays) && periodDays > maxDays) maxDays = periodDays
 	}
-	if (!chart?.length || maxDays <= 0) return totals
+	if (!chart?.length) return { pair: null, totals }
 
 	const latestPointByDay = new Map<number, { point: BridgeDailyVolumePoint; timestamp: number }>()
 	for (const point of chart) {
@@ -99,9 +103,13 @@ export function getCompletedBridgeVolumeTotals(
 	const latestCompletedDay = getUtcStartOfDay(currentTimeMs) - DAY_MS
 	let runningTotal = 0
 	let isComplete = true
-	for (let dayOffset = 0; dayOffset < maxDays; dayOffset++) {
+	let current: number | null = null
+	let previous: number | null = null
+	for (let dayOffset = 0; dayOffset < Math.max(maxDays, 2); dayOffset++) {
 		const point = latestPointByDay.get(latestCompletedDay - dayOffset * DAY_MS)?.point
 		const value = point ? getBridgeDailyVolume(point, useDepositAndWithdrawalVolume) : null
+		if (dayOffset === 0) current = value
+		if (dayOffset === 1) previous = value
 		if (value == null) isComplete = false
 		if (isComplete) runningTotal += value as number
 
@@ -109,22 +117,14 @@ export function getCompletedBridgeVolumeTotals(
 		if (totals.has(periodDays)) totals.set(periodDays, isComplete ? runningTotal : null)
 	}
 
-	return totals
+	return { pair: current == null || previous == null ? null : { current, previous }, totals }
 }
 
 export function getCompletedBridgeVolumePair(
 	chart: BridgeDailyVolumePoint[] | null | undefined,
 	currentTimeMs: number = Date.now()
 ): { current: number; previous: number } | null {
-	const pair = getTimeSeriesPeriodPair(chart, 1, (point) => point.date, {
-		currentTimeMs,
-		currentDayOffset: 1
-	})
-	if (!pair) return null
-
-	const current = getBridgeDailyVolume(pair.current, false)
-	const previous = getBridgeDailyVolume(pair.previous, false)
-	return current == null || previous == null ? null : { current, previous }
+	return getCompletedBridgeVolumeSummary(chart, [], false, currentTimeMs).pair
 }
 
 export const formatBridgesData = ({
@@ -146,12 +146,13 @@ export const formatBridgesData = ({
 		const chartIndex = bridgeNameToChartDataIndex[bridge.displayName]
 		const chart = chartDataByBridge[chartIndex] ?? null
 
-		const completedVolumePair = getCompletedBridgeVolumePair(chart, currentTimeMs)
+		const completedVolumeSummary = getCompletedBridgeVolumeSummary(chart, chain ? [7, 30] : [], false, currentTimeMs)
+		const completedVolumePair = completedVolumeSummary.pair
 		if (chain) {
 			bridge.lastDailyVolume = completedVolumePair?.current ?? null
 			bridge.dayBeforeLastVolume = completedVolumePair?.previous ?? null
-			bridge.weeklyVolume = getCompletedBridgeVolumeTotal(chart, 7, false, currentTimeMs)
-			bridge.monthlyVolume = getCompletedBridgeVolumeTotal(chart, 30, false, currentTimeMs)
+			bridge.weeklyVolume = completedVolumeSummary.totals.get(7) ?? null
+			bridge.monthlyVolume = completedVolumeSummary.totals.get(30) ?? null
 			bridge.last24hVolume = bridge.lastDailyVolume
 		}
 
@@ -192,6 +193,12 @@ export const formatChainsData = ({
 	netflowsDataDay = null,
 	netflowsDataWeek = null
 }) => {
+	const prevDayDataByName = new Map<string, IDailyBridgeStats>()
+	for (const item of prevDayDataByChain ?? []) {
+		if (item.name != null && !prevDayDataByName.has(item.name)) prevDayDataByName.set(item.name, item)
+	}
+	const netflowsDayByChain = indexBridgeNetflows(netflowsDataDay)
+	const netflowsWeekByChain = indexBridgeNetflows(netflowsDataWeek)
 	let filteredChains = [...chains]
 
 	filteredChains = filteredChains.map((chain) => {
@@ -199,29 +206,22 @@ export const formatChainsData = ({
 		const chartIndex = chainToChartDataIndex[name]
 		const charts = chartDataByChain[chartIndex] ?? null
 
-		const prevDayData =
-			prevDayDataByChain?.find(({ name: chainName }) => {
-				return chainName === chain.name
-			}) ?? null
+		const prevDayData = prevDayDataByName.get(chain.name) ?? null
 		const prevDayChart = charts?.[charts.length - 1]
 		const totalTokensDeposited = prevDayData?.totalTokensDeposited
 		const totalTokensWithdrawn = prevDayData?.totalTokensWithdrawn
 
 		let prevDayUsdDeposits, prevDayUsdWithdrawals, prevDayNetFlow
 		if (netflowsDataDay && Array.isArray(netflowsDataDay)) {
-			const chainNetflowDay = netflowsDataDay.find(
-				(item) => item.chain && item.chain.toLowerCase() === name.toLowerCase()
-			)
+			const chainNetflowDay = netflowsDayByChain.get(name.toLowerCase())
 			if (chainNetflowDay) {
 				prevDayUsdDeposits =
-					chainNetflowDay.deposited_usd !== undefined ? Number(chainNetflowDay.deposited_usd) : prevDayChart?.depositUSD
+					chainNetflowDay.depositedUsd !== undefined ? chainNetflowDay.depositedUsd : prevDayChart?.depositUSD
 				prevDayUsdWithdrawals =
-					chainNetflowDay.withdrawn_usd !== undefined
-						? Number(chainNetflowDay.withdrawn_usd)
-						: prevDayChart?.withdrawUSD
+					chainNetflowDay.withdrawnUsd !== undefined ? chainNetflowDay.withdrawnUsd : prevDayChart?.withdrawUSD
 				prevDayNetFlow =
-					chainNetflowDay.net_flow !== undefined
-						? Number(chainNetflowDay.net_flow)
+					chainNetflowDay.netFlow !== undefined
+						? chainNetflowDay.netFlow
 						: (prevDayUsdDeposits ?? 0) - (prevDayUsdWithdrawals ?? 0)
 			} else {
 				prevDayUsdDeposits = prevDayChart?.depositUSD
@@ -236,16 +236,13 @@ export const formatChainsData = ({
 
 		let prevWeekUsdDeposits, prevWeekUsdWithdrawals, prevWeekNetFlow
 		if (netflowsDataWeek && Array.isArray(netflowsDataWeek)) {
-			const chainNetflowWeek = netflowsDataWeek.find(
-				(item) => item.chain && item.chain.toLowerCase() === name.toLowerCase()
-			)
+			const chainNetflowWeek = netflowsWeekByChain.get(name.toLowerCase())
 			if (chainNetflowWeek) {
-				prevWeekUsdDeposits = chainNetflowWeek.deposited_usd !== undefined ? Number(chainNetflowWeek.deposited_usd) : 0
-				prevWeekUsdWithdrawals =
-					chainNetflowWeek.withdrawn_usd !== undefined ? Number(chainNetflowWeek.withdrawn_usd) : 0
+				prevWeekUsdDeposits = chainNetflowWeek.depositedUsd !== undefined ? chainNetflowWeek.depositedUsd : 0
+				prevWeekUsdWithdrawals = chainNetflowWeek.withdrawnUsd !== undefined ? chainNetflowWeek.withdrawnUsd : 0
 				prevWeekNetFlow =
-					chainNetflowWeek.net_flow !== undefined
-						? Number(chainNetflowWeek.net_flow)
+					chainNetflowWeek.netFlow !== undefined
+						? chainNetflowWeek.netFlow
 						: prevWeekUsdDeposits - prevWeekUsdWithdrawals
 			} else {
 				const prevWeekCharts = chartDataByChain[chartIndex].slice(-8, -1)
@@ -286,6 +283,31 @@ export const formatChainsData = ({
 		}
 	})
 	return filteredChains
+}
+
+type IndexedBridgeNetflow = {
+	depositedUsd?: number
+	withdrawnUsd?: number
+	netFlow?: number
+}
+
+function indexBridgeNetflows(data: Array<Partial<RawBridgeNetflowEntry>> | null): Map<string, IndexedBridgeNetflow> {
+	const indexed = new Map<string, IndexedBridgeNetflow>()
+	if (!data) return indexed
+
+	for (const item of data) {
+		if (!item.chain) continue
+		const key = item.chain.toLowerCase()
+		// Array.find used the first duplicate, so indexing must not overwrite it.
+		if (indexed.has(key)) continue
+		indexed.set(key, {
+			depositedUsd: item.deposited_usd !== undefined ? Number(item.deposited_usd) : undefined,
+			withdrawnUsd: item.withdrawn_usd !== undefined ? Number(item.withdrawn_usd) : undefined,
+			netFlow: item.net_flow !== undefined ? Number(item.net_flow) : undefined
+		})
+	}
+
+	return indexed
 }
 
 const getTopTokenByUsd = (tokens?: Record<string, ITokenData>) => {

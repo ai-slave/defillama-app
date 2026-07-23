@@ -38,7 +38,7 @@ describe('buildProDashboardTableSourcePlan', () => {
 		expect(plan.clientOnlySources).toEqual(['["pro-dashboard","trending-contracts","7d","ethereum"]'])
 	})
 
-	it('plans one bulk fetch identity for duplicate legacy and token-usage tables', () => {
+	it('plans one protocols identity for duplicate minimal legacy tables and token usage', () => {
 		const items: DashboardItemConfig[] = [
 			{
 				id: 'legacy-a',
@@ -66,14 +66,27 @@ describe('buildProDashboardTableSourcePlan', () => {
 
 		const keys = buildProDashboardTableSourcePlan(items).streamSources.map((source) => source.key)
 
-		expect(keys.filter((key) => key.includes('protocols-volume-by-chain'))).toHaveLength(1)
+		expect(keys.filter((key) => key.includes('protocols-lite'))).toHaveLength(1)
+		expect(keys.some((key) => key.includes('protocols-volume-by-chain'))).toBe(false)
 		expect(keys.filter((key) => key.includes('token-usage'))).toHaveLength(1)
 	})
 
 	it('plans both aggregate and specific legacy sources when separate tables need them', () => {
 		const items: DashboardItemConfig[] = [
-			{ id: 'all', kind: 'table', tableType: 'protocols', chains: ['All'] },
-			{ id: 'ethereum', kind: 'table', tableType: 'protocols', chains: ['Ethereum'] }
+			{
+				id: 'all',
+				kind: 'table',
+				tableType: 'protocols',
+				chains: ['All'],
+				columnOrder: ['volume_24h', 'fees_24h', 'perps_volume_24h', 'openInterest']
+			},
+			{
+				id: 'ethereum',
+				kind: 'table',
+				tableType: 'protocols',
+				chains: ['Ethereum'],
+				columnOrder: ['volume_24h', 'fees_24h', 'perps_volume_24h', 'openInterest']
+			}
 		]
 		const keys = buildProDashboardTableSourcePlan(items).streamSources.map((source) => source.key)
 

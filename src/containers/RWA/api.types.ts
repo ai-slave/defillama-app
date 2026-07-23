@@ -171,20 +171,14 @@ export type RWAOverviewAsset = RWAOverviewDisplayRow
 
 export interface IRWAAssetsOverview {
 	assets: Array<RWAOverviewDisplayRow>
-	types: Array<string>
-	typeOptions: Array<{ key: string; name: string; help?: string }>
-	assetClasses: Array<string>
-	assetClassOptions: Array<{ key: string; name: string; help?: string }>
-	rwaClassifications: Array<string>
-	rwaClassificationOptions: Array<{ key: string; name: string; help?: string }>
-	accessModels: Array<string>
-	accessModelOptions: Array<{ key: string; name: string; help?: string }>
-	categories: Array<string>
-	categoriesOptions: Array<{ key: string; name: string; help?: string }>
+	typeOptions: Array<{ key: string; name: string; help: string | null }>
+	assetClassOptions: Array<{ key: string; name: string; help: string | null }>
+	rwaClassificationOptions: Array<{ key: string; name: string; help: string | null }>
+	accessModelOptions: Array<{ key: string; name: string; help: string | null }>
+	categoriesOptions: Array<{ key: string; name: string; help: string | null }>
 	platforms: Array<string>
 	assetGroups: Array<string>
 	assetNames: Array<string>
-	categoryValues: Array<{ name: string; value: number }>
 	issuers: Array<string>
 	platformLinks: Array<{ label: string; to: string }>
 	selectedPlatform: string

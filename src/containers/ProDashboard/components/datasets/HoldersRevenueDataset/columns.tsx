@@ -1,26 +1,11 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import type { DimensionDatasetProtocol } from '~/containers/AdapterMetrics/server/datasets'
 import { PercentChange } from '~/ui/PercentChange'
 import { formattedNum } from '~/utils'
 
-interface IHoldersRevenueRow {
-	name: string
-	displayName?: string
-	logo: string
-	slug: string
-	category: string
-	total24h: number
-	total7d: number
-	total30d: number
-	total1y: number
-	change_1d: number
-	change_7d: number
-	change_1m: number
-	chains: string[]
-}
-
-export const holdersRevenueDatasetColumns: ColumnDef<IHoldersRevenueRow>[] = [
+export const holdersRevenueDatasetColumns: ColumnDef<DimensionDatasetProtocol>[] = [
 	{
 		header: 'Name',
 		id: 'name',

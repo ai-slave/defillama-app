@@ -19,6 +19,7 @@ import { reactSelectStyles } from '../../../utils/reactSelectStyles'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { getColumns } from './columns'
+import { buildTokenUsageSummary } from './summary'
 import { useTokenSearch } from './useTokenSearch'
 import { type TokenUsageData, useTokenUsageData } from './useTokenUsageData'
 
@@ -32,9 +33,6 @@ const EMPTY_TOKEN_OPTIONS: _TokenOption[] = []
 const EMPTY_SELECTED_TOKENS: _TokenOption[] = []
 const EMPTY_USAGE_DATA: TokenUsageData[] = []
 const EMPTY_TOKEN_SYMBOLS: string[] = []
-
-type CategoryStats = { count: number; amount: number }
-type CategoryBreakdown = Record<string, CategoryStats>
 
 interface TokenUsageDatasetProps {
 	config: {
@@ -150,77 +148,10 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 		})
 	}
 
-	const tokenStats = useMemo(() => {
-		if (tokenSymbols.length <= 1) return null
-
-		const stats: Record<string, { total: number; protocols: number }> = {}
-		for (const symbol of tokenSymbols) {
-			stats[symbol] = { total: 0, protocols: 0 }
-		}
-
-		for (const item of rawData) {
-			if (item.tokens) {
-				for (const symbol in item.tokens) {
-					const amount = item.tokens[symbol]
-					if (stats[symbol]) {
-						stats[symbol].total += amount
-						stats[symbol].protocols++
-					}
-				}
-			}
-		}
-
-		return stats
-	}, [rawData, tokenSymbols])
-
-	const totalAmount = useMemo(() => rawData.reduce((sum, item) => sum + item.amountUsd, 0), [rawData])
-	const protocolCount = rawData.length
-	const categoryBreakdown = useMemo<CategoryBreakdown>(() => {
-		return rawData.reduce<CategoryBreakdown>(
-			(acc, item) => {
-				const category = item.category || 'Unknown'
-				if (!acc[category]) {
-					acc[category] = { count: 0, amount: 0 }
-				}
-				acc[category].count++
-				acc[category].amount += item.amountUsd
-				return acc
-			},
-			{} as Record<string, { count: number; amount: number }>
-		)
-	}, [rawData])
-
-	const topCategories = useMemo(() => {
-		return (Object.entries(categoryBreakdown) as Array<[string, CategoryStats]>)
-			.sort(([, a], [, b]) => b.amount - a.amount)
-			.slice(0, 3)
-	}, [categoryBreakdown])
-
-	const protocolOverlap = useMemo(() => {
-		if (tokenSymbols.length <= 1) return null
-
-		const overlap: Record<string, number> = {
-			exclusive: 0,
-			shared: 0
-		}
-
-		for (const symbol of tokenSymbols) {
-			overlap[`${symbol}_only`] = 0
-		}
-
-		for (const protocol of rawData) {
-			const usedTokens = tokenSymbols.filter((symbol) => protocol.tokens?.[symbol] && protocol.tokens[symbol] > 0)
-
-			if (usedTokens.length === 1) {
-				overlap[`${usedTokens[0]}_only`]++
-				overlap.exclusive++
-			} else if (usedTokens.length > 1) {
-				overlap.shared++
-			}
-		}
-
-		return overlap
-	}, [rawData, tokenSymbols])
+	const { totalAmount, protocolCount, tokenStats, topCategories, protocolOverlap, multiTokenProtocolCount } = useMemo(
+		() => buildTokenUsageSummary(rawData, tokenSymbols),
+		[rawData, tokenSymbols]
+	)
 
 	const downloadCSV = () => {
 		const isMultiToken = tokenSymbols.length > 1
@@ -435,10 +366,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 								<div className="mb-1 text-xs text-pro-text-tertiary">Unique Protocols</div>
 								<div className="text-lg font-semibold text-pro-text-primary">{protocolCount}</div>
 								<div className="text-xs text-pro-text-tertiary">
-									{(() => {
-										const overlap = rawData.filter((p) => p.tokens && Object.keys(p.tokens).length > 1).length
-										return overlap > 0 ? `${overlap} use multiple` : 'Total count'
-									})()}
+									{multiTokenProtocolCount > 0 ? `${multiTokenProtocolCount} use multiple` : 'Total count'}
 								</div>
 							</div>
 						) : null}

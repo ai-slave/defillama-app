@@ -13,6 +13,7 @@ import * as React from 'react'
 import { areStringArraysEqual } from '~/containers/LlamaAI/utils/chartComparison'
 import { useUserConfig } from '~/hooks/useUserConfig'
 import { downloadCSV } from '~/utils/download'
+import { resolveProtocolTableSourcePlan } from '../../protocolTableSourcePlan'
 import type { CustomView, TableFilters } from '../../types'
 import {
 	buildColumnVisibilityMap,
@@ -21,6 +22,7 @@ import {
 	SHARE_METRIC_DEFINITIONS
 } from './proTable.constants'
 import type { CustomColumn, UseProTableOptions } from './proTable.types'
+import { matchesProTableSearch, normalizeProTableSearchQuery } from './proTablePreparation'
 import { protocolsByChainTableColumns, useProTableColumns } from './useProTableColumns'
 import { useProTableData } from './useProTableData'
 import { useProTableState } from './useProTableState'
@@ -56,10 +58,6 @@ const isCustomColumn = (value: unknown): value is CustomColumn => {
 	return (
 		typeof id === 'string' && typeof name === 'string' && typeof expression === 'string' && typeof isValid === 'boolean'
 	)
-}
-
-const normalizeSearchValue = (value: unknown): string => {
-	return typeof value === 'string' ? value.trim().toLowerCase() : ''
 }
 
 const isStringArray = (value: unknown): value is string[] => {
@@ -129,11 +127,6 @@ export function useProTable(
 	onFilterClick?: () => void,
 	options?: UseProTableOptions
 ) {
-	const { finalProtocolsList, isLoading, isEmptyProtocols, categories, availableProtocols, parentProtocols } =
-		useProTableData({
-			chains,
-			filters
-		})
 	const onColumnsChange = options?.onColumnsChange
 
 	const initialKnownColumnIdsRef = React.useRef<string[] | null>(null)
@@ -160,6 +153,36 @@ export function useProTable(
 		defaultPreset: preferredPresetRef.current ?? undefined,
 		initialKnownColumnIds: initialKnownColumnIdsRef.current ?? []
 	})
+	const sourcePlan = React.useMemo(
+		() =>
+			resolveProtocolTableSourcePlan({
+				columnOrder: state.columnOrder,
+				columnVisibility: state.columnVisibility,
+				customColumns: state.customColumns,
+				activePresetId: state.selectedPreset,
+				sorting: state.sorting,
+				activeDatasetMetric: state.activeDatasetMetric,
+				filters
+			}),
+		[
+			filters,
+			state.activeDatasetMetric,
+			state.columnOrder,
+			state.columnVisibility,
+			state.customColumns,
+			state.selectedPreset,
+			state.sorting
+		]
+	)
+	const {
+		finalProtocolsList,
+		searchIndex,
+		isLoading,
+		isEmptyProtocols,
+		categories,
+		availableProtocols,
+		parentProtocols
+	} = useProTableData({ chains, filters, sourcePlan })
 
 	const filteredProtocolsList = React.useMemo(() => {
 		if (!state.activeDatasetMetric) return finalProtocolsList
@@ -195,6 +218,10 @@ export function useProTable(
 	}, [allLeafColumnIds, state.columnOrder, state.columnVisibility])
 
 	const deferredSearchTerm = React.useDeferredValue(state.searchTerm)
+	const normalizedSearchTerm = React.useMemo(
+		() => normalizeProTableSearchQuery(deferredSearchTerm),
+		[deferredSearchTerm]
+	)
 
 	const table = useReactTable({
 		data: filteredProtocolsList,
@@ -203,31 +230,12 @@ export function useProTable(
 			sorting: state.sorting,
 			pagination: state.pagination,
 			expanded: state.expanded,
-			globalFilter: deferredSearchTerm,
+			globalFilter: normalizedSearchTerm,
 			columnVisibility: resolvedColumnVisibility,
 			columnOrder: state.columnOrder
 		},
 		globalFilterFn: (row, _columnId, filterValue) => {
-			const query = normalizeSearchValue(filterValue)
-			if (!query) return true
-
-			const protocolName = normalizeSearchValue(row.original.name)
-			const protocolCategory = normalizeSearchValue(row.original.category)
-			const protocolSymbol = normalizeSearchValue(row.original.symbol)
-			const protocolChains = Array.isArray(row.original.chains)
-				? row.original.chains.map((chain) => normalizeSearchValue(chain)).join(' ')
-				: ''
-			const protocolOracles = Array.isArray(row.original.oracles)
-				? row.original.oracles.map((oracle) => normalizeSearchValue(oracle)).join(' ')
-				: ''
-
-			return (
-				protocolName.includes(query) ||
-				protocolCategory.includes(query) ||
-				protocolSymbol.includes(query) ||
-				protocolChains.includes(query) ||
-				protocolOracles.includes(query)
-			)
+			return matchesProTableSearch(row.original, filterValue as string, searchIndex)
 		},
 		sortingFns: {
 			alphanumericFalsyLast: (rowA, rowB, columnId) => {

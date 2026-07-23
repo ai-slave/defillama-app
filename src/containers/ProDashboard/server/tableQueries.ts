@@ -14,6 +14,7 @@ import {
 	getPerpsVolumeByChain
 } from '../components/ProTable/proTable.api'
 import type { ProTableDimensionProtocol } from '../components/ProTable/proTable.types'
+import { resolveProtocolTableConfigSourcePlan, type ProtocolTableMetricSource } from '../protocolTableSourcePlan'
 import { getProLegacyTableDatasetQueryKey, getProTokenUsageQueryKey, normalizeProTokenSymbols } from '../tableQueryKeys'
 import type { DashboardItemConfig, ProtocolsTableConfig } from '../types'
 import { fetchProDimensionDataset } from './dimensionDataset'
@@ -31,24 +32,6 @@ export interface TableServerData {
 interface ProTableChainOverview {
 	chain: string
 	protocols: ProTableDimensionProtocol[]
-}
-
-function extractTableChains(items: DashboardItemConfig[]): { chains: string[]; chainSets: string[][] } {
-	const allChains = new Set<string>()
-	const chainSets: string[][] = []
-
-	for (const item of items) {
-		if (item.kind !== 'table' || item.tableType !== 'protocols') continue
-		const itemChains = item.chains
-		chainSets.push(itemChains)
-		if (itemChains.length === 0 || itemChains.includes('All')) {
-			allChains.add('All')
-		} else {
-			for (const chain of itemChains) allChains.add(chain)
-		}
-	}
-
-	return { chains: Array.from(allChains), chainSets }
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -95,7 +78,11 @@ async function fetchTokenUsageData(tokenSymbols: string[], includeCex: boolean):
 }
 
 export interface TableServerDataSourcePlan {
-	chainsToFetch: string[]
+	hasProtocolsTable: boolean
+	chainSources: Array<{
+		source: Extract<ProtocolTableMetricSource, 'volume' | 'fees' | 'perps' | 'openInterest'>
+		chain: string
+	}>
 	datasetSources: Array<{
 		cacheKey: string
 		datasetType: (typeof TABLE_DATASET_SPECS)[number]['datasetType']
@@ -105,23 +92,31 @@ export interface TableServerDataSourcePlan {
 }
 
 export function buildTableServerDataSourcePlan(items: DashboardItemConfig[]): TableServerDataSourcePlan {
-	const { chains, chainSets } = extractTableChains(items)
-	const uniqueChainSets = new Map<string, string[]>()
-	for (const chainSet of chainSets) {
-		let key = 'All'
-		if (chainSet.length > 0 && !chainSet.includes('All')) {
-			key = chainSet.length === 1 ? chainSet[0] : chainSet.toSorted().join(',')
-		}
-		if (!uniqueChainSets.has(key)) uniqueChainSets.set(key, chainSet)
-	}
-
+	let hasProtocolsTable = false
+	const chainSources = new Map<string, TableServerDataSourcePlan['chainSources'][number]>()
 	const datasetSources: TableServerDataSourcePlan['datasetSources'] = []
-	for (const chainSet of uniqueChainSets.values()) {
+	const datasetSourceKeys = new Set<string>()
+	for (const item of items) {
+		if (item.kind !== 'table' || item.tableType !== 'protocols') continue
+		hasProtocolsTable = true
+		const sourcePlan = resolveProtocolTableConfigSourcePlan(item)
+		const chains = item.chains.length === 0 || item.chains.includes('All') ? ['All'] : item.chains
+
+		for (const source of ['volume', 'fees', 'perps', 'openInterest'] as const) {
+			if (!sourcePlan.enabled[source]) continue
+			for (const chain of chains) chainSources.set(`${source}:${chain}`, { source, chain })
+		}
+
 		for (const config of TABLE_DATASET_SPECS) {
+			const source = config.datasetType === 'bridge-aggregators' ? 'bridgeAggregators' : config.datasetType
+			if (!sourcePlan.enabled[source]) continue
+			const cacheKey = JSON.stringify(getProLegacyTableDatasetQueryKey(config.queryKeyPrefix, item.chains))
+			if (datasetSourceKeys.has(cacheKey)) continue
+			datasetSourceKeys.add(cacheKey)
 			datasetSources.push({
-				cacheKey: JSON.stringify(getProLegacyTableDatasetQueryKey(config.queryKeyPrefix, chainSet)),
+				cacheKey,
 				datasetType: config.datasetType,
-				chains: chainSet
+				chains: item.chains
 			})
 		}
 	}
@@ -133,7 +128,8 @@ export function buildTableServerDataSourcePlan(items: DashboardItemConfig[]): Ta
 	}
 
 	return {
-		chainsToFetch: chains,
+		hasProtocolsTable,
+		chainSources: Array.from(chainSources.values()),
 		datasetSources,
 		tokenUsageConfigs: Array.from(tokenUsageConfigs.values())
 	}
@@ -141,25 +137,29 @@ export function buildTableServerDataSourcePlan(items: DashboardItemConfig[]): Ta
 
 export async function fetchTableServerData(
 	items: DashboardItemConfig[],
-	claimSource: (kind: string, key: readonly unknown[]) => boolean = () => true
+	claimSource: (kind: string, key: readonly unknown[]) => boolean = () => true,
+	onData?: (data: TableServerData) => void,
+	getProtocolsList: () => Promise<ProtocolsResponse> = fetchProtocols
 ): Promise<TableServerData | null> {
 	const plan = buildTableServerDataSourcePlan(items)
-	const fetchProtocolsList = plan.chainsToFetch.length > 0 && claimSource('table-protocols-list', [])
-	const chainsToFetch = plan.chainsToFetch.filter((chain) => claimSource('table-chain-overview', [chain]))
+	const fetchProtocolsList = plan.hasProtocolsTable && claimSource('table-protocols-list', [])
+	const chainSources = plan.chainSources.filter(({ source, chain }) =>
+		claimSource('table-chain-overview', [source, chain])
+	)
 	const datasetSources = plan.datasetSources.filter((source) => claimSource('table-dataset', [source.cacheKey]))
 	const tokenUsageConfigs = plan.tokenUsageConfigs.filter((source) =>
 		claimSource('table-token-usage', [source.cacheKey])
 	)
 	if (
 		!fetchProtocolsList &&
-		chainsToFetch.length === 0 &&
+		chainSources.length === 0 &&
 		datasetSources.length === 0 &&
 		tokenUsageConfigs.length === 0
 	) {
 		return null
 	}
 
-	const tableData: TableServerData = {
+	const createTableData = (): TableServerData => ({
 		protocolsList: null,
 		volumeByChain: {},
 		feesByChain: {},
@@ -167,102 +167,98 @@ export async function fetchTableServerData(
 		openInterestByChain: {},
 		datasetsByQueryKey: {},
 		tokenUsageByQueryKey: {}
+	})
+	const tasks: Array<Promise<TableServerData>> = []
+
+	if (fetchProtocolsList) {
+		tasks.push(
+			withTimeout(getProtocolsList(), FETCH_TIMEOUT).then((protocolsList) => ({
+				...createTableData(),
+				protocolsList
+			}))
+		)
 	}
 
-	if (fetchProtocolsList || chainsToFetch.length > 0 || datasetSources.length > 0) {
-		const results = await Promise.allSettled([
-			fetchProtocolsList ? withTimeout(fetchProtocols(), FETCH_TIMEOUT) : Promise.resolve(null),
-			...chainsToFetch.flatMap((chain) => [
-				withTimeout(
-					getDexVolumeByChain({ chain, excludeTotalDataChart: false, excludeTotalDataChartBreakdown: true }).then(
-						(data) => ({ type: 'volume' as const, chain, data: { chain, protocols: data?.protocols ?? [] } })
-					),
-					FETCH_TIMEOUT
-				),
-				withTimeout(
-					getFeesAndRevenueProtocolsByChain({ chain }).then((data) => ({
-						type: 'fees' as const,
-						chain,
-						data: { chain, protocols: data ?? [] }
-					})),
-					FETCH_TIMEOUT
-				),
-				withTimeout(
-					getPerpsVolumeByChain({ chain, excludeTotalDataChart: false, excludeTotalDataChartBreakdown: true }).then(
-						(data) => ({ type: 'perps' as const, chain, data: { chain, protocols: data?.protocols ?? [] } })
-					),
-					FETCH_TIMEOUT
-				),
-				withTimeout(
-					getOpenInterestByChain({ chain }).then((data) => ({
-						type: 'openInterest' as const,
-						chain,
-						data: { chain, protocols: data?.protocols ?? [] }
-					})),
-					FETCH_TIMEOUT
+	for (const { source, chain } of chainSources) {
+		switch (source) {
+			case 'volume':
+				tasks.push(
+					withTimeout(
+						getDexVolumeByChain({ chain, excludeTotalDataChart: false, excludeTotalDataChartBreakdown: true }),
+						FETCH_TIMEOUT
+					).then((data) => ({
+						...createTableData(),
+						volumeByChain: { [chain]: { chain, protocols: data?.protocols ?? [] } }
+					}))
 				)
-			])
-		])
-
-		const [protocolsResult, ...overviewResults] = results
-
-		if (protocolsResult.status === 'fulfilled' && protocolsResult.value) {
-			tableData.protocolsList = protocolsResult.value
-		}
-
-		for (const result of overviewResults) {
-			if (result.status !== 'fulfilled') continue
-			const { type, chain, data } = result.value
-			switch (type) {
-				case 'volume':
-					tableData.volumeByChain[chain] = data
-					break
-				case 'fees':
-					tableData.feesByChain[chain] = data
-					break
-				case 'perps':
-					tableData.perpsByChain[chain] = data
-					break
-				case 'openInterest':
-					tableData.openInterestByChain[chain] = data
-					break
-			}
-		}
-
-		const datasetFetches: Promise<{ cacheKey: string; data: DimensionDatasetProtocol[] }>[] = []
-		for (const source of datasetSources) {
-			const spec = DIMENSION_DATASET_SPEC_BY_TYPE[source.datasetType]
-			datasetFetches.push(
-				withTimeout(fetchProDimensionDataset(spec, source.chains), FETCH_TIMEOUT * 3).then((data) => ({
-					cacheKey: source.cacheKey,
-					data
-				}))
-			)
-		}
-
-		const datasetResults = await Promise.allSettled(datasetFetches)
-		for (const result of datasetResults) {
-			if (result.status !== 'fulfilled') continue
-			tableData.datasetsByQueryKey[result.value.cacheKey] = result.value.data
+				break
+			case 'fees':
+				tasks.push(
+					withTimeout(getFeesAndRevenueProtocolsByChain({ chain }), FETCH_TIMEOUT).then((data) => ({
+						...createTableData(),
+						feesByChain: { [chain]: { chain, protocols: data ?? [] } }
+					}))
+				)
+				break
+			case 'perps':
+				tasks.push(
+					withTimeout(
+						getPerpsVolumeByChain({ chain, excludeTotalDataChart: false, excludeTotalDataChartBreakdown: true }),
+						FETCH_TIMEOUT
+					).then((data) => ({
+						...createTableData(),
+						perpsByChain: { [chain]: { chain, protocols: data?.protocols ?? [] } }
+					}))
+				)
+				break
+			case 'openInterest':
+				tasks.push(
+					withTimeout(getOpenInterestByChain({ chain }), FETCH_TIMEOUT).then((data) => ({
+						...createTableData(),
+						openInterestByChain: { [chain]: { chain, protocols: data?.protocols ?? [] } }
+					}))
+				)
+				break
 		}
 	}
 
-	if (tokenUsageConfigs.length > 0) {
-		const tokenUsageFetches: Promise<{ cacheKey: string; data: ProtocolTokenUsageData[] }>[] = []
-		for (const config of tokenUsageConfigs) {
-			tokenUsageFetches.push(
-				withTimeout(fetchTokenUsageData(config.tokenSymbols, config.includeCex), FETCH_TIMEOUT).then((data) => ({
-					cacheKey: config.cacheKey,
-					data
-				}))
-			)
-		}
+	for (const source of datasetSources) {
+		const spec = DIMENSION_DATASET_SPEC_BY_TYPE[source.datasetType]
+		tasks.push(
+			withTimeout(fetchProDimensionDataset(spec, source.chains), FETCH_TIMEOUT * 3).then((data) => ({
+				...createTableData(),
+				datasetsByQueryKey: { [source.cacheKey]: data }
+			}))
+		)
+	}
 
-		const tokenUsageResults = await Promise.allSettled(tokenUsageFetches)
-		for (const result of tokenUsageResults) {
-			if (result.status !== 'fulfilled') continue
-			tableData.tokenUsageByQueryKey[result.value.cacheKey] = result.value.data
-		}
+	for (const config of tokenUsageConfigs) {
+		tasks.push(
+			withTimeout(fetchTokenUsageData(config.tokenSymbols, config.includeCex), FETCH_TIMEOUT).then((data) => ({
+				...createTableData(),
+				tokenUsageByQueryKey: { [config.cacheKey]: data }
+			}))
+		)
+	}
+
+	const results = await Promise.allSettled(
+		tasks.map(async (task) => {
+			const data = await task
+			onData?.(data)
+			return data
+		})
+	)
+	const tableData = createTableData()
+	for (const result of results) {
+		if (result.status !== 'fulfilled') continue
+		const data = result.value
+		if (data.protocolsList) tableData.protocolsList = data.protocolsList
+		Object.assign(tableData.volumeByChain, data.volumeByChain)
+		Object.assign(tableData.feesByChain, data.feesByChain)
+		Object.assign(tableData.perpsByChain, data.perpsByChain)
+		Object.assign(tableData.openInterestByChain, data.openInterestByChain)
+		Object.assign(tableData.datasetsByQueryKey, data.datasetsByQueryKey)
+		Object.assign(tableData.tokenUsageByQueryKey, data.tokenUsageByQueryKey)
 	}
 
 	return tableData

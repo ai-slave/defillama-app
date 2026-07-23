@@ -1,7 +1,10 @@
+import type { LlamaConfigResponse } from '~/api/types'
+import type { IChainMetadata } from '~/utils/metadata/types'
 import type {
 	StablecoinBridgeInfoResponse,
 	StablecoinChartPoint,
 	StablecoinDetailResponse,
+	StablecoinDominanceResponse,
 	StablecoinListAsset,
 	StablecoinsListResponse
 } from './api.types'
@@ -47,6 +50,30 @@ export interface PeggedChainsPageData {
 	change30d_nol: string | null
 	dataTimestamp: number | null
 	isDataStale: boolean
+}
+
+export interface StablecoinChainsPageInput {
+	peggedAssets: StablecoinListAsset[]
+	chains: PeggedAssetsInput['chains']
+	chainCoingeckoIds: LlamaConfigResponse['chainCoingeckoIds']
+	aggregatedChart: StablecoinChartPoint[]
+	dominanceMap: StablecoinDominanceResponse['dominanceMap']
+	chainChartMap: StablecoinDominanceResponse['chainChartMap']
+}
+
+export interface StablecoinChainsChartInput {
+	chains: PeggedAssetsInput['chains']
+	chainChartMap: StablecoinDominanceResponse['chainChartMap']
+}
+
+export interface StablecoinChainsPageSummaryOptions {
+	chainMetadata: Record<string, IChainMetadata>
+	currentTimeMs?: number
+}
+
+export interface StablecoinChainsChartSource {
+	chainList: string[]
+	chartDataByChain: Array<Array<{ date: number; mcap: number | null }> | null>
 }
 
 export type StablecoinBridges = Record<string, Record<string, { amount: number }>> | null

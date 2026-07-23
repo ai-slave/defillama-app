@@ -27,25 +27,13 @@ import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formattedNum, slug, toNiceDayAndHour } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { fetchBridgeTransactionsClient } from './api'
-import type { RawBridgeInfo } from './api.types'
+import type { RawBridgeInfo, RawBridgeTransaction } from './api.types'
 
-type BridgeTransaction = {
-	tx_hash: string
-	ts: string
-	tx_block: string | number
-	tx_from: string
-	tx_to: string
-	token: string
-	amount: string
-	is_deposit: boolean
-	chain: string
-	bridge_name: string
-	usd_value: string | null
-}
+export type BridgeTransaction = RawBridgeTransaction
 
 const MAX_ITERATIONS = 50
 
-interface TransformedTransaction {
+export interface TransformedTransaction {
 	timestamp: number
 	bridge_name: string
 	bridge_slug: string
@@ -57,6 +45,104 @@ interface TransformedTransaction {
 	tx_from: string
 	tx_to: string
 	tx_hash: string
+}
+
+export interface BridgeTransactionStats {
+	total: number
+	deposits: number
+	withdrawals: number
+	depositVolume: number
+	withdrawalVolume: number
+	totalVolume: number
+	unknownValueCount: number
+	uniqueChains: number
+}
+
+export interface BridgeTransactionResult {
+	rows: TransformedTransaction[]
+	stats: BridgeTransactionStats | null
+}
+
+const parseTransactionTimestamp = (timestamp: string): number => Math.floor(Date.parse(timestamp) / 1000)
+
+const buildBridgeTransactionRow = (tx: BridgeTransaction, timestamp: number): TransformedTransaction => {
+	const parsedUsdValue = tx.usd_value === null ? null : Number.parseFloat(tx.usd_value)
+	return {
+		timestamp,
+		bridge_name: tx.bridge_name,
+		bridge_slug: slug(tx.bridge_name ?? ''),
+		chain: tx.chain,
+		is_deposit: tx.is_deposit,
+		token: tx.token,
+		amount: tx.amount,
+		usd_value: parsedUsdValue !== null && Number.isFinite(parsedUsdValue) ? parsedUsdValue : null,
+		tx_from: tx.tx_from,
+		tx_to: tx.tx_to,
+		tx_hash: tx.tx_hash
+	}
+}
+
+export const createBridgeTransactionCollector = () => {
+	const rows: TransformedTransaction[] = []
+	const seenTransactionHashes = new Set<string>()
+	const uniqueChains = new Set<string>()
+	let previousAcceptedTimestamp = Number.POSITIVE_INFINITY
+	let isDescending = true
+	let deposits = 0
+	let withdrawals = 0
+	let depositVolume = 0
+	let withdrawalVolume = 0
+	let unknownValueCount = 0
+
+	return {
+		addPage(transactions: BridgeTransaction[]): number | null {
+			let terminalTimestamp: number | null = null
+			for (const tx of transactions) {
+				const timestamp = parseTransactionTimestamp(tx.ts)
+				terminalTimestamp = timestamp
+				if (seenTransactionHashes.has(tx.tx_hash)) continue
+				seenTransactionHashes.add(tx.tx_hash)
+
+				const row = buildBridgeTransactionRow(tx, timestamp)
+				if (timestamp > previousAcceptedTimestamp) isDescending = false
+				previousAcceptedTimestamp = timestamp
+				rows.push(row)
+				uniqueChains.add(row.chain)
+				if (row.is_deposit) {
+					deposits++
+					if (row.usd_value === null) unknownValueCount++
+					else depositVolume += row.usd_value
+				} else {
+					withdrawals++
+					if (row.usd_value === null) unknownValueCount++
+					else withdrawalVolume += row.usd_value
+				}
+			}
+			return terminalTimestamp
+		},
+		finish(): BridgeTransactionResult {
+			if (!isDescending) {
+				// Array sorting is stable, so equal timestamps retain API encounter order as before.
+				rows.sort((left, right) => right.timestamp - left.timestamp)
+			}
+			return {
+				rows,
+				stats:
+					rows.length === 0
+						? null
+						: {
+								total: rows.length,
+								deposits,
+								withdrawals,
+								depositVolume,
+								withdrawalVolume,
+								totalVolume: depositVolume + withdrawalVolume,
+								unknownValueCount,
+								uniqueChains: uniqueChains.size
+							}
+			}
+		}
+	}
 }
 
 const columnHelper = createColumnHelper<TransformedTransaction>()
@@ -278,24 +364,6 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 	})
 ]
 
-const transformTransactionForTable = (tx: BridgeTransaction): TransformedTransaction => {
-	const timestamp = Math.floor(new Date(tx.ts).getTime() / 1000)
-	const usdRaw = tx.usd_value == null ? null : parseFloat(String(tx.usd_value))
-	return {
-		timestamp,
-		bridge_name: tx.bridge_name,
-		bridge_slug: slug(tx.bridge_name ?? ''),
-		chain: tx.chain,
-		is_deposit: tx.is_deposit,
-		token: tx.token,
-		amount: tx.amount,
-		usd_value: usdRaw != null && Number.isFinite(usdRaw) ? usdRaw : null,
-		tx_from: tx.tx_from,
-		tx_to: tx.tx_to,
-		tx_hash: tx.tx_hash
-	}
-}
-
 interface FetchArgs {
 	bridges: RawBridgeInfo[]
 	startDate: string
@@ -303,7 +371,7 @@ interface FetchArgs {
 	selectedBridge: string
 }
 
-const fetchTransactions = async ({ bridges, startDate, endDate, selectedBridge }: FetchArgs) => {
+export const fetchTransactions = async ({ bridges, startDate, endDate, selectedBridge }: FetchArgs) => {
 	const selectedBridgeData = bridges.find((bridge) => bridge.displayName === selectedBridge)
 	if (!selectedBridgeData?.id) {
 		throw new Error('Invalid bridge selected')
@@ -317,7 +385,7 @@ const fetchTransactions = async ({ bridges, startDate, endDate, selectedBridge }
 	}
 
 	const bridgeId = selectedBridgeData.id
-	const pages: BridgeTransaction[][] = []
+	const collector = createBridgeTransactionCollector()
 	let currentEndTimestamp = endTimestamp
 	let iterations = 0
 
@@ -328,38 +396,26 @@ const fetchTransactions = async ({ bridges, startDate, endDate, selectedBridge }
 			break
 		}
 
-		pages.push(transactions)
+		// The paging API contract is newest-to-oldest with a 6,000-row cap. The collector
+		// verifies accepted rows across pages and sorts once only if that contract is violated.
+		const terminalTimestamp = collector.addPage(transactions)
 
 		if (transactions.length < 6000) {
 			break
 		}
 
-		const earliestTx = transactions[transactions.length - 1]
-		const earliestTimestamp = Math.floor(new Date(earliestTx.ts).getTime() / 1000)
-
-		if (earliestTimestamp >= currentEndTimestamp) {
+		if (terminalTimestamp === null || terminalTimestamp >= currentEndTimestamp) {
 			break
 		}
 
-		currentEndTimestamp = earliestTimestamp - 1
+		currentEndTimestamp = terminalTimestamp - 1
 		if (currentEndTimestamp <= startTimestamp) {
 			break
 		}
 		iterations++
 	}
 
-	const seen = new Set<string>()
-	const dedupedTransactions: Array<BridgeTransaction & { _ts: number }> = []
-	for (const page of pages) {
-		for (const tx of page) {
-			if (seen.has(tx.tx_hash)) continue
-			seen.add(tx.tx_hash)
-			dedupedTransactions.push({ ...tx, _ts: Math.floor(new Date(tx.ts).getTime() / 1000) })
-		}
-	}
-
-	dedupedTransactions.sort((a, b) => b._ts - a._ts)
-	return dedupedTransactions.map(({ _ts, ...tx }) => tx)
+	return collector.finish()
 }
 
 const toDateOnly = (date: Date) => date.toISOString().split('T')[0]
@@ -410,7 +466,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 	const defaultStartDate = new Date(defaultEndDate)
 	defaultStartDate.setMonth(defaultEndDate.getMonth() - 1)
 
-	const [transactions, setTransactions] = React.useState<BridgeTransaction[]>([])
+	const [transactionResult, setTransactionResult] = React.useState<BridgeTransactionResult>({ rows: [], stats: null })
 	const [fetchedContext, setFetchedContext] = React.useState<{
 		startDate: string
 		endDate: string
@@ -421,7 +477,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 	const { mutate, isPending, error } = useMutation({
 		mutationFn: fetchTransactions,
 		onSuccess: (data, variables) => {
-			setTransactions(data)
+			setTransactionResult(data)
 			setFetchedContext({
 				startDate: variables.startDate,
 				endDate: variables.endDate,
@@ -465,48 +521,16 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 
 	const maxDate = toDateOnly(new Date())
 
-	const tableData = React.useMemo(() => transactions.map(transformTransactionForTable), [transactions])
+	const tableData = transactionResult.rows
 	const columns = React.useMemo(() => buildBridgeColumns(blockExplorersData), [blockExplorersData])
-
-	const stats = React.useMemo(() => {
-		if (tableData.length === 0) return null
-		let deposits = 0
-		let withdrawals = 0
-		let depositVolume = 0
-		let withdrawalVolume = 0
-		let unknownValueCount = 0
-		const uniqueChains = new Set<string>()
-		for (const tx of tableData) {
-			uniqueChains.add(tx.chain)
-			if (tx.is_deposit) {
-				deposits++
-				if (tx.usd_value != null) depositVolume += tx.usd_value
-				else unknownValueCount++
-			} else {
-				withdrawals++
-				if (tx.usd_value != null) withdrawalVolume += tx.usd_value
-				else unknownValueCount++
-			}
-		}
-		const totalVolume = depositVolume + withdrawalVolume
-		return {
-			total: tableData.length,
-			deposits,
-			withdrawals,
-			depositVolume,
-			withdrawalVolume,
-			totalVolume,
-			unknownValueCount,
-			uniqueChains: uniqueChains.size
-		}
-	}, [tableData])
+	const stats = transactionResult.stats
 
 	const csvFileName = fetchedContext
 		? `bridge-transactions_${slug(fetchedContext.bridgeName)}_${fetchedContext.startDate}_${fetchedContext.endDate}`
 		: `bridge-transactions_${startDate}_${endDate}`
 
 	const formError = (error as Error | null)?.message ?? dateError ?? null
-	const showEmpty = transactions.length === 0 && !isPending
+	const showEmpty = tableData.length === 0 && !isPending
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -640,7 +664,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 				</div>
 			) : null}
 
-			{!isPending && transactions.length > 0 ? (
+			{!isPending && tableData.length > 0 ? (
 				<TransactionsTable data={tableData} columns={columns} csvFileName={csvFileName} />
 			) : null}
 
@@ -651,6 +675,13 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 250, 500] as const
 const DEFAULT_PAGE_SIZE = 100
+
+export const toBridgeTransactionCsvCell = (value: unknown): string | number | boolean => {
+	if (value == null) return ''
+	if (typeof value === 'number') return Number.isFinite(value) ? value : ''
+	if (typeof value === 'string' || typeof value === 'boolean') return value
+	return ''
+}
 
 function TransactionsTable({
 	data,
@@ -704,13 +735,7 @@ function TransactionsTable({
 		})
 		const filteredRows = instance.getPrePaginationRowModel().rows
 		const rows = filteredRows.map((row) =>
-			visibleCols.map((column) => {
-				const value = row.getValue(column.id)
-				if (value == null) return ''
-				if (typeof value === 'number') return Number.isFinite(value) ? value : ''
-				if (typeof value === 'string' || typeof value === 'boolean') return value
-				return ''
-			})
+			visibleCols.map((column) => toBridgeTransactionCsvCell(row.getValue(column.id)))
 		)
 		return { filename: csvFileName, rows: [headers, ...rows] }
 	}, [instance, csvFileName])

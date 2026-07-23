@@ -21,6 +21,8 @@ describe('ApiUsageBreakdown', () => {
 	let root: Root
 
 	beforeEach(() => {
+		vi.useFakeTimers()
+		vi.setSystemTime(new Date('2026-07-19T12:00:00Z'))
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		container = document.createElement('div')
 		document.body.appendChild(container)
@@ -31,6 +33,7 @@ describe('ApiUsageBreakdown', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
+		vi.useRealTimers()
 	})
 
 	it('passes positional rows and numeric encodes to MultiSeriesChart', async () => {
@@ -38,7 +41,7 @@ describe('ApiUsageBreakdown', () => {
 		await act(async () => {
 			root.render(
 				<ApiUsageBreakdown
-					usageStats={{ stats: [{ date: '2026-07-19', totalRequests: 28, routes }] }}
+					usageStats={{ windowDays: 3, stats: [{ date: '2026-07-19', totalRequests: 28, routes }] }}
 					isLoading={false}
 					isError={false}
 				/>
@@ -48,7 +51,11 @@ describe('ApiUsageBreakdown', () => {
 		const chartProps = mocks.chartProps!
 		expect(chartProps.dataset).toEqual({
 			dimensions: ['date', 'a', 'b', 'c', 'd', 'e', 'f', 'Others'],
-			source: [[Date.UTC(2026, 6, 19), 7, 6, 5, 4, 3, 2, 1]]
+			source: [
+				[Date.UTC(2026, 6, 17), 0, 0, 0, 0, 0, 0, 0],
+				[Date.UTC(2026, 6, 18), 0, 0, 0, 0, 0, 0, 0],
+				[Date.UTC(2026, 6, 19), 7, 6, 5, 4, 3, 2, 1]
+			]
 		})
 		expect(chartProps.charts!.map((chart) => chart.encode)).toEqual([
 			{ x: 0, y: 1 },

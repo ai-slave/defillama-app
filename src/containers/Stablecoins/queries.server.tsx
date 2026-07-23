@@ -47,6 +47,10 @@ import type {
 	PeggedChainsPageData,
 	PeggedOverviewPageData,
 	StablecoinBridges,
+	StablecoinChainsChartInput,
+	StablecoinChainsChartSource,
+	StablecoinChainsPageInput,
+	StablecoinChainsPageSummaryOptions,
 	StablecoinOverviewChartInputs,
 	StablecoinsGlobalDataCache
 } from './types'
@@ -436,14 +440,6 @@ export async function getStablecoinsByChainPageData(chain: string | null): Promi
 	}
 }
 
-type StablecoinChainsSource = {
-	chainCirculatings: PeggedChainsPageData['chainCirculatings']
-	chartData: StablecoinChartPoint[]
-	peggedChartDataByChain: Array<Array<{ date: number; mcap: number | null }> | null>
-	chainList: string[]
-	chainsGroupbyParent: Record<string, Record<string, string[]>>
-}
-
 const toSignedChangeLabel = (value: string | null): string | null => {
 	if (value == null) return null
 	const numericValue = Number.parseFloat(value.replace(/[^0-9.+-]/g, ''))
@@ -453,110 +449,59 @@ const toSignedChangeLabel = (value: string | null): string | null => {
 	return `+${value}`
 }
 
-const getStablecoinChainsSource = async (): Promise<StablecoinChainsSource> => {
-	return withStablecoinsCache('chains-page', async () => {
-		const [
-			{ peggedAssets, chains },
-			{ chainCoingeckoIds },
-			{ aggregated: chartData },
-			{ dominanceMap, chainChartMap }
-		] = await Promise.all([
-			getStablecoinAssets(),
-			getStablecoinConfigData(),
-			fetchStablecoinChartAllApi(),
-			fetchStablecoinDominanceAllApi()
-		])
-		const { chainList, chainsTVLData } = fetchGlobalData({ peggedAssets, chains })
-
-		const chainsGroupbyParent: Record<string, Record<string, string[]>> = {}
-		for (const chain of chainList) {
-			const parent = chainCoingeckoIds[chain]?.parent
-			if (parent) {
-				if (!chainsGroupbyParent[parent.chain]) {
-					chainsGroupbyParent[parent.chain] = {}
-				}
-				for (const type of parent.types) {
-					if (!chainsGroupbyParent[parent.chain][type]) {
-						chainsGroupbyParent[parent.chain][type] = []
-					}
-					chainsGroupbyParent[parent.chain][type].push(chain)
-				}
-			}
+export const buildStablecoinChainsPageSummary = (
+	raw: StablecoinChainsPageInput,
+	{ chainMetadata, currentTimeMs = Date.now() }: StablecoinChainsPageSummaryOptions
+): PeggedChainsPageData => {
+	const { chainList, chainsTVLData } = fetchGlobalData(raw)
+	const chainsGroupbyParent: Record<string, Record<string, string[]>> = {}
+	for (const chain of chainList) {
+		const parent = raw.chainCoingeckoIds[chain]?.parent
+		if (!parent) continue
+		const parentGroups = (chainsGroupbyParent[parent.chain] ??= {})
+		for (const type of parent.types) {
+			if (!parentGroups[type]) parentGroups[type] = []
+			parentGroups[type].push(chain)
 		}
+	}
 
-		const peggedChartDataByChain = chainList.map((chain) => chainChartMap[chain] ?? null) as Array<
-			StablecoinChartPoint[] | null
-		>
+	const chainDominances: Record<string, { symbol: string; mcap: number }> = {}
+	for (const chain of chainList) {
+		const charts = raw.dominanceMap[chain]
+		const greatestChainMcap = charts?.[charts.length - 1]?.greatestMcap
+		if (greatestChainMcap) chainDominances[chain] = greatestChainMcap
+	}
 
-		const peggedDomDataByChain = chainList.map((chain) => dominanceMap[chain])
-
-		const chainDominances: Record<string, { symbol: string; mcap: number }> = {}
-		for (let i = 0; i < peggedDomDataByChain.length; i++) {
-			const charts = peggedDomDataByChain[i]
-			if (!charts) continue
-			const lastChart = charts[charts.length - 1]
-			if (!lastChart) continue
-			const greatestChainMcap = lastChart.greatestMcap
-			if (!greatestChainMcap) continue
-			const chainName = chainList[i]
-			chainDominances[chainName] = greatestChainMcap
-		}
-
-		const chainCirculatings = formatPeggedChainsData({
-			chainList,
-			peggedChartDataByChain,
-			chainDominances,
-			chainsTVLData
-		})
-
-		const formattedPeggedChartDataByChain: StablecoinChainsSource['peggedChartDataByChain'] = []
-		for (const charts of peggedChartDataByChain) {
-			if (!charts) {
-				formattedPeggedChartDataByChain.push(null)
-				continue
-			}
-
-			const formattedCharts: Array<{ date: number; mcap: number | null }> = []
-			for (const chart of charts) {
-				const date = Number(chart.date)
-
-				const rawMcap = chart.totalCirculatingUSD
-				let mcap: number | null = null
-				if (rawMcap && typeof rawMcap === 'object') {
-					let total = 0
-					let hasValue = false
-					for (const key in rawMcap) {
-						total += rawMcap[key]
-						hasValue = true
-					}
-					mcap = hasValue ? total : null
-				}
-
-				formattedCharts.push({ date, mcap })
-			}
-			formattedPeggedChartDataByChain.push(formattedCharts)
-		}
-
-		return {
-			chainCirculatings,
-			chartData: chartData ?? [],
-			peggedChartDataByChain: formattedPeggedChartDataByChain,
-			chainList,
-			chainsGroupbyParent
-		}
+	const chainCirculatings = formatPeggedChainsData({
+		chainList,
+		peggedChartDataByChain: chainList.map((chain) => raw.chainChartMap[chain] ?? null),
+		chainDominances,
+		chainsTVLData,
+		currentTimeMs
 	})
-}
-
-export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageData> {
-	const [source, metadataCache] = await Promise.all([
-		getStablecoinChainsSource(),
-		import('~/utils/metadata').then((m) => m.default)
-	])
-
-	const totalMcapCurrent = getPrevStablecoinTotalFromChart(source.chartData, 0, 'totalCirculatingUSD')
-	const totalMcapPrevDay = getPrevStablecoinTotalFromChart(source.chartData, 1, 'totalCirculatingUSD')
-	const totalMcapPrevWeek = getPrevStablecoinTotalFromChart(source.chartData, 7, 'totalCirculatingUSD')
-	const totalMcapPrevMonth = getPrevStablecoinTotalFromChart(source.chartData, 30, 'totalCirculatingUSD')
+	const chartLookupOptions = { currentTimeMs }
+	const totalMcapCurrent = getPrevStablecoinTotalFromChart(raw.aggregatedChart, 0, 'totalCirculatingUSD')
+	const totalMcapPrevDay = getPrevStablecoinTotalFromChart(
+		raw.aggregatedChart,
+		1,
+		'totalCirculatingUSD',
+		'',
+		chartLookupOptions
+	)
+	const totalMcapPrevWeek = getPrevStablecoinTotalFromChart(
+		raw.aggregatedChart,
+		7,
+		'totalCirculatingUSD',
+		'',
+		chartLookupOptions
+	)
+	const totalMcapPrevMonth = getPrevStablecoinTotalFromChart(
+		raw.aggregatedChart,
+		30,
+		'totalCirculatingUSD',
+		'',
+		chartLookupOptions
+	)
 
 	const change1d = getPercentChange(totalMcapCurrent, totalMcapPrevDay)?.toFixed(2) ?? null
 	const change7d = getPercentChange(totalMcapCurrent, totalMcapPrevWeek)?.toFixed(2) ?? null
@@ -567,16 +512,17 @@ export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageDat
 	const change1d_nol = formatAbsoluteChange(totalMcapPrevDay)
 	const change7d_nol = formatAbsoluteChange(totalMcapPrevWeek)
 	const change30d_nol = formatAbsoluteChange(totalMcapPrevMonth)
-	const deprecatedChains = getDeprecatedChainsByName(metadataCache.chainMetadata, source.chainList)
-	const latestPoint = source.chartData[source.chartData.length - 1]
+	const deprecatedChains = getDeprecatedChainsByName(chainMetadata, chainList)
+	const latestPoint = raw.aggregatedChart[raw.aggregatedChart.length - 1]
 	const dataTimestamp = latestPoint ? toUnixMsTimestamp(latestPoint.date) / 1e3 : null
 	const isDataStale =
-		latestPoint != null && getFreshStablecoinCurrentPoint(source.chartData, (point) => point.date) == null
+		latestPoint != null &&
+		getFreshStablecoinCurrentPoint(raw.aggregatedChart, (point) => point.date, currentTimeMs) == null
 
 	return {
-		chainCirculatings: source.chainCirculatings,
-		chainList: source.chainList,
-		chainsGroupbyParent: source.chainsGroupbyParent,
+		chainCirculatings,
+		chainList,
+		chainsGroupbyParent,
 		deprecatedChains,
 		change1d: toSignedChangeLabel(change1d),
 		change7d: toSignedChangeLabel(change7d),
@@ -590,14 +536,153 @@ export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageDat
 	}
 }
 
-export const getStablecoinChainsChartSeries = async (
-	chart: StablecoinChainsChartType,
-	includeUnreleased = false,
-	seriesLimit?: number
-): Promise<StablecoinChartSeriesPayload> => {
-	const source = await getStablecoinChainsSource()
+type StablecoinChainsPageCacheEntry = {
+	pageData: PeggedChainsPageData
+	latestChainTimestamps: Record<string, number | null>
+}
+
+const isStablecoinTimestampFresh = (timestamp: number, currentTimeMs: number): boolean => {
+	// dataTimestamp is Unix seconds, matching the canonical stablecoin freshness helper's accepted timestamp units.
+	return getFreshStablecoinCurrentPoint([{ date: timestamp }], (point) => point.date, currentTimeMs) != null
+}
+
+const revalidateStablecoinChainsPageData = (
+	{ pageData, latestChainTimestamps }: StablecoinChainsPageCacheEntry,
+	currentTimeMs = Date.now()
+): PeggedChainsPageData => {
+	let chainCirculatings = pageData.chainCirculatings
+	for (let index = 0; index < pageData.chainCirculatings.length; index++) {
+		const chain = pageData.chainCirculatings[index]
+		const timestamp = latestChainTimestamps[chain.name]
+		if (timestamp == null || isStablecoinTimestampFresh(timestamp, currentTimeMs)) continue
+		if (
+			chain.mcapPrevDay == null &&
+			chain.mcapPrevWeek == null &&
+			chain.mcapPrevMonth == null &&
+			chain.change_1d == null &&
+			chain.change_7d == null &&
+			chain.change_1m == null
+		) {
+			continue
+		}
+		if (chainCirculatings === pageData.chainCirculatings) chainCirculatings = [...chainCirculatings]
+		chainCirculatings[index] = {
+			...chain,
+			mcapPrevDay: null,
+			mcapPrevWeek: null,
+			mcapPrevMonth: null,
+			change_1d: null,
+			change_7d: null,
+			change_1m: null
+		}
+	}
+
+	const aggregateTimestamp = pageData.dataTimestamp
+	const isAggregateStale = aggregateTimestamp != null && !isStablecoinTimestampFresh(aggregateTimestamp, currentTimeMs)
+	const aggregateNeedsUpdate =
+		isAggregateStale &&
+		(!pageData.isDataStale ||
+			pageData.change1d != null ||
+			pageData.change7d != null ||
+			pageData.change30d != null ||
+			pageData.change1d_nol != null ||
+			pageData.change7d_nol != null ||
+			pageData.change30d_nol != null)
+	if (!aggregateNeedsUpdate && chainCirculatings === pageData.chainCirculatings) return pageData
+
+	return {
+		...pageData,
+		chainCirculatings,
+		...(aggregateNeedsUpdate
+			? {
+					change1d: null,
+					change7d: null,
+					change30d: null,
+					change1d_nol: null,
+					change7d_nol: null,
+					change30d_nol: null,
+					isDataStale: true
+				}
+			: {})
+	}
+}
+
+export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageData> {
+	const cacheEntry = await withStablecoinsCache<StablecoinChainsPageCacheEntry>('chains-page-data-v4', async () => {
+		const [
+			{ peggedAssets, chains },
+			{ chainCoingeckoIds },
+			{ aggregated: aggregatedChart },
+			{ dominanceMap, chainChartMap },
+			metadataCache
+		] = await Promise.all([
+			getStablecoinAssets(),
+			getStablecoinConfigData(),
+			fetchStablecoinChartAllApi(),
+			fetchStablecoinDominanceAllApi(),
+			import('~/utils/metadata').then((m) => m.default)
+		])
+		const pageData = buildStablecoinChainsPageSummary(
+			{
+				peggedAssets,
+				chains,
+				chainCoingeckoIds,
+				aggregatedChart: aggregatedChart ?? [],
+				dominanceMap,
+				chainChartMap
+			},
+			{ chainMetadata: metadataCache.chainMetadata }
+		)
+		const latestChainTimestamps: Record<string, number | null> = {}
+		for (const chain of pageData.chainList) {
+			const history = chainChartMap[chain]
+			const latestPoint = history?.[history.length - 1]
+			latestChainTimestamps[chain] = latestPoint ? toUnixMsTimestamp(latestPoint.date) / 1e3 : null
+		}
+		return { pageData, latestChainTimestamps }
+	})
+	return revalidateStablecoinChainsPageData(cacheEntry)
+}
+
+export const buildStablecoinChainsChartSource = (raw: StablecoinChainsChartInput): StablecoinChainsChartSource => {
+	const { chainList } = fetchGlobalData({ peggedAssets: [], chains: raw.chains })
+	const chartDataByChain: StablecoinChainsChartSource['chartDataByChain'] = []
+	for (const chain of chainList) {
+		const charts = raw.chainChartMap[chain]
+		if (!charts) {
+			chartDataByChain.push(null)
+			continue
+		}
+		const formattedCharts: Array<{ date: number; mcap: number | null }> = []
+		for (const chartPoint of charts) {
+			const totals = chartPoint.totalCirculatingUSD
+			let mcap: number | null = null
+			if (totals) {
+				let total = 0
+				let hasValue = false
+				for (const pegType in totals) {
+					total += totals[pegType]
+					hasValue = true
+				}
+				if (hasValue) mcap = total
+			}
+			formattedCharts.push({ date: Number(chartPoint.date), mcap })
+		}
+		chartDataByChain.push(formattedCharts)
+	}
+	return { chainList, chartDataByChain }
+}
+
+export const buildStablecoinChainsChartSeries = (
+	source: StablecoinChainsChartSource,
+	{
+		chart,
+		includeUnreleased = false,
+		seriesLimit
+	}: { chart: StablecoinChainsChartType; includeUnreleased?: boolean; seriesLimit?: number }
+): StablecoinChartSeriesPayload => {
 	const baseParams = {
-		chartDataByAssetOrChain: source.peggedChartDataByChain,
+		chartDataByAssetOrChain: source.chartDataByChain,
 		assetsOrChainsList: source.chainList,
 		issuanceType: 'mcap'
 	}
@@ -619,6 +704,22 @@ export const getStablecoinChainsChartSeries = async (
 		stackName: 'dominance',
 		seriesLimit
 	})
+}
+
+const getStablecoinChainsChartSource = async (): Promise<StablecoinChainsChartSource> => {
+	return withStablecoinsCache('chains-chart-source-v3', async () => {
+		const [{ chains }, { chainChartMap }] = await Promise.all([getStablecoinAssets(), fetchStablecoinDominanceAllApi()])
+		return buildStablecoinChainsChartSource({ chains, chainChartMap })
+	})
+}
+
+export const getStablecoinChainsChartSeries = async (
+	chart: StablecoinChainsChartType,
+	includeUnreleased = false,
+	seriesLimit?: number
+): Promise<StablecoinChartSeriesPayload> => {
+	const source = await getStablecoinChainsChartSource()
+	return buildStablecoinChainsChartSeries(source, { chart, includeUnreleased, seriesLimit })
 }
 
 type StablecoinAssetSource = {

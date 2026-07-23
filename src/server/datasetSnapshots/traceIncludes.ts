@@ -9,7 +9,7 @@ export const DATASET_SNAPSHOT_ROUTE_DOMAINS = {
 	'/about': ['yields'],
 	'/lst': ['yields'],
 	'/rwa/asset/*': ['yields'],
-	'/protocol/*': ['yields'],
+	'/protocol/*': ['yields', 'markets', 'token-rights'],
 	'/protocol/yields/*': ['yields'],
 	'/chart/protocol/*': ['yields'],
 	'/api/public/yields': ['yields'],

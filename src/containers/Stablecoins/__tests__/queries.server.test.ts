@@ -1,7 +1,86 @@
 import { describe, expect, it } from 'vitest'
 import type { StablecoinListAsset } from '../api.types'
 import { buildTotalMcapPayload } from '../chartSeries'
-import { buildOverviewChartInputs, normalizeStablecoinBridges } from '../queries.server'
+import {
+	buildOverviewChartInputs,
+	buildStablecoinChainsChartSeries,
+	buildStablecoinChainsChartSource,
+	buildStablecoinChainsPageSummary,
+	normalizeStablecoinBridges
+} from '../queries.server'
+import type { StablecoinChainsPageInput } from '../types'
+
+const NOW = Date.parse('2026-07-14T12:00:00Z')
+const daysAgo = (days: number) => String(Math.floor((NOW - days * 86_400_000) / 1e3))
+
+const chainPoint = (
+	days: number,
+	mcap: Record<string, number> | undefined,
+	extra: Partial<NonNullable<StablecoinChainsPageInput['chainChartMap'][string]>[number]> = {}
+) => ({
+	date: daysAgo(days),
+	...(mcap === undefined ? {} : { totalCirculatingUSD: mcap }),
+	...extra
+})
+
+const chainsRawFixture = (): StablecoinChainsPageInput => ({
+	peggedAssets: [],
+	chains: [
+		{ name: 'Base', totalCirculatingUSD: { peggedUSD: 100 } },
+		{ name: 'Arbitrum', totalCirculatingUSD: { peggedUSD: 200 } },
+		{ name: 'Ethereum', totalCirculatingUSD: { peggedUSD: 300 } },
+		{ name: 'Empty', totalCirculatingUSD: { peggedUSD: 50 } }
+	],
+	chainCoingeckoIds: {
+		Arbitrum: { parent: { chain: 'Ethereum', types: ['L2'] } },
+		Base: { parent: { chain: 'Ethereum', types: ['L2'] } }
+	},
+	aggregatedChart: [
+		chainPoint(30, { peggedUSD: 700 }),
+		chainPoint(7, { peggedUSD: 800 }),
+		chainPoint(1, { peggedUSD: 900 }),
+		chainPoint(0, { peggedUSD: 1000 })
+	],
+	dominanceMap: {
+		Ethereum: [
+			{
+				date: daysAgo(1),
+				totalCirculatingUSD: { peggedUSD: 90 },
+				greatestMcap: { gecko_id: 'dai', symbol: 'DAI', mcap: 90 }
+			},
+			{
+				date: daysAgo(0),
+				totalCirculatingUSD: { peggedUSD: 100 },
+				greatestMcap: { gecko_id: 'usd-coin', symbol: 'USDC', mcap: 80 }
+			}
+		],
+		Arbitrum: [{ date: daysAgo(0), totalCirculatingUSD: { peggedUSD: 80 } }]
+	},
+	chainChartMap: {
+		Ethereum: [
+			chainPoint(30, { peggedUSD: 70 }),
+			chainPoint(7, { peggedUSD: 80 }),
+			chainPoint(1, { peggedUSD: 90 }),
+			chainPoint(
+				0,
+				{ peggedUSD: 100 },
+				{
+					totalCirculating: { peggedUSD: 100 },
+					totalUnreleased: { peggedUSD: 10 },
+					totalBridgedToUSD: { peggedUSD: 20 },
+					totalMintedUSD: { peggedUSD: 30 }
+				}
+			)
+		],
+		Arbitrum: [chainPoint(30, { peggedUSD: 40 }), chainPoint(7, { peggedUSD: 50 }), chainPoint(0, { peggedUSD: 80 })],
+		Base: [
+			chainPoint(30, { peggedUSD: 0 }),
+			chainPoint(7, {}),
+			chainPoint(1, undefined),
+			chainPoint(0, { peggedUSD: 300 })
+		]
+	}
+})
 
 describe('stablecoin server query helpers', () => {
 	it('normalizes bridge payloads while ignoring optional or missing bridge fields', () => {
@@ -121,5 +200,184 @@ describe('stablecoin server query helpers', () => {
 			[1_000, 30],
 			[86_401_000, 40]
 		])
+	})
+
+	it('preserves sparse chronology and missing-versus-zero points', () => {
+		const asset = (id: string): StablecoinListAsset => ({
+			id,
+			name: id,
+			symbol: id,
+			gecko_id: null,
+			chains: ['Ethereum'],
+			pegType: 'peggedUSD',
+			pegMechanism: 'fiat-backed',
+			price: 1,
+			circulating: { peggedUSD: 0 },
+			circulatingPrevDay: {},
+			circulatingPrevWeek: {},
+			circulatingPrevMonth: {},
+			chainCirculating: {}
+		})
+		const inputs = buildOverviewChartInputs({
+			peggedAssets: [asset('Sparse'), asset('Zero')],
+			breakdown: {
+				Sparse: [
+					{ date: '3', totalCirculatingUSD: { peggedUSD: 30 } },
+					{ date: '7', totalCirculatingUSD: { peggedUSD: 70 } }
+				],
+				Zero: [
+					{ date: '3', totalCirculatingUSD: { peggedUSD: 0 } },
+					{ date: '5', totalCirculatingUSD: { peggedUSD: 5 } }
+				]
+			}
+		})
+
+		expect(inputs.chartDataByPeggedAsset).toEqual([
+			[
+				{ date: 3, mcap: { peggedUSD: 30 } },
+				{ date: 7, mcap: { peggedUSD: 70 } }
+			],
+			[
+				{ date: 3, mcap: { peggedUSD: 0 } },
+				{ date: 5, mcap: { peggedUSD: 5 } }
+			]
+		])
+	})
+
+	it('builds exact chain page summaries without returning chart histories', () => {
+		const page = buildStablecoinChainsPageSummary(chainsRawFixture(), {
+			currentTimeMs: NOW,
+			chainMetadata: {
+				base: { id: 'base', name: 'Base', deprecated: true }
+			}
+		})
+
+		expect(page).toMatchObject({
+			chainList: ['Ethereum', 'Arbitrum', 'Base', 'Empty'],
+			chainsGroupbyParent: { Ethereum: { L2: ['Arbitrum', 'Base'] } },
+			deprecatedChains: { Base: true },
+			change1d: '+11.11',
+			change7d: '+25.00',
+			change30d: '+42.86',
+			totalMcapCurrent: 1000,
+			change1d_nol: '+$100',
+			change7d_nol: '+$200',
+			change30d_nol: '+$300',
+			dataTimestamp: Number(daysAgo(0)),
+			isDataStale: false
+		})
+		expect(page.chainCirculatings.map((chain) => chain.name)).toEqual(['Base', 'Ethereum', 'Arbitrum', 'Empty'])
+		expect(page.chainCirculatings.find((chain) => chain.name === 'Ethereum')).toMatchObject({
+			circulating: 100,
+			mcap: 100,
+			unreleased: 10,
+			bridgedTo: 20,
+			minted: 30,
+			mcapPrevDay: 90,
+			mcapPrevWeek: 80,
+			mcapPrevMonth: 70,
+			change_1d: 11.11111111111111,
+			change_7d: 25,
+			change_1m: 42.857142857142854,
+			dominance: { name: 'USDC', value: '80.00' }
+		})
+		expect(page.chainCirculatings.find((chain) => chain.name === 'Arbitrum')).toMatchObject({
+			mcap: 80,
+			mcapPrevDay: null,
+			dominance: null
+		})
+		expect(page).not.toHaveProperty('chartData')
+		expect(page).not.toHaveProperty('peggedChartDataByChain')
+	})
+
+	it('preserves signed zero labels and reports stale aggregate timestamps exactly', () => {
+		const raw = chainsRawFixture()
+		raw.aggregatedChart = [
+			chainPoint(40, { peggedUSD: 1000 }),
+			chainPoint(39, { peggedUSD: 1000 }),
+			chainPoint(33, { peggedUSD: 1000 }),
+			chainPoint(10, { peggedUSD: 1000 })
+		]
+
+		const page = buildStablecoinChainsPageSummary(raw, { currentTimeMs: NOW, chainMetadata: {} })
+
+		expect(page).toMatchObject({
+			change1d: null,
+			change7d: null,
+			change30d: null,
+			change1d_nol: null,
+			change7d_nol: null,
+			change30d_nol: null,
+			dataTimestamp: Number(daysAgo(10)),
+			isDataStale: true
+		})
+
+		raw.aggregatedChart = [
+			chainPoint(30, { peggedUSD: 1000 }),
+			chainPoint(7, { peggedUSD: 1000 }),
+			chainPoint(1, { peggedUSD: 1000 }),
+			chainPoint(0, { peggedUSD: 1000 })
+		]
+		const unchanged = buildStablecoinChainsPageSummary(raw, { currentTimeMs: NOW, chainMetadata: {} })
+		expect(unchanged).toMatchObject({
+			change1d: '0.00',
+			change7d: '0.00',
+			change30d: '0.00',
+			change1d_nol: '$0',
+			change7d_nol: '$0',
+			change30d_nol: '$0'
+		})
+	})
+
+	it('converts chain chart histories without sorting, mutating, or collapsing missing values into zero', () => {
+		const raw = chainsRawFixture()
+		raw.chainChartMap.Base = [chainPoint(7, {}), chainPoint(30, { peggedUSD: 0 }), chainPoint(0, undefined)]
+		const before = structuredClone(raw)
+
+		const source = buildStablecoinChainsChartSource(raw)
+
+		expect(source.chainList).toEqual(['Ethereum', 'Arbitrum', 'Base', 'Empty'])
+		expect(source.chartDataByChain[2]).toEqual([
+			{ date: Number(daysAgo(7)), mcap: null },
+			{ date: Number(daysAgo(30)), mcap: 0 },
+			{ date: Number(daysAgo(0)), mcap: null }
+		])
+		expect(source.chartDataByChain[3]).toBeNull()
+		expect(raw).toEqual(before)
+	})
+
+	it('builds total, bounded chain, and dominance payloads from the raw source', () => {
+		const raw = chainsRawFixture()
+		const source = buildStablecoinChainsChartSource(raw)
+		const total = buildStablecoinChainsChartSeries(source, { chart: 'totalMcap' })
+		const chains = buildStablecoinChainsChartSeries(source, { chart: 'chainMcaps', seriesLimit: 1 })
+		const dominance = buildStablecoinChainsChartSeries(source, { chart: 'dominance', includeUnreleased: false })
+		const dominanceWithUnreleased = buildStablecoinChainsChartSeries(source, {
+			chart: 'dominance',
+			includeUnreleased: true
+		})
+
+		expect(total.dataset).toEqual({
+			dimensions: ['timestamp', 'Mcap'],
+			source: [
+				[Number(daysAgo(30)) * 1000, 110],
+				[Number(daysAgo(7)) * 1000, 130],
+				[Number(daysAgo(1)) * 1000, 90],
+				[Number(daysAgo(0)) * 1000, 480]
+			]
+		})
+		expect(chains.availableSeries).toEqual(['Base', 'Ethereum', 'Arbitrum', 'Empty'])
+		expect(chains.defaultSeries).toEqual(['Base'])
+		expect(chains).toMatchObject({ valueSymbol: '$', stacked: false, showTotalInTooltip: false })
+		expect(chains.dataset.dimensions).toEqual(['timestamp', 'Base', 'Others'])
+		expect(chains.dataset.source.at(-1)).toEqual([Number(daysAgo(0)) * 1000, 300, 180])
+		expect(dominance).toMatchObject({
+			valueSymbol: '%',
+			stacked: true,
+			expandTo100Percent: true,
+			showTotalInTooltip: false
+		})
+		expect(dominance.dataset.source.at(-1)).toEqual([Number(daysAgo(0)) * 1000, 20.83, 16.67, 62.5, 0])
+		expect(dominanceWithUnreleased).toEqual(dominance)
 	})
 })

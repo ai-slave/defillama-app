@@ -54,4 +54,47 @@ describe('aggregateProtocolTokenUsage', () => {
 			}
 		])
 	})
+
+	it('preserves one-through-four-token totals and protocol encounter order', () => {
+		const symbols = ['USDC', 'USDT', 'DAI', 'FRAX']
+		const responses = symbols.map((symbol, tokenIndex) => ({
+			symbol,
+			data: Array.from({ length: 4 - tokenIndex }, (_, protocolIndex) => ({
+				name: `Protocol ${protocolIndex + tokenIndex}`,
+				category: 'Lending',
+				amountUsd: { Ethereum: tokenIndex + 1 }
+			}))
+		}))
+
+		expect(aggregateProtocolTokenUsage(responses, false)).toEqual([
+			{
+				name: 'Protocol 0',
+				category: 'Lending',
+				amountUsd: 1,
+				logo: undefined,
+				tokens: { USDC: 1 }
+			},
+			{
+				name: 'Protocol 1',
+				category: 'Lending',
+				amountUsd: 3,
+				logo: undefined,
+				tokens: { USDC: 1, USDT: 2 }
+			},
+			{
+				name: 'Protocol 2',
+				category: 'Lending',
+				amountUsd: 6,
+				logo: undefined,
+				tokens: { USDC: 1, USDT: 2, DAI: 3 }
+			},
+			{
+				name: 'Protocol 3',
+				category: 'Lending',
+				amountUsd: 10,
+				logo: undefined,
+				tokens: { USDC: 1, USDT: 2, DAI: 3, FRAX: 4 }
+			}
+		])
+	})
 })

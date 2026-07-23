@@ -1,5 +1,6 @@
 import type { ExpandedState, PaginationState, SortingState } from '@tanstack/react-table'
 import type { IParentProtocol, IFormattedProtocol } from '~/containers/ProtocolLists/protocol-table.types'
+import type { ProtocolTableSourcePlan } from '../../protocolTableSourcePlan'
 import type { TableFilters } from '../../types'
 
 export interface IProtocolRow extends IFormattedProtocol {
@@ -158,6 +159,7 @@ export type ProTableAction =
 
 export interface UseProTableDataResult {
 	finalProtocolsList: IProtocolRow[]
+	searchIndex: WeakMap<IProtocolRow, string>
 	isLoading: boolean
 	isEmptyProtocols: boolean
 	categories: string[]
@@ -168,4 +170,5 @@ export interface UseProTableDataResult {
 export interface UseProTableDataParams {
 	chains: string[]
 	filters?: TableFilters
+	sourcePlan: ProtocolTableSourcePlan
 }

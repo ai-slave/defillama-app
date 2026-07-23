@@ -75,17 +75,20 @@ const legacyTable: DashboardItemConfig = {
 	chains: ['Base']
 }
 
-const allChainsLegacyTable: DashboardItemConfig = {
-	id: 'legacy-all',
-	kind: 'table',
-	tableType: 'protocols',
-	chains: []
-}
-
-const ethereumLegacyTable: DashboardItemConfig = {
-	...allChainsLegacyTable,
-	id: 'legacy-ethereum',
-	chains: ['Ethereum']
+const metricHeavyLegacyTable: DashboardItemConfig = {
+	...legacyTable,
+	id: 'legacy-metric-heavy',
+	columnOrder: [
+		'name',
+		'volume_24h',
+		'fees_24h',
+		'perps_volume_24h',
+		'openInterest',
+		'earnings_24h',
+		'aggregators_volume_24h',
+		'bridge_aggregators_volume_24h',
+		'options_volume_24h'
+	]
 }
 
 const tokenUsageTable: DashboardItemConfig = {
@@ -118,35 +121,53 @@ describe('fetchTableServerData', () => {
 		expect(fetchDimensionDatasetMock).not.toHaveBeenCalled()
 	})
 
-	it('loads only legacy-table chains when both table implementations are present', async () => {
+	it('loads only the protocols list for a minimal legacy table', async () => {
 		const result = await fetchTableServerData([unifiedTable, legacyTable])
 
 		expect(result).not.toBeNull()
-		expect(getDexVolumeByChainMock).toHaveBeenCalledTimes(1)
-		expect(getDexVolumeByChainMock).toHaveBeenCalledWith({
-			chain: 'Base',
-			excludeTotalDataChart: false,
-			excludeTotalDataChartBreakdown: true
-		})
-		expect(fetchDimensionDatasetMock).toHaveBeenCalledTimes(4)
-		expect(fetchDimensionDatasetMock).toHaveBeenCalledWith(
-			{
-				options: {
-					adapterType: 'fees',
-					route: 'earnings',
-					metricName: 'Earnings',
-					dataType: 'dailyEarnings',
-					allCaseFetcher: 'chainOverview',
-					chainGuard: 'fees',
-					withChainBreakdown: true
-				}
-			},
-			['Base']
-		)
+		expect(fetchProtocolsMock).toHaveBeenCalledOnce()
+		expect(getDexVolumeByChainMock).not.toHaveBeenCalled()
+		expect(getFeesAndRevenueProtocolsByChainMock).not.toHaveBeenCalled()
+		expect(getPerpsVolumeByChainMock).not.toHaveBeenCalled()
+		expect(getOpenInterestByChainMock).not.toHaveBeenCalled()
+		expect(fetchDimensionDatasetMock).not.toHaveBeenCalled()
 	})
 
-	it('treats an empty legacy-table chain list as All', async () => {
-		await fetchTableServerData([allChainsLegacyTable])
+	it('uses a shared protocols-list provider when the stream already owns the request', async () => {
+		const sharedProtocols = { protocols: [], chains: [], parentProtocols: [] }
+		const getProtocolsList = vi.fn(async () => sharedProtocols)
+
+		const result = await fetchTableServerData([legacyTable], undefined, undefined, getProtocolsList)
+
+		expect(result?.protocolsList).toBe(sharedProtocols)
+		expect(getProtocolsList).toHaveBeenCalledOnce()
+		expect(fetchProtocolsMock).not.toHaveBeenCalled()
+	})
+
+	it('emits the protocols list without waiting for an optional metric source', async () => {
+		let resolveFees: ((value: []) => void) | undefined
+		getFeesAndRevenueProtocolsByChainMock.mockReturnValue(
+			new Promise<[]>((resolve) => {
+				resolveFees = resolve
+			})
+		)
+		const emitted: Array<{ protocolsList: unknown; feesByChain: Record<string, unknown> }> = []
+		const resultPromise = fetchTableServerData(
+			[{ ...legacyTable, columnOrder: ['name', 'fees_24h'] }],
+			undefined,
+			(data) => emitted.push(data)
+		)
+
+		await vi.waitFor(() => expect(emitted.some((data) => data.protocolsList != null)).toBe(true))
+		expect(emitted.some((data) => Object.keys(data.feesByChain).length > 0)).toBe(false)
+
+		resolveFees?.([])
+		await resultPromise
+		expect(emitted.some((data) => Object.hasOwn(data.feesByChain, 'Base'))).toBe(true)
+	})
+
+	it('treats an empty metric-heavy table chain list as All', async () => {
+		await fetchTableServerData([{ ...metricHeavyLegacyTable, chains: [] }])
 
 		expect(getDexVolumeByChainMock).toHaveBeenCalledWith({
 			chain: 'All',
@@ -158,8 +179,8 @@ describe('fetchTableServerData', () => {
 
 	it('shares aggregate dataset fetches between empty and explicit All chain filters', async () => {
 		await fetchTableServerData([
-			allChainsLegacyTable,
-			{ ...allChainsLegacyTable, id: 'legacy-explicit-all', chains: ['All'] }
+			{ ...metricHeavyLegacyTable, chains: [] },
+			{ ...metricHeavyLegacyTable, id: 'legacy-explicit-all', chains: ['All'] }
 		])
 
 		expect(fetchDimensionDatasetMock).toHaveBeenCalledTimes(4)
@@ -174,8 +195,10 @@ describe('fetchTableServerData', () => {
 			return true
 		}
 
-		await fetchTableServerData([legacyTable], claimSource)
-		await expect(fetchTableServerData([{ ...legacyTable, id: 'later-stage' }], claimSource)).resolves.toBeNull()
+		await fetchTableServerData([metricHeavyLegacyTable], claimSource)
+		await expect(
+			fetchTableServerData([{ ...metricHeavyLegacyTable, id: 'later-stage' }], claimSource)
+		).resolves.toBeNull()
 
 		expect(fetchProtocolsMock).toHaveBeenCalledOnce()
 		expect(getDexVolumeByChainMock).toHaveBeenCalledOnce()
@@ -186,7 +209,10 @@ describe('fetchTableServerData', () => {
 	})
 
 	it('keeps specific sources when another legacy table requests All', async () => {
-		await fetchTableServerData([allChainsLegacyTable, ethereumLegacyTable])
+		await fetchTableServerData([
+			{ ...metricHeavyLegacyTable, chains: [] },
+			{ ...metricHeavyLegacyTable, id: 'legacy-ethereum', chains: ['Ethereum'] }
+		])
 
 		expect(getDexVolumeByChainMock).toHaveBeenCalledTimes(2)
 		expect(getDexVolumeByChainMock).toHaveBeenCalledWith({
@@ -203,7 +229,7 @@ describe('fetchTableServerData', () => {
 	})
 
 	it('treats All plus specific chains in one legacy table as aggregate-only', async () => {
-		await fetchTableServerData([{ ...allChainsLegacyTable, chains: ['All', 'Ethereum'] }])
+		await fetchTableServerData([{ ...metricHeavyLegacyTable, chains: ['All', 'Ethereum'] }])
 
 		expect(getDexVolumeByChainMock).toHaveBeenCalledTimes(1)
 		expect(getDexVolumeByChainMock).toHaveBeenCalledWith({

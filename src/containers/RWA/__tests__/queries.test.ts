@@ -96,8 +96,9 @@ describe('rwa queries', () => {
 		})
 
 		expect(result?.assets.map((asset) => asset.assetName)).toEqual(['Treasury One'])
-		expect(result?.categories).toEqual(['Treasuries'])
-		expect(result?.categoryValues).toEqual([{ name: 'Treasuries', value: 100 }])
+		expect(result?.categoriesOptions.map((option) => option.key)).toEqual(['Treasuries'])
+		expect(result).not.toHaveProperty('categories')
+		expect(result).not.toHaveProperty('categoryValues')
 		expect(result?.categoryLinks).toEqual([])
 	})
 
@@ -270,7 +271,7 @@ describe('rwa queries', () => {
 		expect(result?.totals.onChainMcap).toBe(100)
 		expect(result?.totals.activeMcap).toBe(90)
 		expect(result?.totals.defiActiveTvl).toBe(20)
-		expect(result?.types).toContain('Perp')
+		expect(result?.typeOptions.map((option) => option.key)).toContain('Perp')
 		expect(result?.platforms).toContain('Ondo')
 		expect(result?.assetGroups).toContain('Treasuries')
 	})
@@ -460,10 +461,6 @@ describe('rwa queries', () => {
 		})
 
 		expect(result?.assets[0]?.category).toEqual(['RWA Stablecoins', 'Other RWAs'])
-		expect(result?.categoryValues).toEqual([
-			{ name: 'RWA Stablecoins', value: 100 },
-			{ name: 'Other RWAs', value: 50 }
-		])
 		expect(result?.categoriesOptions).toEqual([
 			{
 				key: 'RWA Stablecoins',

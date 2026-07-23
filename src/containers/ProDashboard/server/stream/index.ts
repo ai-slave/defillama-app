@@ -54,6 +54,7 @@ import type {
 import { normalizeYieldChartType } from '~/containers/ProDashboard/types'
 import { getUnifiedTableQueryIdentity } from '~/containers/ProDashboard/unifiedTableQuery'
 import { STREAM_PROTOCOL_SERIES_SKIP_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
+import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
@@ -142,7 +143,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		writeLine({ type: 'dashboard', data: dashboard })
 
 		// Catalog and app metadata are independent. Only source planning waits for the catalog.
-		const protocolsAndChainsPromise = fetchProtocolsAndChains()
+		const protocolsListPromise = fetchProtocols()
+		const protocolsAndChainsPromise = fetchProtocolsAndChains(protocolsListPromise)
 			.then((d) => {
 				writeLine({ type: 'protocolsAndChains', data: d })
 				return d
@@ -226,13 +228,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 				})()
 			)
 
-			// Table data — single chunk
+			// Table sources stream independently so optional metrics cannot delay the base table.
 			phase2Promises.push(
-				fetchTableServerData(items, claimStreamSource)
-					.then((data) => {
-						if (data) writeLine({ type: 'tableData', data })
-					})
-					.catch(() => {})
+				fetchTableServerData(
+					items,
+					claimStreamSource,
+					(data) => writeLine({ type: 'tableData', data }),
+					() => protocolsListPromise
+				).catch(() => {})
 			)
 
 			// Yields — stream per pool

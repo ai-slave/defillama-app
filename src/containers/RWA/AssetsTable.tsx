@@ -235,6 +235,12 @@ export function getDefiMetricValue(asset: AssetRow): number | null {
 	}
 }
 
+export function getDefiUtilization(asset: AssetRow): number | undefined {
+	const defiTvl = asset.defiActiveTvl?.total
+	const activeMcap = asset.activeMcap?.total
+	return defiTvl == null || activeMcap == null || activeMcap === 0 ? undefined : (defiTvl / activeMcap) * 100
+}
+
 function createAssetFlowColumn(window: RWAFlowWindow, isLoading: boolean, isUnavailable: boolean) {
 	const is7d = window === '7d'
 	const header = is7d ? definitions.flows.netFlow7d : definitions.flows.netFlow30d
@@ -405,24 +411,16 @@ function createRWAAssetColumns(
 				align: 'end'
 			}
 		}),
-		columnHelper.accessor(
-			(asset) =>
-				Number.isNaN(Number(asset.defiActiveTvl?.total)) ||
-				Number.isNaN(Number(asset.activeMcap?.total)) ||
-				Number(asset.activeMcap?.total) === 0
-					? undefined
-					: (Number(asset.defiActiveTvl.total) / Number(asset.activeMcap.total)) * 100,
-			{
-				header: 'DeFi Utilization',
-				cell: (info) => (info.getValue() != null ? `${formatNum(info.getValue(), 2)}%` : null),
-				id: 'utilization',
-				meta: {
-					headerClassName: 'w-[140px]',
-					align: 'end',
-					headerHelperText: 'DeFi Active TVL / Active Mcap'
-				}
+		columnHelper.accessor((asset) => getDefiUtilization(asset), {
+			header: 'DeFi Utilization',
+			cell: (info) => (info.getValue() != null ? `${formatNum(info.getValue(), 2)}%` : null),
+			id: 'utilization',
+			meta: {
+				headerClassName: 'w-[140px]',
+				align: 'end',
+				headerHelperText: 'DeFi Active TVL / Active Mcap'
 			}
-		),
+		}),
 		createAssetFlowColumn('7d', isLoadingFlowSummary, isFlowSummaryUnavailable),
 		createAssetFlowColumn('30d', isLoadingFlowSummary, isFlowSummaryUnavailable),
 		columnHelper.accessor((asset) => formatAssetPlatforms(asset), {

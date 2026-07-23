@@ -73,6 +73,90 @@ const UNLOCK_TYPE_OPTIONS = UNLOCK_TYPES.map((type) => ({
 	key: type
 }))
 
+export interface UnlockTableFilterOptions {
+	showOnlyWatchlist: boolean
+	savedProtocols: Set<string>
+	selectedUnlockTypes: string[]
+	minUnlockValue: number | null
+	maxUnlockValue: number | null
+	minPerc: number | ''
+	maxPerc: number | ''
+}
+
+export const parseUnlockFilterValue = (value: string | string[] | undefined): number | '' => {
+	if (typeof value !== 'string' || value === '') return ''
+	const parsed = Number(value)
+	return Number.isFinite(parsed) ? parsed : ''
+}
+
+export const filterUnlockTableProtocols = (
+	protocols: IEmission[],
+	{
+		showOnlyWatchlist,
+		savedProtocols,
+		selectedUnlockTypes,
+		minUnlockValue,
+		maxUnlockValue,
+		minPerc,
+		maxPerc
+	}: UnlockTableFilterOptions
+): IEmission[] => {
+	const isCategoryFilterActive = selectedUnlockTypes.length !== UNLOCK_TYPES.length
+	const isValueFilterActive = minUnlockValue !== null || maxUnlockValue !== null
+	const isPercentageFilterActive = minPerc !== '' || maxPerc !== ''
+	const isAnyFilterActive =
+		showOnlyWatchlist || isCategoryFilterActive || isValueFilterActive || isPercentageFilterActive
+
+	if (!isAnyFilterActive) return protocols
+
+	const selectedCategories = isCategoryFilterActive ? new Set(selectedUnlockTypes) : null
+	const filteredProtocols: IEmission[] = []
+
+	for (const protocol of protocols) {
+		if (showOnlyWatchlist && !savedProtocols.has(protocol.name)) continue
+
+		const upcomingEvents = protocol.upcomingEvent ?? []
+		let filteredUpcomingEvents: IEmission['upcomingEvent'] | null = null
+		if (selectedCategories) {
+			for (let index = 0; index < upcomingEvents.length; index++) {
+				const event = upcomingEvents[index]
+				if (typeof event.category === 'string' && selectedCategories.has(event.category)) {
+					filteredUpcomingEvents?.push(event)
+				} else if (filteredUpcomingEvents === null) {
+					filteredUpcomingEvents = upcomingEvents.slice(0, index)
+				}
+			}
+		}
+
+		const events = filteredUpcomingEvents ?? upcomingEvents
+		if (isCategoryFilterActive && events.length === 0) continue
+
+		let totalUnlockValue = 0
+		if (isValueFilterActive || isPercentageFilterActive) {
+			for (const event of events) {
+				if (event.timestamp == null || event.noOfTokens.length === 0 || protocol.tPrice == null) continue
+				let totalTokens = 0
+				for (const amount of event.noOfTokens) totalTokens += amount
+				totalUnlockValue += totalTokens * protocol.tPrice
+			}
+		}
+
+		if (minUnlockValue !== null && totalUnlockValue < minUnlockValue) continue
+		if (maxUnlockValue !== null && totalUnlockValue > maxUnlockValue) continue
+
+		if (isPercentageFilterActive) {
+			const mcap = protocol.mcap ?? 0
+			const percentageToUnlock = mcap > 0 ? (totalUnlockValue / mcap) * 100 : 0
+			if (minPerc !== '' && percentageToUnlock < minPerc) continue
+			if (maxPerc !== '' && percentageToUnlock > maxPerc) continue
+		}
+
+		filteredProtocols.push(filteredUpcomingEvents === null ? protocol : { ...protocol, upcomingEvent: events })
+	}
+
+	return filteredProtocols
+}
+
 export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: IUnlocksTableProps) => {
 	const router = useRouter()
 
@@ -93,12 +177,12 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 		minUnlockPerc: minUnlockPercQuery,
 		maxUnlockPerc: maxUnlockPercQuery
 	} = router.query
-	const min = typeof minUnlockValueQuery === 'string' && minUnlockValueQuery !== '' ? Number(minUnlockValueQuery) : ''
-	const max = typeof maxUnlockValueQuery === 'string' && maxUnlockValueQuery !== '' ? Number(maxUnlockValueQuery) : ''
+	const min = parseUnlockFilterValue(minUnlockValueQuery)
+	const max = parseUnlockFilterValue(maxUnlockValueQuery)
 	const minUnlockValue = min === '' ? null : min
 	const maxUnlockValue = max === '' ? null : max
-	const minPerc = typeof minUnlockPercQuery === 'string' && minUnlockPercQuery !== '' ? Number(minUnlockPercQuery) : ''
-	const maxPerc = typeof maxUnlockPercQuery === 'string' && maxUnlockPercQuery !== '' ? Number(maxUnlockPercQuery) : ''
+	const minPerc = parseUnlockFilterValue(minUnlockPercQuery)
+	const maxPerc = parseUnlockFilterValue(maxUnlockPercQuery)
 
 	const handleUnlockValueSubmit = (e: FormSubmitEvent) => {
 		e.preventDefault()
@@ -151,70 +235,15 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 
 	const filteredData = useMemo(() => {
-		const isAnyFilterActive =
-			showOnlyWatchlist ||
-			selectedUnlockTypes.length !== UNLOCK_TYPES.length ||
-			minUnlockValue !== null ||
-			maxUnlockValue !== null ||
-			minPerc !== '' ||
-			maxPerc !== ''
-
-		if (!isAnyFilterActive) {
-			return protocols
-		}
-
-		return protocols
-			.map((protocol: IEmission) => {
-				const filteredUpcomingEvent =
-					selectedUnlockTypes.length === UNLOCK_TYPES.length
-						? protocol.upcomingEvent
-						: (protocol.upcomingEvent ?? []).filter(
-								(event) => typeof event.category === 'string' && selectedUnlockTypes.includes(event.category)
-							)
-
-				return {
-					...protocol,
-					upcomingEvent: filteredUpcomingEvent ?? []
-				}
-			})
-			.filter((protocol) => {
-				let shouldInclude = true
-
-				if (shouldInclude && showOnlyWatchlist) {
-					if (!savedProtocols.has(protocol.name)) {
-						shouldInclude = false
-					}
-				}
-
-				if (shouldInclude && selectedUnlockTypes.length !== UNLOCK_TYPES.length) {
-					if (protocol.upcomingEvent.length === 0) shouldInclude = false
-				}
-
-				const computeUnlockValue = () =>
-					protocol.upcomingEvent.reduce((sum: number, event) => {
-						if (!event || event.timestamp == null || event.noOfTokens.length === 0 || protocol.tPrice == null)
-							return sum
-						const totalTokens = event.noOfTokens.reduce((s: number, amount: number) => s + amount, 0)
-						return sum + totalTokens * protocol.tPrice
-					}, 0)
-
-				if (shouldInclude && (minUnlockValue !== null || maxUnlockValue !== null)) {
-					const totalUnlockValue = computeUnlockValue()
-					if (minUnlockValue !== null && totalUnlockValue < minUnlockValue) shouldInclude = false
-					if (maxUnlockValue !== null && totalUnlockValue > maxUnlockValue) shouldInclude = false
-				}
-
-				if (shouldInclude && (minPerc !== '' || maxPerc !== '')) {
-					const totalUnlockValue = computeUnlockValue()
-					const mcap = protocol.mcap ?? 0
-					const percToUnlockFloat = mcap > 0 ? (totalUnlockValue / mcap) * 100 : 0
-
-					if (minPerc !== '' && percToUnlockFloat < Number(minPerc)) shouldInclude = false
-					if (maxPerc !== '' && percToUnlockFloat > Number(maxPerc)) shouldInclude = false
-				}
-
-				return shouldInclude
-			})
+		return filterUnlockTableProtocols(protocols, {
+			showOnlyWatchlist,
+			savedProtocols,
+			selectedUnlockTypes,
+			minUnlockValue,
+			maxUnlockValue,
+			minPerc,
+			maxPerc
+		})
 	}, [
 		protocols,
 		savedProtocols,
@@ -358,7 +387,7 @@ const columnOptions = [
 
 const defaultColumns = JSON.stringify(Object.fromEntries(columnOptions.map((column) => [column.key, true])))
 
-interface IEmission {
+export interface IEmission {
 	name: string
 	maxSupply: number
 	circSupply: number

@@ -7,6 +7,7 @@ import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 const {
 	fetchDashboardConfigMock,
 	fetchDashboardConfigWithStatusMock,
+	fetchProtocolsMock,
 	fetchProtocolsAndChainsMock,
 	fetchAppMetadataMock,
 	fetchSingleChartDataMock,
@@ -18,6 +19,7 @@ const {
 } = vi.hoisted(() => ({
 	fetchDashboardConfigMock: vi.fn(),
 	fetchDashboardConfigWithStatusMock: vi.fn(),
+	fetchProtocolsMock: vi.fn(),
 	fetchProtocolsAndChainsMock: vi.fn(),
 	fetchAppMetadataMock: vi.fn(),
 	fetchSingleChartDataMock: vi.fn(),
@@ -106,6 +108,10 @@ vi.mock('~/containers/ProDashboard/queries.server', () => ({
 
 vi.mock('~/containers/ProDashboard/server/tableQueries', () => ({
 	fetchTableServerData: fetchTableServerDataMock
+}))
+
+vi.mock('~/containers/ProtocolLists/api', () => ({
+	fetchProtocols: fetchProtocolsMock
 }))
 
 vi.mock('~/containers/ProDashboard/services/ProtocolCharts', () => ({
@@ -220,6 +226,7 @@ describe('pro dashboard cache headers', () => {
 		vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '1200')
 		fetchDashboardConfigMock.mockResolvedValue(publicDashboard)
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({ dashboard: publicDashboard, status: 200 })
+		fetchProtocolsMock.mockResolvedValue({ protocols: [], chains: [], parentProtocols: [] })
 		fetchProtocolsAndChainsMock.mockResolvedValue({ protocols: [], chains: [] })
 		fetchAppMetadataMock.mockResolvedValue({})
 		fetchSingleChartDataMock.mockResolvedValue([[1_700_000_000, 1]])
@@ -519,6 +526,64 @@ describe('pro dashboard cache headers', () => {
 		expect(res.setHeader).toHaveBeenCalledWith('X-Accel-Buffering', 'no')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', PUBLIC_DASHBOARD_CACHE_CONTROL)
 		expect(fetchDashboardConfigMock).toHaveBeenCalledWith('dashboard-1', null)
+		expect(res.end).toHaveBeenCalled()
+	})
+
+	it('shares one raw protocols request between the catalog and a minimal protocols table', async () => {
+		fetchDashboardConfigMock.mockResolvedValue({
+			...publicDashboard,
+			data: {
+				...publicDashboard.data,
+				items: [{ id: 'table-1', kind: 'table', tableType: 'protocols', chains: ['Ethereum'] }]
+			}
+		})
+		let tableProtocolsPromise: Promise<unknown> | undefined
+		fetchProtocolsAndChainsMock.mockImplementation(async (protocolsPromise: Promise<unknown>) => {
+			await protocolsPromise
+			return { protocols: [], chains: [] }
+		})
+		fetchTableServerDataMock.mockImplementation(
+			async (_items: unknown, _claimSource: unknown, _onData: unknown, getProtocolsList: () => Promise<unknown>) => {
+				tableProtocolsPromise = getProtocolsList()
+				await tableProtocolsPromise
+				return null
+			}
+		)
+		const res = createMockNextApiResponse()
+
+		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
+
+		expect(fetchProtocolsMock).toHaveBeenCalledOnce()
+		expect(fetchProtocolsAndChainsMock).toHaveBeenCalledWith(tableProtocolsPromise)
+		expect(fetchTableServerDataMock).toHaveBeenCalledOnce()
+		expect(res.end).toHaveBeenCalled()
+	})
+
+	it('finishes the stream when the shared protocols request fails', async () => {
+		fetchDashboardConfigMock.mockResolvedValue({
+			...publicDashboard,
+			data: {
+				...publicDashboard.data,
+				items: [{ id: 'table-1', kind: 'table', tableType: 'protocols', chains: ['Ethereum'] }]
+			}
+		})
+		fetchProtocolsMock.mockRejectedValue(new Error('protocols unavailable'))
+		fetchProtocolsAndChainsMock.mockImplementation(async (protocolsPromise: Promise<unknown>) => {
+			await protocolsPromise
+			return null
+		})
+		fetchTableServerDataMock.mockImplementation(
+			async (_items: unknown, _claimSource: unknown, _onData: unknown, getProtocolsList: () => Promise<unknown>) => {
+				await getProtocolsList()
+				return null
+			}
+		)
+		const res = createMockNextApiResponse()
+
+		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
+
+		expect(fetchProtocolsMock).toHaveBeenCalledOnce()
+		expect(res.write).toHaveBeenCalledWith('{"type":"done"}\n')
 		expect(res.end).toHaveBeenCalled()
 	})
 

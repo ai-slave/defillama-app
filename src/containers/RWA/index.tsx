@@ -104,6 +104,7 @@ import {
 	hasActiveChartFilters
 } from './hooks'
 import { perpsDefinitions } from './Perps/definitions'
+import { getRankedRwaFilterValues } from './rankedFilterValues'
 import { rwaSlug } from './rwaSlug'
 import { buildRwaNestedTreemapTreeData, buildRwaTreemapTreeData, canBuildRwaNestedTreemap } from './treemap'
 
@@ -152,6 +153,23 @@ function getRwaFlowRotationFrequency(value: string | undefined): RWAFlowGrouping
 }
 
 export const RWAOverview = (props: IRWAAssetsOverview) => {
+	const rankedFilterValues = useMemo(
+		() =>
+			getRankedRwaFilterValues({
+				typeOptions: props.typeOptions,
+				categoriesOptions: props.categoriesOptions,
+				assetClassOptions: props.assetClassOptions,
+				rwaClassificationOptions: props.rwaClassificationOptions,
+				accessModelOptions: props.accessModelOptions
+			}),
+		[
+			props.typeOptions,
+			props.categoriesOptions,
+			props.assetClassOptions,
+			props.rwaClassificationOptions,
+			props.accessModelOptions
+		]
+	)
 	const router = useRouter()
 	const getSelectedFilterValue = (value: string | string[]) => (Array.isArray(value) ? value[0] : value)
 
@@ -234,12 +252,12 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		setSelfCustodyStates
 	} = useRWATableQueryParams({
 		assetNames: props.assetNames,
-		types: props.types,
-		categories: props.categories,
+		types: rankedFilterValues.types,
+		categories: rankedFilterValues.categories,
 		platforms: props.platforms,
-		assetClasses: props.assetClasses,
-		rwaClassifications: props.rwaClassifications,
-		accessModels: props.accessModels,
+		assetClasses: rankedFilterValues.assetClasses,
+		rwaClassifications: rankedFilterValues.rwaClassifications,
+		accessModels: rankedFilterValues.accessModels,
 		issuers: props.issuers,
 		assetGroups: props.assetGroups,
 		categorySlug: props.categorySlug,
@@ -444,7 +462,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		useRWAAssetCategoryPieChartData({
 			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'category',
 			assets: filteredAssets,
-			categories: props.categories,
+			categories: rankedFilterValues.categories,
 			selectedCategories,
 			metric: chartTypeKey
 		})
@@ -453,7 +471,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		useRwaCategoryAssetClassPieChartData({
 			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'assetClass',
 			assets: filteredAssets,
-			assetClasses: props.assetClasses,
+			assetClasses: rankedFilterValues.assetClasses,
 			selectedAssetClasses,
 			metric: chartTypeKey
 		})

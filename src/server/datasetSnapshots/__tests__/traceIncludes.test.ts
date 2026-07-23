@@ -97,6 +97,7 @@ describe('dataset snapshot output tracing', () => {
 			'risk'
 		])
 		expect(DATASET_SNAPSHOT_ROUTE_DOMAINS['/tokens']).toEqual(['markets', 'token-rights'])
+		expect(DATASET_SNAPSHOT_ROUTE_DOMAINS['/protocol/*']).toEqual(['yields', 'markets', 'token-rights'])
 		expect(DATASET_SNAPSHOT_ROUTE_DOMAINS['/sitemap.xml']).toEqual(['markets', 'liquidations', 'raises'])
 	})
 

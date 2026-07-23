@@ -4,6 +4,7 @@ import {
 	createAssetTableRows,
 	getActiveMetricValue,
 	getDefiMetricValue,
+	getDefiUtilization,
 	getMetricColumnHeaders,
 	getOnChainMetricValue
 } from '../AssetsTable'
@@ -156,5 +157,14 @@ describe('RWAAssetsTable', () => {
 		expect(initialRows[0].flowSummaries['7d']).toBeUndefined()
 		expect(loadedRows[0].flowSummaries['7d']?.flow).toBe(0)
 		expect(loadedRows[0].flowSummaries['30d']?.flow).toBe(-50)
+	})
+
+	it('calculates DeFi utilization from nullable typed metrics without coercion', () => {
+		expect(getDefiUtilization(createSpotAsset())).toBe(25)
+		expect(getDefiUtilization(createSpotAsset({ defiActiveTvl: { total: 0, breakdown: [] } }))).toBe(0)
+		expect(getDefiUtilization(createSpotAsset({ defiActiveTvl: null }))).toBeUndefined()
+		expect(getDefiUtilization(createSpotAsset({ activeMcap: null }))).toBeUndefined()
+		expect(getDefiUtilization(createSpotAsset({ activeMcap: { total: 0, breakdown: [] } }))).toBeUndefined()
+		expect(getDefiUtilization(createSpotAsset({ activeMcap: { total: -100, breakdown: [] } }))).toBe(-25)
 	})
 })

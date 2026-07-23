@@ -606,31 +606,26 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 
 		return {
 			assets: assets.sort((a, b) => (b.onChainMcap?.total ?? 0) - (a.onChainMcap?.total ?? 0)),
-			types: formattedTypes,
 			typeOptions: formattedTypes.map((type) => ({
 				key: type,
 				name: type,
 				help: definitions.type.values?.[type] ?? null
 			})),
-			assetClasses: formattedAssetClasses,
 			assetClassOptions: formattedAssetClasses.map((assetClass) => ({
 				key: assetClass,
 				name: assetClass,
 				help: definitions.assetClass.values?.[assetClass] ?? null
 			})),
-			rwaClassifications: formattedRwaClassifications,
 			rwaClassificationOptions: formattedRwaClassifications.map((classification) => ({
 				key: classification,
 				name: classification,
 				help: definitions.rwaClassification.values?.[classification] ?? null
 			})),
-			accessModels: formattedAccessModels,
 			accessModelOptions: formattedAccessModels.map((accessModel) => ({
 				key: accessModel,
 				name: accessModel,
 				help: definitions.accessModel.values?.[accessModel] ?? null
 			})),
-			categories: formattedCategories,
 			categoriesOptions: formattedCategories.map((category) => ({
 				key: category,
 				name: category,
@@ -643,9 +638,6 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 						.sort((a, b) => b[1] - a[1])
 						.map(([key]) => key)
 				: [],
-			categoryValues: Array.from(categories.entries())
-				.sort((a, b) => b[1] - a[1])
-				.map(([name, value]) => ({ name, value })),
 			issuers: Array.from(issuers.entries())
 				.sort((a, b) => b[1] - a[1])
 				.map(([key]) => key),
