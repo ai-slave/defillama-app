@@ -237,6 +237,13 @@ export interface LlamaAIChartConfig {
 	kind: 'llamaai-chart'
 	savedChartId?: string
 	chartRef?: string
+	artifactId?: string | null
+	artifactVersionId?: string | null
+	pinnedVersionId?: string
+	artifactStatus?: 'live' | 'snapshot-only' | 'needs-repair'
+	artifactReasonCode?: string
+	artifactContainsPremium?: boolean
+	artifactEstimatedMaxCostUsd?: number
 	title?: string
 	inlineChartConfig?: import('~/containers/LlamaAI/types').ChartConfiguration
 	inlineChartData?: Record<string, any[]>

@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
+import type { ChartArtifactRef } from '~/containers/LlamaAI/types'
 import type {
 	ChartBuilderConfig,
 	MultiChartConfig,
@@ -28,10 +29,9 @@ export type DashboardChartConfig =
 	| StablecoinAssetChartConfig
 
 export interface LlamaAIChartInput {
-	messageId?: string
-	sessionId?: string
 	chartId: string
 	title: string
+	artifactRef: ChartArtifactRef
 }
 
 interface AddToDashboardButtonProps {

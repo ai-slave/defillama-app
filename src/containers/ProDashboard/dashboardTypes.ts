@@ -53,4 +53,5 @@ export interface Dashboard {
 	collectionId?: string
 	collectionName?: string
 	aiGenerated?: AIGeneratedData | null
+	artifactActivationPending?: boolean
 }

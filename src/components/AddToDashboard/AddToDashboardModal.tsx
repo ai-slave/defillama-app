@@ -5,11 +5,20 @@ import { useRouter } from 'next/router'
 import { startTransition, type KeyboardEvent, useCallback, useDeferredValue, useId, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
-import { AI_SERVER } from '~/constants'
+import {
+	clearChartRepairTarget,
+	readChartRepairTarget,
+	type ChartRepairTarget
+} from '~/containers/LlamaAI/chartRepairTarget'
+import {
+	activateDashboardArtifactsWithConfirmation,
+	buildLlamaAIChartDashboardItem,
+	prepareStoredDashboardActivation
+} from '~/containers/LlamaAI/dashboardArtifactFlow'
 import { useGetLiteDashboards } from '~/containers/ProDashboard/hooks/useDashboardAPI'
 import { type Dashboard, dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
-import type { LlamaAIChartConfig } from '~/containers/ProDashboard/types'
-import { addItemToDashboard } from '~/containers/ProDashboard/utils/dashboardItemsUtils'
+import type { DashboardItemConfig } from '~/containers/ProDashboard/types'
+import { addItemToDashboard, replaceItemInDashboard } from '~/containers/ProDashboard/utils/dashboardItemsUtils'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
@@ -119,10 +128,23 @@ interface AddToDashboardMutationResult {
 	type: AddToDashboardSubmitType
 	message: string
 	href: string
+	repaired: boolean
+}
+
+async function activateAddedLlamaAIChart(
+	authorizedFetch: ReturnType<typeof useAuthContext>['authorizedFetch'],
+	dashboard: Dashboard
+): Promise<'active' | 'declined' | 'pending'> {
+	const plan = prepareStoredDashboardActivation(dashboard.data.items)
+	if (plan.expectedItemIds.length === 0) return 'active'
+	return activateDashboardArtifactsWithConfirmation(authorizedFetch, dashboard.id, plan, (estimatedMaxCostUsd) =>
+		window.confirm(
+			`This dashboard uses premium data. Daily refreshes will bill your account up to $${estimatedMaxCostUsd.toFixed(3)} per refresh window. Continue?`
+		)
+	)
 }
 
 interface BuildChartToAddParams {
-	authorizedFetch: ReturnType<typeof useAuthContext>['authorizedFetch']
 	chartConfig: DashboardChartConfig | null
 	llamaAIChart?: LlamaAIChartInput | null
 	configName: string
@@ -130,49 +152,13 @@ interface BuildChartToAddParams {
 }
 
 async function buildChartToAdd({
-	authorizedFetch,
 	chartConfig,
 	llamaAIChart,
 	configName,
 	nextChartName
-}: BuildChartToAddParams): Promise<DashboardChartConfig | LlamaAIChartConfig | null> {
+}: BuildChartToAddParams): Promise<DashboardItemConfig | null> {
 	if (llamaAIChart) {
-		let savedChartId: string
-
-		if (llamaAIChart.sessionId) {
-			const res = await authorizedFetch(`${AI_SERVER}/agentic/save-chart`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					sessionId: llamaAIChart.sessionId,
-					chartId: llamaAIChart.chartId,
-					title: nextChartName || llamaAIChart.title
-				})
-			})
-			if (!res.ok) {
-				throw new Error('Failed to save chart')
-			}
-			const data = await res.json()
-			savedChartId = data.id
-		} else {
-			const res = await authorizedFetch(`${AI_SERVER}/charts`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ messageId: llamaAIChart.messageId, chartId: llamaAIChart.chartId })
-			})
-			if (!res.ok) {
-				throw new Error('Failed to save chart')
-			}
-			const data = await res.json()
-			savedChartId = data.id
-		}
-
-		return {
-			id: crypto.randomUUID(),
-			kind: 'llamaai-chart',
-			savedChartId,
-			title: nextChartName || llamaAIChart.title
-		} satisfies LlamaAIChartConfig
+		return buildLlamaAIChartDashboardItem(llamaAIChart, nextChartName)
 	}
 
 	if (!chartConfig) return null
@@ -190,6 +176,7 @@ interface SubmitAddToDashboardParams {
 	dashboardNameById: Map<string, string>
 	dashboardSlugById: Map<string, string | undefined>
 	variables: AddToDashboardMutationVariables
+	repairTarget: ChartRepairTarget | null
 }
 
 async function submitAddToDashboard({
@@ -199,10 +186,10 @@ async function submitAddToDashboard({
 	configName,
 	dashboardNameById,
 	dashboardSlugById,
-	variables
+	variables,
+	repairTarget
 }: SubmitAddToDashboardParams): Promise<AddToDashboardMutationResult> {
 	const chartToAdd = await buildChartToAdd({
-		authorizedFetch,
 		chartConfig,
 		llamaAIChart,
 		configName,
@@ -224,11 +211,18 @@ async function submitAddToDashboard({
 			},
 			authorizedFetch
 		)
+		const activation = llamaAIChart ? await activateAddedLlamaAIChart(authorizedFetch, dashboard) : 'active'
 
 		return {
 			type: 'new-dashboard',
-			message: 'Dashboard created!',
-			href: `/pro/${dashboard.slug || dashboard.id}`
+			message:
+				activation === 'active'
+					? 'Dashboard created!'
+					: activation === 'declined'
+						? 'Dashboard created. Daily refresh was not enabled.'
+						: 'Dashboard created, but refresh setup is pending. The current snapshot is safe.',
+			href: `/pro/${dashboard.slug || dashboard.id}`,
+			repaired: false
 		}
 	}
 
@@ -237,13 +231,25 @@ async function submitAddToDashboard({
 		throw new Error('Please select a dashboard')
 	}
 
-	await addItemToDashboard(selectedDashboardId, chartToAdd, authorizedFetch)
+	const isRepair = repairTarget?.dashboardId === selectedDashboardId
+	const dashboard = isRepair
+		? await replaceItemInDashboard(selectedDashboardId, repairTarget.itemId, chartToAdd, authorizedFetch)
+		: await addItemToDashboard(selectedDashboardId, chartToAdd, authorizedFetch)
+	const activation = llamaAIChart ? await activateAddedLlamaAIChart(authorizedFetch, dashboard) : 'active'
 	const selectedName = dashboardNameById.get(selectedDashboardId) ?? 'dashboard'
 
 	return {
 		type: 'existing-dashboard',
-		message: `Added to ${selectedName}!`,
-		href: `/pro/${dashboardSlugById.get(selectedDashboardId) || selectedDashboardId}`
+		message:
+			activation === 'active'
+				? isRepair
+					? `Replaced chart in ${selectedName}!`
+					: `Added to ${selectedName}!`
+				: activation === 'declined'
+					? `Added to ${selectedName}. Daily refresh was not enabled.`
+					: `Added to ${selectedName}, but refresh setup is pending. The current snapshot is safe.`,
+		href: `/pro/${dashboardSlugById.get(selectedDashboardId) || selectedDashboardId}`,
+		repaired: isRepair
 	}
 }
 
@@ -256,25 +262,27 @@ export function AddToDashboardModal({
 	const router = useRouter()
 	const queryClient = useQueryClient()
 	const { authorizedFetch, isAuthenticated, hasActiveSubscription } = useAuthContext()
+	const [repairTarget, setRepairTarget] = useState<ChartRepairTarget | null>(() => readChartRepairTarget())
 	const { data: dashboardsData, isLoading: isLoadingDashboards } = useGetLiteDashboards()
 	const dashboards = dashboardsData ?? EMPTY_DASHBOARDS
 
 	const configName = getConfigName(chartConfig, llamaAIChart)
 	const [search, setSearch] = useState('')
-	const [selectedDashboardId, setSelectedDashboardId] = useState<string | null>(null)
+	const [selectedDashboardId, setSelectedDashboardId] = useState<string | null>(repairTarget?.dashboardId ?? null)
 	const [isCreatingNew, setIsCreatingNew] = useState(false)
 	const [newDashboardNameInput, setNewDashboardNameInput] = useState('')
 	const chartNameInputId = useId()
 	const deferredSearch = useDeferredValue(search)
 
 	const filteredDashboards = useMemo(() => {
+		if (repairTarget) return dashboards.filter((dashboard) => dashboard.id === repairTarget.dashboardId)
 		const query = deferredSearch.trim()
 		if (!query) return dashboards
 		return matchSorter(dashboards, query, {
 			keys: ['name'],
 			threshold: matchSorter.rankings.CONTAINS
 		})
-	}, [dashboards, deferredSearch])
+	}, [dashboards, deferredSearch, repairTarget])
 
 	const dashboardNameById = useMemo(() => {
 		return new Map<string, string>(dashboards.map((dashboard) => [dashboard.id, dashboard.name]))
@@ -312,10 +320,15 @@ export function AddToDashboardModal({
 				configName,
 				dashboardNameById,
 				dashboardSlugById,
-				variables
+				variables,
+				repairTarget
 			})
 		},
 		onSuccess: (result) => {
+			if (result.repaired) {
+				clearChartRepairTarget()
+				setRepairTarget(null)
+			}
 			invalidateDashboardQueries(queryClient)
 			safeTrackAddToDashboardSubmit(result.type)
 			showViewToast(result.message, result.href, router.push)
@@ -382,25 +395,27 @@ export function AddToDashboardModal({
 		>
 			<form onSubmit={handleAdd} className="flex min-h-0 flex-1 flex-col">
 				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-					<DialogHeading>Add to Dashboard</DialogHeading>
+					<DialogHeading>{repairTarget ? 'Replace Dashboard Chart' : 'Add to Dashboard'}</DialogHeading>
 					<DialogCloseButton className="-mr-1" />
 				</div>
 
 				<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-3">
-					<label className="relative block">
-						<span className="sr-only">Search dashboards</span>
-						<Icon
-							name="search"
-							className="pointer-events-none absolute top-0 bottom-0 left-3 my-auto size-4 text-tertiary"
-						/>
-						<Input
-							type="text"
-							onInput={(e) => setSearch(e.currentTarget.value)}
-							onKeyDown={handleSearchKeyDown}
-							placeholder="Search dashboards..."
-							className="w-full pl-8"
-						/>
-					</label>
+					{!repairTarget ? (
+						<label className="relative block">
+							<span className="sr-only">Search dashboards</span>
+							<Icon
+								name="search"
+								className="pointer-events-none absolute top-0 bottom-0 left-3 my-auto size-4 text-tertiary"
+							/>
+							<Input
+								type="text"
+								onInput={(e) => setSearch(e.currentTarget.value)}
+								onKeyDown={handleSearchKeyDown}
+								placeholder="Search dashboards..."
+								className="w-full pl-8"
+							/>
+						</label>
+					) : null}
 
 					<div className="max-h-56 overflow-y-auto overscroll-contain">
 						{isLoadingDashboards ? (
@@ -444,23 +459,25 @@ export function AddToDashboardModal({
 						)}
 					</div>
 
-					<div>
-						{isCreatingNew ? (
-							<Input
-								type="text"
-								name="newDashboardName"
-								required={isCreatingNew}
-								onChange={(e) => setNewDashboardNameInput(e.target.value)}
-								placeholder="New dashboard name..."
-								className="w-full"
-							/>
-						) : (
-							<Button type="button" size="md" onClick={handleCreateNew} className="w-full">
-								<Icon name="plus" className="size-4" />
-								<span>Create new dashboard</span>
-							</Button>
-						)}
-					</div>
+					{!repairTarget ? (
+						<div>
+							{isCreatingNew ? (
+								<Input
+									type="text"
+									name="newDashboardName"
+									required={isCreatingNew}
+									onChange={(e) => setNewDashboardNameInput(e.target.value)}
+									placeholder="New dashboard name..."
+									className="w-full"
+								/>
+							) : (
+								<Button type="button" size="md" onClick={handleCreateNew} className="w-full">
+									<Icon name="plus" className="size-4" />
+									<span>Create new dashboard</span>
+								</Button>
+							)}
+						</div>
+					) : null}
 
 					{chartConfig && (chartConfig.kind === 'multi' || chartConfig.kind === 'builder') ? (
 						<div className="border-t border-subtle pt-4">
@@ -497,8 +514,8 @@ export function AddToDashboardModal({
 							<LoadingSpinner size={16} />
 						) : (
 							<>
-								<Icon name="plus" className="size-3.5" />
-								Add to Dashboard
+								<Icon name={repairTarget ? 'repeat' : 'plus'} className="size-3.5" />
+								{repairTarget ? 'Replace Chart' : 'Add to Dashboard'}
 							</>
 						)}
 					</Button>

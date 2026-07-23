@@ -158,6 +158,17 @@ describe('parseSSEStream', () => {
 				toolChain: [{ name: 'generate_chart' }]
 			}
 		}
+		const artifactOutcomes = [
+			{
+				itemId: 'item-1',
+				chartRef: 'chart-1',
+				artifactId: 'artifact-1',
+				versionId: 'version-1',
+				status: 'live',
+				containsPremium: true,
+				estimatedMaxCostUsd: 0.025
+			}
+		]
 
 		await parseSSEStream(
 			sseReader(
@@ -167,9 +178,10 @@ describe('parseSSEStream', () => {
 						dashboard_id: 'dash-1',
 						dashboardConfig: {
 							dashboardName: 'Nested dashboard',
-							items: [{ kind: 'llamaai-chart', chartRef: 'chart-1', title: 'TVL' }]
+							items: [{ id: 'item-1', kind: 'llamaai-chart', chartRef: 'chart-1', title: 'TVL' }]
 						},
-						chartData
+						chartData,
+						artifactOutcomes
 					}
 				})
 			),
@@ -179,8 +191,9 @@ describe('parseSSEStream', () => {
 		expect(cb.onDashboard).toHaveBeenCalledWith({
 			id: 'dash-1',
 			dashboardName: 'Nested dashboard',
-			items: [{ kind: 'llamaai-chart', chartRef: 'chart-1', title: 'TVL' }],
-			chartData
+			items: [{ id: 'item-1', kind: 'llamaai-chart', chartRef: 'chart-1', title: 'TVL' }],
+			chartData,
+			artifactOutcomes
 		})
 	})
 
@@ -296,6 +309,42 @@ describe('parseSSEStream', () => {
 })
 
 describe('fetchAgenticResponse', () => {
+	it('preserves safe chart artifact refs from the stream for direct save', async () => {
+		const cb = callbacks()
+		await parseSSEStream(
+			sseReader(
+				JSON.stringify({
+					type: 'charts',
+					charts: [chartConfig],
+					chartData: { 'chart-1': [{ timestamp: 1, tvl: 100 }] },
+					artifactRefs: {
+						'chart-1': {
+							artifactId: 'artifact-1',
+							versionId: 'version-1',
+							status: 'live',
+							containsPremium: true,
+							estimatedMaxCostUsd: 0.005
+						}
+					}
+				})
+			),
+			cb
+		)
+		expect(cb.onCharts).toHaveBeenCalledWith(
+			[chartConfig],
+			{ 'chart-1': [{ timestamp: 1, tvl: 100 }] },
+			{
+				'chart-1': {
+					artifactId: 'artifact-1',
+					versionId: 'version-1',
+					status: 'live',
+					containsPremium: true,
+					estimatedMaxCostUsd: 0.005
+				}
+			}
+		)
+	})
+
 	it('posts the agentic request and dispatches the streamed response contract', async () => {
 		const cb = callbacks()
 		const eventCounter = { count: 0 }

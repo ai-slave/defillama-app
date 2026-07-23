@@ -16,13 +16,22 @@ import {
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { saveChartToLibrary } from '~/containers/LlamaAI/api/saveChartToLibrary'
 import { updateChartStyle } from '~/containers/LlamaAI/api/updateChartStyle'
 import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/useArticleExport'
 import { ChartControls } from '~/containers/LlamaAI/components/charts/ChartControls'
 import { ChartStyleEditor, type ChartStyleEditorView } from '~/containers/LlamaAI/components/charts/ChartStyleEditor'
-import type { ChartConfiguration, ChartDataByKey, ChartDataSeries, ChartStylePatch } from '~/containers/LlamaAI/types'
+import { canAddChartArtifactToDashboard } from '~/containers/LlamaAI/dashboardArtifactFlow'
+import type {
+	ChartArtifactRef,
+	ChartArtifactRefs,
+	ChartConfiguration,
+	ChartDataByKey,
+	ChartDataSeries,
+	ChartStylePatch
+} from '~/containers/LlamaAI/types'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import { adaptChartData } from '~/containers/LlamaAI/utils/chartAdapter'
 import { adaptCandlestickData } from '~/containers/LlamaAI/utils/chartAdapters/candlestick'
@@ -64,6 +73,7 @@ interface ChartRendererProps {
 	sessionId?: string | null
 	messageId?: string
 	readOnly?: boolean
+	artifactRefs?: ChartArtifactRefs
 	/** Local persistence for style edits (e.g. research-article chart nodes). When set,
 	 * the style editor is enabled without a chat session and saves go here instead of the API. */
 	onLocalStyleSave?: (config: ChartConfiguration) => void
@@ -77,6 +87,7 @@ interface SingleChartProps {
 	sessionId?: string | null
 	messageId?: string
 	readOnly?: boolean
+	artifactRef?: ChartArtifactRef
 	onLocalStyleSave?: (config: ChartConfiguration) => void
 }
 
@@ -404,6 +415,7 @@ function SingleChart({
 	sessionId,
 	messageId,
 	readOnly,
+	artifactRef,
 	onLocalStyleSave
 }: SingleChartProps) {
 	// authorizedFetch/user come from the shared auth context — real under the LlamaAI provider, an
@@ -500,6 +512,7 @@ function SingleChart({
 			sessionId={sessionId}
 			messageId={messageId}
 			readOnly={readOnly}
+			artifactRef={artifactRef}
 		/>
 	)
 }
@@ -521,7 +534,8 @@ function ActiveSingleChart({
 	handleSaveStyle,
 	sessionId,
 	messageId,
-	readOnly
+	readOnly,
+	artifactRef
 }: {
 	config: ChartConfiguration
 	baseConfig: ChartConfiguration
@@ -540,6 +554,7 @@ function ActiveSingleChart({
 	sessionId?: string | null
 	messageId?: string
 	readOnly?: boolean
+	artifactRef?: ChartArtifactRef
 }) {
 	// category names (bars/slices) for per-category color pickers on single-series hbar & pie
 	const editorCategories = useMemo(() => {
@@ -607,10 +622,24 @@ function ActiveSingleChart({
 		return tryBuildPresentation(config, basePresentation.base, chartState)
 	}, [config, basePresentation, chartState])
 
+	// A locally applied config carries the freshest title; the title prop
+	// comes from message/node state, which in chat only refreshes on reload.
+	const chartTitle = appliedConfig?.title ?? title ?? config.title
+	const addToDashboardButton =
+		canAddChartArtifactToDashboard(artifactRef, readOnly) && artifactRef ? (
+			<AddToDashboardButton
+				chartConfig={null}
+				llamaAIChart={{ chartId: config.id, title: chartTitle ?? config.id, artifactRef }}
+				variant="icon"
+				smol
+			/>
+		) : null
+
 	if (config.type === 'candlestick') {
 		const candlestickData = adaptCandlestickData(config, data)
 		return (
 			<div className="flex flex-col p-2" data-chart-id={config.id}>
+				{addToDashboardButton ? <div className="flex justify-end">{addToDashboardButton}</div> : null}
 				<Suspense fallback={<div className="h-[480px]" />}>
 					<CandlestickChart data={candlestickData.data} indicators={candlestickData.indicators} />
 				</Suspense>
@@ -645,9 +674,6 @@ function ActiveSingleChart({
 
 	const normalizedState = renderPlan.controls.state
 	const exportModel = renderPlan.exportModel
-	// A locally applied config carries the freshest title; the title prop
-	// comes from message/node state, which in chat only refreshes on reload.
-	const chartTitle = appliedConfig?.title ?? title ?? config.title
 	const chartKey = `${config.id}-${normalizedState.stacked}-${normalizedState.percentage}-${normalizedState.cumulative}-${normalizedState.grouping}-${normalizedState.showHallmarks}-${normalizedState.showLabels}-${normalizedState.logScale}`
 	const chartContent = renderChartContent(renderPlan, chartKey, handleChartReady)
 
@@ -672,6 +698,7 @@ function ActiveSingleChart({
 					sessionId={sessionId}
 					messageId={messageId}
 				/>
+				{addToDashboardButton}
 				{canEdit ? (
 					<Button
 						type="button"
@@ -824,6 +851,7 @@ export function ChartRenderer({
 	sessionId,
 	messageId,
 	readOnly,
+	artifactRefs,
 	onLocalStyleSave
 }: ChartRendererProps) {
 	return (
@@ -838,6 +866,7 @@ export function ChartRenderer({
 				sessionId,
 				messageId,
 				readOnly,
+				artifactRefs,
 				onLocalStyleSave
 			}}
 		/>
@@ -854,6 +883,7 @@ function ChartRendererImpl({
 	sessionId,
 	messageId,
 	readOnly,
+	artifactRefs,
 	onLocalStyleSave
 }: ChartRendererProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
@@ -940,6 +970,7 @@ function ChartRendererImpl({
 						sessionId={sessionId}
 						messageId={messageId}
 						readOnly={readOnly}
+						artifactRef={artifactRefs?.[chart.id]}
 						onLocalStyleSave={onLocalStyleSave}
 					/>
 				)
@@ -956,6 +987,7 @@ const ChartRendererMemoized = memo(ChartRendererImpl, (prev, next) => {
 		prev.sessionId === next.sessionId &&
 		prev.messageId === next.messageId &&
 		prev.readOnly === next.readOnly &&
+		prev.artifactRefs === next.artifactRefs &&
 		prev.onLocalStyleSave === next.onLocalStyleSave &&
 		areStringArraysEqual(prev.chartTypes, next.chartTypes) &&
 		areChartsEqual(prev.charts, next.charts) &&

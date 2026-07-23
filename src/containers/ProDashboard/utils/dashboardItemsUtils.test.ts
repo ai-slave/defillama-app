@@ -1,0 +1,48 @@
+import { describe, expect, it } from 'vitest'
+import { replaceDashboardItem } from './dashboardItemsUtils'
+
+describe('replaceDashboardItem', () => {
+	it('replaces one broken chart while preserving its durable slot identity and layout', () => {
+		const items = [
+			{ id: 'before', kind: 'text' as const, content: 'before' },
+			{
+				id: 'repair-slot',
+				kind: 'llamaai-chart' as const,
+				artifactId: null,
+				artifactStatus: 'needs-repair' as const,
+				colSpan: 2 as const
+			},
+			{ id: 'after', kind: 'text' as const, content: 'after' }
+		]
+
+		const replaced = replaceDashboardItem(items, 'repair-slot', {
+			id: 'generated-id',
+			kind: 'llamaai-chart',
+			artifactId: 'artifact-new',
+			artifactVersionId: 'version-new',
+			artifactStatus: 'live',
+			title: 'Replacement'
+		})
+
+		expect(replaced).toHaveLength(3)
+		expect(replaced[1]).toMatchObject({
+			id: 'repair-slot',
+			colSpan: 2,
+			artifactId: 'artifact-new',
+			artifactVersionId: 'version-new',
+			artifactStatus: 'live',
+			title: 'Replacement'
+		})
+	})
+
+	it('refuses a stale target instead of silently appending a duplicate chart', () => {
+		expect(() =>
+			replaceDashboardItem([], 'missing', {
+				id: 'generated-id',
+				kind: 'llamaai-chart',
+				artifactId: 'artifact-new',
+				artifactStatus: 'live'
+			})
+		).toThrow('no longer exists')
+	})
+})

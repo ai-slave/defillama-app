@@ -154,6 +154,7 @@ function ArtifactBlockRenderer({
 					sessionId={sessionId}
 					messageId={messageId}
 					readOnly={readOnly}
+					artifactRefs={artifact.artifactRef ? { [artifact.id]: artifact.artifactRef } : undefined}
 				/>
 			</Suspense>
 		)

@@ -1,5 +1,6 @@
 import type {
 	AlertProposedData,
+	ChartArtifactRef,
 	ChartConfiguration,
 	ChartDataByKey,
 	DashboardArtifact,
@@ -14,6 +15,7 @@ export type ChartArtifactRecord = {
 	id: string
 	charts: ChartConfiguration[]
 	chartData: ChartDataByKey
+	artifactRef?: ChartArtifactRef
 }
 
 export type CsvArtifactRecord = {
@@ -96,7 +98,8 @@ function buildArtifactRegistry(message: Message): ArtifactRegistry {
 				type: 'chart',
 				id: chart.id,
 				charts: [chart],
-				chartData: set.chartData
+				chartData: set.chartData,
+				...(set.artifactRefs?.[chart.id] && { artifactRef: set.artifactRefs[chart.id] })
 			})
 		}
 	}

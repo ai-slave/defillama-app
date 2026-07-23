@@ -3,13 +3,12 @@ import Router from 'next/router'
 import { memo, useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
-import { AI_SERVER } from '~/constants'
+import { activateDashboardArtifacts, prepareDashboardArtifactSave } from '~/containers/LlamaAI/dashboardArtifactFlow'
 import type { DashboardArtifact } from '~/containers/LlamaAI/types'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { ChartGrid } from '~/containers/ProDashboard/components/ChartGrid'
 import { ProDashboardAPIProvider } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { dashboardAPI, dashboardUrlKey } from '~/containers/ProDashboard/services/DashboardAPI'
-import type { DashboardItemConfig } from '~/containers/ProDashboard/types'
 import { Icon } from '~/ui/Icon'
 
 interface DashboardPanelProps {
@@ -56,40 +55,25 @@ function DashboardPanelInner({
 			if (!config) {
 				throw new Error('No dashboard configuration')
 			}
-			let finalItems: DashboardItemConfig[] = config.items
-
-			const chartRefItems = finalItems.filter(
-				(item): item is Extract<DashboardItemConfig, { kind: 'llamaai-chart' }> & { chartRef: string } =>
-					item.kind === 'llamaai-chart' && typeof item.chartRef === 'string' && !item.savedChartId
-			)
-			if (chartRefItems.length > 0 && sessionId) {
-				const promoteRes = await authorizedFetch(`${AI_SERVER}/agentic/promote-charts`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ sessionId, chartRefs: chartRefItems.map((item) => item.chartRef) })
-				})
-				if (promoteRes?.ok) {
-					const data = await promoteRes.json()
-					const mapping = data?.mapping || {}
-					finalItems = finalItems.map((item) => {
-						if (item.kind === 'llamaai-chart' && item.chartRef && mapping[item.chartRef]) {
-							return { ...item, savedChartId: mapping[item.chartRef], chartRef: undefined }
-						}
-						return item
-					})
-				} else {
-					throw new Error('Failed to save custom charts. Try again.')
-				}
+			const artifactSave = prepareDashboardArtifactSave(config.items, config.artifactOutcomes)
+			if (
+				artifactSave.containsPremium &&
+				!window.confirm(
+					`This dashboard uses premium data. Daily refreshes will bill your account up to $${artifactSave.estimatedMaxCostUsd.toFixed(3)} per refresh window. Continue?`
+				)
+			) {
+				throw new Error('Dashboard creation cancelled')
 			}
 
-			return dashboardAPI.createDashboard(
+			const dashboard = await dashboardAPI.createDashboard(
 				{
-					items: finalItems,
+					items: artifactSave.items,
 					dashboardName: config.dashboardName,
 					timePeriod: (config.timePeriod as any) || '365d',
 					visibility: 'private',
 					tags: [],
 					description: '',
+					...(config.sourceDashboardId && { copySourceDashboardId: config.sourceDashboardId }),
 					aiGenerated: sessionId
 						? {
 								[sessionId]: {
@@ -104,8 +88,24 @@ function DashboardPanelInner({
 				},
 				authorizedFetch
 			)
+			let activationPending = false
+			if (artifactSave.expectedItemIds.length > 0) {
+				try {
+					await activateDashboardArtifacts(
+						authorizedFetch,
+						dashboard.id,
+						artifactSave,
+						artifactSave.containsPremium ? artifactSave.estimatedMaxCostUsd : undefined
+					)
+				} catch {
+					activationPending = true
+				}
+			}
+			return { dashboard, activationPending }
 		},
-		onSuccess: (dashboard) => {
+		onSuccess: ({ dashboard, activationPending }) => {
+			if (activationPending)
+				toast.error('Dashboard saved, but refresh setup is pending. Your current chart snapshots are safe.')
 			queryClient.setQueryData(
 				['pro-dashboard', 'dashboard', dashboardUrlKey(dashboard), isAuthenticated, user?.id],
 				dashboard

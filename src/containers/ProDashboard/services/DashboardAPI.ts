@@ -49,16 +49,18 @@ type DashboardSavePayload = {
 	tags?: string[]
 	description?: string
 	aiGenerated?: AIGeneratedData | null
+	copySourceDashboardId?: string
 }
 
 function dashboardSaveBody(data: DashboardSavePayload) {
-	const { visibility, tags, description, aiGenerated, ...dashboardData } = data
+	const { visibility, tags, description, aiGenerated, copySourceDashboardId, ...dashboardData } = data
 	return {
 		data: dashboardData,
 		visibility: visibility || 'private',
 		tags: Array.isArray(tags) ? tags : [],
 		description: typeof description === 'string' ? description : '',
-		aiGenerated: aiGenerated || null
+		aiGenerated: aiGenerated || null,
+		...(copySourceDashboardId && { copySourceDashboardId })
 	}
 }
 
@@ -139,6 +141,7 @@ class DashboardAPIService {
 			tags?: string[]
 			description?: string
 			aiGenerated?: AIGeneratedData | null
+			copySourceDashboardId?: string
 		},
 		authorizedFetch: (url: string, options?: any) => Promise<Response>
 	): Promise<Dashboard> {

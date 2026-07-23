@@ -662,11 +662,17 @@ function ProDashboardAPIProviderInner({
 				const savedDashboard = await updateDashboard({ id: dashboardId, data })
 				if (savedDashboard) {
 					applyDashboard(savedDashboard)
+					if (savedDashboard.artifactActivationPending) {
+						toast.error('Dashboard saved, but chart refresh setup is pending.')
+					}
 				}
 			} else {
 				const newDashboard = await createDashboard(data)
 				if (newDashboard) {
 					applyDashboard(newDashboard)
+					if (newDashboard.artifactActivationPending) {
+						toast.error('Dashboard saved, but chart refresh setup is pending.')
+					}
 				}
 			}
 		},
@@ -753,7 +759,8 @@ function ProDashboardAPIProviderInner({
 			dashboardName: `${dashboardName} (Copy)`,
 			timePeriod,
 			customTimePeriod,
-			visibility: isFreeUser ? ('public' as const) : dashboardVisibility
+			visibility: isFreeUser ? ('public' as const) : dashboardVisibility,
+			...(dashboardId && { copySourceDashboardId: dashboardId })
 		}
 
 		try {
@@ -770,7 +777,8 @@ function ProDashboardAPIProviderInner({
 		createDashboard,
 		canCreateDashboard,
 		isFreeUser,
-		dashboardVisibility
+		dashboardVisibility,
+		dashboardId
 	])
 
 	const handleCreateDashboard = useCallback(

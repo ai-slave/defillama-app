@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useEffectEvent, useRef } from 'react'
+import toast from 'react-hot-toast'
 import pb from '~/utils/pocketbase'
 import type { CustomTimePeriod, TimePeriod } from '../dashboardTypes'
 import { buildDashboardSaveRequest } from '../services/DashboardAPI'
@@ -156,8 +157,11 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 
 		autoSaveTimeoutRef.current = setTimeout(() => {
 			updateDashboard({ id: dashboardId, data })
-				.then(() => {
+				.then((savedDashboard) => {
 					pendingDataRef.current = null
+					if (savedDashboard?.artifactActivationPending) {
+						toast.error('Dashboard saved, but chart refresh setup is pending.')
+					}
 				})
 				.catch((error) => {
 					console.log('Auto-save failed:', error)

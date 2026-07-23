@@ -155,6 +155,14 @@ export interface AlertProposedData {
 export type DashboardItem = DashboardItemConfig
 export type ChartDataSeries = unknown[]
 export type ChartDataByKey = Record<string, ChartDataSeries>
+export interface ChartArtifactRef {
+	artifactId: string
+	versionId: string | null
+	status: 'live' | 'snapshot-only' | 'needs-repair'
+	containsPremium: boolean
+	estimatedMaxCostUsd: number
+}
+export type ChartArtifactRefs = Record<string, ChartArtifactRef>
 export type DashboardChartData = Record<
 	string,
 	{ config: ChartConfiguration; data: ChartDataSeries; toolChain: unknown[] }
@@ -167,6 +175,18 @@ export interface DashboardArtifact {
 	timePeriod?: string
 	sourceDashboardId?: string
 	chartData?: DashboardChartData
+	artifactOutcomes?: DashboardArtifactOutcome[]
+}
+
+export interface DashboardArtifactOutcome {
+	itemId: string
+	chartRef: string
+	artifactId: string | null
+	versionId: string | null
+	status: 'live' | 'snapshot-only' | 'needs-repair'
+	reasonCode?: string
+	containsPremium: boolean
+	estimatedMaxCostUsd: number
 }
 
 export type JsonPrimitive = string | number | boolean | null
@@ -281,7 +301,7 @@ export interface UpgradeOffer {
 export interface Message {
 	role: 'user' | 'assistant'
 	content?: string
-	charts?: Array<{ charts: ChartConfiguration[]; chartData: ChartDataByKey }>
+	charts?: Array<{ charts: ChartConfiguration[]; chartData: ChartDataByKey; artifactRefs?: ChartArtifactRefs }>
 	csvExports?: CsvExport[]
 	mdExports?: Array<{ id: string; title: string; url: string; filename: string }>
 	citations?: UnifiedCitationReference[]
@@ -316,6 +336,7 @@ export interface Message {
 export interface ChartSet {
 	charts: ChartConfiguration[]
 	chartData: ChartDataByKey
+	artifactRefs?: ChartArtifactRefs
 }
 
 export interface GeneratedImage {

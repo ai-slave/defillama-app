@@ -1,4 +1,33 @@
-import type { ChartConfiguration, ChartDataByKey, ChartDataSeries, DashboardChartData, DashboardItem } from './types'
+import type {
+	ChartArtifactRefs,
+	ChartConfiguration,
+	ChartDataByKey,
+	ChartDataSeries,
+	DashboardArtifactOutcome,
+	DashboardChartData,
+	DashboardItem
+} from './types'
+
+export function normalizeChartArtifactRefs(value: unknown): ChartArtifactRefs | undefined {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+	const refs: ChartArtifactRefs = {}
+	for (const [chartId, candidate] of Object.entries(value)) {
+		if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) continue
+		const ref = candidate as Record<string, unknown>
+		if (
+			typeof ref.artifactId !== 'string' ||
+			!ref.artifactId ||
+			(ref.versionId !== null && typeof ref.versionId !== 'string') ||
+			!['live', 'snapshot-only', 'needs-repair'].includes(String(ref.status)) ||
+			typeof ref.containsPremium !== 'boolean' ||
+			typeof ref.estimatedMaxCostUsd !== 'number' ||
+			!Number.isFinite(ref.estimatedMaxCostUsd)
+		)
+			continue
+		refs[chartId] = ref as unknown as ChartArtifactRefs[string]
+	}
+	return Object.keys(refs).length > 0 ? refs : undefined
+}
 
 // These values enter from JSON.parse'd SSE frames and raw Postgres JSONB session
 // restore. Static chart types describe the intended contract; this file keeps
@@ -59,6 +88,23 @@ export function normalizeDashboardItems(value: unknown): DashboardItem[] {
 		if (isRecord(item) && typeof item.kind === 'string') items.push(item as unknown as DashboardItem)
 	}
 	return items
+}
+
+export function normalizeDashboardArtifactOutcomes(value: unknown): DashboardArtifactOutcome[] | undefined {
+	if (!Array.isArray(value)) return undefined
+	const outcomes = value.filter((entry): entry is DashboardArtifactOutcome => {
+		if (!isRecord(entry)) return false
+		return (
+			typeof entry.itemId === 'string' &&
+			typeof entry.chartRef === 'string' &&
+			(entry.artifactId === null || typeof entry.artifactId === 'string') &&
+			(entry.versionId === null || typeof entry.versionId === 'string') &&
+			['live', 'snapshot-only', 'needs-repair'].includes(String(entry.status)) &&
+			typeof entry.containsPremium === 'boolean' &&
+			typeof entry.estimatedMaxCostUsd === 'number'
+		)
+	})
+	return outcomes.length > 0 ? outcomes : undefined
 }
 
 export function normalizeDashboardChartData(value: unknown): DashboardChartData | undefined {

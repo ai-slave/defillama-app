@@ -1,7 +1,9 @@
 import { AI_SERVER } from '~/constants'
 import {
 	normalizeChartConfigs,
+	normalizeChartArtifactRefs,
 	normalizeChartDataByKey,
+	normalizeDashboardArtifactOutcomes,
 	normalizeDashboardChartData,
 	normalizeDashboardItems
 } from '~/containers/LlamaAI/chartPayloads'
@@ -9,6 +11,7 @@ import type {
 	AgenticAnswerMode,
 	AlertProposedData,
 	ChartConfiguration,
+	ChartArtifactRefs,
 	ChartDataByKey,
 	DashboardArtifact,
 	GeneratedImage,
@@ -48,7 +51,7 @@ export interface SpawnProgressData {
 
 export interface AgenticSSECallbacks {
 	onToken: (content: string) => void
-	onCharts: (charts: ChartConfiguration[], chartData: ChartDataByKey) => void
+	onCharts: (charts: ChartConfiguration[], chartData: ChartDataByKey, artifactRefs?: ChartArtifactRefs) => void
 	onGeneratedImages?: (images: GeneratedImage[]) => void
 	onProgress: (toolName: string, isPremium?: boolean) => void
 	onSpawnProgress: (data: SpawnProgressData) => void
@@ -96,6 +99,8 @@ interface ChartsEvent {
 	type: 'charts'
 	charts?: unknown
 	chartData?: unknown
+	artifactOutcomes?: unknown
+	artifactRefs?: unknown
 }
 
 interface GeneratedImagesEvent {
@@ -127,6 +132,7 @@ interface DashboardEvent {
 		sourceDashboardId?: unknown
 	}
 	chartData?: unknown
+	artifactOutcomes?: unknown
 	content?: {
 		dashboard_id?: string
 		dashboardConfig?: {
@@ -136,6 +142,7 @@ interface DashboardEvent {
 			sourceDashboardId?: unknown
 		}
 		chartData?: unknown
+		artifactOutcomes?: unknown
 	}
 }
 
@@ -396,7 +403,10 @@ export function parseSSEStream(
 				}
 				case 'charts': {
 					const charts = normalizeChartConfigs(data.charts)
-					callbacks.onCharts(charts, normalizeChartDataByKey(data.chartData, charts))
+					const chartData = normalizeChartDataByKey(data.chartData, charts)
+					const artifactRefs = normalizeChartArtifactRefs(data.artifactRefs)
+					if (artifactRefs) callbacks.onCharts(charts, chartData, artifactRefs)
+					else callbacks.onCharts(charts, chartData)
 					break
 				}
 				case 'generated_images':
@@ -414,6 +424,7 @@ export function parseSSEStream(
 				case 'dashboard': {
 					const config = data.dashboardConfig || data.content?.dashboardConfig
 					const chartData = data.chartData || data.content?.chartData
+					const artifactOutcomes = data.artifactOutcomes || data.content?.artifactOutcomes
 					if (isRecord(config) && callbacks.onDashboard) {
 						// Dashboard events can arrive in both top-level and nested `content`
 						// forms around PR #2790; normalize both shapes here.
@@ -425,6 +436,7 @@ export function parseSSEStream(
 						const sourceDashboardId =
 							typeof config.sourceDashboardId === 'string' ? config.sourceDashboardId : undefined
 						const dashboardChartData = normalizeDashboardChartData(chartData)
+						const normalizedArtifactOutcomes = normalizeDashboardArtifactOutcomes(artifactOutcomes)
 						const stableId =
 							data.dashboard_id ||
 							data.content?.dashboard_id ||
@@ -435,7 +447,8 @@ export function parseSSEStream(
 							items,
 							...(typeof config.timePeriod === 'string' && { timePeriod: config.timePeriod }),
 							...(sourceDashboardId && { sourceDashboardId }),
-							...(dashboardChartData && { chartData: dashboardChartData })
+							...(dashboardChartData && { chartData: dashboardChartData }),
+							...(normalizedArtifactOutcomes && { artifactOutcomes: normalizedArtifactOutcomes })
 						})
 					}
 					break

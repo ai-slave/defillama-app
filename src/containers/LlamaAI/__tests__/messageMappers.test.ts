@@ -44,6 +44,34 @@ const dashboardItem = {
 } satisfies DashboardItem
 
 describe('messageMappers', () => {
+	it('restores safe chart artifact refs for direct save after process loss', () => {
+		const mapped = mapPersistedMessage({
+			role: 'assistant',
+			charts: [chart],
+			chartData: { 'chart-1': [{ timestamp: 1, tvl: 100 }] },
+			metadata: {
+				chartSaveContext: {
+					artifactRefs: {
+						'chart-1': {
+							artifactId: 'artifact-1',
+							versionId: 'version-1',
+							status: 'live',
+							containsPremium: false,
+							estimatedMaxCostUsd: 0
+						}
+					}
+				}
+			}
+		})
+		expect(mapped.charts?.[0].artifactRefs?.['chart-1']).toEqual({
+			artifactId: 'artifact-1',
+			versionId: 'version-1',
+			status: 'live',
+			containsPremium: false,
+			estimatedMaxCostUsd: 0
+		})
+	})
+
 	it('restores persisted dashboard chart data from message metadata', () => {
 		const message: PersistedMessage = {
 			role: 'assistant',
@@ -57,6 +85,19 @@ describe('messageMappers', () => {
 				dashboardConfig: {
 					dashboardName: 'Protocol dashboard',
 					items: [dashboardItem]
+				},
+				dashboardResult: {
+					artifactOutcomes: [
+						{
+							itemId: 'dashboard-item-1',
+							chartRef: 'chart-1',
+							artifactId: 'artifact-1',
+							versionId: 'version-1',
+							status: 'live',
+							containsPremium: false,
+							estimatedMaxCostUsd: 0
+						}
+					]
 				}
 			}
 		}
@@ -72,6 +113,40 @@ describe('messageMappers', () => {
 			config: chart,
 			data: [{ timestamp: 1, tvl: 100 }],
 			toolChain: []
+		})
+		expect(mapped.dashboards?.[0]?.artifactOutcomes).toEqual([
+			expect.objectContaining({ artifactId: 'artifact-1', status: 'live' })
+		])
+	})
+
+	it('restores bundled dashboard preview data after reload without top-level chart fields', () => {
+		const mapped = mapPersistedMessage({
+			role: 'assistant',
+			content: 'Dashboard ready',
+			messageId: 'dashboard-message',
+			metadata: {
+				dashboardConfig: {
+					dashboardName: 'Restored dashboard',
+					items: [dashboardItem]
+				},
+				dashboardResult: {
+					chartData: {
+						'chart-1': {
+							config: chart,
+							data: [{ timestamp: 1, tvl: 100 }],
+							toolChain: []
+						}
+					}
+				}
+			}
+		})
+
+		expect(mapped.dashboards?.[0]?.chartData).toEqual({
+			'chart-1': {
+				config: chart,
+				data: [{ timestamp: 1, tvl: 100 }],
+				toolChain: []
+			}
 		})
 	})
 

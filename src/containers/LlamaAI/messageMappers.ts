@@ -11,7 +11,14 @@ import type {
 	UnifiedCitationReference
 } from '~/containers/LlamaAI/types'
 import { buildRestoredAlerts, type RestoredAlertMetadata } from '~/containers/LlamaAI/utils/restoredAlerts'
-import { normalizeChartConfigs, normalizeChartDataByKey, normalizeDashboardItems } from './chartPayloads'
+import {
+	normalizeChartConfigs,
+	normalizeChartArtifactRefs,
+	normalizeChartDataByKey,
+	normalizeDashboardArtifactOutcomes,
+	normalizeDashboardChartData,
+	normalizeDashboardItems
+} from './chartPayloads'
 
 export interface PersistedToolExecution extends Partial<ToolExecution> {
 	toolName?: string
@@ -27,6 +34,10 @@ export interface PersistedMessageMetadata extends RestoredAlertMetadata {
 		timePeriod?: string
 		sourceDashboardId?: string
 	}
+	dashboardResult?: {
+		artifactOutcomes?: unknown
+		chartData?: unknown
+	}
 	deliveryChannel?: 'email' | 'telegram' | 'slack'
 	mdExports?: Array<{ id: string; title: string; url: string; filename: string }>
 	x402_cost_usd?: string
@@ -34,6 +45,7 @@ export interface PersistedMessageMetadata extends RestoredAlertMetadata {
 		references?: unknown[]
 	}
 	citations?: { schemaVersion?: number; citations?: unknown[] }
+	chartSaveContext?: { artifactRefs?: unknown }
 }
 
 export interface PersistedMessage {
@@ -155,6 +167,8 @@ function buildRestoredDashboard(message: PersistedMessage, index?: number): Dash
 	const items = normalizeDashboardItems(dashboardConfig.items)
 	const charts = normalizeChartConfigs(message.charts)
 	const chartData = normalizeChartDataByKey(message.chartData, charts)
+	const artifactOutcomes = normalizeDashboardArtifactOutcomes(message.metadata?.dashboardResult?.artifactOutcomes)
+	const restoredChartData = normalizeDashboardChartData(message.metadata?.dashboardResult?.chartData)
 
 	// Historical persisted messages may not have a dashboard id, but the render
 	// model still needs a stable artifact key for fallback rendering.
@@ -164,13 +178,15 @@ function buildRestoredDashboard(message: PersistedMessage, index?: number): Dash
 		dashboardName: dashboardConfig.dashboardName || 'Dashboard',
 		items,
 		timePeriod: dashboardConfig.timePeriod,
-		sourceDashboardId: dashboardConfig.sourceDashboardId
+		sourceDashboardId: dashboardConfig.sourceDashboardId,
+		...(restoredChartData && { chartData: restoredChartData }),
+		...(artifactOutcomes && { artifactOutcomes })
 	}
 	const chartRefs = items.filter(
 		(item): item is Extract<DashboardItem, { kind: 'llamaai-chart' }> & { chartRef: string } =>
 			item.kind === 'llamaai-chart' && typeof item.chartRef === 'string'
 	)
-	if (chartRefs.length > 0 && charts.length > 0) {
+	if (!restoredChartData && chartRefs.length > 0 && charts.length > 0) {
 		const chartConfigMap = new Map(charts.map((chart) => [chart.id, chart]))
 		const bundled: NonNullable<DashboardArtifact['chartData']> = {}
 		for (const item of chartRefs) {
@@ -232,11 +248,15 @@ export function mapPersistedMessage(message: PersistedMessage, index?: number): 
 	const restoredDashboard = buildRestoredDashboard(message, index)
 	const charts = normalizeChartConfigs(message.charts)
 	const chartData = normalizeChartDataByKey(message.chartData, charts)
+	const artifactRefs = normalizeChartArtifactRefs(message.metadata?.chartSaveContext?.artifactRefs)
 	const { citations, legacyUrlCitations } = resolveCitationFields(message.metadata, message.citations)
 	return {
 		role: message.role,
 		content: message.content,
-		charts: charts.length > 0 && hasChartData(chartData) ? [{ charts, chartData }] : undefined,
+		charts:
+			charts.length > 0 && hasChartData(chartData)
+				? [{ charts, chartData, ...(artifactRefs && { artifactRefs }) }]
+				: undefined,
 		citations,
 		legacyUrlCitations,
 		csvExports: message.csvExports,
