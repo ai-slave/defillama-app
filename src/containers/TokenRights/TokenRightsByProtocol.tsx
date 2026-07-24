@@ -6,6 +6,7 @@ import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
 import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import { TokenRightsPieChart } from './TokenRightsPieChart'
 import type { ITokenRightsData, ITokenRightsParsedLink, ITokenRightsTokenDisplay } from './types'
@@ -764,13 +765,7 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Ra
 							return (
 								<tr key={`${r.date}-${r.round}-${i}`} className="border-b border-subtle last:border-0">
 									<td className="py-2.5 pr-4 whitespace-nowrap">
-										{r.date
-											? new Date(r.date * 1000).toLocaleDateString(undefined, {
-													day: '2-digit',
-													month: 'short',
-													year: 'numeric'
-												})
-											: '—'}
+										{r.date ? (formatDate(r.date, { input: 'seconds' }) ?? '—') : '—'}
 									</td>
 									<td className="py-2.5 pr-4 text-right whitespace-nowrap">
 										{r.amountUsd

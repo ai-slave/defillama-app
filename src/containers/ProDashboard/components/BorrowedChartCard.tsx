@@ -12,7 +12,7 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
-import { toNiceCsvDate } from '~/utils'
+import { formatIsoDate } from '~/utils/dateFormat'
 import { download } from '~/utils/download'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPE_LABELS } from '../borrowedChartConstants'
 import { useChartImageExport } from '../hooks/useChartImageExport'
@@ -117,7 +117,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 			return [
 				['Date', ...columnNames],
 				...dataset.source.map((row) => [
-					toNiceCsvDate((row[0] as number) / 1000),
+					formatIsoDate(row[0] as number, { input: 'milliseconds' }) ?? '',
 					...indexes.map((index) => row[index] ?? '')
 				])
 			]

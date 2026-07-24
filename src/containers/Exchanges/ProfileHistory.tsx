@@ -2,10 +2,10 @@ import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Icon, type IIcon } from '~/ui/Icon'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import type { ExchangeProfileModel } from './models'
 
-const UTC_DATE = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' })
 const money = (value: number | null) =>
 	value == null
 		? 'Unknown'
@@ -99,7 +99,7 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 								<>
 									<p className="label-md">{hack.technique ?? hack.name}</p>
 									<p className="mt-0.5 body-sm text-tertiary">
-										{hack.date ? UTC_DATE.format(new Date(hack.date * 1000)) : 'Unknown date'}
+										{hack.date ? (formatDate(hack.date, { input: 'seconds' }) ?? 'Unknown date') : 'Unknown date'}
 									</p>
 									{hack.returnedFundsUsd != null ? (
 										<p className="mt-1 body-sm text-secondary">Returned funds: {money(hack.returnedFundsUsd)}</p>
@@ -120,7 +120,7 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 							details={
 								<>
 									<p className="label-md">{raise.round || 'Funding round'}</p>
-									<p className="mt-0.5 body-sm text-tertiary">{UTC_DATE.format(new Date(raise.date * 1000))}</p>
+									<p className="mt-0.5 body-sm text-tertiary">{formatDate(raise.date, { input: 'seconds' })}</p>
 									{raise.valuationUsd != null ? (
 										<p className="mt-1 body-sm text-secondary">Valuation: {money(raise.valuationUsd)}</p>
 									) : null}

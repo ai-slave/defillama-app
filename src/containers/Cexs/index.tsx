@@ -7,7 +7,8 @@ import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { QuestionHelper } from '~/ui/QuestionHelper'
-import { slug, toNiceDayMonthAndYear } from '~/utils'
+import { slug } from '~/utils'
+import { formatDate } from '~/utils/dateFormat'
 import { letterLogoDataUri } from '~/utils/icons'
 import { formatUsd, roundNumber } from '~/utils/numberFormat'
 import { fetchCexInflowsBatchProxy } from './api'
@@ -303,7 +304,7 @@ const columns = [
 		header: 'Last audit date',
 		cell: ({ getValue }) => {
 			const value = getValue()
-			return <>{value == null ? null : toNiceDayMonthAndYear(value)}</>
+			return <>{value == null ? null : formatDate(value, { input: 'seconds' })}</>
 		},
 		meta: {
 			headerClassName: 'w-[130px]',

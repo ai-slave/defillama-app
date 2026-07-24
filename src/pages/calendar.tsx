@@ -18,6 +18,7 @@ import { useTableSearch } from '~/components/Table/utils'
 import calendarEvents from '~/constants/calendar'
 import { fetchAllProtocolEmissions } from '~/containers/Unlocks/api'
 import type { ProtocolEmission } from '~/containers/Unlocks/api.types'
+import { formatUnlockDate, formatUnlockTime } from '~/containers/Unlocks/dateFormat'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
@@ -31,7 +32,7 @@ import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
-import { slug, toNiceDayMonthYear, toNiceHour } from '~/utils'
+import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatPercent } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -329,8 +330,8 @@ const SimpleUpcomingEvent = ({ timestamp, name }) => {
 			</span>
 			<span className="h-10 w-px bg-border-subtle" />
 			<span className="flex items-center justify-between gap-2">
-				<span>{toNiceDayMonthYear(timestamp)}</span>
-				<span>{toNiceHour(timestamp)}</span>
+				<span>{formatUnlockDate(timestamp)}</span>
+				<span>{formatUnlockTime(timestamp)}</span>
 			</span>
 		</span>
 	)

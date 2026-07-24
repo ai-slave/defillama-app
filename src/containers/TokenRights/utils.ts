@@ -1,3 +1,4 @@
+import { formatDate } from '~/utils/dateFormat'
 import type { IRawTokenRightsEntry } from './api.types'
 import type {
 	ITokenRightsData,
@@ -181,14 +182,6 @@ function formatList(values: string[]): string | null {
 	return activeValues.length > 0 ? activeValues.join(', ') : null
 }
 
-function formatDateLabel(value: string): string {
-	return new Date(value).toLocaleDateString(undefined, {
-		day: '2-digit',
-		month: 'short',
-		year: 'numeric'
-	})
-}
-
 /**
  * Transform a raw API entry into the fully predictable `ITokenRightsData` structure
  * consumed by the UI. Every section is always present; nullable fields use `null`.
@@ -210,7 +203,7 @@ export function parseTokenRightsEntry(raw: IRawTokenRightsEntry): ITokenRightsDa
 			utility,
 			utilityItems: splitUtilityLabels(utility),
 			lastUpdated,
-			lastUpdatedLabel: formatDateLabel(lastUpdated)
+			lastUpdatedLabel: formatDate(lastUpdated) ?? lastUpdated
 		},
 		governance: {
 			summary: raw['Governance Details (Summary)']?.trim() ?? '',

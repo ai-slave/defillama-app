@@ -1,4 +1,5 @@
 import { Icon } from '~/ui/Icon'
+import { formatDateTime } from '~/utils/dateFormat'
 import type { AIGeneratedData } from '../dashboardTypes'
 
 interface AIGenerationHistoryProps {
@@ -39,7 +40,7 @@ export function AIGenerationHistory({ aiGenerated }: AIGenerationHistoryProps) {
 								<h2 className="text-sm font-medium">
 									{session.mode === 'create' ? 'Initial Generation' : 'Iteration'} #{sessions.length - index}
 								</h2>
-								<p className="text-pro-text-form">{new Date(session.timestamp).toLocaleDateString()}</p>
+								<p className="text-pro-text-form">{formatDateTime(session.timestamp, { timeZone: 'UTC' }) ?? '-'}</p>
 								{session.rating !== undefined && session.rating !== -1 ? (
 									<p className="flex items-center gap-1">
 										<span className="sr-only">Rating: </span>

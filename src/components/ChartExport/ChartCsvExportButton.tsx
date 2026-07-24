@@ -2,8 +2,8 @@ import type * as echarts from 'echarts/core'
 import { useCallback } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { buttonStyles } from '~/ui/Button'
-import { toNiceCsvDate } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
+import { formatIsoDate } from '~/utils/dateFormat'
 
 function isRecord(x: unknown): x is Record<string, unknown> {
 	return !!x && typeof x === 'object' && !Array.isArray(x)
@@ -112,7 +112,11 @@ export function buildCsvRowsFromDataset(dimensions: string[] | null, source: unk
 			}
 
 			const tsSeconds = normalizeEpochSeconds(tsRaw)
-			rows.push([toChartCsvCell(tsRaw), tsSeconds != null ? toNiceCsvDate(tsSeconds) : '', ...values])
+			rows.push([
+				toChartCsvCell(tsRaw),
+				tsSeconds != null ? (formatIsoDate(tsSeconds, { input: 'seconds' }) ?? '') : '',
+				...values
+			])
 		}
 		return rows
 	}
@@ -243,7 +247,7 @@ function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {
 		const tsSeconds = includeDate ? normalizeEpochSeconds(xKey) : null
 		rows.push([
 			toChartCsvCell(xKey),
-			...(includeDate ? [tsSeconds != null ? toNiceCsvDate(tsSeconds) : ''] : []),
+			...(includeDate ? [tsSeconds != null ? (formatIsoDate(tsSeconds, { input: 'seconds' }) ?? '') : ''] : []),
 			...seriesNames.map((name) => toChartCsvCell(record[name]))
 		])
 	}

@@ -4,6 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { CardLikeButton } from '~/containers/ProDashboard/components/CardLikeButton'
 import { Icon } from '~/ui/Icon'
 import type { IIcon } from '~/ui/Icon'
+import { RelativeTime } from '~/ui/RelativeTime'
 import { formatNumber } from '~/utils/numberFormat'
 import { avatarColorStyle } from './avatarColor'
 import { FollowAuthorButton } from './FollowAuthorButton'
@@ -16,8 +17,6 @@ import type {
 	PublicDashboardAuthor
 } from './types'
 
-const DATE_FORMATTER = new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' })
-
 const SORT_OPTIONS: Array<{ value: AuthorDashboardSort; label: string }> = [
 	{ value: 'recent', label: 'Recent' },
 	{ value: 'popular', label: 'Popular' },
@@ -29,13 +28,6 @@ type NavParams = { page?: number; sort?: AuthorDashboardSort }
 type AuthorProfileNav = {
 	hrefFor?: (params: NavParams) => string
 	navigate?: (params: NavParams) => void
-}
-
-function formatDate(value: string | null | undefined): string {
-	if (!value) return 'Unknown'
-	const time = Date.parse(value)
-	if (!Number.isFinite(time)) return 'Unknown'
-	return DATE_FORMATTER.format(new Date(time))
 }
 
 export function compactText(value: string | null | undefined, fallback = ''): string {
@@ -250,7 +242,9 @@ function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 				</div>
 
 				<div className="grid gap-3 border-t border-medium pt-3">
-					<p className="text-xs text-tertiary">Updated {formatDate(dashboardUpdatedAt(dashboard))}</p>
+					<p className="text-xs text-tertiary">
+						<RelativeTime value={dashboardUpdatedAt(dashboard)} prefix="Updated" fallback="Unknown" />
+					</p>
 					<DashboardCardStats dashboard={dashboard} />
 				</div>
 			</div>
@@ -286,7 +280,9 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 				<div className="grid content-between gap-4 border-t border-medium pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
 					<DashboardCardStats dashboard={dashboard} />
 					<div className="grid gap-2">
-						<p className="text-xs text-tertiary">Updated {formatDate(dashboardUpdatedAt(dashboard))}</p>
+						<p className="text-xs text-tertiary">
+							<RelativeTime value={dashboardUpdatedAt(dashboard)} prefix="Updated" fallback="Unknown" />
+						</p>
 						<span className="inline-flex items-center gap-1.5 text-sm font-medium text-link">
 							Open dashboard
 							<Icon name="arrow-up-right" className="size-4" />

@@ -18,7 +18,7 @@ import {
 } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { LocalLoader } from '~/ui/Loaders'
-import { toNiceCsvDate } from '~/utils'
+import { formatIsoDate } from '~/utils/dateFormat'
 import { download } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
 import { useChartImageExport } from '../hooks/useChartImageExport'
@@ -174,7 +174,10 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			case 'totalCirc':
 				rows = [
 					['Date', 'Circulating'],
-					...(filteredDataset?.source ?? []).map((row) => [toNiceCsvDate((row[0] as number) / 1000), row[1] ?? ''])
+					...(filteredDataset?.source ?? []).map((row) => [
+						formatIsoDate(row[0] as number, { input: 'milliseconds' }) ?? '',
+						row[1] ?? ''
+					])
 				]
 				filename = `${assetSlug}-total-circulating`
 				break
@@ -182,7 +185,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				rows = [
 					['Date', ...visibleSeries],
 					...(filteredDataset?.source ?? []).map((row) => [
-						toNiceCsvDate((row[0] as number) / 1000),
+						formatIsoDate(row[0] as number, { input: 'milliseconds' }) ?? '',
 						...selectedDimensionIndexes.map((index) => row[index] ?? '')
 					])
 				]
@@ -192,7 +195,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				rows = [
 					['Date', ...visibleSeries],
 					...(filteredDataset?.source ?? []).map((row) => [
-						toNiceCsvDate((row[0] as number) / 1000),
+						formatIsoDate(row[0] as number, { input: 'milliseconds' }) ?? '',
 						...selectedDimensionIndexes.map((index) => row[index] ?? '')
 					])
 				]

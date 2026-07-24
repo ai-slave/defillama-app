@@ -12,6 +12,7 @@ import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
+import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type {
@@ -26,7 +27,6 @@ import { formatEquitiesCompactValue } from './financialsFormatting'
 import { EquitiesFinancialsTable } from './FinancialsTable'
 import { EquitiesMarketsTable, EquitiesTokensTable } from './OnchainTables'
 import type { IEquityTickerPageProps } from './types'
-import { formatEquitiesDate, formatEquitiesDateTime } from './utils'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const TokenUnlocksSection = dynamic(
@@ -544,11 +544,15 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							/>
 							<MetricRow
 								label="Coverage since"
-								value={<span suppressHydrationWarning>{formatEquitiesDate(props.metadata.startDate)}</span>}
+								value={<span suppressHydrationWarning>{formatDate(props.metadata.startDate) ?? '-'}</span>}
 							/>
 							<MetricRow
 								label="Last Updated"
-								value={<span suppressHydrationWarning>{formatEquitiesDateTime(props.summary.updatedAt)}</span>}
+								value={
+									<span suppressHydrationWarning>
+										{formatDateTime(props.summary.updatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}
+									</span>
+								}
 							/>
 						</div>
 						{props.metadata.description ? <p className="body-sm">{props.metadata.description}</p> : null}

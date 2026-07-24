@@ -5,6 +5,7 @@ import { type KeyboardEvent, startTransition, useDeferredValue, useMemo, useStat
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
@@ -12,21 +13,6 @@ import { formatProjectBytes } from './format'
 import { useProjectList, useProjectUsage } from './hooks'
 import { getProjectTier } from './tier'
 import type { ProjectWithStats } from './types'
-
-function relativeTime(iso: string): string {
-	const t = new Date(iso).getTime()
-	const diff = Date.now() - t
-	const minutes = Math.floor(diff / 60_000)
-	if (minutes < 1) return 'just now'
-	if (minutes < 60) return `${minutes}m ago`
-	const hours = Math.floor(minutes / 60)
-	if (hours < 24) return `${hours}h ago`
-	const days = Math.floor(hours / 24)
-	if (days < 30) return `${days}d ago`
-	const months = Math.floor(days / 30)
-	if (months < 12) return `${months}mo ago`
-	return new Date(iso).toLocaleDateString()
-}
 
 type SortBy = 'updated' | 'created' | 'name'
 const EMPTY_PROJECTS: ProjectWithStats[] = []
@@ -241,7 +227,9 @@ export function ProjectsGrid() {
 									</div>
 									<div className="min-w-0 flex-1">
 										<h3 className="truncate text-sm font-semibold">{p.name}</h3>
-										<p className="truncate text-xs text-ai-muted">Updated {relativeTime(p.updated_at)}</p>
+										<p className="truncate text-xs text-ai-muted">
+											<RelativeTime value={p.updated_at} prefix="Updated" />
+										</p>
 									</div>
 									<div className="-mr-1 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
 										<Tooltip

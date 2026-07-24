@@ -1,17 +1,7 @@
 import { memo } from 'react'
 import type { SearchMatch, SearchResult } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
-
-function formatTimeAgo(dateStr: string | null) {
-	if (!dateStr) return ''
-	const diff = Date.now() - new Date(dateStr).getTime()
-	const days = Math.floor(diff / 86400000)
-	if (days === 0) return 'Today'
-	if (days === 1) return 'Yesterday'
-	if (days < 7) return `${days}d ago`
-	if (days < 30) return `${Math.floor(days / 7)}w ago`
-	return `${Math.floor(days / 30)}mo ago`
-}
+import { RelativeTime } from '~/ui/RelativeTime'
 
 function SourceBadge({ type }: { type: SearchMatch['source_type'] }) {
 	const label = type === 'user_message' ? 'You' : type === 'session_title' ? 'Title' : 'AI'
@@ -66,7 +56,7 @@ export const SearchResults = memo(function SearchResults({
 						<span className="min-w-0 truncate text-[11px] font-medium text-ai-secondary">
 							{result.session_title || 'Untitled'}
 						</span>
-						<span className="ml-2 shrink-0 text-[10px] text-ai-muted">{formatTimeAgo(result.last_activity)}</span>
+						<RelativeTime className="ml-2 shrink-0 text-[10px] text-ai-muted" value={result.last_activity} />
 					</button>
 					<div className="flex flex-col gap-0.5 px-1.5 pb-1.5">
 						{result.matches

@@ -18,7 +18,8 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { slug, toNiceCsvDate } from '~/utils'
+import { slug } from '~/utils'
+import { formatIsoDate } from '~/utils/dateFormat'
 import { chainIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
 import {
@@ -240,7 +241,7 @@ export function BridgesOverviewByChain({
 			for (const value of values.values()) total += value
 			rows.push([
 				date,
-				toNiceCsvDate(date),
+				formatIsoDate(date, { input: 'seconds' }) ?? '',
 				...filteredBridgeNames.map((bridgeName) => values.get(bridgeName) ?? ''),
 				total
 			])

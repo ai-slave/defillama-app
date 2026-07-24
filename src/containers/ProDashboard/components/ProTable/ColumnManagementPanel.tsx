@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatDate } from '~/utils/dateFormat'
 import type { CustomView } from '../../types'
 import { CustomColumnPanel } from './CustomColumnPanel'
 import { SHARE_METRIC_DEFINITIONS } from './proTable.constants'
@@ -512,7 +513,7 @@ export function ColumnManagementPanel({
 											{view.customColumns && view.customColumns.length > 0 ? (
 												<span>{view.customColumns.length} custom columns</span>
 											) : null}
-											<span>Created {new Date(view.createdAt).toLocaleDateString()}</span>
+											<span>Created {formatDate(view.createdAt, { input: 'milliseconds' }) ?? '-'}</span>
 										</div>
 									</button>
 									<div className="flex items-center gap-1">

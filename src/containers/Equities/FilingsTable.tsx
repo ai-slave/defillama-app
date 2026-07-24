@@ -16,8 +16,8 @@ import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { formatDate } from '~/utils/dateFormat'
 import type { IEquitiesFilingApiItem } from './api.types'
-import { formatEquitiesDate } from './utils'
 
 const columnHelper = createColumnHelper<IEquitiesFilingApiItem>()
 const DEFAULT_SORTING_STATE: SortingState = [{ id: 'filingDate', desc: true }]
@@ -27,7 +27,7 @@ const DEFAULT_PAGE_SIZE = 10
 const columns = [
 	columnHelper.accessor('filingDate', {
 		header: 'Filing Date',
-		cell: ({ getValue }) => formatEquitiesDate(getValue()),
+		cell: ({ getValue }) => formatDate(getValue()) ?? '-',
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'start'
@@ -35,7 +35,7 @@ const columns = [
 	}),
 	columnHelper.accessor('reportDate', {
 		header: 'Report Date',
-		cell: ({ getValue }) => formatEquitiesDate(getValue()),
+		cell: ({ getValue }) => formatDate(getValue()) ?? '-',
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'start'

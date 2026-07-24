@@ -18,13 +18,13 @@ import { useContext, useMemo, useState } from 'react'
 import { useTableSearch } from '~/components/Table/utils'
 import type { IEquitiesFilingApiItem } from '~/containers/Equities/api.types'
 import { parseEquityTickerCountryParam } from '~/containers/Equities/tickerCountry'
-import { formatEquitiesDate } from '~/containers/Equities/utils'
 import { getProEquitiesFilingsQueryKey } from '~/containers/ProDashboard/equitiesTableQueryKeys'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchEquitiesFilingsViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { getProEquitiesFilingsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { Icon } from '~/ui/Icon'
+import { formatDate } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
@@ -37,13 +37,13 @@ const columns: ColumnDef<IEquitiesFilingApiItem, any>[] = [
 	columnHelper.accessor('filingDate', {
 		id: 'filingDate',
 		header: 'Filing Date',
-		cell: (info) => formatEquitiesDate(info.getValue()),
+		cell: (info) => formatDate(info.getValue()) ?? '-',
 		size: 120
 	}),
 	columnHelper.accessor('reportDate', {
 		id: 'reportDate',
 		header: 'Report Date',
-		cell: (info) => formatEquitiesDate(info.getValue()),
+		cell: (info) => formatDate(info.getValue()) ?? '-',
 		size: 120
 	}),
 	columnHelper.accessor('form', {

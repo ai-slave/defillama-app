@@ -1,10 +1,15 @@
 import dayjs from 'dayjs'
+import { formatIsoDate } from '~/utils/dateFormat'
 import { parseCsvLine, type ParsedCsvRow } from './csvParse'
 import type { DateRangeConfig } from './savedDownloads'
 
 export interface ResolvedDateRange {
 	from: string // YYYY-MM-DD, inclusive
 	to: string // YYYY-MM-DD, inclusive
+}
+
+export function calendarDateKey(value: string): string | null {
+	return formatIsoDate(value)
 }
 
 /**
@@ -23,11 +28,11 @@ export function resolveDateRange(range: DateRangeConfig | null | undefined): Res
 		const to = today.format('YYYY-MM-DD')
 		switch (range.preset) {
 			case '7d':
-				return { from: today.subtract(7, 'day').format('YYYY-MM-DD'), to }
+				return { from: today.subtract(6, 'day').format('YYYY-MM-DD'), to }
 			case '30d':
-				return { from: today.subtract(30, 'day').format('YYYY-MM-DD'), to }
+				return { from: today.subtract(29, 'day').format('YYYY-MM-DD'), to }
 			case '90d':
-				return { from: today.subtract(90, 'day').format('YYYY-MM-DD'), to }
+				return { from: today.subtract(89, 'day').format('YYYY-MM-DD'), to }
 			case '1y':
 				return { from: today.subtract(1, 'year').format('YYYY-MM-DD'), to }
 			case 'ytd':
@@ -62,7 +67,9 @@ export function filterCsvByDateRange(csv: string, range: DateRangeConfig | null 
 		const line = lines[i]
 		if (!line.trim()) continue
 		const fields = parseCsvLine(line)
-		const date = fields[dateIdx]
+		const value = fields[dateIdx]
+		if (!value) continue
+		const date = calendarDateKey(value)
 		if (!date) continue
 		if (date < window.from || date > window.to) continue
 		kept.push(line)
@@ -84,7 +91,9 @@ export function filterParsedRowsByDateRange<T extends ParsedCsvRow>(
 	if (dateColIndex < 0) return rows.slice()
 	const result: T[] = []
 	for (const row of rows) {
-		const date = row.values[dateColIndex]
+		const value = row.values[dateColIndex]
+		if (!value) continue
+		const date = calendarDateKey(value)
 		if (!date) continue
 		if (date < window.from || date > window.to) continue
 		result.push(row)

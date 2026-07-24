@@ -13,6 +13,7 @@ import type { ArticleDocument, ArticleSection } from '~/containers/Articles/type
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
+import { RelativeTime } from '~/ui/RelativeTime'
 import { formatNumber } from '~/utils/numberFormat'
 
 type StatusFilter = 'all' | 'draft' | 'published'
@@ -27,18 +28,6 @@ const SORT_LABELS: Record<SortKey, string> = {
 	updated: 'Recently updated',
 	created: 'Recently created',
 	title: 'Title (A–Z)'
-}
-
-function formatRelative(iso: string | null | undefined) {
-	if (!iso) return '—'
-	const date = new Date(iso)
-	if (Number.isNaN(date.getTime())) return '—'
-	const diff = Date.now() - date.getTime()
-	if (diff < 60_000) return 'just now'
-	if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
-	if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`
-	if (diff < 604_800_000) return `${Math.floor(diff / 86_400_000)}d ago`
-	return date.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function wordCount(text: string | undefined): number {
@@ -337,7 +326,6 @@ function MyArticlesContent() {
 				<>
 					<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-surface">
 						{paged.map((article) => {
-							const updated = formatRelative(article.updatedAt)
 							const words = wordCount(article.plainText) || wordCount(article.excerpt)
 							const minutes = words > 0 ? Math.max(1, Math.ceil(words / 220)) : 0
 							const isDeleting = deleteArticleMutation.variables === article.id && deleteArticleMutation.isPending
@@ -383,11 +371,15 @@ function MyArticlesContent() {
 											) : null}
 										</div>
 										<div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-tertiary">
-											<span>
-												{scheduled
-													? `Scheduled ${formatArticleDate(article.goLiveAt)}`
-													: `${article.status === 'draft' ? 'Saved' : 'Updated'} ${updated}`}
-											</span>
+											{scheduled ? (
+												<span>Scheduled {formatArticleDate(article.goLiveAt)}</span>
+											) : (
+												<RelativeTime
+													value={article.updatedAt}
+													prefix={article.status === 'draft' ? 'Saved' : 'Updated'}
+													fallback="—"
+												/>
+											)}
 											<span aria-hidden>·</span>
 											<span className="truncate font-jetbrains text-[11px]">/{article.slug}</span>
 											{words > 0 ? (

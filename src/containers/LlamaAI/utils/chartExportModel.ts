@@ -1,8 +1,8 @@
 import type { PngExportProfile } from '~/components/ChartExport/ChartPngExportButton'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
-import { toNiceCsvDate } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
+import { formatIsoDate } from '~/utils/dateFormat'
 import { formatPercent } from '~/utils/numberFormat'
 
 export interface ChartExportModel {
@@ -51,7 +51,7 @@ function buildCartesianCsvRows(
 			const seconds = normalizeTimestampToSeconds(timestamp)
 			csvRows.push([
 				toCsvCell(timestamp),
-				seconds != null ? toNiceCsvDate(seconds) : '',
+				seconds != null ? (formatIsoDate(seconds, { input: 'seconds' }) ?? '') : '',
 				...seriesKeys.map((_, index) => toCsvCell(row[index + 1]))
 			])
 		}

@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import { ConfirmActionModal } from './ConfirmActionModal'
 import type { TeamSubscription } from './types'
@@ -34,8 +35,7 @@ function formatCancelDate(raw: string | number): string {
 		const isoLike = raw.includes('T') ? raw : raw.replace(' ', 'T')
 		date = new Date(isoLike)
 	}
-	if (isNaN(date.getTime())) return ''
-	return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+	return formatDate(date) ?? ''
 }
 
 export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsModalProps) {

@@ -3,6 +3,7 @@ import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardUrlKey } from '../services/DashboardAPI'
@@ -48,6 +49,7 @@ function DashboardAuthorLink({ author }: { author: Dashboard['author'] }) {
 export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'grid', className }: DashboardCardProps) {
 	const [isDeleting, setIsDeleting] = useState<boolean>(false)
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false)
+	const updatedAt = dashboard.editedAt || dashboard.updated
 
 	const handleDeleteClick = (e: React.MouseEvent) => {
 		e.stopPropagation()
@@ -184,12 +186,9 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 						</span>
 						<CardLikeButton dashboardId={dashboard.id} liked={dashboard.liked} likeCount={dashboard.likeCount} />
 					</div>
-					<p
-						className="flex items-center gap-1.5 text-xs text-pro-text-form"
-						title={new Date(dashboard.editedAt || dashboard.updated).toLocaleString()}
-					>
+					<p className="flex items-center gap-1.5 text-xs text-pro-text-form">
 						<Icon name="clock" height={10} width={10} />
-						<span>Updated {new Date(dashboard.editedAt || dashboard.updated).toLocaleDateString()}</span>
+						<RelativeTime value={updatedAt} prefix="Updated" />
 					</p>
 				</div>
 			</div>

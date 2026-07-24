@@ -29,10 +29,11 @@ import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { RelativeTime } from '~/ui/RelativeTime'
 import { Switch } from '~/ui/Switch'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { slug, toNiceDaysAgo } from '~/utils'
+import { slug } from '~/utils'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { IRecentProtocol } from './types'
@@ -409,7 +410,7 @@ const listedAtColumn = columnHelper.accessor('listedAt', {
 	header: 'Listed At',
 	cell: ({ getValue }) => {
 		const listedAt = getValue()
-		return listedAt != null ? toNiceDaysAgo(listedAt) : ''
+		return listedAt != null ? <RelativeTime value={listedAt} input="seconds" /> : null
 	},
 	meta: {
 		headerClassName: 'w-[120px]',

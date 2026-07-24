@@ -1,5 +1,5 @@
 import { Icon } from '~/ui/Icon'
-import { toNiceDateYear } from '~/utils'
+import { RelativeTime } from '~/ui/RelativeTime'
 
 export function DataFreshness({
 	timestamp,
@@ -13,9 +13,7 @@ export function DataFreshness({
 	return (
 		<p className={`flex items-center gap-1.5 text-sm text-warning ${className ?? ''}`.trim()}>
 			<Icon name="alert-triangle" height={14} width={14} className="shrink-0" />
-			<span>
-				{label} {toNiceDateYear(timestamp)}
-			</span>
+			<RelativeTime value={timestamp} input="seconds" prefix={label} />
 		</p>
 	)
 }

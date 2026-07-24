@@ -70,7 +70,7 @@ describe('ETF API response to chart contract', () => {
 			bitcoin: { aum: 600, flows: 30 },
 			ethereum: { aum: 400, flows: 20 }
 		})
-		expect(result.lastUpdated).toBe('July 17, 2026')
+		expect(result.lastUpdated).toBe('Jul 17, 2026')
 		expect(chart.dataset).toEqual({
 			dimensions: ['timestamp', 'Bitcoin', 'Ethereum'],
 			source: [

@@ -6,6 +6,8 @@ import { buildChartRepairHref, storeChartRepairTarget } from '~/containers/Llama
 import { ChartRenderer } from '~/containers/LlamaAI/components/charts/ChartRenderer'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
+import { RelativeTime } from '~/ui/RelativeTime'
+import { formatDate } from '~/utils/dateFormat'
 import { useProDashboardDashboard, useProDashboardPermissions, useProDashboardTime } from '../ProDashboardAPIContext'
 import type { LlamaAIChartConfig } from '../types'
 import { filterLlamaAIChartPayload } from '../utils/llamaAIChartTimeFilter'
@@ -145,6 +147,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 	if (!data) {
 		return <p className="flex min-h-[300px] items-center justify-center text-pro-text-form">Chart not found</p>
 	}
+	const updatedAt = data.dataFreshness?.cachedAt || data.publishedAt
 
 	return (
 		<div className="flex flex-col gap-2 p-2">
@@ -154,10 +157,10 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 					{data.status === 'legacy-snapshot' || data.status === 'snapshot-only' ? (
 						<span className="text-xs text-pro-text-form">Snapshot</span>
 					) : null}
-					{data.dataFreshness?.cachedAt || data.dataAsOf || data.publishedAt ? (
-						<span className="text-xs text-pro-text-form">
-							Updated {new Date(data.dataFreshness?.cachedAt || data.dataAsOf || data.publishedAt).toLocaleDateString()}
-						</span>
+					{updatedAt ? (
+						<RelativeTime className="text-xs text-pro-text-form" value={updatedAt} prefix="Updated" />
+					) : data.dataAsOf ? (
+						<span className="text-xs text-pro-text-form">Data as of {formatDate(data.dataAsOf) ?? '-'}</span>
 					) : null}
 					{canRefresh ? (
 						<button

@@ -5,7 +5,7 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { CHART_COLORS } from '~/constants/colors'
 import Layout from '~/layout'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { toNiceDateYear } from '~/utils'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import data from './final.json'
 
@@ -34,7 +34,7 @@ const banksTableColumns = [
 	columnHelper.accessor('date', {
 		header: 'Closing date',
 		sortingFn: sortingFns.datetime,
-		cell: (info) => (info.getValue() ? toNiceDateYear(info.getValue()) : ''),
+		cell: (info) => (info.getValue() ? formatDate(info.getValue(), { input: 'seconds' }) : ''),
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'

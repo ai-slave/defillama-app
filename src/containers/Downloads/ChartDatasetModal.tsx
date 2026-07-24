@@ -14,14 +14,17 @@ import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartDatasetDefinition } from './chart-datasets'
 import { combineCsvsWide } from './combineCsvsWide'
-import { filterParsedRowsByDateRange } from './csvDateFilter'
+import { calendarDateKey, filterParsedRowsByDateRange } from './csvDateFilter'
 import { parseCsv, type ParsedCsvRow } from './csvParse'
 import { DateRangePicker } from './DateRangePicker'
 import { FormatSplitButton } from './FormatSplitButton'
 import {
+	downloadPreviewHasTime,
+	formatDownloadPreviewDate,
 	formatDownloadPreviewCurrency,
 	formatDownloadPreviewNumber,
-	formatDownloadPreviewPercent
+	formatDownloadPreviewPercent,
+	parseDownloadPreviewDate
 } from './previewFormatting'
 import {
 	applyChartColumnsAndSort,
@@ -52,8 +55,6 @@ const DATE_HEADER_PATTERN = /(date|time|timestamp|day)/i
 const PERCENT_HEADER_PATTERN = /(apy|pct|percent|change|rate|fee)/i
 const CURRENCY_HEADER_PATTERN =
 	/(usd|tvl|mcap|market.?cap|price|amount|volume|fees?|revenue|supply|borrow|depositusd|withdrawusd|value|flow)/i
-
-const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
 
 type PreviewRow = ParsedCsvRow
 type ColumnKind = 'text' | 'number' | 'currency' | 'percent' | 'date'
@@ -88,19 +89,11 @@ function parseNumericValue(value: string): number | null {
 	return Number.isFinite(parsed) ? parsed : null
 }
 
-function parseDateValue(value: string, header: string): number | null {
-	const trimmed = value.trim()
-	if (!trimmed) return null
-	if (!DATE_HEADER_PATTERN.test(header) && !/[-/:TZ]/i.test(trimmed)) return null
-	const parsed = Date.parse(trimmed)
-	return Number.isNaN(parsed) ? null : parsed
-}
-
 function detectColumnKind(header: string, values: string[]): ColumnKind {
 	const sample = values.filter((v) => v.trim()).slice(0, COLUMN_DETECTION_SAMPLE_SIZE)
 	if (sample.length === 0) return 'text'
 	const numericMatches = sample.filter((v) => parseNumericValue(v) !== null).length
-	const dateMatches = sample.filter((v) => parseDateValue(v, header) !== null).length
+	const dateMatches = sample.filter((value) => parseDownloadPreviewDate(value, header) !== null).length
 	const numericRatio = numericMatches / sample.length
 	const dateRatio = dateMatches / sample.length
 	if ((DATE_HEADER_PATTERN.test(header) && dateRatio >= 0.5) || dateRatio >= 0.9) return 'date'
@@ -116,7 +109,7 @@ function getColumnWidth(header: string, kind: ColumnKind, values: string[], isFi
 	const sampleMaxLength = values
 		.slice(0, COLUMN_WIDTH_SAMPLE_SIZE)
 		.reduce((max, v) => Math.max(max, v.length), header.length)
-	if (kind === 'date') return isFirst ? 200 : 160
+	if (kind === 'date') return downloadPreviewHasTime(header, values) ? (isFirst ? 240 : 220) : isFirst ? 200 : 160
 	if (kind === 'currency' || kind === 'number' || kind === 'percent') return isFirst ? 200 : 140
 	const estimated = Math.max(140, Math.min(300, sampleMaxLength * 8 + 24))
 	return isFirst ? Math.max(200, estimated) : estimated
@@ -137,8 +130,7 @@ function formatCellValue(value: string, column: ColumnMeta): string {
 		return n === null ? value : formatDownloadPreviewPercent(n)
 	}
 	if (column.kind === 'date') {
-		const d = parseDateValue(value, column.header)
-		return d === null ? value : dateFormatter.format(d)
+		return formatDownloadPreviewDate(value, column.header) ?? value
 	}
 	return value
 }
@@ -498,7 +490,7 @@ export function ChartDatasetModal({
 		let min: string | undefined
 		let max: string | undefined
 		for (const row of rows) {
-			const d = row.values[dateColIndex]
+			const d = calendarDateKey(row.values[dateColIndex] ?? '')
 			if (!d) continue
 			if (min === undefined || d < min) min = d
 			if (max === undefined || d > max) max = d
@@ -534,8 +526,8 @@ export function ChartDatasetModal({
 			if (bBlank) return -1
 
 			if (activeColumn.kind === 'date') {
-				const ad = parseDateValue(av, activeColumn.header)
-				const bd = parseDateValue(bv, activeColumn.header)
+				const ad = parseDownloadPreviewDate(av, activeColumn.header)?.timestamp ?? null
+				const bd = parseDownloadPreviewDate(bv, activeColumn.header)?.timestamp ?? null
 				if (ad === null && bd === null) return a.id - b.id
 				if (ad === null) return 1
 				if (bd === null) return -1

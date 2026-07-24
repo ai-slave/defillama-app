@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import { matchSorter } from 'match-sorter'
 import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
@@ -8,6 +7,7 @@ import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { RelativeTime } from '~/ui/RelativeTime'
 import {
 	chartDatasets,
 	chartDatasetCategories,
@@ -640,7 +640,7 @@ function RecentDownloadsStrip({
 									</span>
 									<span className="truncate text-xs font-medium text-pro-text-primary">{preset.name}</span>
 									<span className="flex items-center justify-between gap-2 text-[11px] text-pro-text-tertiary tabular-nums">
-										<span className="truncate">{dayjs(preset.createdAt).fromNow()}</span>
+										<RelativeTime className="truncate" value={preset.createdAt} input="milliseconds" />
 										<Icon
 											name="arrow-up-right"
 											className="size-3 shrink-0 -translate-x-1 text-pro-text-tertiary opacity-0 transition-all group-hover:translate-x-0 group-hover:text-brand group-hover:opacity-100"
@@ -814,8 +814,8 @@ function SavedDownloadRow({
 	const description = describeSavedConfig(preset)
 	const sourceLabel = resolvedLabel(preset)
 	const timestamp = preset.lastRunAt
-		? { prefix: 'ran', value: dayjs(preset.lastRunAt).fromNow() }
-		: { prefix: 'saved', value: dayjs(preset.createdAt).fromNow() }
+		? { prefix: 'ran', value: preset.lastRunAt }
+		: { prefix: 'saved', value: preset.createdAt }
 
 	const handleRowActivate = (event: React.MouseEvent | React.KeyboardEvent) => {
 		const target = event.target as HTMLElement
@@ -868,7 +868,7 @@ function SavedDownloadRow({
 			<div className="relative flex h-8 shrink-0 items-center justify-end pl-2 sm:min-w-[12rem]">
 				<span className="text-[11px] text-pro-text-tertiary tabular-nums transition-opacity sm:group-focus-within:opacity-0 sm:group-hover:opacity-0">
 					<span className="hidden text-pro-text-tertiary/60 sm:inline">{timestamp.prefix} </span>
-					{timestamp.value}
+					<RelativeTime value={timestamp.value} input="milliseconds" />
 				</span>
 
 				<div className="absolute inset-y-0 right-0 hidden items-center gap-0.5 pl-2 opacity-0 transition-opacity sm:flex sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">

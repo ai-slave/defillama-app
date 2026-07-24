@@ -10,6 +10,7 @@ import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dial
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { formatDate } from '~/utils/dateFormat'
 import { buildLlamaAIChartNode } from '../import/llamaaiToTiptap'
 import type { LlamaAIChartData } from '../llamaaiChart'
 
@@ -117,7 +118,7 @@ export function LlamaAIChartPickerDialog({
 							<span className="min-w-0 flex-1">
 								<span className="block truncate">{item.title}</span>
 								<span className="block truncate text-xs opacity-50">
-									{item.chart_type || 'chart'} · saved {new Date(item.created_at).toLocaleDateString()}
+									{item.chart_type || 'chart'} · saved {formatDate(item.created_at) ?? '-'}
 								</span>
 							</span>
 							{item.frozen ? (

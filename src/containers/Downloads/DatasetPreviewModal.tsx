@@ -14,9 +14,12 @@ import { formatNumber } from '~/utils/numberFormat'
 import type { DatasetDefinition, DatasetExcludeToggle } from './datasets'
 import { FormatSplitButton } from './FormatSplitButton'
 import {
+	downloadPreviewHasTime,
+	formatDownloadPreviewDate,
 	formatDownloadPreviewCurrency,
 	formatDownloadPreviewNumber,
-	formatDownloadPreviewPercent
+	formatDownloadPreviewPercent,
+	parseDownloadPreviewDate
 } from './previewFormatting'
 import { RowLimitPicker } from './RowLimitPicker'
 import {
@@ -45,9 +48,6 @@ const PERCENT_HEADER_PATTERN = /(apy|pct|percent|change|rate|fee|mnav|ltv)/i
 const CURRENCY_HEADER_PATTERN =
 	/(usd|tvl|mcap|market.?cap|price|amount|volume|fees?|revenue|supply|borrow|debt|cost|aum|valuation|value|flow)/i
 
-const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
-const dateTimeFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' })
-
 type PreviewRow = {
 	id: number
 	values: string[]
@@ -62,7 +62,6 @@ interface ColumnMeta {
 	kind: ColumnKind
 	align: 'start' | 'end'
 	width: number
-	hasTime: boolean
 }
 
 interface SortState {
@@ -122,28 +121,11 @@ function parseNumericValue(value: string): number | null {
 	return Number.isFinite(parsed) ? parsed : null
 }
 
-function parseDateValue(value: string, header: string): number | null {
-	const trimmed = value.trim()
-	if (!trimmed) return null
-	const numeric = parseNumericValue(trimmed)
-	if (numeric !== null && DATE_HEADER_PATTERN.test(header)) {
-		const digits = trimmed.replace(/\D/g, '')
-		if (digits.length === 10 || digits.length === 13) {
-			const millis = digits.length === 10 ? numeric * 1000 : numeric
-			const time = new Date(millis).getTime()
-			return Number.isNaN(time) ? null : time
-		}
-	}
-	if (!DATE_HEADER_PATTERN.test(header) && !/[-/:TZ]/i.test(trimmed)) return null
-	const parsed = Date.parse(trimmed)
-	return Number.isNaN(parsed) ? null : parsed
-}
-
 function detectColumnKind(header: string, values: string[]): ColumnKind {
 	const sample = values.filter((value) => value.trim()).slice(0, COLUMN_DETECTION_SAMPLE_SIZE)
 	if (sample.length === 0) return 'text'
 	const numericMatches = sample.filter((value) => parseNumericValue(value) !== null).length
-	const dateMatches = sample.filter((value) => parseDateValue(value, header) !== null).length
+	const dateMatches = sample.filter((value) => parseDownloadPreviewDate(value, header) !== null).length
 	const numericRatio = numericMatches / sample.length
 	const dateRatio = dateMatches / sample.length
 	if ((DATE_HEADER_PATTERN.test(header) && dateRatio >= 0.5) || dateRatio >= 0.9) return 'date'
@@ -155,23 +137,14 @@ function detectColumnKind(header: string, values: string[]): ColumnKind {
 	return 'text'
 }
 
-function detectHasTime(header: string, values: string[]): boolean {
-	if (/time|timestamp/i.test(header)) return true
-	return values.slice(0, COLUMN_DETECTION_SAMPLE_SIZE).some((value) => /T\d|:\d{2}/.test(value))
-}
-
 function getColumnWidth(header: string, kind: ColumnKind, values: string[], isFirst: boolean): number {
 	const sampleMaxLength = values.slice(0, COLUMN_WIDTH_SAMPLE_SIZE).reduce((max, value) => {
 		return Math.max(max, value.length)
 	}, header.length)
-	if (kind === 'date') return isFirst ? 200 : 160
+	if (kind === 'date') return downloadPreviewHasTime(header, values) ? (isFirst ? 240 : 220) : isFirst ? 200 : 160
 	if (kind === 'currency' || kind === 'number' || kind === 'percent') return isFirst ? 200 : 140
 	const estimated = Math.max(140, Math.min(300, sampleMaxLength * 8 + 24))
 	return isFirst ? Math.max(200, estimated) : estimated
-}
-
-function formatDate(value: number, hasTime: boolean): string {
-	return hasTime ? dateTimeFormatter.format(value) : dateFormatter.format(value)
 }
 
 function formatCellValue(value: string, column: ColumnMeta): string {
@@ -189,8 +162,7 @@ function formatCellValue(value: string, column: ColumnMeta): string {
 		return numeric === null ? value : formatDownloadPreviewPercent(numeric)
 	}
 	if (column.kind === 'date') {
-		const parsedDate = parseDateValue(value, column.header)
-		return parsedDate === null ? value : formatDate(parsedDate, column.hasTime)
+		return formatDownloadPreviewDate(value, column.header) ?? value
 	}
 	return value
 }
@@ -368,8 +340,7 @@ export function DatasetPreviewModal({
 				header,
 				kind,
 				align: kind === 'text' || kind === 'date' ? 'start' : 'end',
-				width: getColumnWidth(header, kind, values, index === 0),
-				hasTime: kind === 'date' ? detectHasTime(header, values) : false
+				width: getColumnWidth(header, kind, values, index === 0)
 			}
 		})
 	}, [headers, rows])
@@ -417,8 +388,8 @@ export function DatasetPreviewModal({
 			if (bBlank) return -1
 
 			if (activeColumn.kind === 'date') {
-				const aVal = parseDateValue(a, activeColumn.header)
-				const bVal = parseDateValue(b, activeColumn.header)
+				const aVal = parseDownloadPreviewDate(a, activeColumn.header)?.timestamp ?? null
+				const bVal = parseDownloadPreviewDate(b, activeColumn.header)?.timestamp ?? null
 				if (aVal === null && bVal === null) return leftRow.id - rightRow.id
 				if (aVal === null) return 1
 				if (bVal === null) return -1

@@ -1,3 +1,4 @@
+import { formatDateTime } from '~/utils/dateFormat'
 import { formatNumber, formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
 import { usePegsData, type PegRow, type PegSupplyCap } from './api'
 import { KpiCard, ChartCard, SectionHeader, SimpleTable, type Col } from './ui'
@@ -96,7 +97,7 @@ export default function Pegs() {
 		<div className="flex flex-col gap-6">
 			{data?.asOf && (
 				<p className="text-[11px] text-pro-text-secondary">
-					As of {new Date(data.asOf).toLocaleString()} — {data.methodology}
+					As of {formatDateTime(data.asOf, { timeZone: 'UTC' }) ?? '-'} — {data.methodology}
 				</p>
 			)}
 

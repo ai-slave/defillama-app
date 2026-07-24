@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import { lazy, startTransition, Suspense, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
@@ -16,6 +15,7 @@ import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatMonthYear } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { IProtocolOverviewPageData } from './types'
@@ -47,7 +47,7 @@ const getPeriodHeader = (
 		groupKey === 'cumulative'
 			? 'Total'
 			: groupKey === 'monthly'
-				? dayjs.utc(key).format('MMM YYYY')
+				? (formatMonthYear(key.length === 7 ? `${key}-01` : key) ?? key)
 				: groupKey === 'quarterly'
 					? key.split('-').reverse().join(' ')
 					: key,

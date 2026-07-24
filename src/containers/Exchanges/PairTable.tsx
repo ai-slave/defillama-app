@@ -4,6 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { exchangeDefinitions } from './definitions'
@@ -55,13 +56,6 @@ function UnsupportedMetric() {
 export function pairDepthTotal(bid: number | null, ask: number | null) {
 	return sumNullable([bid, ask])
 }
-
-const UTC_DATE = new Intl.DateTimeFormat('en', {
-	year: 'numeric',
-	month: 'short',
-	day: 'numeric',
-	timeZone: 'UTC'
-})
 
 // Perp-only and fee/listing columns stay defined but off by default — reachable via the column selector.
 function pairColumnVisibility(): VisibilityState {
@@ -292,12 +286,14 @@ function buildColumns(
 						getValue() == null ? (
 							'–'
 						) : (
-							UTC_DATE.format(new Date(getValue() * 1000))
+							<span className="whitespace-nowrap">
+								{formatDateTime(getValue(), { input: 'seconds', timeZone: 'UTC' }) ?? '–'}
+							</span>
 						)
 					) : (
 						<UnsupportedMetric />
 					),
-				meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.nextFundingAt.description }
+				meta: { headerClassName: 'w-[220px]', align: 'end', headerHelperText: definitions.nextFundingAt.description }
 			}),
 			columnHelper.accessor((row) => row.maxLeverage ?? undefined, {
 				id: 'maxLeverage',
@@ -330,7 +326,7 @@ function buildColumns(
 		columnHelper.accessor((row) => row.listedAt ?? undefined, {
 			id: 'listedAt',
 			header: definitions.listedAt.label,
-			cell: ({ getValue }) => (getValue() == null ? '–' : UTC_DATE.format(new Date(getValue() * 1000))),
+			cell: ({ getValue }) => (getValue() == null ? '–' : (formatDate(getValue(), { input: 'seconds' }) ?? '–')),
 			meta: { headerClassName: 'w-[110px]', align: 'end', headerHelperText: definitions.listedAt.description }
 		})
 	)

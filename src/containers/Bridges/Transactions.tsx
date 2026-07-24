@@ -24,8 +24,9 @@ import { inputStyles, searchFieldIconStyles, searchFieldInlineWrapperStyles, sea
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { slug, toNiceDayAndHour } from '~/utils'
+import { slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { fetchBridgeTransactionsClient } from './api'
 import type { RawBridgeInfo, RawBridgeTransaction } from './api.types'
@@ -157,9 +158,13 @@ const truncateMiddle = (value: string, lead = 6, tail = 4) => {
 const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplorers>['data']) => [
 	columnHelper.accessor('timestamp', {
 		header: 'Timestamp',
-		cell: ({ getValue }) => <span className="whitespace-nowrap text-secondary">{toNiceDayAndHour(getValue())}</span>,
+		cell: ({ getValue }) => (
+			<span className="whitespace-nowrap text-secondary">
+				{formatDateTime(getValue(), { input: 'seconds', timeZone: 'UTC' }) ?? '–'}
+			</span>
+		),
 		meta: {
-			headerClassName: 'w-[160px]'
+			headerClassName: 'w-[220px]'
 		}
 	}),
 	columnHelper.accessor('bridge_name', {
@@ -425,13 +430,6 @@ export const fetchTransactions = async ({ bridges, startDate, endDate, selectedB
 
 const toDateOnly = (date: Date) => date.toISOString().split('T')[0]
 
-const formatDateLabel = (value: string) => {
-	if (!value) return ''
-	const [year, month, day] = value.split('-').map(Number)
-	const d = new Date(year, (month ?? 1) - 1, day ?? 1)
-	return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
 interface StatCardProps {
 	label: string
 	value: React.ReactNode
@@ -635,7 +633,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 							{fetchedContext.bridgeName}
 						</span>
 						<span className="text-tertiary">
-							{formatDateLabel(fetchedContext.startDate)} → {formatDateLabel(fetchedContext.endDate)}
+							{formatDate(fetchedContext.startDate)} → {formatDate(fetchedContext.endDate)}
 						</span>
 						<span className="text-tertiary">
 							· {stats.uniqueChains} chain{stats.uniqueChains === 1 ? '' : 's'}

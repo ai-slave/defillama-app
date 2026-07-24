@@ -1,6 +1,5 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import dayjs from 'dayjs'
 import { matchSorter } from 'match-sorter'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
@@ -30,6 +29,7 @@ import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { formatDate } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
@@ -112,8 +112,7 @@ function getTotalRaisedAmount(raises: TokenOverviewData['raises']): number | nul
 
 function formatDateLabel(value: string | number | null | undefined) {
 	if (value == null) return null
-	const date = typeof value === 'number' ? dayjs.unix(value) : dayjs(value)
-	return date.isValid() ? date.format('MMM D, YYYY') : null
+	return typeof value === 'number' ? formatDate(value, { input: 'seconds' }) : formatDate(value)
 }
 
 function getChartLabel(label: TokenOverviewChartLabel, symbol: string) {

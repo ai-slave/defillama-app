@@ -175,6 +175,8 @@ describe('formatDateValue', () => {
 	it('formats ISO date strings in UTC', () => {
 		expect(formatDateValue('2025-10-06')).toBe('Oct 6, 2025')
 		expect(formatDateValue('2025-10-06T12:30:00Z')).toBe('Oct 6, 2025')
+		expect(formatDateValue('2025-10-06 12:30:00')).toBe('Oct 6, 2025')
+		expect(formatDateValue('2025-10-06T12:30:00')).toBe('Oct 6, 2025')
 	})
 
 	it('formats epoch seconds and milliseconds', () => {

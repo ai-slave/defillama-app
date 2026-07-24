@@ -5,11 +5,12 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { EmissionsDataset } from '~/containers/Unlocks/api.types'
+import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
-import { slug, toNiceDayMonthYear } from '~/utils'
+import { slug } from '~/utils'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 
@@ -68,7 +69,7 @@ export function UnlocksChartTab({
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
 	const [totalUnlocksColor] = useState(createRandomColor)
 	const todayHallmarks = useMemo<[number, string][]>(
-		() => [[todayTimestamp, toNiceDayMonthYear(todayTimestamp)]],
+		() => [[todayTimestamp, formatUnlockDate(todayTimestamp)]],
 		[todayTimestamp]
 	)
 	const { data: unlocksProtocols, isLoading: unlocksProtocolsLoading } = useQuery({

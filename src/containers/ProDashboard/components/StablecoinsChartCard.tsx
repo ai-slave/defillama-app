@@ -19,7 +19,7 @@ import {
 	useStablecoinSelectionIntent
 } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
-import { toNiceCsvDate } from '~/utils'
+import { formatIsoDate } from '~/utils/dateFormat'
 import { download } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
 import { useChartImageExport } from '../hooks/useChartImageExport'
@@ -129,7 +129,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 			rows = [
 				['Date', ...dimensions],
 				...dataset.source.map((row) => [
-					toNiceCsvDate((row[0] as number) / 1000),
+					formatIsoDate(row[0] as number, { input: 'milliseconds' }) ?? '',
 					...indexes.map((index) => row[index] ?? '')
 				])
 			]

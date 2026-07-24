@@ -3,6 +3,7 @@ import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-t
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
+import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { formatRatio, formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import {
 	useStSyrupTxes,
@@ -66,12 +67,14 @@ const txColumns: ColumnDef<TxRow>[] = [
 	{
 		header: 'Date',
 		accessorKey: 'timestamp',
-		cell: ({ getValue }) =>
-			new Date(getValue<number>() * 1000).toLocaleDateString('en-US', {
-				month: 'short',
-				day: 'numeric',
-				year: 'numeric'
-			}),
+		cell: ({ getValue }) => {
+			const timestamp = getValue<number>()
+			return (
+				<span title={formatDateTime(timestamp, { input: 'seconds', timeZone: 'UTC' }) ?? undefined}>
+					{formatDate(timestamp, { input: 'seconds' }) ?? '-'}
+				</span>
+			)
+		},
 		size: 140
 	},
 	{
@@ -110,12 +113,14 @@ const dripColumns: ColumnDef<DripRow>[] = [
 	{
 		header: 'Date',
 		accessorKey: 'timestamp',
-		cell: ({ getValue }) =>
-			new Date(getValue<number>() * 1000).toLocaleDateString('en-US', {
-				month: 'short',
-				day: 'numeric',
-				year: 'numeric'
-			}),
+		cell: ({ getValue }) => {
+			const timestamp = getValue<number>()
+			return (
+				<span title={formatDateTime(timestamp, { input: 'seconds', timeZone: 'UTC' }) ?? undefined}>
+					{formatDate(timestamp, { input: 'seconds' }) ?? '-'}
+				</span>
+			)
+		},
 		size: 140
 	},
 	{

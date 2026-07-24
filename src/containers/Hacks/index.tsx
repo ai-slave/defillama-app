@@ -28,7 +28,8 @@ import { TagGroup } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { firstDayOfMonth, toNiceDayMonthAndYear } from '~/utils'
+import { firstDayOfMonth } from '~/utils'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import { isParamNone, parseArrayParam, parseExcludeParam, parseNumberQueryParam } from '~/utils/routerQuery'
 import { HacksFilters } from './Filters'
@@ -407,7 +408,7 @@ const hacksColumns = [
 		}
 	}),
 	columnHelper.accessor('date', {
-		cell: ({ getValue }) => toNiceDayMonthAndYear(getValue()),
+		cell: ({ getValue }) => formatDate(getValue(), { input: 'seconds' }),
 		meta: {
 			headerClassName: 'w-[120px]'
 		},

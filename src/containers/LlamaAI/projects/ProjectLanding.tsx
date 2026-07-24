@@ -10,6 +10,7 @@ import { useSessionMutations } from '~/containers/LlamaAI/hooks/useSessionMutati
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
 import { AddSourcesMenu } from './AddSourcesMenu'
 import { CreateProjectModal } from './CreateProjectModal'
@@ -21,20 +22,6 @@ import type { ProjectTier } from './types'
 
 // Match PromptInput: text pastes above this length collapse into a file chip instead of flooding the field.
 const PASTE_TO_FILE_THRESHOLD = 1500
-
-function relativeTime(iso: string | null): string {
-	if (!iso) return ''
-	const t = new Date(iso).getTime()
-	const diff = Date.now() - t
-	const minutes = Math.floor(diff / 60_000)
-	if (minutes < 1) return 'just now'
-	if (minutes < 60) return `${minutes}m ago`
-	const hours = Math.floor(minutes / 60)
-	if (hours < 24) return `${hours}h ago`
-	const days = Math.floor(hours / 24)
-	if (days < 30) return `${days}d ago`
-	return new Date(iso).toLocaleDateString()
-}
 
 interface ProjectLandingProps {
 	projectId: string
@@ -455,9 +442,10 @@ export function ProjectLanding({
 														) : null}
 														<span className="min-w-0 flex-1 truncate text-[13px]">{s.title || 'Untitled chat'}</span>
 													</button>
-													<span className="shrink-0 text-xs text-ai-muted tabular-nums group-focus-within/row:hidden group-hover/row:hidden">
-														{relativeTime(s.lastActivity ?? s.createdAt)}
-													</span>
+													<RelativeTime
+														value={s.lastActivity ?? s.createdAt}
+														className="shrink-0 text-xs text-ai-muted tabular-nums group-focus-within/row:hidden group-hover/row:hidden"
+													/>
 													<div className="hidden shrink-0 items-center gap-0.5 group-focus-within/row:flex group-hover/row:flex">
 														<Tooltip
 															content="Rename chat"

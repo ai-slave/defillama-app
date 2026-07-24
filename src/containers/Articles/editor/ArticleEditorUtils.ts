@@ -46,18 +46,6 @@ export function formatArticleDate(iso: string | null | undefined): string {
 	return date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 }
 
-export function formatRelative(iso: string | null | undefined) {
-	if (!iso) return null
-	const date = new Date(iso)
-	if (Number.isNaN(date.getTime())) return null
-	const diff = Date.now() - date.getTime()
-	if (diff < 5_000) return 'just now'
-	if (diff < 60_000) return `${Math.floor(diff / 1000)}s ago`
-	if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
-	if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`
-	return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-}
-
 export function useTicker(intervalMs = 30_000) {
 	const [, set] = useState(0)
 	useEffect(() => {

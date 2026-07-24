@@ -25,6 +25,7 @@ import { InlineStatStrip } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
+import { formatMonthYear } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import type { ICexItem, IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
@@ -621,9 +622,7 @@ function getLatestUpdatedMonth(protocols: TokenRightsListItem[]): string | null 
 		if (time > latestTime) latestTime = time
 	}
 
-	return latestTime
-		? new Date(latestTime).toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' })
-		: null
+	return latestTime ? formatMonthYear(latestTime, { input: 'milliseconds' }) : null
 }
 
 const columns = [

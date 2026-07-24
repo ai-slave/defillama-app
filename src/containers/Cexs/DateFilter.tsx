@@ -1,4 +1,6 @@
 import * as Ariakit from '@ariakit/react'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useState } from 'react'
 import { useAuthContext } from '~/auth'
@@ -8,7 +10,8 @@ import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
-import { toNiceDayMonthAndYear, toNiceDayMonthAndYearAndTime } from '~/utils'
+
+dayjs.extend(utc)
 
 const SubscribeProModal = lazy(() =>
 	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
@@ -31,6 +34,10 @@ const getHourFromTimestamp = (timestamp: number | null) => {
 const getTodayString = () => {
 	const today = new Date()
 	return today.toISOString().split('T')[0]
+}
+
+function formatCexRangePoint(timestampMs: number, includeTime: boolean) {
+	return dayjs.utc(timestampMs).format(includeTime ? 'D MMM, YYYY HH:mm' : 'D MMM, YYYY')
 }
 
 const isAtMidnight = (timestamp: number | null) => {
@@ -134,14 +141,14 @@ export const DateFilter = ({
 							{' '}
 							{startDate != null
 								? isAtMidnight(startDate)
-									? toNiceDayMonthAndYear(startDate / 1000)
-									: toNiceDayMonthAndYearAndTime(startDate / 1000)
+									? formatCexRangePoint(startDate, false)
+									: formatCexRangePoint(startDate, true)
 								: null}{' '}
 							-{' '}
 							{endDate != null
 								? isAtMidnight(endDate)
-									? toNiceDayMonthAndYear(endDate / 1000)
-									: toNiceDayMonthAndYearAndTime(endDate / 1000)
+									? formatCexRangePoint(endDate, false)
+									: formatCexRangePoint(endDate, true)
 								: null}
 						</span>
 					) : null}

@@ -23,6 +23,7 @@ type ArticleEditorHeaderProps = {
 	pillLabel: string
 	pillState: SavePillState
 	savedLabel: string | null
+	savedExactLabel: string | null
 	slugDraft: string
 	slugEditing: boolean
 	viewMode: ArticleEditorViewMode
@@ -64,6 +65,7 @@ export function ArticleEditorHeader({
 	pillState,
 	saveArticle,
 	savedLabel,
+	savedExactLabel,
 	setSlugDraft,
 	slugDraft,
 	slugEditing,
@@ -153,7 +155,13 @@ export function ArticleEditorHeader({
 										? `Saved ${savedLabel ?? ''} — save again`
 										: 'Save'
 					}
-					title={pillState === 'error' ? 'Click to retry. Cmd/Ctrl+S also saves.' : 'Cmd/Ctrl+S to save'}
+					title={
+						pillState === 'error'
+							? 'Click to retry. Cmd/Ctrl+S also saves.'
+							: pillState === 'saved' && savedExactLabel
+								? `Saved ${savedExactLabel}. Cmd/Ctrl+S to save.`
+								: 'Cmd/Ctrl+S to save'
+					}
 					disabled={pillState === 'saving' || pillState === 'idle'}
 					onClick={() => void saveArticle()}
 					className={`hidden items-center gap-2 rounded-md border px-2.5 py-1.5 font-jetbrains text-[11px] tracking-tight transition-colors disabled:cursor-default ${

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { RelativeTime } from '~/ui/RelativeTime'
 import { readInvestorApiJson, type ApiUnixMillisecondsString } from '../../api.types'
 
 export interface ParagraphPost {
@@ -11,25 +12,6 @@ export interface ParagraphPost {
 	publishedAt: ApiUnixMillisecondsString
 	imageUrl?: string
 	categories?: string[]
-}
-
-function formatDate(timestamp: string): string {
-	const date = new Date(parseInt(timestamp))
-	return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-}
-
-function formatRelativeTime(timestamp: string): string {
-	const date = new Date(parseInt(timestamp))
-	const now = new Date()
-	const diffInMs = now.getTime() - date.getTime()
-	const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
-
-	if (diffInDays === 0) return 'Today'
-	if (diffInDays === 1) return 'Yesterday'
-	if (diffInDays < 7) return `${diffInDays} days ago`
-	if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`
-	if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`
-	return `${Math.floor(diffInDays / 365)} years ago`
 }
 
 function isWithinLastThreeMonths(timestamp: string): boolean {
@@ -92,8 +74,8 @@ function renderPressReleaseCards(posts: ParagraphPost[]) {
 			<div className="flex flex-1 flex-col gap-3 p-5">
 				{/* Meta */}
 				<div className="flex flex-wrap items-center gap-2">
-					<time className="text-xs font-medium text-pro-text-label" title={formatDate(post.publishedAt)}>
-						{formatRelativeTime(post.publishedAt)}
+					<time className="text-xs font-medium text-pro-text-label">
+						<RelativeTime value={Number(post.publishedAt)} input="milliseconds" />
 					</time>
 					{post.categories && post.categories.length > 0 && (
 						<>
@@ -244,8 +226,8 @@ export default function PressReleases() {
 
 								{/* Content */}
 								<div className="flex flex-1 flex-col gap-2 p-4">
-									<time className="text-xs font-medium text-pro-text-label" title={formatDate(post.publishedAt)}>
-										{formatRelativeTime(post.publishedAt)}
+									<time className="text-xs font-medium text-pro-text-label">
+										<RelativeTime value={Number(post.publishedAt)} input="milliseconds" />
 									</time>
 									<h3 className="line-clamp-2 text-base leading-snug font-bold text-pro-text-primary transition-colors group-hover:text-sl-accent">
 										{post.title}

@@ -12,9 +12,9 @@ import { prepareTableCsv } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
+import { formatDateTime } from '~/utils/dateFormat'
 import { formatEquitiesCompactValue } from './financialsFormatting'
 import type { IEquitiesOnchainMarketRow, IEquitiesOnchainTokenRow } from './types'
-import { formatEquitiesDateTime } from './utils'
 
 const TABLE_PAGE_SIZE_OPTIONS = [10, 25, 50] as const
 const DEFAULT_TABLE_PAGE_SIZE = 10
@@ -151,7 +151,7 @@ const marketsColumns = [
 		header: 'Updated',
 		cell: ({ getValue }) => (
 			<span className="whitespace-nowrap" suppressHydrationWarning>
-				{formatEquitiesDateTime(getValue())}
+				{formatDateTime(getValue(), { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}
 			</span>
 		),
 		meta: {

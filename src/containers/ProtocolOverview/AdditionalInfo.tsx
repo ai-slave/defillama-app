@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
@@ -15,8 +16,11 @@ import { MetricRow } from '~/ui/MetricPrimitives'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { IProtocolOverviewPageData } from './types'
+
+dayjs.extend(utc)
 
 const EMPTY_COMPETITORS: Array<{ name: string; tvl: number }> = []
 const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
@@ -444,7 +448,7 @@ const Hacks = (props: IProtocolOverviewPageData) => {
 						{hack.date ? (
 							<p>
 								<span>Date: </span>
-								<span>{dayjs.utc(hack.date * 1e3).format('MMM D, YYYY')}</span>
+								<span>{formatDate(hack.date, { input: 'seconds' })}</span>
 							</p>
 						) : null}
 						{props.id.startsWith('parent#') ? (

@@ -13,6 +13,7 @@ import type { ArticleAuthorProfile } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Icon } from '~/ui/Icon'
+import { formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
 
 const DISPLAY_NAME_MAX = 120
@@ -147,20 +148,11 @@ function CharCount({ value, max }: { value: string; max: number }) {
 	)
 }
 
-const joinedDateFormatter = new Intl.DateTimeFormat('en', { month: 'short', year: 'numeric' })
-
-function formatJoined(iso: string | null | undefined): string {
-	if (!iso) return ''
-	const d = new Date(iso)
-	if (Number.isNaN(d.getTime())) return ''
-	return joinedDateFormatter.format(d)
-}
-
 function LivePreview({ state, createdAt }: { state: FormState; createdAt: string | null | undefined }) {
 	const displayName = state.displayName.trim() || 'Your name'
 	const slug = state.slug.trim() || 'your-handle'
 	const initials = displayName.slice(0, 2).toUpperCase()
-	const joined = formatJoined(createdAt)
+	const joined = formatMonthYear(createdAt) ?? ''
 	const socialCount =
 		Object.values(state.socials).filter((v) => v.trim()).length +
 		state.customSocials.filter((c) => c.value.trim()).length

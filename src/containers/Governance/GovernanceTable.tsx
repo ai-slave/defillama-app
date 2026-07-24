@@ -16,7 +16,7 @@ import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles
 import { Panel } from '~/ui/Panel'
 import { Switch } from '~/ui/Switch'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { toNiceDayMonthAndYear } from '~/utils'
+import { formatDateTime } from '~/utils/dateFormat'
 import { formatCompactNumber, formatNumber } from '~/utils/numberFormat'
 import type { GovernanceProposal, GovernanceType } from './types'
 
@@ -107,7 +107,11 @@ const DateCell = ({ info }: { info: CellContext<GovernanceProposal, number | nul
 	const value = info.getValue()
 	if (value == null) return ''
 	const timestamp = Number(value)
-	return <>{Number.isFinite(timestamp) ? toNiceDayMonthAndYear(timestamp) : ''}</>
+	return (
+		<span className="whitespace-nowrap">
+			{Number.isFinite(timestamp) ? formatDateTime(timestamp, { input: 'seconds', timeZone: 'UTC' }) : ''}
+		</span>
+	)
 }
 
 const columnHelper = createColumnHelper<GovernanceProposal>()
@@ -125,7 +129,7 @@ const proposalsCompoundColumns = [
 		header: 'Start',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'w-[220px]',
 			align: 'end'
 		}
 	}),
@@ -133,7 +137,7 @@ const proposalsCompoundColumns = [
 		header: 'End',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'w-[220px]',
 			align: 'end'
 		}
 	}),
@@ -178,7 +182,7 @@ const proposalsSnapshotColumns = [
 		header: 'Start',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'w-[220px]',
 			align: 'end'
 		}
 	}),
@@ -186,7 +190,7 @@ const proposalsSnapshotColumns = [
 		header: 'End',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'w-[220px]',
 			align: 'end'
 		}
 	}),
@@ -264,7 +268,7 @@ const proposalsTallyColumns = [
 		header: 'Start',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'w-[220px]',
 			align: 'end'
 		}
 	}),
@@ -272,7 +276,7 @@ const proposalsTallyColumns = [
 		header: 'End',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'w-[220px]',
 			align: 'end'
 		}
 	}),

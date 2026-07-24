@@ -3,10 +3,12 @@ import { lazy, Suspense, useCallback, useContext, useMemo, useState } from 'reac
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
-import { slug, toNiceCsvDate, toNiceDayMonthYear } from '~/utils'
+import { slug } from '~/utils'
+import { formatIsoDate } from '~/utils/dateFormat'
 import { download } from '~/utils/download'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
@@ -31,7 +33,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	const { chartInstance, handleChartReady } = useChartImageExport()
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
 	const todayHallmarks = useMemo<[number, string][]>(
-		() => [[todayTimestamp, toNiceDayMonthYear(todayTimestamp)]],
+		() => [[todayTimestamp, formatUnlockDate(todayTimestamp)]],
 		[todayTimestamp]
 	)
 
@@ -78,7 +80,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 		const headers = ['Date', ...activeCategories]
 		const rows = dataset.source.map((item) => {
 			return [
-				toNiceCsvDate(Math.floor((item[0] as number) / 1e3)),
+				formatIsoDate(item[0] as number, { input: 'milliseconds' }) ?? '',
 				...selectedDimensionIndexes.map((index) => item[index] ?? '')
 			]
 		})

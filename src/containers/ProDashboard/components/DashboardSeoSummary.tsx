@@ -1,13 +1,7 @@
 import { BasicLink } from '~/components/Link'
+import { formatIsoDate } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
 import type { DashboardSeo, DashboardSeoPublicDashboard } from '../utils/seo'
-
-function formatDate(value: string | null): string | null {
-	if (!value) return null
-	const time = Date.parse(value)
-	if (!Number.isFinite(time)) return null
-	return new Date(time).toISOString().slice(0, 10)
-}
 
 function AuthorAvatar({
 	author,
@@ -30,7 +24,7 @@ function AuthorAvatar({
 }
 
 export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSeoPublicDashboard; seo: DashboardSeo }) {
-	const updatedDate = formatDate(seo.updated)
+	const updatedDate = formatIsoDate(seo.updated)
 	const visibleSummaries = seo.itemSummaries.slice(0, 12)
 	const remainingItems = Math.max(0, seo.itemCount - visibleSummaries.length)
 	const metrics = [

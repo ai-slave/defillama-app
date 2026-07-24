@@ -14,6 +14,7 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, Char
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { IDATOverviewDataByAssetProps } from './types'
 
@@ -295,7 +296,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 			cell: ({ getValue }) => {
 				const lastUpdated = getValue()
 				if (lastUpdated == null) return null
-				return <>{new Date(lastUpdated).toLocaleDateString()}</>
+				return <>{formatDate(lastUpdated)}</>
 			},
 			meta: {
 				headerClassName: 'w-[120px]',

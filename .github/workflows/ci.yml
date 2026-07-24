@@ -41,6 +41,9 @@ jobs:
       - name: Check number-formatting policy
         run: bun scripts/policies/check-number-formatting.ts
 
+      - name: Check date-formatting policy
+        run: bun scripts/policies/check-date-formatting.ts --self-test && bun scripts/policies/check-date-formatting.ts
+
       - name: Check design-token policy
         run: bun scripts/policies/check-design-tokens.mjs
 

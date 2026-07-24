@@ -16,18 +16,18 @@ import {
 } from '~/containers/Equities/financialStatements'
 import { parseEquityTickerCountryParam } from '~/containers/Equities/tickerCountry'
 import type { IEquitiesStatementTableRow } from '~/containers/Equities/types'
-import { formatEquitiesDate } from '~/containers/Equities/utils'
 import { getProEquitiesStatementsQueryKey } from '~/containers/ProDashboard/equitiesTableQueryKeys'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchEquitiesStatementsViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { getProEquitiesStatementsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { Icon } from '~/ui/Icon'
+import { formatDate } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 
 function formatStatementPeriodLabel(periodEnding: string): string {
-	return formatEquitiesDate(periodEnding)
+	return formatDate(periodEnding) ?? '-'
 }
 
 function FinancialRow({

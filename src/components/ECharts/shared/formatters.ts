@@ -54,7 +54,13 @@ export function formatTooltipChartDate(value: number, groupBy: TooltipGroupBy, h
 		case 'yearly':
 			return `Jan 1 - Dec 31, ${date.getUTCFullYear()}`
 		default:
-			if (date.getUTCHours() !== 0 && !hideTime) {
+			if (
+				!hideTime &&
+				(date.getUTCHours() !== 0 ||
+					date.getUTCMinutes() !== 0 ||
+					date.getUTCSeconds() !== 0 ||
+					date.getUTCMilliseconds() !== 0)
+			) {
 				return date.toLocaleDateString(undefined, {
 					year: 'numeric',
 					month: '2-digit',

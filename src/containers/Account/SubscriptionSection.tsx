@@ -6,6 +6,7 @@ import type { Subscription } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Icon } from '~/ui/Icon'
+import { formatDate } from '~/utils/dateFormat'
 import { ApiAccessCard } from './ApiAccessCard'
 import { CancelSubscriptionModal } from './CancelSubscriptionModal'
 import { EndTrialModal } from './EndTrialModal'
@@ -29,11 +30,6 @@ function parseExpiryDate(raw: string): string | null {
 		return null
 	}
 	return asDate.toISOString()
-}
-
-function formatDate(dateStr: string): string {
-	const date = new Date(dateStr)
-	return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function getSubscriptionTypeLabel(subscription: { billing_interval?: string; type: string }): string {
@@ -80,7 +76,7 @@ function SubscriptionCardWithProps({
 	return (
 		<SubscriptionCard
 			planName={getPlanName(subscription.type)}
-			renewalDate={expiryDate ? formatDate(expiryDate) : 'Unknown'}
+			renewalDate={expiryDate ? (formatDate(expiryDate) ?? 'Unknown') : 'Unknown'}
 			subscriptionType={getSubscriptionTypeLabel(subscription)}
 			subscriptionPayment={getPaymentLabel(subscription.provider)}
 			provider={subscription.provider as 'stripe' | 'llamapay' | 'legacy' | 'manual'}

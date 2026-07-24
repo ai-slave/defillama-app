@@ -13,8 +13,9 @@ import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
-import { slug, toNiceDayAndHour } from '~/utils'
+import { slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { formatDateTime } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 
 type LargeTxsData = {
@@ -51,9 +52,13 @@ export const BridgesLargeTxsTable = React.forwardRef<BridgesLargeTxsTableHandle,
 			() => [
 				columnHelper.accessor('date', {
 					header: 'Timestamp',
-					cell: (info) => <>{toNiceDayAndHour(info.getValue())}</>,
+					cell: (info) => (
+						<span className="whitespace-nowrap">
+							{formatDateTime(info.getValue(), { input: 'seconds', timeZone: 'UTC' }) ?? '–'}
+						</span>
+					),
 					meta: {
-						headerClassName: 'w-[120px] lg:w-[140px]'
+						headerClassName: 'w-[220px]'
 					}
 				}),
 				columnHelper.accessor('bridge', {

@@ -1,3 +1,4 @@
+import { formatDate } from '~/utils/dateFormat'
 import { fetchETFFlows, fetchETFSnapshot } from './api'
 import type { AssetTotals, ETFOverviewProps, IETFSnapshotRow, IProcessedFlows } from './types'
 
@@ -10,15 +11,7 @@ export async function getETFData(): Promise<ETFOverviewProps> {
 
 	const maxDate = flows.length > 0 ? Math.max(...flows.map((item) => new Date(item.day).getTime())) : null
 
-	const lastUpdated =
-		maxDate == null
-			? 'N/A'
-			: new Date(maxDate).toLocaleDateString('en-US', {
-					month: 'long',
-					day: 'numeric',
-					year: 'numeric',
-					timeZone: 'UTC'
-				})
+	const lastUpdated = maxDate == null ? 'N/A' : (formatDate(maxDate, { input: 'milliseconds' }) ?? 'N/A')
 
 	const processedSnapshot: IETFSnapshotRow[] = snapshot
 		.map((i) => ({

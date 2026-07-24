@@ -14,6 +14,7 @@ import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { IDATCompanyPageProps } from './types'
 
@@ -146,15 +147,11 @@ export function DATCompany(props: IDATCompanyPageProps) {
 						))}
 						<MetricRow
 							label="First Announcement"
-							value={
-								props.firstAnnouncementDate != null ? dayjs(props.firstAnnouncementDate).format('MMM D, YYYY') : null
-							}
+							value={props.firstAnnouncementDate != null ? formatDate(props.firstAnnouncementDate) : null}
 						/>
 						<MetricRow
 							label="Latest Announcement"
-							value={
-								props.lastAnnouncementDate != null ? dayjs(props.lastAnnouncementDate).format('MMM D, YYYY') : null
-							}
+							value={props.lastAnnouncementDate != null ? formatDate(props.lastAnnouncementDate) : null}
 						/>
 						<MetricRow label="Total Transactions" value={props.transactions.length} />
 						{props.price != null ? (
@@ -386,7 +383,7 @@ const columns = [
 	}),
 	columnHelper.accessor('report_date', {
 		header: 'Report Date',
-		cell: (info) => (info.getValue() != null ? dayjs(info.getValue()).format('MMM D, YYYY') : null),
+		cell: (info) => (info.getValue() != null ? formatDate(info.getValue()) : null),
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'

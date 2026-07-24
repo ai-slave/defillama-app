@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
-import { toYearMonth } from '~/utils'
+import { formatIsoDate } from '~/utils/dateFormat'
 import { parseExcludeParam } from '~/utils/routerQuery'
 import type { Raise } from './model'
 
@@ -209,12 +209,14 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 			// split EOS raised amount between 13 months
 			if (r.name === 'EOS') {
 				for (let month = 0; month < 13; month++) {
-					const date = toYearMonth(r.date - month * 2_529_746)
+					const date = formatIsoDate(r.date - month * 2_529_746, { input: 'seconds' })?.slice(0, 7)
+					if (!date) continue
 					monthlyInvestment[date] = (monthlyInvestment[date] ?? 0) + (r.amountUsd ?? 0) / 13
 					fundingRoundsByMonth[date] = (fundingRoundsByMonth[date] ?? 0) + 1
 				}
 			} else {
-				const monthlyDate = toYearMonth(r.date)
+				const monthlyDate = formatIsoDate(r.date, { input: 'seconds' })?.slice(0, 7)
+				if (!monthlyDate) continue
 
 				monthlyInvestment[monthlyDate] = (monthlyInvestment[monthlyDate] ?? 0) + (r.amountUsd ?? 0)
 				fundingRoundsByMonth[monthlyDate] = (fundingRoundsByMonth[monthlyDate] ?? 0) + 1

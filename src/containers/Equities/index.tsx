@@ -26,6 +26,7 @@ import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { readSingleQueryValue, pushShallowQuery } from '~/utils/routerQuery'
 import { EquitiesFiltersDialog, EquityActiveFilterPills } from './EquityFiltersDialog'
@@ -44,7 +45,6 @@ import {
 } from './tableVisibility'
 import { EquitiesTreemapSection } from './TreemapSection'
 import type { IEquitiesListCompanyRow, IEquitiesListPageProps } from './types'
-import { formatEquitiesDateTime } from './utils'
 
 type EquitiesTableCompanyRow = IEquitiesListCompanyRow & { searchPriority?: number }
 
@@ -1026,7 +1026,12 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 					Twelve Data
 				</a>
 				. Filings data from SEC EDGAR.
-				{updatedAt ? <span suppressHydrationWarning> Updated {formatEquitiesDateTime(updatedAt)}.</span> : null}
+				{updatedAt ? (
+					<span suppressHydrationWarning>
+						{' '}
+						Updated {formatDateTime(updatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}.
+					</span>
+				) : null}
 			</p>
 		</div>
 	)

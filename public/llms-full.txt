@@ -165,9 +165,7 @@ Common usage examples:
 - [Protocols by FDV](https://defillama.com/fdv): Token price multiplied by fully diluted supply of each protocol Category: Token.
 - [Protocols by Outstanding FDV](https://defillama.com/outstanding-fdv): Token price multiplied by outstanding supply of each protocol. Outstanding supply is the total supply minus the supply that is not yet allocated to anything (e.g., coins in treasury or reserve) Category: Token.
 - [Tokens](https://defillama.com/tokens): Token rankings by market cap, price performance, volume, revenue, unlocks, and token rights Category: Token.
-- [Exchanges](https://defillama.com/exchanges): Centralized and decentralized exchange volume, open interest, liquidity, fees, reserves, and compliance metadata Category: Exchanges.
 - [Exchange Reserves](https://defillama.com/cexs): Assets held in tracked centralized exchange wallets, clean reserves, and net inflows Category: Exchanges.
-- [Exchange Charts](https://defillama.com/exchanges/charts): Historical volume, open interest, depth, and normalized volume across exchanges Category: Exchanges.
 - [MiCA Exchanges](https://defillama.com/mica): MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements Category: Exchanges.
 - [RWA: Overview](https://defillama.com/rwa): Overview of all Real World Assets (RWAs) Category: RWA.
 - [RWA by Chain](https://defillama.com/rwa/chains): Overview of all Real World Assets (RWAs) by chain Category: RWA.

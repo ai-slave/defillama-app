@@ -1,5 +1,6 @@
 import { getToolLabel } from '~/containers/LlamaAI/toolMetadata'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
+import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatUsd, formatPercent, roundNumber } from '~/utils/numberFormat'
 
 export const PRIVACY_SENTINEL = '[value omitted — sensitive]'
@@ -235,22 +236,16 @@ const DATE_COLS = ['date', 'day', 'period', 'ts', 'ts_close', 'snapshot_date', '
 
 export function formatDateValue(v: unknown): string | null {
 	if (v == null) return null
-	let d: Date | null = null
 	if (typeof v === 'number' && Number.isFinite(v)) {
-		d = new Date(v < 1e12 ? v * 1000 : v)
-	} else if (typeof v === 'string') {
+		return v < 1e12 ? formatDate(v, { input: 'seconds' }) : formatDate(v, { input: 'milliseconds' })
+	}
+	if (typeof v === 'string') {
 		const s = v.trim()
 		if (s === '') return null
-		const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
-		if (m) {
-			d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])))
-		} else {
-			const parsed = Date.parse(s)
-			if (!Number.isNaN(parsed)) d = new Date(parsed)
-		}
+		const calendarDate = /^(\d{4}-\d{2}-\d{2})(?:[ T]|$)/.exec(s)?.[1]
+		return calendarDate ? formatDate(calendarDate) : formatDate(s)
 	}
-	if (!d || Number.isNaN(d.getTime())) return null
-	return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })
+	return null
 }
 
 export function citedRowDate(row: Record<string, unknown> | undefined, cols: string[]): string | null {

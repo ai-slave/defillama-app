@@ -8,6 +8,7 @@ import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { canManageResearchArticle } from '~/containers/Articles/ArticlesAccessGate'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { formatDateTime, formatRelativeTime } from '~/utils/dateFormat'
 import {
 	ArticleApiError,
 	createArticle,
@@ -39,7 +40,7 @@ import { useActiveEntityLink, useEditorFlags, type BlockItem, type MarkButton } 
 import { CoverDetailsDialog, DeleteArticleDialog } from './ArticleEditorDialogs'
 import { ArticleEditorHeader, type ArticleEditorViewMode } from './ArticleEditorHeader'
 import { ArticleEditorPreview } from './ArticleEditorPreview'
-import { articleQueryKey, formatRelative, sanitizeLinkHref, slugFromTitle, useTicker } from './ArticleEditorUtils'
+import { articleQueryKey, sanitizeLinkHref, slugFromTitle, useTicker } from './ArticleEditorUtils'
 import { formatArticleDate } from './ArticleEditorUtils'
 import { ArticleMetaDialog } from './ArticleMetaDialog'
 import { ArticleTitleFields } from './ArticleTitleFields'
@@ -822,7 +823,8 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		)
 	}
 
-	const savedLabel = savedAt ? formatRelative(savedAt) : null
+	const savedLabel = savedAt ? formatRelativeTime(savedAt) : null
+	const savedExactLabel = savedAt ? formatDateTime(savedAt, { timeZone: 'local' }) : null
 	const readMins = Math.max(1, Math.ceil(wordCount / 220))
 
 	const markButtons: MarkButton[] = editor
@@ -954,6 +956,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 				pillState={pillState}
 				saveArticle={saveArticle}
 				savedLabel={savedLabel}
+				savedExactLabel={savedExactLabel}
 				setSlugDraft={setSlugDraft}
 				slugDraft={slugDraft}
 				slugEditing={slugEditing}

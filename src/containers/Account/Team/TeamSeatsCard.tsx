@@ -1,7 +1,9 @@
 import { lazy, Suspense, useState } from 'react'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { Icon } from '~/ui/Icon'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
+import { computeNextBillingDate } from './billingDate'
 import { ConfirmActionModal } from './ConfirmActionModal'
 import type { TeamSubscription } from './types'
 import { useTeam } from './useTeam'
@@ -24,33 +26,11 @@ function getIntervalSuffix(interval: 'month' | 'year'): string {
 	return interval === 'year' ? '/year' : '/month'
 }
 
-function formatDate(date: Date): string {
-	return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
 function parseBackendDate(raw: string): Date | null {
 	// Backend returns "2026-05-17 08:24:42.000Z" with a space; normalize to ISO.
 	const isoLike = raw.includes('T') ? raw : raw.replace(' ', 'T')
 	const date = new Date(isoLike)
 	return isNaN(date.getTime()) ? null : date
-}
-
-function computeNextBillingDate(createdAt: string, billingInterval: 'month' | 'year'): Date | null {
-	// Backend returns "2026-04-16 20:02:14.302Z" with a space separator; normalize to ISO.
-	const isoLike = createdAt.includes('T') ? createdAt : createdAt.replace(' ', 'T')
-	const created = new Date(isoLike)
-	if (isNaN(created.getTime())) return null
-
-	const now = new Date()
-	const next = new Date(created)
-	if (billingInterval === 'year') {
-		const elapsedYears = now.getFullYear() - created.getFullYear()
-		next.setFullYear(created.getFullYear() + elapsedYears + 1)
-	} else {
-		const elapsedMonths = (now.getFullYear() - created.getFullYear()) * 12 + (now.getMonth() - created.getMonth())
-		next.setMonth(created.getMonth() + elapsedMonths + 1)
-	}
-	return next
 }
 
 function isActiveSub(sub: TeamSubscription): boolean {
@@ -160,9 +140,9 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 					valueClassName={subscription.seats.availableSeats > 0 ? 'text-sub-success' : 'text-sub-text-muted'}
 				/>
 				{isCanceling && cancelAtDate ? (
-					<InfoRow label="Cancels on" value={formatDate(cancelAtDate)} valueClassName="text-error" />
+					<InfoRow label="Cancels on" value={formatDate(cancelAtDate) ?? '-'} valueClassName="text-error" />
 				) : nextDate ? (
-					<InfoRow label="Next billing" value={formatDate(nextDate)} />
+					<InfoRow label="Next billing" value={formatDate(nextDate) ?? '-'} />
 				) : subscription.status ? (
 					<InfoRow label="Status" value={subscription.status} valueClassName="capitalize text-sub-text-muted" />
 				) : null}

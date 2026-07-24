@@ -1,12 +1,6 @@
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import utc from 'dayjs/plugin/utc'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchJson } from './async'
 import { formatNumber } from './numberFormat'
-
-dayjs.extend(utc)
-dayjs.extend(relativeTime)
 
 interface HSL {
 	h: number
@@ -38,34 +32,6 @@ export function keepNeededProperties(protocol: object, propertiesToKeep: readonl
 	}
 	return result
 }
-
-/** gives output like `5 days ago` or `17 hours ago` from a timestamp, https://day.js.org/docs/en/plugin/relative-time */
-export const toNiceDaysAgo = (date: number): string => dayjs().to(dayjs.utc(dayjs.unix(date)))
-
-export const toNiceDayAndHour = (date: number): string => {
-	return dayjs.utc(dayjs.unix(date)).format('D MMM, HH:mm')
-}
-export const toNiceHour = (date: number): string => {
-	return dayjs.utc(dayjs.unix(date)).format('HH:mm')
-}
-export const toNiceDayMonthAndYear = (date: number): string => {
-	return dayjs.utc(dayjs.unix(date)).format('D MMM, YYYY')
-}
-
-export const toNiceDayMonthAndYearAndTime = (date: number): string => {
-	return dayjs.utc(dayjs.unix(date)).format('D MMM, YYYY HH:mm')
-}
-
-export const toYearMonth = (date: number): string => {
-	return dayjs.utc(dayjs.unix(date)).format('YYYY-MM')
-}
-export const toNiceCsvDate = (date: number): string => {
-	return dayjs.utc(dayjs.unix(date)).format('YYYY-MM-DD')
-}
-
-export const toNiceDateYear = (date: number): string => dayjs.utc(dayjs.unix(date)).format('MMMM DD, YYYY')
-
-export const toNiceDayMonthYear = (date: number): string => dayjs.utc(dayjs.unix(date)).format('DD MMM YYYY')
 
 /**
  * get standard percent change between two values

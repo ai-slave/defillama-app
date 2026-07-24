@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
 import { Icon } from '~/ui/Icon'
-import { formatVerified, relativeTimeFromTs } from '../format'
+import { RelativeTime } from '~/ui/RelativeTime'
+import { formatVerified } from '../format'
 import { RiskCallout } from '../primitives/RiskCallout'
 import type { DriftEntry, Freshness } from '../types'
 
@@ -65,14 +65,12 @@ export function FreshnessFooter({
 
 	// "Healthy" = no drift, no unreadable readings, AND this row was refreshed in the last run.
 	const healthy = driftMap.size === 0 && staleMap.size === 0 && !stale
-	const [mounted, setMounted] = useState(false)
-	useEffect(() => setMounted(true), [])
 	const updatedLabel =
-		lastUpdatedTs != null
-			? mounted
-				? `Updated ${relativeTimeFromTs(lastUpdatedTs)}`
-				: `Updated ${formatVerified(tsToIso(lastUpdatedTs))}`
-			: `Last verified ${formatVerified(lastRun)}`
+		lastUpdatedTs != null ? (
+			<RelativeTime value={lastUpdatedTs} input="seconds" prefix="Updated" />
+		) : (
+			`Last verified ${formatVerified(lastRun)}`
+		)
 
 	return (
 		<div className="flex flex-col gap-2 body-sm text-secondary">

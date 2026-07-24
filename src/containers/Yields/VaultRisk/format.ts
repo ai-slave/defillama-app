@@ -1,4 +1,4 @@
-import { toNiceDayMonthAndYear } from '~/utils'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import type { GuardianRole, RiskLoss, RoleEntity } from './types'
 
@@ -62,20 +62,8 @@ export function trustScopeTooltip(scope: string[] | undefined): string {
 	return `How much value lends against this token across ${where}: a measure of how widely trusted it is, NOT this pool's loss. Your exposure here is a separate figure; when it exceeds this one, the vault is a large share of (or bigger than) the token's whole tracked lending footprint, a concentration signal.`
 }
 
-// Fixtures give ISO strings; the date util takes unix seconds.
 export function formatVerified(iso?: string): string {
-	if (!iso) return 'unknown'
-	const ms = Date.parse(iso)
-	if (Number.isNaN(ms)) return 'unknown'
-	return toNiceDayMonthAndYear(Math.floor(ms / 1000))
-}
-
-// "{N} ago" from a unix-seconds timestamp — for freshness ("Updated 2 days ago") and the
-// timelock countdown ("executable in 6 days"). `nowSec` is injectable so it stays pure.
-export function relativeTimeFromTs(tsSec: number, nowSec = Math.floor(Date.now() / 1000)): string {
-	const diff = Math.max(0, nowSec - tsSec)
-	if (diff < MIN) return 'moments ago'
-	return `${humanizeDuration(diff)} ago`
+	return (iso ? formatDate(iso) : null) ?? 'unknown'
 }
 
 // Coerce a role slot to a RoleEntity. Tolerates legacy fixtures carrying a bare address

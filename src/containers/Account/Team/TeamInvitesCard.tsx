@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Icon } from '~/ui/Icon'
+import { formatDate, formatDateTime, formatRelativeTime, parseDateTimestamp } from '~/utils/dateFormat'
 import { ConfirmActionModal } from './ConfirmActionModal'
 import { InviteMemberModal } from './InviteMemberModal'
 import type { TeamInvite } from './types'
@@ -7,25 +8,24 @@ import { useTeam } from './useTeam'
 
 const RESEND_COOLDOWN_MS = 60_000
 
-function formatDate(dateStr: string): string {
-	const date = new Date(dateStr)
-	return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
 function InviteRow({ invite }: { invite: TeamInvite }) {
 	const { revokeInviteMutation, resendInviteMutation } = useTeam()
 	const [showRevokeConfirm, setShowRevokeConfirm] = useState(false)
 	const [cooldownUntil, setCooldownUntil] = useState<number | null>(null)
-	const [now, setNow] = useState(() => Date.now())
+	const [now, setNow] = useState<number | null>(null)
 
 	useEffect(() => {
-		if (!cooldownUntil) return
-		const tick = () => setNow(Date.now())
-		const id = window.setInterval(tick, 1000)
+		const tick = () => {
+			const currentTime = Date.now()
+			setNow(currentTime)
+			if (cooldownUntil && currentTime >= cooldownUntil) setCooldownUntil(null)
+		}
+		tick()
+		const id = window.setInterval(tick, cooldownUntil ? 1_000 : 60_000)
 		return () => window.clearInterval(id)
 	}, [cooldownUntil])
 
-	const remainingMs = cooldownUntil ? Math.max(0, cooldownUntil - now) : 0
+	const remainingMs = cooldownUntil && now != null ? Math.max(0, cooldownUntil - now) : 0
 	const remainingSeconds = Math.ceil(remainingMs / 1000)
 	const onCooldown = remainingMs > 0
 	const isResending = resendInviteMutation.isPending && resendInviteMutation.variables?.inviteId === invite.id
@@ -37,7 +37,9 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 		})
 	}
 
-	const isExpired = new Date(invite.expiresAt) < new Date()
+	const expiresAt = parseDateTimestamp(invite.expiresAt)
+	const isExpired = now != null && expiresAt != null && expiresAt <= now
+	const expiresLabel = now ? formatRelativeTime(invite.expiresAt, { now: new Date(now) }) : formatDate(invite.expiresAt)
 
 	return (
 		<>
@@ -45,8 +47,11 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 				<div className="min-w-0 flex-1">
 					<span className="truncate text-sm text-sub-text-primary">{invite.email}</span>
 					<div className="mt-1 flex items-center gap-2">
-						<span className={`text-xs ${isExpired ? 'text-error' : 'text-sub-text-muted'}`}>
-							{isExpired ? 'Expired' : `Expires ${formatDate(invite.expiresAt)}`}
+						<span
+							className={`text-xs ${isExpired ? 'text-error' : 'text-sub-text-muted'}`}
+							title={formatDateTime(invite.expiresAt, { timeZone: 'UTC' }) ?? undefined}
+						>
+							{isExpired ? 'Expired' : `Expires ${expiresLabel ?? 'Unknown'}`}
 						</span>
 					</div>
 				</div>

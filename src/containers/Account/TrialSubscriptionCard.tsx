@@ -1,4 +1,5 @@
 import { Icon } from '~/ui/Icon'
+import { formatDate } from '~/utils/dateFormat'
 
 interface TrialSubscriptionCardProps {
 	trialEndDate: string | null
@@ -17,11 +18,6 @@ function InfoRow({ label, value, valueClassName }: { label: string; value: strin
 	)
 }
 
-function formatShortDate(iso: string): string {
-	const date = new Date(iso)
-	return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
 function getRemainingDays(iso: string): number {
 	const now = new Date()
 	const end = new Date(iso)
@@ -36,7 +32,7 @@ export function TrialSubscriptionCard({
 	isCancelLoading
 }: TrialSubscriptionCardProps) {
 	const remainingDays = trialEndDate ? getRemainingDays(trialEndDate) : null
-	const formattedDate = trialEndDate ? formatShortDate(trialEndDate) : 'Unknown'
+	const formattedDate = trialEndDate ? (formatDate(trialEndDate) ?? 'Unknown') : 'Unknown'
 
 	return (
 		<div className="flex min-w-0 flex-1 flex-col justify-between gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">

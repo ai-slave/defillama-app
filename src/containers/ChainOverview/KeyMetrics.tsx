@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import { Fragment, memo, useRef } from 'react'
 import { BasicLink } from '~/components/Link'
 import { definitions as rwaDefinitions } from '~/containers/RWA/definitions'
@@ -10,6 +9,7 @@ import {
 } from '~/ui/MetricPrimitives'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatPercent, formatPercentChange } from '~/utils/numberFormat'
 import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
 import type { IChainOverviewData } from './types'
@@ -439,7 +439,7 @@ function RaisesSection({ chainRaises }: { chainRaises: IChainOverviewData['chain
 					key={`${raise.date}-${raise.amountUsd}-${raise.round}`}
 				>
 					<span className="flex flex-wrap justify-between">
-						<span className="body-md text-tertiary">{dayjs(raise.date * 1000).format('MMM D, YYYY')}</span>
+						<span className="body-md text-tertiary">{formatDate(raise.date, { input: 'seconds' })}</span>
 						<span className="mono-md">
 							{formatUsd(raise.amountUsd, {
 								compact: true,

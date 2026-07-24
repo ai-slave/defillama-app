@@ -7,6 +7,7 @@ import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatDate } from '~/utils/dateFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IEquitiesStatementsResponse } from './api.types'
 import { formatEquitiesStatementCellValue } from './financialsFormatting'
@@ -24,7 +25,6 @@ import {
 	type EquitiesStatementPeriodOption
 } from './financialStatements'
 import type { IEquitiesStatementTableRow } from './types'
-import { formatEquitiesDate } from './utils'
 
 const statementQueryValueMap: Record<EquitiesStatementOption, string> = {
 	'Income Statement': 'income-statement',
@@ -55,7 +55,7 @@ export function getStatementHeaderIndexes(periodEnding: string[]): number[] {
 }
 
 function formatStatementPeriodLabel(periodEnding: string): string {
-	return formatEquitiesDate(periodEnding)
+	return formatDate(periodEnding) ?? '-'
 }
 
 function FinancialRow({

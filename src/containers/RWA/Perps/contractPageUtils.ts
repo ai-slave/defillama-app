@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import type {
 	ChartTimeGrouping,
 	MultiSeriesChartDataset,
@@ -5,7 +7,6 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { formatPercentChangeText } from '~/ui/PercentChange'
-import { toNiceDayMonthAndYearAndTime } from '~/utils'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { perpsDefinitions as d } from './definitions'
 import type {
@@ -13,6 +14,8 @@ import type {
 	IRWAPerpsContractFundingHistoryPoint,
 	IRWAPerpsContractMarketChartPoint
 } from './types'
+
+dayjs.extend(utc)
 
 export type RWAPerpsContractChartMetricKey = 'openInterest' | 'volume24h' | 'price' | 'fundingRate' | 'premium'
 
@@ -106,7 +109,7 @@ function formatTextValue(value: string | null | undefined): string | null {
 	return value ?? null
 }
 export function formatRWAPerpsContractChartDate(value: number): string {
-	return toNiceDayMonthAndYearAndTime(Math.floor(toUnixMsTimestamp(value) / 1e3))
+	return dayjs.utc(toUnixMsTimestamp(value)).format('D MMM, YYYY HH:mm')
 }
 
 type MetricRowData = {

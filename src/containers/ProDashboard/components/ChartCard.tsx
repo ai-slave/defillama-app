@@ -4,9 +4,10 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { Select } from '~/components/Select/Select'
+import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import { capitalizeFirstLetter, toNiceDayMonthYear } from '~/utils'
+import { capitalizeFirstLetter } from '~/utils'
 import { download } from '~/utils/download'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import {
@@ -102,7 +103,7 @@ function ChartRenderer({
 	}
 
 	const todayHallmarks: [number, string][] | null =
-		type === 'unlocks' ? [[todayTimestamp, toNiceDayMonthYear(todayTimestamp)]] : null
+		type === 'unlocks' ? [[todayTimestamp, formatUnlockDate(todayTimestamp)]] : null
 
 	return (
 		<Suspense fallback={<div className="h-[300px]" />}>

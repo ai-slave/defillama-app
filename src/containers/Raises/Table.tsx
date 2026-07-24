@@ -22,7 +22,7 @@ import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { toNiceDayMonthYear } from '~/utils'
+import { formatDate, formatIsoDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import type { Raise } from './model'
 
@@ -41,7 +41,7 @@ export const raisesColumns = [
 			headerClassName: 'w-[120px]'
 		},
 		header: 'Date',
-		cell: (info) => toNiceDayMonthYear(info.getValue())
+		cell: (info) => formatDate(info.getValue(), { input: 'seconds' })
 	}),
 	columnHelper.accessor('amountUsd', {
 		id: 'amount',
@@ -161,9 +161,7 @@ const prepareRaisesCsv = (instance: Table<Raise>) => {
 				const newRow = [...row]
 				if (dateIdx !== -1 && typeof newRow[dateIdx] === 'number') {
 					const ts = newRow[dateIdx] as number
-					const d = new Date(ts * 1000)
-					const formatted = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
-					newRow.splice(dateIdx, 1, ts, formatted)
+					newRow.splice(dateIdx, 1, ts, formatIsoDate(ts, { input: 'seconds' }) ?? '')
 				}
 				return newRow
 			})

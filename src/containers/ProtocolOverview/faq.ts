@@ -1,4 +1,5 @@
 import { slug } from '~/utils'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import type { IProtocolFaqAnswerPart, IProtocolFaqItem } from './types'
 
@@ -238,14 +239,6 @@ function possessive(name: string): string {
 
 function formatPercentMagnitude(value: number): string {
 	return formatPercent(Math.abs(value), { input: 'percent', maximumFractionDigits: 1 })
-}
-
-function formatDate(timestamp: number | string | null): string | null {
-	if (timestamp == null) return null
-	const numericTimestamp = typeof timestamp === 'number' && timestamp < 1e12 ? timestamp * 1e3 : timestamp
-	const date = new Date(numericTimestamp)
-	if (Number.isNaN(date.getTime())) return null
-	return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 }
 
 function buildDescriptionQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null {
@@ -598,7 +591,7 @@ function buildTreasuryQuestion(context: ProtocolFaqContext): IProtocolFaqItem | 
 function buildSecurityQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null {
 	if (context.hacks.length === 0) return null
 	const latest = context.hacks.toSorted((a, b) => (b.date ?? 0) - (a.date ?? 0))[0]
-	const latestDate = formatDate(latest.date)
+	const latestDate = latest.date == null ? null : formatDate(latest.date, { input: 'seconds' })
 	const answer: IProtocolFaqAnswerPart[] = [
 		text(`${context.name} has ${formatNumber(context.hacks.length)} recorded `),
 		linkedText(`security incident${context.hacks.length === 1 ? '' : 's'}`, '/hacks'),

@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react'
 import type { Icon } from '~/ui/Icon'
+import { formatMonthYear } from '~/utils/dateFormat'
 import type { ExchangeMetadataGroupKey, ExchangeMetadataTone } from './models'
 
 type IconName = ComponentProps<typeof Icon>['name']
@@ -114,8 +115,5 @@ export function metadataStatusTone(value: string): ExchangeMetadataTone {
 }
 
 export function formatMetadataAsOf(asOf: string): string {
-	const [year, month] = asOf.split('-').map(Number)
-	return new Intl.DateTimeFormat('en', { month: 'short', year: 'numeric', timeZone: 'UTC' }).format(
-		new Date(Date.UTC(year, month - 1, 1))
-	)
+	return formatMonthYear(asOf) ?? asOf
 }

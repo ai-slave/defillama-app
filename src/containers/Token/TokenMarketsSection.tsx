@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import type { SortingState } from '@tanstack/react-table'
-import dayjs from 'dayjs'
 import { type KeyboardEvent, Suspense, useMemo, useReducer, useRef } from 'react'
 import { mapExchangePair } from '~/containers/Exchanges/master.mappers'
 import type { PairTableRow } from '~/containers/Exchanges/PairTable'
@@ -14,6 +13,7 @@ import { MaterialChangeCell, MetricStat, MetricStatStrip } from '~/containers/Ma
 import type { Segment } from '~/containers/Markets/segments'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { RelativeTime } from '~/ui/RelativeTime'
 import { LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TabLink } from '~/ui/Tab'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
@@ -327,13 +327,6 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 
 	const isPerpCategory = selectedCategoryTab !== 'spot'
 
-	const lastUpdated = useMemo(() => {
-		if (!data?.last_updated) return null
-		const parsed = dayjs(data.last_updated)
-		if (!parsed.isValid()) return null
-		return { absolute: parsed.format('MMM D, YYYY HH:mm UTC'), relative: parsed.fromNow() }
-	}, [data])
-
 	const sectionHeader = (
 		<PanelHeader className="justify-between">
 			<PanelTitle as="h2" className="group relative flex scroll-mt-24 items-center gap-1" id={TOKEN_MARKETS_SECTION_ID}>
@@ -346,10 +339,8 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 				/>
 				<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 			</PanelTitle>
-			{lastUpdated ? (
-				<span className="label-sm text-secondary" title={lastUpdated.absolute}>
-					Updated {lastUpdated.relative}
-				</span>
+			{data?.last_updated ? (
+				<RelativeTime className="label-sm text-secondary" value={data.last_updated} prefix="Updated" />
 			) : null}
 		</PanelHeader>
 	)

@@ -9,7 +9,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
-import { toNiceCsvDate } from '~/utils'
+import { formatIsoDate } from '~/utils/dateFormat'
 import { download } from '~/utils/download'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
@@ -143,7 +143,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 			return [
 				['Date', ...columnNames],
 				...dataset.source.map((row) => [
-					toNiceCsvDate((row[0] as number) / 1000),
+					formatIsoDate(row[0] as number, { input: 'milliseconds' }) ?? '',
 					...indexes.map((index) => row[index] ?? '')
 				])
 			]

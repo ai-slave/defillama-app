@@ -1,10 +1,10 @@
-import dayjs from 'dayjs'
 import { useMemo, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { getPrimaryValueLabelType } from './helpers'
 import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
@@ -932,7 +932,7 @@ const Expenses = (props: IKeyMetricsProps) => {
 			{props.expenses?.lastUpdate ? (
 				<p className="flex flex-wrap justify-between gap-4 border-b border-dashed border-subtle py-1 text-secondary group-last:border-none">
 					<span className="text-secondary">Last Update</span>
-					<span>{dayjs.utc(props.expenses.lastUpdate).format('MMM D, YYYY')}</span>
+					<span>{formatDate(props.expenses.lastUpdate)}</span>
 				</p>
 			) : null}
 		</MetricSection>
@@ -1069,7 +1069,7 @@ const Raises = (props: IKeyMetricsProps) => {
 					key={`${raise.date}-${raise.amountUsd}-${props.name}`}
 				>
 					<span className="flex flex-wrap justify-between">
-						<span className="text-secondary">{dayjs.utc(raise.date * 1000).format('MMM D, YYYY')}</span>
+						<span className="text-secondary">{formatDate(raise.date, { input: 'seconds' })}</span>
 						{raise.amountUsd ? (
 							<span className="font-jetbrains">
 								{formatUsd(raise.amountUsd, {

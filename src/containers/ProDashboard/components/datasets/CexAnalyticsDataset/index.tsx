@@ -34,6 +34,7 @@ import type { ProtocolsTableConfig } from '~/containers/ProDashboard/types'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
+import { formatDateTime } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { LoadingSpinner } from '../../LoadingSpinner'
@@ -205,7 +206,7 @@ function SummaryCards({ data }: { data: CexAnalyticsSnapshotResponse }) {
 				</div>
 				{data.summary.loadedAt ? (
 					<span className="text-xs tracking-wide text-pro-text-tertiary uppercase">
-						Loaded {new Date(data.summary.loadedAt).toLocaleString()}
+						Loaded {formatDateTime(data.summary.loadedAt, { timeZone: 'UTC' }) ?? '-'}
 					</span>
 				) : null}
 			</div>
