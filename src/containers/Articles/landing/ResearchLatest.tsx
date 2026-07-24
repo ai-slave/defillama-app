@@ -98,7 +98,7 @@ const ContentCard = ({
 			) : null}
 		</div>
 
-		<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-research-invert px-2 py-0.5 text-[10px] font-semibold text-on-brand uppercase backdrop-blur-sm">
+		<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-research-white px-2 py-0.5 text-[10px] font-semibold text-on-brand uppercase backdrop-blur-sm">
 			{item.label}
 		</span>
 

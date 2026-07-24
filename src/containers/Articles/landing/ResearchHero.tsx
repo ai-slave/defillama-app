@@ -37,7 +37,7 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 							>
 								<span>Subscribe</span>
 								<ResearchIcon
-									name="newsletter"
+									name="newsletter-mark"
 									width={20}
 									height={20}
 									className="text-research-accent-strong"
@@ -54,7 +54,7 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 								href="https://calendly.com/research-defillama/30min"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex items-center gap-2 rounded-full border border-research-invert px-3.5 py-3 text-base leading-[50%] text-on-brand md:px-6 md:py-3.5"
+								className="flex items-center gap-2 rounded-full border border-research-white px-3.5 py-3 text-base leading-[50%] text-on-brand md:px-6 md:py-3.5"
 							>
 								<span>Book a call</span>
 

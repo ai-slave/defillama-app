@@ -73,7 +73,7 @@ function NavButton({ direction, disabled, onClick, onMouseEnter, onMouseLeave, c
 			onMouseEnter={onMouseEnter}
 			onMouseLeave={onMouseLeave}
 			className={clsx(
-				'flex h-[29px] w-[34px] cursor-pointer items-center justify-center rounded-xl border border-research-invert bg-transparent transition-all duration-200 hover:bg-research-white/10',
+				'flex h-[29px] w-[34px] cursor-pointer items-center justify-center rounded-xl border border-research-white bg-transparent transition-all duration-200 hover:bg-research-white/10',
 				disabled && 'cursor-not-allowed opacity-50',
 				className
 			)}
@@ -136,7 +136,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 			</p>
 			{addOverlayLink ? (
 				<div className="grid gap-2">
-					<span className="inline-block w-full rounded-sm border border-research-invert px-3 py-2 text-center text-xs leading-[120%] font-medium">
+					<span className="inline-block w-full rounded-sm border border-research-white px-3 py-2 text-center text-xs leading-[120%] font-medium">
 						Read more
 					</span>
 					{pdfUrl ? (
@@ -158,7 +158,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 				>
 					<Link
 						href={href}
-						className="w-full rounded-sm border border-research-invert px-3 py-2 text-center text-xs leading-[120%] font-medium text-on-brand transition-colors hover:bg-research-white/10"
+						className="w-full rounded-sm border border-research-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-on-brand transition-colors hover:bg-research-white/10"
 					>
 						Read more
 					</Link>

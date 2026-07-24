@@ -13,6 +13,7 @@ const RESEARCH_ICON_NAMES = [
 	'linkedin',
 	'linkedin-square',
 	'newsletter',
+	'newsletter-mark',
 	'spotlight',
 	'spotlight-badge',
 	'research-placeholder',
@@ -29,7 +30,7 @@ export interface IResearchIcon extends SVGProps<SVGSVGElement> {
 export function ResearchIcon({ name, ...props }: IResearchIcon) {
 	return (
 		<svg {...props}>
-			<use href={`/icons/research/v1.svg#${name}`} />
+			<use href={`/icons/research/v2.svg#${name}`} />
 		</svg>
 	)
 }

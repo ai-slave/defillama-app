@@ -44,7 +44,7 @@ function buildSearchUrl(pathname: string, params: { q?: string; tag?: string; se
 
 function ResultBadge({ children }: { children: React.ReactNode }) {
 	return (
-		<span className="rounded-[4px] border border-research-invert px-2 py-0.75 text-[10px] font-semibold tracking-[0.04em] text-on-brand uppercase backdrop-blur-[2px]">
+		<span className="rounded-[4px] border border-research-white px-2 py-0.75 text-[10px] font-semibold tracking-[0.04em] text-on-brand uppercase backdrop-blur-[2px]">
 			{children}
 		</span>
 	)

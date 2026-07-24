@@ -4,6 +4,8 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
 import { ResearchHero } from '~/containers/Articles/landing/ResearchHero'
+import { ResearchLatest } from '~/containers/Articles/landing/ResearchLatest'
+import type { ArticleDocument } from '~/containers/Articles/types'
 import NewslettersPage from '~/pages/newsletters'
 import defillamaPages from '~/public/pages.json'
 
@@ -76,8 +78,27 @@ describe('newsletter and media-kit split', () => {
 		expect(html).toContain('href="/newsletters"')
 		expect(html).toContain('aria-label="Subscribe to DefiLlama newsletters"')
 		expect(html).toContain('>Subscribe</span>')
+		expect(html).toContain('/icons/research/v2.svg#newsletter-mark')
+		expect(html).not.toContain('/icons/research/v2.svg#newsletter"')
+		expect(html).toContain('border-research-white')
 		expect(html.match(/href="\/newsletters"/g)).toHaveLength(1)
 		expect(html).not.toContain('newsletter.defillama.com')
+	})
+
+	it('uses a light border for latest article badges over cover images', () => {
+		const article = {
+			id: 'latest-article',
+			title: 'Latest research',
+			slug: 'latest-research',
+			section: 'interview',
+			coverImage: {
+				url: '/latest.png',
+				alt: 'Latest research'
+			}
+		} as ArticleDocument
+		const html = renderWithQueryClient(<ResearchLatest articles={[article]} />)
+
+		expect(html).toMatch(/<span class="[^"]*border-research-white[^"]*"[^>]*>INTERVIEW<\/span>/)
 	})
 
 	it('does not expose newsletters as a main navbar item', () => {
