@@ -77,7 +77,6 @@ export default function NewslettersPage() {
 	}
 
 	const selectedKeys = NEWSLETTERS.map((n) => n.key).filter((key) => selected[key])
-	const selectedLabels = NEWSLETTERS.filter((n) => selected[n.key]).map((n) => n.label)
 	const noneSelected = selectedKeys.length === 0
 	const isPending = mutation.isPending
 	const canSubmit = !isPending && !noneSelected && email.trim().length > 0
@@ -85,7 +84,6 @@ export default function NewslettersPage() {
 		? 'Choose at least one newsletter.'
 		: `${selectedKeys.length} publication${selectedKeys.length === 1 ? '' : 's'} selected.`
 	const visibleSelectionText = `${selectedKeys.length}/${NEWSLETTERS.length} selected`
-	const selectedSummary = noneSelected ? 'No newsletters selected yet' : selectedLabels.join(' + ')
 	const buttonText = noneSelected
 		? 'Choose a newsletter'
 		: email.trim().length === 0
@@ -136,24 +134,18 @@ export default function NewslettersPage() {
 					style={{ backgroundSize: '72px 72px' }}
 				/>
 				<div className="mx-auto flex w-full max-w-7xl flex-col gap-7 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-					<header className="grid gap-5 border-b border-medium pb-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(260px,0.35fr)] lg:items-end">
+					<header className="flex flex-col gap-5 border-b border-medium pb-6">
 						<div className="flex max-w-3xl flex-col gap-3">
 							<p className="flex items-center gap-2 text-sm font-semibold text-link">
 								<Icon name="mail-rounded" height={20} width={20} aria-hidden />
 								DefiLlama newsletters
 							</p>
 							<h1 className="max-w-3xl text-[clamp(2.25rem,4.25vw,4.5rem)] leading-[0.96] font-bold tracking-tight text-primary">
-								Choose your DefiLlama newsletters
+								Subscribe for onchain fundamentals and analysis from DefiLlama
 							</h1>
 							<p className="max-w-2xl text-base leading-7 text-secondary">
 								Market updates and Research Notes from the DefiLlama team, delivered to your inbox.
 							</p>
-						</div>
-
-						<div className="flex flex-col gap-2 border-t border-medium pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
-							<p className="text-xs font-semibold tracking-[0.18em] text-link uppercase">Available newsletters</p>
-							<p className="text-xl leading-tight font-semibold text-primary">Market updates and Research Notes</p>
-							<p className="text-sm leading-6 text-secondary">Pick the lists you want to receive at this email.</p>
 						</div>
 					</header>
 
@@ -265,18 +257,10 @@ export default function NewslettersPage() {
 								className="flex flex-col gap-5 rounded-lg border border-medium bg-surface p-5"
 							>
 								<div className="flex flex-col gap-2">
-									<p className="text-xs font-semibold tracking-[0.18em] text-link uppercase">Subscribe</p>
-									<h2 className="heading-sm text-primary">Send them here</h2>
+									<h2 className="heading-sm text-primary">Subscribe</h2>
 									<p className="text-sm leading-6 text-secondary">
 										Enter the email address where you want to receive the selected newsletters.
 									</p>
-								</div>
-
-								<div className="border-y border-medium py-4">
-									<p className="text-xs font-semibold tracking-[0.14em] text-tertiary uppercase">
-										Selected publications
-									</p>
-									<p className="mt-2 text-base leading-6 font-medium text-primary">{selectedSummary}</p>
 								</div>
 
 								<label className="flex flex-col gap-2">
@@ -314,13 +298,11 @@ export default function NewslettersPage() {
 											<Icon name="check-circle" height={18} width={18} className="mt-1 shrink-0 text-link" />
 											<span>Subscribed. You are on the selected newsletter list.</span>
 										</div>
-									) : (
+									) : noneSelected ? (
 										<p className="text-sm leading-6 text-secondary">
-											{noneSelected
-												? 'Choose at least one publication to continue.'
-												: `We will subscribe this email to ${selectedSummary}.`}
+											Choose at least one publication to continue.
 										</p>
-									)}
+									) : null}
 								</div>
 							</form>
 						</aside>
