@@ -1,3 +1,4 @@
+import { formatUsd } from '~/utils/numberFormat'
 import type { RWAStatsSegmented } from './api.types'
 
 type RWAOverviewInclusion = { kind: 'base' } | { kind: 'stablecoins' } | { kind: 'governance' } | { kind: 'all' }
@@ -56,6 +57,33 @@ export function getRWAOverviewTableData(row: RWAStatsSegmented, inclusion: RWAOv
 		defiActiveTvl,
 		assetIssuers: issuers.size
 	}
+}
+
+export function getRWAOverviewAssetCount(row: RWAStatsSegmented) {
+	return (
+		row.base.assetCount +
+		row.stablecoinsOnly.assetCount +
+		row.governanceOnly.assetCount +
+		row.stablecoinsAndGovernance.assetCount
+	)
+}
+
+export function hasExcludedRWAOverviewAssets(
+	row: RWAStatsSegmented,
+	includeStablecoins: boolean,
+	includeGovernance: boolean
+) {
+	return (
+		(!includeStablecoins && row.stablecoinsOnly.assetCount > 0) ||
+		(!includeGovernance && row.governanceOnly.assetCount > 0) ||
+		(!includeStablecoins && !includeGovernance && row.stablecoinsAndGovernance.assetCount > 0)
+	)
+}
+
+export function formatRWAOverviewUsd(value: number, hasExcludedAssets: boolean) {
+	return value === 0 && hasExcludedAssets
+		? '-'
+		: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 export function getRWAOverviewCsvFileName(prefix: string, inclusion: RWAOverviewInclusion) {

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { RWAStatsSegmented } from '../api.types'
-import { getRWAOverviewInclusion, getRWAOverviewTableData } from '../overviewTableData'
+import {
+	formatRWAOverviewUsd,
+	getRWAOverviewAssetCount,
+	getRWAOverviewInclusion,
+	getRWAOverviewTableData,
+	hasExcludedRWAOverviewAssets
+} from '../overviewTableData'
 
 const row: RWAStatsSegmented = {
 	base: {
@@ -72,5 +78,35 @@ describe('getRWAOverviewTableData', () => {
 			assetCount: 10,
 			assetIssuers: 4
 		})
+	})
+})
+
+describe('fixed RWA overview asset counts', () => {
+	it('distinguishes a filtered zero from a genuine zero', () => {
+		expect(formatRWAOverviewUsd(0, true)).toBe('-')
+		expect(formatRWAOverviewUsd(0, false)).toBe('$0')
+		expect(formatRWAOverviewUsd(1_000_000, true)).toBe('$1m')
+	})
+
+	it('counts every asset classification', () => {
+		expect(getRWAOverviewAssetCount(row)).toBe(10)
+	})
+
+	it('detects assets excluded by the current toggles', () => {
+		expect(hasExcludedRWAOverviewAssets(row, false, false)).toBe(true)
+		expect(hasExcludedRWAOverviewAssets(row, true, false)).toBe(true)
+		expect(hasExcludedRWAOverviewAssets(row, false, true)).toBe(true)
+		expect(hasExcludedRWAOverviewAssets(row, true, true)).toBe(false)
+	})
+
+	it('does not mark empty optional classifications as excluded', () => {
+		const baseOnlyRow: RWAStatsSegmented = {
+			...row,
+			stablecoinsOnly: { ...row.stablecoinsOnly, assetCount: 0 },
+			governanceOnly: { ...row.governanceOnly, assetCount: 0 },
+			stablecoinsAndGovernance: { ...row.stablecoinsAndGovernance, assetCount: 0 }
+		}
+
+		expect(hasExcludedRWAOverviewAssets(baseOnlyRow, false, false)).toBe(false)
 	})
 })

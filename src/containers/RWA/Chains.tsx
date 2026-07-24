@@ -7,13 +7,14 @@ import type {} from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
-import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAChainsOverviewRow, RWAOverviewPage } from './api.types'
 import type { RWAPositionalChartDataset } from './chartDataset'
 import { definitions } from './definitions'
 import type { RWAFlowTreemapSizeRow } from './flowTreemap'
 import { RWAOverviewBreakdownChart } from './OverviewBreakdownChart'
+import { formatRWAOverviewUsd, getRWAOverviewAssetCount, hasExcludedRWAOverviewAssets } from './overviewTableData'
 import { rwaSlug } from './rwaSlug'
 
 type RWAChainsTableRow = {
@@ -23,6 +24,7 @@ type RWAChainsTableRow = {
 	totalDefiActiveTvl: number
 	totalAssetIssuers: number
 	totalAssetCount: number
+	hasExcludedAssets: boolean
 }
 
 const columnHelper = createColumnHelper<RWAChainsTableRow>()
@@ -73,8 +75,7 @@ const columns = [
 	columnHelper.accessor((row) => row.totalActiveMcap ?? undefined, {
 		id: 'totalActiveMcap',
 		header: definitions.totalActiveMcap.label,
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: (info) => formatRWAOverviewUsd(info.getValue(), info.row.original.hasExcludedAssets),
 		meta: {
 			headerClassName: 'w-[min(200px,40vw)]',
 			align: 'end',
@@ -84,8 +85,7 @@ const columns = [
 	columnHelper.accessor((row) => row.totalOnChainMcap ?? undefined, {
 		id: 'totalOnChainMcap',
 		header: definitions.totalOnChainMcap.label,
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: (info) => formatRWAOverviewUsd(info.getValue(), info.row.original.hasExcludedAssets),
 		meta: {
 			headerClassName: 'w-[min(208px,40vw)]',
 			align: 'end',
@@ -95,8 +95,7 @@ const columns = [
 	columnHelper.accessor((row) => row.totalDefiActiveTvl ?? undefined, {
 		id: 'totalDefiActiveTvl',
 		header: definitions.totalDefiActiveTvl.label,
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: (info) => formatRWAOverviewUsd(info.getValue(), info.row.original.hasExcludedAssets),
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -163,17 +162,6 @@ export function RWAChains({
 				totalDefiActiveTvl += row.stablecoinsAndGovernance.defiActiveTvl
 			}
 
-			let totalAssetCount = row.base.assetCount
-			if (includeStablecoins) {
-				totalAssetCount += row.stablecoinsOnly.assetCount
-			}
-			if (includeGovernance) {
-				totalAssetCount += row.governanceOnly.assetCount
-			}
-			if (includeStablecoins || includeGovernance) {
-				totalAssetCount += row.stablecoinsAndGovernance.assetCount
-			}
-
 			let totalAssetIssuers = [...row.base.assetIssuers]
 			if (includeStablecoins) {
 				totalAssetIssuers.push(...row.stablecoinsOnly.assetIssuers)
@@ -191,7 +179,8 @@ export function RWAChains({
 				totalActiveMcap,
 				totalDefiActiveTvl,
 				totalAssetIssuers: Array.from(new Set(totalAssetIssuers)).length,
-				totalAssetCount
+				totalAssetCount: getRWAOverviewAssetCount(row),
+				hasExcludedAssets: hasExcludedRWAOverviewAssets(row, includeStablecoins, includeGovernance)
 			}
 		})
 	}, [chains, includeGovernance, includeStablecoins])
