@@ -73,19 +73,19 @@ behavior must be verified from source before proposing a visual change.
   3. Historical wart: `text-(--text-label)` used to appear in summary metric-card
      recipes, but it is only a legacy alias of text-secondary. Current recipes use
      `text-secondary`; do not carry `--text-label` forward.
-  4. New ratchet in `lint:tokens`: `--legacy-` consumer count must not increase.
+  4. New design-token policy ratchet: `--legacy-` consumer count must not increase.
 - Quarantined per-product namespaces (`--pro-*`, `--sub-*`, `--sl-*`, `--signin-*`)
   are already unambiguous and live in deletable legacy-\*.css files; do not rename.
 - Resolution (2026-07-10): subset (a) now uses the `--legacy-*` namespace across
   definitions, scoped product overrides, class strings, CSS values, and JavaScript CSS
   variable reads. The old-name consumer scan reached zero before the temporary aliases
   were removed. Feedback tokens moved to `semantics.css`, runtime/layout variables and
-  sanctioned product namespaces were left unchanged, and `lint:tokens` now ratchets
+  sanctioned product namespaces were left unchanged, and the design-token policy now ratchets
   legacy-token references independently in core and excluded-product buckets.
 - Follow-up resolution (2026-07-10): primitives, semantics, component tokens, and chart
   tokens now own their clean custom-property names. Tailwind registrations, runtime
   chart readers, direct CSS consumers, documentation, and tests were renamed together;
-  a zero-baseline `lint:tokens` rule prevents reintroducing the `--ld-*` prefix. The
+  a zero-baseline design-token policy rule prevents reintroducing the `--ld-*` prefix. The
   remaining core hardcoded-color baseline is documented branded/data artwork rather than
   reusable UI chrome. The Tailwind v3 default-border compatibility shim remains because
   removing it would require visual review of thousands of implicit-border consumers and
@@ -1046,7 +1046,7 @@ variations instead of forcing a universal abstraction.
   record) and `design-execution-plan.md` (phase sequencing) are deleted. Their
   normative content survives where it belongs: rules in design.md (§ Status,
   § File placement, dialog/popover/series-color recipes), process in AGENTS.md,
-  enforcement in `lint:tokens`, and history in this audit. References to the
+  enforcement in the design-token policy check, and history in this audit. References to the
   deleted files inside earlier dated entries are historical record and stay.
 - **Excluded-product scope is reframed from an execution phase to a design
   decision.** No Figma designs exist for account/subscription, ProDashboard,

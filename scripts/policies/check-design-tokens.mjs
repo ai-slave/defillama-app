@@ -1,7 +1,7 @@
 // Design-token ratchet (see design.md → Do's and Don'ts).
 //
 // Counts styling patterns that bypass the token system and compares them
-// against scripts/design-token-baseline.json. Everything is ratcheted; there
+// against scripts/policies/design-token-baseline.json. Everything is ratcheted; there
 // are two independent buckets so neither can hide the other's regressions:
 //
 //   core     — app code on the Llama Design System (semantics.css)
@@ -12,13 +12,13 @@
 // product evolves is the intended workflow. The surface map below also feeds
 // the *-leak rules, which flag product tokens/utilities used in core code.
 //
-//   bun run lint:tokens            # check
-//   bun run lint:tokens --update   # rewrite baseline after removing debt
+//   bun scripts/policies/check-design-tokens.mjs          # check
+//   bun scripts/policies/check-design-tokens.mjs --update # rewrite baseline after removing debt
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const ROOT = path.join(import.meta.dirname, '..')
+const ROOT = path.join(import.meta.dirname, '../..')
 const BASELINE_PATH = path.join(import.meta.dirname, 'design-token-baseline.json')
 
 // The product-surface map: code under these paths belongs to a standing
@@ -365,7 +365,7 @@ for (const bucket of buckets) {
 			const top = [...offenders[bucket][rule.id].entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)
 			for (const [file, n] of top) console.log(`    ${n}\t${file}`)
 		} else if (now < was) {
-			console.log(`  run \`bun run lint:tokens --update\` to lock in the improvement`)
+			console.log(`  run \`bun scripts/policies/check-design-tokens.mjs --update\` to lock in the improvement`)
 		}
 	}
 }

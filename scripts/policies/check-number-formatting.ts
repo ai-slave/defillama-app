@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import ts from 'typescript'
 
-const root = path.resolve(import.meta.dirname, '..')
+const root = path.resolve(import.meta.dirname, '../..')
 const sourceRoot = path.join(root, 'src')
 const canonicalFormatter = 'src/utils/numberFormat.ts'
 const dateIdentifierFiles = new Set([

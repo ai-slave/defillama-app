@@ -373,7 +373,7 @@
 	  App tokens OUTSIDE the design system. The design system is
 	  src/styles/semantics.css; product palettes live in src/styles/themes/.
 	  --interim-* marks a value awaiting a library token (ratcheted by
-	  lint:tokens — don't add more); the rest are domain tokens documented
+	  the design-token policy check — don't add more); the rest are domain tokens documented
 	  in design.md. --announcement-bg has no global default: the Announcement
 	  component sets it inline per variant.
 	*/

@@ -158,7 +158,7 @@ Sizes in the table are Figma px for reference; the utilities implement them in *
 
 ## Spacing, radius, borders
 
-- **Spacing** is a 4px-based scale — the standard Tailwind scale; no arbitrary `p-[10px]` values (ratcheted by `lint:tokens`).
+- **Spacing** is a 4px-based scale — the standard Tailwind scale; no arbitrary `p-[10px]` values (ratcheted by the design-token policy check).
 - **Border width** is 1px in almost all cases. Data-table row/grid dividers use `border-subtle` (the opaque `border-divider` token was retired — it matched elevated-1/elevated-2 exactly and vanished on elevated surfaces); section separators and detail-card internal rules use `border-subtle` or `border-very-subtle` depending on the surface contrast. Do not use `border-medium` for simple dividers.
 - **Layout is gap/padding/min-h driven.** Figma values for margins, absolute offsets, and per-element line heights are rendering artifacts of the design tool — do not transcribe them. Space siblings with flex/grid `gap`, size boxes with `padding` and `min-h`, and let text wrap naturally. Margins are reserved for opting out of a parent's rhythm (`mt-auto`, negative bleed), not for building it.
 - **Responsive spacing picks both ends from the palette** (`gap-2 lg:gap-4`), never an invented in-between value. Viewport-fluid scaling (Utopia-style `clamp()` interpolation) was considered and rejected: this is a density-first data app — big screens get more data, not bigger chrome — and fluid values would break pixel-diff verification and Figma-frame review.
@@ -283,11 +283,11 @@ ECharts renders to canvas and cannot read `var()`: resolve canvas tokens through
 - Don't restate brand blue, premium gold, or any palette hex inline; if a needed token is missing, that's a design.md/library gap to raise, not a literal to paste.
 - Do pair every width-only border/divide utility (`border`, `border-t`, `divide-y`, …) with a color source (`border-subtle`, `border-medium`, an inline `style={{ borderColor }}`, …). The Tailwind v3 default-border-color compatibility shim was removed from `tailwind.css` (2026-07-10) after an audit found zero implicit consumers, so a colorless border renders `currentColor` — near-white in dark mode.
 - Do use Tailwind v4 spellings: trailing important (`px-1!`), `rounded-sm`, `outline-hidden`, `x-(--var)`, `size-*`, `truncate`, `bg-linear-to-*` — the v3 forms are deprecated compat and ratcheted.
-- `bun run lint:tokens` enforces the above as a ratchet: existing debt is baselined in `scripts/design-token-baseline.json`, and the check fails when any tracked token, radius, border-color, or named-typography conflict count increases. After removing debt, run with `--update` to lock in the improvement.
+- `bun scripts/policies/check-design-tokens.mjs` enforces the above as a ratchet: existing debt is baselined in `scripts/policies/design-token-baseline.json`, and the check fails when any tracked token, radius, border-color, or named-typography conflict count increases. After removing debt, run `bun scripts/policies/check-design-tokens.mjs --update` to lock in the improvement.
 
 ## Status
 
-This file is the standing design-system rulebook. `lint:tokens` enforces the mechanical
+This file is the standing design-system rulebook. The design-token policy check enforces the mechanical
 boundaries, and [design-decision-audit.md](design-decision-audit.md) records the rationale
 behind established decisions and exceptions. Historical migration plans are not evidence
 of current behavior; verify current source before proposing a visual change.
@@ -304,7 +304,7 @@ in scope unless they are part of the investor-relations dashboard product.
 Product surfaces are standing products with their own palettes, kept in
 `src/styles/themes/{pro,subscription,llamaai,articles}.css` under the
 `--pro-*`, `--sub-*`, `--sl-*`, `--ai-*`, `--research-*`/`--callout-*` namespaces.
-`lint:tokens` treats them as leak detectors: product tokens and utilities must
+The design-token policy check treats them as leak detectors: product tokens and utilities must
 not appear in core app code (`product-token-leak` / `product-utility-leak`),
 while inside their own surfaces the themes may grow freely.
 Feedback roles (`--success`, `--error`, and `--warning`) are semantic state tokens rather
