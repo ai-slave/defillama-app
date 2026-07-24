@@ -5,7 +5,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { TopThreeRow } from './TopThreeRow'
 import type { ProtocolEmissionWithHistory } from './types'
 
@@ -202,15 +202,44 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 															/>
 														</Tooltip>
 													</span>
-													<span className="font-medium">{usdValue ? formattedNum(usdValue, true) : '-'}</span>
+													<span className="font-medium">
+														{usdValue
+															? formatUsd(usdValue, {
+																	compact: true,
+																	minimumCompactValue: 1_000_000,
+																	compactSuffix: 'lowercase'
+																})
+															: '-'}
+													</span>
 												</span>
 												<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
 													<span>
-														{percentage != null ? <>{formattedNum(percentage)}%</> : null}{' '}
-														{percentageFloat != null ? <>({formattedNum(percentageFloat)}% of float)</> : null}
+														{percentage != null ? (
+															<>
+																{formatCompactNumber(percentage, {
+																	minimumCompactValue: 1_000_000,
+																	compactSuffix: 'lowercase'
+																})}
+																%
+															</>
+														) : null}{' '}
+														{percentageFloat != null ? (
+															<>
+																(
+																{formatCompactNumber(percentageFloat, {
+																	minimumCompactValue: 1_000_000,
+																	compactSuffix: 'lowercase'
+																})}
+																% of float)
+															</>
+														) : null}
 													</span>
 													<span>
-														{formattedNum(item.amount)} {impact.symbol}
+														{formatCompactNumber(item.amount, {
+															minimumCompactValue: 1_000_000,
+															compactSuffix: 'lowercase'
+														})}{' '}
+														{impact.symbol}
 													</span>
 												</span>
 											</span>
@@ -223,27 +252,36 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 									<span className="flex items-center justify-between gap-2 font-semibold">
 										<span>Total</span>
 										<span>
-											{formattedNum(
+											{formatUsd(
 												impact.unlockBreakdown.reduce((acc, item) => acc + item.amount * impact.price, 0),
-												true
+												{ compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }
 											)}
 										</span>
 									</span>
 									<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
 										<span>
 											{impact.maxSupply
-												? `${formattedNum((impact.unlockBreakdown.reduce((acc, item) => acc + item.amount, 0) / impact.maxSupply) * 100)}%`
+												? `${formatPercent(impact.unlockBreakdown.reduce((acc, item) => acc + item.amount, 0) / impact.maxSupply, { input: 'fraction', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 												: null}
 											{impact.mcap
-												? ` (${formattedNum(
-														(impact.unlockBreakdown.reduce((acc, item) => acc + item.amount * impact.price, 0) /
-															impact.mcap) *
-															100
-													)}% of float)`
+												? ` (${formatPercent(
+														impact.unlockBreakdown.reduce((acc, item) => acc + item.amount * impact.price, 0) /
+															impact.mcap,
+														{
+															input: 'fraction',
+															compact: true,
+															minimumCompactValue: 1_000_000,
+															compactSuffix: 'lowercase'
+														}
+													)} of float)`
 												: null}
 										</span>
 										<span>
-											{formattedNum(impact.unlockBreakdown.reduce((acc, item) => acc + item.amount, 0))} {impact.symbol}
+											{formatCompactNumber(
+												impact.unlockBreakdown.reduce((acc, item) => acc + item.amount, 0),
+												{ minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }
+											)}{' '}
+											{impact.symbol}
 										</span>
 									</span>
 								</span>

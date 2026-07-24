@@ -4,8 +4,8 @@ import { FallbackLogo, TokenLogo } from '~/components/TokenLogo'
 import { getNFTCollectionEarnings } from '~/containers/Nft/queries'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
-import { formattedNum } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('nfts/earnings', async () => {
@@ -120,7 +120,10 @@ const earningsColumns = [
 	}),
 	columnHelper.accessor('totalMintEarnings', {
 		header: 'Mint Earnings',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[100px]',
 			align: 'end'
@@ -128,7 +131,10 @@ const earningsColumns = [
 	}),
 	columnHelper.accessor('totalRoyaltyEarnings', {
 		header: 'Lifetime Royalty Earnings',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
@@ -136,7 +142,10 @@ const earningsColumns = [
 	}),
 	columnHelper.accessor('total30d', {
 		header: 'Royalties 30d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[80px]',
 			align: 'end'
@@ -144,7 +153,10 @@ const earningsColumns = [
 	}),
 	columnHelper.accessor('totalEarnings', {
 		header: 'Total Lifetime Earnings',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',

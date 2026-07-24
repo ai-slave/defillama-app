@@ -1,7 +1,8 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatCompactNumber } from '~/utils/numberFormat'
 
 export function FeesGeneratedChart({ series }: { series: Array<[string, number, string]> }) {
 	const containerRef = useRef<HTMLDivElement>(null)
@@ -85,7 +86,11 @@ export function FeesGeneratedChart({ series }: { series: Array<[string, number, 
 								alt=""
 							/>
 							{series[hoveredIndex][0]}
-							&nbsp;&nbsp;${formattedNum(series[hoveredIndex][1])}
+							&nbsp;&nbsp;$
+							{formatCompactNumber(series[hoveredIndex][1], {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 						</div>
 					</div>
 				) : null}

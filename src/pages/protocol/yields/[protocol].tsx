@@ -15,6 +15,7 @@ import { useYieldsServerTable } from '~/containers/Yields/useYieldsServerTable'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { sluggifyProtocol } from '~/utils/cache-client'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatNumber } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
@@ -191,7 +192,7 @@ function ProtocolYieldsTab({
 		<>
 			<div className="mt-1 mb-2 flex flex-wrap items-baseline gap-x-3 px-1">
 				<p className={`text-sm text-secondary ${total ? '' : 'invisible'}`}>
-					Tracking <strong className="text-primary">{total.toLocaleString()}</strong> {total === 1 ? 'pool' : 'pools'}
+					Tracking <strong className="text-primary">{formatNumber(total)}</strong> {total === 1 ? 'pool' : 'pools'}
 				</p>
 			</div>
 			<div className="mb-3">

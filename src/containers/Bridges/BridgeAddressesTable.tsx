@@ -9,8 +9,9 @@ import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { VirtualTable } from '~/components/Table/Table'
 import { Icon } from '~/ui/Icon'
-import { formattedNum, truncateAddress } from '~/utils'
+import { truncateAddress } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { formatUsd } from '~/utils/numberFormat'
 
 type BridgeAddressesTableRow = {
 	address: string
@@ -71,7 +72,10 @@ export function BridgeAddressesTable({ data }: { data: BridgeAddressesTableRow[]
 			}),
 			columnHelper.accessor('deposited', {
 				header: 'Deposited',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[120px]',
 					align: 'end'
@@ -79,7 +83,10 @@ export function BridgeAddressesTable({ data }: { data: BridgeAddressesTableRow[]
 			}),
 			columnHelper.accessor('withdrawn', {
 				header: 'Withdrawn',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[120px]',
 					align: 'end'

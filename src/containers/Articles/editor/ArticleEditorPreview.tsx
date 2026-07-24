@@ -1,3 +1,4 @@
+import { formatNumber } from '~/utils/numberFormat'
 import { ArticleRenderer } from '../renderer/ArticleRenderer'
 import type { LocalArticleDocument } from '../types'
 import { ARTICLE_SECTION_SLUGS } from '../types'
@@ -52,7 +53,7 @@ export function ArticleEditorPreview({
 
 					<div className="flex flex-wrap items-center gap-2">
 						<div className="hidden items-center gap-2 rounded-md border border-medium bg-surface px-2.5 py-1.5 font-jetbrains text-[10px] tracking-wider whitespace-nowrap text-tertiary uppercase sm:flex">
-							<span>{wordCount.toLocaleString()} words</span>
+							<span>{formatNumber(wordCount)} words</span>
 							<span aria-hidden className="h-3 w-px bg-border-medium" />
 							<span>{readMins} min</span>
 							{isDirty ? (

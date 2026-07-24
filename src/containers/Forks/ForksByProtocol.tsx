@@ -9,8 +9,9 @@ import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { PanelStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formattedNum, getTokenDominance, slug } from '~/utils'
+import { getTokenDominance, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
 import { useForkByProtocolExtraSeries } from './queries.client'
 import type { ForkByProtocolPageData } from './types'
@@ -74,10 +75,17 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 								<TokenLogo name={fork} kind="token" size={24} alt={`Logo of ${fork}`} />
 								{fork}
 							</h1>
-							<StatItem label="TVL in Forks (USD)" value={formattedNum(totalValue, true)} />
+							<StatItem
+								label="TVL in Forks (USD)"
+								value={formatUsd(totalValue, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+							/>
 							<StatItem
 								label={<>{topProtocol?.name ?? 'Top Protocol'} Dominance</>}
-								value={dominanceText == null ? 'N/A' : `${dominanceText}%`}
+								value={dominanceText == null ? 'N/A' : formatPercent(dominanceText, { input: 'percent' })}
 							/>
 						</SummaryStatsCard>
 

@@ -1,3 +1,4 @@
+import { formatFixedNumber } from '~/utils/numberFormat'
 // Inline SVG sparkline for the /yields "30d Trend" column. Uses the yields colour
 // family (--apy-mid up, --apy-very down, --text-tertiary flat) so the sparkline speaks
 // the same green/red as stability, signed APYs and the charts.
@@ -58,7 +59,7 @@ export function Sparkline({ points, width = 84, height = 24 }: SparklineProps) {
 		if (v == null) continue
 		endX = xAt(i)
 		endY = yAt(v)
-		d += `${d ? ' L' : 'M'} ${endX.toFixed(2)} ${endY.toFixed(2)}`
+		d += `${d ? ' L' : 'M'} ${formatFixedNumber(endX, 2)} ${formatFixedNumber(endY, 2)}`
 	}
 
 	const color = last > first ? 'var(--apy-mid)' : last < first ? 'var(--apy-very)' : 'var(--text-tertiary)'
@@ -74,7 +75,7 @@ export function Sparkline({ points, width = 84, height = 24 }: SparklineProps) {
 			style={{ color }}
 		>
 			<path d={d} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-			<circle cx={endX.toFixed(2)} cy={endY.toFixed(2)} r={1.7} fill="currentColor" />
+			<circle cx={formatFixedNumber(endX, 2)} cy={formatFixedNumber(endY, 2)} r={1.7} fill="currentColor" />
 		</svg>
 	)
 }

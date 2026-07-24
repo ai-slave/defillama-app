@@ -3,9 +3,8 @@ import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import type { TopAuthorEntry } from '~/containers/Authors/types'
 import { Icon } from '~/ui/Icon'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import { useTopAuthors } from '../hooks/useTopAuthors'
-
-const COUNT_FORMATTER = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
 
 function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 	const { author } = entry
@@ -37,19 +36,19 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 			<div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-pro-cards-border pt-3 text-xs text-pro-text-label tabular-nums">
 				<span className="inline-flex items-center gap-1" title="Public dashboards">
 					<Icon name="layout-grid" height={12} width={12} />
-					{COUNT_FORMATTER.format(entry.dashboardCount)}
+					{formatCompactNumber(entry.dashboardCount, { maximumFractionDigits: 1 })}
 				</span>
 				<span className="inline-flex items-center gap-1" title="Total views">
 					<Icon name="eye" height={12} width={12} />
-					{COUNT_FORMATTER.format(entry.totalViews)}
+					{formatCompactNumber(entry.totalViews, { maximumFractionDigits: 1 })}
 				</span>
 				<span className="inline-flex items-center gap-1" title="Total likes">
 					<Icon name="star" height={12} width={12} />
-					{COUNT_FORMATTER.format(entry.totalLikes)}
+					{formatCompactNumber(entry.totalLikes, { maximumFractionDigits: 1 })}
 				</span>
 				<span className="inline-flex items-center gap-1" title="Followers">
 					<Icon name="users" height={12} width={12} />
-					{COUNT_FORMATTER.format(entry.followerCount)}
+					{formatCompactNumber(entry.followerCount, { maximumFractionDigits: 1 })}
 				</span>
 			</div>
 		</BasicLink>

@@ -18,6 +18,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { lastNDaysZoom } from './chartDefaults'
 import { useFeeMData, type FeeMLeaderboardEntry } from './feemApi'
+import { formatSonicCount } from './format'
 import { SonicIcon } from './SonicIcon'
 
 echarts.use([EChartsTreemap, TooltipComponent, GraphicComponent, CanvasRenderer])
@@ -44,17 +45,6 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
-}
-
-function formatNumber(n: number): string {
-	if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`
-	if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`
-	if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`
-	return n.toFixed(0)
-}
-
-function formatS(n: number): string {
-	return `${formatNumber(n)} S`
 }
 
 function getTreemapValue(value: unknown): number {
@@ -134,7 +124,7 @@ function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
 			tooltip: {
 				formatter(rawInfo: unknown) {
 					const info = normalizeTooltipItems(rawInfo)[0]
-					return `<b>${info?.name ?? ''}</b><br/>Collected: ${formatS(getTreemapValue(info?.value))}`
+					return `<b>${info?.name ?? ''}</b><br/>Collected: ${formatSonicCount(getTreemapValue(info?.value))} S`
 				}
 			},
 			series: [
@@ -154,7 +144,7 @@ function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
 						textBorderColor: 'rgba(0,0,0,0.3)',
 						textBorderWidth: 2,
 						formatter(params) {
-							return `{name|${params.name}}\n{val|${formatS(getTreemapValue(params.value))}}`
+							return `{name|${params.name}}\n{val|${formatSonicCount(getTreemapValue(params.value))} S}`
 						},
 						rich: {
 							name: { fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 20 },
@@ -234,7 +224,7 @@ const columns = [
 	}),
 	columnHelper.accessor('contractsCount', {
 		header: 'Contracts',
-		cell: (info) => <span className="tabular-nums">{formatNumber(info.getValue())}</span>,
+		cell: (info) => <span className="tabular-nums">{formatSonicCount(info.getValue())}</span>,
 		size: 100
 	}),
 	columnHelper.accessor('transactionsCount', {
@@ -249,12 +239,12 @@ const columns = [
 	}),
 	columnHelper.accessor('claimedRewards', {
 		header: 'Claimed',
-		cell: (info) => <span className="tabular-nums">{formatS(info.getValue())}</span>,
+		cell: (info) => <span className="tabular-nums">{formatSonicCount(info.getValue())} S</span>,
 		size: 120
 	}),
 	columnHelper.accessor('rewardsToClaim', {
 		header: 'Unclaimed',
-		cell: (info) => <span className="tabular-nums">{formatS(info.getValue())}</span>,
+		cell: (info) => <span className="tabular-nums">{formatSonicCount(info.getValue())} S</span>,
 		size: 120
 	})
 ]

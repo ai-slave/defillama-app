@@ -22,8 +22,9 @@ import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInput
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
@@ -69,10 +70,13 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => (row.medianAmount ? row.medianAmount * 1e6 : null), {
+	columnHelper.accessor((row) => row.medianAmountUsd || null, {
 		id: 'medianAmount',
 		header: 'Median Amount',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end'

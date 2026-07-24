@@ -1,5 +1,5 @@
 import defs from '~/public/equities-definitions.json'
-import { abbreviateNumber } from '~/utils'
+import { formatEquitiesCompactValue } from './financialsFormatting'
 import type { IEquitiesListCompanyRow } from './types'
 
 export type EquityComparisonOperator = '>' | '>=' | '<' | '<='
@@ -413,7 +413,7 @@ export function countDraftEquityFilters(filters: EquityDraftFilter[]): number {
 
 export function formatEquityFilterValue(value: number, format: EquityFilterFormat): string {
 	const symbol = format === 'currency' ? '$' : format === 'percent' ? '%' : undefined
-	return abbreviateNumber(value, 2, symbol) ?? String(value)
+	return formatEquitiesCompactValue(value, symbol) ?? String(value)
 }
 
 function formatValues(values: readonly string[]): string {

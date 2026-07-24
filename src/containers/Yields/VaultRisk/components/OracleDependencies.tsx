@@ -1,7 +1,7 @@
 import type { BlockExplorersResponse } from '~/api/types'
 import { Card } from '~/ui/Card'
-import { formattedNum } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { toneClasses } from '../kindMeta'
 import { AddressActions } from '../primitives/AddressActions'
 import { MofNPips } from '../primitives/MofNPips'
@@ -26,7 +26,7 @@ function parseMofN(s?: string): { m: number; n: number } | null {
 function pctOfVault(p: number | null | undefined): string | null {
 	if (p == null) return null
 	const v = Math.min(100, Math.max(0, p * 100))
-	return v > 0 && v < 1 ? '<1%' : `${Math.round(v)}%`
+	return v > 0 && v < 1 ? '<1%' : formatPercent(v, { input: 'percent', maximumFractionDigits: 0 })
 }
 
 const EXCHANGE_RATE_KINDS = new Set(['exchange-rate', 'constant'])
@@ -123,7 +123,13 @@ export function OracleDependencies({
 				{totalDrainableUsd > 0 ? (
 					<p className="flex flex-wrap items-baseline gap-x-1.5">
 						<span className="body-sm text-secondary">Up to</span>
-						<span className="mono-md-bold text-primary">{formattedNum(totalDrainableUsd, true)}</span>
+						<span className="mono-md-bold text-primary">
+							{formatUsd(totalDrainableUsd, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						</span>
 						<span className="body-sm text-secondary">
 							drainable if these feeds are mispriced{totalPct ? ` · ${totalPct} ${shareWord}` : ''}
 						</span>
@@ -164,7 +170,13 @@ export function OracleDependencies({
 								/>
 							</span>
 							<span className="shrink-0 text-left sm:text-right">
-								<span className="text-primary">{formattedNum(o.exposure_usd, true)}</span>
+								<span className="text-primary">
+									{formatUsd(o.exposure_usd, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 								{p ? <span className="text-secondary">{` · ${p} ${shareWord}`}</span> : null}
 								<span className="block body-sm text-tertiary">
 									{eoa ? 'drainable if that key leaks' : 'drainable if it is compromised'}
@@ -191,7 +203,13 @@ export function OracleDependencies({
 								) : null}
 							</span>
 							<span className="shrink-0 text-left sm:text-right">
-								<span className="text-primary">{formattedNum(v.exposure_usd, true)}</span>
+								<span className="text-primary">
+									{formatUsd(v.exposure_usd, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 								{p ? <span className="text-secondary">{` · ${p} ${shareWord}`}</span> : null}
 								<span className="block body-sm text-tertiary">mispriceable if this feed lies</span>
 							</span>
@@ -219,7 +237,13 @@ export function OracleDependencies({
 								<span className="body-sm text-tertiary">prices {g.symbols.join(', ')}</span>
 							</span>
 							<span className="shrink-0 text-left sm:text-right">
-								<span className="text-primary">{formattedNum(g.exposureUsd, true)}</span>
+								<span className="text-primary">
+									{formatUsd(g.exposureUsd, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 								{p ? <span className="text-secondary">{` · ${p} ${shareWord}`}</span> : null}
 								<span className="block body-sm text-tertiary">
 									{immutable ? 'mispriceable only via the issuing contract' : 'mispriceable if these feeds lie'}

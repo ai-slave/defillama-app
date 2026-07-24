@@ -2,7 +2,7 @@ import { createColumnHelper, useReactTable, getCoreRowModel, getSortedRowModel }
 import { lazy, useEffect } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
-import { formattedNum } from '~/utils'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import { useBlockchainData, type TopToken } from './blockchainApi'
 import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
 
@@ -113,12 +113,20 @@ const tokenColumns = [
 	}),
 	tokenColumnHelper.accessor('transferCount', {
 		header: 'Transfers',
-		cell: (info) => <span className="tabular-nums">{formattedNum(info.getValue(), false)}</span>,
+		cell: (info) => (
+			<span className="tabular-nums">
+				{formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+			</span>
+		),
 		size: 120
 	}),
 	tokenColumnHelper.accessor('uniqueSenders', {
 		header: 'Unique Senders',
-		cell: (info) => <span className="tabular-nums">{formattedNum(info.getValue(), false)}</span>,
+		cell: (info) => (
+			<span className="tabular-nums">
+				{formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+			</span>
+		),
 		size: 120
 	})
 ]

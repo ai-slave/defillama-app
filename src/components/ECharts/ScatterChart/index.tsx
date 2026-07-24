@@ -16,8 +16,8 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { formattedNum } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
+import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { CHART_INSET } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
@@ -257,9 +257,18 @@ function ScatterChart({
 
 		const yieldTooltipFormatter = (params: ScatterTooltipParams) => {
 			if (params.value.length > 1) {
-				const apy = typeof params.value[6] === 'number' ? params.value[6].toFixed(2) : '—'
-				const average = typeof params.value[1] === 'number' ? params.value[1].toFixed(2) : '—'
-				const deviation = typeof params.value[0] === 'number' ? params.value[0].toFixed(2) : '—'
+				const apy =
+					typeof params.value[6] === 'number'
+						? formatNumber(params.value[6], { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+						: '—'
+				const average =
+					typeof params.value[1] === 'number'
+						? formatNumber(params.value[1], { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+						: '—'
+				const deviation =
+					typeof params.value[0] === 'number'
+						? formatNumber(params.value[0], { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+						: '—'
 				return (
 					'Symbol: ' +
 					params.value[3] +
@@ -268,7 +277,7 @@ function ScatterChart({
 					params.value[4] +
 					'<br/>' +
 					'TVL: ' +
-					formattedNum(params.value[5], true) +
+					formatUsd(params.value[5], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }) +
 					'<br/>' +
 					'APY Spot: ' +
 					apy +
@@ -304,9 +313,20 @@ function ScatterChart({
 				const formatValue = (val: string | number | null | undefined) => {
 					const numericValue = typeof val === 'number' ? val : Number(val)
 					if (!Number.isFinite(numericValue)) return '—'
-					if (valueSymbol === '$') return formattedNum(numericValue, true)
-					if (valueSymbol === '%') return numericValue.toFixed(2) + '%'
-					return formattedNum(numericValue)
+					if (valueSymbol === '$')
+						return formatUsd(numericValue, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})
+					if (valueSymbol === '%')
+						return formatPercent(numericValue, {
+							input: 'percent',
+							minimumFractionDigits: 2,
+							maximumFractionDigits: 2,
+							useGrouping: false
+						})
+					return formatCompactNumber(numericValue, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				}
 				let tooltip = ''
 				if (entityName) {

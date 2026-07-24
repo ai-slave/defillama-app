@@ -5,6 +5,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
+import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { useRevenueData, chartToModel } from './api'
 import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
@@ -415,7 +416,13 @@ export default function Revenue() {
 						{ key: 'asset', label: 'Asset' },
 						{ key: 'assetsUsd', label: 'NAV', right: true, render: (r) => fmtUsd(r.assetsUsd) },
 						{ key: 'grossPnlUsd', label: 'Gross PnL', right: true, render: (r) => fmtUsd(r.grossPnlUsd) },
-						{ key: 'feeRate', label: 'Fee', right: true, render: (r) => `${((r.feeRate ?? 0) * 100).toFixed(1)}%` },
+						{
+							key: 'feeRate',
+							label: 'Fee',
+							right: true,
+							render: (r) =>
+								`${formatPercent(r.feeRate ?? 0, { input: 'fraction', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
+						},
 						{ key: 'pnlUsd', label: 'Unclaimed Yield', right: true, render: (r) => fmtUsd(r.pnlUsd) },
 						{
 							key: 'lastHarvestDate',
@@ -453,7 +460,7 @@ export default function Revenue() {
 								<div>
 									<span className="text-sm font-semibold text-pro-text-primary">{r.asset}</span>
 									<span className="ml-2 text-xs text-pro-text-secondary">
-										{r.annualRatePct}% APR · debt {fmtUsd(r.totalDebtUsd)}
+										{formatPercent(r.annualRatePct, { input: 'percent' })} APR · debt {fmtUsd(r.totalDebtUsd)}
 									</span>
 								</div>
 								<div className="text-xs text-pro-text-secondary">
@@ -469,7 +476,7 @@ export default function Revenue() {
 										key: 'amount_synth',
 										label: 'Debt (synth)',
 										right: true,
-										render: (x) => x.amount_synth?.toLocaleString(undefined, { maximumFractionDigits: 2 })
+										render: (x) => formatNumber(x.amount_synth)
 									},
 									{ key: 'amount_usd', label: 'Debt (USD)', right: true, render: (x) => fmtUsd(x.amount_usd) }
 								]}

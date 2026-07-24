@@ -5,6 +5,7 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { getNDistinctColors, slug } from '~/utils'
+import { formatFixedNumber } from '~/utils/numberFormat'
 import { parseExcludeParam } from '~/utils/routerQuery'
 import type { IAdapterChainMetrics } from './api.types'
 import type { ADAPTER_TYPES } from './constants'
@@ -701,7 +702,7 @@ function cacheCanonicalSeriesColors(
 		const name = rankedEntityNames[index]
 		// The default top-N retains its authored palette. Overflow peers use a stable
 		// rank-derived hue without generating an O(n²) distinct palette for 2k+ series.
-		colorBySeriesName[name] ??= `hsl(${((index * 137.508) % 360).toFixed(2)}, 68%, 48%)`
+		colorBySeriesName[name] ??= `hsl(${formatFixedNumber((index * 137.508) % 360, 2)}, 68%, 48%)`
 	}
 	let datasetCache = canonicalSeriesColorsCache.get(chartData)
 	if (!datasetCache) {
@@ -1095,7 +1096,8 @@ function getLatestValueSeriesColors({ chartData, cacheKey }: { chartData: MultiS
 			const name = chartData.dimensions[dimensionIndex]
 			if (name === 'Others') continue
 			const colorIndex = peerIndex < MAX_CHAINS_BY_ADAPTER_HBAR_ITEMS ? peerIndex : peerIndex + 1
-			colorBySeriesName[name] = colors[colorIndex] ?? `hsl(${((peerIndex * 137.508) % 360).toFixed(2)}, 68%, 48%)`
+			colorBySeriesName[name] =
+				colors[colorIndex] ?? `hsl(${formatFixedNumber((peerIndex * 137.508) % 360, 2)}, 68%, 48%)`
 			peerIndex++
 		}
 		colorBySeriesName.Others = colors[MAX_CHAINS_BY_ADAPTER_HBAR_ITEMS]

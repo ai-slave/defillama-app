@@ -8,6 +8,7 @@ import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { nestedMenuActionStyles } from '~/ui/Popover'
+import { formatNumber } from '~/utils/numberFormat'
 import {
 	resolveSelectedStablecoinFilterKeys,
 	stablecoinAttributeOptions,
@@ -142,9 +143,7 @@ function McapRange({
 					{min || max ? (
 						<>
 							<span>Mcap: </span>
-							<span className="text-link">{`${min?.toLocaleString() ?? 'min'} - ${
-								max?.toLocaleString() ?? 'max'
-							}`}</span>
+							<span className="text-link">{`${formatNumber(min) ?? 'min'} - ${formatNumber(max) ?? 'max'}`}</span>
 						</>
 					) : (
 						'Mcap'

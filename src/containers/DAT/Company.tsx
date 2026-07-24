@@ -14,7 +14,7 @@ import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { IDATCompanyPageProps } from './types'
 
 const DEFAULT_SORTING_STATE = [{ id: 'report_date', desc: true }]
@@ -74,12 +74,27 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							<>
 								<MetricRow label="Assets in Holdings" value={props.assets.join(', ')} />
 								{props.totalUsdValue != null ? (
-									<MetricRow label="Assets Today's Value (USD)" value={formattedNum(props.totalUsdValue, true)} />
+									<MetricRow
+										label="Assets Today's Value (USD)"
+										value={formatUsd(props.totalUsdValue, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
+									/>
 								) : null}
 								{props.totalCost != null ? (
 									<MetricRow
 										label="Assets Cost Basis"
-										value={props.totalCost != null ? formattedNum(props.totalCost, true) : '-'}
+										value={
+											props.totalCost != null
+												? formatUsd(props.totalCost, {
+														compact: true,
+														minimumCompactValue: 1_000_000,
+														compactSuffix: 'lowercase'
+													})
+												: '-'
+										}
 									/>
 								) : null}
 							</>
@@ -88,17 +103,44 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							<MetricSection
 								key={`${props.ticker}-${asset.name}`}
 								label={`Total ${asset.name}`}
-								value={`${formattedNum(asset.amount, false)} ${asset.ticker}`}
+								value={`${formatCompactNumber(asset.amount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${asset.ticker}`}
 								defaultOpen={props.assetsBreakdown.length === 1 && index === 0}
 							>
 								<SubMetricRow
 									label="Today's Value (USD)"
-									value={asset.usdValue != null ? formattedNum(asset.usdValue, true) : null}
+									value={
+										asset.usdValue != null
+											? formatUsd(asset.usdValue, {
+													compact: true,
+													minimumCompactValue: 1_000_000,
+													compactSuffix: 'lowercase'
+												})
+											: null
+									}
 								/>
-								<SubMetricRow label="Cost Basis" value={asset.cost != null ? formattedNum(asset.cost, true) : '-'} />
+								<SubMetricRow
+									label="Cost Basis"
+									value={
+										asset.cost != null
+											? formatUsd(asset.cost, {
+													compact: true,
+													minimumCompactValue: 1_000_000,
+													compactSuffix: 'lowercase'
+												})
+											: '-'
+									}
+								/>
 								<SubMetricRow
 									label="Average Purchase Price"
-									value={asset.avgPrice != null ? formattedNum(asset.avgPrice, true) : '-'}
+									value={
+										asset.avgPrice != null
+											? formatUsd(asset.avgPrice, {
+													compact: true,
+													minimumCompactValue: 1_000_000,
+													compactSuffix: 'lowercase'
+												})
+											: '-'
+									}
 								/>
 							</MetricSection>
 						))}
@@ -125,7 +167,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 												<>
 													24h change:{' '}
 													<span className={props.priceChange24h > 0 ? 'text-data-up' : 'text-data-down'}>
-														{`${props.priceChange24h > 0 ? '+' : ''}${props.priceChange24h.toFixed(2)}%`}
+														{`${props.priceChange24h > 0 ? '+' : ''}${formatPercent(props.priceChange24h, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}
 													</span>
 												</>
 											}
@@ -143,21 +185,30 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							<MetricRow
 								label="Realized mNAV"
 								tooltip="Market Net Asset Value based only on the current outstanding common shares, with no dilution considered"
-								value={formattedNum(props.realized_mNAV, false)}
+								value={formatCompactNumber(props.realized_mNAV, {
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 						) : null}
 						{props.realistic_mNAV != null ? (
 							<MetricRow
 								label="Realistic mNAV"
 								tooltip="Market Net asset value adjusted for expected dilution from in-the-money options and convertibles that are likely to be exercised"
-								value={formattedNum(props.realistic_mNAV, false)}
+								value={formatCompactNumber(props.realistic_mNAV, {
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 						) : null}
 						{props.max_mNAV != null ? (
 							<MetricRow
 								label="Max mNAV"
 								tooltip={`Market Net Asset Value under the fully diluted scenario, assuming every warrant, option, and convertible is exercised (the most conservative/worst-case view)`}
-								value={formattedNum(props.max_mNAV, false)}
+								value={formatCompactNumber(props.max_mNAV, {
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 						) : null}
 					</div>
@@ -301,7 +352,7 @@ const columns = [
 				const value = getValue()
 				return (
 					<span className={value < 0 ? 'text-data-down' : 'text-data-up'}>
-						{`${value < 0 ? '-' : '+'}${formattedNum(Math.abs(value), false)} ${row.original.assetTicker}`}
+						{`${value < 0 ? '-' : '+'}${formatCompactNumber(Math.abs(value), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${row.original.assetTicker}`}
 					</span>
 				)
 			},
@@ -313,7 +364,10 @@ const columns = [
 	),
 	columnHelper.accessor('avg_price', {
 		header: 'Avg Purchase Price',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[168px]',
 			align: 'end'
@@ -321,7 +375,10 @@ const columns = [
 	}),
 	columnHelper.accessor('usd_value', {
 		header: 'USD Value',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[130px]',
 			align: 'end'
@@ -422,7 +479,7 @@ const chartOptions = {
 				`${label}:` +
 				'&nbsp;&nbsp;' +
 				'<span style="font-weight:600;">' +
-				formattedNum(Math.abs(deltaValue), false) +
+				formatCompactNumber(Math.abs(deltaValue), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }) +
 				'&nbsp;' +
 				(seriesName ?? '') +
 				'</span>' +
@@ -434,7 +491,7 @@ const chartOptions = {
 					`Cost basis per unit:` +
 					'&nbsp;&nbsp;' +
 					'<span style="font-weight:600;">' +
-					formattedNum(Number(avgPrice), true) +
+					formatUsd(Number(avgPrice), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }) +
 					'</span>' +
 					'</li>'
 			}
@@ -445,7 +502,7 @@ const chartOptions = {
 					`${valueLabel}:` +
 					'&nbsp;&nbsp;' +
 					'<span style="font-weight:600;">' +
-					formattedNum(Number(usdValue), true) +
+					formatUsd(Number(usdValue), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }) +
 					'</span>' +
 					'</li>'
 			}
@@ -455,7 +512,10 @@ const chartOptions = {
 				`Holdings till date:` +
 				'&nbsp;&nbsp;' +
 				'<span style="font-weight:600;">' +
-				formattedNum(typeof holdings === 'number' ? holdings : Number(holdings ?? 0), false) +
+				formatCompactNumber(typeof holdings === 'number' ? holdings : Number(holdings ?? 0), {
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				}) +
 				'&nbsp;' +
 				(seriesName ?? '') +
 				'</span>' +

@@ -4,6 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { formatUsd, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { AccentBadge, SecondaryBadge, StatusBadge, TimeframeBadge } from './badges'
 import type { BreakdownSections } from './breakdown'
 import { BreakdownTables, BreakdownTablesSkeleton } from './BreakdownTable'
@@ -363,7 +364,9 @@ function DrawerBody({
 					{SCORE_ROWS.map((row) => (
 						<div key={row.key} className="flex h-8 items-center justify-between text-sm">
 							<span className="text-secondary">{row.label}</span>
-							<span className="font-medium">{(scores[row.key] ?? 0).toFixed(2)}/10.00</span>
+							<span className="font-medium">
+								{formatNumber(scores[row.key] ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/10.00
+							</span>
 						</div>
 					))}
 				</div>
@@ -374,7 +377,8 @@ function DrawerBody({
 					const rank = asDict(b[card.rankKey])
 					const percentile = roundPercentile(asNum(rank.percentile))
 					const rankValue = asNum(rank.value)
-					const percentileLabel = percentile == null ? NA : String(percentile)
+					const percentileLabel =
+						percentile == null ? NA : formatPercent(percentile, { input: 'percent', maximumFractionDigits: 0 })
 					return (
 						<div
 							key={card.rankKey}
@@ -386,11 +390,11 @@ function DrawerBody({
 									{card.label}
 								</h4>
 								<p className="body-sm text-secondary">
-									Outperformed {percentileLabel}% of their peers {card.suffix}
+									Outperformed {percentileLabel} of their peers {card.suffix}
 								</p>
 							</div>
 							<div className="flex shrink-0 flex-wrap gap-2 sm:flex-col sm:items-end sm:gap-1">
-								<SecondaryBadge>Percentile: {percentileLabel}%</SecondaryBadge>
+								<SecondaryBadge>Percentile: {percentileLabel}</SecondaryBadge>
 								<SecondaryBadge>Rank: {rankValue == null ? NA : rankValue}</SecondaryBadge>
 							</div>
 						</div>
@@ -405,9 +409,7 @@ function DrawerBody({
 				</div>
 				<div className={`flex min-h-20 flex-col justify-center gap-1 p-4 ${CARD_BORDER}`}>
 					<span className="body-sm text-secondary">Avg. FDV of Projects in Forgd</span>
-					<span className="text-xl font-bold">
-						{avgFdv == null ? FALLBACK : `$${Math.round(avgFdv).toLocaleString('en-US')}`}
-					</span>
+					<span className="text-xl font-bold">{avgFdv == null ? FALLBACK : formatUsd(Math.round(avgFdv))}</span>
 				</div>
 			</section>
 

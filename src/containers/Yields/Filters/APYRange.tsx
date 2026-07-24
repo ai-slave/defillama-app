@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
+import { formatNumber } from '~/utils/numberFormat'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
@@ -54,9 +55,7 @@ export function APYRange({ nestedMenu, placement, size = 'sm' }: IAPYRange) {
 					{min || max ? (
 						<>
 							<span>APY: </span>
-							<span className="text-link">{`${min?.toLocaleString() ?? 'min'} - ${
-								max?.toLocaleString() ?? 'max'
-							}`}</span>
+							<span className="text-link">{`${formatNumber(min) ?? 'min'} - ${formatNumber(max) ?? 'max'}`}</span>
 						</>
 					) : (
 						<span>APY</span>

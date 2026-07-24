@@ -8,7 +8,8 @@ import Layout from '~/layout'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -81,9 +82,23 @@ export default function Collection() {
 						<FormattedName text={props.name} fontWeight={700} />
 					</h1>
 
-					<StatItem label="30d royalty earnings" value={formattedNum(props.total30d, true)} />
+					<StatItem
+						label="30d royalty earnings"
+						value={formatUsd(props.total30d, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
 
-					<StatItem label="Lifetime royalty earnings" value={formattedNum(props.totalAllTime, true)} />
+					<StatItem
+						label="Lifetime royalty earnings"
+						value={formatUsd(props.totalAllTime, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
 				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-full">

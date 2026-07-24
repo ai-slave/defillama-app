@@ -3,7 +3,7 @@ import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-t
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { useMapleActivePools } from './api'
 import { buildMaplePoolsData, type PoolRow } from './chartData'
 import {
@@ -54,7 +54,8 @@ const poolColumns: ColumnDef<PoolRow>[] = [
 	{
 		header: 'TVL',
 		accessorKey: 'tvlUsd',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -75,7 +76,8 @@ const poolColumns: ColumnDef<PoolRow>[] = [
 	{
 		header: 'Depositors',
 		accessorKey: 'numPositions',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), false),
+		cell: ({ getValue }) =>
+			formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 100
 	},
@@ -130,11 +132,18 @@ export default function PoolsOverview() {
 		isLoading || pools.length === 0
 			? null
 			: {
-					totalTvl: formattedNum(data.totals.totalTvl, true),
+					totalTvl: formatUsd(data.totals.totalTvl, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
 					activePools: pools.length,
-					totalDepositors: formattedNum(data.totals.totalDepositors, false),
-					avgApy: `${data.totals.weightedAverageApy.toFixed(2)}%`,
-					avgUtil: `${data.totals.weightedAverageUtilization.toFixed(1)}%`
+					totalDepositors: formatCompactNumber(data.totals.totalDepositors, {
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
+					avgApy: `${formatPercent(data.totals.weightedAverageApy, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`,
+					avgUtil: `${formatPercent(data.totals.weightedAverageUtilization, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
 				}
 
 	return (

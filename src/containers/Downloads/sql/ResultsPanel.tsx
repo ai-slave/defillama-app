@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { formatNumber } from '~/utils/numberFormat'
 import { FormatSplitButton } from '../FormatSplitButton'
 import type { ChartConfig } from './chartConfig'
 import { exportQueryResult, type QueryResult } from './exportResults'
+import { formatSqlDuration } from './format'
 import { ResultsChart } from './ResultsChart'
 import { ResultsGrid } from './ResultsGrid'
 
@@ -95,9 +97,9 @@ export function ResultsPanel({
 				<div className="flex items-baseline gap-2">
 					<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">Results</h3>
 					<span className="text-xs text-pro-text-tertiary tabular-nums">
-						{result.rows.length.toLocaleString()} row{result.rows.length === 1 ? '' : 's'} · {result.columns.length} col
+						{formatNumber(result.rows.length)} row{result.rows.length === 1 ? '' : 's'} · {result.columns.length} col
 						{result.columns.length === 1 ? '' : 's'}
-						{durationMs != null ? ` · ${formatDuration(durationMs)}` : ''}
+						{durationMs != null ? ` · ${formatSqlDuration(durationMs)}` : ''}
 					</span>
 				</div>
 				<div className="flex items-center gap-2">
@@ -140,13 +142,6 @@ function ViewToggle({
 			<ToggleButton active={view === 'chart'} onClick={() => onChange('chart')} label="Chart" icon="bar-chart-2" />
 		</div>
 	)
-}
-
-function formatDuration(ms: number): string {
-	if (ms < 1000) return `${ms}ms`
-	if (ms < 10_000) return `${(ms / 1000).toFixed(2)}s`
-	if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`
-	return `${Math.round(ms / 1000)}s`
 }
 
 function ToggleButton({

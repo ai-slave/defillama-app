@@ -4,7 +4,8 @@ import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import type { DailyUnlocks } from './calendarTypes'
 
 interface UnlocksListViewProps {
@@ -54,7 +55,13 @@ export const UnlocksListView: React.FC<UnlocksListViewProps> = ({ events }) => {
 										<TokenLogo name={event.protocol} kind="token" size={20} alt={`Logo of ${event.protocol}`} />
 										{event.protocol}
 									</span>
-									<span className="text-sm font-medium text-secondary">{formattedNum(event.value, true)}</span>
+									<span className="text-sm font-medium text-secondary">
+										{formatUsd(event.value, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
+									</span>
 								</div>
 							</BasicLink>
 						))}

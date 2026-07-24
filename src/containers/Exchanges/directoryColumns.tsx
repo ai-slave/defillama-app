@@ -6,8 +6,8 @@ import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
 import { letterLogoDataUri } from '~/utils/icons'
+import { formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
 import {
 	EuAvailabilityValue,
 	getEuStatusPresentation,
@@ -38,16 +38,20 @@ import { selectVenueDestination } from './venueLinks'
 const columnHelper = createColumnHelper<ExchangeDirectoryRowModel>()
 
 function money(value: number | null | undefined): string {
-	return value == null ? '–' : formattedNum(value, true)
+	return value == null
+		? '–'
+		: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 function percentage(value: number | null | undefined, digits = 1): string {
-	return value == null ? '–' : `${(value * 100).toFixed(digits)}%`
+	return value == null
+		? '–'
+		: `${formatPercent(value, { input: 'fraction', minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false })}`
 }
 
 function ratio(value: number | null | undefined): string {
 	if (value == null) return '–'
-	return `${value >= 100 ? Math.round(value).toLocaleString() : value.toFixed(1)}×`
+	return `${formatRatio(value, { maximumFractionDigits: value >= 100 ? 0 : 1 })}×`
 }
 
 function Change({ value }: { value: number | undefined }) {

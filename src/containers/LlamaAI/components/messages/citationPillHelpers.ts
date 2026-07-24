@@ -1,5 +1,6 @@
 import { getToolLabel } from '~/containers/LlamaAI/toolMetadata'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
+import { formatNumber, formatUsd, formatPercent, roundNumber } from '~/utils/numberFormat'
 
 export const PRIVACY_SENTINEL = '[value omitted — sensitive]'
 
@@ -71,12 +72,12 @@ export function hiddenRowsLabel(rowCount?: number): string | null {
 }
 
 function trimToSigDecimals(n: number): string {
-	if (Number.isInteger(n)) return n.toLocaleString('en-US')
+	if (Number.isInteger(n)) return formatNumber(n)
 	const abs = Math.abs(n)
 	const decimals = abs >= 100 ? 0 : abs >= 1 ? 2 : 4
-	const rounded = Number(n.toFixed(decimals))
-	if (Number.isInteger(rounded)) return rounded.toLocaleString('en-US')
-	return rounded.toLocaleString('en-US', { maximumFractionDigits: decimals })
+	const rounded = roundNumber(n, decimals)
+	if (Number.isInteger(rounded)) return formatNumber(rounded)
+	return formatNumber(rounded, { maximumFractionDigits: decimals })
 }
 
 export function formatCellValue(v: unknown): string {
@@ -462,19 +463,20 @@ function metricKind(field: string): MetricKind {
 	return 'plain'
 }
 
-function formatUsd(n: number): string {
-	const sign = n < 0 ? '-' : ''
+function formatCitationUsd(n: number): string {
 	const abs = Math.abs(n)
-	if (abs >= 1e12) return `${sign}$${trimToSigDecimals(abs / 1e12)}T`
-	if (abs >= 1e9) return `${sign}$${trimToSigDecimals(abs / 1e9)}B`
-	if (abs >= 1e6) return `${sign}$${trimToSigDecimals(abs / 1e6)}M`
-	const decimals = abs >= 100 ? 0 : 2
-	return `${sign}$${abs.toLocaleString('en-US', { maximumFractionDigits: decimals })}`
+	const scaled = abs >= 1e12 ? abs / 1e12 : abs >= 1e9 ? abs / 1e9 : abs >= 1e6 ? abs / 1e6 : abs
+	const decimals = scaled >= 100 ? 0 : 2
+	return formatUsd(n, {
+		compact: true,
+		minimumCompactValue: 1e6,
+		maximumFractionDigits: decimals
+	})
 }
 
-function formatPercent(n: number): string {
+function formatCitationPercent(n: number): string {
 	const decimals = Math.abs(n) >= 100 ? 0 : 2
-	return `${n.toLocaleString('en-US', { maximumFractionDigits: decimals })}%`
+	return formatPercent(n, { input: 'percent', maximumFractionDigits: decimals })
 }
 
 export function formatMetricValue(field: string, value: unknown): string {
@@ -484,13 +486,13 @@ export function formatMetricValue(field: string, value: unknown): string {
 	if (n == null) return formatCellValue(value)
 	switch (kind) {
 		case 'usd':
-			return formatUsd(n)
+			return formatCitationUsd(n)
 		case 'percent':
-			return formatPercent(n)
+			return formatCitationPercent(n)
 		case 'percent-decimal':
-			return formatPercent(n * 100)
+			return formatCitationPercent(n * 100)
 		case 'count':
-			return Math.round(n).toLocaleString('en-US')
+			return formatNumber(Math.round(n))
 		case 'ratio':
 			return `${trimToSigDecimals(n)}×`
 		default:
@@ -595,7 +597,7 @@ export function formatOutputValue(key: string, value: unknown): string {
 	if (/_date$|_ts$|^date$/.test(key)) return formatDateValue(value) ?? formatCellValue(value)
 	if (/_pct$|_rate$|_share$/.test(key)) {
 		const n = parseRefNumber(value)
-		return n != null ? `${formatCellValue(n)}%` : formatCellValue(value)
+		return n != null ? formatPercent(n, { input: 'percent' }) : formatCellValue(value)
 	}
 	return formatCellValue(value)
 }

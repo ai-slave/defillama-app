@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 
 export function KpiCard({
 	label,
@@ -53,10 +54,6 @@ export function ChartCard({
 
 export function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
-}
-
-export function formatNullablePercent(value: number | null): string {
-	return value == null ? '—' : `${value}%`
 }
 
 export function ChartSkeleton({ title, height = 'h-[350px]' }: { title: string; height?: string }) {
@@ -136,17 +133,14 @@ export function SimpleTable<Row extends object>({
 export function fmtUsd(v: number | null | undefined): string {
 	if (v == null || Number.isNaN(v)) return '—'
 	const a = Math.abs(v)
-	const s = v < 0 ? '-' : ''
-	if (a >= 1e9) return `${s}$${(a / 1e9).toFixed(2)}B`
-	if (a >= 1e6) return `${s}$${(a / 1e6).toFixed(2)}M`
-	if (a >= 1e3) return `${s}$${(a / 1e3).toFixed(1)}K`
-	return `${s}$${a.toFixed(0)}`
+	const fractionDigits = a >= 1e6 ? 2 : a >= 1e3 ? 1 : 0
+	return formatUsd(v, {
+		compact: true,
+		minimumFractionDigits: fractionDigits,
+		maximumFractionDigits: fractionDigits
+	})
 }
 
-export function fmtNum(v: number | null | undefined, digits = 2): string {
-	if (v == null || Number.isNaN(v)) return '—'
-	return v.toLocaleString(undefined, { maximumFractionDigits: digits })
-}
 export function UtilBar({ pct }: { pct: number | null | undefined }) {
 	const p = Math.min(100, Math.max(0, pct ?? 0))
 	const color = p >= 90 ? '#f87171' : p >= 70 ? '#fbbf24' : '#6366f1'
@@ -155,7 +149,9 @@ export function UtilBar({ pct }: { pct: number | null | undefined }) {
 			<div className="h-2 w-20 shrink-0 rounded-sm bg-pro-cards-border">
 				<div style={{ width: `${p}%`, background: color }} className="h-2 rounded-sm" />
 			</div>
-			<span className="min-w-[44px] text-right">{p.toFixed(1)}%</span>
+			<span className="min-w-[44px] text-right">
+				{formatPercent(p, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}
+			</span>
 		</div>
 	)
 }

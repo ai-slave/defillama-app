@@ -1,7 +1,8 @@
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import { FeesGeneratedChart } from './FeesGeneratedChart'
 import { SmolBarChart } from './SmolBarChart'
 import { SmolLineChart } from './SmolLineChart'
@@ -29,7 +30,12 @@ export const SmolStats = (props: IChainOverviewData) => {
 								</Tooltip>
 								{props.unlocks.chart?.length > 0 ? (
 									<p className="truncate text-secondary">
-										{formattedNum(props.unlocks.total14d, true)} <span className="text-tertiary">over 14 days</span>
+										{formatUsd(props.unlocks.total14d, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}{' '}
+										<span className="text-tertiary">over 14 days</span>
 									</p>
 								) : null}
 							</div>
@@ -54,7 +60,12 @@ export const SmolStats = (props: IChainOverviewData) => {
 								</Tooltip>
 								{props.dexs.chart?.length > 0 ? (
 									<p className="truncate text-secondary">
-										{formattedNum(props.dexs.total24h, true)} <span className="text-tertiary">24h</span>
+										{formatUsd(props.dexs.total24h, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}{' '}
+										<span className="text-tertiary">24h</span>
 									</p>
 								) : null}
 							</div>
@@ -76,7 +87,11 @@ export const SmolStats = (props: IChainOverviewData) => {
 								</Tooltip>
 								{props.etfs?.length > 0 ? (
 									<p className="truncate text-secondary">
-										{formattedNum(props.etfs[props.etfs.length - 1][1], true)}{' '}
+										{formatUsd(props.etfs[props.etfs.length - 1][1], {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}{' '}
 										<span className="text-tertiary">24h</span>
 									</p>
 								) : null}
@@ -96,7 +111,12 @@ export const SmolStats = (props: IChainOverviewData) => {
 								</Tooltip>
 								{props.datInflows.chart?.length > 0 ? (
 									<p className="truncate text-secondary">
-										{formattedNum(props.datInflows.total30d, true)} <span className="text-tertiary">30d</span>
+										{formatUsd(props.datInflows.total30d, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}{' '}
+										<span className="text-tertiary">30d</span>
 									</p>
 								) : null}
 							</div>
@@ -121,7 +141,12 @@ export const SmolStats = (props: IChainOverviewData) => {
 					</Tooltip>
 					{props.dexs.chart?.length > 0 ? (
 						<p className="truncate text-secondary">
-							{formattedNum(props.dexs.total24h, true)} <span className="text-tertiary">24h</span>
+							{formatUsd(props.dexs.total24h, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}{' '}
+							<span className="text-tertiary">24h</span>
 						</p>
 					) : null}
 					<SmolBarChart series={props.dexs.chart} />
@@ -141,7 +166,12 @@ export const SmolStats = (props: IChainOverviewData) => {
 						</Tooltip>
 						{props.chainFees.feesGenerated24h != null ? (
 							<p className="text-secondary">
-								{formattedNum(props.chainFees.feesGenerated24h ?? 0, true)} <span className="text-tertiary">24h</span>
+								{formatUsd(props.chainFees.feesGenerated24h ?? 0, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}{' '}
+								<span className="text-tertiary">24h</span>
 							</p>
 						) : null}
 					</div>
@@ -162,10 +192,16 @@ export const SmolStats = (props: IChainOverviewData) => {
 					</Tooltip>
 					{props.stablecoins.mcap != null ? (
 						<>
-							<p className="truncate text-secondary">{formattedNum(props.stablecoins.mcap, true)}</p>
+							<p className="truncate text-secondary">
+								{formatUsd(props.stablecoins.mcap, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+							</p>
 							<p className="flex items-center gap-1 text-xs">
 								<span className={`truncate ${+props.stablecoins.change7d >= 0 ? 'text-data-up' : 'text-data-down'}`}>
-									{`${+props.stablecoins.change7d >= 0 ? '+' : ''}${props.stablecoins.change7d}%`}
+									{formatPercentChange(props.stablecoins.change7d)}
 								</span>
 								<span className="text-tertiary">7d</span>
 							</p>

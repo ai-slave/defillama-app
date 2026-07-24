@@ -10,8 +10,14 @@ import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
+import { formatNumber } from '~/utils/numberFormat'
 import type { DatasetDefinition, DatasetExcludeToggle } from './datasets'
 import { FormatSplitButton } from './FormatSplitButton'
+import {
+	formatDownloadPreviewCurrency,
+	formatDownloadPreviewNumber,
+	formatDownloadPreviewPercent
+} from './previewFormatting'
 import { RowLimitPicker } from './RowLimitPicker'
 import {
 	applyDatasetConfig,
@@ -39,29 +45,6 @@ const PERCENT_HEADER_PATTERN = /(apy|pct|percent|change|rate|fee|mnav|ltv)/i
 const CURRENCY_HEADER_PATTERN =
 	/(usd|tvl|mcap|market.?cap|price|amount|volume|fees?|revenue|supply|borrow|debt|cost|aum|valuation|value|flow)/i
 
-const integerFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
-const decimalFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 })
-const preciseDecimalFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 })
-const compactNumberFormatter = new Intl.NumberFormat('en-US', {
-	notation: 'compact',
-	maximumFractionDigits: 2
-})
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-	style: 'currency',
-	currency: 'USD',
-	maximumFractionDigits: 2
-})
-const preciseCurrencyFormatter = new Intl.NumberFormat('en-US', {
-	style: 'currency',
-	currency: 'USD',
-	maximumFractionDigits: 6
-})
-const compactCurrencyFormatter = new Intl.NumberFormat('en-US', {
-	style: 'currency',
-	currency: 'USD',
-	notation: 'compact',
-	maximumFractionDigits: 2
-})
 const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' })
 
@@ -187,21 +170,6 @@ function getColumnWidth(header: string, kind: ColumnKind, values: string[], isFi
 	return isFirst ? Math.max(200, estimated) : estimated
 }
 
-function formatNumber(value: number): string {
-	const absoluteValue = Math.abs(value)
-	if (absoluteValue >= 1000000) return compactNumberFormatter.format(value)
-	if (Number.isInteger(value)) return integerFormatter.format(value)
-	if (absoluteValue >= 1) return decimalFormatter.format(value)
-	return preciseDecimalFormatter.format(value)
-}
-
-function formatCurrency(value: number): string {
-	const absoluteValue = Math.abs(value)
-	if (absoluteValue >= 10000) return compactCurrencyFormatter.format(value)
-	if (absoluteValue >= 1) return currencyFormatter.format(value)
-	return preciseCurrencyFormatter.format(value)
-}
-
 function formatDate(value: number, hasTime: boolean): string {
 	return hasTime ? dateTimeFormatter.format(value) : dateFormatter.format(value)
 }
@@ -210,15 +178,15 @@ function formatCellValue(value: string, column: ColumnMeta): string {
 	if (!value) return ''
 	if (column.kind === 'currency') {
 		const numeric = parseNumericValue(value)
-		return numeric === null ? value : formatCurrency(numeric)
+		return numeric === null ? value : formatDownloadPreviewCurrency(numeric)
 	}
 	if (column.kind === 'number') {
 		const numeric = parseNumericValue(value)
-		return numeric === null ? value : formatNumber(numeric)
+		return numeric === null ? value : formatDownloadPreviewNumber(numeric)
 	}
 	if (column.kind === 'percent') {
 		const numeric = parseNumericValue(value)
-		return numeric === null ? value : `${formatNumber(numeric)}%`
+		return numeric === null ? value : formatDownloadPreviewPercent(numeric)
 	}
 	if (column.kind === 'date') {
 		const parsedDate = parseDateValue(value, column.header)
@@ -718,8 +686,8 @@ export function DatasetPreviewModal({
 													const isLimited =
 														rowLimit !== null && rowLimit > 0 && displayedRows.length < sortedRows.length
 													const rowsLabel = isLimited
-														? `${displayedRows.length.toLocaleString()} of ${sortedRows.length.toLocaleString()} rows`
-														: `${sortedRows.length.toLocaleString()} rows`
+														? `${formatNumber(displayedRows.length)} of ${formatNumber(sortedRows.length)} rows`
+														: `${formatNumber(sortedRows.length)} rows`
 													return `${rowsLabel} · ${selectedCount}/${headers.length} cols selected`
 												})()}
 								</p>

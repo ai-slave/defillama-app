@@ -18,7 +18,7 @@ import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IDATOverviewFlowSeries, IDATOverviewPageProps } from './types'
 
@@ -158,7 +158,13 @@ const overviewColumns = [
 		}
 	}),
 	columnHelper.accessor(
-		(row) => row.holdings.map((asset) => `${asset.name} (${(Number(asset.dominance) || 0).toFixed(2)}%)`).join(', '),
+		(row) =>
+			row.holdings
+				.map(
+					(asset) =>
+						`${asset.name} (${formatPercent(Number(asset.dominance) || 0, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })})`
+				)
+				.join(', '),
 		{
 			id: 'holdings',
 			header: 'Assets',
@@ -191,7 +197,10 @@ const overviewColumns = [
 	),
 	columnHelper.accessor('totalCost', {
 		header: 'Cost Basis',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
@@ -199,7 +208,10 @@ const overviewColumns = [
 	}),
 	columnHelper.accessor('totalUsdValue', {
 		header: "Today's Holdings Value",
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(196px,40vw)]',
 			align: 'end'
@@ -211,7 +223,8 @@ const overviewColumns = [
 			const price = getValue()
 			if (price == null) return null
 			const priceChange24h = row.original.priceChange24h
-			if (priceChange24h == null) return <>{formattedNum(price, true)}</>
+			if (priceChange24h == null)
+				return <>{formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 			return (
 				<Tooltip
 					content={
@@ -219,12 +232,12 @@ const overviewColumns = [
 							24h change:{' '}
 							<span
 								className={priceChange24h > 0 ? 'text-data-up' : priceChange24h < 0 ? 'text-data-down' : ''}
-							>{`${priceChange24h > 0 ? '+' : ''}${priceChange24h.toFixed(2)}%`}</span>
+							>{`${priceChange24h > 0 ? '+' : ''}${formatPercent(priceChange24h, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}</span>
 						</>
 					}
 					className="justify-end underline decoration-dotted"
 				>
-					{formattedNum(price, true)}
+					{formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</Tooltip>
 			)
 		},
@@ -235,7 +248,10 @@ const overviewColumns = [
 	}),
 	columnHelper.accessor('realized_mNAV', {
 		header: 'Realized mNAV',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), false) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -245,7 +261,10 @@ const overviewColumns = [
 	}),
 	columnHelper.accessor('realistic_mNAV', {
 		header: 'Realistic mNAV',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), false) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -255,7 +274,10 @@ const overviewColumns = [
 	}),
 	columnHelper.accessor('max_mNAV', {
 		header: 'Max mNAV',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), false) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -279,15 +301,23 @@ interface BreakdownData {
 }
 
 function Breakdown({ data }: { data: BreakdownData }) {
-	const name = `${data.name} (${data.dominance}%)`
+	const name = `${data.name} (${formatPercent(data.dominance, { input: 'percent' })})`
 
 	return (
 		<span className="flex flex-col gap-1 border-l-3 pl-1 text-xs" style={{ borderColor: data.color }}>
 			<span className="break-words">{name}</span>
-			{data.amount != null ? <span>{`Amount: ${formattedNum(data.amount, false)} ${data.ticker}`}</span> : null}
-			{data.usdValue != null ? <span>{`Today's Value: ${formattedNum(data.usdValue, true)}`}</span> : null}
-			{data.cost != null ? <span>{`Cost Basis: ${formattedNum(data.cost, true)}`}</span> : null}
-			{data.avgPrice != null ? <span>{`Average Purchase Price: ${formattedNum(data.avgPrice, true)}`}</span> : null}
+			{data.amount != null ? (
+				<span>{`Amount: ${formatCompactNumber(data.amount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${data.ticker}`}</span>
+			) : null}
+			{data.usdValue != null ? (
+				<span>{`Today's Value: ${formatUsd(data.usdValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</span>
+			) : null}
+			{data.cost != null ? (
+				<span>{`Cost Basis: ${formatUsd(data.cost, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</span>
+			) : null}
+			{data.avgPrice != null ? (
+				<span>{`Average Purchase Price: ${formatUsd(data.avgPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</span>
+			) : null}
 		</span>
 	)
 }

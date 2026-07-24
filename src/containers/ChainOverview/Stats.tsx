@@ -17,8 +17,8 @@ import { TVL_SETTINGS_KEYS, useDarkModeManager, useLocalStorageSettingsManager }
 import { buttonStyles } from '~/ui/Button'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
 import { downloadCSV } from '~/utils/download'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { ChainChartPanel } from './ChainChartPanel'
 import { BAR_CHARTS, type ChainChartLabels, chainCharts } from './constants'
 import { KeyMetrics } from './KeyMetrics'
@@ -166,12 +166,16 @@ export function Stats(props: IStatsProps) {
 									? 'Sum of value of all coins held in smart contracts of all the protocols on all chains'
 									: 'Sum of value of all coins held in smart contracts of all the protocols on the chain'
 							}
-							value={formattedNum(totalValueUSD, true)}
+							value={formatUsd(totalValueUSD, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 							truncate
 						/>
 						{change24h != null && valueChange24hUSD != null ? (
 							<Tooltip
-								content={`${formattedNum(valueChange24hUSD, true)}`}
+								content={`${formatUsd(valueChange24hUSD, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}
 								render={<p />}
 								className="relative bottom-0.5 flex flex-nowrap items-center gap-1"
 							>
@@ -180,7 +184,7 @@ export function Stats(props: IStatsProps) {
 										change24h >= 0 ? 'text-data-up' : 'text-data-down'
 									}`}
 								>
-									{`${change24h > 0 ? '+' : ''}${change24h.toFixed(2)}%`}
+									{`${change24h > 0 ? '+' : ''}${formatPercent(change24h, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}
 								</span>
 								<span className="body-md text-tertiary">24h</span>
 							</Tooltip>

@@ -9,8 +9,10 @@ import { lazy, useEffect, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { formatPercent } from '~/utils/numberFormat'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { useEcosystemData, type TopProtocolEntry, type AssetCategory } from './ecosystemApi'
+import { formatSonicUsd } from './format'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -50,13 +52,6 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
-}
-
-function formatUsd(n: number): string {
-	if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`
-	if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`
-	if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`
-	return `$${n.toFixed(2)}`
 }
 
 const protocolColumnHelper = createColumnHelper<TopProtocolEntry>()
@@ -108,17 +103,17 @@ function makeProtocolColumns(valueLabel: string) {
 		}),
 		protocolColumnHelper.accessor('total7d', {
 			header: `7d ${valueLabel}`,
-			cell: (info) => <span className="tabular-nums">{formatUsd(info.getValue())}</span>,
+			cell: (info) => <span className="tabular-nums">{formatSonicUsd(info.getValue())}</span>,
 			size: 120
 		}),
 		protocolColumnHelper.accessor('total30d', {
 			header: `30d ${valueLabel}`,
-			cell: (info) => <span className="tabular-nums">{formatUsd(info.getValue())}</span>,
+			cell: (info) => <span className="tabular-nums">{formatSonicUsd(info.getValue())}</span>,
 			size: 120
 		}),
 		protocolColumnHelper.accessor('totalAllTime', {
 			header: `All-Time ${valueLabel}`,
-			cell: (info) => <span className="tabular-nums">{formatUsd(info.getValue())}</span>,
+			cell: (info) => <span className="tabular-nums">{formatSonicUsd(info.getValue())}</span>,
 			size: 130
 		})
 	]
@@ -260,14 +255,16 @@ function AssetBreakdownSection({
 										<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
 										<span className="min-w-0 flex-1 truncate text-sm text-pro-text-primary capitalize">{cat.name}</span>
 										<span className="shrink-0 text-sm font-semibold text-pro-text-primary">{cat.formatted}</span>
-										<span className="w-12 shrink-0 text-right text-xs text-pro-text-label">{cat.pct}%</span>
+										<span className="w-12 shrink-0 text-right text-xs text-pro-text-label">
+											{formatPercent(cat.pct, { input: 'percent' })}
+										</span>
 									</div>
 									{isOpen && (
 										<div className="pb-2 pl-8">
 											{breakdownEntries.map(([symbol, value]) => (
 												<div key={symbol} className="flex items-center py-1.5 text-xs text-pro-text-label">
 													<span className="min-w-0 flex-1 truncate">{symbol}</span>
-													<span className="shrink-0">{formatUsd(value)}</span>
+													<span className="shrink-0">{formatSonicUsd(value)}</span>
 												</div>
 											))}
 										</div>
@@ -426,7 +423,9 @@ export default function Ecosystem() {
 											<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
 											<span className="min-w-0 flex-1 truncate text-sm text-pro-text-primary">{coin.name}</span>
 											<span className="shrink-0 text-sm font-semibold text-pro-text-primary">{coin.formatted}</span>
-											<span className="w-12 shrink-0 text-right text-xs text-pro-text-label">{coin.pct}%</span>
+											<span className="w-12 shrink-0 text-right text-xs text-pro-text-label">
+												{formatPercent(coin.pct, { input: 'percent' })}
+											</span>
 										</div>
 									)
 								})}

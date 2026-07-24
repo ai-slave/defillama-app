@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { formatDownloadRowCount } from './format'
 import { buildLlmInstructions } from './llmInstructions'
 import { inferColumnKind, SectionLabel, TypeBadge } from './primitives'
 import { prettyLabelForSource, type RegisteredTable } from './useTableRegistry'
@@ -119,7 +120,7 @@ function TableChip({
 					}`}
 				/>
 				<span className="max-w-[180px] truncate font-mono font-medium">{table.name}</span>
-				<span className="text-pro-text-tertiary tabular-nums">· {formatCount(table.rowCount)}</span>
+				<span className="text-pro-text-tertiary tabular-nums">· {formatDownloadRowCount(table.rowCount)}</span>
 			</button>
 			<button
 				type="button"
@@ -206,13 +207,6 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 			</ul>
 		</div>
 	)
-}
-
-function formatCount(n: number): string {
-	if (n < 1000) return n.toLocaleString()
-	if (n < 10_000) return `${(n / 1000).toFixed(1)}k`
-	if (n < 1_000_000) return `${Math.round(n / 1000)}k`
-	return `${(n / 1_000_000).toFixed(1)}m`
 }
 
 function EmptyTablesPrompt({

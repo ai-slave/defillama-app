@@ -24,10 +24,11 @@ import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import type { ICexItem, IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
+import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { flushTelemetry, recordDomainEvent } from '~/utils/telemetry'
 import {
@@ -669,7 +670,11 @@ const columns = [
 		enableSorting: true,
 		cell: ({ getValue }) => {
 			const value = getValue()
-			return value == null ? <span className="text-tertiary">-</span> : formattedNum(value, true)
+			return value == null ? (
+				<span className="text-tertiary">-</span>
+			) : (
+				formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+			)
 		},
 		meta: {
 			headerClassName: 'w-[150px]',

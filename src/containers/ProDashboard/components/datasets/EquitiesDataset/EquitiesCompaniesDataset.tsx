@@ -21,8 +21,8 @@ import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashbo
 import { fetchEquitiesCompaniesViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { PRO_EQUITIES_COMPANIES_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
-import { formattedNum } from '~/utils'
 import { downloadCSV } from '~/utils/download'
+import { formatPercentChange, formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
@@ -42,16 +42,6 @@ type EquitiesCompanyRow = {
 	dividendYield: number | null
 	revenueTTM: number | null
 	earningsTTM: number | null
-}
-
-function formatPercent(value: number | null | undefined): string {
-	if (value == null || !Number.isFinite(value)) return '—'
-	return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
-}
-
-function formatRatio(value: number | null | undefined): string {
-	if (value == null || !Number.isFinite(value)) return '—'
-	return value.toFixed(2)
 }
 
 const columnHelper = createColumnHelper<EquitiesCompanyRow>()
@@ -76,21 +66,24 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 	columnHelper.accessor('currentPrice', {
 		id: 'currentPrice',
 		header: 'Price',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 120
 	}),
 	columnHelper.accessor('marketCap', {
 		id: 'marketCap',
 		header: 'Market Cap',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 140
 	}),
 	columnHelper.accessor('volume', {
 		id: 'volume',
 		header: 'Volume',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 130
 	}),
@@ -100,7 +93,7 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 		cell: (info) => {
 			const val = info.getValue()
 			const color = val >= 0 ? 'text-success' : 'text-error'
-			return <span className={color}>{formatPercent(val)}</span>
+			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
 		},
 		meta: { align: 'end' },
 		size: 110
@@ -111,7 +104,7 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 		cell: (info) => {
 			const val = info.getValue()
 			const color = val >= 0 ? 'text-success' : 'text-error'
-			return <span className={color}>{formatPercent(val)}</span>
+			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
 		},
 		meta: { align: 'end' },
 		size: 110
@@ -122,7 +115,7 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 		cell: (info) => {
 			const val = info.getValue()
 			const color = val >= 0 ? 'text-success' : 'text-error'
-			return <span className={color}>{formatPercent(val)}</span>
+			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
 		},
 		meta: { align: 'end' },
 		size: 110
@@ -130,7 +123,7 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 	columnHelper.accessor('trailingPE', {
 		id: 'trailingPE',
 		header: 'P/E',
-		cell: (info) => formatRatio(info.getValue()),
+		cell: (info) => formatRatio(info.getValue()) ?? '—',
 		meta: { align: 'end' },
 		size: 90
 	}),
@@ -139,7 +132,9 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 		header: 'Div Yield',
 		cell: (info) => {
 			const val = info.getValue()
-			return val != null && Number.isFinite(val) ? `${(val * 100).toFixed(2)}%` : '—'
+			return val != null && Number.isFinite(val)
+				? `${formatPercent(val, { input: 'fraction', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+				: '—'
 		},
 		meta: { align: 'end' },
 		size: 100
@@ -147,14 +142,16 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 	columnHelper.accessor('revenueTTM', {
 		id: 'revenueTTM',
 		header: 'Revenue TTM',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 140
 	}),
 	columnHelper.accessor('earningsTTM', {
 		id: 'earningsTTM',
 		header: 'Earnings TTM',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 140
 	})

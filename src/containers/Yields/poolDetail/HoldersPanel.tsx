@@ -15,10 +15,10 @@ import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
-import { fmtCount, fmtUsd } from './format'
+import { YIELD_USD_OPTIONS } from './format'
 import { getHolderMode, getHolderModeQueryValue, type HolderMode } from './queryState'
 import { getChartTooltipItems } from './tooltip'
 import type { DetailHolders, Holder, HolderChange, HolderStatus } from './types'
@@ -49,16 +49,22 @@ function shortAddr(address: string): string {
 }
 
 function pctStr(value: number, digits = 1): string {
-	return `${value.toFixed(digits)}%`
+	return `${formatPercent(value, { input: 'percent', minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false })}`
 }
 
 function fmtToken(balance: string, decimals: number): string {
 	const value = Number(balance) / 10 ** decimals
-	return Number.isFinite(value) ? fmtCount(value) : '—'
+	return Number.isFinite(value)
+		? formatCompactNumber(value, {
+				compactSuffix: 'lowercase',
+				minimumFractionDigits: value >= 1e3 ? 1 : undefined,
+				maximumFractionDigits: value >= 1e3 ? 1 : undefined
+			})
+		: '—'
 }
 
 function signedCount(value: number): string {
-	return `${value > 0 ? '+' : ''}${value.toLocaleString()}`
+	return `${value > 0 ? '+' : ''}${formatNumber(value)}`
 }
 
 function changeColor(value: number): string {
@@ -81,13 +87,25 @@ function ChangeBadge({ delta }: { delta: { status: HolderStatus; value: number |
 		case 'up':
 			return (
 				<span className="inline-flex items-center justify-end gap-1 whitespace-nowrap text-(--yield-positive-text)">
-					<Icon name="arrow-up" className="size-3.5 shrink-0" aria-hidden />+{Math.abs(delta.value ?? 0).toFixed(1)}%
+					<Icon name="arrow-up" className="size-3.5 shrink-0" aria-hidden />+
+					{formatPercent(Math.abs(delta.value ?? 0), {
+						input: 'percent',
+						minimumFractionDigits: 1,
+						maximumFractionDigits: 1,
+						useGrouping: false
+					})}
 				</span>
 			)
 		case 'down':
 			return (
 				<span className="inline-flex items-center justify-end gap-1 whitespace-nowrap text-(--yield-negative-text)">
-					<Icon name="arrow-down" className="size-3.5 shrink-0" aria-hidden />-{Math.abs(delta.value ?? 0).toFixed(1)}%
+					<Icon name="arrow-down" className="size-3.5 shrink-0" aria-hidden />-
+					{formatPercent(Math.abs(delta.value ?? 0), {
+						input: 'percent',
+						minimumFractionDigits: 1,
+						maximumFractionDigits: 1,
+						useGrouping: false
+					})}
 				</span>
 			)
 		case 'entered_top_10':
@@ -146,7 +164,7 @@ function HolderDistribution({
 						if (!item) return ''
 						const rawValue = item.value
 						const value = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? 0)
-						return `${item.marker}${item.name}: <b>${value.toFixed(2)}%</b>`
+						return `${item.marker}${item.name}: <b>${formatPercent(value, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}</b>`
 					}}
 					exportButtons={{
 						png: true,
@@ -314,7 +332,14 @@ function HoldersTable({
 									<TokenPageTableBodyCell textAlign="end">
 										{mode === 'share' ? (
 											<span className="flex items-center justify-end gap-2">
-												<span className="text-primary">{holder.share_pct.toFixed(2)}%</span>
+												<span className="text-primary">
+													{formatPercent(holder.share_pct, {
+														input: 'percent',
+														minimumFractionDigits: 2,
+														maximumFractionDigits: 2,
+														useGrouping: false
+													})}
+												</span>
 												<span className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-border-subtle sm:block">
 													<span
 														className="block h-full rounded-full"
@@ -366,7 +391,13 @@ function HolderInsights({ holders, list, tvlUsd }: { holders: DetailHolders; lis
 							<div key={tier.label} className="flex items-center justify-between body-md">
 								<span className="text-secondary">{tier.label}</span>
 								<span className="mono-md-bold text-primary">
-									{tier.pct == null ? '—' : formattedNum((tier.pct / 100) * tvlUsd, true)}
+									{tier.pct == null
+										? '—'
+										: formatUsd((tier.pct / 100) * tvlUsd, {
+												compact: true,
+												minimumCompactValue: 1_000_000,
+												compactSuffix: 'lowercase'
+											})}
 								</span>
 							</div>
 						))}
@@ -377,7 +408,7 @@ function HolderInsights({ holders, list, tvlUsd }: { holders: DetailHolders; lis
 					<div className="flex flex-col gap-2 rounded-md bg-surface-elevated-1 p-2">
 						<div className="flex items-center justify-between">
 							<span className="body-md text-secondary">Total Holders</span>
-							<span className="mono-md-bold text-primary">{count.toLocaleString()}</span>
+							<span className="mono-md-bold text-primary">{formatNumber(count)}</span>
 						</div>
 						{countChange7d != null ? (
 							<div className="flex items-center justify-between body-md">
@@ -397,7 +428,9 @@ function HolderInsights({ holders, list, tvlUsd }: { holders: DetailHolders; lis
 				{avg != null ? (
 					<div className="flex flex-col gap-1 rounded-md bg-surface-elevated-1 p-2">
 						<span className="body-md text-secondary">Avg Position Size</span>
-						<span className="mono-md-bold text-primary">{formattedNum(avg, true)}</span>
+						<span className="mono-md-bold text-primary">
+							{formatUsd(avg, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+						</span>
 					</div>
 				) : null}
 			</div>
@@ -448,8 +481,19 @@ export function HoldersPanel({
 			<Card as="section" padding="md" className="flex flex-col gap-3">
 				<h2 className="heading-xs">Holders</h2>
 				<div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-					<StatItem label="Total holders" value={count == null ? '—' : fmtCount(count)} />
-					<StatItem label="Avg position" value={fmtUsd(avg)} />
+					<StatItem
+						label="Total holders"
+						value={
+							count == null
+								? '—'
+								: formatCompactNumber(count, {
+										compactSuffix: 'lowercase',
+										minimumFractionDigits: count >= 1e3 ? 1 : undefined,
+										maximumFractionDigits: count >= 1e3 ? 1 : undefined
+									})
+						}
+					/>
+					<StatItem label="Avg position" value={formatUsd(avg, YIELD_USD_OPTIONS) ?? '—'} />
 					<StatItem label="Top 10 holders" value={top10Pct == null ? '—' : pctStr(top10Pct)} />
 				</div>
 			</Card>

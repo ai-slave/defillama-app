@@ -21,8 +21,9 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, truncateAddress } from '~/utils'
+import { truncateAddress } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IRWAAssetData, IRWAAssetFlowSummary } from './api.types'
 import { definitions } from './definitions'
@@ -165,7 +166,9 @@ const AssetPrimaryValue = ({
 }) => {
 	const value = (
 		<span className="min-h-8 font-jetbrains text-2xl font-semibold">
-			{total != null ? formattedNum(total, true) : '-'}
+			{total != null
+				? formatUsd(total, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: '-'}
 		</span>
 	)
 
@@ -223,7 +226,9 @@ const AssetPrimaryValue = ({
 						className="flex items-center justify-between gap-1 border-b border-dashed border-subtle py-1 last:border-none"
 					>
 						<span className="text-secondary">{chain}</span>
-						<span className="font-jetbrains">{formattedNum(chainValue, true)}</span>
+						<span className="font-jetbrains">
+							{formatUsd(chainValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+						</span>
 					</p>
 				))}
 			</div>
@@ -280,29 +285,65 @@ const AssetKeyMetrics = ({
 				<MetricSection
 					label={definitions.activeMcap.label}
 					tooltip={definitions.activeMcap.description}
-					value={formattedNum(activeMcap.total, true)}
+					value={formatUsd(activeMcap.total, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
 				>
 					{activeMcap.breakdown.map(([chain, value]) => (
-						<SubMetricRow key={chain} label={chain} value={formattedNum(value, true)} />
+						<SubMetricRow
+							key={chain}
+							label={chain}
+							value={formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+						/>
 					))}
 				</MetricSection>
 			) : (
 				<MetricRow
 					label={definitions.activeMcap.label}
 					tooltip={definitions.activeMcap.description}
-					value={activeMcap?.total != null ? formattedNum(activeMcap.total, true) : '-'}
+					value={
+						activeMcap?.total != null
+							? formatUsd(activeMcap.total, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: '-'
+					}
 				/>
 			)}
 			{asset.defiActiveTvlByProtocolChain != null && asset.defiActiveTvlByProtocolChain.length > 0 ? (
 				<MetricSection
 					label={definitions.defiActiveTvl.label}
 					tooltip={definitions.defiActiveTvl.description}
-					value={formattedNum(defiActiveTvl?.total ?? 0, true)}
+					value={formatUsd(defiActiveTvl?.total ?? 0, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
 				>
 					{asset.defiActiveTvlByProtocolChain.map((row) => (
-						<SubMetricSection key={row.protocol} label={row.protocol} value={formattedNum(row.total, true)}>
+						<SubMetricSection
+							key={row.protocol}
+							label={row.protocol}
+							value={formatUsd(row.total, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						>
 							{row.byChain.map(([chain, value]) => (
-								<SubMetricRow key={chain} label={chain} value={formattedNum(value, true)} />
+								<SubMetricRow
+									key={chain}
+									label={chain}
+									value={formatUsd(value, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								/>
 							))}
 						</SubMetricSection>
 					))}
@@ -311,7 +352,11 @@ const AssetKeyMetrics = ({
 				<MetricRow
 					label={definitions.defiActiveTvl.label}
 					tooltip={definitions.defiActiveTvl.description}
-					value={formattedNum(defiActiveTvl?.total ?? 0, true)}
+					value={formatUsd(defiActiveTvl?.total ?? 0, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
 				/>
 			)}
 			<MetricRow
@@ -345,11 +390,17 @@ const AssetKeyMetrics = ({
 				valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow30d?.flow)}`}
 			/>
 			{asset.price != null ? (
-				<MetricRow label={`${asset.ticker ?? 'Token'} Price`} value={formattedNum(asset.price, true)} />
+				<MetricRow
+					label={`${asset.ticker ?? 'Token'} Price`}
+					value={formatUsd(asset.price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				/>
 			) : null}
 			<MetricRow label="Chains" value={asset.chain?.length ?? 0} />
 			{asset.nativeYieldCurrent != null ? (
-				<MetricRow label="Native Yield" value={`${asset.nativeYieldCurrent.toFixed(2)}%`} />
+				<MetricRow
+					label="Native Yield"
+					value={`${formatPercent(asset.nativeYieldCurrent, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}
+				/>
 			) : null}
 		</div>
 	)
@@ -981,7 +1032,12 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									<span className="label-sm text-secondary uppercase">Native Yield</span>
 									{asset.nativeYieldCurrent != null ? (
 										<span className="font-jetbrains text-3xl font-bold tracking-tight text-[#cc3e82]">
-											{asset.nativeYieldCurrent.toFixed(2)}%
+											{formatPercent(asset.nativeYieldCurrent, {
+												input: 'percent',
+												minimumFractionDigits: 2,
+												maximumFractionDigits: 2,
+												useGrouping: false
+											})}
 										</span>
 									) : null}
 								</p>

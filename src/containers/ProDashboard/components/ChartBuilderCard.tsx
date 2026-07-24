@@ -9,6 +9,7 @@ import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard
 import { Icon } from '~/ui/Icon'
 import type { ChartSeries } from '~/utils/breakdowns'
 import { download } from '~/utils/download'
+import { formatUsd } from '~/utils/numberFormat'
 import { getChartBuilderQueryKey, resolveChartBuilderFilterMode } from '../chartBuilderQueryKey'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import {
@@ -256,17 +257,8 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					: {
 							type: 'value',
 							axisLabel: {
-								formatter: (value: number) => {
-									const absValue = Math.abs(value)
-									if (absValue >= 1e9) {
-										return '$' + (value / 1e9).toFixed(1).replace(/\.0$/, '') + 'B'
-									} else if (absValue >= 1e6) {
-										return '$' + (value / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'
-									} else if (absValue >= 1e3) {
-										return '$' + (value / 1e3).toFixed(1).replace(/\.0$/, '') + 'K'
-									}
-									return '$' + value.toFixed(0)
-								}
+								formatter: (value: number) =>
+									formatUsd(value, { compact: true, maximumFractionDigits: Math.abs(value) >= 1e3 ? 1 : 0 })
 							}
 						}
 		}

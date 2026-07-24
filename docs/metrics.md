@@ -227,6 +227,34 @@ Historical chart semantics:
 - Non-USD denomination must divide the combined value using the millisecond timestamp price lookup.
 - The Bridged TVL key metric card and chart should agree on `govtokens` semantics.
 
+## Hacks
+
+Hack loss and returned-funds values are whole USD amounts in both API payloads:
+
+- `/hacks` returns raw fields named `amount` and `returnedFunds` in whole USD.
+- `/v2/metrics/tvl/protocol/:protocol` embeds the same whole-USD hack fields.
+- This differs from Raises payloads, whose amount and valuation fields are expressed in millions of USD.
+
+Normalize both hack sources at their fetch boundaries with `normalizeHack`. App consumers should only use the explicit
+`amountUsd` and `returnedFundsUsd` fields and pass them directly to `formatUsd`; never multiply hack amounts by `1e6`.
+The Downloads hacks dataset exposes the same normalized USD fields.
+
+## Raises
+
+Raise amounts and valuations use USD millions in both API payloads:
+
+- `/raises` returns `amount` as a number and `valuation` primarily as a numeric string, both in USD millions.
+- `/v2/metrics/tvl/protocol/:protocol` embeds the same fields and units.
+
+Normalize both API shapes at their fetch boundaries with `normalizeRaisesApiItem`. App consumers, snapshot reads, tables, charts,
+filters, and CSV exports should only use `amountUsd` and `valuationUsd`. Raw snapshot publication remains transport-shaped
+so existing artifacts can be read and normalized consistently. The Downloads Raises dataset also exposes normalized USD
+fields.
+
+The warehouse has a different contract: `fact.raise_event.amount` and `fact.hack_event.amount` are already whole USD.
+Do not pass warehouse rows through the Raises API normalizer or silently combine warehouse and API records; the sources
+also differ in coverage and may differ in returned-funds data.
+
 ## RWA
 
 RWA metrics have their own definitions and breakdown files:

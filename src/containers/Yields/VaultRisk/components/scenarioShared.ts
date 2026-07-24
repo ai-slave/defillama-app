@@ -1,4 +1,4 @@
-import { formattedNum } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { formatLossRange } from '../format'
 import type { ScenarioVM } from '../types'
 
@@ -12,7 +12,7 @@ export function formatDepositPct(share: number): string {
 	if (pct <= 0) return '0%'
 	if (pct >= 99.5) return '100%'
 	if (pct < 1) return '<1%'
-	return `${Math.round(pct)}%`
+	return formatPercent(pct, { input: 'percent', maximumFractionDigits: 0 })
 }
 
 // Your loss = pool loss × your pro-rata share, capped at 1 (you can't lose more than you
@@ -75,13 +75,21 @@ function baseModeledCell(scenario: ScenarioVM): ModeledLossCell {
 
 	if (drop != null) {
 		if (min <= 0) {
-			return { amount: '$0', note: `Buffered at −${drop}%`, sortUsd: 0 }
+			return { amount: '$0', note: `Buffered at −${formatPercent(drop, { input: 'percent' })}`, sortUsd: 0 }
 		}
-		return { amount: formattedNum(min, true), note: `At −${drop}% stress`, sortUsd: min }
+		return {
+			amount: formatUsd(min, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			note: `At −${formatPercent(drop, { input: 'percent' })} stress`,
+			sortUsd: min
+		}
 	}
 
 	if (min === max && min > 0) {
-		return { amount: formattedNum(min, true), note: null, sortUsd: min }
+		return {
+			amount: formatUsd(min, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			note: null,
+			sortUsd: min
+		}
 	}
 
 	if (min <= 0 && max > 0) {
@@ -89,7 +97,11 @@ function baseModeledCell(scenario: ScenarioVM): ModeledLossCell {
 	}
 
 	if (min > 0) {
-		return { amount: formattedNum(min, true), note: null, sortUsd: min }
+		return {
+			amount: formatUsd(min, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			note: null,
+			sortUsd: min
+		}
 	}
 
 	return { amount: '—', note: null, sortUsd: 0 }
@@ -108,12 +120,20 @@ export function modeledLossCell(scenario: ScenarioVM, stress?: StressSel): Model
 	if (scenario.lossByAnchor?.length) {
 		if (stress === 'worst') {
 			const max = scenario.lossMaxUsd
-			return { amount: formattedNum(max, true), note: null, sortUsd: max }
+			return {
+				amount: formatUsd(max, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+				note: null,
+				sortUsd: max
+			}
 		}
 		const v = scenario.lossByAnchor.find((a) => a.dropPct === stress)?.lossUsd ?? 0
 		// $0 at this drop = the drop sits inside the liquidation margin.
 		if (v <= 0) return { amount: '$0', note: 'Inside liquidation buffer', sortUsd: 0 }
-		return { amount: formattedNum(v, true), note: null, sortUsd: v }
+		return {
+			amount: formatUsd(v, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			note: null,
+			sortUsd: v
+		}
 	}
 
 	// No drop dimension under an active stress selector: fixed figure, no subtext.
@@ -123,10 +143,10 @@ export function modeledLossCell(scenario: ScenarioVM, stress?: StressSel): Model
 // Title for the selected-stress loss — consistent between table header and detail hero.
 export function stressLossTitle(s: ScenarioVM, stress?: StressSel): string {
 	if (s.lossByAnchor?.length && stress != null) {
-		return stress === 'worst' ? 'Worst-case loss' : `Loss at −${stress}%`
+		return stress === 'worst' ? 'Worst-case loss' : `Loss at −${formatPercent(stress, { input: 'percent' })}`
 	}
 	const drop = dropPct(s)
-	return drop != null ? `Loss at −${drop}%` : 'Modeled loss'
+	return drop != null ? `Loss at −${formatPercent(drop, { input: 'percent' })}` : 'Modeled loss'
 }
 
 // Presentation-only grouping derived from kind + scenario_id + status; never changes any
@@ -189,8 +209,9 @@ export function worstCaseLabel(scenario: ScenarioVM, supplyUsd: number, position
 	if (scenario.status !== 'computed') return formatLossRange({ status: scenario.status, min_usd: 0, max_usd: 0 })
 	if (isFullLoss(scenario, supplyUsd)) return 'Full deposit'
 	const maxUsd = scaleToPosition(scenario.lossMaxUsd, supplyUsd, position)
-	if (scenario.lossMinUsd === scenario.lossMaxUsd) return formattedNum(maxUsd, true)
-	return `up to ${formattedNum(maxUsd, true)}`
+	if (scenario.lossMinUsd === scenario.lossMaxUsd)
+		return formatUsd(maxUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+	return `up to ${formatUsd(maxUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 }
 
 export function scenarioRowId(scenarioId: string): string {

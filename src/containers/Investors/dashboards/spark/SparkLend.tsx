@@ -3,7 +3,7 @@ import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-t
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { AREA_EXPORT, BAR_EXPORT, DOLLAR_CHART_OPTIONS, DOLLAR_STACKED_CHART_OPTIONS } from './chartDefaults'
 import {
 	useSparklendBorrowedChart,
@@ -83,7 +83,10 @@ function KpiSkeleton({ label }: { label: string }) {
 	)
 }
 
-const formatPct = (v: number | null) => (v != null ? `${v.toFixed(2)}%` : '—')
+const formatPct = (v: number | null) =>
+	v != null
+		? `${formatPercent(v, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+		: '—'
 
 interface PoolRow {
 	symbol: string
@@ -109,7 +112,8 @@ const poolColumns: ColumnDef<PoolRow>[] = [
 	{
 		header: 'TVL',
 		accessorKey: 'tvlUsd',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -199,12 +203,34 @@ export default function SparkLend() {
 		if (metricsLoading || tvlLoading || borrowedLoading) return null
 
 		return {
-			tvl: previousTvl != null ? formattedNum(previousTvl, true) : '—',
-			borrowed: currentBorrowed != null ? formattedNum(currentBorrowed, true) : '—',
-			fees24h: fees?.total48hto24h != null ? formattedNum(fees.total48hto24h, true) : '—',
-			revenue24h: revenue?.total48hto24h != null ? formattedNum(revenue.total48hto24h, true) : '—',
+			tvl:
+				previousTvl != null
+					? formatUsd(previousTvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: '—',
+			borrowed:
+				currentBorrowed != null
+					? formatUsd(currentBorrowed, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: '—',
+			fees24h:
+				fees?.total48hto24h != null
+					? formatUsd(fees.total48hto24h, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: '—',
+			revenue24h:
+				revenue?.total48hto24h != null
+					? formatUsd(revenue.total48hto24h, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})
+					: '—',
 			supplySideRevenue24h:
-				supplySideRevenue?.total48hto24h != null ? formattedNum(supplySideRevenue.total48hto24h, true) : '—'
+				supplySideRevenue?.total48hto24h != null
+					? formatUsd(supplySideRevenue.total48hto24h, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})
+					: '—'
 		}
 	}, [fees, revenue, supplySideRevenue, previousTvl, currentBorrowed, metricsLoading, tvlLoading, borrowedLoading])
 

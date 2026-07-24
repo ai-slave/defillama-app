@@ -11,6 +11,7 @@ import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { formatPercent } from '~/utils/numberFormat'
 import { parseNumberInput, pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview } from './api.types'
 import { getDefaultSelectedTypes, type RWAOverviewMode } from './constants'
@@ -84,8 +85,8 @@ const CHART_QUERY_KEYS = [
 const RESETTABLE_QUERY_KEYS = [...FILTER_QUERY_KEYS, ...CHART_QUERY_KEYS] as const
 
 const formatPercentRange = (minPercent: number | null, maxPercent: number | null) => {
-	const minLabel = minPercent != null ? `${minPercent.toLocaleString()}%` : 'no min'
-	const maxLabel = maxPercent != null ? `${maxPercent.toLocaleString()}%` : 'no max'
+	const minLabel = minPercent != null ? formatPercent(minPercent, { input: 'percent' }) : 'no min'
+	const maxLabel = maxPercent != null ? formatPercent(maxPercent, { input: 'percent' }) : 'no max'
 	return `${minLabel} - ${maxLabel}`
 }
 

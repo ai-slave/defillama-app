@@ -53,7 +53,7 @@ function createContext(overrides: Partial<ProtocolFaqContext> = {}): ProtocolFaq
 			others: 8_200_000,
 			total: 98_200_000
 		},
-		hacks: [{ date: 1_669_075_200, amount: 1_600_000, classification: 'Governance Manipulation' }],
+		hacks: [{ date: 1_669_075_200, amountUsd: 1_600_000, classification: 'Governance Manipulation' }],
 		metrics: {
 			borrowed: 18_000_000_000,
 			dexVolume30d: null,

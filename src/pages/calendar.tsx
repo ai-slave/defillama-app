@@ -31,8 +31,9 @@ import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
-import { formatPercentage, slug, toNiceDayMonthYear, toNiceHour } from '~/utils'
+import { slug, toNiceDayMonthYear, toNiceHour } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatPercent } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
@@ -113,7 +114,7 @@ export default function Protocols({ emissions }) {
 			const unlockPercent = tokenValue && emission.mcap ? (tokenValue / emission.mcap) * 100 : null
 			if (unlockPercent === null || unlockPercent <= 4) continue
 			events.push({
-				name: `${emission.tSymbol} ${formatPercentage(unlockPercent)}% unlock`,
+				name: `${emission.tSymbol} ${formatPercent(unlockPercent, { input: 'percent' })} unlock`,
 				timestamp: emission.unlock[0] * 1e3,
 				type: 'Unlock',
 				link: emission.name

@@ -1,5 +1,5 @@
 import { formatChartValue, formatTooltipValue } from '~/components/ECharts/shared/formatters'
-import { formattedNum } from '~/utils'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import type { NumberFormat } from '../chartConfig'
 
 export interface ValueFormatter {
@@ -24,8 +24,8 @@ export function makeValueFormatter(format: NumberFormat): ValueFormatter {
 			}
 		case 'humanized':
 			return {
-				axis: (v) => formattedNum(v, false),
-				tooltip: (v) => formattedNum(v, false),
+				axis: (v) => formatCompactNumber(v, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+				tooltip: (v) => formatCompactNumber(v, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 				valueSymbol: ''
 			}
 		case 'auto':

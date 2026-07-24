@@ -1,11 +1,11 @@
 import { slug } from '~/utils'
 import { fetchRaises } from './api'
+import type { Raise } from './model'
 import type {
 	IInvestor,
 	IInvestorRaisesPageData,
 	IInvestorsPageData,
 	IInvestorTimespan,
-	IRaise,
 	IRaisesPageData
 } from './types'
 import { getRaisesFiltersList } from './utils'
@@ -64,20 +64,20 @@ function createInvestorDealsAccumulator(name: string): InvestorDealsAccumulator 
 	}
 }
 
-function updateTimespan(timespan: InvestorDealsAccumulatorTimespan, raise: IRaise) {
+function updateTimespan(timespan: InvestorDealsAccumulatorTimespan, raise: Raise) {
 	timespan.deals += 1
 	timespan.projects.add(raise.name)
 	for (const chain of raise.chains ?? []) {
 		timespan.chains.add(chain)
 	}
 
-	if (raise.amount != null) {
-		timespan.amounts.push(raise.amount)
+	if (raise.amountUsd != null) {
+		timespan.amounts.push(raise.amountUsd)
 		// "Top" fields track the single largest deal amount in the timespan.
-		if (raise.amount > timespan.topAmount) {
+		if (raise.amountUsd > timespan.topAmount) {
 			timespan.topCategory = raise.category ?? null
 			timespan.topRound = raise.round ?? null
-			timespan.topAmount = raise.amount
+			timespan.topAmount = raise.amountUsd
 		}
 	}
 }
@@ -89,7 +89,7 @@ function normalizeTimespan(timespan: InvestorDealsAccumulatorTimespan): IInvesto
 		deals: timespan.deals,
 		projects: Array.from(timespan.projects).join(', '),
 		chains: Array.from(timespan.chains),
-		medianAmount: calculateMedian(timespan.amounts)
+		medianAmountUsd: calculateMedian(timespan.amounts)
 	}
 }
 
@@ -109,7 +109,7 @@ export async function getInvestorRaisesPageData(
 ): Promise<IInvestorRaisesPageData | { notFound: true }> {
 	const data = await fetchRaises()
 
-	const raises: IRaise[] = []
+	const raises: Raise[] = []
 	let investorName: string | null = null
 
 	for (const raise of data.raises) {

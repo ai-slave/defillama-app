@@ -2,8 +2,9 @@ import { lazy, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { formatPercent } from '~/utils/numberFormat'
 import { useGrowthData, chartToModel, type LooprDailyRow } from './api'
-import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd, formatNullablePercent } from './ui'
+import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -397,7 +398,8 @@ export default function Growth() {
 									key: 'performanceFeePct',
 									label: 'Perf Fee',
 									right: true,
-									render: (r) => formatNullablePercent(r.performanceFeePct)
+									render: (r) =>
+										r.performanceFeePct == null ? '—' : formatPercent(r.performanceFeePct, { input: 'percent' })
 								},
 								{
 									key: 'chains',

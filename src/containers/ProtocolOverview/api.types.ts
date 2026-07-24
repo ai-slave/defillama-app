@@ -1,16 +1,7 @@
 import type { IHackApiItem } from '../Hacks/api.types'
-
-export interface IProtocolRaise {
-	round: string
-	amount: number
-	valuation: string
-	date: number
-	defillamaId: string
-	source?: string
-	leadInvestors?: Array<string>
-	otherInvestors?: Array<string>
-	investors?: Array<string>
-}
+import type { Hack } from '../Hacks/model'
+import type { RaisesApiItem } from '../Raises/api.types'
+import type { Raise } from '../Raises/model'
 
 export interface IProtocolWarningBanner {
 	message: string
@@ -49,8 +40,8 @@ export interface IProtocolMetricsV2 {
 	isParentProtocol?: boolean
 	mcap: number | null
 	methodology?: string
-	raises?: Array<IProtocolRaise>
-	hacks?: Array<IHackApiItem>
+	raises?: Array<Raise>
+	hacks?: Array<Hack>
 	otherProtocols?: Array<string>
 	hallmarks?: Array<[number, string]> | Array<[[number, number], string]>
 	dimensions?: Record<string, { genuineSpikes?: Array<[string, string]>; adapter?: string }> | null
@@ -63,6 +54,11 @@ export interface IProtocolMetricsV2 {
 	wrongLiquidity?: boolean
 	tvlCodePath?: string
 	treasuryCodePath?: string
+}
+
+export type IProtocolMetricsV2Api = Omit<IProtocolMetricsV2, 'hacks' | 'raises'> & {
+	hacks?: Array<IHackApiItem>
+	raises?: Array<RaisesApiItem>
 }
 
 type ProtocolChartBreakdownType = 'chain-breakdown' | 'token-breakdown'

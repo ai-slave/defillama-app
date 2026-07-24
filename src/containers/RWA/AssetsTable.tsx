@@ -24,7 +24,7 @@ import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInput
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatNum, formattedNum } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { IRWAAssetFlowSummary, IRWAAssetsOverview, IRWAFlowSummaryResponse, RWAFlowWindow } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import { BreakdownTooltipContent } from './BreakdownTooltipContent'
@@ -293,7 +293,9 @@ function MixedMetricCell({
 		return <TVLBreakdownCell value={value} breakdown={breakdown} description={description} />
 	}
 
-	return value != null ? <span>{formattedNum(value, true)}</span> : null
+	return value != null ? (
+		<span>{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
+	) : null
 }
 
 function createRWAAssetColumns(
@@ -354,7 +356,12 @@ function createRWAAssetColumns(
 		columnHelper.accessor((asset) => asset.price ?? undefined, {
 			id: 'price',
 			header: 'Token Price',
-			cell: (info) => (info.getValue() != null ? <span>{formattedNum(info.getValue(), true)}</span> : null),
+			cell: (info) =>
+				info.getValue() != null ? (
+					<span>
+						{formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+					</span>
+				) : null,
 			meta: {
 				headerClassName: 'w-[120px]',
 				align: 'end'
@@ -413,7 +420,7 @@ function createRWAAssetColumns(
 		}),
 		columnHelper.accessor((asset) => getDefiUtilization(asset), {
 			header: 'DeFi Utilization',
-			cell: (info) => (info.getValue() != null ? `${formatNum(info.getValue(), 2)}%` : null),
+			cell: (info) => (info.getValue() != null ? formatPercent(info.getValue(), { input: 'percent' }) : null),
 			id: 'utilization',
 			meta: {
 				headerClassName: 'w-[140px]',
@@ -807,7 +814,7 @@ const TVLBreakdownCell = ({
 	}
 
 	if (!breakdown || breakdown.length === 0) {
-		return formattedNum(value, true)
+		return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 	}
 
 	return (
@@ -816,7 +823,7 @@ const TVLBreakdownCell = ({
 			contentClassName="w-80 max-w-(--popover-available-width) p-3 whitespace-normal"
 			className="justify-end underline decoration-dotted"
 		>
-			{formattedNum(value, true)}
+			{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 		</Hovercard>
 	)
 }

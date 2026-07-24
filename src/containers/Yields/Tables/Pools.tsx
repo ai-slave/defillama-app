@@ -4,9 +4,9 @@ import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { parseSelectedEarnColumns } from '../Filters/columnOptions'
-import { fmtPct } from '../poolDetail/format'
+import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { NameYield, PoolNameLockup } from './Name'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import { Sparkline } from './Sparkline'
@@ -52,13 +52,13 @@ function ApyStabilityIndicator({
 			{avg30d != null ? (
 				<span className="flex justify-between gap-4">
 					<span className="text-secondary">30d Avg APY</span>
-					<span>{fmtPct(avg30d)}%</span>
+					<span>{formatPercent(avg30d, YIELD_PERCENT_OPTIONS)}</span>
 				</span>
 			) : null}
 			{sigma != null ? (
 				<span className="flex justify-between gap-4">
 					<span className="text-secondary">Volatility (σ)</span>
-					<span>{fmtPct(sigma)}%</span>
+					<span>{formatPercent(sigma, YIELD_PERCENT_OPTIONS)}</span>
 				</span>
 			) : null}
 			<span className="body-xs opacity-50">Score = 100 / (1 + σ/avg)</span>
@@ -77,7 +77,7 @@ function ProjectNameCell({ row }: { row: { original: IYieldTableRow } }) {
 			project={row.original.project}
 			projectslug={row.original.projectslug}
 			airdrop={row.original.airdrop}
-			raiseValuation={row.original.raiseValuation}
+			raiseValuationUsd={row.original.raiseValuationUsd}
 		/>
 	)
 }
@@ -180,7 +180,14 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 			id: 'tvl',
 			header: 'TVL',
 			enableSorting: true,
-			cell: (info) => (info.getValue() == null ? <EmptyCell /> : <span>{formattedNum(info.getValue(), true)}</span>),
+			cell: (info) =>
+				info.getValue() == null ? (
+					<EmptyCell />
+				) : (
+					<span>
+						{formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+					</span>
+				),
 			meta: { headerClassName: 'w-[100px] min-w-[100px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.apy ?? undefined, {
@@ -199,7 +206,8 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 			id: 'apyBase',
 			header: apyHeader(query, 'APY Base'),
 			enableSorting: true,
-			cell: (info) => (info.getValue() == null ? <EmptyCell /> : <span>{fmtPct(info.getValue())}%</span>),
+			cell: (info) =>
+				info.getValue() == null ? <EmptyCell /> : <span>{formatPercent(info.getValue(), YIELD_PERCENT_OPTIONS)}</span>,
 			meta: { headerClassName: 'w-[150px] min-w-[150px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.apyRewardRaw ?? undefined, {
@@ -219,7 +227,8 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 			id: 'apyMean30d',
 			header: '30d Avg APY',
 			enableSorting: true,
-			cell: (info) => (info.getValue() == null ? <EmptyCell /> : <span>{fmtPct(info.getValue())}%</span>),
+			cell: (info) =>
+				info.getValue() == null ? <EmptyCell /> : <span>{formatPercent(info.getValue(), YIELD_PERCENT_OPTIONS)}</span>,
 			meta: {
 				headerClassName: 'w-[135px] min-w-[135px]',
 				align: 'end',
@@ -279,13 +288,32 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 				const content =
 					top10Pct == null && avgPositionUsd == null ? null : (
 						<span className="flex flex-col gap-0.5">
-							{top10Pct != null ? <span>Top 10: {top10Pct.toFixed(1)}%</span> : null}
-							{avgPositionUsd != null ? <span>Avg: {formattedNum(avgPositionUsd, true)}</span> : null}
+							{top10Pct != null ? (
+								<span>
+									Top 10:{' '}
+									{formatPercent(top10Pct, {
+										input: 'percent',
+										minimumFractionDigits: 1,
+										maximumFractionDigits: 1,
+										useGrouping: false
+									})}
+								</span>
+							) : null}
+							{avgPositionUsd != null ? (
+								<span>
+									Avg:{' '}
+									{formatUsd(avgPositionUsd, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
+							) : null}
 						</span>
 					)
 				return (
 					<Tooltip content={content} className="justify-end">
-						<span>{formattedNum(count)}</span>
+						<span>{formatCompactNumber(count, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
 					</Tooltip>
 				)
 			},
@@ -299,7 +327,12 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 			id: 'volumeUsd1d',
 			header: '1d Volume',
 			enableSorting: true,
-			cell: (info) => (info.getValue() == null ? <EmptyCell /> : formattedNum(info.getValue(), true)),
+			cell: (info) =>
+				info.getValue() == null ? (
+					<EmptyCell />
+				) : (
+					formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				),
 			meta: {
 				headerClassName: 'w-[110px] min-w-[110px]',
 				align: 'end',
@@ -310,7 +343,12 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 			id: 'pricePerShare',
 			header: 'Price per Share',
 			enableSorting: true,
-			cell: (info) => (info.getValue() == null ? <EmptyCell /> : <span>{info.getValue().toFixed(4)}</span>),
+			cell: (info) =>
+				info.getValue() == null ? (
+					<EmptyCell />
+				) : (
+					<span>{formatNumber(info.getValue(), { maximumFractionDigits: 4 })}</span>
+				),
 			meta: { headerClassName: 'w-[130px] min-w-[130px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.top10Pct ?? undefined, {
@@ -327,7 +365,12 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 					<Tooltip content={riskLabel} className="justify-end">
 						<span className="inline-flex items-center gap-1.5">
 							<span className={`size-2 shrink-0 rounded-full ${accentClass}`} />
-							{value.toFixed(1)}%
+							{formatPercent(value, {
+								input: 'percent',
+								minimumFractionDigits: 1,
+								maximumFractionDigits: 1,
+								useGrouping: false
+							})}
 						</span>
 					</Tooltip>
 				)
@@ -342,7 +385,14 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 			id: 'avgPositionUsd',
 			header: 'Avg Position',
 			enableSorting: true,
-			cell: (info) => (info.getValue() == null ? <EmptyCell /> : <span>{formattedNum(info.getValue(), true)}</span>),
+			cell: (info) =>
+				info.getValue() == null ? (
+					<EmptyCell />
+				) : (
+					<span>
+						{formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+					</span>
+				),
 			meta: {
 				headerClassName: 'w-[110px] min-w-[110px]',
 				align: 'end',

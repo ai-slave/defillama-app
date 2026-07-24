@@ -83,10 +83,10 @@ ORDER BY date DESC`
 		techniques: ['to_timestamp'],
 		sql: `SELECT to_timestamp(date) AS raised_at,
        name,
-       amount,
+       amountUsd,
        round
 FROM raises
-WHERE amount IS NOT NULL
+WHERE amountUsd IS NOT NULL
 ORDER BY raised_at DESC
 LIMIT 50`
 	},
@@ -114,12 +114,12 @@ ORDER BY date DESC`
 		techniques: ['ASOF JOIN', 'to_timestamp'],
 		sql: `SELECT to_timestamp(r.date) AS raised_at,
        r.name               AS protocol,
-       r.amount,
+       r.amountUsd,
        t.tvl                AS eth_tvl_on_that_day
 FROM raises r
 ASOF LEFT JOIN ts_chain_tvl_chart_ethereum t
   ON t.date <= to_timestamp(r.date)
-WHERE r.amount > 100
+WHERE r.amountUsd > 100000000
 ORDER BY raised_at DESC
 LIMIT 25`
 	},

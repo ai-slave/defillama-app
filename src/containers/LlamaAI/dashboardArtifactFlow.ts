@@ -1,4 +1,5 @@
 import { AI_SERVER } from '~/constants'
+import { roundNumber } from '~/utils/numberFormat'
 import type { DashboardItemConfig } from '../ProDashboard/types'
 import type { DashboardArtifactOutcome, ChartArtifactRef } from './types'
 
@@ -69,7 +70,10 @@ export function prepareDashboardArtifactSave(
 		items: nextItems,
 		expectedItemIds: expectedItemIds.sort(),
 		containsPremium: premiumArtifacts.size > 0,
-		estimatedMaxCostUsd: Number([...premiumArtifacts.values()].reduce((sum, value) => sum + value, 0).toFixed(6))
+		estimatedMaxCostUsd: roundNumber(
+			[...premiumArtifacts.values()].reduce((sum, value) => sum + value, 0),
+			6
+		)
 	}
 }
 
@@ -100,7 +104,10 @@ export function prepareStoredDashboardActivation(items: DashboardItemConfig[]): 
 	return {
 		expectedItemIds: expectedItemIds.sort(),
 		containsPremium: premiumArtifacts.size > 0,
-		estimatedMaxCostUsd: Number([...premiumArtifacts.values()].reduce((sum, value) => sum + value, 0).toFixed(6))
+		estimatedMaxCostUsd: roundNumber(
+			[...premiumArtifacts.values()].reduce((sum, value) => sum + value, 0),
+			6
+		)
 	}
 }
 

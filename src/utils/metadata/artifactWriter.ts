@@ -19,8 +19,6 @@ import {
 	type MetadataArtifactStatus
 } from './manifest'
 
-export { getMetadataCacheDir } from './config'
-
 export function getMetadataManifestPath(cacheDir: string): string {
 	return path.join(cacheDir, METADATA_MANIFEST_FILE)
 }

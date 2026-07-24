@@ -3,6 +3,7 @@ import { useSubscribe } from '~/auth/useSubscribe'
 import { PaymentButton } from '~/containers/Subscription/Crypto'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Icon } from '~/ui/Icon'
+import { formatUsd } from '~/utils/numberFormat'
 
 const StripeCheckoutModal = lazy(() =>
 	import('~/containers/Subscription/shared/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
@@ -47,7 +48,7 @@ export function SubscribeAPICard({
 					<span className="ml-1 text-sub-text-muted">{displayPeriod}</span>
 				</div>
 				{billingInterval === 'year' ? (
-					<span className="text-sm text-sub-text-muted">${yearlyPrice.toLocaleString('en-US')}/year</span>
+					<span className="text-sm text-sub-text-muted">{formatUsd(yearlyPrice)}/year</span>
 				) : null}
 			</div>
 			{billingInterval === 'month' ? (

@@ -3,11 +3,12 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { exchangeDefinitions } from './definitions'
 import type { ExchangeDirectorySummaryModel, ExchangeVolumeSplit } from './models'
 
-const money = (value: number | null | undefined) => (value == null ? '–' : formattedNum(value, true))
+const money = (value: number | null | undefined) =>
+	value == null ? '–' : formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 function VolumeKindSection({ label, tooltip, split }: { label: string; tooltip: string; split: ExchangeVolumeSplit }) {
 	const definitions = exchangeDefinitions.summary

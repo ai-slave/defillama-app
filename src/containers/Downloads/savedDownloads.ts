@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatNumber } from '~/utils/numberFormat'
 import { chartDatasetsBySlug } from './chart-datasets'
 import type { ChartConfig } from './sql/chartConfig'
 
@@ -454,7 +455,7 @@ export function defaultPresetName(config: SavedDownloadInput, datasetLabel?: str
 			modifiers.push(config.columns.join(', '))
 		}
 		if (config.rowLimit && config.rowLimit > 0) {
-			modifiers.push(`Top ${config.rowLimit.toLocaleString()}`)
+			modifiers.push(`Top ${formatNumber(config.rowLimit)}`)
 		}
 		return modifiers.length > 0 ? `${base} — ${modifiers.join(' · ')}` : base
 	}
@@ -505,7 +506,7 @@ export function describeSavedConfig(config: SavedDownload): string {
 		// Only show rowLimit here when the name didn't already include it (see defaultPresetName).
 		// Duplicating it in the name+description reads noisy, but users rename presets, so we
 		// still surface it here for safety.
-		if (config.rowLimit && config.rowLimit > 0) parts.push(`top ${config.rowLimit.toLocaleString()}`)
+		if (config.rowLimit && config.rowLimit > 0) parts.push(`top ${formatNumber(config.rowLimit)}`)
 		return parts.join(' · ')
 	}
 	if (config.kind === 'chart') {

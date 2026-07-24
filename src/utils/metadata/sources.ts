@@ -9,7 +9,8 @@ import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.
 import { getErrorMessage } from '~/utils/error'
 import type { TokenDirectory } from '~/utils/tokenDirectory'
 import type { UnlockHistoricalPriceProtocol } from '~/utils/unlocks/historicalPriceRequests'
-import { fetchMetadataJson, getMetadataFetchTimeoutMs } from './http'
+import { getMetadataFetchTimeoutMs } from './config'
+import { fetchMetadataJson } from './http'
 import type {
 	ICategoriesAndTags,
 	IChainMetadata,

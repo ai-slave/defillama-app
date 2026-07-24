@@ -10,8 +10,8 @@ import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { AdditionalInfo } from './AdditionalInfo'
 import { getPrimaryValueLabelType, useFinalTVL } from './helpers'
 import { KeyMetrics } from './KeyMetrics'
@@ -42,10 +42,15 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 			props.chartDenominations?.[1]?.symbol &&
 			props.chartDenominations[1].symbol === router.query.denomination
 		) {
-			return formattedNum(Number(value) / chainPrice.price, false) + ` ${chainPrice.symbol}`
+			return (
+				formatCompactNumber(Number(value) / chainPrice.price, {
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				}) + ` ${chainPrice.symbol}`
+			)
 		}
 
-		return formattedNum(value, true)
+		return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 	}
 
 	return (
@@ -66,7 +71,7 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 				cardName={props.name}
 				token={props.name}
 				logo={tokenIconUrl(props.name)}
-				tvl={formattedNum(tvl, true)?.toString()}
+				tvl={formatUsd(tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })?.toString()}
 				isCEX={props.isCEX}
 			/>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">

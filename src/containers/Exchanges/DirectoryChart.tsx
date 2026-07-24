@@ -4,7 +4,7 @@ import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSerie
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { ExchangeOverviewChartModel } from './models'
 import {
@@ -95,7 +95,7 @@ function overviewAriaLabel(chart: ExchangeOverviewChartModel, resolved: Resolved
 	const parts = resolved.map(({ spec, values }) => {
 		const last = values.findLastIndex((value) => value != null)
 		if (last < 0) return `${spec.label}: no data.`
-		return `${spec.label}: ${formattedNum(values[last] as number, true)} on ${UTC_DAY.format(new Date(chart.days[last] * 1000))}.`
+		return `${spec.label}: ${formatUsd(values[last] as number, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} on ${UTC_DAY.format(new Date(chart.days[last] * 1000))}.`
 	})
 	return `Exchange trading activity. ${parts.join(' ')}`
 }

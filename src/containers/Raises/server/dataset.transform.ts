@@ -1,6 +1,6 @@
-import type { RawRaise, RawRaisesResponse } from '~/containers/Raises/api.types'
+import type { Raise, RaisesResponse } from '~/containers/Raises/model'
 
-export function findRaisesByDefillamaId(response: RawRaisesResponse, defillamaId: string): RawRaise[] {
+export function findRaisesByDefillamaId(response: RaisesResponse, defillamaId: string): Raise[] {
 	if (!defillamaId) return []
 	return response.raises.filter((raise) => raise.defillamaId === defillamaId)
 }

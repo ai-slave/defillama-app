@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { Icon } from '~/ui/Icon'
+import { formatUsd } from '~/utils/numberFormat'
 import { ConfirmActionModal } from './ConfirmActionModal'
 import type { TeamSubscription } from './types'
 import { useTeam } from './useTeam'
@@ -123,15 +124,12 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 						{label} — {subscription.billingInterval === 'year' ? 'Yearly' : 'Monthly'}
 					</span>
 					<span className="text-xs text-sub-text-muted">
-						{subscription.seats.seatCount} seat{subscription.seats.seatCount === 1 ? '' : 's'} × $
-						{unit.toLocaleString()}
+						{subscription.seats.seatCount} seat{subscription.seats.seatCount === 1 ? '' : 's'} × {formatUsd(unit)}
 						{intervalSuffix}
 					</span>
 				</div>
 				<div className="flex items-center gap-2">
-					<span className="text-sm font-semibold text-sub-text-primary">
-						{`$${total.toLocaleString()}${intervalSuffix}`}
-					</span>
+					<span className="text-sm font-semibold text-sub-text-primary">{`${formatUsd(total)}${intervalSuffix}`}</span>
 					{isMonthly && active && !isCanceling && (
 						<button
 							onClick={() => setShowUpgradeConfirm(true)}
@@ -208,8 +206,8 @@ function BillingTotals({ subscriptions }: { subscriptions: TeamSubscription[] })
 	if (totals.monthly === 0 && totals.yearly === 0) return null
 
 	const rows: { label: string; value: string }[] = []
-	if (totals.monthly > 0) rows.push({ label: 'Total', value: `$${totals.monthly.toLocaleString()}/month` })
-	if (totals.yearly > 0) rows.push({ label: 'Total', value: `$${totals.yearly.toLocaleString()}/year` })
+	if (totals.monthly > 0) rows.push({ label: 'Total', value: `${formatUsd(totals.monthly)}/month` })
+	if (totals.yearly > 0) rows.push({ label: 'Total', value: `${formatUsd(totals.yearly)}/year` })
 
 	return (
 		<div className="flex flex-col gap-1.5 rounded-lg bg-sub-brand-primary/5 p-3">
@@ -235,8 +233,7 @@ function YearlyTip({ subscriptions }: { subscriptions: TeamSubscription[] }) {
 		<div className="flex items-start gap-2">
 			<Icon name="sparkles" height={12} width={12} className="mt-1 shrink-0 text-sub-text-muted" />
 			<p className="text-xs leading-5 text-sub-text-muted">
-				Tip: switch to yearly billing and get 2 months free — save ${savings.toLocaleString()}/year on your current
-				seats.
+				Tip: switch to yearly billing and get 2 months free — save {formatUsd(savings)}/year on your current seats.
 			</p>
 		</div>
 	)

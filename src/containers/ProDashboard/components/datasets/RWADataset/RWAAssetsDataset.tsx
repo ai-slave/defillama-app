@@ -22,8 +22,8 @@ import { PRO_RWA_ASSETS_TABLE_QUERY_KEY } from '~/containers/ProDashboard/tableQ
 import { fetchRWAActiveTVLs } from '~/containers/RWA/api'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
-import { formattedNum } from '~/utils'
 import { downloadCSV } from '~/utils/download'
+import { formatUsd } from '~/utils/numberFormat'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
@@ -79,21 +79,24 @@ const columns: ColumnDef<RWAAssetRow, any>[] = [
 	columnHelper.accessor('activeMcap', {
 		id: 'activeMcap',
 		header: 'Active Mcap',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 150
 	}),
 	columnHelper.accessor('onChainMcap', {
 		id: 'onChainMcap',
 		header: 'Onchain Mcap',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 150
 	}),
 	columnHelper.accessor('defiActiveTvl', {
 		id: 'defiActiveTvl',
 		header: 'DeFi Active TVL',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 150
 	}),

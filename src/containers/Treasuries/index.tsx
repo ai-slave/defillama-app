@@ -5,7 +5,8 @@ import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Hovercard } from '~/ui/Hovercard'
-import { formattedNum, getDominancePercent } from '~/utils'
+import { getDominancePercent } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { ITreasuryRow } from './types'
 
 const columnHelper = createColumnHelper<ITreasuryRow>()
@@ -117,7 +118,8 @@ const columns = [
 	columnHelper.accessor('stablecoins', {
 		id: 'stablecoins',
 		header: 'Stablecoins',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[115px]',
 			align: 'end'
@@ -126,7 +128,8 @@ const columns = [
 	columnHelper.accessor('majors', {
 		id: 'majors',
 		header: 'Majors (BTC, ETH)',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end'
@@ -134,7 +137,8 @@ const columns = [
 	}),
 	columnHelper.accessor('ownTokens', {
 		header: 'Own Tokens',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
@@ -143,7 +147,8 @@ const columns = [
 	columnHelper.accessor('others', {
 		id: 'others',
 		header: 'Others',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[100px]',
 			align: 'end'
@@ -152,7 +157,8 @@ const columns = [
 	columnHelper.accessor('coreTvl', {
 		id: 'coreTvl',
 		header: 'Total excl. own tokens',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[min(185px,40vw)]',
 			align: 'end'
@@ -161,7 +167,8 @@ const columns = [
 	columnHelper.accessor('tvl', {
 		id: 'tvl',
 		header: 'Total Treasury',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[135px]',
 			align: 'end'
@@ -170,7 +177,10 @@ const columns = [
 	columnHelper.accessor('mcap', {
 		id: 'mcap',
 		header: 'Mcap',
-		cell: (info) => (info.getValue() === null ? null : formattedNum(info.getValue(), true)),
+		cell: (info) =>
+			info.getValue() === null
+				? null
+				: formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end'
@@ -198,7 +208,7 @@ const formatBreakdownType = (type: string) => BREAKDOWN_LABELS[type] ?? type
 
 const Breakdown = ({ data }: { data: [string, number] }) => {
 	const color = breakdownColor(data[0])
-	const name = `${formatBreakdownType(data[0])} (${data[1]}%)`
+	const name = `${formatBreakdownType(data[0])} (${formatPercent(data[1], { input: 'percent' })})`
 
 	return (
 		<span className="flex flex-nowrap items-center gap-1">

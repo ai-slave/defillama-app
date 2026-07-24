@@ -10,7 +10,7 @@ import type { UnlocksData } from '~/containers/Unlocks/calendarTypes'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { buildUnlocksTreemapTreeData, UNLOCKS_TREEMAP_TIME_VIEWS, type UnlocksTreemapTimeView } from './buildTreeData'
 
 echarts.use([TitleComponent, TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer])
@@ -93,7 +93,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 						content += `<img src="${iconUrl}" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 6px; border-radius: 50%;" /> `
 					}
 					content += `<strong style="font-weight: 600;">${pathDisplay}${name}</strong><br/>`
-					content += `<span style="opacity: 0.85;">Value:</span> <strong style="font-weight: 600;">${formattedNum(value, true)}</strong>`
+					content += `<span style="opacity: 0.85;">Value:</span> <strong style="font-weight: 600;">${formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</strong>`
 					content += `</div>`
 					return content
 				},

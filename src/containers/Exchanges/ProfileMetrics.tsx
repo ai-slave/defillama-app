@@ -4,8 +4,8 @@ import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
-import { formattedNum } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { fractionChange, sumNullable } from './modelHelpers'
 import {
 	EXCHANGE_SEGMENT_LABELS,
@@ -17,14 +17,21 @@ import {
 import { ProfileIdentity } from './ProfileIdentity'
 import { SEGMENT_DEFINITIONS } from './segmentPresentation'
 
-const money = (value: number | null) => (value == null ? '–' : formattedNum(value, true))
-const count = (value: number | null) => (value == null ? '–' : formattedNum(value))
+const money = (value: number | null) =>
+	value == null ? '–' : formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+const count = (value: number | null) =>
+	value == null ? '–' : formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 function ChangePct({ value }: { value: number }) {
 	return (
 		<span className={`label-sm ${value >= 0 ? 'text-data-up' : 'text-data-down'}`}>
 			{value >= 0 ? '+' : ''}
-			{(value * 100).toFixed(1)}%
+			{formatPercent(value, {
+				input: 'fraction',
+				minimumFractionDigits: 1,
+				maximumFractionDigits: 1,
+				useGrouping: false
+			})}
 		</span>
 	)
 }
@@ -171,7 +178,13 @@ export function ProfileMetrics({
 								{profile.nativeToken.change24h != null ? (
 									<span className={profile.nativeToken.change24h >= 0 ? 'text-data-up' : 'text-data-down'}>
 										({profile.nativeToken.change24h >= 0 ? '+' : ''}
-										{profile.nativeToken.change24h.toFixed(2)}%)
+										{formatPercent(profile.nativeToken.change24h, {
+											input: 'percent',
+											minimumFractionDigits: 2,
+											maximumFractionDigits: 2,
+											useGrouping: false
+										})}
+										)
 									</span>
 								) : null}
 							</BasicLink>

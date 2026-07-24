@@ -7,6 +7,7 @@ import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { formatNumber } from '~/utils/numberFormat'
 import { TOKEN_MATCHES, TOKEN_ONS, type TokenMatch, type TokenOn } from '../data/tokenMatch'
 import type { TokenOption } from '../data/types'
 
@@ -81,7 +82,7 @@ function HelpIcon({ items, label }: { items: { term: string; def: string }[]; la
 function SectionHeader({ label, hint, count }: { label: string; hint: string; count: number }) {
 	return (
 		<div className="sticky top-0 z-10 -mx-2 flex items-baseline gap-2 border-t border-subtle bg-surface-elevated-1 px-3 py-1.5">
-			<span className="label-sm text-secondary uppercase">{`${label} · ${count.toLocaleString()}`}</span>
+			<span className="label-sm text-secondary uppercase">{`${label} · ${formatNumber(count)}`}</span>
 			<span className="body-sm text-secondary">{hint}</span>
 		</div>
 	)

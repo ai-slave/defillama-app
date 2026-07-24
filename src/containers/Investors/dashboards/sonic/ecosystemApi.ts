@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import { formatNumber } from '~/utils/numberFormat'
 import { readInvestorApiJson, type ApiDate } from '../../api.types'
 import { assignColors } from '../spark/api'
 import { datasetChartOptions, multiSeriesCharts } from './chartDefaults'
+import { formatSonicUsd } from './format'
 
 interface FormattedValue {
 	value: number
@@ -82,13 +84,6 @@ export interface EcosystemAPIResponse {
 	}
 }
 
-function formatUsdValue(n: number): string {
-	if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`
-	if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`
-	if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`
-	return `$${n.toFixed(2)}`
-}
-
 function parseDateToMs(dateStr: string): number {
 	return Date.parse(dateStr + 'T00:00:00Z')
 }
@@ -127,14 +122,18 @@ export function buildEcosystemViewModel(d: EcosystemAPIResponse) {
 	for (const series of stableSeries) {
 		const value = latestIndex >= 0 ? (series.data[latestIndex] ?? 0) : 0
 		if (value <= 0) continue
-		stableBreakdown.push({ name: series.name, value, formatted: formatUsdValue(value), pct: '' })
+		stableBreakdown.push({ name: series.name, value, formatted: formatSonicUsd(value), pct: '' })
 		stableBreakdownTotal += value
 	}
 	stableBreakdown.sort((a, b) => b.value - a.value)
 	const stableBreakdownNames = new Array<string>(stableBreakdown.length)
 	for (let i = 0; i < stableBreakdown.length; i++) {
 		const item = stableBreakdown[i]
-		item.pct = ((item.value / stableBreakdownTotal) * 100).toFixed(1)
+		item.pct = formatNumber((item.value / stableBreakdownTotal) * 100, {
+			minimumFractionDigits: 1,
+			maximumFractionDigits: 1,
+			useGrouping: false
+		})
 		stableBreakdownNames[i] = item.name
 	}
 
@@ -179,7 +178,7 @@ export function buildEcosystemViewModel(d: EcosystemAPIResponse) {
 			title: d.stablecoins.stablecoinChart.title,
 			breakdown: stableBreakdown,
 			pieColors: assignColors(stableBreakdownNames),
-			breakdownTotalFormatted: formatUsdValue(stableBreakdownTotal)
+			breakdownTotalFormatted: formatSonicUsd(stableBreakdownTotal)
 		},
 		chainAssets: {
 			categories: assetCategories,

@@ -6,7 +6,7 @@ import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { LiquidationsTableTabs } from '~/containers/LiquidationsV2/TableTabs'
 import { Panel } from '~/ui/Panel'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { fetchTokenLiquidationsForAliases } from '../LiquidationsV2/api'
 import type { OverviewChainRow, OverviewProtocolRow, TokenLiquidationsSectionData } from '../LiquidationsV2/api.types'
 import { DeferredTableWithSearch } from './deferred/DeferredTableWithSearch'
@@ -78,7 +78,8 @@ const protocolColumns = [
 	protocolColumnHelper.accessor((row) => row.totalCollateralUsd ?? undefined, {
 		id: 'totalCollateralUsd',
 		header: 'Collateral USD',
-		cell: ({ getValue }) => formattedNum(getValue(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[145px]',
 			align: 'end'
@@ -124,7 +125,8 @@ const chainColumns = [
 	chainColumnHelper.accessor((row) => row.totalCollateralUsd ?? undefined, {
 		id: 'totalCollateralUsd',
 		header: 'Collateral USD',
-		cell: ({ getValue }) => formattedNum(getValue(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[145px]',
 			align: 'end'

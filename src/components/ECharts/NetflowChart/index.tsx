@@ -9,7 +9,8 @@ import type { BridgeNetflowChartData } from '~/containers/Bridges/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { capitalizeFirstLetter, formattedNum } from '~/utils'
+import { capitalizeFirstLetter } from '~/utils'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import { chartGrid } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
 
@@ -99,7 +100,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 					const value = (params[0].value || 0) + (params[1].value || 0)
 					return `<div class="flex flex-col gap-1">
 						<span class="font-medium">${chain}</span>
-						<span>Net Flow: ${value > 0 ? '+' : ''}${formattedNum(value)}</span>
+						<span>Net Flow: ${value > 0 ? '+' : ''}${formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
 					</div>`
 				}
 			},
@@ -114,7 +115,8 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 					}
 				},
 				axisLabel: {
-					formatter: (value) => formattedNum(value),
+					formatter: (value) =>
+						formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 					color: chartTheme.axisLabel
 				}
 			},
@@ -145,7 +147,13 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 					label: {
 						show: true,
 						position: 'left',
-						formatter: (params) => (params.value !== 0 ? formattedNum(params.value) : ''),
+						formatter: (params) =>
+							params.value !== 0
+								? formatCompactNumber(params.value as number, {
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})
+								: '',
 						backgroundColor: 'transparent',
 						color: '#ef4444',
 						fontSize: 12,
@@ -165,7 +173,13 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 					label: {
 						show: true,
 						position: 'right',
-						formatter: (params) => (params.value !== 0 ? formattedNum(params.value) : ''),
+						formatter: (params) =>
+							params.value !== 0
+								? formatCompactNumber(params.value as number, {
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})
+								: '',
 						backgroundColor: 'transparent',
 						color: '#22c55e',
 						fontSize: 12,

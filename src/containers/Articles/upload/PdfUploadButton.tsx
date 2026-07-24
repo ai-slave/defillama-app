@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { Icon } from '~/ui/Icon'
+import { formatFixedNumber } from '~/utils/numberFormat'
 import type { ArticlePdf } from '../types'
 import { type PdfUploadResult, usePdfUpload } from './usePdfUpload'
 
@@ -14,8 +15,8 @@ type Props = {
 function formatSize(bytes: number): string {
 	if (!Number.isFinite(bytes) || bytes <= 0) return '—'
 	if (bytes < 1024) return `${bytes} B`
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-	return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+	if (bytes < 1024 * 1024) return `${formatFixedNumber(bytes / 1024, 1)} KB`
+	return `${formatFixedNumber(bytes / 1024 / 1024, 1)} MB`
 }
 
 export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, helperText }: Props) {

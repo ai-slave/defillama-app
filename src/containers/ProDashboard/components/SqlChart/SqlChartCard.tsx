@@ -10,6 +10,7 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatNumber } from '~/utils/numberFormat'
 import type { SqlChartConfig } from '../../types'
 import { ProTableCSVButton } from '../ProTable/CsvButton'
 import { snapshotToResult } from './snapshot'
@@ -180,7 +181,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 
 			{cardView === 'output' && snapshot?.truncated ? (
 				<span className="body-xs text-pro-text-tertiary">
-					Showing first {snapshot.rows.length.toLocaleString()} of {snapshot.rowCount.toLocaleString()} rows.
+					Showing first {formatNumber(snapshot.rows.length)} of {formatNumber(snapshot.rowCount)} rows.
 				</span>
 			) : null}
 		</div>

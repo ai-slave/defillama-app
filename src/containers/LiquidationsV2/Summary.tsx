@@ -1,7 +1,7 @@
 import { TokenLogo, type LogoKind } from '~/components/TokenLogo'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { InlineStatStrip } from '~/ui/SummaryStats'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 
 export function LiquidationsPageHeader({
 	title,
@@ -30,7 +30,9 @@ export function LiquidationsSummaryStats({
 		<InlineStatStrip
 			items={items.map((item) => ({
 				label: item.label,
-				value: item.isUsd ? formattedNum(item.value, true) : formattedNum(item.value)
+				value: item.isUsd
+					? formatUsd(item.value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: formatCompactNumber(item.value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 			}))}
 		/>
 	)

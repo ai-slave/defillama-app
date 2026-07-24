@@ -1,51 +1,24 @@
-// Formatting helpers for the /yields/pool detail page.
-import { formattedNum } from '~/utils'
+// Shared display policies for the /yields/pool detail page. Callers use the
+// canonical formatters directly so the unit and input semantics stay visible.
+import { formatNumber } from '~/utils/numberFormat'
 
-// Splits the short-scale unit (k/m/b/t) out from the rounded value so the suffix can
-// be styled separately. The value carries no symbol — callers prepend "$".
-function fmtUsdShort(n: number | null | undefined): { value: string; suffix: string } | null {
-	if (n == null) return null
-	const formatted = formattedNum(n, false)
-	const match = /^(-?[\d.,]+)([kmbt])$/.exec(formatted)
-	if (match) return { value: match[1], suffix: match[2] }
-	return { value: formatted, suffix: '' }
-}
+export const YIELD_USD_OPTIONS = {
+	compact: true,
+	minimumCompactValue: 1_000_000,
+	compactSuffix: 'lowercase'
+} as const
 
-export function fmtUsd(n: number | null | undefined): string {
-	const f = fmtUsdShort(n)
-	return f ? `$${f.value}${f.suffix}` : '—'
-}
-
-// Loan-to-value ratio (0–1) as a percent, matching the borrow markets table.
-export function fmtLtv(n: number | null | undefined): string {
-	if (n == null) return '—'
-	return `${formattedNum(n * 100)}%`
-}
-
-export function fmtPct(n: number | null | undefined, digits = 2): string {
-	if (n == null) return '—'
-	const sign = n < 0 ? '-' : ''
-	const abs = Math.abs(n)
-	const tinyThreshold = 1 / 10 ** digits
-
-	if (abs > 0 && abs < tinyThreshold) {
-		return `${sign}<${tinyThreshold.toFixed(digits)}`
-	}
-
-	return n.toFixed(digits)
-}
-
-export function fmtCount(n: number | null | undefined): string {
-	if (n == null) return '—'
-	if (n >= 1e9) return (n / 1e9).toFixed(1) + 'b'
-	if (n >= 1e6) return (n / 1e6).toFixed(1) + 'm'
-	if (n >= 1e3) return (n / 1e3).toFixed(1) + 'k'
-	return n.toString()
-}
+export const YIELD_PERCENT_OPTIONS = {
+	input: 'percent',
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2,
+	useGrouping: false,
+	smallValueDisplay: 'threshold'
+} as const
 
 export function scoreValue(s: number | null | undefined): string {
 	if (s == null) return '—'
-	return (s * 100).toFixed(1)
+	return formatNumber(s * 100, { maximumFractionDigits: 1 })
 }
 
 export function protocolInitial(name: string | undefined | null): string {

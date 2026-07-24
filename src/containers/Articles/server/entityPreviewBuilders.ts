@@ -227,8 +227,8 @@ export async function buildHackPreview(slug: string): Promise<EntityPreviewHack 
 	return {
 		kind: 'hack',
 		date: dateIso,
-		amount: typeof match.amount === 'number' ? match.amount : null,
-		returnedFunds: typeof match.returnedFunds === 'number' ? match.returnedFunds : null,
+		amountUsd: match.amountUsd,
+		returnedFundsUsd: match.returnedFundsUsd,
 		classification: match.classification ?? null,
 		technique: match.technique ?? null,
 		chains: Array.isArray(match.chain) ? match.chain.slice(0, 6) : [],

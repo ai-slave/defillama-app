@@ -1,7 +1,7 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
-import { formattedNum } from '~/utils'
+import { formatPercent, formatRatio } from '~/utils/numberFormat'
 import type { LoopTableRow } from '../data/types'
 import { hasPart } from '../domain/apyPresentation'
 import { NameYield, PoolNameLockup } from './Name'
@@ -42,14 +42,16 @@ function loopLegRows(row: LoopTableRow): SignedTipRow[] {
 
 function LtvCell({ value }: { value: number | null | undefined }) {
 	if (value == null) return <EmptyCell />
-	return <span>{`${formattedNum(value * 100)}%`}</span>
+	return (
+		<span>{`${formatPercent(value, { input: 'fraction', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</span>
+	)
 }
 
 function LeverageCell({ value }: { value: number | null | undefined }) {
 	if (value == null) return <EmptyCell />
 	return (
 		<span>
-			{value.toFixed(1)}
+			{formatRatio(value, { maximumFractionDigits: 1 })}
 			<span className="opacity-70">x</span>
 		</span>
 	)
@@ -95,7 +97,7 @@ const loopColumns: Array<ColumnDef<LoopTableRow, unknown>> = [
 				project={row.original.project}
 				projectslug={row.original.projectslug}
 				airdrop={row.original.airdrop}
-				raiseValuation={row.original.raiseValuation}
+				raiseValuationUsd={row.original.raiseValuationUsd}
 			/>
 		),
 		meta: { headerClassName: 'w-[130px]' }
@@ -119,7 +121,9 @@ const loopColumns: Array<ColumnDef<LoopTableRow, unknown>> = [
 			const { ltv, loopCount, supplyApy, borrowApy, loopApy, leverage } = row.original
 			const loops = `${loopCount} loop${loopCount === 1 ? '' : 's'}`
 			const note =
-				ltv != null ? `Recursive loop · ${formattedNum(ltv * 100)}% LTV · ${loops}` : `Recursive loop · ${loops}`
+				ltv != null
+					? `Recursive loop · ${formatPercent(ltv, { input: 'fraction', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} LTV · ${loops}`
+					: `Recursive loop · ${loops}`
 			const legRows = loopLegRows(row.original)
 			// Defensive fallback to leg totals if a row somehow carries no component split.
 			const supplyMult = leverage ?? 1

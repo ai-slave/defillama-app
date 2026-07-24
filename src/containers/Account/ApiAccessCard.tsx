@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
+import { formatNumber, formatFixedNumber, formatPercent } from '~/utils/numberFormat'
 import { ApiUsageBreakdown, type ApiUsageStats } from './ApiUsageBreakdown'
 import { ToggleSwitch } from './ToggleSwitch'
 
@@ -37,7 +38,7 @@ export function ApiAccessCard({
 	const [showKey, setShowKey] = useState(false)
 
 	const remaining = credits ?? 0
-	const usagePercentage = ((remaining / API_CREDITS_LIMIT) * 100).toFixed(1)
+	const usagePercentage = formatFixedNumber((remaining / API_CREDITS_LIMIT) * 100, 1)
 
 	const handleCopy = () => {
 		if (apiKey) {
@@ -133,10 +134,11 @@ export function ApiAccessCard({
 				<span className="text-sm text-sub-text-primary">API Usage</span>
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
-						<span className="text-xs text-sub-text-muted">Remaining API Calls: {usagePercentage}%</span>
+						<span className="text-xs text-sub-text-muted">
+							Remaining API Calls: {formatPercent(usagePercentage, { input: 'percent' })}
+						</span>
 						<span className="text-xs text-sub-text-primary">
-							{remaining.toLocaleString()}{' '}
-							<span className="text-sub-text-muted">/{API_CREDITS_LIMIT.toLocaleString()}</span>
+							{formatNumber(remaining)} <span className="text-sub-text-muted">/{formatNumber(API_CREDITS_LIMIT)}</span>
 						</span>
 					</div>
 					<div className="h-2 overflow-hidden rounded-full bg-sub-border-light dark:bg-white/[0.08]">

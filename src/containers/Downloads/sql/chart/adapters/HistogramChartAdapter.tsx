@@ -5,6 +5,7 @@ import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { formatNumber } from '~/utils/numberFormat'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
@@ -82,7 +83,7 @@ export function HistogramChartAdapter({ config, result, classified, onReady }: H
 						const bin = escapeSqlChartHtml(String(p.axisValue ?? p.name ?? ''))
 						const name = p.seriesName ?? ''
 						const count = Number(getTooltipRawYValue(p, name) ?? 0)
-						return `<div style="font-weight:600;margin-bottom:4px">${bin}</div><div>${p.marker ?? ''}${escapeSqlChartHtml(name)}&nbsp;&nbsp;${count.toLocaleString()}</div>`
+						return `<div style="font-weight:600;margin-bottom:4px">${bin}</div><div>${p.marker ?? ''}${escapeSqlChartHtml(name)}&nbsp;&nbsp;${formatNumber(count)}</div>`
 					}
 				}
 			} satisfies MultiSeriesChartOptions

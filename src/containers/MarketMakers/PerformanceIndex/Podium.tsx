@@ -1,6 +1,6 @@
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
-import { abbreviateNumber } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { formatComposite } from '../format'
 import type { AggregatedMetrics } from './data'
 import type { PerformanceRow } from './types'
@@ -20,12 +20,12 @@ function RibbonBadge({ place, color }: { place: number; color: string }) {
 
 function abbrUsd(value: number | null | undefined): string {
 	if (value == null) return '—'
-	return abbreviateNumber(value, 2, '$') ?? '—'
+	return formatUsd(value, { compact: true }) ?? '—'
 }
 
 function pct(value: number | null | undefined): string {
 	if (value == null) return '—'
-	return `${Number(value.toFixed(2))}%`
+	return formatPercent(value, { input: 'percent' })
 }
 
 function Stat({ label, value, rank }: { label: string; value: string; rank: number | null }) {

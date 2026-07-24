@@ -18,8 +18,9 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { formattedNum, slug, toNiceCsvDate } from '~/utils'
+import { slug, toNiceCsvDate } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
+import { formatUsd } from '~/utils/numberFormat'
 import {
 	buildBridgeOverviewActiveChart,
 	buildBridgeOverviewTokenPieSeries,
@@ -282,14 +283,22 @@ export function BridgesOverviewByChain({
 						<StatItem
 							label={completedDayVolumes ? 'Total volume (last completed day)' : 'Total volume (24h)'}
 							labelAs="h1"
-							value={formattedNum(dayTotalVolume, true)}
+							value={formatUsd(dayTotalVolume, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 						/>
 					) : null}
 					{weekTotalVolume != null ? (
 						<StatItem
 							label={completedDayVolumes ? 'Total volume (7 completed days)' : 'Total volume (7d)'}
 							labelAs={dayTotalVolume == null ? 'h1' : undefined}
-							value={formattedNum(weekTotalVolume, true)}
+							value={formatUsd(weekTotalVolume, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 							className="max-md:hidden"
 						/>
 					) : null}
@@ -297,7 +306,11 @@ export function BridgesOverviewByChain({
 						<StatItem
 							label={completedDayVolumes ? 'Total volume (30 completed days)' : 'Total volume (1mo)'}
 							labelAs={dayTotalVolume == null && weekTotalVolume == null ? 'h1' : undefined}
-							value={formattedNum(monthTotalVolume, true)}
+							value={formatUsd(monthTotalVolume, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 							className="max-md:hidden"
 						/>
 					) : null}

@@ -1,5 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { lazy, Suspense, useMemo, useRef } from 'react'
+import { formatNumber } from '~/utils/numberFormat'
 import type { QueryResult } from './exportResults'
 import { inferColumnKind, TypeBadge } from './primitives'
 
@@ -166,8 +167,8 @@ function formatCell(value: unknown, kind: ColumnKind): string {
 			const date = new Date(value > 1e12 ? value : value * 1000)
 			if (Number.isFinite(date.getTime())) return date.toISOString().slice(0, 10)
 		}
-		if (Number.isInteger(value)) return value.toLocaleString()
-		return value.toLocaleString(undefined, { maximumFractionDigits: 6 })
+		if (Number.isInteger(value)) return formatNumber(value, { maximumFractionDigits: 0 })
+		return formatNumber(value, { maximumFractionDigits: 6 })
 	}
 	if (value instanceof Date) return value.toISOString().slice(0, 10)
 	if (typeof value === 'object') {

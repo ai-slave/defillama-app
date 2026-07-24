@@ -10,7 +10,8 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Icon } from '~/ui/Icon'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { parseExcludeParam } from '~/utils/routerQuery'
 import type { IProtocolsWithTokensByChainPageData, ITokenMetricProtocolRow, TokenMetricType } from './types'
 
@@ -232,7 +233,10 @@ const mcapColumns = [
 	columnHelper.accessor('value', {
 		id: 'mcap',
 		header: 'Market Cap',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end'
@@ -245,7 +249,10 @@ const fdvColumns = [
 	columnHelper.accessor('value', {
 		id: 'fdv',
 		header: 'FDV',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end'
@@ -258,7 +265,10 @@ const priceColumns = [
 	columnHelper.accessor('value', {
 		id: 'price',
 		header: 'Token Price',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end'
@@ -271,7 +281,10 @@ const outstandingFdvColumns = [
 	columnHelper.accessor('value', {
 		id: 'outstanding-fdv',
 		header: 'Outstanding FDV',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end',

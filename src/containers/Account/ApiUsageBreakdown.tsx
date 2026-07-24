@@ -9,7 +9,7 @@ import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from 
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { formattedNum } from '~/utils'
+import { formatCompactNumber } from '~/utils/numberFormat'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -203,8 +203,12 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 	const renderedCharts = useMemo(() => new Set(charts.map((chart) => chart.name)), [charts])
 
 	const hasData = sortedStats.length > 0 && !isLoading && !isError
-	const totalLabel = hasData ? formattedNum(totalRequests) : '--'
-	const avgLabel = hasData ? formattedNum(averageRequests) : '--'
+	const totalLabel = hasData
+		? formatCompactNumber(totalRequests, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		: '--'
+	const avgLabel = hasData
+		? formatCompactNumber(averageRequests, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		: '--'
 
 	const chartOptions = useMemo<MultiSeriesChartOptions>(
 		() => ({
@@ -257,10 +261,10 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 					const rows = items
 						.map(
 							(item) =>
-								`<li style="list-style:none;padding:1px 0">${item.marker}${item.name}&nbsp;&nbsp;<b>${formattedNum(item.value)}</b></li>`
+								`<li style="list-style:none;padding:1px 0">${item.marker}${item.name}&nbsp;&nbsp;<b>${formatCompactNumber(item.value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</b></li>`
 						)
 						.join('')
-					const totalRow = `<li style="list-style:none;padding:2px 0 0;border-top:1px solid ${activeColors.axis};margin-top:4px;font-weight:600">Total&nbsp;&nbsp;${formattedNum(total)}</li>`
+					const totalRow = `<li style="list-style:none;padding:2px 0 0;border-top:1px solid ${activeColors.axis};margin-top:4px;font-weight:600">Total&nbsp;&nbsp;${formatCompactNumber(total, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</li>`
 
 					return `<div><div style="margin-bottom:6px;font-weight:500">${dateLabel}</div><ul style="margin:0;padding:0">${rows}${totalRow}</ul></div>`
 				}

@@ -10,8 +10,9 @@ import { fetchProtocolExpenses } from '~/containers/ProtocolOverview/api'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('expenses', async () => {
@@ -113,7 +114,10 @@ const columns = [
 	}),
 	columnHelper.accessor('sumAnnualUsdExpenses', {
 		header: 'Annual Expenses',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[150px]',
 			align: 'end'

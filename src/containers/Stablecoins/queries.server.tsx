@@ -9,10 +9,11 @@ import {
 	type StablecoinChartDataPoint
 } from '~/containers/Stablecoins/utils'
 import { cachedResult } from '~/server/api/resultCache'
-import { formattedNum, getPercentChange, slug } from '~/utils'
+import { getPercentChange, slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { getObjectCache, setObjectCache } from '~/utils/cache-client'
 import { getDeprecatedChainsByName } from '~/utils/metadata/deprecatedChains'
+import { formatUsd, formatFixedNumber } from '~/utils/numberFormat'
 import { toUnixMsTimestamp } from '~/utils/timeSeries'
 import {
 	fetchStablecoinAssetApi,
@@ -563,12 +564,18 @@ export const buildStablecoinChainsPageSummary = (
 		chartLookupOptions
 	)
 
-	const change1d = getPercentChange(totalMcapCurrent, totalMcapPrevDay)?.toFixed(2) ?? null
-	const change7d = getPercentChange(totalMcapCurrent, totalMcapPrevWeek)?.toFixed(2) ?? null
-	const change30d = getPercentChange(totalMcapCurrent, totalMcapPrevMonth)?.toFixed(2) ?? null
+	const change1d = formatFixedNumber(getPercentChange(totalMcapCurrent, totalMcapPrevDay), 2) ?? null
+	const change7d = formatFixedNumber(getPercentChange(totalMcapCurrent, totalMcapPrevWeek), 2) ?? null
+	const change30d = formatFixedNumber(getPercentChange(totalMcapCurrent, totalMcapPrevMonth), 2) ?? null
 
 	const formatAbsoluteChange = (previous: number | null): string | null =>
-		totalMcapCurrent != null && previous != null ? formattedNum(String(totalMcapCurrent - previous), true) : null
+		totalMcapCurrent != null && previous != null
+			? formatUsd(String(totalMcapCurrent - previous), {
+					compact: true,
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				})
+			: null
 	const change1d_nol = formatAbsoluteChange(totalMcapPrevDay)
 	const change7d_nol = formatAbsoluteChange(totalMcapPrevWeek)
 	const change30d_nol = formatAbsoluteChange(totalMcapPrevMonth)

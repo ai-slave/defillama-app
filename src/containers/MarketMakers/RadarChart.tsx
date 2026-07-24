@@ -7,6 +7,7 @@ import { useEffect, useRef } from 'react'
 import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
+import { formatNumber } from '~/utils/numberFormat'
 
 echarts.use([ERadarChart, RadarComponent, TooltipComponent, CanvasRenderer])
 
@@ -46,7 +47,7 @@ export function buildRadarOption(scores: RadarScores, axisColor?: string): EChar
 	return {
 		tooltip: {
 			trigger: 'item',
-			formatter: () => INDICATORS.map((name, i) => `${name}: ${(values[i] ?? 0).toFixed(2)}`).join('<br/>')
+			formatter: () => INDICATORS.map((name, i) => `${name}: ${formatNumber(values[i] ?? 0)}`).join('<br/>')
 		},
 		radar: {
 			indicator: INDICATORS.map((name) => ({ name, max: 10 })),

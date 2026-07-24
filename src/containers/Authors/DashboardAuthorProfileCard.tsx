@@ -5,6 +5,7 @@ import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Icon } from '~/ui/Icon'
+import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { getMyDashboardAuthorProfile, updateMyDashboardAuthorProfile } from './api'
 import { avatarColorStyle } from './avatarColor'
 import { DEFAULT_AUTHOR_NAME_RE, DEFAULT_AUTHOR_SLUG_RE } from './profileDefaults'
@@ -124,7 +125,9 @@ function ProfileCompletenessMeter({ state }: { state: FormState }) {
 		<div className="mt-4 grid gap-2 border-t border-sub-border-slate-100 pt-4 dark:border-sub-border-strong">
 			<div className="flex items-center justify-between gap-2">
 				<span className="text-xs font-medium text-sub-text-primary">Profile completeness</span>
-				<span className="text-xs font-semibold text-sub-brand-primary tabular-nums">{percent}%</span>
+				<span className="text-xs font-semibold text-sub-brand-primary tabular-nums">
+					{formatPercent(percent, { input: 'percent', maximumFractionDigits: 0 })}
+				</span>
 			</div>
 			<div className="h-1.5 overflow-hidden rounded-full bg-sub-border-slate-100 dark:bg-sub-border-strong">
 				<div
@@ -152,7 +155,7 @@ function CharCount({ value, max }: { value: string; max: number }) {
 	const near = value.length >= Math.floor(max * 0.9)
 	return (
 		<span className={`text-[11px] tabular-nums ${near ? 'text-warning' : 'text-sub-text-muted'}`}>
-			{value.length.toLocaleString()}/{max.toLocaleString()}
+			{formatNumber(value.length)}/{formatNumber(max)}
 		</span>
 	)
 }

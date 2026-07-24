@@ -1,4 +1,5 @@
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import type { IProtocolFaqAnswerPart, IProtocolFaqItem } from './types'
 
 const MAX_FAQ_ITEMS = 10
@@ -70,7 +71,7 @@ export interface ProtocolFaqContext {
 	} | null
 	hacks: Array<{
 		date: number | null
-		amount: number | null
+		amountUsd: number | null
 		classification: string | null
 	}>
 	metrics: {
@@ -235,8 +236,8 @@ function possessive(name: string): string {
 	return name.endsWith('s') ? `${name}'` : `${name}'s`
 }
 
-function formatPercent(value: number): string {
-	return Math.abs(value).toLocaleString('en-US', { maximumFractionDigits: 1 })
+function formatPercentMagnitude(value: number): string {
+	return formatPercent(Math.abs(value), { input: 'percent', maximumFractionDigits: 1 })
 }
 
 function formatDate(timestamp: number | string | null): string | null {
@@ -261,10 +262,12 @@ function buildDescriptionQuestion(context: ProtocolFaqContext): IProtocolFaqItem
 function buildTvlQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null {
 	if (context.tvl.current == null) return null
 
-	const answer = [`${context.name} currently has ${formattedNum(context.tvl.current, true)} in total value locked`]
+	const answer = [
+		`${context.name} currently has ${formatUsd(context.tvl.current, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in total value locked`
+	]
 	if (context.tvl.change30d != null) {
 		const direction = context.tvl.change30d >= 0 ? 'increased' : 'decreased'
-		answer.push(`. TVL has ${direction} ${formatPercent(context.tvl.change30d)}% over the past 30 days`)
+		answer.push(`. TVL has ${direction} ${formatPercentMagnitude(context.tvl.change30d)} over the past 30 days`)
 	}
 	answer.push('.')
 
@@ -286,7 +289,7 @@ function buildChainsQuestion(context: ProtocolFaqContext): IProtocolFaqItem | nu
 			text('.')
 		)
 	} else {
-		answer.push(text(`${context.name} operates on ${context.chains.length.toLocaleString('en-US')} chains: `))
+		answer.push(text(`${context.name} operates on ${formatNumber(context.chains.length)} chains: `))
 		appendLinkedList(answer, context.chains.slice(0, MAX_LINKED_CHAINS))
 		if (context.chains.length > MAX_LINKED_CHAINS) {
 			answer.push(text(` and ${context.chains.length - MAX_LINKED_CHAINS} others`))
@@ -302,7 +305,7 @@ function buildChainsQuestion(context: ProtocolFaqContext): IProtocolFaqItem | nu
 		answer.push(
 			text(' '),
 			linkedText(largestChain.name, largestChain.href),
-			text(` holds the largest share at ${formatPercent(share)}%.`)
+			text(` holds the largest share at ${formatPercentMagnitude(share)}.`)
 		)
 	}
 
@@ -319,18 +322,26 @@ function buildFeesQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null
 
 	const answer: string[] = []
 	if (fees30d != null)
-		answer.push(`Over the past 30 days, ${context.name} generated ${formattedNum(fees30d, true)} in fees.`)
+		answer.push(
+			`Over the past 30 days, ${context.name} generated ${formatUsd(fees30d, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in fees.`
+		)
 	if (revenue30d != null) {
 		answer.push(
 			fees30d != null
-				? ` Of that, ${formattedNum(revenue30d, true)} was protocol revenue.`
-				: `Over the past 30 days, ${context.name} generated ${formattedNum(revenue30d, true)} in protocol revenue.`
+				? ` Of that, ${formatUsd(revenue30d, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} was protocol revenue.`
+				: `Over the past 30 days, ${context.name} generated ${formatUsd(revenue30d, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in protocol revenue.`
 		)
 	}
 	if (annualizedFees != null || annualizedRevenue != null) {
 		const annualized: string[] = []
-		if (annualizedFees != null) annualized.push(`${formattedNum(annualizedFees, true)} in fees`)
-		if (annualizedRevenue != null) annualized.push(`${formattedNum(annualizedRevenue, true)} in revenue`)
+		if (annualizedFees != null)
+			annualized.push(
+				`${formatUsd(annualizedFees, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in fees`
+			)
+		if (annualizedRevenue != null)
+			annualized.push(
+				`${formatUsd(annualizedRevenue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in revenue`
+			)
 		answer.push(` Based on the trailing year, the annualized rate is ${annualized.join(' and ')}.`)
 	}
 
@@ -362,22 +373,40 @@ function buildTokenValuationQuestion(context: ProtocolFaqContext): IProtocolFaqI
 	if (token.currentPrice != null) {
 		answer.push(
 			linkedText(token.symbol, token.tokenPageRoute),
-			text(` is currently trading at ${formattedNum(token.currentPrice, true)}.`)
+			text(
+				` is currently trading at ${formatUsd(token.currentPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}.`
+			)
 		)
 	}
 	if (token.marketCap != null) {
 		answer.push(
-			text(` Its circulating market capitalization is ${formattedNum(token.marketCap, true)}`),
-			text(token.marketCapRank != null ? `, ranking it #${token.marketCapRank.toLocaleString('en-US')}` : ''),
+			text(
+				` Its circulating market capitalization is ${formatUsd(token.marketCap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+			),
+			text(token.marketCapRank != null ? `, ranking it #${formatNumber(token.marketCapRank)}` : ''),
 			text('.')
 		)
 	}
-	if (token.fdv != null) answer.push(text(` Its fully diluted valuation is ${formattedNum(token.fdv, true)}.`))
+	if (token.fdv != null)
+		answer.push(
+			text(
+				` Its fully diluted valuation is ${formatUsd(token.fdv, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}.`
+			)
+		)
 	if (token.circulatingSupply != null || token.totalSupply != null || token.maxSupply != null) {
 		const supply: string[] = []
-		if (token.circulatingSupply != null) supply.push(`${formattedNum(token.circulatingSupply)} circulating`)
-		if (token.totalSupply != null) supply.push(`${formattedNum(token.totalSupply)} total supply`)
-		if (token.maxSupply != null) supply.push(`${formattedNum(token.maxSupply)} maximum supply`)
+		if (token.circulatingSupply != null)
+			supply.push(
+				`${formatCompactNumber(token.circulatingSupply, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} circulating`
+			)
+		if (token.totalSupply != null)
+			supply.push(
+				`${formatCompactNumber(token.totalSupply, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} total supply`
+			)
+		if (token.maxSupply != null)
+			supply.push(
+				`${formatCompactNumber(token.maxSupply, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} maximum supply`
+			)
 		answer.push(text(` Supply currently stands at ${supply.join(', ')}.`))
 	}
 
@@ -395,21 +424,23 @@ function buildTokenPerformanceQuestion(context: ProtocolFaqContext): IProtocolFa
 	const answer: string[] = []
 	if (token.priceChange7d != null) {
 		answer.push(
-			`${token.symbol} is ${token.priceChange7d >= 0 ? 'up' : 'down'} ${formatPercent(token.priceChange7d)}% over the past 7 days`
+			`${token.symbol} is ${token.priceChange7d >= 0 ? 'up' : 'down'} ${formatPercentMagnitude(token.priceChange7d)} over the past 7 days`
 		)
 	}
 	if (token.priceChange30d != null) {
 		answer.push(
-			`${answer.length > 0 ? ' and' : `${token.symbol} is`} ${token.priceChange30d >= 0 ? 'up' : 'down'} ${formatPercent(token.priceChange30d)}% over the past 30 days`
+			`${answer.length > 0 ? ' and' : `${token.symbol} is`} ${token.priceChange30d >= 0 ? 'up' : 'down'} ${formatPercentMagnitude(token.priceChange30d)} over the past 30 days`
 		)
 	}
 	if (answer.length > 0) answer.push('.')
 	if (token.ath != null) {
 		const athDate = formatDate(token.athDate)
-		answer.push(` Its all-time high is ${formattedNum(token.ath, true)}${athDate ? `, reached on ${athDate}` : ''}.`)
+		answer.push(
+			` Its all-time high is ${formatUsd(token.ath, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}${athDate ? `, reached on ${athDate}` : ''}.`
+		)
 		if (token.currentPrice != null && token.ath > 0 && token.currentPrice <= token.ath) {
 			answer.push(
-				` The token is currently ${formatPercent(((token.ath - token.currentPrice) / token.ath) * 100)}% below that level.`
+				` The token is currently ${formatPercentMagnitude(((token.ath - token.currentPrice) / token.ath) * 100)} below that level.`
 			)
 		}
 	}
@@ -446,7 +477,7 @@ function buildRelationshipQuestion(context: ProtocolFaqContext): IProtocolFaqIte
 	]
 	answer.push(
 		text(
-			` tracked by DefiLlama, ${context.name} ranks #${comparison.rank.toLocaleString('en-US')} by TVL. The category holds ${formattedNum(comparison.totalTvl, true)} across ${comparison.protocolCount.toLocaleString('en-US')} protocol${comparison.protocolCount === 1 ? '' : 's'}, and ${context.name} accounts for ${formatPercent(comparison.sharePercent)}% of that total.`
+			` tracked by DefiLlama, ${context.name} ranks #${formatNumber(comparison.rank)} by TVL. The category holds ${formatUsd(comparison.totalTvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} across ${formatNumber(comparison.protocolCount)} protocol${comparison.protocolCount === 1 ? '' : 's'}, and ${context.name} accounts for ${formatPercentMagnitude(comparison.sharePercent)} of that total.`
 		)
 	)
 	if (comparison.peers.length > 0) {
@@ -469,7 +500,9 @@ function buildMetricSpecificQuestion(context: ProtocolFaqContext): IProtocolFaqI
 			id: 'active-loans',
 			question: `How much has been borrowed through ${context.name}?`,
 			answer: [
-				text(`${context.name} currently has ${formattedNum(context.metrics.borrowed, true)} in `),
+				text(
+					`${context.name} currently has ${formatUsd(context.metrics.borrowed, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in `
+				),
 				linkedText('active loans', `/protocol/active-loans/${protocolSlug}`),
 				text('.')
 			]
@@ -480,7 +513,9 @@ function buildMetricSpecificQuestion(context: ProtocolFaqContext): IProtocolFaqI
 			id: 'dex-volume',
 			question: `How much trading volume does ${context.name} process?`,
 			answer: [
-				text(`${context.name} processed ${formattedNum(context.metrics.dexVolume30d, true)} in `),
+				text(
+					`${context.name} processed ${formatUsd(context.metrics.dexVolume30d, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in `
+				),
 				linkedText('DEX volume', `/protocol/dexs/${protocolSlug}`),
 				text(' over the past 30 days.')
 			]
@@ -491,7 +526,9 @@ function buildMetricSpecificQuestion(context: ProtocolFaqContext): IProtocolFaqI
 			id: 'perp-volume',
 			question: `How much perpetual futures volume does ${context.name} process?`,
 			answer: [
-				text(`${context.name} processed ${formattedNum(context.metrics.perpVolume30d, true)} in `),
+				text(
+					`${context.name} processed ${formatUsd(context.metrics.perpVolume30d, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in `
+				),
 				linkedText('perpetual futures volume', `/protocol/perps/${protocolSlug}`),
 				text(' over the past 30 days.')
 			]
@@ -502,7 +539,9 @@ function buildMetricSpecificQuestion(context: ProtocolFaqContext): IProtocolFaqI
 			id: 'open-interest',
 			question: `What is ${possessive(context.name)} open interest?`,
 			answer: [
-				text(`${context.name} currently has ${formattedNum(context.metrics.openInterest, true)} in open interest.`)
+				text(
+					`${context.name} currently has ${formatUsd(context.metrics.openInterest, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in open interest.`
+				)
 			]
 		}
 	}
@@ -512,7 +551,7 @@ function buildMetricSpecificQuestion(context: ProtocolFaqContext): IProtocolFaqI
 			question: `How many yield pools does ${context.name} have?`,
 			answer: [
 				text(
-					`DefiLlama tracks ${context.metrics.yieldPoolCount.toLocaleString('en-US')} ${context.name} yield pool${context.metrics.yieldPoolCount === 1 ? '' : 's'}${context.metrics.averageApy != null ? ` with an average APY of ${formatPercent(context.metrics.averageApy)}%` : ''}.`
+					`DefiLlama tracks ${formatNumber(context.metrics.yieldPoolCount)} ${context.name} yield pool${context.metrics.yieldPoolCount === 1 ? '' : 's'}${context.metrics.averageApy != null ? ` with an average APY of ${formatPercentMagnitude(context.metrics.averageApy)}` : ''}.`
 				)
 			]
 		}
@@ -527,22 +566,30 @@ function buildTreasuryQuestion(context: ProtocolFaqContext): IProtocolFaqItem | 
 
 	const breakdown: string[] = []
 	if (treasury.stablecoins != null && treasury.stablecoins > 0) {
-		breakdown.push(`${formattedNum(treasury.stablecoins, true)} in stablecoins`)
+		breakdown.push(
+			`${formatUsd(treasury.stablecoins, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in stablecoins`
+		)
 	}
 	if (treasury.majors != null && treasury.majors > 0)
-		breakdown.push(`${formattedNum(treasury.majors, true)} in major assets`)
+		breakdown.push(
+			`${formatUsd(treasury.majors, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in major assets`
+		)
 	if (treasury.ownTokens != null && treasury.ownTokens > 0) {
-		breakdown.push(`${formattedNum(treasury.ownTokens, true)} in its own tokens`)
+		breakdown.push(
+			`${formatUsd(treasury.ownTokens, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in its own tokens`
+		)
 	}
 	if (treasury.others != null && treasury.others > 0)
-		breakdown.push(`${formattedNum(treasury.others, true)} in other assets`)
+		breakdown.push(
+			`${formatUsd(treasury.others, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in other assets`
+		)
 
 	return {
 		id: 'treasury',
 		question: `Does ${context.name} have a treasury?`,
 		answer: [
 			text(
-				`${context.name} has a tracked treasury currently valued at ${formattedNum(treasury.total, true)}${breakdown.length > 0 ? `. Its holdings include ${breakdown.join(', ')}` : ''}.`
+				`${context.name} has a tracked treasury currently valued at ${formatUsd(treasury.total, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}${breakdown.length > 0 ? `. Its holdings include ${breakdown.join(', ')}` : ''}.`
 			)
 		]
 	}
@@ -553,13 +600,18 @@ function buildSecurityQuestion(context: ProtocolFaqContext): IProtocolFaqItem | 
 	const latest = context.hacks.toSorted((a, b) => (b.date ?? 0) - (a.date ?? 0))[0]
 	const latestDate = formatDate(latest.date)
 	const answer: IProtocolFaqAnswerPart[] = [
-		text(`${context.name} has ${context.hacks.length.toLocaleString('en-US')} recorded `),
+		text(`${context.name} has ${formatNumber(context.hacks.length)} recorded `),
 		linkedText(`security incident${context.hacks.length === 1 ? '' : 's'}`, '/hacks'),
 		text('.')
 	]
-	if (latestDate || latest.amount != null || latest.classification) {
+	if (latestDate || latest.amountUsd != null || latest.classification) {
 		answer.push(text(` The most recent incident${latestDate ? ` occurred on ${latestDate}` : ''}`))
-		if (latest.amount != null) answer.push(text(` and involved ${formattedNum(latest.amount, true)}`))
+		if (latest.amountUsd != null)
+			answer.push(
+				text(
+					` and involved ${formatUsd(latest.amountUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+				)
+			)
 		if (latest.classification) answer.push(text(`. It was classified as ${latest.classification}`))
 		answer.push(text('.'))
 	}

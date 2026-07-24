@@ -5,7 +5,7 @@ import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useMedia } from '~/hooks/useMedia'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import {
 	chartToDataset,
@@ -53,7 +53,10 @@ function windowKpi(series: [number, number][], days?: number): KpiT {
 	const last = series[series.length - 1][0]
 	const cutoff = days ? last - days * DAY : -Infinity
 	const sum = series.reduce((acc, [t, v]) => (t > cutoff ? acc + (v || 0) : acc), 0)
-	return { value: sum, formatted: formattedNum(sum, true) }
+	return {
+		value: sum,
+		formatted: formatUsd(sum, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+	}
 }
 
 // Trailing-window USD sums of a DefiLlama daily series, fetched once and cached by `key`. The

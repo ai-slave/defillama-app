@@ -1,7 +1,7 @@
 import { metricOptionChipStyles } from '~/ui/MetricChip'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import {
 	collateralDepegLossUsd,
 	isCollateralStressModelable,
@@ -153,8 +153,12 @@ export function VaultStress({
 					) : (
 						<>
 							{'est. bad debt up to '}
-							<span className="label-sm text-primary tabular-nums">{formattedNum(total, true)}</span>
-							{yourShare != null ? ` · ≈ ${formattedNum(yourShare, true)} of your deposit` : null}
+							<span className="label-sm text-primary tabular-nums">
+								{formatUsd(total, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+							</span>
+							{yourShare != null
+								? ` · ≈ ${formatUsd(yourShare, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} of your deposit`
+								: null}
 						</>
 					)}
 				</span>
@@ -167,7 +171,7 @@ export function VaultStress({
 						return (
 							<Tooltip
 								key={a.drop_pct}
-								content={`Estimated bad debt ${formattedNum(a.bad_debt_usd, true)}`}
+								content={`Estimated bad debt ${formatUsd(a.bad_debt_usd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}
 								render={
 									<button
 										type="button"
@@ -178,7 +182,7 @@ export function VaultStress({
 									/>
 								}
 							>
-								{`−${a.drop_pct}%`}
+								{`−${formatPercent(a.drop_pct, { input: 'percent' })}`}
 							</Tooltip>
 						)
 					})}
@@ -197,14 +201,16 @@ export function VaultStress({
 							<span key={d.symbol} className="tabular-nums">
 								{i > 0 ? ' · ' : ''}
 								<span className="text-secondary">{d.symbol}</span> {mode === 'custom' ? `${dropLabel(d.drop)} ` : ''}
-								{formattedNum(d.loss, true)}
+								{formatUsd(d.loss, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 							</span>
 						))}
-						{otherLoss > 0 ? <span className="tabular-nums">{` · other ${formattedNum(otherLoss, true)}`}</span> : null}
+						{otherLoss > 0 ? (
+							<span className="tabular-nums">{` · other ${formatUsd(otherLoss, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</span>
+						) : null}
 						{' · '}
 					</>
 				) : null}
-				<span className="tabular-nums">{`−100% ${formattedNum(ceiling, true)} modeled all-to-zero bad-debt ceiling`}</span>
+				<span className="tabular-nums">{`−100% ${formatUsd(ceiling, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} modeled all-to-zero bad-debt ceiling`}</span>
 				{excluded > 0 ? ` · ${excluded} of ${collateral.length} excluded (no bad-debt attribution)` : null}
 			</p>
 		</div>

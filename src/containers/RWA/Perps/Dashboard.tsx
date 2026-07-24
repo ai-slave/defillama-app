@@ -42,9 +42,9 @@ import { LoadingDots } from '~/ui/Loaders'
 import { PercentChange } from '~/ui/PercentChange'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import {
 	isTrueQueryParam,
 	parseArrayParam,
@@ -364,7 +364,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.openInterest ?? undefined, {
 		id: 'openInterest',
 		header: d.openInterest.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[136px]',
 			align: 'end',
@@ -384,7 +385,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.volume24h ?? undefined, {
 		id: 'volume24h',
 		header: d.volume24h.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[126px]',
 			align: 'end',
@@ -404,7 +406,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.price ?? undefined, {
 		id: 'price',
 		header: d.price.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[88px]',
 			align: 'end',
@@ -424,7 +427,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => (row.fundingRate == null ? undefined : row.fundingRate * 100), {
 		id: 'fundingRate',
 		header: d.fundingRate.label,
-		cell: (info) => `${formattedNum(info.getValue(), false)}%`,
+		cell: (info) =>
+			`${formatPercent(info.getValue(), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -434,7 +438,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => (row.premium == null ? undefined : row.premium * 100), {
 		id: 'premium',
 		header: d.premium.label,
-		cell: (info) => `${formattedNum(info.getValue(), false)}%`,
+		cell: (info) =>
+			`${formatPercent(info.getValue(), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 		meta: {
 			headerClassName: 'w-[108px]',
 			align: 'end',
@@ -444,7 +449,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.maxLeverage ?? undefined, {
 		id: 'maxLeverage',
 		header: d.maxLeverage.label,
-		cell: (info) => `${formattedNum(info.getValue(), false)}x`,
+		cell: (info) =>
+			`${formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}x`,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end',
@@ -508,7 +514,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => (row.makerFeeRate == null ? undefined : row.makerFeeRate * 100), {
 		id: 'makerFeeRate',
 		header: d.makerFeeRate.label,
-		cell: (info) => `${formattedNum(info.getValue(), false)}%`,
+		cell: (info) =>
+			`${formatPercent(info.getValue(), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 		meta: {
 			headerClassName: 'w-[112px]',
 			align: 'end',
@@ -518,7 +525,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => (row.takerFeeRate == null ? undefined : row.takerFeeRate * 100), {
 		id: 'takerFeeRate',
 		header: d.takerFeeRate.label,
-		cell: (info) => `${formattedNum(info.getValue(), false)}%`,
+		cell: (info) =>
+			`${formatPercent(info.getValue(), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 		meta: {
 			headerClassName: 'w-[112px]',
 			align: 'end',
@@ -528,7 +536,10 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => (row.deployerFeeShare == null ? undefined : row.deployerFeeShare * 100), {
 		id: 'deployerFeeShare',
 		header: d.deployerFeeShare.label,
-		cell: (info) => (info.getValue() == null ? '-' : `${formattedNum(info.getValue(), false)}%`),
+		cell: (info) =>
+			info.getValue() == null
+				? '-'
+				: `${formatPercent(info.getValue(), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 		meta: {
 			headerClassName: 'w-[154px]',
 			align: 'end',
@@ -538,7 +549,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.cumulativeFunding ?? undefined, {
 		id: 'cumulativeFunding',
 		header: d.cumulativeFunding.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[168px]',
 			align: 'end',
@@ -548,7 +560,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.oraclePx ?? undefined, {
 		id: 'oraclePx',
 		header: d.oraclePx.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[92px]',
 			align: 'end',
@@ -558,7 +571,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.midPx ?? undefined, {
 		id: 'midPx',
 		header: d.midPx.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[88px]',
 			align: 'end',
@@ -568,7 +582,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.prevDayPx ?? undefined, {
 		id: 'prevDayPx',
 		header: d.prevDayPx.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[116px]',
 			align: 'end',
@@ -578,7 +593,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.volume7d ?? undefined, {
 		id: 'volume7d',
 		header: d.volume7d.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[118px]',
 			align: 'end',
@@ -588,7 +604,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.volume30d ?? undefined, {
 		id: 'volume30d',
 		header: d.volume30d.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[126px]',
 			align: 'end',
@@ -598,7 +615,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.volumeAllTime ?? undefined, {
 		id: 'volumeAllTime',
 		header: d.volumeAllTime.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[146px]',
 			align: 'end',
@@ -608,7 +626,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.estimatedProtocolFees24h ?? undefined, {
 		id: 'estimatedProtocolFees24h',
 		header: d.estimatedProtocolFees24h.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[min(188px,40vw)]',
 			align: 'end',
@@ -618,7 +637,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.estimatedProtocolFees7d ?? undefined, {
 		id: 'estimatedProtocolFees7d',
 		header: d.estimatedProtocolFees7d.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[min(188px,40vw)]',
 			align: 'end',
@@ -628,7 +648,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.estimatedProtocolFees30d ?? undefined, {
 		id: 'estimatedProtocolFees30d',
 		header: d.estimatedProtocolFees30d.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[min(188px,40vw)]',
 			align: 'end',
@@ -638,7 +659,8 @@ const overviewColumns = [
 	overviewColumnHelper.accessor((row) => row.estimatedProtocolFeesAllTime ?? undefined, {
 		id: 'estimatedProtocolFeesAllTime',
 		header: d.estimatedProtocolFeesAllTime.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[min(210px,40vw)]',
 			align: 'end',
@@ -754,7 +776,8 @@ const venueColumns = [
 	venueColumnHelper.accessor((row) => row.openInterest ?? undefined, {
 		id: 'openInterest',
 		header: d.openInterest.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[136px]',
 			align: 'end',
@@ -774,7 +797,8 @@ const venueColumns = [
 	venueColumnHelper.accessor((row) => row.volume24h ?? undefined, {
 		id: 'volume24h',
 		header: d.volume24h.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[126px]',
 			align: 'end',
@@ -794,7 +818,8 @@ const venueColumns = [
 	venueColumnHelper.accessor((row) => row.price ?? undefined, {
 		id: 'price',
 		header: d.price.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[88px]',
 			align: 'end',
@@ -814,7 +839,8 @@ const venueColumns = [
 	venueColumnHelper.accessor((row) => (row.fundingRate == null ? undefined : row.fundingRate * 100), {
 		id: 'fundingRate',
 		header: d.fundingRate.label,
-		cell: (info) => `${formattedNum(info.getValue(), false)}%`,
+		cell: (info) =>
+			`${formatPercent(info.getValue(), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -824,7 +850,8 @@ const venueColumns = [
 	venueColumnHelper.accessor((row) => (row.premium == null ? undefined : row.premium * 100), {
 		id: 'premium',
 		header: d.premium.label,
-		cell: (info) => `${formattedNum(info.getValue(), false)}%`,
+		cell: (info) =>
+			`${formatPercent(info.getValue(), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 		meta: {
 			headerClassName: 'w-[108px]',
 			align: 'end',
@@ -834,7 +861,8 @@ const venueColumns = [
 	venueColumnHelper.accessor((row) => row.maxLeverage ?? undefined, {
 		id: 'maxLeverage',
 		header: d.maxLeverage.label,
-		cell: (info) => `${formattedNum(info.getValue(), false)}x`,
+		cell: (info) =>
+			`${formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}x`,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end',
@@ -862,7 +890,8 @@ const venueColumns = [
 	venueColumnHelper.accessor((row) => (row.makerFeeRate == null ? undefined : row.makerFeeRate * 100), {
 		id: 'makerFeeRate',
 		header: d.makerFeeRate.label,
-		cell: (info) => `${formattedNum(info.getValue(), false)}%`,
+		cell: (info) =>
+			`${formatPercent(info.getValue(), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 		meta: {
 			headerClassName: 'w-[112px]',
 			align: 'end',
@@ -872,7 +901,8 @@ const venueColumns = [
 	venueColumnHelper.accessor((row) => (row.takerFeeRate == null ? undefined : row.takerFeeRate * 100), {
 		id: 'takerFeeRate',
 		header: d.takerFeeRate.label,
-		cell: (info) => `${formattedNum(info.getValue(), false)}%`,
+		cell: (info) =>
+			`${formatPercent(info.getValue(), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 		meta: {
 			headerClassName: 'w-[112px]',
 			align: 'end',
@@ -882,7 +912,8 @@ const venueColumns = [
 	venueColumnHelper.accessor((row) => row.cumulativeFunding ?? undefined, {
 		id: 'cumulativeFunding',
 		header: d.cumulativeFunding.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[168px]',
 			align: 'end',
@@ -892,7 +923,8 @@ const venueColumns = [
 	venueColumnHelper.accessor((row) => row.estimatedProtocolFees24h ?? undefined, {
 		id: 'estimatedProtocolFees24h',
 		header: d.estimatedProtocolFees24h.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[min(188px,40vw)]',
 			align: 'end',
@@ -2084,52 +2116,82 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				{
 					label: d.totalOpenInterest.label,
 					tooltip: d.totalOpenInterest.description,
-					value: formattedNum(displayTotals.openInterest, true),
+					value: formatUsd(displayTotals.openInterest, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
 					change: displayTotals.openInterestChange24h,
 					changeTooltip: d.openInterestChange24h.description
 				},
 				{
 					label: d.totalVolume24h.label,
 					tooltip: d.totalVolume24h.description,
-					value: formattedNum(displayTotals.volume24h, true),
+					value: formatUsd(displayTotals.volume24h, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
 					change: displayTotals.volume24hChange24h,
 					changeTooltip: d.volume24hChange24h.description
 				},
 				{
 					label: d.totalMarkets.label,
 					tooltip: d.totalMarkets.description,
-					value: formattedNum(displayTotals.markets, false)
+					value: formatCompactNumber(displayTotals.markets, {
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})
 				},
 				{
 					label: d.estimatedProtocolFees24h.label,
 					tooltip: d.estimatedProtocolFees24h.description,
-					value: formattedNum(displayTotals.protocolFees24h, true)
+					value: formatUsd(displayTotals.protocolFees24h, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})
 				}
 			]
 		: [
 				{
 					label: d.openInterest.label,
 					tooltip: d.openInterest.description,
-					value: formattedNum(displayTotals.openInterest, true),
+					value: formatUsd(displayTotals.openInterest, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
 					change: displayTotals.openInterestChange24h,
 					changeTooltip: d.openInterestChange24h.description
 				},
 				{
 					label: d.volume24h.label,
 					tooltip: d.volume24h.description,
-					value: formattedNum(displayTotals.volume24h, true),
+					value: formatUsd(displayTotals.volume24h, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
 					change: displayTotals.volume24hChange24h,
 					changeTooltip: d.volume24hChange24h.description
 				},
 				{
 					label: d.markets.label,
 					tooltip: d.markets.description,
-					value: formattedNum(displayTotals.markets, false)
+					value: formatCompactNumber(displayTotals.markets, {
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})
 				},
 				{
 					label: d.estimatedProtocolFees24h.label,
 					tooltip: d.estimatedProtocolFees24h.description,
-					value: formattedNum(displayTotals.protocolFees24h, true)
+					value: formatUsd(displayTotals.protocolFees24h, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})
 				}
 			]
 

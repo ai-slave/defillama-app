@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { chainIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
+import { formatNumber, formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { EntityPreview } from '../entityPreviewTypes'
 import { isPreviewableEntityType } from '../entityPreviewTypes'
 import type { ArticleEntityRef, ArticleEntityType } from '../types'
@@ -36,22 +37,6 @@ function entityLogoUrl(entity: ArticleEntityRef) {
 	return null
 }
 
-const fmtCompactUsd = (n?: number | null): string | null => {
-	if (typeof n !== 'number' || !isFinite(n)) return null
-	const abs = Math.abs(n)
-	if (abs >= 1e12) return `$${(n / 1e12).toFixed(2)}T`
-	if (abs >= 1e9) return `$${(n / 1e9).toFixed(2)}B`
-	if (abs >= 1e6) return `$${(n / 1e6).toFixed(2)}M`
-	if (abs >= 1e3) return `$${(n / 1e3).toFixed(1)}K`
-	return `$${n.toFixed(2)}`
-}
-
-const fmtPct = (n?: number | null): string | null => {
-	if (typeof n !== 'number' || !isFinite(n)) return null
-	const sign = n > 0 ? '+' : ''
-	return `${sign}${(n * 100).toFixed(2)}%`
-}
-
 const changeColor = (n?: number | null) =>
 	typeof n !== 'number' ? 'text-tertiary' : n > 0 ? 'text-success' : n < 0 ? 'text-error' : 'text-tertiary'
 
@@ -68,7 +53,13 @@ function fetchEntityPreview(
 }
 
 function ChangeChip({ value, label }: { value?: number | null; label: string }) {
-	const text = fmtPct(value)
+	const text = formatPercent(value, {
+		input: 'fraction',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+		signDisplay: 'exceptZero',
+		useGrouping: false
+	})
 	if (!text) return null
 	return (
 		<span className={`inline-flex items-baseline gap-1 ${changeColor(value)}`}>
@@ -113,7 +104,7 @@ function PreviewBody({
 	}
 	switch (preview.kind) {
 		case 'protocol': {
-			const tvl = fmtCompactUsd(preview.tvl)
+			const tvl = formatUsd(preview.tvl, { compact: true })
 			return (
 				<span className="flex flex-col gap-2 px-3 pb-3">
 					{preview.category ? (
@@ -145,7 +136,7 @@ function PreviewBody({
 			)
 		}
 		case 'chain': {
-			const tvl = fmtCompactUsd(preview.tvl)
+			const tvl = formatUsd(preview.tvl, { compact: true })
 			return (
 				<span className="flex flex-col gap-2 px-3 pb-3">
 					{tvl ? (
@@ -159,13 +150,13 @@ function PreviewBody({
 						<ChangeChip value={preview.change7d} label="7d" />
 					</span>
 					{typeof preview.protocolCount === 'number' ? (
-						<MetricRow label="Protocols" value={preview.protocolCount.toLocaleString()} />
+						<MetricRow label="Protocols" value={formatNumber(preview.protocolCount)} />
 					) : null}
 				</span>
 			)
 		}
 		case 'stablecoin': {
-			const circ = fmtCompactUsd(preview.circulating)
+			const circ = formatUsd(preview.circulating, { compact: true })
 			return (
 				<span className="flex flex-col gap-2 px-3 pb-3">
 					<span className="flex flex-wrap gap-1">
@@ -191,7 +182,7 @@ function PreviewBody({
 						<span className="flex flex-col gap-0.5">
 							<span className="text-[10px] tracking-wider text-tertiary uppercase">Top chains</span>
 							{preview.topChains.slice(0, 3).map((c) => (
-								<MetricRow key={c.name} label={c.name} value={fmtCompactUsd(c.circulating)} />
+								<MetricRow key={c.name} label={c.name} value={formatUsd(c.circulating, { compact: true })} />
 							))}
 						</span>
 					) : null}
@@ -203,12 +194,12 @@ function PreviewBody({
 				<span className="flex flex-col gap-2 px-3 pb-3">
 					<span className="flex items-baseline gap-2">
 						<span className="text-2xl leading-none font-semibold text-primary tabular-nums">
-							{fmtCompactUsd(preview.tvl) ?? '—'}
+							{formatUsd(preview.tvl, { compact: true }) ?? '—'}
 						</span>
 						<span className="text-[10px] tracking-wider text-tertiary uppercase">Total TVL</span>
 					</span>
 					{typeof preview.protocolCount === 'number' ? (
-						<MetricRow label="Protocols" value={preview.protocolCount.toLocaleString()} />
+						<MetricRow label="Protocols" value={formatNumber(preview.protocolCount)} />
 					) : null}
 					{preview.topProtocols && preview.topProtocols.length > 0 ? (
 						<span className="mt-1 flex flex-col gap-1">
@@ -217,7 +208,9 @@ function PreviewBody({
 								<span key={p.slug} className="flex items-center gap-2">
 									{p.logo ? <img src={p.logo} alt="" className="size-4 shrink-0 rounded-full" loading="lazy" /> : null}
 									<span className="truncate text-xs text-secondary">{p.name}</span>
-									<span className="ml-auto text-[11px] text-tertiary tabular-nums">{fmtCompactUsd(p.tvl)}</span>
+									<span className="ml-auto text-[11px] text-tertiary tabular-nums">
+										{formatUsd(p.tvl, { compact: true })}
+									</span>
 								</span>
 							))}
 						</span>
@@ -226,8 +219,8 @@ function PreviewBody({
 			)
 		}
 		case 'cex': {
-			const tvl = fmtCompactUsd(preview.tvl)
-			const clean = fmtCompactUsd(preview.cleanAssetsTvl)
+			const tvl = formatUsd(preview.tvl, { compact: true })
+			const clean = formatUsd(preview.cleanAssetsTvl, { compact: true })
 			const cleanRatio =
 				typeof preview.tvl === 'number' && typeof preview.cleanAssetsTvl === 'number' && preview.tvl > 0
 					? Math.max(0, Math.min(1, preview.cleanAssetsTvl / preview.tvl))
@@ -244,7 +237,13 @@ function PreviewBody({
 						<span className="flex flex-col gap-1">
 							<span className="flex items-baseline justify-between gap-2 text-[10px] tracking-wider text-tertiary uppercase">
 								<span>Clean assets {clean}</span>
-								<span className="tabular-nums">{(cleanRatio * 100).toFixed(0)}%</span>
+								<span className="tabular-nums">
+									{formatPercent(cleanRatio, {
+										input: 'fraction',
+										maximumFractionDigits: 0,
+										useGrouping: false
+									})}
+								</span>
 							</span>
 							<span className="block h-1 overflow-hidden rounded-sm bg-border-medium">
 								<span className="block h-full rounded-sm bg-link" style={{ width: `${cleanRatio * 100}%` }} />
@@ -252,12 +251,16 @@ function PreviewBody({
 						</span>
 					) : null}
 					{preview.spotVolume != null ? (
-						<MetricRow label="Spot 24h" value={fmtCompactUsd(preview.spotVolume) ?? '—'} />
+						<MetricRow label="Spot 24h" value={formatUsd(preview.spotVolume, { compact: true }) ?? '—'} />
 					) : null}
 					{preview.inflows1w != null ? (
 						<MetricRow
 							label="Net 1w"
-							value={<span className={changeColor(preview.inflows1w)}>{fmtCompactUsd(preview.inflows1w)}</span>}
+							value={
+								<span className={changeColor(preview.inflows1w)}>
+									{formatUsd(preview.inflows1w, { compact: true })}
+								</span>
+							}
 						/>
 					) : null}
 				</span>
@@ -269,13 +272,13 @@ function PreviewBody({
 					{preview.volume24h != null ? (
 						<span className="flex items-baseline gap-2">
 							<span className="text-2xl leading-none font-semibold text-primary tabular-nums">
-								{fmtCompactUsd(preview.volume24h) ?? '—'}
+								{formatUsd(preview.volume24h, { compact: true }) ?? '—'}
 							</span>
 							<span className="text-[10px] tracking-wider text-tertiary uppercase">24h volume</span>
 						</span>
 					) : null}
 					{preview.volume7d != null ? (
-						<MetricRow label="7d volume" value={fmtCompactUsd(preview.volume7d) ?? '—'} />
+						<MetricRow label="7d volume" value={formatUsd(preview.volume7d, { compact: true }) ?? '—'} />
 					) : null}
 					{preview.destinationChain ? <MetricRow label="Destination" value={preview.destinationChain} /> : null}
 					{preview.chains && preview.chains.length > 0 ? (
@@ -294,14 +297,14 @@ function PreviewBody({
 			const dateLabel = preview.date
 				? new Date(preview.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 				: null
-			const lossLabel = fmtCompactUsd(preview.amount)
-			const returnedLabel = fmtCompactUsd(preview.returnedFunds)
+			const lossLabel = formatUsd(preview.amountUsd, { compact: true })
+			const returnedLabel = formatUsd(preview.returnedFundsUsd, { compact: true })
 			const recoveredPct =
-				typeof preview.amount === 'number' &&
-				preview.amount > 0 &&
-				typeof preview.returnedFunds === 'number' &&
-				preview.returnedFunds > 0
-					? Math.min(1, preview.returnedFunds / preview.amount)
+				typeof preview.amountUsd === 'number' &&
+				preview.amountUsd > 0 &&
+				typeof preview.returnedFundsUsd === 'number' &&
+				preview.returnedFundsUsd > 0
+					? Math.min(1, preview.returnedFundsUsd / preview.amountUsd)
 					: null
 			return (
 				<span className="flex flex-col gap-2 px-3 pb-3">
@@ -332,7 +335,15 @@ function PreviewBody({
 							value={
 								<span className="text-success">
 									{returnedLabel}
-									<span className="ml-1 text-tertiary">({(recoveredPct * 100).toFixed(0)}%)</span>
+									<span className="ml-1 text-tertiary">
+										(
+										{formatPercent(recoveredPct, {
+											input: 'fraction',
+											maximumFractionDigits: 0,
+											useGrouping: false
+										})}
+										)
+									</span>
 								</span>
 							}
 						/>

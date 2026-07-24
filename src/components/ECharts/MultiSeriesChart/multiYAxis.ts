@@ -1,16 +1,26 @@
-import { formatNum, formattedNum } from '~/utils'
+import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { IMultiSeriesChartProps, MultiSeriesYAxisOption } from './types'
 
 export function formatAxisLabel(value: number, symbol: string): string {
 	if (Math.abs(value) > 1000) {
-		if (symbol === '$') return formattedNum(value, true)
-		const base = formattedNum(value, false)
+		if (symbol === '$')
+			return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		const base = formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		if (!symbol) return base
-		if (symbol === '%') return `${base}%`
+		if (symbol === '%')
+			return formatPercent(value, {
+				input: 'percent',
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})
 		return `${base} ${symbol}`
 	}
 
-	return formatNum(value, 5, symbol || undefined)
+	if (symbol === '$') return formatUsd(value, { maximumFractionDigits: 5 })
+	if (symbol === '%') return formatPercent(value, { input: 'percent', maximumFractionDigits: 5 })
+	const formatted = formatNumber(value, { maximumFractionDigits: 5 })
+	return symbol ? `${formatted} ${symbol}` : formatted
 }
 
 type RenderSeries = {

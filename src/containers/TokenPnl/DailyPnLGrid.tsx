@@ -1,6 +1,6 @@
 import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatDateLabel, formatPercent } from './format'
+import { formatDateLabel, formatPnlPercent } from './format'
 import type { TimelinePoint } from './types'
 
 export const DailyPnLGrid = ({ timeline }: { timeline: TimelinePoint[] }) => {
@@ -30,13 +30,13 @@ export const DailyPnLGrid = ({ timeline }: { timeline: TimelinePoint[] }) => {
 						<li key={day.timestamp}>
 							<Tooltip
 								placement="top"
-								content={`${formatPercent(day.percentChange)} • ${formatDateLabel(day.timestamp)}`}
+								content={`${formatPnlPercent(day.percentChange)} • ${formatDateLabel(day.timestamp)}`}
 							>
 								<span
 									className="flex size-8 shrink-0 items-end justify-center rounded-md border border-medium transition-transform duration-200 hover:scale-[0.99]"
 									style={{ background: backgroundColor }}
 								>
-									<span className="sr-only">{`${formatPercent(day.percentChange)} on ${formatDateLabel(day.timestamp)}`}</span>
+									<span className="sr-only">{`${formatPnlPercent(day.percentChange)} on ${formatDateLabel(day.timestamp)}`}</span>
 								</span>
 							</Tooltip>
 						</li>

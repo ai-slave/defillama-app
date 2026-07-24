@@ -1,6 +1,6 @@
 import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
-import type { RawRaise } from '~/containers/Raises/api.types'
+import type { Raise } from '~/containers/Raises/model'
 import type { IChainMetadata, IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
 import type { ChainChartLabels } from './constants'
 
@@ -71,7 +71,7 @@ export interface IChainOverviewData {
 	users: { activeUsers: number | null; newUsers: number | null; transactions: number | null }
 	inflows: { netInflows: number | null } | null
 	treasury: { tvl: number | null; tokenBreakdowns: Record<string, number> | null } | null
-	chainRaises: Array<RawRaise> | null
+	chainRaises: Array<Raise> | null
 	chainAssets: IFormattedChainAsset | null
 	devMetrics: null
 	nfts: { total24h: number | null }

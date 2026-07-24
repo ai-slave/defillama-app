@@ -4,6 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { CardLikeButton } from '~/containers/ProDashboard/components/CardLikeButton'
 import { Icon } from '~/ui/Icon'
 import type { IIcon } from '~/ui/Icon'
+import { formatNumber } from '~/utils/numberFormat'
 import { avatarColorStyle } from './avatarColor'
 import { FollowAuthorButton } from './FollowAuthorButton'
 import { ShareProfileButton } from './ShareProfileButton'
@@ -15,7 +16,6 @@ import type {
 	PublicDashboardAuthor
 } from './types'
 
-const COUNT_FORMATTER = new Intl.NumberFormat('en-US')
 const DATE_FORMATTER = new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' })
 
 const SORT_OPTIONS: Array<{ value: AuthorDashboardSort; label: string }> = [
@@ -209,11 +209,11 @@ function DashboardCardStats({ dashboard }: { dashboard: AuthorDashboardSummary }
 	return (
 		<div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-tertiary">
 			<span>
-				{COUNT_FORMATTER.format(itemsCount)} {itemsCount === 1 ? 'item' : 'items'}
+				{formatNumber(itemsCount)} {itemsCount === 1 ? 'item' : 'items'}
 			</span>
 			<span className="inline-flex items-center gap-1">
 				<Icon name="eye" className="size-3.5" />
-				{COUNT_FORMATTER.format(dashboard.viewCount ?? 0)}
+				{formatNumber(dashboard.viewCount ?? 0)}
 			</span>
 			<CardLikeButton dashboardId={dashboard.id} liked={dashboard.liked} likeCount={dashboard.likeCount} />
 		</div>
@@ -398,9 +398,7 @@ function AuthorHero({
 					<div className="grid gap-2">
 						<p className="text-[10px] font-semibold tracking-[0.22em] text-tertiary uppercase">Published dashboards</p>
 						<div className="flex items-end gap-3">
-							<span className="text-5xl leading-none font-semibold text-primary">
-								{COUNT_FORMATTER.format(totalDashboards)}
-							</span>
+							<span className="text-5xl leading-none font-semibold text-primary">{formatNumber(totalDashboards)}</span>
 							<span className="pb-1 text-sm leading-5 text-secondary">
 								public {dashboardNoun}
 								<br />
@@ -410,10 +408,10 @@ function AuthorHero({
 					</div>
 					<div className="grid gap-4">
 						<div className="grid grid-cols-2 gap-4">
-							<AuthorStat label="Total views" value={COUNT_FORMATTER.format(stats.totalViews)} />
-							<AuthorStat label="Total likes" value={COUNT_FORMATTER.format(stats.totalLikes)} />
+							<AuthorStat label="Total views" value={formatNumber(stats.totalViews)} />
+							<AuthorStat label="Total likes" value={formatNumber(stats.totalLikes)} />
 						</div>
-						<AuthorStat label="Followers" value={COUNT_FORMATTER.format(stats.followerCount)} />
+						<AuthorStat label="Followers" value={formatNumber(stats.followerCount)} />
 					</div>
 				</aside>
 			</div>

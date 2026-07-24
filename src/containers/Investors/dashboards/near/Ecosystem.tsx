@@ -4,7 +4,7 @@ import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/com
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { aggregateBreakdown, channelsToBars, lastSeriesValue, singleSeriesDataset } from './chartData'
 import { useEcosystemData, type ChartData } from './ecosystemApi'
 import { NearIcon } from './NearIcon'
@@ -236,7 +236,10 @@ export default function Ecosystem() {
 	const channelBars = intents ? channelsToBars(intents.channelBreakdown) : undefined
 
 	const dailyVolumeRaw = lastSeriesValue(intents?.volumeChart, 'Daily Volume')
-	const dailyVolumeFormatted = dailyVolumeRaw != null ? formattedNum(dailyVolumeRaw, true) : undefined
+	const dailyVolumeFormatted =
+		dailyVolumeRaw != null
+			? formatUsd(dailyVolumeRaw, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+			: undefined
 
 	const areaDatasets = useMemo(
 		() => ({

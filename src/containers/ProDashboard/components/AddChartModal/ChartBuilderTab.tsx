@@ -10,6 +10,7 @@ import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { Icon } from '~/ui/Icon'
+import { formatUsd } from '~/utils/numberFormat'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { resolveChartBuilderFilterMode } from '../../chartBuilderQueryKey'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -390,17 +391,8 @@ export function ChartBuilderTab({
 					: {
 							type: 'value',
 							axisLabel: {
-								formatter: (value: number) => {
-									const absValue = Math.abs(value)
-									if (absValue >= 1e9) {
-										return '$' + (value / 1e9).toFixed(1).replace(/\.0$/, '') + 'B'
-									} else if (absValue >= 1e6) {
-										return '$' + (value / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'
-									} else if (absValue >= 1e3) {
-										return '$' + (value / 1e3).toFixed(1).replace(/\.0$/, '') + 'K'
-									}
-									return '$' + value.toFixed(0)
-								}
+								formatter: (value: number) =>
+									formatUsd(value, { compact: true, maximumFractionDigits: Math.abs(value) >= 1e3 ? 1 : 0 })
 							}
 						}
 		}),

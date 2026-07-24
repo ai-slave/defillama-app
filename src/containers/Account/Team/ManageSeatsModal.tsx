@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatUsd } from '~/utils/numberFormat'
 import { ConfirmActionModal } from './ConfirmActionModal'
 import type { TeamSubscription } from './types'
 import { useTeam } from './useTeam'
@@ -180,14 +181,15 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 										: `Removing ${-diff} seat${-diff === 1 ? '' : 's'}`}
 								</span>
 								<span className="text-sm font-semibold text-sub-text-primary">
-									{diff > 0 ? '+' : '−'}${(unitPrice.amount * Math.abs(diff)).toLocaleString()}
+									{diff > 0 ? '+' : '−'}
+									{formatUsd(unitPrice.amount * Math.abs(diff))}
 									{unitPrice.suffix}
 								</span>
 							</div>
 							<div className="flex items-center justify-between border-t border-sub-border-slate-100 pt-2 dark:border-sub-border-strong">
 								<span className="text-sm text-sub-text-muted">Bill after update</span>
 								<span className="text-sm font-semibold text-sub-text-primary">
-									{`$${(unitPrice.amount * seatCount).toLocaleString()}${unitPrice.suffix}`}
+									{`${formatUsd(unitPrice.amount * seatCount)}${unitPrice.suffix}`}
 								</span>
 							</div>
 						</div>

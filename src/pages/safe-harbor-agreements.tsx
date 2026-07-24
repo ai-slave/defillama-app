@@ -7,10 +7,11 @@ import { getProtocolsByChain } from '~/containers/ProtocolRankings/queries.serve
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('safe-harbor-agreements', async () => {
@@ -168,7 +169,10 @@ const columns = [
 	}),
 	columnHelper.accessor('tvl', {
 		header: 'TVL',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
@@ -176,7 +180,10 @@ const columns = [
 	}),
 	columnHelper.accessor('fees', {
 		header: '24h Fees',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[100px]',
 			align: 'end'
@@ -184,7 +191,10 @@ const columns = [
 	}),
 	columnHelper.accessor('revenue', {
 		header: '24h Revenue',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[125px]',
 			align: 'end'
@@ -192,7 +202,10 @@ const columns = [
 	}),
 	columnHelper.accessor('dexVolume', {
 		header: '24h DEX Volume',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[150px]',
 			align: 'end'

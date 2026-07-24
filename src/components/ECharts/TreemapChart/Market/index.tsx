@@ -7,9 +7,10 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { formattedNum } from '~/utils'
+import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import { CHART_INSET } from '../../shared/chartSpacing'
 import { getChartTheme } from '../../shared/chartTheme'
+import { formatChartValue } from '../../shared/formatters'
 import { asTooltipDataRecord } from '../../shared/tooltip'
 import { buildWatermarkGraphic } from '../../shared/watermark'
 import { clearTreemapFocus, registerTreemapFocusTracking } from '../focus'
@@ -276,11 +277,6 @@ function prepareLeaf(node: MarketTreemapLeaf, onIconSettled: () => void): Prepar
 	}
 }
 
-function formatChangePct(value: number | null | undefined): string {
-	if (value == null) return '-'
-	return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`
-}
-
 function buildLevels(hasGroups: boolean, isDark: boolean) {
 	const groupBorderColor = isDark ? '#2d3139' : '#d1d5db'
 	const leafLevel = {
@@ -385,10 +381,7 @@ export default function MarketTreemapChart({
 	}, [chartLeaves, leaves, treeData])
 	const hasGroups = treeData.length > 0 && 'children' in treeData[0]
 
-	const formatSizeValue = useMemo(
-		() => (value: number) => formattedNum(value, valueSymbol.length > 0 ? valueSymbol : false),
-		[valueSymbol]
-	)
+	const formatSizeValue = useMemo(() => (value: number) => formatChartValue(value, valueSymbol), [valueSymbol])
 
 	useEffect(() => {
 		const el = containerRef.current
@@ -434,9 +427,11 @@ export default function MarketTreemapChart({
 						`${sizeLabel}: ${formatSizeValue(info.value?.[0] ?? 0)}<br>`
 					]
 					if (typeof data.marketCap === 'number' && showMarketCapRow) {
-						rows.push(`Market Cap: ${formattedNum(data.marketCap, true)}<br>`)
+						rows.push(
+							`Market Cap: ${formatUsd(data.marketCap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
+						)
 					}
-					rows.push(`${colorLabel}: ${formatChangePct(info.value?.[1])}`)
+					rows.push(`${colorLabel}: ${formatPercentChange(info.value?.[1]) ?? '-'}`)
 					return rows.filter(Boolean).join('')
 				}
 			},
@@ -470,7 +465,13 @@ export default function MarketTreemapChart({
 							const cellWidth = (layout?.width ?? 0) - LABEL_BOX_PADDING
 							const cellHeight = (layout?.height ?? 0) - LABEL_BOX_PADDING
 							const iconOk = typeof data.iconUrl !== 'string' || !failedIconUrls.has(data.iconUrl)
-							return pickLeafLabel(cellWidth, cellHeight, params.name ?? '', formatChangePct(params.value?.[1]), iconOk)
+							return pickLeafLabel(
+								cellWidth,
+								cellHeight,
+								params.name ?? '',
+								formatPercentChange(params.value?.[1]) ?? '-',
+								iconOk
+							)
 						}
 					},
 					// Needs the LabelLayout feature in echarts.use or it is silently ignored.

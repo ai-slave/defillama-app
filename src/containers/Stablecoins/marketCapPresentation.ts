@@ -1,5 +1,6 @@
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { CHART_COLORS } from '~/constants/colors'
+import { roundNumber } from '~/utils/numberFormat'
 
 const PIE_SLICE_LIMIT = 10
 const HORIZONTAL_BAR_SLICE_LIMIT = 9
@@ -81,7 +82,7 @@ export function buildStablecoinMarketCapPresentation({
 		const treeData = new Array<TreemapNode>(visibleSlices.length)
 		for (let i = 0; i < visibleSlices.length; i++) {
 			const slice = visibleSlices[i]
-			const share = total > 0 ? Number(((slice.value / total) * 100).toFixed(2)) : 0
+			const share = total > 0 ? roundNumber((slice.value / total) * 100, 2) : 0
 			treeData[i] = {
 				name: slice.name,
 				path: `Stablecoins/${slice.name}`,

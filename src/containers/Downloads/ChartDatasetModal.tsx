@@ -11,12 +11,18 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { slug as toSlug } from '~/utils'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
+import { formatNumber } from '~/utils/numberFormat'
 import type { ChartDatasetDefinition } from './chart-datasets'
 import { combineCsvsWide } from './combineCsvsWide'
 import { filterParsedRowsByDateRange } from './csvDateFilter'
 import { parseCsv, type ParsedCsvRow } from './csvParse'
 import { DateRangePicker } from './DateRangePicker'
 import { FormatSplitButton } from './FormatSplitButton'
+import {
+	formatDownloadPreviewCurrency,
+	formatDownloadPreviewNumber,
+	formatDownloadPreviewPercent
+} from './previewFormatting'
 import {
 	applyChartColumnsAndSort,
 	applyChartParams,
@@ -47,26 +53,6 @@ const PERCENT_HEADER_PATTERN = /(apy|pct|percent|change|rate|fee)/i
 const CURRENCY_HEADER_PATTERN =
 	/(usd|tvl|mcap|market.?cap|price|amount|volume|fees?|revenue|supply|borrow|depositusd|withdrawusd|value|flow)/i
 
-const integerFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
-const decimalFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 })
-const preciseDecimalFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 })
-const compactNumberFormatter = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 })
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-	style: 'currency',
-	currency: 'USD',
-	maximumFractionDigits: 2
-})
-const compactCurrencyFormatter = new Intl.NumberFormat('en-US', {
-	style: 'currency',
-	currency: 'USD',
-	notation: 'compact',
-	maximumFractionDigits: 2
-})
-const preciseCurrencyFormatter = new Intl.NumberFormat('en-US', {
-	style: 'currency',
-	currency: 'USD',
-	maximumFractionDigits: 6
-})
 const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
 
 type PreviewRow = ParsedCsvRow
@@ -136,34 +122,19 @@ function getColumnWidth(header: string, kind: ColumnKind, values: string[], isFi
 	return isFirst ? Math.max(200, estimated) : estimated
 }
 
-function formatNumber(value: number): string {
-	const abs = Math.abs(value)
-	if (abs >= 1000000) return compactNumberFormatter.format(value)
-	if (Number.isInteger(value)) return integerFormatter.format(value)
-	if (abs >= 1) return decimalFormatter.format(value)
-	return preciseDecimalFormatter.format(value)
-}
-
-function formatCurrency(value: number): string {
-	const abs = Math.abs(value)
-	if (abs >= 10000) return compactCurrencyFormatter.format(value)
-	if (abs >= 1) return currencyFormatter.format(value)
-	return preciseCurrencyFormatter.format(value)
-}
-
 function formatCellValue(value: string, column: ColumnMeta): string {
 	if (!value) return ''
 	if (column.kind === 'currency') {
 		const n = parseNumericValue(value)
-		return n === null ? value : formatCurrency(n)
+		return n === null ? value : formatDownloadPreviewCurrency(n)
 	}
 	if (column.kind === 'number') {
 		const n = parseNumericValue(value)
-		return n === null ? value : formatNumber(n)
+		return n === null ? value : formatDownloadPreviewNumber(n)
 	}
 	if (column.kind === 'percent') {
 		const n = parseNumericValue(value)
-		return n === null ? value : `${formatNumber(n)}%`
+		return n === null ? value : formatDownloadPreviewPercent(n)
 	}
 	if (column.kind === 'date') {
 		const d = parseDateValue(value, column.header)
@@ -1144,8 +1115,8 @@ export function ChartDatasetModal({
 
 	const hasActiveFilter = !!dateRange || deferredSearch.length > 0
 	const rowsCountLabel = hasActiveFilter
-		? `${sortedRows.length.toLocaleString()} of ${rows.length.toLocaleString()} rows`
-		: `${sortedRows.length.toLocaleString()} rows`
+		? `${formatNumber(sortedRows.length)} of ${formatNumber(rows.length)} rows`
+		: `${formatNumber(sortedRows.length)} rows`
 
 	const headerSubtitle = (() => {
 		if (isCategoryMode) {

@@ -10,6 +10,7 @@ import { removeReportStartMarkers } from '~/containers/LlamaAI/utils/reportMarke
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { formatNumber, formatUsd, formatFixedNumber } from '~/utils/numberFormat'
 
 interface ResponseControlsProps {
 	messageId?: string
@@ -252,16 +253,14 @@ export function ResponseControls({
 								{messageMetadata.outputTokens != null ? (
 									<div className="flex justify-between gap-4">
 										<span className="text-ai-muted">Output</span>
-										<span className="font-mono tabular-nums">
-											{messageMetadata.outputTokens.toLocaleString()} tokens
-										</span>
+										<span className="font-mono tabular-nums">{formatNumber(messageMetadata.outputTokens)} tokens</span>
 									</div>
 								) : null}
 								{messageMetadata.executionTimeMs ? (
 									<div className="flex justify-between gap-4">
 										<span className="text-ai-muted">Time</span>
 										<span className="font-mono tabular-nums">
-											{(messageMetadata.executionTimeMs / 1000).toFixed(1)}s
+											{formatFixedNumber(messageMetadata.executionTimeMs / 1000, 1)}s
 										</span>
 									</div>
 								) : null}
@@ -269,7 +268,10 @@ export function ResponseControls({
 									<div className="flex justify-between gap-4">
 										<span className="text-ai-muted">Premium data</span>
 										<span className="font-mono text-ai-warning tabular-nums">
-											${parseFloat(messageMetadata.x402CostUsd).toFixed(3)}
+											{formatUsd(parseFloat(messageMetadata.x402CostUsd), {
+												minimumFractionDigits: 3,
+												maximumFractionDigits: 3
+											})}
 										</span>
 									</div>
 								) : null}

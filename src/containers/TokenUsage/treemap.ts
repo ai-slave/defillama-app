@@ -1,4 +1,5 @@
 import { CHART_COLORS } from '~/constants/colors'
+import { roundNumber } from '~/utils/numberFormat'
 
 export type TokenUsageTreemapNode = {
 	name: string
@@ -24,7 +25,7 @@ function getProtocolSelectionKey(categoryName: string, protocolName: string): st
 }
 
 function toShare(value: number, total: number): number {
-	return Number(((value / total) * 100).toFixed(2))
+	return roundNumber((value / total) * 100, 2)
 }
 
 function hexToRgb(hex: string): [red: number, green: number, blue: number] {

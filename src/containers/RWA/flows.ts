@@ -6,7 +6,7 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS } from '~/constants/colors'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { toUnixMsTimestamp } from './api'
 import type {
 	IRWAAssetsOverview,
@@ -908,5 +908,5 @@ export function getRWAFlowTextClass(value: number | null | undefined): string {
 export function formatSignedRWAFlow(value: number | null | undefined): string {
 	if (value == null) return '-'
 	const prefix = value > 0 ? '+' : value < 0 ? '-' : ''
-	return `${prefix}${formattedNum(Math.abs(value), true)}`
+	return `${prefix}${formatUsd(Math.abs(value), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 }

@@ -1,4 +1,4 @@
-import type { IHackApiItem } from '~/containers/Hacks/api.types'
+import type { Hack } from '~/containers/Hacks/model'
 
 export type HallmarkPoint = [number, string]
 export type HallmarkRange = [[number, number], string]
@@ -94,7 +94,7 @@ export function buildProtocolOverviewHallmarks({
 	protocolHallmarks,
 	dimensions
 }: {
-	hacks?: IHackApiItem[] | null
+	hacks?: Hack[] | null
 	protocolHallmarks?: Array<unknown> | null
 	dimensions?: HallmarkDimensions
 }): {

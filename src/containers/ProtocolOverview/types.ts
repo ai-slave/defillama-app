@@ -5,9 +5,10 @@ import type {
 	MultiSeriesChartOptions
 } from '~/components/ECharts/MultiSeriesChart/types'
 import type { RawBridgeVolumePoint } from '~/containers/Bridges/api.types'
-import type { IHackApiItem } from '~/containers/Hacks/api.types'
+import type { Hack } from '~/containers/Hacks/model'
+import type { Raise } from '~/containers/Raises/model'
 import type { IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
-import type { IProtocolMetricsV2, IProtocolRaise } from './api.types'
+import type { IProtocolMetricsV2 } from './api.types'
 import type { IProtocolNumericSeries } from './chartSeries.utils'
 import { protocolCharts, type ProtocolChartsLabels } from './constants'
 
@@ -153,7 +154,7 @@ export interface IProtocolOverviewPageData {
 		transactions: number | null
 		gasUsd: number | null
 	} | null
-	raises: Array<IProtocolRaise> | null
+	raises: Array<Raise> | null
 	expenses: {
 		headcount: number | null
 		total: number | null
@@ -193,7 +194,7 @@ export interface IProtocolOverviewPageData {
 	isCEX?: boolean
 	hasKeyMetrics?: boolean
 	competitors?: Array<{ name: string; tvl: number }>
-	hacks: Array<IHackApiItem>
+	hacks: Array<Hack>
 	chartDenominations: Array<{ symbol: string; geckoId?: string | null }>
 	chartColors: Record<string, string>
 	availableCharts: ProtocolChartsLabels[]

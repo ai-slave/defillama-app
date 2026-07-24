@@ -24,6 +24,7 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { formatUsd } from '~/utils/numberFormat'
 
 const TopupModal = lazy(() =>
 	import('~/containers/Subscription/shared/TopupModal').then((m) => ({ default: m.TopupModal }))
@@ -611,7 +612,7 @@ export function AgenticSidebar({
 					<span
 						className={`shrink-0 font-jetbrains text-xs font-semibold ${totalAvailable < 1 ? 'text-ai-warning-bright' : 'text-ai-tertiary dark:text-ai-primary'}`}
 					>
-						${totalAvailable.toFixed(2)}
+						{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 					</span>
 				</Tooltip>
 			) : null}

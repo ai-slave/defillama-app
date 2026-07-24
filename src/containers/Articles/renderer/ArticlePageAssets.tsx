@@ -4,15 +4,16 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
 import { geckoTokenIconUrl } from '~/utils/icons'
+import { formatUsd } from '~/utils/numberFormat'
 import type { PageAssetMarket } from '../pageAssetMarket'
 import type { ArticlePageAsset } from '../types'
 
 function formatAssetPrice(price: number | null): string {
 	if (price == null || !Number.isFinite(price)) return '—'
 	if (price <= 0) return '$0.00'
-	if (price >= 1) return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-	if (price >= 0.01) return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`
-	return `$${price.toLocaleString('en-US', { maximumFractionDigits: 6 })}`
+	if (price >= 1) return formatUsd(price, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+	if (price >= 0.01) return formatUsd(price, { minimumFractionDigits: 2, maximumFractionDigits: 4 })
+	return formatUsd(price, { maximumFractionDigits: 6 })
 }
 
 function usePageAssetMarkets(ids: Array<string>) {

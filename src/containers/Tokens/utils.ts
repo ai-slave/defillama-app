@@ -1,6 +1,6 @@
 import type { ParsedUrlQuery } from 'querystring'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import { abbreviateNumber } from '~/utils'
+import { formatPercent, formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import { parseNumberQueryParam, readSingleQueryValue, toQueryString } from '~/utils/routerQuery'
 import {
 	TOKENS_NUMERIC_FILTER_FIELDS,
@@ -155,19 +155,8 @@ export function buildTokensSortIndexes(rows: TokensSourceRow[]): TokensSortIndex
 	return indexes
 }
 
-const USD_PRICE_FORMATTERS = Array.from(
-	{ length: 21 },
-	(_, maximumFractionDigits) =>
-		new Intl.NumberFormat('en-US', {
-			style: 'currency',
-			currency: 'USD',
-			currencyDisplay: 'narrowSymbol',
-			maximumFractionDigits
-		})
-)
-
 function currencyDisplay(value: number | null): string | null {
-	return value == null ? null : abbreviateNumber(value, null, '$')!
+	return value == null ? null : formatUsd(value, { compact: true })
 }
 
 function priceDisplay(value: number | null): string | null {
@@ -179,12 +168,12 @@ function priceDisplay(value: number | null): string | null {
 			: absoluteValue >= 0.01 || absoluteValue === 0
 				? 4
 				: Math.min(20, Math.floor(-Math.log10(absoluteValue)) + 4)
-	return USD_PRICE_FORMATTERS[maximumFractionDigits].format(value)
+	return formatUsd(value, { maximumFractionDigits })
 }
 
 function percentDisplay(value: number | null, signed = false): string | null {
 	if (value == null) return null
-	return `${signed && value > 0 ? '+' : ''}${abbreviateNumber(value)!}%`
+	return signed ? formatPercentChange(value) : formatPercent(value, { input: 'percent' })
 }
 
 function percentTone(value: number | null): 'positive' | 'negative' | 'neutral' {
@@ -231,14 +220,14 @@ function toTableRow(row: TokensSourceRow, rowNumber: number): TokensTableRow {
 
 export function getTokensStatsDisplay(stats: TokensPageStats): TokensPageStatsDisplay {
 	return {
-		totalMarketCap: abbreviateNumber(stats.totalMarketCap, null, '$')!,
+		totalMarketCap: formatUsd(stats.totalMarketCap, { compact: true }),
 		marketCapWeightedChange24h: percentDisplay(stats.marketCapWeightedChange24h, true),
 		marketCapWeightedChange24hTone: percentTone(stats.marketCapWeightedChange24h),
-		spotVolume24h: abbreviateNumber(stats.spotVolume24h, null, '$')!,
-		perpsVolume24h: abbreviateNumber(stats.perpsVolume24h, null, '$')!,
-		openInterest24h: abbreviateNumber(stats.openInterest24h, null, '$')!,
-		unlock30dUsd: abbreviateNumber(stats.unlock30dUsd, null, '$')!,
-		upcomingUnlockUsd: abbreviateNumber(stats.upcomingUnlockUsd, null, '$')!
+		spotVolume24h: formatUsd(stats.spotVolume24h, { compact: true }),
+		perpsVolume24h: formatUsd(stats.perpsVolume24h, { compact: true }),
+		openInterest24h: formatUsd(stats.openInterest24h, { compact: true }),
+		unlock30dUsd: formatUsd(stats.unlock30dUsd, { compact: true }),
+		upcomingUnlockUsd: formatUsd(stats.upcomingUnlockUsd, { compact: true })
 	}
 }
 

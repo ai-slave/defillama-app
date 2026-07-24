@@ -2,13 +2,13 @@ import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
-import { abbreviateNumber, formatPercentage } from '~/utils'
-import { FEE_TONE_CLASS, formatFee, type FeeTone } from './feePresentation'
+import { formatPercent, formatUsd, formatNumber } from '~/utils/numberFormat'
+import { FEE_TONE_CLASS, type FeeTone } from './feePresentation'
 import type { ExchangePromotionModel, MicaProduct, MicaVenueModel } from './models'
 import { promotionLinks } from './promotions'
 
 function liquidity(value: number): string {
-	return abbreviateNumber(value, 2, '$') ?? '–'
+	return formatUsd(value, { compact: true }) ?? '–'
 }
 
 export function supportsMicaProduct(row: MicaVenueModel, product: 'spot' | 'perp'): boolean {
@@ -160,11 +160,13 @@ function rampCostTone(value: number | null): FeeTone | null {
 }
 
 function formatBtcAmount(value: number | null): string | null {
-	return value == null ? null : `${value.toFixed(8).replace(/0+$/, '')} BTC`
+	return value == null ? null : `${formatNumber(value, { maximumFractionDigits: 8 })} BTC`
 }
 
 function formatEur(value: number | null): string | null {
-	return value == null ? null : `€${value.toFixed(2)}`
+	return value == null
+		? null
+		: formatNumber(value, { currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 export function RampCostValue({ row, direction }: { row: MicaVenueModel; direction: RampDirection }) {
@@ -178,7 +180,10 @@ export function RampCostValue({ row, direction }: { row: MicaVenueModel; directi
 	const breakdown = [
 		{ label: `SEPA ${direction === 'onRamp' ? 'deposit' : 'withdrawal'}`, value: formatEur(leg.fiatFeeUsd) },
 		{
-			label: cost.assumptions.takerFee == null ? 'Taker fee' : `Taker fee (${formatFee(cost.assumptions.takerFee)})`,
+			label:
+				cost.assumptions.takerFee == null
+					? 'Taker fee'
+					: `Taker fee (${formatPercent(cost.assumptions.takerFee, { input: 'fraction' })})`,
 			value: formatEur(leg.tradeFeeUsd)
 		},
 		{ label: 'Slippage vs mid price', value: formatEur(leg.slippageUsd) },
@@ -198,9 +203,9 @@ export function RampCostValue({ row, direction }: { row: MicaVenueModel; directi
 				render={<button />}
 				type="button"
 				className={`inline-flex rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${tone ? FEE_TONE_CLASS[tone] : 'border-subtle text-primary'}`}
-				aria-label={`${row.name} €${cost.notionalUsd.toLocaleString('en-US')} ${directionLabel} cost breakdown`}
+				aria-label={`${row.name} ${formatNumber(cost.notionalUsd, { currency: 'EUR', maximumFractionDigits: 0 })} ${directionLabel} cost breakdown`}
 			>
-				€{leg.totalUsd.toFixed(2)}
+				{formatNumber(leg.totalUsd, { currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 			</Ariakit.HovercardAnchor>
 			<Ariakit.Hovercard
 				unmountOnHide
@@ -212,7 +217,7 @@ export function RampCostValue({ row, direction }: { row: MicaVenueModel; directi
 				<div className="flex flex-col gap-2">
 					<span className="body-sm text-secondary">{RAMP_DIRECTION_STEPS[direction]}</span>
 					<span className="label-sm text-tertiary">
-						€{cost.notionalUsd.toLocaleString('en-US')} notional on {cost.pair ?? '–'}
+						{formatNumber(cost.notionalUsd, { currency: 'EUR' })} notional on {cost.pair ?? '–'}
 					</span>
 					<span className="flex flex-col gap-1 border-t border-subtle pt-2">
 						{breakdown.map(({ label, value }) => (
@@ -225,9 +230,13 @@ export function RampCostValue({ row, direction }: { row: MicaVenueModel; directi
 					<span className="flex items-baseline justify-between gap-3 border-t border-subtle pt-2 label-md">
 						<span>Total</span>
 						<span>
-							€{leg.totalUsd.toFixed(2)}
+							{formatNumber(leg.totalUsd, {
+								currency: 'EUR',
+								minimumFractionDigits: 2,
+								maximumFractionDigits: 2
+							})}
 							{leg.totalFraction == null ? null : (
-								<span className="text-tertiary"> ({formatPercentage(leg.totalFraction * 100)}%)</span>
+								<span className="text-tertiary"> ({formatPercent(leg.totalFraction, { input: 'fraction' })})</span>
 							)}
 						</span>
 					</span>

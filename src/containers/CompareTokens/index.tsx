@@ -15,6 +15,7 @@ import {
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
 import { LoadingIndicator } from '~/ui/Status'
+import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { CompareTokenProtocol } from './types'
 
@@ -296,8 +297,7 @@ export function CompareTokens({
 
 							{comparison != null ? (
 								<p className="text-lg font-bold">
-									${comparison.newPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })} (
-									{comparison.increase.toFixed(2)}x)
+									{formatUsd(comparison.newPrice)} ({formatRatio(comparison.increase)}x)
 								</p>
 							) : null}
 						</div>

@@ -1,5 +1,6 @@
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
+import { formatNumber } from '~/utils/numberFormat'
 import { YIELD_LOOPS_DATASET_API } from '../constants'
 import type { LoopTableRow, TokenOption } from '../data/types'
 import { prepareLoopsCsv } from '../domain/loopCsv'
@@ -79,9 +80,9 @@ const LoopView = ({
 							total && selectedProjects.length && selectedChains.length ? '' : 'invisible'
 						}`}
 					>
-						Tracking <strong className="text-primary">{total.toLocaleString()}</strong> looping strategies across{' '}
-						<strong className="text-primary">{selectedProjects.length.toLocaleString()}</strong> protocols on{' '}
-						<strong className="text-primary">{selectedChains.length.toLocaleString()}</strong> chains
+						Tracking <strong className="text-primary">{formatNumber(total)}</strong> looping strategies across{' '}
+						<strong className="text-primary">{formatNumber(selectedProjects.length)}</strong> protocols on{' '}
+						<strong className="text-primary">{formatNumber(selectedChains.length)}</strong> chains
 					</p>
 				}
 			/>

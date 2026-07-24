@@ -54,8 +54,9 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 import { DataFreshness } from '~/ui/DataFreshness'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { StablecoinVolumeChainChartKind, StablecoinVolumeGlobalChartKind } from './api.types'
 import {
@@ -283,7 +284,10 @@ export function StablecoinsByChain({
 		percent: string | null | undefined,
 		absolute: number | null | undefined
 	): StablecoinChangeStat => {
-		const absoluteLabel = absolute == null ? null : formattedNum(String(absolute), true)
+		const absoluteLabel =
+			absolute == null
+				? null
+				: formatUsd(String(absolute), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		return {
 			days,
 			percent: percent == null ? null : percent.startsWith('-') ? percent : `+${percent}`,
@@ -296,7 +300,11 @@ export function StablecoinsByChain({
 		toChangeStat(30, chartSummary?.change30d, chartSummary?.change30dUsd)
 	]
 	const totalMcapCurrent = chartSummary?.totalMcapCurrent ?? null
-	const mcapToDisplay = formattedNum(totalMcapCurrent, true)
+	const mcapToDisplay = formatUsd(totalMcapCurrent, {
+		compact: true,
+		minimumCompactValue: 1_000_000,
+		compactSuffix: 'lowercase'
+	})
 	const dominance = chartSummary?.dominance ?? null
 	const topTokenSymbol = chartSummary?.topToken.symbol ?? 'USDT'
 
@@ -449,7 +457,7 @@ export function StablecoinsByChain({
 						value={mcapToDisplay}
 					/>
 					<StablecoinChangeStats stats={changeStats} />
-					<StatItem label={<>{topTokenSymbol} Dominance</>} value={<>{dominance}%</>} />
+					<StatItem label={<>{topTokenSymbol} Dominance</>} value={formatPercent(dominance, { input: 'percent' })} />
 					{chartSummary?.isDataStale && chartSummary.dataTimestamp != null ? (
 						<DataFreshness
 							timestamp={chartSummary.dataTimestamp}

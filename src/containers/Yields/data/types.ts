@@ -246,7 +246,7 @@ export interface EarnPageRow {
 	projectslug: string
 	project: string
 	airdrop: boolean
-	raiseValuation: number | null
+	raiseValuationUsd: number | null
 	chains: string[]
 	url: string
 	category: string | null
@@ -297,8 +297,8 @@ export interface MarketTableRow {
 	projectslug: string
 	// True for token-less protocols — drives the "Potential Airdrop" marker in the Protocol cell.
 	airdrop: boolean
-	// Latest fundraise valuation (USD millions) — decorates the airdrop hint; stamped only on airdrop rows.
-	raiseValuation: number | null
+	// Latest fundraise valuation (whole USD) — decorates the airdrop hint; stamped only on airdrop rows.
+	raiseValuationUsd: number | null
 	hasRiskData?: boolean
 	chain: string
 	chains: string[]
@@ -343,8 +343,8 @@ export interface RouteTableRow {
 	projectslug: string
 	// True for token-less protocols — drives the "Potential Airdrop" marker in the Protocol cell.
 	airdrop: boolean
-	// Latest fundraise valuation (USD millions) — decorates the airdrop hint; stamped only on airdrop rows.
-	raiseValuation: number | null
+	// Latest fundraise valuation (whole USD) — decorates the airdrop hint; stamped only on airdrop rows.
+	raiseValuationUsd: number | null
 	hasRiskData?: boolean
 	chain: string
 	chains: string[]
@@ -389,8 +389,8 @@ export interface LoopTableRow {
 	projectslug: string
 	// True for token-less protocols — drives the "Potential Airdrop" marker in the Protocol cell.
 	airdrop: boolean
-	// Latest fundraise valuation (USD millions) — decorates the airdrop hint; stamped only on airdrop rows.
-	raiseValuation: number | null
+	// Latest fundraise valuation (whole USD) — decorates the airdrop hint; stamped only on airdrop rows.
+	raiseValuationUsd: number | null
 	hasRiskData?: boolean
 	chain: string
 	chains: string[]

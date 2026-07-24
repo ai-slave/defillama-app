@@ -6,6 +6,7 @@ import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner, LocalLoader } from '~/ui/Loaders'
+import { formatNumber } from '~/utils/numberFormat'
 import type { ChartOptionsMap } from '../chart-datasets'
 import { chartDatasets } from '../chart-datasets'
 import { datasets } from '../datasets'
@@ -18,6 +19,7 @@ import { ErrorBanner, replaceIdentifier } from './ErrorBanner'
 import type { ExampleQuery } from './examples'
 import { ExamplesPanel } from './ExamplesPanel'
 import { runSql } from './executor'
+import { formatSqlDuration } from './format'
 import { NotebookView } from './notebook/NotebookView'
 import { Keycap, StatusDot } from './primitives'
 import { QueryTabBar } from './QueryTabBar'
@@ -1055,9 +1057,9 @@ function StatusStrip({
 					<span className="text-error">error</span>
 				) : lastRun ? (
 					<span className="text-pro-text-primary">
-						<span className="tabular-nums">{formatDuration(lastRun.durationMs)}</span>
+						<span className="tabular-nums">{formatSqlDuration(lastRun.durationMs)}</span>
 						<span className="px-1 text-pro-text-tertiary">·</span>
-						<span className="tabular-nums">{lastRun.rows.toLocaleString()}</span>
+						<span className="tabular-nums">{formatNumber(lastRun.rows)}</span>
 						<span className="text-pro-text-tertiary"> rows</span>
 					</span>
 				) : (
@@ -1355,11 +1357,4 @@ function firstNonEmptyLine(text: string): string {
 			.find((l) => l.trim())
 			?.trim() ?? ''
 	)
-}
-
-function formatDuration(ms: number): string {
-	if (ms < 1000) return `${ms}ms`
-	if (ms < 10_000) return `${(ms / 1000).toFixed(2)}s`
-	if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`
-	return `${Math.round(ms / 1000)}s`
 }

@@ -15,9 +15,10 @@ import { metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from './fetch'
-import { fmtPct, fmtUsd } from './format'
+import { YIELD_PERCENT_OPTIONS, YIELD_USD_OPTIONS } from './format'
 import {
 	buildBorrowChart,
 	buildSupplyChart,
@@ -59,7 +60,7 @@ function rangeCount(range: Range, total: number): number {
 
 function fmtVal(v: number, symbol: string): string {
 	if (!Number.isFinite(v)) return '-'
-	return symbol === '$' ? fmtUsd(v) : `${fmtPct(v)}%`
+	return symbol === '$' ? formatUsd(v, YIELD_USD_OPTIONS) : formatPercent(v, YIELD_PERCENT_OPTIONS)
 }
 
 // Averages re-sum over the *enabled* breakdown components (or use the net line's own

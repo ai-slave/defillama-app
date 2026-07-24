@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { formatPercent } from '~/utils/numberFormat'
 import { TimeframeBadge } from './badges'
 import type { BreakdownSections } from './breakdown'
 import { heatmapClass, percentileOpacity, rankOpacity } from './colors'
@@ -129,7 +130,7 @@ function BreakdownRow({ row, data }: { row: BreakdownRowConfig; data: Dict }) {
 			<td className="px-3 py-2 text-left body-sm whitespace-normal text-secondary sm:whitespace-nowrap">{row.label}</td>
 			<td className="px-3 py-2 text-left label-sm">{valueText}</td>
 			<td className={`px-3 py-2 text-center body-sm ${percentileHeat}`}>
-				{percentile == null ? 'N/A' : `${Math.round(percentile)}%`}
+				{percentile == null ? 'N/A' : formatPercent(percentile, { input: 'percent', maximumFractionDigits: 0 })}
 			</td>
 			<td className={`px-3 py-2 text-center body-sm ${rankHeat}`}>{rank == null ? 'N/A' : rank}</td>
 		</tr>

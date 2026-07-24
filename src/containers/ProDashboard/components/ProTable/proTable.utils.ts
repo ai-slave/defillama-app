@@ -239,7 +239,7 @@ const groupData = (protocols: IFormattedProtocol[], parent: IParentProtocol, noS
 	const pf = getMarketCapToAnnualizedMetricRatio(finalMcap, finalFeesAnnualized1y)
 	const ps = getMarketCapToAnnualizedMetricRatio(finalMcap, finalRevenueAnnualized1y)
 
-	const mcaptvl = tvl > 0 && finalMcap > 0 ? Number((finalMcap / tvl).toFixed(2)) : null
+	const mcaptvl = tvl > 0 && finalMcap > 0 ? finalMcap / tvl : null
 
 	const oracleSet = new Set<string>()
 	const oraclesByChainAgg: Record<string, Set<string>> = {}
@@ -496,7 +496,7 @@ export const formatProtocolsList = ({
 			const t = finalTvl
 			if (mcap != null && t != null && t > 0) {
 				const ratio = mcap / t
-				mcaptvl = Number.isFinite(ratio) ? Number(ratio.toFixed(2)) : null
+				mcaptvl = Number.isFinite(ratio) ? ratio : null
 			}
 		}
 

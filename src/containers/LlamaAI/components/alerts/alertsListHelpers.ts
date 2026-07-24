@@ -1,5 +1,6 @@
 import { DAYS_OF_WEEK } from '~/containers/LlamaAI/components/alerts/schedule'
 import type { Alert, AlertsUsage, PriceTrigger, UpdateAlertInput } from '~/containers/LlamaAI/components/alerts/types'
+import { formatUsd } from '~/utils/numberFormat'
 
 export function isAlertsUpsellActive(usage: AlertsUsage | null | undefined): boolean {
 	return usage?.allowed === false
@@ -63,7 +64,7 @@ export function formatPriceAlertSummary(
 	armed: boolean | undefined,
 	runCount: number
 ): string {
-	const valueLabel = `$${trigger.value.toLocaleString('en-US', { maximumFractionDigits: 8 })}`
+	const valueLabel = formatUsd(trigger.value, { maximumFractionDigits: 8 })
 	const state = getPriceAlertState(enabled, armed, trigger.recurring, runCount)
 	const segments = [
 		`${formatTokenLabel(trigger.token_nk)} ${trigger.op} ${valueLabel}`,

@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import type { FormSubmitEvent } from '~/types/forms'
+import { formatNumber } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
 type QueryUpdates = Record<string, string | string[] | undefined>
@@ -72,9 +73,7 @@ export function TVLRange({
 						{min || max ? (
 							<>
 								<span>TVL: </span>
-								<span className="text-link">{`${min?.toLocaleString() ?? 'min'} - ${
-									max?.toLocaleString() ?? 'max'
-								}`}</span>
+								<span className="text-link">{`${formatNumber(min) ?? 'min'} - ${formatNumber(max) ?? 'max'}`}</span>
 							</>
 						) : (
 							<span>{label}</span>

@@ -2,7 +2,7 @@ import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/rea
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { useAaveMarkets } from './api'
 import type { FlatReserve } from './api'
 import {
@@ -45,7 +45,8 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 	{
 		header: 'Market Size',
 		accessorKey: 'sizeUsd',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 130
 	},
@@ -55,7 +56,11 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 		cell: ({ getValue }) => {
 			const v = getValue<number | null>()
 			if (v == null) return '—'
-			return v >= 1 ? `$${v.toFixed(2)}` : `$${v.toPrecision(4)}`
+			return formatUsd(v, {
+				minimumFractionDigits: v >= 1 ? 2 : undefined,
+				maximumFractionDigits: v >= 1 ? 2 : 10,
+				maximumSignificantDigits: v >= 1 ? undefined : 4
+			})
 		},
 		meta: { align: 'end' as const },
 		size: 100
@@ -200,12 +205,24 @@ export default function Markets() {
 		const avgSupplyApy = totalReserveSize > 0 ? weightedApySum / totalReserveSize : 0
 
 		return {
-			totalMarketSize: formattedNum(totalMarketSize, true),
-			totalAvailableLiquidity: formattedNum(totalAvailableLiquidity, true),
-			totalBorrowed: formattedNum(totalBorrowed, true),
+			totalMarketSize: formatUsd(totalMarketSize, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
+			totalAvailableLiquidity: formatUsd(totalAvailableLiquidity, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
+			totalBorrowed: formatUsd(totalBorrowed, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 			numChains: chainSet.size,
 			numAssets: assetSet.size,
-			avgSupplyApy: `${avgSupplyApy.toFixed(2)}%`
+			avgSupplyApy: `${formatPercent(avgSupplyApy, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 		}
 	}, [markets, reserves])
 

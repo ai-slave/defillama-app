@@ -14,6 +14,7 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { downloadCSV } from '~/utils/download'
+import { formatPercent } from '~/utils/numberFormat'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { TableBody } from '../../ProTable/TableBody'
@@ -163,7 +164,16 @@ export function ChainsDataset({
 					const value = getValue() as number | null
 					if (value == null) return <span className="text-pro-text-secondary">-</span>
 
-					return <span className="text-pro-text-secondary">{value.toFixed(2)}%</span>
+					return (
+						<span className="text-pro-text-secondary">
+							{formatPercent(value, {
+								input: 'percent',
+								minimumFractionDigits: 2,
+								maximumFractionDigits: 2,
+								useGrouping: false
+							})}
+						</span>
+					)
 				},
 				sortingFn: (rowA, rowB, columnId) => {
 					const a = rowA.getValue(columnId) as number | null

@@ -3,7 +3,7 @@ import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-t
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { useMaplePoolsWithLoans } from './api'
 import { buildMapleLoansData, type LoanRow } from './chartData'
 import {
@@ -61,7 +61,8 @@ const loanColumns: ColumnDef<LoanRow>[] = [
 	{
 		header: 'Principal',
 		accessorKey: 'principal',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 130
 	},
@@ -92,7 +93,8 @@ const loanColumns: ColumnDef<LoanRow>[] = [
 	{
 		header: 'Interest Paid',
 		accessorKey: 'interestPaid',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 120
 	},
@@ -150,9 +152,17 @@ export default function Loans() {
 			? null
 			: {
 					totalLoans: data.rows.length,
-					totalPrincipal: formattedNum(data.totals.totalPrincipal, true),
-					avgRate: `${data.totals.weightedAverageRate.toFixed(2)}%`,
-					totalInterestPaid: formattedNum(data.totals.totalInterestPaid, true),
+					totalPrincipal: formatUsd(data.totals.totalPrincipal, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
+					avgRate: `${formatPercent(data.totals.weightedAverageRate, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`,
+					totalInterestPaid: formatUsd(data.totals.totalInterestPaid, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
 					avgAge: `${Math.round(data.totals.averageAgeDays)}d`
 				}
 

@@ -41,7 +41,7 @@ function setupPageModule({
 		default: () => null
 	}))
 	vi.doMock('~/utils', () => ({
-		formattedNum: (value: number) => `$${value}`,
+		formatUsd: (value: number) => `$${value}`,
 		slug: (value: string) =>
 			value
 				.toLowerCase()

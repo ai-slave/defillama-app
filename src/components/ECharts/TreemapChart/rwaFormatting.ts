@@ -1,10 +1,7 @@
+import { formatPercent } from '~/utils/numberFormat'
 import type { TreemapValue } from './types'
 
 type TreemapPathInfo = Array<{ name?: unknown }>
-
-function formatPct(value: number | null | undefined): number {
-	return value == null ? 0 : Number(value.toFixed(2))
-}
 
 function getTreemapPath(treePathInfo: unknown): string[] {
 	if (!Array.isArray(treePathInfo)) return []
@@ -42,8 +39,8 @@ export function formatRwaTreemapTooltip({
 	const treePath = getTreemapPath(info?.treePathInfo)
 	const value = info.value
 	const metricValue = formatMetricValue(value?.[0] ?? 0)
-	const shareOfParent = formatPct(value?.[1])
-	const shareOfTotal = formatPct(value?.[2])
+	const shareOfParent = formatPercent(value?.[1] ?? 0, { input: 'percent' })
+	const shareOfTotal = formatPercent(value?.[2] ?? 0, { input: 'percent' })
 
 	if (treePath.length >= 2) {
 		const parent = treePath[treePath.length - 2]
@@ -52,13 +49,13 @@ export function formatRwaTreemapTooltip({
 			`Parent: ${parent}<br>`,
 			`Child: ${child}<br>`,
 			`${valueLabel}: ${metricValue}<br>`,
-			`Share of Parent: ${shareOfParent}%<br>`,
-			`Share of Total: ${shareOfTotal}%<br>`
+			`Share of Parent: ${shareOfParent}<br>`,
+			`Share of Total: ${shareOfTotal}<br>`
 		].join('')
 	}
 
 	if (treePath.length === 1) {
-		return [`${treePath[0]}<br>`, `${valueLabel}: ${metricValue}<br>`, `Share of Total: ${shareOfTotal}%<br>`].join('')
+		return [`${treePath[0]}<br>`, `${valueLabel}: ${metricValue}<br>`, `Share of Total: ${shareOfTotal}<br>`].join('')
 	}
 
 	const rootLabel = getName(info?.name) || 'RWA'

@@ -1,7 +1,7 @@
 import type { MultiSeriesYAxisOption } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatTooltipValue } from '~/components/ECharts/shared/formatters'
 import { mergeDeep } from '~/components/ECharts/shared/merge'
-import { formattedNum } from '~/utils'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import type { ChainChartLabels } from './constants'
 
 type AxisExtent = {
@@ -58,7 +58,7 @@ const AXIS_CONFIG_BY_TYPE: Partial<Record<ChainChartLabels, AxisConfig>> = {
 		resolveColor: ({ chartColors }) => chartColors['Bridged TVL']
 	},
 	'Active Addresses': {
-		formatter: (value) => formattedNum(value),
+		formatter: (value) => formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		resolveColor: ({ chartColors, chartsInSeries, themeText }) =>
 			chartsInSeries.has('Active Addresses')
 				? chartColors['Active Addresses']
@@ -67,7 +67,7 @@ const AXIS_CONFIG_BY_TYPE: Partial<Record<ChainChartLabels, AxisConfig>> = {
 					: themeText
 	},
 	Transactions: {
-		formatter: (value) => formattedNum(value),
+		formatter: (value) => formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		resolveColor: ({ chartColors }) => chartColors['Transactions']
 	},
 	'Net Inflows': {

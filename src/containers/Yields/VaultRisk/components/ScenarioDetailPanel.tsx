@@ -1,7 +1,7 @@
 import { TokenPageTableShell } from '~/components/Table/helpers'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { scenarioTone } from '../derive'
 import { guardianText } from '../format'
 import { oracleBadge, toneClasses } from '../kindMeta'
@@ -96,10 +96,18 @@ function LossHero({
 function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supplyUsd: number; stress?: StressSel }) {
 	const exit = exitWindowLabel(scenario)
 	const [position] = usePositionUsd()
-	const asYours = (poolUsd: number) => formattedNum(scaleToPosition(poolUsd, supplyUsd, position), true)
+	const asYours = (poolUsd: number) =>
+		formatUsd(scaleToPosition(poolUsd, supplyUsd, position), {
+			compact: true,
+			minimumCompactValue: 1_000_000,
+			compactSuffix: 'lowercase'
+		})
 	const positionNote =
 		position != null ? (
-			<p className="mt-2 body-sm text-secondary">Shown for your {formattedNum(position, true)} deposit.</p>
+			<p className="mt-2 body-sm text-secondary">
+				Shown for your{' '}
+				{formatUsd(position, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} deposit.
+			</p>
 		) : null
 	if (scenario.status !== 'computed') {
 		return (
@@ -142,7 +150,7 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 					{scenario.lossByAnchor.map((a) => (
 						<StatRow
 							key={a.dropPct}
-							label={`−${a.dropPct}%`}
+							label={`−${formatPercent(a.dropPct, { input: 'percent' })}`}
 							value={a.lossUsd <= 0 ? '$0' : asYours(a.lossUsd)}
 							active={stress === a.dropPct}
 							muted={a.lossUsd <= 0}
@@ -201,7 +209,9 @@ function PerAssetTable({ scenario }: { scenario: ScenarioVM }) {
 						<tr key={a.address} className="border-t border-subtle">
 							<td className="px-3 py-2 label-md text-primary">{a.symbol}</td>
 							<td className="px-3 py-2 text-secondary">{a.oracleType ? oracleBadge(a.oracleType).label : '—'}</td>
-							<td className="px-3 py-2 text-right label-md text-primary">{formattedNum(a.lossMaxUsd, true)}</td>
+							<td className="px-3 py-2 text-right label-md text-primary">
+								{formatUsd(a.lossMaxUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+							</td>
 						</tr>
 					))}
 				</tbody>
@@ -231,12 +241,19 @@ function RealizedStrip({ scenario }: { scenario: ScenarioVM }) {
 						>
 							<span>{inc.date}</span>
 							<span>
-								{formattedNum(inc.usd_lost, true)} lost
+								{formatUsd(inc.usd_lost, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}{' '}
+								lost
 								{inc.usd_recovered > 0 ? (
 									<>
 										{' · '}
 										<span className={madeWhole ? 'text-(--yield-positive-text)' : undefined}>
-											{formattedNum(inc.usd_recovered, true)} recovered{madeWhole ? ' (made whole)' : ''}
+											{formatUsd(inc.usd_recovered, {
+												compact: true,
+												minimumCompactValue: 1_000_000,
+												compactSuffix: 'lowercase'
+											})}{' '}
+											recovered
+											{madeWhole ? ' (made whole)' : ''}
 										</span>
 									</>
 								) : null}
@@ -271,7 +288,9 @@ function CoverageNote({ scenario }: { scenario: ScenarioVM }) {
 						key={`${c.kind}:${c.access}:${c.rawCapUsd}:${c.excludesOwnTokens}`}
 						className="flex flex-wrap items-center gap-x-2 body-md text-secondary"
 					>
-						<span className="label-md text-primary">{formattedNum(c.capUsd, true)}</span>
+						<span className="label-md text-primary">
+							{formatUsd(c.capUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+						</span>
 						<span>{c.kind}</span>
 						{noEscape && c.access !== 'instant' ? (
 							<span className={toneClasses('warning').text}>— reimbursement after the fact</span>
@@ -292,7 +311,9 @@ function WhoCanDoThis({ scenario, protocol }: { scenario: ScenarioVM; protocol: 
 	if (isGov && protocol.governance) {
 		const g = protocol.governance
 		if (g.voting_power_concentration_top10_pct != null) {
-			parts.push(`top 10 holders control ${(g.voting_power_concentration_top10_pct * 100).toFixed(1)}% of votes`)
+			parts.push(
+				`top 10 holders control ${formatPercent(g.voting_power_concentration_top10_pct, { input: 'fraction', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })} of votes`
+			)
 		}
 		const guardian = guardianText(g.guardian_role)
 		if (guardian) parts.push(`guardian: ${guardian}`)
@@ -398,7 +419,11 @@ function NarrativeBody({ scenario, protocol }: { scenario: ScenarioVM; protocol:
 							{Object.entries(scenario.inputs).map(([k, v]) => (
 								<div key={k} className="flex justify-between gap-2 body-md">
 									<dt className="text-secondary">{k}</dt>
-									<dd className="text-secondary">{typeof v === 'number' ? formattedNum(v, false) : String(v)}</dd>
+									<dd className="text-secondary">
+										{typeof v === 'number'
+											? formatCompactNumber(v, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+											: String(v)}
+									</dd>
 								</div>
 							))}
 						</dl>

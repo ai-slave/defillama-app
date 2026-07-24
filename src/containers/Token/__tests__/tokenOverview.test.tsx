@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { RawRaise } from '~/containers/Raises/api.types'
+import type { Raise } from '~/containers/Raises/model'
 import type { RawTreasuriesResponse } from '~/containers/Treasuries/api.types'
 import type { IProtocolMetadata, ITokenListEntry } from '~/utils/metadata/types'
 import type { TokenDirectoryRecord } from '~/utils/tokenDirectory'
@@ -260,7 +260,7 @@ const overviewFixture: TokenOverviewData = {
 		{
 			date: 1704067200,
 			round: 'Series A',
-			amount: 50,
+			amountUsd: 50_000_000,
 			investors: ['Investor A']
 		}
 	],
@@ -301,14 +301,14 @@ beforeEach(() => {
 					date: 1704067200,
 					name: 'Chain Raise',
 					round: 'Strategic',
-					amount: 25,
+					amountUsd: 25_000_000,
 					chains: [],
 					sector: '',
 					category: '',
 					categoryGroup: '',
 					leadInvestors: ['Investor A'],
 					otherInvestors: [],
-					valuation: null,
+					valuationUsd: null,
 					source: 'Chain Announcement',
 					defillamaId: 'chain#xion'
 				},
@@ -316,17 +316,17 @@ beforeEach(() => {
 					date: 1706745600,
 					name: 'Protocol Raise',
 					round: 'Series A',
-					amount: 50,
+					amountUsd: 50_000_000,
 					chains: [],
 					sector: '',
 					category: '',
 					categoryGroup: '',
 					leadInvestors: ['Investor B'],
 					otherInvestors: [],
-					valuation: null,
+					valuationUsd: null,
 					defillamaId: 'parent#test-protocol'
 				}
-			].filter((raise) => raise.defillamaId === defillamaId) satisfies RawRaise[]
+			].filter((raise) => raise.defillamaId === defillamaId) satisfies Raise[]
 	)
 	mocks.fetchTreasuryById.mockResolvedValue({
 		id: 'parent#test-protocol-treasury',
@@ -400,7 +400,7 @@ describe('tokenOverview helpers', () => {
 		expect(result.raises).toEqual([
 			expect.objectContaining({
 				round: 'Strategic',
-				amount: 25,
+				amountUsd: 25_000_000,
 				source: 'Chain Announcement'
 			})
 		])
@@ -442,7 +442,7 @@ describe('tokenOverview helpers', () => {
 		expect(result.raises).toEqual([
 			expect.objectContaining({
 				round: 'Series A',
-				amount: 50
+				amountUsd: 50_000_000
 			})
 		])
 		expect(mocks.fetchTreasuryById).toHaveBeenCalledOnce()
@@ -469,7 +469,7 @@ describe('tokenOverview helpers', () => {
 						date: 1706745600,
 						name: 'Protocol Raise',
 						round: 'Series A',
-						amount: 50,
+						amountUsd: 50_000_000,
 						chains: [],
 						sector: '',
 						category: '',
@@ -477,7 +477,7 @@ describe('tokenOverview helpers', () => {
 						source: 'Protocol Blog',
 						leadInvestors: ['Investor B'],
 						otherInvestors: [],
-						valuation: null,
+						valuationUsd: null,
 						defillamaId: 'parent#test-protocol'
 					}
 				],
@@ -1004,7 +1004,7 @@ describe('TokenOverviewSection component', () => {
 					{
 						date: 1704067200,
 						round: 'Series A',
-						amount: null,
+						amountUsd: null,
 						investors: ['Investor A']
 					}
 				]

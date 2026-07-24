@@ -1,5 +1,6 @@
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatPercent } from '~/utils/numberFormat'
 
 export type StablecoinChangeStat = {
 	days: 1 | 7 | 30
@@ -17,7 +18,9 @@ function ChangeValue({ stat, prominent = false }: { stat: StablecoinChangeStat; 
 				<span className="text-secondary">Change ({stat.days}d)</span>
 				<span className="flex flex-nowrap items-end justify-between gap-1">
 					<span className="font-jetbrains text-2xl font-semibold">{stat.absolute}</span>
-					<span className={`${color} truncate font-jetbrains`}>{`${stat.percent}%`}</span>
+					<span className={`${color} truncate font-jetbrains`}>
+						{formatPercent(stat.percent, { input: 'percent' })}
+					</span>
 				</span>
 			</span>
 		)
@@ -27,7 +30,7 @@ function ChangeValue({ stat, prominent = false }: { stat: StablecoinChangeStat; 
 		<p className="mt-3 flex flex-wrap items-center justify-between gap-2">
 			<span className="text-secondary">Change ({stat.days}d)</span>
 			<Tooltip content={stat.absolute} className={`${color} truncate font-jetbrains underline decoration-dotted`}>
-				{`${stat.percent}%`}
+				{formatPercent(stat.percent, { input: 'percent' })}
 			</Tooltip>
 		</p>
 	)

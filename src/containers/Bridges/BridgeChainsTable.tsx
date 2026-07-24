@@ -19,7 +19,8 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 
 type BridgeChainsTableRow = {
 	name: string
@@ -62,7 +63,11 @@ const bridgeChainsColumn = [
 			const value = info.getValue()
 			if (value == null) return null
 			if (value === 0) return <>$0</>
-			return <span className={`${value > 0 ? 'text-data-up' : 'text-data-down'}`}>{formattedNum(value, true)}</span>
+			return (
+				<span className={`${value > 0 ? 'text-data-up' : 'text-data-down'}`}>
+					{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				</span>
+			)
 		},
 		meta: {
 			headerClassName: 'w-[120px] min-[480px]:w-[140px]',
@@ -71,7 +76,8 @@ const bridgeChainsColumn = [
 	}),
 	columnHelper.accessor('prevDayUsdDeposits', {
 		header: '24h Deposits',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[130px] min-[480px]:w-[150px]',
 			align: 'end'
@@ -79,7 +85,8 @@ const bridgeChainsColumn = [
 	}),
 	columnHelper.accessor('prevDayUsdWithdrawals', {
 		header: '24h Withdrawals',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[130px] min-[480px]:w-[150px]',
 			align: 'end'
@@ -91,7 +98,11 @@ const bridgeChainsColumn = [
 			const value = info.getValue()
 			if (value == null) return null
 			if (value === 0) return <>$0</>
-			return <span className={`${value > 0 ? 'text-data-up' : 'text-data-down'}`}>{formattedNum(value, true)}</span>
+			return (
+				<span className={`${value > 0 ? 'text-data-up' : 'text-data-down'}`}>
+					{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				</span>
+			)
 		},
 		meta: {
 			headerClassName: 'w-[120px] min-[480px]:w-[140px]',
@@ -100,7 +111,8 @@ const bridgeChainsColumn = [
 	}),
 	columnHelper.accessor('prevWeekUsdDeposits', {
 		header: '7d Deposits',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[130px] min-[480px]:w-[150px]',
 			align: 'end'
@@ -108,7 +120,8 @@ const bridgeChainsColumn = [
 	}),
 	columnHelper.accessor('prevWeekUsdWithdrawals', {
 		header: '7d Withdrawals',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[130px] min-[480px]:w-[150px]',
 			align: 'end'

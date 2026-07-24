@@ -26,6 +26,7 @@ import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { formatUsd } from '~/utils/numberFormat'
 import type { DashboardChartConfig, LlamaAIChartInput } from './AddToDashboardButton'
 
 const EMPTY_DASHBOARDS: Dashboard[] = []
@@ -139,7 +140,7 @@ async function activateAddedLlamaAIChart(
 	if (plan.expectedItemIds.length === 0) return 'active'
 	return activateDashboardArtifactsWithConfirmation(authorizedFetch, dashboard.id, plan, (estimatedMaxCostUsd) =>
 		window.confirm(
-			`This dashboard uses premium data. Daily refreshes will bill your account up to $${estimatedMaxCostUsd.toFixed(3)} per refresh window. Continue?`
+			`This dashboard uses premium data. Daily refreshes will bill your account up to ${formatUsd(estimatedMaxCostUsd, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} per refresh window. Continue?`
 		)
 	)
 }

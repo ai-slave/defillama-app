@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { TopThreeRow } from './TopThreeRow'
 import type { ProtocolEmissionWithHistory } from './types'
 
@@ -79,7 +79,11 @@ export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, cla
 					key={unlock.name}
 					name={unlock.name}
 					symbol={unlock.symbol}
-					value={<span className="mono-md-bold text-primary">{formattedNum(unlock.value, true)}</span>}
+					value={
+						<span className="mono-md-bold text-primary">
+							{formatUsd(unlock.value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+						</span>
+					}
 				/>
 			))}
 		</div>

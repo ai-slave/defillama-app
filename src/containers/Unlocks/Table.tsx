@@ -28,7 +28,8 @@ import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
 const optionsKey = 'unlockTable'
@@ -456,7 +457,11 @@ const emissionsColumns = [
 		cell: ({ row }) => {
 			const value = row.original.tPrice
 			return (
-				<div className="flex h-full items-center justify-end">{value != null ? formattedNum(value, true) : ''}</div>
+				<div className="flex h-full items-center justify-end">
+					{value != null
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: ''}
+				</div>
 			)
 		},
 		meta: {
@@ -470,7 +475,11 @@ const emissionsColumns = [
 		cell: ({ row }) => {
 			const value = row.original.mcap
 			if (value == null) return null
-			return <div className="flex h-full items-center justify-end">{formattedNum(value, true)}</div>
+			return (
+				<div className="flex h-full items-center justify-end">
+					{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				</div>
+			)
 		},
 		meta: {
 			headerClassName: 'w-[120px]',
@@ -493,7 +502,14 @@ const emissionsColumns = [
 
 				return (
 					<div className="flex h-full w-full flex-col items-end justify-center gap-2 px-2">
-						<span className="text-sm font-bold text-primary">{formattedNum(pctUnlocked)}%</span>
+						<span className="text-sm font-bold text-primary">
+							{formatPercent(pctUnlocked, {
+								input: 'percent',
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						</span>
 						<div className="h-2 w-full rounded-full bg-surface-elevated-2">
 							<div
 								className="h-2 rounded-full bg-brand"
@@ -582,7 +598,15 @@ const emissionsColumns = [
 
 			return (
 				<div className="flex h-full items-center justify-end">
-					<span className="flex flex-col gap-1">{value ? formattedNum(value.toFixed(2), true) : ''}</span>
+					<span className="flex flex-col gap-1">
+						{value
+							? formatUsd(value, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: ''}
+					</span>
 				</div>
 			)
 		},

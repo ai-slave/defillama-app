@@ -2,7 +2,7 @@ import { prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
-import { formatNum, formattedNum, getNDistinctColors, slug } from '~/utils'
+import { getNDistinctColors, slug } from '~/utils'
 import { fetchEthPrice, fetchLsdRates, fetchYieldPools } from './api'
 import type { ILsdRateApiItem, IProtocolDetailApiItem, IYieldPoolApiItem } from './api.types'
 import type { ILSTTokenRow, InflowsChartData, LSTOverviewProps } from './types'
@@ -295,9 +295,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 		const lsd = ratesByName.get(p.name)
 		const pegInfo = lsd?.type === 'rebase' ? rebase : lsd?.type === 'accruing' ? valueAccruing : null
 		const mcap = p.mcap
-		const mcaptvlRaw =
-			mcap != null && p.stakedEthInUsd !== 0 ? formatNum(+mcap.toFixed(2) / +p.stakedEthInUsd.toFixed(2)) : null
-		const mcaptvl = mcaptvlRaw != null ? +mcaptvlRaw : null
+		const mcaptvl = mcap != null && p.stakedEthInUsd !== 0 ? mcap / p.stakedEthInUsd : null
 
 		const row = {
 			...p,
@@ -307,7 +305,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 			pegInfo,
 			marketRate: lsd?.marketRate ?? null,
 			expectedRate: lsd?.expectedRate ?? null,
-			mcapOverTvl: mcaptvl ? formattedNum(mcaptvl) : null,
+			mcapOverTvl: mcaptvl,
 			apy: apyByName.get(p.name)?.apy ?? null,
 			fee: lsd?.fee != null && lsd.fee > 0 ? lsd.fee * 100 : null
 		}

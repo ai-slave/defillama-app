@@ -12,6 +12,7 @@ import { nestedMenuActionStyles } from '~/ui/Popover'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
+import { formatNumber } from '~/utils/numberFormat'
 import { DeferredPaginatedBorrowRoutesTable } from './deferred/DeferredPaginatedBorrowRoutesTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 import { filterBorrowRoutes } from './TokenBorrowSection.utils'
@@ -43,7 +44,7 @@ function getSelectedChains(selectedChains: string[] | null, availableChains: str
 
 function formatAvailableTriggerValue(value: string) {
 	const numericValue = Number(value)
-	return Number.isFinite(numericValue) ? numericValue.toLocaleString() : value
+	return Number.isFinite(numericValue) ? formatNumber(numericValue) : value
 }
 
 function TokenBorrowAvailableRange({

@@ -1,17 +1,12 @@
 import { BasicLink } from '~/components/Link'
+import { formatNumber } from '~/utils/numberFormat'
 import type { DashboardSeo, DashboardSeoPublicDashboard } from '../utils/seo'
-
-const COUNT_FORMATTER = new Intl.NumberFormat('en-US')
 
 function formatDate(value: string | null): string | null {
 	if (!value) return null
 	const time = Date.parse(value)
 	if (!Number.isFinite(time)) return null
 	return new Date(time).toISOString().slice(0, 10)
-}
-
-function formatCount(value: number | undefined): string {
-	return COUNT_FORMATTER.format(value ?? 0)
 }
 
 function AuthorAvatar({
@@ -39,13 +34,13 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 	const visibleSummaries = seo.itemSummaries.slice(0, 12)
 	const remainingItems = Math.max(0, seo.itemCount - visibleSummaries.length)
 	const metrics = [
-		{ label: 'Items', value: formatCount(seo.itemCount) },
+		{ label: 'Items', value: formatNumber(seo.itemCount ?? 0) },
 		{
 			label: 'Updated',
 			value: updatedDate ? <time dateTime={updatedDate}>{updatedDate}</time> : 'Unknown'
 		},
-		{ label: 'Views', value: formatCount(dashboard.viewCount) },
-		{ label: 'Likes', value: formatCount(dashboard.likeCount) }
+		{ label: 'Views', value: formatNumber(dashboard.viewCount ?? 0) },
+		{ label: 'Likes', value: formatNumber(dashboard.likeCount ?? 0) }
 	]
 
 	return (
@@ -115,7 +110,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 				<div className="mb-3 flex flex-wrap items-center justify-between gap-2">
 					<h2 className="text-sm font-semibold text-pro-text-primary">Dashboard contents</h2>
 					<p className="text-xs text-pro-text-label">
-						{formatCount(seo.itemCount)} {seo.itemCount === 1 ? 'item' : 'items'}
+						{formatNumber(seo.itemCount ?? 0)} {seo.itemCount === 1 ? 'item' : 'items'}
 					</p>
 				</div>
 				{visibleSummaries.length ? (

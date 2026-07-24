@@ -7,6 +7,10 @@ import {
 	RWA_SERVER_URL,
 	TRADFI_API
 } from '~/constants'
+import type { IHackApiItem } from '~/containers/Hacks/api.types'
+import { normalizeHack } from '~/containers/Hacks/model'
+import type { RaisesApiItem } from '~/containers/Raises/api.types'
+import { normalizeRaisesApiItem } from '~/containers/Raises/model'
 
 export interface DatasetExcludeToggle {
 	field: string
@@ -562,29 +566,30 @@ export const datasets: DatasetDefinition[] = [
 	{
 		slug: 'hacks',
 		name: 'Hacks',
-		description: 'Historical exploits database with classification, technique, and amounts',
+		description: 'Historical exploits database with classification, technique, and whole-USD amounts',
 		category: 'Security',
 		url: `${SERVER_URL}/hacks`,
-		defaultSortField: 'amount',
+		defaultSortField: 'amountUsd',
 		fields: [
 			'date',
 			'name',
 			'classification',
 			'technique',
-			'amount',
+			'amountUsd',
 			'chain',
 			'bridgeHack',
 			'targetType',
 			'source',
-			'returnedFunds',
+			'returnedFundsUsd',
 			'language'
 		],
-		extractItems: extractArray
+		extractItems: (json) =>
+			extractArray(json).map((item) => normalizeHack(item as unknown as IHackApiItem) as unknown as DatasetItem)
 	},
 	{
 		slug: 'raises',
 		name: 'Raises',
-		description: 'Funding rounds database with investors, amounts, and categories',
+		description: 'Funding rounds database with investors and whole-USD amounts and valuations',
 		category: 'Fundraising',
 		url: `${SERVER_URL}/raises`,
 		defaultSortField: 'date',
@@ -592,7 +597,7 @@ export const datasets: DatasetDefinition[] = [
 			'date',
 			'name',
 			'round',
-			'amount',
+			'amountUsd',
 			'chains',
 			'sector',
 			'category',
@@ -600,9 +605,12 @@ export const datasets: DatasetDefinition[] = [
 			'source',
 			'leadInvestors',
 			'otherInvestors',
-			'valuation'
+			'valuationUsd'
 		],
-		extractItems: (json) => recordFieldArrayOrRoot(json, 'raises')
+		extractItems: (json) =>
+			recordFieldArrayOrRoot(json, 'raises').map(
+				(item) => normalizeRaisesApiItem(item as unknown as RaisesApiItem) as unknown as DatasetItem
+			)
 	},
 	{
 		slug: 'emissions',

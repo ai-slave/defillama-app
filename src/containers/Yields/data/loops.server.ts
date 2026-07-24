@@ -15,7 +15,7 @@ import {
 	parseNumber,
 	parseTriState
 } from './query'
-import { getRaiseValuations, getReferralUrls } from './server/raiseValuations'
+import { getRaiseValuationsUsd, getReferralUrls } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { ApyComponent, ApyWindow, EnrichedLoopRow, LoopTableRow, Token } from './types'
 
@@ -51,7 +51,7 @@ function toLoopTableRow(
 		projectslug: row.protocolSlug ?? row.protocol,
 		// Token-less protocols get the "Potential Airdrop" marker (Fraxlend excluded at render).
 		airdrop: !row.protocolHasToken,
-		raiseValuation: null,
+		raiseValuationUsd: null,
 		chain: row.chain,
 		chains: [row.chain],
 		leverage: row.leverage.supply_multiplier,
@@ -81,11 +81,11 @@ export async function getLoopsPage(
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
-	const [rows, meta, depegs, raiseValuations, referralUrls, riskCovered] = await Promise.all([
+	const [rows, meta, depegs, raiseValuationsUsd, referralUrls, riskCovered] = await Promise.all([
 		getEnrichedLoops(snapshot),
 		readYieldsMeta(snapshot),
 		readYieldsDepegs(snapshot),
-		getRaiseValuations(snapshot),
+		getRaiseValuationsUsd(snapshot),
 		getReferralUrls(snapshot),
 		getRiskCoveredPoolIds()
 	])
@@ -121,7 +121,7 @@ export async function getLoopsPage(
 		}
 		// Airdrop hint decoration: latest fundraise valuation, only on airdrop rows.
 		if (loopRow.airdrop && row.protocolSlug) {
-			loopRow.raiseValuation = raiseValuations.get(row.protocolSlug) ?? null
+			loopRow.raiseValuationUsd = raiseValuationsUsd.get(row.protocolSlug) ?? null
 		}
 		if (riskCovered.has(row.id)) loopRow.hasRiskData = true
 		pageRows.push(loopRow)

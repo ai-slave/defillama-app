@@ -5,7 +5,8 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { CHART_COLORS } from '~/constants/colors'
 import Layout from '~/layout'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { formattedNum, toNiceDateYear } from '~/utils'
+import { toNiceDateYear } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import data from './final.json'
 
 const MultiSeriesChart = React.lazy(
@@ -42,7 +43,10 @@ const banksTableColumns = [
 	columnHelper.accessor((row) => row['6'] * 1e6, {
 		id: 'assets',
 		header: 'Assets',
-		cell: (info) => (info.getValue() ? formattedNum(info.getValue(), true) : ''),
+		cell: (info) =>
+			info.getValue()
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: '',
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
@@ -51,7 +55,10 @@ const banksTableColumns = [
 	columnHelper.accessor((row) => row['7'] * 1e6, {
 		id: 'assets-inflation-adjusted',
 		header: 'Assets (inflation adjusted)',
-		cell: (info) => (info.getValue() ? formattedNum(info.getValue(), true) : ''),
+		cell: (info) =>
+			info.getValue()
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: '',
 		meta: {
 			headerClassName: 'w-[min(220px,40vw)]',
 			align: 'end'

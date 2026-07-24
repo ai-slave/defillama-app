@@ -24,8 +24,9 @@ import { inputStyles, searchFieldIconStyles, searchFieldInlineWrapperStyles, sea
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { formattedNum, slug, toNiceDayAndHour } from '~/utils'
+import { slug, toNiceDayAndHour } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { fetchBridgeTransactionsClient } from './api'
 import type { RawBridgeInfo, RawBridgeTransaction } from './api.types'
 
@@ -260,7 +261,11 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 		cell: ({ getValue }) => {
 			const value = getValue()
 			if (value == null) return <span className="text-tertiary">—</span>
-			return <span className="font-medium">{formattedNum(value, true)}</span>
+			return (
+				<span className="font-medium">
+					{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				</span>
+			)
 		},
 		meta: {
 			headerClassName: 'w-[130px]',
@@ -640,24 +645,42 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 					<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
 						<StatCard
 							label="Transactions"
-							value={formattedNum(stats.total)}
+							value={formatCompactNumber(stats.total, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 							sublabel={stats.unknownValueCount > 0 ? `${stats.unknownValueCount} without USD value` : undefined}
 						/>
 						<StatCard
 							label="Total Volume"
-							value={formattedNum(stats.totalVolume, true)}
+							value={formatUsd(stats.totalVolume, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 							sublabel="USD, priced rows only"
 						/>
 						<StatCard
 							label="Deposits"
-							value={formattedNum(stats.deposits)}
-							sublabel={formattedNum(stats.depositVolume, true)}
+							value={formatCompactNumber(stats.deposits, {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+							sublabel={formatUsd(stats.depositVolume, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 							accent="success"
 						/>
 						<StatCard
 							label="Withdrawals"
-							value={formattedNum(stats.withdrawals)}
-							sublabel={formattedNum(stats.withdrawalVolume, true)}
+							value={formatCompactNumber(stats.withdrawals, {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+							sublabel={formatUsd(stats.withdrawalVolume, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 							accent="error"
 						/>
 					</div>
@@ -757,8 +780,8 @@ function TransactionsTable({
 					</label>
 					<span className="body-sm whitespace-nowrap text-secondary">
 						{filteredCount === data.length
-							? `${formattedNum(filteredCount)} rows`
-							: `${formattedNum(filteredCount)} of ${formattedNum(data.length)}`}
+							? `${formatCompactNumber(filteredCount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} rows`
+							: `${formatCompactNumber(filteredCount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} of ${formatCompactNumber(data.length, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}
 					</span>
 					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
 				</TableToolbarControlGroup>
@@ -770,7 +793,7 @@ function TransactionsTable({
 				<span>
 					{filteredCount === 0
 						? 'No rows'
-						: `${formattedNum(pageStart)}–${formattedNum(pageEnd)} of ${formattedNum(filteredCount)}`}
+						: `${formatCompactNumber(pageStart, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}–${formatCompactNumber(pageEnd, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} of ${formatCompactNumber(filteredCount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}
 				</span>
 
 				<div className="flex items-center gap-1">

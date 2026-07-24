@@ -4,6 +4,7 @@ import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { useEntityQuestions } from '~/containers/LlamaAI/hooks/useEntityQuestions'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
+import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { YIELD_EARN_DATASET_API } from '../constants'
 import type { TokenOption } from '../data/types'
 import { prepareYieldPoolsCsv } from '../domain/poolCsv'
@@ -14,7 +15,7 @@ import { CuratedViews } from '../Filters/CuratedViews'
 import { IncludeTokens } from '../Filters/IncludeTokens'
 import { getYieldsQuestionContext } from '../getYieldsQuestionContext'
 import { useFormatYieldQueryParams } from '../hooks'
-import { fmtPct } from '../poolDetail/format'
+import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { selectedSubsetQuery } from '../queryState'
 import { PaginatedYieldsPoolTable } from '../Tables/Pools'
 import type { IYieldTableRow } from '../Tables/types'
@@ -130,14 +131,14 @@ const EarnView = ({
 							serverTotal && selectedProjects.length && selectedChains.length ? '' : 'invisible'
 						}`}
 					>
-						Tracking <strong className="text-primary">{serverTotal.toLocaleString()}</strong> pools across{' '}
-						<strong className="text-primary">{selectedProjects.length.toLocaleString()}</strong> protocols on{' '}
-						<strong className="text-primary">{selectedChains.length.toLocaleString()}</strong> chains
+						Tracking <strong className="text-primary">{formatNumber(serverTotal)}</strong> pools across{' '}
+						<strong className="text-primary">{formatNumber(selectedProjects.length)}</strong> protocols on{' '}
+						<strong className="text-primary">{formatNumber(selectedChains.length)}</strong> chains
 						{selectedTokenValues.length > 0 && medianApy != null ? (
 							<>
 								{' · '}
 								{medianLabel === 'selection' ? 'median APY of selection' : `${medianLabel} median APY`}{' '}
-								<strong className="text-primary">{fmtPct(medianApy)}%</strong>
+								<strong className="text-primary">{formatPercent(medianApy, YIELD_PERCENT_OPTIONS)}</strong>
 							</>
 						) : null}
 					</p>

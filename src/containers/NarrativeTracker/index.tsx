@@ -12,7 +12,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { boundSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { PercentChange } from '~/ui/PercentChange'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import {
 	buildNarrativeTreemapTreeData,
 	calculateDenominatedTimeSeries,
@@ -409,7 +409,8 @@ const CoinPerformanceColumn = [
 	}),
 	columnHelper.accessor('mcap', {
 		header: 'Market Cap',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end'
@@ -419,7 +420,13 @@ const CoinPerformanceColumn = [
 		header: '24h Volume',
 		cell: ({ getValue }) => {
 			const value = getValue()
-			return <>{value != null ? formattedNum(value, true) : null}</>
+			return (
+				<>
+					{value != null
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null}
+				</>
+			)
 		},
 		meta: {
 			headerClassName: 'w-[110px]',
@@ -470,7 +477,8 @@ const CategoryPerformanceColumn = [
 	}),
 	columnHelper.accessor('mcap', {
 		header: 'Market Cap',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end'
@@ -478,7 +486,10 @@ const CategoryPerformanceColumn = [
 	}),
 	columnHelper.accessor('volume1D', {
 		header: '24h Volume',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'

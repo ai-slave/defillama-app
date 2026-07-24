@@ -3,6 +3,7 @@ import { ImagePreviewModal } from '~/containers/LlamaAI/components/ImagePreviewM
 import { isReadableTextFile } from '~/containers/LlamaAI/hooks/useImageUpload'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatFixedNumber } from '~/utils/numberFormat'
 
 interface SelectedImage {
 	id: string
@@ -31,8 +32,8 @@ interface ImageUploadProps {
 function formatBytes(byteLength: number): string {
 	if (byteLength < 1024) return `${byteLength} B`
 	const kb = byteLength / 1024
-	if (kb < 1024) return `${kb < 10 ? kb.toFixed(1) : Math.round(kb)} KB`
-	return `${(kb / 1024).toFixed(1)} MB`
+	if (kb < 1024) return `${kb < 10 ? formatFixedNumber(kb, 1) : Math.round(kb)} KB`
+	return `${formatFixedNumber(kb / 1024, 1)} MB`
 }
 
 function fileExtensionLabel(name: string): string {

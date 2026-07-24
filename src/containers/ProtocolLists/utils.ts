@@ -20,7 +20,7 @@ function getMcapTvl(mcap: number | null, tvl: number | null | undefined): number
 
 	// This is derived arithmetic: numeric API fields can still produce non-finite ratios.
 	const ratio = mcap / tvl
-	return Number.isFinite(ratio) ? +ratio.toFixed(2) : null
+	return Number.isFinite(ratio) ? ratio : null
 }
 
 function isAdditiveTvlKey(tvlKey: string, extraTvlsEnabled: Record<string, boolean>, normalizeSettingKey: boolean) {

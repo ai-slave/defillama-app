@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { ArticleEntitySuggestionItem } from '../entitySuggestions'
 import type { ArticleEntityType } from '../types'
 
@@ -37,22 +38,6 @@ const FILTER_ORDER: Array<{ key: Filter; label: string }> = [
 	{ key: 'bridge', label: 'Bridge' }
 ]
 
-const fmtCompactUsd = (n?: number | null): string | null => {
-	if (typeof n !== 'number' || !isFinite(n)) return null
-	const abs = Math.abs(n)
-	if (abs >= 1e12) return `$${(n / 1e12).toFixed(2)}T`
-	if (abs >= 1e9) return `$${(n / 1e9).toFixed(1)}B`
-	if (abs >= 1e6) return `$${(n / 1e6).toFixed(1)}M`
-	if (abs >= 1e3) return `$${(n / 1e3).toFixed(0)}K`
-	return `$${n.toFixed(0)}`
-}
-
-const fmtPctShort = (n?: number | null): string | null => {
-	if (typeof n !== 'number' || !isFinite(n)) return null
-	const sign = n > 0 ? '+' : ''
-	return `${sign}${(n * 100).toFixed(1)}%`
-}
-
 const changeColor = (n?: number | null) =>
 	typeof n !== 'number' ? '' : n > 0 ? 'text-success' : n < 0 ? 'text-error' : ''
 
@@ -60,8 +45,14 @@ function MetricChip({ item }: { item: ArticleEntitySuggestionItem }) {
 	const p = item.preview
 	if (!p) return null
 	if (p.kind === 'protocol' || p.kind === 'chain') {
-		const tvl = fmtCompactUsd(p.tvl)
-		const change = fmtPctShort(p.change7d)
+		const tvl = formatUsd(p.tvl, { compact: true })
+		const change = formatPercent(p.change7d, {
+			input: 'fraction',
+			minimumFractionDigits: 1,
+			maximumFractionDigits: 1,
+			signDisplay: 'exceptZero',
+			useGrouping: false
+		})
 		if (!tvl && !change) return null
 		return (
 			<span className="ml-1 flex shrink-0 flex-col items-end gap-0.5 leading-none">

@@ -1,4 +1,5 @@
 import { CHART_COLORS } from '~/constants/colors'
+import { roundNumber } from '~/utils/numberFormat'
 import type { IRWAAssetsOverview } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import { toFiniteRwaChartValue } from './chartDataset'
@@ -42,7 +43,7 @@ export const buildRwaTreemapTreeData = (pieData: RwaPieChartDatum[], breakdownLa
 	const children: RwaTreemapNode[] = []
 	for (let index = 0; index < data.length; index++) {
 		const item = data[index]
-		const sharePct = total > 0 ? Number(((item.value / total) * 100).toFixed(2)) : 0
+		const sharePct = total > 0 ? roundNumber((item.value / total) * 100, 2) : 0
 		const color =
 			index < TREEMAP_COLORS.length ? TREEMAP_COLORS[index] : createGeneratedColor(index - TREEMAP_COLORS.length)
 		children.push({
@@ -374,12 +375,12 @@ export const buildRwaNestedTreemapTreeData = ({
 
 	const parentNodes: RwaTreemapNode[] = parentRows.map((row) => {
 		const parentPath = `${resolvedRootLabel}/${row.parentLabel}`
-		const parentSharePct = Number(((row.parentTotal / total) * 100).toFixed(2))
+		const parentSharePct = roundNumber((row.parentTotal / total) * 100, 2)
 		const parentColor = parentColorMap[row.parentLabel] ?? TREEMAP_COLORS[0]
 		const childShades = deriveChildShades(parentColor, row.childRows.length)
 		const childNodes: RwaTreemapNode[] = row.childRows.map(([childLabel, childTotal], childIndex) => {
-			const childSharePct = Number(((childTotal / row.parentTotal) * 100).toFixed(2))
-			const childShareOfTotalPct = Number(((childTotal / total) * 100).toFixed(2))
+			const childSharePct = roundNumber((childTotal / row.parentTotal) * 100, 2)
+			const childShareOfTotalPct = roundNumber((childTotal / total) * 100, 2)
 			return {
 				name: childLabel,
 				path: `${parentPath}/${childLabel}`,

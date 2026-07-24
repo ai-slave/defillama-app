@@ -39,12 +39,12 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { parseNumberQueryParam } from '~/utils/routerQuery'
-import { formatValue } from '../../utils'
 import { CustomColumnModal } from './CustomColumnModal'
 import { replaceAliases, sampleProtocol } from './customColumnsUtils'
-import { evaluateFormula, getSortableValue } from './formula.service'
+import { evaluateFormula, formatCustomColumnValue, getSortableValue } from './formula.service'
 import { prepareProtocolsForTable } from './prepareProtocolsForTable'
 import type { IProtocol } from './types'
 
@@ -271,7 +271,7 @@ const ChainProtocolsTableInner = ({
 							)
 						}
 
-						return <span className="flex items-center">{formatValue(value, displayFormat)}</span>
+						return <span className="flex items-center">{formatCustomColumnValue(value, displayFormat)}</span>
 					},
 					sortingFn: (rowA, rowB, sortColumnId) => {
 						const sortEntry = sortingRef.current.find((s) => s.id === sortColumnId)
@@ -690,7 +690,11 @@ const columns = [
 						row.original.strikeTvl || row.original.tvl.excludeParent ? (
 							<ProtocolTvlCell rowValues={row.original} />
 						) : (
-							`$${formattedNum(row.original.tvl?.default?.tvl || 0)}`
+							formatUsd(row.original.tvl?.default?.tvl || 0, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})
 						)
 					) : null,
 				meta: {
@@ -735,7 +739,10 @@ const columns = [
 	columnHelper.accessor((row) => row.mcap ?? undefined, {
 		id: 'mcap',
 		header: 'Market Cap',
-		cell: ({ getValue }) => (getValue() != null ? formattedNum(getValue(), true) : null),
+		cell: ({ getValue }) =>
+			getValue() != null
+				? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -745,7 +752,10 @@ const columns = [
 	columnHelper.accessor((row) => row.tokenPrice ?? undefined, {
 		id: 'token_price',
 		header: 'Token Price',
-		cell: ({ getValue }) => (getValue() != null ? formattedNum(getValue(), true) : null),
+		cell: ({ getValue }) =>
+			getValue() != null
+				? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -755,7 +765,7 @@ const columns = [
 	columnHelper.accessor((row) => row.mcaptvl ?? undefined, {
 		id: 'mcaptvl',
 		header: 'Mcap/TVL',
-		cell: (info) => info.getValue() ?? null,
+		cell: (info) => formatRatio(info.getValue()),
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end',
@@ -769,7 +779,10 @@ const columns = [
 			columnHelper.accessor((row) => row.fees?.total24h ?? undefined, {
 				id: 'fees_24h',
 				header: 'Fees 24h',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[100px]',
 					align: 'end',
@@ -779,7 +792,10 @@ const columns = [
 			columnHelper.accessor((row) => row.revenue?.total24h ?? undefined, {
 				id: 'revenue_24h',
 				header: 'Revenue 24h',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[125px]',
 					align: 'end',
@@ -789,7 +805,10 @@ const columns = [
 			columnHelper.accessor((row) => row.holdersRevenue?.total24h ?? undefined, {
 				id: 'holdersRevenue_24h',
 				header: 'Holders Revenue 24h',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(180px,40vw)]',
 					align: 'end',
@@ -799,7 +818,10 @@ const columns = [
 			columnHelper.accessor((row) => row.emissions?.total24h ?? undefined, {
 				id: 'emissions_24h',
 				header: 'Incentives 24h',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[125px]',
 					align: 'end',
@@ -809,7 +831,10 @@ const columns = [
 			columnHelper.accessor((row) => row.fees?.total7d ?? undefined, {
 				id: 'fees_7d',
 				header: 'Fees 7d',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[100px]',
 					align: 'end',
@@ -819,7 +844,10 @@ const columns = [
 			columnHelper.accessor((row) => row.revenue?.total7d ?? undefined, {
 				id: 'revenue_7d',
 				header: 'Revenue 7d',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[120px]',
 					align: 'end',
@@ -829,7 +857,10 @@ const columns = [
 			columnHelper.accessor((row) => row.holdersRevenue?.total7d ?? undefined, {
 				id: 'holdersRevenue_7d',
 				header: 'Holders Revenue 7d',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(180px,40vw)]',
 					align: 'end',
@@ -839,7 +870,10 @@ const columns = [
 			columnHelper.accessor((row) => row.emissions?.total7d ?? undefined, {
 				id: 'emissions_7d',
 				header: 'Incentives 7d',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[125px]',
 					align: 'end',
@@ -849,7 +883,10 @@ const columns = [
 			columnHelper.accessor((row) => row.fees?.total30d ?? undefined, {
 				id: 'fees_30d',
 				header: 'Fees 30d',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[100px]',
 					align: 'end',
@@ -859,7 +896,10 @@ const columns = [
 			columnHelper.accessor((row) => row.revenue?.total30d ?? undefined, {
 				id: 'revenue_30d',
 				header: 'Revenue 30d',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[125px]',
 					align: 'end',
@@ -869,7 +909,10 @@ const columns = [
 			columnHelper.accessor((row) => row.holdersRevenue?.total30d ?? undefined, {
 				id: 'holdersRevenue_30d',
 				header: 'Holders Revenue 30d',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(180px,40vw)]',
 					align: 'end',
@@ -879,7 +922,10 @@ const columns = [
 			columnHelper.accessor((row) => row.emissions?.total30d ?? undefined, {
 				id: 'emissions_30d',
 				header: 'Incentives 30d',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[125px]',
 					align: 'end',
@@ -889,7 +935,10 @@ const columns = [
 			columnHelper.accessor((row) => row.fees?.total1y ?? undefined, {
 				id: 'fees_1y',
 				header: 'Fees 1Y',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[100px]',
 					align: 'end',
@@ -899,7 +948,10 @@ const columns = [
 			columnHelper.accessor((row) => row.fees?.monthlyAverage1y ?? undefined, {
 				id: 'average_fees_1y',
 				header: 'Monthly Avg 1Y Fees',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(180px,40vw)]',
 					align: 'end',
@@ -909,7 +961,10 @@ const columns = [
 			columnHelper.accessor((row) => row.revenue?.total1y ?? undefined, {
 				id: 'revenue_1y',
 				header: 'Revenue 1Y',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[120px]',
 					align: 'end',
@@ -919,7 +974,10 @@ const columns = [
 			columnHelper.accessor((row) => row.holdersRevenue?.total1y ?? undefined, {
 				id: 'holdersRevenue_1y',
 				header: 'Holders Revenue 1Y',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(180px,40vw)]',
 					align: 'end',
@@ -929,7 +987,10 @@ const columns = [
 			columnHelper.accessor((row) => row.revenue?.monthlyAverage1y ?? undefined, {
 				id: 'average_revenue_1y',
 				header: 'Monthly Avg 1Y Rev',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(180px,40vw)]',
 					align: 'end',
@@ -939,7 +1000,10 @@ const columns = [
 			columnHelper.accessor((row) => row.holdersRevenue?.monthlyAverage1y ?? undefined, {
 				id: 'average_holdersRevenue_1y',
 				header: 'Monthly Avg 1Y Holders Revenue',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(260px,40vw)]',
 					align: 'end',
@@ -949,7 +1013,10 @@ const columns = [
 			columnHelper.accessor((row) => row.emissions?.total1y ?? undefined, {
 				id: 'emissions_1y',
 				header: 'Incentives 1Y',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[125px]',
 					align: 'end',
@@ -959,7 +1026,10 @@ const columns = [
 			columnHelper.accessor((row) => row.emissions?.monthlyAverage1y ?? undefined, {
 				id: 'average_emissions_1y',
 				header: 'Monthly Avg 1Y Incentives',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(220px,40vw)]',
 					align: 'end',
@@ -969,7 +1039,10 @@ const columns = [
 			columnHelper.accessor((row) => row.fees?.totalAllTime ?? undefined, {
 				id: 'fees_cumulative',
 				header: 'Cumulative Fees',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[150px]',
 					align: 'end',
@@ -979,7 +1052,10 @@ const columns = [
 			columnHelper.accessor((row) => row.revenue?.totalAllTime ?? undefined, {
 				id: 'cumulativeRevenue',
 				header: 'Cumulative Revenue',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(180px,40vw)]',
 					align: 'end',
@@ -989,7 +1065,10 @@ const columns = [
 			columnHelper.accessor((row) => row.holdersRevenue?.totalAllTime ?? undefined, {
 				id: 'cumulativeHoldersRevenue',
 				header: 'Cumulative Holders Revenue',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(220px,40vw)]',
 					align: 'end',
@@ -999,7 +1078,10 @@ const columns = [
 			columnHelper.accessor((row) => row.emissions?.totalAllTime ?? undefined, {
 				id: 'cumulativeEmissions',
 				header: 'Cumulative Incentives',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(180px,40vw)]',
 					align: 'end',
@@ -1009,7 +1091,7 @@ const columns = [
 			columnHelper.accessor((row) => row.fees?.pf ?? undefined, {
 				id: 'pf',
 				header: 'P/F',
-				cell: (info) => (info.getValue() != null ? `${info.getValue()}x` : null),
+				cell: (info) => (info.getValue() != null ? `${formatRatio(info.getValue())}x` : null),
 				meta: {
 					headerClassName: 'w-[80px]',
 					align: 'end',
@@ -1019,7 +1101,7 @@ const columns = [
 			columnHelper.accessor((row) => row.revenue?.ps ?? undefined, {
 				id: 'ps',
 				header: 'P/S',
-				cell: (info) => (info.getValue() != null ? `${info.getValue()}x` : null),
+				cell: (info) => (info.getValue() != null ? `${formatRatio(info.getValue())}x` : null),
 				meta: {
 					headerClassName: 'w-[80px]',
 					align: 'end',
@@ -1029,7 +1111,10 @@ const columns = [
 			columnHelper.accessor((row) => getEarningsValue(row.revenue?.total24h, row.emissions?.total24h), {
 				id: 'earnings_24h',
 				header: 'Earnings 24h',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 
 				meta: {
 					headerClassName: 'w-[125px]',
@@ -1040,7 +1125,10 @@ const columns = [
 			columnHelper.accessor((row) => getEarningsValue(row.revenue?.total7d, row.emissions?.total7d), {
 				id: 'earnings_7d',
 				header: 'Earnings 7d',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 
 				meta: {
 					headerClassName: 'w-[125px]',
@@ -1051,7 +1139,10 @@ const columns = [
 			columnHelper.accessor((row) => getEarningsValue(row.revenue?.total30d, row.emissions?.total30d), {
 				id: 'earnings_30d',
 				header: 'Earnings 30d',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[125px]',
 					align: 'end',
@@ -1061,7 +1152,10 @@ const columns = [
 			columnHelper.accessor((row) => getEarningsValue(row.revenue?.total1y, row.emissions?.total1y), {
 				id: 'earnings_1y',
 				header: 'Earnings 1Y',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[125px]',
 					align: 'end',
@@ -1071,7 +1165,10 @@ const columns = [
 			columnHelper.accessor((row) => getEarningsValue(row.revenue?.monthlyAverage1y, row.emissions?.monthlyAverage1y), {
 				id: 'average_earnings_1y',
 				header: 'Monthly Avg 1Y Earnings',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(200px,40vw)]',
 					align: 'end',
@@ -1081,7 +1178,10 @@ const columns = [
 			columnHelper.accessor((row) => getEarningsValue(row.revenue?.totalAllTime, row.emissions?.totalAllTime), {
 				id: 'cumulativeEarnings',
 				header: 'Cumulative Earnings',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(180px,40vw)]',
 					align: 'end',
@@ -1101,7 +1201,10 @@ const columns = [
 			columnHelper.accessor((row) => row.dexs?.total24h ?? undefined, {
 				id: 'dex_volume_24h',
 				header: 'Spot Volume 24h',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[150px]',
 					align: 'end',
@@ -1111,7 +1214,10 @@ const columns = [
 			columnHelper.accessor((row) => row.dexs?.total7d ?? undefined, {
 				id: 'dex_volume_7d',
 				header: 'Spot Volume 7d',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[150px]',
 					align: 'end',
@@ -1131,7 +1237,10 @@ const columns = [
 			columnHelper.accessor((row) => row.dexs?.totalAllTime ?? undefined, {
 				id: 'dex_cumulative_volume',
 				header: 'Spot Cumulative Volume',
-				cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
 				meta: {
 					headerClassName: 'w-[min(200px,40vw)]',
 					align: 'end',
@@ -1202,7 +1311,11 @@ const ProtocolTvlCell = ({ rowValues }) => {
 				/>
 			) : null}
 			<span className={rowValues.strikeTvl ? 'text-tertiary' : ''}>
-				{formattedNum(rowValues.tvl.default.tvl, true)}
+				{formatUsd(rowValues.tvl.default.tvl, {
+					compact: true,
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				})}
 			</span>
 		</span>
 	)

@@ -3,11 +3,8 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { METADATA_ARTIFACT_FILES, type CoreMetadataPayload } from '../../../src/utils/metadata/artifactContract'
-import {
-	getMetadataCacheDir,
-	readMetadataArtifactManifest,
-	writeMetadataArtifacts
-} from '../../../src/utils/metadata/artifactWriter'
+import { readMetadataArtifactManifest, writeMetadataArtifacts } from '../../../src/utils/metadata/artifactWriter'
+import { getMetadataCacheDir } from '../../../src/utils/metadata/config'
 import { METADATA_MANIFEST_FILE, createMetadataArtifactManifest } from '../../../src/utils/metadata/manifest'
 import { runPullMetadataCommand } from '../pullCommand'
 

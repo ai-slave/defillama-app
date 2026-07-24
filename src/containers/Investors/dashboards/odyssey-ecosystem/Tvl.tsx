@@ -1,6 +1,7 @@
 import { lazy, useMemo } from 'react'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { formatPercent } from '~/utils/numberFormat'
 import { useTvlData, chartToModel, zoomStartPct, defaultZoomOptions, type MorphoMarketHistory } from './api'
 import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, UtilBar, fmtUsd } from './ui'
 
@@ -242,7 +243,13 @@ export default function Tvl() {
 								{ key: 'chain', label: 'Chain' },
 								{ key: 'totalAssetsUsd', label: 'Total Assets', right: true, render: (r) => fmtUsd(r.totalAssetsUsd) },
 								{ key: 'idleLiquidityUsd', label: 'Idle', right: true, render: (r) => fmtUsd(r.idleLiquidityUsd) },
-								{ key: 'netApyPct', label: 'Net APY', right: true, render: (r) => `${(r.netApyPct ?? 0).toFixed(2)}%` }
+								{
+									key: 'netApyPct',
+									label: 'Net APY',
+									right: true,
+									render: (r) =>
+										`${formatPercent(r.netApyPct ?? 0, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+								}
 							]}
 						/>
 					</ChartCard>
@@ -265,7 +272,10 @@ export default function Tvl() {
 										key: 'targetPct',
 										label: 'Target',
 										right: true,
-										render: (r) => (r.targetPct != null ? `${r.targetPct.toFixed(0)}%` : '—')
+										render: (r) =>
+											r.targetPct != null
+												? `${formatPercent(r.targetPct, { input: 'percent', maximumFractionDigits: 0, useGrouping: false })}`
+												: '—'
 									},
 									{
 										key: 'mintNeededUsd',
@@ -273,18 +283,26 @@ export default function Tvl() {
 										right: true,
 										render: (r) => fmtUsd(r.mintNeededUsd)
 									},
-									{ key: 'lltvPct', label: 'LLTV', right: true, render: (r) => `${(r.lltvPct ?? 0).toFixed(1)}%` },
+									{
+										key: 'lltvPct',
+										label: 'LLTV',
+										right: true,
+										render: (r) =>
+											`${formatPercent(r.lltvPct ?? 0, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
+									},
 									{
 										key: 'supplyApyPct',
 										label: 'Supply APY',
 										right: true,
-										render: (r) => `${(r.supplyApyPct ?? 0).toFixed(2)}%`
+										render: (r) =>
+											`${formatPercent(r.supplyApyPct ?? 0, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 									},
 									{
 										key: 'borrowApyPct',
 										label: 'Borrow APY',
 										right: true,
-										render: (r) => `${(r.borrowApyPct ?? 0).toFixed(2)}%`
+										render: (r) =>
+											`${formatPercent(r.borrowApyPct ?? 0, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 									}
 								]}
 							/>

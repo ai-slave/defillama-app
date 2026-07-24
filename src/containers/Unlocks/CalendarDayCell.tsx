@@ -3,7 +3,8 @@ import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import type { DailyUnlocks, DayInfo } from './calendarTypes'
 import { interpolateColor } from './colorUtils'
 
@@ -57,7 +58,12 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 				<span className={`text-sm font-medium ${isToday ? 'font-bold text-link' : ''}`}>{dayInfo.date.date()}</span>
 				{hasUnlocks && dayInfo.isCurrentMonth ? (
 					<div className="mt-auto hidden truncate text-xs sm:block">
-						Total: {formattedNum(dayData.totalValue, true)}
+						Total:{' '}
+						{formatUsd(dayData.totalValue, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					</div>
 				) : null}
 			</div>
@@ -72,7 +78,14 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 		<Tooltip
 			content={
 				<div className="flex max-w-xs flex-col gap-2 p-2">
-					<div className="text-sm font-semibold">Total Unlock Value: {formattedNum(dayData.totalValue, true)}</div>
+					<div className="text-sm font-semibold">
+						Total Unlock Value:{' '}
+						{formatUsd(dayData.totalValue, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					</div>
 					{dayData.events.length > 0 ? (
 						<>
 							<div className="-mx-2 border-t border-medium"></div>
@@ -91,7 +104,11 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 											<span className="truncate">{event.protocol}</span>
 										</BasicLink>
 										<span className="text-sm font-medium whitespace-nowrap text-secondary">
-											{formattedNum(event.value, true)}
+											{formatUsd(event.value, {
+												compact: true,
+												minimumCompactValue: 1_000_000,
+												compactSuffix: 'lowercase'
+											})}
 										</span>
 									</div>
 								))}

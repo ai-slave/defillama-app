@@ -1,7 +1,8 @@
 import dayjs from 'dayjs'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import type { DailyUnlocks, DayInfo } from './calendarTypes'
 
 interface WeekDayColumnProps {
@@ -49,7 +50,13 @@ export const WeekDayColumn: React.FC<WeekDayColumnProps> = ({ dayInfo, unlocksDa
 										</span>
 									) : null}
 								</div>
-								<div className="pl-[calc(16px+0.375rem)] text-secondary">{formattedNum(event.value, true)}</div>
+								<div className="pl-[calc(16px+0.375rem)] text-secondary">
+									{formatUsd(event.value, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</div>
 							</div>
 						</BasicLink>
 					))

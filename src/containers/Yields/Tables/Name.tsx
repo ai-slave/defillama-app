@@ -2,18 +2,17 @@ import { Bookmark } from '~/components/Bookmark'
 import { BasicLink } from '~/components/Link'
 import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
-import { formatRaiseAmount } from '~/containers/Raises/utils'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { formatUsd } from '~/utils/numberFormat'
 import { DepegWarningIcon } from './YieldsCells'
 
 interface INameYield {
 	project: string
 	projectslug?: string
 	airdrop?: boolean
-	raiseValuation?: number | null
+	raiseValuationUsd?: number | null
 }
 
 // Quiet external-link glyph (text-tertiary → link on hover) in the leading rail,
@@ -116,16 +115,20 @@ export function PoolNameLockup({
 // glyph sitting inline after the protocol name.
 // The tooltip carries the meaning. When the protocol has a known fundraise, the glyph
 // becomes 💸 and the tooltip adds its last valuation.
-function AirdropHint({ raiseValuation }: { raiseValuation?: number | null }) {
-	const raiseValuationFormatted = formatRaiseAmount(raiseValuation)
+function AirdropHint({ raiseValuationUsd }: { raiseValuationUsd?: number | null }) {
 	return (
 		<Tooltip
 			content={
-				raiseValuationFormatted != null ? (
+				raiseValuationUsd != null ? (
 					<span className="flex flex-col gap-1">
 						<span className="font-medium">Potential Airdrop</span>
 						<span className="border-t border-current/20 pt-1">
-							Last Valuation: {formattedNum(raiseValuationFormatted)}
+							Last Valuation:{' '}
+							{formatUsd(raiseValuationUsd, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 						</span>
 					</span>
 				) : (
@@ -137,7 +140,7 @@ function AirdropHint({ raiseValuation }: { raiseValuation?: number | null }) {
 			}
 			className="shrink-0 body-sm"
 		>
-			{raiseValuation != null ? '\u{1F4B8}' : '\u{1FA82}'}
+			{raiseValuationUsd != null ? '\u{1F4B8}' : '\u{1FA82}'}
 		</Tooltip>
 	)
 }
@@ -160,7 +163,7 @@ export function RiskDataHint({ configID, className }: { configID: string; classN
 	)
 }
 
-export function NameYield({ project, projectslug, airdrop, raiseValuation }: INameYield) {
+export function NameYield({ project, projectslug, airdrop, raiseValuationUsd }: INameYield) {
 	const showAirdrop = Boolean(airdrop) && project !== 'Fraxlend'
 
 	const lockup = (
@@ -184,7 +187,7 @@ export function NameYield({ project, projectslug, airdrop, raiseValuation }: INa
 			) : (
 				lockup
 			)}
-			{showAirdrop ? <AirdropHint raiseValuation={raiseValuation} /> : null}
+			{showAirdrop ? <AirdropHint raiseValuationUsd={raiseValuationUsd} /> : null}
 		</span>
 	)
 }

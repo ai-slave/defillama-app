@@ -1,7 +1,6 @@
 import { getErrorMessage } from '~/utils/error'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 import { sanitizeDefiLlamaProApiUrl, sanitizeResponseTextForError } from '~/utils/http-error-format'
-export { getMetadataFetchTimeoutMs } from './config'
 import { getMetadataFetchTimeoutMs } from './config'
 
 export async function fetchMetadataJson<T>(url: string, options?: RequestInit): Promise<T> {

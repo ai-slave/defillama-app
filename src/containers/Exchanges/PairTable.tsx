@@ -4,8 +4,8 @@ import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { exchangeDefinitions } from './definitions'
 import { sumNullable } from './modelHelpers'
 import type { ExchangePairModel, ExchangeSegment } from './models'
@@ -20,15 +20,21 @@ export type PairTableRow = ExchangePairModel & {
 const columnHelper = createColumnHelper<PairTableRow>()
 
 function money(value: number | null | undefined) {
-	return value == null ? '–' : formattedNum(value, true)
+	return value == null
+		? '–'
+		: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 export function formatPairPrice(price: number | null | undefined, quote: string) {
-	return price == null ? '–' : `${formattedNum(price)} ${quote.toUpperCase()}`
+	return price == null
+		? '–'
+		: `${formatCompactNumber(price, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${quote.toUpperCase()}`
 }
 
 function percentage(value: number | null | undefined, digits = 2) {
-	return value == null ? '–' : `${(value * 100).toFixed(digits)}%`
+	return value == null
+		? '–'
+		: `${formatPercent(value, { input: 'fraction', minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false })}`
 }
 
 function Change({ value }: { value: number | undefined }) {

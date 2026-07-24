@@ -13,7 +13,7 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { DeferredPaginatedTable } from './deferred/DeferredPaginatedTable'
 import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
 import type {
@@ -28,9 +28,9 @@ const TOKEN_RISKS_SECTION_ID = 'token-risks'
 const exposureColumnHelper = createColumnHelper<TokenRiskExposureRow>()
 const DEFAULT_EXPOSURES_SORTING: SortingState = [{ id: 'currentMaxBorrowUsd', desc: true }]
 
-function formatUsd(value: number | null | undefined) {
+function formatRiskUsd(value: number | null | undefined) {
 	if (value == null) return 'Unavailable'
-	return formattedNum(value, true)
+	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 function TableEntityCell({
@@ -60,13 +60,14 @@ function formatProtocolChains(chainBreakdowns: TokenRiskChainExposureSummary[]) 
 
 function formatMinBadDebtValue(value: number | null | undefined, coverage: TokenRiskCoverageStatus) {
 	if (coverage === 'unavailable' || value == null) return '—'
-	if (coverage === 'partial') return `${formattedNum(value, true)} (partial)`
-	return formattedNum(value, true)
+	if (coverage === 'partial')
+		return `${formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} (partial)`
+	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 function formatProtocolSummaryBadDebt(value: number | null | undefined) {
 	if (value == null) return '--'
-	return formattedNum(value, true)
+	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 function ProtocolExposureSummaryText({
@@ -80,9 +81,9 @@ function ProtocolExposureSummaryText({
 
 	return (
 		<>
-			{formatUsd(totalAtRiskUsd)} at-risk exposure ={' '}
+			{formatRiskUsd(totalAtRiskUsd)} at-risk exposure ={' '}
 			{formatProtocolSummaryBadDebt(summary.totalMinBadDebtAtPriceZeroUsd)} bad debt if hacked +{' '}
-			{formatUsd(summary.totalCurrentMaxBorrowUsd)} additional borrowable against {tokenSymbol}
+			{formatRiskUsd(summary.totalCurrentMaxBorrowUsd)} additional borrowable against {tokenSymbol}
 		</>
 	)
 }
@@ -110,14 +111,14 @@ function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: To
 							</span>
 						</span>
 						<span className="text-right text-primary">
-							{formatUsd(chain.totalCurrentMaxBorrowUsd + (chain.totalMinBadDebtAtPriceZeroUsd ?? 0))}
+							{formatRiskUsd(chain.totalCurrentMaxBorrowUsd + (chain.totalMinBadDebtAtPriceZeroUsd ?? 0))}
 						</span>
 						<span className="text-secondary">Bad debt if hacked</span>
 						<span className="text-right text-secondary">
 							{formatMinBadDebtValue(chain.totalMinBadDebtAtPriceZeroUsd, chain.minBadDebtAtPriceZeroCoverage)}
 						</span>
 						<span className="text-secondary">Additional borrowable</span>
-						<span className="text-right text-secondary">{formatUsd(chain.totalCurrentMaxBorrowUsd)}</span>
+						<span className="text-right text-secondary">{formatRiskUsd(chain.totalCurrentMaxBorrowUsd)}</span>
 					</div>
 				))}
 			</div>
@@ -185,7 +186,7 @@ function createExposureColumns(methodologies: TokenRiskResponse['exposures']['me
 		}),
 		exposureColumnHelper.accessor('currentMaxBorrowUsd', {
 			header: 'Max Borrowable',
-			cell: ({ getValue }) => formatUsd(getValue()),
+			cell: ({ getValue }) => formatRiskUsd(getValue()),
 			meta: {
 				align: 'end',
 				headerHelperText: methodologies.currentMaxBorrowUsd
@@ -263,13 +264,15 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 			<div className="flex flex-1 flex-col gap-2 p-2">
 				<Card padding="md">
 					<p className="body-md text-secondary">Maximum possible exposure to {tokenSymbol}</p>
-					<p className="mt-1 font-jetbrains text-2xl font-semibold text-primary">{formatUsd(totalMaxExposureUsd)}</p>
+					<p className="mt-1 font-jetbrains text-2xl font-semibold text-primary">
+						{formatRiskUsd(totalMaxExposureUsd)}
+					</p>
 					<p className="mt-1 body-md text-secondary">
-						{formatUsd(exposures.summary.totalCurrentMaxBorrowUsd)} (max additional borrows against {tokenSymbol})
+						{formatRiskUsd(exposures.summary.totalCurrentMaxBorrowUsd)} (max additional borrows against {tokenSymbol})
 						{exposures.summary.totalMinBadDebtAtPriceZeroUsd == null ? null : (
 							<>
 								{' '}
-								+ {formatUsd(exposures.summary.totalMinBadDebtAtPriceZeroUsd)} (bad debt if {tokenSymbol} was hacked
+								+ {formatRiskUsd(exposures.summary.totalMinBadDebtAtPriceZeroUsd)} (bad debt if {tokenSymbol} was hacked
 								now)
 							</>
 						)}

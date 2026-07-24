@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import {
 	pushBounded,
 	useHyperliquidL2Book,
@@ -72,8 +72,10 @@ function LiveOrderBook({ bids, asks }: { bids: BookLevel[]; asks: BookLevel[] })
 					return (
 						<div key={`a-${level.px}`} className="relative grid grid-cols-3 py-0.75">
 							<div className="absolute inset-y-0 right-0 bg-error/10" style={{ width: `${pct}%` }} />
-							<span className="relative text-error">{level.px.toLocaleString()}</span>
-							<span className="relative text-right text-pro-text-primary">{formattedNum(level.sz)}</span>
+							<span className="relative text-error">{formatNumber(level.px)}</span>
+							<span className="relative text-right text-pro-text-primary">
+								{formatCompactNumber(level.sz, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+							</span>
 							<span className="relative text-right text-pro-text-label">{level.n}</span>
 						</div>
 					)
@@ -81,8 +83,18 @@ function LiveOrderBook({ bids, asks }: { bids: BookLevel[]; asks: BookLevel[] })
 
 				{midPrice > 0 && (
 					<div className="my-1 flex items-center justify-center gap-2 border-y border-pro-cards-border py-2">
-						<span className="text-sm font-semibold text-pro-text-primary">{formattedNum(midPrice, true)}</span>
-						<span className="text-[10px] text-pro-text-label">Spread: {spread.toFixed(4)}%</span>
+						<span className="text-sm font-semibold text-pro-text-primary">
+							{formatUsd(midPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+						</span>
+						<span className="text-[10px] text-pro-text-label">
+							Spread:{' '}
+							{formatPercent(spread, {
+								input: 'percent',
+								minimumFractionDigits: 4,
+								maximumFractionDigits: 4,
+								useGrouping: false
+							})}
+						</span>
 					</div>
 				)}
 
@@ -91,8 +103,10 @@ function LiveOrderBook({ bids, asks }: { bids: BookLevel[]; asks: BookLevel[] })
 					return (
 						<div key={`b-${level.px}`} className="relative grid grid-cols-3 py-0.75">
 							<div className="absolute inset-y-0 right-0 bg-success/10" style={{ width: `${pct}%` }} />
-							<span className="relative text-success">{level.px.toLocaleString()}</span>
-							<span className="relative text-right text-pro-text-primary">{formattedNum(level.sz)}</span>
+							<span className="relative text-success">{formatNumber(level.px)}</span>
+							<span className="relative text-right text-pro-text-primary">
+								{formatCompactNumber(level.sz, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+							</span>
 							<span className="relative text-right text-pro-text-label">{level.n}</span>
 						</div>
 					)
@@ -129,8 +143,10 @@ function LiveTradeFeed({ trades }: { trades: Trade[] }) {
 							className={`grid grid-cols-4 py-0.75 ${isBuy ? 'text-success' : 'text-error'}`}
 						>
 							<span className="text-pro-text-label">{formatTime(trade.time)}</span>
-							<span className="text-right">{trade.px.toLocaleString()}</span>
-							<span className="text-right">{formattedNum(trade.sz)}</span>
+							<span className="text-right">{formatNumber(trade.px)}</span>
+							<span className="text-right">
+								{formatCompactNumber(trade.sz, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+							</span>
 							<span className="text-right font-medium">{isBuy ? 'Buy' : 'Sell'}</span>
 						</div>
 					)
@@ -164,27 +180,54 @@ function MetricStrip({
 		<div className="grid grid-cols-2 gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 md:grid-cols-6">
 			<div>
 				<div className="text-[11px] text-pro-text-label">Spread</div>
-				<div className="text-sm text-pro-text-primary">{spreadPct.toFixed(4)}%</div>
+				<div className="text-sm text-pro-text-primary">
+					{formatPercent(spreadPct, {
+						input: 'percent',
+						minimumFractionDigits: 4,
+						maximumFractionDigits: 4,
+						useGrouping: false
+					})}
+				</div>
 			</div>
 			<div>
 				<div className="text-[11px] text-pro-text-label">Buy Ratio 1m</div>
-				<div className="text-sm text-pro-text-primary">{(buyRatio1m * 100).toFixed(1)}%</div>
+				<div className="text-sm text-pro-text-primary">
+					{formatPercent(buyRatio1m, {
+						input: 'fraction',
+						minimumFractionDigits: 1,
+						maximumFractionDigits: 1,
+						useGrouping: false
+					})}
+				</div>
 			</div>
 			<div>
 				<div className="text-[11px] text-pro-text-label">Buy Ratio 5m</div>
-				<div className="text-sm text-pro-text-primary">{(buyRatio5m * 100).toFixed(1)}%</div>
+				<div className="text-sm text-pro-text-primary">
+					{formatPercent(buyRatio5m, {
+						input: 'fraction',
+						minimumFractionDigits: 1,
+						maximumFractionDigits: 1,
+						useGrouping: false
+					})}
+				</div>
 			</div>
 			<div>
 				<div className="text-[11px] text-pro-text-label">CVD 5m</div>
-				<div className={cvd5m >= 0 ? 'text-sm text-success' : 'text-sm text-error'}>{formattedNum(cvd5m)}</div>
+				<div className={cvd5m >= 0 ? 'text-sm text-success' : 'text-sm text-error'}>
+					{formatCompactNumber(cvd5m, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				</div>
 			</div>
 			<div>
 				<div className="text-[11px] text-pro-text-label">Depth ±0.25%</div>
-				<div className="text-sm text-pro-text-primary">{formattedNum(depth025, true)}</div>
+				<div className="text-sm text-pro-text-primary">
+					{formatUsd(depth025, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				</div>
 			</div>
 			<div>
 				<div className="text-[11px] text-pro-text-label">Depth ±1%</div>
-				<div className="text-sm text-pro-text-primary">{formattedNum(depth1, true)}</div>
+				<div className="text-sm text-pro-text-primary">
+					{formatUsd(depth1, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				</div>
 			</div>
 		</div>
 	)

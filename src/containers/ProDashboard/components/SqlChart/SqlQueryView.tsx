@@ -5,6 +5,7 @@ import { buildShareUrl } from '~/containers/Downloads/urlState'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { formatNumber } from '~/utils/numberFormat'
 import type { SqlChartConfig, SqlSnapshot } from '../../types'
 
 const ReadOnlySqlEditor = lazy(() =>
@@ -56,8 +57,8 @@ export function SqlQueryView({ config, snapshot }: SqlQueryViewProps) {
 	const sourceNames = config.query.tableSources.map(tableNameFor)
 	const rowSummary = snapshot
 		? snapshot.truncated
-			? `${snapshot.rows.length.toLocaleString()} of ${snapshot.rowCount.toLocaleString()} rows stored`
-			: `${snapshot.rowCount.toLocaleString()} rows`
+			? `${formatNumber(snapshot.rows.length)} of ${formatNumber(snapshot.rowCount)} rows stored`
+			: `${formatNumber(snapshot.rowCount)} rows`
 		: 'No result snapshot'
 
 	return (
@@ -112,7 +113,7 @@ export function SqlQueryView({ config, snapshot }: SqlQueryViewProps) {
 
 			<div className="flex flex-wrap items-center gap-x-2 gap-y-1 body-xs text-pro-text-tertiary">
 				<span>{rowSummary}</span>
-				{snapshot ? <span>{snapshot.columns.length.toLocaleString()} columns</span> : null}
+				{snapshot ? <span>{formatNumber(snapshot.columns.length)} columns</span> : null}
 				{snapshot ? <span>{snapshot.engine === 'server' ? 'Server result' : 'Browser result'}</span> : null}
 			</div>
 		</div>

@@ -57,8 +57,8 @@ export type EntityPreviewBridge = {
 export type EntityPreviewHack = {
 	kind: 'hack'
 	date?: string | null
-	amount?: number | null
-	returnedFunds?: number | null
+	amountUsd?: number | null
+	returnedFundsUsd?: number | null
 	classification?: string | null
 	technique?: string | null
 	chains?: string[]

@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react'
 import { STRIPE_PUBLISHABLE_KEY } from '~/constants'
 import { useCreateTopup, TOPUP_CONFIG } from '~/containers/Subscription/useTopup'
 import { Icon } from '~/ui/Icon'
+import { formatUsd } from '~/utils/numberFormat'
 
 const stripeInstance = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null
 
@@ -103,8 +104,11 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 							<div className="flex-1">
 								<h3 className="text-xl leading-7 font-semibold text-sub-dark-page">Complete Payment</h3>
 								<p className="text-xs text-sub-text-muted">
-									Top up <span className="font-semibold text-sub-brand-primary">${parsedAmount.toFixed(2)}</span> to
-									your External Data Balance
+									Top up{' '}
+									<span className="font-semibold text-sub-brand-primary">
+										{formatUsd(parsedAmount, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+									</span>{' '}
+									to your External Data Balance
 								</p>
 							</div>
 							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-dark-page transition-colors">

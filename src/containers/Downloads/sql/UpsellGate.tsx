@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useState, type ReactNode } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
 import { Icon, type IIcon } from '~/ui/Icon'
+import { formatNumber, formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { Keycap, TypeBadge, type ColumnKind } from './primitives'
 
 interface UpsellGateProps {
@@ -875,22 +876,22 @@ function COMMENT({ children }: { children: ReactNode }) {
 
 function formatCellValue(value: string | number): string {
 	if (typeof value === 'string') return value
-	if (Number.isInteger(value)) return value.toLocaleString()
-	return value.toLocaleString(undefined, { maximumFractionDigits: 6 })
+	if (Number.isInteger(value)) return formatNumber(value)
+	return formatNumber(value, { maximumFractionDigits: 6 })
 }
 
 function formatCompactUsd(n: number): string {
-	if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(2)}B`
-	if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-	if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}k`
-	return `$${n.toLocaleString()}`
+	const fractionDigits = Math.abs(n) >= 1_000_000_000 ? 2 : Math.abs(n) >= 1_000 ? 1 : undefined
+	return formatUsd(n, {
+		compact: true,
+		minimumFractionDigits: fractionDigits,
+		maximumFractionDigits: fractionDigits
+	})
 }
 
 function formatTick(t: number): string {
 	if (t === 0) return '0'
-	if (t >= 1_000_000) return `${(t / 1_000_000).toFixed(0)}M`
-	if (t >= 1_000) return `${(t / 1_000).toFixed(0)}k`
-	return t.toFixed(0)
+	return formatCompactNumber(t, { maximumFractionDigits: 0 })
 }
 
 function niceCeiling(value: number): number {

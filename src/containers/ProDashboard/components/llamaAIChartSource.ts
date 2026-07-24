@@ -1,3 +1,4 @@
+import { formatUsd } from '~/utils/numberFormat'
 import type { LlamaAIChartConfig } from '../types'
 
 export interface LlamaAIChartOwnerStatus {
@@ -14,7 +15,7 @@ export function getLlamaAIChartRefreshConfirmation(config: LlamaAIChartConfig): 
 	if (!config.artifactContainsPremium) return null
 	const maxCostUsd = config.artifactEstimatedMaxCostUsd
 	return typeof maxCostUsd === 'number' && Number.isFinite(maxCostUsd) && maxCostUsd > 0
-		? `This refresh may charge up to $${maxCostUsd.toFixed(3)} to your External Data Balance. Continue?`
+		? `This refresh may charge up to ${formatUsd(maxCostUsd, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} to your External Data Balance. Continue?`
 		: 'This refresh uses premium data and may charge your External Data Balance. Continue?'
 }
 

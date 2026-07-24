@@ -65,6 +65,7 @@ import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { formatFixedNumber } from '~/utils/numberFormat'
 
 interface AlertsModalProps {
 	dialogStore: Ariakit.DialogStore
@@ -552,7 +553,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 	}
 
-	const formatDuration = (ms: number) => (ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`)
+	const formatDuration = (ms: number) => (ms < 1000 ? `${ms}ms` : `${formatFixedNumber(ms / 1000, 1)}s`)
 
 	const channelLabel =
 		alert.delivery_channel === 'telegram'

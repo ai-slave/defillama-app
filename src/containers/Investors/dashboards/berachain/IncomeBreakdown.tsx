@@ -6,7 +6,7 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { type BerachainIncomeServerData, useBerachainIncomeData, useHoneyRevenueData } from './api'
 import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
 
@@ -176,7 +176,11 @@ function SectionHeader({ title }: { title: string }) {
 function getCumulativeTotal(dataset: MultiSeriesChartDataset, key: string) {
 	const dimensionIndex = dataset.dimensions.indexOf(key)
 	if (dimensionIndex < 0 || dataset.source.length === 0) return null
-	return formattedNum(dataset.source[dataset.source.length - 1][dimensionIndex], true)
+	return formatUsd(dataset.source[dataset.source.length - 1][dimensionIndex], {
+		compact: true,
+		minimumCompactValue: 1_000_000,
+		compactSuffix: 'lowercase'
+	})
 }
 
 export default function IncomeBreakdown() {

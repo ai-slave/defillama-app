@@ -2,11 +2,14 @@ import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Icon, type IIcon } from '~/ui/Icon'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import type { ExchangeProfileModel } from './models'
 
 const UTC_DATE = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' })
-const money = (value: number | null) => (value == null ? 'Unknown' : formattedNum(value, true))
+const money = (value: number | null) =>
+	value == null
+		? 'Unknown'
+		: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 function HistoryHeader({ icon, title, count }: { icon: IIcon['name']; title: string; count?: number }) {
 	return (

@@ -14,7 +14,7 @@ import {
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricOptions, getChartViewOptions, getChartMetricLabel } from '~/containers/RWA/chartState'
 import { LocalLoader } from '~/ui/Loaders'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
@@ -107,7 +107,10 @@ function RWAChartTabInner({
 	const chainOptions = useMemo(() => {
 		const opts = [{ value: 'All', label: 'All Chains' }]
 		for (const { chain, tvl } of rwaChains) {
-			opts.push({ value: chain, label: `${chain} (${formattedNum(tvl, true)})` })
+			opts.push({
+				value: chain,
+				label: `${chain} (${formatUsd(tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })})`
+			})
 		}
 		return opts
 	}, [rwaChains])
@@ -224,7 +227,14 @@ function AssetControls({
 			assets.map((a) => ({
 				value: a.id,
 				label: a.assetName || a.ticker,
-				description: a.totalActiveMcap > 0 ? formattedNum(a.totalActiveMcap, true) : a.ticker
+				description:
+					a.totalActiveMcap > 0
+						? formatUsd(a.totalActiveMcap, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})
+						: a.ticker
 			})),
 		[assets]
 	)

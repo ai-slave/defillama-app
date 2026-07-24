@@ -13,6 +13,7 @@ import toast from 'react-hot-toast'
 import { getChartLogoMetadata, type ChartLogoMetadata } from '~/components/ECharts/shared/chartLogoMetadata'
 import { getChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { mergeDeep } from '~/components/ECharts/shared/merge'
+import { formatTreemapUsd } from '~/components/ECharts/TreemapChart/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -24,6 +25,7 @@ import {
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
 import { downloadCSV, downloadDataURL } from '~/utils/download'
+import { formatPercent } from '~/utils/numberFormat'
 import { getChartExportIconFetchUrl } from './chartPngExportIcon'
 import {
 	BASE_TOP_PADDING,
@@ -79,15 +81,6 @@ export type TreemapViewportExportState =
 	  }
 	| { rootRect: Rect; sourceLayout: { width: number; height: number } }
 
-const formatTreemapCurrency = (rawValue?: number) => {
-	const value = typeof rawValue === 'number' && Number.isFinite(rawValue) ? rawValue : 0
-	const absValue = Math.abs(value)
-	if (absValue >= 1e9) return '$' + (value / 1e9).toFixed(1) + 'B'
-	if (absValue >= 1e6) return '$' + (value / 1e6).toFixed(1) + 'M'
-	if (absValue >= 1e3) return '$' + (value / 1e3).toFixed(0) + 'K'
-	return '$' + value.toFixed(0)
-}
-
 function getTreemapNumericValue(rawValue: any): number {
 	const value = Array.isArray(rawValue) ? rawValue[0] : rawValue
 	const numeric = typeof value === 'number' ? value : Number(value ?? 0)
@@ -101,8 +94,12 @@ function formatTreemapExportLabel(params: any, total: number, sourceFormatter: a
 	}
 
 	const rawValue = getTreemapNumericValue(params?.value)
-	const pct = total > 0 ? ((rawValue / total) * 100).toFixed(1) : '0'
-	return `{name|${String(params?.name ?? '')}}\n{value|${formatTreemapCurrency(rawValue)} (${pct}%)}`
+	const pct = formatPercent(total > 0 ? rawValue / total : 0, {
+		input: 'fraction',
+		minimumFractionDigits: 1,
+		maximumFractionDigits: 1
+	})
+	return `{name|${String(params?.name ?? '')}}\n{value|${formatTreemapUsd(rawValue)} (${pct})}`
 }
 
 export function sanitizeRichImagesForExport(rich: any) {
@@ -446,7 +443,7 @@ function buildTreemapExportLabelGraphics(chart: echarts.ECharts, isDark: boolean
 		const name = typeof node.name === 'string' ? node.name : ''
 		if (!includeValue) return name
 		const value = getTreemapNumericValue(node.getValue?.())
-		return value > 0 ? `${name}\n${formatTreemapCurrency(value)}` : name
+		return value > 0 ? `${name}\n${formatTreemapUsd(value)}` : name
 	}
 
 	const addText = (node: any, x: number, y: number, width: number, height: number, includeValue: boolean) => {

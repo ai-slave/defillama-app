@@ -15,6 +15,7 @@ import { AUTH_SERVER, STRIPE_PUBLISHABLE_KEY } from '~/constants'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Icon } from '~/ui/Icon'
 import { handleSimpleFetchResponse } from '~/utils/async'
+import { formatNumber } from '~/utils/numberFormat'
 
 const stripeInstance = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null
 const checkoutBackdrop = <div className="fixed inset-0 bg-black/80" />
@@ -23,17 +24,10 @@ const checkoutDialogClassName =
 const checkoutHeaderClassName = 'flex items-center justify-between border-b border-sub-border-slate-100 px-5 py-4'
 const checkoutTitleClassName = 'text-xl leading-7 font-semibold text-sub-dark-page'
 const checkoutCloseButtonClassName = 'rounded-full p-1 text-sub-dark-page transition-colors disabled:opacity-50'
-const amountFormatters = new Map<string, Intl.NumberFormat>()
-
 const formatAmount = (cents: number, currency: string) => {
 	const amount = cents / 100
 	const currencyCode = currency.toUpperCase()
-	let formatter = amountFormatters.get(currencyCode)
-	if (!formatter) {
-		formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode })
-		amountFormatters.set(currencyCode, formatter)
-	}
-	return formatter.format(amount)
+	return formatNumber(amount, { currency: currencyCode })
 }
 
 const getFriendlyPaymentStatus = (status: string) => {

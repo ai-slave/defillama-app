@@ -17,6 +17,7 @@ import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
+import { roundNumber } from '~/utils/numberFormat'
 import type { IOrderBookChartProps } from './types'
 
 echarts.use([
@@ -177,7 +178,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				name: 'Price',
 				type: 'log',
 				axisLabel: {
-					formatter: (value: number) => Number(value.toFixed(2)) + ' ETH',
+					formatter: (value: number) => roundNumber(value, 2) + ' ETH',
 					color: chartTheme.text
 				},
 				boundaryGap: [0, 0],

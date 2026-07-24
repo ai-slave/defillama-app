@@ -18,7 +18,7 @@ import {
 	parseTriState,
 	type TokenFilterInput
 } from './query'
-import { getRaiseValuations, getReferralUrls } from './server/raiseValuations'
+import { getRaiseValuationsUsd, getReferralUrls } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsExploits, readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { DepegRow, EarnPageRow, EnrichedEarnRow, Token } from './types'
 
@@ -73,12 +73,12 @@ export async function getEarnPage(
 
 	const stablecoin = queryBoolean(query, 'stablecoin')
 	const halal = queryBoolean(query, 'halal')
-	const [rows, meta, depegs, exploits, raiseValuations, referralUrls, riskCovered] = await Promise.all([
+	const [rows, meta, depegs, exploits, raiseValuationsUsd, referralUrls, riskCovered] = await Promise.all([
 		getEnrichedEarn(snapshot),
 		readYieldsMeta(snapshot),
 		readYieldsDepegs(snapshot),
 		readYieldsExploits(snapshot),
-		getRaiseValuations(snapshot),
+		getRaiseValuationsUsd(snapshot),
 		getReferralUrls(snapshot),
 		getRiskCoveredPoolIds()
 	])
@@ -121,7 +121,7 @@ export async function getEarnPage(
 		if (minApy != null && !(resolvedApy.total != null && resolvedApy.total >= minApy)) continue
 		if (maxApy != null && !(resolvedApy.total != null && resolvedApy.total <= maxApy)) continue
 
-		const pageRow = toEarnPageRow(row, resolvedApy, window, components, depegByPool.get(row.id), raiseValuations)
+		const pageRow = toEarnPageRow(row, resolvedApy, window, components, depegByPool.get(row.id), raiseValuationsUsd)
 		const referralUrl = row.protocolSlug ? referralUrls.get(row.protocolSlug) : undefined
 		if (referralUrl) pageRow.url = referralUrl
 		if (riskCovered.has(row.id)) pageRow.hasRiskData = true
@@ -153,7 +153,7 @@ function toEarnPageRow(
 	window: ReturnType<typeof parseApyWindow>,
 	components: ReturnType<typeof parseApyComponents>,
 	depeg: DepegRow | undefined,
-	raiseValuations: Map<string, number>
+	raiseValuationsUsd: Map<string, number>
 ): EarnPageRow {
 	const rewardSymbols = collectRewardSymbols(row.reward_tokens)
 	// Unsplit pool (trend serves `total`): stability only exists reward-inclusive,
@@ -175,9 +175,9 @@ function toEarnPageRow(
 		projectslug: row.protocolSlug ?? row.protocol,
 		project: row.protocol,
 		airdrop,
-		// Latest fundraise valuation (USD millions) — decorates the airdrop hint only, so
+		// Latest fundraise valuation (whole USD) — decorates the airdrop hint only, so
 		// stamped solely on airdrop rows (matches main's semantics).
-		raiseValuation: airdrop && row.protocolSlug ? (raiseValuations.get(row.protocolSlug) ?? null) : null,
+		raiseValuationUsd: airdrop && row.protocolSlug ? (raiseValuationsUsd.get(row.protocolSlug) ?? null) : null,
 		chains: [row.chain],
 		url: row.url ?? '',
 		category: row.category,

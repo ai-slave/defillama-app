@@ -14,6 +14,7 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatRatio } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { FAQ } from './Faq'
 import type { PricePoint } from './hooks'
@@ -72,7 +73,7 @@ function CorrelationCell({
 			style={{ backgroundColor }}
 			className="relative size-12 hover:after:pointer-events-none hover:after:absolute hover:after:top-[-5000px] hover:after:left-0 hover:after:h-[10000px] hover:after:w-full hover:after:bg-hover-row hover:after:content-['']"
 		>
-			{corr == null ? '--' : corr.toFixed(2)}
+			{corr == null ? '--' : formatRatio(corr)}
 		</td>
 	)
 }

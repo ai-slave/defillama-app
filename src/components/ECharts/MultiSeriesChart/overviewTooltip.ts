@@ -1,3 +1,4 @@
+import { formatRatio } from '~/utils/numberFormat'
 import { formatTooltipChartDate, formatTooltipValue, type TooltipGroupBy } from '../shared/formatters'
 import {
 	getTooltipAxisValue,
@@ -83,7 +84,8 @@ export function createOverviewTooltipFormatter({
 		}
 		const mcap = rows.find((row) => row.name === 'Mcap')?.value
 		const tvl = rows.find((row) => row.name === 'TVL')?.value
-		if (mcap && tvl) output += `<li style="list-style:none">Mcap/TVL&nbsp;&nbsp;${(mcap / tvl).toFixed(2)}</li>`
+		if (mcap && tvl)
+			output += `<li style="list-style:none">Mcap/TVL&nbsp;&nbsp;${formatRatio(mcap / tvl, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</li>`
 		if (hasOthers) {
 			let remainder = others?.value ?? 0
 			for (let index = topLimit; index < rows.length; index++) remainder += rows[index].value

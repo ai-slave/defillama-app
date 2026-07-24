@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
+import { formatNumber } from '~/utils/numberFormat'
 import { YIELD_BORROW_MARKETS_DATASET_API, YIELD_BORROW_ROUTES_DATASET_API } from '../constants'
 import type { MarketTableRow, RouteTableRow, TokenOption } from '../data/types'
 import { prepareBorrowMarketsCsv, prepareBorrowRoutesCsv } from '../domain/borrowCsv'
@@ -104,10 +105,10 @@ const BorrowView = ({
 							total && selectedProjects.length && selectedChains.length ? '' : 'invisible'
 						}`}
 					>
-						Tracking <strong className="text-primary">{total.toLocaleString()}</strong>{' '}
+						Tracking <strong className="text-primary">{formatNumber(total)}</strong>{' '}
 						{routesMode ? 'borrow routes' : 'borrow markets'} across{' '}
-						<strong className="text-primary">{selectedProjects.length.toLocaleString()}</strong> protocols on{' '}
-						<strong className="text-primary">{selectedChains.length.toLocaleString()}</strong> chains
+						<strong className="text-primary">{formatNumber(selectedProjects.length)}</strong> protocols on{' '}
+						<strong className="text-primary">{formatNumber(selectedChains.length)}</strong> chains
 					</p>
 				}
 			/>

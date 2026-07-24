@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { isChainsCategoryGroupKey, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { capitalizeFirstLetter } from '~/utils'
+import { formatPercent } from '~/utils/numberFormat'
 
 interface IPegged {
 	circulating: number
@@ -281,7 +282,12 @@ export const useGroupBridgeData = (
 				parent.circulating && parent.bridgedAmount && (parent.bridgedAmount / parent.circulating) * 100.0
 			const percentBridgedtoDisplay = percentBridged
 				? percentBridged < 100
-					? percentBridged.toFixed(2) + '%'
+					? formatPercent(percentBridged, {
+							input: 'percent',
+							minimumFractionDigits: 2,
+							maximumFractionDigits: 2,
+							useGrouping: false
+						})
 					: '100%'
 				: null
 			let hasParentBridges = false
@@ -362,7 +368,14 @@ export const useGroupBridgeData = (
 										(effectivePercentBridged > 100 ? 100 : effectivePercentBridged)
 									: 0
 							const percentBridgedBreakdownToDisplay =
-								percentBridgedBreakdown < 100 ? percentBridgedBreakdown.toFixed(2) + '%' : '100%'
+								percentBridgedBreakdown < 100
+									? formatPercent(percentBridgedBreakdown, {
+											input: 'percent',
+											minimumFractionDigits: 2,
+											maximumFractionDigits: 2,
+											useGrouping: false
+										})
+									: '100%'
 
 							const childData = {
 								...parent,

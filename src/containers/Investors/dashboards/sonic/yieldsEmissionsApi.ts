@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import { formatPercent } from '~/utils/numberFormat'
 import { readInvestorApiJson, type ApiDate } from '../../api.types'
 import { assignColors } from '../spark/api'
 import { multiSeriesCharts } from './chartDefaults'
+import { formatSonicAmount } from './format'
 
 interface FormattedValue {
 	value: number
@@ -74,13 +76,6 @@ function parseDateToMs(dateStr: string): number {
 	return Date.parse(dateStr + 'T00:00:00Z')
 }
 
-function formatBurnNumber(n: number): string {
-	if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`
-	if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`
-	if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`
-	return n.toLocaleString('en-US')
-}
-
 export function useYieldsEmissionsData() {
 	const query = useQuery<YieldsEmissionsAPIResponse>({
 		queryKey: ['sonic-yields-emissions'],
@@ -115,19 +110,19 @@ export function useYieldsEmissionsData() {
 			? {
 					permanentBurnPerDay: {
 						value: d.burn.permanentBurnPerDay,
-						formatted: `${formatBurnNumber(d.burn.permanentBurnPerDay)} S`
+						formatted: `${formatSonicAmount(d.burn.permanentBurnPerDay)} S`
 					},
 					permanentBurnPerYear: {
 						value: d.burn.permanentBurnPerYear,
-						formatted: `${formatBurnNumber(d.burn.permanentBurnPerYear)} S`
+						formatted: `${formatSonicAmount(d.burn.permanentBurnPerYear)} S`
 					},
 					burnRate: {
 						value: d.burn.burnRatePercent,
-						formatted: `${(d.burn.burnRatePercent * 100).toFixed(2)}%`
+						formatted: `${formatPercent(d.burn.burnRatePercent, { input: 'fraction', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 					},
 					feesPerDay: {
 						value: d.burn.feesPerDay,
-						formatted: `${formatBurnNumber(d.burn.feesPerDay)} S`
+						formatted: `${formatSonicAmount(d.burn.feesPerDay)} S`
 					}
 				}
 			: null

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { formatNumber, formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { useNetworkStatsData } from './networkStatsApi'
 
 interface BurnBlock {
@@ -83,16 +84,19 @@ function useBurnStream() {
 
 function formatBurnValue(s: string | number): string {
 	const n = typeof s === 'string' ? parseFloat(s) : s
-	if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`
-	if (n >= 1e3) return `${(n / 1e3).toFixed(2)}K`
-	if (n >= 1) return n.toFixed(2)
-	return n.toFixed(6)
+	const fractionDigits = Math.abs(n) < 1 ? 6 : 2
+	return formatCompactNumber(n, {
+		minimumFractionDigits: fractionDigits,
+		maximumFractionDigits: fractionDigits
+	})
 }
 
 function formatGas(n: number): string {
-	if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`
-	if (n >= 1e3) return `${(n / 1e3).toFixed(0)}K`
-	return n.toLocaleString('en-US')
+	const fractionDigits = Math.abs(n) >= 1e6 ? 1 : Math.abs(n) >= 1e3 ? 0 : undefined
+	return formatCompactNumber(n, {
+		minimumFractionDigits: fractionDigits,
+		maximumFractionDigits: fractionDigits
+	})
 }
 
 function timeAgo(ts: number): string {
@@ -138,7 +142,7 @@ function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: num
 		return () => cancelAnimationFrame(animRef.current)
 	}, [totalBurnedS]) // eslint-disable-line react-hooks/exhaustive-deps
 
-	const parts = displayValue.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).split('.')
+	const parts = formatNumber(displayValue, { minimumFractionDigits: 4, maximumFractionDigits: 4 }).split('.')
 	const intPart = parts[0]
 	const decPart = parts[1]
 
@@ -151,7 +155,7 @@ function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: num
 			</div>
 			{price != null && displayValue > 0 && (
 				<span className="mt-1 block text-sm text-pro-text-label tabular-nums">
-					${(displayValue * price).toLocaleString('en-US', { maximumFractionDigits: 0 })} USD
+					{formatUsd(displayValue * price, { maximumFractionDigits: 0 })} USD
 				</span>
 			)}
 		</div>
@@ -225,7 +229,7 @@ export default function NetworkStats() {
 					<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 						<span className="text-xs font-medium tracking-wide text-pro-text-label">Latest Block</span>
 						<span className="text-2xl font-semibold text-pro-text-primary tabular-nums">
-							{liveBlock ? liveBlock.toLocaleString('en-US') : '—'}
+							{liveBlock ? formatNumber(liveBlock) : '—'}
 						</span>
 					</div>
 					{data.network.gasPrice && (
@@ -275,14 +279,18 @@ export default function NetworkStats() {
 										className="border-b border-pro-cards-border last:border-b-0 hover:bg-sl-hover-bg"
 									>
 										<td className="px-4 py-2.5 text-sm font-medium text-pro-text-primary tabular-nums">
-											{block.block_number.toLocaleString('en-US')}
+											{formatNumber(block.block_number)}
 										</td>
 										<td className="px-4 py-2.5 text-sm text-pro-text-primary tabular-nums">{block.tx_count}</td>
 										<td className="px-4 py-2.5 text-sm text-pro-text-primary tabular-nums">
 											{formatGas(block.gas_used)}
 										</td>
 										<td className="px-4 py-2.5 text-sm text-pro-text-primary tabular-nums">
-											{parseFloat(block.block_burn_s).toFixed(6)} S
+											{formatNumber(parseFloat(block.block_burn_s), {
+												minimumFractionDigits: 6,
+												maximumFractionDigits: 6
+											})}{' '}
+											S
 										</td>
 										<td className="hidden px-4 py-2.5 text-right text-xs text-pro-text-label sm:table-cell">
 											{timeAgo(block.timestamp)}

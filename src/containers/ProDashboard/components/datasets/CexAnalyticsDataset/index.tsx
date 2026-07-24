@@ -34,8 +34,8 @@ import type { ProtocolsTableConfig } from '~/containers/ProDashboard/types'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
-import { formattedNum } from '~/utils'
 import { downloadCSV } from '~/utils/download'
+import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
@@ -159,17 +159,41 @@ function filterTimeSeriesRows<T extends { date: number }>(
 	return startIndex === 0 && low === rows.length ? rows : rows.slice(startIndex, low)
 }
 
-function formatRatio(value: number | null) {
-	return value == null ? '-' : `${value.toFixed(2)}x`
-}
-
 function SummaryCards({ data }: { data: CexAnalyticsSnapshotResponse }) {
 	const cards = [
-		{ label: 'Spot Volume', value: formattedNum(data.summary.totalSpotVolume, true) },
-		{ label: 'Derivatives Volume', value: formattedNum(data.summary.totalDerivativesVolume, true) },
-		{ label: 'Open Interest', value: formattedNum(data.summary.totalOpenInterest, true) },
-		{ label: 'Clean TVL', value: formattedNum(data.summary.totalCleanTvl, true) },
-		{ label: 'Weighted Avg Leverage', value: formatRatio(data.summary.weightedAvgLeverage) }
+		{
+			label: 'Spot Volume',
+			value: formatUsd(data.summary.totalSpotVolume, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})
+		},
+		{
+			label: 'Derivatives Volume',
+			value: formatUsd(data.summary.totalDerivativesVolume, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})
+		},
+		{
+			label: 'Open Interest',
+			value: formatUsd(data.summary.totalOpenInterest, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})
+		},
+		{
+			label: 'Clean TVL',
+			value: formatUsd(data.summary.totalCleanTvl, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})
+		},
+		{ label: 'Weighted Avg Leverage', value: `${formatRatio(data.summary.weightedAvgLeverage) ?? '-'}x` }
 	]
 
 	return (

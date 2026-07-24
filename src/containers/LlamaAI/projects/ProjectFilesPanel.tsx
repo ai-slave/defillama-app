@@ -6,20 +6,13 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { AddTextContentModal } from './AddTextContentModal'
+import { formatProjectBytes } from './format'
 import { GitHubConnectModal } from './GitHubConnectModal'
 import { useDeleteProjectFile, useDisconnectSource, useProjectFiles, useProjectSources } from './hooks'
 import type { ProjectFile, ProjectSource } from './types'
 import { PROJECT_FILE_ACCEPT, useProjectFileUpload } from './useProjectFileUpload'
 
 const EMPTY_PROJECT_SOURCES: ProjectSource[] = []
-
-function formatBytes(bytes: number | string): string {
-	const n = Number(bytes ?? 0)
-	if (n < 1024) return `${n} B`
-	if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
-	if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`
-	return `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`
-}
 
 interface ProjectFilesPanelProps {
 	projectId: string
@@ -157,8 +150,8 @@ export function ProjectFilesPanel({
 				<div className="flex items-baseline justify-between gap-2 text-[11px] text-ai-tertiary">
 					<span>
 						{projectBytesLimit
-							? `${formatBytes(projectBytesUsed)} / ${formatBytes(projectBytesLimit)} used`
-							: `${formatBytes(projectBytesUsed)} used`}
+							? `${formatProjectBytes(projectBytesUsed)} / ${formatProjectBytes(projectBytesLimit)} used`
+							: `${formatProjectBytes(projectBytesUsed)} used`}
 						{projectFileLimit ? ` · ${projectFileCount} / ${projectFileLimit} files` : ` · ${projectFileCount} files`}
 					</span>
 					{tier === 'free' ? <span className="text-ai-warning">Free tier</span> : null}
@@ -245,7 +238,7 @@ export function ProjectFilesPanel({
 									<span className="shrink-0 rounded-sm bg-ai-surface-muted px-1.5 py-0.5 text-[10px] tracking-wide text-ai-tertiary uppercase">
 										{sourceBadge}
 									</span>
-									<span className="shrink-0 text-ai-muted tabular-nums">{formatBytes(file.size)}</span>
+									<span className="shrink-0 text-ai-muted tabular-nums">{formatProjectBytes(file.size)}</span>
 									{sourceBadge === 'blob' ? (
 										<Tooltip
 											content="Delete file"

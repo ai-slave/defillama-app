@@ -1,15 +1,15 @@
-import { abbreviateNumber } from '~/utils'
+import { formatCompactNumber, formatUsd, formatNumber, formatPercent } from '~/utils/numberFormat'
 
 export type MetricFormatKind = 'usd' | 'percent' | 'spread' | 'score' | 'decimal'
 
 function pct2(value: number): string {
-	return `${Number(value.toFixed(2))}%`
+	return formatPercent(value, { input: 'percent' })
 }
 
 export function formatComposite(value: number | null | undefined): string {
 	if (value == null) return 'N/A'
 	if (value < 5) return '<5.00'
-	return value.toFixed(2)
+	return formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 export type CompositeGrade = { label: string; colorClassName: string }
@@ -65,14 +65,14 @@ export function formatMetricValue(value: number | null | undefined, kind: Metric
 	if (value == null) return 'N/A'
 	switch (kind) {
 		case 'usd':
-			return abbreviateNumber(value, 2, '$') ?? 'N/A'
+			return formatUsd(value, { compact: true }) ?? 'N/A'
 		case 'percent':
 		case 'spread':
 			return pct2(value)
 		case 'score':
-			return value.toFixed(2)
+			return formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 		case 'decimal':
-			return abbreviateNumber(value, 2) ?? 'N/A'
+			return formatCompactNumber(value) ?? 'N/A'
 	}
 }
 

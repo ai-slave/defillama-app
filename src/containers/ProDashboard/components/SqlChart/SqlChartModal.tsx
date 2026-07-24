@@ -20,6 +20,7 @@ import { useDuckDB } from '~/containers/Downloads/sql/useDuckDB'
 import { tableNameFor, useTableRegistry, type TableSource } from '~/containers/Downloads/sql/useTableRegistry'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
+import { formatNumber } from '~/utils/numberFormat'
 import { useProDashboardEditorActions } from '../../ProDashboardAPIContext'
 import type { SqlChartConfig } from '../../types'
 import { buildSqlChartConfig } from './buildSqlChartConfig'
@@ -305,8 +306,8 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 
 						{oversized ? (
 							<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-pro-text-secondary">
-								Result has {result!.rows.length.toLocaleString()} rows. Only the first {rowCap.toLocaleString()} will be
-								saved with this widget.
+								Result has {formatNumber(result!.rows.length)} rows. Only the first {formatNumber(rowCap)} will be saved
+								with this widget.
 							</div>
 						) : null}
 

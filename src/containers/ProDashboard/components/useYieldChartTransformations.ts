@@ -157,7 +157,7 @@ export function useYieldChartTransformations({
 	const latest = chartType === 'tvl-apy' ? dataset.source.at(-1) : undefined
 	const latestApy = latest?.[1] as number | null | undefined
 	const latestData = {
-		apy: latestApy?.toFixed(2) ?? null,
+		apy: latestApy ?? null,
 		tvl: (latest?.[2] as number | null | undefined) ?? null
 	}
 

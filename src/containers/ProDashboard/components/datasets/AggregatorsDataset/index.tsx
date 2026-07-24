@@ -17,6 +17,7 @@ import { useTableSearch } from '~/components/Table/utils'
 import type { AggregatorItem } from '~/containers/ProDashboard/types'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { downloadCSV } from '~/utils/download'
+import { formatFixedNumber } from '~/utils/numberFormat'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
@@ -171,9 +172,9 @@ export function AggregatorsDataset({ chains }: { chains?: string[] }) {
 										return [
 											item.name,
 											item.total24h,
-											percentage.toFixed(2),
+											formatFixedNumber(percentage, 2),
 											item.total7d,
-											item.marketShare7d?.toFixed(2) || '0',
+											formatFixedNumber(item.marketShare7d, 2) || '0',
 											item.total30d,
 											cumulative,
 											item.change_1d,

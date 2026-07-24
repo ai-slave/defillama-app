@@ -5,7 +5,8 @@ import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import type { RawChainsAssetsResponse, RawChainAssetsFlowEntry } from './api.types'
 import type { IBridgedRow } from './types'
 
@@ -81,7 +82,10 @@ const bridgedColumns = [
 	columnHelper.accessor((row) => row.total?.total ?? undefined, {
 		id: 'total',
 		header: 'Total Bridged',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -91,7 +95,10 @@ const bridgedColumns = [
 	columnHelper.accessor((row) => row.native?.total ?? undefined, {
 		id: 'native',
 		header: 'Native',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end',
@@ -101,7 +108,10 @@ const bridgedColumns = [
 	columnHelper.accessor((row) => row.canonical?.total ?? undefined, {
 		id: 'canonical',
 		header: 'Canonical',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -111,7 +121,10 @@ const bridgedColumns = [
 	columnHelper.accessor((row) => row.ownTokens?.total ?? undefined, {
 		id: 'ownTokens',
 		header: 'Own Tokens',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -121,7 +134,10 @@ const bridgedColumns = [
 	columnHelper.accessor((row) => row.thirdParty?.total ?? undefined, {
 		id: 'thirdParty',
 		header: 'Third Party',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',

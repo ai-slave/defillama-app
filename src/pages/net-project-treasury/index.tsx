@@ -5,8 +5,8 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { getNetProjectTreasuryData } from '~/containers/Treasuries/queries'
 import type { INetProjectTreasury } from '~/containers/Treasuries/types'
 import Layout from '~/layout'
-import { formattedNum } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging(`net-project-treasury/index`, async () => {
@@ -73,7 +73,10 @@ const columns = [
 	}),
 	columnHelper.accessor('netTreasury', {
 		header: 'Net Treasury',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end',

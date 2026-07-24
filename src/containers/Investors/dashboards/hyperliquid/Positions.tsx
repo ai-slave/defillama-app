@@ -11,7 +11,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
 import {
 	type HlpData,
@@ -82,7 +82,11 @@ function Pagination<Row>({ table }: { table: Table<Row> }) {
 
 function PnlCell({ value }: { value: number }) {
 	const color = value > 0 ? 'text-success' : value < 0 ? 'text-error' : ''
-	return <span className={color}>{formattedNum(value, true)}</span>
+	return (
+		<span className={color}>
+			{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+		</span>
+	)
 }
 
 function PercentCell({ value }: { value: number }) {
@@ -90,7 +94,12 @@ function PercentCell({ value }: { value: number }) {
 	return (
 		<span className={color}>
 			{value >= 0 ? '+' : ''}
-			{value.toFixed(2)}%
+			{formatPercent(value, {
+				input: 'percent',
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2,
+				useGrouping: false
+			})}
 		</span>
 	)
 }
@@ -116,7 +125,12 @@ function PortfolioTrend({
 				<h3 className="text-sm font-medium text-pro-text-label">Portfolio Trend ({window})</h3>
 				<span className={changePct >= 0 ? 'text-xs text-success' : 'text-xs text-error'}>
 					{changePct >= 0 ? '+' : ''}
-					{changePct.toFixed(2)}%
+					{formatPercent(changePct, {
+						input: 'percent',
+						minimumFractionDigits: 2,
+						maximumFractionDigits: 2,
+						useGrouping: false
+					})}
 				</span>
 			</div>
 			<Suspense fallback={<div className="h-[220px]" />}>
@@ -132,7 +146,9 @@ function PortfolioTrend({
 			</Suspense>
 			<div className="mt-2 flex items-center justify-between text-xs text-pro-text-label">
 				<span>{new Date(points[0].time).toLocaleDateString()}</span>
-				<span>Last: {formattedNum(last, true)}</span>
+				<span>
+					Last: {formatUsd(last, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				</span>
 				<span>{new Date(points[points.length - 1].time).toLocaleDateString()}</span>
 			</div>
 		</div>
@@ -159,21 +175,24 @@ const positionColumns: ColumnDef<HlpPosition>[] = [
 	{
 		header: 'Size',
 		accessorKey: 'size',
-		cell: ({ getValue }) => formattedNum(getValue<number>()),
+		cell: ({ getValue }) =>
+			formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 110
 	},
 	{
 		header: 'Entry',
 		accessorKey: 'entryPx',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 110
 	},
 	{
 		header: 'Pos Value',
 		accessorKey: 'positionValue',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 130
 	},
@@ -203,7 +222,9 @@ const positionColumns: ColumnDef<HlpPosition>[] = [
 		accessorKey: 'liquidationPx',
 		cell: ({ getValue }) => {
 			const value = getValue<number | null>()
-			return value != null ? formattedNum(value, true) : '—'
+			return value != null
+				? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: '—'
 		},
 		meta: { align: 'end' as const },
 		size: 120
@@ -243,14 +264,16 @@ const fillColumns: ColumnDef<HlpFill>[] = [
 	{
 		header: 'Price',
 		accessorKey: 'px',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 110
 	},
 	{
 		header: 'Size',
 		accessorKey: 'sz',
-		cell: ({ getValue }) => formattedNum(getValue<number>()),
+		cell: ({ getValue }) =>
+			formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 90
 	},
@@ -264,7 +287,8 @@ const fillColumns: ColumnDef<HlpFill>[] = [
 	{
 		header: 'Fee',
 		accessorKey: 'fee',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 100
 	},
@@ -308,14 +332,16 @@ const openOrderColumns: ColumnDef<HlpOpenOrder>[] = [
 	{
 		header: 'Price',
 		accessorKey: 'limitPx',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 110
 	},
 	{
 		header: 'Size',
 		accessorKey: 'sz',
-		cell: ({ getValue }) => formattedNum(getValue<number>()),
+		cell: ({ getValue }) =>
+			formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 100
 	},
@@ -393,15 +419,55 @@ export default function Positions() {
 	const kpis = useMemo(() => {
 		const summary = data.summary
 		return {
-			accountValue: summary.accountValue > 0 ? formattedNum(summary.accountValue, true) : '—',
-			totalNtlPos: summary.totalNtlPos > 0 ? formattedNum(summary.totalNtlPos, true) : '—',
-			totalMarginUsed: summary.totalMarginUsed > 0 ? formattedNum(summary.totalMarginUsed, true) : '—',
-			withdrawable: summary.withdrawable > 0 ? formattedNum(summary.withdrawable, true) : '—',
+			accountValue:
+				summary.accountValue > 0
+					? formatUsd(summary.accountValue, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})
+					: '—',
+			totalNtlPos:
+				summary.totalNtlPos > 0
+					? formatUsd(summary.totalNtlPos, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})
+					: '—',
+			totalMarginUsed:
+				summary.totalMarginUsed > 0
+					? formatUsd(summary.totalMarginUsed, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})
+					: '—',
+			withdrawable:
+				summary.withdrawable > 0
+					? formatUsd(summary.withdrawable, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})
+					: '—',
 			positionCount: filteredPositions.length,
-			fundingPnl24h: formattedNum(funding24h.totalUsdc, true),
-			fundingPnl7d: formattedNum(funding7d.totalUsdc, true),
+			fundingPnl24h: formatUsd(funding24h.totalUsdc, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
+			fundingPnl7d: formatUsd(funding7d.totalUsdc, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 			snapshotTime: summary.snapshotTime ? new Date(summary.snapshotTime).toLocaleString() : '—',
-			portfolioVolume: formattedNum(portfolio.volume, true)
+			portfolioVolume: formatUsd(portfolio.volume, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})
 		}
 	}, [data.summary, filteredPositions.length, funding24h.totalUsdc, funding7d.totalUsdc, portfolio.volume])
 
@@ -503,14 +569,16 @@ export default function Positions() {
 						{
 							header: 'Rate',
 							accessorKey: 'fundingRate',
-							cell: ({ getValue }) => `${(getValue<number>() * 100).toFixed(4)}%`,
+							cell: ({ getValue }) =>
+								`${formatPercent(getValue<number>(), { input: 'fraction', minimumFractionDigits: 4, maximumFractionDigits: 4, useGrouping: false })}`,
 							meta: { align: 'end' as const },
 							size: 90
 						},
 						{
 							header: 'Szi',
 							accessorKey: 'szi',
-							cell: ({ getValue }) => formattedNum(getValue<number>()),
+							cell: ({ getValue }) =>
+								formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 							meta: { align: 'end' as const },
 							size: 90
 						},

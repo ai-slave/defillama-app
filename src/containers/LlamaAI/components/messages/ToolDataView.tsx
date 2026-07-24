@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { formatPercent } from '~/utils/numberFormat'
 import { formatCellValue, humanizeColumn, type CitedCell } from './citationPillHelpers'
 
 type ToolDataRenderer = (data: Record<string, any>) => ReactNode | null
@@ -16,7 +17,8 @@ const TOOL_DATA_RENDERERS: Record<string, ToolDataRenderer> = {
 							<span className="text-ai-secondary">
 								{value.topMatch.slug}{' '}
 								<span className="text-ai-muted">
-									({value.topMatch.type}, {Math.round(value.topMatch.confidence * 100)}%)
+									({value.topMatch.type},{' '}
+									{formatPercent(value.topMatch.confidence, { input: 'fraction', maximumFractionDigits: 0 })})
 								</span>
 								{value.matchCount > 1 ? <span className="text-ai-muted"> +{value.matchCount - 1} more</span> : null}
 							</span>

@@ -33,9 +33,9 @@ ORDER BY date DESC
 `
 
 const HACKS_OVER_50M_SQL = `SELECT to_timestamp(date)::TIMESTAMP::DATE AS hack_date,
-       name, amount, technique, targetType, chain
+       name, amountUsd, technique, targetType, chain
 FROM hacks
-WHERE amount  > 50000000
+WHERE amountUsd > 50000000
 ORDER BY date DESC
 LIMIT 50`
 
@@ -377,22 +377,22 @@ Here we bucket incidents by year with \`date_trunc\`, use \`FILTER (WHERE)\` to 
 		seedCell(
 			'sql',
 			`-- Yearly hacks: totals, counts, and biggest-single-incident per year.
--- A CTE upfront coerces amount to DOUBLE once so downstream aggregates stay readable.
+-- A CTE upfront coerces amountUsd to DOUBLE once so downstream aggregates stay readable.
 WITH h AS (
   SELECT date, name,
-         TRY_CAST(amount AS DOUBLE) AS amount
+         TRY_CAST(amountUsd AS DOUBLE) AS amountUsd
   FROM hacks
   WHERE date IS NOT NULL
 )
 SELECT date_trunc('year', to_timestamp(date)::TIMESTAMP)::DATE AS year,
        COUNT(*)                                              AS incidents,
-       SUM(amount)                                           AS total_lost,
-       COUNT(*)    FILTER (WHERE amount >= 100000000)        AS big_hack_count,
-       SUM(amount) FILTER (WHERE amount >= 100000000)        AS big_hack_losses,
-       arg_max(name, amount)                                 AS biggest_incident,
-       MAX(amount)                                           AS biggest_amount
+       SUM(amountUsd)                                        AS total_lost,
+       COUNT(*)       FILTER (WHERE amountUsd >= 100000000)  AS big_hack_count,
+       SUM(amountUsd) FILTER (WHERE amountUsd >= 100000000)  AS big_hack_losses,
+       arg_max(name, amountUsd)                              AS biggest_incident,
+       MAX(amountUsd)                                        AS biggest_amount
 FROM h
-WHERE amount > 0
+WHERE amountUsd > 0
 GROUP BY year
 ORDER BY year`
 		),

@@ -16,7 +16,8 @@ import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type {
 	LiquidationsDistributionChartBreakdownKey,
@@ -136,7 +137,13 @@ function LiquidationsDistributionChartCard({
 						{chartState.tokenTotalUsd != null ? (
 							<span className="body-sm text-secondary">
 								Collateral:{' '}
-								<span className="font-medium text-primary">{formattedNum(chartState.tokenTotalUsd, true)}</span>
+								<span className="font-medium text-primary">
+									{formatUsd(chartState.tokenTotalUsd, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 							</span>
 						) : null}
 					</div>

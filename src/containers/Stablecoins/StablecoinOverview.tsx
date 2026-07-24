@@ -49,8 +49,9 @@ import { Checkbox } from '~/ui/Checkbox'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { capitalizeFirstLetter, formattedNum, slug } from '~/utils'
+import { capitalizeFirstLetter, slug } from '~/utils'
 import { peggedAssetIconUrl } from '~/utils/icons'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { buildStablecoinMarketCapPresentation, prepareStablecoinMarketCapSeries } from './marketCapPresentation'
 import { StablecoinByChainUsageTable } from './StablecoinUsageByChainTable'
@@ -91,7 +92,11 @@ export default function PeggedContainer(props: PeggedAssetPageProps) {
 				cardName={props.peggedAssetData.name}
 				token={props.peggedAssetData.name}
 				logo={peggedAssetIconUrl(props.peggedAssetData.name)}
-				tvl={formattedNum(props.mcap, true)?.toString()}
+				tvl={formatUsd(props.mcap, {
+					compact: true,
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				})?.toString()}
 			/>
 			<PeggedAssetInfo {...props} />
 		</>
@@ -354,18 +359,33 @@ export const PeggedAssetInfo = ({
 
 					<p className="flex flex-col">
 						<span className="label-md text-secondary">Market Cap</span>
-						<span className="min-h-8 mono-xl">{formattedNum(displayedMarketCap ?? '0', true)}</span>
+						<span className="min-h-8 mono-xl">
+							{formatUsd(displayedMarketCap ?? '0', {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						</span>
 					</p>
 
 					<div className="flex flex-col">
 						<p className="flex flex-wrap justify-between gap-4 border-b border-subtle py-1 first:pt-0 last:border-none last:pb-0">
 							<span className="label-md text-secondary">Price</span>
-							<span className="mono-md">{price === null ? '-' : formattedNum(price, true)}</span>
+							<span className="mono-md">
+								{price === null
+									? '-'
+									: formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+							</span>
 						</p>
 						{displayedTotalCirculating != null ? (
 							<p className="flex flex-wrap justify-between gap-4 border-b border-subtle py-1 first:pt-0 last:border-none last:pb-0">
 								<span className="label-md text-secondary">Total Circulating</span>
-								<span className="mono-md">{formattedNum(displayedTotalCirculating)}</span>
+								<span className="mono-md">
+									{formatCompactNumber(displayedTotalCirculating, {
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 							</p>
 						) : null}
 						{unreleased != null && unreleased > 0 ? (
@@ -381,7 +401,9 @@ export const PeggedAssetInfo = ({
 										<QuestionHelper text="Use this option to choose whether to include coins that have been minted but have never been circulating." />
 									</span>
 								</Checkbox>
-								<span className="mono-md">{formattedNum(unreleased)}</span>
+								<span className="mono-md">
+									{formatCompactNumber(unreleased, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+								</span>
 							</div>
 						) : null}
 					</div>

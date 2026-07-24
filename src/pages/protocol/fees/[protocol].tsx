@@ -24,10 +24,11 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Panel } from '~/ui/Panel'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
@@ -239,7 +240,12 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 						<span className="font-bold">{props.name}</span>
 						{props.deprecated ? <DeprecatedProtocolMarker size={16} /> : null}
 					</h1>
-					<KeyMetrics {...props} formatPrice={(value) => formattedNum(value, true)} />
+					<KeyMetrics
+						{...props}
+						formatPrice={(value) =>
+							formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						}
+					/>
 				</Panel>
 				<ChartPanel className="col-span-1 xl:col-[2/-1]">
 					<ChartPanelToolbar className="justify-end">

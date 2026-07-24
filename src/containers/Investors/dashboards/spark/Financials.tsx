@@ -4,6 +4,7 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { formatPercent } from '~/utils/numberFormat'
 import { assignColors } from './api'
 import {
 	AREA_EXPORT,
@@ -187,7 +188,9 @@ function AllocatedAssetsSection({
 												<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
 												<span className="min-w-0 flex-1 truncate text-sm text-pro-text-primary">{entry.name}</span>
 												<span className="shrink-0 text-sm font-semibold text-pro-text-primary">{entry.formatted}</span>
-												<span className="w-12 shrink-0 text-right text-xs text-pro-text-label">{entry.pct}%</span>
+												<span className="w-12 shrink-0 text-right text-xs text-pro-text-label">
+													{formatPercent(entry.pct, { input: 'percent' })}
+												</span>
 											</div>
 											{isOpen && entry.children && (
 												<div className="pb-2 pl-8">
@@ -667,7 +670,9 @@ export default function Financials() {
 											<td className="py-2.5 text-right text-sm font-semibold text-pro-text-primary">
 												{item.formatted}
 											</td>
-											<td className="py-2.5 text-right text-sm text-pro-text-label">{item.pct}%</td>
+											<td className="py-2.5 text-right text-sm text-pro-text-label">
+												{formatPercent(item.pct, { input: 'percent' })}
+											</td>
 										</tr>
 									))}
 								</tbody>

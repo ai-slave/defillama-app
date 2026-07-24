@@ -33,8 +33,9 @@ import {
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
+import { formatUsd } from '~/utils/numberFormat'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 
@@ -106,7 +107,7 @@ export function StablecoinsChartTab({
 				value: chain.name,
 				label: chain.name,
 				logo: chainIconUrl(chain.name),
-				description: formattedNum(chain.tvl, true)
+				description: formatUsd(chain.tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 			})
 		}
 		return options
@@ -117,7 +118,7 @@ export function StablecoinsChartTab({
 			value: asset.name,
 			label: `${asset.name} (${asset.symbol})`,
 			logo: asset.geckoId ? tokenIconUrl(asset.geckoId) : undefined,
-			description: formattedNum(asset.mcap, true),
+			description: formatUsd(asset.mcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 			extra: slug(asset.name)
 		}))
 	}, [assetsList])
@@ -526,13 +527,25 @@ export function StablecoinsChartTab({
 					{stablecoinMode === 'chain' && totalMcapCurrent !== null ? (
 						<p>
 							Total Market Cap:{' '}
-							<span className="font-semibold text-pro-text-primary">{formattedNum(totalMcapCurrent, true)}</span>
+							<span className="font-semibold text-pro-text-primary">
+								{formatUsd(totalMcapCurrent, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+							</span>
 						</p>
 					) : null}
 					{stablecoinMode === 'asset' && totalCirculating !== null ? (
 						<p>
 							Total Circulating:{' '}
-							<span className="font-semibold text-pro-text-primary">{formattedNum(totalCirculating, true)}</span>
+							<span className="font-semibold text-pro-text-primary">
+								{formatUsd(totalCirculating, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+							</span>
 						</p>
 					) : null}
 				</div>

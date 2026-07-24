@@ -16,6 +16,7 @@ import { nestedMenuActionStyles } from '~/ui/Popover'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { fetchJson } from '~/utils/async'
+import { formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { DeferredPaginatedYieldsPoolTable } from './deferred/DeferredPaginatedYieldsPoolTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
@@ -148,7 +149,9 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 			? hasPartialData && !hasActiveFilters
 				? `Showing ${filteredStats.noOfPoolsTracked} of ${totalRowCount} ${totalRowCount > 1 ? 'pools' : 'pool'}`
 				: `Tracking ${filteredStats.noOfPoolsTracked} ${filteredStats.noOfPoolsTracked > 1 ? 'pools' : 'pool'}${
-						filteredStats.averageAPY != null ? `, average APY ${filteredStats.averageAPY.toFixed(2)}%` : ''
+						filteredStats.averageAPY != null
+							? `, average APY ${formatPercent(filteredStats.averageAPY, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+							: ''
 					}`
 			: null
 

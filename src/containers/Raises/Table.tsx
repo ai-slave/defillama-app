@@ -22,11 +22,11 @@ import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, toNiceDayMonthYear } from '~/utils'
-import type { IRaise } from './types'
-import { formatRaiseAmount } from './utils'
+import { toNiceDayMonthYear } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
+import type { Raise } from './model'
 
-const columnHelper = createColumnHelper<IRaise>()
+const columnHelper = createColumnHelper<Raise>()
 
 export const raisesColumns = [
 	columnHelper.accessor('name', {
@@ -43,10 +43,13 @@ export const raisesColumns = [
 		header: 'Date',
 		cell: (info) => toNiceDayMonthYear(info.getValue())
 	}),
-	columnHelper.accessor((row) => formatRaiseAmount(row.amount), {
+	columnHelper.accessor('amountUsd', {
 		id: 'amount',
 		header: 'Amount Raised',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[140px]'
 		}
@@ -82,10 +85,13 @@ export const raisesColumns = [
 		enableSorting: false,
 		cell: (info) => <Tooltip content={info.getValue().join(', ')}>{info.getValue().join(', ')}</Tooltip>
 	}),
-	columnHelper.accessor((row) => formatRaiseAmount(row.valuation), {
+	columnHelper.accessor('valuationUsd', {
 		id: 'valuation',
 		header: 'Valuation',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[100px]'
 		}
@@ -135,7 +141,7 @@ export const raisesColumnOrders: ColumnOrdersByBreakpoint = {
 	]
 }
 
-const prepareRaisesCsv = (instance: Table<IRaise>) => {
+const prepareRaisesCsv = (instance: Table<Raise>) => {
 	const csv = prepareTableCsv({ instance, filename: 'raises' })
 	if (csv.rows.length === 0) return csv
 
@@ -165,7 +171,7 @@ const prepareRaisesCsv = (instance: Table<IRaise>) => {
 	}
 }
 
-export function RaisesTable({ raises }: { raises: IRaise[] }) {
+export function RaisesTable({ raises }: { raises: Raise[] }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ desc: true, id: 'date' }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])

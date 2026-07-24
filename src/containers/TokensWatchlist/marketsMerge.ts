@@ -1,11 +1,11 @@
 import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import type { TokensTableRow } from '~/containers/Tokens/types'
-import { abbreviateNumber } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 
 type MarketsListEntry = TokenMarketsListResponse['tokens'][number]
 
 const currencyDisplay = (value: number | null): string | null =>
-	value == null ? null : abbreviateNumber(value, null, '$')!
+	value == null ? null : formatUsd(value, { compact: true })
 
 // Mirrors the server-side sumSegments: perps metrics are the sum of the linear + inverse perp segments.
 function sumPerpSegments(entry: MarketsListEntry, key: 'volume_24h' | 'oi_usd'): number | null {

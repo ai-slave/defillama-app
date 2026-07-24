@@ -14,7 +14,7 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, Char
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { IDATOverviewDataByAssetProps } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -53,13 +53,20 @@ export function DATByAsset({
 						<MetricRow label="Total Institution" value={metadata.companies} />
 						<MetricRow
 							label="Total Holdings"
-							value={`${formattedNum(metadata.totalAmount, false)} ${metadata.ticker}`}
+							value={`${formatCompactNumber(metadata.totalAmount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${metadata.ticker}`}
 						/>
-						<MetricRow label="Total USD Value" value={formattedNum(metadata.totalUsdValue, true)} />
+						<MetricRow
+							label="Total USD Value"
+							value={formatUsd(metadata.totalUsdValue, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						/>
 						{metadata.circSupplyPerc != null ? (
 							<MetricRow
 								label={`% of ${metadata.ticker} Circulating Supply`}
-								value={`${metadata.circSupplyPerc.toLocaleString(undefined, { maximumFractionDigits: 3 })}%`}
+								value={formatPercent(metadata.circSupplyPerc, { input: 'percent', maximumFractionDigits: 3 })}
 							/>
 						) : null}
 					</div>
@@ -151,7 +158,9 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 			cell: ({ getValue }) => {
 				const totalAssetAmount = getValue()
 				if (totalAssetAmount == null) return null
-				return <>{`${formattedNum(totalAssetAmount, false)} ${symbol}`}</>
+				return (
+					<>{`${formatCompactNumber(totalAssetAmount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${symbol}`}</>
+				)
 			},
 			meta: {
 				headerClassName: 'w-[120px]',
@@ -164,7 +173,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 			cell: ({ getValue }) => {
 				const usdValue = getValue()
 				if (usdValue == null) return null
-				return <>{formattedNum(usdValue, true)}</>
+				return <>{formatUsd(usdValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 			},
 			meta: {
 				headerClassName: 'w-[min(196px,40vw)]',
@@ -177,7 +186,8 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				const price = getValue()
 				if (price == null) return null
 				const priceChange24h = row.original.priceChange24h
-				if (priceChange24h == null) return <>{formattedNum(price, true)}</>
+				if (priceChange24h == null)
+					return <>{formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 				return (
 					<Tooltip
 						content={
@@ -185,12 +195,12 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 								24h change:{' '}
 								<span
 									className={priceChange24h > 0 ? 'text-data-up' : priceChange24h < 0 ? 'text-data-down' : ''}
-								>{`${priceChange24h > 0 ? '+' : ''}${priceChange24h.toFixed(2)}%`}</span>
+								>{`${priceChange24h > 0 ? '+' : ''}${formatPercent(priceChange24h, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}</span>
 							</>
 						}
 						className="justify-end underline decoration-dotted"
 					>
-						{formattedNum(price, true)}
+						{formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 					</Tooltip>
 				)
 			},
@@ -205,7 +215,16 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 			cell: ({ getValue }) => {
 				const supplyPercentage = getValue()
 				if (supplyPercentage == null) return null
-				return <>{formattedNum(supplyPercentage, false)}%</>
+				return (
+					<>
+						{formatPercent(supplyPercentage, {
+							input: 'percent',
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					</>
+				)
 			},
 			meta: {
 				headerClassName: 'w-[min(228px,40vw)]',
@@ -217,7 +236,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 			cell: ({ getValue }) => {
 				const realized_mNAV = getValue()
 				if (realized_mNAV == null) return null
-				return <>{formattedNum(realized_mNAV, false)}</>
+				return <>{formatCompactNumber(realized_mNAV, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 			},
 			meta: {
 				headerClassName: 'w-[140px]',
@@ -231,7 +250,9 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 			cell: ({ getValue }) => {
 				const realistic_mNAV = getValue()
 				if (realistic_mNAV == null) return null
-				return <>{formattedNum(realistic_mNAV, false)}</>
+				return (
+					<>{formatCompactNumber(realistic_mNAV, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
+				)
 			},
 			meta: {
 				headerClassName: 'w-[140px]',
@@ -245,7 +266,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 			cell: ({ getValue }) => {
 				const max_mNAV = getValue()
 				if (max_mNAV == null) return null
-				return <>{formattedNum(max_mNAV, false)}</>
+				return <>{formatCompactNumber(max_mNAV, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 			},
 			meta: {
 				headerClassName: 'w-[120px]',
@@ -260,7 +281,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 			cell: ({ getValue }) => {
 				const avgPrice = getValue()
 				if (avgPrice == null) return null
-				return <>{formattedNum(avgPrice, true)}</>
+				return <>{formatUsd(avgPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 			},
 			meta: {
 				headerClassName: 'w-[168px]',

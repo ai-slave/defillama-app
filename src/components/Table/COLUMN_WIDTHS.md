@@ -137,8 +137,8 @@ function width({ label, body, sortable = true }) {
 // width({ label: 'Market Cap', body: '$999.99B' }) → 121
 ```
 
-`abbreviateNumber(value, 2, symbol)` (the usual cell formatter) caps at ~4 significant
-digits, so worst-case strings are short: `$999.99B`, `-$999.99B`, `-99.99%`, `999.99B`.
+The canonical compact formatters cap K/M values at two decimal places and B/T values at three,
+so representative worst-case strings stay short: `$999.99M`, `-$999.999B`, `-99.99%`, `999.999B`.
 
 ## Text columns: widen vs. ellipsis
 

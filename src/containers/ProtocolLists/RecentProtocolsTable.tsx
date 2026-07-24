@@ -32,7 +32,8 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Switch } from '~/ui/Switch'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug, toNiceDaysAgo } from '~/utils'
+import { slug, toNiceDaysAgo } from '~/utils'
+import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { IRecentProtocol } from './types'
 
@@ -323,7 +324,7 @@ const protocolsColumns = [
 	}),
 	columnHelper.accessor('mcaptvl', {
 		header: 'Mcap/TVL',
-		cell: (info) => <>{info.getValue() ?? null}</>,
+		cell: (info) => <>{formatRatio(info.getValue())}</>,
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end',
@@ -374,7 +375,13 @@ function ProtocolTvlCell({ value, rowValues }: { value: unknown; rowValues: Prot
 	}
 
 	if (!text && !rowValues.parentExcluded) {
-		return <>{tvlValue != null ? formattedNum(tvlValue, true) : null}</>
+		return (
+			<>
+				{tvlValue != null
+					? formatUsd(tvlValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: null}
+			</>
+		)
 	}
 
 	return (
@@ -390,7 +397,9 @@ function ProtocolTvlCell({ value, rowValues }: { value: unknown; rowValues: Prot
 					color: rowValues.strikeTvl ? 'var(--color-tertiary)' : 'inherit'
 				}}
 			>
-				{tvlValue != null ? formattedNum(tvlValue, true) : null}
+				{tvlValue != null
+					? formatUsd(tvlValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: null}
 			</span>
 		</span>
 	)
@@ -420,7 +429,13 @@ const airdropsColumns = [
 		header: 'Total Money Raised',
 		cell: ({ getValue }) => {
 			const totalRaised = getValue()
-			return <>{totalRaised != null ? formattedNum(totalRaised, true) : ''}</>
+			return (
+				<>
+					{totalRaised != null
+						? formatUsd(totalRaised, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: ''}
+				</>
+			)
 		},
 		meta: {
 			headerClassName: 'w-[168px]',

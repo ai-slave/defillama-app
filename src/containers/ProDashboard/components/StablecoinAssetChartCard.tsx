@@ -18,8 +18,9 @@ import {
 } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { LocalLoader } from '~/ui/Loaders'
-import { formattedNum, toNiceCsvDate } from '~/utils'
+import { toNiceCsvDate } from '~/utils'
 import { download } from '~/utils/download'
+import { formatUsd } from '~/utils/numberFormat'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { getTimePeriodBounds } from '../queries'
@@ -364,7 +365,11 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 					<p className="flex flex-col">
 						<span className="text-[10px] text-pro-text-tertiary uppercase">Total Circulating</span>
 						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
-							{formattedNum(latestCirculating, true)}
+							{formatUsd(latestCirculating, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 						</span>
 					</p>
 				</div>

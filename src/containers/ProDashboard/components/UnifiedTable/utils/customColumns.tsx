@@ -2,7 +2,7 @@ import type { ColumnDef, Row } from '@tanstack/react-table'
 import { Parser } from 'expr-eval'
 import type { ChainMetrics } from '~/containers/ProDashboard/server/unifiedTable/protocols'
 import { PercentChange } from '~/ui/PercentChange'
-import { formattedNum } from '~/utils'
+import { formatRatio, formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { CustomColumnDefinition } from '../../../types'
 import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '../config/ColumnDictionary'
 import { getChainMetricsByName } from '../core/chainMetricsStore'
@@ -43,12 +43,20 @@ const renderDash = () => <span className="text-pro-text-tertiary">-</span>
 
 const renderUsd = (value: number | null | undefined) => {
 	if (value == null) return renderDash()
-	return <span className="text-pro-text-secondary">{formattedNum(value, true)}</span>
+	return (
+		<span className="text-pro-text-secondary">
+			{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+		</span>
+	)
 }
 
 const renderNumber = (value: number | null | undefined) => {
 	if (value == null) return renderDash()
-	return <span className="text-pro-text-secondary">{formattedNum(value, false)}</span>
+	return (
+		<span className="text-pro-text-secondary">
+			{formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+		</span>
+	)
 }
 
 const renderPercent = (value: number | null | undefined) => {
@@ -62,7 +70,9 @@ const renderPercent = (value: number | null | undefined) => {
 
 const renderRatio = (value: number | null | undefined) => {
 	if (value == null) return renderDash()
-	return <span className="text-pro-text-secondary">{`${formattedNum(value, false)}x`}</span>
+	return (
+		<span className="text-pro-text-secondary">{`${formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}x`}</span>
+	)
 }
 
 const numericSorting = (a: number | null | undefined, b: number | null | undefined) => {
@@ -430,26 +440,19 @@ export function formatPreviewNumber(
 	if (value == null) return '-'
 
 	if (format === 'percent') {
-		return `${value.toFixed(2)}%`
+		return `${formatPercent(value, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 	}
 
 	if (format === 'ratio') {
-		return `${value.toFixed(2)}x`
+		return `${formatRatio(value)}x`
 	}
 
-	const prefix = format === 'usd' ? '$' : ''
-
-	if (Math.abs(value) >= 1e9) {
-		return `${prefix}${(value / 1e9).toFixed(2)}B`
-	} else if (Math.abs(value) >= 1e6) {
-		return `${prefix}${(value / 1e6).toFixed(2)}M`
-	} else if (Math.abs(value) >= 1e3) {
-		return `${prefix}${(value / 1e3).toFixed(2)}K`
-	} else if (Math.abs(value) < 1 && value !== 0) {
-		return `${prefix}${value.toFixed(4)}`
-	} else {
-		return `${prefix}${value.toFixed(2)}`
+	const fractionDigits = Math.abs(value) < 1 && value !== 0 ? 4 : 2
+	const precision = {
+		minimumFractionDigits: fractionDigits,
+		maximumFractionDigits: fractionDigits
 	}
+	return format === 'usd' ? formatUsd(value, { compact: true, ...precision }) : formatCompactNumber(value, precision)
 }
 
 export function getDefaultAggregation(expression: string): CustomColumnDefinition['aggregation'] {

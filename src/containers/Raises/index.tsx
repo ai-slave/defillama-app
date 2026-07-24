@@ -5,17 +5,17 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { RaisesFilters } from '~/containers/Raises/Filters'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { useRaisesData } from './hooks'
+import type { Raise } from './model'
 import { RaisesTable } from './Table'
-import type { IRaise } from './types'
 
 const MultiSeriesChart = React.lazy(
 	() => import('~/components/ECharts/MultiSeriesChart')
 ) as React.FC<IMultiSeriesChartProps>
 
 interface RaisesContainerProps {
-	raises: IRaise[]
+	raises: Raise[]
 	investors: string[]
 	rounds: string[]
 	sectors: string[]
@@ -81,7 +81,14 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 			<SummaryCardGrid>
 				<SummaryStatsCard padding="sm">
 					<StatItem label="Total Funding Rounds" value={filteredRaisesList.length} />
-					<StatItem label="Total Funding Amount" value={`$${formattedNum(totalAmountRaised)}`} />
+					<StatItem
+						label="Total Funding Amount"
+						value={formatUsd(totalAmountRaised, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
 				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-2">

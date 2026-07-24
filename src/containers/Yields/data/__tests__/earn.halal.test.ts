@@ -12,7 +12,7 @@ vi.mock('../snapshot', async (importOriginal) => ({
 	readYieldsExploits: () => Promise.resolve([])
 }))
 vi.mock('../server/raiseValuations', () => ({
-	getRaiseValuations: () => Promise.resolve(new Map<string, number>()),
+	getRaiseValuationsUsd: () => Promise.resolve(new Map<string, number>()),
 	getReferralUrls: () => Promise.resolve(new Map<string, string>())
 }))
 

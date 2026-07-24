@@ -25,6 +25,7 @@ import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
+import { formatNumber, roundNumber } from '~/utils/numberFormat'
 import type { ICollectionScatterChartProps } from './types'
 
 echarts.use([
@@ -136,7 +137,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 						params.seriesName +
 						':' +
 						'&nbsp;&nbsp;' +
-						amount.toFixed(2) +
+						formatNumber(amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
 						'&nbsp;' +
 						'ETH' +
 						'</li>'
@@ -197,7 +198,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 					type: 'value',
 					min: 'dataMin',
 					axisLabel: {
-						formatter: (value: number) => Number(value.toFixed(2)) + ' ETH',
+						formatter: (value: number) => roundNumber(value, 2) + ' ETH',
 						color: chartTheme.text
 					},
 					axisLine: {
@@ -267,12 +268,16 @@ export function findClosestChartValue(
 		else high = middle
 	}
 
-	if (low === 0) return rows[0][1].toFixed(2)
-	if (low === rows.length) return rows[rows.length - 1][1].toFixed(2)
+	if (low === 0) return formatNumber(rows[0][1], { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+	if (low === rows.length)
+		return formatNumber(rows[rows.length - 1][1], { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 	const previous = rows[low - 1]
 	const next = rows[low]
 	const previousDistance = targetMs - previous[0] * timestampMultiplier
 	const nextDistance = next[0] * timestampMultiplier - targetMs
-	return (previousDistance <= nextDistance ? previous[1] : next[1]).toFixed(2)
+	return formatNumber(previousDistance <= nextDistance ? previous[1] : next[1], {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	})
 }

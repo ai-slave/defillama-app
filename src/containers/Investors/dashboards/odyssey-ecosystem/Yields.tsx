@@ -1,3 +1,4 @@
+import { formatPercent } from '~/utils/numberFormat'
 import { useYieldsData } from './api'
 import { KpiCard, ChartCard, SectionHeader, SimpleTable } from './ui'
 
@@ -33,7 +34,8 @@ export default function Yields() {
 							key: 'maxApyPct',
 							label: 'Max APY',
 							right: true,
-							render: (r) => `${(r.maxApyPct ?? r.netApyPct ?? 0).toFixed(2)}%`
+							render: (r) =>
+								`${formatPercent(r.maxApyPct ?? r.netApyPct ?? 0, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 						}
 					]}
 				/>
@@ -52,19 +54,22 @@ export default function Yields() {
 							key: 'underlyingApyPct',
 							label: 'Underlying APY',
 							right: true,
-							render: (r) => `${(r.underlyingApyPct ?? r.collateralApyPct ?? 0).toFixed(2)}%`
+							render: (r) =>
+								`${formatPercent(r.underlyingApyPct ?? r.collateralApyPct ?? 0, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 						},
 						{
 							key: 'borrowApyPct',
 							label: 'Borrow APY',
 							right: true,
-							render: (r) => `${(r.borrowApyPct ?? 0).toFixed(2)}%`
+							render: (r) =>
+								`${formatPercent(r.borrowApyPct ?? 0, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 						},
 						{
 							key: 'maxApyPct',
 							label: 'Max APY',
 							right: true,
-							render: (r) => `${(r.maxApyPct ?? r.netApyPct ?? 0).toFixed(2)}%`
+							render: (r) =>
+								`${formatPercent(r.maxApyPct ?? r.netApyPct ?? 0, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 						}
 					]}
 				/>
@@ -79,7 +84,13 @@ export default function Yields() {
 						{ key: 'chain', label: 'Chain' },
 						{ key: 'asset', label: 'Asset' },
 						{ key: 'tvl', label: 'TVL', right: true },
-						{ key: 'netApyPct', label: 'Net APY', right: true, render: (r) => `${(r.netApyPct ?? 0).toFixed(2)}%` }
+						{
+							key: 'netApyPct',
+							label: 'Net APY',
+							right: true,
+							render: (r) =>
+								`${formatPercent(r.netApyPct ?? 0, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+						}
 					]}
 				/>
 			</ChartCard>
@@ -92,7 +103,13 @@ export default function Yields() {
 							rows={venue.pools}
 							cols={[
 								{ key: 'pool', label: 'Pool' },
-								{ key: 'latestApy', label: 'APY', right: true, render: (r) => `${(r.latestApy ?? 0).toFixed(2)}%` }
+								{
+									key: 'latestApy',
+									label: 'APY',
+									right: true,
+									render: (r) =>
+										`${formatPercent(r.latestApy ?? 0, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+								}
 							]}
 						/>
 					</ChartCard>

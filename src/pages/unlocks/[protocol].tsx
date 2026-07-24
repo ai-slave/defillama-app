@@ -8,9 +8,10 @@ import {
 	getProtocolUnlocksStaticPropsData
 } from '~/containers/Unlocks/protocolUnlocksStaticProps'
 import Layout from '~/layout'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
@@ -105,7 +106,11 @@ export default function Protocol({
 				unlockPage={true}
 				cardName={emissions.name}
 				logo={tokenIconUrl(emissions.name)}
-				unlockAmount={`$${formattedNum(totalUnlockValue)}`}
+				unlockAmount={formatUsd(totalUnlockValue, {
+					compact: true,
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				})}
 				tvl={noUpcomingEvent ? 'No Events' : eventCountdown}
 			/>
 			<EmissionsByProtocol

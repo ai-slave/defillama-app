@@ -16,7 +16,7 @@ import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TabLink } from '~/ui/Tab'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { fetchTokenMarkets } from './api'
 import { DeferredPairTable } from './deferred/DeferredPairTable'
 
@@ -165,16 +165,35 @@ function HeaderStrip({ rows, totals, showOi }: { rows: MarketPair[]; totals: Mar
 
 	return (
 		<MetricStatStrip>
-			<MetricStat label="Pairs" value={formattedNum(totals.pair_count)} />
+			<MetricStat
+				label="Pairs"
+				value={formatCompactNumber(totals.pair_count, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+			/>
 			<MetricStat
 				label="24h Volume"
-				value={totals.total_volume_24h == null ? '–' : formattedNum(totals.total_volume_24h, true)}
+				value={
+					totals.total_volume_24h == null
+						? '–'
+						: formatUsd(totals.total_volume_24h, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})
+				}
 				sub={<MaterialChangeCell current={metrics.volume} previous={metrics.volumePrev} />}
 			/>
 			{showOi ? (
 				<MetricStat
 					label="Open Interest"
-					value={totals.total_oi_usd == null ? '–' : formattedNum(totals.total_oi_usd, true)}
+					value={
+						totals.total_oi_usd == null
+							? '–'
+							: formatUsd(totals.total_oi_usd, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+					}
 					sub={<MaterialChangeCell current={metrics.oi} previous={metrics.oiPrev} />}
 				/>
 			) : null}

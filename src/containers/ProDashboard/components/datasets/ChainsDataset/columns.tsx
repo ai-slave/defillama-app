@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { TokenLogo } from '~/components/TokenLogo'
 import { PercentChange } from '~/ui/PercentChange'
-import { formattedNum } from '~/utils'
+import { formatRatio, formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 
 export const chainsDatasetColumns: ColumnDef<any>[] = [
 	{
@@ -35,7 +35,11 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 130,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-primary">{value ? formattedNum(value) : ''}</span>
+			return (
+				<span className="text-pro-text-primary">
+					{value ? formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }) : ''}
+				</span>
+			)
 		}
 	},
 	{
@@ -81,7 +85,11 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		header: 'DeFi TVL',
 		accessorKey: 'tvl',
 		size: 140,
-		cell: ({ getValue }) => <span className="text-pro-text-primary">{formattedNum(getValue() as number, true)}</span>
+		cell: ({ getValue }) => (
+			<span className="text-pro-text-primary">
+				{formatUsd(getValue() as number, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+			</span>
+		)
 	},
 	{
 		header: 'Bridged TVL',
@@ -89,7 +97,13 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 120,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
+			return (
+				<span className="text-pro-text-secondary">
+					{value
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: '-'}
+				</span>
+			)
 		}
 	},
 	{
@@ -98,7 +112,13 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 120,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
+			return (
+				<span className="text-pro-text-secondary">
+					{value
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: '-'}
+				</span>
+			)
 		}
 	},
 	{
@@ -107,7 +127,13 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 150,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
+			return (
+				<span className="text-pro-text-secondary">
+					{value
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: '-'}
+				</span>
+			)
 		}
 	},
 	{
@@ -116,7 +142,13 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 150,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
+			return (
+				<span className="text-pro-text-secondary">
+					{value
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: '-'}
+				</span>
+			)
 		}
 	},
 	{
@@ -125,7 +157,13 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 130,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
+			return (
+				<span className="text-pro-text-secondary">
+					{value
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: '-'}
+				</span>
+			)
 		}
 	},
 	{
@@ -134,7 +172,13 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 130,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
+			return (
+				<span className="text-pro-text-secondary">
+					{value
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: '-'}
+				</span>
+			)
 		}
 	},
 	{
@@ -143,7 +187,13 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 120,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
+			return (
+				<span className="text-pro-text-secondary">
+					{value
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: '-'}
+				</span>
+			)
 		}
 	},
 	{
@@ -152,7 +202,13 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 140,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
+			return (
+				<span className="text-pro-text-secondary">
+					{value
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: '-'}
+				</span>
+			)
 		}
 	},
 	{
@@ -161,7 +217,13 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 140,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
+			return (
+				<span className="text-pro-text-secondary">
+					{value
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: '-'}
+				</span>
+			)
 		}
 	},
 	{
@@ -170,7 +232,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 120,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? value.toFixed(2) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formatRatio(value) : '-'}</span>
 		}
 	},
 	{
@@ -179,7 +241,13 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 140,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
+			return (
+				<span className="text-pro-text-secondary">
+					{value
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: '-'}
+				</span>
+			)
 		}
 	},
 	{
@@ -188,7 +256,13 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 120,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
+			return (
+				<span className="text-pro-text-secondary">
+					{value
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: '-'}
+				</span>
+			)
 		}
 	}
 ]

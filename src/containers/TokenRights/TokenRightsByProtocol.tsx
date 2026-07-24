@@ -1,13 +1,12 @@
 import { useState, type ReactNode } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
-import type { IProtocolRaise } from '~/containers/ProtocolOverview/api.types'
-import { formatRaiseAmount } from '~/containers/Raises/utils'
+import type { Raise } from '~/containers/Raises/model'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
 import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { TokenRightsPieChart } from './TokenRightsPieChart'
 import type { ITokenRightsData, ITokenRightsParsedLink, ITokenRightsTokenDisplay } from './types'
 import { formatFeeSwitchStatus, getEquityPieTone, getTokenRightsPrimaryValueLabel } from './utils'
@@ -49,7 +48,7 @@ interface TokenRightsByProtocolProps {
 	name: string
 	symbol: string | null
 	tokenRightsData: ITokenRightsData
-	raises: IProtocolRaise[] | null
+	raises: Raise[] | null
 	showHeader?: boolean
 	headerVariant?: 'protocol' | 'embedded'
 	initialView?: TokenRightsView
@@ -726,8 +725,8 @@ function RightsRow({
 	)
 }
 
-function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: IProtocolRaise[] }) {
-	const totalAmount = raises.reduce((sum, r) => sum + (r.amount || 0), 0)
+function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Raise[] }) {
+	const totalAmountUsd = raises.reduce((sum, raise) => sum + (raise.amountUsd ?? 0), 0)
 
 	return (
 		<div className="flex flex-col gap-2">
@@ -740,7 +739,13 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: IP
 					<h3 className="label-md">Raise History</h3>
 				)}
 				<span className="label-sm text-secondary">
-					{raises.length} round{raises.length !== 1 ? 's' : ''} · {formattedNum(totalAmount * 1_000_000, true)} total
+					{raises.length} round{raises.length !== 1 ? 's' : ''} ·{' '}
+					{formatUsd(totalAmountUsd, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}{' '}
+					total
 				</span>
 			</div>
 			<div className="overflow-x-auto">
@@ -756,7 +761,6 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: IP
 					</thead>
 					<tbody>
 						{raises.map((r, i) => {
-							const valuation = formatRaiseAmount(r.valuation)
 							return (
 								<tr key={`${r.date}-${r.round}-${i}`} className="border-b border-subtle last:border-0">
 									<td className="py-2.5 pr-4 whitespace-nowrap">
@@ -769,11 +773,23 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: IP
 											: '—'}
 									</td>
 									<td className="py-2.5 pr-4 text-right whitespace-nowrap">
-										{r.amount ? formattedNum(r.amount * 1_000_000, true) : '—'}
+										{r.amountUsd
+											? formatUsd(r.amountUsd, {
+													compact: true,
+													minimumCompactValue: 1_000_000,
+													compactSuffix: 'lowercase'
+												})
+											: '—'}
 									</td>
 									<td className="py-2.5 pr-4 whitespace-nowrap">{r.round || '—'}</td>
 									<td className="py-2.5 pr-4 text-right whitespace-nowrap">
-										{valuation != null ? formattedNum(valuation, true) : '—'}
+										{r.valuationUsd != null
+											? formatUsd(r.valuationUsd, {
+													compact: true,
+													minimumCompactValue: 1_000_000,
+													compactSuffix: 'lowercase'
+												})
+											: '—'}
 									</td>
 									<td className="py-2.5">
 										{r.source ? (

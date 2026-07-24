@@ -2,7 +2,7 @@ import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/rea
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { useAaveGHOReserve, useAaveMarkets, useAaveAPYHistory, num, pct } from './api'
 import type { TimeWindow } from './api'
 import {
@@ -54,21 +54,24 @@ const ghoMarketColumns: ColumnDef<GHOMarketRow>[] = [
 	{
 		header: 'Market Size',
 		accessorKey: 'sizeUsd',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 140
 	},
 	{
 		header: 'Total Borrowed',
 		accessorKey: 'totalBorrowedUsd',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 140
 	},
 	{
 		header: 'Available Liquidity',
 		accessorKey: 'availableLiquidityUsd',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 150
 	},
@@ -155,16 +158,38 @@ export default function GHO() {
 		if (!reserve) return null
 		const bi = reserve.borrowInfo
 		return {
-			totalSize: aggregated ? formattedNum(aggregated.totalSize, true) : formattedNum(num(reserve.size?.usd), true),
+			totalSize: aggregated
+				? formatUsd(aggregated.totalSize, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: formatUsd(num(reserve.size?.usd), {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
 			totalBorrowed: aggregated
-				? formattedNum(aggregated.totalBorrowed, true)
-				: formattedNum(num(bi?.total?.usd), true),
+				? formatUsd(aggregated.totalBorrowed, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})
+				: formatUsd(num(bi?.total?.usd), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 			availableLiquidity: aggregated
-				? formattedNum(aggregated.totalLiquidity, true)
-				: formattedNum(num(bi?.availableLiquidity?.usd), true),
+				? formatUsd(aggregated.totalLiquidity, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})
+				: formatUsd(num(bi?.availableLiquidity?.usd), {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
 			borrowApy: formatPct(pct(bi?.apy?.value)),
 			utilization: formatPct(pct(bi?.utilizationRate?.value)),
-			borrowCap: formattedNum(num(bi?.borrowCap?.usd), true),
+			borrowCap: formatUsd(num(bi?.borrowCap?.usd), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 			markets: aggregated?.marketsCount ?? 1
 		}
 	}, [reserve, aggregated])

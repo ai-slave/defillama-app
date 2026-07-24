@@ -8,8 +8,8 @@ import { getChainsByREVPageData } from '~/containers/AdapterMetrics/queries'
 import type { IChainsByREVPageData } from '~/containers/AdapterMetrics/types'
 import Layout from '~/layout'
 import { definitions } from '~/public/definitions'
-import { formattedNum } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 
 const adapterType = ADAPTER_TYPES.FEES
@@ -84,7 +84,10 @@ const columns = [
 	}),
 	columnHelper.accessor('total24h', {
 		header: 'REV 24h',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'center',
@@ -93,7 +96,10 @@ const columns = [
 	}),
 	columnHelper.accessor('total30d', {
 		header: 'REV 30d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'center',

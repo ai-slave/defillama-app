@@ -7,7 +7,7 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import type { LiquidationPosition, OverviewChainRow, OverviewProtocolRow, ProtocolChainRow } from './api.types'
 import { LiquidationsExplorerProvider, LiquidationsOwnerLink } from './OwnerLink'
 
@@ -78,7 +78,8 @@ const protocolColumns = [
 	protocolColumnHelper.accessor((row) => row.totalCollateralUsd ?? undefined, {
 		id: 'totalCollateralUsd',
 		header: 'Collateral USD',
-		cell: ({ getValue }) => formattedNum(getValue(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[145px]',
 			align: 'end'
@@ -131,7 +132,8 @@ const overviewChainColumns = [
 	overviewChainColumnHelper.accessor((row) => row.totalCollateralUsd ?? undefined, {
 		id: 'totalCollateralUsd',
 		header: 'Collateral USD',
-		cell: ({ getValue }) => formattedNum(getValue(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[145px]',
 			align: 'end'
@@ -181,7 +183,8 @@ const protocolChainColumns = [
 	protocolChainColumnHelper.accessor((row) => row.totalCollateralUsd ?? undefined, {
 		id: 'totalCollateralUsd',
 		header: 'Collateral USD',
-		cell: ({ getValue }) => formattedNum(getValue(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[145px]',
 			align: 'end'
@@ -252,7 +255,8 @@ const positionColumns = [
 	positionColumnHelper.accessor((row) => row.collateralAmountUsd ?? undefined, {
 		id: 'collateralAmountUsd',
 		header: 'Collateral USD',
-		cell: ({ getValue }) => formattedNum(getValue(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[145px]',
 			align: 'end'
@@ -261,7 +265,8 @@ const positionColumns = [
 	positionColumnHelper.accessor((row) => row.collateralAmount ?? undefined, {
 		id: 'collateralAmount',
 		header: 'Raw Amount',
-		cell: ({ getValue }) => formattedNum(getValue()),
+		cell: ({ getValue }) =>
+			formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end'
@@ -270,7 +275,8 @@ const positionColumns = [
 	positionColumnHelper.accessor((row) => row.liqPrice ?? undefined, {
 		id: 'liqPrice',
 		header: 'Liquidation Price',
-		cell: ({ getValue }) => formattedNum(getValue(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end'

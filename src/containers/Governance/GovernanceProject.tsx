@@ -6,7 +6,7 @@ import { GovernanceTable } from '~/containers/Governance/GovernanceTable'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
-import { formattedNum } from '~/utils'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import type { GovernanceDataEntry, GovernanceType } from './types'
 
 const MultiSeriesChart = React.lazy(
@@ -116,10 +116,22 @@ export default function GovernanceProject({
 		governanceStatItems.push({ label: 'Successful (30d)', value: data.stats.successfulProposalsInLast30Days })
 	}
 	if (data?.stats?.highestTotalScore != null) {
-		governanceStatItems.push({ label: 'Max Total Votes', value: formattedNum(data.stats.highestTotalScore) })
+		governanceStatItems.push({
+			label: 'Max Total Votes',
+			value: formatCompactNumber(data.stats.highestTotalScore, {
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})
+		})
 	}
 	if (data?.metadata?.followersCount != null) {
-		governanceStatItems.push({ label: 'Followers', value: formattedNum(data.metadata.followersCount) })
+		governanceStatItems.push({
+			label: 'Followers',
+			value: formatCompactNumber(data.metadata.followersCount, {
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})
+		})
 	}
 
 	return (

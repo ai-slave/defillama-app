@@ -3,7 +3,7 @@ import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { DimensionDatasetProtocol } from '~/containers/AdapterMetrics/server/datasets'
 import { PercentChange } from '~/ui/PercentChange'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 
 export const holdersRevenueDatasetColumns: ColumnDef<DimensionDatasetProtocol>[] = [
 	{
@@ -40,7 +40,7 @@ export const holdersRevenueDatasetColumns: ColumnDef<DimensionDatasetProtocol>[]
 		accessorKey: 'total24h',
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <>{formattedNum(value, true)}</>
+			return <>{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 		},
 		size: 145,
 		meta: {
@@ -52,7 +52,7 @@ export const holdersRevenueDatasetColumns: ColumnDef<DimensionDatasetProtocol>[]
 		accessorKey: 'total7d',
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <>{formattedNum(value, true)}</>
+			return <>{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 		},
 		size: 120,
 		meta: {
@@ -64,7 +64,7 @@ export const holdersRevenueDatasetColumns: ColumnDef<DimensionDatasetProtocol>[]
 		accessorKey: 'total30d',
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <>{formattedNum(value, true)}</>
+			return <>{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 		},
 		size: 120,
 		meta: {

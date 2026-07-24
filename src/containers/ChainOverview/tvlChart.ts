@@ -1,5 +1,6 @@
 import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
-import { getPercentChange, getPrevTvlFromChart } from '~/utils'
+import { getPercentChange } from '~/utils'
+import { getPrevTvlFromChart } from '~/utils/tvlChart'
 import { shouldSubtractTvlOverlapSeries } from '~/utils/tvlOverlap'
 
 interface ChainTvlChartSummary {

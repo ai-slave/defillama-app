@@ -8,6 +8,7 @@ import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { nestedMenuActionStyles } from '~/ui/Popover'
+import { formatNumber } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 interface IDropdownMenusProps {
@@ -175,9 +176,7 @@ function RaisedRange({
 					{min || max ? (
 						<>
 							<span>Amount Raised: </span>
-							<span className="text-link">{`${min?.toLocaleString() ?? 'min'} - ${
-								max?.toLocaleString() ?? 'max'
-							}`}</span>
+							<span className="text-link">{`${formatNumber(min) ?? 'min'} - ${formatNumber(max) ?? 'max'}`}</span>
 						</>
 					) : (
 						<span>Amount Raised</span>

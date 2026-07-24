@@ -1,26 +1,30 @@
 import { SERVER_URL } from '~/constants'
 import { fetchJson } from '~/utils/async'
-import type { RawRaise, RawRaisesResponse } from './api.types'
+import type { RaisesApiResponse } from './api.types'
+import { normalizeRaisesApiResponse, type Raise, type RaisesResponse } from './model'
 
 const RAISES_CACHE_TTL_MS = 60_000
 
 let raisesCache: {
 	expiresAt: number
-	value: Promise<RawRaisesResponse>
+	value: Promise<RaisesResponse>
 } | null = null
 
-/**
- * Fetch fundraising rounds across protocols.
- */
-export async function fetchRaisesFromNetwork(): Promise<RawRaisesResponse> {
-	return fetchJson<RawRaisesResponse>(`${SERVER_URL}/raises`)
+/** Raw transport fetch reserved for snapshot publication. App code should use `fetchRaisesFromNetwork`. */
+export async function fetchRaisesApiResponse(): Promise<RaisesApiResponse> {
+	return fetchJson<RaisesApiResponse>(`${SERVER_URL}/raises`)
 }
 
-export async function fetchRaises(): Promise<RawRaisesResponse> {
+/** Fetch fundraising rounds with all monetary values normalized to whole USD. */
+export async function fetchRaisesFromNetwork(): Promise<RaisesResponse> {
+	return normalizeRaisesApiResponse(await fetchRaisesApiResponse())
+}
+
+export async function fetchRaises(): Promise<RaisesResponse> {
 	return fetchRaisesFromNetwork()
 }
 
-async function fetchRaisesWithShortCache(): Promise<RawRaisesResponse> {
+async function fetchRaisesWithShortCache(): Promise<RaisesResponse> {
 	const now = Date.now()
 	if (!raisesCache || raisesCache.expiresAt <= now) {
 		const value = fetchRaisesFromNetwork().catch((error) => {
@@ -39,7 +43,7 @@ async function fetchRaisesWithShortCache(): Promise<RawRaisesResponse> {
 	return raisesCache.value
 }
 
-export async function fetchRaisesByDefillamaId(defillamaId: string): Promise<RawRaise[]> {
+export async function fetchRaisesByDefillamaId(defillamaId: string): Promise<Raise[]> {
 	if (!defillamaId) {
 		return []
 	}

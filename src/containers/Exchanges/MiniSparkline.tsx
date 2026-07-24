@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { formatFixedNumber } from '~/utils/numberFormat'
 
 function sparklinePoints(values: number[], width: number, height: number): string {
 	if (values.length < 2) return ''
@@ -9,7 +10,7 @@ function sparklinePoints(values: number[], width: number, height: number): strin
 		.map((value, index) => {
 			const x = (index / (values.length - 1)) * width
 			const y = range === 0 ? height / 2 : height - ((value - min) / range) * height
-			return `${x.toFixed(1)},${y.toFixed(1)}`
+			return `${formatFixedNumber(x, 1)},${formatFixedNumber(y, 1)}`
 		})
 		.join(' ')
 }

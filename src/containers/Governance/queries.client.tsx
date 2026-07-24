@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchJson } from '~/utils/async'
+import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import type {
 	GovernanceActivityRow,
 	GovernanceDataEntry,
@@ -158,7 +159,7 @@ function processProposal(proposal: RawProposal): GovernanceProposal {
 		winningChoice: winningIndex >= 0 ? (choices[winningIndex] ?? '') : '',
 		winningPerc:
 			totalVotes !== 0 && winningScore != null
-				? `(${Number(((winningScore / totalVotes) * 100).toFixed(2))}% of votes)`
+				? `(${formatPercent(winningScore / totalVotes, { input: 'fraction' })} of votes)`
 				: ''
 	}
 }
@@ -205,7 +206,7 @@ export function formatGovernanceData(data: RawGovernanceResponse): {
 
 		maxVotes.push({
 			date: timestamp,
-			'Max Votes': maxVotesValue.toFixed(2)
+			'Max Votes': formatNumber(maxVotesValue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 		})
 	}
 

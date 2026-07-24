@@ -2,7 +2,7 @@ import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/rea
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { formattedNum } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { useAaveMarkets, useAaveAPYHistory } from './api'
 import type { TimeWindow } from './api'
 import {
@@ -79,7 +79,8 @@ const rateColumns: ColumnDef<RateComparisonRow>[] = [
 	{
 		header: 'Market Size',
 		accessorKey: 'sizeUsd',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -212,7 +213,11 @@ export default function Rates() {
 					((u - optimalUsageRate) / (100 - optimalUsageRate)) * variableRateSlope2
 			}
 			const supplyRate = borrowRate * (u / 100)
-			source.push([`${u}%`, Math.round(borrowRate * 100) / 100, Math.round(supplyRate * 100) / 100])
+			source.push([
+				formatPercent(u, { input: 'percent', maximumFractionDigits: 0 }),
+				Math.round(borrowRate * 100) / 100,
+				Math.round(supplyRate * 100) / 100
+			])
 		}
 		return { source, dimensions: ['Name', 'Borrow Rate', 'Supply Rate'] }
 	}, [primaryReserve])
@@ -223,7 +228,11 @@ export default function Rates() {
 			supplyApy: formatPct(primaryReserve.supplyApy),
 			borrowApy: formatPct(primaryReserve.borrowApy),
 			utilization: formatPct(primaryReserve.utilization),
-			marketSize: formattedNum(primaryReserve.sizeUsd, true),
+			marketSize: formatUsd(primaryReserve.sizeUsd, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 			marketsCount: assetReserves.length,
 			optimalUtil: primaryReserve.optimalUsageRate != null ? formatPct(primaryReserve.optimalUsageRate) : null,
 			slope1: primaryReserve.variableRateSlope1 != null ? formatPct(primaryReserve.variableRateSlope1) : null,

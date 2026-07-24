@@ -97,7 +97,7 @@ function makeRouteRow(overrides: Partial<RouteTableRow> = {}): RouteTableRow {
 		project: 'Aave',
 		projectslug: 'aave-v3',
 		airdrop: false,
-		raiseValuation: null,
+		raiseValuationUsd: null,
 		chain: 'Ethereum',
 		chains: ['Ethereum'],
 		collateralSymbol: 'ETH',

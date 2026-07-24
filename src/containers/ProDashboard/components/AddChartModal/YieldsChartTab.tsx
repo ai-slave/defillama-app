@@ -9,7 +9,7 @@ import { normalizeYieldToken } from '~/containers/Yields/domain/tokenNormalizati
 import { useYieldChartData, useYieldChartLendBorrow } from '~/containers/Yields/queries.client'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { normalizeYieldChartType } from '../../types'
 import { getItemIconUrl } from '../../utils'
 import { AriakitMultiSelect } from '../AriakitMultiSelect'
@@ -832,11 +832,22 @@ export function YieldsChartTab({
 												<>
 													<span>•</span>
 													<span className="font-medium text-pro-text-secondary">
-														TVL: {formattedNum(selectedPoolData.tvl, true)}
+														TVL:{' '}
+														{formatUsd(selectedPoolData.tvl, {
+															compact: true,
+															minimumCompactValue: 1_000_000,
+															compactSuffix: 'lowercase'
+														})}
 													</span>
 													<span>•</span>
 													<span className="font-medium text-pro-text-secondary">
-														APY: {selectedPoolData.apy?.toFixed(2) || '0.00'}%
+														APY:{' '}
+														{formatPercent(selectedPoolData.apy, {
+															input: 'percent',
+															minimumFractionDigits: 2,
+															maximumFractionDigits: 2,
+															useGrouping: false
+														}) ?? '0.00%'}
 													</span>
 												</>
 											) : null}
@@ -1003,16 +1014,31 @@ export function YieldsChartTab({
 													<div
 														className={`text-right font-medium ${isSelected ? 'text-brand' : 'text-pro-text-primary'}`}
 													>
-														{formattedNum(pool.tvl, true)}
+														{formatUsd(pool.tvl, {
+															compact: true,
+															minimumCompactValue: 1_000_000,
+															compactSuffix: 'lowercase'
+														})}
 													</div>
 
 													<div className="text-right">
 														<div className={`font-medium ${isSelected ? 'text-brand' : 'text-pro-text-primary'}`}>
-															{pool.apy?.toFixed(2) || '0.00'}%
+															{formatPercent(pool.apy, {
+																input: 'percent',
+																minimumFractionDigits: 2,
+																maximumFractionDigits: 2,
+																useGrouping: false
+															}) ?? '0.00%'}
 														</div>
 														{pool.apyMean30d != null ? (
 															<div className="text-[10px] text-pro-text-tertiary">
-																30d: {pool.apyMean30d.toFixed(2)}%
+																30d:{' '}
+																{formatPercent(pool.apyMean30d, {
+																	input: 'percent',
+																	minimumFractionDigits: 2,
+																	maximumFractionDigits: 2,
+																	useGrouping: false
+																})}
 															</div>
 														) : null}
 													</div>
@@ -1083,13 +1109,17 @@ export function YieldsChartTab({
 										<div className="flex flex-col">
 											<span className="text-[10px] text-pro-text-tertiary uppercase">Latest APY</span>
 											<span className="font-jetbrains text-base font-semibold" style={{ color: '#cc3e82' }}>
-												{latestYieldData.apy}%
+												{formatPercent(latestYieldData.apy, { input: 'percent' })}
 											</span>
 										</div>
 										<div className="flex flex-col">
 											<span className="text-[10px] text-pro-text-tertiary uppercase">TVL</span>
 											<span className="font-jetbrains text-base font-semibold" style={{ color: '#3e79cc' }}>
-												{formattedNum(latestYieldData.tvl, true)}
+												{formatUsd(latestYieldData.tvl, {
+													compact: true,
+													minimumCompactValue: 1_000_000,
+													compactSuffix: 'lowercase'
+												})}
 											</span>
 										</div>
 									</div>

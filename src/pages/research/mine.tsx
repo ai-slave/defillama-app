@@ -13,6 +13,7 @@ import type { ArticleDocument, ArticleSection } from '~/containers/Articles/type
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
+import { formatNumber } from '~/utils/numberFormat'
 
 type StatusFilter = 'all' | 'draft' | 'published'
 type SortKey = 'updated' | 'created' | 'title'
@@ -179,7 +180,7 @@ function MyArticlesContent() {
 									<>
 										<span className="mx-2 text-tertiary">·</span>
 										<span className="text-tertiary">
-											showing latest {FETCH_LIMIT} of {data?.totalItems.toLocaleString()}
+											showing latest {FETCH_LIMIT} of {formatNumber(data?.totalItems)}
 										</span>
 									</>
 								) : null}
@@ -393,7 +394,7 @@ function MyArticlesContent() {
 												<>
 													<span aria-hidden>·</span>
 													<span className="tabular-nums">
-														{words.toLocaleString()} words · {minutes} min
+														{formatNumber(words)} words · {minutes} min
 													</span>
 												</>
 											) : null}
@@ -439,7 +440,7 @@ function MyArticlesContent() {
 					{totalPages > 1 ? (
 						<div className="flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-tertiary">
 							<span className="font-jetbrains text-xs tabular-nums">
-								{rangeStart}–{rangeEnd} of {filtered.length.toLocaleString()}
+								{rangeStart}–{rangeEnd} of {formatNumber(filtered.length)}
 							</span>
 							<div className="flex items-center gap-1">
 								<button

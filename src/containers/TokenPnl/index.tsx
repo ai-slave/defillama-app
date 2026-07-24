@@ -25,12 +25,12 @@ import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { ComparisonPanel } from './ComparisonPanel'
 import { DailyPnLGrid } from './DailyPnLGrid'
 import { DateInput } from './DateInput'
-import { formatDateLabel, formatPercent } from './format'
+import { formatDateLabel, formatPnlPercent } from './format'
 import { buildComparisonEntry, computeTokenPnl } from './queries'
 import type { TokenPnlResult } from './queries'
 import { StatsCard } from './StatsCard'
@@ -146,11 +146,17 @@ const TokenPnlContent = ({
 	const tokenExportName = selectedCoinInfo?.name ?? selectedCoinId
 	const { percentChange, isProfit, holdingPeriodDays, annualizedReturn, absoluteChange } = metrics
 	const quantityValue = quantity !== 0 ? absoluteChange * quantity : absoluteChange
-	const formattedQuantityValue = formattedNum(Math.abs(quantityValue), false)
-	const formattedAbsoluteChange = formattedNum(Math.abs(absoluteChange), false)
+	const formattedQuantityValue = formatCompactNumber(Math.abs(quantityValue), {
+		minimumCompactValue: 1_000_000,
+		compactSuffix: 'lowercase'
+	})
+	const formattedAbsoluteChange = formatCompactNumber(Math.abs(absoluteChange), {
+		minimumCompactValue: 1_000_000,
+		compactSuffix: 'lowercase'
+	})
 	const quantityLabel =
 		quantity !== 0
-			? `${formattedNum(quantity, false)} tokens → ${quantityValue >= 0 ? '+$' : '-$'}${formattedQuantityValue}`
+			? `${formatCompactNumber(quantity, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} tokens → ${quantityValue >= 0 ? '+$' : '-$'}${formattedQuantityValue}`
 			: `${absoluteChange >= 0 ? '+$' : '-$'}${formattedAbsoluteChange} per token`
 
 	return (
@@ -159,7 +165,7 @@ const TokenPnlContent = ({
 				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
 					<dt className="label-xs text-secondary uppercase">Return</dt>
 					<dd className={`font-jetbrains text-3xl font-semibold ${isProfit ? 'text-data-up' : 'text-data-down'}`}>
-						{formatPercent(percentChange)}
+						{formatPnlPercent(percentChange)}
 					</dd>
 					<dd className="body-sm text-secondary">{quantityLabel}</dd>
 				</Card>
@@ -178,7 +184,7 @@ const TokenPnlContent = ({
 					<dd
 						className={`font-jetbrains text-3xl font-semibold ${annualizedReturn >= 0 ? 'text-data-up' : 'text-data-down'}`}
 					>
-						{formatPercent(annualizedReturn)}
+						{formatPnlPercent(annualizedReturn)}
 					</dd>
 					<dd className="body-sm text-secondary">
 						{annualizedReturn >= 0 ? '↑' : '↓'} Based on {holdingPeriodDays}d period
@@ -216,14 +222,28 @@ const TokenPnlContent = ({
 			<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 				<StatsCard
 					label="Current Price"
-					value={`$${formattedNum(currentPrice)}`}
+					value={formatUsd(currentPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 					subtle={selectedCoinInfo?.symbol?.toUpperCase()}
 					variant="highlight"
 				/>
-				<StatsCard label="Start Price" value={`$${formattedNum(metrics.startPrice)}`} />
-				<StatsCard label="End Price" value={`$${formattedNum(metrics.endPrice)}`} />
-				<StatsCard label="Max Drawdown" value={formatPercent(-Math.abs(metrics.maxDrawdown))} />
-				<StatsCard label="Volatility (Ann.)" value={formatPercent(metrics.volatility)} />
+				<StatsCard
+					label="Start Price"
+					value={formatUsd(metrics.startPrice, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+				<StatsCard
+					label="End Price"
+					value={formatUsd(metrics.endPrice, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+				<StatsCard label="Max Drawdown" value={formatPnlPercent(-Math.abs(metrics.maxDrawdown))} />
+				<StatsCard label="Volatility (Ann.)" value={formatPnlPercent(metrics.volatility)} />
 			</div>
 
 			<DailyPnLGrid timeline={timeline} />

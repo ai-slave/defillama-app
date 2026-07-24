@@ -1,4 +1,4 @@
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 
 export type TooltipGroupBy = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'cumulative'
 
@@ -9,25 +9,19 @@ export function formatChartValue(value: number, symbol: string) {
 	const abs = Math.abs(value)
 	const applySymbol = (formatted: string) => {
 		if (symbol === '$') return `${value < 0 ? '-' : ''}$${formatted.replace(/^-/, '')}`
-		if (symbol === '%') return `${formatted}%`
 		return symbol ? `${formatted} ${symbol}` : formatted
 	}
 
 	if (abs >= 1000) {
-		return applySymbol(
-			value.toLocaleString('en-US', {
-				notation: 'compact',
-				compactDisplay: 'short',
-				maximumFractionDigits: 2
-			})
-		)
+		if (symbol === '%') return formatPercent(value, { input: 'percent', compact: true })
+		return applySymbol(formatCompactNumber(value))
 	}
 
 	const maximumFractionDigits = abs === 0 ? 0 : abs < 0.001 ? 6 : abs < 10 ? 5 : abs < 100 ? 4 : 2
+	if (symbol === '%') return formatPercent(value, { input: 'percent', maximumFractionDigits })
 	return applySymbol(
-		value.toLocaleString('en-US', {
-			maximumFractionDigits,
-			minimumFractionDigits: 0
+		formatNumber(value, {
+			maximumFractionDigits
 		})
 	)
 }
@@ -36,11 +30,11 @@ export function formatChartValue(value: number, symbol: string) {
 export function formatTooltipValue(value: number, symbol: string) {
 	switch (symbol) {
 		case '$':
-			return formattedNum(value, true)
+			return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		case '%':
-			return `${Math.round(value * 100) / 100} %`
+			return formatPercent(value, { input: 'percent' }).replace('%', ' %')
 		default:
-			return `${formattedNum(value)} ${symbol}`
+			return `${formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${symbol}`
 	}
 }
 

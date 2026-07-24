@@ -12,8 +12,8 @@ import {
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
 import { generateGoogleCalendarUrl } from '~/utils/calendar'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 
 const EMPTY_TOKENS: number[][] = []
 
@@ -318,17 +318,34 @@ export const UpcomingEvent = ({
 						</Tooltip>
 					</span>
 					<span className={`inline-flex items-baseline gap-1 ${valueClass}`.trim()}>
-						{item.usdValue ? formattedNum(item.usdValue, true) : '-'}
+						{item.usdValue
+							? formatUsd(item.usdValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: '-'}
 						{isLinearPerDay ? <span className={suffixClass}>/ day</span> : null}
 					</span>
 				</LineTag>
 				<LineTag className={`flex items-center justify-between gap-2 ${subLineClass}`}>
 					<span>
-						{item.percentage != null ? `${formattedNum(item.percentage)}%` : '-'}{' '}
-						{item.percentageFloat ? <>({formattedNum(item.percentageFloat)}% of float)</> : null}
+						{item.percentage != null
+							? `${formatPercent(item.percentage, { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+							: '-'}{' '}
+						{item.percentageFloat ? (
+							<>
+								(
+								{formatCompactNumber(item.percentageFloat, {
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+								% of float)
+							</>
+						) : null}
 					</span>
 					<span className="inline-flex items-baseline gap-1">
-						{formattedNum(isLinearPerDay ? item.perDayAmount : item.totalAmount)} {tokenSymbol}
+						{formatCompactNumber(isLinearPerDay ? item.perDayAmount : item.totalAmount, {
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}{' '}
+						{tokenSymbol}
 						{isLinearPerDay ? <span className={suffixClass}>/ day</span> : null}
 					</span>
 				</LineTag>
@@ -356,26 +373,68 @@ export const UpcomingEvent = ({
 							{hasLinear ? (
 								dailyValue ? (
 									<>
-										{formattedNum(dailyValue, true)} <span className="body-sm text-secondary">/ day</span>
+										{formatUsd(dailyValue, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}{' '}
+										<span className="body-sm text-secondary">/ day</span>
 									</>
 								) : (
-									<span>{formattedNum(unlockPercent)}%</span>
+									<span>
+										{formatCompactNumber(unlockPercent, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+										%
+									</span>
 								)
 							) : tokenValue ? (
-								formattedNum(tokenValue, true)
+								formatUsd(tokenValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 							) : (
-								<span>{formattedNum(unlockPercent)}%</span>
+								<span>
+									{formatPercent(unlockPercent, {
+										input: 'percent',
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 							)}
 						</span>
 						{hasLinear && linearDurationDays > 0 ? (
 							<span className="body-sm text-secondary">
 								Linear over {formatDuration(linearDurationDays)}
-								{tokenValue ? <> · Total: {formattedNum(tokenValue, true)}</> : null}
+								{tokenValue ? (
+									<>
+										{' '}
+										· Total:{' '}
+										{formatUsd(tokenValue, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
+									</>
+								) : null}
 							</span>
 						) : unlockPercent ? (
 							<span className="body-sm text-secondary">
-								{tokenValue ? formattedNum(unlockPercent) + '%' : null}
-								{unlockPercentFloat ? <> ({formattedNum(unlockPercentFloat)}% of float)</> : null}
+								{tokenValue
+									? formatPercent(unlockPercent, {
+											input: 'percent',
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})
+									: null}
+								{unlockPercentFloat ? (
+									<>
+										{' '}
+										(
+										{formatCompactNumber(unlockPercentFloat, {
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
+										% of float)
+									</>
+								) : null}
 							</span>
 						) : null}
 					</div>
@@ -408,7 +467,11 @@ export const UpcomingEvent = ({
 					<CalendarButton
 						event={{ timestamp, noOfTokens, symbol: symbol || '', description: '' }}
 						tokenName={name}
-						tokenValue={tokenValue ? formattedNum(tokenValue, true) : null}
+						tokenValue={
+							tokenValue
+								? formatUsd(tokenValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+								: null
+						}
 						isProtocolPage={isProtocolPage}
 					/>
 				) : null}
@@ -427,16 +490,31 @@ export const UpcomingEvent = ({
 									<span className="mono-sm-bold text-primary">
 										{hasLinear && dailyValue ? (
 											<>
-												{formattedNum(dailyValue, true)} <span className="label-sm text-tertiary">/ day</span>
+												{formatUsd(dailyValue, {
+													compact: true,
+													minimumCompactValue: 1_000_000,
+													compactSuffix: 'lowercase'
+												})}{' '}
+												<span className="label-sm text-tertiary">/ day</span>
 											</>
 										) : (
-											formattedNum(tokenValue, true)
+											formatUsd(tokenValue, {
+												compact: true,
+												minimumCompactValue: 1_000_000,
+												compactSuffix: 'lowercase'
+											})
 										)}
 									</span>
 									<span className="label-sm text-tertiary">{hasLinear ? 'Linear Unlock' : 'Unlock Value'}</span>
 								</div>
 								<div className="flex flex-col items-end">
-									<span className="mono-sm-bold text-primary">{formattedNum(unlockPercentFloat)}%</span>
+									<span className="mono-sm-bold text-primary">
+										{formatCompactNumber(unlockPercentFloat, {
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
+										%
+									</span>
 									<span className="label-sm text-tertiary">of float</span>
 								</div>
 							</div>
@@ -487,9 +565,13 @@ export const UpcomingEvent = ({
 							<span>Total</span>
 							<span className="inline-flex items-baseline gap-1">
 								{hasLinear && dailyValue
-									? formattedNum(dailyValue, true)
+									? formatUsd(dailyValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 									: tokenValue
-										? formattedNum(tokenValue, true)
+										? formatUsd(tokenValue, {
+												compact: true,
+												minimumCompactValue: 1_000_000,
+												compactSuffix: 'lowercase'
+											})
 										: '-'}
 								{hasLinear ? <span className="text-xs font-normal text-tertiary">/ day</span> : null}
 							</span>
@@ -498,17 +580,26 @@ export const UpcomingEvent = ({
 							<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
 								<span>Linear over {formatDuration(linearDurationDays)}</span>
 								<span>
-									{formattedNum(dailyTokenAmount)} {tokenSymbol} / day
+									{formatCompactNumber(dailyTokenAmount, {
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}{' '}
+									{tokenSymbol} / day
 								</span>
 							</span>
 						) : null}
 						<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
 							<span>
-								{unlockPercent ? `${formattedNum(unlockPercent)}%` : null}
-								{unlockPercentFloat ? ` (${formattedNum(unlockPercentFloat)}% of float)` : null}
+								{unlockPercent
+									? `${formatPercent(unlockPercent, { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+									: null}
+								{unlockPercentFloat
+									? ` (${formatPercent(unlockPercentFloat, { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} of float)`
+									: null}
 							</span>
 							<span>
-								{formattedNum(totalAmount)} {tokenSymbol}
+								{formatCompactNumber(totalAmount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}{' '}
+								{tokenSymbol}
 							</span>
 						</span>
 					</span>
@@ -518,7 +609,11 @@ export const UpcomingEvent = ({
 				<CalendarButton
 					event={{ timestamp, noOfTokens, symbol: symbol || '', description: '' }}
 					tokenName={name}
-					tokenValue={tokenValue ? formattedNum(tokenValue, true) : null}
+					tokenValue={
+						tokenValue
+							? formatUsd(tokenValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null
+					}
 					isProtocolPage={isProtocolPage}
 				/>
 			) : null}

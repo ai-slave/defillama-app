@@ -2,7 +2,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { EmissionEvent } from './api.types'
 
 const COLOR_MAP = {
@@ -153,7 +153,11 @@ export function UnconstrainedSmolLineChart({
 								<p>{formatTooltipChartDate(series[hoveredIndex][0], 'daily', true)}</p>
 								<p className="flex items-center gap-1">
 									<span className="inline-block size-[10px] rounded-full" style={{ backgroundColor: stroke }} />
-									Price: ${formattedNum(series[hoveredIndex][1])}
+									Price: $
+									{formatCompactNumber(series[hoveredIndex][1], {
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
 								</p>
 								<div className="mt-1 opacity-80">
 									{dayPosition === 0 ? (
@@ -178,7 +182,13 @@ export function UnconstrainedSmolLineChart({
 										className="opacity-80"
 									>
 										{percentChange >= 0 ? '+' : ''}
-										{percentChange.toFixed(1)}% from unlock
+										{formatPercent(percentChange, {
+											input: 'percent',
+											minimumFractionDigits: 1,
+											maximumFractionDigits: 1,
+											useGrouping: false
+										})}{' '}
+										from unlock
 									</div>
 								) : null}
 							</div>,
@@ -216,7 +226,12 @@ function UnlockEventTooltip({
 	return (
 		<div className="mt-1">
 			<div className="flex items-center gap-1" style={{ color: stroke }}>
-				Unlocked: {formattedNum(totalAmount * unlockValue, true)}
+				Unlocked:{' '}
+				{formatUsd(totalAmount * unlockValue, {
+					compact: true,
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				})}
 			</div>
 			{uniqueCategories.length > 0 ? (
 				<div className="body-xs text-tertiary">

@@ -84,7 +84,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.tvlPrevWeek).toBe(70)
 		expect(protocol.tvlPrevMonth).toBe(45)
 		expect(protocol.change_1d).toBe(20)
-		expect(protocol.mcaptvl).toBe(8.33)
+		expect(protocol.mcaptvl).toBeCloseTo(1000 / 120)
 	})
 
 	it('keeps mixed-case recent protocol doublecounted and liquid staking extras non-additive', () => {
@@ -167,7 +167,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.strikeTvl).toBe(false)
 		expect(protocol.tvl?.default).toEqual(makeTvlEntry(120, 100, 70, 45))
 		expect(protocol.tvlChange?.change1d).toBe(20)
-		expect(protocol.mcaptvl).toBe(8.33)
+		expect(protocol.mcaptvl).toBeCloseTo(1000 / 120)
 	})
 
 	it('returns null for non-finite protocol table market-cap-to-tvl ratios', () => {

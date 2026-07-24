@@ -4,7 +4,7 @@ import { toChainIconItems, yieldsChainHref } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { PercentChange } from '~/ui/PercentChange'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import type { ProYieldRow } from './data'
 
 export const YIELDS_COLUMN_IDS = [
@@ -34,7 +34,11 @@ function PercentCell({ value, bold = false }: { value: number | null | undefined
 }
 
 function DollarCell({ value }: { value: number | null | undefined }) {
-	return value == null ? <>-</> : <>{formattedNum(value, true)}</>
+	return value == null ? (
+		<>-</>
+	) : (
+		<>{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
+	)
 }
 
 export const yieldsDatasetColumns: ColumnDef<ProYieldRow>[] = [

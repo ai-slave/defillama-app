@@ -1,4 +1,5 @@
 import type { TableFilters } from '~/containers/ProDashboard/types'
+import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 
 type FilterType = 'numeric-range' | 'numeric-single' | 'boolean' | 'array'
 type FilterFormat = 'currency' | 'percent' | 'number'
@@ -619,21 +620,12 @@ function getFilterConfigById(id: string): FilterConfig | undefined {
 
 export function formatFilterValue(value: number, format: FilterFormat = 'currency'): string {
 	if (format === 'percent') {
-		return `${value}%`
+		return formatPercent(value, { input: 'percent' })
 	}
 	if (format === 'number') {
-		return value.toLocaleString()
+		return formatNumber(value)
 	}
-	if (Math.abs(value) >= 1_000_000_000) {
-		return `$${(value / 1_000_000_000).toFixed(1)}B`
-	}
-	if (Math.abs(value) >= 1_000_000) {
-		return `$${(value / 1_000_000).toFixed(1)}M`
-	}
-	if (Math.abs(value) >= 1_000) {
-		return `$${(value / 1_000).toFixed(1)}K`
-	}
-	return `$${value.toLocaleString()}`
+	return formatUsd(value, { compact: true, maximumFractionDigits: 1 })
 }
 
 // oxlint-disable-next-line no-unused-vars

@@ -1,4 +1,5 @@
-import { formatNum, formattedNum, getPercentChange, keepNeededProperties, slug } from '~/utils'
+import { getPercentChange, keepNeededProperties, slug } from '~/utils'
+import { formatUsd, formatFixedNumber } from '~/utils/numberFormat'
 import {
 	DAY_MS,
 	findTimeSeriesPointNear,
@@ -326,7 +327,7 @@ export const getStablecoinDominance = (
 	}
 	const dominance = (topMcap / totalMcap) * 100.0
 	if (!Number.isFinite(dominance) || dominance <= 0) return null
-	if (dominance < 100) return dominance.toFixed(2)
+	if (dominance < 100) return formatFixedNumber(dominance, 2)
 	return 100
 }
 
@@ -354,9 +355,9 @@ export const getStablecoinMcapStatsFromTotals = (
 		totalMcapPrevDay,
 		totalMcapPrevWeek,
 		totalMcapPrevMonth,
-		change1d: getPercentChange(totalMcapCurrent, totalMcapPrevDay)?.toFixed(2) ?? null,
-		change7d: getPercentChange(totalMcapCurrent, totalMcapPrevWeek)?.toFixed(2) ?? null,
-		change30d: getPercentChange(totalMcapCurrent, totalMcapPrevMonth)?.toFixed(2) ?? null,
+		change1d: formatFixedNumber(getPercentChange(totalMcapCurrent, totalMcapPrevDay), 2) ?? null,
+		change7d: formatFixedNumber(getPercentChange(totalMcapCurrent, totalMcapPrevWeek), 2) ?? null,
+		change30d: formatFixedNumber(getPercentChange(totalMcapCurrent, totalMcapPrevMonth), 2) ?? null,
 		change1dUsd: totalMcapCurrent != null && totalMcapPrevDay != null ? totalMcapCurrent - totalMcapPrevDay : null,
 		change7dUsd: totalMcapCurrent != null && totalMcapPrevWeek != null ? totalMcapCurrent - totalMcapPrevWeek : null,
 		change30dUsd: totalMcapCurrent != null && totalMcapPrevMonth != null ? totalMcapCurrent - totalMcapPrevMonth : null,
@@ -486,15 +487,27 @@ export const formatPeggedAssetsData = ({
 
 		const change_1d_nol =
 			formattedPegged.mcap != null && mcapPrevDay != null
-				? formattedNum(String(Number(formattedPegged.mcap) - Number(mcapPrevDay)), true)
+				? formatUsd(String(Number(formattedPegged.mcap) - Number(mcapPrevDay)), {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})
 				: null
 		const change_7d_nol =
 			formattedPegged.mcap != null && mcapPrevWeek != null
-				? formattedNum(String(Number(formattedPegged.mcap) - Number(mcapPrevWeek)), true)
+				? formatUsd(String(Number(formattedPegged.mcap) - Number(mcapPrevWeek)), {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})
 				: null
 		const change_1m_nol =
 			formattedPegged.mcap != null && mcapPrevMonth != null
-				? formattedNum(String(Number(formattedPegged.mcap) - Number(mcapPrevMonth)), true)
+				? formatUsd(String(Number(formattedPegged.mcap) - Number(mcapPrevMonth)), {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})
 				: null
 
 		formattedPegged.change_1d_nol = !change_1d_nol
@@ -615,7 +628,7 @@ export const formatPeggedChainsData = ({
 				}
 			: null
 
-		let mcaptvl = mcap && latestChainTVL ? +(formatNum(mcap / latestChainTVL) ?? 0) : null
+		let mcaptvl = mcap && latestChainTVL ? mcap / latestChainTVL : null
 		if (mcaptvl === 0) {
 			mcaptvl = null
 		}

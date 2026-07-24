@@ -14,6 +14,7 @@
 // The provider reads context via a ref so it stays in sync with the live table
 // registry without re-registering on every state change.
 
+import { formatNumber } from '~/utils/numberFormat'
 import { chartDatasets, type ChartDatasetDefinition } from '../chart-datasets'
 import { datasets, type DatasetDefinition } from '../datasets'
 import { identifierize, type RegisteredTable } from './useTableRegistry'
@@ -87,7 +88,7 @@ export function registerSqlCompletions(
 
 			// 0) Notebook cells that have run — shown at very top.
 			for (const t of ctx.cellTables ?? []) {
-				const detail = t.hasRun ? `${t.rowCount.toLocaleString()} rows · notebook cell` : 'notebook cell · not yet run'
+				const detail = t.hasRun ? `${formatNumber(t.rowCount)} rows · notebook cell` : 'notebook cell · not yet run'
 				const docLines = [`**${t.name}** · notebook cell output`, '']
 				if (t.hasRun && t.columns.length > 0) {
 					docLines.push('Columns:')
@@ -112,7 +113,7 @@ export function registerSqlCompletions(
 					label: t.name,
 					kind: monaco.languages.CompletionItemKind.Module,
 					insertText: t.name,
-					detail: `${t.rowCount.toLocaleString()} rows · loaded`,
+					detail: `${formatNumber(t.rowCount)} rows · loaded`,
 					documentation: {
 						value: [`**${labelForSource(t.source)}**`, '', 'Columns:', ...t.columns.map((c) => `- \`${c.name}\``)].join(
 							'\n'
@@ -237,7 +238,7 @@ export function registerSqlHovers(
 			if (cellHit) {
 				const lines: string[] = [`**${cellHit.name}**  \nnotebook cell output`]
 				if (cellHit.hasRun) {
-					lines.push(`${cellHit.rowCount.toLocaleString()} rows · ${cellHit.columns.length} columns`)
+					lines.push(`${formatNumber(cellHit.rowCount)} rows · ${cellHit.columns.length} columns`)
 					if (cellHit.columns.length > 0) {
 						lines.push('')
 						lines.push('**Columns**')
@@ -254,7 +255,7 @@ export function registerSqlHovers(
 			if (loaded) {
 				const body = [
 					`**${labelForSource(loaded.source)}**  \n\`${loaded.name}\``,
-					`${loaded.rowCount.toLocaleString()} rows · ${loaded.columns.length} columns · loaded`,
+					`${formatNumber(loaded.rowCount)} rows · ${loaded.columns.length} columns · loaded`,
 					'',
 					'**Columns**',
 					...loaded.columns.map((c) => `- \`${c.name}\` · ${c.type}`)

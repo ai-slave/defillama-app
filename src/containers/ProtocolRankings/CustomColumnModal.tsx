@@ -6,9 +6,8 @@ import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
-import { formatValue } from '../../utils'
 import { AVAILABLE_FIELDS, AVAILABLE_FUNCTIONS, replaceAliases } from './customColumnsUtils'
-import { evaluateFormula } from './formula.service'
+import { evaluateFormula, formatCustomColumnValue } from './formula.service'
 
 const SubscribeProModal = lazy(() =>
 	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
@@ -214,7 +213,7 @@ export function CustomColumnModal({
 			if (determinedFormat === 'boolean' && typeof result.value === 'boolean') {
 				preview = result.value ? '✅ True' : '❌ False'
 			} else {
-				preview = formatValue(result.value, determinedFormat)
+				preview = formatCustomColumnValue(result.value, determinedFormat)
 			}
 		}
 	}

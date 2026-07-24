@@ -158,7 +158,7 @@ LIMIT 40`
 			{ kind: 'dataset', slug: 'protocols' }
 		],
 		sql: `WITH raised AS (
-  SELECT name, SUM(TRY_CAST(amount AS DOUBLE)) * 1e6 AS total_raised_usd
+  SELECT name, SUM(TRY_CAST(amountUsd AS DOUBLE)) AS total_raised_usd
   FROM raises
   WHERE name IS NOT NULL
   GROUP BY name
@@ -199,13 +199,13 @@ LIMIT 30`
 		],
 		sql: `SELECT h.name,
        to_timestamp(TRY_CAST(h.date AS DOUBLE))::TIMESTAMP::DATE AS hack_date,
-       TRY_CAST(h.amount AS DOUBLE) AS stolen,
+       TRY_CAST(h.amountUsd AS DOUBLE) AS stolen,
        h.technique, p.tvl AS current_tvl, p.category
 FROM hacks h
 JOIN protocols p ON p.name = h.name
-WHERE TRY_CAST(h.amount AS DOUBLE) > 5000000
+WHERE TRY_CAST(h.amountUsd AS DOUBLE) > 5000000
   AND p.tvl > 1000000
-ORDER BY TRY_CAST(h.amount AS DOUBLE) DESC
+ORDER BY TRY_CAST(h.amountUsd AS DOUBLE) DESC
 LIMIT 30`
 	},
 
@@ -396,9 +396,9 @@ LIMIT 30`
 		subcategory: 'Security',
 		tables: [{ kind: 'dataset', slug: 'hacks' }],
 		sql: `SELECT to_timestamp(TRY_CAST(date AS DOUBLE))::TIMESTAMP::DATE AS hack_date,
-       name, amount, technique, targetType, chain
+       name, amountUsd, technique, targetType, chain
 FROM hacks
-WHERE TRY_CAST(amount AS DOUBLE) > 50000000
+WHERE TRY_CAST(amountUsd AS DOUBLE) > 50000000
 ORDER BY date DESC
 LIMIT 50`
 	},
@@ -409,10 +409,10 @@ LIMIT 50`
 		tables: [{ kind: 'dataset', slug: 'hacks' }],
 		sql: `SELECT technique,
        COUNT(*) AS incidents,
-       SUM(TRY_CAST(amount AS DOUBLE)) AS total_stolen,
-       AVG(TRY_CAST(amount AS DOUBLE)) AS avg_incident
+       SUM(TRY_CAST(amountUsd AS DOUBLE)) AS total_stolen,
+       AVG(TRY_CAST(amountUsd AS DOUBLE)) AS avg_incident
 FROM hacks
-WHERE technique IS NOT NULL AND amount IS NOT NULL
+WHERE technique IS NOT NULL AND amountUsd IS NOT NULL
 GROUP BY technique
 ORDER BY total_stolen DESC NULLS LAST
 LIMIT 20`
@@ -424,7 +424,7 @@ LIMIT 20`
 		tables: [{ kind: 'dataset', slug: 'hacks' }],
 		sql: `SELECT EXTRACT(YEAR FROM to_timestamp(TRY_CAST(date AS DOUBLE))) AS year,
        COUNT(*) AS incidents,
-       SUM(TRY_CAST(amount AS DOUBLE)) AS total_stolen
+       SUM(TRY_CAST(amountUsd AS DOUBLE)) AS total_stolen
 FROM hacks
 WHERE date IS NOT NULL
 GROUP BY year
@@ -437,10 +437,10 @@ ORDER BY year DESC`
 		tables: [{ kind: 'dataset', slug: 'hacks' }],
 		sql: `SELECT CASE WHEN bridgeHack = 'true' THEN 'Bridge' ELSE 'Non-bridge' END AS kind,
        COUNT(*) AS incidents,
-       SUM(TRY_CAST(amount AS DOUBLE)) AS total_stolen,
-       AVG(TRY_CAST(amount AS DOUBLE)) AS avg_incident
+       SUM(TRY_CAST(amountUsd AS DOUBLE)) AS total_stolen,
+       AVG(TRY_CAST(amountUsd AS DOUBLE)) AS avg_incident
 FROM hacks
-WHERE amount IS NOT NULL
+WHERE amountUsd IS NOT NULL
 GROUP BY kind`
 	},
 
@@ -451,11 +451,11 @@ GROUP BY kind`
 		subcategory: 'Fundraising',
 		tables: [{ kind: 'dataset', slug: 'raises' }],
 		sql: `SELECT to_timestamp(TRY_CAST(date AS DOUBLE))::TIMESTAMP::DATE AS raised_on,
-       name, round, amount, sector, leadInvestors, valuation
+       name, round, amountUsd, sector, leadInvestors, valuationUsd
 FROM raises
 WHERE to_timestamp(TRY_CAST(date AS DOUBLE))::TIMESTAMP::DATE >= CURRENT_DATE - INTERVAL 1 YEAR
-  AND TRY_CAST(amount AS DOUBLE) > 5
-ORDER BY TRY_CAST(amount AS DOUBLE) DESC
+  AND TRY_CAST(amountUsd AS DOUBLE) > 5000000
+ORDER BY TRY_CAST(amountUsd AS DOUBLE) DESC
 LIMIT 50`
 	},
 	{
@@ -465,14 +465,14 @@ LIMIT 50`
 		tables: [{ kind: 'dataset', slug: 'raises' }],
 		sql: `SELECT sector,
        COUNT(*) AS deals,
-       SUM(TRY_CAST(amount AS DOUBLE)) AS total_raised_musd,
-       MEDIAN(TRY_CAST(amount AS DOUBLE)) AS median_round_musd
+       SUM(TRY_CAST(amountUsd AS DOUBLE)) AS total_raised_usd,
+       MEDIAN(TRY_CAST(amountUsd AS DOUBLE)) AS median_round_usd
 FROM raises
 WHERE to_timestamp(TRY_CAST(date AS DOUBLE))::TIMESTAMP::DATE >= CURRENT_DATE - INTERVAL 1 YEAR
   AND sector IS NOT NULL
 GROUP BY sector
 HAVING COUNT(*) >= 3
-ORDER BY total_raised_musd DESC NULLS LAST
+ORDER BY total_raised_usd DESC NULLS LAST
 LIMIT 20`
 	},
 	{
@@ -482,14 +482,14 @@ LIMIT 20`
 		tables: [{ kind: 'dataset', slug: 'raises' }],
 		sql: `SELECT round,
        COUNT(*) AS deals,
-       MEDIAN(TRY_CAST(valuation AS DOUBLE)) AS median_valuation,
-       MEDIAN(TRY_CAST(amount AS DOUBLE)) AS median_check_musd
+       MEDIAN(TRY_CAST(valuationUsd AS DOUBLE)) AS median_valuation_usd,
+       MEDIAN(TRY_CAST(amountUsd AS DOUBLE)) AS median_check_usd
 FROM raises
 WHERE to_timestamp(TRY_CAST(date AS DOUBLE))::TIMESTAMP::DATE >= CURRENT_DATE - INTERVAL 2 YEAR
   AND round IS NOT NULL AND round <> ''
 GROUP BY round
 HAVING COUNT(*) >= 5
-ORDER BY median_valuation DESC NULLS LAST
+ORDER BY median_valuation_usd DESC NULLS LAST
 LIMIT 20`
 	},
 

@@ -1063,7 +1063,7 @@ export const getProtocolOverviewPageData = async ({
 		treasury,
 		hacks: (hacks ?? []).map((hack) => ({
 			date: hack.date,
-			amount: hack.amount,
+			amountUsd: hack.amountUsd,
 			classification: hack.classification
 		})),
 		metrics: {

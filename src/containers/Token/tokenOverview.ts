@@ -8,7 +8,7 @@ import { formatLineChart } from '~/components/ECharts/shared/timeSeries'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { normalizeChartPointsToMs } from '~/containers/ProtocolOverview/chartSeries.utils'
 import { fetchRaisesByDefillamaId } from '~/containers/Raises/api'
-import type { RawRaise } from '~/containers/Raises/api.types'
+import type { Raise } from '~/containers/Raises/model'
 import { fetchTreasuryById } from '~/containers/Treasuries/api'
 import type { RawTreasuriesResponse } from '~/containers/Treasuries/api.types'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
@@ -30,7 +30,7 @@ export interface TokenOverviewTreasury {
 export interface TokenOverviewRaise {
 	date: number
 	round: string | null
-	amount: number | null
+	amountUsd: number | null
 	source?: string
 	investors: string[]
 }
@@ -92,7 +92,7 @@ type TokenOverviewDataSource =
 	  }
 	| {
 			kind: 'prefetched'
-			raises: RawRaise[] | null
+			raises: Raise[] | null
 			treasury: RawTreasuriesResponse[number] | null
 			yieldsMeta: YieldsMeta | null
 			liquidityInfo: ProtocolLiquidityTokensResponse[number] | null
@@ -389,7 +389,7 @@ function buildTreasurySummary(
 	}
 }
 
-function buildRaisesSummary(raises: RawRaise[] | null): TokenOverviewRaise[] | null {
+function buildRaisesSummary(raises: Raise[] | null): TokenOverviewRaise[] | null {
 	if (!raises?.length) return null
 
 	return [...raises]
@@ -397,7 +397,7 @@ function buildRaisesSummary(raises: RawRaise[] | null): TokenOverviewRaise[] | n
 		.map((raise) => ({
 			date: raise.date,
 			round: raise.round ?? null,
-			amount: raise.amount ?? null,
+			amountUsd: raise.amountUsd,
 			source: raise.source,
 			investors: [...(raise.leadInvestors ?? []), ...(raise.otherInvestors ?? [])]
 		}))
@@ -556,7 +556,7 @@ export async function getTokenOverviewData({
 		source.kind === 'prefetched'
 			? Promise.resolve(source.raises)
 			: shouldFetchRaises
-				? fetchRaisesByDefillamaId(chainDefiLlamaId ?? protocolDefiLlamaId!).catch(() => [] as RawRaise[])
+				? fetchRaisesByDefillamaId(chainDefiLlamaId ?? protocolDefiLlamaId!).catch(() => [] as Raise[])
 				: Promise.resolve(null),
 		source.kind === 'prefetched'
 			? Promise.resolve(source.treasury)

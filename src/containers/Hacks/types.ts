@@ -6,7 +6,7 @@ export interface IHacksPageData {
 		classification: string
 		date: number
 		target: string
-		amount: number
+		amountUsd: number
 		name: string
 		technique: string
 		bridge: boolean
@@ -23,5 +23,5 @@ export interface IHacksPageData {
 }
 
 export interface IProtocolTotalValueLostInHacksByProtocol {
-	protocols: Array<{ name: string; slug: string; route: string; totalHacked: number; returnedFunds: number }>
+	protocols: Array<{ name: string; slug: string; route: string; totalHackedUsd: number; returnedFundsUsd: number }>
 }

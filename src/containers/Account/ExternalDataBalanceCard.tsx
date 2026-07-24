@@ -1,4 +1,5 @@
 import { Icon } from '~/ui/Icon'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 
 interface ExternalDataBalanceCardProps {
 	freeRemaining: string
@@ -9,7 +10,8 @@ interface ExternalDataBalanceCardProps {
 	onTopUp: () => void
 }
 
-const formatUsd = (value: string) => `$${parseFloat(value).toFixed(2)}`
+const formatBalanceUsd = (value: string) =>
+	formatUsd(parseFloat(value), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export function ExternalDataBalanceCard({
 	freeRemaining,
@@ -68,25 +70,35 @@ export function ExternalDataBalanceCard({
 					<div className="flex items-center justify-between">
 						<span className="text-xs text-sub-text-muted">Free This Month</span>
 						<span className="text-xs text-sub-text-primary">
-							{formatUsd(freeRemaining)} <span className="text-sub-text-muted">/ {formatUsd(freeLimit)}</span>
+							{formatBalanceUsd(freeRemaining)}{' '}
+							<span className="text-sub-text-muted">/ {formatBalanceUsd(freeLimit)}</span>
 						</span>
 					</div>
 					<div className="h-2 overflow-hidden rounded-full bg-sub-border-light dark:bg-white/[0.08]">
 						<div
 							className="h-full rounded-full bg-sub-brand-primary"
-							style={{ width: `${Math.max(1, usagePercent).toFixed(1)}%` }}
+							style={{
+								width: `${formatPercent(Math.max(1, usagePercent), { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
+							}}
 						/>
 					</div>
 					<div className="flex items-center justify-between text-[10px] text-sub-text-muted">
-						<span>{formatUsd(freeSpent)} used</span>
-						<span>{usagePercent.toFixed(0)}% used</span>
+						<span>{formatBalanceUsd(freeSpent)} used</span>
+						<span>
+							{formatPercent(usagePercent, {
+								input: 'percent',
+								maximumFractionDigits: 0,
+								useGrouping: false
+							})}{' '}
+							used
+						</span>
 					</div>
 				</div>
 
 				{/* Topped Up */}
 				<div className="flex items-center justify-between">
 					<span className="text-xs text-sub-text-muted">Topped Up</span>
-					<span className="text-xs font-medium text-sub-text-primary">{formatUsd(toppedUpBalance)}</span>
+					<span className="text-xs font-medium text-sub-text-primary">{formatBalanceUsd(toppedUpBalance)}</span>
 				</div>
 			</div>
 
@@ -96,7 +108,7 @@ export function ExternalDataBalanceCard({
 				<span
 					className={`text-sm font-semibold ${isLowBalance ? 'text-sub-warning-text-dark' : 'text-sub-text-primary'}`}
 				>
-					${totalAvailable.toFixed(2)}
+					{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 				</span>
 			</div>
 		</div>

@@ -1,6 +1,6 @@
 import { Card } from '~/ui/Card'
-import { formattedNum } from '~/utils'
-import { formatPercent } from './format'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { formatPnlPercent } from './format'
 import type { ComparisonEntry } from './types'
 
 export const ComparisonPanel = ({ entries, activeId }: { entries: ComparisonEntry[]; activeId: string }) => {
@@ -14,7 +14,10 @@ export const ComparisonPanel = ({ entries, activeId }: { entries: ComparisonEntr
 			<ul className="grid gap-3 sm:grid-cols-3">
 				{entries.map((entry) => {
 					const isPositive = entry.percentChange >= 0
-					const absChange = formattedNum(Math.abs(entry.absoluteChange))
+					const absChange = formatCompactNumber(Math.abs(entry.absoluteChange), {
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})
 					return (
 						<li
 							key={`${entry.id}-range-comparison`}
@@ -29,10 +32,10 @@ export const ComparisonPanel = ({ entries, activeId }: { entries: ComparisonEntr
 								<span className="label-sm text-primary uppercase">{entry.symbol}</span>
 							</div>
 							<p className={`font-jetbrains text-2xl font-semibold ${isPositive ? 'text-data-up' : 'text-data-down'}`}>
-								{formatPercent(entry.percentChange)}
+								{formatPnlPercent(entry.percentChange)}
 							</p>
 							<p className="body-xs text-secondary">{`${isPositive ? '+$' : '-$'}${absChange}`}</p>
-							<p className="body-xs text-secondary">{`$${formattedNum(entry.startPrice)} → $${formattedNum(entry.endPrice)}`}</p>
+							<p className="body-xs text-secondary">{`${formatUsd(entry.startPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} → ${formatUsd(entry.endPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</p>
 						</li>
 					)
 				})}

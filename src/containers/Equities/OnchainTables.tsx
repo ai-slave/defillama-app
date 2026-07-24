@@ -12,7 +12,7 @@ import { prepareTableCsv } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
-import { abbreviateNumber } from '~/utils'
+import { formatEquitiesCompactValue } from './financialsFormatting'
 import type { IEquitiesOnchainMarketRow, IEquitiesOnchainTokenRow } from './types'
 import { formatEquitiesDateTime } from './utils'
 
@@ -22,12 +22,8 @@ const DEFAULT_TABLE_PAGE_SIZE = 10
 const marketsColumnHelper = createColumnHelper<IEquitiesOnchainMarketRow>()
 const tokensColumnHelper = createColumnHelper<IEquitiesOnchainTokenRow>()
 
-function formatValue(value: unknown, symbol?: string): string {
-	return abbreviateNumber(value, 2, symbol) ?? '-'
-}
-
 function formatFundingRate(value: number | null): string {
-	return value == null ? '-' : `${formatValue(value)}%`
+	return value == null ? '-' : (formatEquitiesCompactValue(value, '%') ?? '-')
 }
 
 function rwaPerpsContractHref(slug: string): string {
@@ -70,7 +66,7 @@ const marketsColumns = [
 	}),
 	marketsColumnHelper.accessor('price', {
 		header: 'Price',
-		cell: ({ getValue }) => formatValue(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[112px]',
 			align: 'end'
@@ -78,7 +74,7 @@ const marketsColumns = [
 	}),
 	marketsColumnHelper.accessor('volume24h', {
 		header: '24h Volume',
-		cell: ({ getValue }) => formatValue(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[124px]',
 			align: 'end'
@@ -86,7 +82,7 @@ const marketsColumns = [
 	}),
 	marketsColumnHelper.accessor('openInterest', {
 		header: 'Open Interest',
-		cell: ({ getValue }) => formatValue(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[132px]',
 			align: 'end'
@@ -194,7 +190,7 @@ const tokensColumns = [
 	}),
 	tokensColumnHelper.accessor('price', {
 		header: 'Price',
-		cell: ({ getValue }) => formatValue(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[112px]',
 			align: 'end'
@@ -202,7 +198,7 @@ const tokensColumns = [
 	}),
 	tokensColumnHelper.accessor('activeMarketcap', {
 		header: 'Active Market Cap',
-		cell: ({ getValue }) => formatValue(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end'

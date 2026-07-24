@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState } from 'react'
 import { TokenPageTableShell } from '~/components/Table/helpers'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { formattedNum } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { scenarioTone } from '../derive'
 import { toneClasses } from '../kindMeta'
 import { ChapterHead } from '../primitives/ChapterHead'
@@ -95,7 +95,11 @@ function ScenarioRow({
 	const possibleUsd = scaleToPosition(atStressUsd, supplyUsd, position)
 	const stressAmount = cell
 		? cell.sortUsd > 0
-			? formattedNum(scaleToPosition(cell.sortUsd, supplyUsd, position), true)
+			? formatUsd(scaleToPosition(cell.sortUsd, supplyUsd, position), {
+					compact: true,
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				})
 			: cell.amount
 		: '—'
 	// The modeled loss as a share of the biggest in the table — grows as the stress climbs.
@@ -142,7 +146,9 @@ function ScenarioRow({
 						<span className="text-secondary">—</span>
 					) : (
 						<span className={`label-md tabular-nums ${cell?.amount === '$0' ? 'text-secondary' : 'text-primary'}`}>
-							{shareAtStress != null ? formatDepositPct(shareAtStress) : formattedNum(possibleUsd, true)}
+							{shareAtStress != null
+								? formatDepositPct(shareAtStress)
+								: formatUsd(possibleUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 						</span>
 					)}
 				</td>
@@ -304,7 +310,8 @@ export function ScenarioByExit({
 
 	if (!groups.length) return null
 
-	const stressHeaderLabel = activeStress === 'worst' ? 'Worst-case loss' : `Loss at −${activeStress}%`
+	const stressHeaderLabel =
+		activeStress === 'worst' ? 'Worst-case loss' : `Loss at −${formatPercent(activeStress, { input: 'percent' })}`
 
 	const onSort = (k: SortKey) => {
 		if (k === sortKey) {
@@ -346,7 +353,9 @@ export function ScenarioByExit({
 							{position != null ? (
 								<>
 									{' · $ shown for your '}
-									<span className="label-sm text-primary">{formattedNum(position, true)}</span>
+									<span className="label-sm text-primary">
+										{formatUsd(position, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+									</span>
 									{' deposit'}
 								</>
 							) : null}

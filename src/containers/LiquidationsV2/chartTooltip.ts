@@ -4,28 +4,31 @@ import {
 	normalizeTooltipItems,
 	type EChartsTooltipItem
 } from '~/components/ECharts/shared/tooltip'
-import { formatNum, formattedNum } from '~/utils'
+import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 
 export type LiquidationsMetric = 'usd' | 'amount'
 
 export function formatLiquidationPrice(value: number): string {
 	if (!Number.isFinite(value) || value <= 0) return '$0'
-	if (value < 0.01) return formatNum(value, 5, '$') ?? '$0'
-	if (value < 1) return formatNum(value, 4, '$') ?? '$0'
-	if (value < 100) return formatNum(value, 2, '$') ?? '$0'
-	return formattedNum(value, true)
+	if (value < 0.01) return formatUsd(value, { maximumFractionDigits: 5 })
+	if (value < 1) return formatUsd(value, { maximumFractionDigits: 4 })
+	if (value < 100) return formatUsd(value, { maximumFractionDigits: 2 })
+	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 export function formatLiquidationMetricValue(value: number, metric: LiquidationsMetric, tokenLabel: string): string {
 	if (metric === 'usd') {
 		if (!Number.isFinite(value) || value <= 0) return '$0'
-		if (value < 0.01) return formatNum(value, 5, '$') ?? '$0'
-		if (value < 1) return formatNum(value, 4, '$') ?? '$0'
-		if (value < 100) return formatNum(value, 2, '$') ?? '$0'
-		return formattedNum(value, true)
+		if (value < 0.01) return formatUsd(value, { maximumFractionDigits: 5 })
+		if (value < 1) return formatUsd(value, { maximumFractionDigits: 4 })
+		if (value < 100) return formatUsd(value, { maximumFractionDigits: 2 })
+		return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 	}
 
-	const amountLabel = !Number.isFinite(value) || value <= 0 ? '0' : formattedNum(value)
+	const amountLabel =
+		!Number.isFinite(value) || value <= 0
+			? '0'
+			: formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 	return `${amountLabel} ${tokenLabel}`
 }
 

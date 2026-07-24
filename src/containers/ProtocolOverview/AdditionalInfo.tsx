@@ -14,7 +14,8 @@ import { Icon } from '~/ui/Icon'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { IProtocolOverviewPageData } from './types'
 
 const EMPTY_COMPETITORS: Array<{ name: string; tvl: number }> = []
@@ -153,15 +154,39 @@ function Users(props: IProtocolOverviewPageData) {
 			</h2>
 			<div className="flex flex-col">
 				{users.activeUsers != null ? (
-					<MetricRow label="Active Addresses (24h)" value={formattedNum(users.activeUsers, false)} />
+					<MetricRow
+						label="Active Addresses (24h)"
+						value={formatCompactNumber(users.activeUsers, {
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
 				) : null}
 				{users.newUsers != null ? (
-					<MetricRow label="New Addresses (24h)" value={formattedNum(users.newUsers, false)} />
+					<MetricRow
+						label="New Addresses (24h)"
+						value={formatCompactNumber(users.newUsers, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+					/>
 				) : null}
 				{users.transactions != null ? (
-					<MetricRow label="Transactions (24h)" value={formattedNum(users.transactions, false)} />
+					<MetricRow
+						label="Transactions (24h)"
+						value={formatCompactNumber(users.transactions, {
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
 				) : null}
-				{users.gasUsd != null ? <MetricRow label="Gas Used (24h)" value={formattedNum(users.gasUsd, true)} /> : null}
+				{users.gasUsd != null ? (
+					<MetricRow
+						label="Gas Used (24h)"
+						value={formatUsd(users.gasUsd, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
+				) : null}
 			</div>
 		</Card>
 	)
@@ -383,7 +408,10 @@ const MethodologyByAdapter = ({
 function Yields(props: IProtocolOverviewPageData) {
 	const yields = props.yields
 	if (!yields) return null
-	const averageApy = yields.averageAPY == null ? '-' : `${formattedNum(yields.averageAPY, false)}%`
+	const averageApy =
+		yields.averageAPY == null
+			? '-'
+			: `${formatPercent(yields.averageAPY, { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
 			<SectionHeader id="yields">Yields</SectionHeader>
@@ -425,10 +453,16 @@ const Hacks = (props: IProtocolOverviewPageData) => {
 								<span>{hack.name}</span>
 							</p>
 						) : null}
-						{hack.amount ? (
+						{hack.amountUsd ? (
 							<p>
 								<span>Amount: </span>
-								<span>{formattedNum(hack.amount, true)}</span>
+								<span>
+									{formatUsd(hack.amountUsd, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 							</p>
 						) : null}
 						{hack.classification ? <p>Classification: {hack.classification}</p> : null}
@@ -447,10 +481,16 @@ const Hacks = (props: IProtocolOverviewPageData) => {
 								<span>{hack.targetType}</span>
 							</p>
 						) : null}
-						{hack.returnedFunds ? (
+						{hack.returnedFundsUsd ? (
 							<p>
 								<span>Returned Funds: </span>
-								<span>{formattedNum(hack.returnedFunds, true)}</span>
+								<span>
+									{formatUsd(hack.returnedFundsUsd, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 							</p>
 						) : null}
 						{hack.source ? (
@@ -543,7 +583,7 @@ const Competitors = (props: IProtocolOverviewPageData) => {
 						target="_blank"
 						rel="noopener noreferrer"
 						className="underline"
-					>{`${similarProtocol.name}${similarProtocol.tvl ? ` (${formattedNum(similarProtocol.tvl, true)})` : ''}`}</a>
+					>{`${similarProtocol.name}${similarProtocol.tvl ? ` (${formatUsd(similarProtocol.tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })})` : ''}`}</a>
 				))}
 			</div>
 			{shouldRenderModal ? (

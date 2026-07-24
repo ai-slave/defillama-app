@@ -1,7 +1,7 @@
 import { getChartTheme } from '~/components/ECharts/shared/chartTheme'
 import type { UnlocksData } from '~/containers/Unlocks/calendarTypes'
-import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
+import { formatUsd } from '~/utils/numberFormat'
 
 export const UNLOCKS_TREEMAP_TIME_VIEWS = ['Month', 'Current Year', 'All Years'] as const
 export type UnlocksTreemapTimeView = (typeof UNLOCKS_TREEMAP_TIME_VIEWS)[number]
@@ -102,7 +102,7 @@ function buildProtocolNodes(protocols: Record<string, number>): UnlocksTreemapNo
 			iconUrl,
 			label: {
 				show: true,
-				formatter: `{icon|}\n{name|${protocol}}\n{value|${formattedNum(value, true)}}`,
+				formatter: `{icon|}\n{name|${protocol}}\n{value|${formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}}`,
 				position: 'inside',
 				color: '#fff',
 				rich: {
@@ -154,7 +154,7 @@ function buildMonthNodes(year: YearInfo, inkColor: string, fontSize: number): Un
 			children: buildProtocolNodes(month.protocols),
 			upperLabel: {
 				show: true,
-				formatter: `${monthName} - ${formattedNum(month.value, true)}`,
+				formatter: `${monthName} - ${formatUsd(month.value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 				color: inkColor,
 				fontSize,
 				fontWeight: 600
@@ -226,7 +226,7 @@ export function buildUnlocksTreemapTreeData({
 			children: buildMonthNodes(year, inkColor, 12),
 			upperLabel: {
 				show: true,
-				formatter: `${yearName} - ${formattedNum(year.value, true)}`,
+				formatter: `${yearName} - ${formatUsd(year.value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 				color: inkColor,
 				fontSize: 14,
 				fontWeight: 700

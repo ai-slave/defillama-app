@@ -3,8 +3,9 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { hasPart } from '../domain/apyPresentation'
-import { fmtLtv, fmtPct, fmtUsd, scoreValue } from './format'
+import { scoreValue, YIELD_PERCENT_OPTIONS, YIELD_USD_OPTIONS } from './format'
 import { HoldersPanel } from './HoldersPanel'
 import { PoolApyChart } from './PoolApyChart'
 import type { PoolChartModel } from './poolCharts'
@@ -73,7 +74,7 @@ function apyParts(apy: ApyBreakdown, kind: ApyKind) {
 		parts.push({
 			key: 'base',
 			label: kind === 'borrow' ? 'Base cost' : 'Base',
-			value: `${fmtPct(apy.base)}%`,
+			value: formatPercent(apy.base, YIELD_PERCENT_OPTIONS),
 			strong: false
 		})
 	}
@@ -83,7 +84,7 @@ function apyParts(apy: ApyBreakdown, kind: ApyKind) {
 		parts.push({
 			key: 'reward',
 			label: `Reward${syms}`,
-			value: `${sign}${fmtPct(Math.abs(apy.reward))}%`,
+			value: `${sign}${formatPercent(Math.abs(apy.reward), YIELD_PERCENT_OPTIONS)}`,
 			strong: true
 		})
 	}
@@ -92,7 +93,7 @@ function apyParts(apy: ApyBreakdown, kind: ApyKind) {
 		parts.push({
 			key: 'intrinsic',
 			label: `Intrinsic${src}`,
-			value: `+${fmtPct(Math.abs(apy.intrinsic))}%`,
+			value: `+${formatPercent(Math.abs(apy.intrinsic), YIELD_PERCENT_OPTIONS)}`,
 			strong: false
 		})
 	}
@@ -104,8 +105,7 @@ const SUB_VALUE_CLS = 'ml-auto mono-md'
 
 function SideBlock({ side, kind, children }: { side: PoolSide; kind: ApyKind; children?: React.ReactNode }) {
 	const parts = hasPart(side.apy.reward) || hasPart(side.apy.intrinsic) ? apyParts(side.apy, kind) : []
-	const total = fmtPct(side.apy.total)
-	const apyValue = total === '—' ? '—' : `${total}%`
+	const apyValue = side.apy.total == null ? '—' : formatPercent(side.apy.total, YIELD_PERCENT_OPTIONS)
 	return (
 		<>
 			{parts.length ? (
@@ -126,7 +126,16 @@ function SideBlock({ side, kind, children }: { side: PoolSide; kind: ApyKind; ch
 				<MetricRow
 					key={m.label}
 					label={m.label}
-					value={m.format === 'ltv' ? fmtLtv(m.value) : fmtUsd(m.value)}
+					value={
+						m.format === 'ltv'
+							? (formatPercent(m.value, {
+									input: 'fraction',
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								}) ?? '—')
+							: (formatUsd(m.value, YIELD_USD_OPTIONS) ?? '—')
+					}
 					valueClassName={VALUE_CLS}
 				/>
 			))}

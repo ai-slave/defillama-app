@@ -2,6 +2,7 @@ import type { BlockExplorersResponse } from '~/api/types'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { formatPercent } from '~/utils/numberFormat'
 import { AddressActions } from '../primitives/AddressActions'
 import type { MarketOracle } from '../types'
 import { isProvenVendor, PtPricingChip } from './collateralShared'
@@ -71,7 +72,9 @@ export function MarketOracleTable({
 											{m.pt_pricing ? <PtPricingChip pricing={m.pt_pricing} /> : null}
 										</span>
 									</td>
-									<td className="px-3 py-2 text-right">{m.lltv != null ? `${Math.round(m.lltv * 100)}%` : '—'}</td>
+									<td className="px-3 py-2 text-right">
+										{m.lltv != null ? formatPercent(m.lltv, { input: 'fraction', maximumFractionDigits: 0 }) : '—'}
+									</td>
 									<td className="px-3 py-2">
 										{m.oracle_address ? (
 											<AddressActions address={m.oracle_address} url={oracleUrl} label="market oracle address" />

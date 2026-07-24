@@ -141,7 +141,7 @@ function makeYieldRow(overrides: Partial<IYieldTableRow> = {}): IYieldTableRow {
 		project: 'Aave',
 		projectslug: 'aave',
 		airdrop: false,
-		raiseValuation: null,
+		raiseValuationUsd: null,
 		configID: 'pool-1',
 		chains: ['Ethereum'],
 		tvl: 1_000_000,

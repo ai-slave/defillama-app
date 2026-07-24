@@ -1,6 +1,7 @@
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { formatNumber } from '~/utils/numberFormat'
 
 export interface CSVExport {
 	id: string
@@ -60,7 +61,7 @@ export function CSVExportArtifact({ csvExport, sessionId, messageId }: CSVExport
 			</span>
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<span className="m-0 truncate text-sm font-medium text-(--text1)">{csvExport.title}</span>
-				<span className="m-0 text-xs text-(--text3)">{csvExport.rowCount.toLocaleString()} rows</span>
+				<span className="m-0 text-xs text-(--text3)">{formatNumber(csvExport.rowCount)} rows</span>
 			</span>
 			<span className="flex shrink-0 items-center gap-1.5 text-ai-action">
 				<Icon name="download-paper" className="size-4" />

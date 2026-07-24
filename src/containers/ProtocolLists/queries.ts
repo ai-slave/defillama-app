@@ -7,9 +7,11 @@ import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import { fetchRaises } from '~/containers/Raises/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
-import { getPercentChange, getPrevTvlFromChart, slug } from '~/utils'
+import { getPercentChange, slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
+import { roundNumber } from '~/utils/numberFormat'
 import { recordRuntimeError } from '~/utils/telemetry'
+import { getPrevTvlFromChart } from '~/utils/tvlChart'
 import { AIRDROP_EXCLUDE } from './airdrop-exclude'
 import { fetchAirdropsConfig, fetchProtocols } from './api'
 import type { ParentProtocolLite, ProtocolLite } from './api.types'
@@ -135,9 +137,9 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 	for (const r of raises) {
 		if (r.defillamaId) {
 			const key = r.defillamaId.toString()
-			const amount = r.amount ?? 0
-			if (!Number.isNaN(amount)) {
-				raisesById.set(key, (raisesById.get(key) ?? 0) + amount * 1e6)
+			const amountUsd = r.amountUsd ?? 0
+			if (!Number.isNaN(amountUsd)) {
+				raisesById.set(key, (raisesById.get(key) ?? 0) + amountUsd)
 			}
 		}
 	}
@@ -291,7 +293,7 @@ export async function getExtraTvlByChain({
 			chains: (protocol.defillamaId ? protocolMetadata[protocol.defillamaId]?.chains : null) ?? protocol.chains ?? [],
 			...(protocol.deprecated ? { deprecated: true } : {}),
 			value: totalValue,
-			change_1m: pct != null ? Number(pct.toFixed(2)) : null
+			change_1m: pct != null ? roundNumber(pct, 2) : null
 		}
 
 		if (protocol.parentProtocol) {
@@ -327,7 +329,7 @@ export async function getExtraTvlByChain({
 			category: categories.length > 1 ? null : (categories[0] ?? null),
 			chains: Array.from(new Set(children.flatMap((child) => child.chains))),
 			value: totalValue,
-			change_1m: pct != null ? Number(pct.toFixed(2)) : null,
+			change_1m: pct != null ? roundNumber(pct, 2) : null,
 			subRows: children
 		})
 	}
@@ -335,7 +337,7 @@ export async function getExtraTvlByChain({
 	const totalValue = getPrevTvlFromChart(chart, 0) ?? chart[chart.length - 1][1]
 	const previousDayValue = getPrevTvlFromChart(chart, 1)
 	const change24hPct = getPercentChange(totalValue, previousDayValue)
-	const change24h = change24hPct == null || !Number.isFinite(change24hPct) ? null : +change24hPct.toFixed(2)
+	const change24h = change24hPct == null || !Number.isFinite(change24hPct) ? null : roundNumber(change24hPct, 2)
 
 	return {
 		protocols: finalProtocols.sort((a, b) => (b.value ?? 0) - (a.value ?? 0)),

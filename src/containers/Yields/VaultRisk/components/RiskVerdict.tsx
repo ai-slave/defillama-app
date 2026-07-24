@@ -1,4 +1,4 @@
-import { formattedNum } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { formatVerified } from '../format'
 import { toneClasses, type Tone } from '../kindMeta'
 import type { Audit, CollateralVM, ExitReadinessVM, HeadlineVM, ScenarioVM, Stress } from '../types'
@@ -34,9 +34,9 @@ function trackRecordSummary(incidents: HistoryIncident[]): { label: string; tone
 	const n = incidents.length === 1 ? '1 incident' : `${incidents.length} incidents`
 	if (totalLost > 0 && totalRecovered >= totalLost) return { label: `${n} · made whole`, tone: 'good', detail: null }
 	return {
-		label: `${formattedNum(totalLost, true)} lost`,
+		label: `${formatUsd(totalLost, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} lost`,
 		tone: 'danger',
-		detail: `${n}${totalRecovered > 0 ? `, ${formattedNum(totalRecovered, true)} recovered` : ', not recovered'}`
+		detail: `${n}${totalRecovered > 0 ? `, ${formatUsd(totalRecovered, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} recovered` : ', not recovered'}`
 	}
 }
 
@@ -78,14 +78,17 @@ export function RiskVerdict({
 	const ratio = personal ? position / supplyUsd : 1
 
 	const avail = exit.availableLiquidityUsd
-	const util = exit.utilization != null ? ` (${Math.round(exit.utilization * 100)}% utilized)` : ''
+	const util =
+		exit.utilization != null
+			? ` (${formatPercent(exit.utilization, { input: 'fraction', maximumFractionDigits: 0 })} utilized)`
+			: ''
 	const withdrawable =
 		exit.poolType === 'market' && avail != null
 			? personal
 				? position <= avail
-					? `your ${formattedNum(position, true)} could exit today — ${formattedNum(avail, true)} withdrawable${util}`
-					: `you couldn't fully exit today — ${formattedNum(avail, true)} withdrawable${util}`
-				: `${formattedNum(avail, true)} withdrawable now${util}`
+					? `your ${formatUsd(position, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} could exit today — ${formatUsd(avail, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} withdrawable${util}`
+					: `you couldn't fully exit today — ${formatUsd(avail, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} withdrawable${util}`
+				: `${formatUsd(avail, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} withdrawable now${util}`
 			: 'withdraw via underlying markets'
 
 	// "Can I exit?" — only timelocked governance changes give a window; every other modeled
@@ -154,7 +157,7 @@ export function RiskVerdict({
 							) : fullyCovered ? (
 								<span className={toneClasses('good').text}>Could cover in full</span>
 							) : covPct > 0 ? (
-								`${covPct}% backstop`
+								`${formatPercent(covPct, { input: 'percent' })} backstop`
 							) : (
 								'No committed backstop'
 							)
@@ -165,9 +168,9 @@ export function RiskVerdict({
 							worst <= 0
 								? undefined
 								: fullyCovered
-									? `${formattedNum(headline.coverageTotalUsd, true)} committed could cover the worst case`
+									? `${formatUsd(headline.coverageTotalUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} committed could cover the worst case`
 									: covPct > 0
-										? `${formattedNum(headline.coverageTotalUsd, true)} committed against ${formattedNum(worst * ratio, true)}`
+										? `${formatUsd(headline.coverageTotalUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} committed against ${formatUsd(worst * ratio, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 										: 'nothing committed would cover a loss'
 						}
 					/>

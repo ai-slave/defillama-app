@@ -9,8 +9,8 @@ import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { VirtualTable } from '~/components/Table/Table'
 import { Icon } from '~/ui/Icon'
-import { formattedNum } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { formatUsd } from '~/utils/numberFormat'
 
 type BridgeTokensTableRow = {
 	symbol: string
@@ -79,7 +79,12 @@ export function BridgeTokensTable({ data }: { data: BridgeTokensTableRow[] }) {
 			}),
 			columnHelper.accessor('deposited', {
 				header: 'Deposited',
-				cell: (info) => formattedNum(info.getValue() ?? 0, true),
+				cell: (info) =>
+					formatUsd(info.getValue() ?? 0, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
 				meta: {
 					headerClassName: 'w-[120px]',
 					align: 'end'
@@ -87,7 +92,12 @@ export function BridgeTokensTable({ data }: { data: BridgeTokensTableRow[] }) {
 			}),
 			columnHelper.accessor('withdrawn', {
 				header: 'Withdrawn',
-				cell: (info) => formattedNum(info.getValue() ?? 0, true),
+				cell: (info) =>
+					formatUsd(info.getValue() ?? 0, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}),
 				meta: {
 					headerClassName: 'w-[120px]',
 					align: 'end'
@@ -95,7 +105,8 @@ export function BridgeTokensTable({ data }: { data: BridgeTokensTableRow[] }) {
 			}),
 			columnHelper.accessor('volume', {
 				header: 'Total Volume',
-				cell: (info) => formattedNum(info.getValue(), true),
+				cell: (info) =>
+					formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 				meta: {
 					headerClassName: 'w-[120px]',
 					align: 'end'

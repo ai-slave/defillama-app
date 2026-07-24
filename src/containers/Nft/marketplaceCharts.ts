@@ -1,5 +1,6 @@
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { getNDistinctColors } from '~/utils'
+import { roundNumber } from '~/utils/numberFormat'
 import type { RawNftMarketplaceVolume } from './api.types'
 
 type DailyMarketplaceValues = {
@@ -31,7 +32,7 @@ export type NFTMarketplaceRelativeChartData = {
 }
 
 function roundToThreeDecimals(value: number): number {
-	return +value.toFixed(3)
+	return roundNumber(value, 3)
 }
 
 function getNumericDominance(value: number, total: number): number {

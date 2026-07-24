@@ -2,7 +2,7 @@ import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { ExchangeResearchChartModel } from './models'
 import type { ResearchPresentation } from './researchPresentation'
 
@@ -28,7 +28,9 @@ export function researchChartDisplayValue(value: number, symbol: ExchangeResearc
 }
 
 function accessibleValue(value: number, symbol: ExchangeResearchChartModel['valueSymbol']) {
-	return symbol === '$' ? formattedNum(value, true) : `${formattedNum(researchChartDisplayValue(value, symbol))}%`
+	return symbol === '$'
+		? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		: `${formatPercent(researchChartDisplayValue(value, symbol), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 }
 
 export function researchSeriesColor(lineId: string, index: number): string {

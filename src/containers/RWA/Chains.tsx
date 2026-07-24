@@ -7,7 +7,7 @@ import type {} from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAChainsOverviewRow, RWAOverviewPage } from './api.types'
 import type { RWAPositionalChartDataset } from './chartDataset'
@@ -51,7 +51,8 @@ const columns = [
 	columnHelper.accessor((row) => row.totalAssetIssuers ?? undefined, {
 		id: 'totalAssetIssuers',
 		header: definitions.totalAssetIssuers.label,
-		cell: (info) => formattedNum(info.getValue(), false),
+		cell: (info) =>
+			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -61,7 +62,8 @@ const columns = [
 	columnHelper.accessor((row) => row.totalAssetCount ?? undefined, {
 		id: 'totalAssetCount',
 		header: definitions.totalAssetCount.label,
-		cell: (info) => formattedNum(info.getValue(), false),
+		cell: (info) =>
+			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end',
@@ -71,7 +73,8 @@ const columns = [
 	columnHelper.accessor((row) => row.totalActiveMcap ?? undefined, {
 		id: 'totalActiveMcap',
 		header: definitions.totalActiveMcap.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[min(200px,40vw)]',
 			align: 'end',
@@ -81,7 +84,8 @@ const columns = [
 	columnHelper.accessor((row) => row.totalOnChainMcap ?? undefined, {
 		id: 'totalOnChainMcap',
 		header: definitions.totalOnChainMcap.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[min(208px,40vw)]',
 			align: 'end',
@@ -91,7 +95,8 @@ const columns = [
 	columnHelper.accessor((row) => row.totalDefiActiveTvl ?? undefined, {
 		id: 'totalDefiActiveTvl',
 		header: definitions.totalDefiActiveTvl.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',

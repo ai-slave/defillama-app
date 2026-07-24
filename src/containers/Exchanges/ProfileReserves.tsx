@@ -3,7 +3,7 @@ import { IncludeOwnTokensSwitch, ReserveAssetsCharts } from '~/containers/Cexs/R
 import { ReserveStablecoinCharts } from '~/containers/Cexs/ReserveStablecoinCharts'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { ExchangeProfileModel, ExchangeReservesModel } from './models'
 import {
@@ -30,14 +30,17 @@ function ReserveStatStrip({ profile }: { profile: ExchangeProfileModel }) {
 				value:
 					key === 'in24h' ? (
 						<span className={field.value < 0 ? 'text-data-down' : field.value > 0 ? 'text-data-up' : ''}>
-							{formattedNum(field.value, true)}
+							{formatUsd(field.value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 						</span>
 					) : (
-						formattedNum(field.value, true)
+						formatUsd(field.value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 					)
 			})
 		} else if (field.type === 'pct') {
-			items.push({ label: field.label, value: `${(field.value * 100).toFixed(2)}%` })
+			items.push({
+				label: field.label,
+				value: `${formatPercent(field.value, { input: 'fraction', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+			})
 		}
 	}
 	if (items.length === 0) return null

@@ -28,8 +28,9 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
+import { formatUsd } from '~/utils/numberFormat'
 import type { RawChainAsset } from './api.types'
 import { buildBridgedInflowsChartData } from './inflowChart'
 
@@ -68,7 +69,8 @@ const bridgedChainColumns = [
 	columnHelper.accessor((row) => (row.value ? +row.value : undefined), {
 		id: 'value',
 		header: 'Total Bridged',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[120px]'
 		}
@@ -203,19 +205,47 @@ export function BridgedTVLByChain({
 					<StatItem
 						label="Total"
 						className="mb-3"
-						value={formattedNum(
+						value={formatUsd(
 							+(chainData?.total?.total ?? 0) + (chainData?.ownTokens?.total ? +chainData.ownTokens.total : 0),
-							true
+							{ compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }
 						)}
 					/>
 
 					<div className="flex flex-col">
-						<MetricRow label="Canonical" value={formattedNum(chainData?.canonical?.total, true)} />
-						<MetricRow label="Native" value={formattedNum(chainData?.native?.total, true)} />
-						<MetricRow label="Third Party" value={formattedNum(chainData?.thirdParty?.total, true)} />
+						<MetricRow
+							label="Canonical"
+							value={formatUsd(chainData?.canonical?.total, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						/>
+						<MetricRow
+							label="Native"
+							value={formatUsd(chainData?.native?.total, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						/>
+						<MetricRow
+							label="Third Party"
+							value={formatUsd(chainData?.thirdParty?.total, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						/>
 
 						{chainData?.ownTokens?.total ? (
-							<MetricRow label="Own Tokens" value={formattedNum(chainData?.ownTokens.total, true)} />
+							<MetricRow
+								label="Own Tokens"
+								value={formatUsd(chainData?.ownTokens.total, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+							/>
 						) : null}
 					</div>
 				</SummaryStatsCard>

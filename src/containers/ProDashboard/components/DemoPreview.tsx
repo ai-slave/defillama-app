@@ -5,6 +5,7 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { Icon } from '~/ui/Icon'
+import { formatUsd } from '~/utils/numberFormat'
 import type { ChartConfig, MultiChartConfig, TextConfig } from '../types'
 import { CHART_TYPES } from '../types'
 import { buildMultiChartSeriesView, type MultiChartInputSeries } from './multiChartSeries'
@@ -96,18 +97,6 @@ const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
 
 const DEMO_CHART_COLORS = ['#2172E5', '#5CCA93', '#F2994A']
 
-const formatDemoValue = (value: number) => {
-	const absValue = Math.abs(value)
-	if (absValue >= 1e9) {
-		return '$' + (value / 1e9).toFixed(1).replace(/\.0$/, '') + 'B'
-	} else if (absValue >= 1e6) {
-		return '$' + (value / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'
-	} else if (absValue >= 1e3) {
-		return '$' + (value / 1e3).toFixed(1).replace(/\.0$/, '') + 'K'
-	}
-	return '$' + value.toString()
-}
-
 const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 	const chartView = React.useMemo(() => {
 		const series: MultiChartInputSeries[] = multi.items.map((item, index) => {
@@ -141,7 +130,7 @@ const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 			yAxis: {
 				max: undefined,
 				min: undefined,
-				axisLabel: { formatter: formatDemoValue }
+				axisLabel: { formatter: (value: number) => formatUsd(value, { compact: true, maximumFractionDigits: 1 }) }
 			},
 			grid: chartGrid({ top: chartView.charts.length > 5 ? 80 : CHART_LEGEND_RESERVE }),
 			legend: {

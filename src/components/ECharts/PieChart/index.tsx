@@ -10,7 +10,7 @@ import { useChartResize } from '~/hooks/useChartResize'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
-import { formattedNum } from '~/utils'
+import { formatPercent } from '~/utils/numberFormat'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
@@ -89,23 +89,34 @@ function PieChart({
 		onReady?.(instance)
 	})
 
-	const { percentByName, formatPercent } = useMemo(() => {
+	const { percentByName, formatSlicePercent } = useMemo(() => {
 		let total = 0
 		for (const item of chartData) total += item.value
 
-		const formatPercent = (value: number) => {
+		const formatSlicePercent = (value: number) => {
 			if (total === 0) return '0%'
 			const pct = (value / total) * 100
 			if (pct === 0) return '0%'
 			if (pct < 0.0001) return '< 0.0001%'
-			if (pct < 0.01) return formattedNum(pct) + '%'
-			return pct.toFixed(2) + '%'
+			if (pct < 0.01)
+				return formatPercent(pct, {
+					input: 'percent',
+					compact: true,
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				})
+			return formatPercent(pct, {
+				input: 'percent',
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2,
+				useGrouping: false
+			})
 		}
 
 		const percentByName = new Map<string, string>()
-		for (const item of chartData) percentByName.set(item.name, formatPercent(item.value))
+		for (const item of chartData) percentByName.set(item.name, formatSlicePercent(item.value))
 
-		return { percentByName, formatPercent }
+		return { percentByName, formatSlicePercent }
 	}, [chartData])
 
 	const { legendBoxWidth, legendLabelByName, legendAlign } = useMemo<{
@@ -217,7 +228,7 @@ function PieChart({
 				fontFamily: 'sans-serif',
 				color: chartTheme.text,
 				formatter: (x) => {
-					return `${x.name}: (${formatPercent(Number(x.value))})`
+					return `${x.name}: (${formatSlicePercent(Number(x.value))})`
 				},
 				show: !showLegend
 			},
@@ -262,7 +273,17 @@ function PieChart({
 		}
 
 		return series
-	}, [chartTheme, showLegend, chartData, radius, stackColorByName, isSmall, reservedRight, formatPercent, customLabel])
+	}, [
+		chartTheme,
+		showLegend,
+		chartData,
+		radius,
+		stackColorByName,
+		isSmall,
+		reservedRight,
+		formatSlicePercent,
+		customLabel
+	])
 
 	const isChartDisposed = (inst: echarts.ECharts | null) => {
 		if (!inst) return true
@@ -309,7 +330,7 @@ function PieChart({
 					if (formatTooltip) return formatTooltip(p)
 					const rawValue = typeof p?.value === 'number' ? p.value : Number(p?.value ?? 0)
 					const formattedValue = formatTooltipValue(rawValue, valueSymbol)
-					return `${p.marker ?? ''}${p.name ?? ''}: <b>${formattedValue}</b> (${p.percent ?? 0}%)`
+					return `${p.marker ?? ''}${p.name ?? ''}: <b>${formattedValue}</b> (${formatPercent(p.percent ?? 0, { input: 'percent' })})`
 				}
 			},
 			grid: {

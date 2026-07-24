@@ -4,10 +4,10 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import { CHART_COLORS } from '~/constants/colors'
 import { toYearMonth } from '~/utils'
 import { parseExcludeParam } from '~/utils/routerQuery'
-import type { IRaise } from './types'
+import type { Raise } from './model'
 
 interface UseRaisesDataParams {
-	raises: IRaise[]
+	raises: Raise[]
 	investors: string[]
 	rounds: string[]
 	sectors: string[]
@@ -188,7 +188,7 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 				}
 			}
 
-			const raisedAmount = raise.amount ? Number(raise.amount) * 1_000_000 : 0
+			const raisedAmount = raise.amountUsd ?? 0
 
 			const isInRange =
 				(minimumAmountRaised ? raisedAmount >= minimumAmountRaised : true) &&
@@ -210,13 +210,13 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 			if (r.name === 'EOS') {
 				for (let month = 0; month < 13; month++) {
 					const date = toYearMonth(r.date - month * 2_529_746)
-					monthlyInvestment[date] = (monthlyInvestment[date] ?? 0) + (r.amount ?? 0) / 13
+					monthlyInvestment[date] = (monthlyInvestment[date] ?? 0) + (r.amountUsd ?? 0) / 13
 					fundingRoundsByMonth[date] = (fundingRoundsByMonth[date] ?? 0) + 1
 				}
 			} else {
 				const monthlyDate = toYearMonth(r.date)
 
-				monthlyInvestment[monthlyDate] = (monthlyInvestment[monthlyDate] ?? 0) + (r.amount ?? 0)
+				monthlyInvestment[monthlyDate] = (monthlyInvestment[monthlyDate] ?? 0) + (r.amountUsd ?? 0)
 				fundingRoundsByMonth[monthlyDate] = (fundingRoundsByMonth[monthlyDate] ?? 0) + 1
 			}
 
@@ -232,8 +232,8 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 		let totalAmountRaised = 0
 
 		for (const date in monthlyInvestment) {
-			finalMonthlyInvestment.push([new Date(date).getTime(), monthlyInvestment[date] * 1e6])
-			totalAmountRaised += monthlyInvestment[date] * 1e6
+			finalMonthlyInvestment.push([new Date(date).getTime(), monthlyInvestment[date]])
+			totalAmountRaised += monthlyInvestment[date]
 		}
 		// ECharts `dataZoom` (slider shadow) is sensitive to source order.
 		// We build these series from object keys, which are not guaranteed to be chronological.

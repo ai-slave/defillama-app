@@ -1,6 +1,7 @@
 import { lazy, useMemo, useState } from 'react'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { formatRatio } from '~/utils/numberFormat'
 import { useIncentivesData, chartToModel, type EpochRow, type SpendWindowRow } from './api'
 import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd, type Col } from './ui'
 
@@ -233,7 +234,7 @@ export default function Incentives() {
 										key: 'multiplier',
 										label: 'Multiplier',
 										right: true,
-										render: (r) => (r.multiplier != null ? `${r.multiplier.toFixed(2)}x` : '—')
+										render: (r) => (r.multiplier != null ? `${formatRatio(r.multiplier)}x` : '—')
 									}
 								]}
 							/>

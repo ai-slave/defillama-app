@@ -1,3 +1,4 @@
+import { formatFixedNumber } from '~/utils/numberFormat'
 import { DATASET_SNAPSHOT_DOMAINS, type DatasetSnapshotDomain } from './contract'
 import { getDatasetSnapshotRoot } from './filePaths.server'
 import { FileDatasetSnapshotStore } from './fileStore.server'
@@ -7,7 +8,7 @@ import { DATASET_SNAPSHOT_RETAINED_VERSION_COUNT, type DatasetSnapshotStore } fr
 /** Build-time/scheduled publisher using the same atomic path as runtime refresh. */
 
 function formatBytes(bytes: number): string {
-	return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`
+	return `${formatFixedNumber(bytes / (1024 * 1024), 1)} MiB`
 }
 
 async function maintainPublishedDomain(

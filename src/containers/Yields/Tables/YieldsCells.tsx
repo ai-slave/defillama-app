@@ -5,10 +5,10 @@ import { fetchBlockExplorers } from '~/api'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
 import { getDepegWarningSeverity, hasPart } from '../domain/apyPresentation'
 import { InstantTooltip } from '../InstantTooltip'
-import { fmtPct } from '../poolDetail/format'
+import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { tokenIconByAddress } from '../VaultRisk/tokenIcon'
 import type { IYieldTableRow } from './types'
 
@@ -26,10 +26,10 @@ export function ApyWindowHeader({ label }: { label: string }) {
 type SignMode = 'plus' | 'minus' | 'auto'
 
 function signedPct(value: number, signed?: SignMode): string {
-	if (signed === 'plus') return `+${fmtPct(Math.abs(value))}%`
-	if (signed === 'minus') return `-${fmtPct(Math.abs(value))}%`
-	if (signed === 'auto') return `${value >= 0 ? '+' : ''}${fmtPct(value)}%`
-	return `${fmtPct(value)}%`
+	if (signed === 'plus') return `+${formatPercent(Math.abs(value), YIELD_PERCENT_OPTIONS)}`
+	if (signed === 'minus') return `-${formatPercent(Math.abs(value), YIELD_PERCENT_OPTIONS)}`
+	if (signed === 'auto') return `${value >= 0 ? '+' : ''}${formatPercent(value, YIELD_PERCENT_OPTIONS)}`
+	return formatPercent(value, YIELD_PERCENT_OPTIONS)
 }
 
 // The single, shared "no data" marker used across every yields table cell. A plain inline em
@@ -61,7 +61,7 @@ export function DepegWarningIcon({
 	const abs = Math.abs(deviation)
 	const colorClass = severity === 'danger' ? 'text-data-down' : 'text-warning'
 	const token = symbol ?? 'The underlying stablecoin'
-	const content = `${token} is ${(abs * 100).toFixed(1)}% off peg — ${consequence}.`
+	const content = `${token} is ${formatPercent(abs, { input: 'fraction', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })} off peg — ${consequence}.`
 	return (
 		<Tooltip content={content}>
 			<Icon name="alert-triangle" height={14} width={14} className={`shrink-0 ${colorClass}`} />
@@ -111,16 +111,17 @@ export function EarnApyCell({ row }: { row: IYieldTableRow }) {
 	const body = (
 		<span className="flex flex-col items-end leading-tight">
 			<span className="flex items-center gap-1 text-sm font-bold text-primary">
-				<span>
-					{fmtPct(total)}
-					<span className="ml-0.5 opacity-70">%</span>
-				</span>
+				<span>{formatPercent(total, YIELD_PERCENT_OPTIONS)}</span>
 			</span>
 			{hasComposition ? (
 				<span className="flex gap-1 body-sm">
-					{base != null ? <span className="text-secondary">{fmtPct(base)}%</span> : null}
-					{hasPart(reward) ? <span className="text-(--yield-reward-text)">+{fmtPct(reward)}%</span> : null}
-					{hasPart(intrinsic) ? <span className="text-secondary">+{fmtPct(intrinsic)}%</span> : null}
+					{base != null ? <span className="text-secondary">{formatPercent(base, YIELD_PERCENT_OPTIONS)}</span> : null}
+					{hasPart(reward) ? (
+						<span className="text-(--yield-reward-text)">+{formatPercent(reward, YIELD_PERCENT_OPTIONS)}</span>
+					) : null}
+					{hasPart(intrinsic) ? (
+						<span className="text-secondary">+{formatPercent(intrinsic, YIELD_PERCENT_OPTIONS)}</span>
+					) : null}
 				</span>
 			) : null}
 		</span>
@@ -148,11 +149,13 @@ export function EarnApyCell({ row }: { row: IYieldTableRow }) {
 						{tipRows.map((tip) => (
 							<Fragment key={tip.label}>
 								<span className="text-secondary">{tip.label}</span>
-								<span className="text-right text-primary">{fmtPct(tip.value)}%</span>
+								<span className="text-right text-primary">{formatPercent(tip.value, YIELD_PERCENT_OPTIONS)}</span>
 							</Fragment>
 						))}
 						<span className="mt-0.5 border-t border-subtle pt-1.5 text-secondary">Total</span>
-						<span className="mt-0.5 border-t border-subtle pt-1.5 text-right font-semibold">{fmtPct(total)}%</span>
+						<span className="mt-0.5 border-t border-subtle pt-1.5 text-right font-semibold">
+							{formatPercent(total, YIELD_PERCENT_OPTIONS)}
+						</span>
 					</span>
 				}
 			>
@@ -228,14 +231,15 @@ export function TotalApyCell({
 	const body = (
 		<span className="flex flex-col items-end leading-tight">
 			<span className="flex items-center justify-end label-md text-primary">
-				{fmtPct(value)}
-				<span className="ml-0.5 opacity-70">%</span>
+				{formatPercent(value, YIELD_PERCENT_OPTIONS)}
 			</span>
 			{hasComposition ? (
 				<span className="flex gap-1 body-sm">
-					{base != null ? <span className="text-secondary">{fmtPct(base)}%</span> : null}
+					{base != null ? <span className="text-secondary">{formatPercent(base, YIELD_PERCENT_OPTIONS)}</span> : null}
 					{hasPart(reward) ? <span className="text-(--yield-reward-text)">{signedPct(reward, rewardSign)}</span> : null}
-					{hasPart(intrinsic) ? <span className="text-secondary">+{fmtPct(intrinsic)}%</span> : null}
+					{hasPart(intrinsic) ? (
+						<span className="text-secondary">+{formatPercent(intrinsic, YIELD_PERCENT_OPTIONS)}</span>
+					) : null}
 				</span>
 			) : null}
 		</span>
@@ -259,7 +263,9 @@ export function TotalApyCell({
 						<span className="mt-0.5 border-t border-subtle pt-1.5 text-secondary">
 							{kind === 'borrow' ? 'Cost' : 'Total'}
 						</span>
-						<span className="mt-0.5 border-t border-subtle pt-1.5 text-right label-sm">{fmtPct(value)}%</span>
+						<span className="mt-0.5 border-t border-subtle pt-1.5 text-right label-sm">
+							{formatPercent(value, YIELD_PERCENT_OPTIONS)}
+						</span>
 					</>
 				</span>
 			}
@@ -310,8 +316,7 @@ export function SignedApyCell({
 		<span className="flex items-center justify-end">
 			<span className={`label-md ${tone}`}>
 				{value >= 0 ? '+' : ''}
-				{fmtPct(value)}
-				<span className="ml-0.5 opacity-70">%</span>
+				{formatPercent(value, YIELD_PERCENT_OPTIONS)}
 			</span>
 		</span>
 	)
@@ -331,7 +336,7 @@ export function SignedApyCell({
 						<Fragment key={tip.label}>
 							<span className="text-secondary">{tip.label}</span>
 							<span className="text-right body-sm text-tertiary">
-								{tip.multiple != null ? `${tip.multiple.toFixed(2)}x` : ''}
+								{tip.multiple != null ? `${formatRatio(tip.multiple)}x` : ''}
 							</span>
 							<span className="text-right text-primary">{signedPct(tip.value, tip.signed)}</span>
 						</Fragment>
@@ -362,7 +367,9 @@ export function AvailableCell({
 
 	const body = (
 		<span className="flex flex-col items-end gap-1">
-			<span className="text-primary">{formattedNum(available, true)}</span>
+			<span className="text-primary">
+				{formatUsd(available, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+			</span>
 			{pct != null ? (
 				<span className="hidden h-1 w-20 overflow-hidden rounded-full bg-surface-elevated-2 md:block">
 					<span className="block h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
@@ -377,7 +384,10 @@ export function AvailableCell({
 	// cell, so the (centered, placement='top') tooltip centers over the content rather than the full
 	// cell width — otherwise the anchor spans the whole right-aligned cell and the tooltip drifts left.
 	return (
-		<InstantTooltip content={`${pct.toFixed(1)}% filled`} className="ml-auto w-fit max-w-full justify-end">
+		<InstantTooltip
+			content={`${formatPercent(pct, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })} filled`}
+			className="ml-auto w-fit max-w-full justify-end"
+		>
 			{body}
 		</InstantTooltip>
 	)
@@ -428,7 +438,7 @@ export function RewardApyCell({
 					))}
 				</span>
 			) : null}
-			<span>{fmtPct(value)}%</span>
+			<span>{formatPercent(value, YIELD_PERCENT_OPTIONS)}</span>
 		</span>
 	)
 }

@@ -13,6 +13,7 @@ import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatNumber } from '~/utils/numberFormat'
 import { AppMetadataProvider } from './AppMetadataContext'
 import { ChartGrid } from './components/ChartGrid'
 import { CopyDashboardLinkButton } from './components/CopyDashboardLinkButton'
@@ -62,12 +63,6 @@ const AIGenerationHistory = lazy(() =>
 	import('./components/AIGenerationHistory').then((m) => ({ default: m.AIGenerationHistory }))
 )
 const Rating = lazy(() => import('./components/Rating').then((m) => ({ default: m.Rating })))
-
-const COUNT_FORMATTER = new Intl.NumberFormat('en-US')
-
-function formatCount(value: number | undefined): string {
-	return COUNT_FORMATTER.format(value ?? 0)
-}
 
 function DashboardAuthorByline({ author }: { author?: PublicDashboardAuthor }) {
 	if (!author) return null
@@ -417,7 +412,7 @@ function ProDashboardContent() {
 								className="inline-flex items-center gap-1.5 rounded-md border border-pro-cards-border bg-surface-elevated-1/45 px-2.5 py-1.5 text-xs font-medium text-pro-text-label"
 							>
 								<Icon name="eye" height={14} width={14} />
-								<span className="tabular-nums">{formatCount(currentDashboard?.viewCount)}</span>
+								<span className="tabular-nums">{formatNumber(currentDashboard?.viewCount ?? 0)}</span>
 								<span className="sr-only">Views</span>
 							</Tooltip>
 							<LikeDashboardButton

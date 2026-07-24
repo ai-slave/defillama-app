@@ -7,6 +7,7 @@ import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { capitalizeFirstLetter } from '~/utils'
 import { download } from '~/utils/download'
+import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import {
 	useProDashboardCatalog,
@@ -310,17 +311,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 					max: undefined,
 					min: undefined,
 					axisLabel: {
-						formatter: (value: number) => {
-							const absValue = Math.abs(value)
-							if (absValue >= 1e9) {
-								return (value / 1e9).toFixed(1).replace(/\.0$/, '') + 'B'
-							} else if (absValue >= 1e6) {
-								return (value / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'
-							} else if (absValue >= 1e3) {
-								return (value / 1e3).toFixed(1).replace(/\.0$/, '') + 'K'
-							}
-							return value.toFixed(2)
-						}
+						formatter: (value: number) => formatCompactNumber(value, { maximumFractionDigits: 1 })
 					}
 				},
 				grid,
@@ -333,17 +324,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 				max: undefined,
 				min: undefined,
 				axisLabel: {
-					formatter: (value: number) => {
-						const absValue = Math.abs(value)
-						if (absValue >= 1e9) {
-							return '$' + (value / 1e9).toFixed(1).replace(/\.0$/, '') + 'B'
-						} else if (absValue >= 1e6) {
-							return '$' + (value / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'
-						} else if (absValue >= 1e3) {
-							return '$' + (value / 1e3).toFixed(1).replace(/\.0$/, '') + 'K'
-						}
-						return '$' + value.toString()
-					}
+					formatter: (value: number) => formatUsd(value, { compact: true, maximumFractionDigits: 1 })
 				}
 			},
 			grid,

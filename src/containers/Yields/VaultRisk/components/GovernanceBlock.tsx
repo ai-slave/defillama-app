@@ -4,7 +4,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { formatVerified, guardianText } from '../format'
 import { toneClasses } from '../kindMeta'
 import { AddressActions } from '../primitives/AddressActions'
@@ -297,7 +297,12 @@ export function GovernanceBlock({
 								}
 								className={concentrationHigh ? toneClasses('danger').text : undefined}
 							>
-								{(concentration * 100).toFixed(1)}%
+								{formatPercent(concentration, {
+									input: 'fraction',
+									minimumFractionDigits: 1,
+									maximumFractionDigits: 1,
+									useGrouping: false
+								})}
 							</Tooltip>
 						</span>
 					</LabelValueRow>
@@ -311,8 +316,11 @@ export function GovernanceBlock({
 							>
 								<span>
 									{g.quorum_max != null && g.quorum_max !== g.quorum_min
-										? `${formattedNum(wholeTokens(g.quorum_min), false)}–${formattedNum(wholeTokens(g.quorum_max), false)}`
-										: formattedNum(wholeTokens(g.quorum_min), false)}
+										? `${formatCompactNumber(wholeTokens(g.quorum_min), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}–${formatCompactNumber(wholeTokens(g.quorum_max), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+										: formatCompactNumber(wholeTokens(g.quorum_min), {
+												minimumCompactValue: 1_000_000,
+												compactSuffix: 'lowercase'
+											})}
 									{g.voting_token?.symbol ? ` ${g.voting_token.symbol}` : ''}
 								</span>
 							</Tooltip>
@@ -325,7 +333,7 @@ export function GovernanceBlock({
 									}
 									className={g.top10_clears_quorum ? toneClasses('danger').text : 'text-secondary'}
 								>
-									{`· top 10 hold ${formattedNum(g.voting_power_top10_tokens, false)}`}
+									{`· top 10 hold ${formatCompactNumber(g.voting_power_top10_tokens, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}
 								</Tooltip>
 							) : null}
 						</span>

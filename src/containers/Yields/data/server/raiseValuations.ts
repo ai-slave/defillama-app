@@ -1,12 +1,12 @@
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ParentProtocolLite, ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import { fetchRaisesFromNetwork } from '~/containers/Raises/api'
-import type { RawRaise } from '~/containers/Raises/api.types'
+import type { Raise, RaisesResponse } from '~/containers/Raises/model'
 import { readYieldsMeta, type YieldsSnapshot } from '../snapshot'
 import type { YieldsMeta } from '../types'
 
-// A protocol-slug → latest fundraise valuation (USD millions) map. Ported from main's
-// `buildRaiseValuations` (normalizers/pageData.ts): the raise data decorates the
+// A protocol-slug → latest fundraise valuation (whole USD) map. Ported from main's
+// `buildRaiseValuationsUsd` (normalizers/pageData.ts): the raise data decorates the
 // "Potential Airdrop" hint on token-less protocols with the protocol's last known
 // valuation. Kept app-side (yield-server-v2 is not touched) and keyed by the v2 protocol
 // slug so earn / borrow / loop rows can look it up by `protocolSlug`.
@@ -17,8 +17,8 @@ type ProtocolIdentity = { slug: string; name: string }
 // Build slug → valuation from raises + the protocols-lite hierarchy. Mirrors main exactly:
 // index raises by defillamaId AND lowercased name (most-recent-first, first write wins);
 // the protocols-lite parent hierarchy lets a child protocol inherit its parent's raise.
-export function buildRaiseValuations(
-	raises: RawRaise[],
+export function buildRaiseValuationsUsd(
+	raises: Raise[],
 	protocols: ProtocolIdentity[],
 	protocolsLite: { protocols?: ProtocolLite[]; parentProtocols?: ParentProtocolLite[] }
 ): Map<string, number> {
@@ -28,8 +28,8 @@ export function buildRaiseValuations(
 	const byId = new Map<string, number>()
 	const byName = new Map<string, number>()
 	for (const r of sorted) {
-		const val = Number(r.valuation)
-		if (!Number.isFinite(val) || val <= 0) continue
+		const val = r.valuationUsd
+		if (val == null || !Number.isFinite(val) || val <= 0) continue
 		if (r.defillamaId && !byId.has(String(r.defillamaId))) byId.set(String(r.defillamaId), val)
 		if (r.name && !byName.has(r.name.trim().toLowerCase())) byName.set(r.name.trim().toLowerCase(), val)
 	}
@@ -139,7 +139,7 @@ export function buildReferralUrls(
 const CACHE_TTL_MS = 10 * 60_000
 
 interface ProtocolJoins {
-	raiseValuations: Map<string, number>
+	raiseValuationsUsd: Map<string, number>
 	referralUrls: Map<string, string>
 }
 
@@ -147,11 +147,11 @@ let cache: { meta: YieldsMeta; expiresAt: number; value: Promise<ProtocolJoins> 
 
 async function buildFromSources(meta: YieldsMeta): Promise<ProtocolJoins> {
 	const [raisesResponse, protocolsLite] = await Promise.all([
-		fetchRaisesFromNetwork().catch((): { raises: RawRaise[] } => ({ raises: [] })),
+		fetchRaisesFromNetwork().catch((): RaisesResponse => ({ raises: [] })),
 		fetchProtocols().catch((): ProtocolsResponse => ({ protocols: [], chains: [], parentProtocols: [] }))
 	])
 	return {
-		raiseValuations: buildRaiseValuations(raisesResponse?.raises ?? [], meta.protocols, protocolsLite),
+		raiseValuationsUsd: buildRaiseValuationsUsd(raisesResponse?.raises ?? [], meta.protocols, protocolsLite),
 		referralUrls: buildReferralUrls(meta.protocols, protocolsLite)
 	}
 }
@@ -169,8 +169,8 @@ async function getProtocolJoins(snapshot: YieldsSnapshot): Promise<ProtocolJoins
 	return cache.value
 }
 
-export async function getRaiseValuations(snapshot: YieldsSnapshot): Promise<Map<string, number>> {
-	return (await getProtocolJoins(snapshot)).raiseValuations
+export async function getRaiseValuationsUsd(snapshot: YieldsSnapshot): Promise<Map<string, number>> {
+	return (await getProtocolJoins(snapshot)).raiseValuationsUsd
 }
 
 export async function getReferralUrls(snapshot: YieldsSnapshot): Promise<Map<string, string>> {

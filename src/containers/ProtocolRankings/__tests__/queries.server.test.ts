@@ -251,9 +251,9 @@ describe('getProtocolsByChain parent aggregation', () => {
 		})
 		const childProtocolsByName = new Map(parent?.childProtocols?.map((protocol) => [protocol.name, protocol]))
 		expect(Array.from(childProtocolsByName.keys())).toEqual(expect.arrayContaining(['Alpha One', 'Alpha Two']))
-		expect(childProtocolsByName.get('Alpha One')?.fees?.pf).toBe(0.33)
-		expect(childProtocolsByName.get('Alpha Two')?.fees?.pf).toBe(0.21)
-		expect(childProtocolsByName.get('Alpha One')?.revenue?.ps).toBe(0.37)
+		expect(childProtocolsByName.get('Alpha One')?.fees?.pf).toBeCloseTo(1 / 3)
+		expect(childProtocolsByName.get('Alpha Two')?.fees?.pf).toBeCloseTo(5 / 24)
+		expect(childProtocolsByName.get('Alpha One')?.revenue?.ps).toBeCloseTo(10 / 27)
 		expect(childProtocolsByName.get('Alpha Two')?.revenue?.ps).toBeNull()
 
 		const withStakingAndMin = applyProtocolTvlSettings({

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { STRIPE_PUBLISHABLE_KEY } from '~/constants'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatNumber, formatUsd } from '~/utils/numberFormat'
 import type { PurchaseSeatsResponse, TeamSubscription } from './types'
 import { useTeam } from './useTeam'
 
@@ -215,11 +216,11 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 									<span className="text-sm font-semibold text-sub-text-primary">
 										{subscriptionType === 'api'
 											? billingInterval === 'year'
-												? `$${(3000 * seatCount).toLocaleString()}/year`
-												: `$${(300 * seatCount).toLocaleString()}/month`
+												? `${formatUsd(3000 * seatCount)}/year`
+												: `${formatUsd(300 * seatCount)}/month`
 											: billingInterval === 'year'
-												? `$${(490 * seatCount).toLocaleString()}/year`
-												: `$${(49 * seatCount).toLocaleString()}/month`}
+												? `${formatUsd(490 * seatCount)}/year`
+												: `${formatUsd(49 * seatCount)}/month`}
 									</span>
 								</div>
 							</div>
@@ -229,7 +230,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 									<Icon name="sparkles" height={12} width={12} className="mt-1 shrink-0 text-sub-text-muted" />
 									<p className="text-xs leading-5 text-sub-text-muted">
 										Switch to yearly billing and get 2 months free — save $
-										{((subscriptionType === 'api' ? 300 * 12 - 3000 : 49 * 12 - 490) * seatCount).toLocaleString()}
+										{formatNumber((subscriptionType === 'api' ? 300 * 12 - 3000 : 49 * 12 - 490) * seatCount)}
 										/year on these seats.
 									</p>
 								</div>

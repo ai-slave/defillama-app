@@ -8,17 +8,10 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
+import { formatProjectBytes } from './format'
 import { useProjectList, useProjectUsage } from './hooks'
 import { getProjectTier } from './tier'
 import type { ProjectWithStats } from './types'
-
-function formatBytes(bytes: number | string): string {
-	const n = Number(bytes ?? 0)
-	if (n < 1024) return `${n} B`
-	if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
-	if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`
-	return `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`
-}
 
 function relativeTime(iso: string): string {
 	const t = new Date(iso).getTime()
@@ -294,7 +287,7 @@ export function ProjectsGrid() {
 									<span>
 										{p.file_count} file{p.file_count === 1 ? '' : 's'}
 									</span>
-									<span>{formatBytes(p.total_bytes)}</span>
+									<span>{formatProjectBytes(p.total_bytes)}</span>
 								</footer>
 							</div>
 						</li>

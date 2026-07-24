@@ -2,7 +2,7 @@ import { lazy } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET } from '~/components/ECharts/shared/chartSpacing'
-import { formattedNum } from '~/utils'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import { useEtherfiCashTransactions } from './cashApi'
 import { CardSkeleton, ChartCard, KpiCard, KpiSkeleton } from './ui'
 
@@ -61,9 +61,27 @@ export default function CashTransactions() {
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
 				{kpis ? (
 					<>
-						<KpiCard label="Txns All Time" value={formattedNum(kpis.allTimeTxns)} />
-						<KpiCard label="Active Users All Time" value={formattedNum(kpis.allTimeUsers)} />
-						<KpiCard label="Txns per User All Time" value={formattedNum(kpis.allTimeAvg)} />
+						<KpiCard
+							label="Txns All Time"
+							value={formatCompactNumber(kpis.allTimeTxns, {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						/>
+						<KpiCard
+							label="Active Users All Time"
+							value={formatCompactNumber(kpis.allTimeUsers, {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						/>
+						<KpiCard
+							label="Txns per User All Time"
+							value={formatCompactNumber(kpis.allTimeAvg, {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						/>
 					</>
 				) : (
 					<>
@@ -77,9 +95,27 @@ export default function CashTransactions() {
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
 				{kpis ? (
 					<>
-						<KpiCard label="Txns Last Week" value={formattedNum(kpis.lastWeekTxns)} />
-						<KpiCard label="Active Users Last Week" value={formattedNum(kpis.lastWeekUsers)} />
-						<KpiCard label="Txns per User Last Week" value={formattedNum(kpis.lastWeekAvg)} />
+						<KpiCard
+							label="Txns Last Week"
+							value={formatCompactNumber(kpis.lastWeekTxns, {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						/>
+						<KpiCard
+							label="Active Users Last Week"
+							value={formatCompactNumber(kpis.lastWeekUsers, {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						/>
+						<KpiCard
+							label="Txns per User Last Week"
+							value={formatCompactNumber(kpis.lastWeekAvg, {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						/>
 					</>
 				) : (
 					<>

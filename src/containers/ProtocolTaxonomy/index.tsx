@@ -20,8 +20,8 @@ import { Icon } from '~/ui/Icon'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formatNum, formattedNum } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
+import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { buildProtocolTaxonomyGroupedCharts } from './chartGrouping'
 import {
 	getProtocolCategoryDexVolumeLabel,
@@ -99,9 +99,9 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							<MetricRow
 								label="Total Value Locked"
 								tooltip="Sum of value of all coins held in smart contracts of all the protocols on the chain"
-								value={formattedNum(
+								value={formatUsd(
 									charts.dataset?.source[charts.dataset?.source.length - 1]?.[charts.dataset.dimensions.indexOf('TVL')],
-									true
+									{ compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }
 								)}
 							/>
 						) : null}
@@ -109,48 +109,76 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							<MetricRow
 								label="Premium Volume (7d)"
 								tooltip={definitions.optionsPremium.chain['7d']}
-								value={formattedNum(props.optionsPremium7d, true)}
+								value={formatUsd(props.optionsPremium7d, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 						) : null}
 						{props.optionsNotional7d != null ? (
 							<MetricRow
 								label="Notional Volume (7d)"
 								tooltip={definitions.optionsNotional.chain['7d']}
-								value={formattedNum(props.optionsNotional7d, true)}
+								value={formatUsd(props.optionsNotional7d, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 						) : null}
 						{props.fees7d != null ? (
 							<MetricRow
 								label="Fees (7d)"
 								tooltip={definitions.fees.chain['7d']}
-								value={formattedNum(props.fees7d, true)}
+								value={formatUsd(props.fees7d, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 						) : null}
 						{props.revenue7d != null ? (
 							<MetricRow
 								label="Revenue (7d)"
 								tooltip={definitions.revenue.chain['7d']}
-								value={formattedNum(props.revenue7d, true)}
+								value={formatUsd(props.revenue7d, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 						) : null}
 						{props.perpVolume7d != null ? (
 							<MetricRow
 								label="Perp Volume (7d)"
 								tooltip={definitions.perps.protocol['7d']}
-								value={formattedNum(props.perpVolume7d, true)}
+								value={formatUsd(props.perpVolume7d, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 						) : null}
 						{props.dexVolume7d != null ? (
 							<MetricRow
 								label={`${getProtocolCategoryDexVolumeLabel(props.effectiveCategory)} (7d)`}
-								value={formattedNum(props.dexVolume7d, true)}
+								value={formatUsd(props.dexVolume7d, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 						) : null}
 						{props.openInterest != null ? (
 							<MetricRow
 								label="Open Interest"
 								tooltip={definitions.openInterest.common}
-								value={formattedNum(props.openInterest, true)}
+								value={formatUsd(props.openInterest, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 						) : null}
 					</div>
@@ -214,12 +242,12 @@ const perpVolumeCell = (info: any) => {
 					<QuestionHelper key={`${info.row.original.name}-${helper}`} text={helper} />
 				))}
 				<span className={info.row.original.perpVolume?.doublecounted ? 'text-tertiary' : ''}>
-					{formattedNum(info.getValue(), true)}
+					{formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</span>
 			</span>
 		)
 	}
-	return formattedNum(info.getValue(), true)
+	return formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
@@ -270,17 +298,20 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	tvl: columnHelper.accessor((p) => p.tvl, {
 		id: 'tvl',
 		header: 'TVL',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
 			headerHelperText: 'Sum of value of all coins held in smart contracts of the protocol'
 		}
 	}),
-	'mcap/tvl': columnHelper.accessor((p) => (p.mcap != null && p.tvl != null ? formatNum(p.mcap / p.tvl) : null), {
+	'mcap/tvl': columnHelper.accessor((p) => (p.mcap != null && p.tvl != null ? p.mcap / p.tvl : null), {
 		id: 'mcap/tvl',
 		header: 'Mcap/TVL',
-		cell: (info) => (info.getValue() != null ? info.getValue() : null),
+		cell: (info) => formatRatio(info.getValue()),
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end',
@@ -290,7 +321,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	fees_7d: columnHelper.accessor((p) => p.fees?.total7d, {
 		id: 'fees_7d',
 		header: 'Fees 7d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[100px]',
 			align: 'end',
@@ -300,7 +334,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	revenue_7d: columnHelper.accessor((p) => p.revenue?.total7d, {
 		id: 'revenue_7d',
 		header: 'Revenue 7d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end',
@@ -310,7 +347,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	fees_30d: columnHelper.accessor((p) => p.fees?.total30d, {
 		id: 'fees_30d',
 		header: 'Fees 30d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[100px]',
 			align: 'end',
@@ -320,7 +360,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	revenue_30d: columnHelper.accessor((p) => p.revenue?.total30d, {
 		id: 'revenue_30d',
 		header: 'Revenue 30d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end',
@@ -330,7 +373,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	fees_24h: columnHelper.accessor((p) => p.fees?.total24h, {
 		id: 'fees_24h',
 		header: 'Fees 24h',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[100px]',
 			align: 'end',
@@ -340,7 +386,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	revenue_24h: columnHelper.accessor((p) => p.revenue?.total24h, {
 		id: 'revenue_24h',
 		header: 'Revenue 24h',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end',
@@ -380,7 +429,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	openInterest: columnHelper.accessor((p) => p.openInterest?.total24h, {
 		id: 'openInterest',
 		header: 'Open Interest',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end',
@@ -390,7 +442,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	dex_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d, {
 		id: 'dex_volume_7d',
 		header: 'DEX Volume 7d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -400,7 +455,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	dex_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d, {
 		id: 'dex_volume_30d',
 		header: 'DEX Volume 30d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[148px]',
 			align: 'end',
@@ -410,7 +468,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	dex_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h, {
 		id: 'dex_volume_24h',
 		header: 'DEX Volume 24h',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[148px]',
 			align: 'end',
@@ -420,7 +481,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	dex_aggregator_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d, {
 		id: 'dex_aggregator_volume_7d',
 		header: 'DEX Aggregator Volume 7d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(220px,40vw)]',
 			align: 'end',
@@ -430,7 +494,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	dex_aggregator_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d, {
 		id: 'dex_aggregator_volume_30d',
 		header: 'DEX Aggregator Volume 30d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(220px,40vw)]',
 			align: 'end',
@@ -440,7 +507,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	dex_aggregator_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h, {
 		id: 'dex_aggregator_volume_24h',
 		header: 'DEX Aggregator Volume 24h',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(220px,40vw)]',
 			align: 'end',
@@ -450,7 +520,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	prediction_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d, {
 		id: 'prediction_volume_7d',
 		header: 'Prediction Volume 7d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -460,7 +533,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	prediction_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d, {
 		id: 'prediction_volume_30d',
 		header: 'Prediction Volume 30d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(195px,40vw)]',
 			align: 'end',
@@ -470,7 +546,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	prediction_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h, {
 		id: 'prediction_volume_24h',
 		header: 'Prediction Volume 24h',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(195px,40vw)]',
 			align: 'end',
@@ -480,7 +559,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	payment_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d, {
 		id: 'payment_volume_7d',
 		header: 'Payment Volume 7d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -490,7 +572,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	payment_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d, {
 		id: 'payment_volume_30d',
 		header: 'Payment Volume 30d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -500,7 +585,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	payment_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h, {
 		id: 'payment_volume_24h',
 		header: 'Payment Volume 24h',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -510,7 +598,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	spot_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d, {
 		id: 'spot_volume_7d',
 		header: 'Spot Volume 7d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end',
@@ -520,7 +611,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	spot_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d, {
 		id: 'spot_volume_30d',
 		header: 'Spot Volume 30d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end',
@@ -530,7 +624,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	spot_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h, {
 		id: 'spot_volume_24h',
 		header: 'Spot Volume 24h',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end',
@@ -540,7 +637,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	options_premium_7d: columnHelper.accessor((p) => p.optionsPremium?.total7d, {
 		id: 'options_premium_7d',
 		header: 'Premium Volume 7d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -550,7 +650,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	options_premium_30d: columnHelper.accessor((p) => p.optionsPremium?.total30d, {
 		id: 'options_premium_30d',
 		header: 'Premium Volume 30d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -560,7 +663,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	options_premium_24h: columnHelper.accessor((p) => p.optionsPremium?.total24h, {
 		id: 'options_premium_24h',
 		header: 'Premium Volume 24h',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -570,7 +676,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	options_notional_7d: columnHelper.accessor((p) => p.optionsNotional?.total7d, {
 		id: 'options_notional_7d',
 		header: 'Notional Volume 7d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -580,7 +689,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	options_notional_30d: columnHelper.accessor((p) => p.optionsNotional?.total30d, {
 		id: 'options_notional_30d',
 		header: 'Notional Volume 30d',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -590,7 +702,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	options_notional_24h: columnHelper.accessor((p) => p.optionsNotional?.total24h, {
 		id: 'options_notional_24h',
 		header: 'Notional Volume 24h',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -600,7 +715,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	borrowed: columnHelper.accessor((p) => p.borrowed, {
 		id: 'borrowed',
 		header: 'Active Loans',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -610,7 +728,10 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	supplied: columnHelper.accessor((p) => p.supplied, {
 		id: 'supplied',
 		header: 'Supplied',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[100px]',
 			align: 'end',
@@ -620,7 +741,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 	'supplied/tvl': columnHelper.accessor((p) => p.suppliedTvl, {
 		id: 'supplied/tvl',
 		header: 'Supplied/TVL',
-		cell: (info) => info.getValue(),
+		cell: (info) => formatRatio(info.getValue()),
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',

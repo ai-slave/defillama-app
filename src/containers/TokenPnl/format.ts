@@ -1,8 +1,8 @@
-export const formatPercent = (value: number) => {
+import { formatPercentChange } from '~/utils/numberFormat'
+
+export const formatPnlPercent = (value: number) => {
 	if (!Number.isFinite(value)) return '0%'
-	const formatted = value.toFixed(2)
-	const prefix = value > 0 ? '+' : value < 0 ? '' : ''
-	return `${prefix}${formatted}%`
+	return formatPercentChange(value)
 }
 
 export const formatDateLabel = (timestamp: number) => {

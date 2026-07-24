@@ -14,7 +14,7 @@ import { Button } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { CalendarDayCell } from './CalendarDayCell'
 import type { CalendarViewProps, CalendarUnlockEvent, DailyUnlocks, DayInfo } from './calendarTypes'
@@ -405,13 +405,13 @@ const chartOptions = {
 					totalValue += value
 					tooltipContent += `<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
 					<span>${param.marker} ${param.seriesName}</span>
-					<span style="font-weight: 500;">${formattedNum(value, true)}</span>
+					<span style="font-weight: 500;">${formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
 				</div>`
 				}
 				if (validParams.length > 1) {
 					tooltipContent += `<div style="border-top: 1px solid var(--border-subtle); margin-top: 4px; padding-top: 4px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
 					<span><strong>Total</strong></span>
-					<span style="font-weight: 600;">${formattedNum(totalValue, true)}</span>
+					<span style="font-weight: 600;">${formatUsd(totalValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
 				</div>`
 				}
 			}

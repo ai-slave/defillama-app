@@ -1,4 +1,5 @@
 import { Icon } from '~/ui/Icon'
+import { formatNumber } from '~/utils/numberFormat'
 import type { ChartConfig } from '../chartConfig'
 import { ResultsChart } from '../ResultsChart'
 import type { NotebookCell } from '../useSqlTabs'
@@ -21,7 +22,7 @@ function describeShape(opt: ChartSourceOption): string {
 	if (!opt.hasRun || !opt.result) return 'not run'
 	const rows = opt.result.rows.length
 	const cols = opt.result.columns.length
-	return `${rows.toLocaleString()}×${cols}`
+	return `${formatNumber(rows)}×${cols}`
 }
 
 export function ChartCell({ cell, availableSources, onSourceChange, onChartConfigChange }: ChartCellProps) {
@@ -58,7 +59,7 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 					</span>
 				) : selected?.result ? (
 					<span className="inline-flex min-w-0 items-center gap-1.5 text-pro-text-tertiary">
-						<span className="text-pro-text-secondary tabular-nums">{selected.result.rows.length.toLocaleString()}</span>
+						<span className="text-pro-text-secondary tabular-nums">{formatNumber(selected.result.rows.length)}</span>
 						rows
 						<span aria-hidden>·</span>
 						<span className="flex min-w-0 flex-wrap items-center gap-1">

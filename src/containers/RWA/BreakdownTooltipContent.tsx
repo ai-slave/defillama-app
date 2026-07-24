@@ -1,4 +1,4 @@
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 
 export const BreakdownTooltipContent = ({
 	breakdown,
@@ -11,7 +11,7 @@ export const BreakdownTooltipContent = ({
 		<span className="body-sm text-secondary">{description}</span>
 		{breakdown.map(([chain, tvl]) => (
 			<span key={`${chain}-${tvl}`}>
-				{chain}: {formattedNum(tvl, true)}
+				{chain}: {formatUsd(tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 			</span>
 		))}
 	</span>

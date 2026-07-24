@@ -1,5 +1,19 @@
 import { Parser } from 'expr-eval'
+import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { IProtocol } from './types'
+
+export function formatCustomColumnValue(value: unknown, formatType: string): string | null {
+	const numericValue = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : Number.NaN
+	if (formatType === 'usd') return formatUsd(Number.isFinite(numericValue) ? numericValue : null, { compact: true })
+	if (formatType === 'number') return formatCompactNumber(Number.isFinite(numericValue) ? numericValue : null)
+	if (formatType === 'percent') {
+		if (!Number.isFinite(numericValue)) return null
+		return formatPercent(numericValue, {
+			input: numericValue !== 0 && Math.abs(numericValue) < 1 ? 'fraction' : 'percent'
+		})
+	}
+	return typeof value === 'string' ? value : String(value)
+}
 
 export function evaluateFormula(formula: string, row: IProtocol): { value: number | string; error?: string } {
 	try {

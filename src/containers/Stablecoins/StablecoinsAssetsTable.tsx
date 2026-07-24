@@ -26,7 +26,8 @@ import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd, formatPercent, roundNumber } from '~/utils/numberFormat'
 
 type StablecoinDeviationInfo = {
 	timestamp: number
@@ -158,7 +159,11 @@ const stablecoinsColumns = [
 			return (
 				<span className="flex w-full items-center justify-end gap-1">
 					{rowValues.floatingPeg ? <QuestionHelper text="Has a variable, floating, or crawling peg." /> : null}
-					{value != null ? formattedNum(value, true) : <span>-</span>}
+					{value != null ? (
+						formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					) : (
+						<span>-</span>
+					)}
 				</span>
 			)
 		},
@@ -229,7 +234,10 @@ const stablecoinsColumns = [
 	}),
 	columnHelper.accessor('mcap', {
 		header: 'Market Cap',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
@@ -267,21 +275,16 @@ function formattedPeggedPercent(percent: unknown, noSign = false) {
 		color = down
 		finalValue = '< 0.0001%'
 	} else {
-		const fixedPercent = Number(numericPercent.toFixed(2))
+		const fixedPercent = roundNumber(numericPercent, 2)
 
-		if (fixedPercent === 0) {
-			finalValue = '0%'
-		} else if (fixedPercent > 0) {
-			const prefix = noSign ? '' : '+'
-			finalValue = fixedPercent > 100 ? `${prefix}${numericPercent.toFixed(0)}%` : `${prefix}${fixedPercent}%`
-			color = up
-		} else if (fixedPercent < -2) {
-			finalValue = `${fixedPercent}%`
-			color = down
-		} else {
-			finalValue = `${fixedPercent}%`
-			color = down
-		}
+		finalValue = formatPercent(fixedPercent, {
+			input: 'percent',
+			maximumFractionDigits: fixedPercent > 100 ? 0 : 2,
+			signDisplay: !noSign && fixedPercent > 0 ? 'always' : 'auto',
+			useGrouping: false
+		})
+		if (fixedPercent > 0) color = up
+		if (fixedPercent < 0) color = down
 	}
 
 	return (
@@ -307,7 +310,7 @@ function pegDeviationText(pegDeviationInfo: { timestamp: number; price: number; 
 	const { timestamp, price, priceSource } = pegDeviationInfo
 	const date = new Date(timestamp * 1000).toISOString().slice(0, 10)
 	const sourceLabel = priceSource != null ? formatPriceSource[String(priceSource)] : undefined
-	return `On ${date}, ${sourceLabel ?? (priceSource != null ? `source ${String(priceSource)}` : 'an unknown source')} reported a price of $${formattedNum(price)}.`
+	return `On ${date}, ${sourceLabel ?? (priceSource != null ? `source ${String(priceSource)}` : 'an unknown source')} reported a price of ${formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}.`
 }
 
 export function StablecoinsTable({ data }: { data: StablecoinRow[] }) {

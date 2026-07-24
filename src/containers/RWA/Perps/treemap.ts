@@ -1,4 +1,5 @@
 import { CHART_COLORS } from '~/constants/colors'
+import { roundNumber } from '~/utils/numberFormat'
 import type { IRWAPerpsMarket } from './api.types'
 import { getRWAPerpsSharedBreakdownLabel } from './breakdownLabels'
 import type {
@@ -30,7 +31,7 @@ function getMetricValue(market: IRWAPerpsMarket, metric: RWAPerpsChartMetricKey)
 
 function toShare(value: number, total: number): number {
 	if (total <= 0) return 0
-	return Number(((value / total) * 100).toFixed(2))
+	return roundNumber((value / total) * 100, 2)
 }
 
 function hexToRgb(hex: string) {

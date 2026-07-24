@@ -6,6 +6,7 @@ import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { formatNumber } from '~/utils/numberFormat'
 import {
 	chartDatasets,
 	chartDatasetCategories,
@@ -13,6 +14,7 @@ import {
 	type ChartOptionsMap
 } from '../chart-datasets'
 import { datasets, datasetCategories, type DatasetDefinition } from '../datasets'
+import { formatDownloadRowCount } from './format'
 import { inferColumnKind, TypeBadge } from './primitives'
 import { columnShapeFor } from './schemaShapes'
 import { identifierize, tableNameFor, type RegisteredTable, type TableSource } from './useTableRegistry'
@@ -679,7 +681,7 @@ function ParamCombobox({
 				</button>
 			) : null}
 			<span className="ml-auto text-[10px] text-pro-text-tertiary tabular-nums">
-				{options.length.toLocaleString()} option{options.length === 1 ? '' : 's'}
+				{formatNumber(options.length)} option{options.length === 1 ? '' : 's'}
 			</span>
 		</div>
 	)
@@ -709,16 +711,9 @@ function LoadedPill({ rowCount }: { rowCount: number }) {
 	return (
 		<span className="inline-flex items-center gap-1 rounded-sm bg-success/15 px-1.5 py-px text-[10px] font-medium text-success">
 			<Icon name="check" className="size-2.5" />
-			Loaded · {formatCount(rowCount)}
+			Loaded · {formatDownloadRowCount(rowCount)}
 		</span>
 	)
-}
-
-function formatCount(n: number): string {
-	if (n < 1000) return n.toLocaleString()
-	if (n < 10_000) return `${(n / 1000).toFixed(1)}k`
-	if (n < 1_000_000) return `${Math.round(n / 1000)}k`
-	return `${(n / 1_000_000).toFixed(1)}m`
 }
 
 function copyToClipboard(text: string) {

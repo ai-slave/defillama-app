@@ -11,8 +11,9 @@ import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
+import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import type { ExtraTvlMetric, IExtraTvlByChainPageData, IExtraTvlProtocolRow } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -54,7 +55,11 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 						<StatItem
 							label={metricInfo.header}
 							labelAs={props.chain === 'All' ? 'h1' : 'span'}
-							value={formattedNum(props.totalValue, true)}
+							value={formatUsd(props.totalValue, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 							truncate
 						/>
 						{props.change24h != null ? (
@@ -64,7 +69,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 										props.change24h >= 0 ? 'text-data-up' : 'text-data-down'
 									}`}
 								>
-									{`${props.change24h >= 0 ? '+' : ''}${props.change24h}%`}
+									{formatPercentChange(props.change24h)}
 								</span>
 								<span className="text-secondary">24h</span>
 							</p>
@@ -187,7 +192,10 @@ function buildColumns(metric: ExtraTvlMetric) {
 		columnHelper.accessor('value', {
 			id: 'value',
 			header: metricInfo.header,
-			cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+			cell: (info) =>
+				info.getValue() != null
+					? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: null,
 			meta: {
 				headerClassName: 'w-[128px]',
 				align: 'end',

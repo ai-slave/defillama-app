@@ -1,6 +1,6 @@
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card as UICard } from '~/ui/Card'
-import { abbreviateNumber } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { AggregatedMetrics } from './data'
 
 type PickMode = 'max' | 'min'
@@ -25,12 +25,12 @@ function leader(
 
 function pctValue(value: number | null | undefined): string {
 	if (value == null) return '—'
-	return `${Number(value.toFixed(2))}%`
+	return formatPercent(value, { input: 'percent' })
 }
 
 function usdValue(value: number | null | undefined): string {
 	if (value == null) return '—'
-	return abbreviateNumber(value, 2, '$') ?? '—'
+	return formatUsd(value, { compact: true }) ?? '—'
 }
 
 function Card({ label, winner, value }: { label: string; winner: AggregatedMetrics | null; value: string }) {

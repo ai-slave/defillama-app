@@ -4,6 +4,7 @@ import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'rea
 import { BasicLink } from '~/components/Link'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { Button } from '~/ui/Button'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 
 const pageCss = `
 .attn-demo{container-type:inline-size;contain:layout paint}
@@ -432,12 +433,6 @@ const liabilitySources: LedgerSource[] = [
 	{ label: '4 more chains', verifiedStage: verificationStages.remainingChainsIndexed, value: 20_689_407 }
 ]
 
-const usdFormatter = new Intl.NumberFormat('en-US', {
-	style: 'currency',
-	currency: 'USD',
-	maximumFractionDigits: 0
-})
-
 function AuditValue({
 	prefix,
 	groups,
@@ -496,7 +491,7 @@ function LedgerColumn({
 	recheckState?: VerificationHeartbeat
 }) {
 	const verifiedTotal = sources.reduce((total, source) => total + (stage >= source.verifiedStage ? source.value : 0), 0)
-	const displayValue = verifiedTotal === 0 ? '—' : usdFormatter.format(verifiedTotal)
+	const displayValue = verifiedTotal === 0 ? '—' : formatUsd(verifiedTotal, { maximumFractionDigits: 0 })
 
 	return (
 		<section className="p-4 sm:p-5">
@@ -557,7 +552,7 @@ function ReconciliationLedger() {
 	const { stage, run, replay, frameRef } = useVerificationRun()
 	const heartbeat = useVerificationHeartbeat(stage, run)
 	const coverage = useAnimatedCoverage(stage >= verificationStages.coveragePublished, run)
-	const coverageLabel = `${coverage.toFixed(2)}%`
+	const coverageLabel = `${formatPercent(coverage, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 	const thresholdMarkerRef = useRef<HTMLSpanElement>(null)
 	const reconciliationState =
 		heartbeat === 'checking'

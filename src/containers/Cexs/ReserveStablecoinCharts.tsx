@@ -22,8 +22,9 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { exchangeIconUrl } from '~/utils/icons'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -269,19 +270,27 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 				items={[
 					{
 						label: 'Total Stablecoin in CEX',
-						value: currentTotal ? formattedNum(currentTotal, true) : '-'
+						value: currentTotal
+							? formatUsd(currentTotal, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: '-'
 					},
 					...(stablecoinBreakdown.length > 0
 						? [
 								{
 									label: 'Dominant Backing Type',
 									value: <span className="capitalize">{stablecoinBreakdown[0].mechanism.replace('-', ' ')}</span>,
-									change: `(${stablecoinBreakdown[0].percentage.toFixed(1)}%)`,
+									change: `(${formatPercent(stablecoinBreakdown[0].percentage, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })})`,
 									changeClassName: 'text-tertiary'
 								},
 								{
 									label: 'Fiat-Backed %',
-									value: `${stablecoinBreakdown.find((b) => b.mechanism === 'fiat-backed')?.percentage.toFixed(1) || '0'}%`
+									value:
+										formatPercent(stablecoinBreakdown.find((b) => b.mechanism === 'fiat-backed')?.percentage, {
+											input: 'percent',
+											minimumFractionDigits: 1,
+											maximumFractionDigits: 1,
+											useGrouping: false
+										}) ?? '0%'
 								},
 								{
 									label: 'Number of Stablecoins',

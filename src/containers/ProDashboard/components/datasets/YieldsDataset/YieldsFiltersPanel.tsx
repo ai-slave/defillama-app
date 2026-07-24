@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { formatNumber } from '~/utils/numberFormat'
 import { AriakitVirtualizedMultiSelect } from '../../AriakitVirtualizedMultiSelect'
 
 export interface YieldsFilters {
@@ -19,11 +20,6 @@ export interface YieldsFilters {
 const EMPTY_CATEGORIES: string[] = []
 const EMPTY_PROTOCOLS: string[] = []
 const EMPTY_TOKENS: string[] = []
-
-const formatNumberWithCommas = (num: number | undefined): string => {
-	if (num == null) return ''
-	return num.toLocaleString('en-US', { maximumFractionDigits: 0 })
-}
 
 interface YieldsFiltersPanelProps {
 	setShowFiltersPanel: (show: boolean) => void
@@ -193,7 +189,7 @@ export function YieldsFiltersPanel({
 									type="text"
 									aria-label="Minimum TVL"
 									placeholder="Min"
-									value={formatNumberWithCommas(localFilters.tvlMin)}
+									value={formatNumber(localFilters.tvlMin, { maximumFractionDigits: 0 }) ?? ''}
 									onChange={(e) => updateFilter('tvlMin', parseFormattedNumber(e.target.value))}
 									className="flex-1 rounded-md border pro-border bg-pro-glass-bg px-2 py-1.5 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 								/>
@@ -202,7 +198,7 @@ export function YieldsFiltersPanel({
 									type="text"
 									aria-label="Maximum TVL"
 									placeholder="Max"
-									value={formatNumberWithCommas(localFilters.tvlMax)}
+									value={formatNumber(localFilters.tvlMax, { maximumFractionDigits: 0 }) ?? ''}
 									onChange={(e) => updateFilter('tvlMax', parseFormattedNumber(e.target.value))}
 									className="flex-1 rounded-md border pro-border bg-pro-glass-bg px-2 py-1.5 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 								/>

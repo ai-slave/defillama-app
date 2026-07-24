@@ -1,12 +1,11 @@
+import { formatNumber, formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
 import { usePegsData, type PegRow, type PegSupplyCap } from './api'
 import { KpiCard, ChartCard, SectionHeader, SimpleTable, type Col } from './ui'
 
 const SIZES = [10_000, 50_000, 100_000, 500_000, 1_000_000]
 
 function fmtSize(s: number) {
-	if (s >= 1_000_000) return '$' + s / 1_000_000 + 'M'
-	if (s >= 1_000) return '$' + s / 1_000 + 'K'
-	return '$' + s
+	return formatUsd(s, { compact: true, maximumFractionDigits: 0 })
 }
 
 function PegPill({ ratio, bps }: { ratio: number; bps?: number }) {
@@ -14,7 +13,10 @@ function PegPill({ ratio, bps }: { ratio: number; bps?: number }) {
 	const color = dev <= 30 ? 'text-success' : dev <= 100 ? 'text-warning' : 'text-error'
 	return (
 		<span className={`tabular-nums ${color}`}>
-			{ratio.toFixed(4)} <span className="text-[10px] text-pro-text-secondary">({dev.toFixed(0)} bps)</span>
+			{formatRatio(ratio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}{' '}
+			<span className="text-[10px] text-pro-text-secondary">
+				({formatNumber(dev, { maximumFractionDigits: 0 })} bps)
+			</span>
 		</span>
 	)
 }
@@ -102,19 +104,27 @@ export default function Pegs() {
 			<div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
 				<KpiCard
 					label="msUSD spot peg"
-					value={k?.msUSD ? `${k.msUSD.spotPegRatio.toFixed(4)} (${k.msUSD.spotDeviationBps} bps)` : undefined}
+					value={
+						k?.msUSD
+							? `${formatRatio(k.msUSD.spotPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msUSD.spotDeviationBps} bps)`
+							: undefined
+					}
 					sub={
 						k?.msUSD
-							? `Worst: ${k.msUSD.worstChain} @ ${fmtSize(k.msUSD.worstSizeUsd)} → ${k.msUSD.worstPegRatio.toFixed(4)} (${k.msUSD.worstDeviationBps} bps)`
+							? `Worst: ${k.msUSD.worstChain} @ ${fmtSize(k.msUSD.worstSizeUsd)} → ${formatRatio(k.msUSD.worstPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msUSD.worstDeviationBps} bps)`
 							: undefined
 					}
 				/>
 				<KpiCard
 					label="msETH spot peg"
-					value={k?.msETH ? `${k.msETH.spotPegRatio.toFixed(4)} (${k.msETH.spotDeviationBps} bps)` : undefined}
+					value={
+						k?.msETH
+							? `${formatRatio(k.msETH.spotPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msETH.spotDeviationBps} bps)`
+							: undefined
+					}
 					sub={
 						k?.msETH
-							? `Worst: ${k.msETH.worstChain} @ ${fmtSize(k.msETH.worstSizeUsd)} → ${k.msETH.worstPegRatio.toFixed(4)} (${k.msETH.worstDeviationBps} bps)`
+							? `Worst: ${k.msETH.worstChain} @ ${fmtSize(k.msETH.worstSizeUsd)} → ${formatRatio(k.msETH.worstPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msETH.worstDeviationBps} bps)`
 							: undefined
 					}
 				/>
@@ -142,15 +152,21 @@ export default function Pegs() {
 						key: 'supply',
 						label: 'Supply',
 						right: true,
-						render: (r) => r.supply.toLocaleString(undefined, { maximumFractionDigits: 2 })
+						render: (r) => formatNumber(r.supply)
 					},
 					{
 						key: 'maxSupply',
 						label: 'Max Supply',
 						right: true,
-						render: (r) => r.maxSupply.toLocaleString(undefined, { maximumFractionDigits: 2 })
+						render: (r) => formatNumber(r.maxSupply)
 					},
-					{ key: 'usagePct', label: 'Usage', right: true, render: (r) => `${r.usagePct.toFixed(1)}%` }
+					{
+						key: 'usagePct',
+						label: 'Usage',
+						right: true,
+						render: (r) =>
+							`${formatPercent(r.usagePct, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
+					}
 				]
 				return (
 					<>

@@ -3,7 +3,7 @@ import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-t
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
-import { formattedNum } from '~/utils'
+import { formatRatio, formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import {
 	useStSyrupTxes,
 	useSyrupTxes,
@@ -90,7 +90,8 @@ const txColumns: ColumnDef<TxRow>[] = [
 	{
 		header: 'Amount',
 		accessorKey: 'assetsAmount',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -126,7 +127,8 @@ const dripColumns: ColumnDef<DripRow>[] = [
 	{
 		header: 'Amount',
 		accessorKey: 'amount',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), false),
+		cell: ({ getValue }) =>
+			formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -217,10 +219,19 @@ export default function SyrupActivity() {
 		}
 
 		return {
-			tvl: syrupTvl != null ? formattedNum(syrupTvl, true) : null,
-			apy: syrupApy != null ? `${syrupApy.toFixed(2)}%` : null,
-			exchangeRate: exchangeRate != null ? exchangeRate.toFixed(4) : null,
-			stSupply: stSupply != null ? formattedNum(stSupply, false) : null
+			tvl:
+				syrupTvl != null
+					? formatUsd(syrupTvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: null,
+			apy:
+				syrupApy != null
+					? `${formatPercent(syrupApy, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+					: null,
+			exchangeRate: exchangeRate != null ? formatRatio(exchangeRate, { maximumFractionDigits: 4 }) : null,
+			stSupply:
+				stSupply != null
+					? formatCompactNumber(stSupply, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: null
 		}
 	}, [globals, stSyrupState, globalsLoading, stStateLoading])
 
@@ -258,7 +269,10 @@ export default function SyrupActivity() {
 
 		return {
 			totalMigrations: syrupTxes.length,
-			tokensMigrated: formattedNum(totalMigrated),
+			tokensMigrated: formatCompactNumber(totalMigrated, {
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 			deposits,
 			withdrawals
 		}
@@ -276,7 +290,7 @@ export default function SyrupActivity() {
 
 		return {
 			totalClaims: dripRows.length,
-			totalClaimed: formattedNum(totalClaimed, false),
+			totalClaimed: formatCompactNumber(totalClaimed, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 			uniqueClaimers: claimers.size
 		}
 	}, [dripRows, dripLoading])

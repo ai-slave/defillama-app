@@ -7,8 +7,9 @@ import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { QuestionHelper } from '~/ui/QuestionHelper'
-import { formattedNum, slug, toNiceDayMonthAndYear } from '~/utils'
+import { slug, toNiceDayMonthAndYear } from '~/utils'
 import { letterLogoDataUri } from '~/utils/icons'
+import { formatUsd, roundNumber } from '~/utils/numberFormat'
 import { fetchCexInflowsBatchProxy } from './api'
 import { DateFilter } from './DateFilter'
 import type { ICex } from './types'
@@ -42,7 +43,9 @@ function CustomRangeCell({
 
 	return (
 		<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
-			{value != null ? formattedNum(value, true) : ''}
+			{value != null
+				? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: ''}
 		</span>
 	)
 }
@@ -145,7 +148,13 @@ const columns = [
 				)
 			}
 			const value = info.getValue()
-			return <>{value != null ? formattedNum(value, true) : null}</>
+			return (
+				<>
+					{value != null
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null}
+				</>
+			)
 		},
 		meta: {
 			headerClassName: 'w-[120px]',
@@ -174,7 +183,7 @@ const columns = [
 			return (
 				<span className="flex items-center justify-end gap-1">
 					<QuestionHelper text={helperText} />
-					<span>{formattedNum(value, true)}</span>
+					<span>{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
 				</span>
 			)
 		},
@@ -190,7 +199,9 @@ const columns = [
 			const value = info.getValue()
 			return (
 				<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
-					{value != null ? formattedNum(value, true) : ''}
+					{value != null
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: ''}
 				</span>
 			)
 		},
@@ -205,7 +216,9 @@ const columns = [
 			const value = info.getValue()
 			return (
 				<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
-					{value != null ? formattedNum(value, true) : ''}
+					{value != null
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: ''}
 				</span>
 			)
 		},
@@ -220,7 +233,9 @@ const columns = [
 			const value = info.getValue()
 			return (
 				<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
-					{value != null ? formattedNum(value, true) : ''}
+					{value != null
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: ''}
 				</span>
 			)
 		},
@@ -231,7 +246,10 @@ const columns = [
 	}),
 	columnHelper.accessor('spotVolume', {
 		header: 'Spot Volume',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[125px]',
 			align: 'end'
@@ -239,7 +257,10 @@ const columns = [
 	}),
 	columnHelper.accessor('oi', {
 		header: '24h Open Interest',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end'
@@ -249,7 +270,7 @@ const columns = [
 		header: 'Avg Leverage',
 		cell: (info) => {
 			const value = info.getValue()
-			return value != null ? Number(Number(value).toFixed(2)) + 'x' : null
+			return value != null ? roundNumber(Number(value), 2) + 'x' : null
 		},
 		meta: {
 			headerClassName: 'w-[130px]',

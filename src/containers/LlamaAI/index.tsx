@@ -110,6 +110,7 @@ import { useStableCallback } from '~/hooks/useStableCallback'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { formatUsd } from '~/utils/numberFormat'
 import {
 	isSameAgenticRouteTransition,
 	shouldSkipCurrentSessionRouteRestore,
@@ -2640,7 +2641,9 @@ const ChatControls = memo(function ChatControls({
 				<span>Open</span>
 				<div className="flex flex-col items-end text-right">
 					{sessionTitle ? <span>{sessionTitle}</span> : null}
-					{balance ? <span>${totalAvailable.toFixed(2)}</span> : null}
+					{balance ? (
+						<span>{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+					) : null}
 				</div>
 			</div>
 		) : (

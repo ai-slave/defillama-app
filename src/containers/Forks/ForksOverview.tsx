@@ -16,7 +16,8 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { PanelStatus } from '~/ui/Status'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
 import { buildForksOverviewDisplayData, mergeForkOverviewChartData } from './overviewData'
 import { useForksOverviewExtraSeries } from './queries.client'
@@ -63,7 +64,10 @@ const forksColumn = [
 	}),
 	columnHelper.accessor('tvl', {
 		header: 'Forks TVL',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
@@ -71,7 +75,10 @@ const forksColumn = [
 	}),
 	columnHelper.accessor('ftot', {
 		header: 'Forks TVL / Original TVL',
-		cell: (info) => (info.getValue() != null ? `${formattedNum(info.getValue())}%` : null),
+		cell: (info) =>
+			info.getValue() != null
+				? `${formatPercent(info.getValue(), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+				: null,
 		meta: {
 			headerClassName: 'w-[min(210px,40vw)]',
 			align: 'end'

@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo, useState } from 'react'
 import { Icon } from '~/ui/Icon'
+import { formatNumber, formatFixedNumber } from '~/utils/numberFormat'
 
 interface PastedContentModalProps {
 	preview: { content: string; filename: string; isPasted?: boolean } | null
@@ -10,8 +11,8 @@ interface PastedContentModalProps {
 function formatBytes(byteLength: number): string {
 	if (byteLength < 1024) return `${byteLength} B`
 	const kb = byteLength / 1024
-	if (kb < 1024) return `${kb.toFixed(kb < 10 ? 2 : 1)} KB`
-	return `${(kb / 1024).toFixed(2)} MB`
+	if (kb < 1024) return `${formatFixedNumber(kb, kb < 10 ? 2 : 1)} KB`
+	return `${formatFixedNumber(kb / 1024, 2)} MB`
 }
 
 export function PastedContentModal({ preview, onClose }: PastedContentModalProps) {
@@ -53,7 +54,7 @@ export function PastedContentModal({ preview, onClose }: PastedContentModalProps
 							<div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-ai-muted">
 								<span>{stats.size}</span>
 								<span aria-hidden className="size-1 rounded-full bg-current opacity-50" />
-								<span>{stats.lines.toLocaleString()} lines</span>
+								<span>{formatNumber(stats.lines)} lines</span>
 								{preview?.isPasted ? (
 									<>
 										<span aria-hidden className="size-1 rounded-full bg-current opacity-50" />

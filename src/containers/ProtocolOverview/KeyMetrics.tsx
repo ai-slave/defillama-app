@@ -5,7 +5,7 @@ import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { getPrimaryValueLabelType } from './helpers'
 import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
 import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
@@ -312,8 +312,12 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 								<span className="flex items-center gap-1">
 									<span className="font-jetbrains">{props.formatPrice(props.currentTvlByChain.staking)}</span>
 									<span className="text-xs text-tertiary">
-										({formattedNum((props.currentTvlByChain.staking / props.tokenCGData.marketCap.current) * 100)}% of
-										mcap)
+										(
+										{formatCompactNumber(
+											(props.currentTvlByChain.staking / props.tokenCGData.marketCap.current) * 100,
+											{ minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }
+										)}
+										% of mcap)
 									</span>
 								</span>
 							) : (
@@ -824,18 +828,54 @@ function renderChainRows({
 const Treasury = (props: IKeyMetricsProps) => {
 	if (!props.treasury) return null
 	return (
-		<MetricSection label="Treasury" value={formattedNum(props.treasury.total, true)}>
+		<MetricSection
+			label="Treasury"
+			value={formatUsd(props.treasury.total, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})}
+		>
 			{props.treasury.majors != null ? (
-				<SubMetricRow label="Majors" tooltip="BTC, ETH" value={formattedNum(props.treasury.majors, true)} />
+				<SubMetricRow
+					label="Majors"
+					tooltip="BTC, ETH"
+					value={formatUsd(props.treasury.majors, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
 			) : null}
 			{props.treasury.stablecoins != null ? (
-				<SubMetricRow label="Stablecoins" value={formattedNum(props.treasury.stablecoins, true)} />
+				<SubMetricRow
+					label="Stablecoins"
+					value={formatUsd(props.treasury.stablecoins, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
 			) : null}
 			{props.treasury.ownTokens != null ? (
-				<SubMetricRow label="Own Tokens" value={formattedNum(props.treasury.ownTokens, true)} />
+				<SubMetricRow
+					label="Own Tokens"
+					value={formatUsd(props.treasury.ownTokens, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
 			) : null}
 			{props.treasury.others != null ? (
-				<SubMetricRow label="Others" value={formattedNum(props.treasury.others, true)} />
+				<SubMetricRow
+					label="Others"
+					value={formatUsd(props.treasury.others, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
 			) : null}
 		</MetricSection>
 	)
@@ -847,7 +887,14 @@ const Expenses = (props: IKeyMetricsProps) => {
 		<MetricSection label="Annual Operational Expenses" value={props.formatPrice(props.expenses.total)}>
 			<MetricRow
 				label="Headcount"
-				value={props.expenses.headcount != null ? formattedNum(props.expenses.headcount) : '\u2014'}
+				value={
+					props.expenses.headcount != null
+						? formatCompactNumber(props.expenses.headcount, {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})
+						: '\u2014'
+				}
 			/>
 			{props.expenses.annualUsdCost.map(([category, amount]) => (
 				<p
@@ -898,7 +945,11 @@ const TokenLiquidity = (props: IKeyMetricsProps) => {
 		<MetricSection
 			label={`${props.token?.symbol ? `$${props.token.symbol}` : 'Token'} Liquidity`}
 			tooltip="Sum of value locked in DEX pools that include that token across all DEXs for which DefiLlama tracks pool data."
-			value={formattedNum(props.tokenLiquidity.total, true)}
+			value={formatUsd(props.tokenLiquidity.total, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})}
 		>
 			{props.tokenLiquidity?.pools.map((pool) => (
 				<p
@@ -983,8 +1034,9 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 								</span>
 								<span className="text-xs text-tertiary">
 									(
-									{formattedNum(
-										((props.tokenCGData.volume24h.dex ?? 0) / (props.tokenCGData.volume24h.total ?? 1)) * 100
+									{formatCompactNumber(
+										((props.tokenCGData.volume24h.dex ?? 0) / (props.tokenCGData.volume24h.total ?? 1)) * 100,
+										{ minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }
 									)}
 									% of total)
 								</span>
@@ -1002,22 +1054,37 @@ const Raises = (props: IKeyMetricsProps) => {
 	return (
 		<MetricSection
 			label="Total Raised"
-			value={formattedNum(props.raises.reduce((sum, r) => sum + Number(r.amount), 0) * 1_000_000, true)}
+			value={formatUsd(
+				props.raises.reduce((sum, raise) => sum + (raise.amountUsd ?? 0), 0),
+				{
+					compact: true,
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				}
+			)}
 		>
 			{props.raises.map((raise) => (
 				<p
 					className="flex flex-col gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"
-					key={`${raise.date}-${raise.amount}-${props.name}`}
+					key={`${raise.date}-${raise.amountUsd}-${props.name}`}
 				>
 					<span className="flex flex-wrap justify-between">
 						<span className="text-secondary">{dayjs.utc(raise.date * 1000).format('MMM D, YYYY')}</span>
-						{raise.amount ? (
-							<span className="font-jetbrains">{formattedNum(raise.amount * 1_000_000, true)}</span>
+						{raise.amountUsd ? (
+							<span className="font-jetbrains">
+								{formatUsd(raise.amountUsd, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+							</span>
 						) : null}
 					</span>
 					<span className="flex flex-wrap justify-between gap-1 text-secondary">
 						<span>Round: {raise.round}</span>
-						{raise.investors?.length ? <span>Investors: {raise.investors.join(', ')}</span> : null}
+						{raise.leadInvestors.length || raise.otherInvestors.length ? (
+							<span>Investors: {[...raise.leadInvestors, ...raise.otherInvestors].join(', ')}</span>
+						) : null}
 					</span>
 				</p>
 			))}

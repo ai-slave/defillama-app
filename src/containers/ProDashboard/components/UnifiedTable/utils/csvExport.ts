@@ -1,4 +1,5 @@
 import type { Column, Row, Table } from '@tanstack/react-table'
+import { formatFixedNumber } from '~/utils/numberFormat'
 import type { UnifiedRowHeaderType } from '../../../types'
 import { getAggregationContextFromRow, getRowDisplayProps, getRowHeaderFromGroupingColumn } from '../core/groupingUtils'
 import type { NormalizedRow } from '../types'
@@ -53,7 +54,7 @@ function getGroupedRowCsvValue(row: Row<NormalizedRow>, columnId: string, percen
 	}
 
 	if (percentColumns.has(columnId) && typeof value === 'number') {
-		return value.toFixed(2)
+		return formatFixedNumber(value, 2)
 	}
 
 	return typeof value === 'number' ? String(value) : ''

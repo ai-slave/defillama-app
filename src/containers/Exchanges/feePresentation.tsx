@@ -1,3 +1,5 @@
+import { formatPercent } from '~/utils/numberFormat'
+
 export interface MakerTakerFee {
 	maker: number | null
 	taker: number | null
@@ -22,15 +24,10 @@ const FEE_TONE_LABEL: Record<FeeTone, string> = {
 	high: 'High fee'
 }
 
-export function formatFee(fee: number | null): string | null {
-	// Fees carry up to 2 significant decimals as a percent (0.0015 → "0.15%"); don't over-round.
-	return fee == null ? null : `${(fee * 100).toLocaleString(undefined, { maximumFractionDigits: 3 })}%`
-}
-
 export function feeLabel(fee: MakerTakerFee | null): string {
 	if (!fee) return '–'
-	const maker = formatFee(fee.maker)
-	const taker = formatFee(fee.taker)
+	const maker = formatPercent(fee.maker, { input: 'fraction' })
+	const taker = formatPercent(fee.taker, { input: 'fraction' })
 	return maker && taker ? `${maker} / ${taker}` : (maker ?? taker ?? '–')
 }
 

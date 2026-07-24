@@ -26,9 +26,9 @@ vi.mock('../snapshot', async (importOriginal) => ({
 	readYieldsExploits: () => Promise.resolve([])
 }))
 // Mutable so a test can populate slug → valuation and assert the airdrop-hint stamping.
-const { raiseValuationsMap } = vi.hoisted(() => ({ raiseValuationsMap: new Map<string, number>() }))
+const { raiseValuationsUsdMap } = vi.hoisted(() => ({ raiseValuationsUsdMap: new Map<string, number>() }))
 vi.mock('../server/raiseValuations', () => ({
-	getRaiseValuations: () => Promise.resolve(raiseValuationsMap),
+	getRaiseValuationsUsd: () => Promise.resolve(raiseValuationsUsdMap),
 	getReferralUrls: () => Promise.resolve(new Map<string, string>())
 }))
 
@@ -155,7 +155,7 @@ beforeEach(() => {
 	getEnrichedLoops.mockReset()
 	getEnrichedMarkets.mockReset()
 	getEnrichedRoutes.mockReset()
-	raiseValuationsMap.clear()
+	raiseValuationsUsdMap.clear()
 })
 
 describe('getLoopsPage per-leg components', () => {
@@ -268,27 +268,27 @@ describe('getBorrowRoutesPage per-leg components', () => {
 describe('airdrop raise-valuation stamping', () => {
 	// ENTITY has protocolHasToken:false (airdrop) + protocolSlug:'aave-v3'.
 	it('stamps the valuation on an airdrop market/route/loop row', async () => {
-		raiseValuationsMap.set('aave-v3', 25)
+		raiseValuationsUsdMap.set('aave-v3', 25_000_000)
 		getEnrichedMarkets.mockResolvedValue([marketRow()])
 		getEnrichedRoutes.mockResolvedValue([routeRow()])
 		getEnrichedLoops.mockResolvedValue([loopRow()])
-		expect((await getBorrowMarketsPage({ pageSize: 'all' })).rows[0].raiseValuation).toBe(25)
-		expect((await getBorrowRoutesPage({ pageSize: 'all' })).rows[0].raiseValuation).toBe(25)
-		expect((await getLoopsPage({ pageSize: 'all' })).rows[0].raiseValuation).toBe(25)
+		expect((await getBorrowMarketsPage({ pageSize: 'all' })).rows[0].raiseValuationUsd).toBe(25_000_000)
+		expect((await getBorrowRoutesPage({ pageSize: 'all' })).rows[0].raiseValuationUsd).toBe(25_000_000)
+		expect((await getLoopsPage({ pageSize: 'all' })).rows[0].raiseValuationUsd).toBe(25_000_000)
 	})
 
-	it('leaves raiseValuation null on an airdrop row with no known raise', async () => {
+	it('leaves raiseValuationUsd null on an airdrop row with no known raise', async () => {
 		getEnrichedMarkets.mockResolvedValue([marketRow()])
 		const { rows } = await getBorrowMarketsPage({ pageSize: 'all' })
 		expect(rows[0].airdrop).toBe(true)
-		expect(rows[0].raiseValuation ?? null).toBeNull()
+		expect(rows[0].raiseValuationUsd ?? null).toBeNull()
 	})
 
 	it('never stamps a valuation on a non-airdrop row (protocol has a token)', async () => {
-		raiseValuationsMap.set('aave-v3', 25)
+		raiseValuationsUsdMap.set('aave-v3', 25_000_000)
 		getEnrichedMarkets.mockResolvedValue([marketRow({ protocolHasToken: true })])
 		const { rows } = await getBorrowMarketsPage({ pageSize: 'all' })
 		expect(rows[0].airdrop).toBe(false)
-		expect(rows[0].raiseValuation ?? null).toBeNull()
+		expect(rows[0].raiseValuationUsd ?? null).toBeNull()
 	})
 })

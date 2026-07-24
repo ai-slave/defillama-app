@@ -87,4 +87,38 @@ describe('strict download dataset extractors', () => {
 			{ date: 2, value: 0 }
 		])
 	})
+
+	it('exports hacks and raises with explicit whole-USD fields', () => {
+		const hacks = dataset('hacks').extractItems([
+			{
+				date: 1,
+				name: 'Protocol',
+				amount: 8_000_000,
+				returnedFunds: 2_000_000
+			}
+		])
+		const raises = dataset('raises').extractItems({
+			raises: [
+				{
+					date: 1,
+					name: 'Protocol',
+					round: 'Seed',
+					amount: 3.1,
+					chains: [],
+					sector: 'DeFi',
+					category: 'DeFi',
+					categoryGroup: 'DeFi',
+					leadInvestors: [],
+					otherInvestors: [],
+					valuation: '300'
+				}
+			]
+		})
+
+		expect(hacks[0]).toMatchObject({ amountUsd: 8_000_000, returnedFundsUsd: 2_000_000 })
+		expect(hacks[0]).not.toHaveProperty('amount')
+		expect(raises[0]).toMatchObject({ amountUsd: 3_100_000, valuationUsd: 300_000_000 })
+		expect(raises[0]).not.toHaveProperty('amount')
+		expect(raises[0]).not.toHaveProperty('valuation')
+	})
 })

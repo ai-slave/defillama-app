@@ -44,7 +44,7 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 import { DataFreshness } from '~/ui/DataFreshness'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formattedNum } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import {
 	buildStablecoinMarketCapPresentation,
@@ -166,7 +166,11 @@ export function ChainsWithStablecoins({
 		includeUnreleased
 	)
 
-	const mcapToDisplay = formattedNum(totalMcapCurrent, true)
+	const mcapToDisplay = formatUsd(totalMcapCurrent, {
+		compact: true,
+		minimumCompactValue: 1_000_000,
+		compactSuffix: 'lowercase'
+	})
 
 	let topChain = { name: 'Ethereum', mcap: 0 }
 	if (chainTotals.length > 0) {
@@ -297,7 +301,7 @@ export function ChainsWithStablecoins({
 						]}
 					/>
 
-					<StatItem label={<>{topChain.name} Dominance</>} value={<>{dominance}%</>} />
+					<StatItem label={<>{topChain.name} Dominance</>} value={formatPercent(dominance, { input: 'percent' })} />
 					{isDataStale && dataTimestamp != null ? (
 						<DataFreshness timestamp={dataTimestamp} label="Market cap data last updated" className="mt-auto" />
 					) : null}

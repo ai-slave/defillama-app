@@ -5,7 +5,8 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { formatPercentChangeText } from '~/ui/PercentChange'
-import { formattedNum, toNiceDayMonthAndYearAndTime } from '~/utils'
+import { toNiceDayMonthAndYearAndTime } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { perpsDefinitions as d } from './definitions'
 import type {
 	IRWAPerpsContractData,
@@ -88,17 +89,17 @@ function toUnixMsTimestamp(timestamp: number): number {
 // Contract detail metrics are display fallbacks; null or malformed values should render as "-" instead of NaN.
 function formatFractionPercent(value: number | null | undefined): string {
 	if (value == null || !Number.isFinite(value)) return '-'
-	return `${(value * 100).toFixed(Math.abs(value * 100) >= 1 ? 2 : 4)}%`
+	return `${formatPercent(value, { input: 'fraction', minimumFractionDigits: Math.abs(value * 100) >= 1 ? 2 : 4, maximumFractionDigits: Math.abs(value * 100) >= 1 ? 2 : 4, useGrouping: false })}`
 }
 
 function formatMaybeCurrency(value: number | null | undefined): string {
 	if (value == null || !Number.isFinite(value)) return '-'
-	return formattedNum(value, true)
+	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 function formatMaybeNumber(value: number | null | undefined): string {
 	if (value == null || !Number.isFinite(value)) return '-'
-	return formattedNum(value, false)
+	return formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 function formatTextValue(value: string | null | undefined): string | null {

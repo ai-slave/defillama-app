@@ -1,7 +1,7 @@
 import type { MultiSeriesYAxisOption } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatTooltipValue } from '~/components/ECharts/shared/formatters'
 import { mergeDeep } from '~/components/ECharts/shared/merge'
-import { formattedNum } from '~/utils'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import type { ProtocolChartsLabels } from './constants'
 
 type AxisExtent = {
@@ -83,16 +83,17 @@ const AXIS_CONFIG_BY_TYPE: Partial<Record<ProtocolChartsLabels, AxisConfig>> = {
 		resolveColor: ({ chartColors }) => chartColors['Open Interest']
 	},
 	Unlocks: {
-		formatter: (value, { unlockTokenSymbol }) => `${formattedNum(value)} ${unlockTokenSymbol}`,
+		formatter: (value, { unlockTokenSymbol }) =>
+			`${formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${unlockTokenSymbol}`,
 		resolveColor: ({ chartColors }) => chartColors['Unlocks']
 	},
 	'Active Addresses': {
-		formatter: (value) => formattedNum(value),
+		formatter: (value) => formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		resolveColor: ({ chartColors, chartsInSeries }) =>
 			chartsInSeries.has('Active Addresses') ? chartColors['Active Addresses'] : chartColors['New Addresses']
 	},
 	Transactions: {
-		formatter: (value) => formattedNum(value),
+		formatter: (value) => formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		resolveColor: ({ chartColors }) => chartColors['Transactions']
 	},
 	'Gas Used': {
@@ -107,11 +108,11 @@ const AXIS_CONFIG_BY_TYPE: Partial<Record<ProtocolChartsLabels, AxisConfig>> = {
 		resolveColor: ({ chartColors }) => chartColors['USD Inflows']
 	},
 	'Total Proposals': {
-		formatter: (value) => formattedNum(value),
+		formatter: (value) => formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		resolveColor: ({ chartColors }) => chartColors['Total Proposals']
 	},
 	'Max Votes': {
-		formatter: (value) => formattedNum(value),
+		formatter: (value) => formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		resolveColor: ({ chartColors }) => chartColors['Max Votes']
 	},
 	Treasury: {

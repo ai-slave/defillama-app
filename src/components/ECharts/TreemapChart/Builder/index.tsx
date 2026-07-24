@@ -7,8 +7,10 @@ import { useEffect, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
+import { formatPercent } from '~/utils/numberFormat'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../../renderVisibility'
 import { clearTreemapFocus, registerTreemapFocusTracking } from '../focus'
+import { formatTreemapUsd } from '../formatters'
 
 echarts.use([TooltipComponent, GraphicComponent, ToolboxComponent, EChartTreemap, CanvasRenderer])
 
@@ -32,18 +34,6 @@ interface TreemapFormatterParams {
 
 function normalizeTreemapFormatterParams(params: unknown): TreemapFormatterParams {
 	return params && typeof params === 'object' ? (params as TreemapFormatterParams) : {}
-}
-
-const formatValue = (value: number) => {
-	const absValue = Math.abs(value)
-	if (absValue >= 1e9) {
-		return '$' + (value / 1e9).toFixed(1) + 'B'
-	} else if (absValue >= 1e6) {
-		return '$' + (value / 1e6).toFixed(1) + 'M'
-	} else if (absValue >= 1e3) {
-		return '$' + (value / 1e3).toFixed(0) + 'K'
-	}
-	return '$' + value.toFixed(0)
 }
 
 function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemapChartProps) {
@@ -120,8 +110,12 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 				formatter: function (rawInfo: unknown) {
 					const info = normalizeTreemapFormatterParams(rawInfo)
 					const rawValue = typeof info.value === 'number' ? info.value : Number(info.value ?? 0)
-					const pct = total > 0 ? ((rawValue / total) * 100).toFixed(1) : '0'
-					return `<div style="font-weight:600">${info.name ?? ''}</div><div>${formatValue(rawValue)} (${pct}%)</div>`
+					const pct = formatPercent(total > 0 ? rawValue / total : 0, {
+						input: 'fraction',
+						minimumFractionDigits: 1,
+						maximumFractionDigits: 1
+					})
+					return `<div style="font-weight:600">${info.name ?? ''}</div><div>${formatTreemapUsd(rawValue)} (${pct})</div>`
 				}
 			},
 			series: [
@@ -144,8 +138,12 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 						formatter: function (rawParams: unknown) {
 							const params = normalizeTreemapFormatterParams(rawParams)
 							const rawValue = typeof params.value === 'number' ? params.value : Number(params.value ?? 0)
-							const pct = total > 0 ? ((rawValue / total) * 100).toFixed(1) : '0'
-							return `{name|${params.name ?? ''}}\n{value|${formatValue(rawValue)} (${pct}%)}`
+							const pct = formatPercent(total > 0 ? rawValue / total : 0, {
+								input: 'fraction',
+								minimumFractionDigits: 1,
+								maximumFractionDigits: 1
+							})
+							return `{name|${params.name ?? ''}}\n{value|${formatTreemapUsd(rawValue)} (${pct})}`
 						},
 						rich: {
 							name: {

@@ -17,6 +17,7 @@ import {
 import { CHART_TYPES, getChainChartTypes, getProtocolChartTypes } from '~/containers/ProDashboard/types'
 import { Icon } from '~/ui/Icon'
 import { tokenIconUrl, chainIconUrl } from '~/utils/icons'
+import { formatUsd } from '~/utils/numberFormat'
 import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
 import { validateArticleChartConfig } from '../chartAdapters'
 import type {
@@ -104,15 +105,6 @@ function entityLogo(entity: { entityType: ArticleChartEntityType; slug: string; 
 	if (entity.logo) return entity.logo
 	if (entity.entityType === 'chain') return chainIconUrl(entity.slug)
 	return tokenIconUrl(entity.slug)
-}
-
-function compactUsd(value: number | undefined) {
-	if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null
-	if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`
-	if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`
-	if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`
-	if (value >= 1e3) return `$${(value / 1e3).toFixed(1)}K`
-	return `$${value.toFixed(0)}`
 }
 
 function MultiPreview({
@@ -495,7 +487,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 							filteredEntities.map((entity) => {
 								const candidateId = `${entity.entityType}:${entity.slug}:${currentMetric}`
 								const checked = selectedIds.has(candidateId)
-								const tvl = compactUsd(entity.tvl)
+								const tvl = entity.tvl != null && entity.tvl > 0 ? formatUsd(entity.tvl, { compact: true }) : null
 								const limitReached = !checked && series.length >= MAX_SERIES
 								return (
 									<li key={`${entity.entityType}:${entity.slug}`}>

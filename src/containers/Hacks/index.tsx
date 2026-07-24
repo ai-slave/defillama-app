@@ -28,7 +28,8 @@ import { TagGroup } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { firstDayOfMonth, formattedNum, toNiceDayMonthAndYear } from '~/utils'
+import { firstDayOfMonth, toNiceDayMonthAndYear } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { isParamNone, parseArrayParam, parseExcludeParam, parseNumberQueryParam } from '~/utils/routerQuery'
 import { HacksFilters } from './Filters'
 import type { IHacksPageData } from './types'
@@ -164,8 +165,8 @@ const applyFilters = (
 		}
 
 		if (filters.since != null && row.date < filters.since) return false
-		if (filters.minLost != null && row.amount < filters.minLost) return false
-		if (filters.maxLost != null && row.amount > filters.maxLost) return false
+		if (filters.minLost != null && row.amountUsd < filters.minLost) return false
+		if (filters.maxLost != null && row.amountUsd > filters.maxLost) return false
 		return true
 	})
 }
@@ -282,14 +283,14 @@ export const HacksContainer = ({
 
 		for (const row of filteredData) {
 			const monthTsMs = firstDayOfMonth(row.date) * 1e3
-			monthlyHacks.set(monthTsMs, (monthlyHacks.get(monthTsMs) ?? 0) + row.amount)
+			monthlyHacks.set(monthTsMs, (monthlyHacks.get(monthTsMs) ?? 0) + row.amountUsd)
 
-			totalHackedRaw += row.amount
-			if (row.target === 'DeFi Protocol') totalHackedDefiRaw += row.amount
-			if (row.bridge) totalBridgeHackRaw += row.amount
+			totalHackedRaw += row.amountUsd
+			if (row.target === 'DeFi Protocol') totalHackedDefiRaw += row.amountUsd
+			if (row.bridge) totalBridgeHackRaw += row.amountUsd
 
 			if (row.technique) {
-				techniqueTotals.set(row.technique, (techniqueTotals.get(row.technique) ?? 0) + row.amount)
+				techniqueTotals.set(row.technique, (techniqueTotals.get(row.technique) ?? 0) + row.amountUsd)
 			}
 		}
 
@@ -298,9 +299,21 @@ export const HacksContainer = ({
 			.map(([date, value]) => [date, value] as [number, number])
 
 		return {
-			totalHacked: formattedNum(totalHackedRaw, true),
-			totalHackedDefi: formattedNum(totalHackedDefiRaw, true),
-			totalRugs: formattedNum(totalBridgeHackRaw, true),
+			totalHacked: formatUsd(totalHackedRaw, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
+			totalHackedDefi: formatUsd(totalHackedDefiRaw, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
+			totalRugs: formatUsd(totalBridgeHackRaw, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 			monthlyHacksChartData: {
 				dataset: {
 					source: monthlySeries,
@@ -400,9 +413,12 @@ const hacksColumns = [
 		},
 		header: 'Date'
 	}),
-	columnHelper.accessor('amount', {
+	columnHelper.accessor('amountUsd', {
 		header: 'Amount lost',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[140px]'
 		}

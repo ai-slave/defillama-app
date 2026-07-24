@@ -3,8 +3,8 @@ import { lazy, Suspense, useContext } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
-import { formattedNum } from '~/utils'
 import { download } from '~/utils/download'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext } from '../queries'
@@ -202,13 +202,13 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 					<div className="flex flex-col">
 						<span className="text-[10px] text-pro-text-tertiary uppercase">Latest Supply APY</span>
 						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#cc3e82' }}>
-							{latestData.apy}%
+							{formatPercent(latestData.apy, { input: 'percent' })}
 						</span>
 					</div>
 					<div className="flex flex-col">
 						<span className="text-[10px] text-pro-text-tertiary uppercase">TVL</span>
 						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
-							{formattedNum(latestData.tvl, true)}
+							{formatUsd(latestData.tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 						</span>
 					</div>
 				</div>

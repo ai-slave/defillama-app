@@ -16,7 +16,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { VirtualTable } from '~/components/Table/Table'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
 import {
 	type PerpMarket,
@@ -72,7 +72,7 @@ function usePersistentChart(enabled: boolean) {
 
 function formatPct(value: number | null | undefined) {
 	if (value == null) return '—'
-	return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
+	return `${value >= 0 ? '+' : ''}${formatPercent(value, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 }
 
 function formatTimestamp(ts: number | null | undefined) {
@@ -152,7 +152,11 @@ function PriceTickerTape({ coins }: { coins: string[] }) {
 					if (!pEls) continue
 
 					const price = parseFloat(mids[coin])
-					const formatted = formattedNum(price, true) as string
+					const formatted = formatUsd(price, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}) as string
 					pEls.forEach((el) => {
 						el.textContent = formatted
 					})
@@ -260,7 +264,7 @@ function FundingChart({ data }: { data: { name: string; value: number }[] }) {
 					const rawValue = getTooltipRawYValue(item, item.seriesName ?? '')
 					const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
 					if (!Number.isFinite(value)) return ''
-					return `<b>${item.name ?? ''}</b><br/>Funding (ann.): ${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
+					return `<b>${item.name ?? ''}</b><br/>Funding (ann.): ${value >= 0 ? '+' : ''}${formatPercent(value, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 				}
 			},
 			xAxis: {
@@ -343,7 +347,8 @@ const perpColumns: ColumnDef<PerpMarket>[] = [
 	{
 		header: 'Price',
 		accessorKey: 'markPx',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 120
 	},
@@ -352,7 +357,9 @@ const perpColumns: ColumnDef<PerpMarket>[] = [
 		accessorKey: 'oraclePx',
 		cell: ({ getValue }) => {
 			const value = getValue<number | undefined>()
-			return value ? formattedNum(value, true) : '—'
+			return value
+				? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: '—'
 		},
 		meta: { align: 'end' as const },
 		size: 120
@@ -389,14 +396,16 @@ const perpColumns: ColumnDef<PerpMarket>[] = [
 	{
 		header: '24h Volume',
 		accessorKey: 'dayNtlVlm',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 140
 	},
 	{
 		header: 'Open Interest',
 		accessorKey: 'openInterest',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -423,14 +432,16 @@ const spotColumns: ColumnDef<SpotMarket>[] = [
 	{
 		header: 'Price',
 		accessorKey: 'markPx',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 120
 	},
 	{
 		header: '24h Volume',
 		accessorKey: 'dayNtlVlm',
-		cell: ({ getValue }) => formattedNum(getValue<number>(), true),
+		cell: ({ getValue }) =>
+			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -528,7 +539,7 @@ function OIDistributionChart({ data }: { data: { name: string; value: number }[]
 					const item = normalizeTooltipItems(rawParams)[0]
 					const value = typeof item?.value === 'number' ? item.value : Number(item?.value)
 					const percent = item && 'percent' in item && typeof item.percent === 'number' ? item.percent : 0
-					return `<b>${item?.name ?? ''}</b><br/>OI: $${formattedNum(value)}<br/>${percent}%`
+					return `<b>${item?.name ?? ''}</b><br/>OI: ${formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>${formatPercent(percent, { input: 'percent' })}`
 				}
 			},
 			series: [
@@ -584,7 +595,7 @@ function VolumeOIScatter({ data }: { data: PerpMarket[] }) {
 						typeof d[3] !== 'string'
 					)
 						return ''
-					return `<b>${d[3]}</b><br/>Volume: $${formattedNum(d[0])}<br/>OI: $${formattedNum(d[1])}<br/>Funding: ${d[2] >= 0 ? '+' : ''}${d[2].toFixed(2)}%`
+					return `<b>${d[3]}</b><br/>Volume: ${formatUsd(d[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>OI: ${formatUsd(d[1], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>Funding: ${d[2] >= 0 ? '+' : ''}${formatPercent(d[2], { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 				}
 			},
 			xAxis: {
@@ -742,8 +753,12 @@ export default function Stats() {
 		}
 		if (otherOI > 0) oiDistributionData.push({ name: 'Other', value: otherOI })
 		return {
-			totalVolume: formattedNum(totalVolume, true),
-			totalOI: formattedNum(totalOI, true),
+			totalVolume: formatUsd(totalVolume, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
+			totalOI: formatUsd(totalOI, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 			fundingChartData,
 			oiDistributionData
 		}

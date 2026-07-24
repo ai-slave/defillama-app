@@ -23,8 +23,8 @@ import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { useRaisesData } from './hooks'
+import type { Raise } from './model'
 import { raisesColumnOrders, raisesColumns } from './Table'
-import type { IRaise } from './types'
 
 const MultiSeriesChart = React.lazy(
 	() => import('~/components/ECharts/MultiSeriesChart')
@@ -32,7 +32,7 @@ const MultiSeriesChart = React.lazy(
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
-function RaisesByInvestorTable({ raises }: { raises: IRaise[] }) {
+function RaisesByInvestorTable({ raises }: { raises: Raise[] }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ desc: true, id: 'date' }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
@@ -81,7 +81,7 @@ function RaisesByInvestorTable({ raises }: { raises: IRaise[] }) {
 }
 
 interface InvestorContainerProps {
-	raises: IRaise[]
+	raises: Raise[]
 	investors: string[]
 	rounds: string[]
 	sectors: string[]

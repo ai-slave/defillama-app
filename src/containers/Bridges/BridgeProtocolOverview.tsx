@@ -25,7 +25,8 @@ import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
-import { formattedNum, getPercentChange, slug } from '~/utils'
+import { getPercentChange, slug } from '~/utils'
+import { formatUsd, formatPercentChange } from '~/utils/numberFormat'
 import { getFreshTimeSeriesCurrentPoint } from '~/utils/timeSeries'
 import {
 	buildBridgeProtocolAllChainsVolumeData,
@@ -80,7 +81,7 @@ export const BridgeInfo = ({
 	const rollingHours = config.name === 'wormhole' ? 28 : 24
 	const windowLabel = rollingHours === 24 ? '24h' : `${rollingHours}h`
 
-	let volPercentChange: string | null = null
+	let volPercentChange: number | null = null
 
 	if (completedDayVolumes) {
 		const prev2DayChart = completedDayVolumes.previous
@@ -88,7 +89,7 @@ export const BridgeInfo = ({
 		const prevWithdrawalsUSD = -(prev2DayChart.Withdrawn ?? 0)
 		const prevVolume = prevDepositsUSD + prevWithdrawalsUSD
 		if (prevVolume > 0) {
-			volPercentChange = getPercentChange(currentDailyVolume, prevVolume)?.toFixed(2)
+			volPercentChange = getPercentChange(currentDailyVolume, prevVolume)
 		}
 	}
 
@@ -205,7 +206,11 @@ export const BridgeInfo = ({
 						<StatItem
 							label={<>Total Volume ({windowLabel})</>}
 							tooltip="Volume equals (Deposited + Withdrawn)/2 over the same rolling window used by the bridges overview."
-							value={formattedNum(prevDayVolumeValue, true)}
+							value={formatUsd(prevDayVolumeValue, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 						/>
 					) : (
 						<>
@@ -215,7 +220,11 @@ export const BridgeInfo = ({
 										Deposited to {currentChain} ({windowLabel})
 									</>
 								}
-								value={formattedNum(currentDepositsUSD || '0', true)}
+								value={formatUsd(currentDepositsUSD || '0', {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 							<StatItem
 								label={
@@ -223,13 +232,17 @@ export const BridgeInfo = ({
 										Withdrawn from {currentChain} ({windowLabel})
 									</>
 								}
-								value={formattedNum(currentWithdrawalsUSD || '0', true)}
+								value={formatUsd(currentWithdrawalsUSD || '0', {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 							/>
 						</>
 					)}
 
 					{volPercentChange != null ? (
-						<StatItem label="Volume Change (prev day)" value={`${volPercentChange}%`} />
+						<StatItem label="Volume Change (prev day)" value={formatPercentChange(volPercentChange)} />
 					) : null}
 					{config?.url ? (
 						<ExternalLinkButton

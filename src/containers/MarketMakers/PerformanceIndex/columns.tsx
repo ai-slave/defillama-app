@@ -4,6 +4,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatNumber } from '~/utils/numberFormat'
 import { GradeBadge, StatusBadge } from '../badges'
 import { formatComposite, resolveGrade } from '../format'
 import type { IntegrationStatus, PerformanceRow } from './types'
@@ -53,7 +54,7 @@ function HeaderWithTooltip({ label, tooltip, glyph = '?' }: { label: string; too
 
 function renderScore(value: number | null) {
 	if (value == null) return <span className="text-tertiary">N/A</span>
-	return <span>{value.toFixed(2)}</span>
+	return <span>{formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
 }
 
 function renderComposite(value: number | null) {

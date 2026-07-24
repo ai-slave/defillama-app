@@ -16,7 +16,8 @@ import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles
 import { Panel } from '~/ui/Panel'
 import { Switch } from '~/ui/Switch'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { formattedNum, toNiceDayMonthAndYear } from '~/utils'
+import { toNiceDayMonthAndYear } from '~/utils'
+import { formatCompactNumber, formatNumber } from '~/utils/numberFormat'
 import type { GovernanceProposal, GovernanceType } from './types'
 
 export function GovernanceTable({
@@ -99,7 +100,7 @@ const ControversyCell = ({ info }: { info: CellContext<GovernanceProposal, numbe
 	const value = info.getValue()
 	if (value == null) return ''
 	const numericValue = Number(value)
-	return <>{Number.isFinite(numericValue) ? numericValue.toFixed(2) : ''}</>
+	return <>{Number.isFinite(numericValue) ? formatNumber(numericValue) : ''}</>
 }
 
 const DateCell = ({ info }: { info: CellContext<GovernanceProposal, number | null | undefined> }) => {
@@ -146,7 +147,8 @@ const proposalsCompoundColumns = [
 	}),
 	columnHelper.accessor('scores_total', {
 		header: 'Votes',
-		cell: (info) => formattedNum(info.getValue()),
+		cell: (info) =>
+			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end'
@@ -203,7 +205,8 @@ const proposalsSnapshotColumns = [
 	}),
 	columnHelper.accessor('scores_total', {
 		header: 'Votes',
-		cell: (info) => formattedNum(info.getValue()),
+		cell: (info) =>
+			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end'
@@ -283,7 +286,8 @@ const proposalsTallyColumns = [
 	}),
 	columnHelper.accessor('scores_total', {
 		header: 'Votes',
-		cell: (info) => formattedNum(info.getValue()),
+		cell: (info) =>
+			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end'

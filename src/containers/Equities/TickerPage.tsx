@@ -12,7 +12,6 @@ import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
-import { abbreviateNumber } from '~/utils'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type {
@@ -23,6 +22,7 @@ import type {
 } from './api.types'
 import { buildEquitiesDimensionsChart } from './chartData'
 import { EquitiesFilingsTable } from './FilingsTable'
+import { formatEquitiesCompactValue } from './financialsFormatting'
 import { EquitiesFinancialsTable } from './FinancialsTable'
 import { EquitiesMarketsTable, EquitiesTokensTable } from './OnchainTables'
 import type { IEquityTickerPageProps } from './types'
@@ -92,14 +92,10 @@ const TAB_LABELS: Record<EquityTab, string> = {
 	unlocks: 'Unlocks'
 }
 
-function formatMetricValue(value: unknown, symbol?: string): string {
-	return abbreviateNumber(value, 2, symbol) ?? '-'
-}
-
 function ChangeMetricValue({ value, symbol }: { value: number | null; symbol?: string }) {
 	return (
 		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
-			{formatMetricValue(value, symbol)}
+			{formatEquitiesCompactValue(value, symbol) ?? '-'}
 		</span>
 	)
 }
@@ -122,67 +118,67 @@ export function EquityKeyMetrics({ summary }: { summary: IEquitiesSummaryRespons
 			<MetricRow
 				label={defs.currentPrice.label}
 				tooltip={defs.currentPrice.description}
-				value={formatMetricValue(summary.currentPrice, '$')}
+				value={formatEquitiesCompactValue(summary.currentPrice, '$') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.revenueTTM.label}
 				tooltip={defs.revenueTTM.description}
-				value={formatMetricValue(summary.revenueTTM, '$')}
+				value={formatEquitiesCompactValue(summary.revenueTTM, '$') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.holdersRevenueTTM.label}
 				tooltip={defs.holdersRevenueTTM.description}
-				value={formatMetricValue(summary.holdersRevenueTTM, '$')}
+				value={formatEquitiesCompactValue(summary.holdersRevenueTTM, '$') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.grossProfitTTM.label}
 				tooltip={defs.grossProfitTTM.description}
-				value={formatMetricValue(summary.grossProfitTTM, '$')}
+				value={formatEquitiesCompactValue(summary.grossProfitTTM, '$') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.earningsTTM.label}
 				tooltip={defs.earningsTTM.description}
-				value={formatMetricValue(summary.earningsTTM, '$')}
+				value={formatEquitiesCompactValue(summary.earningsTTM, '$') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.ebitdaTTM.label}
 				tooltip={defs.ebitdaTTM.description}
-				value={formatMetricValue(summary.ebitdaTTM, '$')}
+				value={formatEquitiesCompactValue(summary.ebitdaTTM, '$') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.operatingProfitMarginTTM.label}
 				tooltip={defs.operatingProfitMarginTTM.description}
-				value={formatMetricValue(summary.operatingProfitMarginTTM, '%')}
+				value={formatEquitiesCompactValue(summary.operatingProfitMarginTTM, '%') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.dividendYield.label}
 				tooltip={defs.dividendYield.description}
-				value={formatMetricValue(summary.dividendYield, '%')}
+				value={formatEquitiesCompactValue(summary.dividendYield, '%') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.holdersYield.label}
 				tooltip={defs.holdersYield.description}
-				value={formatMetricValue(summary.holdersYield, '%')}
+				value={formatEquitiesCompactValue(summary.holdersYield, '%') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.cashAndCashEquivalents.label}
 				tooltip={defs.cashAndCashEquivalents.description}
-				value={formatMetricValue(summary.cashAndCashEquivalents, '$')}
+				value={formatEquitiesCompactValue(summary.cashAndCashEquivalents, '$') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.totalAssets.label}
 				tooltip={defs.totalAssets.description}
-				value={formatMetricValue(summary.totalAssets, '$')}
+				value={formatEquitiesCompactValue(summary.totalAssets, '$') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.totalShareholdersEquity.label}
 				tooltip={defs.totalShareholdersEquity.description}
-				value={formatMetricValue(summary.totalShareholdersEquity, '$')}
+				value={formatEquitiesCompactValue(summary.totalShareholdersEquity, '$') ?? '-'}
 			/>
 			<MetricRow
 				label={defs.totalDebt.label}
 				tooltip={defs.totalDebt.description}
-				value={formatMetricValue(summary.totalDebt, '$')}
+				value={formatEquitiesCompactValue(summary.totalDebt, '$') ?? '-'}
 			/>
 		</div>
 	)
@@ -298,7 +294,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 					<p className="flex flex-col">
 						<span className="text-secondary">{defs.marketCap.label}</span>
 						<span className="min-h-8 font-jetbrains text-2xl font-semibold">
-							{formatMetricValue(props.summary.marketCap, '$')}
+							{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
 						</span>
 					</p>
 					<EquityKeyMetrics summary={props.summary} />
@@ -317,7 +313,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							<p className="flex flex-col">
 								<span className="text-secondary">{defs.marketCap.label}</span>
 								<span className="min-h-8 font-jetbrains text-2xl font-semibold">
-									{formatMetricValue(props.summary.marketCap, '$')}
+									{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
 								</span>
 							</p>
 						</div>
@@ -414,27 +410,27 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							<MetricRow
 								label={defs.currentPrice.label}
 								tooltip={defs.currentPrice.description}
-								value={formatMetricValue(props.summary.currentPrice, '$')}
+								value={formatEquitiesCompactValue(props.summary.currentPrice, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.marketCap.label}
 								tooltip={defs.marketCap.description}
-								value={formatMetricValue(props.summary.marketCap, '$')}
+								value={formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.circulatingMarketCap.label}
 								tooltip={defs.circulatingMarketCap.description}
-								value={formatMetricValue(props.summary.circulatingMarketCap, '$')}
+								value={formatEquitiesCompactValue(props.summary.circulatingMarketCap, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.enterpriseValue.label}
 								tooltip={defs.enterpriseValue.description}
-								value={formatMetricValue(props.summary.enterpriseValue, '$')}
+								value={formatEquitiesCompactValue(props.summary.enterpriseValue, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.volume.label}
 								tooltip={defs.volume.description}
-								value={formatMetricValue(props.summary.volume)}
+								value={formatEquitiesCompactValue(props.summary.volume) ?? '-'}
 							/>
 							<MetricRow
 								label={defs.priceChangePercentage1d.label}
@@ -464,42 +460,42 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							<MetricRow
 								label={defs.fiftyTwoWeekLow.label}
 								tooltip={defs.fiftyTwoWeekLow.description}
-								value={formatMetricValue(props.summary.fiftyTwoWeekLow, '$')}
+								value={formatEquitiesCompactValue(props.summary.fiftyTwoWeekLow, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.fiftyTwoWeekHigh.label}
 								tooltip={defs.fiftyTwoWeekHigh.description}
-								value={formatMetricValue(props.summary.fiftyTwoWeekHigh, '$')}
+								value={formatEquitiesCompactValue(props.summary.fiftyTwoWeekHigh, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.circulatingSupply.label}
 								tooltip={defs.circulatingSupply.description}
-								value={formatMetricValue(props.summary.circulatingSupply)}
+								value={formatEquitiesCompactValue(props.summary.circulatingSupply) ?? '-'}
 							/>
 							<MetricRow
 								label={defs.totalSupply.label}
 								tooltip={defs.totalSupply.description}
-								value={formatMetricValue(props.summary.totalSupply)}
+								value={formatEquitiesCompactValue(props.summary.totalSupply) ?? '-'}
 							/>
 							<MetricRow
 								label={defs.trailingPE.label}
 								tooltip={defs.trailingPE.description}
-								value={formatMetricValue(props.summary.trailingPE)}
+								value={formatEquitiesCompactValue(props.summary.trailingPE) ?? '-'}
 							/>
 							<MetricRow
 								label={defs.priceToRevenue.label}
 								tooltip={defs.priceToRevenue.description}
-								value={formatMetricValue(props.summary.priceToRevenue)}
+								value={formatEquitiesCompactValue(props.summary.priceToRevenue) ?? '-'}
 							/>
 							<MetricRow
 								label={defs.priceToBook.label}
 								tooltip={defs.priceToBook.description}
-								value={formatMetricValue(props.summary.priceToBook)}
+								value={formatEquitiesCompactValue(props.summary.priceToBook) ?? '-'}
 							/>
 							<MetricRow
 								label={defs.enterpriseValueToEbitda.label}
 								tooltip={defs.enterpriseValueToEbitda.description}
-								value={formatMetricValue(props.summary.enterpriseValueToEbitda)}
+								value={formatEquitiesCompactValue(props.summary.enterpriseValueToEbitda) ?? '-'}
 							/>
 						</div>
 					</Card>
@@ -523,7 +519,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							<MetricRow
 								label={defs.employeeCount.label}
 								tooltip={defs.employeeCount.description}
-								value={formatMetricValue(props.metadata.employeeCount)}
+								value={formatEquitiesCompactValue(props.metadata.employeeCount) ?? '-'}
 							/>
 							<MetricRow
 								label="Website"
@@ -564,67 +560,67 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							<MetricRow
 								label={defs.revenueTTM.label}
 								tooltip={defs.revenueTTM.description}
-								value={formatMetricValue(props.summary.revenueTTM, '$')}
+								value={formatEquitiesCompactValue(props.summary.revenueTTM, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.grossProfitTTM.label}
 								tooltip={defs.grossProfitTTM.description}
-								value={formatMetricValue(props.summary.grossProfitTTM, '$')}
+								value={formatEquitiesCompactValue(props.summary.grossProfitTTM, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.earningsTTM.label}
 								tooltip={defs.earningsTTM.description}
-								value={formatMetricValue(props.summary.earningsTTM, '$')}
+								value={formatEquitiesCompactValue(props.summary.earningsTTM, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.ebitdaTTM.label}
 								tooltip={defs.ebitdaTTM.description}
-								value={formatMetricValue(props.summary.ebitdaTTM, '$')}
+								value={formatEquitiesCompactValue(props.summary.ebitdaTTM, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.operatingProfitMarginTTM.label}
 								tooltip={defs.operatingProfitMarginTTM.description}
-								value={formatMetricValue(props.summary.operatingProfitMarginTTM, '%')}
+								value={formatEquitiesCompactValue(props.summary.operatingProfitMarginTTM, '%') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.holdersRevenueTTM.label}
 								tooltip={defs.holdersRevenueTTM.description}
-								value={formatMetricValue(props.summary.holdersRevenueTTM, '$')}
+								value={formatEquitiesCompactValue(props.summary.holdersRevenueTTM, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.holderEarningsTTM.label}
 								tooltip={defs.holderEarningsTTM.description}
-								value={formatMetricValue(props.summary.holderEarningsTTM, '$')}
+								value={formatEquitiesCompactValue(props.summary.holderEarningsTTM, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.dividendYield.label}
 								tooltip={defs.dividendYield.description}
-								value={formatMetricValue(props.summary.dividendYield, '%')}
+								value={formatEquitiesCompactValue(props.summary.dividendYield, '%') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.holdersYield.label}
 								tooltip={defs.holdersYield.description}
-								value={formatMetricValue(props.summary.holdersYield, '%')}
+								value={formatEquitiesCompactValue(props.summary.holdersYield, '%') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.dividendsTTM.label}
 								tooltip={defs.dividendsTTM.description}
-								value={formatMetricValue(props.summary.dividendsTTM, '$')}
+								value={formatEquitiesCompactValue(props.summary.dividendsTTM, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.stockRepurchaseTTM.label}
 								tooltip={defs.stockRepurchaseTTM.description}
-								value={formatMetricValue(props.summary.stockRepurchaseTTM, '$')}
+								value={formatEquitiesCompactValue(props.summary.stockRepurchaseTTM, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.stockIssuanceTTM.label}
 								tooltip={defs.stockIssuanceTTM.description}
-								value={formatMetricValue(props.summary.stockIssuanceTTM, '$')}
+								value={formatEquitiesCompactValue(props.summary.stockIssuanceTTM, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.stockBasedCompensationTTM.label}
 								tooltip={defs.stockBasedCompensationTTM.description}
-								value={formatMetricValue(props.summary.stockBasedCompensationTTM, '$')}
+								value={formatEquitiesCompactValue(props.summary.stockBasedCompensationTTM, '$') ?? '-'}
 							/>
 						</div>
 					</Card>
@@ -635,27 +631,27 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							<MetricRow
 								label={defs.cashAndCashEquivalents.label}
 								tooltip={defs.cashAndCashEquivalents.description}
-								value={formatMetricValue(props.summary.cashAndCashEquivalents, '$')}
+								value={formatEquitiesCompactValue(props.summary.cashAndCashEquivalents, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.totalAssets.label}
 								tooltip={defs.totalAssets.description}
-								value={formatMetricValue(props.summary.totalAssets, '$')}
+								value={formatEquitiesCompactValue(props.summary.totalAssets, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.totalLiabilities.label}
 								tooltip={defs.totalLiabilities.description}
-								value={formatMetricValue(props.summary.totalLiabilities, '$')}
+								value={formatEquitiesCompactValue(props.summary.totalLiabilities, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.totalShareholdersEquity.label}
 								tooltip={defs.totalShareholdersEquity.description}
-								value={formatMetricValue(props.summary.totalShareholdersEquity, '$')}
+								value={formatEquitiesCompactValue(props.summary.totalShareholdersEquity, '$') ?? '-'}
 							/>
 							<MetricRow
 								label={defs.totalDebt.label}
 								tooltip={defs.totalDebt.description}
-								value={formatMetricValue(props.summary.totalDebt, '$')}
+								value={formatEquitiesCompactValue(props.summary.totalDebt, '$') ?? '-'}
 							/>
 						</div>
 					</Card>

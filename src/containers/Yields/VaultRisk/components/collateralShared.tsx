@@ -1,4 +1,5 @@
 import { Tooltip } from '~/ui/Tooltip'
+import { formatPercent } from '~/utils/numberFormat'
 
 // Backend placeholders where no third-party feed is proven ('unverified', 'none', '') —
 // these add no signal and must never render as a vendor name.
@@ -13,7 +14,7 @@ export const SLIDER_THUMB =
 	'[&::-moz-range-thumb]:size-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:bg-brand'
 
 export function dropLabel(drop: number): string {
-	return drop === 0 ? '0%' : `−${drop}%`
+	return drop === 0 ? '0%' : `−${formatPercent(drop, { input: 'percent' })}`
 }
 
 // A vault-share percentage that stays honest in aggregate: 99.7% never rounds up to "100%",
@@ -22,10 +23,12 @@ export function vaultSharePct(fraction: number): string {
 	const pct = fraction * 100
 	if (pct <= 0) return '0%'
 	if (pct < 0.05) return '<0.1%'
-	if (pct < 1) return `${pct.toFixed(1)}%`
+	if (pct < 1)
+		return `${formatPercent(pct, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
 	if (pct >= 99.95) return '100%'
-	if (pct >= 99) return `${pct.toFixed(1)}%`
-	return `${Math.round(pct)}%`
+	if (pct >= 99)
+		return `${formatPercent(pct, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
+	return formatPercent(pct, { input: 'percent', maximumFractionDigits: 0 })
 }
 
 // Pendle PT pricing model → label + depositor-facing consequence. Neutral classification,

@@ -35,8 +35,8 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 import { Icon } from '~/ui/Icon'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formattedNum } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
@@ -298,8 +298,22 @@ export default function Protocols({
 				<SummaryStatsCard>
 					<h1 className="heading-sm">Unlock Statistics</h1>
 					<StatItem label="Total Protocols Tracked" value={totalProtocols} />
-					<StatItem label="Upcoming Unlocks (7d)" value={formattedNum(upcomingUnlocks7dValue, true)} />
-					<StatItem label="Upcoming Unlocks (30d)" value={formattedNum(upcomingUnlocks30dValue, true)} />
+					<StatItem
+						label="Upcoming Unlocks (7d)"
+						value={formatUsd(upcomingUnlocks7dValue, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
+					<StatItem
+						label="Upcoming Unlocks (30d)"
+						value={formatUsd(upcomingUnlocks30dValue, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
 					<BasicLink
 						href="/unlocks/calendar"
 						className="mt-auto flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row"

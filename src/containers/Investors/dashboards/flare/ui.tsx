@@ -1,4 +1,4 @@
-// Design language (see design.md): numbers are the hero — large, monospaced and
+import { formatPercent } from '~/utils/numberFormat' // Design language (see design.md): numbers are the hero — large, monospaced and
 // tabular; labels are tiny, uppercase and dim. Flat, hairline-bordered, no shadows.
 export function KpiCard({
 	label,
@@ -78,17 +78,7 @@ export function NarrativeCallout({ children }: { children: React.ReactNode }) {
 	)
 }
 
-export function formatNumber(n: number, decimals = 2): string {
-	if (!Number.isFinite(n)) return '—'
-	const abs = Math.abs(n)
-	if (abs >= 1e12) return `${(n / 1e12).toFixed(decimals)}T`
-	if (abs >= 1e9) return `${(n / 1e9).toFixed(decimals)}B`
-	if (abs >= 1e6) return `${(n / 1e6).toFixed(decimals)}M`
-	if (abs >= 1e3) return `${(n / 1e3).toFixed(1)}K`
-	return n.toLocaleString('en-US', { maximumFractionDigits: decimals })
-}
-
 export function formatPct(n: number, decimals = 2): string {
 	if (!Number.isFinite(n)) return '—'
-	return `${n.toFixed(decimals)}%`
+	return `${formatPercent(n, { input: 'percent', minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: false })}`
 }

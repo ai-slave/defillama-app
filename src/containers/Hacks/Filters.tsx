@@ -7,6 +7,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { nestedMenuActionStyles } from '~/ui/Popover'
 import { TagGroup } from '~/ui/SegmentedControl'
+import { formatNumber } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 type FormSubmitHandler = NonNullable<React.ComponentProps<'form'>['onSubmit']>
@@ -171,8 +172,8 @@ const Filters = ({
 					minLostVal != null || maxLostVal != null ? (
 						<>
 							<span>Amount: </span>
-							<span className="text-link">{`${minLostVal?.toLocaleString() ?? 'min'} - ${
-								maxLostVal?.toLocaleString() ?? 'max'
+							<span className="text-link">{`${formatNumber(minLostVal) ?? 'min'} - ${
+								formatNumber(maxLostVal) ?? 'max'
 							}`}</span>
 						</>
 					) : (

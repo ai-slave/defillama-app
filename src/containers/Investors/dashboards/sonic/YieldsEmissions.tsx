@@ -8,6 +8,7 @@ import {
 import { lazy, useEffect } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { formatPercent } from '~/utils/numberFormat'
 import { STACKED_UNITLESS_TIME_CHART_OPTIONS } from './chartDefaults'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
 
@@ -37,7 +38,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 
 function formatPct(n: number | null): string {
 	if (n === null || n === undefined) return '—'
-	return `${n.toFixed(2)}%`
+	return `${formatPercent(n, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 }
 
 const columnHelper = createColumnHelper<YieldPool>()

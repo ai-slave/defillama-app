@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useEffect, useState } from 'react'
 import { Icon } from '~/ui/Icon'
+import { formatNumber } from '~/utils/numberFormat'
 
 const PRESETS = [50, 100, 500, 1000] as const
 
@@ -40,7 +41,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 		popover.hide()
 	}
 
-	const triggerLabel = isActive && value ? `Top ${value.toLocaleString()}` : 'Row limit'
+	const triggerLabel = isActive && value ? `Top ${formatNumber(value)}` : 'Row limit'
 
 	const triggerClass = isActive
 		? 'flex items-center gap-1.5 rounded-md rounded-r-none border border-brand/40 bg-brand/10 px-2.5 py-1.5 text-xs font-medium text-brand transition-colors hover:bg-brand/15 disabled:opacity-40'
@@ -53,7 +54,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 					<Icon name="layers" className="size-3.5" />
 					<span className="truncate">{triggerLabel}</span>
 					{isActive && totalRows > 0 ? (
-						<span className="text-[10px] text-brand/70">of {totalRows.toLocaleString()}</span>
+						<span className="text-[10px] text-brand/70">of {formatNumber(totalRows)}</span>
 					) : null}
 					<Icon name="chevron-down" className="size-3" />
 				</Ariakit.PopoverDisclosure>
@@ -94,7 +95,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 											: 'border-subtle text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
 									}`}
 								>
-									{n.toLocaleString()}
+									{formatNumber(n)}
 								</button>
 							)
 						})}

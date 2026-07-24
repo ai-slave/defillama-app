@@ -20,12 +20,8 @@ vi.mock('~/ui/Tooltip', () => ({
 	Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 
-vi.mock('~/containers/Raises/utils', () => ({
-	formatRaiseAmount: () => null
-}))
-
 vi.mock('~/utils', () => ({
-	formattedNum: (value: number) => String(value)
+	formatUsd: (value: number) => String(value)
 }))
 
 const baseTokenRightsEntry: IRawTokenRightsEntry = {

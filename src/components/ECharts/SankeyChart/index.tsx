@@ -10,12 +10,11 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
-import { abbreviateNumber } from '~/utils'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
 import { useChartTheme } from '../shared/chartTheme'
-import { formatTooltipValue } from '../shared/formatters'
+import { formatChartValue } from '../shared/formatters'
 import type { ISankeyChartProps } from './types'
 
 echarts.use([
@@ -154,12 +153,7 @@ function SankeyChart({
 	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const isVisibleRef = useRef(false)
 	const onReadyRef = useRef(onReady)
-	const formatSankeyValue = useCallback(
-		(value: number): string => {
-			return abbreviateNumber(value, 2, valueSymbol) ?? formatTooltipValue(value, valueSymbol)
-		},
-		[valueSymbol]
-	)
+	const formatSankeyValue = useCallback((value: number): string => formatChartValue(value, valueSymbol), [valueSymbol])
 
 	useEffect(() => {
 		onReadyRef.current = onReady

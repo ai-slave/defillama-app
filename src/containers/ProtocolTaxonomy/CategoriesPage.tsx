@@ -14,9 +14,10 @@ import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { LoadingIndicator } from '~/ui/Status'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
+import { formatUsd } from '~/utils/numberFormat'
 import { getCategoryRoute } from './categoryRoutes'
 import {
 	applyProtocolsCategoriesTvlSettings,
@@ -88,7 +89,7 @@ const categoriesColumns = [
 		},
 		cell: ({ getValue }) => {
 			const value = getValue()
-			return formattedNum(value, true)
+			return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		}
 	}),
 	columnHelper.accessor('change_1d', {
@@ -123,7 +124,7 @@ const categoriesColumns = [
 		},
 		cell: ({ getValue }) => {
 			const value = getValue()
-			return formattedNum(value, true)
+			return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		}
 	}),
 	columnHelper.accessor('description', {

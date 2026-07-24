@@ -1,5 +1,6 @@
+import { formatNumber } from '~/utils/numberFormat'
 import { useTreasuryData } from './api'
-import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd, fmtNum } from './ui'
+import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd } from './ui'
 
 export default function Treasury() {
 	const { data } = useTreasuryData()
@@ -108,26 +109,27 @@ export default function Treasury() {
 									key: 'lockedTokens',
 									label: 'Locked',
 									right: true,
-									render: (r) => (typeof r.lockedTokens === 'number' ? fmtNum(r.lockedTokens) : r.lockedTokens)
+									render: (r) =>
+										typeof r.lockedTokens === 'number' ? (formatNumber(r.lockedTokens) ?? '—') : r.lockedTokens
 								},
 								{
 									key: 'supply',
 									label: 'Supply',
 									right: true,
-									render: (r) => (typeof r.supply === 'number' ? fmtNum(r.supply) : r.supply)
+									render: (r) => (typeof r.supply === 'number' ? (formatNumber(r.supply) ?? '—') : r.supply)
 								},
 								{ key: 'nftCount', label: 'NFTs', right: true },
 								{
 									key: 'avgLockYears',
 									label: 'Avg Lock (yrs)',
 									right: true,
-									render: (r) => (r.avgLockYears != null ? r.avgLockYears.toFixed(2) : '—')
+									render: (r) => (r.avgLockYears != null ? formatNumber(r.avgLockYears) : '—')
 								},
 								{
 									key: 'avgRemainingYears',
 									label: 'Avg Remaining (yrs)',
 									right: true,
-									render: (r) => (r.avgRemainingYears != null ? r.avgRemainingYears.toFixed(2) : '—')
+									render: (r) => (r.avgRemainingYears != null ? formatNumber(r.avgRemainingYears) : '—')
 								}
 							]}
 						/>

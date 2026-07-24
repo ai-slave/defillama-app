@@ -10,7 +10,7 @@ import { buildWatermarkGraphic } from '~/components/ECharts/shared/watermark'
 import { clearTreemapFocus, registerTreemapFocusTracking } from '~/components/ECharts/TreemapChart/focus'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { formatSignedRWAFlow } from './flows'
 import type { RWAFlowTreemapNode } from './flowTreemap'
 
@@ -73,7 +73,7 @@ export function buildRWAFlowTreemapChartData(nodes: readonly RWAFlowTreemapNode[
 
 function formatFlowPercent(value: number | null): string {
 	if (value == null) return '-'
-	return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`
+	return `${value > 0 ? '+' : ''}${formatPercent(value, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 }
 
 function pickLabel(width: number, height: number, name: string, flow: string, percentage: string): string {
@@ -143,7 +143,7 @@ export function RWAFlowTreemapChart({
 					if (!data) return ''
 					return [
 						`<strong>${data.name}</strong><br>`,
-						`${sizeLabel}: ${formattedNum(data.value[0], true)}<br>`,
+						`${sizeLabel}: ${formatUsd(data.value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`,
 						`${periodLabel} Net Flow: ${formatSignedRWAFlow(data.netFlowUsd)}<br>`,
 						`Net Flow / ${sizeLabel}: ${formatFlowPercent(data.value[1])}`
 					].join('')

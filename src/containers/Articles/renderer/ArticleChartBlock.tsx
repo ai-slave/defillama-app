@@ -13,6 +13,7 @@ import {
 } from '~/containers/ProDashboard/queries'
 import { CHART_TYPES } from '~/containers/ProDashboard/types'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
+import { formatUsd } from '~/utils/numberFormat'
 import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
 import { getArticleEntityRoute } from '../entityLinks'
 import type { ArticleChartConfig, ArticleChartEntityType, ArticleChartRange, ArticleChartSeries } from '../types'
@@ -35,16 +36,6 @@ const RANGE_LABEL: Record<ArticleChartRange, string> = {
 	'90d': 'Past 90 days',
 	'365d': 'Past year',
 	all: 'All time'
-}
-
-function compactUsd(value: number | null | undefined) {
-	if (typeof value !== 'number' || !Number.isFinite(value)) return null
-	const abs = Math.abs(value)
-	if (abs >= 1e12) return `$${(value / 1e12).toFixed(2)}T`
-	if (abs >= 1e9) return `$${(value / 1e9).toFixed(2)}B`
-	if (abs >= 1e6) return `$${(value / 1e6).toFixed(2)}M`
-	if (abs >= 1e3) return `$${(value / 1e3).toFixed(1)}K`
-	return `$${value.toFixed(2)}`
 }
 
 function lastValue(data: [number, number][] | undefined): number | null {
@@ -147,7 +138,7 @@ export function ArticleChartBlock({
 	const figureLabel = typeof index === 'number' ? `Fig. ${String(index).padStart(2, '0')}` : null
 	const primarySeries = series[0]
 	const route = primarySeries ? getArticleEntityRoute(primarySeries.entityType, primarySeries.slug) : '/'
-	const latestLabel = series.length === 1 ? compactUsd(primaryLatest) : null
+	const latestLabel = series.length === 1 ? formatUsd(primaryLatest, { compact: true }) : null
 	const rangeLabel = RANGE_LABEL[config.range ?? 'all']
 	const isMulti = series.length > 1
 

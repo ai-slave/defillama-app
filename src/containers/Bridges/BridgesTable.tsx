@@ -17,7 +17,8 @@ import { prepareTableCsv, useSortColumnOrders } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { PercentChange } from '~/ui/PercentChange'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 
 type BridgesTableRow = {
 	displayName: string
@@ -97,7 +98,8 @@ const getBridgesColumns = (completedDayVolumes: boolean) => [
 	}),
 	columnHelper.accessor('lastDailyVolume', {
 		header: completedDayVolumes ? 'Completed day' : '24h Volume',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -106,7 +108,8 @@ const getBridgesColumns = (completedDayVolumes: boolean) => [
 	}),
 	columnHelper.accessor('weeklyVolume', {
 		header: completedDayVolumes ? '7 completed days' : '7d Volume',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -115,7 +118,8 @@ const getBridgesColumns = (completedDayVolumes: boolean) => [
 	}),
 	columnHelper.accessor('monthlyVolume', {
 		header: completedDayVolumes ? '30 completed days' : '1m Volume',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',

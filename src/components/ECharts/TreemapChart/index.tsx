@@ -7,10 +7,11 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { formattedNum } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { CHART_INSET } from '../shared/chartSpacing'
 import { getChartTheme } from '../shared/chartTheme'
+import { formatChartValue } from '../shared/formatters'
 import { buildWatermarkGraphic } from '../shared/watermark'
 import { clearTreemapFocus, registerTreemapFocusTracking } from './focus'
 import { formatRwaTreemapBoxLabel, formatRwaTreemapTooltip, formatRwaUpperLabel } from './rwaFormatting'
@@ -48,7 +49,7 @@ function TreemapChart({
 
 	const chartTheme = useMemo(() => getChartTheme(isDark), [isDark])
 	const formatTreemapMetricValue = useCallback(
-		(value: number) => formattedNum(value, valueSymbol && valueSymbol.length > 0 ? valueSymbol : false),
+		(value: number) => formatChartValue(value, valueSymbol ?? ''),
 		[valueSymbol]
 	)
 
@@ -102,8 +103,8 @@ function TreemapChart({
 						if (treePath.length > 1) {
 							return [
 								`${treePath[1]}<br>`,
-								`Return: ${info.value[1]}%<br>`,
-								`Market Cap: ${formattedNum(info.value[0], true)}<br>`
+								`Return: ${formatPercent(info.value[1], { input: 'percent' })}<br>`,
+								`Market Cap: ${formatUsd(info.value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
 							].join('')
 						} else {
 							return null
@@ -190,8 +191,8 @@ function TreemapChart({
 								if (variant === 'narrative') {
 									arr = [
 										`{name|${pathParts[pathParts.length - 1]}}`,
-										`Return: {apy| ${value[1] ?? 0}%}`,
-										`Market Cap: {mcap| ${formattedNum(value[0], true)}}`
+										`Return: {apy| ${formatPercent(value[1] ?? 0, { input: 'percent' })}}`,
+										`Market Cap: {mcap| ${formatUsd(value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}}`
 									]
 								} else if (isRwaVariant) {
 									arr = [

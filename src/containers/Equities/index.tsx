@@ -26,7 +26,6 @@ import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { abbreviateNumber } from '~/utils'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { readSingleQueryValue, pushShallowQuery } from '~/utils/routerQuery'
 import { EquitiesFiltersDialog, EquityActiveFilterPills } from './EquityFiltersDialog'
@@ -37,6 +36,7 @@ import {
 	serializeEquityFiltersQuery,
 	type EquityActiveFilter
 } from './filters'
+import { formatEquitiesCompactValue } from './financialsFormatting'
 import {
 	applyEquityFilterColumnVisibility,
 	getEquityFilterDefaultSorting,
@@ -52,14 +52,10 @@ const columnHelper = createColumnHelper<EquitiesTableCompanyRow>()
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
 const DEFAULT_PAGE_SIZE = 50
 
-function formatNumber(value: unknown, symbol?: string): string {
-	return abbreviateNumber(value, 2, symbol) ?? '-'
-}
-
 function ChangePercent({ value }: { value: number | null }) {
 	return (
 		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
-			{formatNumber(value, '%')}
+			{formatEquitiesCompactValue(value, '%') ?? '-'}
 		</span>
 	)
 }
@@ -67,7 +63,7 @@ function ChangePercent({ value }: { value: number | null }) {
 function ChangeValue({ value, symbol }: { value: number | null; symbol?: string }) {
 	return (
 		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
-			{formatNumber(value, symbol)}
+			{formatEquitiesCompactValue(value, symbol) ?? '-'}
 		</span>
 	)
 }
@@ -134,7 +130,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('marketCap', {
 		header: defs.marketCap.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[121px] min-w-[121px]',
 			align: 'end',
@@ -175,7 +171,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('currentPrice', {
 		header: defs.currentPrice.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[96px] min-w-[96px]',
 			align: 'end',
@@ -184,7 +180,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('fiftyTwoWeekHigh', {
 		header: defs.fiftyTwoWeekHigh.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[128px] min-w-[128px]',
 			align: 'end',
@@ -193,7 +189,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('fiftyTwoWeekLow', {
 		header: defs.fiftyTwoWeekLow.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[128px] min-w-[128px]',
 			align: 'end',
@@ -229,7 +225,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('volume', {
 		header: defs.volume.label,
-		cell: ({ getValue }) => formatNumber(getValue()),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
 			headerClassName: 'w-[95px] min-w-[95px]',
 			align: 'end',
@@ -247,7 +243,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('circulatingMarketCap', {
 		header: defs.circulatingMarketCap.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[156px] min-w-[156px]',
 			align: 'end',
@@ -256,7 +252,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('enterpriseValue', {
 		header: defs.enterpriseValue.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[153px] min-w-[153px]',
 			align: 'end',
@@ -265,7 +261,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('trailingPE', {
 		header: defs.trailingPE.label,
-		cell: ({ getValue }) => formatNumber(getValue()),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
 			headerClassName: 'w-[87px] min-w-[87px]',
 			align: 'end',
@@ -274,7 +270,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('priceToRevenue', {
 		header: defs.priceToRevenue.label,
-		cell: ({ getValue }) => formatNumber(getValue()),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
 			headerClassName: 'w-[87px] min-w-[87px]',
 			align: 'end',
@@ -283,7 +279,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('dividendYield', {
 		header: defs.dividendYield.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '%'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '%') ?? '-',
 		meta: {
 			headerClassName: 'w-[140px] min-w-[140px]',
 			align: 'end',
@@ -292,7 +288,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('holdersYield', {
 		header: defs.holdersYield.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '%'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '%') ?? '-',
 		meta: {
 			headerClassName: 'w-[133px] min-w-[133px]',
 			align: 'end',
@@ -301,7 +297,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('priceToBook', {
 		header: defs.priceToBook.label,
-		cell: ({ getValue }) => formatNumber(getValue()),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
 			headerClassName: 'w-[87px] min-w-[87px]',
 			align: 'end',
@@ -310,7 +306,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('enterpriseValueToEbitda', {
 		header: defs.enterpriseValueToEbitda.label,
-		cell: ({ getValue }) => formatNumber(getValue()),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
 			headerClassName: 'w-[118px] min-w-[118px]',
 			align: 'end',
@@ -319,7 +315,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('operatingProfitMarginTTM', {
 		header: defs.operatingProfitMarginTTM.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '%'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '%') ?? '-',
 		meta: {
 			headerClassName: 'w-[163px] min-w-[163px]',
 			align: 'end',
@@ -328,7 +324,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('revenueTTM', {
 		header: defs.revenueTTM.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[147px] min-w-[147px]',
 			align: 'end',
@@ -337,7 +333,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('grossProfitTTM', {
 		header: defs.grossProfitTTM.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[168px] min-w-[168px]',
 			align: 'end',
@@ -346,7 +342,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('earningsTTM', {
 		header: defs.earningsTTM.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[147px] min-w-[147px]',
 			align: 'end',
@@ -355,7 +351,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('ebitdaTTM', {
 		header: defs.ebitdaTTM.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[140px] min-w-[140px]',
 			align: 'end',
@@ -364,7 +360,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('holdersRevenueTTM', {
 		header: defs.holdersRevenueTTM.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[203px] min-w-[203px]',
 			align: 'end',
@@ -373,7 +369,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('holderEarningsTTM', {
 		header: defs.holderEarningsTTM.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[195px] min-w-[195px]',
 			align: 'end',
@@ -382,7 +378,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('dividendsTTM', {
 		header: defs.dividendsTTM.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[155px] min-w-[155px]',
 			align: 'end',
@@ -391,7 +387,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('stockRepurchaseTTM', {
 		header: defs.stockRepurchaseTTM.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[154px] min-w-[154px]',
 			align: 'end',
@@ -400,7 +396,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('stockIssuanceTTM', {
 		header: defs.stockIssuanceTTM.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[190px] min-w-[190px]',
 			align: 'end',
@@ -409,7 +405,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('stockBasedCompensationTTM', {
 		header: defs.stockBasedCompensationTTM.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[174px] min-w-[174px]',
 			align: 'end',
@@ -418,7 +414,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('cashAndCashEquivalents', {
 		header: defs.cashAndCashEquivalents.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[136px] min-w-[136px]',
 			align: 'end',
@@ -427,7 +423,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('totalAssets', {
 		header: defs.totalAssets.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[126px] min-w-[126px]',
 			align: 'end',
@@ -436,7 +432,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('totalLiabilities', {
 		header: defs.totalLiabilities.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[143px] min-w-[143px]',
 			align: 'end',
@@ -445,7 +441,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('totalShareholdersEquity', {
 		header: defs.totalShareholdersEquity.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[116px] min-w-[116px]',
 			align: 'end',
@@ -454,7 +450,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('totalDebt', {
 		header: defs.totalDebt.label,
-		cell: ({ getValue }) => formatNumber(getValue(), '$'),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
 			headerClassName: 'w-[113px] min-w-[113px]',
 			align: 'end',
@@ -463,7 +459,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('circulatingSupply', {
 		header: defs.circulatingSupply.label,
-		cell: ({ getValue }) => formatNumber(getValue()),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
 			headerClassName: 'w-[125px] min-w-[125px]',
 			align: 'end',
@@ -472,7 +468,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('totalSupply', {
 		header: defs.totalSupply.label,
-		cell: ({ getValue }) => formatNumber(getValue()),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
 			headerClassName: 'w-[128px] min-w-[128px]',
 			align: 'end',
@@ -481,7 +477,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 	}),
 	columnHelper.accessor('employeeCount', {
 		header: defs.employeeCount.label,
-		cell: ({ getValue }) => formatNumber(getValue()),
+		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
 			headerClassName: 'w-[117px] min-w-[117px]',
 			align: 'end',

@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { formatNumber, formatUsd, formatPercent } from '~/utils/numberFormat'
 import { readInvestorApiJson, type ApiNumericString } from '../../api.types'
+import { formatSonicAmount } from './format'
 
 interface BurnData {
 	price: number
@@ -33,17 +35,6 @@ interface NetworkStatsAPIResponse {
 	uptimeUrl: string
 }
 
-function formatNumber(n: number): string {
-	if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`
-	if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`
-	if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`
-	return n.toLocaleString('en-US')
-}
-
-function formatS(n: number): string {
-	return `${formatNumber(n)} S`
-}
-
 export function useNetworkStatsData() {
 	const query = useQuery<NetworkStatsAPIResponse>({
 		queryKey: ['sonic-network-stats'],
@@ -67,40 +58,65 @@ export function useNetworkStatsData() {
 		return {
 			data: {
 				network: {
-					blockNumber:
-						d.blockNumber != null ? { value: d.blockNumber, formatted: d.blockNumber.toLocaleString('en-US') } : null,
+					blockNumber: d.blockNumber != null ? { value: d.blockNumber, formatted: formatNumber(d.blockNumber) } : null,
 					gasPrice:
-						d.gasPrice != null ? { value: d.gasPrice.gwei, formatted: `${d.gasPrice.gwei.toFixed(0)} Gwei` } : null,
-					price: burn != null ? { value: burn.price, formatted: `$${burn.price.toFixed(4)}` } : null,
-					totalSupply: burn != null ? { value: burn.totalSupply, formatted: formatNumber(burn.totalSupply) } : null
+						d.gasPrice != null
+							? {
+									value: d.gasPrice.gwei,
+									formatted: `${formatNumber(d.gasPrice.gwei, { maximumFractionDigits: 0 })} Gwei`
+								}
+							: null,
+					price:
+						burn != null
+							? {
+									value: burn.price,
+									formatted: formatUsd(burn.price, { minimumFractionDigits: 4, maximumFractionDigits: 4 })
+								}
+							: null,
+					totalSupply: burn != null ? { value: burn.totalSupply, formatted: formatSonicAmount(burn.totalSupply) } : null
 				},
 				tokenomics:
 					burn != null
 						? {
-								initialSupply: { value: burn.initialSupply, formatted: formatNumber(burn.initialSupply) },
-								netIssuance: { value: burn.netIssuance, formatted: formatNumber(burn.netIssuance) },
-								burnPerDay: { value: burn.permanentBurnPerDay, formatted: formatS(burn.permanentBurnPerDay) },
-								burnPerYear: { value: burn.permanentBurnPerYear, formatted: formatS(burn.permanentBurnPerYear) }
+								initialSupply: { value: burn.initialSupply, formatted: formatSonicAmount(burn.initialSupply) },
+								netIssuance: { value: burn.netIssuance, formatted: formatSonicAmount(burn.netIssuance) },
+								burnPerDay: {
+									value: burn.permanentBurnPerDay,
+									formatted: `${formatSonicAmount(burn.permanentBurnPerDay)} S`
+								},
+								burnPerYear: {
+									value: burn.permanentBurnPerYear,
+									formatted: `${formatSonicAmount(burn.permanentBurnPerYear)} S`
+								}
 							}
 						: null,
 				fees:
 					burn != null
 						? {
-								feesPerDay: { value: burn.feesPerDay, formatted: formatS(burn.feesPerDay) },
-								feeMPerDay: { value: burn.feeMPerDay, formatted: formatS(burn.feeMPerDay) },
-								validatorFeesPerDay: { value: burn.validatorFeesPerDay, formatted: formatS(burn.validatorFeesPerDay) },
-								burnRate: { value: burn.burnRatePercent, formatted: `${(burn.burnRatePercent * 100).toFixed(2)}%` }
+								feesPerDay: { value: burn.feesPerDay, formatted: `${formatSonicAmount(burn.feesPerDay)} S` },
+								feeMPerDay: { value: burn.feeMPerDay, formatted: `${formatSonicAmount(burn.feeMPerDay)} S` },
+								validatorFeesPerDay: {
+									value: burn.validatorFeesPerDay,
+									formatted: `${formatSonicAmount(burn.validatorFeesPerDay)} S`
+								},
+								burnRate: {
+									value: burn.burnRatePercent,
+									formatted: `${formatPercent(burn.burnRatePercent, { input: 'fraction', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+								}
 							}
 						: null,
 				epoch:
 					burn != null
 						? {
-								current: { value: burn.currentEpoch, formatted: burn.currentEpoch.toLocaleString('en-US') },
+								current: { value: burn.currentEpoch, formatted: formatNumber(burn.currentEpoch) },
 								avgDuration: {
 									value: burn.avgEpochDuration,
 									formatted: `~${Math.round(burn.avgEpochDuration / 60)} min`
 								},
-								lastFee: { value: burn.lastEpochFee, formatted: `${burn.lastEpochFee.toFixed(2)} S` }
+								lastFee: {
+									value: burn.lastEpochFee,
+									formatted: `${formatNumber(burn.lastEpochFee, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} S`
+								}
 							}
 						: null,
 				uptimeUrl: d.uptimeUrl

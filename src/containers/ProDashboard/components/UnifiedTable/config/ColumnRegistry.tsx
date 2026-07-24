@@ -11,7 +11,8 @@ import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatRatio, formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../../types'
 import { getChainMetricsByName } from '../core/chainMetricsStore'
 import { ROW_HEADER_GROUPING_COLUMN_IDS } from '../core/grouping'
@@ -32,7 +33,11 @@ const renderUsd = (value: number | null | undefined) => {
 	if (value == null) {
 		return renderDash()
 	}
-	return <span className="text-pro-text-secondary">{formattedNum(value, true)}</span>
+	return (
+		<span className="text-pro-text-secondary">
+			{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+		</span>
+	)
 }
 
 // oxlint-disable-next-line no-unused-vars
@@ -40,7 +45,11 @@ const renderNumber = (value: number | null | undefined) => {
 	if (value == null) {
 		return renderDash()
 	}
-	return <span className="text-pro-text-secondary">{formattedNum(value, false)}</span>
+	return (
+		<span className="text-pro-text-secondary">
+			{formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+		</span>
+	)
 }
 
 const renderPercent = (value: number | null | undefined) => {
@@ -69,7 +78,7 @@ const renderRatio = (value: number | null | undefined) => {
 	if (value == null) {
 		return renderDash()
 	}
-	return <span className="text-pro-text-secondary">{`${formattedNum(value, false)}x`}</span>
+	return <span className="text-pro-text-secondary">{`${formatRatio(value)}x`}</span>
 }
 
 type MetricKey = keyof NumericMetrics

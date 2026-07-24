@@ -19,7 +19,8 @@ import { TagGroup } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
-import { capitalizeFirstLetter, firstDayOfMonth, formattedNum, lastDayOfWeek, slug } from '~/utils'
+import { capitalizeFirstLetter, firstDayOfMonth, lastDayOfWeek, slug } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent, formatPercentChange, roundNumber } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { EmissionsChartConfig, EmissionsDataset, Insider } from './api.types'
 import { processGroupedChartData, sortStacksByVolatility } from './emissionsChartData'
@@ -341,7 +342,13 @@ function TokenHeader({
 			{tokenPrice != null ? (
 				<>
 					<span className="mx-1 h-5 w-px bg-border-medium" />
-					<span className="mono-md-bold">${formattedNum(tokenPrice)}</span>
+					<span className="mono-md-bold">
+						{formatUsd(tokenPrice, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					</span>
 					{percentChange !== null ? (
 						<span
 							className="text-sm font-medium"
@@ -349,8 +356,7 @@ function TokenHeader({
 								color: percentChange > 0 ? 'rgba(18, 182, 0, 0.7)' : 'rgba(211, 0, 0, 0.7)'
 							}}
 						>
-							{percentChange > 0 ? '+' : null}
-							{percentChange}%
+							{formatPercentChange(percentChange)}
 						</span>
 					) : null}
 				</>
@@ -375,19 +381,42 @@ function TokenStats({
 	const withSymbol = (amount: string) => (symbol ? `${amount} ${symbol}` : amount)
 	const items: InlineStatStripItem[] = []
 	if (tokenCircSupply != null) {
-		items.push({ label: 'Circ. Supply', value: withSymbol(formattedNum(tokenCircSupply)) })
+		items.push({
+			label: 'Circ. Supply',
+			value: withSymbol(
+				formatCompactNumber(tokenCircSupply, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+			)
+		})
 	}
 	if (tokenMaxSupply != null) {
 		items.push({
 			label: 'Max Supply',
-			value: withSymbol(tokenMaxSupply !== Infinity ? formattedNum(tokenMaxSupply) : '∞')
+			value: withSymbol(
+				tokenMaxSupply !== Infinity
+					? formatCompactNumber(tokenMaxSupply, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: '∞'
+			)
 		})
 	}
 	if (tokenMcap != null) {
-		items.push({ label: 'MCap', value: `$${formattedNum(tokenMcap)}` })
+		items.push({
+			label: 'MCap',
+			value: formatUsd(tokenMcap, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})
+		})
 	}
 	if (tokenVolume != null) {
-		items.push({ label: 'Vol 24h', value: `$${formattedNum(tokenVolume)}` })
+		items.push({
+			label: 'Vol 24h',
+			value: formatUsd(tokenVolume, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})
+		})
 	}
 	if (items.length === 0) return null
 	return <InlineStatStrip items={items} />
@@ -417,7 +446,7 @@ function TokenAllocationBars({
 								<div key={cat} className="flex flex-col gap-1">
 									<div className="flex items-center justify-between gap-2">
 										<span className="body-md text-primary">{capitalizeFirstLetter(cat)}</span>
-										<span className="mono-md text-secondary">{perc}%</span>
+										<span className="mono-md text-secondary">{formatPercent(perc, { input: 'percent' })}</span>
 									</div>
 									<div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated-2">
 										<div
@@ -462,8 +491,12 @@ function SourcesNotesSection({
 				<Card as="section" padding="sm" className="flex flex-col gap-3">
 					<h3 className="heading-xs">Futures</h3>
 					<div className="flex flex-col gap-1 body-md text-primary">
-						{futures.openInterest != null ? <p>{`Open Interest: $${formattedNum(futures.openInterest)}`}</p> : null}
-						{futures.fundingRate != null ? <p>{`Funding Rate: ${futures.fundingRate}%`}</p> : null}
+						{futures.openInterest != null ? (
+							<p>{`Open Interest: ${formatUsd(futures.openInterest, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</p>
+						) : null}
+						{futures.fundingRate != null ? (
+							<p>{`Funding Rate: ${formatPercent(futures.fundingRate, { input: 'percent' })}`}</p>
+						) : null}
 					</div>
 				</Card>
 			) : null}
@@ -561,7 +594,7 @@ const ChartContainer = ({
 
 	const ystdPrice = findPriceAtLeast24hAgo(chartPrices)
 	const percentChangeFromChart =
-		tokenPrice != null && ystdPrice != null ? +(((tokenPrice - ystdPrice) / ystdPrice) * 100).toFixed(2) : null
+		tokenPrice != null && ystdPrice != null ? roundNumber(((tokenPrice - ystdPrice) / ystdPrice) * 100, 2) : null
 	const percentChange = initialTokenMarketData?.priceChangePercent ?? percentChangeFromChart ?? null
 
 	const priceChartForOverlay = isPriceActive || isMcapActive ? priceChart.data?.data : null
@@ -906,7 +939,7 @@ const ChartContainer = ({
 			png: true,
 			csv: true,
 			filename: `${data.name}-unlocked`,
-			pngTitle: `${data.name} Unlocked ${unlockedPercent.toFixed(2)}%`
+			pngTitle: `${data.name} Unlocked ${formatPercent(unlockedPercent, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 		}),
 		[data.name, unlockedPercent]
 	)
@@ -1075,7 +1108,7 @@ const ChartContainer = ({
 							<Suspense fallback={<ChartPanelExportShellFallback />}>
 								<PieChart
 									showLegend
-									title={`Unlocked ${unlockedPercent.toFixed(2)}%`}
+									title={`Unlocked ${formatPercent(unlockedPercent, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}
 									legendPosition={unlockedPieChartLegendPosition}
 									legendTextStyle={pieChartLegendTextStyle}
 									radius={unlockedPieChartRadius}

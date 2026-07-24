@@ -16,8 +16,8 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
+import { formatUsd } from '~/utils/numberFormat'
 import { buildETFChartSpec, ETF_ASSET_NAMES } from './chartData'
 import type { ETFOverviewProps, IETFSnapshotRow } from './types'
 
@@ -70,12 +70,18 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 										<span
 											className={`ml-auto font-jetbrains text-base font-medium ${assetFlows > 0 ? 'text-data-up' : assetFlows < 0 ? 'text-data-down' : ''}`}
 										>
-											{formattedNum(assetFlows, true)}
+											{formatUsd(assetFlows, {
+												compact: true,
+												minimumCompactValue: 1_000_000,
+												compactSuffix: 'lowercase'
+											})}
 										</span>
 									</p>
 									<p className="flex flex-wrap justify-start gap-4 pl-8">
 										<span className="text-secondary">AUM</span>
-										<span className="ml-auto font-jetbrains text-base font-medium">{formattedNum(aum, true)}</span>
+										<span className="ml-auto font-jetbrains text-base font-medium">
+											{formatUsd(aum, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+										</span>
 									</p>
 								</div>
 							)
@@ -173,7 +179,10 @@ const columns = [
 		header: 'Flows',
 		cell: ({ getValue }) => {
 			const value = getValue()
-			const formattedValue = value != null ? formattedNum(value, true) : null
+			const formattedValue =
+				value != null
+					? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: null
 
 			return (
 				<span
@@ -190,7 +199,10 @@ const columns = [
 	}),
 	columnHelper.accessor('aum', {
 		header: 'AUM',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
@@ -198,7 +210,10 @@ const columns = [
 	}),
 	columnHelper.accessor('volume', {
 		header: 'Volume',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'

@@ -19,8 +19,9 @@ import {
 	useStablecoinSelectionIntent
 } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
-import { formattedNum, toNiceCsvDate } from '~/utils'
+import { toNiceCsvDate } from '~/utils'
 import { download } from '~/utils/download'
+import { formatUsd } from '~/utils/numberFormat'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { StablecoinsChartConfig } from '../types'
@@ -207,7 +208,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 					<div className="flex flex-col">
 						<span className="text-[10px] text-pro-text-tertiary uppercase">Total Market Cap</span>
 						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
-							{formattedNum(latestMcap, true)}
+							{formatUsd(latestMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 						</span>
 					</div>
 				</div>

@@ -5,7 +5,7 @@ const SparklineChart = lazy(() =>
 )
 const BarSparkline = lazy(() => import('~/components/ECharts/BarSparkline').then((m) => ({ default: m.BarSparkline })))
 import { Icon } from '~/ui/Icon'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { useMetricData } from '../hooks/useMetricData'
 import { useProDashboardCatalog, useProDashboardPermissions } from '../ProDashboardAPIContext'
 import type { MetricAggregator, MetricChartType, MetricConfig, MetricWindow } from '../types'
@@ -127,9 +127,11 @@ export function MetricCard({ metric }: MetricCardProps) {
 
 	const displayValue = (() => {
 		if (value == null) return '-'
-		if (format === 'currency') return formattedNum(value, true)
-		if (format === 'number') return formattedNum(value, false)
-		return `${(value as number).toFixed(2)}%`
+		if (format === 'currency')
+			return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		if (format === 'number')
+			return formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		return `${formatPercent(value as number, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 	})()
 
 	const compareFormat = metric.compare?.format ?? 'percent'
@@ -145,16 +147,16 @@ export function MetricCard({ metric }: MetricCardProps) {
 			}
 			const v =
 				format === 'currency'
-					? formattedNum(delta, true)
+					? formatUsd(delta, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 					: format === 'percent'
-						? `${delta.toFixed(2)}pp`
-						: formattedNum(delta, false)
+						? `${formatNumber(delta)}pp`
+						: formatCompactNumber(delta, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 			return v
 		}
 		if (deltaPct == null) return null
 		if (Math.abs(deltaPct) < 0.005) return null
 		const sign = deltaPct > 0 ? '+' : ''
-		return `${sign}${deltaPct.toFixed(2)}%`
+		return `${sign}${formatPercent(deltaPct, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 	})()
 
 	const deltaPositive = (delta ?? deltaPct ?? 0) > 0

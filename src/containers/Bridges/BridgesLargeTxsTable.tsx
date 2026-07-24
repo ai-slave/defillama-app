@@ -13,8 +13,9 @@ import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
-import { formattedNum, slug, toNiceDayAndHour } from '~/utils'
+import { slug, toNiceDayAndHour } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { formatUsd } from '~/utils/numberFormat'
 
 type LargeTxsData = {
 	date: number
@@ -121,7 +122,8 @@ export const BridgesLargeTxsTable = React.forwardRef<BridgesLargeTxsTableHandle,
 				}),
 				columnHelper.accessor('usdValue', {
 					header: 'Value',
-					cell: (info) => formattedNum(info.getValue(), true),
+					cell: (info) =>
+						formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 					meta: {
 						headerClassName: 'w-[120px]',
 						align: 'end'

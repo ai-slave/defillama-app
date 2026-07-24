@@ -8,7 +8,7 @@ const computeMarketCapToAnnualizedMetricRatio = (
 	if (marketCap == null || annualizedMetric == null || annualizedMetric === 0) {
 		return null
 	}
-	return Number((marketCap / annualizedMetric).toFixed(2))
+	return marketCap / annualizedMetric
 }
 
 const hasMetricValue = (metrics: NumericMetrics, keys: (keyof NumericMetrics)[]) =>

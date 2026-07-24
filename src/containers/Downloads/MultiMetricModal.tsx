@@ -9,6 +9,7 @@ import { Icon, type IIcon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { slug as toSlug } from '~/utils'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
+import { formatNumber } from '~/utils/numberFormat'
 import { chartDatasets, chartDatasetsBySlug, type ChartDatasetDefinition, type ChartOptionsMap } from './chart-datasets'
 import { combineCsvsWide, type CsvItem } from './combineCsvsWide'
 import { filterCsvByDateRange, filterParsedRowsByDateRange } from './csvDateFilter'
@@ -508,8 +509,8 @@ export function MultiMetricModal({
 		if (activeError) return 'Error loading metric'
 		if (parsedActive) {
 			const rowsLabel = filterActive
-				? `${activeFilteredRows.toLocaleString()} of ${activeTotalRows.toLocaleString()} rows`
-				: `${activeTotalRows.toLocaleString()} rows`
+				? `${formatNumber(activeFilteredRows)} of ${formatNumber(activeTotalRows)} rows`
+				: `${formatNumber(activeTotalRows)} rows`
 			return `${rowsLabel} · ${parsedActive.headers.length} cols`
 		}
 		return ''
@@ -992,8 +993,7 @@ function PreviewTable({
 			{!isPreview && rows.length > PREVIEW_ROWS ? (
 				<div className="border-t border-subtle bg-surface px-3 py-2 text-[11px] text-pro-text-tertiary">
 					<p>
-						Showing first {PREVIEW_ROWS.toLocaleString()} of {rows.length.toLocaleString()} rows · download for full
-						data
+						Showing first {formatNumber(PREVIEW_ROWS)} of {formatNumber(rows.length)} rows · download for full data
 					</p>
 				</div>
 			) : null}

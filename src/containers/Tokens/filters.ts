@@ -1,5 +1,5 @@
 import type { ParsedUrlQuery } from 'querystring'
-import { abbreviateNumber } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TOKENS_HIDEABLE_COLUMN_SPECS, type TokensFilterCategory, type TokensFilterFormat } from './columnSpecs'
 import { TOKENS_NUMERIC_FILTER_FIELDS, type TokensNumericFilterField } from './types'
 import { parseNumericFiltersQueryParams, parseRankRangeQueryParams } from './utils'
@@ -95,8 +95,8 @@ export function shouldApplyTokensFilterSorting(
 }
 
 function formatFilterValue(value: number, format: TokensFilterFormat): string {
-	if (format === 'currency') return abbreviateNumber(value, null, '$') ?? String(value)
-	if (format === 'percent') return `${value}%`
+	if (format === 'currency') return formatUsd(value, { compact: true })
+	if (format === 'percent') return formatPercent(value, { input: 'percent' })
 	return String(value)
 }
 

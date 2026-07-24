@@ -1,5 +1,5 @@
 import { Tooltip } from '~/ui/Tooltip'
-import { formatNum } from '~/utils'
+import { formatPercent } from '~/utils/numberFormat'
 import type { IRWAAssetFlowSummary, RWAChainFlowSummary } from './api.types'
 import { definitions } from './definitions'
 import {
@@ -31,17 +31,17 @@ export const RWAFlowValueUnavailable = () => (
  * pill/button shape — it is a data caveat, not a control.
  */
 export function RWAFlowCoverageTag({ coverage }: { coverage: number }) {
-	const pct = formatNum(coverage * 100, 0)
+	const pct = formatPercent(coverage, { input: 'fraction', maximumFractionDigits: 0 })
 	const isLow = coverage < LOW_COVERAGE_THRESHOLD
 
 	return (
 		<Tooltip
-			content={`Flow data is available for ${pct}% of days in the selected period. Days without data are excluded from flows${
+			content={`Flow data is available for ${pct} of days in the selected period. Days without data are excluded from flows${
 				isLow ? ', so totals likely understate real activity' : ''
 			}.`}
 			className={`body-sm underline decoration-dotted ${isLow ? 'text-warning' : 'text-tertiary'}`}
 		>
-			Data coverage: {pct}%
+			Data coverage: {pct}
 		</Tooltip>
 	)
 }
@@ -50,7 +50,9 @@ export function formatRWAChainFlowSummary(summary: RWAChainFlowSummary): string 
 	switch (summary.status) {
 		case 'measured': {
 			const flow = formatSignedRWAFlow(summary.flow)
-			return summary.coverage < 1 ? `${flow} (${formatNum(summary.coverage * 100, 0)}% coverage)` : flow
+			return summary.coverage < 1
+				? `${flow} (${formatPercent(summary.coverage, { input: 'fraction', maximumFractionDigits: 0 })} coverage)`
+				: flow
 		}
 		case 'notPriced':
 			return 'not priced'
@@ -72,7 +74,9 @@ export function RWAFlowSummaryTooltip({
 		<span className="flex flex-col gap-2">
 			<span>{description}</span>
 			{summary && summary.coverage < 1 ? (
-				<span className="text-secondary">Measured on {formatNum(summary.coverage * 100, 0)}% of days.</span>
+				<span className="text-secondary">
+					Measured on {formatPercent(summary.coverage, { input: 'fraction', maximumFractionDigits: 0 })} of days.
+				</span>
 			) : null}
 			{chains.length > 0 ? (
 				<span className="flex flex-col gap-1 border-t border-subtle pt-2">
@@ -144,10 +148,10 @@ export function RWAFlowVsPriceStrip({
 			{summary.flowDrivenPct != null ? (
 				<>
 					<Tooltip
-						content={`${formatNum(summary.flowDrivenPct, 0)} percent of this asset's growth over this period came from real money entering, not from price going up. The marketcap change always splits into two parts: measured flows, and price plus unmeasured days.`}
+						content={`${formatPercent(summary.flowDrivenPct, { input: 'percent', maximumFractionDigits: 0 })} of this asset's growth over this period came from real money entering, not from price going up. The marketcap change always splits into two parts: measured flows, and price plus unmeasured days.`}
 						className="font-medium underline decoration-dotted"
 					>
-						{formatNum(summary.flowDrivenPct, 0)}% flow-driven
+						{formatPercent(summary.flowDrivenPct, { input: 'percent', maximumFractionDigits: 0 })} flow-driven
 					</Tooltip>
 					<span aria-hidden className="text-tertiary">
 						·

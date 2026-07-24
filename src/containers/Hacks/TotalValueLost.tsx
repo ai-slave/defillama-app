@@ -5,7 +5,7 @@ import { Select } from '~/components/Select/Select'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import type { IProtocolTotalValueLostInHacksByProtocol } from './types'
 
 type ProtocolRow = IProtocolTotalValueLostInHacksByProtocol['protocols'][number]
@@ -50,28 +50,31 @@ const columns = [
 			headerClassName: 'w-[min(240px,40vw)]'
 		}
 	}),
-	columnHelper.accessor((row) => row.totalHacked, {
+	columnHelper.accessor((row) => row.totalHackedUsd, {
 		id: 'Total Hacked',
 		header: 'Total Hacked',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[130px]',
 			align: 'center'
 		}
 	}),
-	columnHelper.accessor((row) => row.returnedFunds, {
+	columnHelper.accessor((row) => row.returnedFundsUsd, {
 		id: 'Returned Funds',
 		header: 'Returned Funds',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[150px]',
 			align: 'center'
 		}
 	}),
-	columnHelper.accessor((row) => row.totalHacked - row.returnedFunds, {
+	columnHelper.accessor((row) => row.totalHackedUsd - row.returnedFundsUsd, {
 		id: 'Net User Loss',
 		header: 'Net User Loss',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'center',

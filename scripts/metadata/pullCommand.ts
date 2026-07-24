@@ -1,12 +1,12 @@
 import type { CoreMetadataPayload } from '../../src/utils/metadata/artifactContract'
 import {
-	getMetadataCacheDir,
 	getMissingMetadataArtifacts,
 	hasMetadataArtifactFiles,
 	readValidMetadataArtifactManifest,
 	writeMetadataArtifacts,
 	writeMissingMetadataStubArtifacts
 } from '../../src/utils/metadata/artifactWriter'
+import { getMetadataCacheDir } from '../../src/utils/metadata/config'
 import { fetchCoreMetadata } from '../../src/utils/metadata/fetch'
 import { isMetadataArtifactManifestFresh } from '../../src/utils/metadata/manifest'
 import { isLocalDevWithoutApiKey, shouldWriteMetadataStubsOnFailure } from '../../src/utils/metadata/policy'

@@ -21,8 +21,9 @@ import { TVL_SETTINGS_KEYS_SET, useLocalStorageSettingsManager } from '~/context
 import Layout from '~/layout'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
-import { formattedNum, getPercentChange, slug } from '~/utils'
+import { getPercentChange, slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 
 const GAINERS_SORTING_STATE: SortingState = [{ id: 'change_1d', desc: true }]
@@ -88,7 +89,10 @@ const topGainersAndLosersColumns = [
 	}),
 	columnHelper.accessor('tvl', {
 		header: 'TVL',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[100px]',
 			align: 'end'
@@ -105,7 +109,7 @@ const topGainersAndLosersColumns = [
 	}),
 	columnHelper.accessor('mcaptvl', {
 		header: 'Mcap/TVL',
-		cell: (info) => info.getValue(),
+		cell: (info) => formatRatio(info.getValue()),
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -185,7 +189,7 @@ export default function TopGainersLosers({ protocols }: InferGetStaticPropsType<
 			const tvlPrevDay = finalTvlPrevDay != null && finalTvlPrevDay < 0 ? 0 : (finalTvlPrevDay ?? 0)
 			const tvlPrevWeek = finalTvlPrevWeek != null && finalTvlPrevWeek < 0 ? 0 : (finalTvlPrevWeek ?? 0)
 			const tvlPrevMonth = finalTvlPrevMonth != null && finalTvlPrevMonth < 0 ? 0 : (finalTvlPrevMonth ?? 0)
-			const mcaptvl = protocol.mcap != null && tvl !== 0 ? +(protocol.mcap / tvl).toFixed(2) : null
+			const mcaptvl = protocol.mcap != null && tvl !== 0 ? protocol.mcap / tvl : null
 
 			return {
 				...protocol,

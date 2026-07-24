@@ -17,6 +17,7 @@ import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { tokenIconUrl } from '~/utils/icons'
+import { formatNumber, formatPercent } from '~/utils/numberFormat'
 
 interface INftMarketplace {
 	exchangeName: string
@@ -44,7 +45,7 @@ const EthVolumeCell = ({ value }: { value: unknown }) => {
 
 	return (
 		<span className="flex flex-nowrap items-center justify-end gap-1">
-			<span>{numericValue.toFixed(2)}</span>
+			<span>{formatNumber(numericValue)}</span>
 			<EthIcon />
 		</span>
 	)
@@ -103,7 +104,10 @@ const columns = [
 	}),
 	columnHelper.accessor('pctOfTotal', {
 		header: 'Market Share',
-		cell: (info) => (Number.isFinite(Number(info.getValue())) ? `${Number(info.getValue()).toFixed(2)}%` : null),
+		cell: (info) =>
+			Number.isFinite(Number(info.getValue()))
+				? `${formatPercent(Number(info.getValue()), { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+				: null,
 		meta: {
 			headerClassName: 'w-[150px]',
 			align: 'end',

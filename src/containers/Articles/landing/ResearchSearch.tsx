@@ -22,6 +22,7 @@ import {
 import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import type { ArticleDocument, ArticleSection } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
+import { formatNumber } from '~/utils/numberFormat'
 
 function humanizeTag(tag: string) {
 	return tag.replace(/-/g, ' ')
@@ -270,7 +271,7 @@ function Pagination({
 			className="flex flex-wrap items-center justify-between gap-3 border-t border-research-heading/10 pt-5 dark:border-research-line"
 		>
 			<span className="font-jetbrains text-[11px] tracking-[0.18em] text-research-heading/55 uppercase tabular-nums dark:text-on-brand/55">
-				{rangeStart}–{rangeEnd} of {totalItems.toLocaleString()}
+				{rangeStart}–{rangeEnd} of {formatNumber(totalItems)}
 			</span>
 			<div className="flex items-center gap-2">
 				<button
@@ -411,7 +412,7 @@ export default function ResearchSearch() {
 
 				<div className="flex items-center gap-x-3 text-research-heading/55 dark:text-on-brand/55">
 					<span className="font-jetbrains text-[10px] tracking-[0.18em] uppercase tabular-nums">
-						{resultsLoading ? 'Loading…' : `${totalItems.toLocaleString()} ${totalItems === 1 ? 'result' : 'results'}`}
+						{resultsLoading ? 'Loading…' : `${formatNumber(totalItems)} ${totalItems === 1 ? 'result' : 'results'}`}
 					</span>
 					<div className="grow border-t border-research-heading/15 dark:border-research-line" />
 				</div>

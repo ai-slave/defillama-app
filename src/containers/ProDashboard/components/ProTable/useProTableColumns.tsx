@@ -17,7 +17,8 @@ import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { TableFilters } from '../../types'
 import { SHARE_METRIC_DEFINITIONS, USD_METRIC_KEYS } from './proTable.constants'
 import type { IProtocolRow, CustomColumn } from './proTable.types'
@@ -562,9 +563,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('mcaptvl', {
 				header: 'Mcap/TVL',
-				cell: (info) => {
-					return <>{info.getValue() ?? null}</>
-				},
+				cell: (info) => <>{formatRatio(info.getValue())}</>,
 				size: 110,
 				sortUndefined: 'last',
 				meta: {
@@ -581,7 +580,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 		columns: [
 			columnHelper.accessor('earnings_24h', {
 				header: 'Earnings 24h',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.earnings.protocol['24h'] },
 				size: 140
@@ -595,7 +600,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('earnings_7d', {
 				header: 'Earnings 7d',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.earnings.protocol['7d'] },
 				size: 140
@@ -609,7 +620,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('earnings_30d', {
 				header: 'Earnings 30d',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.earnings.protocol['30d'] },
 				size: 140
@@ -623,7 +640,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('earnings_1y', {
 				header: 'Earnings 1y',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.earnings.protocol['1y'] },
 				size: 150
@@ -639,7 +662,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 		columns: [
 			columnHelper.accessor('fees_24h', {
 				header: 'Fees 24h',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -649,7 +682,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('revenue_24h', {
 				header: 'Revenue 24h',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -659,7 +702,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('fees_7d', {
 				header: 'Fees 7d',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -689,7 +742,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('revenue_7d', {
 				header: 'Revenue 7d',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -729,7 +792,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('fees_30d', {
 				header: 'Fees 30d',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -749,7 +822,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('revenue_30d', {
 				header: 'Revenue 30d',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -799,7 +882,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('fees_1y', {
 				header: 'Fees 1Y',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -809,7 +902,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('average_1y', {
 				header: 'Monthly Avg 1Y Fees',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -819,7 +922,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('revenue_1y', {
 				header: 'Revenue 1Y',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -829,7 +942,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('average_revenue_1y', {
 				header: 'Monthly Avg 1Y Revenue',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -839,7 +962,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('holdersRevenue30d', {
 				header: 'Holders Revenue 30d',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -849,7 +982,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('cumulativeFees', {
 				header: 'Cumulative Fees',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -859,7 +1002,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('holderRevenue_24h', {
 				header: 'Holders Revenue 24h',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -869,7 +1022,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('pf', {
 				header: 'P/F',
-				cell: (info) => <>{info.getValue() != null ? info.getValue() + 'x' : null}</>,
+				cell: (info) => <>{info.getValue() != null ? `${formatRatio(info.getValue())}x` : null}</>,
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -879,7 +1032,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('ps', {
 				header: 'P/S',
-				cell: (info) => <>{info.getValue() != null ? info.getValue() + 'x' : null}</>,
+				cell: (info) => <>{info.getValue() != null ? `${formatRatio(info.getValue())}x` : null}</>,
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -899,7 +1052,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 		columns: [
 			columnHelper.accessor('volume_24h', {
 				header: 'Spot Volume 24h',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -909,7 +1072,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('volume_7d', {
 				header: 'Spot Volume 7d',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -919,7 +1092,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('volume_30d', {
 				header: 'Spot Volume 30d',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -959,7 +1142,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('cumulativeVolume', {
 				header: 'Spot Cumulative Volume',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -998,7 +1191,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 		columns: [
 			columnHelper.accessor('perps_volume_24h', {
 				header: 'Perp Volume 24h',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -1008,7 +1211,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('perps_volume_7d', {
 				header: 'Perp Volume 7d',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -1018,7 +1231,17 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('perps_volume_30d', {
 				header: 'Perp Volume 30d',
-				cell: (info) => <>{info.getValue() != null ? formattedNum(info.getValue(), true) : null}</>,
+				cell: (info) => (
+					<>
+						{info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: {
 					align: 'end',
@@ -1079,7 +1302,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 		columns: [
 			columnHelper.accessor('aggregators_volume_24h', {
 				header: 'Agg Volume 24h',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.dexAggregators.protocol['24h'] },
 				size: 150
@@ -1093,7 +1322,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('aggregators_volume_7d', {
 				header: 'Agg Volume 7d',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.dexAggregators.protocol['7d'] },
 				size: 150
@@ -1107,7 +1342,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('aggregators_volume_30d', {
 				header: 'Agg Volume 30d',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.dexAggregators.protocol['30d'] },
 				size: 160
@@ -1137,7 +1378,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 		columns: [
 			columnHelper.accessor('bridge_aggregators_volume_24h', {
 				header: 'Bridge Agg Volume 24h',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.bridgeAggregators.protocol['24h'] },
 				size: 180
@@ -1151,7 +1398,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('bridge_aggregators_volume_7d', {
 				header: 'Bridge Agg Volume 7d',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.bridgeAggregators.protocol['7d'] },
 				size: 180
@@ -1165,7 +1418,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('bridge_aggregators_volume_30d', {
 				header: 'Bridge Agg Volume 30d',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.bridgeAggregators.protocol['30d'] },
 				size: 180
@@ -1188,7 +1447,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 		columns: [
 			columnHelper.accessor('options_volume_24h', {
 				header: 'Options Volume 24h',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.optionsPremium.protocol['24h'] },
 				size: 160
@@ -1202,7 +1467,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('options_volume_7d', {
 				header: 'Options Volume 7d',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.optionsPremium.protocol['7d'] },
 				size: 160
@@ -1216,7 +1487,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			}),
 			columnHelper.accessor('options_volume_30d', {
 				header: 'Options Volume 30d',
-				cell: ({ getValue }) => <>{getValue() != null ? formattedNum(getValue(), true) : null}</>,
+				cell: ({ getValue }) => (
+					<>
+						{getValue() != null
+							? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+							: null}
+					</>
+				),
 				sortUndefined: 'last',
 				meta: { align: 'end', headerHelperText: definitions.optionsPremium.protocol['30d'] },
 				size: 160
@@ -1237,7 +1514,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 		header: 'Open Interest',
 		cell: (info) => {
 			const value = info.getValue()
-			return <>{typeof value === 'number' && value > 0 ? formattedNum(value, true) : null}</>
+			return (
+				<>
+					{typeof value === 'number' && value > 0
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null}
+				</>
+			)
 		},
 		sortUndefined: 'last',
 		meta: {
@@ -1260,7 +1543,13 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 		header: 'Market Cap',
 		cell: ({ getValue }) => {
 			const value = getValue()
-			return <>{typeof value === 'number' && value > 0 ? formattedNum(value, true) : null}</>
+			return (
+				<>
+					{typeof value === 'number' && value > 0
+						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null}
+				</>
+			)
 		},
 		sortUndefined: 'last',
 		meta: {
@@ -1307,7 +1596,13 @@ const ProtocolTvlCell = ({ value, rowValues }: { value: unknown; rowValues: Prot
 	}
 
 	if (!text && !rowValues.parentExcluded) {
-		return <>{tvlValue != null ? formattedNum(tvlValue, true) : null}</>
+		return (
+			<>
+				{tvlValue != null
+					? formatUsd(tvlValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: null}
+			</>
+		)
 	}
 
 	return (
@@ -1323,7 +1618,9 @@ const ProtocolTvlCell = ({ value, rowValues }: { value: unknown; rowValues: Prot
 					color: rowValues.strikeTvl ? 'var(--text-tertiary)' : 'inherit'
 				}}
 			>
-				{tvlValue != null ? formattedNum(tvlValue, true) : null}
+				{tvlValue != null
+					? formatUsd(tvlValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: null}
 			</span>
 		</span>
 	)
@@ -1348,15 +1645,6 @@ const coerceToNumber = (value: unknown): number | null => {
 		if (Number.isFinite(parsed)) return parsed
 	}
 	return null
-}
-
-const formatCurrencyShort = (value: number): string => {
-	const sign = value < 0 ? '-' : ''
-	const abs = Math.abs(value)
-	if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(2)}B`
-	if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(2)}M`
-	if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(2)}K`
-	return `${sign}$${abs.toFixed(2)}`
 }
 
 const collectLeafColumnIds = (columns: ColumnDef<IProtocolRow>[]): string[] => {
@@ -1437,7 +1725,7 @@ export function useProTableColumns({
 				},
 				cell: ({ getValue }) => {
 					const value = getValue()
-					return typeof value === 'number' ? formatCurrencyShort(value) : '-'
+					return typeof value === 'number' ? formatUsd(value, { compact: true }) : '-'
 				},
 				sortingFn: (rowA, rowB, columnId) => {
 					const valueA = rowA.getValue(columnId)
@@ -1484,7 +1772,9 @@ export function useProTableColumns({
 				},
 				cell: ({ getValue }) => {
 					const value = getValue()
-					return typeof value === 'number' ? `${value.toFixed(2)}%` : ''
+					return typeof value === 'number'
+						? `${formatPercent(value, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+						: ''
 				}
 			})
 		)

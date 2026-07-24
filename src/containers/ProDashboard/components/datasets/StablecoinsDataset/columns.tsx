@@ -4,7 +4,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 
 interface IPeggedAssetRow {
 	name: string
@@ -55,7 +55,9 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 			return (
 				<span className="flex items-center gap-1">
 					{pegDeviation && Math.abs(pegDeviation) >= 0.5 ? (
-						<Tooltip content={`${pegDeviation > 0 ? '+' : ''}${pegDeviation.toFixed(2)}% from peg`}>
+						<Tooltip
+							content={`${pegDeviation > 0 ? '+' : ''}${formatPercent(pegDeviation, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })} from peg`}
+						>
 							<Icon
 								name="alert-triangle"
 								height={14}
@@ -64,7 +66,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 							/>
 						</Tooltip>
 					) : null}
-					<span>${value?.toFixed(4) || '0.0000'}</span>
+					<span>{formatUsd(value, { minimumFractionDigits: 4, maximumFractionDigits: 4 }) ?? '$0.0000'}</span>
 				</span>
 			)
 		},
@@ -78,7 +80,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 		accessorKey: 'mcap',
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <>{formattedNum(value, true)}</>
+			return <>{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
 		},
 		size: 145,
 		meta: {

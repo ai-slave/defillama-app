@@ -12,8 +12,9 @@ import { VirtualTable } from '~/components/Table/Table'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { formattedNum, truncateAddress } from '~/utils'
+import { truncateAddress } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import type { Insider } from './api.types'
 
 const columnHelper = createColumnHelper<Insider>()
@@ -84,7 +85,9 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 										<span className="min-w-0 break-words">
 											{a.allocationSection ?? formatAllocationLabel(a.category)} ({formatAllocationLabel(a.category)})
 										</span>
-										<span className="shrink-0 font-medium">{formattedNum(a.received)}</span>
+										<span className="shrink-0 font-medium">
+											{formatCompactNumber(a.received, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+										</span>
 									</span>
 								))}
 							</span>
@@ -99,22 +102,26 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 	),
 	columnHelper.accessor('received', {
 		header: 'Received',
-		cell: ({ getValue }) => formattedNum(getValue()),
+		cell: ({ getValue }) =>
+			formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
 	}),
 	columnHelper.accessor('balance', {
 		header: 'Balance',
-		cell: ({ getValue }) => formattedNum(getValue()),
+		cell: ({ getValue }) =>
+			formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
 	}),
 	columnHelper.accessor('staked', {
 		header: 'Staked',
-		cell: ({ getValue }) => formattedNum(getValue()),
+		cell: ({ getValue }) =>
+			formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
 	}),
 	columnHelper.accessor('transferredOut', {
 		header: 'Transferred Out',
-		cell: ({ getValue }) => formattedNum(getValue()),
+		cell: ({ getValue }) =>
+			formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { headerClassName: 'w-[160px] min-w-[160px]', align: 'end' }
 	})
 ]

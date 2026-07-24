@@ -22,7 +22,7 @@ import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInput
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
-import { formattedNum } from '~/utils'
+import { formatCompactNumber } from '~/utils/numberFormat'
 
 type StablecoinByChainRow = ReturnType<typeof useGroupBridgeData>[number]
 type BridgeInfoCell = StablecoinByChainRow['bridgeInfo']
@@ -139,7 +139,8 @@ const stablecoinsByChainColumns = [
 	}),
 	columnHelper.accessor('circulating', {
 		header: 'Total Circulating',
-		cell: (info) => formattedNum(info.getValue()),
+		cell: (info) =>
+			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[145px]',
 			align: 'end'

@@ -5,7 +5,7 @@ import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import {
 	formatMetadataAsOf,
 	METADATA_GROUP_ORDER,
@@ -101,9 +101,12 @@ function formatScalar(value: ExchangeMetadataCell | undefined, type: ExchangeMet
 	if (type === 'bool') {
 		return value === true ? <MetadataBadge value="Yes" tone="positive" /> : <MetadataBadge value="No" />
 	}
-	if (type === 'usd' && typeof value === 'number') return formattedNum(value, true)
-	if (type === 'pct' && typeof value === 'number') return `${(value * 100).toFixed(3)}%`
-	if (type === 'number' && typeof value === 'number') return formattedNum(value)
+	if (type === 'usd' && typeof value === 'number')
+		return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+	if (type === 'pct' && typeof value === 'number')
+		return `${formatPercent(value, { input: 'fraction', minimumFractionDigits: 3, maximumFractionDigits: 3, useGrouping: false })}`
+	if (type === 'number' && typeof value === 'number')
+		return formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 	if (type === 'link' && typeof value === 'object' && !Array.isArray(value)) {
 		return <ExternalMetadataLink value={value} />
 	}

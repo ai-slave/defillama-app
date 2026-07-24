@@ -16,8 +16,8 @@ import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { abbreviateNumber } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { IProtocolOverviewPageData } from './types'
 
 const SankeyChart = lazy(() => import('~/components/ECharts/SankeyChart'))
@@ -26,7 +26,6 @@ const incomeStatementGroupByOptions = ['Yearly', 'Quarterly', 'Monthly', 'Cumula
 const EMPTY_BREAKDOWN_LABELS: string[] = []
 const EMPTY_BREAKDOWN_METHODOLOGY: Record<string, string> = {}
 
-const formatIncomeValue = (value: number): string => abbreviateNumber(value, 2, '$') ?? '$0'
 type IncomeStatementGroupBy = (typeof incomeStatementGroupByOptions)[number]
 type IncomeStatementGroupKey = 'monthly' | 'quarterly' | 'yearly' | 'cumulative'
 type IncomeStatementDataType =
@@ -276,12 +275,16 @@ export const IncomeStatement = ({
 		}
 
 		// Helper to format percentage
-		const formatPercent = (value: number, total: number) => {
+		const formatIncomePercent = (value: number, total: number) => {
 			if (total === 0) return '0%'
 			const pct = (value / total) * 100
 			const absPct = Math.abs(pct)
 			const sign = pct < 0 ? '-' : ''
-			return absPct >= 1 ? `${sign}${absPct.toFixed(0)}%` : absPct >= 0.1 ? `${sign}${absPct.toFixed(1)}%` : '<0.1%'
+			return absPct >= 1
+				? `${sign}${formatPercent(absPct, { input: 'percent', maximumFractionDigits: 0, useGrouping: false })}`
+				: absPct >= 0.1
+					? `${sign}${formatPercent(absPct, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
+					: '<0.1%'
 		}
 
 		// Only add fee breakdown nodes if breakdown labels are available
@@ -306,7 +309,7 @@ export const IncomeStatement = ({
 						color: COLORS.gray,
 						description: incomeStatement?.breakdownMethodology?.['Gross Protocol Revenue']?.[label] ?? '',
 						depth: 0,
-						percentageLabel: formatPercent(value, grossProtocolRevenue)
+						percentageLabel: formatIncomePercent(value, grossProtocolRevenue)
 					})
 					links.push({ source: label, target: 'Gross Protocol Revenue', value })
 				}
@@ -329,7 +332,7 @@ export const IncomeStatement = ({
 				description: incomeStatement?.methodology?.['Cost Of Revenue'] ?? '',
 				displayValue: costOfRevenue, // Show actual cost of revenue value
 				depth: 2,
-				percentageLabel: formatPercent(costOfRevenue, grossProtocolRevenue)
+				percentageLabel: formatIncomePercent(costOfRevenue, grossProtocolRevenue)
 			})
 			links.push({ source: 'Gross Protocol Revenue', target: 'Cost of Revenue', value: costOfRevenue })
 
@@ -349,7 +352,7 @@ export const IncomeStatement = ({
 							color: COLORS.red,
 							description: incomeStatement?.breakdownMethodology?.['Cost Of Revenue']?.[label] ?? '',
 							depth: 3,
-							percentageLabel: formatPercent(value, costOfRevenue)
+							percentageLabel: formatIncomePercent(value, costOfRevenue)
 						})
 						links.push({ source: 'Cost of Revenue', target: costLabel, value })
 					}
@@ -366,7 +369,7 @@ export const IncomeStatement = ({
 				description: incomeStatement?.methodology?.['Gross Profit'] ?? '',
 				displayValue: grossProfit, // Show actual revenue value
 				depth: 2,
-				percentageLabel: formatPercent(grossProfit, grossProtocolRevenue)
+				percentageLabel: formatIncomePercent(grossProfit, grossProtocolRevenue)
 			})
 			links.push({ source: 'Gross Protocol Revenue', target: 'Gross Profit', value: grossProfit })
 
@@ -395,7 +398,7 @@ export const IncomeStatement = ({
 								name: incentiveLabel,
 								color: COLORS.red,
 								description: incomeStatement?.breakdownMethodology?.['Incentives']?.[label] ?? '',
-								percentageLabel: formatPercent(value, incentives)
+								percentageLabel: formatIncomePercent(value, incentives)
 							})
 							links.push({ source: incentiveLabel, target: 'Incentives', value })
 						}
@@ -406,10 +409,10 @@ export const IncomeStatement = ({
 				nodes.push({
 					name: 'Earnings',
 					color: earnings >= 0 ? COLORS.green : COLORS.red,
-					description: `Gross Profit (${formatIncomeValue(grossProfit)}) minus Incentives (${formatIncomeValue(incentives)})`,
+					description: `Gross Profit (${formatUsd(grossProfit, { compact: true })}) minus Incentives (${formatUsd(incentives, { compact: true })})`,
 					displayValue: earnings, // Show actual earnings value, not the sum of flows
 					depth: 3,
-					percentageLabel: formatPercent(earnings, grossProfit)
+					percentageLabel: formatIncomePercent(earnings, grossProfit)
 				})
 
 				// Gross Profit flows to Earnings (green)
@@ -423,7 +426,7 @@ export const IncomeStatement = ({
 						color: COLORS.green,
 						description: incomeStatement?.methodology?.['Token Holder Net Income'] ?? '',
 						depth: 4,
-						percentageLabel: formatPercent(tokenHolderNetIncome, earnings)
+						percentageLabel: formatIncomePercent(tokenHolderNetIncome, earnings)
 					})
 					links.push({ source: 'Earnings', target: 'Value Distributed to Token Holders', value: tokenHolderNetIncome })
 				}
@@ -435,7 +438,7 @@ export const IncomeStatement = ({
 						color: COLORS.green,
 						description: incomeStatement?.methodology?.['Gross Profit'] ?? '',
 						depth: 3,
-						percentageLabel: formatPercent(earnings, grossProfit)
+						percentageLabel: formatIncomePercent(earnings, grossProfit)
 					})
 					links.push({ source: 'Gross Profit', target: 'Earnings', value: earnings })
 
@@ -445,7 +448,7 @@ export const IncomeStatement = ({
 							color: COLORS.green,
 							description: incomeStatement?.methodology?.['Token Holder Net Income'] ?? '',
 							depth: 4,
-							percentageLabel: formatPercent(tokenHolderNetIncome, earnings)
+							percentageLabel: formatIncomePercent(tokenHolderNetIncome, earnings)
 						})
 						links.push({
 							source: 'Earnings',
@@ -877,10 +880,10 @@ const IncomeStatementByLabel = ({
 								}
 								className={`justify-start underline decoration-dotted ${isEarnings ? (data[header[0]]?.value >= 0 ? 'decoration-data-up/60' : 'decoration-data-down/60') : 'decoration-current'}`}
 							>
-								{formatIncomeValue(data[header[0]].value)}
+								{formatUsd(data[header[0]].value, { compact: true })}
 							</Tooltip>
 						) : (
-							<>{formatIncomeValue(data[header[0]].value)}</>
+							<>{formatUsd(data[header[0]].value, { compact: true })}</>
 						)}
 					</TokenPageTableIncomeCell>
 				))}
@@ -930,10 +933,10 @@ const IncomeStatementByLabel = ({
 											}
 											className="justify-start underline decoration-current decoration-dotted"
 										>
-											{formatIncomeValue(data[header[0]]['by-label']?.[breakdownlabel])}
+											{formatUsd(data[header[0]]['by-label']?.[breakdownlabel], { compact: true })}
 										</Tooltip>
 									) : (
-										<>{formatIncomeValue(data[header[0]]['by-label']?.[breakdownlabel])}</>
+										<>{formatUsd(data[header[0]]['by-label']?.[breakdownlabel], { compact: true })}</>
 									)}
 								</TokenPageTableIncomeCell>
 							))}
@@ -961,10 +964,10 @@ const PerformanceTooltipContent = ({
 	if (previousValue == null || currentValue == null) return null
 	const valueChange = currentValue - previousValue
 	const percentageChange = previousValue !== 0 ? (valueChange / Math.abs(previousValue)) * 100 : 0
-	const percentageChangeText =
-		percentageChange > 0
-			? `+${percentageChange.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`
-			: `${percentageChange.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`
+	const percentageChangeText = formatPercent(percentageChange, {
+		input: 'percent',
+		signDisplay: 'exceptZero'
+	})
 	const displayLabel = label ? label.toLowerCase() : dataType
 	return (
 		<p className="text-xs">

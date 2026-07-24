@@ -1,3 +1,5 @@
+import { formatPercentChange } from '~/utils/numberFormat'
+
 interface PercentChangeDisplay {
 	finalValue: string
 	isPositive: boolean
@@ -17,31 +19,11 @@ function getPercentChangeDisplay(percent: unknown, noSign?: boolean): PercentCha
 	}
 	let isPositive = false
 	let isNegative = false
-	let finalValue = ''
-
-	if (!parsedPercent || parsedPercent === 0) {
-		finalValue = '0%'
-	} else if (parsedPercent > 0 && parsedPercent < 0.0001) {
-		isPositive = true
-		finalValue = '< 0.0001%'
-	} else if (parsedPercent < 0 && parsedPercent > -0.0001) {
-		isNegative = true
-		finalValue = '< 0.0001%'
-	} else {
-		const fixedPercent = parsedPercent.toFixed(2)
-		const fixedNum = Number(fixedPercent)
-
-		if (fixedNum === 0) {
-			finalValue = '0%'
-		} else if (fixedNum > 0) {
-			isPositive = true
-			const prefix = noSign ? '' : '+'
-			finalValue = fixedNum > 100 ? `${prefix}${parsedPercent.toFixed(0)}%` : `${prefix}${fixedPercent}%`
-		} else {
-			isNegative = true
-			finalValue = `${fixedPercent}%`
-		}
-	}
+	if (parsedPercent > 0) isPositive = true
+	if (parsedPercent < 0) isNegative = true
+	const formatted = formatPercentChange(parsedPercent)
+	if (!formatted) return null
+	const finalValue = noSign ? formatted.replace(/^\+/, '') : formatted
 
 	return { finalValue, isPositive, isNegative }
 }

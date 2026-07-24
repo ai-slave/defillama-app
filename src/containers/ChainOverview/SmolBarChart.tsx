@@ -2,7 +2,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { CHART_COLORS, purple } from '~/constants/colors'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 
 export function SmolBarChart({
 	series,
@@ -114,7 +114,11 @@ export function SmolBarChart({
 									backgroundColor: series[hoveredIndex][1] >= 0 ? CHART_COLORS[0] : purple
 								}}
 							/>
-							{formattedNum(series[hoveredIndex][1], true)}
+							{formatUsd(series[hoveredIndex][1], {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 						</p>
 					</div>
 				) : null}

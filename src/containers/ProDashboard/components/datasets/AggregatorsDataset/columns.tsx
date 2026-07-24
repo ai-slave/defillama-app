@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { PercentChange } from '~/ui/PercentChange'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { percentageSortingFn } from '../../../utils/tableSorting'
 
 export const aggregatorsDatasetColumns: ColumnDef<any>[] = [
@@ -53,13 +53,21 @@ export const aggregatorsDatasetColumns: ColumnDef<any>[] = [
 		header: '24h Volume',
 		accessorKey: 'total24h',
 		size: 145,
-		cell: ({ getValue }) => <span className="text-pro-text-primary">{formattedNum(getValue() as number, true)}</span>
+		cell: ({ getValue }) => (
+			<span className="text-pro-text-primary">
+				{formatUsd(getValue() as number, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+			</span>
+		)
 	},
 	{
 		header: '7d Volume',
 		accessorKey: 'total7d',
 		size: 120,
-		cell: ({ getValue }) => <span className="text-pro-text-secondary">{formattedNum(getValue() as number, true)}</span>
+		cell: ({ getValue }) => (
+			<span className="text-pro-text-secondary">
+				{formatUsd(getValue() as number, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+			</span>
+		)
 	},
 	{
 		header: '7d Market Share',
@@ -78,7 +86,11 @@ export const aggregatorsDatasetColumns: ColumnDef<any>[] = [
 		header: '30d Volume',
 		accessorKey: 'total30d',
 		size: 120,
-		cell: ({ getValue }) => <span className="text-pro-text-secondary">{formattedNum(getValue() as number, true)}</span>
+		cell: ({ getValue }) => (
+			<span className="text-pro-text-secondary">
+				{formatUsd(getValue() as number, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+			</span>
+		)
 	},
 	{
 		header: '% of Total',

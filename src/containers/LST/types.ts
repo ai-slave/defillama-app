@@ -16,7 +16,7 @@ export interface ILSTTokenRow {
 	pegInfo: string | null
 	marketRate: number | null
 	expectedRate: number | null
-	mcapOverTvl: string | null
+	mcapOverTvl: number | null
 	apy: number | null
 	fee: number | null
 }

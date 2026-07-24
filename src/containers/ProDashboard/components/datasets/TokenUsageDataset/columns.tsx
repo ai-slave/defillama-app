@@ -2,7 +2,8 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 
 export const getColumns = (tokenSymbols: string[]): ColumnDef<ProtocolTokenUsageData>[] => {
 	const isMultiToken = tokenSymbols.length > 1
@@ -46,7 +47,9 @@ export const getColumns = (tokenSymbols: string[]): ColumnDef<ProtocolTokenUsage
 				cell: ({ getValue }) => {
 					const value = getValue() as number
 					return value > 0 ? (
-						<span className="text-sm font-medium">{formattedNum(value, true)}</span>
+						<span className="text-sm font-medium">
+							{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+						</span>
 					) : (
 						<span className="text-sm text-pro-text-tertiary">-</span>
 					)
@@ -63,7 +66,11 @@ export const getColumns = (tokenSymbols: string[]): ColumnDef<ProtocolTokenUsage
 		accessorKey: 'amountUsd',
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="text-sm font-semibold">{formattedNum(value, true)}</span>
+			return (
+				<span className="text-sm font-semibold">
+					{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				</span>
+			)
 		},
 		meta: {
 			align: 'end'

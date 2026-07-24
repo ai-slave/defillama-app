@@ -2,7 +2,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { CHART_COLORS } from '~/constants/colors'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
-import { formattedNum } from '~/utils'
+import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 
 interface UnlockEntry {
 	date: number
@@ -66,10 +66,18 @@ export function UpcomingUnlocksChart({ data, className }: { data: Array<UnlockEn
 				{hoveredIndex != null ? (
 					<div ref={tooltipRef} className={domChartTooltipStyles}>
 						<p>{formatTooltipChartDate(data[hoveredIndex].date, 'daily')}</p>
-						<p style={{ fontWeight: 'bold', marginBottom: '4px' }}>Total: ${formattedNum(data[hoveredIndex].total)}</p>
+						<p style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+							Total: $
+							{formatCompactNumber(data[hoveredIndex].total, {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						</p>
 						{data[hoveredIndex].breakdown.map((item) => (
 							<p key={item.token} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-								{item.token}&nbsp;&nbsp;${formattedNum(item.value)} ({item.pct}%)
+								{item.token}&nbsp;&nbsp;$
+								{formatCompactNumber(item.value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} (
+								{formatPercent(item.pct, { input: 'percent' })})
 							</p>
 						))}
 					</div>

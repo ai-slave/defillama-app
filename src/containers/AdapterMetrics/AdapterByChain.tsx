@@ -41,7 +41,8 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatRatio, formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import { parseExcludeParam } from '~/utils/routerQuery'
 import { AdapterByChainChart } from './ChainChart'
 import type { IAdapterByChainPageData, IProtocol } from './types'
@@ -256,7 +257,11 @@ export function AdapterByChain(props: IProps) {
 							<StatItem
 								label={`${metricName} (24h)`}
 								labelAs="h1"
-								value={formattedNum(props.total24h, true)}
+								value={formatUsd(props.total24h, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 								truncate
 							/>
 						) : (
@@ -267,7 +272,11 @@ export function AdapterByChain(props: IProps) {
 							<StatItem
 								label={`${metricName} (24h)`}
 								tooltip={pageTypeByDefinition[props.type]?.['24h']}
-								value={formattedNum(props.total24h, true)}
+								value={formatUsd(props.total24h, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 								truncate
 							/>
 						) : null}
@@ -277,28 +286,40 @@ export function AdapterByChain(props: IProps) {
 								<MetricRow
 									label="Open Interest"
 									tooltip={definitions.openInterest.chain}
-									value={formattedNum(props.openInterest, true)}
+									value={formatUsd(props.openInterest, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
 								/>
 							) : null}
 							{props.activeLiquidity != null ? (
 								<MetricRow
 									label="Active Liquidity"
 									tooltip={definitions.activeLiquidity.chain}
-									value={formattedNum(props.activeLiquidity, true)}
+									value={formatUsd(props.activeLiquidity, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
 								/>
 							) : null}
 							{props.total30d != null ? (
 								<MetricRow
 									label={`${metricName} (30d)`}
 									tooltip={pageTypeByDefinition[props.type]?.['30d']}
-									value={formattedNum(props.total30d, true)}
+									value={formatUsd(props.total30d, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
 								/>
 							) : null}
 							{props.change_7dover7d != null ? (
 								<MetricRow
 									label="Weekly Change"
 									tooltip="Change of last 7d volume over the previous 7d volume"
-									value={`${props.change_7dover7d >= 0 ? '+' : ''}${props.change_7dover7d}%`}
+									value={formatPercentChange(props.change_7dover7d)}
 									valueClassName={`mono-md-bold ml-auto ${props.change_7dover7d >= 0 ? 'text-data-up' : 'text-data-down'}`}
 								/>
 							) : null}
@@ -587,7 +608,10 @@ const centeredMetricColumn = (
 	columnHelper.accessor(accessor, {
 		id,
 		header,
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: getMetricColumnWidthClass(size),
 			align: 'center',
@@ -606,7 +630,10 @@ const endMetricColumn = (
 	columnHelper.accessor(accessor, {
 		id,
 		header,
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: getMetricColumnWidthClass(size),
 			align: 'end',
@@ -630,11 +657,19 @@ const doubleCountedMetricColumn = (
 				return (
 					<span className="flex items-center justify-center gap-1">
 						<QuestionHelper text="This protocol is a wrapper interface over another protocol. Its volume is excluded from totals to avoid double-counting the underlying protocol's volume" />
-						<span className="text-tertiary">{formattedNum(info.getValue(), true)}</span>
+						<span className="text-tertiary">
+							{formatUsd(info.getValue(), {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						</span>
 					</span>
 				)
 			}
-			return info.getValue() != null ? formattedNum(info.getValue(), true) : null
+			return info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null
 		},
 		meta: {
 			headerClassName: getMetricColumnWidthClass(size),
@@ -673,13 +708,19 @@ const reportedPerpVolumeColumn = (
 							<QuestionHelper key={`${info.row.original.name}-${helper}`} text={helper} />
 						))}
 						<span className={info.row.original.doublecounted ? 'text-tertiary' : ''}>
-							{formattedNum(info.getValue(), true)}
+							{formatUsd(info.getValue(), {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 						</span>
 					</span>
 				)
 			}
 
-			return <>{formattedNum(info.getValue(), true)}</>
+			return (
+				<>{formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
+			)
 		},
 		meta: {
 			headerClassName: getMetricColumnWidthClass(size),
@@ -704,11 +745,19 @@ const openInterestMetricColumn = (
 				return (
 					<span className={`flex items-center ${align === 'center' ? 'justify-center' : 'justify-end'} gap-1`}>
 						<QuestionHelper text="This protocol is a wrapper interface over another protocol. Its open interest is excluded from totals to avoid double-counting the underlying protocol's open interest" />
-						<span className="text-tertiary">{formattedNum(info.getValue(), true)}</span>
+						<span className="text-tertiary">
+							{formatUsd(info.getValue(), {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						</span>
 					</span>
 				)
 			}
-			return info.getValue() != null ? formattedNum(info.getValue(), true) : null
+			return info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null
 		},
 		meta: {
 			headerClassName: getMetricColumnWidthClass(size),
@@ -721,7 +770,7 @@ const pfOrPsColumn = (label: 'P/F' | 'P/S', headerHelperText: string) =>
 	columnHelper.accessor((protocol) => protocol.pfOrPs, {
 		id: 'pfOrPs',
 		header: label,
-		cell: (info) => (info.getValue() != null ? info.getValue() : null),
+		cell: (info) => formatRatio(info.getValue()),
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'center',

@@ -2,6 +2,7 @@ import { flexRender, type RowData, type Table } from '@tanstack/react-table'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { formatPercent } from '~/utils/numberFormat'
 
 export const AAVE_AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
 export const AAVE_BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
@@ -201,4 +202,7 @@ export function Pagination<T>({ table }: { table: Table<T> }) {
 	)
 }
 
-export const formatPct = (v: number | null) => (v != null ? `${v.toFixed(2)}%` : '—')
+export const formatPct = (v: number | null) =>
+	v != null
+		? `${formatPercent(v, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+		: '—'

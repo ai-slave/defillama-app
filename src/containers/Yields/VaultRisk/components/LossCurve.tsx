@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
-import { formattedNum } from '~/utils'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { EASE_OUT_EXPO, useCountUp, useInViewOnce } from '../primitives/motion'
 import type { CollateralVM, ScenarioVM, Stress, StressAnchor } from '../types'
 
@@ -24,7 +24,7 @@ function realisticMarks(
 	if (stress?.anchors?.length) {
 		return stress.anchors
 			.filter((a) => inBand(a.bad_debt_usd))
-			.map((a) => ({ lossUsd: a.bad_debt_usd, cause: `−${a.drop_pct}% crash` }))
+			.map((a) => ({ lossUsd: a.bad_debt_usd, cause: `−${formatPercent(a.drop_pct, { input: 'percent' })} crash` }))
 			.sort((x, y) => x.lossUsd - y.lossUsd)
 	}
 	const seen = new Set<number>()
@@ -123,7 +123,7 @@ function LossReadout({
 	catSub: string
 	ratio: number
 }) {
-	const fmt = (v: number) => formattedNum(v, true)
+	const fmt = (v: number) => formatUsd(v, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 	const leadRef = useCountUp(leadUsd * ratio, fmt)
 	const catRef = useCountUp(catUsd * ratio, fmt)
 	return (
@@ -188,10 +188,15 @@ export function LossCurve({
 	position,
 	coverageUsd
 }: LossVizProps) {
-	const fmt = (usd: number) => formattedNum(usd * ratio, true)
-	const share = (usd: number) => (supplyUsd > 0 ? Math.round((usd / supplyUsd) * 100) : 0)
+	const fmt = (usd: number) =>
+		formatUsd(usd * ratio, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+	const share = (usd: number) =>
+		formatPercent(supplyUsd > 0 ? usd / supplyUsd : 0, { input: 'fraction', maximumFractionDigits: 0 })
 	const catLabel = worstTitle ?? 'worst case'
-	const whole = personal && position != null ? `~${formattedNum(position, true)}` : 'the full amount'
+	const whole =
+		personal && position != null
+			? `~${formatUsd(position, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+			: 'the full amount'
 	const anchors = stress?.anchors ?? NO_ANCHORS
 
 	const [active, setActive] = useState<number | null>(null)
@@ -298,9 +303,9 @@ export function LossCurve({
 	// committed coverage drawn across the curve: below it the backstop covers, above it exposed
 	const covY = coverageUsd > 0 && coverageUsd < yMax * 0.97 ? 100 - (coverageUsd / yMax) * 100 : null
 
-	const aria = `Loss against collateral crash severity on ${formattedNum(supplyUsd * ratio, true)}: ${curvePts
+	const aria = `Loss against collateral crash severity on ${formatUsd(supplyUsd * ratio, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}: ${curvePts
 		.filter((p) => p.drop < 100)
-		.map((p) => `at −${p.drop}% about ${fmt(p.loss)}`)
+		.map((p) => `at −${formatPercent(p.drop, { input: 'percent' })} about ${fmt(p.loss)}`)
 		.join(', ')}; only an extreme event reaches a total ${fmt(yMax)}.`
 
 	const scrub = (clientX: number, el: HTMLElement) => {
@@ -334,7 +339,7 @@ export function LossCurve({
 	const hot = active != null ? curvePts[active] : null
 	const hotBreakdown = hot ? breakdownAt(hot.drop, hot.loss) : []
 	const valueText = hot
-		? `${hot.drop >= 100 ? 'Extreme event' : `−${hot.drop}% collateral crash`}: est. loss ${fmt(hot.loss)} (${share(hot.loss)}% of deposit)`
+		? `${hot.drop >= 100 ? 'Extreme event' : `−${formatPercent(hot.drop, { input: 'percent' })} collateral crash`}: est. loss ${fmt(hot.loss)} (${share(hot.loss)} of deposit)`
 		: 'No point selected — arrow keys step through the modeled crash depths'
 	// popover flips below when the point is near the top and anchors by x so it never runs off
 	const popTransformX = hot ? (hot.x < 22 ? '0%' : hot.x > 78 ? '-100%' : '-50%') : '-50%'
@@ -344,7 +349,7 @@ export function LossCurve({
 		<div className="flex flex-col gap-2">
 			<LossReadout
 				leadUsd={realisticAnchor.bad_debt_usd}
-				leadSub={`realistic worst · −${realisticAnchor.drop_pct}% collateral crash`}
+				leadSub={`realistic worst · −${formatPercent(realisticAnchor.drop_pct, { input: 'percent' })} collateral crash`}
 				catUsd={yMax}
 				catSub={`${catLabel} · extreme only`}
 				ratio={ratio}
@@ -456,10 +461,10 @@ export function LossCurve({
 						}}
 					>
 						<div className="label-sm text-primary">
-							{hot.drop >= 100 ? 'Extreme event' : `−${hot.drop}% collateral crash`}
+							{hot.drop >= 100 ? 'Extreme event' : `−${formatPercent(hot.drop, { input: 'percent' })} collateral crash`}
 						</div>
 						<div className="body-sm text-secondary tabular-nums">
-							{`${fmt(hot.loss)} · ${share(hot.loss)}% of deposit`}
+							{`${fmt(hot.loss)} · ${share(hot.loss)} of deposit`}
 						</div>
 						{hot.drop >= 100 ? (
 							<p className="mt-1.5 border-t border-subtle pt-1.5 body-sm text-secondary">
@@ -502,7 +507,7 @@ export function LossCurve({
 						className="absolute -translate-x-1/2 whitespace-nowrap tabular-nums"
 						style={{ left: `${p.x}%` }}
 					>
-						{p.drop >= 100 ? 'extreme' : `−${p.drop}%`}
+						{p.drop >= 100 ? 'extreme' : `−${formatPercent(p.drop, { input: 'percent' })}`}
 					</span>
 				))}
 			</div>

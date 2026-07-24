@@ -1,5 +1,6 @@
 import { DAYS_OF_WEEK } from '~/containers/LlamaAI/components/alerts/schedule'
 import type { AlertsUsage, DeliveryChannel, PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
+import { formatNumber } from '~/utils/numberFormat'
 
 export type TriggerType = 'schedule' | 'price'
 export type PriceOp = 'above' | 'below'
@@ -134,14 +135,17 @@ export function buildArtifactSaveBody(input: {
 }
 
 export function formatPriceLabel(price: number): string {
-	const options: Intl.NumberFormatOptions = price >= 10 ? { maximumFractionDigits: 2 } : { maximumSignificantDigits: 4 }
-	return `$${price.toLocaleString('en-US', options)}`
+	return `$${
+		price >= 10
+			? formatNumber(price, { maximumFractionDigits: 2 })
+			: formatNumber(price, { maximumSignificantDigits: 4 })
+	}`
 }
 
 export function roundPriceValue(price: number): string {
 	if (!Number.isFinite(price) || price <= 0) return ''
-	if (price >= 10) return price.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 2 })
-	return price.toLocaleString('en-US', { useGrouping: false, maximumSignificantDigits: 4 })
+	if (price >= 10) return formatNumber(price, { useGrouping: false, maximumFractionDigits: 2 })
+	return formatNumber(price, { useGrouping: false, maximumSignificantDigits: 4 })
 }
 
 export function normalizePriceInput(raw: string): string {

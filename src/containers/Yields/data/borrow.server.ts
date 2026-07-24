@@ -15,7 +15,7 @@ import {
 	parseTokenPairFilters,
 	parseTriState
 } from './query'
-import { getRaiseValuations, getReferralUrls } from './server/raiseValuations'
+import { getRaiseValuationsUsd, getReferralUrls } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type {
 	ApyComponent,
@@ -63,7 +63,7 @@ function toMarketTableRow(row: EnrichedMarketRow, window: ApyWindow, components:
 		projectslug: row.protocolSlug ?? row.protocol,
 		// Token-less protocols get the "Potential Airdrop" marker (Fraxlend excluded at render).
 		airdrop: !row.protocolHasToken,
-		raiseValuation: null,
+		raiseValuationUsd: null,
 		chain: row.chain,
 		chains: [row.chain],
 		supplyApy: supply.total,
@@ -110,7 +110,7 @@ function toRouteTableRow(row: EnrichedRouteRow, window: ApyWindow, components: A
 		projectslug: row.protocolSlug ?? row.protocol,
 		// Token-less protocols get the "Potential Airdrop" marker (Fraxlend excluded at render).
 		airdrop: !row.protocolHasToken,
-		raiseValuation: null,
+		raiseValuationUsd: null,
 		chain: row.chain,
 		chains: [row.chain],
 		collateralSymbol,
@@ -140,7 +140,7 @@ function decorateRouteTableRow(
 	window: ApyWindow,
 	components: ApyComponent[],
 	depegByPool: Map<string, DepegRow>,
-	raiseValuations: Map<string, number>,
+	raiseValuationsUsd: Map<string, number>,
 	referralUrls: Map<string, string>,
 	riskCovered: Set<string>
 ): RouteTableRow {
@@ -161,7 +161,8 @@ function decorateRouteTableRow(
 		routeRow.pegDeviation = worst.deviation_pct
 		routeRow.pegTokenSymbol = worst.token_symbol
 	}
-	if (routeRow.airdrop && row.protocolSlug) routeRow.raiseValuation = raiseValuations.get(row.protocolSlug) ?? null
+	if (routeRow.airdrop && row.protocolSlug)
+		routeRow.raiseValuationUsd = raiseValuationsUsd.get(row.protocolSlug) ?? null
 	if (riskCovered.has(row.collateral.id)) routeRow.hasRiskData = true
 	return routeRow
 }
@@ -184,11 +185,11 @@ export async function getBorrowMarketsPage(
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
-	const [rows, meta, depegs, raiseValuations, referralUrls, riskCovered] = await Promise.all([
+	const [rows, meta, depegs, raiseValuationsUsd, referralUrls, riskCovered] = await Promise.all([
 		getEnrichedMarkets(snapshot),
 		readYieldsMeta(snapshot),
 		readYieldsDepegs(snapshot),
-		getRaiseValuations(snapshot),
+		getRaiseValuationsUsd(snapshot),
 		getReferralUrls(snapshot),
 		getRiskCoveredPoolIds()
 	])
@@ -229,7 +230,7 @@ export async function getBorrowMarketsPage(
 		}
 		// Airdrop hint decoration: latest fundraise valuation, only on airdrop rows.
 		if (marketRow.airdrop && row.protocolSlug) {
-			marketRow.raiseValuation = raiseValuations.get(row.protocolSlug) ?? null
+			marketRow.raiseValuationUsd = raiseValuationsUsd.get(row.protocolSlug) ?? null
 		}
 		if (riskCovered.has(row.id)) marketRow.hasRiskData = true
 		pageRows.push(marketRow)
@@ -256,11 +257,11 @@ export async function getBorrowRoutesPage(
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
-	const [rows, meta, depegs, raiseValuations, referralUrls, riskCovered] = await Promise.all([
+	const [rows, meta, depegs, raiseValuationsUsd, referralUrls, riskCovered] = await Promise.all([
 		getEnrichedRoutes(snapshot),
 		readYieldsMeta(snapshot),
 		readYieldsDepegs(snapshot),
-		getRaiseValuations(snapshot),
+		getRaiseValuationsUsd(snapshot),
 		getReferralUrls(snapshot),
 		getRiskCoveredPoolIds()
 	])
@@ -289,7 +290,7 @@ export async function getBorrowRoutesPage(
 		if (!matchesBorrow([row.borrowTokenKeys])) continue
 
 		pageRows.push(
-			decorateRouteTableRow(row, window, components, depegByPool, raiseValuations, referralUrls, riskCovered)
+			decorateRouteTableRow(row, window, components, depegByPool, raiseValuationsUsd, referralUrls, riskCovered)
 		)
 	}
 
@@ -302,10 +303,10 @@ export async function getBorrowRoutesPage(
 }
 
 export async function getBorrowRoutesForTokenKeys(snapshot: YieldsSnapshot, tokenKeys: string[]) {
-	const [rows, depegs, raiseValuations, referralUrls, riskCovered] = await Promise.all([
+	const [rows, depegs, raiseValuationsUsd, referralUrls, riskCovered] = await Promise.all([
 		getEnrichedRoutes(snapshot),
 		readYieldsDepegs(snapshot),
-		getRaiseValuations(snapshot),
+		getRaiseValuationsUsd(snapshot),
 		getReferralUrls(snapshot),
 		getRiskCoveredPoolIds()
 	])
@@ -326,7 +327,7 @@ export async function getBorrowRoutesForTokenKeys(snapshot: YieldsSnapshot, toke
 			window,
 			components,
 			depegByPool,
-			raiseValuations,
+			raiseValuationsUsd,
 			referralUrls,
 			riskCovered
 		)

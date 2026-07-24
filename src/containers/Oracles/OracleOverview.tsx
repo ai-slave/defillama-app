@@ -12,8 +12,9 @@ import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formattedNum, getTokenDominance, slug } from '~/utils'
+import { getTokenDominance, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import {
 	calculateTotalWithExtraToggles,
 	getEnabledExtraTvlApiKeys,
@@ -102,7 +103,13 @@ export const OracleOverview = ({
 					return (
 						<span className="flex items-center justify-center gap-1">
 							{strikeText ? <QuestionHelper text={strikeText} /> : null}
-							<span className={strikeText ? 'text-tertiary' : ''}>{formattedNum(row.original.tvl, true)}</span>
+							<span className={strikeText ? 'text-tertiary' : ''}>
+								{formatUsd(row.original.tvl, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+							</span>
 						</span>
 					)
 				},
@@ -213,8 +220,14 @@ export const OracleOverview = ({
 			<SummaryCardGrid>
 				<SummaryStatsCard>
 					<h1 className="heading-sm">{displayOracle}</h1>
-					<StatItem label="Total Value Secured (USD)" value={formattedNum(totalValue, true)} />
-					<StatItem label={dominanceLabel} value={dominanceText === null ? 'N/A' : `${dominanceText}%`} />
+					<StatItem
+						label="Total Value Secured (USD)"
+						value={formatUsd(totalValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+					/>
+					<StatItem
+						label={dominanceLabel}
+						value={dominanceText === null ? 'N/A' : formatPercent(dominanceText, { input: 'percent' })}
+					/>
 				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-2">

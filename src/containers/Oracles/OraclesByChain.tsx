@@ -15,7 +15,8 @@ import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSele
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { getEnabledExtraTvlApiKeys, getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
 import { buildOraclesByChainDominanceData, buildOraclesByChainTableAndPieData } from './byChainData'
 import { useOraclesByChainExtraBreakdowns } from './queries.client'
@@ -255,7 +256,8 @@ const columns = [
 	columnHelper.accessor('tvl', {
 		header: 'TVS',
 		enableSorting: true,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',

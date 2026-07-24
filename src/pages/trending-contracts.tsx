@@ -18,6 +18,7 @@ import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { truncateAddress } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { formatNumber } from '~/utils/numberFormat'
 
 const valueToFilter = {
 	'1d': 'day',
@@ -214,7 +215,7 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 	}),
 	columnHelper.accessor('gas_spend', {
 		header: 'Gas Spent',
-		cell: (info) => <>{info.getValue()?.toFixed(2)} ETH</>,
+		cell: (info) => <>{formatNumber(info.getValue())} ETH</>,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'

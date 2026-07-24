@@ -22,8 +22,8 @@ import { PRO_RWA_CHAINS_TABLE_QUERY_KEY } from '~/containers/ProDashboard/tableQ
 import { fetchRWAStats } from '~/containers/RWA/api'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
-import { formattedNum } from '~/utils'
 import { downloadCSV } from '~/utils/download'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
@@ -51,35 +51,40 @@ const columns: ColumnDef<RWAChainsTableRow, any>[] = [
 	columnHelper.accessor('totalAssetIssuers', {
 		id: 'totalAssetIssuers',
 		header: 'Asset Issuers',
-		cell: (info) => formattedNum(info.getValue(), false),
+		cell: (info) =>
+			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 140
 	}),
 	columnHelper.accessor('totalAssetCount', {
 		id: 'totalAssetCount',
 		header: 'Asset Count',
-		cell: (info) => formattedNum(info.getValue(), false),
+		cell: (info) =>
+			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 140
 	}),
 	columnHelper.accessor('totalActiveMcap', {
 		id: 'totalActiveMcap',
 		header: 'Active Mcap',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 160
 	}),
 	columnHelper.accessor('totalOnChainMcap', {
 		id: 'totalOnChainMcap',
 		header: 'Onchain Mcap',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 160
 	}),
 	columnHelper.accessor('totalDefiActiveTvl', {
 		id: 'totalDefiActiveTvl',
 		header: 'DeFi Active TVL',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
 		size: 160
 	})

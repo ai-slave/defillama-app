@@ -765,7 +765,7 @@ export async function getProtocolTaxonomyPageData(
 
 		const borrowed = extraTvls.borrowed ?? null
 		const supplied = borrowed && tvl != null && tvl > 0 ? borrowed + tvl : null
-		const suppliedTvl = supplied && tvl != null ? Number((supplied / tvl).toFixed(2)) : null
+		const suppliedTvl = supplied && tvl != null ? supplied / tvl : null
 		const adapterProtocolData = adapterDataStore[protocol.defillamaId]
 
 		const finalData: ProtocolTableRow = {
@@ -841,7 +841,7 @@ export async function getProtocolTaxonomyPageData(
 
 		const borrowed = extraTvls.borrowed ?? null
 		const supplied = borrowed && tvl != null && tvl > 0 ? borrowed + tvl : null
-		const suppliedTvl = supplied && tvl != null ? Number((supplied / tvl).toFixed(2)) : null
+		const suppliedTvl = supplied && tvl != null ? supplied / tvl : null
 		const fees = sumMetricTotals({ rows: childProtocols, selector: (row) => row.fees })
 		const revenue = sumMetricTotals({ rows: childProtocols, selector: (row) => row.revenue })
 		const dexVolume = sumMetricTotals({ rows: childProtocols, selector: (row) => row.dexVolume })

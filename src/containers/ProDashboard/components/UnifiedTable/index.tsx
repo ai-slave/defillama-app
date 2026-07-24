@@ -3,6 +3,7 @@
 import type { ColumnOrderState, SortingState, VisibilityState } from '@tanstack/react-table'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { downloadCSV } from '~/utils/download'
+import { formatFixedNumber } from '~/utils/numberFormat'
 import { useProDashboardEditorActions, useProDashboardPermissions } from '../../ProDashboardAPIContext'
 import type { CustomColumnDefinition, TableFilters, UnifiedRowHeaderType, UnifiedTableConfig } from '../../types'
 import { DEFAULT_UNIFIED_TABLE_SORTING } from './constants'
@@ -195,7 +196,7 @@ const toCsvValue = (columnId: string, row: NormalizedRow, customColumns?: Custom
 			const value = evaluateExpression(customCol.expression, row.metrics)
 			if (value === null) return ''
 			if (customCol.format === 'percent') {
-				return value.toFixed(2)
+				return formatFixedNumber(value, 2)
 			}
 			return String(value)
 		}
@@ -210,7 +211,7 @@ const toCsvValue = (columnId: string, row: NormalizedRow, customColumns?: Custom
 	}
 
 	if (CSV_PERCENT_COLUMNS.has(columnId) && typeof value === 'number') {
-		return value.toFixed(2)
+		return formatFixedNumber(value, 2)
 	}
 
 	return typeof value === 'number' ? String(value) : ''

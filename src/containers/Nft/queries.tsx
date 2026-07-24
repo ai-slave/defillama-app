@@ -1,5 +1,6 @@
 import { formatBarChart } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS } from '~/constants/colors'
+import { roundNumber } from '~/utils/numberFormat'
 import {
 	fetchNftCollection,
 	fetchNftCollectionFloorHistory,
@@ -46,10 +47,10 @@ export const getNFTData = async (): Promise<NftDataResult> => {
 
 			return {
 				...collection,
-				volume1d: Number((volume?.['1DayVolume'] ?? 0).toFixed(2)),
-				volume7d: Number((volume?.['7DayVolume'] ?? 0).toFixed(2)),
-				volume30d: Number((volume?.['30DayVolume'] ?? 0).toFixed(2)),
-				sales1d: Number((volume?.['1DaySales'] ?? 0).toFixed(2))
+				volume1d: roundNumber(volume?.['1DayVolume'] ?? 0, 2),
+				volume7d: roundNumber(volume?.['7DayVolume'] ?? 0, 2),
+				volume30d: roundNumber(volume?.['30DayVolume'] ?? 0, 2),
+				sales1d: roundNumber(volume?.['1DaySales'] ?? 0, 2)
 			}
 		})
 

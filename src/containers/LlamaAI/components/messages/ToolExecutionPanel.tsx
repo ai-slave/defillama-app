@@ -3,6 +3,7 @@ import { ToolDataView } from '~/containers/LlamaAI/components/messages/ToolDataV
 import { getToolLabel, TOOL_ICONS } from '~/containers/LlamaAI/toolMetadata'
 import type { ToolExecution } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
+import { formatUsd, formatFixedNumber } from '~/utils/numberFormat'
 
 function createOccurrenceKeyFactory() {
 	const counts = new Map<string, number>()
@@ -22,13 +23,16 @@ function getToolExecutionKey(execution: ToolExecution) {
 
 const formatStepDuration = (ms: number): string => {
 	if (ms < 1000) return `${ms}ms`
-	if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
+	if (ms < 60000) return `${formatFixedNumber(ms / 1000, 1)}s`
 	const m = Math.floor(ms / 60000)
 	const s = Math.floor((ms % 60000) / 1000)
 	return `${m}m ${s}s`
 }
 
-const formatStepCost = (usd: number): string => (usd < 0.01 ? `$${usd.toFixed(3)}` : `$${usd.toFixed(2)}`)
+const formatStepCost = (usd: number): string => {
+	const fractionDigits = usd < 0.01 ? 3 : 2
+	return formatUsd(usd, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits })
+}
 
 export function ToolExecutionPanel({
 	toolExecutions,

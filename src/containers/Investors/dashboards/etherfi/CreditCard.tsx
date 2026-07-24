@@ -1,7 +1,7 @@
 import { lazy, useMemo } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { useEtherfiCashFeesCharts, useEtherfiCashMetrics, useEtherfiCashTvlChart } from './api'
 import { CardSkeleton, ChartCard, KpiCard, KpiSkeleton } from './ui'
 
@@ -54,10 +54,26 @@ export default function CreditCard() {
 		if (metricsLoading || tvlLoading) return null
 
 		return {
-			tvl: previousTvl != null ? formattedNum(previousTvl, true) : '—',
-			fees24h: fees?.total48hto24h != null ? formattedNum(fees.total48hto24h, true) : '—',
-			revenue24h: revenue?.total48hto24h != null ? formattedNum(revenue.total48hto24h, true) : '—',
-			inflows: previousInflow != null ? formattedNum(previousInflow, true) : '—'
+			tvl:
+				previousTvl != null
+					? formatUsd(previousTvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: '—',
+			fees24h:
+				fees?.total48hto24h != null
+					? formatUsd(fees.total48hto24h, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: '—',
+			revenue24h:
+				revenue?.total48hto24h != null
+					? formatUsd(revenue.total48hto24h, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})
+					: '—',
+			inflows:
+				previousInflow != null
+					? formatUsd(previousInflow, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: '—'
 		}
 	}, [fees, revenue, previousTvl, previousInflow, metricsLoading, tvlLoading])
 

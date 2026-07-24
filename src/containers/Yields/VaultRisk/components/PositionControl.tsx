@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { formatNumber } from '~/utils/numberFormat'
 
 // "Your deposit" — pro-rata scaling happens in the consumers; this only owns the amount.
 // Persisted globally (not per pool): your position size is a property of you.
@@ -81,7 +82,7 @@ export function PositionControl({
 	onChange: (v: number | null) => void
 }) {
 	const [draft, setDraft] = useState('')
-	useEffect(() => setDraft(position ? position.toLocaleString('en-US') : ''), [position])
+	useEffect(() => setDraft(position ? formatNumber(position) : ''), [position])
 
 	const commit = () => {
 		const v = parseAmount(draft)
@@ -116,7 +117,7 @@ export function PositionControl({
 						onBlur={commit}
 						onKeyDown={(e) => {
 							if (e.key === 'Enter') e.currentTarget.blur()
-							if (e.key === 'Escape') setDraft(position ? position.toLocaleString('en-US') : '')
+							if (e.key === 'Escape') setDraft(position ? formatNumber(position) : '')
 						}}
 						className="w-24 pr-2 pl-5 tabular-nums"
 					/>

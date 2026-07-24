@@ -1,4 +1,6 @@
 import { SERVER_URL, V2_SERVER_URL } from '~/constants'
+import { normalizeHack } from '~/containers/Hacks/model'
+import { normalizeRaisesApiItem } from '~/containers/Raises/model'
 import { fetchJson } from '~/utils/async'
 import type {
 	IProtocolChainBreakdownChart,
@@ -9,7 +11,8 @@ import type {
 	IProtocolValueChart,
 	IProtocolValueChartRaw,
 	IProtocolChartV2Params,
-	IProtocolMetricsV2
+	IProtocolMetricsV2,
+	IProtocolMetricsV2Api
 } from './api.types'
 
 const PROTOCOL_API_URL = `${SERVER_URL}/updatedProtocol`
@@ -66,7 +69,12 @@ const normalizeProtocolTokenBreakdownChart = (
  * Fetch aggregate TVL metrics for a protocol.
  */
 export const fetchProtocolOverviewMetrics = async (protocol: string): Promise<IProtocolMetricsV2> => {
-	return fetchJson<IProtocolMetricsV2>(`${V2_SERVER_URL}/metrics/tvl/protocol/${protocol}`)
+	const metrics = await fetchJson<IProtocolMetricsV2Api>(`${V2_SERVER_URL}/metrics/tvl/protocol/${protocol}`)
+	return {
+		...metrics,
+		hacks: metrics.hacks?.map(normalizeHack),
+		raises: metrics.raises?.map(normalizeRaisesApiItem)
+	}
 }
 
 /**

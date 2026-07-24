@@ -2,7 +2,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
-import { formattedNum } from '~/utils'
+import { formatCompactNumber } from '~/utils/numberFormat'
 
 const COLOR_MAP = {
 	green: { dark: '#3fb84f', light: '#008a13' },
@@ -124,7 +124,11 @@ export function SmolLineChart({
 									backgroundColor: stroke
 								}}
 							/>
-							${formattedNum(series[hoveredIndex][1])}
+							$
+							{formatCompactNumber(series[hoveredIndex][1], {
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 						</p>
 					</div>
 				) : null}

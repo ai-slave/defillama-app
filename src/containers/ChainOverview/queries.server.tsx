@@ -15,7 +15,7 @@ import { getChainIncentivesFromAggregatedEmissions } from '~/containers/Incentiv
 import type { ChainIncentivesSummary } from '~/containers/Incentives/types'
 import { getProtocolsByChain } from '~/containers/ProtocolRankings/queries.server'
 import { fetchRaises } from '~/containers/Raises/api'
-import type { RawRaisesResponse } from '~/containers/Raises/api.types'
+import type { RaisesResponse } from '~/containers/Raises/model'
 import { fetchRWAStats } from '~/containers/RWA/api'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
@@ -25,7 +25,7 @@ import { getStablecoinChainMcapSummary } from '~/containers/Stablecoins/queries.
 import { fetchTreasuries } from '~/containers/Treasuries/api'
 import type { RawTreasuriesResponse } from '~/containers/Treasuries/api.types'
 import { feeRevenueMetrics, shouldFetchChainOverviewFeeRevenueMetric } from '~/metrics/feesRevenue'
-import { getPercentChange, getPrevTvlFromChart, lastDayOfWeek, slug } from '~/utils'
+import { getPercentChange, lastDayOfWeek, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
 import type {
@@ -34,10 +34,12 @@ import type {
 	IProtocolMetadata,
 	ProtocolLlamaswapMetadata
 } from '~/utils/metadata/types'
+import { roundNumber } from '~/utils/numberFormat'
 import { recordOptionalPageDataFailure } from '~/utils/optionalPageData'
 import type { RoutePhaseTimer } from '~/utils/perf'
 import { findTokenPageRoute, type TokenDirectory } from '~/utils/tokenDirectory'
 import { applyTvlOverlapBaseAdjustment } from '~/utils/tvl'
+import { getPrevTvlFromChart } from '~/utils/tvlChart'
 import type { ChainChartLabels } from './constants'
 import { fetchHomepageUnlocksSummary } from './homepageUnlocks.server'
 import type { IChainOverviewData, ILiteChart } from './types'
@@ -261,7 +263,7 @@ export async function getChainOverviewData({
 			number | null,
 			number | null,
 			number | null,
-			RawRaisesResponse,
+			RaisesResponse,
 			RawTreasuriesResponse | null,
 			CoinGeckoCoinDetailResult,
 			Record<string, number> | null,
@@ -663,7 +665,7 @@ export async function getChainOverviewData({
 				total7d: dexs?.total7d ?? null,
 				change_7dover7d: dexs?.change_7dover7d ?? null,
 				dexsDominance:
-					cexVolume && dexs?.total24h ? +((dexs.total24h / (cexVolume + dexs.total24h)) * 100).toFixed(2) : null,
+					cexVolume && dexs?.total24h ? roundNumber((dexs.total24h / (cexVolume + dexs.total24h)) * 100, 2) : null,
 				chart: dexs ? dexs.totalDataChart.slice(-14).map((x) => [x[0] * 1000, x[1]]) : null
 			},
 			perps: {

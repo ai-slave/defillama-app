@@ -13,8 +13,8 @@ import { components } from 'react-select'
 import { ReactSelect } from '~/components/MultiSelect/ReactSelect'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { normalizeProTokenSymbols } from '~/containers/ProDashboard/tableQueryKeys'
-import { formattedNum } from '~/utils'
 import { download } from '~/utils/download'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { reactSelectStyles } from '../../../utils/reactSelectStyles'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
@@ -294,7 +294,9 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 				<div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
 					<div className="border border-subtle p-3">
 						<div className="mb-1 text-xs text-pro-text-tertiary">Total Value</div>
-						<div className="text-lg font-semibold text-pro-text-primary">{formattedNum(totalAmount, true)}</div>
+						<div className="text-lg font-semibold text-pro-text-primary">
+							{formatUsd(totalAmount, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+						</div>
 					</div>
 					<div className="border border-subtle p-3">
 						<div className="mb-1 text-xs text-pro-text-tertiary">Protocols</div>
@@ -312,7 +314,13 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 					<div className="border border-subtle p-3">
 						<div className="mb-1 text-xs text-pro-text-tertiary">Avg per Protocol</div>
 						<div className="text-lg font-semibold text-pro-text-primary">
-							{protocolCount > 0 ? formattedNum(totalAmount / protocolCount, true) : '-'}
+							{protocolCount > 0
+								? formatUsd(totalAmount / protocolCount, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})
+								: '-'}
 						</div>
 					</div>
 				</div>
@@ -323,7 +331,13 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 							<div key={symbol} className="border border-subtle p-3">
 								<div className="mb-1 text-xs text-pro-text-tertiary">{symbol.toUpperCase()} Value</div>
 								<div className="text-lg font-semibold text-pro-text-primary">
-									{tokenStats && tokenStats[symbol] ? formattedNum(tokenStats[symbol].total, true) : '$0'}
+									{tokenStats && tokenStats[symbol]
+										? formatUsd(tokenStats[symbol].total, {
+												compact: true,
+												minimumCompactValue: 1_000_000,
+												compactSuffix: 'lowercase'
+											})
+										: '$0'}
 								</div>
 								<div className="text-xs text-pro-text-tertiary">
 									{tokenStats && tokenStats[symbol] ? `${tokenStats[symbol].protocols} protocols` : '0 protocols'}
@@ -333,7 +347,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 										<span className="text-xs text-pro-text-tertiary">Share</span>
 										<span className="text-xs font-medium">
 											{tokenStats && tokenStats[symbol] && totalAmount > 0
-												? `${((tokenStats[symbol].total / totalAmount) * 100).toFixed(1)}%`
+												? `${formatPercent(tokenStats[symbol].total / totalAmount, { input: 'fraction', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
 												: '0%'}
 										</span>
 									</div>
@@ -356,7 +370,13 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 						{tokenSymbols.length <= 2 ? (
 							<div className="border border-subtle p-3">
 								<div className="mb-1 text-xs text-pro-text-tertiary">Total Combined</div>
-								<div className="text-lg font-semibold text-pro-text-primary">{formattedNum(totalAmount, true)}</div>
+								<div className="text-lg font-semibold text-pro-text-primary">
+									{formatUsd(totalAmount, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</div>
 								<div className="text-xs text-pro-text-tertiary">All tokens</div>
 							</div>
 						) : null}
@@ -383,7 +403,13 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 										<span className="text-pro-text-tertiary"> shared</span>
 										<span className="text-xs text-pro-text-tertiary">
 											{' '}
-											({((protocolOverlap.shared / protocolCount) * 100).toFixed(0)}%)
+											(
+											{formatPercent(protocolOverlap.shared / protocolCount, {
+												input: 'fraction',
+												maximumFractionDigits: 0,
+												useGrouping: false
+											})}
+											)
 										</span>
 									</span>
 								</div>

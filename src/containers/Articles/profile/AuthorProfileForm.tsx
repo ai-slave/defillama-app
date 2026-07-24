@@ -13,6 +13,7 @@ import type { ArticleAuthorProfile } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Icon } from '~/ui/Icon'
+import { formatNumber } from '~/utils/numberFormat'
 
 const DISPLAY_NAME_MAX = 120
 const SLUG_MAX = 60
@@ -141,7 +142,7 @@ function CharCount({ value, max }: { value: string; max: number }) {
 	const near = len >= Math.floor(max * 0.9)
 	return (
 		<span className={`text-[11px] tabular-nums ${near ? 'text-warning' : 'text-tertiary'}`}>
-			{len.toLocaleString()}/{max.toLocaleString()}
+			{formatNumber(len)}/{formatNumber(max)}
 		</span>
 	)
 }

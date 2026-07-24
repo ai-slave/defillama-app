@@ -1,14 +1,19 @@
 /** Typed Raises reads and pure lookups over the current immutable snapshot. */
-import type { RawRaise, RawRaisesResponse } from '~/containers/Raises/api.types'
+import type { RaisesApiResponse } from '~/containers/Raises/api.types'
+import { normalizeRaisesApiResponse, type Raise, type RaisesResponse } from '~/containers/Raises/model'
 import { DATASET_SNAPSHOT_CONTRACT } from '~/server/datasetSnapshots/contract'
 import { datasetSnapshotReader } from '~/server/datasetSnapshots/reader.server'
 import { findRaisesByDefillamaId } from './dataset.transform'
 
-export async function fetchRaisesByDefillamaId(defillamaId: string): Promise<RawRaise[]> {
+export async function fetchRaisesByDefillamaId(defillamaId: string): Promise<Raise[]> {
 	const response = await fetchRaises()
 	return findRaisesByDefillamaId(response, defillamaId)
 }
 
-export function fetchRaises(): Promise<RawRaisesResponse> {
-	return datasetSnapshotReader.readJson<RawRaisesResponse>('raises', DATASET_SNAPSHOT_CONTRACT.raises.files.full)
+export async function fetchRaises(): Promise<RaisesResponse> {
+	const response = await datasetSnapshotReader.readJson<RaisesApiResponse>(
+		'raises',
+		DATASET_SNAPSHOT_CONTRACT.raises.files.full
+	)
+	return normalizeRaisesApiResponse(response)
 }

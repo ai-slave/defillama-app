@@ -3,7 +3,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { formatVerified } from '../format'
 import { ExternalLink } from '../primitives/ExternalLink'
 import { EASE_OUT_EXPO, useInViewOnce } from '../primitives/motion'
@@ -110,11 +110,11 @@ function classificationContext(c: string): string {
 // One dollar sentence, shared by both lanes.
 function moneyStory(usdLost: number, usdRecovered: number, madeWhole: boolean): string {
 	if (usdLost <= 0 && usdRecovered > 0) {
-		return `${formattedNum(usdRecovered, true)} returned before depositors lost anything`
+		return `${formatUsd(usdRecovered, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} returned before depositors lost anything`
 	}
-	return `${formattedNum(usdLost, true)} lost${
+	return `${formatUsd(usdLost, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} lost${
 		usdRecovered > 0
-			? `, ${formattedNum(usdRecovered, true)} recovered${madeWhole ? ' (made whole)' : ''}`
+			? `, ${formatUsd(usdRecovered, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} recovered${madeWhole ? ' (made whole)' : ''}`
 			: ', not recovered'
 	}`
 }

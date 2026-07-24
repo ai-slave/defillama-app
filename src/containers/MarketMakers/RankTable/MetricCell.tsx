@@ -1,3 +1,4 @@
+import { formatPercent } from '~/utils/numberFormat'
 import type { DisplayMode } from '../constants'
 import { formatMarketPct, formatMetricValue, type MetricFormatKind } from '../format'
 import type { Metric } from '../types'
@@ -11,7 +12,7 @@ interface IProps {
 }
 
 function roundPct(value: number | null | undefined): string {
-	return value == null ? 'N/A' : `${Math.round(value)}%`
+	return value == null ? 'N/A' : formatPercent(value, { input: 'percent', maximumFractionDigits: 0 })
 }
 
 export function MetricCell({ metric, market, mode, kind }: IProps) {

@@ -3,6 +3,7 @@ import { EditorContent, type Editor } from '@tiptap/react'
 import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
+import { formatNumber } from '~/utils/numberFormat'
 import type { ArticleCalloutTone } from '../types'
 import {
 	RailButton,
@@ -541,7 +542,7 @@ export function ArticleEditorCanvas({
 						<RailDivider />
 
 						<div className="hidden shrink-0 items-center gap-3 px-2 font-jetbrains text-[10px] tracking-wider whitespace-nowrap text-tertiary uppercase md:flex">
-							<span>{wordCount.toLocaleString()} words</span>
+							<span>{formatNumber(wordCount)} words</span>
 							<span aria-hidden className="h-3 w-px bg-border-medium" />
 							<span>{readMins} min</span>
 						</div>

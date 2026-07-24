@@ -1,6 +1,6 @@
 import type { ILiteProtocol } from '~/containers/ProtocolRankings/types'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
-import { formatNum, getPercentChange, keepNeededProperties } from '~/utils'
+import { getPercentChange, keepNeededProperties } from '~/utils'
 import type { ProtocolsResponse } from './api.types'
 import type { IFormattedProtocol } from './protocol-table.types'
 
@@ -164,7 +164,7 @@ export const formatProtocolsData = ({
 			p.change_1d = getPercentChange(p.tvl, p.tvlPrevDay)
 			p.change_7d = getPercentChange(p.tvl, p.tvlPrevWeek)
 			p.change_1m = getPercentChange(p.tvl, p.tvlPrevMonth)
-			p.mcaptvl = protocol.mcap != null && p.tvl != null ? +(formatNum(protocol.mcap / (p.tvl as number)) ?? 0) : null
+			p.mcaptvl = protocol.mcap != null && p.tvl != null ? protocol.mcap / (p.tvl as number) : null
 
 			final = [...final, p]
 		}

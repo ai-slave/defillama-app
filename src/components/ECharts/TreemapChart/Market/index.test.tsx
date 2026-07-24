@@ -41,7 +41,8 @@ vi.mock('~/hooks/useChartResize', () => ({
 }))
 
 vi.mock('~/utils', () => ({
-	formattedNum: (value: number) => String(value)
+	formatPercentChange: () => '+1.50%',
+	formatUsd: (value: number) => String(value)
 }))
 
 vi.mock('~/utils/icons', () => ({

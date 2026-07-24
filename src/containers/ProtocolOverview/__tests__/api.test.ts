@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchProtocolTreasuryChart, fetchProtocolTvlChart } from '../api'
+import { fetchProtocolOverviewMetrics, fetchProtocolTreasuryChart, fetchProtocolTvlChart } from '../api'
 
 const fetchJsonMock = vi.hoisted(() => vi.fn())
 
@@ -31,6 +31,50 @@ describe('ProtocolOverview API chart fetchers', () => {
 			[1000, 10],
 			[2000, 20]
 		])
+	})
+
+	it('keeps embedded hack amounts in whole USD and gives them explicit domain names', async () => {
+		fetchJsonMock.mockResolvedValue({
+			id: 'aave',
+			raises: [
+				{
+					date: 1_737_331_200,
+					name: 'Aave',
+					round: 'Series A',
+					amount: 16,
+					chains: ['Ethereum'],
+					sector: 'DeFi',
+					category: 'Lending',
+					categoryGroup: 'DeFi',
+					leadInvestors: [],
+					otherInvestors: [],
+					valuation: '300'
+				}
+			],
+			hacks: [
+				{
+					date: 1_773_273_600,
+					name: 'Aave V3',
+					classification: 'Protocol Logic',
+					technique: null,
+					amount: 862_000,
+					chain: ['Ethereum'],
+					bridgeHack: false,
+					targetType: 'DeFi Protocol',
+					returnedFunds: 862_000,
+					defillamaId: '1599',
+					language: null
+				}
+			]
+		})
+
+		const result = await fetchProtocolOverviewMetrics('aave')
+
+		expect(result.hacks?.[0]).toMatchObject({ amountUsd: 862_000, returnedFundsUsd: 862_000 })
+		expect(result.hacks?.[0]).not.toHaveProperty('amount')
+		expect(result.raises?.[0]).toMatchObject({ amountUsd: 16_000_000, valuationUsd: 300_000_000 })
+		expect(result.raises?.[0]).not.toHaveProperty('amount')
+		expect(result.raises?.[0]).not.toHaveProperty('valuation')
 	})
 
 	it('fetches and normalizes TVL chain breakdown charts from the TVL namespace', async () => {

@@ -2,9 +2,8 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import utc from 'dayjs/plugin/utc'
 import { CHART_COLORS } from '~/constants/colors'
-import { renderPercentChange } from '~/ui/PercentChange'
 import { fetchJson } from './async'
-export { getPrevTvlFromChart } from './tvlChart'
+import { formatNumber } from './numberFormat'
 
 dayjs.extend(utc)
 dayjs.extend(relativeTime)
@@ -67,243 +66,6 @@ export const toNiceCsvDate = (date: number): string => {
 export const toNiceDateYear = (date: number): string => dayjs.utc(dayjs.unix(date)).format('MMMM DD, YYYY')
 
 export const toNiceDayMonthYear = (date: number): string => dayjs.utc(dayjs.unix(date)).format('DD MMM YYYY')
-
-const toK = (num: number): string => {
-	if ((!num && num !== 0) || Number.isNaN(Number(num))) {
-		return '0'
-	}
-
-	const stringifiedNum = Number(num).toFixed(0)
-	const len = stringifiedNum.length
-
-	if (len >= 4 && len <= 6) {
-		return (+stringifiedNum / 1_000).toLocaleString('en-US', { maximumFractionDigits: 2 }) + 'k'
-	}
-
-	if (len >= 7 && len <= 9) {
-		return (+stringifiedNum / 1_000_000).toLocaleString('en-US', { maximumFractionDigits: 2 }) + 'm'
-	}
-
-	if (len >= 10 && len <= 12) {
-		return (+stringifiedNum / 1_000_000_000).toLocaleString('en-US', { maximumFractionDigits: 3 }) + 'b'
-	}
-
-	if (len > 12) {
-		return (+stringifiedNum / 1_000_000_000_000).toLocaleString('en-US', { maximumFractionDigits: 3 }) + 't'
-	}
-
-	return num.toLocaleString('en-US', {
-		maximumFractionDigits: num > 0.1 ? 1 : num > 0.01 ? 2 : num > 0.0001 ? 3 : 5
-	})
-}
-
-function appendSymbol(value: string | null | undefined, symbol: string | undefined): string | null | undefined {
-	if (!value || !symbol) return value
-
-	if (symbol === '$') {
-		return value.startsWith('-') ? `-$${value.substring(1)}` : `$${value}`
-	}
-
-	if (symbol === '%') {
-		return `${value}%`
-	}
-
-	return `${value} ${symbol}`
-}
-
-const toNumericContext = (value: unknown): { numValue: number; stringValue: string } => ({
-	numValue: Number(value),
-	stringValue: typeof value === 'number' ? value.toString() : String(value)
-})
-
-type NumberFormatMode = 'standard' | 'compact'
-
-const ABBREVIATION_SCALES = [
-	{ threshold: 1_000_000_000_000, divisor: 1_000_000_000_000, suffix: 'T' },
-	{ threshold: 1_000_000_000, divisor: 1_000_000_000, suffix: 'B' },
-	{ threshold: 1_000_000, divisor: 1_000_000, suffix: 'M' },
-	{ threshold: 1_000, divisor: 1_000, suffix: 'K' }
-] as const
-
-const formatNumberCore = (value: unknown, maxDecimals?: number, mode: NumberFormatMode = 'standard'): string => {
-	if (!value && value !== 0) return '0'
-	const { numValue, stringValue } = toNumericContext(value)
-	if (Number.isNaN(numValue) || !Number.isFinite(numValue)) {
-		return Number.isNaN(numValue) ? '0' : String(numValue)
-	}
-
-	if (mode === 'compact' && Math.abs(numValue) >= 1000) {
-		const isNegative = numValue < 0
-		const absValue = Math.abs(numValue)
-		const resolvedMaxDecimals = maxDecimals ?? 2
-
-		let scaleIndex = ABBREVIATION_SCALES.findIndex((scale) => absValue >= scale.threshold)
-		if (scaleIndex === -1) {
-			return formatNumberCore(value, maxDecimals, 'standard')
-		}
-
-		let scale = ABBREVIATION_SCALES[scaleIndex]
-		let scaledValue = absValue / scale.divisor
-		let formattedScaled = formatNumberCore(scaledValue, resolvedMaxDecimals, 'standard')
-
-		// If rounding pushes 999.99K -> 1000K, promote to next suffix.
-		while (Number(formattedScaled) >= 1000 && scaleIndex > 0) {
-			scaleIndex -= 1
-			scale = ABBREVIATION_SCALES[scaleIndex]
-			scaledValue = absValue / scale.divisor
-			formattedScaled = formatNumberCore(scaledValue, resolvedMaxDecimals, 'standard')
-		}
-
-		const result = `${formattedScaled}${scale.suffix}`
-		return isNegative ? `-${result}` : result
-	}
-
-	// Handle scientific notation
-	let processedValue: string = stringValue
-	const isScientificNotation = processedValue.includes('e') || processedValue.includes('E')
-
-	if (isScientificNotation) {
-		// Convert to fixed decimal string with enough precision
-		processedValue = numValue.toFixed(20).replace(/\.?0+$/, '')
-	}
-
-	const [num, decimals] = processedValue.split('.')
-
-	if (!decimals) return num
-
-	if (decimals?.startsWith('999')) {
-		return numValue.toLocaleString('en-US', { maximumFractionDigits: 2 })
-	}
-
-	if (decimals?.startsWith('0000000000')) {
-		return numValue.toFixed(0)
-	}
-
-	if (maxDecimals !== undefined) {
-		const decimalsToShow = decimals.substring(0, maxDecimals)
-		// Check if all digits are zeros
-		let allZeros = true
-		for (let i = 0; i < decimalsToShow.length; i++) {
-			if (decimalsToShow[i] !== '0') {
-				allZeros = false
-				break
-			}
-		}
-		// If all decimal digits are zeros, return without decimal point
-		if (allZeros) {
-			return num
-		}
-		return num + '.' + decimalsToShow
-	}
-
-	// No maxDecimals provided - default behavior
-	const absValue = Math.abs(numValue)
-	const isLessThanPointOne = absValue > 0 && absValue < 0.1
-
-	// Count leading zeros (needed for determining decimal places)
-	let leadingZeros = 0
-	for (let i = 0; i < decimals.length; i++) {
-		if (decimals[i] === '0') {
-			leadingZeros++
-		} else {
-			break
-		}
-	}
-
-	if (isLessThanPointOne) {
-		// If 3 or more zeros, return "0"
-		if (leadingZeros >= 3) {
-			return '0'
-		}
-
-		// Only show all digits if there are exactly 2 leading zeros AND the decimal is short (like 0.002, 0.001)
-		// For longer decimals or 1 leading zero, show max 2 decimals (like 0.008, 0.07)
-		if (leadingZeros === 2 && decimals.length <= 4) {
-			// For very small numbers < 0.1 with exactly 2 leading zeros and short decimals, show all digits
-			return num + '.' + decimals
-		}
-		// Fall through to max 2 decimals logic below
-	}
-
-	// For numbers >= 0.1 but < 1, or >= 1, show max 2 decimals
-	// For numbers < 0.1, show 3 decimals only if there are 2 leading zeros (to get 0.008), otherwise 2 decimals
-	const maxDecimalsToShow = absValue < 0.1 && leadingZeros === 2 ? 3 : 2
-	const decimalsToShow = decimals.substring(0, maxDecimalsToShow)
-
-	// Remove trailing zeros
-	let endIndex = decimalsToShow.length
-	while (endIndex > 0 && decimalsToShow[endIndex - 1] === '0') {
-		endIndex--
-	}
-
-	if (endIndex === 0) {
-		return num
-	}
-
-	return num + '.' + decimalsToShow.substring(0, endIndex)
-}
-
-export const formatNum = (value: unknown, maxDecimals?: number, symbol?: string): string | null | undefined => {
-	return appendSymbol(formatNumberCore(value, maxDecimals, 'standard'), symbol)
-}
-
-export const abbreviateNumber = (
-	value: unknown,
-	maxDecimals?: number | null,
-	symbol?: string
-): string | null | undefined => {
-	if (value == null) return null
-	return appendSymbol(formatNumberCore(value, maxDecimals ?? undefined, 'compact'), symbol)
-}
-
-export const formattedNum = (number: unknown, symbol: boolean | string = false): string => {
-	let currencySymbol: string
-	if (symbol === true) {
-		currencySymbol = '$'
-	} else if (symbol === false) {
-		currencySymbol = ''
-	} else {
-		currencySymbol = symbol
-	}
-
-	if (number === '' || number == null || Number.isNaN(Number(number))) {
-		return symbol ? `${currencySymbol}0` : `0`
-	}
-	let num = Number(number)
-	const isNegative = num < 0
-	num = Math.abs(num)
-
-	const currencyMark = isNegative ? `-${currencySymbol}` : currencySymbol
-	const normalMark = isNegative ? '-' : ''
-
-	if (num >= 1_000_000) {
-		return `${symbol ? currencyMark : normalMark}${toK(num)}`
-	}
-
-	if (num === 0) {
-		return symbol ? `${currencySymbol}0` : `0`
-	}
-
-	if (num < 0.0001 && num > 0) {
-		return symbol ? `< ${currencySymbol}0.0001` : '< 0.0001'
-	}
-
-	if (num > 1_000) {
-		return symbol
-			? `${currencyMark}${Number(num.toFixed(0)).toLocaleString('en-US')}`
-			: `${normalMark}${Number(num.toFixed(0)).toLocaleString('en-US')}`
-	}
-
-	if (symbol) {
-		return `${currencyMark}${num.toLocaleString('en-US', {
-			maximumFractionDigits: num > 0.1 ? 2 : num > 0.01 ? 3 : num > 0.0001 ? 4 : 5
-		})}`
-	}
-
-	return `${normalMark}${num.toLocaleString('en-US', {
-		maximumFractionDigits: num > 0.1 ? 2 : num > 0.01 ? 3 : num > 0.0001 ? 4 : 5
-	})}`
-}
 
 /**
  * get standard percent change between two values
@@ -496,7 +258,7 @@ export const getTokenDominance = (
 	const dominance = topToken.tvl && totalVolume && (topToken.tvl / totalVolume) * 100.0
 	if (!dominance) return null
 	if (dominance < 100) {
-		return dominance.toFixed(2)
+		return formatNumber(dominance)
 	} else return 100
 }
 
@@ -513,22 +275,6 @@ export const getPrevVolumeFromChart = (
 		return prevChart.Deposits - prevChart.Withdrawals
 	}
 	return txs ? prevChart.txs : prevChart.volume
-}
-
-export const formatPercentage = (value: number): string => {
-	let zeroes = 0
-	let stop = false
-
-	const decimals = value.toString().split('.')?.[1]?.slice(0, 5)?.split('') ?? []
-	for (const x of decimals) {
-		if (!stop && x === '0') {
-			zeroes += 1
-		} else {
-			stop = true
-		}
-	}
-
-	return value.toLocaleString(undefined, { maximumFractionDigits: zeroes + 1 })
 }
 
 export function firstDayOfMonth(utcTimestamp: number): number {
@@ -655,36 +401,11 @@ export function roundToNearestHalfHour(timestamp: number): number {
 	return Math.floor(timestamp / 1800) * 1800
 }
 
-export function formatValue(value: unknown, formatType: string = 'auto'): string | null {
-	switch (formatType) {
-		case 'usd':
-			return formattedNum(value, true)
-		case 'number':
-			return formattedNum(value)
-		case 'percent': {
-			const num = typeof value === 'number' ? value : Number(value)
-			if (!Number.isNaN(num) && num !== 0 && Math.abs(num) < 1) {
-				return renderPercentChange(num * 100, true, 400, true)
-			}
-			return renderPercentChange(value, true, 400, true)
-		}
-		case 'auto':
-		default: {
-			const num = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN
-			if (!Number.isNaN(num)) {
-				if (num !== 0 && Math.abs(num) < 1) return renderPercentChange(num * 100, true, 400, true)
-				if (Math.abs(num) > 1000) return formattedNum(num, true)
-				return formattedNum(num)
-			}
-			return typeof value === 'string' ? value : String(value)
-		}
-	}
-}
 export const getMarketCapToAnnualizedMetricRatio = (marketCap?: number | null, annualizedMetric?: number | null) => {
 	if (marketCap == null || annualizedMetric == null || annualizedMetric === 0) {
 		return null
 	}
-	return Number((marketCap / annualizedMetric).toFixed(2))
+	return marketCap / annualizedMetric
 }
 
 /** 0x1234ab...cdef display form; returns short values unchanged. */

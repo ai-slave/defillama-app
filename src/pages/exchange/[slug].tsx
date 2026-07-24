@@ -86,9 +86,9 @@ async function enrichExchangeProfile(profile: ExchangeProfileModel): Promise<Exc
 					.map((hack) => ({
 						date: hack.date,
 						name: hack.name,
-						amountUsd: hack.amount,
+						amountUsd: hack.amountUsd,
 						technique: hack.technique,
-						returnedFundsUsd: hack.returnedFunds
+						returnedFundsUsd: hack.returnedFundsUsd
 					}))
 					.toSorted((a, b) => (b.date ?? 0) - (a.date ?? 0))
 			: [],
@@ -98,8 +98,8 @@ async function enrichExchangeProfile(profile: ExchangeProfileModel): Promise<Exc
 					.map((raise) => ({
 						date: raise.date,
 						round: raise.round,
-						amountUsd: raise.amount == null ? null : raise.amount * 1_000_000,
-						valuationUsd: raise.valuation == null ? null : raise.valuation * 1_000_000,
+						amountUsd: raise.amountUsd,
+						valuationUsd: raise.valuationUsd,
 						investors: [...(raise.leadInvestors ?? []), ...(raise.otherInvestors ?? [])],
 						sourceUrl: raise.source || null
 					}))

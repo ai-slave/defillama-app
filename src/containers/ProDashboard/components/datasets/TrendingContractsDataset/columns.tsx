@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { PercentChange } from '~/ui/PercentChange'
+import { formatNumber } from '~/utils/numberFormat'
 
 interface ITrendingContracts {
 	accounts_percentage_growth: number
@@ -49,7 +50,7 @@ export const trendingContractsColumns = (chain: string): ColumnDef<ITrendingCont
 		header: 'Transactions',
 		accessorKey: 'txns',
 		size: 120,
-		cell: ({ getValue }) => <span className="text-pro-text-primary">{(getValue() as number).toLocaleString()}</span>
+		cell: ({ getValue }) => <span className="text-pro-text-primary">{formatNumber(getValue() as number)}</span>
 	},
 	{
 		header: 'Tx Growth',
@@ -68,7 +69,7 @@ export const trendingContractsColumns = (chain: string): ColumnDef<ITrendingCont
 		header: 'Active Accounts',
 		accessorKey: 'active_accounts',
 		size: 140,
-		cell: ({ getValue }) => <span className="text-pro-text-primary">{(getValue() as number).toLocaleString()}</span>
+		cell: ({ getValue }) => <span className="text-pro-text-primary">{formatNumber(getValue() as number)}</span>
 	},
 	{
 		header: 'Account Growth',
@@ -87,7 +88,7 @@ export const trendingContractsColumns = (chain: string): ColumnDef<ITrendingCont
 		header: 'Gas Spent',
 		accessorKey: 'gas_spend',
 		size: 120,
-		cell: ({ getValue }) => <span className="text-pro-text-primary">{(getValue() as number)?.toFixed(2)} ETH</span>
+		cell: ({ getValue }) => <span className="text-pro-text-primary">{formatNumber(getValue() as number)} ETH</span>
 	},
 	{
 		header: 'Gas Growth',

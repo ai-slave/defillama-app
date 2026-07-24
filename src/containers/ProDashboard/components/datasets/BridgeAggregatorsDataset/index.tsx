@@ -15,6 +15,7 @@ import {
 import * as React from 'react'
 import { useTableSearch } from '~/components/Table/utils'
 import { downloadCSV } from '~/utils/download'
+import { formatFixedNumber } from '~/utils/numberFormat'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
@@ -154,7 +155,7 @@ export function BridgeAggregatorsDataset({ chains }: { chains?: string[] }) {
 										return [
 											item.name,
 											item.total24h,
-											percentage.toFixed(2),
+											formatFixedNumber(percentage, 2),
 											item.total7d,
 											item.total30d,
 											cumulative,

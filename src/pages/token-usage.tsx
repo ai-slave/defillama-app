@@ -46,7 +46,7 @@ import {
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
@@ -311,7 +311,8 @@ const columns = [
 	}),
 	columnHelper.accessor('amountUsd', {
 		header: 'Amount',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'

@@ -12,6 +12,7 @@ import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
+import { formatNumber } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { ICollectionScatterChartProps, IOrderBookChartProps } from './types'
 
@@ -84,9 +85,9 @@ export function NFTCollectionContainer() {
 						) : null}
 					</h1>
 
-					<StatItem label="Floor Price" value={floorPrice != null ? floorPrice.toFixed(2) + ' ETH' : ''} />
+					<StatItem label="Floor Price" value={floorPrice != null ? `${formatNumber(floorPrice)} ETH` : ''} />
 
-					<StatItem label="24h Volume" value={volume24h != null ? volume24h.toFixed(2) + ' ETH' : ''} />
+					<StatItem label="24h Volume" value={volume24h != null ? `${formatNumber(volume24h)} ETH` : ''} />
 
 					<StatItem label="Total Supply" value={primaryCollection?.totalSupply} />
 

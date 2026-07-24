@@ -21,7 +21,7 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback } fro
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
-import { formatNum, getPercentChange } from '~/utils'
+import { getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import { ChainsByCategoryTable } from './Table'
@@ -388,8 +388,7 @@ export const useGroupAndFormatChains = ({
 					change_1d,
 					change_7d,
 					change_1m,
-					mcaptvl:
-						chain.mcap != null && finalTvl != null ? +formatNum(+chain.mcap.toFixed(2) / +finalTvl.toFixed(2)) : null
+					mcaptvl: chain.mcap != null && finalTvl != null ? chain.mcap / finalTvl : null
 				}
 			})
 			.filter((chain) => (minTvl != null ? chain.tvl >= minTvl : true) && (maxTvl != null ? chain.tvl <= maxTvl : true))
@@ -547,7 +546,7 @@ export const useGroupAndFormatChains = ({
 			const change_1d = getPercentChange(tvl, tvlPrevDay)
 			const change_7d = getPercentChange(tvl, tvlPrevWeek)
 			const change_1m = getPercentChange(tvl, tvlPrevMonth)
-			const mcaptvl = mcap && tvl ? +formatNum(+mcap.toFixed(2) / +tvl.toFixed(2)) : null
+			const mcaptvl = mcap && tvl ? mcap / tvl : null
 
 			chainsTableData.push({
 				...chain,

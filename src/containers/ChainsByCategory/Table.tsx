@@ -29,7 +29,8 @@ import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatRatio, formatUsd, formatCompactNumber, roundNumber } from '~/utils/numberFormat'
 import type { IFormattedDataWithExtraTvl } from './types'
 
 const optionsKey = 'chains-overview-table-columns'
@@ -297,7 +298,10 @@ const columns = [
 	}),
 	columnHelper.accessor('tvl', {
 		header: 'DeFi TVL',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -336,7 +340,7 @@ const columns = [
 			const total = row.chainAssets?.total
 			if (total == null) return undefined
 			const raw = typeof total === 'object' ? (total as { total: string }).total : String(total)
-			return raw ? +(+raw).toFixed(2) : undefined
+			return raw ? roundNumber(+raw, 2) : undefined
 		},
 		{
 			id: 'chainAssets',
@@ -358,25 +362,49 @@ const columns = [
 						{normalizedChainAssets.native ? (
 							<div className="flex items-center justify-between gap-1">
 								<span>Native:</span>
-								<span>{formattedNum(+normalizedChainAssets.native, true)}</span>
+								<span>
+									{formatUsd(+normalizedChainAssets.native, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 							</div>
 						) : null}
 						{normalizedChainAssets.canonical ? (
 							<div className="flex items-center justify-between gap-1">
 								<span>Canonical:</span>
-								<span>{formattedNum(+normalizedChainAssets.canonical, true)}</span>
+								<span>
+									{formatUsd(+normalizedChainAssets.canonical, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 							</div>
 						) : null}
 						{normalizedChainAssets.ownTokens ? (
 							<div className="flex items-center justify-between gap-1">
 								<span>Own Tokens:</span>
-								<span>{formattedNum(+normalizedChainAssets.ownTokens, true)}</span>
+								<span>
+									{formatUsd(+normalizedChainAssets.ownTokens, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 							</div>
 						) : null}
 						{normalizedChainAssets.thirdParty ? (
 							<div className="flex items-center justify-between gap-1">
 								<span>Third Party:</span>
-								<span>{formattedNum(+normalizedChainAssets.thirdParty, true)}</span>
+								<span>
+									{formatUsd(+normalizedChainAssets.thirdParty, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
 							</div>
 						) : null}
 					</div>
@@ -384,7 +412,11 @@ const columns = [
 
 				return (
 					<Tooltip content={chainAssetsBreakdown} className="justify-end">
-						{formattedNum(+normalizedChainAssets.total, true)}
+						{formatUsd(+normalizedChainAssets.total, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					</Tooltip>
 				)
 			},
@@ -397,7 +429,10 @@ const columns = [
 	),
 	columnHelper.accessor('stablesMcap', {
 		header: 'Stables MCap',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end',
@@ -407,7 +442,10 @@ const columns = [
 	columnHelper.accessor('dexVolume24h', {
 		header: '24h DEXs Volume',
 		enableSorting: true,
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[152px]',
 			align: 'end',
@@ -417,7 +455,10 @@ const columns = [
 	columnHelper.accessor('fees24h', {
 		header: `24h Chain Fees`,
 		enableSorting: true,
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -427,7 +468,10 @@ const columns = [
 	columnHelper.accessor('appRevenue24h', {
 		header: `24h App Revenue`,
 		enableSorting: true,
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -436,7 +480,13 @@ const columns = [
 	}),
 	columnHelper.accessor('activeUsers24h', {
 		header: '24h Active Addresses',
-		cell: (info) => <>{info.getValue() > 0 ? formattedNum(info.getValue()) : null}</>,
+		cell: (info) => (
+			<>
+				{info.getValue() > 0
+					? formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+					: null}
+			</>
+		),
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -445,7 +495,7 @@ const columns = [
 	}),
 	columnHelper.accessor('mcaptvl', {
 		header: 'Mcap / DeFi TVL',
-		cell: (info) => (info.getValue() != null ? String(info.getValue()) : null),
+		cell: (info) => formatRatio(info.getValue()),
 		meta: {
 			headerClassName: 'w-[148px]',
 			align: 'end',
@@ -454,7 +504,10 @@ const columns = [
 	}),
 	columnHelper.accessor('nftVolume24h', {
 		header: '24h NFT Volume',
-		cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
 		meta: {
 			headerClassName: 'w-[148px]',
 			align: 'end',

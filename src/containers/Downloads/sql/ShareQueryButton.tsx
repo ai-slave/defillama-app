@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
+import { formatNumber } from '~/utils/numberFormat'
 import type { QueryTableRef } from '../savedDownloads'
 import { extractQueryConfig } from '../savedDownloads'
 import { buildNotebookShareUrl, buildShareUrl, type NotebookShareCell } from '../urlState'
@@ -48,7 +49,7 @@ export function ShareQueryButton({
 				toast(
 					(t) => (
 						<span>
-							Link is long ({withMode.length.toLocaleString()} chars) — some apps may truncate it.
+							Link is long ({formatNumber(withMode.length)} chars) — some apps may truncate it.
 							<button type="button" onClick={() => toast.dismiss(t.id)} style={{ marginLeft: 8 }}>
 								OK
 							</button>

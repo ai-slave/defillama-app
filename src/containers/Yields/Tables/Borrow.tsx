@@ -1,7 +1,7 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { MarketTableRow, RouteTableRow } from '../data/types'
 import { hasPart } from '../domain/apyPresentation'
 import { NameYield, PoolNameLockup } from './Name'
@@ -33,12 +33,14 @@ function routeNetRows(row: RouteTableRow): SignedTipRow[] {
 
 function LtvCell({ value }: { value: number | null | undefined }) {
 	if (value == null) return <EmptyCell />
-	return <span>{`${formattedNum(value * 100)}%`}</span>
+	return (
+		<span>{`${formatPercent(value, { input: 'fraction', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</span>
+	)
 }
 
 function UsdCell({ value }: { value: number | null | undefined }) {
 	if (value == null) return <EmptyCell />
-	return <span>{formattedNum(value, true)}</span>
+	return <span>{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
 }
 
 // Shared server-paginated table for the /yields/borrow markets & routes views.
@@ -76,7 +78,7 @@ const marketColumns: Array<ColumnDef<MarketTableRow, unknown>> = [
 				project={row.original.project}
 				projectslug={row.original.projectslug}
 				airdrop={row.original.airdrop}
-				raiseValuation={row.original.raiseValuation}
+				raiseValuationUsd={row.original.raiseValuationUsd}
 			/>
 		),
 		meta: { headerClassName: 'w-[160px]' }
@@ -189,7 +191,7 @@ const routeColumns: Array<ColumnDef<RouteTableRow, unknown>> = [
 				project={row.original.project}
 				projectslug={row.original.projectslug}
 				airdrop={row.original.airdrop}
-				raiseValuation={row.original.raiseValuation}
+				raiseValuationUsd={row.original.raiseValuationUsd}
 			/>
 		),
 		meta: { headerClassName: 'w-[160px]' }

@@ -3,6 +3,7 @@ import { lazy, Suspense, useMemo } from 'react'
 import type { PieTooltipParams } from '~/components/ECharts/PieChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { formatPercent } from '~/utils/numberFormat'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
@@ -41,7 +42,7 @@ export function PieChartAdapter({ config, result, classified, onReady }: PieChar
 	const formatTooltip = (params: PieTooltipParams) => {
 		const value = readSqlNumber(params.value) ?? 0
 		const percent = typeof params.percent === 'number' ? params.percent : 0
-		return `<strong>${escapeSqlChartHtml(String(params.name ?? ''))}</strong><br/>${formatter.tooltip(value)} (${percent}%)`
+		return `<strong>${escapeSqlChartHtml(String(params.name ?? ''))}</strong><br/>${formatter.tooltip(value)} (${formatPercent(percent, { input: 'percent' })})`
 	}
 
 	if (!nameCol || !valueCol)

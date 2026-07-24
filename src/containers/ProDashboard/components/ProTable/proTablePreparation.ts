@@ -198,7 +198,7 @@ const recalculateParentMetrics = (
 		change_1d: getPercentChange(tvl, tvlPrevDay),
 		change_7d: getPercentChange(tvl, tvlPrevWeek),
 		change_1m: getPercentChange(tvl, tvlPrevMonth),
-		mcaptvl: tvl > 0 && finalMcap > 0 ? Number((finalMcap / tvl).toFixed(2)) : null,
+		mcaptvl: tvl > 0 && finalMcap > 0 ? finalMcap / tvl : null,
 		pf: getMarketCapToAnnualizedMetricRatio(finalMcap, finalFeesAnnualized1y),
 		ps: getMarketCapToAnnualizedMetricRatio(finalMcap, finalRevenueAnnualized1y),
 		subRows: filteredSubRows,

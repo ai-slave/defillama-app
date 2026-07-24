@@ -20,7 +20,7 @@ import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { rwaSlug } from '../rwaSlug'
 import {
@@ -124,7 +124,11 @@ function RWAPerpsContractPriceSummary({ contract }: { contract: IRWAPerpsContrac
 					{d.price.label}
 				</Tooltip>
 				<p className="min-h-8 truncate font-jetbrains text-2xl font-semibold">
-					{formattedNum(contract.market.price, true)}
+					{formatUsd(contract.market.price, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
 				</p>
 			</div>
 

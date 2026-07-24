@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp } from '../../api.types'
 
 interface FormattedValue {
@@ -97,10 +98,11 @@ export interface RevenueAPIResponse {
 }
 
 function formatNear(value: number): string {
-	if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B NEAR`
-	if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M NEAR`
-	if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K NEAR`
-	return `${value.toFixed(2)} NEAR`
+	const fractionDigits = Math.abs(value) >= 1e6 || Math.abs(value) < 1e3 ? 2 : 1
+	return `${formatCompactNumber(value, {
+		minimumFractionDigits: fractionDigits,
+		maximumFractionDigits: fractionDigits
+	})} NEAR`
 }
 
 function sumLastNDays(series: number[], n: number): number {

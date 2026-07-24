@@ -19,6 +19,7 @@ import {
 import { useDarkModeManager, useLlamaAINotifyBannerDismissed } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { formatFixedNumber } from '~/utils/numberFormat'
 
 const MAX_LENGTH = 500
 
@@ -225,13 +226,13 @@ export const SettingsModal = memo(function SettingsModal({
 		void actions.setAdvancedProvenance(!settings.advancedProvenance)
 	}, [actions, settings.advancedProvenance])
 
-	const [spendCapDraft, setSpendCapDraft] = useState<string>(() => settings.spendCapPerMessage.toFixed(2))
+	const [spendCapDraft, setSpendCapDraft] = useState<string>(() => formatFixedNumber(settings.spendCapPerMessage, 2))
 	const lastCommittedSpendCapRef = useRef<number>(settings.spendCapPerMessage)
 
 	useEffect(() => {
 		if (settings.spendCapPerMessage !== lastCommittedSpendCapRef.current) {
 			lastCommittedSpendCapRef.current = settings.spendCapPerMessage
-			setSpendCapDraft(settings.spendCapPerMessage.toFixed(2))
+			setSpendCapDraft(formatFixedNumber(settings.spendCapPerMessage, 2))
 		}
 	}, [settings.spendCapPerMessage])
 
@@ -239,10 +240,10 @@ export const SettingsModal = memo(function SettingsModal({
 		(raw: string) => {
 			const parsed = Number(raw)
 			if (!Number.isFinite(parsed) || parsed < 0) {
-				setSpendCapDraft(lastCommittedSpendCapRef.current.toFixed(2))
+				setSpendCapDraft(formatFixedNumber(lastCommittedSpendCapRef.current, 2))
 				return
 			}
-			setSpendCapDraft(parsed.toFixed(2))
+			setSpendCapDraft(formatFixedNumber(parsed, 2))
 			if (parsed === lastCommittedSpendCapRef.current) return
 			lastCommittedSpendCapRef.current = parsed
 			trackUmamiEvent('llamaai-spend-cap-change')

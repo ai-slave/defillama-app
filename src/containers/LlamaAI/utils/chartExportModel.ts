@@ -3,6 +3,7 @@ import type { ChartConfiguration } from '~/containers/LlamaAI/types'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import { toNiceCsvDate } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
+import { formatPercent } from '~/utils/numberFormat'
 
 export interface ChartExportModel {
 	csvRows: CsvCell[][]
@@ -29,9 +30,9 @@ function toCsvCell(value: unknown): CsvCell {
 	return typeof value === 'string' || typeof value === 'boolean' ? value : ''
 }
 
-function formatPercent(value: number, total: number): string {
+function formatChartPercent(value: number, total: number): string {
 	if (!Number.isFinite(value) || total <= 0) return '0%'
-	return `${((value / total) * 100).toFixed(2)}%`
+	return `${formatPercent(value / total, { input: 'fraction', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 }
 
 function buildCartesianCsvRows(
@@ -81,7 +82,7 @@ export function buildExportModel(config: ChartConfiguration, adaptedChart: Adapt
 			return {
 				csvRows: [
 					['Name', 'Value', 'Percentage'],
-					...(pieData.map((item) => [item.name, item.value, formatPercent(item.value, total)]) as CsvCell[][])
+					...(pieData.map((item) => [item.name, item.value, formatChartPercent(item.value, total)]) as CsvCell[][])
 				],
 				csvFilename,
 				pngProfile: 'default'

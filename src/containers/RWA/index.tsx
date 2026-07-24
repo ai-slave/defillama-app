@@ -18,7 +18,8 @@ import { LoadingDots } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { slug } from '~/utils'
+import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam, toQueryString } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview, RWAAssetChartTarget, RWAChartMetricKey, RWAFlowOverviewSplitBy } from './api.types'
 import { RWAAssetsTable } from './AssetsTable'
@@ -954,7 +955,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 						className="gap-1"
 						label={definitions.totalActiveMcap.label}
 						tooltip={definitions.totalActiveMcap.description}
-						value={formattedNum(totalActiveMcap, true)}
+						value={formatUsd(totalActiveMcap, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				</Card>
 				<Card padding="sm" className="flex-1">
@@ -962,7 +967,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 						className="gap-1"
 						label={definitions.totalOnChainMcap.label}
 						tooltip={definitions.totalOnChainMcap.description}
-						value={formattedNum(totalOnChainMcap, true)}
+						value={formatUsd(totalOnChainMcap, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				</Card>
 				<Card padding="sm" className="flex-1">
@@ -970,7 +979,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 						className="gap-1"
 						label={definitions.totalDefiActiveTvl.label}
 						tooltip={definitions.totalDefiActiveTvl.description}
-						value={formattedNum(totalOnChainDeFiActiveTvl, true)}
+						value={formatUsd(totalOnChainDeFiActiveTvl, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				</Card>
 				{includeRwaPerps ? (
@@ -979,7 +992,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 							className="gap-1"
 							label="RWA Perps OI"
 							tooltip={perpsDefinitions.totalOpenInterest.description}
-							value={formattedNum(totalOpenInterest, true)}
+							value={formatUsd(totalOpenInterest, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 						/>
 					</Card>
 				) : null}
@@ -988,7 +1005,10 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 						className="gap-1"
 						label={definitions.totalAssetIssuers.label}
 						tooltip={definitions.totalAssetIssuers.description}
-						value={formattedNum(totalIssuersCount, false)}
+						value={formatCompactNumber(totalIssuersCount, {
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				</Card>
 			</div>

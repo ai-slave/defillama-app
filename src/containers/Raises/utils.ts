@@ -7,7 +7,7 @@ type RaiseLike = {
 	round?: string
 	category?: string
 	chains?: Array<string>
-	amount?: number | null
+	amountUsd?: number | null
 }
 
 type GetRaisesFiltersListArgs = {
@@ -58,7 +58,7 @@ export function getRaisesFiltersList({ raises, investorName }: GetRaisesFiltersL
 
 		if (!includeRaise) continue
 
-		const amount = typeof raise.amount === 'number' ? raise.amount : 0
+		const amount = raise.amountUsd ?? 0
 
 		// Only build investors list for the "all raises" page.
 		if (!investorSlug) {
@@ -101,10 +101,4 @@ export function getRaisesFiltersList({ raises, investorName }: GetRaisesFiltersL
 		sectors: sortByAmountThenName(Array.from(sectors), sectorAmounts),
 		chains: sortByAmountThenName(Array.from(chains), chainAmounts)
 	}
-}
-
-export const formatRaiseAmount = (n: unknown): number | null => {
-	if (n == null) return null
-	if (Number.isNaN(Number(n))) return null
-	return Number(n) * 1e6
 }

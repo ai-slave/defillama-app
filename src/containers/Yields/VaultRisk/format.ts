@@ -1,4 +1,5 @@
-import { formattedNum, toNiceDayMonthAndYear } from '~/utils'
+import { toNiceDayMonthAndYear } from '~/utils'
+import { formatUsd } from '~/utils/numberFormat'
 import type { GuardianRole, RiskLoss, RoleEntity } from './types'
 
 const MIN = 60
@@ -26,10 +27,12 @@ export function formatLossRange(loss: Pick<RiskLoss, 'status' | 'min_usd' | 'max
 	if (loss.status === 'data_gap') return 'Not fully measured'
 	if (loss.status === 'not_attributable') return 'Not attributable to this vault'
 	const { min_usd, max_usd } = loss
-	if (min_usd === max_usd) return formattedNum(max_usd, true)
+	if (min_usd === max_usd)
+		return formatUsd(max_usd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 	// A zero floor reads as noise ("$0 – $X"); the ceiling is the only number that matters.
-	if (min_usd === 0) return `up to ${formattedNum(max_usd, true)}`
-	return `${formattedNum(min_usd, true)} – ${formattedNum(max_usd, true)}`
+	if (min_usd === 0)
+		return `up to ${formatUsd(max_usd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+	return `${formatUsd(min_usd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} – ${formatUsd(max_usd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 }
 
 // guardian_role may be a string, or a sourced attribution whose value is a string or

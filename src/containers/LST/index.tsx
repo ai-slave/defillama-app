@@ -26,7 +26,7 @@ import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum } from '~/utils'
+import { formatRatio, formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { buildActiveLstChartData } from './chartData'
 import type { ILSTTokenRow, LSTOverviewProps } from './types'
 
@@ -38,8 +38,8 @@ const DEFAULT_SORTING_STATE = [{ id: 'stakedEth', desc: true }]
 const ETHPegTooltipContent = ({ marketRate, expectedRate }: { marketRate: number; expectedRate: number }) => {
 	return (
 		<span className="flex flex-col gap-1">
-			<span>{`Market Rate: ${marketRate.toFixed(4)}`}</span>
-			<span>{`Expected Rate: ${expectedRate.toFixed(4)}`}</span>
+			<span>{`Market Rate: ${formatRatio(marketRate, { maximumFractionDigits: 4 })}`}</span>
+			<span>{`Expected Rate: ${formatRatio(expectedRate, { maximumFractionDigits: 4 })}`}</span>
 		</span>
 	)
 }
@@ -75,7 +75,8 @@ const LST_COLUMNS = [
 	}),
 	columnHelper.accessor('stakedEth', {
 		header: 'Staked ETH',
-		cell: (info) => formattedNum(info.getValue()),
+		cell: (info) =>
+			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
@@ -83,7 +84,8 @@ const LST_COLUMNS = [
 	}),
 	columnHelper.accessor('stakedEthInUsd', {
 		header: 'TVL',
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end'
@@ -109,7 +111,18 @@ const LST_COLUMNS = [
 		header: 'Market Share',
 		cell: ({ getValue }) => {
 			const value = getValue()
-			return <>{value != null ? value.toFixed(2) + '%' : null}</>
+			return (
+				<>
+					{value != null
+						? formatPercent(value, {
+								input: 'percent',
+								minimumFractionDigits: 2,
+								maximumFractionDigits: 2,
+								useGrouping: false
+							})
+						: null}
+				</>
+			)
 		},
 		meta: {
 			headerClassName: 'w-[125px]',
@@ -161,7 +174,7 @@ const LST_COLUMNS = [
 	}),
 	columnHelper.accessor('mcapOverTvl', {
 		header: 'Mcap/TVL',
-		cell: ({ getValue }) => getValue(),
+		cell: ({ getValue }) => formatRatio(getValue()),
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end',
@@ -170,7 +183,10 @@ const LST_COLUMNS = [
 	}),
 	columnHelper.accessor('apy', {
 		header: 'Supply APY',
-		cell: (info) => (info.getValue() != null ? `${info.getValue().toFixed(2)}%` : null),
+		cell: (info) =>
+			info.getValue() != null
+				? `${formatPercent(info.getValue(), { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+				: null,
 		meta: {
 			headerClassName: 'w-[130px]',
 			align: 'end',
@@ -179,7 +195,10 @@ const LST_COLUMNS = [
 	}),
 	columnHelper.accessor('fee', {
 		header: 'Fee',
-		cell: (info) => (info.getValue() != null ? `${info.getValue().toFixed(2)}%` : null),
+		cell: (info) =>
+			info.getValue() != null
+				? `${formatPercent(info.getValue(), { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+				: null,
 		meta: {
 			headerClassName: 'w-[90px]',
 			align: 'end',
@@ -290,10 +309,7 @@ export const LSTOverview = ({
 		<>
 			<Card as="header" padding="sm" className="flex flex-wrap items-center justify-between gap-4">
 				<h1 className="heading-sm">Total Value Locked ETH LSTs</h1>
-				<span className="font-jetbrains">{`${formattedNum(stakedEthSum)} ETH (${formattedNum(
-					stakedEthInUsdSum,
-					true
-				)})`}</span>
+				<span className="font-jetbrains">{`${formatCompactNumber(stakedEthSum, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ETH (${formatUsd(stakedEthInUsdSum, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })})`}</span>
 			</Card>
 
 			<Card padding="none" className="flex w-full flex-col">

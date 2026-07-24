@@ -200,7 +200,7 @@ export const chainCharts = defineApiRoute({
 				const data = await fetchRaises().then((response) => {
 					const store = (response?.raises ?? []).reduce(
 						(acc, curr) => {
-							acc[curr.date] = (acc[curr.date] ?? 0) + +(curr.amount ?? 0)
+							acc[curr.date] = (acc[curr.date] ?? 0) + (curr.amountUsd ?? 0)
 							return acc
 						},
 						{} as Record<string, number>
@@ -208,7 +208,7 @@ export const chainCharts = defineApiRoute({
 
 					const chart: Array<[number, number]> = []
 					for (const date in store) {
-						chart.push([+date * 1e3, store[date] * 1e6])
+						chart.push([+date * 1e3, store[date]])
 					}
 					return chart
 				})

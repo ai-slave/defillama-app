@@ -3,10 +3,12 @@ export interface IHackApiItem {
 	name: string
 	classification: string | null
 	technique: string | null
+	/** Whole USD, not millions of USD. */
 	amount: number | null
 	chain: string[] | null
 	bridgeHack: boolean
 	targetType: string | null
+	/** Whole USD, not millions of USD. */
 	returnedFunds: number | null
 	defillamaId: string | null
 	language: string | null

@@ -17,8 +17,9 @@ import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar }
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
+import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { InstantTooltip } from '../InstantTooltip'
-import { fmtCount, fmtPct, fmtUsd } from '../poolDetail/format'
+import { YIELD_PERCENT_OPTIONS, YIELD_USD_OPTIONS } from '../poolDetail/format'
 import { ProtocolIcon } from '../poolDetail/Icons'
 import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue } from '../poolDetail/tooltip'
 import { YieldsTabs } from '../YieldsTabs'
@@ -47,19 +48,20 @@ interface CompRow {
 }
 
 function pct(value: number | null): string {
-	return value == null ? '—' : `${fmtPct(value)}%`
+	return value == null ? '—' : formatPercent(value, YIELD_PERCENT_OPTIONS)
 }
 function spreadPct(value: number | null): { text: string; neg: boolean } {
 	if (value == null) return { text: '—', neg: false }
-	return { text: `${value < 0 ? '−' : '+'}${fmtPct(Math.abs(value))}%`, neg: value < 0 }
+	return { text: `${value < 0 ? '−' : '+'}${formatPercent(Math.abs(value), YIELD_PERCENT_OPTIONS)}`, neg: value < 0 }
 }
 function weightPct(fraction: number | null): string {
 	if (fraction == null) return '—'
 	const p = fraction * 100
 	if (p <= 0) return '0%'
 	if (p < 0.1) return '<0.1%'
-	if (p < 1) return `${p.toFixed(1)}%`
-	return `${Math.round(p)}%`
+	if (p < 1)
+		return `${formatPercent(p, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
+	return formatPercent(p, { input: 'percent', maximumFractionDigits: 0 })
 }
 
 function ratesForAsset(current: StablecoinRatesCurrent, asset: string): RefRateSet {
@@ -160,10 +162,10 @@ function BenchmarkMetric({
 		delta == null
 			? null
 			: flat
-				? `→ ${Math.abs(delta).toFixed(2)}pp`
+				? `→ ${formatNumber(Math.abs(delta))}pp`
 				: delta > 0
-					? `↑ +${delta.toFixed(2)}pp`
-					: `↓ −${Math.abs(delta).toFixed(2)}pp`
+					? `↑ +${formatNumber(delta)}pp`
+					: `↓ −${formatNumber(Math.abs(delta))}pp`
 	const deltaClassName = flat
 		? 'text-secondary'
 		: delta != null && delta > 0
@@ -400,7 +402,10 @@ function RatesByProtocolPanel({
 								</TokenPageTableBodyCell>
 								<TokenPageTableBodyCell textAlign="end" className="text-primary">
 									{protocol.supply ? (
-										<InstantTooltip content={`${fmtUsd(protocol.supply.weight_usd)} weighted`} className="justify-end">
+										<InstantTooltip
+											content={`${formatUsd(protocol.supply.weight_usd, YIELD_USD_OPTIONS) ?? '—'} weighted`}
+											className="justify-end"
+										>
 											{weightPct(protocol.supply.weight_pct)}
 										</InstantTooltip>
 									) : (
@@ -412,7 +417,10 @@ function RatesByProtocolPanel({
 								</TokenPageTableBodyCell>
 								<TokenPageTableBodyCell textAlign="end" className="text-primary">
 									{protocol.borrow ? (
-										<InstantTooltip content={`${fmtUsd(protocol.borrow.weight_usd)} weighted`} className="justify-end">
+										<InstantTooltip
+											content={`${formatUsd(protocol.borrow.weight_usd, YIELD_USD_OPTIONS) ?? '—'} weighted`}
+											className="justify-end"
+										>
 											{weightPct(protocol.borrow.weight_pct)}
 										</InstantTooltip>
 									) : (
@@ -612,7 +620,11 @@ function AssetRow({ name, rates }: { name: string; rates: RefRateSet }) {
 				{sp.text}
 			</TokenPageTableBodyCell>
 			<TokenPageTableBodyCell textAlign="end" className="text-primary">
-				{fmtCount(rates.supply.market_count)}
+				{formatCompactNumber(rates.supply.market_count, {
+					compactSuffix: 'lowercase',
+					minimumFractionDigits: rates.supply.market_count >= 1e3 ? 1 : undefined,
+					maximumFractionDigits: rates.supply.market_count >= 1e3 ? 1 : undefined
+				})}
 			</TokenPageTableBodyCell>
 		</tr>
 	)

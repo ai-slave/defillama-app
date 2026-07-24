@@ -10,6 +10,7 @@ import { ChartGrid } from '~/containers/ProDashboard/components/ChartGrid'
 import { ProDashboardAPIProvider } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { dashboardAPI, dashboardUrlKey } from '~/containers/ProDashboard/services/DashboardAPI'
 import { Icon } from '~/ui/Icon'
+import { formatUsd } from '~/utils/numberFormat'
 
 interface DashboardPanelProps {
 	config: DashboardArtifact | null
@@ -59,7 +60,7 @@ function DashboardPanelInner({
 			if (
 				artifactSave.containsPremium &&
 				!window.confirm(
-					`This dashboard uses premium data. Daily refreshes will bill your account up to $${artifactSave.estimatedMaxCostUsd.toFixed(3)} per refresh window. Continue?`
+					`This dashboard uses premium data. Daily refreshes will bill your account up to ${formatUsd(artifactSave.estimatedMaxCostUsd, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} per refresh window. Continue?`
 				)
 			) {
 				throw new Error('Dashboard creation cancelled')

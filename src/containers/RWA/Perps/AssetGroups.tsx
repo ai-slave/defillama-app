@@ -4,7 +4,7 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import type {} from '~/components/Table/utils'
 import type { RWAChartDataset } from '~/containers/RWA/chartDataset'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
-import { formattedNum } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { perpsDefinitions as d } from './definitions'
 import { RWAPerpsOverviewChart } from './OverviewChart'
 import type { IRWAPerpsAssetGroupsOverviewRow } from './types'
@@ -35,7 +35,8 @@ const columns = [
 	columnHelper.accessor((row) => row.openInterest ?? undefined, {
 		id: 'openInterest',
 		header: d.openInterest.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -45,7 +46,8 @@ const columns = [
 	columnHelper.accessor((row) => row.openInterestShare ?? undefined, {
 		id: 'openInterestShare',
 		header: d.openInterestShare.label,
-		cell: (info) => `${formattedNum(info.getValue() * 100, false)}%`,
+		cell: (info) =>
+			`${formatPercent(info.getValue(), { input: 'fraction', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 		meta: {
 			headerClassName: 'w-[150px]',
 			align: 'end',
@@ -55,7 +57,8 @@ const columns = [
 	columnHelper.accessor((row) => row.volume24h ?? undefined, {
 		id: 'volume24h',
 		header: d.volume24h.label,
-		cell: (info) => formattedNum(info.getValue(), true),
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
@@ -65,7 +68,8 @@ const columns = [
 	columnHelper.accessor((row) => row.volume24hShare ?? undefined, {
 		id: 'volume24hShare',
 		header: d.volume24hShare.label,
-		cell: (info) => `${formattedNum(info.getValue() * 100, false)}%`,
+		cell: (info) =>
+			`${formatPercent(info.getValue(), { input: 'fraction', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`,
 		meta: {
 			headerClassName: 'w-[min(190px,40vw)]',
 			align: 'end',
@@ -75,7 +79,8 @@ const columns = [
 	columnHelper.accessor((row) => row.markets ?? undefined, {
 		id: 'markets',
 		header: d.markets.label,
-		cell: (info) => formattedNum(info.getValue(), false),
+		cell: (info) =>
+			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',

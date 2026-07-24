@@ -9,19 +9,19 @@ import {
 	SubMetricRow as ChainSubMetricRow
 } from '~/ui/MetricPrimitives'
 import { Tooltip } from '~/ui/Tooltip'
-import { formattedNum, slug } from '~/utils'
-import { formatRaiseAmount } from '../Raises/utils'
+import { slug } from '~/utils'
+import { formatUsd, formatCompactNumber, formatPercent, formatPercentChange } from '~/utils/numberFormat'
 import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
 import type { IChainOverviewData } from './types'
 
 const formatKeyMetricsValue = (value: number | string | null) => {
 	if (Number.isNaN(Number(value))) return null
-	return formattedNum(value, true)
+	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 const formatNullableCurrency = (value: number | null | undefined) => {
 	if (value == null || Number.isNaN(value)) return 'N/A'
-	return formattedNum(value, true)
+	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
 interface KeyMetricsProps {
@@ -77,42 +77,66 @@ export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 					<ChainMetricRow
 						label="Chain Fees (24h)"
 						tooltip={definitions.fees.chain['24h']}
-						value={formattedNum(props.chainFees.total24h, true)}
+						value={formatUsd(props.chainFees.total24h, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				) : null}
 				{props.chainRevenue.total24h != null ? (
 					<ChainMetricRow
 						label="Chain Revenue (24h)"
 						tooltip={definitions.revenue.chain['24h']}
-						value={formattedNum(props.chainRevenue.total24h, true)}
+						value={formatUsd(props.chainRevenue.total24h, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				) : null}
 				{props.chainFees?.totalREV24h != null ? (
 					<ChainMetricRow
 						label="Chain REV (24h)"
 						tooltip={definitions.rev.chain['24h']}
-						value={formattedNum(props.chainFees.totalREV24h, true)}
+						value={formatUsd(props.chainFees.totalREV24h, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				) : null}
 				{props.chainIncentives?.emissions24h != null ? (
 					<ChainMetricRow
 						label="Token Incentives (24h)"
 						tooltip={definitions.incentives.protocol['24h']}
-						value={formattedNum(props.chainIncentives.emissions24h, true)}
+						value={formatUsd(props.chainIncentives.emissions24h, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				) : null}
 				{props.appRevenue.total24h != null && props.appRevenue.total24h > 1e3 ? (
 					<ChainMetricRow
 						label="App Revenue (24h)"
 						tooltip={definitions.appRevenue.chain['24h']}
-						value={formattedNum(props.appRevenue.total24h, true)}
+						value={formatUsd(props.appRevenue.total24h, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				) : null}
 				{props.appFees.total24h != null && props.appFees.total24h > 1e3 ? (
 					<ChainMetricRow
 						label="App Fees (24h)"
 						tooltip={definitions.appFees.chain['24h']}
-						value={formattedNum(props.appFees.total24h, true)}
+						value={formatUsd(props.appFees.total24h, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				) : null}
 				<DexsVolume dexs={props.dexs} />
@@ -121,7 +145,11 @@ export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 					<ChainMetricRow
 						label="Inflows (24h)"
 						tooltip="Net money bridged to the chain within the last 24h. Updates daily at 00:00 UTC"
-						value={formattedNum(props.inflows.netInflows, true)}
+						value={formatUsd(props.inflows.netInflows, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				) : null}
 				<ActiveAddresses users={props.users} />
@@ -132,7 +160,11 @@ export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 					<ChainMetricRow
 						label="NFT Volume (24h)"
 						tooltip="Volume of Non Fungible Tokens traded in the last 24 hours"
-						value={formattedNum(props.nfts.total24h, true)}
+						value={formatUsd(props.nfts.total24h, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
 					/>
 				) : null}
 				<ChainTokenInfo chainTokenInfo={props.chainTokenInfo} />
@@ -152,25 +184,28 @@ function StablecoinsMcap({ stablecoins, isAll }: { stablecoins: IChainOverviewDa
 					? 'Sum of market cap of all stablecoins circulating on all chains'
 					: 'Sum of market cap of all stablecoins circulating on the chain'
 			}
-			value={formattedNum(stablecoins.mcap, true)}
+			value={formatUsd(stablecoins.mcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 		>
 			{stablecoins.change7d != null ? (
 				<ChainSubMetricRow
 					label="Change (7d)"
 					value={
 						<Tooltip
-							content={`${formattedNum(stablecoins.change7dUsd, true)}`}
+							content={`${formatUsd(stablecoins.change7dUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}
 							className={`ml-auto justify-end truncate mono-md underline decoration-dotted ${
 								+stablecoins.change7d >= 0 ? 'text-data-up' : 'text-data-down'
 							}`}
 						>
-							{`${+stablecoins.change7d > 0 ? '+' : ''}${stablecoins.change7d}%`}
+							{formatPercentChange(stablecoins.change7d)}
 						</Tooltip>
 					}
 				/>
 			) : null}
 			{stablecoins.dominance != null ? (
-				<ChainSubMetricRow label={`${stablecoins.topToken.symbol} Dominance`} value={`${stablecoins.dominance}%`} />
+				<ChainSubMetricRow
+					label={`${stablecoins.topToken.symbol} Dominance`}
+					value={formatPercent(stablecoins.dominance, { input: 'percent' })}
+				/>
 			) : null}
 		</ChainMetricSection>
 	)
@@ -183,7 +218,7 @@ function RwaActiveMcap({ rwaActiveMcap }: { rwaActiveMcap: IChainOverviewData['r
 		<ChainMetricRow
 			label="RWA Active Mcap"
 			tooltip={rwaDefinitions.activeMcap.description}
-			value={formattedNum(rwaActiveMcap, true)}
+			value={formatUsd(rwaActiveMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 		/>
 	)
 }
@@ -214,13 +249,13 @@ function DexsVolume({ dexs }: { dexs: IChainOverviewData['dexs'] }) {
 		<ChainMetricSection
 			label="DEXs Volume (24h)"
 			tooltip={definitions.dexs.chain['24h']}
-			value={formattedNum(dexs.total24h, true)}
+			value={formatUsd(dexs.total24h, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 		>
 			{dexs.total7d != null ? (
 				<ChainSubMetricRow
 					label="Volume (7d)"
 					tooltip={definitions.dexs.chain['7d']}
-					value={formattedNum(dexs.total7d, true)}
+					value={formatUsd(dexs.total7d, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				/>
 			) : null}
 			{dexs.change_7dover7d != null ? (
@@ -229,13 +264,16 @@ function DexsVolume({ dexs }: { dexs: IChainOverviewData['dexs'] }) {
 					tooltip={definitions.dexs.chain['change7dover7d']}
 					value={
 						<span className={dexs.change_7dover7d >= 0 ? 'text-data-up' : 'text-data-down'}>
-							{`${dexs.change_7dover7d >= 0 ? '+' : ''}${dexs.change_7dover7d}%`}
+							{formatPercentChange(dexs.change_7dover7d)}
 						</span>
 					}
 				/>
 			) : null}
 			{dexs.dexsDominance != null ? (
-				<ChainSubMetricRow label="DEX vs CEX dominance" value={`${dexs.dexsDominance}%`} />
+				<ChainSubMetricRow
+					label="DEX vs CEX dominance"
+					value={formatPercent(dexs.dexsDominance, { input: 'percent' })}
+				/>
 			) : null}
 		</ChainMetricSection>
 	)
@@ -248,13 +286,17 @@ function PerpsVolume({ perps }: { perps: IChainOverviewData['perps'] }) {
 		<ChainMetricSection
 			label="Perps Volume (24h)"
 			tooltip={definitions.perps.chain['24h']}
-			value={formattedNum(perps.total24h, true)}
+			value={formatUsd(perps.total24h, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 		>
 			{perps.total7d != null ? (
 				<ChainSubMetricRow
 					label="Volume (7d)"
 					tooltip={definitions.perps.chain['7d']}
-					value={formattedNum(perps.total7d, true)}
+					value={formatUsd(perps.total7d, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
 				/>
 			) : null}
 			{perps.change_7dover7d != null ? (
@@ -263,7 +305,7 @@ function PerpsVolume({ perps }: { perps: IChainOverviewData['perps'] }) {
 					tooltip={definitions.perps.chain['change7dover7d']}
 					value={
 						<span className={perps.change_7dover7d >= 0 ? 'text-data-up' : 'text-data-down'}>
-							{`${perps.change_7dover7d >= 0 ? '+' : ''}${perps.change_7dover7d}%`}
+							{formatPercentChange(perps.change_7dover7d)}
 						</span>
 					}
 				/>
@@ -295,7 +337,7 @@ function ActiveAddresses({ users }: { users: IChainOverviewData['users'] }) {
 						Updates daily at 00:00 UTC
 					</p>
 				}
-				value={formattedNum(users.activeUsers, false)}
+				value={formatCompactNumber(users.activeUsers, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 			/>
 		)
 	}
@@ -304,13 +346,22 @@ function ActiveAddresses({ users }: { users: IChainOverviewData['users'] }) {
 		<ChainMetricSection
 			label="Active Addresses (24h)"
 			tooltip="Number of unique addresses that have interacted with the protocol directly in the last 24 hours. Interactions are counted as transactions sent directly against the protocol, thus transactions that go through an aggregator or some other middleman contract are not counted here. The reasoning for this is that this is meant to help measure stickiness/loyalty of users, and users that are interacting with the protocol through another product aren't likely to be sticky. Updates daily at 00:00 UTC"
-			value={formattedNum(users.activeUsers, false)}
+			value={formatCompactNumber(users.activeUsers, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 		>
 			{users.newUsers != null ? (
-				<ChainSubMetricRow label="New Addresses (24h)" value={formattedNum(users.newUsers, false)} />
+				<ChainSubMetricRow
+					label="New Addresses (24h)"
+					value={formatCompactNumber(users.newUsers, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				/>
 			) : null}
 			{users.transactions != null ? (
-				<ChainSubMetricRow label="Transactions (24h)" value={formattedNum(users.transactions, false)} />
+				<ChainSubMetricRow
+					label="Transactions (24h)"
+					value={formatCompactNumber(users.transactions, {
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
 			) : null}
 		</ChainMetricSection>
 	)
@@ -320,21 +371,49 @@ function TreasurySection({ treasury }: { treasury: IChainOverviewData['treasury'
 	if (!treasury) return null
 
 	return (
-		<ChainMetricSection label="Treasury" value={formattedNum(treasury.tvl, true)}>
+		<ChainMetricSection
+			label="Treasury"
+			value={formatUsd(treasury.tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+		>
 			{treasury.tokenBreakdowns?.stablecoins != null ? (
-				<ChainSubMetricRow label="Stablecoins" value={formattedNum(treasury.tokenBreakdowns.stablecoins, true)} />
+				<ChainSubMetricRow
+					label="Stablecoins"
+					value={formatUsd(treasury.tokenBreakdowns.stablecoins, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
 			) : null}
 			{treasury.tokenBreakdowns?.majors != null ? (
 				<ChainSubMetricRow
 					label="Major Tokens (ETH, BTC)"
-					value={formattedNum(treasury.tokenBreakdowns.majors, true)}
+					value={formatUsd(treasury.tokenBreakdowns.majors, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
 				/>
 			) : null}
 			{treasury.tokenBreakdowns?.others != null ? (
-				<ChainSubMetricRow label="Other Tokens" value={formattedNum(treasury.tokenBreakdowns.others, true)} />
+				<ChainSubMetricRow
+					label="Other Tokens"
+					value={formatUsd(treasury.tokenBreakdowns.others, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
 			) : null}
 			{treasury.tokenBreakdowns?.ownTokens != null ? (
-				<ChainSubMetricRow label="Own Tokens" value={formattedNum(treasury.tokenBreakdowns.ownTokens, true)} />
+				<ChainSubMetricRow
+					label="Own Tokens"
+					value={formatUsd(treasury.tokenBreakdowns.ownTokens, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
 			) : null}
 		</ChainMetricSection>
 	)
@@ -343,30 +422,38 @@ function TreasurySection({ treasury }: { treasury: IChainOverviewData['treasury'
 function RaisesSection({ chainRaises }: { chainRaises: IChainOverviewData['chainRaises'] }) {
 	if (!chainRaises || chainRaises.length === 0) return null
 	const sortedRaises = chainRaises.toSorted((a, b) => a.date - b.date)
-	const totalRaised = chainRaises.reduce((sum, r) => sum + Number(r.amount), 0)
-	const totalRaisedFormatted = formatRaiseAmount(totalRaised)
-	if (totalRaisedFormatted == null) return null
+	const totalRaisedUsd = chainRaises.reduce((sum, raise) => sum + (raise.amountUsd ?? 0), 0)
 	return (
 		<ChainMetricSection
 			label="Total Raised"
 			tooltip="Sum of all money raised by the chain, including VC funding rounds, public sales and ICOs."
-			value={formattedNum(totalRaisedFormatted, true)}
+			value={formatUsd(totalRaisedUsd, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})}
 		>
 			{sortedRaises.map((raise) => (
 				<p
 					className="flex flex-col gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"
-					key={`${raise.date}-${raise.amount}-${raise.round}`}
+					key={`${raise.date}-${raise.amountUsd}-${raise.round}`}
 				>
 					<span className="flex flex-wrap justify-between">
 						<span className="body-md text-tertiary">{dayjs(raise.date * 1000).format('MMM D, YYYY')}</span>
-						<span className="mono-md">{formattedNum(raise.amount * 1_000_000, true)}</span>
+						<span className="mono-md">
+							{formatUsd(raise.amountUsd, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						</span>
 					</span>
 					<span className="flex flex-wrap justify-between gap-1 body-md text-secondary">
 						<span>Round: {raise.round}</span>
-						{(raise as any).leadInvestors?.length || (raise as any).otherInvestors?.length ? (
+						{raise.leadInvestors.length || raise.otherInvestors.length ? (
 							<span>
 								Investors:{' '}
-								{(raise as any).leadInvestors.concat((raise as any).otherInvestors).map((i, index, arr) => (
+								{raise.leadInvestors.concat(raise.otherInvestors).map((i, index, arr) => (
 									<Fragment key={'raised from ' + i}>
 										<a href={`/raises/${slug(i)}`}>{i}</a>
 										{index < arr.length - 1 ? ', ' : ''}
@@ -394,37 +481,54 @@ function BridgedTvlSection({
 		<ChainMetricSection
 			label="Bridged TVL"
 			tooltip="Value of all tokens held on the chain"
-			value={formattedNum(
-				chainAssets.total.total + (tvlSettingsGovtokens ? +(chainAssets?.ownTokens?.total ?? 0) : 0),
-				true
-			)}
+			value={formatUsd(chainAssets.total.total + (tvlSettingsGovtokens ? +(chainAssets?.ownTokens?.total ?? 0) : 0), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})}
 		>
 			{chainAssets.native?.total ? (
 				<ChainSubMetricRow
 					label="Native"
 					tooltip="Sum of marketcaps of all tokens that were issued on the chain (excluding the chain's own token)"
-					value={formattedNum(chainAssets.native.total, true)}
+					value={formatUsd(chainAssets.native.total, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
 				/>
 			) : null}
 			{chainAssets.ownTokens?.total ? (
 				<ChainSubMetricRow
 					label="Own Tokens"
 					tooltip="Marketcap of the governance token of the chain"
-					value={formattedNum(chainAssets.ownTokens.total, true)}
+					value={formatUsd(chainAssets.ownTokens.total, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
 				/>
 			) : null}
 			{chainAssets.canonical?.total ? (
 				<ChainSubMetricRow
 					label="Canonical"
 					tooltip="Tokens that were bridged to the chain through the canonical bridge"
-					value={formattedNum(chainAssets.canonical.total, true)}
+					value={formatUsd(chainAssets.canonical.total, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
 				/>
 			) : null}
 			{chainAssets.thirdParty?.total ? (
 				<ChainSubMetricRow
 					label="Third Party"
 					tooltip="Tokens that were bridged to the chain through third party bridges"
-					value={formattedNum(chainAssets.thirdParty.total, true)}
+					value={formatUsd(chainAssets.thirdParty.total, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
 				/>
 			) : null}
 		</ChainMetricSection>
