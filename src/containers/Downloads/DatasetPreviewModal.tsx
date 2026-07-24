@@ -21,6 +21,7 @@ import {
 	formatDownloadPreviewPercent,
 	parseDownloadPreviewDate
 } from './previewFormatting'
+import { createPreviewSearchIndex, filterPreviewRows } from './previewSearch'
 import { RowLimitPicker } from './RowLimitPicker'
 import {
 	applyDatasetConfig,
@@ -363,13 +364,11 @@ export function DatasetPreviewModal({
 		if (fieldIndices.length === 0) return rows
 		return rows.filter((row) => !fieldIndices.some((idx) => row.values[idx]?.toLowerCase() === 'true'))
 	}, [rows, headers, dataset.excludeToggles, excludeState])
+	const searchIndex = useMemo(() => createPreviewSearchIndex(rows, columnMeta.length), [rows, columnMeta.length])
 
 	const filteredRows = useMemo(() => {
-		if (deferredSearch.length === 0) return excludeFilteredRows
-		return excludeFilteredRows.filter((row) =>
-			columnMeta.some((column) => (row.values[column.index] ?? '').toLowerCase().includes(deferredSearch))
-		)
-	}, [columnMeta, deferredSearch, excludeFilteredRows])
+		return filterPreviewRows(excludeFilteredRows, searchIndex, deferredSearch)
+	}, [excludeFilteredRows, searchIndex, deferredSearch])
 
 	const sortedRows = useMemo(() => {
 		if (!sortState) return filteredRows

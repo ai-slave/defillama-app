@@ -49,6 +49,27 @@ export interface TransformedTransaction {
 	tx_hash: string
 }
 
+type BridgeTransactionSearchIndex = WeakMap<TransformedTransaction, string>
+
+export function createBridgeTransactionSearchIndex(rows: TransformedTransaction[]): BridgeTransactionSearchIndex {
+	const index: BridgeTransactionSearchIndex = new WeakMap()
+	for (const row of rows) {
+		index.set(
+			row,
+			`${row.timestamp}\0${row.bridge_name}\0${row.chain}\0${row.token}\0${row.amount}\0${row.usd_value ?? ''}\0${row.tx_from}\0${row.tx_to}\0${row.tx_hash}`.toLowerCase()
+		)
+	}
+	return index
+}
+
+export function matchesBridgeTransactionSearch(
+	row: TransformedTransaction,
+	searchIndex: BridgeTransactionSearchIndex,
+	normalizedSearchValue: string
+): boolean {
+	return searchIndex.get(row)!.includes(normalizedSearchValue)
+}
+
 export interface BridgeTransactionStats {
 	total: number
 	deposits: number
@@ -717,15 +738,20 @@ function TransactionsTable({
 	const [globalFilter, setGlobalFilter] = React.useState('')
 	const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: DEFAULT_PAGE_SIZE })
 	const deferredFilter = React.useDeferredValue(globalFilter)
+	const normalizedFilter = deferredFilter.toLowerCase()
+	const searchIndex = React.useMemo(() => createBridgeTransactionSearchIndex(data), [data])
 
 	const instance = useReactTable({
 		data,
 		columns,
-		state: { sorting, globalFilter: deferredFilter, pagination },
+		state: { sorting, globalFilter: normalizedFilter, pagination },
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
 		onGlobalFilterChange: setGlobalFilter,
 		onPaginationChange: (updater) => React.startTransition(() => setPagination(updater)),
-		globalFilterFn: 'includesString',
+		globalFilterFn: (row, _columnId, searchValue: string) =>
+			matchesBridgeTransactionSearch(row.original, searchIndex, searchValue),
+		// The index contains every searchable value, so TanStack only needs to call it once per row.
+		getColumnCanGlobalFilter: (column) => column.id === 'timestamp',
 		enableSortingRemoval: false,
 		defaultColumn: { sortUndefined: 'last' },
 		getCoreRowModel: getCoreRowModel(),
@@ -738,7 +764,7 @@ function TransactionsTable({
 		React.startTransition(() => {
 			setPagination((prev) => (prev.pageIndex === 0 ? prev : { ...prev, pageIndex: 0 }))
 		})
-	}, [deferredFilter, sorting])
+	}, [normalizedFilter, sorting])
 
 	const filteredCount = instance.getFilteredRowModel().rows.length
 	const pageCount = instance.getPageCount()

@@ -8,7 +8,9 @@ vi.mock('./api', () => ({ fetchBridgeTransactionsClient: fetchBridgeTransactions
 
 import {
 	createBridgeTransactionCollector,
+	createBridgeTransactionSearchIndex,
 	fetchTransactions,
+	matchesBridgeTransactionSearch,
 	toBridgeTransactionCsvCell,
 	type BridgeTransaction
 } from './Transactions'
@@ -153,5 +155,38 @@ describe('bridge transaction construction behavior fixture', () => {
 		expect(toBridgeTransactionCsvCell(0)).toBe(0)
 		expect(toBridgeTransactionCsvCell(-2.5)).toBe(-2.5)
 		expect(toBridgeTransactionCsvCell(Number.NaN)).toBe('')
+	})
+
+	it('searches the indexed transaction values case-insensitively', () => {
+		const collector = createBridgeTransactionCollector()
+		collector.addPage([
+			{
+				...transaction('0xUniqueHash', 1_800_000_000),
+				bridge_name: 'Across',
+				chain: 'Arbitrum',
+				token: 'WETH',
+				amount: '987.65',
+				usd_value: '1234.56',
+				tx_from: '0xUniqueFrom',
+				tx_to: '0xUniqueTo'
+			}
+		])
+		const row = collector.finish().rows[0]
+		const searchIndex = createBridgeTransactionSearchIndex([row])
+
+		for (const query of [
+			'1800000000',
+			'across',
+			'arbitrum',
+			'weth',
+			'987.65',
+			'1234.56',
+			'0xuniquefrom',
+			'0xuniqueto',
+			'0xuniquehash'
+		]) {
+			expect(matchesBridgeTransactionSearch(row, searchIndex, query)).toBe(true)
+		}
+		expect(matchesBridgeTransactionSearch(row, searchIndex, 'withdrawal')).toBe(false)
 	})
 })

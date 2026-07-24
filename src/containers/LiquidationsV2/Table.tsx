@@ -1,5 +1,4 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { matchSorter } from 'match-sorter'
 import * as React from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
 import { BasicLink } from '~/components/Link'
@@ -21,14 +20,36 @@ const overviewChainColumnHelper = createColumnHelper<OverviewChainRow>()
 const protocolChainColumnHelper = createColumnHelper<ProtocolChainRow>()
 const positionColumnHelper = createColumnHelper<LiquidationPosition>()
 
-export function filterLiquidationPositions(rows: LiquidationPosition[], searchValue: string): LiquidationPosition[] {
-	const searchTerm = searchValue.trim()
+type LiquidationPositionSearchIndex = WeakMap<LiquidationPosition, string>
+
+const normalizeSearchValue = (value: string) =>
+	value
+		.normalize('NFD')
+		.replace(/\p{Diacritic}/gu, '')
+		.toLowerCase()
+
+export function createLiquidationPositionSearchIndex(rows: LiquidationPosition[]): LiquidationPositionSearchIndex {
+	const index: LiquidationPositionSearchIndex = new WeakMap()
+	for (const row of rows) {
+		index.set(
+			row,
+			normalizeSearchValue(
+				`${row.protocolName}\0${row.protocolSlug}\0${row.chainName}\0${row.chainSlug}\0${row.ownerName}\0${row.owner}\0${row.collateral}`
+			)
+		)
+	}
+	return index
+}
+
+export function filterLiquidationPositions(
+	rows: LiquidationPosition[],
+	searchIndex: LiquidationPositionSearchIndex,
+	searchValue: string
+): LiquidationPosition[] {
+	const searchTerm = normalizeSearchValue(searchValue.trim())
 	if (!searchTerm) return rows
 
-	return matchSorter(rows, searchTerm, {
-		keys: ['protocolName', 'protocolSlug', 'chainName', 'chainSlug', 'ownerName', 'owner', 'collateral'],
-		threshold: matchSorter.rankings.CONTAINS
-	})
+	return rows.filter((row) => searchIndex.get(row)!.includes(searchTerm))
 }
 
 const protocolColumns = [
@@ -357,9 +378,10 @@ export function LiquidationsPositionsTable({
 } & LiquidationsTableProps) {
 	const [searchValue, setSearchValue] = React.useState('')
 	const deferredSearchValue = React.useDeferredValue(searchValue)
+	const searchIndex = React.useMemo(() => createLiquidationPositionSearchIndex(rows), [rows])
 	const filteredRows = React.useMemo(
-		() => filterLiquidationPositions(rows, deferredSearchValue),
-		[rows, deferredSearchValue]
+		() => filterLiquidationPositions(rows, searchIndex, deferredSearchValue),
+		[rows, searchIndex, deferredSearchValue]
 	)
 
 	return (

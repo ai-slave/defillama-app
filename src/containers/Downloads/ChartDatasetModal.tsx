@@ -26,6 +26,7 @@ import {
 	formatDownloadPreviewPercent,
 	parseDownloadPreviewDate
 } from './previewFormatting'
+import { createPreviewSearchIndex, filterPreviewRows } from './previewSearch'
 import {
 	applyChartColumnsAndSort,
 	applyChartParams,
@@ -502,13 +503,11 @@ export function ChartDatasetModal({
 		() => filterParsedRowsByDateRange(rows, dateColIndex, dateRange),
 		[rows, dateColIndex, dateRange]
 	)
+	const searchIndex = useMemo(() => createPreviewSearchIndex(rows, columnMeta.length), [rows, columnMeta.length])
 
 	const filteredRows = useMemo(() => {
-		if (deferredSearch.length === 0) return dateFilteredRows
-		return dateFilteredRows.filter((row) =>
-			columnMeta.some((column) => (row.values[column.index] ?? '').toLowerCase().includes(deferredSearch))
-		)
-	}, [columnMeta, deferredSearch, dateFilteredRows])
+		return filterPreviewRows(dateFilteredRows, searchIndex, deferredSearch)
+	}, [dateFilteredRows, searchIndex, deferredSearch])
 
 	const sortedRows = useMemo(() => {
 		if (!sortState) return filteredRows
