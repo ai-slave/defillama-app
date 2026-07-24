@@ -53,18 +53,4 @@ if [ "$status" -ne 0 ]; then
 	exit "$status"
 fi
 
-echo "Running bun run typecheck and bun run test:typecheck in parallel..."
-
-bun run typecheck &
-typecheck_pid=$!
-
-bun run test:typecheck &
-test_typecheck_pid=$!
-
-wait "$typecheck_pid" || status=$?
-wait "$test_typecheck_pid" || status=$?
-
-if [ "$status" -ne 0 ]; then
-	echo "Pre-commit checks failed."
-	exit "$status"
-fi
+echo "Pre-commit checks passed."

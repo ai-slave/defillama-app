@@ -1396,7 +1396,10 @@ export function withServerSidePropsTelemetry<T extends { [key: string]: any }>(
 	}
 }
 
-if (typeof process !== 'undefined') {
+// Vitest evaluates this module in isolated contexts that share one Node process.
+// Registering in tests would accumulate one beforeExit listener per context;
+// telemetry tests flush and reset the queue explicitly instead.
+if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') {
 	process.once('beforeExit', () => {
 		void flushTelemetry({ timeoutMs: getEnvNumber('OPS_TELEMETRY_BEFORE_EXIT_FLUSH_MS', 2000), runtime: 'build' })
 	})

@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+
+status=0
+
+echo "Running full pre-push checks..."
+
+bun run lint &
+lint_pid=$!
+
+bun run typecheck &
+typecheck_pid=$!
+
+bun run test:typecheck &
+test_typecheck_pid=$!
+
+bun run test &
+test_pid=$!
+
+wait "$lint_pid" || status=1
+wait "$typecheck_pid" || status=1
+wait "$test_typecheck_pid" || status=1
+wait "$test_pid" || status=1
+
+if [ "$status" -ne 0 ]; then
+	echo "Pre-push checks failed."
+	exit "$status"
+fi
+
+echo "Pre-push checks passed."
