@@ -1,94 +1,59 @@
-import { setTimeout as delay } from 'node:timers/promises'
 import type { LogLike } from './logger'
-
-type Fetch = typeof fetch
 
 type PostStartHookOptions = {
 	env?: NodeJS.ProcessEnv
-	fetchImpl?: Fetch
+	fetchImpl?: typeof fetch
 	logger?: LogLike
-	now?: () => number
-	sleep?: (ms: number) => Promise<void>
 }
 
 type PostStartHookResult =
 	| { reason: string; status: 'skipped' }
-	| { attempts: number; status: 'purged' }
+	| { status: 'triggered' }
 	| { reason: string; status: 'failed' }
 
-function parsePositiveInt(value: string | undefined, fallback: number): number {
-	const parsed = Number.parseInt(value ?? '', 10)
-	return parsed > 0 ? parsed : fallback
-}
-
-function getHealthUrl(env: NodeJS.ProcessEnv): string {
-	return env.POST_START_HEALTH_URL || `http://127.0.0.1:${env.PORT || '3000'}/`
-}
-
-async function waitForHealth({
-	env,
-	fetchImpl,
-	logger,
-	now = Date.now,
-	sleep = delay
-}: Required<Pick<PostStartHookOptions, 'env' | 'fetchImpl' | 'logger'>> &
-	Pick<PostStartHookOptions, 'now' | 'sleep'>): Promise<number> {
-	const healthUrl = getHealthUrl(env)
-	const timeoutMs = parsePositiveInt(env.POST_START_HEALTH_TIMEOUT_MS, 30_000)
-	const intervalMs = parsePositiveInt(env.POST_START_HEALTH_INTERVAL_MS, 1_000)
-	const startedAt = now()
-	let attempts = 0
-
-	while (now() - startedAt <= timeoutMs) {
-		attempts += 1
-		try {
-			const response = await fetchImpl(healthUrl, { method: 'GET' })
-			if (response.ok) {
-				return attempts
-			}
-			logger.log(`Post-start health check returned ${response.status}; retrying`)
-		} catch (error) {
-			logger.log(`Post-start health check failed; retrying: ${error instanceof Error ? error.message : String(error)}`)
-		}
-		await sleep(intervalMs)
-	}
-
-	return 0
-}
+const DEFAULT_INVALIDATION_URL = 'https://defillama.com/_wipe-cache'
 
 export async function runPostStartHook({
 	env = process.env,
 	fetchImpl = fetch,
-	logger = console,
-	now,
-	sleep
+	logger = console
 }: PostStartHookOptions = {}): Promise<PostStartHookResult> {
-	if (!env.CF_ZONE || !env.CF_PURGE_CACHE_AUTH) {
-		logger.log('CF_ZONE or CF_PURGE_CACHE_AUTH is not set, skipping purge cache')
-		return { reason: 'missing Cloudflare env', status: 'skipped' }
+	const invalidationAuth = env.LB_CACHE_INVALIDATION_AUTH?.trim()
+	if (!invalidationAuth) {
+		logger.log('LB_CACHE_INVALIDATION_AUTH is not set, skipping cache invalidation')
+		return { reason: 'missing LB cache invalidation auth', status: 'skipped' }
 	}
 
-	const attempts = await waitForHealth({ env, fetchImpl, logger, now, sleep })
-	if (attempts === 0) {
-		logger.log('Post-start health check timed out, skipping purge cache')
-		return { reason: 'health check timed out', status: 'skipped' }
+	const buildId = env.NEXT_BUILD_ID?.trim()
+	if (!buildId) {
+		logger.log('NEXT_BUILD_ID is not set, skipping cache invalidation')
+		return { reason: 'missing Next build ID', status: 'skipped' }
 	}
 
-	logger.log(`Purging cache for zone ${env.CF_ZONE}`)
-	const response = await fetchImpl(`https://api.cloudflare.com/client/v4/zones/${env.CF_ZONE}/purge_cache`, {
-		body: JSON.stringify({ purge_everything: true }),
-		headers: {
-			Authorization: `Bearer ${env.CF_PURGE_CACHE_AUTH}`,
-			'Content-Type': 'application/json'
-		},
-		method: 'POST'
-	})
+	const invalidationUrl = env.LB_CACHE_INVALIDATION_URL?.trim() || DEFAULT_INVALIDATION_URL
+	logger.log(`Triggering load-balancer cache invalidation for build ${buildId}`)
+
+	let response: Response
+	try {
+		response = await fetchImpl(invalidationUrl, {
+			headers: {
+				'X-Build-ID': buildId,
+				'X-Purge-Token': invalidationAuth
+			},
+			method: 'POST'
+		})
+	} catch (error) {
+		const reason = error instanceof Error ? error.message : String(error)
+		logger.log(`Load-balancer cache invalidation trigger failed: ${reason}`)
+		return { reason, status: 'failed' }
+	}
 
 	if (!response.ok) {
 		const body = await response.text()
-		logger.log(`Cloudflare purge failed: ${body}`)
-		return { reason: body, status: 'failed' }
+		const reason = body || `HTTP ${response.status}`
+		logger.log(`Load-balancer cache invalidation trigger failed: ${reason}`)
+		return { reason, status: 'failed' }
 	}
 
-	return { attempts, status: 'purged' }
+	return { status: 'triggered' }
 }
