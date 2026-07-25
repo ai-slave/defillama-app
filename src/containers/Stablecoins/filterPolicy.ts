@@ -233,6 +233,12 @@ export const stablecoinPegTypeOptions: StablecoinFilterOption[] = [
 		key: 'PEGGEDMYR',
 		filterFn: (item) => item.pegType === 'peggedMYR',
 		help: 'Show stablecoins pegged to Malaysian Ringgit'
+	},
+	{
+		name: 'KRW',
+		key: 'PEGEDKRW',
+		filterFn: (item) => item.pegType === 'peggedKRW',
+		help: 'Show stablecoins pegged to Korean Won'
 	}
 ]
 
