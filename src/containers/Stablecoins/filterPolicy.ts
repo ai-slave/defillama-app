@@ -236,7 +236,7 @@ export const stablecoinPegTypeOptions: StablecoinFilterOption[] = [
 	},
 	{
 		name: 'KRW',
-		key: 'PEGEDKRW',
+		key: 'PEGGEDKRW',
 		filterFn: (item) => item.pegType === 'peggedKRW',
 		help: 'Show stablecoins pegged to Korean Won'
 	}
