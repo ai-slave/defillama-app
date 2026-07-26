@@ -126,19 +126,18 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 			enableSorting: false,
 			cell: (info) => {
 				const value = info.getValue()
-				return value ? (
+				if (!value) return <EmptyCell />
+				const route = info.row.original.referenceTokenRoute
+				return (
 					<Tooltip content={value} className="block">
-						<BasicLink
-							href={`/token/${encodeURIComponent(value.toUpperCase())}`}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="truncate hover:underline"
-						>
-							{value}
-						</BasicLink>
+						{route ? (
+							<BasicLink href={route} target="_blank" rel="noopener noreferrer" className="truncate hover:underline">
+								{value}
+							</BasicLink>
+						) : (
+							<span className="truncate">{value}</span>
+						)}
 					</Tooltip>
-				) : (
-					<EmptyCell />
 				)
 			},
 			meta: {

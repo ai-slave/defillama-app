@@ -2,6 +2,8 @@ import { paginateAndSortRows } from '~/containers/Yields/yieldsTablePagination.s
 import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { queryBoolean } from '~/server/api/params'
 import type { ApiQuery } from '~/server/api/types'
+import { slug } from '~/utils'
+import { getCanonicalTokenRoute, type TokenDirectory } from '~/utils/tokenDirectory'
 import { getRiskCoveredPoolIds } from '../VaultRisk/coveredPools'
 import { collapseTrend, resolveApy, resolveVariant, stabilityRatingFromScore } from './apy'
 import { getEnrichedEarn } from './enrich.server'
@@ -73,15 +75,18 @@ export async function getEarnPage(
 
 	const stablecoin = queryBoolean(query, 'stablecoin')
 	const halal = queryBoolean(query, 'halal')
-	const [rows, meta, depegs, exploits, raiseValuationsUsd, referralUrls, riskCovered] = await Promise.all([
-		getEnrichedEarn(snapshot),
-		readYieldsMeta(snapshot),
-		readYieldsDepegs(snapshot),
-		readYieldsExploits(snapshot),
-		getRaiseValuationsUsd(snapshot),
-		getReferralUrls(snapshot),
-		getRiskCoveredPoolIds()
-	])
+	const [rows, meta, depegs, exploits, raiseValuationsUsd, referralUrls, riskCovered, metadataCache] =
+		await Promise.all([
+			getEnrichedEarn(snapshot),
+			readYieldsMeta(snapshot),
+			readYieldsDepegs(snapshot),
+			readYieldsExploits(snapshot),
+			getRaiseValuationsUsd(snapshot),
+			getReferralUrls(snapshot),
+			getRiskCoveredPoolIds(),
+			import('~/utils/metadata').then((m) => m.default)
+		])
+	const tokenDirectory = metadataCache.tokenDirectory
 	common.tokens = normalizeLegacyTokens(common.tokens, meta)
 	const matchesToken = createTokenFilterMatcher(common.tokens, tokenMatch, tokenOn)
 	// Worst-deviation-per-pool depeg flags, joined onto matching rows by pool id (sparse).
@@ -121,7 +126,15 @@ export async function getEarnPage(
 		if (minApy != null && !(resolvedApy.total != null && resolvedApy.total >= minApy)) continue
 		if (maxApy != null && !(resolvedApy.total != null && resolvedApy.total <= maxApy)) continue
 
-		const pageRow = toEarnPageRow(row, resolvedApy, window, components, depegByPool.get(row.id), raiseValuationsUsd)
+		const pageRow = toEarnPageRow(
+			row,
+			resolvedApy,
+			window,
+			components,
+			depegByPool.get(row.id),
+			raiseValuationsUsd,
+			tokenDirectory
+		)
 		const referralUrl = row.protocolSlug ? referralUrls.get(row.protocolSlug) : undefined
 		if (referralUrl) pageRow.url = referralUrl
 		if (riskCovered.has(row.id)) pageRow.hasRiskData = true
@@ -153,7 +166,8 @@ function toEarnPageRow(
 	window: ReturnType<typeof parseApyWindow>,
 	components: ReturnType<typeof parseApyComponents>,
 	depeg: DepegRow | undefined,
-	raiseValuationsUsd: Map<string, number>
+	raiseValuationsUsd: Map<string, number>,
+	tokenDirectory: TokenDirectory
 ): EarnPageRow {
 	const rewardSymbols = collectRewardSymbols(row.reward_tokens)
 	// Unsplit pool (trend serves `total`): stability only exists reward-inclusive,
@@ -166,6 +180,8 @@ function toEarnPageRow(
 	const stabilityAvg30d = resolveApy(row.apy, row.intrinsic, 'avg_30d', stabilityComponents).total
 	// Token-less protocols get the "Potential Airdrop" marker (Fraxlend excluded at render).
 	const airdrop = !row.protocolHasToken
+	// Same lookup /token/[token] resolves with — untracked symbols get no link.
+	const referenceTokenRecord = row.reference_asset_symbol ? tokenDirectory[slug(row.reference_asset_symbol)] : undefined
 	return {
 		// Aliases consumed by the shared pools-table columns / cells / CSV export.
 		id: row.id,
@@ -183,6 +199,7 @@ function toEarnPageRow(
 		category: row.category,
 		// Reference column (reference-asset symbol, e.g. "ETH").
 		referenceAsset: row.reference_asset_symbol ?? null,
+		referenceTokenRoute: referenceTokenRecord ? getCanonicalTokenRoute(referenceTokenRecord) : null,
 		tvl: row.tvl_usd,
 		apy: resolvedApy.total,
 		apyBase: resolvedApy.base,

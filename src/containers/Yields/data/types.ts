@@ -251,6 +251,8 @@ export interface EarnPageRow {
 	url: string
 	category: string | null
 	referenceAsset: string | null
+	// Canonical token-page route; null when the token directory doesn't track the symbol.
+	referenceTokenRoute?: string | null
 	tvl: number | null
 	apy: number | null
 	apyBase: number | null
