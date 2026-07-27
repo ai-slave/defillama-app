@@ -1,21 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { FEATURES_SERVER } from '~/constants'
-import { purgeCloudflareResearchUrls, type CloudflarePurgeResult } from '~/server/cloudflarePurge'
-import {
-	assertRevalidateFanoutSucceeded,
-	fanoutRevalidate,
-	type InstanceRevalidateResult
-} from '~/server/revalidateInstances'
+import { scheduleResearchCacheUpdate, type ScheduledResearchCacheUpdate } from '~/server/researchCacheInvalidation'
 import { withApiRouteTelemetry } from '~/utils/telemetry'
 
-type CacheUpdateResult = {
-	cloudflare: CloudflarePurgeResult
-	instances: InstanceRevalidateResult[]
-	revalidateErrors: { path: string; reason: string }[]
-	revalidated: string[]
-}
-
-type ResponseData = CacheUpdateResult | { error: string }
+type ResponseData = ScheduledResearchCacheUpdate | { error: string }
 
 function articleUrl(path: string) {
 	return `${FEATURES_SERVER.replace(/\/$/, '')}${path}`
@@ -49,19 +37,6 @@ async function sendBackendResponse(response: Response, res: NextApiResponse<Resp
 	return res.status(response.status).json({ error: body || response.statusText || 'Article request failed' })
 }
 
-async function revalidateResearchLanding(res: NextApiResponse<ResponseData>) {
-	const path = '/research'
-	try {
-		await res.revalidate(path)
-		return { revalidateErrors: [], revalidated: [path] }
-	} catch (error) {
-		return {
-			revalidateErrors: [{ path, reason: error instanceof Error ? error.message : String(error) }],
-			revalidated: []
-		}
-	}
-}
-
 export async function researchLandingRevalidateHandler(req: NextApiRequest, res: NextApiResponse<ResponseData>) {
 	res.setHeader('Cache-Control', 'private, no-store, max-age=0')
 
@@ -80,23 +55,11 @@ export async function researchLandingRevalidateHandler(req: NextApiRequest, res:
 		return sendBackendResponse(authCheck, res)
 	}
 
-	const revalidate = await revalidateResearchLanding(res)
-	if (revalidate.revalidateErrors.length > 0) {
-		return res.status(502).json({ error: `Local revalidation failed: ${JSON.stringify(revalidate.revalidateErrors)}` })
-	}
-	const fanout = await fanoutRevalidate(['/research'])
-	try {
-		assertRevalidateFanoutSucceeded(fanout, ['/research'])
-	} catch (error) {
-		return res.status(502).json({ error: error instanceof Error ? error.message : String(error) })
-	}
-	const cloudflare = await purgeCloudflareResearchUrls(['/research'])
+	const cache = scheduleResearchCacheUpdate({ purgePaths: ['/research'], revalidatePaths: ['/research'] }, (path) =>
+		res.revalidate(path)
+	)
 
-	return res.status(200).json({
-		cloudflare,
-		instances: fanout.instances,
-		...revalidate
-	})
+	return res.status(200).json(cache)
 }
 
 export default withApiRouteTelemetry('/api/private/research/revalidate-landing', researchLandingRevalidateHandler)

@@ -2,31 +2,15 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { FEATURES_SERVER } from '~/constants'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_SLUGS } from '~/containers/Articles/types'
-import {
-	normalizeResearchCachePaths,
-	purgeCloudflareResearchUrls,
-	type CloudflarePurgeResult
-} from '~/server/cloudflarePurge'
-import {
-	assertRevalidateFanoutSucceeded,
-	checkRevalidateFanoutReady,
-	fanoutRevalidate,
-	type InstanceRevalidateResult
-} from '~/server/revalidateInstances'
+import { normalizeResearchCachePaths } from '~/server/cloudflarePurge'
+import { scheduleResearchCacheUpdate, type ScheduledResearchCacheUpdate } from '~/server/researchCacheInvalidation'
 import { withApiRouteTelemetry } from '~/utils/telemetry'
 
 type BackendArticleResponse = {
 	article: ArticleDocument
 }
 
-type CacheUpdateResult = {
-	cloudflare: CloudflarePurgeResult
-	instances: InstanceRevalidateResult[]
-	revalidateErrors: { path: string; reason: string }[]
-	revalidated: string[]
-}
-
-type ResponseData = (BackendArticleResponse & { cache?: CacheUpdateResult }) | { error: string }
+type ResponseData = (BackendArticleResponse & { cache?: ScheduledResearchCacheUpdate }) | { error: string }
 
 type ResearchInvalidationTargets = {
 	purgePaths: string[]
@@ -107,27 +91,6 @@ async function sendBackendResponse(response: Response, res: NextApiResponse<Resp
 	return res.status(response.status).json({ error: body || response.statusText || 'Article request failed' })
 }
 
-async function revalidatePaths(paths: string[], res: NextApiResponse<ResponseData>) {
-	const revalidated: string[] = []
-	const revalidateErrors: CacheUpdateResult['revalidateErrors'] = []
-
-	for (const path of paths) {
-		try {
-			await res.revalidate(path)
-			revalidated.push(path)
-		} catch (error) {
-			revalidateErrors.push({ path, reason: error instanceof Error ? error.message : String(error) })
-		}
-	}
-
-	return { revalidateErrors, revalidated }
-}
-
-async function assertFanoutReady(paths: string[]) {
-	const fanout = await checkRevalidateFanoutReady(paths)
-	assertRevalidateFanoutSucceeded(fanout, paths)
-}
-
 export async function researchUnpublishHandler(req: NextApiRequest, res: NextApiResponse<ResponseData>) {
 	res.setHeader('Cache-Control', 'private, no-store, max-age=0')
 
@@ -151,11 +114,6 @@ export async function researchUnpublishHandler(req: NextApiRequest, res: NextApi
 
 	const before = (await readJson<BackendArticleResponse>(beforeResponse))?.article ?? null
 	const targets = unpublishInvalidationTargets(before)
-	try {
-		await assertFanoutReady(targets.revalidatePaths)
-	} catch (error) {
-		return res.status(502).json({ error: error instanceof Error ? error.message : String(error) })
-	}
 
 	const unpublishResponse = await fetch(articleUrl(`/articles/${encodedArticleId}/unpublish`), {
 		headers: authorizationHeader(req),
@@ -167,29 +125,12 @@ export async function researchUnpublishHandler(req: NextApiRequest, res: NextApi
 
 	const data = await readJson<BackendArticleResponse>(unpublishResponse)
 	if (!data?.article) {
-		return res.status(502).json({ error: 'Unpublish response did not include an article' })
+		return res.status(500).json({ error: 'Unpublish response did not include an article' })
 	}
 
-	const revalidate = await revalidatePaths(targets.revalidatePaths, res)
-	if (revalidate.revalidateErrors.length > 0) {
-		return res.status(502).json({ error: `Local revalidation failed: ${JSON.stringify(revalidate.revalidateErrors)}` })
-	}
-	const fanout = await fanoutRevalidate(targets.revalidatePaths)
-	try {
-		assertRevalidateFanoutSucceeded(fanout, targets.revalidatePaths)
-	} catch (error) {
-		return res.status(502).json({ error: error instanceof Error ? error.message : String(error) })
-	}
-	const cloudflare = await purgeCloudflareResearchUrls(targets.purgePaths)
+	const cache = scheduleResearchCacheUpdate(targets, (path) => res.revalidate(path))
 
-	return res.status(unpublishResponse.status).json({
-		...data,
-		cache: {
-			cloudflare,
-			instances: fanout.instances,
-			...revalidate
-		}
-	})
+	return res.status(unpublishResponse.status).json({ ...data, cache })
 }
 
 export default withApiRouteTelemetry('/api/private/research/articles/[id]/unpublish', researchUnpublishHandler)

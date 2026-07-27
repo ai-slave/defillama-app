@@ -49,22 +49,24 @@ describe('/api/private/research/revalidate-landing', () => {
 		expect(new URL(fetchImpl.mock.calls[0][0]).pathname).toBe('/articles/mine')
 		expect(new URL(fetchImpl.mock.calls[0][0]).searchParams.get('limit')).toBe('1')
 		expect(fetchImpl.mock.calls[0][1]).toEqual({ headers: { Authorization: 'Bearer user-token' } })
-		expect(res.revalidate).toHaveBeenCalledWith('/research')
-		expect(fetchImpl).toHaveBeenLastCalledWith('https://api.cloudflare.com/client/v4/zones/zone/purge_cache', {
-			body: JSON.stringify({ files: ['https://defillama.test/research'] }),
-			headers: {
-				Authorization: 'Bearer token',
-				'Content-Type': 'application/json'
-			},
-			method: 'POST'
-		})
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({
-			cloudflare: { status: 'purged', urls: ['https://defillama.test/research'] },
-			instances: [],
-			revalidateErrors: [],
-			revalidated: ['/research']
+			purgePaths: ['/research'],
+			revalidatePaths: ['/research'],
+			status: 'scheduled'
 		})
+
+		await vi.waitFor(() => {
+			expect(fetchImpl).toHaveBeenLastCalledWith('https://api.cloudflare.com/client/v4/zones/zone/purge_cache', {
+				body: JSON.stringify({ files: ['https://defillama.test/research'] }),
+				headers: {
+					Authorization: 'Bearer token',
+					'Content-Type': 'application/json'
+				},
+				method: 'POST'
+			})
+		})
+		expect(res.revalidate).toHaveBeenCalledWith('/research')
 	})
 
 	it('passes auth validation failures through without touching caches', async () => {

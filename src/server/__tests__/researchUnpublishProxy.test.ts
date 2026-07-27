@@ -54,58 +54,59 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 			headers: { Authorization: 'Bearer user-token' },
 			method: 'POST'
 		})
-		expect(res.revalidate).toHaveBeenCalledWith('/research')
-		expect(res.revalidate).toHaveBeenCalledWith('/research/report')
-		expect(res.revalidate).not.toHaveBeenCalledWith('/research/report/old-story')
-		expect(fetchImpl).toHaveBeenLastCalledWith('https://api.cloudflare.com/client/v4/zones/zone/purge_cache', {
-			body: JSON.stringify({
-				files: [
-					'https://defillama.test/research',
-					'https://defillama.test/research/feed.xml',
-					'https://defillama.test/research/report/old-story',
-					'https://defillama.test/research/report'
-				]
-			}),
-			headers: {
-				Authorization: 'Bearer token',
-				'Content-Type': 'application/json'
-			},
-			method: 'POST'
-		})
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({
 			article: after,
 			cache: {
-				cloudflare: {
-					status: 'purged',
-					urls: [
+				purgePaths: ['/research', '/research/feed.xml', '/research/report/old-story', '/research/report'],
+				revalidatePaths: ['/research', '/research/report'],
+				status: 'scheduled'
+			}
+		})
+
+		await vi.waitFor(() => {
+			expect(fetchImpl).toHaveBeenLastCalledWith('https://api.cloudflare.com/client/v4/zones/zone/purge_cache', {
+				body: JSON.stringify({
+					files: [
 						'https://defillama.test/research',
 						'https://defillama.test/research/feed.xml',
 						'https://defillama.test/research/report/old-story',
 						'https://defillama.test/research/report'
 					]
+				}),
+				headers: {
+					Authorization: 'Bearer token',
+					'Content-Type': 'application/json'
 				},
-				instances: [],
-				revalidateErrors: [],
-				revalidated: ['/research', '/research/report']
-			}
+				method: 'POST'
+			})
 		})
+		expect(res.revalidate).toHaveBeenCalledWith('/research')
+		expect(res.revalidate).toHaveBeenCalledWith('/research/report')
+		expect(res.revalidate).not.toHaveBeenCalledWith('/research/report/old-story')
 	})
 
-	it('fails closed in production when cross-instance revalidation is not configured', async () => {
+	it('unpublishes in production even when cross-instance revalidation is not configured', async () => {
 		vi.stubEnv('NODE_ENV', 'production')
-		vi.stubEnv('CF_ZONE', 'zone')
-		vi.stubEnv('CF_PURGE_CACHE_AUTH', 'token')
 		const before = article()
-		const fetchImpl = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ article: before }), { status: 200 }))
+		const after = article({ status: 'draft' })
+		const fetchImpl = vi
+			.fn()
+			.mockResolvedValueOnce(new Response(JSON.stringify({ article: before }), { status: 200 }))
+			.mockResolvedValueOnce(new Response(JSON.stringify({ article: after }), { status: 200 }))
 		vi.stubGlobal('fetch', fetchImpl)
 		const res = createMockNextApiResponse()
 
 		await researchUnpublishHandler(request({ headers: { authorization: 'Bearer user-token' } }), res)
 
-		expect(res.revalidate).not.toHaveBeenCalled()
-		expect(fetchImpl).toHaveBeenCalledTimes(1)
-		expect(res.status).toHaveBeenCalledWith(502)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Cross-instance revalidation is not configured' })
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith({
+			article: after,
+			cache: {
+				purgePaths: ['/research', '/research/feed.xml', '/research/report/old-story', '/research/report'],
+				revalidatePaths: ['/research', '/research/report'],
+				status: 'scheduled'
+			}
+		})
 	})
 })
