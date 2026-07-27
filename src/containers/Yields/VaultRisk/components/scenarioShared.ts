@@ -136,7 +136,20 @@ export function modeledLossCell(scenario: ScenarioVM, stress?: StressSel): Model
 		}
 	}
 
-	// No drop dimension under an active stress selector: fixed figure, no subtext.
+	// No drop dimension under an active stress selector: fixed at every drop anchor, but
+	// 'worst' still means the ceiling — under a "Worst-case loss" header a min<max row (e.g.
+	// oracle full-drain) must never show its floor.
+	if (stress === 'worst' && scenario.lossMaxUsd > 0) {
+		return {
+			amount: formatUsd(scenario.lossMaxUsd, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
+			note: null,
+			sortUsd: scenario.lossMaxUsd
+		}
+	}
 	return { ...baseModeledCell(scenario), note: null }
 }
 
@@ -145,6 +158,8 @@ export function stressLossTitle(s: ScenarioVM, stress?: StressSel): string {
 	if (s.lossByAnchor?.length && stress != null) {
 		return stress === 'worst' ? 'Worst-case loss' : `Loss at −${formatPercent(stress, { input: 'percent' })}`
 	}
+	// keep the no-curve cell and its title agreeing under the 'worst' selection
+	if (stress === 'worst' && s.lossMaxUsd > 0) return 'Worst-case loss'
 	const drop = dropPct(s)
 	return drop != null ? `Loss at −${formatPercent(drop, { input: 'percent' })}` : 'Modeled loss'
 }

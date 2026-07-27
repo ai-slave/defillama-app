@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import { prerenderToNodeStream } from 'react-dom/static.node'
 import { describe, expect, it } from 'vitest'
 import { CollateralView } from '../components/CollateralView'
+import { ScenarioDetailContent } from '../components/ScenarioDetailPanel'
 import { TrustPanel } from '../components/TrustPanel'
 import { buildVaultRiskVM } from '../derive'
 import type { CollateralRisk, VaultRiskData, VaultScenario } from '../types'
@@ -717,6 +718,93 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('NAV')
 		// the richer legs view supersedes the base/quote fallback text
 		expect(html).not.toContain('should not render when legs are present')
+	})
+
+	it('renders the oracle full-drain detail as a drainable-now → if-forced range with the admin inline', async () => {
+		const d = morphoData()
+		const weETH = d.vault.collateral_risks[0].token
+		const cbETH = d.vault.collateral_risks[1].token
+		d.vault.vault_specific_risks.push(
+			makeScenario({
+				id: 'sc-fulldrain-weeth',
+				scenario_id: 'oracle-compromise-full-drain',
+				kind: 'oracle-hack',
+				title: 'Oracle compromise (full drain)',
+				asset: weETH,
+				description:
+					'If this managed oracle is compromised, the feed can be forced and the whole position borrowed out.',
+				loss: makeLoss({
+					status: 'computed',
+					min_usd: 500_000,
+					max_usd: 2_000_000,
+					window_type: 'event',
+					time_window_sec: { min: 0, max: 0 }
+				}),
+				oracle_admins: [
+					{ address: '0x00000000000000000000000000000000000000d1', kind: 'safe', threshold: 4, signers: 9 }
+				]
+			}),
+			makeScenario({
+				id: 'sc-fulldrain-cbeth',
+				scenario_id: 'oracle-compromise-full-drain',
+				kind: 'oracle-hack',
+				title: 'Oracle compromise (full drain)',
+				asset: cbETH,
+				description:
+					'If this managed oracle is compromised, the feed can be forced and the whole position borrowed out.',
+				loss: makeLoss({
+					status: 'computed',
+					min_usd: 200_000,
+					max_usd: 800_000,
+					window_type: 'event',
+					time_window_sec: { min: 0, max: 0 }
+				}),
+				// no threshold/signers → a bare single-key control, toned as the weaker admin
+				oracle_admins: [{ address: '0x00000000000000000000000000000000000000d2', kind: 'eoa' }]
+			})
+		)
+		const vm = buildVaultRiskVM(d)
+		const scenario = vm.scenarios.find((s) => s.scenarioId === 'oracle-compromise-full-drain')!
+		const html = await render(
+			<ScenarioDetailContent scenario={scenario} protocol={vm.protocol} supplyUsd={vm.supplyUsd} />
+		)
+		// the two-figure range: what's drainable now vs the whole position if the feed is forced
+		expect(html).toContain('Drainable now')
+		expect(html).toContain('If the oracle is forced')
+		// the plausibility clause names the resolved multisig strength and the single-key case
+		expect(html).toContain('if this 4-of-9 Safe is compromised')
+		expect(html).toContain('if this single key (EOA) is compromised')
+		// framed as a conditional worst case, never an expected loss
+		expect(html).toContain('conditional worst case')
+	})
+
+	it('omits the controlling-admin clause on a full-drain row whose admin was not resolved this tick', async () => {
+		const d = morphoData()
+		d.vault.vault_specific_risks.push(
+			makeScenario({
+				id: 'sc-fulldrain-unresolved',
+				scenario_id: 'oracle-compromise-full-drain',
+				kind: 'oracle-hack',
+				title: 'Oracle compromise (full drain)',
+				asset: d.vault.collateral_risks[0].token,
+				description: 'A managed oracle can be forced to any price, letting an attacker borrow out the whole position.',
+				loss: makeLoss({
+					status: 'computed',
+					min_usd: 500_000,
+					max_usd: 2_000_000,
+					window_type: 'event',
+					time_window_sec: { min: 0, max: 0 }
+				})
+				// oracle_admins intentionally absent
+			})
+		)
+		const vm = buildVaultRiskVM(d)
+		const scenario = vm.scenarios.find((s) => s.scenarioId === 'oracle-compromise-full-drain')!
+		const html = await render(
+			<ScenarioDetailContent scenario={scenario} protocol={vm.protocol} supplyUsd={vm.supplyUsd} />
+		)
+		expect(html).toContain('If the oracle is forced') // the range still renders
+		expect(html).not.toContain('is compromised') // …but no "controlled by" implication
 	})
 
 	it('trust panel groups vault-scoped deps and shows a pending-change countdown when queued', async () => {

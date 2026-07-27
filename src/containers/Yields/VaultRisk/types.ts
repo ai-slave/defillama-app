@@ -180,6 +180,17 @@ export interface Evidence {
 	note?: string
 }
 
+// The on-chain entity that can move a feed, attached to oracle-compromise scenario rows.
+// `threshold`/`signers` give the m-of-n of a Safe or guardian set — the governance-strength
+// (how-hard-to-compromise) signal. A missing entry on a row means it wasn't resolved this
+// tick, NOT that the feed is ungoverned.
+export interface OracleAdmin {
+	address: string
+	kind: 'safe' | 'guardian-set' | 'contract' | 'eoa' | (string & {})
+	threshold?: number
+	signers?: number
+}
+
 export interface VaultScenario {
 	id: string
 	scenario_id: string
@@ -192,6 +203,7 @@ export interface VaultScenario {
 	mitigations: string[]
 	evidence: Evidence[]
 	probability_estimates: unknown[]
+	oracle_admins?: OracleAdmin[] // oracle-compromise rows only; absent = unresolved this tick
 }
 
 export interface CollateralRisk {
@@ -509,9 +521,11 @@ export interface PerAssetLossVM {
 	symbol: string
 	address: string
 	lossMaxUsd: number
+	lossMinUsd?: number // full-drain: what's drainable right now (the borrow-out floor)
 	oracleType?: OracleType
 	heartbeatSec?: number
 	deviationThreshold?: number
+	oracleAdmins?: OracleAdmin[] // controllers of this collateral's feed (full-drain rows)
 }
 
 export interface AnchorLossVM {

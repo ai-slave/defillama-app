@@ -131,6 +131,55 @@ describe('buildScenarios (grouping + status)', () => {
 	})
 })
 
+describe('buildScenarios — oracle full-drain (per-collateral, min/max range + admins)', () => {
+	const fullDrainVault = (oracleAdmins?: unknown) =>
+		makeVaultRiskFixture({
+			vault_specific_risks: [
+				makeScenario({
+					id: 'fd-prime',
+					scenario_id: 'oracle-compromise-full-drain',
+					kind: 'oracle-hack',
+					asset: { chain: 'ethereum', symbol: 'PRIME', address: '0xp1' },
+					loss: makeLoss({ status: 'computed', min_usd: 12_000_000, max_usd: 124_000_000, window_type: 'event' }),
+					...(oracleAdmins !== undefined ? { oracle_admins: oracleAdmins } : {})
+				} as never)
+			]
+		})
+
+	it('breaks a single affected collateral out into perAsset (min floor, max ceiling, admins)', () => {
+		const admins = [{ address: '0xadm', kind: 'safe', threshold: 4, signers: 9 }]
+		const [scenario] = buildScenarios(fullDrainVault(admins), scenarioDeps())
+		expect(scenario.perAsset).toHaveLength(1)
+		expect(scenario.perAsset![0].lossMinUsd).toBe(12_000_000)
+		expect(scenario.perAsset![0].lossMaxUsd).toBe(124_000_000)
+		expect(scenario.perAsset![0].oracleAdmins).toEqual(admins)
+		// scenario-level range mirrors the (single) row
+		expect(scenario.lossMinUsd).toBe(12_000_000)
+		expect(scenario.lossMaxUsd).toBe(124_000_000)
+	})
+
+	it('leaves oracleAdmins undefined when the backend did not resolve the admin this tick', () => {
+		const [scenario] = buildScenarios(fullDrainVault(undefined), scenarioDeps())
+		expect(scenario.perAsset).toHaveLength(1)
+		expect(scenario.perAsset![0].oracleAdmins).toBeUndefined()
+	})
+
+	it('a single-asset market-oracle-compromise still gets no perAsset breakout (unchanged)', () => {
+		const v = makeVaultRiskFixture({
+			vault_specific_risks: [
+				makeScenario({
+					scenario_id: 'market-oracle-compromise',
+					kind: 'oracle-hack',
+					asset: { chain: 'ethereum', symbol: 'PRIME', address: '0xp1' },
+					loss: makeLoss({ status: 'computed', min_usd: 0, max_usd: 12_000_000 })
+				})
+			]
+		})
+		const [scenario] = buildScenarios(v, scenarioDeps())
+		expect(scenario.perAsset).toBeUndefined()
+	})
+})
+
 describe('mergeCoverage + coverageForScenario', () => {
 	// vault + protocol coverage with (a) an exact duplicate across both, (b) differing
 	// priorities, (c) an excl-own-tokens cap, (d) a scenario-scoped layer.

@@ -1,6 +1,6 @@
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
-import type { GuardianRole, RiskLoss, RoleEntity } from './types'
+import type { GuardianRole, OracleAdmin, RiskLoss, RoleEntity } from './types'
 
 const MIN = 60
 const HOUR = 3600
@@ -85,6 +85,25 @@ export function asRoleEntity(value: unknown): RoleEntity | null {
 		}
 	}
 	return null
+}
+
+// An oracle-feed admin (a scenario's `oracle_admins`) → a short governance-strength label:
+// an m-of-n Safe / guardian set names its threshold (the "how hard is the attack" signal),
+// an EOA is a single key. Mirrors roleEntityLabel so the two read alike across the section.
+export function formatOracleAdmin(admin: OracleAdmin): string {
+	const mn = admin.threshold && admin.signers ? `${admin.threshold}-of-${admin.signers} ` : ''
+	switch (admin.kind) {
+		case 'safe':
+			return `${mn}Safe`
+		case 'guardian-set':
+			return `${mn}guardian set`
+		case 'eoa':
+			return 'single key (EOA)'
+		case 'contract':
+			return 'control contract'
+		default:
+			return 'admin'
+	}
 }
 
 // `unknown` means the on-chain read failed this tick (neutral, not a flag).

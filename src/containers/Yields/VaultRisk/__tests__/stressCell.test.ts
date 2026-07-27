@@ -90,6 +90,19 @@ describe('modeledLossCell — stress selected (no per-drop curve)', () => {
 		expect(cell.amount).toBe('—')
 		expect(cell.note).toBeNull()
 	})
+
+	it('"worst" shows the ceiling, never the floor, on a min<max row (oracle full-drain)', () => {
+		// drainable-now floor 12.7m, full-compromise ceiling 124.5m: fixed at drop anchors…
+		const fullDrain = scn({ lossMinUsd: 12_700_000, lossMaxUsd: 124_500_000 })
+		expect(modeledLossCell(fullDrain, 10).sortUsd).toBe(12_700_000)
+		expect(modeledLossCell(fullDrain, 50).sortUsd).toBe(12_700_000)
+		// …but under the "Worst-case loss" header the cell must read the ceiling
+		expect(modeledLossCell(fullDrain, 'worst').sortUsd).toBe(124_500_000)
+		// a worst-case-only row ("—" at anchors) also resolves to its ceiling
+		expect(modeledLossCell(scn({ lossMinUsd: 0, lossMaxUsd: 1000 }), 'worst').sortUsd).toBe(1000)
+		// a genuinely $0 row stays untouched
+		expect(modeledLossCell(scn({ lossMinUsd: 0, lossMaxUsd: 0 }), 'worst').amount).toBe('—')
+	})
 })
 
 describe('scenarioGroup', () => {

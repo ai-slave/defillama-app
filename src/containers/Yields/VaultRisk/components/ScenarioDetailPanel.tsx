@@ -2,11 +2,11 @@ import { TokenPageTableShell } from '~/components/Table/helpers'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
-import { scenarioTone } from '../derive'
-import { guardianText } from '../format'
+import { ORACLE_FULL_DRAIN_SCENARIO_ID, scenarioTone } from '../derive'
+import { formatOracleAdmin, guardianText } from '../format'
 import { oracleBadge, toneClasses } from '../kindMeta'
 import { RiskCallout } from '../primitives/RiskCallout'
-import type { CoverageVM, ProtocolRiskFixture, ScenarioVM } from '../types'
+import type { CoverageVM, OracleAdmin, ProtocolRiskFixture, ScenarioVM } from '../types'
 import { ConditionsTree } from './ConditionsTree'
 import { usePositionUsd } from './PositionControl'
 import { isFullLoss, modeledLossCell, scaleToPosition, type StressSel, stressLossTitle } from './scenarioShared'
@@ -192,8 +192,75 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 	)
 }
 
+// The plausibility clause on a full-drain row: an EOA is a single key (toned danger); a
+// resolved multisig/guardian set names its threshold so the reader can judge how hard the
+// attack is. Absent admins → nothing rendered (unresolved this tick, NOT ungoverned).
+function OracleAdminNote({ admins }: { admins?: OracleAdmin[] }) {
+	if (!admins?.length) return null
+	const labels = admins.map(formatOracleAdmin)
+	const danger = admins.some((a) => a.kind === 'eoa')
+	const clause =
+		labels.length > 1 ? `if any of these is compromised: ${labels.join(', ')}` : `if this ${labels[0]} is compromised`
+	return (
+		<span className={`mt-0.5 block body-sm ${danger ? toneClasses('danger').text : 'text-tertiary'}`}>{clause}</span>
+	)
+}
+
+// Full-drain is per-collateral and a conditional worst case: the drainable-now floor beside
+// the whole-position ceiling, each ceiling qualified by the feed's controlling admin.
+function OracleDrainTable({ scenario }: { scenario: ScenarioVM }) {
+	if (!scenario.perAsset?.length) return null
+	return (
+		<div className="flex flex-col gap-2">
+			<TokenPageTableShell>
+				<table className="w-full">
+					<thead className="bg-surface text-sm font-medium text-secondary">
+						<tr>
+							<th className="px-3 py-2 text-left">Collateral</th>
+							<th className="px-3 py-2 text-right">Drainable now</th>
+							<th className="px-3 py-2 text-right">If the oracle is forced</th>
+						</tr>
+					</thead>
+					<tbody>
+						{scenario.perAsset.slice(0, 12).map((a) => (
+							<tr key={a.address} className="border-t border-subtle align-top">
+								<td className="px-3 py-2 label-md text-primary">{a.symbol}</td>
+								<td className="px-3 py-2 text-right text-secondary tabular-nums">
+									{formatUsd(a.lossMinUsd ?? 0, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</td>
+								<td className="px-3 py-2 text-right">
+									<span className="label-md text-primary tabular-nums">
+										{formatUsd(a.lossMaxUsd, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
+									</span>
+									<OracleAdminNote admins={a.oracleAdmins} />
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+				{scenario.perAsset.length > 12 ? (
+					<p className="px-3 py-2 body-md text-secondary">+{scenario.perAsset.length - 12} more assets</p>
+				) : null}
+			</TokenPageTableShell>
+			<p className="max-w-[68ch] body-sm text-tertiary">
+				If the oracle is forced is a conditional worst case: the whole position drained if the feed is fully
+				compromised, not an expected loss. Drainable now is what current borrow capacity already allows.
+			</p>
+		</div>
+	)
+}
+
 function PerAssetTable({ scenario }: { scenario: ScenarioVM }) {
 	if (!scenario.perAsset?.length) return null
+	if (scenario.scenarioId === ORACLE_FULL_DRAIN_SCENARIO_ID) return <OracleDrainTable scenario={scenario} />
 	return (
 		<TokenPageTableShell>
 			<table className="w-full">

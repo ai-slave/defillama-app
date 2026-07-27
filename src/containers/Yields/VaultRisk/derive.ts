@@ -30,6 +30,11 @@ import type {
 	VaultScenario
 } from './types'
 
+// The scenario the backend fans per non-market-oracle collateral: a conditional worst case
+// pairing the drainable-now floor (min_usd) with the whole-position ceiling (max_usd), plus
+// the feed's controlling admin(s) as the plausibility signal.
+export const ORACLE_FULL_DRAIN_SCENARIO_ID = 'oracle-compromise-full-drain'
+
 export function parseActingWindow(loss: Pick<RiskLoss, 'window_type' | 'time_window_sec'>): ActingWindowVM {
 	const { min, max } = loss.time_window_sec
 	if (loss.window_type === 'event') {
@@ -132,18 +137,24 @@ export function buildScenarios(vault: VaultRiskFixture, deps: BuildScenariosDeps
 		}
 
 		let perAsset: PerAssetLossVM[] | undefined
-		if (rows.length > 1 && rows.some((r) => r.asset)) {
+		// full-drain is a per-collateral story (drainable-now vs full-compromise, plus the feed's
+		// controlling admin) — break it out even when a single collateral is affected.
+		const fanned = rows.some((r) => r.asset)
+		if (fanned && (rows.length > 1 || scenarioId === ORACLE_FULL_DRAIN_SCENARIO_ID)) {
 			perAsset = rows
 				.filter((r): r is VaultScenario & { asset: TokenRef } => !!r.asset)
 				.map((r) => {
 					const oc = deps.oracleByAddr.get(r.asset.address.toLowerCase())
+					const computed = r.loss.status === 'computed'
 					return {
 						symbol: r.asset.symbol,
 						address: r.asset.address,
-						lossMaxUsd: r.loss.status === 'computed' ? r.loss.max_usd || 0 : 0,
+						lossMaxUsd: computed ? r.loss.max_usd || 0 : 0,
+						lossMinUsd: computed ? r.loss.min_usd || 0 : 0,
 						oracleType: oc?.type,
 						heartbeatSec: oc?.heartbeat_sec,
-						deviationThreshold: oc?.deviation_threshold
+						deviationThreshold: oc?.deviation_threshold,
+						oracleAdmins: r.oracle_admins
 					}
 				})
 				.sort((a, b) => b.lossMaxUsd - a.lossMaxUsd)
