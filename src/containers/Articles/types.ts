@@ -378,3 +378,48 @@ export type BannerLookupResult = {
 	imageHorizontal: Banner | null
 	promo: Banner | null
 }
+
+export type TrustedLogo = {
+	id: string
+	name: string
+	linkUrl: string
+	imageUrl: string
+	sortOrder: number
+	enabled: boolean
+	createdAt: string
+	updatedAt: string
+}
+
+export type TrustedLogoPayload = {
+	name?: string
+	linkUrl?: string
+	imageUrl?: string
+	enabled?: boolean
+}
+
+export type SocialMention = {
+	id: string
+	quote: string | null
+	username: string | null
+	socialMediaName: string
+	socialMediaLink: string | null
+	xPostId: string | null
+	sortOrder: number
+	enabled: boolean
+	createdAt: string
+	updatedAt: string
+}
+
+export type SocialMentionPayload = {
+	quote?: string | null
+	username?: string | null
+	socialMediaName?: string
+	socialMediaLink?: string | null
+	xPostId?: string | null
+	enabled?: boolean
+}
+
+export type TrustedByLookupResult = {
+	logos: TrustedLogo[]
+	mentions: SocialMention[]
+}

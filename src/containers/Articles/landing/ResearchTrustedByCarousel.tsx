@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import React, { useEffect, useRef } from 'react'
+import type { TrustedLogo } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
 
 interface Logo {
@@ -71,8 +72,12 @@ const getMobileItems = (items: React.ReactNode[]): React.ReactNode[] => {
 	return mobileItems
 }
 
-const desktopItems = TRUSTED_BY_LOGOS.map(renderLogo)
-const mobileItems = getMobileItems(desktopItems)
+const toLogo = (logo: TrustedLogo, index: number): Logo => ({
+	id: index + 1,
+	name: logo.name,
+	logo: logo.imageUrl,
+	link: logo.linkUrl
+})
 
 interface LogosCarouselProps {
 	items: React.ReactNode[]
@@ -155,8 +160,13 @@ const LogosCarousel: React.FC<LogosCarouselProps> = ({ items, speed = SPEED_PX_P
 	)
 }
 
-export const ResearchTrustedByCarousel: React.FC = () => {
+export const ResearchTrustedByCarousel: React.FC<{ logos?: TrustedLogo[] | null }> = ({ logos }) => {
 	const isMobile = useMedia('(max-width: 1023px)')
+
+	const trustedByItems = logos && logos.length > 0 ? logos.map(toLogo) : TRUSTED_BY_LOGOS
+	const desktopItems = trustedByItems.map(renderLogo)
+	const mobileItems = getMobileItems(desktopItems)
+
 	const items = isMobile ? mobileItems : desktopItems
 
 	return <LogosCarousel items={items} />

@@ -68,6 +68,14 @@ export const RESEARCH_LANDING_COLLECTIONS_FETCH_LIMIT = Object.values(RESEARCH_L
 	0
 )
 
+export function chunkMentions<T>(mentions: T[]): T[][] {
+	const blocks: T[][] = []
+	for (let i = 0; i < mentions.length; i += 3) {
+		blocks.push(mentions.slice(i, i + 3))
+	}
+	return blocks
+}
+
 export function takeUniqueArticles<T extends { id: string }>(
 	articles: T[],
 	excludedIds: ReadonlySet<string>,

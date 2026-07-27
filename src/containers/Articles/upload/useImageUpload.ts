@@ -14,6 +14,7 @@ export type UploadScope =
 	| 'promo-card'
 	| 'report-carousel'
 	| 'report-sponsor-logo'
+	| 'trusted-logo'
 
 export type UploadResult = {
 	id: string

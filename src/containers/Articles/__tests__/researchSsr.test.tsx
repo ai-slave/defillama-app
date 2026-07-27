@@ -9,12 +9,13 @@ import {
 	getLandingBanner,
 	getResearchLanding,
 	getSectionBanner,
+	getTrustedBySection,
 	listArticles,
 	listArticlesByTag,
 	listArticlesByTopic
 } from '~/containers/Articles/api'
 import { ReportsCarousel } from '~/containers/Articles/landing/ReportsCarousel'
-import type { ArticleDocument, BannerLookupResult } from '~/containers/Articles/types'
+import type { ArticleDocument, BannerLookupResult, TrustedByLookupResult } from '~/containers/Articles/types'
 import ArticlesPage, { getServerSideProps as getResearchServerSideProps } from '~/pages/research'
 import SectionLandingPage, { getServerSideProps as getSectionLandingServerSideProps } from '~/pages/research/[section]'
 import SectionArticlePage, { getServerSideProps as getArticleServerSideProps } from '~/pages/research/[section]/[slug]'
@@ -40,6 +41,7 @@ vi.mock('~/containers/Articles/api', () => ({
 	getLandingBanner: vi.fn(),
 	getResearchLanding: vi.fn(),
 	getSectionBanner: vi.fn(),
+	getTrustedBySection: vi.fn(),
 	listArticlePaths: vi.fn(),
 	listArticles: vi.fn(),
 	listArticlesByTag: vi.fn(),
@@ -168,6 +170,11 @@ const emptyBanner: BannerLookupResult = {
 	promo: null
 }
 
+const emptyTrustedBy: TrustedByLookupResult = {
+	logos: [],
+	mentions: []
+}
+
 describe('research ISR data loading', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
@@ -195,6 +202,7 @@ describe('research ISR data loading', () => {
 		vi.mocked(getArticleBanner).mockResolvedValue(emptyBanner)
 		vi.mocked(getSectionBanner).mockResolvedValue(emptyBanner)
 		vi.mocked(getAllArticlesBanner).mockResolvedValue(emptyBanner)
+		vi.mocked(getTrustedBySection).mockResolvedValue(emptyTrustedBy)
 	})
 
 	it('loads landing page props for SSR and renders article content immediately', async () => {

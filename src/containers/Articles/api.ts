@@ -12,7 +12,12 @@ import type {
 	Banner,
 	BannerLookupResult,
 	BannerPayload,
-	LocalArticleDocument
+	LocalArticleDocument,
+	TrustedLogo,
+	TrustedLogoPayload,
+	SocialMention,
+	SocialMentionPayload,
+	TrustedByLookupResult
 } from './types'
 
 type AuthorizedFetch = (url: string, options?: RequestInit) => Promise<Response | null>
@@ -677,4 +682,119 @@ export async function getArticleBanner(articleId: string, fetchFn: FetchLike = f
 		await fetchFn(articleUrlWithCacheNonce(`/banners/lookup/article/${encodeURIComponent(articleId)}`))
 	)
 	return data ?? EMPTY_BANNER_LOOKUP
+}
+
+const EMPTY_TRUSTED_BY: TrustedByLookupResult = { logos: [], mentions: [] }
+
+export async function getTrustedBySection(fetchFn: FetchLike = fetch): Promise<TrustedByLookupResult> {
+	const data = await parseResponse<TrustedByLookupResult | null>(
+		await fetchFn(articleUrlWithCacheNonce('/research/trusted-by/lookup'))
+	)
+	return data ?? EMPTY_TRUSTED_BY
+}
+
+export async function listTrustedLogos(authorizedFetch: AuthorizedFetch): Promise<TrustedLogo[]> {
+	const data = await parseResponse<{ logos: TrustedLogo[] }>(
+		await authorizedFetch(articleUrl('/research/trusted-by/logos'))
+	)
+	return data.logos
+}
+
+export async function createTrustedLogo(
+	payload: TrustedLogoPayload,
+	authorizedFetch: AuthorizedFetch
+): Promise<TrustedLogo> {
+	const data = await parseResponse<{ logo: TrustedLogo }>(
+		await authorizedFetch(articleUrl('/research/trusted-by/logos'), {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		})
+	)
+	return data.logo
+}
+
+export async function updateTrustedLogo(
+	id: string,
+	payload: TrustedLogoPayload,
+	authorizedFetch: AuthorizedFetch
+): Promise<TrustedLogo> {
+	const data = await parseResponse<{ logo: TrustedLogo }>(
+		await authorizedFetch(articleUrl(`/research/trusted-by/logos/${encodeURIComponent(id)}`), {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		})
+	)
+	return data.logo
+}
+
+export async function deleteTrustedLogo(id: string, authorizedFetch: AuthorizedFetch): Promise<void> {
+	await parseResponse(
+		await authorizedFetch(articleUrl(`/research/trusted-by/logos/${encodeURIComponent(id)}`), { method: 'DELETE' })
+	)
+}
+
+export async function reorderTrustedLogos(ids: string[], authorizedFetch: AuthorizedFetch): Promise<TrustedLogo[]> {
+	const data = await parseResponse<{ logos: TrustedLogo[] }>(
+		await authorizedFetch(articleUrl('/research/trusted-by/logos/order'), {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ ids })
+		})
+	)
+	return data.logos
+}
+
+export async function listSocialMentions(authorizedFetch: AuthorizedFetch): Promise<SocialMention[]> {
+	const data = await parseResponse<{ mentions: SocialMention[] }>(
+		await authorizedFetch(articleUrl('/research/trusted-by/mentions'))
+	)
+	return data.mentions
+}
+
+export async function createSocialMention(
+	payload: SocialMentionPayload,
+	authorizedFetch: AuthorizedFetch
+): Promise<SocialMention> {
+	const data = await parseResponse<{ mention: SocialMention }>(
+		await authorizedFetch(articleUrl('/research/trusted-by/mentions'), {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		})
+	)
+	return data.mention
+}
+
+export async function updateSocialMention(
+	id: string,
+	payload: SocialMentionPayload,
+	authorizedFetch: AuthorizedFetch
+): Promise<SocialMention> {
+	const data = await parseResponse<{ mention: SocialMention }>(
+		await authorizedFetch(articleUrl(`/research/trusted-by/mentions/${encodeURIComponent(id)}`), {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		})
+	)
+	return data.mention
+}
+
+export async function deleteSocialMention(id: string, authorizedFetch: AuthorizedFetch): Promise<void> {
+	await parseResponse(
+		await authorizedFetch(articleUrl(`/research/trusted-by/mentions/${encodeURIComponent(id)}`), { method: 'DELETE' })
+	)
+}
+
+export async function reorderSocialMentions(ids: string[], authorizedFetch: AuthorizedFetch): Promise<SocialMention[]> {
+	const data = await parseResponse<{ mentions: SocialMention[] }>(
+		await authorizedFetch(articleUrl('/research/trusted-by/mentions/order'), {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ ids })
+		})
+	)
+	return data.mentions
 }

@@ -2,10 +2,11 @@ import Link from 'next/link'
 import React, { useEffect, useRef, useState } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { TweetEmbed } from '~/containers/Articles/renderer/ArticleEmbedBlock'
-import type { ArticleEmbedConfig } from '~/containers/Articles/types'
+import type { ArticleEmbedConfig, SocialMention } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
+import { chunkMentions } from './utils'
 
-interface MentionQuote {
+export interface MentionQuote {
 	quote: string
 	username: string
 	social_media_name: string
@@ -71,7 +72,7 @@ const DESKTOP_TWEET_TILE_SIZE = 215
 const DESKTOP_TWEET_RENDER_WIDTH = 320
 const DESKTOP_TWEET_SCALE = DESKTOP_TWEET_TILE_SIZE / DESKTOP_TWEET_RENDER_WIDTH
 
-const QuoteBlock: React.FC<{
+export const QuoteBlock: React.FC<{
 	quote: MentionQuote
 	variant?: 'primary' | 'secondary'
 	size?: 'small' | 'large'
@@ -85,17 +86,18 @@ const QuoteBlock: React.FC<{
 	const textStyles = mobile
 		? 'text-base leading-[20px] text-center px-6.5 py-3'
 		: size === 'small'
-			? 'text-xl leading-[28px] text-center px-11.25 py-5'
+			? 'text-xl leading-[28px] text-center px-11.25 py-2.5'
 			: 'text-xl leading-[24px] px-7.5 py-5'
 
 	const containerHeight = mobile ? 'h-[160px] min-h-[160px]' : 'h-[215px]'
+	const cardGap = !mobile && size === 'small' ? 'gap-2' : 'gap-4'
 
 	return (
 		<Link
 			href={quote.social_media_link || '#'}
 			target="_blank"
 			rel="noopener noreferrer"
-			className={`flex grow flex-col gap-4 rounded-[4px] p-3.25 ${bgColor} ${containerHeight}`}
+			className={`flex grow flex-col ${cardGap} rounded-[4px] p-3.25 ${bgColor} ${containerHeight}`}
 		>
 			{quote.quote && (
 				<blockquote className={`relative font-semibold ${textStyles} ${textColor}`}>
@@ -162,7 +164,7 @@ const MobileSlide: React.FC<{ quote: MentionQuote; tweetId: string; variant?: 'p
 	</div>
 )
 
-const BlockContent: React.FC<{ block: MentionBlock; isEven: boolean }> = ({ block, isEven }) => {
+export const BlockContent: React.FC<{ block: MentionBlock; isEven: boolean }> = ({ block, isEven }) => {
 	const empty: MentionQuote = { quote: '', username: '', social_media_name: '', social_media_link: '', x_post_id: '' }
 	const quote1 = block[0] ?? empty
 	const quote2 = block[1] ?? empty
@@ -175,16 +177,16 @@ const BlockContent: React.FC<{ block: MentionBlock; isEven: boolean }> = ({ bloc
 		<div className="grid w-[992px] gap-6" style={{ gridTemplateColumns: '252px 716px' }}>
 			<div className={`flex gap-6 ${isEven ? 'flex-col-reverse' : 'flex-col'}`}>
 				<QuoteBlock quote={quote1} size="small" />
-				<TweetWidget tweetId={quote1.x_post_id} />
+				<TweetWidget key={quote1.x_post_id} tweetId={quote1.x_post_id} />
 			</div>
 			<div className="flex flex-col gap-6">
 				<div className={`flex gap-6 ${isEven ? 'flex-row-reverse' : 'flex-row'}`}>
-					<TweetWidget tweetId={quote2.x_post_id} />
+					<TweetWidget key={quote2.x_post_id} tweetId={quote2.x_post_id} />
 					<QuoteBlock quote={quote2} />
 				</div>
 				<div className={`flex gap-6 ${isEven ? 'flex-row-reverse' : 'flex-row'}`}>
 					<QuoteBlock quote={quote3} variant="secondary" />
-					<TweetWidget tweetId={quote3.x_post_id} />
+					<TweetWidget key={quote3.x_post_id} tweetId={quote3.x_post_id} />
 				</div>
 			</div>
 		</div>
@@ -292,10 +294,20 @@ const AutoplayCarousel: React.FC<AutoplayCarouselProps> = ({
 	)
 }
 
-export const ResearchSocialMediaMentions: React.FC = () => {
+export const toMentionQuote = (mention: SocialMention): MentionQuote => ({
+	quote: mention.quote ?? '',
+	username: mention.username ?? '',
+	social_media_name: mention.socialMediaName,
+	social_media_link: mention.socialMediaLink ?? '',
+	x_post_id: mention.xPostId ?? ''
+})
+
+export const ResearchSocialMediaMentions: React.FC<{ mentions?: SocialMention[] | null }> = ({ mentions }) => {
 	const isMobile = useMedia('(max-width: 767px)')
 
-	const activeBlocks = BLOCKS.filter((block) => block.some((q) => q.quote || q.username || q.x_post_id))
+	const blocks: MentionBlock[] = mentions && mentions.length > 0 ? chunkMentions(mentions.map(toMentionQuote)) : BLOCKS
+
+	const activeBlocks = blocks.filter((block) => block.some((q) => q.quote || q.username || q.x_post_id))
 
 	if (activeBlocks.length === 0) return null
 

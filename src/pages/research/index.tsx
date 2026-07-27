@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import Head from 'next/head'
-import { ArticleApiError, getLandingBanner, getResearchLanding } from '~/containers/Articles/api'
+import { ArticleApiError, getLandingBanner, getResearchLanding, getTrustedBySection } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { ResearchBanner } from '~/containers/Articles/landing/ResearchBanner'
 import { ResearchCollections } from '~/containers/Articles/landing/ResearchCollections'
@@ -28,7 +28,7 @@ import {
 } from '~/containers/Articles/landing/utils'
 import { ArticleBannerStrip } from '~/containers/Articles/renderer/ArticleBannerStrip'
 import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
-import type { ArticleDocument, BannerLookupResult } from '~/containers/Articles/types'
+import type { ArticleDocument, BannerLookupResult, TrustedByLookupResult } from '~/containers/Articles/types'
 import Layout from '~/layout'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -49,6 +49,7 @@ export type ResearchLandingArticles = {
 type ArticlesPageProps = {
 	landingData: ResearchLandingArticles
 	landingBanner: BannerLookupResult | null
+	trustedBy: TrustedByLookupResult | null
 }
 
 async function getResearchLandingArticles(): Promise<ResearchLandingArticles> {
@@ -99,7 +100,11 @@ async function getResearchLandingArticles(): Promise<ResearchLandingArticles> {
 }
 
 export async function loadResearchLandingData(): Promise<ArticlesPageProps> {
-	const [articlesResult, bannerResult] = await Promise.allSettled([getResearchLandingArticles(), getLandingBanner()])
+	const [articlesResult, bannerResult, trustedByResult] = await Promise.allSettled([
+		getResearchLandingArticles(),
+		getLandingBanner(),
+		getTrustedBySection()
+	])
 
 	if (articlesResult.status === 'rejected') {
 		throw articlesResult.reason
@@ -107,17 +112,19 @@ export async function loadResearchLandingData(): Promise<ArticlesPageProps> {
 
 	return {
 		landingData: articlesResult.value,
-		landingBanner: bannerResult.status === 'fulfilled' ? bannerResult.value : null
+		landingBanner: bannerResult.status === 'fulfilled' ? bannerResult.value : null,
+		trustedBy: trustedByResult.status === 'fulfilled' ? trustedByResult.value : null
 	}
 }
 
 const getServerSidePropsHandler: GetServerSideProps<ArticlesPageProps> = async ({ res }) => {
-	const { landingData, landingBanner } = await loadResearchLandingData()
+	const { landingData, landingBanner, trustedBy } = await loadResearchLandingData()
 	res.setHeader('Cache-Control', RESEARCH_LANDING_CACHE_CONTROL)
 	return {
 		props: {
 			landingData,
-			landingBanner
+			landingBanner,
+			trustedBy
 		}
 	}
 }
@@ -230,9 +237,9 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 						<TitleLine title="Trusted by" />
 
 						<div className="mt-6 space-y-12">
-							<ResearchTrustedByCarousel />
+							<ResearchTrustedByCarousel logos={landingQuery.data?.trustedBy?.logos} />
 
-							<ResearchSocialMediaMentions />
+							<ResearchSocialMediaMentions mentions={landingQuery.data?.trustedBy?.mentions} />
 						</div>
 					</div>
 
@@ -266,7 +273,8 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 
 export default function ArticlesPage({
 	landingData,
-	landingBanner
+	landingBanner,
+	trustedBy
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
 	const { showSearch } = useResearchSearchParams()
 
@@ -293,7 +301,7 @@ export default function ArticlesPage({
 					) : (
 						<>
 							<ArticleBannerStrip scope="landing" initialData={{ landing: landingBanner }} />
-							<ArticlesLandingInner initialData={{ landingData, landingBanner }} />
+							<ArticlesLandingInner initialData={{ landingData, landingBanner, trustedBy }} />
 						</>
 					)}
 				</div>
