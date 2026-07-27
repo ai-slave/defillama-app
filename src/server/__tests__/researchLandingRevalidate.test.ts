@@ -27,12 +27,11 @@ describe('/api/private/research/revalidate-landing', () => {
 		await researchLandingRevalidateHandler(request(), res)
 
 		expect(fetchImpl).not.toHaveBeenCalled()
-		expect(res.revalidate).not.toHaveBeenCalled()
 		expect(res.status).toHaveBeenCalledWith(401)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' })
 	})
 
-	it('validates the researcher session, then revalidates and purges /research', async () => {
+	it('validates the researcher session, then purges /research', async () => {
 		vi.stubEnv('CF_ZONE', 'zone')
 		vi.stubEnv('CF_PURGE_CACHE_AUTH', 'token')
 		vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://defillama.test')
@@ -52,7 +51,6 @@ describe('/api/private/research/revalidate-landing', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({
 			purgePaths: ['/research'],
-			revalidatePaths: ['/research'],
 			status: 'scheduled'
 		})
 
@@ -66,7 +64,6 @@ describe('/api/private/research/revalidate-landing', () => {
 				method: 'POST'
 			})
 		})
-		expect(res.revalidate).toHaveBeenCalledWith('/research')
 	})
 
 	it('passes auth validation failures through without touching caches', async () => {
@@ -81,7 +78,6 @@ describe('/api/private/research/revalidate-landing', () => {
 
 		await researchLandingRevalidateHandler(request({ headers: { authorization: 'Bearer user-token' } }), res)
 
-		expect(res.revalidate).not.toHaveBeenCalled()
 		expect(fetchImpl).toHaveBeenCalledTimes(1)
 		expect(res.status).toHaveBeenCalledWith(403)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Forbidden' })

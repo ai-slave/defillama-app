@@ -19,7 +19,7 @@ import type { ArticleDocument, BannerLookupResult, TrustedByLookupResult } from 
 import ArticlesPage, { getServerSideProps as getResearchServerSideProps } from '~/pages/research'
 import SectionLandingPage, { getServerSideProps as getSectionLandingServerSideProps } from '~/pages/research/[section]'
 import SectionArticlePage, { getServerSideProps as getArticleServerSideProps } from '~/pages/research/[section]/[slug]'
-import TopicLandingPage, { getStaticProps as getTopicLandingStaticProps } from '~/pages/research/topics/[topic]'
+import TopicLandingPage, { getServerSideProps as getTopicLandingServerSideProps } from '~/pages/research/topics/[topic]'
 
 const routerMock = vi.hoisted(() => vi.fn())
 
@@ -175,7 +175,7 @@ const emptyTrustedBy: TrustedByLookupResult = {
 	mentions: []
 }
 
-describe('research ISR data loading', () => {
+describe('research SSR data loading', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		routerMock.mockReturnValue({
@@ -274,34 +274,45 @@ describe('research ISR data loading', () => {
 		).resolves.toMatchObject({ notFound: true })
 	})
 
-	it('loads topic landing props for ISR and renders articles immediately', async () => {
-		const result = await getTopicLandingStaticProps({
-			params: { topic: 'lending' }
+	it('loads topic landing props for SSR and renders articles immediately', async () => {
+		const setHeader = vi.fn()
+		const result = await getTopicLandingServerSideProps({
+			params: { topic: 'lending' },
+			req: { method: 'GET' },
+			res: { setHeader },
+			resolvedUrl: '/research/topics/lending'
 		} as never)
 
-		expect(result).toMatchObject({ revalidate: expect.any(Number) })
+		expect(setHeader).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('s-maxage'))
 		if (!('props' in result)) throw new Error('expected props')
-		expect(result.props.topic).toBe('lending')
-		expect(result.props.initialArticles.items[0]?.title).toBe('Canonical Research')
+		const props = await Promise.resolve(result.props)
+		expect(props.topic).toBe('lending')
+		expect(props.initialArticles.items[0]?.title).toBe('Canonical Research')
 		expect(listArticlesByTopic).toHaveBeenCalledWith('lending', { sort: 'newest', limit: 60 })
 
-		const html = renderWithQueryClient(<TopicLandingPage {...result.props} />)
+		const html = renderWithQueryClient(<TopicLandingPage {...props} />)
 		expect(html).toContain('Canonical Research')
 		expect(html).toContain('lending')
 	})
 
 	it('returns notFound for invalid topic slugs', async () => {
 		await expect(
-			getTopicLandingStaticProps({
-				params: { topic: '!!!' }
+			getTopicLandingServerSideProps({
+				params: { topic: '!!!' },
+				req: { method: 'GET' },
+				res: { setHeader: vi.fn() },
+				resolvedUrl: '/research/topics/!!!'
 			} as never)
 		).resolves.toMatchObject({ notFound: true })
 	})
 
 	it('safely redirects malformed encoded topic slugs to a normalized path', async () => {
 		await expect(
-			getTopicLandingStaticProps({
-				params: { topic: '%E0%A4%A' }
+			getTopicLandingServerSideProps({
+				params: { topic: '%E0%A4%A' },
+				req: { method: 'GET' },
+				res: { setHeader: vi.fn() },
+				resolvedUrl: '/research/topics/%E0%A4%A'
 			} as never)
 		).resolves.toMatchObject({
 			redirect: {
@@ -315,16 +326,22 @@ describe('research ISR data loading', () => {
 		vi.mocked(listArticlesByTopic).mockResolvedValueOnce(topicArticleList(3))
 
 		await expect(
-			getTopicLandingStaticProps({
-				params: { topic: 'lending' }
+			getTopicLandingServerSideProps({
+				params: { topic: 'lending' },
+				req: { method: 'GET' },
+				res: { setHeader: vi.fn() },
+				resolvedUrl: '/research/topics/lending'
 			} as never)
 		).resolves.toMatchObject({ notFound: true })
 	})
 
 	it('redirects non-canonical topic slugs to the normalized path', async () => {
 		await expect(
-			getTopicLandingStaticProps({
-				params: { topic: 'Lending' }
+			getTopicLandingServerSideProps({
+				params: { topic: 'Lending' },
+				req: { method: 'GET' },
+				res: { setHeader: vi.fn() },
+				resolvedUrl: '/research/topics/Lending'
 			} as never)
 		).resolves.toMatchObject({
 			redirect: {

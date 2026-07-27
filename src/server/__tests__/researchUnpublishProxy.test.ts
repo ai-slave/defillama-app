@@ -30,7 +30,7 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('unpublishes through the backend, revalidates ISR indexes, and purges public research urls', async () => {
+	it('unpublishes through the backend, then purges public research urls', async () => {
 		vi.stubEnv('CF_ZONE', 'zone')
 		vi.stubEnv('CF_PURGE_CACHE_AUTH', 'token')
 		vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://defillama.test')
@@ -59,7 +59,6 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 			article: after,
 			cache: {
 				purgePaths: ['/research', '/research/feed.xml', '/research/report/old-story', '/research/report'],
-				revalidatePaths: ['/research', '/research/report'],
 				status: 'scheduled'
 			}
 		})
@@ -81,12 +80,9 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 				method: 'POST'
 			})
 		})
-		expect(res.revalidate).toHaveBeenCalledWith('/research')
-		expect(res.revalidate).toHaveBeenCalledWith('/research/report')
-		expect(res.revalidate).not.toHaveBeenCalledWith('/research/report/old-story')
 	})
 
-	it('unpublishes in production even when cross-instance revalidation is not configured', async () => {
+	it('unpublishes in production even when the cache purge is not configured', async () => {
 		vi.stubEnv('NODE_ENV', 'production')
 		const before = article()
 		const after = article({ status: 'draft' })
@@ -104,7 +100,6 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 			article: after,
 			cache: {
 				purgePaths: ['/research', '/research/feed.xml', '/research/report/old-story', '/research/report'],
-				revalidatePaths: ['/research', '/research/report'],
 				status: 'scheduled'
 			}
 		})

@@ -3,7 +3,7 @@ import { FEATURES_SERVER } from '~/constants'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_SLUGS } from '~/containers/Articles/types'
 import { normalizeResearchCachePaths } from '~/server/cloudflarePurge'
-import { scheduleResearchCacheUpdate, type ScheduledResearchCacheUpdate } from '~/server/researchCacheInvalidation'
+import { scheduleResearchCachePurge, type ScheduledResearchCacheUpdate } from '~/server/researchCacheInvalidation'
 import { withApiRouteTelemetry } from '~/utils/telemetry'
 
 type BackendArticleResponse = {
@@ -11,11 +11,6 @@ type BackendArticleResponse = {
 }
 
 type ResponseData = (BackendArticleResponse & { cache?: ScheduledResearchCacheUpdate }) | { error: string }
-
-type ResearchInvalidationTargets = {
-	purgePaths: string[]
-	revalidatePaths: string[]
-}
 
 function articleUrl(path: string) {
 	return `${FEATURES_SERVER.replace(/\/$/, '')}${path}`
@@ -48,18 +43,13 @@ function sectionPathForArticlePath(articlePath: string): string {
 	return articlePath.split('/').slice(0, 3).join('/')
 }
 
-function publishInvalidationTargets(
-	before: ArticleDocument | null,
-	after: ArticleDocument
-): ResearchInvalidationTargets {
+function publishPurgePaths(before: ArticleDocument | null, after: ArticleDocument): string[] {
 	const beforePath = articlePublicPath(before)
 	const afterPath = articlePublicPath(after)
 	const purgePaths = new Set<string>()
-	const nextPaths = new Set<string>()
 	if (beforePath || afterPath) {
 		purgePaths.add('/research')
 		purgePaths.add('/research/feed.xml')
-		nextPaths.add('/research')
 	}
 	for (const articlePath of [beforePath, afterPath]) {
 		if (!articlePath) continue
@@ -67,13 +57,9 @@ function publishInvalidationTargets(
 		const sectionPath = sectionPathForArticlePath(articlePath)
 		if (sectionPath !== articlePath) {
 			purgePaths.add(sectionPath)
-			nextPaths.add(sectionPath)
 		}
 	}
-	return {
-		purgePaths: normalizeResearchCachePaths(Array.from(purgePaths)),
-		revalidatePaths: normalizeResearchCachePaths(Array.from(nextPaths))
-	}
+	return normalizeResearchCachePaths(Array.from(purgePaths))
 }
 
 async function readJson<T>(response: Response): Promise<T | null> {
@@ -160,9 +146,7 @@ export async function researchPublishHandler(req: NextApiRequest, res: NextApiRe
 		return res.status(500).json({ error: 'Publish response did not include an article' })
 	}
 
-	const cache = scheduleResearchCacheUpdate(publishInvalidationTargets(before, data.article), (path) =>
-		res.revalidate(path)
-	)
+	const cache = scheduleResearchCachePurge(publishPurgePaths(before, data.article))
 
 	return res.status(publishResponse.status).json({ ...data, cache })
 }

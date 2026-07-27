@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { FEATURES_SERVER } from '~/constants'
-import { scheduleResearchCacheUpdate, type ScheduledResearchCacheUpdate } from '~/server/researchCacheInvalidation'
+import { scheduleResearchCachePurge, type ScheduledResearchCacheUpdate } from '~/server/researchCacheInvalidation'
 import { withApiRouteTelemetry } from '~/utils/telemetry'
 
 type ResponseData = ScheduledResearchCacheUpdate | { error: string }
@@ -55,9 +55,7 @@ export async function researchLandingRevalidateHandler(req: NextApiRequest, res:
 		return sendBackendResponse(authCheck, res)
 	}
 
-	const cache = scheduleResearchCacheUpdate({ purgePaths: ['/research'], revalidatePaths: ['/research'] }, (path) =>
-		res.revalidate(path)
-	)
+	const cache = scheduleResearchCachePurge(['/research'])
 
 	return res.status(200).json(cache)
 }

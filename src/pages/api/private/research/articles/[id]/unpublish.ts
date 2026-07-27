@@ -3,7 +3,7 @@ import { FEATURES_SERVER } from '~/constants'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_SLUGS } from '~/containers/Articles/types'
 import { normalizeResearchCachePaths } from '~/server/cloudflarePurge'
-import { scheduleResearchCacheUpdate, type ScheduledResearchCacheUpdate } from '~/server/researchCacheInvalidation'
+import { scheduleResearchCachePurge, type ScheduledResearchCacheUpdate } from '~/server/researchCacheInvalidation'
 import { withApiRouteTelemetry } from '~/utils/telemetry'
 
 type BackendArticleResponse = {
@@ -11,11 +11,6 @@ type BackendArticleResponse = {
 }
 
 type ResponseData = (BackendArticleResponse & { cache?: ScheduledResearchCacheUpdate }) | { error: string }
-
-type ResearchInvalidationTargets = {
-	purgePaths: string[]
-	revalidatePaths: string[]
-}
 
 function articleUrl(path: string) {
 	return `${FEATURES_SERVER.replace(/\/$/, '')}${path}`
@@ -46,25 +41,19 @@ function sectionPathForArticlePath(articlePath: string): string {
 	return articlePath.split('/').slice(0, 3).join('/')
 }
 
-function unpublishInvalidationTargets(before: ArticleDocument | null): ResearchInvalidationTargets {
+function unpublishPurgePaths(before: ArticleDocument | null): string[] {
 	const beforePath = articlePublicPath(before)
 	const purgePaths = new Set<string>()
-	const nextPaths = new Set<string>()
 	if (beforePath) {
 		purgePaths.add('/research')
 		purgePaths.add('/research/feed.xml')
 		purgePaths.add(beforePath)
-		nextPaths.add('/research')
 		const sectionPath = sectionPathForArticlePath(beforePath)
 		if (sectionPath !== beforePath) {
 			purgePaths.add(sectionPath)
-			nextPaths.add(sectionPath)
 		}
 	}
-	return {
-		purgePaths: normalizeResearchCachePaths(Array.from(purgePaths)),
-		revalidatePaths: normalizeResearchCachePaths(Array.from(nextPaths))
-	}
+	return normalizeResearchCachePaths(Array.from(purgePaths))
 }
 
 async function readJson<T>(response: Response): Promise<T | null> {
@@ -113,7 +102,7 @@ export async function researchUnpublishHandler(req: NextApiRequest, res: NextApi
 	}
 
 	const before = (await readJson<BackendArticleResponse>(beforeResponse))?.article ?? null
-	const targets = unpublishInvalidationTargets(before)
+	const purgePaths = unpublishPurgePaths(before)
 
 	const unpublishResponse = await fetch(articleUrl(`/articles/${encodedArticleId}/unpublish`), {
 		headers: authorizationHeader(req),
@@ -128,7 +117,7 @@ export async function researchUnpublishHandler(req: NextApiRequest, res: NextApi
 		return res.status(500).json({ error: 'Unpublish response did not include an article' })
 	}
 
-	const cache = scheduleResearchCacheUpdate(targets, (path) => res.revalidate(path))
+	const cache = scheduleResearchCachePurge(purgePaths)
 
 	return res.status(unpublishResponse.status).json({ ...data, cache })
 }

@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import type { GetStaticPaths, GetStaticPropsContext, InferGetStaticPropsType } from 'next'
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import Error from 'next/error'
 import Link from 'next/link'
-import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { ArticleApiError, listArticlesByTopic } from '~/containers/Articles/api'
 import type { ArticleListResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
@@ -10,9 +9,10 @@ import { GenericCard } from '~/containers/Articles/landing/GenericCard'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
 import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import Layout from '~/layout'
-import { maxAgeForNext } from '~/utils/maxAgeForNext'
-import { withPerformanceLogging } from '~/utils/perf'
 import { safeDecodeURIComponent } from '~/utils/route'
+import { withServerSidePropsTelemetry } from '~/utils/telemetry'
+
+const TOPIC_LANDING_CACHE_CONTROL = 'public, s-maxage=60'
 
 type TopicRouteParams = {
 	topic: string
@@ -38,67 +38,47 @@ function humanizeTopic(topic: string) {
 	return topic.replace(/-/g, ' ')
 }
 
-export const getStaticPaths: GetStaticPaths<TopicRouteParams> = async () => {
-	if (SKIP_BUILD_STATIC_GENERATION) {
+const getServerSidePropsHandler: GetServerSideProps<TopicLandingPageProps, TopicRouteParams> = async ({
+	params,
+	res
+}) => {
+	res.setHeader('Cache-Control', TOPIC_LANDING_CACHE_CONTROL)
+
+	const topicParam = params?.topic
+	if (!topicParam) {
+		return { notFound: true }
+	}
+
+	const decodedTopicParam = safeDecodeURIComponent(topicParam)
+	const topic = normalizeTopicSlug(decodedTopicParam)
+	if (!topic) {
+		return { notFound: true }
+	}
+
+	const canonicalParam = decodedTopicParam.trim()
+	if (canonicalParam !== topic && normalizeTopicSlug(canonicalParam) === topic) {
 		return {
-			paths: [],
-			fallback: 'blocking'
+			redirect: {
+				destination: `/research/topics/${encodeURIComponent(topic)}`,
+				permanent: true
+			}
 		}
+	}
+
+	const initialArticles = await listArticlesByTopic(topic, { sort: 'newest', limit: 60 })
+	if (initialArticles.totalItems < MIN_TOPIC_ARTICLE_COUNT) {
+		return { notFound: true }
 	}
 
 	return {
-		paths: [],
-		fallback: 'blocking'
+		props: {
+			topic,
+			initialArticles
+		}
 	}
 }
 
-export const getStaticProps = withPerformanceLogging<TopicLandingPageProps, TopicRouteParams>(
-	'research/topics/[topic]',
-	async ({ params }: GetStaticPropsContext<TopicRouteParams>) => {
-		const topicParam = params?.topic
-		if (!topicParam) {
-			return {
-				notFound: true,
-				revalidate: maxAgeForNext([22])
-			}
-		}
-
-		const decodedTopicParam = safeDecodeURIComponent(topicParam)
-		const topic = normalizeTopicSlug(decodedTopicParam)
-		if (!topic) {
-			return {
-				notFound: true,
-				revalidate: maxAgeForNext([22])
-			}
-		}
-
-		const canonicalParam = decodedTopicParam.trim()
-		if (canonicalParam !== topic && normalizeTopicSlug(canonicalParam) === topic) {
-			return {
-				redirect: {
-					destination: `/research/topics/${encodeURIComponent(topic)}`,
-					permanent: true
-				}
-			}
-		}
-
-		const initialArticles = await listArticlesByTopic(topic, { sort: 'newest', limit: 60 })
-		if (initialArticles.totalItems < MIN_TOPIC_ARTICLE_COUNT) {
-			return {
-				notFound: true,
-				revalidate: maxAgeForNext([22])
-			}
-		}
-
-		return {
-			props: {
-				topic,
-				initialArticles
-			},
-			revalidate: maxAgeForNext([22])
-		}
-	}
-)
+export const getServerSideProps = withServerSidePropsTelemetry('/research/topics/[topic]', getServerSidePropsHandler)
 
 function TopicLandingContent({ topic, initialArticles }: { topic: string; initialArticles: ArticleListResponse }) {
 	const topicLabel = humanizeTopic(topic)
@@ -160,7 +140,10 @@ function TopicLandingContent({ topic, initialArticles }: { topic: string; initia
 	)
 }
 
-export default function TopicLandingPage({ topic, initialArticles }: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function TopicLandingPage({
+	topic,
+	initialArticles
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
 	const canonical = `/research/topics/${topic}`
 	const topicLabel = humanizeTopic(topic)
 

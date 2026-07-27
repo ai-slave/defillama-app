@@ -30,7 +30,7 @@ describe('/api/private/research/articles/[id]/publish', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('publishes through the backend, then revalidates and purges public research urls', async () => {
+	it('publishes through the backend, then purges public research urls', async () => {
 		vi.stubEnv('CF_ZONE', 'zone')
 		vi.stubEnv('CF_PURGE_CACHE_AUTH', 'token')
 		vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://defillama.test')
@@ -67,7 +67,6 @@ describe('/api/private/research/articles/[id]/publish', () => {
 					'/research/spotlight/new-story',
 					'/research/spotlight'
 				],
-				revalidatePaths: ['/research', '/research/report', '/research/spotlight'],
 				status: 'scheduled'
 			}
 		})
@@ -91,11 +90,6 @@ describe('/api/private/research/articles/[id]/publish', () => {
 				method: 'POST'
 			})
 		})
-		expect(res.revalidate).toHaveBeenCalledWith('/research')
-		expect(res.revalidate).toHaveBeenCalledWith('/research/report')
-		expect(res.revalidate).toHaveBeenCalledWith('/research/spotlight')
-		expect(res.revalidate).not.toHaveBeenCalledWith('/research/report/old-story')
-		expect(res.revalidate).not.toHaveBeenCalledWith('/research/spotlight/new-story')
 	})
 
 	it('forwards goLiveAt from query into the backend publish POST body', async () => {
@@ -148,7 +142,7 @@ describe('/api/private/research/articles/[id]/publish', () => {
 		})
 	})
 
-	it('publishes in production even when cross-instance revalidation is not configured', async () => {
+	it('publishes in production even when the cache purge is not configured', async () => {
 		vi.stubEnv('NODE_ENV', 'production')
 		const before = article()
 		const after = article()
@@ -166,13 +160,14 @@ describe('/api/private/research/articles/[id]/publish', () => {
 			article: after,
 			cache: {
 				purgePaths: ['/research', '/research/feed.xml', '/research/report/old-story', '/research/report'],
-				revalidatePaths: ['/research', '/research/report'],
 				status: 'scheduled'
 			}
 		})
 	})
 
-	it('keeps the publish successful when background cache work fails', async () => {
+	it('keeps the publish successful when the background purge fails', async () => {
+		vi.stubEnv('CF_ZONE', 'zone')
+		vi.stubEnv('CF_PURGE_CACHE_AUTH', 'token')
 		const logger = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const before = article()
 		const after = article()
@@ -180,16 +175,16 @@ describe('/api/private/research/articles/[id]/publish', () => {
 			.fn()
 			.mockResolvedValueOnce(new Response(JSON.stringify({ article: before }), { status: 200 }))
 			.mockResolvedValueOnce(new Response(JSON.stringify({ article: after }), { status: 200 }))
+			.mockRejectedValueOnce(new Error('cloudflare is down'))
 		vi.stubGlobal('fetch', fetchImpl)
 		const res = createMockNextApiResponse()
-		res.revalidate.mockRejectedValue(new Error('not an ISR route'))
 
 		await researchPublishHandler(request({ headers: { authorization: 'Bearer user-token' } }), res)
 
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.status).not.toHaveBeenCalledWith(500)
 		await vi.waitFor(() => {
-			expect(logger).toHaveBeenCalledWith('Research cache: revalidating /research failed: not an ISR route')
+			expect(logger).toHaveBeenCalledWith('Research cache: Cloudflare purge failed: cloudflare is down')
 		})
 		logger.mockRestore()
 	})
@@ -210,7 +205,6 @@ describe('/api/private/research/articles/[id]/publish', () => {
 
 		await researchPublishHandler(request({ headers: { authorization: 'Bearer user-token' } }), res)
 
-		expect(res.revalidate).not.toHaveBeenCalled()
 		expect(fetchImpl).toHaveBeenCalledTimes(2)
 		expect(res.status).toHaveBeenCalledWith(403)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Forbidden' })
