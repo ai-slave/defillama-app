@@ -29,8 +29,8 @@ async function fetchEmissionsHistoricalPrices(
 	let batchReqs: Record<string, number[]> = {}
 	let batchCount = 0
 
-	for (const coin in priceReqs) {
-		batchReqs[coin] = priceReqs[coin]
+	for (const [coin, requests] of Object.entries(priceReqs)) {
+		batchReqs[coin] = requests
 		batchCount++
 		if (batchCount < EMISSIONS_HISTORICAL_PRICES_BATCH_SIZE) continue
 

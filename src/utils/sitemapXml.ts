@@ -34,7 +34,7 @@ function encodeSitemapSegment(segment: string): string {
 }
 
 export function encodeSitemapPath(path: string): string {
-	const [pathPart, ...queryParts] = path.split('?')
+	const [pathPart = '', ...queryParts] = path.split('?')
 	const encodedPath = pathPart
 		.split('/')
 		.map((segment) => encodeSitemapSegment(segment))

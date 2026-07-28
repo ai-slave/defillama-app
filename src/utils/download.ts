@@ -59,8 +59,8 @@ export function downloadJSON(filename: string, data: CsvCell[][], options: { add
 		const headerStrings = header.map(stringifyCell)
 		const objects = rows.map((row) => {
 			const obj: Record<string, string> = {}
-			for (let i = 0; i < headerStrings.length; i++) {
-				obj[headerStrings[i]] = stringifyCell(row[i])
+			for (const [index, headerName] of headerStrings.entries()) {
+				obj[headerName] = stringifyCell(row[index])
 			}
 			return obj
 		})
@@ -69,10 +69,10 @@ export function downloadJSON(filename: string, data: CsvCell[][], options: { add
 		trackUmamiEvent('export-json-success', { filename })
 
 		let finalFilename = filename
-		if (options.addTimestamp && !filename.includes(new Date().toISOString().split('T')[0])) {
+		if (options.addTimestamp && !filename.includes(new Date().toISOString().slice(0, 10))) {
 			const extension = filename.split('.').pop()
 			const nameWithoutExt = filename.replace(`.${extension}`, '')
-			finalFilename = `${nameWithoutExt}_${new Date().toISOString().split('T')[0]}.${extension}`
+			finalFilename = `${nameWithoutExt}_${new Date().toISOString().slice(0, 10)}.${extension}`
 		}
 
 		const blob = new Blob([content], { type: 'application/json;charset=utf-8;' })
@@ -138,10 +138,10 @@ export function downloadCSV(filename: string, csvData: CsvData, options: CSVDown
 		trackUmamiEvent('export-csv-success', { filename })
 
 		let finalFilename = filename
-		if (addTimestamp && !filename.includes(new Date().toISOString().split('T')[0])) {
+		if (addTimestamp && !filename.includes(new Date().toISOString().slice(0, 10))) {
 			const extension = filename.split('.').pop()
 			const nameWithoutExt = filename.replace(`.${extension}`, '')
-			finalFilename = `${nameWithoutExt}_${new Date().toISOString().split('T')[0]}.${extension}`
+			finalFilename = `${nameWithoutExt}_${new Date().toISOString().slice(0, 10)}.${extension}`
 		}
 
 		const blob = new Blob([csvContent], { type: mimeType })

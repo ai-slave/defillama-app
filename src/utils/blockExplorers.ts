@@ -82,7 +82,8 @@ export function getBlockExplorerNew({
 		match = findBlockExplorerChain(apiResponse, { chainId: normalizedChainId })
 	}
 
-	const explorer = match?.blockExplorers?.[0]
+	if (!match) return null
+	const explorer = match.blockExplorers[0]
 	if (!explorer) return null
 
 	return {
@@ -108,7 +109,7 @@ function matchesChainKey(entry: BlockExplorersChain, normalizedChainKey: string)
 
 export function findBlockExplorerChain(
 	apiResponse: BlockExplorersResponse,
-	{ chainId, chainName }: { chainId?: string; chainName?: string }
+	{ chainId, chainName }: { chainId?: string | undefined; chainName?: string | undefined }
 ): BlockExplorersChain | null {
 	const normalizedChainId = normalizeChainKey(chainId)
 	if (normalizedChainId) {

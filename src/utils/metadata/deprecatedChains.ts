@@ -10,8 +10,7 @@ export function isDeprecatedChain(chainMetadata: ChainMetadataRecord, chain: str
 export function getDeprecatedChainNames(chainMetadata: ChainMetadataRecord): Record<string, true> {
 	const deprecatedChains: Record<string, true> = {}
 
-	for (const chain in chainMetadata) {
-		const metadata = chainMetadata[chain]
+	for (const metadata of Object.values(chainMetadata)) {
 		if (metadata.deprecated) deprecatedChains[metadata.name] = true
 	}
 

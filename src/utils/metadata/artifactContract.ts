@@ -358,8 +358,7 @@ function createSlugLookup(values: string[]): Record<string, string> {
 function createChainRouteKeyBySlug(chains: Record<string, IChainMetadata>): Record<string, string> {
 	const routeKeyBySlug: Record<string, string> = {}
 
-	for (const chainKey in chains) {
-		const metadata = chains[chainKey]
+	for (const [chainKey, metadata] of Object.entries(chains)) {
 		setSlugAlias(routeKeyBySlug, chainKey, chainKey)
 		setSlugAlias(routeKeyBySlug, metadata.name, chainKey)
 		setSlugAlias(routeKeyBySlug, metadata.id, chainKey)
@@ -371,8 +370,7 @@ function createChainRouteKeyBySlug(chains: Record<string, IChainMetadata>): Reco
 function createProtocolRouteIdBySlug(protocols: Record<string, IProtocolMetadata>): Record<string, string> {
 	const routeIdBySlug: Record<string, string> = {}
 
-	for (const protocolId in protocols) {
-		const metadata = protocols[protocolId]
+	for (const [protocolId, metadata] of Object.entries(protocols)) {
 		if (metadata.cex) continue
 		setSlugAlias(routeIdBySlug, metadata.displayName, protocolId)
 		setSlugAlias(routeIdBySlug, metadata.name, protocolId)
@@ -405,8 +403,7 @@ function createCexRouteIndexes(
 		if (nameSlug) cexSlugByNameSlug[nameSlug] = cexSlug
 	}
 
-	for (const protocolId in protocols) {
-		const metadata = protocols[protocolId]
+	for (const [protocolId, metadata] of Object.entries(protocols)) {
 		if (!metadata.cex || !metadata.name) continue
 
 		const canonicalSlug = slug(metadata.name)
@@ -420,8 +417,8 @@ function createCexRouteIndexes(
 		setSlugAlias(routeIdBySlug, protocolId, protocolId)
 	}
 
-	for (const nameSlug in cexSlugByNameSlug) {
-		const protocolId = protocolIdByCanonicalSlug[cexSlugByNameSlug[nameSlug]]
+	for (const [nameSlug, cexSlug] of Object.entries(cexSlugByNameSlug)) {
+		const protocolId = protocolIdByCanonicalSlug[cexSlug]
 		if (protocolId && !routeIdBySlug[nameSlug]) {
 			routeIdBySlug[nameSlug] = protocolId
 		}

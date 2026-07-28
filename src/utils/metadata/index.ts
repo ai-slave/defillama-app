@@ -65,8 +65,8 @@ function recordMetadataRefreshTelemetry({
 }: {
 	durationMs: number
 	error?: unknown
-	source?: string
-	staleAgeMs?: number
+	source: string | undefined
+	staleAgeMs: number | undefined
 	status: 'failure' | 'success'
 }): void {
 	const subject = source ?? 'manual'

@@ -16,8 +16,8 @@ function buildPointHallmarkMap({
 	protocolHallmarks,
 	dimensions
 }: {
-	protocolHallmarks?: Array<unknown> | null
-	dimensions?: HallmarkDimensions
+	protocolHallmarks?: Array<unknown> | null | undefined
+	dimensions?: HallmarkDimensions | undefined
 }): Map<number, string> {
 	const hallmarkMap = new Map<number, string>()
 
@@ -79,8 +79,8 @@ export function buildHallmarksWithGenuineSpikes({
 	protocolHallmarks,
 	dimensions
 }: {
-	protocolHallmarks?: Array<unknown> | null
-	dimensions?: HallmarkDimensions
+	protocolHallmarks?: Array<unknown> | null | undefined
+	dimensions?: HallmarkDimensions | undefined
 }): HallmarkPoint[] | null {
 	const hallmarkMap = buildPointHallmarkMap({ protocolHallmarks, dimensions })
 
@@ -95,8 +95,8 @@ export function buildProtocolOverviewHallmarks({
 	dimensions
 }: {
 	hacks?: Hack[] | null
-	protocolHallmarks?: Array<unknown> | null
-	dimensions?: HallmarkDimensions
+	protocolHallmarks?: Array<unknown> | null | undefined
+	dimensions?: HallmarkDimensions | undefined
 }): {
 	hallmarks: HallmarkPoint[]
 	rangeHallmarks: HallmarkRange[]

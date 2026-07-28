@@ -299,9 +299,7 @@ export default function NewslettersPage() {
 											<span>Subscribed. You are on the selected newsletter list.</span>
 										</div>
 									) : noneSelected ? (
-										<p className="text-sm leading-6 text-secondary">
-											Choose at least one publication to continue.
-										</p>
+										<p className="text-sm leading-6 text-secondary">Choose at least one publication to continue.</p>
 									) : null}
 								</div>
 							</form>

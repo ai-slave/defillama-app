@@ -134,10 +134,10 @@ type RouteTelemetryOptions<T> = {
 	route: string
 	operationType: OperationType
 	runtime: TelemetryRuntime
-	method?: string
-	requestPath?: string
+	method?: string | undefined
+	requestPath?: string | undefined
 	flushTimeoutMs?: number
-	attributes?: TelemetryAttributes
+	attributes?: TelemetryAttributes | undefined
 	getResultAttributes?: (result: T, durationMs: number, context: RouteTelemetryContext) => TelemetryAttributes
 	getHttpStatus?: (result: T) => number | undefined
 	getStatus?: (result: T, durationMs: number) => RouteStatus
@@ -528,10 +528,14 @@ export function recordRuntimeError(error: unknown, phase: RuntimeErrorPhase, att
 	const mergedAttributes = mergeRuntimeErrorAttributes(context, attributes)
 	recordTelemetry({
 		type: 'runtime_error',
-		trace_id: context?.traceId,
+		...(context
+			? {
+					trace_id: context.traceId,
+					parent_span_id: context.spanId,
+					route: context.route
+				}
+			: null),
 		span_id: newId(),
-		parent_span_id: context?.spanId,
-		route: context?.route,
 		phase,
 		occurred_at: nowIso(),
 		...fields,
@@ -561,10 +565,14 @@ export function recordDomainEvent(
 	const context = currentTelemetryContext()
 	recordTelemetry({
 		type: 'domain_event',
-		trace_id: context?.traceId,
+		...(context
+			? {
+					trace_id: context.traceId,
+					parent_span_id: context.spanId,
+					route: context.route
+				}
+			: null),
 		span_id: newId(),
-		parent_span_id: context?.spanId,
-		route: context?.route,
 		event_name: eventName,
 		level,
 		occurred_at: nowIso(),
@@ -595,6 +603,7 @@ export async function withRouteTelemetry<T>(options: RouteTelemetryOptions<T>, r
 		const durationMs = Date.now() - started
 		const extraAttributes = options.getResultAttributes?.(result, durationMs, context)
 		const status = options.getStatus?.(result, durationMs) ?? routeStatus(durationMs)
+		const httpStatus = options.getHttpStatus?.(result)
 
 		recordTelemetry({
 			type: 'route_execution',
@@ -608,7 +617,7 @@ export async function withRouteTelemetry<T>(options: RouteTelemetryOptions<T>, r
 			ended_at: nowIso(),
 			duration_ms: durationMs,
 			status,
-			http_status: options.getHttpStatus?.(result),
+			...(httpStatus === undefined ? null : { http_status: httpStatus }),
 			...context.error,
 			attributes: mergeAttributes(context, extraAttributes)
 		})
@@ -680,7 +689,7 @@ function recordPageBuildFinishTick(
 		parent_span_id: context.spanId,
 		route,
 		finished_at: finishedAt,
-		...(previousFinishedAt ? { previous_finished_at: previousFinishedAt, gap_ms: gapMs } : null),
+		...(previousFinishedAt && gapMs !== undefined ? { previous_finished_at: previousFinishedAt, gap_ms: gapMs } : null),
 		status,
 		attributes: {
 			...context.attributes,
@@ -1212,6 +1221,7 @@ export async function withOutboundTelemetry(
 
 		if (context) {
 			const { apiGroup: apiGroupValue, ...parts } = urlParts(sanitizedUrl)
+			const attributes = outboundAttributes(response, apiGroupValue, method, urlString, options)
 
 			recordTelemetry({
 				type: 'outbound_http_request',
@@ -1229,7 +1239,7 @@ export async function withOutboundTelemetry(
 				timeout_ms: timeoutMs,
 				...(options?.telemetry?.attempt ? { attempt: options.telemetry.attempt } : null),
 				...(options?.telemetry?.maxAttempts ? { max_attempts: options.telemetry.maxAttempts } : null),
-				attributes: outboundAttributes(response, apiGroupValue, method, urlString, options)
+				...(attributes ? { attributes } : null)
 			})
 		}
 
@@ -1266,6 +1276,7 @@ export async function withOutboundTelemetry(
 			...(attributes ? { attributes } : null)
 		})
 		if (status !== 'timeout') {
+			const runtimeErrorAttributes = mergeRuntimeErrorAttributes(context, { url: sanitizedUrl })
 			recordTelemetry({
 				type: 'runtime_error',
 				trace_id: context.traceId,
@@ -1275,7 +1286,7 @@ export async function withOutboundTelemetry(
 				phase: 'outboundFetch',
 				occurred_at: nowIso(),
 				...fields,
-				attributes: mergeRuntimeErrorAttributes(context, { url: sanitizedUrl })
+				...(runtimeErrorAttributes ? { attributes: runtimeErrorAttributes } : null)
 			})
 		}
 		throw error

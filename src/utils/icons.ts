@@ -41,7 +41,9 @@ const XML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&
 
 /** Inline SVG data URI showing the name's first character — a fallback logo so a missing icon doesn't read as broken. */
 export function letterLogoDataUri(name: string, size: number = 48): string {
-	const char = (name.trim()[0] ?? '?').toUpperCase().replace(/[&<>"']/g, (c) => XML_ESCAPES[c])
+	const char = (name.trim()[0] ?? '?')
+		.toUpperCase()
+		.replace(/[&<>"']/g, (character) => XML_ESCAPES[character] ?? character)
 	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" rx="${size / 2}" fill="#3b4252"/><text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="${size * 0.5}" fill="#e5e9f0">${char}</text></svg>`
 	return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }

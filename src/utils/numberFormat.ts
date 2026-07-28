@@ -12,7 +12,7 @@ interface PrecisionOptions {
 
 export interface FormatNumberOptions extends PrecisionOptions {
 	useGrouping?: boolean
-	signDisplay?: SignDisplay
+	signDisplay?: SignDisplay | undefined
 	currency?: string
 }
 

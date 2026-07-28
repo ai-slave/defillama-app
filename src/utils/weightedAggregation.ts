@@ -45,8 +45,7 @@ export const finalizeAggregatedProtocol = <T extends Record<string | symbol, any
 	const store = entry[WEIGHTED_ACC_SYMBOL] as WeightedStore | undefined
 
 	if (store) {
-		for (const key in store) {
-			const accumulator = store[key]
+		for (const [key, accumulator] of Object.entries(store)) {
 			result[key] = accumulator.denominator > 0 ? accumulator.numerator / accumulator.denominator : undefined
 		}
 		delete result[WEIGHTED_ACC_SYMBOL]

@@ -144,7 +144,7 @@ export interface PriceObject {
 }
 
 export interface CoinsPricesResponse {
-	coins?: Record<string, PriceObject | undefined>
+	coins?: Record<string, PriceObject>
 }
 
 interface CoinChartPricePoint {

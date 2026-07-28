@@ -168,11 +168,13 @@ export function getNDistinctColors(n: number): string[] {
 	// Deterministic low-discrepancy sequence with bucketed distance checks.
 	while (colors.length < n && attempts < maxAttempts) {
 		const hue = (i * 137.508) % 360
-		const saturation = saturationSteps[Math.floor(i / lightnessSteps.length) % saturationSteps.length]
+		const saturationIndex = Math.floor(i / lightnessSteps.length) % saturationSteps.length
+		const saturation = saturationSteps[saturationIndex]!
 		const baseLightnessIndex = i % lightnessSteps.length
 
 		for (let lightnessShift = 0; lightnessShift < lightnessSteps.length; lightnessShift++) {
-			const lightness = lightnessSteps[(baseLightnessIndex + lightnessShift) % lightnessSteps.length]
+			const lightnessIndex = (baseLightnessIndex + lightnessShift) % lightnessSteps.length
+			const lightness = lightnessSteps[lightnessIndex]!
 			const candidate = hslToHex(hue, saturation, lightness)
 			if (usedColors.has(candidate)) continue
 			if (!hasBalancedContrast(candidate)) continue
@@ -338,8 +340,8 @@ export async function batchFetchHistoricalPrices(
 	let batchReqs: Record<string, number | number[]> = {}
 	let batchCount = 0
 
-	for (const coin in priceReqs) {
-		batchReqs[coin] = priceReqs[coin]
+	for (const [coin, request] of Object.entries(priceReqs)) {
+		batchReqs[coin] = request
 		batchCount++
 		if (batchCount < batchSize) continue
 

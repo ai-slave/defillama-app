@@ -32,7 +32,7 @@ export function createTokenDirectoryRecordByRouteSegment(tokens: TokenDirectory)
 	const records = Object.create(null) as TokenDirectoryRecordByRouteSegment
 
 	for (const key in tokens) {
-		const token = tokens[key]
+		const token = tokens[key]!
 		const routeSegment = getCanonicalTokenRouteSegment(token)
 		if (!routeSegment) continue
 		const decodedSegment = safeDecodeURIComponent(routeSegment)
@@ -51,7 +51,7 @@ export function findTokenDirectoryRecordByGeckoId(
 	const tokenNk = `coingecko:${geckoId.toLowerCase()}`
 
 	for (const key in tokens) {
-		const token = tokens[key]
+		const token = tokens[key]!
 
 		if (token.token_nk?.toLowerCase() === tokenNk) {
 			return token
@@ -79,7 +79,7 @@ export function findTokenDirectoryRecordByDefillamaId(
 	defillamaId: string
 ): TokenDirectoryRecord | null {
 	for (const key in tokens) {
-		const token = tokens[key]
+		const token = tokens[key]!
 
 		if (token.protocolId === defillamaId || token.chainId === defillamaId) {
 			return token

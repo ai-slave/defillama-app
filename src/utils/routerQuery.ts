@@ -348,7 +348,7 @@ function removeResolvedDynamicRouteParams(query: ParsedUrlQueryInput, routePathn
 export function pushShallowQuery(
 	router: NextRouter,
 	updates: Record<string, QueryUpdateValue>,
-	pathname: string = router.pathname.includes('[') ? router.asPath.split('?')[0] : router.pathname
+	pathname: string = router.pathname.includes('[') ? (router.asPath.split('?')[0] ?? router.pathname) : router.pathname
 ) {
 	const nextQuery = buildUpdatedQuery(router.query as Record<string, unknown>, updates)
 	// A resolved pathname already contains its dynamic segments. Keeping those keys in

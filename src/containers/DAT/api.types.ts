@@ -51,7 +51,7 @@ export type IDATMNAVTuple = [number, number, number, number]
 
 /** Full response from GET /institutions */
 export interface IDATInstitutionsResponse {
-	institutionMetadata: Record<number, IDATInstitutionMetadata>
+	institutionMetadata: Record<string, IDATInstitutionMetadata>
 	assetMetadata: Record<string, IDATAssetMetadata>
 	institutions: Array<{ institutionId: number; totalUsdValue: number; totalCost: number }>
 	assets: Record<string, Array<{ institutionId: number; usdValue: number; amount: number }>>

@@ -10,15 +10,14 @@ export function buildProtocolDisplayNameLookupRecord(
 ): Record<string, string> {
 	const lookup: Record<string, string> = {}
 
-	for (const key in protocolMetadata) {
-		const metadata = protocolMetadata[key]
-		if (!metadata?.name) continue
+	for (const metadata of Object.values(protocolMetadata)) {
+		if (!metadata.name) continue
 		lookup[metadata.name] = metadata.displayName ?? metadata.name
 	}
 
-	for (const protocol in PROTOCOL_FALLBACKs) {
+	for (const [protocol, fallback] of Object.entries(PROTOCOL_FALLBACKs)) {
 		if (lookup[protocol] == null) {
-			lookup[protocol] = PROTOCOL_FALLBACKs[protocol]
+			lookup[protocol] = fallback
 		}
 	}
 
@@ -30,9 +29,8 @@ export function buildChainDisplayNameLookupRecord(
 ): Record<string, string> {
 	const lookup: Record<string, string> = {}
 
-	for (const key in chainMetadata) {
-		const metadata = chainMetadata[key]
-		if (!metadata?.name) continue
+	for (const [key, metadata] of Object.entries(chainMetadata)) {
+		if (!metadata.name) continue
 		lookup[key] = metadata.name
 		lookup[slug(metadata.name)] = metadata.name
 		if (metadata.id) {
@@ -46,8 +44,8 @@ export function buildChainDisplayNameLookupRecord(
 export function createStringLookupMap(lookup: Record<string, string>): Map<string, string> {
 	const map = new Map<string, string>()
 
-	for (const key in lookup) {
-		map.set(key, lookup[key])
+	for (const [key, value] of Object.entries(lookup)) {
+		map.set(key, value)
 	}
 
 	return map

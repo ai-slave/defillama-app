@@ -47,7 +47,7 @@ function setQueryParam(url: URL, key: string, value: string | number | boolean |
 }
 
 async function fetchCoinGeckoJson<T>(pathname: string, url: URL = createCoinGeckoUrl(pathname)): Promise<T> {
-	return fetchJson<T>(url.toString(), { headers: COINGECKO_REQUEST_HEADERS })
+	return fetchJson<T>(url.toString(), COINGECKO_REQUEST_HEADERS ? { headers: COINGECKO_REQUEST_HEADERS } : undefined)
 }
 
 async function fetchAllPaginatedCoinGeckoResults<T>({
@@ -59,7 +59,7 @@ async function fetchAllPaginatedCoinGeckoResults<T>({
 	fetchPage: (page: number) => Promise<T[]>
 	pageSize: number
 	breakOnPartialPage?: boolean
-	maxPages?: number
+	maxPages?: number | undefined
 }): Promise<T[]> {
 	const results: T[] = []
 	const safeMaxPages = Math.max(1, maxPages)
@@ -299,7 +299,7 @@ async function fetchCgChartFresh(geckoId: string, fullChart: boolean): Promise<C
 		prices,
 		mcaps: marketChart?.market_caps,
 		volumes: marketChart?.total_volumes,
-		coinData: coinData as CgChartResponse['data']['coinData']
+		coinData
 	}
 }
 

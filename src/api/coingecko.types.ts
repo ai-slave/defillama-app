@@ -120,7 +120,7 @@ export interface CgChartResponse {
 				fully_diluted_valuation?: { usd?: number | null }
 				total_volume?: { usd?: number | null }
 				circulating_supply?: number
-				max_supply?: number
+				max_supply?: number | null
 				max_supply_infinite?: boolean
 			}
 			tickers?: Array<{
@@ -130,8 +130,8 @@ export interface CgChartResponse {
 			}>
 		}
 		prices?: Array<[number, number]>
-		mcaps?: Array<[number, number]>
-		volumes?: Array<[number, number]>
+		mcaps?: Array<[number, number]> | undefined
+		volumes?: Array<[number, number]> | undefined
 	}
 }
 

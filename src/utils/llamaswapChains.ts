@@ -42,8 +42,8 @@ export function normalizeProtocolLlamaswapChains(
 	const sortedChains = entry.chains.toSorted(sortChainsByLiquidityDesc)
 	const normalizedChains: IProtocolLlamaswapChain[] = []
 
-	for (let index = 0; index < sortedChains.length; index += 1) {
-		normalizedChains.push(toProtocolLlamaswapChain(sortedChains[index], { best: isLlamaswapList && index === 0 }))
+	for (const [index, chain] of sortedChains.entries()) {
+		normalizedChains.push(toProtocolLlamaswapChain(chain, { best: isLlamaswapList && index === 0 }))
 	}
 
 	return normalizedChains

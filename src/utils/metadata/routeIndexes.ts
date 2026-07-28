@@ -138,10 +138,9 @@ export function buildDigitalAssetTreasuryRoutesMetadata(
 		const ticker = data.institutionMetadata[institution.institutionId]?.ticker
 		if (ticker) companySlugs.push(ticker)
 	}
-	for (const institutionId in data.institutionMetadata) {
-		const numericInstitutionId = Number(institutionId)
-		if (includedInstitutionIds.has(numericInstitutionId)) continue
-		const ticker = data.institutionMetadata[institutionId].ticker
+	for (const institution of Object.values(data.institutionMetadata)) {
+		if (includedInstitutionIds.has(institution.institutionId)) continue
+		const ticker = institution.ticker
 		if (ticker) companySlugs.push(ticker)
 	}
 

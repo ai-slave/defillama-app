@@ -6,9 +6,9 @@ export interface TvlChartData {
 }
 
 export interface TvlOverlapValues {
-	doublecounted?: number | null
-	liquidstaking?: number | null
-	dcAndLsOverlap?: number | null
+	doublecounted?: number | null | undefined
+	liquidstaking?: number | null | undefined
+	dcAndLsOverlap?: number | null | undefined
 }
 
 export function applyTvlOverlapBaseAdjustment(
@@ -210,14 +210,19 @@ export const processAdjustedProtocolTvl = (
 	}
 	const allTs = Array.from(tsSet).sort((a, b) => a - b)
 
-	const adjusted: [number, number][] = allTs.map((ts) => [
-		ts,
-		applyTvlOverlapBaseAdjustment(base.get(ts) || 0, {
-			doublecounted: dc.get(ts),
-			liquidstaking: ls.get(ts),
-			dcAndLsOverlap: overlap.get(ts)
-		})
-	])
+	const adjusted: [number, number][] = allTs.map((ts) => {
+		const doublecounted = dc.get(ts)
+		const liquidstaking = ls.get(ts)
+		const dcAndLsOverlap = overlap.get(ts)
+		return [
+			ts,
+			applyTvlOverlapBaseAdjustment(base.get(ts) || 0, {
+				doublecounted,
+				liquidstaking,
+				dcAndLsOverlap
+			})
+		]
+	})
 
 	return filterOutToday(adjusted)
 }

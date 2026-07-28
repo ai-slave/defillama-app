@@ -68,7 +68,17 @@ function isLeapYear(year: number) {
 function isValidInstant(value: string) {
 	const match = OFFSET_INSTANT.exec(value)
 	if (!match) return false
-	const [, yearText, monthText, dayText, hourText, minuteText, secondText = '0', , offset] = match
+	const [
+		,
+		yearText = '',
+		monthText = '',
+		dayText = '',
+		hourText = '',
+		minuteText = '',
+		secondText = '0',
+		,
+		offset = ''
+	] = match
 	const year = Number(yearText)
 	const month = Number(monthText)
 	const day = Number(dayText)
@@ -77,7 +87,8 @@ function isValidInstant(value: string) {
 	const second = Number(secondText)
 	const daysInMonth = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-	if (month < 1 || month > 12 || day < 1 || day > daysInMonth[month - 1]) return false
+	const daysInSelectedMonth = daysInMonth[month - 1]
+	if (month < 1 || month > 12 || daysInSelectedMonth === undefined || day < 1 || day > daysInSelectedMonth) return false
 	if (hour > 23 || minute > 59 || second > 59) return false
 	if (offset !== 'Z' && offset !== 'z') {
 		const offsetHour = Number(offset.slice(1, 3))
@@ -125,9 +136,9 @@ export function formatDate(value: DateValue, options?: NumericDateOptions) {
 /** Formats an exact instant, retaining its time. Local output must be rendered through a hydration-safe client path. */
 export function formatDateTime(value: NonNumericDateValue, options: DateTimeOptions): string | null
 export function formatDateTime(value: NumericDateValue, options: NumericDateTimeOptions): string | null
-export function formatDateTime(value: DateValue, options?: NumericDateTimeOptions) {
+export function formatDateTime(value: DateValue, options?: DateTimeOptions | NumericDateTimeOptions) {
 	if (options?.timeZone !== 'UTC' && options?.timeZone !== 'local') return null
-	const date = parseInstant(value, options?.input)
+	const date = parseInstant(value, 'input' in options ? options.input : undefined)
 	if (!date) return null
 	return options.timeZone === 'UTC'
 		? `${UTC_DATE_TIME_FORMATTER.format(date)} UTC`
@@ -147,8 +158,8 @@ export function formatMonthYear(value: DateValue, options?: NumericDateOptions) 
 /** Formats freshness as compact relative text. Exact instants should remain available to the user separately. */
 export function formatRelativeTime(value: NonNumericDateValue, options?: RelativeTimeOptions): string | null
 export function formatRelativeTime(value: NumericDateValue, options: NumericRelativeTimeOptions): string | null
-export function formatRelativeTime(value: DateValue, options?: NumericRelativeTimeOptions) {
-	const date = parseInstant(value, options?.input)
+export function formatRelativeTime(value: DateValue, options?: RelativeTimeOptions | NumericRelativeTimeOptions) {
+	const date = parseInstant(value, options && 'input' in options ? options.input : undefined)
 	if (!date) return null
 
 	const now = options?.now?.getTime() ?? Date.now()
