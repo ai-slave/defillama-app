@@ -34,6 +34,7 @@ import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
 import { setChartLogoMetadata } from '../shared/chartLogoMetadata'
 import {
+	CHART_HALLMARK_LABEL_RESERVE,
 	CHART_INSET,
 	CHART_LEGEND_RESERVE,
 	chartDataZoomSliderGeometry,
@@ -768,7 +769,10 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 
 		const baseGrid = chartGrid({
 			bottom: getMainGridBottom({ shouldShowEventRail, shouldHideDataZoom }),
-			top: hideDefaultLegend ? CHART_INSET : CHART_LEGEND_RESERVE
+			top: Math.max(
+				hideDefaultLegend ? CHART_INSET : CHART_LEGEND_RESERVE,
+				hallmarksMarkLine ? CHART_INSET + CHART_HALLMARK_LABEL_RESERVE : 0
+			)
 		})
 		const finalGrid = mergedChartSettings.grid ? mergeDeep(baseGrid, mergedChartSettings.grid) : baseGrid
 		const hasExplicitGridBottom = mergedChartSettings.grid?.bottom != null
@@ -884,6 +888,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		hideDataZoom,
 		autoHideDataZoom,
 		hideDefaultLegend,
+		hallmarksMarkLine,
 		selectedCharts,
 		datasetDimensions,
 		renderedDatasetSource,

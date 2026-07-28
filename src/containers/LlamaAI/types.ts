@@ -112,6 +112,7 @@ export interface CsvExport {
 export interface ChatSession {
 	sessionId: string
 	title: string
+	titleIsPlaceholder?: boolean
 	createdAt: string
 	lastActivity: string
 	isActive: boolean

@@ -1320,12 +1320,16 @@ async function renderClonedChartExport(
 
 		const legendItems = collectLegendItems(currentOptions, flags.isPieChart)
 		const showLegend = isLegendVisibleForExport(flags, currentOptions)
+		const hasMarkLineHallmarks = (
+			Array.isArray(currentOptions.series) ? currentOptions.series : [currentOptions.series]
+		).some((s: any) => s?.markLine?.data?.length)
 		const layout = computeExportLayout({
 			title,
 			legendItems,
 			shouldShowLegend: showLegend,
 			hasIcon: !!iconBase64,
-			expandLegend
+			expandLegend,
+			hasMarkLineHallmarks
 		})
 
 		currentOptions.series = adjustSeriesForExport({

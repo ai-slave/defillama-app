@@ -27,6 +27,13 @@ const CHART_SLIDER_BOTTOM_INSET = 12
 export const CHART_ZOOM_RESERVE =
 	CHART_SLIDER_BOTTOM_INSET + CHART_SLIDER_HEIGHT + CHART_SLIDER_MOVE_HANDLE_SIZE + CHART_INSET // 57
 export const CHART_LEGEND_RESERVE = 40
+
+/**
+ * Hallmark markLine labels use `position: 'end'`, so their ink paints ABOVE the
+ * plot rect: `distance` (6) + one ~17px line. Every label shares that single row
+ * regardless of hallmark count, so this reserve is a constant, not a per-item sum.
+ */
+export const CHART_HALLMARK_LABEL_RESERVE = 24
 export const CHART_VERTICAL_LEGEND_RIGHT_INSET = 16
 
 /**

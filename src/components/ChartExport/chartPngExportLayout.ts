@@ -1,6 +1,9 @@
 export const IMAGE_EXPORT_WIDTH = 1280
 export const EXPORT_FONT_SIZE = 24
 export const LEGEND_ITEM_GAP = 20
+
+/** Export rescales markLine labels to EXPORT_FONT_SIZE, so their row is taller than in-app. */
+export const EXPORT_HALLMARK_LABEL_RESERVE = 40
 export const BASE_TOP_PADDING = 16
 
 const LEGEND_ITEM_WIDTH = 48
@@ -25,8 +28,9 @@ export function computeExportLayout(opts: {
 	shouldShowLegend: boolean
 	hasIcon: boolean
 	expandLegend: boolean | undefined
+	hasMarkLineHallmarks?: boolean
 }): ExportLayout {
-	const { title, legendItems, shouldShowLegend, hasIcon, expandLegend } = opts
+	const { title, legendItems, shouldShowLegend, hasIcon, expandLegend, hasMarkLineHallmarks } = opts
 
 	const totalLegendWidth = legendItems.reduce(
 		(total, name) => total + approximateTextWidth(name, EXPORT_FONT_SIZE) + LEGEND_ITEM_WIDTH + LEGEND_ITEM_GAP,
@@ -56,12 +60,15 @@ export function computeExportLayout(opts: {
 	const legendTop =
 		BASE_TOP_PADDING +
 		(canShareRow ? Math.max(0, (titleHeight - singleRowHeight) / 2) : title ? titleHeight + verticalGap : 0)
-	const gridTop =
+	const headerGridTop =
 		BASE_TOP_PADDING +
 		(canShareRow
 			? Math.max(titleHeight, legendHeight) + verticalGap
 			: (title ? titleHeight + verticalGap : 0) +
 				(hasLegend ? legendHeight + verticalGap + (expandLegend ? 16 : 0) : 0))
+	const gridTop = hasMarkLineHallmarks
+		? Math.max(headerGridTop, BASE_TOP_PADDING + EXPORT_HALLMARK_LABEL_RESERVE)
+		: headerGridTop
 
 	return { gridTop, legendTop, canShareRow, hasLegend, legendRows, totalLegendWidth }
 }

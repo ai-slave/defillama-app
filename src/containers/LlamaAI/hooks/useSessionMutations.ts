@@ -14,6 +14,7 @@ import {
 import { isProjectSessionsQueryKey, projectSessionsKey } from '~/containers/LlamaAI/projects/queryKeys'
 import type { ProjectChatSession } from '~/containers/LlamaAI/projects/types'
 import type { ChatSession } from '~/containers/LlamaAI/types'
+import { placeholderTitleFromMessage } from '~/containers/LlamaAI/utils/sessionTitle'
 import { getErrorMessage } from '~/utils/error'
 
 type SwitchActiveLeafResponse = {
@@ -109,13 +110,16 @@ export function useSessionMutations() {
 	const { user, authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 
-	const invalidateProjectSessions = (projectId?: string | null) => {
-		if (projectId) {
-			void queryClient.invalidateQueries({ queryKey: projectSessionsKey(projectId) })
-			return
-		}
-		void queryClient.invalidateQueries({ predicate: (query) => isProjectSessionsQueryKey(query.queryKey) })
-	}
+	const invalidateProjectSessions = useCallback(
+		(projectId?: string | null) => {
+			if (projectId) {
+				void queryClient.invalidateQueries({ queryKey: projectSessionsKey(projectId) })
+				return
+			}
+			void queryClient.invalidateQueries({ predicate: (query) => isProjectSessionsQueryKey(query.queryKey) })
+		},
+		[queryClient]
+	)
 
 	const prependProjectSession = useCallback(
 		(projectId: string, session: ProjectChatSession) => {
@@ -406,17 +410,34 @@ export function useSessionMutations() {
 		}
 	})
 
+	// The server already persisted this title; only the local caches need to catch up.
+	const applyServerSessionTitle = useCallback(
+		(sessionId: string, title: string, projectId?: string | null) => {
+			queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], (old: SessionListInfiniteData | undefined) =>
+				updateSessionInInfiniteData(old, sessionId, (session) => ({
+					...session,
+					title,
+					titleIsPlaceholder: false
+				}))
+			)
+			if (projectId) invalidateProjectSessions(projectId)
+		},
+		[queryClient, user, invalidateProjectSessions]
+	)
+
 	// Insert a temporary session into the cache so first-message submits have a stable local target.
 	const createFakeSession = useCallback(
-		(projectId?: string | null) => {
+		(projectId?: string | null, firstMessage?: string) => {
 			const sessionId = crypto.randomUUID()
-			const title = 'New Chat'
+			const placeholder = placeholderTitleFromMessage(firstMessage)
+			const title = placeholder ?? 'New Chat'
 			const now = new Date().toISOString()
 
 			if (user) {
 				const fakeSession: ChatSession = {
 					sessionId,
 					title,
+					titleIsPlaceholder: true,
 					createdAt: now,
 					lastActivity: now,
 					isActive: true,
@@ -536,6 +557,7 @@ export function useSessionMutations() {
 	return {
 		createSession: createSessionMutation.mutateAsync,
 		createFakeSession,
+		applyServerSessionTitle,
 		replaceOptimisticSessionId,
 		restoreSession,
 		loadMoreMessages,

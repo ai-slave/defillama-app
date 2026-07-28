@@ -95,6 +95,9 @@ function SourceMiniCard({ reference }: { reference: UnifiedCitationReference }) 
 					<span className="ml-auto text-[11px] font-medium text-ai-primary">{reference.value}</span>
 				) : null}
 			</div>
+			{reference.excerpt ? (
+				<p className="m-0 mt-1 text-[11px] leading-snug text-ai-secondary">{reference.excerpt}</p>
+			) : null}
 			{hasRows ? (
 				<details className="group mt-1">
 					<summary className="cursor-pointer list-none text-[10px] font-medium text-ai-muted hover:text-ai-secondary">
@@ -185,11 +188,19 @@ function DataView({
 	const hiddenLabel = reference.rows_omitted ? hiddenRowsLabel(reference.rowCount) : null
 	const sql = (reference.sql ?? []).join('\n\n')
 	const citedRow = citedCell && reference.rows ? reference.rows[citedCell.rowIndex] : null
+	const sources = reference.sources ?? []
 	return (
 		<>
 			{citedRow ? <CitedRowCard reference={reference} citedCell={citedCell} /> : null}
+			{sources.length > 0 ? (
+				<div className="flex flex-col gap-1.5">
+					{sources.map((source, i) => (
+						<SourceMiniCard key={source.id ?? i} reference={source} />
+					))}
+				</div>
+			) : null}
 			{hasRows ? (
-				<details open={!citedRow} className="group">
+				<details open={!citedRow && sources.length === 0} className="group">
 					<summary className="cursor-pointer list-none text-[11px] font-medium text-ai-accent-blue hover:underline">
 						<span className="group-open:hidden">{citedRow ? 'Show full table' : 'See the data'}</span>
 						<span className="hidden group-open:inline">Hide table</span>
@@ -360,7 +371,11 @@ export function PillBody({
 			typeBody = <WebView reference={reference} />
 			break
 		case 'x':
-			typeBody = <XView reference={reference} />
+			typeBody = reference.url ? (
+				<XView reference={reference} />
+			) : (
+				<DataView reference={reference} citedCell={citedCell} advancedProvenance={advancedProvenance} />
+			)
 			break
 		case 'tool':
 			typeBody = <ToolView reference={reference} />

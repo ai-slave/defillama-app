@@ -125,7 +125,7 @@ describe('scaleXAxisForExport', () => {
 	})
 })
 import { getChartExportIconFetchUrl } from '../chartPngExportIcon'
-import { computeExportLayout } from '../chartPngExportLayout'
+import { BASE_TOP_PADDING, computeExportLayout, EXPORT_HALLMARK_LABEL_RESERVE } from '../chartPngExportLayout'
 
 describe('scaleYAxisForExport', () => {
 	// EXPORT_FONT_SIZE = 24; on-screen category labels use the ECharts default 12px font.
@@ -174,6 +174,47 @@ describe('computeExportLayout', () => {
 		})
 
 		expect(layout.hasLegend).toBe(false)
+	})
+
+	it('reserves a row for hallmark labels on a legend-less chart so they are not clipped', () => {
+		const base = {
+			title: undefined,
+			legendItems: [],
+			shouldShowLegend: false,
+			hasIcon: false,
+			expandLegend: undefined
+		}
+		const without = computeExportLayout(base)
+		const with_ = computeExportLayout({ ...base, hasMarkLineHallmarks: true })
+
+		expect(with_.gridTop).toBeGreaterThan(without.gridTop)
+		expect(with_.gridTop).toBe(BASE_TOP_PADDING + EXPORT_HALLMARK_LABEL_RESERVE)
+	})
+
+	it('keeps the taller header reserve when a title already clears the hallmark row', () => {
+		const base = {
+			title: 'Pump.fun Daily Fees',
+			legendItems: ['Daily Fees'],
+			shouldShowLegend: true,
+			hasIcon: true,
+			expandLegend: undefined
+		}
+
+		expect(computeExportLayout({ ...base, hasMarkLineHallmarks: true }).gridTop).toBe(computeExportLayout(base).gridTop)
+	})
+
+	it('reserves one row no matter how many hallmarks there are — they share a single label row', () => {
+		const layout = (hasMarkLineHallmarks: boolean) =>
+			computeExportLayout({
+				title: undefined,
+				legendItems: [],
+				shouldShowLegend: false,
+				hasIcon: false,
+				expandLegend: undefined,
+				hasMarkLineHallmarks
+			})
+
+		expect(layout(true).gridTop - layout(false).gridTop).toBe(EXPORT_HALLMARK_LABEL_RESERVE)
 	})
 })
 

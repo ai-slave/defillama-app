@@ -13,11 +13,20 @@ import {
 	type SessionListPage,
 	type SessionListResponse
 } from '~/containers/LlamaAI/hooks/sessionListCache'
+import type { ChatSession } from '~/containers/LlamaAI/types'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { handleSimpleFetchResponse } from '~/utils/async'
 
 export { SESSIONS_QUERY_KEY }
 export type { SessionListData, SessionListInfiniteData }
+
+const AWAITING_TITLE_MAX_AGE_MS = 10 * 60 * 1000
+
+function isAwaitingTitle(session: ChatSession): boolean {
+	if (!session.titleIsPlaceholder) return false
+	const lastActivity = Date.parse(session.lastActivity)
+	return Number.isFinite(lastActivity) && Date.now() - lastActivity < AWAITING_TITLE_MAX_AGE_MS
+}
 
 export function useSessionList() {
 	const { user, authorizedFetch, isAuthenticated } = useAuthContext()
@@ -55,7 +64,11 @@ export function useSessionList() {
 		getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextOffset : undefined),
 		enabled: isAuthenticated && !!user,
 		refetchOnWindowFocus: true,
-		staleTime: 10000
+		staleTime: 10000,
+		refetchInterval: (query) => {
+			const sessions = query.state.data?.pages.flatMap((page) => page.sessions) ?? []
+			return sessions.some(isAwaitingTitle) ? 15000 : false
+		}
 	})
 
 	const data = useMemo(() => flattenSessionListData(queryData), [queryData])

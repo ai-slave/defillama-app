@@ -284,6 +284,7 @@ export function AgenticChat({
 		switchActiveLeaf,
 		deleteSession,
 		updateSessionTitle,
+		applyServerSessionTitle,
 		isDeletingSession,
 		isUpdatingTitle,
 		bulkDeleteSessions,
@@ -858,12 +859,8 @@ export function AgenticChat({
 								onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
 								onTokenLimit: () => setShowTokenLimitModal(true),
 								onTitle: (title) => {
-									setSessionTitle(title)
-									updateSessionTitle({
-										sessionId: targetSessionId,
-										title,
-										projectId: currentSessionProjectIdRef.current
-									}).catch(() => {})
+									if (targetSessionId === sessionId) setSessionTitle(title)
+									applyServerSessionTitle(targetSessionId, title, currentSessionProjectIdRef.current)
 									moveSessionToTop(targetSessionId)
 								}
 							}),
@@ -934,12 +931,8 @@ export function AgenticChat({
 						onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
 						onTokenLimit: () => setShowTokenLimitModal(true),
 						onTitle: (title) => {
-							setSessionTitle(title)
-							updateSessionTitle({
-								sessionId: targetSessionId,
-								title,
-								projectId: currentSessionProjectIdRef.current
-							}).catch(() => {})
+							if (targetSessionId === sessionId) setSessionTitle(title)
+							applyServerSessionTitle(targetSessionId, title, currentSessionProjectIdRef.current)
 							moveSessionToTop(targetSessionId)
 						}
 					}),
@@ -984,12 +977,13 @@ export function AgenticChat({
 		[
 			authorizedFetchCompat,
 			appendMessage,
+			applyServerSessionTitle,
 			clearRecoveryController,
 			moveSessionToTop,
 			notify,
 			replaceLocalUserMessageId,
-			setMessageSiblingInfo,
-			updateSessionTitle
+			sessionId,
+			setMessageSiblingInfo
 		]
 	)
 
@@ -1285,13 +1279,12 @@ export function AgenticChat({
 			await clearConversationState()
 			const nextSessionId = createFakeSession(projectIdForNewChat)
 			setSessionId(nextSessionId)
-			setSessionTitle('New Chat')
+			setSessionTitle(null)
 			setCurrentSessionProjectId(projectIdForNewChat)
 			restoredSessionIdRef.current = nextSessionId
 			isFirstMessageRef.current = false
 			const persistSession = createSession({
 				sessionId: nextSessionId,
-				title: 'New Chat',
 				projectId: projectIdForNewChat
 			})
 			try {
@@ -1534,7 +1527,7 @@ export function AgenticChat({
 						setMessages(seeded)
 						isFirstMessageRef.current = false
 					} else if (isFirstMessageRef.current && !currentSessionId) {
-						currentSessionId = createFakeSession(submitProjectId)
+						currentSessionId = createFakeSession(submitProjectId, trimmed)
 						setSessionId(currentSessionId)
 						setCurrentSessionProjectId(submitProjectId)
 						isFirstMessageRef.current = false
@@ -1619,9 +1612,7 @@ export function AgenticChat({
 									if (!isActiveRequest(activeRequestIdRef, requestId)) return
 									setSessionTitle(title)
 									if (currentSessionId) {
-										updateSessionTitle({ sessionId: currentSessionId, title, projectId: submitProjectId }).catch(
-											() => {}
-										)
+										applyServerSessionTitle(currentSessionId, title, submitProjectId)
 										moveSessionToTop(currentSessionId)
 									}
 								}
@@ -1760,7 +1751,7 @@ export function AgenticChat({
 			authorizedFetchCompat,
 			createSession,
 			createFakeSession,
-			updateSessionTitle,
+			applyServerSessionTitle,
 			moveSessionToTop,
 			researchModalStore,
 			primeAudio,
@@ -1866,7 +1857,7 @@ export function AgenticChat({
 						onTokenLimit: () => setShowTokenLimitModal(true),
 						onTitle: (title) => {
 							setSessionTitle(title)
-							updateSessionTitle({ sessionId, title, projectId: currentSessionProjectId }).catch(() => {})
+							applyServerSessionTitle(sessionId, title, currentSessionProjectId)
 						}
 					}),
 				execute: ({ callbacks, signal, eventCounter }) =>
@@ -2016,7 +2007,7 @@ export function AgenticChat({
 			setMessageSiblingInfo,
 			startRecoveryCycle,
 			triggerPromptTransition,
-			updateSessionTitle
+			applyServerSessionTitle
 		]
 	)
 
