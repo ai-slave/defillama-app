@@ -32,8 +32,8 @@ export type LowercaseDwmGrouping = (typeof DWM_GROUPING_OPTIONS_LOWERCASE)[numbe
 type BaseProps<T extends string> = {
 	value: T
 	options: readonly ChartGroupingOption<T>[]
-	className?: string
-	buttonClassName?: string
+	className?: string | undefined
+	buttonClassName?: string | undefined
 }
 
 type LocalStateProps<T extends string> = BaseProps<T> & {
@@ -57,7 +57,7 @@ export function ChartGroupingSelector<T extends string>({
 }: ChartGroupingSelectorProps<T>) {
 	const handleValueChange = React.useCallback(
 		(nextValue: T) => {
-			if ('setValue' in props) {
+			if (props.setValue) {
 				React.startTransition(() => props.setValue(nextValue))
 				return
 			}
@@ -66,6 +66,9 @@ export function ChartGroupingSelector<T extends string>({
 		},
 		[props]
 	)
+	const styleProps: { className?: string; buttonClassName?: string } = {}
+	if (className !== undefined) styleProps.className = className
+	if (buttonClassName !== undefined) styleProps.buttonClassName = buttonClassName
 
 	return (
 		<SegmentedControl
@@ -80,8 +83,7 @@ export function ChartGroupingSelector<T extends string>({
 			label="Chart grouping"
 			variant="default"
 			size="md"
-			className={className}
-			buttonClassName={buttonClassName}
+			{...styleProps}
 		/>
 	)
 }

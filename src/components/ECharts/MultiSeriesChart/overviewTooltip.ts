@@ -40,7 +40,7 @@ function getSeriesSymbol(
 	if (seriesName.includes('Addresses')) return ''
 	if (seriesName.includes('Transactions')) return 'TXs'
 	if (seriesName === 'TVL' && valueSymbol !== '$') return valueSymbol
-	if (seriesName in CHART_SYMBOLS) return CHART_SYMBOLS[seriesName]
+	if (seriesName in CHART_SYMBOLS) return CHART_SYMBOLS[seriesName]!
 	return valueSymbol
 }
 
@@ -76,7 +76,7 @@ export function createOverviewTooltipFormatter({
 		const topLimit = hasOthers ? 9 : 10
 		let output = chartDate
 		for (let index = 0; index < rows.length && index < topLimit; index++) {
-			const row = rows[index]
+			const row = rows[index]!
 			output += `<li style="list-style:none">${row.marker}${row.name}&nbsp;&nbsp;${formatTooltipValue(
 				row.value,
 				getSeriesSymbol(row.name, valueSymbol, unlockTokenSymbol, seriesValueSymbols)
@@ -88,7 +88,7 @@ export function createOverviewTooltipFormatter({
 			output += `<li style="list-style:none">Mcap/TVL&nbsp;&nbsp;${formatRatio(mcap / tvl, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</li>`
 		if (hasOthers) {
 			let remainder = others?.value ?? 0
-			for (let index = topLimit; index < rows.length; index++) remainder += rows[index].value
+			for (let index = topLimit; index < rows.length; index++) remainder += rows[index]!.value
 			output += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${others?.marker ?? rows[topLimit]?.marker ?? ''}Others&nbsp;&nbsp;${formatTooltipValue(remainder, valueSymbol)}</li>`
 		}
 		return output

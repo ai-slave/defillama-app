@@ -6,6 +6,7 @@ import type {
 	XAXisComponentOption,
 	YAXisComponentOption
 } from 'echarts'
+import type { PieSeriesOption, TreemapSeriesOption } from 'echarts/charts'
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
@@ -523,12 +524,13 @@ async function getChartPngDataURL(
 ): Promise<string> {
 	const { pixelRatio = 2, backgroundColor = '#ffffff', excludeComponents } = opts
 
-	const dataURL = chart.getDataURL({
+	const dataUrlOptions: Parameters<echarts.ECharts['getDataURL']>[0] = {
 		type: 'png',
 		pixelRatio,
-		backgroundColor,
-		excludeComponents
-	})
+		backgroundColor
+	}
+	if (excludeComponents !== undefined) dataUrlOptions.excludeComponents = excludeComponents
+	const dataURL = chart.getDataURL(dataUrlOptions)
 
 	if (dataURL.startsWith('data:image/png')) {
 		return dataURL
@@ -679,10 +681,10 @@ async function composeLogoOverlay(opts: {
 		ctx.textBaseline = 'middle'
 		ctx.fillStyle = getChartTheme(isDark).exportTextMuted
 		const textX = EXPORT_HBAR_LEFT_PAD + EXPORT_HBAR_LOGO_SIZE + EXPORT_HBAR_LOGO_GAP
-		for (let i = 0; i < logosData.categories.length; i++) {
-			const y = tempChart.convertToPixel({ yAxisIndex: 0 }, i)
+		for (const [categoryIndex, category] of logosData.categories.entries()) {
+			const y = tempChart.convertToPixel({ yAxisIndex: 0 }, categoryIndex)
 			if (typeof y !== 'number' || !Number.isFinite(y)) continue
-			const img = loadedImgs[i]
+			const img = loadedImgs[categoryIndex]
 			if (img) {
 				ctx.save()
 				ctx.beginPath()
@@ -699,7 +701,7 @@ async function composeLogoOverlay(opts: {
 				)
 				ctx.restore()
 			}
-			const text = truncateToWidth(ctx, logosData.categories[i], EXPORT_HBAR_LABEL_MAX_WIDTH)
+			const text = truncateToWidth(ctx, category, EXPORT_HBAR_LABEL_MAX_WIDTH)
 			ctx.fillText(text, textX, y)
 		}
 	}
@@ -961,7 +963,6 @@ function adjustSeriesForExport(opts: {
 	isDark: boolean
 	title: string | undefined
 	expandLegend: boolean | undefined
-	pngProfile?: PngExportProfile
 	exportHeight?: number
 	treemapViewportState?: TreemapViewportExportState | null
 }): SeriesOption[] {
@@ -1078,7 +1079,7 @@ function adjustSeriesForExport(opts: {
 
 	// Pie: recenter for the fixed export canvas and hide labels when legend is shown
 	if (flags.isPieChart && layout.hasLegend) {
-		series = series.map((s) => {
+		series = series.map((s): SeriesOption => {
 			if (s?.type !== 'pie') return s
 			const existingLabelLayout = s.labelLayout
 			const nextLabelLayout =
@@ -1089,8 +1090,8 @@ function adjustSeriesForExport(opts: {
 			const right = parsePixelValue(s.right) ?? 0
 			const drawableWidth = Math.max(1, IMAGE_EXPORT_WIDTH - left - right)
 			const nextCenterX = Math.round(left + drawableWidth / 2)
-			const nextCenterY = Array.isArray(s.center) && s.center.length > 1 ? s.center[1] : '50%'
-			return {
+			const nextCenterY = Array.isArray(s.center) && s.center.length > 1 ? (s.center[1] ?? '50%') : '50%'
+			const next: PieSeriesOption = {
 				...s,
 				center: [nextCenterX, nextCenterY],
 				avoidLabelOverlap: true,
@@ -1098,13 +1099,15 @@ function adjustSeriesForExport(opts: {
 				label: { ...(s.label ?? {}), show: false },
 				labelLine: { ...(s.labelLine ?? {}), show: false }
 			}
+			return next
 		})
 	}
 
 	// Treemap: push chart body below title area
 	if (flags.isTreemapChart) {
-		series = series.map((s) => {
+		series = series.map((s): SeriesOption => {
 			if (s?.type !== 'treemap') return s
+			const { levels: sourceLevels, ...treemapSeries } = s
 			// The cloned export must declare labels at both series and level scope.
 			// ECharts treemap levels can override series labels, which previously produced normalized PNGs with no text.
 			const total = Array.isArray(s.data)
@@ -1147,44 +1150,45 @@ function adjustSeriesForExport(opts: {
 			}
 			const targetDataRoot = getTreemapTargetDataRoot(s, treemapViewportState ?? null)
 			const exportData = targetDataRoot?.data ?? s.data
-			return {
-				...s,
+			const next: TreemapSeriesOption = {
+				...treemapSeries,
 				...(targetDataRoot ? { name: targetDataRoot.name } : {}),
 				top: layout.gridTop,
 				left: TREEMAP_EXPORT_SIDE_PADDING,
 				right: TREEMAP_EXPORT_SIDE_PADDING,
 				bottom: TREEMAP_EXPORT_BOTTOM_PADDING,
 				breadcrumb: { ...(s?.breadcrumb ?? {}), show: false },
-				data: Array.isArray(exportData)
-					? applyTreemapDataExportLabels(exportData, exportLabel, exportUpperLabel)
-					: exportData,
 				label: exportLabel,
-				upperLabel: exportUpperLabel,
-				levels: Array.isArray(s.levels)
-					? s.levels.map((level: any) => {
-							const levelLabel = level?.label ?? {}
-							const levelUpperLabel = level?.upperLabel ?? {}
-							return {
-								...level,
-								label: {
-									...exportLabel,
-									...levelLabel,
-									show: true,
-									formatter: typeof levelLabel.formatter === 'function' ? levelLabel.formatter : exportLabelFormatter
-								},
-								upperLabel: {
-									...exportUpperLabel,
-									...levelUpperLabel,
-									show: levelUpperLabel.show ?? exportUpperLabel.show,
-									formatter:
-										typeof levelUpperLabel.formatter === 'function'
-											? levelUpperLabel.formatter
-											: exportUpperLabel.formatter
-								}
-							}
-						})
-					: s.levels
+				upperLabel: exportUpperLabel
 			}
+			if (Array.isArray(exportData)) {
+				next.data = applyTreemapDataExportLabels(exportData, exportLabel, exportUpperLabel)
+			} else if (exportData !== undefined) {
+				next.data = exportData
+			}
+			if (Array.isArray(sourceLevels)) {
+				next.levels = sourceLevels.map((level: any) => {
+					const levelLabel = level?.label ?? {}
+					const levelUpperLabel = level?.upperLabel ?? {}
+					return {
+						...level,
+						label: {
+							...exportLabel,
+							...levelLabel,
+							show: true,
+							formatter: typeof levelLabel.formatter === 'function' ? levelLabel.formatter : exportLabelFormatter
+						},
+						upperLabel: {
+							...exportUpperLabel,
+							...levelUpperLabel,
+							show: levelUpperLabel.show ?? exportUpperLabel.show,
+							formatter:
+								typeof levelUpperLabel.formatter === 'function' ? levelUpperLabel.formatter : exportUpperLabel.formatter
+						}
+					}
+				})
+			}
+			return next
 		})
 	}
 
@@ -1199,27 +1203,30 @@ function buildExportTitle(opts: {
 	isDark: boolean
 }): TitleComponentOption {
 	const { title, iconBase64, isDark } = opts
-	return {
-		text: iconBase64 ? `{icon|} ${title}` : title,
-		textStyle: {
-			fontSize: 28,
-			fontWeight: 600,
-			color: getChartTheme(isDark).text,
-			rich: iconBase64
-				? {
-						icon: {
-							height: 32,
-							width: 32,
-							verticalAlign: 'middle',
-							backgroundColor: { image: iconBase64 }
-						}
-					}
-				: undefined
-		},
+	const textStyle: NonNullable<TitleComponentOption['textStyle']> = {
+		fontSize: 28,
+		fontWeight: 600,
+		color: getChartTheme(isDark).text
+	}
+	if (iconBase64) {
+		textStyle.rich = {
+			icon: {
+				height: 32,
+				width: 32,
+				verticalAlign: 'middle',
+				backgroundColor: { image: iconBase64 }
+			}
+		}
+	}
+	const titleOption: TitleComponentOption = {
+		textStyle,
 		left: 14,
 		top: BASE_TOP_PADDING,
 		z: EXPORT_TITLE_Z
 	}
+	if (iconBase64) titleOption.text = `{icon|} ${title}`
+	else if (title !== undefined) titleOption.text = title
+	return titleOption
 }
 
 // --- Chart render wait ---
@@ -1339,7 +1346,6 @@ async function renderClonedChartExport(
 			isDark,
 			title,
 			expandLegend,
-			pngProfile,
 			exportHeight,
 			treemapViewportState
 		})
@@ -1453,19 +1459,19 @@ const DEFAULT_CLASSNAME = buttonStyles({ size: 'md' })
 
 interface ChartPngExportButtonProps {
 	chartInstance: () => echarts.ECharts | null
-	className?: string
-	smol?: boolean
-	title?: string
-	filename?: string
-	iconUrl?: string
-	expandLegend?: boolean
-	pngProfile?: PngExportProfile
-	onExport?: (info: { kind: 'download' | 'copy'; filename: string }) => void
+	className?: string | undefined
+	smol?: boolean | undefined
+	title?: string | undefined
+	filename?: string | undefined
+	iconUrl?: string | undefined
+	expandLegend?: boolean | undefined
+	pngProfile?: PngExportProfile | undefined
+	onExport?: ((info: { kind: 'download' | 'copy'; filename: string }) => void) | undefined
 	/** Consolidated export menu: icon-only disclosure with a "Download CSV" item on top
 	 * of the image actions. Used by the LlamaAI chat toolbar; other pages keep the
 	 * separate .csv/.png buttons. */
-	csvMenuItem?: { prepareCsv: () => { filename: string; rows: Array<Array<string | number | boolean>> } }
-	iconOnly?: boolean
+	csvMenuItem?: { prepareCsv: () => { filename: string; rows: Array<Array<string | number | boolean>> } } | undefined
+	iconOnly?: boolean | undefined
 }
 
 export function ChartPngExportButton({

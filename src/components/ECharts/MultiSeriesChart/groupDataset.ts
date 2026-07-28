@@ -1,50 +1,47 @@
 import { getBucketTimestampMs } from '../shared/timeSeries'
-import type { CanonicalMultiSeriesChartDataset, ChartTimeGroupingWithCumulative } from './types'
+import type { ChartTimeGroupingWithCumulative, MultiSeriesTimeSeriesDataset } from './types'
 
 /** Group an ascending canonical bar dataset without re-sorting or allocating a Map. */
-export function groupMultiSeriesBarChartDataset<TDataset extends CanonicalMultiSeriesChartDataset>({
+export function groupMultiSeriesBarChartDataset({
 	dataset,
 	groupBy
 }: {
-	dataset: TDataset
+	dataset: MultiSeriesTimeSeriesDataset
 	groupBy: ChartTimeGroupingWithCumulative
-}): TDataset {
+}): MultiSeriesTimeSeriesDataset {
 	if (groupBy === 'daily') return dataset
 
-	const timestampIndex = dataset.dimensions.indexOf('timestamp')
-	const seriesIndexes: number[] = []
-	for (let i = 0; i < dataset.dimensions.length; i++) if (i !== timestampIndex) seriesIndexes.push(i)
-	const source: CanonicalMultiSeriesChartDataset['source'] = []
+	const source: MultiSeriesTimeSeriesDataset['source'] = []
 
 	for (const row of dataset.source) {
-		const timestamp = row[timestampIndex] as number
+		const timestamp = row[0]
 		const bucketTimestamp = groupBy === 'cumulative' ? timestamp : getBucketTimestampMs(timestamp, groupBy)
 		let groupedRow = source[source.length - 1]
-		if (groupedRow?.[timestampIndex] !== bucketTimestamp) groupedRow = undefined
+		if (groupedRow?.[0] !== bucketTimestamp) groupedRow = undefined
 
-		for (const seriesIndex of seriesIndexes) {
+		for (let seriesIndex = 1; seriesIndex < dataset.dimensions.length; seriesIndex++) {
 			const value = row[seriesIndex]
 			if (value == null) continue
 			if (!groupedRow) {
-				groupedRow = new Array<number | null | undefined>(dataset.dimensions.length)
-				groupedRow[timestampIndex] = bucketTimestamp
+				groupedRow = [bucketTimestamp]
+				groupedRow.length = dataset.dimensions.length
 				source.push(groupedRow)
 			}
-			groupedRow[seriesIndex] = ((groupedRow[seriesIndex] as number | undefined) ?? 0) + (value as number)
+			groupedRow[seriesIndex] = (groupedRow[seriesIndex] ?? 0) + value
 		}
 	}
 
 	if (groupBy === 'cumulative') {
-		const totals = new Array<number>(seriesIndexes.length).fill(0)
+		const totals = new Array<number>(dataset.dimensions.length - 1).fill(0)
 		for (const row of source) {
-			for (let i = 0; i < seriesIndexes.length; i++) {
-				const seriesIndex = seriesIndexes[i]
+			for (let seriesIndex = 1; seriesIndex < dataset.dimensions.length; seriesIndex++) {
 				const value = row[seriesIndex]
-				if (value != null) totals[i] += value as number
-				row[seriesIndex] = totals[i]
+				const totalIndex = seriesIndex - 1
+				if (value != null) totals[totalIndex] = totals[totalIndex]! + value
+				row[seriesIndex] = totals[totalIndex]!
 			}
 		}
 	}
 
-	return { ...dataset, source } as TDataset
+	return { ...dataset, source }
 }

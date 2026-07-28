@@ -45,13 +45,15 @@ export function buildRwaCanonicalMetricDataset(
 	const seriesDimensions = dataset.dimensions.filter(
 		(dimension) => dimension !== 'timestamp' && dimension !== 'Total' && !isRwaTotalSeriesLabel(dimension)
 	)
-	const dimensions = onlyTotal ? ['timestamp', totalLabel] : ['timestamp', totalLabel, ...seriesDimensions]
+	const dimensions: RWAPositionalChartDataset['dimensions'] = onlyTotal
+		? ['timestamp', totalLabel]
+		: ['timestamp', totalLabel, ...seriesDimensions]
 	const source = new Array<RWAPositionalChartDataset['source'][number]>(dataset.source.length)
 
 	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
 		const input = dataset.source[rowIndex]
-		const row = new Array<number | null>(dimensions.length)
-		row[0] = input.timestamp
+		const row: RWAPositionalChartDataset['source'][number] = [input.timestamp]
+		row.length = dimensions.length
 		if (onlyTotal) {
 			row[1] = input.Total ?? null
 		} else {

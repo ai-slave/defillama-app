@@ -1147,15 +1147,19 @@ export function useRwaChartDataset({
 
 	assert(initialDataset == null || initialDataset.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
 
-	const chartDataset = useMemo(() => {
+	const chartDataset = useMemo<RWAPositionalChartDataset>(() => {
 		if (!enabled) return { source: [], dimensions: ['timestamp'] }
 
-		const spotDataset = (() => {
+		const spotDataset = ((): RWAPositionalChartDataset => {
 			if (useInitialDataset && initialDataset) {
 				if (mode !== 'total') return initialDataset
+				const totalDimension = initialDataset.dimensions[1]
+				if (totalDimension === undefined) {
+					return { dimensions: ['timestamp'], source: initialDataset.source.map((row) => [row[0]]) }
+				}
 				return {
-					dimensions: initialDataset.dimensions.slice(0, 2),
-					source: initialDataset.source.map((row) => row.slice(0, 2))
+					dimensions: ['timestamp', totalDimension],
+					source: initialDataset.source.map((row) => [row[0], row[1] ?? null])
 				}
 			}
 			if (!assetRows) return { source: [], dimensions: ['timestamp'] }
@@ -1165,7 +1169,7 @@ export function useRwaChartDataset({
 
 		if (!includeRwaPerps) return spotDataset
 
-		const openInterestDataset = useInitialDataset
+		const openInterestDataset: RWAPositionalChartDataset = useInitialDataset
 			? toRwaMultiSeriesChartDataset(initialOpenInterestDataset ?? { source: [], dimensions: ['timestamp'] })
 			: openInterestRows
 				? toRwaMultiSeriesChartDataset(buildRwaOpenInterestDataset(filteredAssets, openInterestRows))

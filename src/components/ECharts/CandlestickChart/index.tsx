@@ -1,4 +1,10 @@
-import type { EChartsOption, GridComponentOption, XAXisComponentOption, YAXisComponentOption } from 'echarts'
+import type {
+	DefaultLabelFormatterCallbackParams,
+	EChartsOption,
+	GridComponentOption,
+	XAXisComponentOption,
+	YAXisComponentOption
+} from 'echarts'
 import {
 	BarChart,
 	CandlestickChart,
@@ -49,7 +55,7 @@ echarts.use([
 	LegendComponent
 ])
 
-const EMPTY_INDICATORS: ICandlestickChartProps['indicators'] = []
+const EMPTY_INDICATORS: NonNullable<ICandlestickChartProps['indicators']> = []
 
 const INDICATOR_COLORS = ['#ff7f0e', '#2ca02c', '#9467bd', '#e377c2', '#17becf', '#bcbd22', '#7f7f7f']
 
@@ -134,7 +140,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 					areaStyle: { color: [chartTheme.ink(0.02), ''] }
 				},
 				axisLabel: {
-					formatter: (v) => formatTooltipValue(v, '$'),
+					formatter: (value: number) => formatTooltipValue(value, '$'),
 					color: chartTheme.axisLabel
 				},
 				axisLine: { lineStyle: { color: chartTheme.text, opacity: 0.1 } },
@@ -152,7 +158,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 		]
 
 		for (let idx = 0; idx < panels.length; idx++) {
-			const panel = panels[idx]
+			const panel = panels[idx]!
 			const gridIdx = idx + 2
 			const bottom = BASE_BOTTOM + (panelCount - idx - 1) * PANEL_HEIGHT
 
@@ -178,17 +184,20 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 			})
 
 			const isOscillator = ['rsi', 'stoch', 'mfi', 'willr', 'cci'].some((t) => panel.name.toLowerCase().startsWith(t))
-			yAxes.push({
+			const yAxis: YAXisComponentOption = {
 				scale: !isOscillator,
 				gridIndex: gridIdx,
-				min: isOscillator ? 0 : undefined,
-				max: isOscillator ? 100 : undefined,
 				splitNumber: 2,
 				axisLabel: { show: true, fontSize: 10, color: chartTheme.axisLabel },
 				axisLine: { show: false },
 				axisTick: { show: false },
 				splitLine: { lineStyle: { color: chartTheme.gridline } }
-			})
+			}
+			if (isOscillator) {
+				yAxis.min = 0
+				yAxis.max = 100
+			}
+			yAxes.push(yAxis)
 		}
 
 		const allAxisIndices = Array.from({ length: grids.length }, (_, i) => i)
@@ -300,27 +309,27 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 		]
 
 		for (let idx = 0; idx < overlays.length; idx++) {
-			const ind = overlays[idx]
-			const color = ind.color || INDICATOR_COLORS[idx % INDICATOR_COLORS.length]
+			const ind = overlays[idx]!
+			const color = ind.color || INDICATOR_COLORS[idx % INDICATOR_COLORS.length]!
 			if (ind.values && ind.name.toLowerCase().includes('bband')) {
 				result.push({
 					name: `${ind.name} Upper`,
 					type: 'line',
-					data: ind.values.map((v) => [v[0], v[1]?.upper]),
+					data: ind.values.map((v) => [v[0], v[1].upper ?? null]),
 					lineStyle: { color, opacity: 0.5, width: 1 },
 					symbol: 'none'
 				})
 				result.push({
 					name: ind.name,
 					type: 'line',
-					data: ind.values.map((v) => [v[0], v[1]?.middle]),
+					data: ind.values.map((v) => [v[0], v[1].middle ?? null]),
 					lineStyle: { color, width: 1 },
 					symbol: 'none'
 				})
 				result.push({
 					name: `${ind.name} Lower`,
 					type: 'line',
-					data: ind.values.map((v) => [v[0], v[1]?.lower]),
+					data: ind.values.map((v) => [v[0], v[1].lower ?? null]),
 					lineStyle: { color, opacity: 0.5, width: 1 },
 					symbol: 'none',
 					areaStyle: { color, opacity: 0.1 }
@@ -337,9 +346,9 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 		}
 
 		for (let idx = 0; idx < panels.length; idx++) {
-			const panel = panels[idx]
+			const panel = panels[idx]!
 			const gridIdx = idx + 2
-			const color = panel.color || INDICATOR_COLORS[(overlays.length + idx) % INDICATOR_COLORS.length]
+			const color = panel.color || INDICATOR_COLORS[(overlays.length + idx) % INDICATOR_COLORS.length]!
 
 			if (panel.values && panel.name.toLowerCase().includes('macd')) {
 				result.push({
@@ -347,9 +356,12 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 					type: 'bar',
 					xAxisIndex: gridIdx,
 					yAxisIndex: gridIdx,
-					data: panel.values.map((v) => [v[0], v[1]?.histogram]),
+					data: panel.values.map((v) => [v[0], v[1].histogram ?? null]),
 					itemStyle: {
-						color: (params) => (params.value[1] >= 0 ? chartTheme.up : chartTheme.down)
+						color: (params: DefaultLabelFormatterCallbackParams) => {
+							const value = Array.isArray(params.value) ? params.value[1] : undefined
+							return typeof value === 'number' && value >= 0 ? chartTheme.up : chartTheme.down
+						}
 					}
 				})
 				result.push({
@@ -357,7 +369,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 					type: 'line',
 					xAxisIndex: gridIdx,
 					yAxisIndex: gridIdx,
-					data: panel.values.map((v) => [v[0], v[1]?.signal]),
+					data: panel.values.map((v) => [v[0], v[1].signal ?? null]),
 					lineStyle: { color: '#ff7f0e', width: 1 },
 					symbol: 'none'
 				})
@@ -366,7 +378,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 					type: 'line',
 					xAxisIndex: gridIdx,
 					yAxisIndex: gridIdx,
-					data: panel.values.map((v) => [v[0], v[1]?.macd]),
+					data: panel.values.map((v) => [v[0], v[1].macd ?? null]),
 					lineStyle: { color: '#2ca02c', width: 1 },
 					symbol: 'none'
 				})
@@ -376,7 +388,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 					type: 'line',
 					xAxisIndex: gridIdx,
 					yAxisIndex: gridIdx,
-					data: panel.values.map((v) => [v[0], v[1]?.k]),
+					data: panel.values.map((v) => [v[0], v[1].k ?? null]),
 					lineStyle: { color: '#2ca02c', width: 1 },
 					symbol: 'none'
 				})
@@ -385,7 +397,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 					type: 'line',
 					xAxisIndex: gridIdx,
 					yAxisIndex: gridIdx,
-					data: panel.values.map((v) => [v[0], v[1]?.d]),
+					data: panel.values.map((v) => [v[0], v[1].d ?? null]),
 					lineStyle: { color: '#ff7f0e', width: 1 },
 					symbol: 'none'
 				})

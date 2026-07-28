@@ -4,7 +4,8 @@ import {
 	buildSparseTimeSeriesDataset,
 	buildTimeSeriesDataset,
 	materializeZeroFilledDataset,
-	sliceTimestampDataset
+	sliceTimestampDataset,
+	type TimestampDataset
 } from './timeSeriesDataset'
 
 describe('timeSeriesDataset', () => {
@@ -93,7 +94,7 @@ describe('timeSeriesDataset', () => {
 	})
 
 	it('materializes only visible series and zero-fills sparse rows', () => {
-		const input = {
+		const input: TimestampDataset = {
 			dimensions: ['timestamp', 'A', 'B', 'Hidden'],
 			source: [
 				[1_000, 2, undefined, 9],

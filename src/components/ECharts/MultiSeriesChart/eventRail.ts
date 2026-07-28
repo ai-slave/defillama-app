@@ -1,9 +1,9 @@
-import type { CustomSeriesOption, EChartsOption, YAXisComponentOption } from 'echarts'
+import type { CustomSeriesOption, EChartsOption } from 'echarts'
 import type * as echarts from 'echarts/core'
 import { CHART_INSET, CHART_ZOOM_RESERVE } from '../shared/chartSpacing'
 import { formatTooltipChartDate } from '../shared/formatters'
 import { asTooltipDataRecord } from '../shared/tooltip'
-import type { ChartTimeGrouping, MultiSeriesChartArrayRow } from './types'
+import type { ChartTimeGrouping, MultiSeriesChartArrayRow, MultiSeriesYAxisOption } from './types'
 
 const EVENT_DOT_SIZE = 16
 const EVENT_DOT_FILL_POINTS = [
@@ -41,8 +41,8 @@ const EVENT_MARKLINE_GRAPHIC_ID = 'echarts-hallmark-markline'
 const EVENT_STAR_PATH = 'M50 12 L62 42 L94 42 L68 61 L78 92 L50 73 L22 92 L32 61 L6 42 L38 42 Z'
 const DANGER_KEYWORDS = ['depeg', 'hack', 'exploit', 'attack']
 
-const EVENT_DOT_FILL_POLYGON_POINTS = EVENT_DOT_FILL_POINTS.map(([x, y]) => [x, y] as [number, number])
-const EVENT_DOT_BORDER_POLYGON_POINTS = EVENT_DOT_BORDER_POINTS.map(([x, y]) => [x, y] as [number, number])
+const EVENT_DOT_FILL_POLYGON_POINTS = EVENT_DOT_FILL_POINTS.map(([x, y]): [number, number] => [x, y])
+const EVENT_DOT_BORDER_POLYGON_POINTS = EVENT_DOT_BORDER_POINTS.map(([x, y]): [number, number] => [x, y])
 
 export type EventRailDatum = {
 	value: [number, number]
@@ -63,6 +63,10 @@ export type EventRailDatum = {
 
 export type EventHoverState = {
 	hoveredEventDate: number | null
+}
+
+function isEventHoverDatum(value: unknown): value is Pick<EventRailDatum, 'eventDate' | 'rangeStart'> {
+	return value !== null && typeof value === 'object' && 'eventDate' in value && typeof value.eventDate === 'number'
 }
 
 const RANGE_TOOLTIP_DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
@@ -133,8 +137,8 @@ export function buildEventRailData({
 	isThemeDark,
 	dateInMs = true
 }: {
-	hallmarks?: Array<[number, string]> | null
-	rangeHallmarks?: Array<[[number, number], string]> | null
+	hallmarks?: Array<[number, string]> | null | undefined
+	rangeHallmarks?: Array<[[number, number], string]> | null | undefined
 	isThemeDark: boolean
 	dateInMs?: boolean
 }) {
@@ -202,7 +206,7 @@ export function getMainGridBottom({
 		: EVENT_STRIP_BOTTOM_WITH_ZOOM + EVENT_STRIP_HEIGHT + EVENT_STRIP_TOP_GAP
 }
 
-export function createEventStripYAxis(): YAXisComponentOption {
+export function createEventStripYAxis(): MultiSeriesYAxisOption {
 	return {
 		type: 'value',
 		min: -1,
@@ -244,11 +248,11 @@ export function getDatasetTimeBounds(source: MultiSeriesChartArrayRow[], timesta
 	let min: number | undefined
 	let max: number | undefined
 	for (let index = 0; index < source.length; index++) {
-		min = readTimestampEndpoint(source[index][timestampIndex])
+		min = readTimestampEndpoint(source[index]![timestampIndex])
 		if (min !== undefined) break
 	}
 	for (let index = source.length - 1; index >= 0; index--) {
-		max = readTimestampEndpoint(source[index][timestampIndex])
+		max = readTimestampEndpoint(source[index]![timestampIndex])
 		if (max !== undefined) break
 	}
 	return { min, max }
@@ -303,7 +307,7 @@ export function createEventRailSeries({
 			if (!event) return
 
 			const [x] = api.coord([event.eventDate, 0])
-			if (!Number.isFinite(x)) return
+			if (typeof x !== 'number' || !Number.isFinite(x)) return
 
 			const centerY = getEventStripCenterY(api.getHeight(), shouldHideDataZoom)
 			const isHovered = hoverState.hoveredEventDate === event.eventDate
@@ -471,7 +475,7 @@ export function attachEventHoverHandlers({
 			clearMarkLineTimer = null
 		}
 
-		const event = params.data as EventRailDatum | undefined
+		const event = isEventHoverDatum(params.data) ? params.data : undefined
 		if (!event || event.rangeStart != null) {
 			if (event?.eventDate != null && hoverState.hoveredEventDate !== event.eventDate) {
 				hoverState.hoveredEventDate = event.eventDate

@@ -36,7 +36,7 @@ function createEndLabel(
 	text: string,
 	chartTheme: ChartTheme,
 	offset: [number, number],
-	seriesDimension: string | number,
+	seriesDimension: string | number | undefined,
 	yAxisIndex: number,
 	chartRef: ChartInstanceRef | undefined
 ): NonNullable<LineSeriesOption['endLabel']> {
@@ -78,19 +78,19 @@ export function buildMultiSeries({
 	expandTo100Percent: boolean | undefined
 	solidChartAreaStyle: boolean
 	chartTheme: ChartTheme
-	hallmarksMarkLine?: ReturnType<typeof buildHallmarksMarkLine>
-	chartRef?: ChartInstanceRef
+	hallmarksMarkLine?: ReturnType<typeof buildHallmarksMarkLine> | undefined
+	chartRef?: ChartInstanceRef | undefined
 }) {
 	const output: MultiSeriesRenderSeries[] = []
 	let hasExplicitYAxis = false
 
 	const chartConfigs = charts ?? []
 	for (let index = 0; index < chartConfigs.length; index++) {
-		const chart = chartConfigs[index]
+		const chart = chartConfigs[index]!
 		if (selectedCharts && !selectedCharts.has(chart.name)) continue
 		if (chart.yAxisIndex != null) hasExplicitYAxis = true
 
-		const color = chart.color ?? CHART_COLORS[index % CHART_COLORS.length]
+		const color = chart.color ?? CHART_COLORS[index % CHART_COLORS.length]!
 		const common = {
 			name: chart.name,
 			encode: chart.encode,

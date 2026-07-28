@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
+import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
 import { buildProRwaAssetChartSeries } from './rwaAssetChart'
 
 describe('Pro RWA asset chart series', () => {
-	const dataset = {
+	const dataset: RWAPositionalChartDataset = {
 		dimensions: ['timestamp', 'DeFi Active TVL', 'Active Mcap', 'Onchain Mcap'],
 		source: [[1, 2, 3, 4]]
 	}

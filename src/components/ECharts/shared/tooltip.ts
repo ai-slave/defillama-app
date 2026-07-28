@@ -7,19 +7,25 @@ export interface EChartsTooltipItem {
 	axisValue?: unknown
 	componentSubType?: string
 	data?: unknown
+	dataIndex?: number
 	dimensionNames?: readonly string[]
 	encode?: { x?: readonly (number | string)[]; y?: readonly (number | string)[] }
 	marker?: string
 	name?: string
 	seriesName?: string
+	seriesIndex?: number
 	value?: unknown
 }
 
 type TooltipRow = { marker: string; name: string; value: number }
 
+function isEChartsTooltipItem(value: unknown): value is EChartsTooltipItem {
+	return value !== null && typeof value === 'object'
+}
+
 export function normalizeTooltipItems(params: unknown): EChartsTooltipItem[] {
-	if (Array.isArray(params)) return params as EChartsTooltipItem[]
-	return params && typeof params === 'object' ? [params as EChartsTooltipItem] : []
+	if (Array.isArray(params)) return params.filter(isEChartsTooltipItem)
+	return isEChartsTooltipItem(params) ? [params] : []
 }
 
 export function isTooltipDataRecord(value: unknown): value is Record<string, unknown> {
@@ -105,9 +111,9 @@ export function createSignedInflowsTooltipFormatter(valueSymbol: string, hideSer
 			total += value
 			if (name === 'Others') {
 				explicitOthers = row
-			} else if (rows.length < 10 || value < rows[rows.length - 1].value) {
+			} else if (rows.length < 10 || value < rows[rows.length - 1]!.value) {
 				let insertAt = rows.length
-				while (insertAt > 0 && rows[insertAt - 1].value > value) insertAt--
+				while (insertAt > 0 && rows[insertAt - 1]!.value > value) insertAt--
 				rows.splice(insertAt, 0, row)
 				if (rows.length > 10) rows.pop()
 			}

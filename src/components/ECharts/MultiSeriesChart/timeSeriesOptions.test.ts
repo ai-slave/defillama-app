@@ -19,7 +19,11 @@ it('preserves the compact single-series grid and axis formatting', () => {
 	expect(grid?.top).toBe(CHART_INSET)
 	expect(options?.xAxis).toMatchObject({ axisLabel: { hideOverlap: false } })
 	expect(options?.yAxis).toMatchObject({ min: undefined, axisLabel: { formatter: expect.any(Function) } })
+	expect(options?.yAxis).not.toHaveProperty('scale')
 	expect(Array.isArray(options?.yAxis)).toBe(false)
-	const axisLabel = (options!.yAxis as { axisLabel: { formatter: (value: number) => string } }).axisLabel
-	expect(axisLabel.formatter(0.123456)).toBe('0.12 %')
+	const yAxis = options?.yAxis
+	if (!yAxis || Array.isArray(yAxis) || typeof yAxis.axisLabel?.formatter !== 'function') {
+		throw new Error('Expected a single y-axis with a formatter')
+	}
+	expect(yAxis.axisLabel.formatter(0.123456, 0, undefined)).toBe('0.12 %')
 })

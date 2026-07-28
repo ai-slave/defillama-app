@@ -1,5 +1,5 @@
-import type { EChartsOption } from 'echarts'
-import { TreemapChart as EChartTreemap } from 'echarts/charts'
+import type { ComposeOption, GraphicComponentOption, ToolboxComponentOption, TooltipComponentOption } from 'echarts'
+import { TreemapChart as EChartTreemap, type TreemapSeriesOption } from 'echarts/charts'
 import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -16,6 +16,46 @@ import { buildWatermarkGraphic } from '../shared/watermark'
 import { clearTreemapFocus, registerTreemapFocusTracking } from './focus'
 import { formatRwaTreemapBoxLabel, formatRwaTreemapTooltip, formatRwaUpperLabel } from './rwaFormatting'
 import type { TreemapChartProps, TreemapNode, TreemapValue } from './types'
+
+type TreemapPathInfo = Array<{ name?: unknown }>
+type TreemapFormatterParams = {
+	data?: unknown
+	treePathInfo?: TreemapPathInfo
+	value: TreemapValue
+	name?: unknown
+}
+
+type CanonicalTreemapSeriesOption = Omit<TreemapSeriesOption, 'data'> & { data: TreemapNode[] }
+type TreemapOption = ComposeOption<
+	CanonicalTreemapSeriesOption | GraphicComponentOption | ToolboxComponentOption | TooltipComponentOption
+>
+
+function isTreemapFormatterParams(value: unknown): value is TreemapFormatterParams {
+	return value !== null && typeof value === 'object' && 'value' in value && isTreemapValue(value.value)
+}
+
+function isTreemapValue(value: unknown): value is TreemapValue {
+	if (!Array.isArray(value) || typeof value[0] !== 'number') return false
+	const secondary = value[1]
+	const color = value[2]
+	const gradient = value[3]
+	return (
+		(secondary === null || typeof secondary === 'number') &&
+		(color === null || typeof color === 'number') &&
+		(gradient === undefined || typeof gradient === 'number')
+	)
+}
+
+function isTreemapNode(value: unknown): value is TreemapNode {
+	return (
+		value !== null &&
+		typeof value === 'object' &&
+		'name' in value &&
+		typeof value.name === 'string' &&
+		'value' in value &&
+		isTreemapValue(value.value)
+	)
+}
 
 const VISUAL_MIN = -100
 const VISUAL_MAX = 100
@@ -86,17 +126,20 @@ function TreemapChart({
 		const instance = chartRef.current
 		if (!instance) return
 
-		const option: EChartsOption = {
+		const option: TreemapOption = {
 			graphic: [buildWatermarkGraphic(isDark)],
 			tooltip: {
 				className: 'defillama-echarts-tooltip',
 				backgroundColor: 'transparent',
 				borderWidth: 0,
-				formatter: function (info) {
-					const treePathInfo = Array.isArray(info?.treePathInfo) ? info.treePathInfo : []
+				formatter: (rawInfo: unknown) => {
+					if (!isTreemapFormatterParams(rawInfo)) return ''
+					const info = rawInfo
+					const treePathInfo = Array.isArray(info.treePathInfo) ? info.treePathInfo : []
 					const treePath: string[] = []
 					for (let i = 1; i < treePathInfo.length; i++) {
-						treePath.push(treePathInfo[i].name)
+						const name = treePathInfo[i]!.name
+						if (typeof name === 'string') treePath.push(name)
 					}
 
 					if (variant === 'narrative') {
@@ -107,17 +150,15 @@ function TreemapChart({
 								`Market Cap: ${formatUsd(info.value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
 							].join('')
 						} else {
-							return null
+							return ''
 						}
 					}
 
-					if (isRwaVariant) {
-						return formatRwaTreemapTooltip({
-							info,
-							valueLabel,
-							formatMetricValue: formatTreemapMetricValue
-						})
-					}
+					return formatRwaTreemapTooltip({
+						info,
+						valueLabel,
+						formatMetricValue: formatTreemapMetricValue
+					})
 				}
 			},
 			...(isNarrativeVariant ? { toolbox: { feature: { restore: {} } } } : {}),
@@ -151,12 +192,12 @@ function TreemapChart({
 							: {
 									breadcrumb: {
 										itemStyle: {
-											color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.4)'
-										},
-										textStyle: {
-											fontFamily: 'sans-serif',
-											fontWeight: 400,
-											color: chartTheme.text
+											color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.4)',
+											textStyle: {
+												fontFamily: 'sans-serif',
+												fontWeight: 400,
+												color: chartTheme.text
+											}
 										}
 									}
 								}),
@@ -175,9 +216,11 @@ function TreemapChart({
 									textBorderWidth: 2
 								}
 							: {}),
-						formatter: function (params) {
-							let arr
-							const data = params.data as TreemapNode
+						formatter: (rawParams: unknown) => {
+							if (!isTreemapFormatterParams(rawParams)) return ''
+							const params = rawParams
+							const data = params.data
+							if (!isTreemapNode(data)) return ''
 							const path = data.path ?? ''
 							const pathParts = path ? path.split('/') : []
 							if (pathParts.length > 1) {
@@ -186,24 +229,23 @@ function TreemapChart({
 									// Parent nodes: show the group name directly for visibility.
 									return String(params.name ?? '')
 								}
-								const value = params.value as TreemapValue
+								const value = params.value
 
 								if (variant === 'narrative') {
-									arr = [
+									return [
 										`{name|${pathParts[pathParts.length - 1]}}`,
 										`Return: {apy| ${formatPercent(value[1] ?? 0, { input: 'percent' })}}`,
 										`Market Cap: {mcap| ${formatUsd(value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}}`
-									]
-								} else if (isRwaVariant) {
-									arr = [
+									].join('\n')
+								}
+								if (isRwaVariant) {
+									return [
 										`{rwaName|${formatRwaTreemapBoxLabel(params)}}`,
 										`{rwaMetric|${valueLabel}: ${formatTreemapMetricValue(value[0])}}`
-									]
+									].join('\n')
 								}
-							} else {
-								arr = [String(params.name ?? '')]
 							}
-							return arr.join('\n')
+							return String(params.name ?? '')
 						},
 						rich: {
 							name: {

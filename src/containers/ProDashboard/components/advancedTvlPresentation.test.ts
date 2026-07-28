@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { buildAdvancedTvlPresentation, orderAdvancedTvlChains } from './advancedTvlPresentation'
 
-const chainsDataset = {
+const chainsDataset: TimestampDataset = {
 	dimensions: ['timestamp', 'Ethereum', 'Base'],
 	source: [
 		[1_000, 10, 5],

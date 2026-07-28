@@ -63,9 +63,13 @@ function getPointValue(point: ScatterChartDatum): ScatterChartValue {
 	return isScatterChartPoint(point) ? point.value : [Number.NaN, Number.NaN]
 }
 
+function isScatterTooltipParams(value: unknown): value is Partial<ScatterTooltipParams> {
+	return value !== null && typeof value === 'object'
+}
+
 function normalizeScatterTooltipParams(params: unknown): ScatterTooltipParams {
-	if (!params || typeof params !== 'object') return { value: [Number.NaN, Number.NaN] }
-	const candidate = params as Partial<ScatterTooltipParams>
+	if (!isScatterTooltipParams(params)) return { value: [Number.NaN, Number.NaN] }
+	const candidate = params
 	const rawValue = candidate.value
 	const value: ScatterChartValue = [
 		typeof rawValue?.[0] === 'number' ? rawValue[0] : Number(rawValue?.[0]),
@@ -343,31 +347,6 @@ function ScatterChart({
 			tooltipFormatter || (isYieldData ? yieldTooltipFormatter : genericTooltipFormatter)
 
 		const option: EChartsOption = {
-			title: title
-				? {
-						text: title,
-						textStyle: {
-							fontFamily: 'sans-serif',
-							fontWeight: 600,
-							color: chartTheme.text
-						}
-					}
-				: undefined,
-			legend: showCategoricalLegend
-				? {
-						type: 'scroll',
-						top: 0,
-						left: CHART_INSET,
-						right: 108,
-						itemWidth: 10,
-						itemHeight: 10,
-						textStyle: {
-							fontFamily: 'sans-serif',
-							fontSize: 11,
-							color: chartTheme.text
-						}
-					}
-				: undefined,
 			grid: {
 				top: showCategoricalLegend ? 40 : CHART_INSET,
 				right: CHART_INSET,
@@ -457,6 +436,31 @@ function ScatterChart({
 			],
 			labelLayout: { hideOverlap: true },
 			series: series
+		}
+		if (title) {
+			option.title = {
+				text: title,
+				textStyle: {
+					fontFamily: 'sans-serif',
+					fontWeight: 600,
+					color: chartTheme.text
+				}
+			}
+		}
+		if (showCategoricalLegend) {
+			option.legend = {
+				type: 'scroll',
+				top: 0,
+				left: CHART_INSET,
+				right: 108,
+				itemWidth: 10,
+				itemHeight: 10,
+				textStyle: {
+					fontFamily: 'sans-serif',
+					fontSize: 11,
+					color: chartTheme.text
+				}
+			}
 		}
 
 		instance.setOption(option, { notMerge: true })

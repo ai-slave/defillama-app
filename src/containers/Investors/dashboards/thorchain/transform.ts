@@ -57,8 +57,8 @@ export function chartToDataset(chart: Chart): TimestampDataset {
 	for (let i = 0; i < chart.dates.length; i++) {
 		const timestamp = parseDateToUnix(chart.dates[i]) * 1000
 		if (!Number.isFinite(timestamp)) continue
-		const row = new Array<number>(chart.series.length + 1)
-		row[0] = timestamp
+		const row: TimestampDataset['source'][number] = [timestamp]
+		row.length = chart.series.length + 1
 		for (let j = 0; j < chart.series.length; j++) row[j + 1] = chart.series[j].data[i] ?? 0
 		source.push(row)
 	}

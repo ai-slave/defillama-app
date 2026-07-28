@@ -66,7 +66,7 @@ describe('RWA snapshot presentation', () => {
 	})
 
 	it('exposes exports only when the active non-pie presentation has data', () => {
-		const emptyDataset = { dimensions: ['timestamp'], source: [] }
+		const emptyDataset: RWAPositionalChartDataset = { dimensions: ['timestamp'], source: [] }
 		expect(hasRwaOverviewChartExportData('timeSeries', dataset, null)).toBe(true)
 		expect(hasRwaOverviewChartExportData('timeSeries', emptyDataset, null)).toBe(false)
 		expect(hasRwaOverviewChartExportData('pie', null, { view: 'pie', data: [{ name: 'Alpha', value: 1 }] })).toBe(false)

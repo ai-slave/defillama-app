@@ -2,6 +2,7 @@ import { useQueries } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, type ReactNode } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
+import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardReducer'
 import { buildProDashboardParentMapping, buildProtocolSymbolMap } from '~/containers/ProDashboard/protocolCatalog'
@@ -115,11 +116,11 @@ export function ArticleChartBlock({
 				const data = queries[i]?.data as [number, number][] | undefined
 				if (!data || data.length === 0) return null
 				const meta = CHART_TYPES[s.chartType as keyof typeof CHART_TYPES]
-				const seriesType = (meta?.chartType === 'bar' ? 'bar' : 'line') as 'line' | 'bar'
+				const seriesType: 'line' | 'bar' = meta?.chartType === 'bar' ? 'bar' : 'line'
 				return {
 					name: seriesDisplayName(s),
 					type: seriesType,
-					color: SERIES_COLORS[i % SERIES_COLORS.length],
+					color: SERIES_COLORS[i % SERIES_COLORS.length]!,
 					data,
 					// Each API series owns its calendar; connect across union rows belonging only to sibling series.
 					...(seriesType === 'line' ? { connectNulls: true } : {}),
@@ -156,22 +157,23 @@ export function ArticleChartBlock({
 
 	const charts = useMemo(() => {
 		const markLine = buildArticleAnnotationMarkLine(config.annotations ?? [])
-		if (!markLine || chartModel.charts.length === 0) return chartModel.charts
-		return [{ ...chartModel.charts[0], markLine }, ...chartModel.charts.slice(1)]
+		const [firstChart, ...remainingCharts] = chartModel.charts
+		if (!markLine || !firstChart) return chartModel.charts
+		return [{ ...firstChart, markLine }, ...remainingCharts]
 	}, [chartModel.charts, config.annotations])
 
-	const chartOptions = useMemo(
+	const chartOptions = useMemo<MultiSeriesChartOptions>(
 		() => ({
 			tooltip: { formatter: ARTICLE_TOOLTIP_FORMATTER },
 			xAxis: { show: true },
-			yAxis: { show: true, type: config.logScale ? ('log' as const) : ('value' as const) }
+			yAxis: config.logScale ? { show: true, type: 'log' } : { show: true, type: 'value' }
 		}),
 		[config.logScale]
 	)
 
 	const titleText = useMemo(() => {
-		const allSameEntity = uniqueEntities.length === 1
-		if (allSameEntity) return uniqueEntities[0].name
+		const firstEntity = uniqueEntities[0]
+		if (uniqueEntities.length === 1 && firstEntity) return firstEntity.name
 		return uniqueEntities.map((s) => s.name).join(' vs ')
 	}, [uniqueEntities])
 

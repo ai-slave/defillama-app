@@ -325,10 +325,9 @@ const buildProjectedBreakdownDataset = (
 	const source = new Array<TimestampDataset['source'][number]>(breakdown.length)
 	for (let i = 0; i < breakdown.length; i++) {
 		const [timestamp, values] = breakdown[i]
-		const point = fillMissingWithZero
-			? new Array<number | undefined>(seriesNames.length + 1).fill(0)
-			: new Array<number | undefined>(seriesNames.length + 1)
-		point[0] = timestamp
+		const point: TimestampDataset['source'][number] = [timestamp]
+		point.length = seriesNames.length + 1
+		if (fillMissingWithZero) point.fill(0, 1)
 		let others = 0
 		let hasOthers = false
 

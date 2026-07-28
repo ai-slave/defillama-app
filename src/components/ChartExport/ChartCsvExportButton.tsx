@@ -278,11 +278,11 @@ function buildCsvFromChart({
 
 interface ChartCsvExportButtonProps {
 	chartInstance: () => echarts.ECharts | null
-	className?: string
-	smol?: boolean
-	filename?: string
-	prepareCsvDirect?: () => { filename: string; rows: Array<Array<CsvCell>> }
-	onExport?: (info: { filename: string }) => void
+	className?: string | undefined
+	smol?: boolean | undefined
+	filename?: string | undefined
+	prepareCsvDirect?: (() => { filename: string; rows: Array<Array<CsvCell>> }) | undefined
+	onExport?: ((info: { filename: string }) => void) | undefined
 }
 
 const DEFAULT_CLASSNAME = buttonStyles({ size: 'md' })

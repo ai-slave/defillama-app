@@ -1,4 +1,5 @@
-import type { MultiSeriesYAxisOption } from './types'
+import { mergeDeep } from '../shared/merge'
+import type { MultiSeriesYAxisOption, MultiSeriesYAxisOverride } from './types'
 
 // Applies logarithmic scaling to the eligible value y-axes of a MultiSeriesChart option.
 // The Log/Linear toggle sets `logScale`; `logEligibleYAxes` (from getLogEligibleYAxes) lists the
@@ -14,13 +15,30 @@ export function getZeroBaselineYAxisMin(extent: AxisExtent) {
 }
 
 type YAxisOption = MultiSeriesYAxisOption | undefined
-type YAxisOptions = YAxisOption | YAxisOption[]
+type YAxisOptions = YAxisOption | MultiSeriesYAxisOption[]
+type ConfiguredYAxisOption = MultiSeriesYAxisOverride | undefined
+type ConfiguredYAxisOptions = ConfiguredYAxisOption | MultiSeriesYAxisOverride[]
 
-function removeImplicitMinimum(axis: YAxisOption, configuredAxis: YAxisOption) {
+export function mergeYAxisOption(
+	base: MultiSeriesYAxisOption,
+	override: MultiSeriesYAxisOverride
+): MultiSeriesYAxisOption {
+	const merged = mergeDeep(base, override)
+	if (merged.type === 'log') {
+		if ('scale' in merged) delete merged.scale
+	} else if ('logBase' in merged) {
+		delete merged.logBase
+	}
+	if (Object.hasOwn(override, 'min') && override.min === undefined) delete merged.min
+	return merged
+}
+
+function removeImplicitMinimum(axis: MultiSeriesYAxisOption, configuredAxis: ConfiguredYAxisOption) {
 	if (
-		!axis ||
+		!configuredAxis ||
 		configuredAxis?.type === 'log' ||
-		configuredAxis?.scale !== true ||
+		!('scale' in configuredAxis) ||
+		configuredAxis.scale !== true ||
 		Object.hasOwn(configuredAxis, 'min') ||
 		axis.min !== getZeroBaselineYAxisMin
 	) {
@@ -33,13 +51,14 @@ function removeImplicitMinimum(axis: YAxisOption, configuredAxis: YAxisOption) {
 
 // ECharts `scale: true` opts out of including zero only when no explicit min is present.
 // Remove our shared implicit baseline for callers that request scaling, but keep caller bounds.
-export function applyConfiguredYAxisScale(yAxis: YAxisOptions, configuredYAxis: YAxisOptions): YAxisOptions {
+export function applyConfiguredYAxisScale(yAxis: YAxisOptions, configuredYAxis: ConfiguredYAxisOptions): YAxisOptions {
 	if (Array.isArray(yAxis)) {
 		return yAxis.map((axis, index) =>
 			removeImplicitMinimum(axis, Array.isArray(configuredYAxis) ? configuredYAxis[index] : configuredYAxis)
 		)
 	}
 
+	if (!yAxis) return yAxis
 	return removeImplicitMinimum(yAxis, Array.isArray(configuredYAxis) ? configuredYAxis[0] : configuredYAxis)
 }
 
@@ -52,10 +71,17 @@ export function applyLogScaleToYAxes(
 	const eligible = logEligibleYAxes ?? []
 	return axes.map((axis, index) => {
 		if (!eligible.includes(index)) return axis
+		if (axis.type === 'log') {
+			const next = { ...axis }
+			if (next.min === getZeroBaselineYAxisMin || (typeof next.min === 'number' && next.min <= 0)) delete next.min
+			if (typeof next.max === 'number' && next.max <= 0) delete next.max
+			return next
+		}
+		const { type: _valueAxisType, scale: _valueAxisScale, ...sharedAxis } = axis
 		// ECharts gives value/log axes distinct generic axis-label types even though both
-		// format numeric values. This is the one internal discriminant conversion; callers
-		// still provide a checked ECharts y-axis option at the renderer boundary.
-		const next = { ...axis, type: 'log' } as Extract<MultiSeriesYAxisOption, { type?: 'log' }>
+		// format numeric values. Seed the log variant, then merge the shared numeric fields;
+		// callers still provide a checked ECharts y-axis option at the renderer boundary.
+		const next = mergeDeep<Extract<MultiSeriesYAxisOption, { type: 'log' }>>({ type: 'log' }, sharedAxis)
 		if (next.min === getZeroBaselineYAxisMin || (typeof next.min === 'number' && next.min <= 0)) delete next.min
 		if (typeof next.max === 'number' && next.max <= 0) delete next.max
 		return next

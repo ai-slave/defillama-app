@@ -3,6 +3,7 @@ import { createElement, type ReactElement } from 'react'
 import { renderToPipeableStream } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import type { RWAPositionalChartDataset } from '../chartDataset'
 import {
 	buildOverviewBreakdownChartSeries,
 	getOverviewBreakdownChartDatasetForSelectedStacks,
@@ -170,7 +171,7 @@ describe('getOverviewBreakdownRequestState', () => {
 	})
 
 	it('renders supplied total series with requested aggregate breakdown charts', async () => {
-		const dataset = {
+		const dataset: RWAPositionalChartDataset = {
 			source: [[1, 15, 10, 5]],
 			dimensions: ['timestamp', 'Total Active Mcap', 'Ethereum', 'Solana']
 		}
@@ -199,7 +200,7 @@ describe('getOverviewBreakdownRequestState', () => {
 	})
 
 	it('leaves category breakdown charts unchanged', async () => {
-		const dataset = {
+		const dataset: RWAPositionalChartDataset = {
 			source: [[1, 10, 5]],
 			dimensions: ['timestamp', 'Treasuries', 'Credit']
 		}
@@ -293,7 +294,7 @@ describe('getOverviewBreakdownRequestState', () => {
 
 	it('slices selected stack charts to the first non-null selected value', async () => {
 		routerQuery = { stacks: 'PreStocks' }
-		const dataset = {
+		const dataset: RWAPositionalChartDataset = {
 			source: [
 				[1, 10, null, 10],
 				[2, 11, null, 11],

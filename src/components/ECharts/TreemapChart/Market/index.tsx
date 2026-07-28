@@ -1,4 +1,4 @@
-import type { EChartsOption } from 'echarts'
+import type { ComposeOption, GraphicComponentOption, ToolboxComponentOption, TooltipComponentOption } from 'echarts'
 import { TreemapChart as EChartTreemap, type TreemapSeriesOption } from 'echarts/charts'
 import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
@@ -11,7 +11,7 @@ import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import { CHART_INSET } from '../../shared/chartSpacing'
 import { getChartTheme } from '../../shared/chartTheme'
 import { formatChartValue } from '../../shared/formatters'
-import { asTooltipDataRecord } from '../../shared/tooltip'
+import { asTooltipDataRecord, normalizeTooltipItems } from '../../shared/tooltip'
 import { buildWatermarkGraphic } from '../../shared/watermark'
 import { clearTreemapFocus, registerTreemapFocusTracking } from '../focus'
 import type { MarketTreemapGroup, MarketTreemapLeaf, MarketTreemapNode } from './types'
@@ -61,14 +61,20 @@ const ICON_ONLY_BUCKETS = [{ icon: 12 }, { icon: 8 }] as const
 type TreemapLabelOption = NonNullable<TreemapSeriesOption['label']>
 type TreemapRichTextStyles = NonNullable<TreemapLabelOption['rich']>
 
-type TreemapLayoutAccess = {
-	getModel?: () => {
-		getSeriesByIndex?: (seriesIndex: number) => {
-			getData?: () => {
-				getItemLayout?: (dataIndex: number) => { width?: number; height?: number } | undefined
-			}
+type TreemapLayoutModel = {
+	getSeriesByIndex?: (seriesIndex: number) => {
+		getData?: () => {
+			getItemLayout?: (dataIndex: number) => { width?: number; height?: number } | undefined
 		}
 	}
+}
+
+type TreemapLayoutAccess = {
+	getModel: () => TreemapLayoutModel | undefined
+}
+
+function hasTreemapLayoutAccess(value: object): value is TreemapLayoutAccess {
+	return 'getModel' in value && typeof value.getModel === 'function'
 }
 
 interface TreemapLabelLayoutParams {
@@ -130,6 +136,12 @@ function pickLeafLabel(
 		}
 	}
 	return ''
+}
+
+function readPercentChange(values: unknown[]): number | null | undefined {
+	const value = values[1]
+	if (value === null) return null
+	return typeof value === 'number' ? value : undefined
 }
 
 const iconImages = new Map<string, HTMLCanvasElement>()
@@ -246,12 +258,12 @@ for (const iconSize of ICON_SIZES) LABEL_LINE_HEIGHTS[`icon${iconSize}`] = iconL
 function buildLeafIconRich(image: HTMLCanvasElement | undefined) {
 	const rich: TreemapRichTextStyles = {}
 	for (const iconSize of ICON_SIZES) {
-		rich[`icon${iconSize}`] = {
-			backgroundColor: { image },
+		const textStyle = {
 			width: iconSize,
 			height: iconSize,
 			lineHeight: iconLineHeightOf(iconSize)
 		}
+		rich[`icon${iconSize}`] = image === undefined ? textStyle : { ...textStyle, backgroundColor: { image } }
 	}
 	return rich
 }
@@ -265,6 +277,10 @@ type PreparedMarketTreemapGroup = Omit<MarketTreemapGroup, 'children'> & {
 }
 
 type PreparedMarketTreemapNode = PreparedMarketTreemapLeaf | PreparedMarketTreemapGroup
+type MarketTreemapSeriesOption = Omit<TreemapSeriesOption, 'data'> & { data: PreparedMarketTreemapNode[] }
+type MarketTreemapOption = ComposeOption<
+	MarketTreemapSeriesOption | GraphicComponentOption | ToolboxComponentOption | TooltipComponentOption
+>
 
 function prepareLeaf(node: MarketTreemapLeaf, onIconSettled: () => void): PreparedMarketTreemapLeaf {
 	const image = preloadLeafIcon(node.iconUrl, onIconSettled)
@@ -360,26 +376,39 @@ export default function MarketTreemapChart({
 
 	// Canvas-backed rich text is the only runtime decoration. Keep it stable when
 	// the same canonical leaves are merely regrouped.
-	const chartLeaves = useMemo(() => {
-		const prepared: PreparedMarketTreemapLeaf[] = []
-		for (const leaf of leaves) prepared.push(prepareLeaf(leaf, scheduleIconRefresh))
-		return prepared
+	const preparedLeaves = useMemo(() => {
+		const ordered: PreparedMarketTreemapLeaf[] = []
+		const byIconKey = new Map<number, PreparedMarketTreemapLeaf>()
+		for (const leaf of leaves) {
+			if (byIconKey.has(leaf.iconKey)) throw new Error(`Duplicate market treemap icon key ${leaf.iconKey}`)
+			const prepared = prepareLeaf(leaf, scheduleIconRefresh)
+			ordered.push(prepared)
+			byIconKey.set(leaf.iconKey, prepared)
+		}
+		return { ordered, byIconKey }
 	}, [leaves, scheduleIconRefresh])
 	const chartDataTree = useMemo(() => {
-		if (treeData === leaves) return chartLeaves
+		if (treeData === leaves) return preparedLeaves.ordered
 		const prepared: PreparedMarketTreemapNode[] = []
 		for (const node of treeData) {
 			if ('children' in node) {
 				const children: PreparedMarketTreemapLeaf[] = []
-				for (const child of node.children) children.push(chartLeaves[child.iconKey])
+				for (const child of node.children) {
+					const preparedChild = preparedLeaves.byIconKey.get(child.iconKey)
+					if (!preparedChild) throw new Error(`Unknown market treemap icon key ${child.iconKey}`)
+					children.push(preparedChild)
+				}
 				prepared.push({ ...node, children })
 			} else {
-				prepared.push(chartLeaves[node.iconKey])
+				const preparedLeaf = preparedLeaves.byIconKey.get(node.iconKey)
+				if (!preparedLeaf) throw new Error(`Unknown market treemap icon key ${node.iconKey}`)
+				prepared.push(preparedLeaf)
 			}
 		}
 		return prepared
-	}, [chartLeaves, leaves, treeData])
-	const hasGroups = treeData.length > 0 && 'children' in treeData[0]
+	}, [leaves, preparedLeaves, treeData])
+	const firstTreeNode = treeData[0]
+	const hasGroups = firstTreeNode !== undefined && 'children' in firstTreeNode
 
 	const formatSizeValue = useMemo(() => (value: number) => formatChartValue(value, valueSymbol), [valueSymbol])
 
@@ -403,35 +432,38 @@ export default function MarketTreemapChart({
 	useEffect(() => {
 		const instance = chartRef.current
 		if (!instance) return
-		const option: EChartsOption = {
+		const option: MarketTreemapOption = {
 			graphic: [buildWatermarkGraphic(isDark)],
 			tooltip: {
 				className: 'defillama-echarts-tooltip',
 				backgroundColor: 'transparent',
 				borderWidth: 0,
-				formatter: function (info) {
-					const data = asTooltipDataRecord(info?.data) ?? {}
+				formatter: (rawInfo: unknown) => {
+					const info = normalizeTooltipItems(rawInfo)[0]
+					if (!info) return ''
+					const values = Array.isArray(info.value) ? info.value : []
+					const data = asTooltipDataRecord(info.data) ?? {}
 					const children = Array.isArray(data.children) ? data.children : []
 					if (children.length > 0) {
 						return [
-							`<strong>${info.name}</strong><br>`,
-							`${sizeLabel}: ${formatSizeValue(info.value?.[0] ?? 0)}<br>`,
+							`<strong>${info.name ?? ''}</strong><br>`,
+							`${sizeLabel}: ${formatSizeValue(Number(values[0] ?? 0))}<br>`,
 							`${groupItemsLabel}: ${children.length}`
 						].join('')
 					}
-					const companyName = typeof data.companyName === 'string' ? data.companyName : info.name
+					const companyName = typeof data.companyName === 'string' ? data.companyName : (info.name ?? '')
 					const rows = [
-						`<strong>${companyName}</strong> (${info.name})<br>`,
+						`<strong>${companyName}</strong> (${info.name ?? ''})<br>`,
 						typeof data.sector === 'string' ? `Sector: ${data.sector}<br>` : '',
 						typeof data.industry === 'string' ? `Industry: ${data.industry}<br>` : '',
-						`${sizeLabel}: ${formatSizeValue(info.value?.[0] ?? 0)}<br>`
+						`${sizeLabel}: ${formatSizeValue(Number(values[0] ?? 0))}<br>`
 					]
 					if (typeof data.marketCap === 'number' && showMarketCapRow) {
 						rows.push(
 							`Market Cap: ${formatUsd(data.marketCap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
 						)
 					}
-					rows.push(`${colorLabel}: ${formatPercentChange(info.value?.[1]) ?? '-'}`)
+					rows.push(`${colorLabel}: ${formatPercentChange(readPercentChange(values)) ?? '-'}`)
 					return rows.filter(Boolean).join('')
 				}
 			},
@@ -452,13 +484,19 @@ export default function MarketTreemapChart({
 					label: {
 						position: 'inside',
 						rich: LEAF_TEXT_RICH,
-						formatter: function (params) {
-							const data = asTooltipDataRecord(params?.data) ?? {}
+						formatter: (rawParams: unknown) => {
+							const params = normalizeTooltipItems(rawParams)[0]
+							if (!params) return ''
+							const values = Array.isArray(params.value) ? params.value : []
+							const data = asTooltipDataRecord(params.data) ?? {}
 							// upperLabel reuses this formatter; group nodes must return their name.
 							if (Array.isArray(data.children) && data.children.length > 0) return String(params.name ?? '')
+							if (typeof params.dataIndex !== 'number') return ''
 							// Treemap cell bounds are only exposed through ECharts' private model API.
-							const layout = (instance as unknown as TreemapLayoutAccess)
-								.getModel?.()
+							const privateApi: object = instance
+							if (!hasTreemapLayoutAccess(privateApi)) return ''
+							const layout = privateApi
+								.getModel()
 								?.getSeriesByIndex?.(params.seriesIndex ?? 0)
 								?.getData?.()
 								?.getItemLayout?.(params.dataIndex)
@@ -469,7 +507,7 @@ export default function MarketTreemapChart({
 								cellWidth,
 								cellHeight,
 								params.name ?? '',
-								formatPercentChange(params.value?.[1]) ?? '-',
+								formatPercentChange(readPercentChange(values)) ?? '-',
 								iconOk
 							)
 						}
@@ -484,7 +522,8 @@ export default function MarketTreemapChart({
 						for (const line of params.text.split('\n')) {
 							const marker = /^\{((?:icon|ticker|chg)\d+)/.exec(line)
 							if (!marker) continue
-							contentHeight += LABEL_LINE_HEIGHTS[marker[1]]
+							const lineHeight = LABEL_LINE_HEIGHTS[marker[1] ?? '']
+							if (lineHeight !== undefined) contentHeight += lineHeight
 						}
 						return {
 							dy: (rect.height - contentHeight) / 2 - LEAF_LABEL_PADDING

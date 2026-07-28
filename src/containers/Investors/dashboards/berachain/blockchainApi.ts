@@ -82,8 +82,8 @@ export function buildBlockchainViewModel({ metadata, blockchain }: BlockchainAPI
 	const transactions = blockchain.chainActivity.series[0].data
 	const activeAddresses = blockchain.chainActivity.series[1].data
 	const newAddresses = blockchain.chainActivity.series[2].data
-	const transactionRows = new Array<(number | null)[]>(activityDates.length)
-	const addressRows = new Array<(number | null)[]>(activityDates.length)
+	const transactionRows = new Array<TimestampDataset['source'][number]>(activityDates.length)
+	const addressRows = new Array<TimestampDataset['source'][number]>(activityDates.length)
 	for (let i = 0; i < activityDates.length; i++) {
 		const timestamp = parseDateToTimestampMs(activityDates[i])
 		transactionRows[i] = [timestamp, transactions[i] ?? 0]

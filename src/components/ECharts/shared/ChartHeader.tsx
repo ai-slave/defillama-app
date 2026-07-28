@@ -1,11 +1,11 @@
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 
 interface ChartHeaderProps {
-	title?: string
-	headingAs?: 'h1' | 'h2' | 'h3'
-	customComponents?: React.ReactNode
-	exportButtons?: React.ReactNode
-	className?: string
+	title?: string | undefined
+	headingAs?: 'h1' | 'h2' | 'h3' | undefined
+	customComponents?: React.ReactNode | undefined
+	exportButtons?: React.ReactNode | undefined
+	className?: string | undefined
 }
 
 export function ChartHeader({

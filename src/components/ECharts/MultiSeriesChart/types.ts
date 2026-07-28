@@ -24,6 +24,15 @@ export type MultiSeriesChartDataset = {
 
 export type CanonicalMultiSeriesChartDataset = MultiSeriesChartDataset
 
+export type MultiSeriesTimeSeriesRow = [timestampMs: number, ...values: Array<number | null | undefined>]
+
+export type MultiSeriesTimeSeriesDataset = {
+	/** Ascending rows with the millisecond timestamp in the first column. */
+	source: MultiSeriesTimeSeriesRow[]
+	/** The first dimension is `timestamp`; remaining names address numeric series columns. */
+	dimensions: [timestamp: 'timestamp', ...series: string[]]
+}
+
 export type MultiSeriesChartSeriesConfig = {
 	type: 'line' | 'bar'
 	/** Stable display identity. `selectedCharts` entries must match this name exactly. */
@@ -57,7 +66,24 @@ export type MultiSeriesChartSeriesConfig = {
 	large?: boolean
 }
 
-export type MultiSeriesYAxisOption = Extract<YAXisComponentOption, { type?: 'value' | 'log' }>
+type EChartsValueYAxisOption = Extract<YAXisComponentOption, { type?: 'value' }>
+type EChartsLogYAxisOption = Extract<YAXisComponentOption, { type?: 'log' }>
+
+type MultiSeriesValueYAxisOption = Omit<EChartsValueYAxisOption, 'type'> & { type?: 'value' }
+type MultiSeriesLogYAxisOption = Omit<EChartsLogYAxisOption, 'type'> & { type: 'log' }
+
+export type MultiSeriesYAxisOption = MultiSeriesValueYAxisOption | MultiSeriesLogYAxisOption
+
+/** `min: undefined` intentionally clears the renderer's inherited zero-baseline callback during option merging. */
+export type MultiSeriesYAxisOverride =
+	| (Omit<MultiSeriesValueYAxisOption, 'type' | 'min'> & {
+			type?: 'value'
+			min?: MultiSeriesValueYAxisOption['min'] | undefined
+	  })
+	| (Omit<MultiSeriesLogYAxisOption, 'type' | 'min'> & {
+			type: 'log'
+			min?: MultiSeriesLogYAxisOption['min'] | undefined
+	  })
 
 /**
  * Only options backed by components registered in MultiSeriesChart are exposed.
@@ -72,7 +98,7 @@ export type MultiSeriesChartOptions = Pick<EChartsOption, 'dataZoom' | 'graphic'
 	tooltip?: TooltipComponentOption
 	xAxis?: XAXisComponentOption
 	/** MultiSeriesChart owns a Cartesian numeric y scale; category/time y-axes are unsupported. */
-	yAxis?: MultiSeriesYAxisOption | MultiSeriesYAxisOption[]
+	yAxis?: MultiSeriesYAxisOverride | MultiSeriesYAxisOverride[]
 }
 
 export interface IMultiSeriesChartProps {

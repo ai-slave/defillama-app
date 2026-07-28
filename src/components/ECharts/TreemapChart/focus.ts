@@ -1,9 +1,9 @@
 import type * as echarts from 'echarts/core'
 
-type TreemapFocusChart = echarts.ECharts & {
-	__llamaTreemapFocusNode?: { id: string; path?: string[]; indexPath?: number[] }
-	__llamaTreemapFocusNodeId?: string
-}
+type TreemapFocusNode = { id: string; path?: string[]; indexPath?: number[] }
+
+const TREEMAP_FOCUS_NODE_KEY = '__llamaTreemapFocusNode'
+const LEGACY_TREEMAP_FOCUS_NODE_ID_KEY = '__llamaTreemapFocusNodeId'
 
 interface TreemapClickParams {
 	dataIndex?: number
@@ -18,20 +18,25 @@ interface TreemapTreeNode {
 	getAncestors?: (includeSelf: boolean) => TreemapTreeNode[]
 }
 
-type TreemapModelAccess = {
-	getModel?: () => {
-		getSeriesByIndex?: (seriesIndex: number) => {
-			getData?: () => {
-				tree?: { getNodeByDataIndex?: (dataIndex: number | undefined) => TreemapTreeNode | undefined }
-			}
+type TreemapGlobalModel = {
+	getSeriesByIndex?: (seriesIndex: number) => {
+		getData?: () => {
+			tree?: { getNodeByDataIndex?: (dataIndex: number | undefined) => TreemapTreeNode | undefined }
 		}
 	}
 }
 
+type TreemapModelAccess = {
+	getModel: () => TreemapGlobalModel | undefined
+}
+
+function hasTreemapModelAccess(value: object): value is TreemapModelAccess {
+	return 'getModel' in value && typeof value.getModel === 'function'
+}
+
 export function clearTreemapFocus(instance: echarts.ECharts) {
-	const chart = instance as TreemapFocusChart
-	delete chart.__llamaTreemapFocusNode
-	delete chart.__llamaTreemapFocusNodeId
+	Reflect.deleteProperty(instance, TREEMAP_FOCUS_NODE_KEY)
+	Reflect.deleteProperty(instance, LEGACY_TREEMAP_FOCUS_NODE_ID_KEY)
 }
 
 /** Track the drilled node so PNG export can reproduce the visible treemap viewport. */
@@ -39,8 +44,10 @@ export function registerTreemapFocusTracking(instance: echarts.ECharts) {
 	const handleClick = (params: TreemapClickParams) => {
 		if (params?.seriesType !== 'treemap') return
 		// Treemap drill state is only exposed through ECharts' private model API.
-		const node = (instance as unknown as TreemapModelAccess)
-			.getModel?.()
+		const privateApi: object = instance
+		if (!hasTreemapModelAccess(privateApi)) return
+		const node = privateApi
+			.getModel()
 			?.getSeriesByIndex?.(params.seriesIndex ?? 0)
 			?.getData?.()
 			?.tree?.getNodeByDataIndex?.(params.dataIndex)
@@ -61,11 +68,12 @@ export function registerTreemapFocusTracking(instance: echarts.ECharts) {
 			}
 		}
 
-		;(instance as TreemapFocusChart).__llamaTreemapFocusNode = {
-			id: nodeId,
-			...(path.length > 0 ? { path } : {}),
-			...(indexPath.length > 0 && indexPath.length === Math.max(0, ancestors?.length - 1) ? { indexPath } : {})
-		}
+		const hasCompleteIndexPath =
+			Array.isArray(ancestors) && indexPath.length > 0 && indexPath.length === Math.max(0, ancestors.length - 1)
+		const focusNode: TreemapFocusNode = { id: nodeId }
+		if (path.length > 0) focusNode.path = path
+		if (hasCompleteIndexPath) focusNode.indexPath = indexPath
+		Reflect.set(instance, TREEMAP_FOCUS_NODE_KEY, focusNode)
 	}
 	const handleRestore = () => clearTreemapFocus(instance)
 

@@ -5,6 +5,11 @@ import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from './ty
 export const DEFAULT_ADDITIVE_SERIES_LIMIT = 30
 const REMAINDER_SERIES_NAME = 'Others'
 
+function readNumericValue(value: MultiSeriesChartDataset['source'][number][number]): number | null | undefined {
+	if (value === null) return null
+	return typeof value === 'number' ? value : undefined
+}
+
 /** Rank named dataset dimensions by their peak absolute value, retaining input order for ties. */
 export function rankSeriesByPeakAbsoluteValue(
 	dataset: MultiSeriesChartDataset,
@@ -20,7 +25,7 @@ export function rankSeriesByPeakAbsoluteValue(
 	for (const row of dataset.source) {
 		for (const series of rankedSeries) {
 			if (series.dimensionIndex < 0) continue
-			const value = row[series.dimensionIndex] as number | null | undefined
+			const value = readNumericValue(row[series.dimensionIndex])
 			if (value == null) continue
 			const magnitude = Math.abs(value)
 			if (magnitude > series.peak) series.peak = magnitude
@@ -31,6 +36,7 @@ export function rankSeriesByPeakAbsoluteValue(
 
 function resolveDimensionIndex(dimension: MultiSeriesChartSeriesConfig['encode']['x'], dimensions: string[]): number {
 	const encoded = Array.isArray(dimension) ? dimension[0] : dimension
+	if (encoded === undefined) throw new Error('Chart encodes must contain at least one dimension')
 	const index = typeof encoded === 'number' ? encoded : dimensions.indexOf(encoded)
 	if (index < 0) throw new Error(`Unknown chart dimension: ${String(encoded)}`)
 	return index
@@ -51,18 +57,21 @@ export function buildSelectedPercentageChart({
 	selectedCharts: ReadonlySet<string>
 }): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } {
 	const displayedCharts = charts.filter((chart) => selectedCharts.has(chart.name))
-	const xIndex = displayedCharts.length > 0 ? resolveDimensionIndex(displayedCharts[0].encode.x, dataset.dimensions) : 0
+	const xIndex =
+		displayedCharts.length > 0 ? resolveDimensionIndex(displayedCharts[0]!.encode.x, dataset.dimensions) : 0
+	const xDimension = dataset.dimensions[xIndex]
+	if (xDimension === undefined) throw new Error('A chart dataset requires an x-axis dimension')
 	const yIndexes = displayedCharts.map((chart) => resolveDimensionIndex(chart.encode.y, dataset.dimensions))
 	const source = new Array<MultiSeriesChartDataset['source'][number]>(dataset.source.length)
 
 	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
-		const input = dataset.source[rowIndex]
+		const input = dataset.source[rowIndex]!
 		const row = new Array<MultiSeriesChartDataset['source'][number][number]>(displayedCharts.length + 1)
 		row[0] = input[xIndex]
 		let total = 0
 		let lastPositiveValueIndex = -1
 		for (let seriesIndex = 0; seriesIndex < yIndexes.length; seriesIndex++) {
-			const value = input[yIndexes[seriesIndex]] as number | null | undefined
+			const value = readNumericValue(input[yIndexes[seriesIndex]!])
 			row[seriesIndex + 1] = value
 			if (value != null) {
 				total += value
@@ -73,7 +82,7 @@ export function buildSelectedPercentageChart({
 		if (total > 0 && lastPositiveValueIndex !== -1) {
 			let normalizedTotal = 0
 			for (let valueIndex = 1; valueIndex < row.length; valueIndex++) {
-				const value = row[valueIndex] as number | null | undefined
+				const value = readNumericValue(row[valueIndex])
 				if (value == null || valueIndex === lastPositiveValueIndex) continue
 				const normalized = (value / total) * 100
 				row[valueIndex] = normalized
@@ -90,7 +99,7 @@ export function buildSelectedPercentageChart({
 
 	return {
 		dataset: {
-			dimensions: [dataset.dimensions[xIndex], ...displayedCharts.map((chart) => chart.name)],
+			dimensions: [xDimension, ...displayedCharts.map((chart) => chart.name)],
 			source
 		},
 		charts: displayedCharts.map((chart, index) => ({
@@ -132,22 +141,25 @@ export function buildSelectedAdditiveChart({
 	const remainderNames = selectedNames.slice(namedLimit)
 	if (includesUpstreamRemainder) remainderNames.push(REMAINDER_SERIES_NAME)
 	const hasRemainder = remainderNames.length > 0
-	const templateChart = chartByName.get(visibleNames[0]) ?? charts[0]
+	const firstVisibleName = visibleNames[0]
+	const templateChart = (firstVisibleName === undefined ? undefined : chartByName.get(firstVisibleName)) ?? charts[0]
 	const xIndex = templateChart ? resolveDimensionIndex(templateChart.encode.x, dataset.dimensions) : 0
+	const xDimension = dataset.dimensions[xIndex]
+	if (xDimension === undefined) throw new Error('A chart dataset requires an x-axis dimension')
 	const inputIndexByName = new Map(
 		charts.map((chart) => [chart.name, resolveDimensionIndex(chart.encode.y, dataset.dimensions)])
 	)
-	const dimensions = [dataset.dimensions[xIndex], ...visibleNames, ...(hasRemainder ? [REMAINDER_SERIES_NAME] : [])]
+	const dimensions = [xDimension, ...visibleNames, ...(hasRemainder ? [REMAINDER_SERIES_NAME] : [])]
 	const visibleIndexes = visibleNames.map((name) => inputIndexByName.get(name) ?? -1)
 	const remainderIndexes = remainderNames.map((name) => inputIndexByName.get(name) ?? -1)
 	const source = new Array<MultiSeriesChartDataset['source'][number]>(dataset.source.length)
 
 	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
-		const input = dataset.source[rowIndex]
+		const input = dataset.source[rowIndex]!
 		const row = new Array<MultiSeriesChartDataset['source'][number][number]>(dimensions.length)
 		row[0] = input[xIndex]
 		for (let seriesIndex = 0; seriesIndex < visibleIndexes.length; seriesIndex++) {
-			const inputIndex = visibleIndexes[seriesIndex]
+			const inputIndex = visibleIndexes[seriesIndex]!
 			row[seriesIndex + 1] = inputIndex >= 0 ? input[inputIndex] : undefined
 		}
 		if (hasRemainder) {
@@ -155,7 +167,7 @@ export function buildSelectedAdditiveChart({
 			let hasValue = false
 			for (const inputIndex of remainderIndexes) {
 				if (inputIndex < 0) continue
-				const value = input[inputIndex] as number | null | undefined
+				const value = readNumericValue(input[inputIndex])
 				if (value == null) continue
 				remainder += value
 				hasValue = true

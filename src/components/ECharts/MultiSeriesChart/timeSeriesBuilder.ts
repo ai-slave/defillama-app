@@ -1,15 +1,16 @@
 import { getBucketTimestampMs } from '../shared/timeSeries'
 import type {
-	CanonicalMultiSeriesChartDataset,
 	ChartTimeGrouping,
-	MultiSeriesChartArrayRow,
-	MultiSeriesChartSeriesConfig
+	MultiSeriesChartSeriesConfig,
+	MultiSeriesTimeSeriesDataset,
+	MultiSeriesTimeSeriesRow
 } from './types'
 
 /** Canonical millisecond timestamp used by the time-series builder input/output. */
 type TimestampMs = number
 /** Normalized chart point as `[timestampMs, value]`. */
 export type TimePoint = readonly [timestampMs: TimestampMs, value: number]
+type MutableTimeSeriesRow = MultiSeriesTimeSeriesRow
 
 /** Multi-series bar input where each series contributes summed values per selected time bucket. */
 export type PeriodBarSeries = {
@@ -52,7 +53,7 @@ type TimeSeriesChartInput =
 
 /** Exact `MultiSeriesChart` render shape returned by the builder. */
 export type TimeSeriesChartSpec = {
-	dataset: CanonicalMultiSeriesChartDataset
+	dataset: MultiSeriesTimeSeriesDataset
 	charts: MultiSeriesChartSeriesConfig[]
 }
 
@@ -67,14 +68,14 @@ function assertNever(value: never): never {
 }
 
 function getOrCreateRow(
-	rowsByTimestamp: Map<number, MultiSeriesChartArrayRow>,
+	rowsByTimestamp: Map<number, MutableTimeSeriesRow>,
 	timestamp: number,
 	seriesCount: number
-): MultiSeriesChartArrayRow {
+): MutableTimeSeriesRow {
 	let row = rowsByTimestamp.get(timestamp)
 	if (!row) {
-		row = new Array<number | null | undefined>(seriesCount + 1)
-		row[0] = timestamp
+		row = [timestamp]
+		row.length = seriesCount + 1
 		rowsByTimestamp.set(timestamp, row)
 	}
 	return row
@@ -91,20 +92,21 @@ function addSeriesName(name: string, seenNames: Set<string>, dimensions: string[
 
 /** Sort the shared sparse rows once, then fill every series value in place. */
 function finalizeRows(
-	rowsByTimestamp: Map<number, MultiSeriesChartArrayRow>,
+	rowsByTimestamp: Map<number, MutableTimeSeriesRow>,
 	seriesCount: number,
 	isCumulative: boolean,
 	carryForwardMissingValues: boolean
-): MultiSeriesChartArrayRow[] {
-	const source = Array.from(rowsByTimestamp.values()).sort((a, b) => (a[0] as number) - (b[0] as number))
+): MultiSeriesTimeSeriesRow[] {
+	const source = Array.from(rowsByTimestamp.values()).sort((a, b) => a[0] - b[0])
 
 	if (isCumulative) {
 		const totals = new Array<number>(seriesCount).fill(0)
 		for (const row of source) {
 			for (let i = 1; i <= seriesCount; i++) {
 				const value = row[i]
-				if (value !== undefined) totals[i - 1] += value as number
-				if (value !== undefined || carryForwardMissingValues) row[i] = totals[i - 1]
+				const totalIndex = i - 1
+				if (typeof value === 'number') totals[totalIndex] = totals[totalIndex]! + value
+				if (value !== undefined || carryForwardMissingValues) row[i] = totals[totalIndex]!
 			}
 		}
 		return source
@@ -134,18 +136,17 @@ function finalizeRows(
 export function buildTimeSeriesChart(input: TimeSeriesChartInput): TimeSeriesChartSpec {
 	if (input.series.length === 0) return EMPTY_CHART_SPEC
 
-	const rowsByTimestamp = new Map<number, MultiSeriesChartArrayRow>()
+	const rowsByTimestamp = new Map<number, MutableTimeSeriesRow>()
 	const seenNames = new Set<string>()
-	const dimensions = ['timestamp']
+	const dimensions: MultiSeriesTimeSeriesDataset['dimensions'] = ['timestamp']
 	const charts = new Array<MultiSeriesChartSeriesConfig>(input.series.length)
 
 	switch (input.kind) {
 		case 'periodBars': {
-			for (let i = 0; i < input.series.length; i++) {
-				const item = input.series[i]
-				const valueIndex = i + 1
+			for (const [seriesIndex, item] of input.series.entries()) {
+				const valueIndex = seriesIndex + 1
 				addSeriesName(item.name, seenNames, dimensions)
-				charts[i] = {
+				charts[seriesIndex] = {
 					type: 'bar',
 					name: item.name,
 					encode: { x: 0, y: valueIndex },
@@ -155,31 +156,33 @@ export function buildTimeSeriesChart(input: TimeSeriesChartInput): TimeSeriesCha
 				const points = item.points
 				if (points.length === 0) continue
 
-				let bucketTimestamp = getBucketTimestampMs(points[0][0], input.groupBy)
-				let bucketValue = points[0][1]
+				const firstPoint = points[0]!
+				let bucketTimestamp = getBucketTimestampMs(firstPoint[0], input.groupBy)
+				let bucketValue = firstPoint[1]
 				for (let j = 1; j < points.length; j++) {
-					const point = points[j]
+					const point = points[j]!
 					const nextBucketTimestamp = getBucketTimestampMs(point[0], input.groupBy)
 					if (nextBucketTimestamp === bucketTimestamp) {
 						bucketValue += point[1]
 						continue
 					}
 					const row = getOrCreateRow(rowsByTimestamp, bucketTimestamp, input.series.length)
-					row[valueIndex] = ((row[valueIndex] as number | undefined) ?? 0) + bucketValue
+					const previousValue = row[valueIndex]
+					row[valueIndex] = (typeof previousValue === 'number' ? previousValue : 0) + bucketValue
 					bucketTimestamp = nextBucketTimestamp
 					bucketValue = point[1]
 				}
 				const row = getOrCreateRow(rowsByTimestamp, bucketTimestamp, input.series.length)
-				row[valueIndex] = ((row[valueIndex] as number | undefined) ?? 0) + bucketValue
+				const previousValue = row[valueIndex]
+				row[valueIndex] = (typeof previousValue === 'number' ? previousValue : 0) + bucketValue
 			}
 			break
 		}
 		case 'periodLines': {
-			for (let i = 0; i < input.series.length; i++) {
-				const item = input.series[i]
+			for (const [seriesIndex, item] of input.series.entries()) {
 				addSeriesName(item.name, seenNames, dimensions)
 				const data: Array<[number, number | null]> = []
-				charts[i] = {
+				charts[seriesIndex] = {
 					type: 'line',
 					name: item.name,
 					encode: { x: 0, y: 1 },
@@ -189,10 +192,11 @@ export function buildTimeSeriesChart(input: TimeSeriesChartInput): TimeSeriesCha
 				const points = item.points
 				if (points.length === 0) continue
 
-				let bucketTimestamp = getBucketTimestampMs(points[0][0], input.groupBy)
-				let bucketValue = points[0][1]
+				const firstPoint = points[0]!
+				let bucketTimestamp = getBucketTimestampMs(firstPoint[0], input.groupBy)
+				let bucketValue = firstPoint[1]
 				for (let j = 1; j < points.length; j++) {
-					const point = points[j]
+					const point = points[j]!
 					const nextBucketTimestamp = getBucketTimestampMs(point[0], input.groupBy)
 					if (nextBucketTimestamp === bucketTimestamp) {
 						bucketValue = point[1]
@@ -207,11 +211,10 @@ export function buildTimeSeriesChart(input: TimeSeriesChartInput): TimeSeriesCha
 			return { dataset: { source: [], dimensions }, charts }
 		}
 		case 'cumulativeLines': {
-			for (let i = 0; i < input.series.length; i++) {
-				const item = input.series[i]
-				const valueIndex = i + 1
+			for (const [seriesIndex, item] of input.series.entries()) {
+				const valueIndex = seriesIndex + 1
 				addSeriesName(item.name, seenNames, dimensions)
-				charts[i] = {
+				charts[seriesIndex] = {
 					type: 'line',
 					name: item.name,
 					encode: { x: 0, y: valueIndex },
@@ -220,21 +223,24 @@ export function buildTimeSeriesChart(input: TimeSeriesChartInput): TimeSeriesCha
 				const points = item.points
 				if (points.length === 0) continue
 
-				let timestamp = points[0][0]
-				let value = points[0][1]
+				const firstPoint = points[0]!
+				let timestamp = firstPoint[0]
+				let value = firstPoint[1]
 				for (let j = 1; j < points.length; j++) {
-					const point = points[j]
+					const point = points[j]!
 					if (point[0] === timestamp) {
 						value += point[1]
 						continue
 					}
 					const row = getOrCreateRow(rowsByTimestamp, timestamp, input.series.length)
-					row[valueIndex] = ((row[valueIndex] as number | undefined) ?? 0) + value
+					const previousValue = row[valueIndex]
+					row[valueIndex] = (typeof previousValue === 'number' ? previousValue : 0) + value
 					timestamp = point[0]
 					value = point[1]
 				}
 				const row = getOrCreateRow(rowsByTimestamp, timestamp, input.series.length)
-				row[valueIndex] = ((row[valueIndex] as number | undefined) ?? 0) + value
+				const previousValue = row[valueIndex]
+				row[valueIndex] = (typeof previousValue === 'number' ? previousValue : 0) + value
 			}
 			break
 		}

@@ -132,6 +132,7 @@ function HBarChart({
 		if (!instance || instance.isDisposed() || !shouldRenderLogos) return
 
 		for (let i = 0; i < currentCategories.length; i++) {
+			const category = currentCategories[i]!
 			const y = instance.convertToPixel({ yAxisIndex: 0 }, i)
 			if (typeof y !== 'number' || !Number.isFinite(y)) continue
 			const url = currentLogos?.[i]
@@ -157,8 +158,8 @@ function HBarChart({
 				row.appendChild(spacer)
 			}
 			const text = document.createElement('span')
-			text.textContent = currentCategories[i]
-			text.title = currentCategories[i]
+			text.textContent = category
+			text.title = category
 			text.style.cssText = `display:inline-block;vertical-align:middle;color:${currentTextColor};font-size:12px;line-height:${LOGO_SIZE}px;margin-left:${LOGO_GAP}px;max-width:${currentLabelWidth}px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`
 			row.appendChild(text)
 			layer.appendChild(row)

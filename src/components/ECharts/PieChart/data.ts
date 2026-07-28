@@ -1,6 +1,11 @@
 import { CHART_COLORS } from '~/constants/colors'
 
 type PieInputRow = Record<string, unknown>
+type RuntimePieInput = Record<string, number> | PieInputRow[] | ReadonlyMap<string, number>
+
+function isPieInputMap(data: RuntimePieInput): data is ReadonlyMap<string, number> {
+	return data instanceof Map
+}
 
 export interface RuntimePieChartData {
 	peers: Array<{ name: string; value: number }>
@@ -39,7 +44,7 @@ export function preparePieChartData({
 	const mainSlices: Array<{ name: string; value: number }> = []
 	let othersValue = 0
 	for (let i = 0; i < pieData.length; i++) {
-		const slice = pieData[i]
+		const slice = pieData[i]!
 		if (i < limit && slice.name !== 'Others') mainSlices.push(slice)
 		else othersValue += slice.value
 	}
@@ -55,7 +60,7 @@ export function prepareRuntimePieChartData({
 	sliceValue = 'value',
 	comparePeers
 }: {
-	data: Record<string, number> | PieInputRow[] | ReadonlyMap<string, number>
+	data: RuntimePieInput
 	limit: number
 	sliceIdentifier?: string
 	sliceValue?: string
@@ -63,7 +68,7 @@ export function prepareRuntimePieChartData({
 }): RuntimePieChartData {
 	const peers: Array<{ name: string; value: number }> = []
 	let upstreamOthersValue = 0
-	if (data instanceof Map) {
+	if (isPieInputMap(data)) {
 		for (const [name, value] of data) {
 			if (name === 'Others') upstreamOthersValue += value
 			else if (value > 0) peers.push({ name, value })
@@ -109,7 +114,7 @@ export function buildRuntimePieChartPresentation({
 	let selectedPeerCount = 0
 	let othersValue = 0
 	for (let index = 0; index < series.peers.length; index++) {
-		const peer = series.peers[index]
+		const peer = series.peers[index]!
 		if (selectedSeries && !selectedSeries.has(peer.name)) continue
 		selectedPeerCount++
 		if (chartData.length < series.limit) {
@@ -121,13 +126,13 @@ export function buildRuntimePieChartPresentation({
 				colorIndexBeforeReservedSlot < reservedColorIndex
 					? colorIndexBeforeReservedSlot
 					: colorIndexBeforeReservedSlot + 1
-			stackColors[peer.name] = CHART_COLORS[colorIndex % CHART_COLORS.length]
+			stackColors[peer.name] = CHART_COLORS[colorIndex % CHART_COLORS.length]!
 		} else othersValue += peer.value
 	}
 	if (includeUpstreamOthers && selectedPeerCount === series.peers.length) othersValue += series.upstreamOthersValue
 	if (othersValue > 0) {
 		chartData.push({ name: 'Others', value: othersValue })
-		stackColors.Others = CHART_COLORS[series.limit % CHART_COLORS.length]
+		stackColors.Others = CHART_COLORS[series.limit % CHART_COLORS.length]!
 	}
 	return { chartData, stackColors }
 }

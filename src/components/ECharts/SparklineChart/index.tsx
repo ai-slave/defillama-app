@@ -35,9 +35,9 @@ function parseRgbColor(base: string): RgbColor | null {
 		const hex = computed.slice(1)
 		if (hex.length === 3) {
 			output = [
-				Number.parseInt(hex[0] + hex[0], 16),
-				Number.parseInt(hex[1] + hex[1], 16),
-				Number.parseInt(hex[2] + hex[2], 16)
+				Number.parseInt(hex.charAt(0).repeat(2), 16),
+				Number.parseInt(hex.charAt(1).repeat(2), 16),
+				Number.parseInt(hex.charAt(2).repeat(2), 16)
 			]
 		} else if (hex.length === 6 || hex.length === 8) {
 			output = [
@@ -49,11 +49,14 @@ function parseRgbColor(base: string): RgbColor | null {
 	} else if (typeof computed === 'string') {
 		const rgbMatch = computed.match(/rgba?\(([^)]+)\)/)
 		if (rgbMatch) {
-			const values = rgbMatch[1]
+			const values = rgbMatch[1]!
 				.split(',')
 				.slice(0, 3)
 				.map((part) => Number.parseInt(part.trim(), 10))
-			if (values.every(Number.isFinite)) output = values as RgbColor
+			const [red, green, blue] = values
+			if (red !== undefined && green !== undefined && blue !== undefined && values.every(Number.isFinite)) {
+				output = [red, green, blue]
+			}
 		}
 	}
 
@@ -112,6 +115,7 @@ function SparklineChartRenderer({
 	useEffect(() => {
 		const instance = chartRef.current
 		if (!instance) return
+		if (seriesData.length === 0) return
 
 		const resolveColor = (input?: string) => {
 			if (!input) return undefined
@@ -119,7 +123,9 @@ function SparklineChartRenderer({
 			if (!match) {
 				return input
 			}
-			const [variable, fallback] = match[1].split(',').map((part) => part.trim())
+			const variableExpression = match[1]
+			if (variableExpression === undefined) return input
+			const [variable = '', fallback] = variableExpression.split(',').map((part) => part.trim())
 			let value = ''
 			try {
 				const target: HTMLElement = document.documentElement
@@ -173,8 +179,8 @@ function SparklineChartRenderer({
 				axisTick: { show: false },
 				axisLabel: { show: false },
 				splitLine: { show: false },
-				min: seriesData[0]?.[0],
-				max: seriesData[seriesData.length - 1]?.[0]
+				min: seriesData[0]![0],
+				max: seriesData[seriesData.length - 1]![0]
 			},
 			yAxis: {
 				type: 'value',

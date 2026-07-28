@@ -4,18 +4,18 @@ import { ChartPngExportButton, type PngExportProfile } from './ChartPngExportBut
 
 interface ChartExportButtonsProps {
 	chartInstance: () => echarts.ECharts | null
-	filename?: string
-	title?: string
-	iconUrl?: string
-	expandLegend?: boolean
-	className?: string
-	smol?: boolean
-	showCsv?: boolean
-	showPng?: boolean
-	prepareCsvDirect?: () => { filename: string; rows: Array<Array<string | number | boolean>> }
-	pngProfile?: PngExportProfile
-	onCsvExport?: (info: { filename: string }) => void
-	onPngExport?: (info: { kind: 'download' | 'copy'; filename: string }) => void
+	filename?: string | undefined
+	title?: string | undefined
+	iconUrl?: string | undefined
+	expandLegend?: boolean | undefined
+	className?: string | undefined
+	smol?: boolean | undefined
+	showCsv?: boolean | undefined
+	showPng?: boolean | undefined
+	prepareCsvDirect?: (() => { filename: string; rows: Array<Array<string | number | boolean>> }) | undefined
+	pngProfile?: PngExportProfile | undefined
+	onCsvExport?: ((info: { filename: string }) => void) | undefined
+	onPngExport?: ((info: { kind: 'download' | 'copy'; filename: string }) => void) | undefined
 }
 
 export function ChartExportButtons({

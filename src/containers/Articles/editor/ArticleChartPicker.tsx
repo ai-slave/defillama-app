@@ -3,6 +3,7 @@ import { useQueries } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
+import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { useAppMetadata } from '~/containers/ProDashboard/AppMetadataContext'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import { ChartTypePills } from '~/containers/ProDashboard/components/AddChartModal/ChartTypePills'
@@ -160,11 +161,11 @@ function MultiPreview({
 				const data = queries[i]?.data as [number, number][] | undefined
 				if (!data || data.length === 0) return null
 				const meta = CHART_TYPES[s.chartType as keyof typeof CHART_TYPES]
-				const type = (meta?.chartType === 'bar' ? 'bar' : 'line') as 'line' | 'bar'
+				const type: 'line' | 'bar' = meta?.chartType === 'bar' ? 'bar' : 'line'
 				return {
 					name: `${s.name} · ${meta?.title || s.chartType}`,
 					type,
-					color: SERIES_COLORS[i % SERIES_COLORS.length],
+					color: SERIES_COLORS[i % SERIES_COLORS.length]!,
 					data,
 					// Each API series owns its calendar; connect across union rows belonging only to sibling series.
 					...(type === 'line' ? { connectNulls: true } : {}),
@@ -176,15 +177,16 @@ function MultiPreview({
 	}, [queries, series])
 	const charts = useMemo(() => {
 		const markLine = buildArticleAnnotationMarkLine(annotations)
-		if (!markLine || chartModel.charts.length === 0) return chartModel.charts
-		return [{ ...chartModel.charts[0], markLine }, ...chartModel.charts.slice(1)]
+		const [firstChart, ...remainingCharts] = chartModel.charts
+		if (!markLine || !firstChart) return chartModel.charts
+		return [{ ...firstChart, markLine }, ...remainingCharts]
 	}, [annotations, chartModel.charts])
 
-	const chartOptions = useMemo(
+	const chartOptions = useMemo<MultiSeriesChartOptions>(
 		() => ({
 			tooltip: { formatter: ARTICLE_TOOLTIP_FORMATTER },
 			xAxis: { show: true },
-			yAxis: { show: true, type: logScale ? ('log' as const) : ('value' as const) }
+			yAxis: logScale ? { show: true, type: 'log' } : { show: true, type: 'value' }
 		}),
 		[logScale]
 	)
@@ -263,17 +265,17 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 		if (tab === 'protocol') {
 			return (catalog.protocols || [])
 				.filter((protocol) => protocol.slug)
-				.map((protocol) => ({
-					entityType: 'protocol' as const,
+				.map<Entity>((protocol) => ({
+					entityType: 'protocol',
 					slug: protocol.slug,
 					name: protocol.name,
-					logo: protocol.logo,
+					...(protocol.logo === undefined ? {} : { logo: protocol.logo }),
 					tvl: protocol.tvl,
 					geckoId: protocol.geckoId ?? null
 				}))
 		}
-		return (catalog.chains || []).map((chain) => ({
-			entityType: 'chain' as const,
+		return (catalog.chains || []).map<Entity>((chain) => ({
+			entityType: 'chain',
 			slug: chain.name,
 			name: chain.name,
 			tvl: chain.tvl,
@@ -370,7 +372,9 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 			})
 		const counts = new Map<string, number>()
 		for (const s of dedupedSeries) counts.set(s.chartType, (counts.get(s.chartType) ?? 0) + 1)
-		let chartTypeLegacy = dedupedSeries[0].chartType
+		const firstSeries = dedupedSeries[0]
+		if (!firstSeries) return
+		let chartTypeLegacy = firstSeries.chartType
 		let bestCount = 0
 		for (const [type, count] of counts) {
 			if (count > bestCount) {

@@ -59,7 +59,7 @@ import {
 	mergeGraphicWithEventMarkLinePlaceholder
 } from './eventRail'
 import { buildHallmarksMarkLine } from './hallmarks'
-import { applyConfiguredYAxisScale, applyLogScaleToYAxes, getZeroBaselineYAxisMin } from './logScale'
+import { applyConfiguredYAxisScale, applyLogScaleToYAxes, getZeroBaselineYAxisMin, mergeYAxisOption } from './logScale'
 import { buildMultiYAxis, formatAxisLabel, normalizeSeriesYAxisIndices } from './multiYAxis'
 import { buildMultiSeries } from './series'
 import { buildSparseTimeSeriesDataset } from './timeSeriesDataset'
@@ -91,38 +91,65 @@ const CATEGORY_LOGO_SIZE = 22
 const CATEGORY_LOGO_BOTTOM_GAP = 10
 const EMPTY_CHART_OPTIONS: NonNullable<IMultiSeriesChartProps['chartOptions']> = {}
 
-function mergeChartOptions(
-	defaults: MultiSeriesChartOptions,
-	overrides: MultiSeriesChartOptions
-): MultiSeriesChartOptions {
-	const merged: Record<string, unknown> = { ...defaults }
+type ResolvedMultiSeriesChartOptions = Omit<MultiSeriesChartOptions, 'yAxis'> & {
+	yAxis?: MultiSeriesYAxisOption | MultiSeriesYAxisOption[]
+}
 
-	for (const [option, override] of Object.entries(overrides)) {
-		if (option === 'dataZoom' && Array.isArray(defaults.dataZoom) && override) {
+function mergeOption<T>(base: T | undefined, override: T): T {
+	return base === undefined ? override : mergeDeep(base, override)
+}
+
+function mergeChartOptions(
+	defaults: ResolvedMultiSeriesChartOptions,
+	overrides: MultiSeriesChartOptions
+): ResolvedMultiSeriesChartOptions {
+	const merged: ResolvedMultiSeriesChartOptions = { ...defaults }
+
+	if (Object.hasOwn(overrides, 'dataZoom')) {
+		const override = overrides.dataZoom
+		if (override === undefined) delete merged.dataZoom
+		else if (Array.isArray(defaults.dataZoom)) {
 			merged.dataZoom = defaults.dataZoom.map((zoomOption, index) =>
 				mergeDeep(zoomOption, Array.isArray(override) ? (override[index] ?? {}) : override)
 			)
-			continue
-		}
-		if (option === 'yAxis' && Array.isArray(overrides.yAxis)) {
-			const baseAxes = Array.isArray(defaults.yAxis) ? defaults.yAxis : [defaults.yAxis ?? {}]
-			merged.yAxis = overrides.yAxis.map((axisOption, index) =>
-				mergeDeep(baseAxes[index] ?? baseAxes[0] ?? {}, axisOption)
-			)
-			continue
-		}
-
-		const base = merged[option]
-		merged[option] = base
-			? mergeDeep(base, override)
-			: override && typeof override === 'object' && !Array.isArray(override)
-				? { ...override }
-				: override
+		} else merged.dataZoom = mergeOption(defaults.dataZoom, override)
 	}
 
-	// Object.entries necessarily erases keys while performing the generic deep merge.
-	// Both inputs are already checked MultiSeriesChartOptions at the public boundary.
-	return merged as MultiSeriesChartOptions
+	if (Object.hasOwn(overrides, 'graphic')) {
+		if (overrides.graphic === undefined) delete merged.graphic
+		else merged.graphic = mergeOption(defaults.graphic, overrides.graphic)
+	}
+	if (Object.hasOwn(overrides, 'grid')) {
+		if (overrides.grid === undefined) delete merged.grid
+		else merged.grid = mergeOption(defaults.grid, overrides.grid)
+	}
+	if (Object.hasOwn(overrides, 'legend')) {
+		if (overrides.legend === undefined) delete merged.legend
+		else merged.legend = mergeOption(defaults.legend, overrides.legend)
+	}
+	if (Object.hasOwn(overrides, 'tooltip')) {
+		if (overrides.tooltip === undefined) delete merged.tooltip
+		else merged.tooltip = mergeOption(defaults.tooltip, overrides.tooltip)
+	}
+	if (Object.hasOwn(overrides, 'xAxis')) {
+		if (overrides.xAxis === undefined) delete merged.xAxis
+		else merged.xAxis = mergeOption(defaults.xAxis, overrides.xAxis)
+	}
+
+	if (Object.hasOwn(overrides, 'yAxis')) {
+		if (overrides.yAxis === undefined) delete merged.yAxis
+		else if (Array.isArray(overrides.yAxis)) {
+			const baseAxes = Array.isArray(defaults.yAxis) ? defaults.yAxis : [defaults.yAxis ?? {}]
+			merged.yAxis = overrides.yAxis.map((axisOption, index) =>
+				mergeYAxisOption(baseAxes[index] ?? baseAxes[0] ?? {}, axisOption)
+			)
+		} else {
+			const baseAxis = Array.isArray(defaults.yAxis) ? (defaults.yAxis[0] ?? {}) : (defaults.yAxis ?? {})
+			merged.yAxis = mergeYAxisOption(baseAxis, overrides.yAxis)
+		}
+	}
+
+	return merged
 }
 
 function MultiSeriesChart(props: IMultiSeriesChartProps) {
@@ -188,7 +215,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const groupBySafe: GroupBy = groupBy ?? 'daily'
 	const tooltipGroupBy = groupBySafe === 'cumulative' ? 'daily' : groupBySafe
 
-	const defaultChartSettings = useMemo<MultiSeriesChartOptions>(() => {
+	const defaultChartSettings = useMemo<ResolvedMultiSeriesChartOptions>(() => {
 		const themeColor = chartTheme.text
 		const axisLabelColor = chartTheme.axisLabel
 
@@ -281,15 +308,14 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		const inferred: NonNullable<IMultiSeriesChartProps['charts']> = []
 		const xDimensionIndex = Math.max(0, datasetDimensions.indexOf('timestamp'))
 		for (let i = 0; i < datasetDimensions.length; i++) {
-			const name = datasetDimensions[i]
+			const name = datasetDimensions[i]!
 			if (i === xDimensionIndex) continue
 			const colorIndex = inferred.length
 			inferred.push({
 				type: 'line',
 				name,
 				encode: { x: xDimensionIndex, y: i },
-				color: CHART_COLORS[colorIndex % CHART_COLORS.length],
-				yAxisIndex: undefined,
+				color: CHART_COLORS[colorIndex % CHART_COLORS.length]!,
 				...(stacked ? { stack: 'A' } : {})
 			})
 		}
@@ -754,10 +780,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 
 		const tooltipConfig: TooltipComponentOption = {
 			...baseTooltip,
-			appendToBody: alwaysShowTooltip ? undefined : true,
 			renderMode: 'html',
-			className: alwaysShowTooltip ? undefined : 'defillama-echarts-tooltip',
-			...(alwaysShowTooltip ? {} : { backgroundColor: 'transparent', borderWidth: 0 }),
 			enterable,
 			// Clamp to the browser viewport (not the chart grid).
 			confine: false,
@@ -765,6 +788,14 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			extraCssText,
 			trigger: 'axis',
 			formatter: customTooltipFormatter ?? tooltipFormatter
+		}
+		delete tooltipConfig.appendToBody
+		delete tooltipConfig.className
+		if (!alwaysShowTooltip) {
+			tooltipConfig.appendToBody = true
+			tooltipConfig.className = 'defillama-echarts-tooltip'
+			tooltipConfig.backgroundColor = 'transparent'
+			tooltipConfig.borderWidth = 0
 		}
 
 		const baseGrid = chartGrid({
@@ -833,16 +864,17 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		const finalGraphic = shouldShowEventRail ? mergeGraphicWithEventMarkLinePlaceholder(graphic, isThemeDark) : graphic
 
 		const option: EChartsOption = {
-			...(hideDefaultLegend ? {} : { legend: finalLegend ?? legend }),
-			graphic: finalGraphic,
 			tooltip: tooltipConfig,
 			grid: finalGrid,
-			xAxis: finalXAxis,
 			yAxis: finalYAxisWithEvents,
-			...(shouldHideDataZoom ? {} : { dataZoom }),
 			series: finalSeries,
 			dataset: datasetForOption
 		}
+		const renderedLegend = finalLegend ?? legend
+		if (!hideDefaultLegend && renderedLegend !== undefined) option.legend = renderedLegend
+		if (finalGraphic !== undefined) option.graphic = finalGraphic
+		if (finalXAxis !== undefined) option.xAxis = finalXAxis
+		if (!shouldHideDataZoom && dataZoom !== undefined) option.dataZoom = dataZoom
 		instance.setOption(option, { notMerge: true })
 
 		if (hasCategoryLogos) {

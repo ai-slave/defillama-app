@@ -102,11 +102,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	const runtimeSeries = useMemo(
 		() =>
 			presentation.chartType === 'chainMcaps' || presentation.chartType === 'chainDominance'
-				? getStablecoinRuntimeSeries({
-						dataset: presentation.dataset,
-						charts: presentation.charts,
-						availableSeries: presentation.availableSeries
-					})
+				? getStablecoinRuntimeSeries(presentation)
 				: {
 						selectableSeries: EMPTY_SERIES,
 						renderedSelectableSeries: EMPTY_SERIES,

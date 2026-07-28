@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { groupMultiSeriesBarChartDataset } from './groupDataset'
+import type { MultiSeriesTimeSeriesDataset } from './types'
 
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
 
 describe('groupMultiSeriesBarChartDataset', () => {
 	it('groups multi-series bar datasets by interval', () => {
-		const dataset = {
+		const dataset: MultiSeriesTimeSeriesDataset = {
 			dimensions: ['timestamp', 'A', 'B'],
 			source: [
 				[toMs(2024, 1, 15), 10, 5],
@@ -25,7 +26,7 @@ describe('groupMultiSeriesBarChartDataset', () => {
 	})
 
 	it('groups sparse multi-series rows in one chronological dataset', () => {
-		const dataset = {
+		const dataset: MultiSeriesTimeSeriesDataset = {
 			dimensions: ['timestamp', 'A', 'B'],
 			source: [
 				[toMs(2024, 1, 3), 10],
@@ -45,7 +46,7 @@ describe('groupMultiSeriesBarChartDataset', () => {
 	})
 
 	it('preserves negative flows when grouping multi-series bars', () => {
-		const dataset = {
+		const dataset: MultiSeriesTimeSeriesDataset = {
 			dimensions: ['timestamp', 'Inflows'],
 			source: [
 				[toMs(2024, 1, 3), 100],
@@ -60,7 +61,7 @@ describe('groupMultiSeriesBarChartDataset', () => {
 	})
 
 	it('computes independent cumulative totals for sparse multi-series rows', () => {
-		const dataset = {
+		const dataset: MultiSeriesTimeSeriesDataset = {
 			dimensions: ['timestamp', 'A', 'B'],
 			source: [
 				[toMs(2024, 1, 1), undefined, 7],

@@ -1,5 +1,5 @@
 import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
-import type { IMultiSeriesChartProps, MultiSeriesYAxisOption } from './types'
+import type { IMultiSeriesChartProps, MultiSeriesYAxisOption, MultiSeriesYAxisOverride } from './types'
 
 export function formatAxisLabel(value: number, symbol: string): string {
 	if (Math.abs(value) > 1000) {
@@ -49,7 +49,9 @@ export function normalizeSeriesYAxisIndices<TSeries extends RenderSeries>(series
 	if (isDense) return { series, sourceAxisIndexes }
 
 	const denseIndexBySource = new Map<number, number>()
-	for (let i = 0; i < sourceAxisIndexes.length; i++) denseIndexBySource.set(sourceAxisIndexes[i], i)
+	for (const [denseIndex, sourceIndex] of sourceAxisIndexes.entries()) {
+		denseIndexBySource.set(sourceIndex, denseIndex)
+	}
 
 	return {
 		series: series.map((item) => ({ ...item, yAxisIndex: denseIndexBySource.get(item.yAxisIndex ?? 0) ?? 0 })),
@@ -68,7 +70,7 @@ export function buildMultiYAxis({
 }: {
 	series: RenderSeries[]
 	yAxis: MultiSeriesYAxisOption | MultiSeriesYAxisOption[] | undefined
-	configuredYAxis?: MultiSeriesYAxisOption | MultiSeriesYAxisOption[]
+	configuredYAxis?: MultiSeriesYAxisOverride | MultiSeriesYAxisOverride[] | undefined
 	expandTo100Percent: boolean | undefined
 	effectiveCharts: IMultiSeriesChartProps['charts']
 	valueSymbol: string
@@ -93,7 +95,11 @@ export function buildMultiYAxis({
 	if (maxIndex < 0 && series.length > 0) maxIndex = 0
 
 	const denseIndexBySource = new Map<number, number>()
-	for (let i = 0; i < (sourceAxisIndexes?.length ?? 0); i++) denseIndexBySource.set(sourceAxisIndexes![i], i)
+	if (sourceAxisIndexes) {
+		for (const [denseIndex, sourceIndex] of sourceAxisIndexes.entries()) {
+			denseIndexBySource.set(sourceIndex, denseIndex)
+		}
+	}
 
 	const axisColorCandidates = new Map<number, Set<string>>()
 	for (const chart of effectiveCharts ?? []) {
@@ -109,12 +115,12 @@ export function buildMultiYAxis({
 	}
 
 	for (const [index, colors] of axisColorCandidates) {
-		if (colors.size === 1) yAxisIndexToExplicitColor.set(index, colors.values().next().value)
+		if (colors.size !== 1) continue
+		for (const color of colors) yAxisIndexToExplicitColor.set(index, color)
 	}
 	for (const [index, colors] of renderedAxisColors) {
-		if (colors.size === 1 && !yAxisIndexToExplicitColor.has(index)) {
-			yAxisIndexToExplicitColor.set(index, colors.values().next().value)
-		}
+		if (colors.size !== 1 || yAxisIndexToExplicitColor.has(index)) continue
+		for (const color of colors) yAxisIndexToExplicitColor.set(index, color)
 	}
 
 	if (maxIndex < 0) return null

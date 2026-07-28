@@ -37,7 +37,7 @@ function BarSparklineRenderer({ data, className, height = 48, focusable, maxBars
 		let previousValue: number | undefined
 		let lastIndex = -1
 		const appendPoint = (index: number) => {
-			const [timestamp, value] = data[index]
+			const [timestamp, value] = data[index]!
 			xAxisData.push(timestamp * 1000)
 			bars.push({
 				value,

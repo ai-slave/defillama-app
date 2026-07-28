@@ -883,7 +883,11 @@ export async function getRWAAssetData({
 		}
 
 		if (chartDataset && data.activeMcapData === false) {
-			chartDataset.dimensions = chartDataset.dimensions.filter((dimension) => dimension !== 'Active Mcap')
+			const [timestampDimension, ...seriesDimensions] = chartDataset.dimensions
+			chartDataset.dimensions = [
+				timestampDimension,
+				...seriesDimensions.filter((dimension) => dimension !== 'Active Mcap')
+			]
 		}
 
 		let yieldMatch = emptyRWAYieldResult()

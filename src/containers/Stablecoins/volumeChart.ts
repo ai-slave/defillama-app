@@ -1,8 +1,8 @@
 import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
 import type {
 	ChartTimeGroupingWithCumulative,
-	MultiSeriesChartDataset,
-	MultiSeriesChartSeriesConfig
+	MultiSeriesChartSeriesConfig,
+	MultiSeriesTimeSeriesDataset
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import type {
@@ -14,7 +14,7 @@ import type {
 import { getGroupedBarCharts } from './chartGrouping'
 
 export interface StablecoinVolumeChartPayload {
-	dataset: MultiSeriesChartDataset
+	dataset: MultiSeriesTimeSeriesDataset
 	charts: MultiSeriesChartSeriesConfig[]
 	valueSymbol: '$'
 	stacked: boolean
@@ -89,7 +89,7 @@ const buildTotalVolumePayload = (
 	data: StablecoinVolumeTotalChartPoint[],
 	trimIncompleteTail: boolean
 ): StablecoinVolumeChartPayload => {
-	const source: MultiSeriesChartDataset['source'] = []
+	const source: MultiSeriesTimeSeriesDataset['source'] = []
 	const lastCompletePointIndex = getLastCompletePointIndex(data, trimIncompleteTail)
 	for (let i = 0; i <= lastCompletePointIndex; i++) {
 		const point = data[i]
@@ -158,7 +158,7 @@ const buildBreakdownVolumePayload = (
 	const limit = clampLimit(options.limit)
 	const keys = selectedKeys.slice(0, limit)
 	const omittedKeys = selectedKeys.slice(limit)
-	const dimensions = ['timestamp']
+	const dimensions: MultiSeriesTimeSeriesDataset['dimensions'] = ['timestamp']
 	for (const key of keys) {
 		const label = labelsByKey.get(key)!
 		dimensions.push(label)
@@ -167,11 +167,11 @@ const buildBreakdownVolumePayload = (
 	let hasOthersValue = false
 
 	const omittedKeysSet = new Set(omittedKeys)
-	const source: MultiSeriesChartDataset['source'] = []
+	const source: MultiSeriesTimeSeriesDataset['source'] = []
 	for (let i = 0; i <= lastCompletePointIndex; i++) {
 		const [timestamp, breakdown] = points[i]
-		const row = new Array<number>(keys.length + 2)
-		row[0] = timestamp * 1e3
+		const row: MultiSeriesTimeSeriesDataset['source'][number] = [timestamp * 1e3]
+		row.length = keys.length + 2
 		for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
 			row[keyIndex + 1] = breakdown[keys[keyIndex]] ?? 0
 		}

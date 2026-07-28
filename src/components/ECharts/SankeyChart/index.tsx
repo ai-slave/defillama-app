@@ -1,4 +1,9 @@
-import type { EChartsOption, LabelLayoutOptionCallbackParams } from 'echarts'
+import type {
+	EChartsOption,
+	GraphicComponentOption,
+	LabelLayoutOptionCallbackParams,
+	TooltipComponentOption
+} from 'echarts'
 import { SankeyChart as ESankeyChart, type SankeySeriesOption } from 'echarts/charts'
 import { GraphicComponent, GridComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
@@ -116,13 +121,16 @@ interface SankeyFormatterParams {
 }
 
 function normalizeSankeyFormatterParams(params: unknown): SankeyFormatterParams {
-	if (!params || typeof params !== 'object') return { name: '', value: 0 }
-	const candidate = params as Partial<SankeyFormatterParams>
+	if (!isSankeyFormatterParams(params)) return { name: '', value: 0 }
 	return {
-		...candidate,
-		name: candidate.name ?? '',
-		value: typeof candidate.value === 'number' ? candidate.value : Number(candidate.value ?? 0)
+		...params,
+		name: params.name ?? '',
+		value: typeof params.value === 'number' ? params.value : Number(params.value ?? 0)
 	}
+}
+
+function isSankeyFormatterParams(params: unknown): params is Partial<SankeyFormatterParams> {
+	return params !== null && typeof params === 'object'
 }
 
 function SankeyChart({
@@ -161,9 +169,9 @@ function SankeyChart({
 
 	// Create maps for node metadata (descriptions, display values, and percentage labels)
 	const nodeMetadata = useMemo(() => {
-		const descriptions = {}
-		const displayValues = {}
-		const percentageLabels = {}
+		const descriptions: Record<string, string> = {}
+		const displayValues: Record<string, number | string> = {}
+		const percentageLabels: Record<string, string> = {}
 		for (const node of nodes) {
 			if (node.description) {
 				descriptions[node.name] = node.description
@@ -188,12 +196,12 @@ function SankeyChart({
 			depthRanks.set(depth, depthRank + 1)
 			const mobileLabelPosition: 'left' | 'right' =
 				depth >= 2 && depth < maxDepth && depthRank % 2 === 1 ? 'left' : 'right'
-			return {
+			const dataItem = {
 				name: node.name,
-				itemStyle: { color },
 				...(useMobileLayout ? { label: { position: mobileLabelPosition } } : {}),
 				...(node.depth !== undefined ? { depth: node.depth } : {})
 			}
+			return color === undefined ? dataItem : { ...dataItem, itemStyle: { color } }
 		})
 		return {
 			type: 'sankey',
@@ -259,12 +267,10 @@ function SankeyChart({
 				}
 			},
 			data: nodeData,
-			links: links.map((link) => ({
-				source: link.source,
-				target: link.target,
-				value: link.value,
-				lineStyle: link.color ? { color: link.color } : undefined
-			}))
+			links: links.map((link) => {
+				const dataItem = { source: link.source, target: link.target, value: link.value }
+				return link.color ? { ...dataItem, lineStyle: { color: link.color } } : dataItem
+			})
 		}
 	}, [
 		nodes,
@@ -280,7 +286,7 @@ function SankeyChart({
 	])
 
 	const option = useMemo<EChartsOption>(() => {
-		const graphic = {
+		const graphic: GraphicComponentOption = {
 			type: 'image',
 			z: 0,
 			style: {
@@ -291,42 +297,43 @@ function SankeyChart({
 			left: isSmall ? '35%' : '40%',
 			top: '50%'
 		}
+		const tooltip: TooltipComponentOption = {
+			trigger: 'item',
+			triggerOn: isSmall ? 'click' : 'mousemove',
+			confine: true,
+			className: 'defillama-echarts-tooltip',
+			backgroundColor: 'transparent',
+			borderWidth: 0,
+			formatter: (rawParams: unknown) => {
+				const params = normalizeSankeyFormatterParams(rawParams)
+				if (params.dataType === 'edge' && params.data) {
+					return `${params.data.source ?? ''} → ${params.data.target ?? ''}<br/>${formatSankeyValue(params.data.value ?? 0)}`
+				}
+				// Use displayValue if provided for tooltip value
+				const displayValue = nodeMetadata.displayValues[params.name]
+				const valueToShow =
+					displayValue !== undefined
+						? typeof displayValue === 'string'
+							? displayValue
+							: formatSankeyValue(displayValue)
+						: formatSankeyValue(params.value)
+				// Add percentage label if provided
+				const percentageLabel = nodeMetadata.percentageLabels[params.name]
+				const valueWithPercent = percentageLabel ? `${valueToShow} (${percentageLabel})` : valueToShow
+				const description = nodeMetadata.descriptions[params.name]
+				if (description) {
+					return `<strong>${params.name}</strong><br/>${valueWithPercent}<br/><span style="color: var(--text-secondary); font-size: 11px;">${description}</span>`
+				}
+				return `${params.name}<br/>${valueWithPercent}`
+			}
+		}
+		if (useMobileLayout) {
+			tooltip.extraCssText = 'max-width: calc(100% - 8px); white-space: normal; overflow-wrap: anywhere;'
+		}
 
 		return {
 			graphic,
-			tooltip: {
-				trigger: 'item',
-				triggerOn: isSmall ? 'click' : 'mousemove',
-				confine: true,
-				className: 'defillama-echarts-tooltip',
-				extraCssText: useMobileLayout
-					? 'max-width: calc(100% - 8px); white-space: normal; overflow-wrap: anywhere;'
-					: undefined,
-				backgroundColor: 'transparent',
-				borderWidth: 0,
-				formatter: (rawParams: unknown) => {
-					const params = normalizeSankeyFormatterParams(rawParams)
-					if (params.dataType === 'edge' && params.data) {
-						return `${params.data.source ?? ''} → ${params.data.target ?? ''}<br/>${formatSankeyValue(params.data.value ?? 0)}`
-					}
-					// Use displayValue if provided for tooltip value
-					const displayValue = nodeMetadata.displayValues[params.name]
-					const valueToShow =
-						displayValue !== undefined
-							? typeof displayValue === 'string'
-								? displayValue
-								: formatSankeyValue(displayValue)
-							: formatSankeyValue(params.value)
-					// Add percentage label if provided
-					const percentageLabel = nodeMetadata.percentageLabels[params.name]
-					const valueWithPercent = percentageLabel ? `${valueToShow} (${percentageLabel})` : valueToShow
-					const description = nodeMetadata.descriptions[params.name]
-					if (description) {
-						return `<strong>${params.name}</strong><br/>${valueWithPercent}<br/><span style="color: var(--text-secondary); font-size: 11px;">${description}</span>`
-					}
-					return `${params.name}<br/>${valueWithPercent}`
-				}
-			},
+			tooltip,
 			series
 		}
 	}, [series, isDark, isSmall, useMobileLayout, nodeMetadata, formatSankeyValue])

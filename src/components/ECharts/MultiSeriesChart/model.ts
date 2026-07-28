@@ -27,24 +27,22 @@ export type CartesianChartModel = {
 }
 
 function buildCharts(series: readonly CartesianSeriesSpec[]): MultiSeriesChartSeriesConfig[] {
-	const charts = new Array<MultiSeriesChartSeriesConfig>(series.length)
-	for (let i = 0; i < series.length; i++) {
-		const item = series[i]
-		charts[i] = {
+	return series.map((item, seriesIndex) => {
+		const chart: MultiSeriesChartSeriesConfig = {
 			type: item.type,
 			name: item.name,
-			encode: { x: 0, y: i + 1 },
-			color: item.color,
-			stack: item.stack,
-			yAxisIndex: item.yAxisIndex,
-			valueSymbol: item.valueSymbol,
-			legendIconUrl: item.legendIconUrl,
-			areaStyle: item.areaStyle,
-			barMaxWidth: item.barMaxWidth,
-			connectNulls: item.connectNulls
+			encode: { x: 0, y: seriesIndex + 1 }
 		}
-	}
-	return charts
+		if (item.color !== undefined) chart.color = item.color
+		if (item.stack !== undefined) chart.stack = item.stack
+		if (item.yAxisIndex !== undefined) chart.yAxisIndex = item.yAxisIndex
+		if (item.valueSymbol !== undefined) chart.valueSymbol = item.valueSymbol
+		if (item.legendIconUrl !== undefined) chart.legendIconUrl = item.legendIconUrl
+		if (item.areaStyle !== undefined) chart.areaStyle = item.areaStyle
+		if (item.barMaxWidth !== undefined) chart.barMaxWidth = item.barMaxWidth
+		if (item.connectNulls !== undefined) chart.connectNulls = item.connectNulls
+		return chart
+	})
 }
 
 function buildIndependentCharts(
@@ -52,13 +50,17 @@ function buildIndependentCharts(
 	timestampMultiplier: 1 | 1000
 ): MultiSeriesChartSeriesConfig[] {
 	const charts = buildCharts(series)
-	for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
-		const input = series[seriesIndex].data
+	for (const [seriesIndex, item] of series.entries()) {
+		const input = item.data
 		const data = new Array<[number, number | null]>(input.length)
 		for (let pointIndex = 0; pointIndex < input.length; pointIndex++) {
-			data[pointIndex] = [(input[pointIndex][0] as number) * timestampMultiplier, input[pointIndex][1]]
+			const point = input[pointIndex]!
+			data[pointIndex] = [Number(point[0]) * timestampMultiplier, point[1]]
 		}
-		charts[seriesIndex] = { ...charts[seriesIndex], encode: { x: 0, y: 1 }, data }
+		data.sort((a, b) => a[0] - b[0])
+		const chart = charts[seriesIndex]
+		if (!chart) throw new Error(`Missing chart config for series index ${seriesIndex}`)
+		charts[seriesIndex] = { ...chart, encode: { x: 0, y: 1 }, data }
 	}
 	return charts
 }
@@ -69,8 +71,8 @@ function alignIndependentStackGroups(
 	timestampMultiplier: 1 | 1000
 ) {
 	const indexesByStack = new Map<string, number[]>()
-	for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
-		const stack = series[seriesIndex].stack
+	for (const [seriesIndex, item] of series.entries()) {
+		const stack = item.stack
 		if (!stack) continue
 		const indexes = indexesByStack.get(stack)
 		if (indexes) indexes.push(seriesIndex)
@@ -81,8 +83,8 @@ function alignIndependentStackGroups(
 		if (indexes.length < 2) continue
 		const rows = new Map<number, Array<number | null>>()
 		for (let stackIndex = 0; stackIndex < indexes.length; stackIndex++) {
-			for (const [inputTimestamp, value] of series[indexes[stackIndex]].data) {
-				const timestamp = (inputTimestamp as number) * timestampMultiplier
+			for (const [inputTimestamp, value] of series[indexes[stackIndex]!]!.data) {
+				const timestamp = Number(inputTimestamp) * timestampMultiplier
 				let row = rows.get(timestamp)
 				if (!row) {
 					row = new Array<number | null>(indexes.length).fill(null)
@@ -97,9 +99,11 @@ function alignIndependentStackGroups(
 		for (let stackIndex = 0; stackIndex < indexes.length; stackIndex++) {
 			const data = new Array<[number, number | null]>(sortedRows.length)
 			for (let rowIndex = 0; rowIndex < sortedRows.length; rowIndex++) {
-				data[rowIndex] = [sortedRows[rowIndex].timestamp, sortedRows[rowIndex].values[stackIndex]]
+				const row = sortedRows[rowIndex]!
+				data[rowIndex] = [row.timestamp, row.values[stackIndex]!]
 			}
-			charts[indexes[stackIndex]] = { ...charts[indexes[stackIndex]], data }
+			const seriesIndex = indexes[stackIndex]!
+			charts[seriesIndex] = { ...charts[seriesIndex]!, data }
 		}
 	}
 }
@@ -123,12 +127,11 @@ export function buildAlignedCartesianChartModel(
 	assertUniqueSeriesNames(series)
 	const source = new Array<MultiSeriesChartArrayRow>(xValues.length)
 
-	for (let rowIndex = 0; rowIndex < xValues.length; rowIndex++) {
-		const x = xValues[rowIndex]
+	for (const [rowIndex, x] of xValues.entries()) {
 		const row = new Array<number | string | null>(series.length + 1)
-		row[0] = xDimension === 'timestamp' ? (x as number) * timestampMultiplier : x
-		for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
-			row[seriesIndex + 1] = series[seriesIndex].values[rowIndex] ?? null
+		row[0] = xDimension === 'timestamp' ? Number(x) * timestampMultiplier : x
+		for (const [seriesIndex, item] of series.entries()) {
+			row[seriesIndex + 1] = item.values[rowIndex] ?? null
 		}
 		source[rowIndex] = row
 	}
@@ -151,33 +154,37 @@ export function buildSparseCartesianChartModel(
 	const timestampMultiplier = options.timestampMultiplier ?? 1000
 	assertUniqueSeriesNames(series)
 	const firstData = series[0]?.data
-	let isAligned = !!firstData
-	for (let seriesIndex = 1; isAligned && seriesIndex < series.length; seriesIndex++) {
-		const data = series[seriesIndex].data
-		if (data.length !== firstData!.length) {
-			isAligned = false
-			break
-		}
-		for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
-			if (data[rowIndex][0] !== firstData![rowIndex][0]) {
+	let isAligned = firstData !== undefined
+	if (firstData) {
+		for (const [seriesIndex, item] of series.entries()) {
+			if (seriesIndex === 0 || !isAligned) continue
+			const data = item.data
+			if (data.length !== firstData.length) {
 				isAligned = false
 				break
+			}
+			for (const [rowIndex, point] of data.entries()) {
+				if (point[0] !== firstData[rowIndex]![0]) {
+					isAligned = false
+					break
+				}
 			}
 		}
 	}
 
-	if (isAligned) {
-		const source = new Array<MultiSeriesChartArrayRow>(firstData!.length)
-		for (let rowIndex = 0; rowIndex < firstData!.length; rowIndex++) {
-			const inputX = firstData![rowIndex][0]
-			const x = xDimension === 'timestamp' ? (inputX as number) * timestampMultiplier : inputX
+	if (isAligned && firstData) {
+		const source = new Array<MultiSeriesChartArrayRow>(firstData.length)
+		for (const [rowIndex, firstPoint] of firstData.entries()) {
+			const inputX = firstPoint[0]
+			const x = xDimension === 'timestamp' ? Number(inputX) * timestampMultiplier : inputX
 			const row = new Array<number | string | null>(series.length + 1)
 			row[0] = x
-			for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
-				row[seriesIndex + 1] = series[seriesIndex].data[rowIndex][1]
+			for (const [seriesIndex, item] of series.entries()) {
+				row[seriesIndex + 1] = item.data[rowIndex]![1]
 			}
 			source[rowIndex] = row
 		}
+		if (xDimension === 'timestamp') source.sort((a, b) => Number(a[0]) - Number(b[0]))
 		return {
 			dataset: { dimensions: [xDimension, ...series.map((item) => item.name)], source },
 			charts: buildCharts(series)
@@ -197,10 +204,9 @@ export function buildSparseCartesianChartModel(
 
 	const rowsByX = new Map<number | string, MultiSeriesChartArrayRow>()
 
-	for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
-		const item = series[seriesIndex]
+	for (const [seriesIndex, item] of series.entries()) {
 		for (const point of item.data) {
-			const x = xDimension === 'timestamp' ? (point[0] as number) * timestampMultiplier : point[0]
+			const x = point[0]
 			let row = rowsByX.get(x)
 			if (!row) {
 				row = new Array<number | string | null | undefined>(series.length + 1)
@@ -212,7 +218,6 @@ export function buildSparseCartesianChartModel(
 	}
 
 	const source = Array.from(rowsByX.values())
-	if (xDimension === 'timestamp') source.sort((a, b) => (a[0] as number) - (b[0] as number))
 	return {
 		dataset: { dimensions: [xDimension, ...series.map((item) => item.name)], source },
 		charts: buildCharts(series)

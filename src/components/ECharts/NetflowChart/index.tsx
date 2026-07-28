@@ -13,6 +13,7 @@ import { capitalizeFirstLetter } from '~/utils'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { chartGrid } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
+import { normalizeTooltipItems } from '../shared/tooltip'
 
 echarts.use([BarChart, TooltipComponent, GridComponent, DatasetComponent, GraphicComponent, CanvasRenderer])
 
@@ -95,9 +96,12 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 				axisPointer: {
 					type: 'shadow'
 				},
-				formatter: function (params) {
-					const chain = params[0].axisValue
-					const value = (params[0].value || 0) + (params[1].value || 0)
+				formatter: (params) => {
+					const items = normalizeTooltipItems(params)
+					const chain = items[0]?.axisValue ?? ''
+					const outflow = items[0]?.value
+					const inflow = items[1]?.value
+					const value = (typeof outflow === 'number' ? outflow : 0) + (typeof inflow === 'number' ? inflow : 0)
 					return `<div class="flex flex-col gap-1">
 						<span class="font-medium">${chain}</span>
 						<span>Net Flow: ${value > 0 ? '+' : ''}${formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
@@ -147,13 +151,15 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 					label: {
 						show: true,
 						position: 'left',
-						formatter: (params) =>
-							params.value !== 0
-								? formatCompactNumber(params.value as number, {
+						formatter: (params) => {
+							const value = params.value
+							return typeof value === 'number' && value !== 0
+								? formatCompactNumber(value, {
 										minimumCompactValue: 1_000_000,
 										compactSuffix: 'lowercase'
 									})
-								: '',
+								: ''
+						},
 						backgroundColor: 'transparent',
 						color: '#ef4444',
 						fontSize: 12,
@@ -173,13 +179,15 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 					label: {
 						show: true,
 						position: 'right',
-						formatter: (params) =>
-							params.value !== 0
-								? formatCompactNumber(params.value as number, {
+						formatter: (params) => {
+							const value = params.value
+							return typeof value === 'number' && value !== 0
+								? formatCompactNumber(value, {
 										minimumCompactValue: 1_000_000,
 										compactSuffix: 'lowercase'
 									})
-								: '',
+								: ''
+						},
 						backgroundColor: 'transparent',
 						color: '#22c55e',
 						fontSize: 12,

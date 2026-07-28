@@ -5,9 +5,9 @@ export function prepareChartCsv(data: Record<string, Array<[string | number, num
 	const rows: Array<Array<string | number | null>> = []
 	const charts: string[] = []
 	const valuesByDate = new Map<string, Map<string, number | null>>()
-	for (const chartName in data) {
+	for (const [chartName, chartData] of Object.entries(data)) {
 		charts.push(chartName)
-		for (const [date, value] of data[chartName]) {
+		for (const [date, value] of chartData) {
 			const dateKey = String(date)
 			let values = valuesByDate.get(dateKey)
 			if (!values) {

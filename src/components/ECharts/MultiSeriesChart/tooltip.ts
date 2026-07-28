@@ -21,7 +21,7 @@ export function createCategoryTooltipFormatter(valueSymbol: string) {
 		const items = normalizeTooltipItems(params)
 		if (items.length === 0) return ''
 
-		const first = items[0]
+		const first = items[0]!
 		const category = first.axisValue ?? first.name
 		let output = category == null ? '' : `<strong>${category}</strong><br/>`
 		const rows: LegacyTooltipRow[] = []
@@ -38,7 +38,7 @@ export function createCategoryTooltipFormatter(valueSymbol: string) {
 		const others = othersIndex >= 0 ? rows.splice(othersIndex, 1)[0] : null
 		const limit = others ? 9 : 10
 		for (let index = 0; index < rows.length && index < limit; index++) {
-			const row = rows[index]
+			const row = rows[index]!
 			output += `<li style="list-style:none">${row.marker}${row.name}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
 		}
 		if (others) {
@@ -88,13 +88,13 @@ export function createCappedRemainderTooltipFormatter({
 		const hasRemainder = explicitOthers != null || rows.length > maxItems
 		const visibleLimit = hasRemainder ? Math.max(0, maxItems - 1) : maxItems
 		for (let index = 0; index < rows.length && index < visibleLimit; index++) {
-			const row = rows[index]
+			const row = rows[index]!
 			output += `<li style="list-style:none">${row.marker}${row.name}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
 		}
 
 		if (hasRemainder) {
 			let remainder = explicitOthers?.value ?? 0
-			for (let index = visibleLimit; index < rows.length; index++) remainder += rows[index].value
+			for (let index = visibleLimit; index < rows.length; index++) remainder += rows[index]!.value
 			output += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${explicitOthers?.marker ?? rows[visibleLimit]?.marker ?? ''}${OTHERS_SERIES_NAME}&nbsp;&nbsp;${formatTooltipValue(remainder, valueSymbol)}</li>`
 		}
 
@@ -164,12 +164,12 @@ export function createInflowsTooltipFormatter({
 			if (topN <= 0) continue
 
 			const absoluteValue = Math.abs(value)
-			if (topValues.length < topN || absoluteValue > Math.abs(topValues[0].value)) {
+			if (topValues.length < topN || absoluteValue > Math.abs(topValues[0]!.value)) {
 				topValues.push({ marker: item.marker ?? '', name, value })
 				let index = topValues.length - 1
-				while (index > 0 && Math.abs(topValues[index - 1].value) > Math.abs(topValues[index].value)) {
-					const previous = topValues[index - 1]
-					topValues[index - 1] = topValues[index]
+				while (index > 0 && Math.abs(topValues[index - 1]!.value) > Math.abs(topValues[index]!.value)) {
+					const previous = topValues[index - 1]!
+					topValues[index - 1] = topValues[index]!
 					topValues[index] = previous
 					index--
 				}
@@ -179,7 +179,7 @@ export function createInflowsTooltipFormatter({
 
 		if (regularCount === 0 && !explicitOthers) return chartdate
 		if (regularCount === 1 && !explicitOthers && topValues.length === 1) {
-			const row = topValues[0]
+			const row = topValues[0]!
 			return `${chartdate}<li style="list-style:none">${row.marker}${row.name}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
 		}
 
@@ -191,7 +191,7 @@ export function createInflowsTooltipFormatter({
 		let output = chartdate
 		output += `<li style="list-style:none;font-weight:600">${totalLabel}&nbsp;&nbsp;${formatTooltipValue(total, valueSymbol)}</li>`
 		for (let index = topValues.length - 1; index >= 0; index--) {
-			const row = topValues[index]
+			const row = topValues[index]!
 			output += `<li style="list-style:none">${row.marker}${row.name}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
 		}
 		if (others !== 0) {
@@ -211,7 +211,7 @@ function insertTopTooltipValue(rows: TooltipValueRow[], nextRow: TooltipValueRow
 
 	let insertAt = rows.length
 	for (let i = 0; i < rows.length; i++) {
-		if (rows[i][2] < nextRow[2]) {
+		if (rows[i]![2] < nextRow[2]) {
 			insertAt = i
 			break
 		}
@@ -241,10 +241,10 @@ export function createTooltipFormatter({
 }: {
 	groupBy: GroupBy
 	valueSymbol: string
-	seriesSymbols?: Map<string, string>
-	tooltipTotalExcludedSeries?: Set<string>
-	maxItems?: number
-	showTotalInTooltip?: boolean
+	seriesSymbols?: Map<string, string> | undefined
+	tooltipTotalExcludedSeries?: Set<string> | undefined
+	maxItems?: number | undefined
+	showTotalInTooltip?: boolean | undefined
 }) {
 	return (params: unknown) => {
 		const items = normalizeTooltipItems(params)

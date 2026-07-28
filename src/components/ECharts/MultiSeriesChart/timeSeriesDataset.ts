@@ -1,4 +1,4 @@
-import type { CanonicalMultiSeriesChartDataset, MultiSeriesChartArrayRow } from './types'
+import type { MultiSeriesTimeSeriesDataset, MultiSeriesTimeSeriesRow } from './types'
 
 type ColumnarSeries = {
 	name: string
@@ -10,29 +10,30 @@ type SparseTupleSeries = {
 	data: readonly (readonly [timestamp: number, value: number | null])[]
 }
 
-export type TimestampDataset = CanonicalMultiSeriesChartDataset
+export type TimestampDataset = MultiSeriesTimeSeriesDataset
 
 /** Merge independently timed series into one positional dataset; Map output is sorted once chronologically. */
 export function buildSparseTimeSeriesDataset(series: readonly SparseTupleSeries[]): TimestampDataset {
-	const dimensions = new Array<string>(series.length + 1)
-	dimensions[0] = 'timestamp'
-	const rows = new Map<number, MultiSeriesChartArrayRow>()
-	for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
-		const item = series[seriesIndex]
-		dimensions[seriesIndex + 1] = item.name
+	const dimensions: TimestampDataset['dimensions'] = ['timestamp', ...series.map((item) => item.name)]
+	const rows = new Map<number, MultiSeriesTimeSeriesRow>()
+	for (const [seriesIndex, item] of series.entries()) {
 		for (const [timestamp, value] of item.data) {
 			let row = rows.get(timestamp)
 			if (!row) {
-				row = new Array<number | null>(series.length + 1).fill(null)
-				row[0] = timestamp
+				row = [timestamp]
+				row.length = series.length + 1
+				row.fill(null, 1)
 				rows.set(timestamp, row)
 			}
 			row[seriesIndex + 1] = value
 		}
 	}
+	const source = Array.from(rows.entries())
+		.sort(([aTimestamp], [bTimestamp]) => aTimestamp - bTimestamp)
+		.map(([, row]) => row)
 	return {
 		dimensions,
-		source: Array.from(rows.values()).sort((a, b) => (a[0] as number) - (b[0] as number))
+		source
 	}
 }
 
@@ -43,26 +44,23 @@ export function buildColumnarTimeSeriesDataset(
 	toTimestampMs: (date: string) => number,
 	missingValue: number | null = null
 ): TimestampDataset {
-	const dimensions = new Array<string>(series.length + 1)
-	dimensions[0] = 'timestamp'
+	const dimensions: TimestampDataset['dimensions'] = ['timestamp', ...series.map((item) => item.name)]
 	const seenNames = new Set<string>()
-	for (let i = 0; i < series.length; i++) {
-		const name = series[i].name
+	for (const { name } of series) {
 		if (seenNames.has(name)) throw new Error(`Duplicate series name "${name}" is not allowed`)
 		seenNames.add(name)
-		dimensions[i + 1] = name
 	}
 
-	const source = new Array<MultiSeriesChartArrayRow>(dates.length)
+	const source = new Array<MultiSeriesTimeSeriesRow>(dates.length)
 
-	for (let i = 0; i < dates.length; i++) {
-		const row = new Array<number | null>(series.length + 1)
-		row[0] = toTimestampMs(dates[i])
-		for (let j = 0; j < series.length; j++) {
-			const value = series[j].data[i]
-			row[j + 1] = value ?? missingValue
+	for (const [dateIndex, date] of dates.entries()) {
+		const row: MultiSeriesTimeSeriesRow = [toTimestampMs(date)]
+		row.length = series.length + 1
+		for (const [seriesIndex, item] of series.entries()) {
+			const value = item.data[dateIndex]
+			row[seriesIndex + 1] = value ?? missingValue
 		}
-		source[i] = row
+		source[dateIndex] = row
 	}
 
 	return {
@@ -77,11 +75,10 @@ export function buildTimeSeriesDataset(
 	valueDimension: string,
 	timestampMultiplier: 1 | 1000
 ): TimestampDataset {
-	const source = new Array<MultiSeriesChartArrayRow>(points.length)
+	const source = new Array<MultiSeriesTimeSeriesRow>(points.length)
 
-	for (let i = 0; i < points.length; i++) {
-		const point = points[i]
-		source[i] = [point[0] * timestampMultiplier, point[1]]
+	for (const [pointIndex, point] of points.entries()) {
+		source[pointIndex] = [point[0] * timestampMultiplier, point[1]]
 	}
 
 	return { source, dimensions: ['timestamp', valueDimension] }
@@ -92,17 +89,16 @@ export function materializeZeroFilledDataset(
 	dataset: TimestampDataset,
 	seriesNames: readonly string[]
 ): TimestampDataset {
-	const source = new Array<MultiSeriesChartArrayRow>(dataset.source.length)
-	const seriesIndexes = new Array<number>(seriesNames.length)
-	for (let i = 0; i < seriesNames.length; i++) seriesIndexes[i] = dataset.dimensions.indexOf(seriesNames[i])
-	for (let i = 0; i < dataset.source.length; i++) {
-		const input = dataset.source[i]
-		const output = new Array<number>(seriesNames.length + 1)
-		output[0] = input[0] as number
-		for (let j = 0; j < seriesNames.length; j++) {
-			output[j + 1] = (input[seriesIndexes[j]] as number | null | undefined) ?? 0
+	const source = new Array<MultiSeriesTimeSeriesRow>(dataset.source.length)
+	const seriesIndexes = seriesNames.map((seriesName) => dataset.dimensions.indexOf(seriesName))
+	for (const [rowIndex, input] of dataset.source.entries()) {
+		const output: MultiSeriesTimeSeriesRow = [input[0]]
+		output.length = seriesNames.length + 1
+		for (const [seriesIndex, inputIndex] of seriesIndexes.entries()) {
+			const value = input[inputIndex]
+			output[seriesIndex + 1] = value ?? 0
 		}
-		source[i] = output
+		source[rowIndex] = output
 	}
 	return { source, dimensions: ['timestamp', ...seriesNames] }
 }
@@ -119,7 +115,7 @@ export function sliceTimestampDataset(
 
 	while (low < high) {
 		const middle = (low + high) >>> 1
-		if ((source[middle][0] as number) < startTimestampMs) low = middle + 1
+		if (source[middle]![0] < startTimestampMs) low = middle + 1
 		else high = middle
 	}
 	const startIndex = low
@@ -128,7 +124,7 @@ export function sliceTimestampDataset(
 	high = source.length
 	while (low < high) {
 		const middle = (low + high) >>> 1
-		if ((source[middle][0] as number) <= endTimestampMs) low = middle + 1
+		if (source[middle]![0] <= endTimestampMs) low = middle + 1
 		else high = middle
 	}
 

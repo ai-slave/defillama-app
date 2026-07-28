@@ -10,6 +10,7 @@ import {
 	buildUsdInflowsPayload,
 	groupStablecoinBarChartPayload,
 	getStablecoinRuntimeSeries,
+	type StablecoinChartSeriesPayload,
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT
 } from '../chartSeries'
 import { formatPeggedChainsData } from '../utils'
@@ -60,7 +61,6 @@ describe('stablecoin chart series builders', () => {
 	it('uses canonical availability while keeping aggregate helpers always visible', () => {
 		expect(
 			getStablecoinRuntimeSeries({
-				dataset: { dimensions: ['timestamp', 'USDT', 'USDC', 'Others'], source: [] },
 				charts: [
 					{ type: 'line', name: 'USDT', encode: { x: 0, y: 1 } },
 					{ type: 'line', name: 'USDC', encode: { x: 0, y: 2 } },
@@ -79,7 +79,6 @@ describe('stablecoin chart series builders', () => {
 	it('separates a fixed remainder from configured volume series without availability metadata', () => {
 		expect(
 			getStablecoinRuntimeSeries({
-				dataset: { dimensions: ['timestamp', 'USDT', 'USDC', 'Others'], source: [] },
 				charts: [
 					{ type: 'line', name: 'USDT', encode: { x: 0, y: 1 } },
 					{ type: 'line', name: 'USDC', encode: { x: 0, y: 2 } },
@@ -570,7 +569,7 @@ describe('stablecoin chart series builders', () => {
 	})
 
 	it('groups stablecoin inflow bar payloads by the selected interval', () => {
-		const payload = {
+		const payload: StablecoinChartSeriesPayload = {
 			dataset: {
 				dimensions: ['timestamp', 'Inflows'],
 				source: [

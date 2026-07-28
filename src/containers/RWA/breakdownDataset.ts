@@ -32,12 +32,14 @@ export function toRwaPositionalChartDataset(
 	}
 
 	const seriesDimensions = [...seenSeries]
-	const dimensions = appendTotal ? ['timestamp', totalLabel, ...seriesDimensions] : ['timestamp', ...seriesDimensions]
+	const dimensions: RWAPositionalChartDataset['dimensions'] = appendTotal
+		? ['timestamp', totalLabel, ...seriesDimensions]
+		: ['timestamp', ...seriesDimensions]
 	const source = new Array<RWAPositionalChartDataset['source'][number]>(rows.length)
 	for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
 		const input = rows[rowIndex]
-		const output = new Array<number | null>(dimensions.length)
-		output[0] = input.timestamp
+		const output: RWAPositionalChartDataset['source'][number] = [input.timestamp]
+		output.length = dimensions.length
 		let offset = 1
 		if (appendTotal) {
 			let total = 0

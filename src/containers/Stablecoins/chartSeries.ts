@@ -1,8 +1,8 @@
 import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
 import type {
 	ChartTimeGroupingWithCumulative,
-	MultiSeriesChartDataset,
-	MultiSeriesChartSeriesConfig
+	MultiSeriesChartSeriesConfig,
+	MultiSeriesTimeSeriesDataset
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { getDominancePercent } from '~/utils'
@@ -43,7 +43,7 @@ export type StablecoinChartSummary = {
 }
 
 export interface StablecoinChartSeriesPayload {
-	dataset: MultiSeriesChartDataset
+	dataset: MultiSeriesTimeSeriesDataset
 	charts: MultiSeriesChartSeriesConfig[]
 	availableSeries?: string[]
 	defaultSeries?: string[]
@@ -61,7 +61,9 @@ export interface StablecoinRuntimeSeries {
 	alwaysVisibleSeries: string[]
 }
 
-export function getStablecoinRuntimeSeries(payload: StablecoinChartSeriesPayload): StablecoinRuntimeSeries {
+export function getStablecoinRuntimeSeries(
+	payload: Pick<StablecoinChartSeriesPayload, 'charts' | 'availableSeries'>
+): StablecoinRuntimeSeries {
 	const configuredSeries = payload.charts.map((chart) => chart.name)
 	const fixedRemainderSeries = configuredSeries.filter((name) => name === STABLECOIN_OTHERS_SERIES_NAME)
 	if (!payload.availableSeries) {
@@ -560,11 +562,11 @@ const buildStablecoinBreakdownDatasetFromCollection = ({
 	collection: StablecoinCanonicalHistory
 	selection: StablecoinBreakdownSelection
 	fillMissingValues?: boolean
-}): MultiSeriesChartDataset => {
-	const dimensions = ['timestamp', ...selection.visibleSeries]
-	const source: Array<Array<number | undefined>> = collection.timestamps.map((timestamp) => {
-		const row = new Array<number | undefined>(dimensions.length)
-		row[0] = timestamp
+}): MultiSeriesTimeSeriesDataset => {
+	const dimensions: MultiSeriesTimeSeriesDataset['dimensions'] = ['timestamp', ...selection.visibleSeries]
+	const source: MultiSeriesTimeSeriesDataset['source'] = collection.timestamps.map((timestamp) => {
+		const row: MultiSeriesTimeSeriesDataset['source'][number] = [timestamp]
+		row.length = dimensions.length
 		return row
 	})
 	const seriesByName = new Map(collection.series.map((series) => [series.name, series]))
@@ -805,12 +807,12 @@ export const buildDominancePayloadFromCollection = (
 	const selection = getStablecoinSelectionFromCollection(collected, options, options?.chartNames)
 	const canonicalColorIndex = new Map(selection.availableSeries.map((name, index) => [name, index]))
 	const baseDataset = buildStablecoinBreakdownDatasetFromCollection({ collection: collected, selection })
-	const source: MultiSeriesChartDataset['source'] = []
+	const source: MultiSeriesTimeSeriesDataset['source'] = []
 	for (const inputRow of baseDataset.source) {
-		const row = new Array<number>(inputRow.length)
-		row[0] = inputRow[0] as number
+		const row: MultiSeriesTimeSeriesDataset['source'][number] = [inputRow[0]]
+		row.length = inputRow.length
 		let total = 0
-		for (let index = 1; index < inputRow.length; index++) total += (inputRow[index] as number | undefined) ?? 0
+		for (let index = 1; index < inputRow.length; index++) total += inputRow[index] ?? 0
 		let lastPositiveIndex = -1
 		for (let index = 1; index < inputRow.length; index++) {
 			const percentage = getDominancePercent((inputRow[index] as number | undefined) ?? 0, total)

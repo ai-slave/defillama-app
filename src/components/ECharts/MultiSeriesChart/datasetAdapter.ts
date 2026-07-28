@@ -9,9 +9,9 @@ type PreparedMultiSeriesDataset = {
 
 function buildDimensionIndex(dimensions: string[]): Map<string, number> {
 	const index = new Map<string, number>()
-	for (let i = 0; i < dimensions.length; i++) {
+	for (const [dimensionIndex, dimension] of dimensions.entries()) {
 		// String encodes have always selected the first matching display label.
-		if (!index.has(dimensions[i])) index.set(dimensions[i], i)
+		if (!index.has(dimension)) index.set(dimension, dimensionIndex)
 	}
 	return index
 }
@@ -21,12 +21,7 @@ function dimensionIndexes(
 	dimensionIndex: Map<string, number> | undefined
 ): number[] {
 	const values = Array.isArray(encoded) ? encoded : [encoded]
-	const indexes = new Array<number>(values.length)
-	for (let i = 0; i < values.length; i++) {
-		indexes[i] =
-			typeof values[i] === 'number' ? (values[i] as number) : (dimensionIndex?.get(values[i] as string) ?? -1)
-	}
-	return indexes
+	return values.map((value) => (typeof value === 'number' ? value : (dimensionIndex?.get(value) ?? -1)))
 }
 
 function displayedDimensionIndexes(
@@ -49,8 +44,8 @@ function remapEncode(
 	encoded: MultiSeriesChartSeriesConfig['encode']['x'],
 	dimensionIndex: Map<string, number> | undefined
 ): MultiSeriesChartSeriesConfig['encode']['x'] {
-	const indexes = dimensionIndexes(encoded, dimensionIndex)
-	return Array.isArray(encoded) ? indexes : indexes[0]
+	if (Array.isArray(encoded)) return dimensionIndexes(encoded, dimensionIndex)
+	return typeof encoded === 'number' ? encoded : (dimensionIndex?.get(encoded) ?? -1)
 }
 
 function usesOnlyNumericEncodes(chart: MultiSeriesChartSeriesConfig) {
@@ -72,9 +67,8 @@ export function prepareMultiSeriesDataset(
 	let renderedCharts = charts
 	if (!allNumericEncodes) {
 		renderedCharts = new Array<MultiSeriesChartSeriesConfig>(charts.length)
-		for (let i = 0; i < charts.length; i++) {
-			const chart = charts[i]
-			renderedCharts[i] = {
+		for (const [chartIndex, chart] of charts.entries()) {
+			renderedCharts[chartIndex] = {
 				...chart,
 				encode: {
 					x: remapEncode(chart.encode.x, dimensionIndex),
@@ -102,12 +96,16 @@ export function projectMultiSeriesDatasetForCharts(
 	const indexes = displayedDimensionIndexes(dataset.dimensions, charts, dimensionIndex)
 	if (indexes.length === dataset.dimensions.length) return dataset
 	const source = new Array<MultiSeriesChartArrayRow>(dataset.source.length)
-	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
-		const input = dataset.source[rowIndex]
+	for (const [rowIndex, input] of dataset.source.entries()) {
 		const row = new Array<MultiSeriesChartArrayRow[number]>(indexes.length)
-		for (let columnIndex = 0; columnIndex < indexes.length; columnIndex++)
-			row[columnIndex] = input[indexes[columnIndex]]
+		for (const [columnIndex, inputIndex] of indexes.entries()) row[columnIndex] = input[inputIndex]
 		source[rowIndex] = row
 	}
-	return { dimensions: indexes.map((index) => dataset.dimensions[index]), source }
+	const dimensions: string[] = []
+	for (const index of indexes) {
+		const dimension = dataset.dimensions[index]
+		if (dimension === undefined) throw new Error(`Unknown projected chart dimension index: ${index}`)
+		dimensions.push(dimension)
+	}
+	return { dimensions, source }
 }

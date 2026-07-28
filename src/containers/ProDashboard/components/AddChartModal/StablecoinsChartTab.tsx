@@ -217,11 +217,7 @@ export function StablecoinsChartTab({
 	const assetRuntimeSeries = useMemo(
 		() =>
 			assetPresentation.chartType === 'chainMcaps' || assetPresentation.chartType === 'chainDominance'
-				? getStablecoinRuntimeSeries({
-						dataset: assetPresentation.dataset,
-						charts: assetPresentation.charts,
-						availableSeries: assetPresentation.availableSeries
-					})
+				? getStablecoinRuntimeSeries(assetPresentation)
 				: {
 						selectableSeries: EMPTY_SERIES,
 						renderedSelectableSeries: EMPTY_SERIES,

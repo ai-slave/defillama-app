@@ -1,4 +1,4 @@
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesChartDataset, MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
 
 export const RWA_OPEN_INTEREST_SERIES_LABEL = 'RWA Perps OI'
 
@@ -6,7 +6,7 @@ export type RWAChartSeriesValue = number | null | undefined
 export type RWAChartRow = { timestamp: number } & Record<string, RWAChartSeriesValue>
 export type RWAChartDataset = { source: RWAChartRow[]; dimensions: string[] }
 export type RWAIndependentChartSeries = { name: string; data: Array<[number, number | null]> }
-export type RWAPositionalChartDataset = MultiSeriesChartDataset & {
+export type RWAPositionalChartDataset = MultiSeriesTimeSeriesDataset & {
 	/** RWA Perps overlays have an independent calendar and are mirrored into renderer chart configs. */
 	independentSeries?: RWAIndependentChartSeries[]
 }
@@ -46,15 +46,14 @@ export function materializeRwaIndependentChartDataset(dataset: RWAPositionalChar
 }
 
 /** Materialize the named public RWA API contract once before a Cartesian renderer consumes it. */
-export function toRwaMultiSeriesChartDataset(
-	dataset: RWAChartDataset,
-	dimensions: string[] = dataset.dimensions
-): MultiSeriesChartDataset {
-	const source = new Array<MultiSeriesChartDataset['source'][number]>(dataset.source.length)
+export function toRwaMultiSeriesChartDataset(dataset: RWAChartDataset): MultiSeriesTimeSeriesDataset {
+	const dimensions: MultiSeriesTimeSeriesDataset['dimensions'] = ['timestamp', ...dataset.dimensions.slice(1)]
+	const source = new Array<MultiSeriesTimeSeriesDataset['source'][number]>(dataset.source.length)
 	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
 		const input = dataset.source[rowIndex]
-		const row = new Array<RWAChartSeriesValue>(dimensions.length)
-		for (let dimensionIndex = 0; dimensionIndex < dimensions.length; dimensionIndex++) {
+		const row: MultiSeriesTimeSeriesDataset['source'][number] = [input.timestamp]
+		row.length = dimensions.length
+		for (let dimensionIndex = 1; dimensionIndex < dimensions.length; dimensionIndex++) {
 			row[dimensionIndex] = input[dimensions[dimensionIndex]]
 		}
 		source[rowIndex] = row
@@ -88,7 +87,7 @@ export function mergeRwaPositionalChartDatasets(
 		}
 	}
 
-	const dimensions = [...primary.dimensions]
+	const dimensions: RWAPositionalChartDataset['dimensions'] = [...primary.dimensions]
 	const dimensionIndexes = new Map<string, number>()
 	for (let index = 0; index < dimensions.length; index++) dimensionIndexes.set(dimensions[index], index)
 	for (let index = 1; index < overlay.dimensions.length; index++) {
@@ -101,25 +100,28 @@ export function mergeRwaPositionalChartDatasets(
 
 	const rowsByTimestamp = new Map<number, RWAPositionalChartDataset['source'][number]>()
 	for (const input of primary.source) {
-		const row = new Array<number | null | undefined>(dimensions.length)
-		for (let index = 0; index < primary.dimensions.length; index++)
-			row[index] = input[index] as number | null | undefined
-		rowsByTimestamp.set(input[0] as number, row)
+		const row: RWAPositionalChartDataset['source'][number] = [input[0]]
+		row.length = dimensions.length
+		for (let index = 0; index < primary.dimensions.length; index++) row[index] = input[index]
+		rowsByTimestamp.set(input[0], row)
 	}
 	for (const input of overlay.source) {
-		const timestamp = input[0] as number
+		const timestamp = input[0]
 		let row = rowsByTimestamp.get(timestamp)
 		if (!row) {
-			row = new Array<number | null | undefined>(dimensions.length)
-			row[0] = timestamp
+			row = [timestamp]
+			row.length = dimensions.length
 			rowsByTimestamp.set(timestamp, row)
 		}
-		for (let index = 1; index < overlay.dimensions.length; index++) {
-			row[dimensionIndexes.get(overlay.dimensions[index])!] = input[index] as number | null | undefined
+		for (const [inputIndex, dimension] of overlay.dimensions.entries()) {
+			if (inputIndex === 0) continue
+			const outputIndex = dimensionIndexes.get(dimension)
+			if (outputIndex === undefined) throw new Error(`Missing merged RWA dimension "${dimension}"`)
+			row[outputIndex] = input[inputIndex]
 		}
 	}
 
-	return { source: [...rowsByTimestamp.values()].sort((a, b) => (a[0] as number) - (b[0] as number)), dimensions }
+	return { source: [...rowsByTimestamp.values()].sort((a, b) => a[0] - b[0]), dimensions }
 }
 
 export function toFiniteRwaChartValue(value: unknown): number {

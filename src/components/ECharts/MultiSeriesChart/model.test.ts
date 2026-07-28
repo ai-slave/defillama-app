@@ -3,15 +3,14 @@ import { buildAlignedCartesianChartModel, buildSparseCartesianChartModel } from 
 
 describe('cartesian chart models', () => {
 	it('builds aligned rows without intermediate tuples', () => {
-		expect(
-			buildAlignedCartesianChartModel(
-				[2, 3],
-				[
-					{ name: 'TVL', type: 'line', values: [10, 11] },
-					{ name: 'Fees', type: 'bar', values: [1, undefined], stack: 'flows' }
-				]
-			)
-		).toMatchObject({
+		const model = buildAlignedCartesianChartModel(
+			[2, 3],
+			[
+				{ name: 'TVL', type: 'line', values: [10, 11] },
+				{ name: 'Fees', type: 'bar', values: [1, undefined], stack: 'flows' }
+			]
+		)
+		expect(model).toMatchObject({
 			dataset: {
 				dimensions: ['timestamp', 'TVL', 'Fees'],
 				source: [
@@ -24,6 +23,7 @@ describe('cartesian chart models', () => {
 				{ name: 'Fees', encode: { x: 0, y: 2 }, stack: 'flows' }
 			]
 		})
+		expect(model.charts[0]).toEqual({ type: 'line', name: 'TVL', encode: { x: 0, y: 1 } })
 	})
 
 	it('keeps independently timed series positional so sibling timestamps do not create line gaps', () => {
@@ -33,8 +33,8 @@ describe('cartesian chart models', () => {
 				name: 'B',
 				type: 'line',
 				data: [
-					[1, 10],
-					[3, 31]
+					[3, 31],
+					[1, 10]
 				]
 			}
 		])
@@ -146,16 +146,16 @@ describe('cartesian chart models', () => {
 				name: 'A',
 				type: 'line',
 				data: [
-					[1, 10],
-					[2, 20]
+					[2, 20],
+					[1, 10]
 				]
 			},
 			{
 				name: 'B',
 				type: 'bar',
 				data: [
-					[1, 11],
-					[2, null]
+					[2, null],
+					[1, 11]
 				]
 			}
 		])

@@ -1,4 +1,4 @@
-import type { EChartsOption } from 'echarts'
+import type { EChartsOption, LegendComponentOption } from 'echarts'
 import { PieChart as EPieChart, type PieSeriesOption } from 'echarts/charts'
 import { GraphicComponent, GridComponent, LegendComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
@@ -33,7 +33,11 @@ const DEFAULT_PIE_CENTER_Y = '50%' as const
 
 function normalizePieTooltipParams(params: unknown): PieTooltipParams {
 	const value = Array.isArray(params) ? params[0] : params
-	return value && typeof value === 'object' ? (value as PieTooltipParams) : {}
+	return isPieTooltipParams(value) ? value : {}
+}
+
+function isPieTooltipParams(value: unknown): value is PieTooltipParams {
+	return value !== null && typeof value === 'object'
 }
 
 function PieChart({
@@ -43,7 +47,7 @@ function PieChart({
 	title,
 	headingAs,
 	valueSymbol = '$',
-	radius = null,
+	radius,
 	centerY = DEFAULT_PIE_CENTER_Y,
 	showLegend = false,
 	legendPosition,
@@ -130,7 +134,7 @@ function PieChart({
 			return {
 				legendBoxWidth: 0,
 				legendLabelByName: new Map(),
-				legendAlign: undefined as 'left' | 'right' | undefined
+				legendAlign: undefined
 			}
 		const legendOrient = legendPosition?.orient ?? 'vertical'
 		const legendIsRight = legendPosition?.right != null || legendPosition?.left === 'right' || !legendPosition
@@ -138,7 +142,7 @@ function PieChart({
 			return {
 				legendBoxWidth: 0,
 				legendLabelByName: new Map(),
-				legendAlign: undefined as 'left' | 'right' | undefined
+				legendAlign: undefined
 			}
 
 		const fontSize = typeof legendTextStyle?.fontSize === 'number' ? legendTextStyle.fontSize : 12
@@ -239,13 +243,11 @@ function PieChart({
 					shadowColor: 'rgba(0, 0, 0, 0.5)'
 				}
 			},
-			data: chartData.map((item) => ({
-				name: item.name,
-				value: item.value,
-				itemStyle: {
-					color: stackColorByName.get(item.name)
-				}
-			}))
+			data: chartData.map((item) => {
+				const color = stackColorByName.get(item.name)
+				const dataItem = { name: item.name, value: item.value }
+				return color === undefined ? dataItem : { ...dataItem, itemStyle: { color } }
+			})
 		}
 
 		if (reservedRight > 0) {
@@ -318,6 +320,31 @@ function PieChart({
 		const instance = chartRef.current
 		if (!instance || isChartDisposed(instance)) return
 
+		const legend: LegendComponentOption = {
+			...chartLegendScrollStyle(chartTheme.legendPageActive, chartTheme.legendPageInactive, chartTheme.axisLabel),
+			show: showLegend,
+			type: 'scroll',
+			top: CHART_INSET,
+			right: CHART_VERTICAL_LEGEND_RIGHT_INSET,
+			orient: 'vertical',
+			data: chartData.map((item) => item.name),
+			icon: 'circle',
+			itemWidth: 10,
+			itemHeight: 10,
+			itemGap: 10,
+			textStyle: {
+				color: chartTheme.text,
+				...(legendTextStyle || {})
+			},
+			formatter: function (name: string) {
+				return legendLabelByName.get(String(name)) ?? String(name)
+			},
+			...legendPosition
+		}
+		if (legendBoxWidth > 0) legend.width = legendBoxWidth
+		// If everything fits, right-align looks cleaner. If truncated, left-align maximizes readable label length.
+		if (legendAlign !== undefined) legend.align = legendAlign
+
 		const option: EChartsOption = {
 			tooltip: {
 				trigger: 'item',
@@ -341,30 +368,7 @@ function PieChart({
 				top: 0,
 				right: 0
 			},
-			legend: {
-				...chartLegendScrollStyle(chartTheme.legendPageActive, chartTheme.legendPageInactive, chartTheme.axisLabel),
-				show: showLegend,
-				type: 'scroll',
-				top: CHART_INSET,
-				right: CHART_VERTICAL_LEGEND_RIGHT_INSET,
-				orient: 'vertical', // Default
-				data: chartData.map((item) => item.name),
-				icon: 'circle',
-				itemWidth: 10,
-				itemHeight: 10,
-				itemGap: 10,
-				// If everything fits, right-align looks cleaner. If truncated, left-align maximizes readable label length.
-				align: legendAlign,
-				textStyle: {
-					color: chartTheme.text, // Default color
-					...(legendTextStyle || {}) // Apply overrides from prop
-				},
-				formatter: function (name: string) {
-					return legendLabelByName.get(String(name)) ?? String(name)
-				},
-				...(legendBoxWidth > 0 ? { width: legendBoxWidth } : {}),
-				...legendPosition // Apply overrides from prop (left/right/top/bottom/orient)
-			},
+			legend,
 			series
 		}
 		instance.setOption(option)

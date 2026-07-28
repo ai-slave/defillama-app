@@ -1,6 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { applyConfiguredYAxisScale, applyLogScaleToYAxes, getZeroBaselineYAxisMin } from './logScale'
-import type { MultiSeriesYAxisOption } from './types'
+import { applyConfiguredYAxisScale, applyLogScaleToYAxes, getZeroBaselineYAxisMin, mergeYAxisOption } from './logScale'
+import type { MultiSeriesYAxisOption, MultiSeriesYAxisOverride } from './types'
+
+const valueYAxisOverride = { type: 'value', scale: true } satisfies MultiSeriesYAxisOverride
+const logYAxisOverride = { type: 'log', logBase: 2 } satisfies MultiSeriesYAxisOverride
+
+// @ts-expect-error `scale` is exclusive to value axes.
+const invalidLogYAxisOverride = { type: 'log', scale: true } satisfies MultiSeriesYAxisOverride
+
+// @ts-expect-error `logBase` is exclusive to log axes.
+const invalidValueYAxisOverride = { type: 'value', logBase: 2 } satisfies MultiSeriesYAxisOverride
+
+void invalidLogYAxisOverride
+void invalidValueYAxisOverride
+
+describe('MultiSeriesYAxisOverride', () => {
+	it('keeps value-only and log-only settings in separate variants', () => {
+		expect(valueYAxisOverride).toEqual({ type: 'value', scale: true })
+		expect(logYAxisOverride).toEqual({ type: 'log', logBase: 2 })
+	})
+})
 
 describe('applyConfiguredYAxisScale', () => {
 	it('removes the implicit zero baseline when a caller opts into axis scaling', () => {
@@ -26,6 +45,33 @@ describe('applyConfiguredYAxisScale', () => {
 	})
 })
 
+describe('mergeYAxisOption', () => {
+	it('uses explicit undefined to clear an inherited minimum', () => {
+		expect(mergeYAxisOption({ min: getZeroBaselineYAxisMin }, { min: undefined })).toEqual({})
+	})
+
+	it('preserves an explicit scaled-axis request', () => {
+		expect(mergeYAxisOption({ min: getZeroBaselineYAxisMin }, { scale: true })).toEqual({
+			min: getZeroBaselineYAxisMin,
+			scale: true
+		})
+	})
+
+	it('removes value-only settings when an override selects a log axis', () => {
+		expect(mergeYAxisOption({ type: 'value', scale: true }, { type: 'log', logBase: 2 })).toEqual({
+			type: 'log',
+			logBase: 2
+		})
+	})
+
+	it('removes log-only settings when an override selects a value axis', () => {
+		expect(mergeYAxisOption({ type: 'log', logBase: 2 }, { type: 'value', scale: true })).toEqual({
+			type: 'value',
+			scale: true
+		})
+	})
+})
+
 describe('applyLogScaleToYAxes', () => {
 	it('leaves axes untouched when logScale is off', () => {
 		const axes: MultiSeriesYAxisOption[] = [{ type: 'value', min: 0 }]
@@ -33,7 +79,7 @@ describe('applyLogScaleToYAxes', () => {
 	})
 
 	it('sets type=log, drops a zero baseline, and keeps a positive maximum', () => {
-		const axes: MultiSeriesYAxisOption[] = [{ type: 'value', min: 0, max: 100, position: 'left' }]
+		const axes: MultiSeriesYAxisOption[] = [{ type: 'value', min: 0, max: 100, position: 'left', scale: true }]
 		const out = applyLogScaleToYAxes(axes, true, [0])
 		expect(out[0]).toEqual({ type: 'log', max: 100, position: 'left' })
 		expect(out[0]).not.toHaveProperty('min')
