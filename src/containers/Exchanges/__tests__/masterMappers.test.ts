@@ -189,6 +189,7 @@ function directoryVenue(patch: Partial<MasterDirectoryVenue> = {}): MasterDirect
 		warnings: [{ level: 'caution', text: 'Limited coverage' }],
 		regional: null,
 		nvol: { spot: null, linear_perp: null, inverse_perp: null },
+		rank: null,
 		...patch
 	}
 }
@@ -391,6 +392,39 @@ function micaVenue(patch: Partial<MasterMicaVenue> = {}): MasterMicaVenue {
 }
 
 describe('master directory mapper', () => {
+	it('orders ranked venues by quality score and rank before volume-ranked unscored venues', () => {
+		const withVolume = (slug: string, totalTradingVolume: number) => {
+			const venue = directoryVenue()
+			return directoryVenue({
+				slug,
+				totals: { ...venue.totals, total_trading_volume_24h: totalTradingVolume }
+			})
+		}
+		const withQuality = (slug: string, score: number, rank: number, totalTradingVolume: number) => ({
+			...withVolume(slug, totalTradingVolume),
+			rank: { score, rank, segments: {}, components: {} }
+		})
+
+		const rows = mapMasterDirectory(
+			directoryResponse([
+				withVolume('unranked-smaller', 1_000),
+				withQuality('lower-score', 80, 1, 10_000),
+				withQuality('score-tie-rank-two', 90, 2, 100),
+				withVolume('unranked-larger', 2_000),
+				withQuality('score-tie-rank-one', 90, 1, 50)
+			])
+		).rows
+
+		expect(rows.map((row) => row.slug)).toEqual([
+			'score-tie-rank-one',
+			'score-tie-rank-two',
+			'lower-score',
+			'unranked-larger',
+			'unranked-smaller'
+		])
+		expect(rows[0].quality).toMatchObject({ score: 90, rank: 1 })
+	})
+
 	it('uses canonical totals and preserves nullable segment observations and enriched metadata', () => {
 		const base = directoryVenue()
 		const mapped = mapMasterDirectory(

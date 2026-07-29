@@ -138,6 +138,7 @@ export function TableWithSearch<T extends RowData>({
 	const columnsOptions = React.useMemo(
 		() =>
 			columns.flatMap((column) => {
+				if (column.meta?.hidden) return []
 				const key = column.id ?? ('accessorKey' in column ? String(column.accessorKey) : '')
 				if (!key) return []
 				const name = typeof column.header === 'function' ? key : column.header != null ? String(column.header) : key
@@ -148,7 +149,7 @@ export function TableWithSearch<T extends RowData>({
 	)
 	const selectedColumns = instance
 		.getAllLeafColumns()
-		.filter((column) => column.getIsVisible())
+		.filter((column) => column.getIsVisible() && !column.columnDef.meta?.hidden)
 		.map((column) => column.id)
 	const setColumnOptions = React.useCallback(
 		(newOptions: string[] | ((prev: string[]) => string[])) => {

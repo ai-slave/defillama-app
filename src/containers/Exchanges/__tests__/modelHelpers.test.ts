@@ -63,6 +63,7 @@ function row(patch: Partial<ExchangeDirectoryRowModel> = {}): ExchangeDirectoryR
 		selectedCountry: null,
 		selectedCountryStatus: null,
 		normalizedVolume: null,
+		quality: null,
 		...patch
 	}
 }
@@ -310,7 +311,7 @@ describe('parent/child directory nesting', () => {
 		expect(nested[0].subRows).toBeUndefined()
 	})
 
-	it('aggregates valid Binance brand activity and blanks parent-only facts', () => {
+	it('aggregates valid Binance brand activity and keeps parent-level facts', () => {
 		const binance = row({
 			slug: 'binance',
 			name: 'Binance',
@@ -403,14 +404,14 @@ describe('parent/child directory nesting', () => {
 			normalized: 820,
 			unverifiedFraction: 20 / 1_040
 		})
-		expect(brand).toMatchObject({
-			reserves: null,
-			fees: null,
-			compliance: null,
-			profile: null,
-			funding: null,
-			warnings: []
-		})
+		// Brand-level facts stay the parent's, so the brand row still ranks in the
+		// Transparency/Fees/Compliance views instead of reading as "no data".
+		expect(brand.reserves?.totalUsd).toBe(1)
+		expect(brand.fees).toBe(binance.fees)
+		expect(brand.compliance?.headquarters).toBe('Global')
+		expect(brand.profile?.nativeToken).toBe('BNB')
+		expect(brand.funding?.hasFiatOnramp).toBe(true)
+		expect(brand.warnings).toEqual([{ level: 'caution', text: 'Parent-only warning' }])
 		// Brand-row identity stays the global venue's (slug, links, profile).
 		expect(brand.slug).toBe('binance')
 		expect(brand.profileHref).toBe('/exchange/binance')

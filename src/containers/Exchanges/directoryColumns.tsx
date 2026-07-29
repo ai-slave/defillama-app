@@ -186,6 +186,26 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 			cell: ({ getValue }) => <KindBadge kind={getValue()} />,
 			meta: { headerClassName: 'w-[71px] min-w-[71px]', headerHelperText: definitions.kind.description }
 		}),
+		// Depth leads the activity view: it is the liquidity fact volume is judged against.
+		columnHelper.accessor((row) => depthTotal(activityForScope(row, scope)) ?? undefined, {
+			id: 'depth2Usd',
+			header: definitions.depth2Usd.label,
+			cell: ({ row, getValue }) => {
+				const activity = activityForScope(row.original, scope)
+				const metric = depthMetricState(activity)
+				if (metric.state === 'unsupported') return <UnsupportedMetric />
+				if (metric.state === 'missing') return <span className="text-tertiary">–</span>
+				const note = [metric.partial ? 'Partial orderbook coverage' : null, activity?.doubleCount?.depth]
+					.filter(Boolean)
+					.join(' · ')
+				return linkedMetric(money(getValue()), note || undefined)
+			},
+			meta: {
+				headerClassName: 'w-[114px] min-w-[114px]',
+				align: 'end',
+				headerHelperText: definitions.depth2Usd.description
+			}
+		}),
 		columnHelper.accessor((row) => activityForScope(row, scope)?.volume24h ?? undefined, {
 			id: 'volume24h',
 			header: definitions.volume24h.label,
@@ -213,6 +233,28 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				}
 			}
 		),
+		columnHelper.accessor((row) => normalizedVolumeForScope(row, scope)?.normalized ?? undefined, {
+			id: 'normalizedVolume',
+			header: definitions.normalizedVolume.label,
+			cell: ({ row, getValue }) => {
+				const nvol = normalizedVolumeForScope(row.original, scope)
+				return nvol ? (
+					<Tooltip
+						content={`${percentage(nvol.discountFraction)} below reported · ${percentage(nvol.unverifiedFraction)} unverified${nvol.flag ? ` · ${nvol.flag}` : ''}`}
+						className="ms-auto w-fit"
+					>
+						<span className="underline decoration-dotted">{money(getValue())}</span>
+					</Tooltip>
+				) : (
+					'–'
+				)
+			},
+			meta: {
+				headerClassName: 'w-[130px] min-w-[130px]',
+				align: 'end',
+				headerHelperText: definitions.normalizedVolume.description
+			}
+		}),
 		columnHelper.accessor((row) => activityForScope(row, scope)?.openInterestUsd ?? undefined, {
 			id: 'openInterestUsd',
 			header: definitions.openInterestUsd.label,
@@ -288,47 +330,6 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerClassName: 'w-[79px] min-w-[79px]',
 				align: 'end',
 				headerHelperText: definitions.coinCount.description
-			}
-		}),
-		columnHelper.accessor((row) => normalizedVolumeForScope(row, scope)?.normalized ?? undefined, {
-			id: 'normalizedVolume',
-			header: definitions.normalizedVolume.label,
-			cell: ({ row, getValue }) => {
-				const nvol = normalizedVolumeForScope(row.original, scope)
-				return nvol ? (
-					<Tooltip
-						content={`${percentage(nvol.discountFraction)} below reported · ${percentage(nvol.unverifiedFraction)} unverified${nvol.flag ? ` · ${nvol.flag}` : ''}`}
-						className="ms-auto w-fit"
-					>
-						<span className="underline decoration-dotted">{money(getValue())}</span>
-					</Tooltip>
-				) : (
-					'–'
-				)
-			},
-			meta: {
-				headerClassName: 'w-[130px] min-w-[130px]',
-				align: 'end',
-				headerHelperText: definitions.normalizedVolume.description
-			}
-		}),
-		columnHelper.accessor((row) => depthTotal(activityForScope(row, scope)) ?? undefined, {
-			id: 'depth2Usd',
-			header: definitions.depth2Usd.label,
-			cell: ({ row, getValue }) => {
-				const activity = activityForScope(row.original, scope)
-				const metric = depthMetricState(activity)
-				if (metric.state === 'unsupported') return <UnsupportedMetric />
-				if (metric.state === 'missing') return <span className="text-tertiary">–</span>
-				const note = [metric.partial ? 'Partial orderbook coverage' : null, activity?.doubleCount?.depth]
-					.filter(Boolean)
-					.join(' · ')
-				return linkedMetric(money(getValue()), note || undefined)
-			},
-			meta: {
-				headerClassName: 'w-[114px] min-w-[114px]',
-				align: 'end',
-				headerHelperText: definitions.depth2Usd.description
 			}
 		}),
 		columnHelper.accessor((row) => sparklineForScope(row, scope), {

@@ -44,33 +44,32 @@ const EMPTY_TOTALS: MarketCategoryTotals = { pair_count: 0, total_volume_24h: 0,
 // The token is implied by the page, so omit the redundant exchange-profile token column.
 const TOKEN_PAGE_OMITTED_COLUMNS = ['token'] as const
 
+// Depth first, then volume and its derivatives, then the perp-only metrics — the same
+// reading order as the exchanges directory.
 export const TOKEN_PAGE_COLUMN_ORDER = [
 	'venue',
 	'pair',
 	'price',
 	'priceChange24h',
 	'depth2Usd',
-	'openInterestUsd',
-	'openInterestChange24h',
 	'volume24h',
 	'volumeChange24h',
-	'normalizedVolume'
+	'normalizedVolume',
+	'openInterestUsd',
+	'openInterestChange24h',
+	'fundingRate8h',
+	'makerFee',
+	'takerFee'
 ] as const
 
+// OI and funding are perp-only; spot gets everything else.
+const SPOT_HIDDEN_COLUMNS = new Set<string>(['openInterestUsd', 'openInterestChange24h', 'fundingRate8h'])
+
 export const TOKEN_PAGE_VISIBLE_COLUMNS: Record<Segment, readonly string[]> = {
-	spot: ['venue', 'pair', 'price', 'priceChange24h', 'depth2Usd', 'volume24h', 'volumeChange24h', 'normalizedVolume'],
+	spot: TOKEN_PAGE_COLUMN_ORDER.filter((id) => !SPOT_HIDDEN_COLUMNS.has(id)),
 	linear_perp: TOKEN_PAGE_COLUMN_ORDER,
-	inverse_perp: [
-		'venue',
-		'pair',
-		'price',
-		'priceChange24h',
-		'depth2Usd',
-		'openInterestUsd',
-		'openInterestChange24h',
-		'volume24h',
-		'volumeChange24h'
-	]
+	// Normalized volume has no inverse-perp equivalent, so it would only render N/A.
+	inverse_perp: TOKEN_PAGE_COLUMN_ORDER.filter((id) => id !== 'normalizedVolume')
 }
 
 export function toPairTableRow(row: MarketPair, depthBands: number[], segment: Segment): PairTableRow {

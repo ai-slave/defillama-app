@@ -223,6 +223,18 @@ export interface MasterDirectoryVenue extends MasterVenueCore {
 	warnings: MasterWarning[]
 	regional: Pick<MasterExchangeRegionManifestResponse, 'variants'> | null
 	nvol: Record<MasterSegment, MasterSegmentNormalizedVolume | null>
+	/** Internal quality rank, stamped from a manually refreshed upstream file — null
+	 * for a venue not scored yet. `score` is the 0–100 composite and IS comparable
+	 * across CEX and DEX (the popularity component applies to both), so it is what a
+	 * mixed table sorts on; `rank` is the position within the venue's own kind and only
+	 * breaks ties. `components` is the breakdown, carried for a later "why this rank"
+	 * surface. */
+	rank: {
+		score: number
+		rank: number
+		segments: Partial<Record<MasterSegment, number>>
+		components: Record<string, number | null>
+	} | null
 }
 
 export interface MasterDirectoryTotals {

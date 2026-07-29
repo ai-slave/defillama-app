@@ -294,8 +294,22 @@ function mapDirectoryVenue(
 					linear_perp: mapNormalizedVolume(venue.nvol.linear_perp),
 					inverse_perp: mapNormalizedVolume(venue.nvol.inverse_perp)
 				}
-			: null
+			: null,
+		quality: venue.rank ?? null
 	}
+}
+
+/** Directory default order: internal quality score descending, tie-broken on rank.
+ * Score is comparable across CEX and DEX because the popularity component applies to
+ * both — without it DEXes float to the top on a renormalized composite. `rank` stays
+ * the position within a venue's own kind, so it only breaks ties here. Unranked venues
+ * sort last, by volume. The table ships this order as-is (no default `sortingState`),
+ * so any header click still overrides it. */
+function byQualityRank(a: ExchangeDirectoryRowModel, b: ExchangeDirectoryRowModel): number {
+	if (a.quality && b.quality) return b.quality.score - a.quality.score || a.quality.rank - b.quality.rank
+	if (a.quality) return -1
+	if (b.quality) return 1
+	return (b.totalVolume24h ?? 0) - (a.totalVolume24h ?? 0)
 }
 
 /** Cross-venue perp OI is not part of DirectoryTotals; sum venues within one
@@ -313,7 +327,7 @@ function directoryOpenInterest(venues: MasterDirectoryVenue[], segment: MasterSe
 
 export function mapMasterDirectory(response: MasterDirectoryResponse): ExchangeDirectoryModel {
 	const venuesBySlug = new Map(response.venues.map((venue) => [venue.slug, venue]))
-	const rows = response.venues.map((venue) => mapDirectoryVenue(venue, venuesBySlug))
+	const rows = response.venues.map((venue) => mapDirectoryVenue(venue, venuesBySlug)).sort(byQualityRank)
 	const volumeSplit = (totals: {
 		spot_volume_24h: number | null
 		linear_perp_volume_24h: number | null

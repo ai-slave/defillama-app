@@ -191,16 +191,14 @@ function brandRow(parent: ExchangeDirectoryRowModel, children: ExchangeDirectory
 		}
 	}
 	const hasNormalizedVolume = EXCHANGE_SEGMENTS.some((segment) => normalizedVolume[segment] !== null)
+	// Non-activity facts (reserves, fees, compliance, funding, profile, warnings) stay
+	// the parent's own — they are brand-level facts, not sums, and blanking them made the
+	// brand row read as "no data" and sort last in every non-activity view (Binance below
+	// venues a thousandth its size in Transparency). Children keep their own values.
 	return {
 		...parent,
 		segments,
 		sparks,
-		reserves: null,
-		fees: null,
-		compliance: null,
-		profile: null,
-		funding: null,
-		warnings: [],
 		normalizedVolume: hasNormalizedVolume ? normalizedVolume : null
 	}
 }

@@ -166,6 +166,14 @@ export interface ExchangeDirectoryRowModel {
 	selectedCountry: string | null
 	selectedCountryStatus: ExchangeRegionStatus | null
 	normalizedVolume: Record<ExchangeSegment, ExchangeNormalizedVolume | null> | null
+	/** Internal quality rank — the directory's default order. Not rendered yet;
+	 * `components` is the breakdown, kept for a later "why this rank" surface. */
+	quality: {
+		score: number
+		rank: number
+		segments: Partial<Record<ExchangeSegment, number>>
+		components: Record<string, number | null>
+	} | null
 }
 
 export interface ExchangeVolumeSplit {

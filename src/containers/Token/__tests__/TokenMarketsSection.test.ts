@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { resolvePairColumns, resolvePairColumnVisibility } from '~/containers/Exchanges/PairTable'
 import type { MarketPair } from '~/containers/Markets/api.types'
 import {
 	rankRowsBybitFirst,
@@ -70,31 +71,76 @@ function marketPair(slug: string, displayName: string, volume24h: number): Marke
 }
 
 describe('token markets rows', () => {
-	it('uses the requested default column order and visibility', () => {
-		expect(TOKEN_PAGE_COLUMN_ORDER).toEqual([
-			'venue',
-			'pair',
-			'price',
-			'priceChange24h',
-			'depth2Usd',
-			'openInterestUsd',
-			'openInterestChange24h',
-			'volume24h',
-			'volumeChange24h',
-			'normalizedVolume'
-		])
-		expect(TOKEN_PAGE_VISIBLE_COLUMNS.spot).toEqual([
-			'venue',
-			'pair',
-			'price',
-			'priceChange24h',
-			'depth2Usd',
-			'volume24h',
-			'volumeChange24h',
-			'normalizedVolume'
-		])
-		expect(TOKEN_PAGE_VISIBLE_COLUMNS.linear_perp).toEqual(TOKEN_PAGE_COLUMN_ORDER)
-		expect(TOKEN_PAGE_VISIBLE_COLUMNS.inverse_perp).not.toContain('normalizedVolume')
+	it.each([
+		[
+			'spot',
+			[
+				'venue',
+				'pair',
+				'price',
+				'priceChange24h',
+				'depth2Usd',
+				'volume24h',
+				'volumeChange24h',
+				'normalizedVolume',
+				'makerFee',
+				'takerFee'
+			]
+		],
+		[
+			'linear_perp',
+			[
+				'venue',
+				'pair',
+				'price',
+				'priceChange24h',
+				'depth2Usd',
+				'volume24h',
+				'volumeChange24h',
+				'normalizedVolume',
+				'openInterestUsd',
+				'openInterestChange24h',
+				'fundingRate8h',
+				'makerFee',
+				'takerFee'
+			]
+		],
+		[
+			'inverse_perp',
+			[
+				'venue',
+				'pair',
+				'price',
+				'priceChange24h',
+				'depth2Usd',
+				'volume24h',
+				'volumeChange24h',
+				'openInterestUsd',
+				'openInterestChange24h',
+				'fundingRate8h',
+				'makerFee',
+				'takerFee'
+			]
+		]
+	] as const)('resolves the %s table to the requested visible column order', (segment, expected) => {
+		const columns = resolvePairColumns({
+			segment,
+			capabilities: {
+				openInterest: segment !== 'spot',
+				funding: segment !== 'spot',
+				depth: true
+			},
+			showVenue: true,
+			omitColumns: ['token'],
+			columnOrder: TOKEN_PAGE_COLUMN_ORDER
+		})
+		const visibility = resolvePairColumnVisibility(columns, TOKEN_PAGE_VISIBLE_COLUMNS[segment])
+		const visibleColumnIds = columns
+			.filter((column) => !column.meta?.hidden && visibility[column.id as string] !== false)
+			.map((column) => column.id)
+
+		expect(visibleColumnIds).toEqual(expected)
+		expect(visibleColumnIds).not.toContain('maxLeverage')
 	})
 
 	it('maps the curated exchange name and derives its canonical profile route', () => {

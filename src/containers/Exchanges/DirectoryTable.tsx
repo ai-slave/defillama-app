@@ -39,14 +39,15 @@ const GROUP_OPTIONS = [
 ] as const
 
 const GROUP_COLUMN_IDS: Record<DirectoryColumnGroup, string[]> = {
+	// Render order lives in buildDirectoryColumns; this is only the visible set.
 	activity: [
+		'depth2Usd',
 		'volume24h',
 		'volumeChange24h',
 		'normalizedVolume',
 		'openInterestUsd',
 		'openInterestChange24h',
 		'volumeToOi',
-		'depth2Usd',
 		'volumeToDepth',
 		'sparkline',
 		'marketCount',
@@ -89,12 +90,11 @@ function directoryColumnVisibility(group: DirectoryColumnGroup, scope: ExchangeS
 	return Object.fromEntries(ALL_COLUMN_IDS.map((id) => [id, visible.has(id)]))
 }
 
+// Only transparency gets a default sort — reserves is the one figure that view exists
+// to rank on. Every other view keeps the mapper's quality-rank order (see byQualityRank)
+// so switching views doesn't reshuffle the table. Clicking any header still takes over.
 function sortingFor(group: DirectoryColumnGroup): SortingState {
-	if (group === 'transparency') return [{ id: 'reservesUsd', desc: true }]
-	if (group === 'fees') return []
-	if (group === 'funding') return [{ id: 'fiatOnramp', desc: true }]
-	if (group === 'compliance') return []
-	return [{ id: 'volume24h', desc: true }]
+	return group === 'transparency' ? [{ id: 'reservesUsd', desc: true }] : []
 }
 
 export function DirectoryTable({

@@ -57,25 +57,21 @@ export function pairDepthTotal(bid: number | null, ask: number | null) {
 	return sumNullable([bid, ask])
 }
 
-// Perp-only and fee/listing columns stay defined but off by default — reachable via the column selector.
+// OI, funding and fees are core to reading a market, so they ship visible; the perp-only
+// ones are simply not built for spot. The rest stay defined but off — reachable via the
+// column selector. maxLeverage is CSV-only because it renders beside the pair name.
 function pairColumnVisibility(): VisibilityState {
 	return {
-		openInterestUsd: false,
-		openInterestChange24h: false,
-		fundingRate8h: false,
 		markPrice: false,
 		indexPrice: false,
 		basis: false,
 		nextFundingAt: false,
 		volumeFreshness: false,
-		maxLeverage: false,
-		makerFee: false,
-		takerFee: false,
 		listedAt: false
 	}
 }
 
-function buildColumns(
+export function buildPairColumns(
 	segment: ExchangeSegment,
 	capabilities: { openInterest: boolean; funding: boolean; depth: boolean },
 	showVenue: boolean
@@ -118,16 +114,27 @@ function buildColumns(
 			header: definitions.pair.label,
 			enableSorting: false,
 			cell: ({ row, getValue }) => (
-				<BasicLink
-					href={row.original.pairUrl}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="truncate label-md text-link uppercase hover:underline"
-				>
-					{getValue()}
-				</BasicLink>
+				<span className="flex min-w-0 items-center gap-1.5">
+					<BasicLink
+						href={row.original.pairUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="truncate label-md text-link uppercase hover:underline"
+					>
+						{getValue()}
+					</BasicLink>
+					{/* Sibling of the link, not a child: leverage must never end up inside the link text. */}
+					{isPerp && row.original.maxLeverage != null ? (
+						<Tooltip content={`${definitions.maxLeverage.label}: ${row.original.maxLeverage}×`}>
+							<span className="shrink-0 label-sm text-tertiary">{row.original.maxLeverage}×</span>
+						</Tooltip>
+					) : null}
+				</span>
 			),
-			meta: { headerClassName: 'w-[135px]', headerHelperText: definitions.pair.description }
+			meta: {
+				headerClassName: isPerp ? 'w-[165px]' : 'w-[135px]',
+				headerHelperText: definitions.pair.description
+			}
 		}),
 		columnHelper.accessor((row) => row.price ?? undefined, {
 			id: 'price',
@@ -144,6 +151,32 @@ function buildColumns(
 				align: 'end',
 				headerHelperText: definitions.priceChange24h.description
 			}
+		}),
+		// Depth leads the liquidity metrics, matching the exchanges directory.
+		columnHelper.accessor((row) => pairDepthTotal(row.depthBid2Usd, row.depthAsk2Usd) ?? undefined, {
+			id: 'depth2Usd',
+			header: definitions.depth2Usd.label,
+			cell: ({ row, getValue }) =>
+				capabilities.depth ? (
+					<Tooltip
+						content={`Bid ${money(row.original.depthBid2Usd)} · Ask ${money(row.original.depthAsk2Usd)}${
+							row.original.depthBidMaxDistance != null || row.original.depthAskMaxDistance != null
+								? ` · fetched to ${percentage(
+										Math.min(
+											row.original.depthBidMaxDistance ?? Number.POSITIVE_INFINITY,
+											row.original.depthAskMaxDistance ?? Number.POSITIVE_INFINITY
+										)
+									)}`
+								: ''
+						}`}
+						className="ms-auto w-fit"
+					>
+						<span className="underline decoration-dotted">{money(getValue())}</span>
+					</Tooltip>
+				) : (
+					<UnsupportedMetric />
+				),
+			meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.depth2Usd.description }
 		}),
 		columnHelper.accessor((row) => row.volume24h ?? undefined, {
 			id: 'volume24h',
@@ -183,31 +216,6 @@ function buildColumns(
 				align: 'end',
 				headerHelperText: definitions.normalizedVolume.description
 			}
-		}),
-		columnHelper.accessor((row) => pairDepthTotal(row.depthBid2Usd, row.depthAsk2Usd) ?? undefined, {
-			id: 'depth2Usd',
-			header: definitions.depth2Usd.label,
-			cell: ({ row, getValue }) =>
-				capabilities.depth ? (
-					<Tooltip
-						content={`Bid ${money(row.original.depthBid2Usd)} · Ask ${money(row.original.depthAsk2Usd)}${
-							row.original.depthBidMaxDistance != null || row.original.depthAskMaxDistance != null
-								? ` · fetched to ${percentage(
-										Math.min(
-											row.original.depthBidMaxDistance ?? Number.POSITIVE_INFINITY,
-											row.original.depthAskMaxDistance ?? Number.POSITIVE_INFINITY
-										)
-									)}`
-								: ''
-						}`}
-						className="ms-auto w-fit"
-					>
-						<span className="underline decoration-dotted">{money(getValue())}</span>
-					</Tooltip>
-				) : (
-					<UnsupportedMetric />
-				),
-			meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.depth2Usd.description }
 		}),
 		columnHelper.accessor((row) => row.spreadFraction ?? undefined, {
 			id: 'spreadFraction',
@@ -299,7 +307,13 @@ function buildColumns(
 				id: 'maxLeverage',
 				header: definitions.maxLeverage.label,
 				cell: ({ getValue }) => (getValue() == null ? '–' : `${getValue()}×`),
-				meta: { headerClassName: 'w-[105px]', align: 'end', headerHelperText: definitions.maxLeverage.description }
+				meta: {
+					hidden: true,
+					csvOnly: true,
+					headerClassName: 'w-[105px]',
+					align: 'end',
+					headerHelperText: definitions.maxLeverage.description
+				}
 			})
 		)
 	}
@@ -368,6 +382,38 @@ function buildColumns(
 	return columns
 }
 
+export function resolvePairColumns({
+	segment,
+	capabilities,
+	showVenue,
+	omitColumns,
+	columnOrder
+}: {
+	segment: ExchangeSegment
+	capabilities: { openInterest: boolean; funding: boolean; depth: boolean }
+	showVenue: boolean
+	omitColumns?: readonly string[]
+	columnOrder?: readonly string[]
+}): ColumnDef<PairTableRow, any>[] {
+	const omit = new Set(omitColumns ?? [])
+	const columns = buildPairColumns(segment, capabilities, showVenue).filter((column) => !omit.has(column.id as string))
+	if (!columnOrder) return columns
+
+	const position = new Map(columnOrder.map((id, index) => [id, index]))
+	return columns.sort(
+		(a, b) => (position.get(a.id as string) ?? position.size) - (position.get(b.id as string) ?? position.size)
+	)
+}
+
+export function resolvePairColumnVisibility(
+	columns: ColumnDef<PairTableRow, any>[],
+	initialVisibleColumns?: readonly string[]
+): VisibilityState {
+	if (!initialVisibleColumns) return pairColumnVisibility()
+	const visible = new Set(initialVisibleColumns)
+	return Object.fromEntries(columns.map((column) => [column.id as string, visible.has(column.id as string)]))
+}
+
 const DEFAULT_PAIR_SORTING: SortingState = [{ id: 'volume24h', desc: true }]
 
 export function PairTable({
@@ -407,22 +453,21 @@ export function PairTable({
 	leadingControls?: React.ReactNode
 }) {
 	const { openInterest, funding, depth: supportsDepth } = capabilities
-	const columns = React.useMemo(() => {
-		const omit = new Set(omitColumns ?? [])
-		const filtered = buildColumns(segment, { openInterest, funding, depth: supportsDepth }, showVenue).filter(
-			(column) => !omit.has(column.id as string)
-		)
-		if (!columnOrder) return filtered
-		const position = new Map(columnOrder.map((id, index) => [id, index]))
-		return filtered.sort(
-			(a, b) => (position.get(a.id as string) ?? position.size) - (position.get(b.id as string) ?? position.size)
-		)
-	}, [segment, openInterest, funding, supportsDepth, showVenue, omitColumns, columnOrder])
-	const columnVisibility = React.useMemo(() => {
-		if (!initialVisibleColumns) return pairColumnVisibility()
-		const visible = new Set(initialVisibleColumns)
-		return Object.fromEntries(columns.map((column) => [column.id as string, visible.has(column.id as string)]))
-	}, [columns, initialVisibleColumns])
+	const columns = React.useMemo(
+		() =>
+			resolvePairColumns({
+				segment,
+				capabilities: { openInterest, funding, depth: supportsDepth },
+				showVenue,
+				omitColumns,
+				columnOrder
+			}),
+		[segment, openInterest, funding, supportsDepth, showVenue, omitColumns, columnOrder]
+	)
+	const columnVisibility = React.useMemo(
+		() => resolvePairColumnVisibility(columns, initialVisibleColumns),
+		[columns, initialVisibleColumns]
+	)
 	return (
 		<TableWithSearch
 			key={segment}
