@@ -1,0 +1,12 @@
+{
+	"extends": "./tsconfig.vitest.json",
+	"compilerOptions": {
+		"strict": true,
+		"noImplicitAny": true,
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"incremental": false
+	}
+}
