@@ -230,6 +230,7 @@ function toEarnPageRow(
 		sparkline: collapseTrend(row.trend, components),
 		// Extra consumed by the APY toggle and the pool page.
 		resolvedApy,
+		availableSupplyUsd: row.available_supply_usd ?? null,
 		// Depeg flag (sparse): drives the always-on APY warning icon and the optional Peg column.
 		// Relative deviation (−0.05 = −5%); formatted only in cells.
 		...(depeg ? { pegDeviation: depeg.deviation_pct, pegTokenSymbol: depeg.token_symbol } : {})

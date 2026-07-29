@@ -142,6 +142,7 @@ export interface EarnRow {
 	price_per_share: number | null
 	volume_1d_usd: number | null
 	attributes: EarnAttributes
+	available_supply_usd: number | null
 }
 
 export interface BorrowMarketRow {
@@ -281,6 +282,8 @@ export interface EarnPageRow {
 	tokenSymbols: string[]
 	singleAssetExposure: boolean
 	ilRisk: boolean
+	// Optional so other EarnPageRow producers can omit it.
+	availableSupplyUsd?: number | null
 }
 
 // Response row for the /yields/borrow markets table. A flat row shape (aliases follow the

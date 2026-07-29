@@ -12,7 +12,7 @@ import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import { Sparkline } from './Sparkline'
 import { hasSparkline } from './sparklineModel'
 import type { IYieldsTableProps, IYieldTableRow, YieldsTableAppearance } from './types'
-import { EarnApyCell, EmptyCell, RewardApyCell } from './YieldsCells'
+import { EarnApyCell, EmptyCell, RewardApyCell, SupplyCapBar } from './YieldsCells'
 
 const STABILITY_RATING_STYLES: Record<string, string> = {
 	stable: 'bg-(--apy-mid)/10 text-(--yield-positive-text)',
@@ -179,12 +179,21 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 			id: 'tvl',
 			header: 'TVL',
 			enableSorting: true,
-			cell: (info) =>
-				info.getValue() == null ? (
+			cell: ({ row }) =>
+				row.original.tvl == null ? (
 					<EmptyCell />
 				) : (
-					<span>
-						{formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+					<span className="flex flex-col items-end gap-1">
+						<span>
+							{formatUsd(row.original.tvl, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						</span>
+						{row.original.availableSupplyUsd != null ? (
+							<SupplyCapBar tvl={row.original.tvl} available={row.original.availableSupplyUsd} />
+						) : null}
 					</span>
 				),
 			meta: { headerClassName: 'w-[100px] min-w-[100px]', align: 'end' }

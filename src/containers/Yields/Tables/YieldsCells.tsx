@@ -69,6 +69,33 @@ export function DepegWarningIcon({
 	)
 }
 
+// Supply-cap fill bar under the TVL value, shown only for pools that cap
+// deposits — same bar vocabulary as the borrow table's AvailableCell.
+// fill = tvl / (tvl + available), clamped at 100% (caps can be exceeded
+// on-chain via interest accrual).
+export function SupplyCapBar({ tvl, available }: { tvl: number | null; available: number }) {
+	if (tvl == null) return null
+	const fill = Math.min(tvl / (tvl + available), 1)
+	const full = available === 0
+	const label = full
+		? 'No capacity for new deposits — pool is at its supply cap'
+		: `${formatUsd(available, { compact: true, compactSuffix: 'lowercase' })} can still be deposited — pool is ~${formatPercent(fill, { input: 'fraction', maximumFractionDigits: 0 })} full`
+	return (
+		<InstantTooltip content={label} className="ml-auto w-fit max-w-full justify-end">
+			<span
+				role="img"
+				aria-label={label}
+				className="hidden h-1 w-20 overflow-hidden rounded-full bg-surface-elevated-2 md:block"
+			>
+				<span
+					className={`block h-full rounded-full ${full ? 'bg-data-down' : 'bg-brand'}`}
+					style={{ width: `${fill * 100}%` }}
+				/>
+			</span>
+		</InstantTooltip>
+	)
+}
+
 // --- earn APY cell -------------------------------------------------------------------------
 // Neutral total (the column header is the category) over a composition sub-line that renders
 // only the non-null resolved-view components: base (secondary), +reward% (amber), +intrinsic%
