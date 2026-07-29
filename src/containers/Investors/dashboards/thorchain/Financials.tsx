@@ -1,18 +1,27 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { readInvestorApiJson } from '../../api.types'
 import { ApiTrendChart, ChainBreakdownChart } from './ChainBreakdownChart'
-import type { ApiTableData, Chart, Distribution, Kpi as KpiT } from './transform'
+import {
+	addNetworkFeeToIncomeStatement,
+	type ApiTableData,
+	type Chart,
+	type Distribution,
+	type Kpi as KpiT
+} from './transform'
 import {
 	ApiTable,
 	ChartCard,
+	defWithNetworkFee,
+	DEX,
 	DonutCard,
 	Kpi,
 	KpiBand,
+	networkFeeQuery,
 	PageLoader,
 	PlaceholderCard,
 	SectionHeader,
@@ -20,15 +29,15 @@ import {
 	useAdapterSeries,
 	useThorchainData,
 	useThorchainDefs,
+	withNetworkFee,
 	type SeriesKpis
 } from './ui'
 
-// DefiLlama protocol slug carrying THORChain's fees/revenue/income-statement.
-const DEX = 'thorchain-dex'
 const NAME = 'THORChain'
 
 // Same setup as odyssey's MetronomeIncomeStatement: render the shared ProtocolOverview
-// component with a Table/Sankey toggle, fed by the internal income-statement route.
+// component with a Table/Sankey toggle, fed by the internal income-statement route. The
+// statement only covers thorchain-dex, so the network fee is folded in client-side.
 function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle?: string }) {
 	const [view, setView] = useState<'table' | 'sankey'>('table')
 	const query = useQuery({
@@ -43,7 +52,11 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
-	const data = query.data
+	const networkFees = useQuery(networkFeeQuery())
+	const data = useMemo(
+		() => addNetworkFeeToIncomeStatement(query.data, networkFees.data),
+		[query.data, networkFees.data]
+	)
 	const hasData =
 		data?.data && (['monthly', 'quarterly', 'yearly'] as const).some((k) => Object.keys(data.data[k] ?? {}).length > 0)
 
@@ -98,23 +111,25 @@ export default function Financials() {
 	const defs = useThorchainDefs()
 	// Fees & composition KPIs from the DefiLlama thorchain-dex adapter (same cache keys as
 	// the Overview), so each window matches across tabs. All windows are Lifetime / 1Y / 30D / 7D.
-	const fees = useAdapterSeries('dex-fees', () => ProtocolCharts.fees(DEX))
+	const fees = useAdapterSeries('total-fees', withNetworkFee(ADAPTER_DATA_TYPES.DAILY_FEES))
+	const revenue = useAdapterSeries('total-revenue', withNetworkFee(ADAPTER_DATA_TYPES.DAILY_REVENUE))
 	const holdersRev = useAdapterSeries('dex-holders-revenue', () => ProtocolCharts.holdersRevenue(DEX))
 	const supplySide = useAdapterSeries('dex-supply-side-revenue', () =>
 		ProtocolCharts.summary(DEX, ADAPTER_TYPES.FEES, ADAPTER_DATA_TYPES.DAILY_SUPPLY_SIDE_REVENUE)
 	)
-	const protocolRev = useAdapterSeries('dex-protocol-revenue', () =>
-		ProtocolCharts.summary(DEX, ADAPTER_TYPES.FEES, ADAPTER_DATA_TYPES.DAILY_PROTOCOL_REVENUE)
+	const protocolRev = useAdapterSeries(
+		'total-protocol-revenue',
+		withNetworkFee(ADAPTER_DATA_TYPES.DAILY_PROTOCOL_REVENUE)
 	)
 	if (!data) return <PageLoader />
 
 	const { distribution, affiliate } = data
 
-	// Fees in its own group; the revenue lines it decomposes into share one
-	// "Composition" group below (a 4-wide grid, so each line reads as one row).
+	// Fees, then Revenue (its protocol + holders parts), then the full decomposition of fees —
+	// supply-side (the cost leg) alongside the two revenue legs, one row each in a 4-wide grid.
 	const composition: Array<{ label: string; def?: string; data?: SeriesKpis | null }> = [
 		{ label: 'Supply-Side Revenue', def: defs.supplySideRevenue, data: supplySide.data },
-		{ label: 'Protocol Revenue', def: defs.protocolRevenue, data: protocolRev.data },
+		{ label: 'Protocol Revenue', def: defWithNetworkFee(defs.protocolRevenue), data: protocolRev.data },
 		{ label: 'Holders Revenue', def: defs.holdersRevenue, data: holdersRev.data }
 	]
 
@@ -124,13 +139,20 @@ export default function Financials() {
 				<SectionHeader>Fees & Revenue</SectionHeader>
 
 				<KpiBand label="Fees">
-					<Kpi kpi={fees.data?.lifetime} label="Lifetime" def={defs.fees} />
+					<Kpi kpi={fees.data?.lifetime} label="Lifetime" def={defWithNetworkFee(defs.fees)} />
 					<Kpi kpi={fees.data?.y1} label="1Y" />
 					<Kpi kpi={fees.data?.d30} label="30D" />
 					<Kpi kpi={fees.data?.d7} label="7D" />
 				</KpiBand>
 
-				<KpiBand label="Composition">
+				<KpiBand label="Revenue (Protocol + Holders)">
+					<Kpi kpi={revenue.data?.lifetime} label="Lifetime" def={defWithNetworkFee(defs.revenue)} />
+					<Kpi kpi={revenue.data?.y1} label="1Y" />
+					<Kpi kpi={revenue.data?.d30} label="30D" />
+					<Kpi kpi={revenue.data?.d7} label="7D" />
+				</KpiBand>
+
+				<KpiBand label="Fees Composition (Revenue + Supply-Side Revenue)">
 					{composition.flatMap(({ label, def, data: d }) => [
 						<Kpi key={`${label}-lifetime`} kpi={d?.lifetime} label={`${label} (Lifetime)`} def={def} />,
 						<Kpi key={`${label}-1y`} kpi={d?.y1} label={`${label} (1Y)`} />,
@@ -140,8 +162,16 @@ export default function Financials() {
 				</KpiBand>
 
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-					<ChainBreakdownChart metric="fees" title="Fees by Chain" />
-					<ChainBreakdownChart metric="revenue" title="Revenue by Chain" />
+					<ChainBreakdownChart
+						metric="fees"
+						title="Fees by Chain"
+						subtitle="Native network fee included in THORChain."
+					/>
+					<ChainBreakdownChart
+						metric="revenue"
+						title="Revenue by Chain"
+						subtitle="Native network fee included in THORChain."
+					/>
 				</div>
 
 				<DonutCard
@@ -152,7 +182,10 @@ export default function Financials() {
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Income Statement</SectionHeader>
-				<ThorchainIncomeStatement title="THORChain Income Statement" subtitle="Fees & protocol revenue." />
+				<ThorchainIncomeStatement
+					title="THORChain Income Statement"
+					subtitle="Fees & protocol revenue, including the native network fee."
+				/>
 			</section>
 
 			{!affiliate && (

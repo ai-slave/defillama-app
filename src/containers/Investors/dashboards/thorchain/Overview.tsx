@@ -1,10 +1,13 @@
 import { useMemo } from 'react'
+import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { ApiTrendChart, FeeRevenueChart } from './ChainBreakdownChart'
 import type { ApiTableData, Chart, Distribution, Kpi as KpiT } from './transform'
 import {
 	ApiTable,
 	CategoryBarCard,
+	defWithNetworkFee,
+	DEX,
 	DonutCard,
 	Kpi,
 	KpiGrid,
@@ -14,7 +17,8 @@ import {
 	TimeAreaCard,
 	useAdapterSeries,
 	useThorchainData,
-	useThorchainDefs
+	useThorchainDefs,
+	withNetworkFee
 } from './ui'
 
 interface OverviewData {
@@ -24,8 +28,6 @@ interface OverviewData {
 	}
 	tvlChart: Chart
 }
-
-const DEX = 'thorchain-dex'
 
 const GRID = 'grid grid-cols-2 gap-3 lg:grid-cols-4'
 
@@ -37,8 +39,8 @@ export default function Overview() {
 	// Liquidity composition currently lives on the network endpoint.
 	const { data: net } = useThorchainData<{ liquidity?: LiquidityData }>('network')
 	const defs = useThorchainDefs()
-	const fees = useAdapterSeries('dex-fees', () => ProtocolCharts.fees(DEX))
-	const revenue = useAdapterSeries('dex-revenue', () => ProtocolCharts.revenue(DEX))
+	const fees = useAdapterSeries('total-fees', withNetworkFee(ADAPTER_DATA_TYPES.DAILY_FEES))
+	const revenue = useAdapterSeries('total-revenue', withNetworkFee(ADAPTER_DATA_TYPES.DAILY_REVENUE))
 	const holdersRevenue = useAdapterSeries('dex-holders-revenue', () => ProtocolCharts.holdersRevenue(DEX))
 	const supplySideRevenue = useAdapterSeries('dex-supply-side-revenue', () =>
 		ProtocolCharts.summary(DEX, 'fees', 'dailySupplySideRevenue')
@@ -61,17 +63,20 @@ export default function Overview() {
 			{/* No section header — the page header above already carries the THORChain identity. */}
 			<section className="flex flex-col gap-6">
 				<div className={GRID}>
-					<Kpi kpi={fees.data?.lifetime} label="Fees (Lifetime)" def={defs.fees} />
+					<Kpi kpi={fees.data?.lifetime} label="Fees (Lifetime)" def={defWithNetworkFee(defs.fees)} />
 					<Kpi
 						kpi={supplySideRevenue.data?.lifetime}
 						label="Supply-Side Revenue (Lifetime)"
 						def={defs.supplySideRevenue}
 					/>
-					<Kpi kpi={revenue.data?.lifetime} label="Revenue (Lifetime)" def={defs.revenue} />
+					<Kpi kpi={revenue.data?.lifetime} label="Revenue (Lifetime)" def={defWithNetworkFee(defs.revenue)} />
 					<Kpi kpi={holdersRevenue.data?.lifetime} label="Holders Revenue (Lifetime)" def={defs.holdersRevenue} />
 				</div>
 
-				<FeeRevenueChart source="dex" title="Fees & Revenue" subtitle="Swap fees and protocol revenue." />
+				<FeeRevenueChart
+					title="Fees & Revenue"
+					subtitle="Swap fees plus the native network fee, and protocol revenue."
+				/>
 
 				<div className={GRID}>
 					<Kpi kpi={vol?.kpis.volumeLifetime} label="Volume (Lifetime)" />

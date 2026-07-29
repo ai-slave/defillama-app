@@ -4,17 +4,65 @@ import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { useMedia } from '~/hooks/useMedia'
 import { formatUsd } from '~/utils/numberFormat'
+import { recordRuntimeError } from '~/utils/telemetry'
 import { readInvestorApiJson } from '../../api.types'
 import {
 	chartToDataset,
+	NETWORK_FEE_NOTE,
+	sumDailySeries,
 	unitSymbol,
 	type ApiTableData,
 	type Chart,
 	type Distribution,
 	type Kpi as KpiT
 } from './transform'
+
+// DefiLlama protocol slugs: the swap protocol, and the native chain whose L1 transaction
+// fee THORChain counts as the "network fee" (see NETWORK_FEE_NOTE in ./transform).
+export const DEX = 'thorchain-dex'
+export const CHAIN = 'thorchain'
+
+// Daily USD series for a fees-adapter metric, summed across both slugs. A missing chain
+// series degrades to the dex figure alone rather than blanking the KPI, but is reported.
+export function withNetworkFee(dataType: `${ADAPTER_DATA_TYPES}`) {
+	return async () =>
+		sumDailySeries(
+			await Promise.all([
+				ProtocolCharts.summary(DEX, ADAPTER_TYPES.FEES, dataType),
+				ProtocolCharts.summary(CHAIN, ADAPTER_TYPES.FEES, dataType).catch((error) => {
+					recordRuntimeError(error, 'clientRuntime')
+					return []
+				})
+			])
+		)
+}
+
+// The chain adapter reports the native tx fee under each of these at once — it is fee,
+// revenue and protocol revenue in one — so all three stay consistent. Shared query config
+// so every consumer (KPIs, by-chain charts, income statement) hits one cache entry.
+export const NETWORK_FEE_DATA_TYPES: Record<string, `${ADAPTER_DATA_TYPES}` | undefined> = {
+	fees: ADAPTER_DATA_TYPES.DAILY_FEES,
+	revenue: ADAPTER_DATA_TYPES.DAILY_REVENUE,
+	'protocol-revenue': ADAPTER_DATA_TYPES.DAILY_PROTOCOL_REVENUE
+}
+
+export function networkFeeQuery(dataType: `${ADAPTER_DATA_TYPES}` = ADAPTER_DATA_TYPES.DAILY_FEES) {
+	return {
+		queryKey: ['thorchain-network-fee', dataType],
+		queryFn: () => ProtocolCharts.summary(CHAIN, ADAPTER_TYPES.FEES, dataType),
+		staleTime: 10 * 60 * 1000,
+		refetchOnWindowFocus: false
+	}
+}
+
+// Appends the network-fee caveat to an ir-server term definition, for KPI (i) tooltips.
+export function defWithNetworkFee(def?: string): string {
+	return def ? `${def} ${NETWORK_FEE_NOTE}` : NETWORK_FEE_NOTE
+}
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>

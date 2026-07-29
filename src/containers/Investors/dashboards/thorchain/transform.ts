@@ -1,4 +1,5 @@
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 
 // Shapes returned by /api/public/thorchain/<fn>. Everything is pre-computed and
 // pre-formatted server-side; the frontend renders `formatted` and only uses raw
@@ -49,6 +50,92 @@ export function parseDateToUnix(dateStr: string): number {
 		return n > 1e12 ? Math.floor(n / 1000) : n
 	}
 	return Math.floor(Date.parse(dateStr.length === 10 ? dateStr + 'T00:00:00Z' : dateStr) / 1000)
+}
+
+// THORChain counts its native L1 transaction fee — the "network fee", tracked by DefiLlama
+// under the `thorchain` chain adapter — as part of total fees, while the thorchain-dex adapter
+// explicitly excludes it. So every fees / revenue / protocol-revenue figure here sums both.
+export const NETWORK_FEE = 'Network Fee'
+export const NETWORK_FEE_NOTE =
+	"Includes THORChain's native L1 transaction fee (the network fee), excluded from the thorchain-dex adapter; it accrues entirely to the Reserve."
+
+// Pure protocol income: no supply-side cost and no incentives attached, so the network fee
+// lands on these three income-statement lines and nowhere else.
+const NETWORK_FEE_LINES = ['Gross Protocol Revenue', 'Gross Profit', 'Earnings'] as const
+const GROUP_KEYS = ['monthly', 'quarterly', 'yearly', 'cumulative'] as const
+
+type IncomeStatementData = NonNullable<IProtocolOverviewPageData['incomeStatement']>
+
+function periodKeyOf(groupKey: (typeof GROUP_KEYS)[number], unixSeconds: number): string {
+	const date = new Date(unixSeconds * 1000)
+	const year = date.getUTCFullYear()
+	const month = date.getUTCMonth()
+	if (groupKey === 'yearly') return String(year)
+	if (groupKey === 'quarterly') return `${year}-Q${Math.floor(month / 3) + 1}`
+	if (groupKey === 'monthly') return `${year}-${String(month + 1).padStart(2, '0')}`
+	return 'cumulative'
+}
+
+// Cumulative series only carry points for days the chain actually reported, and ECharts renders
+// a missing value inside a stack as a drop to zero. Re-emit every series on the union calendar,
+// holding the last running total (0 before a chain's first day) so the stack stays continuous.
+export function carryForwardCumulative<T extends { points: Array<[number, number]> }>(series: T[]): T[] {
+	const calendar = [...new Set(series.flatMap((s) => s.points.map(([timestamp]) => timestamp)))].sort((a, b) => a - b)
+	return series.map((s) => {
+		const points: Array<[number, number]> = new Array(calendar.length)
+		let cursor = 0
+		let total = 0
+		for (let index = 0; index < calendar.length; index++) {
+			while (cursor < s.points.length && s.points[cursor][0] <= calendar[index]) total = s.points[cursor++][1]
+			points[index] = [calendar[index], total]
+		}
+		return { ...s, points }
+	})
+}
+
+// Sum daily series (already aligned on UTC day timestamps) into one.
+export function sumDailySeries(parts: Array<Array<[number, number]>>): Array<[number, number]> {
+	const byTimestamp = new Map<number, number>()
+	for (const part of parts) {
+		for (const [timestamp, value] of part) byTimestamp.set(timestamp, (byTimestamp.get(timestamp) ?? 0) + (value || 0))
+	}
+	return [...byTimestamp].sort((a, b) => a[0] - b[0])
+}
+
+// Folds the daily network fee into a thorchain-dex income statement as its own breakdown label,
+// so the statement's totals match the dashboard's fee/revenue KPIs.
+export function addNetworkFeeToIncomeStatement(
+	statement: IncomeStatementData | null | undefined,
+	dailyNetworkFees: Array<[number, number]> | undefined
+): IncomeStatementData | null | undefined {
+	if (!statement?.data || !dailyNetworkFees?.length) return statement
+	const merged = structuredClone(statement)
+	for (const groupKey of GROUP_KEYS) {
+		const group = merged.data[groupKey]
+		if (!group) continue
+		for (const [timestamp, value] of dailyNetworkFees) {
+			if (!value) continue
+			// ponytail: fees dated outside the periods the dex statement covers are dropped rather
+			// than inventing a period (which needs a synthetic timestamp); revisit if a gap appears.
+			const period = group[periodKeyOf(groupKey, timestamp)]
+			if (!period) continue
+			for (const line of NETWORK_FEE_LINES) {
+				const entry = (period[line] ??= { value: 0, 'by-label': {} })
+				// Lines the upstream statement reports as a bare total carry no `by-label` map.
+				entry['by-label'] ??= {}
+				entry.value = (entry.value ?? 0) + value
+				entry['by-label'][NETWORK_FEE] = (entry['by-label'][NETWORK_FEE] ?? 0) + value
+			}
+		}
+	}
+	for (const line of NETWORK_FEE_LINES) {
+		const labels = (merged.labelsByType[line] ??= [])
+		if (!labels.includes(NETWORK_FEE)) labels.push(NETWORK_FEE)
+		if (merged.breakdownMethodology) {
+			merged.breakdownMethodology[line] = { ...merged.breakdownMethodology[line], [NETWORK_FEE]: NETWORK_FEE_NOTE }
+		}
+	}
+	return merged
 }
 
 // Time-chart callers share this broad API type with category charts, so keep date and length guards at this boundary.

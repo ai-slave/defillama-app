@@ -4,16 +4,25 @@ import { buildSparseCartesianChartModel, type SparseCartesianSeries } from '~/co
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
+import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
 import ProtocolChartBuilderData from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
-import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
-import { parseDateToUnix, type Chart } from './transform'
-import { ChartCard, PALETTE, SegToggle, THOR_TEAL } from './ui'
+import { carryForwardCumulative, parseDateToUnix, sumDailySeries, type Chart } from './transform'
+import {
+	ChartCard,
+	DEX,
+	NETWORK_FEE_DATA_TYPES,
+	networkFeeQuery,
+	PALETTE,
+	SegToggle,
+	THOR_TEAL,
+	withNetworkFee
+} from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-const DEX = 'thorchain-dex'
 const GOLD = '#f5c842'
+const THORCHAIN = 'THORChain'
 
 // All from DefiLlama internal APIs (context-free services, no ir-server hop).
 type Metric =
@@ -74,7 +83,7 @@ function aggregate(series: RawSeries[], view: View, stacked: boolean) {
 		}
 	})
 	const useArea = stacked || agg.length === 1
-	return agg.map((s) => ({
+	return (isCumulative ? carryForwardCumulative(agg) : agg).map((s) => ({
 		name: s.name,
 		data: s.points,
 		color: s.color,
@@ -165,19 +174,35 @@ export function ChainBreakdownChart({
 		queryFn: () => ProtocolChartBuilderData.getProtocolChainData(protocol, metric, undefined, limit),
 		...QUERY_OPTS
 	})
-	// The API returns chains unordered and spells the chain "Thorchain" — order the
-	// legend by lifetime size (catch-all "Others" bucket last) and fix the casing.
+	const networkFeeDataType = protocol === DEX ? NETWORK_FEE_DATA_TYPES[metric] : undefined
+	const networkFee = useQuery({
+		...networkFeeQuery(networkFeeDataType),
+		enabled: networkFeeDataType != null
+	})
+	// The API returns chains unordered and spells the chain "Thorchain" — fix the casing, then
+	// order the legend by lifetime size (catch-all "Others" bucket last).
 	const series = useMemo(() => {
 		const total = (s: RawSeries) => s.data.reduce((t, [, v]) => t + (v || 0), 0)
-		return (data?.series ?? [])
-			.map((s) => (s.name === 'Thorchain' ? { ...s, name: 'THORChain' } : s))
-			.sort((a, b) => {
-				const aOthers = a.name.startsWith('Others'),
-					bOthers = b.name.startsWith('Others')
-				if (aOthers !== bOthers) return aOthers ? 1 : -1
-				return total(b) - total(a)
-			})
-	}, [data])
+		const chains = (data?.series ?? []).map((s) => (s.name === 'Thorchain' ? { ...s, name: THORCHAIN } : s))
+		// The native L1 tx fee comes from its own adapter but is THORChain-chain activity, so it
+		// adds to that chain's bucket rather than reading as a separate chain in the legend.
+		if (networkFee.data?.length) {
+			const index = chains.findIndex((s) => s.name === THORCHAIN)
+			const existing = chains[index]
+			const merged = {
+				...(existing ?? { name: THORCHAIN }),
+				data: sumDailySeries(existing ? [existing.data, networkFee.data] : [networkFee.data])
+			}
+			if (existing) chains[index] = merged
+			else chains.push(merged)
+		}
+		return chains.sort((a, b) => {
+			const aOthers = a.name.startsWith('Others'),
+				bOthers = b.name.startsWith('Others')
+			if (aOthers !== bOthers) return aOthers ? 1 : -1
+			return total(b) - total(a)
+		})
+	}, [data, networkFee.data])
 	const chartSeries = useMemo(() => aggregate(series, view, true), [series, view])
 	return (
 		<TrendCard
@@ -187,7 +212,7 @@ export function ChainBreakdownChart({
 			view={view}
 			setView={setView}
 			chartSeries={chartSeries}
-			isLoading={isLoading}
+			isLoading={isLoading || networkFee.isLoading}
 			isError={isError}
 		/>
 	)
@@ -265,34 +290,27 @@ export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subti
 	)
 }
 
-// Fees + Revenue merged (two overlaid totals), both from the protocol fees adapter so the
-// chain figures match defillama.com/chain/thorchain. `chain` → native `thorchain` protocol
-// (NOT the chain-wide aggregate, which folds in unaffiliated apps like THORWallet); `dex` → thorchain-dex.
-function totalFn(source: 'chain' | 'dex', metric: 'fees' | 'revenue'): () => Promise<Pts> {
-	const protocol = source === 'chain' ? 'thorchain' : DEX
-	return metric === 'fees' ? () => ProtocolCharts.fees(protocol) : () => ProtocolCharts.revenue(protocol)
-}
-
+// Fees + Revenue merged (two overlaid totals), each summing the thorchain-dex adapter with the
+// native `thorchain` protocol's network fee (NOT the chain-wide aggregate, which folds in
+// unaffiliated apps like THORWallet) — same totals as the headline KPIs.
 export function FeeRevenueChart({
-	source,
 	title,
 	subtitle,
 	defaultView = 'cumulative'
 }: {
-	source: 'chain' | 'dex'
 	title: string
 	subtitle?: string
 	defaultView?: View
 }) {
 	const [view, setView] = useState<View>(defaultView)
 	const fees = useQuery({
-		queryKey: ['thorchain-total', source, 'fees'],
-		queryFn: totalFn(source, 'fees'),
+		queryKey: ['thorchain-total', 'fees'],
+		queryFn: withNetworkFee(ADAPTER_DATA_TYPES.DAILY_FEES),
 		...QUERY_OPTS
 	})
 	const revenue = useQuery({
-		queryKey: ['thorchain-total', source, 'revenue'],
-		queryFn: totalFn(source, 'revenue'),
+		queryKey: ['thorchain-total', 'revenue'],
+		queryFn: withNetworkFee(ADAPTER_DATA_TYPES.DAILY_REVENUE),
 		...QUERY_OPTS
 	})
 	const rawSeries = useMemo(
