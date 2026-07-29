@@ -21,20 +21,9 @@ import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInput
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
+import type { BridgeChainTableRow } from './utils'
 
-type BridgeChainsTableRow = {
-	name: string
-	prevDayNetFlow?: number
-	prevDayUsdDeposits?: number
-	prevDayUsdWithdrawals?: number
-	prevWeekNetFlow?: number
-	prevWeekUsdDeposits?: number
-	prevWeekUsdWithdrawals?: number
-	topTokenWithdrawnSymbol?: string
-	deprecated?: boolean
-}
-
-const columnHelper = createColumnHelper<BridgeChainsTableRow>()
+const columnHelper = createColumnHelper<BridgeChainTableRow>()
 
 const bridgeChainsColumn = [
 	columnHelper.accessor('name', {
@@ -164,7 +153,7 @@ const bridgeChainsColumnOrders: ColumnOrdersByBreakpoint = {
 		'prevWeekNetFlow'
 	]
 }
-export function BridgeChainsTable({ data }: { data: BridgeChainsTableRow[] }) {
+export function BridgeChainsTable({ data }: { data: BridgeChainTableRow[] }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'prevDayNetFlow', desc: true }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])

@@ -97,13 +97,27 @@ describe('bridge volume freshness', () => {
 	})
 
 	it('does not present a completed daily chart point as rolling 24h data', () => {
-		expect(
-			formatChainsData({
-				chains: [{ name: 'Test Chain' }],
-				chartDataByChain: [[{ date: '1', depositUSD: 10, withdrawUSD: null }]],
-				chainToChartDataIndex: { 'Test Chain': 0 }
-			})
-		).toMatchObject([{ prevDayUsdDeposits: undefined, prevDayUsdWithdrawals: undefined, prevDayNetFlow: undefined }])
+		const rows = formatChainsData({
+			chains: [{ name: 'Test Chain' }],
+			chartDataByChain: [[{ date: '1', depositUSD: 10, withdrawUSD: null }]],
+			chainToChartDataIndex: { 'Test Chain': 0 }
+		})
+
+		expect(rows).toEqual([
+			{
+				name: 'Test Chain',
+				prevDayUsdDeposits: null,
+				prevDayUsdWithdrawals: null,
+				prevWeekUsdDeposits: 0,
+				prevWeekUsdWithdrawals: 0,
+				topTokenDepositedSymbol: null,
+				topTokenDepositedUsd: null,
+				topTokenWithdrawnSymbol: null,
+				topTokenWithdrawnUsd: null,
+				prevDayNetFlow: null,
+				prevWeekNetFlow: 0
+			}
+		])
 	})
 
 	it('indexes chain stats with the existing exact and case-insensitive matching rules', () => {
@@ -193,9 +207,9 @@ describe('bridge volume freshness', () => {
 				currentTimeMs: NOW
 			})[0]
 		).toMatchObject({
-			prevDayUsdDeposits: undefined,
-			prevDayUsdWithdrawals: undefined,
-			prevDayNetFlow: undefined,
+			prevDayUsdDeposits: null,
+			prevDayUsdWithdrawals: null,
+			prevDayNetFlow: null,
 			prevWeekUsdDeposits: 140,
 			prevWeekUsdWithdrawals: 42,
 			prevWeekNetFlow: 98

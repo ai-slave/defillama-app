@@ -7,6 +7,21 @@ interface IDailyBridgeStats extends BridgeDayStats {
 	name?: string
 }
 
+export interface BridgeChainTableRow {
+	name: string
+	prevDayNetFlow: number | null
+	prevDayUsdDeposits: number | null
+	prevDayUsdWithdrawals: number | null
+	prevWeekNetFlow: number | null
+	prevWeekUsdDeposits: number | null
+	prevWeekUsdWithdrawals: number | null
+	topTokenDepositedSymbol: string | null
+	topTokenDepositedUsd: number | null
+	topTokenWithdrawnSymbol: string | null
+	topTokenWithdrawnUsd: number | null
+	deprecated?: boolean
+}
+
 type BridgeSummaryChartPoint = { date: string | number; volume?: number | null; txs?: number | null }
 
 interface BridgeForFormatting {
@@ -214,7 +229,7 @@ export const formatChainsData = ({
 	netflowsDataDay?: BridgeNetflowsResponse | null
 	netflowsDataWeek?: BridgeNetflowsResponse | null
 	currentTimeMs?: number
-}) => {
+}): BridgeChainTableRow[] => {
 	const prevDayDataByName = new Map<string, IDailyBridgeStats>()
 	for (const item of prevDayDataByChain ?? []) {
 		if (item.name != null && !prevDayDataByName.has(item.name)) prevDayDataByName.set(item.name, item)
@@ -231,15 +246,15 @@ export const formatChainsData = ({
 		const totalTokensWithdrawn = prevDayData?.totalTokensWithdrawn
 
 		const chainNetflowDay = netflowsDayByChain.get(name.toLowerCase())
-		const prevDayUsdDeposits = chainNetflowDay?.depositedUsd
-		const prevDayUsdWithdrawals = chainNetflowDay?.withdrawnUsd
-		const prevDayNetFlow = chainNetflowDay?.netFlow
+		const prevDayUsdDeposits = chainNetflowDay?.depositedUsd ?? null
+		const prevDayUsdWithdrawals = chainNetflowDay?.withdrawnUsd ?? null
+		const prevDayNetFlow = chainNetflowDay?.netFlow ?? null
 
 		const chainNetflowWeek = netflowsWeekByChain.get(name.toLowerCase())
 		const completedWeek = chainNetflowWeek ? null : getCompletedBridgeLegTotals(charts, 7, currentTimeMs)
-		const prevWeekUsdDeposits = chainNetflowWeek?.depositedUsd ?? completedWeek?.depositedUsd
-		const prevWeekUsdWithdrawals = chainNetflowWeek?.withdrawnUsd ?? completedWeek?.withdrawnUsd
-		const prevWeekNetFlow = chainNetflowWeek?.netFlow ?? completedWeek?.netFlow
+		const prevWeekUsdDeposits = chainNetflowWeek?.depositedUsd ?? completedWeek?.depositedUsd ?? null
+		const prevWeekUsdWithdrawals = chainNetflowWeek?.withdrawnUsd ?? completedWeek?.withdrawnUsd ?? null
+		const prevWeekNetFlow = chainNetflowWeek?.netFlow ?? completedWeek?.netFlow ?? null
 
 		const topTokenDeposited = getTopTokenByUsd(totalTokensDeposited)
 		const topTokenWithdrawn = getTopTokenByUsd(totalTokensWithdrawn)
