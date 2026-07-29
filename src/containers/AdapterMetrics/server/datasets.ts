@@ -1,14 +1,13 @@
 import { fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
-import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { mergeMetricPeriods, type MetricPeriodFields } from '~/containers/AdapterMetrics/metricPeriods'
 import { getAdapterByChainPageData, getAdapterChainOverview } from '~/containers/AdapterMetrics/queries'
-import type { IAdapterByChainPageData } from '~/containers/AdapterMetrics/types'
+import type { IAdapterByChainPageData, IAdapterChainOverview } from '~/containers/AdapterMetrics/types'
 import { slug } from '~/utils'
 import type { IChainMetadata } from '~/utils/metadata/types'
 
 type DimensionDatasetSourceProtocol =
-	| IAdapterChainMetrics['protocols'][number]
+	| IAdapterChainOverview['protocols'][number]
 	| IAdapterByChainPageData['protocols'][number]
 
 export interface DimensionDatasetProtocol extends MetricPeriodFields {
@@ -22,13 +21,30 @@ export interface DimensionDatasetProtocol extends MetricPeriodFields {
 	chainBreakdown?: Record<string, DimensionDatasetProtocol & { chain: string }>
 }
 
+export type DimensionDatasetResult<T = DimensionDatasetProtocol> =
+	| { status: 'complete'; protocols: T[] }
+	| { status: 'partial'; protocols: T[]; unavailableChains: string[] }
+
+type DimensionDatasetChainProtocol = DimensionDatasetProtocol & { chain: string }
+
 function toDimensionDatasetProtocol(protocol: DimensionDatasetSourceProtocol): DimensionDatasetProtocol {
+	const displayName = 'displayName' in protocol ? protocol.displayName : protocol.name
+	const defillamaId = 'defillamaId' in protocol ? protocol.defillamaId : undefined
 	return {
 		...protocol,
 		name: protocol.name,
-		displayName: 'displayName' in protocol ? protocol.displayName : protocol.name,
-		defillamaId: 'defillamaId' in protocol ? protocol.defillamaId : undefined,
+		displayName,
+		...(defillamaId !== undefined ? { defillamaId } : {}),
 		chains: protocol.chains ?? []
+	}
+}
+
+function toChainBreakdownProtocol(protocol: DimensionDatasetProtocol, chain: string): DimensionDatasetChainProtocol {
+	const change7d = protocol.change_7d ?? protocol.change_7dover7d
+	return {
+		...protocol,
+		...(change7d !== undefined ? { change_7d: change7d } : {}),
+		chain
 	}
 }
 
@@ -54,23 +70,37 @@ export async function fetchDimensionDataset({
 	chainGuard,
 	hasOpenInterestByChain,
 	withChainBreakdown
-}: DimensionDatasetOptions): Promise<DimensionDatasetProtocol[]> {
+}: DimensionDatasetOptions): Promise<DimensionDatasetResult> {
 	const chainList = chains ?? []
 	const allChains = chainList.length === 0 || chainList.includes('All')
 
 	if (allChains) {
 		const data =
 			allCaseFetcher === 'chainOverview'
-				? await getAdapterChainOverview({ adapterType, chain: 'All', excludeTotalDataChart: true, dataType })
-				: await fetchAdapterChainMetrics({ adapterType, dataType, chain: 'All' })
-		return (data.protocols ?? [])
-			.map(toDimensionDatasetProtocol)
-			.filter((protocol) => (protocol.total24h ?? 0) > 0)
-			.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))
+				? await getAdapterChainOverview({
+						adapterType,
+						chain: 'All',
+						excludeTotalDataChart: true,
+						...(dataType !== undefined ? { dataType } : {})
+					})
+				: await fetchAdapterChainMetrics({
+						adapterType,
+						chain: 'All',
+						...(dataType !== undefined ? { dataType } : {})
+					})
+		const protocols: DimensionDatasetProtocol[] = []
+		for (const protocol of data.protocols) protocols.push(toDimensionDatasetProtocol(protocol))
+		return {
+			status: 'complete',
+			protocols: protocols
+				.filter((protocol) => (protocol.total24h ?? 0) > 0)
+				.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))
+		}
 	}
 
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 	const allProtocolsMap = new Map<string, DimensionDatasetProtocol>()
+	const unavailableChains: string[] = []
 
 	for (const chainName of chainList) {
 		const chainSlug = slug(chainName)
@@ -78,59 +108,63 @@ export async function fetchDimensionDataset({
 		if (!chainData) continue
 		if (chainGuard && !chainData[chainGuard]) continue
 
-		const data = await getAdapterByChainPageData({
-			adapterType,
-			dataType,
-			chain: chainData.name,
-			route,
-			metricName,
-			...(hasOpenInterestByChain ? { hasOpenInterest: chainData.openInterest } : {})
-		}).catch((e) => {
-			console.info(`Chain page data not found ${adapterType} : chain:${chainName}`, e)
-			return null
-		})
+		let data: IAdapterByChainPageData | null
+		try {
+			data = await getAdapterByChainPageData({
+				adapterType,
+				chain: chainData.name,
+				route,
+				metricName,
+				...(dataType !== undefined ? { dataType } : {}),
+				...(hasOpenInterestByChain && chainData.openInterest !== undefined
+					? { hasOpenInterest: chainData.openInterest }
+					: {})
+			})
+		} catch (error) {
+			console.info(`Chain page data not found ${adapterType} : chain:${chainName}`, error)
+			unavailableChains.push(chainData.name)
+			continue
+		}
 
-		if (!data?.protocols) continue
+		if (!data) {
+			unavailableChains.push(chainData.name)
+			continue
+		}
 
 		for (const sourceProtocol of data.protocols) {
 			const protocol = toDimensionDatasetProtocol(sourceProtocol)
 			const key = protocol.defillamaId ?? protocol.slug ?? protocol.name
 			const existing = allProtocolsMap.get(key)
+			let aggregate: DimensionDatasetProtocol
 			if (existing) {
 				mergeMetricPeriods(existing, protocol)
-				existing.chains = Array.from(new Set([...existing.chains, chainName]))
-				if (withChainBreakdown) {
-					const normalizedChainKey = chainName.trim().toLowerCase()
-					existing.chainBreakdown ??= {}
-					existing.chainBreakdown[normalizedChainKey] = {
-						...protocol,
-						change_7d: protocol.change_7d ?? protocol.change_7dover7d,
-						chain: chainName
-					}
-				}
+				if (!existing.chains.includes(chainName)) existing.chains.push(chainName)
+				aggregate = existing
 			} else {
-				const entry: DimensionDatasetProtocol = {
+				aggregate = {
 					...protocol,
 					chains: [chainName]
 				}
-				if (withChainBreakdown) {
-					const normalizedChainKey = chainName.trim().toLowerCase()
-					entry.chainBreakdown = {
-						[normalizedChainKey]: {
-							...protocol,
-							change_7d: protocol.change_7d ?? protocol.change_7dover7d,
-							chain: chainName
-						}
-					}
-				}
-				allProtocolsMap.set(key, entry)
+				allProtocolsMap.set(key, aggregate)
+			}
+
+			if (withChainBreakdown) {
+				const chainBreakdown = aggregate.chainBreakdown ?? (aggregate.chainBreakdown = {})
+				chainBreakdown[chainName.trim().toLowerCase()] = toChainBreakdownProtocol(protocol, chainName)
 			}
 		}
 	}
 
-	return Array.from(allProtocolsMap.values())
+	const protocols: DimensionDatasetProtocol[] = []
+	for (const protocol of allProtocolsMap.values()) protocols.push(protocol)
+
+	const sortedProtocols = protocols
 		.filter((protocol) => (protocol.total24h ?? 0) > 0)
 		.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))
+
+	return unavailableChains.length > 0
+		? { status: 'partial', protocols: sortedProtocols, unavailableChains }
+		: { status: 'complete', protocols: sortedProtocols }
 }
 
 export interface DimensionDatasetSpec {

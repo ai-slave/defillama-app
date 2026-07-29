@@ -11,7 +11,7 @@ import { fetchMetadataRouteIndexes } from './routeIndexes'
 import { fetchCoreMetadataSources } from './sources'
 import type { IEmissionsHistoricalPrices, ITokenListEntry, ProtocolLlamaswapMetadata } from './types'
 
-const normalizeSlug = (value: unknown): string =>
+const normalizeSlug = (value: string | null | undefined): string =>
 	String(value ?? '')
 		.toLowerCase()
 		.replace(/ /g, '-')
@@ -83,7 +83,6 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 
 	const tokenlist: Record<string, ITokenListEntry> = {}
 	for (const t of tokenlistArray) {
-		if (!t || typeof t.id !== 'string' || !t.id) continue
 		tokenlist[t.id] = {
 			symbol: t.symbol,
 			current_price: t.current_price ?? null,
@@ -105,13 +104,13 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 	const bridgeChainSlugToName: Record<string, string> = {}
 	const bridgeProtocolSlugsSet = new Set<string>()
 	const bridgeChainSlugsSet = new Set<string>()
-	for (const bridge of bridgesResponse?.bridges ?? []) {
+	for (const bridge of bridgesResponse.bridges) {
 		const fromApiSlug = normalizeSlug(bridge.slug)
 		const fromDisplayName = normalizeSlug(bridge.displayName)
 		if (fromApiSlug) bridgeProtocolSlugsSet.add(fromApiSlug)
 		if (fromDisplayName) bridgeProtocolSlugsSet.add(fromDisplayName)
 
-		const chainNames = [...(bridge.chains ?? [])]
+		const chainNames = [...bridge.chains]
 		if (bridge.destinationChain && bridge.destinationChain !== 'false') {
 			chainNames.push(bridge.destinationChain)
 		}
@@ -125,7 +124,7 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 	const bridgeProtocolSlugs = Array.from(bridgeProtocolSlugsSet)
 	const bridgeChainSlugs = Array.from(bridgeChainSlugsSet)
 
-	const protocolLlamaswapDataset = {} as ProtocolLlamaswapMetadata
+	const protocolLlamaswapDataset: ProtocolLlamaswapMetadata = {}
 
 	const protocolDisplayNames = buildProtocolDisplayNameLookupRecord(protocols)
 	const chainDisplayNames = buildChainDisplayNameLookupRecord(chains)

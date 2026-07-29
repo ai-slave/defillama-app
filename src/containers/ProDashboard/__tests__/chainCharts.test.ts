@@ -4,11 +4,13 @@ const {
 	fetchAdapterChainChartDataMock,
 	fetchAdapterProtocolChartDataMock,
 	fetchChainAssetsChartMock,
+	resolveChainAssetIdMock,
 	fetchStablecoinChartApiMock
 } = vi.hoisted(() => ({
 	fetchAdapterChainChartDataMock: vi.fn(),
 	fetchAdapterProtocolChartDataMock: vi.fn(),
 	fetchChainAssetsChartMock: vi.fn(),
+	resolveChainAssetIdMock: vi.fn(),
 	fetchStablecoinChartApiMock: vi.fn()
 }))
 
@@ -19,6 +21,10 @@ vi.mock('~/containers/AdapterMetrics/api', () => ({
 
 vi.mock('~/containers/BridgedTVL/api', () => ({
 	fetchChainAssetsChart: fetchChainAssetsChartMock
+}))
+
+vi.mock('~/containers/BridgedTVL/chainAssetIds', () => ({
+	resolveChainAssetId: resolveChainAssetIdMock
 }))
 
 vi.mock('~/containers/Stablecoins/api', () => ({
@@ -32,74 +38,58 @@ describe('ChainCharts Bridged TVL', () => {
 		vi.clearAllMocks()
 		fetchAdapterChainChartDataMock.mockResolvedValue([])
 		fetchAdapterProtocolChartDataMock.mockResolvedValue([])
-		fetchChainAssetsChartMock.mockResolvedValue([{ timestamp: 1_700_000_000, data: { total: '42' } }])
+		fetchChainAssetsChartMock.mockResolvedValue([{ timestamp: 1_700_000_000, data: { total: 42 } }])
+		resolveChainAssetIdMock.mockResolvedValue('hyperliquid')
 	})
 
-	it('queries chain asset charts with slugged display names', async () => {
-		await expect(ChainCharts.bridgedTvl('Hyperliquid L1')).resolves.toEqual([[1_700_000_000, 42]])
+	it('resolves saved chain names to the producer metadata ID', async () => {
+		await expect(ChainCharts.getData('bridgedTvl', 'Hyperliquid L1')).resolves.toEqual([[1_700_000_000, 42]])
 
+		expect(resolveChainAssetIdMock).toHaveBeenCalledWith('Hyperliquid L1')
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(1)
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('hyperliquid-l1')
+		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('hyperliquid')
 	})
 
-	it('dedupes equivalent chain asset slugs before fetching', async () => {
-		await expect(ChainCharts.bridgedTvl('hyperliquid-l1')).resolves.toEqual([[1_700_000_000, 42]])
-
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(1)
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('hyperliquid-l1')
-	})
-
-	it('fetches once per unique slug when an alias maps to a distinct display name', async () => {
-		fetchChainAssetsChartMock.mockImplementation(async (chainSlug: string) => {
-			if (chainSlug === 'hyperliquid') return [{ timestamp: 1_700_000_000, data: { total: '10' } }]
-			if (chainSlug === 'hyperliquid-l1') return [{ timestamp: 1_700_086_400, data: { total: '20' } }]
-			return []
-		})
-
-		await expect(ChainCharts.bridgedTvl('Hyperliquid')).resolves.toEqual([
-			[1_700_000_000, 10],
-			[1_700_086_400, 20]
-		])
-
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(2)
-		expect(fetchChainAssetsChartMock).toHaveBeenNthCalledWith(1, 'hyperliquid')
-		expect(fetchChainAssetsChartMock).toHaveBeenNthCalledWith(2, 'hyperliquid-l1')
-	})
-
-	it('returns an empty chart when the chain assets fetch fails', async () => {
+	it('rejects when the chain assets fetch fails so callers do not cache a fake empty chart', async () => {
 		fetchChainAssetsChartMock.mockRejectedValue(new Error('missing chart'))
 
-		await expect(ChainCharts.bridgedTvl('Base')).resolves.toEqual([])
+		resolveChainAssetIdMock.mockResolvedValue('base')
+		await expect(ChainCharts.getData('bridgedTvl', 'Base')).rejects.toThrow('missing chart')
 
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(1)
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('base')
 	})
 
-	it('ignores failed alias fetches and keeps successful chain asset responses', async () => {
-		fetchChainAssetsChartMock.mockImplementation(async (chainSlug: string) => {
-			if (chainSlug === 'hyperliquid') throw new Error('missing alias chart')
-			return [{ timestamp: 1_700_086_400, data: { total: '20' } }]
-		})
+	it('rejects when chain metadata resolution fails', async () => {
+		resolveChainAssetIdMock.mockRejectedValue(new Error('metadata unavailable'))
 
-		await expect(ChainCharts.bridgedTvl('Hyperliquid')).resolves.toEqual([[1_700_086_400, 20]])
-
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(2)
-		expect(fetchChainAssetsChartMock).toHaveBeenNthCalledWith(1, 'hyperliquid')
-		expect(fetchChainAssetsChartMock).toHaveBeenNthCalledWith(2, 'hyperliquid-l1')
-	})
-
-	it('returns an empty chart for empty chain inputs without fetching', async () => {
-		await expect(ChainCharts.bridgedTvl('')).resolves.toEqual([])
-		await expect(ChainCharts.bridgedTvl(null as unknown as string)).resolves.toEqual([])
-
+		await expect(ChainCharts.getData('bridgedTvl', 'Base')).rejects.toThrow('metadata unavailable')
 		expect(fetchChainAssetsChartMock).not.toHaveBeenCalled()
 	})
 
-	it('slugifies unknown chain names before fetching', async () => {
-		await expect(ChainCharts.bridgedTvl('Unknown Chain')).resolves.toEqual([[1_700_000_000, 42]])
+	it('returns an empty chart for empty chain inputs without fetching', async () => {
+		await expect(ChainCharts.getData('bridgedTvl', '')).resolves.toEqual([])
 
+		expect(resolveChainAssetIdMock).not.toHaveBeenCalled()
+		expect(fetchChainAssetsChartMock).not.toHaveBeenCalled()
+	})
+
+	it('uses an already-resolved producer ID without another metadata lookup', async () => {
+		await expect(ChainCharts.getData('bridgedTvl', 'OP Mainnet', undefined, 'optimism')).resolves.toEqual([
+			[1_700_000_000, 42]
+		])
+
+		expect(resolveChainAssetIdMock).not.toHaveBeenCalled()
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(1)
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('unknown-chain')
+		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('optimism')
+	})
+
+	it('does not fetch charts for chains without the metadata capability', async () => {
+		resolveChainAssetIdMock.mockResolvedValue(null)
+
+		await expect(ChainCharts.getData('bridgedTvl', 'Unknown')).resolves.toEqual([])
+
+		expect(fetchChainAssetsChartMock).not.toHaveBeenCalled()
 	})
 })
 

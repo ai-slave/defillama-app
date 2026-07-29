@@ -95,7 +95,7 @@ export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 						})}
 					/>
 				) : null}
-				{props.chainFees?.totalREV24h != null ? (
+				{props.chainFees.totalREV24h != null ? (
 					<ChainMetricRow
 						label="Chain REV (24h)"
 						tooltip={definitions.rev.chain['24h']}
@@ -106,7 +106,7 @@ export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 						})}
 					/>
 				) : null}
-				{props.chainIncentives?.emissions24h != null ? (
+				{props.chainIncentives.emissions24h != null ? (
 					<ChainMetricRow
 						label="Token Incentives (24h)"
 						tooltip={definitions.incentives.protocol['24h']}
@@ -144,7 +144,7 @@ export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 				{props.inflows?.netInflows != null ? (
 					<ChainMetricRow
 						label="Inflows (24h)"
-						tooltip="Net money bridged to the chain within the last 24h. Updates daily at 00:00 UTC"
+						tooltip="Net value bridged to the chain during the latest completed UTC day."
 						value={formatUsd(props.inflows.netInflows, {
 							compact: true,
 							minimumCompactValue: 1_000_000,
@@ -481,7 +481,7 @@ function BridgedTvlSection({
 		<ChainMetricSection
 			label="Bridged TVL"
 			tooltip="Value of all tokens held on the chain"
-			value={formatUsd(chainAssets.total.total + (tvlSettingsGovtokens ? +(chainAssets?.ownTokens?.total ?? 0) : 0), {
+			value={formatUsd(chainAssets.total.total + (tvlSettingsGovtokens ? (chainAssets.ownTokens?.total ?? 0) : 0), {
 				compact: true,
 				minimumCompactValue: 1_000_000,
 				compactSuffix: 'lowercase'
@@ -509,7 +509,7 @@ function BridgedTvlSection({
 					})}
 				/>
 			) : null}
-			{chainAssets.canonical?.total ? (
+			{chainAssets.canonical.total ? (
 				<ChainSubMetricRow
 					label="Canonical"
 					tooltip="Tokens that were bridged to the chain through the canonical bridge"
@@ -520,7 +520,7 @@ function BridgedTvlSection({
 					})}
 				/>
 			) : null}
-			{chainAssets.thirdParty?.total ? (
+			{chainAssets.thirdParty.total ? (
 				<ChainSubMetricRow
 					label="Third Party"
 					tooltip="Tokens that were bridged to the chain through third party bridges"

@@ -121,7 +121,8 @@ export function ChainChartPanel({
 
 	const { multiChart, unsupportedMetrics } = useMemo(() => {
 		if (!metadata?.name) {
-			return { multiChart: null, unsupportedMetrics: [] as ChainChartLabels[] }
+			const emptyUnsupportedMetrics: ChainChartLabels[] = []
+			return { multiChart: null, unsupportedMetrics: emptyUnsupportedMetrics }
 		}
 
 		return serializeChainChartToMultiChart({
@@ -175,7 +176,12 @@ export function ChainChartPanel({
 
 		for (const option of filteredMetricOptions) {
 			const category = categoryByMetric.get(option.id) ?? 'Other'
-			groups.get(category)!.push(option)
+			const group = groups.get(category)
+			if (group) {
+				group.push(option)
+			} else {
+				groups.set(category, [option])
+			}
 		}
 
 		return order
@@ -190,9 +196,7 @@ export function ChainChartPanel({
 			.filter((group) => group.options.length > 0)
 	}, [filteredMetricOptions, categoryByMetric])
 
-	const getOptionColor = useCallback((option: ChainMetricOption): string => {
-		return chainOverviewChartColors[option.id] ?? '#9CA3AF'
-	}, [])
+	const getOptionColor = useCallback((option: ChainMetricOption): string => chainOverviewChartColors[option.id], [])
 
 	const handleToggleMetric = useCallback(
 		(option: ChainMetricOption) => {
@@ -278,9 +282,6 @@ export function ChainChartPanel({
 										</div>
 										<div className="flex flex-wrap gap-1">
 											{group.options.map((option) => {
-												const dotColor = option.active
-													? `color-mix(in oklch, ${getOptionColor(option)} 75%, var(--text-secondary))`
-													: null
 												return (
 													<button
 														key={`chain-chart-option-${group.label}-${option.id}`}
@@ -293,7 +294,9 @@ export function ChainChartPanel({
 															<span
 																aria-hidden
 																className="size-1.5 rounded-full"
-																style={{ backgroundColor: dotColor! }}
+																style={{
+																	backgroundColor: `color-mix(in oklch, ${getOptionColor(option)} 75%, var(--text-secondary))`
+																}}
 															/>
 														) : (
 															<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />

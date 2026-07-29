@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import {
-	BRIDGE_VOLUME_COMBINED_CHARTS,
 	BRIDGE_VOLUME_SPLIT_CHARTS,
 	buildBridgeVolumeChartData,
 	getStaleBridgeVolumeTimestamp
@@ -11,8 +10,8 @@ describe('buildBridgeVolumeChartData', () => {
 	it('builds daily split volume rows in chronological order', () => {
 		const result = buildBridgeVolumeChartData({
 			data: [
-				{ date: '1', depositUSD: 10, withdrawUSD: 3, depositTxs: 1, withdrawTxs: 1 },
-				{ date: '2', depositUSD: 20, withdrawUSD: 5, depositTxs: 2, withdrawTxs: 1 }
+				{ date: 1, depositUSD: 10, withdrawUSD: 3, depositTxs: 1, withdrawTxs: 1 },
+				{ date: 2, depositUSD: 20, withdrawUSD: 5, depositTxs: 2, withdrawTxs: 1 }
 			],
 			timePeriod: 'daily',
 			metricType: 'Volume',
@@ -26,7 +25,6 @@ describe('buildBridgeVolumeChartData', () => {
 				[2_000, 20, -5]
 			]
 		})
-		expect(result.charts).toBe(BRIDGE_VOLUME_SPLIT_CHARTS)
 	})
 
 	it('keeps signed split bars out of ECharts large mode', () => {
@@ -58,9 +56,9 @@ describe('buildBridgeVolumeChartData', () => {
 		const nextBucket = getBucketTimestampSec(day9, 'weekly')
 		const result = buildBridgeVolumeChartData({
 			data: [
-				{ date: String(day1), depositUSD: 30, withdrawUSD: 10, depositTxs: 3, withdrawTxs: 1 },
-				{ date: String(day2), depositUSD: 70, withdrawUSD: 20, depositTxs: 7, withdrawTxs: 2 },
-				{ date: String(day9), depositUSD: 40, withdrawUSD: 30, depositTxs: 4, withdrawTxs: 3 }
+				{ date: day1, depositUSD: 30, withdrawUSD: 10, depositTxs: 3, withdrawTxs: 1 },
+				{ date: day2, depositUSD: 70, withdrawUSD: 20, depositTxs: 7, withdrawTxs: 2 },
+				{ date: day9, depositUSD: 40, withdrawUSD: 30, depositTxs: 4, withdrawTxs: 3 }
 			],
 			timePeriod: 'weekly',
 			metricType: 'Transactions',
@@ -74,14 +72,13 @@ describe('buildBridgeVolumeChartData', () => {
 				[nextBucket * 1e3, 7]
 			]
 		})
-		expect(result.charts).toBe(BRIDGE_VOLUME_COMBINED_CHARTS)
 	})
 
-	it('treats omitted raw bridge metric sides as zero', () => {
+	it('preserves unknown volume legs and requires both for a combined value', () => {
 		const result = buildBridgeVolumeChartData({
 			data: [
-				{ date: '1', depositUSD: 10, depositTxs: 2 },
-				{ date: '2', withdrawUSD: 5, withdrawTxs: 1 }
+				{ date: 1, depositUSD: 10, withdrawUSD: null, depositTxs: 2, withdrawTxs: 0 },
+				{ date: 2, depositUSD: null, withdrawUSD: 5, depositTxs: 0, withdrawTxs: 1 }
 			],
 			timePeriod: 'daily',
 			metricType: 'Volume',
@@ -89,9 +86,40 @@ describe('buildBridgeVolumeChartData', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			[1_000, 10],
-			[2_000, 5]
+			[1_000, null],
+			[2_000, null]
 		])
+	})
+
+	it('uses the midpoint for combined USD volume and the sum for combined transaction counts', () => {
+		const data = [{ date: 1, depositUSD: 30, withdrawUSD: 10, depositTxs: 3, withdrawTxs: 2 }]
+
+		expect(
+			buildBridgeVolumeChartData({ data, timePeriod: 'daily', metricType: 'Volume', viewType: 'Combined' }).dataset
+				.source
+		).toEqual([[1_000, 20]])
+		expect(
+			buildBridgeVolumeChartData({ data, timePeriod: 'daily', metricType: 'Transactions', viewType: 'Combined' })
+				.dataset.source
+		).toEqual([[1_000, 5]])
+	})
+
+	it('shows a known split leg and exact transaction counts', () => {
+		const volume = buildBridgeVolumeChartData({
+			data: [{ date: 1, depositUSD: 10, withdrawUSD: null, depositTxs: 0, withdrawTxs: 0 }],
+			timePeriod: 'daily',
+			metricType: 'Volume',
+			viewType: 'Split'
+		})
+		const transactions = buildBridgeVolumeChartData({
+			data: [{ date: 1, depositUSD: null, withdrawUSD: null, depositTxs: 2, withdrawTxs: 0 }],
+			timePeriod: 'daily',
+			metricType: 'Transactions',
+			viewType: 'Combined'
+		})
+
+		expect(volume.dataset.source).toEqual([[1_000, 10, null]])
+		expect(transactions.dataset.source).toEqual([[1_000, 2]])
 	})
 
 	it('keeps empty combined datasets dimensioned for the active view', () => {
@@ -111,7 +139,7 @@ describe('buildBridgeVolumeChartData', () => {
 	it('reports the last chart date only when bridge volume data is stale', () => {
 		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
 		const point = (date: string) => ({
-			date: String(Date.parse(`${date}T00:00:00Z`) / 1e3),
+			date: Date.parse(`${date}T00:00:00Z`) / 1e3,
 			depositUSD: 1,
 			withdrawUSD: 1,
 			depositTxs: 1,

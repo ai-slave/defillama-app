@@ -19,6 +19,29 @@ const BASE_SUMMARY = {
 }
 
 describe('ChainOverview TVL chart helpers', () => {
+	it('keeps empty and single zero-valued TVL series distinct', () => {
+		expect(
+			buildChainTvlChartState({
+				tvlChart: [],
+				tvlChartSummary: { totalValueUSD: null, tvlPrevDay: null, valueChange24hUSD: null, change24h: null },
+				extraTvlCharts: {},
+				tvlSettings: { govtokens: true },
+				nowMs: NOW_MS
+			})
+		).toMatchObject({ finalTvlChart: [], totalValueUSD: null })
+
+		const zeroTimestamp = Date.UTC(2026, 2, 27)
+		expect(
+			buildChainTvlChartState({
+				tvlChart: [[zeroTimestamp, 0]],
+				tvlChartSummary: { totalValueUSD: 0, tvlPrevDay: null, valueChange24hUSD: null, change24h: null },
+				extraTvlCharts: {},
+				tvlSettings: { govtokens: true },
+				nowMs: NOW_MS
+			}).finalTvlChart
+		).toEqual([[zeroTimestamp, 0]])
+	})
+
 	it('uses server summary values without iterating extras when no TVL extras are enabled', () => {
 		const result = buildChainTvlChartState({
 			tvlChart: TVL_CHART,

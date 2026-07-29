@@ -20,15 +20,15 @@ import { Tooltip } from '~/ui/Tooltip'
 import { downloadCSV } from '~/utils/download'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { ChainChartPanel } from './ChainChartPanel'
-import { BAR_CHARTS, type ChainChartLabels, chainCharts } from './constants'
+import { BAR_CHARTS, chainCharts } from './constants'
 import { KeyMetrics } from './KeyMetrics'
 import type { IChainOverviewData } from './types'
 import { useFetchChainChartData } from './useFetchChainChartData'
 
 const normalizeChartInterval = (value: string | null | undefined): LowercaseDwmcGrouping | null => {
 	const normalizedValue = value?.toLowerCase() ?? null
-	if (DWMC_GROUPING_OPTIONS_LOWERCASE.some((option) => option.value === normalizedValue)) {
-		return normalizedValue as LowercaseDwmcGrouping
+	for (const option of DWMC_GROUPING_OPTIONS_LOWERCASE) {
+		if (option.value === normalizedValue) return option.value
 	}
 	return null
 }
@@ -38,6 +38,9 @@ interface IStatsProps extends IChainOverviewData {
 
 export function Stats(props: IStatsProps) {
 	const router = useRouter()
+	const summaryStatsCardProps: { padding: 'sm'; className?: string } = props.hideChart
+		? { padding: 'sm', className: 'xl:col-span-full' }
+		: { padding: 'sm' }
 
 	const searchParams = useMemo(() => {
 		const queryString = router.asPath.split('?')[1]?.split('#')[0] ?? ''
@@ -70,7 +73,7 @@ export function Stats(props: IStatsProps) {
 
 		const toggledCharts = props.charts.filter((tchart, index) =>
 			index === 0 ? searchParams.get(chainCharts[tchart]) !== 'false' : searchParams.get(chainCharts[tchart]) === 'true'
-		) as ChainChartLabels[]
+		)
 
 		const hasAtleasOneBarChart = toggledCharts.some((chart) => BAR_CHARTS.includes(chart))
 		const groupByParam = searchParams.get('groupBy')
@@ -133,7 +136,7 @@ export function Stats(props: IStatsProps) {
 
 	return (
 		<SummaryCardGrid className="h-full">
-			<SummaryStatsCard padding="sm" className={props.hideChart ? 'xl:col-span-full' : undefined}>
+			<SummaryStatsCard {...summaryStatsCardProps}>
 				{props.metadata.name !== 'All' ? (
 					<h1 className="flex flex-nowrap items-center gap-2 *:last:ml-auto">
 						<TokenLogo name={props.metadata.name} kind="chain" size={24} alt={`Logo of ${props.metadata.name}`} />

@@ -5,7 +5,7 @@ import {
 	getBridgeOverviewSummaryTotals,
 	type BridgeOverviewChartType
 } from '../bridgeOverviewChartData'
-import { formatBridgeOverviewVolumeData } from '../bridgeOverviewVolumeData'
+import { formatBridgeOverviewVolumeData, normalizeBridgeVolumeResponse } from '../bridgeOverviewVolumeData'
 
 const chainVolumeData = [
 	{ date: 1, Deposits: 10, Withdrawals: -4 },
@@ -14,9 +14,15 @@ const chainVolumeData = [
 
 describe('buildBridgeOverviewActiveChart', () => {
 	it('builds net flow from the production raw bridge-volume contract', () => {
-		const formatted = formatBridgeOverviewVolumeData([
-			{ date: '1', depositUSD: 10, withdrawUSD: 4, depositTxs: 2, withdrawTxs: 1 },
-			{ date: '2', depositUSD: 5, depositTxs: 1 }
+		const formatted = formatBridgeOverviewVolumeData(
+			normalizeBridgeVolumeResponse([
+				{ date: '1', depositUSD: 10, withdrawUSD: 4, depositTxs: 2, withdrawTxs: 1 },
+				{ date: '2', depositUSD: 5, withdrawUSD: null, depositTxs: 1, withdrawTxs: 0 }
+			])
+		)
+		expect(formatted).toEqual([
+			{ date: 1, Deposits: 10, Withdrawals: -4 },
+			{ date: 2, Deposits: 5, Withdrawals: null }
 		])
 
 		expect(
@@ -27,27 +33,52 @@ describe('buildBridgeOverviewActiveChart', () => {
 				dimensions: ['timestamp', 'Net Flow'],
 				source: [
 					[1_000, 6],
-					[2_000, 5]
+					[2_000, null]
 				]
 			}
 		})
 	})
 
-	it('preserves filtered row totals on the all-chains overview', () => {
+	it('sums the completed bridge rows for global summary totals', () => {
+		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
+		const aggregate = Array.from({ length: 30 }, (_, index) => ({
+			date: (Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000) / 1e3,
+			volume: index + 1,
+			Deposits: null,
+			Withdrawals: null
+		}))
 		expect(
 			getBridgeOverviewSummaryTotals({
 				selectedChain: 'All',
-				bridges: [{ lastDailyVolume: 3, weeklyVolume: 12, monthlyVolume: 40 }],
-				chainVolumeData: []
+				bridges: [
+					{ lastDailyVolume: 3, weeklyVolume: 30, monthlyVolume: 300 },
+					{ lastDailyVolume: 2, weeklyVolume: 20, monthlyVolume: 200 }
+				],
+				chainVolumeData: aggregate,
+				currentTimeMs
 			})
-		).toEqual({ dayTotalVolume: 3, weekTotalVolume: 12, monthTotalVolume: 40 })
+		).toEqual({ dayTotalVolume: 5, weekTotalVolume: 50, monthTotalVolume: 500 })
+	})
+
+	it('keeps active bridge totals when another successful bridge has no completed activity', () => {
+		expect(
+			getBridgeOverviewSummaryTotals({
+				selectedChain: 'All',
+				bridges: [
+					{ lastDailyVolume: 5, weeklyVolume: 20, monthlyVolume: 80 },
+					{ lastDailyVolume: 0, weeklyVolume: 0, monthlyVolume: 0 }
+				],
+				chainVolumeData: [],
+				currentTimeMs: Date.parse('2026-07-14T12:00:00Z')
+			})
+		).toEqual({ dayTotalVolume: 5, weekTotalVolume: 20, monthTotalVolume: 80 })
 	})
 
 	it('uses normalized chain-wide aggregate totals on a chain overview', () => {
 		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
 		const aggregate = [
 			...Array.from({ length: 30 }, (_, index) => ({
-				date: new Date(Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000).toISOString(),
+				date: (Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000) / 1e3,
 				Deposits: 10,
 				Withdrawals: -2
 			}))
@@ -56,10 +87,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 		expect(
 			getBridgeOverviewSummaryTotals({
 				selectedChain: 'Ethereum',
-				bridges: [
-					{ lastDailyVolume: 3, weeklyVolume: 12, monthlyVolume: 40 },
-					{ lastDailyVolume: 2, weeklyVolume: null, monthlyVolume: null }
-				],
+				bridges: [{ lastDailyVolume: 3 }, { lastDailyVolume: 2 }],
 				chainVolumeData: aggregate,
 				currentTimeMs
 			})
@@ -97,7 +125,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 				dimensions: ['timestamp', 'Inflows', 'Outflows'],
 				source: [
 					[1_000, (10 / 14) * 100, (4 / 14) * 100],
-					[2_000, 0, 0]
+					[2_000, null, null]
 				]
 			}
 		})
@@ -116,7 +144,27 @@ describe('buildBridgeOverviewActiveChart', () => {
 		})
 	})
 
-	it('groups and limits only the selected token direction', () => {
+	it('distinguishes unavailable token stats from a known-empty token map', () => {
+		expect(
+			buildBridgeOverviewActiveChart({
+				selectedChain: 'Ethereum',
+				chartType: '24h Tokens Deposited',
+				chainVolumeData
+			})
+		).toBeNull()
+
+		const knownEmpty = buildBridgeOverviewActiveChart({
+			selectedChain: 'Ethereum',
+			chartType: '24h Tokens Deposited',
+			chainVolumeData,
+			bridgeStatsCurrentDay: { totalTokensDeposited: {}, totalTokensWithdrawn: {} }
+		})
+		expect(knownEmpty?.kind).toBe('24h Tokens Deposited')
+		if (knownEmpty?.kind !== '24h Tokens Deposited') return
+		expect(knownEmpty.series.peers).toEqual([])
+	})
+
+	it('preserves exact token identities and limits only the selected token direction', () => {
 		const totalTokensDeposited = Object.fromEntries(
 			Array.from({ length: 12 }, (_, index) => [
 				`deposit-${index}`,
@@ -135,24 +183,45 @@ describe('buildBridgeOverviewActiveChart', () => {
 
 		expect(result?.kind).toBe('24h Tokens Deposited')
 		if (result?.kind !== '24h Tokens Deposited') return
-		expect(result.series.peers).toHaveLength(11)
+		expect(result.series.peers).toHaveLength(12)
 		const chartData = buildRuntimePieChartPresentation({ series: result.series }).chartData
-		expect(chartData[0]).toEqual({ name: 'USDC', value: 23 })
-		expect(chartData.at(-1)).toEqual({ name: 'Others', value: 1 })
+		expect(chartData.slice(0, 2)).toEqual([
+			{ name: 'USDC · deposit-0', value: 12 },
+			{ name: 'USDC · deposit-1', value: 11 }
+		])
+		expect(chartData.at(-1)).toEqual({ name: 'Others', value: 3 })
 	})
 
-	it('builds the selected token direction when the opposite direction is unavailable', () => {
+	it('builds the selected token direction when the opposite direction is known empty', () => {
 		const result = buildBridgeOverviewActiveChart({
 			selectedChain: 'Ethereum',
 			chartType: '24h Tokens Deposited',
 			chainVolumeData,
 			bridgeStatsCurrentDay: {
-				totalTokensDeposited: { deposit: { symbol: 'USDC', usdValue: 10 } }
+				totalTokensDeposited: { deposit: { symbol: 'USDC', usdValue: 10 } },
+				totalTokensWithdrawn: {}
 			}
 		})
 		expect(result?.kind).toBe('24h Tokens Deposited')
 		if (result?.kind !== '24h Tokens Deposited') return
 		expect(buildRuntimePieChartPresentation({ series: result.series }).chartData).toEqual([{ name: 'USDC', value: 10 }])
+	})
+
+	it('does not render a partial token pie when any USD value is unknown', () => {
+		expect(
+			buildBridgeOverviewActiveChart({
+				selectedChain: 'Ethereum',
+				chartType: '24h Tokens Deposited',
+				chainVolumeData,
+				bridgeStatsCurrentDay: {
+					totalTokensDeposited: {
+						known: { symbol: 'USDC', usdValue: 10 },
+						unknown: { symbol: 'ETH', usdValue: null }
+					},
+					totalTokensWithdrawn: {}
+				}
+			})
+		).toBeNull()
 	})
 
 	it('keeps a source Others slice at the end', () => {

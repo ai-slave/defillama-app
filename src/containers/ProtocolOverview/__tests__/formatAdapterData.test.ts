@@ -5,7 +5,6 @@ import { formatAdapterData } from '../formatAdapterData'
 function createAdapterMetrics(overrides: Partial<IAdapterProtocolMetrics> = {}): IAdapterProtocolMetrics {
 	return {
 		chain: null,
-		allChains: ['Ethereum', 'Base'],
 		total24h: 12,
 		total48hto24h: 8,
 		total7d: 70,
@@ -19,6 +18,8 @@ function createAdapterMetrics(overrides: Partial<IAdapterProtocolMetrics> = {}):
 		change_1m: 3,
 		change_7dover7d: 4,
 		change_30dover30d: 5,
+		total7DaysAgo: 60,
+		total30DaysAgo: 250,
 		totalAllTime: 1500,
 		defillamaId: '1',
 		name: 'gauntlet',
@@ -59,6 +60,7 @@ describe('formatAdapterData', () => {
 						total30d: 120,
 						total60dto30d: 100,
 						total1y: 1000,
+						annualized1y: 1000,
 						total7DaysAgo: 20,
 						total30DaysAgo: 110,
 						totalAllTime: 700,
@@ -78,6 +80,7 @@ describe('formatAdapterData', () => {
 						total30d: 180,
 						total60dto30d: 150,
 						total1y: 1200,
+						annualized1y: 1200,
 						total7DaysAgo: 30,
 						total30DaysAgo: 160,
 						totalAllTime: 800,
@@ -130,6 +133,15 @@ describe('formatAdapterData', () => {
 				methodologyKey: 'Fees'
 			})?.chainBreakdown
 		).toBeNull()
+	})
+
+	it('uses a string methodology as the protocol methodology', () => {
+		expect(
+			formatAdapterData({
+				data: createAdapterMetrics({ methodology: 'Reported directly by the protocol' }),
+				methodologyKey: 'Fees'
+			})?.methodology
+		).toBe('Reported directly by the protocol')
 	})
 
 	it('preserves child methodology behavior', () => {

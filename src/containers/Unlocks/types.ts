@@ -5,7 +5,8 @@ import type {
 	EmissionEvent,
 	Insider,
 	ProtocolEmission,
-	TokenAllocationSplit
+	TokenAllocationSplit,
+	TokenIncentiveChartPoint
 } from './api.types'
 
 export interface ProtocolEmissionWithHistory extends ProtocolEmission {
@@ -37,7 +38,7 @@ export interface ProtocolEmissionResult {
 	hallmarks: { documented: Array<[number, string]>; realtime: Array<[number, string]> }
 	name: string | null
 	tokenPrice: { price?: number; symbol?: string }
-	unlockUsdChart: unknown[] | null
+	unlockUsdChart: TokenIncentiveChartPoint[] | null
 	tbdSections: string[]
 	forecastSections: string[]
 	insiders: { methodology: string; addresses: Insider[] }

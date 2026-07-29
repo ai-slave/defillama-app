@@ -19,7 +19,10 @@ export function prepareChartCsv(data: Record<string, Array<[string | number, num
 	}
 	for (const [date, valuesByChart] of valuesByDate) {
 		const values: Array<number | string | null> = []
-		for (const chartName of charts) values.push(valuesByChart.get(chartName) ?? '')
+		for (const chartName of charts) {
+			const value = valuesByChart.get(chartName)
+			values.push(value === undefined ? '' : value)
+		}
 		rows.push([date, formatIsoDate(+date, { input: 'milliseconds' }) ?? '', ...values])
 	}
 

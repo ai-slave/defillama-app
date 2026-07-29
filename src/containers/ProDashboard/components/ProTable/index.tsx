@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useProDashboardEditorActions } from '../../ProDashboardAPIContext'
 import type { TableFilters } from '../../types'
+import { DimensionDatasetCoverageNotice } from '../datasets/DimensionDatasetCoverageNotice'
 import { ColumnManagementPanel } from './ColumnManagementPanel'
 import type { CustomColumn } from './proTable.types'
 import { ProtocolFilterModal } from './ProtocolFilterModal'
@@ -64,6 +65,7 @@ export function ProtocolsByChainTable({
 		table,
 		isLoading,
 		isEmptyProtocols,
+		unavailableChains,
 		showColumnPanel,
 		setShowColumnPanel,
 		searchTerm,
@@ -90,11 +92,11 @@ export function ProtocolsByChainTable({
 		deleteCustomView,
 		loadCustomView
 	} = useProTable(chains, filters, () => setShowFilterModal(true), {
-		initialColumnOrder: columnOrder,
-		initialColumnVisibility: columnVisibility,
-		initialCustomColumns: customColumns,
-		initialActiveViewId: activeViewId,
-		initialActivePresetId: activePresetId,
+		...(columnOrder !== undefined ? { initialColumnOrder: columnOrder } : {}),
+		...(columnVisibility !== undefined ? { initialColumnVisibility: columnVisibility } : {}),
+		...(customColumns !== undefined ? { initialCustomColumns: customColumns } : {}),
+		...(activeViewId !== undefined ? { initialActiveViewId: activeViewId } : {}),
+		...(activePresetId !== undefined ? { initialActivePresetId: activePresetId } : {}),
 		onColumnsChange: handleColumnsChange
 	})
 
@@ -154,8 +156,10 @@ export function ProtocolsByChainTable({
 				onDeleteView={(...args) => {
 					void deleteCustomView(...args)
 				}}
-				activeViewId={activePreset}
+				{...(activePreset !== null ? { activeViewId: activePreset } : {})}
 			/>
+
+			<DimensionDatasetCoverageNotice unavailableChains={unavailableChains} />
 
 			<TableBody
 				table={table}

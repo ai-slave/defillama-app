@@ -85,7 +85,7 @@ Do not move TVL behavior into `src/metrics` without first inventorying the route
 
 ## Bridged TVL Notes
 
-ChainOverview can show a Bridged TVL key metric card from current `/chain-assets/chains` totals. The historical Bridged TVL chart is different data: it depends on the precomputed backend `/chain-assets/chart/:chain-slug` route and is exposed from chain metadata `chainAssets`, even when the current totals fetch is missing or failed.
+ChainOverview can show a Bridged TVL key metric card from current `/chain-assets/chains` totals. The historical Bridged TVL chart is different data: it depends on the precomputed backend `/chain-assets/chart/:chain-asset-id` route and uses the exact chain metadata `id`, not a display-name slug. It is exposed from chain metadata `chainAssets`, even when the current totals fetch is missing or failed.
 
 The chart semantics are one millisecond timestamp point per day with `total`, plus `ownTokens` when `govtokens` is enabled. Non-USD denomination conversion uses the same millisecond timestamp for the combined value.
 

@@ -1,5 +1,6 @@
-import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
+import type { AdapterChainProtocol } from '~/containers/AdapterMetrics/api.types'
 import type { IAdapterChainOverview } from '~/containers/AdapterMetrics/types'
+import type { EmissionsBreakdownProtocol } from './api.types'
 
 export interface ChainIncentivesSummary {
 	emissions24h: number | null
@@ -26,22 +27,9 @@ export interface ProtocolEmissionsLookupEntry {
 
 export type ProtocolEmissionsLookup = Record<string, ProtocolEmissionsLookupEntry>
 
-export interface DimensionEarningsEmissionMatch {
-	defillamaId: string
-	name: string
-	linked?: string[]
-	emission24h?: number
-	emission7d?: number
-	emission30d?: number
-	emission1y?: number
-	emissionAllTime?: number
-}
-
-export type DimensionEarningsOverviewBase = IAdapterChainMetrics
-export type DimensionEarningsProtocol = IAdapterChainMetrics['protocols'][0]
-export type DimensionEarningsProtocolWithEmissions = Omit<DimensionEarningsProtocol, 'total1y'> & {
+export type DimensionEarningsProtocolWithEmissions = Omit<AdapterChainProtocol, 'total1y'> & {
 	total1y: number | null
-	_emissions?: DimensionEarningsEmissionMatch
+	_emissions?: EmissionsBreakdownProtocol
 }
 
 export interface DimensionEarningsOverview extends Omit<IAdapterChainOverview, 'protocols' | 'total1y'> {

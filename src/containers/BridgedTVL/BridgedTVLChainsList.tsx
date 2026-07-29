@@ -7,13 +7,13 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
-import type { RawChainsAssetsResponse, RawChainAssetsFlowEntry } from './api.types'
+import type { ChainAssetsFlowEntry, ChainsAssetsResponse } from './api.types'
 import type { IBridgedRow } from './types'
 
 interface BridgedTVLChainsListProps {
-	assets: RawChainsAssetsResponse
+	assets: ChainsAssetsResponse
 	chains: Array<{ label: string; to: string }>
-	flows1d: Record<string, RawChainAssetsFlowEntry> | null
+	flows1d: Record<string, ChainAssetsFlowEntry> | null
 	deprecatedChains: Record<string, true>
 }
 
@@ -26,17 +26,18 @@ export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains
 		const rows: IBridgedRow[] = []
 		for (const name in assets) {
 			const chainAssets = assets[name]
-			if (!chainAssets?.total) continue
-
+			if (chainAssets === undefined) continue
 			const chainFlows = flows1d?.[name]
-			rows.push({
+			const row: IBridgedRow = {
 				name,
 				deprecated: deprecatedChains[name] === true,
-				...chainAssets,
-				change_24h: chainFlows?.total?.perc
-			})
+				...chainAssets
+			}
+			const change24h = chainFlows?.total?.perc
+			if (change24h != null) row.change_24h = change24h
+			rows.push(row)
 		}
-		rows.sort((a, b) => Number(b.total?.total ?? 0) - Number(a.total?.total ?? 0))
+		rows.sort((a, b) => b.total.total - a.total.total)
 		return rows
 	}, [assets, flows1d, deprecatedChains])
 
@@ -79,7 +80,7 @@ const bridgedColumns = [
 			headerClassName: 'w-[min(200px,40vw)]'
 		}
 	}),
-	columnHelper.accessor((row) => row.total?.total ?? undefined, {
+	columnHelper.accessor((row) => row.total.total, {
 		id: 'total',
 		header: 'Total Bridged',
 		cell: (info) =>

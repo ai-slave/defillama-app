@@ -72,11 +72,35 @@ export const BAR_CHARTS: ChainChartLabels[] = [
 
 export const DISABLED_CUMULATIVE_CHARTS: ChainChartLabels[] = ['Core Developers', 'Devs Commits']
 
-const chainOverviewChartColorsRecord: Record<string, string> = {}
-let chartColorIndex = 0
-for (const chart in chainCharts) {
-	chainOverviewChartColorsRecord[chart] = CHART_COLORS[chartColorIndex++]
+export function getChainOverviewPaletteColor(index: number): string {
+	const color = CHART_COLORS[index]
+	if (color === undefined) {
+		throw new Error(`Missing ChainOverview chart color at palette index ${index}`)
+	}
+	return color
 }
-export const chainOverviewChartColors = chainOverviewChartColorsRecord as {
-	[K in keyof typeof chainCharts]: string
+
+export const chainOverviewChartColors = {
+	TVL: getChainOverviewPaletteColor(0),
+	'Stablecoins Mcap': getChainOverviewPaletteColor(1),
+	'Chain Fees': getChainOverviewPaletteColor(2),
+	'Chain Revenue': getChainOverviewPaletteColor(3),
+	'DEXs Volume': getChainOverviewPaletteColor(4),
+	'Perps Volume': getChainOverviewPaletteColor(5),
+	'Token Incentives': getChainOverviewPaletteColor(6),
+	'App Revenue': getChainOverviewPaletteColor(7),
+	'App Fees': getChainOverviewPaletteColor(8),
+	'Bridged TVL': getChainOverviewPaletteColor(9),
+	'Active Addresses': getChainOverviewPaletteColor(10),
+	'New Addresses': getChainOverviewPaletteColor(11),
+	Transactions: getChainOverviewPaletteColor(12),
+	Raises: getChainOverviewPaletteColor(13),
+	'Net Inflows': getChainOverviewPaletteColor(14),
+	'Core Developers': getChainOverviewPaletteColor(15),
+	'Devs Commits': getChainOverviewPaletteColor(16),
+	'Token Mcap': getChainOverviewPaletteColor(17),
+	'Token Price': getChainOverviewPaletteColor(18),
+	'Token Volume': getChainOverviewPaletteColor(19)
+} satisfies {
+	[K in ChainChartLabels]: string
 }

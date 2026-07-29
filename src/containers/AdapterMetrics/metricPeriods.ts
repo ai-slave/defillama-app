@@ -1,4 +1,4 @@
-type NullableNumber = number | null | undefined
+type NullableNumber = number | null
 
 export type MetricPeriodFields = {
 	total24h?: NullableNumber
@@ -40,7 +40,7 @@ const SUM_FIELDS = [
 
 const ANNUALIZED_PARENT_CONTRIBUTOR_FIELDS = ['total24h', 'total7d', 'total30d', 'total1y', 'totalAllTime'] as const
 
-function sumNullable(left: NullableNumber, right: NullableNumber) {
+function sumNullable(left: NullableNumber | undefined, right: NullableNumber | undefined) {
 	if (left == null && right == null) return null
 	return (left ?? 0) + (right ?? 0)
 }
@@ -52,7 +52,7 @@ function hasAnnualizedParentContributor(protocol: MetricPeriodFields) {
 	return false
 }
 
-function getPercentChange(valueNow: NullableNumber, valuePrevious: NullableNumber) {
+function getPercentChange(valueNow: NullableNumber | undefined, valuePrevious: NullableNumber | undefined) {
 	if (valueNow == null || valuePrevious == null || valuePrevious === 0) return null
 
 	return ((valueNow - valuePrevious) / valuePrevious) * 100

@@ -66,6 +66,21 @@ Examples of ambiguous pairings:
 - `dailyVolume` is used by DEXs, perps, DEX aggregators, and perp aggregators. The metadata flag depends on `adapterType`.
 - `dailyNotionalVolume` is used by DEX notional volume and options notional volume. The metadata flag depends on `adapterType`.
 
+### Activity Availability And Aggregation
+
+Interpret nullable adapter activity periods using source provenance rather than a global fallback:
+
+- In a successful authoritative protocol or chain listing, an omitted row or nullable period means zero activity for that period. A successful empty listing therefore totals zero, and an inactive or deprecated child must not hide active siblings.
+- A failed whole request remains unavailable (`null`). Do not convert a request failure into a successful zero or present a best-effort multi-source result as complete.
+- Selected-chain datasets that retain successful chains after another chain fails must carry explicit partial-coverage metadata through APIs, server-stream cache seeding, and consumers.
+- These activity rules do not apply to exact TVL snapshots, ratio denominators, required bridge legs, or chart points. Missing required values for those metrics remain unknown.
+
+Earnings additionally combines two authoritative sources:
+
+- Revenue minus emissions is unavailable when either whole source fails.
+- Within successful listings, nullable revenue activity and a missing protocol emissions row each contribute zero.
+- Earnings comparison fields remain unavailable when the emissions producer has no matching comparison periods. Selected-chain earnings must not relabel all-chain periods as chain-specific values.
+
 ### Protocol Liquidations
 
 Protocol liquidation metrics are adapter-backed metrics exposed through the `liquidations` adapter namespace. They are distinct from the Liquidations product page, which tracks collateral at risk of liquidation.
@@ -215,10 +230,10 @@ Current data surfaces:
 
 - Current bridged asset totals come from `/chain-assets/chains`.
 - ChainOverview uses those current totals for the Bridged TVL key metric card when chain asset data exists.
-- Historical Bridged TVL charts come from the precomputed backend `/chain-assets/chart/:chain-slug` route.
+- Historical Bridged TVL charts come from the precomputed backend `/chain-assets/chart/:chain-asset-id` route.
 - ChainOverview exposes the historical Bridged TVL chart from chain metadata `chainAssets`; a missing or failed current totals fetch must not hide the chart.
-- Public chain chart API requests for `kind=bridged-tvl` must validate the chain through chain metadata, require the `chainAssets` flag, and query the backend with the validated chain slug.
-- Direct frontend callers, including Pro Dashboard chain charts, must query historical Bridged TVL with `slug(chain)`.
+- Public chain chart API requests for `kind=bridged-tvl` must validate the chain through chain metadata, require the `chainAssets` flag, and query the backend with the exact metadata `id` used by the chain-assets producer.
+- Direct frontend callers, including Pro Dashboard chain charts, must resolve that metadata `id`; display names and URL slugs are not producer identifiers for chains such as Hyperliquid L1, OP Mainnet, Avalanche, Gnosis, and zkSync Era.
 
 Historical chart semantics:
 

@@ -81,7 +81,7 @@ const formatGroupedChart = ({
 	}
 
 	const formatted: Array<[number, number | null]> = []
-	let cumulativeTotal = 0
+	let cumulativeTotal: number | null = 0
 
 	if (!denominationPriceHistory) {
 		for (let i = 0; i < data.length; i++) {
@@ -121,15 +121,14 @@ const formatGroupedChart = ({
 		const price = denominationPriceHistory[String(timestampSec)] ?? denominationPriceHistory[String(timestampMs)]
 
 		if (mode === 'sum') {
-			if (!price) continue
-			const nextValue = value / price
+			const nextValue = price ? value / price : null
 			const previous = formatted[formatted.length - 1]
 			if (groupBy === 'cumulative') {
-				cumulativeTotal += nextValue
+				cumulativeTotal = cumulativeTotal == null || nextValue == null ? null : cumulativeTotal + nextValue
 				if (previous?.[0] === bucketTimestampMs) previous[1] = cumulativeTotal
 				else formatted.push([bucketTimestampMs, cumulativeTotal])
 			} else if (previous?.[0] === bucketTimestampMs) {
-				previous[1] = (previous[1] ?? 0) + nextValue
+				previous[1] = previous[1] == null || nextValue == null ? null : previous[1] + nextValue
 			} else {
 				formatted.push([bucketTimestampMs, nextValue])
 			}
@@ -155,6 +154,54 @@ export const formatBarChart = ({
 	denominationPriceHistory
 }: FormatterInput): Array<[number, number | null]> =>
 	formatGroupedChart({ data, groupBy, dateInMs, denominationPriceHistory, mode: 'sum' })
+
+/** Sum a nullable flow series without converting unknown observations into zero. */
+export function formatNullableBarChart({
+	data,
+	groupBy,
+	dateInMs = false,
+	denominationPriceHistory
+}: {
+	data: ReadonlyArray<[string | number, number | null]>
+	groupBy: ChartTimeGroupingWithCumulative
+	dateInMs?: boolean
+	denominationPriceHistory: Record<string, number> | null
+}): Array<[number, number | null]> {
+	const formatted: Array<[number, number | null]> = []
+	let cumulativeTotal: number | null = 0
+
+	for (const [date, value] of data) {
+		const timestampSec = dateInMs ? Number(date) / 1e3 : Number(date)
+		const timestampMs = dateInMs ? Number(date) : Number(date) * 1e3
+		const price = denominationPriceHistory
+			? (denominationPriceHistory[String(timestampSec)] ?? denominationPriceHistory[String(timestampMs)])
+			: 1
+		const convertedValue = value == null || price == null || price === 0 ? null : value / price
+
+		if (groupBy === 'daily') {
+			formatted.push([timestampMs, convertedValue])
+			continue
+		}
+
+		if (groupBy === 'cumulative') {
+			cumulativeTotal = cumulativeTotal == null || convertedValue == null ? null : cumulativeTotal + convertedValue
+			const previous = formatted[formatted.length - 1]
+			if (previous?.[0] === timestampMs) previous[1] = cumulativeTotal
+			else formatted.push([timestampMs, cumulativeTotal])
+			continue
+		}
+
+		const bucketTimestampMs = getBucketTimestampSec(timestampSec, groupBy) * 1e3
+		const previous = formatted[formatted.length - 1]
+		if (previous?.[0] === bucketTimestampMs) {
+			previous[1] = previous[1] == null || convertedValue == null ? null : previous[1] + convertedValue
+		} else {
+			formatted.push([bucketTimestampMs, convertedValue])
+		}
+	}
+
+	return formatted
+}
 
 /**
  * Transform raw time-series tuples into `[timestampMs, value]` pairs for ECharts line series.

@@ -13,7 +13,8 @@ import {
 	getAdapterByChainPageData,
 	getChainsByAdapterChartData,
 	getChainsByAdapterPageData,
-	getChainsByChainNativeFeeRevenuePageData
+	getChainsByChainNativeFeeRevenuePageData,
+	getChainsByREVPageData
 } from '../queries'
 
 const chainMetadata = {
@@ -166,6 +167,50 @@ describe('chains by adapter page data', () => {
 		])
 	})
 
+	it('retains explicit zero supplemental metrics in chain ranking rows', async () => {
+		const derivatives = await getChainsByAdapterPageData({
+			adapterType: ADAPTER_TYPES.PERPS,
+			dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME,
+			chainMetadata: {
+				base: {
+					id: 'base',
+					name: 'Base',
+					perps: true,
+					openInterest: true,
+					dimAgg: {
+						derivatives: { dv: { '24h': 0 } },
+						'open-interest': { doi: { '24h': 0 } }
+					}
+				}
+			},
+			includeChartData: false
+		})
+		const normalizedVolume = await getChainsByAdapterPageData({
+			adapterType: ADAPTER_TYPES.NORMALIZED_VOLUME,
+			dataType: ADAPTER_DATA_TYPES.DAILY_NORMALIZED_VOLUME,
+			chainMetadata: {
+				base: {
+					id: 'base',
+					name: 'Base',
+					normalizedVolume: true,
+					activeLiquidity: true,
+					dimAgg: {
+						'normalized-volume': {
+							dnvol: { '24h': 0 },
+							dal: { '24h': 0 }
+						}
+					}
+				}
+			},
+			includeChartData: false
+		})
+
+		expect(derivatives.chains).toEqual([expect.objectContaining({ name: 'Base', total24h: 0, openInterest: 0 })])
+		expect(normalizedVolume.chains).toEqual([
+			expect.objectContaining({ name: 'Base', total24h: 0, activeLiquidity: 0 })
+		])
+	})
+
 	it('builds the chart data shape used by the page', async () => {
 		fetchJsonMock.mockResolvedValue([
 			[1, { Ethereum: 10, Optimism: 5, Unknown: 999 }],
@@ -243,14 +288,30 @@ describe('chains by adapter page data', () => {
 	})
 
 	it('uses chain fee metadata to qualify chain-native rankings with one base request', async () => {
-		fetchJsonMock.mockResolvedValue({
-			protocols: [
-				{ name: 'Base', slug: 'base', protocolType: 'chain', total24h: 100, total7d: 700, total30d: 3000 },
-				{ name: 'Sui', slug: 'sui', protocolType: 'chain', total24h: 200, total7d: 1400, total30d: 6000 },
-				{ name: 'App Only', slug: 'app-only', protocolType: 'chain', total24h: 300 },
-				{ name: 'Protocol Row', slug: 'protocol-row', protocolType: 'protocol', total24h: 400 }
-			]
-		})
+		fetchJsonMock.mockResolvedValue(
+			adapterMetricsResponse({
+				protocols: [
+					adapterProtocolRow({
+						name: 'Base',
+						slug: 'base',
+						protocolType: 'chain',
+						total24h: 100,
+						total7d: 700,
+						total30d: 3000
+					}),
+					adapterProtocolRow({
+						name: 'Sui',
+						slug: 'sui',
+						protocolType: 'chain',
+						total24h: 200,
+						total7d: 1400,
+						total30d: 6000
+					}),
+					adapterProtocolRow({ name: 'App Only', slug: 'app-only', protocolType: 'chain', total24h: 300 }),
+					adapterProtocolRow({ name: 'Protocol Row', slug: 'protocol-row', protocolType: 'protocol', total24h: 400 })
+				]
+			})
+		)
 
 		const data = await getChainsByChainNativeFeeRevenuePageData({
 			adapterType: ADAPTER_TYPES.FEES,
@@ -266,13 +327,15 @@ describe('chains by adapter page data', () => {
 	})
 
 	it('uses chain revenue metadata and excludes app-only chains', async () => {
-		fetchJsonMock.mockResolvedValue({
-			protocols: [
-				{ name: 'Base', slug: 'base', protocolType: 'chain', total24h: 100 },
-				{ name: 'Sui', slug: 'sui', protocolType: 'chain', total24h: 200 },
-				{ name: 'App Only', slug: 'app-only', protocolType: 'chain', total24h: 300 }
-			]
-		})
+		fetchJsonMock.mockResolvedValue(
+			adapterMetricsResponse({
+				protocols: [
+					adapterProtocolRow({ name: 'Base', slug: 'base', protocolType: 'chain', total24h: 100 }),
+					adapterProtocolRow({ name: 'Sui', slug: 'sui', protocolType: 'chain', total24h: 200 }),
+					adapterProtocolRow({ name: 'App Only', slug: 'app-only', protocolType: 'chain', total24h: 300 })
+				]
+			})
+		)
 
 		const data = await getChainsByChainNativeFeeRevenuePageData({
 			adapterType: ADAPTER_TYPES.FEES,
@@ -282,5 +345,39 @@ describe('chains by adapter page data', () => {
 
 		expect(data.allChains).toEqual(['Sui'])
 		expect(data.chains.map((chain) => chain.name)).toEqual(['Sui'])
+	})
+
+	it('keeps REV requests paired with their chain when one protocol request fails', async () => {
+		fetchJsonMock.mockImplementation((url: string) => {
+			const pathname = new URL(url).pathname
+			if (pathname.endsWith('/chain/ethereum')) {
+				return Promise.resolve(
+					adapterMetricsResponse({
+						protocols: [adapterProtocolRow({ slug: 'flashbots', total24h: 10, total30d: 30 })]
+					})
+				)
+			}
+			if (pathname.endsWith('/chain/solana')) return Promise.reject(new Error('solana unavailable'))
+			return Promise.resolve(
+				adapterMetricsResponse({
+					protocols: [
+						adapterProtocolRow({ slug: 'ethereum', total24h: 100, total30d: 300 }),
+						adapterProtocolRow({ slug: 'solana', total24h: 200, total30d: 600 })
+					]
+				})
+			)
+		})
+
+		const data = await getChainsByREVPageData({
+			chainMetadata: {
+				ethereum: { id: 'ethereum', name: 'Ethereum', chainFees: true },
+				solana: { id: 'solana', name: 'Solana', chainFees: true }
+			}
+		})
+
+		expect(data.chains).toEqual([
+			expect.objectContaining({ name: 'Solana', slug: 'solana', total24h: 200, total30d: 600 }),
+			expect.objectContaining({ name: 'Ethereum', slug: 'ethereum', total24h: 110, total30d: 330 })
+		])
 	})
 })

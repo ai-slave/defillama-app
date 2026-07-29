@@ -3,7 +3,6 @@ import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { fetchCoinPrices } from '~/api/pricing'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchChainChart, fetchChainsByCategoryAll } from '~/containers/Chains/api'
-import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import { fetchRaises } from '~/containers/Raises/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
@@ -44,7 +43,8 @@ function extractExtraTvl(
 	> = {}
 	for (const sectionName in protocol.chainTvls) {
 		if (TVL_SETTINGS_KEYS_SET.has(sectionName) || sectionName === 'excludeParent') {
-			extraTvl[sectionName] = protocol.chainTvls[sectionName]
+			const section = protocol.chainTvls[sectionName]
+			if (section !== undefined) extraTvl[sectionName] = section
 		}
 	}
 	return extraTvl
@@ -111,6 +111,7 @@ export async function getAirdropDirectoryData(): Promise<Array<{ name: string; p
 	const result: Array<{ name: string; page: string }> = []
 	for (const key in airdrops) {
 		const i = airdrops[key]
+		if (i === undefined) continue
 		if (i.isActive === false || !i.page) continue
 		if (!i.endTime || (i.endTime < 1e12 ? i.endTime * 1000 > now : i.endTime > now)) {
 			result.push({ name: i.name ?? key, page: i.page })
@@ -230,8 +231,8 @@ export async function getExtraTvlByChain({
 		string[]
 	] = await Promise.all([
 		fetchProtocols(),
-		fetchChainChart<ChainChartResponse>(chain)
-			.then((data) => data?.[config.chartKey]?.map((item) => [+item[0] * 1e3, item[1]]) ?? [])
+		fetchChainChart(chain)
+			.then((data) => data?.[config.chartKey]?.map((item): [number, number] => [+item[0] * 1e3, item[1]]) ?? [])
 			.catch((err) => {
 				recordRuntimeError(err, 'pageBuild', {
 					event: 'extraTvlByChain',
@@ -242,9 +243,7 @@ export async function getExtraTvlByChain({
 				})
 				return null
 			}),
-		fetchChainsByCategoryAll<{
-			chainTvls: Array<{ name: string; extraTvl?: Record<string, { tvl: number }> }>
-		}>()
+		fetchChainsByCategoryAll()
 			.then((data) =>
 				(data?.chainTvls ?? []).flatMap((chainData) =>
 					chainData.extraTvl?.[config.chartKey]?.tvl ? [chainData.name] : []
@@ -265,25 +264,30 @@ export async function getExtraTvlByChain({
 	if (!chart || chart.length === 0) return null
 
 	const finalProtocols: IExtraTvlProtocolRow[] = []
-	const parentChildren: Record<string, Array<{ row: IExtraTvlProtocolRow; prevMonthValue: number }>> = {}
+	const parentChildren: Record<string, Array<{ row: IExtraTvlProtocolRow; prevMonthValue: number | null }>> = {}
 	const parentProtocolsMap = new Map(parentProtocols.map((parentProtocol) => [parentProtocol.id, parentProtocol]))
 
 	for (const protocol of protocols) {
-		let totalValue: number | null = null
-		let totalPrevMonth: number | null = null
+		let totalValue = 0
+		let totalPrevMonth: number | null = 0
+		let hasMetricValue = false
 
 		for (const ctvl in protocol.chainTvls) {
 			const isMetricSection = ctvl.endsWith(config.suffix)
 			const matchesChain = chain === 'All' || ctvl === `${chain}${config.suffix}`
 			if (isMetricSection && matchesChain) {
-				totalValue = (totalValue ?? 0) + protocol.chainTvls[ctvl].tvl
-				totalPrevMonth = (totalPrevMonth ?? 0) + protocol.chainTvls[ctvl].tvlPrevMonth
+				const chainTvl = protocol.chainTvls[ctvl]
+				if (chainTvl === undefined) continue
+				hasMetricValue = true
+				totalValue += chainTvl.tvl
+				totalPrevMonth =
+					totalPrevMonth == null || chainTvl.tvlPrevMonth == null ? null : totalPrevMonth + chainTvl.tvlPrevMonth
 			}
 		}
 
-		if (totalValue == null) continue
+		if (!hasMetricValue) continue
 
-		const pct = totalPrevMonth != null && totalValue != null ? getPercentChange(totalValue, totalPrevMonth) : null
+		const pct = totalPrevMonth != null ? getPercentChange(totalValue, totalPrevMonth) : null
 
 		const p: IExtraTvlProtocolRow = {
 			name: protocol.name,
@@ -297,10 +301,8 @@ export async function getExtraTvlByChain({
 		}
 
 		if (protocol.parentProtocol) {
-			if (!parentChildren[protocol.parentProtocol]) {
-				parentChildren[protocol.parentProtocol] = []
-			}
-			parentChildren[protocol.parentProtocol].push({ row: p, prevMonthValue: totalPrevMonth ?? 0 })
+			const children = parentChildren[protocol.parentProtocol] ?? (parentChildren[protocol.parentProtocol] = [])
+			children.push({ row: p, prevMonthValue: totalPrevMonth })
 		} else {
 			finalProtocols.push(p)
 		}
@@ -311,33 +313,42 @@ export async function getExtraTvlByChain({
 		if (!parent) continue
 
 		const childrenWithPrevMonth = parentChildren[parentId]
-		const children = childrenWithPrevMonth.map(({ row }) => row)
-		const totalValue = childrenWithPrevMonth.reduce((acc, { row }) => acc + (row.value ?? 0), 0)
-		const totalPrevMonth = childrenWithPrevMonth.reduce((acc, { prevMonthValue }) => acc + prevMonthValue, 0)
-
+		if (childrenWithPrevMonth === undefined) continue
+		const children: IExtraTvlProtocolRow[] = []
+		let totalValue = 0
+		let totalPrevMonth: number | null = 0
 		const categorySet = new Set<string>()
-		for (const child of children) {
-			if (child.category) categorySet.add(child.category)
+		const chainSet = new Set<string>()
+		for (const { row, prevMonthValue } of childrenWithPrevMonth) {
+			children.push(row)
+			totalValue += row.value
+			totalPrevMonth = totalPrevMonth == null || prevMonthValue == null ? null : totalPrevMonth + prevMonthValue
+			if (row.category) categorySet.add(row.category)
+			for (const childChain of row.chains) chainSet.add(childChain)
 		}
 		const categories = Array.from(categorySet)
-		const pct = totalValue != null && totalPrevMonth != null ? getPercentChange(totalValue, totalPrevMonth) : null
+		const pct = totalPrevMonth != null ? getPercentChange(totalValue, totalPrevMonth) : null
 
 		finalProtocols.push({
 			name: parent.name,
 			logo: parent.logo ?? '',
 			slug: slug(parent.name),
 			category: categories.length > 1 ? null : (categories[0] ?? null),
-			chains: Array.from(new Set(children.flatMap((child) => child.chains))),
+			chains: Array.from(chainSet),
 			value: totalValue,
 			change_1m: pct != null ? roundNumber(pct, 2) : null,
 			subRows: children
 		})
 	}
 
-	const totalValue = getPrevTvlFromChart(chart, 0) ?? chart[chart.length - 1][1]
+	const latestChartPoint = chart.at(-1)
+	if (latestChartPoint === undefined) return null
+	const totalValue = getPrevTvlFromChart(chart, 0) ?? latestChartPoint[1]
 	const previousDayValue = getPrevTvlFromChart(chart, 1)
 	const change24hPct = getPercentChange(totalValue, previousDayValue)
 	const change24h = change24hPct == null || !Number.isFinite(change24hPct) ? null : roundNumber(change24hPct, 2)
+	const chartColor = CHART_COLORS[0]
+	if (chartColor === undefined) throw new Error('Chart palette has no primary color')
 
 	return {
 		protocols: finalProtocols.sort((a, b) => (b.value ?? 0) - (a.value ?? 0)),
@@ -355,7 +366,7 @@ export async function getExtraTvlByChain({
 				type: 'line' as const,
 				name: config.label,
 				encode: { x: 0, y: 1 },
-				color: CHART_COLORS[0],
+				color: chartColor,
 				stack: config.label
 			}
 		],
@@ -419,9 +430,12 @@ function buildTokenMetricProtocols({
 		if (!parent) continue
 
 		const children = parentChildren[parentId]
+		if (children === undefined) continue
 		const categorySet = new Set<string>()
+		const chainSet = new Set<string>()
 		for (const child of children) {
 			if (child.category) categorySet.add(child.category)
+			for (const childChain of child.chains) chainSet.add(childChain)
 		}
 		const cats = Array.from(categorySet)
 
@@ -430,7 +444,7 @@ function buildTokenMetricProtocols({
 			logo: parent.logo ?? '',
 			slug: slug(parent.name),
 			category: cats.length > 1 ? null : (cats[0] ?? null),
-			chains: Array.from(new Set(children.flatMap((child) => child.chains))),
+			chains: Array.from(chainSet),
 			subRows: children,
 			value: getParentValue(parent)
 		})
@@ -583,7 +597,7 @@ export async function getProtocolsAdjustedFDVsByChain({
 		}
 	}
 
-	const getAdjustedFdv = (geckoId: string | undefined, name: string): number | null => {
+	const getAdjustedFdv = (geckoId: string | null | undefined, name: string): number | null => {
 		if (!geckoId) return null
 		const slugName = emissionsSlugByName.get(name) ?? slug(name)
 		const adjustedSupply = emissionsSupplyMetrics[slugName]?.supplyMetrics?.adjustedSupply

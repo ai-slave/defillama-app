@@ -1,3 +1,4 @@
+import { buildProDashboardChainMetadataByName, getProDashboardChainMetadata } from './chainMetadata'
 import {
 	chartNeedsGeckoId,
 	getProDashboardChartSourceQueryKey,
@@ -17,16 +18,6 @@ export interface ProDashboardChartSourcePlanEntry {
 	queryKey: ProDashboardChartSourceQueryKey
 	request: ProDashboardChartRequest
 	skipReason?: string
-}
-
-function buildChainMetadataByName(appMetadata: ProDashboardAppMetadata | null) {
-	const chainsByName = new Map<string, ProDashboardAppMetadata['chains'][string]>()
-	for (const key in appMetadata?.chains ?? {}) {
-		const chain = appMetadata!.chains[key]
-		chainsByName.set(key.toLowerCase(), chain)
-		chainsByName.set(chain.name.toLowerCase(), chain)
-	}
-	return chainsByName
 }
 
 type ProtocolMetadata = ProDashboardAppMetadata['protocols'][string]
@@ -61,8 +52,11 @@ const PROTOCOL_SOURCE_FLAGS: Partial<Record<ProDashboardChartType, readonly (key
 
 function buildProtocolMetadataBySlug(appMetadata: ProDashboardAppMetadata | null) {
 	const protocolsBySlug = new Map<string, ProtocolMetadata[]>()
-	for (const key in appMetadata?.protocols ?? {}) {
-		const protocol = appMetadata!.protocols[key]
+	const protocols = appMetadata?.protocols
+	if (!protocols) return protocolsBySlug
+	for (const protocolId in protocols) {
+		const protocol = protocols[protocolId]
+		if (protocol === undefined) continue
 		if (!protocol.name) continue
 		const normalizedSlug = protocol.name.toLowerCase()
 		const records = protocolsBySlug.get(normalizedSlug)
@@ -139,11 +133,11 @@ function toChartRequest(
 ): ProDashboardChartRequest {
 	return {
 		type: chart.type,
-		protocol: chart.protocol,
-		chain: chart.chain,
-		geckoId: chart.geckoId,
-		dataType: chart.dataType,
-		protocolSymbol
+		...(chart.protocol !== undefined ? { protocol: chart.protocol } : {}),
+		...(chart.chain !== undefined ? { chain: chart.chain } : {}),
+		...(chart.geckoId !== undefined ? { geckoId: chart.geckoId } : {}),
+		...(chart.dataType !== undefined ? { dataType: chart.dataType } : {}),
+		...(protocolSymbol !== undefined ? { protocolSymbol } : {})
 	}
 }
 
@@ -160,10 +154,9 @@ function toMetricRequest(
 	const chain = itemType === 'chain' ? chainsByName.get(item) : undefined
 	return {
 		type: metric.type,
-		protocol: itemType === 'protocol' ? item : '',
-		chain: itemType === 'chain' ? item : '',
+		...(itemType === 'protocol' ? { protocol: item } : { chain: item }),
 		geckoId: metric.subject.geckoId ?? protocol?.geckoId ?? chain?.gecko_id ?? null,
-		protocolSymbol: protocol?.symbol
+		...(protocol?.symbol !== undefined ? { protocolSymbol: protocol.symbol } : {})
 	}
 }
 
@@ -177,12 +170,19 @@ export function buildProDashboardChartSourcePlan(
 	for (const protocol of catalog?.protocols ?? []) protocolsBySlug.set(protocol.slug, protocol)
 	const chainsByName = new Map<string, ProDashboardProtocolCatalog['chains'][number]>()
 	for (const chain of catalog?.chains ?? []) chainsByName.set(chain.name, chain)
-	const chainMetadataByName = buildChainMetadataByName(appMetadata)
+	const chainMetadataByName = buildProDashboardChainMetadataByName(appMetadata?.chains)
 	const protocolMetadataBySlug = buildProtocolMetadataBySlug(appMetadata)
 	const childrenByParentSlug = buildProDashboardParentMapping(catalog?.protocols ?? [])
 
 	const plan = new Map<string, ProDashboardChartSourcePlanEntry>()
-	const addRequest = (request: ProDashboardChartRequest) => {
+	const addRequest = (inputRequest: ProDashboardChartRequest) => {
+		const chainMetadata = inputRequest.chain
+			? getProDashboardChainMetadata(chainMetadataByName, inputRequest.chain)
+			: undefined
+		const request =
+			inputRequest.type === 'bridgedTvl' && chainMetadata
+				? { ...inputRequest, chainAssetId: chainMetadata.id }
+				: inputRequest
 		const itemType = request.protocol ? 'protocol' : 'chain'
 		// Missing catalog metadata must remain an unseeded query so the client can retry it.
 		if (chartNeedsGeckoId(request.type, itemType) && !request.geckoId) return
@@ -190,24 +190,25 @@ export function buildProDashboardChartSourcePlan(
 		const queryKey = getProDashboardChartSourceQueryKey(request)
 		const serializedKey = JSON.stringify(queryKey)
 		if (!plan.has(serializedKey)) {
+			const skipReason =
+				getUnsupportedProtocolSourceReason(request, protocolMetadataBySlug, childrenByParentSlug) ??
+				getUnsupportedChainSourceReason(request, chainMetadataByName)
 			plan.set(serializedKey, {
 				queryKey,
 				request,
-				skipReason:
-					getUnsupportedProtocolSourceReason(request, protocolMetadataBySlug, childrenByParentSlug) ??
-					getUnsupportedChainSourceReason(request, chainMetadataByName)
+				...(skipReason !== undefined ? { skipReason } : {})
 			})
 		}
 	}
 
 	for (const item of items) {
 		if (item.kind === 'chart') {
-			addRequest(toChartRequest(item, protocolsBySlug.get(item.protocol)?.symbol))
+			addRequest(toChartRequest(item, item.protocol ? protocolsBySlug.get(item.protocol)?.symbol : undefined))
 			continue
 		}
 		if (item.kind === 'multi') {
 			for (const chart of limitMultiChartItems(item.items)) {
-				addRequest(toChartRequest(chart, protocolsBySlug.get(chart.protocol)?.symbol))
+				addRequest(toChartRequest(chart, chart.protocol ? protocolsBySlug.get(chart.protocol)?.symbol : undefined))
 			}
 			continue
 		}

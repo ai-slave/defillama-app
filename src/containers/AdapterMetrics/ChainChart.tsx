@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query'
+import { skipToken, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -41,6 +41,8 @@ import {
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const HBarChart = React.lazy(() => import('~/components/ECharts/HBarChart'))
 const BuilderTreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart/Builder'))
+const PRIMARY_CHART_COLOR = CHART_COLORS[0]
+if (PRIMARY_CHART_COLOR === undefined) throw new Error('Chart palette must include a primary color')
 
 const CHART_VIEW_MODES_ADAPTER_BY_CHAIN = ['Combined', 'Breakdown'] as const
 type AdapterByChainViewMode = (typeof CHART_VIEW_MODES_ADAPTER_BY_CHAIN)[number]
@@ -70,19 +72,41 @@ const CHART_VIEW_MODE_OPTIONS = [
 	{ key: 'Combined', name: 'Combined' },
 	{ key: 'Breakdown', name: 'Breakdown' }
 ] as const
-const EMPTY_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp'] }
+const EMPTY_DATASET: MultiSeriesTimeSeriesDataset = { source: [], dimensions: ['timestamp'] }
 const EMPTY_COMBINED_CHART_PRESENTATION: CombinedChartPresentation = { dataset: EMPTY_DATASET, charts: [] }
 type BreakdownChartDataState =
 	| { kind: 'loading' }
 	| { kind: 'error'; message: string }
 	| {
 			kind: 'ready'
-			chartData: MultiSeriesChartDataset
+			chartData: MultiSeriesTimeSeriesDataset
 			protocolDimensions: string[]
 	  }
 
 function assertNever(value: never): never {
 	throw new Error(`Unhandled chains by adapter chart state: ${JSON.stringify(value)}`)
+}
+
+function normalizeChartStateFromQueryValues({
+	chartKindParam,
+	valueModeParam,
+	barLayoutParam,
+	groupByParam,
+	legacyChartTypeParam
+}: {
+	chartKindParam: string | undefined
+	valueModeParam: string | undefined
+	barLayoutParam: string | undefined
+	groupByParam: string | undefined
+	legacyChartTypeParam: string | undefined
+}): ChainsByAdapterChartState {
+	return normalizeChainsByAdapterChartState({
+		...(chartKindParam !== undefined ? { chartKindParam } : {}),
+		...(valueModeParam !== undefined ? { valueModeParam } : {}),
+		...(barLayoutParam !== undefined ? { barLayoutParam } : {}),
+		...(groupByParam !== undefined ? { groupByParam } : {}),
+		...(legacyChartTypeParam !== undefined ? { legacyChartTypeParam } : {})
+	})
 }
 
 function getChartKindQueryUpdate(
@@ -203,7 +227,7 @@ export const AdapterByChainChart = ({
 	const chartViewMode: AdapterByChainViewMode = chartViewParam === 'breakdown' ? 'Breakdown' : 'Combined'
 	const breakdownChartState = React.useMemo(
 		() =>
-			normalizeChainsByAdapterChartState({
+			normalizeChartStateFromQueryValues({
 				chartKindParam: readSingleQueryValue(router.query.chartKind),
 				valueModeParam: readSingleQueryValue(router.query.valueMode),
 				barLayoutParam: readSingleQueryValue(router.query.barLayout),
@@ -396,7 +420,7 @@ export const AdapterByChainChart = ({
 					chain: chain,
 					type: dashboardChartType,
 					grouping,
-					color: CHART_COLORS[0]
+					color: PRIMARY_CHART_COLOR
 				}
 			],
 			grouping,
@@ -684,7 +708,7 @@ function useAdapterByChainBreakdownChartData({
 			const chart = await fetchAdapterChainChartDataByProtocolBreakdown({
 				adapterType,
 				chain,
-				dataType: safeDataType
+				...(safeDataType !== undefined ? { dataType: safeDataType } : {})
 			})
 			const normalized = normalizeProtocolBreakdownChartData({
 				chart,
@@ -736,7 +760,7 @@ export const ChainsByAdapterChart = ({
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 	const chartState = React.useMemo(
 		() =>
-			normalizeChainsByAdapterChartState({
+			normalizeChartStateFromQueryValues({
 				chartKindParam: readSingleQueryValue(router.query.chartKind),
 				valueModeParam: readSingleQueryValue(router.query.valueMode),
 				barLayoutParam: readSingleQueryValue(router.query.barLayout),
@@ -772,7 +796,7 @@ export const ChainsByAdapterChart = ({
 		isLoading: isBaseChartLoading
 	} = useQuery({
 		queryKey: ['page-data', 'dimension-adapters', 'chains-chart', adapterType, dataType],
-		queryFn: () => fetchChainsByAdapterPageChartData({ adapterType, dataType: dataType! }),
+		queryFn: dataType === null ? skipToken : () => fetchChainsByAdapterPageChartData({ adapterType, dataType }),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0,

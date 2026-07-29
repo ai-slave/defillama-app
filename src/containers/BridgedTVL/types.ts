@@ -1,10 +1,7 @@
-export interface IBridgedRow {
+import type { ChainAsset } from './api.types'
+
+export interface IBridgedRow extends ChainAsset {
 	name: string
 	deprecated?: boolean
-	total?: { total?: string }
-	thirdParty?: { total?: string }
-	canonical?: { total?: string }
-	ownTokens?: { total?: string }
-	native?: { total?: string }
-	change_24h: number
+	change_24h?: number
 }

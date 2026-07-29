@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { formatBarChart, formatLineChart, getBucketTimestampMs, getBucketTimestampSec } from './timeSeries'
+import {
+	formatBarChart,
+	formatLineChart,
+	formatNullableBarChart,
+	getBucketTimestampMs,
+	getBucketTimestampSec
+} from './timeSeries'
 
 const toSec = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day) / 1000
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
@@ -51,8 +57,6 @@ describe('formatBarChart', () => {
 			groupBy: 'daily',
 			denominationPriceHistory: null
 		})
-		expect(result).toHaveLength(2)
-		expect(result[0][0]).not.toBe(result[1][0])
 		expect(result).toEqual([
 			[h6 * 1e3, 10],
 			[h18 * 1e3, 20]
@@ -162,7 +166,7 @@ describe('formatBarChart', () => {
 		])
 	})
 
-	it('converts duplicate cumulative deltas and skips missing denomination prices', () => {
+	it('keeps cumulative denomination totals unknown after a missing price', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -179,7 +183,8 @@ describe('formatBarChart', () => {
 			})
 		).toEqual([
 			[toMs(2024, 1, 1), 8],
-			[toMs(2024, 1, 3), 10]
+			[toMs(2024, 1, 2), null],
+			[toMs(2024, 1, 3), null]
 		])
 	})
 
@@ -226,7 +231,7 @@ describe('formatBarChart', () => {
 		).toEqual([[toMs(2024, 1, 1), 10]]) // 10/2 + 20/4 = 5 + 5
 	})
 
-	it('skips entries with no matching denomination price (sum mode)', () => {
+	it('does not fabricate a partial grouped total when a denomination price is missing', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -236,10 +241,9 @@ describe('formatBarChart', () => {
 				groupBy: 'quarterly',
 				denominationPriceHistory: {
 					[String(toSec(2024, 1, 15))]: 2
-					// no price for Feb 15 → entry is skipped
 				}
 			})
-		).toEqual([[toMs(2024, 1, 1), 5]]) // only 10/2
+		).toEqual([[toMs(2024, 1, 1), null]])
 	})
 
 	it('applies denomination in daily mode', () => {
@@ -260,6 +264,112 @@ describe('formatBarChart', () => {
 				denominationPriceHistory: { '99999': 5 }
 			})
 		).toEqual([[toMs(2024, 1, 1), null]])
+	})
+})
+
+describe('formatNullableBarChart', () => {
+	it('preserves known zero and unknown observations in daily mode', () => {
+		expect(
+			formatNullableBarChart({
+				data: [
+					[toSec(2024, 1, 1), 0],
+					[toSec(2024, 1, 2), null]
+				],
+				groupBy: 'daily',
+				denominationPriceHistory: null
+			})
+		).toEqual([
+			[toMs(2024, 1, 1), 0],
+			[toMs(2024, 1, 2), null]
+		])
+	})
+
+	it('marks a grouped period unknown when any contributing observation is unknown', () => {
+		expect(
+			formatNullableBarChart({
+				data: [
+					[toSec(2024, 1, 15), 10],
+					[toSec(2024, 1, 16), null],
+					[toSec(2024, 1, 22), 4]
+				],
+				groupBy: 'weekly',
+				denominationPriceHistory: null
+			})
+		).toEqual([
+			[weekBucketJan21, null],
+			[weekBucketJan28, 4]
+		])
+	})
+
+	it('keeps cumulative values unknown after the first unknown observation', () => {
+		expect(
+			formatNullableBarChart({
+				data: [
+					[toSec(2024, 1, 1), 10],
+					[toSec(2024, 1, 2), null],
+					[toSec(2024, 1, 3), 5]
+				],
+				groupBy: 'cumulative',
+				denominationPriceHistory: null
+			})
+		).toEqual([
+			[toMs(2024, 1, 1), 10],
+			[toMs(2024, 1, 2), null],
+			[toMs(2024, 1, 3), null]
+		])
+	})
+
+	it('does not fabricate partial denominated sums when a price is missing', () => {
+		expect(
+			formatNullableBarChart({
+				data: [
+					[toSec(2024, 1, 15), 10],
+					[toSec(2024, 1, 16), 20]
+				],
+				groupBy: 'weekly',
+				denominationPriceHistory: { [String(toSec(2024, 1, 15))]: 2 }
+			})
+		).toEqual([[weekBucketJan21, null]])
+	})
+
+	it('preserves an all-unknown grouped series', () => {
+		expect(
+			formatNullableBarChart({
+				data: [
+					[toSec(2024, 1, 15), null],
+					[toSec(2024, 1, 16), null]
+				],
+				groupBy: 'weekly',
+				denominationPriceHistory: null
+			})
+		).toEqual([[weekBucketJan21, null]])
+	})
+
+	it('treats omitted sparse dates as zero contribution rather than unknown', () => {
+		expect(
+			formatNullableBarChart({
+				data: [
+					[toSec(2024, 1, 15), 10],
+					[toSec(2024, 1, 17), 5]
+				],
+				groupBy: 'weekly',
+				denominationPriceHistory: null
+			})
+		).toEqual([[weekBucketJan21, 15]])
+
+		expect(
+			formatNullableBarChart({
+				data: [
+					[toSec(2024, 1, 15), 10],
+					[toSec(2024, 1, 17), 5]
+				],
+				groupBy: 'cumulative',
+				denominationPriceHistory: null
+			})
+		).toEqual([
+			[toMs(2024, 1, 15), 10],
+			[toMs(2024, 1, 17), 15]
+		])
 	})
 })
 
@@ -291,8 +401,6 @@ describe('formatLineChart', () => {
 			groupBy: 'daily',
 			denominationPriceHistory: null
 		})
-		expect(result).toHaveLength(2)
-		expect(result[0][0]).not.toBe(result[1][0])
 		expect(result).toEqual([
 			[h6 * 1e3, 10],
 			[h18 * 1e3, 20]

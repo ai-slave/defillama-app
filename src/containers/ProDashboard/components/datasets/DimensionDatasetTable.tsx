@@ -24,6 +24,7 @@ import { LoadingSpinner } from '../LoadingSpinner'
 import { ProTableCSVButton } from '../ProTable/CsvButton'
 import { TableBody } from '../ProTable/TableBody'
 import { TablePagination } from '../ProTable/TablePagination'
+import { DimensionDatasetCoverageNotice } from './DimensionDatasetCoverageNotice'
 import {
 	buildDimensionDatasetCSV,
 	filterDimensionDatasetRows,
@@ -91,7 +92,7 @@ export function DimensionDatasetTable({
 	)
 
 	const { handleTableFiltersChange } = useProDashboardEditorActions()
-	const { data, isLoading, error } = useDimensionDatasetData(datasetType, chains)
+	const { data, isLoading, error, unavailableChains } = useDimensionDatasetData(datasetType, chains)
 	const width = useBreakpointWidth()
 	const tableData = data ?? EMPTY_TABLE_DATA
 	const hasSelectedChains = Boolean(chains?.length)
@@ -193,10 +194,10 @@ export function DimensionDatasetTable({
 		setIncludeCategories(sanitizedInclude)
 		setExcludeCategories(sanitizedExclude)
 		if (tableId) {
-			handleTableFiltersChange(tableId, {
-				categories: sanitizedInclude.length > 0 ? sanitizedInclude : undefined,
-				excludedCategories: sanitizedExclude.length > 0 ? sanitizedExclude : undefined
-			})
+			const nextFilters: TableFilters = {}
+			if (sanitizedInclude.length > 0) nextFilters.categories = sanitizedInclude
+			if (sanitizedExclude.length > 0) nextFilters.excludedCategories = sanitizedExclude
+			handleTableFiltersChange(tableId, nextFilters)
 		}
 	}
 
@@ -257,6 +258,7 @@ export function DimensionDatasetTable({
 					</div>
 				</div>
 			</div>
+			<DimensionDatasetCoverageNotice unavailableChains={unavailableChains} />
 			<TableBody table={instance} />
 			<TablePagination table={instance} />
 			{categoryFiltering && showFilterModal ? (

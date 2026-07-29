@@ -22,6 +22,7 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import { DimensionDatasetCoverageNotice } from '../DimensionDatasetCoverageNotice'
 import { useDimensionDatasetData } from '../useDimensionDatasetData'
 import { dexsDatasetColumns } from './columns'
 
@@ -40,7 +41,7 @@ export function DexsDataset({ chains }: { chains?: string[] }) {
 		pageSize: 10
 	})
 
-	const { data, isLoading, error } = useDimensionDatasetData<DexItem>('dexs', chains)
+	const { data, isLoading, error, unavailableChains } = useDimensionDatasetData<DexItem>('dexs', chains)
 	const width = useBreakpointWidth()
 
 	const enrichedData = React.useMemo<DexItemWithMarketShare[]>(() => {
@@ -207,6 +208,7 @@ export function DexsDataset({ chains }: { chains?: string[] }) {
 					</div>
 				</div>
 			</div>
+			<DimensionDatasetCoverageNotice unavailableChains={unavailableChains} />
 			<TableBody table={instance} />
 			<TablePagination table={instance} />
 		</div>

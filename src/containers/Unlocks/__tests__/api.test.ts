@@ -30,7 +30,12 @@ describe('unlocks api', () => {
 	it('fetches protocol emission details from the datasets endpoint', async () => {
 		mocks.fetchJson.mockResolvedValue({
 			name: 'Chainlink',
-			metadata: {},
+			metadata: {
+				events: [
+					{ timestamp: 100, noOfTokens: [1] },
+					{ timestamp: '200', noOfTokens: [2, null] }
+				]
+			},
 			documentedData: { data: [] }
 		})
 
@@ -40,16 +45,14 @@ describe('unlocks api', () => {
 		expect(mocks.fetchJson).toHaveBeenCalledWith('https://datasets.example.com/emissions/chain%2Flink')
 		expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
 		expect(result?.name).toBe('Chainlink')
+		expect(result?.metadata?.events).toEqual([
+			{ timestamp: 100, noOfTokens: [1] },
+			{ timestamp: 200, noOfTokens: [], hasUnknownTokenAmount: true }
+		])
 	})
 
-	it('returns null for invalid datasets emission payloads', async () => {
-		mocks.fetchJson.mockResolvedValue({
-			body: JSON.stringify({
-				name: 'Chainlink',
-				metadata: {},
-				documentedData: { data: [] }
-			})
-		})
+	it('returns null when the datasets emission request fails', async () => {
+		mocks.fetchJson.mockRejectedValue(new Error('not found'))
 
 		const api = await import('../api')
 		const result = await api.fetchProtocolEmission('chainlink')
@@ -59,24 +62,31 @@ describe('unlocks api', () => {
 	})
 
 	it('normalizes numeric-string event timestamps once at the list API boundary', async () => {
+		const normalizedProtocol = {
+			name: 'Already normalized',
+			token: 'NORMAL',
+			events: [{ timestamp: 300, noOfTokens: [3] }]
+		}
 		mocks.fetchJson.mockResolvedValue([
 			{
 				name: 'Chainlink',
 				token: 'LINK',
 				events: [
 					{ timestamp: 100, noOfTokens: [1] },
-					{ timestamp: '200', noOfTokens: [2] },
-					{ timestamp: 'invalid', noOfTokens: [3] }
+					{ timestamp: '200', noOfTokens: [2, null] }
 				]
-			}
+			},
+			normalizedProtocol
 		])
 
 		const api = await import('../api')
 		const result = await api.fetchAllProtocolEmissions()
 
-		expect(result[0].events).toEqual([
+		expect(result[0]?.events).toEqual([
 			{ timestamp: 100, noOfTokens: [1] },
-			{ timestamp: 200, noOfTokens: [2] }
+			{ timestamp: 200, noOfTokens: [], hasUnknownTokenAmount: true }
 		])
+		expect(result[1]).toBe(normalizedProtocol)
+		expect(result[1]?.events).toBe(normalizedProtocol.events)
 	})
 })

@@ -44,7 +44,7 @@ function makeCache<T>(loader: () => Promise<T>) {
 
 const getProtocols = makeCache(() => fetchProtocols())
 const getChains = makeCache(() => fetchChainsList())
-const getChainsByCategory = makeCache(() => fetchChainsByCategoryAll<{ chains?: any[] }>())
+const getChainsByCategory = makeCache(fetchChainsByCategoryAll)
 const getStablecoins = makeCache(() => fetchStablecoinAssetsApi())
 const getCexs = makeCache(() => fetchCexs())
 const getBridges = makeCache(() => fetchBridges(true))

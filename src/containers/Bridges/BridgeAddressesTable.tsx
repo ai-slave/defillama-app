@@ -12,16 +12,11 @@ import { Icon } from '~/ui/Icon'
 import { truncateAddress } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatUsd } from '~/utils/numberFormat'
+import type { BridgeAddressTableRow } from './types'
 
-type BridgeAddressesTableRow = {
-	address: string
-	deposited?: number
-	withdrawn?: number
-	txs?: number
-}
-const columnHelper = createColumnHelper<BridgeAddressesTableRow>()
+const columnHelper = createColumnHelper<BridgeAddressTableRow>()
 
-export function BridgeAddressesTable({ data }: { data: BridgeAddressesTableRow[] }) {
+export function BridgeAddressesTable({ data }: { data: BridgeAddressTableRow[] }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'withdrawn', desc: true }])
 	const { data: blockExplorersData } = useBlockExplorers()
 

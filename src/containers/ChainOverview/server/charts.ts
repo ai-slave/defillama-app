@@ -1,27 +1,31 @@
 import { fetchAdapterChainChartData, fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
-import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
+import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchChainAssetsChart } from '~/containers/BridgedTVL/api'
-import { fetchBridgeVolumeByChain } from '~/containers/Bridges/api'
-import { formatBridgeOverviewVolumeData } from '~/containers/Bridges/bridgeOverviewVolumeData'
+import { fetchRawBridgeVolumeByChain } from '~/containers/Bridges/api'
+import { normalizeBridgeVolumeResponse } from '~/containers/Bridges/bridgeOverviewVolumeData'
+import type { BridgeOverviewVolumeChartTuple } from '~/containers/Bridges/types'
 import { fetchRaises } from '~/containers/Raises/api'
 import { getStablecoinOverviewChartSeries } from '~/containers/Stablecoins/queries.server'
 import { getProtocolUnlockUsdChart } from '~/containers/Unlocks/queries'
 import type { ChainNativeFeeRevenueMetric } from '~/metrics/definitions'
 import { getChainNativeFeeRevenueMetricForAdapterProtocol } from '~/metrics/routeSemantics'
 import { queryString } from '~/server/api/params'
-import { badRequest, notFound, ok } from '~/server/api/respond'
+import { badRequest, notFound, ok, upstreamError } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
-import { slug } from '~/utils'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 
 const CHART_CACHE_CONTROL = 'public, s-maxage=3600, stale-while-revalidate=600'
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' }
 
-type StablecoinMcapSeriesPoint = [number, number]
-
+type StablecoinMcapSeriesPoint = [timestampMs: number, value: number | null]
+const ADAPTER_TYPE_VALUES = new Set<string>(Object.values(ADAPTER_TYPES))
 const ADAPTER_DATA_TYPE_VALUES = new Set<string>(Object.values(ADAPTER_DATA_TYPES))
 
-function isAdapterDataType(dataType: string | undefined): boolean {
+function isAdapterType(adapterType: string): adapterType is `${ADAPTER_TYPES}` {
+	return ADAPTER_TYPE_VALUES.has(adapterType)
+}
+
+function isAdapterDataType(dataType: string | undefined): dataType is `${ADAPTER_DATA_TYPES}` | undefined {
 	return dataType == null || ADAPTER_DATA_TYPE_VALUES.has(dataType)
 }
 
@@ -38,6 +42,13 @@ async function resolveCanonicalChainParam(
 	const chainRoute = await resolveChainParam(chain)
 	if (options.requiredFlag && !chainRoute?.metadata[options.requiredFlag]) return null
 	return chainRoute?.canonicalName ?? null
+}
+
+async function resolveChainAssetIdParam(chain: string): Promise<string | null> {
+	if (chain.toLowerCase() === 'all') return null
+	const { resolveChainParam } = await import('~/containers/ChainOverview/server/routes')
+	const chainRoute = await resolveChainParam(chain)
+	return chainRoute?.metadata.chainAssets ? chainRoute.metadata.id : null
 }
 
 async function resolveCanonicalChainProtocolParam(protocol: string): Promise<string | null> {
@@ -102,7 +113,7 @@ const buildChainStablecoinMcapSeries = async (chain: string): Promise<Stablecoin
 		const data = await getStablecoinOverviewChartSeries({ chain: chain === 'All' ? null : chain, chart: 'totalMcap' })
 		const series: StablecoinMcapSeriesPoint[] = []
 		for (const point of data.dataset.source) {
-			series.push([point[0] as number, point[1] as number])
+			series.push([point[0], point[1] ?? null])
 		}
 		return series
 	} catch (error) {
@@ -130,6 +141,9 @@ export const chainCharts = defineApiRoute({
 				if (!adapterType || !chain) {
 					return badRequest('adapterType and chain parameters are required')
 				}
+				if (!isAdapterType(adapterType)) {
+					return badRequest('Unsupported adapterType')
+				}
 				if (!isAdapterDataType(dataType)) {
 					return badRequest('Unsupported adapter dataType')
 				}
@@ -139,10 +153,10 @@ export const chainCharts = defineApiRoute({
 				}
 
 				const data = await fetchAdapterChainChartData({
-					adapterType: adapterType as Parameters<typeof fetchAdapterChainChartData>[0]['adapterType'],
+					adapterType,
 					chain: canonicalChain,
-					...(dataType ? { dataType: dataType as Parameters<typeof fetchAdapterChainChartData>[0]['dataType'] } : {}),
-					...(category ? { category } : {})
+					...(dataType !== undefined ? { dataType } : {}),
+					...(category !== undefined ? { category } : {})
 				})
 				return ok(data)
 			}
@@ -156,6 +170,9 @@ export const chainCharts = defineApiRoute({
 				if (!adapterType || !protocol) {
 					return badRequest('adapterType and protocol parameters are required')
 				}
+				if (!isAdapterType(adapterType)) {
+					return badRequest('Unsupported adapterType')
+				}
 				if (!isAdapterDataType(dataType)) {
 					return badRequest('Unsupported adapter dataType')
 				}
@@ -168,9 +185,9 @@ export const chainCharts = defineApiRoute({
 				}
 
 				const data = await fetchAdapterProtocolChartData({
-					adapterType: adapterType as Parameters<typeof fetchAdapterProtocolChartData>[0]['adapterType'],
+					adapterType,
 					protocol: canonicalProtocol,
-					...(dataType ? { dataType: dataType as Parameters<typeof fetchAdapterProtocolChartData>[0]['dataType'] } : {})
+					...(dataType !== undefined ? { dataType } : {})
 				})
 				return ok(data)
 			}
@@ -180,17 +197,17 @@ export const chainCharts = defineApiRoute({
 				if (!chain) {
 					return badRequest('chain parameter is required')
 				}
-				const canonicalChain = await resolveCanonicalChainParam(chain, { allowAll: false, requiredFlag: 'chainAssets' })
-				if (!canonicalChain) {
+				const chainAssetId = await resolveChainAssetIdParam(chain)
+				if (!chainAssetId) {
 					return notFound('chain not found')
 				}
 
-				const data = await fetchChainAssetsChart(slug(canonicalChain)).catch((error) => {
+				const data = await fetchChainAssetsChart(chainAssetId).catch((error) => {
 					recordRouteRuntimeError(error, 'apiRoute')
 					return null
 				})
 				if (data === null) {
-					return ok(null, NO_STORE_HEADERS)
+					return upstreamError('Bridged TVL chart is unavailable upstream')
 				}
 
 				return ok(data)
@@ -198,19 +215,14 @@ export const chainCharts = defineApiRoute({
 
 			if (kind === 'raises') {
 				const data = await fetchRaises().then((response) => {
-					const store = (response?.raises ?? []).reduce(
-						(acc, curr) => {
-							acc[curr.date] = (acc[curr.date] ?? 0) + (curr.amountUsd ?? 0)
-							return acc
-						},
-						{} as Record<string, number>
-					)
-
-					const chart: Array<[number, number]> = []
-					for (const date in store) {
-						chart.push([+date * 1e3, store[date]])
+					const totalByDate = new Map<number, number>()
+					for (const raise of response.raises) {
+						totalByDate.set(raise.date, (totalByDate.get(raise.date) ?? 0) + (raise.amountUsd ?? 0))
 					}
-					return chart
+
+					return Array.from(totalByDate, ([date, total]): [number, number] => [date * 1e3, total]).sort(
+						(a, b) => a[0] - b[0]
+					)
 				})
 
 				return ok(data)
@@ -245,14 +257,19 @@ export const chainCharts = defineApiRoute({
 					return notFound('chain not found')
 				}
 
-				const data = await fetchBridgeVolumeByChain(canonicalChain)
-					.then((chart) =>
-						formatBridgeOverviewVolumeData(chart).map((volume) => [
-							volume.date ?? null,
-							volume.Deposits ?? null,
-							volume.Withdrawals ?? null
-						])
-					)
+				const data = await fetchRawBridgeVolumeByChain(canonicalChain)
+					.then((chart) => {
+						const normalizedChart = normalizeBridgeVolumeResponse(chart)
+						const volumeSeries: BridgeOverviewVolumeChartTuple[] = []
+						for (const volume of normalizedChart) {
+							volumeSeries.push([
+								volume.date,
+								volume.depositUSD ?? null,
+								volume.withdrawUSD == null ? null : volume.withdrawUSD === 0 ? 0 : -volume.withdrawUSD
+							])
+						}
+						return volumeSeries
+					})
 					.catch((error) => {
 						recordRouteRuntimeError(error, 'apiRoute')
 						return null
@@ -277,7 +294,11 @@ export const chainCharts = defineApiRoute({
 					import('~/containers/ProtocolOverview/server/routes')
 				])
 				const protocolRoute = resolveProtocolParamFromMetadata(protocol, metadataCache)
-				if (!protocolRoute || !metadataCache.emissionsProtocolBySlug[protocolRoute.canonicalSlug]) {
+				if (
+					!protocolRoute ||
+					!Object.hasOwn(metadataCache.emissionsProtocolBySlug, protocolRoute.canonicalSlug) ||
+					!metadataCache.emissionsProtocolBySlug[protocolRoute.canonicalSlug]
+				) {
 					return notFound('protocol emissions not found')
 				}
 
@@ -286,7 +307,7 @@ export const chainCharts = defineApiRoute({
 					return ok(null, NO_STORE_HEADERS)
 				}
 
-				const nonZeroIndex = chart.findIndex((point) => Array.isArray(point) && Number(point[1]) > 0)
+				const nonZeroIndex = chart.findIndex(([, value]) => value > 0)
 				return ok(chart.slice(nonZeroIndex >= 0 ? nonZeroIndex : 0))
 			}
 

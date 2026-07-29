@@ -11,17 +11,11 @@ import { VirtualTable } from '~/components/Table/Table'
 import { Icon } from '~/ui/Icon'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatUsd } from '~/utils/numberFormat'
+import type { BridgeTokenTableRow } from './types'
 
-type BridgeTokensTableRow = {
-	symbol: string
-	deposited?: number
-	withdrawn?: number
-	volume?: number
-}
+const columnHelper = createColumnHelper<BridgeTokenTableRow>()
 
-const columnHelper = createColumnHelper<BridgeTokensTableRow>()
-
-export function BridgeTokensTable({ data }: { data: BridgeTokensTableRow[] }) {
+export function BridgeTokensTable({ data }: { data: BridgeTokenTableRow[] }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'volume', desc: true }])
 	const { data: blockExplorersData } = useBlockExplorers()
 
@@ -29,11 +23,10 @@ export function BridgeTokensTable({ data }: { data: BridgeTokensTableRow[] }) {
 		() => [
 			columnHelper.accessor('symbol', {
 				header: 'Token',
-				cell: ({ getValue }) => {
-					const value = getValue()
-					if (!value) return 'Not found'
-
-					const [symbol, token] = value.split('#')
+				cell: ({ getValue, row }) => {
+					const symbol = getValue()
+					const token = row.original.token
+					if (!symbol) return 'Not found'
 					const explorer = token
 						? getBlockExplorerNew({
 								apiResponse: blockExplorersData ?? [],
@@ -61,7 +54,7 @@ export function BridgeTokensTable({ data }: { data: BridgeTokensTableRow[] }) {
 				id: 'chainName',
 				header: 'Chain',
 				cell: ({ row }) => {
-					const [, token] = row.original.symbol.split('#')
+					const token = row.original.token
 					if (!token) return null
 
 					return (
@@ -80,11 +73,13 @@ export function BridgeTokensTable({ data }: { data: BridgeTokensTableRow[] }) {
 			columnHelper.accessor('deposited', {
 				header: 'Deposited',
 				cell: (info) =>
-					formatUsd(info.getValue() ?? 0, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					}),
+					info.getValue() == null
+						? null
+						: formatUsd(info.getValue(), {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							}),
 				meta: {
 					headerClassName: 'w-[120px]',
 					align: 'end'
@@ -93,11 +88,13 @@ export function BridgeTokensTable({ data }: { data: BridgeTokensTableRow[] }) {
 			columnHelper.accessor('withdrawn', {
 				header: 'Withdrawn',
 				cell: (info) =>
-					formatUsd(info.getValue() ?? 0, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					}),
+					info.getValue() == null
+						? null
+						: formatUsd(info.getValue(), {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							}),
 				meta: {
 					headerClassName: 'w-[120px]',
 					align: 'end'
@@ -106,7 +103,13 @@ export function BridgeTokensTable({ data }: { data: BridgeTokensTableRow[] }) {
 			columnHelper.accessor('volume', {
 				header: 'Total Volume',
 				cell: (info) =>
-					formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+					info.getValue() == null
+						? null
+						: formatUsd(info.getValue(), {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							}),
 				meta: {
 					headerClassName: 'w-[120px]',
 					align: 'end'

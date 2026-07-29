@@ -6,7 +6,8 @@ import { mergeParentMetricPeriods } from './metricPeriods'
 import type { IAdapterByChainPageData, IAdapterChainOverview, IProtocol } from './types'
 import type { ActiveLiquidityData, NormalizedVolumeData, OpenInterestData } from './utils'
 
-type AdapterChainProtocolMetric = IAdapterChainMetrics['protocols'][number]
+type AdapterChainProtocolMetric = IAdapterChainOverview['protocols'][number]
+type NonEmptyArray<T> = [T, ...T[]]
 
 type ProtocolMcapData = {
 	protocols: Array<{ name: string; mcap: number | null }>
@@ -19,17 +20,17 @@ type AdapterByChainRankBy = 'pfOrPs' | 'total24h'
 type AdapterByChainReadModel = {
 	protocols: IAdapterByChainPageData['protocols']
 	categories: string[]
-	openInterest: number
+	openInterest: number | null
 	activeLiquidity: number | null
 }
 
 function buildProtocolsMcap(protocolsData: ProtocolMcapData) {
-	const protocolsMcap: Record<string, number | null> = {}
+	const protocolsMcap = new Map<string, number | null>()
 	for (const protocol of protocolsData.protocols) {
-		protocolsMcap[protocol.name] = protocol.mcap ?? null
+		protocolsMcap.set(protocol.name, protocol.mcap ?? null)
 	}
 	for (const protocol of protocolsData.parentProtocols) {
-		protocolsMcap[protocol.name] = protocol.mcap ?? null
+		protocolsMcap.set(protocol.name, protocol.mcap ?? null)
 	}
 	return protocolsMcap
 }
@@ -40,20 +41,22 @@ function getProtocolMethodology({
 	protocol
 }: {
 	adapterType: `${ADAPTER_TYPES}`
-	dataType?: AdapterByChainDataType
+	dataType: AdapterByChainDataType | undefined
 	protocol: AdapterChainProtocolMetric
 }) {
 	if (adapterType !== 'fees') return null
+	if (typeof protocol.methodology === 'string') return protocol.methodology
+	if (protocol.methodology == null) return null
 	if (dataType === 'dailyRevenue') {
-		return protocol.methodology?.['Revenue']
+		return protocol.methodology['Revenue']
 	}
 	if (dataType === 'dailyProtocolRevenue') {
-		return protocol.methodology?.['ProtocolRevenue'] ?? protocol.methodology?.['Revenue']
+		return protocol.methodology['ProtocolRevenue'] ?? protocol.methodology['Revenue']
 	}
 	if (dataType === 'dailyHoldersRevenue') {
-		return protocol.methodology?.['HoldersRevenue']
+		return protocol.methodology['HoldersRevenue']
 	}
-	return protocol.methodology?.['Fees']
+	return protocol.methodology['Fees']
 }
 
 function buildProtocolSummary({
@@ -68,11 +71,11 @@ function buildProtocolSummary({
 }: {
 	protocol: AdapterChainProtocolMetric
 	adapterType: `${ADAPTER_TYPES}`
-	dataType?: AdapterByChainDataType
+	dataType: AdapterByChainDataType | undefined
 	protocolMcap: number | null | undefined
-	openInterestProtocols: Record<string, OpenInterestData>
-	activeLiquidityProtocols: Record<string, ActiveLiquidityData>
-	normalizedVolumeProtocols: Record<string, NormalizedVolumeData>
+	openInterestProtocols: Map<string, OpenInterestData>
+	activeLiquidityProtocols: Map<string, ActiveLiquidityData>
+	normalizedVolumeProtocols: Map<string, NormalizedVolumeData>
 	cantonIncentivesWarning: string | null
 }): IProtocol {
 	const warning = protocol.slug === 'canton' ? cantonIncentivesWarning : null
@@ -81,6 +84,9 @@ function buildProtocolSummary({
 		protocolMcap != null && protocol.annualized1y != null
 			? getMarketCapToAnnualizedMetricRatio(protocolMcap, protocol.annualized1y)
 			: null
+	const openInterest = openInterestProtocols.get(protocol.name)?.total24h
+	const activeLiquidity = activeLiquidityProtocols.get(protocol.name)?.total24h
+	const normalizedVolume24h = normalizedVolumeProtocols.get(protocol.name)?.total24h
 
 	return {
 		name: protocol.displayName,
@@ -110,15 +116,9 @@ function buildProtocolSummary({
 		...(protocol.doublecounted ? { doublecounted: protocol.doublecounted } : {}),
 		...(ZERO_FEE_PERPS.has(protocol.displayName) ? { zeroFeePerp: true } : {}),
 		...(warning ? { warning } : {}),
-		...(openInterestProtocols[protocol.name]?.total24h != null
-			? { openInterest: openInterestProtocols[protocol.name].total24h }
-			: {}),
-		...(activeLiquidityProtocols[protocol.name]?.total24h != null
-			? { activeLiquidity: activeLiquidityProtocols[protocol.name].total24h }
-			: {}),
-		...(normalizedVolumeProtocols[protocol.name]?.total24h != null
-			? { normalizedVolume24h: normalizedVolumeProtocols[protocol.name].total24h }
-			: {}),
+		...(openInterest != null ? { openInterest } : {}),
+		...(activeLiquidity != null ? { activeLiquidity } : {}),
+		...(normalizedVolume24h != null ? { normalizedVolume24h } : {}),
 		...(protocol.displayName !== protocol.name ? { breakdownAliases: [protocol.name] } : {})
 	}
 }
@@ -140,18 +140,11 @@ function buildParentProtocolSummary({
 	protocolsMcap
 }: {
 	protocol: string
-	childProtocols: IProtocol[]
-	protocolsMcap: Record<string, number | null>
+	childProtocols: NonEmptyArray<IProtocol>
+	protocolsMcap: Map<string, number | null>
 }): IProtocol {
+	const [firstChildProtocol] = childProtocols
 	const periodTotals = mergeParentMetricPeriods(childProtocols)
-	const totals = {
-		total24h: periodTotals.total24h ?? null,
-		total7d: periodTotals.total7d ?? null,
-		total30d: periodTotals.total30d ?? null,
-		total1y: periodTotals.total1y ?? null,
-		annualized1y: periodTotals.annualized1y ?? null,
-		totalAllTime: periodTotals.totalAllTime ?? null
-	}
 	let doublecounted = false
 	let zeroFeePerp = false
 	let warning: string | null = null
@@ -160,7 +153,7 @@ function buildParentProtocolSummary({
 	let normalizedVolume24h: number | null = null
 	const methodologySet = new Set<string>()
 	const methodologyChildrenByMethod = new Map<string, string[]>()
-	let topProtocol = childProtocols[0]
+	let topProtocol = firstChildProtocol
 	const breakdownAliasSet = new Set<string>()
 	const chainSet = new Set<string>()
 
@@ -202,8 +195,9 @@ function buildParentProtocolSummary({
 
 	const methodology = Array.from(methodologySet)
 	let methodologyText: string | null = null
-	if (methodology.length === 1) {
-		methodologyText = methodology[0]
+	const [onlyMethodology] = methodology
+	if (methodology.length === 1 && onlyMethodology !== undefined) {
+		methodologyText = onlyMethodology
 	} else if (methodology.length > 1) {
 		const methodologyParts: string[] = []
 		for (const method of methodology) {
@@ -212,10 +206,10 @@ function buildParentProtocolSummary({
 		methodologyText = methodologyParts.join('. ')
 	}
 
-	const protocolMcap = protocolsMcap[protocol]
+	const protocolMcap = protocolsMcap.get(protocol)
 	const pfOrPs =
-		protocolMcap != null && totals.annualized1y != null
-			? getMarketCapToAnnualizedMetricRatio(protocolMcap, totals.annualized1y)
+		protocolMcap != null && periodTotals.annualized1y != null
+			? getMarketCapToAnnualizedMetricRatio(protocolMcap, periodTotals.annualized1y)
 			: null
 
 	return {
@@ -224,9 +218,23 @@ function buildParentProtocolSummary({
 		logo: tokenIconUrl(protocol),
 		category: topProtocol.category ?? null,
 		chains: Array.from(chainSet),
-		...periodTotals,
-		...totals,
-		mcap: protocolsMcap[protocol] ?? null,
+		total24h: periodTotals.total24h ?? null,
+		total48hto24h: periodTotals.total48hto24h ?? null,
+		total7d: periodTotals.total7d ?? null,
+		total14dto7d: periodTotals.total14dto7d ?? null,
+		total30d: periodTotals.total30d ?? null,
+		total60dto30d: periodTotals.total60dto30d ?? null,
+		total7DaysAgo: periodTotals.total7DaysAgo ?? null,
+		total30DaysAgo: periodTotals.total30DaysAgo ?? null,
+		total1y: periodTotals.total1y ?? null,
+		annualized1y: periodTotals.annualized1y ?? null,
+		totalAllTime: periodTotals.totalAllTime ?? null,
+		change_1d: periodTotals.change_1d ?? null,
+		change_7d: periodTotals.change_7d ?? null,
+		change_1m: periodTotals.change_1m ?? null,
+		change_7dover7d: periodTotals.change_7dover7d ?? null,
+		change_30dover30d: periodTotals.change_30dover30d ?? null,
+		mcap: protocolMcap ?? null,
 		breakdownAliases: Array.from(breakdownAliasSet),
 		childProtocols,
 		...(pfOrPs != null ? { pfOrPs } : {}),
@@ -244,36 +252,25 @@ function sortFinalProtocols({
 	protocols,
 	rankBy
 }: {
-	protocols: Record<string, IProtocol>
+	protocols: Map<string, IProtocol>
 	rankBy: AdapterByChainRankBy
 }): IAdapterByChainPageData['protocols'] {
 	const finalProtocols: IAdapterByChainPageData['protocols'] = []
 	if (rankBy === 'pfOrPs') {
-		for (const protocol in protocols) {
-			if (protocols[protocol].pfOrPs != null) {
-				finalProtocols.push(protocols[protocol])
+		for (const protocol of protocols.values()) {
+			if (protocol.pfOrPs != null) {
+				finalProtocols.push(protocol)
 			}
 		}
 		finalProtocols.sort((a, b) => (b.pfOrPs ?? 0) - (a.pfOrPs ?? 0))
 	} else {
-		for (const protocol in protocols) {
-			finalProtocols.push(protocols[protocol])
+		for (const protocol of protocols.values()) {
+			finalProtocols.push(protocol)
 		}
 		finalProtocols.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))
 	}
 
 	return finalProtocols
-}
-
-function sumSupplementalTotal<T extends { total24h: number | null; doublecounted: boolean }>(
-	protocols: Record<string, T>
-) {
-	let total = 0
-	for (const protocol in protocols) {
-		if (protocols[protocol]?.doublecounted) continue
-		total += protocols[protocol]?.total24h ?? 0
-	}
-	return total
 }
 
 export function buildAdapterByChainReadModel({
@@ -293,43 +290,43 @@ export function buildAdapterByChainReadModel({
 	activeLiquidityData: IAdapterChainOverview | null
 	normalizedVolumeData: IAdapterChainMetrics | null
 	adapterType: `${ADAPTER_TYPES}`
-	dataType?: AdapterByChainDataType
+	dataType: AdapterByChainDataType | undefined
 	rankBy: AdapterByChainRankBy
 	cantonIncentivesWarning: string | null
 }): AdapterByChainReadModel {
 	const protocolsMcap = buildProtocolsMcap(protocolsData)
-	const openInterestProtocols: Record<string, OpenInterestData> = {}
-	const activeLiquidityProtocols: Record<string, ActiveLiquidityData> = {}
-	const normalizedVolumeProtocols: Record<string, NormalizedVolumeData> = {}
+	const openInterestProtocols = new Map<string, OpenInterestData>()
+	const activeLiquidityProtocols = new Map<string, ActiveLiquidityData>()
+	const normalizedVolumeProtocols = new Map<string, NormalizedVolumeData>()
 
 	if (openInterestData) {
 		for (const protocol of openInterestData.protocols) {
-			openInterestProtocols[protocol.name] = {
+			openInterestProtocols.set(protocol.name, {
 				total24h: protocol.total24h ?? null,
 				doublecounted: !!protocol.doublecounted
-			}
+			})
 		}
 	}
 
 	if (activeLiquidityData) {
 		for (const protocol of activeLiquidityData.protocols) {
-			activeLiquidityProtocols[protocol.name] = {
+			activeLiquidityProtocols.set(protocol.name, {
 				total24h: protocol.total24h ?? null,
 				doublecounted: !!protocol.doublecounted
-			}
+			})
 		}
 	}
 
 	if (normalizedVolumeData) {
 		for (const protocol of normalizedVolumeData.protocols) {
-			normalizedVolumeProtocols[protocol.name] = {
+			normalizedVolumeProtocols.set(protocol.name, {
 				total24h: protocol.total24h ?? null
-			}
+			})
 		}
 	}
 
-	const protocols: Record<string, IProtocol> = {}
-	const parentProtocols: Record<string, IProtocol[]> = {}
+	const protocols = new Map<string, IProtocol>()
+	const parentProtocols = new Map<string, NonEmptyArray<IProtocol>>()
 	const categories = new Set<string>()
 
 	for (const protocol of data.protocols) {
@@ -337,40 +334,41 @@ export function buildAdapterByChainReadModel({
 			protocol,
 			adapterType,
 			dataType,
-			protocolMcap: protocolsMcap[protocol.name],
+			protocolMcap: protocolsMcap.get(protocol.name),
 			openInterestProtocols,
 			activeLiquidityProtocols,
 			normalizedVolumeProtocols,
 			cantonIncentivesWarning
 		})
 
-		if (protocol.linkedProtocols?.length > 1) {
-			parentProtocols[protocol.linkedProtocols[0]] = parentProtocols[protocol.linkedProtocols[0]] || []
-			parentProtocols[protocol.linkedProtocols[0]].push(summary)
+		const parentProtocol = protocol.linkedProtocols?.[0]
+		if (protocol.linkedProtocols && protocol.linkedProtocols.length > 1 && parentProtocol !== undefined) {
+			const children = parentProtocols.get(parentProtocol)
+			if (children) {
+				children.push(summary)
+			} else {
+				parentProtocols.set(parentProtocol, [summary])
+			}
 		} else {
-			protocols[protocol.displayName] = summary
+			protocols.set(protocol.displayName, summary)
 		}
 		if (protocol.category) {
 			categories.add(protocol.category)
 		}
 	}
 
-	for (const protocol in parentProtocols) {
-		if (parentProtocols[protocol].length === 1) {
-			protocols[protocol] = buildSingleChildParentSummary(protocol, parentProtocols[protocol][0])
+	for (const [protocol, childProtocols] of parentProtocols) {
+		if (childProtocols.length === 1) {
+			protocols.set(protocol, buildSingleChildParentSummary(protocol, childProtocols[0]))
 			continue
 		}
-		protocols[protocol] = buildParentProtocolSummary({
-			protocol,
-			childProtocols: parentProtocols[protocol],
-			protocolsMcap
-		})
+		protocols.set(protocol, buildParentProtocolSummary({ protocol, childProtocols, protocolsMcap }))
 	}
 
 	return {
 		protocols: sortFinalProtocols({ protocols, rankBy }),
 		categories: adapterType === 'fees' ? Array.from(categories).sort() : [],
-		openInterest: sumSupplementalTotal(openInterestProtocols),
-		activeLiquidity: activeLiquidityData ? sumSupplementalTotal(activeLiquidityProtocols) : null
+		openInterest: openInterestData?.total24h ?? null,
+		activeLiquidity: activeLiquidityData?.total24h ?? null
 	}
 }

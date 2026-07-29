@@ -42,7 +42,7 @@ describe('ChainOverview chart renderer contract', () => {
 	let root: Root
 
 	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -139,5 +139,48 @@ describe('ChainOverview chart renderer contract', () => {
 		await act(async () => root.render(<ChainCoreChart chartData={{ TVL: [[1_000, 10]] }} isThemeDark={false} />))
 
 		expect(mocks.instance.setOption.mock.calls.at(-1)![0].dataZoom).toBeDefined()
+	})
+
+	it('keeps converted and intrinsically USD series units distinct on axes and tooltips', async () => {
+		const timestamp = Date.UTC(2024, 0, 1)
+		const usdSeries = ['Token Price', 'Token Mcap', 'Token Volume', 'Raises'] as const
+		await act(async () =>
+			root.render(
+				<ChainCoreChart
+					chartData={{
+						TVL: [[timestamp, 1]],
+						'Token Price': [[timestamp, 2_000]],
+						'Token Mcap': [[timestamp, 3_000]],
+						'Token Volume': [[timestamp, 4_000]],
+						Raises: [[timestamp, 5_000]]
+					}}
+					isThemeDark={false}
+					valueSymbol="ETH"
+				/>
+			)
+		)
+
+		const option = mocks.instance.setOption.mock.calls.at(-1)![0]
+		const tvlAxisIndex = option.series.find((item: any) => item.name === 'TVL').yAxisIndex
+		expect(option.yAxis[tvlAxisIndex].axisLabel.formatter(1)).toContain('ETH')
+		for (const seriesName of usdSeries) {
+			const axisIndex = option.series.find((item: any) => item.name === seriesName).yAxisIndex
+			const axisLabel = option.yAxis[axisIndex].axisLabel.formatter(1)
+			expect(axisLabel).toContain('$')
+			expect(axisLabel).not.toContain('ETH')
+		}
+
+		const tooltip = option.tooltip.formatter(
+			['TVL', ...usdSeries].map((seriesName, index) => ({
+				axisValue: timestamp,
+				seriesName,
+				value: [timestamp, index + 1],
+				encode: { y: [1] }
+			}))
+		)
+		expect(tooltip).toContain('TVL&nbsp;&nbsp;1 ETH')
+		for (const seriesName of usdSeries) {
+			expect(tooltip).toContain(`${seriesName}&nbsp;&nbsp;$`)
+		}
 	})
 })

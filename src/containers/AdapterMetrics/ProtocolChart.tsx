@@ -3,7 +3,11 @@ import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
-import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
+import type {
+	MultiSeriesChartSeriesConfig,
+	MultiSeriesTimeSeriesDataset,
+	MultiSeriesTimeSeriesRow
+} from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -21,11 +25,115 @@ import { LoadingIndicator } from '~/ui/Status'
 import { getNDistinctColors, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
+import type { IAdapterBreakdownChartData } from './api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const EMPTY_PROTOCOL_BREAKDOWN_DATASET: MultiSeriesTimeSeriesDataset = {
+	source: [],
+	dimensions: ['timestamp']
+}
 
-const buildAdapterProtocolBreakdownApiUrl = ({
+type ProtocolBreakdownChartPresentation = {
+	dataset: MultiSeriesTimeSeriesDataset
+	charts: MultiSeriesChartSeriesConfig[]
+}
+
+function getPaletteColor(colors: string[], index: number): string {
+	const color = colors[index]
+	if (color === undefined) throw new Error(`Protocol breakdown palette is missing color ${index}`)
+	return color
+}
+
+export function buildProtocolBreakdownChartPresentation({
+	data,
+	seriesNames,
+	chartInterval
+}: {
+	data: IAdapterBreakdownChartData
+	seriesNames: string[]
+	chartInterval: LowercaseDwmcGrouping
+}): ProtocolBreakdownChartPresentation {
+	if (seriesNames.length === 0) return { dataset: EMPTY_PROTOCOL_BREAKDOWN_DATASET, charts: [] }
+
+	const isCumulative = chartInterval === 'cumulative'
+	const aggregatedByDate = new Map<number, number[]>()
+	for (const [date, valuesBySeries] of data) {
+		const timestampMs = date * 1e3
+		const finalDate = isCumulative ? timestampMs : getBucketTimestampMs(timestampMs, chartInterval)
+		let values = aggregatedByDate.get(finalDate)
+		if (!values) {
+			values = new Array<number>(seriesNames.length).fill(0)
+			aggregatedByDate.set(finalDate, values)
+		}
+
+		for (let seriesIndex = 0; seriesIndex < seriesNames.length; seriesIndex++) {
+			const seriesName = seriesNames[seriesIndex]
+			const currentValue = values[seriesIndex]
+			if (seriesName === undefined || currentValue === undefined) {
+				throw new Error(`Missing protocol breakdown series at index ${seriesIndex}`)
+			}
+			const value = valuesBySeries[seriesName]
+			if (value === undefined) continue
+			values[seriesIndex] = currentValue + value
+		}
+	}
+
+	const sortedEntries = Array.from(aggregatedByDate.entries()).sort((a, b) => a[0] - b[0])
+	const cumulative = new Array<number>(seriesNames.length).fill(0)
+	const source: MultiSeriesTimeSeriesDataset['source'] = []
+	for (const [date, values] of sortedEntries) {
+		const row: MultiSeriesTimeSeriesRow = [date]
+		row.length = seriesNames.length + 1
+		for (let seriesIndex = 0; seriesIndex < seriesNames.length; seriesIndex++) {
+			const value = values[seriesIndex]
+			if (value === undefined) throw new Error(`Missing protocol breakdown value at index ${seriesIndex}`)
+			if (isCumulative) {
+				const previousCumulative = cumulative[seriesIndex]
+				if (previousCumulative === undefined) {
+					throw new Error(`Missing protocol breakdown cumulative value at index ${seriesIndex}`)
+				}
+				const cumulativeValue = previousCumulative + value
+				cumulative[seriesIndex] = cumulativeValue
+				row[seriesIndex + 1] = cumulativeValue
+			} else {
+				row[seriesIndex + 1] = value
+			}
+		}
+		source.push(row)
+	}
+
+	// Preserve zeroes after a series starts, but hide leading zero-only buckets.
+	for (let seriesIndex = 0; seriesIndex < seriesNames.length; seriesIndex++) {
+		for (const row of source) {
+			const valueIndex = seriesIndex + 1
+			if (row[valueIndex] !== 0) break
+			row[valueIndex] = null
+		}
+	}
+
+	const colors = getNDistinctColors(seriesNames.length)
+	const chartType: 'line' | 'bar' = isCumulative ? 'line' : 'bar'
+	const charts: MultiSeriesChartSeriesConfig[] = []
+	for (let index = 0; index < seriesNames.length; index++) {
+		const name = seriesNames[index]
+		if (name === undefined) continue
+		charts.push({
+			type: chartType,
+			name,
+			encode: { x: 0, y: index + 1 },
+			stack: 'chartType',
+			color: getPaletteColor(colors, index)
+		})
+	}
+
+	return {
+		dataset: { source, dimensions: ['timestamp', ...seriesNames] },
+		charts
+	}
+}
+
+export const buildAdapterProtocolBreakdownApiUrl = ({
 	adapterType,
 	protocol,
 	dataType,
@@ -76,7 +184,7 @@ export const DimensionProtocolChartByType = ({
 				buildAdapterProtocolBreakdownApiUrl({
 					adapterType,
 					protocol: protocolName,
-					dataType,
+					...(dataType !== undefined ? { dataType } : {}),
 					type: chartType
 				})
 			),
@@ -117,9 +225,9 @@ export const DimensionProtocolChartByType = ({
 			title={title}
 			chartType={chartType}
 			protocolName={protocolName}
-			protocolDisplayName={protocolDisplayName}
 			adapterType={adapterType}
-			hallmarks={hallmarks}
+			{...(protocolDisplayName !== undefined ? { protocolDisplayName } : {})}
+			{...(hallmarks !== undefined ? { hallmarks } : {})}
 		/>
 	)
 }
@@ -196,81 +304,15 @@ const ChartByType = ({
 		}
 	}, [protocolName, adapterType, chartInterval, title, chartType])
 
-	const mainChartData = React.useMemo(() => {
-		if (uniqueBreakdownNames.length === 0) return { dataset: { source: [], dimensions: ['timestamp'] }, charts: [] }
-
-		// Helper to compute final date based on interval
-		const computeFinalDate = (date: number) =>
-			chartInterval === 'cumulative'
-				? +date * 1e3
-				: getBucketTimestampMs(+date * 1e3, chartInterval as ChartTimeGrouping)
-
-		// Aggregate by date with interval grouping
-		const aggregatedByDate = new Map<number, number[]>()
-		const addChart = (chart: Array<[number, Record<string, number>]> | undefined) => {
-			for (const [date, versions] of chart ?? []) {
-				const finalDate = computeFinalDate(date)
-				let values = aggregatedByDate.get(finalDate)
-				if (!values) {
-					values = new Array(uniqueBreakdownNames.length).fill(0)
-					aggregatedByDate.set(finalDate, values)
-				}
-				for (let typeIndex = 0; typeIndex < uniqueBreakdownNames.length; typeIndex++) {
-					values[typeIndex] += versions[uniqueBreakdownNames[typeIndex]] ?? 0
-				}
-			}
-		}
-		addChart(data)
-
-		// Sort dates and build dataset rows
-		const sortedDates = Array.from(aggregatedByDate.keys()).sort((a, b) => a - b)
-		const isCumulative = chartInterval === 'cumulative'
-		const cumulative = new Array<number>(uniqueBreakdownNames.length).fill(0)
-
-		const source = sortedDates.map((date) => {
-			const entry = aggregatedByDate.get(date)!
-			const row = new Array<number | null>(uniqueBreakdownNames.length + 1)
-			row[0] = date
-			for (let typeIndex = 0; typeIndex < uniqueBreakdownNames.length; typeIndex++) {
-				const value = entry[typeIndex]
-				if (isCumulative) {
-					cumulative[typeIndex] += value
-					row[typeIndex + 1] = cumulative[typeIndex]
-				} else {
-					row[typeIndex + 1] = value
-				}
-			}
-			return row
-		})
-
-		// Replace leading zeros with null for cleaner charts
-		for (let typeIndex = 0; typeIndex < uniqueBreakdownNames.length; typeIndex++) {
-			for (let i = 0; i < source.length && source[i][typeIndex + 1] === 0; i++) {
-				source[i][typeIndex + 1] = null
-			}
-		}
-
-		// Build chart config
-		const allColors = getNDistinctColors(uniqueBreakdownNames.length)
-		const stackColors = {}
-		for (let i = 0; i < uniqueBreakdownNames.length; i++) {
-			stackColors[uniqueBreakdownNames[i]] = allColors[i]
-		}
-
-		const chartType2: 'line' | 'bar' = isCumulative ? 'line' : 'bar'
-		const chartsConfig = uniqueBreakdownNames.map((type, index) => ({
-			type: chartType2,
-			name: type,
-			encode: { x: 0, y: index + 1 },
-			stack: 'chartType',
-			color: stackColors[type]
-		}))
-
-		return {
-			dataset: { source, dimensions: ['timestamp', ...uniqueBreakdownNames] },
-			charts: chartsConfig
-		}
-	}, [uniqueBreakdownNames, chartInterval, data])
+	const mainChartData = React.useMemo(
+		() =>
+			buildProtocolBreakdownChartPresentation({
+				data,
+				seriesNames: uniqueBreakdownNames,
+				chartInterval
+			}),
+		[uniqueBreakdownNames, chartInterval, data]
+	)
 	const deferredMainChartData = React.useDeferredValue(mainChartData)
 	const exportProtocolName = protocolDisplayName ?? protocolName
 	const exportMetricTitle = title?.replace(/\s+by\s+(?:chain|protocol version)$/i, '')
@@ -322,7 +364,7 @@ const ChartByType = ({
 					groupBy={chartInterval}
 					valueSymbol="$"
 					showTotalInTooltip
-					hallmarks={hallmarks}
+					{...(hallmarks !== undefined ? { hallmarks } : {})}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>

@@ -4,8 +4,43 @@ export const COMPARE_CHAIN_ADAPTER_METRICS = ['dexVolumeChart', 'chainFeesChart'
 
 export type CompareChainAdapterMetric = (typeof COMPARE_CHAIN_ADAPTER_METRICS)[number]
 
+export type CompareChainAdapterRequest =
+	| {
+			metric: 'dexVolumeChart'
+			endpoint: 'chain'
+			params: { adapterType: 'dexs'; chain: string }
+	  }
+	| {
+			metric: 'chainFeesChart'
+			endpoint: 'protocol'
+			params: { adapterType: 'fees'; protocol: string }
+	  }
+	| {
+			metric: 'chainRevenueChart'
+			endpoint: 'protocol'
+			params: { adapterType: 'fees'; protocol: string; dataType: 'dailyRevenue' }
+	  }
+
 export function getCompareChainAdapterMetrics(selectedCharts: readonly string[]): CompareChainAdapterMetric[] {
 	return COMPARE_CHAIN_ADAPTER_METRICS.filter((metric) => selectedCharts.includes(metric))
+}
+
+export function buildCompareChainAdapterRequest(
+	chain: string,
+	metric: CompareChainAdapterMetric
+): CompareChainAdapterRequest {
+	switch (metric) {
+		case 'dexVolumeChart':
+			return { metric, endpoint: 'chain', params: { adapterType: 'dexs', chain } }
+		case 'chainFeesChart':
+			return { metric, endpoint: 'protocol', params: { adapterType: 'fees', protocol: chain } }
+		case 'chainRevenueChart':
+			return {
+				metric,
+				endpoint: 'protocol',
+				params: { adapterType: 'fees', protocol: chain, dataType: 'dailyRevenue' }
+			}
+	}
 }
 
 export function buildCompareChainOverviewQueryKey(chain: string) {
@@ -38,8 +73,10 @@ export function mergeCompareChainSources<T extends Record<CompareChainAdapterMet
 
 	const merged = { ...overview }
 	for (let index = 0; index < adapterMetrics.length; index++) {
+		const metric = adapterMetrics[index]
+		if (metric === undefined) continue
 		const data = metricData[index]
-		if (data) merged[adapterMetrics[index]] = data
+		if (data) merged[metric] = data
 	}
 	return merged
 }
@@ -59,9 +96,13 @@ export function getCompareChainFailedSources({
 }): string[] {
 	const failedSources = chains.flatMap((chain, index) => (overviewErrors[index] ? [chain] : []))
 	for (let chainIndex = 0; chainIndex < chains.length; chainIndex++) {
+		const chain = chains[chainIndex]
+		if (chain === undefined) continue
 		for (let metricIndex = 0; metricIndex < adapterMetrics.length; metricIndex++) {
+			const metric = adapterMetrics[metricIndex]
+			if (metric === undefined) continue
 			if (metricErrors[chainIndex * adapterMetrics.length + metricIndex]) {
-				failedSources.push(`${chains[chainIndex]} - ${metricLabels[adapterMetrics[metricIndex]]}`)
+				failedSources.push(`${chain} - ${metricLabels[metric]}`)
 			}
 		}
 	}

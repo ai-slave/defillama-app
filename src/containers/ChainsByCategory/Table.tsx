@@ -20,6 +20,7 @@ import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
+import type { ChainAssetTotals } from '~/containers/BridgedTVL/api.types'
 import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
@@ -32,6 +33,21 @@ import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatRatio, formatUsd, formatCompactNumber, roundNumber } from '~/utils/numberFormat'
 import type { IFormattedDataWithExtraTvl } from './types'
+
+export function getChainAssetTableValues(chainAssets: ChainAssetTotals | null | undefined) {
+	if (!chainAssets) return null
+	return {
+		total: chainAssets.total.total,
+		canonical: chainAssets.canonical.total,
+		native: chainAssets.native?.total,
+		ownTokens: chainAssets.ownTokens?.total,
+		thirdParty: chainAssets.thirdParty.total
+	}
+}
+
+export function hasChainAssetTableValue(value: number | undefined): value is number {
+	return value != null
+}
 
 const optionsKey = 'chains-overview-table-columns'
 
@@ -337,33 +353,23 @@ const columns = [
 	}),
 	columnHelper.accessor(
 		(row) => {
-			const total = row.chainAssets?.total
-			if (total == null) return undefined
-			const raw = typeof total === 'object' ? (total as { total: string }).total : String(total)
-			return raw ? roundNumber(+raw, 2) : undefined
+			const total = getChainAssetTableValues(row.chainAssets)?.total
+			return hasChainAssetTableValue(total) ? roundNumber(total, 2) : undefined
 		},
 		{
 			id: 'chainAssets',
 			header: 'Bridged TVL',
 			cell: ({ row }) => {
-				const originalChainAssets = row.original.chainAssets
-				const total = originalChainAssets?.total
-				if (total == null) return null
-
-				const normalizedChainAssets = {
-					...originalChainAssets,
-					total: typeof total === 'object' ? total.total : String(total)
-				}
-
-				if (!normalizedChainAssets.total) return null
+				const chainAssets = getChainAssetTableValues(row.original.chainAssets)
+				if (!chainAssets) return null
 
 				const chainAssetsBreakdown = (
 					<div className="flex w-52 flex-col gap-1">
-						{normalizedChainAssets.native ? (
+						{hasChainAssetTableValue(chainAssets.native) ? (
 							<div className="flex items-center justify-between gap-1">
 								<span>Native:</span>
 								<span>
-									{formatUsd(+normalizedChainAssets.native, {
+									{formatUsd(chainAssets.native, {
 										compact: true,
 										minimumCompactValue: 1_000_000,
 										compactSuffix: 'lowercase'
@@ -371,11 +377,11 @@ const columns = [
 								</span>
 							</div>
 						) : null}
-						{normalizedChainAssets.canonical ? (
+						{hasChainAssetTableValue(chainAssets.canonical) ? (
 							<div className="flex items-center justify-between gap-1">
 								<span>Canonical:</span>
 								<span>
-									{formatUsd(+normalizedChainAssets.canonical, {
+									{formatUsd(chainAssets.canonical, {
 										compact: true,
 										minimumCompactValue: 1_000_000,
 										compactSuffix: 'lowercase'
@@ -383,11 +389,11 @@ const columns = [
 								</span>
 							</div>
 						) : null}
-						{normalizedChainAssets.ownTokens ? (
+						{hasChainAssetTableValue(chainAssets.ownTokens) ? (
 							<div className="flex items-center justify-between gap-1">
 								<span>Own Tokens:</span>
 								<span>
-									{formatUsd(+normalizedChainAssets.ownTokens, {
+									{formatUsd(chainAssets.ownTokens, {
 										compact: true,
 										minimumCompactValue: 1_000_000,
 										compactSuffix: 'lowercase'
@@ -395,11 +401,11 @@ const columns = [
 								</span>
 							</div>
 						) : null}
-						{normalizedChainAssets.thirdParty ? (
+						{hasChainAssetTableValue(chainAssets.thirdParty) ? (
 							<div className="flex items-center justify-between gap-1">
 								<span>Third Party:</span>
 								<span>
-									{formatUsd(+normalizedChainAssets.thirdParty, {
+									{formatUsd(chainAssets.thirdParty, {
 										compact: true,
 										minimumCompactValue: 1_000_000,
 										compactSuffix: 'lowercase'
@@ -412,7 +418,7 @@ const columns = [
 
 				return (
 					<Tooltip content={chainAssetsBreakdown} className="justify-end">
-						{formatUsd(+normalizedChainAssets.total, {
+						{formatUsd(chainAssets.total, {
 							compact: true,
 							minimumCompactValue: 1_000_000,
 							compactSuffix: 'lowercase'
@@ -480,13 +486,12 @@ const columns = [
 	}),
 	columnHelper.accessor('activeUsers24h', {
 		header: '24h Active Addresses',
-		cell: (info) => (
-			<>
-				{info.getValue() > 0
-					? formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-					: null}
-			</>
-		),
+		cell: (info) => {
+			const value = info.getValue()
+			return value != null && value > 0
+				? formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null
+		},
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',

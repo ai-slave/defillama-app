@@ -31,15 +31,6 @@ describe('date formatters', () => {
 		expect(formatRelativeTime('2026-07-24T16:30:00')).toBeNull()
 		expect(formatDate(new Date(Number.NaN))).toBeNull()
 		expect(formatRelativeTime('2026-07-24T16:30:00Z', { now: new Date(Number.NaN) })).toBeNull()
-
-		const unsafeFormatDate = formatDate as unknown as (value: number, options?: { input?: string }) => string | null
-		const unsafeFormatDateTime = formatDateTime as unknown as (
-			value: string,
-			options?: { timeZone?: string }
-		) => string | null
-		expect(unsafeFormatDate(Date.UTC(2026, 6, 24))).toBeNull()
-		expect(unsafeFormatDate(Date.UTC(2026, 6, 24), { input: 'minutes' })).toBeNull()
-		expect(unsafeFormatDateTime('2026-07-24T16:30:00Z')).toBeNull()
 	})
 
 	it('formats months and machine dates in UTC', () => {

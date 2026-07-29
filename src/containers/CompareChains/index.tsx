@@ -2,7 +2,12 @@ import { useQueries } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import type { NextRouter } from 'next/router'
 import * as React from 'react'
-import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type {
+	IMultiSeriesChartProps,
+	MultiSeriesChartSeriesConfig,
+	MultiSeriesTimeSeriesDataset,
+	MultiSeriesTimeSeriesRow
+} from '~/components/ECharts/MultiSeriesChart/types'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { Select } from '~/components/Select/Select'
 import { selectTriggerStyles } from '~/components/Select/types'
@@ -18,12 +23,13 @@ import { getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import {
 	buildCompareChainAdapterQueryKey,
+	buildCompareChainAdapterRequest,
 	buildCompareChainOverviewQueryKey,
 	getCompareChainFailedSources,
 	getCompareChainAdapterMetrics,
 	hasPendingCompareChainSources,
 	mergeCompareChainSources,
-	type CompareChainAdapterMetric
+	type CompareChainAdapterRequest
 } from './requestPlan'
 import { buildCompareChainsTvlChartState, type CompareChainsTvlChartState } from './tvlChart'
 
@@ -40,15 +46,17 @@ interface ChainOption {
 interface SupportedChart {
 	id: string
 	name: string
-	key: string
+	key: 'tvlChart' | 'dexVolumeChart' | 'chainFeesChart' | 'chainRevenueChart'
+	type: 'line' | 'bar'
+	timestampUnit: 'milliseconds' | 'seconds'
 }
 
 // Supported charts configuration
 const supportedCharts: SupportedChart[] = [
-	{ id: 'tvl', name: 'TVL', key: 'tvlChart' },
-	{ id: 'volume', name: 'DEXs Volume', key: 'dexVolumeChart' },
-	{ id: 'chainFees', name: 'Chain Fees', key: 'chainFeesChart' },
-	{ id: 'chainRevenue', name: 'Chain Revenue', key: 'chainRevenueChart' }
+	{ id: 'tvl', name: 'TVL', key: 'tvlChart', type: 'line', timestampUnit: 'milliseconds' },
+	{ id: 'volume', name: 'DEXs Volume', key: 'dexVolumeChart', type: 'bar', timestampUnit: 'seconds' },
+	{ id: 'chainFees', name: 'Chain Fees', key: 'chainFeesChart', type: 'bar', timestampUnit: 'seconds' },
+	{ id: 'chainRevenue', name: 'Chain Revenue', key: 'chainRevenueChart', type: 'bar', timestampUnit: 'seconds' }
 ]
 
 type ChainDataResult = {
@@ -79,14 +87,12 @@ const getChainData = async (chain: string): Promise<ChainDataResult> => {
 	}
 }
 
-const getAdapterMetricData = (chain: string, metric: CompareChainAdapterMetric) => {
-	switch (metric) {
-		case 'dexVolumeChart':
-			return fetchAdapterChainChartData({ adapterType: 'dexs', chain })
-		case 'chainFeesChart':
-			return fetchAdapterProtocolChartData({ adapterType: 'fees', protocol: chain })
-		case 'chainRevenueChart':
-			return fetchAdapterProtocolChartData({ adapterType: 'fees', protocol: chain, dataType: 'dailyRevenue' })
+const getAdapterMetricData = (request: CompareChainAdapterRequest) => {
+	switch (request.endpoint) {
+		case 'chain':
+			return fetchAdapterChainChartData(request.params)
+		case 'protocol':
+			return fetchAdapterProtocolChartData(request.params)
 	}
 }
 
@@ -106,13 +112,16 @@ const useCompare = ({ chains = [], selectedCharts }: { chains?: string[]; select
 	const metricQueries = React.useMemo(
 		() =>
 			chains.flatMap((chain) =>
-				adapterMetrics.map((metric) => ({
-					queryKey: buildCompareChainAdapterQueryKey(chain, metric),
-					queryFn: () => getAdapterMetricData(chain, metric),
-					staleTime: 60 * 60 * 1000,
-					refetchOnWindowFocus: false,
-					retry: 0
-				}))
+				adapterMetrics.map((metric) => {
+					const request = buildCompareChainAdapterRequest(chain, metric)
+					return {
+						queryKey: buildCompareChainAdapterQueryKey(chain, metric),
+						queryFn: () => getAdapterMetricData(request),
+						staleTime: 60 * 60 * 1000,
+						refetchOnWindowFocus: false,
+						retry: 0
+					}
+				})
 			),
 		[chains, adapterMetrics]
 	)
@@ -150,72 +159,97 @@ const useCompare = ({ chains = [], selectedCharts }: { chains?: string[]; select
 }
 
 // Build chart lookup map for O(1) access
-const chartsMap = new Map(supportedCharts.map((c) => [c.key, c]))
+const chartsMap: ReadonlyMap<string, SupportedChart> = new Map(supportedCharts.map((chart) => [chart.key, chart]))
 
-type ChartSeriesConfig = {
-	type: 'line' | 'bar'
-	name: string
-	encode: { x: number; y: number }
-	stack: string
-	color: string
-}
+type CompareChainChartData = Pick<
+	ChainDataResult,
+	'chain' | 'dexVolumeChart' | 'chainFeesChart' | 'chainRevenueChart'
+> & { tvlChart: Array<[number, number]> | null }
 
-const formatChartData = (
-	chainsData: Array<ChainDataResult & { tvlChart: Array<[number, number]> | null }>,
+export const buildCompareChainsChartData = (
+	chainsData: CompareChainChartData[],
 	selectedCharts: string[]
-): { dataset: MultiSeriesChartDataset; charts: ChartSeriesConfig[] } => {
-	if (chainsData.length === 0 || !chainsData.every(Boolean))
-		return { dataset: { source: [], dimensions: ['timestamp'] }, charts: [] }
+): {
+	dataset: MultiSeriesTimeSeriesDataset
+	charts: MultiSeriesChartSeriesConfig[]
+	showTotalInTooltip: boolean
+} => {
+	if (chainsData.length === 0) {
+		return { dataset: { source: [], dimensions: ['timestamp'] }, charts: [], showTotalInTooltip: false }
+	}
 
 	const colors = getNDistinctColors(selectedCharts.length * chainsData.length)
 	let colorIndex = 0
 	const seriesNames: string[] = []
-	const seriesConfigs: ChartSeriesConfig[] = []
+	const seriesConfigs: MultiSeriesChartSeriesConfig[] = []
 	const seriesData: Array<{ entries: Array<[number, number]>; dateInMs: boolean; dimensionIndex: number }> = []
+	const displayedMetricKinds = new Set<SupportedChart['key']>()
 
 	for (const chart of selectedCharts) {
 		const targetChart = chartsMap.get(chart)
 		if (!targetChart) continue
+		displayedMetricKinds.add(targetChart.key)
 
-		const dateInMs = chart === 'tvlChart'
+		const dateInMs = targetChart.timestampUnit === 'milliseconds'
 
 		for (const chainData of chainsData) {
 			const name = `${chainData.chain} - ${targetChart.name}`
 			seriesNames.push(name)
 			const dimensionIndex = seriesNames.length
+			const color = colors[colorIndex]
+			if (color == null) throw new Error(`Missing comparison chart color at index ${colorIndex}`)
 			seriesConfigs.push({
-				type: chart === 'tvlChart' ? 'line' : 'bar',
+				type: targetChart.type,
 				name,
 				encode: { x: 0, y: dimensionIndex },
 				stack: name,
-				color: colors[colorIndex]
+				color
 			})
 			colorIndex++
 
-			const chartEntries = (chainData as Record<string, unknown>)[targetChart.key] as
-				| Array<[number, number]>
-				| null
-				| undefined
+			const chartEntries = chainData[targetChart.key]
 			seriesData.push({ entries: chartEntries ?? [], dateInMs, dimensionIndex })
 		}
 	}
 
-	const rowMap = new Map<number, MultiSeriesChartDataset['source'][number]>()
+	const rowMap = new Map<number, MultiSeriesTimeSeriesRow>()
 	for (const { entries, dateInMs, dimensionIndex } of seriesData) {
-		for (const data of entries) {
-			const ts = !dateInMs ? Number(data[0]) * 1e3 : data[0]
+		for (const [timestamp, value] of entries) {
+			const ts = dateInMs ? timestamp : timestamp * 1e3
 			let row = rowMap.get(ts)
 			if (!row) {
-				row = new Array(seriesNames.length + 1)
-				row[0] = ts
+				row = [ts, ...new Array<number | null>(seriesNames.length).fill(null)]
 				rowMap.set(ts, row)
 			}
-			row[dimensionIndex] = data[1]
+			row[dimensionIndex] = value
 		}
 	}
 
-	const source = Array.from(rowMap.values()).sort((a, b) => (a[0] as number) - (b[0] as number))
-	return { dataset: { source, dimensions: ['timestamp', ...seriesNames] }, charts: seriesConfigs }
+	const source = Array.from(rowMap.values()).sort((a, b) => a[0] - b[0])
+	return {
+		dataset: { source, dimensions: ['timestamp', ...seriesNames] },
+		charts: seriesConfigs,
+		showTotalInTooltip: displayedMetricKinds.size === 1 && seriesConfigs.length > 0
+	}
+}
+
+export function buildCompareChainsTvlCharts(
+	data: Array<{
+		chain: string
+		chainOverviewData: Pick<IChainOverviewData, 'tvlChart' | 'extraTvlCharts'>
+	}>,
+	tvlSettings: Record<string, boolean>
+): Record<string, CompareChainsTvlChartState> {
+	const charts: Record<string, CompareChainsTvlChartState> = {}
+	for (const chainData of data) {
+		if (!chainData.chainOverviewData.tvlChart.length) continue
+		charts[chainData.chain] = buildCompareChainsTvlChartState({
+			tvlChart: chainData.chainOverviewData.tvlChart,
+			tvlSettings,
+			extraTvlCharts: chainData.chainOverviewData.extraTvlCharts
+		})
+	}
+	return charts
 }
 
 const updateRoute = (key: string, val: string | string[], router: NextRouter) => {
@@ -288,20 +322,14 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 	const isChartLoading = isLoading
 
 	const tvlCharts = React.useMemo(() => {
-		const charts: Record<string, CompareChainsTvlChartState> = {}
-		for (const chainData of data) {
-			if (!chainData?.chainOverviewData?.tvlChart?.length) continue
-			charts[chainData.chain] = buildCompareChainsTvlChartState({
-				tvlChart: chainData.chainOverviewData.tvlChart,
-				tvlSettings,
-				extraTvlCharts: chainData.chainOverviewData.extraTvlCharts
-			})
-		}
-		return charts
+		return buildCompareChainsTvlCharts(
+			data.filter((chainData): chainData is ChainDataResult => chainData != null),
+			tvlSettings
+		)
 	}, [data, tvlSettings])
 
 	const chartData = React.useMemo(() => {
-		return formatChartData(
+		return buildCompareChainsChartData(
 			data
 				.filter((d): d is ChainDataResult => d != null)
 				.map((chainData) => ({
@@ -347,7 +375,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 								<MultiSeriesChart
 									dataset={chartData.dataset}
 									charts={chartData.charts}
-									showTotalInTooltip
+									showTotalInTooltip={chartData.showTotalInTooltip}
 									exportButtons={{
 										png: true,
 										csv: true,

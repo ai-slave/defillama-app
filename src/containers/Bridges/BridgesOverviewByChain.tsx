@@ -29,6 +29,7 @@ import {
 	type BridgeOverviewChartType
 } from './bridgeOverviewChartData'
 import { BridgesLargeTxsTable, type BridgesLargeTxsTableHandle } from './BridgesLargeTxsTable'
+import type { getBridgeOverviewPageData } from './queries.server'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -68,8 +69,10 @@ const BRIDGE_CHAIN_CHART_OPTIONS = [
 	'24h Tokens Deposited',
 	'24h Tokens Withdrawn'
 ]
+type BridgeOverviewPageData = Awaited<ReturnType<typeof getBridgeOverviewPageData>>
+type BridgesOverviewByChainProps = Omit<BridgeOverviewPageData, 'chain'> & { selectedChain?: string }
 const EMPTY_CHAINS: string[] = []
-const EMPTY_PROTOCOLS: any[] = []
+const EMPTY_PROTOCOLS: BridgeOverviewPageData['filteredBridges'] = []
 const CHART_VIEW_OPTIONS = [
 	{ key: 'netflow' as const, label: 'Net Flows By Chain' },
 	{ key: 'volume' as const, label: 'Bridge Volume' }
@@ -124,7 +127,7 @@ export function BridgesOverviewByChain({
 	netflowsData,
 	bridgeStatsCurrentDay,
 	largeTxsData
-}) {
+}: BridgesOverviewByChainProps) {
 	const [chartType, setChartType] = React.useState<BridgeOverviewChartType>(
 		selectedChain === 'All' ? 'Volumes' : 'Bridge Volume'
 	)
@@ -144,10 +147,10 @@ export function BridgesOverviewByChain({
 
 	const displaysTokenPie = chartType === '24h Tokens Deposited' || chartType === '24h Tokens Withdrawn'
 	const tokenPieSeriesByDirection = React.useMemo(() => {
-		if (!displaysTokenPie) return null
+		if (!displaysTokenPie || !bridgeStatsCurrentDay) return null
 		return {
-			deposited: buildBridgeOverviewTokenPieSeries(bridgeStatsCurrentDay?.totalTokensDeposited ?? {}),
-			withdrawn: buildBridgeOverviewTokenPieSeries(bridgeStatsCurrentDay?.totalTokensWithdrawn ?? {})
+			deposited: buildBridgeOverviewTokenPieSeries(bridgeStatsCurrentDay.totalTokensDeposited),
+			withdrawn: buildBridgeOverviewTokenPieSeries(bridgeStatsCurrentDay.totalTokensWithdrawn)
 		}
 	}, [bridgeStatsCurrentDay, displaysTokenPie])
 	const activeTokenPieSeries =
@@ -163,14 +166,15 @@ export function BridgesOverviewByChain({
 				chartType,
 				chainVolumeData,
 				bridgeStatsCurrentDay,
-				tokenPieSeries: activeTokenPieSeries ?? undefined
+				...(displaysTokenPie ? { tokenPieSeries: activeTokenPieSeries } : {})
 			}),
-		[selectedChain, chartType, chainVolumeData, bridgeStatsCurrentDay, activeTokenPieSeries]
+		[selectedChain, chartType, chainVolumeData, bridgeStatsCurrentDay, activeTokenPieSeries, displaysTokenPie]
 	)
 	const tokenColorIndex = React.useMemo(() => {
 		const indexByToken = new Map<string, number>()
 		if (!tokenPieSeriesByDirection) return indexByToken
 		for (const series of [tokenPieSeriesByDirection.deposited, tokenPieSeriesByDirection.withdrawn]) {
+			if (!series) continue
 			for (const peer of series.peers) {
 				if (!indexByToken.has(peer.name)) indexByToken.set(peer.name, indexByToken.size)
 			}
@@ -205,8 +209,6 @@ export function BridgesOverviewByChain({
 
 	const chartFilename = getBridgeChartFilename(selectedChain, chartType)
 	const selectedChainIconUrl = selectedChain !== 'All' ? chainIconUrl(selectedChain) : undefined
-	const completedDayVolumes = selectedChain !== 'All'
-
 	const prepareCsv = () => {
 		const resolvedFilteredBridges = filteredBridges ?? EMPTY_PROTOCOLS
 		const resolvedMessagingProtocols = messagingProtocols ?? EMPTY_PROTOCOLS
@@ -215,16 +217,19 @@ export function BridgesOverviewByChain({
 
 		const filteredBridgeNames = allBridgeNames.filter((bridgeName) => {
 			const chartDataIndex = bridgeNameToChartDataIndex[bridgeName]
+			if (chartDataIndex === undefined) return false
 			const charts = chartDataByBridge[chartDataIndex]
-			return charts && charts.length
+			return !!charts?.length
 		})
 
 		const fileName = 'bridge-and-messaging-volumes.csv'
-		const rows = [['Timestamp', 'Date', ...filteredBridgeNames, 'Total']]
-		const valuesByDate = new Map<number, Map<string, number>>()
+		const rows: Array<Array<string | number>> = [['Timestamp', 'Date', ...filteredBridgeNames, 'Total']]
+		const valuesByDate = new Map<number, Map<string, number | null>>()
 		for (const bridgeName of filteredBridgeNames) {
 			const chartDataIndex = bridgeNameToChartDataIndex[bridgeName]
+			if (chartDataIndex === undefined) continue
 			const charts = chartDataByBridge[chartDataIndex]
+			if (!charts) continue
 			for (const chart of charts) {
 				let values = valuesByDate.get(chart.date)
 				if (!values) {
@@ -236,14 +241,21 @@ export function BridgesOverviewByChain({
 		}
 		const sortedDates = Array.from(valuesByDate.keys()).sort((a, b) => a - b)
 		for (const date of sortedDates) {
-			const values = valuesByDate.get(date)!
-			let total = 0
-			for (const value of values.values()) total += value
+			const values = valuesByDate.get(date)
+			if (!values) throw new Error(`Missing bridge CSV values for ${date}`)
+			let total: number | null = 0
+			for (const value of values.values()) {
+				if (value === null) total = null
+				else if (total !== null) total += value
+			}
 			rows.push([
 				date,
 				formatIsoDate(date, { input: 'seconds' }) ?? '',
-				...filteredBridgeNames.map((bridgeName) => values.get(bridgeName) ?? ''),
-				total
+				...filteredBridgeNames.map((bridgeName) => {
+					const value = values.get(bridgeName)
+					return value === undefined ? 0 : (value ?? '')
+				}),
+				total ?? ''
 			])
 		}
 
@@ -282,7 +294,7 @@ export function BridgesOverviewByChain({
 				<SummaryStatsCard padding="sm">
 					{dayTotalVolume != null ? (
 						<StatItem
-							label={completedDayVolumes ? 'Total volume (last completed day)' : 'Total volume (24h)'}
+							label="Total volume (last completed day)"
 							labelAs="h1"
 							value={formatUsd(dayTotalVolume, {
 								compact: true,
@@ -293,8 +305,8 @@ export function BridgesOverviewByChain({
 					) : null}
 					{weekTotalVolume != null ? (
 						<StatItem
-							label={completedDayVolumes ? 'Total volume (7 completed days)' : 'Total volume (7d)'}
-							labelAs={dayTotalVolume == null ? 'h1' : undefined}
+							label="Total volume (7 completed days)"
+							{...(dayTotalVolume == null ? { labelAs: 'h1' as const } : {})}
 							value={formatUsd(weekTotalVolume, {
 								compact: true,
 								minimumCompactValue: 1_000_000,
@@ -305,8 +317,8 @@ export function BridgesOverviewByChain({
 					) : null}
 					{monthTotalVolume != null ? (
 						<StatItem
-							label={completedDayVolumes ? 'Total volume (30 completed days)' : 'Total volume (1mo)'}
-							labelAs={dayTotalVolume == null && weekTotalVolume == null ? 'h1' : undefined}
+							label="Total volume (30 completed days)"
+							{...(dayTotalVolume == null && weekTotalVolume == null ? { labelAs: 'h1' as const } : {})}
 							value={formatUsd(monthTotalVolume, {
 								compact: true,
 								minimumCompactValue: 1_000_000,
@@ -339,13 +351,13 @@ export function BridgesOverviewByChain({
 								/>
 							</ChartPanelToolbar>
 
-							{chartView === 'netflow' ? (
+							{chartView === 'netflow' && netflowsData ? (
 								<React.Suspense fallback={<div className="min-h-[600px]" />}>
 									<NetflowChart height={600} onReady={handleChartReady} data={netflowsData} />
 								</React.Suspense>
-							) : (
+							) : chartView === 'volume' ? (
 								<BridgeVolumeChart data={rawBridgeVolumeData} height="360px" onReady={handleChartReady} />
-							)}
+							) : null}
 						</>
 					) : (
 						<>
@@ -505,7 +517,6 @@ export function BridgesOverviewByChain({
 						ref={bridgesTableRef}
 						data={bridgesTableData}
 						searchValue={deferredSearchValue}
-						completedDayVolumes={completedDayVolumes}
 						csvFileName={
 							activeTab === 'messaging'
 								? 'messaging-protocols'

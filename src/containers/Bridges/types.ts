@@ -10,27 +10,30 @@ export type BridgeNetflowChartData = Record<BridgeNetflowPeriod, BridgeNetflowCh
 
 export interface BridgeVolumeChartPoint {
 	date: number
-	Deposited: number
-	Withdrawn: number
+	Deposited: number | null
+	Withdrawn: number | null
 }
 
 export interface BridgeOverviewVolumeChartPoint {
-	date: string | number
-	Deposits: number
-	Withdrawals: number
+	date: number
+	Deposits: number | null
+	Withdrawals: number | null
 }
+
+export type BridgeOverviewVolumeChartTuple = [date: number, deposits: number | null, withdrawals: number | null]
 
 export interface BridgeTokenTableRow {
 	symbol: string
-	deposited: number
-	withdrawn: number
-	volume: number
+	token: string
+	deposited: number | null
+	withdrawn: number | null
+	volume: number | null
 }
 
 export interface BridgeAddressTableRow {
 	address: string
-	deposited: number
-	withdrawn: number
+	deposited: number | null
+	withdrawn: number | null
 	txs: number
 }
 
@@ -42,13 +45,13 @@ export interface BridgePieChartSlice {
 export interface BridgeTableData {
 	tokensTableData: BridgeTokenTableRow[]
 	addressesTableData: BridgeAddressTableRow[]
-	tokenDeposits: RuntimePieChartData
-	tokenWithdrawals: RuntimePieChartData
-	totalDepositedUSD?: number
-	totalWithdrawnUSD?: number
-	totalDepositTxs?: number
-	totalWithdrawalTxs?: number
-	dataTimestamp?: number
+	tokenDeposits: RuntimePieChartData | null
+	tokenWithdrawals: RuntimePieChartData | null
+	totalDepositedUSD: number | null
+	totalWithdrawnUSD: number | null
+	totalDepositTxs: number
+	totalWithdrawalTxs: number
+	dataTimestamp: number
 }
 
 export interface BridgePageData {

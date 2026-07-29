@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@tanstack/react-query', () => ({
+	skipToken: Symbol('skipToken'),
 	useQuery: mocks.useQuery,
 	useQueries: mocks.useQueries
 }))

@@ -1,4 +1,5 @@
 import type * as echarts from 'echarts/core'
+import type { CsvCell } from '~/utils/csvCell'
 import { ChartCsvExportButton } from './ChartCsvExportButton'
 import { ChartPngExportButton, type PngExportProfile } from './ChartPngExportButton'
 
@@ -12,7 +13,7 @@ interface ChartExportButtonsProps {
 	smol?: boolean | undefined
 	showCsv?: boolean | undefined
 	showPng?: boolean | undefined
-	prepareCsvDirect?: (() => { filename: string; rows: Array<Array<string | number | boolean>> }) | undefined
+	prepareCsvDirect?: (() => { filename: string; rows: Array<Array<CsvCell>> }) | undefined
 	pngProfile?: PngExportProfile | undefined
 	onCsvExport?: ((info: { filename: string }) => void) | undefined
 	onPngExport?: ((info: { kind: 'download' | 'copy'; filename: string }) => void) | undefined

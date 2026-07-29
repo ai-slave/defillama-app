@@ -6,6 +6,7 @@ import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { getProtocolBridgeVolumeMetrics } from './chartSeries.utils'
 import { getPrimaryValueLabelType } from './helpers'
 import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
 import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
@@ -131,7 +132,7 @@ const ANNUALIZATION_FACTOR = 12.2
 
 interface VolumeMetric {
 	name: string
-	tooltipContent?: string
+	tooltipContent?: string | undefined
 	value: number
 	chainBreakdown?: Record<string, number> | null
 }
@@ -203,7 +204,9 @@ function extractChainValues(
 ): Record<string, number> | null {
 	const sortedEntries: Array<[string, number]> = []
 	for (const chain in cb) {
-		const value = cb[chain][key]
+		const chainData = cb[chain]
+		if (chainData === undefined) continue
+		const value = chainData[key]
 		if (value != null) {
 			sortedEntries.push([chain, value])
 		}
@@ -251,7 +254,7 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 				<KeyMetricsPngExportButton
 					containerRef={containerRef}
 					protocolName={props.name}
-					primaryValue={primaryValue}
+					{...(primaryValue !== undefined ? { primaryValue } : {})}
 					primaryLabel={primaryLabel}
 					formatPrice={props.formatPrice}
 					hasTvlData={hasPrimaryMetricData}
@@ -659,45 +662,22 @@ function BridgeVolume(props: IKeyMetricsProps) {
 	if (!props.bridgeVolume || props.bridgeVolume.length === 0) return null
 
 	const metrics = []
-	const oneDayAgo = now - 24 * 60 * 60 * 1000
-	const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000
-	const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000
+	const { lastCompletedDay, sevenCompletedDays, thirtyCompletedDays, sinceDataStart } = getProtocolBridgeVolumeMetrics(
+		props.bridgeVolume,
+		now
+	)
 
-	let total24h = 0
-	let total7d = 0
-	let total30d = 0
-	let totalAllTime = 0
-
-	for (const item of props.bridgeVolume) {
-		const volume = ((item.depositUSD ?? 0) + (item.withdrawUSD ?? 0)) / 2
-		const timestamp = Number(item.date) * 1000
-
-		totalAllTime += volume
-
-		if (timestamp >= thirtyDaysAgo) {
-			total30d += volume
-		}
-
-		if (timestamp >= sevenDaysAgo) {
-			total7d += volume
-		}
-
-		if (timestamp >= oneDayAgo) {
-			total24h += volume
-		}
+	if (thirtyCompletedDays != null) {
+		metrics.push({ name: 'Bridge Volume 30 completed days', tooltipContent: null, value: thirtyCompletedDays })
 	}
-
-	if (total30d > 0) {
-		metrics.push({ name: 'Bridge Volume 30d', tooltipContent: null, value: total30d })
+	if (sevenCompletedDays != null) {
+		metrics.push({ name: 'Bridge Volume 7 completed days', tooltipContent: null, value: sevenCompletedDays })
 	}
-	if (total7d > 0) {
-		metrics.push({ name: 'Bridge Volume 7d', tooltipContent: null, value: total7d })
+	if (lastCompletedDay != null) {
+		metrics.push({ name: 'Bridge Volume last completed day', tooltipContent: null, value: lastCompletedDay })
 	}
-	if (total24h > 0) {
-		metrics.push({ name: 'Bridge Volume 24h', tooltipContent: null, value: total24h })
-	}
-	if (totalAllTime > 0) {
-		metrics.push({ name: 'Cumulative Bridge Volume', tooltipContent: null, value: totalAllTime })
+	if (sinceDataStart != null) {
+		metrics.push({ name: 'Bridge Volume since data start', tooltipContent: null, value: sinceDataStart })
 	}
 
 	if (metrics.length === 0) return null
@@ -722,44 +702,44 @@ const SmolStats = ({
 }: {
 	data: Array<{
 		name: string
-		tooltipContent?: string | null
+		tooltipContent?: string | null | undefined
 		value: string | number
 		chainBreakdown?: Record<string, number> | null
 	}>
 	protocolName: string
 	category: string
 	formatPrice: (value: number | string | null) => string | number | null
-	openSmolStatsSummaryByDefault?: boolean
+	openSmolStatsSummaryByDefault?: boolean | undefined
 	dataType: string
 }) => {
 	const restOfData = useMemo(() => data.slice(1), [data])
+	const primary = data[0]
+	if (!primary) return null
 
-	if (data.length === 0) return null
-
-	if (data.length === 1 && !data[0].chainBreakdown) {
+	if (data.length === 1 && !primary.chainBreakdown) {
 		return (
 			<MetricRow
-				label={data[0].name}
-				tooltip={data[0].tooltipContent ?? undefined}
-				value={formatPrice(data[0].value)}
+				label={primary.name}
+				{...(primary.tooltipContent != null ? { tooltip: primary.tooltipContent } : {})}
+				value={formatPrice(primary.value)}
 			/>
 		)
 	}
 
 	return (
 		<MetricSection
-			label={data[0].name}
-			tooltip={data[0].tooltipContent ?? undefined}
-			value={formatPrice(data[0].value)}
+			label={primary.name}
+			{...(primary.tooltipContent != null ? { tooltip: primary.tooltipContent } : {})}
+			value={formatPrice(primary.value)}
 			defaultOpen={openSmolStatsSummaryByDefault}
 		>
-			{data[0].chainBreakdown ? (
-				<SubMetricSection key={`${data[0].name}-chains-${protocolName}`} label={`${data[0].name} by chain`}>
+			{primary.chainBreakdown ? (
+				<SubMetricSection key={`${primary.name}-chains-${protocolName}`} label={`${primary.name} by chain`}>
 					{renderChainRows({
-						chains: data[0].chainBreakdown,
+						chains: primary.chainBreakdown,
 						protocolName,
 						formatPrice,
-						keySuffix: data[0].name
+						keySuffix: primary.name
 					})}
 				</SubMetricSection>
 			) : null}
@@ -782,7 +762,7 @@ function ChainBreakdownMetricRow({
 }: {
 	metric: {
 		name: string
-		tooltipContent?: string | null
+		tooltipContent?: string | null | undefined
 		value: string | number
 		chainBreakdown?: Record<string, number> | null
 	}
@@ -793,7 +773,7 @@ function ChainBreakdownMetricRow({
 		return (
 			<SubMetricRow
 				label={metric.name}
-				tooltip={metric.tooltipContent ?? undefined}
+				{...(metric.tooltipContent != null ? { tooltip: metric.tooltipContent } : {})}
 				value={formatPrice(metric.value)}
 			/>
 		)
@@ -818,9 +798,9 @@ function renderChainRows({
 }) {
 	const rows = []
 	for (const chain in chains) {
-		rows.push(
-			<SubMetricRow key={`${chain}-${keySuffix}-${protocolName}`} label={chain} value={formatPrice(chains[chain])} />
-		)
+		const value = chains[chain]
+		if (value === undefined) continue
+		rows.push(<SubMetricRow key={`${chain}-${keySuffix}-${protocolName}`} label={chain} value={formatPrice(value)} />)
 	}
 	return rows
 }

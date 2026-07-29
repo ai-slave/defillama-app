@@ -8,12 +8,12 @@ import {
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { TagGroup } from '~/ui/SegmentedControl'
+import type { BridgeVolumePoint } from './api.types'
 import {
 	BRIDGE_VOLUME_METRIC_TYPES,
 	BRIDGE_VOLUME_VIEW_TYPES,
 	buildBridgeVolumeChartData,
 	getStaleBridgeVolumeTimestamp,
-	type BridgeVolumeInputPoint,
 	type BridgeVolumeMetricType,
 	type BridgeVolumeViewType
 } from './bridgeVolumeData'
@@ -21,7 +21,7 @@ import {
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 interface BridgeVolumeChartProps {
-	data: BridgeVolumeInputPoint[] | null | undefined
+	data: BridgeVolumePoint[] | null | undefined
 	height?: string
 	onReady?: (instance: echarts.ECharts | null) => void
 	headerStart?: ReactNode
@@ -75,11 +75,11 @@ export function BridgeVolumeChart({ data, height, onReady, headerStart, headerEn
 				<MultiSeriesChart
 					dataset={deferredChartData.dataset}
 					charts={deferredChartData.charts}
-					height={height}
+					{...(height !== undefined ? { height } : {})}
 					hideDefaultLegend={false}
 					groupBy={timePeriod}
 					valueSymbol={deferredChartData.metricType === 'Volume' ? '$' : ''}
-					onReady={onReady}
+					{...(onReady !== undefined ? { onReady } : {})}
 				/>
 			</Suspense>
 		</>

@@ -44,16 +44,22 @@ export function useProTableData({ chains, filters, sourcePlan }: UseProTableData
 		chains,
 		sourcePlan.enabled.openInterest
 	)
-	const { data: chainProtocolsEarnings } = useGetProtocolsEarningsByMultiChain(chains, sourcePlan.enabled.earnings)
-	const { data: chainProtocolsAggregators } = useGetProtocolsAggregatorsByMultiChain(
-		chains,
-		sourcePlan.enabled.aggregators
+	const { data: chainProtocolsEarnings, unavailableChains: earningsUnavailableChains } =
+		useGetProtocolsEarningsByMultiChain(chains, sourcePlan.enabled.earnings)
+	const { data: chainProtocolsAggregators, unavailableChains: aggregatorsUnavailableChains } =
+		useGetProtocolsAggregatorsByMultiChain(chains, sourcePlan.enabled.aggregators)
+	const { data: chainProtocolsBridgeAggregators, unavailableChains: bridgeAggregatorsUnavailableChains } =
+		useGetProtocolsBridgeAggregatorsByMultiChain(chains, sourcePlan.enabled.bridgeAggregators)
+	const { data: chainProtocolsOptions, unavailableChains: optionsUnavailableChains } =
+		useGetProtocolsOptionsVolumeByMultiChain(chains, sourcePlan.enabled.options)
+	const unavailableChains = Array.from(
+		new Set([
+			...earningsUnavailableChains,
+			...aggregatorsUnavailableChains,
+			...bridgeAggregatorsUnavailableChains,
+			...optionsUnavailableChains
+		])
 	)
-	const { data: chainProtocolsBridgeAggregators } = useGetProtocolsBridgeAggregatorsByMultiChain(
-		chains,
-		sourcePlan.enabled.bridgeAggregators
-	)
-	const { data: chainProtocolsOptions } = useGetProtocolsOptionsVolumeByMultiChain(chains, sourcePlan.enabled.options)
 
 	const fullProtocolsList = React.useMemo(() => normalizeProtocolRows(rawProtocols), [rawProtocols])
 	const parentProtocols = React.useMemo(() => normalizeParentProtocols(rawParentProtocols), [rawParentProtocols])
@@ -64,16 +70,18 @@ export function useProTableData({ chains, filters, sourcePlan }: UseProTableData
 		return prepareProTableRows({
 			protocols: fullProtocolsList,
 			parentProtocols,
-			filters,
 			sourcePlan,
-			volumeData: chainProtocolsVolumes,
-			feesData: chainProtocolsFees,
-			perpsData: chainProtocolsPerps,
-			openInterestData: chainProtocolsOpenInterest,
-			earningsData: chainProtocolsEarnings,
-			aggregatorsData: chainProtocolsAggregators,
-			bridgeAggregatorsData: chainProtocolsBridgeAggregators,
-			optionsData: chainProtocolsOptions
+			...(filters !== undefined ? { filters } : {}),
+			...(chainProtocolsVolumes !== undefined ? { volumeData: chainProtocolsVolumes } : {}),
+			...(chainProtocolsFees !== undefined ? { feesData: chainProtocolsFees } : {}),
+			...(chainProtocolsPerps !== undefined ? { perpsData: chainProtocolsPerps } : {}),
+			...(chainProtocolsOpenInterest !== undefined ? { openInterestData: chainProtocolsOpenInterest } : {}),
+			...(chainProtocolsEarnings !== undefined ? { earningsData: chainProtocolsEarnings } : {}),
+			...(chainProtocolsAggregators !== undefined ? { aggregatorsData: chainProtocolsAggregators } : {}),
+			...(chainProtocolsBridgeAggregators !== undefined
+				? { bridgeAggregatorsData: chainProtocolsBridgeAggregators }
+				: {}),
+			...(chainProtocolsOptions !== undefined ? { optionsData: chainProtocolsOptions } : {})
 		})
 	}, [
 		fullProtocolsList,
@@ -107,6 +115,7 @@ export function useProTableData({ chains, filters, sourcePlan }: UseProTableData
 		finalProtocolsList,
 		isLoading,
 		isEmptyProtocols,
+		unavailableChains,
 		categories,
 		availableProtocols,
 		parentProtocols,

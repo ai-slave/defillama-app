@@ -38,38 +38,51 @@ import { formatPercent } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
+type CalendarEmission = ProtocolEmission & {
+	unlock: [timestamp: number, amount: number]
+	tPrice: number | null
+	tSymbol: string | null
+}
+
 export const getStaticProps = withPerformanceLogging('calendar', async () => {
 	const res = await fetchAllProtocolEmissions()
 
-	const emissions = res.map((protocol: ProtocolEmission) => {
-		const unlocksByDate: Record<number, number> = {}
+	const emissions: CalendarEmission[] = []
+	for (const protocol of res) {
+		const unlocksByDate = new Map<number, number>()
 		for (const e of protocol.events ?? []) {
-			if (e.timestamp < Date.now() / 1000 || (e.noOfTokens.length === 1 && e.noOfTokens[0] === 0)) continue
-			unlocksByDate[e.timestamp] =
-				(unlocksByDate[e.timestamp] ?? 0) +
-				(e.noOfTokens.length === 2 ? e.noOfTokens[1] - e.noOfTokens[0] : e.noOfTokens[0])
+			if (
+				e.timestamp < Date.now() / 1000 ||
+				e.hasUnknownTokenAmount ||
+				e.noOfTokens.length === 0 ||
+				(e.noOfTokens.length === 1 && e.noOfTokens[0] === 0)
+			)
+				continue
+			const firstAmount = e.noOfTokens[0]
+			if (firstAmount === undefined) continue
+			const secondAmount = e.noOfTokens[1]
+			const amount = e.noOfTokens.length === 2 && secondAmount !== undefined ? secondAmount - firstAmount : firstAmount
+			unlocksByDate.set(e.timestamp, (unlocksByDate.get(e.timestamp) ?? 0) + amount)
 		}
-		const unlocksList = Object.entries(unlocksByDate)
-		const maxUnlock = unlocksList.reduce((max, curr) => {
-			if (max[1] < curr[1]) {
-				return curr
-			}
-			return max
-		}, unlocksList[0])
+		let maxUnlock: CalendarEmission['unlock'] | null = null
+		for (const [timestamp, amount] of unlocksByDate) {
+			if (!maxUnlock || amount > maxUnlock[1]) maxUnlock = [timestamp, amount]
+		}
+		if (!maxUnlock) continue
 
 		const tSymbol = protocol.name === 'LooksRare' ? 'LOOKS' : (protocol.tokenPrice?.[0]?.symbol ?? null)
 
-		return {
+		emissions.push({
 			...protocol,
 			unlock: maxUnlock,
 			tPrice: protocol.tokenPrice?.[0]?.price ?? null,
 			tSymbol
-		}
-	})
+		})
+	}
 
 	return {
 		props: {
-			emissions: emissions.filter((p) => p.unlock) || []
+			emissions
 		},
 		revalidate: maxAgeForNext([22])
 	}
@@ -86,7 +99,7 @@ const columnHelper = createColumnHelper<CalendarRow>()
 
 const options = ['Unlock', 'Close', 'Macro', 'Crypto']
 
-export default function Protocols({ emissions }) {
+export default function Protocols({ emissions }: { emissions: CalendarEmission[] }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'timestamp', desc: false }])
 	const router = useRouter()
@@ -124,6 +137,7 @@ export default function Protocols({ emissions }) {
 
 		for (const [eventType, items] of calendarEvents) {
 			for (const [ts, name] of items) {
+				if (!ts || !name) continue
 				events.push({
 					name,
 					timestamp: new Date(ts).getTime(),
@@ -296,7 +310,7 @@ export const calendarColumns = [
 	})
 ]
 
-const SimpleUpcomingEvent = ({ timestamp, name }) => {
+const SimpleUpcomingEvent = ({ timestamp, name }: { timestamp: number; name: string }) => {
 	const [nowMs, setNowMs] = React.useState(() => Date.now())
 	const timeLeft = Math.max(0, timestamp - nowMs / 1e3)
 	const days = Math.floor(timeLeft / 86400)

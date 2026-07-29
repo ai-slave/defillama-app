@@ -16,19 +16,18 @@ export interface RawBridgeInfo {
 	destinationChain: string
 	url?: string
 	slug?: string
-	txsPrevDay?: number | null
 }
 
 export interface RawBridgeChainInfo {
 	gecko_id?: string | null
 	volumePrevDay: number
-	tokenSymbol?: string | null
+	tokenSymbol: string | null
 	name: string
-	lastDailyVolume?: number
 }
 
 export interface RawBridgesResponse {
 	bridges: RawBridgeInfo[]
+	dataUpdatedAt: string | null
 }
 
 export interface RawBridgesWithChainsResponse extends RawBridgesResponse {
@@ -37,13 +36,23 @@ export interface RawBridgesWithChainsResponse extends RawBridgesResponse {
 
 export interface RawBridgeVolumePoint {
 	date: string
-	depositUSD?: number
-	withdrawUSD?: number
-	depositTxs?: number
-	withdrawTxs?: number
+	depositUSD: number | null
+	withdrawUSD: number | null
+	depositTxs: number
+	withdrawTxs: number
 }
 
 export type RawBridgeVolumeResponse = RawBridgeVolumePoint[]
+
+export interface BridgeVolumePoint {
+	date: number
+	depositUSD: number | null
+	withdrawUSD: number | null
+	depositTxs: number
+	withdrawTxs: number
+}
+
+export type BridgeVolumeResponse = BridgeVolumePoint[]
 
 export interface RawBridgeVolumeBySlugBridge {
 	id: number
@@ -57,31 +66,56 @@ export interface RawBridgeVolumeBySlugResponse {
 	dailyVolumes: RawBridgeVolumePoint[]
 }
 
+export interface BridgeVolumeBySlugResponse {
+	bridge: RawBridgeVolumeBySlugBridge
+	dailyVolumes: BridgeVolumePoint[]
+}
+
 export interface RawBridgeTokenStats {
-	usdValue: number
+	usdValue: number | null
 	amount: string
 	symbol: string
 	decimals: number
 }
 
 export interface RawBridgeAddressStats {
-	usdValue: number
+	usdValue: number | null
 	txs: number
 }
 
 export interface RawBridgeDayStats {
 	date: number
-	totalDepositedUSD?: number
-	totalWithdrawnUSD?: number
-	totalDepositTxs?: number
-	totalWithdrawalTxs?: number
+	totalDepositedUSD: number | null
+	totalWithdrawnUSD: number | null
+	totalDepositTxs: number
+	totalWithdrawalTxs: number
 	totalTokensDeposited: Record<string, RawBridgeTokenStats>
 	totalTokensWithdrawn: Record<string, RawBridgeTokenStats>
 	totalAddressDeposited: Record<string, RawBridgeAddressStats>
 	totalAddressWithdrawn: Record<string, RawBridgeAddressStats>
 }
 
-export type RawBridgeDayStatsResponse = RawBridgeDayStats | Record<string, never>
+export interface BridgeDayTokenStats {
+	usdValue: number | null
+	symbol: string
+}
+
+export interface BridgeDayAddressStats {
+	usdValue: number | null
+	txs: number
+}
+
+export interface BridgeDayStats {
+	date: number
+	totalDepositedUSD: number | null
+	totalWithdrawnUSD: number | null
+	totalDepositTxs: number
+	totalWithdrawalTxs: number
+	totalTokensDeposited: Record<string, BridgeDayTokenStats>
+	totalTokensWithdrawn: Record<string, BridgeDayTokenStats>
+	totalAddressDeposited: Record<string, BridgeDayAddressStats>
+	totalAddressWithdrawn: Record<string, BridgeDayAddressStats>
+}
 
 export interface RawBridgeLargeTransaction {
 	date: number
@@ -123,6 +157,13 @@ export interface RawBridgeNetflowEntry {
 }
 
 export type RawBridgeNetflowsResponse = RawBridgeNetflowEntry[]
+export interface BridgeNetflowEntry {
+	chain: string
+	netFlow: number
+	depositedUsd: number
+	withdrawnUsd: number
+}
+export type BridgeNetflowsResponse = BridgeNetflowEntry[]
 export type BridgeNetflowPeriod = 'day' | 'week' | 'month'
 
 export interface RawBridgeTxCountInfo {

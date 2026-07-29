@@ -15,11 +15,28 @@ interface ModalProps {
 	initialExclude: string[]
 }
 
-const mocks = vi.hoisted(() => ({
-	query: { data: [] as DimensionDatasetProtocol[], isLoading: false, error: null as Error | null },
+interface DatasetQueryMock {
+	data: DimensionDatasetProtocol[]
+	isLoading: boolean
+	error: Error | null
+	unavailableChains: string[]
+}
+
+const mocks = vi.hoisted<{
+	query: DatasetQueryMock
+	handleTableFiltersChange: ReturnType<typeof vi.fn>
+	downloadCSV: ReturnType<typeof vi.fn>
+	modalProps: ModalProps | null
+}>(() => ({
+	query: {
+		data: [],
+		isLoading: false,
+		error: null,
+		unavailableChains: []
+	},
 	handleTableFiltersChange: vi.fn(),
 	downloadCSV: vi.fn(),
-	modalProps: null as ModalProps | null
+	modalProps: null
 }))
 
 vi.mock('./useDimensionDatasetData', () => ({
@@ -75,7 +92,7 @@ const renderTable = (filters?: { categories?: string[]; excludedCategories?: str
 	<DimensionDatasetTable
 		datasetType="revenue"
 		tableId={tableId}
-		filters={filters}
+		{...(filters !== undefined ? { filters } : {})}
 		columns={columns}
 		title="Protocol Revenue"
 		loadingText="Loading revenue data..."
@@ -93,11 +110,11 @@ describe('DimensionDatasetTable category persistence', () => {
 	let root: Root
 
 	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
-		mocks.query = { data: [], isLoading: false, error: null }
+		mocks.query = { data: [], isLoading: false, error: null, unavailableChains: [] }
 		mocks.modalProps = null
 		mocks.handleTableFiltersChange.mockReset()
 		mocks.downloadCSV.mockReset()
@@ -110,7 +127,7 @@ describe('DimensionDatasetTable category persistence', () => {
 
 	it('keeps persisted categories while data is empty, sanitizes on arrival, and follows external updates', async () => {
 		await act(async () => root.render(renderTable({ categories: ['Stale', 'Lending'] })))
-		mocks.query = { data, isLoading: false, error: null }
+		mocks.query = { data, isLoading: false, error: null, unavailableChains: [] }
 		await act(async () => root.render(renderTable({ categories: ['Stale', 'Lending'] })))
 
 		await act(async () => (container.querySelector('button[title="Filter categories"]') as HTMLButtonElement).click())
@@ -131,7 +148,7 @@ describe('DimensionDatasetTable category persistence', () => {
 	})
 
 	it('sanitizes applied filters, persists undefined for empty arrays, and requires a table id', async () => {
-		mocks.query = { data, isLoading: false, error: null }
+		mocks.query = { data, isLoading: false, error: null, unavailableChains: [] }
 		await act(async () => root.render(renderTable()))
 		await act(async () => (container.querySelector('button[title="Filter categories"]') as HTMLButtonElement).click())
 		await act(async () => mocks.modalProps?.onApply(['Dexes', 'Stale'], ['Lending']))
@@ -141,10 +158,7 @@ describe('DimensionDatasetTable category persistence', () => {
 			excludedCategories: ['Lending']
 		})
 		await act(async () => mocks.modalProps?.onClear())
-		expect(mocks.handleTableFiltersChange).toHaveBeenLastCalledWith('table-1', {
-			categories: undefined,
-			excludedCategories: undefined
-		})
+		expect(mocks.handleTableFiltersChange).toHaveBeenLastCalledWith('table-1', {})
 
 		mocks.handleTableFiltersChange.mockClear()
 		await act(async () => root.render(renderTable(undefined, '')))
@@ -153,20 +167,28 @@ describe('DimensionDatasetTable category persistence', () => {
 	})
 
 	it('preserves loading, error, and empty-data frames', async () => {
-		mocks.query = { data: [], isLoading: true, error: null }
+		mocks.query = { data: [], isLoading: true, error: null, unavailableChains: [] }
 		await act(async () => root.render(renderTable()))
 		expect(container.textContent).toContain('Protocol Revenue')
 		expect(container.textContent).toContain('Loading revenue data...')
 
-		mocks.query = { data: [], isLoading: false, error: new Error('failed') }
+		mocks.query = { data: [], isLoading: false, error: new Error('failed'), unavailableChains: [] }
 		await act(async () => root.render(renderTable()))
 		expect(container.textContent).toContain('Failed to load revenue data')
 
-		mocks.query = { data: [], isLoading: false, error: null }
+		mocks.query = { data: [], isLoading: false, error: null, unavailableChains: [] }
 		await act(async () => root.render(renderTable()))
 		expect(container.textContent).toContain('Protocol Revenue')
 		expect(container.textContent).toContain('CSV')
 		expect(container.querySelector('[data-testid="rows"]')?.textContent).toBe('')
+	})
+
+	it('labels successful rows as partial when a selected chain is unavailable', async () => {
+		mocks.query = { data, isLoading: false, error: null, unavailableChains: ['Base'] }
+		await act(async () => root.render(renderTable()))
+
+		expect(container.textContent).toContain('Partial data: Base was unavailable.')
+		expect(container.querySelector('[data-testid="rows"]')?.textContent).toBe('Beta,Alpha')
 	})
 
 	it('omits change columns only for chain-selected metrics that already did so', async () => {
@@ -175,7 +197,7 @@ describe('DimensionDatasetTable category persistence', () => {
 			{ accessorKey: 'change_1d', header: '24h Change' },
 			{ accessorKey: 'change_7d', header: '7d Change' }
 		]
-		mocks.query = { data, isLoading: false, error: null }
+		mocks.query = { data, isLoading: false, error: null, unavailableChains: [] }
 
 		await act(async () =>
 			root.render(

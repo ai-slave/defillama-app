@@ -3,27 +3,28 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
 	fetchChainsByCategoryMock,
 	fetchChainsAssetsMock,
-	fetchAdapterChainMetricsMock,
+	fetchAdapterChainProtocolTotalsMock,
 	getDimensionAdapterOverviewOfAllChainsMock,
 	fetchStablecoinAssetsApiMock
 } = vi.hoisted(() => ({
 	fetchChainsByCategoryMock: vi.fn(),
 	fetchChainsAssetsMock: vi.fn(),
-	fetchAdapterChainMetricsMock: vi.fn(),
+	fetchAdapterChainProtocolTotalsMock: vi.fn(),
 	getDimensionAdapterOverviewOfAllChainsMock: vi.fn(),
 	fetchStablecoinAssetsApiMock: vi.fn()
 }))
 
 vi.mock('~/containers/BridgedTVL/api', () => ({
-	fetchChainsAssets: fetchChainsAssetsMock
+	fetchChainsAssetTotals: fetchChainsAssetsMock
 }))
 
 vi.mock('~/containers/Chains/api', () => ({
-	fetchChainsByCategory: fetchChainsByCategoryMock
+	fetchChainsByCategory: fetchChainsByCategoryMock,
+	fetchNormalizedChainsByCategory: fetchChainsByCategoryMock
 }))
 
 vi.mock('~/containers/AdapterMetrics/api', () => ({
-	fetchAdapterChainMetrics: fetchAdapterChainMetricsMock
+	fetchAdapterChainProtocolTotals: fetchAdapterChainProtocolTotalsMock
 }))
 
 vi.mock('~/containers/AdapterMetrics/queries', () => ({
@@ -64,12 +65,28 @@ const mockChainsChartResponse = () => {
 	})
 }
 
+const chainRow = (name: string) => ({
+	name,
+	symbol: 'TEST',
+	tvl: 100,
+	tvlPrevDay: 90,
+	tvlPrevWeek: 80,
+	tvlPrevMonth: 70,
+	mcap: null,
+	mcaptvl: null,
+	protocols: 1,
+	extraTvl: {},
+	change_1d: null,
+	change_7d: null,
+	change_1m: null
+})
+
 describe('chains by category chart data', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		mockChainsChartResponse()
 		getDimensionAdapterOverviewOfAllChainsMock.mockResolvedValue({})
-		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
+		fetchAdapterChainProtocolTotalsMock.mockResolvedValue({ protocols: [] })
 		fetchStablecoinAssetsApiMock.mockResolvedValue({ chains: [] })
 		fetchChainsAssetsMock.mockResolvedValue({})
 	})
@@ -130,6 +147,13 @@ describe('chains by category chart data', () => {
 	})
 
 	it('keeps all extra TVL chart series for pages that still embed chart data', async () => {
+		fetchChainsAssetsMock.mockResolvedValue({
+			Ethereum: {
+				total: { total: 12.5 },
+				canonical: { total: 10 },
+				thirdParty: { total: 2.5 }
+			}
+		})
 		fetchChainsByCategoryMock.mockResolvedValue({
 			categories: [],
 			chainsUnique: ['Ethereum'],
@@ -185,6 +209,9 @@ describe('chains by category chart data', () => {
 				1000: 15
 			}
 		})
+		expect(data.chains[0]?.chainAssets?.total.total).toBe(12.5)
+		expect(data.chains[0]?.chainAssets?.total).not.toHaveProperty('breakdown')
+		expect(data.chains[0]?.bridgedTvl).toBe(12.5)
 	})
 
 	it('removes stale extra TVL entries when chart data is omitted from page props', async () => {
@@ -255,8 +282,125 @@ describe('chains by category chart data', () => {
 		})
 
 		expect(data.tvlChartsByChain).toEqual({})
-		expect(data.chains[0].extraTvl.doublecounted).toBeUndefined()
-		expect(data.chains[0].extraTvl.liquidstaking?.tvl).toBe(30)
-		expect(data.chains[0].tvl).toBe(70)
+		expect(data.chains.map((chain) => chain.extraTvl.doublecounted)).toEqual([undefined])
+		expect(data.chains).toMatchObject([
+			{
+				tvl: 70,
+				extraTvl: { liquidstaking: { tvl: 30 } }
+			}
+		])
+	})
+
+	it('distinguishes an absent chain group from a populated group', async () => {
+		fetchChainsByCategoryMock.mockResolvedValue({
+			categories: [],
+			chainsUnique: ['Example'],
+			chainTvls: [chainRow('Example')],
+			chainsGroupbyParent: {},
+			stackedDataset: [],
+			tvlTypes: { tvl: 't' }
+		})
+
+		const withoutOwnGroup = await getChainsByCategory({ chainMetadata: {}, category: 'All' })
+		expect(withoutOwnGroup.chains[0]?.childGroups).toBeNull()
+
+		fetchChainsByCategoryMock.mockResolvedValue({
+			categories: [],
+			chainsUnique: ['Example'],
+			chainTvls: [chainRow('Example')],
+			chainsGroupbyParent: { Example: { ecosystem: ['Child'] } },
+			stackedDataset: [],
+			tvlTypes: { tvl: 't' }
+		})
+
+		const withOwnGroup = await getChainsByCategory({ chainMetadata: {}, category: 'All' })
+		expect(withOwnGroup.chains[0]?.childGroups).toEqual({ ecosystem: ['Child'] })
+	})
+
+	it('keeps core chain rows available when auxiliary asset totals fail', async () => {
+		fetchChainsByCategoryMock.mockResolvedValue({
+			categories: [],
+			chainsUnique: ['Ethereum'],
+			chainTvls: [chainRow('Ethereum')],
+			chainsGroupbyParent: {},
+			stackedDataset: [],
+			tvlTypes: { tvl: 't' }
+		})
+		fetchChainsAssetsMock.mockRejectedValue(new Error('asset totals unavailable'))
+
+		const data = await getChainsByCategory({ chainMetadata: {}, category: 'All' })
+
+		expect(data.chains[0]?.name).toBe('Ethereum')
+		expect(data.chains[0]?.chainAssets).toBeNull()
+		expect(data.chains[0]?.bridgedTvl).toBeNull()
+	})
+})
+
+describe('chains by category source availability', () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+		getDimensionAdapterOverviewOfAllChainsMock.mockReturnValue({})
+		fetchAdapterChainProtocolTotalsMock.mockResolvedValue({ protocols: [] })
+		fetchStablecoinAssetsApiMock.mockResolvedValue({ chains: [] })
+		fetchChainsAssetsMock.mockResolvedValue({})
+		fetchChainsByCategoryMock.mockResolvedValue({
+			categories: [],
+			chainsUnique: ['Active', 'Deprecated'],
+			chainTvls: [
+				{ ...chainRow('Active'), tvl: 10, tvlPrevDay: 9, tvlPrevWeek: 8, tvlPrevMonth: 7 },
+				{
+					...chainRow('Deprecated'),
+					tvl: 0,
+					tvlPrevDay: 0,
+					tvlPrevWeek: 0,
+					tvlPrevMonth: 0,
+					protocols: 0
+				}
+			],
+			chainsGroupbyParent: { Active: { ecosystem: ['Deprecated'] } },
+			stackedDataset: [],
+			tvlTypes: { tvl: 't' }
+		})
+	})
+
+	it('uses zero activity for absent rows in successful sources, including deprecated children', async () => {
+		const result = await getChainsByCategory({
+			chainMetadata: {
+				active: { id: 'active', name: 'Active', protocolCount: 1 },
+				deprecated: { id: 'deprecated', name: 'Deprecated', protocolCount: 0, deprecated: true }
+			},
+			category: 'all',
+			includeChartData: false
+		})
+
+		for (const chain of result.chains) {
+			expect(chain).toMatchObject({
+				fees24h: 0,
+				revenue24h: 0,
+				appRevenue24h: 0,
+				dexVolume24h: 0,
+				activeUsers24h: 0,
+				nftVolume24h: 0,
+				stablesMcap: 0
+			})
+		}
+	})
+
+	it('preserves only the failed source as unavailable', async () => {
+		fetchAdapterChainProtocolTotalsMock.mockImplementation(async ({ dataType }: { dataType?: string }) => {
+			if (dataType === 'dailyRevenue') throw new Error('revenue unavailable')
+			return { protocols: [] }
+		})
+
+		const result = await getChainsByCategory({
+			chainMetadata: {
+				active: { id: 'active', name: 'Active', protocolCount: 1 },
+				deprecated: { id: 'deprecated', name: 'Deprecated', protocolCount: 0, deprecated: true }
+			},
+			category: 'all',
+			includeChartData: false
+		})
+
+		expect(result.chains[0]).toMatchObject({ fees24h: 0, revenue24h: null, activeUsers24h: 0 })
 	})
 })

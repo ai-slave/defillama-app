@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	buildCompareChainAdapterQueryKey,
+	buildCompareChainAdapterRequest,
 	buildCompareChainOverviewQueryKey,
 	getCompareChainFailedSources,
 	hasPendingCompareChainSources,
@@ -31,6 +32,24 @@ describe('CompareChains request planning', () => {
 			'Arbitrum One',
 			'chainRevenueChart'
 		])
+	})
+
+	it('maps each metric to its only compatible endpoint contract', () => {
+		expect(buildCompareChainAdapterRequest('Arbitrum One', 'dexVolumeChart')).toEqual({
+			metric: 'dexVolumeChart',
+			endpoint: 'chain',
+			params: { adapterType: 'dexs', chain: 'Arbitrum One' }
+		})
+		expect(buildCompareChainAdapterRequest('Arbitrum One', 'chainFeesChart')).toEqual({
+			metric: 'chainFeesChart',
+			endpoint: 'protocol',
+			params: { adapterType: 'fees', protocol: 'Arbitrum One' }
+		})
+		expect(buildCompareChainAdapterRequest('Arbitrum One', 'chainRevenueChart')).toEqual({
+			metric: 'chainRevenueChart',
+			endpoint: 'protocol',
+			params: { adapterType: 'fees', protocol: 'Arbitrum One', dataType: 'dailyRevenue' }
+		})
 	})
 
 	it('preserves overview data when one adapter source fails', () => {

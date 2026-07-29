@@ -11,6 +11,8 @@ export interface ProDashboardChartRequest {
 	type: string
 	protocol?: string
 	chain?: string
+	/** Backend chain ID used by the precomputed Bridged TVL chart cache. */
+	chainAssetId?: string
 	geckoId?: string | null
 	dataType?: string
 	/** Resolved from the shared lite catalog; used only by protocol liquidity charts. */

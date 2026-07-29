@@ -5,7 +5,6 @@ import { getObjectCache, setObjectCache } from '~/utils/cache-client'
 import type {
 	CgChartResponse,
 	CgMarketChartResponse,
-	CoinGeckoCoinByContractAddressResponse,
 	CoinGeckoCoinDetailResultForOptions,
 	CoinGeckoCoinListItem,
 	CoinGeckoCoinDetailResponseForOptions,
@@ -18,7 +17,6 @@ import type {
 	FetchCoinGeckoExchangesOptions,
 	FetchCoinGeckoSimplePriceOptions,
 	GeckoIdResponse,
-	IResponseCGMarketsAPI,
 	IResponseCGTokenRankingsDatasetItem
 } from './coingecko.types'
 
@@ -54,12 +52,12 @@ async function fetchAllPaginatedCoinGeckoResults<T>({
 	fetchPage,
 	pageSize,
 	breakOnPartialPage = true,
-	maxPages = 1000
+	maxPages
 }: {
 	fetchPage: (page: number) => Promise<T[]>
 	pageSize: number
 	breakOnPartialPage?: boolean
-	maxPages?: number | undefined
+	maxPages: number
 }): Promise<T[]> {
 	const results: T[] = []
 	const safeMaxPages = Math.max(1, maxPages)
@@ -89,25 +87,12 @@ async function fetchAllPaginatedCoinGeckoResults<T>({
 	return results
 }
 
-function isCGMarketsApiItem(value: unknown): value is IResponseCGMarketsAPI {
-	if (typeof value !== 'object' || value === null) return false
-	const item = value as Partial<IResponseCGMarketsAPI>
-	return typeof item.id === 'string' && typeof item.symbol === 'string' && typeof item.name === 'string'
-}
-
 /**
  * Fetch the ranked CoinGecko token market list from the DefiLlama datasets mirror.
  * This is not a direct CoinGecko API call.
  */
 export async function fetchCoinGeckoTokensListFromDataset(): Promise<Array<IResponseCGTokenRankingsDatasetItem>> {
-	const data = await fetchJson<unknown>(TOKEN_LIST_API_URL)
-	if (!Array.isArray(data)) {
-		throw new Error(`[fetchCoinGeckoTokensListFromDataset] Expected array response from ${TOKEN_LIST_API_URL}`)
-	}
-
-	const validTokens = data.filter(isCGMarketsApiItem)
-
-	return validTokens
+	return fetchJson<IResponseCGTokenRankingsDatasetItem[]>(TOKEN_LIST_API_URL)
 }
 
 /**
@@ -116,7 +101,7 @@ export async function fetchCoinGeckoTokensListFromDataset(): Promise<Array<IResp
  */
 export async function fetchCoinGeckoExchanges({
 	perPage = COINGECKO_EXCHANGES_MAX_PAGE_SIZE,
-	maxPages
+	maxPages = 1000
 }: FetchCoinGeckoExchangesOptions = {}): Promise<CoinGeckoExchange[]> {
 	const pageSize = Math.min(Math.max(1, perPage), COINGECKO_EXCHANGES_MAX_PAGE_SIZE)
 
@@ -173,10 +158,10 @@ export async function fetchCoinGeckoSimplePrice({
 async function fetchCoinGeckoCoinByContractAddress(
 	assetPlatformId: string,
 	contractAddress: string
-): Promise<CoinGeckoCoinByContractAddressResponse | null> {
+): Promise<CoinGeckoCoinDetailResponseForOptions | null> {
 	if (!assetPlatformId || !contractAddress) return null
 
-	return fetchCoinGeckoJson<CoinGeckoCoinByContractAddressResponse>(
+	return fetchCoinGeckoJson<CoinGeckoCoinDetailResponseForOptions>(
 		`/coins/${encodeURIComponent(assetPlatformId)}/contract/${encodeURIComponent(contractAddress)}`
 	).catch(() => null)
 }
@@ -241,11 +226,9 @@ export async function fetchCoinGeckoCoinById<TOptions extends FetchCoinGeckoCoin
 	geckoId: string,
 	options?: TOptions
 ): Promise<CoinGeckoCoinDetailResultForOptions<TOptions>> {
-	if (!geckoId) return {} as CoinGeckoCoinDetailResultForOptions<TOptions>
+	if (!geckoId) return null
 
-	return fetchCoinGeckoCoinByIdOrThrow(geckoId, options).catch(
-		() => ({}) as CoinGeckoCoinDetailResultForOptions<TOptions>
-	)
+	return fetchCoinGeckoCoinByIdOrThrow(geckoId, options).catch(() => null)
 }
 /** Fetch CoinGecko historical market chart data from GET /coins/{id}/market_chart. */
 async function fetchCoinGeckoCoinMarketChartById(
@@ -297,9 +280,9 @@ async function fetchCgChartFresh(geckoId: string, fullChart: boolean): Promise<C
 
 	return {
 		prices,
-		mcaps: marketChart?.market_caps,
-		volumes: marketChart?.total_volumes,
-		coinData
+		...(marketChart?.market_caps !== undefined ? { mcaps: marketChart.market_caps } : {}),
+		...(marketChart?.total_volumes !== undefined ? { volumes: marketChart.total_volumes } : {}),
+		...(coinData !== null ? { coinData } : {})
 	}
 }
 

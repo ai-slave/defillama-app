@@ -3,6 +3,12 @@ import { definitions } from '~/public/definitions'
 import type { IProtocolOverviewPageData } from './types'
 
 type AdapterOverview = NonNullable<IProtocolOverviewPageData['fees']>
+type AdapterChainBreakdown = NonNullable<AdapterOverview['chainBreakdown']>
+
+function getMethodology(methodology: IAdapterProtocolMetrics['methodology'], key: string): string | null {
+	if (typeof methodology === 'string') return methodology
+	return methodology?.[key] ?? null
+}
 
 const commonMethodology = {
 	dexs: definitions.dexs.common,
@@ -28,14 +34,12 @@ export function formatAdapterData({
 		return null
 	}
 
-	let chainBreakdown: Record<
-		string,
-		{ total24h: number | null; total7d: number | null; total30d: number | null; totalAllTime: number | null }
-	> | null = null
+	let chainBreakdown: AdapterChainBreakdown | null = null
 	if (data.chainBreakdown) {
-		const slim: NonNullable<typeof chainBreakdown> = {}
+		const slim: AdapterChainBreakdown = {}
 		for (const chain in data.chainBreakdown) {
 			const value = data.chainBreakdown[chain]
+			if (value === undefined) continue
 			slim[chain] = {
 				total24h: value.total24h ?? null,
 				total7d: value.total7d ?? null,
@@ -54,7 +58,7 @@ export function formatAdapterData({
 			if (methodologyKey && !commonMethodologyMap[methodologyKey]) {
 				childMethodologies.push([
 					childProtocol.displayName,
-					childProtocol.methodology?.[methodologyKey] ?? null,
+					getMethodology(childProtocol.methodology, methodologyKey),
 					childProtocol.methodologyURL ?? null
 				])
 			}
@@ -94,7 +98,7 @@ export function formatAdapterData({
 		annualized1y: data.annualized1y ?? null,
 		totalAllTime: data.totalAllTime ?? null,
 		methodology: methodologyKey
-			? (data.methodology?.[methodologyKey] ?? commonMethodologyMap[methodologyKey] ?? null)
+			? (getMethodology(data.methodology, methodologyKey) ?? commonMethodologyMap[methodologyKey] ?? null)
 			: null,
 		methodologyURL: data.methodologyURL ?? null,
 		defaultChartView: data.defaultChartView ?? 'daily',

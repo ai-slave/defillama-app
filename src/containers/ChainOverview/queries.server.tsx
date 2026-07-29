@@ -1,29 +1,23 @@
 import { fetchLlamaConfig } from '~/api'
 import { fetchCoinGeckoCoinById } from '~/api/coingecko'
-import type { CoinGeckoCoinDetailResult } from '~/api/coingecko.types'
 import { tvlOptions } from '~/components/Filters/options'
 import { TRADFI_API } from '~/constants'
 import { fetchAdapterChainMetrics, fetchAdapterProtocolMetrics, fetchCexVolume } from '~/containers/AdapterMetrics/api'
-import type { IAdapterChainMetrics, IAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api.types'
 import { REV_PROTOCOLS } from '~/containers/AdapterMetrics/constants'
-import { fetchChainsAssets } from '~/containers/BridgedTVL/api'
-import type { RawChainAsset } from '~/containers/BridgedTVL/api.types'
+import { fetchChainsAssetTotals } from '~/containers/BridgedTVL/api'
 import { getBridgeChainNetInflows } from '~/containers/Bridges/queries.server'
 import { fetchChainChart } from '~/containers/Chains/api'
+import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import { getETFData } from '~/containers/ETF/queries'
 import { getChainIncentivesFromAggregatedEmissions } from '~/containers/Incentives/queries'
-import type { ChainIncentivesSummary } from '~/containers/Incentives/types'
 import { getProtocolsByChain } from '~/containers/ProtocolRankings/queries.server'
 import { fetchRaises } from '~/containers/Raises/api'
-import type { RaisesResponse } from '~/containers/Raises/model'
 import { fetchRWAStats } from '~/containers/RWA/api'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
-import type { StablecoinsListResponse } from '~/containers/Stablecoins/api.types'
 import { getStablecoinChainMcapSummary } from '~/containers/Stablecoins/queries.server'
 import { fetchTreasuries } from '~/containers/Treasuries/api'
-import type { RawTreasuriesResponse } from '~/containers/Treasuries/api.types'
 import { feeRevenueMetrics, shouldFetchChainOverviewFeeRevenueMetric } from '~/metrics/feesRevenue'
 import { getPercentChange, lastDayOfWeek, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -42,16 +36,10 @@ import { applyTvlOverlapBaseAdjustment } from '~/utils/tvl'
 import { getPrevTvlFromChart } from '~/utils/tvlChart'
 import type { ChainChartLabels } from './constants'
 import { fetchHomepageUnlocksSummary } from './homepageUnlocks.server'
-import type { IChainOverviewData, ILiteChart } from './types'
+import type { IChainOverviewData } from './types'
 import { formatChainAssets, getChainWarningBanners } from './utils'
 
-type ChainConfigResult = {
-	stablecoins: Array<string> | null
-	website: string | null
-	warningBanners: IChainOverviewData['warningBanners']
-}
-
-function emptyLiteChart(): ILiteChart {
+function emptyLiteChart(): ChainChartResponse {
 	return {
 		tvl: [],
 		staking: [],
@@ -77,6 +65,14 @@ function computeTvlChartSummary(chart: Array<[number, number]>): {
 	const change24h = lastValue != null && tvlPrevDay != null ? getPercentChange(lastValue, tvlPrevDay) : null
 
 	return { totalValueUSD: lastValue, tvlPrevDay, valueChange24hUSD, change24h }
+}
+
+function formatExtraTvlChart(chart: ChainChartResponse['tvl']): Record<string, number> {
+	const formatted: Record<string, number> = {}
+	for (const [date, totalLiquidityUSD] of chart) {
+		formatted[Number(date) * 1e3] = Math.trunc(totalLiquidityUSD)
+	}
+	return formatted
 }
 
 export function shouldFetchChainDexs({
@@ -110,16 +106,53 @@ export function shouldFetchChainPerps({
 }
 
 export function getRwaActiveMcapForChain(rwaStats: IRWAStatsResponse | null, chainName: string): number | null {
-	const exactMatch = rwaStats?.byChain?.[chainName]
-	if (exactMatch) return exactMatch.base.activeMcap || null
+	const byChain = rwaStats?.byChain
+	const exactMatch = byChain?.[chainName]
+	if (exactMatch) return exactMatch.base.activeMcap
+	if (!byChain) return null
 
 	const chainSlug = rwaSlug(chainName)
-	for (const chain in rwaStats?.byChain ?? {}) {
+	for (const chain in byChain) {
+		const chainStats = byChain[chain]
+		if (chainStats === undefined) continue
 		if (rwaSlug(chain) !== chainSlug) continue
-		return rwaStats.byChain[chain].base.activeMcap || null
+		return chainStats.base.activeMcap
 	}
 
 	return null
+}
+
+export function sumAdapterProtocol24h(rows: readonly { total24h?: number | null }[] | null): number | null {
+	if (rows === null) return null
+	let total = 0
+	for (const row of rows) {
+		total += row.total24h ?? 0
+	}
+	return total
+}
+
+export function getChainRev24h({
+	chainFees24h,
+	feeProtocols,
+	revProtocolSlugs
+}: {
+	chainFees24h: number | null
+	feeProtocols: readonly { slug: string; total24h?: number | null }[] | null
+	revProtocolSlugs: Iterable<string>
+}): number | null {
+	if (chainFees24h == null) return null
+	let total = chainFees24h
+	for (const revProtocolSlug of revProtocolSlugs) {
+		if (feeProtocols === null) return null
+		total += feeProtocols.find((row) => row.slug === revProtocolSlug)?.total24h ?? 0
+	}
+	return total
+}
+
+export function getDexDominance(cexVolume: number | null, dexVolume: number | null): number | null {
+	if (cexVolume == null || dexVolume == null) return null
+	const total = cexVolume + dexVolume
+	return total > 0 ? roundNumber((dexVolume / total) * 100, 2) : null
 }
 
 export function hasRwaActiveMcapChain(rwaChains: string[] | null | undefined, chainName: string): boolean {
@@ -152,11 +185,11 @@ export function fetchChainActivityProtocolMetricTotal({
 	return fetchAdapterProtocolMetrics({
 		protocol: chain,
 		adapterType,
-		...(dataType ? { dataType } : null)
+		...(dataType !== undefined ? { dataType } : {})
 	}).then((data) => data?.total24h ?? null)
 }
 
-export function getChainOverviewTvlOptions(chartData: ILiteChart | null | undefined) {
+export function getChainOverviewTvlOptions(chartData: ChainChartResponse | null | undefined) {
 	return tvlOptions.filter((option) => chartData?.[option.key]?.length)
 }
 
@@ -179,29 +212,31 @@ export async function getChainOverviewData({
 	tokenDirectory?: TokenDirectory | null
 	phaseTimer?: RoutePhaseTimer
 }): Promise<IChainOverviewData | null> {
-	const currentChainMetadata: IChainMetadata =
+	const resolvedChainMetadata =
 		chain === 'All'
 			? { name: 'All', stablecoins: true, fees: true, dexs: true, perps: true, id: 'all' }
 			: chainMetadata[slug(chain)]
 
-	if (!currentChainMetadata) return null
+	if (!resolvedChainMetadata) return null
+	const currentChainMetadata: IChainMetadata = resolvedChainMetadata
 
 	const shouldFetchDexs = shouldFetchChainDexs({ chain, currentChainMetadata, categoriesAndTagsMetadata })
 	const shouldFetchPerps = shouldFetchChainPerps({ chain, currentChainMetadata, categoriesAndTagsMetadata })
 	const shouldFetchRwaActiveMcap =
 		chain !== 'All' && hasRwaActiveMcapChain(rwaChainsForActiveMcap, currentChainMetadata.name)
-	function timePhase<T>(
+	async function timePhase<T>(
 		label: string,
 		run: () => T | Promise<T>,
 		options?: { fallback: Awaited<T> }
 	): Promise<Awaited<T>> {
-		const result = phaseTimer ? phaseTimer.time(label, run) : (Promise.resolve().then(run) as Promise<Awaited<T>>)
-		if (!options) return result
-
-		return result.catch((error) => {
+		try {
+			if (phaseTimer) return await phaseTimer.time(label, run)
+			return await Promise.resolve().then(run)
+		} catch (error) {
+			if (!options) throw error
 			recordOptionalPageDataFailure(`chain:${currentChainMetadata.name}:${label}`, error)
 			return options.fallback
-		})
+		}
 	}
 
 	const chainFeesMetric = feeRevenueMetrics.chainFees
@@ -231,7 +266,7 @@ export async function getChainOverviewData({
 	try {
 		const [
 			chartData,
-			{ protocols, chains, fees, dexs },
+			protocolsByChain,
 			stablecoins,
 			inflowsData,
 			activeUsers,
@@ -255,38 +290,10 @@ export async function getChainOverviewData({
 			stablecoinsData,
 			chainConfig,
 			rwaStats
-		]: [
-			ILiteChart,
-			Awaited<ReturnType<typeof getProtocolsByChain>>,
-			Awaited<ReturnType<typeof getStablecoinChainMcapSummary>>,
-			{ netInflows: number | null } | null,
-			number | null,
-			number | null,
-			number | null,
-			RaisesResponse,
-			RawTreasuriesResponse | null,
-			CoinGeckoCoinDetailResult,
-			Record<string, number> | null,
-			RawChainAsset | null,
-			IAdapterChainMetrics | null,
-			IAdapterChainMetrics | null,
-			IAdapterProtocolMetrics | null,
-			IAdapterProtocolMetrics | null,
-			IAdapterChainMetrics | null,
-			number | null,
-			Array<[number, number]> | null,
-			IChainOverviewData['unlocks'],
-			ChainIncentivesSummary | null,
-			{ chart: Array<[number, number]>; total30d: number } | null,
-			StablecoinsListResponse | null,
-			ChainConfigResult | null,
-			IRWAStatsResponse | null
 		] = await Promise.all([
-			timePhase(
-				'chain_chart',
-				() => fetchChainChart<ILiteChart>(chain === 'All' ? undefined : currentChainMetadata.name),
-				{ fallback: emptyLiteChart() }
-			),
+			timePhase('chain_chart', () => fetchChainChart(chain === 'All' ? undefined : currentChainMetadata.name), {
+				fallback: emptyLiteChart()
+			}),
 			timePhase('protocols_by_chain', () =>
 				getProtocolsByChain({ chain, chainMetadata, protocolMetadata, protocolLlamaswapDataset, shouldFetchDexs })
 			),
@@ -343,12 +350,10 @@ export async function getChainOverviewData({
 			timePhase(
 				'coingecko',
 				() =>
-					currentChainMetadata.gecko_id
-						? fetchCoinGeckoCoinById(currentChainMetadata.gecko_id)
-						: Promise.resolve({} as CoinGeckoCoinDetailResult),
-				{ fallback: {} as CoinGeckoCoinDetailResult }
+					currentChainMetadata.gecko_id ? fetchCoinGeckoCoinById(currentChainMetadata.gecko_id) : Promise.resolve(null),
+				{ fallback: null }
 			),
-			timePhase(
+			timePhase<Record<string, number> | null>(
 				'nft_volumes',
 				() =>
 					chain && chain !== 'All'
@@ -359,7 +364,9 @@ export async function getChainOverviewData({
 			timePhase(
 				'chain_assets',
 				() =>
-					fetchChainsAssets().then((assets) => (chain !== 'All' ? (assets[currentChainMetadata.name] ?? null) : null)),
+					fetchChainsAssetTotals().then((assets) =>
+						chain !== 'All' ? (assets[currentChainMetadata.name] ?? null) : null
+					),
 				{ fallback: null }
 			),
 			timePhase(appRevenueMetric.chainOverview.phase, () =>
@@ -412,10 +419,19 @@ export async function getChainOverviewData({
 					chain === 'All'
 						? getETFData().then((data) => {
 								const recentFlows: Array<[number, number]> = []
-								for (const [date, values] of Object.entries(data.flows).slice(-14)) {
+								const recentDates: string[] = []
+								for (const date in data.flows) {
+									if (recentDates.length === 14) recentDates.shift()
+									recentDates.push(date)
+								}
+								for (const date of recentDates) {
+									const values = data.flows[date]
+									if (values === undefined) continue
 									let total = 0
 									for (const key in values) {
-										if (key !== 'date') total += values[key]
+										if (key === 'date') continue
+										const value = values[key]
+										if (value !== undefined) total += value
 									}
 									recentFlows.push([+date * 1000, total])
 								}
@@ -442,7 +458,7 @@ export async function getChainOverviewData({
 				() =>
 					chain !== 'All'
 						? fetchLlamaConfig().then((data) => {
-								const config = data.chainCoingeckoIds?.[currentChainMetadata.name]
+								const config = data.chainCoingeckoIds[currentChainMetadata.name]
 								return {
 									stablecoins: config?.stablecoins ?? null,
 									website: config?.url ?? null,
@@ -456,6 +472,10 @@ export async function getChainOverviewData({
 				fallback: null
 			})
 		])
+		if (!protocolsByChain) {
+			throw new Error(`Missing protocol aggregation for ${currentChainMetadata.name}`)
+		}
+		const { protocols, chains, fees, dexs } = protocolsByChain
 		const stopOverviewTransform = phaseTimer?.start('overview_transform')
 
 		const {
@@ -468,54 +488,31 @@ export async function getChainOverviewData({
 			doublecounted = [],
 			liquidstaking = [],
 			dcAndLsOverlap = []
-		} = chartData || {}
+		} = chartData
 
 		const availableTvlOptions = getChainOverviewTvlOptions(chartData)
-		const extraTvlCharts = {
-			staking: {},
-			borrowed: {},
-			pool2: {},
-			vesting: {},
-			offers: {},
-			doublecounted: {},
-			liquidstaking: {},
-			dcAndLsOverlap: {}
-		}
-		for (const [date, totalLiquidityUSD] of staking) {
-			extraTvlCharts.staking[+date * 1e3] = Math.trunc(totalLiquidityUSD)
-		}
-		for (const [date, totalLiquidityUSD] of borrowed) {
-			extraTvlCharts.borrowed[+date * 1e3] = Math.trunc(totalLiquidityUSD)
-		}
-		for (const [date, totalLiquidityUSD] of pool2) {
-			extraTvlCharts.pool2[+date * 1e3] = Math.trunc(totalLiquidityUSD)
-		}
-		for (const [date, totalLiquidityUSD] of vesting) {
-			extraTvlCharts.vesting[+date * 1e3] = Math.trunc(totalLiquidityUSD)
-		}
-		for (const [date, totalLiquidityUSD] of offers) {
-			extraTvlCharts.offers[+date * 1e3] = Math.trunc(totalLiquidityUSD)
-		}
-		for (const [date, totalLiquidityUSD] of doublecounted) {
-			extraTvlCharts.doublecounted[+date * 1e3] = Math.trunc(totalLiquidityUSD)
-		}
-		for (const [date, totalLiquidityUSD] of liquidstaking) {
-			extraTvlCharts.liquidstaking[+date * 1e3] = Math.trunc(totalLiquidityUSD)
-		}
-		for (const [date, totalLiquidityUSD] of dcAndLsOverlap) {
-			extraTvlCharts.dcAndLsOverlap[+date * 1e3] = Math.trunc(totalLiquidityUSD)
+		const extraTvlCharts: IChainOverviewData['extraTvlCharts'] = {
+			staking: formatExtraTvlChart(staking),
+			borrowed: formatExtraTvlChart(borrowed),
+			pool2: formatExtraTvlChart(pool2),
+			vesting: formatExtraTvlChart(vesting),
+			offers: formatExtraTvlChart(offers),
+			doublecounted: formatExtraTvlChart(doublecounted),
+			liquidstaking: formatExtraTvlChart(liquidstaking),
+			dcAndLsOverlap: formatExtraTvlChart(dcAndLsOverlap)
 		}
 
 		// by default we should not include liquidstaking and doublecounted in the tvl chart, but include overlapping tvl so you don't subtract twice
-		const tvlChart = tvl.map(([date, totalLiquidityUSD]) => {
-			const timestamp = +date * 1e3
+		const tvlChart: Array<[number, number]> = []
+		for (const [date, totalLiquidityUSD] of tvl) {
+			const timestamp = Number(date) * 1e3
 			const sum = applyTvlOverlapBaseAdjustment(Math.trunc(totalLiquidityUSD), {
 				liquidstaking: extraTvlCharts.liquidstaking[timestamp],
 				doublecounted: extraTvlCharts.doublecounted[timestamp],
 				dcAndLsOverlap: extraTvlCharts.dcAndLsOverlap[timestamp]
 			})
-			return [timestamp, sum]
-		}) as Array<[number, number]>
+			tvlChart.push([timestamp, sum])
+		}
 
 		// Pre-compute TVL summary to avoid client-side iteration
 		const tvlChartSummary = computeTvlChartSummary(tvlChart)
@@ -530,30 +527,30 @@ export async function getChainOverviewData({
 					['Services', 'Chain', 'Foundation'].includes(t?.category)
 			) ?? null
 
-		const topProtocolsByFeesChart =
-			fees?.protocols?.length > 0
-				? (protocols
-						.sort((a, b) => (b.fees?.total24h ?? 0) - (a.fees?.total24h ?? 0))
-						.filter((a) => !!a.fees?.total24h)
-						.slice(0, 14)
-						.map((x) => [x.name, x.fees?.total24h ?? 0, tokenIconUrl(x.name)]) as Array<[string, number, string]>)
-				: null
+		const feeProtocols = fees?.protocols ?? null
+		let topProtocolsByFeesChart: Array<[string, number, string]> | null = null
+		if (feeProtocols && feeProtocols.length > 0) {
+			const protocolsByFees: Array<{ protocol: (typeof protocols)[number]; total24h: number }> = []
+			for (const protocol of protocols) {
+				protocolsByFees.push({ protocol, total24h: protocol.fees?.total24h ?? 0 })
+			}
+			protocolsByFees.sort((a, b) => b.total24h - a.total24h)
+			topProtocolsByFeesChart = []
+			let protocolIndex = 0
+			for (const { protocol, total24h } of protocolsByFees) {
+				protocols[protocolIndex++] = protocol
+				if (!total24h || topProtocolsByFeesChart.length === 14) continue
+				topProtocolsByFeesChart.push([protocol.name, total24h, tokenIconUrl(protocol.name)])
+			}
+		}
 
-		const feesGenerated24h =
-			fees?.protocols?.length > 0 ? fees.protocols.reduce((acc, curr) => (acc += curr.total24h || 0), 0) : null
+		const feesGenerated24h = sumAdapterProtocol24h(feeProtocols)
 
-		const chainRevProtocols = new Set(REV_PROTOCOLS[slug(currentChainMetadata.name)] ?? [])
-
-		const chainREV =
-			chainFees?.total24h == null && chainRevProtocols.size === 0
-				? null
-				: (chainFees?.total24h ?? 0) +
-					(fees?.protocols?.reduce((acc, curr) => {
-						if (chainRevProtocols.has(curr.slug)) {
-							acc += curr.total24h || 0
-						}
-						return acc
-					}, 0) ?? 0)
+		const chainREV = getChainRev24h({
+			chainFees24h: chainFees?.total24h ?? null,
+			feeProtocols,
+			revProtocolSlugs: REV_PROTOCOLS[slug(currentChainMetadata.name)] ?? []
+		})
 
 		const charts: ChainChartLabels[] = []
 
@@ -602,7 +599,7 @@ export async function getChainOverviewData({
 		if (chain === 'All') {
 			charts.push('Raises')
 		}
-		if (inflowsData?.netInflows != null && inflowsData.netInflows !== 0) {
+		if (inflowsData?.netInflows != null) {
 			charts.push('Net Inflows')
 		}
 		if (chain !== 'All' && currentChainMetadata.gecko_id != null) {
@@ -624,6 +621,8 @@ export async function getChainOverviewData({
 			: null
 		const descriptionMetrics = rwaActiveMcap != null ? [...charts, 'RWA Active Mcap'] : charts
 		const isDataAvailable = charts.length > 0 || protocols.length > 0 || rwaActiveMcap != null
+		const chainGeckoId = currentChainMetadata.gecko_id
+		const nftVolume = chain !== 'All' ? nftVolumesData?.[currentChainMetadata.name.toLowerCase()] : undefined
 
 		const result: IChainOverviewData = {
 			chain,
@@ -635,18 +634,16 @@ export async function getChainOverviewData({
 			chainTokenInfo:
 				chain !== 'All'
 					? {
-							gecko_id: currentChainMetadata.gecko_id ?? null,
+							gecko_id: chainGeckoId ?? null,
 							token_symbol: currentChainMetadata.tokenSymbol ?? null,
 							tokenPageRoute: findTokenPageRoute(tokenDirectory, {
 								defillamaId: currentChainMetadata.id,
-								geckoId: currentChainMetadata.gecko_id
+								...(chainGeckoId !== undefined ? { geckoId: chainGeckoId } : {})
 							}),
 							current_price: cgData?.market_data?.current_price?.usd ?? null,
 							market_cap: cgData?.market_data?.market_cap?.usd ?? null,
 							fully_diluted_valuation: cgData?.market_data?.fully_diluted_valuation?.usd ?? null,
-							llamaswapChains: currentChainMetadata.gecko_id
-								? (protocolLlamaswapDataset?.[currentChainMetadata.gecko_id] ?? null)
-								: null
+							llamaswapChains: chainGeckoId ? (protocolLlamaswapDataset?.[chainGeckoId] ?? null) : null
 						}
 					: null,
 			stablecoins,
@@ -654,7 +651,8 @@ export async function getChainOverviewData({
 			chainFees: {
 				total24h: chainFees?.total24h ?? null,
 				feesGenerated24h: feesGenerated24h,
-				topProtocolsChart: topProtocolsByFeesChart?.length > 0 ? topProtocolsByFeesChart : null,
+				topProtocolsChart:
+					topProtocolsByFeesChart && topProtocolsByFeesChart.length > 0 ? topProtocolsByFeesChart : null,
 				totalREV24h: chainREV
 			},
 			chainRevenue: { total24h: chainRevenue?.total24h ?? null },
@@ -664,9 +662,10 @@ export async function getChainOverviewData({
 				total24h: dexs?.total24h ?? null,
 				total7d: dexs?.total7d ?? null,
 				change_7dover7d: dexs?.change_7dover7d ?? null,
-				dexsDominance:
-					cexVolume && dexs?.total24h ? roundNumber((dexs.total24h / (cexVolume + dexs.total24h)) * 100, 2) : null,
-				chart: dexs ? dexs.totalDataChart.slice(-14).map((x) => [x[0] * 1000, x[1]]) : null
+				dexsDominance: getDexDominance(cexVolume, dexs?.total24h ?? null),
+				chart: dexs
+					? dexs.totalDataChart.slice(-14).map((point): [number, number] => [point[0] * 1000, point[1]])
+					: null
 			},
 			perps: {
 				total24h: perps?.total24h ?? null,
@@ -679,10 +678,7 @@ export async function getChainOverviewData({
 			chainRaises: chainRaises ?? null,
 			chainAssets: formatChainAssets(chainAssets),
 			devMetrics: null,
-			nfts:
-				nftVolumesData && chain !== 'All' && nftVolumesData[currentChainMetadata.name.toLowerCase()]
-					? { total24h: nftVolumesData[currentChainMetadata.name.toLowerCase()] }
-					: null,
+			nfts: nftVolume !== undefined ? { total24h: nftVolume } : null,
 			etfs: etfData,
 			allChains: [{ label: 'All', to: '/' }].concat(chains.map((c) => ({ label: c, to: `/chain/${slug(c)}` }))),
 			unlocks: homepageUnlocks,
@@ -746,8 +742,10 @@ const getDATInflows = async () => {
 		// Only keep inflows for the last 14 weeks (to match the chart window)
 		const fourteenWeeksAgo = Date.now() - 14 * 7 * 24 * 60 * 60 * 1000
 
-		for (const asset in data.flows) {
-			for (const [date, _net, _inflow, _outflow, purchasePrice, usdValueOfPurchase] of data.flows[asset]) {
+		for (const flowType in data.flows) {
+			const flows = data.flows[flowType]
+			if (flows === undefined) continue
+			for (const [date, _net, _inflow, _outflow, purchasePrice, usdValueOfPurchase] of flows) {
 				const utcTimestamp = getUTCTimestamp(date)
 				if (utcTimestamp < fourteenWeeksAgo) continue
 				const finalDate = lastDayOfWeek(utcTimestamp / 1000) * 1000
@@ -762,7 +760,7 @@ const getDATInflows = async () => {
 		// Always end with the last day of the current week
 		const mostRecentTimestamp = lastDayOfWeek(Date.now() / 1000) * 1000
 		const oneWeekInMs = 7 * 24 * 60 * 60 * 1000
-		const completeChart = []
+		const completeChart: Array<[number, number]> = []
 
 		// Generate all 14 weekly timestamps ending with current week
 		for (let i = 13; i >= 0; i--) {

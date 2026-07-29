@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchJson } from '~/utils/async'
+import type { BridgeOverviewVolumeChartTuple } from './types'
 
 export const useGetBridgeChartDataByChain = (chain?: string) => {
 	return useQuery({
@@ -7,7 +8,7 @@ export const useGetBridgeChartDataByChain = (chain?: string) => {
 		queryFn:
 			chain && chain !== 'All'
 				? () =>
-						fetchJson<Array<[number | null, number | null, number | null]> | null>(
+						fetchJson<BridgeOverviewVolumeChartTuple[] | null>(
 							`/api/public/chains/charts?kind=net-inflows&chain=${encodeURIComponent(chain)}`
 						).catch((err) => {
 							console.log(err)

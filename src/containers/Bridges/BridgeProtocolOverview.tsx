@@ -58,6 +58,7 @@ export const BridgeInfo = ({
 	const [bridgesSettings] = useLocalStorageSettingsManager('bridges')
 	const isBridgesShowingAddresses = bridgesSettings[BRIDGES_SHOWING_ADDRESSES]
 
+	const currentTableData = tableDataByChain[currentChain]
 	const {
 		tokensTableData,
 		addressesTableData,
@@ -66,16 +67,28 @@ export const BridgeInfo = ({
 		totalDepositedUSD,
 		totalWithdrawnUSD,
 		dataTimestamp
-	} = tableDataByChain[currentChain]
+	} = currentTableData ?? {
+		tokensTableData: [],
+		addressesTableData: [],
+		tokenDeposits: null,
+		tokenWithdrawals: null
+	}
 
 	const volumeChartDataByChain = volumeDataByChain[currentChain]
 	const completedDayVolumes = getBridgeProtocolCompletedDayVolumes(volumeChartDataByChain)
 	const prevDayChart = completedDayVolumes?.current
 	const hasFreshRollingStats =
 		dataTimestamp != null && getFreshTimeSeriesCurrentPoint([{ date: dataTimestamp }], (point) => point.date) != null
-	const currentDepositsUSD = (hasFreshRollingStats ? totalDepositedUSD : null) ?? prevDayChart?.Deposited ?? 0
-	const currentWithdrawalsUSD = (hasFreshRollingStats ? totalWithdrawnUSD : null) ?? -(prevDayChart?.Withdrawn ?? 0)
-	const currentDailyVolume = (prevDayChart?.Deposited ?? 0) + -(prevDayChart?.Withdrawn ?? 0)
+	const currentDepositsUSD = hasFreshRollingStats ? (totalDepositedUSD ?? null) : (prevDayChart?.Deposited ?? null)
+	const currentWithdrawalsUSD = hasFreshRollingStats
+		? (totalWithdrawnUSD ?? null)
+		: prevDayChart?.Withdrawn == null
+			? null
+			: -prevDayChart.Withdrawn
+	const currentDailyVolume =
+		prevDayChart?.Deposited == null || prevDayChart.Withdrawn == null
+			? null
+			: prevDayChart.Deposited - prevDayChart.Withdrawn
 
 	const isAllChains = currentChain === 'All Chains'
 	const rollingHours = config.name === 'wormhole' ? 28 : 24
@@ -85,10 +98,11 @@ export const BridgeInfo = ({
 
 	if (completedDayVolumes) {
 		const prev2DayChart = completedDayVolumes.previous
-		const prevDepositsUSD = prev2DayChart.Deposited ?? 0
-		const prevWithdrawalsUSD = -(prev2DayChart.Withdrawn ?? 0)
-		const prevVolume = prevDepositsUSD + prevWithdrawalsUSD
-		if (prevVolume > 0) {
+		const prevVolume =
+			prev2DayChart.Deposited == null || prev2DayChart.Withdrawn == null
+				? null
+				: prev2DayChart.Deposited - prev2DayChart.Withdrawn
+		if (currentDailyVolume != null && prevVolume != null && prevVolume > 0) {
 			volPercentChange = getPercentChange(currentDailyVolume, prevVolume)
 		}
 	}
@@ -113,7 +127,7 @@ export const BridgeInfo = ({
 			volumeChartDataByChain,
 			totalDepositedUSD,
 			totalWithdrawnUSD,
-			dataTimestamp
+			...(dataTimestamp !== undefined ? { dataTimestamp } : {})
 		})
 	}, [isAllChains, volumeChartDataByChain, totalDepositedUSD, totalWithdrawnUSD, dataTimestamp])
 
@@ -125,6 +139,7 @@ export const BridgeInfo = ({
 	const tokenColorIndex = React.useMemo(() => {
 		const indexByToken = new Map<string, number>()
 		for (const series of [tokenWithdrawals, tokenDeposits]) {
+			if (!series) continue
 			for (const peer of series.peers) {
 				if (!indexByToken.has(peer.name)) indexByToken.set(peer.name, indexByToken.size)
 			}
@@ -220,11 +235,15 @@ export const BridgeInfo = ({
 										Deposited to {currentChain} ({windowLabel})
 									</>
 								}
-								value={formatUsd(currentDepositsUSD || '0', {
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								})}
+								value={
+									currentDepositsUSD == null
+										? 'N/A'
+										: formatUsd(currentDepositsUSD, {
+												compact: true,
+												minimumCompactValue: 1_000_000,
+												compactSuffix: 'lowercase'
+											})
+								}
 							/>
 							<StatItem
 								label={
@@ -232,11 +251,15 @@ export const BridgeInfo = ({
 										Withdrawn from {currentChain} ({windowLabel})
 									</>
 								}
-								value={formatUsd(currentWithdrawalsUSD || '0', {
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								})}
+								value={
+									currentWithdrawalsUSD == null
+										? 'N/A'
+										: formatUsd(currentWithdrawalsUSD, {
+												compact: true,
+												minimumCompactValue: 1_000_000,
+												compactSuffix: 'lowercase'
+											})
+								}
 							/>
 						</>
 					)}
@@ -313,7 +336,7 @@ export const BridgeInfo = ({
 								/>
 							</React.Suspense>
 						) : null}
-						{chartType === 'Tokens To' && tokenWithdrawals.peers.length > 0 ? (
+						{chartType === 'Tokens To' && tokenWithdrawals && tokenWithdrawals.peers.length > 0 ? (
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
 								<PieChart
 									chartData={visibleTokenPresentation.chartData}
@@ -322,7 +345,7 @@ export const BridgeInfo = ({
 								/>
 							</React.Suspense>
 						) : null}
-						{chartType === 'Tokens From' && tokenDeposits.peers.length > 0 ? (
+						{chartType === 'Tokens From' && tokenDeposits && tokenDeposits.peers.length > 0 ? (
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
 								<PieChart
 									chartData={visibleTokenPresentation.chartData}

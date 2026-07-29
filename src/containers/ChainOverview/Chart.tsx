@@ -65,7 +65,8 @@ export default function ChainCoreChart({
 					formatter: createOverviewTooltipFormatter({
 						groupBy: tooltipGroupBy,
 						valueSymbol,
-						unlockTokenSymbol
+						unlockTokenSymbol,
+						seriesValueSymbols: presentation.seriesValueSymbols
 					})
 				},
 				chartOptions.tooltip
@@ -76,6 +77,7 @@ export default function ChainCoreChart({
 		chartTheme.text,
 		presentation.allYAxis,
 		presentation.chartsInSeries,
+		presentation.seriesValueSymbols,
 		tooltipGroupBy,
 		unlockTokenSymbol,
 		valueSymbol
@@ -87,13 +89,13 @@ export default function ChainCoreChart({
 			charts={presentation.charts}
 			chartOptions={finalChartOptions}
 			valueSymbol={valueSymbol}
-			groupBy={groupBy}
-			height={height}
+			{...(groupBy !== undefined ? { groupBy } : {})}
+			{...(height !== undefined ? { height } : {})}
 			autoHideDataZoom={false}
 			hideDefaultLegend
 			exportButtons="hidden"
 			isThemeDark={isThemeDark}
-			onReady={onReady}
+			{...(onReady !== undefined ? { onReady } : {})}
 		/>
 	)
 }

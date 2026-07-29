@@ -1,11 +1,6 @@
 import { formatRatio } from '~/utils/numberFormat'
 import { formatTooltipChartDate, formatTooltipValue, type TooltipGroupBy } from '../shared/formatters'
-import {
-	getTooltipAxisValue,
-	getTooltipRawYValue,
-	normalizeTooltipItems,
-	TOOLTIP_OTHERS_ROW_STYLE
-} from '../shared/tooltip'
+import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '../shared/tooltip'
 
 const CHART_SYMBOLS: Record<string, string> = {
 	'Active Addresses': '',
@@ -40,7 +35,8 @@ function getSeriesSymbol(
 	if (seriesName.includes('Addresses')) return ''
 	if (seriesName.includes('Transactions')) return 'TXs'
 	if (seriesName === 'TVL' && valueSymbol !== '$') return valueSymbol
-	if (seriesName in CHART_SYMBOLS) return CHART_SYMBOLS[seriesName]!
+	const chartSymbol = Object.hasOwn(CHART_SYMBOLS, seriesName) ? CHART_SYMBOLS[seriesName] : undefined
+	if (chartSymbol !== undefined) return chartSymbol
 	return valueSymbol
 }
 
@@ -61,36 +57,24 @@ export function createOverviewTooltipFormatter({
 		if (items.length === 0) return ''
 		const axisValue = getTooltipAxisValue(items[0])
 		const chartDate = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
-		const rows: Array<{ marker: string; name: string; value: number }> = []
+		let output = chartDate
+		let mcap: number | null = null
+		let tvl: number | null = null
 		for (const item of items) {
 			const name = item.seriesName
 			if (!name) continue
 			const rawValue = getTooltipRawYValue(item, name)
 			const value = rawValue === '-' ? Number.NaN : typeof rawValue === 'number' ? rawValue : Number(rawValue)
-			if (!Number.isFinite(value) || value === 0) continue
-			rows.push({ marker: item.marker ?? '', name, value })
-		}
-		const othersIndex = rows.findIndex((row) => row.name === 'Others')
-		const others = othersIndex >= 0 ? rows.splice(othersIndex, 1)[0] : null
-		const hasOthers = others != null || rows.length > 10
-		const topLimit = hasOthers ? 9 : 10
-		let output = chartDate
-		for (let index = 0; index < rows.length && index < topLimit; index++) {
-			const row = rows[index]!
-			output += `<li style="list-style:none">${row.marker}${row.name}&nbsp;&nbsp;${formatTooltipValue(
-				row.value,
-				getSeriesSymbol(row.name, valueSymbol, unlockTokenSymbol, seriesValueSymbols)
+			if (!Number.isFinite(value)) continue
+			output += `<li style="list-style:none">${item.marker ?? ''}${name}&nbsp;&nbsp;${formatTooltipValue(
+				value,
+				getSeriesSymbol(name, valueSymbol, unlockTokenSymbol, seriesValueSymbols)
 			)}</li>`
+			if (name === 'Mcap' && mcap === null) mcap = value
+			if (name === 'TVL' && tvl === null) tvl = value
 		}
-		const mcap = rows.find((row) => row.name === 'Mcap')?.value
-		const tvl = rows.find((row) => row.name === 'TVL')?.value
-		if (mcap && tvl)
+		if (mcap !== null && tvl !== null && tvl > 0)
 			output += `<li style="list-style:none">Mcap/TVL&nbsp;&nbsp;${formatRatio(mcap / tvl, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</li>`
-		if (hasOthers) {
-			let remainder = others?.value ?? 0
-			for (let index = topLimit; index < rows.length; index++) remainder += rows[index]!.value
-			output += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${others?.marker ?? rows[topLimit]?.marker ?? ''}Others&nbsp;&nbsp;${formatTooltipValue(remainder, valueSymbol)}</li>`
-		}
 		return output
 	}
 }

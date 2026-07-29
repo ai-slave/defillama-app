@@ -1,17 +1,10 @@
+import type { ChainExtraTvlRecord } from '~/containers/Chains/api.types'
 import type { TvlSettingsKey } from '~/contexts/LocalStorage'
 import { applyTvlOverlapBaseAdjustment } from '~/utils/tvl'
 import { shouldSubtractTvlOverlapSeries } from '~/utils/tvlOverlap'
 
 type ChainTvlValue = number | null | undefined
 type ChainTvlExtraValues = Partial<Record<TvlSettingsKey | 'dcAndLsOverlap', ChainTvlValue>>
-type ChainTvlExtraEntry = {
-	tvl: number
-	tvlPrevDay: number
-	tvlPrevWeek: number
-	tvlPrevMonth: number
-}
-type ChainExtraTvlRecord = Partial<Record<TvlSettingsKey | 'dcAndLsOverlap' | 'excludeparent', ChainTvlExtraEntry>>
-
 const EXTRA_TVL_STALE_TOLERANCE_MS = 2 * 24 * 60 * 60 * 1000
 
 const getLatestChartTimestamp = (chart: Record<number, number> | undefined): number | null => {
@@ -20,39 +13,60 @@ const getLatestChartTimestamp = (chart: Record<number, number> | undefined): num
 	let latestTimestamp: number | null = null
 	for (const timestamp in chart) {
 		const parsedTimestamp = Number(timestamp)
-		if (!Number.isFinite(parsedTimestamp)) continue
 		latestTimestamp = latestTimestamp == null ? parsedTimestamp : Math.max(latestTimestamp, parsedTimestamp)
 	}
 
 	return latestTimestamp
 }
 
-export function normalizeChainsBaseTvlValue(baseValue: ChainTvlValue, extraValues: ChainTvlExtraValues = {}): number {
+export function normalizeChainsBaseTvlValue(baseValue: number, extraValues?: ChainTvlExtraValues): number
+export function normalizeChainsBaseTvlValue(baseValue: ChainTvlValue, extraValues?: ChainTvlExtraValues): number | null
+export function normalizeChainsBaseTvlValue(
+	baseValue: ChainTvlValue,
+	extraValues: ChainTvlExtraValues = {}
+): number | null {
+	if (baseValue == null) return null
+	for (const key of ['doublecounted', 'liquidstaking', 'dcAndLsOverlap'] as const) {
+		if (Object.hasOwn(extraValues, key) && extraValues[key] == null) return null
+	}
 	return applyTvlOverlapBaseAdjustment(baseValue, extraValues)
 }
 
+export function getChainMcapTvlRatio(mcap: number | null, tvl: number | null): number | null {
+	return mcap != null && tvl != null && tvl > 0 ? mcap / tvl : null
+}
+
+export function applyChainsTvlSettings(
+	baseValue: number,
+	extraValues: ChainTvlExtraValues,
+	enabledSettings: readonly TvlSettingsKey[]
+): number
 export function applyChainsTvlSettings(
 	baseValue: ChainTvlValue,
-	extraValues: ChainTvlExtraValues = {},
+	extraValues: ChainTvlExtraValues,
+	enabledSettings: readonly TvlSettingsKey[]
+): number | null
+export function applyChainsTvlSettings(
+	baseValue: ChainTvlValue,
+	extraValues: ChainTvlExtraValues,
 	enabledSettings: readonly TvlSettingsKey[]
 ): number | null {
-	let hasAnyValue = baseValue != null
-	let value = baseValue ?? 0
+	if (baseValue == null) return null
+	let value = baseValue
 	for (const key of enabledSettings) {
+		if (!Object.hasOwn(extraValues, key)) continue
 		const extraValue = extraValues[key]
-		if (extraValue != null) {
-			value += extraValue
-			hasAnyValue = true
-		}
+		if (extraValue == null) return null
+		value += extraValue
 	}
 
-	const overlapValue = extraValues.dcAndLsOverlap
-	if (shouldSubtractTvlOverlapSeries(enabledSettings) && overlapValue != null) {
+	if (shouldSubtractTvlOverlapSeries(enabledSettings) && Object.hasOwn(extraValues, 'dcAndLsOverlap')) {
+		const overlapValue = extraValues.dcAndLsOverlap
+		if (overlapValue == null) return null
 		value -= overlapValue
-		hasAnyValue = true
 	}
 
-	return hasAnyValue ? Math.max(0, value) : null
+	return Math.max(0, value)
 }
 
 export function removeStaleChainExtraTvlEntries({
@@ -64,23 +78,24 @@ export function removeStaleChainExtraTvlEntries({
 	extraTvl: ChainExtraTvlRecord | undefined
 	tvlChartsByChain: Record<string, Record<string, Record<number, number>>>
 }): ChainExtraTvlRecord {
-	if (!extraTvl) return {}
-
-	const latestBaseTimestamp = getLatestChartTimestamp(tvlChartsByChain.tvl?.[chainName])
-	if (latestBaseTimestamp == null) return extraTvl
-
 	const sanitizedExtraTvl: ChainExtraTvlRecord = {}
+	if (!extraTvl) return sanitizedExtraTvl
+
+	const baseCharts = tvlChartsByChain.tvl
+	const latestBaseTimestamp = getLatestChartTimestamp(baseCharts?.[chainName])
 	for (const key in extraTvl) {
-		const typedKey = key as keyof ChainExtraTvlRecord
-		if (!(typedKey in tvlChartsByChain)) {
-			sanitizedExtraTvl[typedKey] = extraTvl[typedKey]
+		const entry = extraTvl[key]
+		if (entry === undefined) continue
+		if (latestBaseTimestamp == null || tvlChartsByChain[key] === undefined) {
+			sanitizedExtraTvl[key] = entry
 			continue
 		}
 
-		const latestExtraTimestamp = getLatestChartTimestamp(tvlChartsByChain[typedKey]?.[chainName])
+		const extraCharts = tvlChartsByChain[key]
+		const latestExtraTimestamp = getLatestChartTimestamp(extraCharts?.[chainName])
 		if (latestExtraTimestamp == null) continue
 		if (latestBaseTimestamp - latestExtraTimestamp > EXTRA_TVL_STALE_TOLERANCE_MS) continue
-		sanitizedExtraTvl[typedKey] = extraTvl[typedKey]
+		sanitizedExtraTvl[key] = entry
 	}
 
 	if (!sanitizedExtraTvl.doublecounted || !sanitizedExtraTvl.liquidstaking) {

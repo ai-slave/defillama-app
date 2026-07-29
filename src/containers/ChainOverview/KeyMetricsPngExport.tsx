@@ -9,10 +9,10 @@ interface KeyMetricsPngExportButtonProps {
 	containerRef: RefObject<HTMLDivElement | null>
 	chainName: string
 	chainIconSlug?: string
-	primaryValue?: number
+	primaryValue: number | null
 	primaryLabel: string
 	formatPrice: (value: number | string | null) => string | number | null
-	hasTvlData?: boolean
+	hasTvlData: boolean
 }
 
 interface MetricRow {
@@ -24,8 +24,8 @@ function getTrimmedText(el: Element | null | undefined): string {
 	return el?.textContent?.trim().replace(/\s+/g, ' ') ?? ''
 }
 
-function extractLabel(el: HTMLElement): string {
-	const directChildren = Array.from(el.children) as HTMLElement[]
+function extractLabel(el: Element): string {
+	const directChildren = Array.from(el.children)
 	const directLabel =
 		directChildren.find((child) => child.matches?.(METRIC_LABEL_SELECTOR)) ??
 		directChildren.find((child) => child.tagName.toUpperCase() === 'SPAN')
@@ -34,12 +34,12 @@ function extractLabel(el: HTMLElement): string {
 	return getTrimmedText(directLabel ?? fallbackLabel)
 }
 
-function extractValue(el: HTMLElement): string {
+function extractValue(el: Element): string {
 	const valueEl = el.querySelector?.(METRIC_VALUE_SELECTOR) ?? null
 	return getTrimmedText(valueEl)
 }
 
-function extractRow(el: HTMLElement): MetricRow | null {
+function extractRow(el: Element): MetricRow | null {
 	const label = extractLabel(el)
 	const value = extractValue(el)
 	if (!label || !value) return null
@@ -50,8 +50,7 @@ function extractRows(container: HTMLDivElement): MetricRow[] {
 	const rows: MetricRow[] = []
 	const children = Array.from(container.children)
 
-	for (const child of children) {
-		const el = child as HTMLElement
+	for (const el of children) {
 		const tagName = el.tagName.toUpperCase()
 
 		if (tagName === 'P') {
@@ -60,7 +59,7 @@ function extractRows(container: HTMLDivElement): MetricRow[] {
 		} else if (tagName === 'DETAILS') {
 			const summary = el.querySelector('summary')
 			if (summary) {
-				const row = extractRow(summary as unknown as HTMLElement)
+				const row = extractRow(summary)
 				if (row) rows.push(row)
 			}
 		}
@@ -86,7 +85,13 @@ async function loadChainIcon(slug: string): Promise<string | null> {
 		const blob = await response.blob()
 		return new Promise((resolve, reject) => {
 			const reader = new FileReader()
-			reader.onloadend = () => resolve(reader.result as string)
+			reader.onloadend = () => {
+				if (typeof reader.result === 'string') {
+					resolve(reader.result)
+				} else {
+					reject(new Error('Failed to read chain icon as a data URL'))
+				}
+			}
 			reader.onerror = reject
 			reader.readAsDataURL(blob)
 		})
@@ -114,11 +119,8 @@ function fillRoundedRect(
 	radius: number
 ) {
 	ctx.beginPath()
-	const roundRectCtx = ctx as CanvasRenderingContext2D & {
-		roundRect?: (x: number, y: number, width: number, height: number, radius: number) => void
-	}
-	if (typeof roundRectCtx.roundRect === 'function') {
-		roundRectCtx.roundRect(x, y, width, height, radius)
+	if (typeof ctx.roundRect === 'function') {
+		ctx.roundRect(x, y, width, height, radius)
 	} else {
 		const r = Math.min(radius, width / 2, height / 2)
 		ctx.moveTo(x + r, y)
@@ -142,7 +144,7 @@ export function KeyMetricsPngExportButton({
 	primaryValue,
 	primaryLabel,
 	formatPrice,
-	hasTvlData = false
+	hasTvlData
 }: KeyMetricsPngExportButtonProps) {
 	const [isLoading, setIsLoading] = useState(false)
 	const [isDark] = useDarkModeManager()
@@ -173,11 +175,7 @@ export function KeyMetricsPngExportButton({
 			if (!container) return
 			const rows = extractRows(container)
 
-			if (!hasPrimaryValue) {
-				if (rows.length === 0) {
-					return
-				}
-			}
+			if (!hasPrimaryValue && rows.length === 0) return
 
 			const containerWidth = container.getBoundingClientRect().width
 			const canvasWidth = Math.max(400, Math.min(600, containerWidth))
@@ -244,8 +242,8 @@ export function KeyMetricsPngExportButton({
 
 			ctx.font = '14px system-ui, -apple-system, sans-serif'
 
-			for (let index = 0; index < rows.length; index++) {
-				const row = rows[index]
+			let index = 0
+			for (const row of rows) {
 				const rowY = rowsStartY + index * rowHeight
 
 				ctx.strokeStyle = borderColor
@@ -266,6 +264,7 @@ export function KeyMetricsPngExportButton({
 				ctx.fillText(row.value, canvasWidth - padding, rowY + rowHeight / 2)
 
 				ctx.font = '14px system-ui, -apple-system, sans-serif'
+				index++
 			}
 
 			try {

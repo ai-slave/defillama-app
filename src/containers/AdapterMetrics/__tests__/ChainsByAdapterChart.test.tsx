@@ -1,11 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
 
 const mocks = vi.hoisted(() => ({
 	presentationInputs: [] as Array<{
-		chartData: MultiSeriesChartDataset
+		chartData: MultiSeriesTimeSeriesDataset
 		selectedChains: string[]
 	}>
 }))
@@ -15,6 +15,7 @@ vi.mock('next/router', () => ({
 }))
 
 vi.mock('@tanstack/react-query', () => ({
+	skipToken: Symbol('skipToken'),
 	useQuery: () => ({ data: undefined, error: null, isLoading: false })
 }))
 
@@ -39,7 +40,7 @@ vi.mock('../utils', async (importOriginal) => {
 	return {
 		...actual,
 		buildChainsByAdapterChartPresentation: (input: {
-			chartData: MultiSeriesChartDataset
+			chartData: MultiSeriesTimeSeriesDataset
 			selectedChains: string[]
 		}) => {
 			mocks.presentationInputs.push(input)
@@ -58,7 +59,7 @@ vi.mock('../utils', async (importOriginal) => {
 
 import { ChainsByAdapterChart } from '../ChainChart'
 
-const baseChartData: MultiSeriesChartDataset = {
+const baseChartData: MultiSeriesTimeSeriesDataset = {
 	dimensions: ['timestamp', 'Base', 'Ethereum'],
 	source: [[Date.UTC(2024, 0, 1), 100, 50]]
 }
@@ -79,7 +80,6 @@ describe('ChainsByAdapterChart', () => {
 			/>
 		)
 
-		expect(mocks.presentationInputs).toHaveLength(1)
-		expect(mocks.presentationInputs[0].chartData).toBe(baseChartData)
+		expect(mocks.presentationInputs.map(({ chartData }) => chartData)).toEqual([baseChartData])
 	})
 })

@@ -1,9 +1,36 @@
 import { describe, expect, it } from 'vitest'
-import { formatLineChart } from '~/components/ECharts/shared/timeSeries'
-import { buildBridgedTvlChart, buildDenominationPriceHistory } from '../useFetchChainChartData'
+import { formatBarChart, formatLineChart } from '~/components/ECharts/shared/timeSeries'
+import type { ChainAssetTotals } from '~/containers/BridgedTVL/api.types'
+import {
+	buildBridgedTvlChart,
+	buildDenominationPriceHistory,
+	getNetInflowsSeries,
+	normalizeActivityChart
+} from '../useFetchChainChartData'
+import { formatChainAssets } from '../utils'
 
 describe('ChainOverview chart data transforms', () => {
-	it('keeps Coingecko price chart rows alongside the denomination lookup', () => {
+	it('charts signed net inflows while preserving zero and retaining unknown points as gaps', () => {
+		expect(
+			getNetInflowsSeries([
+				[1, 10, -4],
+				[2, 4, -10],
+				[3, 5, -5],
+				[4, null, -3],
+				[5, 3, null],
+				[6, null, null]
+			])
+		).toEqual([
+			[1, 6],
+			[2, -6],
+			[3, 0],
+			[4, null],
+			[5, null],
+			[6, null]
+		])
+	})
+
+	it('keeps valid Coingecko price chart rows alongside the denomination lookup', () => {
 		const prices: Array<[number, number]> = [
 			[2_000, 2],
 			[1_000, 1]
@@ -13,20 +40,87 @@ describe('ChainOverview chart data transforms', () => {
 
 		const result = buildDenominationPriceHistory({ prices, mcaps, volumes })
 
-		expect(result.priceChart).toBe(prices)
-		expect(result.prices).toEqual({
+		expect(result.priceChart).toEqual(prices)
+		expect(result.conversionPrices).toEqual({
 			1000: 1,
 			2000: 2
 		})
+		expect(result.canConvert).toBe(true)
 		expect(result.mcaps).toBe(mcaps)
 		expect(result.volumes).toBe(volumes)
+	})
+
+	it('keeps an all-zero price chart without exposing a conversion denominator', () => {
+		expect(buildDenominationPriceHistory({ prices: [[1_000, 0]] })).toEqual({
+			conversionPrices: {},
+			canConvert: false,
+			priceChart: [[1_000, 0]],
+			mcaps: undefined,
+			volumes: undefined
+		})
+	})
+
+	it('uses the last valid duplicate timestamp observation as the conversion denominator', () => {
+		const positiveThenZero = buildDenominationPriceHistory({
+			prices: [
+				[1_000, 2],
+				[1_000, 0]
+			]
+		})
+		expect(positiveThenZero.priceChart).toEqual([
+			[1_000, 2],
+			[1_000, 0]
+		])
+		expect(positiveThenZero.conversionPrices).toEqual({})
+		expect(positiveThenZero.canConvert).toBe(false)
+
+		const zeroThenPositive = buildDenominationPriceHistory({
+			prices: [
+				[1_000, 0],
+				[1_000, 2]
+			]
+		})
+		expect(zeroThenPositive.priceChart).toEqual([
+			[1_000, 0],
+			[1_000, 2]
+		])
+		expect(zeroThenPositive.conversionPrices).toEqual({ 1000: 2 })
+		expect(zeroThenPositive.canConvert).toBe(true)
+
+		const positiveThenPositive = buildDenominationPriceHistory({
+			prices: [
+				[1_000, 2],
+				[1_000, 4]
+			]
+		})
+		expect(positiveThenPositive.conversionPrices).toEqual({ 1000: 4 })
+		expect(positiveThenPositive.canConvert).toBe(true)
+	})
+
+	it('distinguishes an empty activity response from a zero-valued point', () => {
+		expect(normalizeActivityChart([])).toBeNull()
+		const activity = normalizeActivityChart([[1_700_000_000, 0]])
+		expect(activity).toEqual([[1_700_000_000, 0]])
+		expect(formatBarChart({ data: activity ?? [], groupBy: 'daily', denominationPriceHistory: null })).toEqual([
+			[1_700_000_000_000, 0]
+		])
+	})
+
+	it('preserves integer chain-asset presentation without projecting token breakdowns', () => {
+		const category = { total: 5.7 }
+		const chainAsset: ChainAssetTotals = { canonical: category, thirdParty: category, total: category }
+
+		const formatted = formatChainAssets(chainAsset)
+
+		expect(formatted?.total).toEqual({ total: 5 })
+		expect(formatted?.total).not.toHaveProperty('breakdown')
 	})
 
 	it('builds bridged TVL chart timestamps from UTC day arithmetic', () => {
 		const timestampSec = Date.UTC(2026, 0, 3, 12) / 1e3
 		const dayStartSec = Date.UTC(2026, 0, 3) / 1e3
 
-		expect(buildBridgedTvlChart([{ timestamp: timestampSec, data: { total: '100' } }, null], false)).toEqual([
+		expect(buildBridgedTvlChart([{ timestamp: timestampSec, data: { total: 100 } }], false)).toEqual([
 			[dayStartSec * 1e3, 100]
 		])
 	})
@@ -35,7 +129,7 @@ describe('ChainOverview chart data transforms', () => {
 		const timestampSec = Date.UTC(2026, 0, 3, 12) / 1e3
 		const dayStartSec = Date.UTC(2026, 0, 3) / 1e3
 
-		expect(buildBridgedTvlChart([{ timestamp: timestampSec, data: { total: '100', ownTokens: '10' } }], true)).toEqual([
+		expect(buildBridgedTvlChart([{ timestamp: timestampSec, data: { total: 100, ownTokens: 10 } }], true)).toEqual([
 			[dayStartSec * 1e3, 110]
 		])
 	})
@@ -46,7 +140,7 @@ describe('ChainOverview chart data transforms', () => {
 
 		expect(
 			formatLineChart({
-				data: buildBridgedTvlChart([{ timestamp: timestampSec, data: { total: '100' } }], false),
+				data: buildBridgedTvlChart([{ timestamp: timestampSec, data: { total: 100 } }], false),
 				groupBy: 'daily',
 				denominationPriceHistory: {
 					[String(dayStartSec * 1e3)]: 2
@@ -62,7 +156,7 @@ describe('ChainOverview chart data transforms', () => {
 
 		expect(
 			formatLineChart({
-				data: buildBridgedTvlChart([{ timestamp: timestampSec, data: { total: '100', ownTokens: '10' } }], true),
+				data: buildBridgedTvlChart([{ timestamp: timestampSec, data: { total: 100, ownTokens: 10 } }], true),
 				groupBy: 'daily',
 				denominationPriceHistory: {
 					[String(dayStartSec * 1e3)]: 2

@@ -38,12 +38,17 @@ describe('prepareChartCsv', () => {
 		const row1 = dataRows.find((r) => String(r[0]) === String(toMs(2024, 1, 1)))
 		const row2 = dataRows.find((r) => String(r[0]) === String(toMs(2024, 1, 2)))
 
-		expect(row1).toBeDefined()
-		expect(row1![2]).toBe(10) // A column
-		expect(row1![3]).toBe('') // B column missing
-		expect(row2).toBeDefined()
-		expect(row2![2]).toBe('') // A column missing
-		expect(row2![3]).toBe(20) // B column
+		expect(row1?.[2]).toBe(10) // A column
+		expect(row1?.[3]).toBe('') // B column missing
+		expect(row2?.[2]).toBe('') // A column missing
+		expect(row2?.[3]).toBe(20) // B column
+	})
+
+	it('preserves explicit null gaps instead of treating them as missing cells', () => {
+		const timestamp = toMs(2024, 1, 1)
+		const result = prepareChartCsv({ TVL: [[timestamp, null]] }, 'null-gap.csv')
+
+		expect(result.rows[1]).toEqual([timestamp.toString(), '2024-01-01', null])
 	})
 
 	it('sorts rows chronologically', () => {

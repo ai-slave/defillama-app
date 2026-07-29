@@ -1,7 +1,7 @@
 import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import { getFreshTimeSeriesCurrentPoint, toUnixMsTimestamp } from '~/utils/timeSeries'
-import type { RawBridgeVolumePoint } from './api.types'
+import type { BridgeVolumePoint } from './api.types'
 
 export const BRIDGE_VOLUME_VIEW_TYPES = ['Split', 'Combined'] as const
 export type BridgeVolumeViewType = (typeof BRIDGE_VOLUME_VIEW_TYPES)[number]
@@ -9,10 +9,8 @@ export type BridgeVolumeViewType = (typeof BRIDGE_VOLUME_VIEW_TYPES)[number]
 export const BRIDGE_VOLUME_METRIC_TYPES = ['Volume', 'Transactions'] as const
 export type BridgeVolumeMetricType = (typeof BRIDGE_VOLUME_METRIC_TYPES)[number]
 
-export type BridgeVolumeInputPoint = RawBridgeVolumePoint
-
 export function getStaleBridgeVolumeTimestamp(
-	data: BridgeVolumeInputPoint[] | null | undefined,
+	data: BridgeVolumePoint[] | null | undefined,
 	currentTimeMs: number = Date.now()
 ): number | null {
 	const hasCurrentOrCompletedDay =
@@ -51,12 +49,15 @@ export const BRIDGE_VOLUME_COMBINED_CHARTS = [
 	{ type: 'bar' as const, name: 'Total', encode: { x: 0, y: 1 }, color: '#22c55e' }
 ]
 
-function getBridgeMetricValues(item: BridgeVolumeInputPoint, metricType: BridgeVolumeMetricType) {
-	// Raw bridge volume rows can omit one side of a metric; missing side contributes zero to the bucket.
+function getBridgeMetricValues(item: BridgeVolumePoint, metricType: BridgeVolumeMetricType) {
 	return {
-		deposits: metricType === 'Volume' ? (item.depositUSD ?? 0) : (item.depositTxs ?? 0),
-		withdrawals: metricType === 'Volume' ? (item.withdrawUSD ?? 0) : (item.withdrawTxs ?? 0)
+		deposits: metricType === 'Volume' ? item.depositUSD : item.depositTxs,
+		withdrawals: metricType === 'Volume' ? item.withdrawUSD : item.withdrawTxs
 	}
+}
+
+function addKnownBridgeMetric(left: number | null, right: number | null): number | null {
+	return left == null || right == null ? null : left + right
 }
 
 function pushBridgeVolumeDatasetRow({
@@ -64,15 +65,28 @@ function pushBridgeVolumeDatasetRow({
 	timestamp,
 	deposits,
 	withdrawals,
-	viewType
+	viewType,
+	metricType
 }: {
-	source: number[][]
+	source: Array<Array<number | null>>
 	timestamp: number
-	deposits: number
-	withdrawals: number
+	deposits: number | null
+	withdrawals: number | null
 	viewType: BridgeVolumeViewType
+	metricType: BridgeVolumeMetricType
 }) {
-	source.push(viewType === 'Split' ? [timestamp, deposits, -withdrawals] : [timestamp, deposits + withdrawals])
+	source.push(
+		viewType === 'Split'
+			? [timestamp, deposits, withdrawals == null ? null : -withdrawals]
+			: [
+					timestamp,
+					deposits == null || withdrawals == null
+						? null
+						: metricType === 'Volume'
+							? (deposits + withdrawals) / 2
+							: deposits + withdrawals
+				]
+	)
 }
 
 export function buildBridgeVolumeChartData({
@@ -81,14 +95,14 @@ export function buildBridgeVolumeChartData({
 	metricType,
 	viewType
 }: {
-	data: BridgeVolumeInputPoint[] | null | undefined
+	data: BridgeVolumePoint[] | null | undefined
 	timePeriod: ChartTimeGrouping
 	metricType: BridgeVolumeMetricType
 	viewType: BridgeVolumeViewType
 }) {
 	const isSplit = viewType === 'Split'
 	const dimensions = isSplit ? ['timestamp', 'Deposits', 'Withdrawals'] : ['timestamp', 'Total']
-	const source: number[][] = []
+	const source: Array<Array<number | null>> = []
 
 	if (!data?.length) {
 		return {
@@ -99,15 +113,15 @@ export function buildBridgeVolumeChartData({
 	}
 
 	if (timePeriod === 'daily') {
-		// Bridge volume API returns unix seconds as strings; chart rows use milliseconds.
 		for (const item of data) {
 			const { deposits, withdrawals } = getBridgeMetricValues(item, metricType)
 			pushBridgeVolumeDatasetRow({
 				source,
-				timestamp: +item.date * 1e3,
+				timestamp: item.date * 1e3,
 				deposits,
 				withdrawals,
-				viewType
+				viewType,
+				metricType
 			})
 		}
 
@@ -121,19 +135,18 @@ export function buildBridgeVolumeChartData({
 	const groupedData = new Map<
 		number,
 		{
-			deposits: number
-			withdrawals: number
+			deposits: number | null
+			withdrawals: number | null
 		}
 	>()
 
-	// Bridge volume API returns unix seconds as strings.
 	for (const item of data) {
-		const key = getBucketTimestampSec(+item.date, timePeriod)
+		const key = getBucketTimestampSec(item.date, timePeriod)
 		const { deposits, withdrawals } = getBridgeMetricValues(item, metricType)
 		const existing = groupedData.get(key)
 		if (existing) {
-			existing.deposits += deposits
-			existing.withdrawals += withdrawals
+			existing.deposits = addKnownBridgeMetric(existing.deposits, deposits)
+			existing.withdrawals = addKnownBridgeMetric(existing.withdrawals, withdrawals)
 		} else {
 			groupedData.set(key, { deposits, withdrawals })
 		}
@@ -145,7 +158,8 @@ export function buildBridgeVolumeChartData({
 			timestamp: date * 1e3,
 			deposits: values.deposits,
 			withdrawals: values.withdrawals,
-			viewType
+			viewType,
+			metricType
 		})
 	}
 

@@ -3,9 +3,18 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { IChainOverviewData } from '../types'
 
-function setupStatsMocks() {
+function setupStatsMocks(asPath = '/chain/ethereum') {
+	const useFetchChainChartData = vi.fn(() => ({
+		totalValueUSD: 0,
+		change24h: null,
+		valueChange24hUSD: null,
+		finalCharts: {},
+		valueSymbol: '$',
+		isFetchingChartData: false,
+		failedMetrics: []
+	}))
 	vi.doMock('next/router', () => ({
-		useRouter: () => ({ asPath: '/chain/ethereum' })
+		useRouter: () => ({ asPath })
 	}))
 	vi.doMock('@tanstack/react-query', () => ({
 		useMutation: () => ({ mutate: vi.fn(), isPending: false })
@@ -40,16 +49,9 @@ function setupStatsMocks() {
 		KeyMetrics: () => null
 	}))
 	vi.doMock('../useFetchChainChartData', () => ({
-		useFetchChainChartData: () => ({
-			totalValueUSD: 0,
-			change24h: null,
-			valueChange24hUSD: null,
-			finalCharts: {},
-			valueSymbol: '$',
-			isFetchingChartData: false,
-			failedMetrics: []
-		})
+		useFetchChainChartData
 	}))
+	return { useFetchChainChartData }
 }
 
 const statsProps = {
@@ -95,6 +97,37 @@ describe('ChainOverview Stats header', () => {
 		expect(markup).toContain('data-umami-event="chain-website-click"')
 		expect(markup).toContain('data-umami-event-chain="Ethereum"')
 		expect(markup).toContain('data-umami-event-placement="header"')
+		expect(markup).toContain('xl:col-span-full')
 		expect(markup.indexOf('aria-label="Open Ethereum website"')).toBeLessThan(markup.indexOf('BOOKMARK'))
+	})
+
+	it('uses the configured gas token for chain names with spaces', async () => {
+		const { useFetchChainChartData } = setupStatsMocks('/chain/zksync-era')
+		const { Stats } = await import('../Stats')
+
+		renderToStaticMarkup(
+			React.createElement(Stats, {
+				...statsProps,
+				chain: 'ZKsync Era',
+				metadata: { id: 'zksync-era', name: 'ZKsync Era' }
+			})
+		)
+
+		expect(useFetchChainChartData).toHaveBeenCalledWith(
+			expect.objectContaining({ chainGeckoId: 'ethereum', denomination: 'USD' })
+		)
+	})
+
+	it.each([
+		['WEEKLY', 'weekly'],
+		['hourly', 'daily']
+	])('normalizes the %s chart grouping to %s', async (groupByParam, expectedGroupBy) => {
+		const { useFetchChainChartData } = setupStatsMocks(`/chain/ethereum?groupBy=${groupByParam}`)
+		const { Stats } = await import('../Stats')
+		const charts: IChainOverviewData['charts'] = ['Chain Fees']
+
+		renderToStaticMarkup(React.createElement(Stats, { ...statsProps, charts }))
+
+		expect(useFetchChainChartData).toHaveBeenCalledWith(expect.objectContaining({ groupBy: expectedGroupBy }))
 	})
 })

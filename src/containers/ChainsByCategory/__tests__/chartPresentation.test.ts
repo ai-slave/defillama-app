@@ -77,4 +77,18 @@ describe('chains by category chart presentation', () => {
 		expect(result.chainSeries).toEqual(['Solana', 'Ethereum', 'Historical'])
 		expect(result.dominanceCharts.charts.map((chart) => chart.name)).toEqual(['Solana', 'Ethereum', 'Historical'])
 	})
+
+	it('returns empty chart contracts when no base total series exists', () => {
+		const result = buildChainsByCategoryChartPresentation({
+			tvlChartsByChain: {},
+			totalTvlByDate: {},
+			colorsByChain: {},
+			enabledTvlSettings: []
+		})
+
+		expect(result.dominanceCharts.dataset).toEqual({ source: [], dimensions: ['timestamp'] })
+		expect(result.dominanceCharts.charts).toEqual([])
+		expect(result.pieSeries.peers).toEqual([])
+		expect(result.chainSeries).toEqual([])
+	})
 })

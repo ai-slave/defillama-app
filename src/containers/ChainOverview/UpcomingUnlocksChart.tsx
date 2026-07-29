@@ -1,8 +1,12 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
-import { CHART_COLORS } from '~/constants/colors'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { getChainOverviewPaletteColor } from './constants'
+import { useSmolChartHover } from './useSmolChartHover'
+
+const BAR_COLOR = getChainOverviewPaletteColor(0)
+const HOVERED_BAR_COLOR = getChainOverviewPaletteColor(1)
 
 interface UnlockEntry {
 	date: number
@@ -11,38 +15,12 @@ interface UnlockEntry {
 }
 
 export function UpcomingUnlocksChart({ data, className }: { data: Array<UnlockEntry>; className?: string }) {
-	const containerRef = useRef<HTMLDivElement>(null)
-	const tooltipRef = useRef<HTMLDivElement>(null)
-	const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-	const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
-
-	const onMouseMove = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>) => {
-			if (!containerRef.current || data.length === 0) return
-			const rect = containerRef.current.getBoundingClientRect()
-			const index = Math.min(Math.floor(((e.clientX - rect.left) / rect.width) * data.length), data.length - 1)
-			if (index >= 0) {
-				setHoveredIndex(index)
-				setMousePos({ x: e.clientX, y: e.clientY })
-			}
-		},
-		[data.length]
-	)
-
-	const onMouseLeave = useCallback(() => setHoveredIndex(null), [])
-
-	useLayoutEffect(() => {
-		const el = tooltipRef.current
-		if (!el || hoveredIndex == null) return
-		const flipX = mousePos.x + 12 + el.offsetWidth > window.innerWidth
-		const flipY = mousePos.y - 12 + el.offsetHeight > window.innerHeight
-		el.style.left = `${flipX ? mousePos.x - el.offsetWidth - 12 : mousePos.x + 12}px`
-		el.style.top = `${flipY ? mousePos.y - el.offsetHeight + 12 : mousePos.y - 12}px`
-	}, [mousePos, hoveredIndex])
+	const { containerRef, tooltipRef, hoveredIndex, onMouseMove, onMouseLeave } = useSmolChartHover(data.length)
 
 	const maxVal = useMemo(() => Math.max(...data.map((d) => d.total)) || 1, [data])
 
 	if (data.length === 0) return null
+	const hoveredEntry = hoveredIndex == null ? undefined : data[hoveredIndex]
 
 	return (
 		<div className={className ?? 'my-auto h-[156px]'}>
@@ -54,26 +32,26 @@ export function UpcomingUnlocksChart({ data, className }: { data: Array<UnlockEn
 								className="w-[60%] min-w-[4px]"
 								style={{
 									height: `${(d.total / maxVal) * 100}%`,
-									backgroundColor: hoveredIndex === i ? CHART_COLORS[1] : CHART_COLORS[0]
+									backgroundColor: hoveredIndex === i ? HOVERED_BAR_COLOR : BAR_COLOR
 								}}
 							/>
 						</div>
 					))}
 				</div>
-				{hoveredIndex != null ? (
+				{hoveredIndex != null && hoveredEntry ? (
 					<div className={domChartCrosshairStyles} style={{ left: `${((hoveredIndex + 0.5) / data.length) * 100}%` }} />
 				) : null}
-				{hoveredIndex != null ? (
+				{hoveredEntry ? (
 					<div ref={tooltipRef} className={domChartTooltipStyles}>
-						<p>{formatTooltipChartDate(data[hoveredIndex].date, 'daily')}</p>
+						<p>{formatTooltipChartDate(hoveredEntry.date, 'daily')}</p>
 						<p style={{ fontWeight: 'bold', marginBottom: '4px' }}>
 							Total: $
-							{formatCompactNumber(data[hoveredIndex].total, {
+							{formatCompactNumber(hoveredEntry.total, {
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
 							})}
 						</p>
-						{data[hoveredIndex].breakdown.map((item) => (
+						{hoveredEntry.breakdown.map((item) => (
 							<p key={item.token} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
 								{item.token}&nbsp;&nbsp;$
 								{formatCompactNumber(item.value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} (

@@ -144,7 +144,7 @@ export async function fetchSingleChartData(
 	if (!item) return []
 
 	if (itemType === 'chain') {
-		const data = await ChainCharts.getData(chart.type, item, chart.geckoId)
+		const data = await ChainCharts.getData(chart.type, item, chart.geckoId ?? undefined, chart.chainAssetId)
 		return filterDataByTimePeriod(data, timePeriod || 'all', customTimePeriod)
 	}
 

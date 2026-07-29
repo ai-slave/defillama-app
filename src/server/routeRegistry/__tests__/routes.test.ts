@@ -163,8 +163,11 @@ describe('route cache readers', () => {
 
 	it('builds chain feature slugs from chain metadata flags', () => {
 		const metadata = metadataFixture()
-		metadata.chainMetadata.ethereum.optionsNotionalVolume = true
-		metadata.chainMetadata['zkSync-era'].optionsPremiumVolume = true
+		const ethereum = metadata.chainMetadata.ethereum
+		const zkSyncEra = metadata.chainMetadata['zkSync-era']
+		if (!ethereum || !zkSyncEra) throw new Error('Expected route metadata fixtures')
+		ethereum.optionsNotionalVolume = true
+		zkSyncEra.optionsPremiumVolume = true
 
 		expect(getChainSlugsFromMetadata(metadata)).toEqual(['ethereum', 'zksync-era'])
 		expect(getChainMetricSlugsFromMetadata(metadata, 'fees')).toEqual(['ethereum'])

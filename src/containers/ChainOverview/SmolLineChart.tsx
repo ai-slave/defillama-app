@@ -1,24 +1,27 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formatCompactNumber } from '~/utils/numberFormat'
+import { useSmolChartHover } from './useSmolChartHover'
 
 const COLOR_MAP = {
 	green: { dark: '#3fb84f', light: '#008a13' },
 	red: { dark: '#e24a42', light: '#e60d02' }
 } as const
 
-function smoothPath(points: Array<[number, number]>): string {
-	if (points.length < 2) return ''
-	if (points.length === 2) return `M${points[0][0]},${points[0][1]} L${points[1][0]},${points[1][1]}`
+export function smoothPath(points: Array<[number, number]>): string {
+	const first = points[0]
+	const second = points[1]
+	if (!first || !second) return ''
+	if (points.length === 2) return `M${first[0]},${first[1]} L${second[0]},${second[1]}`
 
-	let d = `M${points[0][0]},${points[0][1]}`
+	let d = `M${first[0]},${first[1]}`
+	let p0 = first
+	let p1 = first
+	let p2 = second
 	for (let i = 0; i < points.length - 1; i++) {
-		const p0 = points[Math.max(i - 1, 0)]
-		const p1 = points[i]
-		const p2 = points[i + 1]
-		const p3 = points[Math.min(i + 2, points.length - 1)]
+		const p3 = points[i + 2] ?? p2
 
 		const cp1x = p1[0] + (p2[0] - p0[0]) / 6
 		const cp1y = p1[1] + (p2[1] - p0[1]) / 6
@@ -26,6 +29,9 @@ function smoothPath(points: Array<[number, number]>): string {
 		const cp2y = p2[1] - (p3[1] - p1[1]) / 6
 
 		d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`
+		p0 = p1
+		p1 = p2
+		p2 = p3
 	}
 	return d
 }
@@ -40,34 +46,7 @@ export function SmolLineChart({
 	className?: string
 }) {
 	const [isThemeDark] = useDarkModeManager()
-	const containerRef = useRef<HTMLDivElement>(null)
-	const tooltipRef = useRef<HTMLDivElement>(null)
-	const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-	const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
-
-	const onMouseMove = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>) => {
-			if (!containerRef.current || series.length === 0) return
-			const rect = containerRef.current.getBoundingClientRect()
-			const index = Math.min(Math.floor(((e.clientX - rect.left) / rect.width) * series.length), series.length - 1)
-			if (index >= 0) {
-				setHoveredIndex(index)
-				setMousePos({ x: e.clientX, y: e.clientY })
-			}
-		},
-		[series.length]
-	)
-
-	const onMouseLeave = useCallback(() => setHoveredIndex(null), [])
-
-	useLayoutEffect(() => {
-		const el = tooltipRef.current
-		if (!el || hoveredIndex == null) return
-		const flipX = mousePos.x + 12 + el.offsetWidth > window.innerWidth
-		const flipY = mousePos.y - 12 + el.offsetHeight > window.innerHeight
-		el.style.left = `${flipX ? mousePos.x - el.offsetWidth - 12 : mousePos.x + 12}px`
-		el.style.top = `${flipY ? mousePos.y - el.offsetHeight + 12 : mousePos.y - 12}px`
-	}, [mousePos, hoveredIndex])
+	const { containerRef, tooltipRef, hoveredIndex, onMouseMove, onMouseLeave } = useSmolChartHover(series.length)
 
 	const { pathD, stroke } = useMemo(() => {
 		if (series.length === 0) return { pathD: '', stroke: '' }
@@ -92,6 +71,7 @@ export function SmolLineChart({
 	}, [series, color, isThemeDark])
 
 	if (series.length === 0) return null
+	const hoveredPoint = hoveredIndex == null ? undefined : series[hoveredIndex]
 
 	return (
 		<div className={className ?? 'my-auto h-[112px]'}>
@@ -105,15 +85,15 @@ export function SmolLineChart({
 				>
 					<path d={pathD} fill="none" stroke={stroke} strokeWidth="2" vectorEffect="non-scaling-stroke" />
 				</svg>
-				{hoveredIndex != null ? (
+				{hoveredIndex != null && hoveredPoint ? (
 					<div
 						className={domChartCrosshairStyles}
 						style={{ left: `${series.length === 1 ? 50 : (hoveredIndex / (series.length - 1)) * 100}%` }}
 					/>
 				) : null}
-				{hoveredIndex != null ? (
+				{hoveredPoint ? (
 					<div ref={tooltipRef} className={domChartTooltipStyles}>
-						<p>{formatTooltipChartDate(series[hoveredIndex][0], 'daily')}</p>
+						<p>{formatTooltipChartDate(hoveredPoint[0], 'daily')}</p>
 						<p style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
 							<span
 								style={{
@@ -125,7 +105,7 @@ export function SmolLineChart({
 								}}
 							/>
 							$
-							{formatCompactNumber(series[hoveredIndex][1], {
+							{formatCompactNumber(hoveredPoint[1], {
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
 							})}

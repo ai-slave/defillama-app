@@ -22,6 +22,7 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import { DimensionDatasetCoverageNotice } from '../DimensionDatasetCoverageNotice'
 import { useDimensionDatasetData } from '../useDimensionDatasetData'
 import { aggregatorsDatasetColumns } from './columns'
 
@@ -40,7 +41,7 @@ export function AggregatorsDataset({ chains }: { chains?: string[] }) {
 		pageSize: 10
 	})
 
-	const { data, isLoading, error } = useDimensionDatasetData<AggregatorItem>('aggregators', chains)
+	const { data, isLoading, error, unavailableChains } = useDimensionDatasetData<AggregatorItem>('aggregators', chains)
 	const width = useBreakpointWidth()
 
 	const enrichedData = React.useMemo<AggregatorItemWithMarketShare[]>(() => {
@@ -50,7 +51,7 @@ export function AggregatorsDataset({ chains }: { chains?: string[] }) {
 
 		return data.map((item: AggregatorItem) => ({
 			...item,
-			marketShare7d: total7dGlobal > 0 ? (item.total7d / total7dGlobal) * 100 : 0
+			marketShare7d: total7dGlobal > 0 ? ((item.total7d ?? 0) / total7dGlobal) * 100 : 0
 		}))
 	}, [data])
 
@@ -196,6 +197,7 @@ export function AggregatorsDataset({ chains }: { chains?: string[] }) {
 					</div>
 				</div>
 			</div>
+			<DimensionDatasetCoverageNotice unavailableChains={unavailableChains} />
 			<TableBody table={instance} />
 			<TablePagination table={instance} />
 		</div>

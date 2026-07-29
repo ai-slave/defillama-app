@@ -1,23 +1,16 @@
-import type { RawChainAsset } from '~/containers/BridgedTVL/api.types'
-import type { IFormattedChainAsset } from './types'
-import type { IChainOverviewData } from './types'
+import type { ChainAssetTotals } from '~/containers/BridgedTVL/api.types'
+import type { IChainOverviewData, IFormattedChainAsset } from './types'
 
-export function formatChainAssets(chainAsset: RawChainAsset | null) {
+export function formatChainAssets(chainAsset: ChainAssetTotals | null): IFormattedChainAsset | null {
 	if (!chainAsset) return null
 
-	const acc = {} as IFormattedChainAsset
-	for (const type in chainAsset) {
-		const asset = chainAsset[type]
-		const formatted = {} as any
-		formatted.total = Number(asset.total.split('.')[0])
-		const breakdown = {}
-		for (const b in asset.breakdown) {
-			breakdown[b] = Number(asset.breakdown[b].split('.')[0])
-		}
-		formatted.breakdown = breakdown
-		acc[type] = formatted
+	return {
+		canonical: { total: Math.trunc(chainAsset.canonical.total) },
+		thirdParty: { total: Math.trunc(chainAsset.thirdParty.total) },
+		...(chainAsset.ownTokens ? { ownTokens: { total: Math.trunc(chainAsset.ownTokens.total) } } : {}),
+		...(chainAsset.native ? { native: { total: Math.trunc(chainAsset.native.total) } } : {}),
+		total: { total: Math.trunc(chainAsset.total.total) }
 	}
-	return acc
 }
 
 export function getChainWarningBanners(warningBanners: IChainOverviewData['warningBanners']) {

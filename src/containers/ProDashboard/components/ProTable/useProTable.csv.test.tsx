@@ -22,6 +22,7 @@ vi.mock('./useProTableData', () => ({
 			searchIndex: new WeakMap(rows.map((row) => [row, row.name.toLowerCase()])),
 			isLoading: false,
 			isEmptyProtocols: false,
+			unavailableChains: [],
 			categories: ['Dexs', 'Lending'],
 			availableProtocols: rows,
 			parentProtocols: []
@@ -33,9 +34,9 @@ import { useProTable } from './useProTable'
 
 describe('Pro table CSV source planning', () => {
 	it('keeps visible metric data enabled and exports unchanged sorted cell values', () => {
-		let tableResult: ReturnType<typeof useProTable> | null = null
+		const tableResult: { current: ReturnType<typeof useProTable> | null } = { current: null }
 		function Probe() {
-			tableResult = useProTable(['Base'], undefined, undefined, {
+			tableResult.current = useProTable(['Base'], undefined, undefined, {
 				initialColumnOrder: ['name', 'fees_24h'],
 				initialColumnVisibility: { name: true, fees_24h: true }
 			})
@@ -43,8 +44,9 @@ describe('Pro table CSV source planning', () => {
 		}
 
 		renderToStaticMarkup(<Probe />)
-		if (!tableResult) throw new Error('Expected the table hook to render')
-		tableResult.downloadCSV()
+		const result = tableResult.current
+		if (!result) throw new Error('Expected the table hook to render')
+		result.downloadCSV()
 
 		expect(mocks.sourcePlan?.sources).toEqual(['protocols', 'fees'])
 		expect(mocks.downloadCSV).toHaveBeenCalledWith(
@@ -59,9 +61,9 @@ describe('Pro table CSV source planning', () => {
 	})
 
 	it('keeps custom-column inputs available to sorting and CSV evaluation', () => {
-		let tableResult: ReturnType<typeof useProTable> | null = null
+		const tableResult: { current: ReturnType<typeof useProTable> | null } = { current: null }
 		function Probe() {
-			tableResult = useProTable(['Base'], undefined, undefined, {
+			tableResult.current = useProTable(['Base'], undefined, undefined, {
 				initialColumnOrder: ['name', 'custom-double-fees'],
 				initialColumnVisibility: { name: true, 'custom-double-fees': true },
 				initialCustomColumns: [
@@ -77,8 +79,9 @@ describe('Pro table CSV source planning', () => {
 		}
 
 		renderToStaticMarkup(<Probe />)
-		if (!tableResult) throw new Error('Expected the table hook to render')
-		tableResult.downloadCSV()
+		const result = tableResult.current
+		if (!result) throw new Error('Expected the table hook to render')
+		result.downloadCSV()
 
 		expect(mocks.sourcePlan?.sources).toEqual(['protocols', 'fees'])
 		expect(mocks.downloadCSV).toHaveBeenLastCalledWith(

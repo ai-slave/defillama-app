@@ -225,6 +225,7 @@ function resolveTokenRightsListItem(
 
 		for (const key in tokenDirectory) {
 			const token = tokenDirectory[key]
+			if (token === undefined) continue
 
 			if (slug(token.name) === cexSlug) {
 				tokenRecord = token
@@ -323,7 +324,7 @@ function buildTokenRightsListItem({
 }
 
 function buildHoldersRevenueByDefillamaId(
-	holdersRevenueProtocols: Array<{ defillamaId: string; total24h: number | null }>,
+	holdersRevenueProtocols: Array<{ defillamaId: string; total24h?: number | null }>,
 	liteProtocols: ProtocolLite[],
 	parentProtocols: ParentProtocolLite[]
 ): Record<string, number> {
@@ -353,8 +354,9 @@ function buildHoldersRevenueByDefillamaId(
 	}
 
 	for (const parentId in holdersRevenueByParentId) {
-		if (holdersRevenueByDefillamaId[parentId] == null && knownParentIds[parentId]) {
-			holdersRevenueByDefillamaId[parentId] = holdersRevenueByParentId[parentId]
+		const parentRevenue = holdersRevenueByParentId[parentId]
+		if (parentRevenue !== undefined && holdersRevenueByDefillamaId[parentId] == null && knownParentIds[parentId]) {
+			holdersRevenueByDefillamaId[parentId] = parentRevenue
 		}
 	}
 
@@ -409,6 +411,7 @@ function findTokenRightsMetadata(
 
 	for (const key in chainMetadata) {
 		const cachedChain = chainMetadata[key]
+		if (cachedChain === undefined) continue
 		if (cachedChain.id === defillamaId) return { source: 'chain', metadata: cachedChain }
 	}
 

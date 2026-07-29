@@ -2,11 +2,9 @@ import type { Hack } from '~/containers/Hacks/model'
 
 export type HallmarkPoint = [number, string]
 export type HallmarkRange = [[number, number], string]
+type RawHallmark = HallmarkPoint | HallmarkRange
 
-type HallmarkDimensions =
-	| Record<string, { genuineSpikes?: Array<[string, string]>; adapter?: string }>
-	| null
-	| undefined
+type HallmarkDimensions = Record<string, { genuineSpikes?: Array<[string, string]>; adapter?: string }> | null
 
 function normalizeHallmarkTimestampToSeconds(timestamp: number): number {
 	return timestamp >= 1e12 ? Math.floor(timestamp / 1e3) : timestamp
@@ -16,24 +14,25 @@ function buildPointHallmarkMap({
 	protocolHallmarks,
 	dimensions
 }: {
-	protocolHallmarks?: Array<unknown> | null | undefined
+	protocolHallmarks?: RawHallmark[] | null | undefined
 	dimensions?: HallmarkDimensions | undefined
 }): Map<number, string> {
 	const hallmarkMap = new Map<number, string>()
 
-	for (const mark of protocolHallmarks ?? []) {
-		if (!Array.isArray(mark)) continue
-		if (!Array.isArray(mark[0]) && typeof mark[0] === 'number' && mark[1] !== '-') {
-			const timestamp = normalizeHallmarkTimestampToSeconds(mark[0])
+	for (const [timestampOrRange, label] of protocolHallmarks ?? []) {
+		if (!Array.isArray(timestampOrRange) && label !== '-') {
+			const timestamp = normalizeHallmarkTimestampToSeconds(timestampOrRange)
 			if (!hallmarkMap.has(timestamp)) {
-				hallmarkMap.set(timestamp, String(mark[1]))
+				hallmarkMap.set(timestamp, label)
 			}
 		}
 	}
 
 	if (dimensions) {
-		for (const dimKey in dimensions) {
-			const spikes = dimensions[dimKey]?.genuineSpikes
+		for (const dimensionName in dimensions) {
+			const dimension = dimensions[dimensionName]
+			if (dimension === undefined) continue
+			const spikes = dimension.genuineSpikes
 			if (!spikes) continue
 
 			for (const [dateStr, label] of spikes) {
@@ -48,19 +47,17 @@ function buildPointHallmarkMap({
 	return hallmarkMap
 }
 
-function buildRangeHallmarksInMs(protocolHallmarks?: Array<unknown> | null): HallmarkRange[] {
+function buildRangeHallmarksInMs(protocolHallmarks?: RawHallmark[] | null): HallmarkRange[] {
 	const rangeHallmarks: HallmarkRange[] = []
 
-	for (const mark of protocolHallmarks ?? []) {
-		if (!Array.isArray(mark) || mark[1] === '-') continue
-		if (!Array.isArray(mark[0])) continue
+	for (const [timestampOrRange, label] of protocolHallmarks ?? []) {
+		if (!Array.isArray(timestampOrRange) || label === '-') continue
 
-		const [start, end] = mark[0]
-		if (typeof start !== 'number' || typeof end !== 'number') continue
+		const [start, end] = timestampOrRange
 
 		rangeHallmarks.push([
 			[normalizeHallmarkTimestampToSeconds(start) * 1e3, normalizeHallmarkTimestampToSeconds(end) * 1e3],
-			String(mark[1])
+			label
 		])
 	}
 
@@ -79,7 +76,7 @@ export function buildHallmarksWithGenuineSpikes({
 	protocolHallmarks,
 	dimensions
 }: {
-	protocolHallmarks?: Array<unknown> | null | undefined
+	protocolHallmarks?: RawHallmark[] | null | undefined
 	dimensions?: HallmarkDimensions | undefined
 }): HallmarkPoint[] | null {
 	const hallmarkMap = buildPointHallmarkMap({ protocolHallmarks, dimensions })
@@ -95,7 +92,7 @@ export function buildProtocolOverviewHallmarks({
 	dimensions
 }: {
 	hacks?: Hack[] | null
-	protocolHallmarks?: Array<unknown> | null | undefined
+	protocolHallmarks?: RawHallmark[] | null | undefined
 	dimensions?: HallmarkDimensions | undefined
 }): {
 	hallmarks: HallmarkPoint[]

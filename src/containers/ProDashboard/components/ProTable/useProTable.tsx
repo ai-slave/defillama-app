@@ -100,6 +100,7 @@ const areCustomColumnsEqual = (a: CustomColumn[], b: CustomColumn[]): boolean =>
 	for (let index = 0; index < a.length; index += 1) {
 		const left = a[index]
 		const right = b[index]
+		if (left === undefined || right === undefined) return false
 		if (
 			left.id !== right.id ||
 			left.name !== right.name ||
@@ -148,9 +149,9 @@ export function useProTable(
 	}
 
 	const { state, actions } = useProTableState({
-		options,
+		...(options !== undefined ? { options } : {}),
 		defaultSorting: DEFAULT_SORTING,
-		defaultPreset: preferredPresetRef.current ?? undefined,
+		...(preferredPresetRef.current !== null ? { defaultPreset: preferredPresetRef.current } : {}),
 		initialKnownColumnIds: initialKnownColumnIdsRef.current ?? []
 	})
 	const sourcePlan = React.useMemo(
@@ -162,7 +163,7 @@ export function useProTable(
 				activePresetId: state.selectedPreset,
 				sorting: state.sorting,
 				activeDatasetMetric: state.activeDatasetMetric,
-				filters
+				...(filters !== undefined ? { filters } : {})
 			}),
 		[
 			filters,
@@ -179,10 +180,11 @@ export function useProTable(
 		searchIndex,
 		isLoading,
 		isEmptyProtocols,
+		unavailableChains,
 		categories,
 		availableProtocols,
 		parentProtocols
-	} = useProTableData({ chains, filters, sourcePlan })
+	} = useProTableData({ chains, sourcePlan, ...(filters !== undefined ? { filters } : {}) })
 
 	const filteredProtocolsList = React.useMemo(() => {
 		if (!state.activeDatasetMetric) return finalProtocolsList
@@ -196,8 +198,8 @@ export function useProTable(
 	const { allColumns, allLeafColumnIds } = useProTableColumns({
 		customColumns: state.customColumns,
 		protocols: finalProtocolsList,
-		filters,
-		onFilterClick
+		...(filters !== undefined ? { filters } : {}),
+		...(onFilterClick !== undefined ? { onFilterClick } : {})
 	})
 
 	const resolvedColumnVisibility = React.useMemo(() => {
@@ -207,7 +209,7 @@ export function useProTable(
 		const columnOrderSet = new Set(state.columnOrder)
 		for (const columnId of allLeafColumnIds) {
 			if (Object.prototype.hasOwnProperty.call(state.columnVisibility, columnId)) {
-				nextVisibility[columnId] = state.columnVisibility[columnId]
+				nextVisibility[columnId] = state.columnVisibility[columnId] ?? false
 			} else if (state.columnOrder.length > 0) {
 				nextVisibility[columnId] = columnOrderSet.has(columnId)
 			} else {
@@ -239,15 +241,16 @@ export function useProTable(
 		},
 		sortingFns: {
 			alphanumericFalsyLast: (rowA, rowB, columnId) => {
-				const isDesc = state.sorting.length > 0 ? state.sorting[0].desc : true
+				const isDesc = state.sorting[0]?.desc ?? true
 				const valueA = rowA.getValue(columnId)
 				const valueB = rowB.getValue(columnId)
 				const numberA = typeof valueA === 'number' ? valueA : null
 				const numberB = typeof valueB === 'number' ? valueB : null
 
-				if (numberA === null && numberB !== null) return isDesc ? -1 : 1
-				if (numberA !== null && numberB === null) return isDesc ? 1 : -1
-				if (numberA === null && numberB === null) return 0
+				if (numberA === null || numberB === null) {
+					if (numberA === null && numberB === null) return 0
+					return numberA === null ? (isDesc ? -1 : 1) : isDesc ? 1 : -1
+				}
 				return numberA - numberB
 			}
 		},
@@ -337,6 +340,7 @@ export function useProTable(
 
 			const nextColumnOrder = [...state.columnOrder]
 			const previousColumn = nextColumnOrder[currentIndex - 1]
+			if (previousColumn === undefined) return
 			nextColumnOrder[currentIndex - 1] = columnKey
 			nextColumnOrder[currentIndex] = previousColumn
 
@@ -353,6 +357,7 @@ export function useProTable(
 
 			const nextColumnOrder = [...state.columnOrder]
 			const nextColumn = nextColumnOrder[currentIndex + 1]
+			if (nextColumn === undefined) return
 			nextColumnOrder[currentIndex + 1] = columnKey
 			nextColumnOrder[currentIndex] = nextColumn
 
@@ -372,8 +377,7 @@ export function useProTable(
 					? preset.sort.map((rule) => ({ ...rule }))
 					: DEFAULT_SORTING.map((rule) => ({ ...rule }))
 			const presetVisibility = buildColumnVisibilityMap(allLeafColumnIds, preset.columns)
-			const activeDatasetMetric =
-				preset.group === 'dataset' && preset.sort && preset.sort.length > 0 ? preset.sort[0].id : null
+			const activeDatasetMetric = preset.group === 'dataset' ? (preset.sort?.[0]?.id ?? null) : null
 
 			actions.applyPreset(presetId, preset.columns, presetSorting, presetVisibility, activeDatasetMetric)
 		},
@@ -603,6 +607,7 @@ export function useProTable(
 		table,
 		isLoading,
 		isEmptyProtocols,
+		unavailableChains,
 		showColumnPanel: state.showColumnPanel,
 		setShowColumnPanel: actions.setShowColumnPanel,
 		searchTerm: state.searchTerm,

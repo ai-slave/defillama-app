@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'vitest'
+import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import type { ICategoriesAndTags, IChainMetadata } from '~/utils/metadata/types'
 import { createRoutePhaseTimer } from '~/utils/perf'
 import {
 	getChainOverviewData,
 	getChainOverviewTvlOptions,
+	getChainRev24h,
+	getDexDominance,
 	getRwaActiveMcapForChain,
 	hasRwaActiveMcapChain,
 	shouldShowChainOverviewBridgedTvlChart,
 	shouldFetchChainDexs,
-	shouldFetchChainPerps
+	shouldFetchChainPerps,
+	sumAdapterProtocol24h
 } from '../queries.server'
-import type { ILiteChart } from '../types'
 
 const categoriesAndTagsMetadata = {
 	categories: ['Dexs', 'Derivatives', 'OTC Marketplace'],
@@ -154,9 +157,9 @@ describe('shouldFetchChainPerps', () => {
 })
 
 describe('getChainOverviewTvlOptions', () => {
-	const makeChartData = (staking: ILiteChart['staking']): ILiteChart => ({
+	const makeChartData = (staking: ChainChartResponse['staking']): ChainChartResponse => ({
 		tvl: [],
-		staking,
+		...(staking !== undefined ? { staking } : {}),
 		borrowed: [],
 		pool2: [],
 		vesting: [],
@@ -219,9 +222,47 @@ describe('getRwaActiveMcapForChain', () => {
 		expect(getRwaActiveMcapForChain(stats, 'XDC-Network')).toBe(90)
 	})
 
-	it('returns null for zero or missing active market cap', () => {
-		expect(getRwaActiveMcapForChain(stats, 'EmptyChain')).toBeNull()
+	it('preserves zero and returns null only for missing active market cap', () => {
+		expect(getRwaActiveMcapForChain(stats, 'EmptyChain')).toBe(0)
 		expect(getRwaActiveMcapForChain(stats, 'Missing')).toBeNull()
+	})
+})
+
+describe('chain overview nullable aggregates', () => {
+	it('treats missing periods in a successful fee response as zero activity', () => {
+		expect(sumAdapterProtocol24h([{ total24h: 0 }, { total24h: 5 }])).toBe(5)
+		expect(sumAdapterProtocol24h([{ total24h: null }, { total24h: 5 }])).toBe(5)
+		expect(sumAdapterProtocol24h([])).toBe(0)
+		expect(sumAdapterProtocol24h(null)).toBeNull()
+	})
+
+	it('adds configured REV contributions while preserving unavailable responses', () => {
+		const revProtocolSlugs = new Set(['mev-tips'])
+		expect(
+			getChainRev24h({
+				chainFees24h: 10,
+				feeProtocols: [{ slug: 'mev-tips', total24h: 2 }],
+				revProtocolSlugs
+			})
+		).toBe(12)
+		expect(getChainRev24h({ chainFees24h: null, feeProtocols: [], revProtocolSlugs })).toBeNull()
+		expect(getChainRev24h({ chainFees24h: 10, feeProtocols: [], revProtocolSlugs })).toBe(10)
+		expect(
+			getChainRev24h({
+				chainFees24h: 10,
+				feeProtocols: [{ slug: 'mev-tips', total24h: null }],
+				revProtocolSlugs
+			})
+		).toBe(10)
+		expect(getChainRev24h({ chainFees24h: 10, feeProtocols: null, revProtocolSlugs })).toBeNull()
+		expect(getChainRev24h({ chainFees24h: 10, feeProtocols: null, revProtocolSlugs: [] })).toBe(10)
+	})
+
+	it('preserves a valid zero DEX share when the denominator is known', () => {
+		expect(getDexDominance(100, 0)).toBe(0)
+		expect(getDexDominance(0, 100)).toBe(100)
+		expect(getDexDominance(0, 0)).toBeNull()
+		expect(getDexDominance(null, 100)).toBeNull()
 	})
 })
 

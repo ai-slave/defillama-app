@@ -1,81 +1,8 @@
-import type { RawChainAsset } from '~/containers/BridgedTVL/api.types'
+import type { ChainAssetTotals } from '~/containers/BridgedTVL/api.types'
+import type { ChainsByCategoryChain } from '~/containers/Chains/api.types'
 
-interface IChainTvl {
-	tvl: number
-	tvlPrevDay: number
-	tvlPrevWeek: number
-	tvlPrevMonth: number
-	mcap: number | null
-	mcaptvl: number | null
-	name: string
-	symbol: string
-	protocols: number
-	deprecated?: boolean
-	extraTvl: {
-		borrowed?: {
-			tvl: number
-			tvlPrevDay: number
-			tvlPrevWeek: number
-			tvlPrevMonth: number
-		}
-		doublecounted?: {
-			tvl: number
-			tvlPrevDay: number
-			tvlPrevWeek: number
-			tvlPrevMonth: number
-		}
-		staking?: {
-			tvl: number
-			tvlPrevDay: number
-			tvlPrevWeek: number
-			tvlPrevMonth: number
-		}
-		excludeparent?: {
-			tvl: number
-			tvlPrevDay: number
-			tvlPrevWeek: number
-			tvlPrevMonth: number
-		}
-		liquidstaking?: {
-			tvl: number
-			tvlPrevDay: number
-			tvlPrevWeek: number
-			tvlPrevMonth: number
-		}
-		pool2?: {
-			tvl: number
-			tvlPrevDay: number
-			tvlPrevWeek: number
-			tvlPrevMonth: number
-		}
-		vesting?: {
-			tvl: number
-			tvlPrevDay: number
-			tvlPrevWeek: number
-			tvlPrevMonth: number
-		}
-		dcAndLsOverlap?: {
-			tvl: number
-			tvlPrevDay: number
-			tvlPrevWeek: number
-			tvlPrevMonth: number
-		}
-	}
-	change_1d: number | null
-	change_7d: number | null
-	change_1m: number | null
-}
-
-export interface IChainsByCategory {
-	chainsUnique: Array<string>
-	categories: Array<string>
-	chainTvls: Array<IChainTvl>
-	chainsGroupbyParent: Record<string, Record<string, Array<string>>>
-	stackedDataset: Array<[string, Record<string, Record<string, number>>]>
-	tvlTypes: Record<string, string>
-}
-
-export interface IChain extends IChainTvl {
+export interface IChain extends Omit<ChainsByCategoryChain, 'protocols'> {
+	protocols: number | null
 	dexVolume24h: number | null
 	dexVolume7d: number | null
 	dexVolume30d: number | null
@@ -95,7 +22,7 @@ export interface IChain extends IChainTvl {
 	nftVolume24h: number | null
 	nftVolume7d: number | null
 	nftVolume30d: number | null
-	chainAssets: RawChainAsset | null
+	chainAssets: ChainAssetTotals | null
 	bridgedTvl?: number | null
 	childGroups: Record<string, Array<string>> | null
 }
@@ -115,18 +42,18 @@ export interface IChainsByCategoryData {
 }
 
 export type IFormattedDataWithExtraTvlBase = {
-	chainAssets?: RawChainAsset | null
-	tvl: number
-	tvlPrevDay: number
-	tvlPrevWeek: number
-	tvlPrevMonth: number
+	chainAssets?: ChainAssetTotals | null
+	tvl: number | null
+	tvlPrevDay: number | null
+	tvlPrevWeek: number | null
+	tvlPrevMonth: number | null
 	change_1d: number | null
 	change_7d: number | null
 	change_1m: number | null
 	mcap: number | null
 	mcaptvl: number | null
 	name: string
-	protocols: IChain['protocols']
+	protocols: IChain['protocols'] | null
 	deprecated?: boolean
 	stablesMcap: IChain['stablesMcap']
 	dexVolume24h: IChain['dexVolume24h']

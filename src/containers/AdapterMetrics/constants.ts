@@ -40,7 +40,7 @@ export enum ADAPTER_DATA_TYPES {
 	DAILY_COLLATERAL_LIQUIDATED = 'dailyCollateralLiquidated'
 }
 
-export const ADAPTER_DATA_TYPE_KEYS = {
+export const ADAPTER_DATA_TYPE_KEYS: Partial<Record<`${ADAPTER_DATA_TYPES}`, string>> = {
 	dailyFees: 'df',
 	dailyRevenue: 'dr',
 	dailyProtocolRevenue: 'dpr',
@@ -61,7 +61,7 @@ export const ADAPTER_DATA_TYPE_KEYS = {
 	dailyGasUsed: 'dgu',
 	dailyLiquidationVolume: 'dlv',
 	dailyCollateralLiquidated: 'dcl'
-} as const
+}
 
 type ChainMetadataKey = Extract<keyof IChainMetadata, string>
 
@@ -109,12 +109,12 @@ export function getChainMetadataKey(
 export const LINE_DIMENSIONS = new Set(['Open Interest', 'Active Liquidity'])
 
 // MEV/REV adapters folded into chain REV aggregations
-export const REV_PROTOCOLS = {
+export const REV_PROTOCOLS: Readonly<Record<string, readonly string[]>> = {
 	ethereum: ['flashbots', 'eden-relay'],
 	solana: ['jito-mev-tips', 'bloxroute'],
 	arbitrum: ['arbitrum-timeboost'],
 	polygon: ['fastlane'],
 	bsc: ['bloxroute']
-} as const
+}
 
 export const ZERO_FEE_PERPS = new Set(['Lighter Perps', 'Paradex Perps'])

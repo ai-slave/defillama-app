@@ -1,4 +1,7 @@
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type {
+	MultiSeriesTimeSeriesDataset,
+	MultiSeriesTimeSeriesRow
+} from '~/components/ECharts/MultiSeriesChart/types'
 import { V2_SERVER_URL } from '~/constants'
 import { getDimensionAdapterChainEarningsOverview } from '~/containers/Incentives/queries'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
@@ -17,7 +20,7 @@ import {
 	fetchAdapterProtocolChartData,
 	fetchAdapterProtocolMetrics
 } from './api'
-import type { IAdapterProtocolMetrics, IAdapterChainMetrics } from './api.types'
+import type { IAdapterChainMetrics } from './api.types'
 import {
 	ADAPTER_DATA_TYPE_KEYS,
 	ADAPTER_DATA_TYPES,
@@ -28,6 +31,7 @@ import {
 import type {
 	IAdapterByChainPageData,
 	IAdapterChainOverview,
+	IAdapterProtocolOverview,
 	IChainsByAdapterPageData,
 	IChainsByREVPageData
 } from './types'
@@ -36,6 +40,8 @@ import { buildAdapterByChainChartDataset } from './utils'
 const FEES_CHART_ROUTES = new Set(['fees', 'revenue', 'holders-revenue'])
 const CANTON_INCENTIVES_WARNING =
 	'Canton is currently distributing massive incentives, so its fees and revenue should be interpreted with that context.'
+type ChainPeriodMetrics = { '24h'?: number | null; '7d'?: number | null; '30d'?: number | null }
+type ChainPeriodMetricsByName = Record<string, ChainPeriodMetrics>
 
 function buildChainsChartData({
 	rawChartData,
@@ -43,19 +49,24 @@ function buildChainsChartData({
 }: {
 	rawChartData: Array<[number, Record<string, number>]>
 	allChains: string[]
-}): MultiSeriesChartDataset {
-	const chartDimensions = ['timestamp', ...allChains]
+}): MultiSeriesTimeSeriesDataset {
+	const chartDimensions: MultiSeriesTimeSeriesDataset['dimensions'] = ['timestamp', ...allChains]
 	const chainIndexes = new Map<string, number>()
-	for (let i = 0; i < allChains.length; i++) chainIndexes.set(allChains[i], i + 1)
-	const source: MultiSeriesChartDataset['source'] = []
+	for (let index = 0; index < allChains.length; index++) {
+		const chain = allChains[index]
+		if (chain !== undefined) chainIndexes.set(chain, index + 1)
+	}
+	const source: MultiSeriesTimeSeriesDataset['source'] = []
 	for (const [timestamp, chainValues] of rawChartData) {
 		const normalizedTimestamp = timestamp < 1e12 ? timestamp * 1e3 : timestamp
-		const row = new Array<number | null>(chartDimensions.length).fill(null)
-		row[0] = normalizedTimestamp
+		const row: MultiSeriesTimeSeriesRow = [normalizedTimestamp]
+		row.length = allChains.length + 1
+		row.fill(null, 1)
 
 		for (const chainKey in chainValues) {
+			const value = chainValues[chainKey]
 			const index = chainIndexes.get(chainKey)
-			if (index != null) row[index] = chainValues[chainKey]
+			if (value !== undefined && index !== undefined) row[index] = value
 		}
 
 		source.push(row)
@@ -79,8 +90,9 @@ export function getChainsByAdapterAllChains({
 	const sType = getChainMetadataKey(adapterType, dataType)
 	if (!sType) return allChains
 
-	for (const chain in chainMetadata) {
-		const currentChainMetadata = chainMetadata[chain]
+	for (const chainId in chainMetadata) {
+		const currentChainMetadata = chainMetadata[chainId]
+		if (currentChainMetadata === undefined) continue
 		if (!currentChainMetadata[sType]) continue
 		allChains.push(currentChainMetadata.name)
 	}
@@ -98,7 +110,7 @@ export async function getChainsByAdapterChartData({
 	dataType: `${ADAPTER_DATA_TYPES}`
 	allChains: string[]
 	allowEmptyOnError?: boolean
-}): Promise<MultiSeriesChartDataset> {
+}): Promise<MultiSeriesTimeSeriesDataset> {
 	let rawChartData: Array<[number, Record<string, number>]>
 	try {
 		rawChartData = await fetchJson<Array<[number, Record<string, number>]>>(
@@ -122,28 +134,32 @@ export async function getAdapterChainOverview({
 	chain: string
 	excludeTotalDataChart: boolean
 	dataType?: `${ADAPTER_DATA_TYPES}` | 'dailyEarnings'
-}) {
+}): Promise<IAdapterChainOverview> {
 	if (dataType !== 'dailyEarnings') {
 		const [overviewData, totalDataChart] = await Promise.all([
-			fetchAdapterChainMetrics({ adapterType, chain, dataType }),
-			excludeTotalDataChart ? Promise.resolve([]) : fetchAdapterChainChartData({ adapterType, chain, dataType })
-		])
-
-		return { ...overviewData, totalDataChart } as IAdapterChainOverview
-	} else {
-		const [overviewData, totalDataChart] = await Promise.all([
-			fetchAdapterChainMetrics({ adapterType, chain: 'All', dataType: 'dailyRevenue' }),
+			fetchAdapterChainMetrics({ adapterType, chain, ...(dataType !== undefined ? { dataType } : {}) }),
 			excludeTotalDataChart
-				? Promise.resolve([])
-				: fetchAdapterChainChartData({ adapterType, chain, dataType: 'dailyRevenue' })
+				? Promise.resolve<IAdapterChainOverview['totalDataChart']>([])
+				: fetchAdapterChainChartData({ adapterType, chain, ...(dataType !== undefined ? { dataType } : {}) })
 		])
 
-		return (await getDimensionAdapterChainEarningsOverview({
-			chain,
-			overviewData,
-			totalDataChart
-		})) as IAdapterChainOverview
+		const overview: IAdapterChainOverview = { ...overviewData, totalDataChart }
+		return overview
 	}
+
+	const [overviewData, totalDataChart] = await Promise.all([
+		fetchAdapterChainMetrics({ adapterType, chain: 'All', dataType: 'dailyRevenue' }),
+		excludeTotalDataChart
+			? Promise.resolve<IAdapterChainOverview['totalDataChart']>([])
+			: fetchAdapterChainChartData({ adapterType, chain, dataType: 'dailyRevenue' })
+	])
+
+	const overview: IAdapterChainOverview = await getDimensionAdapterChainEarningsOverview({
+		chain,
+		overviewData,
+		totalDataChart
+	})
+	return overview
 }
 
 export async function getAdapterProtocolOverview({
@@ -156,15 +172,17 @@ export async function getAdapterProtocolOverview({
 	protocol: string
 	excludeTotalDataChart: boolean
 	dataType?: `${ADAPTER_DATA_TYPES}`
-}) {
+}): Promise<IAdapterProtocolOverview> {
 	if (protocol.toLowerCase() === 'all') throw new Error('Protocol cannot be All')
 
 	const [overviewData, totalDataChart] = await Promise.all([
-		fetchAdapterProtocolMetrics({ adapterType, protocol, dataType }),
-		excludeTotalDataChart ? Promise.resolve([]) : fetchAdapterProtocolChartData({ adapterType, protocol, dataType })
+		fetchAdapterProtocolMetrics({ adapterType, protocol, ...(dataType !== undefined ? { dataType } : {}) }),
+		excludeTotalDataChart
+			? Promise.resolve<IAdapterProtocolOverview['totalDataChart']>([])
+			: fetchAdapterProtocolChartData({ adapterType, protocol, ...(dataType !== undefined ? { dataType } : {}) })
 	])
 
-	return { ...overviewData, totalDataChart } as IAdapterProtocolMetrics & { totalDataChart: Array<[number, number]> }
+	return { ...overviewData, totalDataChart }
 }
 
 export const getAdapterByChainPageData = async ({
@@ -199,7 +217,7 @@ export const getAdapterByChainPageData = async ({
 		getAdapterChainOverview({
 			adapterType,
 			chain,
-			dataType,
+			...(dataType !== undefined ? { dataType } : {}),
 			excludeTotalDataChart: adapterType === 'fees' && !showFeesChart
 		}),
 		fetchProtocols().catch(() => ({ protocols: [], parentProtocols: [] })),
@@ -289,8 +307,9 @@ export const getChainsByChainNativeFeeRevenuePageData = async ({
 		const deprecatedChains = getDeprecatedChainNames(chainMetadata)
 		const metric = getChainNativeFeeRevenueRankingMetric(dataType)
 
-		for (const chain in chainMetadata) {
-			const currentChainMetadata = chainMetadata[chain]
+		for (const chainId in chainMetadata) {
+			const currentChainMetadata = chainMetadata[chainId]
+			if (currentChainMetadata === undefined) continue
 			if (!currentChainMetadata[metric.metadataFlag]) continue
 			allChainsSet.add(currentChainMetadata.name)
 		}
@@ -350,7 +369,7 @@ export const getChainsByAdapterPageData = async ({
 		const allChains = getChainsByAdapterAllChains({ adapterType, dataType, chainMetadata })
 		const deprecatedChains = getDeprecatedChainNames(chainMetadata)
 
-		const getOptionalOverview = ({
+		const getOptionalOverview = async ({
 			enabled,
 			adapterType: overviewAdapterType,
 			dataType: overviewDataType
@@ -358,27 +377,20 @@ export const getChainsByAdapterPageData = async ({
 			enabled: boolean
 			adapterType: `${ADAPTER_TYPES}`
 			dataType: `${ADAPTER_DATA_TYPES}`
-		}) => {
-			if (!enabled) return Promise.resolve({})
+		}): Promise<ChainPeriodMetricsByName | null> => {
+			if (!enabled) return null
 			try {
-				return Promise.resolve(
-					getDimensionAdapterOverviewOfAllChains({
-						adapterType: overviewAdapterType,
-						dataType: overviewDataType,
-						chainMetadata
-					})
-				)
+				return getDimensionAdapterOverviewOfAllChains({
+					adapterType: overviewAdapterType,
+					dataType: overviewDataType,
+					chainMetadata
+				})
 			} catch {
-				return Promise.resolve({})
+				return null
 			}
 		}
 
-		const [chainsData, chartData, openInterestData, activeLiquidityData]: [
-			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>,
-			MultiSeriesChartDataset,
-			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>,
-			Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }>
-		] = await Promise.all([
+		const [chainsData, chartData, openInterestData, activeLiquidityData] = await Promise.all([
 			getDimensionAdapterOverviewOfAllChains({
 				adapterType,
 				dataType,
@@ -386,7 +398,7 @@ export const getChainsByAdapterPageData = async ({
 			}),
 			includeChartData
 				? getChainsByAdapterChartData({ adapterType, dataType, allChains, allowEmptyOnError: true })
-				: Promise.resolve({ dimensions: ['timestamp'], source: [] }),
+				: Promise.resolve<MultiSeriesTimeSeriesDataset>({ dimensions: ['timestamp'], source: [] }),
 			getOptionalOverview({
 				enabled: adapterType === 'derivatives',
 				adapterType: 'open-interest',
@@ -406,19 +418,20 @@ export const getChainsByAdapterPageData = async ({
 				(dataType === ADAPTER_DATA_TYPES.DAILY_FEES || dataType === ADAPTER_DATA_TYPES.DAILY_REVENUE)
 					? CANTON_INCENTIVES_WARNING
 					: null
-			const openInterest = openInterestData[chain]?.['24h'] ?? null
-			const activeLiquidity = activeLiquidityData[chain]?.['24h'] ?? null
+			const chainMetrics = chainsData?.[chain]
+			const openInterest = openInterestData?.[chain]?.['24h'] ?? null
+			const activeLiquidity = activeLiquidityData?.[chain]?.['24h'] ?? null
 
 			chains.push({
 				name: chain,
 				logo: chainIconUrl(chain),
-				total24h: chainsData[chain]?.['24h'] ?? null,
-				total7d: chainsData[chain]?.['7d'] ?? null,
-				total30d: chainsData[chain]?.['30d'] ?? null,
+				total24h: chainMetrics?.['24h'] ?? null,
+				total7d: chainMetrics?.['7d'] ?? null,
+				total30d: chainMetrics?.['30d'] ?? null,
 				...(deprecatedChains[chain] ? { deprecated: true } : {}),
 				...(warning ? { warning } : {}),
-				...(openInterest ? { openInterest } : {}),
-				...(activeLiquidity ? { activeLiquidity } : {})
+				...(openInterest != null ? { openInterest } : {}),
+				...(activeLiquidity != null ? { activeLiquidity } : {})
 			})
 		}
 
@@ -450,18 +463,18 @@ export const getChainsByREVPageData = async ({
 		const allChains: Array<string> = []
 
 		for (const chain in chainMetadata) {
-			if (chainMetadata[chain][feeRevenueMetrics.rev.metadataFlag]) {
+			const currentChainMetadata = chainMetadata[chain]
+			if (currentChainMetadata === undefined) continue
+			if (currentChainMetadata[feeRevenueMetrics.rev.metadataFlag]) {
 				allChains.push(chain)
 			}
 		}
 
-		const protocolsByChainsData = await Promise.allSettled(
-			allChains.map(async (chain) =>
-				fetchAdapterChainMetrics({
-					adapterType: 'fees',
-					chain
-				})
-			)
+		const protocolsByChain = await Promise.all(
+			allChains.map(async (chain) => ({
+				chain,
+				protocols: await fetchAdapterChainMetrics({ adapterType: 'fees', chain }).catch(() => null)
+			}))
 		)
 
 		const chainFeesData = await fetchAdapterChainMetrics({
@@ -470,13 +483,11 @@ export const getChainsByREVPageData = async ({
 		})
 
 		const chains: IChainsByREVPageData['chains'] = []
-		for (let index = 0; index < allChains.length; index++) {
-			const chain = allChains[index]
+		for (const { chain, protocols } of protocolsByChain) {
+			const currentChainMetadata = chainMetadata[chain]
+			if (currentChainMetadata === undefined) continue
 			const chainFees = chainFeesData.protocols.find((p) => p.slug === chain)
-			const protocolsResult = protocolsByChainsData[index]
-			const protocols = protocolsResult.status === 'fulfilled' ? protocolsResult.value : null
-			const chainRevProtocols =
-				chain in REV_PROTOCOLS ? new Set(REV_PROTOCOLS[chain as keyof typeof REV_PROTOCOLS]) : new Set<string>()
+			const chainRevProtocols = new Set(REV_PROTOCOLS[chain] ?? [])
 			let revProtocols24h = 0
 			let revProtocols30d = 0
 			for (const curr of protocols?.protocols ?? []) {
@@ -486,12 +497,12 @@ export const getChainsByREVPageData = async ({
 			}
 
 			chains.push({
-				name: chainMetadata[chain].name,
+				name: currentChainMetadata.name,
 				slug: chain,
 				logo: chainIconUrl(chain),
 				total24h: (chainFees?.total24h ?? 0) + revProtocols24h,
 				total30d: (chainFees?.total30d ?? 0) + revProtocols30d,
-				...(chainMetadata[chain].deprecated ? { deprecated: true } : {})
+				...(currentChainMetadata.deprecated ? { deprecated: true } : {})
 			})
 		}
 
@@ -510,15 +521,16 @@ export function getDimensionAdapterOverviewOfAllChains({
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: `${ADAPTER_DATA_TYPES}`
 	chainMetadata: Record<string, IChainMetadata>
-}) {
+}): ChainPeriodMetricsByName {
 	try {
-		const chains: Record<string, { '24h'?: number; '7d'?: number; '30d'?: number }> = {}
-		for (const chain in chainMetadata) {
-			const currentChainMetadata = chainMetadata[chain]
-			const metadataKey = getChainMetadataKey(adapterType, dataType)
-			if (!metadataKey || !currentChainMetadata[metadataKey]) continue
-			const dataKey = dataType in ADAPTER_DATA_TYPE_KEYS ? ADAPTER_DATA_TYPE_KEYS[dataType] : null
-			if (!dataKey) continue
+		const chains: ChainPeriodMetricsByName = {}
+		const metadataKey = getChainMetadataKey(adapterType, dataType)
+		const dataKey = ADAPTER_DATA_TYPE_KEYS[dataType]
+		if (!metadataKey || !dataKey) return chains
+		for (const chainId in chainMetadata) {
+			const currentChainMetadata = chainMetadata[chainId]
+			if (currentChainMetadata === undefined) continue
+			if (!currentChainMetadata[metadataKey]) continue
 			const value = currentChainMetadata.dimAgg?.[adapterType]?.[dataKey]
 			if (!value) continue
 			chains[currentChainMetadata.name] = value

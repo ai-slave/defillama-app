@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
 	fetchAdapterChainMetrics: vi.fn(),
 	fetchAdapterProtocolMetrics: vi.fn(),
 	fetchCexVolume: vi.fn(),
-	fetchChainsAssets: vi.fn(),
+	fetchChainsAssetTotals: vi.fn(),
 	getBridgeChainNetInflows: vi.fn(),
 	fetchChainChart: vi.fn(),
 	getETFData: vi.fn(),
@@ -30,7 +30,7 @@ vi.mock('~/containers/AdapterMetrics/api', () => ({
 	fetchAdapterProtocolMetrics: mocks.fetchAdapterProtocolMetrics,
 	fetchCexVolume: mocks.fetchCexVolume
 }))
-vi.mock('~/containers/BridgedTVL/api', () => ({ fetchChainsAssets: mocks.fetchChainsAssets }))
+vi.mock('~/containers/BridgedTVL/api', () => ({ fetchChainsAssetTotals: mocks.fetchChainsAssetTotals }))
 vi.mock('~/containers/Bridges/queries.server', () => ({ getBridgeChainNetInflows: mocks.getBridgeChainNetInflows }))
 vi.mock('~/containers/Chains/api', () => ({ fetchChainChart: mocks.fetchChainChart }))
 vi.mock('~/containers/ETF/queries', () => ({ getETFData: mocks.getETFData }))
@@ -69,11 +69,11 @@ const ethereum = {
 
 function resetMocks() {
 	mocks.fetchLlamaConfig.mockResolvedValue({})
-	mocks.fetchCoinGeckoCoinById.mockResolvedValue({})
+	mocks.fetchCoinGeckoCoinById.mockResolvedValue(null)
 	mocks.fetchAdapterChainMetrics.mockResolvedValue(null)
 	mocks.fetchAdapterProtocolMetrics.mockResolvedValue(null)
 	mocks.fetchCexVolume.mockResolvedValue(null)
-	mocks.fetchChainsAssets.mockResolvedValue({})
+	mocks.fetchChainsAssetTotals.mockResolvedValue({})
 	mocks.getBridgeChainNetInflows.mockResolvedValue(null)
 	mocks.fetchChainChart.mockResolvedValue({
 		tvl: [],
@@ -134,5 +134,107 @@ describe('getChainOverviewData optional sections', () => {
 				categoriesAndTagsMetadata
 			})
 		).rejects.toThrow('Error fetching chainOverview:Ethereum')
+	})
+
+	it('still rejects when required protocol aggregation is absent', async () => {
+		resetMocks()
+		mocks.getProtocolsByChain.mockResolvedValueOnce(null)
+		const { getChainOverviewData } = await import('../queries.server')
+
+		await expect(
+			getChainOverviewData({
+				chain: 'Ethereum',
+				chainMetadata: { ethereum },
+				protocolMetadata: {},
+				categoriesAndTagsMetadata
+			})
+		).rejects.toThrow('Missing protocol aggregation for Ethereum')
+	})
+
+	it('retains an explicit zero NFT volume', async () => {
+		resetMocks()
+		mocks.fetchJson.mockResolvedValueOnce({ ethereum: 0 })
+		const { getChainOverviewData } = await import('../queries.server')
+
+		const data = await getChainOverviewData({
+			chain: 'Ethereum',
+			chainMetadata: { ethereum },
+			protocolMetadata: {},
+			categoriesAndTagsMetadata
+		})
+
+		expect(data?.nfts).toEqual({ total24h: 0 })
+	})
+
+	it('keeps chain-native and app fee/revenue requests on their canonical endpoints', async () => {
+		resetMocks()
+		const { getChainOverviewData } = await import('../queries.server')
+		const metricChain = {
+			...ethereum,
+			fees: true,
+			revenue: true,
+			chainFees: true,
+			chainRevenue: true
+		} satisfies IChainMetadata
+
+		await getChainOverviewData({
+			chain: 'Ethereum',
+			chainMetadata: { ethereum: metricChain },
+			protocolMetadata: {},
+			categoriesAndTagsMetadata
+		})
+
+		expect(mocks.fetchAdapterChainMetrics).toHaveBeenCalledTimes(2)
+		expect(mocks.fetchAdapterChainMetrics).toHaveBeenCalledWith({
+			adapterType: 'fees',
+			chain: 'Ethereum',
+			dataType: 'dailyAppFees'
+		})
+		expect(mocks.fetchAdapterChainMetrics).toHaveBeenCalledWith({
+			adapterType: 'fees',
+			chain: 'Ethereum',
+			dataType: 'dailyAppRevenue'
+		})
+		expect(mocks.fetchAdapterProtocolMetrics).toHaveBeenCalledTimes(2)
+		expect(mocks.fetchAdapterProtocolMetrics).toHaveBeenCalledWith({
+			adapterType: 'fees',
+			protocol: 'Ethereum'
+		})
+		expect(mocks.fetchAdapterProtocolMetrics).toHaveBeenCalledWith({
+			adapterType: 'fees',
+			protocol: 'Ethereum',
+			dataType: 'dailyRevenue'
+		})
+	})
+
+	it('keeps the top fee protocol ordering, positive-value filter, and 14-row limit', async () => {
+		resetMocks()
+		const protocols = Array.from({ length: 16 }, (_, index) => ({
+			name: `Protocol ${index + 1}`,
+			fees: { total24h: index + 1 }
+		}))
+		protocols.push({ name: 'Zero Protocol', fees: { total24h: 0 } })
+		mocks.getProtocolsByChain.mockResolvedValue({
+			protocols,
+			chains: [],
+			fees: { protocols: [{ slug: 'fee-protocol', total24h: 1 }] },
+			dexs: null
+		})
+		const { getChainOverviewData } = await import('../queries.server')
+
+		const data = await getChainOverviewData({
+			chain: 'Ethereum',
+			chainMetadata: { ethereum },
+			protocolMetadata: {},
+			categoriesAndTagsMetadata
+		})
+
+		expect(data?.chainFees.topProtocolsChart?.map(([name, total24h]) => [name, total24h])).toEqual(
+			Array.from({ length: 14 }, (_, index) => [`Protocol ${16 - index}`, 16 - index])
+		)
+		expect(data?.protocols.map((protocol) => protocol.name)).toEqual([
+			...Array.from({ length: 16 }, (_, index) => `Protocol ${16 - index}`),
+			'Zero Protocol'
+		])
 	})
 })

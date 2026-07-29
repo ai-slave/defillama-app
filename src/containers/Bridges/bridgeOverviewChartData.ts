@@ -1,5 +1,6 @@
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import type { BridgeDayStats } from './api.types'
 import type { BridgeOverviewVolumeChartPoint } from './types'
 import { getCompletedBridgeVolumeTotals } from './utils'
 
@@ -14,13 +15,10 @@ export type BridgeOverviewChartType =
 
 interface BridgeTokenData {
 	symbol: string
-	usdValue: number
+	usdValue: number | null
 }
 
-interface BridgeDailyTokenStats {
-	totalTokensDeposited?: Record<string, BridgeTokenData>
-	totalTokensWithdrawn?: Record<string, BridgeTokenData>
-}
+type BridgeDailyTokenStats = Pick<BridgeDayStats, 'totalTokensDeposited' | 'totalTokensWithdrawn'>
 
 export type BridgeOverviewActiveChart =
 	| { kind: 'Net Flow'; dataset: MultiSeriesChartDataset }
@@ -78,25 +76,39 @@ export function getBridgeOverviewSummaryTotals({
 
 	for (const bridge of bridges ?? []) {
 		for (const period of BRIDGE_OVERVIEW_SUMMARY_PERIODS) {
-			if (rowTotals[period.total] == null) continue
+			const currentTotal = rowTotals[period.total]
+			if (currentTotal == null) continue
 			const value = bridge[period.field]
-			rowTotals[period.total] = value == null ? null : rowTotals[period.total] + value
+			rowTotals[period.total] = value == null ? null : currentTotal + value
 		}
 	}
 
 	return rowTotals
 }
 
-export function buildBridgeOverviewTokenPieSeries(tokens: Record<string, BridgeTokenData>): RuntimePieChartData {
-	const totalsBySymbol = new Map<string, number>()
+export function buildBridgeOverviewTokenPieSeries(tokens: Record<string, BridgeTokenData>): RuntimePieChartData | null {
+	const symbolCounts: Record<string, number> = {}
 	for (const token in tokens) {
-		const { symbol, usdValue } = tokens[token]
+		const tokenData = tokens[token]
+		if (tokenData === undefined) continue
+		const { symbol } = tokenData
 		const name = symbol || 'Unknown'
-		totalsBySymbol.set(name, (totalsBySymbol.get(name) ?? 0) + usdValue)
+		symbolCounts[name] = (symbolCounts[name] ?? 0) + 1
+	}
+
+	const totalsByToken: Record<string, number> = {}
+	for (const token in tokens) {
+		const tokenData = tokens[token]
+		if (tokenData === undefined) continue
+		const { symbol, usdValue } = tokenData
+		if (usdValue === null) return null
+		const name = symbol || 'Unknown'
+		const displayName = symbolCounts[name] === 1 ? name : `${name} · ${token}`
+		totalsByToken[displayName] = usdValue
 	}
 
 	return prepareRuntimePieChartData({
-		data: totalsBySymbol,
+		data: totalsByToken,
 		limit: 10,
 		comparePeers: (a, b) => {
 			const valueDifference = b.value - a.value
@@ -122,7 +134,7 @@ export function buildBridgeOverviewActiveChart({
 	chartType: BridgeOverviewChartType
 	chainVolumeData: BridgeOverviewVolumeChartPoint[]
 	bridgeStatsCurrentDay?: BridgeDailyTokenStats | null
-	tokenPieSeries?: RuntimePieChartData
+	tokenPieSeries?: RuntimePieChartData | null
 }): BridgeOverviewActiveChart {
 	if (selectedChain === 'All' || chartType === 'Volumes' || chartType === 'Bridge Volume') return null
 
@@ -131,7 +143,10 @@ export function buildBridgeOverviewActiveChart({
 			kind: chartType,
 			dataset: {
 				dimensions: ['timestamp', 'Net Flow'],
-				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => [Number(date) * 1e3, Deposits + Withdrawals])
+				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => [
+					date * 1e3,
+					Deposits == null || Withdrawals == null ? null : Deposits + Withdrawals
+				])
 			}
 		}
 	}
@@ -142,8 +157,11 @@ export function buildBridgeOverviewActiveChart({
 			dataset: {
 				dimensions: ['timestamp', 'Inflows', 'Outflows'],
 				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => {
+					if (Deposits == null || Withdrawals == null) return [date * 1e3, null, null]
 					const volume = Deposits + Math.abs(Withdrawals)
-					return [Number(date) * 1e3, (Deposits / volume) * 100 || 0, (Math.abs(Withdrawals) / volume) * 100 || 0]
+					return volume === 0
+						? [date * 1e3, null, null]
+						: [date * 1e3, (Deposits / volume) * 100, (Math.abs(Withdrawals) / volume) * 100]
 				})
 			}
 		}
@@ -154,13 +172,17 @@ export function buildBridgeOverviewActiveChart({
 			kind: chartType,
 			dataset: {
 				dimensions: ['timestamp', 'Deposits', 'Withdrawals'],
-				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => [Number(date) * 1e3, Deposits, Withdrawals])
+				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => [date * 1e3, Deposits, Withdrawals])
 			}
 		}
 	}
 
-	const tokensDeposited = bridgeStatsCurrentDay?.totalTokensDeposited
-	const tokensWithdrawn = bridgeStatsCurrentDay?.totalTokensWithdrawn
+	if (tokenPieSeries !== undefined) return tokenPieSeries ? { kind: chartType, series: tokenPieSeries } : null
+	if (!bridgeStatsCurrentDay) return null
+
+	const tokensDeposited = bridgeStatsCurrentDay.totalTokensDeposited
+	const tokensWithdrawn = bridgeStatsCurrentDay.totalTokensWithdrawn
 	const tokens = chartType === '24h Tokens Deposited' ? tokensDeposited : tokensWithdrawn
-	return { kind: chartType, series: tokenPieSeries ?? buildBridgeOverviewTokenPieSeries(tokens ?? {}) }
+	const series = buildBridgeOverviewTokenPieSeries(tokens)
+	return series ? { kind: chartType, series } : null
 }

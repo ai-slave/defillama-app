@@ -2,6 +2,7 @@ export interface UnlockHistoricalPriceEvent {
 	timestamp?: number | null
 	category?: string | null
 	noOfTokens?: number[] | null
+	hasUnknownTokenAmount?: true
 }
 
 export interface UnlockHistoricalPriceProtocol {
@@ -39,6 +40,7 @@ export function buildUnlocksHistoricalPriceRequests(
 		let lastPastEvent: number | undefined
 
 		for (const e of events) {
+			if (e.hasUnknownTokenAmount) continue
 			const ts = e?.timestamp
 			if (typeof ts !== 'number' || !Number.isFinite(ts)) continue
 			if (earliestEvent == null || ts < earliestEvent) earliestEvent = ts

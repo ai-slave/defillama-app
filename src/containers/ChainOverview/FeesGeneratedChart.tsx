@@ -1,42 +1,19 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import { CHART_COLORS } from '~/constants/colors'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { slug } from '~/utils'
 import { formatCompactNumber } from '~/utils/numberFormat'
+import { getChainOverviewPaletteColor } from './constants'
+import { useSmolChartHover } from './useSmolChartHover'
+
+const BAR_COLOR = getChainOverviewPaletteColor(0)
+const HOVERED_BAR_COLOR = getChainOverviewPaletteColor(1)
 
 export function FeesGeneratedChart({ series }: { series: Array<[string, number, string]> }) {
-	const containerRef = useRef<HTMLDivElement>(null)
-	const tooltipRef = useRef<HTMLDivElement>(null)
-	const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-	const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
-
-	const onMouseMove = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>) => {
-			if (!containerRef.current || series.length === 0) return
-			const rect = containerRef.current.getBoundingClientRect()
-			const index = Math.min(Math.floor(((e.clientX - rect.left) / rect.width) * series.length), series.length - 1)
-			if (index >= 0) {
-				setHoveredIndex(index)
-				setMousePos({ x: e.clientX, y: e.clientY })
-			}
-		},
-		[series.length]
-	)
-
-	const onMouseLeave = useCallback(() => setHoveredIndex(null), [])
-
-	useLayoutEffect(() => {
-		const el = tooltipRef.current
-		if (!el || hoveredIndex == null) return
-		const flipX = mousePos.x + 12 + el.offsetWidth > window.innerWidth
-		const flipY = mousePos.y - 12 + el.offsetHeight > window.innerHeight
-		el.style.left = `${flipX ? mousePos.x - el.offsetWidth - 12 : mousePos.x + 12}px`
-		el.style.top = `${flipY ? mousePos.y - el.offsetHeight + 12 : mousePos.y - 12}px`
-	}, [mousePos, hoveredIndex])
+	const { containerRef, tooltipRef, hoveredIndex, onMouseMove, onMouseLeave } = useSmolChartHover(series.length)
 
 	if (series.length === 0) return null
 
 	const maxVal = Math.max(...series.map((s) => s[1])) || 1
+	const hoveredPoint = hoveredIndex == null ? undefined : series[hoveredIndex]
 
 	return (
 		<div className="flex-1 cursor-pointer">
@@ -46,8 +23,8 @@ export function FeesGeneratedChart({ series }: { series: Array<[string, number, 
 				onMouseMove={onMouseMove}
 				onMouseLeave={onMouseLeave}
 				onClick={() => {
-					if (hoveredIndex != null) {
-						window.open(`/fees/${slug(series[hoveredIndex][0])}`)
+					if (hoveredPoint) {
+						window.open(`/fees/${slug(hoveredPoint[0])}`)
 					}
 				}}
 			>
@@ -58,7 +35,7 @@ export function FeesGeneratedChart({ series }: { series: Array<[string, number, 
 								className="w-[70%] min-w-[4px]"
 								style={{
 									height: `${(s[1] / maxVal) * 100}%`,
-									backgroundColor: hoveredIndex === i ? CHART_COLORS[1] : CHART_COLORS[0]
+									backgroundColor: hoveredIndex === i ? HOVERED_BAR_COLOR : BAR_COLOR
 								}}
 							/>
 						</div>
@@ -71,23 +48,23 @@ export function FeesGeneratedChart({ series }: { series: Array<[string, number, 
 						</div>
 					))}
 				</div>
-				{hoveredIndex != null ? (
+				{hoveredIndex != null && hoveredPoint ? (
 					<div
 						className={domChartCrosshairStyles}
 						style={{ left: `${((hoveredIndex + 0.5) / series.length) * 100}%` }}
 					/>
 				) : null}
-				{hoveredIndex != null ? (
+				{hoveredPoint ? (
 					<div ref={tooltipRef} className={domChartTooltipStyles}>
 						<div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
 							<img
-								src={series[hoveredIndex][2]}
+								src={hoveredPoint[2]}
 								style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0 }}
 								alt=""
 							/>
-							{series[hoveredIndex][0]}
+							{hoveredPoint[0]}
 							&nbsp;&nbsp;$
-							{formatCompactNumber(series[hoveredIndex][1], {
+							{formatCompactNumber(hoveredPoint[1], {
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
 							})}

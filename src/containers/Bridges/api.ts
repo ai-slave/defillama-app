@@ -2,7 +2,11 @@ import { BRIDGES_SERVER_URL } from '~/constants'
 import { fetchJson } from '~/utils/async'
 import type {
 	BridgeNetflowPeriod,
-	RawBridgeDayStatsResponse,
+	BridgeNetflowsResponse,
+	BridgeDayStats,
+	BridgeVolumeBySlugResponse,
+	BridgeVolumeResponse,
+	RawBridgeDayStats,
 	RawBridgeLargeTransactionsResponse,
 	RawBridgesResponse,
 	RawBridgesWithChainsResponse,
@@ -12,6 +16,7 @@ import type {
 	RawBridgeVolumeResponse,
 	RawBridgeNetflowsResponse
 } from './api.types'
+import { normalizeBridgeVolumeResponse } from './bridgeOverviewVolumeData'
 
 const BRIDGEDAYSTATS_API = `${BRIDGES_SERVER_URL}/bridgedaystats`
 const BRIDGES_API = `${BRIDGES_SERVER_URL}/bridges`
@@ -22,93 +27,45 @@ const BRIDGEVOLUME_API = `${BRIDGES_SERVER_URL}/bridgevolume`
 const BRIDGEVOLUME_API_SLUG = `${BRIDGES_SERVER_URL}/bridgevolume/slug`
 const NETFLOWS_API = `${BRIDGES_SERVER_URL}/netflows`
 
-interface BridgeApiErrorEnvelope {
-	statusCode: number
-	body: string
-	headers?: Record<string, string>
-}
-
-const isBridgeApiErrorEnvelope = (value: unknown): value is BridgeApiErrorEnvelope => {
-	return (
-		typeof value === 'object' &&
-		value !== null &&
-		'statusCode' in value &&
-		'body' in value &&
-		typeof (value as { statusCode?: unknown }).statusCode === 'number' &&
-		typeof (value as { body?: unknown }).body === 'string'
-	)
-}
-
-const extractEnvelopeMessage = (envelope: BridgeApiErrorEnvelope): string => {
-	try {
-		const parsed = JSON.parse(envelope.body) as { message?: unknown }
-		if (typeof parsed?.message === 'string' && parsed.message.length > 0) {
-			return parsed.message
-		}
-	} catch {}
-	return envelope.body
-}
-
-const unwrapBridgeResponse = <T>(context: string, payload: T | BridgeApiErrorEnvelope): T => {
-	if (!isBridgeApiErrorEnvelope(payload)) return payload as T
-	const message = extractEnvelopeMessage(payload)
-	throw new Error(`${context}: [${payload.statusCode}] ${message}`)
-}
-
-const unwrapBridgeVolumeChart = (context: string, payload: unknown): RawBridgeVolumeResponse => {
-	const chart = unwrapBridgeResponse(context, payload)
-	// The API proxy can temporarily return cache metadata instead of the cached chart.
-	return Array.isArray(chart) ? (chart as RawBridgeVolumeResponse) : []
-}
-
-const unwrapBridgeVolumeBySlug = (context: string, payload: unknown): RawBridgeVolumeBySlugResponse => {
-	const response = unwrapBridgeResponse(context, payload)
-	if (
-		typeof response !== 'object' ||
-		response === null ||
-		!('bridge' in response) ||
-		typeof response.bridge !== 'object' ||
-		response.bridge === null ||
-		!('dailyVolumes' in response) ||
-		!Array.isArray(response.dailyVolumes)
-	) {
-		throw new Error('Bridge volume API returned an invalid slug response')
-	}
-	return response as unknown as RawBridgeVolumeBySlugResponse
-}
-
 export function fetchBridges(includeChains: true): Promise<RawBridgesWithChainsResponse>
 export function fetchBridges(includeChains?: false): Promise<RawBridgesResponse>
 export function fetchBridges(includeChains = false): Promise<RawBridgesResponse | RawBridgesWithChainsResponse> {
 	const query = includeChains ? '?includeChains=true' : ''
 	const url = `${BRIDGES_API}${query}`
-	return fetchJson<RawBridgesResponse | RawBridgesWithChainsResponse | BridgeApiErrorEnvelope>(url).then((response) =>
-		unwrapBridgeResponse(url, response)
-	)
+	return fetchJson<RawBridgesResponse | RawBridgesWithChainsResponse>(url)
 }
 
-export function fetchBridgeVolumeAll(id?: string | number): Promise<RawBridgeVolumeResponse> {
+export function fetchRawBridgeVolumeAll(id?: string | number): Promise<RawBridgeVolumeResponse> {
 	const query = id == null ? '' : `?id=${encodeURIComponent(String(id))}`
 	const url = `${BRIDGEVOLUME_API}/all${query}`
-	return fetchJson<unknown>(url).then((response) => unwrapBridgeVolumeChart(url, response))
+	return fetchJson<RawBridgeVolumeResponse>(url)
 }
 
-export function fetchBridgeVolumeByChain(chain: string, id?: string | number): Promise<RawBridgeVolumeResponse> {
+export function fetchBridgeVolumeAll(id?: string | number): Promise<BridgeVolumeResponse> {
+	return fetchRawBridgeVolumeAll(id).then(normalizeBridgeVolumeResponse)
+}
+
+export function fetchRawBridgeVolumeByChain(chain: string, id?: string | number): Promise<RawBridgeVolumeResponse> {
 	const query = id == null ? '' : `?id=${encodeURIComponent(String(id))}`
 	const url = `${BRIDGEVOLUME_API}/${encodeURIComponent(chain)}${query}`
-	return fetchJson<unknown>(url).then((response) => unwrapBridgeVolumeChart(url, response))
+	return fetchJson<RawBridgeVolumeResponse>(url)
 }
 
-export function fetchBridgeVolumeBySlug(protocolSlug: string): Promise<RawBridgeVolumeBySlugResponse> {
+export function fetchBridgeVolumeByChain(chain: string, id?: string | number): Promise<BridgeVolumeResponse> {
+	return fetchRawBridgeVolumeByChain(chain, id).then(normalizeBridgeVolumeResponse)
+}
+
+export async function fetchBridgeVolumeBySlug(protocolSlug: string): Promise<BridgeVolumeBySlugResponse> {
 	const url = `${BRIDGEVOLUME_API_SLUG}/${encodeURIComponent(protocolSlug)}`
-	return fetchJson<unknown>(url).then((response) => unwrapBridgeVolumeBySlug(url, response))
+	const response = await fetchJson<RawBridgeVolumeBySlugResponse>(url)
+	return { bridge: response.bridge, dailyVolumes: normalizeBridgeVolumeResponse(response.dailyVolumes) }
 }
 
 export function fetchBridgeDayStats(
 	timestamp: number,
 	chain: string,
 	options?: string | number | { id?: string | number; rollingHours?: number }
-): Promise<RawBridgeDayStatsResponse> {
+): Promise<BridgeDayStats> {
 	const utcDayTimestamp = Math.floor(timestamp / 86400) * 86400
 	const params = new URLSearchParams()
 	if (typeof options === 'string' || typeof options === 'number') {
@@ -119,9 +76,7 @@ export function fetchBridgeDayStats(
 	}
 	const query = params.toString() ? `?${params.toString()}` : ''
 	const url = `${BRIDGEDAYSTATS_API}/${encodeURIComponent(String(utcDayTimestamp))}/${encodeURIComponent(chain)}${query}`
-	return fetchJson<RawBridgeDayStatsResponse | BridgeApiErrorEnvelope>(url).then((response) =>
-		unwrapBridgeResponse(url, response)
-	)
+	return fetchJson<RawBridgeDayStats>(url)
 }
 
 export function fetchBridgeLargeTransactions(
@@ -131,17 +86,13 @@ export function fetchBridgeLargeTransactions(
 ): Promise<RawBridgeLargeTransactionsResponse> {
 	const chainOrAll = chain ? encodeURIComponent(chain) : 'all'
 	const url = `${BRIDGELARGETX_API}/${chainOrAll}?starttimestamp=${encodeURIComponent(String(startTimestamp))}&endtimestamp=${encodeURIComponent(String(endTimestamp))}`
-	return fetchJson<RawBridgeLargeTransactionsResponse | BridgeApiErrorEnvelope>(url).then((response) =>
-		unwrapBridgeResponse(url, response)
-	)
+	return fetchJson<RawBridgeLargeTransactionsResponse>(url)
 }
 
 export function fetchBridgeTxCounts(chain?: string): Promise<RawBridgeTxCountsResponse> {
 	const chainOrAll = chain ? encodeURIComponent(chain) : 'all'
 	const url = `${BRIDGETXCOUNT_API}/${chainOrAll}`
-	return fetchJson<RawBridgeTxCountsResponse | BridgeApiErrorEnvelope>(url).then((response) =>
-		unwrapBridgeResponse(url, response)
-	)
+	return fetchJson<RawBridgeTxCountsResponse>(url)
 }
 
 export function fetchBridgeTransactions(
@@ -150,9 +101,7 @@ export function fetchBridgeTransactions(
 	endTimestamp: number
 ): Promise<RawBridgeTransactionsResponse> {
 	const url = `${BRIDGETX_API}/${encodeURIComponent(String(bridgeId))}?starttimestamp=${encodeURIComponent(String(startTimestamp))}&endtimestamp=${encodeURIComponent(String(endTimestamp))}`
-	return fetchJson<RawBridgeTransactionsResponse | BridgeApiErrorEnvelope>(url).then((response) =>
-		unwrapBridgeResponse(url, response)
-	)
+	return fetchJson<RawBridgeTransactionsResponse>(url)
 }
 
 export function fetchBridgeTransactionsClient(
@@ -168,9 +117,16 @@ export function fetchBridgeTransactionsClient(
 	return fetchJson<RawBridgeTransactionsResponse>(url)
 }
 
-export function fetchBridgeNetflows(period: BridgeNetflowPeriod): Promise<RawBridgeNetflowsResponse> {
+export function fetchBridgeNetflows(period: BridgeNetflowPeriod): Promise<BridgeNetflowsResponse> {
 	const url = `${NETFLOWS_API}/${period}`
-	return fetchJson<RawBridgeNetflowsResponse | BridgeApiErrorEnvelope>(url).then((response) =>
-		unwrapBridgeResponse(url, response)
-	)
+	return fetchJson<RawBridgeNetflowsResponse>(url).then(normalizeBridgeNetflowsResponse)
+}
+
+export function normalizeBridgeNetflowsResponse(response: RawBridgeNetflowsResponse): BridgeNetflowsResponse {
+	return response.map((entry) => ({
+		chain: entry.chain,
+		netFlow: Number(entry.net_flow),
+		depositedUsd: Number(entry.deposited_usd),
+		withdrawnUsd: Number(entry.withdrawn_usd)
+	}))
 }

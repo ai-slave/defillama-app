@@ -18,33 +18,33 @@ import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { PercentChange } from '~/ui/PercentChange'
 import { slug } from '~/utils'
+import type { CsvCell } from '~/utils/csvCell'
 import { formatUsd } from '~/utils/numberFormat'
 
 type BridgesTableRow = {
 	displayName: string
-	icon?: string
+	icon?: string | null
 	chains: Array<string>
 	change_1d?: number | null
 	lastDailyVolume?: number | null
 	weeklyVolume?: number | null
 	monthlyVolume?: number | null
-	txsPrevDay?: number
+	txsPrevDay?: number | null
 }
 
 export type BridgesTableHandle = {
-	prepareCsv: () => { filename: string; rows: Array<Array<string | number | boolean>> }
+	prepareCsv: () => { filename: string; rows: CsvCell[][] }
 }
 
 type BridgesTableProps = {
 	data: BridgesTableRow[]
 	searchValue?: string
 	csvFileName?: string
-	completedDayVolumes?: boolean
 }
 
 const columnHelper = createColumnHelper<BridgesTableRow>()
 
-const getBridgesColumns = (completedDayVolumes: boolean) => [
+const BRIDGES_COLUMNS = [
 	columnHelper.accessor('displayName', {
 		header: 'Name',
 		enableSorting: false,
@@ -97,33 +97,33 @@ const getBridgesColumns = (completedDayVolumes: boolean) => [
 		}
 	}),
 	columnHelper.accessor('lastDailyVolume', {
-		header: completedDayVolumes ? 'Completed day' : '24h Volume',
+		header: 'Completed day',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'w-[160px]',
 			align: 'end',
-			headerHelperText: completedDayVolumes ? 'Volume during the last completed UTC day' : undefined
+			headerHelperText: 'Volume during the last completed UTC day'
 		}
 	}),
 	columnHelper.accessor('weeklyVolume', {
-		header: completedDayVolumes ? '7 completed days' : '7d Volume',
+		header: '7 completed days',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'w-[160px]',
 			align: 'end',
-			headerHelperText: completedDayVolumes ? 'Volume during the last 7 completed UTC days' : undefined
+			headerHelperText: 'Volume during the last 7 completed UTC days'
 		}
 	}),
 	columnHelper.accessor('monthlyVolume', {
-		header: completedDayVolumes ? '30 completed days' : '1m Volume',
+		header: '30 completed days',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'w-[160px]',
 			align: 'end',
-			headerHelperText: completedDayVolumes ? 'Volume during the last 30 completed UTC days' : undefined
+			headerHelperText: 'Volume during the last 30 completed UTC days'
 		}
 	}),
 	columnHelper.accessor('txsPrevDay', {
@@ -142,16 +142,15 @@ const bridgesColumnOrders: ColumnOrdersByBreakpoint = {
 	1024: ['displayName', 'chains', 'change_1d', 'lastDailyVolume', 'weeklyVolume', 'monthlyVolume', 'txsPrevDay']
 }
 export const BridgesTable = React.forwardRef<BridgesTableHandle, BridgesTableProps>(function BridgesTable(
-	{ data, searchValue = '', csvFileName = 'bridges', completedDayVolumes = false },
+	{ data, searchValue = '', csvFileName = 'bridges' },
 	ref
 ) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'lastDailyVolume', desc: true }])
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
-	const columns = React.useMemo(() => getBridgesColumns(completedDayVolumes), [completedDayVolumes])
 	const instance = useReactTable({
 		data,
-		columns,
+		columns: BRIDGES_COLUMNS,
 		state: {
 			sorting,
 			columnFilters,

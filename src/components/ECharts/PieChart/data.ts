@@ -73,25 +73,23 @@ export function prepareRuntimePieChartData({
 			if (name === 'Others') upstreamOthersValue += value
 			else if (value > 0) peers.push({ name, value })
 		}
-	} else {
+	} else if (Array.isArray(data)) {
 		const valueByPeer = new Map<string, number>()
-		if (Array.isArray(data)) {
-			for (const entry of data) {
-				const name = String(Object.hasOwn(entry, sliceIdentifier) ? entry[sliceIdentifier] : undefined)
-				const value = Number(Object.hasOwn(entry, sliceValue) ? entry[sliceValue] : undefined)
-				if (name === 'Others') upstreamOthersValue += value
-				else valueByPeer.set(name, (valueByPeer.get(name) ?? 0) + value)
-			}
-		} else {
-			for (const name in data) {
-				if (!Object.hasOwn(data, name)) continue
-				const value = Number(data[name])
-				if (name === 'Others') upstreamOthersValue += value
-				else valueByPeer.set(name, (valueByPeer.get(name) ?? 0) + value)
-			}
+		for (const entry of data) {
+			const name = String(entry[sliceIdentifier])
+			const value = Number(entry[sliceValue])
+			if (name === 'Others') upstreamOthersValue += value
+			else valueByPeer.set(name, (valueByPeer.get(name) ?? 0) + value)
 		}
 		for (const [name, value] of valueByPeer) {
 			if (value > 0) peers.push({ name, value })
+		}
+	} else {
+		for (const name in data) {
+			const value = data[name]
+			if (value === undefined) continue
+			if (name === 'Others') upstreamOthersValue += value
+			else if (value > 0) peers.push({ name, value })
 		}
 	}
 	peers.sort(comparePeers ?? ((left, right) => right.value - left.value))

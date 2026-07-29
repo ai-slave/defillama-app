@@ -1,6 +1,6 @@
 import {
 	fetchDimensionDataset,
-	type DimensionDatasetProtocol,
+	type DimensionDatasetResult,
 	type DimensionDatasetSpec
 } from '~/containers/AdapterMetrics/server/datasets'
 import { slug } from '~/utils'
@@ -27,9 +27,11 @@ export function filterProDimensionDatasetChains(
 export async function fetchProDimensionDataset(
 	spec: DimensionDatasetSpec,
 	chains: string[]
-): Promise<DimensionDatasetProtocol[]> {
+): Promise<DimensionDatasetResult> {
 	const metadata = await import('~/utils/metadata').then((module) => module.default)
 	const supportedChains = filterProDimensionDatasetChains(spec, chains, metadata.chainMetadata)
-	if (chains.length > 0 && !chains.includes('All') && supportedChains.length === 0) return []
+	if (chains.length > 0 && !chains.includes('All') && supportedChains.length === 0) {
+		return { status: 'complete', protocols: [] }
+	}
 	return fetchDimensionDataset({ ...spec.options, chains: supportedChains })
 }

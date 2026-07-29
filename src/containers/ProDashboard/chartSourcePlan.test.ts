@@ -37,12 +37,10 @@ describe('Pro dashboard chart source planning', () => {
 		const plan = buildProDashboardChartSourcePlan(items, catalog)
 
 		expect(plan).toHaveLength(1)
-		expect(plan[0].request).toEqual({
+		expect(plan[0]?.request).toEqual({
 			type: 'liquidity',
 			protocol: 'aave',
 			chain: '',
-			geckoId: undefined,
-			dataType: undefined,
 			protocolSymbol: 'AAVE'
 		})
 	})
@@ -105,6 +103,32 @@ describe('Pro dashboard chart source planning', () => {
 		])
 	})
 
+	it('attaches exact producer IDs to Bridged TVL sources for display names and legacy aliases', () => {
+		const names = ['Hyperliquid', 'OP Mainnet', 'Avalanche', 'Gnosis', 'ZKsync Era']
+		const items: DashboardItemConfig[] = names.map((chain, index) => ({
+			id: `bridged-${index}`,
+			kind: 'chart',
+			type: 'bridgedTvl',
+			protocol: '',
+			chain
+		}))
+		const appMetadata = {
+			protocols: {},
+			pfPs: { pf: [], ps: [] },
+			chains: {
+				'hyperliquid-l1': { id: 'hyperliquid', name: 'Hyperliquid L1', chainAssets: true },
+				'op-mainnet': { id: 'optimism', name: 'OP Mainnet', chainAssets: true },
+				avalanche: { id: 'avax', name: 'Avalanche', chainAssets: true },
+				gnosis: { id: 'xdai', name: 'Gnosis', chainAssets: true },
+				'zksync-era': { id: 'era', name: 'ZKsync Era', chainAssets: true }
+			}
+		}
+
+		const plan = buildProDashboardChartSourcePlan(items, catalog, appMetadata)
+
+		expect(plan.map(({ request }) => request.chainAssetId)).toEqual(['hyperliquid', 'optimism', 'avax', 'xdai', 'era'])
+	})
+
 	it('seeds unsupported persisted protocol sources as empty instead of calling a missing adapter', () => {
 		const items: DashboardItemConfig[] = [
 			{ id: 'tvl', kind: 'chart', type: 'tvl', protocol: 'huma-finance-v2', chain: '' },
@@ -145,15 +169,17 @@ describe('Pro dashboard chart source planning', () => {
 
 		const plan = buildProDashboardChartSourcePlan(items, catalog, appMetadata)
 
-		expect(plan[0].skipReason).toBeUndefined()
+		expect(plan[0]?.skipReason).toBeUndefined()
 	})
 
 	it('keeps symbol-backed parent liquidity fetchable without a metadata flag', () => {
 		const items: DashboardItemConfig[] = [
 			{ id: 'liquidity', kind: 'chart', type: 'liquidity', protocol: 'aave', chain: '' }
 		]
+		const parentProtocol = catalog.protocols[1]
+		if (!parentProtocol) throw new Error('Missing parent protocol fixture')
 		const parentOnlyCatalog: ProDashboardProtocolCatalog = {
-			protocols: [catalog.protocols[1]],
+			protocols: [parentProtocol],
 			chains: []
 		}
 		const appMetadata = {
@@ -166,6 +192,6 @@ describe('Pro dashboard chart source planning', () => {
 
 		const plan = buildProDashboardChartSourcePlan(items, parentOnlyCatalog, appMetadata)
 
-		expect(plan[0].skipReason).toBeUndefined()
+		expect(plan[0]?.skipReason).toBeUndefined()
 	})
 })

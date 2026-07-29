@@ -21,6 +21,7 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import { DimensionDatasetCoverageNotice } from '../DimensionDatasetCoverageNotice'
 import { useDimensionDatasetData } from '../useDimensionDatasetData'
 import { optionsDatasetColumns } from './columns'
 
@@ -37,7 +38,7 @@ export function OptionsDataset({ chains }: { chains?: string[] }) {
 		pageSize: 10
 	})
 
-	const { data, isLoading, error } = useDimensionDatasetData('options', chains)
+	const { data, isLoading, error, unavailableChains } = useDimensionDatasetData('options', chains)
 	const width = useBreakpointWidth()
 
 	const instance = useReactTable({
@@ -180,6 +181,7 @@ export function OptionsDataset({ chains }: { chains?: string[] }) {
 					</div>
 				</div>
 			</div>
+			<DimensionDatasetCoverageNotice unavailableChains={unavailableChains} />
 			<TableBody table={instance} />
 			<TablePagination table={instance} />
 		</div>

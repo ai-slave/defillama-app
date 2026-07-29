@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { parse as parseEChartsColor } from 'zrender/lib/tool/color'
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type {
+	MultiSeriesTimeSeriesDataset,
+	MultiSeriesTimeSeriesRow
+} from '~/components/ECharts/MultiSeriesChart/types'
 import type { IProtocol } from '../types'
 import {
-	aggregateProtocolVersions,
 	buildProtocolBreakdownNormalization,
 	buildAdapterByChainBreakdownPresentation,
 	buildAdapterByChainLatestValuePresentation,
@@ -17,14 +19,32 @@ import {
 
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
 
-type NamedChartRow = Record<string, string | number | null | undefined>
+type NamedChartRow = Record<string, number | null | undefined>
 
-function toDataset({ dimensions, source }: { dimensions: string[]; source: NamedChartRow[] }): MultiSeriesChartDataset {
-	return { dimensions, source: source.map((row) => dimensions.map((dimension) => row[dimension])) }
+function toDataset({
+	dimensions,
+	source
+}: {
+	dimensions: MultiSeriesTimeSeriesDataset['dimensions']
+	source: NamedChartRow[]
+}): MultiSeriesTimeSeriesDataset {
+	return {
+		dimensions,
+		source: source.map((row) => {
+			const timestamp = row.timestamp
+			if (timestamp == null) throw new Error('Test chart row is missing its timestamp')
+			const chartRow: MultiSeriesTimeSeriesRow = [timestamp]
+			for (const dimension of dimensions.slice(1)) chartRow.push(row[dimension])
+			return chartRow
+		})
+	}
 }
 
-function datasetValue(dataset: MultiSeriesChartDataset, rowIndex: number, dimension: string) {
-	return dataset.source[rowIndex][dataset.dimensions.indexOf(dimension)]
+function datasetValue(dataset: MultiSeriesTimeSeriesDataset, rowIndex: number, dimension: string) {
+	for (let dimensionIndex = 1; dimensionIndex < dataset.dimensions.length; dimensionIndex++) {
+		if (dataset.dimensions[dimensionIndex] === dimension) return dataset.source[rowIndex]?.[dimensionIndex]
+	}
+	return undefined
 }
 
 const baseChartData = toDataset({
@@ -76,15 +96,7 @@ const adapterBreakdownChartData = toDataset({
 
 describe('normalizeChainsByAdapterChartState', () => {
 	it('returns the default bar state when no query params are present', () => {
-		expect(
-			normalizeChainsByAdapterChartState({
-				chartKindParam: undefined,
-				valueModeParam: undefined,
-				barLayoutParam: undefined,
-				groupByParam: undefined,
-				legacyChartTypeParam: undefined
-			})
-		).toEqual({
+		expect(normalizeChainsByAdapterChartState({})).toEqual({
 			chartKind: 'bar',
 			valueMode: 'absolute',
 			barLayout: 'stacked',
@@ -149,6 +161,37 @@ describe('normalizeChainsByAdapterChartState', () => {
 })
 
 describe('buildChainsByAdapterChartPresentation', () => {
+	it('treats a chain named timestamp as a positional series in bar and dominance charts', () => {
+		const chartData: MultiSeriesTimeSeriesDataset = {
+			dimensions: ['timestamp', 'timestamp'],
+			source: [[toMs(2024, 1, 1), 25]]
+		}
+		const bar = buildChainsByAdapterChartPresentation({
+			chartData,
+			selectedChains: ['timestamp'],
+			state: {
+				chartKind: 'bar',
+				valueMode: 'absolute',
+				barLayout: 'stacked',
+				groupBy: 'daily'
+			}
+		})
+		const dominance = buildChainsByAdapterChartPresentation({
+			chartData,
+			selectedChains: ['timestamp'],
+			state: { chartKind: 'dominance', groupBy: 'daily' }
+		})
+
+		expect(bar.kind).toBe('bar')
+		if (bar.kind !== 'bar') return
+		expect(bar.dataset).toEqual(chartData)
+		expect(bar.charts[0]).toEqual(expect.objectContaining({ name: 'timestamp', encode: { x: 0, y: 1 } }))
+		expect(dominance.kind).toBe('dominance')
+		if (dominance.kind !== 'dominance') return
+		expect(dominance.dataset).toEqual({ dimensions: ['timestamp', 'timestamp'], source: [[toMs(2024, 1, 1), 100]] })
+		expect(dominance.charts[0]).toEqual(expect.objectContaining({ name: 'timestamp', encode: { x: 0, y: 1 } }))
+	})
+
 	it('builds absolute stacked bars with totals enabled', () => {
 		const state: ChainsByAdapterChartState = {
 			chartKind: 'bar',
@@ -207,13 +250,11 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.charts.every((chart) => chart.stack == null)).toBe(true)
 		expect(presentation.charts.every((chart) => chart.large == null)).toBe(true)
 
-		const [day1, day2, day3] = presentation.dataset.source
-		expect(day1[1]).toBe(100)
-		expect(day1[2]).toBe(0)
-		expect(day2[1]).toBeCloseTo(33.3333333333)
-		expect(day2[2]).toBeCloseTo(66.6666666667)
-		expect(day3[1]).toBe(100)
-		expect(day3[2]).toBe(0)
+		expect(presentation.dataset.source.map((row) => row.slice(1))).toEqual([
+			[100, 0],
+			[expect.closeTo(33.3333333333), expect.closeTo(66.6666666667)],
+			[100, 0]
+		])
 	})
 
 	it('clamps negative values to zero when normalizing relative shares', () => {
@@ -338,9 +379,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.groupBy).toBe('weekly')
 		expect(presentation.charts.every((chart) => chart.type === 'line' && chart.hideAreaStyle == null)).toBe(true)
 
-		const [week1] = presentation.dataset.source
-		expect(week1[1]).toBeCloseTo(60)
-		expect(week1[2]).toBeCloseTo(40)
+		expect(presentation.dataset.source.map((row) => row.slice(1))).toEqual([[expect.closeTo(60), expect.closeTo(40)]])
 	})
 
 	it('applies negative adjustments before calculating narrowed grouped and cumulative dominance', () => {
@@ -478,9 +517,12 @@ describe('buildChainsByAdapterChartPresentation', () => {
 			state: { chartKind: 'dominance', groupBy: 'daily' }
 		})
 		if (overflow.kind !== 'dominance') return
-		const color = overflow.charts[0].color
-		expect(color).toMatch(/^hsl\([^,]+, 68%, 48%\)$/)
-		expect(parseEChartsColor(color!)).toBeDefined()
+		const colors = overflow.charts.flatMap(({ color }) => (color === undefined ? [] : [color]))
+		expect(colors).toHaveLength(overflow.charts.length)
+		for (const color of colors) {
+			expect(color).toMatch(/^hsl\([^,]+, 68%, 48%\)$/)
+			expect(parseEChartsColor(color)).toBeDefined()
+		}
 	})
 
 	it('builds treemap data from the last complete daily chart timestamp', () => {
@@ -493,11 +535,10 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.kind).toBe('treemap')
 		if (presentation.kind !== 'treemap') return
 
-		expect(presentation.data.map((item) => item.name)).toEqual(['Base', 'Ethereum'])
-		expect(presentation.data[0].value).toBe(30)
-		expect(presentation.data[0].share).toBe(75)
-		expect(presentation.data[1].value).toBe(10)
-		expect(presentation.data[1].share).toBe(25)
+		expect(presentation.data.map(({ name, value, share }) => ({ name, value, share }))).toEqual([
+			{ name: 'Base', value: 30, share: 75 },
+			{ name: 'Ethereum', value: 10, share: 25 }
+		])
 	})
 
 	it('falls back to the previous daily timestamp when the latest point is not at UTC midnight', () => {
@@ -510,9 +551,10 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.kind).toBe('hbar')
 		if (presentation.kind !== 'hbar') return
 
-		expect(presentation.data.map((item) => item.name)).toEqual(['Solana', 'Ethereum'])
-		expect(presentation.data[0].value).toBe(20)
-		expect(presentation.data[1].value).toBe(10)
+		expect(presentation.data.map(({ name, value }) => ({ name, value }))).toEqual([
+			{ name: 'Solana', value: 20 },
+			{ name: 'Ethereum', value: 10 }
+		])
 	})
 
 	it('falls back to the previous daily timestamp when the latest gap is less than 23 hours', () => {
@@ -525,9 +567,10 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.kind).toBe('treemap')
 		if (presentation.kind !== 'treemap') return
 
-		expect(presentation.data.map((item) => item.name)).toEqual(['Solana', 'Ethereum'])
-		expect(presentation.data[0].value).toBe(20)
-		expect(presentation.data[1].value).toBe(10)
+		expect(presentation.data.map(({ name, value }) => ({ name, value }))).toEqual([
+			{ name: 'Solana', value: 20 },
+			{ name: 'Ethereum', value: 10 }
+		])
 	})
 
 	it('uses the last available daily timestamp when there is only one point', () => {
@@ -540,9 +583,10 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.kind).toBe('hbar')
 		if (presentation.kind !== 'hbar') return
 
-		expect(presentation.data.map((item) => item.name)).toEqual(['Solana', 'Ethereum'])
-		expect(presentation.data[0].value).toBe(40)
-		expect(presentation.data[1].value).toBe(30)
+		expect(presentation.data.map(({ name, value }) => ({ name, value }))).toEqual([
+			{ name: 'Solana', value: 40 },
+			{ name: 'Ethereum', value: 30 }
+		])
 	})
 
 	it('keeps first-row selection for duplicate latest daily timestamps', () => {
@@ -613,10 +657,13 @@ describe('buildChainsByAdapterChartPresentation', () => {
 			'Chain 9',
 			'Others'
 		])
-		expect(presentation.data[0].value).toBe(100)
-		expect(presentation.data[8].value).toBe(20)
-		expect(presentation.data[9].value).toBe(15)
-		expect(presentation.data[9].share).toBeCloseTo((15 / 555) * 100)
+		expect(presentation.data).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ name: 'Chain 1', value: 100 }),
+				expect.objectContaining({ name: 'Chain 9', value: 20 }),
+				expect.objectContaining({ name: 'Others', value: 15, share: expect.closeTo((15 / 555) * 100) })
+			])
+		)
 	})
 
 	it('keeps latest-value colors stable after filtering and across snapshot views', () => {
@@ -692,10 +739,11 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.kind).toBe('treemap')
 		if (presentation.kind !== 'treemap') return
 
-		expect(presentation.data.map((item) => item.name)).toEqual(['Ethereum', 'Base', 'Solana'])
-		expect(presentation.data[0].value).toBe(30)
-		expect(presentation.data[1].value).toBe(30)
-		expect(presentation.data[2].value).toBe(20)
+		expect(presentation.data.map(({ name, value }) => ({ name, value }))).toEqual([
+			{ name: 'Ethereum', value: 30 },
+			{ name: 'Base', value: 30 },
+			{ name: 'Solana', value: 20 }
+		])
 	})
 
 	it('builds cumulative latest-value treemap data from running totals', () => {
@@ -708,10 +756,11 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.kind).toBe('treemap')
 		if (presentation.kind !== 'treemap') return
 
-		expect(presentation.data.map((item) => item.name)).toEqual(['Ethereum', 'Base', 'Solana'])
-		expect(presentation.data[0].value).toBe(30)
-		expect(presentation.data[1].value).toBe(30)
-		expect(presentation.data[2].value).toBe(20)
+		expect(presentation.data.map(({ name, value }) => ({ name, value }))).toEqual([
+			{ name: 'Ethereum', value: 30 },
+			{ name: 'Base', value: 30 },
+			{ name: 'Solana', value: 20 }
+		])
 	})
 
 	it('keeps zero cumulative totals distinct from missing selected series for ranking', () => {
@@ -784,8 +833,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.kind).toBe('treemap')
 		if (presentation.kind !== 'treemap') return
 
-		expect(presentation.data.map((item) => item.name)).toEqual(['Active'])
-		expect(presentation.data[0].value).toBe(100)
+		expect(presentation.data.map(({ name, value }) => ({ name, value }))).toEqual([{ name: 'Active', value: 100 }])
 	})
 
 	it('sums only points inside the yearly rolling window for treemap', () => {
@@ -822,6 +870,25 @@ describe('buildChainsByAdapterChartPresentation', () => {
 })
 
 describe('buildAdapterByChainBreakdownPresentation', () => {
+	it('treats a protocol named timestamp as the positional data series', () => {
+		const timestamp = toMs(2024, 1, 1)
+		const presentation = buildAdapterByChainBreakdownPresentation({
+			chartData: { dimensions: ['timestamp', 'timestamp'], source: [[timestamp, 25]] },
+			selectedProtocols: ['timestamp'],
+			state: {
+				chartKind: 'bar',
+				valueMode: 'absolute',
+				barLayout: 'stacked',
+				groupBy: 'daily'
+			}
+		})
+
+		expect(presentation.kind).toBe('bar')
+		if (presentation.kind !== 'bar') return
+		expect(presentation.dataset).toEqual({ dimensions: ['timestamp', 'timestamp'], source: [[timestamp, 25]] })
+		expect(presentation.charts[0]).toEqual(expect.objectContaining({ name: 'timestamp', encode: { x: 0, y: 1 } }))
+	})
+
 	it('keeps protocol colors stable after filtering', () => {
 		const state = { chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' } as const
 		const full = buildAdapterByChainBreakdownPresentation({
@@ -1048,6 +1115,22 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 })
 
 describe('buildAdapterByChainLatestValuePresentation', () => {
+	it('reads latest values from a protocol series named timestamp rather than the x column', () => {
+		const presentation = buildAdapterByChainLatestValuePresentation({
+			chartKind: 'hbar',
+			selectedProtocols: ['timestamp'],
+			groupBy: 'daily',
+			chartData: {
+				dimensions: ['timestamp', 'timestamp'],
+				source: [[toMs(2024, 1, 1), 25]]
+			}
+		})
+
+		expect(presentation.kind).toBe('hbar')
+		if (presentation.kind !== 'hbar') return
+		expect(presentation.data).toEqual([expect.objectContaining({ name: 'timestamp', value: 25, share: 100 })])
+	})
+
 	it('uses the last complete daily chart timestamp', () => {
 		const chartData = toDataset({
 			dimensions: ['timestamp', 'Hyperliquid', 'dYdX', 'GMX'],
@@ -1067,9 +1150,10 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 		expect(presentation.kind).toBe('treemap')
 		if (presentation.kind !== 'treemap') return
 
-		expect(presentation.data.map((item) => item.name)).toEqual(['Hyperliquid', 'dYdX'])
-		expect(presentation.data[0].value).toBe(70)
-		expect(presentation.data[1].value).toBe(30)
+		expect(presentation.data.map(({ name, value }) => ({ name, value }))).toEqual([
+			{ name: 'Hyperliquid', value: 70 },
+			{ name: 'dYdX', value: 30 }
+		])
 	})
 
 	it('returns no rows when selected protocols are missing from the chosen daily timestamp', () => {
@@ -1133,10 +1217,11 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 		expect(presentation.kind).toBe('hbar')
 		if (presentation.kind !== 'hbar') return
 
-		expect(presentation.data.map((item) => item.name)).toEqual(['Hyperliquid', 'dYdX', 'GMX'])
-		expect(presentation.data[0].value).toBe(70)
-		expect(presentation.data[1].value).toBe(30)
-		expect(presentation.data[2].value).toBe(10)
+		expect(presentation.data.map(({ name, value }) => ({ name, value }))).toEqual([
+			{ name: 'Hyperliquid', value: 70 },
+			{ name: 'dYdX', value: 30 },
+			{ name: 'GMX', value: 10 }
+		])
 	})
 
 	it('renders every selected treemap item without synthesizing an Others tile', () => {
@@ -1187,7 +1272,11 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 		if (hbar.kind !== 'hbar') return
 		expect(hbar.data.at(-1)).toEqual(expect.objectContaining({ name: 'Others', value: 4_371 }))
 		expect(hbar.data.at(-1)?.share).toBeCloseTo((4_371 / 5_253) * 100)
-		expect(hbar.data.at(-1)?.itemStyle.color).not.toBe(hbar.data[8].itemStyle.color)
+		const othersColor = hbar.data.find((item) => item.name === 'Others')?.itemStyle.color
+		const visiblePeerColor = hbar.data.find((item) => item.name === 'Protocol 9')?.itemStyle.color
+		expect(othersColor).toBeDefined()
+		expect(visiblePeerColor).toBeDefined()
+		expect(othersColor).not.toBe(visiblePeerColor)
 	})
 })
 
@@ -1387,39 +1476,5 @@ describe('leafProtocolNamesFromTableRows', () => {
 			]
 		} as IProtocol
 		expect(leafProtocolNamesFromTableRows([parent])).toEqual(['C2', 'C1'])
-	})
-})
-
-describe('aggregateProtocolVersions', () => {
-	it('keeps all-missing period totals null instead of zero-seeding them', () => {
-		const result = aggregateProtocolVersions([
-			{
-				name: 'Version A',
-				displayName: 'Version A',
-				parentProtocol: 'Parent Protocol',
-				linkedProtocols: ['Parent Protocol', 'Version A'],
-				chains: ['Base']
-			},
-			{
-				name: 'Version B',
-				displayName: 'Version B',
-				parentProtocol: 'Parent Protocol',
-				linkedProtocols: ['Parent Protocol', 'Version B'],
-				chains: ['Optimism']
-			}
-		] as any)
-
-		expect(result).toMatchObject({
-			name: 'Parent Protocol',
-			displayName: 'Parent Protocol',
-			slug: 'parent-protocol',
-			total24h: null,
-			total7d: null,
-			total30d: null,
-			annualized1y: null,
-			totalAllTime: null
-		})
-		expect(result.chains).toEqual(expect.arrayContaining(['Base', 'Optimism']))
-		expect(result.chains).toHaveLength(2)
 	})
 })

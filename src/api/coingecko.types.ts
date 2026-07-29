@@ -130,8 +130,8 @@ export interface CgChartResponse {
 			}>
 		}
 		prices?: Array<[number, number]>
-		mcaps?: Array<[number, number]> | undefined
-		volumes?: Array<[number, number]> | undefined
+		mcaps?: Array<[number, number]>
+		volumes?: Array<[number, number]>
 	}
 }
 
@@ -363,15 +363,8 @@ export type CoinGeckoCoinDetailResponseForOptions<TOptions = undefined> = CoinGe
 		Array<Record<string, unknown>>
 	>
 
-type CoinGeckoCoinDetailResponse = CoinGeckoCoinDetailResponseForOptions
-
 export type CoinGeckoCoinDetailResultForOptions<TOptions = undefined> =
-	| CoinGeckoCoinDetailResponseForOptions<TOptions>
-	| Record<string, never>
-
-export type CoinGeckoCoinDetailResult = CoinGeckoCoinDetailResultForOptions
-
-export type CoinGeckoCoinByContractAddressResponse = CoinGeckoCoinDetailResponse
+	CoinGeckoCoinDetailResponseForOptions<TOptions> | null
 
 export type CoinGeckoCoinTickersResponseForOptions<TOptions = undefined> = {
 	name?: string

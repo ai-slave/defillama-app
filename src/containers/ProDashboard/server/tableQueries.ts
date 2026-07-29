@@ -1,6 +1,6 @@
 import {
 	DIMENSION_DATASET_SPEC_BY_TYPE,
-	type DimensionDatasetProtocol
+	type DimensionDatasetResult
 } from '~/containers/AdapterMetrics/server/datasets'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
@@ -25,7 +25,7 @@ export interface TableServerData {
 	feesByChain: Record<string, ProTableChainOverview>
 	perpsByChain: Record<string, ProTableChainOverview>
 	openInterestByChain: Record<string, ProTableChainOverview>
-	datasetsByQueryKey: Record<string, DimensionDatasetProtocol[]>
+	datasetsByQueryKey: Record<string, DimensionDatasetResult>
 	tokenUsageByQueryKey: Record<string, ProtocolTokenUsageData[]>
 }
 
@@ -224,6 +224,7 @@ export async function fetchTableServerData(
 
 	for (const source of datasetSources) {
 		const spec = DIMENSION_DATASET_SPEC_BY_TYPE[source.datasetType]
+		if (!spec) throw new Error(`Missing dimension dataset spec: ${source.datasetType}`)
 		tasks.push(
 			withTimeout(fetchProDimensionDataset(spec, source.chains), FETCH_TIMEOUT * 3).then((data) => ({
 				...createTableData(),

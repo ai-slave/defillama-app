@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildChainYAxis } from './chartYAxis'
+import { chainOverviewChartColors } from './constants'
 
 describe('chain chart y-axis layout', () => {
 	it('keeps per-metric colors, formatters, and spacing across three axes', () => {
@@ -10,26 +11,27 @@ describe('chain chart y-axis layout', () => {
 				['Token Price', 2]
 			],
 			baseYAxis: { axisLabel: { color: '#aaa' } },
-			chartColors: { TVL: '#111', 'Active Addresses': '#222', 'Token Price': '#333' },
+			chartColors: { ...chainOverviewChartColors, TVL: '#111', 'Active Addresses': '#222', 'Token Price': '#333' },
 			chartsInSeries: new Set(['TVL', 'Active Addresses', 'Token Price']),
 			themeText: '#aaa'
 		})
 
-		const usersAxisLine = axes[1].axisLine as { lineStyle: { color: string } }
-		const priceAxisLine = axes[2].axisLine as { lineStyle: { color: string } }
-		const usersAxisLabel = axes[1].axisLabel as { color: string; formatter: (value: number) => string }
-		const priceAxisLabel = axes[2].axisLabel as { color: string; formatter: (value: number) => string }
+		const [, usersAxis, priceAxis] = axes
+		if (!usersAxis || !priceAxis) throw new Error('Expected three configured chain axes')
+		const usersFormatter = usersAxis.axisLabel?.formatter
+		const priceFormatter = priceAxis.axisLabel?.formatter
+		if (typeof usersFormatter !== 'function' || typeof priceFormatter !== 'function') {
+			throw new Error('Expected numeric chain-axis formatters')
+		}
 		expect(axes.map((axis) => axis.offset ?? 0)).toEqual([0, 0, 40])
-		expect(usersAxisLine.lineStyle.color).toBe('#222')
-		expect(priceAxisLine.lineStyle.color).toBe('#333')
-		expect(usersAxisLabel.color).toBe('#aaa')
-		expect(priceAxisLabel.color).toBe('#aaa')
-		expect(usersAxisLine.lineStyle).toMatchObject({ type: [5, 10] })
-		expect(priceAxisLine.lineStyle).toMatchObject({ type: [5, 10] })
-		expect(usersAxisLine.lineStyle).not.toHaveProperty('opacity')
-		expect(priceAxisLine.lineStyle).not.toHaveProperty('opacity')
-		expect(usersAxisLabel.formatter(1_000)).toBe('1,000')
-		expect(priceAxisLabel.formatter(5)).toContain('$')
+		expect(usersAxis.axisLine?.lineStyle).toMatchObject({ color: '#222', type: [5, 10] })
+		expect(priceAxis.axisLine?.lineStyle).toMatchObject({ color: '#333', type: [5, 10] })
+		expect(usersAxis.axisLabel).toMatchObject({ color: '#aaa' })
+		expect(priceAxis.axisLabel).toMatchObject({ color: '#aaa' })
+		expect(usersAxis.axisLine?.lineStyle).not.toHaveProperty('opacity')
+		expect(priceAxis.axisLine?.lineStyle).not.toHaveProperty('opacity')
+		expect(usersFormatter(1_000, 0, null)).toBe('1,000')
+		expect(priceFormatter(5, 0, null)).toContain('$')
 		expect(axes.every((axis) => axis.alignTicks == null)).toBe(true)
 	})
 
@@ -40,7 +42,7 @@ describe('chain chart y-axis layout', () => {
 				['Token Price', 1]
 			],
 			baseYAxis: { alignTicks: true },
-			chartColors: { TVL: '#111', 'Token Price': '#333' },
+			chartColors: { ...chainOverviewChartColors, TVL: '#111', 'Token Price': '#333' },
 			chartsInSeries: new Set(['TVL', 'Token Price']),
 			themeText: '#aaa'
 		})

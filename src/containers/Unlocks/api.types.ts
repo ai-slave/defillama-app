@@ -5,6 +5,8 @@ import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesCh
 export interface EmissionEvent {
 	timestamp: number
 	noOfTokens: number[]
+	/** Present when the producer supplied at least one unknown token amount. */
+	hasUnknownTokenAmount?: true
 	description?: string
 	category?: string
 	unlockType?: string
@@ -20,10 +22,11 @@ export interface TokenAllocationSplit {
 	current: Record<string, number>
 	final: Record<string, number>
 	progress?: Record<string, number>
-	bySection?: Record<string, unknown>
+	bySection?: Omit<TokenAllocationSplit, 'bySection'>
 }
 
-export type TokenAllocationPayload = TokenAllocationSplit | Record<string, number>
+export type LegacyTokenAllocation = Record<string, number>
+export type TokenAllocationPayload = TokenAllocationSplit | LegacyTokenAllocation
 
 export interface ProtocolEmission {
 	name: string
@@ -31,7 +34,6 @@ export interface ProtocolEmission {
 	gecko_id?: string | null
 	events?: EmissionEvent[] | null
 	tokenPrice?: TokenPriceSnapshot[] | null
-	unlockEvents?: unknown
 	tPrice?: number | null
 	tSymbol?: string | null
 	circSupply?: number | null
@@ -62,6 +64,25 @@ export interface InsidersPayload {
 	addresses: Insider[]
 }
 
+export interface EmissionSeriesPoint {
+	timestamp: number
+	unlocked?: number | null
+	rawEmission?: number | null
+	burned?: number | null
+	isTBD?: boolean
+	isForecast?: boolean
+}
+
+export interface EmissionSeries {
+	label?: string
+	data?: EmissionSeriesPoint[]
+}
+
+export interface ProtocolEmissionChartData {
+	data?: EmissionSeries[] | null
+	tokenAllocation?: TokenAllocationPayload | null
+}
+
 export interface ProtocolEmissionDetail {
 	name: string
 	gecko_id?: string | null
@@ -70,36 +91,10 @@ export interface ProtocolEmissionDetail {
 		notes?: string[] | null
 		events?: EmissionEvent[] | null
 	} | null
-	documentedData?: {
-		data?: Array<{
-			label?: string
-			data?: Array<{
-				timestamp: number
-				unlocked?: number | null
-				rawEmission?: number | null
-				burned?: number | null
-				isTBD?: boolean
-				isForecast?: boolean
-			}>
-		}> | null
-		tokenAllocation?: TokenAllocationPayload | null
-	} | null
-	realTimeData?: {
-		data?: Array<{
-			label?: string
-			data?: Array<{
-				timestamp: number
-				unlocked?: number | null
-				rawEmission?: number | null
-				burned?: number | null
-				isTBD?: boolean
-				isForecast?: boolean
-			}>
-		}> | null
-		tokenAllocation?: TokenAllocationPayload | null
-	} | null
-	unlockUsdChart?: unknown[] | null
-	futures?: Record<string, unknown> | null
+	documentedData?: ProtocolEmissionChartData | null
+	realTimeData?: ProtocolEmissionChartData | null
+	unlockUsdChart?: TokenIncentiveChartPoint[] | null
+	futures?: { openInterest?: number; fundingRate?: number } | null
 	categories?: Record<string, string[]> | null
 	componentData?: {
 		sections?: Record<string, EmissionSectionMetadata>
@@ -107,11 +102,12 @@ export interface ProtocolEmissionDetail {
 	insiders?: InsidersPayload | null
 }
 
+export type TokenIncentiveChartPoint = [timestamp: number, value: number]
+
 export interface EmissionSectionMetadata {
 	isTBD?: boolean
 	isForecast?: boolean
 	colorFrom?: string
-	[key: string]: unknown
 }
 
 export interface EmissionSupplyMetrics {
@@ -145,7 +141,7 @@ interface EmissionsChartConfigItem {
 	type: 'line'
 	name: string
 	encode: { x: 0; y: number }
-	color: string | undefined
+	color?: string
 	stack: string
 }
 

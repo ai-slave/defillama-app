@@ -1,19 +1,17 @@
 import { slug } from '~/utils'
-import { sluggify } from '~/utils/cache-client'
 import { getDeprecatedChainsByName, isDeprecatedChain } from '~/utils/metadata/deprecatedChains'
 import type { IChainMetadata } from '~/utils/metadata/types'
-import { fetchChainAssetsFlows1d, fetchChainAssetsHistoricalFlows, fetchChainsAssets } from './api'
-import type { RawChainAsset, RawChainAssetsFlowEntry, RawChainsAssetsResponse } from './api.types'
+import { fetchChainAssetsFlows1d, fetchChainsAssets } from './api'
+import type { ChainAsset, ChainAssetsFlowEntry, ChainsAssetsResponse } from './api.types'
+import { reconcileChainAssetFlowKeys } from './flowKeys'
 
 interface BridgedTVLData {
 	chains: Array<{ label: string; to: string }>
-	assets: RawChainsAssetsResponse
-	flows1d: Record<string, RawChainAssetsFlowEntry> | null
-	chainData: RawChainAsset | null
+	assets: ChainsAssetsResponse
+	flows1d: Record<string, ChainAssetsFlowEntry> | null
+	chainData: ChainAsset | null
 	deprecated?: boolean
 	deprecatedChains: Record<string, true>
-	inflows: Array<Record<string, number>>
-	tokenInflowNames: string[]
 }
 
 export async function getBridgedTVLByChain({
@@ -23,39 +21,26 @@ export async function getBridgedTVLByChain({
 	chain?: string
 	chainMetadata: Record<string, IChainMetadata>
 }): Promise<BridgedTVLData> {
-	const [assets, flows1d, inflows] = await Promise.all([
-		fetchChainsAssets(),
-		fetchChainAssetsFlows1d().catch(() => null),
-		chain ? fetchChainAssetsHistoricalFlows(sluggify(chain)).catch(() => []) : []
-	])
+	const [assets, rawFlows1d] = await Promise.all([fetchChainsAssets(), fetchChainAssetsFlows1d().catch(() => null)])
+	const flows1d = rawFlows1d ? reconcileChainAssetFlowKeys({ assets, flows: rawFlows1d, chainMetadata }) : null
 
-	let chainData: RawChainAsset | null = null
+	let chainData: ChainAsset | null = null
 	if (chain) {
 		const targetSlug = slug(chain)
-		for (const key in assets ?? {}) {
+		for (const key in assets) {
 			if (slug(key) === targetSlug) {
-				chainData = assets[key]
+				chainData = assets[key] ?? null
 				break
 			}
 		}
 	}
 
-	const tokenInflowNames = new Set<string>()
-	for (const inflow of inflows) {
-		for (const token in inflow) {
-			if (token !== 'date') {
-				tokenInflowNames.add(token)
-			}
-		}
+	const assetEntries: Array<[string, ChainAsset]> = []
+	for (const key in assets) {
+		const asset = assets[key]
+		if (asset !== undefined) assetEntries.push([key, asset])
 	}
-
-	const assetEntries: [string, RawChainAsset][] = []
-	for (const key in assets ?? {}) {
-		assetEntries.push([key, assets[key]])
-	}
-	assetEntries.sort(
-		(a, b) => Number(b[1].total?.total?.split('.')?.[0] ?? 0) - Number(a[1].total?.total?.split('.')?.[0] ?? 0)
-	)
+	assetEntries.sort((a, b) => Math.trunc(b[1].total.total) - Math.trunc(a[1].total.total))
 	const chainLinks: { label: string; to: string }[] = [{ label: 'All', to: '/bridged' }]
 	const deprecatedChainNames: string[] = []
 	for (const [assetKey] of assetEntries) {
@@ -74,8 +59,6 @@ export async function getBridgedTVLByChain({
 		flows1d,
 		chainData,
 		...(chain && isDeprecatedChain(chainMetadata, chain) ? { deprecated: true } : {}),
-		deprecatedChains: getDeprecatedChainsByName(chainMetadata, deprecatedChainNames),
-		inflows,
-		tokenInflowNames: Array.from(tokenInflowNames)
+		deprecatedChains: getDeprecatedChainsByName(chainMetadata, deprecatedChainNames)
 	}
 }

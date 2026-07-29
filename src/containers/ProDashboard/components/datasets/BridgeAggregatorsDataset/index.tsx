@@ -20,6 +20,7 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import { DimensionDatasetCoverageNotice } from '../DimensionDatasetCoverageNotice'
 import { useDimensionDatasetData } from '../useDimensionDatasetData'
 import { bridgeAggregatorsDatasetColumns } from './columns'
 
@@ -35,7 +36,7 @@ export function BridgeAggregatorsDataset({ chains }: { chains?: string[] }) {
 		pageIndex: 0,
 		pageSize: 10
 	})
-	const { data, isLoading, error } = useDimensionDatasetData('bridge-aggregators', chains)
+	const { data, isLoading, error, unavailableChains } = useDimensionDatasetData('bridge-aggregators', chains)
 
 	const instance = useReactTable({
 		data: data ?? EMPTY_DATA,
@@ -69,10 +70,10 @@ export function BridgeAggregatorsDataset({ chains }: { chains?: string[] }) {
 	}, [instance])
 
 	React.useEffect(() => {
-		const columnSizes = {}
+		const columnSizes: ColumnSizingState = {}
 		for (const column of bridgeAggregatorsDatasetColumns) {
-			if (column.size) {
-				columnSizes[column.id as string] = column.size
+			if (column.id && column.size) {
+				columnSizes[column.id] = column.size
 			}
 		}
 		instance.setColumnSizing(columnSizes)
@@ -178,6 +179,7 @@ export function BridgeAggregatorsDataset({ chains }: { chains?: string[] }) {
 					</div>
 				</div>
 			</div>
+			<DimensionDatasetCoverageNotice unavailableChains={unavailableChains} />
 			<TableBody table={instance} />
 			<TablePagination table={instance} />
 		</div>

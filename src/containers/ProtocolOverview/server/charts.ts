@@ -85,10 +85,10 @@ const parseStringArrayParam = (value: string | undefined): string[] | null => {
 // Upstream adapter breakdown charts only support these named dimensions; reject
 // arbitrary strings here instead of forwarding them as a loose passthrough.
 const parseAdapterBreakdownRequest = (params: {
-	adapterType?: string
-	protocol?: string
-	type?: string
-	dataType?: string
+	adapterType: string | undefined
+	protocol: string | undefined
+	type: string | undefined
+	dataType: string | undefined
 }): AdapterBreakdownRequest => {
 	const { adapterType, protocol, type, dataType } = params
 
@@ -269,26 +269,7 @@ export const protocolCharts = defineApiRoute({
 					return notFound('protocol emissions not found')
 				}
 
-				const result = await getProtocolEmissionsCharts(protocolRoute.canonicalSlug)
-				const unlockUsdChart: Array<[number, number]> = []
-				if (Array.isArray(result.unlockUsdChart)) {
-					for (const item of result.unlockUsdChart) {
-						if (
-							!Array.isArray(item) ||
-							item.length < 2 ||
-							!Number.isFinite(Number(item[0])) ||
-							!Number.isFinite(Number(item[1]))
-						) {
-							continue
-						}
-						unlockUsdChart.push([Number(item[0]), Number(item[1])])
-					}
-				}
-				const data = {
-					...result,
-					unlockUsdChart: Array.isArray(result.unlockUsdChart) ? unlockUsdChart : null
-				}
-
+				const data = await getProtocolEmissionsCharts(protocolRoute.canonicalSlug)
 				return ok(data)
 			}
 

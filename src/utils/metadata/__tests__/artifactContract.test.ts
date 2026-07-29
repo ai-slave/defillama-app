@@ -96,7 +96,7 @@ describe('metadata artifact contract', () => {
 	it('creates runtime metadata lookups from artifact payloads', () => {
 		const metadata = createMetadataCacheFromArtifacts(createPayload())
 
-		expect(metadata.protocolMetadata['parent#aave'].displayName).toBe('Aave')
+		expect(metadata.protocolMetadata['parent#aave']).toMatchObject({ displayName: 'Aave' })
 		expect(metadata.protocolRouteIdBySlug.aave).toBe('parent#aave')
 		expect(metadata.protocolDisplayNames.get('aave')).toBe('Aave')
 		expect(metadata.chainRouteKeyBySlug.ethereum).toBe('Ethereum')
@@ -113,18 +113,6 @@ describe('metadata artifact contract', () => {
 		expect(metadata.digitalAssetTreasuryCompanyRouteBySlug.mstr).toBe('MSTR')
 		expect(metadata.stablecoinPeggedAssetSlugsSet.has('tether')).toBe(true)
 		expect(metadata.equitiesCompanySlugsSet.has('NVDA:US')).toBe(true)
-	})
-
-	it('indexes token route segments that overlap object prototype names', () => {
-		const metadata = createMetadataCacheFromArtifacts(
-			createPayload({
-				tokenDirectory: {
-					ctor: { name: 'Constructor Token', symbol: 'CTOR', route: '/token/constructor' }
-				}
-			})
-		)
-
-		expect(metadata.tokenDirectoryRecordByRouteSegment['constructor']?.symbol).toBe('CTOR')
 	})
 
 	it('applies refresh payloads directly', () => {

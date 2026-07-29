@@ -110,7 +110,7 @@ describe('fetchTableServerData', () => {
 		getFeesAndRevenueProtocolsByChainMock.mockResolvedValue([])
 		getOpenInterestByChainMock.mockResolvedValue({ protocols: [] })
 		getPerpsVolumeByChainMock.mockResolvedValue({ protocols: [] })
-		fetchDimensionDatasetMock.mockResolvedValue([])
+		fetchDimensionDatasetMock.mockResolvedValue({ status: 'complete', protocols: [] })
 	})
 
 	it('does not load the legacy table bundle for a Unified Table', async () => {
@@ -273,7 +273,10 @@ describe('fetchTableServerData', () => {
 		fetchProtocolsByTokenMock.mockResolvedValue([{ name: 'Aave', category: 'Lending', amountUsd: { Ethereum: 10 } }])
 
 		const result = await fetchTableServerData([{ ...tokenUsageTable, tokenSymbols: [' usdc ', 'USDC', 'usdt'] }])
-		const [[cacheKey, data]] = Object.entries(result?.tokenUsageByQueryKey ?? {})
+		const entry = Object.entries(result?.tokenUsageByQueryKey ?? {})[0]
+		expect(entry).toBeDefined()
+		if (!entry) return
+		const [cacheKey, data] = entry
 
 		expect(cacheKey).toBe('["pro-dashboard","token-usage",["USDC","USDT"],false]')
 		expect(fetchProtocolsByTokenMock).toHaveBeenCalledTimes(2)

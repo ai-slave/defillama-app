@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedPercentageChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
+import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartPresentation, prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
@@ -24,14 +25,16 @@ import { LoadingIndicator } from '~/ui/Status'
 import { getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
+import { aggregateGroupedChainRows, getTopLevelGroupedChains } from './grouping'
 import { ChainsByCategoryTable } from './Table'
-import { applyChainsTvlSettings } from './tvl'
-import type { IChain, IChainsByCategoryData } from './types'
+import { applyChainsTvlSettings, getChainMcapTvlRatio } from './tvl'
+import type { IChain, IChainsByCategoryData, IFormattedDataWithExtraTvl } from './types'
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 type ChainsChartData = Pick<IChainsByCategoryData, 'tvlChartsByChain' | 'totalTvlByDate'>
 const EMPTY_CHAINS_CHART_DATA: ChainsChartData = { tvlChartsByChain: { tvl: {} }, totalTvlByDate: { tvl: {} } }
+const CHAIN_TVL_VALUE_KEYS = [...TVL_SETTINGS_KEYS, 'dcAndLsOverlap'] as const
 
 const getChartExtraValues = ({
 	tvlChartsByChain,
@@ -40,16 +43,16 @@ const getChartExtraValues = ({
 }: {
 	tvlChartsByChain: IChainsByCategoryData['tvlChartsByChain']
 	chain: string
-	date: string
-}) => ({
-	doublecounted: tvlChartsByChain.doublecounted?.[chain]?.[date],
-	liquidstaking: tvlChartsByChain.liquidstaking?.[chain]?.[date],
-	dcAndLsOverlap: tvlChartsByChain.dcAndLsOverlap?.[chain]?.[date],
-	staking: tvlChartsByChain.staking?.[chain]?.[date],
-	borrowed: tvlChartsByChain.borrowed?.[chain]?.[date],
-	pool2: tvlChartsByChain.pool2?.[chain]?.[date],
-	vesting: tvlChartsByChain.vesting?.[chain]?.[date]
-})
+	date: number
+}) => {
+	const values: Partial<Record<TvlSettingsKey | 'dcAndLsOverlap', number | null>> = {}
+	for (const key of CHAIN_TVL_VALUE_KEYS) {
+		const chart = tvlChartsByChain[key]?.[chain]
+		if (!chart) continue
+		values[key] = chart[date] ?? null
+	}
+	return values
+}
 
 const getChainRowExtraValues = ({
 	chain,
@@ -57,15 +60,14 @@ const getChainRowExtraValues = ({
 }: {
 	chain: IChain
 	metric: 'tvl' | 'tvlPrevDay' | 'tvlPrevWeek' | 'tvlPrevMonth'
-}) => ({
-	doublecounted: chain.extraTvl?.doublecounted?.[metric],
-	liquidstaking: chain.extraTvl?.liquidstaking?.[metric],
-	dcAndLsOverlap: chain.extraTvl?.dcAndLsOverlap?.[metric],
-	staking: chain.extraTvl?.staking?.[metric],
-	borrowed: chain.extraTvl?.borrowed?.[metric],
-	pool2: chain.extraTvl?.pool2?.[metric],
-	vesting: chain.extraTvl?.vesting?.[metric]
-})
+}) => {
+	const values: Partial<Record<TvlSettingsKey | 'dcAndLsOverlap', number | null>> = {}
+	for (const key of CHAIN_TVL_VALUE_KEYS) {
+		if (!Object.hasOwn(chain.extraTvl, key)) continue
+		values[key] = chain.extraTvl[key]?.[metric] ?? null
+	}
+	return values
+}
 
 export function ChainsByCategory({
 	chains,
@@ -155,7 +157,7 @@ export function ChainsByCategory({
 	return (
 		<>
 			<RowLinksWithDropdown links={allCategories} activeLink={categoryName} />
-			{entityQuestions?.length > 0 ? (
+			{entityQuestions && entityQuestions.length > 0 ? (
 				<EntityQuestionsStrip questions={entityQuestions} entitySlug="chains" entityType="page" entityName="Chains" />
 			) : null}
 
@@ -258,7 +260,7 @@ export const buildChainsByCategoryChartPresentation = ({
 	colorsByChain: IChainsByCategoryData['colorsByChain']
 	enabledTvlSettings: readonly TvlSettingsKey[]
 }) => {
-	const recentTvlByChain = {}
+	const recentTvlByChain: Record<string, number> = {}
 	const tvlByChain = tvlChartsByChain['tvl'] ?? {}
 	const chainNames: string[] = []
 	for (const chain in tvlByChain) {
@@ -266,22 +268,30 @@ export const buildChainsByCategoryChartPresentation = ({
 	}
 
 	const source: Array<Array<number | null>> = []
-	const dates = Object.keys(totalTvlByDate['tvl'])
-	for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
-		const date = dates[dateIndex]
+	const totalTvlChart = totalTvlByDate.tvl
+	let latestDateKey: string | null = null
+	if (totalTvlChart) {
+		for (const dateKey in totalTvlChart) latestDateKey = dateKey
+	}
+	let dateIndex = 0
+	for (const dateKey in totalTvlChart ?? {}) {
+		const date = Number(dateKey)
 		const includeRow = dateIndex % 2 === 1
-		const isLatest = dateIndex === dates.length - 1
+		dateIndex++
+		const isLatest = dateKey === latestDateKey
 		if (!includeRow && !isLatest) continue
 		const row = includeRow ? new Array<number | null>(chainNames.length + 1) : null
-		if (row) row[0] = +date
+		if (row) row[0] = date
 		for (let chainIndex = 0; chainIndex < chainNames.length; chainIndex++) {
+			// The index is bounded by chainNames.length; this loop can traverse millions of cells.
 			const chain = chainNames[chainIndex]
+			if (chain === undefined) throw new Error(`Missing chain chart dimension at index ${chainIndex}`)
 			const value = applyChainsTvlSettings(
 				tvlChartsByChain['tvl']?.[chain]?.[date],
 				getChartExtraValues({ tvlChartsByChain, chain, date }),
 				enabledTvlSettings
 			)
-			if (isLatest) recentTvlByChain[chain] = value ?? 0
+			if (isLatest && value != null) recentTvlByChain[chain] = value
 			if (row) row[chainIndex + 1] = value
 		}
 		if (row) source.push(row)
@@ -294,13 +304,20 @@ export const buildChainsByCategoryChartPresentation = ({
 		if (!rankedCurrentChains.has(chain)) chainSeries.push(chain)
 	}
 	const dimensionIndex = new Map(chainNames.map((chain, index) => [chain, index + 1]))
-	const chartsConfig = chainSeries.map((chain) => ({
-		type: 'line' as const,
-		name: chain,
-		encode: { x: 0, y: dimensionIndex.get(chain)! },
-		stack: chain,
-		color: colorsByChain[chain]
-	}))
+	const chartsConfig: MultiSeriesChartSeriesConfig[] = []
+	for (const chain of chainSeries) {
+		const yDimension = dimensionIndex.get(chain)
+		if (yDimension == null) throw new Error(`Missing chart dimension for chain ${chain}`)
+		const chart: MultiSeriesChartSeriesConfig = {
+			type: 'line',
+			name: chain,
+			encode: { x: 0, y: yDimension },
+			stack: chain
+		}
+		const color = colorsByChain[chain]
+		if (color != null) chart.color = color
+		chartsConfig.push(chart)
+	}
 	return {
 		dominanceCharts: { dataset: { source, dimensions }, charts: chartsConfig },
 		pieSeries,
@@ -388,29 +405,28 @@ export const useGroupAndFormatChains = ({
 					change_1d,
 					change_7d,
 					change_1m,
-					mcaptvl: chain.mcap != null && finalTvl != null ? chain.mcap / finalTvl : null
+					mcaptvl: getChainMcapTvlRatio(chain.mcap, finalTvl)
 				}
 			})
-			.filter((chain) => (minTvl != null ? chain.tvl >= minTvl : true) && (maxTvl != null ? chain.tvl <= maxTvl : true))
+			.filter((chain) =>
+				minTvl == null && maxTvl == null
+					? true
+					: chain.tvl != null &&
+						(minTvl != null ? chain.tvl >= minTvl : true) &&
+						(maxTvl != null ? chain.tvl <= maxTvl : true)
+			)
 
 		if (!showByGroup) return { showByGroup, chainsTableData: data }
-		const trackedSubChains = new Set<string>()
-
-		const chainsTableData = []
-		for (const chain of data) {
-			const subChainsList = new Set()
+		const chainsTableData: IFormattedDataWithExtraTvl[] = []
+		for (const chain of getTopLevelGroupedChains(data, toggledChainsGroupbyParent)) {
+			const subChainsList = new Set<string>()
 			for (const group of toggledChainsGroupbyParent) {
-				if (chain?.['childGroups']?.[group]) {
-					for (const subChain of chain['childGroups'][group]) {
+				const childGroup = chain.childGroups?.[group]
+				if (childGroup) {
+					for (const subChain of childGroup) {
 						subChainsList.add(subChain)
-						trackedSubChains.add(subChain)
 					}
 				}
-			}
-
-			// already counted as subchain of another chain
-			if (trackedSubChains.has(chain.name)) {
-				continue
 			}
 
 			if (subChainsList.size === 0) {
@@ -421,9 +437,7 @@ export const useGroupAndFormatChains = ({
 			const subChains = data.filter((childChain) => subChainsList.has(childChain.name))
 			const subRows = [chain].concat(subChains)
 
-			const nullSum = (a: number | null, b: number | null): number | null =>
-				a == null && b == null ? null : (a ?? 0) + (b ?? 0)
-
+			const totals = aggregateGroupedChainRows(subRows)
 			const {
 				tvl,
 				tvlPrevDay,
@@ -447,106 +461,16 @@ export const useGroupAndFormatChains = ({
 				appRevenue7d,
 				appRevenue30d,
 				chainAssets,
+				protocols,
 				nftVolume24h,
 				nftVolume7d,
 				nftVolume30d
-			} = subRows.reduce(
-				(acc, rowChain) => {
-					acc.tvl = nullSum(acc.tvl, rowChain.tvl)
-					acc.tvlPrevDay = nullSum(acc.tvlPrevDay, rowChain.tvlPrevDay)
-					acc.tvlPrevWeek = nullSum(acc.tvlPrevWeek, rowChain.tvlPrevWeek)
-					acc.tvlPrevMonth = nullSum(acc.tvlPrevMonth, rowChain.tvlPrevMonth)
-					acc.mcap = nullSum(acc.mcap, rowChain.mcap)
-					acc.stablesMcap = nullSum(acc.stablesMcap, rowChain.stablesMcap)
-					acc.activeUsers24h = nullSum(acc.activeUsers24h, rowChain.activeUsers24h)
-					acc.activeUsers7d = nullSum(acc.activeUsers7d, rowChain.activeUsers7d)
-					acc.activeUsers30d = nullSum(acc.activeUsers30d, rowChain.activeUsers30d)
-					acc.dexVolume24h = nullSum(acc.dexVolume24h, rowChain.dexVolume24h)
-					acc.dexVolume7d = nullSum(acc.dexVolume7d, rowChain.dexVolume7d)
-					acc.dexVolume30d = nullSum(acc.dexVolume30d, rowChain.dexVolume30d)
-					acc.fees24h = nullSum(acc.fees24h, rowChain.fees24h)
-					acc.fees7d = nullSum(acc.fees7d, rowChain.fees7d)
-					acc.fees30d = nullSum(acc.fees30d, rowChain.fees30d)
-					acc.revenue24h = nullSum(acc.revenue24h, rowChain.revenue24h)
-					acc.revenue7d = nullSum(acc.revenue7d, rowChain.revenue7d)
-					acc.revenue30d = nullSum(acc.revenue30d, rowChain.revenue30d)
-					acc.appRevenue24h = nullSum(acc.appRevenue24h, rowChain.appRevenue24h)
-					acc.appRevenue7d = nullSum(acc.appRevenue7d, rowChain.appRevenue7d)
-					acc.appRevenue30d = nullSum(acc.appRevenue30d, rowChain.appRevenue30d)
-					const aTotal = acc.chainAssets?.total?.total
-					const bTotal = rowChain.chainAssets?.total?.total
-					const aCanon = acc.chainAssets?.canonical?.total
-					const bCanon = rowChain.chainAssets?.canonical?.total
-					const aOwn = acc.chainAssets?.ownTokens?.total
-					const bOwn = rowChain.chainAssets?.ownTokens?.total
-					const aNative = acc.chainAssets?.native?.total
-					const bNative = rowChain.chainAssets?.native?.total
-					const aThird = acc.chainAssets?.thirdParty?.total
-					const bThird = rowChain.chainAssets?.thirdParty?.total
-					const allNull =
-						aTotal == null &&
-						bTotal == null &&
-						aCanon == null &&
-						bCanon == null &&
-						aOwn == null &&
-						bOwn == null &&
-						aNative == null &&
-						bNative == null &&
-						aThird == null &&
-						bThird == null
-					acc.chainAssets = allNull
-						? null
-						: {
-								total: { total: +(aTotal ?? 0) + +(bTotal ?? 0) },
-								canonical: { total: +(aCanon ?? 0) + +(bCanon ?? 0) },
-								ownTokens: { total: +(aOwn ?? 0) + +(bOwn ?? 0) },
-								native: { total: +(aNative ?? 0) + +(bNative ?? 0) },
-								thirdParty: { total: +(aThird ?? 0) + +(bThird ?? 0) }
-							}
-					acc.nftVolume24h = nullSum(acc.nftVolume24h, rowChain.nftVolume24h)
-					acc.nftVolume7d = nullSum(acc.nftVolume7d, rowChain.nftVolume7d)
-					acc.nftVolume30d = nullSum(acc.nftVolume30d, rowChain.nftVolume30d)
-					return acc
-				},
-				{
-					tvl: null as number | null,
-					tvlPrevDay: null as number | null,
-					tvlPrevWeek: null as number | null,
-					tvlPrevMonth: null as number | null,
-					mcap: null as number | null,
-					stablesMcap: null as number | null,
-					activeUsers24h: null as number | null,
-					activeUsers7d: null as number | null,
-					activeUsers30d: null as number | null,
-					dexVolume24h: null as number | null,
-					dexVolume7d: null as number | null,
-					dexVolume30d: null as number | null,
-					fees24h: null as number | null,
-					fees7d: null as number | null,
-					fees30d: null as number | null,
-					revenue24h: null as number | null,
-					revenue7d: null as number | null,
-					revenue30d: null as number | null,
-					appRevenue24h: null as number | null,
-					appRevenue7d: null as number | null,
-					appRevenue30d: null as number | null,
-					nftVolume24h: null as number | null,
-					nftVolume7d: null as number | null,
-					nftVolume30d: null as number | null,
-					chainAssets: null as {
-						total: { total: number }
-						canonical: { total: number }
-						ownTokens: { total: number }
-						native: { total: number }
-						thirdParty: { total: number }
-					} | null
-				}
-			)
+			} = totals
 
 			const change_1d = getPercentChange(tvl, tvlPrevDay)
 			const change_7d = getPercentChange(tvl, tvlPrevWeek)
 			const change_1m = getPercentChange(tvl, tvlPrevMonth)
-			const mcaptvl = mcap && tvl ? mcap / tvl : null
+			const mcaptvl = getChainMcapTvlRatio(mcap, tvl)
 
 			chainsTableData.push({
 				...chain,
@@ -559,7 +483,7 @@ export const useGroupAndFormatChains = ({
 				change_7d,
 				change_1m,
 				mcaptvl,
-				protocols: null,
+				protocols,
 				activeUsers24h,
 				activeUsers7d,
 				activeUsers30d,
@@ -584,6 +508,13 @@ export const useGroupAndFormatChains = ({
 			})
 		}
 
-		return { showByGroup, chainsTableData: chainsTableData.sort((a, b) => (b.tvl ?? 0) - (a.tvl ?? 0)) }
+		return {
+			showByGroup,
+			chainsTableData: chainsTableData.sort((a, b) => {
+				if (a.tvl == null) return b.tvl == null ? 0 : 1
+				if (b.tvl == null) return -1
+				return b.tvl - a.tvl
+			})
+		}
 	}, [category, chains, tvlSettings, minMaxTvl, chainsGroupbyParent, hideGroupBy])
 }

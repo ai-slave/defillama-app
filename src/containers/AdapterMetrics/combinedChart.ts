@@ -1,11 +1,15 @@
-import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type {
+	MultiSeriesChartSeriesConfig,
+	MultiSeriesTimeSeriesDataset,
+	MultiSeriesTimeSeriesRow
+} from '~/components/ECharts/MultiSeriesChart/types'
 import type { LowercaseDwmcGrouping } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS } from '~/constants/colors'
 import { LINE_DIMENSIONS } from './constants'
 
 export type CombinedChartPresentation = {
-	dataset: MultiSeriesChartDataset
+	dataset: MultiSeriesTimeSeriesDataset
 	charts: MultiSeriesChartSeriesConfig[]
 }
 
@@ -26,64 +30,69 @@ function getCombinedChartSeriesConfig(series: SeriesDefinition, index: number): 
 	}
 }
 
+function getChartColor(index: number): string {
+	const color = CHART_COLORS[index % CHART_COLORS.length]
+	if (color === undefined) throw new Error(`Chart palette is missing color ${index}`)
+	return color
+}
+
 export function buildAdapterByChainCombinedChartPresentation({
 	chartData,
 	chartName,
 	groupBy
 }: {
-	chartData: MultiSeriesChartDataset
+	chartData: MultiSeriesTimeSeriesDataset
 	chartName: string
 	groupBy: LowercaseDwmcGrouping
 }): CombinedChartPresentation {
-	const dimensions: string[] = []
-	for (const dimension of chartData.dimensions) {
-		if (dimension !== 'timestamp') dimensions.push(dimension)
-	}
+	const dimensions = chartData.dimensions.slice(1)
 
 	const isCumulative = groupBy === 'cumulative'
 	const isSnapshotChart = LINE_DIMENSIONS.has(chartName)
 	const seriesDefinitions: SeriesDefinition[] = []
 	for (let index = 0; index < dimensions.length; index++) {
 		const dimension = dimensions[index]
+		if (dimension === undefined) continue
 		const isSnapshotMetric = isSnapshotChart || LINE_DIMENSIONS.has(dimension)
 		seriesDefinitions.push({
 			dimension,
 			isSnapshotMetric,
 			type: isSnapshotMetric || isCumulative ? 'line' : 'bar',
-			color: CHART_COLORS[index % CHART_COLORS.length]
+			color: getChartColor(index)
 		})
 	}
 
 	const charts: MultiSeriesChartSeriesConfig[] = []
 	for (let index = 0; index < seriesDefinitions.length; index++) {
-		charts.push(getCombinedChartSeriesConfig(seriesDefinitions[index], index))
+		const series = seriesDefinitions[index]
+		if (series === undefined) continue
+		charts.push(getCombinedChartSeriesConfig(series, index))
 	}
 
 	if (groupBy === 'daily') {
 		return { dataset: chartData, charts }
 	}
 
-	const rowsByTimestamp = new Map<number, MultiSeriesChartDataset['source'][number]>()
+	const rowsByTimestamp = new Map<number, MultiSeriesTimeSeriesRow>()
 	for (const sourceRow of chartData.source) {
-		const timestamp = sourceRow[0] as number
+		const timestamp = sourceRow[0]
 		const bucketTimestamp = isCumulative ? timestamp : getBucketTimestampMs(timestamp, groupBy)
 		let bucketRow = rowsByTimestamp.get(bucketTimestamp)
 
 		for (let seriesIndex = 0; seriesIndex < seriesDefinitions.length; seriesIndex++) {
 			const series = seriesDefinitions[seriesIndex]
+			if (!series) continue
 			const value = sourceRow[seriesIndex + 1]
 			if (value == null) continue
 
 			if (!bucketRow) {
-				bucketRow = new Array<number | null>(seriesDefinitions.length + 1).fill(null)
-				bucketRow[0] = bucketTimestamp
+				bucketRow = [bucketTimestamp]
+				for (let index = 0; index < seriesDefinitions.length; index++) bucketRow.push(null)
 				rowsByTimestamp.set(bucketTimestamp, bucketRow)
 			}
 
 			// Snapshot series keep the last observation in a bucket; flow series add every observation.
-			bucketRow[seriesIndex + 1] = series.isSnapshotMetric
-				? value
-				: ((bucketRow[seriesIndex + 1] as number | undefined) ?? 0) + (value as number)
+			bucketRow[seriesIndex + 1] = series.isSnapshotMetric ? value : (bucketRow[seriesIndex + 1] ?? 0) + value
 		}
 	}
 
@@ -95,6 +104,7 @@ export function buildAdapterByChainCombinedChartPresentation({
 		for (const row of groupedRows) {
 			for (let index = 0; index < seriesDefinitions.length; index++) {
 				const series = seriesDefinitions[index]
+				if (!series) continue
 				if (series.isSnapshotMetric) continue
 
 				const value = row[index + 1]
@@ -102,9 +112,9 @@ export function buildAdapterByChainCombinedChartPresentation({
 					if (hasCumulativeValue[index]) row[index + 1] = cumulativeTotals[index]
 					continue
 				}
-				cumulativeTotals[index] += value as number
+				cumulativeTotals[index] = (cumulativeTotals[index] ?? 0) + value
 				hasCumulativeValue[index] = true
-				row[index + 1] = cumulativeTotals[index]
+				row[index + 1] = cumulativeTotals[index] ?? 0
 			}
 		}
 	}

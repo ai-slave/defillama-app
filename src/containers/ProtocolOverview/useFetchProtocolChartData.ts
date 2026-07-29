@@ -1,16 +1,16 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { skipToken, useQueries, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import type { DenominationPriceHistory } from '~/api/coingecko.types'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
-import { formatBarChart, formatLineChart } from '~/components/ECharts/shared/timeSeries'
+import { formatBarChart, formatLineChart, formatNullableBarChart } from '~/components/ECharts/shared/timeSeries'
 import { useFetchProtocolGovernanceData } from '~/containers/Governance/queries.client'
 import {
 	useFetchProtocolActivityChart,
 	useFetchProtocolMedianAPY,
 	useFetchProtocolTVLChart
 } from '~/containers/ProtocolOverview/queries.client'
-import type { EmissionsChartRow } from '~/containers/Unlocks/api.types'
+import type { EmissionsChartRow, TokenIncentiveChartPoint } from '~/containers/Unlocks/api.types'
 import { useIsClient } from '~/hooks/useIsClient'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -38,9 +38,22 @@ const buildChartRowsFromTimestampRecord = (
 ): Array<[number, number]> => {
 	const rows: Array<[number, number]> = []
 	for (const timestamp in valuesByTimestamp) {
-		rows.push([+timestamp * timestampMultiplier, valuesByTimestamp[timestamp]])
+		const value = valuesByTimestamp[timestamp]
+		if (value === undefined) continue
+		rows.push([+timestamp * timestampMultiplier, value])
 	}
 	return rows.sort((a, b) => a[0] - b[0])
+}
+
+function getKnownChartValues(
+	series: Array<[number, number | null]> | null | undefined
+): Array<[number, number]> | null {
+	if (!series) return null
+	const known: Array<[number, number]> = []
+	for (const [timestamp, value] of series) {
+		if (value != null) known.push([timestamp, value])
+	}
+	return known
 }
 
 const buildProtocolChartApiUrl = (params: Record<string, string | undefined>) => {
@@ -84,19 +97,20 @@ export const useFetchProtocolChartData = ({
 		? chartDenominationBySymbol.get(toggledMetrics.denomination)
 		: null
 	const hasAnyToggledChart = availableCharts.some((chartLabel) => toggledMetrics[protocolCharts[chartLabel]] === 'true')
-	const oracleProtocolName = (oracleProtocols as Record<string, string>)[name] ?? name
+	const oracleProtocolName = oracleProtocols[name] ?? name
 	const prefetchedChartsInSeconds = useMemo(() => {
-		const normalized: Partial<Record<ProtocolChartsLabels, Array<[number, number]>>> = {}
-		for (const chartLabel in initialMultiSeriesChartData) {
-			const typedLabel = chartLabel as ProtocolChartsLabels
+		const normalized: Partial<Record<ProtocolChartsLabels, Array<[number, number | null]>>> = {}
+		for (const typedLabel of availableCharts) {
 			const series = initialMultiSeriesChartData[typedLabel]
 			if (!series?.length) continue
 			normalized[typedLabel] = normalizeSeriesToSeconds(series)
 		}
 		return normalized
-	}, [initialMultiSeriesChartData])
+	}, [availableCharts, initialMultiSeriesChartData])
 	const prefetchedChartsForMsRender = useMemo(() => {
-		const normalized: Partial<Record<ProtocolChartsLabels, Array<[number, number]>>> = { ...prefetchedChartsInSeconds }
+		const normalized: Partial<Record<ProtocolChartsLabels, Array<[number, number | null]>>> = {
+			...prefetchedChartsInSeconds
+		}
 		const treasurySeries = prefetchedChartsInSeconds['Treasury']
 		if (treasurySeries?.length) {
 			normalized['Treasury'] = normalizeSeriesToMilliseconds(treasurySeries)
@@ -107,6 +121,18 @@ export const useFetchProtocolChartData = ({
 		}
 		return normalized
 	}, [prefetchedChartsInSeconds])
+	const prefetchedNumericCharts = useMemo(() => {
+		const numeric: Partial<Record<ProtocolChartsLabels, Array<[number, number]>>> = {}
+		for (const label of availableCharts) {
+			const series = getKnownChartValues(prefetchedChartsInSeconds[label])
+			if (series?.length) numeric[label] = series
+		}
+		return numeric
+	}, [availableCharts, prefetchedChartsInSeconds])
+	const prefetchedTreasuryCharts = useMemo(() => {
+		const treasury = getKnownChartValues(prefetchedChartsForMsRender['Treasury'])
+		return treasury?.length ? { Treasury: treasury } : {}
+	}, [prefetchedChartsForMsRender])
 
 	const denominationGeckoId =
 		canFetchClientCharts && hasAnyToggledChart ? (selectedDenomination?.geckoId ?? null) : null
@@ -115,18 +141,20 @@ export const useFetchProtocolChartData = ({
 		number
 	> | null>({
 		queryKey: ['protocol-overview', protocolSlug, 'denomination-price-history', denominationGeckoId],
-		queryFn: () =>
-			fetchJson(`/api/public/tokens/charts/coingecko/${encodeURIComponent(denominationGeckoId!)}?fullChart=true`).then(
-				(res: { data?: { prices?: Array<[number, number]> } }) => {
-					if (!res.data?.prices?.length) return null
-					const store: Record<string, number> = {}
-					for (const [date, value] of res.data.prices) {
-						store[String(date)] = value
-						store[String(Math.floor(date / 1e3))] = value
-					}
-					return store
-				}
-			),
+		queryFn: denominationGeckoId
+			? () =>
+					fetchJson(
+						`/api/public/tokens/charts/coingecko/${encodeURIComponent(denominationGeckoId)}?fullChart=true`
+					).then((res: { data?: { prices?: Array<[number, number]> } }) => {
+						if (!res.data?.prices?.length) return null
+						const store: Record<string, number> = {}
+						for (const [date, value] of res.data.prices) {
+							store[String(date)] = value
+							store[String(Math.floor(date / 1e3))] = value
+						}
+						return store
+					})
+			: skipToken,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0,
@@ -136,10 +164,12 @@ export const useFetchProtocolChartData = ({
 	const { data: protocolTokenData = null, isLoading: fetchingProtocolTokenData } =
 		useQuery<DenominationPriceHistory | null>({
 			queryKey: ['protocol-overview', protocolSlug, 'token-price-history', geckoId],
-			queryFn: () =>
-				fetchJson(`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId!)}?fullChart=true`).then(
-					(res: { data?: DenominationPriceHistory }) => (res.data?.prices?.length ? res.data : null)
-				),
+			queryFn: geckoId
+				? () =>
+						fetchJson(`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId)}?fullChart=true`).then(
+							(res: { data?: DenominationPriceHistory }) => (res.data?.prices?.length ? res.data : null)
+						)
+				: skipToken,
 			staleTime: 60 * 60 * 1000,
 			refetchOnWindowFocus: false,
 			retry: 0,
@@ -155,13 +185,12 @@ export const useFetchProtocolChartData = ({
 
 	const { data: tokenTotalSupply = null, isLoading: fetchingTokenTotalSupply } = useQuery<number | null>({
 		queryKey: ['protocol-overview', protocolSlug, 'token-supply', geckoId],
-		queryFn: () =>
-			fetchJson<{ totalSupply: number | null }>(
-				`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId!)}?kind=supply`
-			).then((res) => {
-				const totalSupply = res.totalSupply
-				return typeof totalSupply === 'number' && Number.isFinite(totalSupply) ? totalSupply : null
-			}),
+		queryFn: geckoId
+			? () =>
+					fetchJson<{ totalSupply: number | null }>(
+						`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId)}?kind=supply`
+					).then((res) => res.totalSupply)
+			: skipToken,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0,
@@ -219,10 +248,10 @@ export const useFetchProtocolChartData = ({
 	})
 	const baseTvlChartData = useMemo((): Array<[number, number]> => {
 		if (isCEX) {
-			return prefetchedChartsInSeconds['Total Assets'] ?? prefetchedChartsInSeconds['TVL'] ?? []
+			return prefetchedNumericCharts['Total Assets'] ?? prefetchedNumericCharts['TVL'] ?? []
 		}
-		return prefetchedChartsInSeconds['TVL'] ?? []
-	}, [prefetchedChartsInSeconds, isCEX])
+		return prefetchedNumericCharts['TVL'] ?? []
+	}, [prefetchedNumericCharts, isCEX])
 	const shouldFetchBaseTvlChart = !!(
 		canFetchClientCharts &&
 		metrics.tvl &&
@@ -338,7 +367,7 @@ export const useFetchProtocolChartData = ({
 				label: descriptor.label,
 				queryKey: ['protocol-overview', protocolSlug, descriptor.clientQueryKey],
 				enabled,
-				prefetchedCharts: prefetchedChartsInSeconds,
+				prefetchedCharts: prefetchedNumericCharts,
 				queryFn: () =>
 					fetchJson<Array<[number, number]> | null>(
 						buildProtocolChartApiUrl({
@@ -358,22 +387,25 @@ export const useFetchProtocolChartData = ({
 		}
 
 		return configs
-	}, [metrics, toggledMetrics, canFetchClientCharts, protocolSlug, name, prefetchedChartsInSeconds])
+	}, [metrics, toggledMetrics, canFetchClientCharts, protocolSlug, name, prefetchedNumericCharts])
 
 	const adapterChartQueryResults = useQueries({
 		queries: adapterChartConfigs.map(({ queryOptions }) => queryOptions)
 	})
 
 	const adapterChartStates = useMemo(() => {
-		const states = {} as Record<AdapterChartDescriptorLabel, AdapterChartState>
-		for (let i = 0; i < adapterChartConfigs.length; i++) {
-			const { descriptor, enabled, prefetchedData } = adapterChartConfigs[i]
-			const result = adapterChartQueryResults[i]
-			states[descriptor.label] = {
-				data: (result.data as Array<[number, number]> | null | undefined) ?? prefetchedData,
+		const states = new Map<AdapterChartDescriptorLabel, AdapterChartState>()
+		for (let index = 0; index < adapterChartConfigs.length; index++) {
+			const config = adapterChartConfigs[index]
+			if (config === undefined) continue
+			const { descriptor, enabled, prefetchedData } = config
+			const result = adapterChartQueryResults[index]
+			if (!result) throw new Error(`Missing adapter chart query result for ${descriptor.label}`)
+			states.set(descriptor.label, {
+				data: result.data ?? prefetchedData,
 				isLoading: result.isLoading,
 				enabled
-			}
+			})
 		}
 		return states
 	}, [adapterChartConfigs, adapterChartQueryResults])
@@ -385,7 +417,7 @@ export const useFetchProtocolChartData = ({
 	)
 	const { data: unlocksAndIncentivesData = null, isLoading: fetchingUnlocksAndIncentives } = useQuery<{
 		chartData: { documented: Array<EmissionsChartRow>; realtime: Array<EmissionsChartRow> }
-		unlockUsdChart: Array<[string | number, number]> | null
+		unlockUsdChart: TokenIncentiveChartPoint[] | null
 	} | null>({
 		queryKey: ['protocol-overview', protocolSlug, 'unlocks'],
 		queryFn: () =>
@@ -401,7 +433,7 @@ export const useFetchProtocolChartData = ({
 	const isTreasuryEnabled = !!(toggledMetrics.treasury === 'true' && metrics.treasury && canFetchClientCharts)
 	const { data: treasuryData, isLoading: fetchingTreasury } = usePrefetchedProtocolChartQuery({
 		label: 'Treasury',
-		prefetchedCharts: prefetchedChartsForMsRender,
+		prefetchedCharts: prefetchedTreasuryCharts,
 		queryKey: ['protocol-overview', protocolSlug, 'treasury'],
 		enabled: isTreasuryEnabled,
 		queryFn: () =>
@@ -427,19 +459,26 @@ export const useFetchProtocolChartData = ({
 	const fetchingUsdInflows = false
 
 	const isBridgeVolumeEnabled = !!(toggledMetrics.bridgeVolume === 'true' && canFetchClientCharts)
-	const { data: bridgeVolumeData, isLoading: fetchingBridgeVolume } = usePrefetchedProtocolChartQuery({
-		label: 'Bridge Volume',
-		prefetchedCharts: prefetchedChartsForMsRender,
+	const prefetchedBridgeVolume = prefetchedChartsForMsRender['Bridge Volume'] ?? null
+	const { data: fetchedBridgeVolume = null, isLoading: fetchingBridgeVolume } = useQuery<Array<
+		[number, number | null]
+	> | null>({
 		queryKey: ['protocol-overview', protocolSlug, 'bridge-volume'],
-		enabled: isBridgeVolumeEnabled,
 		queryFn: () =>
-			fetchJson<Array<[number, number]> | null>(buildProtocolChartApiUrl({ kind: 'bridge-volume', protocol: name }))
+			fetchJson<Array<[number, number | null]> | null>(
+				buildProtocolChartApiUrl({ kind: 'bridge-volume', protocol: name })
+			),
+		staleTime: 60 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		retry: 0,
+		enabled: isBridgeVolumeEnabled && !prefetchedBridgeVolume
 	})
+	const bridgeVolumeData = fetchedBridgeVolume ?? prefetchedBridgeVolume
 
 	const isTvsEnabled = !!(toggledMetrics.tvs === 'true' && canFetchClientCharts && availableCharts.includes('TVS'))
 	const { data: tvsData, isLoading: fetchingTvs } = usePrefetchedProtocolChartQuery({
 		label: 'TVS',
-		prefetchedCharts: prefetchedChartsInSeconds,
+		prefetchedCharts: prefetchedNumericCharts,
 		queryKey: ['protocol-overview', protocolSlug, 'tvs'],
 		enabled: isTvsEnabled,
 		queryFn: () =>
@@ -535,8 +574,8 @@ export const useFetchProtocolChartData = ({
 			},
 			{ isLoading: isTvsToggled && fetchingTvs, label: 'TVS' },
 			...ADAPTER_CHART_DESCRIPTORS.map((descriptor) => {
-				const state = adapterChartStates[descriptor.label]
-				return { isLoading: state.enabled && state.isLoading, label: descriptor.label }
+				const state = adapterChartStates.get(descriptor.label)
+				return { isLoading: !!state?.enabled && !!state.isLoading, label: descriptor.label }
 			}),
 			{ isLoading: isUnlocksToggled && fetchingUnlocksAndIncentives, label: 'Unlocks' },
 			{ isLoading: isIncentivesToggled && fetchingUnlocksAndIncentives, label: 'Incentives' },
@@ -570,7 +609,7 @@ export const useFetchProtocolChartData = ({
 			const chartName: ProtocolChartsLabels = isCEX ? 'Total Assets' : ('TVL' as const)
 			charts[chartName] = tvlChart
 		}
-		if (tvsData?.length > 0 && isTvsToggled) {
+		if (tvsData && tvsData.length > 0 && isTvsToggled) {
 			charts['TVS'] = formatLineChart({ data: tvsData, groupBy, denominationPriceHistory })
 		}
 		if (protocolTokenData) {
@@ -612,7 +651,7 @@ export const useFetchProtocolChartData = ({
 			charts['Token Liquidity'] = formatLineChart({ data: tokenLiquidityData, groupBy, denominationPriceHistory })
 
 		for (const descriptor of ADAPTER_CHART_DESCRIPTORS) {
-			const chart = adapterChartStates[descriptor.label].data
+			const chart = adapterChartStates.get(descriptor.label)?.data
 			if (!chart) continue
 			charts[descriptor.label] =
 				descriptor.renderKind === 'line'
@@ -753,7 +792,7 @@ export const useFetchProtocolChartData = ({
 		if (usdInflowsData && isUsdInflowsToggled)
 			charts['USD Inflows'] = formatBarChart({ data: usdInflowsData, groupBy, denominationPriceHistory })
 		if (bridgeVolumeData && isBridgeVolumeToggled)
-			charts['Bridge Volume'] = formatBarChart({
+			charts['Bridge Volume'] = formatNullableBarChart({
 				data: bridgeVolumeData,
 				groupBy,
 				dateInMs: true,
@@ -761,10 +800,12 @@ export const useFetchProtocolChartData = ({
 			})
 
 		const filteredCharts: Partial<Record<ProtocolChartsLabels, Array<[number, number | null]>>> = {}
-		for (const chartLabel in charts) {
-			const queryParamKey = protocolCharts[chartLabel as ProtocolChartsLabels]
+		for (const chartLabel of availableCharts) {
+			const chart = charts[chartLabel]
+			if (!chart) continue
+			const queryParamKey = protocolCharts[chartLabel]
 			if (!queryParamKey || toggledMetrics[queryParamKey] === 'true') {
-				filteredCharts[chartLabel] = charts[chartLabel]
+				filteredCharts[chartLabel] = chart
 			}
 		}
 

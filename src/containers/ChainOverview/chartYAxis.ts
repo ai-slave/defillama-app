@@ -9,8 +9,8 @@ type AxisExtent = {
 }
 
 type AxisBuilderContext = {
-	chartColors: Record<string, string>
-	chartsInSeries: Set<string>
+	chartColors: Record<ChainChartLabels, string>
+	chartsInSeries: Set<ChainChartLabels>
 	themeText: string
 }
 
@@ -107,8 +107,8 @@ export function buildChainYAxis({
 }: {
 	allYAxis: Array<[ChainChartLabels, number | undefined]>
 	baseYAxis: MultiSeriesYAxisOption
-	chartColors: Record<string, string>
-	chartsInSeries: Set<string>
+	chartColors: Record<ChainChartLabels, string>
+	chartsInSeries: Set<ChainChartLabels>
 	themeText: string
 }) {
 	const finalYAxis: MultiSeriesYAxisOption[] = []
@@ -133,9 +133,10 @@ export function buildChainYAxis({
 		})
 		const axisConfig = AXIS_CONFIG_BY_TYPE[type]
 
-		if (axisConfig?.formatter) {
+		const formatter = axisConfig?.formatter
+		if (formatter) {
 			axisOptions.axisLabel = mergeDeep(axisOptions.axisLabel ?? {}, {
-				formatter: (value: number) => axisConfig.formatter!(value, context)
+				formatter: (value: number) => formatter(value, context)
 			})
 		}
 

@@ -5,25 +5,46 @@ export interface ChainListItem {
 	tokenSymbol: string | null
 	cmcId: string | null
 	chainId: number | string | null
-	[key: string]: unknown
 }
 
 export interface ChainsCategoriesResponse {
 	categories: string[]
 }
 
+export interface ChainExtraTvlSnapshot {
+	tvl: number | null
+	tvlPrevDay: number | null
+	tvlPrevWeek: number | null
+	tvlPrevMonth: number | null
+}
+
+/** Adapter-defined snapshot families are dynamic and must retain their original key identity. */
+export type ChainExtraTvlRecord = Record<string, ChainExtraTvlSnapshot>
+
+export interface ChainsByCategoryChain {
+	name: string
+	symbol: string
+	tvl: number | null
+	tvlPrevDay: number | null
+	tvlPrevWeek: number | null
+	tvlPrevMonth: number | null
+	mcap: number | null
+	mcaptvl: number | null
+	protocols?: number | null
+	extraTvl: ChainExtraTvlRecord
+	change_1d: number | null
+	change_7d: number | null
+	change_1m: number | null
+	deprecated?: boolean
+}
+
 export interface ChainsByCategoryResponse {
 	chainsUnique: string[]
 	categories: string[]
-	chainTvls: Array<{
-		name: string
-		extraTvl?: Record<string, { tvl?: number }>
-		[key: string]: unknown
-	}>
+	chainTvls: ChainsByCategoryChain[]
 	chainsGroupbyParent: Record<string, Record<string, string[]>>
 	stackedDataset: Array<[string, Record<string, Record<string, number>>]>
 	tvlTypes: Record<string, string>
-	[key: string]: unknown
 }
 
 export type ChainChartPoint = [timestamp: string | number, value: number]

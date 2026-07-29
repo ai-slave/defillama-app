@@ -1,4 +1,10 @@
-export const chainCoingeckoIdsForGasNotMcap = {
+interface ChainGasToken {
+	geckoId: string
+	symbol: string
+	cmcId: string
+}
+
+export const chainCoingeckoIdsForGasNotMcap: Readonly<Record<string, ChainGasToken>> = {
 	Optimism: {
 		geckoId: 'ethereum',
 		symbol: 'ETH',

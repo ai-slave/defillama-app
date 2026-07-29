@@ -25,6 +25,7 @@ import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
+import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV, downloadDataURL } from '~/utils/download'
 import { formatPercent } from '~/utils/numberFormat'
 import { getChartExportIconFetchUrl } from './chartPngExportIcon'
@@ -1470,7 +1471,7 @@ interface ChartPngExportButtonProps {
 	/** Consolidated export menu: icon-only disclosure with a "Download CSV" item on top
 	 * of the image actions. Used by the LlamaAI chat toolbar; other pages keep the
 	 * separate .csv/.png buttons. */
-	csvMenuItem?: { prepareCsv: () => { filename: string; rows: Array<Array<string | number | boolean>> } } | undefined
+	csvMenuItem?: { prepareCsv: () => { filename: string; rows: Array<Array<CsvCell>> } } | undefined
 	iconOnly?: boolean | undefined
 }
 

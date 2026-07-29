@@ -1,3 +1,4 @@
+import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchCoinPrices as fetchCoinPricesBatched } from '~/api/pricing'
 import { DATASETS_SERVER_URL } from '~/constants'
 import { buildUnlocksMultiSeriesChartForDateRange } from '~/containers/Unlocks/buildUnlocksMultiSeriesChart'
@@ -13,8 +14,11 @@ import type {
 	EmissionsChartConfig,
 	EmissionEvent,
 	ProtocolEmission,
+	ProtocolEmissionChartData,
 	ProtocolEmissionDetail,
-	TokenAllocationSplit
+	TokenAllocationPayload,
+	TokenAllocationSplit,
+	TokenIncentiveChartPoint
 } from './api.types'
 import type { CalendarUnlockEvent } from './calendarTypes'
 import { buildEmissionProjectionModel } from './emissionsChartData'
@@ -26,21 +30,20 @@ type UnlockCurrentPrice = {
 	price?: number | null
 	symbol?: string | null
 }
-type RawTokenlistEntry = Partial<UnlockTokenlistEntry> & { id?: unknown }
-
 const TOKEN_LIST_API_URL = `${DATASETS_SERVER_URL}/tokenlist/rankings.json`
 let unlockTokenlistPromise: Promise<UnlockTokenlist> | null = null
 
 function buildEmissionsDataset(chartData: Array<EmissionsChartRow>, stacks: string[]): EmissionsDataset {
-	const source = new Array<EmissionsDataset['source'][number]>(chartData.length)
-	for (let rowIndex = 0; rowIndex < chartData.length; rowIndex++) {
-		const input = chartData[rowIndex]
+	const source: EmissionsDataset['source'] = []
+	for (const input of chartData) {
 		const row = new Array<number | null>(stacks.length + 1)
 		row[0] = input.timestamp
 		for (let stackIndex = 0; stackIndex < stacks.length; stackIndex++) {
-			row[stackIndex + 1] = input[stacks[stackIndex]] ?? null
+			const stack = stacks[stackIndex]
+			if (stack === undefined) continue
+			row[stackIndex + 1] = input[stack] ?? null
 		}
-		source[rowIndex] = row
+		source.push(row)
 	}
 	return {
 		source,
@@ -49,17 +52,20 @@ function buildEmissionsDataset(chartData: Array<EmissionsChartRow>, stacks: stri
 }
 
 function buildEmissionsCharts(stacks: string[], colors: Record<string, string>): EmissionsChartConfig {
-	return stacks.map((name, index) => ({
-		type: 'line' as const,
-		name,
-		encode: { x: 0 as const, y: index + 1 },
-		color: colors[name],
-		stack: 'A'
-	}))
+	return stacks.map((name, index) => {
+		const color = colors[name]
+		return {
+			type: 'line' as const,
+			name,
+			encode: { x: 0 as const, y: index + 1 },
+			...(color !== undefined ? { color } : {}),
+			stack: 'A'
+		}
+	})
 }
 
-function formatEmissionLabel(label: unknown): string {
-	if (typeof label !== 'string') return ''
+function formatEmissionLabel(label: string | undefined): string {
+	if (!label) return ''
 	return label
 		.split(' ')
 		.map((l) => capitalizeFirstLetter(l))
@@ -67,16 +73,20 @@ function formatEmissionLabel(label: unknown): string {
 }
 
 function roundEmissionEvents(events: EmissionEvent[] | undefined | null): EmissionEvent[] {
-	if (!Array.isArray(events) || events.length === 0) return []
-	const roundedEvents: EmissionEvent[] = []
-	for (const event of events) {
-		if (typeof event?.timestamp !== 'number' || !Number.isFinite(event.timestamp)) continue
-		roundedEvents.push({
-			...event,
-			timestamp: roundToNearestHalfHour(event.timestamp)
-		})
+	if (!events?.length) return []
+	let roundedEvents: EmissionEvent[] | null = null
+	for (let index = 0; index < events.length; index++) {
+		const event = events[index]
+		if (event === undefined) continue
+		const timestamp = roundToNearestHalfHour(event.timestamp)
+		if (timestamp === event.timestamp) {
+			roundedEvents?.push(event)
+			continue
+		}
+		if (!roundedEvents) roundedEvents = events.slice(0, index)
+		roundedEvents.push({ ...event, timestamp })
 	}
-	return roundedEvents
+	return roundedEvents ?? events
 }
 
 const EMPTY_TOKEN_ALLOCATION_SPLIT: TokenAllocationSplit = {
@@ -84,93 +94,31 @@ const EMPTY_TOKEN_ALLOCATION_SPLIT: TokenAllocationSplit = {
 	final: {}
 }
 
-function isStringKeyedObject(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value)
+function normalizeTokenAllocation(input: TokenAllocationPayload | null | undefined): TokenAllocationSplit {
+	if (!input) return EMPTY_TOKEN_ALLOCATION_SPLIT
+	if (isTokenAllocationSplit(input)) return input
+	return { current: { ...input }, final: { ...input } }
 }
 
-function toNumberRecord(obj: Record<string, unknown>): Record<string, number> {
-	const result = {}
-	for (const key in obj) {
-		if (!Object.prototype.hasOwnProperty.call(obj, key)) continue
-		const val = obj[key]
-		if (typeof val === 'number' && Number.isFinite(val)) {
-			result[key] = val
-		}
-	}
-	return result
+function isTokenAllocationSplit(input: TokenAllocationPayload): input is TokenAllocationSplit {
+	return typeof input.current === 'object' && typeof input.final === 'object'
 }
 
-function normalizeTokenAllocation(input: unknown): TokenAllocationSplit {
-	if (!isStringKeyedObject(input)) return EMPTY_TOKEN_ALLOCATION_SPLIT
-
-	if ('current' in input || 'final' in input) {
-		return {
-			current: isStringKeyedObject(input.current) ? toNumberRecord(input.current) : {},
-			final: isStringKeyedObject(input.final) ? toNumberRecord(input.final) : {}
-		}
-	}
-
-	// Legacy shape: a single category->allocation map
-	const sanitized = toNumberRecord(input)
-	return { current: sanitized, final: sanitized }
+function isPositiveNumber(value: number | null | undefined): value is number {
+	return value != null && value > 0
 }
 
-function normalizeCategoriesBreakdown(input: unknown): Record<string, string[]> | null {
-	if (!input || typeof input !== 'object') return null
-
-	const normalized = {}
-	for (const [group, value] of Object.entries(input)) {
-		if (Array.isArray(value)) {
-			normalized[group] = value.filter((item): item is string => typeof item === 'string')
-			continue
-		}
-
-		if (typeof value === 'string') {
-			normalized[group] = [value]
-		}
-	}
-
-	return normalized
+function normalizeTokenlistSymbol(value: string): string | null {
+	return value ? value.toUpperCase() : null
 }
 
-function isFinitePositiveNumber(value: unknown): value is number {
-	return typeof value === 'number' && Number.isFinite(value) && value > 0
-}
-
-function normalizeTokenlistSymbol(value: unknown): string | null {
-	return typeof value === 'string' && value ? value.toUpperCase() : null
-}
-
-function addRawTokenlistEntry(
-	tokenlist: UnlockTokenlist,
-	key: string,
-	entry: RawTokenlistEntry | null | undefined
-): void {
-	const id = typeof entry?.id === 'string' && entry.id ? entry.id : key.replace(/^coingecko:/, '')
-	if (!id) return
-	tokenlist[id] = {
-		current_price: typeof entry?.current_price === 'number' ? entry.current_price : null,
-		symbol: typeof entry?.symbol === 'string' ? entry.symbol : ''
-	}
-}
-
-function parseUnlockTokenlist(raw: unknown): UnlockTokenlist {
+function projectUnlockTokenlist(rankings: IResponseCGTokenRankingsDatasetItem[]): UnlockTokenlist {
 	const tokenlist: UnlockTokenlist = {}
-
-	if (Array.isArray(raw)) {
-		for (const entry of raw) {
-			if (!entry || typeof entry !== 'object') continue
-			const id = (entry as { id?: unknown }).id
-			if (typeof id !== 'string' || !id) continue
-			addRawTokenlistEntry(tokenlist, id, entry as RawTokenlistEntry)
+	for (const ranking of rankings) {
+		tokenlist[ranking.id] = {
+			current_price: ranking.current_price ?? null,
+			symbol: ranking.symbol
 		}
-		return tokenlist
-	}
-
-	if (!raw || typeof raw !== 'object') return tokenlist
-	for (const [key, entry] of Object.entries(raw)) {
-		if (!entry || typeof entry !== 'object') continue
-		addRawTokenlistEntry(tokenlist, key, entry as RawTokenlistEntry)
 	}
 	return tokenlist
 }
@@ -178,8 +126,10 @@ function parseUnlockTokenlist(raw: unknown): UnlockTokenlist {
 export async function fetchUnlockTokenlistPrices(): Promise<UnlockTokenlist> {
 	if (unlockTokenlistPromise) return unlockTokenlistPromise
 
-	unlockTokenlistPromise = fetchJson<unknown>(TOKEN_LIST_API_URL, { timeout: getSlowJsonTimeoutMs() })
-		.then(parseUnlockTokenlist)
+	unlockTokenlistPromise = fetchJson<IResponseCGTokenRankingsDatasetItem[]>(TOKEN_LIST_API_URL, {
+		timeout: getSlowJsonTimeoutMs()
+	})
+		.then(projectUnlockTokenlist)
 		.catch((error) => {
 			unlockTokenlistPromise = null
 			console.error('Failed to fetch unlock tokenlist prices:', error)
@@ -195,7 +145,7 @@ function getTokenlistCurrentPrice(
 ): UnlockCurrentPrice | null {
 	if (!geckoId || !tokenlist) return null
 	const token = tokenlist[geckoId]
-	if (!isFinitePositiveNumber(token?.current_price)) return null
+	if (!isPositiveNumber(token?.current_price)) return null
 	return {
 		price: token.current_price,
 		symbol: normalizeTokenlistSymbol(token.symbol)
@@ -239,39 +189,20 @@ async function fetchCurrentUnlockPrices({
 	return prices
 }
 
-interface EmissionsDataInput {
-	data?:
-		| Array<{
-				label?: string | undefined
-				data?:
-					| Array<{
-							timestamp: number
-							unlocked?: number | null | undefined
-							rawEmission?: number | null | undefined
-							burned?: number | null | undefined
-							isTBD?: boolean | undefined
-							isForecast?: boolean | undefined
-					  }>
-					| undefined
-		  }>
-		| null
-		| undefined
-}
-
-function buildEmissionsSeriesAndCategories(input: EmissionsDataInput | null | undefined): {
-	series: Record<number, Record<string, number | null>>
+function buildEmissionsSeriesAndCategories(input: ProtocolEmissionChartData | null | undefined): {
+	series: Map<number, Record<string, number | null>>
 	categories: string[]
 	tbdSections: string[]
 	forecastSections: string[]
 } {
-	const series = {}
+	const series = new Map<number, Record<string, number | null>>()
 	const categories: string[] = []
 	const seen = new Set<string>()
 	const tbdSections: string[] = []
 	const forecastSections: string[] = []
 
 	for (const emission of input?.data ?? []) {
-		const label = formatEmissionLabel(emission?.label)
+		const label = formatEmissionLabel(emission.label)
 		if (!label) continue
 
 		if (!seen.has(label)) {
@@ -284,25 +215,29 @@ function buildEmissionsSeriesAndCategories(input: EmissionsDataInput | null | un
 		if (firstValue?.isTBD) tbdSections.push(label)
 		else if (firstValue?.isForecast) forecastSections.push(label)
 
-		for (const value of emission?.data ?? []) {
-			const ts = value?.timestamp
-			if (typeof ts !== 'number' || !Number.isFinite(ts)) continue
-			const entry = series[ts] ?? (series[ts] = {})
-			entry[label] = value?.unlocked ?? null
+		for (const value of emission.data ?? []) {
+			const ts = value.timestamp
+			let entry = series.get(ts)
+			if (!entry) {
+				const createdEntry: Record<string, number | null> = {}
+				series.set(ts, createdEntry)
+				entry = createdEntry
+			}
+			entry[label] = value.unlocked ?? null
 		}
 	}
 
 	return { series, categories, tbdSections, forecastSections }
 }
 
-function seriesToChartRows(series: Record<number, Record<string, number | null>>): EmissionsChartRow[] {
+function seriesToChartRows(series: Map<number, Record<string, number | null>>): EmissionsChartRow[] {
 	const rows: EmissionsChartRow[] = []
-	for (const tsStr in series) {
-		const tsSeconds = Number(tsStr)
-		if (!Number.isFinite(tsSeconds)) continue
-		const row = { timestamp: tsSeconds * 1e3 } as { timestamp: number } & Record<string, number | null>
-		const values = series[tsSeconds]
-		for (const label of Object.keys(values)) row[label] = values[label]
+	for (const [timestamp, values] of series) {
+		const row: EmissionsChartRow = { timestamp: timestamp * 1e3 }
+		for (const label in values) {
+			const value = values[label]
+			if (value !== undefined) row[label] = value
+		}
 		rows.push(row)
 	}
 	rows.sort((a, b) => a.timestamp - b.timestamp)
@@ -317,7 +252,7 @@ function buildPieFromChart(chart: EmissionsChartRow[]): Array<{ name: string; va
 	for (const key in last) {
 		if (key !== 'timestamp') {
 			const value = last[key]
-			if (typeof value === 'number') {
+			if (value != null) {
 				pie.push({ name: key, value })
 			}
 		}
@@ -329,7 +264,7 @@ function buildColorsForPie(
 	pie: Array<{ name: string }>,
 	colorFrom: Record<string, string> = {}
 ): Record<string, string> {
-	const colors = {}
+	const colors: Record<string, string> = {}
 	const names = new Set(pie.map((p) => p.name))
 	const baseNameCache = new Map<string, string>()
 	const baseNameOf = (name: string): string => {
@@ -341,11 +276,13 @@ function buildColorsForPie(
 		let current = name
 
 		for (;;) {
-			const next = Object.hasOwn(colorFrom, current) ? colorFrom[current] : undefined
+			const next = colorFrom[current]
 			if (!next || !names.has(next)) break
 			if (seen.has(next)) {
 				const cycle = [...visited, current, next].filter((item, index, arr) => arr.indexOf(item) === index)
-				current = cycle.toSorted()[0]
+				const cycleStart = cycle.toSorted()[0]
+				if (!cycleStart) throw new Error('Emission color cycle is unexpectedly empty')
+				current = cycleStart
 				break
 			}
 			visited.push(current)
@@ -361,16 +298,23 @@ function buildColorsForPie(
 	}
 	const primary = pie.filter((p) => baseNameOf(p.name) === p.name)
 	const palette = getNDistinctColors(primary.length)
-	for (let i = 0; i < primary.length; i++) colors[primary[i].name] = palette[i]
+	for (let index = 0; index < primary.length; index++) {
+		const entry = primary[index]
+		if (entry === undefined) continue
+		const color = palette[index]
+		if (!color) throw new Error(`Missing emission pie color at index ${index}`)
+		colors[entry.name] = color
+	}
 	for (const p of pie) {
 		if (colors[p.name]) continue
 		const base = baseNameOf(p.name)
-		if (colors[base]) colors[p.name] = colors[base]
+		const color = colors[base]
+		if (color) colors[p.name] = color
 	}
 	return colors
 }
 
-export async function getProtocolUnlockUsdChart(protocolName: string): Promise<unknown[] | null> {
+export async function getProtocolUnlockUsdChart(protocolName: string): Promise<TokenIncentiveChartPoint[] | null> {
 	const res = await fetchProtocolEmission(protocolName)
 	return res?.unlockUsdChart ?? null
 }
@@ -380,7 +324,7 @@ export async function getProtocolEmissionsCharts(protocolName: string): Promise<
 		documented: Array<EmissionsChartRow>
 		realtime: Array<EmissionsChartRow>
 	}
-	unlockUsdChart: unknown[] | null
+	unlockUsdChart: TokenIncentiveChartPoint[] | null
 }> {
 	const empty = { chartData: { documented: [], realtime: [] }, unlockUsdChart: null }
 	if (!protocolName) return empty
@@ -431,13 +375,24 @@ export async function getProtocolEmissionsScheduleData(protocolName: string): Pr
 
 	// Assign colors by category order to keep schedule charts fully colored.
 	const documentedPalette = getNDistinctColors(categories.documented.length)
-	const documentedColors = {}
-	for (let i = 0; i < categories.documented.length; i++)
-		documentedColors[categories.documented[i]] = documentedPalette[i]
+	const documentedColors: Record<string, string> = {}
+	for (let index = 0; index < categories.documented.length; index++) {
+		const category = categories.documented[index]
+		if (category === undefined) continue
+		const color = documentedPalette[index]
+		if (!color) throw new Error(`Missing documented emission color at index ${index}`)
+		documentedColors[category] = color
+	}
 
 	const realtimePalette = getNDistinctColors(categories.realtime.length)
-	const realtimeColors = {}
-	for (let i = 0; i < categories.realtime.length; i++) realtimeColors[categories.realtime[i]] = realtimePalette[i]
+	const realtimeColors: Record<string, string> = {}
+	for (let index = 0; index < categories.realtime.length; index++) {
+		const category = categories.realtime[index]
+		if (category === undefined) continue
+		const color = realtimePalette[index]
+		if (!color) throw new Error(`Missing realtime emission color at index ${index}`)
+		realtimeColors[category] = color
+	}
 
 	const datasets = {
 		documented: buildEmissionsDataset(documentedChart, categories.documented),
@@ -513,7 +468,12 @@ export async function getProtocolEmissionsPieData(protocolName: string): Promise
 	return { pieChartData, stackColors, meta }
 }
 
-type UnlockCalendarProtocolEvent = { timestamp: number; noOfTokens: number[]; description?: string; category?: string }
+type UnlockCalendarProtocolEvent = {
+	timestamp: number
+	noOfTokens: number[]
+	description?: string
+	category?: string
+}
 
 export function buildUnlockTypesByTimestamp(
 	allEventsForProtocol: readonly UnlockCalendarProtocolEvent[]
@@ -522,16 +482,21 @@ export function buildUnlockTypesByTimestamp(
 	const unlockTypes = new Map<number, string>()
 	// The emissions API contract is timestamp-ascending. Filtering preserves that
 	// order, so classify adjacent future events without copying or re-sorting.
-	for (let index = 0; index < allEventsForProtocol.length - 1; index++) {
-		const event = allEventsForProtocol[index]
-		if (event.timestamp <= nowSec || unlockTypes.has(event.timestamp)) continue
-
-		const diffToNextEventDays = (allEventsForProtocol[index + 1].timestamp - event.timestamp) / (60 * 60 * 24)
-		let unlockType = ''
-		if (diffToNextEventDays > 6.5 && diffToNextEventDays < 7.5) unlockType = 'Weekly'
-		else if (diffToNextEventDays > 28 && diffToNextEventDays < 32) unlockType = 'Monthly'
-		else if (diffToNextEventDays > 88 && diffToNextEventDays < 92) unlockType = 'Quarterly'
-		unlockTypes.set(event.timestamp, unlockType)
+	let event: UnlockCalendarProtocolEvent | undefined
+	for (const nextEvent of allEventsForProtocol) {
+		if (!event) {
+			event = nextEvent
+			continue
+		}
+		if (event.timestamp > nowSec && !unlockTypes.has(event.timestamp)) {
+			const diffToNextEventDays = (nextEvent.timestamp - event.timestamp) / (60 * 60 * 24)
+			let unlockType = ''
+			if (diffToNextEventDays > 6.5 && diffToNextEventDays < 7.5) unlockType = 'Weekly'
+			else if (diffToNextEventDays > 28 && diffToNextEventDays < 32) unlockType = 'Monthly'
+			else if (diffToNextEventDays > 88 && diffToNextEventDays < 92) unlockType = 'Quarterly'
+			unlockTypes.set(event.timestamp, unlockType)
+		}
+		event = nextEvent
 	}
 	return unlockTypes
 }
@@ -558,9 +523,7 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 	for (const protocol of data ?? []) {
 		if (!protocol?.events || protocol.tPrice == null) continue
 
-		const validEvents = protocol.events.filter(
-			(event: EmissionEvent) => event.timestamp !== null && event.noOfTokens && event.noOfTokens.length > 0
-		)
+		const validEvents = protocol.events.filter((event: EmissionEvent) => event.noOfTokens.length > 0)
 		const unlockTypesByTimestamp = buildUnlockTypesByTimestamp(validEvents)
 
 		const protocolUnlocksByDate: Record<
@@ -569,11 +532,12 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 		> = {}
 
 		for (const event of validEvents) {
-			const totalTokens = event.noOfTokens.reduce((sum: number, amount: number) => sum + amount, 0)
+			let totalTokens = 0
+			for (const amount of event.noOfTokens) totalTokens += amount
 			if (totalTokens === 0) continue
 
 			const valueUSD = totalTokens * protocol.tPrice
-			const dateStr = new Date(event.timestamp * 1000).toISOString().split('T')[0]
+			const dateStr = new Date(event.timestamp * 1000).toISOString().slice(0, 10)
 			const unlockType = unlockTypesByTimestamp.get(event.timestamp) ?? ''
 
 			const entry =
@@ -583,28 +547,33 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 			entry.value += valueUSD
 			entry.details.push(event.description || 'Token unlock')
 			entry.unlockTypes.push(unlockType)
-			entry.category = event.category || entry.category
+			if (event.category) entry.category = event.category
 		}
 
 		for (const dateStr in protocolUnlocksByDate) {
 			const dailyData = protocolUnlocksByDate[dateStr]
-			if (!unlocksData[dateStr]) unlocksData[dateStr] = { totalValue: 0, events: [] }
+			if (dailyData === undefined) continue
+			const unlockDay = unlocksData[dateStr] ?? { totalValue: 0, events: [] }
+			unlocksData[dateStr] = unlockDay
 
-			unlocksData[dateStr].totalValue += dailyData.value
-			unlocksData[dateStr].events.push({
+			unlockDay.totalValue += dailyData.value
+			unlockDay.events.push({
 				protocol: protocol.name,
 				value: dailyData.value,
 				details: dailyData.details.join(', '),
 				unlockType: dailyData.unlockTypes.find((type) => type !== '') || '',
-				category: dailyData.category
+				...(dailyData.category !== undefined ? { category: dailyData.category } : {})
 			})
 		}
 	}
 
-	for (const date in unlocksData) {
-		unlocksData[date].events = unlocksData[date].events.toSorted((a, b) => b.value - a.value)
+	const unlockEntries: Array<[string, UnlocksData[string]]> = []
+	for (const dateStr in unlocksData) {
+		const dailyData = unlocksData[dateStr]
+		if (dailyData === undefined) continue
+		dailyData.events = dailyData.events.toSorted((a, b) => b.value - a.value)
+		unlockEntries.push([dateStr, dailyData])
 	}
-
 	const currentYear = new Date().getFullYear()
 	for (let year = currentYear - 1; year <= currentYear + 2; year++) {
 		for (let month = 0; month < 12; month++) {
@@ -613,8 +582,7 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 			const monthKey = `${year}-${month.toString().padStart(2, '0')}`
 
 			let maxValue = 0
-			for (const dateStr in unlocksData) {
-				const dailyData = unlocksData[dateStr]
+			for (const [dateStr, dailyData] of unlockEntries) {
 				const date = dayjs(dateStr)
 				if (date.isBetween(startOfMonth.subtract(1, 'day'), endOfMonth.add(1, 'day'))) {
 					if (dailyData.totalValue > maxValue) maxValue = dailyData.totalValue
@@ -632,10 +600,10 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 		const startDateKey = startDate.format('YYYY-MM-DD')
 
 		const events: Array<{ date: string; event: CalendarUnlockEvent }> = []
-		for (const dateStr in unlocksData) {
+		for (const [dateStr, dailyData] of unlockEntries) {
 			const date = dayjs(dateStr)
 			if (date.isBetween(startDate.subtract(1, 'day'), endDate)) {
-				for (const event of unlocksData[dateStr].events) events.push({ date: dateStr, event })
+				for (const event of dailyData.events) events.push({ date: dateStr, event })
 			}
 		}
 
@@ -678,7 +646,10 @@ const getAllProtocolEmissionsWithHistory = async ({
 	try {
 		const protocols = await fetchAllProtocolEmissions()
 
-		const coinPrices = await fetchCurrentUnlockPrices({ protocols, tokenlist })
+		const coinPrices = await fetchCurrentUnlockPrices({
+			protocols,
+			...(tokenlist !== undefined ? { tokenlist } : {})
+		})
 
 		return protocols
 			.map((protocol: ProtocolEmission) => {
@@ -748,7 +719,10 @@ export const getAllProtocolEmissions = async ({
 		const protocols = await fetchAllProtocolEmissions()
 		const nowSec = Date.now() / 1000
 
-		const coinPrices = await fetchCurrentUnlockPrices({ protocols, tokenlist })
+		const coinPrices = await fetchCurrentUnlockPrices({
+			protocols,
+			...(tokenlist !== undefined ? { tokenlist } : {})
+		})
 		const { priceReqs, hasPriceRequests, lastPastTimestampByCoinKey } = buildUnlocksHistoricalPriceRequests(
 			protocols,
 			nowSec
@@ -757,7 +731,8 @@ export const getAllProtocolEmissions = async ({
 		if (getHistoricalPrices) {
 			if (emissionsHistoricalPrices !== undefined) {
 				for (const coin in emissionsHistoricalPrices) {
-					historicalPrices[coin] = emissionsHistoricalPrices[coin]
+					const prices = emissionsHistoricalPrices[coin]
+					if (prices !== undefined) historicalPrices[coin] = prices
 				}
 			}
 
@@ -767,7 +742,9 @@ export const getAllProtocolEmissions = async ({
 
 				for (const coin in priceReqs) {
 					if (historicalPrices[coin]?.prices?.length) continue
-					missingPriceReqs[coin] = priceReqs[coin]
+					const requests = priceReqs[coin]
+					if (requests === undefined) continue
+					missingPriceReqs[coin] = requests
 					hasMissingPriceRequests = true
 				}
 
@@ -783,18 +760,14 @@ export const getAllProtocolEmissions = async ({
 				const geckoId = protocol?.gecko_id
 				const coinKey = geckoId ? `coingecko:${geckoId}` : null
 
-				const eventsRaw = Array.isArray(protocol?.events) ? protocol.events : []
-				const events = eventsRaw.map((event: EmissionEvent) => ({
-					...event,
-					timestamp: typeof event?.timestamp === 'number' ? roundToNearestHalfHour(event.timestamp) : event?.timestamp
-				}))
+				const events = roundEmissionEvents(protocol.events)
 
 				// Upcoming event: choose the earliest upcoming event with non-zero tokens.
 				let upcomingTimestamp: number | null = null
 				for (const e of events) {
-					const ts = e?.timestamp
-					if (typeof ts !== 'number' || !Number.isFinite(ts)) continue
+					const ts = e.timestamp
 					if (ts < nowSec) continue
+					if (e.hasUnknownTokenAmount) continue
 					if (e?.noOfTokens?.length === 1 && e.noOfTokens[0] === 0) continue
 					if (upcomingTimestamp === null || ts < upcomingTimestamp) upcomingTimestamp = ts
 				}
@@ -802,7 +775,7 @@ export const getAllProtocolEmissions = async ({
 				const upcomingEvent: EmissionEvent[] = []
 				if (upcomingTimestamp !== null) {
 					for (const event of events) {
-						if (event.timestamp === upcomingTimestamp) {
+						if (event.timestamp === upcomingTimestamp && !event.hasUnknownTokenAmount) {
 							upcomingEvent.push(event)
 						}
 					}
@@ -814,6 +787,7 @@ export const getAllProtocolEmissions = async ({
 					for (const event of events) {
 						if (
 							event.timestamp === lastPastTimestamp &&
+							!event.hasUnknownTokenAmount &&
 							event.category !== 'noncirculating' &&
 							event.category !== 'farming'
 						) {
@@ -883,8 +857,9 @@ const EMPTY_FORECAST_SECTIONS: string[] = []
 function extractColorFromMap(res: ProtocolEmissionDetail): Record<string, string> {
 	const sections = res.componentData?.sections
 	if (!sections) return {}
-	const map = {}
-	for (const [name, section] of Object.entries(sections)) {
+	const map: Record<string, string> = {}
+	for (const name in sections) {
+		const section: (typeof sections)[string] | undefined = sections[name]
 		const target = section?.colorFrom
 		if (typeof target === 'string' && target && target !== name && sections[target]) {
 			map[name] = target
@@ -972,7 +947,7 @@ export const getProtocolEmissons = async (
 		const emissionCategories = { documented: documentedBuilt.categories, realtime: realtimeBuilt.categories }
 		const projectionModel = buildEmissionProjectionModel({
 			chartSections: documentedBuilt.categories.concat(realtimeBuilt.categories),
-			categoriesBreakdown: normalizeCategoriesBreakdown(res.categories),
+			categoriesBreakdown: res.categories ?? null,
 			sectionMetadata: res.componentData?.sections,
 			seriesTbdSections: documentedBuilt.tbdSections.concat(realtimeBuilt.tbdSections),
 			seriesForecastSections: documentedBuilt.forecastSections.concat(realtimeBuilt.forecastSections)
@@ -1007,7 +982,7 @@ export const getProtocolEmissons = async (
 		const coinKey = typeof tokenKey === 'string' && tokenKey ? tokenKey : geckoId ? `coingecko:${geckoId}` : null
 		const tokenlistPrices = options?.tokenlist ?? (geckoId ? await fetchUnlockTokenlistPrices() : undefined)
 		const tokenlistPrice = getTokenlistCurrentPrice(geckoId, tokenlistPrices)
-		const prices =
+		const prices: Record<string, UnlockCurrentPrice | undefined> =
 			coinKey && !tokenlistPrice
 				? await fetchCoinPricesBatched([coinKey], { searchWidth: '4h' }).catch((err) => {
 						console.log(err)
@@ -1017,15 +992,18 @@ export const getProtocolEmissons = async (
 
 		const tokenPriceData = tokenlistPrice ?? (coinKey ? prices[coinKey] : undefined)
 		const tokenPrice: { price?: number; symbol?: string } = {}
-		if (isFinitePositiveNumber(tokenPriceData?.price)) tokenPrice.price = tokenPriceData.price
+		if (isPositiveNumber(tokenPriceData?.price)) tokenPrice.price = tokenPriceData.price
 		if (typeof tokenPriceData?.symbol === 'string' && tokenPriceData.symbol) tokenPrice.symbol = tokenPriceData.symbol
 
 		let upcomingEvent: EmissionEvent[] = []
 		if (roundedEvents.length > 0) {
-			const event = roundedEvents.find((e) => e.timestamp >= nowSec)
+			const event = roundedEvents.find(
+				(e) =>
+					e.timestamp >= nowSec && !e.hasUnknownTokenAmount && !(e.noOfTokens.length === 1 && e.noOfTokens[0] === 0)
+			)
 
-			if (event && !(event.noOfTokens?.length === 1 && event.noOfTokens[0] === 0)) {
-				upcomingEvent = roundedEvents.filter((e) => e.timestamp === event.timestamp)
+			if (event) {
+				upcomingEvent = roundedEvents.filter((e) => e.timestamp === event.timestamp && !e.hasUnknownTokenAmount)
 			}
 		}
 

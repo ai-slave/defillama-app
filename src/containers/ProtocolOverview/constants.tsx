@@ -161,7 +161,7 @@ export const BAR_CHARTS: ProtocolChartsLabels[] = [
 ]
 
 // Oracle protocols with their own TVS entries (display name -> oracle name)
-export const oracleProtocols = {
+export const oracleProtocols: Readonly<Record<string, string>> = {
 	Chainlink: 'Chainlink',
 	Pyth: 'Pyth',
 	Api3: 'Api3',

@@ -162,6 +162,7 @@ export interface UseProTableDataResult {
 	searchIndex: WeakMap<IProtocolRow, string>
 	isLoading: boolean
 	isEmptyProtocols: boolean
+	unavailableChains: string[]
 	categories: string[]
 	availableProtocols: IProtocolRow[]
 	parentProtocols: IParentProtocol[]

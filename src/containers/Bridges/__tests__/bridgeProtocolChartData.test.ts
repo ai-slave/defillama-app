@@ -60,6 +60,39 @@ describe('bridge protocol chart data helpers', () => {
 				currentTimeMs: NOW
 			})
 		).toBe(20)
+
+		expect(
+			getBridgeProtocolPrevDayVolumeValue({
+				isAllChains: true,
+				volumeChartDataByChain: [],
+				totalDepositedUSD: 50,
+				totalWithdrawnUSD: undefined,
+				dataTimestamp: toSeconds('2026-07-14'),
+				currentTimeMs: NOW
+			})
+		).toBeNull()
+
+		expect(
+			getBridgeProtocolPrevDayVolumeValue({
+				isAllChains: true,
+				volumeChartDataByChain: [],
+				totalDepositedUSD: null,
+				totalWithdrawnUSD: 10,
+				dataTimestamp: toSeconds('2026-07-14'),
+				currentTimeMs: NOW
+			})
+		).toBeNull()
+
+		expect(
+			getBridgeProtocolPrevDayVolumeValue({
+				isAllChains: true,
+				volumeChartDataByChain: [{ date: toSeconds('2026-07-13'), Deposited: 30, Withdrawn: -10 }],
+				totalDepositedUSD: null,
+				totalWithdrawnUSD: null,
+				dataTimestamp: toSeconds('2026-07-14'),
+				currentTimeMs: NOW
+			})
+		).toBeNull()
 	})
 
 	it('requires exact completed-day endpoints for the previous-day change', () => {
@@ -69,13 +102,16 @@ describe('bridge protocol chart data helpers', () => {
 			{ date: toSeconds('2026-07-14'), Deposited: 12, Withdrawn: -4 }
 		]
 		expect(getBridgeProtocolCompletedDayVolumes(complete, NOW)).toEqual({
-			current: complete[1],
-			previous: complete[0]
+			current: { date: toSeconds('2026-07-13'), Deposited: 10, Withdrawn: -3 },
+			previous: { date: toSeconds('2026-07-12'), Deposited: 5, Withdrawn: -2 }
 		})
 
 		expect(
 			getBridgeProtocolCompletedDayVolumes(
-				[{ date: toSeconds('2026-07-11'), Deposited: 5, Withdrawn: -2 }, complete[1]],
+				[
+					{ date: toSeconds('2026-07-11'), Deposited: 5, Withdrawn: -2 },
+					{ date: toSeconds('2026-07-13'), Deposited: 10, Withdrawn: -3 }
+				],
 				NOW
 			)
 		).toBeNull()
@@ -113,5 +149,23 @@ describe('bridge protocol chart data helpers', () => {
 				volumeChartDataByChain: [{ date: 1, Deposited: 10, Withdrawn: -4 }]
 			}).source
 		).toEqual([])
+	})
+
+	it('keeps split legs visible but gaps derived or grouped values when a leg is unknown', () => {
+		const incomplete = [
+			{ date: 1, Deposited: 10, Withdrawn: null },
+			{ date: 2, Deposited: 20, Withdrawn: -5 }
+		]
+
+		expect(
+			buildBridgeProtocolAllChainsVolumeData({ active: true, groupBy: 'daily', volumeChartDataByChain: incomplete })
+				.source
+		).toEqual([
+			[1_000, null],
+			[2_000, 12.5]
+		])
+		expect(
+			buildBridgeProtocolInflowsData({ active: true, groupBy: 'weekly', volumeChartDataByChain: incomplete }).source
+		).toEqual([[getBucketTimestampSec(1, 'weekly') * 1e3, 30, null]])
 	})
 })

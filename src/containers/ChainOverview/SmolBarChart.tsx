@@ -1,8 +1,12 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
-import { CHART_COLORS, purple } from '~/constants/colors'
+import { purple } from '~/constants/colors'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formatUsd } from '~/utils/numberFormat'
+import { getChainOverviewPaletteColor } from './constants'
+import { useSmolChartHover } from './useSmolChartHover'
+
+const POSITIVE_BAR_COLOR = getChainOverviewPaletteColor(0)
 
 export function SmolBarChart({
 	series,
@@ -13,34 +17,7 @@ export function SmolBarChart({
 	className?: string
 	groupBy?: 'daily' | 'weekly' | 'monthly'
 }) {
-	const containerRef = useRef<HTMLDivElement>(null)
-	const tooltipRef = useRef<HTMLDivElement>(null)
-	const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-	const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
-
-	const onMouseMove = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>) => {
-			if (!containerRef.current || series.length === 0) return
-			const rect = containerRef.current.getBoundingClientRect()
-			const index = Math.min(Math.floor(((e.clientX - rect.left) / rect.width) * series.length), series.length - 1)
-			if (index >= 0) {
-				setHoveredIndex(index)
-				setMousePos({ x: e.clientX, y: e.clientY })
-			}
-		},
-		[series.length]
-	)
-
-	const onMouseLeave = useCallback(() => setHoveredIndex(null), [])
-
-	useLayoutEffect(() => {
-		const el = tooltipRef.current
-		if (!el || hoveredIndex == null) return
-		const flipX = mousePos.x + 12 + el.offsetWidth > window.innerWidth
-		const flipY = mousePos.y - 12 + el.offsetHeight > window.innerHeight
-		el.style.left = `${flipX ? mousePos.x - el.offsetWidth - 12 : mousePos.x + 12}px`
-		el.style.top = `${flipY ? mousePos.y - el.offsetHeight + 12 : mousePos.y - 12}px`
-	}, [mousePos, hoveredIndex])
+	const { containerRef, tooltipRef, hoveredIndex, onMouseMove, onMouseLeave } = useSmolChartHover(series.length)
 
 	const { bars, hasNegative, posRatio } = useMemo(() => {
 		if (series.length === 0) return { bars: [], hasNegative: false, posRatio: 1 }
@@ -54,7 +31,7 @@ export function SmolBarChart({
 			bars: values.map((v) => ({
 				heightPct: v >= 0 ? (v / maxPos) * 100 : (Math.abs(v) / (maxNeg || 1)) * 100,
 				isNegative: v < 0,
-				fill: v >= 0 ? CHART_COLORS[0] : purple
+				fill: v >= 0 ? POSITIVE_BAR_COLOR : purple
 			})),
 			hasNegative: neg,
 			posRatio: neg ? maxPos / (maxPos + maxNeg) : 1
@@ -65,6 +42,7 @@ export function SmolBarChart({
 
 	const posHeight = `${posRatio * 100}%`
 	const negHeight = `${(1 - posRatio) * 100}%`
+	const hoveredPoint = hoveredIndex == null ? undefined : series[hoveredIndex]
 
 	return (
 		<div className={className ?? 'my-auto h-[132px]'}>
@@ -95,15 +73,15 @@ export function SmolBarChart({
 						))}
 					</div>
 				) : null}
-				{hoveredIndex != null ? (
+				{hoveredIndex != null && hoveredPoint ? (
 					<div
 						className={domChartCrosshairStyles}
 						style={{ left: `${((hoveredIndex + 0.5) / series.length) * 100}%` }}
 					/>
 				) : null}
-				{hoveredIndex != null ? (
+				{hoveredPoint ? (
 					<div ref={tooltipRef} className={domChartTooltipStyles}>
-						<p>{formatTooltipChartDate(series[hoveredIndex][0], groupBy ?? 'daily')}</p>
+						<p>{formatTooltipChartDate(hoveredPoint[0], groupBy ?? 'daily')}</p>
 						<p style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
 							<span
 								style={{
@@ -111,10 +89,10 @@ export function SmolBarChart({
 									width: '10px',
 									height: '10px',
 									borderRadius: '50%',
-									backgroundColor: series[hoveredIndex][1] >= 0 ? CHART_COLORS[0] : purple
+									backgroundColor: hoveredPoint[1] >= 0 ? POSITIVE_BAR_COLOR : purple
 								}}
 							/>
-							{formatUsd(series[hoveredIndex][1], {
+							{formatUsd(hoveredPoint[1], {
 								compact: true,
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'

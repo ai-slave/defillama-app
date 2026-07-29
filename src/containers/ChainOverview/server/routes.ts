@@ -46,10 +46,13 @@ export function resolveChainParamFromMetadata(chain: string, metadataCache: Meta
 	const normalizedChain = slug(chain)
 	if (!normalizedChain) return null
 
+	if (!Object.hasOwn(metadataCache.chainRouteKeyBySlug, normalizedChain)) return null
 	const chainKey = metadataCache.chainRouteKeyBySlug[normalizedChain]
 	if (!chainKey) return null
 
+	if (!Object.hasOwn(metadataCache.chainMetadata, chainKey)) return null
 	const metadata = metadataCache.chainMetadata[chainKey]
+	if (!metadata) return null
 	return {
 		metadata,
 		canonicalSlug: slug(metadata.name),
@@ -81,7 +84,9 @@ export function getChainSlugsFromMetadata(metadataCache: MetadataCache): string[
 	const slugs = new Set<string>()
 
 	for (const chainSlug in metadataCache.chainMetadata) {
+		if (!Object.hasOwn(metadataCache.chainMetadata, chainSlug)) continue
 		const metadata = metadataCache.chainMetadata[chainSlug]
+		if (!metadata) continue
 		const canonicalSlug = slug(metadata.name)
 		if (canonicalSlug === 'all') continue
 		slugs.add(canonicalSlug)
@@ -98,7 +103,9 @@ export function getChainMetricSlugsFromMetadata(metadataCache: MetadataCache, me
 	const slugs = new Set<string>()
 
 	for (const chainSlug in metadataCache.chainMetadata) {
+		if (!Object.hasOwn(metadataCache.chainMetadata, chainSlug)) continue
 		const metadata = metadataCache.chainMetadata[chainSlug]
+		if (!metadata) continue
 		if (!metadata[metric]) continue
 
 		const canonicalSlug = slug(metadata.name)

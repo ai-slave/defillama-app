@@ -7,29 +7,36 @@ const {
 	fetchAdapterProtocolChartDataMock,
 	resolveChainParamMock,
 	resolveProtocolParamMock,
+	resolveProtocolParamFromMetadataMock,
 	fetchChainAssetsChartMock,
 	fetchBridgeVolumeByChainMock,
 	fetchRaisesMock,
 	getStablecoinOverviewChartSeriesMock,
-	getProtocolUnlockUsdChartMock
+	getProtocolUnlockUsdChartMock,
+	metadataCache
 } = vi.hoisted(() => ({
 	fetchAdapterChainChartDataMock: vi.fn(),
 	fetchAdapterProtocolChartDataMock: vi.fn(),
 	resolveChainParamMock: vi.fn(),
 	resolveProtocolParamMock: vi.fn(),
+	resolveProtocolParamFromMetadataMock: vi.fn(),
 	fetchChainAssetsChartMock: vi.fn(),
 	fetchBridgeVolumeByChainMock: vi.fn(),
 	fetchRaisesMock: vi.fn(),
 	getStablecoinOverviewChartSeriesMock: vi.fn(),
-	getProtocolUnlockUsdChartMock: vi.fn()
+	getProtocolUnlockUsdChartMock: vi.fn(),
+	metadataCache: { emissionsProtocolBySlug: { aave: true } }
 }))
 
-vi.mock('~/containers/BridgedTVL/api', () => ({
+vi.mock('~/utils/metadata', () => ({ default: metadataCache }))
+
+vi.mock('~/containers/BridgedTVL/api', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/containers/BridgedTVL/api')>()),
 	fetchChainAssetsChart: fetchChainAssetsChartMock
 }))
 
 vi.mock('~/containers/Bridges/api', () => ({
-	fetchBridgeVolumeByChain: fetchBridgeVolumeByChainMock
+	fetchRawBridgeVolumeByChain: fetchBridgeVolumeByChainMock
 }))
 
 vi.mock('~/containers/AdapterMetrics/api', () => ({
@@ -50,7 +57,8 @@ vi.mock('~/containers/Unlocks/queries', () => ({
 }))
 
 vi.mock('~/containers/ProtocolOverview/server/routes', () => ({
-	resolveProtocolParam: resolveProtocolParamMock
+	resolveProtocolParam: resolveProtocolParamMock,
+	resolveProtocolParamFromMetadata: resolveProtocolParamFromMetadataMock
 }))
 
 vi.mock('~/containers/ChainOverview/server/routes', () => ({
@@ -67,6 +75,11 @@ beforeEach(() => {
 	fetchBridgeVolumeByChainMock.mockResolvedValue([])
 	resolveChainParamMock.mockResolvedValue(null)
 	resolveProtocolParamMock.mockResolvedValue({ canonicalSlug: 'aave', id: '1', metadata: { displayName: 'Aave' } })
+	resolveProtocolParamFromMetadataMock.mockReturnValue({
+		canonicalSlug: 'aave',
+		id: '1',
+		metadata: { displayName: 'Aave' }
+	})
 })
 
 describe('/api/public/chains/charts', () => {
@@ -329,6 +342,21 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Unsupported adapter dataType' })
 	})
 
+	it('rejects unsupported adapter types before resolving or fetching', async () => {
+		const req = {
+			method: 'GET',
+			query: { kind: 'adapter-chain', adapterType: 'unknown-adapter', chain: 'Base' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(resolveChainParamMock).not.toHaveBeenCalled()
+		expect(fetchAdapterChainChartDataMock).not.toHaveBeenCalled()
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Unsupported adapterType' })
+	})
+
 	it.each(chainNativeProtocolRows)('does not use chain fallback for explicit protocol $label requests', async (row) => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
@@ -535,9 +563,9 @@ describe('/api/public/chains/charts', () => {
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Hyperliquid L1',
 			canonicalSlug: 'hyperliquid-l1',
-			metadata: { name: 'Hyperliquid L1', chainAssets: true }
+			metadata: { id: 'hyperliquid', name: 'Hyperliquid L1', chainAssets: true }
 		})
-		fetchChainAssetsChartMock.mockResolvedValue([{ timestamp: 1_700_000_000, data: { total: '100' } }])
+		fetchChainAssetsChartMock.mockResolvedValue([{ timestamp: 1_700_000_000, data: { total: 100 } }])
 		const req = {
 			method: 'GET',
 			query: { kind: 'bridged-tvl', chain: 'hyperliquid-l1' }
@@ -546,9 +574,32 @@ describe('/api/public/chains/charts', () => {
 
 		await handler(req, res)
 
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('hyperliquid-l1')
+		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('hyperliquid')
 		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith([{ timestamp: 1_700_000_000, data: { total: '100' } }])
+		expect(res.json).toHaveBeenCalledWith([{ timestamp: 1_700_000_000, data: { total: 100 } }])
+	})
+
+	it.each([
+		['OP Mainnet', 'optimism'],
+		['Avalanche', 'avax'],
+		['Gnosis', 'xdai'],
+		['ZKsync Era', 'era']
+	])('uses the producer chain ID for %s Bridged TVL charts', async (name, id) => {
+		resolveChainParamMock.mockResolvedValue({
+			canonicalName: name,
+			canonicalSlug: name.toLowerCase().replaceAll(' ', '-'),
+			metadata: { id, name, chainAssets: true }
+		})
+
+		const req = {
+			method: 'GET',
+			query: { kind: 'bridged-tvl', chain: name }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith(id)
 	})
 
 	it('does not fetch Bridged TVL charts when chainAssets metadata is missing', async () => {
@@ -585,11 +636,11 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'chain not found' })
 	})
 
-	it('returns null when Bridged TVL historical data is unavailable upstream', async () => {
+	it('returns an upstream error when Bridged TVL historical data is unavailable', async () => {
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Base',
 			canonicalSlug: 'base',
-			metadata: { name: 'Base', chainAssets: true }
+			metadata: { id: 'base', name: 'Base', chainAssets: true }
 		})
 		fetchChainAssetsChartMock.mockRejectedValue(new Error('missing chart'))
 		const req = {
@@ -601,8 +652,8 @@ describe('/api/public/chains/charts', () => {
 		await handler(req, res)
 
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('base')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith(null)
+		expect(res.status).toHaveBeenCalledWith(502)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Bridged TVL chart is unavailable upstream' })
 	})
 
 	it('loads bridge net inflows with one focused chain-volume request', async () => {
@@ -612,8 +663,8 @@ describe('/api/public/chains/charts', () => {
 			metadata: { name: 'Base' }
 		})
 		fetchBridgeVolumeByChainMock.mockResolvedValue([
-			{ date: '1700000000', depositUSD: 100, withdrawUSD: 40 },
-			{ date: '1700086400', depositUSD: 25, withdrawUSD: 10 }
+			{ date: '1700000000', depositUSD: 100, withdrawUSD: 40, depositTxs: 2, withdrawTxs: 1 },
+			{ date: '1700086400', depositUSD: 25, withdrawUSD: 10, depositTxs: 1, withdrawTxs: 1 }
 		])
 		const req = {
 			method: 'GET',
@@ -627,8 +678,93 @@ describe('/api/public/chains/charts', () => {
 		expect(fetchBridgeVolumeByChainMock).toHaveBeenCalledWith('Base')
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith([
-			['1700000000', 100, -40],
-			['1700086400', 25, -10]
+			[1700000000, 100, -40],
+			[1700086400, 25, -10]
+		])
+	})
+
+	it('preserves missing bridge legs so clients can distinguish unknown from zero', async () => {
+		resolveChainParamMock.mockResolvedValue({
+			canonicalName: 'Base',
+			canonicalSlug: 'base',
+			metadata: { name: 'Base' }
+		})
+		fetchBridgeVolumeByChainMock.mockResolvedValue([
+			{ date: '1700000000', depositUSD: null, withdrawUSD: 4, depositTxs: 0, withdrawTxs: 1 },
+			{ date: '1700086400', depositUSD: 0, withdrawUSD: 0, depositTxs: 0, withdrawTxs: 0 },
+			{ date: '1700172800', depositUSD: null, withdrawUSD: null, depositTxs: 0, withdrawTxs: 0 }
+		])
+		const req = {
+			method: 'GET',
+			query: { kind: 'net-inflows', chain: 'base' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.json).toHaveBeenCalledWith([
+			[1700000000, null, -4],
+			[1700086400, 0, 0],
+			[1700172800, null, null]
+		])
+	})
+
+	it('trims leading zero token incentive points without changing producer tuples', async () => {
+		getProtocolUnlockUsdChartMock.mockResolvedValue([
+			[100, 0],
+			[200, 5],
+			[500, 7],
+			[600, 0]
+		])
+		const req = {
+			method: 'GET',
+			query: { kind: 'token-incentives', protocol: 'aave' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(getProtocolUnlockUsdChartMock).toHaveBeenCalledWith('aave')
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith([
+			[200, 5],
+			[500, 7],
+			[600, 0]
+		])
+	})
+
+	it('preserves a valid empty token incentive chart as a cached empty response', async () => {
+		getProtocolUnlockUsdChartMock.mockResolvedValue([])
+		const req = {
+			method: 'GET',
+			query: { kind: 'token-incentives', protocol: 'aave' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith([])
+		expect(res.setHeader).not.toHaveBeenCalledWith('Cache-Control', 'no-store')
+	})
+
+	it('preserves a nonempty all-zero token incentive chart', async () => {
+		getProtocolUnlockUsdChartMock.mockResolvedValue([
+			[100, 0],
+			[200, 0]
+		])
+		const req = {
+			method: 'GET',
+			query: { kind: 'token-incentives', protocol: 'aave' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith([
+			[100, 0],
+			[200, 0]
 		])
 	})
 
@@ -643,5 +779,55 @@ describe('/api/public/chains/charts', () => {
 
 		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({ adapterType: 'fees', chain: 'All' })
 		expect(res.status).toHaveBeenCalledWith(200)
+	})
+
+	it('sorts aggregated raise dates while retaining an explicit zero total', async () => {
+		fetchRaisesMock.mockResolvedValue({
+			raises: [
+				{ date: 3, amountUsd: 0 },
+				{ date: 2, amountUsd: 4 },
+				{ date: 1, amountUsd: 3 },
+				{ date: 2, amountUsd: 1 }
+			]
+		})
+		const req = {
+			method: 'GET',
+			query: { kind: 'raises' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith([
+			[1_000, 3],
+			[2_000, 5],
+			[3_000, 0]
+		])
+	})
+
+	it('preserves stablecoin chart gaps and zero-valued rows', async () => {
+		getStablecoinOverviewChartSeriesMock.mockResolvedValue({
+			dataset: {
+				dimensions: ['timestamp', 'Total Stablecoins'],
+				source: [
+					[1_000, null],
+					[2_000, 0]
+				]
+			}
+		})
+		const req = {
+			method: 'GET',
+			query: { kind: 'stablecoins-mcap', chain: 'all' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith([
+			[1_000, null],
+			[2_000, 0]
+		])
 	})
 })

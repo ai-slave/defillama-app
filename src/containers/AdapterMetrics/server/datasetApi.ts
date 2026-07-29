@@ -28,8 +28,8 @@ export function createAdapterMetricDatasetHandler(publicMetric: string): NextApi
 		try {
 			const { chains } = req.query
 			const chainList = typeof chains === 'string' ? [chains] : chains || []
-			const sortedProtocols = await fetchDimensionDataset({ ...spec.options, chains: chainList })
-			res.status(200).json(sortedProtocols)
+			const result = await fetchDimensionDataset({ ...spec.options, chains: chainList })
+			res.status(200).json(result)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			res.status(500).json({ error: `Failed to fetch ${publicMetric} data` })

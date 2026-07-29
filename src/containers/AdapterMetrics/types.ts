@@ -1,8 +1,9 @@
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IAdapterChainMetrics, IAdapterChart, IAdapterProtocolMetrics } from './api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
 
-// Chain-level adapter data with chart
+// Chain-level adapter data with chart. Metric periods retain the producer's
+// exact optionality; page read models decide where a missing period is shown as null.
 export interface IAdapterChainOverview extends IAdapterChainMetrics {
 	totalDataChart: IAdapterChart
 }
@@ -55,7 +56,7 @@ export interface IAdapterByChainPageData {
 	categories: Array<string>
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: `${ADAPTER_DATA_TYPES}` | null
-	chartData: MultiSeriesChartDataset
+	chartData: MultiSeriesTimeSeriesDataset
 	total24h: number | null
 	total7d: number | null
 	total30d: number | null
@@ -72,7 +73,7 @@ export interface IAdapterByChainPageData {
 export interface IChainsByAdapterPageData {
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: `${ADAPTER_DATA_TYPES}` | null
-	chartData: MultiSeriesChartDataset
+	chartData: MultiSeriesTimeSeriesDataset
 	chains: Array<{
 		name: string
 		logo: string

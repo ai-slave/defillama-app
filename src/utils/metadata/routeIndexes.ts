@@ -2,6 +2,7 @@ import { CATEGORY_INFO_API } from '~/constants'
 import { fetchDATInstitutions } from '~/containers/DAT/api'
 import type { ICategoryInfoApiItem } from '~/containers/NarrativeTracker/api.types'
 import { fetchOracleMetrics } from '~/containers/Oracles/api'
+import type { IOracleMetrics } from '~/containers/Oracles/api.types'
 import { fetchStablecoinPeggedConfigApi } from '~/containers/Stablecoins/api'
 import { slug } from '~/utils'
 import { fetchMetadataJson } from './http'
@@ -89,7 +90,7 @@ export function buildOracleRoutesMetadata({
 	oraclesTVS = {}
 }: {
 	chainsByOracle: Record<string, string[]>
-	oraclesTVS?: Record<string, unknown>
+	oraclesTVS?: IOracleMetrics['oraclesTVS']
 }): OracleRoutesMetadata {
 	const oracleNameBySlug: Record<string, string> = {}
 	const chainNameBySlug: Record<string, string> = {}
@@ -138,7 +139,9 @@ export function buildDigitalAssetTreasuryRoutesMetadata(
 		const ticker = data.institutionMetadata[institution.institutionId]?.ticker
 		if (ticker) companySlugs.push(ticker)
 	}
-	for (const institution of Object.values(data.institutionMetadata)) {
+	for (const institutionId in data.institutionMetadata) {
+		const institution = data.institutionMetadata[institutionId]
+		if (institution === undefined) continue
 		if (includedInstitutionIds.has(institution.institutionId)) continue
 		const ticker = institution.ticker
 		if (ticker) companySlugs.push(ticker)
@@ -152,9 +155,7 @@ export function buildDigitalAssetTreasuryRoutesMetadata(
 
 export function buildStablecoinPeggedAssetSlugs(config: Record<string, string>): string[] {
 	const assetSlugs: string[] = []
-	for (const asset in config) {
-		assetSlugs.push(slug(asset))
-	}
+	for (const asset in config) assetSlugs.push(slug(asset))
 	return dedupeNonEmpty(assetSlugs)
 }
 

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext } from 'react'
-import type { DimensionDatasetProtocol } from '~/containers/AdapterMetrics/server/datasets'
+import type { DimensionDatasetProtocol, DimensionDatasetResult } from '~/containers/AdapterMetrics/server/datasets'
 import { StreamDoneContext } from '~/containers/ProDashboard/queries'
 import {
 	getProDimensionDatasetQueryKey,
@@ -22,11 +22,20 @@ export function useDimensionDatasetData<T = DimensionDatasetProtocol>(
 		? `?${requestChains.map((chain) => `chains=${encodeURIComponent(chain)}`).join('&')}`
 		: ''
 
-	return useQuery<T[]>({
+	const queryResult = useQuery<DimensionDatasetResult<T>>({
 		queryKey: getProDimensionDatasetQueryKey(datasetType, selectedChains),
-		queryFn: () => fetchJson<T[]>(`/api/dynamic/adapter-metrics/${getProDimensionDatasetRoute(datasetType)}${query}`),
+		queryFn: () =>
+			fetchJson<DimensionDatasetResult<T>>(
+				`/api/dynamic/adapter-metrics/${getProDimensionDatasetRoute(datasetType)}${query}`
+			),
 		enabled: streamDone,
 		staleTime: Infinity,
 		retry: 1
 	})
+
+	return {
+		...queryResult,
+		data: queryResult.data?.protocols,
+		unavailableChains: queryResult.data?.status === 'partial' ? queryResult.data.unavailableChains : []
+	}
 }

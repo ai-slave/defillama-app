@@ -1,10 +1,14 @@
 import type { ParsedUrlQuery } from 'querystring'
 import { fetchCoinGeckoTokensListFromDataset } from '~/api/coingecko'
+import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
+import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import { fetchTokenMarketsList } from '~/containers/Markets/server/dataset.server'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import type { TokenOverviewCurrentMetrics } from '~/containers/Token/tokenOverview'
+import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import { fetchTokenRightsEntries } from '~/containers/TokenRights/server/dataset.server'
 import type { ITokenRightsData } from '~/containers/TokenRights/types'
 import {
@@ -19,13 +23,7 @@ import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import { getCanonicalTokenRoute, type TokenDirectoryRecord } from '~/utils/tokenDirectory'
-import type {
-	TokensRawAdapterChainMetrics,
-	TokensRawCoinGeckoRanking,
-	TokensRawMarketsList,
-	TokensRawProtocolEmission,
-	TokensRawTokenRightsEntry
-} from './api.types'
+import type { TokensRawProtocolEmission } from './api.types'
 import {
 	getOrCreateSharedTokensSnapshot,
 	getTokensCacheRevision,
@@ -46,7 +44,7 @@ import { buildTokensSortIndexes, getTokensPageFromRows } from './utils'
 
 const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60
 
-type AdapterProtocolMetric = TokensRawAdapterChainMetrics['protocols'][number]
+type AdapterProtocolMetric = IAdapterChainMetrics['protocols'][number]
 
 interface TokensSourceRows {
 	rows: TokensSourceRow[]
@@ -61,8 +59,8 @@ interface TokensSourceData extends TokensSourceRows {
 
 interface SharedTokensMarketSnapshot {
 	revision: number
-	tokens: TokensRawCoinGeckoRanking[]
-	markets: TokensRawMarketsList
+	tokens: IResponseCGTokenRankingsDatasetItem[]
+	markets: TokenMarketsListResponse
 	currentMetricsById: Record<string, TokenOverviewCurrentMetrics>
 }
 
@@ -97,7 +95,7 @@ interface TokenUnlockMetrics {
 	upcomingUnlockUsd: number | null
 }
 
-const EMPTY_MARKETS_LIST: TokensRawMarketsList = {
+const EMPTY_MARKETS_LIST: TokenMarketsListResponse = {
 	last_updated: '',
 	tokens: []
 }
@@ -114,12 +112,15 @@ function buildTokenDirectoryIndexes(metadata: MetadataCache): TokenDirectoryInde
 
 	for (const key in metadata.tokenDirectory) {
 		const record = metadata.tokenDirectory[key]
+		if (record === undefined) continue
 		const geckoId = tokenRecordGeckoId(record)
 		if (geckoId && !byGeckoId.has(geckoId)) byGeckoId.set(geckoId, record)
 	}
 
 	for (const protocolId in metadata.protocolMetadata) {
-		const geckoId = metadata.protocolMetadata[protocolId].gecko_id?.toLowerCase()
+		const protocol = metadata.protocolMetadata[protocolId]
+		if (protocol === undefined) continue
+		const geckoId = protocol.gecko_id?.toLowerCase()
 		if (!geckoId) continue
 		const currentProtocolId = protocolIdByGeckoId.get(geckoId)
 		if (!currentProtocolId || (!currentProtocolId.startsWith('parent#') && protocolId.startsWith('parent#'))) {
@@ -135,9 +136,11 @@ function buildMetricMap(rows: AdapterProtocolMetric[]): Map<string, number> {
 	const parentTotals = new Map<string, number>()
 
 	for (const row of rows) {
-		map.set(row.defillamaId, row.total24h)
-		if (row.parentProtocol)
-			parentTotals.set(row.parentProtocol, (parentTotals.get(row.parentProtocol) ?? 0) + row.total24h)
+		const total24h = row.total24h ?? 0
+		map.set(row.defillamaId, total24h)
+		if (row.parentProtocol) {
+			parentTotals.set(row.parentProtocol, (parentTotals.get(row.parentProtocol) ?? 0) + total24h)
+		}
 	}
 
 	for (const [parentProtocol, total24h] of parentTotals) {
@@ -147,7 +150,7 @@ function buildMetricMap(rows: AdapterProtocolMetric[]): Map<string, number> {
 	return map
 }
 
-function buildUniqueTokenSymbols(tokens: TokensRawCoinGeckoRanking[]): Set<string> {
+function buildUniqueTokenSymbols(tokens: IResponseCGTokenRankingsDatasetItem[]): Set<string> {
 	const counts = new Map<string, number>()
 	for (const token of tokens) {
 		const symbol = token.symbol.toUpperCase()
@@ -162,10 +165,10 @@ function buildUniqueTokenSymbols(tokens: TokensRawCoinGeckoRanking[]): Set<strin
 }
 
 function buildMarketsMap(
-	markets: TokensRawMarketsList,
+	markets: TokenMarketsListResponse,
 	uniqueTokenSymbols: Set<string>
-): Map<string, TokensRawMarketsList['tokens'][number]> {
-	const map = new Map<string, TokensRawMarketsList['tokens'][number]>()
+): Map<string, TokenMarketsListResponse['tokens'][number]> {
+	const map = new Map<string, TokenMarketsListResponse['tokens'][number]>()
 	for (const entry of markets.tokens) {
 		const symbol = entry.symbol.toUpperCase()
 		// The markets dataset is symbol-keyed, so duplicate CoinGecko symbols would otherwise inherit each other's metrics.
@@ -209,7 +212,7 @@ function getTokenRightsSummary(parsed: ITokenRightsData): TokensRightsSummary {
 	}
 }
 
-function buildTokenRightsMap(entries: TokensRawTokenRightsEntry[]): Map<string, TokensRightsSummary> {
+function buildTokenRightsMap(entries: IRawTokenRightsEntry[]): Map<string, TokensRightsSummary> {
 	const map = new Map<string, TokensRightsSummary>()
 	for (const entry of entries) {
 		const parsed = parseTokenRightsEntry(entry)
@@ -299,7 +302,7 @@ function resolveEmissionsProtocolSlug(
 }
 
 function sumSegments(
-	entry: TokensRawMarketsList['tokens'][number] | undefined,
+	entry: TokenMarketsListResponse['tokens'][number] | undefined,
 	key: 'volume_24h' | 'oi_usd'
 ): number | null {
 	if (!entry) return null
@@ -318,7 +321,7 @@ function sumSegments(
 	return hasValue ? total : null
 }
 
-function getSearchKey(token: TokensRawCoinGeckoRanking, record: TokenDirectoryRecord | undefined): string {
+function getSearchKey(token: IResponseCGTokenRankingsDatasetItem, record: TokenDirectoryRecord | undefined): string {
 	return `${token.id} ${token.name} ${token.symbol} ${record?.name ?? ''} ${record?.symbol ?? ''}`.toLowerCase()
 }
 
@@ -342,7 +345,10 @@ function getUnlockedPercentFromSupplyMetrics(
 	return Math.max(0, Math.min(100, (adjustedSupply / maxSupply) * 100))
 }
 
-function firstUpdatedAt(tokens: TokensRawCoinGeckoRanking[], markets: TokensRawMarketsList): string | null {
+function firstUpdatedAt(
+	tokens: IResponseCGTokenRankingsDatasetItem[],
+	markets: TokenMarketsListResponse
+): string | null {
 	if (markets.last_updated) return markets.last_updated
 	for (const token of tokens) {
 		if (token.last_updated) return token.last_updated
@@ -355,11 +361,11 @@ export function buildTokenOverviewCurrentMetricsById({
 	markets,
 	metadata
 }: {
-	tokens: TokensRawCoinGeckoRanking[]
-	markets: TokensRawMarketsList
+	tokens: IResponseCGTokenRankingsDatasetItem[]
+	markets: TokenMarketsListResponse
 	metadata: MetadataCache
 }): Record<string, TokenOverviewCurrentMetrics> {
-	const currentMetricsById: Record<string, TokenOverviewCurrentMetrics> = Object.create(null)
+	const currentMetricsById: Record<string, TokenOverviewCurrentMetrics> = {}
 	const indexes = buildTokenDirectoryIndexes(metadata)
 	const marketsBySymbol = buildMarketsMap(markets, buildUniqueTokenSymbols(tokens))
 
@@ -393,7 +399,7 @@ export function buildTokenOverviewCurrentMetricsById({
 }
 
 export function buildTokenMarketSummary(
-	token: TokensRawCoinGeckoRanking,
+	token: IResponseCGTokenRankingsDatasetItem,
 	currentMetrics: TokenOverviewCurrentMetrics | null,
 	fallbackRank: number
 ): TokenMarketSummary {
@@ -413,10 +419,12 @@ export function buildTokenMarketSummary(
 	}
 }
 
-function buildTokenIndexById(tokens: TokensRawCoinGeckoRanking[]): Map<string, number> {
+function buildTokenIndexById(tokens: IResponseCGTokenRankingsDatasetItem[]): Map<string, number> {
 	const tokenIndexById = new Map<string, number>()
-	for (let index = 0; index < tokens.length; index += 1) {
-		tokenIndexById.set(tokens[index].id.toLowerCase(), index)
+	let index = 0
+	for (const token of tokens) {
+		tokenIndexById.set(token.id.toLowerCase(), index)
+		index++
 	}
 	return tokenIndexById
 }
@@ -525,10 +533,10 @@ export function buildTokensSourceRows({
 	metadata,
 	nowSec
 }: {
-	tokens: TokensRawCoinGeckoRanking[]
-	markets: TokensRawMarketsList
+	tokens: IResponseCGTokenRankingsDatasetItem[]
+	markets: TokenMarketsListResponse
 	currentMetricsById?: Record<string, TokenOverviewCurrentMetrics>
-	tokenRightsEntries: TokensRawTokenRightsEntry[]
+	tokenRightsEntries: IRawTokenRightsEntry[]
 	stablecoinGeckoIds?: Set<string>
 	fees: AdapterProtocolMetric[]
 	revenue: AdapterProtocolMetric[]
@@ -557,8 +565,8 @@ export function buildTokensSourceRows({
 	let weightedChangeMarketCap = 0
 	let weightedChangeNumerator = 0
 
-	for (let index = 0; index < tokens.length; index++) {
-		const token = tokens[index]
+	let index = 0
+	for (const token of tokens) {
 		const geckoId = token.id.toLowerCase()
 		const currentMetrics = currentMetricsById?.[geckoId]
 		const record = indexes.byGeckoId.get(geckoId)
@@ -636,6 +644,7 @@ export function buildTokensSourceRows({
 			weightedChangeNumerator += row.marketCap * row.priceChange24h
 		}
 		rows.push(row)
+		index++
 	}
 
 	if (weightedChangeMarketCap > 0) stats.marketCapWeightedChange24h = weightedChangeNumerator / weightedChangeMarketCap
@@ -684,6 +693,7 @@ export async function getTokenMarketSummaryByGeckoId(geckoId: string): Promise<T
 		const tokenIndex = marketSnapshot.tokenIndexById.get(normalizedGeckoId)
 		if (tokenIndex == null) return null
 		const token = marketSnapshot.tokens[tokenIndex]
+		if (token === undefined) throw new Error(`Missing indexed token ${normalizedGeckoId}`)
 		return buildTokenMarketSummary(token, marketSnapshot.currentMetricsById[normalizedGeckoId] ?? null, tokenIndex + 1)
 	}
 }
@@ -704,13 +714,19 @@ export function buildTokensChartDataset(
 	let index = marketCapIndex.nullStart - 1
 
 	while (index >= 0 && chartData.marketCaps.length < limit) {
+		const currentRow = marketCapIndex.rows[index]
+		if (currentRow === undefined) throw new Error(`Missing token sort row at index ${index}`)
 		let groupStart = index
-		while (groupStart > 0 && marketCapIndex.rows[groupStart - 1].marketCap === marketCapIndex.rows[index].marketCap) {
+		while (groupStart > 0) {
+			const previousRow = marketCapIndex.rows[groupStart - 1]
+			if (previousRow === undefined) throw new Error(`Missing token sort row at index ${groupStart - 1}`)
+			if (previousRow.marketCap !== currentRow.marketCap) break
 			groupStart--
 		}
 
 		for (let rowIndex = groupStart; rowIndex <= index && chartData.marketCaps.length < limit; rowIndex++) {
 			const row = marketCapIndex.rows[rowIndex]
+			if (row === undefined) throw new Error(`Missing token sort row at index ${rowIndex}`)
 			if (row.marketCap == null || row.marketCap <= 0) continue
 			chartData.names.push(row.name)
 			chartData.symbols.push(row.symbol)

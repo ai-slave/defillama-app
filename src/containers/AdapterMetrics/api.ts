@@ -1,15 +1,48 @@
 import { fetchCoinGeckoExchanges, fetchCoinGeckoSimplePrice } from '~/api/coingecko'
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { V2_SERVER_URL } from '~/constants'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import type {
+	AdapterChainProtocolTotalsResponse,
 	IAdapterChainMetrics,
+	IAdapterBreakdownChartData,
 	IAdapterChart,
-	IAdapterProtocolMetrics,
-	IAdapterBreakdownChartData
+	IAdapterProtocolMetrics
 } from './api.types'
 import { ADAPTER_TYPES, ADAPTER_DATA_TYPES } from './constants'
+
+interface AdapterChainMetricsRequest {
+	adapterType: `${ADAPTER_TYPES}`
+	chain: string
+	dataType?: `${ADAPTER_DATA_TYPES}` | 'dailyEarnings'
+	category?: string
+}
+
+async function fetchAdapterChainMetricsResponse({
+	adapterType,
+	chain,
+	dataType,
+	category
+}: AdapterChainMetricsRequest): Promise<IAdapterChainMetrics> {
+	const metricsUrl = new URL(
+		`${V2_SERVER_URL}/metrics/${adapterType}${category ? `/category/${slug(category)}` : ''}${chain && chain !== 'All' ? `/chain/${slug(chain)}` : ''}`
+	)
+
+	if (dataType) metricsUrl.searchParams.set('dataType', dataType)
+
+	return fetchJson<IAdapterChainMetrics>(metricsUrl.toString(), {
+		timeout: 30_000,
+		telemetry: {
+			attributes: {
+				adapter_type: adapterType,
+				...(dataType ? { data_type: dataType } : null),
+				chain,
+				...(category ? { category } : null)
+			}
+		}
+	})
+}
 
 /**
  * Fetch aggregate adapter metrics for a data type.
@@ -49,31 +82,31 @@ export async function fetchAdapterChainMetrics({
 	chain,
 	dataType,
 	category
-}: {
-	adapterType: `${ADAPTER_TYPES}`
-	chain: string
-	dataType?: `${ADAPTER_DATA_TYPES}` | 'dailyEarnings'
-	category?: string
-}): Promise<IAdapterChainMetrics> {
-	const metricsUrl = new URL(
-		`${V2_SERVER_URL}/metrics/${adapterType}${category ? `/category/${slug(category)}` : ''}${chain && chain !== 'All' ? `/chain/${slug(chain)}` : ''}`
-	)
-
-	if (dataType) {
-		metricsUrl.searchParams.set('dataType', dataType)
-	}
-
-	return fetchJson<IAdapterChainMetrics>(metricsUrl.toString(), {
-		timeout: 30_000,
-		telemetry: {
-			attributes: {
-				adapter_type: adapterType,
-				...(dataType ? { data_type: dataType } : null),
-				chain,
-				...(category ? { category } : null)
-			}
-		}
+}: AdapterChainMetricsRequest): Promise<IAdapterChainMetrics> {
+	return fetchAdapterChainMetricsResponse({
+		adapterType,
+		chain,
+		...(dataType !== undefined ? { dataType } : {}),
+		...(category !== undefined ? { category } : {})
 	})
+}
+
+/** Fetch the small protocol-total projection needed by chain comparison tables. */
+export async function fetchAdapterChainProtocolTotals(
+	options: AdapterChainMetricsRequest
+): Promise<AdapterChainProtocolTotalsResponse> {
+	const metrics = await fetchAdapterChainMetricsResponse(options)
+	const protocols: AdapterChainProtocolTotalsResponse['protocols'] = []
+	for (const protocol of metrics.protocols) {
+		protocols.push({
+			defillamaId: protocol.defillamaId,
+			displayName: protocol.displayName,
+			total24h: protocol.total24h ?? null,
+			total7d: protocol.total7d ?? null,
+			total30d: protocol.total30d ?? null
+		})
+	}
+	return { protocols }
 }
 
 /**
@@ -230,9 +263,9 @@ export async function fetchChainsByAdapterPageChartData({
 }: {
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: `${ADAPTER_DATA_TYPES}`
-}): Promise<MultiSeriesChartDataset> {
+}): Promise<MultiSeriesTimeSeriesDataset> {
 	const searchParams = new URLSearchParams({ adapterType, dataType })
-	return fetchJson<MultiSeriesChartDataset>(
+	return fetchJson<MultiSeriesTimeSeriesDataset>(
 		`/api/public/page-data/dimension-adapters/chains-chart?${searchParams.toString()}&zz=18`
 	)
 }
@@ -247,34 +280,20 @@ export async function fetchCexVolume(): Promise<number | null> {
 			fetchCoinGeckoSimplePrice({ ids: 'bitcoin', vsCurrencies: 'usd' })
 		])
 
-		// Validate BTC price exists and is a number
 		const btcPrice = btcPriceRes?.bitcoin?.usd
-		if (typeof btcPrice !== 'number' || isNaN(btcPrice)) {
-			return null
+		if (btcPrice == null) return null
+
+		let totalVolumeBtc = 0
+		let validCexCount = 0
+		for (const cex of cexs) {
+			const trustScore = cex?.trust_score
+			const volumeBtc = cex?.trade_volume_24h_btc
+			if (trustScore == null || trustScore < 9 || volumeBtc == null) continue
+			totalVolumeBtc += volumeBtc
+			validCexCount++
 		}
 
-		// Validate cexs is an array
-		if (!Array.isArray(cexs)) {
-			console.warn('CEX data is not an array:', typeof cexs)
-			return null
-		}
-
-		// Validate and calculate with defensive checks
-		const validCexs = cexs.filter((c) => {
-			return (
-				c &&
-				typeof c.trust_score === 'number' &&
-				c.trust_score >= 9 &&
-				typeof c.trade_volume_24h_btc === 'number' &&
-				!isNaN(c.trade_volume_24h_btc)
-			)
-		})
-
-		if (validCexs.length === 0) {
-			return null
-		}
-
-		return validCexs.reduce((sum, c) => sum + c.trade_volume_24h_btc, 0) * btcPrice
+		return validCexCount === 0 ? null : totalVolumeBtc * btcPrice
 	} catch (error) {
 		console.error('Error fetching CEX volume:', error)
 		return null

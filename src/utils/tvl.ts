@@ -65,12 +65,9 @@ const filterOutToday = (pairs: [number, number][]): [number, number][] => {
 	return pairs.filter(([ts]) => ts < today)
 }
 
-export type ProtocolChainTvls = Record<
-	string,
-	{
-		tvl?: Array<{ date: number | string; totalLiquidityUSD: number | string }>
-	}
->
+type ProtocolTvlPoint = { date: number | string; totalLiquidityUSD: number | string }
+
+export type ProtocolChainTvls = Record<string, { tvl?: ProtocolTvlPoint[] }>
 
 interface AdjustProtocolTvlOptions {
 	includeChains?: string[]
@@ -96,45 +93,23 @@ const getChainFromDerivedKey = (key: string, type: AdjustKey): string | null => 
 	return key.endsWith(suffix) ? key.slice(0, -suffix.length) : null
 }
 
-type TvlObjectEntry = {
-	date?: number | string | null
-	totalLiquidityUSD?: number | string | null
-}
-
-type TvlDataEntry = TvlObjectEntry | [number | string, number | string] | null | undefined
-
-const isTvlObjectEntry = (value: TvlDataEntry): value is TvlObjectEntry => {
-	return value != null && typeof value === 'object' && !Array.isArray(value)
-}
-
-const toPairs = (arr: readonly TvlDataEntry[] | undefined): [number, number][] => {
-	if (!Array.isArray(arr)) return []
+const toPairs = (points: readonly ProtocolTvlPoint[] | undefined): [number, number][] => {
 	const byDay = new Map<number, { ts: number; v: number }>()
 
-	for (const d of arr) {
-		let tsRaw: number
-		let vRaw: number
+	for (const point of points ?? []) {
+		const tsRaw = Number(point.date)
+		const value = Number(point.totalLiquidityUSD)
 
-		if (Array.isArray(d)) {
-			tsRaw = Number(d[0])
-			vRaw = Math.trunc(Number(d[1]) || 0) // || needed: NaN fallback
-		} else if (isTvlObjectEntry(d)) {
-			tsRaw = Number(d.date)
-			vRaw = Math.trunc(Number(d.totalLiquidityUSD) || 0) // || needed: NaN fallback
-		} else {
-			continue
-		}
-
-		if (!Number.isFinite(tsRaw) || !Number.isFinite(vRaw)) continue
+		const vRaw = Math.trunc(value)
 		const day = toUtcDay(tsRaw)
 		const prev = byDay.get(day)
 		if (!prev || tsRaw > prev.ts) {
 			byDay.set(day, { ts: tsRaw, v: vRaw })
 		}
 	}
-	const result = Array.from(byDay.entries())
-		.sort((a, b) => a[0] - b[0])
-		.map(([day, { v }]) => [day, v] as [number, number])
+	const result: Array<[number, number]> = []
+	for (const [day, { v }] of byDay) result.push([day, v])
+	result.sort((a, b) => a[0] - b[0])
 	return result
 }
 
@@ -159,13 +134,13 @@ export const processAdjustedProtocolTvl = (
 	const hasInclude = includeSet.size > 0
 	const hasExclude = excludeSet.size > 0
 
-	for (const key in chainTvls || {}) {
-		const val = (chainTvls || {})[key]
-		if (!val || typeof val !== 'object') continue
+	for (const key in chainTvls) {
 		if (isIgnoreKey(key)) continue
+		const value = chainTvls[key]
+		if (value === undefined) continue
 
 		const adjustType = getAdjustType(key)
-		const pairs = toPairs(val.tvl)
+		const pairs = toPairs(value.tvl)
 
 		let include = true
 		let chainScope: string | null = null

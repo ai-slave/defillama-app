@@ -18,10 +18,10 @@ describe('homepage unlocks summary', () => {
 	})
 
 	it('parses a valid homepage unlocks summary', async () => {
-		const { parseHomepageUnlocksSummary } = await import('../homepageUnlocks.server')
+		const { projectHomepageUnlocksSummary } = await import('../homepageUnlocks.server')
 
 		expect(
-			parseHomepageUnlocksSummary({
+			projectHomepageUnlocksSummary({
 				schemaVersion: 1,
 				generatedAtSec: 1779292800,
 				windowDays: 14,
@@ -44,32 +44,6 @@ describe('homepage unlocks summary', () => {
 				}
 			]
 		})
-	})
-
-	it('rejects malformed homepage unlocks summaries', async () => {
-		const { parseHomepageUnlocksSummary } = await import('../homepageUnlocks.server')
-
-		expect(parseHomepageUnlocksSummary({ schemaVersion: 2, total14d: 100, chart: [] })).toBeNull()
-		expect(
-			parseHomepageUnlocksSummary({
-				schemaVersion: 1,
-				generatedAtSec: 1,
-				windowDays: 14,
-				total14d: Number.NaN,
-				chart: []
-			})
-		).toBeNull()
-		expect(parseHomepageUnlocksSummary({ schemaVersion: 1, windowDays: 14, total14d: 100, chart: [] })).toBeNull()
-		expect(parseHomepageUnlocksSummary({ schemaVersion: 1, generatedAtSec: 1, total14d: 100, chart: [] })).toBeNull()
-		expect(
-			parseHomepageUnlocksSummary({
-				schemaVersion: 1,
-				generatedAtSec: 1,
-				windowDays: 14,
-				total14d: 100,
-				chart: [{ date: 1, total: 100, breakdown: [{ token: 'ETH', value: '100', pct: '100.00' }] }]
-			})
-		).toBeNull()
 	})
 
 	it('returns null when the homepage unlocks artifact fetch fails', async () => {

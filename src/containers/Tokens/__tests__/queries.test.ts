@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import type { MarketSegmentSummary } from '~/containers/Markets/api.types'
+import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
+import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
+import type { MarketSegmentSummary, TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
-import type { TokensRawAdapterChainMetrics, TokensRawCoinGeckoRanking, TokensRawMarketsList } from '../api.types'
 import {
 	buildTokenMarketSummary,
 	buildTokenOverviewCurrentMetricsById,
@@ -29,14 +30,27 @@ function marketSegment(overrides: Partial<MarketSegmentSummary>): MarketSegmentS
 
 function adapterMetric(
 	defillamaId: string,
-	total24h: number,
+	total24h: number | null,
 	parentProtocol?: string
-): TokensRawAdapterChainMetrics['protocols'][number] {
+): IAdapterChainMetrics['protocols'][number] {
 	return {
 		defillamaId,
 		total24h,
-		parentProtocol
-	} as TokensRawAdapterChainMetrics['protocols'][number]
+		...(parentProtocol !== undefined ? { parentProtocol } : {}),
+		breakdown24h: null,
+		breakdown30d: null,
+		name: defillamaId,
+		displayName: defillamaId,
+		module: null,
+		category: null,
+		logo: '',
+		chains: [],
+		protocolType: 'protocol',
+		methodologyURL: null,
+		methodology: null,
+		slug: defillamaId,
+		id: defillamaId
+	}
 }
 
 function tokenRightsEntry(overrides: Partial<IRawTokenRightsEntry>): IRawTokenRightsEntry {
@@ -143,7 +157,7 @@ describe('buildTokenMarketSummary', () => {
 describe('buildTokensSourceRows', () => {
 	it('precomputes token rows from tokenlist, markets, adapter metrics, unlocks, and rights data', () => {
 		const nowSec = 1_800_000_000
-		const tokens: TokensRawCoinGeckoRanking[] = [
+		const tokens: IResponseCGTokenRankingsDatasetItem[] = [
 			{
 				id: 'ethena',
 				name: 'Ethena',
@@ -170,7 +184,7 @@ describe('buildTokensSourceRows', () => {
 				market_cap: 50
 			}
 		]
-		const markets: TokensRawMarketsList = {
+		const markets: TokenMarketsListResponse = {
 			last_updated: '2026-06-29T01:00:00Z',
 			tokens: [
 				{
@@ -275,6 +289,7 @@ describe('buildTokensSourceRows', () => {
 		})
 
 		const ethena = result.rows[0]
+		if (ethena === undefined) throw new Error('Expected Ethena token row')
 		expect(ethena).toMatchObject({
 			id: 'ethena',
 			logo: '/ena.png',
@@ -488,7 +503,7 @@ describe('buildTokensSourceRows', () => {
 		expect(result.rows.map((row) => row.href)).toEqual(['/token/DATA', '/token/Streamr'])
 	})
 
-	it('prioritizes parent protocol matches for adapter metrics', () => {
+	it('prioritizes explicit parent metrics and treats inactive children as zero activity', () => {
 		const result = buildTokensSourceRows({
 			tokens: [
 				{
@@ -503,7 +518,8 @@ describe('buildTokensSourceRows', () => {
 			tokenRightsEntries: [],
 			fees: [
 				adapterMetric('hyperliquid-perps', 10, 'parent#hyperliquid'),
-				adapterMetric('hyperliquid-spot-orderbook', 20, 'parent#hyperliquid')
+				adapterMetric('hyperliquid-spot-orderbook', 20, 'parent#hyperliquid'),
+				adapterMetric('hyperliquid-options', null, 'parent#hyperliquid')
 			],
 			revenue: [adapterMetric('parent#hyperliquid', 100), adapterMetric('hyperliquid-perps', 7, 'parent#hyperliquid')],
 			holdersRevenue: [adapterMetric('hyperliquid-perps', 25, 'parent#hyperliquid')],

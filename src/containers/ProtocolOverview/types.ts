@@ -4,12 +4,11 @@ import type {
 	ChartTimeGroupingWithCumulative,
 	MultiSeriesChartOptions
 } from '~/components/ECharts/MultiSeriesChart/types'
-import type { RawBridgeVolumePoint } from '~/containers/Bridges/api.types'
+import type { BridgeVolumePoint } from '~/containers/Bridges/api.types'
 import type { Hack } from '~/containers/Hacks/model'
 import type { Raise } from '~/containers/Raises/model'
 import type { IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
 import type { IProtocolMetricsV2 } from './api.types'
-import type { IProtocolNumericSeries } from './chartSeries.utils'
 import { protocolCharts, type ProtocolChartsLabels } from './constants'
 
 export interface IProtocolPageMetrics {
@@ -76,7 +75,7 @@ interface IAdapterOverview {
 	> | null
 }
 
-type IProtocolOverviewChartSeries = IProtocolNumericSeries
+type IProtocolOverviewChartSeries = Array<[number, number | null]>
 type IProtocolOverviewInitialMultiSeriesChartData = Partial<Record<ProtocolChartsLabels, IProtocolOverviewChartSeries>>
 
 export interface IProtocolOverviewPageData {
@@ -119,14 +118,14 @@ export interface IProtocolOverviewPageData {
 	optionsNotionalVolume: IAdapterOverview | null
 	liquidationVolume: IAdapterOverview | null
 	collateralLiquidated: IAdapterOverview | null
-	bridgeVolume: RawBridgeVolumePoint[] | null
+	bridgeVolume: Array<Pick<BridgeVolumePoint, 'date' | 'depositUSD' | 'withdrawUSD'>> | null
 	incentives?: {
-		emissions24h: number
-		emissions7d: number
-		emissions30d: number
+		emissions24h: number | null
+		emissions7d: number | null
+		emissions30d: number | null
 		emissions1y: number | null
-		emissionsAllTime: number
-		emissionsMonthlyAverage1y: number
+		emissionsAllTime: number | null
+		emissionsMonthlyAverage1y: number | null
 		methodology?: string
 	} | null
 	treasury: {

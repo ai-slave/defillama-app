@@ -1,10 +1,11 @@
-import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import type { Raise } from '~/containers/Raises/model'
 import type { IChainMetadata, IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
 import type { ChainChartLabels } from './constants'
 
-export type ChainOverviewChartData = Partial<Record<ChainChartLabels, Array<[number, number]>>>
+export type ChainOverviewChartData = Partial<
+	Record<ChainChartLabels, Array<[timestampMs: number, value: number | null]>>
+>
 
 export interface IChainOverviewData {
 	chain: string
@@ -74,7 +75,7 @@ export interface IChainOverviewData {
 	chainRaises: Array<Raise> | null
 	chainAssets: IFormattedChainAsset | null
 	devMetrics: null
-	nfts: { total24h: number | null }
+	nfts: { total24h: number | null } | null
 	etfs: Array<[number, number]> | null
 	allChains: Array<{ label: string; to: string }>
 	unlocks: {
@@ -101,27 +102,10 @@ interface IChainWarningBanner {
 	level: 'low' | 'alert' | 'rug'
 }
 
-export type ILiteChart = ChainChartResponse
-
 export interface IFormattedChainAsset {
-	canonical?: {
-		total: number
-		breakdown: Record<string, number>
-	}
-	ownTokens?: {
-		total: number
-		breakdown: Record<string, number>
-	}
-	native?: {
-		total: number
-		breakdown: Record<string, number>
-	}
-	thirdParty?: {
-		total: number
-		breakdown: Record<string, number>
-	}
-	total: {
-		total: number
-		breakdown: Record<string, number>
-	}
+	canonical: { total: number }
+	ownTokens?: { total: number }
+	native?: { total: number }
+	thirdParty: { total: number }
+	total: { total: number }
 }

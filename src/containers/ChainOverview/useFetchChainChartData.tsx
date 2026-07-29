@@ -1,8 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
+import { skipToken, useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import type { CgChartResponse } from '~/api/coingecko.types'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
-import { formatBarChart, formatLineChart } from '~/components/ECharts/shared/timeSeries'
+import { formatBarChart, formatLineChart, formatNullableBarChart } from '~/components/ECharts/shared/timeSeries'
+import type { ChainAssetsChartDataPoint, ChainAssetsChartResponse } from '~/containers/BridgedTVL/api.types'
+import { getBridgeNetFlow } from '~/containers/Bridges/bridgeOverviewVolumeData'
 import { useGetBridgeChartDataByChain } from '~/containers/Bridges/queries.client'
+import type { BridgeOverviewVolumeChartTuple } from '~/containers/Bridges/types'
 import { useGetStabelcoinsChartDataByChain } from '~/containers/Stablecoins/queries.client'
 import { feeRevenueMetrics } from '~/metrics/feesRevenue'
 import { getFeeRevenueChainChartApiParams } from '~/metrics/routeSemantics'
@@ -11,14 +15,9 @@ import type { ChainChartLabels } from './constants'
 import { buildChainTvlChartState } from './tvlChart'
 import type { ChainOverviewChartData } from './types'
 
-const normalizeActivityChart = (values: Array<[number, number]> | null): Array<[number, number]> | null => {
+export const normalizeActivityChart = (values: Array<[number, number]> | null): Array<[number, number]> | null => {
 	if (!values?.length) return null
-	const normalized: Array<[number, number]> = new Array(values.length)
-	for (let index = 0; index < values.length; index++) {
-		const point = values[index]
-		normalized[index] = [point[0] * 1e3, point[1]]
-	}
-	return normalized
+	return values
 }
 
 const buildChainChartApiUrl = (params: Record<string, string | undefined>) => {
@@ -38,43 +37,78 @@ const appRevenueMetric = feeRevenueMetrics.appRevenue
 
 type CoingeckoChartData = {
 	prices: Array<[number, number]>
-	mcaps: Array<[number, number]>
-	volumes: Array<[number, number]>
+	mcaps?: Array<[number, number]>
+	volumes?: Array<[number, number]>
 }
 
 type DenominationPriceHistory = {
-	prices: Record<string, number>
+	conversionPrices: Record<string, number>
+	canConvert: boolean
 	priceChart: Array<[number, number]>
-	mcaps: Array<[number, number]>
-	volumes: Array<[number, number]>
+	mcaps: Array<[number, number]> | undefined
+	volumes: Array<[number, number]> | undefined
 }
 
 export function buildDenominationPriceHistory(data: CoingeckoChartData): DenominationPriceHistory {
-	const prices: Record<string, number> = {}
+	const conversionPrices: Record<string, number> = {}
+	let activeConversionPriceCount = 0
 	for (const [date, value] of data.prices) {
-		prices[date] = value
+		const hasConversionPrice = conversionPrices[date] !== undefined
+		if (value === 0) {
+			if (hasConversionPrice) {
+				delete conversionPrices[date]
+				activeConversionPriceCount--
+			}
+			continue
+		}
+		if (!hasConversionPrice) activeConversionPriceCount++
+		conversionPrices[date] = value
 	}
 
-	return { prices, priceChart: data.prices, mcaps: data.mcaps, volumes: data.volumes }
+	return {
+		conversionPrices,
+		canConvert: activeConversionPriceCount > 0,
+		priceChart: data.prices,
+		mcaps: data.mcaps,
+		volumes: data.volumes
+	}
 }
 
-type BridgedTvlChartPoint = {
-	timestamp: number
-	data: {
-		total: string | number
-		ownTokens?: string | number | null
+async function fetchDenominationPriceHistory(geckoId: string): Promise<DenominationPriceHistory | null> {
+	const response = await fetchJson<CgChartResponse>(
+		`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId)}?fullChart=true`
+	)
+	const prices = response.data?.prices
+	if (!prices?.length) return null
+
+	const priceHistory = buildDenominationPriceHistory({
+		prices,
+		...(response.data?.mcaps !== undefined ? { mcaps: response.data.mcaps } : {}),
+		...(response.data?.volumes !== undefined ? { volumes: response.data.volumes } : {})
+	})
+	return priceHistory.priceChart.length > 0 ? priceHistory : null
+}
+
+export function getNetInflowsSeries(data: BridgeOverviewVolumeChartTuple[]): Array<[number, number | null]> {
+	const series: Array<[number, number | null]> = []
+	for (const [date, deposits, signedWithdrawals] of data) {
+		const netFlow = getBridgeNetFlow({
+			depositUSD: deposits,
+			withdrawUSD: signedWithdrawals == null ? null : -signedWithdrawals
+		})
+		series.push([date, netFlow])
 	}
+	return series
 }
 
 export function buildBridgedTvlChart(
-	bridgedTvlData: Array<BridgedTvlChartPoint | null>,
+	bridgedTvlData: ChainAssetsChartDataPoint[],
 	isGovTokensEnabled: boolean | undefined
 ): Array<[number, number]> {
 	const chart: Array<[number, number]> = []
 	for (const item of bridgedTvlData) {
-		if (!item) continue
 		const timestampMs = Math.floor(item.timestamp / 86_400) * 86_400 * 1e3
-		chart.push([timestampMs, +item.data.total + (isGovTokensEnabled ? +(item.data.ownTokens ?? 0) : 0)])
+		chart.push([timestampMs, item.data.total + (isGovTokensEnabled ? (item.data.ownTokens ?? 0) : 0)])
 	}
 	return chart
 }
@@ -101,7 +135,7 @@ export const useFetchChainChartData = ({
 	}
 	extraTvlCharts: Record<string, Record<string, number>>
 	tvlSettings: Record<string, boolean>
-	chainGeckoId?: string
+	chainGeckoId: string | null
 	toggledCharts: Array<ChainChartLabels>
 	groupBy: ChartTimeGroupingWithCumulative
 }) => {
@@ -122,20 +156,9 @@ export const useFetchChainChartData = ({
 	const isTokenVolumeEnabled = toggledChartsSet.has('Token Volume')
 
 	// date in the chart is in ms
-	const { data: denominationPriceHistory = null, isLoading: fetchingDenominationPriceHistory } = useQuery<{
-		prices: Record<string, number>
-		priceChart: Array<[number, number]>
-		mcaps: Array<[number, number]>
-		volumes: Array<[number, number]>
-	}>({
+	const { data: denominationPriceHistory = null, isLoading: fetchingDenominationPriceHistory } = useQuery({
 		queryKey: ['chain-overview', 'price-history', denominationGeckoId],
-		queryFn: () =>
-			fetchJson(`/api/public/tokens/charts/coingecko/${encodeURIComponent(denominationGeckoId!)}?fullChart=true`).then(
-				(res) => {
-					if (!res.data?.prices?.length) return null
-					return buildDenominationPriceHistory(res.data)
-				}
-			),
+		queryFn: denominationGeckoId ? () => fetchDenominationPriceHistory(denominationGeckoId) : skipToken,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0,
@@ -239,10 +262,10 @@ export const useFetchChainChartData = ({
 	})
 
 	const { data: stablecoinsChartData = null, isLoading: fetchingStablecoinsChartDataByChain } =
-		useGetStabelcoinsChartDataByChain(toggledChartsSet.has('Stablecoins Mcap') ? selectedChain : null)
+		useGetStabelcoinsChartDataByChain(toggledChartsSet.has('Stablecoins Mcap') ? selectedChain : undefined)
 
 	const { data: inflowsChartData = null, isLoading: fetchingInflowsChartData } = useGetBridgeChartDataByChain(
-		toggledChartsSet.has('Net Inflows') ? selectedChain : null
+		toggledChartsSet.has('Net Inflows') ? selectedChain : undefined
 	)
 
 	const isActiveAddressesEnabled = toggledChartsSet.has('Active Addresses')
@@ -306,11 +329,11 @@ export const useFetchChainChartData = ({
 		enabled: isTransactionsEnabled
 	})
 	const isBridgedTvlEnabled = toggledChartsSet.has('Bridged TVL')
-	const { data: bridgedTvlData = null, isLoading: fetchingBridgedTvlData } = useQuery({
+	const { data: bridgedTvlData = null, isLoading: fetchingBridgedTvlData } = useQuery<ChainAssetsChartResponse>({
 		queryKey: ['chain-overview', 'bridged-tvl', selectedChain],
 		queryFn: isBridgedTvlEnabled
-			? () => fetchJson(buildChainChartApiUrl({ kind: 'bridged-tvl', chain: selectedChain }))
-			: () => null,
+			? () => fetchJson<ChainAssetsChartResponse>(buildChainChartApiUrl({ kind: 'bridged-tvl', chain: selectedChain }))
+			: skipToken,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0,
@@ -328,10 +351,14 @@ export const useFetchChainChartData = ({
 	})
 
 	const isChainIncentivesEnabled = toggledChartsSet.has('Token Incentives')
-	const { data: chainIncentivesData = null, isLoading: fetchingChainIncentives } = useQuery({
+	const { data: chainIncentivesData = null, isLoading: fetchingChainIncentives } = useQuery<Array<
+		[number, number]
+	> | null>({
 		queryKey: ['chain-overview', 'token-incentives', selectedChain],
 		queryFn: () =>
-			fetchJson(buildChainChartApiUrl({ kind: 'token-incentives', protocol: selectedChain })).catch(() => null),
+			fetchJson<Array<[number, number]>>(
+				buildChainChartApiUrl({ kind: 'token-incentives', protocol: selectedChain })
+			).catch(() => null),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0,
@@ -408,19 +435,21 @@ export const useFetchChainChartData = ({
 
 		if (loadingCharts.length > 0) {
 			return {
-				finalCharts: {} as ChainOverviewChartData,
+				finalCharts: {},
 				valueSymbol: denomination === 'USD' ? '$' : denomination,
 				loadingCharts: loadingCharts.join(', ').toLowerCase(),
-				failedMetrics: [] as ChainChartLabels[]
+				failedMetrics: []
 			}
 		}
+		const canConvertDenomination = isDenominationEnabled && denominationPriceHistory?.canConvert === true
+		const denominationPrices = canConvertDenomination ? denominationPriceHistory.conversionPrices : null
 
 		if (toggledChartsSet.has('TVL')) {
-			const chartName: ChainChartLabels = 'TVL' as const
+			const chartName: ChainChartLabels = 'TVL'
 			charts[chartName] = formatLineChart({
 				data: finalTvlChart,
 				groupBy,
-				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null,
+				denominationPriceHistory: denominationPrices,
 				dateInMs: true
 			})
 		}
@@ -430,7 +459,7 @@ export const useFetchChainChartData = ({
 			charts[chartName] = formatBarChart({
 				data: chainFeesDataChart,
 				groupBy,
-				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null
+				denominationPriceHistory: denominationPrices
 			})
 		}
 
@@ -439,25 +468,25 @@ export const useFetchChainChartData = ({
 			charts[chartName] = formatBarChart({
 				data: chainRevenueDataChart,
 				groupBy,
-				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null
+				denominationPriceHistory: denominationPrices
 			})
 		}
 
 		if (isDexVolumeEnabled && dexVolumeDataChart) {
-			const chartName: ChainChartLabels = 'DEXs Volume' as const
+			const chartName: ChainChartLabels = 'DEXs Volume'
 			charts[chartName] = formatBarChart({
 				data: dexVolumeDataChart,
 				groupBy,
-				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null
+				denominationPriceHistory: denominationPrices
 			})
 		}
 
 		if (isPerpsVolumeEnabled && perpsVolumeDataChart) {
-			const chartName: ChainChartLabels = 'Perps Volume' as const
+			const chartName: ChainChartLabels = 'Perps Volume'
 			charts[chartName] = formatBarChart({
 				data: perpsVolumeDataChart,
 				groupBy,
-				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null
+				denominationPriceHistory: denominationPrices
 			})
 		}
 
@@ -466,7 +495,7 @@ export const useFetchChainChartData = ({
 			charts[chartName] = formatBarChart({
 				data: chainAppFeesDataChart,
 				groupBy,
-				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null
+				denominationPriceHistory: denominationPrices
 			})
 		}
 
@@ -475,12 +504,12 @@ export const useFetchChainChartData = ({
 			charts[chartName] = formatBarChart({
 				data: chainAppRevenueDataChart,
 				groupBy,
-				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null
+				denominationPriceHistory: denominationPrices
 			})
 		}
 
 		if (isTokenPriceEnabled && denominationPriceHistory?.priceChart) {
-			const chartName: ChainChartLabels = 'Token Price' as const
+			const chartName: ChainChartLabels = 'Token Price'
 			charts[chartName] = formatLineChart({
 				data: denominationPriceHistory.priceChart,
 				groupBy,
@@ -490,7 +519,7 @@ export const useFetchChainChartData = ({
 		}
 
 		if (isTokenMcapEnabled && denominationPriceHistory?.mcaps) {
-			const chartName: ChainChartLabels = 'Token Mcap' as const
+			const chartName: ChainChartLabels = 'Token Mcap'
 			charts[chartName] = formatLineChart({
 				data: denominationPriceHistory?.mcaps,
 				groupBy,
@@ -500,7 +529,7 @@ export const useFetchChainChartData = ({
 		}
 
 		if (isTokenVolumeEnabled && denominationPriceHistory?.volumes) {
-			const chartName: ChainChartLabels = 'Token Volume' as const
+			const chartName: ChainChartLabels = 'Token Volume'
 			charts[chartName] = formatBarChart({
 				data: denominationPriceHistory?.volumes,
 				groupBy,
@@ -510,66 +539,66 @@ export const useFetchChainChartData = ({
 		}
 
 		if (toggledChartsSet.has('Net Inflows') && inflowsChartData) {
-			const chartName: ChainChartLabels = 'Net Inflows' as const
-			charts[chartName] = formatBarChart({
-				data: inflowsChartData,
+			const chartName: ChainChartLabels = 'Net Inflows'
+			charts[chartName] = formatNullableBarChart({
+				data: getNetInflowsSeries(inflowsChartData),
 				groupBy,
-				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null
+				denominationPriceHistory: denominationPrices
 			})
 		}
 
 		if (toggledChartsSet.has('Stablecoins Mcap') && stablecoinsChartData) {
-			const chartName: ChainChartLabels = 'Stablecoins Mcap' as const
+			const chartName: ChainChartLabels = 'Stablecoins Mcap'
 			charts[chartName] = formatLineChart({
 				data: stablecoinsChartData,
 				groupBy,
-				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null,
+				denominationPriceHistory: denominationPrices,
 				dateInMs: true
 			})
 		}
 
 		if (isActiveAddressesEnabled && activeAddressesData) {
-			const chartName: ChainChartLabels = 'Active Addresses' as const
+			const chartName: ChainChartLabels = 'Active Addresses'
 			charts[chartName] = formatBarChart({
 				data: activeAddressesData,
 				groupBy,
 				denominationPriceHistory: null,
-				dateInMs: true
+				dateInMs: false
 			})
 		}
 
 		if (isNewAddressesEnabled && newAddressesData) {
-			const chartName: ChainChartLabels = 'New Addresses' as const
+			const chartName: ChainChartLabels = 'New Addresses'
 			charts[chartName] = formatBarChart({
 				data: newAddressesData,
 				groupBy,
 				denominationPriceHistory: null,
-				dateInMs: true
+				dateInMs: false
 			})
 		}
 
 		if (isTransactionsEnabled && transactionsData) {
-			const chartName: ChainChartLabels = 'Transactions' as const
+			const chartName: ChainChartLabels = 'Transactions'
 			charts[chartName] = formatBarChart({
 				data: transactionsData,
 				groupBy,
 				denominationPriceHistory: null,
-				dateInMs: true
+				dateInMs: false
 			})
 		}
 
 		if (isBridgedTvlEnabled && bridgedTvlData) {
-			const chartName: ChainChartLabels = 'Bridged TVL' as const
+			const chartName: ChainChartLabels = 'Bridged TVL'
 			charts[chartName] = formatLineChart({
 				data: buildBridgedTvlChart(bridgedTvlData, isGovTokensEnabled),
 				groupBy,
-				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null,
+				denominationPriceHistory: denominationPrices,
 				dateInMs: true
 			})
 		}
 
 		if (isRaisesEnabled && raisesData) {
-			const chartName: ChainChartLabels = 'Raises' as const
+			const chartName: ChainChartLabels = 'Raises'
 			charts[chartName] = formatBarChart({
 				data: raisesData,
 				groupBy,
@@ -579,11 +608,11 @@ export const useFetchChainChartData = ({
 		}
 
 		if (isChainIncentivesEnabled && chainIncentivesData) {
-			const chartName: ChainChartLabels = 'Token Incentives' as const
+			const chartName: ChainChartLabels = 'Token Incentives'
 			charts[chartName] = formatBarChart({
 				data: chainIncentivesData,
 				groupBy,
-				denominationPriceHistory: isDenominationEnabled ? denominationPriceHistory?.prices : null
+				denominationPriceHistory: denominationPrices
 			})
 		}
 
@@ -595,7 +624,7 @@ export const useFetchChainChartData = ({
 		})
 		return {
 			finalCharts: charts,
-			valueSymbol: denomination === 'USD' ? '$' : denomination,
+			valueSymbol: canConvertDenomination ? denomination : '$',
 			loadingCharts: '',
 			failedMetrics
 		}

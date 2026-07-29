@@ -2,8 +2,10 @@
 
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useContext, useMemo, useRef } from 'react'
+import type { DimensionDatasetProtocol, DimensionDatasetResult } from '~/containers/AdapterMetrics/server/datasets'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
-import { basicPropertiesToKeep, formatProtocolsData } from '~/containers/ProtocolLists/utils.old'
+import type { IFormattedProtocol } from '~/containers/ProtocolLists/protocol-table.types'
+import { formatProtocolsData } from '~/containers/ProtocolLists/utils.old'
 import { getMarketCapToAnnualizedMetricRatio } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { StreamDoneContext } from '../../queries'
@@ -172,23 +174,20 @@ export function useGetProtocolsListMultiChain(chains: string[], enabled = true) 
 		if (chains.length === 0 || chains.includes('All')) {
 			return {
 				fullProtocolsList: formatProtocolsData({
-					chain: null,
 					protocols,
-					removeBridges: true,
-					protocolProps: [...basicPropertiesToKeep, 'extraTvl', 'oracles', 'oraclesByChain']
+					removeBridges: true
 				}),
 				parentProtocols
 			}
 		}
 
-		const protocolsMap = new Map<string, any>()
+		const protocolsMap = new Map<string, IFormattedProtocol>()
 
 		for (const chain of chains) {
 			const chainProtocols = formatProtocolsData({
 				chain,
 				protocols,
-				removeBridges: true,
-				protocolProps: [...basicPropertiesToKeep, 'extraTvl', 'oracles', 'oraclesByChain']
+				removeBridges: true
 			})
 
 			for (const protocol of chainProtocols) {
@@ -209,7 +208,9 @@ export function useGetProtocolsListMultiChain(chains: string[], enabled = true) 
 					if (protocol.oraclesByChain) {
 						existing.oraclesByChain = existing.oraclesByChain || {}
 						for (const k in protocol.oraclesByChain) {
-							const cur = new Set([...(existing.oraclesByChain[k] || []), ...protocol.oraclesByChain[k]])
+							const protocolOracles = protocol.oraclesByChain[k]
+							if (protocolOracles === undefined) continue
+							const cur = new Set([...(existing.oraclesByChain[k] ?? []), ...protocolOracles])
 							existing.oraclesByChain[k] = Array.from(cur)
 						}
 					}
@@ -507,12 +508,20 @@ export function useGetProtocolsEarningsByMultiChain(chains: string[], enabled = 
 	const queryKey = getProLegacyTableDatasetQueryKey('protocols-earnings-multi-chain', chains)
 	const query = useQuery({
 		queryKey,
-		queryFn: () => fetchJson(`/api/dynamic/adapter-metrics/earnings${buildChainsQuery(chains)}`) as Promise<any[]>,
+		queryFn: () =>
+			fetchJson<DimensionDatasetResult<DimensionDatasetProtocol>>(
+				`/api/dynamic/adapter-metrics/earnings${buildChainsQuery(chains)}`
+			),
 		staleTime: Infinity,
 		retry: 1,
 		enabled: enabled && streamDone
 	})
-	return { ...query, isLoading: enabled && (query.isLoading || (!query.data && !streamDone)) }
+	return {
+		...query,
+		data: query.data?.protocols,
+		unavailableChains: query.data?.status === 'partial' ? query.data.unavailableChains : [],
+		isLoading: enabled && (query.isLoading || (!query.data && !streamDone))
+	}
 }
 
 export function useGetProtocolsAggregatorsByMultiChain(chains: string[], enabled = true) {
@@ -521,12 +530,19 @@ export function useGetProtocolsAggregatorsByMultiChain(chains: string[], enabled
 	const query = useQuery({
 		queryKey,
 		queryFn: () =>
-			fetchJson(`/api/dynamic/adapter-metrics/dex-aggregators${buildChainsQuery(chains)}`) as Promise<any[]>,
+			fetchJson<DimensionDatasetResult<DimensionDatasetProtocol>>(
+				`/api/dynamic/adapter-metrics/dex-aggregators${buildChainsQuery(chains)}`
+			),
 		staleTime: Infinity,
 		retry: 1,
 		enabled: enabled && streamDone
 	})
-	return { ...query, isLoading: enabled && (query.isLoading || (!query.data && !streamDone)) }
+	return {
+		...query,
+		data: query.data?.protocols,
+		unavailableChains: query.data?.status === 'partial' ? query.data.unavailableChains : [],
+		isLoading: enabled && (query.isLoading || (!query.data && !streamDone))
+	}
 }
 
 export function useGetProtocolsBridgeAggregatorsByMultiChain(chains: string[], enabled = true) {
@@ -535,12 +551,19 @@ export function useGetProtocolsBridgeAggregatorsByMultiChain(chains: string[], e
 	const query = useQuery({
 		queryKey,
 		queryFn: () =>
-			fetchJson(`/api/dynamic/adapter-metrics/bridge-aggregators${buildChainsQuery(chains)}`) as Promise<any[]>,
+			fetchJson<DimensionDatasetResult<DimensionDatasetProtocol>>(
+				`/api/dynamic/adapter-metrics/bridge-aggregators${buildChainsQuery(chains)}`
+			),
 		staleTime: Infinity,
 		retry: 1,
 		enabled: enabled && streamDone
 	})
-	return { ...query, isLoading: enabled && (query.isLoading || (!query.data && !streamDone)) }
+	return {
+		...query,
+		data: query.data?.protocols,
+		unavailableChains: query.data?.status === 'partial' ? query.data.unavailableChains : [],
+		isLoading: enabled && (query.isLoading || (!query.data && !streamDone))
+	}
 }
 
 export function useGetProtocolsOptionsVolumeByMultiChain(chains: string[], enabled = true) {
@@ -548,10 +571,18 @@ export function useGetProtocolsOptionsVolumeByMultiChain(chains: string[], enabl
 	const queryKey = getProLegacyTableDatasetQueryKey('protocols-options-multi-chain', chains)
 	const query = useQuery({
 		queryKey,
-		queryFn: () => fetchJson(`/api/dynamic/adapter-metrics/options${buildChainsQuery(chains)}`) as Promise<any[]>,
+		queryFn: () =>
+			fetchJson<DimensionDatasetResult<DimensionDatasetProtocol>>(
+				`/api/dynamic/adapter-metrics/options${buildChainsQuery(chains)}`
+			),
 		staleTime: Infinity,
 		retry: 1,
 		enabled: enabled && streamDone
 	})
-	return { ...query, isLoading: enabled && (query.isLoading || (!query.data && !streamDone)) }
+	return {
+		...query,
+		data: query.data?.protocols,
+		unavailableChains: query.data?.status === 'partial' ? query.data.unavailableChains : [],
+		isLoading: enabled && (query.isLoading || (!query.data && !streamDone))
+	}
 }

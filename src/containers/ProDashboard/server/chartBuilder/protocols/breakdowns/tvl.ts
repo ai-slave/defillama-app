@@ -12,7 +12,7 @@ import {
 	type ChartSeries,
 	type ProtocolBreakdownData
 } from '~/utils/breakdowns'
-import { processAdjustedTvl, type TvlChartData } from '~/utils/tvl'
+import { processAdjustedTvl } from '~/utils/tvl'
 import { sumProtocolTvlBreakdown } from './protocolTvlBreakdown'
 
 // Some protocol responses include synthetic keys that shouldn't be counted in TVL totals
@@ -31,7 +31,7 @@ const isIgnoredChainKey = (key: string): boolean => {
 const fetchChainTotalTvl = async (chains: string[]): Promise<[number, number][]> => {
 	const isAll = chains.length === 0 || chains.some((c) => c.toLowerCase() === 'all')
 	if (isAll) {
-		const j = await fetchChainChart<TvlChartData>().catch(() => null)
+		const j = await fetchChainChart().catch(() => null)
 		if (!j) return []
 		const adjustedTvl = processAdjustedTvl(j)
 		return filterOutToday(normalizeDailyPairs(adjustedTvl, 'last'))
@@ -39,7 +39,7 @@ const fetchChainTotalTvl = async (chains: string[]): Promise<[number, number][]>
 
 	const perChain = await Promise.all(
 		chains.map(async (chain) => {
-			const j = await fetchChainChart<TvlChartData>(chain).catch(() => null)
+			const j = await fetchChainChart(chain).catch(() => null)
 			if (!j) return []
 			const adjustedTvl = processAdjustedTvl(j)
 			return filterOutToday(normalizeDailyPairs(adjustedTvl, 'last'))
@@ -62,7 +62,7 @@ const fetchAllChainTotalTvl = async (): Promise<[number, number][]> => {
 }
 
 const fetchChainTvlSingle = async (chain: string): Promise<[number, number][]> => {
-	const j = await fetchChainChart<TvlChartData>(chain).catch(() => null)
+	const j = await fetchChainChart(chain).catch(() => null)
 	if (!j) return []
 	const adjustedTvl = processAdjustedTvl(j)
 	return filterOutToday(normalizeDailyPairs(adjustedTvl, 'last'))
@@ -397,11 +397,14 @@ export const getTvlBreakdownData = async (
 	}
 	const allTimestamps = Array.from(timestampSet).sort((a, b) => a - b)
 
-	const alignedProtocolSeries: ChartSeries[] = succeededSeries.map((s, idx) => ({
-		name: s.name,
-		data: alignSeries(allTimestamps, s.data),
-		color: BREAKDOWN_COLOR_PALETTE[idx % BREAKDOWN_COLOR_PALETTE.length]
-	}))
+	const alignedProtocolSeries: ChartSeries[] = succeededSeries.map((s, idx) => {
+		const color = BREAKDOWN_COLOR_PALETTE[idx % BREAKDOWN_COLOR_PALETTE.length]
+		return {
+			name: s.name,
+			data: alignSeries(allTimestamps, s.data),
+			...(color !== undefined ? { color } : {})
+		}
+	})
 
 	const alignedTotal = alignSeries(allTimestamps, totalSeries)
 	const topSumPerTs = alignSeries(

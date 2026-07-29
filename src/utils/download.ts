@@ -49,6 +49,15 @@ function stringifyCell(cell: CsvCell): string {
 	return String(cell)
 }
 
+export function addTimestampToFilename(filename: string, date: string): string {
+	if (filename.includes(date)) return filename
+
+	const extensionIndex = filename.lastIndexOf('.')
+	if (extensionIndex <= 0 || extensionIndex === filename.length - 1) return `${filename}_${date}`
+
+	return `${filename.slice(0, extensionIndex)}_${date}${filename.slice(extensionIndex)}`
+}
+
 export function downloadJSON(filename: string, data: CsvCell[][], options: { addTimestamp?: boolean } = {}): void {
 	try {
 		const [header, ...rows] = data
@@ -68,12 +77,9 @@ export function downloadJSON(filename: string, data: CsvCell[][], options: { add
 
 		trackUmamiEvent('export-json-success', { filename })
 
-		let finalFilename = filename
-		if (options.addTimestamp && !filename.includes(new Date().toISOString().slice(0, 10))) {
-			const extension = filename.split('.').pop()
-			const nameWithoutExt = filename.replace(`.${extension}`, '')
-			finalFilename = `${nameWithoutExt}_${new Date().toISOString().slice(0, 10)}.${extension}`
-		}
+		const finalFilename = options.addTimestamp
+			? addTimestampToFilename(filename, new Date().toISOString().slice(0, 10))
+			: filename
 
 		const blob = new Blob([content], { type: 'application/json;charset=utf-8;' })
 		const downloadUrl = window.URL.createObjectURL(blob)
@@ -137,12 +143,9 @@ export function downloadCSV(filename: string, csvData: CsvData, options: CSVDown
 
 		trackUmamiEvent('export-csv-success', { filename })
 
-		let finalFilename = filename
-		if (addTimestamp && !filename.includes(new Date().toISOString().slice(0, 10))) {
-			const extension = filename.split('.').pop()
-			const nameWithoutExt = filename.replace(`.${extension}`, '')
-			finalFilename = `${nameWithoutExt}_${new Date().toISOString().slice(0, 10)}.${extension}`
-		}
+		const finalFilename = addTimestamp
+			? addTimestampToFilename(filename, new Date().toISOString().slice(0, 10))
+			: filename
 
 		const blob = new Blob([csvContent], { type: mimeType })
 		const downloadUrl = window.URL.createObjectURL(blob)

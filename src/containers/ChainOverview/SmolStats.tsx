@@ -11,11 +11,22 @@ import { UpcomingUnlocksChart } from './UpcomingUnlocksChart'
 
 export const SmolStats = (props: IChainOverviewData) => {
 	const chainSlug = slug(props.metadata.name)
+	const unlocks = props.unlocks
+	const dexs = props.dexs
+	const dexsChart = dexs.chart
+	const etfs = props.etfs
+	const latestEtf = etfs?.at(-1)
+	const datInflows = props.datInflows
+	const feesChart = props.chainFees.topProtocolsChart
+	const stablecoins = props.stablecoins
+	const stablecoinChart = stablecoins?.mcapChartData
+	const stablecoinChangeIsNonNegative = stablecoins != null && Number(stablecoins.change7d) >= 0
+
 	return (
 		<div className="isolate grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
 			{props.chain === 'All' ? (
 				<>
-					{props.unlocks?.chart?.length > 0 ? (
+					{unlocks && unlocks.chart.length > 0 ? (
 						<Card
 							padding="sm"
 							className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1"
@@ -28,9 +39,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 								>
 									Upcoming Unlocks
 								</Tooltip>
-								{props.unlocks.chart?.length > 0 ? (
+								{unlocks.chart.length > 0 ? (
 									<p className="truncate text-secondary">
-										{formatUsd(props.unlocks.total14d, {
+										{formatUsd(unlocks.total14d, {
 											compact: true,
 											minimumCompactValue: 1_000_000,
 											compactSuffix: 'lowercase'
@@ -39,13 +50,10 @@ export const SmolStats = (props: IChainOverviewData) => {
 									</p>
 								) : null}
 							</div>
-							<UpcomingUnlocksChart
-								data={props.unlocks.chart}
-								className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'}
-							/>
+							<UpcomingUnlocksChart data={unlocks.chart} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
 						</Card>
 					) : null}
-					{props.dexs?.chart?.length > 0 ? (
+					{dexsChart && dexsChart.length > 0 ? (
 						<Card
 							padding="sm"
 							className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1"
@@ -58,9 +66,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 								>
 									DEXs Volume
 								</Tooltip>
-								{props.dexs.chart?.length > 0 ? (
+								{dexsChart.length > 0 ? (
 									<p className="truncate text-secondary">
-										{formatUsd(props.dexs.total24h, {
+										{formatUsd(dexs.total24h, {
 											compact: true,
 											minimumCompactValue: 1_000_000,
 											compactSuffix: 'lowercase'
@@ -69,10 +77,10 @@ export const SmolStats = (props: IChainOverviewData) => {
 									</p>
 								) : null}
 							</div>
-							<SmolBarChart series={props.dexs.chart} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
+							<SmolBarChart series={dexsChart} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
 						</Card>
 					) : null}
-					{props.etfs?.length > 0 ? (
+					{etfs && etfs.length > 0 ? (
 						<Card
 							padding="sm"
 							className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1"
@@ -85,9 +93,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 								>
 									ETF Inflows
 								</Tooltip>
-								{props.etfs?.length > 0 ? (
+								{latestEtf ? (
 									<p className="truncate text-secondary">
-										{formatUsd(props.etfs[props.etfs.length - 1][1], {
+										{formatUsd(latestEtf[1], {
 											compact: true,
 											minimumCompactValue: 1_000_000,
 											compactSuffix: 'lowercase'
@@ -96,10 +104,10 @@ export const SmolStats = (props: IChainOverviewData) => {
 									</p>
 								) : null}
 							</div>
-							<SmolBarChart series={props.etfs} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
+							<SmolBarChart series={etfs} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
 						</Card>
 					) : null}
-					{props.datInflows?.chart?.length > 0 ? (
+					{datInflows && datInflows.chart.length > 0 ? (
 						<Card padding="sm" className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1">
 							<div className="flex flex-col gap-1 xl:flex-row xl:items-start xl:justify-between">
 								<Tooltip
@@ -109,9 +117,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 								>
 									DAT Inflows
 								</Tooltip>
-								{props.datInflows.chart?.length > 0 ? (
+								{datInflows.chart.length > 0 ? (
 									<p className="truncate text-secondary">
-										{formatUsd(props.datInflows.total30d, {
+										{formatUsd(datInflows.total30d, {
 											compact: true,
 											minimumCompactValue: 1_000_000,
 											compactSuffix: 'lowercase'
@@ -121,14 +129,14 @@ export const SmolStats = (props: IChainOverviewData) => {
 								) : null}
 							</div>
 							<SmolBarChart
-								series={props.datInflows.chart}
+								series={datInflows.chart}
 								className={'my-auto h-[53px] md:h-[132px] xl:h-[156px]'}
 								groupBy="weekly"
 							/>
 						</Card>
 					) : null}
 				</>
-			) : props.dexs?.chart?.length > 0 ? (
+			) : dexsChart && dexsChart.length > 0 ? (
 				<Card padding="sm" className="col-span-1 flex h-[196px] flex-col gap-1">
 					<Tooltip
 						render={<BasicLink href={props.metadata.name === 'All' ? '/dexs' : `/dexs/chain/${chainSlug}`} />}
@@ -139,9 +147,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 					>
 						DEXs Volume
 					</Tooltip>
-					{props.dexs.chart?.length > 0 ? (
+					{dexsChart.length > 0 ? (
 						<p className="truncate text-secondary">
-							{formatUsd(props.dexs.total24h, {
+							{formatUsd(dexs.total24h, {
 								compact: true,
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
@@ -149,10 +157,10 @@ export const SmolStats = (props: IChainOverviewData) => {
 							<span className="text-tertiary">24h</span>
 						</p>
 					) : null}
-					<SmolBarChart series={props.dexs.chart} />
+					<SmolBarChart series={dexsChart} />
 				</Card>
 			) : null}
-			{props.chainFees?.topProtocolsChart?.length > 0 ? (
+			{feesChart && feesChart.length > 0 ? (
 				<Card padding="sm" className="col-span-1 flex h-[196px] flex-col gap-1">
 					<div className="flex items-start justify-between gap-4">
 						<Tooltip
@@ -166,7 +174,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 						</Tooltip>
 						{props.chainFees.feesGenerated24h != null ? (
 							<p className="text-secondary">
-								{formatUsd(props.chainFees.feesGenerated24h ?? 0, {
+								{formatUsd(props.chainFees.feesGenerated24h, {
 									compact: true,
 									minimumCompactValue: 1_000_000,
 									compactSuffix: 'lowercase'
@@ -175,10 +183,10 @@ export const SmolStats = (props: IChainOverviewData) => {
 							</p>
 						) : null}
 					</div>
-					<FeesGeneratedChart series={props.chainFees.topProtocolsChart} />
+					<FeesGeneratedChart series={feesChart} />
 				</Card>
 			) : null}
-			{props.stablecoins?.mcapChartData?.length > 0 ? (
+			{stablecoins && stablecoinChart && stablecoinChart.length > 0 ? (
 				<Card padding="sm" className="col-span-1 flex h-[196px] flex-col gap-1">
 					<Tooltip
 						placement="top-start"
@@ -190,27 +198,24 @@ export const SmolStats = (props: IChainOverviewData) => {
 					>
 						Stablecoins Market Cap
 					</Tooltip>
-					{props.stablecoins.mcap != null ? (
+					{stablecoins.mcap != null ? (
 						<>
 							<p className="truncate text-secondary">
-								{formatUsd(props.stablecoins.mcap, {
+								{formatUsd(stablecoins.mcap, {
 									compact: true,
 									minimumCompactValue: 1_000_000,
 									compactSuffix: 'lowercase'
 								})}
 							</p>
 							<p className="flex items-center gap-1 text-xs">
-								<span className={`truncate ${+props.stablecoins.change7d >= 0 ? 'text-data-up' : 'text-data-down'}`}>
-									{formatPercentChange(props.stablecoins.change7d)}
+								<span className={`truncate ${stablecoinChangeIsNonNegative ? 'text-data-up' : 'text-data-down'}`}>
+									{formatPercentChange(stablecoins.change7d)}
 								</span>
 								<span className="text-tertiary">7d</span>
 							</p>
 						</>
 					) : null}
-					<SmolLineChart
-						series={props.stablecoins.mcapChartData}
-						color={+props.stablecoins.change7d >= 0 ? 'green' : 'red'}
-					/>
+					<SmolLineChart series={stablecoinChart} color={stablecoinChangeIsNonNegative ? 'green' : 'red'} />
 				</Card>
 			) : null}
 		</div>

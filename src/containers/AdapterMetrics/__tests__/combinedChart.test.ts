@@ -1,13 +1,36 @@
 import { describe, expect, it } from 'vitest'
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { buildAdapterByChainCombinedChartPresentation } from '../combinedChart'
 
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
 
 describe('buildAdapterByChainCombinedChartPresentation', () => {
+	it('treats a series named timestamp as the second positional dimension', () => {
+		const chartData: MultiSeriesTimeSeriesDataset = {
+			dimensions: ['timestamp', 'timestamp'],
+			source: [[toMs(2024, 1, 1), 42]]
+		}
+
+		const presentation = buildAdapterByChainCombinedChartPresentation({
+			chartData,
+			chartName: 'Volume',
+			groupBy: 'daily'
+		})
+
+		expect(presentation.dataset).toBe(chartData)
+		expect(presentation.charts).toEqual([
+			{
+				type: 'bar',
+				name: 'timestamp',
+				encode: { x: 0, y: 1 },
+				color: CHART_COLORS[0]
+			}
+		])
+	})
+
 	it('keeps daily data unchanged and preserves dimension, chart, and color ordering', () => {
-		const chartData: MultiSeriesChartDataset = {
+		const chartData: MultiSeriesTimeSeriesDataset = {
 			dimensions: ['timestamp', 'Flow B', 'Open Interest', 'Flow A'],
 			source: [
 				[toMs(2024, 1, 1), 2, 100, null],
