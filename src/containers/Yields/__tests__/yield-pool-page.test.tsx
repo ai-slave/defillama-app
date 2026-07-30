@@ -18,13 +18,15 @@ const {
 	fetchPoolDetailHistoryMock,
 	fetchBorrowMarketDetailMock,
 	fetchBorrowMarketDetailHistoryMock,
-	getYieldsMetaMock
+	getYieldsMetaMock,
+	hasVaultRiskMock
 } = vi.hoisted(() => ({
 	fetchPoolDetailMock: vi.fn(),
 	fetchPoolDetailHistoryMock: vi.fn(),
 	fetchBorrowMarketDetailMock: vi.fn(),
 	fetchBorrowMarketDetailHistoryMock: vi.fn(),
-	getYieldsMetaMock: vi.fn()
+	getYieldsMetaMock: vi.fn(),
+	hasVaultRiskMock: vi.fn()
 }))
 
 class ApiError extends Error {
@@ -53,6 +55,14 @@ vi.mock('~/containers/Yields/server/dataset.server', () => ({
 vi.mock('~/containers/Yields/data/snapshot', async (importOriginal) => ({
 	...(await importOriginal<typeof import('~/containers/Yields/data/snapshot')>()),
 	readYieldsMeta: getYieldsMetaMock
+}))
+
+vi.mock('~/containers/Yields/data/server/raiseValuations', () => ({
+	getReferralUrls: () => Promise.resolve(new Map<string, string>())
+}))
+
+vi.mock('~/containers/Yields/VaultRisk/loader', () => ({
+	hasVaultRisk: hasVaultRiskMock
 }))
 
 const META = {
@@ -145,6 +155,8 @@ describe('YieldPoolPage', () => {
 		fetchBorrowMarketDetailHistoryMock.mockReset()
 		getYieldsMetaMock.mockReset()
 		getYieldsMetaMock.mockResolvedValue(META)
+		hasVaultRiskMock.mockReset()
+		hasVaultRiskMock.mockResolvedValue(false)
 	})
 
 	it('returns not found when no pool id is provided', async () => {
@@ -154,6 +166,7 @@ describe('YieldPoolPage', () => {
 
 		expect(result).toEqual({ notFound: true })
 		expect(fetchPoolDetailMock).not.toHaveBeenCalled()
+		expect(hasVaultRiskMock).not.toHaveBeenCalled()
 		expect(res.setHeader).not.toHaveBeenCalled()
 	})
 
@@ -168,6 +181,7 @@ describe('YieldPoolPage', () => {
 		expect(result).toEqual({ notFound: true })
 		expect(fetchPoolDetailMock).toHaveBeenCalledWith(poolId)
 		expect(fetchBorrowMarketDetailMock).toHaveBeenCalledWith(poolId)
+		expect(hasVaultRiskMock).toHaveBeenCalledWith(poolId)
 		expect(getYieldsMetaMock).not.toHaveBeenCalled()
 		expect(res.setHeader).not.toHaveBeenCalled()
 	})
@@ -205,6 +219,7 @@ describe('YieldPoolPage', () => {
 		expect(props.stability).toBeNull()
 		expect(props.holders).toBeNull()
 		expect(fetchBorrowMarketDetailMock).toHaveBeenCalledWith(poolId)
+		expect(hasVaultRiskMock).toHaveBeenCalledWith(poolId)
 		expect(fetchPoolDetailHistoryMock).not.toHaveBeenCalled()
 		expect(fetchBorrowMarketDetailHistoryMock).toHaveBeenCalled()
 		expect(res.setHeader).toHaveBeenCalled()
@@ -229,6 +244,7 @@ describe('YieldPoolPage', () => {
 		expect(props.stability).toEqual({ score: 0.9, rating: 'stable' })
 		// available_history.supply is false → no history fetch, no supply chart.
 		expect(fetchPoolDetailHistoryMock).not.toHaveBeenCalled()
+		expect(hasVaultRiskMock).toHaveBeenCalledWith(poolId)
 		expect(props.supplyChart).toBeNull()
 		expect(res.setHeader).toHaveBeenCalled()
 	})

@@ -24,10 +24,17 @@ function article(overrides: Partial<ArticleDocument> = {}): ArticleDocument {
 	} as ArticleDocument
 }
 
+async function expectSkippedResearchPurge(logger: ReturnType<typeof vi.spyOn>) {
+	await vi.waitFor(() => {
+		expect(logger).toHaveBeenCalledWith('CF_ZONE or CF_PURGE_CACHE_AUTH is not set, skipping research cache purge')
+	})
+}
+
 describe('/api/private/research/articles/[id]/publish', () => {
 	afterEach(() => {
 		vi.unstubAllEnvs()
 		vi.unstubAllGlobals()
+		vi.restoreAllMocks()
 	})
 
 	it('publishes through the backend, then purges public research urls', async () => {
@@ -93,6 +100,7 @@ describe('/api/private/research/articles/[id]/publish', () => {
 	})
 
 	it('forwards goLiveAt from query into the backend publish POST body', async () => {
+		const logger = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const before = article()
 		const after = article({ status: 'draft', goLiveAt: '2026-06-01T09:00:00.000Z' })
 		const fetchImpl = vi
@@ -115,9 +123,11 @@ describe('/api/private/research/articles/[id]/publish', () => {
 			headers: { Authorization: 'Bearer user-token', 'Content-Type': 'application/json' },
 			method: 'POST'
 		})
+		await expectSkippedResearchPurge(logger)
 	})
 
 	it('forwards goLiveAt=null from query when publishing immediately', async () => {
+		const logger = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const before = article({ status: 'draft', goLiveAt: '2026-06-01T09:00:00.000Z' })
 		const after = article({ status: 'published', goLiveAt: null })
 		const fetchImpl = vi
@@ -140,9 +150,11 @@ describe('/api/private/research/articles/[id]/publish', () => {
 			headers: { Authorization: 'Bearer user-token', 'Content-Type': 'application/json' },
 			method: 'POST'
 		})
+		await expectSkippedResearchPurge(logger)
 	})
 
 	it('publishes in production even when the cache purge is not configured', async () => {
+		const logger = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		vi.stubEnv('NODE_ENV', 'production')
 		const before = article()
 		const after = article()
@@ -163,6 +175,7 @@ describe('/api/private/research/articles/[id]/publish', () => {
 				status: 'scheduled'
 			}
 		})
+		await expectSkippedResearchPurge(logger)
 	})
 
 	it('keeps the publish successful when the background purge fails', async () => {

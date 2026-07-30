@@ -14,6 +14,9 @@ vi.mock('../server/raiseValuations', () => ({
 	getRaiseValuationsUsd: () => Promise.resolve(new Map<string, number>()),
 	getReferralUrls: () => Promise.resolve(new Map<string, string>())
 }))
+vi.mock('~/containers/Yields/VaultRisk/coveredPools', () => ({
+	getRiskCoveredPoolIds: () => Promise.resolve(new Set<string>())
+}))
 
 import { getEarnPage as getEarnPageFromSnapshot } from '../earn.server'
 
@@ -59,7 +62,8 @@ function row(id: string, apyTotal: number | null, overrides: Partial<EnrichedEar
 		protocolHasToken: false,
 		trend: null,
 		tokenKeys: null,
-		...overrides
+		...overrides,
+		available_supply_usd: overrides.available_supply_usd ?? null
 	}
 }
 

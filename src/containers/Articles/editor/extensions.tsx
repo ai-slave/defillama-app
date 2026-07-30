@@ -9,7 +9,6 @@ import { TableHeader } from '@tiptap/extension-table-header'
 import { TableRow } from '@tiptap/extension-table-row'
 import TaskItem from '@tiptap/extension-task-item'
 import TaskList from '@tiptap/extension-task-list'
-import Underline from '@tiptap/extension-underline'
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
@@ -574,7 +573,6 @@ export function createArticleEditorExtensions(imageOptions?: Partial<ArticleImag
 			autolink: true,
 			defaultProtocol: 'https'
 		}),
-		Underline,
 		Highlight.configure({ multicolor: false }),
 		TaskList,
 		TaskItem.configure({ nested: true }),

@@ -31,6 +31,9 @@ vi.mock('../server/raiseValuations', () => ({
 	getRaiseValuationsUsd: () => Promise.resolve(raiseValuationsUsdMap),
 	getReferralUrls: () => Promise.resolve(new Map<string, string>())
 }))
+vi.mock('~/containers/Yields/VaultRisk/coveredPools', () => ({
+	getRiskCoveredPoolIds: () => Promise.resolve(new Set<string>())
+}))
 
 import {
 	getBorrowMarketsPage as getBorrowMarketsPageFromSnapshot,

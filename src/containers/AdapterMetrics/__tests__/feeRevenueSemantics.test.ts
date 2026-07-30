@@ -29,6 +29,22 @@ vi.mock('~/containers/AdapterMetrics/ChainsByAdapter', () => ({
 	ChainsByAdapter: () => null
 }))
 
+vi.mock('~/components/DeprecatedEntityMarker', () => ({
+	DeprecatedEntityMarker: () => null
+}))
+
+vi.mock('~/components/Link', () => ({
+	BasicLink: () => null
+}))
+
+vi.mock('~/components/Table/TableWithSearch', () => ({
+	TableWithSearch: () => null
+}))
+
+vi.mock('~/components/TokenLogo', () => ({
+	TokenLogo: () => null
+}))
+
 vi.mock('~/containers/AdapterMetrics/queries', () => ({
 	getChainsByAdapterPageData: mocks.getChainsByAdapterPageData,
 	getChainsByChainNativeFeeRevenuePageData: mocks.getChainsByChainNativeFeeRevenuePageData,

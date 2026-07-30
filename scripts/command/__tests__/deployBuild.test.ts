@@ -37,6 +37,7 @@ function runDeployBuildTest(options: Parameters<typeof runDeployBuild>[0] = {}) 
 
 afterEach(async () => {
 	vi.unstubAllGlobals()
+	vi.restoreAllMocks()
 	telemetryMock.flushTelemetry.mockClear()
 	telemetryMock.recordDomainEvent.mockClear()
 	await Promise.all(tempDirs.splice(0).map((tempDir) => fs.rm(tempDir, { force: true, recursive: true })))
@@ -90,6 +91,7 @@ describe('deploy build pipeline', () => {
 	})
 
 	it('uploads the build log URL and mentions users after failed builds', async () => {
+		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'deploy-build-test-'))
 		tempDirs.push(projectDir)
 		const logPath = path.join(projectDir, 'build.log')
@@ -128,9 +130,11 @@ describe('deploy build pipeline', () => {
 		const uploadedLog = Buffer.from(uploadBody.data, 'base64').toString('utf8')
 		expect(uploadedLog).toContain('Skipping next build due to earlier failure')
 		expect(uploadedLog).toContain('Build failed in 5s')
+		expect(consoleLog).toHaveBeenCalledWith('https://logs.example/get/log-id')
 	})
 
 	it('uploads Next.js failure output and exit metadata in the build log', async () => {
+		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'deploy-build-next-fail-test-'))
 		tempDirs.push(projectDir)
 		const logPath = path.join(projectDir, 'build.log')
@@ -165,9 +169,11 @@ describe('deploy build pipeline', () => {
 		expect(uploadedLog).toContain('Next.js build started')
 		expect(uploadedLog).toContain('Next compiler error: Cannot find module @tanstack/react-query-hash')
 		expect(uploadedLog).toContain('Next.js build failed with exit code 1')
+		expect(consoleLog).toHaveBeenCalledWith('https://logs.example/get/log-id')
 	})
 
 	it('keeps the build result when notification throws', async () => {
+		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const result = await runDeployBuildTest({
 			findBuildId: vi.fn().mockResolvedValue(''),
 			logger: createMemoryLogger(),
@@ -179,6 +185,7 @@ describe('deploy build pipeline', () => {
 
 		expect(result.exitCode).toBe(3)
 		expect(result.status).toBe('failure')
+		expect(consoleLog).toHaveBeenCalledWith('Build notification failed:', expect.stringContaining('discord down'))
 	})
 
 	it('keeps notifying when build id lookup fails', async () => {

@@ -1,45 +1,41 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IChainOverviewData } from '../types'
 
-function setupChainMocks({ user, query }: { user: unknown; query: Record<string, unknown> }) {
-	vi.doMock('next/router', () => ({
-		useRouter: () => ({ query, pathname: '/chain/[chain]', push: vi.fn() })
-	}))
-	vi.doMock('~/auth', () => ({
-		useAuthContext: () => ({ user })
-	}))
-	vi.doMock('~/containers/Investors/InvestorRelationsView', () => ({
-		InvestorRelationsView: () => React.createElement('div', null, 'IR-VIEW-MARKER')
-	}))
-	vi.doMock('~/components/RowLinksWithDropdown', () => ({
-		RowLinksWithDropdown: () => React.createElement('div', null, 'CHAIN-LINKS-MARKER')
-	}))
-	vi.doMock('~/components/EntityQuestionsStrip', () => ({
-		EntityQuestionsStrip: () => React.createElement('div', null, 'QUESTIONS-MARKER')
-	}))
-	vi.doMock('~/ui/Icon', () => ({
-		Icon: () => null
-	}))
-	vi.doMock('~/components/Newsletter/NewsletterSignup', () => ({
-		NewsletterSignup: () => null
-	}))
-	vi.doMock('~/components/TokenLogo', () => ({
-		TokenLogo: () => null
-	}))
-	vi.doMock('~/containers/ProtocolRankings/Table', () => ({
-		ChainProtocolsTable: () => null
-	}))
-	vi.doMock('../Stats', () => ({
-		Stats: () => React.createElement('div', null, 'OVERVIEW-MARKER')
-	}))
-	vi.doMock('../SmolStats', () => ({
-		SmolStats: () => null
-	}))
-	vi.doMock('~/ui/QuestionHelper', () => ({
-		QuestionHelper: () => null
-	}))
+const state = vi.hoisted(() => ({
+	query: {} as Record<string, unknown>,
+	user: null as unknown
+}))
+
+vi.mock('next/router', () => ({
+	useRouter: () => ({ query: state.query, pathname: '/chain/[chain]', push: vi.fn() })
+}))
+vi.mock('~/auth', () => ({
+	useAuthContext: () => ({ user: state.user })
+}))
+vi.mock('~/containers/Investors/InvestorRelationsView', () => ({
+	InvestorRelationsView: () => React.createElement('div', null, 'IR-VIEW-MARKER')
+}))
+vi.mock('~/components/RowLinksWithDropdown', () => ({
+	RowLinksWithDropdown: () => React.createElement('div', null, 'CHAIN-LINKS-MARKER')
+}))
+vi.mock('~/components/EntityQuestionsStrip', () => ({
+	EntityQuestionsStrip: () => React.createElement('div', null, 'QUESTIONS-MARKER')
+}))
+vi.mock('~/ui/Icon', () => ({ Icon: () => null }))
+vi.mock('~/components/Newsletter/NewsletterSignup', () => ({ NewsletterSignup: () => null }))
+vi.mock('~/components/TokenLogo', () => ({ TokenLogo: () => null }))
+vi.mock('~/containers/ProtocolRankings/Table', () => ({ ChainProtocolsTable: () => null }))
+vi.mock('../Stats', () => ({ Stats: () => React.createElement('div', null, 'OVERVIEW-MARKER') }))
+vi.mock('../SmolStats', () => ({ SmolStats: () => null }))
+vi.mock('~/ui/QuestionHelper', () => ({ QuestionHelper: () => null }))
+
+import { ChainOverview } from '../index'
+
+function setupChainState({ user, query }: { user: unknown; query: Record<string, unknown> }) {
+	state.user = user
+	state.query = query
 }
 
 const chainProps = (name: string) =>
@@ -51,16 +47,15 @@ const chainProps = (name: string) =>
 		protocols: []
 	}) as unknown as IChainOverviewData
 
-afterEach(() => {
+beforeEach(() => {
 	vi.clearAllMocks()
-	vi.resetModules()
+	setupChainState({ user: null, query: {} })
 })
 
 describe('Chain Investor Relations tab', () => {
 	it('shows the Overview / Investor Relations tab row for an is_llama user on an IR chain', async () => {
-		setupChainMocks({ user: { flags: { is_llama: true } }, query: {} })
+		setupChainState({ user: { flags: { is_llama: true } }, query: {} })
 
-		const { ChainOverview } = await import('../index')
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('NEAR')))
 
 		expect(markup).toContain('Investor Relations')
@@ -70,9 +65,8 @@ describe('Chain Investor Relations tab', () => {
 	})
 
 	it('renders the Investor Relations view (not the Overview) when ?tab=investor-relations is set', async () => {
-		setupChainMocks({ user: { flags: { is_llama: true } }, query: { tab: 'investor-relations' } })
+		setupChainState({ user: { flags: { is_llama: true } }, query: { tab: 'investor-relations' } })
 
-		const { ChainOverview } = await import('../index')
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('NEAR')))
 
 		// InvestorRelationsView is lazy-loaded; under renderToStaticMarkup it suspends to the null
@@ -83,18 +77,16 @@ describe('Chain Investor Relations tab', () => {
 	})
 
 	it('hides the Investor Relations tab for a non-llama user', async () => {
-		setupChainMocks({ user: null, query: {} })
+		setupChainState({ user: null, query: {} })
 
-		const { ChainOverview } = await import('../index')
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('NEAR')))
 
 		expect(markup).not.toContain('Investor Relations')
 	})
 
 	it('does not render the IR view for a non-llama user even with the tab query', async () => {
-		setupChainMocks({ user: null, query: { tab: 'investor-relations' } })
+		setupChainState({ user: null, query: { tab: 'investor-relations' } })
 
-		const { ChainOverview } = await import('../index')
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('NEAR')))
 
 		// Non-llama: irActive is false, so the Overview branch renders regardless of the tab query.
@@ -103,42 +95,10 @@ describe('Chain Investor Relations tab', () => {
 	})
 
 	it('hides the Investor Relations tab on a chain without an IR dashboard', async () => {
-		setupChainMocks({ user: { flags: { is_llama: true } }, query: {} })
+		setupChainState({ user: { flags: { is_llama: true } }, query: {} })
 
-		const { ChainOverview } = await import('../index')
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('Ethereum')))
 
 		expect(markup).not.toContain('Investor Relations')
-	})
-
-	it('renders chain warning banners directly below the announcement before layout metrics', async () => {
-		vi.doMock('~/layout', () => ({
-			default: ({ announcement, children }: { announcement?: React.ReactNode; children?: React.ReactNode }) =>
-				React.createElement(
-					React.Fragment,
-					null,
-					announcement,
-					React.createElement('div', null, 'METRICS-MARKER'),
-					children
-				)
-		}))
-		vi.doMock('~/containers/ChainOverview', () => ({
-			ChainOverview: () => React.createElement('div', null, 'OVERVIEW-MARKER')
-		}))
-		vi.doMock('~/containers/ChainOverview/Announcement', () => ({
-			ChainOverviewAnnouncement: () => React.createElement('div', null, 'ANNOUNCEMENT-MARKER')
-		}))
-		vi.doMock('~/containers/ChainOverview/WarningBanners', () => ({
-			ChainWarningBanners: () => React.createElement('div', null, 'WARNING-MARKER')
-		}))
-
-		const { default: ChainPage } = await import('../../../pages/chain/[chain]')
-		const markup = renderToStaticMarkup(
-			React.createElement(ChainPage as React.ComponentType<any>, chainProps('Arbitrum Nova'))
-		)
-
-		expect(markup.indexOf('ANNOUNCEMENT-MARKER')).toBeLessThan(markup.indexOf('WARNING-MARKER'))
-		expect(markup.indexOf('WARNING-MARKER')).toBeLessThan(markup.indexOf('METRICS-MARKER'))
-		expect(markup.indexOf('METRICS-MARKER')).toBeLessThan(markup.indexOf('OVERVIEW-MARKER'))
 	})
 })

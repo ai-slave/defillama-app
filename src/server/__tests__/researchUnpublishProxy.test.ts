@@ -28,6 +28,7 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 	afterEach(() => {
 		vi.unstubAllEnvs()
 		vi.unstubAllGlobals()
+		vi.restoreAllMocks()
 	})
 
 	it('unpublishes through the backend, then purges public research urls', async () => {
@@ -83,6 +84,7 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 	})
 
 	it('unpublishes in production even when the cache purge is not configured', async () => {
+		const logger = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		vi.stubEnv('NODE_ENV', 'production')
 		const before = article()
 		const after = article({ status: 'draft' })
@@ -102,6 +104,9 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 				purgePaths: ['/research', '/research/feed.xml', '/research/report/old-story', '/research/report'],
 				status: 'scheduled'
 			}
+		})
+		await vi.waitFor(() => {
+			expect(logger).toHaveBeenCalledWith('CF_ZONE or CF_PURGE_CACHE_AUTH is not set, skipping research cache purge')
 		})
 	})
 })

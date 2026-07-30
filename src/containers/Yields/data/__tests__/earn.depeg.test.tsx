@@ -17,6 +17,9 @@ vi.mock('../server/raiseValuations', () => ({
 	getRaiseValuationsUsd: () => Promise.resolve(new Map<string, number>()),
 	getReferralUrls: () => Promise.resolve(new Map<string, string>())
 }))
+vi.mock('~/containers/Yields/VaultRisk/coveredPools', () => ({
+	getRiskCoveredPoolIds: () => Promise.resolve(new Set<string>())
+}))
 
 import { getDepegWarningSeverity } from '../../domain/apyPresentation'
 import { getEarnPage as getEarnPageFromSnapshot } from '../earn.server'
@@ -45,6 +48,7 @@ function row(id: string): EnrichedEarnRow {
 		underlying_tokens: [],
 		reward_tokens: [],
 		tvl_usd: 1_000,
+		available_supply_usd: null,
 		apy: ZERO_APY,
 		intrinsic: null,
 		stability_30d: {},

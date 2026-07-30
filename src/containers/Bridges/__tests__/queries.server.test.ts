@@ -107,11 +107,14 @@ describe('getBridgeChainNetInflows', () => {
 	})
 
 	it('does not add another retry layer when a bridge request fails', async () => {
+		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { XDC: ['xdc-network'] } })
 		vi.mocked(fetchBridgeVolumeByChain).mockRejectedValue(new Error('bridge request failed'))
 
 		await expect(getBridgeChainNetInflows('XDC')).rejects.toThrow('bridge volume for chain XDC is broken')
 		expect(fetchBridgeVolumeByChain).toHaveBeenCalledOnce()
+		expect(consoleLog).toHaveBeenCalledWith('[bridges][fetch-failed] fetchBridgeVolumeByChain(XDC)', expect.any(Error))
+		consoleLog.mockRestore()
 	})
 })
 

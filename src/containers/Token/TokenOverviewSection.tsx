@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useQuery } from '@tanstack/react-query'
+import { skipToken, useQuery } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
@@ -396,7 +396,7 @@ function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geck
 	const totalRaised = getTotalRaisedAmount(overview.raises)
 	const { data: markets } = useQuery({
 		queryKey: ['token-markets', geckoId],
-		queryFn: geckoId ? () => fetchTokenMarkets(geckoId) : undefined,
+		queryFn: geckoId ? () => fetchTokenMarkets(geckoId) : skipToken,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: false,

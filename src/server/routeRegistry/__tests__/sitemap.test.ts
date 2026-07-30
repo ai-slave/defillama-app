@@ -239,8 +239,9 @@ describe('cache-backed sitemap sections', () => {
 		expect(section?.entries.map((entry) => entry.path)).toEqual(
 			expect.arrayContaining(['raises/paradigm', 'raises/a16z'])
 		)
-		await Promise.resolve()
-		await Promise.resolve()
+		await vi.waitFor(() => {
+			expect(warnSpy).toHaveBeenCalledWith('[sitemap] failed to build raises section', expect.any(Error))
+		})
 		warnSpy.mockRestore()
 	})
 

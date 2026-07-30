@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
 import { adaptCandlestickData } from '~/containers/LlamaAI/utils/chartAdapters/candlestick'
 import { adaptCartesianChartData } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
@@ -59,6 +59,7 @@ describe('chart adapters', () => {
 	})
 
 	it('supports display names that match logical dimensions but rejects duplicate series identities', () => {
+		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const timestampSeries = {
 			...baseConfig,
 			type: 'line',
@@ -84,6 +85,8 @@ describe('chart adapters', () => {
 		expect(timestampResult.props.dataset.dimensions).toEqual(['timestamp', 'timestamp'])
 		expect(timestampResult.props.charts?.[0].encode).toEqual({ x: 0, y: 1 })
 		expect(adaptCartesianChartData(duplicateNames, [{ date: 1, y: 2 }]).description).toContain('Duplicate')
+		expect(consoleLog).toHaveBeenCalledWith('Cartesian chart adapter error:', expect.any(Error))
+		consoleLog.mockRestore()
 	})
 
 	it('preserves falsy category labels in cartesian, pie, hbar, and scatter adapters', () => {

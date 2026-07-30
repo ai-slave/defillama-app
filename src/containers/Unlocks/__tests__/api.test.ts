@@ -52,6 +52,7 @@ describe('unlocks api', () => {
 	})
 
 	it('returns null when the datasets emission request fails', async () => {
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 		mocks.fetchJson.mockRejectedValue(new Error('not found'))
 
 		const api = await import('../api')
@@ -59,6 +60,8 @@ describe('unlocks api', () => {
 
 		expect(result).toBeNull()
 		expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
+		expect(consoleError).toHaveBeenCalledWith('Failed to fetch protocol emission for chainlink:', expect.any(Error))
+		consoleError.mockRestore()
 	})
 
 	it('normalizes numeric-string event timestamps once at the list API boundary', async () => {

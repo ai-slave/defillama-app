@@ -72,6 +72,7 @@ describe('fetchDimensionDataset', () => {
 	})
 
 	it('keeps successful chains after a partial failure and omits absent breakdown fields', async () => {
+		const consoleInfo = vi.spyOn(console, 'info').mockImplementation(() => undefined)
 		mocks.metadataCache.chainMetadata = {
 			base: { id: 'base', name: 'Base' },
 			ethereum: { id: 'ethereum', name: 'Ethereum' }
@@ -97,5 +98,7 @@ describe('fetchDimensionDataset', () => {
 		expect(chainBreakdown).toBeDefined()
 		expect(chainBreakdown?.ethereum).toEqual(expect.objectContaining({ chain: 'Ethereum', total24h: 10 }))
 		expect(chainBreakdown?.ethereum).not.toHaveProperty('change_7d')
+		expect(consoleInfo).toHaveBeenCalledWith('Chain page data not found aggregators : chain:Base', expect.any(Error))
+		consoleInfo.mockRestore()
 	})
 })

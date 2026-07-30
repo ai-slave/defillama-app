@@ -318,6 +318,7 @@ describe('chains by category chart data', () => {
 	})
 
 	it('keeps core chain rows available when auxiliary asset totals fail', async () => {
+		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		fetchChainsByCategoryMock.mockResolvedValue({
 			categories: [],
 			chainsUnique: ['Ethereum'],
@@ -333,6 +334,8 @@ describe('chains by category chart data', () => {
 		expect(data.chains[0]?.name).toBe('Ethereum')
 		expect(data.chains[0]?.chainAssets).toBeNull()
 		expect(data.chains[0]?.bridgedTvl).toBeNull()
+		expect(consoleLog).toHaveBeenCalledWith(expect.objectContaining({ message: 'asset totals unavailable' }))
+		consoleLog.mockRestore()
 	})
 })
 
@@ -387,6 +390,7 @@ describe('chains by category source availability', () => {
 	})
 
 	it('preserves only the failed source as unavailable', async () => {
+		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		fetchAdapterChainProtocolTotalsMock.mockImplementation(async ({ dataType }: { dataType?: string }) => {
 			if (dataType === 'dailyRevenue') throw new Error('revenue unavailable')
 			return { protocols: [] }
@@ -402,5 +406,7 @@ describe('chains by category source availability', () => {
 		})
 
 		expect(result.chains[0]).toMatchObject({ fees24h: 0, revenue24h: null, activeUsers24h: 0 })
+		expect(consoleLog).toHaveBeenCalledWith(expect.objectContaining({ message: 'revenue unavailable' }))
+		consoleLog.mockRestore()
 	})
 })

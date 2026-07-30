@@ -64,7 +64,7 @@ describe('runServerSql', () => {
 					sql: 'SELECT max(a.range * b.range) FROM range(100000) a, range(1000000) b',
 					tableSources: [...RECIPE_SOURCES]
 				},
-				{ timeoutMs: 1500 }
+				{ timeoutMs: 300 }
 			)
 		).rejects.toThrow(SqlRunTimeoutError)
 	}, 30000)

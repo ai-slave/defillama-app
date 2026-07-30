@@ -23,6 +23,9 @@ vi.mock('../server/raiseValuations', () => ({
 	getRaiseValuationsUsd: () => Promise.resolve(new Map<string, number>()),
 	getReferralUrls: () => Promise.resolve(new Map<string, string>())
 }))
+vi.mock('~/containers/Yields/VaultRisk/coveredPools', () => ({
+	getRiskCoveredPoolIds: () => Promise.resolve(new Set<string>())
+}))
 
 import { getEarnPage as getEarnPageFromSnapshot } from '../earn.server'
 
@@ -213,7 +216,8 @@ function row(id: string, keys: Partial<TokenKeys>, over: Partial<EnrichedEarnRow
 		protocolHasToken: false,
 		trend: null,
 		tokenKeys: { id, ...keys },
-		...over
+		...over,
+		available_supply_usd: over.available_supply_usd ?? null
 	}
 }
 
