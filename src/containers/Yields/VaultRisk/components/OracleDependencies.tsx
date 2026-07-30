@@ -1,7 +1,7 @@
 import type { BlockExplorersResponse } from '~/api/types'
 import { Card } from '~/ui/Card'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
-import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { formatUsd } from '~/utils/numberFormat'
 import { toneClasses } from '../kindMeta'
 import { AddressActions } from '../primitives/AddressActions'
 import { MofNPips } from '../primitives/MofNPips'
@@ -26,7 +26,7 @@ function parseMofN(s?: string): { m: number; n: number } | null {
 function pctOfVault(p: number | null | undefined): string | null {
 	if (p == null) return null
 	const v = Math.min(100, Math.max(0, p * 100))
-	return v > 0 && v < 1 ? '<1%' : formatPercent(v, { input: 'percent', maximumFractionDigits: 0 })
+	return v > 0 && v < 1 ? '<1%' : `${Math.round(v)}%`
 }
 
 const EXCHANGE_RATE_KINDS = new Set(['exchange-rate', 'constant'])
@@ -124,14 +124,18 @@ export function OracleDependencies({
 					<p className="flex flex-wrap items-baseline gap-x-1.5">
 						<span className="body-sm text-secondary">Up to</span>
 						<span className="mono-md-bold text-primary">
-							{formatUsd(totalDrainableUsd, {
-								compact: true,
-								minimumCompactValue: 1_000_000,
-								compactSuffix: 'lowercase'
-							})}
+							{totalPct ??
+								formatUsd(totalDrainableUsd, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
 						</span>
 						<span className="body-sm text-secondary">
-							drainable if these feeds are mispriced{totalPct ? ` · ${totalPct} ${shareWord}` : ''}
+							{totalPct ? `${shareWord} ` : ''}drainable if these feeds are mispriced
+							{totalPct
+								? ` · ${formatUsd(totalDrainableUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+								: ''}
 						</span>
 					</p>
 				) : null}
@@ -171,13 +175,16 @@ export function OracleDependencies({
 							</span>
 							<span className="shrink-0 text-left sm:text-right">
 								<span className="text-primary">
-									{formatUsd(o.exposure_usd, {
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})}
+									{p ??
+										formatUsd(o.exposure_usd, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
 								</span>
-								{p ? <span className="text-secondary">{` · ${p} ${shareWord}`}</span> : null}
+								{p ? (
+									<span className="text-secondary">{` ${shareWord} · ${formatUsd(o.exposure_usd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</span>
+								) : null}
 								<span className="block body-sm text-tertiary">
 									{eoa ? 'drainable if that key leaks' : 'drainable if it is compromised'}
 								</span>
@@ -204,13 +211,16 @@ export function OracleDependencies({
 							</span>
 							<span className="shrink-0 text-left sm:text-right">
 								<span className="text-primary">
-									{formatUsd(v.exposure_usd, {
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})}
+									{p ??
+										formatUsd(v.exposure_usd, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
 								</span>
-								{p ? <span className="text-secondary">{` · ${p} ${shareWord}`}</span> : null}
+								{p ? (
+									<span className="text-secondary">{` ${shareWord} · ${formatUsd(v.exposure_usd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</span>
+								) : null}
 								<span className="block body-sm text-tertiary">mispriceable if this feed lies</span>
 							</span>
 						</li>
@@ -238,13 +248,16 @@ export function OracleDependencies({
 							</span>
 							<span className="shrink-0 text-left sm:text-right">
 								<span className="text-primary">
-									{formatUsd(g.exposureUsd, {
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})}
+									{p ??
+										formatUsd(g.exposureUsd, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
 								</span>
-								{p ? <span className="text-secondary">{` · ${p} ${shareWord}`}</span> : null}
+								{p ? (
+									<span className="text-secondary">{` ${shareWord} · ${formatUsd(g.exposureUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</span>
+								) : null}
 								<span className="block body-sm text-tertiary">
 									{immutable ? 'mispriceable only via the issuing contract' : 'mispriceable if these feeds lie'}
 								</span>

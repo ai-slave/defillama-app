@@ -8,7 +8,7 @@ import { collateralMarketBreakLossUsd, isDustCollateral } from '../derive'
 import { ChapterHead } from '../primitives/ChapterHead'
 import type { CollateralVM, MarketOracle, OracleDependency, OracleExposure, PoolType } from '../types'
 import { CollateralRow, UnallocatedRow } from './CollateralRow'
-import { type StressMode } from './collateralShared'
+import { DEFAULT_STRESS_DROP } from './collateralShared'
 import { MarketOracleTable } from './MarketOracleTable'
 import { OracleDependencies } from './OracleDependencies'
 import { VaultStress } from './VaultStress'
@@ -54,8 +54,7 @@ export function CollateralView({
 	chain?: string
 }) {
 	const [showAll, setShowAll] = useState(false)
-	const [stressMode, setStressMode] = useState<StressMode>('vault')
-	const [stressDrop, setStressDrop] = useState(30)
+	// Per-asset drops only; an asset with no entry sits at the default.
 	const [customDrops, setCustomDrops] = useState<Record<string, number>>({})
 
 	// Derived from props only, so slider ticks (stressDrop/customDrops state) don't re-run them.
@@ -95,22 +94,12 @@ export function CollateralView({
 	const dustHidden = collateral.length - ranked.length
 	const shown = showAll ? ranked : ranked.slice(0, TOP_N)
 	const hidden = ranked.length - shown.length
-	const customDropFor = (c: CollateralVM) => customDrops[c.address.toLowerCase()] ?? stressDrop
-	const setCustomDropFor = (c: CollateralVM, drop: number) => {
+	const dropFor = (c: CollateralVM) => customDrops[c.address.toLowerCase()] ?? DEFAULT_STRESS_DROP
+	const setDropFor = (c: CollateralVM, drop: number) => {
 		setCustomDrops((prev) => ({ ...prev, [c.address.toLowerCase()]: drop }))
 	}
-	const enterVaultMode = () => setStressMode('vault')
-	const enterCustomMode = () => {
-		setCustomDrops((prev) => {
-			const next = { ...prev }
-			for (const c of collateral) {
-				const key = c.address.toLowerCase()
-				if (next[key] == null) next[key] = stressDrop
-			}
-			return next
-		})
-		setStressMode('custom')
-	}
+	const tunedCount = Object.entries(customDrops).filter(([, d]) => d !== DEFAULT_STRESS_DROP).length
+	const resetDrops = () => setCustomDrops({})
 
 	return (
 		<div className="flex flex-col gap-5">
@@ -131,12 +120,9 @@ export function CollateralView({
 					supplyUsd={supplyUsd}
 					poolType={poolType}
 					singleCollateral={singleCollateral}
-					mode={stressMode}
-					drop={stressDrop}
-					setDrop={setStressDrop}
-					setModeVault={enterVaultMode}
-					setModeCustom={enterCustomMode}
-					customDrops={customDrops}
+					dropFor={dropFor}
+					tunedCount={tunedCount}
+					onReset={resetDrops}
 				/>
 
 				<div
@@ -180,9 +166,9 @@ export function CollateralView({
 							poolType={poolType}
 							singleCollateral={singleCollateral}
 							supplyUsd={supplyUsd}
-							stressDrop={stressMode === 'custom' ? customDropFor(c) : stressDrop}
-							stressMode={stressMode}
-							onStressDropChange={stressMode === 'custom' ? (drop) => setCustomDropFor(c, drop) : undefined}
+							stressDrop={dropFor(c)}
+							tuned={customDrops[c.address.toLowerCase()] != null}
+							onStressDropChange={(drop) => setDropFor(c, drop)}
 							trustScope={trustScope}
 							markets={marketOracles}
 						/>

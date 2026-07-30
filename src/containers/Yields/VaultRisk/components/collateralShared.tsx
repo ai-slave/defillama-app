@@ -7,7 +7,10 @@ const ORACLE_GAP_VENDORS = new Set(['', 'none', 'unverified'])
 export const isProvenVendor = (p: string | null | undefined): p is string =>
 	!!p && !ORACLE_GAP_VENDORS.has(p.toLowerCase())
 
-export type StressMode = 'vault' | 'custom'
+// Stress is per asset, always. Each collateral starts at this drop and any row can dial its
+// own — there is no vault-wide mode to switch into, because "what if THIS asset breaks" is the
+// question worth asking and a uniform crash is just every asset sharing one value.
+export const DEFAULT_STRESS_DROP = 30
 
 export const SLIDER_THUMB =
 	'[&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-none [&::-webkit-slider-thumb]:bg-brand ' +

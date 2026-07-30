@@ -9,7 +9,14 @@ import { RiskCallout } from '../primitives/RiskCallout'
 import type { CoverageVM, OracleAdmin, ProtocolRiskFixture, ScenarioVM } from '../types'
 import { ConditionsTree } from './ConditionsTree'
 import { usePositionUsd } from './PositionControl'
-import { isFullLoss, modeledLossCell, scaleToPosition, type StressSel, stressLossTitle } from './scenarioShared'
+import {
+	isFullLoss,
+	lossPct,
+	modeledLossCell,
+	scaleToPosition,
+	type StressSel,
+	stressLossTitle
+} from './scenarioShared'
 
 function exitWindowLabel(s: ScenarioVM): string {
 	return s.actingWindow.kind === 'no-escape' ? 'Instant' : s.actingWindow.label.replace(' withdraw window', '')
@@ -96,17 +103,18 @@ function LossHero({
 function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supplyUsd: number; stress?: StressSel }) {
 	const exit = exitWindowLabel(scenario)
 	const [position] = usePositionUsd()
-	const asYours = (poolUsd: number) =>
-		formatUsd(scaleToPosition(poolUsd, supplyUsd, position), {
-			compact: true,
-			minimumCompactValue: 1_000_000,
-			compactSuffix: 'lowercase'
-		})
+	// Percent of deposit leads; a typed deposit appends the amount it works out to.
+	const asShare = (poolUsd: number) => {
+		const pct = lossPct(poolUsd, supplyUsd)
+		if (!pct) return formatUsd(poolUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		if (position == null || poolUsd <= 0) return pct
+		return `${pct} · ${formatUsd(scaleToPosition(poolUsd, supplyUsd, position), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+	}
 	const positionNote =
 		position != null ? (
 			<p className="mt-2 body-sm text-secondary">
-				Shown for your{' '}
-				{formatUsd(position, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} deposit.
+				Percentages are of your deposit; amounts shown for{' '}
+				{formatUsd(position, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}.
 			</p>
 		) : null
 	if (scenario.status !== 'computed') {
@@ -122,9 +130,9 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 	}
 
 	const full = isFullLoss(scenario, supplyUsd)
-	const worstValue = full ? 'Full deposit' : asYours(scenario.lossMaxUsd)
-	const cell = modeledLossCell(scenario, stress)
-	const heroAmount = cell.sortUsd > 0 ? asYours(cell.sortUsd) : cell.amount
+	const worstValue = full ? 'Full deposit' : asShare(scenario.lossMaxUsd)
+	const cell = modeledLossCell(scenario, stress, supplyUsd)
+	const heroAmount = cell.sortUsd > 0 ? asShare(cell.sortUsd) : cell.amount
 	const tone = toneClasses(scenarioTone(scenario))
 	const ringDenom = full && supplyUsd > 0 ? Math.min(scenario.lossMaxUsd, supplyUsd) : scenario.lossMaxUsd
 	const ringPct = ringDenom > 0 ? Math.min(100, (cell.sortUsd / ringDenom) * 100) : 0
@@ -134,7 +142,7 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 		) : null
 
 	if (scenario.lossByAnchor?.length) {
-		const headlineMuted = cell.amount === '$0' || cell.amount === '—'
+		const headlineMuted = Boolean(cell.zero) || cell.amount === '—'
 		return (
 			<Card padding="md" className="flex flex-col self-start">
 				<LossHero
@@ -151,7 +159,7 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 						<StatRow
 							key={a.dropPct}
 							label={`−${formatPercent(a.dropPct, { input: 'percent' })}`}
-							value={a.lossUsd <= 0 ? '$0' : asYours(a.lossUsd)}
+							value={a.lossUsd <= 0 ? (supplyUsd > 0 ? '0%' : '$0') : asShare(a.lossUsd)}
 							active={stress === a.dropPct}
 							muted={a.lossUsd <= 0}
 						/>
@@ -176,7 +184,7 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 				amount={worstOnly ? worstValue : heroAmount}
 				pct={worstOnly ? 100 : ringPct}
 				toneText={tone.text}
-				muted={!worstOnly && cell.amount === '$0'}
+				muted={!worstOnly && Boolean(cell.zero)}
 			/>
 			{!worstOnly ? (
 				<div className="mt-3 border-t border-subtle pt-3">
@@ -258,7 +266,7 @@ function OracleDrainTable({ scenario }: { scenario: ScenarioVM }) {
 	)
 }
 
-function PerAssetTable({ scenario }: { scenario: ScenarioVM }) {
+function PerAssetTable({ scenario, supplyUsd }: { scenario: ScenarioVM; supplyUsd: number }) {
 	if (!scenario.perAsset?.length) return null
 	if (scenario.scenarioId === ORACLE_FULL_DRAIN_SCENARIO_ID) return <OracleDrainTable scenario={scenario} />
 	return (
@@ -277,7 +285,12 @@ function PerAssetTable({ scenario }: { scenario: ScenarioVM }) {
 							<td className="px-3 py-2 label-md text-primary">{a.symbol}</td>
 							<td className="px-3 py-2 text-secondary">{a.oracleType ? oracleBadge(a.oracleType).label : '—'}</td>
 							<td className="px-3 py-2 text-right label-md text-primary">
-								{formatUsd(a.lossMaxUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+								{lossPct(a.lossMaxUsd, supplyUsd) ??
+									formatUsd(a.lossMaxUsd, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
 							</td>
 						</tr>
 					))}
@@ -414,7 +427,15 @@ function ReasonNote({ scenario }: { scenario: ScenarioVM }) {
 	)
 }
 
-function NarrativeBody({ scenario, protocol }: { scenario: ScenarioVM; protocol: ProtocolRiskFixture | null }) {
+function NarrativeBody({
+	scenario,
+	protocol,
+	supplyUsd
+}: {
+	scenario: ScenarioVM
+	protocol: ProtocolRiskFixture | null
+	supplyUsd: number
+}) {
 	return (
 		<div className="flex flex-col gap-4">
 			{scenario.oneLiner ? (
@@ -425,7 +446,7 @@ function NarrativeBody({ scenario, protocol }: { scenario: ScenarioVM; protocol:
 			) : null}
 			<ReasonNote scenario={scenario} />
 			<RealizedStrip scenario={scenario} />
-			<PerAssetTable scenario={scenario} />
+			<PerAssetTable scenario={scenario} supplyUsd={supplyUsd} />
 
 			{scenario.conditions ? (
 				<div className="flex flex-col gap-1.5">
@@ -518,14 +539,14 @@ export function ScenarioDetailContent({
 		return (
 			<div className="grid gap-4 lg:grid-cols-[1fr_3fr]">
 				<LossBox scenario={scenario} supplyUsd={supplyUsd} stress={stress} />
-				<NarrativeBody scenario={scenario} protocol={protocol} />
+				<NarrativeBody scenario={scenario} protocol={protocol} supplyUsd={supplyUsd} />
 			</div>
 		)
 	}
 	return (
 		<div className="flex flex-col gap-4">
 			<LossBox scenario={scenario} supplyUsd={supplyUsd} stress={stress} />
-			<NarrativeBody scenario={scenario} protocol={protocol} />
+			<NarrativeBody scenario={scenario} protocol={protocol} supplyUsd={supplyUsd} />
 		</div>
 	)
 }

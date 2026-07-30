@@ -273,7 +273,6 @@ export function VaultRiskSection({ data, poolName, chain, explorers, standalone 
 					<RiskVerdict
 						headline={vm.headline}
 						scenarios={vm.scenarios}
-						collateral={vm.collateral}
 						stress={vm.stress}
 						supplyUsd={vm.supplyUsd}
 						exit={vm.exitReadiness}

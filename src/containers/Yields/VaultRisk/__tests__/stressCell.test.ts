@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
 	anyHasAnchors,
 	formatDepositPct,
+	lossPct,
 	modeledLossCell,
 	scaleToPosition,
-	scenarioGroup
+	scenarioGroup,
+	worstCaseLabel
 } from '../components/scenarioShared'
 import type { ScenarioVM } from '../types'
 
@@ -56,6 +58,65 @@ describe('modeledLossCell — no stress (mechanism enumeration)', () => {
 		expect(cell.amount).toBe('$0')
 		expect(cell.note).toBe('Buffered at −10%')
 		expect(cell.sortUsd).toBe(0)
+		expect(cell.zero).toBe(true)
+	})
+})
+
+// Losses are quoted as a share of the deposit; dollars are only the no-denominator fallback.
+describe('modeledLossCell — percent of deposit', () => {
+	it('formats the loss as a % of supply when a denominator is passed', () => {
+		const cell = modeledLossCell(
+			scn({ inputs: { drop_pct: 30 }, lossMinUsd: 25_000, lossMaxUsd: 90_000 }),
+			undefined,
+			100_000
+		)
+		expect(cell.amount).toBe('25%')
+		expect(cell.sortUsd).toBe(25_000) // sorting stays in dollars
+	})
+
+	it('reads a buffered anchor as 0%, and keeps the zero flag for muted styling', () => {
+		const row = scn({ lossByAnchor: CURVE, lossMaxUsd: 30_000, inputs: { drop_pct: 30 }, lossMinUsd: 5000 })
+		const cell = modeledLossCell(row, 10, 100_000)
+		expect(cell.amount).toBe('0%')
+		expect(cell.zero).toBe(true)
+	})
+
+	it('prices each served anchor against the deposit', () => {
+		const row = scn({ lossByAnchor: CURVE, lossMaxUsd: 30_000, inputs: { drop_pct: 30 }, lossMinUsd: 5000 })
+		expect(modeledLossCell(row, 30, 100_000).amount).toBe('5%')
+		expect(modeledLossCell(row, 50, 100_000).amount).toBe('9%')
+		expect(modeledLossCell(row, 'worst', 100_000).amount).toBe('30%')
+	})
+
+	it('never exceeds 100% even when the modeled loss runs past pool size', () => {
+		expect(modeledLossCell(scn({ lossMinUsd: 5_000_000, lossMaxUsd: 5_000_000 }), undefined, 100_000).amount).toBe(
+			'100%'
+		)
+	})
+
+	it('falls back to dollars with no denominator, so a missing supply never prints a fake percentage', () => {
+		expect(modeledLossCell(scn({ lossMinUsd: 25_000, lossMaxUsd: 25_000 }), undefined, 0).amount).toBe('$25,000')
+	})
+})
+
+describe('lossPct', () => {
+	it('is null without a denominator, so callers fall back to dollars', () => {
+		expect(lossPct(1000, 0)).toBeNull()
+	})
+
+	it('is position-independent — the same share whatever the depositor put in', () => {
+		expect(lossPct(50_000, 100_000)).toBe('50%')
+	})
+})
+
+describe('worstCaseLabel', () => {
+	it('quotes the ceiling as a share of the deposit', () => {
+		expect(worstCaseLabel(scn({ lossMinUsd: 0, lossMaxUsd: 40_000 }), 100_000)).toBe('up to 40%')
+		expect(worstCaseLabel(scn({ lossMinUsd: 40_000, lossMaxUsd: 40_000 }), 100_000)).toBe('40%')
+	})
+
+	it('names a total loss rather than printing "100%"', () => {
+		expect(worstCaseLabel(scn({ lossMinUsd: 0, lossMaxUsd: 100_000 }), 100_000)).toBe('Full deposit')
 	})
 })
 

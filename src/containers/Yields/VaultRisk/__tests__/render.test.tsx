@@ -609,7 +609,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('exposed') // unmodeled shows the exposure ceiling as context
 	})
 
-	it('collateral view folds per-market oracles into the accordion and shows the stress slider (morpho)', async () => {
+	it('collateral view folds per-market oracles into the accordion and gives each asset its own stress slider (morpho)', async () => {
 		const vm = buildVaultRiskVM(morphoData())
 		const html = await render(
 			<CollateralView
@@ -632,11 +632,17 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('misprice the collateral and borrow against it') // unified verdict band intro
 		expect(html).toContain('Safe multisig') // the 4/9 Safe controlling the feeds
 		expect(html).toContain('drainable if it is compromised')
-		expect(html).toContain('If collateral prices drop') // vault-level stress slider
-		expect(html).toContain('vault-wide · no liquidations · stress estimate')
-		expect(html).toContain('Custom by asset')
+		// Stress is per asset only: the section header is a readout, and the sole drop control
+		// lives in each row — no vault-wide slider and no mode toggle competing with it.
+		expect(html).toContain('If collateral prices drop')
+		expect(html).toContain('per asset · no liquidations · stress estimate')
+		expect(html).not.toContain('Custom by asset')
+		expect(html).not.toContain('Collateral stress scope') // the removed mode toggle's aria-label
 		expect(html).toContain('At −30%:')
-		expect(html).toContain('inherits vault-wide stress')
+		expect(html).toContain('drag to set this asset') // the row owns the only drop control
+		// one range input per modelable collateral, none in the header
+		expect(html.match(/type="range"/g)?.length).toBe(2)
+		expect(html).toContain('aria-label="Custom weETH collateral price drop"')
 		expect(html).toContain('modeled all-to-zero bad-debt ceiling')
 		expect(html).toContain('Oracle exposure')
 		expect(html).toContain('separate path: an attacker borrows against a fake price')
@@ -901,25 +907,45 @@ describe('VaultRiskSection render', () => {
 		expect(html).not.toContain('Sentinels')
 	})
 
-	it('shows the scenario stress toggle only when the backend serves loss.by_anchor', async () => {
-		// morpho-blue carries the per-drop curve → the [−10/−30/−50/Worst] control renders
+	it('reduces the scenario table to Loss / Worst case / Exit window — no column per crash depth', async () => {
+		// The served anchors carry only a handful of distinct values across a table this size, so the
+		// per-depth columns (and the drop selector that fed them) are gone; each row states its loss
+		// at the depth it was modeled at, and the full curve lives in the expanded row.
 		const morpho = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
-		expect(morpho).toContain('Collateral price-drop stress level') // the stress control's aria-label
-		// compound-v3 has no by_anchor → no stress control
-		const compound = await render(<VaultRiskSection data={compoundData()} poolName="x" chain="ethereum" />)
-		expect(compound).not.toContain('Collateral price-drop stress level')
+		expect(morpho).toContain('Worst case')
+		expect(morpho).toContain('Exit window')
+		expect(morpho).toContain('Loss at −30%') // one fixed depth, not a column per anchor
+		expect(morpho).not.toContain('Loss at −10%')
+		expect(morpho).not.toContain('Loss at −50%')
+		expect(morpho).not.toContain('Possible loss') // the column that duplicated the selected anchor
+		expect(morpho).not.toContain('Collateral price-drop stress level') // the removed selector
 	})
 
-	it('frames scenarios as % of deposit, keeps the −30% + Worst case columns, and scales to a deposit', async () => {
-		// the smart-contract-bug at full supply (100% of deposit) sits alongside price-scaling rows. The
-		// lead column reads the loss as a % of the deposit; the −30% and Worst case columns both stay on
-		// screen so the realistic and the ceiling are visible together.
+	it('leads with one loss figure bound to its cause, in % of deposit, with no interpolated loss curve', async () => {
+		// The loss curve was removed: over the served universe its shape is near-identical vault to
+		// vault, it splined a claim between only three modeled anchors, and it repeated both the
+		// headline above it and the VaultStress drop control below it.
 		const html = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
-		expect(html).toContain('Possible loss') // lead column: share of deposit at the selected drop
-		expect(html).toContain('Loss at −30%') // the stress column, at the default drop
-		expect(html).toContain('Worst case') // the drop-independent ceiling column, restored
+		// one hero figure with its condition in plain language, then the ceiling as a sentence —
+		// no jargon labels and no two stats at opposite ends of a row to reconcile
+		expect(html).toMatch(/of your deposit if collateral falls \d+%/)
+		expect(html).toContain('reaches a total')
+		expect(html).not.toContain('realistic worst')
+		expect(html).not.toContain('extreme only')
+		// the chart's own scaffolding is gone
+		expect(html).not.toContain('Loss against collateral crash severity')
+		expect(html).not.toContain('vault-loss-grad')
+		expect(html).not.toContain('role="slider"')
+	})
+
+	it('frames scenario losses as % of deposit, qualified by the crash depth each was modeled at', async () => {
+		// the smart-contract-bug at full supply reads 100% of deposit; price-driven rows carry the
+		// depth as a qualifier so the figure is readable without a page-level drop selector.
+		const html = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
 		expect(html).toContain('100%') // smart-contract bug takes the whole deposit
 		expect(html).toContain('Full deposit') // …and its worst-case ceiling reads "Full deposit"
+		expect(html).toContain('Loss at −30%') // the column states the depth, so cells don't repeat it
+		expect(html).not.toMatch(/At −\d+% stress/)
 	})
 
 	it('survives collateral_risks with no liquidity_scenario (API may omit it) — no blank section', async () => {

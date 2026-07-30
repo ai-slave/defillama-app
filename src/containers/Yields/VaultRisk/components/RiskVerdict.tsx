@@ -1,10 +1,10 @@
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { formatVerified } from '../format'
 import { toneClasses, type Tone } from '../kindMeta'
-import type { Audit, CollateralVM, ExitReadinessVM, HeadlineVM, ScenarioVM, Stress } from '../types'
+import type { Audit, ExitReadinessVM, HeadlineVM, ScenarioVM, Stress } from '../types'
 import type { HistoryIncident } from './HistoryStrip'
-import { LossCurve, type LossVizProps } from './LossCurve'
 import { PositionControl, usePositionUsd } from './PositionControl'
+import { formatDepositPct } from './scenarioShared'
 
 // One orient block in the three-question strip; severity is carried by the value's tone +
 // label, never by the block.
@@ -40,6 +40,93 @@ function trackRecordSummary(incidents: HistoryIncident[]): { label: string; tone
 	}
 }
 
+// The largest realistic (below-catastrophe) loss: the deepest depeg anchor still sitting
+// meaningfully under the worst case, else the worst computed scenario in that band. Null when
+// every modeled path is a total loss — then there's no smaller-loss story to tell.
+function realisticWorst(
+	scenarios: ScenarioVM[],
+	stress: Stress | null,
+	supplyUsd: number,
+	worstUsd: number
+): { lossUsd: number; condition: string } | null {
+	if (supplyUsd <= 0) return null
+	const ceil = worstUsd > 0 ? worstUsd : supplyUsd
+	const inBand = (usd: number) => usd > supplyUsd * 0.01 && usd < ceil * 0.95
+	const anchors = (stress?.anchors ?? []).filter((a) => inBand(a.bad_debt_usd))
+	if (anchors.length) {
+		const deepest = anchors.reduce((best, a) => (a.bad_debt_usd > best.bad_debt_usd ? a : best))
+		return { lossUsd: deepest.bad_debt_usd, condition: `if collateral falls ${deepest.drop_pct}%` }
+	}
+	const worstBelow = [...scenarios]
+		.filter((s) => s.status === 'computed' && inBand(s.lossMaxUsd))
+		.sort((a, b) => b.lossMaxUsd - a.lossMaxUsd)[0]
+	return worstBelow ? { lossUsd: worstBelow.lossMaxUsd, condition: `from ${worstBelow.title.toLowerCase()}` } : null
+}
+
+// One number, one cause, then the ceiling as a sentence. Both figures are shares of the
+// deposit, so they read the same for every depositor. Deliberately NOT two stats at opposite
+// ends of a row: the reader shouldn't have to work out how the figures relate.
+function LossHeadline({
+	realistic,
+	worstUsd,
+	worstTitle,
+	supplyUsd,
+	noEscape,
+	position
+}: {
+	realistic: { lossUsd: number; condition: string } | null
+	worstUsd: number
+	worstTitle: string | null
+	supplyUsd: number
+	noEscape: boolean
+	position: number | null
+}) {
+	const share = (usd: number) => formatDepositPct(supplyUsd > 0 ? Math.min(1, usd / supplyUsd) : 0)
+	const inDollars = (usd: number) =>
+		position != null && supplyUsd > 0
+			? ` · ≈ ${formatUsd(usd * Math.min(1, position / supplyUsd), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+			: ''
+	const catLabel = worstTitle ?? 'worst case'
+
+	if (!realistic)
+		return (
+			<p className="body-md text-secondary">
+				{'Every modeled failure here risks '}
+				<span className="text-primary">
+					{position != null
+						? `~${formatUsd(position, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
+						: 'the full deposit'}
+				</span>
+				{' — there’s no smaller-loss path. Worst case: '}
+				<span className="text-primary">
+					{catLabel}
+					{noEscape ? ' (no warning to exit)' : ''}
+				</span>
+				.
+			</p>
+		)
+
+	return (
+		<div className="flex flex-col gap-1">
+			<span className="flex flex-wrap items-baseline gap-x-2">
+				<span className="mono-xl text-primary tabular-nums">{share(realistic.lossUsd)}</span>
+				<span className="body-md text-secondary">
+					{`of your deposit ${realistic.condition}`}
+					{inDollars(realistic.lossUsd)}
+				</span>
+			</span>
+			<span className="body-sm text-secondary">
+				{'Only '}
+				{catLabel.toLowerCase()}
+				{' reaches a total '}
+				<span className="text-primary tabular-nums">{share(worstUsd)}</span>
+				{noEscape ? ', with no warning to exit' : ''}
+				{'.'}
+			</span>
+		</div>
+	)
+}
+
 function auditsPhrase(audits: Audit[]): string {
 	if (!audits.length) return 'no audits on record'
 	const latest = audits
@@ -53,7 +140,6 @@ function auditsPhrase(audits: Audit[]): string {
 export function RiskVerdict({
 	headline,
 	scenarios,
-	collateral,
 	stress,
 	supplyUsd,
 	exit,
@@ -62,7 +148,6 @@ export function RiskVerdict({
 }: {
 	headline: HeadlineVM
 	scenarios: ScenarioVM[]
-	collateral: CollateralVM[]
 	stress?: Stress | null
 	supplyUsd: number
 	exit: ExitReadinessVM
@@ -113,19 +198,7 @@ export function RiskVerdict({
 	const trToneCls = tr.tone === 'good' ? toneClasses('good').text : ''
 	const trackSub = [tr.detail, auditsPhrase(audits)].filter(Boolean).join(' · ')
 
-	const lossProps: LossVizProps = {
-		scenarios,
-		collateral,
-		stress: stress ?? null,
-		supplyUsd,
-		worstUsd: worst,
-		worstTitle: headline.worstCaseTitle,
-		noEscape,
-		ratio,
-		personal,
-		position,
-		coverageUsd: headline.coverageTotalUsd
-	}
+	const realistic = realisticWorst(scenarios, stress ?? null, supplyUsd, worst)
 
 	return (
 		<div className="relative flex flex-col gap-6">
@@ -138,7 +211,14 @@ export function RiskVerdict({
 					{supplyUsd > 0 && worst > 0 ? <PositionControl position={position} onChange={setPosition} /> : null}
 				</div>
 				{worst > 0 ? (
-					<LossCurve {...lossProps} />
+					<LossHeadline
+						realistic={realistic}
+						worstUsd={worst}
+						worstTitle={headline.worstCaseTitle}
+						supplyUsd={supplyUsd}
+						noEscape={noEscape}
+						position={position}
+					/>
 				) : (
 					<p className="body-md text-secondary">No quantified loss scenarios for this pool yet.</p>
 				)}
