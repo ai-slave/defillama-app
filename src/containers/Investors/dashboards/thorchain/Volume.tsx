@@ -87,7 +87,7 @@ export default function Volume() {
 				<Kpi
 					kpi={data.kpis.uniqueWallets30d}
 					label="Unique Wallets (30D)"
-					def="Distinct wallets that transacted in the latest complete calendar month — a stand-in for a rolling 30-day distinct count, which has no data source (daily uniques can't be summed without double-counting)."
+					def="Distinct wallets that transacted in the latest complete calendar month. It stands in for a rolling 30-day count, which has no data source: daily uniques can't be summed without double-counting."
 					note="monthly uniques feed"
 				/>
 				<Kpi
@@ -110,14 +110,14 @@ export default function Volume() {
 					<TimeBarCard
 						chart={walletChart}
 						valueSymbol=""
-						subtitle="Distinct wallets transacting in each period — every timeframe is its own distinct count."
+						subtitle="Distinct wallets transacting in each period. Every timeframe is its own distinct count."
 						control={walletToggle}
 					/>
 				)
 			) : (
 				<PlaceholderCard
 					title="Unique Wallets"
-					subtitle="Distinct wallets per period — awaiting feed."
+					subtitle="Distinct wallets per period. Awaiting feed."
 					note="raynalytics unique-wallet endpoints"
 				/>
 			)}

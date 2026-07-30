@@ -115,7 +115,7 @@ export default function Token() {
 				) : (
 					<PlaceholderCard
 						title="Protocol Owned TCY"
-						subtitle="Protocol-owned TCY over time — awaiting feed."
+						subtitle="Protocol-owned TCY over time. Awaiting feed."
 						note="raynalytics treasury-pol-tcy-balance"
 					/>
 				)}

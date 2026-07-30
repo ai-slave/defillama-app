@@ -48,7 +48,7 @@ export default function Unlocks() {
 						chart={history.unlockChart}
 						valueSymbol=""
 						defaultView="month"
-						subtitle="RUNE is fully unlocked — historical unlocks by allocation category; the cumulative view shows the progression."
+						subtitle="RUNE is fully unlocked. Historical unlocks by allocation category; the Cumulative view shows the progression."
 					/>
 				</>
 			)}

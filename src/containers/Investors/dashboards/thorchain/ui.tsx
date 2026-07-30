@@ -7,6 +7,8 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { useMedia } from '~/hooks/useMedia'
+import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { recordRuntimeError } from '~/utils/telemetry'
 import { readInvestorApiJson } from '../../api.types'
@@ -160,10 +162,12 @@ function KpiCard({ label, value, sub, def }: { label: string; value: string; sub
 		<div className="flex flex-col gap-1.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<span className="flex items-center gap-1 text-[11px] font-medium tracking-wider text-pro-text-tertiary uppercase">
 				{label}
+				{/* Shared Tooltip, not a `title` attribute: `title` never opens on touch. Padding
+				    buys a ~29px tap target; the negative margins keep the row height unchanged. */}
 				{def && (
-					<span title={def} className="cursor-help normal-case" aria-label={def}>
-						ⓘ
-					</span>
+					<Tooltip content={def} className="-my-2 -mr-2 cursor-help p-2" aria-label={def}>
+						<Icon name="help-circle" height={13} width={13} />
+					</Tooltip>
 				)}
 			</span>
 			<span className="font-jetbrains text-xl font-semibold tracking-tight text-pro-text-primary tabular-nums">
@@ -314,8 +318,9 @@ export function SegToggle<T extends string>({
 	value: T
 	onChange: (v: T) => void
 }) {
+	// Wraps rather than overflowing: the 5-option wallet toggle doesn't fit a phone in one row.
 	return (
-		<div className="flex rounded-md border border-pro-cards-border p-0.5">
+		<div className="flex flex-wrap justify-end rounded-md border border-pro-cards-border p-0.5">
 			{options.map((o) => (
 				<button
 					key={o.value}

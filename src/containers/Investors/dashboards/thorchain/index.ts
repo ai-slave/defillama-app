@@ -15,7 +15,7 @@ export const tabs: DashboardTabConfig[] = [
 	{ id: 'financials', label: 'Financials', component: Financials },
 	{ id: 'volume', label: 'Volume', component: Volume },
 	{ id: 'network', label: 'Network', component: Network },
-	{ id: 'token', label: 'Token', component: Token },
+	{ id: 'token', label: 'Tokens', component: Token },
 	{ id: 'unlocks', label: 'Unlocks', component: Unlocks }
 ]
 

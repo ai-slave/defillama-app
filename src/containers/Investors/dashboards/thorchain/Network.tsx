@@ -87,7 +87,7 @@ export default function Network() {
 			) : (
 				<PlaceholderCard
 					title="Protocol-Owned Liquidity Over Time"
-					subtitle="POL market value over time — awaiting feed."
+					subtitle="POL market value over time. Awaiting feed."
 					note="raynalytics pol-value"
 				/>
 			)}

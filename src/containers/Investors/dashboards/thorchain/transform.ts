@@ -57,7 +57,7 @@ export function parseDateToUnix(dateStr: string): number {
 // explicitly excludes it. So every fees / revenue / protocol-revenue figure here sums both.
 export const NETWORK_FEE = 'Network Fee'
 export const NETWORK_FEE_NOTE =
-	"Includes THORChain's native L1 transaction fee (the network fee), excluded from the thorchain-dex adapter; it accrues entirely to the Reserve."
+	"Includes THORChain's native L1 transaction fee (the network fee), which swap fees exclude; it accrues entirely to the Reserve."
 
 // Pure protocol income: no supply-side cost and no incentives attached, so the network fee
 // lands on these three income-statement lines and nowhere else.
