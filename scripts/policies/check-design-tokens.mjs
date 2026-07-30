@@ -69,12 +69,13 @@ function isProductSurfaceFile(file) {
 // stopped receiving a default gray in Tailwind v4; the compatibility shim that
 // restored the v3 behavior was removed from tailwind.css after a full audit, so
 // such a utility now renders a currentColor border (near-white in dark mode)
-// unless a color source accompanies it. This matcher scans plain string
-// literals only: template literals with ${} interpolation and strings carrying
-// pro-* theme classes (which set border-color) are assumed to supply a color,
-// zero-width utilities (border-0) render nothing, and class examples inside
-// block comments aren't consumers. The baseline covers audited sites whose
-// color arrives via an inline style={{ borderColor }} at the call site.
+// unless a color source accompanies it. This matcher scans class-list string
+// literals only: direct class/className attributes and strings corroborated by
+// another class-shaped token. Template literals with ${} interpolation and
+// strings carrying pro-* theme classes (which set border-color) are assumed to
+// supply a color, zero-width utilities (border-0) render nothing, and class
+// examples inside block comments aren't consumers. The baseline covers audited
+// sites whose color arrives via an inline style={{ borderColor }} at the call site.
 const BORDER_STYLE_KEYWORDS = new Set([
 	'dashed',
 	'dotted',
@@ -109,10 +110,17 @@ function classifyBorderUtility(utility) {
 function matchImplicitBorderColor(content) {
 	const found = []
 	const source = content.replace(/\/\*[\s\S]*?\*\//g, '')
-	for (const [literal] of source.matchAll(STRING_LITERAL)) {
+	for (const match of source.matchAll(STRING_LITERAL)) {
+		const literal = match[0]
 		if (!literal.includes('border') && !literal.includes('divide')) continue
 		if (literal.startsWith('`') && literal.includes('${')) continue
 		if (/pro-(?:border|divider|btn-[\w-]+)/.test(literal)) continue
+		const tokens = literal.slice(1, -1).split(/\s+/)
+		const isClassAttribute = /(?:class|className)\s*=\s*$/.test(
+			source.slice(Math.max(0, match.index - 24), match.index)
+		)
+		const hasClassShapedToken = tokens.some((token) => token.includes('-') && /^[\w!:[\]()/.%&>~*-]+$/.test(token))
+		if (!isClassAttribute && !hasClassShapedToken) continue
 		const widthUtilities = []
 		let hasColor = false
 		for (const token of literal.matchAll(BORDER_TOKEN)) {

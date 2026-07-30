@@ -69,7 +69,7 @@ export default function ResearchAdminHubPage() {
 								href="/research/admin/trusted-by"
 								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
 							>
-								<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Promotions</span>
+								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Promotions</span>
 								<span className="text-lg font-semibold text-primary group-hover:text-link">Trusted By</span>
 								<span className="text-sm text-secondary">
 									Manage the Trusted By logos and social media mentions shown on /research.

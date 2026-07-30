@@ -308,9 +308,7 @@ export function TrustedByAdminView() {
 					<div className="grid gap-3">
 						{chunkMentions(enabledMentions).map((block, blockIndex) => (
 							<div key={block[0].id} className="grid gap-2 rounded-md border border-medium bg-surface p-4">
-								<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
-									Slide {blockIndex + 1}
-								</span>
+								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Slide {blockIndex + 1}</span>
 								{showFullPreview ? (
 									<div
 										style={{
@@ -365,9 +363,7 @@ function SlideBoundary({
 	return (
 		<>
 			<li className="bg-page/60 px-4 py-1.5">
-				<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
-					Slide {slideNumber}
-				</span>
+				<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Slide {slideNumber}</span>
 			</li>
 			{children}
 		</>
@@ -503,7 +499,7 @@ function SortableMentionRow({
 			</button>
 
 			{slotLabel ? (
-				<span className="inline-flex shrink-0 items-center rounded-full bg-research-tint px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link uppercase">
+				<span className="inline-flex shrink-0 items-center rounded-full bg-research-tint px-2 py-0.5 label-xs tracking-[0.18em] text-link uppercase">
 					{slotLabel}
 				</span>
 			) : (

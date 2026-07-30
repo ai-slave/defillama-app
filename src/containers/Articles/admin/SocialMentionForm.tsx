@@ -200,9 +200,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 							<div key={slotIndex} className={`grid gap-1 rounded-md p-1.5 ${isCurrent ? 'ring-2 ring-link' : ''}`}>
 								<MentionSlotPreview quote={previewQuote} slotIndex={slotIndex} scale={0.55} />
 								{isCurrent ? (
-									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-link uppercase">
-										current position
-									</span>
+									<span className="label-xs tracking-[0.18em] text-link uppercase">current position</span>
 								) : null}
 							</div>
 						)

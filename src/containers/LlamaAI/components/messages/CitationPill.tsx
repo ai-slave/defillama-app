@@ -95,9 +95,7 @@ function SourceMiniCard({ reference }: { reference: UnifiedCitationReference }) 
 					<span className="ml-auto text-[11px] font-medium text-ai-primary">{reference.value}</span>
 				) : null}
 			</div>
-			{reference.excerpt ? (
-				<p className="m-0 mt-1 text-[11px] leading-snug text-ai-secondary">{reference.excerpt}</p>
-			) : null}
+			{reference.excerpt ? <p className="m-0 mt-1 body-sm text-ai-secondary">{reference.excerpt}</p> : null}
 			{hasRows ? (
 				<details className="group mt-1">
 					<summary className="cursor-pointer list-none text-[10px] font-medium text-ai-muted hover:text-ai-secondary">
