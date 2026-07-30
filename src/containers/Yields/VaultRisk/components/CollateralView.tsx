@@ -89,8 +89,8 @@ export function CollateralView({
 	// The header row and each data row are separate grids sharing this template, so the numeric
 	// columns must be FIXED widths — otherwise each grid sizes to its own content and headings drift.
 	const cols = alloc
-		? 'sm:grid-cols-[minmax(7rem,1fr)_7rem_7rem_7.5rem_1rem]'
-		: 'sm:grid-cols-[minmax(8rem,1fr)_7rem_7.5rem_1rem]'
+		? 'sm:grid-cols-[minmax(7rem,1fr)_9.5rem_9.5rem_7.5rem_1rem]'
+		: 'sm:grid-cols-[minmax(8rem,1fr)_9.5rem_7.5rem_1rem]'
 	const dustHidden = collateral.length - ranked.length
 	const shown = showAll ? ranked : ranked.slice(0, TOP_N)
 	const hidden = ranked.length - shown.length

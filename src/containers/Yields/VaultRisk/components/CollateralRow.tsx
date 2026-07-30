@@ -129,7 +129,7 @@ function MarketBreakCell({
 	return (
 		<>
 			<span className="label-md text-primary tabular-nums">{`${p.approximate ? '≈ ' : ''}${sharePct}`}</span>
-			<span className="body-sm text-tertiary tabular-nums">{sub}</span>
+			<span className="body-sm whitespace-nowrap text-tertiary tabular-nums">{sub}</span>
 		</>
 	)
 }
@@ -384,7 +384,7 @@ export function CollateralRow({
 									})
 								: '—')}
 						{allocText && c.allocationUsd != null ? (
-							<span className="block body-sm text-tertiary">
+							<span className="block body-sm whitespace-nowrap text-tertiary tabular-nums">
 								{shareWord} ·{' '}
 								{formatUsd(c.allocationUsd, {
 									compact: true,
@@ -581,7 +581,7 @@ export function UnallocatedRow({ alloc, cols }: { alloc: AllocationVM; cols: str
 			</div>
 			<span className="hidden text-right label-md text-primary sm:block">
 				{vaultSharePct(alloc.unallocatedPct / 100)}
-				<span className="block body-sm text-tertiary">
+				<span className="block body-sm whitespace-nowrap text-tertiary tabular-nums">
 					of vault ·{' '}
 					{formatUsd(alloc.unallocatedUsd, {
 						compact: true,
