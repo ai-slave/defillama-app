@@ -86,7 +86,14 @@ function buildProtocolSummary({
 			: null
 	const openInterest = openInterestProtocols.get(protocol.name)?.total24h
 	const activeLiquidity = activeLiquidityProtocols.get(protocol.name)?.total24h
-	const normalizedVolume24h = normalizedVolumeProtocols.get(protocol.name)?.total24h
+	const rawNormalizedVolume24h = normalizedVolumeProtocols.get(protocol.name)?.total24h
+	// Reported USD volume is the upper bound for the alternate normalized calculation on perp pages.
+	const normalizedVolume24h =
+		adapterType !== ADAPTER_TYPES.PERPS
+			? rawNormalizedVolume24h
+			: rawNormalizedVolume24h != null && protocol.total24h != null
+				? Math.min(rawNormalizedVolume24h, protocol.total24h)
+				: null
 
 	return {
 		name: protocol.displayName,

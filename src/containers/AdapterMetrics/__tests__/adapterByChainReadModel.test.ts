@@ -80,13 +80,15 @@ function buildReadModel({
 	protocolsData = { protocols: [], parentProtocols: [] },
 	openInterestData = null,
 	activeLiquidityData = null,
-	normalizedVolumeData = null
+	normalizedVolumeData = null,
+	adapterType = ADAPTER_TYPES.DEXS
 }: {
 	protocols: AdapterProtocol[]
 	protocolsData?: Parameters<typeof buildAdapterByChainReadModel>[0]['protocolsData']
 	openInterestData?: IAdapterChainOverview | null
 	activeLiquidityData?: IAdapterChainOverview | null
 	normalizedVolumeData?: IAdapterChainMetrics | null
+	adapterType?: Parameters<typeof buildAdapterByChainReadModel>[0]['adapterType']
 }) {
 	return buildAdapterByChainReadModel({
 		data: overview(protocols),
@@ -94,7 +96,7 @@ function buildReadModel({
 		openInterestData,
 		activeLiquidityData,
 		normalizedVolumeData,
-		adapterType: ADAPTER_TYPES.DEXS,
+		adapterType,
 		dataType: undefined,
 		rankBy: 'total24h',
 		cantonIncentivesWarning: null
@@ -258,5 +260,64 @@ describe('buildAdapterByChainReadModel', () => {
 
 		expect(result).toMatchObject({ openInterest: 0, activeLiquidity: 0 })
 		expect(result.protocols[0]).toMatchObject({ openInterest: 0, activeLiquidity: 0, normalizedVolume24h: 0 })
+	})
+
+	it('caps perp normalized volume at reported volume while preserving lower values', () => {
+		const protocols = [
+			protocol({ name: 'Higher', displayName: 'Higher', slug: 'higher', total24h: 100 }),
+			protocol({ name: 'Lower', displayName: 'Lower', slug: 'lower', total24h: 100 }),
+			protocol({ name: 'Unavailable', displayName: 'Unavailable', slug: 'unavailable', total24h: null })
+		]
+		const normalizedVolumeData = overview([
+			protocol({ name: 'Higher', total24h: 120 }),
+			protocol({ name: 'Lower', total24h: 80 }),
+			protocol({ name: 'Unavailable', total24h: 90 })
+		])
+
+		const result = buildReadModel({
+			protocols,
+			normalizedVolumeData,
+			adapterType: ADAPTER_TYPES.PERPS
+		})
+
+		expect(result.protocols.find(({ name }) => name === 'Higher')).toMatchObject({ normalizedVolume24h: 100 })
+		expect(result.protocols.find(({ name }) => name === 'Lower')).toMatchObject({ normalizedVolume24h: 80 })
+		expect(result.protocols.find(({ name }) => name === 'Unavailable')).not.toHaveProperty('normalizedVolume24h')
+	})
+
+	it('sums capped normalized volume for parent perp rows', () => {
+		const protocols = [
+			protocol({
+				name: 'Child A',
+				displayName: 'Child A',
+				slug: 'child-a',
+				total24h: 100,
+				linkedProtocols: ['Parent', 'Child A']
+			}),
+			protocol({
+				name: 'Child B',
+				displayName: 'Child B',
+				slug: 'child-b',
+				total24h: 50,
+				linkedProtocols: ['Parent', 'Child B']
+			})
+		]
+		const normalizedVolumeData = overview([
+			protocol({ name: 'Child A', total24h: 120 }),
+			protocol({ name: 'Child B', total24h: 40 })
+		])
+
+		const result = buildReadModel({
+			protocols,
+			normalizedVolumeData,
+			adapterType: ADAPTER_TYPES.PERPS
+		})
+
+		expect(result.protocols[0]).toMatchObject({
+			name: 'Parent',
+			total24h: 150,
+			normalizedVolume24h: 140,
+			childProtocols: [{ normalizedVolume24h: 100 }, { normalizedVolume24h: 40 }]
+		})
 	})
 })
