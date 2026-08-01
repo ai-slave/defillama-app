@@ -10,7 +10,7 @@ interface KeyMetricsPngExportButtonProps {
 	protocolName: string
 	primaryValue?: number
 	primaryLabel: string
-	formatPrice: (value: number | string | null) => string | number | null
+	formatPrice: (value: number | null) => string | number | null
 	hasTvlData?: boolean
 }
 
@@ -23,8 +23,8 @@ function getTrimmedText(el: Element | null | undefined): string {
 	return el?.textContent?.trim().replace(/\s+/g, ' ') ?? ''
 }
 
-function extractLabel(el: HTMLElement): string {
-	const directChildren = Array.from(el.children) as HTMLElement[]
+function extractLabel(el: Element): string {
+	const directChildren = Array.from(el.children)
 	const directLabel =
 		directChildren.find((child) => child.matches?.(METRIC_LABEL_SELECTOR)) ??
 		directChildren.find((child) => child.tagName.toUpperCase() === 'SPAN')
@@ -33,12 +33,12 @@ function extractLabel(el: HTMLElement): string {
 	return getTrimmedText(directLabel ?? fallbackLabel)
 }
 
-function extractValue(el: HTMLElement): string {
+function extractValue(el: Element): string {
 	const valueEl = el.querySelector?.(METRIC_VALUE_SELECTOR) ?? null
 	return getTrimmedText(valueEl)
 }
 
-function extractRow(el: HTMLElement): MetricRow | null {
+function extractRow(el: Element): MetricRow | null {
 	const label = extractLabel(el)
 	const value = extractValue(el)
 	if (!label || !value) return null
@@ -50,16 +50,15 @@ function extractRows(container: HTMLDivElement): MetricRow[] {
 	const children = Array.from(container.children)
 
 	for (const child of children) {
-		const el = child as HTMLElement
-		const tagName = el.tagName.toUpperCase()
+		const tagName = child.tagName.toUpperCase()
 
 		if (tagName === 'P') {
-			const row = extractRow(el)
+			const row = extractRow(child)
 			if (row) rows.push(row)
 		} else if (tagName === 'DETAILS') {
-			const summary = el.querySelector('summary')
+			const summary = child.querySelector('summary')
 			if (summary) {
-				const row = extractRow(summary as unknown as HTMLElement)
+				const row = extractRow(summary)
 				if (row) rows.push(row)
 			}
 		}
@@ -83,10 +82,14 @@ async function loadProtocolIcon(name: string): Promise<string | null> {
 		const response = await fetch(`/api/public/protocol-icon?slug=${encodeURIComponent(name)}`)
 		if (!response.ok) return null
 		const blob = await response.blob()
-		return new Promise((resolve, reject) => {
+		return await new Promise<string | null>((resolve) => {
 			const reader = new FileReader()
-			reader.onloadend = () => resolve(reader.result as string)
-			reader.onerror = reject
+			reader.onloadend = () => {
+				if (typeof reader.result === 'string') resolve(reader.result)
+				else resolve(null)
+			}
+			reader.onerror = () => resolve(null)
+			reader.onabort = () => resolve(null)
 			reader.readAsDataURL(blob)
 		})
 	} catch {
@@ -113,11 +116,8 @@ function fillRoundedRect(
 	radius: number
 ) {
 	ctx.beginPath()
-	const roundRectCtx = ctx as CanvasRenderingContext2D & {
-		roundRect?: (x: number, y: number, width: number, height: number, radius: number) => void
-	}
-	if (typeof roundRectCtx.roundRect === 'function') {
-		roundRectCtx.roundRect(x, y, width, height, radius)
+	if (typeof ctx.roundRect === 'function') {
+		ctx.roundRect(x, y, width, height, radius)
 	} else {
 		const r = Math.min(radius, width / 2, height / 2)
 		ctx.moveTo(x + r, y)
@@ -240,8 +240,7 @@ export function KeyMetricsPngExportButton({
 
 			ctx.font = '14px system-ui, -apple-system, sans-serif'
 
-			for (let index = 0; index < rows.length; index++) {
-				const row = rows[index]
+			for (const [index, row] of rows.entries()) {
 				const rowY = rowsStartY + index * rowHeight
 
 				ctx.strokeStyle = borderColor

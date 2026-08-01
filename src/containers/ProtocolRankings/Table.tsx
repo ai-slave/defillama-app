@@ -5,7 +5,6 @@ import {
 	getExpandedRowModel,
 	getSortedRowModel,
 	useReactTable,
-	type ColumnDef,
 	type ExpandedState,
 	type SortingState
 } from '@tanstack/react-table'
@@ -43,28 +42,15 @@ import { slug } from '~/utils'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { parseNumberQueryParam } from '~/utils/routerQuery'
 import { CustomColumnModal } from './CustomColumnModal'
-import { replaceAliases, sampleProtocol } from './customColumnsUtils'
-import { evaluateFormula, formatCustomColumnValue, getSortableValue } from './formula.service'
+import { parseProtocolTableColumnVisibility, replaceAliases, sampleProtocol } from './customColumnsUtils'
+import { createFormulaEvaluator, formatCustomColumnValue, getSortableValue } from './formula.service'
 import { prepareProtocolsForTable } from './prepareProtocolsForTable'
+import { getProtocolEarningsValue } from './readModel'
 import type { IProtocol } from './types'
-
-const EMPTY_CUSTOM_COLUMN_VALUES: Record<string, unknown> = {}
-
-const getEarningsValue = (revenue: number | null | undefined, emissions: number | null | undefined) => {
-	if (revenue != null && emissions != null) {
-		return revenue - emissions
-	}
-
-	if (revenue != null) {
-		return revenue
-	}
-
-	return undefined
-}
 
 type ChainProtocolsTableProps = {
 	protocols: Array<IProtocol>
-	sampleRow?: any
+	sampleRow?: IProtocol
 	useStickyHeader?: boolean
 	borderless?: boolean
 	headingAs?: 'h1' | 'h2'
@@ -160,14 +146,11 @@ const ChainProtocolsTableInner = ({
 
 		if (newColumnKey) {
 			const allKeys = [...columnOptions.map((c) => c.key), ...next.map((_, idx) => `custom_formula_${idx}`)]
-			let ops: Record<string, boolean> = {}
-			try {
-				ops = JSON.parse(localStorage.getItem(tableColumnOptionsKey) ?? '{}')
-			} catch {}
+			const ops = parseProtocolTableColumnVisibility(localStorage.getItem(tableColumnOptionsKey))
 			for (const key of allKeys) {
 				if (key === newColumnKey) {
 					ops[key] = true
-				} else if (!(key in ops)) {
+				} else if (!Object.hasOwn(ops, key)) {
 					ops[key] = false
 				}
 			}
@@ -190,12 +173,10 @@ const ChainProtocolsTableInner = ({
 				formatType: col.formatType
 			}))
 		]
-		const defaultColumnVisibility = Object.fromEntries(mergedColumns.map((col) => [col.key, true] as const))
+		const defaultColumnVisibility: Record<string, boolean> = {}
+		for (const column of mergedColumns) defaultColumnVisibility[column.key] = true
 
-		let parsedColumnVisibility: Record<string, boolean> = {}
-		try {
-			parsedColumnVisibility = JSON.parse(columnsInStorage) as Record<string, boolean>
-		} catch {}
+		const parsedColumnVisibility = parseProtocolTableColumnVisibility(columnsInStorage)
 
 		const columnVisibility = { ...defaultColumnVisibility, ...parsedColumnVisibility }
 		const selectedColumns = mergedColumns.flatMap((column) => (columnVisibility[column.key] ? [column.key] : []))
@@ -218,46 +199,39 @@ const ChainProtocolsTableInner = ({
 	}
 
 	const [sorting, setSorting] = useState<SortingState>([
-		{ desc: true, id: MAIN_COLUMN_BY_CATEGORY[filterState] ?? 'tvl' }
+		{ desc: true, id: filterState && isTableCategory(filterState) ? MAIN_COLUMN_BY_CATEGORY[filterState] : 'tvl' }
 	])
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 	const sortingRef = useRef(sorting)
 	sortingRef.current = sorting
 
-	const allColumns = useMemo<ColumnDef<IProtocol>[]>(() => {
+	const allColumns = useMemo(() => {
 		const customColumnDefs = customColumns.map((col, idx) => {
 			const columnId = `custom_formula_${idx}`
 			const displayFormat = col.determinedFormat || col.formatType
+			const evaluate = createFormulaEvaluator(replaceAliases(col.formula))
 
 			return columnHelper.accessor(
 				(row) => {
-					const formulaWithPaths = replaceAliases(col.formula)
-					const { value, error } = evaluateFormula(formulaWithPaths, row)
-
-					if (error) {
-						return null
-					}
-
-					return getSortableValue(value, displayFormat)
+					const result = evaluate(row)
+					return result.status === 'success' ? getSortableValue(result.value, displayFormat) : null
 				},
 				{
 					id: columnId,
 					header: col.name,
 					cell: ({ row }) => {
-						const formulaWithPaths = replaceAliases(col.formula)
-						const { value, error } = evaluateFormula(formulaWithPaths, row.original)
+						const result = evaluate(row.original)
 
-						if (error) {
+						if (result.status === 'error') {
 							return (
-								<Tooltip content={error} className="cursor-help text-data-down">
+								<Tooltip content={result.error} className="cursor-help text-data-down">
 									Err
 								</Tooltip>
 							)
 						}
 
-						if (value === '' || value === null) {
-							return null
-						}
+						if (result.status === 'missing') return null
+						const value = result.value
 
 						if (displayFormat === 'boolean' && typeof value === 'boolean') {
 							return (
@@ -277,8 +251,8 @@ const ChainProtocolsTableInner = ({
 						const sortEntry = sortingRef.current.find((s) => s.id === sortColumnId)
 						const desc = sortEntry?.desc ?? true
 
-						let a = rowA.getValue(sortColumnId)
-						let b = rowB.getValue(sortColumnId)
+						const a = getSortableValue(rowA.getValue(sortColumnId), displayFormat)
+						const b = getSortableValue(rowB.getValue(sortColumnId), displayFormat)
 
 						if (a === null && b !== null) {
 							return desc ? -1 : 1
@@ -438,7 +412,7 @@ const ChainProtocolsTableInner = ({
 					onSave={handleSaveCustomColumn}
 					sampleRow={sampleRow}
 					key={`custom-index-${customColumnModalEditIndex}`}
-					{...(customColumnModalInitialValues ?? EMPTY_CUSTOM_COLUMN_VALUES)}
+					{...customColumnModalInitialValues}
 				/>
 			) : null}
 		</div>
@@ -455,7 +429,7 @@ enum TABLE_CATEGORIES {
 	TVL = 'TVL'
 }
 
-const MAIN_COLUMN_BY_CATEGORY = {
+const MAIN_COLUMN_BY_CATEGORY: Record<TableCategory, string> = {
 	[TABLE_CATEGORIES.TVL]: 'tvl',
 	[TABLE_CATEGORIES.FEES]: 'fees_24h',
 	[TABLE_CATEGORIES.REVENUE]: 'revenue_24h',
@@ -477,11 +451,11 @@ const TABLE_CATEGORIES_VALUES = [
 const TABLE_PERIODS_VALUES = [TABLE_PERIODS.ONE_DAY, TABLE_PERIODS.SEVEN_DAYS, TABLE_PERIODS.ONE_MONTH] as const
 
 function isTableCategory(value: string | null): value is TableCategory {
-	return value != null && (TABLE_CATEGORIES_VALUES as readonly string[]).includes(value)
+	return value != null && TABLE_CATEGORIES_VALUES.some((category) => category === value)
 }
 
 function isTablePeriod(value: string | null): value is TablePeriod {
-	return value != null && (TABLE_PERIODS_VALUES as readonly string[]).includes(value)
+	return value != null && TABLE_PERIODS_VALUES.some((period) => period === value)
 }
 
 function isTableFilterState(value: string | null): value is TableFilterState {
@@ -690,7 +664,7 @@ const columns = [
 						row.original.strikeTvl || row.original.tvl.excludeParent ? (
 							<ProtocolTvlCell rowValues={row.original} />
 						) : (
-							formatUsd(row.original.tvl?.default?.tvl || 0, {
+							formatUsd(row.original.tvl.default.tvl, {
 								compact: true,
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
@@ -1108,7 +1082,7 @@ const columns = [
 					headerHelperText: definitions.revenue.protocol['ps']
 				}
 			}),
-			columnHelper.accessor((row) => getEarningsValue(row.revenue?.total24h, row.emissions?.total24h), {
+			columnHelper.accessor((row) => getProtocolEarningsValue(row.revenue?.total24h, row.emissions?.total24h), {
 				id: 'earnings_24h',
 				header: 'Earnings 24h',
 				cell: (info) =>
@@ -1122,7 +1096,7 @@ const columns = [
 					headerHelperText: definitions.earnings.protocol['24h']
 				}
 			}),
-			columnHelper.accessor((row) => getEarningsValue(row.revenue?.total7d, row.emissions?.total7d), {
+			columnHelper.accessor((row) => getProtocolEarningsValue(row.revenue?.total7d, row.emissions?.total7d), {
 				id: 'earnings_7d',
 				header: 'Earnings 7d',
 				cell: (info) =>
@@ -1136,7 +1110,7 @@ const columns = [
 					headerHelperText: definitions.earnings.protocol['7d']
 				}
 			}),
-			columnHelper.accessor((row) => getEarningsValue(row.revenue?.total30d, row.emissions?.total30d), {
+			columnHelper.accessor((row) => getProtocolEarningsValue(row.revenue?.total30d, row.emissions?.total30d), {
 				id: 'earnings_30d',
 				header: 'Earnings 30d',
 				cell: (info) =>
@@ -1149,7 +1123,7 @@ const columns = [
 					headerHelperText: definitions.earnings.protocol['30d']
 				}
 			}),
-			columnHelper.accessor((row) => getEarningsValue(row.revenue?.total1y, row.emissions?.total1y), {
+			columnHelper.accessor((row) => getProtocolEarningsValue(row.revenue?.total1y, row.emissions?.total1y), {
 				id: 'earnings_1y',
 				header: 'Earnings 1Y',
 				cell: (info) =>
@@ -1162,20 +1136,27 @@ const columns = [
 					headerHelperText: definitions.earnings.protocol['1y']
 				}
 			}),
-			columnHelper.accessor((row) => getEarningsValue(row.revenue?.monthlyAverage1y, row.emissions?.monthlyAverage1y), {
-				id: 'average_earnings_1y',
-				header: 'Monthly Avg 1Y Earnings',
-				cell: (info) =>
-					info.getValue() != null
-						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-						: null,
-				meta: {
-					headerClassName: 'w-[min(200px,40vw)]',
-					align: 'end',
-					headerHelperText: definitions.earnings.protocol['monthlyAverage1y']
+			columnHelper.accessor(
+				(row) => getProtocolEarningsValue(row.revenue?.monthlyAverage1y, row.emissions?.monthlyAverage1y),
+				{
+					id: 'average_earnings_1y',
+					header: 'Monthly Avg 1Y Earnings',
+					cell: (info) =>
+						info.getValue() != null
+							? formatUsd(info.getValue(), {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
+							: null,
+					meta: {
+						headerClassName: 'w-[min(200px,40vw)]',
+						align: 'end',
+						headerHelperText: definitions.earnings.protocol['monthlyAverage1y']
+					}
 				}
-			}),
-			columnHelper.accessor((row) => getEarningsValue(row.revenue?.totalAllTime, row.emissions?.totalAllTime), {
+			),
+			columnHelper.accessor((row) => getProtocolEarningsValue(row.revenue?.totalAllTime, row.emissions?.totalAllTime), {
 				id: 'cumulativeEarnings',
 				header: 'Cumulative Earnings',
 				cell: (info) =>
@@ -1266,26 +1247,14 @@ const defaultColumns = JSON.stringify({
 	revenue_24h: true
 })
 
-const ProtocolTvlCell = ({ rowValues }) => {
-	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
+const ProtocolTvlCell = ({ rowValues }: { rowValues: IProtocol }) => {
+	const tvl = rowValues.tvl
+	if (!tvl) return null
 
 	let text = null
 
 	if (rowValues.strikeTvl) {
-		if (!extraTvlsEnabled['doublecounted']) {
-			text =
-				'This protocol deposits into another protocol and is subtracted from total TVL because "Double Count" toggle is off'
-		}
-
-		if (!extraTvlsEnabled['liquidstaking']) {
-			text =
-				'This protocol is under Liquid Staking category and is subtracted from total TVL because "Liquid Staking" toggle is off'
-		}
-
-		if (!extraTvlsEnabled['doublecounted'] && !extraTvlsEnabled['liquidstaking']) {
-			text =
-				'This protocol deposits into another protocol or is under Liquid Staking category, so it is subtracted from total TVL because both "Liquid Staking" and "Double Count" toggles are off'
-		}
+		text = 'This protocol is excluded from chain TVL to avoid double counting'
 
 		const whiteLabeledVaultProviders = ['Veda']
 		if (whiteLabeledVaultProviders.includes(rowValues.name)) {
@@ -1293,7 +1262,7 @@ const ProtocolTvlCell = ({ rowValues }) => {
 				'This protocol issues white-labeled vaults which may result in TVL being counted by another protocol (e.g., double counted).'
 		}
 
-		if (removedCategoriesFromChainTvlSet.has(rowValues.category)) {
+		if (rowValues.category && removedCategoriesFromChainTvlSet.has(rowValues.category)) {
 			text = `${rowValues.category} protocols are not counted into Chain TVL`
 		}
 
@@ -1305,13 +1274,13 @@ const ProtocolTvlCell = ({ rowValues }) => {
 	return (
 		<span className="flex items-center justify-end gap-1">
 			{text ? <QuestionHelper text={text} /> : null}
-			{rowValues.tvl.excludeParent && rowValues.childProtocols ? (
+			{tvl.excludeParent && rowValues.childProtocols ? (
 				<QuestionHelper
 					text={"There's some internal doublecounting that is excluded from parent TVL, so sum won't match"}
 				/>
 			) : null}
 			<span className={rowValues.strikeTvl ? 'text-tertiary' : ''}>
-				{formatUsd(rowValues.tvl.default.tvl, {
+				{formatUsd(tvl.default.tvl, {
 					compact: true,
 					minimumCompactValue: 1_000_000,
 					compactSuffix: 'lowercase'

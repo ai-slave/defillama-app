@@ -1,4 +1,4 @@
-import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
+import { type CellContext, type ColumnDef, createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
@@ -27,7 +27,8 @@ import {
 	getProtocolCategoryDexVolumeLabel,
 	getProtocolCategoryColumns,
 	getProtocolCategoryDefaultSort,
-	getProtocolCategoryPresentation
+	getProtocolCategoryPresentation,
+	type ProtocolCategoryColumn
 } from './constants'
 import { applyProtocolTaxonomyTvlSettings } from './tvl'
 import type { IProtocolTaxonomyPageData } from './types'
@@ -60,10 +61,9 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 				protocols: props.protocols,
 				charts: props.charts,
 				extraTvlCharts: props.extraTvlCharts,
-				tvlSettings,
-				effectiveCategory: props.effectiveCategory
+				tvlSettings
 			}),
-		[tvlSettings, props.protocols, props.charts, props.extraTvlCharts, props.effectiveCategory]
+		[tvlSettings, props.protocols, props.charts, props.extraTvlCharts]
 	)
 
 	const categoryColumns = useMemo(() => {
@@ -213,6 +213,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 			</SummaryCardGrid>
 			<TableWithSearch
 				data={finalProtocols}
+				getSubRows={(row) => row.subRows}
 				columns={categoryColumns}
 				placeholder={categoryPresentation.searchPlaceholder}
 				columnToSearch="name"
@@ -226,10 +227,19 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 }
 
 type ProtocolRow = IProtocolTaxonomyPageData['protocols'][0]
+// This heterogeneous collection never exposes a shared accessor value to callers.
+type ProtocolColumnDef = ColumnDef<ProtocolRow, never>
 
 const columnHelper = createColumnHelper<ProtocolRow>()
+type ProtocolMetricValue = number | null | undefined
 
-const perpVolumeCell = (info: any) => {
+const sortableNumber = (value: ProtocolMetricValue): number | undefined => value ?? undefined
+
+export function getProtocolMcapTvlRatio(mcap: number | null, tvl: number | null): number | undefined {
+	return mcap !== null && tvl !== null && tvl > 0 ? mcap / tvl : undefined
+}
+
+const perpVolumeCell = (info: CellContext<ProtocolRow, number | undefined>) => {
 	if (info.getValue() == null) return null
 	const helpers: string[] = []
 	if (info.row.original.perpVolume?.zeroFeePerp) {
@@ -250,7 +260,7 @@ const perpVolumeCell = (info: any) => {
 	return formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
-const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
+const COLUMN_REGISTRY = {
 	name: columnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
@@ -264,12 +274,12 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 							{row.getIsExpanded() ? (
 								<>
 									<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
-									<span className="sr-only">View child protocols</span>
+									<span className="sr-only">Hide child protocols</span>
 								</>
 							) : (
 								<>
 									<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
-									<span className="sr-only">Hide child protocols</span>
+									<span className="sr-only">View child protocols</span>
 								</>
 							)}
 						</button>
@@ -295,7 +305,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerClassName: 'w-[min(280px,40vw)]'
 		}
 	}),
-	tvl: columnHelper.accessor((p) => p.tvl, {
+	tvl: columnHelper.accessor((p) => sortableNumber(p.tvl), {
 		id: 'tvl',
 		header: 'TVL',
 		cell: (info) =>
@@ -308,7 +318,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: 'Sum of value of all coins held in smart contracts of the protocol'
 		}
 	}),
-	'mcap/tvl': columnHelper.accessor((p) => (p.mcap != null && p.tvl != null ? p.mcap / p.tvl : null), {
+	'mcap/tvl': columnHelper.accessor((p) => getProtocolMcapTvlRatio(p.mcap, p.tvl), {
 		id: 'mcap/tvl',
 		header: 'Mcap/TVL',
 		cell: (info) => formatRatio(info.getValue()),
@@ -318,7 +328,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: 'Market cap / TVL ratio'
 		}
 	}),
-	fees_7d: columnHelper.accessor((p) => p.fees?.total7d, {
+	fees_7d: columnHelper.accessor((p) => sortableNumber(p.fees?.total7d), {
 		id: 'fees_7d',
 		header: 'Fees 7d',
 		cell: (info) =>
@@ -331,7 +341,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.fees.protocol['7d']
 		}
 	}),
-	revenue_7d: columnHelper.accessor((p) => p.revenue?.total7d, {
+	revenue_7d: columnHelper.accessor((p) => sortableNumber(p.revenue?.total7d), {
 		id: 'revenue_7d',
 		header: 'Revenue 7d',
 		cell: (info) =>
@@ -344,7 +354,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.revenue.protocol['7d']
 		}
 	}),
-	fees_30d: columnHelper.accessor((p) => p.fees?.total30d, {
+	fees_30d: columnHelper.accessor((p) => sortableNumber(p.fees?.total30d), {
 		id: 'fees_30d',
 		header: 'Fees 30d',
 		cell: (info) =>
@@ -357,7 +367,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.fees.protocol['30d']
 		}
 	}),
-	revenue_30d: columnHelper.accessor((p) => p.revenue?.total30d, {
+	revenue_30d: columnHelper.accessor((p) => sortableNumber(p.revenue?.total30d), {
 		id: 'revenue_30d',
 		header: 'Revenue 30d',
 		cell: (info) =>
@@ -370,7 +380,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.revenue.protocol['30d']
 		}
 	}),
-	fees_24h: columnHelper.accessor((p) => p.fees?.total24h, {
+	fees_24h: columnHelper.accessor((p) => sortableNumber(p.fees?.total24h), {
 		id: 'fees_24h',
 		header: 'Fees 24h',
 		cell: (info) =>
@@ -383,7 +393,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.fees.protocol['24h']
 		}
 	}),
-	revenue_24h: columnHelper.accessor((p) => p.revenue?.total24h, {
+	revenue_24h: columnHelper.accessor((p) => sortableNumber(p.revenue?.total24h), {
 		id: 'revenue_24h',
 		header: 'Revenue 24h',
 		cell: (info) =>
@@ -396,37 +406,37 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.revenue.protocol['24h']
 		}
 	}),
-	perp_volume_24h: columnHelper.accessor((p) => p.perpVolume?.total24h, {
+	perp_volume_24h: columnHelper.accessor((p) => sortableNumber(p.perpVolume?.total24h), {
 		id: 'perp_volume_24h',
 		header: 'Perp Volume 24h',
-		cell: perpVolumeCell,
+		cell: (info) => perpVolumeCell(info),
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end',
 			headerHelperText: definitions.perps.protocol['24h']
 		}
 	}),
-	perp_volume_7d: columnHelper.accessor((p) => p.perpVolume?.total7d, {
+	perp_volume_7d: columnHelper.accessor((p) => sortableNumber(p.perpVolume?.total7d), {
 		id: 'perp_volume_7d',
 		header: 'Perp Volume 7d',
-		cell: perpVolumeCell,
+		cell: (info) => perpVolumeCell(info),
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end',
 			headerHelperText: definitions.perps.protocol['7d']
 		}
 	}),
-	perp_volume_30d: columnHelper.accessor((p) => p.perpVolume?.total30d, {
+	perp_volume_30d: columnHelper.accessor((p) => sortableNumber(p.perpVolume?.total30d), {
 		id: 'perp_volume_30d',
 		header: 'Perp Volume 30d',
-		cell: perpVolumeCell,
+		cell: (info) => perpVolumeCell(info),
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end',
 			headerHelperText: definitions.perps.protocol['30d']
 		}
 	}),
-	openInterest: columnHelper.accessor((p) => p.openInterest?.total24h, {
+	openInterest: columnHelper.accessor((p) => sortableNumber(p.openInterest?.total24h), {
 		id: 'openInterest',
 		header: 'Open Interest',
 		cell: (info) =>
@@ -439,7 +449,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.openInterest.protocol
 		}
 	}),
-	dex_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d, {
+	dex_volume_7d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total7d), {
 		id: 'dex_volume_7d',
 		header: 'DEX Volume 7d',
 		cell: (info) =>
@@ -452,7 +462,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
 	}),
-	dex_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d, {
+	dex_volume_30d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total30d), {
 		id: 'dex_volume_30d',
 		header: 'DEX Volume 30d',
 		cell: (info) =>
@@ -465,7 +475,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
 	}),
-	dex_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h, {
+	dex_volume_24h: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total24h), {
 		id: 'dex_volume_24h',
 		header: 'DEX Volume 24h',
 		cell: (info) =>
@@ -478,7 +488,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
 	}),
-	dex_aggregator_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d, {
+	dex_aggregator_volume_7d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total7d), {
 		id: 'dex_aggregator_volume_7d',
 		header: 'DEX Aggregator Volume 7d',
 		cell: (info) =>
@@ -491,7 +501,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
 	}),
-	dex_aggregator_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d, {
+	dex_aggregator_volume_30d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total30d), {
 		id: 'dex_aggregator_volume_30d',
 		header: 'DEX Aggregator Volume 30d',
 		cell: (info) =>
@@ -504,7 +514,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
 	}),
-	dex_aggregator_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h, {
+	dex_aggregator_volume_24h: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total24h), {
 		id: 'dex_aggregator_volume_24h',
 		header: 'DEX Aggregator Volume 24h',
 		cell: (info) =>
@@ -517,7 +527,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
 	}),
-	prediction_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d, {
+	prediction_volume_7d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total7d), {
 		id: 'prediction_volume_7d',
 		header: 'Prediction Volume 7d',
 		cell: (info) =>
@@ -530,7 +540,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
 	}),
-	prediction_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d, {
+	prediction_volume_30d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total30d), {
 		id: 'prediction_volume_30d',
 		header: 'Prediction Volume 30d',
 		cell: (info) =>
@@ -543,7 +553,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
 	}),
-	prediction_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h, {
+	prediction_volume_24h: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total24h), {
 		id: 'prediction_volume_24h',
 		header: 'Prediction Volume 24h',
 		cell: (info) =>
@@ -556,7 +566,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
 	}),
-	payment_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d, {
+	payment_volume_7d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total7d), {
 		id: 'payment_volume_7d',
 		header: 'Payment Volume 7d',
 		cell: (info) =>
@@ -569,7 +579,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
 	}),
-	payment_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d, {
+	payment_volume_30d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total30d), {
 		id: 'payment_volume_30d',
 		header: 'Payment Volume 30d',
 		cell: (info) =>
@@ -582,7 +592,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
 	}),
-	payment_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h, {
+	payment_volume_24h: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total24h), {
 		id: 'payment_volume_24h',
 		header: 'Payment Volume 24h',
 		cell: (info) =>
@@ -595,7 +605,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
 	}),
-	spot_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d, {
+	spot_volume_7d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total7d), {
 		id: 'spot_volume_7d',
 		header: 'Spot Volume 7d',
 		cell: (info) =>
@@ -608,7 +618,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
 	}),
-	spot_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d, {
+	spot_volume_30d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total30d), {
 		id: 'spot_volume_30d',
 		header: 'Spot Volume 30d',
 		cell: (info) =>
@@ -621,7 +631,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
 	}),
-	spot_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h, {
+	spot_volume_24h: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total24h), {
 		id: 'spot_volume_24h',
 		header: 'Spot Volume 24h',
 		cell: (info) =>
@@ -634,7 +644,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
 	}),
-	options_premium_7d: columnHelper.accessor((p) => p.optionsPremium?.total7d, {
+	options_premium_7d: columnHelper.accessor((p) => sortableNumber(p.optionsPremium?.total7d), {
 		id: 'options_premium_7d',
 		header: 'Premium Volume 7d',
 		cell: (info) =>
@@ -647,7 +657,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.optionsPremium.protocol['7d']
 		}
 	}),
-	options_premium_30d: columnHelper.accessor((p) => p.optionsPremium?.total30d, {
+	options_premium_30d: columnHelper.accessor((p) => sortableNumber(p.optionsPremium?.total30d), {
 		id: 'options_premium_30d',
 		header: 'Premium Volume 30d',
 		cell: (info) =>
@@ -660,7 +670,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.optionsPremium.protocol['30d']
 		}
 	}),
-	options_premium_24h: columnHelper.accessor((p) => p.optionsPremium?.total24h, {
+	options_premium_24h: columnHelper.accessor((p) => sortableNumber(p.optionsPremium?.total24h), {
 		id: 'options_premium_24h',
 		header: 'Premium Volume 24h',
 		cell: (info) =>
@@ -673,7 +683,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.optionsPremium.protocol['24h']
 		}
 	}),
-	options_notional_7d: columnHelper.accessor((p) => p.optionsNotional?.total7d, {
+	options_notional_7d: columnHelper.accessor((p) => sortableNumber(p.optionsNotional?.total7d), {
 		id: 'options_notional_7d',
 		header: 'Notional Volume 7d',
 		cell: (info) =>
@@ -686,7 +696,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.optionsNotional.protocol['7d']
 		}
 	}),
-	options_notional_30d: columnHelper.accessor((p) => p.optionsNotional?.total30d, {
+	options_notional_30d: columnHelper.accessor((p) => sortableNumber(p.optionsNotional?.total30d), {
 		id: 'options_notional_30d',
 		header: 'Notional Volume 30d',
 		cell: (info) =>
@@ -699,7 +709,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.optionsNotional.protocol['30d']
 		}
 	}),
-	options_notional_24h: columnHelper.accessor((p) => p.optionsNotional?.total24h, {
+	options_notional_24h: columnHelper.accessor((p) => sortableNumber(p.optionsNotional?.total24h), {
 		id: 'options_notional_24h',
 		header: 'Notional Volume 24h',
 		cell: (info) =>
@@ -712,7 +722,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: definitions.optionsNotional.protocol['24h']
 		}
 	}),
-	borrowed: columnHelper.accessor((p) => p.borrowed, {
+	borrowed: columnHelper.accessor((p) => sortableNumber(p.borrowed), {
 		id: 'borrowed',
 		header: 'Active Loans',
 		cell: (info) =>
@@ -725,7 +735,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: 'Total amount currently borrowed from the protocol'
 		}
 	}),
-	supplied: columnHelper.accessor((p) => p.supplied, {
+	supplied: columnHelper.accessor((p) => sortableNumber(p.supplied), {
 		id: 'supplied',
 		header: 'Supplied',
 		cell: (info) =>
@@ -738,7 +748,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: 'Total amount supplied to the protocol'
 		}
 	}),
-	'supplied/tvl': columnHelper.accessor((p) => p.suppliedTvl, {
+	'supplied/tvl': columnHelper.accessor((p) => sortableNumber(p.suppliedTvl), {
 		id: 'supplied/tvl',
 		header: 'Supplied/TVL',
 		cell: (info) => formatRatio(info.getValue()),
@@ -748,9 +758,9 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 			headerHelperText: '(Total amount supplied / Total value locked) ratio'
 		}
 	})
-}
+} satisfies Record<ProtocolCategoryColumn, ProtocolColumnDef>
 
 export function getColumnsForCategory(effectiveCategory: string | null) {
 	const columnIds = getProtocolCategoryColumns(effectiveCategory)
-	return columnIds.map((id) => COLUMN_REGISTRY[id]).filter(Boolean)
+	return columnIds.map((id) => COLUMN_REGISTRY[id])
 }

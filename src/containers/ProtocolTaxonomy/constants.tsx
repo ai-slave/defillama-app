@@ -24,6 +24,47 @@ export interface ProtocolCategoryMetrics {
 	staking?: boolean
 }
 
+export type ProtocolCategoryColumn =
+	| 'name'
+	| 'tvl'
+	| 'mcap/tvl'
+	| 'fees_7d'
+	| 'revenue_7d'
+	| 'fees_30d'
+	| 'revenue_30d'
+	| 'fees_24h'
+	| 'revenue_24h'
+	| 'perp_volume_24h'
+	| 'perp_volume_7d'
+	| 'perp_volume_30d'
+	| 'openInterest'
+	| 'dex_volume_7d'
+	| 'dex_volume_30d'
+	| 'dex_volume_24h'
+	| 'dex_aggregator_volume_7d'
+	| 'dex_aggregator_volume_30d'
+	| 'dex_aggregator_volume_24h'
+	| 'prediction_volume_7d'
+	| 'prediction_volume_30d'
+	| 'prediction_volume_24h'
+	| 'payment_volume_7d'
+	| 'payment_volume_30d'
+	| 'payment_volume_24h'
+	| 'spot_volume_7d'
+	| 'spot_volume_30d'
+	| 'spot_volume_24h'
+	| 'options_premium_7d'
+	| 'options_premium_30d'
+	| 'options_premium_24h'
+	| 'options_notional_7d'
+	| 'options_notional_30d'
+	| 'options_notional_24h'
+	| 'borrowed'
+	| 'supplied'
+	| 'supplied/tvl'
+
+export type ProtocolCategorySortableColumn = Exclude<ProtocolCategoryColumn, 'name'>
+
 export interface ProtocolCategoryConfig {
 	description: string
 	defaultChart?: ProtocolChartsQueryParams
@@ -36,11 +77,11 @@ export interface ProtocolCategoryConfig {
 	tableHeader?: string
 	searchPlaceholder?: string
 	metrics?: ProtocolCategoryMetrics
-	columns?: string[]
-	defaultSort?: string
+	columns?: ProtocolCategoryColumn[]
+	defaultSort?: ProtocolCategorySortableColumn
 }
 
-const DEFAULT_COLUMNS = [
+const DEFAULT_COLUMNS: ProtocolCategoryColumn[] = [
 	'name',
 	'tvl',
 	'fees_7d',
@@ -82,7 +123,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 			'fees_24h',
 			'revenue_24h'
 		],
-		defaultSort: 'prediction_volume_7d'
+		defaultSort: 'dex_volume_7d'
 	},
 	Yield: {
 		description: 'Protocols that pay you a reward for your staking/LP on their platform',
@@ -728,8 +769,6 @@ export function getProtocolCategoryChartMetricLabel(
 	}
 }
 
-export const categoriesPageExcludedExtraTvls = new Set<string>(['doublecounted', 'liquidstaking'])
-
 export function getProtocolCategoryPresentation({
 	label,
 	effectiveCategory,
@@ -824,12 +863,12 @@ export function getProtocolCategoryChartMetrics(effectiveCategory: string | null
 	return result.length > 0 ? result : ['tvl']
 }
 
-export function getProtocolCategoryColumns(effectiveCategory: string | null): string[] {
+export function getProtocolCategoryColumns(effectiveCategory: string | null): ProtocolCategoryColumn[] {
 	if (!effectiveCategory) return DEFAULT_COLUMNS
 	return protocolCategoryConfig[effectiveCategory]?.columns ?? DEFAULT_COLUMNS
 }
 
-export function getProtocolCategoryDefaultSort(effectiveCategory: string | null): string {
+export function getProtocolCategoryDefaultSort(effectiveCategory: string | null): ProtocolCategorySortableColumn {
 	if (!effectiveCategory) return 'tvl'
 	return protocolCategoryConfig[effectiveCategory]?.defaultSort ?? 'tvl'
 }

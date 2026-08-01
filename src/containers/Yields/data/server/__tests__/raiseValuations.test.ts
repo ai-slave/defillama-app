@@ -22,7 +22,9 @@ function raise(over: Partial<Raise>): Raise {
 
 const noLite = { protocols: [], parentProtocols: [] }
 
-function protocol(overrides: Pick<ProtocolLite, 'name' | 'defillamaId'> & Partial<ProtocolLite>): ProtocolLite {
+function protocol(
+	overrides: Pick<ProtocolLite, 'name' | 'defillamaId'> & Partial<Omit<ProtocolLite, 'name' | 'defillamaId'>>
+): ProtocolLite {
 	return {
 		symbol: '',
 		logo: '',
@@ -35,12 +37,13 @@ function protocol(overrides: Pick<ProtocolLite, 'name' | 'defillamaId'> & Partia
 		tvlPrevWeek: null,
 		tvlPrevMonth: null,
 		mcap: null,
+		geckoId: null,
 		...overrides
 	}
 }
 
 function parent(id: string, name: string): ParentProtocolLite {
-	return { id, name, chains: [] }
+	return { id, name, symbol: '-', chains: [], gecko_id: null, mcap: null, logo: '' }
 }
 
 describe('buildRaiseValuationsUsd', () => {

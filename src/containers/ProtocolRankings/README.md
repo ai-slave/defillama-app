@@ -23,7 +23,7 @@ Start from the route file in `src/pages`, then follow imports here when the page
 - `queries.server.ts`: `getProtocolsByChain` fetch orchestration, parent/child aggregation, and row assembly.
 - `readModel.ts`: pure adapter metric row enrichment for protocol fees, revenue, holders revenue, and DEX volume.
 - `types.ts`: shared protocol row, child protocol, and TVL types.
-- `utils.ts`: protocol, fork, oracle, and `strikeTvl` filtering helpers.
+- `utils.ts`: protocol, fork, and `strikeTvl` filtering helpers.
 - `customColumnsUtils.ts`: custom protocol table column definitions.
 - `CustomColumnModal.tsx`: custom column UI.
 - `formula.service.ts`: formula evaluation for custom columns.
@@ -71,14 +71,34 @@ Keep this shared row model stable. Changes here can affect multiple pages that d
 Important rules:
 
 - `toFilterProtocol` controls whether a protocol belongs in a chain-scoped row set.
-- `protocolMatchesForkFilter` and `protocolMatchesOracleFilter` control fork/oracle-specific row filtering.
-- `toStrikeTvl` controls whether TVL is visually struck based on category and TVL toggles.
-- Dimension metric rows are admitted when at least one relevant period, annualized, average, or all-time field exists; `total24h` is not required by itself.
+- `protocolMatchesForkFilter` controls fork-specific row filtering. The lite protocol
+  producer does not emit oracle membership, so this public read model has no oracle filter.
+- `toStrikeTvl` derives strike presentation from removed categories or the presence of
+  upstream `doublecounted`/`liquidstaking` classification sections. Hidden chain-only
+  settings do not change it.
+- Fees, revenue, holders revenue, and DEX sources fail independently. A successful
+  source normalizes omitted/null activity periods to zero for listed rows and supplies
+  zero rows for inactive protocols; whole-source failure leaves that metric unavailable.
 - Parent/child protocol aggregation affects names, chains, TVL, and adapter metric fields.
+- A parent row requires at least two eligible children and canonical parent metadata;
+  otherwise children remain ordinary public rows and internal grouping IDs are omitted.
+- Exact chain-name prefixes are removed by prefix length, so hyphenated display names remain intact.
 - Parent DEX `change_7dover7d` is derived from aggregated current and previous totals rather than summing child percentages.
 - Fee/revenue values here are protocol/app rows on a chain, not Chain Fees or Chain Revenue ranking semantics.
 - Parent P/F and P/S aggregation uses summed `annualized1y` fee/revenue denominators and preserves null when a contributing child is missing the annualized value.
-- Deprecated zero-TVL child protocols are excluded from parent previous-TVL change math, while non-deprecated zero-TVL children still count as real drops when previous TVL exists.
+- Explicit zero TVL participates in parent current and comparison math regardless of
+  deprecation; unavailable producer snapshots remain null and are never inferred.
+- Bridge TVL is intentionally suppressed in this table and does not contribute to a mixed
+  parent. A nullable non-Bridge child remains required and keeps the parent TVL unavailable.
+- A selected-chain protocol without an exact `chainTvls` entry is unavailable because the
+  response has no coverage marker proving that omission means zero.
+- Market-cap-to-TVL, P/F, and P/S ratios require positive denominators. A zero numerator
+  over a positive denominator remains a valid zero ratio.
+- A successful emissions lookup with no protocol row means zero incentives; a failed or
+  unavailable emissions source keeps emissions and derived earnings unavailable.
+- A nullable period on a matched emissions row remains unavailable and makes the matching
+  parent emissions and earnings period unavailable; it is never skipped as a partial sum.
+- Emissions are all-chain data and remain unavailable on selected-chain rankings.
 - TVL display behavior here is table/read-model behavior. Previous TVL fields may stay null after table toggles; do not assume this matches ChainOverview chart TVL behavior.
 
 ## TVL Notes
@@ -86,7 +106,9 @@ Important rules:
 Be careful with:
 
 - `default` TVL versus keyed extra TVL sections
-- `doublecounted` and `liquidstaking`
+- upstream `doublecounted` and `liquidstaking` classification sections (strike only)
+- additive protocol sections (`staking`, `pool2`, `borrowed`, `vesting`) versus the
+  impossible protocol-level `govtokens` key
 - categories removed from chain TVL
 - `strikeTvl` for parent and child rows
 - min/max TVL filtering in consumers
@@ -99,9 +121,15 @@ This shared area has high blast radius. Add focused tests before refactoring `qu
 
 Current local tests:
 
-- `__tests__/queries.server.test.ts`: parent/child aggregation, chain dedupe, chain filtering, fee/revenue aggregation, strict annualized null behavior, TVL extras, deprecated zero-TVL parent changes, non-deprecated zero-TVL drops, and parent DEX change derivation.
-- `__tests__/readModel.test.ts`: dimension metric row admission and fee/revenue/holders revenue/DEX enrichment.
-- `__tests__/utils.test.ts`: direct `toFilterProtocol`, fork filter, oracle filter, and `toStrikeTvl` behavior.
+- `__tests__/queries.server.test.ts`: parent/child aggregation and fallback, chain dedupe,
+  hyphenated chain filtering, independent adapter-source availability, successful inactive
+  zeros, all-chain emissions availability, strict annualized null behavior, finite TVL
+  extras, exact zero/null parent changes, and parent DEX change derivation.
+- `__tests__/readModel.test.ts`: nullable activity-period normalization,
+  fee/revenue/holders revenue/DEX enrichment, and strict earnings availability.
+- `__tests__/utils.test.ts`: direct `toFilterProtocol`, fork filtering, and `toStrikeTvl` behavior.
+- `__tests__/formula.service.test.ts`: aliases, zero/boolean preservation, typed scalar
+  errors, strict sort values, formatting, and narrowed saved custom-column/visibility parsing.
 
 Still useful if touched:
 
@@ -110,7 +138,7 @@ Still useful if touched:
 Focused command:
 
 ```bash
-bun run test src/containers/ProtocolRankings/__tests__/queries.server.test.ts src/containers/ProtocolRankings/__tests__/readModel.test.ts src/containers/ProtocolRankings/__tests__/utils.test.ts
+bun run test src/containers/ProtocolRankings/__tests__/queries.server.test.ts src/containers/ProtocolRankings/__tests__/readModel.test.ts src/containers/ProtocolRankings/__tests__/utils.test.ts src/containers/ProtocolRankings/__tests__/formula.service.test.ts
 ```
 
 For source changes, follow the repo root verification instructions.

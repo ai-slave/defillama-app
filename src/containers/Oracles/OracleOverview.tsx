@@ -20,6 +20,7 @@ import {
 	getEnabledExtraTvlApiKeys,
 	getEnabledForkOracleExtraTvlChartApiKeys
 } from '~/utils/tvlOverlap'
+import { getTopMeasuredOracleProtocol } from './byChainData'
 import { useOracleOverviewExtraSeries } from './queries.client'
 import type { OracleOverviewPageData } from './types'
 
@@ -95,20 +96,24 @@ export const OracleOverview = ({
 					align: 'center'
 				}
 			}),
-			columnHelper.accessor('tvl', {
+			columnHelper.accessor((row) => row.tvl ?? undefined, {
+				id: 'tvl',
 				header: 'TVL',
 				enableSorting: true,
+				sortUndefined: 'last',
 				cell: ({ row }) => {
 					const strikeText = getStrikeTvlText({ row: row.original, extraTvlsEnabled })
 					return (
 						<span className="flex items-center justify-center gap-1">
 							{strikeText ? <QuestionHelper text={strikeText} /> : null}
 							<span className={strikeText ? 'text-tertiary' : ''}>
-								{formatUsd(row.original.tvl, {
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								})}
+								{row.original.tvl === null
+									? null
+									: formatUsd(row.original.tvl, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
 							</span>
 						</span>
 					)
@@ -135,29 +140,38 @@ export const OracleOverview = ({
 
 	const { tableData, totalValue } = useMemo(() => {
 		const totalValue =
-			enabledExtraApiKeys.length === 0
-				? tvl
-				: calculateTotalWithExtraToggles({
-						values: { tvl, ...extraTvl },
-						extraTvlsEnabled
-					})
+			tvl === null
+				? null
+				: enabledExtraApiKeys.length === 0
+					? tvl
+					: calculateTotalWithExtraToggles({
+							values: { tvl, ...extraTvl },
+							extraTvlsEnabled
+						})
 
 		const tableData: Array<IProtocolTableRow> =
 			enabledExtraApiKeys.length === 0
 				? protocolTableData
 				: protocolTableData
 						.map((protocol) => {
-							const protocolTvl = calculateTotalWithExtraToggles({
-								values: { tvl: protocol.tvl, ...(protocol.extraTvl ?? {}) },
-								extraTvlsEnabled
-							})
+							const protocolTvl =
+								protocol.tvl === null
+									? null
+									: calculateTotalWithExtraToggles({
+											values: { tvl: protocol.tvl, ...protocol.extraTvl },
+											extraTvlsEnabled
+										})
 
 							return {
 								...protocol,
 								tvl: protocolTvl
 							}
 						})
-						.sort((a, b) => b.tvl - a.tvl)
+						.sort((a, b) => {
+							if (a.tvl === null) return b.tvl === null ? 0 : 1
+							if (b.tvl === null) return -1
+							return b.tvl - a.tvl
+						})
 
 		return {
 			tableData,
@@ -178,13 +192,13 @@ export const OracleOverview = ({
 		const selectedOracle = oracle ?? firstOracle
 		const shouldApplyExtraSeries = enabledExtraChartApiKeys.length > 0 && !isFetchingExtraSeries
 
-		const datasetSource: Array<[number, number]> = []
+		const datasetSource: Array<[number, number | null]> = []
 
 		for (const point of chartBreakdownByTimestamp) {
 			const timestampInSeconds = point.timestamp
-			const baseTvs = selectedOracle ? (point[selectedOracle] ?? 0) : 0
+			const baseTvs = selectedOracle ? (point[selectedOracle] ?? null) : null
 			const extraTvs = shouldApplyExtraSeries ? (extraTvsByTimestamp.get(timestampInSeconds) ?? 0) : 0
-			const tvsValue = baseTvs + extraTvs
+			const tvsValue = baseTvs === null ? null : baseTvs + extraTvs
 
 			datasetSource.push([timestampInSeconds * 1e3, tvsValue])
 		}
@@ -205,8 +219,9 @@ export const OracleOverview = ({
 		}
 	}, [chartData, enabledExtraChartApiKeys.length, extraTvsByTimestamp, isFetchingExtraSeries, oracle])
 
-	const topProtocol = tableData[0] ?? null
-	const dominance = topProtocol ? getTokenDominance({ tvl: topProtocol.tvl }, totalValue) : null
+	const topProtocol = getTopMeasuredOracleProtocol(tableData)
+	const dominance =
+		topProtocol?.tvl != null && totalValue != null ? getTokenDominance({ tvl: topProtocol.tvl }, totalValue) : null
 	const dominanceText = dominance == null ? null : String(dominance)
 	const displayOracle = oracle ?? 'Oracle'
 	const dominanceLabel = topProtocol ? `${topProtocol.name} Dominance` : 'Top Protocol Dominance'
@@ -222,7 +237,15 @@ export const OracleOverview = ({
 					<h1 className="heading-sm">{displayOracle}</h1>
 					<StatItem
 						label="Total Value Secured (USD)"
-						value={formatUsd(totalValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+						value={
+							totalValue === null
+								? null
+								: formatUsd(totalValue, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})
+						}
 					/>
 					<StatItem
 						label={dominanceLabel}
@@ -251,7 +274,7 @@ export const OracleOverview = ({
 									csv: true,
 									filename: slug(chartFilenameTitle),
 									pngTitle: chartTitle,
-									pngIconUrl: chain ? chainIconUrl(chain) : undefined
+									...(chain ? { pngIconUrl: chainIconUrl(chain) } : {})
 								}}
 							/>
 						</Suspense>

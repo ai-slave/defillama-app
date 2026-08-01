@@ -67,7 +67,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		queryFn: () => fetchProtocolTvlValueForDashboard(protocol),
 		enabled: streamDone && chartType === 'tvl',
 		staleTime: Infinity,
-		select: (data) => buildTimeSeriesDataset(data ?? [], 'TVL', 1)
+		select: (data) => buildTimeSeriesDataset(data, 'TVL', 1)
 	})
 	const { data: advancedData, isLoading: isAdvancedLoading } = useAdvancedTvlChartData({
 		protocol,
@@ -94,7 +94,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		defaultSeries: advancedData.defaultSeriesNames,
 		aggregateOthers: chartType === 'chainsTvl' || chartType === 'tokenValuesUsd' || chartType === 'tokenInflows',
 		type: chartType === 'tokenInflows' ? 'bar' : 'line',
-		stack: chartType === 'tokenInflows' ? 'stackA' : undefined,
+		...(chartType === 'tokenInflows' ? { stack: 'stackA' } : {}),
 		fillMissingWithZero: true,
 		selectionKey: `${protocol}:${chartType}`
 	})
@@ -210,7 +210,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				title=""
 				dataset={canonicalDataset}
 				charts={presentation.charts}
-				selectedCharts={selectorValues.length > 0 ? runtimePresentation.selectedCharts : undefined}
+				{...(selectorValues.length > 0 ? { selectedCharts: runtimePresentation.selectedCharts } : {})}
 				valueSymbol={presentation.valueSymbol}
 				hideDefaultLegend
 				hideDataZoom={presentation.hideDataZoom}

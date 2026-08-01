@@ -148,6 +148,51 @@ export type CustomColumnDef = {
 	determinedFormat?: 'number' | 'usd' | 'percent' | 'string' | 'boolean'
 }
 
+export const isCustomColumnFormat = (value: unknown): value is CustomColumnDef['formatType'] =>
+	value === 'auto' ||
+	value === 'number' ||
+	value === 'usd' ||
+	value === 'percent' ||
+	value === 'string' ||
+	value === 'boolean'
+
+const isDeterminedCustomColumnFormat = (value: unknown): value is NonNullable<CustomColumnDef['determinedFormat']> =>
+	value === 'number' || value === 'usd' || value === 'percent' || value === 'string' || value === 'boolean'
+
+export function parseCustomColumns(value: unknown): CustomColumnDef[] {
+	if (!Array.isArray(value)) return []
+
+	const columns: CustomColumnDef[] = []
+	for (const entry of value) {
+		if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) continue
+		if (!('name' in entry) || !('formula' in entry) || !('formatType' in entry)) continue
+		if (
+			typeof entry.name !== 'string' ||
+			typeof entry.formula !== 'string' ||
+			!isCustomColumnFormat(entry.formatType)
+		) {
+			continue
+		}
+		if (
+			'determinedFormat' in entry &&
+			entry.determinedFormat !== undefined &&
+			!isDeterminedCustomColumnFormat(entry.determinedFormat)
+		) {
+			continue
+		}
+
+		columns.push({
+			name: entry.name,
+			formula: entry.formula,
+			formatType: entry.formatType,
+			...('determinedFormat' in entry && entry.determinedFormat !== undefined
+				? { determinedFormat: entry.determinedFormat }
+				: {})
+		})
+	}
+	return columns
+}
+
 export type LlamaAIWalkthroughState = 'idle' | 'armed' | 'completed'
 
 export type AppStorage = SettingsStore & {
@@ -540,7 +585,8 @@ export function useWatchlistManager(type: 'defi' | 'yields' | 'chains' | 'tokens
 					...currentWatchlist,
 					[currentSelectedPortfolio]: { ...currentWatchlist[currentSelectedPortfolio] }
 				}
-				delete newWatchlist[currentSelectedPortfolio][slug(name)]
+				const selectedWatchlist = newWatchlist[currentSelectedPortfolio]
+				if (selectedWatchlist) delete selectedWatchlist[slug(name)]
 
 				writeAppStorage({
 					...currentStore,
@@ -556,17 +602,18 @@ export function useCustomColumns() {
 		subscribeToLocalStorage,
 		() => {
 			const store = readAppStorage()
-			const cols = store[CUSTOM_COLUMNS]
-			return cols ? JSON.stringify(cols) : '[]'
+			const cols: unknown = store[CUSTOM_COLUMNS]
+			return JSON.stringify(parseCustomColumns(cols))
 		},
 		() => '[]'
 	)
 
 	const customColumns = useMemo(() => {
 		try {
-			return JSON.parse(snapshot) as CustomColumnDef[]
+			const parsed: unknown = JSON.parse(snapshot)
+			return parseCustomColumns(parsed)
 		} catch {
-			return [] as CustomColumnDef[]
+			return []
 		}
 	}, [snapshot])
 

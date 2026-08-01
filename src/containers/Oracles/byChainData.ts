@@ -2,6 +2,17 @@ import { prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { calculateTotalWithExtraToggles } from '~/utils/tvlOverlap'
 import type { OracleBreakdownItem, OraclesByChainPageData } from './types'
 
+export function getTopMeasuredOracleProtocol<T extends { tvl: number | null }>(protocols: ReadonlyArray<T>): T | null {
+	let topProtocol: T | null = null
+	for (const protocol of protocols) {
+		if (protocol.tvl === null) continue
+		if (topProtocol === null || topProtocol.tvl === null || protocol.tvl > topProtocol.tvl) {
+			topProtocol = protocol
+		}
+	}
+	return topProtocol
+}
+
 interface OracleDominanceChart {
 	type: 'line'
 	name: string
@@ -14,13 +25,16 @@ function indexExtraChartDataByTimestamp(extraBreakdownsByApiKey: Record<string, 
 	const indexedByTimestamp = new Map<number, Record<string, Record<string, number>>>()
 
 	for (const apiKey in extraBreakdownsByApiKey) {
-		for (const dayData of extraBreakdownsByApiKey[apiKey]) {
+		const breakdown = extraBreakdownsByApiKey[apiKey]
+		if (!breakdown) continue
+		for (const dayData of breakdown) {
 			const timestamp = dayData.timestamp
 			const valuesByOracle = indexedByTimestamp.get(timestamp) ?? {}
 
 			for (const oracleName in dayData) {
 				if (oracleName === 'timestamp') continue
 				const value = dayData[oracleName]
+				if (value === undefined) continue
 				const currentValues = valuesByOracle[oracleName] ?? {}
 				currentValues[apiKey] = value
 				valuesByOracle[oracleName] = currentValues
@@ -38,15 +52,18 @@ function calculateTotalWithOracleExtras({
 	extraTvl,
 	extraTvlsEnabled
 }: {
-	tvl: number
+	tvl: number | null
 	extraTvl: Record<string, number> | undefined
 	extraTvlsEnabled: Record<string, boolean>
 }) {
+	if (tvl === null) return null
 	if (!extraTvl) return tvl
 
 	const values: Record<string, number> = { tvl }
 	for (const extraKey in extraTvl) {
-		values[extraKey] = extraTvl[extraKey]
+		const extraValue = extraTvl[extraKey]
+		if (extraValue === undefined) continue
+		values[extraKey] = extraValue
 	}
 
 	return calculateTotalWithExtraToggles({ values, extraTvlsEnabled })
@@ -63,7 +80,9 @@ export function buildOraclesByChainTableAndPieData({
 }) {
 	if (!hasEnabledExtras) {
 		const pieInput: Array<{ name: string; value: number }> = []
-		for (const row of tableData) pieInput.push({ name: row.name, value: row.tvl })
+		for (const row of tableData) {
+			if (row.tvl !== null) pieInput.push({ name: row.name, value: row.tvl })
+		}
 
 		return {
 			tableData,
@@ -82,10 +101,16 @@ export function buildOraclesByChainTableAndPieData({
 			})
 		})
 	}
-	tableDataWithAdjustedTvl.sort((a, b) => b.tvl - a.tvl)
+	tableDataWithAdjustedTvl.sort((a, b) => {
+		if (a.tvl === null) return b.tvl === null ? 0 : 1
+		if (b.tvl === null) return -1
+		return b.tvl - a.tvl
+	})
 
 	const pieInput: Array<{ name: string; value: number }> = []
-	for (const row of tableDataWithAdjustedTvl) pieInput.push({ name: row.name, value: row.tvl })
+	for (const row of tableDataWithAdjustedTvl) {
+		if (row.tvl !== null) pieInput.push({ name: row.name, value: row.tvl })
+	}
 
 	return {
 		tableData: tableDataWithAdjustedTvl,
@@ -112,41 +137,43 @@ export function buildOraclesByChainDominanceData({
 		? indexExtraChartDataByTimestamp(extraBreakdownsByApiKey)
 		: null
 	const dimensions = ['timestamp', ...oracles]
-	const source: number[][] = []
+	const source: Array<Array<number | null>> = []
 
 	for (const baseDayData of chartData) {
 		const timestampInSeconds = baseDayData.timestamp
 		const extraValuesForTimestamp = extraValuesByTimestamp?.get(timestampInSeconds)
 
-		const point = new Array<number>(oracles.length + 1)
+		const point = new Array<number | null>(oracles.length + 1)
 		point[0] = timestampInSeconds * 1e3
 		let hasValue = false
-		for (let oracleIndex = 0; oracleIndex < oracles.length; oracleIndex++) {
-			const oracleName = oracles[oracleIndex]
+		let oracleDimension = 1
+		for (const oracleName of oracles) {
 			const oracleTvs = shouldApplyExtraTvlFormatting
 				? calculateTotalWithOracleExtras({
-						tvl: baseDayData[oracleName] ?? 0,
+						tvl: baseDayData[oracleName] ?? null,
 						extraTvl: extraValuesForTimestamp?.[oracleName],
 						extraTvlsEnabled
 					})
-				: (baseDayData[oracleName] ?? 0)
-			point[oracleIndex + 1] = oracleTvs
-			if (oracleTvs > 0) hasValue = true
+				: (baseDayData[oracleName] ?? null)
+			point[oracleDimension] = oracleTvs
+			if (oracleTvs !== null) hasValue = true
+			oracleDimension++
 		}
 		if (!hasValue) continue
 		source.push(point)
 	}
 
 	const dominanceCharts: Array<OracleDominanceChart> = []
-	for (let oracleIndex = 0; oracleIndex < oracles.length; oracleIndex++) {
-		const name = oracles[oracleIndex]
+	let oracleDimension = 1
+	for (const name of oracles) {
 		dominanceCharts.push({
 			type: 'line',
 			name,
-			encode: { x: 0, y: oracleIndex + 1 },
+			encode: { x: 0, y: oracleDimension },
 			color: oraclesColors[name] ?? '#ccc',
 			stack: 'dominance'
 		})
+		oracleDimension++
 	}
 
 	return {

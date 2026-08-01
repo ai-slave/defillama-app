@@ -3,39 +3,43 @@ import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/tim
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { CHART_COLORS } from '~/constants/colors'
-import type { IProtocolTokenBreakdownChart, IProtocolValueChart } from './api.types'
-import { useFetchProtocolChartsByKeys } from './queries.client'
+import type { IProtocolValueChart, ProtocolTreasuryKey } from './api.types'
+import { useFetchProtocolChartsByKeys, type IFetchProtocolChartsByKeysParams } from './queries.client'
+import type { ProtocolExtraTvlKey } from './tvlChart'
+import { canonicalizeTokensToExclude } from './valueChartSources'
 
 type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
-type MultiSeriesChart = MultiSeriesCharts[number]
 type BreakdownPoint = [number, Record<string, number>]
 export type ProtocolBreakdownChart = BreakdownPoint[]
-type BreakdownChart = ProtocolBreakdownChart
-type InflowsDataset = TimestampDataset
+type AggregatedValueChart = Array<[number, number | null]>
 type BuiltTokenInflows = {
-	tokenInflows: BreakdownChart
+	tokenInflows: ProtocolBreakdownChart
 	usdInflows: Array<[number, number]>
 }
 /** Maximum allowed difference (in milliseconds) between chart latest timestamps for alignment. */
 const MAX_BREAKDOWN_TIMESTAMP_ALIGNMENT_DIFF_MS = 24 * 60 * 60 * 1e3
 const OTHERS_SERIES_COLOR = '#AAAAAA'
 
-interface IUseProtocolBreakdownChartsParams {
+interface IUseProtocolBreakdownChartsCommonParams {
 	protocol: string
-	keys: string[]
 	includeBase?: boolean
-	source?: 'tvl' | 'treasury'
 	/** Fetch and build token breakdown datasets. */
 	inflows?: boolean
 	/** Build derived inflow datasets when the page renders them. */
 	computeInflows?: boolean
 	chainsUnique?: string[]
-	tokensToExclude?: string[]
 	/** Minimum positive latest USD value included in the token pie. */
 	tokenPieMinimumValue?: number
 }
 
-type FailedQueryCategory = 'tvl' | 'chain-breakdown' | 'token-breakdown-usd' | 'token-breakdown-raw'
+type ProtocolTreasuryExtraKey = Extract<ProtocolTreasuryKey, 'OwnTokens'>
+type IUseProtocolBreakdownChartsParams = IUseProtocolBreakdownChartsCommonParams &
+	(
+		| { source?: 'tvl'; keys: ProtocolExtraTvlKey[]; tokensToExclude?: string[] }
+		| { source: 'treasury'; keys: ProtocolTreasuryExtraKey[]; tokensToExclude?: never }
+	)
+
+export type FailedQueryCategory = 'tvl' | 'chain-breakdown' | 'token-breakdown-usd' | 'token-breakdown-raw'
 
 interface IFailedChartQuery {
 	category: FailedQueryCategory
@@ -52,133 +56,157 @@ interface IUseProtocolBreakdownChartsResult {
 	rawTokensUnique: string[]
 	inflowTokensUnique: string[]
 	defaultRawTokens: string[]
-	chainBreakdown: BreakdownChart | null
+	chainBreakdown: ProtocolBreakdownChart | null
 	valueDataset: TimestampDataset | null
 	valueCharts: MultiSeriesCharts
-	tokenRawBreakdown: BreakdownChart | null
-	tokenBreakdownUSD: BreakdownChart | null
+	tokenRawBreakdown: ProtocolBreakdownChart | null
+	tokenBreakdownUSD: ProtocolBreakdownChart | null
 	tokenBreakdownPieSeries: RuntimePieChartData
-	usdInflowsDataset: InflowsDataset | null
-	tokenInflows: BreakdownChart | null
+	usdInflowsDataset: TimestampDataset | null
+	tokenInflows: ProtocolBreakdownChart | null
 }
 
 type IUseProtocolBreakdownChartsComputed = Omit<IUseProtocolBreakdownChartsResult, 'isLoading' | 'errors'>
 
-const getLatestChartTimestamp = (chart: Array<[number, unknown]>): number | null => {
-	if (chart.length === 0) return null
-	const lastPoint = chart[chart.length - 1]
-	return lastPoint?.[0] ?? null
+const getLatestChartTimestamp = <T>(chart: Array<[number, T]>): number | null => {
+	return chart.at(-1)?.[0] ?? null
 }
 
-/**
- * Compute per-chart alignment info: for each chart whose latest timestamp is within
- * `maxDiff` of the global most-recent timestamp, we map its latest → mostRecent.
- */
-const buildTimestampAlignment = (
-	charts: Array<Array<[number, unknown]> | null | undefined>
-): { mostRecent: number | null; perChart: Map<number, number> } => {
-	const perChart = new Map<number, number>()
-	let mostRecent: number | null = null
+type PreparedExtraChart<T> = {
+	latestTimestamp: number | null
+	valuesByTimestamp: Map<number, T>
+}
 
-	for (const [i, chart] of charts.entries()) {
-		if (!chart?.length) continue
-		const latest = getLatestChartTimestamp(chart)
-		if (latest == null) continue
-		perChart.set(i, latest)
-		if (mostRecent == null || latest > mostRecent) mostRecent = latest
+const prepareExtraCharts = <T>(
+	charts: Array<Array<[number, T]> | null | undefined>,
+	baseLatestTimestamp: number | null
+): { charts: PreparedExtraChart<T>[]; alignedLatestTimestamp: number | null } | null => {
+	const prepared: PreparedExtraChart<T>[] = []
+	let alignedLatestTimestamp = baseLatestTimestamp
+	for (const chart of charts) {
+		if (chart == null) return null
+		const latestTimestamp = getLatestChartTimestamp(chart)
+		const valuesByTimestamp = new Map(chart)
+		prepared.push({ latestTimestamp, valuesByTimestamp })
+		if (
+			baseLatestTimestamp != null &&
+			latestTimestamp != null &&
+			Math.abs(latestTimestamp - baseLatestTimestamp) <= MAX_BREAKDOWN_TIMESTAMP_ALIGNMENT_DIFF_MS &&
+			(alignedLatestTimestamp == null || latestTimestamp > alignedLatestTimestamp)
+		) {
+			alignedLatestTimestamp = latestTimestamp
+		}
 	}
-
-	return { mostRecent, perChart }
+	return { charts: prepared, alignedLatestTimestamp }
 }
 
-const alignTimestamp = (
-	timestamp: number,
-	chartIndex: number,
-	alignment: { mostRecent: number | null; perChart: Map<number, number> },
-	maxDiff: number
-): number => {
-	const latest = alignment.perChart.get(chartIndex)
+const getAnchoredExtraValue = <T>(
+	extra: PreparedExtraChart<T>,
+	baseTimestamp: number,
+	baseLatestTimestamp: number | null
+): { found: false } | { found: true; timestamp: number; value: T } => {
+	if (extra.latestTimestamp == null) return { found: false }
+	if (extra.valuesByTimestamp.has(baseTimestamp)) {
+		const value = extra.valuesByTimestamp.get(baseTimestamp)
+		if (value === undefined) throw new Error('Missing indexed protocol chart value')
+		return { found: true, timestamp: baseTimestamp, value }
+	}
 	if (
-		latest != null &&
-		alignment.mostRecent != null &&
-		Math.abs(alignment.mostRecent - latest) <= maxDiff &&
-		timestamp === latest
+		baseLatestTimestamp != null &&
+		baseTimestamp === baseLatestTimestamp &&
+		Math.abs(extra.latestTimestamp - baseLatestTimestamp) <= MAX_BREAKDOWN_TIMESTAMP_ALIGNMENT_DIFF_MS
 	) {
-		return alignment.mostRecent
+		const value = extra.valuesByTimestamp.get(extra.latestTimestamp)
+		if (value === undefined) throw new Error('Missing latest protocol chart value')
+		return { found: true, timestamp: extra.latestTimestamp, value }
 	}
-	return timestamp
+	return { found: false }
 }
 
-const aggregateValueCharts = (charts: Array<IProtocolValueChart | null | undefined>): IProtocolValueChart | null => {
-	let onlyChart: IProtocolValueChart | null = null
-	let chartCount = 0
-	for (const chart of charts) {
-		if (!chart?.length) continue
-		onlyChart = chart
-		chartCount++
-		if (chartCount > 1) break
-	}
-	if (chartCount === 0) return null
-	if (chartCount === 1) return onlyChart
+const aggregateValueCharts = (charts: Array<IProtocolValueChart | null | undefined>): AggregatedValueChart | null => {
+	if (charts.length === 0) return null
+	const base = charts[0]
+	if (base == null) return null
+	const baseLatestTimestamp = getLatestChartTimestamp(base)
+	const prepared = prepareExtraCharts(charts.slice(1), baseLatestTimestamp)
+	if (!prepared) return null
+	if (prepared.charts.every((chart) => chart.latestTimestamp == null)) return base
 
-	const summedByTimestamp = new Map<number, number>()
-	const alignment = buildTimestampAlignment(charts)
-
-	for (const [chartIndex, chart] of charts.entries()) {
-		if (!chart?.length) continue
-		for (const [timestamp, value] of chart) {
-			const aligned = alignTimestamp(timestamp, chartIndex, alignment, MAX_BREAKDOWN_TIMESTAMP_ALIGNMENT_DIFF_MS)
-			summedByTimestamp.set(aligned, (summedByTimestamp.get(aligned) ?? 0) + value)
-		}
-	}
-
-	if (summedByTimestamp.size === 0) return null
-	return Array.from(summedByTimestamp.entries()).sort((a, b) => a[0] - b[0])
-}
-
-const aggregateBreakdownCharts = (charts: Array<BreakdownChart | null | undefined>): BreakdownChart | null => {
-	let onlyChart: BreakdownChart | null = null
-	let chartCount = 0
-	for (const chart of charts) {
-		if (!chart?.length) continue
-		onlyChart = chart
-		chartCount++
-		if (chartCount > 1) break
-	}
-	if (chartCount === 0) return null
-	if (chartCount === 1) return onlyChart
-
-	const summedByTimestamp = new Map<number, Map<string, number>>()
-	const alignment = buildTimestampAlignment(charts)
-
-	for (const [chartIndex, chart] of charts.entries()) {
-		if (!chart?.length) continue
-		for (const [timestamp, values] of chart) {
-			const aligned = alignTimestamp(timestamp, chartIndex, alignment, MAX_BREAKDOWN_TIMESTAMP_ALIGNMENT_DIFF_MS)
-			const current = summedByTimestamp.get(aligned) ?? new Map<string, number>()
-			for (const key in values) {
-				current.set(key, (current.get(key) ?? 0) + values[key])
+	const result: AggregatedValueChart = []
+	for (const [timestamp, baseValue] of base) {
+		let value: number | null = baseValue
+		for (const extra of prepared.charts) {
+			if (extra.latestTimestamp == null) continue
+			const extraPoint = getAnchoredExtraValue(extra, timestamp, baseLatestTimestamp)
+			if (!extraPoint.found) {
+				value = null
+				break
 			}
-			summedByTimestamp.set(aligned, current)
+			value += extraPoint.value
 		}
+		const alignedTimestamp =
+			timestamp === baseLatestTimestamp && prepared.alignedLatestTimestamp != null
+				? prepared.alignedLatestTimestamp
+				: timestamp
+		result.push([alignedTimestamp, value])
 	}
-
-	if (summedByTimestamp.size === 0) return null
-	return Array.from(
-		summedByTimestamp,
-		([timestamp, values]) => [timestamp, Object.fromEntries(values)] as BreakdownPoint
-	).sort((a, b) => a[0] - b[0])
+	return result
 }
 
-const buildBreakdownKeys = (breakdown: BreakdownChart | null | undefined): string[] => {
+const aggregateBreakdownCharts = (
+	charts: Array<ProtocolBreakdownChart | null | undefined>
+): ProtocolBreakdownChart | null => {
+	if (charts.length === 0) return null
+	const base = charts[0]
+	if (base == null) return null
+	const baseLatestTimestamp = getLatestChartTimestamp(base)
+	const prepared = prepareExtraCharts(charts.slice(1), baseLatestTimestamp)
+	if (!prepared) return null
+	if (prepared.charts.every((chart) => chart.latestTimestamp == null)) return base
+
+	const result: ProtocolBreakdownChart = []
+	for (const [timestamp, baseValues] of base) {
+		const values: Record<string, number> = {}
+		for (const key in baseValues) {
+			const value = baseValues[key]
+			if (value !== undefined) values[key] = value
+		}
+
+		let hasEveryRequiredPoint = true
+		for (const extra of prepared.charts) {
+			if (extra.latestTimestamp == null) continue
+			const extraPoint = getAnchoredExtraValue(extra, timestamp, baseLatestTimestamp)
+			if (!extraPoint.found) {
+				hasEveryRequiredPoint = false
+				break
+			}
+			for (const key in extraPoint.value) {
+				const value = extraPoint.value[key]
+				if (value !== undefined) values[key] = (values[key] ?? 0) + value
+			}
+		}
+		if (!hasEveryRequiredPoint) continue
+
+		const alignedTimestamp =
+			timestamp === baseLatestTimestamp && prepared.alignedLatestTimestamp != null
+				? prepared.alignedLatestTimestamp
+				: timestamp
+		result.push([alignedTimestamp, values])
+	}
+	return result
+}
+
+const buildBreakdownKeys = (breakdown: ProtocolBreakdownChart | null | undefined): string[] => {
 	if (!breakdown?.length) return []
 
-	const latestPoint = breakdown[breakdown.length - 1]?.[1] ?? {}
+	let latestPoint: Record<string, number> | null = null
 	const allKeys = new Set<string>()
 
 	for (const [, values] of breakdown) {
+		latestPoint = values
 		for (const key in values) allKeys.add(key)
 	}
+	if (!latestPoint) return []
 
 	return Array.from(allKeys)
 		.filter((name) => name !== OTHERS_SERIES_NAME)
@@ -186,7 +214,7 @@ const buildBreakdownKeys = (breakdown: BreakdownChart | null | undefined): strin
 }
 
 const buildPeakValueKeys = (
-	breakdown: BreakdownChart | null | undefined,
+	breakdown: ProtocolBreakdownChart | null | undefined,
 	eligibleKeys?: ReadonlySet<string>
 ): string[] => {
 	if (!breakdown?.length) return []
@@ -194,8 +222,10 @@ const buildPeakValueKeys = (
 	const order: string[] = []
 	for (const [, values] of breakdown) {
 		for (const key in values) {
+			const rawValue = values[key]
+			if (rawValue === undefined) continue
 			if (key === OTHERS_SERIES_NAME || (eligibleKeys && !eligibleKeys.has(key))) continue
-			const value = Math.abs(values[key])
+			const value = Math.abs(rawValue)
 			const peak = peakByKey.get(key)
 			if (peak === undefined) {
 				order.push(key)
@@ -205,33 +235,42 @@ const buildPeakValueKeys = (
 			}
 		}
 	}
-	return order.sort((a, b) => (peakByKey.get(b) ?? 0) - (peakByKey.get(a) ?? 0))
+	return order.sort((a, b) => {
+		const aPeak = peakByKey.get(a)
+		const bPeak = peakByKey.get(b)
+		if (aPeak === undefined || bPeak === undefined) throw new Error('Missing breakdown peak')
+		return bPeak - aPeak
+	})
 }
 
 const buildRawTokenKeysByPeakUsd = (
-	rawBreakdown: BreakdownChart | null | undefined,
-	usdBreakdown: BreakdownChart | null | undefined
+	rawBreakdown: ProtocolBreakdownChart | null | undefined,
+	usdBreakdown: ProtocolBreakdownChart | null | undefined
 ): { available: string[]; defaults: string[] } => {
 	if (!rawBreakdown?.length) return { available: [], defaults: [] }
-	const rawKeySet = new Set<string>()
 	const rawPeakByKey = new Map<string, number>()
-	const rawKeys: string[] = []
 	for (const [, values] of rawBreakdown) {
 		for (const token in values) {
 			const value = values[token]
+			if (value === undefined) continue
 			if (token === OTHERS_SERIES_NAME || token.startsWith('UNKNOWN') || value <= 0) continue
 			const peak = rawPeakByKey.get(token)
 			if (peak === undefined) {
-				rawKeySet.add(token)
-				rawKeys.push(token)
 				rawPeakByKey.set(token, value)
 			} else if (value > peak) {
 				rawPeakByKey.set(token, value)
 			}
 		}
 	}
+	const rawKeys = Array.from(rawPeakByKey.keys())
+	rawKeys.sort((left, right) => {
+		const leftPeak = rawPeakByKey.get(left)
+		const rightPeak = rawPeakByKey.get(right)
+		if (leftPeak === undefined || rightPeak === undefined) throw new Error('Missing raw token peak')
+		return rightPeak - leftPeak
+	})
 	if (rawKeys.length === 0) return { available: [], defaults: [] }
-	rawKeys.sort((left, right) => rawPeakByKey.get(right)! - rawPeakByKey.get(left)!)
+	const rawKeySet = new Set(rawKeys)
 	const rankedByUsd = buildPeakValueKeys(usdBreakdown, rawKeySet)
 	const defaults = (rankedByUsd.length > 0 ? rankedByUsd : rawKeys).slice(0, MAX_PROTOCOL_BREAKDOWN_SERIES)
 	return { available: rawKeys, defaults }
@@ -240,7 +279,7 @@ const buildRawTokenKeysByPeakUsd = (
 export const MAX_PROTOCOL_BREAKDOWN_SERIES = 30
 const OTHERS_SERIES_NAME = 'Others'
 
-const hasBreakdownSeries = (breakdown: BreakdownChart, name: string): boolean => {
+const hasBreakdownSeries = (breakdown: ProtocolBreakdownChart, name: string): boolean => {
 	for (const [, values] of breakdown) {
 		if (values[name] != null) return true
 	}
@@ -257,7 +296,7 @@ export const buildProtocolBreakdownPresentation = ({
 	type,
 	stack
 }: {
-	breakdown: BreakdownChart | null | undefined
+	breakdown: ProtocolBreakdownChart | null | undefined
 	availableSeries: readonly string[]
 	activeSeries: readonly string[]
 	aggregateOthers: boolean
@@ -297,24 +336,31 @@ export const buildProtocolBreakdownPresentation = ({
 	if (!dataset) return { dataset: null, charts: EMPTY_MULTI_SERIES_CHARTS }
 
 	const canonicalColorIndex = new Map<string, number>()
-	for (let i = 0; i < availableSeries.length; i++) canonicalColorIndex.set(availableSeries[i], i)
-	const charts = renderedNames.map(
-		(name, index): MultiSeriesChart => ({
+	for (const [index, name] of availableSeries.entries()) canonicalColorIndex.set(name, index)
+	const charts: MultiSeriesCharts = []
+	for (const [index, name] of renderedNames.entries()) {
+		let color = OTHERS_SERIES_COLOR
+		if (name !== OTHERS_SERIES_NAME) {
+			const canonicalIndex = canonicalColorIndex.get(name)
+			if (canonicalIndex === undefined) throw new Error(`Missing canonical color index for ${name}`)
+			const colorIndex = canonicalIndex % CHART_COLORS.length
+			const paletteColor = CHART_COLORS[colorIndex]
+			if (paletteColor === undefined) throw new Error(`Missing chart color at index ${colorIndex}`)
+			color = paletteColor
+		}
+		charts.push({
 			type,
 			name,
 			encode: { x: 0, y: index + 1 },
-			color:
-				name === OTHERS_SERIES_NAME
-					? OTHERS_SERIES_COLOR
-					: CHART_COLORS[(canonicalColorIndex.get(name) ?? index) % CHART_COLORS.length],
+			color,
 			...(stack ? { stack } : {})
 		})
-	)
+	}
 	return { dataset, charts }
 }
 
 const buildProjectedBreakdownDataset = (
-	breakdown: BreakdownChart | null | undefined,
+	breakdown: ProtocolBreakdownChart | null | undefined,
 	seriesNames: string[],
 	remainderNames: readonly string[],
 	fillMissingWithZero: boolean
@@ -323,16 +369,14 @@ const buildProjectedBreakdownDataset = (
 	const othersSeriesIndex = seriesNames.indexOf(OTHERS_SERIES_NAME)
 	const othersIndex = othersSeriesIndex === -1 ? undefined : othersSeriesIndex + 1
 	const source = new Array<TimestampDataset['source'][number]>(breakdown.length)
-	for (let i = 0; i < breakdown.length; i++) {
-		const [timestamp, values] = breakdown[i]
+	for (const [rowIndex, [timestamp, values]] of breakdown.entries()) {
 		const point: TimestampDataset['source'][number] = [timestamp]
 		point.length = seriesNames.length + 1
 		if (fillMissingWithZero) point.fill(0, 1)
 		let others = 0
 		let hasOthers = false
 
-		for (let seriesIndex = 0; seriesIndex < seriesNames.length; seriesIndex++) {
-			const name = seriesNames[seriesIndex]
+		for (const [seriesIndex, name] of seriesNames.entries()) {
 			if (name === OTHERS_SERIES_NAME) continue
 			const value = values[name]
 			if (value != null) point[seriesIndex + 1] = value
@@ -347,118 +391,156 @@ const buildProjectedBreakdownDataset = (
 		}
 
 		if (hasOthers && othersIndex != null) point[othersIndex] = others
-		source[i] = point
+		source[rowIndex] = point
 	}
 	return { source, dimensions: ['timestamp', ...seriesNames] }
 }
 
-const buildTokenInflowsFromBreakdowns = (
-	tokenBreakdownUSD: IProtocolTokenBreakdownChart | null | undefined,
-	tokenBreakdownRaw: IProtocolTokenBreakdownChart | null | undefined
-): BuiltTokenInflows | null => {
-	if (!tokenBreakdownUSD?.length || !tokenBreakdownRaw?.length) return null
+const buildTokenInflowPoint = ({
+	currentRaw,
+	previousRaw,
+	currentUsd,
+	previousUsd
+}: {
+	currentRaw: Record<string, number>
+	previousRaw: Record<string, number>
+	currentUsd: Record<string, number>
+	previousUsd: Record<string, number>
+}): { tokenValues: Record<string, number>; usdValue: number } => {
+	const tokenValues: Record<string, number> = {}
+	let usdValue = 0
 
-	const usdByTimestamp = new Map<number, Record<string, number>>()
-	for (const [timestamp, tokens] of tokenBreakdownUSD) {
-		usdByTimestamp.set(timestamp, tokens)
+	const addTokenInflow = (token: string) => {
+		// Backend Others is an aggregate of changing token composition. Treating it as
+		// one raw token would infer a meaningless price and manufacture false flows.
+		if (token === OTHERS_SERIES_NAME || token.startsWith('UNKNOWN')) return
+		const currentAmount = currentRaw[token] ?? 0
+		const previousAmount = previousRaw[token] ?? 0
+		const amountDiff = currentAmount - previousAmount
+		if (amountDiff === 0) return
+
+		let price: number | null = null
+		let referenceUsd = 0
+		const currentUsdValue = currentUsd[token]
+		const previousUsdValue = previousUsd[token]
+		if (currentAmount > 0 && currentUsdValue != null) {
+			price = currentUsdValue / currentAmount
+			referenceUsd = currentUsdValue
+		}
+		if (previousAmount > 0 && previousUsdValue != null && (price == null || previousUsdValue > referenceUsd)) {
+			price = previousUsdValue / previousAmount
+			referenceUsd = previousUsdValue
+		}
+		if (price == null) return
+
+		const inflow = amountDiff * price
+		if (Math.abs(inflow) > 2 * referenceUsd) return
+
+		tokenValues[token] = inflow
+		usdValue += inflow
 	}
 
-	if (tokenBreakdownRaw.length < 2) return null
-
-	const tokenInflows: BreakdownChart = []
-	const usdInflows: Array<[number, number]> = []
-
-	for (let i = 1; i < tokenBreakdownRaw.length; i++) {
-		const [timestamp, currentRaw] = tokenBreakdownRaw[i]
-		const [previousTimestamp, previousRaw] = tokenBreakdownRaw[i - 1]
-		const currentUsd = usdByTimestamp.get(timestamp) ?? {}
-		const previousUsd = usdByTimestamp.get(previousTimestamp) ?? {}
-
-		const point: Record<string, number> = {}
-		let hasTokenInflows = false
-		let usdInflow = 0
-
-		const addTokenInflow = (token: string) => {
-			// Backend Others is an aggregate of changing token composition. Treating it as
-			// one raw token would infer a meaningless price and manufacture false flows.
-			if (token === OTHERS_SERIES_NAME || token.startsWith('UNKNOWN')) return
-			const currentAmount = currentRaw[token] ?? 0
-			const previousAmount = previousRaw[token] ?? 0
-			const amountDiff = currentAmount - previousAmount
-			if (amountDiff === 0) return
-
-			let price: number | null = null
-			let referenceUsd = 0
-			const currentUsdValue = currentUsd[token]
-			const previousUsdValue = previousUsd[token]
-			if (currentAmount > 0 && currentUsdValue != null) {
-				price = currentUsdValue / currentAmount
-				referenceUsd = currentUsdValue
-			}
-			if (previousAmount > 0 && previousUsdValue != null && (price == null || previousUsdValue > referenceUsd)) {
-				price = previousUsdValue / previousAmount
-				referenceUsd = previousUsdValue
-			}
-			if (price == null) return
-
-			const inflow = amountDiff * price
-			if (Math.abs(inflow) > 2 * referenceUsd) return
-
-			point[token] = inflow
-			usdInflow += inflow
-			hasTokenInflows = true
-		}
-
-		for (const token in currentRaw) addTokenInflow(token)
-		for (const token in previousRaw) {
-			if (currentRaw[token] == null) addTokenInflow(token)
-		}
-
-		if (hasTokenInflows) {
-			tokenInflows.push([timestamp, point])
-			usdInflows.push([timestamp, usdInflow])
-		}
+	for (const token in currentRaw) addTokenInflow(token)
+	for (const token in previousRaw) {
+		if (currentRaw[token] == null) addTokenInflow(token)
 	}
 
-	return tokenInflows.length > 0 ? { tokenInflows, usdInflows } : null
+	return { tokenValues, usdValue }
+}
+
+type PreparedTokenInflowSource = {
+	isSuccessfulEmpty: boolean
+	raw: PreparedExtraChart<Record<string, number>>
+	usd: PreparedExtraChart<Record<string, number>>
 }
 
 const buildTokenInflowsFromChartPairs = (
-	tokenBreakdownUsdCharts: Array<BreakdownChart | null | undefined>,
-	tokenBreakdownRawCharts: Array<BreakdownChart | null | undefined>
+	tokenBreakdownUsdCharts: Array<ProtocolBreakdownChart | null | undefined>,
+	tokenBreakdownRawCharts: Array<ProtocolBreakdownChart | null | undefined>
 ): BuiltTokenInflows | null => {
 	const pairCount = Math.max(tokenBreakdownUsdCharts.length, tokenBreakdownRawCharts.length)
-	if (pairCount <= 1) {
-		return buildTokenInflowsFromBreakdowns(tokenBreakdownUsdCharts[0], tokenBreakdownRawCharts[0])
-	}
+	if (pairCount === 0) return null
 
-	const tokenInflowsByTimestamp = new Map<number, Map<string, number>>()
-	const usdInflowsByTimestamp = new Map<number, number>()
+	const sources: PreparedTokenInflowSource[] = []
 	for (let i = 0; i < pairCount; i++) {
-		const result = buildTokenInflowsFromBreakdowns(tokenBreakdownUsdCharts[i], tokenBreakdownRawCharts[i])
-		if (!result) continue
-
-		for (const [timestamp, point] of result.tokenInflows) {
-			const values = tokenInflowsByTimestamp.get(timestamp) ?? new Map<string, number>()
-			for (const token in point) {
-				const value = point[token]
-				values.set(token, (values.get(token) ?? 0) + value)
-			}
-			tokenInflowsByTimestamp.set(timestamp, values)
-		}
-		for (const [timestamp, value] of result.usdInflows) {
-			usdInflowsByTimestamp.set(timestamp, (usdInflowsByTimestamp.get(timestamp) ?? 0) + value)
-		}
+		const usdChart = tokenBreakdownUsdCharts[i]
+		const rawChart = tokenBreakdownRawCharts[i]
+		if (usdChart == null || rawChart == null) return null
+		sources.push({
+			isSuccessfulEmpty: usdChart.length === 0 && rawChart.length === 0,
+			raw: { latestTimestamp: getLatestChartTimestamp(rawChart), valuesByTimestamp: new Map(rawChart) },
+			usd: { latestTimestamp: getLatestChartTimestamp(usdChart), valuesByTimestamp: new Map(usdChart) }
+		})
 	}
 
-	if (tokenInflowsByTimestamp.size === 0) return null
-	const timestamps = Array.from(tokenInflowsByTimestamp.keys()).sort((a, b) => a - b)
-	const tokenInflows = new Array<BreakdownPoint>(timestamps.length)
-	const usdInflows = new Array<[number, number]>(timestamps.length)
-	for (let i = 0; i < timestamps.length; i++) {
-		const timestamp = timestamps[i]
-		tokenInflows[i] = [timestamp, Object.fromEntries(tokenInflowsByTimestamp.get(timestamp)!)]
-		usdInflows[i] = [timestamp, usdInflowsByTimestamp.get(timestamp) ?? 0]
+	const baseRawChart = tokenBreakdownRawCharts[0]
+	if (!baseRawChart || baseRawChart.length < 2) return { tokenInflows: [], usdInflows: [] }
+	const baseLatestTimestamp = getLatestChartTimestamp(baseRawChart)
+	if (baseLatestTimestamp == null) return { tokenInflows: [], usdInflows: [] }
+
+	const tokenInflows: ProtocolBreakdownChart = []
+	const usdInflows: Array<[number, number]> = []
+	for (let rowIndex = 1; rowIndex < baseRawChart.length; rowIndex++) {
+		const previousBasePoint = baseRawChart[rowIndex - 1]
+		const currentBasePoint = baseRawChart[rowIndex]
+		if (!previousBasePoint || !currentBasePoint) throw new Error('Missing base protocol chart interval endpoint')
+		const previousBaseTimestamp = previousBasePoint[0]
+		const currentBaseTimestamp = currentBasePoint[0]
+		const baseIntervalDuration = currentBaseTimestamp - previousBaseTimestamp
+		if (baseIntervalDuration <= 0 || baseIntervalDuration > MAX_BREAKDOWN_TIMESTAMP_ALIGNMENT_DIFF_MS) continue
+		const tokenValues: Record<string, number> = {}
+		let usdValue = 0
+		let alignedTimestamp = currentBaseTimestamp
+		let hasEveryRequiredEndpoint = true
+
+		for (const source of sources) {
+			if (source.isSuccessfulEmpty) continue
+			const previousRaw = getAnchoredExtraValue(source.raw, previousBaseTimestamp, baseLatestTimestamp)
+			const currentRaw = getAnchoredExtraValue(source.raw, currentBaseTimestamp, baseLatestTimestamp)
+			const previousUsd = getAnchoredExtraValue(source.usd, previousBaseTimestamp, baseLatestTimestamp)
+			const currentUsd = getAnchoredExtraValue(source.usd, currentBaseTimestamp, baseLatestTimestamp)
+			if (!previousRaw.found || !currentRaw.found || !previousUsd.found || !currentUsd.found) {
+				hasEveryRequiredEndpoint = false
+				break
+			}
+			const sourceRawIntervalDuration = currentRaw.timestamp - previousRaw.timestamp
+			if (
+				sourceRawIntervalDuration <= 0 ||
+				sourceRawIntervalDuration > MAX_BREAKDOWN_TIMESTAMP_ALIGNMENT_DIFF_MS ||
+				previousRaw.timestamp !== previousUsd.timestamp ||
+				currentRaw.timestamp !== currentUsd.timestamp
+			) {
+				hasEveryRequiredEndpoint = false
+				break
+			}
+
+			const sourceInflow = buildTokenInflowPoint({
+				currentRaw: currentRaw.value,
+				previousRaw: previousRaw.value,
+				currentUsd: currentUsd.value,
+				previousUsd: previousUsd.value
+			})
+			for (const token in sourceInflow.tokenValues) {
+				const value = sourceInflow.tokenValues[token]
+				if (value !== undefined) tokenValues[token] = (tokenValues[token] ?? 0) + value
+			}
+			usdValue += sourceInflow.usdValue
+			if (currentRaw.timestamp > alignedTimestamp) alignedTimestamp = currentRaw.timestamp
+			if (currentUsd.timestamp > alignedTimestamp) alignedTimestamp = currentUsd.timestamp
+		}
+
+		if (!hasEveryRequiredEndpoint) continue
+		let hasVisibleTokenFlow = false
+		for (const token in tokenValues) {
+			const value = tokenValues[token]
+			if (value !== undefined && value !== 0) {
+				hasVisibleTokenFlow = true
+				break
+			}
+		}
+		if (!hasVisibleTokenFlow && usdValue === 0) continue
+		tokenInflows.push([alignedTimestamp, tokenValues])
+		usdInflows.push([alignedTimestamp, usdValue])
 	}
 	return { tokenInflows, usdInflows }
 }
@@ -495,9 +577,9 @@ export const buildComputedBreakdownResult = ({
 	tokenPieMinimumValue = 1
 }: {
 	tvlCharts: Array<IProtocolValueChart | null | undefined>
-	chainBreakdownCharts: Array<BreakdownChart | null | undefined>
-	tokenBreakdownUsdCharts: Array<BreakdownChart | null | undefined>
-	tokenBreakdownRawCharts: Array<BreakdownChart | null | undefined>
+	chainBreakdownCharts: Array<ProtocolBreakdownChart | null | undefined>
+	tokenBreakdownUsdCharts: Array<ProtocolBreakdownChart | null | undefined>
+	tokenBreakdownRawCharts: Array<ProtocolBreakdownChart | null | undefined>
 	valueSeriesName: string
 	inflows?: boolean
 	computeInflows?: boolean
@@ -558,16 +640,19 @@ export const buildComputedBreakdownResult = ({
 	const rawTokensUnique = rawTokenSeries.available
 	const defaultRawTokens = rawTokenSeries.defaults
 
-	const tokenBreakdownPieSource = {}
+	const tokenBreakdownPieSource: Record<string, number> = {}
 	let hasTokenBreakdownPieSource = false
 	if (buildTokenPieChart && tokenBreakdownUSD?.length) {
-		const latestTokens = tokenBreakdownUSD[tokenBreakdownUSD.length - 1]?.[1] ?? {}
-		for (const name in latestTokens) {
-			const value = latestTokens[name]
-			if (name.startsWith('UNKNOWN') || !value || value <= 0) continue
-			if (value >= tokenPieMinimumValue) {
-				tokenBreakdownPieSource[name] = value
-				hasTokenBreakdownPieSource = true
+		const latestPoint = tokenBreakdownUSD.at(-1)
+		if (latestPoint) {
+			const latestTokens = latestPoint[1]
+			for (const name in latestTokens) {
+				const value = latestTokens[name]
+				if (name.startsWith('UNKNOWN') || !value || value <= 0) continue
+				if (value >= tokenPieMinimumValue) {
+					tokenBreakdownPieSource[name] = value
+					hasTokenBreakdownPieSource = true
+				}
 			}
 		}
 	}
@@ -596,17 +681,17 @@ export const buildComputedBreakdownResult = ({
 	}
 
 	const inflowsResult = buildTokenInflowsFromChartPairs(tokenBreakdownUsdCharts, tokenBreakdownRawCharts)
-	const tokenInflows = inflowsResult?.tokenInflows ?? null
-	const usdInflows = inflowsResult?.usdInflows ?? null
+	const tokenInflows = inflowsResult?.tokenInflows.length ? inflowsResult.tokenInflows : null
+	const usdInflows = inflowsResult?.usdInflows.length ? inflowsResult.usdInflows : null
 	const inflowTokensUnique = buildPeakValueKeys(tokenInflows)
 	const inflowTokenSet = new Set(inflowTokensUnique)
 	for (const token of rawTokensUnique) {
 		if (!inflowTokenSet.has(token)) inflowTokensUnique.push(token)
 	}
 
-	let usdInflowsDataset: InflowsDataset | null = null
+	let usdInflowsDataset: TimestampDataset | null = null
 	if (usdInflows?.length) {
-		const source: InflowsDataset['source'] = []
+		const source: TimestampDataset['source'] = []
 		for (const [timestamp, value] of usdInflows) {
 			source.push([timestamp, value])
 		}
@@ -639,28 +724,41 @@ const collectFailedQueries = (
 ): IFailedChartQuery[] => {
 	const failed: IFailedChartQuery[] = []
 	for (const { category, queries, keys } of queryGroups) {
-		for (let i = 0; i < queries.length; i++) {
-			const query = queries[i]
+		for (const [index, query] of queries.entries()) {
 			if (query.isError && query.error) {
-				failed.push({ category, key: keys[i], error: query.error })
+				failed.push({ category, key: keys[index], error: query.error })
 			}
 		}
 	}
 	return failed
 }
 
-export function useProtocolBreakdownCharts({
-	protocol,
-	keys,
-	includeBase = true,
-	source = 'tvl',
-	inflows = true,
-	computeInflows = inflows,
-	chainsUnique: knownChains,
-	tokensToExclude,
-	tokenPieMinimumValue = 1
-}: IUseProtocolBreakdownChartsParams): IUseProtocolBreakdownChartsResult {
+export function useProtocolBreakdownCharts(
+	params: IUseProtocolBreakdownChartsParams
+): IUseProtocolBreakdownChartsResult {
+	const {
+		protocol,
+		keys,
+		includeBase = true,
+		inflows = true,
+		computeInflows = inflows,
+		chainsUnique: knownChains,
+		tokenPieMinimumValue = 1
+	} = params
+	const source = params.source ?? 'tvl'
 	const chainBreakdown = !knownChains || knownChains.length >= 2
+	const chartQueryParams: IFetchProtocolChartsByKeysParams =
+		params.source === 'treasury'
+			? { protocol, keys: params.keys, includeBase, source: 'treasury', inflows, chainBreakdown }
+			: {
+					protocol,
+					keys: params.keys,
+					includeBase,
+					source: 'tvl',
+					inflows,
+					chainBreakdown,
+					...(params.tokensToExclude !== undefined ? { tokensToExclude: params.tokensToExclude } : {})
+				}
 
 	const {
 		keysToFetch,
@@ -668,40 +766,44 @@ export function useProtocolBreakdownCharts({
 		chainBreakdownChartQueries,
 		tokenBreakdownUsdQueries,
 		tokenBreakdownRawQueries
-	} = useFetchProtocolChartsByKeys({
-		protocol,
-		keys,
-		includeBase,
-		source,
-		inflows,
-		chainBreakdown,
-		tokensToExclude
-	})
+	} = useFetchProtocolChartsByKeys(chartQueryParams)
 
 	const isNetworkLoading =
 		tvlChartQueries.some((query) => query.isLoading) ||
 		chainBreakdownChartQueries.some((query) => query.isLoading) ||
 		tokenBreakdownUsdQueries.some((query) => query.isLoading) ||
 		tokenBreakdownRawQueries.some((query) => query.isLoading)
+	const tokenExclusionSignature =
+		params.source === 'treasury' ? '' : (canonicalizeTokensToExclude(params.tokensToExclude)?.queryValue ?? '')
 
 	const computeSignature = [
-		tvlChartQueries.map((query) => query.dataUpdatedAt).join('|'),
-		chainBreakdownChartQueries.map((query) => query.dataUpdatedAt).join('|'),
-		tokenBreakdownUsdQueries.map((query) => query.dataUpdatedAt).join('|'),
-		tokenBreakdownRawQueries.map((query) => query.dataUpdatedAt).join('|'),
+		tvlChartQueries
+			.map((query) => `${query.dataUpdatedAt}:${query.data === undefined ? 'absent' : 'present'}`)
+			.join('|'),
+		chainBreakdownChartQueries
+			.map((query) => `${query.dataUpdatedAt}:${query.data === undefined ? 'absent' : 'present'}`)
+			.join('|'),
+		tokenBreakdownUsdQueries
+			.map((query) => `${query.dataUpdatedAt}:${query.data === undefined ? 'absent' : 'present'}`)
+			.join('|'),
+		tokenBreakdownRawQueries
+			.map((query) => `${query.dataUpdatedAt}:${query.data === undefined ? 'absent' : 'present'}`)
+			.join('|'),
 		protocol,
 		source,
 		includeBase ? '1' : '0',
 		keys.join('|'),
+		tokenExclusionSignature,
+		inflows ? 'with-breakdowns' : 'without-breakdowns',
 		computeInflows ? 'inflows' : 'no-inflows',
 		tokenPieMinimumValue
 	].join('::')
 
 	const latestComputeInputRef = React.useRef<{
 		tvlCharts: Array<IProtocolValueChart | null | undefined>
-		chainBreakdownCharts: Array<BreakdownChart | null | undefined>
-		tokenBreakdownUsdCharts: Array<BreakdownChart | null | undefined>
-		tokenBreakdownRawCharts: Array<BreakdownChart | null | undefined>
+		chainBreakdownCharts: Array<ProtocolBreakdownChart | null | undefined>
+		tokenBreakdownUsdCharts: Array<ProtocolBreakdownChart | null | undefined>
+		tokenBreakdownRawCharts: Array<ProtocolBreakdownChart | null | undefined>
 	}>({
 		tvlCharts: [],
 		chainBreakdownCharts: [],
@@ -709,10 +811,18 @@ export function useProtocolBreakdownCharts({
 		tokenBreakdownRawCharts: []
 	})
 	latestComputeInputRef.current = {
-		tvlCharts: tvlChartQueries.map((query) => query.data),
-		chainBreakdownCharts: chainBreakdownChartQueries.map((query) => query.data),
-		tokenBreakdownUsdCharts: tokenBreakdownUsdQueries.map((query) => query.data),
-		tokenBreakdownRawCharts: tokenBreakdownRawQueries.map((query) => query.data)
+		tvlCharts: tvlChartQueries.some((query) => query.isError && query.data === undefined)
+			? []
+			: tvlChartQueries.map((query) => query.data),
+		chainBreakdownCharts: chainBreakdownChartQueries.some((query) => query.isError && query.data === undefined)
+			? []
+			: chainBreakdownChartQueries.map((query) => query.data),
+		tokenBreakdownUsdCharts: tokenBreakdownUsdQueries.some((query) => query.isError && query.data === undefined)
+			? []
+			: tokenBreakdownUsdQueries.map((query) => query.data),
+		tokenBreakdownRawCharts: tokenBreakdownRawQueries.some((query) => query.isError && query.data === undefined)
+			? []
+			: tokenBreakdownRawQueries.map((query) => query.data)
 	}
 
 	const [computed, setComputed] = React.useState<IUseProtocolBreakdownChartsComputed>(EMPTY_COMPUTED_RESULT)

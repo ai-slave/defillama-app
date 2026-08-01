@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { ChainListItem } from '~/containers/Chains/api.types'
-import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
+import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import {
 	buildProDashboardParentMapping,
 	buildProDashboardProtocolCatalog,
 	buildProtocolSymbolMap
 } from './protocolCatalog'
 
-const protocol = (overrides: Partial<ProtocolsResponse['protocols'][number]> = {}) => ({
+const protocol = (overrides: Partial<ProtocolLite> = {}): ProtocolLite => ({
 	name: 'Child',
 	symbol: 'CHILD',
 	logo: 'child.png',
@@ -21,14 +21,15 @@ const protocol = (overrides: Partial<ProtocolsResponse['protocols'][number]> = {
 	tvlPrevMonth: 7,
 	mcap: null,
 	defillamaId: '1',
+	geckoId: null,
 	...overrides
 })
 
 describe('buildProDashboardProtocolCatalog', () => {
 	it('builds one canonical sorted catalog with parent totals and gecko fallbacks', () => {
-		const protocolsData: ProtocolsResponse = {
+		const protocolsData = {
 			protocols: [
-				protocol({ parentProtocol: 'parent#group', misrepresentedTokens: true }),
+				protocol({ parentProtocol: 'parent#group' }),
 				protocol({ name: 'Standalone', defillamaId: '2', tvl: null, geckoId: 'standalone' })
 			],
 			chains: ['Ethereum', 'Base'],
@@ -39,10 +40,12 @@ describe('buildProDashboardProtocolCatalog', () => {
 					symbol: 'GROUP',
 					chains: ['Ethereum'],
 					gecko_id: 'group-token',
-					logo: 'group.png'
+					logo: 'group.png',
+					mcap: null
 				}
-			]
-		}
+			],
+			protocolCategories: ['Lending']
+		} satisfies ProtocolsResponse
 		const chainsData: ChainListItem[] = [
 			{
 				name: 'Ethereum',
@@ -71,13 +74,12 @@ describe('buildProDashboardProtocolCatalog', () => {
 				slug: 'child',
 				symbol: 'CHILD',
 				geckoId: 'group-token',
-				parentProtocol: 'parent#group',
-				misrepresentedTokens: true
+				parentProtocol: 'parent#group'
 			}),
 			expect.objectContaining({
 				id: '2',
 				slug: 'standalone',
-				tvl: 0,
+				tvl: null,
 				geckoId: 'standalone',
 				parentProtocol: null
 			}),
@@ -86,10 +88,143 @@ describe('buildProDashboardProtocolCatalog', () => {
 				slug: 'group',
 				symbol: 'GROUP',
 				tvl: 10,
-				geckoId: 'group-token',
-				misrepresentedTokens: true
+				geckoId: 'group-token'
 			})
 		])
+	})
+
+	it('skips no-TVL children without erasing measured parent TVL', () => {
+		const result = buildProDashboardProtocolCatalog(
+			{
+				protocols: [
+					protocol({ defillamaId: 'known', parentProtocol: 'parent#group', tvl: 10 }),
+					protocol({ defillamaId: 'unknown', parentProtocol: 'parent#group', tvl: null, deprecated: true })
+				],
+				chains: [],
+				parentProtocols: [
+					{
+						id: 'parent#group',
+						name: 'Group',
+						chains: [],
+						gecko_id: null,
+						logo: 'group.png',
+						mcap: null
+					}
+				],
+				protocolCategories: []
+			} satisfies ProtocolsResponse,
+			[]
+		)
+
+		expect(result.protocols.find((entry) => entry.id === 'parent#group')?.tvl).toBe(10)
+	})
+
+	it('keeps a parent without a measured TVL child unavailable', () => {
+		const result = buildProDashboardProtocolCatalog(
+			{
+				protocols: [protocol({ defillamaId: 'unknown', parentProtocol: 'parent#group', tvl: null })],
+				chains: [],
+				parentProtocols: [
+					{
+						id: 'parent#group',
+						name: 'Group',
+						chains: [],
+						gecko_id: null,
+						logo: 'group.png',
+						mcap: null
+					}
+				],
+				protocolCategories: []
+			} satisfies ProtocolsResponse,
+			[]
+		)
+
+		expect(result.protocols.find((entry) => entry.id === 'parent#group')?.tvl).toBeNull()
+	})
+
+	it('subtracts child TVL excluded from its synthetic parent', () => {
+		const result = buildProDashboardProtocolCatalog(
+			{
+				protocols: [
+					protocol({
+						parentProtocol: 'parent#group',
+						tvl: 100,
+						chainTvls: {
+							excludeParent: { tvl: 30, tvlPrevDay: 20, tvlPrevWeek: 10, tvlPrevMonth: 5 }
+						}
+					})
+				],
+				chains: [],
+				parentProtocols: [
+					{
+						id: 'parent#group',
+						name: 'Group',
+						chains: [],
+						gecko_id: null,
+						logo: 'group.png',
+						mcap: null
+					}
+				],
+				protocolCategories: []
+			} satisfies ProtocolsResponse,
+			[]
+		)
+
+		expect(result.protocols.find((entry) => entry.id === 'parent#group')?.tvl).toBe(70)
+	})
+
+	it('keeps synthetic parent TVL unavailable when its required exclusion is unavailable', () => {
+		const result = buildProDashboardProtocolCatalog(
+			{
+				protocols: [
+					protocol({
+						parentProtocol: 'parent#group',
+						chainTvls: {
+							excludeParent: { tvl: null, tvlPrevDay: 0, tvlPrevWeek: 0, tvlPrevMonth: 0 }
+						}
+					})
+				],
+				chains: [],
+				parentProtocols: [
+					{
+						id: 'parent#group',
+						name: 'Group',
+						chains: [],
+						gecko_id: null,
+						logo: 'group.png',
+						mcap: null
+					}
+				],
+				protocolCategories: []
+			} satisfies ProtocolsResponse,
+			[]
+		)
+
+		expect(result.protocols.find((entry) => entry.id === 'parent#group')?.tvl).toBeNull()
+	})
+
+	it('preserves explicit zero TVL for children and parent totals', () => {
+		const result = buildProDashboardProtocolCatalog(
+			{
+				protocols: [protocol({ defillamaId: 'zero', parentProtocol: 'parent#group', tvl: 0 })],
+				chains: [],
+				parentProtocols: [
+					{
+						id: 'parent#group',
+						name: 'Group',
+						chains: [],
+						gecko_id: null,
+						logo: 'group.png',
+						mcap: null
+					}
+				],
+				protocolCategories: []
+			} satisfies ProtocolsResponse,
+			[]
+		)
+
+		expect(result.protocols.find((entry) => entry.id === 'zero')?.tvl).toBe(0)
+		expect(result.protocols.find((entry) => entry.id === 'parent#group')?.tvl).toBe(0)
 	})
 
 	it('builds reusable parent and symbol indexes regardless of catalog order', () => {
@@ -112,12 +247,23 @@ describe('buildProDashboardProtocolCatalog', () => {
 			{
 				protocols: [protocol({ name: 'Group', defillamaId: 'real', tvl: 4 })],
 				chains: [],
-				parentProtocols: [{ id: 'parent#group', name: 'Group', chains: [] }]
-			},
+				parentProtocols: [
+					{
+						id: 'parent#group',
+						name: 'Group',
+						symbol: 'GROUP',
+						chains: [],
+						gecko_id: null,
+						mcap: null,
+						logo: ''
+					}
+				],
+				protocolCategories: []
+			} satisfies ProtocolsResponse,
 			[]
 		)
 
 		expect(result.protocols).toHaveLength(1)
-		expect(result.protocols[0].id).toBe('real')
+		expect(result.protocols[0]?.id).toBe('real')
 	})
 })

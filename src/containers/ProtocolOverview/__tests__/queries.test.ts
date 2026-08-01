@@ -1,8 +1,38 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getFastJsonTimeoutMs } from '~/utils/async'
+import type { IProtocolMetadata } from '~/utils/metadata/types'
 
 const fetchAdapterProtocolChartData = vi.hoisted(() => vi.fn())
+const fetchAdapterProtocolMetrics = vi.hoisted(() => vi.fn().mockResolvedValue({}))
+const fetchProtocolOverviewMetrics = vi.hoisted(() =>
+	vi.fn().mockResolvedValue({
+		id: 'test-protocol',
+		name: 'Test Protocol',
+		symbol: 'TEST',
+		url: 'https://example.com',
+		description: null,
+		logo: null,
+		gecko_id: 'test-token',
+		cmcId: null,
+		category: 'Dexes',
+		chain: 'Ethereum',
+		module: 'test/index.js',
+		chains: ['Ethereum'],
+		currentChainTvls: {},
+		mcap: null,
+		raises: [],
+		hacks: []
+	})
+)
+const formatAdapterData = vi.hoisted(() =>
+	vi.fn().mockResolvedValue({
+		totalAllTime: 1,
+		defaultChartView: 'daily'
+	})
+)
 const fetchProtocolTvlChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
+const fetchOracleMetrics = vi.hoisted(() => vi.fn().mockResolvedValue(null))
+const fetchOracleProtocolChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchTreasuries = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchJson = vi.hoisted(() => vi.fn().mockResolvedValue({ content_elements: [] }))
 const getTokenMarketSummaryByGeckoId = vi.hoisted(() => vi.fn().mockResolvedValue(null))
@@ -36,7 +66,7 @@ vi.mock('~/containers/Articles/api', () => ({
 
 vi.mock('~/containers/AdapterMetrics/api', () => ({
 	fetchAdapterProtocolChartData,
-	fetchAdapterProtocolMetrics: vi.fn().mockResolvedValue({})
+	fetchAdapterProtocolMetrics
 }))
 
 vi.mock('~/containers/Incentives/queries', () => ({
@@ -44,8 +74,8 @@ vi.mock('~/containers/Incentives/queries', () => ({
 }))
 
 vi.mock('~/containers/Oracles/api', () => ({
-	fetchOracleMetrics: vi.fn().mockResolvedValue(null),
-	fetchOracleProtocolChart: vi.fn().mockResolvedValue(null)
+	fetchOracleMetrics,
+	fetchOracleProtocolChart
 }))
 
 vi.mock('~/containers/ProtocolLists/api', () => ({
@@ -70,35 +100,177 @@ vi.mock('~/utils/optionalPageData', () => ({
 
 vi.mock('../api', () => ({
 	fetchProtocolExpenses: vi.fn().mockResolvedValue([]),
-	fetchProtocolOverviewMetrics: vi.fn().mockResolvedValue({
-		id: 'test-protocol',
-		name: 'Test Protocol',
-		gecko_id: 'test-token',
-		category: 'Dexes',
-		chains: ['Ethereum'],
-		currentChainTvls: {}
-	}),
+	fetchProtocolOverviewMetrics,
 	fetchProtocolTvlChart
 }))
 
 vi.mock('../formatAdapterData', () => ({
-	formatAdapterData: vi.fn().mockResolvedValue({
-		totalAllTime: 1,
-		defaultChartView: 'daily'
-	})
+	formatAdapterData
 }))
 
 describe('getProtocolOverviewPageData', () => {
 	afterEach(() => {
 		fetchAdapterProtocolChartData.mockClear()
+		fetchAdapterProtocolMetrics.mockResolvedValue({})
+		fetchAdapterProtocolMetrics.mockClear()
 		fetchProtocolTvlChart.mockResolvedValue([])
 		fetchProtocolTvlChart.mockClear()
+		fetchOracleMetrics.mockResolvedValue(null)
+		fetchOracleMetrics.mockClear()
+		fetchOracleProtocolChart.mockResolvedValue([])
+		fetchOracleProtocolChart.mockClear()
 		fetchTreasuries.mockResolvedValue([])
 		fetchTreasuries.mockClear()
 		fetchJson.mockResolvedValue({ content_elements: [] })
 		fetchJson.mockClear()
 		optionalPageData.mockClear()
 		getTokenMarketSummaryByGeckoId.mockClear()
+		fetchProtocolOverviewMetrics.mockClear()
+		formatAdapterData.mockClear()
+	})
+
+	it('distinguishes absent TVL capability from successful empty and explicit-zero TVL responses', async () => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+		const request = {
+			protocolId: 'test-protocol',
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		}
+
+		const absent = await getProtocolOverviewPageData({
+			...request,
+			currentProtocolMetadata: { displayName: 'Test Protocol', tvl: false } satisfies IProtocolMetadata
+		})
+		expect(absent.currentTvlByChain).toBeNull()
+
+		const empty = await getProtocolOverviewPageData({
+			...request,
+			currentProtocolMetadata: { displayName: 'Test Protocol', tvl: true } satisfies IProtocolMetadata
+		})
+		expect(empty.currentTvlByChain).toStrictEqual({})
+
+		fetchProtocolOverviewMetrics.mockResolvedValueOnce({
+			id: 'test-protocol',
+			name: 'Test Protocol',
+			symbol: 'TEST',
+			url: 'https://example.com',
+			description: null,
+			logo: null,
+			gecko_id: null,
+			cmcId: null,
+			category: 'Dexes',
+			chain: 'Ethereum',
+			module: 'test/index.js',
+			chains: ['Ethereum'],
+			currentChainTvls: { Ethereum: 0 },
+			mcap: null,
+			raises: [],
+			hacks: []
+		})
+		const zero = await getProtocolOverviewPageData({
+			...request,
+			currentProtocolMetadata: { displayName: 'Test Protocol', tvl: true } satisfies IProtocolMetadata
+		})
+		expect(zero.currentTvlByChain).toStrictEqual({ Ethereum: 0 })
+	})
+
+	it('shows key metrics for period-only and zero adapter values but hides unavailable adapter data', async () => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+		const request = {
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: { displayName: 'Test Protocol', fees: true } satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		}
+
+		formatAdapterData.mockResolvedValueOnce({ total30d: 100, totalAllTime: null, defaultChartView: 'daily' })
+		expect((await getProtocolOverviewPageData(request)).hasKeyMetrics).toBe(true)
+
+		formatAdapterData.mockResolvedValueOnce({ total30d: 0, totalAllTime: null, defaultChartView: 'daily' })
+		expect((await getProtocolOverviewPageData(request)).hasKeyMetrics).toBe(true)
+
+		formatAdapterData.mockResolvedValueOnce({
+			total24h: null,
+			total7d: null,
+			total30d: null,
+			totalAllTime: null,
+			annualized1y: null,
+			defaultChartView: 'daily'
+		})
+		expect((await getProtocolOverviewPageData(request)).hasKeyMetrics).toBe(false)
+	})
+
+	it('retains a successful activity summary when every metric is explicit zero', async () => {
+		fetchAdapterProtocolMetrics.mockResolvedValue({ total24h: 0 })
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: {
+				displayName: 'Test Protocol',
+				activeUsers: true,
+				newUsers: true,
+				txCount: true,
+				gasUsed: true
+			} satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		})
+
+		expect(data.users).toEqual({ activeUsers: 0, newUsers: 0, transactions: 0, gasUsed: 0, gasUsedUsd: 0 })
+	})
+
+	it('keeps native gas usage separate from its USD cost', async () => {
+		fetchAdapterProtocolMetrics.mockImplementation(({ dataType }: { dataType?: string }) =>
+			Promise.resolve({
+				total24h: dataType === 'dailyGasUsed' ? 398_354 : dataType === 'dailyGasUsedUsd' ? 28_520 : null
+			})
+		)
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'polymarket',
+			currentProtocolMetadata: {
+				displayName: 'Polymarket',
+				gasUsed: true
+			} satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		})
+
+		expect(data.users).toEqual({
+			activeUsers: null,
+			newUsers: null,
+			transactions: null,
+			gasUsed: 398_354,
+			gasUsedUsd: 28_520
+		})
+		expect(fetchAdapterProtocolMetrics).toHaveBeenCalledWith({
+			protocol: 'Polymarket',
+			adapterType: 'active-users',
+			dataType: 'dailyGasUsed'
+		})
+		expect(fetchAdapterProtocolMetrics).toHaveBeenCalledWith({
+			protocol: 'Polymarket',
+			adapterType: 'active-users',
+			dataType: 'dailyGasUsedUsd'
+		})
 	})
 
 	it('default-toggles secondary charts without server-prefetching their series', async () => {
@@ -109,7 +281,7 @@ describe('getProtocolOverviewPageData', () => {
 			currentProtocolMetadata: {
 				displayName: 'Test Protocol',
 				fees: true
-			} as never,
+			} satisfies IProtocolMetadata,
 			chainMetadata: {},
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
@@ -136,7 +308,7 @@ describe('getProtocolOverviewPageData', () => {
 			currentProtocolMetadata: {
 				displayName: 'Test Protocol',
 				tvl: true
-			} as never,
+			} satisfies IProtocolMetadata,
 			chainMetadata: {},
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
@@ -152,6 +324,111 @@ describe('getProtocolOverviewPageData', () => {
 				[1_700_086_400_000, 12]
 			]
 		})
+	})
+
+	it('keeps configured TVS available while seeding only a nonempty exact producer array', async () => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const emptyData = await getProtocolOverviewPageData({
+			protocolId: 'chainlink',
+			currentProtocolMetadata: { displayName: 'Chainlink', tvl: true } satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		})
+
+		expect(emptyData.availableCharts).toContain('TVS')
+		expect(emptyData.availableCharts).not.toContain('TVL')
+		expect(emptyData.defaultToggledCharts).toContain('TVS')
+		expect(emptyData.initialMultiSeriesChartData).toEqual({})
+
+		fetchOracleProtocolChart.mockResolvedValueOnce([[1_700_000_000, 42]])
+		const populatedData = await getProtocolOverviewPageData({
+			protocolId: 'chainlink',
+			currentProtocolMetadata: { displayName: 'Chainlink', tvl: true } satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		})
+
+		expect(populatedData.initialMultiSeriesChartData.TVS).toEqual([[1_700_000_000_000, 42]])
+	})
+
+	it('aggregates every consumer measurement for an oracle provider', async () => {
+		fetchOracleMetrics.mockResolvedValueOnce({
+			oracles: { Chainlink: ['Chainlink', 'Aave'] },
+			chainsByOracle: { Chainlink: ['Ethereum', 'Arbitrum'] },
+			protocolsByOracleChain: {
+				Chainlink: { Ethereum: ['Chainlink', 'Aave'], Arbitrum: ['Aave'] }
+			},
+			oraclesTVS: {
+				Chainlink: {
+					Chainlink: { Ethereum: 0 },
+					Aave: { Ethereum: 20, Arbitrum: 5 }
+				}
+			}
+		})
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'chainlink',
+			currentProtocolMetadata: { displayName: 'Chainlink', tvl: true } satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		})
+
+		expect(data.oracleTvs).toEqual({ Ethereum: 20, Arbitrum: 5 })
+	})
+
+	it('keeps an oracle provider aggregate unavailable when a canonical member is unmeasured', async () => {
+		fetchOracleMetrics.mockResolvedValueOnce({
+			oracles: { Chainlink: ['Measured', 'Missing'] },
+			chainsByOracle: { Chainlink: ['Ethereum'] },
+			protocolsByOracleChain: { Chainlink: { Ethereum: ['Measured', 'Missing'] } },
+			oraclesTVS: { Chainlink: { Measured: { Ethereum: 10 } } }
+		})
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'chainlink',
+			currentProtocolMetadata: { displayName: 'Chainlink', tvl: true } satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		})
+
+		expect(data.oracleTvs).toBeNull()
+	})
+
+	it('preserves Oracle identity when its optional measurement request fails', async () => {
+		fetchOracleMetrics.mockRejectedValueOnce(new Error('oracle metrics unavailable'))
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'chainlink',
+			currentProtocolMetadata: { displayName: 'Chainlink', tvl: true } satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		})
+
+		expect(data).toMatchObject({ isOracleProtocol: true, oracleTvs: null, hasKeyMetrics: true })
 	})
 
 	it('constructs token FAQ data from the shared token market summary', async () => {
@@ -176,7 +453,7 @@ describe('getProtocolOverviewPageData', () => {
 			currentProtocolMetadata: {
 				displayName: 'Test Protocol',
 				gecko_id: 'test-token'
-			} as never,
+			} satisfies IProtocolMetadata,
 			chainMetadata: {},
 			tokenlist: {},
 			tokenDirectory: {
@@ -206,7 +483,10 @@ describe('getProtocolOverviewPageData', () => {
 
 		await getProtocolOverviewPageData({
 			protocolId: 'test-protocol',
-			currentProtocolMetadata: { displayName: 'Test Protocol', gecko_id: 'test-token' } as never,
+			currentProtocolMetadata: {
+				displayName: 'Test Protocol',
+				gecko_id: 'test-token'
+			} satisfies IProtocolMetadata,
 			chainMetadata: {},
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
@@ -231,7 +511,7 @@ describe('getProtocolOverviewPageData', () => {
 				currentProtocolMetadata: {
 					displayName: 'Test Protocol',
 					tvl: true
-				} as never,
+				} satisfies IProtocolMetadata,
 				chainMetadata: {},
 				tokenlist: {},
 				cgExchangeIdentifiers: [],
@@ -258,7 +538,7 @@ describe('getProtocolOverviewPageData', () => {
 			currentProtocolMetadata: {
 				displayName: 'Test Protocol',
 				treasury: true
-			} as never,
+			} satisfies IProtocolMetadata,
 			chainMetadata: {},
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
@@ -279,7 +559,7 @@ describe('getProtocolOverviewPageData', () => {
 			currentProtocolMetadata: {
 				displayName: 'Test Protocol',
 				yields: true
-			} as never,
+			} satisfies IProtocolMetadata,
 			chainMetadata: {},
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
@@ -301,7 +581,7 @@ describe('getProtocolOverviewPageData', () => {
 				displayName: 'Test Protocol',
 				yields: true,
 				liquidity: true
-			} as never,
+			} satisfies IProtocolMetadata,
 			chainMetadata: {},
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
@@ -312,6 +592,7 @@ describe('getProtocolOverviewPageData', () => {
 
 		expect(data.yields).toBeNull()
 		expect(data.tokenLiquidity).toBeNull()
+		expect(JSON.parse(JSON.stringify(data))).toEqual(data)
 		expect(optionalPageData).not.toHaveBeenCalledWith('protocol:test-protocol:yields', expect.any(Function), null)
 		expect(optionalPageData).not.toHaveBeenCalledWith(
 			'protocol:test-protocol:liquidity_yields_config',
@@ -321,13 +602,40 @@ describe('getProtocolOverviewPageData', () => {
 	})
 
 	it('fetches token income statements from the token endpoint', async () => {
-		fetchJson.mockResolvedValueOnce({ aggregates: { monthly: {}, quarterly: {}, yearly: {} } })
+		const response = {
+			aggregates: {
+				monthly: {
+					'2026-01': {
+						Earnings: { value: -5 },
+						Revenue: { value: 0, 'by-label': { Fees: 0 } }
+					}
+				},
+				quarterly: {},
+				yearly: {}
+			}
+		}
+		const original = structuredClone(response)
+		fetchJson.mockResolvedValueOnce(response)
 		const { getTokenIncomeStatement } = await import('../queries')
 
 		const incomeStatement = await getTokenIncomeStatement({ token: 'HYPE' })
 
 		expect(fetchJson).toHaveBeenCalledWith(expect.stringMatching(/\/metrics\/financial-statement\/token\/hype\?q=30$/))
-		expect(incomeStatement?.data).toMatchObject({ monthly: {}, quarterly: {}, yearly: {} })
+		expect(incomeStatement?.data.monthly['2026-01']).toEqual({
+			timestamp: Date.parse('2026-01'),
+			values: {
+				Earnings: { value: -5 },
+				Revenue: { value: 0, 'by-label': { Fees: 0 } }
+			}
+		})
+		expect(incomeStatement?.data.cumulative.cumulative).toEqual({
+			timestamp: Date.parse('2026-01'),
+			values: {
+				Earnings: { value: -5 },
+				Revenue: { value: 0, 'by-label': { Fees: 0 } }
+			}
+		})
+		expect(response).toEqual(original)
 	})
 
 	it('calculates outstanding FDV from cached emissions supply metrics', async () => {
@@ -338,7 +646,7 @@ describe('getProtocolOverviewPageData', () => {
 			currentProtocolMetadata: {
 				displayName: 'Test Protocol',
 				emissions: true
-			} as never,
+			} satisfies IProtocolMetadata,
 			chainMetadata: {},
 			tokenlist: {
 				'test-token': {
@@ -376,5 +684,53 @@ describe('getProtocolOverviewPageData', () => {
 		})
 
 		expect(data.outstandingFDV).toBe(1000)
+	})
+
+	it.each([
+		{ adjustedSupply: 0, currentPrice: 2 },
+		{ adjustedSupply: 500, currentPrice: 0 }
+	])('preserves zero at the outstanding FDV boundary', async ({ adjustedSupply, currentPrice }) => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: { displayName: 'Test Protocol', emissions: true } satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {
+				'test-token': {
+					symbol: 'test',
+					current_price: currentPrice,
+					price_change_24h: null,
+					price_change_percentage_24h: null,
+					ath: null,
+					ath_date: null,
+					atl: null,
+					atl_date: null,
+					market_cap: null,
+					fully_diluted_valuation: null,
+					total_volume: null,
+					total_supply: null,
+					circulating_supply: null,
+					max_supply: null
+				}
+			},
+			cgExchangeIdentifiers: [],
+			yieldsSnapshot,
+			emissionsSupplyMetrics: {
+				'test-protocol': {
+					name: 'Test Protocol',
+					supplyMetrics: {
+						maxSupply: 1000,
+						adjustedSupply,
+						tbdAmount: 0,
+						incentiveAmount: 0,
+						nonIncentiveAmount: adjustedSupply
+					}
+				}
+			},
+			protocolLlamaswapDataset: {}
+		})
+
+		expect(data.outstandingFDV).toBe(0)
 	})
 })

@@ -19,12 +19,14 @@ const EMPTY_ACTIVITY_DATASET: MultiSeriesChartDataset = {
 }
 const EMPTY_MAXVOTES_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp', 'Max Votes'] }
 
-const ACTIVITY_CHARTS: IMultiSeriesChartProps['charts'] = [
+type GovernanceCharts = NonNullable<IMultiSeriesChartProps['charts']>
+
+const ACTIVITY_CHARTS: GovernanceCharts = [
 	{ type: 'bar', name: 'Total', encode: { x: 'timestamp', y: 'Total' }, color: CHART_COLORS[0] },
 	{ type: 'bar', name: 'Successful', encode: { x: 'timestamp', y: 'Successful' }, color: CHART_COLORS[1] }
 ]
 
-const MAX_VOTES_CHARTS: IMultiSeriesChartProps['charts'] = [
+const MAX_VOTES_CHARTS: GovernanceCharts = [
 	{ type: 'bar', name: 'Max Votes', encode: { x: 'timestamp', y: 'Max Votes' }, color: CHART_COLORS[2] }
 ]
 
@@ -65,7 +67,7 @@ export default function GovernanceProject({
 			<TagGroup
 				variant="default"
 				size="md"
-				selectedValue={categoryLabels[safeCategoryIndex] ?? categoryLabels[0]}
+				selectedValue={governanceLabel}
 				setValue={(value) => {
 					const idx = categoryLabels.indexOf(value as GovernanceTypeLabel)
 					if (idx === -1) return
@@ -77,15 +79,12 @@ export default function GovernanceProject({
 		) : null
 
 	const activityDataset = React.useMemo<MultiSeriesChartDataset>(() => {
-		const source = (data?.activity ?? []).map((row) => [Number(row.date) * 1e3, row.Total ?? 0, row.Successful ?? 0])
+		const source = (data?.activity ?? []).map((row) => [row.date * 1e3, row.Total, row.Successful])
 		return { source, dimensions: ['timestamp', 'Total', 'Successful'] }
 	}, [data?.activity])
 
 	const maxVotesDataset = React.useMemo<MultiSeriesChartDataset>(() => {
-		const source = (data?.maxVotes ?? []).map((row) => [
-			Number(row.date) * 1e3,
-			row['Max Votes'] == null ? 0 : Number(row['Max Votes'])
-		])
+		const source = (data?.maxVotes ?? []).map((row) => [row.date * 1e3, row['Max Votes']])
 		return { source, dimensions: ['timestamp', 'Max Votes'] }
 	}, [data?.maxVotes])
 

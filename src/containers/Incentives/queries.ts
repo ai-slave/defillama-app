@@ -95,6 +95,36 @@ function sumRevenueBreakdown(breakdown: AdapterBreakdown | null | undefined): nu
 	return total
 }
 
+function calculateChainPeriodEarnings({
+	breakdown,
+	totalRevenue,
+	chain,
+	emission,
+	hasEmissionsMatch
+}: {
+	breakdown: AdapterBreakdown | null | undefined
+	totalRevenue: number | null | undefined
+	chain: string
+	emission: number | null
+	hasEmissionsMatch: boolean
+}): number | null {
+	if (breakdown == null) {
+		// A missing breakdown on an inactive period is successful zero activity. A nonzero
+		// aggregate without its chain allocation cannot be attributed to the selected chain.
+		if ((totalRevenue ?? 0) !== 0) return null
+		return hasEmissionsMatch && emission !== 0 ? null : 0
+	}
+
+	const chainRevenue = sumRevenueValues(breakdown[chain])
+	if (hasEmissionsMatch && emission === null) return null
+	const emissions = emission ?? 0
+	if (emissions === 0) return chainRevenue
+
+	const revenueBasis = sumRevenueBreakdown(breakdown)
+	if (revenueBasis <= 0) return null
+	return chainRevenue - emissions * (chainRevenue / revenueBasis)
+}
+
 function aggregateDimensionProtocolVersions(
 	protocolVersions: NonEmptyArray<AdapterChainProtocol>
 ): AdapterChainProtocol {
@@ -166,14 +196,19 @@ function calculateDimensionProtocolEarnings(
 	protocolData: AdapterChainProtocol,
 	emissions?: EmissionsBreakdownProtocol
 ): DimensionEarningsProtocolWithEmissions {
-	const subtractEmissions = (revenue: number | null | undefined, emission: number): number => (revenue ?? 0) - emission
+	const subtractEmissions = (
+		revenue: number | null | undefined,
+		emission: number | null,
+		hasEmissionsMatch: boolean
+	): number | null => (hasEmissionsMatch && emission === null ? null : (revenue ?? 0) - (emission ?? 0))
+	const hasEmissionsMatch = emissions !== undefined
 	return {
 		...protocolData,
-		total24h: subtractEmissions(protocolData.total24h, emissions?.emission24h ?? 0),
-		total7d: subtractEmissions(protocolData.total7d, emissions?.emission7d ?? 0),
-		total30d: subtractEmissions(protocolData.total30d, emissions?.emission30d ?? 0),
-		total1y: subtractEmissions(protocolData.total1y, emissions?.emissions1y ?? 0),
-		totalAllTime: subtractEmissions(protocolData.totalAllTime, emissions?.emissionsAllTime ?? 0),
+		total24h: subtractEmissions(protocolData.total24h, emissions?.emission24h ?? null, hasEmissionsMatch),
+		total7d: subtractEmissions(protocolData.total7d, emissions?.emission7d ?? null, hasEmissionsMatch),
+		total30d: subtractEmissions(protocolData.total30d, emissions?.emission30d ?? null, hasEmissionsMatch),
+		total1y: subtractEmissions(protocolData.total1y, emissions?.emissions1y ?? null, hasEmissionsMatch),
+		totalAllTime: subtractEmissions(protocolData.totalAllTime, emissions?.emissionsAllTime ?? null, hasEmissionsMatch),
 		// The emissions payload has no comparison-period values, so revenue changes cannot be presented as earnings changes.
 		total48hto24h: null,
 		total14dto7d: null,
@@ -293,25 +328,30 @@ export async function getDimensionAdapterChainEarningsOverview({
 		filteredEarningsData = []
 		for (const protocol of earningsData) {
 			const chainBreakdown24h = protocol.breakdown24h?.[internalChainName]
-			if (!chainBreakdown24h) continue
-
-			const chainRevenue24h = sumRevenueValues(chainBreakdown24h)
-			const chainRevenue30d = sumRevenueValues(protocol.breakdown30d?.[internalChainName])
-			const totalRevenue24h = sumRevenueBreakdown(protocol.breakdown24h)
-			const totalRevenue30d = sumRevenueBreakdown(protocol.breakdown30d)
-
-			const chainRevenueRatio24h = totalRevenue24h > 0 ? chainRevenue24h / totalRevenue24h : 0
-			const chainRevenueRatio30d = totalRevenue30d > 0 ? chainRevenue30d / totalRevenue30d : 0
+			const chainBreakdown30d = protocol.breakdown30d?.[internalChainName]
+			if (chainBreakdown24h === undefined && chainBreakdown30d === undefined) continue
 
 			const emissions = protocol._emissions
-			const chainEmissions24h = (emissions?.emission24h || 0) * chainRevenueRatio24h
-			const chainEmissions30d = (emissions?.emission30d || 0) * chainRevenueRatio30d
+			const hasEmissionsMatch = emissions !== undefined
+			const chainEarnings24h = calculateChainPeriodEarnings({
+				breakdown: protocol.breakdown24h,
+				totalRevenue: protocol.total24h,
+				chain: internalChainName,
+				emission: emissions?.emission24h ?? null,
+				hasEmissionsMatch
+			})
+			const chainEarnings30d = calculateChainPeriodEarnings({
+				breakdown: protocol.breakdown30d,
+				totalRevenue: protocol.total30d,
+				chain: internalChainName,
+				emission: emissions?.emission30d ?? null,
+				hasEmissionsMatch
+			})
 
-			const chainEarnings24h = chainRevenue24h - chainEmissions24h
-			const chainEarnings30d = chainRevenue30d - chainEmissions30d
-
-			chainSpecificTotal24h += chainEarnings24h
-			chainSpecificTotal30d += chainEarnings30d
+			chainSpecificTotal24h =
+				chainSpecificTotal24h === null || chainEarnings24h === null ? null : chainSpecificTotal24h + chainEarnings24h
+			chainSpecificTotal30d =
+				chainSpecificTotal30d === null || chainEarnings30d === null ? null : chainSpecificTotal30d + chainEarnings30d
 
 			filteredEarningsData.push({
 				...protocol,
@@ -427,8 +467,9 @@ export function buildProtocolEmissionsLookup(
 	return lookup
 }
 
-export async function getProtocolEmissionsLookupFromAggregated(): Promise<ProtocolEmissionsLookup> {
+export async function getProtocolEmissionsLookupFromAggregated(): Promise<ProtocolEmissionsLookup | null> {
 	const emissionsData = await fetchEmissionsBreakdownAggregated()
+	if (emissionsData === null) return null
 	return buildProtocolEmissionsLookup(emissionsData)
 }
 

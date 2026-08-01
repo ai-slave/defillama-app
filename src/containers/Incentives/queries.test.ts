@@ -147,6 +147,21 @@ describe('dimension earnings aggregation', () => {
 		expect(result.total24h).toBe(-10)
 	})
 
+	it('keeps earnings unavailable for a nullable period on a matched emissions row', async () => {
+		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(
+			emissionsResponse([emissionsProtocol({ emission24h: null })])
+		)
+
+		const result = await getDimensionAdapterChainEarningsOverview({
+			chain: 'All',
+			overviewData: { allChains: ['Ethereum'], protocols: [protocol()] },
+			totalDataChart: []
+		})
+
+		expect(result.protocols[0]).toMatchObject({ total24h: null, total7d: 630 })
+		expect(result).toMatchObject({ total24h: null, total7d: 630 })
+	})
+
 	it('does not label all-chain earnings windows as chain-specific values', async () => {
 		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(emissionsResponse([emissionsProtocol()]))
 
@@ -164,6 +179,93 @@ describe('dimension earnings aggregation', () => {
 			total1y: null,
 			totalAllTime: null
 		})
+	})
+
+	it('keeps selected-chain earnings unavailable for a nullable matched emissions period', async () => {
+		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(
+			emissionsResponse([emissionsProtocol({ emission24h: null })])
+		)
+
+		const result = await getDimensionAdapterChainEarningsOverview({
+			chain: 'Ethereum',
+			overviewData: { allChains: ['Ethereum'], protocols: [protocol()] },
+			totalDataChart: []
+		})
+
+		expect(result).toMatchObject({ total24h: null, total30d: 2_700 })
+		expect(result.protocols[0]).toMatchObject({ total24h: null, total30d: 2_700 })
+	})
+
+	it('keeps a 30d-only selected-chain row and treats its inactive 24h period as zero', async () => {
+		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(
+			emissionsResponse([emissionsProtocol({ emission24h: 0 })])
+		)
+
+		const result = await getDimensionAdapterChainEarningsOverview({
+			chain: 'Ethereum',
+			overviewData: {
+				allChains: ['Ethereum'],
+				protocols: [protocol({ total24h: null, breakdown24h: null })]
+			},
+			totalDataChart: []
+		})
+
+		expect(result).toMatchObject({ total24h: 0, total30d: 2_700 })
+		expect(result.protocols[0]).toMatchObject({ total24h: 0, total30d: 2_700 })
+	})
+
+	it('keeps a selected-chain period unavailable when a positive aggregate has no breakdown', async () => {
+		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(
+			emissionsResponse([emissionsProtocol({ emission24h: 0 })])
+		)
+
+		const result = await getDimensionAdapterChainEarningsOverview({
+			chain: 'Ethereum',
+			overviewData: {
+				allChains: ['Ethereum'],
+				protocols: [protocol({ breakdown24h: null })]
+			},
+			totalDataChart: []
+		})
+
+		expect(result).toMatchObject({ total24h: null, total30d: 2_700 })
+		expect(result.protocols[0]).toMatchObject({ total24h: null, total30d: 2_700 })
+	})
+
+	it('does not allocate nonzero emissions over a zero revenue basis', async () => {
+		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(
+			emissionsResponse([emissionsProtocol({ emission24h: 10 })])
+		)
+
+		const result = await getDimensionAdapterChainEarningsOverview({
+			chain: 'Ethereum',
+			overviewData: {
+				allChains: ['Ethereum'],
+				protocols: [protocol({ total24h: 0, breakdown24h: { Ethereum: {} } })]
+			},
+			totalDataChart: []
+		})
+
+		expect(result.total24h).toBeNull()
+		expect(result.protocols[0]?.total24h).toBeNull()
+	})
+
+	it('retains explicit zero selected-chain earnings when revenue and emissions are zero', async () => {
+		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(
+			emissionsResponse([emissionsProtocol({ emission24h: 0 })])
+		)
+
+		const result = await getDimensionAdapterChainEarningsOverview({
+			chain: 'Ethereum',
+			overviewData: {
+				allChains: ['Ethereum'],
+				protocols: [protocol({ total24h: 0, breakdown24h: { Ethereum: {} } })]
+			},
+			totalDataChart: []
+		})
+
+		expect(result.total24h).toBe(0)
+		expect(result.protocols[0]?.total24h).toBe(0)
 	})
 
 	it('keeps earnings unavailable when the emissions source fails', async () => {

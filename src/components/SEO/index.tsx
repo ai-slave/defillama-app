@@ -27,6 +27,7 @@ interface ILinkPreviewCardProps {
 	unlockAmount?: string
 	pageType?: string
 	isCEX?: boolean
+	valueHeader?: string
 }
 
 // page title and description
@@ -48,7 +49,8 @@ export const LinkPreviewCard = ({
 	unlockPage = false,
 	unlockAmount,
 	pageType,
-	isCEX
+	isCEX,
+	valueHeader
 }: ILinkPreviewCardProps) => {
 	const windowURL = typeof window !== 'undefined' && window.location.href ? window.location.href : ''
 
@@ -68,28 +70,30 @@ export const LinkPreviewCard = ({
 		cardSrc.searchParams.append('theme', 'dark')
 		const pageTypeValue = pageType ?? ''
 
-		let valueHeader: string
-		if (nftPage) {
-			valueHeader = 'Total Volume'
+		let resolvedValueHeader: string
+		if (valueHeader) {
+			resolvedValueHeader = valueHeader
+		} else if (nftPage) {
+			resolvedValueHeader = 'Total Volume'
 		} else if (liqsPage) {
-			valueHeader = 'Total Liquidatable Amount'
+			resolvedValueHeader = 'Total Liquidatable Amount'
 		} else if (stablePage) {
-			valueHeader = 'Market Cap'
+			resolvedValueHeader = 'Market Cap'
 		} else if (unlockPage) {
 			if (unlockAmount !== '$0') {
-				valueHeader = 'Next Unlock | ' + unlockAmount
+				resolvedValueHeader = 'Next Unlock | ' + unlockAmount
 			} else {
-				valueHeader = `Next Unlock`
+				resolvedValueHeader = `Next Unlock`
 			}
 		} else if (pageTypeValue === FEES_PAGE_TYPE) {
-			valueHeader = '24h fees'
+			resolvedValueHeader = '24h fees'
 		} else if (VOLUME_PAGE_TYPES.has(pageTypeValue)) {
-			valueHeader = '24h volume'
+			resolvedValueHeader = '24h volume'
 		} else {
-			valueHeader = isCEX ? 'Total Assets' : 'Total Value Locked'
+			resolvedValueHeader = isCEX ? 'Total Assets' : 'Total Value Locked'
 		}
 
-		cardSrc.searchParams.append('valueHeader', valueHeader)
+		cardSrc.searchParams.append('valueHeader', resolvedValueHeader)
 
 		if (isTvlValid && typeof tvl === 'string') {
 			cardSrc.searchParams.append('tvl', tvl)

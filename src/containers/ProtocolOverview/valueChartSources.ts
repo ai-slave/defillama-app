@@ -1,76 +1,84 @@
-import type { IProtocolChartV2Params } from './api.types'
+import type {
+	ProtocolChartBreakdownType,
+	ProtocolChartCurrency,
+	ProtocolChartSelector,
+	ProtocolTreasuryKey,
+	ProtocolTvlKey
+} from './api.types'
 
 export type ProtocolValueChartSource = 'tvl' | 'treasury'
 type ProtocolValueChartQueryKind = 'tvl-chart' | 'treasury-chart'
+
+export interface CanonicalTokenExclusions {
+	queryValue: string
+}
+
+export type ProtocolTvlValueChartRequest<TProtocol extends string | null = string> = {
+	source: 'tvl'
+	protocol: TProtocol
+	key?: ProtocolTvlKey
+	tokenExclusions?: CanonicalTokenExclusions
+} & ProtocolChartSelector
+
+export type ProtocolTreasuryValueChartRequest<TProtocol extends string | null = string> = {
+	source: 'treasury'
+	protocol: TProtocol
+	key?: ProtocolTreasuryKey
+} & ProtocolChartSelector
+
+export type ProtocolValueChartRequest<TProtocol extends string | null = string> =
+	| ProtocolTvlValueChartRequest<TProtocol>
+	| ProtocolTreasuryValueChartRequest<TProtocol>
+
 export type ProtocolValueChartQueryKey = [
 	'protocol-overview',
 	ProtocolValueChartQueryKind,
 	string | null,
 	string | undefined,
-	string | undefined,
-	IProtocolChartV2Params['breakdownType'],
+	ProtocolChartCurrency | undefined,
+	ProtocolChartBreakdownType | undefined,
 	string | undefined
 ]
 
 const protocolValueChartSources = {
-	tvl: {
-		apiKind: 'tvl',
-		queryKind: 'tvl-chart'
-	},
-	treasury: {
-		apiKind: 'treasury',
-		queryKind: 'treasury-chart'
-	}
+	tvl: { apiKind: 'tvl', queryKind: 'tvl-chart' },
+	treasury: { apiKind: 'treasury', queryKind: 'treasury-chart' }
 } satisfies Record<
 	ProtocolValueChartSource,
 	{ apiKind: ProtocolValueChartSource; queryKind: ProtocolValueChartQueryKind }
 >
 
-export const buildProtocolValueChartApiUrl = ({
-	source,
-	protocol,
-	key,
-	currency,
-	breakdownType,
-	tokensToExclude
-}: {
-	source: ProtocolValueChartSource
-	protocol: string
-	key?: string
-	currency?: string
-	breakdownType?: IProtocolChartV2Params['breakdownType']
-	tokensToExclude?: string[]
-}) => {
+export const canonicalizeTokensToExclude = (
+	tokensToExclude: ReadonlyArray<string> | undefined
+): CanonicalTokenExclusions | undefined => {
+	if (!tokensToExclude?.length) return undefined
+	const queryValue = Array.from(new Set(tokensToExclude.filter((token) => token !== '')))
+		.sort()
+		.join(',')
+	return queryValue ? { queryValue } : undefined
+}
+
+export const buildProtocolValueChartApiUrl = (request: ProtocolValueChartRequest) => {
 	const searchParams = new URLSearchParams()
-	searchParams.set('kind', protocolValueChartSources[source].apiKind)
-	searchParams.set('protocol', protocol)
-	if (key != null) searchParams.set('key', key)
-	if (currency != null) searchParams.set('currency', currency)
-	if (breakdownType != null) searchParams.set('breakdownType', breakdownType)
-	if (tokensToExclude?.length) searchParams.set('tokensToExclude', tokensToExclude.join(','))
+	searchParams.set('kind', protocolValueChartSources[request.source].apiKind)
+	searchParams.set('protocol', request.protocol)
+	if (request.key !== undefined) searchParams.set('key', request.key)
+	if (request.currency !== undefined) searchParams.set('currency', request.currency)
+	if (request.breakdownType !== undefined) searchParams.set('breakdownType', request.breakdownType)
+	if (request.source === 'tvl' && request.tokenExclusions) {
+		searchParams.set('tokensToExclude', request.tokenExclusions.queryValue)
+	}
 	return `/api/public/protocols/charts?${searchParams.toString()}`
 }
 
-export const buildProtocolValueChartQueryKey = ({
-	source,
-	protocol,
-	key,
-	currency,
-	breakdownType,
-	tokensToExclude
-}: {
-	source: ProtocolValueChartSource
-	protocol: string | null
-	key?: string
-	currency?: string
-	breakdownType?: IProtocolChartV2Params['breakdownType']
-	tokensToExclude?: string[]
-}): ProtocolValueChartQueryKey => [
+export const buildProtocolValueChartQueryKey = (
+	request: ProtocolValueChartRequest<string | null>
+): ProtocolValueChartQueryKey => [
 	'protocol-overview',
-	protocolValueChartSources[source].queryKind,
-	protocol,
-	key,
-	currency,
-	breakdownType,
-	tokensToExclude?.length ? tokensToExclude.join(',') : undefined
+	protocolValueChartSources[request.source].queryKind,
+	request.protocol,
+	request.key,
+	request.currency,
+	request.breakdownType,
+	request.source === 'tvl' ? request.tokenExclusions?.queryValue : undefined
 ]

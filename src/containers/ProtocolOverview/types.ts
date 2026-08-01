@@ -8,7 +8,7 @@ import type { BridgeVolumePoint } from '~/containers/Bridges/api.types'
 import type { Hack } from '~/containers/Hacks/model'
 import type { Raise } from '~/containers/Raises/model'
 import type { IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
-import type { IProtocolMetricsV2 } from './api.types'
+import type { IncomeStatementMetric, IProtocolMetricsV2 } from './api.types'
 import { protocolCharts, type ProtocolChartsLabels } from './constants'
 
 export interface IProtocolPageMetrics {
@@ -151,7 +151,8 @@ export interface IProtocolOverviewPageData {
 		activeUsers: number | null
 		newUsers: number | null
 		transactions: number | null
-		gasUsd: number | null
+		gasUsed: number | null
+		gasUsedUsd: number | null
 	} | null
 	raises: Array<Raise> | null
 	expenses: {
@@ -204,7 +205,7 @@ export interface IProtocolOverviewPageData {
 	incomeStatement?: {
 		data: Record<
 			'monthly' | 'quarterly' | 'yearly' | 'cumulative',
-			Record<string, Record<string, { value: number; 'by-label': Record<string, number> }>> & { timestamp?: number }
+			Record<string, { timestamp: number; values: Record<string, IncomeStatementMetric> }>
 		>
 		labelsByType: Record<string, Array<string>>
 		methodology: Record<string, string>
@@ -218,7 +219,8 @@ export interface IProtocolOverviewPageData {
 	seoTitle: string
 	seoDescription: string
 	defaultToggledCharts: ProtocolChartsLabels[]
-	oracleTvs?: Record<string, number> | null
+	isOracleProtocol: boolean
+	oracleTvs: Record<string, number> | null
 	entityQuestions?: string[]
 	faqItems?: IProtocolFaqItem[]
 	treasuryMethodologyUrl?: string | null
@@ -239,6 +241,52 @@ export interface IToggledMetrics extends Record<
 	events: 'true' | 'false'
 	denomination: string | null
 }
+
+export const createDisabledProtocolToggledMetrics = (): IToggledMetrics => ({
+	tvl: 'false',
+	totalAssets: 'false',
+	tvs: 'false',
+	mcap: 'false',
+	tokenPrice: 'false',
+	tokenVolume: 'false',
+	tokenLiquidity: 'false',
+	fdv: 'false',
+	fees: 'false',
+	revenue: 'false',
+	holdersRevenue: 'false',
+	dexVolume: 'false',
+	dexNotionalVolume: 'false',
+	perpVolume: 'false',
+	openInterest: 'false',
+	optionsPremiumVolume: 'false',
+	optionsNotionalVolume: 'false',
+	perpAggregatorVolume: 'false',
+	bridgeAggregatorVolume: 'false',
+	dexAggregatorVolume: 'false',
+	liquidationVolume: 'false',
+	collateralLiquidated: 'false',
+	unlocks: 'false',
+	incentives: 'false',
+	staking_tvl: 'false',
+	borrowed_tvl: 'false',
+	medianApy: 'false',
+	usdInflows: 'false',
+	treasury: 'false',
+	bridgeDeposits: 'false',
+	bridgeWithdrawals: 'false',
+	totalProposals: 'false',
+	successfulProposals: 'false',
+	maxVotes: 'false',
+	activeAddresses: 'false',
+	newAddresses: 'false',
+	transactions: 'false',
+	gasUsed: 'false',
+	tweets: 'false',
+	nftVolume: 'false',
+	bridgeVolume: 'false',
+	events: 'false',
+	denomination: null
+})
 
 export interface IProtocolCoreChartProps {
 	chartData: Partial<Record<ProtocolChartsLabels, Array<[number, number | null]>>>

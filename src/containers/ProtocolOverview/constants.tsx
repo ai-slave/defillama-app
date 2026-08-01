@@ -129,6 +129,10 @@ export const protocolChartCategoryOrder: ProtocolChartCategory[] = [
 	'Governance'
 ]
 
+export const PROTOCOL_CHART_LABELS: ProtocolChartsLabels[] = protocolChartCategoryOrder.flatMap(
+	(category) => protocolChartCategories[category]
+)
+
 export const BAR_CHARTS: ProtocolChartsLabels[] = [
 	'DEX Volume',
 	'Perp Volume',

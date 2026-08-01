@@ -1,7 +1,8 @@
-import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
+import type { GetStaticPropsContext } from 'next'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
+import type { TimePoint } from '~/components/ECharts/MultiSeriesChart/timeSeriesBuilder'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -12,6 +13,10 @@ import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { CHART_COLORS } from '~/constants/colors'
 import { DimensionProtocolChartByType } from '~/containers/AdapterMetrics/ProtocolChart'
 import { getAdapterProtocolOverview } from '~/containers/AdapterMetrics/queries'
+import {
+	getLinkedAdapterProtocolVersionNames,
+	getLinkedAdapterProtocolVersions
+} from '~/containers/ProtocolOverview/adapterProtocolPage'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { formatAdapterData } from '~/containers/ProtocolOverview/formatAdapterData'
 import { KeyMetrics } from '~/containers/ProtocolOverview/KeyMetrics'
@@ -25,17 +30,37 @@ import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/Char
 import { Panel } from '~/ui/Panel'
 import { slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
+import type { HallmarkPoint } from '~/utils/hallmarks'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
-const EMPTY_TOGGLE_OPTIONS = []
+const EMPTY_TOGGLE_OPTIONS: Array<{ name: string; key: string }> = []
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-export const getStaticProps = withPerformanceLogging(
+interface PerpsProtocolPageProps {
+	name: string
+	deprecated: boolean
+	otherProtocols: string[]
+	category: string | null
+	metrics: IProtocolOverviewPageData['metrics']
+	hasKeyMetrics: true
+	openSmolStatsSummaryByDefault: true
+	perpVolume: NonNullable<IProtocolOverviewPageData['perpVolume']>
+	chart: TimePoint[]
+	protocolChains: string[]
+	protocolVersions: string[]
+	warningBanners: ReturnType<typeof getProtocolWarningBanners>
+	hallmarks: HallmarkPoint[] | null
+	defaultChartView: LowercaseDwmcGrouping
+	seoTitle: string
+	seoDescription: string
+}
+
+export const getStaticProps = withPerformanceLogging<PerpsProtocolPageProps, { protocol: string }>(
 	'protocol/derivatives/[protocol]',
 	async ({ params }: GetStaticPropsContext<{ protocol: string }>) => {
 		if (!params?.protocol) {
@@ -59,19 +84,21 @@ export const getStaticProps = withPerformanceLogging(
 		if (protocolRoute.type === 'redirect') {
 			return canonicalRouteRedirect(protocolRoute.destination)
 		}
-		const metadata = [protocolRoute.route.id, protocolRoute.route.metadata] as const
+		const metadata = protocolRoute.route.metadata
+		const protocolDisplayName = metadata.displayName
+		if (!protocolDisplayName) return { notFound: true }
 		const canonicalProtocol = protocolRoute.route.canonicalSlug
 
 		const [protocolData, adapterData] = await Promise.all([
 			fetchProtocolOverviewMetrics(canonicalProtocol),
 			getAdapterProtocolOverview({
 				adapterType: 'derivatives',
-				protocol: metadata[1].displayName,
+				protocol: protocolDisplayName,
 				excludeTotalDataChart: false
 			})
 		])
 
-		const metrics = getProtocolMetricFlags({ protocolData, metadata: metadata[1] })
+		const metrics = getProtocolMetricFlags({ protocolData, metadata })
 		const hallmarks = buildHallmarksWithGenuineSpikes({
 			dimensions: protocolData.dimensions
 		})
@@ -79,43 +106,39 @@ export const getStaticProps = withPerformanceLogging(
 		const seoTitle = `${protocolData.name} Perpetual Futures Volume - DefiLlama`
 		const seoDescription = `Track ${protocolData.name} perpetual futures trading volume with daily and cumulative breakdowns on DefiLlama.`
 
-		const perpVolume: IProtocolOverviewPageData['perpVolume'] = formatAdapterData({
+		const perpVolume = formatAdapterData({
 			data: adapterData,
 			methodologyKey: 'perps'
 		})
 
-		const linkedProtocolsSet = new Set((adapterData?.linkedProtocols ?? []).slice(1))
-		const linkedProtocolsWithAdapterData = []
-		if (protocolData.isParentProtocol) {
-			for (const key in protocolMetadata) {
-				if (linkedProtocolsSet.size === 0) break
-				if (linkedProtocolsSet.has(protocolMetadata[key].displayName)) {
-					if (protocolMetadata[key].perps) {
-						linkedProtocolsWithAdapterData.push(protocolMetadata[key])
-					}
-					linkedProtocolsSet.delete(protocolMetadata[key].displayName)
-				}
-			}
-		}
+		const linkedProtocolVersions = getLinkedAdapterProtocolVersions({
+			isParentProtocol: protocolData.isParentProtocol === true,
+			linkedProtocols: adapterData.linkedProtocols,
+			protocolMetadata
+		})
+		const protocolVersions = getLinkedAdapterProtocolVersionNames({
+			versions: linkedProtocolVersions,
+			metric: 'perps'
+		})
 
-		const chart = normalizeProtocolFlowChart(adapterData.totalDataChart ?? [], true)
+		const chart = normalizeProtocolFlowChart(adapterData.totalDataChart, true)
 
 		return {
 			props: {
 				name: protocolData.name,
 				deprecated: protocolData.deprecated ?? false,
-				otherProtocols: protocolData?.otherProtocols ?? [],
-				category: protocolData?.category ?? null,
+				otherProtocols: protocolData.otherProtocols ?? [],
+				category: protocolData.category ?? null,
 				metrics,
 				hasKeyMetrics: true,
 				openSmolStatsSummaryByDefault: true,
 				perpVolume,
 				chart,
-				protocolChains: adapterData?.chains ?? [],
-				protocolVersions: linkedProtocolsWithAdapterData?.map((versionProtocol) => versionProtocol.displayName) ?? [],
+				protocolChains: adapterData.chains,
+				protocolVersions,
 				warningBanners: getProtocolWarningBanners(protocolData),
 				hallmarks,
-				defaultChartView: perpVolume?.defaultChartView ?? 'daily',
+				defaultChartView: perpVolume.defaultChartView ?? 'daily',
 				seoTitle,
 				seoDescription
 			},
@@ -138,7 +161,7 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function Protocols(props: PerpsProtocolPageProps) {
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>(props.defaultChartView)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -171,6 +194,8 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					</h1>
 					<KeyMetrics
 						{...props}
+						isOracleProtocol={false}
+						oracleTvs={null}
 						formatPrice={(value) =>
 							formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						}
@@ -192,14 +217,14 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							charts={deferredFinalCharts.charts}
 							groupBy={groupBy}
 							valueSymbol="$"
-							hallmarks={props.hallmarks ?? undefined}
+							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							onReady={handleChartReady}
 						/>
 					</Suspense>
 				</ChartPanel>
 			</div>
 			<div className="grid grid-cols-2 gap-2">
-				{props.protocolChains?.length > 1 ? (
+				{props.protocolChains.length > 1 ? (
 					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="chain"
@@ -207,12 +232,12 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							protocolDisplayName={props.name}
 							adapterType="derivatives"
 							breakdownNames={props.protocolChains}
-							hallmarks={props.hallmarks ?? undefined}
+							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							title="Perp Volume by chain"
 						/>
 					</ChartPanel>
 				) : null}
-				{props.protocolVersions?.length > 1 ? (
+				{props.protocolVersions.length > 1 ? (
 					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="version"
@@ -220,7 +245,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							protocolDisplayName={props.name}
 							adapterType="derivatives"
 							breakdownNames={props.protocolVersions}
-							hallmarks={props.hallmarks ?? undefined}
+							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							title="Perp Volume by protocol version"
 						/>
 					</ChartPanel>

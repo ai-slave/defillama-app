@@ -9,39 +9,27 @@ export interface IProtocolWarningBanner {
 	level: 'low' | 'alert' | 'rug'
 }
 
-export interface IProtocolMetricsV2 {
+interface IProtocolMetricsV2Common {
 	id: string
 	name: string
 	address?: string | null
-	symbol?: string | null
 	url: string
-	referralUrl?: string | null
-	description: string
-	chain: string
-	logo: string
-	audits: string | null
-	audit_note: string | null
+	referralUrl?: string
+	audits?: string | null
 	gecko_id: string | null
 	cmcId: string | null
-	category: string
-	tags?: Array<string> | null
 	chains: Array<string>
-	module?: string | null
-	treasury?: string | null
-	twitter: string
-	audit_links: Array<string>
+	audit_links?: Array<string>
 	openSource?: boolean
-	forkedFrom: Array<string>
-	oraclesByChain: Record<string, Array<string>>
-	parentProtocol?: string
+	forkedFrom?: Array<string>
+	oraclesByChain?: Record<string, Array<string>>
 	governanceID?: Array<string>
 	github?: Array<string>
-	currentChainTvls?: Record<string, number>
-	isParentProtocol?: boolean
+	currentChainTvls: Record<string, number>
 	mcap: number | null
 	methodology?: string
-	raises?: Array<Raise>
-	hacks?: Array<Hack>
+	raises: Array<Raise>
+	hacks: Array<Hack>
 	otherProtocols?: Array<string>
 	hallmarks?: Array<[number, string]> | Array<[[number, number], string]>
 	dimensions?: Record<string, { genuineSpikes?: Array<[string, string]>; adapter?: string }> | null
@@ -56,39 +44,141 @@ export interface IProtocolMetricsV2 {
 	treasuryCodePath?: string
 }
 
-export type IProtocolMetricsV2Api = Omit<IProtocolMetricsV2, 'hacks' | 'raises'> & {
-	hacks?: Array<IHackApiItem>
-	raises?: Array<RaisesApiItem>
+type IProtocolCategoryAndTags = { category: string; tags?: Array<string> }
+
+export type IProtocolParentMetricsV2 = IProtocolMetricsV2Common & {
+	isParentProtocol: true
+	symbol: string | null
+	description: string
+	logo: string
+	twitter: string | null
+	treasury: string | null
+	categories?: Array<string>
+	category?: never
+	tags?: never
+	chain?: never
+	module?: never
+	parentProtocol?: never
+	parentProtocolSlug?: never
+	otherProtocols: Array<string>
 }
 
-type ProtocolChartBreakdownType = 'chain-breakdown' | 'token-breakdown'
+export type IProtocolChildMetricsV2 = IProtocolMetricsV2Common &
+	IProtocolCategoryAndTags & {
+		isParentProtocol?: never
+		symbol: string
+		description: string | null
+		logo: string | null
+		twitter?: string | null
+		treasury?: string | null
+		chain: string
+		module: string
+		parentProtocol: string
+		parentProtocolSlug?: string
+		categories?: never
+	}
 
-type IProtocolChartTimestamp = string | number
+export type IProtocolStandaloneMetricsV2 = IProtocolMetricsV2Common &
+	IProtocolCategoryAndTags & {
+		isParentProtocol?: never
+		symbol: string
+		description: string | null
+		logo: string | null
+		twitter?: string | null
+		treasury?: string | null
+		chain: string
+		module: string
+		parentProtocol?: never
+		parentProtocolSlug?: never
+		categories?: never
+	}
 
-type IProtocolValueChartRawPoint = [IProtocolChartTimestamp, number]
+export type IProtocolMetricsV2 = IProtocolParentMetricsV2 | IProtocolChildMetricsV2 | IProtocolStandaloneMetricsV2
+
+export type IProtocolMetricsV2Api = IProtocolMetricsV2 extends infer Metrics
+	? Metrics extends IProtocolMetricsV2
+		? Omit<Metrics, 'hacks' | 'raises'> & {
+				hacks: Array<IHackApiItem>
+				raises: Array<RaisesApiItem>
+			}
+		: never
+	: never
+
+export type ProtocolChartBreakdownType = 'chain-breakdown' | 'token-breakdown'
+export type ProtocolTvlKey = 'tvl' | 'staking' | 'borrowed' | 'pool2' | 'vesting' | 'all'
+export type ProtocolTreasuryKey = 'tvl' | 'OwnTokens' | 'all'
+export type ProtocolChartCurrency = 'token' | 'raw' | 'usd'
+
+type IProtocolValueChartRawPoint = [number, number]
 export type IProtocolValueChartRaw = IProtocolValueChartRawPoint[]
 type IProtocolValueChartPoint = [number, number]
 export type IProtocolValueChart = IProtocolValueChartPoint[]
 
 export type IProtocolChainBreakdownValue = Record<string, number>
-type IProtocolChainBreakdownChartRawPoint = [IProtocolChartTimestamp, IProtocolChainBreakdownValue]
+type IProtocolChainBreakdownChartRawPoint = [number, IProtocolChainBreakdownValue]
 export type IProtocolChainBreakdownChartRaw = IProtocolChainBreakdownChartRawPoint[]
 type IProtocolChainBreakdownChartPoint = [number, IProtocolChainBreakdownValue]
 export type IProtocolChainBreakdownChart = IProtocolChainBreakdownChartPoint[]
 
 export type IProtocolTokenBreakdownValue = Record<string, number>
-type IProtocolTokenBreakdownChartRawPoint = [IProtocolChartTimestamp, IProtocolTokenBreakdownValue]
+type IProtocolTokenBreakdownChartRawPoint = [number, IProtocolTokenBreakdownValue]
 export type IProtocolTokenBreakdownChartRaw = IProtocolTokenBreakdownChartRawPoint[]
 type IProtocolTokenBreakdownChartPoint = [number, IProtocolTokenBreakdownValue]
 export type IProtocolTokenBreakdownChart = IProtocolTokenBreakdownChartPoint[]
 
-export interface IProtocolChartV2Params {
+interface IProtocolMedianApyChartPoint {
+	date: number
+	medianAPY: number
+}
+
+export type IProtocolMedianApyChart = IProtocolMedianApyChartPoint[]
+
+interface IProtocolChartParamsBase {
 	protocol: string
-	key?: string
-	currency?: string
-	tokensToExclude?: string[]
-	breakdownType?: ProtocolChartBreakdownType
 	timeout?: number
+}
+
+export type ProtocolChartSelector =
+	| { breakdownType?: never; currency?: never }
+	| { breakdownType: 'chain-breakdown'; currency?: never }
+	| { breakdownType: 'token-breakdown'; currency?: ProtocolChartCurrency }
+
+export type IProtocolTvlChartParams = IProtocolChartParamsBase & {
+	key?: ProtocolTvlKey
+	tokensToExclude?: string[]
+} & ProtocolChartSelector
+
+export type IProtocolTreasuryChartParams = IProtocolChartParamsBase & {
+	key?: ProtocolTreasuryKey
+} & ProtocolChartSelector
+
+export type IProtocolTvlTokenBreakdownChartParams = IProtocolChartParamsBase & {
+	key?: ProtocolTvlKey
+	tokensToExclude?: string[]
+	currency?: ProtocolChartCurrency
+}
+
+export type IncomeStatementMetric = {
+	value: number
+	'by-label'?: Record<string, number>
+}
+
+export type IncomeStatementPeriod = Record<string, IncomeStatementMetric>
+export type IncomeStatementPeriods = Record<string, IncomeStatementPeriod>
+
+export interface IIncomeStatementApiResponse {
+	aggregates: {
+		monthly: IncomeStatementPeriods
+		quarterly: IncomeStatementPeriods
+		yearly: IncomeStatementPeriods
+	}
+	methodology?: Record<string, string> | null
+	breakdownMethodology?: Record<string, string | Record<string, string>> | null
+	childProtocols?: Array<{
+		displayName: string
+		methodology?: Record<string, string> | null
+		breakdownMethodology?: Record<string, string | Record<string, string>> | null
+	}> | null
 }
 
 export interface IProtocolExpenses {

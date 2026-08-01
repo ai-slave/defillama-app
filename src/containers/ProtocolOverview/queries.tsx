@@ -6,7 +6,6 @@ import { V2_SERVER_URL } from '~/constants'
 import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
-import type { IAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api.types'
 import { listArticles } from '~/containers/Articles/api'
 import { articleHref } from '~/containers/Articles/landing/utils'
 import { fetchBridgeVolumeBySlug } from '~/containers/Bridges/api'
@@ -36,9 +35,17 @@ import type {
 import { optionalPageData } from '~/utils/optionalPageData'
 import { findTokenPageRoute, type TokenDirectory } from '~/utils/tokenDirectory'
 import { fetchProtocolExpenses, fetchProtocolOverviewMetrics, fetchProtocolTvlChart } from './api'
-import type { IProtocolValueChart, IProtocolMetricsV2, IProtocolExpenses } from './api.types'
+import type {
+	IIncomeStatementApiResponse,
+	IncomeStatementMetric,
+	IncomeStatementPeriod,
+	IncomeStatementPeriods,
+	IProtocolExpenses,
+	IProtocolMetricsV2,
+	IProtocolValueChart
+} from './api.types'
 import { resolveProtocolCategory } from './category'
-import { normalizeChartPointsToMs } from './chartSeries.utils'
+import { normalizeSeriesToMilliseconds } from './chartSeries.utils'
 import { oracleProtocols } from './constants'
 import { buildAvailableCharts, buildDefaultToggledCharts } from './defaultCharts'
 import { buildProtocolFaq, buildProtocolFaqRelationship } from './faq'
@@ -46,7 +53,7 @@ import { formatAdapterData } from './formatAdapterData'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics } from './types'
 import { getProtocolWarningBanners } from './utils'
 
-interface IProtocolDataExtended extends IProtocolMetricsV2 {
+type IProtocolDataExtended = IProtocolMetricsV2 & {
 	tokenCGData?: {
 		price: {
 			current: number | null
@@ -120,6 +127,21 @@ export const getProtocolMetricFlags = ({
 
 type IBridgeVolumeResult = BridgeVolumePoint[] | null
 type IProtocolTvlChartSeedResult = { data: IProtocolValueChart; failed: boolean }
+
+function isOracleExtraTvlBreakdownKey(key: string): boolean {
+	if (TVL_SETTINGS_KEYS_SET.has(key) || key === 'dcAndLsOverlap') return true
+	for (const extraKey of TVL_SETTINGS_KEYS_SET) {
+		if (key.endsWith(`-${extraKey}`)) return true
+	}
+	return key.endsWith('-dcAndLsOverlap')
+}
+
+function hasOracleBaseMeasurement(breakdown: Record<string, number>): boolean {
+	for (const key in breakdown) {
+		if (!isOracleExtraTvlBreakdownKey(key)) return true
+	}
+	return false
+}
 
 export const getProtocolOverviewPageData = async ({
 	protocolId,
@@ -217,7 +239,8 @@ export const getProtocolOverviewPageData = async ({
 		activeUsers,
 		newUsers,
 		transactions,
-		gasUsd,
+		gasUsed,
+		gasUsedUsd,
 		expenses,
 		yieldsConfig,
 		liquidityInfo,
@@ -253,6 +276,7 @@ export const getProtocolOverviewPageData = async ({
 		number | null,
 		number | null,
 		number | null,
+		number | null,
 		IProtocolExpenses | null,
 		YieldsMeta | null,
 		ProtocolLiquidityTokensResponse,
@@ -267,7 +291,7 @@ export const getProtocolOverviewPageData = async ({
 		protocolDataPromise,
 		currentProtocolMetadata.tvl && !isOracleProtocol
 			? fetchProtocolTvlChart({ protocol: currentProtocolSlug, timeout: getFastJsonTimeoutMs() })
-					.then((chart): IProtocolTvlChartSeedResult => ({ data: chart ?? [], failed: false }))
+					.then((chart): IProtocolTvlChartSeedResult => ({ data: chart, failed: false }))
 					.catch((err): IProtocolTvlChartSeedResult => {
 						console.log(
 							'[HTTP]:[ERROR]:[PROTOCOL_TVL_CHART]:',
@@ -387,21 +411,15 @@ export const getProtocolOverviewPageData = async ({
 					'treasury',
 					() =>
 						fetchTreasuries()
-							.then(
-								(res: Array<{ id: string; tokenBreakdowns?: Record<string, number | null> }>) =>
-									res.find((item) => item.id === `${protocolId}-treasury`)?.tokenBreakdowns ?? null
-							)
+							.then((res) => res.find((item) => item.id === `${protocolId}-treasury`)?.tokenBreakdowns ?? null)
 							.then((res): IProtocolOverviewPageData['treasury'] => {
 								if (!res) return null
 								return {
-									majors: res.majors ?? null,
-									stablecoins: res.stablecoins ?? null,
-									ownTokens: res.ownTokens ?? null,
-									others: res.others ?? null,
-									total: [res.majors, res.stablecoins, res.ownTokens, res.others].reduce(
-										(acc: number, curr) => acc + +(curr ?? 0),
-										0
-									)
+									majors: res.majors,
+									stablecoins: res.stablecoins,
+									ownTokens: res.ownTokens,
+									others: res.others,
+									total: res.majors + res.stablecoins + res.ownTokens + res.others
 								}
 							}),
 					null
@@ -475,6 +493,18 @@ export const getProtocolOverviewPageData = async ({
 					null
 				)
 			: Promise.resolve(null),
+		currentProtocolMetadata.gasUsed
+			? optionalProtocolData(
+					'gas_used_usd',
+					() =>
+						fetchAdapterProtocolMetrics({
+							protocol: displayName,
+							adapterType: 'active-users',
+							dataType: 'dailyGasUsedUsd'
+						}).then((data) => data?.total24h ?? null),
+					null
+				)
+			: Promise.resolve(null),
 		currentProtocolMetadata.expenses && protocolId
 			? optionalProtocolData(
 					'expenses',
@@ -488,7 +518,9 @@ export const getProtocolOverviewPageData = async ({
 		currentProtocolMetadata?.liquidity
 			? optionalProtocolData('liquidity_tokens', () => fetchLiquidityTokensDataset(), [])
 			: Promise.resolve([]),
-		fetchProtocols().catch((): ProtocolsResponse => ({ protocols: [], chains: [], parentProtocols: [] })),
+		fetchProtocols().catch(
+			(): ProtocolsResponse => ({ protocols: [], chains: [], parentProtocols: [], protocolCategories: [] })
+		),
 		currentProtocolMetadata.bridge
 			? optionalProtocolData(
 					'bridge_volume',
@@ -507,10 +539,7 @@ export const getProtocolOverviewPageData = async ({
 		oracleProtocolName
 			? optionalProtocolData(
 					'oracle_chart',
-					() =>
-						fetchOracleProtocolChart({ protocol: oracleProtocolName }).then((data): Array<[number, number]> | null =>
-							normalizeChartPointsToMs(data)
-						),
+					() => fetchOracleProtocolChart({ protocol: oracleProtocolName }).then(normalizeSeriesToMilliseconds),
 					null
 				)
 			: Promise.resolve(null),
@@ -519,22 +548,17 @@ export const getProtocolOverviewPageData = async ({
 					'oracle_metrics',
 					() =>
 						fetchOracleMetrics().then((data): Record<string, number> | null => {
-							const protocolTvsByOracle = data?.oraclesTVS?.[oracleProtocolName]
-							if (!protocolTvsByOracle) return null
+							const memberNames = data.oracles[oracleProtocolName]
+							const protocolTvsByOracle = data.oraclesTVS[oracleProtocolName]
+							if (!memberNames?.length || !protocolTvsByOracle) return null
 							const tvs: Record<string, number> = {}
 
-							const displayNameTvs = protocolTvsByOracle[displayName]
-							const slugNameTvs = protocolTvsByOracle[slug(displayName)]
-							const selectedProtocolTvs: Record<string, Record<string, number>> = displayNameTvs
-								? { [displayName]: displayNameTvs }
-								: slugNameTvs
-									? { [slug(displayName)]: slugNameTvs }
-									: protocolTvsByOracle
-							for (const protocolKey in selectedProtocolTvs) {
-								const chainTvs = selectedProtocolTvs[protocolKey]
+							for (const memberName of memberNames) {
+								const chainTvs = protocolTvsByOracle[memberName]
+								if (!chainTvs || !hasOracleBaseMeasurement(chainTvs)) return null
 								for (const chain in chainTvs) {
-									const nestedValue = Number(chainTvs[chain])
-									if (!Number.isFinite(nestedValue)) continue
+									const nestedValue = chainTvs[chain]
+									if (nestedValue === undefined) continue
 									tvs[chain] = (tvs[chain] ?? 0) + nestedValue
 								}
 							}
@@ -598,7 +622,8 @@ export const getProtocolOverviewPageData = async ({
 					const protocolName = protocolNameBySlug.get(protocolSlug) ?? protocolSlug
 					const chainValues = liquidityAggregated[protocolSlug]
 					for (const chainName in chainValues) {
-						rows.push([protocolName, chainName, Number(chainValues[chainName])])
+						const value = chainValues[chainName]
+						if (value !== undefined) rows.push([protocolName, chainName, value])
 					}
 				}
 				rows.sort((a: [string, string, number], b: [string, string, number]) => b[2] - a[2])
@@ -606,42 +631,60 @@ export const getProtocolOverviewPageData = async ({
 			})()
 		: ([] as Array<[string, string, number]>)
 
-	const raises =
-		protocolData.raises
-			?.sort((a, b) => a.date - b.date)
-			?.map((r) => ({
-				...r,
-				investors: (r.leadInvestors ?? []).concat(r.otherInvestors ?? [])
-			})) ?? null
+	const raises = protocolData.raises
+		.slice()
+		.sort((a, b) => a.date - b.date)
+		.map((r) => ({
+			...r,
+			investors: r.leadInvestors.concat(r.otherInvestors)
+		}))
+	const currentTvlByChain = currentProtocolMetadata.tvl ? protocolData.currentChainTvls : null
+	const hasFeeFamilyMetrics = (data: Awaited<ReturnType<typeof formatAdapterData>>) =>
+		data != null &&
+		(data.annualized1y != null ||
+			data.total30d != null ||
+			data.total7d != null ||
+			data.total24h != null ||
+			data.totalAllTime != null)
+	const hasStandardAdapterMetrics = (data: Awaited<ReturnType<typeof formatAdapterData>>) =>
+		data != null &&
+		(data.total30d != null || data.total7d != null || data.total24h != null || data.totalAllTime != null)
+	const hasIncentiveMetrics =
+		incentives != null &&
+		(incentives.emissions1y != null ||
+			incentives.emissions30d != null ||
+			incentives.emissions7d != null ||
+			incentives.emissions24h != null ||
+			incentives.emissionsAllTime != null)
 
-	const hasKeyMetrics = !!(
-		protocolData.currentChainTvls?.staking != null ||
-		protocolData.currentChainTvls?.borrowed != null ||
-		raises?.length ||
+	const hasKeyMetrics = Boolean(
+		protocolData.currentChainTvls.staking != null ||
+		protocolData.currentChainTvls.borrowed != null ||
+		raises.length ||
 		expenses ||
 		treasury ||
 		tokenLiquidity?.length ||
-		feesData?.totalAllTime ||
-		revenueData?.totalAllTime ||
-		holdersRevenueData?.totalAllTime ||
-		incentives ||
-		dexVolumeData?.totalAllTime ||
-		dexNotionalVolumeData?.totalAllTime ||
-		perpVolumeData?.totalAllTime ||
-		dexAggregatorVolumeData?.totalAllTime ||
-		perpAggregatorVolumeData?.totalAllTime ||
-		bridgeAggregatorVolumeData?.totalAllTime ||
-		optionsPremiumVolumeData?.totalAllTime ||
-		optionsNotionalVolumeData?.totalAllTime ||
-		liquidationVolumeData?.totalAllTime ||
-		collateralLiquidatedData?.totalAllTime ||
+		hasFeeFamilyMetrics(feesData) ||
+		hasFeeFamilyMetrics(revenueData) ||
+		hasFeeFamilyMetrics(holdersRevenueData) ||
+		hasIncentiveMetrics ||
+		hasStandardAdapterMetrics(dexVolumeData) ||
+		hasStandardAdapterMetrics(dexNotionalVolumeData) ||
+		hasStandardAdapterMetrics(perpVolumeData) ||
+		hasStandardAdapterMetrics(dexAggregatorVolumeData) ||
+		hasStandardAdapterMetrics(perpAggregatorVolumeData) ||
+		hasStandardAdapterMetrics(bridgeAggregatorVolumeData) ||
+		hasStandardAdapterMetrics(optionsPremiumVolumeData) ||
+		hasStandardAdapterMetrics(optionsNotionalVolumeData) ||
+		hasStandardAdapterMetrics(liquidationVolumeData) ||
+		hasStandardAdapterMetrics(collateralLiquidatedData) ||
 		openInterestData?.total24h != null ||
 		bridgeVolumeData?.length ||
-		oracleTvs ||
+		isOracleProtocol ||
 		protocolData.tokenCGData
 	)
 
-	const resolvedProtocolChains = protocolData.chains?.length
+	const resolvedProtocolChains = protocolData.chains.length
 		? protocolData.chains
 		: (currentProtocolMetadata.chains ?? [])
 	const protocolChainsSet = new Set(resolvedProtocolChains)
@@ -651,7 +694,7 @@ export const getProtocolOverviewPageData = async ({
 			? (() => {
 					const rows: Array<{ name: string; tvl: number; commonChains: number }> = []
 					const currentCategory = resolvedCategory.toLowerCase()
-					const currentName = protocolData.name?.toLowerCase()
+					const currentName = protocolData.name.toLowerCase()
 					for (const protocol of liteProtocolsData.protocols) {
 						if (!protocol.category) continue
 						if (protocol.category.toLowerCase() !== currentCategory) continue
@@ -704,7 +747,7 @@ export const getProtocolOverviewPageData = async ({
 		competitorsList.push({ name: competitor.name, tvl: competitor.tvl })
 	}
 
-	const hacks = protocolData.hacks?.toSorted((a, b) => (a.date ?? 0) - (b.date ?? 0)) ?? null
+	const hacks = protocolData.hacks.toSorted((a, b) => (a.date ?? 0) - (b.date ?? 0))
 
 	const protocolMetrics = getProtocolMetricFlags({
 		protocolData,
@@ -712,7 +755,7 @@ export const getProtocolOverviewPageData = async ({
 	})
 
 	const chains: Array<[string, number]> = []
-	const currentChainTvlsObj = protocolData.currentChainTvls ?? {}
+	const currentChainTvlsObj = protocolData.currentChainTvls
 	for (const chain in currentChainTvlsObj) {
 		if (chain.includes('-') || chain === 'offers') continue
 		if (TVL_SETTINGS_KEYS_SET.has(chain)) continue
@@ -755,10 +798,8 @@ export const getProtocolOverviewPageData = async ({
 	const protocolTvlChartData = protocolTvlChartSeed.data
 	const availableCharts = buildAvailableCharts({
 		isCEX,
-		hasTvlChart: Boolean(
-			currentProtocolMetadata.tvl && (protocolTvlChartData.length > 0 || protocolTvlChartSeed.failed)
-		),
-		hasTvsChart: Boolean(oracleChartData?.length),
+		hasTvlChart: Boolean(currentProtocolMetadata.tvl && !isOracleProtocol),
+		hasTvsChart: isOracleProtocol,
 		hasGeckoId: Boolean(tokenGeckoId),
 		hasLiquidity: Boolean(currentProtocolMetadata.liquidity),
 		hasFees: Boolean(feesData),
@@ -778,8 +819,8 @@ export const getProtocolOverviewPageData = async ({
 		hasBridgeVolume: Boolean(bridgeVolumeData),
 		hasUnlocks: Boolean(currentProtocolMetadata.emissions),
 		hasIncentives: Boolean(incentives),
-		hasStaking: protocolData.currentChainTvls?.staking != null,
-		hasBorrowed: protocolData.currentChainTvls?.borrowed != null,
+		hasStaking: protocolData.currentChainTvls.staking != null,
+		hasBorrowed: protocolData.currentChainTvls.borrowed != null,
 		hasUsdInflows: Boolean(protocolMetrics.inflows),
 		hasTreasury: Boolean(treasury),
 		hasMedianApy: Boolean(yields && !protocolData.isParentProtocol),
@@ -806,7 +847,7 @@ export const getProtocolOverviewPageData = async ({
 		dimensions: protocolData.dimensions
 	})
 
-	const name = protocolData.name ?? currentProtocolMetadata.displayName ?? ''
+	const name = protocolData.name
 
 	const initialMultiSeriesChartData: IProtocolOverviewPageData['initialMultiSeriesChartData'] = {}
 	if (protocolTvlChartData.length > 0) {
@@ -822,7 +863,7 @@ export const getProtocolOverviewPageData = async ({
 		isOracleProtocol,
 		protocolMetricsTvl: Boolean(currentProtocolMetadata.tvl),
 		protocolTvlChartData,
-		...(protocolData.currentChainTvls !== undefined ? { currentChainTvls: protocolData.currentChainTvls } : {}),
+		currentChainTvls: protocolData.currentChainTvls,
 		availableCharts,
 		category: resolvedCategory
 	})
@@ -902,24 +943,20 @@ export const getProtocolOverviewPageData = async ({
 		: null
 
 	const pageData: IProtocolOverviewPageData = {
-		id: String(protocolData.id),
+		id: protocolData.id,
 		name: name,
 		category: resolvedCategory,
 		tags: protocolData.tags ?? null,
 		otherProtocols: protocolData.otherProtocols ?? null,
 		deprecated: protocolData.deprecated ?? false,
 		chains: resolvedProtocolChains,
-		currentTvlByChain: currentProtocolMetadata.tvl ? (protocolData.currentChainTvls ?? {}) : {},
+		currentTvlByChain,
 		description: protocolData.description ?? '',
-		website: protocolData.referralUrl?.trim() || protocolData.url?.trim() || null,
+		website: protocolData.referralUrl?.trim() || protocolData.url.trim() || null,
 		isWebsiteReferral: Boolean(protocolData.referralUrl?.trim()),
 		twitter: protocolData.twitter ?? null,
 		safeHarbor: currentProtocolMetadata.safeHarbor ?? false,
-		github: protocolData.github
-			? typeof protocolData.github === 'string'
-				? [protocolData.github]
-				: protocolData.github
-			: null,
+		github: protocolData.github ?? null,
 		tvlMethodology:
 			protocolData.methodology ||
 			(currentProtocolMetadata.tvl && protocolData.module !== 'dummy.js'
@@ -940,7 +977,7 @@ export const getProtocolOverviewPageData = async ({
 			gecko_id: tokenGeckoId,
 			gecko_url: tokenGeckoId ? `https://www.coingecko.com/en/coins/${tokenGeckoId}` : null,
 			tokenPageRoute: findTokenPageRoute(tokenDirectory, {
-				defillamaId: String(protocolData.id),
+				defillamaId: protocolData.id,
 				geckoId: tokenGeckoId
 			}),
 			explorer_url:
@@ -973,15 +1010,16 @@ export const getProtocolOverviewPageData = async ({
 		articles: await researchReportsPromise,
 		incentives,
 		users:
-			activeUsers || newUsers || transactions || gasUsd
+			activeUsers != null || newUsers != null || transactions != null || gasUsed != null || gasUsedUsd != null
 				? {
 						activeUsers: activeUsers ?? null,
 						newUsers: newUsers ?? null,
 						transactions: transactions ?? null,
-						gasUsd: gasUsd ?? null
+						gasUsed: gasUsed ?? null,
+						gasUsedUsd: gasUsedUsd ?? null
 					}
 				: null,
-		raises: raises?.length ? raises : null,
+		raises: raises.length ? raises : null,
 		expenses: formattedExpenses,
 		tokenLiquidity:
 			tokenLiquidity?.length > 0
@@ -989,7 +1027,7 @@ export const getProtocolOverviewPageData = async ({
 				: null,
 		tokenCGData: protocolData.tokenCGData ?? null,
 		outstandingFDV:
-			adjustedSupply && protocolData.tokenCGData?.price?.current
+			adjustedSupply != null && protocolData.tokenCGData?.price?.current != null
 				? adjustedSupply * protocolData.tokenCGData.price.current
 				: null,
 		audits:
@@ -997,13 +1035,13 @@ export const getProtocolOverviewPageData = async ({
 				? {
 						total: +protocolData.audits,
 						auditLinks: protocolData.audit_links ?? [],
-						note: protocolData.audit_note ?? null
+						note: null
 					}
 				: null,
 		isCEX,
 		hasKeyMetrics,
 		competitors: competitorsList,
-		hacks: hacks ?? [],
+		hacks,
 		chartDenominations,
 		availableCharts,
 		chartColors,
@@ -1032,6 +1070,7 @@ export const getProtocolOverviewPageData = async ({
 		seoTitle,
 		seoDescription,
 		defaultToggledCharts,
+		isOracleProtocol,
 		oracleTvs,
 		llamaswapChains
 	}
@@ -1046,7 +1085,7 @@ export const getProtocolOverviewPageData = async ({
 		protocols: liteProtocolsData.protocols,
 		parentProtocols: liteProtocolsData.parentProtocols
 	})
-	const chainTvl = protocolData.currentChainTvls ?? {}
+	const chainTvl = protocolData.currentChainTvls
 	const hasCurrentChainTvl = resolvedProtocolChains.some((chain) => chainTvl[chain] != null)
 	const currentTvlFromChains = hasCurrentChainTvl
 		? resolvedProtocolChains.reduce((total, chain) => total + (chainTvl[chain] ?? 0), 0)
@@ -1080,13 +1119,13 @@ export const getProtocolOverviewPageData = async ({
 		children: relationship.children,
 		useChildrenQuestion: relationship.useChildrenQuestion,
 		treasury,
-		hacks: (hacks ?? []).map((hack) => ({
+		hacks: hacks.map((hack) => ({
 			date: hack.date,
 			amountUsd: hack.amountUsd,
 			classification: hack.classification
 		})),
 		metrics: {
-			borrowed: protocolData.currentChainTvls?.borrowed ?? null,
+			borrowed: protocolData.currentChainTvls.borrowed ?? null,
 			dexVolume30d: dexVolumeData?.total30d ?? null,
 			perpVolume30d: perpVolumeData?.total30d ?? null,
 			openInterest: openInterestData?.total24h ?? null,
@@ -1168,12 +1207,10 @@ function getTokenCGData(
 	}
 }
 
-const protocolsWithFalsyBreakdownMetrics = new Set<string>()
-
 type IncomeStatementSource = { kind: 'protocol'; metadata: IProtocolMetadata } | { kind: 'token'; token: string }
 
 type IncomeStatementMethodologySource = Pick<
-	IAdapterProtocolMetrics,
+	IIncomeStatementApiResponse,
 	'methodology' | 'breakdownMethodology' | 'childProtocols'
 >
 
@@ -1182,7 +1219,7 @@ export function buildIncomeStatementMethodologies(source: IncomeStatementMethodo
 	breakdownMethodology: Record<string, Record<string, string>>
 } {
 	const methodology: Record<string, string> = {}
-	if (source.methodology && typeof source.methodology === 'object') {
+	if (source.methodology) {
 		for (const label in source.methodology) {
 			const text = source.methodology[label]
 			if (text !== undefined) methodology[label] = text
@@ -1237,7 +1274,7 @@ export function buildIncomeStatementMethodologies(source: IncomeStatementMethodo
 	}
 
 	for (const child of source.childProtocols) {
-		if (child.methodology && typeof child.methodology === 'object') {
+		if (child.methodology) {
 			for (const label in child.methodology) {
 				const text = child.methodology[label]
 				if (text !== undefined) addMethodology(label, text)
@@ -1260,10 +1297,7 @@ export function buildIncomeStatementMethodologies(source: IncomeStatementMethodo
 		}
 		const parts: string[] = []
 		for (const child of source.childProtocols) {
-			const childValue =
-				child.methodology && typeof child.methodology === 'object'
-					? child.methodology[label]
-					: child.breakdownMethodology?.[label]
+			const childValue = child.methodology ? child.methodology[label] : child.breakdownMethodology?.[label]
 			if (typeof childValue === 'string') parts.push(`${child.displayName}: ${childValue}`)
 		}
 		methodology[label] = parts.join('\n')
@@ -1308,52 +1342,16 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 
 		if (source.kind === 'protocol' && typeof window !== 'undefined') {
 			const protocol = slug(source.metadata.displayName)
-			return fetchJson(`/api/public/income-statement?protocol=${encodeURIComponent(protocol)}`).catch(() => null)
+			return fetchJson<NonNullable<IProtocolOverviewPageData['incomeStatement']> | null>(
+				`/api/public/income-statement?protocol=${encodeURIComponent(protocol)}&version=2`
+			).catch(() => null)
 		}
 
 		const entity = source.kind === 'protocol' ? source.metadata.displayName : source.token
-		const incomeStatement = await fetchJson(
+		const incomeStatement = await fetchJson<IIncomeStatementApiResponse>(
 			`${V2_SERVER_URL}/metrics/financial-statement/${source.kind}/${slug(entity)}?q=30`
 		)
-
-		if (!incomeStatement) {
-			throw new Error(`Missing income statement for ${source.kind}=${entity}`)
-		}
-
-		type IncomeStatementData = NonNullable<IProtocolOverviewPageData['incomeStatement']>['data']
-		const aggregates: IncomeStatementData =
-			incomeStatement?.aggregates ??
-			({
-				monthly: {},
-				quarterly: {},
-				yearly: {},
-				cumulative: {}
-			} as IncomeStatementData)
-
-		type PeriodEntry = Record<string, { value: number; 'by-label': Record<string, number> }> & { timestamp?: number }
-		type AggregatesMap = Record<string, Record<string, PeriodEntry>>
-		// IncomeStatementData uses a union key ('monthly' | 'quarterly' | 'yearly') which is structurally
-		// compatible with Record<string, ...>, but TS doesn't allow direct assignment. We widen through
-		// a single cast since the runtime shape is guaranteed to match.
-		const aggregatesMap: AggregatesMap = aggregates as AggregatesMap
-
-		if (protocolsWithFalsyBreakdownMetrics.has(source.kind === 'protocol' ? (source.metadata.displayName ?? '') : '')) {
-			for (const aggregateKey in aggregatesMap) {
-				const periods = aggregatesMap[aggregateKey]
-				if (periods === undefined) continue
-				for (const period in periods) {
-					const periodData = periods[period]
-					if (periodData === undefined) continue
-					for (const label in periodData) {
-						if (label === 'timestamp') continue
-						const entry = periodData[label]
-						if (entry && typeof entry === 'object' && 'by-label' in entry) {
-							entry['by-label'] = {}
-						}
-					}
-				}
-			}
-		}
+		const aggregates = normalizeIncomeStatementAggregates(incomeStatement.aggregates)
 
 		const labelsByType: Record<string, Set<string>> = {}
 		const metricTypes = new Set<string>()
@@ -1361,22 +1359,14 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 		// Collect all breakdown labels and metric type names present in the raw aggregates.
 		// The table UI renders breakdown rows based on `labelsByType`, while the Sankey reads `by-label` directly.
 		// If this isn't computed, breakdown rows will be missing in the table even when `by-label` data exists.
-		for (const aggregateKey in aggregatesMap) {
-			const periods = aggregatesMap[aggregateKey]
-			if (periods === undefined) continue
+		for (const aggregateKey of ['monthly', 'quarterly', 'yearly'] as const) {
+			const periods = aggregates[aggregateKey]
 			for (const period in periods) {
 				const periodData = periods[period]
 				if (periodData === undefined) continue
-				const [year = '', quarterLabel = ''] = period.split('-')
-				periodData.timestamp = period.includes('Q')
-					? new Date(
-							`${year}-${((parseInt(quarterLabel.replace('Q', '')) - 1) * 3 + 1).toString().padStart(2, '0')}`
-						).getTime()
-					: new Date(period.length === 4 ? `${period}-01-01` : period).getTime()
-				for (const type in periodData) {
-					if (type === 'timestamp') continue
+				for (const type in periodData.values) {
 					metricTypes.add(type)
-					const byLabel = periodData?.[type]?.['by-label']
+					const byLabel = periodData.values[type]?.['by-label']
 					if (!byLabel) continue
 					for (const breakdownLabel in byLabel) {
 						const labels = labelsByType[type] ?? (labelsByType[type] = new Set())
@@ -1386,47 +1376,42 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 			}
 		}
 
-		const cumulativePeriod: PeriodEntry = {}
+		const cumulativeMetrics: Record<string, NormalizedIncomeStatementMetric> = {}
 		let latestMonthlyTimestamp = 0
 
-		const monthlyPeriods = aggregatesMap.monthly
+		const monthlyPeriods = aggregates.monthly
 		for (const period in monthlyPeriods) {
 			const periodData = monthlyPeriods[period]
 			if (periodData === undefined) continue
-			latestMonthlyTimestamp = Math.max(latestMonthlyTimestamp, Number(periodData?.timestamp ?? 0))
+			latestMonthlyTimestamp = Math.max(latestMonthlyTimestamp, periodData.timestamp)
 
-			for (const label in periodData) {
-				if (label === 'timestamp') continue
-
-				const entry = periodData[label] as { value: number; 'by-label': Record<string, number> } | undefined
+			for (const label in periodData.values) {
+				const entry = periodData.values[label]
 				if (!entry) continue
 
-				const cumulativeEntry = cumulativePeriod[label] as
-					| { value: number; 'by-label': Record<string, number> }
-					| undefined
-
-				if (!cumulativeEntry) {
-					cumulativePeriod[label] = {
-						value: 0,
-						'by-label': {}
-					}
+				let cumulativeEntry = cumulativeMetrics[label]
+				if (cumulativeEntry === undefined) {
+					cumulativeEntry = { value: 0 }
+					cumulativeMetrics[label] = cumulativeEntry
 				}
 
-				;(cumulativePeriod[label] as { value: number; 'by-label': Record<string, number> }).value += entry.value ?? 0
+				cumulativeEntry.value += entry.value
 
-				for (const breakdownLabel in entry['by-label'] ?? {}) {
-					const breakdowns = (cumulativePeriod[label] as { value: number; 'by-label': Record<string, number> })[
-						'by-label'
-					]
-					breakdowns[breakdownLabel] = (breakdowns[breakdownLabel] ?? 0) + (entry['by-label'][breakdownLabel] ?? 0)
+				const entryByLabel = entry['by-label']
+				if (entryByLabel === undefined) continue
+				const cumulativeByLabel = cumulativeEntry['by-label'] ?? (cumulativeEntry['by-label'] = {})
+				for (const breakdownLabel in entryByLabel) {
+					const value = entryByLabel[breakdownLabel]
+					if (value === undefined) continue
+					cumulativeByLabel[breakdownLabel] = (cumulativeByLabel[breakdownLabel] ?? 0) + value
 				}
 			}
 		}
 
-		if (Object.keys(cumulativePeriod).length > 0) {
-			cumulativePeriod.timestamp = latestMonthlyTimestamp
-			aggregatesMap.cumulative = { cumulative: cumulativePeriod }
-		}
+		const cumulative =
+			Object.keys(cumulativeMetrics).length > 0
+				? { cumulative: { timestamp: latestMonthlyTimestamp, values: cumulativeMetrics } }
+				: {}
 
 		const finalLabelsByType: Record<string, Array<string>> = {}
 		for (const label in labelsByType) {
@@ -1439,13 +1424,13 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 		methodology['Earnings'] = 'Gross Profit minus Incentives'
 
 		return {
-			data: aggregates,
+			data: { ...aggregates, cumulative },
 			labelsByType: finalLabelsByType,
 			methodology: methodology,
 			breakdownMethodology: breakdownMethodology,
 			hasOtherTokenHolderFlows: metricTypes.has('Others Token Holder Flows'),
 			hasTokenHolderNetIncome: metricTypes.has('Token Holder Net Income')
-		} as IProtocolOverviewPageData['incomeStatement']
+		}
 	} catch (err) {
 		if (typeof window === 'undefined') {
 			throw err
@@ -1453,3 +1438,40 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 		return null
 	}
 }
+
+type NormalizedIncomeStatementMetric = { value: number; 'by-label'?: Record<string, number> }
+type NormalizedIncomeStatementPeriod = { timestamp: number; values: Record<string, NormalizedIncomeStatementMetric> }
+type NormalizedIncomeStatementPeriods = Record<string, NormalizedIncomeStatementPeriod>
+
+const getIncomeStatementPeriodTimestamp = (period: string): number => {
+	if (!period.includes('Q')) return new Date(period.length === 4 ? `${period}-01-01` : period).getTime()
+	const [year = '', quarterLabel = ''] = period.split('-')
+	const month = ((parseInt(quarterLabel.replace('Q', '')) - 1) * 3 + 1).toString().padStart(2, '0')
+	return new Date(`${year}-${month}`).getTime()
+}
+
+const normalizeIncomeStatementPeriods = (periods: IncomeStatementPeriods): NormalizedIncomeStatementPeriods => {
+	const normalized: NormalizedIncomeStatementPeriods = {}
+	for (const period in periods) {
+		const rawPeriod: IncomeStatementPeriod | undefined = periods[period]
+		if (rawPeriod === undefined) continue
+		const metrics: Record<string, NormalizedIncomeStatementMetric> = {}
+		for (const label in rawPeriod) {
+			const metric: IncomeStatementMetric | undefined = rawPeriod[label]
+			if (metric === undefined) continue
+			const byLabel = metric['by-label']
+			metrics[label] = {
+				value: metric.value,
+				...(byLabel === undefined ? {} : { 'by-label': { ...byLabel } })
+			}
+		}
+		normalized[period] = { timestamp: getIncomeStatementPeriodTimestamp(period), values: metrics }
+	}
+	return normalized
+}
+
+export const normalizeIncomeStatementAggregates = (aggregates: IIncomeStatementApiResponse['aggregates']) => ({
+	monthly: normalizeIncomeStatementPeriods(aggregates.monthly),
+	quarterly: normalizeIncomeStatementPeriods(aggregates.quarterly),
+	yearly: normalizeIncomeStatementPeriods(aggregates.yearly)
+})

@@ -1,4 +1,5 @@
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type { ProtocolListAdditiveTvlKey } from './api.types'
 
 // ---------------------------------------------------------------------------
 // ExtraTvl pages (total-borrowed, total-staked, pool2)
@@ -8,12 +9,12 @@ export type ExtraTvlMetric = 'borrowed' | 'staking' | 'pool2'
 
 export interface IExtraTvlProtocolRow {
 	name: string
-	logo: string
+	logo: string | null
 	slug: string
 	category: string | null
 	chains: string[]
 	deprecated?: boolean
-	value: number
+	value: number | null
 	change_1m: number | null
 	subRows?: IExtraTvlProtocolRow[]
 }
@@ -37,7 +38,7 @@ export type TokenMetricType = 'mcap' | 'fdv' | 'price' | 'outstanding-fdv'
 
 export interface ITokenMetricProtocolRow {
 	name: string
-	logo: string
+	logo: string | null
 	slug: string
 	category: string | null
 	chains: string[]
@@ -59,7 +60,7 @@ export interface IProtocolsWithTokensByChainPageData {
 // ---------------------------------------------------------------------------
 
 interface TvlEntry {
-	tvl: number
+	tvl: number | null
 	tvlPrevDay: number | null
 	tvlPrevWeek: number | null
 	tvlPrevMonth: number | null
@@ -67,13 +68,13 @@ interface TvlEntry {
 
 export interface IRecentProtocol {
 	name: string
-	symbol: string | null
-	logo: string
+	symbol: string
+	logo: string | null
 	url: string
 	category: string
 	chains: string[]
 	chainTvls: Record<string, TvlEntry>
-	tvl: number
+	tvl: number | null
 	tvlPrevDay: number | null
 	tvlPrevWeek: number | null
 	tvlPrevMonth: number | null
@@ -82,10 +83,10 @@ export interface IRecentProtocol {
 	defillamaId: string
 	deprecated?: boolean
 	forkedFrom?: string[]
-	/** Extra TVL sections (staking, pool2, borrowed, etc.) extracted from chainTvls. */
-	extraTvl: Record<string, TvlEntry>
+	/** Finite protocol-list TVL sections extracted from chainTvls. */
+	extraTvl: Partial<Record<ProtocolListAdditiveTvlKey, TvlEntry>>
 	/** Only present on airdrops page. */
-	totalRaised?: number
+	totalRaised?: number | null
 }
 
 export interface IRecentProtocolsPageData {

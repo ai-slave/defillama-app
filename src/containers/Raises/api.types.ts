@@ -1,13 +1,13 @@
 export interface RaisesApiItem {
 	date: number
 	name: string
-	round: string
+	round: string | null
 	/** USD millions. Normalize before using in app code. */
 	amount: number | null
 	chains: string[]
-	sector: string
-	category: string
-	categoryGroup: string
+	sector: string | null
+	category: string | null
+	categoryGroup: string | null
 	leadInvestors: string[]
 	otherInvestors: string[]
 	/** USD millions. Normalize before using in app code. */

@@ -1,8 +1,8 @@
 import { tvlOptions } from '~/components/Filters/options'
 import { CompareProtocols } from '~/containers/CompareProtocols'
 import { getCompareProtocolsPageData } from '~/containers/CompareProtocols/queries'
-import { COMPARE_PROTOCOL_TVL_KEYS } from '~/containers/CompareProtocols/requestPlan'
 import type { CompareProtocolsProps } from '~/containers/CompareProtocols/types'
+import { isProtocolListTvlKey } from '~/containers/ProtocolLists/api.types'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -16,8 +16,7 @@ export const getStaticProps = withPerformanceLogging('comparison', async () => {
 })
 
 const pageName = ['Compare Protocols']
-const compareProtocolTvlOptionKeys = new Set<string>(COMPARE_PROTOCOL_TVL_KEYS)
-const compareProtocolTvlOptions = tvlOptions.filter((option) => compareProtocolTvlOptionKeys.has(option.key))
+const compareProtocolTvlOptions = tvlOptions.filter((option) => isProtocolListTvlKey(option.key))
 
 export default function CompareProtocolsPage({ protocols, protocolsList }: CompareProtocolsProps) {
 	return (

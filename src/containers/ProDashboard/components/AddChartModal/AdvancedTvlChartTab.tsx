@@ -86,7 +86,7 @@ export function AdvancedTvlChartTab({
 		queryFn: () => fetchProtocolTvlValueForDashboard(selectedAdvancedTvlProtocol!),
 		enabled: !!selectedAdvancedTvlProtocol && selectedAdvancedTvlChartType === 'tvl',
 		staleTime: 60 * 60 * 1000,
-		select: (data) => buildTimeSeriesDataset(data ?? [], 'TVL', 1)
+		select: (data) => buildTimeSeriesDataset(data, 'TVL', 1)
 	})
 	const { data: advancedData, isLoading: isAdvancedLoading } = useAdvancedTvlChartData({
 		protocol: selectedAdvancedTvlProtocol ?? '',
@@ -113,7 +113,7 @@ export function AdvancedTvlChartTab({
 		defaultSeries: advancedData.defaultSeriesNames,
 		aggregateOthers: chartType === 'chainsTvl' || chartType === 'tokenValuesUsd' || chartType === 'tokenInflows',
 		type: chartType === 'tokenInflows' ? 'bar' : 'line',
-		stack: chartType === 'tokenInflows' ? 'stackA' : undefined,
+		...(chartType === 'tokenInflows' ? { stack: 'stackA' } : {}),
 		fillMissingWithZero: true,
 		selectionKey: `${selectedAdvancedTvlProtocol}:${selectedAdvancedTvlChartType}`
 	})
@@ -209,7 +209,7 @@ export function AdvancedTvlChartTab({
 						hideDefaultLegend
 						hideDataZoom={presentation.hideDataZoom}
 						solidChartAreaStyle={presentation.solidChartAreaStyle}
-						selectedCharts={selectorValues.length > 0 ? runtimePresentation.selectedCharts : undefined}
+						{...(selectorValues.length > 0 ? { selectedCharts: runtimePresentation.selectedCharts } : {})}
 						chartOptions={presentation.chartOptions}
 						exportButtons={
 							chartType === 'usdInflows' || chartType === 'tokenInflows' ? BAR_PREVIEW_EXPORTS : AREA_PREVIEW_EXPORTS

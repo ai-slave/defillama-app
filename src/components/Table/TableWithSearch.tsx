@@ -35,9 +35,13 @@ const EMPTY_EXPANDED: ExpandedState = {}
 
 type CustomFiltersProp = React.ReactNode | (() => React.ReactNode)
 
+// TanStack columns have heterogeneous accessor value types. `never` preserves each
+// column's inferred value type while collecting them without falling back to `any`.
+type TableColumnDef<T extends RowData> = ColumnDef<T> | ColumnDef<T, never>
+
 interface ITableWithSearchBaseProps<T extends RowData> {
 	data: T[]
-	columns: ColumnDef<T>[]
+	columns: TableColumnDef<T>[]
 	placeholder?: string
 	columnToSearch?: string
 	header?: string | null
@@ -118,12 +122,7 @@ export function TableWithSearch<T extends RowData>({
 		enableSortingRemoval: false,
 		filterFromLeafRows: true,
 		onExpandedChange: (updater) => React.startTransition(() => setExpanded(updater)),
-		getSubRows:
-			getSubRowsProp ??
-			((row) => {
-				const sub = (row as Record<string, unknown>).subRows
-				return Array.isArray(sub) ? (sub as T[]) : undefined
-			}),
+		...(getSubRowsProp ? { getSubRows: getSubRowsProp } : {}),
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
 		onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater)),
@@ -142,8 +141,8 @@ export function TableWithSearch<T extends RowData>({
 				const key = column.id ?? ('accessorKey' in column ? String(column.accessorKey) : '')
 				if (!key) return []
 				const name = typeof column.header === 'function' ? key : column.header != null ? String(column.header) : key
-				const help = column.meta?.headerHelperText ?? undefined
-				return [{ key, name, help }]
+				const help = column.meta?.headerHelperText
+				return [{ key, name, ...(help !== undefined ? { help } : {}) }]
 			}),
 		[columns]
 	)
@@ -262,7 +261,7 @@ export function TableWithSearch<T extends RowData>({
 				{controls}
 				<VirtualTable
 					instance={instance}
-					rowSize={rowSize ?? undefined}
+					{...(rowSize != null ? { rowSize } : {})}
 					compact={compact}
 					skipVirtualization={skipVirtualization}
 					tableLayout={tableLayout}
@@ -276,7 +275,7 @@ export function TableWithSearch<T extends RowData>({
 			{controls}
 			<VirtualTable
 				instance={instance}
-				rowSize={rowSize ?? undefined}
+				{...(rowSize != null ? { rowSize } : {})}
 				compact={compact}
 				skipVirtualization={skipVirtualization}
 				tableLayout={tableLayout}

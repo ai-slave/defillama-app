@@ -82,12 +82,17 @@ function periodKeyOf(groupKey: (typeof GROUP_KEYS)[number], unixSeconds: number)
 export function carryForwardCumulative<T extends { points: Array<[number, number]> }>(series: T[]): T[] {
 	const calendar = [...new Set(series.flatMap((s) => s.points.map(([timestamp]) => timestamp)))].sort((a, b) => a - b)
 	return series.map((s) => {
-		const points: Array<[number, number]> = new Array(calendar.length)
+		const points: Array<[number, number]> = []
 		let cursor = 0
 		let total = 0
-		for (let index = 0; index < calendar.length; index++) {
-			while (cursor < s.points.length && s.points[cursor][0] <= calendar[index]) total = s.points[cursor++][1]
-			points[index] = [calendar[index], total]
+		for (const timestamp of calendar) {
+			while (cursor < s.points.length) {
+				const point = s.points[cursor]
+				if (point === undefined || point[0] > timestamp) break
+				total = point[1]
+				cursor += 1
+			}
+			points.push([timestamp, total])
 		}
 		return { ...s, points }
 	})
@@ -97,7 +102,7 @@ export function carryForwardCumulative<T extends { points: Array<[number, number
 export function sumDailySeries(parts: Array<Array<[number, number]>>): Array<[number, number]> {
 	const byTimestamp = new Map<number, number>()
 	for (const part of parts) {
-		for (const [timestamp, value] of part) byTimestamp.set(timestamp, (byTimestamp.get(timestamp) ?? 0) + (value || 0))
+		for (const [timestamp, value] of part) byTimestamp.set(timestamp, (byTimestamp.get(timestamp) ?? 0) + value)
 	}
 	return [...byTimestamp].sort((a, b) => a[0] - b[0])
 }
@@ -120,10 +125,10 @@ export function addNetworkFeeToIncomeStatement(
 			const period = group[periodKeyOf(groupKey, timestamp)]
 			if (!period) continue
 			for (const line of NETWORK_FEE_LINES) {
-				const entry = (period[line] ??= { value: 0, 'by-label': {} })
+				const entry = (period.values[line] ??= { value: 0, 'by-label': {} })
 				// Lines the upstream statement reports as a bare total carry no `by-label` map.
 				entry['by-label'] ??= {}
-				entry.value = (entry.value ?? 0) + value
+				entry.value += value
 				entry['by-label'][NETWORK_FEE] = (entry['by-label'][NETWORK_FEE] ?? 0) + value
 			}
 		}
@@ -141,12 +146,17 @@ export function addNetworkFeeToIncomeStatement(
 // Time-chart callers share this broad API type with category charts, so keep date and length guards at this boundary.
 export function chartToDataset(chart: Chart): TimestampDataset {
 	const source: TimestampDataset['source'] = []
-	for (let i = 0; i < chart.dates.length; i++) {
-		const timestamp = parseDateToUnix(chart.dates[i]) * 1000
+	for (const [index, date] of chart.dates.entries()) {
+		const timestamp = parseDateToUnix(date) * 1000
 		if (!Number.isFinite(timestamp)) continue
 		const row: TimestampDataset['source'][number] = [timestamp]
-		row.length = chart.series.length + 1
-		for (let j = 0; j < chart.series.length; j++) row[j + 1] = chart.series[j].data[i] ?? 0
+		for (const series of chart.series) {
+			const value = series.data[index]
+			if (value === undefined) {
+				throw new Error(`Expected ${series.name} data for ${date}`)
+			}
+			row.push(value)
+		}
 		source.push(row)
 	}
 

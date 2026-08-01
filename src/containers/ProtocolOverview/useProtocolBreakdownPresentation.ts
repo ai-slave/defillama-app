@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import {
 	buildProtocolBreakdownPresentation,
@@ -7,7 +7,7 @@ import {
 	type ProtocolBreakdownChart
 } from './useProtocolBreakdownCharts'
 
-const EMPTY_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp'] }
+const EMPTY_DATASET: TimestampDataset = { source: [], dimensions: ['timestamp'] }
 
 export function useProtocolBreakdownPresentation({
 	breakdown,
@@ -31,7 +31,7 @@ export function useProtocolBreakdownPresentation({
 	const { activeSeries, setSelectedSeries, isDefaultSelection } = useSeriesSelection({
 		availableSeries,
 		defaultSeries,
-		maxSelectedSeries: aggregateOthers ? undefined : MAX_PROTOCOL_BREAKDOWN_SERIES,
+		...(aggregateOthers ? {} : { maxSelectedSeries: MAX_PROTOCOL_BREAKDOWN_SERIES }),
 		allowEmptySelection: true,
 		resetToDefaultWhenStale: true,
 		selectionKey,
@@ -48,7 +48,7 @@ export function useProtocolBreakdownPresentation({
 				includeUpstreamOthers: aggregateOthers && isDefaultSelection,
 				fillMissingWithZero,
 				type,
-				stack
+				...(stack === undefined ? {} : { stack })
 			}),
 		[activeSeries, aggregateOthers, availableSeries, breakdown, fillMissingWithZero, isDefaultSelection, stack, type]
 	)

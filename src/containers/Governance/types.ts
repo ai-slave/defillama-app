@@ -11,7 +11,7 @@ export interface GovernanceProposal {
 	scores: number[]
 	choices: string[]
 	scores_total: number
-	score_curve?: number
+	score_curve: number
 	totalVotes: number
 	winningChoice: string
 	winningPerc: string
@@ -25,7 +25,7 @@ export interface GovernanceActivityRow {
 
 export interface GovernanceMaxVotesRow {
 	date: number
-	'Max Votes': string
+	'Max Votes': number
 }
 
 export interface GovernanceStats {
@@ -43,7 +43,7 @@ interface GovernanceMetadata {
 }
 
 export interface GovernanceDataEntry {
-	metadata: GovernanceMetadata | null
+	metadata: GovernanceMetadata
 	stats: GovernanceStats | null
 	proposals: GovernanceProposal[]
 	controversialProposals: GovernanceProposal[]
@@ -53,9 +53,9 @@ export interface GovernanceDataEntry {
 
 export interface GovernanceOverviewItem {
 	name: string
-	proposalsCount: string
-	followersCount: string
-	strategyCount: string
+	proposalsCount: number
+	followersCount: number
+	strategyCount: number
 	successfulProposals?: number
 	states: Record<string, number>
 	months: Record<string, { proposals: string[]; states: { active?: number; closed?: number } }>

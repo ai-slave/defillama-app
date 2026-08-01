@@ -1,41 +1,22 @@
 import type { IProtocolMetricsV2 } from '~/containers/ProtocolOverview/api.types'
 import type { IProtocolWarningBanner } from './api.types'
 
-export const getProtocolWarningBanners = (protocolData: IProtocolMetricsV2) => {
-	// Helper function to check if a date is in valid format
-	const isValidDateFormat = (date: unknown): boolean => {
-		if (!date || date === 'forever') return true
-
-		// Check if it's a number (seconds or milliseconds)
-		if (typeof date === 'number') {
-			const dateObj = new Date(date * 1000)
-			return !Number.isNaN(dateObj.getTime())
-		}
-
-		// Check if it's a Date-parseable string
-		if (typeof date === 'string') {
-			const dateObj = new Date(date)
-			return !Number.isNaN(dateObj.getTime())
-		}
-
-		return false
-	}
-
-	const warningBanners = protocolData.warningBanners ?? []
+export const getProtocolWarningBanners = (
+	protocolData: Pick<IProtocolMetricsV2, 'warningBanners' | 'rugged' | 'deadUrl'>
+) => {
 	const banners: IProtocolWarningBanner[] = []
-	for (const banner of warningBanners) {
-		if (!banner.until || banner.until === 'forever') {
-			banners.push(banner)
-			continue
-		}
+	const now = Date.now()
+	if (protocolData.warningBanners) {
+		for (const banner of protocolData.warningBanners) {
+			if (banner.until == null || banner.until === 'forever') {
+				banners.push(banner)
+				continue
+			}
 
-		// Validate date format first
-		if (!isValidDateFormat(banner.until)) {
-			continue
-		}
-
-		if (new Date(typeof banner.until === 'number' ? banner.until * 1000 : banner.until) > new Date()) {
-			banners.push(banner)
+			const expiry = typeof banner.until === 'number' ? banner.until * 1000 : Date.parse(banner.until)
+			if (expiry > now) {
+				banners.push(banner)
+			}
 		}
 	}
 
@@ -61,8 +42,9 @@ export const filterStablecoinsFromTokens = (
 ): Record<string, number> => {
 	const filteredTokens: Record<string, number> = {}
 	for (const token in tokens) {
-		if (stablecoinSymbols.has(token)) {
-			filteredTokens[token] = tokens[token]
+		const value = tokens[token]
+		if (value !== undefined && stablecoinSymbols.has(token)) {
+			filteredTokens[token] = value
 		}
 	}
 	return filteredTokens
@@ -74,9 +56,10 @@ export const groupTokensByPegType = (
 ): Record<string, number> => {
 	const grouped: Record<string, number> = {}
 	for (const token in tokens) {
+		const value = tokens[token]
 		const pegType = pegTypeMap.get(token)
-		if (pegType) {
-			grouped[pegType] = (grouped[pegType] || 0) + tokens[token]
+		if (value !== undefined && pegType) {
+			grouped[pegType] = (grouped[pegType] ?? 0) + value
 		}
 	}
 	return grouped
@@ -88,9 +71,10 @@ export const groupTokensByPegMechanism = (
 ): Record<string, number> => {
 	const grouped: Record<string, number> = {}
 	for (const token in tokens) {
+		const value = tokens[token]
 		const pegMechanism = pegMechanismMap.get(token)
-		if (pegMechanism) {
-			grouped[pegMechanism] = (grouped[pegMechanism] || 0) + tokens[token]
+		if (value !== undefined && pegMechanism) {
+			grouped[pegMechanism] = (grouped[pegMechanism] ?? 0) + value
 		}
 	}
 	return grouped

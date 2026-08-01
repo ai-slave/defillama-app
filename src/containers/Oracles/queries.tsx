@@ -10,8 +10,8 @@ import {
 	fetchOracleProtocolChainBreakdownChart,
 	fetchOracleChainProtocolBreakdownChart
 } from './api'
+import type { IOracleMetrics } from './api.types'
 import type {
-	OracleBreakdownItem,
 	OracleChartData,
 	OracleOverviewPageData,
 	OraclesByChainPageData,
@@ -39,14 +39,38 @@ function resolveCanonicalName(value: string, options: Array<string>): string | n
 	return null
 }
 
-function getAllChains(chainsByOracle: Record<string, Array<string>>): Array<string> {
-	return Array.from(new Set(Object.values(chainsByOracle).flatMap((chains) => chains)))
+function getOracleChains(metrics: IOracleMetrics, oracle: string): string[] {
+	const membersByChain = metrics.protocolsByOracleChain[oracle]
+	if (!membersByChain) return []
+
+	const chains: string[] = []
+	for (const chain of metrics.chainsByOracle[oracle] ?? []) {
+		if (membersByChain[chain] !== undefined) chains.push(chain)
+	}
+	for (const chain in membersByChain) {
+		if (!chains.includes(chain)) chains.push(chain)
+	}
+	return chains
 }
 
-function buildMultiOracleChartDataFromBreakdown(
-	protocolBreakdown: ReadonlyArray<OracleBreakdownItem>
-): OracleChartData {
-	return protocolBreakdown.map((dayData) => ({ ...dayData }))
+function getAllChains(protocolsByOracleChain: IOracleMetrics['protocolsByOracleChain']): Array<string> {
+	const allChains = new Set<string>()
+	for (const oracle in protocolsByOracleChain) {
+		const membersByChain = protocolsByOracleChain[oracle]
+		if (!membersByChain) continue
+		for (const chain in membersByChain) allChains.add(chain)
+	}
+	return Array.from(allChains)
+}
+
+function getOracleExtraTvlSuffix(breakdownKey: string): string | null {
+	if (isExtraTvlKey(breakdownKey)) return breakdownKey
+
+	for (const extraKey of TVL_SETTINGS_KEYS_SET) {
+		if (breakdownKey.endsWith(`-${extraKey}`)) return extraKey
+	}
+
+	return breakdownKey.endsWith('-dcAndLsOverlap') ? 'dcAndLsOverlap' : null
 }
 
 function aggregateTvlFromBreakdown({
@@ -55,22 +79,26 @@ function aggregateTvlFromBreakdown({
 }: {
 	data: Record<string, number> | undefined
 	chain: string | null
-}): { tvl: number; extraTvl: Record<string, number> } {
-	let tvl = 0
+}): { tvl: number | null; extraTvl: Record<string, number> } {
+	let tvl: number | null = null
 	const extraTvl: Record<string, number> = {}
+	let hasChainMeasurement = false
 
 	if (!data) {
-		return { tvl, extraTvl }
+		return { tvl: null, extraTvl }
 	}
 
-	for (const [breakdownKey, value] of Object.entries(data)) {
+	for (const breakdownKey in data) {
+		const value = data[breakdownKey]
+		if (value === undefined) continue
 		if (isExtraTvlKey(breakdownKey)) {
 			continue
 		}
 
 		if (chain) {
 			if (breakdownKey === chain) {
-				tvl += value
+				hasChainMeasurement = true
+				tvl = (tvl ?? 0) + value
 				continue
 			}
 
@@ -78,21 +106,22 @@ function aggregateTvlFromBreakdown({
 			if (!breakdownKey.startsWith(metricPrefix)) continue
 			const metricName = breakdownKey.slice(metricPrefix.length)
 			if (!metricName || !isExtraTvlKey(metricName)) continue
+			hasChainMeasurement = true
 			extraTvl[metricName] = (extraTvl[metricName] ?? 0) + value
 			continue
 		}
 
-		if (!breakdownKey.includes('-')) {
-			tvl += value
-		} else {
-			const separatorIndex = breakdownKey.indexOf('-')
-			const metricName = breakdownKey.slice(separatorIndex + 1)
-			if (!metricName || !isExtraTvlKey(metricName)) continue
+		const metricName = getOracleExtraTvlSuffix(breakdownKey)
+		if (metricName) {
 			extraTvl[metricName] = (extraTvl[metricName] ?? 0) + value
+		} else {
+			// A hyphen is valid inside a base chain name (for example, X-Layer). Only
+			// recognized metric suffixes split an Oracle breakdown key.
+			tvl = (tvl ?? 0) + value
 		}
 	}
 
-	return { tvl, extraTvl }
+	return { tvl: chain && hasChainMeasurement && tvl === null ? 0 : tvl, extraTvl }
 }
 
 function buildOracleProtocolBreakdown({
@@ -101,11 +130,38 @@ function buildOracleProtocolBreakdown({
 }: {
 	protocolOracleData: Record<string, number> | undefined
 	chain: string | null
-}): { tvl: number; extraTvl: Record<string, number> } {
+}): { tvl: number | null; extraTvl: Record<string, number> } {
 	return aggregateTvlFromBreakdown({
 		data: protocolOracleData,
 		chain
 	})
+}
+
+function aggregateOracleMembers({
+	memberNames,
+	oracleProtocols,
+	chain
+}: {
+	memberNames: ReadonlyArray<string>
+	oracleProtocols: Record<string, Record<string, number>>
+	chain: string | null
+}): { tvl: number | null; extraTvl: Record<string, number> } {
+	if (memberNames.length === 0) return { tvl: null, extraTvl: {} }
+
+	let tvl: number | null = null
+	const extraTvl: Record<string, number> = {}
+
+	for (const protocolName of memberNames) {
+		const protocolBreakdown = aggregateTvlFromBreakdown({ data: oracleProtocols[protocolName], chain })
+		if (protocolBreakdown.tvl !== null) tvl = (tvl ?? 0) + protocolBreakdown.tvl
+		for (const extraKey in protocolBreakdown.extraTvl) {
+			const extraValue = protocolBreakdown.extraTvl[extraKey]
+			if (extraValue === undefined) continue
+			extraTvl[extraKey] = (extraTvl[extraKey] ?? 0) + extraValue
+		}
+	}
+
+	return { tvl, extraTvl }
 }
 
 // - /oracles, /oracles/chain/:chain
@@ -116,69 +172,69 @@ export async function getOraclesListPageData({
 } = {}): Promise<OraclesByChainPageData | null> {
 	const metrics = await fetchOracleMetrics()
 
-	const chainsByOracle = metrics.chainsByOracle ?? {}
-	const oraclesTVS = metrics.oraclesTVS ?? {}
-	const allChains = getAllChains(chainsByOracle)
+	const oracleProtocolNamesByOracle = metrics.oracles
+	const protocolsByOracleChain = metrics.protocolsByOracleChain
+	const oraclesTVS = metrics.oraclesTVS
+	const allChains = getAllChains(protocolsByOracleChain)
 	const canonicalChain = chain ? resolveCanonicalName(chain, allChains) : null
 
 	if (chain && !canonicalChain) {
 		return null
 	}
 
-	const chartData = canonicalChain
-		? buildMultiOracleChartDataFromBreakdown(await fetchOracleChainProtocolBreakdownChart({ chain: canonicalChain }))
-		: buildMultiOracleChartDataFromBreakdown(await fetchOracleProtocolBreakdownChart())
+	const chartData: OracleChartData = canonicalChain
+		? await fetchOracleChainProtocolBreakdownChart({ chain: canonicalChain })
+		: await fetchOracleProtocolBreakdownChart()
 	const latestTvlByChain: Record<string, number> = {}
 
 	const tableData: Array<OracleTableDataRow> = []
-	for (const oracle in oraclesTVS) {
-		const chains = chainsByOracle[oracle] ?? []
-		// Single lookup: .includes() is more efficient than creating a Set
-		if (canonicalChain && !chains.includes(canonicalChain)) {
-			continue
-		}
+	for (const oracle in oracleProtocolNamesByOracle) {
+		const canonicalMembers = oracleProtocolNamesByOracle[oracle]
+		if (!canonicalMembers) continue
+		const chains = getOracleChains(metrics, oracle)
+		const memberNames = canonicalChain ? protocolsByOracleChain[oracle]?.[canonicalChain] : canonicalMembers
+		if (!memberNames) continue
 
-		let tvl = 0
-		const extraTvl: Record<string, number> = {}
-		let protocolsSecured = 0
-		for (const protocolName in oraclesTVS[oracle]) {
-			const protocolBreakdown = oraclesTVS[oracle][protocolName]
-			const { tvl: protocolTvl, extraTvl: protocolExtraTvl } = aggregateTvlFromBreakdown({
-				data: protocolBreakdown,
-				chain: canonicalChain
-			})
-			tvl += protocolTvl
-			for (const [extraKey, extraValue] of Object.entries(protocolExtraTvl)) {
-				extraTvl[extraKey] = (extraTvl[extraKey] ?? 0) + extraValue
-			}
-
+		const oracleProtocols = oraclesTVS[oracle]
+		if (!oracleProtocols) throw new Error(`Oracle metrics is missing TVS measurements for ${oracle}`)
+		const { tvl, extraTvl } = aggregateOracleMembers({
+			memberNames,
+			oracleProtocols,
+			chain: canonicalChain
+		})
+		for (const protocolName of canonicalMembers) {
+			const protocolBreakdown = oracleProtocols[protocolName]
+			if (!protocolBreakdown) continue
 			for (const chainOrExtraTvlKey in protocolBreakdown) {
 				const value = protocolBreakdown[chainOrExtraTvlKey]
-				if (chainOrExtraTvlKey.includes('-') || isExtraTvlKey(chainOrExtraTvlKey)) continue
+				if (value === undefined) continue
+				if (getOracleExtraTvlSuffix(chainOrExtraTvlKey)) continue
 				latestTvlByChain[chainOrExtraTvlKey] = (latestTvlByChain[chainOrExtraTvlKey] ?? 0) + value
 			}
-			protocolsSecured += 1
 		}
 		tableData.push({
 			name: oracle,
 			tvl,
 			extraTvl,
-			protocolsSecured,
+			protocolsSecured: memberNames.length,
 			chains
 		})
 	}
-	tableData.sort((a, b) => b.tvl - a.tvl)
-
+	tableData.sort((a, b) => {
+		if (a.tvl === null) return b.tvl === null ? 0 : 1
+		if (b.tvl === null) return -1
+		return b.tvl - a.tvl
+	})
 	const oracles = tableData.map((row) => row.name)
 	const oraclesColors: Record<string, string> = {
 		Others: '#AAAAAA'
 	}
 	const sortedColors = getNDistinctColors(oracles.length)
-	for (let i = 0; i < oracles.length; i++) {
-		oraclesColors[oracles[i]] = sortedColors[i]
+	for (const [index, oracleName] of oracles.entries()) {
+		oraclesColors[oracleName] = sortedColors[index] ?? '#ccc'
 	}
 
-	const uniqueChains = [...getAllChains(chainsByOracle)].sort(
+	const uniqueChains = getAllChains(protocolsByOracleChain).sort(
 		(a, b) => (latestTvlByChain[b] ?? 0) - (latestTvlByChain[a] ?? 0)
 	)
 	const chainLinks = [{ label: 'All', to: `/oracles` }].concat(
@@ -204,20 +260,16 @@ export async function getOracleDetailPageData({
 	chain?: string | null
 }): Promise<OracleOverviewPageData | null> {
 	const metrics = await fetchOracleMetrics()
-	const oracleProtocolNamesByOracle = metrics.oracles ?? {}
-	const chainsByOracle = metrics.chainsByOracle ?? {}
-	const oraclesTVS = metrics.oraclesTVS ?? {}
+	const oracleProtocolNamesByOracle = metrics.oracles
+	const oraclesTVS = metrics.oraclesTVS
 
-	const oracleNames: string[] = []
-	for (const oracleName in oraclesTVS) {
-		oracleNames.push(oracleName)
-	}
+	const oracleNames = Object.keys(oracleProtocolNamesByOracle)
 	const canonicalOracle = resolveCanonicalName(oracle, oracleNames)
 	if (!canonicalOracle) {
 		return null
 	}
 
-	const availableChains = chainsByOracle[canonicalOracle] ?? []
+	const availableChains = getOracleChains(metrics, canonicalOracle)
 	const canonicalChain = chain ? resolveCanonicalName(chain, availableChains) : null
 	if (chain && !canonicalChain) {
 		return null
@@ -247,45 +299,35 @@ export async function getOracleDetailPageData({
 			fetchProtocols()
 		])
 		protocols = fetchedProtocols
-		chartData =
-			oracleChart?.map(([timestamp, value]) => ({
-				timestamp,
-				[canonicalOracle]: value
-			})) ?? []
+		chartData = oracleChart.map(([timestamp, value]) => ({
+			timestamp,
+			[canonicalOracle]: value
+		}))
 	}
 
-	const oracleProtocols = oraclesTVS[canonicalOracle] ?? {}
-	let tvl = 0
-	const extraTvl: Record<string, number> = {}
-	for (const protocolName in oracleProtocols) {
-		const { tvl: protocolTvl, extraTvl: protocolExtraTvl } = aggregateTvlFromBreakdown({
-			data: oracleProtocols[protocolName],
-			chain: canonicalChain
-		})
-		tvl += protocolTvl
-		for (const [extraKey, extraValue] of Object.entries(protocolExtraTvl)) {
-			extraTvl[extraKey] = (extraTvl[extraKey] ?? 0) + extraValue
-		}
+	const oracleProtocols = oraclesTVS[canonicalOracle]
+	if (!oracleProtocols) throw new Error(`Oracle metrics is missing TVS measurements for ${canonicalOracle}`)
+	const protocolsByName = new Map<string, ProtocolLite>()
+	for (const protocol of protocols) protocolsByName.set(protocol.name, protocol)
+	const orderedOracleProtocolNames = canonicalChain
+		? metrics.protocolsByOracleChain[canonicalOracle]?.[canonicalChain]
+		: oracleProtocolNamesByOracle[canonicalOracle]
+	if (!orderedOracleProtocolNames) {
+		throw new Error(
+			`Oracle metrics is missing membership for ${canonicalOracle}${canonicalChain ? ` on ${canonicalChain}` : ''}`
+		)
 	}
-
-	const protocolsByName = new Map(protocols.map((protocol) => [protocol.name, protocol]))
-	// Build one Set for repeated membership checks in the table loop.
-	// The per-protocol chain test remains a single cheap `.includes()` call.
-	let protocolsSupportingCanonicalChain: Set<string> | null = null
-	if (canonicalChain) {
-		protocolsSupportingCanonicalChain = new Set<string>()
-		for (const protocol of protocols) {
-			if (protocol.chains.includes(canonicalChain)) {
-				protocolsSupportingCanonicalChain.add(protocol.name)
-			}
-		}
-	}
-	const orderedOracleProtocolNames = oracleProtocolNamesByOracle[canonicalOracle] ?? []
+	const { tvl, extraTvl } = aggregateOracleMembers({
+		memberNames: orderedOracleProtocolNames,
+		oracleProtocols,
+		chain: canonicalChain
+	})
 	const protocolTableData: Array<OracleProtocolWithBreakdown> = []
 	for (const protocolName of orderedOracleProtocolNames) {
+		// Oracle metrics owns membership. The lite response only enriches rows with public metadata;
+		// without an exact name match there is no identity payload to render safely.
 		const protocolData = protocolsByName.get(protocolName)
 		if (!protocolData) continue
-		if (protocolsSupportingCanonicalChain && !protocolsSupportingCanonicalChain.has(protocolName)) continue
 
 		const { tvl: protocolTvl, extraTvl: protocolExtraTvl } = buildOracleProtocolBreakdown({
 			protocolOracleData: oracleProtocols[protocolName],
@@ -303,15 +345,12 @@ export async function getOracleDetailPageData({
 		})
 	}
 
-	protocolTableData.sort((a, b) => b.tvl - a.tvl)
-
-	const oracleChains = chainsByOracle[canonicalOracle] ?? []
 	const chainLinks = [{ label: 'All', to: `/oracles/${slug(canonicalOracle)}` }].concat(
-		oracleChains.map((c) => ({ label: c, to: `/oracles/${slug(canonicalOracle)}/${slug(c)}` }))
+		availableChains.map((c) => ({ label: c, to: `/oracles/${slug(canonicalOracle)}/${slug(c)}` }))
 	)
 
 	return {
-		chain: canonicalChain ?? null,
+		chain: canonicalChain,
 		chainLinks,
 		oracle: canonicalOracle,
 		tvl,

@@ -1,4 +1,4 @@
-import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
+import type { GetStaticPropsContext } from 'next'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
@@ -10,8 +10,13 @@ import {
 import { Select } from '~/components/Select/Select'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
+import type { IAdapterChart } from '~/containers/AdapterMetrics/api.types'
 import { DimensionProtocolChartByType } from '~/containers/AdapterMetrics/ProtocolChart'
 import { getAdapterProtocolOverview } from '~/containers/AdapterMetrics/queries'
+import {
+	getLinkedAdapterProtocolVersionNames,
+	getLinkedAdapterProtocolVersions
+} from '~/containers/ProtocolOverview/adapterProtocolPage'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { formatAdapterData } from '~/containers/ProtocolOverview/formatAdapterData'
 import { KeyMetrics } from '~/containers/ProtocolOverview/KeyMetrics'
@@ -26,6 +31,7 @@ import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Panel } from '~/ui/Panel'
 import { slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
+import type { HallmarkPoint } from '~/utils/hallmarks'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatUsd } from '~/utils/numberFormat'
@@ -34,9 +40,41 @@ import { canonicalRouteRedirect } from '~/utils/route'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
+type ProtocolFeeChartName = 'Fees' | 'Revenue' | 'Holders Revenue'
+type OptionalProtocolFeeMetric = Exclude<ProtocolFeeChartName, 'Fees'>
+
 type OptionalAdapterOverviewResult = {
 	data: Awaited<ReturnType<typeof getAdapterProtocolOverview>> | null
 	failed: boolean
+}
+
+interface ProtocolFeesPageProps {
+	name: string
+	deprecated: boolean
+	otherProtocols: string[]
+	category: string | null
+	metrics: IProtocolOverviewPageData['metrics']
+	fees: NonNullable<IProtocolOverviewPageData['fees']>
+	revenue: IProtocolOverviewPageData['revenue']
+	holdersRevenue: IProtocolOverviewPageData['holdersRevenue']
+	hasKeyMetrics: true
+	openSmolStatsSummaryByDefault: true
+	charts: {
+		fees: IAdapterChart
+		revenue: IAdapterChart
+		holdersRevenue: IAdapterChart
+	}
+	defaultCharts: ProtocolFeeChartName[]
+	protocolChains: string[]
+	protocolRevenueChains: string[]
+	protocolFeesVersions: string[]
+	protocolRevenueVersions: string[]
+	warningBanners: ReturnType<typeof getProtocolWarningBanners>
+	defaultChartView: LowercaseDwmcGrouping
+	hallmarks: HallmarkPoint[] | null
+	seoTitle: string
+	seoDescription: string
+	failedMetrics: OptionalProtocolFeeMetric[]
 }
 
 const fetchOptionalAdapterProtocolOverview = async (
@@ -52,7 +90,7 @@ const fetchOptionalAdapterProtocolOverview = async (
 	}
 }
 
-export const getStaticProps = withPerformanceLogging(
+export const getStaticProps = withPerformanceLogging<ProtocolFeesPageProps, { protocol: string }>(
 	'protocol/fees/[protocol]',
 	async ({ params }: GetStaticPropsContext<{ protocol: string }>) => {
 		if (!params?.protocol) {
@@ -76,71 +114,69 @@ export const getStaticProps = withPerformanceLogging(
 		if (protocolRoute.type === 'redirect') {
 			return canonicalRouteRedirect(protocolRoute.destination)
 		}
-		const metadata = [protocolRoute.route.id, protocolRoute.route.metadata] as const
+		const metadata = protocolRoute.route.metadata
+		const protocolDisplayName = metadata.displayName
+		if (!protocolDisplayName) return { notFound: true }
 		const canonicalProtocol = protocolRoute.route.canonicalSlug
 
 		const [protocolData, feesData, revenueResult, holdersRevenueResult] = await Promise.all([
 			fetchProtocolOverviewMetrics(canonicalProtocol),
 			getAdapterProtocolOverview({
 				adapterType: 'fees',
-				protocol: metadata[1].displayName,
+				protocol: protocolDisplayName,
 				excludeTotalDataChart: false
 			}),
-			fetchOptionalAdapterProtocolOverview(!!metadata[1].revenue, {
+			fetchOptionalAdapterProtocolOverview(!!metadata.revenue, {
 				adapterType: 'fees',
-				protocol: metadata[1].displayName,
+				protocol: protocolDisplayName,
 				excludeTotalDataChart: false,
 				dataType: 'dailyRevenue'
 			}),
-			fetchOptionalAdapterProtocolOverview(!!metadata[1].holdersRevenue, {
+			fetchOptionalAdapterProtocolOverview(!!metadata.holdersRevenue, {
 				adapterType: 'fees',
-				protocol: metadata[1].displayName,
+				protocol: protocolDisplayName,
 				excludeTotalDataChart: false,
 				dataType: 'dailyHoldersRevenue'
 			})
 		])
 		const revenueData = revenueResult.data
 		const holdersRevenueData = holdersRevenueResult.data
-		const failedMetrics: Array<string> = []
+		const failedMetrics: OptionalProtocolFeeMetric[] = []
 		if (revenueResult.failed) failedMetrics.push('Revenue')
 		if (holdersRevenueResult.failed) failedMetrics.push('Holders Revenue')
 
-		const metrics = getProtocolMetricFlags({ protocolData, metadata: metadata[1] })
+		const metrics = getProtocolMetricFlags({ protocolData, metadata })
 
-		const fees: IProtocolOverviewPageData['fees'] = formatAdapterData({ data: feesData, methodologyKey: 'Fees' })
-		const revenue: IProtocolOverviewPageData['revenue'] = formatAdapterData({
+		const fees = formatAdapterData({ data: feesData, methodologyKey: 'Fees' })
+		const revenue = formatAdapterData({
 			data: revenueData,
 			methodologyKey: 'Revenue'
 		})
-		const holdersRevenue: IProtocolOverviewPageData['holdersRevenue'] = formatAdapterData({
+		const holdersRevenue = formatAdapterData({
 			data: holdersRevenueData,
 			methodologyKey: 'HoldersRevenue'
 		})
-		const linkedProtocolsSet = new Set((feesData?.linkedProtocols ?? []).slice(1))
-		const linkedProtocolsWithFeesData = []
-		const linkedProtocolsWithRevenueData = []
-		if (protocolData.isParentProtocol) {
-			for (const key in protocolMetadata) {
-				if (linkedProtocolsSet.size === 0) break
-				if (linkedProtocolsSet.has(protocolMetadata[key].displayName)) {
-					if (protocolMetadata[key].fees) {
-						linkedProtocolsWithFeesData.push(protocolMetadata[key])
-					}
-					if (protocolMetadata[key].revenue) {
-						linkedProtocolsWithRevenueData.push(protocolMetadata[key])
-					}
-					linkedProtocolsSet.delete(protocolMetadata[key].displayName)
-				}
-			}
-		}
+		const linkedProtocolVersions = getLinkedAdapterProtocolVersions({
+			isParentProtocol: protocolData.isParentProtocol === true,
+			linkedProtocols: feesData.linkedProtocols,
+			protocolMetadata
+		})
+		const linkedProtocolsWithFeesData = getLinkedAdapterProtocolVersionNames({
+			versions: linkedProtocolVersions,
+			metric: 'fees'
+		})
+		const linkedProtocolsWithRevenueData = getLinkedAdapterProtocolVersionNames({
+			versions: linkedProtocolVersions,
+			metric: 'revenue'
+		})
 
 		const charts = {
-			fees: feesData?.totalDataChart ?? [],
+			fees: feesData.totalDataChart,
 			revenue: revenueData?.totalDataChart ?? [],
 			holdersRevenue: holdersRevenueData?.totalDataChart ?? []
 		}
 
-		const defaultCharts = []
+		const defaultCharts: ProtocolFeeChartName[] = []
 
 		if (charts.fees.length > 0) {
 			defaultCharts.push('Fees')
@@ -165,23 +201,23 @@ export const getStaticProps = withPerformanceLogging(
 			props: {
 				name: protocolData.name,
 				deprecated: protocolData.deprecated ?? false,
-				otherProtocols: protocolData?.otherProtocols ?? [],
-				category: protocolData?.category ?? null,
+				otherProtocols: protocolData.otherProtocols ?? [],
+				category: protocolData.category ?? null,
 				metrics,
 				fees,
-				revenue: revenueData && revenueData.totalAllTime ? revenue : null,
-				holdersRevenue: holdersRevenueData && holdersRevenueData.totalAllTime ? holdersRevenue : null,
+				revenue,
+				holdersRevenue,
 				hasKeyMetrics: true,
 				openSmolStatsSummaryByDefault: true,
 				charts,
 				defaultCharts,
-				protocolChains: feesData?.chains ?? [],
-				protocolFeesVersions: linkedProtocolsWithFeesData?.map((versionProtocol) => versionProtocol.displayName) ?? [],
-				protocolRevenueVersions:
-					linkedProtocolsWithRevenueData?.map((versionProtocol) => versionProtocol.displayName) ?? [],
+				protocolChains: feesData.chains,
+				protocolRevenueChains: revenueData?.chains ?? [],
+				protocolFeesVersions: linkedProtocolsWithFeesData,
+				protocolRevenueVersions: linkedProtocolsWithRevenueData,
 				warningBanners: getProtocolWarningBanners(protocolData),
 				defaultChartView:
-					fees?.defaultChartView ?? revenue?.defaultChartView ?? holdersRevenue?.defaultChartView ?? 'daily',
+					fees.defaultChartView ?? revenue?.defaultChartView ?? holdersRevenue?.defaultChartView ?? 'daily',
 				hallmarks,
 				seoTitle,
 				seoDescription,
@@ -206,7 +242,7 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function Protocols(props: ProtocolFeesPageProps) {
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>(props.defaultChartView)
 	const [charts, setCharts] = useState<string[]>(props.defaultCharts)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
@@ -242,6 +278,8 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					</h1>
 					<KeyMetrics
 						{...props}
+						isOracleProtocol={false}
+						oracleTvs={null}
 						formatPrice={(value) =>
 							formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						}
@@ -274,15 +312,15 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							charts={deferredFinalCharts.charts}
 							groupBy={groupBy}
 							valueSymbol="$"
-							hallmarks={props.hallmarks ?? undefined}
+							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							onReady={handleChartReady}
 						/>
 					</Suspense>
-					<FailedProtocolFeeMetricsPopover failedMetrics={props.failedMetrics ?? []} />
+					<FailedProtocolFeeMetricsPopover failedMetrics={props.failedMetrics} />
 				</ChartPanel>
 			</div>
 			<div className="grid grid-cols-2 gap-2">
-				{props.protocolChains?.length > 1 ? (
+				{props.protocolChains.length > 1 ? (
 					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="chain"
@@ -290,12 +328,12 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							protocolDisplayName={props.name}
 							adapterType="fees"
 							breakdownNames={props.protocolChains}
-							hallmarks={props.hallmarks ?? undefined}
+							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							title="Fees by chain"
 						/>
 					</ChartPanel>
 				) : null}
-				{props.protocolFeesVersions?.length > 1 ? (
+				{props.protocolFeesVersions.length > 1 ? (
 					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="version"
@@ -303,47 +341,44 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							protocolDisplayName={props.name}
 							adapterType="fees"
 							breakdownNames={props.protocolFeesVersions}
-							hallmarks={props.hallmarks ?? undefined}
+							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							title="Fees by protocol version"
 						/>
 					</ChartPanel>
 				) : null}
-				{props.protocolRevenueVersions?.length > 1 ? (
-					<>
-						{props.protocolChains?.length > 1 ? (
-							<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
-								<DimensionProtocolChartByType
-									chartType="chain"
-									protocolName={slug(props.name)}
-									protocolDisplayName={props.name}
-									adapterType="fees"
-									dataType="dailyRevenue"
-									breakdownNames={props.protocolChains}
-									hallmarks={props.hallmarks ?? undefined}
-									title="Revenue by chain"
-								/>
-							</ChartPanel>
-						) : null}
-
-						<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
-							<DimensionProtocolChartByType
-								chartType="version"
-								protocolName={slug(props.name)}
-								protocolDisplayName={props.name}
-								adapterType="fees"
-								dataType="dailyRevenue"
-								breakdownNames={props.protocolRevenueVersions}
-								hallmarks={props.hallmarks ?? undefined}
-								title="Revenue by protocol version"
-							/>
-						</ChartPanel>
-					</>
+				{props.protocolRevenueChains.length > 1 ? (
+					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
+						<DimensionProtocolChartByType
+							chartType="chain"
+							protocolName={slug(props.name)}
+							protocolDisplayName={props.name}
+							adapterType="fees"
+							dataType="dailyRevenue"
+							breakdownNames={props.protocolRevenueChains}
+							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
+							title="Revenue by chain"
+						/>
+					</ChartPanel>
+				) : null}
+				{props.protocolRevenueVersions.length > 1 ? (
+					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
+						<DimensionProtocolChartByType
+							chartType="version"
+							protocolName={slug(props.name)}
+							protocolDisplayName={props.name}
+							adapterType="fees"
+							dataType="dailyRevenue"
+							breakdownNames={props.protocolRevenueVersions}
+							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
+							title="Revenue by protocol version"
+						/>
+					</ChartPanel>
 				) : null}
 			</div>
 		</ProtocolOverviewLayout>
 	)
 }
 
-function FailedProtocolFeeMetricsPopover({ failedMetrics }: { failedMetrics: Array<string> }) {
+function FailedProtocolFeeMetricsPopover({ failedMetrics }: { failedMetrics: OptionalProtocolFeeMetric[] }) {
 	return <FailedDataPopover items={failedMetrics} ariaLabel="Show failed metric APIs" />
 }

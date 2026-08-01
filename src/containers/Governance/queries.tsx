@@ -4,7 +4,7 @@ import {
 	GOVERNANCE_TALLY_API,
 	governanceIdsToApis
 } from '~/containers/Governance/api'
-import { fetchAndFormatGovernanceData, getGovernanceTypeFromApi } from '~/containers/Governance/queries.client'
+import { fetchAndFormatGovernanceData } from '~/containers/Governance/queries.client'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import type { GovernanceDataEntry, GovernanceOverviewItem, GovernanceType } from './types'
@@ -22,90 +22,61 @@ type GovernanceDetailsPageData =
 type GovernanceDetailsPageDataWithProps = Exclude<GovernanceDetailsPageData, { notFound: true }>
 
 async function fetchGovernanceDataForApis(governanceApis: Array<string>) {
-	const governanceData = await fetchAndFormatGovernanceData(governanceApis)
-	const governanceTypes = governanceApis.map(getGovernanceTypeFromApi)
+	const sources = await fetchAndFormatGovernanceData(governanceApis)
+	const governanceData = sources.map((source) => source.data)
+	const governanceTypes = sources.map((source) => source.type)
 	return { governanceData, governanceTypes }
 }
 
-type RawGovernanceOverviewItem = Record<string, unknown> & {
+type RawGovernanceOverviewMonth = {
+	total: number
+	successful: number
+	proposals?: string[]
+	states: Record<string, number>
+}
+
+type RawGovernanceOverviewItem = {
 	name?: string
-	proposalsCount?: string | number
-	followersCount?: string | number
-	strategyCount?: string | number
-	successfulProposals?: number | string
-	states?: Record<string, number | string>
-	months?: Record<
-		string,
-		{
-			proposals?: unknown
-			states?: { active?: unknown; closed?: unknown }
-		}
-	>
-	proposalsInLast30Days?: number | string
-	propsalsInLast30Days?: number | string
-	successfulProposalsInLast30Days?: number | string
-	successfulPropsalsInLast30Days?: number | string
+	proposalsCount?: number
+	followersCount?: number
+	strategyCount?: number
+	successfulProposals?: number
+	states?: Record<string, number>
+	months?: Record<string, RawGovernanceOverviewMonth>
+	proposalsInLast30Days?: number
+	propsalsInLast30Days?: number
+	successfulProposalsInLast30Days?: number
+	successfulPropsalsInLast30Days?: number
 }
 type RawGovernanceOverview = Record<string, RawGovernanceOverviewItem>
 
-const toFiniteNumber = (value: unknown): number | null => {
-	if (typeof value === 'number' && Number.isFinite(value)) return value
-	if (typeof value === 'string') {
-		const numericValue = Number(value)
-		return Number.isFinite(numericValue) ? numericValue : null
-	}
-	return null
-}
-
-const toCountString = (value: unknown): string => {
-	if (typeof value === 'string') return value
-	const numericValue = toFiniteNumber(value)
-	return numericValue != null ? String(numericValue) : '0'
-}
-
 function normalizeGovernanceOverviewItem(raw: RawGovernanceOverviewItem): GovernanceOverviewItem {
-	const states: Record<string, number> = {}
-	for (const [state, value] of Object.entries(raw.states ?? {})) {
-		const numericValue = toFiniteNumber(value)
-		if (numericValue != null) {
-			states[state] = numericValue
-		}
-	}
+	const states = raw.states ?? {}
 
 	const months: GovernanceOverviewItem['months'] = {}
-	for (const [month, monthData] of Object.entries(raw.months ?? {})) {
-		if (monthData == null || typeof monthData !== 'object') {
-			months[month] = { proposals: [], states: {} }
-			continue
-		}
-
-		const proposalsRaw = (monthData as { proposals?: unknown }).proposals
-		const proposals = Array.isArray(proposalsRaw) ? proposalsRaw.filter((p): p is string => typeof p === 'string') : []
-
-		const monthStatesRaw = (monthData as { states?: { active?: unknown; closed?: unknown } }).states
-		const active = toFiniteNumber(monthStatesRaw?.active)
-		const closed = toFiniteNumber(monthStatesRaw?.closed)
+	for (const month in raw.months) {
+		const monthData = raw.months[month]
+		if (monthData === undefined) continue
+		const active = monthData.states.active
+		const closed = monthData.states.closed
 		months[month] = {
-			proposals,
+			proposals: monthData.proposals ?? [],
 			states: {
-				...(active != null ? { active } : {}),
-				...(closed != null ? { closed } : {})
+				...(active !== undefined ? { active } : {}),
+				...(closed !== undefined ? { closed } : {})
 			}
 		}
 	}
 
-	const proposalsInLast30Days =
-		toFiniteNumber(raw.proposalsInLast30Days) ?? toFiniteNumber(raw.propsalsInLast30Days) ?? 0
-	const successfulProposalsInLast30Days =
-		toFiniteNumber(raw.successfulProposalsInLast30Days) ?? toFiniteNumber(raw.successfulPropsalsInLast30Days) ?? 0
-	const successfulProposals = toFiniteNumber(raw.successfulProposals)
+	const proposalsInLast30Days = raw.proposalsInLast30Days ?? raw.propsalsInLast30Days ?? 0
+	const successfulProposalsInLast30Days = raw.successfulProposalsInLast30Days ?? raw.successfulPropsalsInLast30Days ?? 0
 
 	return {
-		name: typeof raw.name === 'string' ? raw.name : '',
-		proposalsCount: toCountString(raw.proposalsCount),
-		followersCount: toCountString(raw.followersCount),
-		strategyCount: toCountString(raw.strategyCount),
-		...(successfulProposals != null ? { successfulProposals } : {}),
+		name: raw.name ?? '',
+		proposalsCount: raw.proposalsCount ?? 0,
+		followersCount: raw.followersCount ?? 0,
+		strategyCount: raw.strategyCount ?? 0,
+		...(raw.successfulProposals !== undefined ? { successfulProposals: raw.successfulProposals } : {}),
 		states,
 		months,
 		proposalsInLast30Days,
@@ -117,7 +88,9 @@ function normalizeGovernanceOverviewItem(raw: RawGovernanceOverviewItem): Govern
 const mergeNumberRecord = (base: Record<string, number>, incoming: Record<string, number>): Record<string, number> => {
 	const merged: Record<string, number> = { ...base }
 
-	for (const [key, value] of Object.entries(incoming)) {
+	for (const key in incoming) {
+		const value = incoming[key]
+		if (value === undefined) continue
 		merged[key] = (merged[key] ?? 0) + value
 	}
 
@@ -130,7 +103,9 @@ const mergeMonths = (
 ): GovernanceOverviewItem['months'] => {
 	const merged: GovernanceOverviewItem['months'] = { ...base }
 
-	for (const [month, monthData] of Object.entries(incoming)) {
+	for (const month in incoming) {
+		const monthData = incoming[month]
+		if (monthData === undefined) continue
 		const existingMonthData = merged[month]
 
 		if (!existingMonthData) {
@@ -157,9 +132,9 @@ const mergeGovernanceOverviewItems = (
 	base: GovernanceOverviewItem,
 	incoming: GovernanceOverviewItem
 ): GovernanceOverviewItem => {
-	const proposalsCount = (toFiniteNumber(base.proposalsCount) ?? 0) + (toFiniteNumber(incoming.proposalsCount) ?? 0)
-	const followersCount = (toFiniteNumber(base.followersCount) ?? 0) + (toFiniteNumber(incoming.followersCount) ?? 0)
-	const strategyCount = (toFiniteNumber(base.strategyCount) ?? 0) + (toFiniteNumber(incoming.strategyCount) ?? 0)
+	const proposalsCount = base.proposalsCount + incoming.proposalsCount
+	const followersCount = base.followersCount + incoming.followersCount
+	const strategyCount = base.strategyCount + incoming.strategyCount
 	const successfulProposals = (base.successfulProposals ?? 0) + (incoming.successfulProposals ?? 0)
 	const hasSuccessfulProposals = base.successfulProposals != null || incoming.successfulProposals != null
 
@@ -167,9 +142,9 @@ const mergeGovernanceOverviewItems = (
 
 	return {
 		name: base.name || incoming.name,
-		proposalsCount: toCountString(proposalsCount),
-		followersCount: toCountString(followersCount),
-		strategyCount: toCountString(strategyCount),
+		proposalsCount,
+		followersCount,
+		strategyCount,
 		...(hasSuccessfulProposals ? { successfulProposals } : {}),
 		states,
 		months: mergeMonths(base.months, incoming.months),
@@ -183,16 +158,10 @@ const buildGovernanceOverviewData = (datasets: RawGovernanceOverview[]): Governa
 	const mergedByProject = new Map<string, GovernanceOverviewItem>()
 
 	for (const dataset of datasets) {
-		if (dataset == null || typeof dataset !== 'object' || Array.isArray(dataset)) {
-			continue
-		}
-
-		for (const [rawKey, item] of Object.entries(dataset)) {
-			if (item == null || typeof item !== 'object' || Array.isArray(item)) {
-				continue
-			}
-
-			const normalizedItem = normalizeGovernanceOverviewItem(item as RawGovernanceOverviewItem)
+		for (const rawKey in dataset) {
+			const item = dataset[rawKey]
+			if (item === undefined) continue
+			const normalizedItem = normalizeGovernanceOverviewItem(item)
 			const projectKey = slug(normalizedItem.name || rawKey) || rawKey
 			const existingItem = mergedByProject.get(projectKey)
 
@@ -208,9 +177,9 @@ const buildGovernanceOverviewData = (datasets: RawGovernanceOverview[]): Governa
 
 export async function getGovernancePageData(): Promise<{ data: GovernanceOverviewItem[] }> {
 	const [snapshot, compound, tally] = await Promise.all([
-		fetchJson<RawGovernanceOverview>(GOVERNANCE_SNAPSHOT_API).catch(() => ({}) as RawGovernanceOverview),
-		fetchJson<RawGovernanceOverview>(GOVERNANCE_COMPOUND_API).catch(() => ({}) as RawGovernanceOverview),
-		fetchJson<RawGovernanceOverview>(GOVERNANCE_TALLY_API).catch(() => ({}) as RawGovernanceOverview)
+		fetchJson<RawGovernanceOverview>(GOVERNANCE_SNAPSHOT_API),
+		fetchJson<RawGovernanceOverview>(GOVERNANCE_COMPOUND_API),
+		fetchJson<RawGovernanceOverview>(GOVERNANCE_TALLY_API)
 	])
 
 	const data = buildGovernanceOverviewData([snapshot, compound, tally])
@@ -242,43 +211,18 @@ export async function getGovernanceDetailsPageData(
 	// Case 2: We only have a project slug (governance route) and must discover IDs via overview indexes.
 	const project = input.project
 	const [snapshot, compound, tally] = await Promise.all([
-		fetchJson<Record<string, GovernanceOverviewProject>>(GOVERNANCE_SNAPSHOT_API).catch(() => ({})),
-		fetchJson<Record<string, GovernanceOverviewProject>>(GOVERNANCE_COMPOUND_API).catch(() => ({})),
-		fetchJson<Record<string, GovernanceOverviewProject>>(GOVERNANCE_TALLY_API).catch(() => ({}))
+		fetchJson<Record<string, GovernanceOverviewProject>>(GOVERNANCE_SNAPSHOT_API),
+		fetchJson<Record<string, GovernanceOverviewProject>>(GOVERNANCE_COMPOUND_API),
+		fetchJson<Record<string, GovernanceOverviewProject>>(GOVERNANCE_TALLY_API)
 	])
 
 	const normalizedProject = slug(project)
 
-	// Build lookup maps by slug for O(1) access instead of O(n) Object.values().find()
-	const snapshotBySlug = new Map<string, GovernanceOverviewProject>()
-	const compoundBySlug = new Map<string, GovernanceOverviewProject>()
-	const tallyBySlug = new Map<string, GovernanceOverviewProject>()
-
-	for (const key in snapshot) {
-		const p = snapshot[key]
-		const projectSlug = slug(p.name)
-		if (!snapshotBySlug.has(projectSlug)) {
-			snapshotBySlug.set(projectSlug, p)
-		}
-	}
-	for (const key in compound) {
-		const p = compound[key]
-		const projectSlug = slug(p.name)
-		if (!compoundBySlug.has(projectSlug)) {
-			compoundBySlug.set(projectSlug, p)
-		}
-	}
-	for (const key in tally) {
-		const p = tally[key]
-		const projectSlug = slug(p.name)
-		if (!tallyBySlug.has(projectSlug)) {
-			tallyBySlug.set(projectSlug, p)
-		}
-	}
-
-	const snapshotProject = snapshotBySlug.get(normalizedProject)
-	const compoundProject = compoundBySlug.get(normalizedProject)
-	const tallyProject = tallyBySlug.get(normalizedProject)
+	const findProject = (projects: Record<string, GovernanceOverviewProject>) =>
+		Object.values(projects).find((candidate) => slug(candidate.name) === normalizedProject)
+	const snapshotProject = findProject(snapshot)
+	const compoundProject = findProject(compound)
+	const tallyProject = findProject(tally)
 
 	if (!snapshotProject && !compoundProject && !tallyProject) {
 		return { notFound: true }

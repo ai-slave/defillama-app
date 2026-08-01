@@ -1,57 +1,7 @@
-import { TVL_SETTINGS } from '~/contexts/LocalStorage'
+import type { ProtocolListAdditiveTvlKey } from '~/containers/ProtocolLists/api.types'
 import type { IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
 
-type LiteProtocolTvlEntry = {
-	tvl: number
-	tvlPrevDay: number | null
-	tvlPrevWeek: number | null
-	tvlPrevMonth: number | null
-}
-
-export interface ILiteProtocol {
-	category: string
-	tags?: Array<string>
-	chains: Array<string>
-	mcap: number | null
-	name: string
-	symbol: string
-	logo: string
-	url: string
-	referralUrl?: string
-	tvl: number
-	tvlPrevDay: number | null
-	tvlPrevWeek: number | null
-	tvlPrevMonth: number | null
-	chainTvls: Record<string, LiteProtocolTvlEntry>
-	defillamaId: string
-	governanceID?: Array<string>
-	geckoId?: string
-	parentProtocol?: string
-	oracles?: Array<string>
-	oraclesByChain?: Record<string, Array<string>>
-	forkedFrom?: Array<string>
-	listedAt?: number
-	deprecated?: boolean
-}
-
-export interface ILiteParentProtocol {
-	id: string
-	name: string
-	url: string
-	description: string
-	logo: string
-	chains: Array<string>
-	gecko_id: string
-	cmcId: string
-	treasury: string
-	twitter: string
-	governanceID: Array<string>
-	wrongLiquidity: boolean
-	github: Array<string>
-	mcap: number
-}
-
-export type TVL_TYPES = (typeof TVL_SETTINGS)[keyof typeof TVL_SETTINGS] | 'default' | 'excludeParent'
+export type TVL_TYPES = ProtocolListAdditiveTvlKey | 'doublecounted' | 'liquidstaking' | 'default' | 'excludeParent'
 
 export type ProtocolRankingTvlEntry = {
 	tvl: number | null
@@ -60,12 +10,16 @@ export type ProtocolRankingTvlEntry = {
 	tvlPrevMonth: number | null
 }
 
+export type ProtocolRankingTvls = Partial<Record<TVL_TYPES, ProtocolRankingTvlEntry>> & {
+	default: ProtocolRankingTvlEntry
+}
+
 export interface IChildProtocol {
 	name: string
 	slug: string
 	logo?: string | null
 	category: string | null
-	tvl: Record<TVL_TYPES, ProtocolRankingTvlEntry> | null
+	tvl: ProtocolRankingTvls | null
 	tvlChange: { change1d: number | null; change7d: number | null; change1m: number | null } | null
 	chains: Array<string>
 	mcap: number | null

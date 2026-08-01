@@ -6,7 +6,7 @@ import type { DimensionDatasetProtocol, DimensionDatasetResult } from '~/contain
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { IFormattedProtocol } from '~/containers/ProtocolLists/protocol-table.types'
 import { formatProtocolsData } from '~/containers/ProtocolLists/utils.old'
-import { getMarketCapToAnnualizedMetricRatio } from '~/utils'
+import { getMarketCapToAnnualizedMetricRatio, getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { StreamDoneContext } from '../../queries'
 import {
@@ -193,26 +193,19 @@ export function useGetProtocolsListMultiChain(chains: string[], enabled = true) 
 			for (const protocol of chainProtocols) {
 				const existing = protocolsMap.get(protocol.name)
 				if (existing) {
-					existing.tvl = (existing.tvl || 0) + (protocol.tvl || 0)
-					existing.tvlPrevDay = (existing.tvlPrevDay || 0) + (protocol.tvlPrevDay || 0)
-					existing.tvlPrevWeek = (existing.tvlPrevWeek || 0) + (protocol.tvlPrevWeek || 0)
-					existing.tvlPrevMonth = (existing.tvlPrevMonth || 0) + (protocol.tvlPrevMonth || 0)
+					existing.tvl = addCompleteNumber(existing.tvl, protocol.tvl)
+					existing.tvlPrevDay = addCompleteNumber(existing.tvlPrevDay, protocol.tvlPrevDay)
+					existing.tvlPrevWeek = addCompleteNumber(existing.tvlPrevWeek, protocol.tvlPrevWeek)
+					existing.tvlPrevMonth = addCompleteNumber(existing.tvlPrevMonth, protocol.tvlPrevMonth)
+					existing.change_1d = getPercentChange(existing.tvl, existing.tvlPrevDay)
+					existing.change_7d = getPercentChange(existing.tvl, existing.tvlPrevWeek)
+					existing.change_1m = getPercentChange(existing.tvl, existing.tvlPrevMonth)
+					const mcapTvl =
+						existing.mcap != null && existing.tvl != null && existing.tvl > 0 ? existing.mcap / existing.tvl : null
+					existing.mcaptvl = mcapTvl !== null && Number.isFinite(mcapTvl) ? mcapTvl : null
 
-					if (protocol.chains && Array.isArray(protocol.chains)) {
-						existing.chains = [...new Set([...existing.chains, ...protocol.chains])]
-					}
-					if (Array.isArray(protocol.oracles)) {
-						const merged = new Set([...(existing.oracles || []), ...protocol.oracles])
-						existing.oracles = Array.from(merged)
-					}
-					if (protocol.oraclesByChain) {
-						existing.oraclesByChain = existing.oraclesByChain || {}
-						for (const k in protocol.oraclesByChain) {
-							const protocolOracles = protocol.oraclesByChain[k]
-							if (protocolOracles === undefined) continue
-							const cur = new Set([...(existing.oraclesByChain[k] ?? []), ...protocolOracles])
-							existing.oraclesByChain[k] = Array.from(cur)
-						}
+					for (const protocolChain of protocol.chains) {
+						if (!existing.chains.includes(protocolChain)) existing.chains.push(protocolChain)
 					}
 				} else {
 					protocolsMap.set(protocol.name, { ...protocol })

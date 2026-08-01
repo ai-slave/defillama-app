@@ -54,14 +54,7 @@ export const OraclesByChain = ({
 	const tableAndPieData = React.useMemo(() => {
 		return buildOraclesByChainTableAndPieData({ tableData, extraTvlsEnabled, hasEnabledExtras })
 	}, [extraTvlsEnabled, hasEnabledExtras, tableData])
-	const oracleSeries = React.useMemo(() => {
-		const series = tableAndPieData.pieSeries.peers.map((peer) => peer.name)
-		const rankedCurrent = new Set(series)
-		for (const oracle of oracles) {
-			if (!rankedCurrent.has(oracle)) series.push(oracle)
-		}
-		return series
-	}, [oracles, tableAndPieData.pieSeries.peers])
+	const oracleSeries = oracles
 
 	const dominanceData = React.useMemo(() => {
 		return buildOraclesByChainDominanceData({
@@ -84,7 +77,8 @@ export const OraclesByChain = ({
 			buildSelectedPercentageChart({
 				dataset: dominanceData.dominanceDataset,
 				charts: dominanceData.dominanceCharts,
-				selectedCharts
+				selectedCharts,
+				missingValuePolicy: 'sum-available'
 			}),
 		[dominanceData, selectedCharts]
 	)
@@ -233,7 +227,7 @@ const columns = [
 		header: 'Chains',
 		enableSorting: false,
 		cell: ({ row }) => {
-			const chains = row.original.chains ?? []
+			const chains = row.original.chains
 			return (
 				<div className="flex items-center justify-end gap-1 overflow-hidden">
 					<IconsRow items={toChainIconItems(chains, (chain) => chainHref('/oracles/chain', chain))} />
@@ -253,11 +247,17 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('tvl', {
+	columnHelper.accessor((row) => row.tvl ?? undefined, {
+		id: 'tvl',
 		header: 'TVS',
 		enableSorting: true,
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		sortUndefined: 'last',
+		cell: (info) => {
+			const tvl = info.row.original.tvl
+			return tvl === null
+				? null
+				: formatUsd(tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		},
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',

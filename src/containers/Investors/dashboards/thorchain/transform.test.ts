@@ -1,17 +1,27 @@
 import { describe, expect, it } from 'vitest'
+import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { addNetworkFeeToIncomeStatement, carryForwardCumulative, chartToDataset, sumDailySeries } from './transform'
 
 describe('chartToDataset', () => {
-	it('guards broad date labels and zero-fills a missing parallel value', () => {
+	it('skips category labels while keeping aligned time-series values', () => {
 		const dataset = chartToDataset({
 			dates: ['Total', '2026-01-01'],
-			series: [{ name: 'Revenue', data: [10] }]
+			series: [{ name: 'Revenue', data: [10, 20] }]
 		})
 
 		expect(dataset).toEqual({
 			dimensions: ['timestamp', 'Revenue'],
-			source: [[1_767_225_600_000, 0]]
+			source: [[1_767_225_600_000, 20]]
 		})
+	})
+
+	it('rejects a time-series value missing from a parallel series', () => {
+		expect(() =>
+			chartToDataset({
+				dates: ['2026-01-01'],
+				series: [{ name: 'Revenue', data: [] }]
+			})
+		).toThrow('Expected Revenue data for 2026-01-01')
 	})
 })
 
@@ -69,27 +79,56 @@ describe('carryForwardCumulative', () => {
 describe('addNetworkFeeToIncomeStatement', () => {
 	// 2026-01-15 UTC — lands in 2026-01 / 2026-Q1 / 2026 / cumulative.
 	const JAN_15_2026 = 1_768_435_200
+	type IncomeStatementData = NonNullable<IProtocolOverviewPageData['incomeStatement']>
 
-	const statement = () =>
-		({
-			data: {
-				monthly: { '2026-01': { 'Gross Protocol Revenue': { value: 100, 'by-label': { Swap: 100 } } } },
-				quarterly: { '2026-Q1': { 'Gross Protocol Revenue': { value: 100, 'by-label': { Swap: 100 } } } },
-				yearly: { '2026': { 'Gross Protocol Revenue': { value: 100, 'by-label': { Swap: 100 } } } },
-				cumulative: { cumulative: { 'Gross Protocol Revenue': { value: 100, 'by-label': { Swap: 100 } } } }
+	const statement = (): IncomeStatementData => ({
+		data: {
+			monthly: {
+				'2026-01': {
+					timestamp: Date.parse('2026-01-01'),
+					values: { 'Gross Protocol Revenue': { value: 100, 'by-label': { Swap: 100 } } }
+				}
 			},
-			labelsByType: { 'Gross Protocol Revenue': ['Swap'] },
-			methodology: {},
-			breakdownMethodology: {},
-			hasOtherTokenHolderFlows: false,
-			hasTokenHolderNetIncome: false
-		}) as unknown as NonNullable<
-			import('~/containers/ProtocolOverview/types').IProtocolOverviewPageData['incomeStatement']
-		>
+			quarterly: {
+				'2026-Q1': {
+					timestamp: Date.parse('2026-01-01'),
+					values: { 'Gross Protocol Revenue': { value: 100, 'by-label': { Swap: 100 } } }
+				}
+			},
+			yearly: {
+				'2026': {
+					timestamp: Date.parse('2026-01-01'),
+					values: { 'Gross Protocol Revenue': { value: 100, 'by-label': { Swap: 100 } } }
+				}
+			},
+			cumulative: {
+				cumulative: {
+					timestamp: Date.parse('2026-01-01'),
+					values: { 'Gross Protocol Revenue': { value: 100, 'by-label': { Swap: 100 } } }
+				}
+			}
+		},
+		labelsByType: { 'Gross Protocol Revenue': ['Swap'] },
+		methodology: {},
+		breakdownMethodology: {},
+		hasOtherTokenHolderFlows: false,
+		hasTokenHolderNetIncome: false
+	})
+
+	const getPeriod = (
+		incomeStatement: IncomeStatementData,
+		group: keyof IncomeStatementData['data'],
+		periodKey: string
+	) => {
+		const period = incomeStatement.data[group][periodKey]
+		if (!period) throw new Error(`Expected ${group} period ${periodKey}`)
+		return period
+	}
 
 	it('adds the fee to every period bucket without mutating the source', () => {
 		const source = statement()
-		const merged = addNetworkFeeToIncomeStatement(source, [[JAN_15_2026, 10]])!
+		const merged = addNetworkFeeToIncomeStatement(source, [[JAN_15_2026, 10]])
+		if (!merged) throw new Error('Expected merged income statement')
 
 		for (const [group, period] of [
 			['monthly', '2026-01'],
@@ -97,30 +136,34 @@ describe('addNetworkFeeToIncomeStatement', () => {
 			['yearly', '2026'],
 			['cumulative', 'cumulative']
 		] as const) {
-			const entry = merged.data[group][period]['Gross Protocol Revenue']
+			const entry = getPeriod(merged, group, period).values['Gross Protocol Revenue']
+			if (!entry) throw new Error('Expected gross protocol revenue')
 			expect(entry.value).toBe(110)
 			expect(entry['by-label']).toEqual({ Swap: 100, 'Network Fee': 10 })
 		}
 		expect(merged.labelsByType['Gross Protocol Revenue']).toEqual(['Swap', 'Network Fee'])
 		// Lines the dex statement doesn't carry are created rather than dropped.
-		expect(merged.data.monthly['2026-01']['Gross Profit'].value).toBe(10)
-		expect(merged.data.monthly['2026-01']['Earnings'].value).toBe(10)
-		expect(source.data.monthly['2026-01']['Gross Protocol Revenue'].value).toBe(100)
+		expect(getPeriod(merged, 'monthly', '2026-01').values['Gross Profit']?.value).toBe(10)
+		expect(getPeriod(merged, 'monthly', '2026-01').values['Earnings']?.value).toBe(10)
+		expect(getPeriod(source, 'monthly', '2026-01').values['Gross Protocol Revenue']?.value).toBe(100)
 	})
 
 	it('fills in a by-label map on lines that arrive as a bare total', () => {
 		const source = statement()
-		source.data.monthly['2026-01']['Gross Profit'] = {
-			value: 40
-		} as (typeof source.data.monthly)['2026-01']['Gross Profit']
+		getPeriod(source, 'monthly', '2026-01').values['Gross Profit'] = { value: 40 }
 
-		const merged = addNetworkFeeToIncomeStatement(source, [[JAN_15_2026, 10]])!
+		const merged = addNetworkFeeToIncomeStatement(source, [[JAN_15_2026, 10]])
+		if (!merged) throw new Error('Expected merged income statement')
 
-		expect(merged.data.monthly['2026-01']['Gross Profit']).toEqual({ value: 50, 'by-label': { 'Network Fee': 10 } })
+		expect(getPeriod(merged, 'monthly', '2026-01').values['Gross Profit']).toEqual({
+			value: 50,
+			'by-label': { 'Network Fee': 10 }
+		})
 	})
 
 	it('drops days outside the periods the statement covers', () => {
-		const merged = addNetworkFeeToIncomeStatement(statement(), [[JAN_15_2026 - 365 * 86400, 10]])!
-		expect(merged.data.monthly['2026-01']['Gross Protocol Revenue'].value).toBe(100)
+		const merged = addNetworkFeeToIncomeStatement(statement(), [[JAN_15_2026 - 365 * 86400, 10]])
+		if (!merged) throw new Error('Expected merged income statement')
+		expect(getPeriod(merged, 'monthly', '2026-01').values['Gross Protocol Revenue']?.value).toBe(100)
 	})
 })

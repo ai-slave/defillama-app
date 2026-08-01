@@ -1,21 +1,25 @@
-type ProtocolLiteTvlEntry = {
-	tvl: number
+export type ProtocolLiteTvlEntry = {
+	tvl: number | null
 	tvlPrevDay: number | null
 	tvlPrevWeek: number | null
 	tvlPrevMonth: number | null
 }
 
+export const PROTOCOL_LIST_ADDITIVE_TVL_KEYS = ['pool2', 'staking', 'borrowed', 'vesting'] as const
+
+export type ProtocolListAdditiveTvlKey = (typeof PROTOCOL_LIST_ADDITIVE_TVL_KEYS)[number]
+
+export function isProtocolListTvlKey(value: string): value is ProtocolListAdditiveTvlKey {
+	return PROTOCOL_LIST_ADDITIVE_TVL_KEYS.some((key) => key === value)
+}
+
 /** Raw protocol from the lite/protocols2 API. */
 export interface ProtocolLite {
 	name: string
-	slug?: string
-	id?: string
 	symbol: string
-	logo: string
+	logo: string | null
 	url: string
-	category: string
-	tags?: string[]
-	referralUrl?: string | null
+	referralUrl?: string
 	chains: string[]
 	chainTvls: Record<string, ProtocolLiteTvlEntry>
 	tvl: number | null
@@ -24,26 +28,27 @@ export interface ProtocolLite {
 	tvlPrevMonth: number | null
 	mcap: number | null
 	defillamaId: string
-	geckoId?: string | null
+	geckoId: string | null
+	category: string
+	tags?: string[]
 	parentProtocol?: string
 	listedAt?: number
-	deprecated?: boolean
-	misrepresentedTokens?: boolean
+	deprecated?: true
 	forkedFrom?: string[]
-	oracles?: string[]
-	oraclesByChain?: Record<string, string[]>
+	governanceID?: string[]
 }
 
 /** Raw parent protocol from the lite/protocols2 API. */
 export interface ParentProtocolLite {
 	id: string
 	name: string
-	symbol?: string
+	symbol?: string | null
 	chains: string[]
-	gecko_id?: string | null
-	mcap?: number | null
-	referralUrl?: string | null
-	logo?: string
+	gecko_id: string | null
+	mcap: number | null
+	referralUrl?: string
+	logo: string
+	deprecated?: true
 }
 
 /** Full response from lite/protocols2. */
@@ -51,5 +56,5 @@ export interface ProtocolsResponse {
 	protocols: ProtocolLite[]
 	chains: string[]
 	parentProtocols: ParentProtocolLite[]
-	protocolCategories?: string[]
+	protocolCategories: string[]
 }

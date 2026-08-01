@@ -54,12 +54,13 @@ export default function ProtocolChart({
 		[chartData, chartColors, chartTheme.text, groupBy, isThemeDark, rangeHallmarks]
 	)
 	const finalChartOptions = useMemo(() => {
+		const normalizedUnlockTokenSymbol = unlockTokenSymbol ?? ''
 		const domainAxes = buildProtocolYAxis({
 			allYAxis: presentation.allYAxis,
 			baseYAxis: {},
 			chartColors,
 			chartsInSeries: presentation.chartsInSeries,
-			unlockTokenSymbol: unlockTokenSymbol ?? '',
+			unlockTokenSymbol: normalizedUnlockTokenSymbol,
 			gasUsedValueSymbol: gasUsedValueSymbol ?? valueSymbol
 		})
 		return {
@@ -71,8 +72,8 @@ export default function ProtocolChart({
 					formatter: createOverviewTooltipFormatter({
 						groupBy: tooltipGroupBy,
 						valueSymbol,
-						unlockTokenSymbol: unlockTokenSymbol ?? '',
-						seriesValueSymbols: gasUsedValueSymbol ? new Map([['Gas Used', gasUsedValueSymbol]]) : undefined
+						unlockTokenSymbol: normalizedUnlockTokenSymbol,
+						...(gasUsedValueSymbol ? { seriesValueSymbols: new Map([['Gas Used', gasUsedValueSymbol]]) } : {})
 					})
 				},
 				chartOptions.tooltip
@@ -96,17 +97,17 @@ export default function ProtocolChart({
 			charts={presentation.charts}
 			chartOptions={finalChartOptions}
 			valueSymbol={valueSymbol}
-			groupBy={groupBy}
-			hallmarks={hallmarks ?? undefined}
+			{...(groupBy !== undefined ? { groupBy } : {})}
+			{...(hallmarks !== null ? { hallmarks } : {})}
 			rangeHallmarks={rangeHallmarks}
 			hallmarksInMs
-			height={height}
+			{...(height !== undefined ? { height } : {})}
 			hideDataZoom={effectiveHideDataZoom}
 			autoHideDataZoom={false}
 			hideDefaultLegend
 			exportButtons="hidden"
 			isThemeDark={isThemeDark}
-			onReady={onReady}
+			{...(onReady !== undefined ? { onReady } : {})}
 		/>
 	)
 }

@@ -85,11 +85,28 @@ ProtocolLists consumes protocol list data and reshapes it for list pages. It sho
 Important rules:
 
 - `fetchProtocols()` is a shared protocol list source used by many containers.
-- Extra TVL sections are extracted from `chainTvls` when keys match TVL setting keys.
+- `/lite/protocols2` returns `protocolCategories` and emits nullable top-level and section
+  TVL snapshots. Every child protocol has `category`; tagged protocols also retain `tags`,
+  so the fields are not mutually exclusive. List DTOs preserve nullable snapshots until a
+  page deliberately normalizes them.
+- Protocol-list TVL sections are finite. `staking`, `pool2`, `borrowed`, and `vesting`
+  are the only selectable/additive keys. `doublecounted` and `liquidstaking` are upstream
+  classification markers only, and `govtokens` is not a protocol-list section.
 - Recent/airdrop TVL toggle behavior is not the same as chain TVL normalization.
-- `applyExtraTvl` intentionally does not apply the chain doublecounted/liquidstaking subtraction model.
-- `applyProtocolTvlSettings` applies table toggles, min/max TVL filtering, child protocol behavior, and `strikeTvl` adjustments.
-- `applyProtocolTvlSettings` preserves unknown previous TVL fields as `null` after toggles while normalizing current TVL for table display.
+- Hidden chain-only doublecounted/liquidstaking/govtokens settings do not change protocol
+  list values, strike state, or tooltip copy.
+- Selected-chain recent/airdrop snapshots use exact chain-name prefixes (including
+  hyphenated names). Present null current/previous snapshots keep the aggregate period
+  null; every selected chain declared by the protocol requires a base snapshot. A missing
+  selected-chain base is unavailable because the response has no coverage marker proving
+  that omission means zero. Explicit zero remains zero, and selected undeclared chains are
+  irrelevant.
+- `applyProtocolTvlSettings` applies additive table toggles, min/max TVL filtering, and
+  child protocol behavior without changing producer-derived `strikeTvl`.
+- Min/max TVL bounds exclude unavailable rows. Market-cap-to-TVL ratios require a strictly
+  positive TVL denominator; zero market cap over positive TVL remains a valid zero ratio.
+- Extra-TVL and token-metric pages group only canonical parents with multiple visible
+  children; missing parents and sole children remain public rows.
 
 Read `docs/metrics.md` before changing TVL terminology or trying to share behavior with chain TVL pages.
 
@@ -100,24 +117,29 @@ Local TVL/list helper coverage now exists, but the surface area is still broad. 
 Current covered helper targets:
 
 - `applyExtraTvl`:
-  - adds selected non-doublecounted/non-liquidstaking extras
-  - does not apply chain doublecounted/liquidstaking subtraction
+  - adds only the four producer-backed additive protocol extras
+  - ignores chain-only doublecounted/liquidstaking/govtokens state
+  - preserves unknown previous snapshots as null
   - clamps negative values to zero
   - recalculates percent changes and market-cap-to-TVL
+- `scopeRecentProtocolToChains`:
+  - aggregates selected base-chain snapshots exactly
+  - handles hyphenated chain-name prefixes
+  - distinguishes known, null, explicit zero, and missing selected-chain current values
 - `applyProtocolTvlSettings`:
   - filters by min/max after selected extras are applied
   - handles child protocols
-  - clears `strikeTvl` when liquidstaking or doublecounted is enabled
+  - leaves producer-derived strike presentation unchanged by hidden chain-only settings
   - preserves null previous TVL fields for parent and child table rows
-
-Still useful if this area is touched:
-
-- `getExtraTvlByChain`: pin the expected extra TVL config for borrowed, staking, and pool2.
+- `getExtraTvlByChain` and token metrics:
+  - preserve explicit zero and null metric rows
+  - retain zero-valued chain navigation entries by section presence
+  - preserve missing-parent and sole-child rows
 
 Focused command:
 
 ```bash
-bun run test src/containers/ProtocolLists/__tests__/utils.test.ts
+bun run test src/containers/ProtocolLists/__tests__/utils.test.ts src/containers/ProtocolLists/__tests__/queries.test.ts src/containers/ProtocolLists/utils.old.test.ts
 ```
 
 For source changes, follow the repo root verification instructions.
@@ -125,6 +147,8 @@ For source changes, follow the repo root verification instructions.
 ## Change Rules
 
 - Trust upstream API payloads and aggregates.
+- Keep protocol-list extra-key admission aligned with the `/lite/protocols2` producer;
+  do not reuse broader chain-level toggle key sets.
 - Preserve public routes, query params, payload shapes, page copy, and displayed numbers unless explicitly requested.
 - Do not dedupe TVL behavior with ChainOverview or ChainsByCategory until characterization tests prove it is the same behavior.
 - Keep protocol entity behavior in `ProtocolOverview`.

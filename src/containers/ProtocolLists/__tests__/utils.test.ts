@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
+import type { ProtocolLiteTvlEntry } from '../api.types'
 import type { IRecentProtocol } from '../types'
-import { applyExtraTvl, applyProtocolTvlSettings } from '../utils'
+import { applyExtraTvl, applyProtocolTvlSettings, scopeRecentProtocolToChains } from '../utils'
 
 type ProtocolTvlRecord = NonNullable<IProtocol['tvl']>
 type ProtocolTvlEntry = ProtocolTvlRecord['default']
@@ -11,7 +12,7 @@ const makeTvlEntry = (
 	tvlPrevDay: number | null = tvl,
 	tvlPrevWeek: number | null = tvl,
 	tvlPrevMonth: number | null = tvl
-): ProtocolTvlEntry => ({
+): ProtocolLiteTvlEntry => ({
 	tvl,
 	tvlPrevDay,
 	tvlPrevWeek,
@@ -26,7 +27,6 @@ const makeProtocolTvl = (overrides: Partial<ProtocolTvlRecord> = {}): ProtocolTv
 	doublecounted: makeTvlEntry(0),
 	liquidstaking: makeTvlEntry(0),
 	vesting: makeTvlEntry(0),
-	govtokens: makeTvlEntry(0),
 	excludeParent: makeTvlEntry(0),
 	...overrides
 })
@@ -47,7 +47,7 @@ const makeProtocol = (overrides: Partial<IProtocol> = {}): IProtocol => ({
 
 const makeRecentProtocol = (overrides: Partial<IRecentProtocol> = {}): IRecentProtocol => ({
 	name: 'Recent Protocol',
-	symbol: null,
+	symbol: 'RECENT',
 	logo: '',
 	url: 'https://example.com',
 	category: 'Dexes',
@@ -64,20 +64,149 @@ const makeRecentProtocol = (overrides: Partial<IRecentProtocol> = {}): IRecentPr
 	...overrides
 })
 
+function only<T>(values: T[]): T {
+	const value = values[0]
+	if (value === undefined) throw new Error('Expected one result')
+	return value
+}
+
 describe('ProtocolLists TVL helpers', () => {
-	it('adds enabled recent protocol extras without applying doublecounted or liquid staking overlap behavior', () => {
+	it('keeps selected-chain previous snapshots unknown when one required chain snapshot is null', () => {
+		const protocol = scopeRecentProtocolToChains({
+			protocol: makeRecentProtocol({
+				chains: ['OP Mainnet', 'Base'],
+				chainTvls: {
+					'OP Mainnet': makeTvlEntry(100, 80, 70, 60),
+					Base: makeTvlEntry(50, null, 40, 30)
+				}
+			}),
+			selectedChains: new Set(['op mainnet', 'base'])
+		})
+
+		expect(protocol.tvl).toBe(150)
+		expect(protocol.tvlPrevDay).toBeNull()
+		expect(protocol.tvlPrevWeek).toBe(110)
+		expect(protocol.tvlPrevMonth).toBe(90)
+	})
+
+	it('keeps selected-chain current TVL unknown when a present contribution is null', () => {
+		const protocol = scopeRecentProtocolToChains({
+			protocol: makeRecentProtocol({
+				chains: ['OP Mainnet', 'Base'],
+				chainTvls: {
+					'OP Mainnet': makeTvlEntry(100),
+					Base: makeTvlEntry(null)
+				}
+			}),
+			selectedChains: new Set(['op mainnet', 'base'])
+		})
+
+		expect(protocol.tvl).toBeNull()
+	})
+
+	it('keeps combined snapshots unknown when a selected declared chain has no base entry', () => {
+		const protocol = scopeRecentProtocolToChains({
+			protocol: makeRecentProtocol({
+				chains: ['Ethereum', 'Base'],
+				chainTvls: {
+					Ethereum: makeTvlEntry(100, 80, 70, 60),
+					'Base-staking': makeTvlEntry(10, 9, 8, 7)
+				}
+			}),
+			selectedChains: new Set(['ethereum', 'base', 'arbitrum'])
+		})
+
+		expect(protocol).toMatchObject({
+			tvl: null,
+			tvlPrevDay: null,
+			tvlPrevWeek: null,
+			tvlPrevMonth: null,
+			extraTvl: { staking: makeTvlEntry(10, 9, 8, 7) }
+		})
+	})
+
+	it('distinguishes a sole null, explicit zero, and missing selected-chain base', () => {
+		const protocol = makeRecentProtocol({
+			chains: ['Ethereum'],
+			chainTvls: { Ethereum: makeTvlEntry(null) }
+		})
+
+		expect(scopeRecentProtocolToChains({ protocol, selectedChains: new Set(['ethereum']) }).tvl).toBeNull()
+		expect(
+			scopeRecentProtocolToChains({
+				protocol: { ...protocol, chainTvls: { Ethereum: makeTvlEntry(0) } },
+				selectedChains: new Set(['ethereum'])
+			}).tvl
+		).toBe(0)
+		expect(scopeRecentProtocolToChains({ protocol, selectedChains: new Set(['base']) }).tvl).toBeNull()
+	})
+
+	it('preserves selected-chain zero snapshots and admits only producer-backed protocol extras', () => {
+		const protocol = scopeRecentProtocolToChains({
+			protocol: makeRecentProtocol({
+				chains: ['OP Mainnet'],
+				chainTvls: {
+					'OP Mainnet': makeTvlEntry(0, 0, 0, 0),
+					'OP Mainnet-staking': makeTvlEntry(10, null, 8, 7),
+					'OP Mainnet-doublecounted': makeTvlEntry(20)
+				}
+			}),
+			selectedChains: new Set(['op mainnet'])
+		})
+
+		expect(protocol.tvl).toBe(0)
+		expect(protocol.tvlPrevDay).toBe(0)
+		expect(protocol.extraTvl).toEqual({
+			staking: makeTvlEntry(10, null, 8, 7)
+		})
+	})
+
+	it('keeps nullable enabled extra snapshots unknown while persisted govtokens state is a no-op', () => {
+		const protocol = only(
+			applyExtraTvl(
+				[
+					makeRecentProtocol({
+						extraTvl: {
+							staking: makeTvlEntry(20, null, 10, null)
+						}
+					})
+				],
+				{ staking: true, govtokens: true }
+			)
+		)
+
+		expect(protocol.tvl).toBe(120)
+		expect(protocol.tvlPrevDay).toBeNull()
+		expect(protocol.tvlPrevWeek).toBe(60)
+		expect(protocol.tvlPrevMonth).toBeNull()
+		expect(protocol.change_1d).toBeNull()
+	})
+
+	it('treats a protocol-table govtokens-only setting as a no-op', () => {
+		const protocols = [makeProtocol()]
+
+		expect(
+			applyProtocolTvlSettings({
+				protocols,
+				extraTvlsEnabled: { govtokens: true },
+				minTvl: null,
+				maxTvl: null
+			})
+		).toBe(protocols)
+	})
+
+	it('adds enabled recent protocol extras while persisted classification settings are no-ops', () => {
 		const [protocol] = applyExtraTvl(
 			[
 				makeRecentProtocol({
 					extraTvl: {
-						staking: makeTvlEntry(20),
-						doublecounted: makeTvlEntry(500),
-						liquidstaking: makeTvlEntry(600)
+						staking: makeTvlEntry(20)
 					}
 				})
 			],
 			{ staking: true, doublecounted: true, liquidstaking: true }
 		)
+		if (!protocol) throw new Error('Expected adjusted protocol')
 
 		expect(protocol.tvl).toBe(120)
 		expect(protocol.tvlPrevDay).toBe(100)
@@ -85,27 +214,6 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.tvlPrevMonth).toBe(45)
 		expect(protocol.change_1d).toBe(20)
 		expect(protocol.mcaptvl).toBeCloseTo(1000 / 120)
-	})
-
-	it('keeps mixed-case recent protocol doublecounted and liquid staking extras non-additive', () => {
-		const [protocol] = applyExtraTvl(
-			[
-				makeRecentProtocol({
-					extraTvl: {
-						Staking: makeTvlEntry(20),
-						Doublecounted: makeTvlEntry(500),
-						LiquidStaking: makeTvlEntry(600)
-					}
-				})
-			],
-			{ staking: true, doublecounted: true, liquidstaking: true }
-		)
-
-		expect(protocol.tvl).toBe(120)
-		expect(protocol.tvlPrevDay).toBe(100)
-		expect(protocol.tvlPrevWeek).toBe(70)
-		expect(protocol.tvlPrevMonth).toBe(45)
-		expect(protocol.change_1d).toBe(20)
 	})
 
 	it('clamps negative recent protocol TVL values after enabled extras are applied', () => {
@@ -123,6 +231,7 @@ describe('ProtocolLists TVL helpers', () => {
 			],
 			{ pool2: true }
 		)
+		if (!protocol) throw new Error('Expected adjusted protocol')
 
 		expect(protocol.tvl).toBe(0)
 		expect(protocol.tvlPrevDay).toBe(0)
@@ -142,6 +251,7 @@ describe('ProtocolLists TVL helpers', () => {
 			],
 			{}
 		)
+		if (!protocol) throw new Error('Expected adjusted protocol')
 
 		expect(protocol.mcaptvl).toBeNull()
 	})
@@ -163,8 +273,9 @@ describe('ProtocolLists TVL helpers', () => {
 			minTvl: null,
 			maxTvl: null
 		})
+		if (!protocol) throw new Error('Expected adjusted protocol')
 
-		expect(protocol.strikeTvl).toBe(false)
+		expect(protocol.strikeTvl).toBe(true)
 		expect(protocol.tvl?.default).toEqual(makeTvlEntry(120, 100, 70, 45))
 		expect(protocol.tvlChange?.change1d).toBe(20)
 		expect(protocol.mcaptvl).toBeCloseTo(1000 / 120)
@@ -184,17 +295,52 @@ describe('ProtocolLists TVL helpers', () => {
 			minTvl: null,
 			maxTvl: null
 		})
+		if (!protocol) throw new Error('Expected adjusted protocol')
 
 		expect(protocol.mcaptvl).toBeNull()
 	})
 
-	it('treats missing additive extra fields as zero when protocol table base fields exist', () => {
+	it('keeps market-cap ratios finite with positive denominators and preserves a zero numerator', () => {
+		const [zeroMcap, negativeTvl] = applyProtocolTvlSettings({
+			protocols: [
+				makeProtocol({ mcap: 0, tvl: makeProtocolTvl({ default: makeTvlEntry(100) }) }),
+				makeProtocol({ name: 'Negative TVL', mcap: 100, tvl: makeProtocolTvl({ default: makeTvlEntry(-10) }) })
+			],
+			extraTvlsEnabled: { staking: true },
+			minTvl: null,
+			maxTvl: null
+		})
+
+		expect(zeroMcap?.mcaptvl).toBe(0)
+		expect(negativeTvl?.mcaptvl).toBeNull()
+	})
+
+	it('excludes unavailable TVL whenever a numeric min or max bound is active', () => {
+		const protocols = [
+			makeProtocol({ name: 'Unavailable', tvl: makeProtocolTvl({ default: makeTvlEntry(null) }) }),
+			makeProtocol({ name: 'Zero', tvl: makeProtocolTvl({ default: makeTvlEntry(0) }) }),
+			makeProtocol({ name: 'Positive', tvl: makeProtocolTvl({ default: makeTvlEntry(100) }) })
+		]
+
+		expect(
+			applyProtocolTvlSettings({ protocols, extraTvlsEnabled: {}, minTvl: 0, maxTvl: null }).map(
+				(protocol) => protocol.name
+			)
+		).toEqual(['Zero', 'Positive'])
+		expect(
+			applyProtocolTvlSettings({ protocols, extraTvlsEnabled: {}, minTvl: null, maxTvl: 100 }).map(
+				(protocol) => protocol.name
+			)
+		).toEqual(['Zero', 'Positive'])
+	})
+
+	it('keeps nullable additive extra fields unknown when protocol table base fields exist', () => {
 		const staking = {
 			tvl: 20,
 			tvlPrevDay: null,
 			tvlPrevWeek: 10,
 			tvlPrevMonth: null
-		} as unknown as ProtocolTvlEntry
+		} satisfies ProtocolTvlEntry
 
 		const [protocol] = applyProtocolTvlSettings({
 			protocols: [
@@ -209,8 +355,9 @@ describe('ProtocolLists TVL helpers', () => {
 			minTvl: null,
 			maxTvl: null
 		})
+		if (!protocol) throw new Error('Expected adjusted protocol')
 
-		expect(protocol.tvl?.default).toEqual(makeTvlEntry(120, 80, 60, 25))
+		expect(protocol.tvl?.default).toEqual(makeTvlEntry(120, null, 60, null))
 	})
 
 	it('keeps unknown protocol table base fields unknown even when additive extras exist', () => {
@@ -219,7 +366,7 @@ describe('ProtocolLists TVL helpers', () => {
 			tvlPrevDay: null,
 			tvlPrevWeek: 50,
 			tvlPrevMonth: null
-		} as unknown as ProtocolTvlEntry
+		} satisfies ProtocolTvlEntry
 
 		const [protocol] = applyProtocolTvlSettings({
 			protocols: [
@@ -234,6 +381,7 @@ describe('ProtocolLists TVL helpers', () => {
 			minTvl: null,
 			maxTvl: null
 		})
+		if (!protocol) throw new Error('Expected adjusted protocol')
 
 		expect(protocol.tvl?.default).toEqual(makeTvlEntry(120, null, 70, null))
 		expect(protocol.tvlChange?.change1d).toBeNull()
@@ -246,7 +394,7 @@ describe('ProtocolLists TVL helpers', () => {
 			tvlPrevDay: null,
 			tvlPrevWeek: 50,
 			tvlPrevMonth: null
-		} as ProtocolTvlEntry
+		} satisfies ProtocolTvlEntry
 
 		const [protocol] = applyProtocolTvlSettings({
 			protocols: [
@@ -271,6 +419,7 @@ describe('ProtocolLists TVL helpers', () => {
 			minTvl: null,
 			maxTvl: null
 		})
+		if (!protocol) throw new Error('Expected adjusted protocol')
 
 		const child = protocol.childProtocols?.[0]
 		expect(child?.tvl?.default).toEqual(makeTvlEntry(90, null, 70, null))
@@ -310,9 +459,10 @@ describe('ProtocolLists TVL helpers', () => {
 			minTvl: 80,
 			maxTvl: null
 		})
+		if (!protocol) throw new Error('Expected adjusted protocol')
 
 		expect(protocol.tvl?.default.tvl).toBe(110)
 		expect(protocol.childProtocols?.map((child) => child.name)).toEqual(['Included Child'])
-		expect(protocol.childProtocols?.[0].tvl?.default.tvl).toBe(90)
+		expect(only(protocol.childProtocols ?? []).tvl?.default.tvl).toBe(90)
 	})
 })

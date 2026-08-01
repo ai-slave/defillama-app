@@ -19,9 +19,11 @@ export function normalizeProtocolFlowChart(
 	}
 
 	const normalized = new Array<TimePoint>(points.length - startIndex)
-	for (let index = startIndex; index < points.length; index++) {
-		const point = points[index]
-		normalized[index - startIndex] = [point[0] * 1e3, point[1]]
+	let sourceIndex = 0
+	let normalizedIndex = 0
+	for (const point of points) {
+		if (sourceIndex++ < startIndex) continue
+		normalized[normalizedIndex++] = [point[0] * 1e3, point[1]]
 	}
 	return normalized
 }

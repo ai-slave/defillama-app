@@ -125,7 +125,7 @@ export function buildProtocolFaqRelationship({
 		if (protocol.parentProtocol === protocolId) {
 			rawChildren.push({
 				name: protocol.name,
-				slug: protocol.slug,
+				...(protocol.slug !== undefined ? { slug: protocol.slug } : {}),
 				category: protocol.category ?? null,
 				tvl: protocol.tvl ?? null
 			})
@@ -176,7 +176,11 @@ export function buildProtocolFaqRelationship({
 	}
 
 	const totalTvl = rows.reduce((sum, [, row]) => sum + row.tvl, 0)
-	const currentTvl = rows[currentIndex][1].tvl
+	const currentRow = rows[currentIndex]
+	if (currentRow === undefined) {
+		return { comparison: null, children, useChildrenQuestion: isParent && children.length > 0 }
+	}
+	const currentTvl = currentRow[1].tvl
 	if (totalTvl <= 0) {
 		return { comparison: null, children, useChildrenQuestion: isParent && children.length > 0 }
 	}
@@ -225,11 +229,11 @@ function linkedText(value: string, href: string | null | undefined): IProtocolFa
 }
 
 function appendLinkedList(parts: IProtocolFaqAnswerPart[], items: Array<{ name: string; href?: string | null }>): void {
-	for (let index = 0; index < items.length; index += 1) {
+	for (const [index, item] of items.entries()) {
 		if (index > 0) {
 			parts.push(text(index === items.length - 1 ? (items.length === 2 ? ' and ' : ', and ') : ', '))
 		}
-		parts.push(linkedText(items[index].name, items[index].href))
+		parts.push(linkedText(item.name, item.href))
 	}
 }
 
@@ -276,11 +280,9 @@ function buildChainsQuestion(context: ProtocolFaqContext): IProtocolFaqItem | nu
 
 	const answer: IProtocolFaqAnswerPart[] = []
 	if (context.chains.length === 1) {
-		answer.push(
-			text(`${context.name} operates on `),
-			linkedText(context.chains[0].name, context.chains[0].href),
-			text('.')
-		)
+		for (const chain of context.chains) {
+			answer.push(text(`${context.name} operates on `), linkedText(chain.name, chain.href), text('.'))
+		}
 	} else {
 		answer.push(text(`${context.name} operates on ${formatNumber(context.chains.length)} chains: `))
 		appendLinkedList(answer, context.chains.slice(0, MAX_LINKED_CHAINS))
@@ -590,7 +592,11 @@ function buildTreasuryQuestion(context: ProtocolFaqContext): IProtocolFaqItem | 
 
 function buildSecurityQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null {
 	if (context.hacks.length === 0) return null
-	const latest = context.hacks.toSorted((a, b) => (b.date ?? 0) - (a.date ?? 0))[0]
+	let latest: ProtocolFaqContext['hacks'][number] | null = null
+	for (const hack of context.hacks) {
+		if (latest === null || (hack.date ?? 0) > (latest.date ?? 0)) latest = hack
+	}
+	if (latest === null) return null
 	const latestDate = latest.date == null ? null : formatDate(latest.date, { input: 'seconds' })
 	const answer: IProtocolFaqAnswerPart[] = [
 		text(`${context.name} has ${formatNumber(context.hacks.length)} recorded `),

@@ -60,15 +60,24 @@ const hasRevenueAnnualizedContributor = (protocol: IProtocolRow): boolean =>
 	protocol.revenue_30d != null ||
 	protocol.revenue_1y != null
 
+const addChildTvl = (
+	total: number | null,
+	value: number | null,
+	excludedValue: number | null | undefined
+): number | null => {
+	if (total === null || value === null || excludedValue === null) return null
+	return total + value - (excludedValue ?? 0)
+}
+
 const recalculateParentMetrics = (
 	parent: ProtocolWithSubRows,
 	filteredSubRows: IProtocolRow[],
 	oracleMetadataRows: IProtocolRow[]
 ): ProtocolWithSubRows => {
-	let tvl = 0
-	let tvlPrevDay = 0
-	let tvlPrevWeek = 0
-	let tvlPrevMonth = 0
+	let tvl: number | null = 0
+	let tvlPrevDay: number | null = 0
+	let tvlPrevWeek: number | null = 0
+	let tvlPrevMonth: number | null = 0
 	let mcap = 0
 	let volume24h = 0
 	let volume7d = 0
@@ -96,12 +105,17 @@ const recalculateParentMetrics = (
 	let totalVolumeWeight = 0
 	let weightedPerpsVolumeChange = 0
 	let totalPerpsVolumeWeight = 0
+	let hasTvlContributor = false
 
 	for (const child of filteredSubRows) {
-		tvl += child.tvl ?? 0
-		tvlPrevDay += child.tvlPrevDay ?? 0
-		tvlPrevWeek += child.tvlPrevWeek ?? 0
-		tvlPrevMonth += child.tvlPrevMonth ?? 0
+		if (child.contributesTvl) {
+			hasTvlContributor = true
+			const excludedTvl = child.extraTvl?.excludeParent
+			tvl = addChildTvl(tvl, child.tvl, excludedTvl?.tvl)
+			tvlPrevDay = addChildTvl(tvlPrevDay, child.tvlPrevDay, excludedTvl?.tvlPrevDay)
+			tvlPrevWeek = addChildTvl(tvlPrevWeek, child.tvlPrevWeek, excludedTvl?.tvlPrevWeek)
+			tvlPrevMonth = addChildTvl(tvlPrevMonth, child.tvlPrevMonth, excludedTvl?.tvlPrevMonth)
+		}
 		mcap += child.mcap ?? 0
 		volume24h += child.volume_24h ?? 0
 		volume7d += child.volume_7d ?? 0
@@ -144,11 +158,18 @@ const recalculateParentMetrics = (
 		}
 		openInterest += child.openInterest ?? 0
 	}
+	if (!hasTvlContributor) {
+		tvl = null
+		tvlPrevDay = null
+		tvlPrevWeek = null
+		tvlPrevMonth = null
+	}
 
 	const finalMcap = mcap > 0 ? mcap : (parent.mcap ?? 0)
 	const finalFeesAnnualized1y = hasFeesAnnualized1y && !isFeesAnnualized1yIncomplete ? feesAnnualized1y : null
 	const finalRevenueAnnualized1y =
 		hasRevenueAnnualized1y && !isRevenueAnnualized1yIncomplete ? revenueAnnualized1y : null
+	const parentMcapTvl = tvl != null && tvl > 0 ? finalMcap / tvl : null
 
 	const oracleSet = new Set<string>()
 	const oraclesByChain = new Map<string, Set<string>>()
@@ -167,9 +188,12 @@ const recalculateParentMetrics = (
 	for (const [chain, chainOracles] of oraclesByChain) {
 		aggregatedOraclesByChain[chain] = Array.from(chainOracles).sort((a, b) => a.localeCompare(b))
 	}
+	const finalOraclesByChain =
+		Object.keys(aggregatedOraclesByChain).length > 0 ? aggregatedOraclesByChain : parent.oraclesByChain
 
 	return {
 		...parent,
+		contributesTvl: hasTvlContributor,
 		tvl,
 		tvlPrevDay,
 		tvlPrevWeek,
@@ -198,12 +222,12 @@ const recalculateParentMetrics = (
 		change_1d: getPercentChange(tvl, tvlPrevDay),
 		change_7d: getPercentChange(tvl, tvlPrevWeek),
 		change_1m: getPercentChange(tvl, tvlPrevMonth),
-		mcaptvl: tvl > 0 && finalMcap > 0 ? finalMcap / tvl : null,
+		mcaptvl: parentMcapTvl !== null && Number.isFinite(parentMcapTvl) ? parentMcapTvl : null,
 		pf: getMarketCapToAnnualizedMetricRatio(finalMcap, finalFeesAnnualized1y),
 		ps: getMarketCapToAnnualizedMetricRatio(finalMcap, finalRevenueAnnualized1y),
 		subRows: filteredSubRows,
 		oracles: Array.from(oracleSet).sort((a, b) => a.localeCompare(b)),
-		oraclesByChain: Object.keys(aggregatedOraclesByChain).length > 0 ? aggregatedOraclesByChain : parent.oraclesByChain
+		...(finalOraclesByChain !== undefined ? { oraclesByChain: finalOraclesByChain } : {})
 	}
 }
 
@@ -241,7 +265,8 @@ export const filterProTableProtocols = (protocols: IProtocolRow[], filters?: Tab
 			!filterSets.categories || (!!protocol.category && filterSets.categories.has(protocol.category))
 		const parentMatchesOriginalOracle = !filterSets.oracles || matchesOracle(protocol, filterSets.oracles)
 		const filtersExcludedChildren = filterSets.excludedCategories !== null
-		const filtersProtocolChildren = filterSets.protocols !== null && !parentMatchesProtocol
+		const protocolFilter = filterSets.protocols
+		const filtersProtocolChildren = protocolFilter !== null && !parentMatchesProtocol
 		const baseRows: IProtocolRow[] = filtersExcludedChildren ? [] : protocol.subRows
 		const protocolRows: IProtocolRow[] = filtersProtocolChildren ? [] : baseRows
 		const protocolOracleRows: IProtocolRow[] = []
@@ -255,7 +280,7 @@ export const filterProTableProtocols = (protocols: IProtocolRow[], filters?: Tab
 			if (filtersExcludedChildren) baseRows.push(child)
 			const childMatchesOracle = !filterSets.oracles || matchesOracle(child, filterSets.oracles)
 			if (filtersExcludedChildren && childMatchesOracle) baseHasMatchingOracle = true
-			if (filtersProtocolChildren && !filterSets.protocols.has(child.name)) continue
+			if (protocolFilter && !parentMatchesProtocol && !protocolFilter.has(child.name)) continue
 
 			if (filtersProtocolChildren) protocolRows.push(child)
 			if (childMatchesOracle) {
@@ -360,14 +385,14 @@ export const prepareProTableRows = ({
 			extraTvlsEnabled: {},
 			protocols,
 			parentProtocols,
-			volumeData: sourcePlan.enabled.volume ? volumeData : undefined,
-			feesData: sourcePlan.enabled.fees ? feesData : undefined,
-			perpsData: sourcePlan.enabled.perps ? perpsData : undefined,
-			openInterestData: sourcePlan.enabled.openInterest ? openInterestData : undefined,
-			earningsData: sourcePlan.enabled.earnings ? earningsData : undefined,
-			aggregatorsData: sourcePlan.enabled.aggregators ? aggregatorsData : undefined,
-			bridgeAggregatorsData: sourcePlan.enabled.bridgeAggregators ? bridgeAggregatorsData : undefined,
-			optionsData: sourcePlan.enabled.options ? optionsData : undefined
+			...(sourcePlan.enabled.volume && volumeData !== undefined ? { volumeData } : {}),
+			...(sourcePlan.enabled.fees && feesData !== undefined ? { feesData } : {}),
+			...(sourcePlan.enabled.perps && perpsData !== undefined ? { perpsData } : {}),
+			...(sourcePlan.enabled.openInterest && openInterestData !== undefined ? { openInterestData } : {}),
+			...(sourcePlan.enabled.earnings && earningsData !== undefined ? { earningsData } : {}),
+			...(sourcePlan.enabled.aggregators && aggregatorsData !== undefined ? { aggregatorsData } : {}),
+			...(sourcePlan.enabled.bridgeAggregators && bridgeAggregatorsData !== undefined ? { bridgeAggregatorsData } : {}),
+			...(sourcePlan.enabled.options && optionsData !== undefined ? { optionsData } : {})
 		}),
 		filters
 	)

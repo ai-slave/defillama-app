@@ -120,7 +120,8 @@ export function ChainsByCategory({
 			buildSelectedPercentageChart({
 				dataset: dominanceCharts.dataset,
 				charts: dominanceCharts.charts,
-				selectedCharts
+				selectedCharts,
+				missingValuePolicy: 'sum-available'
 			}),
 		[dominanceCharts, selectedCharts]
 	)

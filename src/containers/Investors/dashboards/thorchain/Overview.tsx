@@ -53,7 +53,18 @@ export default function Overview() {
 	const totalVolumeChart: Chart | null = useMemo(() => {
 		const c = vol?.volumeChart
 		if (!c) return null
-		const total = c.dates.map((_, i) => c.series.reduce((sum, s) => sum + (s.data[i] ?? 0), 0))
+		const total: number[] = []
+		for (const [index, date] of c.dates.entries()) {
+			let value = 0
+			for (const series of c.series) {
+				const seriesValue = series.data[index]
+				if (seriesValue === undefined) {
+					throw new Error(`Expected ${series.name} data for ${date}`)
+				}
+				value += seriesValue
+			}
+			total.push(value)
+		}
 		return { ...c, title: 'Swap Volume', series: [{ name: 'Volume', type: 'bar', data: total }] }
 	}, [vol])
 	if (!data) return <PageLoader />
@@ -110,7 +121,15 @@ interface LiquidityData {
 
 // Liquidity: TVL + pooled-liquidity composition, with the by-blockchain split leading
 // (per the protocol's review). Data comes from the network endpoint's `liquidity` object.
-function LiquiditySection({ liquidity, tvlChart, tvl }: { liquidity: LiquidityData; tvlChart: Chart; tvl?: KpiT }) {
+function LiquiditySection({
+	liquidity,
+	tvlChart,
+	tvl
+}: {
+	liquidity: LiquidityData
+	tvlChart: Chart
+	tvl?: KpiT | undefined
+}) {
 	const defs = useThorchainDefs()
 	const LIQUIDITY_KPIS: Array<[string, string, string | undefined]> = [
 		['tvl', 'TVL', defs.tvl],

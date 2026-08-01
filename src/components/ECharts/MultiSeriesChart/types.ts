@@ -131,6 +131,8 @@ export interface IMultiSeriesChartProps {
 	tooltipMaxItems?: number
 	/** Adds a total for same-unit series. Per-series unit overrides are excluded. */
 	showTotalInTooltip?: boolean
+	/** Hide the total when any displayed same-unit series is unavailable. */
+	requireCompleteTooltipTotal?: boolean
 	exportButtons?: ChartExportButtonsMode
 	logScale?: boolean
 	logEligibleYAxes?: number[]

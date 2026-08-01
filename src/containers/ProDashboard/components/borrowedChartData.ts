@@ -5,7 +5,7 @@ import {
 	buildComputedBreakdownResult,
 	type ProtocolBreakdownChart
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
-import type { BorrowedBreakdownSource } from '../services/protocolTvl'
+import type { BorrowedBreakdownSource, ProtocolTvlBreakdownChart } from '../services/protocolTvl'
 import type { BorrowedChartType } from '../types'
 
 interface BorrowedChartData {
@@ -21,15 +21,17 @@ const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 15, upstreamOt
 export function buildBorrowedChartData(
 	chartType: BorrowedChartType,
 	sources: BorrowedBreakdownSource[],
-	breakdowns: Array<IProtocolChainBreakdownChart | null | undefined>
+	breakdowns: Array<ProtocolTvlBreakdownChart | null | undefined>
 ): BorrowedChartData {
 	const chainBreakdownCharts: Array<IProtocolChainBreakdownChart | null | undefined> = []
 	const tokenBreakdownUsdCharts: Array<IProtocolChainBreakdownChart | null | undefined> = []
 	const tokenBreakdownRawCharts: Array<IProtocolChainBreakdownChart | null | undefined> = []
 
 	for (let i = 0; i < sources.length; i++) {
+		const source = sources[i]
+		if (!source) continue
 		const breakdown = breakdowns[i]
-		switch (sources[i].kind) {
+		switch (source.kind) {
 			case 'chain':
 				chainBreakdownCharts.push(breakdown)
 				break

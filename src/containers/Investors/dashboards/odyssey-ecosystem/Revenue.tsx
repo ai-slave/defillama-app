@@ -46,7 +46,7 @@ function useMetronomeIncomeStatement() {
 	return useQuery({
 		queryKey: ['odyssey-ecosystem', 'income-statement', INCOME_STATEMENT_PROTOCOL],
 		queryFn: async () => {
-			const response = await fetch(`/api/public/income-statement?protocol=${INCOME_STATEMENT_PROTOCOL}`)
+			const response = await fetch(`/api/public/income-statement?protocol=${INCOME_STATEMENT_PROTOCOL}&version=2`)
 			return response.ok
 				? readInvestorApiJson<NonNullable<IProtocolOverviewPageData['incomeStatement']>>(response)
 				: null
@@ -94,6 +94,12 @@ function MetronomeIncomeStatement() {
 
 const PROTO_COLORS: Record<string, string> = { Metronome: '#fb923c', Vesper: '#a78bfa', Odyssey: '#60a5fa' }
 const PIE_COLORS = ['#6366f1', '#22d3ee', '#34d399', '#fbbf24', '#f472b6', '#fb923c', '#a78bfa']
+
+function getPieColor(index: number): string {
+	const color = PIE_COLORS[index % PIE_COLORS.length]
+	if (color === undefined) throw new Error('Expected the income pipeline color palette to be non-empty')
+	return color
+}
 
 function sumUsd<Row>(rows: Row[] | undefined, getValue: (row: Row) => number): number {
 	if (!rows) return 0
@@ -348,7 +354,7 @@ export default function Revenue() {
 						height="320px"
 						showLegend
 						legendPosition={{ orient: 'vertical', left: 'right', top: 'middle' }}
-						stackColors={Object.fromEntries(up.pie.map((p, i) => [p.name, PIE_COLORS[i % PIE_COLORS.length]]))}
+						stackColors={Object.fromEntries(up.pie.map((p, i) => [p.name, getPieColor(i)]))}
 					/>
 				)}
 			</div>

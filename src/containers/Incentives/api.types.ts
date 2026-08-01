@@ -4,7 +4,7 @@ export interface EmissionsBreakdownProtocol {
 	linked: string[]
 	category: string
 	chain: string
-	emission24h: number
+	emission24h: number | null
 	emission7d: number
 	emission30d: number
 	emissions1y: number

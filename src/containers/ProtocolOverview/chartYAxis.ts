@@ -17,7 +17,7 @@ type AxisBuilderContext = {
 
 type AxisConfig = {
 	formatter?: (value: number, context: AxisBuilderContext) => string
-	resolveColor?: (context: AxisBuilderContext) => string
+	resolveColor?: (context: AxisBuilderContext) => string | undefined
 }
 
 const CUSTOM_OFFSETS: Record<string, number> = {
@@ -164,18 +164,20 @@ export function buildProtocolYAxis({
 		})
 		const axisConfig = AXIS_CONFIG_BY_TYPE[type]
 
-		if (axisConfig?.formatter) {
+		const formatter = axisConfig?.formatter
+		if (formatter) {
 			axisOptions.axisLabel = mergeDeep(axisOptions.axisLabel ?? {}, {
-				formatter: (value: number) => axisConfig.formatter!(value, context)
+				formatter: (value: number) => formatter(value, context)
 			})
 		}
 
-		if (axisConfig?.resolveColor) {
+		const axisColor = axisConfig?.resolveColor?.(context)
+		if (axisColor) {
 			axisOptions.axisLine = {
 				show: true,
 				lineStyle: {
 					...DASHED_AXIS_LINE_STYLE,
-					color: axisConfig.resolveColor(context)
+					color: axisColor
 				}
 			}
 		}

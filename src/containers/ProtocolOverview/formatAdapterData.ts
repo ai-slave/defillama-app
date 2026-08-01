@@ -5,12 +5,12 @@ import type { IProtocolOverviewPageData } from './types'
 type AdapterOverview = NonNullable<IProtocolOverviewPageData['fees']>
 type AdapterChainBreakdown = NonNullable<AdapterOverview['chainBreakdown']>
 
-function getMethodology(methodology: IAdapterProtocolMetrics['methodology'], key: string): string | null {
+export function getAdapterMethodology(methodology: IAdapterProtocolMetrics['methodology'], key: string): string | null {
 	if (typeof methodology === 'string') return methodology
 	return methodology?.[key] ?? null
 }
 
-const commonMethodology = {
+const commonMethodology: Readonly<Record<string, string>> = {
 	dexs: definitions.dexs.common,
 	dexsNotionalVolume: definitions.dexsNotional.common,
 	dexAggregators: definitions.dexAggregators.common,
@@ -19,17 +19,23 @@ const commonMethodology = {
 	bridgeAggregators: definitions.bridgeAggregators.common,
 	optionsPremiumVolume: definitions.optionsPremium.common,
 	optionsNotionalVolume: definitions.optionsNotional.common,
-	liquidationVolume: definitions.liquidationVolume.common,
-	collateralLiquidated: definitions.collateralLiquidated.common
+	LiquidationVolume: definitions.liquidationVolume.common,
+	CollateralLiquidated: definitions.collateralLiquidated.common
 }
 
-export function formatAdapterData({
-	data,
-	methodologyKey
-}: {
+type AdapterDataOptions = {
+	data: IAdapterProtocolMetrics
+	methodologyKey?: string
+}
+
+type NullableAdapterDataOptions = {
 	data: IAdapterProtocolMetrics | null | undefined
 	methodologyKey?: string
-}): AdapterOverview | null {
+}
+
+export function formatAdapterData(options: AdapterDataOptions): AdapterOverview
+export function formatAdapterData(options: NullableAdapterDataOptions): AdapterOverview | null
+export function formatAdapterData({ data, methodologyKey }: NullableAdapterDataOptions): AdapterOverview | null {
 	if (!data) {
 		return null
 	}
@@ -37,9 +43,11 @@ export function formatAdapterData({
 	let chainBreakdown: AdapterChainBreakdown | null = null
 	if (data.chainBreakdown) {
 		const slim: AdapterChainBreakdown = {}
+		let hasChainBreakdown = false
 		for (const chain in data.chainBreakdown) {
 			const value = data.chainBreakdown[chain]
 			if (value === undefined) continue
+			hasChainBreakdown = true
 			slim[chain] = {
 				total24h: value.total24h ?? null,
 				total7d: value.total7d ?? null,
@@ -47,18 +55,16 @@ export function formatAdapterData({
 				totalAllTime: value.totalAllTime ?? null
 			}
 		}
-		chainBreakdown = Object.keys(slim).length === 0 ? null : slim
+		chainBreakdown = hasChainBreakdown ? slim : null
 	}
-
-	const commonMethodologyMap = commonMethodology as Record<string, string>
 
 	if (data.childProtocols?.length) {
 		const childMethodologies: Array<[string, string | null, string | null]> = []
 		for (const childProtocol of data.childProtocols) {
-			if (methodologyKey && !commonMethodologyMap[methodologyKey]) {
+			if (methodologyKey && !commonMethodology[methodologyKey]) {
 				childMethodologies.push([
 					childProtocol.displayName,
-					getMethodology(childProtocol.methodology, methodologyKey),
+					getAdapterMethodology(childProtocol.methodology, methodologyKey),
 					childProtocol.methodologyURL ?? null
 				])
 			}
@@ -81,7 +87,7 @@ export function formatAdapterData({
 				? { childMethodologies: childMethodologies.filter((entry) => !!(entry[1] || entry[2])) }
 				: {
 						methodology: methodologyKey
-							? (topChildMethodology?.[1] ?? commonMethodologyMap[methodologyKey] ?? null)
+							? (topChildMethodology?.[1] ?? commonMethodology[methodologyKey] ?? null)
 							: null,
 						methodologyURL: topChildMethodology?.[2] ?? null
 					}),
@@ -98,7 +104,7 @@ export function formatAdapterData({
 		annualized1y: data.annualized1y ?? null,
 		totalAllTime: data.totalAllTime ?? null,
 		methodology: methodologyKey
-			? (getMethodology(data.methodology, methodologyKey) ?? commonMethodologyMap[methodologyKey] ?? null)
+			? (getAdapterMethodology(data.methodology, methodologyKey) ?? commonMethodology[methodologyKey] ?? null)
 			: null,
 		methodologyURL: data.methodologyURL ?? null,
 		defaultChartView: data.defaultChartView ?? 'daily',

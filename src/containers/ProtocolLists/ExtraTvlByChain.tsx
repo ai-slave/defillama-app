@@ -39,6 +39,13 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 	const metricInfo = METRIC_LABELS[props.metric]
 	const chartTitle = props.chain === 'All' ? metricInfo.header : props.chain
 	const chartFilenameTitle = props.chain === 'All' ? metricInfo.header : `${props.chain} ${metricInfo.header}`
+	const exportButtons = {
+		png: true,
+		csv: true,
+		filename: slug(chartFilenameTitle),
+		pngTitle: chartTitle,
+		...(props.chain !== 'All' ? { pngIconUrl: chainIconUrl(props.chain) } : {})
+	}
 
 	return (
 		<>
@@ -78,22 +85,13 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
-						<MultiSeriesChart
-							exportButtons={{
-								png: true,
-								csv: true,
-								filename: slug(chartFilenameTitle),
-								pngTitle: chartTitle,
-								pngIconUrl: props.chain !== 'All' ? chainIconUrl(props.chain) : undefined
-							}}
-							dataset={props.dataset}
-							charts={props.charts}
-						/>
+						<MultiSeriesChart exportButtons={exportButtons} dataset={props.dataset} charts={props.charts} />
 					</Suspense>
 				</ChartPanel>
 			</SummaryCardGrid>
 			<TableWithSearch
 				data={props.protocols}
+				getSubRows={(row) => row.subRows}
 				columns={buildColumns(props.metric)}
 				placeholder={'Search protocols...'}
 				columnToSearch={'name'}

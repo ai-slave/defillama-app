@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { tvlOptionsMap } from '~/components/Filters/options'
 import { isTvlSettingsKey, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { isProtocolExtraTvlKey, type ProtocolExtraTvlKey } from './tvlChart'
 import type { IProtocolOverviewPageData } from './types'
 
-type ToggleOption = { name: string; key: string }
+type ToggleOption = { name: string; key: ProtocolExtraTvlKey }
 
 const pushToggleOption = (toggleOptions: ToggleOption[], option: ToggleOption) => {
 	if (!toggleOptions.some((item) => item.key === option.key)) {
@@ -24,10 +25,12 @@ const aggregateTvlByChain = ({
 }): number => {
 	let total = 0
 	for (const chain in source) {
+		const value = source[chain]
+		if (value === undefined) continue
 		if (isTvlSettingsKey(chain)) {
-			const option = tvlOptionsMap.get(chain)
-			if (option) {
-				pushToggleOption(toggleOptions, option)
+			if (isProtocolExtraTvlKey(chain)) {
+				const option = tvlOptionsMap.get(chain)
+				if (option) pushToggleOption(toggleOptions, { name: option.name, key: chain })
 			}
 			continue
 		}
@@ -39,19 +42,16 @@ const aggregateTvlByChain = ({
 
 		// Preserve chain names that contain hyphens unless the suffix is a known extra-TVL key.
 		if (!hasRecognizedExtraTvl) {
-			const value = source[chain]
 			destination[chain] = (destination[chain] ?? 0) + value
 			total += value
 			continue
 		}
+		if (!isProtocolExtraTvlKey(normalizedExtraKey)) continue
 
 		const chainName = chain.slice(0, lastIndex)
 		const extraOption = tvlOptionsMap.get(normalizedExtraKey)
-		if (extraOption) {
-			pushToggleOption(toggleOptions, extraOption)
-		}
+		if (extraOption) pushToggleOption(toggleOptions, { name: extraOption.name, key: normalizedExtraKey })
 		if (extraTvlsEnabled[normalizedExtraKey]) {
-			const value = source[chain]
 			destination[chainName] = (destination[chainName] ?? 0) + value
 			total += value
 		}
@@ -62,13 +62,14 @@ const aggregateTvlByChain = ({
 const getSortedChainValues = (valuesByChain: Record<string, number>): Array<[string, number]> => {
 	const values: Array<[string, number]> = []
 	for (const chain in valuesByChain) {
-		values.push([chain, valuesByChain[chain]])
+		const value = valuesByChain[chain]
+		if (value !== undefined) values.push([chain, value])
 	}
 	values.sort((a, b) => b[1] - a[1])
 	return values
 }
 
-export const useFinalTVL = (props: IProtocolOverviewPageData) => {
+export const useFinalTVL = (props: Pick<IProtocolOverviewPageData, 'currentTvlByChain' | 'oracleTvs'>) => {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 
 	return useMemo(() => {
@@ -76,21 +77,23 @@ export const useFinalTVL = (props: IProtocolOverviewPageData) => {
 		const toggleOptions: ToggleOption[] = []
 		const oracleTvsByChainMap: Record<string, number> = {}
 
-		const currentTvlByChain = props.currentTvlByChain ?? {}
-		const tvl = aggregateTvlByChain({
-			source: currentTvlByChain,
-			destination: tvlByChainMap,
-			extraTvlsEnabled,
-			toggleOptions
-		})
+		const tvl = props.currentTvlByChain
+			? aggregateTvlByChain({
+					source: props.currentTvlByChain,
+					destination: tvlByChainMap,
+					extraTvlsEnabled,
+					toggleOptions
+				})
+			: 0
 
-		const oracleTvsData = props.oracleTvs ?? {}
-		const oracleTvs = aggregateTvlByChain({
-			source: oracleTvsData,
-			destination: oracleTvsByChainMap,
-			extraTvlsEnabled,
-			toggleOptions
-		})
+		const oracleTvs = props.oracleTvs
+			? aggregateTvlByChain({
+					source: props.oracleTvs,
+					destination: oracleTvsByChainMap,
+					extraTvlsEnabled,
+					toggleOptions
+				})
+			: null
 
 		return {
 			tvl,
@@ -102,7 +105,7 @@ export const useFinalTVL = (props: IProtocolOverviewPageData) => {
 	}, [extraTvlsEnabled, props.currentTvlByChain, props.oracleTvs])
 }
 
-export const getPrimaryValueLabelType = (category: string) => {
+export const getPrimaryValueLabelType = (category: string | null | undefined) => {
 	switch (category) {
 		case 'CEX':
 			return { title: 'Total Assets', byChainTitle: 'Total Assets by Chain', dataType: 'TotalAssets' }

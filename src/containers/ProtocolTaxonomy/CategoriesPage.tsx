@@ -28,6 +28,7 @@ import type { IProtocolsCategoriesChartData, IProtocolsCategoriesPageData, IProt
 
 const DEFAULT_SORTING_STATE = [{ id: 'tvl', desc: true }]
 const columnHelper = createColumnHelper<IProtocolsCategoriesTableRow>()
+const sortableNumber = (value: number | null): number | undefined => value ?? undefined
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -81,7 +82,8 @@ const categoriesColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('tvl', {
+	columnHelper.accessor((row) => sortableNumber(row.tvl), {
+		id: 'tvl',
 		header: 'Combined TVL',
 		meta: {
 			headerClassName: 'w-[135px]',
@@ -92,7 +94,8 @@ const categoriesColumns = [
 			return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		}
 	}),
-	columnHelper.accessor('change_1d', {
+	columnHelper.accessor((row) => sortableNumber(row.change_1d), {
+		id: 'change_1d',
 		header: '1d TVL Change',
 		meta: {
 			headerClassName: 'w-[140px]',
@@ -100,7 +103,8 @@ const categoriesColumns = [
 		},
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />
 	}),
-	columnHelper.accessor('change_7d', {
+	columnHelper.accessor((row) => sortableNumber(row.change_7d), {
+		id: 'change_7d',
 		header: '7d TVL Change',
 		meta: {
 			headerClassName: 'w-[140px]',
@@ -108,7 +112,8 @@ const categoriesColumns = [
 		},
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />
 	}),
-	columnHelper.accessor('change_1m', {
+	columnHelper.accessor((row) => sortableNumber(row.change_1m), {
+		id: 'change_1m',
 		header: '1m TVL Change',
 		meta: {
 			headerClassName: 'w-[140px]',
@@ -116,7 +121,8 @@ const categoriesColumns = [
 		},
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />
 	}),
-	columnHelper.accessor('revenue', {
+	columnHelper.accessor((row) => sortableNumber(row.revenue), {
+		id: 'revenue',
 		header: 'Combined 24h Revenue',
 		meta: {
 			headerClassName: 'w-[min(200px,40vw)]',
@@ -241,6 +247,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 							solidChartAreaStyle
 							onReady={handleChartReady}
 							showTotalInTooltip
+							requireCompleteTooltipTotal
 						/>
 					</React.Suspense>
 				)}
@@ -249,6 +256,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 			<React.Suspense fallback={<Panel padding="none" style={{ minHeight: `${categories.length * 50 + 200}px` }} />}>
 				<TableWithSearch
 					data={finalCategoriesList}
+					getSubRows={(row) => row.subRows}
 					columns={categoriesColumns}
 					columnToSearch="name"
 					placeholder="Search category..."

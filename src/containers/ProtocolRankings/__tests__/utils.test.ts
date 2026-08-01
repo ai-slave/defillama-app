@@ -1,22 +1,30 @@
 import { describe, expect, it } from 'vitest'
-import { protocolMatchesForkFilter, protocolMatchesOracleFilter, toFilterProtocol, toStrikeTvl } from '../utils'
+import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
+import { protocolMatchesForkFilter, toFilterProtocol, toStrikeTvl } from '../utils'
 
-const protocolMetadata = (overrides: Record<string, unknown> = {}) =>
-	({
-		displayName: 'Protocol',
-		chains: ['Ethereum'],
-		...overrides
-	}) as any
+const protocolMetadata = (overrides: Partial<{ displayName: string; chains: string[] }> = {}) => ({
+	displayName: 'Protocol',
+	chains: ['Ethereum'],
+	...overrides
+})
 
-const liteProtocol = (overrides: Record<string, unknown> = {}) =>
-	({
-		category: 'Dexes',
-		chains: ['Ethereum'],
-		forkedFrom: undefined,
-		oracles: undefined,
-		oraclesByChain: {},
-		...overrides
-	}) as any
+const liteProtocol = (overrides: Partial<ProtocolLite> = {}): ProtocolLite => ({
+	name: 'Protocol',
+	symbol: 'PROTOCOL',
+	logo: null,
+	url: 'https://example.com',
+	category: 'Dexes',
+	chains: ['Ethereum'],
+	chainTvls: {},
+	tvl: 0,
+	tvlPrevDay: 0,
+	tvlPrevWeek: 0,
+	tvlPrevMonth: 0,
+	mcap: null,
+	defillamaId: 'protocol',
+	geckoId: null,
+	...overrides
+})
 
 describe('ProtocolRankings filter helpers', () => {
 	it('keeps protocols with display metadata on all-chain views', () => {
@@ -56,7 +64,7 @@ describe('ProtocolRankings filter helpers', () => {
 		).toBe(false)
 		expect(
 			toFilterProtocol({
-				protocolMetadata: protocolMetadata({ chains: undefined }),
+				protocolMetadata: { displayName: 'Protocol' },
 				protocolData: liteProtocol(),
 				chainDisplayName: 'All'
 			})
@@ -79,73 +87,19 @@ describe('ProtocolRankings filter helpers', () => {
 			})
 		).toBe(false)
 	})
-
-	it('matches oracle filters against the selected chain first', () => {
-		expect(
-			protocolMatchesOracleFilter({
-				protocol: liteProtocol(),
-				normalizedOracle: null,
-				isAllChains: false,
-				chainDisplayName: 'Ethereum'
-			})
-		).toBe(true)
-		expect(
-			protocolMatchesOracleFilter({
-				protocol: liteProtocol({ oraclesByChain: { Ethereum: ['Chainlink'] } }),
-				normalizedOracle: 'chainlink',
-				isAllChains: false,
-				chainDisplayName: 'Ethereum'
-			})
-		).toBe(true)
-		expect(
-			protocolMatchesOracleFilter({
-				protocol: liteProtocol({ oraclesByChain: { Optimism: ['Chainlink'] }, oracles: ['Chainlink'] }),
-				normalizedOracle: 'chainlink',
-				isAllChains: false,
-				chainDisplayName: 'Ethereum'
-			})
-		).toBe(false)
-	})
-
-	it('matches oracle filters across any chain on all-chain views and falls back to legacy oracle lists', () => {
-		expect(
-			protocolMatchesOracleFilter({
-				protocol: liteProtocol({ oraclesByChain: { Optimism: ['Chainlink'] } }),
-				normalizedOracle: 'chainlink',
-				isAllChains: true,
-				chainDisplayName: 'All'
-			})
-		).toBe(true)
-		expect(
-			protocolMatchesOracleFilter({
-				protocol: liteProtocol({ oracles: ['Chainlink'] }),
-				normalizedOracle: 'chainlink',
-				isAllChains: false,
-				chainDisplayName: 'Ethereum'
-			})
-		).toBe(true)
-		expect(
-			protocolMatchesOracleFilter({
-				protocol: liteProtocol({ oracles: ['Pyth'] }),
-				normalizedOracle: 'chainlink',
-				isAllChains: true,
-				chainDisplayName: 'All'
-			})
-		).toBe(false)
-	})
 })
 
 describe('ProtocolRankings TVL helpers', () => {
 	it('strikes protocol rows in categories removed from chain TVL', () => {
-		expect(toStrikeTvl({ category: 'Bridge' }, {})).toBe(true)
+		expect(toStrikeTvl(liteProtocol({ category: 'Bridge' }), {})).toBe(true)
 	})
 
 	it('strikes protocol rows that expose liquid staking or double counted TVL sections', () => {
-		expect(toStrikeTvl({ category: 'Dexes' }, { liquidstaking: true })).toBe(true)
-		expect(toStrikeTvl({ category: 'Dexes' }, { doublecounted: true })).toBe(true)
+		expect(toStrikeTvl(liteProtocol(), { liquidstaking: true })).toBe(true)
+		expect(toStrikeTvl(liteProtocol(), { doublecounted: true })).toBe(true)
 	})
 
 	it('does not strike ordinary protocol rows without removed categories or extra TVL sections', () => {
-		expect(toStrikeTvl({ category: 'Dexes' }, {})).toBe(false)
+		expect(toStrikeTvl(liteProtocol(), {})).toBe(false)
 	})
 })

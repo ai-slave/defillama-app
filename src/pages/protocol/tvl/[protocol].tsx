@@ -3,9 +3,8 @@ import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartPresentation, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
-import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { tvlOptionsMap } from '~/components/Filters/options'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -14,13 +13,15 @@ import { oldBlue } from '~/constants/colors'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
+import { isProtocolExtraTvlKey, type ProtocolExtraTvlKey } from '~/containers/ProtocolOverview/tvlChart'
 import {
+	type FailedQueryCategory,
 	type ProtocolBreakdownChart,
 	useProtocolBreakdownCharts
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
-import { TVL_SETTINGS_KEYS_SET, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { isTvlSettingsKey, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
@@ -34,9 +35,7 @@ import { canonicalRouteRedirect } from '~/utils/route'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-
-const EMPTY_OTHER_PROTOCOLS: string[] = []
+const PieChart = React.lazy(() => import('~/components/ECharts/PieChart'))
 
 const INFLOWS_TOOLTIP_FORMATTER_USD = createInflowsTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 const USD_INFLOWS_SERIES = new Set(['USD Inflows'])
@@ -82,10 +81,10 @@ export const getStaticProps = withPerformanceLogging(
 		const chainsUnique = new Set<string>()
 
 		for (const chain in protocolData.currentChainTvls) {
-			if (TVL_SETTINGS_KEYS_SET.has(chain)) {
-				const option = tvlOptionsMap.get(chain as any)
-				if (option) {
-					toggleOptions.push(option)
+			if (isTvlSettingsKey(chain)) {
+				if (isProtocolExtraTvlKey(chain)) {
+					const option = tvlOptionsMap.get(chain)
+					if (option) toggleOptions.push({ name: option.name, key: chain })
 				}
 			} else {
 				if (chain.includes('-')) continue
@@ -97,7 +96,7 @@ export const getStaticProps = withPerformanceLogging(
 			props: {
 				name: protocolData.name,
 				parentProtocol: protocolData.parentProtocol ?? null,
-				otherProtocols: protocolData.otherProtocols ?? EMPTY_OTHER_PROTOCOLS,
+				otherProtocols: protocolData.otherProtocols ?? null,
 				category: protocolData.category ?? null,
 				metrics,
 				warningBanners: getProtocolWarningBanners(protocolData),
@@ -138,7 +137,7 @@ function ChainsChartCard({
 	breakdown: ProtocolBreakdownChart
 	exportFilenameBase: string
 	exportTitle: string
-	exportIconUrl?: string
+	exportIconUrl: string | undefined
 }) {
 	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts } = useProtocolBreakdownPresentation({
 		breakdown,
@@ -212,15 +211,15 @@ function TokenLineChartCard({
 	breakdown: ProtocolBreakdownChart
 	defaultValues?: string[]
 	aggregateOthers: boolean
-	valueSymbol?: string
+	valueSymbol: string
 	exportFilenameBase: string
 	exportTitle: string
-	exportIconUrl?: string
+	exportIconUrl: string | undefined
 }) {
 	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts } = useProtocolBreakdownPresentation({
 		breakdown,
 		availableSeries: allValues,
-		defaultSeries: defaultValues,
+		...(defaultValues ? { defaultSeries: defaultValues } : {}),
 		aggregateOthers,
 		type: 'line'
 	})
@@ -285,7 +284,7 @@ function TokensBreakdownPieChartCard({
 	tokenBreakdownPieSeries: RuntimePieChartData
 	exportFilenameBase: string
 	exportTitle: string
-	exportIconUrl?: string
+	exportIconUrl: string | undefined
 }) {
 	const selectableSeries = React.useMemo(
 		() => tokenBreakdownPieSeries.peers.map((peer) => peer.name),
@@ -354,7 +353,7 @@ function USDInflowsChartCard({
 	dataset: MultiSeriesChartDataset
 	exportFilenameBase: string
 	exportTitle: string
-	exportIconUrl?: string
+	exportIconUrl: string | undefined
 }) {
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const deferredDataset = React.useDeferredValue(dataset)
@@ -396,7 +395,7 @@ function InflowsByTokenChartCard({
 	breakdown: ProtocolBreakdownChart
 	exportFilenameBase: string
 	exportTitle: string
-	exportIconUrl?: string
+	exportIconUrl: string | undefined
 }) {
 	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts } = useProtocolBreakdownPresentation({
 		breakdown,
@@ -447,7 +446,9 @@ function InflowsByTokenChartCard({
 					hideDefaultLegend={false}
 					valueSymbol="$"
 					selectedCharts={selectedCharts}
-					chartOptions={selectedCharts.size > 1 ? { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } : undefined}
+					{...(selectedCharts.size > 1
+						? { chartOptions: { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } }
+						: {})}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -457,10 +458,13 @@ function InflowsByTokenChartCard({
 
 export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	const [tvlSettings] = useLocalStorageSettingsManager('tvl')
-	const protocol = slug(props.name ?? '')
+	const protocol = slug(props.name)
 	const toggledTvlKeys = React.useMemo(() => {
-		const availableTvlKeys: string[] = (props.toggleOptions ?? []).map((option) => option.key)
-		return availableTvlKeys.filter((key) => tvlSettings[key])
+		const enabled: ProtocolExtraTvlKey[] = []
+		for (const option of props.toggleOptions) {
+			if (tvlSettings[option.key]) enabled.push(option.key)
+		}
+		return enabled
 	}, [props.toggleOptions, tvlSettings])
 
 	const {
@@ -482,14 +486,14 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 		keys: toggledTvlKeys,
 		includeBase: true,
 		chainsUnique: props.chainsUnique,
-		inflows: props.metrics?.inflows,
+		inflows: props.metrics.inflows,
 		tokenPieMinimumValue: 0
 	})
 
-	const protocolSlug = slug(props.name || 'protocol')
+	const protocolSlug = slug(props.name)
 	const buildFilename = (suffix: string) => `${protocolSlug}-${slug(suffix)}`
-	const buildTitle = (suffix: string) => (props.name ? `${props.name} – ${suffix}` : suffix)
-	const protocolIconUrl = props.name ? tokenIconUrl(props.name) : undefined
+	const buildTitle = (suffix: string) => `${props.name} – ${suffix}`
+	const protocolIconUrl = tokenIconUrl(props.name)
 
 	return (
 		<ProtocolOverviewLayout
@@ -541,8 +545,9 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 						/>
 					) : null}
 
-					{tokenBreakdownUSD?.length > 1 &&
-					tokensUnique?.length > 0 &&
+					{tokenBreakdownUSD &&
+					tokenBreakdownUSD.length > 1 &&
+					tokensUnique.length > 0 &&
 					(tokenBreakdownPieSeries.peers.length > 0 || tokenBreakdownPieSeries.upstreamOthersValue > 0) ? (
 						<TokensBreakdownPieChartCard
 							title="Tokens Breakdown (USD)"
@@ -602,7 +607,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 	)
 }
 
-const CHART_CATEGORY_LABELS: Record<string, string> = {
+const CHART_CATEGORY_LABELS: Record<FailedQueryCategory, string> = {
 	tvl: 'TVL',
 	'chain-breakdown': 'chain breakdown',
 	'token-breakdown-usd': 'token breakdown',
@@ -610,5 +615,5 @@ const CHART_CATEGORY_LABELS: Record<string, string> = {
 }
 
 const USD_INFLOWS_CHARTS = [
-	{ type: 'bar' as const, name: 'USD Inflows', encode: { x: 'timestamp', y: 'USD Inflows' }, color: oldBlue }
-]
+	{ type: 'bar', name: 'USD Inflows', encode: { x: 'timestamp', y: 'USD Inflows' }, color: oldBlue }
+] satisfies MultiSeriesChartSeriesConfig[]

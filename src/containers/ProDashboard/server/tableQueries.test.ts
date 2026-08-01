@@ -134,7 +134,7 @@ describe('fetchTableServerData', () => {
 	})
 
 	it('uses a shared protocols-list provider when the stream already owns the request', async () => {
-		const sharedProtocols = { protocols: [], chains: [], parentProtocols: [] }
+		const sharedProtocols = { protocols: [], chains: [], parentProtocols: [], protocolCategories: [] }
 		const getProtocolsList = vi.fn(async () => sharedProtocols)
 
 		const result = await fetchTableServerData([legacyTable], undefined, undefined, getProtocolsList)

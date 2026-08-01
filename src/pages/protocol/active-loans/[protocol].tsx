@@ -1,23 +1,22 @@
-import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
+import type { GetStaticPropsContext } from 'next'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { buildRuntimePieChartPresentation, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
-import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import { tvlOptionsMap } from '~/components/Filters/options'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
+import type { ProtocolExtraTvlKey } from '~/containers/ProtocolOverview/tvlChart'
+import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
 import {
 	type ProtocolBreakdownChart,
 	useProtocolBreakdownCharts
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
-import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
@@ -31,9 +30,20 @@ import { canonicalRouteRedirect } from '~/utils/route'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
+const PieChart = React.lazy(() => import('~/components/ECharts/PieChart'))
 
 const EMPTY_OTHER_PROTOCOLS: string[] = []
+const ACTIVE_LOANS_KEYS: ProtocolExtraTvlKey[] = ['borrowed']
+
+interface ActiveLoansProtocolPageProps {
+	name: string
+	otherProtocols: string[]
+	category: string | null
+	metrics: IProtocolPageMetrics
+	warningBanners: ReturnType<typeof getProtocolWarningBanners>
+	seoTitle: string
+	seoDescription: string
+}
 
 function MultiSeriesChartCard({
 	title,
@@ -67,7 +77,7 @@ function MultiSeriesChartCard({
 	} = useProtocolBreakdownPresentation({
 		breakdown,
 		availableSeries: allSeries,
-		defaultSeries,
+		...(defaultSeries !== undefined ? { defaultSeries } : {}),
 		aggregateOthers,
 		type: 'line'
 	})
@@ -179,7 +189,7 @@ function TokensBreakdownPieChartCard({
 	)
 }
 
-export const getStaticProps = withPerformanceLogging(
+export const getStaticProps = withPerformanceLogging<ActiveLoansProtocolPageProps, { protocol: string }>(
 	'protocol/active-loans/[protocol]',
 	async ({ params }: GetStaticPropsContext<{ protocol: string }>) => {
 		if (!params?.protocol) {
@@ -207,7 +217,7 @@ export const getStaticProps = withPerformanceLogging(
 
 		const protocolData = await fetchProtocolOverviewMetrics(canonicalProtocol)
 
-		if (!protocolData || protocolData.currentChainTvls?.borrowed == null) {
+		if (protocolData.currentChainTvls.borrowed === undefined) {
 			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
 
@@ -215,26 +225,13 @@ export const getStaticProps = withPerformanceLogging(
 		const seoTitle = `${protocolData.name} Active Loans & Lending - DefiLlama`
 		const seoDescription = `Monitor ${protocolData.name} active loans, utilization rates, and lending pools on DefiLlama.`
 
-		const toggleOptions = []
-
-		for (const chain in protocolData.currentChainTvls) {
-			if (TVL_SETTINGS_KEYS_SET.has(chain)) {
-				const option = tvlOptionsMap.get(chain as any)
-				if (option) {
-					toggleOptions.push(option)
-				}
-			}
-		}
-
 		return {
 			props: {
 				name: protocolData.name,
-				parentProtocol: protocolData.parentProtocol ?? null,
 				otherProtocols: protocolData.otherProtocols ?? EMPTY_OTHER_PROTOCOLS,
 				category: protocolData.category ?? null,
 				metrics,
 				warningBanners: getProtocolWarningBanners(protocolData),
-				toggleOptions,
 				seoTitle,
 				seoDescription
 			},
@@ -254,10 +251,11 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeof getStaticProps>) {
-	const protocol = slug(props.name ?? '')
+export default function ActiveLoansProtocol(props: ActiveLoansProtocolPageProps) {
+	const protocol = slug(props.name)
 	const {
 		isLoading,
+		errors,
 		chainsUnique,
 		tokensUnique,
 		rawTokensUnique,
@@ -268,9 +266,9 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 		tokenBreakdownPieSeries
 	} = useProtocolBreakdownCharts({
 		protocol,
-		keys: ['borrowed'],
+		keys: ACTIVE_LOANS_KEYS,
 		includeBase: false,
-		inflows: props.metrics?.inflows,
+		inflows: props.metrics.inflows,
 		computeInflows: false
 	})
 	const hasBreakdownMetrics =
@@ -289,7 +287,6 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 			metrics={props.metrics}
 			tab="borrowed"
 			warningBanners={props.warningBanners}
-			toggleOptions={props.toggleOptions}
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
@@ -300,11 +297,11 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 
 			{isLoading ? (
 				<PanelLoadingStatus label={`Loading ${props.name} active loans`} />
-			) : !hasBreakdownMetrics ? (
+			) : !hasBreakdownMetrics && errors.length === 0 ? (
 				<PanelStatus variant="empty" className="col-span-full">
 					Breakdown metrics are not available
 				</PanelStatus>
-			) : (
+			) : hasBreakdownMetrics ? (
 				<div className="grid grid-cols-2 gap-2">
 					{chainBreakdown && chainsUnique.length > 1 ? (
 						<MultiSeriesChartCard
@@ -357,7 +354,12 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 						/>
 					) : null}
 				</div>
-			)}
+			) : null}
+			{errors.length > 0 ? (
+				<PanelStatus variant="error" className="col-span-full">
+					Failed to fetch active loans breakdown APIs
+				</PanelStatus>
+			) : null}
 		</ProtocolOverviewLayout>
 	)
 }

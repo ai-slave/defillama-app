@@ -4,6 +4,8 @@ import type { ProtocolTableSourcePlan } from '../../protocolTableSourcePlan'
 import type { TableFilters } from '../../types'
 
 export interface IProtocolRow extends IFormattedProtocol {
+	parentExcluded?: boolean
+	isParentProtocol?: boolean
 	subRows?: IProtocolRow[]
 }
 
@@ -87,7 +89,7 @@ export interface UseProTableOptions {
 }
 
 export interface ProtocolWithSubRows extends IProtocolRow {
-	isParentProtocol?: boolean
+	subRows: IProtocolRow[]
 }
 
 export interface ProTableState {

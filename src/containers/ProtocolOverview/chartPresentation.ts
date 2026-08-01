@@ -5,6 +5,8 @@ import { BAR_CHARTS, type ProtocolChartsLabels, yAxisByChart } from './constants
 const BAR_CHARTS_SET = new Set<ProtocolChartsLabels>(BAR_CHARTS)
 const EMPTY_DATASET = { dimensions: ['timestamp'], source: [] }
 
+const isProtocolChartLabel = (label: string): label is ProtocolChartsLabels => Object.hasOwn(yAxisByChart, label)
+
 export function buildProtocolChartPresentation({
 	chartData,
 	chartColors,
@@ -14,17 +16,16 @@ export function buildProtocolChartPresentation({
 	themeText
 }: {
 	chartData: Partial<Record<ProtocolChartsLabels, Array<[number, number | null]>>>
-	chartColors: Record<string, string>
+	chartColors: Partial<Record<ProtocolChartsLabels, string>>
 	isCumulative: boolean
 	rangeHallmarks: Array<[[number, number], string]> | null
 	isThemeDark: boolean
 	themeText: string
 }) {
-	const labels = Object.keys(chartData) as ProtocolChartsLabels[]
 	const axisIndexByType = new Map<ProtocolChartsLabels, number>()
 	const allYAxis: Array<[ProtocolChartsLabels, number | undefined]> = []
 	const chartsInSeries = new Set<ProtocolChartsLabels>()
-	const charts = new Array<MultiSeriesChartSeriesConfig>(labels.length)
+	const charts: MultiSeriesChartSeriesConfig[] = []
 	const markArea: LineSeriesOption['markArea'] | undefined = rangeHallmarks?.length
 		? {
 				itemStyle: { color: isThemeDark ? 'rgba(15, 52, 105, 0.4)' : 'rgba(70, 130, 180, 0.3)' },
@@ -33,8 +34,10 @@ export function buildProtocolChartPresentation({
 			}
 		: undefined
 
-	for (let index = 0; index < labels.length; index++) {
-		const label = labels[index]
+	for (const label of Object.keys(chartData)) {
+		if (!isProtocolChartLabel(label)) continue
+		const data = chartData[label]
+		if (!data) continue
 		const axisType = yAxisByChart[label]
 		let yAxisIndex = axisIndexByType.get(axisType)
 		if (yAxisIndex == null) {
@@ -43,18 +46,18 @@ export function buildProtocolChartPresentation({
 			allYAxis.push([axisType, yAxisIndex === 0 ? undefined : yAxisIndex])
 		}
 		chartsInSeries.add(label)
-		const data = chartData[label] ?? []
 		const type = BAR_CHARTS_SET.has(label) && !isCumulative ? 'bar' : 'line'
-		charts[index] = {
+		const color = chartColors[label]
+		charts.push({
 			type,
 			name: label,
 			encode: { x: 0, y: 1 },
 			data,
-			color: chartColors[label],
+			...(color ? { color } : {}),
 			yAxisIndex,
 			...(type === 'bar' ? { large: data.length > 0 } : {}),
-			...(index === 0 && markArea ? { markArea } : {})
-		}
+			...(charts.length === 0 && markArea ? { markArea } : {})
+		})
 	}
 
 	return {

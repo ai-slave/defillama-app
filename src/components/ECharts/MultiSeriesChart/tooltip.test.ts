@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createCappedRemainderTooltipFormatter, createInflowsTooltipFormatter, createTooltipFormatter } from './tooltip'
 
-function tooltipItem(name: string, value: number) {
+function tooltipItem(name: string, value: number | null) {
 	return {
 		seriesName: name,
 		marker: '•',
@@ -148,6 +148,25 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(tooltip).toContain('Total: $60')
 		expect(tooltip).toContain('+1 more')
 		expect(tooltip.indexOf('Total')).toBeLessThan(tooltip.indexOf('Marketplace C'))
+	})
+
+	it('requires complete same-unit series only when the caller opts in', () => {
+		const items = [tooltipItem('Available', 10), tooltipItem('Unavailable', null)]
+		const legacyTooltip = createTooltipFormatter({
+			groupBy: 'daily',
+			valueSymbol: '$',
+			showTotalInTooltip: true
+		})(items)
+		const exactTooltip = createTooltipFormatter({
+			groupBy: 'daily',
+			valueSymbol: '$',
+			showTotalInTooltip: true,
+			requireCompleteTooltipTotal: true
+		})(items)
+
+		expect(legacyTooltip).toContain('Total: $10')
+		expect(exactTooltip).toContain('Available: $10')
+		expect(exactTooltip).not.toContain('Total:')
 	})
 
 	it('does not add aggregate spacing when Others is the only value row', () => {

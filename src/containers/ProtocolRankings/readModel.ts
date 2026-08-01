@@ -4,8 +4,6 @@ import type { IChildProtocol } from './types'
 
 type DimensionFees = Omit<NonNullable<IChildProtocol['fees']>, 'pf'>
 type DimensionRevenue = Omit<NonNullable<IChildProtocol['revenue']>, 'ps'>
-type DimensionMetricProtocol = IAdapterChainMetrics['protocols'][number]
-type DimensionDexProtocol = IAdapterChainOverview['protocols'][number]
 
 export interface IProtocolRankingsDimensionMetrics {
 	fees?: DimensionFees
@@ -14,31 +12,11 @@ export interface IProtocolRankingsDimensionMetrics {
 	dexs?: NonNullable<IChildProtocol['dexs']>
 }
 
-function hasAnyFeeFamilyTotal(protocol: DimensionMetricProtocol) {
-	return (
-		protocol.total24h != null ||
-		protocol.total7d != null ||
-		protocol.total30d != null ||
-		protocol.total1y != null ||
-		protocol.annualized1y != null ||
-		protocol.monthlyAverage1y != null ||
-		protocol.totalAllTime != null
-	)
-}
-
-function hasAnyHoldersRevenueTotal(protocol: DimensionMetricProtocol) {
-	return (
-		protocol.total24h != null ||
-		protocol.total7d != null ||
-		protocol.total30d != null ||
-		protocol.total1y != null ||
-		protocol.monthlyAverage1y != null ||
-		protocol.totalAllTime != null
-	)
-}
-
-function hasAnyDexTotal(protocol: DimensionDexProtocol) {
-	return protocol.total24h != null || protocol.total7d != null || protocol.totalAllTime != null
+export function getProtocolEarningsValue(
+	revenue: number | null | undefined,
+	emissions: number | null | undefined
+): number | null {
+	return revenue != null && emissions != null ? revenue - emissions : null
 }
 
 export function buildDimensionProtocolMetrics({
@@ -55,54 +33,50 @@ export function buildDimensionProtocolMetrics({
 	const dimensionProtocols: Record<string, IProtocolRankingsDimensionMetrics> = {}
 
 	for (const protocol of fees?.protocols ?? []) {
-		if (!hasAnyFeeFamilyTotal(protocol)) continue
 		const row = (dimensionProtocols[protocol.defillamaId] ??= {})
 		row.fees = {
-			total24h: protocol.total24h ?? null,
-			total7d: protocol.total7d ?? null,
-			total30d: protocol.total30d ?? null,
-			total1y: protocol.total1y ?? null,
+			total24h: protocol.total24h ?? 0,
+			total7d: protocol.total7d ?? 0,
+			total30d: protocol.total30d ?? 0,
+			total1y: protocol.total1y ?? 0,
 			annualized1y: protocol.annualized1y ?? null,
-			monthlyAverage1y: protocol.monthlyAverage1y ?? null,
-			totalAllTime: protocol.totalAllTime ?? null
+			monthlyAverage1y: protocol.monthlyAverage1y ?? 0,
+			totalAllTime: protocol.totalAllTime ?? 0
 		}
 	}
 
 	for (const protocol of revenue?.protocols ?? []) {
-		if (!hasAnyFeeFamilyTotal(protocol)) continue
 		const row = (dimensionProtocols[protocol.defillamaId] ??= {})
 		row.revenue = {
-			total24h: protocol.total24h ?? null,
-			total7d: protocol.total7d ?? null,
-			total30d: protocol.total30d ?? null,
-			total1y: protocol.total1y ?? null,
+			total24h: protocol.total24h ?? 0,
+			total7d: protocol.total7d ?? 0,
+			total30d: protocol.total30d ?? 0,
+			total1y: protocol.total1y ?? 0,
 			annualized1y: protocol.annualized1y ?? null,
-			monthlyAverage1y: protocol.monthlyAverage1y ?? null,
-			totalAllTime: protocol.totalAllTime ?? null
+			monthlyAverage1y: protocol.monthlyAverage1y ?? 0,
+			totalAllTime: protocol.totalAllTime ?? 0
 		}
 	}
 
 	for (const protocol of holdersRevenue?.protocols ?? []) {
-		if (!hasAnyHoldersRevenueTotal(protocol)) continue
 		const row = (dimensionProtocols[protocol.defillamaId] ??= {})
 		row.holdersRevenue = {
-			total24h: protocol.total24h ?? null,
-			total7d: protocol.total7d ?? null,
-			total30d: protocol.total30d ?? null,
-			total1y: protocol.total1y ?? null,
-			monthlyAverage1y: protocol.monthlyAverage1y ?? null,
-			totalAllTime: protocol.totalAllTime ?? null
+			total24h: protocol.total24h ?? 0,
+			total7d: protocol.total7d ?? 0,
+			total30d: protocol.total30d ?? 0,
+			total1y: protocol.total1y ?? 0,
+			monthlyAverage1y: protocol.monthlyAverage1y ?? 0,
+			totalAllTime: protocol.totalAllTime ?? 0
 		}
 	}
 
 	for (const protocol of dexs?.protocols ?? []) {
-		if (!hasAnyDexTotal(protocol)) continue
 		const row = (dimensionProtocols[protocol.defillamaId] ??= {})
 		row.dexs = {
-			total24h: protocol.total24h ?? null,
-			total7d: protocol.total7d ?? null,
+			total24h: protocol.total24h ?? 0,
+			total7d: protocol.total7d ?? 0,
 			change_7dover7d: protocol.change_7dover7d ?? null,
-			totalAllTime: protocol.totalAllTime ?? null
+			totalAllTime: protocol.totalAllTime ?? 0
 		}
 	}
 

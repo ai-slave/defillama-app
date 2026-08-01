@@ -1,6 +1,7 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { tvlOptions } from '~/components/Filters/options'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
+import { isProtocolListTvlKey } from '~/containers/ProtocolLists/api.types'
 import { ProtocolTaxonomyPage } from '~/containers/ProtocolTaxonomy'
 import { getProtocolCategoryPresentation } from '~/containers/ProtocolTaxonomy/constants'
 import { getProtocolTaxonomyPageData } from '~/containers/ProtocolTaxonomy/queries'
@@ -18,8 +19,6 @@ export const getStaticProps = withPerformanceLogging(
 		}
 
 		const category = params.category
-		const chain = undefined
-
 		const [{ default: metadataCache }, { resolveProtocolListingParamFromMetadata }] = await Promise.all([
 			import('~/utils/metadata'),
 			import('~/containers/ProtocolTaxonomy/server/routes')
@@ -42,7 +41,6 @@ export const getStaticProps = withPerformanceLogging(
 				? await getProtocolTaxonomyPageData({
 						kind: 'category',
 						category: categoryRoute.value,
-						chain,
 						categoriesAndTags,
 						chainMetadata: metadataCache.chainMetadata
 					})
@@ -50,7 +48,6 @@ export const getStaticProps = withPerformanceLogging(
 						kind: 'tag',
 						tag: categoryRoute.value,
 						tagCategory: categoryRoute.tagCategory,
-						chain,
 						categoriesAndTags,
 						chainMetadata: metadataCache.chainMetadata
 					})
@@ -84,7 +81,7 @@ export async function getStaticPaths() {
 	return { paths, fallback: 'blocking' }
 }
 
-const toggleOptions = tvlOptions.filter((key) => !['doublecounted', 'liquidstaking'].includes(key.key))
+const toggleOptions = tvlOptions.filter((option) => isProtocolListTvlKey(option.key))
 
 export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	const categoryLabel = props.category ?? props.tag ?? ''

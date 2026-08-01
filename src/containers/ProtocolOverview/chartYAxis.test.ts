@@ -16,10 +16,13 @@ describe('protocol chart y-axis layout', () => {
 			gasUsedValueSymbol: 'GAS'
 		})
 
-		const apyAxisLine = axes[1].axisLine as { lineStyle: { color: string } }
-		const gasAxisLine = axes[2].axisLine as { lineStyle: { color: string } }
-		const apyAxisLabel = axes[1].axisLabel as { formatter: (value: number) => string }
-		const gasAxisLabel = axes[2].axisLabel as { formatter: (value: number) => string }
+		const apyAxis = axes[1]
+		const gasAxis = axes[2]
+		if (!apyAxis || !gasAxis) throw new Error('Expected APY and gas axes')
+		const apyAxisLine = apyAxis.axisLine as { lineStyle: { color: string } }
+		const gasAxisLine = gasAxis.axisLine as { lineStyle: { color: string } }
+		const apyAxisLabel = apyAxis.axisLabel as { formatter: (value: number) => string }
+		const gasAxisLabel = gasAxis.axisLabel as { formatter: (value: number) => string }
 		expect(axes.map((axis) => axis.offset ?? 0)).toEqual([0, 0, 40])
 		expect(apyAxisLine.lineStyle.color).toBe('#222')
 		expect(gasAxisLine.lineStyle.color).toBe('#333')

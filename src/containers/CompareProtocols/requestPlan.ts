@@ -1,12 +1,10 @@
+import { PROTOCOL_LIST_ADDITIVE_TVL_KEYS, type ProtocolListAdditiveTvlKey } from '~/containers/ProtocolLists/api.types'
 import { buildProtocolValueChartQueryKey } from '~/containers/ProtocolOverview/valueChartSources'
 import type { TvlSettingsKey } from '~/contexts/LocalStorage'
 import { slug } from '~/utils'
 
-export const COMPARE_PROTOCOL_TVL_KEYS = ['pool2', 'staking', 'borrowed', 'vesting'] as const
-export type CompareProtocolTvlKey = (typeof COMPARE_PROTOCOL_TVL_KEYS)[number]
-
 export function getCompareProtocolTvlSettings(
-	extraTvlEnabled: Record<string, boolean>
+	extraTvlEnabled: Partial<Record<TvlSettingsKey, boolean>>
 ): Record<TvlSettingsKey, boolean> {
 	return {
 		borrowed: !!extraTvlEnabled.borrowed,
@@ -19,14 +17,36 @@ export function getCompareProtocolTvlSettings(
 	}
 }
 
-export function getCompareProtocolExtraTvlKeys(extraTvlEnabled: Record<string, boolean>) {
-	return COMPARE_PROTOCOL_TVL_KEYS.filter((key) => extraTvlEnabled[key])
+export function getCompareProtocolExtraTvlKeys(extraTvlEnabled: Partial<Record<TvlSettingsKey, boolean>>) {
+	return PROTOCOL_LIST_ADDITIVE_TVL_KEYS.filter((key) => extraTvlEnabled[key])
 }
 
-export function buildCompareProtocolTvlRequestPlan(protocol: string, key?: CompareProtocolTvlKey) {
+export function normalizeCompareProtocolSelection(
+	protocolQuery: string | string[] | undefined,
+	protocolNameBySlug: ReadonlyMap<string, string>
+): string[] {
+	const values = typeof protocolQuery === 'string' ? [protocolQuery] : (protocolQuery ?? [])
+	const selected: string[] = []
+	const seen = new Set<string>()
+	for (const value of values) {
+		const protocol = value.trim()
+		if (!protocol) continue
+		const protocolSlug = slug(protocol)
+		if (!protocolSlug || seen.has(protocolSlug)) continue
+		seen.add(protocolSlug)
+		selected.push(protocolNameBySlug.get(protocolSlug) ?? protocol)
+	}
+	return selected
+}
+
+export function buildCompareProtocolTvlRequestPlan(protocol: string, key?: ProtocolListAdditiveTvlKey) {
 	const protocolSlug = slug(protocol)
 	return {
 		protocolSlug,
-		queryKey: buildProtocolValueChartQueryKey({ source: 'tvl', protocol: protocolSlug, key })
+		queryKey: buildProtocolValueChartQueryKey({
+			source: 'tvl',
+			protocol: protocolSlug,
+			...(key ? { key } : {})
+		})
 	}
 }

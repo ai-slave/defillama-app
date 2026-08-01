@@ -1,11 +1,11 @@
 import { useQueries, type UseQueryResult } from '@tanstack/react-query'
 import { useMemo, useRef } from 'react'
-import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { useIdleChartComputation } from '../hooks/useIdleChartComputation'
 import {
 	fetchBorrowedBreakdownForDashboard,
 	getBorrowedBreakdownQueryKey,
-	getBorrowedBreakdownSources
+	getBorrowedBreakdownSources,
+	type ProtocolTvlBreakdownChart
 } from '../services/protocolTvl'
 import type { BorrowedChartType } from '../types'
 import { buildBorrowedChartData } from './borrowedChartData'
@@ -30,14 +30,14 @@ export function useBorrowedChartData({
 	staleTime: number
 }) {
 	const sources = useMemo(() => getBorrowedBreakdownSources(protocol, chartType), [protocol, chartType])
-	const queries = useQueries({
+	const queries: Array<UseQueryResult<ProtocolTvlBreakdownChart>> = useQueries({
 		queries: sources.map((source) => ({
 			queryKey: getBorrowedBreakdownQueryKey(source.request),
 			queryFn: () => fetchBorrowedBreakdownForDashboard(source.request),
 			enabled,
 			staleTime
 		}))
-	}) as Array<UseQueryResult<IProtocolChainBreakdownChart | null>>
+	})
 	const firstBreakdown = queries[0]?.data
 	const secondBreakdown = queries[1]?.data
 	const isNetworkLoading = enabled && queries.some((query) => query.isLoading)

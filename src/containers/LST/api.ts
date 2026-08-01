@@ -1,8 +1,13 @@
 import { fetchCoinPrices } from '~/api/pricing'
-import { YIELDS_SERVER_URL } from '~/constants'
+import { SERVER_URL, YIELDS_SERVER_URL } from '~/constants'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { fetchJson } from '~/utils/async'
-import type { ILsdRateApiItem, IYieldPoolApiItem } from './api.types'
+import type { ILsdRateApiItem, IProtocolDetailApiItem, IYieldPoolApiItem } from './api.types'
+
+/** Fetch the legacy protocol history consumed only by the LST page. */
+export async function fetchProtocolBySlug(protocolSlug: string): Promise<IProtocolDetailApiItem> {
+	return fetchJson<IProtocolDetailApiItem>(`${SERVER_URL}/updatedProtocol/${encodeURIComponent(protocolSlug)}`)
+}
 
 /**
  * Fetch yield pools available to the LST dashboard.

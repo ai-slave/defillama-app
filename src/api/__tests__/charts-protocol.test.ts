@@ -7,6 +7,7 @@ const {
 	fetchProtocolTreasuryChartMock,
 	resolveProtocolParamMock,
 	resolveCexParamMock,
+	resolveBridgeProtocolParamMock,
 	fetchAdapterProtocolChartDataMock,
 	fetchAdapterProtocolChartDataByBreakdownTypeMock,
 	fetchProtocolTokenLiquidityChartMock,
@@ -22,6 +23,7 @@ const {
 	fetchProtocolTreasuryChartMock: vi.fn(),
 	resolveProtocolParamMock: vi.fn(),
 	resolveCexParamMock: vi.fn(),
+	resolveBridgeProtocolParamMock: vi.fn(),
 	fetchAdapterProtocolChartDataMock: vi.fn(),
 	fetchAdapterProtocolChartDataByBreakdownTypeMock: vi.fn(),
 	fetchProtocolTokenLiquidityChartMock: vi.fn(),
@@ -49,6 +51,10 @@ vi.mock('~/containers/AdapterMetrics/api', () => ({
 
 vi.mock('~/containers/Bridges/api', () => ({
 	fetchBridgeVolumeBySlug: fetchBridgeVolumeBySlugMock
+}))
+
+vi.mock('~/containers/Bridges/server/routes', () => ({
+	resolveBridgeProtocolParamFromMetadata: resolveBridgeProtocolParamMock
 }))
 
 vi.mock('~/containers/Governance/queries.client', () => ({
@@ -82,7 +88,7 @@ vi.mock('~/containers/ProtocolOverview/server/routes', () => ({
 
 vi.mock('~/utils/metadata', () => ({
 	__esModule: true,
-	default: {}
+	default: { oracleRoutes: { oracleNameBySlug: { chainlink: 'Chainlink' } } }
 }))
 
 vi.mock('~/utils/async', async (importOriginal) => {
@@ -100,12 +106,21 @@ vi.mock('~/utils/telemetry', () => ({
 
 import handler from '~/pages/api/public/protocols/charts'
 
+function createRequest(query: NextApiRequest['query']): NextApiRequest {
+	return { method: 'GET', query } as NextApiRequest
+}
+
 beforeEach(() => {
 	vi.clearAllMocks()
 	fetchProtocolTvlChartMock.mockResolvedValue([])
 	fetchProtocolTreasuryChartMock.mockResolvedValue([])
 	resolveProtocolParamMock.mockReturnValue({ canonicalSlug: 'aave', id: '1', metadata: { displayName: 'Aave' } })
 	resolveCexParamMock.mockReturnValue(null)
+	resolveBridgeProtocolParamMock.mockReturnValue('stargate')
+	fetchJsonMock.mockResolvedValue({ data: [] })
+	fetchBridgeVolumeBySlugMock.mockResolvedValue({ bridge: {}, dailyVolumes: [] })
+	fetchOracleProtocolChartMock.mockResolvedValue([])
+	fetchNftMarketplaceVolumesMock.mockResolvedValue([])
 })
 
 describe('/api/public/protocols/charts', () => {
@@ -113,8 +128,8 @@ describe('/api/public/protocols/charts', () => {
 		{
 			label: 'TVL value chart',
 			kind: 'tvl',
-			query: { key: 'pool2', currency: 'ETH', tokensToExclude: 'GT,MNT' },
-			expected: { protocol: 'aave', key: 'pool2', currency: 'ETH', tokensToExclude: ['GT', 'MNT'] },
+			query: { key: 'pool2', tokensToExclude: 'GT,MNT' },
+			expected: { protocol: 'aave', key: 'pool2', tokensToExclude: ['GT', 'MNT'] },
 			fetcher: fetchProtocolTvlChartMock,
 			oppositeFetcher: fetchProtocolTreasuryChartMock
 		},
@@ -135,34 +150,47 @@ describe('/api/public/protocols/charts', () => {
 			oppositeFetcher: fetchProtocolTreasuryChartMock
 		},
 		{
+			label: 'TVL raw token breakdown chart',
+			kind: 'tvl',
+			query: { currency: 'raw', breakdownType: 'token-breakdown' },
+			expected: { protocol: 'aave', currency: 'raw', breakdownType: 'token-breakdown' },
+			fetcher: fetchProtocolTvlChartMock,
+			oppositeFetcher: fetchProtocolTreasuryChartMock
+		},
+		{
 			label: 'treasury value chart',
 			kind: 'treasury',
-			query: { key: 'ownTokens' },
-			expected: { protocol: 'aave', key: 'ownTokens' },
+			query: { key: 'OwnTokens' },
+			expected: { protocol: 'aave', key: 'OwnTokens' },
 			fetcher: fetchProtocolTreasuryChartMock,
 			oppositeFetcher: fetchProtocolTvlChartMock
 		},
 		{
 			label: 'treasury chain breakdown chart',
 			kind: 'treasury',
-			query: { key: 'ownTokens', breakdownType: 'chain-breakdown' },
-			expected: { protocol: 'aave', key: 'ownTokens', breakdownType: 'chain-breakdown' },
+			query: { key: 'OwnTokens', breakdownType: 'chain-breakdown' },
+			expected: { protocol: 'aave', key: 'OwnTokens', breakdownType: 'chain-breakdown' },
 			fetcher: fetchProtocolTreasuryChartMock,
 			oppositeFetcher: fetchProtocolTvlChartMock
 		},
 		{
 			label: 'treasury token breakdown chart',
 			kind: 'treasury',
-			query: { key: 'ownTokens', currency: 'token', breakdownType: 'token-breakdown' },
-			expected: { protocol: 'aave', key: 'ownTokens', currency: 'token', breakdownType: 'token-breakdown' },
+			query: { key: 'OwnTokens', currency: 'token', breakdownType: 'token-breakdown' },
+			expected: { protocol: 'aave', key: 'OwnTokens', currency: 'token', breakdownType: 'token-breakdown' },
+			fetcher: fetchProtocolTreasuryChartMock,
+			oppositeFetcher: fetchProtocolTvlChartMock
+		},
+		{
+			label: 'treasury USD token breakdown chart',
+			kind: 'treasury',
+			query: { currency: 'usd', breakdownType: 'token-breakdown' },
+			expected: { protocol: 'aave', currency: 'usd', breakdownType: 'token-breakdown' },
 			fetcher: fetchProtocolTreasuryChartMock,
 			oppositeFetcher: fetchProtocolTvlChartMock
 		}
 	])('dispatches $label requests to the matching ProtocolOverview fetcher', async (row) => {
-		const req = {
-			method: 'GET',
-			query: { kind: row.kind, protocol: 'Aave V3', ...row.query }
-		} as unknown as NextApiRequest
+		const req = createRequest({ kind: row.kind, protocol: 'Aave V3', ...row.query })
 		const res = createMockNextApiResponse()
 
 		await handler(req, res)
@@ -177,10 +205,7 @@ describe('/api/public/protocols/charts', () => {
 	it('does not fetch TVL or treasury charts for unknown protocols', async () => {
 		resolveProtocolParamMock.mockReturnValue(null)
 		resolveCexParamMock.mockReturnValue(null)
-		const req = {
-			method: 'GET',
-			query: { kind: 'treasury', protocol: 'missing', key: 'ownTokens' }
-		} as unknown as NextApiRequest
+		const req = createRequest({ kind: 'treasury', protocol: 'missing', key: 'OwnTokens' })
 		const res = createMockNextApiResponse()
 
 		await handler(req, res)
@@ -191,6 +216,26 @@ describe('/api/public/protocols/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
 	})
 
+	it.each([
+		['tvl', { key: 'doublecounted' }, 'Invalid tvl key: doublecounted'],
+		['tvl', { key: 'liquidstaking' }, 'Invalid tvl key: liquidstaking'],
+		['tvl', { key: 'govtokens' }, 'Invalid tvl key: govtokens'],
+		['treasury', { key: 'ownTokens' }, 'Invalid treasury key: ownTokens'],
+		['tvl', { breakdownType: 'chain' }, 'Invalid breakdownType: chain'],
+		['tvl', { currency: 'token' }, 'currency is only supported for token-breakdown charts'],
+		['treasury', { tokensToExclude: 'AAVE' }, 'tokensToExclude is only supported for tvl charts']
+	])('rejects unsupported %s chart request combinations', async (kind, query, error) => {
+		const req = createRequest({ kind, protocol: 'Aave', ...query })
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(fetchProtocolTvlChartMock).not.toHaveBeenCalled()
+		expect(fetchProtocolTreasuryChartMock).not.toHaveBeenCalled()
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error })
+	})
+
 	it('falls back to CEX route cache entries for protocol chart requests', async () => {
 		resolveProtocolParamMock.mockReturnValue(null)
 		resolveCexParamMock.mockReturnValue({
@@ -198,10 +243,7 @@ describe('/api/public/protocols/charts', () => {
 			id: 'cex-1',
 			metadata: { displayName: 'Binance' }
 		})
-		const req = {
-			method: 'GET',
-			query: { kind: 'tvl', protocol: 'Binance' }
-		} as unknown as NextApiRequest
+		const req = createRequest({ kind: 'tvl', protocol: 'Binance' })
 		const res = createMockNextApiResponse()
 
 		await handler(req, res)
@@ -214,24 +256,75 @@ describe('/api/public/protocols/charts', () => {
 		expect(res.json).toHaveBeenCalledWith([])
 	})
 
-	it('normalizes nullable NFT marketplace volume without changing legitimate zeroes', async () => {
+	it('preserves nullable NFT marketplace volume without changing legitimate zeroes', async () => {
 		fetchNftMarketplaceVolumesMock.mockResolvedValue([
 			{ day: '2026-07-16', exchangeName: 'OpenSea', sumUsd: null },
 			{ day: '2026-07-17', exchangeName: 'OpenSea', sumUsd: 0 },
 			{ day: '2026-07-17', exchangeName: 'Blur', sumUsd: 10 }
 		])
-		const req = {
-			method: 'GET',
-			query: { kind: 'nft-volume', protocol: 'OpenSea' }
-		} as unknown as NextApiRequest
+		const req = createRequest({ kind: 'nft-volume', protocol: 'OpenSea' })
 		const res = createMockNextApiResponse()
 
 		await handler(req, res)
 
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith([
-			[Date.parse('2026-07-16'), 0],
+			[Date.parse('2026-07-16'), null],
 			[Date.parse('2026-07-17'), 0]
 		])
+	})
+
+	it('fails a combined governance chart when any configured provider is unavailable', async () => {
+		fetchAndFormatGovernanceDataMock.mockResolvedValue([
+			{
+				type: 'snapshot',
+				data: {
+					metadata: {},
+					stats: null,
+					proposals: [],
+					controversialProposals: [],
+					activity: [],
+					maxVotes: []
+				}
+			}
+		])
+		const req = createRequest({ kind: 'governance', apis: JSON.stringify(['snapshot', 'tally']) })
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(500)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to load protocol chart data' })
+	})
+
+	it.each([
+		['median-apy', 'aave-v3'],
+		['bridge-volume', 'Stargate'],
+		['oracle-chart', 'Chainlink'],
+		['nft-volume', 'OpenSea']
+	])('keeps successful empty %s producer results as empty charts', async (kind, protocol) => {
+		const req = createRequest({ kind, protocol })
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith([])
+	})
+
+	it.each([
+		['median-apy', 'aave-v3', () => fetchJsonMock.mockRejectedValueOnce(new Error('median failed'))],
+		['bridge-volume', 'Stargate', () => fetchBridgeVolumeBySlugMock.mockRejectedValueOnce(new Error('bridge failed'))],
+		['oracle-chart', 'Chainlink', () => fetchOracleProtocolChartMock.mockRejectedValueOnce(new Error('oracle failed'))],
+		['nft-volume', 'OpenSea', () => fetchNftMarketplaceVolumesMock.mockRejectedValueOnce(new Error('nft failed'))]
+	])('returns an error instead of a successful null %s chart when its producer fails', async (kind, protocol, fail) => {
+		fail()
+		const req = createRequest({ kind, protocol })
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(500)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to load protocol chart data' })
 	})
 })

@@ -5,7 +5,6 @@ import { CHART_COLORS } from '~/constants/colors'
 import { fetchChainChart, fetchChainsByCategoryAll } from '~/containers/Chains/api'
 import { fetchRaises } from '~/containers/Raises/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
-import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
 import { getPercentChange, slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
 import { roundNumber } from '~/utils/numberFormat'
@@ -13,7 +12,13 @@ import { recordRuntimeError } from '~/utils/telemetry'
 import { getPrevTvlFromChart } from '~/utils/tvlChart'
 import { AIRDROP_EXCLUDE } from './airdrop-exclude'
 import { fetchAirdropsConfig, fetchProtocols } from './api'
-import type { ParentProtocolLite, ProtocolLite } from './api.types'
+import {
+	isProtocolListTvlKey,
+	type ParentProtocolLite,
+	type ProtocolListAdditiveTvlKey,
+	type ProtocolLite,
+	type ProtocolLiteTvlEntry
+} from './api.types'
 import type {
 	ExtraTvlMetric,
 	IExtraTvlByChainPageData,
@@ -34,15 +39,10 @@ function sortCategoriesByTvl(categoryTvlMap: Map<string, number>): string[] {
 		.map(([category]) => category)
 }
 
-function extractExtraTvl(
-	protocol: ProtocolLite
-): Record<string, { tvl: number; tvlPrevDay: number | null; tvlPrevWeek: number | null; tvlPrevMonth: number | null }> {
-	const extraTvl: Record<
-		string,
-		{ tvl: number; tvlPrevDay: number | null; tvlPrevWeek: number | null; tvlPrevMonth: number | null }
-	> = {}
+function extractExtraTvl(protocol: ProtocolLite): Partial<Record<ProtocolListAdditiveTvlKey, ProtocolLiteTvlEntry>> {
+	const extraTvl: Partial<Record<ProtocolListAdditiveTvlKey, ProtocolLiteTvlEntry>> = {}
 	for (const sectionName in protocol.chainTvls) {
-		if (TVL_SETTINGS_KEYS_SET.has(sectionName) || sectionName === 'excludeParent') {
+		if (isProtocolListTvlKey(sectionName)) {
 			const section = protocol.chainTvls[sectionName]
 			if (section !== undefined) extraTvl[sectionName] = section
 		}
@@ -64,7 +64,7 @@ export async function getRecentProtocols(): Promise<IRecentProtocolsPageData> {
 	for (const protocol of protocols) {
 		if (protocol.listedAt == null) continue
 
-		const isForkedProtocol = Array.isArray(protocol.forkedFrom) && protocol.forkedFrom.length > 0
+		const isForkedProtocol = (protocol.forkedFrom?.length ?? 0) > 0
 		if (isForkedProtocol) {
 			forkedList[protocol.name] = true
 		}
@@ -75,20 +75,20 @@ export async function getRecentProtocols(): Promise<IRecentProtocolsPageData> {
 
 		recentProtocols.push({
 			name: protocol.name,
-			symbol: protocol.symbol ?? null,
+			symbol: protocol.symbol,
 			logo: protocol.logo,
 			url: protocol.url,
 			category: protocol.category,
-			chains: protocol.chains ?? [],
+			chains: protocol.chains,
 			chainTvls: protocol.chainTvls,
-			tvl: protocol.tvl ?? 0,
+			tvl: protocol.tvl,
 			tvlPrevDay: protocol.tvlPrevDay,
 			tvlPrevWeek: protocol.tvlPrevWeek,
 			tvlPrevMonth: protocol.tvlPrevMonth,
-			mcap: protocol.mcap ?? null,
+			mcap: protocol.mcap,
 			listedAt: protocol.listedAt,
 			defillamaId: protocol.defillamaId,
-			...(protocol.deprecated != null ? { deprecated: protocol.deprecated } : {}),
+			...(protocol.deprecated !== undefined ? { deprecated: protocol.deprecated } : {}),
 			...(isForkedProtocol ? { forkedFrom: protocol.forkedFrom } : {}),
 			extraTvl: extractExtraTvl(protocol)
 		})
@@ -123,8 +123,8 @@ export async function getAirdropDirectoryData(): Promise<Array<{ name: string; p
 export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> {
 	const [{ protocols, chains, parentProtocols }, { raises }, claimableAirdrops] = await Promise.all([
 		fetchProtocols(),
-		fetchRaises().catch(() => ({ raises: [] })),
-		getAirdropDirectoryData().catch(() => [])
+		fetchRaises(),
+		getAirdropDirectoryData()
 	])
 
 	const parents: Record<string, boolean> = {}
@@ -134,14 +134,19 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 		}
 	}
 
-	const raisesById = new Map<string, number>()
+	const raisesById = new Map<string, number | null>()
 	for (const r of raises) {
 		if (r.defillamaId) {
 			const key = r.defillamaId.toString()
-			const amountUsd = r.amountUsd ?? 0
-			if (!Number.isNaN(amountUsd)) {
-				raisesById.set(key, (raisesById.get(key) ?? 0) + amountUsd)
-			}
+			const currentTotal = raisesById.get(key)
+			raisesById.set(
+				key,
+				currentTotal === undefined
+					? r.amountUsd
+					: currentTotal === null || r.amountUsd === null
+						? null
+						: currentTotal + r.amountUsd
+			)
 		}
 	}
 
@@ -150,11 +155,11 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 	const categoryTvlMap = new Map<string, number>()
 
 	for (const protocol of protocols) {
-		if (protocol.symbol != null && protocol.symbol !== '-') continue
+		if (protocol.symbol !== '-') continue
 		if (AIRDROP_EXCLUDE.has(protocol.name)) continue
 		if (protocol.parentProtocol != null && parents[protocol.parentProtocol]) continue
 
-		const isForkedProtocol = Array.isArray(protocol.forkedFrom) && protocol.forkedFrom.length > 0
+		const isForkedProtocol = (protocol.forkedFrom?.length ?? 0) > 0
 		if (isForkedProtocol) {
 			forkedList[protocol.name] = true
 		}
@@ -162,26 +167,27 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 		if (protocol.category) {
 			categoryTvlMap.set(protocol.category, (categoryTvlMap.get(protocol.category) ?? 0) + (protocol.tvl ?? 0))
 		}
+		const totalRaised = raisesById.get(protocol.defillamaId)
 
 		airdropsProtocols.push({
 			name: protocol.name,
-			symbol: protocol.symbol ?? null,
+			symbol: protocol.symbol,
 			logo: protocol.logo,
 			url: protocol.url,
 			category: protocol.category,
-			chains: protocol.chains ?? [],
+			chains: protocol.chains,
 			chainTvls: protocol.chainTvls,
-			tvl: protocol.tvl ?? 0,
+			tvl: protocol.tvl,
 			tvlPrevDay: protocol.tvlPrevDay,
 			tvlPrevWeek: protocol.tvlPrevWeek,
 			tvlPrevMonth: protocol.tvlPrevMonth,
-			mcap: protocol.mcap ?? null,
+			mcap: protocol.mcap,
 			listedAt: protocol.listedAt ?? 1624728920,
 			defillamaId: protocol.defillamaId,
 			...(protocol.deprecated !== undefined ? { deprecated: protocol.deprecated } : {}),
 			...(isForkedProtocol ? { forkedFrom: protocol.forkedFrom } : {}),
 			extraTvl: extractExtraTvl(protocol),
-			totalRaised: raisesById.get(protocol.defillamaId) ?? 0
+			totalRaised: totalRaised === undefined ? 0 : totalRaised
 		})
 	}
 
@@ -246,7 +252,7 @@ export async function getExtraTvlByChain({
 		fetchChainsByCategoryAll()
 			.then((data) =>
 				(data?.chainTvls ?? []).flatMap((chainData) =>
-					chainData.extraTvl?.[config.chartKey]?.tvl ? [chainData.name] : []
+					chainData.extraTvl?.[config.chartKey] !== undefined ? [chainData.name] : []
 				)
 			)
 			.catch((err) => {
@@ -268,7 +274,7 @@ export async function getExtraTvlByChain({
 	const parentProtocolsMap = new Map(parentProtocols.map((parentProtocol) => [parentProtocol.id, parentProtocol]))
 
 	for (const protocol of protocols) {
-		let totalValue = 0
+		let totalValue: number | null = 0
 		let totalPrevMonth: number | null = 0
 		let hasMetricValue = false
 
@@ -279,7 +285,7 @@ export async function getExtraTvlByChain({
 				const chainTvl = protocol.chainTvls[ctvl]
 				if (chainTvl === undefined) continue
 				hasMetricValue = true
-				totalValue += chainTvl.tvl
+				totalValue = totalValue == null || chainTvl.tvl == null ? null : totalValue + chainTvl.tvl
 				totalPrevMonth =
 					totalPrevMonth == null || chainTvl.tvlPrevMonth == null ? null : totalPrevMonth + chainTvl.tvlPrevMonth
 			}
@@ -294,7 +300,7 @@ export async function getExtraTvlByChain({
 			logo: protocol.logo,
 			slug: slug(protocol.name),
 			category: protocol.category,
-			chains: (protocol.defillamaId ? protocolMetadata[protocol.defillamaId]?.chains : null) ?? protocol.chains ?? [],
+			chains: protocolMetadata[protocol.defillamaId]?.chains ?? protocol.chains,
 			...(protocol.deprecated ? { deprecated: true } : {}),
 			value: totalValue,
 			change_1m: pct != null ? roundNumber(pct, 2) : null
@@ -310,18 +316,20 @@ export async function getExtraTvlByChain({
 
 	for (const parentId in parentChildren) {
 		const parent = parentProtocolsMap.get(parentId)
-		if (!parent) continue
-
 		const childrenWithPrevMonth = parentChildren[parentId]
 		if (childrenWithPrevMonth === undefined) continue
+		if (!parent || childrenWithPrevMonth.length <= 1) {
+			for (const child of childrenWithPrevMonth) finalProtocols.push(child.row)
+			continue
+		}
 		const children: IExtraTvlProtocolRow[] = []
-		let totalValue = 0
+		let totalValue: number | null = 0
 		let totalPrevMonth: number | null = 0
 		const categorySet = new Set<string>()
 		const chainSet = new Set<string>()
 		for (const { row, prevMonthValue } of childrenWithPrevMonth) {
 			children.push(row)
-			totalValue += row.value
+			totalValue = totalValue == null || row.value == null ? null : totalValue + row.value
 			totalPrevMonth = totalPrevMonth == null || prevMonthValue == null ? null : totalPrevMonth + prevMonthValue
 			if (row.category) categorySet.add(row.category)
 			for (const childChain of row.chains) chainSet.add(childChain)
@@ -331,7 +339,7 @@ export async function getExtraTvlByChain({
 
 		finalProtocols.push({
 			name: parent.name,
-			logo: parent.logo ?? '',
+			logo: parent.logo,
 			slug: slug(parent.name),
 			category: categories.length > 1 ? null : (categories[0] ?? null),
 			chains: Array.from(chainSet),
@@ -412,7 +420,7 @@ function buildTokenMetricProtocols({
 			logo: protocol.logo,
 			slug: slug(protocol.name),
 			category: protocol.category,
-			chains: (protocol.defillamaId ? protocolMetadata[protocol.defillamaId]?.chains : null) ?? protocol.chains ?? [],
+			chains: protocolMetadata[protocol.defillamaId]?.chains ?? protocol.chains,
 			...(protocol.deprecated ? { deprecated: true } : {}),
 			value: getValue(protocol)
 		}
@@ -427,10 +435,12 @@ function buildTokenMetricProtocols({
 
 	for (const parentId in parentChildren) {
 		const parent = parentProtocolsMap.get(parentId)
-		if (!parent) continue
-
 		const children = parentChildren[parentId]
 		if (children === undefined) continue
+		if (!parent || children.length <= 1) {
+			finalProtocols.push(...children)
+			continue
+		}
 		const categorySet = new Set<string>()
 		const chainSet = new Set<string>()
 		for (const child of children) {
@@ -441,7 +451,7 @@ function buildTokenMetricProtocols({
 
 		finalProtocols.push({
 			name: parent.name,
-			logo: parent.logo ?? '',
+			logo: parent.logo,
 			slug: slug(parent.name),
 			category: cats.length > 1 ? null : (cats[0] ?? null),
 			chains: Array.from(chainSet),

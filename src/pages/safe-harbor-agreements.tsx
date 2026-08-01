@@ -1,10 +1,10 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import type { InferGetStaticPropsType } from 'next'
 import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getProtocolsByChain } from '~/containers/ProtocolRankings/queries.server'
-import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { slug } from '~/utils'
@@ -18,20 +18,21 @@ export const getStaticProps = withPerformanceLogging('safe-harbor-agreements', a
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 	const protocolMetadata = metadataCache.protocolMetadata
 
-	const [safeHarborProtocols, { protocols }]: [Record<string, boolean>, { protocols: Array<IProtocol> }] =
-		await Promise.all([
-			fetchJson<Record<string, boolean>>('https://api.llama.fi/_fe/static/safe-harbor-projects'),
-			getProtocolsByChain({
-				chain: 'All',
-				chainMetadata: metadataCache.chainMetadata,
-				protocolMetadata: metadataCache.protocolMetadata
-			})
-		])
+	const [safeHarborProtocols, rankings] = await Promise.all([
+		fetchJson<Record<string, boolean>>('https://api.llama.fi/_fe/static/safe-harbor-projects'),
+		getProtocolsByChain({
+			chain: 'All',
+			chainMetadata: metadataCache.chainMetadata,
+			protocolMetadata: metadataCache.protocolMetadata
+		})
+	])
+	if (!rankings) throw new Error('All-chain protocol rankings are unavailable')
+	const { protocols } = rankings
 
-	const tvlByProtocol = {}
-	const feesByProtocol = {}
-	const revenueByProtocol = {}
-	const dexVolumeByProtocol = {}
+	const tvlByProtocol: Record<string, number | null> = {}
+	const feesByProtocol: Record<string, number | null> = {}
+	const revenueByProtocol: Record<string, number | null> = {}
+	const dexVolumeByProtocol: Record<string, number | null> = {}
 	for (const protocol of protocols) {
 		tvlByProtocol[protocol.name] = protocol.tvl?.default?.tvl ?? null
 		feesByProtocol[protocol.name] = protocol.fees?.total24h ?? null
@@ -39,28 +40,36 @@ export const getStaticProps = withPerformanceLogging('safe-harbor-agreements', a
 		dexVolumeByProtocol[protocol.name] = protocol.dexs?.total24h ?? null
 	}
 
-	const finalProtocols = []
+	const finalProtocols: SafeHarborRow[] = []
 	for (const protocolId in safeHarborProtocols) {
 		const pmetadata = protocolMetadata[protocolId]
-		if (safeHarborProtocols[protocolId] && pmetadata) {
+		const displayName = pmetadata?.displayName
+		const chains = pmetadata?.chains
+		if (safeHarborProtocols[protocolId] && displayName && chains) {
 			finalProtocols.push({
 				defillamaId: protocolId,
-				name: pmetadata.displayName,
-				slug: slug(pmetadata.displayName),
-				chains: pmetadata.chains,
-				logo: tokenIconUrl(pmetadata.displayName),
-				url: `https://safeharbor.securityalliance.org/database/${slug(pmetadata.displayName)}`,
-				tvl: tvlByProtocol[pmetadata.displayName] ?? null,
-				fees: feesByProtocol[pmetadata.displayName] ?? null,
-				revenue: revenueByProtocol[pmetadata.displayName] ?? null,
-				dexVolume: dexVolumeByProtocol[pmetadata.displayName] ?? null
+				name: displayName,
+				slug: slug(displayName),
+				chains,
+				logo: tokenIconUrl(displayName),
+				url: `https://safeharbor.securityalliance.org/database/${slug(displayName)}`,
+				tvl: tvlByProtocol[displayName] ?? null,
+				fees: feesByProtocol[displayName] ?? null,
+				revenue: revenueByProtocol[displayName] ?? null,
+				dexVolume: dexVolumeByProtocol[displayName] ?? null
 			})
 		}
 	}
 
+	finalProtocols.sort((a, b) => {
+		if (a.tvl === null) return b.tvl === null ? 0 : 1
+		if (b.tvl === null) return -1
+		return b.tvl - a.tvl
+	})
+
 	return {
 		props: {
-			protocols: finalProtocols.sort((a, b) => b.tvl - a.tvl)
+			protocols: finalProtocols
 		},
 		revalidate: maxAgeForNext([22])
 	}
@@ -69,7 +78,7 @@ export const getStaticProps = withPerformanceLogging('safe-harbor-agreements', a
 const pageName = ['Safe Harbor Agreements']
 const DEFAULT_SORTING_STATE = [{ id: 'tvl', desc: true }]
 
-export default function SafeHarborAgreements({ protocols }) {
+export default function SafeHarborAgreements({ protocols }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title="Safe Harbor Agreements - DefiLlama"
@@ -93,15 +102,16 @@ export default function SafeHarborAgreements({ protocols }) {
 }
 
 type SafeHarborRow = {
+	defillamaId: string
 	name: string
 	url: string
 	chains: string[]
 	slug: string
 	logo: string
-	tvl: number
-	fees: number
-	revenue: number
-	dexVolume: number
+	tvl: number | null
+	fees: number | null
+	revenue: number | null
+	dexVolume: number | null
 }
 
 const columnHelper = createColumnHelper<SafeHarborRow>()
@@ -115,28 +125,7 @@ const columns = [
 			const value = getValue()
 
 			return (
-				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-6' : 'pl-0'}`}>
-					{row.subRows?.length > 0 ? (
-						<button
-							className="absolute -left-4.5"
-							{...{
-								onClick: row.getToggleExpandedHandler()
-							}}
-						>
-							{row.getIsExpanded() ? (
-								<>
-									<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
-									<span className="sr-only">View child protocols</span>
-								</>
-							) : (
-								<>
-									<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
-									<span className="sr-only">Hide child protocols</span>
-								</>
-							)}
-						</button>
-					) : null}
-
+				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />

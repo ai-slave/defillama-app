@@ -10,6 +10,13 @@ import { fetchAndFormatGovernanceData } from '~/containers/Governance/queries.cl
 import { fetchNftMarketplaceVolumes } from '~/containers/Nft/api'
 import { fetchOracleProtocolChart } from '~/containers/Oracles/api'
 import { fetchProtocolTreasuryChart, fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
+import type {
+	IProtocolMedianApyChart,
+	ProtocolChartBreakdownType,
+	ProtocolChartCurrency,
+	ProtocolTreasuryKey,
+	ProtocolTvlKey
+} from '~/containers/ProtocolOverview/api.types'
 import { normalizeBridgeVolumeToChartMs } from '~/containers/ProtocolOverview/chartSeries.utils'
 import { getProtocolEmissionsCharts } from '~/containers/Unlocks/queries'
 import { queryString } from '~/server/api/params'
@@ -20,7 +27,6 @@ import { fetchJson } from '~/utils/async'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 
 const CHART_CACHE_CONTROL = 'public, s-maxage=3600, stale-while-revalidate=600'
-const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' }
 
 // ---------------------------------------------------------------------------
 // /api/public/protocols/charts
@@ -79,6 +85,56 @@ const parseStringArrayParam = (value: string | undefined): string[] | null => {
 		return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : null
 	} catch {
 		return null
+	}
+}
+
+const parseProtocolBreakdownType = (value: string | undefined): ProtocolChartBreakdownType | undefined => {
+	switch (value) {
+		case undefined:
+		case 'chain-breakdown':
+		case 'token-breakdown':
+			return value
+		default:
+			return undefined
+	}
+}
+
+const parseProtocolCurrency = (value: string | undefined): ProtocolChartCurrency | undefined => {
+	switch (value) {
+		case undefined:
+		case 'token':
+		case 'raw':
+		case 'usd':
+			return value
+		default:
+			return undefined
+	}
+}
+
+const parseProtocolTvlKey = (value: string | undefined): ProtocolTvlKey | undefined => {
+	switch (value) {
+		case undefined:
+		case 'tvl':
+		case 'staking':
+		case 'borrowed':
+		case 'pool2':
+		case 'vesting':
+		case 'all':
+			return value
+		default:
+			return undefined
+	}
+}
+
+const parseProtocolTreasuryKey = (value: string | undefined): ProtocolTreasuryKey | undefined => {
+	switch (value) {
+		case undefined:
+		case 'tvl':
+		case 'OwnTokens':
+		case 'all':
+			return value
+		default:
+			return undefined
 	}
 }
 
@@ -183,35 +239,67 @@ export const protocolCharts = defineApiRoute({
 
 			if (kind === 'tvl' || kind === 'treasury') {
 				const protocol = queryString(req.query, 'protocol')
-				const key = queryString(req.query, 'key')
-				const currency = queryString(req.query, 'currency')
-				const breakdownType = queryString(req.query, 'breakdownType')
+				const inputKey = queryString(req.query, 'key')
+				const inputCurrency = queryString(req.query, 'currency')
+				const inputBreakdownType = queryString(req.query, 'breakdownType')
 				const tokensToExclude = queryString(req.query, 'tokensToExclude')?.split(',').filter(Boolean)
 
 				if (!protocol) {
 					return badRequest('protocol parameter is required')
+				}
+				const breakdownType = parseProtocolBreakdownType(inputBreakdownType)
+				if (inputBreakdownType !== undefined && breakdownType === undefined) {
+					return badRequest(`Invalid breakdownType: ${inputBreakdownType}`)
+				}
+				const currency = parseProtocolCurrency(inputCurrency)
+				if (inputCurrency !== undefined && currency === undefined) {
+					return badRequest(`Invalid currency: ${inputCurrency}`)
+				}
+				if (currency !== undefined && breakdownType !== 'token-breakdown') {
+					return badRequest('currency is only supported for token-breakdown charts')
+				}
+				if (kind === 'treasury' && tokensToExclude?.length) {
+					return badRequest('tokensToExclude is only supported for tvl charts')
 				}
 				const canonicalProtocol = await resolveCanonicalProtocolOrCexParam(protocol)
 				if (!canonicalProtocol) {
 					return notFound('protocol not found')
 				}
 
-				const chartParams = {
-					protocol: canonicalProtocol,
-					...(key ? { key } : {}),
-					...(currency ? { currency } : {}),
-					...(kind === 'tvl' && tokensToExclude?.length ? { tokensToExclude } : {}),
-					...(breakdownType
-						? {
-								breakdownType: breakdownType as NonNullable<
-									Parameters<typeof fetchProtocolTvlChart>[0]['breakdownType']
-								>
-							}
-						: {})
+				if (kind === 'tvl') {
+					const key = parseProtocolTvlKey(inputKey)
+					if (inputKey !== undefined && key === undefined) return badRequest(`Invalid tvl key: ${inputKey}`)
+					const params = {
+						protocol: canonicalProtocol,
+						...(key !== undefined ? { key } : {}),
+						...(tokensToExclude?.length ? { tokensToExclude } : {})
+					}
+					const data = await (breakdownType === 'token-breakdown'
+						? fetchProtocolTvlChart({
+								...params,
+								breakdownType,
+								...(currency !== undefined ? { currency } : {})
+							})
+						: breakdownType === 'chain-breakdown'
+							? fetchProtocolTvlChart({ ...params, breakdownType })
+							: fetchProtocolTvlChart(params))
+					return ok(data)
 				}
-
-				const data =
-					kind === 'tvl' ? await fetchProtocolTvlChart(chartParams) : await fetchProtocolTreasuryChart(chartParams)
+				const key = parseProtocolTreasuryKey(inputKey)
+				if (inputKey !== undefined && key === undefined) return badRequest(`Invalid treasury key: ${inputKey}`)
+				const params = {
+					protocol: canonicalProtocol,
+					...(key !== undefined ? { key } : {})
+				}
+				const data = await (breakdownType === 'token-breakdown'
+					? fetchProtocolTreasuryChart({
+							...params,
+							breakdownType,
+							...(currency !== undefined ? { currency } : {})
+						})
+					: breakdownType === 'chain-breakdown'
+						? fetchProtocolTreasuryChart({ ...params, breakdownType })
+						: fetchProtocolTreasuryChart(params))
 				return ok(data)
 			}
 
@@ -233,22 +321,14 @@ export const protocolCharts = defineApiRoute({
 					return badRequest('protocol parameter is required')
 				}
 
-				const data = await fetchJson<{ data: Array<{ date: string; median_apy: number; pools: number }> }>(
-					`${YIELDS_V2_SERVER_URL}/v2/protocol-median/${encodeURIComponent(protocol)}/history`
+				const data: IProtocolMedianApyChart = await fetchJson<{
+					data: Array<{ date: string; median_apy: number; pools: number }>
+				}>(`${YIELDS_V2_SERVER_URL}/v2/protocol-median/${encodeURIComponent(protocol)}/history`).then((values) =>
+					values.data.map((item) => ({
+						date: Math.floor(new Date(item.date).getTime() / 1000),
+						medianAPY: item.median_apy
+					}))
 				)
-					.then((values) =>
-						values && values.data.length > 0
-							? values.data.map((item) => ({
-									date: Math.floor(new Date(item.date).getTime() / 1000),
-									medianAPY: item.median_apy
-								}))
-							: null
-					)
-					.catch(() => null)
-
-				if (data === null) {
-					return ok(null, NO_STORE_HEADERS)
-				}
 
 				return ok(data)
 			}
@@ -289,13 +369,9 @@ export const protocolCharts = defineApiRoute({
 					return notFound('bridge protocol not found')
 				}
 
-				const data = await fetchBridgeVolumeBySlug(bridgeSlug)
-					.then((response) => normalizeBridgeVolumeToChartMs(response.dailyVolumes))
-					.catch(() => null)
-
-				if (data === null) {
-					return ok(null, NO_STORE_HEADERS)
-				}
+				const data = await fetchBridgeVolumeBySlug(bridgeSlug).then((response) =>
+					normalizeBridgeVolumeToChartMs(response.dailyVolumes)
+				)
 
 				return ok(data)
 			}
@@ -313,10 +389,7 @@ export const protocolCharts = defineApiRoute({
 					return notFound('oracle protocol not found')
 				}
 
-				const data = await fetchOracleProtocolChart({ protocol: canonicalOracle }).catch(() => null)
-				if (data === null) {
-					return ok(null, NO_STORE_HEADERS)
-				}
+				const data = await fetchOracleProtocolChart({ protocol: canonicalOracle })
 
 				return ok(data)
 			}
@@ -327,8 +400,11 @@ export const protocolCharts = defineApiRoute({
 					return badRequest('apis parameter is required')
 				}
 
-				const data = await fetchAndFormatGovernanceData(apis)
-				return ok(data)
+				const sources = await fetchAndFormatGovernanceData(apis)
+				if (sources.length !== apis.length) {
+					throw new Error('Failed to load every governance source')
+				}
+				return ok(sources.map((source) => source.data))
 			}
 
 			if (kind === 'nft-volume') {
@@ -339,20 +415,12 @@ export const protocolCharts = defineApiRoute({
 					return badRequest('protocol parameter is required')
 				}
 
-				const data = await fetchNftMarketplaceVolumes()
-					.then((response) => {
-						const rows: Array<[number, number]> = []
-						const protocolSlug = slug(protocol)
-						for (const item of response) {
-							if (slug(item.exchangeName) !== protocolSlug) continue
-							rows.push([new Date(item.day).getTime(), item.sumUsd ?? 0])
-						}
-						return rows
-					})
-					.catch((): null => null)
-
-				if (data === null) {
-					return ok(null, NO_STORE_HEADERS)
+				const response = await fetchNftMarketplaceVolumes()
+				const data: Array<[number, number | null]> = []
+				const protocolSlug = slug(protocol)
+				for (const item of response) {
+					if (slug(item.exchangeName) !== protocolSlug) continue
+					data.push([new Date(item.day).getTime(), item.sumUsd])
 				}
 
 				return ok(data)

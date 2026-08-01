@@ -43,7 +43,7 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 	const query = useQuery({
 		queryKey: ['thorchain-income-statement', DEX],
 		queryFn: async () => {
-			const response = await fetch(`/api/public/income-statement?protocol=${DEX}`)
+			const response = await fetch(`/api/public/income-statement?protocol=${DEX}&version=2`)
 			return response.ok
 				? readInvestorApiJson<NonNullable<IProtocolOverviewPageData['incomeStatement']>>(response)
 				: null
@@ -127,7 +127,7 @@ export default function Financials() {
 
 	// Fees, then Revenue (its protocol + holders parts), then the full decomposition of fees —
 	// supply-side (the cost leg) alongside the two revenue legs, one row each in a 4-wide grid.
-	const composition: Array<{ label: string; def?: string; data?: SeriesKpis | null }> = [
+	const composition: Array<{ label: string; def: string | undefined; data: SeriesKpis | null | undefined }> = [
 		{ label: 'Supply-Side Revenue', def: defs.supplySideRevenue, data: supplySide.data },
 		{ label: 'Protocol Revenue', def: defWithNetworkFee(defs.protocolRevenue), data: protocolRev.data },
 		{ label: 'Holders Revenue', def: defs.holdersRevenue, data: holdersRev.data }

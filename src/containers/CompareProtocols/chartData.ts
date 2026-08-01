@@ -1,35 +1,63 @@
-import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type {
+	MultiSeriesChartSeriesConfig,
+	MultiSeriesTimeSeriesRow
+} from '~/components/ECharts/MultiSeriesChart/types'
+import { PROTOCOL_LIST_ADDITIVE_TVL_KEYS, type ProtocolListAdditiveTvlKey } from '~/containers/ProtocolLists/api.types'
 import type { IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
 import { buildExtraTvlCharts, buildTvlChart } from '~/containers/ProtocolOverview/tvlChart'
 import { getNDistinctColors } from '~/utils'
+import { getCompareProtocolExtraTvlKeys, getCompareProtocolTvlSettings } from './requestPlan'
 
 export type CompareProtocolTvlCharts = {
 	name: string
 	tvlChart: IProtocolValueChart | null
-	extraTvlCharts: Record<string, IProtocolValueChart | null>
+	extraTvlCharts: Partial<Record<ProtocolListAdditiveTvlKey, IProtocolValueChart | null>>
 }
 
 function composeProtocolTvlChart({
 	tvlChart,
 	extraTvlCharts,
 	extraTvlEnabled
-}: Omit<CompareProtocolTvlCharts, 'name'> & { extraTvlEnabled: Record<string, boolean> }) {
-	const currentTvlByChain: Record<string, number> = {}
-	for (const key in extraTvlEnabled) {
-		if (extraTvlEnabled[key]) currentTvlByChain[key] = 0
+}: Omit<CompareProtocolTvlCharts, 'name'> & {
+	extraTvlEnabled: ReturnType<typeof getCompareProtocolTvlSettings>
+}) {
+	const availableExtraTvlCharts: Partial<Record<ProtocolListAdditiveTvlKey, IProtocolValueChart>> = {}
+	for (const key of PROTOCOL_LIST_ADDITIVE_TVL_KEYS) {
+		const chart = extraTvlCharts[key]
+		if (chart !== null && chart !== undefined) availableExtraTvlCharts[key] = chart
 	}
-	const tvlChartInSeconds = tvlChart?.map(
-		([timestamp, value]) => [Math.floor(timestamp / 1e3), value] as [number, number]
-	)
+
+	let tvlChartInSeconds: IProtocolValueChart = []
+	if (tvlChart !== null) {
+		if (tvlChart.length > 0) {
+			tvlChartInSeconds = tvlChart.map(([timestamp, value]) => [Math.floor(timestamp / 1e3), value])
+		} else {
+			const additiveTimestamps = new Set<number>()
+			for (const key of PROTOCOL_LIST_ADDITIVE_TVL_KEYS) {
+				if (!extraTvlEnabled[key]) continue
+				for (const [timestamp] of availableExtraTvlCharts[key] ?? []) {
+					additiveTimestamps.add(Math.floor(timestamp / 1e3))
+				}
+			}
+			tvlChartInSeconds = Array.from(additiveTimestamps)
+				.sort((a, b) => a - b)
+				.map((timestamp) => [timestamp, 0])
+		}
+	}
 
 	return buildTvlChart({
-		tvlChartData: tvlChartInSeconds ?? [],
-		extraTvlCharts: buildExtraTvlCharts(extraTvlCharts),
-		tvlSettings: extraTvlEnabled,
-		currentTvlByChain,
+		tvlChartData: tvlChartInSeconds,
+		extraTvlCharts: buildExtraTvlCharts(availableExtraTvlCharts),
+		selectedExtraTvls: getCompareProtocolExtraTvlKeys(extraTvlEnabled),
 		groupBy: 'daily',
 		denominationPriceHistory: null
 	})
+}
+
+function createCompareChartRow(timestamp: number, seriesCount: number): MultiSeriesTimeSeriesRow {
+	const row: MultiSeriesTimeSeriesRow = [timestamp]
+	while (row.length <= seriesCount) row.push(null)
+	return row
 }
 
 export function buildCompareProtocolsChartData({
@@ -37,56 +65,34 @@ export function buildCompareProtocolsChartData({
 	extraTvlEnabled
 }: {
 	protocolCharts: CompareProtocolTvlCharts[]
-	extraTvlEnabled: Record<string, boolean>
+	extraTvlEnabled: Parameters<typeof getCompareProtocolTvlSettings>[0]
 }) {
-	const chartsByProtocol = new Map<string, Map<number, number>>()
-	const seriesNames: string[] = []
-	let totalProtocols = 0
-
-	for (const protocolData of protocolCharts) {
-		const protocolName = protocolData.name
-		let protocolChart = chartsByProtocol.get(protocolName)
-		if (!protocolChart) {
-			protocolChart = new Map<number, number>()
-			chartsByProtocol.set(protocolName, protocolChart)
-			seriesNames.push(protocolName)
-		}
-
-		for (const [timestamp, value] of composeProtocolTvlChart({ ...protocolData, extraTvlEnabled })) {
-			protocolChart.set(timestamp, value ?? 0)
-		}
-		totalProtocols++
-	}
-
-	const distinctColors = getNDistinctColors(totalProtocols)
-	const rowMap = new Map<number, MultiSeriesChartDataset['source'][number]>()
-	for (let seriesIndex = 0; seriesIndex < seriesNames.length; seriesIndex++) {
-		const protocolName = seriesNames[seriesIndex]
-		const protocolChart = chartsByProtocol.get(protocolName)
-		if (!protocolChart) continue
-
-		for (const [date, value] of protocolChart) {
-			const timestamp = date
+	const tvlSettings = getCompareProtocolTvlSettings(extraTvlEnabled)
+	const seriesNames = protocolCharts.map((protocol) => protocol.name)
+	const distinctColors = getNDistinctColors(protocolCharts.length)
+	const rowMap = new Map<number, MultiSeriesTimeSeriesRow>()
+	for (const [seriesIndex, protocol] of protocolCharts.entries()) {
+		for (const [timestamp, value] of composeProtocolTvlChart({ ...protocol, extraTvlEnabled: tvlSettings })) {
 			let row = rowMap.get(timestamp)
 			if (!row) {
-				row = new Array(seriesNames.length + 1)
-				row[0] = timestamp
+				row = createCompareChartRow(timestamp, seriesNames.length)
 				rowMap.set(timestamp, row)
 			}
 			row[seriesIndex + 1] = value
 		}
 	}
 
-	const source = Array.from(rowMap.values()).sort((a, b) => (a[0] as number) - (b[0] as number))
+	const source = Array.from(rowMap.values()).sort((a, b) => a[0] - b[0])
 	const charts: MultiSeriesChartSeriesConfig[] = []
-	for (let index = 0; index < seriesNames.length; index++) {
-		const protocolName = seriesNames[index]
+	for (const [index, protocolName] of seriesNames.entries()) {
+		const color = distinctColors[index]
+		if (color === undefined) throw new Error(`Compare protocol palette is missing color ${index}`)
 		charts.push({
 			type: 'line',
 			name: protocolName,
 			encode: { x: 0, y: index + 1 },
 			stack: protocolName,
-			color: distinctColors[index]
+			color
 		})
 	}
 

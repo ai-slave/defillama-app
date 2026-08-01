@@ -21,7 +21,7 @@ export function normalizeChartPointsToMs(
 		normalized.push([timestampMs, value])
 	}
 
-	return normalized.length > 0 ? normalized : null
+	return normalized
 }
 
 export function normalizeSeriesToSeconds<T extends number | null>(
@@ -47,7 +47,8 @@ export function normalizeSeriesToMilliseconds<T extends number | null>(
 export function normalizeBridgeVolumeToChartMs(
 	bridgeVolumeData: IProtocolOverviewPageData['bridgeVolume']
 ): IProtocolNullableSeries | null {
-	if (!bridgeVolumeData?.length) return null
+	if (bridgeVolumeData == null) return null
+	if (bridgeVolumeData.length === 0) return []
 
 	// Match BridgeVolume in index.tsx: sum per-item midpoint volumes for the same date.
 	const valuesByTimestamp = new Map<number, number | null>()

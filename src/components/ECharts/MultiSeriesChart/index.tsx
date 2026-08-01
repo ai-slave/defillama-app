@@ -171,6 +171,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		hideDataZoom,
 		autoHideDataZoom = true,
 		showTotalInTooltip = false,
+		requireCompleteTooltipTotal = false,
 		onReady,
 		hideDefaultLegend = true,
 		selectedCharts,
@@ -505,9 +506,18 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 				seriesSymbols,
 				tooltipTotalExcludedSeries,
 				maxItems: tooltipMaxItems,
-				showTotalInTooltip
+				showTotalInTooltip,
+				requireCompleteTooltipTotal
 			}),
-		[groupBySafe, displayValueSymbol, seriesSymbols, tooltipTotalExcludedSeries, tooltipMaxItems, showTotalInTooltip]
+		[
+			groupBySafe,
+			displayValueSymbol,
+			seriesSymbols,
+			tooltipTotalExcludedSeries,
+			tooltipMaxItems,
+			showTotalInTooltip,
+			requireCompleteTooltipTotal
+		]
 	)
 
 	const exportFilename = exportButtonsConfig?.filename || (title ? slug(title) : 'multi-series-chart')

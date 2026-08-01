@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
+import type { GovernanceDataEntry } from '~/containers/Governance/types'
+import type { IProtocolMedianApyChart } from '../api.types'
 import { protocolCharts } from '../constants'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics, IToggledMetrics } from '../types'
 
@@ -11,10 +13,28 @@ type ProbeProps = IProtocolOverviewPageData & {
 }
 
 type QueryOptions = { queryKey: Array<string | null> }
+type TvlChartOptions = {
+	protocol: string
+	key?: 'pool2' | 'staking' | 'borrowed' | 'vesting'
+	enabled: boolean
+}
+type TvlQueryResult = {
+	data: Array<[number, number]> | undefined
+	isLoading: boolean
+	isError: boolean
+}
+type QueryHookResult<T> = { data: T | null; isLoading: boolean }
 
 const mocks = vi.hoisted(() => ({
 	useQuery: vi.fn(),
 	useQueries: vi.fn(),
+	useFetchProtocolTVLChart: vi.fn<(options: TvlChartOptions) => TvlQueryResult>(),
+	useFetchProtocolGovernanceData: vi.fn(
+		(_apis: string[] | null): QueryHookResult<GovernanceDataEntry[]> => ({ data: null, isLoading: false })
+	),
+	useFetchProtocolMedianAPY: vi.fn(
+		(_protocol: string | null): QueryHookResult<IProtocolMedianApyChart> => ({ data: null, isLoading: false })
+	),
 	isClient: true,
 	lastResult: null as ReturnType<typeof import('../useFetchProtocolChartData').useFetchProtocolChartData> | null
 }))
@@ -34,13 +54,13 @@ vi.mock('~/hooks/useIsClient', () => ({
 }))
 
 vi.mock('~/containers/Governance/queries.client', () => ({
-	useFetchProtocolGovernanceData: () => ({ data: null, isLoading: false })
+	useFetchProtocolGovernanceData: mocks.useFetchProtocolGovernanceData
 }))
 
 vi.mock('~/containers/ProtocolOverview/queries.client', () => ({
 	useFetchProtocolActivityChart: () => ({ data: null, isLoading: false }),
-	useFetchProtocolMedianAPY: () => ({ data: null, isLoading: false }),
-	useFetchProtocolTVLChart: () => ({ data: null, isLoading: false })
+	useFetchProtocolMedianAPY: mocks.useFetchProtocolMedianAPY,
+	useFetchProtocolTVLChart: mocks.useFetchProtocolTVLChart
 }))
 
 vi.mock('~/utils/async', () => ({
@@ -51,6 +71,13 @@ import { useFetchProtocolChartData } from '../useFetchProtocolChartData'
 
 const timestamp = Date.UTC(2024, 0, 1) / 1e3
 const timestampMs = Date.UTC(2024, 0, 1)
+const DISABLED_TVL_QUERY: TvlQueryResult = { data: undefined, isLoading: false, isError: false }
+type TvlQueryKey = 'base' | 'pool2' | 'staking' | 'borrowed' | 'vesting'
+let tvlQueryResults: Partial<Record<TvlQueryKey, TvlQueryResult>> = {}
+
+function setTvlQueries(queries: Partial<Record<TvlQueryKey, TvlQueryResult>>) {
+	tvlQueryResults = queries
+}
 
 function makeToggledMetrics(overrides: Partial<IToggledMetrics>): IToggledMetrics {
 	const toggles = {
@@ -111,6 +138,8 @@ const feeProps: ProbeProps = {
 	chains: [],
 	geckoId: null,
 	currentTvlByChain: null,
+	isOracleProtocol: false,
+	oracleTvs: null,
 	initialMultiSeriesChartData: {},
 	metrics: {
 		...baseMetrics,
@@ -170,6 +199,10 @@ describe('ProtocolOverview chart metric semantics', () => {
 		vi.clearAllMocks()
 		mocks.isClient = true
 		probeProps = feeProps
+		tvlQueryResults = {}
+		mocks.useFetchProtocolTVLChart.mockImplementation(
+			(options) => tvlQueryResults[options.key ?? 'base'] ?? DISABLED_TVL_QUERY
+		)
 		mocks.useQueries.mockImplementation(({ queries }: { queries: QueryOptions[] }) =>
 			queries.map((options) => mocks.useQuery(options))
 		)
@@ -214,12 +247,205 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.loadingCharts).toEqual([])
 	})
 
+	it('creates protocol TVL observers only for the base chart and protocol-valid extra keys', () => {
+		probeProps = {
+			...feeProps,
+			currentTvlByChain: {
+				staking: 10,
+				borrowed: 20,
+				pool2: 30,
+				vesting: 40
+			},
+			metrics: { ...baseMetrics, tvl: true },
+			toggledMetrics: makeToggledMetrics({ tvl: 'true' }),
+			availableCharts: ['TVL'],
+			tvlSettings: {
+				staking: true,
+				borrowed: true,
+				pool2: true,
+				vesting: true,
+				doublecounted: true,
+				liquidstaking: true,
+				govtokens: true
+			}
+		}
+
+		renderToStaticMarkup(<Probe />)
+
+		const observers = mocks.useFetchProtocolTVLChart.mock.calls.map(([options]) => ({
+			key: options.key ?? 'base',
+			enabled: options.enabled
+		}))
+		expect(observers).toHaveLength(5)
+		expect(observers).toEqual(
+			expect.arrayContaining([
+				{ key: 'base', enabled: true },
+				{ key: 'pool2', enabled: true },
+				{ key: 'staking', enabled: true },
+				{ key: 'borrowed', enabled: true },
+				{ key: 'vesting', enabled: true }
+			])
+		)
+	})
+
+	it('distinguishes a cold extra error from successful empty and cached-error composite TVL data', () => {
+		const baseChart: Array<[number, number]> = [
+			[timestamp, 100],
+			[timestamp + 86_400, 110]
+		]
+		probeProps = {
+			...feeProps,
+			currentTvlByChain: { pool2: 1 },
+			metrics: { ...baseMetrics, tvl: true, inflows: true },
+			toggledMetrics: makeToggledMetrics({ tvl: 'true', usdInflows: 'true' }),
+			availableCharts: ['TVL', 'USD Inflows'],
+			tvlSettings: { pool2: true }
+		}
+
+		setTvlQueries({
+			base: { data: baseChart, isLoading: false, isError: false },
+			pool2: { data: undefined, isLoading: false, isError: true }
+		})
+
+		renderToStaticMarkup(<Probe />)
+
+		expect(mocks.lastResult?.finalCharts.TVL).toBeUndefined()
+		expect(mocks.lastResult?.finalCharts['USD Inflows']).toBeUndefined()
+		expect(mocks.lastResult?.failedMetrics).toEqual(['TVL', 'USD Inflows'])
+
+		setTvlQueries({
+			base: { data: baseChart, isLoading: false, isError: false },
+			pool2: { data: [], isLoading: false, isError: false }
+		})
+
+		renderToStaticMarkup(<Probe />)
+
+		expect(mocks.lastResult?.finalCharts.TVL).toEqual([
+			[timestampMs, 100],
+			[timestampMs + 86_400_000, 110]
+		])
+		expect(mocks.lastResult?.finalCharts['USD Inflows']).toEqual([[timestampMs + 86_400_000, 10]])
+		expect(mocks.lastResult?.failedMetrics).toEqual([])
+
+		setTvlQueries({
+			base: { data: baseChart, isLoading: false, isError: false },
+			pool2: {
+				data: [
+					[timestamp, 5],
+					[timestamp + 86_400, 6]
+				],
+				isLoading: false,
+				isError: true
+			}
+		})
+
+		renderToStaticMarkup(<Probe />)
+
+		expect(mocks.lastResult?.finalCharts.TVL).toEqual([
+			[timestampMs, 105],
+			[timestampMs + 86_400_000, 116]
+		])
+		expect(mocks.lastResult?.finalCharts['USD Inflows']).toEqual([[timestampMs + 86_400_000, 11]])
+		expect(mocks.lastResult?.failedMetrics).toEqual([])
+	})
+
+	it('registers successful empty TVL-family charts without reporting them as failures', () => {
+		probeProps = {
+			...feeProps,
+			currentTvlByChain: { staking: 1, borrowed: 1 },
+			metrics: { ...baseMetrics, tvl: true, inflows: true },
+			toggledMetrics: makeToggledMetrics({
+				tvl: 'true',
+				usdInflows: 'true',
+				staking_tvl: 'true',
+				borrowed_tvl: 'true'
+			}),
+			availableCharts: ['TVL', 'USD Inflows', 'Staking', 'Active Loans']
+		}
+		setTvlQueries({
+			base: { data: [], isLoading: false, isError: false },
+			staking: { data: [], isLoading: false, isError: false },
+			borrowed: { data: [], isLoading: false, isError: false }
+		})
+
+		renderToStaticMarkup(<Probe />)
+
+		expect(mocks.lastResult?.finalCharts.TVL).toEqual([])
+		expect(mocks.lastResult?.finalCharts['USD Inflows']).toEqual([])
+		expect(mocks.lastResult?.finalCharts.Staking).toEqual([])
+		expect(mocks.lastResult?.finalCharts['Active Loans']).toEqual([])
+		expect(mocks.lastResult?.failedMetrics).toEqual([])
+	})
+
+	it('distinguishes successful empty, cold failure, and retained cached TVS data', () => {
+		probeProps = {
+			...feeProps,
+			toggledMetrics: makeToggledMetrics({ tvs: 'true' }),
+			availableCharts: ['TVS']
+		}
+		mocks.useQuery.mockImplementation((options: QueryOptions) =>
+			options.queryKey[2] === 'tvs' ? { data: [], isLoading: false } : { data: null, isLoading: false }
+		)
+
+		renderToStaticMarkup(<Probe />)
+
+		expect(mocks.lastResult?.finalCharts.TVS).toEqual([])
+		expect(mocks.lastResult?.failedMetrics).toEqual([])
+
+		mocks.useQuery.mockImplementation(() => ({ data: null, isLoading: false }))
+		renderToStaticMarkup(<Probe />)
+		expect(mocks.lastResult?.finalCharts.TVS).toBeUndefined()
+		expect(mocks.lastResult?.failedMetrics).toEqual(['TVS'])
+
+		mocks.useQuery.mockImplementation((options: QueryOptions) =>
+			options.queryKey[2] === 'tvs' ? { data: [[timestamp, 42]], isLoading: false } : { data: null, isLoading: false }
+		)
+		renderToStaticMarkup(<Probe />)
+		expect(mocks.lastResult?.finalCharts.TVS).toEqual([[timestampMs, 42]])
+		expect(mocks.lastResult?.failedMetrics).toEqual([])
+	})
+
+	it('keeps USD Inflows loading while its required composite TVL source loads', () => {
+		probeProps = {
+			...feeProps,
+			metrics: { ...baseMetrics, tvl: true, inflows: true },
+			toggledMetrics: makeToggledMetrics({ usdInflows: 'true' }),
+			availableCharts: ['TVL', 'USD Inflows']
+		}
+		setTvlQueries({ base: { data: undefined, isLoading: true, isError: false } })
+
+		renderToStaticMarkup(<Probe />)
+
+		expect(mocks.lastResult?.loadingCharts).toEqual(['USD Inflows'])
+		expect(mocks.lastResult?.failedMetrics).toEqual([])
+	})
+
+	it('keeps primary TVL loading while an enabled composite-only staking source loads', () => {
+		probeProps = {
+			...feeProps,
+			currentTvlByChain: { staking: 1 },
+			metrics: { ...baseMetrics, tvl: true },
+			toggledMetrics: makeToggledMetrics({ tvl: 'true' }),
+			availableCharts: ['TVL'],
+			tvlSettings: { staking: true }
+		}
+		setTvlQueries({
+			base: { data: [[timestamp, 100]], isLoading: false, isError: false },
+			staking: { data: undefined, isLoading: true, isError: false }
+		})
+
+		renderToStaticMarkup(<Probe />)
+
+		expect(mocks.lastResult?.loadingCharts).toEqual(['TVL'])
+		expect(mocks.lastResult?.failedMetrics).toEqual([])
+	})
+
 	it('keeps fee-family charts visible from their base queries', () => {
 		renderToStaticMarkup(<Probe />)
 
-		expect(mocks.lastResult?.finalCharts.Fees).toBeDefined()
-		expect(mocks.lastResult?.finalCharts.Revenue).toBeDefined()
-		expect(mocks.lastResult?.finalCharts['Holders Revenue']).toBeDefined()
+		expect(mocks.lastResult?.finalCharts.Fees).toEqual([[timestampMs, 100]])
+		expect(mocks.lastResult?.finalCharts.Revenue).toEqual([[timestampMs, 50]])
+		expect(mocks.lastResult?.finalCharts['Holders Revenue']).toEqual([[timestampMs, 25]])
 		expect(mocks.lastResult?.failedMetrics).toEqual([])
 	})
 
@@ -258,6 +484,30 @@ describe('ProtocolOverview chart metric semantics', () => {
 		])
 	})
 
+	it('keeps absent optional CoinGecko series unavailable when prices exist', () => {
+		probeProps = {
+			...feeProps,
+			geckoId: 'test-token',
+			metrics: baseMetrics,
+			toggledMetrics: makeToggledMetrics({ mcap: 'true', tokenPrice: 'true', tokenVolume: 'true' }),
+			availableCharts: ['Mcap', 'Token Price', 'Token Volume']
+		}
+
+		mocks.useQuery.mockImplementation((options: QueryOptions) => {
+			if (options.queryKey[2] === 'token-price-history') {
+				return { data: { prices: [[timestampMs, 2]] }, isLoading: false }
+			}
+			return { data: null, isLoading: false }
+		})
+
+		renderToStaticMarkup(<Probe />)
+
+		expect(mocks.lastResult?.finalCharts['Token Price']).toEqual([[timestampMs, 2]])
+		expect(mocks.lastResult?.finalCharts.Mcap).toBeUndefined()
+		expect(mocks.lastResult?.finalCharts['Token Volume']).toBeUndefined()
+		expect(mocks.lastResult?.failedMetrics).toEqual(['Mcap', 'Token Volume'])
+	})
+
 	it('fetches descriptor-driven liquidation charts', () => {
 		probeProps = {
 			...feeProps,
@@ -277,6 +527,53 @@ describe('ProtocolOverview chart metric semantics', () => {
 
 		expect(mocks.lastResult?.finalCharts['Collateral Liquidated']).toEqual([[timestampMs, 123]])
 		expect(mocks.lastResult?.failedMetrics).toEqual([])
+	})
+
+	it('preserves numeric median APY and governance values without parsing or zero fallback', () => {
+		probeProps = {
+			...feeProps,
+			metrics: { ...baseMetrics, yields: true, governance: true },
+			toggledMetrics: makeToggledMetrics({
+				medianApy: 'true',
+				totalProposals: 'true',
+				successfulProposals: 'true',
+				maxVotes: 'true'
+			}),
+			availableCharts: ['Median APY', 'Total Proposals', 'Successful Proposals', 'Max Votes'],
+			governanceApis: ['https://example.com/governance']
+		}
+		mocks.useFetchProtocolMedianAPY.mockReturnValueOnce({
+			data: [{ date: timestamp, medianAPY: -2.5 }],
+			isLoading: false
+		})
+		mocks.useFetchProtocolGovernanceData.mockReturnValueOnce({
+			data: [
+				{
+					metadata: {},
+					stats: null,
+					proposals: [],
+					controversialProposals: [],
+					activity: [{ date: timestamp, Total: 0, Successful: 2 }],
+					maxVotes: [{ date: timestamp, 'Max Votes': 1_000 }]
+				},
+				{
+					metadata: {},
+					stats: null,
+					proposals: [],
+					controversialProposals: [],
+					activity: [{ date: timestamp, Total: 3, Successful: 1 }],
+					maxVotes: [{ date: timestamp, 'Max Votes': 1_500 }]
+				}
+			],
+			isLoading: false
+		})
+
+		renderToStaticMarkup(<Probe />)
+
+		expect(mocks.lastResult?.finalCharts['Median APY']).toEqual([[timestampMs, -2.5]])
+		expect(mocks.lastResult?.finalCharts['Total Proposals']).toEqual([[timestampMs, 3]])
+		expect(mocks.lastResult?.finalCharts['Successful Proposals']).toEqual([[timestampMs, 3]])
+		expect(mocks.lastResult?.finalCharts['Max Votes']).toEqual([[timestampMs, 1_500]])
 	})
 
 	it('keeps cumulative fee-family charts in selected denomination units', () => {

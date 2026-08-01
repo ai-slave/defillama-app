@@ -11,7 +11,7 @@ import { parseNumberQueryParam, parseExcludeParam, getSelectedChainFilters } fro
 import { airdropsEligibilityCheck } from './airdrops'
 import { RecentlyListedProtocolsTable } from './RecentProtocolsTable'
 import type { IRecentProtocol, IRecentProtocolsPageData } from './types'
-import { applyExtraTvl } from './utils'
+import { applyExtraTvl, scopeRecentProtocolToChains } from './utils'
 
 export function RecentProtocols({
 	protocols,
@@ -97,62 +97,7 @@ export function RecentProtocols({
 			}
 			if (!includesChain) continue
 
-			// Recalculate TVLs scoped to selected chains
-			let tvl = 0
-			let tvlPrevDay: number | null = null
-			let tvlPrevWeek: number | null = null
-			let tvlPrevMonth: number | null = null
-			const extraTvl: Record<
-				string,
-				{ tvl: number; tvlPrevDay: number | null; tvlPrevWeek: number | null; tvlPrevMonth: number | null }
-			> = {}
-
-			for (const chainName of protocol.chains) {
-				if (!chainsToSelectSet.has(chainName.toLowerCase())) continue
-
-				for (const sectionName in protocol.chainTvls) {
-					const isBaseChainSection = sectionName.toLowerCase() === chainName.toLowerCase()
-					const isExtraTvlSection = sectionName.startsWith(`${chainName}-`)
-					if (!isBaseChainSection && !isExtraTvlSection) continue
-
-					const values = protocol.chainTvls[sectionName]
-
-					if (isExtraTvlSection) {
-						const sectionToAdd = sectionName.slice(chainName.length + 1)
-						if (!sectionToAdd) continue
-
-						if (!extraTvl[sectionToAdd]) {
-							extraTvl[sectionToAdd] = { tvl: 0, tvlPrevDay: 0, tvlPrevWeek: 0, tvlPrevMonth: 0 }
-						}
-						extraTvl[sectionToAdd].tvl += values.tvl ?? 0
-						extraTvl[sectionToAdd].tvlPrevDay += values.tvlPrevDay ?? 0
-						extraTvl[sectionToAdd].tvlPrevWeek += values.tvlPrevWeek ?? 0
-						extraTvl[sectionToAdd].tvlPrevMonth += values.tvlPrevMonth ?? 0
-					} else {
-						if (values.tvl != null) {
-							tvl = (tvl ?? 0) + values.tvl
-						}
-						if (values.tvlPrevDay != null) {
-							tvlPrevDay = (tvlPrevDay ?? 0) + values.tvlPrevDay
-						}
-						if (values.tvlPrevWeek != null) {
-							tvlPrevWeek = (tvlPrevWeek ?? 0) + values.tvlPrevWeek
-						}
-						if (values.tvlPrevMonth != null) {
-							tvlPrevMonth = (tvlPrevMonth ?? 0) + values.tvlPrevMonth
-						}
-					}
-				}
-			}
-
-			filteredProtocols.push({
-				...protocol,
-				tvl,
-				tvlPrevDay,
-				tvlPrevWeek,
-				tvlPrevMonth,
-				extraTvl
-			})
+			filteredProtocols.push(scopeRecentProtocolToChains({ protocol, selectedChains: chainsToSelectSet }))
 		}
 
 		// Apply extraTvl toggles (staking/pool2/borrowed)
@@ -160,7 +105,7 @@ export function RecentProtocols({
 
 		if (isValidTvlRange) {
 			const rangeFiltered = withExtraTvl.filter(
-				(p) => (minTvl != null ? p.tvl >= minTvl : true) && (maxTvl != null ? p.tvl <= maxTvl : true)
+				(p) => p.tvl != null && (minTvl != null ? p.tvl >= minTvl : true) && (maxTvl != null ? p.tvl <= maxTvl : true)
 			)
 			return { data: rangeFiltered, selectedChains, selectedCategories }
 		}

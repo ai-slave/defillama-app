@@ -1,9 +1,6 @@
-import type {
-	ChartTimeGroupingWithCumulative,
-	MultiSeriesChartSeriesConfig
-} from '~/components/ECharts/MultiSeriesChart/types'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
-import type { IProtocolTaxonomyPageData } from './types'
+import type { IProtocolTaxonomyPageData, ProtocolTaxonomyChartRow } from './types'
 
 type ProtocolTaxonomyCharts = IProtocolTaxonomyPageData['charts']
 type ProtocolTaxonomyGroupedChartsResult = {
@@ -11,9 +8,10 @@ type ProtocolTaxonomyGroupedChartsResult = {
 	hasBarCharts: boolean
 }
 
-function getYDimensionIndex(series: MultiSeriesChartSeriesConfig, dimensions: string[]): number {
-	const encodedY = Array.isArray(series.encode.y) ? series.encode.y[0] : series.encode.y
-	return typeof encodedY === 'number' ? encodedY : dimensions.indexOf(encodedY)
+function createGroupedRow(timestamp: number, dimensionCount: number): ProtocolTaxonomyChartRow {
+	const row: ProtocolTaxonomyChartRow = [timestamp]
+	while (row.length < dimensionCount) row.push(null)
+	return row
 }
 
 export function buildProtocolTaxonomyGroupedCharts({
@@ -23,63 +21,110 @@ export function buildProtocolTaxonomyGroupedCharts({
 	charts: ProtocolTaxonomyCharts
 	groupBy: ChartTimeGroupingWithCumulative
 }): ProtocolTaxonomyGroupedChartsResult {
-	const chartSeries = charts.charts ?? []
+	const chartSeries = charts.charts
 	if (!chartSeries.some((series) => series.type === 'bar')) return { charts, hasBarCharts: false }
 
 	const dimensionCount = charts.dataset.dimensions.length
-	const cumulativeTotals = new Array<number>(dimensionCount).fill(0)
-	const hasCumulativeValue = new Array<boolean>(dimensionCount).fill(false)
-	const source: ProtocolTaxonomyCharts['dataset']['source'] = []
 	const isCumulative = groupBy === 'cumulative'
-	const barDimensionIndexes: number[] = []
+	const resolvedSeries: Array<{ type: 'line' | 'bar'; dimensionIndex: number }> = []
+	const barDimensionStates: Array<{
+		dimensionIndex: number
+		total: number
+		hasValue: boolean
+		unavailable: boolean
+	}> = []
+	const resolvedBarDimensions = new Set<number>()
 	for (const series of chartSeries) {
-		if (series.type !== 'bar') continue
-		const dimensionIndex = getYDimensionIndex(series, charts.dataset.dimensions)
-		if (dimensionIndex >= 0) barDimensionIndexes.push(dimensionIndex)
+		const dimensionIndex = series.encode.y
+		resolvedSeries.push({ type: series.type, dimensionIndex })
+		if (series.type === 'bar' && !resolvedBarDimensions.has(dimensionIndex)) {
+			resolvedBarDimensions.add(dimensionIndex)
+			barDimensionStates.push({ dimensionIndex, total: 0, hasValue: false, unavailable: false })
+		}
 	}
+	const firstNumericTimestampByDimension = new Array<number | null>(dimensionCount).fill(null)
+	for (const inputRow of charts.dataset.source) {
+		for (const { dimensionIndex } of barDimensionStates) {
+			if (typeof inputRow[dimensionIndex] !== 'number') continue
+			const currentFirstTimestamp = firstNumericTimestampByDimension[dimensionIndex] ?? null
+			if (currentFirstTimestamp === null || inputRow[0] < currentFirstTimestamp) {
+				firstNumericTimestampByDimension[dimensionIndex] = inputRow[0]
+			}
+		}
+	}
+	const buckets = new Map<
+		number,
+		{
+			timestamp: number
+			row: ProtocolTaxonomyCharts['dataset']['source'][number]
+			lineTimestamps: Array<number | null>
+			unavailableBarDimensions: number[] | null
+		}
+	>()
 	let hasBarCharts = false
 
 	for (const inputRow of charts.dataset.source) {
 		const inputTimestamp = inputRow[0]
-		if (typeof inputTimestamp !== 'number') continue
 		const timestamp = isCumulative ? inputTimestamp : getBucketTimestampMs(inputTimestamp, groupBy)
-		let outputRow = source[source.length - 1]
-
-		for (const series of chartSeries) {
-			const dimensionIndex = getYDimensionIndex(series, charts.dataset.dimensions)
-			if (dimensionIndex < 0) continue
-			const value = inputRow[dimensionIndex]
-			if (typeof value !== 'number') continue
-
-			if (outputRow?.[0] !== timestamp) {
-				outputRow = new Array(dimensionCount).fill(null)
-				outputRow[0] = timestamp
-				source.push(outputRow)
+		let bucket = buckets.get(timestamp)
+		if (!bucket) {
+			bucket = {
+				timestamp,
+				row: createGroupedRow(timestamp, dimensionCount),
+				lineTimestamps: new Array<number | null>(dimensionCount).fill(null),
+				unavailableBarDimensions: null
 			}
+			buckets.set(timestamp, bucket)
+		}
+		for (const series of resolvedSeries) {
+			const { dimensionIndex } = series
+			const value = inputRow[dimensionIndex]
 
 			if (series.type === 'bar') {
+				if (typeof value !== 'number') {
+					const firstNumericTimestamp = firstNumericTimestampByDimension[dimensionIndex] ?? null
+					if (firstNumericTimestamp === null || inputTimestamp < firstNumericTimestamp) continue
+					const unavailableDimensions = bucket.unavailableBarDimensions ?? []
+					if (!unavailableDimensions.includes(dimensionIndex)) unavailableDimensions.push(dimensionIndex)
+					bucket.unavailableBarDimensions = unavailableDimensions
+					bucket.row[dimensionIndex] = null
+					continue
+				}
 				hasBarCharts = true
-				if (isCumulative) {
-					cumulativeTotals[dimensionIndex] += value
-					hasCumulativeValue[dimensionIndex] = true
-					outputRow[dimensionIndex] = cumulativeTotals[dimensionIndex]
-				} else {
-					outputRow[dimensionIndex] = ((outputRow[dimensionIndex] as number | null) ?? 0) + value
-				}
-			} else {
-				outputRow[dimensionIndex] = value
-			}
-		}
-		if (isCumulative && outputRow?.[0] === timestamp) {
-			for (const dimensionIndex of barDimensionIndexes) {
-				if (hasCumulativeValue[dimensionIndex] && outputRow[dimensionIndex] == null) {
-					outputRow[dimensionIndex] = cumulativeTotals[dimensionIndex]
-				}
+				if (bucket.unavailableBarDimensions?.includes(dimensionIndex)) continue
+				const currentValue = bucket.row[dimensionIndex]
+				bucket.row[dimensionIndex] = (typeof currentValue === 'number' ? currentValue : 0) + value
+			} else if ((bucket.lineTimestamps[dimensionIndex] ?? -Infinity) <= inputTimestamp) {
+				bucket.row[dimensionIndex] = value ?? null
+				bucket.lineTimestamps[dimensionIndex] = inputTimestamp
 			}
 		}
 	}
 
 	if (!hasBarCharts) return { charts, hasBarCharts: false }
+
+	const source = Array.from(buckets.values())
+		.sort((a, b) => a.timestamp - b.timestamp)
+		.map((bucket) => bucket.row)
+	if (isCumulative) {
+		for (const row of source) {
+			for (const state of barDimensionStates) {
+				const value = row[state.dimensionIndex]
+				if (typeof value !== 'number') {
+					const firstNumericTimestamp = firstNumericTimestampByDimension[state.dimensionIndex] ?? null
+					if (firstNumericTimestamp === null || row[0] < firstNumericTimestamp) {
+						row[state.dimensionIndex] = null
+						continue
+					}
+					state.unavailable = true
+				} else if (!state.unavailable) {
+					state.total += value
+					state.hasValue = true
+				}
+				row[state.dimensionIndex] = state.unavailable ? null : state.hasValue ? state.total : null
+			}
+		}
+	}
 
 	return {
 		charts: {

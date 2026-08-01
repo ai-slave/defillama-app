@@ -62,7 +62,7 @@ export const AdditionalInfo = (props: IProtocolOverviewPageData) => {
 					<ProtocolInfo {...props} />
 					<Articles {...props} />
 					<Yields {...props} />
-					<Users {...props} />
+					<UserActivity users={props.users} gasUsedValueSymbol={props.chartDenominations[1]?.symbol ?? null} />
 				</div>
 				<Methodology {...props} />
 				<Hacks {...props} />
@@ -79,7 +79,7 @@ export const AdditionalInfo = (props: IProtocolOverviewPageData) => {
 			<Methodology {...props} />
 			<NewsletterSignup layout="strip" className="col-span-full" />
 			<Yields {...props} />
-			<Users {...props} />
+			<UserActivity users={props.users} gasUsedValueSymbol={props.chartDenominations[1]?.symbol ?? null} />
 			<Hacks {...props} />
 			<Competitors {...props} />
 		</div>
@@ -142,8 +142,13 @@ const Articles = (props: IProtocolOverviewPageData) => {
 	)
 }
 
-function Users(props: IProtocolOverviewPageData) {
-	const users = props.users
+export function UserActivity({
+	users,
+	gasUsedValueSymbol
+}: {
+	users: IProtocolOverviewPageData['users']
+	gasUsedValueSymbol: string | null
+}) {
 	if (!users) return null
 
 	return (
@@ -181,10 +186,19 @@ function Users(props: IProtocolOverviewPageData) {
 						})}
 					/>
 				) : null}
-				{users.gasUsd != null ? (
+				{users.gasUsed != null ? (
 					<MetricRow
 						label="Gas Used (24h)"
-						value={formatUsd(users.gasUsd, {
+						value={`${formatCompactNumber(users.gasUsed, {
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}${gasUsedValueSymbol ? ` ${gasUsedValueSymbol}` : ''}`}
+					/>
+				) : null}
+				{users.gasUsedUsd != null ? (
+					<MetricRow
+						label="Gas Cost (24h)"
+						value={formatUsd(users.gasUsedUsd, {
 							compact: true,
 							minimumCompactValue: 1_000_000,
 							compactSuffix: 'lowercase'
@@ -277,7 +291,7 @@ const Methodology = (props: IProtocolOverviewPageData) => {
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
 			<SectionHeader id="methodology">Methodology</SectionHeader>
-			{!props.oracleTvs && props.tvlMethodologyUrl ? (
+			{!props.isOracleProtocol && props.tvlMethodologyUrl ? (
 				<a href={props.tvlMethodologyUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
 					<span className="font-medium text-secondary">{props.isCEX ? 'Total Assets:' : 'TVL:'}</span>{' '}
 					<span>{props.tvlMethodology ?? ''}</span>
@@ -286,13 +300,13 @@ const Methodology = (props: IProtocolOverviewPageData) => {
 						<span className="sr-only">View code on GitHub</span>
 					</span>
 				</a>
-			) : !props.oracleTvs && props.tvlMethodology ? (
+			) : !props.isOracleProtocol && props.tvlMethodology ? (
 				<p>
 					<span className="font-medium text-secondary">{props.isCEX ? 'Total Assets:' : 'TVL:'}</span>{' '}
 					<span>{props.tvlMethodology ?? ''}</span>
 				</p>
 			) : null}
-			{props.oracleTvs && props.tvlMethodologyUrl ? (
+			{props.isOracleProtocol && props.tvlMethodologyUrl ? (
 				<a href={props.tvlMethodologyUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
 					<span className="font-medium text-secondary">TVS:</span>{' '}
 					<span>Total value secured by an oracle, where oracle failure would lead to a loss equal to TVS</span>
@@ -301,7 +315,7 @@ const Methodology = (props: IProtocolOverviewPageData) => {
 						<span className="sr-only">View code on GitHub</span>
 					</span>
 				</a>
-			) : props.oracleTvs ? (
+			) : props.isOracleProtocol ? (
 				<p>
 					<span className="font-medium text-secondary">TVS:</span>{' '}
 					<span>Total value secured by an oracle, where oracle failure would lead to a loss equal to TVS</span>

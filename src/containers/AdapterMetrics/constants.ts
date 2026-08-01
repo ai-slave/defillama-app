@@ -36,6 +36,7 @@ export enum ADAPTER_DATA_TYPES {
 	DAILY_NEW_USERS = 'dailyNewUsers',
 	DAILY_TRANSACTIONS_COUNT = 'dailyTransactionsCount',
 	DAILY_GAS_USED = 'dailyGasUsed',
+	DAILY_GAS_USED_USD = 'dailyGasUsedUsd',
 	DAILY_LIQUIDATION_VOLUME = 'dailyLiquidationVolume',
 	DAILY_COLLATERAL_LIQUIDATED = 'dailyCollateralLiquidated'
 }
@@ -59,6 +60,7 @@ export const ADAPTER_DATA_TYPE_KEYS: Partial<Record<`${ADAPTER_DATA_TYPES}`, str
 	dailyNewUsers: 'dnu',
 	dailyTransactionsCount: 'dtc',
 	dailyGasUsed: 'dgu',
+	dailyGasUsedUsd: 'dguusd',
 	dailyLiquidationVolume: 'dlv',
 	dailyCollateralLiquidated: 'dcl'
 }
@@ -89,6 +91,7 @@ const CHAIN_METADATA_KEYS: Record<string, ChainMetadataKey> = {
 	[ADAPTER_DATA_TYPES.DAILY_NEW_USERS]: 'chainNewUsers',
 	[ADAPTER_DATA_TYPES.DAILY_TRANSACTIONS_COUNT]: 'txCount',
 	[ADAPTER_DATA_TYPES.DAILY_GAS_USED]: 'gasUsed',
+	[ADAPTER_DATA_TYPES.DAILY_GAS_USED_USD]: 'gasUsed',
 	// fee sub-types gate on fees flag, revenue sub-types gate on revenue flag
 	[ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE]: 'revenue',
 	[ADAPTER_DATA_TYPES.DAILY_SUPPLY_SIDE_REVENUE]: 'revenue',

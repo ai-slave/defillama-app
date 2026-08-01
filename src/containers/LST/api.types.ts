@@ -1,13 +1,13 @@
 /** Full protocol data from PROTOCOL_API/:slug */
 export interface IProtocolDetailApiItem {
 	name: string
-	logo: string
+	logo: string | null
 	mcap: number | null
 	chainTvls: Record<
 		string,
 		{
-			tokens?: Array<{ date: number; tokens: Record<string, number> }>
-			tokensInUsd?: Array<{ date: number; tokens: Record<string, number> }>
+			tokens?: Array<{ date: number; tokens: Record<string, number> }> | null
+			tokensInUsd?: Array<{ date: number; tokens: Record<string, number> }> | null
 		}
 	>
 }

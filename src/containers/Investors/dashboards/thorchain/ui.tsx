@@ -100,7 +100,9 @@ export interface SeriesKpis {
 }
 
 function windowKpi(series: [number, number][], days?: number): KpiT {
-	const last = series[series.length - 1][0]
+	const lastPoint = series[series.length - 1]
+	if (!lastPoint) throw new Error('Expected a non-empty adapter series')
+	const last = lastPoint[0]
 	const cutoff = days ? last - days * DAY : -Infinity
 	const sum = series.reduce((acc, [t, v]) => (t > cutoff ? acc + (v || 0) : acc), 0)
 	return {
@@ -144,8 +146,15 @@ export const PALETTE = [
 	'#ff9f45',
 	'#7ee787'
 ]
+
+function paletteColor(index: number): string {
+	const color = PALETTE[index % PALETTE.length]
+	if (color === undefined) throw new Error('Expected the THORChain chart palette to be non-empty')
+	return color
+}
+
 const colorMap = (names: string[]): Record<string, string> =>
-	Object.fromEntries(names.map((n, i) => [n, PALETTE[i % PALETTE.length]]))
+	Object.fromEntries(names.map((n, i) => [n, paletteColor(i)]))
 
 const THREE_MONTHS = 90
 const CSV_ONLY_EXPORT = { csv: true, png: false } as const
@@ -157,7 +166,7 @@ function lastNDaysZoom(len: number, days = THREE_MONTHS): { dataZoom: { start: n
 
 // ---------------------------------------------------------------- KPI + layout
 
-function KpiCard({ label, value, sub, def }: { label: string; value: string; sub?: string; def?: string }) {
+function KpiCard({ label, value, sub, def }: { label: string; value: string; sub?: string; def?: string | undefined }) {
 	return (
 		<div className="flex flex-col gap-1.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<span className="flex items-center gap-1 text-[11px] font-medium tracking-wider text-pro-text-tertiary uppercase">
@@ -217,7 +226,17 @@ export function SectionHeader({ children }: { children: React.ReactNode }) {
 
 // Single KPI that degrades to a placeholder when the backend hasn't shipped the
 // field yet. `note` names the awaited API path so it's obvious what to wire later.
-export function Kpi({ kpi, label, note, def }: { kpi?: KpiT; label: string; note?: string; def?: string }) {
+export function Kpi({
+	kpi,
+	label,
+	note,
+	def
+}: {
+	kpi?: KpiT | undefined
+	label: string
+	note?: string
+	def?: string | undefined
+}) {
 	if (kpi) return <KpiCard label={label} value={kpi.formatted} def={def} />
 	return (
 		<div className="flex flex-col gap-1.5 rounded-lg border border-dashed border-pro-cards-border bg-pro-cards-bg p-4">
@@ -247,7 +266,7 @@ export function PlaceholderCard({
 	height = '360px'
 }: {
 	title: string
-	subtitle?: string
+	subtitle?: string | undefined
 	note?: string
 	height?: string
 }) {
@@ -282,8 +301,8 @@ export function ChartCard({
 	children
 }: {
 	title: string
-	subtitle?: string
-	value?: string
+	subtitle?: string | undefined
+	value?: string | undefined
 	/** Optional header-right control (e.g. a Daily/Cumulative toggle). */
 	control?: React.ReactNode
 	children: React.ReactNode
@@ -353,7 +372,7 @@ export function TimeAreaCard({
 }: {
 	chart: Chart
 	subtitle?: string
-	value?: string
+	value?: string | undefined
 	valueSymbol?: string
 	/** Open showing the whole history instead of default-zooming to the last 90 days. */
 	fullRange?: boolean
@@ -370,7 +389,7 @@ export function TimeAreaCard({
 					type: 'line',
 					name: series.name,
 					encode: { x: 'timestamp', y: series.name },
-					color: PALETTE[index % PALETTE.length],
+					color: paletteColor(index),
 					hideAreaStyle: multipleSeries
 				})
 			),
@@ -419,7 +438,7 @@ export function TimeBarCard({
 					type: 'bar',
 					name: series.name,
 					encode: { x: 'timestamp', y: series.name },
-					color: PALETTE[index % PALETTE.length],
+					color: paletteColor(index),
 					stack: series.stack ?? series.name,
 					large: false
 				})

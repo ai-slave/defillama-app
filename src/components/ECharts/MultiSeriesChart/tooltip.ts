@@ -237,7 +237,8 @@ export function createTooltipFormatter({
 	seriesSymbols,
 	tooltipTotalExcludedSeries,
 	maxItems,
-	showTotalInTooltip
+	showTotalInTooltip,
+	requireCompleteTooltipTotal
 }: {
 	groupBy: GroupBy
 	valueSymbol: string
@@ -245,6 +246,7 @@ export function createTooltipFormatter({
 	tooltipTotalExcludedSeries?: Set<string> | undefined
 	maxItems?: number | undefined
 	showTotalInTooltip?: boolean | undefined
+	requireCompleteTooltipTotal?: boolean | undefined
 }) {
 	return (params: unknown) => {
 		const items = normalizeTooltipItems(params)
@@ -257,6 +259,7 @@ export function createTooltipFormatter({
 		let total = 0
 		let regularCount = 0
 		let standardCount = 0
+		let hasUnavailableStandardValue = false
 		const vals: TooltipValueRow[] = []
 		const topOverrideVals: TooltipValueRow[] = []
 		const topStandardVals: TooltipValueRow[] = []
@@ -266,13 +269,16 @@ export function createTooltipFormatter({
 			const name = item?.seriesName
 			if (!name) continue
 
+			const hasOverride = seriesSymbols?.has(name) ?? false
+			const excludeFromTotal = hasOverride || (tooltipTotalExcludedSeries?.has(name) ?? false)
 			const rawValue = getTooltipRawYValue(item, name)
 			const value =
 				rawValue == null || rawValue === '-' ? null : typeof rawValue === 'number' ? rawValue : Number(rawValue)
-			if (value == null || Number.isNaN(value)) continue
+			if (value == null || Number.isNaN(value)) {
+				if (requireCompleteTooltipTotal && !excludeFromTotal) hasUnavailableStandardValue = true
+				continue
+			}
 
-			const hasOverride = seriesSymbols?.has(name) ?? false
-			const excludeFromTotal = hasOverride || (tooltipTotalExcludedSeries?.has(name) ?? false)
 			const nextRow = [item.marker ?? '', name, value, seriesSymbols?.get(name) ?? valueSymbol, hasOverride] as const
 
 			if (!excludeFromTotal) {
@@ -304,7 +310,7 @@ export function createTooltipFormatter({
 			: vals
 		const remaining = shouldCap ? Math.max(0, regularCount - cappedVals.length) : 0
 		const totalLine =
-			showTotalInTooltip && standardCount > 0
+			showTotalInTooltip && standardCount > 0 && !hasUnavailableStandardValue
 				? `<li style="list-style:none;font-weight:600;">Total: ${formatAxisLabel(total, valueSymbol)}</li>`
 				: ''
 		let valueLines = ''

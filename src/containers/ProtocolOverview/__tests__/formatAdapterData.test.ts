@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { IAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api.types'
+import { definitions } from '~/public/definitions'
 import { formatAdapterData } from '../formatAdapterData'
 
 function createAdapterMetrics(overrides: Partial<IAdapterProtocolMetrics> = {}): IAdapterProtocolMetrics {
@@ -142,6 +143,15 @@ describe('formatAdapterData', () => {
 				methodologyKey: 'Fees'
 			})?.methodology
 		).toBe('Reported directly by the protocol')
+	})
+
+	it('uses the common liquidation methodology when the producer omits a protocol-specific value', () => {
+		expect(
+			formatAdapterData({
+				data: createAdapterMetrics({ methodology: {} }),
+				methodologyKey: 'LiquidationVolume'
+			})?.methodology
+		).toBe(definitions.liquidationVolume.common)
 	})
 
 	it('preserves child methodology behavior', () => {

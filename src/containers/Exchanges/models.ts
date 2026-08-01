@@ -367,7 +367,7 @@ export interface ExchangeHackModel {
 
 export interface ExchangeRaiseModel {
 	date: number
-	round: string
+	round: string | null
 	amountUsd: number | null
 	valuationUsd: number | null
 	investors: string[]

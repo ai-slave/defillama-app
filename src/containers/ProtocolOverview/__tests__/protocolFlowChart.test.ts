@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildProtocolFlowChart, normalizeProtocolFlowChart } from '../protocolFlowChart'
+import { buildProtocolFlowChart, normalizeProtocolFlowChart, type ProtocolFlowChartSeries } from '../protocolFlowChart'
 
 describe('normalizeProtocolFlowChart', () => {
 	it('normalizes numeric API seconds and trims only when a positive point exists', () => {
@@ -30,18 +30,17 @@ describe('normalizeProtocolFlowChart', () => {
 })
 
 describe('buildProtocolFlowChart', () => {
-	const series = [
-		{
-			name: 'Fees',
-			color: '#111111',
-			stack: 'Fees',
-			points: [
-				[Date.UTC(2024, 0, 1), 2],
-				[Date.UTC(2024, 0, 1), 3],
-				[Date.UTC(2024, 0, 2), 4]
-			] as const
-		}
-	]
+	const feeSeries: ProtocolFlowChartSeries = {
+		name: 'Fees',
+		color: '#111111',
+		stack: 'Fees',
+		points: [
+			[Date.UTC(2024, 0, 1), 2],
+			[Date.UTC(2024, 0, 1), 3],
+			[Date.UTC(2024, 0, 2), 4]
+		] as const
+	}
+	const series = [feeSeries]
 
 	it('sums flow buckets and renders them as bars', () => {
 		const result = buildProtocolFlowChart({ groupBy: 'daily', series })
@@ -56,7 +55,7 @@ describe('buildProtocolFlowChart', () => {
 		const result = buildProtocolFlowChart({
 			groupBy: 'cumulative',
 			series: [
-				series[0],
+				feeSeries,
 				{
 					name: 'Revenue',
 					color: '#222222',

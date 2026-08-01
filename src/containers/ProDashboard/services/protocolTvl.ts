@@ -1,4 +1,8 @@
-import type { IProtocolChainBreakdownChart, IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
+import type {
+	IProtocolChainBreakdownChart,
+	IProtocolTokenBreakdownChart,
+	IProtocolValueChart
+} from '~/containers/ProtocolOverview/api.types'
 import {
 	buildProtocolValueChartApiUrl,
 	buildProtocolValueChartQueryKey
@@ -6,42 +10,59 @@ import {
 import { fetchJson } from '~/utils/async'
 import type { AdvancedTvlChartType, BorrowedChartType } from '../types'
 
-export type ProtocolTvlBreakdownKind = 'chain' | 'token-usd' | 'token-raw'
 export type SupportedProtocolTvlKey = 'pool2' | 'staking' | 'borrowed' | 'vesting'
 
-export interface ProtocolTvlBreakdownRequest {
+type ProtocolTvlBreakdownRequestBase = {
 	protocol: string
 	key?: SupportedProtocolTvlKey
-	breakdownType: 'chain-breakdown' | 'token-breakdown'
-	currency?: 'token'
 }
 
-export interface ProtocolTvlBreakdownSource {
-	kind: ProtocolTvlBreakdownKind
-	request: ProtocolTvlBreakdownRequest
+type ProtocolTvlChainBreakdownRequest = ProtocolTvlBreakdownRequestBase & {
+	breakdownType: 'chain-breakdown'
+	currency?: never
 }
+
+type ProtocolTvlTokenUsdBreakdownRequest = ProtocolTvlBreakdownRequestBase & {
+	breakdownType: 'token-breakdown'
+	currency?: never
+}
+
+type ProtocolTvlTokenRawBreakdownRequest = ProtocolTvlBreakdownRequestBase & {
+	breakdownType: 'token-breakdown'
+	currency: 'token'
+}
+
+export type ProtocolTvlBreakdownRequest =
+	| ProtocolTvlChainBreakdownRequest
+	| ProtocolTvlTokenUsdBreakdownRequest
+	| ProtocolTvlTokenRawBreakdownRequest
+
+export type ProtocolTvlBreakdownChart = IProtocolChainBreakdownChart | IProtocolTokenBreakdownChart
+
+export type ProtocolTvlBreakdownSource =
+	| { kind: 'chain'; request: ProtocolTvlChainBreakdownRequest }
+	| { kind: 'token-usd'; request: ProtocolTvlTokenUsdBreakdownRequest }
+	| { kind: 'token-raw'; request: ProtocolTvlTokenRawBreakdownRequest }
 
 // Advanced TVL cards compose individual protocol sections exposed by the breakdown API.
 // Aggregate/table adjustment flags such as doublecounted, liquidstaking and govtokens
 // are intentionally not breakdown sources here.
 const SUPPORTED_EXTRA_TVL_KEYS: SupportedProtocolTvlKey[] = ['pool2', 'staking', 'borrowed', 'vesting']
 
-export function fetchProtocolTvlValueForDashboard(protocol: string): Promise<IProtocolValueChart | null> {
-	return fetchJson<IProtocolValueChart | null>(buildProtocolValueChartApiUrl({ source: 'tvl', protocol }))
+export function fetchProtocolTvlValueForDashboard(protocol: string): Promise<IProtocolValueChart> {
+	return fetchJson<IProtocolValueChart>(buildProtocolValueChartApiUrl({ source: 'tvl', protocol }))
 }
 
 export function getProtocolTvlValueQueryKey(protocol: string) {
 	return buildProtocolValueChartQueryKey({ source: 'tvl', protocol })
 }
 
-export interface BorrowedBreakdownRequest extends ProtocolTvlBreakdownRequest {
-	key: 'borrowed'
-}
+export type BorrowedBreakdownRequest = ProtocolTvlBreakdownRequest & { key: 'borrowed' }
 
-export interface BorrowedBreakdownSource {
-	kind: ProtocolTvlBreakdownKind
-	request: BorrowedBreakdownRequest
-}
+export type BorrowedBreakdownSource =
+	| { kind: 'chain'; request: ProtocolTvlChainBreakdownRequest & { key: 'borrowed' } }
+	| { kind: 'token-usd'; request: ProtocolTvlTokenUsdBreakdownRequest & { key: 'borrowed' } }
+	| { kind: 'token-raw'; request: ProtocolTvlTokenRawBreakdownRequest & { key: 'borrowed' } }
 
 export function getBorrowedBreakdownSources(protocol: string, chartType: BorrowedChartType): BorrowedBreakdownSource[] {
 	if (chartType === 'chainsBorrowed') {
@@ -88,16 +109,17 @@ export function getAdvancedTvlBreakdownSources(
 
 	const sources: ProtocolTvlBreakdownSource[] = []
 	for (const key of keys) {
+		const requestKey = key === undefined ? {} : { key }
 		if (chartType === 'chainsTvl') {
-			sources.push({ kind: 'chain', request: { protocol, key, breakdownType: 'chain-breakdown' } })
+			sources.push({ kind: 'chain', request: { protocol, ...requestKey, breakdownType: 'chain-breakdown' } })
 			continue
 		}
 
-		sources.push({ kind: 'token-usd', request: { protocol, key, breakdownType: 'token-breakdown' } })
+		sources.push({ kind: 'token-usd', request: { protocol, ...requestKey, breakdownType: 'token-breakdown' } })
 		if (chartType === 'tokenBalances' || chartType === 'usdInflows' || chartType === 'tokenInflows') {
 			sources.push({
 				kind: 'token-raw',
-				request: { protocol, key, breakdownType: 'token-breakdown', currency: 'token' }
+				request: { protocol, ...requestKey, breakdownType: 'token-breakdown', currency: 'token' }
 			})
 		}
 	}
@@ -110,9 +132,20 @@ export function getProtocolTvlBreakdownQueryKey(request: ProtocolTvlBreakdownReq
 }
 
 export function fetchProtocolTvlBreakdownForDashboard(
+	request: ProtocolTvlChainBreakdownRequest
+): Promise<IProtocolChainBreakdownChart>
+export function fetchProtocolTvlBreakdownForDashboard(
+	request: ProtocolTvlTokenUsdBreakdownRequest | ProtocolTvlTokenRawBreakdownRequest
+): Promise<IProtocolTokenBreakdownChart>
+export function fetchProtocolTvlBreakdownForDashboard(
 	request: ProtocolTvlBreakdownRequest
-): Promise<IProtocolChainBreakdownChart | null> {
-	return fetchJson<IProtocolChainBreakdownChart | null>(buildProtocolValueChartApiUrl({ source: 'tvl', ...request }))
+): Promise<ProtocolTvlBreakdownChart>
+export async function fetchProtocolTvlBreakdownForDashboard(
+	request: ProtocolTvlBreakdownRequest
+): Promise<ProtocolTvlBreakdownChart> {
+	const url = buildProtocolValueChartApiUrl({ source: 'tvl', ...request })
+	if (request.breakdownType === 'chain-breakdown') return fetchJson<IProtocolChainBreakdownChart>(url)
+	return fetchJson<IProtocolTokenBreakdownChart>(url)
 }
 
 export function getBorrowedBreakdownQueryKey(request: BorrowedBreakdownRequest) {
@@ -121,6 +154,6 @@ export function getBorrowedBreakdownQueryKey(request: BorrowedBreakdownRequest) 
 
 export function fetchBorrowedBreakdownForDashboard(
 	request: BorrowedBreakdownRequest
-): Promise<IProtocolChainBreakdownChart | null> {
+): Promise<ProtocolTvlBreakdownChart> {
 	return fetchProtocolTvlBreakdownForDashboard(request)
 }

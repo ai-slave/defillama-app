@@ -42,12 +42,12 @@ describe('Raises API', () => {
 				{
 					date: 1,
 					name: 'Undisclosed',
-					round: '',
+					round: null,
 					amount: null,
 					chains: [],
-					sector: '',
-					category: '',
-					categoryGroup: '',
+					sector: null,
+					category: null,
+					categoryGroup: null,
 					leadInvestors: [],
 					otherInvestors: [],
 					valuation: ' '
@@ -57,6 +57,13 @@ describe('Raises API', () => {
 
 		const result = await fetchRaises()
 
-		expect(result.raises[0]).toMatchObject({ amountUsd: null, valuationUsd: null })
+		expect(result.raises[0]).toMatchObject({
+			round: null,
+			sector: null,
+			category: null,
+			categoryGroup: null,
+			amountUsd: null,
+			valuationUsd: null
+		})
 	})
 })

@@ -9,8 +9,8 @@ export function KpiCard({
 	info
 }: {
 	label: string
-	value?: string | number
-	sub?: string
+	value?: string | number | undefined
+	sub?: string | undefined
 	/** When set, renders a "*" next to the label that reveals this text on hover. */
 	info?: string
 }) {

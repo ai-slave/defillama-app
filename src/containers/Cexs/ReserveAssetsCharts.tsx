@@ -9,6 +9,7 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { oldBlue } from '~/constants/colors'
 import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
+import type { ProtocolExtraTvlKey } from '~/containers/ProtocolOverview/tvlChart'
 import {
 	type ProtocolBreakdownChart,
 	useProtocolBreakdownCharts
@@ -27,7 +28,7 @@ const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeri
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 const INFLOWS_TOOLTIP_FORMATTER_USD = createInflowsTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
-const EMPTY_CHART_KEYS: string[] = []
+const EMPTY_CHART_KEYS: ProtocolExtraTvlKey[] = []
 const USD_INFLOWS_SERIES = new Set(['USD Inflows'])
 
 const reserveExchangeIconUrl = (protocolName: string) => exchangeIconUrl(slug(protocolName.replace(/-cex$/, '')))
@@ -449,7 +450,9 @@ function InflowsByTokenChartCard({
 					hideDefaultLegend={false}
 					valueSymbol="$"
 					selectedCharts={selectedCharts}
-					chartOptions={selectedCharts.size > 1 ? { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } : undefined}
+					{...(selectedCharts.size > 1
+						? { chartOptions: { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } }
+						: {})}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -479,6 +482,7 @@ export function ReserveAssetsCharts({
 
 	const {
 		isLoading,
+		errors,
 		chainsUnique,
 		tokensUnique,
 		rawTokensUnique,
@@ -501,15 +505,16 @@ export function ReserveAssetsCharts({
 	const hasBreakdownMetrics =
 		(chainBreakdown && chainsUnique.length > 1) ||
 		(tokenBreakdownUSD && tokensUnique.length > 0) ||
-		(tokenBreakdownUSD?.length > 1 &&
-			tokensUnique?.length > 0 &&
+		(tokenBreakdownUSD &&
+			tokenBreakdownUSD.length > 1 &&
+			tokensUnique.length > 0 &&
 			(tokenBreakdownPieSeries.peers.length > 0 || tokenBreakdownPieSeries.upstreamOthersValue > 0)) ||
 		(tokenRawBreakdown && rawTokensUnique.length > 0) ||
 		usdInflowsDataset ||
 		(tokenInflows && inflowTokensUnique.length > 0)
 
 	if (isLoading) return <PanelLoadingStatus />
-	if (!hasBreakdownMetrics) {
+	if (!hasBreakdownMetrics && errors.length === 0) {
 		return (
 			<PanelStatus variant="empty" className="col-span-full">
 				Breakdown metrics are not available
@@ -519,6 +524,11 @@ export function ReserveAssetsCharts({
 
 	return (
 		<div className="grid grid-cols-2 gap-2">
+			{errors.length > 0 ? (
+				<PanelStatus variant="error" className="col-span-full">
+					Failed to fetch reserve asset breakdown APIs
+				</PanelStatus>
+			) : null}
 			{chainBreakdown && chainsUnique.length > 1 ? (
 				<ChainsChartCard protocolName={displayName} allChains={chainsUnique} breakdown={chainBreakdown} />
 			) : null}
@@ -527,8 +537,9 @@ export function ReserveAssetsCharts({
 				<TokenValuesUSDChartCard protocolName={displayName} allTokens={tokensUnique} breakdown={tokenBreakdownUSD} />
 			) : null}
 
-			{tokenBreakdownUSD?.length > 1 &&
-			tokensUnique?.length > 0 &&
+			{tokenBreakdownUSD &&
+			tokenBreakdownUSD.length > 1 &&
+			tokensUnique.length > 0 &&
 			(tokenBreakdownPieSeries.peers.length > 0 || tokenBreakdownPieSeries.upstreamOthersValue > 0) ? (
 				<TokensBreakdownPieChartCard tokenBreakdownPieSeries={tokenBreakdownPieSeries} protocolName={displayName} />
 			) : null}

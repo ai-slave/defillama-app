@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ADAPTER_CHART_DESCRIPTORS } from '../chartDescriptors'
+import { PROTOCOL_CHART_LABELS, protocolCharts } from '../constants'
 
 const expectedDescriptors = {
 	Fees: {
@@ -107,6 +108,11 @@ const descriptorsByLabel = Object.fromEntries(
 )
 
 describe('ProtocolOverview adapter chart descriptors', () => {
+	it('keeps the typed chart-label iterator complete and unique', () => {
+		expect(new Set(PROTOCOL_CHART_LABELS)).toEqual(new Set(Object.keys(protocolCharts)))
+		expect(PROTOCOL_CHART_LABELS).toHaveLength(Object.keys(protocolCharts).length)
+	})
+
 	it('maps each protocol chart label to the expected adapter request and methodology key', () => {
 		expect(
 			Object.fromEntries(

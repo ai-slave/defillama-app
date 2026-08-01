@@ -62,6 +62,7 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 			<RowLinksWithDropdown links={props.chains} activeLink={props.chain} />
 			<TableWithSearch
 				data={protocols}
+				getSubRows={(row) => row.subRows}
 				columns={columns}
 				placeholder={'Search protocols...'}
 				columnToSearch={'name'}

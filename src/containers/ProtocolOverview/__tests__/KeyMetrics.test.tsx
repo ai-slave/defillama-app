@@ -64,6 +64,8 @@ const renderKeyMetrics = async (props: IKeyMetricsProps) => {
 const baseProps = {
 	name: 'Gauntlet',
 	metrics,
+	isOracleProtocol: false,
+	oracleTvs: null,
 	hasKeyMetrics: true,
 	category: 'Analytics',
 	openSmolStatsSummaryByDefault: true,
@@ -167,6 +169,109 @@ describe('KeyMetrics', () => {
 		expect(markup).toContain('Ethereum')
 		expect(markup).toContain('$100')
 		expect(markup).toContain('$20')
+	})
+
+	it('renders a zero outstanding FDV instead of treating it as unavailable', async () => {
+		const markup = await renderKeyMetrics({
+			...baseProps,
+			outstandingFDV: 0,
+			tokenCGData: {
+				price: { current: null, ath: null, athDate: null, atl: null, atlDate: null },
+				marketCap: { current: null },
+				totalSupply: null,
+				fdv: { current: null },
+				volume24h: { total: null, cex: null, dex: null },
+				symbol: null
+			}
+		})
+
+		expect(markup).toContain('Outstanding FDV')
+		expect(markup).toContain('$0')
+	})
+
+	it('shows measured zero metrics without invalid percentages and retains valid positive shares', async () => {
+		const tokenCGData = {
+			price: { current: null, ath: null, athDate: null, atl: null, atlDate: null },
+			marketCap: { current: 0 },
+			totalSupply: null,
+			fdv: { current: null },
+			volume24h: { total: 0, cex: 0, dex: 10 },
+			symbol: 'TEST'
+		}
+		const zeroMarkup = await renderKeyMetrics({
+			...baseProps,
+			currentTvlByChain: { staking: 10 },
+			tokenCGData
+		})
+
+		expect(zeroMarkup).toContain('Staked')
+		expect(zeroMarkup).toContain('Token Volume 24h')
+		expect(zeroMarkup).not.toContain('of mcap')
+		expect(zeroMarkup).not.toContain('of total')
+		expect(zeroMarkup).not.toMatch(/Infinity|NaN/)
+
+		const positiveMarkup = await renderKeyMetrics({
+			...baseProps,
+			currentTvlByChain: { staking: 10 },
+			tokenCGData: {
+				...tokenCGData,
+				marketCap: { current: 100 },
+				volume24h: { total: 100, cex: 90, dex: 10 }
+			}
+		})
+		expect(positiveMarkup).toContain('10% of mcap')
+		expect(positiveMarkup).toContain('10% of total')
+	})
+
+	it('keeps Total Raised unavailable for an undisclosed round and renders an explicit-zero round', async () => {
+		const raise = (date: number, amountUsd: number | null) => ({
+			date,
+			name: 'Gauntlet',
+			round: 'Seed',
+			amountUsd,
+			valuationUsd: null,
+			chains: ['Ethereum'],
+			sector: null,
+			category: null,
+			categoryGroup: null,
+			leadInvestors: [],
+			otherInvestors: []
+		})
+		const markup = await renderKeyMetrics({
+			...baseProps,
+			raises: [raise(1_700_000_000, 10_000_000), raise(1_700_086_400, null), raise(1_700_172_800, 0)]
+		})
+
+		expect(markup).toContain('Total Raised')
+		expect(markup.match(/\$10m/g)).toHaveLength(1)
+		expect(markup).toContain('$0')
+	})
+
+	it('uses canonical TVL availability for an Oracle secondary zero TVL row', async () => {
+		const availableMarkup = await renderKeyMetrics({
+			...baseProps,
+			isOracleProtocol: true,
+			metrics: { ...metrics, tvl: true },
+			oracleTvs: { Ethereum: 10 },
+			computedOracleTvs: 10,
+			tvl: 0,
+			tvlByChain: [],
+			currentTvlByChain: {}
+		})
+		const unavailableMarkup = await renderKeyMetrics({
+			...baseProps,
+			isOracleProtocol: true,
+			metrics: { ...metrics, tvl: false },
+			oracleTvs: { Ethereum: 10 },
+			computedOracleTvs: 10,
+			tvl: 0,
+			tvlByChain: [],
+			currentTvlByChain: null
+		})
+
+		expect(availableMarkup).toContain('Total Value Locked')
+		expect(availableMarkup).toContain('$0')
+		expect(unavailableMarkup).not.toContain('Total Value Locked')
 	})
 
 	it('uses the annualized1y fees value for annualized metrics when available', async () => {

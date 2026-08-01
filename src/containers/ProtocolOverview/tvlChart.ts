@@ -1,15 +1,36 @@
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatLineChart } from '~/components/ECharts/shared/timeSeries'
+import type { IProtocolValueChart, ProtocolTvlKey } from './api.types'
 import { getGroupedTimestampSec } from './chartSeries.utils'
 
 type ChartInterval = ChartTimeGroupingWithCumulative
-type V2ChartPoint = [string | number, number]
+
+export type ProtocolExtraTvlKey = Exclude<ProtocolTvlKey, 'tvl' | 'all'>
+export const PROTOCOL_EXTRA_TVL_KEYS = [
+	'staking',
+	'borrowed',
+	'pool2',
+	'vesting'
+] as const satisfies readonly ProtocolExtraTvlKey[]
+type ProtocolExtraTvlSettings = Partial<Record<ProtocolExtraTvlKey, boolean>>
+
+export const isProtocolExtraTvlKey = (value: string): value is ProtocolExtraTvlKey => {
+	switch (value) {
+		case 'staking':
+		case 'borrowed':
+		case 'pool2':
+		case 'vesting':
+			return true
+		default:
+			return false
+	}
+}
 
 const MAX_TVL_TIMESTAMP_ALIGNMENT_DIFF_SEC = 24 * 60 * 60
 
 interface ExtraTvlChartsResult {
-	charts: Record<string, Record<string, number>>
-	latestTimestamps: Record<string, number>
+	charts: Partial<Record<ProtocolExtraTvlKey, Record<string, number>>>
+	latestTimestamps: Partial<Record<ProtocolExtraTvlKey, number>>
 }
 
 export function getProtocolExtraTvlChartFetchState({
@@ -22,7 +43,7 @@ export function getProtocolExtraTvlChartFetchState({
 }: {
 	isRouterReady: boolean
 	currentTvlByChain: Record<string, number> | null
-	tvlSettings: Record<string, boolean>
+	tvlSettings: ProtocolExtraTvlSettings
 	needsCompositeTvlChart: boolean
 	isStakingTvlToggled: boolean
 	isBorrowedTvlToggled: boolean
@@ -39,165 +60,157 @@ export function getProtocolExtraTvlChartFetchState({
 			((needsCompositeTvlChart && tvlSettings.borrowed) || isBorrowedTvlToggled)
 		),
 		pool2: !!(isRouterReady && needsCompositeTvlChart && currentTvlByChain?.pool2 != null && tvlSettings.pool2),
-		doublecounted: !!(
-			isRouterReady &&
-			needsCompositeTvlChart &&
-			currentTvlByChain?.doublecounted != null &&
-			tvlSettings.doublecounted
-		),
-		liquidstaking: !!(
-			isRouterReady &&
-			needsCompositeTvlChart &&
-			currentTvlByChain?.liquidstaking != null &&
-			tvlSettings.liquidstaking
-		),
-		vesting: !!(isRouterReady && needsCompositeTvlChart && currentTvlByChain?.vesting != null && tvlSettings.vesting),
-		govtokens: !!(
-			isRouterReady &&
-			needsCompositeTvlChart &&
-			currentTvlByChain?.govtokens != null &&
-			tvlSettings.govtokens
-		)
+		vesting: !!(isRouterReady && needsCompositeTvlChart && currentTvlByChain?.vesting != null && tvlSettings.vesting)
 	}
 }
 
-const toUnixSeconds = (timestamp: string | number): number | null => {
-	const parsed = Number(timestamp)
-	if (!Number.isFinite(parsed)) return null
-	return parsed >= 1e12 ? Math.floor(parsed / 1e3) : Math.floor(parsed)
-}
+const toUnixSeconds = (timestamp: number): number =>
+	timestamp >= 1e12 ? Math.floor(timestamp / 1e3) : Math.floor(timestamp)
 
-const getLatestTimestamp = (chart: Array<[string | number, number]>): number | null => {
+const getLatestTimestamp = (chart: IProtocolValueChart): number | null => {
 	if (chart.length === 0) return null
 	const lastPoint = chart[chart.length - 1]
 	return lastPoint ? toUnixSeconds(lastPoint[0]) : null
 }
 
-export function buildExtraTvlCharts(chartByKey: Record<string, Array<V2ChartPoint> | null>): ExtraTvlChartsResult {
-	const charts: Record<string, Record<string, number>> = {}
-	const latestTimestamps: Record<string, number> = {}
+export function buildExtraTvlCharts(
+	chartByKey: Partial<Record<ProtocolExtraTvlKey, IProtocolValueChart | undefined>>
+): ExtraTvlChartsResult {
+	const charts: ExtraTvlChartsResult['charts'] = {}
+	const latestTimestamps: ExtraTvlChartsResult['latestTimestamps'] = {}
 
-	for (const key in chartByKey) {
+	for (const key of PROTOCOL_EXTRA_TVL_KEYS) {
 		const chart = chartByKey[key]
-		if (!chart || chart.length === 0) continue
+		if (!chart) continue
 
 		const byDate: Record<string, number> = {}
+		charts[key] = byDate
+		if (chart.length === 0) continue
+
 		let maxTimestamp: number | null = null
 		for (const [timestamp, value] of chart) {
 			const dateInSec = toUnixSeconds(timestamp)
-			if (dateInSec == null) continue
 			byDate[String(dateInSec)] = value
 			if (maxTimestamp == null || dateInSec > maxTimestamp) maxTimestamp = dateInSec
 		}
 
-		let hasByDate = false
-		for (const _date in byDate) {
-			hasByDate = true
-			break
-		}
-		if (hasByDate) {
-			charts[key] = byDate
-			if (maxTimestamp != null) latestTimestamps[key] = maxTimestamp
-		}
+		if (maxTimestamp != null) latestTimestamps[key] = maxTimestamp
 	}
 
 	return { charts, latestTimestamps }
 }
 
+export function getSelectedProtocolExtraTvlKeys(
+	tvlSettings: ProtocolExtraTvlSettings,
+	currentTvlByChain: Record<string, number> | null
+): ProtocolExtraTvlKey[] {
+	const selected: ProtocolExtraTvlKey[] = []
+	for (const key of PROTOCOL_EXTRA_TVL_KEYS) {
+		if (tvlSettings[key] && currentTvlByChain?.[key] != null) selected.push(key)
+	}
+	return selected
+}
+
 export function buildTvlChart({
 	tvlChartData,
 	extraTvlCharts,
-	tvlSettings,
-	currentTvlByChain,
+	selectedExtraTvls,
 	groupBy,
 	denominationPriceHistory
 }: {
-	tvlChartData: Array<[number, number]>
+	tvlChartData: IProtocolValueChart
 	extraTvlCharts: ExtraTvlChartsResult
-	tvlSettings: Record<string, boolean>
-	currentTvlByChain: Record<string, number> | null
+	selectedExtraTvls: readonly ProtocolExtraTvlKey[]
 	groupBy: ChartInterval
 	denominationPriceHistory: Record<string, number> | null
 }): Array<[number, number | null]> {
-	const extraTvls: string[] = []
-	for (const extra in tvlSettings) {
-		if (tvlSettings[extra] && currentTvlByChain?.[extra] != null) {
-			extraTvls.push(extra)
-		}
-	}
-
-	if (extraTvls.length === 0) {
+	if (selectedExtraTvls.length === 0) {
 		return formatLineChart({ data: tvlChartData, groupBy, denominationPriceHistory })
 	}
 
-	const store: Record<string, number> = {}
-	const retainedTimestampByKey: Record<string, number> = {}
+	const store: Record<string, { timestampSec: number; value: number | null; retainedTimestampSec: number }> = {}
 	const latestMainTvlTimestamp = getLatestTimestamp(tvlChartData)
-	let mostRecentTvlTimestamp = latestMainTvlTimestamp
+	let alignedLatestMainTimestamp = latestMainTvlTimestamp
 
-	for (const extra of extraTvls) {
-		const extraLatestTimestamp = extraTvlCharts.latestTimestamps[extra]
-		if (extraLatestTimestamp == null) continue
-		if (mostRecentTvlTimestamp == null || extraLatestTimestamp > mostRecentTvlTimestamp) {
-			mostRecentTvlTimestamp = extraLatestTimestamp
+	if (latestMainTvlTimestamp != null) {
+		for (const extra of selectedExtraTvls) {
+			const extraLatestTimestamp = extraTvlCharts.latestTimestamps[extra]
+			if (
+				extraLatestTimestamp != null &&
+				Math.abs(extraLatestTimestamp - latestMainTvlTimestamp) <= MAX_TVL_TIMESTAMP_ALIGNMENT_DIFF_SEC &&
+				(alignedLatestMainTimestamp == null || extraLatestTimestamp > alignedLatestMainTimestamp)
+			) {
+				alignedLatestMainTimestamp = extraLatestTimestamp
+			}
 		}
 	}
 
 	const shouldNormalizeMainTvlLatest =
 		latestMainTvlTimestamp != null &&
-		mostRecentTvlTimestamp != null &&
-		Math.abs(mostRecentTvlTimestamp - latestMainTvlTimestamp) <= MAX_TVL_TIMESTAMP_ALIGNMENT_DIFF_SEC
+		alignedLatestMainTimestamp != null &&
+		alignedLatestMainTimestamp !== latestMainTvlTimestamp
 
 	for (const [rawDate, value] of tvlChartData) {
 		const dateInSec = toUnixSeconds(rawDate)
-		if (dateInSec == null) continue
 		const alignedDateInSec =
-			shouldNormalizeMainTvlLatest && dateInSec === latestMainTvlTimestamp ? mostRecentTvlTimestamp! : dateInSec
+			shouldNormalizeMainTvlLatest && dateInSec === latestMainTvlTimestamp && alignedLatestMainTimestamp != null
+				? alignedLatestMainTimestamp
+				: dateInSec
 		const dateKey = getGroupedTimestampSec(alignedDateInSec, groupBy)
 		let extrasAtTimestamp = 0
-		for (const extra of extraTvls) {
+		let hasMissingExtra = false
+		for (const extra of selectedExtraTvls) {
 			const extraChart = extraTvlCharts.charts[extra]
-			if (!extraChart) continue
+			if (extraChart === undefined) {
+				hasMissingExtra = true
+				break
+			}
+			const extraLatestTimestamp = extraTvlCharts.latestTimestamps[extra]
+			if (extraLatestTimestamp === undefined) continue
+
 			let extraValue = extraChart[String(dateInSec)]
-			if (extraValue == null && alignedDateInSec !== dateInSec) {
+			if (extraValue === undefined && alignedDateInSec !== dateInSec) {
 				extraValue = extraChart[String(alignedDateInSec)]
 			}
 
 			// Align only near the latest timestamp so stale charts do not shift.
-			if (
-				extraValue == null &&
-				latestMainTvlTimestamp != null &&
-				dateInSec === latestMainTvlTimestamp &&
-				mostRecentTvlTimestamp != null
-			) {
-				const extraLatestTimestamp = extraTvlCharts.latestTimestamps[extra]
-				if (
-					extraLatestTimestamp != null &&
-					Math.abs(mostRecentTvlTimestamp - extraLatestTimestamp) <= MAX_TVL_TIMESTAMP_ALIGNMENT_DIFF_SEC
-				) {
+			if (extraValue === undefined && latestMainTvlTimestamp != null && dateInSec === latestMainTvlTimestamp) {
+				if (Math.abs(latestMainTvlTimestamp - extraLatestTimestamp) <= MAX_TVL_TIMESTAMP_ALIGNMENT_DIFF_SEC) {
 					extraValue = extraChart[String(extraLatestTimestamp)]
 				}
 			}
-			extrasAtTimestamp += extraValue ?? 0
+			if (extraValue === undefined) {
+				hasMissingExtra = true
+				break
+			}
+			extrasAtTimestamp += extraValue
 		}
-		store[String(dateKey)] = value + extrasAtTimestamp
-		retainedTimestampByKey[String(dateKey)] = alignedDateInSec
+		store[String(dateKey)] = {
+			timestampSec: dateKey,
+			value: hasMissingExtra ? null : value + extrasAtTimestamp,
+			retainedTimestampSec: alignedDateInSec
+		}
 	}
 
 	const finalChart: Array<[number, number | null]> = []
-	for (const date in store) {
-		const dateInSec = Number(date)
-		const dateInMs = Number(date) * 1e3
-		const retainedTimestampSec = retainedTimestampByKey[date] ?? dateInSec
+	for (const dateKey in store) {
+		const point = store[dateKey]
+		if (point === undefined) continue
+		const dateInMs = point.timestampSec * 1e3
+		if (point.value === null) {
+			finalChart.push([dateInMs, null])
+			continue
+		}
+		const retainedTimestampSec = point.retainedTimestampSec
 		const retainedTimestampMs = retainedTimestampSec * 1e3
 		const denominationRate =
 			denominationPriceHistory?.[String(retainedTimestampSec)] ??
 			denominationPriceHistory?.[String(retainedTimestampMs)]
 		const finalValue = denominationPriceHistory
 			? denominationRate
-				? store[date] / denominationRate
+				? point.value / denominationRate
 				: null
-			: store[date]
+			: point.value
 		if (finalValue !== null) {
 			finalChart.push([dateInMs, finalValue])
 		}
@@ -206,16 +219,19 @@ export function buildTvlChart({
 	return finalChart
 }
 
-export function buildUsdInflowsFromTvlChart(tvlChart: Array<[number, number | null]>): Array<[number, number]> | null {
-	if (tvlChart.length < 2) return null
+export function buildUsdInflowsFromTvlChart(tvlChart: Array<[number, number | null]>): Array<[number, number]> {
+	if (tvlChart.length < 2) return []
 
 	const inflows: Array<[number, number]> = []
-	for (let i = 1; i < tvlChart.length; i++) {
-		const [timestamp, value] = tvlChart[i]
-		const previousValue = tvlChart[i - 1][1]
-		if (value == null || previousValue == null || !Number.isFinite(value) || !Number.isFinite(previousValue)) continue
-		inflows.push([Math.floor(timestamp / 1e3), value - previousValue])
+	let hasPrevious = false
+	let previousValue: number | null = null
+	for (const [timestamp, value] of tvlChart) {
+		if (hasPrevious && value != null && previousValue != null) {
+			inflows.push([Math.floor(timestamp / 1e3), value - previousValue])
+		}
+		hasPrevious = true
+		previousValue = value
 	}
 
-	return inflows.length > 0 ? inflows : null
+	return inflows
 }

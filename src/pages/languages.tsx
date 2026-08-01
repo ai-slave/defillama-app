@@ -147,7 +147,14 @@ function LanguageSeriesChart({
 	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({ availableSeries: series })
 	const selectedPercentage = React.useMemo(
 		() =>
-			expandTo100Percent ? buildSelectedPercentageChart({ dataset, charts, selectedCharts }) : { dataset, charts },
+			expandTo100Percent
+				? buildSelectedPercentageChart({
+						dataset,
+						charts,
+						selectedCharts,
+						missingValuePolicy: 'require-complete'
+					})
+				: { dataset, charts },
 		[charts, dataset, expandTo100Percent, selectedCharts]
 	)
 	const displayedSelectedCharts = React.useMemo(

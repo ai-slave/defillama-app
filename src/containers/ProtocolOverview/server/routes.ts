@@ -43,41 +43,59 @@ type ProtocolMetric =
 	| 'raises'
 
 const protocolTabRoutes = [
-	{ prefix: 'protocol/tvl', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.tvl },
-	{ prefix: 'protocol/stablecoins', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.stablecoins },
-	{ prefix: 'protocol/bridges', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.bridge },
-	{ prefix: 'protocol/treasury', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.treasury },
-	{ prefix: 'protocol/yields', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.yields },
-	{ prefix: 'protocol/fees', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.fees },
-	{ prefix: 'protocol/dexs', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.dexs },
-	{ prefix: 'protocol/perps', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.perps },
+	{ prefix: 'protocol/tvl', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.tvl) },
+	{
+		prefix: 'protocol/stablecoins',
+		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.stablecoins)
+	},
+	{ prefix: 'protocol/bridges', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.bridge) },
+	{
+		prefix: 'protocol/treasury',
+		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.treasury)
+	},
+	{ prefix: 'protocol/yields', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.yields) },
+	{ prefix: 'protocol/fees', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.fees) },
+	{ prefix: 'protocol/dexs', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.dexs) },
+	{ prefix: 'protocol/perps', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.perps) },
 	{
 		prefix: 'protocol/dex-aggregators',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.dexAggregators
+		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.dexAggregators)
 	},
 	{
 		prefix: 'protocol/perps-aggregators',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.perpsAggregators
+		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.perpsAggregators)
 	},
 	{
 		prefix: 'protocol/bridge-aggregators',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.bridgeAggregators
+		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.bridgeAggregators)
 	},
 	{
 		prefix: 'protocol/options',
 		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) =>
-			meta.optionsPremiumVolume || meta.optionsNotionalVolume
+			Boolean(meta.optionsPremiumVolume || meta.optionsNotionalVolume)
 	},
-	{ prefix: 'protocol/token-rights', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.tokenRights },
-	{ prefix: 'protocol/unlocks', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.emissions },
-	{ prefix: 'protocol/governance', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.governance },
-	{ prefix: 'protocol/forks', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.forks }
+	{
+		prefix: 'protocol/token-rights',
+		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.tokenRights)
+	},
+	{
+		prefix: 'protocol/unlocks',
+		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.emissions)
+	},
+	{
+		prefix: 'protocol/governance',
+		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.governance)
+	},
+	{ prefix: 'protocol/forks', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.forks) }
 ]
 
-const standaloneProtocolRoutes = [
-	{ prefix: 'unlocks', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.emissions },
-	{ prefix: 'governance', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.governance },
-	{ prefix: 'forks', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => meta.forks }
+const standaloneProtocolRoutes: Array<{
+	prefix: 'unlocks' | 'governance' | 'forks'
+	hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => boolean
+}> = [
+	{ prefix: 'unlocks', hasMetric: (meta) => Boolean(meta.emissions) },
+	{ prefix: 'governance', hasMetric: (meta) => Boolean(meta.governance) },
+	{ prefix: 'forks', hasMetric: (meta) => Boolean(meta.forks) }
 ]
 
 export function getProtocolSlug(metadata: IProtocolMetadata, protocolId: string): string {
@@ -92,6 +110,7 @@ export function resolveProtocolParamFromMetadata(protocol: string, metadataCache
 	if (!protocolId) return null
 
 	const metadata = metadataCache.protocolMetadata[protocolId]
+	if (!metadata) return null
 	return {
 		id: protocolId,
 		metadata,
@@ -147,6 +166,7 @@ export function getProtocolOverviewSlugsFromMetadata(metadataCache: MetadataCach
 
 	for (const protocolId in metadataCache.protocolMetadata) {
 		const metadata = metadataCache.protocolMetadata[protocolId]
+		if (!metadata) continue
 		if (!isProtocolRouteMetadata(metadata)) continue
 		if (EXCLUDED_OVERVIEW_CATEGORIES.has(metadata.category ?? '')) continue
 
@@ -183,6 +203,7 @@ export function getProtocolFeatureSlugsFromMetadata(
 
 	for (const protocolId in metadataCache.protocolMetadata) {
 		const metadata = metadataCache.protocolMetadata[protocolId]
+		if (!metadata) continue
 		if (!isProtocolRouteMetadata(metadata)) continue
 		if (!hasMetric(metadata)) continue
 
@@ -201,6 +222,7 @@ export function getProtocolSitemapRoutes(metadataCache: MetadataCache): string[]
 
 	for (const protocolId in metadataCache.protocolMetadata) {
 		const metadata = metadataCache.protocolMetadata[protocolId]
+		if (!metadata) continue
 		if (!isProtocolRouteMetadata(metadata)) continue
 		if (!metadata.displayName && !metadata.name) continue
 		const protocolSlug = getProtocolSlug(metadata, protocolId)
@@ -228,7 +250,7 @@ export function getStandaloneProtocolSitemapRoutes(
 
 	for (const routeDef of standaloneProtocolRoutes) {
 		for (const protocolSlug of getProtocolFeatureSlugsFromMetadata(metadataCache, routeDef.hasMetric)) {
-			routes[routeDef.prefix as keyof typeof routes].push(`${routeDef.prefix}/${protocolSlug}`)
+			routes[routeDef.prefix].push(`${routeDef.prefix}/${protocolSlug}`)
 		}
 	}
 

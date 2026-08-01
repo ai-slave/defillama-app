@@ -86,30 +86,30 @@ export function buildNarrativeCategoriesMetadata(info: ICategoryInfoApiItem[]): 
 }
 
 export function buildOracleRoutesMetadata({
+	oracles,
 	chainsByOracle,
-	oraclesTVS = {}
-}: {
-	chainsByOracle: Record<string, string[]>
-	oraclesTVS?: IOracleMetrics['oraclesTVS']
-}): OracleRoutesMetadata {
+	protocolsByOracleChain
+}: Pick<IOracleMetrics, 'oracles' | 'chainsByOracle' | 'protocolsByOracleChain'>): OracleRoutesMetadata {
 	const oracleNameBySlug: Record<string, string> = {}
 	const chainNameBySlug: Record<string, string> = {}
 	const chainSlugsByOracleSlug: Record<string, string[]> = {}
-	const oracleNames = new Set<string>()
-	for (const oracleName in oraclesTVS) {
-		oracleNames.add(oracleName)
-	}
-	for (const oracleName in chainsByOracle) {
-		oracleNames.add(oracleName)
-	}
 
-	for (const oracleName of oracleNames) {
+	for (const oracleName in oracles) {
 		const oracleSlug = slug(oracleName)
 		if (!oracleSlug) continue
 		oracleNameBySlug[oracleSlug] = oracleName
 
-		const chainSlugs: string[] = []
+		const membersByChain = protocolsByOracleChain[oracleName] ?? {}
+		const chainNames: string[] = []
 		for (const chainName of chainsByOracle[oracleName] ?? []) {
+			if (membersByChain[chainName] !== undefined) chainNames.push(chainName)
+		}
+		for (const chainName in membersByChain) {
+			if (!chainNames.includes(chainName)) chainNames.push(chainName)
+		}
+
+		const chainSlugs: string[] = []
+		for (const chainName of chainNames) {
 			const chainSlug = slug(chainName)
 			if (!chainSlug) continue
 			chainNameBySlug[chainSlug] = chainName

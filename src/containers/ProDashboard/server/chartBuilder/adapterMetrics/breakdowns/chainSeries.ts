@@ -120,12 +120,11 @@ const getProtocolCategoryLookup = async (): Promise<ProtocolCategoryLookup | nul
 	try {
 		const json = await fetchProtocols()
 		const lookup = createEmptyCategoryLookup()
-		const protocols = Array.isArray(json?.protocols) ? json.protocols : []
-		for (const proto of protocols) {
-			const category = (proto?.category || '').toLowerCase()
+		for (const proto of json.protocols) {
+			const category = proto.category.toLowerCase()
 			if (!category) continue
-			registerCategoryLookupEntry(lookup, proto?.name, category)
-			registerCategoryLookupEntry(lookup, proto?.slug, category, { asSlug: true })
+			registerCategoryLookupEntry(lookup, proto.name, category)
+			registerCategoryLookupEntry(lookup, toSlug(proto.name), category, { asSlug: true })
 		}
 		protocolCategoryCache = { data: lookup, timestamp: Date.now() }
 		return lookup
@@ -224,10 +223,11 @@ async function getDimensionsProtocolChainData(
 		for (const chain of chainDataMap.keys()) {
 			const chainSeriesData = chainDataMap.get(chain)!
 			const sortedData = chainSeriesData.toSorted((a, b) => a[0] - b[0])
+			const color = BREAKDOWN_COLOR_PALETTE[colorIndex % BREAKDOWN_COLOR_PALETTE.length]
 			series.push({
 				name: chain,
 				data: filterOutToday(sortedData),
-				color: BREAKDOWN_COLOR_PALETTE[colorIndex % BREAKDOWN_COLOR_PALETTE.length]
+				...(color ? { color } : {})
 			})
 			colorIndex++
 		}
@@ -426,9 +426,13 @@ async function getAllProtocolsTopChainsDimensionsData(
 			)
 
 			if (hasProtocolCategoryFilter) {
-				const breakdownSeries = Array.isArray(j?.totalDataChartBreakdown) ? j.totalDataChartBreakdown : []
+				const breakdownSeries: Array<[number | string, Record<string, number>]> = Array.isArray(
+					j?.totalDataChartBreakdown
+				)
+					? j.totalDataChartBreakdown
+					: []
 				if (breakdownSeries.length > 0) {
-					const filteredPairs = breakdownSeries.map(([timestamp, protocolsAtTimestamp]) => [
+					const filteredPairs: Array<[number, number]> = breakdownSeries.map(([timestamp, protocolsAtTimestamp]) => [
 						Number(timestamp),
 						aggregateProtocolsForTimestamp(protocolsAtTimestamp)
 					])
@@ -436,11 +440,13 @@ async function getAllProtocolsTopChainsDimensionsData(
 				}
 			}
 
-			return {
+			const color = BREAKDOWN_COLOR_PALETTE[idx % BREAKDOWN_COLOR_PALETTE.length]
+			const chainSeries: ChartSeries = {
 				name: displayChainName(slug),
 				data: normalized,
-				color: BREAKDOWN_COLOR_PALETTE[idx % BREAKDOWN_COLOR_PALETTE.length]
-			} as ChartSeries
+				...(color ? { color } : {})
+			}
+			return chainSeries
 		})
 
 		const seriesRaw = (
@@ -453,9 +459,13 @@ async function getAllProtocolsTopChainsDimensionsData(
 			normalizeDailyPairs((totalChart as Array<[number | string, number]>).map(([ts, v]) => [Number(ts), Number(v)]))
 		)
 		if (hasProtocolCategoryFilter) {
-			const totalBreakdown = Array.isArray(overview?.totalDataChartBreakdown) ? overview.totalDataChartBreakdown : []
+			const totalBreakdown: Array<[number | string, Record<string, number>]> = Array.isArray(
+				overview?.totalDataChartBreakdown
+			)
+				? overview.totalDataChartBreakdown
+				: []
 			if (totalBreakdown.length > 0) {
-				const filteredTotal = totalBreakdown.map(([timestamp, protocolsAtTimestamp]) => [
+				const filteredTotal: Array<[number, number]> = totalBreakdown.map(([timestamp, protocolsAtTimestamp]) => [
 					Number(timestamp),
 					aggregateProtocolsForTimestamp(protocolsAtTimestamp)
 				])

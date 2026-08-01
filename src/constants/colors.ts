@@ -40,4 +40,4 @@ export const CHART_COLORS = [
 	'#8A2BE2', // Blue Violet
 	'#D2B48C', // Tan
 	'#FF4500' // Orange Red
-]
+] satisfies [string, string, string, ...string[]]

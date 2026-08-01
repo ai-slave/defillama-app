@@ -74,8 +74,10 @@ describe('fetchMetadataRouteIndexes', () => {
 		vi.clearAllMocks()
 		fetchMetadataJsonMock.mockResolvedValue([{ id: 'ai', name: 'AI', mcap: 1, volume1D: null, nbCoins: 1 }])
 		fetchOracleMetricsMock.mockResolvedValue({
+			oracles: { Chainlink: ['Aave'] },
 			oraclesTVS: { Chainlink: {} },
-			chainsByOracle: { Chainlink: ['Ethereum'] }
+			chainsByOracle: { Chainlink: ['Ethereum'] },
+			protocolsByOracleChain: { Chainlink: { Ethereum: ['Aave'] } }
 		})
 		fetchDATInstitutionsMock.mockResolvedValue(createDATResponse())
 		fetchStablecoinPeggedConfigApiMock.mockResolvedValue({ Tether: 'pegged-1' })

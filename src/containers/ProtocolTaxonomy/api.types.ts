@@ -1,8 +1,20 @@
-export type CategoryOrTagChartMetrics = Record<string, number | null | undefined>
+export type CategoryOrTagChartMetrics = Record<string, number>
 
-export type CategoryOrTagChartResponse = Record<string, CategoryOrTagChartMetrics>
+export type CategoryOrTagChartSection =
+	| 'tvl'
+	| 'staking'
+	| 'pool2'
+	| 'offers'
+	| 'borrowed'
+	| 'treasury'
+	| 'vesting'
+	| 'doublecounted'
+	| 'liquidstaking'
+	| 'dcAndLsOverlap'
+
+export type CategoryOrTagChartResponse = Partial<Record<CategoryOrTagChartSection, CategoryOrTagChartMetrics>>
 
 export type CategoriesSummaryResponse = {
-	chart: Record<string, Record<string, CategoryOrTagChartMetrics>> | null
-	categories: Array<string> | Record<string, unknown> | null
+	chart: Record<string, Record<string, CategoryOrTagChartMetrics>>
+	categories: Record<string, string[]>
 }

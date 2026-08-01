@@ -2,6 +2,7 @@
 export interface IOracleMetrics {
 	oracles: Record<string, string[]>
 	chainsByOracle: Record<string, string[]>
+	protocolsByOracleChain: Record<string, Record<string, string[]>>
 	oraclesTVS: Record<string, Record<string, Record<string, number>>>
 }
 

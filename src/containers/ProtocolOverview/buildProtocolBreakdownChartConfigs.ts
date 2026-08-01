@@ -17,16 +17,18 @@ export function buildProtocolBreakdownChartConfigs({
 }): MultiSeriesChartSeriesConfig[] {
 	const dimensionIndex = dimensions ? new Map(dimensions.map((name, index) => [name, index])) : null
 	const charts = new Array<MultiSeriesChartSeriesConfig>(seriesNames.length)
-	for (let i = 0; i < seriesNames.length; i++) {
-		const name = seriesNames[i]
-		charts[i] = {
+	let index = 0
+	for (const name of seriesNames) {
+		const color = colors?.[name]
+		charts[index] = {
 			type,
 			name,
-			encode: { x: 0, y: dimensionIndex?.get(name) ?? i + 1 },
-			...(colors?.[name] ? { color: colors[name] } : {}),
+			encode: { x: 0, y: dimensionIndex?.get(name) ?? index + 1 },
+			...(color ? { color } : {}),
 			...(stack ? { stack } : {}),
 			...(type === 'line' && hideAreaStyle ? { hideAreaStyle: true } : {})
 		}
+		index++
 	}
 	return charts
 }

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
 	buildCompareProtocolTvlRequestPlan,
 	getCompareProtocolExtraTvlKeys,
-	getCompareProtocolTvlSettings
+	getCompareProtocolTvlSettings,
+	normalizeCompareProtocolSelection
 } from '../requestPlan'
 
 describe('CompareProtocols request planning', () => {
@@ -47,5 +48,20 @@ describe('CompareProtocols request planning', () => {
 			staking: false,
 			vesting: true
 		})
+	})
+
+	it('keeps the first occurrence of each nonblank URL selection', () => {
+		const protocolNameBySlug = new Map([
+			['aave', 'Aave'],
+			['compound', 'Compound'],
+			['aave-v3', 'Aave V3']
+		])
+		expect(
+			normalizeCompareProtocolSelection(
+				[' Aave ', '', 'Compound', 'aave', '   ', "'''", 'Compound', 'Aave V3', 'aave-v3', 'unknown-protocol'],
+				protocolNameBySlug
+			)
+		).toEqual(['Aave', 'Compound', 'Aave V3', 'unknown-protocol'])
+		expect(normalizeCompareProtocolSelection(undefined, protocolNameBySlug)).toEqual([])
 	})
 })

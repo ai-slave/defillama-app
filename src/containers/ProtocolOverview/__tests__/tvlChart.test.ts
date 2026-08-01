@@ -3,7 +3,8 @@ import {
 	buildExtraTvlCharts,
 	buildTvlChart,
 	buildUsdInflowsFromTvlChart,
-	getProtocolExtraTvlChartFetchState
+	getProtocolExtraTvlChartFetchState,
+	getSelectedProtocolExtraTvlKeys
 } from '../tvlChart'
 
 const DAY = 24 * 60 * 60
@@ -11,7 +12,7 @@ const DAY = 24 * 60 * 60
 const toMs = (timestampSec: number) => timestampSec * 1e3
 
 describe('ProtocolOverview TVL chart helpers', () => {
-	it('keeps staking and borrowed standalone fetch behavior separate from composite-only extras', () => {
+	it('keeps valid staking and borrowed standalone fetch behavior separate from composite-only extras', () => {
 		expect(
 			getProtocolExtraTvlChartFetchState({
 				isRouterReady: true,
@@ -19,17 +20,13 @@ describe('ProtocolOverview TVL chart helpers', () => {
 					staking: 1,
 					borrowed: 1,
 					pool2: 1,
-					vesting: 1,
-					govtokens: 1
+					vesting: 1
 				},
 				tvlSettings: {
 					staking: true,
 					borrowed: true,
 					pool2: true,
-					doublecounted: true,
-					liquidstaking: true,
-					vesting: true,
-					govtokens: true
+					vesting: true
 				},
 				needsCompositeTvlChart: false,
 				isStakingTvlToggled: true,
@@ -39,10 +36,7 @@ describe('ProtocolOverview TVL chart helpers', () => {
 			staking: true,
 			borrowed: true,
 			pool2: false,
-			doublecounted: false,
-			liquidstaking: false,
-			vesting: false,
-			govtokens: false
+			vesting: false
 		})
 	})
 
@@ -60,10 +54,7 @@ describe('ProtocolOverview TVL chart helpers', () => {
 					staking: true,
 					borrowed: true,
 					pool2: true,
-					doublecounted: true,
-					liquidstaking: true,
-					vesting: true,
-					govtokens: true
+					vesting: true
 				},
 				needsCompositeTvlChart: true,
 				isStakingTvlToggled: false,
@@ -73,14 +64,43 @@ describe('ProtocolOverview TVL chart helpers', () => {
 			staking: true,
 			borrowed: true,
 			pool2: true,
-			doublecounted: false,
-			liquidstaking: false,
-			vesting: true,
-			govtokens: false
+			vesting: true
 		})
 	})
 
-	it('adds selected extra charts only when the protocol exposes the current TVL key', () => {
+	it('keeps grouped points ordered and retains the last base point in a bucket', () => {
+		const firstDay = Date.UTC(2026, 0, 1) / 1e3
+		expect(
+			buildTvlChart({
+				tvlChartData: [
+					[firstDay + 1, 100],
+					[firstDay + 2, 110],
+					[firstDay + DAY + 2, 220]
+				],
+				extraTvlCharts: buildExtraTvlCharts({
+					staking: [
+						[firstDay + 1, 0],
+						[firstDay + 2, 0],
+						[firstDay + DAY + 2, 0]
+					]
+				}),
+				selectedExtraTvls: ['staking'],
+				groupBy: 'daily',
+				denominationPriceHistory: null
+			})
+		).toEqual([
+			[toMs(firstDay), 110],
+			[toMs(firstDay + DAY), 220]
+		])
+	})
+
+	it('resolves selected extra charts from settings and the protocol current-TVL keys', () => {
+		expect(
+			getSelectedProtocolExtraTvlKeys({ staking: true, pool2: true, borrowed: true }, { staking: 1, pool2: 1 })
+		).toEqual(['staking', 'pool2'])
+	})
+
+	it('adds only the already-resolved extra charts', () => {
 		const extraTvlCharts = buildExtraTvlCharts({
 			staking: [
 				[DAY, 10],
@@ -103,8 +123,7 @@ describe('ProtocolOverview TVL chart helpers', () => {
 					[DAY * 2, 200]
 				],
 				extraTvlCharts,
-				tvlSettings: { staking: true, pool2: true, borrowed: true },
-				currentTvlByChain: { staking: 1, pool2: 1 },
+				selectedExtraTvls: ['staking', 'pool2'],
 				groupBy: 'cumulative',
 				denominationPriceHistory: null
 			})
@@ -130,8 +149,7 @@ describe('ProtocolOverview TVL chart helpers', () => {
 					[DAY * 2, 200]
 				],
 				extraTvlCharts,
-				tvlSettings: { staking: true },
-				currentTvlByChain: { staking: 1 },
+				selectedExtraTvls: ['staking'],
 				groupBy: 'cumulative',
 				denominationPriceHistory: null
 			})
@@ -141,11 +159,12 @@ describe('ProtocolOverview TVL chart helpers', () => {
 		])
 	})
 
-	it('keeps the base timestamp but still adds the latest extra value when latest timestamps are far apart', () => {
+	it('accepts latest extra TVL alignment exactly one day from the base', () => {
+		const exactBoundaryTimestamp = DAY * 3
 		const extraTvlCharts = buildExtraTvlCharts({
 			staking: [
 				[DAY, 10],
-				[DAY * 3 + 1, 20]
+				[exactBoundaryTimestamp, 20]
 			]
 		})
 
@@ -156,14 +175,101 @@ describe('ProtocolOverview TVL chart helpers', () => {
 					[DAY * 2, 200]
 				],
 				extraTvlCharts,
-				tvlSettings: { staking: true },
-				currentTvlByChain: { staking: 1 },
+				selectedExtraTvls: ['staking'],
 				groupBy: 'cumulative',
 				denominationPriceHistory: null
 			})
 		).toEqual([
 			[toMs(DAY), 110],
-			[toMs(DAY * 2), 220]
+			[toMs(exactBoundaryTimestamp), 220]
+		])
+	})
+
+	it('marks a required latest extra missing and does not manufacture inflow when it is over one day away', () => {
+		const extraTvlCharts = buildExtraTvlCharts({
+			staking: [
+				[DAY, 10],
+				[DAY * 3 + 1, 20]
+			]
+		})
+
+		const chart = buildTvlChart({
+			tvlChartData: [
+				[DAY, 100],
+				[DAY * 2, 200]
+			],
+			extraTvlCharts,
+			selectedExtraTvls: ['staking'],
+			groupBy: 'cumulative',
+			denominationPriceHistory: null
+		})
+
+		expect(chart).toEqual([
+			[toMs(DAY), 110],
+			[toMs(DAY * 2), null]
+		])
+		expect(buildUsdInflowsFromTvlChart(chart)).toEqual([])
+	})
+
+	it('marks required points missing when a populated extra is too old', () => {
+		const chart = buildTvlChart({
+			tvlChartData: [
+				[DAY * 2, 100],
+				[DAY * 3 + 1, 200]
+			],
+			extraTvlCharts: buildExtraTvlCharts({ staking: [[DAY, 20]] }),
+			selectedExtraTvls: ['staking'],
+			groupBy: 'cumulative',
+			denominationPriceHistory: null
+		})
+
+		expect(chart).toEqual([
+			[toMs(DAY * 2), null],
+			[toMs(DAY * 3 + 1), null]
+		])
+	})
+
+	it('distinguishes an unavailable required extra from a successful empty extra', () => {
+		const input: Omit<Parameters<typeof buildTvlChart>[0], 'extraTvlCharts'> = {
+			tvlChartData: [
+				[DAY, 100],
+				[DAY * 2, 200]
+			] as Array<[number, number]>,
+			selectedExtraTvls: ['staking'],
+			groupBy: 'cumulative' as const,
+			denominationPriceHistory: null
+		}
+
+		expect(buildTvlChart({ ...input, extraTvlCharts: buildExtraTvlCharts({}) })).toEqual([
+			[toMs(DAY), null],
+			[toMs(DAY * 2), null]
+		])
+		expect(buildTvlChart({ ...input, extraTvlCharts: buildExtraTvlCharts({ staking: [] }) })).toEqual([
+			[toMs(DAY), 100],
+			[toMs(DAY * 2), 200]
+		])
+	})
+
+	it('preserves exact zero extra values', () => {
+		expect(
+			buildTvlChart({
+				tvlChartData: [
+					[DAY, 100],
+					[DAY * 2, 200]
+				],
+				extraTvlCharts: buildExtraTvlCharts({
+					staking: [
+						[DAY, 0],
+						[DAY * 2, 0]
+					]
+				}),
+				selectedExtraTvls: ['staking'],
+				groupBy: 'cumulative',
+				denominationPriceHistory: null
+			})
+		).toEqual([
+			[toMs(DAY), 100],
+			[toMs(DAY * 2), 200]
 		])
 	})
 
@@ -174,14 +280,13 @@ describe('ProtocolOverview TVL chart helpers', () => {
 				[DAY * 2, 20]
 			]
 		})
-		const input = {
+		const input: Omit<Parameters<typeof buildTvlChart>[0], 'denominationPriceHistory'> = {
 			tvlChartData: [
 				[DAY, 100],
 				[DAY * 2, 200]
 			] as Array<[number, number]>,
 			extraTvlCharts,
-			tvlSettings: { staking: true },
-			currentTvlByChain: { staking: 1 },
+			selectedExtraTvls: ['staking'],
 			groupBy: 'cumulative' as const
 		}
 

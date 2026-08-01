@@ -52,6 +52,33 @@ describe('buildSelectedAdditiveChart', () => {
 		expect(result.charts.every((chart) => chart.type === 'bar' && chart.stack === 'A')).toBe(true)
 	})
 
+	it('keeps Others unavailable when any selected remainder member is unavailable', () => {
+		const names = ['A', 'B', 'C', 'D']
+		const charts = names.map((name, index) => ({
+			type: 'line' as const,
+			name,
+			encode: { x: 0, y: index + 1 }
+		}))
+		const result = buildSelectedAdditiveChart({
+			dataset: {
+				dimensions: ['timestamp', ...names],
+				source: [
+					[1, 10, 20, null, 5],
+					[2, 10, 20, 0, 5]
+				]
+			},
+			charts,
+			seriesOrder: names,
+			selectedCharts: new Set(names),
+			limit: 2
+		})
+
+		expect(result.dataset.source).toEqual([
+			[1, 10, 20, null],
+			[2, 10, 20, 5]
+		])
+	})
+
 	it('does not add Others for an explicit subset below the limit', () => {
 		const charts = [
 			{ type: 'line' as const, name: 'A', encode: { x: 0, y: 1 } },
@@ -97,7 +124,8 @@ describe('buildSelectedPercentageChart', () => {
 		const result = buildSelectedPercentageChart({
 			dataset,
 			charts,
-			selectedCharts: new Set(['Solana', 'Ethereum'])
+			selectedCharts: new Set(['Solana', 'Ethereum']),
+			missingValuePolicy: 'require-complete'
 		})
 
 		expect(result.dataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Solana'])
@@ -111,12 +139,52 @@ describe('buildSelectedPercentageChart', () => {
 	})
 
 	it('makes a single selected peer 100% while preserving missing values', () => {
-		const result = buildSelectedPercentageChart({ dataset, charts, selectedCharts: new Set(['Base']) })
+		const result = buildSelectedPercentageChart({
+			dataset,
+			charts,
+			selectedCharts: new Set(['Base']),
+			missingValuePolicy: 'require-complete'
+		})
 
 		expect(result.dataset.source).toEqual([
 			[1, 100],
 			[2, null]
 		])
+	})
+
+	it('keeps every selected share unavailable when the selected denominator is incomplete', () => {
+		const result = buildSelectedPercentageChart({
+			dataset: {
+				dimensions: ['timestamp', 'Unmeasured', 'Measured'],
+				source: [[1, null, 50]]
+			},
+			charts: [
+				{ type: 'line', name: 'Unmeasured', encode: { x: 0, y: 1 } },
+				{ type: 'line', name: 'Measured', encode: { x: 0, y: 2 } }
+			],
+			selectedCharts: new Set(['Unmeasured', 'Measured']),
+			missingValuePolicy: 'require-complete'
+		})
+
+		expect(result.dataset.source).toEqual([[1, null, null]])
+	})
+
+	it('normalizes available peers while preserving missing peer gaps', () => {
+		const result = buildSelectedPercentageChart({
+			dataset: {
+				dimensions: ['timestamp', 'Unmeasured', 'MeasuredA', 'MeasuredB'],
+				source: [[1, null, 75, 25]]
+			},
+			charts: [
+				{ type: 'line', name: 'Unmeasured', encode: { x: 0, y: 1 } },
+				{ type: 'line', name: 'MeasuredA', encode: { x: 0, y: 2 } },
+				{ type: 'line', name: 'MeasuredB', encode: { x: 0, y: 3 } }
+			],
+			selectedCharts: new Set(['Unmeasured', 'MeasuredA', 'MeasuredB']),
+			missingValuePolicy: 'sum-available'
+		})
+
+		expect(result.dataset.source).toEqual([[1, null, 75, 25]])
 	})
 
 	it('keeps zero-valued trailing peers exactly zero when correcting rounding residue', () => {
@@ -130,12 +198,15 @@ describe('buildSelectedPercentageChart', () => {
 				{ type: 'line', name: 'ActiveB', encode: { x: 0, y: 2 } },
 				{ type: 'line', name: 'Dormant', encode: { x: 0, y: 3 } }
 			],
-			selectedCharts: new Set(['ActiveA', 'ActiveB', 'Dormant'])
+			selectedCharts: new Set(['ActiveA', 'ActiveB', 'Dormant']),
+			missingValuePolicy: 'require-complete'
 		})
 
-		expect(result.dataset.source[0]).toEqual([1, (1 / 3) * 100, 100 - (1 / 3) * 100, 0])
+		const row = result.dataset.source[0]
+		if (!row) throw new Error('Expected one percentage row')
+		expect(row).toEqual([1, (1 / 3) * 100, 100 - (1 / 3) * 100, 0])
 		expect(
-			result.dataset.source[0]
+			row
 				.slice(1)
 				.map(Number)
 				.reduce((total, value) => total + value, 0)

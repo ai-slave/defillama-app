@@ -23,7 +23,6 @@ import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { removedCategoriesFromChainTvlSet } from '~/containers/ProtocolRankings/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
-import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -340,33 +339,19 @@ type ProtocolTvlRow = RecentProtocolTableRow & {
 }
 
 function ProtocolTvlCell({ value, rowValues }: { value: unknown; rowValues: ProtocolTvlRow }) {
-	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const tvlValue = typeof value === 'number' ? value : null
 
 	let text: string | null = null
 
 	if (rowValues.strikeTvl) {
-		if (!extraTvlsEnabled['doublecounted']) {
-			text =
-				'This protocol deposits into another protocol and is subtracted from total TVL because "Double Count" toggle is off'
-		}
-
-		if (!extraTvlsEnabled['liquidstaking']) {
-			text =
-				'This protocol is under Liquid Staking category and is subtracted from total TVL because "Liquid Staking" toggle is off'
-		}
-
-		if (!extraTvlsEnabled['doublecounted'] && !extraTvlsEnabled['liquidstaking']) {
-			text =
-				'This protocol deposits into another protocol or is under Liquid Staking category, so it is subtracted from total TVL because both "Liquid Staking" and "Double Count" toggles are off'
-		}
+		text = 'This protocol is excluded from chain TVL to avoid double counting'
 
 		if (whiteLabeledVaultProviders.has(rowValues.name)) {
 			text =
 				'This protocol issues white-labeled vaults which may result in TVL being counted by another protocol (e.g., double counted).'
 		}
 
-		if (removedCategoriesFromChainTvlSet.has(rowValues.category)) {
+		if (rowValues.category && removedCategoriesFromChainTvlSet.has(rowValues.category)) {
 			text = `${rowValues.category} protocols are not counted into Chain TVL`
 		}
 

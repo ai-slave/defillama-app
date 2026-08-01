@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { resolveProtocolTableSourcePlan } from '../../protocolTableSourcePlan'
-import type { IProtocolRow } from './proTable.types'
+import type { IProtocolRow, ProtocolWithSubRows } from './proTable.types'
 import {
 	createProTableSearchIndex,
 	filterProTableProtocols,
@@ -13,6 +13,7 @@ const child = (name: string, category: string, oracle: string, tvl: number, volu
 	({
 		name,
 		category,
+		contributesTvl: true,
 		oracles: [oracle],
 		oraclesByChain: { Ethereum: [oracle] },
 		tvl,
@@ -42,7 +43,7 @@ describe('filterProTableProtocols behavior fixture', () => {
 			...child('Parent', 'Parent Protocol', 'Parent Oracle', 650, 130),
 			isParentProtocol: true,
 			subRows: [lending, dex, excluded]
-		} as IProtocolRow
+		} satisfies ProtocolWithSubRows
 
 		const result = filterProTableProtocols([parent], {
 			protocols: ['Lending Child', 'DEX Child'],
@@ -61,7 +62,7 @@ describe('filterProTableProtocols behavior fixture', () => {
 			oracles: ['Chainlink', 'Parent Oracle', 'Pyth'],
 			oraclesByChain: { Ethereum: ['Chainlink', 'Parent Oracle', 'Pyth'] }
 		})
-		expect(result[0].subRows?.map((row) => row.name)).toEqual(['Lending Child'])
+		expect(result[0]?.subRows?.map((row) => row.name)).toEqual(['Lending Child'])
 	})
 
 	it('preserves parent and child order while retaining unchanged row identities', () => {
@@ -71,15 +72,72 @@ describe('filterProTableProtocols behavior fixture', () => {
 			...child('First Parent', 'Lending', 'Chainlink', 150, 30),
 			isParentProtocol: true,
 			subRows: [firstChild, secondChild]
-		} as IProtocolRow
+		} satisfies ProtocolWithSubRows
 		const standalone = child('Standalone', 'Lending', 'Chainlink', 25, 5)
 
 		const result = filterProTableProtocols([firstParent, standalone], { categories: ['Lending'] })
 
 		expect(result).toEqual([firstParent, standalone])
 		expect(result[0]).toBe(firstParent)
-		expect(result[0].subRows).toEqual([firstChild, secondChild])
+		expect(result[0]?.subRows).toEqual([firstChild, secondChild])
 		expect(result[1]).toBe(standalone)
+	})
+
+	it('keeps recalculated legacy Pro parent TVL unavailable when a required child is null', () => {
+		const known = child('Known', 'Lending', 'Chainlink', 100, 20)
+		const unavailable = { ...child('Unavailable', 'Lending', 'Chainlink', 50, 10), tvl: null }
+		const parent = {
+			...child('Parent', 'Parent Protocol', 'Parent Oracle', 150, 30),
+			isParentProtocol: true,
+			subRows: [known, unavailable]
+		} satisfies ProtocolWithSubRows
+
+		const [result] = filterProTableProtocols([parent], { protocols: ['Known', 'Unavailable'] })
+
+		expect(result).toMatchObject({ tvl: null, mcaptvl: null })
+	})
+
+	it('skips no-TVL children when filters recalculate a parent', () => {
+		const known = child('Known', 'Lending', 'Chainlink', 100, 20)
+		const metadata = {
+			...child('Metadata', 'Lending', 'Chainlink', 0, 0),
+			contributesTvl: false,
+			deprecated: true,
+			tvl: null,
+			tvlPrevDay: null,
+			tvlPrevWeek: null,
+			tvlPrevMonth: null
+		}
+		const parent = {
+			...child('Parent', 'Parent Protocol', 'Parent Oracle', 100, 20),
+			isParentProtocol: true,
+			subRows: [known, metadata]
+		} satisfies ProtocolWithSubRows
+
+		const [result] = filterProTableProtocols([parent], { protocols: ['Known', 'Metadata'] })
+		const [metadataOnly] = filterProTableProtocols([parent], { protocols: ['Metadata'] })
+
+		expect(result).toMatchObject({ tvl: 100, tvlPrevDay: 50, tvlPrevWeek: 25, tvlPrevMonth: 20 })
+		expect(result?.subRows).toHaveLength(2)
+		expect(metadataOnly).toMatchObject({ tvl: null, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null })
+	})
+
+	it('retains exclude-parent subtraction when filters recalculate parent TVL snapshots', () => {
+		const included = {
+			...child('Included', 'Lending', 'Chainlink', 100, 20),
+			extraTvl: {
+				excludeParent: { tvl: 30, tvlPrevDay: 10, tvlPrevWeek: 5, tvlPrevMonth: null }
+			}
+		}
+		const parent = {
+			...child('Parent', 'Parent Protocol', 'Parent Oracle', 100, 20),
+			isParentProtocol: true,
+			subRows: [included]
+		} satisfies ProtocolWithSubRows
+
+		const [result] = filterProTableProtocols([parent], { categories: ['Lending'] })
+
+		expect(result).toMatchObject({ tvl: 70, tvlPrevDay: 40, tvlPrevWeek: 20, tvlPrevMonth: null })
 	})
 
 	it('preserves weighted changes and incomplete annualized parent semantics', () => {
@@ -105,7 +163,7 @@ describe('filterProTableProtocols behavior fixture', () => {
 			...child('Parent', 'Parent Protocol', 'Parent Oracle', 300, 400),
 			isParentProtocol: true,
 			subRows: [first, second]
-		} as IProtocolRow
+		} satisfies ProtocolWithSubRows
 
 		const [result] = filterProTableProtocols([parent], { categories: ['Lending'] })
 
@@ -133,7 +191,6 @@ describe('filterProTableProtocols behavior fixture', () => {
 			protocols: [base],
 			parentProtocols: [],
 			sourcePlan: volumePlan,
-			volumeData: undefined,
 			feesData
 		})
 		const afterVolume = prepareProTableRows({
@@ -144,10 +201,10 @@ describe('filterProTableProtocols behavior fixture', () => {
 			feesData
 		})
 
-		expect(beforeVolume[0].volume_24h).toBeUndefined()
-		expect(beforeVolume[0].fees_24h).toBeUndefined()
-		expect(afterVolume[0].volume_24h).toBe(12)
-		expect(afterVolume[0].fees_24h).toBeUndefined()
+		expect(beforeVolume[0]?.volume_24h).toBeUndefined()
+		expect(beforeVolume[0]?.fees_24h).toBeUndefined()
+		expect(afterVolume[0]?.volume_24h).toBe(12)
+		expect(afterVolume[0]?.fees_24h).toBeUndefined()
 	})
 
 	it('builds one ephemeral normalized search entry per prepared row', () => {
@@ -157,7 +214,7 @@ describe('filterProTableProtocols behavior fixture', () => {
 			symbol: 'PRT',
 			chains: ['Arbitrum One', 'Base'],
 			subRows: [nested]
-		} as IProtocolRow
+		} satisfies ProtocolWithSubRows
 		const index = createProTableSearchIndex([parent])
 
 		expect(matchesProTableSearch(parent, normalizeProTableSearchQuery('  ARBITRUM  '), index)).toBe(true)

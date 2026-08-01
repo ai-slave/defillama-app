@@ -27,7 +27,9 @@ export function getProtocolPrimaryMetricOverride(
 
 			const valueByChain: Array<[string, number]> = []
 			for (const chain in protocol.perpVolume.chainBreakdown) {
-				const value = protocol.perpVolume.chainBreakdown[chain].total30d
+				const chainBreakdown = protocol.perpVolume.chainBreakdown[chain]
+				if (chainBreakdown === undefined) continue
+				const value = chainBreakdown.total30d
 				if (value != null) valueByChain.push([chain, value])
 			}
 			valueByChain.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))

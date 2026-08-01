@@ -580,9 +580,9 @@ export interface Protocol {
 	id: string
 	name: string
 	symbol?: string
-	logo?: string
+	logo?: string | null
 	slug: string
-	tvl: number
+	tvl: number | null
 	geckoId?: string | null
 	parentProtocol?: string | null
 	category?: string

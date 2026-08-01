@@ -1,10 +1,9 @@
 import { prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
-import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { getNDistinctColors, slug } from '~/utils'
-import { fetchEthPrice, fetchLsdRates, fetchYieldPools } from './api'
-import type { ILsdRateApiItem, IProtocolDetailApiItem, IYieldPoolApiItem } from './api.types'
+import { fetchEthPrice, fetchLsdRates, fetchProtocolBySlug, fetchYieldPools } from './api'
+import type { ILsdRateApiItem, IYieldPoolApiItem } from './api.types'
 import type { ILSTTokenRow, InflowsChartData, LSTOverviewProps } from './types'
 
 const roundDate = (ts: number): number => Math.floor(ts / 86400) * 86400
@@ -13,6 +12,7 @@ function getETHValue(obj: Record<string, number>): number {
 	let eth = 0
 	for (const key in obj) {
 		const value = obj[key]
+		if (value === undefined) continue
 		if (key.includes('ETH') && value > eth) {
 			eth = value
 		}
@@ -75,13 +75,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 		lsdProtocolsSlug.push(protocolSlug)
 		lsdProtocolsSlugSet.add(protocolSlug)
 	}
-	const protocolResponses = await Promise.all(
-		lsdProtocolsSlug.map((p) => fetchProtocolBySlug<IProtocolDetailApiItem>(p).catch(() => null))
-	)
-	const chartData: IProtocolDetailApiItem[] = []
-	for (const protocol of protocolResponses) {
-		if (protocol != null) chartData.push(protocol)
-	}
+	const chartData = await Promise.all(lsdProtocolsSlug.map((protocolSlug) => fetchProtocolBySlug(protocolSlug)))
 
 	const cryptoComPool = pools.find((i) => i.project === 'crypto.com-staked-eth')
 	const lsdApy: PoolWithName[] = []
@@ -101,9 +95,10 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 	}
 
 	const allColors = getNDistinctColors(lsdProtocols.length)
-	const lsdColors = {}
-	for (let i = 0; i < lsdProtocols.length; i++) {
-		lsdColors[lsdProtocols[i]] = allColors[i]
+	const lsdColors: Record<string, string> = {}
+	for (const [index, protocol] of lsdProtocols.entries()) {
+		const color = allColors[index]
+		if (color !== undefined) lsdColors[protocol] = color
 	}
 	lsdColors['Others'] = '#AAAAAA'
 
@@ -153,7 +148,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 			let totalEthValue = 0
 			for (const key in t.tokens) {
 				const value = t.tokens[key]
-				if (key.includes('ETH')) {
+				if (value !== undefined && key.includes('ETH')) {
 					totalEthValue += value
 				}
 			}
@@ -161,11 +156,13 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 
 			const entry = { name: protocol.name, date, value: totalEthValue }
 
-			if (!historicByDate.has(date)) historicByDate.set(date, [])
-			historicByDate.get(date)!.push(entry)
+			const entriesForDate = historicByDate.get(date)
+			if (entriesForDate) entriesForDate.push(entry)
+			else historicByDate.set(date, [entry])
 
-			if (!historicByName.has(protocol.name)) historicByName.set(protocol.name, [])
-			historicByName.get(protocol.name)!.push({ date, value: totalEthValue })
+			const entriesForProtocol = historicByName.get(protocol.name)
+			if (entriesForProtocol) entriesForProtocol.push({ date, value: totalEthValue })
+			else historicByName.set(protocol.name, [{ date, value: totalEthValue }])
 		}
 	}
 
@@ -221,12 +218,26 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 			continue
 		}
 
-		const lastDate = p.tokens[p.tokens.length - 1].date
+		const lastTokenRecord = p.tokens.at(-1)
+		if (!lastTokenRecord) continue
+		const lastDate = lastTokenRecord.date
 		const offset7d = roundDate(lastDate - 7 * 86400)
 		const offset30d = roundDate(lastDate - 30 * 86400)
 
-		const lastTokens = p.tokens[p.tokens.length - 1].tokens
-		const lastTokensInUsd = p.tokensInUsd?.[p.tokensInUsd.length - 1]?.tokens
+		const lastTokens = lastTokenRecord.tokens
+		let lastTokensInUsd: Record<string, number> | null = null
+		const tokensInUsd = p.tokensInUsd
+		if (tokensInUsd) {
+			for (let index = tokensInUsd.length - 1; index >= 0; index--) {
+				const record = tokensInUsd[index]
+				if (!record) continue
+				if (record.date === lastDate) {
+					lastTokensInUsd = record.tokens
+					break
+				}
+				if (record.date < lastDate) break
+			}
+		}
 		let lastTokens7d: Record<string, number> | null = null
 		let lastTokens30d: Record<string, number> | null = null
 		for (const item of p.tokens) {
@@ -239,17 +250,18 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 		}
 
 		const eth = getETHValue(lastTokens)
-		const ethInUsd = lastTokensInUsd ? getETHValue(lastTokensInUsd) : 0
+		const measuredEthInUsd = lastTokensInUsd ? getETHValue(lastTokensInUsd) : null
 		const eth7d = lastTokens7d ? getETHValue(lastTokens7d) : null
 		const eth30d = lastTokens30d ? getETHValue(lastTokens30d) : null
 
 		let correctedEth = eth
-		if (ethPrice != null && ethInUsd) {
-			const calculatedEth = ethInUsd / ethPrice
+		if (ethPrice != null && ethPrice > 0 && measuredEthInUsd) {
+			const calculatedEth = measuredEthInUsd / ethPrice
 			if (Math.abs(calculatedEth - eth) / eth > PRICE_DIFF_THRESHOLD) {
 				correctedEth = calculatedEth
 			}
 		}
+		const ethInUsd = measuredEthInUsd ?? (ethPrice != null && ethPrice > 0 ? correctedEth * ethPrice : null)
 
 		if (correctedEth === 0) {
 			continue
@@ -262,8 +274,8 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 			mcap: protocol.mcap,
 			stakedEth: correctedEth,
 			stakedEthInUsd: ethInUsd,
-			stakedEthPctChange7d: eth7d !== null ? ((correctedEth - eth7d) / eth7d) * 100 : null,
-			stakedEthPctChange30d: eth30d !== null ? ((correctedEth - eth30d) / eth30d) * 100 : null
+			stakedEthPctChange7d: eth7d != null && eth7d > 0 ? ((correctedEth - eth7d) / eth7d) * 100 : null,
+			stakedEthPctChange30d: eth30d != null && eth30d > 0 ? ((correctedEth - eth30d) / eth30d) * 100 : null
 		})
 	}
 	tokenTvls.sort((a, b) => b.stakedEth - a.stakedEth)
@@ -272,10 +284,11 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 	const valueAccruing = 'Value Accruing Token: Staking rewards are earned in form of an appreciating LSD value.'
 
 	let stakedEthSum = 0
-	let stakedEthInUsdSum = 0
+	let stakedEthInUsdSum: number | null = 0
 	for (const tokenTvl of tokenTvls) {
 		stakedEthSum += tokenTvl.stakedEth
-		stakedEthInUsdSum += tokenTvl.stakedEthInUsd
+		if (tokenTvl.stakedEthInUsd == null) stakedEthInUsdSum = null
+		else if (stakedEthInUsdSum != null) stakedEthInUsdSum += tokenTvl.stakedEthInUsd
 	}
 
 	const ratesByName = new Map<string, ILsdRateApiItem>()
@@ -295,7 +308,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 		const lsd = ratesByName.get(p.name)
 		const pegInfo = lsd?.type === 'rebase' ? rebase : lsd?.type === 'accruing' ? valueAccruing : null
 		const mcap = p.mcap
-		const mcaptvl = mcap != null && p.stakedEthInUsd !== 0 ? mcap / p.stakedEthInUsd : null
+		const mcaptvl = mcap != null && p.stakedEthInUsd != null && p.stakedEthInUsd !== 0 ? mcap / p.stakedEthInUsd : null
 
 		const row = {
 			...p,
@@ -307,7 +320,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 			expectedRate: lsd?.expectedRate ?? null,
 			mcapOverTvl: mcaptvl,
 			apy: apyByName.get(p.name)?.apy ?? null,
-			fee: lsd?.fee != null && lsd.fee > 0 ? lsd.fee * 100 : null
+			fee: lsd?.fee != null ? lsd.fee * 100 : null
 		}
 		tokens.push(row.name)
 		if (row.name !== 'diva') {
@@ -323,8 +336,8 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 	})
 
 	// --- Inflows (daily deltas per protocol, using pre-grouped historicByName) ---
-	const inflowsChartData = {} as InflowsChartData
-	const barChartStacks = {}
+	const inflowsChartData: InflowsChartData = {}
+	const barChartStacks: Record<string, string> = {}
 
 	for (const protocol of tokens) {
 		const series = historicByName.get(protocol)
@@ -332,8 +345,11 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 
 		for (let i = 1; i < series.length; i++) {
 			const curr = series[i]
-			if (!inflowsChartData[curr.date]) inflowsChartData[curr.date] = {}
-			inflowsChartData[curr.date][protocol] = curr.value - series[i - 1].value
+			const previous = series[i - 1]
+			if (!curr || !previous) continue
+			const inflowsForDate = inflowsChartData[curr.date] ?? {}
+			inflowsForDate[protocol] = curr.value - previous.value
+			inflowsChartData[curr.date] = inflowsForDate
 		}
 		barChartStacks[protocol] = 'A'
 	}

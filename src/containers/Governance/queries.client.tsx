@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { skipToken, useQuery } from '@tanstack/react-query'
 import { fetchJson } from '~/utils/async'
-import { formatNumber, formatPercent } from '~/utils/numberFormat'
+import { formatPercent } from '~/utils/numberFormat'
 import type {
 	GovernanceActivityRow,
 	GovernanceDataEntry,
@@ -12,101 +12,100 @@ import type {
 
 type RawProposal = {
 	id: string
-	title: string
+	title?: string
 	state: string
-	link: string
-	discussion: string
+	link?: string
+	discussion?: string
 	start: number
 	end: number
-	scores?: number[] | null
-	choices?: string[] | null
+	scores: number[]
+	choices?: string[]
 	scores_total: number
 	score_curve?: number
+	month: string
+}
+
+type RawGovernanceMonth = {
+	total: number
+	successful: number
+	proposals?: string[]
 }
 
 type RawGovernanceResponse = {
-	metadata?: Record<string, unknown> | null
+	metadata: {
+		name?: string
+		followersCount?: number
+	}
 	stats?: {
 		chainName?: string
 		proposalsCount?: number
 		successfulProposals?: number
-		proposalsInLast30Days?: number
 		propsalsInLast30Days?: number
-		successfulProposalsInLast30Days?: number
 		successfulPropsalsInLast30Days?: number
 		highestTotalScore?: number
-		months?: Record<
-			string,
-			{
-				total?: number
-				successful?: number
-				proposals: string[]
-			}
-		>
-		[key: string]: unknown
+		months?: Record<string, RawGovernanceMonth>
 	} | null
-	proposals?: RawProposal[] | Record<string, RawProposal>
+	proposals: Record<string, RawProposal>
 }
 
 function normalizeGovernanceStats(stats: RawGovernanceResponse['stats']): GovernanceStats | null {
 	if (!stats) return null
 
-	return {
-		chainName: typeof stats.chainName === 'string' ? stats.chainName : undefined,
-		proposalsCount: typeof stats.proposalsCount === 'number' ? stats.proposalsCount : undefined,
-		successfulProposals: typeof stats.successfulProposals === 'number' ? stats.successfulProposals : undefined,
-		proposalsInLast30Days:
-			typeof stats.proposalsInLast30Days === 'number'
-				? stats.proposalsInLast30Days
-				: typeof stats.propsalsInLast30Days === 'number'
-					? stats.propsalsInLast30Days
-					: undefined,
-		successfulProposalsInLast30Days:
-			typeof stats.successfulProposalsInLast30Days === 'number'
-				? stats.successfulProposalsInLast30Days
-				: typeof stats.successfulPropsalsInLast30Days === 'number'
-					? stats.successfulPropsalsInLast30Days
-					: undefined,
-		highestTotalScore: typeof stats.highestTotalScore === 'number' ? stats.highestTotalScore : undefined
+	const normalized: GovernanceStats = {}
+	if (stats.chainName !== undefined) normalized.chainName = stats.chainName
+	if (stats.proposalsCount !== undefined) normalized.proposalsCount = stats.proposalsCount
+	if (stats.successfulProposals !== undefined) normalized.successfulProposals = stats.successfulProposals
+	if (stats.propsalsInLast30Days !== undefined) {
+		normalized.proposalsInLast30Days = stats.propsalsInLast30Days
 	}
+	if (stats.successfulPropsalsInLast30Days !== undefined) {
+		normalized.successfulProposalsInLast30Days = stats.successfulPropsalsInLast30Days
+	}
+	if (stats.highestTotalScore !== undefined) normalized.highestTotalScore = stats.highestTotalScore
+	return normalized
 }
 
 function normalizeMetadata(raw: RawGovernanceResponse['metadata']): GovernanceDataEntry['metadata'] {
-	if (!raw) return null
-
-	return {
-		name: typeof raw.name === 'string' ? raw.name : undefined,
-		followersCount: typeof raw.followersCount === 'number' ? raw.followersCount : undefined
-	}
+	const normalized: GovernanceDataEntry['metadata'] = {}
+	if (raw.name !== undefined) normalized.name = raw.name
+	if (raw.followersCount !== undefined) normalized.followersCount = raw.followersCount
+	return normalized
 }
 
-export async function fetchAndFormatGovernanceData(apis: Array<string> | null): Promise<GovernanceDataEntry[]> {
+export async function fetchAndFormatGovernanceData(
+	apis: Array<string> | null
+): Promise<Array<{ type: GovernanceType; data: GovernanceDataEntry }>> {
 	if (!apis) return []
 
-	const data = await Promise.allSettled(
+	const requests = await Promise.allSettled(
 		apis.map((gapi) =>
 			fetchJson<RawGovernanceResponse>(gapi).then((raw) => {
 				const { proposals, activity, maxVotes } = formatGovernanceData(raw)
 
 				return {
-					metadata: normalizeMetadata(raw.metadata),
-					stats: normalizeGovernanceStats(raw.stats),
-					proposals,
-					controversialProposals: [...proposals]
-						.sort((a, b) => (b.score_curve ?? 0) - (a.score_curve ?? 0))
-						.slice(0, 10),
-					activity,
-					maxVotes
+					type: getGovernanceTypeFromApi(gapi),
+					data: {
+						metadata: normalizeMetadata(raw.metadata),
+						stats: normalizeGovernanceStats(raw.stats),
+						proposals,
+						controversialProposals: [...proposals].sort((a, b) => b.score_curve - a.score_curve).slice(0, 10),
+						activity,
+						maxVotes
+					}
 				}
 			})
 		)
 	)
 
-	const results: GovernanceDataEntry[] = []
-	for (const item of data) {
-		if (item.status === 'fulfilled') results.push(stripUndefined(item.value))
+	const sources: Array<{ type: GovernanceType; data: GovernanceDataEntry }> = []
+	for (const request of requests) {
+		if (request.status === 'fulfilled') sources.push(request.value)
 	}
-	return results
+	if (sources.length === 0 && apis.length > 0) {
+		const failedRequest = requests.find((request) => request.status === 'rejected')
+		if (failedRequest?.status === 'rejected') throw failedRequest.reason
+	}
+	return sources
 }
 
 export function getGovernanceTypeFromApi(apiUrl: string): GovernanceType {
@@ -133,26 +132,26 @@ export const useFetchProtocolGovernanceData = (governanceApis: Array<string> | n
 							apis: governanceApis
 						})
 					})
-			: () => Promise.resolve(null),
+			: skipToken,
 		staleTime: 60 * 60 * 1000,
 		retry: 0,
 		enabled: isEnabled
 	})
 }
 
-function stripUndefined<T>(obj: T): T {
-	return JSON.parse(JSON.stringify(obj)) as T
-}
-
 function processProposal(proposal: RawProposal): GovernanceProposal {
-	const scores = (proposal.scores ?? []).filter((score): score is number => Number.isFinite(score))
-	const choices = Array.isArray(proposal.choices) ? proposal.choices : []
+	const scores = proposal.scores
+	const choices = proposal.choices ?? []
 	const winningScore = scores.length > 0 ? Math.max(...scores) : undefined
 	const winningIndex = winningScore != null ? scores.findIndex((score) => score === winningScore) : -1
-	const totalVotes = scores.reduce((acc, curr) => acc + curr, 0)
+	const totalVotes = proposal.scores_total
 
 	return {
 		...proposal,
+		title: proposal.title ?? '',
+		link: proposal.link ?? '',
+		discussion: proposal.discussion ?? '',
+		score_curve: proposal.score_curve ?? 0,
 		scores,
 		choices,
 		totalVotes,
@@ -170,44 +169,39 @@ export function formatGovernanceData(data: RawGovernanceResponse): {
 	maxVotes: GovernanceMaxVotesRow[]
 } {
 	const proposals: GovernanceProposal[] = []
-	const rawProposals = data?.proposals
-
-	if (Array.isArray(rawProposals)) {
-		for (const proposal of rawProposals) {
-			proposals.push(processProposal(proposal))
-		}
-	} else if (rawProposals != null && typeof rawProposals === 'object') {
-		for (const [, proposal] of Object.entries(rawProposals)) {
-			proposals.push(processProposal(proposal))
-		}
+	const maxVotesByMonth = new Map<string, number>()
+	for (const proposalId in data.proposals) {
+		const proposal = data.proposals[proposalId]
+		if (proposal === undefined) continue
+		proposals.push(processProposal(proposal))
+		const currentMax = maxVotesByMonth.get(proposal.month) ?? 0
+		if (proposal.scores_total > currentMax) maxVotesByMonth.set(proposal.month, proposal.scores_total)
 	}
 
 	const activity: GovernanceActivityRow[] = []
 	const maxVotes: GovernanceMaxVotesRow[] = []
-	const statsMonths = data.stats?.months ?? {}
-	const chronologicalMonths = Object.entries(statsMonths)
-		.map(([date, values]) => [Math.floor(new Date(date).getTime() / 1000), values] as const)
-		.sort((a, b) => a[0] - b[0])
-	const proposalById = new Map(proposals.map((proposal) => [proposal.id, proposal] as const))
-	for (const [timestamp, values] of chronologicalMonths) {
-		activity.push({
-			date: timestamp,
-			Total: values.total ?? 0,
-			Successful: values.successful ?? 0
-		})
-
-		let maxVotesValue = 0
-		for (const proposalId of Array.isArray(values.proposals) ? values.proposals : []) {
-			const votes = proposalById.get(proposalId)?.totalVotes ?? 0
-			if (votes > maxVotesValue) {
-				maxVotesValue = votes
+	const statsMonths = data.stats?.months
+	if (statsMonths) {
+		const chronologicalMonths: Array<[number, string, RawGovernanceMonth]> = []
+		for (const date in statsMonths) {
+			const values = statsMonths[date]
+			if (values !== undefined) {
+				chronologicalMonths.push([Math.floor(new Date(date).getTime() / 1000), date, values])
 			}
 		}
+		chronologicalMonths.sort((a, b) => a[0] - b[0])
+		for (const [timestamp, month, values] of chronologicalMonths) {
+			activity.push({
+				date: timestamp,
+				Total: values.total,
+				Successful: values.successful
+			})
 
-		maxVotes.push({
-			date: timestamp,
-			'Max Votes': formatNumber(maxVotesValue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-		})
+			maxVotes.push({
+				date: timestamp,
+				'Max Votes': maxVotesByMonth.get(month) ?? 0
+			})
+		}
 	}
 
 	return { maxVotes, activity, proposals }

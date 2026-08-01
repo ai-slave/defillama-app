@@ -50,11 +50,13 @@ function resolveDimensionIndex(dimension: MultiSeriesChartSeriesConfig['encode']
 export function buildSelectedPercentageChart({
 	dataset,
 	charts,
-	selectedCharts
+	selectedCharts,
+	missingValuePolicy
 }: {
 	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesChartSeriesConfig[]
 	selectedCharts: ReadonlySet<string>
+	missingValuePolicy: 'require-complete' | 'sum-available'
 }): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } {
 	const displayedCharts = charts.filter((chart) => selectedCharts.has(chart.name))
 	const xIndex =
@@ -70,16 +72,20 @@ export function buildSelectedPercentageChart({
 		row[0] = input[xIndex]
 		let total = 0
 		let lastPositiveValueIndex = -1
+		let hasUnavailableValue = false
 		for (let seriesIndex = 0; seriesIndex < yIndexes.length; seriesIndex++) {
 			const value = readNumericValue(input[yIndexes[seriesIndex]!])
 			row[seriesIndex + 1] = value
-			if (value != null) {
+			if (value == null) hasUnavailableValue = missingValuePolicy === 'require-complete'
+			else {
 				total += value
 				if (value > 0) lastPositiveValueIndex = seriesIndex + 1
 			}
 		}
 
-		if (total > 0 && lastPositiveValueIndex !== -1) {
+		if (hasUnavailableValue) {
+			for (let valueIndex = 1; valueIndex < row.length; valueIndex++) row[valueIndex] = null
+		} else if (total > 0 && lastPositiveValueIndex !== -1) {
 			let normalizedTotal = 0
 			for (let valueIndex = 1; valueIndex < row.length; valueIndex++) {
 				const value = readNumericValue(row[valueIndex])
@@ -126,59 +132,68 @@ export function buildSelectedAdditiveChart({
 	includeUpstreamRemainder?: boolean
 }): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } {
 	const chartByName = new Map(charts.map((chart) => [chart.name, chart]))
-	const selectedNames = seriesOrder.filter(
-		(name) => name !== REMAINDER_SERIES_NAME && selectedCharts.has(name) && chartByName.has(name)
-	)
+	const selectedSeries: MultiSeriesChartSeriesConfig[] = []
+	for (const name of seriesOrder) {
+		const chart = chartByName.get(name)
+		if (name !== REMAINDER_SERIES_NAME && selectedCharts.has(name) && chart) selectedSeries.push(chart)
+	}
+	const selectedNames = selectedSeries.map((chart) => chart.name)
 	const namedLimit = Math.max(1, limit)
 	const includesUpstreamRemainder = includeUpstreamRemainder && chartByName.has(REMAINDER_SERIES_NAME)
 	if (selectedNames.length <= namedLimit && !includesUpstreamRemainder) {
 		return {
 			dataset,
-			charts: selectedNames.map((name) => chartByName.get(name)!)
+			charts: selectedSeries
 		}
 	}
-	const visibleNames = selectedNames.slice(0, namedLimit)
+	const visibleSeries = selectedSeries.slice(0, namedLimit)
+	const visibleNames = visibleSeries.map((chart) => chart.name)
 	const remainderNames = selectedNames.slice(namedLimit)
 	if (includesUpstreamRemainder) remainderNames.push(REMAINDER_SERIES_NAME)
 	const hasRemainder = remainderNames.length > 0
-	const firstVisibleName = visibleNames[0]
-	const templateChart = (firstVisibleName === undefined ? undefined : chartByName.get(firstVisibleName)) ?? charts[0]
+	const templateChart = selectedSeries[0] ?? charts[0]
 	const xIndex = templateChart ? resolveDimensionIndex(templateChart.encode.x, dataset.dimensions) : 0
 	const xDimension = dataset.dimensions[xIndex]
 	if (xDimension === undefined) throw new Error('A chart dataset requires an x-axis dimension')
 	const inputIndexByName = new Map(
 		charts.map((chart) => [chart.name, resolveDimensionIndex(chart.encode.y, dataset.dimensions)])
 	)
+	const getInputIndex = (name: string) => {
+		const index = inputIndexByName.get(name)
+		if (index === undefined) throw new Error(`Missing chart dimension for selected series: ${name}`)
+		return index
+	}
 	const dimensions = [xDimension, ...visibleNames, ...(hasRemainder ? [REMAINDER_SERIES_NAME] : [])]
-	const visibleIndexes = visibleNames.map((name) => inputIndexByName.get(name) ?? -1)
-	const remainderIndexes = remainderNames.map((name) => inputIndexByName.get(name) ?? -1)
+	const visibleIndexes = visibleNames.map(getInputIndex)
+	const remainderIndexes = remainderNames.map(getInputIndex)
 	const source = new Array<MultiSeriesChartDataset['source'][number]>(dataset.source.length)
 
-	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
-		const input = dataset.source[rowIndex]!
+	for (const [rowIndex, input] of dataset.source.entries()) {
 		const row = new Array<MultiSeriesChartDataset['source'][number][number]>(dimensions.length)
 		row[0] = input[xIndex]
-		for (let seriesIndex = 0; seriesIndex < visibleIndexes.length; seriesIndex++) {
-			const inputIndex = visibleIndexes[seriesIndex]!
-			row[seriesIndex + 1] = inputIndex >= 0 ? input[inputIndex] : undefined
+		for (const [seriesIndex, inputIndex] of visibleIndexes.entries()) {
+			row[seriesIndex + 1] = input[inputIndex]
 		}
 		if (hasRemainder) {
 			let remainder = 0
 			let hasValue = false
+			let hasUnavailableValue = false
 			for (const inputIndex of remainderIndexes) {
-				if (inputIndex < 0) continue
 				const value = readNumericValue(input[inputIndex])
-				if (value == null) continue
+				if (value == null) {
+					hasUnavailableValue = true
+					continue
+				}
 				remainder += value
 				hasValue = true
 			}
-			row[row.length - 1] = hasValue ? remainder : undefined
+			row[row.length - 1] = hasUnavailableValue ? null : hasValue ? remainder : undefined
 		}
 		source[rowIndex] = row
 	}
 
-	const outputCharts = visibleNames.map((name, index) => ({
-		...chartByName.get(name)!,
+	const outputCharts = visibleSeries.map((chart, index) => ({
+		...chart,
 		encode: { x: 0, y: index + 1 }
 	}))
 	if (hasRemainder) {

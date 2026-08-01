@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import type { InferGetStaticPropsType } from 'next'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { FallbackLogo, TokenLogo } from '~/components/TokenLogo'
 import { getNFTCollectionEarnings } from '~/containers/Nft/queries'
@@ -21,8 +22,17 @@ export const getStaticProps = withPerformanceLogging('nfts/earnings', async () =
 
 const pageName = ['Earnings', 'by', 'NFTs']
 const DEFAULT_SORTING_STATE = [{ id: 'totalEarnings', desc: true }]
+type NFTCollectionEarningsRow = Awaited<ReturnType<typeof getNFTCollectionEarnings>>['earnings'][number]
 
-function Earnings({ earnings }) {
+function getEarningsSubRows(row: NFTCollectionEarningsRow): NFTCollectionEarningsRow[] | undefined {
+	return 'subRows' in row ? row.subRows : undefined
+}
+
+function getEarningsLogo(row: NFTCollectionEarningsRow | undefined): string | undefined {
+	return row && 'logo' in row ? row.logo : undefined
+}
+
+function Earnings({ earnings }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title="NFT Creator Earnings & Royalties - DefiLlama"
@@ -32,6 +42,7 @@ function Earnings({ earnings }) {
 		>
 			<TableWithSearch
 				data={earnings}
+				getSubRows={getEarningsSubRows}
 				columns={earningsColumns}
 				columnToSearch={'name'}
 				placeholder={'Search collections...'}
@@ -44,21 +55,7 @@ function Earnings({ earnings }) {
 	)
 }
 
-interface IEarnings {
-	defillamaId: string
-	name: string
-	logo?: string
-	displayName: string
-	chains: Array<string>
-	total24h: number | null
-	total7d: number | null
-	total30d: number | null
-	totalRoyaltyEarnings: number | null
-	totalMintEarnings: number | null
-	totalEarnings: number | null
-}
-
-const columnHelper = createColumnHelper<IEarnings>()
+const columnHelper = createColumnHelper<NFTCollectionEarningsRow>()
 
 const earningsColumns = [
 	columnHelper.accessor('name', {
@@ -67,7 +64,7 @@ const earningsColumns = [
 		cell: ({ getValue, row }) => {
 			const value = getValue()
 
-			const logo = row.original.logo ?? row.subRows?.[0]?.original?.logo
+			const logo = getEarningsLogo(row.original) ?? getEarningsLogo(row.subRows[0]?.original)
 
 			return (
 				<span
@@ -84,12 +81,12 @@ const earningsColumns = [
 							{row.getIsExpanded() ? (
 								<>
 									<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
-									<span className="sr-only">View child protocols</span>
+									<span className="sr-only">Hide child collections</span>
 								</>
 							) : (
 								<>
 									<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
-									<span className="sr-only">Hide child protocols</span>
+									<span className="sr-only">View child collections</span>
 								</>
 							)}
 						</button>

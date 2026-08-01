@@ -75,7 +75,9 @@ const getCurrentColumnOrderBreakpoint = (entries: ColumnOrderEntry[], defaultCol
 	if (typeof window === 'undefined') return null
 
 	for (let i = entries.length - 1; i >= 0; i--) {
-		const [size, order] = entries[i]
+		const entry = entries[i]
+		if (!entry) continue
+		const [size, order] = entry
 		if (size <= 0 || window.matchMedia(`(min-width: ${size}px)`).matches) {
 			return defaultColumnOrder != null && isColumnOrderEqual(order, defaultColumnOrder) ? null : size
 		}
@@ -178,7 +180,7 @@ export function useTableSearch<T>({
 	columnToSearch
 }: {
 	instance: Table<T>
-	columnToSearch?: string
+	columnToSearch: string | undefined
 }): [string, (value: string) => void] {
 	const [search, setSearch] = useState('')
 	const deferredSearch = useDeferredValue(search)

@@ -4,6 +4,22 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+type TestChartRow = Array<number | null>
+type TestChartSeries = {
+	name: string
+	type?: string
+	data?: TestChartRow[]
+	encode?: { y: number | string }
+	markArea?: { data: Array<Array<{ name?: string; xAxis: number }>> }
+	connectNulls?: boolean
+}
+type TestChartOption = {
+	series: TestChartSeries[]
+	dataset: { dimensions: string[]; source: TestChartRow[] }
+	yAxis: Array<{ alignTicks?: boolean; axisLabel?: { formatter?: (value: number) => string } }>
+	dataZoom?: object
+}
+
 const mocks = vi.hoisted(() => {
 	const instance = {
 		convertToPixel: vi.fn(() => 100),
@@ -15,7 +31,7 @@ const mocks = vi.hoisted(() => {
 		off: vi.fn(),
 		on: vi.fn(),
 		resize: vi.fn(),
-		setOption: vi.fn()
+		setOption: vi.fn<(option: TestChartOption, settings?: { notMerge?: boolean }) => void>()
 	}
 	return { init: vi.fn(() => instance), instance, use: vi.fn() }
 })
@@ -31,11 +47,24 @@ vi.mock('~/hooks/useMedia', () => ({ useMedia: () => false }))
 
 import ProtocolChart from './Chart'
 
-function readPoints(option: any, name: string) {
-	const series = option.series.find((item: any) => item.name === name)
+function getSeries(option: TestChartOption, name: string): TestChartSeries {
+	const series = option.series.find((item) => item.name === name)
+	if (series === undefined) throw new Error(`Missing ${name} chart series`)
+	return series
+}
+
+function readPoints(option: TestChartOption, name: string): TestChartRow[] {
+	const series = getSeries(option, name)
 	if (series.data) return series.data
+	if (series.encode === undefined) throw new Error(`Missing ${name} chart encode`)
 	const y = typeof series.encode.y === 'number' ? series.encode.y : option.dataset.dimensions.indexOf(series.encode.y)
-	return option.dataset.source.filter((row: unknown[]) => row[y] != null).map((row: unknown[]) => [row[0], row[y]])
+	return option.dataset.source.filter((row) => row[y] != null).map((row) => [row[0] ?? null, row[y] ?? null])
+}
+
+function getLastOption(): TestChartOption {
+	const option = mocks.instance.setOption.mock.calls.at(-1)?.[0]
+	if (option === undefined) throw new Error('Expected chart options')
+	return option
 }
 
 describe('ProtocolOverview chart renderer contract', () => {
@@ -43,7 +72,7 @@ describe('ProtocolOverview chart renderer contract', () => {
 	let root: Root
 
 	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -81,7 +110,7 @@ describe('ProtocolOverview chart renderer contract', () => {
 			)
 		)
 
-		const option = mocks.instance.setOption.mock.calls.at(-1)![0]
+		const option = getLastOption()
 		expect(readPoints(option, 'TVL')).toEqual([
 			[1_000, 10],
 			[3_000, 12]
@@ -90,11 +119,11 @@ describe('ProtocolOverview chart renderer contract', () => {
 			[1_000, 2],
 			[2_000, 3]
 		])
-		expect(option.series.find((item: any) => item.name === 'Fees').type).toBe('bar')
-		expect(option.series[0].markArea.data).toEqual([[{ name: 'Migration', xAxis: 1_000 }, { xAxis: 3_000 }]])
-		expect(option.series.at(-1).name).toBe('Events')
-		const gasAxis = option.yAxis.find((axis: any) => axis.axisLabel?.formatter?.(5)?.includes('GAS'))
-		const unlockAxis = option.yAxis.find((axis: any) => axis.axisLabel?.formatter?.(5)?.includes('TOKEN'))
+		expect(getSeries(option, 'Fees').type).toBe('bar')
+		expect(getSeries(option, 'TVL').markArea?.data).toEqual([[{ name: 'Migration', xAxis: 1_000 }, { xAxis: 3_000 }]])
+		expect(option.series.at(-1)?.name).toBe('Events')
+		const gasAxis = option.yAxis.find((axis) => axis.axisLabel?.formatter?.(5)?.includes('GAS'))
+		const unlockAxis = option.yAxis.find((axis) => axis.axisLabel?.formatter?.(5)?.includes('TOKEN'))
 		expect(gasAxis).toBeTruthy()
 		expect(unlockAxis).toBeTruthy()
 	})
@@ -122,7 +151,7 @@ describe('ProtocolOverview chart renderer contract', () => {
 			)
 		)
 
-		const option = mocks.instance.setOption.mock.calls.at(-1)![0]
+		const option = getLastOption()
 		expect(readPoints(option, 'TVL')).toEqual([
 			[1_000, 10],
 			[2_000, 12]
@@ -131,8 +160,8 @@ describe('ProtocolOverview chart renderer contract', () => {
 			[1_000, 2],
 			[2_000, 5]
 		])
-		expect(option.series.find((item: any) => item.name === 'Fees').type).toBe('line')
-		expect(option.yAxis.every((axis: any) => axis.alignTicks == null)).toBe(true)
+		expect(getSeries(option, 'Fees').type).toBe('line')
+		expect(option.yAxis.every((axis) => axis.alignTicks == null)).toBe(true)
 	})
 
 	it('keeps explicit null observations as line gaps without injecting other series timestamps', async () => {
@@ -155,8 +184,8 @@ describe('ProtocolOverview chart renderer contract', () => {
 			)
 		)
 
-		const option = mocks.instance.setOption.mock.calls.at(-1)![0]
-		const tvlSeries = option.series.find((item: any) => item.name === 'TVL')
+		const option = getLastOption()
+		const tvlSeries = getSeries(option, 'TVL')
 		expect(tvlSeries.data).toEqual([
 			[1_000, 10],
 			[2_500, null],
@@ -184,7 +213,7 @@ describe('ProtocolOverview chart renderer contract', () => {
 				/>
 			)
 		)
-		expect(mocks.instance.setOption.mock.calls.at(-1)![0]).not.toHaveProperty('dataZoom')
+		expect(getLastOption()).not.toHaveProperty('dataZoom')
 	})
 
 	it('omits data zoom when every series has only one independently timed point', async () => {
@@ -199,7 +228,7 @@ describe('ProtocolOverview chart renderer contract', () => {
 				/>
 			)
 		)
-		expect(mocks.instance.setOption.mock.calls.at(-1)![0]).not.toHaveProperty('dataZoom')
+		expect(getLastOption()).not.toHaveProperty('dataZoom')
 	})
 
 	it('keeps range hallmarks when the first series is a bar', async () => {
@@ -219,6 +248,6 @@ describe('ProtocolOverview chart renderer contract', () => {
 				/>
 			)
 		)
-		expect(mocks.instance.setOption.mock.calls.at(-1)![0].series[0].markArea.data).toHaveLength(1)
+		expect(getSeries(getLastOption(), 'Fees').markArea?.data).toHaveLength(1)
 	})
 })

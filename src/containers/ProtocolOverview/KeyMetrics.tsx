@@ -12,7 +12,7 @@ import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
 import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
 import type { IProtocolOverviewPageData } from './types'
 
-type KeyMetricsRequiredFields = Pick<IProtocolOverviewPageData, 'name' | 'metrics'>
+type KeyMetricsRequiredFields = Pick<IProtocolOverviewPageData, 'name' | 'metrics' | 'isOracleProtocol' | 'oracleTvs'>
 
 type KeyMetricsOptionalFields = Partial<
 	Pick<
@@ -20,7 +20,6 @@ type KeyMetricsOptionalFields = Partial<
 		| 'category'
 		| 'hasKeyMetrics'
 		| 'llamaswapChains'
-		| 'oracleTvs'
 		| 'currentTvlByChain'
 		| 'openSmolStatsSummaryByDefault'
 		| 'token'
@@ -50,10 +49,11 @@ type KeyMetricsOptionalFields = Partial<
 >
 
 export interface IKeyMetricsProps extends KeyMetricsRequiredFields, KeyMetricsOptionalFields {
-	formatPrice: (value: number | string | null) => string | number | null
+	formatPrice: (value: number | null) => string | number | null
 	tvl?: number
 	tvlByChain?: [string, number][]
-	computedOracleTvs?: number
+	computedOracleTvs?: number | null
+	hasTvlData?: boolean
 }
 
 type AdapterOverviewKey =
@@ -70,7 +70,17 @@ type AdapterOverviewKey =
 
 interface StandardMetricConfig {
 	dataProp: AdapterOverviewKey
-	definitionKey: string
+	definitionKey:
+		| 'dexs'
+		| 'dexsNotional'
+		| 'dexAggregators'
+		| 'perps'
+		| 'perpsAggregators'
+		| 'bridgeAggregators'
+		| 'optionsPremium'
+		| 'optionsNotional'
+		| 'liquidationVolume'
+		| 'collateralLiquidated'
 	label: string
 	dataType: string
 }
@@ -148,14 +158,10 @@ function buildStandardVolumeMetrics(
 			{ total24h: number | null; total7d: number | null; total30d: number | null; totalAllTime: number | null }
 		> | null
 	},
-	definitionKey: string,
+	definitionKey: StandardMetricConfig['definitionKey'],
 	label: string
 ) {
-	const entry = (definitions as Record<string, unknown>)[definitionKey]
-	const defs =
-		typeof entry === 'object' && entry !== null && 'protocol' in entry
-			? (entry as { protocol: Record<string, string> }).protocol
-			: undefined
+	const defs = definitions[definitionKey].protocol
 	const cb = data.chainBreakdown
 	const metrics: VolumeMetric[] = []
 
@@ -223,20 +229,16 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 	if (!props.hasKeyMetrics) return null
 
 	const primaryMetricOverride = getProtocolPrimaryMetricOverride(props)
-	const isOracleProtocol = props.oracleTvs != null
-	const primaryValue = primaryMetricOverride?.value ?? (isOracleProtocol ? props.computedOracleTvs : props.tvl)
-	const { title: defaultPrimaryLabel } = getPrimaryValueLabelType(isOracleProtocol ? 'Oracle' : (props.category ?? ''))
+	const primaryValue = primaryMetricOverride?.value ?? (props.isOracleProtocol ? props.computedOracleTvs : props.tvl)
+	const { title: defaultPrimaryLabel } = getPrimaryValueLabelType(props.isOracleProtocol ? 'Oracle' : props.category)
 	const primaryLabel = primaryMetricOverride?.title ?? defaultPrimaryLabel
+	const hasTvlData =
+		props.hasTvlData !== undefined
+			? props.hasTvlData
+			: props.currentTvlByChain !== undefined && props.currentTvlByChain !== null
 
 	const hasPrimaryMetricData =
-		primaryMetricOverride != null ||
-		(isOracleProtocol
-			? props.oracleTvs != null
-			: (() => {
-					if (!props.metrics.tvl || props.currentTvlByChain == null) return false
-					for (const _chain in props.currentTvlByChain) return true
-					return false
-				})())
+		primaryMetricOverride != null || (props.isOracleProtocol ? props.oracleTvs != null : hasTvlData)
 
 	return (
 		<div className="flex flex-1 flex-col gap-2">
@@ -254,14 +256,14 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 				<KeyMetricsPngExportButton
 					containerRef={containerRef}
 					protocolName={props.name}
-					{...(primaryValue !== undefined ? { primaryValue } : {})}
+					{...(primaryValue != null ? { primaryValue } : {})}
 					primaryLabel={primaryLabel}
 					formatPrice={props.formatPrice}
 					hasTvlData={hasPrimaryMetricData}
 				/>
 			</div>
 			<div className="flex flex-col" ref={containerRef}>
-				{props.oracleTvs ? <TVL {...props} /> : null}
+				{props.isOracleProtocol && hasTvlData && props.tvl != null ? <TVL {...props} tvl={props.tvl} /> : null}
 				<Fees {...props} />
 				<Revenue {...props} />
 				<HoldersRevenue {...props} />
@@ -278,7 +280,6 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 							key={config.dataType}
 							data={metrics}
 							protocolName={props.name}
-							category={props.category ?? ''}
 							formatPrice={props.formatPrice}
 							openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
 							dataType={config.dataType}
@@ -298,7 +299,6 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 							}
 						]}
 						protocolName={props.name}
-						category={props.category ?? ''}
 						formatPrice={props.formatPrice}
 						openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
 						dataType="Open Interest"
@@ -311,7 +311,7 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 						label="Staked"
 						valueClassName="ml-auto"
 						value={
-							props.tokenCGData?.marketCap?.current != null ? (
+							props.tokenCGData?.marketCap?.current != null && props.tokenCGData.marketCap.current > 0 ? (
 								<span className="flex items-center gap-1">
 									<span className="font-jetbrains">{props.formatPrice(props.currentTvlByChain.staking)}</span>
 									<span className="text-xs text-tertiary">
@@ -342,8 +342,8 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 	)
 }
 
-function TVL(props: IKeyMetricsProps) {
-	const tvl = props.tvl ?? 0
+function TVL(props: IKeyMetricsProps & { tvl: number }) {
+	const tvl = props.tvl
 	const tvlByChain = props.tvlByChain
 
 	const metrics = useMemo(() => {
@@ -354,11 +354,13 @@ function TVL(props: IKeyMetricsProps) {
 			value: tvl
 		})
 
-		for (const [chain, chainTvl] of tvlByChain ?? []) {
-			metrics.push({
-				name: chain,
-				value: chainTvl
-			})
+		if (tvlByChain) {
+			for (const [chain, chainTvl] of tvlByChain) {
+				metrics.push({
+					name: chain,
+					value: chainTvl
+				})
+			}
 		}
 
 		return metrics
@@ -370,7 +372,6 @@ function TVL(props: IKeyMetricsProps) {
 		<SmolStats
 			data={metrics}
 			protocolName={props.name}
-			category={props.category ?? ''}
 			formatPrice={props.formatPrice}
 			openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
 			dataType="TVL"
@@ -509,7 +510,6 @@ function Fees(props: IKeyMetricsProps) {
 		<SmolStats
 			data={metrics}
 			protocolName={props.name}
-			category={props.category ?? ''}
 			formatPrice={props.formatPrice}
 			openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
 			dataType="Fees"
@@ -533,7 +533,6 @@ function Revenue(props: IKeyMetricsProps) {
 		<SmolStats
 			data={metrics}
 			protocolName={props.name}
-			category={props.category ?? ''}
 			formatPrice={props.formatPrice}
 			openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
 			dataType="Revenue"
@@ -549,7 +548,7 @@ function HoldersRevenue(props: IKeyMetricsProps) {
 		definitions.holdersRevenue.protocol,
 		'Holders Revenue',
 		false,
-		props.holdersRevenue?.chainBreakdown
+		props.holdersRevenue.chainBreakdown
 	)
 	if (metrics.length === 0) return null
 
@@ -557,7 +556,6 @@ function HoldersRevenue(props: IKeyMetricsProps) {
 		<SmolStats
 			data={metrics}
 			protocolName={props.name}
-			category={props.category ?? ''}
 			formatPrice={props.formatPrice}
 			openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
 			dataType="Holders Revenue"
@@ -575,7 +573,6 @@ function Incentives(props: IKeyMetricsProps) {
 		<SmolStats
 			data={metrics}
 			protocolName={props.name}
-			category={props.category ?? ''}
 			formatPrice={props.formatPrice}
 			openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
 			dataType="Incentives"
@@ -648,7 +645,6 @@ function Earnings(props: IKeyMetricsProps) {
 		<SmolStats
 			data={metrics}
 			protocolName={props.name}
-			category={props.category ?? ''}
 			formatPrice={props.formatPrice}
 			openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
 			dataType="Earnings"
@@ -686,7 +682,6 @@ function BridgeVolume(props: IKeyMetricsProps) {
 		<SmolStats
 			data={metrics}
 			protocolName={props.name}
-			category={props.category ?? ''}
 			formatPrice={props.formatPrice}
 			openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
 			dataType="Bridge Volume"
@@ -703,12 +698,11 @@ const SmolStats = ({
 	data: Array<{
 		name: string
 		tooltipContent?: string | null | undefined
-		value: string | number
+		value: number
 		chainBreakdown?: Record<string, number> | null
 	}>
 	protocolName: string
-	category: string
-	formatPrice: (value: number | string | null) => string | number | null
+	formatPrice: (value: number | null) => string | number | null
 	openSmolStatsSummaryByDefault?: boolean | undefined
 	dataType: string
 }) => {
@@ -763,11 +757,11 @@ function ChainBreakdownMetricRow({
 	metric: {
 		name: string
 		tooltipContent?: string | null | undefined
-		value: string | number
+		value: number
 		chainBreakdown?: Record<string, number> | null
 	}
 	protocolName: string
-	formatPrice: (value: number | string | null) => string | number | null
+	formatPrice: (value: number | null) => string | number | null
 }) {
 	if (!metric.chainBreakdown) {
 		return (
@@ -793,7 +787,7 @@ function renderChainRows({
 }: {
 	chains: Record<string, number>
 	protocolName: string
-	formatPrice: (value: number | string | null) => string | number | null
+	formatPrice: (value: number | null) => string | number | null
 	keySuffix: string
 }) {
 	const rows = []
@@ -887,10 +881,10 @@ const Expenses = (props: IKeyMetricsProps) => {
 					</span>
 				</p>
 			))}
-			{props.expenses?.sources?.length ? (
+			{props.expenses.sources?.length ? (
 				<p className="flex flex-wrap justify-between gap-4 border-b border-dashed border-subtle py-1 text-secondary group-last:border-none">
 					<span className="text-secondary">Sources</span>
-					{props.expenses.sources?.map((source) => (
+					{props.expenses.sources.map((source) => (
 						<a
 							href={source}
 							target="_blank"
@@ -903,13 +897,13 @@ const Expenses = (props: IKeyMetricsProps) => {
 					))}
 				</p>
 			) : null}
-			{props.expenses?.notes?.length ? (
+			{props.expenses.notes?.length ? (
 				<p className="flex flex-wrap justify-between gap-4 border-b border-dashed border-subtle py-1 text-secondary group-last:border-none">
 					<span className="text-secondary">Notes</span>
-					<span>{props.expenses.notes?.join(', ') ?? ''}</span>
+					<span>{props.expenses.notes.join(', ')}</span>
 				</p>
 			) : null}
-			{props.expenses?.lastUpdate ? (
+			{props.expenses.lastUpdate ? (
 				<p className="flex flex-wrap justify-between gap-4 border-b border-dashed border-subtle py-1 text-secondary group-last:border-none">
 					<span className="text-secondary">Last Update</span>
 					<span>{formatDate(props.expenses.lastUpdate)}</span>
@@ -931,7 +925,7 @@ const TokenLiquidity = (props: IKeyMetricsProps) => {
 				compactSuffix: 'lowercase'
 			})}
 		>
-			{props.tokenLiquidity?.pools.map((pool) => (
+			{props.tokenLiquidity.pools.map((pool) => (
 				<p
 					key={`${pool[0]}-${pool[1]}-${pool[2]}`}
 					className="flex items-center justify-between gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"
@@ -956,10 +950,10 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 	)
 	return (
 		<>
-			{props.tokenCGData?.marketCap?.current != null ? (
+			{props.tokenCGData.marketCap.current != null ? (
 				<MetricRow label="Market Cap" value={props.formatPrice(props.tokenCGData.marketCap.current)} />
 			) : null}
-			{props.tokenCGData?.price?.current != null ? (
+			{props.tokenCGData.price.current != null ? (
 				props.tokenCGData.price.ath != null || props.tokenCGData.price.atl != null ? (
 					/* A <summary> cannot contain a link, so the accordion label stays
 					   plain text and the token-page link lives in the expanded body. */
@@ -977,7 +971,7 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 					<MetricRow label={linkedPriceLabel} value={props.formatPrice(props.tokenCGData.price.current)} />
 				)
 			) : null}
-			{props.tokenCGData?.fdv?.current != null ? (
+			{props.tokenCGData.fdv.current != null ? (
 				<MetricRow
 					label="Fully Diluted Valuation"
 					tooltip={
@@ -986,7 +980,7 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 					value={props.formatPrice(props.tokenCGData.fdv.current)}
 				/>
 			) : null}
-			{props.outstandingFDV ? (
+			{props.outstandingFDV != null ? (
 				<MetricRow
 					label="Outstanding FDV"
 					tooltip={
@@ -1012,14 +1006,16 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 								<span className="font-jetbrains">
 									{props.tokenCGData.volume24h.dex != null ? props.formatPrice(props.tokenCGData.volume24h.dex) : '-'}
 								</span>
-								<span className="text-xs text-tertiary">
-									(
-									{formatCompactNumber(
-										((props.tokenCGData.volume24h.dex ?? 0) / (props.tokenCGData.volume24h.total ?? 1)) * 100,
-										{ minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }
-									)}
-									% of total)
-								</span>
+								{props.tokenCGData.volume24h.dex != null && props.tokenCGData.volume24h.total > 0 ? (
+									<span className="text-xs text-tertiary">
+										(
+										{formatCompactNumber((props.tokenCGData.volume24h.dex / props.tokenCGData.volume24h.total) * 100, {
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
+										% of total)
+									</span>
+								) : null}
 							</span>
 						}
 					/>
@@ -1031,17 +1027,22 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 
 const Raises = (props: IKeyMetricsProps) => {
 	if (!props.raises || props.raises.length === 0) return null
+	let totalRaised: number | null = 0
+	for (const raise of props.raises) {
+		if (raise.amountUsd === null) {
+			totalRaised = null
+			break
+		}
+		totalRaised += raise.amountUsd
+	}
 	return (
 		<MetricSection
 			label="Total Raised"
-			value={formatUsd(
-				props.raises.reduce((sum, raise) => sum + (raise.amountUsd ?? 0), 0),
-				{
-					compact: true,
-					minimumCompactValue: 1_000_000,
-					compactSuffix: 'lowercase'
-				}
-			)}
+			value={formatUsd(totalRaised, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})}
 		>
 			{props.raises.map((raise) => (
 				<p
@@ -1050,7 +1051,7 @@ const Raises = (props: IKeyMetricsProps) => {
 				>
 					<span className="flex flex-wrap justify-between">
 						<span className="text-secondary">{formatDate(raise.date, { input: 'seconds' })}</span>
-						{raise.amountUsd ? (
+						{raise.amountUsd != null ? (
 							<span className="font-jetbrains">
 								{formatUsd(raise.amountUsd, {
 									compact: true,

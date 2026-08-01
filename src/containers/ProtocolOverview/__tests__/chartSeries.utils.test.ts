@@ -8,7 +8,13 @@ import {
 } from '../chartSeries.utils'
 
 describe('ProtocolOverview chart series normalization', () => {
+	it('keeps a successful empty bridge chart distinct from nullable absence', () => {
+		expect(normalizeBridgeVolumeToChartMs([])).toEqual([])
+		expect(normalizeBridgeVolumeToChartMs(null)).toBeNull()
+	})
+
 	it('normalizes the exact numeric producer tuple contract from seconds or milliseconds', () => {
+		expect(normalizeChartPointsToMs([])).toEqual([])
 		expect(
 			normalizeChartPointsToMs([
 				[1_700_000_000_000, 1],

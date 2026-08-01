@@ -1,7 +1,7 @@
+import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
 import { removedCategoriesFromChainTvlSet } from './constants'
-import type { ILiteProtocol } from './types'
 
 const excludedCategoriesSet = new Set(['Canonical Bridge', 'Staking Pool', 'Foundation'])
 
@@ -10,27 +10,25 @@ export const toFilterProtocol = ({
 	protocolData,
 	chainDisplayName
 }: {
-	protocolMetadata: IProtocolMetadata
-	protocolData: ILiteProtocol
+	protocolMetadata: Pick<IProtocolMetadata, 'displayName' | 'chains'>
+	protocolData: ProtocolLite
 	chainDisplayName: string | null
 }): boolean => {
-	const combinedChainsSet = new Set([...(protocolMetadata.chains ?? []), ...(protocolData.chains ?? [])])
+	if (!protocolMetadata.displayName || !protocolMetadata.chains) return false
+	if (excludedCategoriesSet.has(protocolData.category)) return false
+	if (chainDisplayName === 'All') return true
+	if (chainDisplayName === null) return false
 
-	return !!(
-		protocolMetadata.displayName &&
-		protocolMetadata.chains &&
-		(chainDisplayName !== 'All' ? combinedChainsSet.has(chainDisplayName) : true) &&
-		!excludedCategoriesSet.has(protocolData.category)
-	)
+	return protocolMetadata.chains.includes(chainDisplayName) || protocolData.chains.includes(chainDisplayName)
 }
 
 export const toStrikeTvl = (
-	protocol: Pick<ILiteProtocol, 'category'>,
-	extraTvlSections: { liquidstaking?: boolean; doublecounted?: boolean } | Record<string, boolean>
+	protocol: ProtocolLite,
+	extraTvlSections: { liquidstaking?: boolean; doublecounted?: boolean }
 ) => {
 	if (removedCategoriesFromChainTvlSet.has(protocol.category)) return true
 
-	if (extraTvlSections['liquidstaking'] || extraTvlSections['doublecounted']) return true
+	if (extraTvlSections.liquidstaking || extraTvlSections.doublecounted) return true
 
 	return false
 }
@@ -39,7 +37,7 @@ export const protocolMatchesForkFilter = ({
 	protocol,
 	normalizedFork
 }: {
-	protocol: Pick<ILiteProtocol, 'forkedFrom'>
+	protocol: ProtocolLite
 	normalizedFork: string | null
 }): boolean => {
 	if (!normalizedFork) return true
@@ -50,50 +48,4 @@ export const protocolMatchesForkFilter = ({
 		if (slug(forkName) === normalizedFork) return true
 	}
 	return false
-}
-
-export const protocolMatchesOracleFilter = ({
-	protocol,
-	normalizedOracle,
-	isAllChains,
-	chainDisplayName
-}: {
-	protocol: Pick<ILiteProtocol, 'oracles' | 'oraclesByChain'>
-	normalizedOracle: string | null
-	isAllChains: boolean
-	chainDisplayName: string
-}): boolean => {
-	if (!normalizedOracle) return true
-
-	const oraclesByChain = protocol.oraclesByChain ?? {}
-	let hasOraclesByChain = false
-	for (const _chain in oraclesByChain) {
-		hasOraclesByChain = true
-		break
-	}
-
-	if (hasOraclesByChain) {
-		if (!isAllChains) {
-			const normalizedChainName = slug(chainDisplayName)
-			for (const chainName in oraclesByChain) {
-				if (slug(chainName) !== normalizedChainName) continue
-				const oracleNames = oraclesByChain[chainName]
-				for (const oracleName of oracleNames) {
-					if (slug(oracleName) === normalizedOracle) return true
-				}
-				return false
-			}
-			return false
-		}
-
-		for (const chainName in oraclesByChain) {
-			const oracleNames = oraclesByChain[chainName]
-			for (const oracleName of oracleNames) {
-				if (slug(oracleName) === normalizedOracle) return true
-			}
-		}
-		return false
-	}
-
-	return (protocol.oracles ?? []).some((oracleName) => slug(oracleName) === normalizedOracle)
 }

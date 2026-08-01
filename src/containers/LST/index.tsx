@@ -284,7 +284,8 @@ export const LSTOverview = ({
 				? buildSelectedPercentageChart({
 						dataset: renderedActiveChartData.data.dataset,
 						charts: renderedActiveChartData.data.charts,
-						selectedCharts: selectedBreakdownTokensSet
+						selectedCharts: selectedBreakdownTokensSet,
+						missingValuePolicy: 'sum-available'
 					})
 				: null,
 		[renderedActiveChartData, selectedBreakdownTokensSet]
@@ -309,7 +310,19 @@ export const LSTOverview = ({
 		<>
 			<Card as="header" padding="sm" className="flex flex-wrap items-center justify-between gap-4">
 				<h1 className="heading-sm">Total Value Locked ETH LSTs</h1>
-				<span className="font-jetbrains">{`${formatCompactNumber(stakedEthSum, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ETH (${formatUsd(stakedEthInUsdSum, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })})`}</span>
+				<span className="font-jetbrains">
+					{formatCompactNumber(stakedEthSum, {
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}{' '}
+					ETH (
+					{formatUsd(stakedEthInUsdSum, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}) ?? '—'}
+					)
+				</span>
 			</Card>
 
 			<Card padding="none" className="flex w-full flex-col">
@@ -370,11 +383,11 @@ export const LSTOverview = ({
 										filename={breakdownExportFilenameBase}
 										title={breakdownExportTitle}
 										prepareCsvDirect={
-											renderedActiveChartData.kind === 'breakdown'
+											selectedBreakdownPresentation
 												? () =>
 														buildSelectedSeriesCsv({
-															dataset: selectedBreakdownPresentation!.dataset,
-															charts: selectedBreakdownPresentation!.charts,
+															dataset: selectedBreakdownPresentation.dataset,
+															charts: selectedBreakdownPresentation.charts,
 															selectedCharts: new Set(selectedBreakdownTokens),
 															filename: breakdownExportFilenameBase
 														})
@@ -382,17 +395,21 @@ export const LSTOverview = ({
 										}
 									/>
 								</div>
-								<React.Suspense fallback={<ChartPanelBodyFallback />}>
-									<MultiSeriesChart
-										dataset={selectedBreakdownPresentation?.dataset}
-										charts={selectedBreakdownPresentation?.charts}
-										stacked={true}
-										expandTo100Percent={true}
-										hideDefaultLegend
-										valueSymbol="%"
-										onReady={handleBreakdownReady}
-									/>
-								</React.Suspense>
+								{selectedBreakdownPresentation ? (
+									<React.Suspense fallback={<ChartPanelBodyFallback />}>
+										<MultiSeriesChart
+											dataset={selectedBreakdownPresentation.dataset}
+											charts={selectedBreakdownPresentation.charts}
+											stacked={true}
+											expandTo100Percent={true}
+											hideDefaultLegend
+											valueSymbol="%"
+											onReady={handleBreakdownReady}
+										/>
+									</React.Suspense>
+								) : (
+									<ChartPanelBodyFallback />
+								)}
 							</div>
 						</div>
 					) : (
@@ -420,12 +437,12 @@ export const LSTOverview = ({
 									filename={inflowsExportFilenameBase}
 									title={inflowsExportTitle}
 									prepareCsvDirect={
-										renderedActiveChartData.kind === 'inflows'
+										selectedInflowsPresentation
 											? () =>
 													buildSelectedSeriesCsv({
-														dataset: selectedInflowsPresentation!.dataset,
-														charts: selectedInflowsPresentation!.charts,
-														selectedCharts: new Set(selectedInflowsPresentation!.charts.map((chart) => chart.name)),
+														dataset: selectedInflowsPresentation.dataset,
+														charts: selectedInflowsPresentation.charts,
+														selectedCharts: new Set(selectedInflowsPresentation.charts.map((chart) => chart.name)),
 														filename: inflowsExportFilenameBase
 													})
 											: undefined
@@ -433,36 +450,23 @@ export const LSTOverview = ({
 								/>
 							</div>
 
-							{groupBy === 'cumulative' ? (
+							{selectedInflowsPresentation ? (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart
-										dataset={selectedInflowsPresentation?.dataset}
-										charts={selectedInflowsPresentation?.charts}
+										dataset={selectedInflowsPresentation.dataset}
+										charts={selectedInflowsPresentation.charts}
 										hideDefaultLegend
 										groupBy={groupBy}
 										valueSymbol="ETH"
 										showTotalInTooltip
-										chartOptions={
-											selectedInflowTokens.length > 1 ? { tooltip: { formatter: inflowsTooltipFormatter } } : undefined
-										}
+										{...(selectedInflowTokens.length > 1
+											? { chartOptions: { tooltip: { formatter: inflowsTooltipFormatter } } }
+											: {})}
 										onReady={handleInflowsReady}
 									/>
 								</React.Suspense>
 							) : (
-								<React.Suspense fallback={<ChartPanelBodyFallback />}>
-									<MultiSeriesChart
-										dataset={selectedInflowsPresentation?.dataset}
-										charts={selectedInflowsPresentation?.charts}
-										hideDefaultLegend
-										groupBy={groupBy}
-										valueSymbol="ETH"
-										showTotalInTooltip
-										chartOptions={
-											selectedInflowTokens.length > 1 ? { tooltip: { formatter: inflowsTooltipFormatter } } : undefined
-										}
-										onReady={handleInflowsReady}
-									/>
-								</React.Suspense>
+								<ChartPanelBodyFallback />
 							)}
 						</div>
 					)}

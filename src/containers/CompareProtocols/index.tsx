@@ -1,7 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
@@ -9,18 +8,18 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { LoadingIndicator, PanelStatus } from '~/ui/Status'
+import { slug } from '~/utils'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { buildCompareProtocolsChartData, type CompareProtocolTvlCharts } from './chartData'
 import {
 	buildCompareProtocolTvlRequestPlan,
 	getCompareProtocolExtraTvlKeys,
-	getCompareProtocolTvlSettings
+	getCompareProtocolTvlSettings,
+	normalizeCompareProtocolSelection
 } from './requestPlan'
 import type { CompareProtocolsProps } from './types'
 
-const MultiSeriesChart = React.lazy(
-	() => import('~/components/ECharts/MultiSeriesChart')
-) as React.FC<IMultiSeriesChartProps>
+const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsProps) {
 	const router = useRouter()
@@ -28,10 +27,18 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 	const [extraTvlEnabled] = useLocalStorageSettingsManager('tvl')
 
 	const { protocol: protocolQuery } = router.query
+	const protocolNameBySlug = React.useMemo(() => {
+		const names = new Map<string, string>()
+		for (const protocol of protocolsList) {
+			const protocolSlug = slug(protocol.value)
+			if (protocolSlug && !names.has(protocolSlug)) names.set(protocolSlug, protocol.value)
+		}
+		return names
+	}, [protocolsList])
 
 	const selectedProtocols = React.useMemo(() => {
-		return protocolQuery ? (typeof protocolQuery === 'string' ? [protocolQuery] : [...protocolQuery]) : []
-	}, [protocolQuery])
+		return normalizeCompareProtocolSelection(protocolQuery, protocolNameBySlug)
+	}, [protocolQuery, protocolNameBySlug])
 	const compareTvlSettings = React.useMemo(() => getCompareProtocolTvlSettings(extraTvlEnabled), [extraTvlEnabled])
 	const extraTvlKeys = React.useMemo(() => getCompareProtocolExtraTvlKeys(compareTvlSettings), [compareTvlSettings])
 
@@ -65,36 +72,34 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 	const isLoading = baseResults.some((r) => r.isLoading) || extraResults.some((r) => r.isLoading)
 	const failedSources = React.useMemo(() => {
 		const failed: string[] = []
-		for (let index = 0; index < baseResults.length; index++) {
-			if (baseResults[index]?.error) failed.push(`${selectedProtocols[index]} - TVL`)
+		for (const [protocolIndex, protocol] of selectedProtocols.entries()) {
+			if (baseResults[protocolIndex]?.error) failed.push(`${protocol} - TVL`)
 		}
-		for (let index = 0; index < extraResults.length; index++) {
-			if (!extraResults[index]?.error) continue
-			const protocol = selectedProtocols[Math.floor(index / extraTvlKeys.length)]
-			const key = extraTvlKeys[index % extraTvlKeys.length]
-			failed.push(`${protocol} - ${key}`)
+		for (const [protocolIndex, protocol] of selectedProtocols.entries()) {
+			for (const [keyIndex, key] of extraTvlKeys.entries()) {
+				const resultIndex = protocolIndex * extraTvlKeys.length + keyIndex
+				if (extraResults[resultIndex]?.error) failed.push(`${protocol} - ${key}`)
+			}
 		}
 		return failed
 	}, [baseResults, extraResults, selectedProtocols, extraTvlKeys])
 
 	const { dataset, charts } = React.useMemo(() => {
 		const protocolCharts: CompareProtocolTvlCharts[] = []
-		for (let protocolIndex = 0; protocolIndex < selectedProtocols.length; protocolIndex++) {
-			const tvlChart = baseResults[protocolIndex]?.data
-			if (!tvlChart) continue
+		for (const [protocolIndex, protocolName] of selectedProtocols.entries()) {
+			const tvlChart = baseResults[protocolIndex]?.data ?? null
 			const extraTvlCharts: CompareProtocolTvlCharts['extraTvlCharts'] = {}
-			for (let keyIndex = 0; keyIndex < extraTvlKeys.length; keyIndex++) {
-				extraTvlCharts[extraTvlKeys[keyIndex]] =
-					extraResults[protocolIndex * extraTvlKeys.length + keyIndex]?.data ?? null
+			for (const [keyIndex, key] of extraTvlKeys.entries()) {
+				extraTvlCharts[key] = extraResults[protocolIndex * extraTvlKeys.length + keyIndex]?.data ?? null
 			}
-			protocolCharts.push({ name: selectedProtocols[protocolIndex], tvlChart, extraTvlCharts })
+			protocolCharts.push({ name: protocolName, tvlChart, extraTvlCharts })
 		}
 		return buildCompareProtocolsChartData({ protocolCharts, extraTvlEnabled: compareTvlSettings })
 	}, [baseResults, extraResults, selectedProtocols, extraTvlKeys, compareTvlSettings])
 
-	const { selectedProtocolsData, selectedProtocolsNames } = React.useMemo(() => {
+	const selectedProtocolsData = React.useMemo(() => {
 		if (selectedProtocols.length === 0) {
-			return { selectedProtocolsData: [], selectedProtocolsNames: [] }
+			return []
 		}
 
 		const selectedProtocolSet = new Set(selectedProtocols)
@@ -112,15 +117,13 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 		}
 
 		const selectedProtocolsData: typeof protocols = []
-		const selectedProtocolsNames: string[] = []
 		for (const protocolName of selectedProtocols) {
 			const protocol = selectedProtocolByName.get(protocolName)
 			if (!protocol) continue
 			selectedProtocolsData.push(protocol)
-			selectedProtocolsNames.push(protocol.name)
 		}
 
-		return { selectedProtocolsData, selectedProtocolsNames }
+		return selectedProtocolsData
 	}, [selectedProtocols, protocols])
 
 	return (
@@ -129,7 +132,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 				<MultiSelectCombobox
 					data={protocolsList}
 					placeholder="Select Protocols..."
-					selectedValues={selectedProtocolsNames}
+					selectedValues={selectedProtocols}
 					setSelectedValues={(values) => {
 						void pushShallowQuery(router, { protocol: values.length > 0 ? values : undefined })
 					}}
@@ -148,13 +151,16 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 									dataset={dataset}
 									charts={charts}
 									valueSymbol="$"
-									showTotalInTooltip
-									exportButtons={{
-										png: true,
-										csv: true,
-										filename: 'compare-protocols',
-										pngTitle: 'Protocol TVL Comparison'
-									}}
+									exportButtons={
+										dataset.source.length > 0
+											? {
+													png: true,
+													csv: true,
+													filename: 'compare-protocols',
+													pngTitle: 'Protocol TVL Comparison'
+												}
+											: 'hidden'
+									}
 								/>
 							</React.Suspense>
 						)}

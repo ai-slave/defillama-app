@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { TvlSettingsKey } from '~/contexts/LocalStorage'
 import { prepareProtocolsForTable } from '../prepareProtocolsForTable'
-import type { IChildProtocol, IProtocol, ProtocolRankingTvlEntry, TVL_TYPES } from '../types'
+import type { IChildProtocol, IProtocol, ProtocolRankingTvlEntry, ProtocolRankingTvls } from '../types'
 
 const entry = (tvl: number): ProtocolRankingTvlEntry => ({
 	tvl,
@@ -10,12 +10,11 @@ const entry = (tvl: number): ProtocolRankingTvlEntry => ({
 	tvlPrevMonth: tvl
 })
 
-const tvl = (base: number): Record<TVL_TYPES, ProtocolRankingTvlEntry> => ({
+const tvl = (base: number): ProtocolRankingTvls => ({
 	default: entry(base),
 	borrowed: entry(0),
 	doublecounted: entry(0),
 	excludeParent: entry(25),
-	govtokens: entry(0),
 	liquidstaking: entry(0),
 	pool2: entry(0),
 	staking: entry(10),
@@ -53,7 +52,7 @@ describe('prepareProtocolsForTable', () => {
 			childProtocols: [child('Child')]
 		}
 		const parentExclude = protocol.tvl?.excludeParent
-		const childExclude = protocol.childProtocols?.[0].tvl?.excludeParent
+		const childExclude = protocol.childProtocols?.at(0)?.tvl?.excludeParent
 
 		const [prepared] = prepareProtocolsForTable({
 			protocols: [protocol],
@@ -63,11 +62,14 @@ describe('prepareProtocolsForTable', () => {
 			suppressTvlStrike: true
 		})
 
+		expect(prepared).toBeDefined()
+		if (!prepared) throw new Error('Expected the protocol to remain after applying table filters')
+		const preparedChild = prepared.childProtocols?.at(0)
 		expect(prepared.tvl?.default.tvl).toBe(110)
-		expect(prepared.childProtocols?.[0].tvl?.default.tvl).toBe(60)
+		expect(preparedChild?.tvl?.default.tvl).toBe(60)
 		expect(prepared.strikeTvl).toBe(false)
-		expect(prepared.childProtocols?.[0].strikeTvl).toBe(false)
+		expect(preparedChild?.strikeTvl).toBe(false)
 		expect(prepared.tvl?.excludeParent).toBe(parentExclude)
-		expect(prepared.childProtocols?.[0].tvl?.excludeParent).toBe(childExclude)
+		expect(preparedChild?.tvl?.excludeParent).toBe(childExclude)
 	})
 })

@@ -74,11 +74,13 @@ Interpret nullable adapter activity periods using source provenance rather than 
 - A failed whole request remains unavailable (`null`). Do not convert a request failure into a successful zero or present a best-effort multi-source result as complete.
 - Selected-chain datasets that retain successful chains after another chain fails must carry explicit partial-coverage metadata through APIs, server-stream cache seeding, and consumers.
 - These activity rules do not apply to exact TVL snapshots, ratio denominators, required bridge legs, or chart points. Missing required values for those metrics remain unknown.
+- `dailyGasUsed` is measured in the chain's native gas token; `dailyGasUsedUsd` is the separately priced USD cost. Do not currency-format or relabel native gas usage as USD.
 
 Earnings additionally combines two authoritative sources:
 
 - Revenue minus emissions is unavailable when either whole source fails.
 - Within successful listings, nullable revenue activity and a missing protocol emissions row each contribute zero.
+- A matched emissions row with a nullable period is unavailable for that period; it must not become zero or a partial parent sum.
 - Earnings comparison fields remain unavailable when the emissions producer has no matching comparison periods. Selected-chain earnings must not relabel all-chain periods as chain-specific values.
 
 ### Protocol Liquidations
@@ -197,7 +199,8 @@ TVL is not currently a single global metric implementation. The app has multiple
 Common terms:
 
 - base TVL
-- extra TVL setting keys: staking, borrowed, pool2, vesting, govtokens, doublecounted, and liquidstaking
+- protocol-list additive keys: staking, borrowed, pool2, and vesting
+- chain-only setting keys: govtokens, doublecounted, and liquidstaking
 - `dcAndLsOverlap`: not a setting key; this is overlap adjustment data for the shared portion of double counted and liquid staking TVL
 
 Important files:
@@ -211,7 +214,81 @@ Important files:
 - `src/containers/Forks/tvl.ts`: fork-specific TVL/original percentage helper.
 - `src/contexts/LocalStorage.tsx`: TVL setting keys.
 
-Do not assume two routes use the same TVL model just because they share the same toggle names. Some pages start from an adjusted base TVL, while others start from raw TVL and add selected extras. Some table paths use double counted or liquid staking toggles for display/strike behavior rather than normal extra addition.
+Do not assume two routes use the same TVL model just because they share the same toggle names. Some pages start from an adjusted base TVL, while others start from raw TVL and add selected extras. On protocol-list and protocol-taxonomy pages, only staking, borrowed, pool2, and vesting are selectable/additive. Upstream protocol `doublecounted` and `liquidstaking` sections can classify a ranking row for strike presentation, but persisted chain-only toggle state must not change protocol values, strike state, or tooltip copy. `govtokens` is absent/no-op on protocol rows.
+
+The `/protocol/active-loans/[protocol]` route is page-owned borrowed data. It always requests the borrowed breakdown and does not expose or consume protocol TVL toggles.
+
+Potential-airdrop membership requires the protocol listing, funding rounds, and active claimable-airdrop directory. Funding
+and claimability are exclusion sources; if either fails, the candidate list is unavailable rather than silently including
+protocols that should have been excluded. A protocol with no matched funding round has a zero raised total. If any matched
+round has an undisclosed amount, the protocol's total raised is unavailable; known rounds are not published as a complete
+subtotal.
+
+Exact protocol-list TVL snapshots preserve producer availability:
+
+- An explicit zero remains zero.
+- Within a measured contribution, a present null value makes the required aggregate unavailable.
+- A missing selected-chain entry is unavailable unless the producer supplies explicit coverage metadata proving that the omission means zero.
+- Numeric TVL bounds exclude unavailable rows, and market-cap-to-TVL ratios require a strictly positive TVL denominator.
+- Parent summaries skip metadata-only children whose canonical all-chain TVL is null. Those children remain visible but do not erase measured siblings or their changes. A measured child with a missing required period, or a present-null `excludeParent` subtraction, still makes only that parent period unavailable.
+
+Category and tag directory totals are a successful-listing summary rather than an exact individual snapshot. A
+metadata-only protocol whose current or comparison TVL is null contributes zero to that aggregate and remains counted
+as a protocol; it must not hide measured siblings. The individual protocol row remains nullable. A failure of the
+whole protocol listing still makes the page unavailable.
+
+Compare Protocols fetches one base TVL chart and only the enabled protocol-list additive sections for each selected
+protocol. A failed base source retains the selected series as unavailable, and a failed enabled section makes the
+composed points null. A successful empty base chart may still produce additive-only history, while a successful empty
+extra-section chart means that section contributes zero. URL selections are trimmed and deduplicated by canonical
+request slug in first-selected order before requests or series construction. Comparison rows use explicit null gaps so
+JSON, chart rendering, and CSV export preserve the same selected-series order.
+
+Category and tag chart responses expose a finite set of TVL sections. All-chain responses may aggregate unqualified
+protocol sections, but a selected-chain response may emit an additive section only from a matching chain-qualified key
+such as `Ethereum-staking`. It must not attribute an unqualified `staking` value or another chain's value to Ethereum.
+Within a successful selected-chain response, an omitted additive section means that no matching contribution exists;
+an explicit zero remains zero.
+
+Additive breakdown charts may group a homogeneous tail into `Others`, but the grouped value is unavailable if any
+required tail member is unavailable; explicit zero is retained. Protocol Categories opts into complete tooltip totals,
+so its total is hidden if any displayed same-unit contributor is unavailable. Other shared chart consumers retain their
+existing sparse-total behavior unless they explicitly require completeness. Comparison selections do not show a tooltip
+total because parent and child protocols can overlap and are not guaranteed to be additive.
+
+Percentage and dominance rows require an explicit coverage policy. Exact selected denominators make every share unavailable
+when one selected member is unmeasured; measured peers must not be renormalized to an apparent 100%. Historical Oracle,
+Fork, LST, and chain-category dominance instead normalize over the measurements available on each date because members have
+different launch, shutdown, and measurement ranges. Missing shares remain gaps rather than becoming zero. A complete
+all-zero row remains explicit zero.
+
+For grouped bar series, leading nulls before that dimension's first numeric point are pre-coverage gaps and do not
+poison its first measured bucket. A missing point at or after coverage begins makes that grouped bucket unavailable;
+cumulative output remains unavailable from that internal gap onward. Explicit zero starts coverage and remains zero.
+
+On a selected-chain taxonomy page, canonical `/lite/protocols2` `protocol.chains` owns TVL membership; adapter-only
+fallback rows use their adapter-owned source chains. Adapter metric chains may enrich display metadata but cannot admit a
+canonical off-chain TVL child. Membership is filtered before parent grouping, so a single remaining child is shown as
+that child. Multiple remaining children form a parent; a declared member missing its exact chain snapshot makes that
+parent TVL unavailable. The independent `Active Loans` chart remains the producer's borrowed series when additive TVL
+settings change the composite TVL series.
+
+Parent protocol TVL totals subtract each child's exact `chainTvls.excludeParent` snapshot. This applies to current and
+comparison-period totals, including synthetic parents and parents recalculated after table filters. A present-null
+exclusion makes only that parent snapshot unavailable; a child without an `excludeParent` section remains additive.
+
+Selected-chain Earnings derives membership from an own chain key in either the 24h or 30d revenue breakdown. Each period
+is evaluated independently: a usable breakdown without the selected chain is zero, while a nonzero aggregate without a
+breakdown is unavailable. Nonzero emissions cannot be allocated over a nonpositive revenue basis. Explicit zero revenue
+with zero emissions remains zero.
+
+Governance providers are independent on detail pages. Snapshot, Compound, and Tally requests settle separately, and
+successful provider tabs remain paired with their type in configured order when another source fails. If every configured
+detail provider fails, the request fails rather than becoming an empty/not-found project. Provider-membership discovery,
+the global Governance overview, and combined Protocol Overview charts require every configured index/provider; any failure
+makes the result unavailable so false 404s and partial project lists, counts, or chart sums are never presented as complete.
+
+Oracle membership and TVS measurement are separate contracts. `/v2/metrics/oracle` `oracles` owns global membership and order, while `protocolsByOracleChain` owns exact chain membership and secured-protocol counts. `oraclesTVS` supplies measurements only. Provider totals sum the available measurements; an unmeasured member remains blank without erasing measured peers, an explicit zero remains zero, and a provider with no measurements remains unavailable. Historical dominance similarly divides each available provider measurement by the available total for that timestamp while preserving missing provider shares as gaps. `chainsByOracle` may order chain links but cannot add or remove membership. Oracle identity is independent of measurement availability, so a metrics outage must not relabel ordinary protocol TVL as TVS. A chain-qualified recognized extra-TVL key contributes its exact extra value; when it is the member's only selected-chain measurement, its base contribution is zero. `/lite/protocols2` only enriches exact Oracle member names with protocol metadata.
 
 Oracle and Fork chart API `key` query params are not the same contract as local TVL setting keys. For valid keys, the chart response shape is stable across keys, but the backend v2 chart routes only accept the protocol/treasury TVL chart keys such as `tvl`, `staking`, `borrowed`, `pool2`, `vesting`, `all`, and `OwnTokens`. Do not send local overlap setting names such as `doublecounted`, `liquidstaking`, or `dcAndLsOverlap` directly as Fork/Oracle chart `key` values.
 
@@ -258,13 +335,14 @@ The Downloads hacks dataset exposes the same normalized USD fields.
 
 Raise amounts and valuations use USD millions in both API payloads:
 
-- `/raises` returns `amount` as a number and `valuation` primarily as a numeric string, both in USD millions.
+- `/raises` returns `amount` as a nullable number and `valuation` as a nullable number or numeric string, both in USD millions.
 - `/v2/metrics/tvl/protocol/:protocol` embeds the same fields and units.
 
 Normalize both API shapes at their fetch boundaries with `normalizeRaisesApiItem`. App consumers, snapshot reads, tables, charts,
 filters, and CSV exports should only use `amountUsd` and `valuationUsd`. Raw snapshot publication remains transport-shaped
 so existing artifacts can be read and normalized consistently. The Downloads Raises dataset also exposes normalized USD
-fields.
+fields. Any exact per-protocol total is unavailable when one matched round has an undisclosed amount; known rounds must not
+be displayed as a complete subtotal. Explicit zero remains a measured round value.
 
 The warehouse has a different contract: `fact.raise_event.amount` and `fact.hack_event.amount` are already whole USD.
 Do not pass warehouse rows through the Raises API normalizer or silently combine warehouse and API records; the sources

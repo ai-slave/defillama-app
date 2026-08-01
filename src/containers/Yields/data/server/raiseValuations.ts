@@ -20,7 +20,7 @@ type ProtocolIdentity = { slug: string; name: string }
 export function buildRaiseValuationsUsd(
 	raises: Raise[],
 	protocols: ProtocolIdentity[],
-	protocolsLite: { protocols?: ProtocolLite[]; parentProtocols?: ParentProtocolLite[] }
+	protocolsLite: Pick<ProtocolsResponse, 'protocols' | 'parentProtocols'>
 ): Map<string, number> {
 	const sorted = raises.toSorted((a, b) => b.date - a.date)
 
@@ -34,17 +34,18 @@ export function buildRaiseValuationsUsd(
 		if (r.name && !byName.has(r.name.trim().toLowerCase())) byName.set(r.name.trim().toLowerCase(), val)
 	}
 
-	const liteProtocols = protocolsLite.protocols ?? []
-	const parents = protocolsLite.parentProtocols ?? []
+	const liteProtocols = protocolsLite.protocols
+	const parents = protocolsLite.parentProtocols
 
 	// Protocol lookups
 	const liteByName = new Map<string, ProtocolLite>()
 	const childrenByParent = new Map<string, ProtocolLite[]>()
 	for (const p of liteProtocols) {
-		if (p.name) liteByName.set(p.name.toLowerCase(), p)
+		liteByName.set(p.name.toLowerCase(), p)
 		if (p.parentProtocol) {
-			if (!childrenByParent.has(p.parentProtocol)) childrenByParent.set(p.parentProtocol, [])
-			childrenByParent.get(p.parentProtocol)!.push(p)
+			const siblings = childrenByParent.get(p.parentProtocol)
+			if (siblings) siblings.push(p)
+			else childrenByParent.set(p.parentProtocol, [p])
 		}
 	}
 
@@ -52,13 +53,13 @@ export function buildRaiseValuationsUsd(
 	const parentNameById = new Map<string, string>()
 	const valByParentName = new Map<string, number>()
 	for (const pp of parents) {
-		if (pp.id && pp.name) parentNameById.set(pp.id, pp.name)
-		if (!pp.name || pp.name.length < 4) continue
+		parentNameById.set(pp.id, pp.name)
+		if (pp.name.length < 4) continue
 		const name = pp.name.trim().toLowerCase()
 		let val = byId.get(pp.id)
 		if (val == null) {
 			for (const child of childrenByParent.get(pp.id) ?? []) {
-				val = byId.get(String(child.defillamaId ?? child.id ?? ''))
+				val = byId.get(child.defillamaId)
 				if (val != null) break
 			}
 		}
@@ -75,10 +76,10 @@ export function buildRaiseValuationsUsd(
 
 		// 1: direct defillamaId
 		if (proto) {
-			val = byId.get(String(proto.defillamaId ?? proto.id ?? ''))
+			val = byId.get(proto.defillamaId)
 			// 2: parent protocol (by id, then by name)
 			if (val == null && proto.parentProtocol) {
-				val = byId.get(String(proto.parentProtocol))
+				val = byId.get(proto.parentProtocol)
 				if (val == null) {
 					const pName = parentNameById.get(proto.parentProtocol)
 					if (pName) val = byName.get(pName.toLowerCase())
@@ -108,15 +109,15 @@ export function buildRaiseValuationsUsd(
 // protocol's own referral link wins, else it inherits its parent's (e.g. GMX markets).
 export function buildReferralUrls(
 	protocols: ProtocolIdentity[],
-	protocolsLite: { protocols?: ProtocolLite[]; parentProtocols?: ParentProtocolLite[] }
+	protocolsLite: Pick<ProtocolsResponse, 'protocols' | 'parentProtocols'>
 ): Map<string, string> {
 	const liteByName = new Map<string, ProtocolLite>()
-	for (const p of protocolsLite.protocols ?? []) {
-		if (p.name) liteByName.set(p.name.toLowerCase(), p)
+	for (const p of protocolsLite.protocols) {
+		liteByName.set(p.name.toLowerCase(), p)
 	}
 	const parentById = new Map<string, ParentProtocolLite>()
-	for (const pp of protocolsLite.parentProtocols ?? []) {
-		if (pp.id) parentById.set(pp.id, pp)
+	for (const pp of protocolsLite.parentProtocols) {
+		parentById.set(pp.id, pp)
 	}
 
 	const result = new Map<string, string>()
@@ -148,10 +149,12 @@ let cache: { meta: YieldsMeta; expiresAt: number; value: Promise<ProtocolJoins> 
 async function buildFromSources(meta: YieldsMeta): Promise<ProtocolJoins> {
 	const [raisesResponse, protocolsLite] = await Promise.all([
 		fetchRaisesFromNetwork().catch((): RaisesResponse => ({ raises: [] })),
-		fetchProtocols().catch((): ProtocolsResponse => ({ protocols: [], chains: [], parentProtocols: [] }))
+		fetchProtocols().catch(
+			(): ProtocolsResponse => ({ protocols: [], chains: [], parentProtocols: [], protocolCategories: [] })
+		)
 	])
 	return {
-		raiseValuationsUsd: buildRaiseValuationsUsd(raisesResponse?.raises ?? [], meta.protocols, protocolsLite),
+		raiseValuationsUsd: buildRaiseValuationsUsd(raisesResponse.raises, meta.protocols, protocolsLite),
 		referralUrls: buildReferralUrls(meta.protocols, protocolsLite)
 	}
 }

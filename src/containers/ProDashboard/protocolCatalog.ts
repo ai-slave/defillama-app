@@ -65,38 +65,41 @@ export function buildProDashboardProtocolCatalog(
 		parentGeckoIds.set(parent.id, parent.gecko_id ?? null)
 	}
 
-	const protocols = new Array<Protocol>(protocolsData.protocols.length + protocolsData.parentProtocols.length)
-	let protocolIndex = 0
-	const parentTotals = new Map<string, number>()
-	const parentsWithMisrepresentedTokens = new Set<string>()
+	const protocols: Protocol[] = []
+	const parentTotals = new Map<string, number | null>()
 	for (const protocol of protocolsData.protocols) {
-		protocols[protocolIndex++] = {
+		const parentGeckoId = protocol.parentProtocol ? (parentGeckoIds.get(protocol.parentProtocol) ?? null) : null
+		protocols.push({
 			...protocol,
-			id: protocol.id ?? protocol.defillamaId,
+			id: protocol.defillamaId,
 			slug: sluggifyProtocol(protocol.name),
-			tvl: protocol.tvl ?? 0,
-			geckoId: protocol.geckoId ?? parentGeckoIds.get(protocol.parentProtocol ?? '') ?? null,
+			tvl: protocol.tvl,
+			geckoId: protocol.geckoId ?? parentGeckoId,
 			parentProtocol: protocol.parentProtocol ?? null
-		}
+		})
 		if (protocol.parentProtocol) {
-			parentTotals.set(protocol.parentProtocol, (parentTotals.get(protocol.parentProtocol) ?? 0) + (protocol.tvl ?? 0))
-			if (protocol.misrepresentedTokens) parentsWithMisrepresentedTokens.add(protocol.parentProtocol)
+			if (protocol.tvl === null) continue
+			const currentTotal = parentTotals.get(protocol.parentProtocol)
+			const excludedTvl = protocol.chainTvls.excludeParent?.tvl
+			parentTotals.set(
+				protocol.parentProtocol,
+				currentTotal === null || excludedTvl === null ? null : (currentTotal ?? 0) + protocol.tvl - (excludedTvl ?? 0)
+			)
 		}
 	}
 
 	for (const parent of protocolsData.parentProtocols) {
-		const slug = sluggifyProtocol(parent.name)
-		protocols[protocolIndex++] = {
+		const parentTvl = parentTotals.get(parent.id)
+		protocols.push({
 			id: parent.id,
 			name: parent.name,
-			symbol: parent.symbol,
+			...(parent.symbol != null ? { symbol: parent.symbol } : {}),
 			logo: parent.logo,
-			slug: slug || `id-${parent.id}`,
-			tvl: parentTotals.get(parent.id) ?? 0,
+			slug: sluggifyProtocol(parent.name),
+			tvl: parentTvl ?? null,
 			geckoId: parent.gecko_id ?? null,
-			...(parentsWithMisrepresentedTokens.has(parent.id) ? { misrepresentedTokens: true } : {}),
 			parentProtocol: null
-		}
+		})
 	}
 
 	const protocolsBySlug = new Map<string, Protocol>()
@@ -104,11 +107,8 @@ export function buildProDashboardProtocolCatalog(
 		if (!protocolsBySlug.has(protocol.slug)) protocolsBySlug.set(protocol.slug, protocol)
 	}
 
-	const chains = new Array<Chain>(chainsData.length)
-	for (let index = 0; index < chainsData.length; index++) {
-		const chain = chainsData[index]
-		chains[index] = { ...chain, name: toDisplayName(chain.name) }
-	}
+	const chains: Chain[] = []
+	for (const chain of chainsData) chains.push({ ...chain, name: toDisplayName(chain.name) })
 	chains.sort((a, b) => b.tvl - a.tvl)
 
 	return { protocols: Array.from(protocolsBySlug.values()), chains }

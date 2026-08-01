@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import type { AdapterProtocolChild } from '~/containers/AdapterMetrics/api.types'
+import type { IIncomeStatementApiResponse } from '../api.types'
 import { buildIncomeStatementMethodologies } from '../queries'
+
+type IncomeStatementChild = NonNullable<IIncomeStatementApiResponse['childProtocols']>[number]
 
 const child = (
 	displayName: string,
-	breakdownMethodology: NonNullable<AdapterProtocolChild['breakdownMethodology']>
-): AdapterProtocolChild => ({
-	name: displayName.toLowerCase(),
-	defillamaId: displayName,
+	breakdownMethodology: NonNullable<IncomeStatementChild['breakdownMethodology']>
+): IncomeStatementChild => ({
 	displayName,
-	methodologyURL: null,
 	methodology: null,
 	breakdownMethodology
 })

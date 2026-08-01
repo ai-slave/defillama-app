@@ -8,10 +8,18 @@ import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import type { CompareTokenProtocol, CompareTokensPageData } from './types'
 
 export async function getCompareTokensPageData(): Promise<CompareTokensPageData> {
-	const emptyProtocolsResponse: ProtocolsResponse = { protocols: [], chains: [], parentProtocols: [] }
-	const emptyAdapterProtocols: IAdapterChainMetrics['protocols'] = []
-
-	const [coinsData, tvlProtocols, feesProtocols, revenueProtocols] = await Promise.all([
+	const emptyProtocolsResponse: ProtocolsResponse = {
+		protocols: [],
+		chains: [],
+		parentProtocols: [],
+		protocolCategories: []
+	}
+	const [coinsData, tvlProtocols, feesData, revenueData]: [
+		IResponseCGMarketsAPI[],
+		ProtocolsResponse,
+		IAdapterChainMetrics | null,
+		IAdapterChainMetrics | null
+	] = await Promise.all([
 		fetchCoinGeckoTokensListFromDataset().catch((error) => {
 			console.log(`Couldn't fetch CoinGecko tokens at path: compare-tokens`, 'Error:', error)
 			return [] as IResponseCGMarketsAPI[]
@@ -23,71 +31,87 @@ export async function getCompareTokensPageData(): Promise<CompareTokensPageData>
 		fetchAdapterChainMetrics({
 			adapterType: ADAPTER_TYPES.FEES,
 			chain: 'All'
-		})
-			.then((response) => response.protocols)
-			.catch((error) => {
-				console.log(`Couldn't fetch fees protocols list at path: compare-tokens`, 'Error:', error)
-				return emptyAdapterProtocols
-			}),
+		}).catch((error) => {
+			console.log(`Couldn't fetch fees protocols list at path: compare-tokens`, 'Error:', error)
+			return null
+		}),
 		fetchAdapterChainMetrics({
 			adapterType: ADAPTER_TYPES.FEES,
 			chain: 'All',
 			dataType: 'dailyRevenue'
+		}).catch((error) => {
+			console.log(`Couldn't fetch revenue protocols list at path: compare-tokens`, 'Error:', error)
+			return null
 		})
-			.then((response) => response.protocols)
-			.catch((error) => {
-				console.log(`Couldn't fetch revenue protocols list at path: compare-tokens`, 'Error:', error)
-				return emptyAdapterProtocols
-			})
 	])
 
-	const parentProtocols: Record<
-		string,
-		{ name: string; geckoId: string | null; tvl: number | null; fees: number | null; revenue: number | null }
-	> = {}
+	type ParentProtocolAccumulator = CompareTokenProtocol & { hasChild: boolean; hasMeasuredTvl: boolean }
+	const parentProtocols: Record<string, ParentProtocolAccumulator> = {}
 
 	for (const protocol of tvlProtocols.parentProtocols) {
 		parentProtocols[protocol.id] = {
 			name: protocol.name,
-			geckoId: protocol.gecko_id ?? null,
-			tvl: null,
-			fees: null,
-			revenue: null
+			geckoId: protocol.gecko_id,
+			tvl: 0,
+			fees: feesData === null ? null : 0,
+			revenue: revenueData === null ? null : 0,
+			hasChild: false,
+			hasMeasuredTvl: false
 		}
 	}
 
-	const feesByProtocolId = new Map(feesProtocols.map((fp) => [fp.defillamaId, fp.total24h ?? null] as const))
-	const revenueByProtocolId = new Map(revenueProtocols.map((fp) => [fp.defillamaId, fp.total24h ?? null] as const))
+	const feesByProtocolId = new Map<string, number>()
+	for (const protocol of feesData?.protocols ?? []) {
+		feesByProtocolId.set(protocol.defillamaId, protocol.total24h ?? 0)
+	}
+	const revenueByProtocolId = new Map<string, number>()
+	for (const protocol of revenueData?.protocols ?? []) {
+		revenueByProtocolId.set(protocol.defillamaId, protocol.total24h ?? 0)
+	}
+	const llamaProtocols: CompareTokenProtocol[] = []
+	for (const protocol of tvlProtocols.protocols) {
+		const fees = feesData === null ? null : (feesByProtocolId.get(protocol.defillamaId) ?? 0)
+		const revenue = revenueData === null ? null : (revenueByProtocolId.get(protocol.defillamaId) ?? 0)
 
-	const llamaProtocols: CompareTokenProtocol[] = tvlProtocols.protocols.map((protocol) => {
-		const fees = feesByProtocolId.get(protocol.defillamaId) ?? null
-		const revenue = revenueByProtocolId.get(protocol.defillamaId) ?? null
-
-		if (protocol.parentProtocol && parentProtocols[protocol.parentProtocol]) {
-			if (protocol.tvl != null) {
-				parentProtocols[protocol.parentProtocol].tvl =
-					(parentProtocols[protocol.parentProtocol].tvl ?? 0) + protocol.tvl
+		const parentProtocol = protocol.parentProtocol ? parentProtocols[protocol.parentProtocol] : undefined
+		if (parentProtocol) {
+			parentProtocol.hasChild = true
+			if (protocol.tvl !== null) {
+				parentProtocol.hasMeasuredTvl = true
+				const excludedTvl = protocol.chainTvls.excludeParent?.tvl
+				parentProtocol.tvl =
+					parentProtocol.tvl === null || excludedTvl === null
+						? null
+						: parentProtocol.tvl + protocol.tvl - (excludedTvl ?? 0)
 			}
-			if (fees != null) {
-				parentProtocols[protocol.parentProtocol].fees = (parentProtocols[protocol.parentProtocol].fees ?? 0) + fees
-			}
-			if (revenue != null) {
-				parentProtocols[protocol.parentProtocol].revenue =
-					(parentProtocols[protocol.parentProtocol].revenue ?? 0) + revenue
-			}
+			if (parentProtocol.fees !== null && fees !== null) parentProtocol.fees += fees
+			if (parentProtocol.revenue !== null && revenue !== null) parentProtocol.revenue += revenue
 		}
 
-		return {
+		llamaProtocols.push({
 			name: protocol.name,
-			tvl: protocol.tvl ?? null,
-			geckoId: protocol.geckoId ?? null,
+			tvl: protocol.tvl,
+			geckoId: protocol.geckoId,
 			fees,
 			revenue
-		}
-	})
+		})
+	}
+
+	const parentRows: CompareTokenProtocol[] = []
+	for (const parentId in parentProtocols) {
+		const parentProtocol = parentProtocols[parentId]
+		if (!parentProtocol?.hasChild) continue
+		parentRows.push({
+			name: parentProtocol.name,
+			geckoId: parentProtocol.geckoId,
+			tvl: parentProtocol.hasMeasuredTvl ? parentProtocol.tvl : null,
+			fees: parentProtocol.fees,
+			revenue: parentProtocol.revenue
+		})
+	}
 
 	return {
 		coinsData: coinsData.map((coin) => ({ ...coin, label: coin.symbol.toUpperCase(), value: coin.id })),
-		protocols: [...llamaProtocols, ...Object.values(parentProtocols)]
+		protocols: llamaProtocols.concat(parentRows)
 	}
 }

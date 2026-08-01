@@ -3,11 +3,11 @@ import type { RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 /** A processed LST token row for the table */
 export interface ILSTTokenRow {
 	name: string
-	logo: string
+	logo: string | null
 	deprecated?: boolean
 	mcap: number | null
 	stakedEth: number
-	stakedEthInUsd: number
+	stakedEthInUsd: number | null
 	stakedEthPctChange7d: number | null
 	stakedEthPctChange30d: number | null
 	marketShare: number
@@ -31,7 +31,7 @@ export interface LSTOverviewProps {
 	tokensList: ILSTTokenRow[]
 	tokens: string[]
 	stakedEthSum: number
-	stakedEthInUsdSum: number
+	stakedEthInUsdSum: number | null
 	lsdColors: Record<string, string>
 	inflowsChartData: InflowsChartData
 	barChartStacks: Record<string, string>

@@ -1,6 +1,6 @@
 import { tvlOptions } from '~/components/Filters/options'
+import { isProtocolListTvlKey } from '~/containers/ProtocolLists/api.types'
 import { ProtocolsCategoriesPage } from '~/containers/ProtocolTaxonomy/CategoriesPage'
-import { categoriesPageExcludedExtraTvls } from '~/containers/ProtocolTaxonomy/constants'
 import { getProtocolsCategoriesPageData } from '~/containers/ProtocolTaxonomy/queries'
 import type { IProtocolsCategoriesPageData } from '~/containers/ProtocolTaxonomy/types'
 import Layout from '~/layout'
@@ -8,7 +8,7 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 const pageName = ['Protocol Categories']
-const finalTvlOptions = tvlOptions.filter((option) => !categoriesPageExcludedExtraTvls.has(option.key))
+const finalTvlOptions = tvlOptions.filter((option) => isProtocolListTvlKey(option.key))
 
 export const getStaticProps = withPerformanceLogging('categories', async () => {
 	const pageData = await getProtocolsCategoriesPageData()

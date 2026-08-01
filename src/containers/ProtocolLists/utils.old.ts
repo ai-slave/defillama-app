@@ -1,11 +1,9 @@
-import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
 import { getPercentChange, keepNeededProperties } from '~/utils'
-import type { ProtocolLite, ProtocolsResponse } from './api.types'
+import { isProtocolListTvlKey, type ProtocolLite, type ProtocolsResponse } from './api.types'
 import type { IFormattedProtocol } from './protocol-table.types'
 
 interface IFormatProtocolsData {
 	chain?: string
-	oracle?: string
 	fork?: string
 	category?: string
 	protocols: ProtocolLite[]
@@ -20,6 +18,7 @@ function createFormattedProtocol(protocol: ProtocolLite): IFormattedProtocol {
 		url: protocol.url,
 		category: protocol.category,
 		chains: protocol.chains,
+		contributesTvl: protocol.tvl !== null && !protocol.deprecated,
 		chainTvls: protocol.chainTvls,
 		tvl: protocol.tvl,
 		tvlPrevDay: protocol.tvlPrevDay,
@@ -33,18 +32,15 @@ function createFormattedProtocol(protocol: ProtocolLite): IFormattedProtocol {
 		mcaptvl: null,
 		extraTvl: {},
 		...(protocol.parentProtocol === undefined ? {} : { parentProtocol: protocol.parentProtocol }),
-		...(protocol.oracles === undefined ? {} : { oracles: protocol.oracles }),
-		...(protocol.oraclesByChain === undefined ? {} : { oraclesByChain: protocol.oraclesByChain }),
 		...(protocol.deprecated === undefined ? {} : { deprecated: protocol.deprecated })
 	}
 }
 
 export const formatProtocolsData = ({
 	chain,
-	oracle,
 	fork,
 	category,
-	protocols = [],
+	protocols,
 	removeBridges = false
 }: IFormatProtocolsData) => {
 	const data: IFormattedProtocol[] = []
@@ -53,25 +49,11 @@ export const formatProtocolsData = ({
 		let toFilter = true
 
 		if (removeBridges) {
-			toFilter = toFilter && protocol?.category !== 'Bridge'
+			toFilter = toFilter && protocol.category !== 'Bridge'
 		}
 
 		if (chain) {
-			toFilter = toFilter && (protocol.chains?.includes(chain) ?? false)
-		}
-
-		if (oracle) {
-			if (protocol.oraclesByChain) {
-				toFilter =
-					toFilter &&
-					(chain
-						? (protocol.oraclesByChain[chain]?.includes(oracle) ?? false)
-						: Object.values(protocol.oraclesByChain).flat().includes(oracle))
-			} else if (protocol.oracles) {
-				toFilter = toFilter && protocol.oracles.includes(oracle)
-			} else {
-				toFilter = false
-			}
+			toFilter = toFilter && protocol.chains.includes(chain)
 		}
 
 		if (fork) {
@@ -79,7 +61,7 @@ export const formatProtocolsData = ({
 		}
 
 		if (category) {
-			toFilter = toFilter && category.toLowerCase() === (protocol.category?.toLowerCase() ?? '')
+			toFilter = toFilter && category.toLowerCase() === protocol.category.toLowerCase()
 		}
 
 		if (!toFilter) continue
@@ -95,38 +77,15 @@ export const formatProtocolsData = ({
 		}
 
 		if (chain) {
-			p.tvl = protocol.chainTvls[chain]?.tvl ?? 0
-			p.tvlPrevDay = protocol.chainTvls[chain]?.tvlPrevDay ?? null
-			p.tvlPrevWeek = protocol.chainTvls[chain]?.tvlPrevWeek ?? null
-			p.tvlPrevMonth = protocol.chainTvls[chain]?.tvlPrevMonth ?? null
-		} else if (oracle && protocol.oraclesByChain) {
-			p.tvl = 0
-			p.tvlPrevDay = 0
-			p.tvlPrevWeek = 0
-			p.tvlPrevMonth = 0
-
-			for (const oracleChain in protocol.oraclesByChain) {
-				if (protocol.oraclesByChain[oracleChain]?.includes(oracle)) {
-					p.tvl += protocol.chainTvls[oracleChain]?.tvl ?? 0
-					p.tvlPrevDay += protocol.chainTvls[oracleChain]?.tvlPrevDay ?? 0
-					p.tvlPrevWeek += protocol.chainTvls[oracleChain]?.tvlPrevWeek ?? 0
-					p.tvlPrevMonth += protocol.chainTvls[oracleChain]?.tvlPrevMonth ?? 0
-				}
-			}
+			const chainTvl = protocol.chainTvls[chain]
+			p.tvl = chainTvl?.tvl ?? null
+			p.tvlPrevDay = chainTvl?.tvlPrevDay ?? null
+			p.tvlPrevWeek = chainTvl?.tvlPrevWeek ?? null
+			p.tvlPrevMonth = chainTvl?.tvlPrevMonth ?? null
 		}
 
 		const extraTvl: NonNullable<IFormattedProtocol['extraTvl']> = {}
 		p.extraTvl = extraTvl
-		const filteredChains: string[] = []
-		if (oracle && protocol.oraclesByChain) {
-			for (const chainName in protocol.oraclesByChain) {
-				if (protocol.oraclesByChain[chainName]?.includes(oracle)) {
-					filteredChains.push(chainName)
-				}
-			}
-			p.chains = filteredChains
-		}
-
 		for (const sectionName in protocol.chainTvls) {
 			const sectionTvl = protocol.chainTvls[sectionName]
 			if (sectionTvl === undefined) continue
@@ -134,27 +93,11 @@ export const formatProtocolsData = ({
 			if (chain) {
 				if (sectionName.startsWith(`${chain}-`)) {
 					const extraTvlKey = sectionName.slice(chain.length + 1)
-					if (extraTvlKey) extraTvl[extraTvlKey] = sectionTvl
+					if (isProtocolListTvlKey(extraTvlKey) || extraTvlKey === 'excludeParent') {
+						extraTvl[extraTvlKey] = sectionTvl
+					}
 				}
-			} else if (oracle && protocol.oraclesByChain) {
-				const separatorIndex = sectionName.indexOf('-')
-				if (separatorIndex <= 0) continue
-				const chainKey = sectionName.slice(0, separatorIndex)
-				const extraTvlKey = sectionName.slice(separatorIndex + 1)
-				if (!extraTvlKey || !protocol.oraclesByChain[chainKey]?.includes(oracle)) continue
-
-				const aggregate = extraTvl[extraTvlKey] ?? {
-					tvl: 0,
-					tvlPrevDay: 0,
-					tvlPrevWeek: 0,
-					tvlPrevMonth: 0
-				}
-				aggregate.tvl += sectionTvl.tvl
-				aggregate.tvlPrevDay = (aggregate.tvlPrevDay ?? 0) + (sectionTvl.tvlPrevDay ?? 0)
-				aggregate.tvlPrevWeek = (aggregate.tvlPrevWeek ?? 0) + (sectionTvl.tvlPrevWeek ?? 0)
-				aggregate.tvlPrevMonth = (aggregate.tvlPrevMonth ?? 0) + (sectionTvl.tvlPrevMonth ?? 0)
-				extraTvl[extraTvlKey] = aggregate
-			} else if (TVL_SETTINGS_KEYS_SET.has(sectionName) || sectionName === 'excludeParent') {
+			} else if (isProtocolListTvlKey(sectionName) || sectionName === 'excludeParent') {
 				extraTvl[sectionName] = sectionTvl
 			}
 		}
@@ -162,7 +105,12 @@ export const formatProtocolsData = ({
 		p.change_1d = getPercentChange(p.tvl, p.tvlPrevDay)
 		p.change_7d = getPercentChange(p.tvl, p.tvlPrevWeek)
 		p.change_1m = getPercentChange(p.tvl, p.tvlPrevMonth)
-		p.mcaptvl = protocol.mcap != null && p.tvl != null ? protocol.mcap / p.tvl : null
+		if (protocol.mcap != null && p.tvl != null && p.tvl > 0) {
+			const ratio = protocol.mcap / p.tvl
+			p.mcaptvl = Number.isFinite(ratio) ? ratio : null
+		} else {
+			p.mcaptvl = null
+		}
 
 		data.push(p)
 	}

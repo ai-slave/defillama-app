@@ -22,16 +22,20 @@ describe('metadata route indexes', () => {
 		})
 	})
 
-	it('builds oracle route indexes from chainsByOracle memberships', () => {
+	it('builds oracle route indexes from exact chain memberships in preferred chain order', () => {
 		expect(
 			buildOracleRoutesMetadata({
-				oraclesTVS: {
-					Chainlink: {},
-					'Pyth Network': {}
+				oracles: {
+					Chainlink: ['Aave'],
+					'Pyth Network': ['Kamino']
 				},
 				chainsByOracle: {
-					Chainlink: ['Ethereum', 'Arbitrum One'],
+					Chainlink: ['Ethereum', 'Stale Measurement'],
 					'Pyth Network': ['Solana']
+				},
+				protocolsByOracleChain: {
+					Chainlink: { Ethereum: ['Aave'], 'Arbitrum One': ['Aave'] },
+					'Pyth Network': { Solana: ['Kamino'] }
 				}
 			})
 		).toEqual({

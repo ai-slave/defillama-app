@@ -4,7 +4,6 @@ import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Icon } from '~/ui/Icon'
 import { formatUsd } from '~/utils/numberFormat'
 import type { IProtocolTotalValueLostInHacksByProtocol } from './types'
 
@@ -20,22 +19,7 @@ const columns = [
 		cell: ({ row, getValue }) => {
 			const name = getValue()
 			return (
-				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-6' : 'pl-0'}`}>
-					{row.subRows?.length > 0 ? (
-						<button className="absolute -left-4.5" onClick={row.getToggleExpandedHandler()}>
-							{row.getIsExpanded() ? (
-								<>
-									<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
-									<span className="sr-only">Hide child protocols</span>
-								</>
-							) : (
-								<>
-									<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
-									<span className="sr-only">View child protocols</span>
-								</>
-							)}
-						</button>
-					) : null}
+				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
 					<TokenLogo name={row.original.slug} kind="token" data-lgonly alt={`Logo of ${row.original.slug}`} />

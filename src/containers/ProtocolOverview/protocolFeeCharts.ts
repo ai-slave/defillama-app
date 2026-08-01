@@ -7,6 +7,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import { getGroupedTimestampSec } from './chartSeries.utils'
 
 export type ProtocolFeeChartSeries = Array<[number, number]>
+type ProtocolFeeChartRow = [timestamp: number, ...(number | null)[]]
 
 const FEE_CHART_DEFINITIONS = [
 	{ key: 'fees', name: 'Fees', color: CHART_COLORS[0] },
@@ -30,10 +31,17 @@ function groupChart(chart: ProtocolFeeChartSeries, groupBy: ChartTimeGroupingWit
 	if (groupBy !== 'cumulative') return rows
 
 	let total = 0
-	return rows.map(([timestamp, value]) => {
-		total += value
-		return [timestamp, total]
-	})
+	for (const row of rows) {
+		total += row[1]
+		row[1] = total
+	}
+	return rows
+}
+
+const createProtocolFeeChartRow = (timestamp: number, length: number): ProtocolFeeChartRow => {
+	const row: ProtocolFeeChartRow = [timestamp]
+	while (row.length < length) row.push(null)
+	return row
 }
 
 export function buildProtocolFeeChartPresentation({
@@ -53,7 +61,7 @@ export function buildProtocolFeeChartPresentation({
 	const selectedDefinitions = FEE_CHART_DEFINITIONS.filter((definition) => selected.has(definition.name))
 	if (selectedDefinitions.length === 0) return EMPTY_FEE_CHART_PRESENTATION
 
-	const rowsByTimestamp = new Map<number, Array<number | null>>()
+	const rowsByTimestamp = new Map<number, ProtocolFeeChartRow>()
 	const dimensions = ['timestamp', ...selectedDefinitions.map((definition) => definition.name)]
 	const charts: MultiSeriesChartSeriesConfig[] = selectedDefinitions.map((definition, index) => ({
 		type: groupBy === 'cumulative' ? 'line' : 'bar',
@@ -64,12 +72,10 @@ export function buildProtocolFeeChartPresentation({
 	}))
 	const sourceByKey = { fees, revenue, holdersRevenue }
 
-	for (let definitionIndex = 0; definitionIndex < selectedDefinitions.length; definitionIndex++) {
-		const definition = selectedDefinitions[definitionIndex]
+	for (const [definitionIndex, definition] of selectedDefinitions.entries()) {
 		for (const [timestampSec, value] of groupChart(sourceByKey[definition.key], groupBy)) {
 			const timestamp = timestampSec * 1e3
-			const row = rowsByTimestamp.get(timestamp) ?? new Array<number | null>(dimensions.length).fill(null)
-			row[0] = timestamp
+			const row = rowsByTimestamp.get(timestamp) ?? createProtocolFeeChartRow(timestamp, dimensions.length)
 			row[definitionIndex + 1] = value
 			rowsByTimestamp.set(timestamp, row)
 		}
@@ -77,7 +83,7 @@ export function buildProtocolFeeChartPresentation({
 
 	return {
 		dataset: {
-			source: Array.from(rowsByTimestamp.values()).sort((a, b) => a[0]! - b[0]!),
+			source: Array.from(rowsByTimestamp.values()).sort((a, b) => a[0] - b[0]),
 			dimensions
 		},
 		charts

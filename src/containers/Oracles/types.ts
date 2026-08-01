@@ -1,10 +1,10 @@
-import type { ILiteProtocol } from '~/containers/ProtocolRankings/types'
+import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
 
 export type OracleBreakdownItem = { timestamp: number } & Record<string, number>
 export type OracleChartData = Array<OracleBreakdownItem>
 
-export interface OracleProtocolWithBreakdown extends ILiteProtocol {
-	tvl: number
+export type OracleProtocolWithBreakdown = ProtocolLite & {
+	tvl: number | null
 	extraTvl: Record<string, number>
 	strikeTvl: boolean
 }
@@ -16,7 +16,7 @@ interface OracleLink {
 
 export interface OracleTableDataRow {
 	name: string
-	tvl: number
+	tvl: number | null
 	extraTvl: Record<string, number>
 	protocolsSecured: number
 	chains: Array<string>
@@ -26,7 +26,7 @@ export interface OracleOverviewPageData {
 	chain: string | null
 	chainLinks: Array<OracleLink>
 	oracle: string | null
-	tvl: number
+	tvl: number | null
 	extraTvl: Record<string, number>
 	protocolTableData: Array<OracleProtocolWithBreakdown>
 	chartData: OracleChartData

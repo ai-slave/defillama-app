@@ -1,4 +1,20 @@
-import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type { ProtocolListAdditiveTvlKey } from '~/containers/ProtocolLists/api.types'
+
+export type ProtocolTaxonomyChartRow = [timestampMs: number, ...values: Array<number | null>]
+
+export type ProtocolTaxonomyChartSeries = Omit<MultiSeriesChartSeriesConfig, 'data' | 'encode'> & {
+	encode: { x: number; y: number }
+	data?: never
+}
+
+export interface ProtocolTaxonomyCharts {
+	dataset: {
+		source: ProtocolTaxonomyChartRow[]
+		dimensions: [timestamp: 'timestamp', ...series: string[]]
+	}
+	charts: ProtocolTaxonomyChartSeries[]
+}
 
 interface IProtocolMetricTotals {
 	total24h: number | null
@@ -18,11 +34,11 @@ interface IProtocolOpenInterestTotals {
 interface IProtocolByCategory {
 	name: string
 	slug: string
-	logo: string
+	logo: string | null
 	chains: Array<string>
 	deprecated?: boolean
 	tvl: number | null
-	extraTvls: Record<string, number>
+	extraTvls: Partial<Record<ProtocolListAdditiveTvlKey | 'excludeParent', number | null>>
 	mcap: number | null
 	fees?: IProtocolMetricTotals | null
 	revenue?: IProtocolMetricTotals | null
@@ -48,7 +64,7 @@ export interface IProtocolTaxonomyPageData {
 	effectiveCategory: string | null
 	chains: Array<{ label: string; to: string }>
 	chain: string
-	charts: { dataset: MultiSeriesChartDataset; charts: NonNullable<IMultiSeriesChartProps['charts']> }
+	charts: ProtocolTaxonomyCharts
 	fees7d: number | null
 	revenue7d: number | null
 	dexVolume7d: number | null
@@ -56,24 +72,24 @@ export interface IProtocolTaxonomyPageData {
 	openInterest: number | null
 	optionsPremium7d: number | null
 	optionsNotional7d: number | null
-	extraTvlCharts: Record<string, Record<string | number, number | null>>
+	extraTvlCharts: Partial<Record<ProtocolListAdditiveTvlKey, Record<number, number | null>>>
 }
 
 export interface IProtocolsCategoriesExtraTvlPoint {
-	tvl: number
-	tvlPrevDay: number
-	tvlPrevWeek: number
-	tvlPrevMonth: number
+	tvl: number | null
+	tvlPrevDay: number | null
+	tvlPrevWeek: number | null
+	tvlPrevMonth: number | null
 }
 
 export interface IProtocolsCategoriesTableRow {
 	name: string
 	protocols: number
-	tvl: number
-	tvlPrevDay: number
-	tvlPrevWeek: number
-	tvlPrevMonth: number
-	revenue: number
+	tvl: number | null
+	tvlPrevDay: number | null
+	tvlPrevWeek: number | null
+	tvlPrevMonth: number | null
+	revenue: number | null
 	extraTvls: Record<string, IProtocolsCategoriesExtraTvlPoint>
 	change_1d: number | null
 	change_7d: number | null
@@ -86,7 +102,7 @@ export type IProtocolsCategoriesChartRow = Record<string, number | null> & { tim
 
 export interface IProtocolsCategoriesChartData {
 	chartSource: Array<IProtocolsCategoriesChartRow>
-	extraTvlCharts: Record<string, Record<string, Record<number, number>>>
+	extraTvlCharts: Record<string, Partial<Record<ProtocolListAdditiveTvlKey, Record<number, number | null>>>>
 }
 
 export interface IProtocolsCategoriesPageData extends IProtocolsCategoriesChartData {

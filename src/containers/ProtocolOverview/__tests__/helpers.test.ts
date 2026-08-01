@@ -2,7 +2,6 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useFinalTVL } from '../helpers'
-import type { IProtocolOverviewPageData } from '../types'
 
 let tvlSettings: Record<string, boolean> = {}
 let localStorageSettingKeys: string[] = []
@@ -21,32 +20,35 @@ vi.mock('~/contexts/LocalStorage', async (importOriginal) => {
 const baseProtocolOverviewData = {
 	currentTvlByChain: null,
 	oracleTvs: null
-} as IProtocolOverviewPageData
+}
+
+type FinalTvlProps = Parameters<typeof useFinalTVL>[0]
 
 function FinalTvlProbe({
 	props,
 	onResult
 }: {
-	props: IProtocolOverviewPageData
+	props: FinalTvlProps
 	onResult: (result: ReturnType<typeof useFinalTVL>) => void
 }) {
 	onResult(useFinalTVL(props))
 	return null
 }
 
-function getFinalTvlResult(props: IProtocolOverviewPageData) {
-	let result: ReturnType<typeof useFinalTVL> | null = null
+function getFinalTvlResult(props: FinalTvlProps) {
+	const results: Array<ReturnType<typeof useFinalTVL>> = []
 
 	renderToStaticMarkup(
 		createElement(FinalTvlProbe, {
 			props,
 			onResult: (value) => {
-				result = value
+				results.push(value)
 			}
 		})
 	)
 
-	if (result == null) throw new Error('Final TVL probe did not render')
+	const result = results[0]
+	if (!result) throw new Error('Final TVL probe did not render')
 	return result
 }
 
@@ -97,6 +99,24 @@ describe('useFinalTVL', () => {
 		expect(result.tvl).toBe(100)
 		expect(result.tvlByChain).toEqual([['Ethereum', 100]])
 		expect(result.toggleOptions.map((option) => option.key)).toEqual(['staking', 'borrowed'])
+	})
+
+	it('does not expose or aggregate chain-only TVL settings on protocol surfaces', () => {
+		tvlSettings = { doublecounted: true, liquidstaking: true, govtokens: true }
+
+		const result = getFinalTvlResult({
+			...baseProtocolOverviewData,
+			currentTvlByChain: {
+				Ethereum: 100,
+				'Ethereum-doublecounted': 20,
+				'Base-liquidstaking': 30,
+				govtokens: 40
+			}
+		})
+
+		expect(result.tvl).toBe(100)
+		expect(result.tvlByChain).toEqual([['Ethereum', 100]])
+		expect(result.toggleOptions).toEqual([])
 	})
 
 	it('applies TVL toggles to oracle TVS aggregation', () => {

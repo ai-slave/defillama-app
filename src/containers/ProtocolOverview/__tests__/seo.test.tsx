@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { IProtocolPageMetrics } from '../types'
+import type { IProtocolOverviewPageData, IProtocolPageMetrics } from '../types'
 
 const canonicalProtocolAaveRegex =
 	/<link\b(?=[^>]*\brel="canonical")(?=[^>]*\bhref="https:\/\/defillama\.com\/protocol\/aave")[^>]*\/?>/
@@ -45,6 +45,63 @@ const metrics: IProtocolPageMetrics = {
 	borrowed: false,
 	tokenRights: false
 }
+
+const createOverviewProps = (): IProtocolOverviewPageData => ({
+	initialMultiSeriesChartData: {},
+	id: 'aave',
+	name: 'Aave',
+	token: {
+		symbol: 'AAVE',
+		gecko_id: null,
+		gecko_url: null,
+		explorer_url: null
+	},
+	category: 'Lending',
+	chains: null,
+	currentTvlByChain: null,
+	isOracleProtocol: false,
+	oracleTvs: null,
+	metrics,
+	fees: null,
+	revenue: null,
+	holdersRevenue: null,
+	dexVolume: null,
+	dexNotionalVolume: null,
+	dexAggregatorVolume: null,
+	perpVolume: null,
+	openInterest: null,
+	perpAggregatorVolume: null,
+	bridgeAggregatorVolume: null,
+	optionsPremiumVolume: null,
+	optionsNotionalVolume: null,
+	liquidationVolume: null,
+	collateralLiquidated: null,
+	bridgeVolume: null,
+	treasury: null,
+	unlocks: null,
+	yields: null,
+	governance: null,
+	articles: null,
+	raises: null,
+	expenses: null,
+	tokenLiquidity: null,
+	outstandingFDV: null,
+	audits: null,
+	isCEX: false,
+	hasKeyMetrics: false,
+	hacks: [],
+	chartDenominations: [],
+	chartColors: {},
+	availableCharts: [],
+	hallmarks: [],
+	rangeHallmarks: [],
+	geckoId: null,
+	governanceApis: null,
+	incomeStatement: null,
+	seoTitle: 'Aave',
+	seoDescription: 'Aave protocol overview',
+	defaultToggledCharts: []
+})
 
 afterEach(() => {
 	vi.clearAllMocks()
@@ -139,21 +196,7 @@ describe('ProtocolOverview final page SEO', () => {
 		}))
 
 		const { ProtocolOverview } = await import('../index')
-		const props = {
-			name: 'Aave',
-			category: 'Lending',
-			metrics,
-			chartDenominations: [],
-			token: {
-				symbol: 'AAVE'
-			},
-			isCEX: false,
-			deprecated: false,
-			hasKeyMetrics: false,
-			incomeStatement: null,
-			seoTitle: 'Aave',
-			seoDescription: 'Aave protocol overview'
-		} as Parameters<typeof ProtocolOverview>[0]
+		const props = createOverviewProps()
 
 		const markup = renderToStaticMarkup(React.createElement(ProtocolOverview, props))
 
@@ -214,7 +257,12 @@ function setupLayoutMocks() {
 				React.createElement(
 					'div',
 					{ 'data-page-name': pageName?.join('/') },
-					React.createElement(SEO, { title, description, canonicalUrl, noIndex }),
+					React.createElement(SEO, {
+						title,
+						description,
+						canonicalUrl,
+						...(noIndex !== undefined ? { noIndex } : {})
+					}),
 					children
 				)
 		}
@@ -222,21 +270,35 @@ function setupLayoutMocks() {
 }
 
 describe('ProtocolOverviewLayout SEO', () => {
+	it('falls back when SEO producers pass empty strings', async () => {
+		setupLayoutMocks()
+
+		const { ProtocolOverviewLayout } = await import('../Layout')
+		const markup = renderToStaticMarkup(
+			<ProtocolOverviewLayout
+				name="Aave"
+				category="Lending"
+				metrics={metrics}
+				tab="information"
+				seoTitle=""
+				seoDescription=""
+			>
+				{null}
+			</ProtocolOverviewLayout>
+		)
+
+		expect(markup).toContain('Aave Protocol Overview - DefiLlama')
+		expect(markup).toContain('Track Aave metrics on DefiLlama')
+	})
+
 	it('keeps the information tab indexable with a canonical URL', async () => {
 		setupLayoutMocks()
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(
-			React.createElement(
-				ProtocolOverviewLayout as React.ComponentType<any>,
-				{
-					name: 'Aave',
-					category: 'Lending',
-					metrics,
-					tab: 'information'
-				},
-				null
-			)
+			<ProtocolOverviewLayout name="Aave" category="Lending" metrics={metrics} tab="information">
+				{null}
+			</ProtocolOverviewLayout>
 		)
 
 		expect(markup).toMatch(canonicalProtocolAaveRegex)
@@ -248,16 +310,9 @@ describe('ProtocolOverviewLayout SEO', () => {
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(
-			React.createElement(
-				ProtocolOverviewLayout as React.ComponentType<any>,
-				{
-					name: 'Defi Swap',
-					category: 'DEX',
-					metrics,
-					tab: 'information'
-				},
-				null
-			)
+			<ProtocolOverviewLayout name="Defi Swap" category="DEX" metrics={metrics} tab="information">
+				{null}
+			</ProtocolOverviewLayout>
 		)
 
 		expect(markup).toMatch(canonicalProtocolDefiSwapRegex)
@@ -269,16 +324,9 @@ describe('ProtocolOverviewLayout SEO', () => {
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(
-			React.createElement(
-				ProtocolOverviewLayout as React.ComponentType<any>,
-				{
-					name: 'Aave',
-					category: 'Lending',
-					metrics,
-					tab: 'tvl'
-				},
-				null
-			)
+			<ProtocolOverviewLayout name="Aave" category="Lending" metrics={metrics} tab="tvl">
+				{null}
+			</ProtocolOverviewLayout>
 		)
 
 		expect(markup).toMatch(robotsNoindexRegex)
@@ -290,20 +338,37 @@ describe('ProtocolOverviewLayout SEO', () => {
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(
-			React.createElement(
-				ProtocolOverviewLayout as React.ComponentType<any>,
-				{
-					name: 'Aave',
-					category: 'Lending',
-					metrics: { ...metrics, borrowed: true },
-					tab: 'borrowed'
-				},
-				null
-			)
+			<ProtocolOverviewLayout name="Aave" category="Lending" metrics={{ ...metrics, borrowed: true }} tab="borrowed">
+				{null}
+			</ProtocolOverviewLayout>
 		)
 
 		expect(markup).toMatch(canonicalProtocolActiveLoansAaveRegex)
 		expect(markup).not.toMatch(robotsNoindexRegex)
+	})
+
+	it('does not show TVL toggle instructions on the page-owned active loans tab', async () => {
+		setupLayoutMocks()
+
+		const { ProtocolOverviewLayout } = await import('../Layout')
+		const borrowedMarkup = renderToStaticMarkup(
+			<ProtocolOverviewLayout
+				name="Aave"
+				category="Uncollateralized Lending"
+				metrics={{ ...metrics, borrowed: true }}
+				tab="borrowed"
+			>
+				{null}
+			</ProtocolOverviewLayout>
+		)
+		const overviewMarkup = renderToStaticMarkup(
+			<ProtocolOverviewLayout name="Aave" category="Uncollateralized Lending" metrics={metrics} tab="information">
+				{null}
+			</ProtocolOverviewLayout>
+		)
+
+		expect(borrowedMarkup).not.toContain('toggle Active Loans')
+		expect(overviewMarkup).toContain('toggle Active Loans')
 	})
 
 	it.each(['Vesper', 'Odyssey Finance', 'Metronome', 'Metronome Synth'])(
@@ -313,16 +378,9 @@ describe('ProtocolOverviewLayout SEO', () => {
 
 			const { ProtocolOverviewLayout } = await import('../Layout')
 			const markup = renderToStaticMarkup(
-				React.createElement(
-					ProtocolOverviewLayout as React.ComponentType<any>,
-					{
-						name,
-						category: 'Lending',
-						metrics,
-						tab: 'information'
-					},
-					null
-				)
+				<ProtocolOverviewLayout name={name} category="Lending" metrics={metrics} tab="information">
+					{null}
+				</ProtocolOverviewLayout>
 			)
 
 			expect(markup).toContain('href="https://enterprise.defillama.com/odyssey-ecosystem"')
@@ -334,6 +392,56 @@ describe('ProtocolOverviewLayout SEO', () => {
 })
 
 describe('ProtocolOverview SEO contract', () => {
+	it('canonicalizes a lower-case denomination for overview summary formatting', async () => {
+		let formattedSummaryValue: string | number | null | undefined
+
+		vi.doMock('next/router', () => ({
+			useRouter: () => ({ query: { denomination: 'eth' } })
+		}))
+		vi.doMock('~/api/client', () => ({
+			useGetTokenPrice: () => ({ data: { price: 2, symbol: 'ETH' }, isLoading: false })
+		}))
+		vi.doMock('../helpers', () => ({
+			useFinalTVL: () => ({
+				tvl: 100,
+				tvlByChain: [],
+				oracleTvs: 0,
+				oracleTvsByChain: [],
+				toggleOptions: []
+			}),
+			getPrimaryValueLabelType: () => ({
+				title: 'Total Value Locked',
+				byChainTitle: 'TVL by chain'
+			})
+		}))
+		vi.doMock('~/components/Bookmark', () => ({ Bookmark: () => null }))
+		vi.doMock('~/ui/Icon', () => ({ Icon: () => null }))
+		vi.doMock('~/components/SEO', () => ({ LinkPreviewCard: () => null }))
+		vi.doMock('~/components/TokenLogo', () => ({ TokenLogo: () => null }))
+		vi.doMock('../AdditionalInfo', () => ({ AdditionalInfo: () => null }))
+		vi.doMock('../ProtocolChartPanel', () => ({ ProtocolChartPanel: () => null }))
+		vi.doMock('../KeyMetrics', () => ({
+			KeyMetrics: ({ formatPrice }: { formatPrice: (value: number) => string | number | null }) => {
+				formattedSummaryValue = formatPrice(100)
+				return null
+			}
+		}))
+		vi.doMock('../Layout', () => ({
+			ProtocolOverviewLayout: ({ children }: { children?: React.ReactNode }) =>
+				React.createElement(React.Fragment, null, children)
+		}))
+
+		const { ProtocolOverview } = await import('../index')
+		const props = {
+			...createOverviewProps(),
+			chartDenominations: [{ symbol: 'USD' }, { symbol: 'ETH', geckoId: 'ethereum' }]
+		}
+
+		renderToStaticMarkup(React.createElement(ProtocolOverview, props))
+
+		expect(formattedSummaryValue).toBe('50 ETH')
+	})
+
 	it('passes the information tab to ProtocolOverviewLayout', async () => {
 		let capturedTab: string | undefined
 
@@ -388,21 +496,7 @@ describe('ProtocolOverview SEO contract', () => {
 		}))
 
 		const { ProtocolOverview } = await import('../index')
-		const props = {
-			name: 'Aave',
-			category: 'Lending',
-			metrics,
-			chartDenominations: [],
-			token: {
-				symbol: 'AAVE'
-			},
-			isCEX: false,
-			deprecated: false,
-			hasKeyMetrics: false,
-			incomeStatement: null,
-			seoTitle: 'Aave',
-			seoDescription: 'Aave protocol overview'
-		} as Parameters<typeof ProtocolOverview>[0]
+		const props = createOverviewProps()
 
 		renderToStaticMarkup(React.createElement(ProtocolOverview, props))
 
@@ -459,22 +553,7 @@ describe('ProtocolOverview SEO contract', () => {
 		}))
 
 		const { ProtocolOverview } = await import('../index')
-		const props = {
-			name: 'Aave',
-			category: 'Lending',
-			metrics,
-			chartDenominations: [],
-			token: {
-				symbol: 'AAVE'
-			},
-			website: 'https://aave.com',
-			isCEX: false,
-			deprecated: false,
-			hasKeyMetrics: false,
-			incomeStatement: null,
-			seoTitle: 'Aave',
-			seoDescription: 'Aave protocol overview'
-		} as Parameters<typeof ProtocolOverview>[0]
+		const props = { ...createOverviewProps(), website: 'https://aave.com' }
 
 		const markup = renderToStaticMarkup(React.createElement(ProtocolOverview, props))
 
@@ -493,10 +572,10 @@ describe('ProtocolInfo category links', () => {
 				children,
 				href,
 				...props
-			}: {
+			}: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
 				children: React.ReactNode
 				href: string
-			} & Record<string, unknown>) => React.createElement('a', { href, ...props }, children),
+			}) => React.createElement('a', { href, ...props }, children),
 			ButtonLink: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children)
 		}))
 		vi.doMock('~/components/Menu', () => ({
@@ -521,6 +600,8 @@ describe('ProtocolInfo category links', () => {
 		const { ProtocolInfo } = await vi.importActual<typeof import('../AdditionalInfo')>('../AdditionalInfo')
 		const markup = renderToStaticMarkup(
 			React.createElement(ProtocolInfo, {
+				...createOverviewProps(),
+				id: 'polymarket',
 				name: 'Polymarket',
 				description: 'Prediction markets protocol.',
 				category: 'Prediction Market',
@@ -531,7 +612,7 @@ describe('ProtocolInfo category links', () => {
 				twitter: null,
 				safeHarbor: false,
 				isCEX: false
-			} as Parameters<typeof ProtocolInfo>[0])
+			})
 		)
 
 		expect(markup).toContain('href="/protocols/prediction-market"')

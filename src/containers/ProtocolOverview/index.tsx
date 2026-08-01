@@ -13,6 +13,7 @@ import { Icon } from '~/ui/Icon'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { AdditionalInfo } from './AdditionalInfo'
+import { resolveProtocolChartDenomination } from './chartQuery'
 import { getPrimaryValueLabelType, useFinalTVL } from './helpers'
 import { KeyMetrics } from './KeyMetrics'
 import { ProtocolOverviewLayout } from './Layout'
@@ -27,23 +28,25 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 	const router = useRouter()
 
 	const { tvl, tvlByChain, oracleTvs, oracleTvsByChain, toggleOptions } = useFinalTVL(props)
+	const hasTvlData = props.currentTvlByChain !== null
+	const selectedDenomination = resolveProtocolChartDenomination(router.query.denomination, props.chartDenominations)
 
 	const { data: chainPrice, isLoading: fetchingChainPrice } = useGetTokenPrice(
-		props.chartDenominations?.[1]?.geckoId ?? undefined
+		props.chartDenominations[1]?.geckoId ?? undefined
 	)
 
-	const formatPrice = (value?: number | string | null): string | number | null => {
-		if (Number.isNaN(Number(value))) return null
+	const formatPrice = (value: number | null): string | number | null => {
+		if (value == null) return null
 
 		if (
 			!fetchingChainPrice &&
-			chainPrice?.price &&
-			typeof router.query.denomination === 'string' &&
-			props.chartDenominations?.[1]?.symbol &&
-			props.chartDenominations[1].symbol === router.query.denomination
+			chainPrice?.price != null &&
+			chainPrice.price !== 0 &&
+			props.chartDenominations[1]?.symbol &&
+			props.chartDenominations[1].symbol === selectedDenomination
 		) {
 			return (
-				formatCompactNumber(Number(value) / chainPrice.price, {
+				formatCompactNumber(value / chainPrice.price, {
 					minimumCompactValue: 1_000_000,
 					compactSuffix: 'lowercase'
 				}) + ` ${chainPrice.symbol}`
@@ -52,32 +55,43 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 
 		return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 	}
+	const linkPreviewMetric = props.isOracleProtocol ? oracleTvs : hasTvlData ? tvl : null
+	const linkPreviewTvl =
+		linkPreviewMetric == null
+			? undefined
+			: formatUsd(linkPreviewMetric, {
+					compact: true,
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				})?.toString()
 
 	return (
 		<ProtocolOverviewLayout
-			isCEX={props.isCEX}
+			{...(props.isCEX !== undefined ? { isCEX: props.isCEX } : {})}
 			name={props.name}
-			category={props.category ?? ''}
-			otherProtocols={props.otherProtocols ?? undefined}
+			{...(props.category !== undefined ? { category: props.category } : {})}
+			{...(props.otherProtocols !== undefined ? { otherProtocols: props.otherProtocols } : {})}
 			toggleOptions={toggleOptions}
 			metrics={props.metrics}
-			warningBanners={props.warningBanners}
+			{...(props.warningBanners !== undefined ? { warningBanners: props.warningBanners } : {})}
 			tab="information"
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
-			entityQuestions={props.entityQuestions}
+			{...(props.entityQuestions !== undefined ? { entityQuestions: props.entityQuestions } : {})}
 		>
 			<LinkPreviewCard
 				cardName={props.name}
 				token={props.name}
 				logo={tokenIconUrl(props.name)}
-				tvl={formatUsd(tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })?.toString()}
-				isCEX={props.isCEX}
+				{...(linkPreviewTvl !== undefined ? { tvl: linkPreviewTvl } : {})}
+				{...(props.isOracleProtocol ? { valueHeader: 'Total Value Secured' } : {})}
+				{...(props.isCEX !== undefined ? { isCEX: props.isCEX } : {})}
 			/>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				<Card padding="sm" className="col-span-1 row-[2/3] hidden flex-col gap-6 xl:row-[1/2] xl:flex xl:min-h-[360px]">
 					<ProtocolHeader
 						props={props}
+						hasTvlData={hasTvlData}
 						oracleTvs={oracleTvs}
 						tvl={tvl}
 						tvlByChain={tvlByChain}
@@ -91,6 +105,7 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 						tvl={tvl}
 						tvlByChain={tvlByChain}
 						computedOracleTvs={oracleTvs}
+						hasTvlData={hasTvlData}
 					/>
 				</Card>
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
@@ -98,6 +113,7 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 						<Card padding="sm" className="flex flex-col gap-6 xl:hidden">
 							<ProtocolHeader
 								props={props}
+								hasTvlData={hasTvlData}
 								oracleTvs={oracleTvs}
 								tvl={tvl}
 								tvlByChain={tvlByChain}
@@ -124,17 +140,18 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 								tvl={tvl}
 								tvlByChain={tvlByChain}
 								computedOracleTvs={oracleTvs}
+								hasTvlData={hasTvlData}
 							/>
 						</Card>
 					) : null}
 				</div>
 				<AdditionalInfo {...props} />
-				{props.incomeStatement?.data ? (
+				{props.incomeStatement ? (
 					<Suspense fallback={<></>}>
 						<IncomeStatement
 							name={props.name}
 							incomeStatement={props.incomeStatement}
-							hasIncentives={props.metrics?.incentives}
+							hasIncentives={props.metrics.incentives}
 						/>
 					</Suspense>
 				) : null}
@@ -146,6 +163,7 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 
 function ProtocolHeader({
 	props,
+	hasTvlData,
 	oracleTvs,
 	tvl,
 	tvlByChain,
@@ -154,11 +172,12 @@ function ProtocolHeader({
 	headingAs: Tag = 'h1'
 }: {
 	props: IProtocolOverviewPageData
-	oracleTvs: number
+	hasTvlData: boolean
+	oracleTvs: number | null
 	tvl: number
 	tvlByChain: [string, number][]
 	oracleTvsByChain: [string, number][]
-	formatPrice: (value?: number | string | null) => string | number | null
+	formatPrice: (value: number | null) => string | number | null
 	headingAs?: 'h1' | 'div'
 }) {
 	const primaryMetricOverride = getProtocolPrimaryMetricOverride(props)
@@ -192,13 +211,13 @@ function ProtocolHeader({
 					hasTvl={true}
 					value={primaryMetricOverride.value}
 					name={props.name}
-					category={props.category ?? ''}
+					category={props.category}
 					valueByChain={primaryMetricOverride.valueByChain}
 					formatPrice={formatPrice}
 					title={primaryMetricOverride.title}
 					byChainTitle={primaryMetricOverride.byChainTitle}
 				/>
-			) : props.oracleTvs ? (
+			) : props.isOracleProtocol ? (
 				<PrimaryValue
 					hasTvl={true}
 					value={oracleTvs}
@@ -209,10 +228,10 @@ function ProtocolHeader({
 				/>
 			) : (
 				<PrimaryValue
-					hasTvl={props.metrics.tvl}
+					hasTvl={hasTvlData}
 					value={tvl}
 					name={props.name}
-					category={props.category === 'Oracle' ? '' : (props.category ?? '')}
+					category={props.category === 'Oracle' ? null : props.category}
 					valueByChain={tvlByChain}
 					formatPrice={formatPrice}
 				/>
@@ -232,10 +251,10 @@ const PrimaryValue = ({
 	byChainTitle: byChainTitleOverride
 }: {
 	hasTvl: boolean
-	value: number
+	value: number | null
 	name: string
-	category: string
-	formatPrice: (value: number | string | null) => string | number | null
+	category: string | null | undefined
+	formatPrice: (value: number | null) => string | number | null
 	valueByChain?: [string, number][]
 	title?: string
 	byChainTitle?: string
@@ -253,7 +272,7 @@ const PrimaryValue = ({
 					<span className="text-secondary">{title}</span>
 				</span>
 				<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
-					{formatPrice(value)}
+					{formatPrice(value) ?? 'N/A'}
 				</span>
 			</p>
 		)
@@ -267,7 +286,7 @@ const PrimaryValue = ({
 				</span>
 				<span className="flex flex-nowrap items-center gap-2">
 					<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
-						{formatPrice(value)}
+						{formatPrice(value) ?? 'N/A'}
 					</span>
 					<Icon
 						name="chevron-down"

@@ -1,6 +1,5 @@
-import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
+import { PROTOCOL_LIST_ADDITIVE_TVL_KEYS } from '~/containers/ProtocolLists/api.types'
 import { getPercentChange } from '~/utils'
-import { categoriesPageExcludedExtraTvls } from './constants'
 import type { IProtocolTaxonomyPageData, IProtocolsCategoriesPageData, IProtocolsCategoriesTableRow } from './types'
 
 type ProtocolTaxonomyProtocol = IProtocolTaxonomyPageData['protocols'][number]
@@ -19,16 +18,16 @@ type ProtocolsCategoriesChartState = {
 }
 
 function getEnabledExtraTvlValueSum(
-	extraTvls: Record<string, number>,
+	extraTvls: Record<string, number | null | undefined>,
 	enabledTvls: Array<string>
-): { sum: number; hasValue: boolean } {
-	let extraSum = 0
+): { sum: number | null; hasValue: boolean } {
+	let extraSum: number | null = 0
 	let hasValue = false
 	for (const extraTvlKey of enabledTvls) {
-		const extraTvl = extraTvls[extraTvlKey]
-		if (extraTvl == null) continue
-		extraSum += extraTvl
+		if (!Object.hasOwn(extraTvls, extraTvlKey)) continue
 		hasValue = true
+		const extraTvl = extraTvls[extraTvlKey] ?? null
+		extraSum = extraSum === null || extraTvl === null ? null : extraSum + extraTvl
 	}
 	return { sum: extraSum, hasValue }
 }
@@ -37,10 +36,13 @@ function sumEnabledExtraTvlChartValues(
 	extraTvlCharts: Record<string, Record<string | number, number | null | undefined> | undefined> | undefined,
 	enabledTvls: Array<string>,
 	timestamp: string | number
-): number {
-	let extraSum = 0
+): number | null {
+	let extraSum: number | null = 0
 	for (const extraTvlKey of enabledTvls) {
-		extraSum += extraTvlCharts?.[extraTvlKey]?.[timestamp] ?? 0
+		const chart = extraTvlCharts?.[extraTvlKey]
+		if (!chart || !Object.hasOwn(chart, timestamp)) continue
+		const extraValue = chart[timestamp] ?? null
+		extraSum = extraSum === null || extraValue === null ? null : extraSum + extraValue
 	}
 	return extraSum
 }
@@ -56,36 +58,34 @@ function addEnabledCategoryRowExtraTvls(
 
 	for (const extraTvlKey of enabledTvls) {
 		const extraTvl = row.extraTvls[extraTvlKey]
-		if (extraTvl == null) continue
-		tvl += extraTvl.tvl
-		tvlPrevDay += extraTvl.tvlPrevDay
-		tvlPrevWeek += extraTvl.tvlPrevWeek
-		tvlPrevMonth += extraTvl.tvlPrevMonth
+		if (extraTvl === undefined) continue
+		tvl = tvl === null || extraTvl.tvl === null ? null : tvl + extraTvl.tvl
+		tvlPrevDay = tvlPrevDay === null || extraTvl.tvlPrevDay === null ? null : tvlPrevDay + extraTvl.tvlPrevDay
+		tvlPrevWeek = tvlPrevWeek === null || extraTvl.tvlPrevWeek === null ? null : tvlPrevWeek + extraTvl.tvlPrevWeek
+		tvlPrevMonth = tvlPrevMonth === null || extraTvl.tvlPrevMonth === null ? null : tvlPrevMonth + extraTvl.tvlPrevMonth
 	}
 
 	return { tvl, tvlPrevDay, tvlPrevWeek, tvlPrevMonth }
 }
 
 export function getEnabledProtocolTaxonomyTvls(tvlSettings: Record<string, boolean>) {
-	return TVL_SETTINGS_KEYS.filter((key) => tvlSettings[key])
+	return PROTOCOL_LIST_ADDITIVE_TVL_KEYS.filter((key) => tvlSettings[key])
 }
 
 export function getEnabledProtocolsCategoriesTvls(tvlSettings: Record<string, boolean>) {
-	return TVL_SETTINGS_KEYS.filter((key) => tvlSettings[key] && !categoriesPageExcludedExtraTvls.has(key))
+	return PROTOCOL_LIST_ADDITIVE_TVL_KEYS.filter((key) => tvlSettings[key])
 }
 
 export function applyProtocolTaxonomyTvlSettings({
 	protocols,
 	charts,
 	extraTvlCharts,
-	tvlSettings,
-	effectiveCategory
+	tvlSettings
 }: {
 	protocols: IProtocolTaxonomyPageData['protocols']
 	charts: IProtocolTaxonomyPageData['charts']
 	extraTvlCharts: IProtocolTaxonomyPageData['extraTvlCharts']
 	tvlSettings: Record<string, boolean>
-	effectiveCategory: IProtocolTaxonomyPageData['effectiveCategory']
 }): {
 	finalProtocols: IProtocolTaxonomyPageData['protocols']
 	charts: IProtocolTaxonomyPageData['charts']
@@ -95,18 +95,16 @@ export function applyProtocolTaxonomyTvlSettings({
 	if (enabledTvls.length === 0) return { finalProtocols: protocols, charts }
 
 	const finalProtocols = protocols.map((protocol) => applyProtocolRowTvlSettings(protocol, enabledTvls))
-	const shouldMirrorBorrowedChart = effectiveCategory === 'Lending' && enabledTvls.includes('borrowed')
 	const tvlIndex = charts.dataset.dimensions.indexOf('TVL')
-	const activeLoansIndex = charts.dataset.dimensions.indexOf('Active Loans')
 	const finalSource: IProtocolTaxonomyPageData['charts']['dataset']['source'] = charts.dataset.source.map((row) => {
-		const timestampKey = row[0] as number
-		const extraSum = timestampKey == null ? 0 : sumEnabledExtraTvlChartValues(extraTvlCharts, enabledTvls, timestampKey)
+		const timestampKey = row[0]
+		const extraSum = sumEnabledExtraTvlChartValues(extraTvlCharts, enabledTvls, timestampKey)
 
-		const nextTvlValue = ((row[tvlIndex] as number | null | undefined) ?? 0) + extraSum
-		const nextRow = [...row]
+		const baseTvlValue = row[tvlIndex]
+		const nextTvlValue = typeof baseTvlValue === 'number' && extraSum !== null ? baseTvlValue + extraSum : null
+		const nextRow: typeof row = [timestampKey]
+		for (const value of row.slice(1)) nextRow.push(value)
 		nextRow[tvlIndex] = nextTvlValue
-
-		if (shouldMirrorBorrowedChart && activeLoansIndex >= 0) nextRow[activeLoansIndex] = nextTvlValue
 
 		return nextRow
 	})
@@ -125,11 +123,14 @@ function applyProtocolRowTvlSettings(
 	enabledTvls: Array<string>
 ): ProtocolTaxonomyProtocol {
 	const extraTvl = getEnabledExtraTvlValueSum(protocol.extraTvls, enabledTvls)
-	const tvl = extraTvl.hasValue ? (protocol.tvl ?? 0) + extraTvl.sum : protocol.tvl
+	const tvl =
+		extraTvl.hasValue && protocol.tvl != null && extraTvl.sum !== null ? protocol.tvl + extraTvl.sum : protocol.tvl
+	const exactTvl = extraTvl.hasValue && extraTvl.sum === null ? null : tvl
 
-	const updated = { ...protocol, tvl }
-	if (updated.subRows?.length > 0) {
-		updated.subRows = updated.subRows.map((subRow) => applyProtocolRowTvlSettings(subRow, enabledTvls))
+	const updated = { ...protocol, tvl: exactTvl }
+	const subRows = updated.subRows
+	if (subRows && subRows.length > 0) {
+		updated.subRows = subRows.map((subRow) => applyProtocolRowTvlSettings(subRow, enabledTvls))
 	}
 	return updated
 }
@@ -153,14 +154,15 @@ export function buildProtocolsCategoriesTvlCharts({
 
 		for (let index = 0; index < categories.length; index++) {
 			const categoryName = categories[index]
+			if (categoryName === undefined) continue
 			const baseValue = row[categoryName]
-			const safeBaseValue = typeof baseValue === 'number' ? baseValue : 0
 			const extraTvlValue =
 				enabledTvls.length === 0
 					? 0
 					: sumEnabledExtraTvlChartValues(extraTvlCharts[categoryName], enabledTvls, row.timestamp)
 
-			adjustedRow[index + 1] = safeBaseValue + extraTvlValue
+			adjustedRow[index + 1] =
+				typeof baseValue === 'number' && extraTvlValue !== null ? baseValue + extraTvlValue : null
 		}
 
 		return adjustedRow
@@ -172,7 +174,7 @@ export function buildProtocolsCategoriesTvlCharts({
 		name: categoryName,
 		encode: { x: 0 as const, y: index + 1 },
 		stack: 'stackA' as const,
-		color: categoryColors[categoryName]
+		color: categoryColors[categoryName] ?? '#999999'
 	}))
 
 	return { dataset: { source, dimensions }, charts }

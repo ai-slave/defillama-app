@@ -24,7 +24,7 @@ vi.mock('~/public/definitions', () => ({
 	}
 }))
 
-import { getColumnsForCategory } from '../index'
+import { getColumnsForCategory, getProtocolMcapTvlRatio } from '../index'
 
 const getHeader = (column: { header?: unknown }) => column.header
 
@@ -47,5 +47,11 @@ describe('getColumnsForCategory', () => {
 		expect(paymentHeaders).toContain('Payment Volume 24h')
 		expect(paymentHeaders).toContain('Payment Volume 7d')
 		expect(paymentHeaders).toContain('Payment Volume 30d')
+	})
+
+	it('requires positive TVL for market-cap ratios while preserving zero market cap', () => {
+		expect(getProtocolMcapTvlRatio(0, 10)).toBe(0)
+		expect(getProtocolMcapTvlRatio(10, 0)).toBeUndefined()
+		expect(getProtocolMcapTvlRatio(10, null)).toBeUndefined()
 	})
 })

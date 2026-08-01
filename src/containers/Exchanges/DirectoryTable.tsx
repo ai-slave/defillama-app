@@ -8,7 +8,7 @@ import { pushShallowQuery } from '~/utils/routerQuery'
 import { buildDirectoryColumns } from './directoryColumns'
 import { ExchangeCountrySelect } from './ExchangeCountrySelect'
 import type { MasterExchangeRegionCatalogResponse } from './master.types'
-import { filterDirectoryRows, nestDirectoryRows, type DirectoryKind } from './modelHelpers'
+import { filterDirectoryRows, nestDirectoryRows, type DirectoryKind, type DirectoryTreeRow } from './modelHelpers'
 import type { ExchangeDirectoryRowModel, ExchangeSegment } from './models'
 import {
 	DEFAULT_DIRECTORY_QUERY_STATE,
@@ -122,9 +122,10 @@ export function DirectoryTable({
 	const columns = React.useMemo(() => buildDirectoryColumns(scope), [scope])
 
 	return (
-		<TableWithSearch
+		<TableWithSearch<DirectoryTreeRow>
 			key={`${scope}-${group}`}
 			data={filteredRows}
+			getSubRows={(row) => row.subRows}
 			columns={columns}
 			columnToSearch="name"
 			placeholder="Search exchanges..."

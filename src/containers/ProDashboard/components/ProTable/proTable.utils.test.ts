@@ -1,5 +1,39 @@
 import { describe, expect, it } from 'vitest'
+import type { IFormattedProtocol, IParentProtocol } from '~/containers/ProtocolLists/protocol-table.types'
 import { formatProtocolsList } from './proTable.utils'
+
+const formattedProtocol = (name: string, overrides: Partial<IFormattedProtocol> = {}): IFormattedProtocol => ({
+	name,
+	contributesTvl: true,
+	tvl: 0,
+	tvlPrevDay: 0,
+	tvlPrevWeek: 0,
+	tvlPrevMonth: 0,
+	mcap: 0,
+	chainTvls: {},
+	change_1d: null,
+	change_7d: null,
+	change_1m: null,
+	mcaptvl: null,
+	chains: [],
+	logo: null,
+	url: '',
+	defillamaId: name,
+	...overrides
+})
+
+const parentProtocol = (id: string, name: string, overrides: Partial<IParentProtocol> = {}): IParentProtocol => ({
+	id,
+	name,
+	url: '',
+	description: '',
+	logo: '',
+	chains: [],
+	gecko_id: '',
+	cmcId: '',
+	mcap: null,
+	...overrides
+})
 
 describe('formatProtocolsList fee ratios', () => {
 	it('uses annualized1y for P/F and P/S instead of deriving ratios from 30d totals', () => {
@@ -116,33 +150,107 @@ describe('formatProtocolsList fee ratios', () => {
 	})
 
 	it('groups known siblings without dropping solo or unknown-parent protocols', () => {
-		const protocol = (name: string, parentProtocol: string, tvl: number) => ({
-			name,
-			parentProtocol,
-			tvl,
-			tvlPrevDay: tvl,
-			tvlPrevWeek: tvl,
-			tvlPrevMonth: tvl,
-			mcap: 0,
-			chainTvls: {},
-			chains: []
-		})
 		const result = formatProtocolsList({
 			protocols: [
-				protocol('Child A', 'parent#grouped', 20),
-				protocol('Child B', 'parent#grouped', 30),
-				protocol('Solo Child', 'parent#solo', 10),
-				protocol('Unknown Child', 'parent#unknown', 5)
-			] as any,
+				formattedProtocol('Child A', { parentProtocol: 'parent#grouped', tvl: 20 }),
+				formattedProtocol('Child B', { parentProtocol: 'parent#grouped', tvl: 30 }),
+				formattedProtocol('Solo Child', { parentProtocol: 'parent#solo', tvl: 10 }),
+				formattedProtocol('Unknown Child', { parentProtocol: 'parent#unknown', tvl: 5 })
+			],
 			parentProtocols: [
-				{ id: 'parent#grouped', name: 'Grouped Parent', chains: [] },
-				{ id: 'parent#solo', name: 'Solo Parent', chains: [] }
-			] as any,
+				parentProtocol('parent#grouped', 'Grouped Parent'),
+				parentProtocol('parent#solo', 'Solo Parent')
+			],
 			extraTvlsEnabled: {}
 		})
 
 		expect(result.map((row) => row.name)).toEqual(['Grouped Parent', 'Solo Child', 'Unknown Child'])
-		const groupedParent = result[0] as { subRows?: Array<{ name: string }> }
-		expect(groupedParent.subRows?.map((row) => row.name)).toEqual(['Child A', 'Child B'])
+		const groupedParent = result.find((row) => row.name === 'Grouped Parent')
+		expect(groupedParent?.subRows?.map((row) => row.name)).toEqual(['Child A', 'Child B'])
+	})
+
+	it('keeps a measured child with an unavailable TVL strict', () => {
+		const result = formatProtocolsList({
+			protocols: [
+				formattedProtocol('Known Child', { parentProtocol: 'parent#exact', tvl: 10 }),
+				formattedProtocol('Unknown Child', { parentProtocol: 'parent#exact', tvl: null })
+			],
+			parentProtocols: [parentProtocol('parent#exact', 'Exact Parent', { mcap: 0 })],
+			extraTvlsEnabled: {}
+		})
+
+		expect(result).toEqual([expect.objectContaining({ name: 'Exact Parent', tvl: null, mcaptvl: null })])
+	})
+
+	it('keeps no-TVL children visible without erasing measured parent TVL', () => {
+		const result = formatProtocolsList({
+			protocols: [
+				formattedProtocol('Known Child', { parentProtocol: 'parent#exact', tvl: 10 }),
+				formattedProtocol('Metadata Child', {
+					parentProtocol: 'parent#exact',
+					contributesTvl: false,
+					deprecated: true,
+					tvl: null,
+					tvlPrevDay: null,
+					tvlPrevWeek: null,
+					tvlPrevMonth: null
+				})
+			],
+			parentProtocols: [parentProtocol('parent#exact', 'Exact Parent', { mcap: 0 })],
+			extraTvlsEnabled: {}
+		})
+
+		expect(result).toEqual([
+			expect.objectContaining({
+				name: 'Exact Parent',
+				tvl: 10,
+				subRows: expect.arrayContaining([expect.objectContaining({ name: 'Metadata Child', deprecated: true })])
+			})
+		])
+	})
+
+	it('keeps a grouped parent without measured TVL unavailable', () => {
+		const result = formatProtocolsList({
+			protocols: [
+				formattedProtocol('Metadata A', {
+					parentProtocol: 'parent#metadata',
+					contributesTvl: false,
+					tvl: null
+				}),
+				formattedProtocol('Metadata B', {
+					parentProtocol: 'parent#metadata',
+					contributesTvl: false,
+					tvl: null
+				})
+			],
+			parentProtocols: [parentProtocol('parent#metadata', 'Metadata Parent')],
+			extraTvlsEnabled: {}
+		})
+
+		expect(result).toEqual([expect.objectContaining({ name: 'Metadata Parent', tvl: null })])
+	})
+
+	it('does not reconstruct unavailable legacy Pro base periods from enabled extras', () => {
+		const result = formatProtocolsList({
+			protocols: [
+				formattedProtocol('Unknown Base', {
+					tvl: null,
+					tvlPrevDay: 10,
+					tvlPrevWeek: 10,
+					tvlPrevMonth: 10,
+					mcap: 100,
+					extraTvl: {
+						staking: { tvl: 25, tvlPrevDay: null, tvlPrevWeek: 5, tvlPrevMonth: 5 }
+					}
+				})
+			],
+			parentProtocols: [],
+			extraTvlsEnabled: { staking: true },
+			noSubrows: true
+		})
+
+		expect(result).toEqual([
+			expect.objectContaining({ tvl: null, tvlPrevDay: null, tvlPrevWeek: 15, tvlPrevMonth: 15, mcaptvl: null })
+		])
 	})
 })

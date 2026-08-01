@@ -8,14 +8,20 @@ import {
 	ZERO_FEE_PERPS
 } from '~/containers/AdapterMetrics/constants'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
-import type { ParentProtocolLite, ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
-import { TVL_SETTINGS_KEYS, TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
+import {
+	PROTOCOL_LIST_ADDITIVE_TVL_KEYS,
+	isProtocolListTvlKey,
+	type ParentProtocolLite,
+	type ProtocolListAdditiveTvlKey,
+	type ProtocolLite,
+	type ProtocolsResponse
+} from '~/containers/ProtocolLists/api.types'
 import { getNDistinctColors, getPercentChange, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import type { ICategoriesAndTags, ICategoriesAndTagsConfig, IChainMetadata } from '~/utils/metadata/types'
 import { fetchCategoriesSummary, fetchCategoryChart, fetchTagChart } from './api'
+import type { CategoriesSummaryResponse } from './api.types'
 import {
-	categoriesPageExcludedExtraTvls,
 	getProtocolCategoryChartMetricLabel,
 	getProtocolCategoryChartMetrics,
 	protocolCategoryConfig,
@@ -74,8 +80,30 @@ const CHART_METRIC_Y_AXIS_INDEX: Record<ProtocolCategoryChartMetric, number> = {
 }
 
 const FALLBACK_CHART_METRICS: ProtocolCategoryChartMetric[] = ['tvl']
-
+const PROTOCOL_TAXONOMY_TVL_KEYS = [...PROTOCOL_LIST_ADDITIVE_TVL_KEYS, 'excludeParent'] as const
 type AdapterMetricProtocol = IAdapterChainMetrics['protocols'][number]
+type ProtocolTaxonomySource = {
+	defillamaId: string
+	name: string
+	logo: string | null
+	category?: string
+	tags?: string[]
+	chains: string[]
+	chainTvls: Record<string, ChainTvlPoint>
+	tvl?: number | null
+	mcap: number | null
+	parentProtocol?: string
+	deprecated?: true
+}
+type ProtocolTaxonomyParent = Pick<ParentProtocolLite, 'id' | 'name' | 'logo' | 'chains' | 'mcap'>
+
+const normalizeParentForTaxonomy = (parent: ParentProtocolLite): ProtocolTaxonomyParent => ({
+	id: parent.id,
+	name: parent.name,
+	logo: parent.logo,
+	chains: [...parent.chains],
+	mcap: parent.mcap
+})
 
 const normalizeChartTimestamp = (timestamp: number) => (timestamp < 1e12 ? timestamp * 1e3 : timestamp)
 
@@ -99,7 +127,6 @@ const createTimeSeriesMapFromRecord = (
 
 	for (const timestamp in chartData) {
 		const numericTimestamp = Number(timestamp)
-		if (!Number.isFinite(numericTimestamp)) continue
 		chartMap.set(normalizeChartTimestamp(numericTimestamp), chartData[timestamp] ?? null)
 	}
 
@@ -112,25 +139,18 @@ export const createFallbackProtocolFromAdapter = ({
 	tag
 }: {
 	protocol: AdapterMetricProtocol
-	category?: string
-	tag?: string
-}): ProtocolLite => ({
-	name: protocol.displayName || protocol.name,
-	symbol: '',
-	logo: protocol.logo ?? '',
-	url: '',
-	category: category ?? protocol.category ?? '',
-	tags: tag ? [tag] : [],
-	chains: protocol.chains ?? [],
+	category: string | undefined
+	tag: string | undefined
+}): ProtocolTaxonomySource => ({
+	name: protocol.displayName,
+	logo: protocol.logo,
+	...(category ? { category } : protocol.category ? { category: protocol.category } : {}),
+	...(tag ? { tags: [tag] } : {}),
+	chains: protocol.chains,
 	chainTvls: {},
-	tvl: 0,
-	tvlPrevDay: 0,
-	tvlPrevWeek: 0,
-	tvlPrevMonth: 0,
 	mcap: null,
 	defillamaId: protocol.defillamaId,
-	parentProtocol: protocol.parentProtocol ?? undefined,
-	slug: protocol.slug
+	...(protocol.parentProtocol ? { parentProtocol: protocol.parentProtocol } : {})
 })
 
 export function mergeProtocolsWithAdapterFallback({
@@ -140,38 +160,36 @@ export function mergeProtocolsWithAdapterFallback({
 	category,
 	tag
 }: {
-	protocols: Array<ProtocolLite>
-	parentProtocols: Array<ParentProtocolLite>
+	protocols: ProtocolLite[]
+	parentProtocols: ParentProtocolLite[]
 	adapterProtocols: Array<AdapterMetricProtocol>
-	category?: string
-	tag?: string
-}): { protocols: Array<ProtocolLite>; parentProtocols: Array<ParentProtocolLite> } {
-	const mergedProtocols = [...protocols]
-	const protocolIds = new Set(protocols.map((protocol) => String(protocol.defillamaId)))
-	const parentProtocolsMap = new Map(parentProtocols.map((parentProtocol) => [parentProtocol.id, parentProtocol]))
+	category: string | undefined
+	tag: string | undefined
+}): { protocols: ProtocolTaxonomySource[]; parentProtocols: ProtocolTaxonomyParent[] } {
+	const mergedProtocols: ProtocolTaxonomySource[] = []
+	for (const protocol of protocols) mergedProtocols.push(protocol)
+	const protocolIds = new Set<string>()
+	for (const protocol of protocols) protocolIds.add(protocol.defillamaId)
+	const parentProtocolsMap = new Map<string, ProtocolTaxonomyParent>()
+	for (const parentProtocol of parentProtocols) {
+		parentProtocolsMap.set(parentProtocol.id, normalizeParentForTaxonomy(parentProtocol))
+	}
 
 	for (const protocol of adapterProtocols) {
-		if (!protocolIds.has(String(protocol.defillamaId))) {
+		if (!protocolIds.has(protocol.defillamaId)) {
 			mergedProtocols.push(createFallbackProtocolFromAdapter({ protocol, category, tag }))
-			protocolIds.add(String(protocol.defillamaId))
+			protocolIds.add(protocol.defillamaId)
 		}
 
 		if (!protocol.parentProtocol) continue
 
 		const existingParentProtocol = parentProtocolsMap.get(protocol.parentProtocol)
 		if (existingParentProtocol) {
-			existingParentProtocol.chains = Array.from(
-				new Set([...(existingParentProtocol.chains ?? []), ...(protocol.chains ?? [])])
-			)
+			for (const chain of protocol.chains) {
+				if (!existingParentProtocol.chains.includes(chain)) existingParentProtocol.chains.push(chain)
+			}
 			continue
 		}
-
-		parentProtocolsMap.set(protocol.parentProtocol, {
-			id: protocol.parentProtocol,
-			name: protocol.parentProtocol.replace(/^parent#/, '') || protocol.parentProtocol,
-			chains: Array.from(new Set(protocol.chains ?? [])),
-			mcap: null
-		})
 	}
 
 	return {
@@ -232,12 +250,12 @@ export const buildCategoryCharts = ({
 
 	const sortedTimestamps = Array.from(timestamps).sort((a, b) => a - b)
 	const metricLabels = finalMetrics.map((metric) => getProtocolCategoryChartMetricLabel(metric, effectiveCategory))
-	const dimensions = ['timestamp', ...metricLabels]
-	const source = sortedTimestamps.map((timestamp) => {
-		const row = new Array<number | null>(finalMetrics.length + 1)
-		row[0] = timestamp
-		for (let index = 0; index < finalMetrics.length; index++) {
-			row[index + 1] = chartMapsByMetric[finalMetrics[index]].get(timestamp) ?? null
+	const dimensions: IProtocolTaxonomyPageData['charts']['dataset']['dimensions'] = ['timestamp']
+	dimensions.push(...metricLabels)
+	const source: IProtocolTaxonomyPageData['charts']['dataset']['source'] = sortedTimestamps.map((timestamp) => {
+		const row: IProtocolTaxonomyPageData['charts']['dataset']['source'][number] = [timestamp]
+		for (const [index, metric] of finalMetrics.entries()) {
+			row[index + 1] = chartMapsByMetric[metric].get(timestamp) ?? null
 		}
 		return row
 	})
@@ -248,12 +266,13 @@ export const buildCategoryCharts = ({
 			dimensions
 		},
 		charts: finalMetrics.map((metric, index) => {
-			const dimension = metricLabels[index]
+			const dimension = getProtocolCategoryChartMetricLabel(metric, effectiveCategory)
+			const color = CHART_COLORS[index]
 			return {
 				type: CHART_METRIC_SERIES_TYPE[metric],
 				name: dimension,
 				encode: { x: 0, y: index + 1 },
-				color: CHART_COLORS[index],
+				...(color ? { color } : {}),
 				yAxisIndex: CHART_METRIC_Y_AXIS_INDEX[metric],
 				valueSymbol: '$'
 			}
@@ -277,6 +296,9 @@ type PerpMetricTotals = ProtocolMetricTotals & {
 type OpenInterestTotals = {
 	total24h: number | null
 }
+
+const ZERO_PROTOCOL_METRIC_TOTALS: ProtocolMetricTotals = { total24h: 0, total7d: 0, total30d: 0 }
+const ZERO_OPEN_INTEREST_TOTALS: OpenInterestTotals = { total24h: 0 }
 
 type AdapterProtocolData = {
 	chains: Array<string>
@@ -303,8 +325,8 @@ function getCategoryOrTagConfig({
 	tagCategory
 }: {
 	categoriesAndTags: ICategoriesAndTags
-	category?: string | null
-	tag?: string | null
+	category: string | null | undefined
+	tag: string | null | undefined
 	tagCategory?: string | null
 }): ICategoriesAndTagsConfig | null {
 	if (category) return categoriesAndTags.configs[category] ?? null
@@ -320,7 +342,7 @@ function hasCategoryMetric({
 	dataType
 }: {
 	config: ICategoriesAndTagsConfig | null
-	chain?: string
+	chain: string | undefined
 	chainMetadata: IChainMetadata
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: `${ADAPTER_DATA_TYPES}`
@@ -339,9 +361,10 @@ export async function getProtocolTaxonomyPageData(
 	const { chain, chainMetadata, categoriesAndTags } = params
 	const category = params.kind === 'category' ? params.category : undefined
 	const tag = params.kind === 'tag' ? params.tag : undefined
+	const taxonomyName = params.kind === 'category' ? params.category : params.tag
 	// For tag pages, we use the tag's parent category for category-specific logic.
 	const effectiveCategory = params.kind === 'category' ? params.category : params.tagCategory
-	const dimensionCategory = slug(category ?? tag ?? '')
+	const dimensionCategory = slug(taxonomyName)
 	const config = effectiveCategory ? protocolCategoryConfig[effectiveCategory] : null
 	const categoryMetrics: ProtocolCategoryMetrics | undefined = config?.metrics
 	const chartMetrics = getProtocolCategoryChartMetrics(effectiveCategory)
@@ -352,7 +375,7 @@ export async function getProtocolTaxonomyPageData(
 		tagCategory: params.kind === 'tag' ? params.tagCategory : null
 	})
 
-	const currentChainMetadata: IChainMetadata = chain
+	const currentChainMetadata = chain
 		? chainMetadata[slug(chain)]
 		: {
 				name: 'All',
@@ -444,33 +467,16 @@ export async function getProtocolTaxonomyPageData(
 		optionsPremiumVolumeChartData,
 		optionsNotionalVolumeChartData,
 		chainsByCategoriesOrTags
-	]: [
-		{ protocols: Array<ProtocolLite>; parentProtocols: Array<ParentProtocolLite> },
-		IAdapterChainMetrics | null,
-		IAdapterChainMetrics | null,
-		IAdapterChainMetrics | null,
-		IAdapterChainMetrics | null,
-		IAdapterChainMetrics | null,
-		IAdapterChainMetrics | null,
-		IAdapterChainMetrics | null,
-		Record<string, Record<string, number | null>>,
-		Array<[number, number]> | null,
-		Array<[number, number]> | null,
-		Array<[number, number]> | null,
-		Array<[number, number]> | null,
-		Array<[number, number]> | null,
-		Array<[number, number]> | null,
-		Record<string, Array<string>> | null
 	] = await Promise.all([
 		fetchProtocols(),
-		hasFees && currentChainMetadata?.fees
+		hasFees && currentChainMetadata.fees
 			? fetchAdapterChainMetrics({
 					chain: chain ?? 'All',
 					adapterType: 'fees',
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
-		hasRevenue && currentChainMetadata?.fees
+		hasRevenue && currentChainMetadata.fees
 			? fetchAdapterChainMetrics({
 					chain: chain ?? 'All',
 					adapterType: 'fees',
@@ -478,27 +484,27 @@ export async function getProtocolTaxonomyPageData(
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
-		hasDexVolume && categoryMetrics?.dexVolume && currentChainMetadata?.dexs
+		hasDexVolume && categoryMetrics?.dexVolume && currentChainMetadata.dexs
 			? fetchAdapterChainMetrics({
 					chain: chain ?? 'All',
 					adapterType: 'dexs',
 					category: dimensionCategory
 				}).catch(() => null)
-			: hasDexAggregatorsVolume && categoryMetrics?.dexAggregatorsVolume && currentChainMetadata?.dexAggregators
+			: hasDexAggregatorsVolume && categoryMetrics?.dexAggregatorsVolume && currentChainMetadata.dexAggregators
 				? fetchAdapterChainMetrics({
 						chain: chain ?? 'All',
 						adapterType: 'aggregators',
 						category: dimensionCategory
 					}).catch(() => null)
 				: null,
-		hasPerpVolume && categoryMetrics?.perpVolume && currentChainMetadata?.perps
+		hasPerpVolume && categoryMetrics?.perpVolume && currentChainMetadata.perps
 			? fetchAdapterChainMetrics({
 					chain: chain ?? 'All',
 					adapterType: 'derivatives',
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
-		hasOpenInterest && categoryMetrics?.openInterest && currentChainMetadata?.openInterest
+		hasOpenInterest && categoryMetrics?.openInterest && currentChainMetadata.openInterest
 			? fetchAdapterChainMetrics({
 					chain: chain ?? 'All',
 					adapterType: 'open-interest',
@@ -506,7 +512,7 @@ export async function getProtocolTaxonomyPageData(
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
-		hasOptionsPremiumVolume && categoryMetrics?.optionsPremiumVolume && currentChainMetadata?.optionsPremiumVolume
+		hasOptionsPremiumVolume && categoryMetrics?.optionsPremiumVolume && currentChainMetadata.optionsPremiumVolume
 			? fetchAdapterChainMetrics({
 					chain: chain ?? 'All',
 					adapterType: 'options',
@@ -514,7 +520,7 @@ export async function getProtocolTaxonomyPageData(
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
-		hasOptionsNotionalVolume && categoryMetrics?.optionsNotionalVolume && currentChainMetadata?.optionsNotionalVolume
+		hasOptionsNotionalVolume && categoryMetrics?.optionsNotionalVolume && currentChainMetadata.optionsNotionalVolume
 			? fetchAdapterChainMetrics({
 					chain: chain ?? 'All',
 					adapterType: 'options',
@@ -522,29 +528,31 @@ export async function getProtocolTaxonomyPageData(
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
-		tag ? fetchTagChart({ tag, chain }) : fetchCategoryChart({ category: category ?? '', chain }),
-		hasDexVolume && categoryMetrics?.dexVolume && currentChainMetadata?.dexs
+		params.kind === 'tag'
+			? fetchTagChart({ tag: params.tag, ...(chain ? { chain } : {}) })
+			: fetchCategoryChart({ category: params.category, ...(chain ? { chain } : {}) }),
+		hasDexVolume && categoryMetrics?.dexVolume && currentChainMetadata.dexs
 			? fetchAdapterChainChartData({
 					chain: chain ?? 'All',
 					adapterType: 'dexs',
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
-		hasDexAggregatorsVolume && categoryMetrics?.dexAggregatorsVolume && currentChainMetadata?.dexAggregators
+		hasDexAggregatorsVolume && categoryMetrics?.dexAggregatorsVolume && currentChainMetadata.dexAggregators
 			? fetchAdapterChainChartData({
 					chain: chain ?? 'All',
 					adapterType: 'aggregators',
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
-		hasPerpVolume && categoryMetrics?.perpVolume && currentChainMetadata?.perps
+		hasPerpVolume && categoryMetrics?.perpVolume && currentChainMetadata.perps
 			? fetchAdapterChainChartData({
 					chain: chain ?? 'All',
 					adapterType: 'derivatives',
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
-		hasOpenInterest && categoryMetrics?.openInterest && currentChainMetadata?.openInterest
+		hasOpenInterest && categoryMetrics?.openInterest && currentChainMetadata.openInterest
 			? fetchAdapterChainChartData({
 					chain: chain ?? 'All',
 					adapterType: 'open-interest',
@@ -552,7 +560,7 @@ export async function getProtocolTaxonomyPageData(
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
-		hasOptionsPremiumVolume && categoryMetrics?.optionsPremiumVolume && currentChainMetadata?.optionsPremiumVolume
+		hasOptionsPremiumVolume && categoryMetrics?.optionsPremiumVolume && currentChainMetadata.optionsPremiumVolume
 			? fetchAdapterChainChartData({
 					chain: chain ?? 'All',
 					adapterType: 'options',
@@ -560,7 +568,7 @@ export async function getProtocolTaxonomyPageData(
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
-		hasOptionsNotionalVolume && categoryMetrics?.optionsNotionalVolume && currentChainMetadata?.optionsNotionalVolume
+		hasOptionsNotionalVolume && categoryMetrics?.optionsNotionalVolume && currentChainMetadata.optionsNotionalVolume
 			? fetchAdapterChainChartData({
 					chain: chain ?? 'All',
 					adapterType: 'options',
@@ -619,9 +627,9 @@ export async function getProtocolTaxonomyPageData(
 			protocolChains: protocol.chains
 		})
 		adapterData.fees = {
-			total24h: protocol.total24h ?? null,
-			total7d: protocol.total7d ?? null,
-			total30d: protocol.total30d ?? null
+			total24h: protocol.total24h ?? 0,
+			total7d: protocol.total7d ?? 0,
+			total30d: protocol.total30d ?? 0
 		}
 	}
 
@@ -631,9 +639,9 @@ export async function getProtocolTaxonomyPageData(
 			protocolChains: protocol.chains
 		})
 		adapterData.revenue = {
-			total24h: protocol.total24h ?? null,
-			total7d: protocol.total7d ?? null,
-			total30d: protocol.total30d ?? null
+			total24h: protocol.total24h ?? 0,
+			total7d: protocol.total7d ?? 0,
+			total30d: protocol.total30d ?? 0
 		}
 	}
 
@@ -643,9 +651,9 @@ export async function getProtocolTaxonomyPageData(
 			protocolChains: protocol.chains
 		})
 		adapterData.dexVolume = {
-			total24h: protocol.total24h ?? null,
-			total7d: protocol.total7d ?? null,
-			total30d: protocol.total30d ?? null
+			total24h: protocol.total24h ?? 0,
+			total7d: protocol.total7d ?? 0,
+			total30d: protocol.total30d ?? 0
 		}
 	}
 
@@ -655,9 +663,9 @@ export async function getProtocolTaxonomyPageData(
 			protocolChains: protocol.chains
 		})
 		adapterData.perpVolume = {
-			total24h: protocol.total24h ?? null,
-			total7d: protocol.total7d ?? null,
-			total30d: protocol.total30d ?? null,
+			total24h: protocol.total24h ?? 0,
+			total7d: protocol.total7d ?? 0,
+			total30d: protocol.total30d ?? 0,
 			...(protocol.doublecounted ? { doublecounted: protocol.doublecounted } : {}),
 			...(ZERO_FEE_PERPS.has(protocol.displayName) ? { zeroFeePerp: true } : {})
 		}
@@ -669,7 +677,7 @@ export async function getProtocolTaxonomyPageData(
 			protocolChains: protocol.chains
 		})
 		adapterData.openInterest = {
-			total24h: protocol.total24h ?? null
+			total24h: protocol.total24h ?? 0
 		}
 	}
 
@@ -679,9 +687,9 @@ export async function getProtocolTaxonomyPageData(
 			protocolChains: protocol.chains
 		})
 		adapterData.optionsPremium = {
-			total24h: protocol.total24h ?? null,
-			total7d: protocol.total7d ?? null,
-			total30d: protocol.total30d ?? null
+			total24h: protocol.total24h ?? 0,
+			total7d: protocol.total7d ?? 0,
+			total30d: protocol.total30d ?? 0
 		}
 	}
 
@@ -691,81 +699,60 @@ export async function getProtocolTaxonomyPageData(
 			protocolChains: protocol.chains
 		})
 		adapterData.optionsNotional = {
-			total24h: protocol.total24h ?? null,
-			total7d: protocol.total7d ?? null,
-			total30d: protocol.total30d ?? null
+			total24h: protocol.total24h ?? 0,
+			total7d: protocol.total7d ?? 0,
+			total30d: protocol.total30d ?? 0
 		}
 	}
 
 	const protocolsStore: Record<string, ProtocolTableRow> = {}
-	const parentProtocolsStore: Record<string, Array<ProtocolTableRow>> = {}
+	type StoredParentChild = { row: ProtocolTableRow; contributesTvl: boolean }
+	const parentProtocolsStore: Record<string, Array<StoredParentChild>> = {}
+	const canonicalParentIds = new Set<string>()
+	for (const parentProtocol of mergedParentProtocols) canonicalParentIds.add(parentProtocol.id)
 
 	for (const protocol of mergedProtocols) {
 		const isProtocolInCategoryOrTag = tag ? (protocol.tags ?? []).includes(tag) : protocol.category === category
 		if (!isProtocolInCategoryOrTag) continue
 
 		let tvl: number | null = null
-		const extraTvls: Record<string, number> = {}
-		const chainTvlEntries = Object.entries(protocol.chainTvls) as Array<[string, ChainTvlPoint]>
-
+		const extraTvls: Partial<Record<ProtocolListAdditiveTvlKey | 'excludeParent', number | null>> = {}
 		if (chain) {
-			for (const [chainTvlKey, chainTvlData] of chainTvlEntries) {
+			for (const chainTvlKey in protocol.chainTvls) {
+				const chainTvlData = protocol.chainTvls[chainTvlKey]
+				if (!chainTvlData) continue
 				const chainTvlValue = chainTvlData.tvl
-				if (chainTvlValue == null) continue
+				if (chainTvlKey === currentChainMetadata.name) {
+					tvl = chainTvlValue
+					continue
+				}
 
-				const chainName = chainTvlKey.split('-')[0]
-				if (chainName !== currentChainMetadata.name) continue
-
-				const extraKey = chainTvlKey.split('-')[1]
+				const chainPrefix = `${currentChainMetadata.name}-`
+				if (!chainTvlKey.startsWith(chainPrefix)) continue
+				const extraKey = chainTvlKey.slice(chainPrefix.length)
 				if (extraKey === 'excludeParent') {
-					extraTvls.excludeParent = (extraTvls.excludeParent ?? 0) + chainTvlValue
+					extraTvls.excludeParent = chainTvlValue
 					continue
 				}
 
-				if (
-					extraKey != null &&
-					(['doublecounted', 'liquidstaking', 'dcAndLsOverlap', 'offers'].includes(extraKey) ||
-						!TVL_SETTINGS_KEYS_SET.has(extraKey))
-				) {
-					continue
+				if (isProtocolListTvlKey(extraKey)) {
+					extraTvls[extraKey] = chainTvlValue
 				}
-
-				if (extraKey != null && TVL_SETTINGS_KEYS_SET.has(extraKey)) {
-					extraTvls[extraKey] = (extraTvls[extraKey] ?? 0) + chainTvlValue
-					continue
-				}
-
-				tvl = (tvl ?? 0) + chainTvlValue
 			}
 		} else {
-			for (const [chainTvlKey, chainTvlData] of chainTvlEntries) {
-				const chainTvlValue = chainTvlData.tvl
-				if (chainTvlValue == null) continue
+			if (Object.hasOwn(protocol, 'tvl')) {
+				tvl = protocol.tvl ?? null
+			}
 
-				if (chainTvlKey === 'excludeParent') {
-					extraTvls[chainTvlKey] = (extraTvls[chainTvlKey] ?? 0) + chainTvlValue
-					continue
-				}
-
-				if (
-					['doublecounted', 'liquidstaking', 'dcAndLsOverlap', 'offers'].includes(chainTvlKey) ||
-					chainTvlKey.includes('-')
-				) {
-					continue
-				}
-
-				if (TVL_SETTINGS_KEYS_SET.has(chainTvlKey)) {
-					extraTvls[chainTvlKey] = (extraTvls[chainTvlKey] ?? 0) + chainTvlValue
-					continue
-				}
-
-				tvl = (tvl ?? 0) + chainTvlValue
+			for (const extraKey of PROTOCOL_TAXONOMY_TVL_KEYS) {
+				const chainTvlEntry = protocol.chainTvls[extraKey]
+				if (chainTvlEntry !== undefined) extraTvls[extraKey] = chainTvlEntry.tvl
 			}
 		}
 
 		const borrowed = extraTvls.borrowed ?? null
-		const supplied = borrowed && tvl != null && tvl > 0 ? borrowed + tvl : null
-		const suppliedTvl = supplied && tvl != null ? supplied / tvl : null
+		const supplied = borrowed != null && tvl != null ? borrowed + tvl : null
+		const suppliedTvl = supplied != null && tvl != null && tvl > 0 ? supplied / tvl : null
 		const adapterProtocolData = adapterDataStore[protocol.defillamaId]
 
 		const finalData: ProtocolTableRow = {
@@ -776,23 +763,29 @@ export async function getProtocolTaxonomyPageData(
 			...(protocol.deprecated ? { deprecated: true } : {}),
 			tvl,
 			extraTvls,
-			mcap: protocol.mcap ?? null,
+			mcap: protocol.mcap,
 			...(effectiveCategory && ['Lending'].includes(effectiveCategory) ? { borrowed, supplied, suppliedTvl } : {}),
-			fees: adapterProtocolData?.fees ?? null,
-			revenue: adapterProtocolData?.revenue ?? null,
-			dexVolume: adapterProtocolData?.dexVolume ?? null,
-			perpVolume: adapterProtocolData?.perpVolume ?? null,
-			openInterest: adapterProtocolData?.openInterest ?? null,
-			optionsPremium: adapterProtocolData?.optionsPremium ?? null,
-			optionsNotional: adapterProtocolData?.optionsNotional ?? null,
+			fees: feesData === null ? null : (adapterProtocolData?.fees ?? ZERO_PROTOCOL_METRIC_TOTALS),
+			revenue: revenueData === null ? null : (adapterProtocolData?.revenue ?? ZERO_PROTOCOL_METRIC_TOTALS),
+			dexVolume: dexVolumeData === null ? null : (adapterProtocolData?.dexVolume ?? ZERO_PROTOCOL_METRIC_TOTALS),
+			perpVolume: perpVolumeData === null ? null : (adapterProtocolData?.perpVolume ?? ZERO_PROTOCOL_METRIC_TOTALS),
+			openInterest: openInterestData === null ? null : (adapterProtocolData?.openInterest ?? ZERO_OPEN_INTEREST_TOTALS),
+			optionsPremium:
+				optionsPremiumData === null ? null : (adapterProtocolData?.optionsPremium ?? ZERO_PROTOCOL_METRIC_TOTALS),
+			optionsNotional:
+				optionsNotionalData === null ? null : (adapterProtocolData?.optionsNotional ?? ZERO_PROTOCOL_METRIC_TOTALS),
 			tags: protocol.tags ?? []
 		}
 
-		if (protocol.parentProtocol) {
-			parentProtocolsStore[protocol.parentProtocol] = [
-				...(parentProtocolsStore[protocol.parentProtocol] ?? []),
-				finalData
-			]
+		const canonicalParentId =
+			protocol.parentProtocol && canonicalParentIds.has(protocol.parentProtocol) ? protocol.parentProtocol : null
+		if (chain && !protocol.chains.includes(currentChainMetadata.name)) continue
+
+		if (canonicalParentId) {
+			const siblings = parentProtocolsStore[canonicalParentId]
+			const storedChild = { row: finalData, contributesTvl: protocol.tvl != null }
+			if (siblings) siblings.push(storedChild)
+			else parentProtocolsStore[canonicalParentId] = [storedChild]
 		} else {
 			protocolsStore[protocol.defillamaId] = finalData
 		}
@@ -805,18 +798,16 @@ export async function getProtocolTaxonomyPageData(
 		rows: Array<ProtocolTableRow>
 		selector: (row: ProtocolTableRow) => ProtocolMetricTotals | null | undefined
 	}): ProtocolMetricTotals => {
-		return rows.reduce<ProtocolMetricTotals>(
-			(acc, row) => ({
-				total24h: (acc.total24h ?? 0) + (selector(row)?.total24h ?? 0),
-				total7d: (acc.total7d ?? 0) + (selector(row)?.total7d ?? 0),
-				total30d: (acc.total30d ?? 0) + (selector(row)?.total30d ?? 0)
-			}),
-			{
-				total24h: 0,
-				total7d: 0,
-				total30d: 0
-			}
-		)
+		let total24h = 0
+		let total7d = 0
+		let total30d = 0
+		for (const row of rows) {
+			const metric = selector(row)
+			total24h += metric?.total24h ?? 0
+			total7d += metric?.total7d ?? 0
+			total30d += metric?.total30d ?? 0
+		}
+		return { total24h, total7d, total30d }
 	}
 
 	const finalProtocols: Array<ProtocolTableRow> = Object.values(protocolsStore)
@@ -825,82 +816,95 @@ export async function getProtocolTaxonomyPageData(
 		if (childProtocols == null) continue
 
 		if (childProtocols.length === 1) {
-			finalProtocols.push(childProtocols[0])
+			for (const childProtocol of childProtocols) finalProtocols.push(childProtocol.row)
 			continue
 		}
 
-		let tvl = childProtocols.some((row) => row.tvl != null)
-			? childProtocols.reduce((acc, row) => acc + (row.tvl ?? 0), 0)
-			: null
-		const extraTvls = childProtocols.reduce<Record<string, number>>((acc, row) => {
-			for (const [extraTvlKey, extraTvlValue] of Object.entries(row.extraTvls)) {
-				acc[extraTvlKey] = (acc[extraTvlKey] ?? 0) + extraTvlValue
+		let tvl: number | null = null
+		for (const childProtocol of childProtocols) {
+			if (!childProtocol.contributesTvl) continue
+			if (childProtocol.row.tvl == null) {
+				tvl = null
+				break
 			}
-			return acc
-		}, {})
+			tvl = (tvl ?? 0) + childProtocol.row.tvl
+		}
+		const extraTvls: Partial<Record<ProtocolListAdditiveTvlKey | 'excludeParent', number | null>> = {}
+		const childRows = childProtocols.map((childProtocol) => childProtocol.row)
+		for (const childProtocol of childRows) {
+			for (const extraTvlKey of PROTOCOL_TAXONOMY_TVL_KEYS) {
+				if (!Object.hasOwn(childProtocol.extraTvls, extraTvlKey)) continue
+				const incoming = childProtocol.extraTvls[extraTvlKey] ?? null
+				if (!Object.hasOwn(extraTvls, extraTvlKey)) {
+					extraTvls[extraTvlKey] = incoming
+					continue
+				}
+				const current = extraTvls[extraTvlKey] ?? null
+				extraTvls[extraTvlKey] = current === null || incoming === null ? null : current + incoming
+			}
+		}
 
 		const borrowed = extraTvls.borrowed ?? null
-		const supplied = borrowed && tvl != null && tvl > 0 ? borrowed + tvl : null
-		const suppliedTvl = supplied && tvl != null ? supplied / tvl : null
-		const fees = sumMetricTotals({ rows: childProtocols, selector: (row) => row.fees })
-		const revenue = sumMetricTotals({ rows: childProtocols, selector: (row) => row.revenue })
-		const dexVolume = sumMetricTotals({ rows: childProtocols, selector: (row) => row.dexVolume })
-		const perpVolume = sumMetricTotals({ rows: childProtocols, selector: (row) => row.perpVolume })
-		const openInterest = childProtocols.reduce<OpenInterestTotals>(
-			(acc, row) => ({
-				total24h: (acc.total24h ?? 0) + (row.openInterest?.total24h ?? 0)
-			}),
-			{
-				total24h: 0
-			}
-		)
-		const optionsPremium = sumMetricTotals({ rows: childProtocols, selector: (row) => row.optionsPremium })
-		const optionsNotional = sumMetricTotals({ rows: childProtocols, selector: (row) => row.optionsNotional })
+		const supplied = borrowed != null && tvl != null ? borrowed + tvl : null
+		const suppliedTvl = supplied != null && tvl != null && tvl > 0 ? supplied / tvl : null
+		const fees = feesData === null ? null : sumMetricTotals({ rows: childRows, selector: (row) => row.fees })
+		const revenue = revenueData === null ? null : sumMetricTotals({ rows: childRows, selector: (row) => row.revenue })
+		const dexVolume =
+			dexVolumeData === null ? null : sumMetricTotals({ rows: childRows, selector: (row) => row.dexVolume })
+		const perpVolume =
+			perpVolumeData === null ? null : sumMetricTotals({ rows: childRows, selector: (row) => row.perpVolume })
+		const openInterest =
+			openInterestData === null
+				? null
+				: childRows.reduce<OpenInterestTotals>(
+						(acc, row) => ({ total24h: (acc.total24h ?? 0) + (row.openInterest?.total24h ?? 0) }),
+						{ total24h: 0 }
+					)
+		const optionsPremium =
+			optionsPremiumData === null ? null : sumMetricTotals({ rows: childRows, selector: (row) => row.optionsPremium })
+		const optionsNotional =
+			optionsNotionalData === null ? null : sumMetricTotals({ rows: childRows, selector: (row) => row.optionsNotional })
 
+		const tags = new Set<string>()
+		for (const childProtocol of childRows) {
+			for (const childTag of childProtocol.tags) tags.add(childTag)
+		}
 		finalProtocols.push({
 			name: parentProtocol.name,
 			slug: slug(parentProtocol.name),
-			logo: parentProtocol.logo ?? '',
+			logo: parentProtocol.logo,
 			chains: parentProtocol.chains,
-			mcap: parentProtocol.mcap ?? null,
+			mcap: parentProtocol.mcap,
 			tvl,
 			...(effectiveCategory && ['Lending'].includes(effectiveCategory) ? { borrowed, supplied, suppliedTvl } : {}),
 			extraTvls,
-			fees: fees.total24h === 0 && fees.total7d === 0 && fees.total30d === 0 ? null : fees,
-			revenue: revenue.total24h === 0 && revenue.total7d === 0 && revenue.total30d === 0 ? null : revenue,
-			dexVolume: dexVolume.total24h === 0 && dexVolume.total7d === 0 && dexVolume.total30d === 0 ? null : dexVolume,
-			perpVolume:
-				perpVolume.total24h === 0 && perpVolume.total7d === 0 && perpVolume.total30d === 0 ? null : perpVolume,
-			openInterest: openInterest.total24h === 0 ? null : openInterest,
-			optionsPremium:
-				optionsPremium.total24h === 0 && optionsPremium.total7d === 0 && optionsPremium.total30d === 0
-					? null
-					: optionsPremium,
-			optionsNotional:
-				optionsNotional.total24h === 0 && optionsNotional.total7d === 0 && optionsNotional.total30d === 0
-					? null
-					: optionsNotional,
-			subRows: childProtocols.toSorted((a, b) => (b.tvl ?? 0) - (a.tvl ?? 0)),
-			tags: Array.from(new Set(childProtocols.flatMap((row) => row.tags ?? [])))
+			fees,
+			revenue,
+			dexVolume,
+			perpVolume,
+			openInterest,
+			optionsPremium,
+			optionsNotional,
+			subRows: childRows.toSorted((a, b) => (b.tvl ?? 0) - (a.tvl ?? 0)),
+			tags: Array.from(tags)
 		})
 	}
 
 	const tvlChart: Array<[number, number | null]> = []
-	const extraTvlCharts: Record<string, Record<string | number, number | null>> = {}
-	for (const chartType in chartData) {
-		if (['doublecounted', 'liquidstaking', 'dcAndLsOverlap'].includes(chartType)) continue
-
-		if (chartType === 'tvl') {
-			for (const date in chartData[chartType]) {
-				tvlChart.push([+date * 1e3, chartData[chartType][date] ?? null])
-			}
-		} else {
-			if (!extraTvlCharts[chartType]) {
-				extraTvlCharts[chartType] = {} as Record<string, number | null>
-			}
-			for (const date in chartData[chartType]) {
-				extraTvlCharts[chartType][+date * 1e3] = chartData[chartType][date] ?? null
-			}
+	const extraTvlCharts: IProtocolTaxonomyPageData['extraTvlCharts'] = {}
+	const baseTvlChart = chartData.tvl
+	if (baseTvlChart) {
+		for (const date in baseTvlChart) {
+			tvlChart.push([+date * 1e3, baseTvlChart[date] ?? null])
+		}
+	}
+	for (const chartType of PROTOCOL_LIST_ADDITIVE_TVL_KEYS) {
+		const chart = chartData[chartType]
+		if (!chart) continue
+		const extraTvlChart: Record<number, number | null> = {}
+		extraTvlCharts[chartType] = extraTvlChart
+		for (const date in chart) {
+			extraTvlChart[+date * 1e3] = chart[date] ?? null
 		}
 	}
 
@@ -920,27 +924,32 @@ export async function getProtocolTaxonomyPageData(
 		stakingChartData: extraTvlCharts.staking
 	})
 
-	let fees7d = 0
-	let revenue7d = 0
-	let dexVolume7d = 0
-	let perpVolume7d = 0
-	let openInterest = 0
-	let optionsPremium7d = 0
-	let optionsNotional7d = 0
-
-	for (const protocol of finalProtocols) {
-		fees7d += protocol.fees?.total7d ?? 0
-		revenue7d += protocol.revenue?.total7d ?? 0
-		dexVolume7d += protocol.dexVolume?.total7d ?? 0
-		perpVolume7d += protocol.perpVolume?.total7d ?? 0
-		openInterest += protocol.openInterest?.total24h ?? 0
-		optionsPremium7d += protocol.optionsPremium?.total7d ?? 0
-		optionsNotional7d += protocol.optionsNotional?.total7d ?? 0
+	const sumAvailableSummary = (
+		available: boolean,
+		selector: (protocol: ProtocolTableRow) => number | null | undefined
+	): number | null => {
+		if (!available) return null
+		let total = 0
+		for (const protocol of finalProtocols) total += selector(protocol) ?? 0
+		return total
 	}
+	const fees7d = sumAvailableSummary(feesData !== null, (protocol) => protocol.fees?.total7d)
+	const revenue7d = sumAvailableSummary(revenueData !== null, (protocol) => protocol.revenue?.total7d)
+	const dexVolume7d = sumAvailableSummary(dexVolumeData !== null, (protocol) => protocol.dexVolume?.total7d)
+	const perpVolume7d = sumAvailableSummary(perpVolumeData !== null, (protocol) => protocol.perpVolume?.total7d)
+	const openInterest = sumAvailableSummary(openInterestData !== null, (protocol) => protocol.openInterest?.total24h)
+	const optionsPremium7d = sumAvailableSummary(
+		optionsPremiumData !== null,
+		(protocol) => protocol.optionsPremium?.total7d
+	)
+	const optionsNotional7d = sumAvailableSummary(
+		optionsNotionalData !== null,
+		(protocol) => protocol.optionsNotional?.total7d
+	)
 
 	return {
 		charts: categoryCharts,
-		chain: currentChainMetadata?.name ?? 'All',
+		chain: currentChainMetadata.name,
 		protocols: (chain
 			? finalProtocols.filter((p) => p.chains.includes(currentChainMetadata.name))
 			: finalProtocols
@@ -949,26 +958,18 @@ export async function getProtocolTaxonomyPageData(
 		tag: tag ?? null,
 		effectiveCategory,
 		chains: [
-			{ label: 'All', to: `/protocols/${slug(category ?? tag)}` },
-			...chains.map((c) => ({ label: c, to: `/protocols/${slug(category ?? tag)}/${slug(c)}` }))
+			{ label: 'All', to: `/protocols/${slug(taxonomyName)}` },
+			...chains.map((c) => ({ label: c, to: `/protocols/${slug(taxonomyName)}/${slug(c)}` }))
 		],
-		fees7d: fees7d > 0 ? fees7d : null,
-		revenue7d: revenue7d > 0 ? revenue7d : null,
-		dexVolume7d: dexVolume7d > 0 ? dexVolume7d : null,
-		perpVolume7d: perpVolume7d > 0 ? perpVolume7d : null,
-		openInterest: openInterest > 0 ? openInterest : null,
-		optionsPremium7d: optionsPremium7d > 0 ? optionsPremium7d : null,
-		optionsNotional7d: optionsNotional7d > 0 ? optionsNotional7d : null,
+		fees7d,
+		revenue7d,
+		dexVolume7d,
+		perpVolume7d,
+		openInterest,
+		optionsPremium7d,
+		optionsNotional7d,
 		extraTvlCharts
 	}
-}
-
-type CategoriesApiChartMetrics = Record<string, number | null | undefined>
-type CategoriesApiChart = Record<string, Record<string, CategoriesApiChartMetrics>>
-
-type CategoriesApiResponse = {
-	chart: CategoriesApiChart | null
-	categories: Array<string> | Record<string, unknown> | null
 }
 
 type CategoryAggregateRow = {
@@ -978,13 +979,11 @@ type CategoryAggregateRow = {
 	tvlPrevDay: number
 	tvlPrevWeek: number
 	tvlPrevMonth: number
-	revenue: number
+	revenue: number | null
 	extraTvls: Record<string, IProtocolsCategoriesExtraTvlPoint>
 }
 
-const CATEGORIES_PAGE_INCLUDED_EXTRA_TVL_KEYS = TVL_SETTINGS_KEYS.filter(
-	(key) => !categoriesPageExcludedExtraTvls.has(key)
-)
+const CATEGORIES_PAGE_INCLUDED_EXTRA_TVL_KEYS = PROTOCOL_LIST_ADDITIVE_TVL_KEYS
 
 function createEmptyExtraTvlPoint(): IProtocolsCategoriesExtraTvlPoint {
 	return {
@@ -1003,7 +1002,7 @@ function createEmptyExtraTvls(): Record<string, IProtocolsCategoriesExtraTvlPoin
 	return extraTvls
 }
 
-function createCategoryAggregateRow(name: string): CategoryAggregateRow {
+function createCategoryAggregateRow(name: string, revenueAvailable: boolean): CategoryAggregateRow {
 	return {
 		name,
 		protocols: 0,
@@ -1011,7 +1010,7 @@ function createCategoryAggregateRow(name: string): CategoryAggregateRow {
 		tvlPrevDay: 0,
 		tvlPrevWeek: 0,
 		tvlPrevMonth: 0,
-		revenue: 0,
+		revenue: revenueAvailable ? 0 : null,
 		extraTvls: createEmptyExtraTvls()
 	}
 }
@@ -1040,57 +1039,46 @@ function toCategoryTableRow({
 	return categoryRow
 }
 
-function getCategoryKeysFromApi(categories: CategoriesApiResponse['categories']): Array<string> {
-	if (Array.isArray(categories)) {
-		return categories.filter((categoryName): categoryName is string => typeof categoryName === 'string')
-	}
-
-	if (categories != null && typeof categories === 'object') {
-		const categoryKeys: string[] = []
-		for (const categoryName in categories) {
-			categoryKeys.push(categoryName)
-		}
-		return categoryKeys
-	}
-
-	return []
-}
-
 function buildProtocolsCategoriesChartData({
 	chart,
 	categoryKeys,
 	extraTvlTypes = []
 }: {
-	chart: CategoriesApiResponse['chart']
+	chart: CategoriesSummaryResponse['chart']
 	categoryKeys: Array<string>
 	extraTvlTypes?: readonly string[]
 }): IProtocolsCategoriesChartData {
 	const includedExtraTvlKeys = CATEGORIES_PAGE_INCLUDED_EXTRA_TVL_KEYS.filter((key) => extraTvlTypes.includes(key))
-	const extraTvlCharts = {}
+	const extraTvlCharts: IProtocolsCategoriesChartData['extraTvlCharts'] = {}
 	if (includedExtraTvlKeys.length > 0) {
 		for (const categoryName of categoryKeys) {
 			extraTvlCharts[categoryName] = {}
 			for (const extraTvlKey of includedExtraTvlKeys) {
-				extraTvlCharts[categoryName][extraTvlKey] = {}
+				const categoryExtraTvlCharts = extraTvlCharts[categoryName]
+				if (categoryExtraTvlCharts) categoryExtraTvlCharts[extraTvlKey] = {}
 			}
 		}
 	}
 
 	const chartSource: IProtocolsCategoriesChartData['chartSource'] = []
-	for (const [date, chartByCategory] of Object.entries(chart ?? {})) {
+	for (const date in chart) {
+		const chartByCategory = chart[date]
+		if (!chartByCategory) continue
 		const timestamp = Number(date) * 1e3
 
-		const chartRow = { timestamp: timestamp } as { timestamp: number } & Record<string, number | null>
+		const chartRow: IProtocolsCategoriesChartData['chartSource'][number] = { timestamp }
 		for (const categoryName of categoryKeys) {
-			const categoryChartMetrics = chartByCategory?.[categoryName]
+			const categoryChartMetrics = chartByCategory[categoryName]
 			const tvlValue = categoryChartMetrics?.tvl
-			chartRow[categoryName] = typeof tvlValue === 'number' ? tvlValue : null
+			chartRow[categoryName] = tvlValue ?? null
 
 			for (const extraTvlKey of includedExtraTvlKeys) {
-				const rawExtraValue = categoryChartMetrics?.[extraTvlKey]
-				const extraValue = typeof rawExtraValue === 'number' ? rawExtraValue : 0
-				const currentValue = extraTvlCharts[categoryName][extraTvlKey][timestamp] ?? 0
-				extraTvlCharts[categoryName][extraTvlKey][timestamp] = currentValue + extraValue
+				const extraValue = categoryChartMetrics?.[extraTvlKey] ?? 0
+				const categoryExtraTvlCharts = extraTvlCharts[categoryName]
+				const extraTvlChart = categoryExtraTvlCharts?.[extraTvlKey]
+				if (!extraTvlChart) continue
+				const currentValue = extraTvlChart[timestamp] ?? 0
+				extraTvlChart[timestamp] = currentValue + extraValue
 			}
 		}
 		chartSource.push(chartRow)
@@ -1106,14 +1094,8 @@ export async function getProtocolsCategoriesChartData({
 	extraTvlTypes?: readonly string[]
 } = {}): Promise<IProtocolsCategoriesChartData> {
 	const { chart, categories } = await fetchCategoriesSummary()
-	const categoryKeysFromApi = getCategoryKeysFromApi(categories)
-	const categoryKeysSet = new Set(categoryKeysFromApi)
-	if (categoryKeysSet.size === 0) {
-		for (const chartByCategory of Object.values(chart ?? {})) {
-			for (const categoryName in chartByCategory) categoryKeysSet.add(categoryName)
-		}
-	}
-	const categoryKeys = Array.from(categoryKeysSet)
+	const categoryKeys: string[] = []
+	for (const categoryName in categories) categoryKeys.push(categoryName)
 
 	return buildProtocolsCategoriesChartData({ chart, categoryKeys, extraTvlTypes })
 }
@@ -1140,7 +1122,7 @@ export async function getProtocolsCategoriesPageData(): Promise<IProtocolsCatego
 		const existingRow = categoryRows.get(categoryName)
 		if (existingRow != null) return existingRow
 
-		const newRow = createCategoryAggregateRow(categoryName)
+		const newRow = createCategoryAggregateRow(categoryName, revenueData !== null)
 		categoryRows.set(categoryName, newRow)
 		return newRow
 	}
@@ -1160,7 +1142,7 @@ export async function getProtocolsCategoriesPageData(): Promise<IProtocolsCatego
 		const existingRow = tagsByName.get(tagName)
 		if (existingRow != null) return existingRow
 
-		const newRow = createCategoryAggregateRow(tagName)
+		const newRow = createCategoryAggregateRow(tagName, revenueData !== null)
 		tagsByName.set(tagName, newRow)
 		return newRow
 	}
@@ -1168,7 +1150,7 @@ export async function getProtocolsCategoriesPageData(): Promise<IProtocolsCatego
 	for (const protocol of protocols) {
 		const categoryName = protocol.category
 		if (!categoryName) continue
-		const protocolRevenue = revenueByProtocol[protocol.defillamaId] ?? 0
+		const protocolRevenue = revenueData === null ? null : (revenueByProtocol[protocol.defillamaId] ?? 0)
 		const protocolTvl = protocol.tvl ?? 0
 		const protocolTvlPrevDay = protocol.tvlPrevDay ?? 0
 		const protocolTvlPrevWeek = protocol.tvlPrevWeek ?? 0
@@ -1180,7 +1162,8 @@ export async function getProtocolsCategoriesPageData(): Promise<IProtocolsCatego
 		categoryRow.tvlPrevDay += protocolTvlPrevDay
 		categoryRow.tvlPrevWeek += protocolTvlPrevWeek
 		categoryRow.tvlPrevMonth += protocolTvlPrevMonth
-		categoryRow.revenue += protocolRevenue
+		categoryRow.revenue =
+			categoryRow.revenue === null || protocolRevenue === null ? null : categoryRow.revenue + protocolRevenue
 
 		const protocolTags = protocol.tags ?? []
 		for (const tagName of protocolTags) {
@@ -1190,7 +1173,7 @@ export async function getProtocolsCategoriesPageData(): Promise<IProtocolsCatego
 			tagRow.tvlPrevDay += protocolTvlPrevDay
 			tagRow.tvlPrevWeek += protocolTvlPrevWeek
 			tagRow.tvlPrevMonth += protocolTvlPrevMonth
-			tagRow.revenue += protocolRevenue
+			tagRow.revenue = tagRow.revenue === null || protocolRevenue === null ? null : tagRow.revenue + protocolRevenue
 		}
 
 		for (const extraTvlKey of CATEGORIES_PAGE_INCLUDED_EXTRA_TVL_KEYS) {
@@ -1198,18 +1181,42 @@ export async function getProtocolsCategoriesPageData(): Promise<IProtocolsCatego
 			if (protocolExtraTvl == null) continue
 
 			const categoryExtraTvl = categoryRow.extraTvls[extraTvlKey]
-			categoryExtraTvl.tvl += protocolExtraTvl.tvl ?? 0
-			categoryExtraTvl.tvlPrevDay += protocolExtraTvl.tvlPrevDay ?? 0
-			categoryExtraTvl.tvlPrevWeek += protocolExtraTvl.tvlPrevWeek ?? 0
-			categoryExtraTvl.tvlPrevMonth += protocolExtraTvl.tvlPrevMonth ?? 0
+			if (!categoryExtraTvl) continue
+			categoryExtraTvl.tvl =
+				categoryExtraTvl.tvl === null || protocolExtraTvl.tvl === null
+					? null
+					: categoryExtraTvl.tvl + protocolExtraTvl.tvl
+			categoryExtraTvl.tvlPrevDay =
+				categoryExtraTvl.tvlPrevDay === null || protocolExtraTvl.tvlPrevDay === null
+					? null
+					: categoryExtraTvl.tvlPrevDay + protocolExtraTvl.tvlPrevDay
+			categoryExtraTvl.tvlPrevWeek =
+				categoryExtraTvl.tvlPrevWeek === null || protocolExtraTvl.tvlPrevWeek === null
+					? null
+					: categoryExtraTvl.tvlPrevWeek + protocolExtraTvl.tvlPrevWeek
+			categoryExtraTvl.tvlPrevMonth =
+				categoryExtraTvl.tvlPrevMonth === null || protocolExtraTvl.tvlPrevMonth === null
+					? null
+					: categoryExtraTvl.tvlPrevMonth + protocolExtraTvl.tvlPrevMonth
 
 			for (const tagName of protocolTags) {
 				const tagRow = getOrCreateTagRow({ categoryName, tagName })
 				const tagExtraTvl = tagRow.extraTvls[extraTvlKey]
-				tagExtraTvl.tvl += protocolExtraTvl.tvl ?? 0
-				tagExtraTvl.tvlPrevDay += protocolExtraTvl.tvlPrevDay ?? 0
-				tagExtraTvl.tvlPrevWeek += protocolExtraTvl.tvlPrevWeek ?? 0
-				tagExtraTvl.tvlPrevMonth += protocolExtraTvl.tvlPrevMonth ?? 0
+				if (!tagExtraTvl) continue
+				tagExtraTvl.tvl =
+					tagExtraTvl.tvl === null || protocolExtraTvl.tvl === null ? null : tagExtraTvl.tvl + protocolExtraTvl.tvl
+				tagExtraTvl.tvlPrevDay =
+					tagExtraTvl.tvlPrevDay === null || protocolExtraTvl.tvlPrevDay === null
+						? null
+						: tagExtraTvl.tvlPrevDay + protocolExtraTvl.tvlPrevDay
+				tagExtraTvl.tvlPrevWeek =
+					tagExtraTvl.tvlPrevWeek === null || protocolExtraTvl.tvlPrevWeek === null
+						? null
+						: tagExtraTvl.tvlPrevWeek + protocolExtraTvl.tvlPrevWeek
+				tagExtraTvl.tvlPrevMonth =
+					tagExtraTvl.tvlPrevMonth === null || protocolExtraTvl.tvlPrevMonth === null
+						? null
+						: tagExtraTvl.tvlPrevMonth + protocolExtraTvl.tvlPrevMonth
 			}
 		}
 	}
@@ -1219,7 +1226,7 @@ export async function getProtocolsCategoriesPageData(): Promise<IProtocolsCatego
 	)
 
 	const allColors = getNDistinctColors(categoryKeys.length)
-	const categoryColors = {}
+	const categoryColors: Record<string, string> = {}
 	for (const [index, categoryName] of categoryKeys.entries()) {
 		categoryColors[categoryName] = allColors[index] ?? '#999999'
 	}
@@ -1251,7 +1258,11 @@ export async function getProtocolsCategoriesPageData(): Promise<IProtocolsCatego
 
 	return {
 		categories: categoryKeys,
-		tableData: tableData.toSorted((a, b) => b.tvl - a.tvl),
+		tableData: tableData.toSorted((a, b) => {
+			if (a.tvl === null) return b.tvl === null ? 0 : 1
+			if (b.tvl === null) return -1
+			return b.tvl - a.tvl
+		}),
 		chartSource: [],
 		categoryColors,
 		extraTvlCharts: {}

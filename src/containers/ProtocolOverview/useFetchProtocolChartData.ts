@@ -1,7 +1,8 @@
 import { skipToken, useQueries, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
-import type { DenominationPriceHistory } from '~/api/coingecko.types'
+import type { CgChartResponse } from '~/api/coingecko.types'
+import type { ProtocolTokenLiquidityChart } from '~/api/types'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatBarChart, formatLineChart, formatNullableBarChart } from '~/components/ECharts/shared/timeSeries'
 import { useFetchProtocolGovernanceData } from '~/containers/Governance/queries.client'
@@ -21,7 +22,9 @@ import {
 	buildExtraTvlCharts,
 	buildTvlChart,
 	buildUsdInflowsFromTvlChart,
-	getProtocolExtraTvlChartFetchState
+	getProtocolExtraTvlChartFetchState,
+	getSelectedProtocolExtraTvlKeys,
+	type ProtocolExtraTvlKey
 } from './tvlChart'
 import type { IProtocolOverviewPageData, IToggledMetrics } from './types'
 import {
@@ -31,6 +34,10 @@ import {
 
 type ChartInterval = ChartTimeGroupingWithCumulative
 type AdapterChartState = { data: Array<[number, number]> | null; isLoading: boolean; enabled: boolean }
+type UnlocksChartResponse = {
+	chartData: { documented: Array<EmissionsChartRow>; realtime: Array<EmissionsChartRow> }
+	unlockUsdChart: TokenIncentiveChartPoint[] | null
+}
 
 const buildChartRowsFromTimestampRecord = (
 	valuesByTimestamp: Record<string, number>,
@@ -84,7 +91,7 @@ export const useFetchProtocolChartData = ({
 }: IProtocolOverviewPageData & {
 	toggledMetrics: IToggledMetrics
 	groupBy: ChartInterval
-	tvlSettings: Record<string, boolean>
+	tvlSettings: Partial<Record<ProtocolExtraTvlKey, boolean>>
 }) => {
 	const router = useRouter()
 	const canFetchClientCharts = useIsClient() && router.isReady
@@ -143,10 +150,10 @@ export const useFetchProtocolChartData = ({
 		queryKey: ['protocol-overview', protocolSlug, 'denomination-price-history', denominationGeckoId],
 		queryFn: denominationGeckoId
 			? () =>
-					fetchJson(
+					fetchJson<CgChartResponse | null>(
 						`/api/public/tokens/charts/coingecko/${encodeURIComponent(denominationGeckoId)}?fullChart=true`
-					).then((res: { data?: { prices?: Array<[number, number]> } }) => {
-						if (!res.data?.prices?.length) return null
+					).then((res) => {
+						if (!res?.data?.prices?.length) return null
 						const store: Record<string, number> = {}
 						for (const [date, value] of res.data.prices) {
 							store[String(date)] = value
@@ -161,27 +168,32 @@ export const useFetchProtocolChartData = ({
 		enabled: !!denominationGeckoId
 	})
 
-	const { data: protocolTokenData = null, isLoading: fetchingProtocolTokenData } =
-		useQuery<DenominationPriceHistory | null>({
-			queryKey: ['protocol-overview', protocolSlug, 'token-price-history', geckoId],
-			queryFn: geckoId
-				? () =>
-						fetchJson(`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId)}?fullChart=true`).then(
-							(res: { data?: DenominationPriceHistory }) => (res.data?.prices?.length ? res.data : null)
-						)
-				: skipToken,
-			staleTime: 60 * 60 * 1000,
-			refetchOnWindowFocus: false,
-			retry: 0,
-			enabled: !!(
-				canFetchClientCharts &&
-				(toggledMetrics.mcap === 'true' ||
-					toggledMetrics.tokenPrice === 'true' ||
-					toggledMetrics.tokenVolume === 'true' ||
-					toggledMetrics.fdv === 'true') &&
-				geckoId
-			)
-		})
+	const { data: protocolTokenData = null, isLoading: fetchingProtocolTokenData } = useQuery<
+		(NonNullable<CgChartResponse['data']> & { prices: Array<[number, number]> }) | null
+	>({
+		queryKey: ['protocol-overview', protocolSlug, 'token-price-history', geckoId],
+		queryFn: geckoId
+			? () =>
+					fetchJson<CgChartResponse | null>(
+						`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId)}?fullChart=true`
+					).then((res) => {
+						const data = res?.data
+						const prices = data?.prices
+						return prices?.length ? { ...data, prices } : null
+					})
+			: skipToken,
+		staleTime: 60 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		retry: 0,
+		enabled: !!(
+			canFetchClientCharts &&
+			(toggledMetrics.mcap === 'true' ||
+				toggledMetrics.tokenPrice === 'true' ||
+				toggledMetrics.tokenVolume === 'true' ||
+				toggledMetrics.fdv === 'true') &&
+			geckoId
+		)
+	})
 
 	const { data: tokenTotalSupply = null, isLoading: fetchingTokenTotalSupply } = useQuery<number | null>({
 		queryKey: ['protocol-overview', protocolSlug, 'token-supply', geckoId],
@@ -196,16 +208,18 @@ export const useFetchProtocolChartData = ({
 		retry: 0,
 		enabled: !!(geckoId && toggledMetrics.fdv === 'true' && canFetchClientCharts)
 	})
-	const { data: tokenLiquidityData = null, isLoading: fetchingTokenLiquidity } = useQuery<Array<
-		[string | number, number]
-	> | null>({
-		queryKey: ['protocol-overview', protocolSlug, 'token-liquidity', protocolId],
-		queryFn: () => fetchJson(buildProtocolChartApiUrl({ kind: 'token-liquidity', protocolId })),
-		staleTime: 60 * 60 * 1000,
-		refetchOnWindowFocus: false,
-		retry: 0,
-		enabled: !!(canFetchClientCharts && metrics.liquidity && toggledMetrics.tokenLiquidity === 'true')
-	})
+	const { data: tokenLiquidityData = null, isLoading: fetchingTokenLiquidity } =
+		useQuery<ProtocolTokenLiquidityChart | null>({
+			queryKey: ['protocol-overview', protocolSlug, 'token-liquidity', protocolId],
+			queryFn: () =>
+				fetchJson<ProtocolTokenLiquidityChart | null>(
+					buildProtocolChartApiUrl({ kind: 'token-liquidity', protocolId })
+				),
+			staleTime: 60 * 60 * 1000,
+			refetchOnWindowFocus: false,
+			retry: 0,
+			enabled: !!(canFetchClientCharts && metrics.liquidity && toggledMetrics.tokenLiquidity === 'true')
+		})
 
 	const isTvlToggled = toggledMetrics.tvl === 'true'
 	const isTotalAssetsToggled = toggledMetrics.totalAssets === 'true'
@@ -234,10 +248,7 @@ export const useFetchProtocolChartData = ({
 		pool2: shouldFetchPool2Tvl,
 		staking: shouldFetchStakingTvl,
 		borrowed: shouldFetchBorrowedTvl,
-		doublecounted: shouldFetchDoubleCountedTvl,
-		liquidstaking: shouldFetchLiquidStakingTvl,
-		vesting: shouldFetchVestingTvl,
-		govtokens: shouldFetchGovTokensTvl
+		vesting: shouldFetchVestingTvl
 	} = getProtocolExtraTvlChartFetchState({
 		isRouterReady: canFetchClientCharts,
 		currentTvlByChain,
@@ -259,7 +270,11 @@ export const useFetchProtocolChartData = ({
 		baseTvlChartData.length === 0 &&
 		availableCharts.includes(primaryTvlChartLabel)
 	)
-	const { data: fetchedBaseTvlChart = null, isLoading: fetchingBaseTvlChart } = useFetchProtocolTVLChart({
+	const {
+		data: fetchedBaseTvlChart,
+		isLoading: fetchingBaseTvlChart,
+		isError: baseTvlChartError
+	} = useFetchProtocolTVLChart({
 		protocol: protocolSlug,
 		enabled: shouldFetchBaseTvlChart
 	})
@@ -273,40 +288,41 @@ export const useFetchProtocolChartData = ({
 		[baseTvlChartData, fetchedBaseTvlChart]
 	)
 
-	const { data: pool2TvlChart = null, isLoading: fetchingPool2TvlChart } = useFetchProtocolTVLChart({
+	const {
+		data: pool2TvlChart,
+		isLoading: fetchingPool2TvlChart,
+		isError: pool2TvlChartError
+	} = useFetchProtocolTVLChart({
 		protocol: protocolSlug,
 		key: 'pool2',
 		enabled: shouldFetchPool2Tvl
 	})
-	const { data: stakingTvlChart = null, isLoading: fetchingStakingTvlChart } = useFetchProtocolTVLChart({
+	const {
+		data: stakingTvlChart,
+		isLoading: fetchingStakingTvlChart,
+		isError: stakingTvlChartError
+	} = useFetchProtocolTVLChart({
 		protocol: protocolSlug,
 		key: 'staking',
 		enabled: shouldFetchStakingTvl
 	})
-	const { data: borrowedTvlChart = null, isLoading: fetchingBorrowedTvlChart } = useFetchProtocolTVLChart({
+	const {
+		data: borrowedTvlChart,
+		isLoading: fetchingBorrowedTvlChart,
+		isError: borrowedTvlChartError
+	} = useFetchProtocolTVLChart({
 		protocol: protocolSlug,
 		key: 'borrowed',
 		enabled: shouldFetchBorrowedTvl
 	})
-	const { data: doubleCountedTvlChart = null, isLoading: fetchingDoubleCountedTvlChart } = useFetchProtocolTVLChart({
-		protocol: protocolSlug,
-		key: 'doublecounted',
-		enabled: shouldFetchDoubleCountedTvl
-	})
-	const { data: liquidStakingTvlChart = null, isLoading: fetchingLiquidStakingTvlChart } = useFetchProtocolTVLChart({
-		protocol: protocolSlug,
-		key: 'liquidstaking',
-		enabled: shouldFetchLiquidStakingTvl
-	})
-	const { data: vestingTvlChart = null, isLoading: fetchingVestingTvlChart } = useFetchProtocolTVLChart({
+	const {
+		data: vestingTvlChart,
+		isLoading: fetchingVestingTvlChart,
+		isError: vestingTvlChartError
+	} = useFetchProtocolTVLChart({
 		protocol: protocolSlug,
 		key: 'vesting',
 		enabled: shouldFetchVestingTvl
-	})
-	const { data: govTokensTvlChart = null, isLoading: fetchingGovTokensTvlChart } = useFetchProtocolTVLChart({
-		protocol: protocolSlug,
-		key: 'govtokens',
-		enabled: shouldFetchGovTokensTvl
 	})
 
 	const extraTvlCharts = useMemo(
@@ -315,34 +331,66 @@ export const useFetchProtocolChartData = ({
 				pool2: pool2TvlChart,
 				staking: stakingTvlChart,
 				borrowed: borrowedTvlChart,
-				doublecounted: doubleCountedTvlChart,
-				liquidstaking: liquidStakingTvlChart,
-				vesting: vestingTvlChart,
-				govtokens: govTokensTvlChart
+				vesting: vestingTvlChart
 			}),
-		[
-			pool2TvlChart,
-			stakingTvlChart,
-			borrowedTvlChart,
-			doubleCountedTvlChart,
-			liquidStakingTvlChart,
-			vestingTvlChart,
-			govTokensTvlChart
-		]
+		[pool2TvlChart, stakingTvlChart, borrowedTvlChart, vestingTvlChart]
+	)
+	const isStakingRequiredForComposite = !!(
+		needsCompositeTvlChart &&
+		tvlSettings.staking &&
+		currentTvlByChain?.staking != null
+	)
+	const isBorrowedRequiredForComposite = !!(
+		needsCompositeTvlChart &&
+		tvlSettings.borrowed &&
+		currentTvlByChain?.borrowed != null
+	)
+	const isPool2RequiredForComposite = !!(
+		needsCompositeTvlChart &&
+		tvlSettings.pool2 &&
+		currentTvlByChain?.pool2 != null
+	)
+	const isVestingRequiredForComposite = !!(
+		needsCompositeTvlChart &&
+		tvlSettings.vesting &&
+		currentTvlByChain?.vesting != null
+	)
+	const isCompositeTvlUnavailable = !!(
+		(shouldFetchBaseTvlChart && baseTvlChartError && fetchedBaseTvlChart === undefined) ||
+		(isStakingRequiredForComposite && stakingTvlChartError && stakingTvlChart === undefined) ||
+		(isBorrowedRequiredForComposite && borrowedTvlChartError && borrowedTvlChart === undefined) ||
+		(isPool2RequiredForComposite && pool2TvlChartError && pool2TvlChart === undefined) ||
+		(isVestingRequiredForComposite && vestingTvlChartError && vestingTvlChart === undefined)
+	)
+	const isCompositeTvlLoading = !!(
+		(shouldFetchBaseTvlChart && fetchingBaseTvlChart) ||
+		(isStakingRequiredForComposite && fetchingStakingTvlChart) ||
+		(isBorrowedRequiredForComposite && fetchingBorrowedTvlChart) ||
+		(isPool2RequiredForComposite && fetchingPool2TvlChart) ||
+		(isVestingRequiredForComposite && fetchingVestingTvlChart)
+	)
+	const selectedExtraTvls = useMemo(
+		() => getSelectedProtocolExtraTvlKeys(tvlSettings, currentTvlByChain),
+		[tvlSettings, currentTvlByChain]
 	)
 
-	const tvlChart = useMemo(
-		() =>
-			buildTvlChart({
-				tvlChartData: resolvedBaseTvlChartData,
-				extraTvlCharts,
-				tvlSettings,
-				currentTvlByChain,
-				groupBy,
-				denominationPriceHistory
-			}),
-		[resolvedBaseTvlChartData, extraTvlCharts, tvlSettings, groupBy, denominationPriceHistory, currentTvlByChain]
-	)
+	const tvlChart = useMemo(() => {
+		if (isCompositeTvlUnavailable) return null
+		return buildTvlChart({
+			tvlChartData: resolvedBaseTvlChartData,
+			extraTvlCharts,
+			selectedExtraTvls,
+			groupBy,
+			denominationPriceHistory
+		})
+	}, [
+		isCompositeTvlUnavailable,
+		resolvedBaseTvlChartData,
+		extraTvlCharts,
+		selectedExtraTvls,
+		groupBy,
+		denominationPriceHistory
+	])
 
 	const adapterChartConfigs = useMemo(() => {
 		const configs: Array<{
@@ -415,20 +463,18 @@ export const useFetchProtocolChartData = ({
 		(metrics.unlocks || metrics.incentives) &&
 		canFetchClientCharts
 	)
-	const { data: unlocksAndIncentivesData = null, isLoading: fetchingUnlocksAndIncentives } = useQuery<{
-		chartData: { documented: Array<EmissionsChartRow>; realtime: Array<EmissionsChartRow> }
-		unlockUsdChart: TokenIncentiveChartPoint[] | null
-	} | null>({
-		queryKey: ['protocol-overview', protocolSlug, 'unlocks'],
-		queryFn: () =>
-			isUnlocksEnabled
-				? fetchJson(buildProtocolChartApiUrl({ kind: 'unlocks', protocol: name }))
-				: Promise.resolve(null),
-		staleTime: 60 * 60 * 1000,
-		refetchOnWindowFocus: false,
-		retry: 0,
-		enabled: isUnlocksEnabled
-	})
+	const { data: unlocksAndIncentivesData = null, isLoading: fetchingUnlocksAndIncentives } =
+		useQuery<UnlocksChartResponse | null>({
+			queryKey: ['protocol-overview', protocolSlug, 'unlocks'],
+			queryFn: () =>
+				isUnlocksEnabled
+					? fetchJson<UnlocksChartResponse | null>(buildProtocolChartApiUrl({ kind: 'unlocks', protocol: name }))
+					: Promise.resolve(null),
+			staleTime: 60 * 60 * 1000,
+			refetchOnWindowFocus: false,
+			retry: 0,
+			enabled: isUnlocksEnabled
+		})
 
 	const isTreasuryEnabled = !!(toggledMetrics.treasury === 'true' && metrics.treasury && canFetchClientCharts)
 	const { data: treasuryData, isLoading: fetchingTreasury } = usePrefetchedProtocolChartQuery({
@@ -444,19 +490,18 @@ export const useFetchProtocolChartData = ({
 
 	const isUsdInflowsEnabled = !!(toggledMetrics.usdInflows === 'true' && metrics.tvl && canFetchClientCharts)
 	const usdInflowsData = useMemo(() => {
-		if (!isUsdInflowsEnabled) return null
+		if (!isUsdInflowsEnabled || isCompositeTvlUnavailable) return null
 
 		const tvlChartInUsd = buildTvlChart({
 			tvlChartData: resolvedBaseTvlChartData,
 			extraTvlCharts,
-			tvlSettings,
-			currentTvlByChain,
+			selectedExtraTvls,
 			groupBy: 'daily',
 			denominationPriceHistory: null
 		})
 		return buildUsdInflowsFromTvlChart(tvlChartInUsd)
-	}, [isUsdInflowsEnabled, resolvedBaseTvlChartData, extraTvlCharts, tvlSettings, currentTvlByChain])
-	const fetchingUsdInflows = false
+	}, [isUsdInflowsEnabled, isCompositeTvlUnavailable, resolvedBaseTvlChartData, extraTvlCharts, selectedExtraTvls])
+	const fetchingUsdInflows = isUsdInflowsEnabled && isCompositeTvlLoading
 
 	const isBridgeVolumeEnabled = !!(toggledMetrics.bridgeVolume === 'true' && canFetchClientCharts)
 	const prefetchedBridgeVolume = prefetchedChartsForMsRender['Bridge Volume'] ?? null
@@ -482,11 +527,9 @@ export const useFetchProtocolChartData = ({
 		queryKey: ['protocol-overview', protocolSlug, 'tvs'],
 		enabled: isTvsEnabled,
 		queryFn: () =>
-			fetchJson<Array<[number, number]> | null>(
+			fetchJson<Array<[number, number]>>(
 				buildProtocolChartApiUrl({ kind: 'oracle-chart', protocol: oracleProtocolName })
-			)
-				.then((chart) => (chart ? normalizeSeriesToSeconds(chart) : null))
-				.catch(() => null)
+			).then(normalizeSeriesToSeconds)
 	})
 
 	const { data: medianAPYData = null, isLoading: fetchingMedianAPY } = useFetchProtocolMedianAPY(
@@ -531,14 +574,10 @@ export const useFetchProtocolChartData = ({
 	)
 
 	const isNftVolumeEnabled = !!(toggledMetrics.nftVolume === 'true' && metrics.nfts && canFetchClientCharts)
-	const { data: nftVolumeData = null, isLoading: fetchingNftVolume } = useQuery<Array<[number, number]> | null>({
+	const { data: nftVolumeData = null, isLoading: fetchingNftVolume } = useQuery<Array<[number, number | null]>>({
 		queryKey: ['protocol-overview', protocolSlug, 'nft-volume'],
 		queryFn: () =>
-			isNftVolumeEnabled
-				? fetchJson<Array<[number, number]> | null>(
-						buildProtocolChartApiUrl({ kind: 'nft-volume', protocol: name })
-					).catch((): Array<[number, number]> => [])
-				: Promise.resolve(null),
+			fetchJson<Array<[number, number | null]>>(buildProtocolChartApiUrl({ kind: 'nft-volume', protocol: name })),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0,
@@ -550,7 +589,7 @@ export const useFetchProtocolChartData = ({
 		selectedDenomination.symbol !== 'USD' &&
 		denominationPriceHistory
 	)
-	const valueSymbol = showNonUsdDenomination ? (selectedDenomination?.symbol ?? '') : '$'
+	const valueSymbol = showNonUsdDenomination && selectedDenomination ? selectedDenomination.symbol : '$'
 
 	const chartData = useMemo(() => {
 		const loadingStates: Array<{ isLoading: boolean; label: string }> = [
@@ -560,17 +599,11 @@ export const useFetchProtocolChartData = ({
 			{ isLoading: isTokenVolumeToggled && fetchingProtocolTokenData, label: 'Token Volume' },
 			{ isLoading: isFdvToggled && (fetchingProtocolTokenData || fetchingTokenTotalSupply), label: 'FDV' },
 			{ isLoading: toggledMetrics.tokenLiquidity === 'true' && fetchingTokenLiquidity, label: 'Token Liquidity' },
-			{ isLoading: shouldFetchBaseTvlChart && fetchingBaseTvlChart, label: primaryTvlChartLabel },
-			{ isLoading: shouldFetchPool2Tvl && fetchingPool2TvlChart, label: primaryTvlChartLabel },
-			{ isLoading: shouldFetchStakingTvl && fetchingStakingTvlChart, label: 'Staking' },
-			{ isLoading: shouldFetchBorrowedTvl && fetchingBorrowedTvlChart, label: 'Active Loans' },
+			{ isLoading: isPrimaryTvlToggled && isCompositeTvlLoading, label: primaryTvlChartLabel },
+			{ isLoading: isStakingTvlToggled && shouldFetchStakingTvl && fetchingStakingTvlChart, label: 'Staking' },
 			{
-				isLoading:
-					(shouldFetchDoubleCountedTvl && fetchingDoubleCountedTvlChart) ||
-					(shouldFetchLiquidStakingTvl && fetchingLiquidStakingTvlChart) ||
-					(shouldFetchVestingTvl && fetchingVestingTvlChart) ||
-					(shouldFetchGovTokensTvl && fetchingGovTokensTvlChart),
-				label: primaryTvlChartLabel
+				isLoading: isBorrowedTvlToggled && shouldFetchBorrowedTvl && fetchingBorrowedTvlChart,
+				label: 'Active Loans'
 			},
 			{ isLoading: isTvsToggled && fetchingTvs, label: 'TVS' },
 			...ADAPTER_CHART_DESCRIPTORS.map((descriptor) => {
@@ -605,15 +638,15 @@ export const useFetchProtocolChartData = ({
 
 		const charts: { [key in ProtocolChartsLabels]?: Array<[number, number | null]> } = {}
 
-		if (tvlChart?.length > 0 && (isTvlToggled || isTotalAssetsToggled)) {
+		if (tvlChart !== null && (isTvlToggled || isTotalAssetsToggled)) {
 			const chartName: ProtocolChartsLabels = isCEX ? 'Total Assets' : ('TVL' as const)
 			charts[chartName] = tvlChart
 		}
-		if (tvsData && tvsData.length > 0 && isTvsToggled) {
+		if (tvsData !== null && isTvsToggled) {
 			charts['TVS'] = formatLineChart({ data: tvsData, groupBy, denominationPriceHistory })
 		}
 		if (protocolTokenData) {
-			if (isMcapToggled)
+			if (isMcapToggled && protocolTokenData.mcaps)
 				charts['Mcap'] = formatLineChart({
 					data: protocolTokenData.mcaps,
 					groupBy,
@@ -627,7 +660,7 @@ export const useFetchProtocolChartData = ({
 					dateInMs: true,
 					denominationPriceHistory
 				})
-			if (isTokenVolumeToggled)
+			if (isTokenVolumeToggled && protocolTokenData.volumes)
 				charts['Token Volume'] = formatBarChart({
 					data: protocolTokenData.volumes,
 					groupBy,
@@ -710,7 +743,7 @@ export const useFetchProtocolChartData = ({
 		if (medianAPYData) {
 			const medianAPYChartData: Array<[number, number]> = []
 			for (const item of medianAPYData) {
-				medianAPYChartData.push([+item.date * 1e3, Number(item.medianAPY) || 0])
+				medianAPYChartData.push([item.date * 1e3, item.medianAPY])
 			}
 			charts['Median APY'] = formatLineChart({
 				data: medianAPYChartData,
@@ -725,14 +758,17 @@ export const useFetchProtocolChartData = ({
 			const successfulProposals: Record<string, number> = {}
 			const maxVotes: Record<string, number> = {}
 			for (const gItem of governanceData) {
-				for (const item of gItem.activity ?? []) {
-					const date = Math.floor(+item.date / 86400) * 86400
-					totalProposals[date] = (totalProposals[date] ?? 0) + (item['Total'] || 0)
-					successfulProposals[date] = (successfulProposals[date] ?? 0) + (item['Successful'] || 0)
+				for (const item of gItem.activity) {
+					const date = Math.floor(item.date / 86400) * 86400
+					totalProposals[date] = (totalProposals[date] ?? 0) + item.Total
+					successfulProposals[date] = (successfulProposals[date] ?? 0) + item.Successful
 				}
-				for (const item of gItem.maxVotes ?? []) {
-					const date = Math.floor(+item.date / 86400) * 86400
-					maxVotes[date] = (maxVotes[date] ?? 0) + (Number(item['Max Votes']) || 0)
+				for (const item of gItem.maxVotes) {
+					const date = Math.floor(item.date / 86400) * 86400
+					const currentMax = maxVotes[date]
+					if (currentMax === undefined || item['Max Votes'] > currentMax) {
+						maxVotes[date] = item['Max Votes']
+					}
 				}
 			}
 			charts['Total Proposals'] = formatBarChart({
@@ -753,7 +789,7 @@ export const useFetchProtocolChartData = ({
 		}
 
 		if (nftVolumeData && isNftVolumeToggled)
-			charts['NFT Volume'] = formatBarChart({
+			charts['NFT Volume'] = formatNullableBarChart({
 				data: nftVolumeData,
 				groupBy,
 				dateInMs: true,
@@ -826,22 +862,11 @@ export const useFetchProtocolChartData = ({
 		tokenTotalSupply,
 		fetchingTokenLiquidity,
 		tokenLiquidityData,
-		fetchingBaseTvlChart,
-		shouldFetchBaseTvlChart,
-		fetchingPool2TvlChart,
-		shouldFetchPool2Tvl,
+		isCompositeTvlLoading,
 		fetchingStakingTvlChart,
 		shouldFetchStakingTvl,
 		fetchingBorrowedTvlChart,
 		shouldFetchBorrowedTvl,
-		fetchingDoubleCountedTvlChart,
-		shouldFetchDoubleCountedTvl,
-		fetchingLiquidStakingTvlChart,
-		shouldFetchLiquidStakingTvl,
-		fetchingVestingTvlChart,
-		shouldFetchVestingTvl,
-		fetchingGovTokensTvlChart,
-		shouldFetchGovTokensTvl,
 		denominationGeckoId,
 		adapterChartStates,
 		fetchingTvs,
@@ -870,6 +895,7 @@ export const useFetchProtocolChartData = ({
 		bridgeVolumeData,
 		isTvlToggled,
 		isTotalAssetsToggled,
+		isPrimaryTvlToggled,
 		isTvsToggled,
 		isMcapToggled,
 		isTokenPriceToggled,

@@ -11,6 +11,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
+import type { IProtocolTokenBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
@@ -34,7 +35,6 @@ import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
-const EMPTY_TOGGLE_OPTIONS = []
 const TREASURY_SERIES = new Set(['Treasury'])
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -183,7 +183,7 @@ function TokensMultiSeriesChartCard({
 	} = useProtocolBreakdownPresentation({
 		breakdown,
 		availableSeries: allTokens,
-		defaultSeries: defaultTokens,
+		...(defaultTokens ? { defaultSeries: defaultTokens } : {}),
 		aggregateOthers,
 		type: 'line'
 	})
@@ -310,7 +310,7 @@ export default function Protocols(props: TreasuryPageProps) {
 	// Read query params only when router is ready to avoid hydration mismatch.
 	const includeOwnTokens = router.isReady && router.query.includeOwnTokens === 'true'
 
-	const extraKeys = React.useMemo(() => (includeOwnTokens ? ['OwnTokens'] : []), [includeOwnTokens])
+	const extraKeys = React.useMemo<Array<'OwnTokens'>>(() => (includeOwnTokens ? ['OwnTokens'] : []), [includeOwnTokens])
 
 	const {
 		isLoading,
@@ -332,10 +332,10 @@ export default function Protocols(props: TreasuryPageProps) {
 		computeInflows: false
 	})
 
-	const { data: ownTokensBreakdown } = useQuery({
+	const { data: ownTokensBreakdown } = useQuery<IProtocolTokenBreakdownChart>({
 		queryKey: ['protocol-overview', 'treasury-own-tokens', protocol],
 		queryFn: () =>
-			fetchJson(
+			fetchJson<IProtocolTokenBreakdownChart>(
 				`/api/public/protocols/charts?kind=treasury&protocol=${encodeURIComponent(protocol)}&key=${encodeURIComponent('OwnTokens')}&breakdownType=${encodeURIComponent('token-breakdown')}`
 			),
 		staleTime: 60 * 60 * 1000,
@@ -363,7 +363,6 @@ export default function Protocols(props: TreasuryPageProps) {
 			metrics={props.metrics}
 			tab="treasury"
 			warningBanners={props.warningBanners}
-			toggleOptions={EMPTY_TOGGLE_OPTIONS}
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>

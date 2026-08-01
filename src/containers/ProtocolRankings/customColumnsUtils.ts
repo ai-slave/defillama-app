@@ -1,4 +1,6 @@
-export const sampleProtocol = {
+import type { IProtocol } from './types'
+
+export const sampleProtocol: IProtocol = {
 	name: 'Pendle',
 	slug: 'pendle',
 	chains: ['Ethereum', 'Arbitrum', 'Optimism', 'Binance', 'BSC', 'OP Mainnet', 'Mantle', 'Base', 'Sonic', 'Berachain'],
@@ -43,7 +45,8 @@ export const sampleProtocol = {
 		total7d: 100059,
 		total30d: 1148707,
 		total1y: 19280143,
-		average1y: 52822.3095890411,
+		annualized1y: 19280143,
+		monthlyAverage1y: 1606678.5833333333,
 		totalAllTime: 25640450,
 		pf: 40.09
 	},
@@ -52,7 +55,8 @@ export const sampleProtocol = {
 		total7d: 92307,
 		total30d: 1133455,
 		total1y: 19085881,
-		average1y: 52290.08493150685,
+		annualized1y: 19085881,
+		monthlyAverage1y: 1590490.0833333333,
 		totalAllTime: 25287865,
 		ps: 40.63
 	},
@@ -64,40 +68,42 @@ export const sampleProtocol = {
 	}
 }
 
-const FIELD_ALIASES = {
-	mcap: 'mcap',
-	tokenPrice: 'tokenPrice',
+const fieldAlias = (name: string, path: string) => ({ name, path, regex: new RegExp(`\\b${name}\\b`, 'g') })
+
+const FIELD_ALIASES = [
+	fieldAlias('mcap', 'mcap'),
+	fieldAlias('tokenPrice', 'tokenPrice'),
 	// TVL fields
-	tvl: 'tvl_default_tvl',
-	tvlPrevDay: 'tvl_default_tvlPrevDay',
-	tvlPrevWeek: 'tvl_default_tvlPrevWeek',
-	tvlPrevMonth: 'tvl_default_tvlPrevMonth',
+	fieldAlias('tvl', 'tvl_default_tvl'),
+	fieldAlias('tvlPrevDay', 'tvl_default_tvlPrevDay'),
+	fieldAlias('tvlPrevWeek', 'tvl_default_tvlPrevWeek'),
+	fieldAlias('tvlPrevMonth', 'tvl_default_tvlPrevMonth'),
 	// TVL change fields
-	change_1d: 'tvlChange_change1d',
-	change_7d: 'tvlChange_change7d',
-	change_1m: 'tvlChange_change1m',
+	fieldAlias('change_1d', 'tvlChange_change1d'),
+	fieldAlias('change_7d', 'tvlChange_change7d'),
+	fieldAlias('change_1m', 'tvlChange_change1m'),
 	// Fees fields
-	fees_24h: 'fees_total24h',
-	fees_7d: 'fees_total7d',
-	fees_30d: 'fees_total30d',
-	fees_1y: 'fees_total1y',
-	average_fees_1y: 'fees_average1y',
-	cumulativeFees: 'fees_totalAllTime',
-	pf: 'fees_pf',
+	fieldAlias('fees_24h', 'fees_total24h'),
+	fieldAlias('fees_7d', 'fees_total7d'),
+	fieldAlias('fees_30d', 'fees_total30d'),
+	fieldAlias('fees_1y', 'fees_total1y'),
+	fieldAlias('average_fees_1y', 'fees_monthlyAverage1y'),
+	fieldAlias('cumulativeFees', 'fees_totalAllTime'),
+	fieldAlias('pf', 'fees_pf'),
 	// Revenue fields
-	revenue_24h: 'revenue_total24h',
-	revenue_7d: 'revenue_total7d',
-	revenue_30d: 'revenue_total30d',
-	revenue_1y: 'revenue_total1y',
-	average_revenue_1y: 'revenue_average1y',
-	cumulativeRevenue: 'revenue_totalAllTime',
-	ps: 'revenue_ps',
+	fieldAlias('revenue_24h', 'revenue_total24h'),
+	fieldAlias('revenue_7d', 'revenue_total7d'),
+	fieldAlias('revenue_30d', 'revenue_total30d'),
+	fieldAlias('revenue_1y', 'revenue_total1y'),
+	fieldAlias('average_revenue_1y', 'revenue_monthlyAverage1y'),
+	fieldAlias('cumulativeRevenue', 'revenue_totalAllTime'),
+	fieldAlias('ps', 'revenue_ps'),
 	// Dexs fields
-	volume_24h: 'dexs_total24h',
-	volume_7d: 'dexs_total7d',
-	volumeChange_7d: 'dexs_change_7dover7d',
-	cumulativeVolume: 'dexs_totalAllTime'
-}
+	fieldAlias('volume_24h', 'dexs_total24h'),
+	fieldAlias('volume_7d', 'dexs_total7d'),
+	fieldAlias('volumeChange_7d', 'dexs_change_7dover7d'),
+	fieldAlias('cumulativeVolume', 'dexs_totalAllTime')
+]
 
 export const AVAILABLE_FUNCTIONS = [
 	{ name: 'abs', type: 'operator', args: 'x' },
@@ -112,20 +118,27 @@ export const AVAILABLE_FUNCTIONS = [
 	{ name: 'if', type: 'function', args: 'c, a, b' }
 ]
 
-export const AVAILABLE_FIELDS = Object.keys(FIELD_ALIASES)
+export const AVAILABLE_FIELDS = FIELD_ALIASES.map((alias) => alias.name)
 
-// Pre-computed RegExp patterns for each alias to avoid creating RegExp objects inside loops
-const ALIAS_REGEX_MAP: Record<keyof typeof FIELD_ALIASES, RegExp> = {} as Record<keyof typeof FIELD_ALIASES, RegExp>
-for (const alias in FIELD_ALIASES) {
-	ALIAS_REGEX_MAP[alias as keyof typeof FIELD_ALIASES] = new RegExp(`\\b${alias}\\b`, 'g')
+export function parseProtocolTableColumnVisibility(value: string | null): Record<string, boolean> {
+	if (!value) return {}
+	try {
+		const parsed: unknown = JSON.parse(value)
+		if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return {}
+		const visibility: Record<string, boolean> = {}
+		for (const [key, isVisible] of Object.entries(parsed)) {
+			if (typeof isVisible === 'boolean') visibility[key] = isVisible
+		}
+		return visibility
+	} catch {
+		return {}
+	}
 }
 
 export function replaceAliases(formula: string): string {
 	let result = formula
-	for (const alias in FIELD_ALIASES) {
-		const path = FIELD_ALIASES[alias as keyof typeof FIELD_ALIASES]
-		const regex = ALIAS_REGEX_MAP[alias as keyof typeof FIELD_ALIASES]
-		result = result.replace(regex, path)
+	for (const alias of FIELD_ALIASES) {
+		result = result.replace(alias.regex, alias.path)
 	}
 	return result
 }

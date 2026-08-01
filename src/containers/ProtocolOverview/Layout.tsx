@@ -124,8 +124,8 @@ export function ProtocolOverviewLayout({
 	children: React.ReactNode
 	isCEX?: boolean
 	name: string
-	category: string
-	otherProtocols?: Array<string>
+	category?: string | null
+	otherProtocols?: Array<string> | null
 	toggleOptions?: Array<{
 		name: string
 		key: string
@@ -206,7 +206,7 @@ export function ProtocolOverviewLayout({
 			: tab === 'stablecoins'
 				? `/cex/stablecoins/${entitySlug}`
 				: `/cex/${entitySlug}`
-		: !tab || tab === 'information'
+		: tab === 'information'
 			? `/protocol/${entitySlug}`
 			: tab === 'tvl'
 				? `/protocol/tvl/${entitySlug}`
@@ -230,10 +230,10 @@ export function ProtocolOverviewLayout({
 			description={resolvedDescription}
 			canonicalUrl={standaloneCanonicals[tab] ? canonicalUrl : null}
 			noIndex={shouldNoIndex}
-			pageName={isCEX ? ['Exchanges'] : undefined}
-			tvlOptions={toggleOptions}
+			{...(isCEX ? { pageName: ['Exchanges'] } : {})}
+			{...(toggleOptions !== undefined ? { tvlOptions: toggleOptions } : {})}
 		>
-			{category === 'Uncollateralized Lending' || category === 'RWA Lending' ? (
+			{tab !== 'borrowed' && (category === 'Uncollateralized Lending' || category === 'RWA Lending') ? (
 				<div className="relative rounded-md border border-(--bg-color) bg-surface-elevated-1 p-2 text-center text-xs text-black dark:text-primary">
 					<p>
 						Active loans are not included in TVL by default, to include them toggle Active Loans. For more info on this
@@ -403,9 +403,9 @@ export function ProtocolOverviewLayout({
 						</TabLink>
 					) : null}
 				</div>
-				{tab !== 'investorRelations' ? (
+				{tab !== 'investorRelations' && entityQuestions ? (
 					<EntityQuestionsStrip
-						questions={entityQuestions || []}
+						questions={entityQuestions}
 						entitySlug={slug(name)}
 						entityType="protocol"
 						entityName={name}

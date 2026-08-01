@@ -1,10 +1,10 @@
 import { useQueries, type UseQueryResult } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import {
 	fetchProtocolTvlBreakdownForDashboard,
 	getAdvancedTvlBreakdownSources,
-	getProtocolTvlBreakdownQueryKey
+	getProtocolTvlBreakdownQueryKey,
+	type ProtocolTvlBreakdownChart
 } from '../services/protocolTvl'
 import type { AdvancedTvlChartType } from '../types'
 import { buildAdvancedTvlChartData, type AdvancedTvlChartData } from './advancedTvlChartData'
@@ -34,7 +34,7 @@ export function useAdvancedTvlChartData({
 		() => getAdvancedTvlBreakdownSources(protocol, chartType, extraTvlsEnabled),
 		[protocol, chartType, extraTvlsEnabled]
 	)
-	const queries = useQueries({
+	const queries: Array<UseQueryResult<ProtocolTvlBreakdownChart>> = useQueries({
 		queries: sources.map((source) => ({
 			queryKey: getProtocolTvlBreakdownQueryKey(source.request),
 			queryFn: () => fetchProtocolTvlBreakdownForDashboard(source.request),
@@ -43,7 +43,7 @@ export function useAdvancedTvlChartData({
 			refetchOnWindowFocus: false,
 			retry: 0
 		}))
-	}) as Array<UseQueryResult<IProtocolChainBreakdownChart | null>>
+	})
 	const isNetworkLoading = enabled && queries.some((query) => query.isLoading)
 	const computeSignature = [
 		protocol,
@@ -52,7 +52,7 @@ export function useAdvancedTvlChartData({
 		sources.map((source) => JSON.stringify(getProtocolTvlBreakdownQueryKey(source.request))).join('|'),
 		queries.map((query) => query.dataUpdatedAt).join('|')
 	].join('::')
-	const latestBreakdowns = useRef<Array<IProtocolChainBreakdownChart | null | undefined>>([])
+	const latestBreakdowns = useRef<Array<ProtocolTvlBreakdownChart | undefined>>([])
 	latestBreakdowns.current = queries.map((query) => query.data)
 	const [computed, setComputed] = useState<{ signature: string; data: AdvancedTvlChartData }>({
 		signature: '',

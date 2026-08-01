@@ -40,4 +40,11 @@ describe('ProtocolTaxonomy constants', () => {
 		expect(getProtocolCategoryDexVolumeLabel('Interface')).toBe('Spot Volume')
 		expect(getProtocolCategoryChartMetricLabel('dexVolume', 'Interface')).toBe('Spot Volume')
 	})
+
+	it('keeps every configured default sort backed by a visible category column', () => {
+		for (const category in protocolCategoryConfig) {
+			const defaultSort = protocolCategoryConfig[category]?.defaultSort
+			if (defaultSort) expect(getProtocolCategoryColumns(category)).toContain(defaultSort)
+		}
+	})
 })

@@ -1,13 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
-import { type ComponentType, lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	ChartGroupingSelector,
-	DWMC_GROUPING_OPTIONS_LOWERCASE,
-	type LowercaseDwmcGrouping
+	DWMC_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { prepareChartCsv } from '~/components/ECharts/shared/csv'
 import { EmbedChart } from '~/components/EmbedChart'
@@ -28,41 +27,20 @@ import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { resolveProtocolChartQuery } from './chartQuery'
 import {
-	BAR_CHARTS,
 	protocolChartCategories,
 	protocolChartCategoryOrder,
 	protocolCharts,
 	type ProtocolChartCategory,
 	type ProtocolChartsLabels
 } from './constants'
-import type { IProtocolOverviewPageData, IToggledMetrics, IProtocolCoreChartProps } from './types'
+import type { IProtocolOverviewPageData } from './types'
 import { useFetchProtocolChartData } from './useFetchProtocolChartData'
-
-const resolveVisibility = ({
-	queryValue,
-	defaultEnabled
-}: {
-	queryValue: string | null
-	defaultEnabled: boolean
-}): 'true' | 'false' => {
-	if (queryValue === 'true') return 'true'
-	if (queryValue === 'false') return 'false'
-	return defaultEnabled ? 'true' : 'false'
-}
 
 const getQueryValueOnRemove = (isDefaultEnabled: boolean): 'false' | null => (isDefaultEnabled ? 'false' : null)
 
-const isChartInterval = (value: string | null): value is LowercaseDwmcGrouping =>
-	value != null && DWMC_GROUPING_OPTIONS_LOWERCASE.some((option) => option.value === value)
-const normalizeChartInterval = (value: string | null | undefined): LowercaseDwmcGrouping | null => {
-	const normalizedValue = value?.toLowerCase() ?? null
-	return isChartInterval(normalizedValue) ? normalizedValue : null
-}
-
-const ProtocolChart = lazy(() =>
-	import('./Chart').then((m) => ({ default: m.default as ComponentType<IProtocolCoreChartProps> }))
-)
+const ProtocolChart = lazy(() => import('./Chart'))
 
 type ProtocolMetricOption =
 	| {
@@ -98,66 +76,32 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const { chartInstance: overviewChartInstance, handleChartReady: handleOverviewChartReady } = useChartImageExport()
 	const overviewImageFilename = slug(props.name)
 	const overviewImageTitle = props.name
-	const chartDenominationByLowerSymbol = useMemo(
-		() => new Map(props.chartDenominations.map((d) => [d.symbol.toLowerCase(), d])),
-		[props.chartDenominations]
-	)
-
-	const { toggledMetrics, hasAtleasOneBarChart, toggledCharts, groupBy, defaultEnabledCharts, hasEvents } =
-		useMemo(() => {
-			const defaultEnabledChartSet = new Set<ProtocolChartsLabels>(props.defaultToggledCharts)
-			const defaultEnabledCharts: Partial<Record<ProtocolChartsLabels, boolean>> = {}
-			const chartsByVisibility: Record<string, 'true' | 'false'> = {}
-			for (const chartLabel of Object.keys(protocolCharts) as ProtocolChartsLabels[]) {
-				const chartKey = protocolCharts[chartLabel]
-				const defaultEnabled = defaultEnabledChartSet.has(chartLabel)
-				defaultEnabledCharts[chartLabel] = defaultEnabled
-				chartsByVisibility[chartKey] = resolveVisibility({
-					queryValue: searchParams.get(chartKey),
-					defaultEnabled
-				})
-			}
-
-			const denominationInSearchParams = searchParams.get('denomination')?.toLowerCase()
-			const hasEvents = (props.hallmarks?.length ?? 0) > 0 || (props.rangeHallmarks?.length ?? 0) > 0
-
-			const toggledMetrics = {
-				...chartsByVisibility,
-				denomination: denominationInSearchParams
-					? (chartDenominationByLowerSymbol.get(denominationInSearchParams)?.symbol ?? null)
-					: null,
-				events: hasEvents
-					? resolveVisibility({ queryValue: searchParams.get('events'), defaultEnabled: true })
-					: 'false'
-			} as IToggledMetrics
-
-			const toggledCharts = props.availableCharts.filter((chart) => toggledMetrics[protocolCharts[chart]] === 'true')
-
-			const hasAtleasOneBarChart = toggledCharts.some((chart) => BAR_CHARTS.includes(chart))
-
-			return {
-				toggledMetrics,
-				toggledCharts,
-				hasAtleasOneBarChart,
-				hasEvents,
-				groupBy: (() => {
-					if (!hasAtleasOneBarChart) return 'daily'
-					// Preserve existing shared/bookmarked URLs that still use title-cased values like `Weekly`.
-					const groupByParam = normalizeChartInterval(searchParams.get('groupBy'))
-					if (groupByParam) return groupByParam
-					return normalizeChartInterval(props.defaultChartView) ?? 'daily'
-				})(),
-				defaultEnabledCharts
-			}
-		}, [
+	const { toggledMetrics, hasAtLeastOneBarChart, toggledCharts, groupBy, defaultEnabledCharts, hasEvents } = useMemo(
+		() =>
+			resolveProtocolChartQuery({
+				getQueryValue: (key) => {
+					const values = searchParams.getAll(key)
+					if (values.length === 0) return null
+					if (values.length === 1) return values[0]
+					return values
+				},
+				availableCharts: props.availableCharts,
+				defaultToggledCharts: props.defaultToggledCharts,
+				chartDenominations: props.chartDenominations,
+				hallmarks: props.hallmarks,
+				rangeHallmarks: props.rangeHallmarks,
+				defaultChartView: props.defaultChartView
+			}),
+		[
 			searchParams,
-			chartDenominationByLowerSymbol,
+			props.availableCharts,
+			props.defaultToggledCharts,
+			props.chartDenominations,
 			props.hallmarks,
 			props.rangeHallmarks,
-			props.defaultToggledCharts,
-			props.availableCharts,
 			props.defaultChartView
-		])
+		]
+	)
 
 	const [tvlSettings] = useLocalStorageSettingsManager('tvl')
 
@@ -165,8 +109,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 		...props,
 		toggledMetrics,
 		groupBy: groupBy,
-		tvlSettings,
-		isCEX: props.isCEX
+		tvlSettings
 	})
 	const chartRenderModel = useMemo(
 		() => ({
@@ -232,26 +175,35 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const categoryByMetric = PROTOCOL_CATEGORY_BY_METRIC
 
 	const groupedFilteredOptions = useMemo(() => {
-		const groups = new Map<ProtocolChartCategory | 'Annotations' | 'Other', ProtocolMetricOption[]>()
+		const groups: Record<ProtocolChartCategory | 'Annotations' | 'Other', ProtocolMetricOption[]> = {
+			Core: [],
+			Token: [],
+			Revenue: [],
+			Volume: [],
+			Liquidations: [],
+			Bridge: [],
+			Activity: [],
+			Governance: [],
+			Other: [],
+			Annotations: []
+		}
 		const order: Array<ProtocolChartCategory | 'Annotations' | 'Other'> = [
 			...protocolChartCategoryOrder,
 			'Other',
 			'Annotations'
 		]
-		for (const key of order) groups.set(key, [])
-
 		for (const option of filteredMetricOptions) {
 			if (option.type === 'events') {
-				groups.get('Annotations')!.push(option)
+				groups.Annotations.push(option)
 				continue
 			}
 			const category = categoryByMetric.get(option.id) ?? 'Other'
-			groups.get(category)!.push(option)
+			groups[category].push(option)
 		}
 
 		return order
 			.map((label) => {
-				const options = groups.get(label) ?? []
+				const options = groups[label]
 				return {
 					label,
 					options,
@@ -367,9 +319,6 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 										</div>
 										<div className="flex flex-wrap gap-1">
 											{group.options.map((option) => {
-												const dotColor = option.active
-													? `color-mix(in oklch, ${getOptionColor(option)} 75%, var(--text-secondary))`
-													: null
 												return (
 													<button
 														key={`option-${group.label}-${option.id}`}
@@ -382,7 +331,9 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 															<span
 																aria-hidden
 																className="size-1.5 rounded-full"
-																style={{ backgroundColor: dotColor! }}
+																style={{
+																	backgroundColor: `color-mix(in oklch, ${getOptionColor(option)} 75%, var(--text-secondary))`
+																}}
 															/>
 														) : (
 															<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
@@ -500,7 +451,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 							size="md"
 						/>
 					) : null}
-					{hasAtleasOneBarChart ? (
+					{hasAtLeastOneBarChart ? (
 						<ChartGroupingSelector
 							value={groupBy}
 							onValueChange={(dataInterval) => {

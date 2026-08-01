@@ -1,7 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
-import { buildOraclesByChainDominanceData, buildOraclesByChainTableAndPieData } from '../byChainData'
+import {
+	buildOraclesByChainDominanceData,
+	buildOraclesByChainTableAndPieData,
+	getTopMeasuredOracleProtocol
+} from '../byChainData'
 import type { OraclesByChainPageData } from '../types'
+
+describe('getTopMeasuredOracleProtocol', () => {
+	it('finds the largest measured TVS without depending on canonical member order', () => {
+		const protocols = [
+			{ name: 'First member', tvl: 10 },
+			{ name: 'Unmeasured member', tvl: null },
+			{ name: 'Largest member', tvl: 50 }
+		]
+
+		expect(getTopMeasuredOracleProtocol(protocols)?.name).toBe('Largest member')
+		expect(getTopMeasuredOracleProtocol([{ name: 'Zero member', tvl: 0 }])?.name).toBe('Zero member')
+	})
+})
 
 const tableData = [
 	{
@@ -55,7 +72,23 @@ describe('buildOraclesByChainTableAndPieData', () => {
 			{ name: 'Chainlink', value: 140 },
 			{ name: 'Pyth', value: 120 }
 		])
-		expect(tableData[0].tvl).toBe(100)
+		expect(tableData.map(({ tvl }) => tvl)).toEqual([100, 120])
+	})
+
+	it('keeps unavailable TVS null through toggles and excludes it from pie arithmetic', () => {
+		const result = buildOraclesByChainTableAndPieData({
+			tableData: [
+				...tableData,
+				{ name: 'Unavailable', tvl: null, extraTvl: { staking: 500 }, protocolsSecured: 1, chains: [] }
+			],
+			extraTvlsEnabled: { staking: true },
+			hasEnabledExtras: true
+		})
+
+		expect(result.tableData.at(-1)).toEqual(expect.objectContaining({ name: 'Unavailable', tvl: null }))
+		expect(buildRuntimePieChartPresentation({ series: result.pieSeries }).chartData).not.toEqual(
+			expect.arrayContaining([expect.objectContaining({ name: 'Unavailable' })])
+		)
 	})
 })
 
@@ -97,7 +130,10 @@ describe('buildOraclesByChainDominanceData', () => {
 
 		expect(result.dominanceDataset).toEqual({
 			dimensions: ['timestamp', 'Chainlink', 'Pyth'],
-			source: [[1_000, 140, 60]]
+			source: [
+				[1_000, 140, 60],
+				[2_000, 0, 0]
+			]
 		})
 		expect(result.dominanceCharts).toEqual([
 			{
@@ -109,5 +145,18 @@ describe('buildOraclesByChainDominanceData', () => {
 			},
 			{ type: 'line', name: 'Pyth', encode: { x: 0, y: 2 }, color: '#222', stack: 'dominance' }
 		])
+	})
+
+	it('keeps absent chart measurements null while preserving explicit zero', () => {
+		const result = buildOraclesByChainDominanceData({
+			chartData: [{ timestamp: 1, Pyth: 0 }],
+			oracles: ['Chainlink', 'Pyth'],
+			oraclesColors: { Chainlink: '#111', Pyth: '#222' },
+			extraBreakdownsByApiKey: {},
+			extraTvlsEnabled: {},
+			shouldApplyExtraTvlFormatting: false
+		})
+
+		expect(result.dominanceDataset.source).toEqual([[1_000, null, 0]])
 	})
 })

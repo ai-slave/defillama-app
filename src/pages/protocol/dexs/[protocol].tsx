@@ -1,7 +1,8 @@
-import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
+import type { GetStaticPropsContext } from 'next'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
+import type { TimePoint } from '~/components/ECharts/MultiSeriesChart/timeSeriesBuilder'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -13,8 +14,12 @@ import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { CHART_COLORS } from '~/constants/colors'
 import { DimensionProtocolChartByType } from '~/containers/AdapterMetrics/ProtocolChart'
 import { getAdapterProtocolOverview } from '~/containers/AdapterMetrics/queries'
+import {
+	getLinkedAdapterProtocolVersionNames,
+	getLinkedAdapterProtocolVersions
+} from '~/containers/ProtocolOverview/adapterProtocolPage'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
-import { formatAdapterData } from '~/containers/ProtocolOverview/formatAdapterData'
+import { formatAdapterData, getAdapterMethodology } from '~/containers/ProtocolOverview/formatAdapterData'
 import { KeyMetrics } from '~/containers/ProtocolOverview/KeyMetrics'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import {
@@ -30,17 +35,41 @@ import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/Char
 import { Panel } from '~/ui/Panel'
 import { slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
+import type { HallmarkPoint } from '~/utils/hallmarks'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
-const EMPTY_TOGGLE_OPTIONS = []
+const EMPTY_TOGGLE_OPTIONS: Array<{ name: string; key: string }> = []
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-export const getStaticProps = withPerformanceLogging(
+type DexProtocolChartName = 'DEX Volume' | 'Notional Volume'
+
+interface DexProtocolPageProps {
+	name: string
+	deprecated: boolean
+	otherProtocols: string[]
+	category: string | null
+	metrics: IProtocolOverviewPageData['metrics']
+	hasKeyMetrics: true
+	openSmolStatsSummaryByDefault: true
+	dexVolume: IProtocolOverviewPageData['dexVolume']
+	dexNotionalVolume: IProtocolOverviewPageData['dexNotionalVolume']
+	charts: Partial<Record<DexProtocolChartName, TimePoint[]>>
+	defaultCharts: DexProtocolChartName[]
+	protocolChains: string[]
+	protocolVersions: string[]
+	warningBanners: ReturnType<typeof getProtocolWarningBanners>
+	hallmarks: HallmarkPoint[] | null
+	defaultChartView: LowercaseDwmcGrouping
+	seoTitle: string
+	seoDescription: string
+}
+
+export const getStaticProps = withPerformanceLogging<DexProtocolPageProps, { protocol: string }>(
 	'protocol/dexs/[protocol]',
 	async ({ params }: GetStaticPropsContext<{ protocol: string }>) => {
 		if (!params?.protocol) {
@@ -64,29 +93,31 @@ export const getStaticProps = withPerformanceLogging(
 		if (protocolRoute.type === 'redirect') {
 			return canonicalRouteRedirect(protocolRoute.destination)
 		}
-		const metadata = [protocolRoute.route.id, protocolRoute.route.metadata] as const
+		const metadata = protocolRoute.route.metadata
+		const protocolDisplayName = metadata.displayName
+		if (!protocolDisplayName) return { notFound: true }
 		const canonicalProtocol = protocolRoute.route.canonicalSlug
 
 		const [protocolData, volumeData, notionalVolumeData] = await Promise.all([
 			fetchProtocolOverviewMetrics(canonicalProtocol),
-			metadata[1].dexs
+			metadata.dexs
 				? getAdapterProtocolOverview({
 						adapterType: 'dexs',
-						protocol: metadata[1].displayName,
+						protocol: protocolDisplayName,
 						excludeTotalDataChart: false
 					}).catch(() => null)
 				: null,
-			metadata[1].dexsNotionalVolume
+			metadata.dexsNotionalVolume
 				? getAdapterProtocolOverview({
 						adapterType: 'dexs',
-						protocol: metadata[1].displayName,
+						protocol: protocolDisplayName,
 						excludeTotalDataChart: false,
 						dataType: 'dailyNotionalVolume'
 					}).catch(() => null)
 				: null
 		])
 
-		const metrics = getProtocolMetricFlags({ protocolData, metadata: metadata[1] })
+		const metrics = getProtocolMetricFlags({ protocolData, metadata })
 		const hallmarks = buildHallmarksWithGenuineSpikes({
 			dimensions: protocolData.dimensions
 		})
@@ -94,61 +125,52 @@ export const getStaticProps = withPerformanceLogging(
 		const seoTitle = `${protocolData.name} DEX Trading Volume & Stats - DefiLlama`
 		const seoDescription = `Track ${protocolData.name} decentralized exchange trading volume with daily, weekly, and cumulative charts on DefiLlama.`
 
-		const dexVolume: IProtocolOverviewPageData['dexVolume'] = formatAdapterData({
+		const dexVolume = formatAdapterData({
 			data: volumeData,
-			methodologyKey: volumeData?.methodology?.['Volume'] ? 'Volume' : 'dexs'
+			methodologyKey: getAdapterMethodology(volumeData?.methodology ?? null, 'Volume') ? 'Volume' : 'dexs'
 		})
 
-		const dexNotionalVolume: IProtocolOverviewPageData['dexNotionalVolume'] = formatAdapterData({
+		const dexNotionalVolume = formatAdapterData({
 			data: notionalVolumeData,
 			methodologyKey: 'dexsNotionalVolume'
 		})
 
-		const linkedProtocolsSet = new Set([
-			...(volumeData?.linkedProtocols ?? []).slice(1),
-			...(notionalVolumeData?.linkedProtocols ?? []).slice(1)
-		])
-		const linkedProtocolsWithAdapterData = []
-		if (protocolData.isParentProtocol) {
-			for (const key in protocolMetadata) {
-				if (linkedProtocolsSet.size === 0) break
-				if (linkedProtocolsSet.has(protocolMetadata[key].displayName)) {
-					if (protocolMetadata[key].dexs || protocolMetadata[key].dexsNotionalVolume) {
-						linkedProtocolsWithAdapterData.push(protocolMetadata[key])
-					}
-					linkedProtocolsSet.delete(protocolMetadata[key].displayName)
-				}
-			}
-		}
+		const linkedProtocolVersions = getLinkedAdapterProtocolVersions({
+			isParentProtocol: protocolData.isParentProtocol === true,
+			linkedProtocols: volumeData?.linkedProtocols,
+			protocolMetadata
+		})
+		const protocolVersions = getLinkedAdapterProtocolVersionNames({
+			versions: linkedProtocolVersions,
+			metric: 'dexs'
+		})
 
-		const charts: Record<string, Array<readonly [number, number]>> = {}
-		if (volumeData?.totalDataChart?.length > 0) {
+		const charts: DexProtocolPageProps['charts'] = {}
+		const defaultCharts: DexProtocolChartName[] = []
+		if (volumeData && volumeData.totalDataChart.length > 0) {
 			charts['DEX Volume'] = normalizeProtocolFlowChart(volumeData.totalDataChart)
+			defaultCharts.push('DEX Volume')
 		}
-		if (notionalVolumeData?.totalDataChart?.length > 0) {
+		if (notionalVolumeData && notionalVolumeData.totalDataChart.length > 0) {
 			charts['Notional Volume'] = normalizeProtocolFlowChart(notionalVolumeData.totalDataChart)
-		}
-
-		const defaultCharts: string[] = []
-		for (const chartName in charts) {
-			defaultCharts.push(chartName)
+			defaultCharts.push('Notional Volume')
 		}
 
 		return {
 			props: {
 				name: protocolData.name,
 				deprecated: protocolData.deprecated ?? false,
-				otherProtocols: protocolData?.otherProtocols ?? [],
-				category: protocolData?.category ?? null,
+				otherProtocols: protocolData.otherProtocols ?? [],
+				category: protocolData.category ?? null,
 				metrics,
 				hasKeyMetrics: true,
 				openSmolStatsSummaryByDefault: true,
-				dexVolume: volumeData && volumeData.totalAllTime ? dexVolume : null,
-				dexNotionalVolume: notionalVolumeData && notionalVolumeData.totalAllTime ? dexNotionalVolume : null,
+				dexVolume,
+				dexNotionalVolume,
 				charts,
 				defaultCharts,
 				protocolChains: volumeData?.chains ?? [],
-				protocolVersions: linkedProtocolsWithAdapterData?.map((versionProtocol) => versionProtocol.displayName) ?? [],
+				protocolVersions,
 				warningBanners: getProtocolWarningBanners(protocolData),
 				hallmarks,
 				defaultChartView: dexVolume?.defaultChartView ?? dexNotionalVolume?.defaultChartView ?? 'daily',
@@ -171,7 +193,7 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function Protocols(props: DexProtocolPageProps) {
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>(props.defaultChartView)
 	const [charts, setCharts] = useState<string[]>(props.defaultCharts)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
@@ -179,20 +201,22 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 	const finalCharts = useMemo(() => {
 		const series: ProtocolFlowChartSeries[] = []
 
-		if (charts.includes('DEX Volume')) {
+		const dexVolumePoints = props.charts['DEX Volume']
+		if (charts.includes('DEX Volume') && dexVolumePoints) {
 			series.push({
 				name: 'DEX Volume',
 				color: CHART_COLORS[0],
 				stack: 'DEX Volume',
-				points: props.charts['DEX Volume']
+				points: dexVolumePoints
 			})
 		}
-		if (charts.includes('Notional Volume')) {
+		const notionalVolumePoints = props.charts['Notional Volume']
+		if (charts.includes('Notional Volume') && notionalVolumePoints) {
 			series.push({
 				name: 'Notional Volume',
 				color: CHART_COLORS[1],
 				stack: 'Notional Volume',
-				points: props.charts['Notional Volume']
+				points: notionalVolumePoints
 			})
 		}
 		return buildProtocolFlowChart({ groupBy, series })
@@ -220,6 +244,8 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					</h1>
 					<KeyMetrics
 						{...props}
+						isOracleProtocol={false}
+						oracleTvs={null}
 						formatPrice={(value) =>
 							formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						}
@@ -252,14 +278,14 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							charts={deferredFinalCharts.charts}
 							groupBy={groupBy}
 							valueSymbol="$"
-							hallmarks={props.hallmarks ?? undefined}
+							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							onReady={handleChartReady}
 						/>
 					</Suspense>
 				</ChartPanel>
 			</div>
 			<div className="grid grid-cols-2 gap-2">
-				{props.protocolChains?.length > 1 ? (
+				{props.protocolChains.length > 1 ? (
 					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="chain"
@@ -267,12 +293,12 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							protocolDisplayName={props.name}
 							adapterType="dexs"
 							breakdownNames={props.protocolChains}
-							hallmarks={props.hallmarks ?? undefined}
+							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							title="DEX Volume by chain"
 						/>
 					</ChartPanel>
 				) : null}
-				{props.protocolVersions?.length > 1 ? (
+				{props.protocolVersions.length > 1 ? (
 					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="version"
@@ -280,7 +306,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							protocolDisplayName={props.name}
 							adapterType="dexs"
 							breakdownNames={props.protocolVersions}
-							hallmarks={props.hallmarks ?? undefined}
+							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							title="DEX Volume by protocol version"
 						/>
 					</ChartPanel>

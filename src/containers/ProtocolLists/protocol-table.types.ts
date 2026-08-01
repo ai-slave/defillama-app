@@ -18,6 +18,7 @@ interface ProtocolTvls {
 interface LiteProtocol {
 	category?: string | null
 	chains: Array<string>
+	contributesTvl: boolean
 	oracles?: Array<string>
 	oraclesByChain?: Record<string, Array<string>>
 	forkedFrom?: Array<string>
@@ -74,7 +75,12 @@ export interface ChainMetricSnapshot {
 
 export interface IFormattedProtocol extends LiteProtocol, ProtocolTvls {
 	extraTvl?: {
-		[key: string]: { tvl: number; tvlPrevDay: number | null; tvlPrevWeek: number | null; tvlPrevMonth: number | null }
+		[key: string]: {
+			tvl: number | null
+			tvlPrevDay: number | null
+			tvlPrevWeek: number | null
+			tvlPrevMonth: number | null
+		}
 	}
 	change_1d: number | null
 	change_7d: number | null

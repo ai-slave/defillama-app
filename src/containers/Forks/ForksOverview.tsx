@@ -119,7 +119,13 @@ export const ForksOverview = ({
 	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
 	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({ availableSeries: forkSeries })
 	const selectedDominance = React.useMemo(
-		() => buildSelectedPercentageChart({ dataset: dominanceDataset, charts: dominanceCharts, selectedCharts }),
+		() =>
+			buildSelectedPercentageChart({
+				dataset: dominanceDataset,
+				charts: dominanceCharts,
+				selectedCharts,
+				missingValuePolicy: 'sum-available'
+			}),
 		[dominanceCharts, dominanceDataset, selectedCharts]
 	)
 	const {
