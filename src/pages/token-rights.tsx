@@ -10,6 +10,7 @@ import { matchSorter } from 'match-sorter'
 import Link from 'next/link'
 import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
@@ -530,6 +531,12 @@ function TokenRightsPage({ protocols }: { protocols: TokenRightsListItem[] }) {
 								</Button>
 							)
 						})}
+						<ExternalLinkButton
+							href="https://docs.google.com/forms/d/e/1FAIpQLSdV1cCKiwQzzSlUIkPbfVHrTLFYaiDFpTR1cvXmuDiakORfuQ/viewform"
+							icon="plus"
+						>
+							List Your Tokens
+						</ExternalLinkButton>
 						<label className={`${searchFieldInlineWrapperStyles} ml-auto`}>
 							<span className="sr-only">Search protocol</span>
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
