@@ -301,7 +301,11 @@ describe('MultiSeriesChart lifecycle', () => {
 		)
 
 		const options = mocks.instance.setOption.mock.calls[0][0]
-		expect(options.dataset.dimensions).toEqual(['__dimension_0', '__dimension_1', '__dimension_2'])
+		expect(options.dataset.dimensions).toEqual([
+			{ name: '__dimension_0', displayName: 'category' },
+			{ name: '__dimension_1' },
+			{ name: '__dimension_2', displayName: 'Visible' }
+		])
 		expect(options.dataset.source[0]).toBe(sourceRow)
 		expect(options.series).toHaveLength(1)
 		expect(options.series[0].encode).toEqual({ x: 0, y: 2 })
@@ -330,7 +334,11 @@ describe('MultiSeriesChart lifecycle', () => {
 		)
 
 		const options = mocks.instance.setOption.mock.calls[0][0]
-		expect(options.dataset.dimensions).toEqual(['__dimension_0', '__dimension_1', '__dimension_2'])
+		expect(options.dataset.dimensions).toEqual([
+			{ name: '__dimension_0', displayName: 'timestamp' },
+			{ name: '__dimension_1' },
+			{ name: '__dimension_2', displayName: 'Visible' }
+		])
 		expect(options.series[0].encode).toEqual({ x: 0, y: 2 })
 	})
 

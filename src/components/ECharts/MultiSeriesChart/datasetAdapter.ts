@@ -1,7 +1,7 @@
 import type { MultiSeriesChartArrayRow, MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from './types'
 
 type PreparedMultiSeriesDataset = {
-	dimensions: string[]
+	dimensions: Array<{ name: string; displayName?: string }>
 	logicalDimensions: string[]
 	source: MultiSeriesChartArrayRow[]
 	charts: MultiSeriesChartSeriesConfig[]
@@ -57,10 +57,20 @@ function usesOnlyNumericEncodes(chart: MultiSeriesChartSeriesConfig) {
 /** Assign private ECharts dimensions without copying history when only series visibility changes. */
 export function prepareMultiSeriesDataset(
 	dataset: MultiSeriesChartDataset,
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: MultiSeriesChartSeriesConfig[],
+	selectedCharts?: Set<string>
 ): PreparedMultiSeriesDataset {
 	const allNumericEncodes = charts.every(usesOnlyNumericEncodes)
 	const dimensionIndex = allNumericEncodes ? undefined : buildDimensionIndex(dataset.dimensions)
+	const displayedIndexes = selectedCharts
+		? new Set(
+				displayedDimensionIndexes(
+					dataset.dimensions,
+					charts.filter((chart) => selectedCharts.has(chart.name)),
+					dimensionIndex
+				)
+			)
+		: null
 
 	// Keep the full chart order through renderer adaptation. Fallback colors are assigned from
 	// this stable order after selection, while non-selected encodes are never rendered.
@@ -79,7 +89,10 @@ export function prepareMultiSeriesDataset(
 	}
 
 	return {
-		dimensions: dataset.dimensions.map((_, index) => `__dimension_${index}`),
+		dimensions: dataset.dimensions.map((displayName, index) => ({
+			name: `__dimension_${index}`,
+			...(displayedIndexes == null || displayedIndexes.has(index) ? { displayName } : {})
+		})),
 		logicalDimensions: dataset.dimensions,
 		source: dataset.source,
 		charts: renderedCharts

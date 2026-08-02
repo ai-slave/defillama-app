@@ -2,7 +2,6 @@ import { skipToken, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
-import { buildCsvFromDataset } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
@@ -893,15 +892,6 @@ export const ChainsByAdapterChart = ({
 			title: chartName
 		}
 	}, [chartName, chartState])
-	const prepareCsvDirect =
-		deferredChartPresentation.kind === 'treemap' || deferredChartPresentation.kind === 'hbar'
-			? undefined
-			: () =>
-					buildCsvFromDataset({
-						dimensions: deferredChartPresentation.dataset.dimensions,
-						source: deferredChartPresentation.dataset.source,
-						filenameBase: exportConfig.filename
-					})
 
 	const chartKindLabel =
 		chartState.chartKind === 'treemap'
@@ -1011,7 +1001,6 @@ export const ChainsByAdapterChart = ({
 							chartInstance={exportChartInstance}
 							filename={exportConfig.filename}
 							title={exportConfig.title}
-							prepareCsvDirect={prepareCsvDirect}
 							pngProfile={chartState.chartKind === 'treemap' ? 'treemapNormalized' : undefined}
 						/>
 					) : null}

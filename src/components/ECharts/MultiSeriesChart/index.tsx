@@ -338,7 +338,10 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		() => (selectedCharts ? effectiveCharts.filter((chart) => selectedCharts.has(chart.name)) : effectiveCharts),
 		[effectiveCharts, selectedCharts]
 	)
-	const preparedDataset = useMemo(() => prepareMultiSeriesDataset(dataset, effectiveCharts), [dataset, effectiveCharts])
+	const preparedDataset = useMemo(
+		() => prepareMultiSeriesDataset(dataset, effectiveCharts, selectedCharts),
+		[dataset, effectiveCharts, selectedCharts]
+	)
 	const renderedDatasetDimensions = preparedDataset.logicalDimensions
 	const echartsDatasetDimensions = preparedDataset.dimensions
 	const renderedDatasetSource = preparedDataset.source

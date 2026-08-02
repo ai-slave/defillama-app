@@ -10,7 +10,11 @@ describe('prepareMultiSeriesDataset', () => {
 		])
 
 		expect(prepared.source).toBe(source)
-		expect(prepared.dimensions).toEqual(['__dimension_0', '__dimension_1', '__dimension_2'])
+		expect(prepared.dimensions).toEqual([
+			{ name: '__dimension_0', displayName: 'timestamp' },
+			{ name: '__dimension_1', displayName: 'A' },
+			{ name: '__dimension_2', displayName: 'B' }
+		])
 		expect(prepared.charts.map((chart) => chart.encode)).toEqual([
 			{ x: 0, y: 1 },
 			{ x: 0, y: 2 }
@@ -30,10 +34,16 @@ describe('prepareMultiSeriesDataset', () => {
 			[
 				{ type: 'line', name: 'A', encode: { x: 'timestamp', y: 'A' } },
 				{ type: 'line', name: 'B', encode: { x: 'timestamp', y: 'B' } }
-			]
+			],
+			new Set(['B'])
 		)
 
 		expect(prepared.logicalDimensions).toEqual(['timestamp', 'A', 'B'])
+		expect(prepared.dimensions).toEqual([
+			{ name: '__dimension_0', displayName: 'timestamp' },
+			{ name: '__dimension_1' },
+			{ name: '__dimension_2', displayName: 'B' }
+		])
 		expect(prepared.source).toBe(source)
 		expect(prepared.charts).toMatchObject([
 			{ name: 'A', encode: { x: 0, y: 1 } },

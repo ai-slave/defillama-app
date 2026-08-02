@@ -1,3 +1,4 @@
+import type { DatasetComponentOption } from 'echarts'
 import type * as echarts from 'echarts/core'
 import { useCallback } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
@@ -39,17 +40,32 @@ function toChartCsvCell(value: unknown): CsvCell {
 	return typeof value === 'string' || typeof value === 'boolean' ? value : ''
 }
 
-function getDatasetFromOption(option: any): { dimensions: string[] | null; source: unknown[] | null } {
-	const ds = option?.dataset
-	const datasetObj = Array.isArray(ds) ? ds[0] : ds
-	const dimensionsRaw = datasetObj?.dimensions
-	const sourceRaw = datasetObj?.source
+function getDatasetFromOption(option: ReturnType<echarts.ECharts['getOption']>): {
+	dimensions: string[] | null
+	source: unknown[] | null
+} {
+	const datasetOption = option.dataset as DatasetComponentOption | DatasetComponentOption[] | undefined
+	const dataset = Array.isArray(datasetOption) ? datasetOption[0] : datasetOption
+	const dimensionsRaw = dataset?.dimensions
+	const sourceRaw = dataset?.source
 
-	const dimensions =
-		Array.isArray(dimensionsRaw) && dimensionsRaw.every((d) => typeof d === 'string') ? dimensionsRaw : null
-	const source = Array.isArray(sourceRaw) ? sourceRaw : null
+	if (!Array.isArray(sourceRaw)) return { dimensions: null, source: null }
+	if (!dimensionsRaw) return { dimensions: null, source: sourceRaw }
 
-	return { dimensions, source }
+	const dimensions: string[] = []
+	const indexes: number[] = []
+	for (const [index, dimension] of dimensionsRaw.entries()) {
+		const name = typeof dimension === 'string' ? dimension : dimension.displayName
+		if (name === undefined) continue
+		dimensions.push(name)
+		indexes.push(index)
+	}
+
+	const source =
+		indexes.length === dimensionsRaw.length
+			? sourceRaw
+			: sourceRaw.map((row) => (Array.isArray(row) ? indexes.map((index) => row[index]) : row))
+	return { dimensions: dimensions.length > 0 ? dimensions : null, source }
 }
 
 export function buildCsvRowsFromDataset(dimensions: string[] | null, source: unknown[] | null): Array<Array<CsvCell>> {
