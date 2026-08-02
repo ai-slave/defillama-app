@@ -7,7 +7,13 @@ const mocks = vi.hoisted(() => ({
 	presentationInputs: [] as Array<{
 		chartData: MultiSeriesTimeSeriesDataset
 		selectedChains: string[]
-	}>
+	}>,
+	csvPreparers: [] as Array<
+		() => {
+			filename: string
+			rows: Array<Array<string | number | boolean>>
+		}
+	>
 }))
 
 vi.mock('next/router', () => ({
@@ -19,7 +25,12 @@ vi.mock('@tanstack/react-query', () => ({
 	useQuery: () => ({ data: undefined, error: null, isLoading: false })
 }))
 
-vi.mock('~/components/ChartExport/ChartExportButtons', () => ({ ChartExportButtons: () => null }))
+vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
+	ChartExportButtons: (props: { prepareCsvDirect?: (typeof mocks.csvPreparers)[number] }) => {
+		if (props.prepareCsvDirect) mocks.csvPreparers.push(props.prepareCsvDirect)
+		return null
+	}
+}))
 vi.mock('~/components/ChartExport/ChartRestoreButton', () => ({ ChartRestoreButton: () => null }))
 vi.mock('~/components/ECharts/shared/ChartGroupingSelector', () => ({
 	ChartGroupingSelector: () => null,
@@ -67,6 +78,7 @@ const baseChartData: MultiSeriesTimeSeriesDataset = {
 describe('ChainsByAdapterChart', () => {
 	beforeEach(() => {
 		mocks.presentationInputs = []
+		mocks.csvPreparers = []
 	})
 
 	it('passes the fetched chart dataset directly to the presentation builder', () => {
@@ -81,5 +93,23 @@ describe('ChainsByAdapterChart', () => {
 		)
 
 		expect(mocks.presentationInputs.map(({ chartData }) => chartData)).toEqual([baseChartData])
+	})
+
+	it('exports logical timestamp, date, and chain headers instead of private renderer dimensions', () => {
+		renderToStaticMarkup(
+			<ChainsByAdapterChart
+				adapterType={ADAPTER_TYPES.FEES}
+				dataType={ADAPTER_DATA_TYPES.DAILY_APP_REVENUE}
+				chartData={baseChartData}
+				allChains={['Base', 'Ethereum']}
+				chartName="App Revenue"
+			/>
+		)
+
+		expect(mocks.csvPreparers).toHaveLength(1)
+		expect(mocks.csvPreparers[0]!().rows).toEqual([
+			['Timestamp', 'Date', 'Base', 'Ethereum'],
+			[Date.UTC(2024, 0, 1), '2024-01-01', 100, 50]
+		])
 	})
 })
