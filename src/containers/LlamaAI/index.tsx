@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import {
 	lazy,
@@ -101,7 +101,7 @@ import {
 import type { AgenticAnswerMode, Message, UpgradeOffer } from '~/containers/LlamaAI/types'
 import { chartsMapFromGroups } from '~/containers/LlamaAI/utils/articleExport'
 import type { SettingsInitialState, SettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
-import { useAiBalance } from '~/containers/Subscription/useTopup'
+import { AI_BALANCE_QUERY_KEY, useAiBalance } from '~/containers/Subscription/useTopup'
 import { useLlamaAINavigate, useProjectHomeSignal } from '~/contexts/LlamaAINavigate'
 import { useLlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
 import { useOptionalSessionAliases } from '~/contexts/SessionAliasRegistry'
@@ -400,6 +400,15 @@ export function AgenticChat({
 		rateLimitDetails,
 		contextWarning
 	} = streamState
+
+	const queryClient = useQueryClient()
+	const wasStreamingRef = useRef(false)
+	useEffect(() => {
+		if (wasStreamingRef.current && !isStreaming) {
+			void queryClient.invalidateQueries({ queryKey: [AI_BALANCE_QUERY_KEY] })
+		}
+		wasStreamingRef.current = isStreaming
+	}, [isStreaming, queryClient])
 
 	const sharedMessages = useMemo(
 		() => sharedSession?.messages.map((msg, i) => mapSharedSessionMessage(msg, i)) ?? null,

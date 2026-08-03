@@ -19,6 +19,8 @@ interface TopupRequest {
 
 type TopupResult = { provider: 'stripe'; clientSecret: string } | { provider: 'llamapay'; checkoutUrl: string }
 
+export const AI_BALANCE_QUERY_KEY = 'ai-balance'
+
 export const TOPUP_CONFIG = {
 	minAmount: 1,
 	maxAmount: 500,
@@ -46,7 +48,7 @@ export const useAiBalance = () => {
 		isError,
 		refetch
 	} = useQuery<AiBalance>({
-		queryKey: ['ai-balance', user?.id],
+		queryKey: [AI_BALANCE_QUERY_KEY, user?.id],
 		queryFn: async () => {
 			const data = await authorizedFetch(`${AUTH_SERVER}/user/ai-balance`, {
 				method: 'GET'
@@ -99,7 +101,7 @@ export const useCreateTopup = () => {
 			return normalizedResponse.json()
 		},
 		onSuccess: () => {
-			void queryClient.invalidateQueries({ queryKey: ['ai-balance'] })
+			void queryClient.invalidateQueries({ queryKey: [AI_BALANCE_QUERY_KEY] })
 		}
 	})
 }

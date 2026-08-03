@@ -11,6 +11,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { CreateProjectModal } from './CreateProjectModal'
 import { useProjectList, useProjectSessions } from './hooks'
+import { orderVisibleProjectSessions } from './sessionOrdering'
 import { getProjectTier } from './tier'
 import type { ProjectWithStats } from './types'
 
@@ -67,15 +68,10 @@ export function ProjectsSidebarSection({
 	const hasOverflow = projects.length > VISIBLE_LIMIT
 	const activeProjectSessions = projectSessions.data
 	const sessionById = useMemo(() => new Map(sessions.map((session) => [session.sessionId, session])), [sessions])
-	const visibleProjectSessions = useMemo(() => {
-		if (!activeProjectSessions) return []
-		const next = activeProjectSessions.slice(0, NESTED_SESSIONS_LIMIT)
-		if (!currentSessionId || next.some((s) => s.sessionId === currentSessionId)) return next
-		const currentSession = activeProjectSessions.find((s) => s.sessionId === currentSessionId)
-		if (!currentSession) return next
-		if (next.length < NESTED_SESSIONS_LIMIT) return [...next, currentSession]
-		return [...next.slice(0, NESTED_SESSIONS_LIMIT - 1), currentSession]
-	}, [activeProjectSessions, currentSessionId])
+	const visibleProjectSessions = useMemo(
+		() => orderVisibleProjectSessions(activeProjectSessions, currentSessionId ?? null, NESTED_SESSIONS_LIMIT),
+		[activeProjectSessions, currentSessionId]
+	)
 
 	const navigate = useLlamaAINavigate()
 	const { hideSidebar } = useLlamaAIChrome()

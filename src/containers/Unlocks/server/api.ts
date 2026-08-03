@@ -40,12 +40,16 @@ export const calendarIcs = defineApiRoute({
 				)
 		)
 
+		const safeName = String(name)
+			.replace(/["\r\n;\\]/g, '_')
+			.trim()
+
 		return {
 			status: 200,
 			body: content,
 			headers: {
 				'Content-Type': 'text/calendar',
-				'Content-Disposition': `attachment; filename="${String(name)}-unlock.ics"`
+				'Content-Disposition': `attachment; filename="${safeName}-unlock.ics"`
 			}
 		}
 	}

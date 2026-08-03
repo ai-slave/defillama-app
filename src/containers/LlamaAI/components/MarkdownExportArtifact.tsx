@@ -14,6 +14,18 @@ interface MarkdownExportArtifactProps {
 	messageId?: string
 }
 
+const FILE_TYPE_LABELS: Record<string, string> = {
+	md: 'Markdown file',
+	xlsx: 'Excel workbook',
+	docx: 'Word document',
+	pptx: 'PowerPoint deck'
+}
+
+function fileExtension(filename: string): string {
+	const ext = filename.split('.').pop()?.toLowerCase() ?? ''
+	return ext || 'file'
+}
+
 async function downloadMarkdownFile({ url, filename }: { url: string; filename: string }) {
 	try {
 		const response = await fetch(url)
@@ -67,7 +79,9 @@ export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: Markd
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<span className="m-0 truncate text-sm font-medium text-(--text1)">{mdExport.title}</span>
 				<span className="m-0 text-xs text-(--text3)">
-					{downloadMarkdownMutation.isPending ? 'Downloading…' : 'Markdown file'}
+					{downloadMarkdownMutation.isPending
+						? 'Downloading…'
+						: (FILE_TYPE_LABELS[fileExtension(mdExport.filename)] ?? 'File')}
 				</span>
 				{downloadMarkdownMutation.error ? (
 					<span role="alert" className="m-0 text-xs text-error">
@@ -77,7 +91,7 @@ export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: Markd
 			</span>
 			<span className="flex shrink-0 items-center gap-1.5 text-ai-action">
 				<Icon name="download-paper" className="size-4" />
-				<span className="text-sm font-medium">.md</span>
+				<span className="text-sm font-medium">.{fileExtension(mdExport.filename)}</span>
 			</span>
 		</button>
 	)
