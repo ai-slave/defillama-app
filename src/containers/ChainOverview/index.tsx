@@ -44,8 +44,14 @@ export function ChainOverview(props: IChainOverviewData) {
 			<RowLinksWithDropdown links={props.allChains} activeLink={props.metadata.name} />
 			<div className="isolate flex flex-1 flex-col gap-2">
 				{showInvestorRelations && irDashboard ? (
-					<nav className={tabTrackStyles}>
-						<TabLink as="button" type="button" onClick={() => goToTab(undefined)} data-active={!irActive}>
+					<nav className={`${tabTrackStyles} scrollbar-none min-h-10 shrink-0`}>
+						<TabLink
+							as="button"
+							type="button"
+							onClick={() => goToTab(undefined)}
+							data-active={!irActive}
+							className="flex items-center"
+						>
 							Overview
 						</TabLink>
 						<TabLink
