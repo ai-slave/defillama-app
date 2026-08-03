@@ -9,7 +9,6 @@ const rows: PerformanceRow[] = [
 		marketMakerName: 'Lhava',
 		marketMakerImageUrl: null,
 		composite: 10,
-		grade: 'A+',
 		tradingKpis: 9.5,
 		trustIntegration: 8,
 		coverageCapabilities: 7.25,
@@ -24,7 +23,6 @@ const rows: PerformanceRow[] = [
 		marketMakerName: 'Wintermute',
 		marketMakerImageUrl: null,
 		composite: 5,
-		grade: 'C',
 		tradingKpis: null,
 		trustIntegration: 4,
 		coverageCapabilities: 3,
@@ -39,7 +37,6 @@ const rows: PerformanceRow[] = [
 		marketMakerName: 'GSR',
 		marketMakerImageUrl: null,
 		composite: 1,
-		grade: null,
 		tradingKpis: 1,
 		trustIntegration: 1,
 		coverageCapabilities: 1,
@@ -90,17 +87,13 @@ describe('ScoresTable', () => {
 		expect([...positions].sort((a, b) => a - b)).toEqual(positions)
 	})
 
-	it('renders the API grade as a colored letter', () => {
+	it('derives the grade from the composite score', () => {
 		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
-		expect(html).toContain('>A+</span>')
+		expect(html).toContain('>AAA</span>')
 		expect(html).toContain('text-success')
-		expect(html).toContain('>C</span>')
+		expect(html).toContain('>B</span>')
 		expect(html).toContain('text-warning')
-	})
-
-	it('falls back to a composite-derived grade when the API grade is missing', () => {
-		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
-		expect(html).toContain('>F</span>')
+		expect(html).toContain('>CCC</span>')
 		expect(html).toContain('text-error')
 	})
 

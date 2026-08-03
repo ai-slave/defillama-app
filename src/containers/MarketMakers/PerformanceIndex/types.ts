@@ -5,7 +5,6 @@ export type PerformanceRow = {
 	marketMakerName: string
 	marketMakerImageUrl: string | null
 	composite: number | null
-	grade: string | null
 	tradingKpis: number | null
 	trustIntegration: number | null
 	coverageCapabilities: number | null

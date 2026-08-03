@@ -1,12 +1,23 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { docsAsset, FigureDualTable, FigureRadar, FigureTable } from './DocsFigures'
+import { GRADE_BANDS } from './gradeBands'
 import { MarketMakersOutro } from './MarketMakersOutro'
 import { MarketMakersTabs } from './MarketMakersTabs'
+import {
+	PI_COMPONENT_SECTIONS,
+	PI_COMPOSITE_SCORE_INTRO,
+	PI_FIGURE_CAPTION,
+	PI_GRADE_SUMMARY,
+	PI_METHODOLOGY_INTRO,
+	PI_OVERVIEW_PARAGRAPHS,
+	PI_PREFACE_BULLET,
+	PI_SAME_RANK_NOTE
+} from './performanceIndexDocs'
 
-const LAST_UPDATED = 'April 8th, 2026'
+const LAST_UPDATED = 'July 31st, 2026'
 
 const TOC_ITEMS = [
 	{ id: 'introduction', label: 'Introduction' },
@@ -24,7 +35,7 @@ type WeightRow = { metric: string; weighting: string; ranking?: number }
 
 const PERFORMANCE_GLOBAL_WEIGHTS: WeightRow[] = [
 	{ metric: 'Trading KPIs', weighting: '40%' },
-	{ metric: 'Trust', weighting: '20%' },
+	{ metric: 'Trust & Integration', weighting: '20%' },
 	{ metric: 'Coverage & Capabilities', weighting: '15%' },
 	{ metric: 'Uptime', weighting: '10%' },
 	{ metric: 'Integration Level', weighting: '15%' }
@@ -43,7 +54,7 @@ const PERFORMANCE_KPI_WEIGHTS: WeightRow[] = [
 	{ metric: 'Uptime %, Bid & Ask Depth 100 bps', weighting: '4.00%', ranking: 10 },
 	{ metric: 'Bid Depth 50 bps, USD Value', weighting: '2.50%', ranking: 11 },
 	{ metric: 'Ask Depth 100 bps, USD Value', weighting: '2.50%', ranking: 12 },
-	{ metric: 'Bid Depth 100 bps, USD Value', weighting: '2.50%', ranking: 13 },
+	{ metric: 'Bid Depth 100 bps, % of Market', weighting: '2.50%', ranking: 13 },
 	{ metric: 'Loan Utilization, Maker Fill Volume', weighting: '2.50%', ranking: 14 },
 	{ metric: 'Uptime %, Bid-Ask Spread', weighting: '2.50%', ranking: 15 },
 	{ metric: 'Uptime %, Bid & Ask Depth 50 bps', weighting: '2.00%', ranking: 16 },
@@ -459,18 +470,18 @@ function SubHeading({ children }: { children: ReactNode }) {
 
 function Lead({ label, children }: { label: string; children: ReactNode }) {
 	return (
-		<p className="body-sm text-secondary">
+		<p className="body-lg text-secondary">
 			<span className="font-semibold text-primary">{label}</span> {children}
 		</p>
 	)
 }
 
 function P({ children }: { children: ReactNode }) {
-	return <p className="body-sm text-secondary">{children}</p>
+	return <p className="body-lg text-secondary">{children}</p>
 }
 
 function Bullets({ items, ordered = false }: { items: ReactNode[]; ordered?: boolean }) {
-	const cls = 'ml-5 flex flex-col gap-2 body-sm text-secondary'
+	const cls = 'ml-5 flex flex-col gap-2 body-lg text-secondary'
 	const inner = items.map((item, i) => (
 		<li key={i} className={ordered ? 'list-decimal' : 'list-disc'}>
 			{item}
@@ -506,6 +517,33 @@ function WeightTable({ rows, showRanking = true }: { rows: WeightRow[]; showRank
 	)
 }
 
+function GradeBandsTable() {
+	return (
+		<div className="overflow-hidden rounded-lg border border-subtle">
+			<div className="overflow-x-auto">
+				<table className="w-full border-collapse text-sm">
+					<thead>
+						<tr className="bg-brand text-on-brand">
+							<th className="w-40 px-4 py-3 text-center font-medium">Composite Score</th>
+							<th className="w-28 px-4 py-3 text-center font-medium">Grade</th>
+							<th className="px-4 py-3 text-center font-medium">Interpretation</th>
+						</tr>
+					</thead>
+					<tbody>
+						{GRADE_BANDS.map((band) => (
+							<tr key={band.label} className="border-t border-subtle bg-surface first:border-t-0">
+								<td className="px-4 py-2.5 whitespace-nowrap text-secondary">{band.range}</td>
+								<td className={`px-4 py-2.5 text-center font-medium ${band.colorClassName}`}>{band.label}</td>
+								<td className="min-w-[280px] px-4 py-2.5 text-secondary">{band.interpretation}</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	)
+}
+
 function Divider() {
 	return <div role="separator" className="border-t border-subtle" />
 }
@@ -513,12 +551,12 @@ function Divider() {
 function GlossaryItem({ entry }: { entry: GlossaryEntry }) {
 	return (
 		<div className="flex flex-col gap-2">
-			<p className="body-sm text-secondary">
+			<p className="body-lg text-secondary">
 				<span className="font-semibold text-primary">{entry.term}:</span> {entry.def}
 			</p>
 			{entry.bullets ? <Bullets items={entry.bullets} /> : null}
 			{entry.code ? (
-				<pre className="overflow-x-auto rounded-md bg-page p-3 text-xs text-primary">
+				<pre className="overflow-x-auto rounded-md bg-page p-3 text-sm text-primary">
 					<code>{entry.code}</code>
 				</pre>
 			) : null}
@@ -583,12 +621,7 @@ export function MarketMakersDocumentation() {
 										<Bullets
 											items={[
 												<>
-													<span className="font-semibold text-primary">The Performance Index</span> shows market maker
-													ranks across all key performance metrics with additional information regarding their
-													integration level with Forgd, their trading coverage & capabilities, and ancillary information
-													(exchange coverage, non-market making services, active engagements shared with Forgd, and
-													more). This allows Forgd to calculate a proprietary composite score derived from 50+
-													quantitative and qualitative variables.
+													<span className="font-semibold text-primary">The Performance Index</span> {PI_PREFACE_BULLET}
 												</>,
 												<>
 													<span className="font-semibold text-primary">The Depth Leaderboard</span> displays the average
@@ -631,26 +664,16 @@ export function MarketMakersDocumentation() {
 
 									<Section id="performance-index" title="2. Performance Index">
 										<SubHeading>Overview</SubHeading>
-										<P>
-											The Performance Index ranks market makers based on a proprietary composite score derived from 50+
-											quantitative and qualitative variables across their tracked engagements. It provides a unified
-											view of overall performance by aggregating granular trading KPIs, including liquidity provision,
-											execution quality, and operational consistency, alongside infrastructure, integration, and
-											coverage-related attributes such as exchange integrations, API capabilities, and participation
-											across CEXs, DEXs, and ancillary trading functions.
-										</P>
+										{PI_OVERVIEW_PARAGRAPHS.map((paragraph) => (
+											<P key={paragraph}>{paragraph}</P>
+										))}
 										<FigureTable
 											src={docsAsset('performance_index.png')}
 											alt="Forgd Market Maker Performance Index leaderboard table"
-											caption="Supporting fields within the table provide additional context on each market maker's infrastructure and capabilities, and a “Details” view allows for a more granular breakdown of performance and characteristics. Screenshot taken April 16, 2026."
+											caption={PI_FIGURE_CAPTION}
 										/>
 										<SubHeading>Calculation Methodology</SubHeading>
-										<P>
-											The Performance Index is calculated using a proprietary weighted composite model that incorporates
-											over 50 underlying KPIs. These KPIs are measured at a granular level and may differentiate across
-											specific dimensions (e.g., depth at varying thresholds, bid vs. ask side behavior, and execution
-											characteristics).
-										</P>
+										<P>{PI_METHODOLOGY_INTRO}</P>
 										<P>
 											Each KPI contributes to the composite score with its own weighting, reflecting its relative
 											importance within the overall evaluation framework. In addition to quantitative trading metrics,
@@ -659,6 +682,10 @@ export function MarketMakersDocumentation() {
 											metric are as follows:
 										</P>
 										<WeightTable rows={PERFORMANCE_GLOBAL_WEIGHTS} showRanking={false} />
+										<P>{PI_COMPOSITE_SCORE_INTRO}</P>
+										<GradeBandsTable />
+										<P>{PI_GRADE_SUMMARY}</P>
+										<SubHeading>Trading KPIs</SubHeading>
 										<P>
 											The Trading KPI component evaluates a market maker's performance across four core dimensions:
 											liquidity depth, execution quality, capital efficiency, and operational reliability. Depth is
@@ -673,6 +700,14 @@ export function MarketMakersDocumentation() {
 											All values are aggregated across each market maker's active engagements tracked by Forgd and are
 											recalculated dynamically based on the selected timeframe.
 										</P>
+										{PI_COMPONENT_SECTIONS.map((component) => (
+											<Fragment key={component.title}>
+												<SubHeading>{component.title}</SubHeading>
+												{component.paragraphs.map((paragraph) => (
+													<P key={paragraph}>{paragraph}</P>
+												))}
+											</Fragment>
+										))}
 										<SubHeading>How to Interpret</SubHeading>
 										<P>
 											The composite score represents a relative measure of overall performance across all included
@@ -684,20 +719,17 @@ export function MarketMakersDocumentation() {
 											ordered
 											items={[
 												"Trading KPIs benchmark market makers' raw performance against one another.",
-												'Trust provides visibility into their infrastructure and connectivity.',
-												'Coverage & Capabilities reflects the breadth of participation across CEXs, DEXs, and additional trading functions.',
+												'Trust is measured based on the number of engagements tracked and instances of trading abnormalities from tracked engagements.',
+												'Coverage & Capabilities reflects the breadth of trading coverage across CEXs & DEXs as well as additional trading functions.',
 												'Uptime indicates operational consistency over the selected period.',
 												"Integration Level reflects the degree of integration with Forgd's data consumption systems."
 											]}
 										/>
+										<P>{PI_SAME_RANK_NOTE}</P>
 										<FigureRadar
 											src={docsAsset('radar_mm_details.png')}
 											alt="Market Maker detail view — Leaderboard Performance radar chart"
 										/>
-										<P>
-											Market makers may share the same rank in cases where composite scores are equivalent when rounded
-											to one decimal place.
-										</P>
 										<SubHeading>Filtering</SubHeading>
 										<P>
 											Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
@@ -912,7 +944,7 @@ export function MarketMakersDocumentation() {
 											]}
 										/>
 										<P>The total fill volume in this example is $2.36m, allowing us to calculate VWAS as:</P>
-										<pre className="overflow-x-auto rounded-md bg-page p-3 text-xs text-primary">
+										<pre className="overflow-x-auto rounded-md bg-page p-3 text-sm text-primary">
 											<code>
 												VWAS = [(1.0m×5) + (0.75m×10) + (0.5m×10) + (0.1m×50) + (0.01m×100)] / 2.36m ≈ 9.96 bps (~10
 												bps)

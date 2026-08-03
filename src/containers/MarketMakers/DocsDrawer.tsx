@@ -3,6 +3,16 @@ import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { docsAsset, FigureRadar, FigureTable } from './DocsFigures'
 import { Drawer } from './Drawer'
+import { GRADE_BANDS } from './gradeBands'
+import {
+	PI_COMPONENT_SECTIONS,
+	PI_COMPOSITE_SCORE_INTRO,
+	PI_FIGURE_CAPTION,
+	PI_GRADE_SUMMARY,
+	PI_METHODOLOGY_INTRO,
+	PI_OVERVIEW_PARAGRAPHS,
+	PI_SAME_RANK_NOTE
+} from './performanceIndexDocs'
 
 const TOC = [
 	{ id: 'overview', label: '1. Overview' },
@@ -13,7 +23,7 @@ const TOC = [
 
 const WEIGHTS = [
 	{ metric: 'Trading KPIs', weighting: '40%' },
-	{ metric: 'Trust', weighting: '20%' },
+	{ metric: 'Trust & Integration', weighting: '20%' },
 	{ metric: 'Coverage & Capabilities', weighting: '15%' },
 	{ metric: 'Uptime', weighting: '10%' },
 	{ metric: 'Integration Level', weighting: '15%' }
@@ -52,10 +62,13 @@ const TRADING_KPIS = [
 
 const INTERPRET = [
 	{ term: 'Trading KPIs', rest: 'benchmark market makers’ raw performance against one another.' },
-	{ term: 'Trust', rest: 'provides visibility into their infrastructure and connectivity.' },
+	{
+		term: 'Trust',
+		rest: 'is measured based on the number of engagements tracked and instances of trading abnormalities from tracked engagements.'
+	},
 	{
 		term: 'Coverage & Capabilities',
-		rest: 'reflects the breadth of participation across CEXs, DEXs, and additional trading functions.'
+		rest: 'reflects the breadth of trading coverage across CEXs & DEXs as well as additional trading functions.'
 	},
 	{ term: 'Uptime', rest: 'indicates operational consistency over the selected period.' },
 	{ term: 'Integration Level', rest: 'reflects the degree of integration with Forgd’s data consumption systems.' }
@@ -170,28 +183,21 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 
 					<section id="overview" className="flex scroll-mt-4 flex-col gap-5">
 						<h2 className="heading-xs">Overview</h2>
-						<p className="body-lg text-secondary">
-							The Performance Index ranks market makers based on a proprietary composite score derived from 50+
-							quantitative and qualitative variables across their tracked engagements. It provides a unified view of
-							overall performance by aggregating granular trading KPIs, including liquidity provision, execution
-							quality, and operational consistency, alongside infrastructure, integration, and coverage-related
-							attributes such as exchange integrations, API capabilities, and participation across CEXs, DEXs, and
-							ancillary trading functions.
-						</p>
+						{PI_OVERVIEW_PARAGRAPHS.map((paragraph) => (
+							<p key={paragraph} className="body-lg text-secondary">
+								{paragraph}
+							</p>
+						))}
 						<FigureTable
 							src={docsAsset('performance_index.png')}
 							alt="Performance Index leaderboard table"
-							caption="Supporting fields within the table provide additional context on each market maker’s infrastructure and capabilities, and a “Details” view allows for a more granular breakdown of performance and characteristics. Screenshot taken April 16, 2026."
+							caption={PI_FIGURE_CAPTION}
 						/>
 					</section>
 
 					<section id="calculation-methodology" className="flex scroll-mt-4 flex-col gap-5">
 						<h2 className="heading-xs">Calculation Methodology</h2>
-						<p className="body-lg text-secondary">
-							The Performance Index is calculated using a proprietary weighted composite model that incorporates over 50
-							underlying KPIs. These KPIs are measured at a granular level and may differentiate across specific
-							dimensions (e.g., depth at varying thresholds, bid vs. ask side behavior, and execution characteristics).
-						</p>
+						<p className="body-lg text-secondary">{PI_METHODOLOGY_INTRO}</p>
 						<p className="body-lg text-secondary">
 							Each KPI contributes to the composite score with its own weighting, reflecting its relative importance
 							within the overall evaluation framework. In addition to quantitative trading metrics, select
@@ -216,6 +222,29 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 								</tbody>
 							</table>
 						</div>
+						<p className="body-lg text-secondary">{PI_COMPOSITE_SCORE_INTRO}</p>
+						<div className="overflow-x-auto rounded-lg border border-subtle">
+							<table className="w-full border-collapse body-sm">
+								<thead>
+									<tr>
+										<th className={`${TH} text-left whitespace-nowrap`}>Composite Score</th>
+										<th className={TH}>Grade</th>
+										<th className={TH}>Interpretation</th>
+									</tr>
+								</thead>
+								<tbody>
+									{GRADE_BANDS.map((band) => (
+										<tr key={band.label} className="last:[&>td]:border-b-0">
+											<td className={`${TD} whitespace-nowrap`}>{band.range}</td>
+											<td className={`${TD} text-center font-medium ${band.colorClassName}`}>{band.label}</td>
+											<td className={`${TD} min-w-[260px]`}>{band.interpretation}</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+						<p className="body-lg text-secondary">{PI_GRADE_SUMMARY}</p>
+						<h3 className="heading-xs">Trading KPIs</h3>
 						<p className="body-lg text-secondary">
 							The Trading KPI component evaluates a market maker’s performance across four core dimensions: liquidity
 							depth, execution quality, capital efficiency, and operational reliability. Depth is measured at +/- 0.50%,
@@ -248,6 +277,16 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 							All values are aggregated across each market maker’s active engagements tracked by Forgd and are
 							recalculated dynamically based on the selected timeframe.
 						</p>
+						{PI_COMPONENT_SECTIONS.map((component) => (
+							<div key={component.title} className="flex flex-col gap-5">
+								<h3 className="heading-xs">{component.title}</h3>
+								{component.paragraphs.map((paragraph) => (
+									<p key={paragraph} className="body-lg text-secondary">
+										{paragraph}
+									</p>
+								))}
+							</div>
+						))}
 					</section>
 
 					<section id="how-to-interpret" className="flex scroll-mt-4 flex-col gap-5">
@@ -265,14 +304,11 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 								</li>
 							))}
 						</ol>
+						<p className="body-lg text-secondary">{PI_SAME_RANK_NOTE}</p>
 						<FigureRadar
 							src={docsAsset('radar_mm_details.png')}
 							alt="Market Maker detail view — Leaderboard Performance radar"
 						/>
-						<p className="body-lg text-secondary">
-							Market makers may share the same rank in cases where composite scores are equivalent when rounded to one
-							decimal place.
-						</p>
 					</section>
 
 					<section id="filtering" className="flex scroll-mt-4 flex-col gap-5">

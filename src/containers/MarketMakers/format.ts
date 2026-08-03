@@ -1,4 +1,5 @@
 import { formatCompactNumber, formatUsd, formatNumber, formatPercent } from '~/utils/numberFormat'
+import { GRADE_BANDS } from './gradeBands'
 
 export type MetricFormatKind = 'usd' | 'percent' | 'spread' | 'score' | 'decimal'
 
@@ -14,41 +15,10 @@ export function formatComposite(value: number | null | undefined): string {
 
 export type CompositeGrade = { label: string; colorClassName: string }
 
-const GRADE_LETTER_COLORS: Record<string, string> = {
-	A: 'text-success',
-	B: 'text-success',
-	C: 'text-warning',
-	D: 'text-warning',
-	F: 'text-error'
-}
-
-const GRADE_FALLBACK_STEPS: { min: number; label: string }[] = [
-	{ min: 9, label: 'A+' },
-	{ min: 8, label: 'A' },
-	{ min: 7, label: 'B' },
-	{ min: 6, label: 'C' },
-	{ min: 5, label: 'D' }
-]
-
-function gradeFromLabel(label: string): CompositeGrade | null {
-	const colorClassName = GRADE_LETTER_COLORS[label.charAt(0).toUpperCase()]
-	return colorClassName ? { label, colorClassName } : null
-}
-
-function gradeFromComposite(value: number): CompositeGrade | null {
-	for (const step of GRADE_FALLBACK_STEPS) {
-		if (value >= step.min) return gradeFromLabel(step.label)
-	}
-	return gradeFromLabel('F')
-}
-
-export function resolveGrade(
-	grade: string | null | undefined,
-	composite: number | null | undefined
-): CompositeGrade | null {
-	if (grade) return gradeFromLabel(grade)
+export function resolveGrade(composite: number | null | undefined): CompositeGrade | null {
 	if (composite == null) return null
-	return gradeFromComposite(composite)
+	const band = GRADE_BANDS.find((step) => composite >= step.min) ?? GRADE_BANDS[GRADE_BANDS.length - 1]
+	return { label: band.label, colorClassName: band.colorClassName }
 }
 
 export function roundPercentile(value: number | null | undefined): number | null {

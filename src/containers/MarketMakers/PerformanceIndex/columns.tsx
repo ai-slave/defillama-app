@@ -7,6 +7,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { GradeBadge, StatusBadge } from '../badges'
 import { formatComposite, resolveGrade } from '../format'
+import { GRADE_SCALE_SUMMARY } from '../gradeBands'
 import type { IntegrationStatus, PerformanceRow } from './types'
 
 const columnHelper = createColumnHelper<PerformanceRow>()
@@ -19,8 +20,7 @@ interface IBuildPerformanceColumns {
 const SCORE_TOOLTIPS = {
 	composite:
 		'Weighted average of all performance categories. A higher score indicates better overall performance across trading, trust, coverage, uptime and integration.',
-	grade:
-		'A simplified letter rating that reflects a market maker’s overall standing on the leaderboard. Grades are designed to make performance easier to interpret without relying solely on individual numerical scores.',
+	grade: `A simplified letter rating that reflects a market maker’s overall standing on the leaderboard. Grades are derived from the composite score and are designed to make performance easier to interpret without relying solely on individual numerical scores. ${GRADE_SCALE_SUMMARY}`,
 	tradingKpis:
 		"Score derived from the market maker's rank on the aggregated leaderboard, reflecting depth and volume performance relative to peers.",
 	trustIntegration:
@@ -114,7 +114,7 @@ export function buildPerformanceColumns({ onSelectMM, rankById }: IBuildPerforma
 	const gradeColumn = columnHelper.accessor((row) => row.composite ?? undefined, {
 		id: 'grade',
 		header: () => <HeaderWithTooltip label="Grade" tooltip={SCORE_TOOLTIPS.grade} />,
-		cell: ({ row }) => <GradeBadge grade={resolveGrade(row.original.grade, row.original.composite)} />,
+		cell: ({ row }) => <GradeBadge grade={resolveGrade(row.original.composite)} />,
 		sortUndefined: 'last',
 		meta: { align: 'start' }
 	})

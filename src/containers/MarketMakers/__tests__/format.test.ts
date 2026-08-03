@@ -23,30 +23,26 @@ describe('formatComposite', () => {
 })
 
 describe('resolveGrade', () => {
-	it('returns null when both grade and composite are null', () => {
-		expect(resolveGrade(null, null)).toBeNull()
+	it('returns null when the composite is null', () => {
+		expect(resolveGrade(null)).toBeNull()
 	})
-	it('prefers the API grade over the composite value', () => {
-		expect(resolveGrade('D', 9.9)?.label).toBe('D')
+	it('maps each composite band to its credit-style grade', () => {
+		expect(resolveGrade(10)?.label).toBe('AAA')
+		expect(resolveGrade(9.1)?.label).toBe('AAA')
+		expect(resolveGrade(9.09)?.label).toBe('AA')
+		expect(resolveGrade(8)?.label).toBe('AA')
+		expect(resolveGrade(7)?.label).toBe('BBB')
+		expect(resolveGrade(6)?.label).toBe('BB')
+		expect(resolveGrade(5)?.label).toBe('B')
+		expect(resolveGrade(4.99)?.label).toBe('CCC')
 	})
-	it('colors A+/A/B success, C/D warning, F error', () => {
-		expect(resolveGrade('A+', null)?.colorClassName).toBe('text-success')
-		expect(resolveGrade('A', null)?.colorClassName).toBe('text-success')
-		expect(resolveGrade('B', null)?.colorClassName).toBe('text-success')
-		expect(resolveGrade('C', null)?.colorClassName).toBe('text-warning')
-		expect(resolveGrade('D', null)?.colorClassName).toBe('text-warning')
-		expect(resolveGrade('F', null)?.colorClassName).toBe('text-error')
-	})
-	it('returns null for an unrecognized API grade', () => {
-		expect(resolveGrade('X', null)).toBeNull()
-	})
-	it('falls back to composite thresholds when the API grade is missing', () => {
-		expect(resolveGrade(null, 9)?.label).toBe('A+')
-		expect(resolveGrade(null, 8)?.label).toBe('A')
-		expect(resolveGrade(null, 7)?.label).toBe('B')
-		expect(resolveGrade(null, 6)?.label).toBe('C')
-		expect(resolveGrade(null, 5)?.label).toBe('D')
-		expect(resolveGrade(null, 4.99)?.label).toBe('F')
+	it('colors AAA/AA success, BBB/BB/B warning, CCC error', () => {
+		expect(resolveGrade(9.5)?.colorClassName).toBe('text-success')
+		expect(resolveGrade(8.5)?.colorClassName).toBe('text-success')
+		expect(resolveGrade(7.5)?.colorClassName).toBe('text-warning')
+		expect(resolveGrade(6.5)?.colorClassName).toBe('text-warning')
+		expect(resolveGrade(5.5)?.colorClassName).toBe('text-warning')
+		expect(resolveGrade(1)?.colorClassName).toBe('text-error')
 	})
 })
 
