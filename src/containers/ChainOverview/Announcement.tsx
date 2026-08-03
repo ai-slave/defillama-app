@@ -2,6 +2,7 @@ import { useAuthContext } from '~/auth'
 import { Announcement } from '~/components/Announcement'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Icon } from '~/ui/Icon'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { getMainSiteIrDashboard } from '../Investors/mainSiteDashboards'
@@ -73,23 +74,26 @@ export const ChainOverviewAnnouncement = ({ chainName }: { chainName?: string })
 
 	return (
 		<Announcement
-			announcementId="mica-dashboard"
-			version="2026-06-30"
-			className="border border-[#0f6e56] bg-[linear-gradient(90deg,rgba(225,245,238,0.98),rgba(207,242,229,0.98)_50%,rgba(191,236,222,0.95)_100%)] text-[#04342c] shadow-[0_8px_20px_rgba(29,158,117,0.14)] dark:border-[#1d9e75] dark:bg-[linear-gradient(90deg,rgba(7,33,26,0.96),rgba(9,44,34,0.94)_55%,rgba(7,52,40,0.94)_100%)] dark:text-[#d9fff0]"
+			announcementId="defillama-mobile-app"
+			version="2026-08-03"
+			className="relative overflow-hidden border border-[#1a5cc4] bg-[linear-gradient(100deg,#1f67d2_0%,#2b7de9_45%,#4f9cf9_100%)] text-white shadow-[0_10px_30px_rgba(31,103,210,0.35)] dark:border-[#3d7fe0] dark:bg-[linear-gradient(100deg,#0d2a5c_0%,#154189_50%,#1d5cb8_100%)] dark:text-[#eaf3ff] dark:shadow-[0_10px_30px_rgba(13,42,92,0.5)]"
 			contentClassName="text-center"
 		>
-			<span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-				<span className="size-2 shrink-0 rounded-full bg-[#0f6e56] dark:bg-[#38f5a6]" />
-				<span className="inline-flex items-center gap-1.5 rounded-full bg-[#1d9e75] px-2 py-0.5 text-xs font-semibold text-on-brand dark:bg-[#38f5a6] dark:text-[#04241b]">
-					NEW · MiCA
+			<span className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-[shimmer_6s_ease-in-out_infinite] bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.18),transparent)]" />
+			<span className="relative flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
+				<span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-0.5 text-xs font-bold tracking-wide text-[#1f67d2] shadow-sm dark:bg-white/15 dark:text-white dark:ring-1 dark:ring-white/25">
+					<Icon name="sparkles" height={12} width={12} />
+					NEW APP
 				</span>
-				<span>
-					Track exchanges available in the EU with{' '}
-					<BasicLink href="/mica" className="underline decoration-2 underline-offset-[3px]">
-						our new MiCA dashboard
-					</BasicLink>
-					.
-				</span>
+				<span className="font-medium">The DefiLlama App is here.</span>
+				<BasicLink
+					href="/app"
+					data-umami-event="mobile-app-announcement-click"
+					className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold text-white ring-1 ring-white/40 transition-colors hover:bg-white/25 dark:bg-white/10 dark:ring-white/30 dark:hover:bg-white/20"
+				>
+					Get extra free LlamaAI queries
+					<Icon name="arrow-right" height={12} width={12} />
+				</BasicLink>
 			</span>
 		</Announcement>
 	)

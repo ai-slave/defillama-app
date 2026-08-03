@@ -9,6 +9,7 @@ import { SEO } from '~/components/SEO'
 import { AI_SERVER } from '~/constants'
 import { TOOL_ICONS, TOOL_LABELS } from '~/containers/LlamaAI/toolMetadata'
 import type { LandingQuestion } from '~/containers/LlamaAI/types'
+import { LlamaAIMobileAppPromotion } from '~/containers/MobileApp/LlamaAIMobileAppGate'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Icon } from '~/ui/Icon'
@@ -422,6 +423,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 					50% { opacity: 0.7; }
 				}
 			`}</style>
+			<LlamaAIMobileAppPromotion />
 			<div className="col-span-full flex min-h-screen flex-col overflow-x-hidden bg-ai-surface dark:bg-ai-surface-card">
 				{/* Header */}
 				<header className="relative z-20 px-4 pt-4 md:px-8 md:pt-6">

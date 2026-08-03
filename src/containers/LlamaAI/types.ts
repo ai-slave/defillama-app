@@ -192,7 +192,7 @@ export interface MessageMetadata {
 	completionReason?: string
 }
 
-export interface UpgradeOffer {
+export interface FreeLimitOffer {
 	code: 'FREE_QUESTION_LIMIT' | 'FREE_FORM_LIMIT' | 'FREE_DAILY_LIMIT'
 	resetTime?: string | null
 }
@@ -229,7 +229,7 @@ export interface Message {
 	thinking?: string
 	quotedText?: string
 	messageMetadata?: MessageMetadata
-	upgradeOffer?: UpgradeOffer
+	freeLimitOffer?: FreeLimitOffer
 }
 
 export interface ChartSet {

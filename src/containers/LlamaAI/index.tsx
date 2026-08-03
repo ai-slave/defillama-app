@@ -98,7 +98,7 @@ import {
 	type FailedRequest,
 	type StreamBuffer
 } from '~/containers/LlamaAI/streamState'
-import type { AgenticAnswerMode, Message, UpgradeOffer } from '~/containers/LlamaAI/types'
+import type { AgenticAnswerMode, FreeLimitOffer, Message } from '~/containers/LlamaAI/types'
 import { chartsMapFromGroups } from '~/containers/LlamaAI/utils/articleExport'
 import type { SettingsInitialState, SettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
 import { AI_BALANCE_QUERY_KEY, useAiBalance } from '~/containers/Subscription/useTopup'
@@ -132,7 +132,7 @@ interface RestoreSessionSnapshotResult {
 	recoveredResponse: boolean
 }
 
-function buildFreeLimitMessage(err: UsageLimitError & { code: UpgradeOffer['code'] }): Message {
+function buildFreeLimitMessage(err: UsageLimitError & { code: FreeLimitOffer['code'] }): Message {
 	const isDaily = err.code === 'FREE_DAILY_LIMIT'
 	let content = isDaily ? "You've reached today's free question limit." : "You've reached your free question limit."
 	if (err.details?.resetTime) {
@@ -147,7 +147,7 @@ function buildFreeLimitMessage(err: UsageLimitError & { code: UpgradeOffer['code
 	return {
 		role: 'assistant',
 		content,
-		upgradeOffer: {
+		freeLimitOffer: {
 			code: err.code,
 			resetTime: err.details?.resetTime ?? null
 		}

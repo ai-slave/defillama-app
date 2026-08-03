@@ -3,6 +3,7 @@ import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { AlertArtifact, AlertArtifactLoading } from '~/containers/LlamaAI/components/AlertArtifact'
 import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
 import { CSVExportArtifact } from '~/containers/LlamaAI/components/CSVExportArtifact'
+import { FreeLimitCard } from '~/containers/LlamaAI/components/FreeLimitCard'
 import { ImagePreviewModal } from '~/containers/LlamaAI/components/ImagePreviewModal'
 import { TextChip } from '~/containers/LlamaAI/components/input/ImageUpload'
 import { ChatMarkdownRenderer, SourcesList } from '~/containers/LlamaAI/components/markdown/ChatMarkdownRenderer'
@@ -14,7 +15,6 @@ import { PastedContentModal } from '~/containers/LlamaAI/components/PastedConten
 import { ResponseControls } from '~/containers/LlamaAI/components/ResponseControls'
 import { ThinkingPanel } from '~/containers/LlamaAI/components/status/ThinkingPanel'
 import { useHackerMode } from '~/containers/LlamaAI/components/status/useHackerMode'
-import { TrialUpgradeCard } from '~/containers/LlamaAI/components/TrialUpgradeCard'
 import { useAdvancedProvenance } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import {
 	parseMessageToRenderModel,
@@ -355,7 +355,7 @@ function InlineContent({
 				<ToolExecutionPanel toolExecutions={toolExecutions} showDetails={showToolDetails} />
 			) : null}
 
-			{message.upgradeOffer ? <TrialUpgradeCard offer={message.upgradeOffer} /> : null}
+			{message.freeLimitOffer ? <FreeLimitCard offer={message.freeLimitOffer} /> : null}
 		</div>
 	)
 }

@@ -11,17 +11,17 @@ import {
 	type RequestSettleState
 } from '~/containers/LlamaAI/requestLifecycle'
 import type { RateLimitDetails } from '~/containers/LlamaAI/streamState'
-import type { UpgradeOffer } from '~/containers/LlamaAI/types'
+import type { FreeLimitOffer } from '~/containers/LlamaAI/types'
 
 export type AgenticRequestMode = 'prompt' | 'edit' | 'resume' | 'replay'
 
 export interface UsageLimitError extends Error {
-	code?: 'USAGE_LIMIT_EXCEEDED' | 'FACT_CHECKED_REQUIRES_SUBSCRIPTION' | UpgradeOffer['code']
+	code?: 'USAGE_LIMIT_EXCEEDED' | 'FACT_CHECKED_REQUIRES_SUBSCRIPTION' | FreeLimitOffer['code']
 	details?: Partial<RateLimitDetails> & { feature?: string }
 	upgradeUrl?: string
 }
 
-export type FreeLimitError = UsageLimitError & { code: UpgradeOffer['code'] }
+export type FreeLimitError = UsageLimitError & { code: FreeLimitOffer['code'] }
 
 export type AgenticRequestErrorKind = 'abort' | 'free-limit' | 'usage-limit' | 'temporary-connectivity' | 'failure'
 

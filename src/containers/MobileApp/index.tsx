@@ -89,7 +89,7 @@ const FLOATING_CHIPS = [
 
 // Detected after mount so the server-rendered markup keeps both store links:
 // crawlers and unknown platforms see the full pair, phones narrow to their own store.
-function useDevicePlatform(): 'ios' | 'android' | null {
+export function useDevicePlatform(): 'ios' | 'android' | null {
 	const [platform, setPlatform] = useState<'ios' | 'android' | null>(null)
 
 	useEffect(() => {
@@ -108,23 +108,41 @@ function useDevicePlatform(): 'ios' | 'android' | null {
 // Official badge glyphs (Apple artwork, Google artwork + brand colors) rendered on our
 // own dark buttons so the pair matches in weight, corners and height in both themes.
 // Fixed button size keeps the pair identical; artwork fills the height and centers.
+const storeButtonSizeClassNames = {
+	md: 'h-12 w-44 md:h-14 md:w-[196px]',
+	lg: 'h-14 w-full max-w-[300px]'
+} as const
 const storeButtonClassName =
-	'flex h-12 w-44 items-center justify-center rounded-xl bg-black transition-opacity duration-200 hover:opacity-85 md:h-14 md:w-[196px] dark:border dark:border-white/15'
+	'flex items-center justify-center rounded-xl bg-black transition-opacity duration-200 hover:opacity-85 dark:border dark:border-white/15'
 const storeBadgeClassName = 'h-full w-auto'
 
-export function StoreButtons({ className = '', eventSuffix }: { className?: string; eventSuffix: string }) {
+export function StoreButtons({
+	className = '',
+	eventSuffix,
+	size = 'md'
+}: {
+	className?: string
+	eventSuffix: string
+	size?: keyof typeof storeButtonSizeClassNames
+}) {
 	const platform = useDevicePlatform()
 
 	return (
 		<div className={`flex flex-col items-center gap-3 ${className}`}>
-			<div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
+			<div
+				className={
+					size === 'lg'
+						? 'flex w-full flex-col items-center gap-3'
+						: 'flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row'
+				}
+			>
 				{platform === 'android' ? null : (
 					<a
 						href={APP_STORE_URL}
 						target="_blank"
 						rel="noopener noreferrer"
 						data-umami-event={`mobile-app-ios-${eventSuffix}`}
-						className={storeButtonClassName}
+						className={`${storeButtonClassName} ${storeButtonSizeClassNames[size]}`}
 					>
 						<img
 							src="/assets/app/app-store-badge.svg"
@@ -141,7 +159,7 @@ export function StoreButtons({ className = '', eventSuffix }: { className?: stri
 						target="_blank"
 						rel="noopener noreferrer"
 						data-umami-event={`mobile-app-android-${eventSuffix}`}
-						className={storeButtonClassName}
+						className={`${storeButtonClassName} ${storeButtonSizeClassNames[size]}`}
 					>
 						<img
 							src="/assets/app/google-play-badge.svg"
@@ -174,7 +192,7 @@ const chipClassName =
 
 function QuotaChips() {
 	return (
-		<div className="mt-6 flex flex-wrap justify-center gap-2">
+		<div className="flex flex-wrap justify-center gap-2">
 			<span className={chipClassName}>3 prompts without an account</span>
 			<span className={chipClassName}>10 a day once you sign in</span>
 			<span className={chipClassName}>
@@ -185,6 +203,13 @@ function QuotaChips() {
 			</span>
 		</div>
 	)
+}
+
+const sectionHeadingClassName =
+	'text-3xl leading-10 font-semibold tracking-tight text-sub-text-primary md:text-[40px] md:leading-[1.15]'
+
+function Section({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+	return <section className={`mx-auto max-w-[1440px] px-4 md:px-10 2xl:px-32 ${className}`}>{children}</section>
 }
 
 function GradientWord({ children }: { children: React.ReactNode }) {
@@ -199,7 +224,7 @@ function SectionEyebrow({ children }: { children: React.ReactNode }) {
 
 function HeroPhone() {
 	return (
-		<div className="relative mt-14 md:mt-20">
+		<div className="relative">
 			{/* aura + rings behind the phone */}
 			<div
 				aria-hidden="true"
@@ -239,42 +264,42 @@ function HeroPhone() {
 
 function Hero({ protocols, chains }: { protocols: number; chains: number }) {
 	return (
-		<section className="relative mx-auto flex max-w-[1440px] flex-col items-center px-4 pt-14 pb-20 md:px-10 md:pt-24 md:pb-28">
-			<span className="flex items-center gap-2 rounded-full border border-sub-border bg-sub-surface-panel px-3.5 py-1.5 text-xs font-medium text-sub-text-secondary dark:bg-sub-dark-card">
-				<span className="size-1.5 rounded-full bg-sub-live shadow-sub-live" />
-				Now on iOS and Android
-			</span>
+		<Section className="relative flex flex-col items-center gap-14 pt-14 pb-20 md:gap-20 md:pt-24 md:pb-28">
+			<div className="flex flex-col items-center gap-6">
+				<span className="flex items-center gap-2 rounded-full border border-sub-border bg-sub-surface-panel px-3.5 py-1.5 text-xs font-medium text-sub-text-secondary dark:bg-sub-dark-card">
+					<span className="size-1.5 rounded-full bg-sub-live shadow-sub-live" />
+					Now on iOS and Android
+				</span>
 
-			<h1 className="mt-7 max-w-[820px] text-center text-[40px] leading-[1.05] font-semibold tracking-[-0.03em] text-sub-text-primary md:text-7xl">
-				Meet <GradientWord>LlamaAI</GradientWord>
-			</h1>
+				<h1 className="max-w-[820px] text-center text-[40px] leading-[1.05] font-semibold tracking-[-0.03em] text-sub-text-primary md:text-7xl">
+					Meet <GradientWord>LlamaAI</GradientWord>
+				</h1>
 
-			<p className="mt-6 max-w-[620px] text-center text-lg leading-8 text-sub-text-secondary md:text-xl md:leading-9">
-				Your AI research analyst for crypto — full theses, live charts, forecasts and backtests, backed by DefiLlama
-				data on {protocols.toLocaleString('en-US')} protocols across {chains.toLocaleString('en-US')} chains.
-			</p>
+				<p className="max-w-[620px] text-center text-lg leading-8 text-sub-text-secondary md:text-xl md:leading-9">
+					Your AI research analyst for crypto — full theses, live charts, forecasts and backtests, backed by DefiLlama
+					data on {protocols.toLocaleString('en-US')} protocols across {chains.toLocaleString('en-US')} chains.
+				</p>
 
-			<StoreButtons className="mt-9 w-full sm:w-auto" eventSuffix="hero" />
+				<StoreButtons className="w-full sm:w-auto" eventSuffix="hero" />
 
-			<QuotaChips />
+				<QuotaChips />
+			</div>
 
 			<HeroPhone />
-		</section>
+		</Section>
 	)
 }
 
 function Features() {
 	return (
-		<section className="mx-auto max-w-[1440px] px-4 py-16 md:px-10 md:py-24 2xl:px-32">
+		<Section className="flex flex-col gap-12 py-16 md:py-24">
 			<div className="mx-auto flex max-w-[680px] flex-col items-center gap-4 text-center">
 				<SectionEyebrow>LlamaAI</SectionEyebrow>
-				<h2 className="text-3xl leading-10 font-semibold tracking-tight text-sub-text-primary md:text-[40px] md:leading-[1.15]">
-					DeFi and TradFi data, live insights, actionable analysis
-				</h2>
+				<h2 className={sectionHeadingClassName}>DeFi and TradFi data, live insights, actionable analysis</h2>
 				<p className="text-base leading-6 text-sub-text-secondary">
 					Everything DefiLlama knows, with an analyst that reads it for you and shows the work.
 				</p>
-				<div className="mt-1 flex flex-wrap justify-center gap-2">
+				<div className="flex flex-wrap justify-center gap-2">
 					{ASK_EXAMPLES.map((example) => (
 						<span
 							key={example}
@@ -286,7 +311,7 @@ function Features() {
 				</div>
 			</div>
 
-			<div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{FEATURES.map((feature) => (
 					<div
 						key={feature.title}
@@ -300,21 +325,19 @@ function Features() {
 					</div>
 				))}
 			</div>
-		</section>
+		</Section>
 	)
 }
 
 function Previews() {
 	return (
-		<section className="mx-auto max-w-[1440px] px-4 py-16 md:px-10 md:py-24 2xl:px-32">
+		<Section className="flex flex-col gap-12 py-16 md:py-24">
 			<div className="mx-auto flex max-w-[640px] flex-col items-center gap-4 text-center">
 				<SectionEyebrow>App preview</SectionEyebrow>
-				<h2 className="text-3xl leading-10 font-semibold tracking-tight text-sub-text-primary md:text-[40px] md:leading-[1.15]">
-					See it in action
-				</h2>
+				<h2 className={sectionHeadingClassName}>See it in action</h2>
 			</div>
 
-			<div className="mt-12 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible">
+			<div className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible">
 				{PREVIEWS.map((preview) => (
 					<figure key={preview.src} className="flex w-[280px] shrink-0 snap-center flex-col gap-4 md:w-auto">
 						<img
@@ -331,13 +354,13 @@ function Previews() {
 					</figure>
 				))}
 			</div>
-		</section>
+		</Section>
 	)
 }
 
 function FinalCta() {
 	return (
-		<section className="mx-auto max-w-[1440px] px-4 pt-4 pb-16 md:px-10 md:pt-8 md:pb-28 2xl:px-32">
+		<Section className="pt-4 pb-16 md:pt-8 md:pb-28">
 			<div className="relative overflow-hidden rounded-3xl border border-sub-brand-primary/25 bg-sub-surface-panel px-6 py-14 text-center md:py-20 dark:bg-sub-dark-card">
 				<div
 					aria-hidden="true"
@@ -348,16 +371,20 @@ function FinalCta() {
 					className="absolute -top-32 left-1/2 h-64 w-[720px] max-w-full -translate-x-1/2 rounded-full bg-sub-brand-primary/20 blur-[100px] dark:bg-sub-blue/25"
 				/>
 
-				<h2 className="relative mx-auto max-w-[640px] text-3xl leading-10 font-semibold tracking-tight text-sub-text-primary md:text-5xl md:leading-[1.1]">
-					Put <GradientWord>LlamaAI</GradientWord> in your pocket
-				</h2>
-				<p className="relative mx-auto mt-4 max-w-[560px] text-base leading-6 text-sub-text-secondary">
-					Try 3 prompts straight away, no account needed. Sign in for 10 free prompts a day, or go unlimited with a
-					DefiLlama Pro subscription — the same one that works on the web.
-				</p>
-				<StoreButtons className="relative mt-8" eventSuffix="footer" />
+				<div className="relative flex flex-col items-center gap-8">
+					<div className="flex max-w-[640px] flex-col items-center gap-4">
+						<h2 className="text-3xl leading-10 font-semibold tracking-tight text-sub-text-primary md:text-5xl md:leading-[1.1]">
+							Put <GradientWord>LlamaAI</GradientWord> in your pocket
+						</h2>
+						<p className="max-w-[560px] text-base leading-6 text-sub-text-secondary">
+							Try 3 prompts straight away, no account needed. Sign in for 10 free prompts a day, or go unlimited with a
+							DefiLlama Pro subscription — the same one that works on the web.
+						</p>
+					</div>
+					<StoreButtons eventSuffix="footer" />
+				</div>
 			</div>
-		</section>
+		</Section>
 	)
 }
 

@@ -11,6 +11,7 @@ import { AgenticChat } from '~/containers/LlamaAI'
 import { LlamaAIAnimationPreloads } from '~/containers/LlamaAI/components/status/LlamaAIAnimationPreloads'
 import { toSessionId } from '~/containers/LlamaAI/ids'
 import { buildForkedSharedRoute, replaceSharedForkHistoryPath } from '~/containers/LlamaAI/sharedForkRoute'
+import { LlamaAIMobileAppGate } from '~/containers/MobileApp/LlamaAIMobileAppGate'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { LlamaAIRouteProvider, type LlamaAIRouteState } from '~/contexts/LlamaAIRouteState'
 import Layout from '~/layout'
@@ -132,18 +133,20 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 	if (isLoading || !router.isReady) {
 		return (
 			<Layout title={title} description={description} canonicalUrl={null} noIndex={true}>
-				<LlamaAIAnimationPreloads />
 				<Head>
 					<meta property="og:image" content={ogImageUrl} />
 					<meta name="twitter:card" content="summary_large_image" />
 					<meta name="twitter:image" content={ogImageUrl} />
 				</Head>
-				<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
-					<p className="flex items-center gap-1 text-center">
-						Loading conversation
-						<LoadingDots />
-					</p>
-				</div>
+				<LlamaAIMobileAppGate interactive>
+					<LlamaAIAnimationPreloads />
+					<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
+						<p className="flex items-center gap-1 text-center">
+							Loading conversation
+							<LoadingDots />
+						</p>
+					</div>
+				</LlamaAIMobileAppGate>
 			</Layout>
 		)
 	}
@@ -156,34 +159,38 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 				canonicalUrl={null}
 				noIndex={true}
 			>
-				<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
-					<div className="text-center">
-						<div className="mb-2 text-lg text-error">{error?.message ?? 'Conversation not found'}</div>
-						<p className="text-secondary">The conversation may have been made private or the link is invalid.</p>
+				<LlamaAIMobileAppGate interactive>
+					<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
+						<div className="text-center">
+							<div className="mb-2 text-lg text-error">{error?.message ?? 'Conversation not found'}</div>
+							<p className="text-secondary">The conversation may have been made private or the link is invalid.</p>
+						</div>
 					</div>
-				</div>
+				</LlamaAIMobileAppGate>
 			</Layout>
 		)
 	}
 
 	return (
 		<Layout title={title} description={description} canonicalUrl={null} noIndex={true} hideDesktopSearchLlamaAiButton>
-			<LlamaAIAnimationPreloads />
 			<Head>
 				<meta property="og:image" content={ogImageUrl} />
 				<meta name="twitter:card" content="summary_large_image" />
 				<meta name="twitter:image" content={ogImageUrl} />
 			</Head>
-			<LlamaAIRouteProvider value={routeOverride}>
-				<AgenticChat
-					sharedSession={session as any}
-					shareToken={shareToken}
-					onForkSubmit={handleForkSubmit}
-					onSharedSessionFork={handleSharedSessionFork}
-					initialPrompt={initialPrompt}
-				/>
-			</LlamaAIRouteProvider>
-			<SignInModal store={signInDialogStore} hideWhenAuthenticated={false} />
+			<LlamaAIMobileAppGate interactive>
+				<LlamaAIAnimationPreloads />
+				<LlamaAIRouteProvider value={routeOverride}>
+					<AgenticChat
+						sharedSession={session as any}
+						shareToken={shareToken}
+						onForkSubmit={handleForkSubmit}
+						onSharedSessionFork={handleSharedSessionFork}
+						initialPrompt={initialPrompt}
+					/>
+				</LlamaAIRouteProvider>
+				<SignInModal store={signInDialogStore} hideWhenAuthenticated={false} />
+			</LlamaAIMobileAppGate>
 		</Layout>
 	)
 }
