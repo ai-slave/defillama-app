@@ -37,6 +37,7 @@ const PRODUCT_SURFACE_PREFIXES = [
 	'src/containers/Downloads/',
 	'src/containers/Investors/',
 	'src/containers/LlamaAI/',
+	'src/containers/MobileApp/',
 	'src/containers/ProDashboard/',
 	'src/containers/Sheets/',
 	'src/containers/Subscription/',

@@ -21,10 +21,25 @@
 	--shadow-sub-google: 0 4px 16px rgb(52 168 83 / 0.2);
 	--shadow-sub-google-deep: 0 4px 16px rgb(33 115 70 / 0.2);
 	--shadow-sub-purple-glow: 0 0 24px rgb(92 92 249 / 0.2);
+	--shadow-sub-blue-glow: 0 0 24px rgb(31 103 210 / 0.25);
 	--shadow-sub-purple-glow-strong: 0px 0px 32px 0px rgb(92 92 249 / 0.5);
 	--shadow-sub-purple-aura: 0 0 150px 75px rgb(92 92 249 / 0.15), 0 0 75px 25px rgb(123 123 255 / 0.1);
 	--shadow-sub-focus-ring: 0 0 0 3px color-mix(in srgb, var(--bg-brand) 15%, transparent);
 	--shadow-sub-brand-ring: 0 0 0 2px color-mix(in oklch, var(--sub-brand-primary) 10%, transparent);
+
+	/* Gentle bob for the floating chips on the mobile-app landing hero */
+	--animate-float: float 6s ease-in-out infinite;
+
+	@keyframes float {
+		0%,
+		100% {
+			transform: translateY(0);
+		}
+		50% {
+			transform: translateY(-8px);
+		}
+	}
+
 	--color-sub-warning-text-light: #a15d23;
 	--color-sub-warning-text-dark: #ffa455;
 	--color-sub-warning-border-light: #ffd2aa;
