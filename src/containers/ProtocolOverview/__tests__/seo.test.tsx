@@ -401,7 +401,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 		)
 
 		expect(markup).toContain('href="/protocol/investor-relations/odyssey-finance"')
-		expect(markup).toContain('Enterprise Dashboard')
+		expect(markup).toContain('Enterprise')
 		expect(markup).not.toContain('href="https://enterprise.defillama.com/odyssey-ecosystem"')
 		expect(markup).not.toContain('Odyssey Enterprise')
 	})

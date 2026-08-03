@@ -82,7 +82,7 @@ afterEach(() => {
 })
 
 describe('Protocol Investor Relations tab', () => {
-	it('shows the Investor Relations tab on an IR protocol', async () => {
+	it('shows the Enterprise tab on an IR protocol', async () => {
 		setupLayoutMocks({ flags: { is_llama: true } })
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -94,7 +94,7 @@ describe('Protocol Investor Relations tab', () => {
 			)
 		)
 
-		expect(markup).toContain('Investor Relations')
+		expect(markup).toContain('Enterprise')
 		expect(markup).toContain('href="/protocol/investor-relations/spark"')
 		expect(markup).toContain('data-umami-event="investor-relations-tab-click"')
 		expect(markup).toContain('data-umami-event-entity-type="protocol"')
@@ -102,7 +102,7 @@ describe('Protocol Investor Relations tab', () => {
 		expect(markup).toContain('data-umami-event-dashboard-id="9vn8xp43tdzo6gt"')
 	})
 
-	it('shows the Investor Relations tab for a signed-out user', async () => {
+	it('shows the Enterprise tab for a signed-out user', async () => {
 		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -117,7 +117,7 @@ describe('Protocol Investor Relations tab', () => {
 		expect(markup).toContain('href="/protocol/investor-relations/spark"')
 	})
 
-	it('hides the Investor Relations tab on a protocol without an IR dashboard', async () => {
+	it('hides the Enterprise tab on a protocol without an IR dashboard', async () => {
 		setupLayoutMocks({ flags: { is_llama: true } })
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -162,7 +162,7 @@ describe('Protocol Investor Relations tab', () => {
 		expect(markup).not.toContain('investors.defillama.com/spark')
 	})
 
-	it('labels the IR tab "Enterprise Dashboard" for odyssey', async () => {
+	it('labels the IR tab "Enterprise" for odyssey', async () => {
 		setupLayoutMocks({ flags: { is_llama: true } })
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -174,7 +174,7 @@ describe('Protocol Investor Relations tab', () => {
 			)
 		)
 
-		expect(markup).toContain('Enterprise Dashboard')
+		expect(markup).toContain('Enterprise')
 		expect(markup).toContain('href="/protocol/investor-relations/odyssey-finance"')
 	})
 })

@@ -40,7 +40,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'Spark',
 		customOnly: false,
 		brandGradient: 'linear-gradient(90deg, #FA43BD, #FFA930)',
-		tabLabel: 'Investor Relations'
+		tabLabel: 'Enterprise'
 	},
 	{
 		irProjectId: 'near',
@@ -50,7 +50,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'NEAR',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #00C1DE, #00E4AA, #00EC97)',
-		tabLabel: 'Investor Relations'
+		tabLabel: 'Enterprise'
 	},
 	{
 		// NEAR exists as both a chain (/chain/Near) and a protocol (/protocol/near); surface IR on both.
@@ -61,7 +61,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'NEAR',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #00C1DE, #00E4AA, #00EC97)',
-		tabLabel: 'Investor Relations'
+		tabLabel: 'Enterprise'
 	},
 	{
 		irProjectId: 'sonic',
@@ -71,7 +71,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'Sonic',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #fac461, #fe7d2d, #e3570a)',
-		tabLabel: 'Investor Relations'
+		tabLabel: 'Enterprise'
 	},
 	{
 		irProjectId: 'thorchain',
@@ -81,7 +81,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'THORChain',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #00CCFF, #31FD9D)',
-		tabLabel: 'Investor Relations'
+		tabLabel: 'Enterprise'
 	},
 	{
 		irProjectId: 'thorchain',
@@ -91,7 +91,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'THORChain',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #00CCFF, #31FD9D)',
-		tabLabel: 'Investor Relations'
+		tabLabel: 'Enterprise'
 	},
 	{
 		irProjectId: 'odyssey-ecosystem',
@@ -101,7 +101,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'Odyssey Ecosystem',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd)',
-		tabLabel: 'Enterprise Dashboard'
+		tabLabel: 'Enterprise'
 	}
 ]
 

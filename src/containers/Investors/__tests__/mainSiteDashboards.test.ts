@@ -73,9 +73,9 @@ describe('mainSiteDashboards', () => {
 		}
 	})
 
-	it('labels odyssey as Enterprise Dashboard and the rest as Investor Relations', () => {
-		expect(getMainSiteIrDashboard('protocol', 'odyssey-finance')?.tabLabel).toBe('Enterprise Dashboard')
-		expect(getMainSiteIrDashboard('protocol', 'spark')?.tabLabel).toBe('Investor Relations')
-		expect(getMainSiteIrDashboard('chain', 'near')?.tabLabel).toBe('Investor Relations')
+	it('uses the configured dashboard labels', () => {
+		for (const dashboard of MAIN_SITE_IR_DASHBOARDS) {
+			expect(dashboard.tabLabel).toBe('Enterprise')
+		}
 	})
 })
