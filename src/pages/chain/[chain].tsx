@@ -4,6 +4,8 @@ import { ChainOverview } from '~/containers/ChainOverview'
 import { ChainOverviewAnnouncement } from '~/containers/ChainOverview/Announcement'
 import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
 import { ChainWarningBanners } from '~/containers/ChainOverview/WarningBanners'
+import { getMainSiteIrDashboard } from '~/containers/Investors/mainSiteDashboards'
+import { fetchCustomServerData } from '~/containers/Investors/serverDataRegistry'
 import { fetchOptionalEntityQuestions } from '~/containers/LlamaAI/entityQuestions'
 import Layout from '~/layout'
 import { slug } from '~/utils'
@@ -61,15 +63,21 @@ export const getStaticProps = withPerformanceLogging('chain/[chain]', async ({ p
 			throw new Error(`Missing page data for route=/chain/[chain] chain=${normalizedChain}`)
 		}
 
-		const { questions: entityQuestions } =
+		const normalizedSlug = slug(normalizedChain)
+		const irDashboard = normalizedChain === 'All' ? undefined : getMainSiteIrDashboard('chain', normalizedSlug)
+		const [{ questions: entityQuestions }, customServerData] = await Promise.all([
 			normalizedChain !== 'All'
-				? await phaseTimer.time('entity_questions', () =>
-						fetchOptionalEntityQuestions(normalizedChain, 'chain', slug(normalizedChain))
+				? phaseTimer.time('entity_questions', () =>
+						fetchOptionalEntityQuestions(normalizedChain, 'chain', normalizedSlug)
 					)
-				: { questions: [] }
+				: Promise.resolve({ questions: [] }),
+			irDashboard
+				? phaseTimer.time('ir_custom_server_data', () => fetchCustomServerData(irDashboard.dashboardId))
+				: Promise.resolve({})
+		])
 
 		return {
-			props: { ...data, entityQuestions },
+			props: { ...data, entityQuestions, customServerData },
 			revalidate: maxAgeForNext([22])
 		}
 	} finally {

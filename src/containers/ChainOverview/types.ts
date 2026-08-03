@@ -94,6 +94,7 @@ export interface IChainOverviewData {
 	website: string | null
 	warningBanners?: Array<IChainWarningBanner>
 	entityQuestions?: string[]
+	customServerData?: Record<string, unknown>
 }
 
 interface IChainWarningBanner {

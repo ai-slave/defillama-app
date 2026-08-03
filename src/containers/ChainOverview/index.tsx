@@ -83,6 +83,7 @@ export function ChainOverview(props: IChainOverviewData) {
 							dashboardId={irDashboard.dashboardId}
 							customOnly={irDashboard.customOnly}
 							entityName={props.metadata.name}
+							customServerData={props.customServerData}
 						/>
 					</Suspense>
 				) : (
