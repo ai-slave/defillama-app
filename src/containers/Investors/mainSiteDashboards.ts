@@ -7,7 +7,6 @@ import type { InvestorsProjectId } from './config'
  * investors.defillama.com / enterprise.defillama.com deployments and resolve to empty on the main build.
  * The dashboard modules themselves are loaded through the ungated `registry.ts` by `dashboardId`.
  *
- * v1 surfaces the dashboards that are live on the IR sites today, gated to `flags.is_llama` users.
  * Add a row here to surface another entity once its dashboard is ready.
  */
 
@@ -72,6 +71,26 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'Sonic',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #fac461, #fe7d2d, #e3570a)',
+		tabLabel: 'Investor Relations'
+	},
+	{
+		irProjectId: 'thorchain',
+		dashboardId: 'bfqwxro9m0xnc9z',
+		entityType: 'chain',
+		slug: 'thorchain',
+		entityName: 'THORChain',
+		customOnly: true,
+		brandGradient: 'linear-gradient(90deg, #00CCFF, #31FD9D)',
+		tabLabel: 'Investor Relations'
+	},
+	{
+		irProjectId: 'thorchain',
+		dashboardId: 'bfqwxro9m0xnc9z',
+		entityType: 'protocol',
+		slug: 'thorchain',
+		entityName: 'THORChain',
+		customOnly: true,
+		brandGradient: 'linear-gradient(90deg, #00CCFF, #31FD9D)',
 		tabLabel: 'Investor Relations'
 	},
 	{

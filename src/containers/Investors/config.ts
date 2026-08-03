@@ -14,8 +14,13 @@ export const ALL_INVESTORS_PROJECTS = [
 export type InvestorsProject = (typeof ALL_INVESTORS_PROJECTS)[number]
 export type InvestorsProjectId = InvestorsProject['id']
 
-const INVESTORS_LIVE_PROJECT_IDS = ['spark', 'sonic', 'near'] as const satisfies readonly InvestorsProjectId[]
-const INVESTORS_PREVIEW_PROJECT_IDS = ['flare', 'thorchain'] as const satisfies readonly InvestorsProjectId[]
+const INVESTORS_LIVE_PROJECT_IDS = [
+	'spark',
+	'sonic',
+	'near',
+	'thorchain'
+] as const satisfies readonly InvestorsProjectId[]
+const INVESTORS_PREVIEW_PROJECT_IDS = ['flare'] as const satisfies readonly InvestorsProjectId[]
 const INVESTORS_PREVIEW_ENABLED = process.env.NEXT_PUBLIC_INVESTORS_PREVIEW === 'true'
 const INVESTORS_DOMAIN_PROJECT_IDS = [
 	...INVESTORS_LIVE_PROJECT_IDS,

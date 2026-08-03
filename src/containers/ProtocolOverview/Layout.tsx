@@ -198,7 +198,7 @@ export function ProtocolOverviewLayout({
 
 	const entitySlug = slug(name)
 	const irDashboard = isCEX ? undefined : getMainSiteIrDashboard('protocol', entitySlug)
-	const showInvestorRelations = !!irDashboard && user?.flags?.is_llama === true
+	const showInvestorRelations = !!irDashboard
 	const shouldNoIndex = !standaloneCanonicals[tab] || noIndexProtocolSlugs.has(entitySlug)
 	const canonicalUrl = isCEX
 		? tab === 'assets'

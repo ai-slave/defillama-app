@@ -1,7 +1,4 @@
 import type { GetStaticPropsContext } from 'next'
-import { useRouter } from 'next/router'
-import { useEffect } from 'react'
-import { useAuthContext } from '~/auth'
 import { InvestorRelationsView } from '~/containers/Investors/InvestorRelationsView'
 import { getMainSiteIrDashboard, MAIN_SITE_IR_PROTOCOL_SLUGS } from '~/containers/Investors/mainSiteDashboards'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
@@ -9,7 +6,6 @@ import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
-import { PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -91,18 +87,6 @@ export const getStaticPaths = () => {
 }
 
 export default function ProtocolInvestorRelations(props: InvestorRelationsPageProps) {
-	const router = useRouter()
-	const { user, loaders } = useAuthContext()
-	const isLlama = user?.flags?.is_llama === true
-
-	// Internal preview: only `is_llama` users can view it. Everyone else is sent to the protocol overview.
-	useEffect(() => {
-		if (!router.isReady || loaders.userLoading) return
-		if (!isLlama) {
-			router.replace(`/protocol/${slug(props.name)}`)
-		}
-	}, [router, loaders.userLoading, isLlama, props.name])
-
 	return (
 		<ProtocolOverviewLayout
 			name={props.name}
@@ -114,15 +98,11 @@ export default function ProtocolInvestorRelations(props: InvestorRelationsPagePr
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
-			{isLlama ? (
-				<InvestorRelationsView
-					dashboardId={props.dashboardId}
-					customOnly={props.customOnly}
-					entityName={props.entityName}
-				/>
-			) : (
-				<PanelStatus variant="empty">This dashboard isn’t available on your account.</PanelStatus>
-			)}
+			<InvestorRelationsView
+				dashboardId={props.dashboardId}
+				customOnly={props.customOnly}
+				entityName={props.entityName}
+			/>
 		</ProtocolOverviewLayout>
 	)
 }

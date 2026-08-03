@@ -22,9 +22,10 @@ describe('mainSiteDashboards', () => {
 		expect(spark?.customOnly).toBe(false)
 	})
 
-	it('resolves near and sonic as chain dashboards', () => {
+	it('resolves near, sonic, and thorchain as chain dashboards', () => {
 		expect(getMainSiteIrDashboard('chain', 'near')?.dashboardId).toBe('n34rr3v3nu3d4sh')
 		expect(getMainSiteIrDashboard('chain', 'sonic')?.dashboardId).toBe('s0n1cd4shb0ard1')
+		expect(getMainSiteIrDashboard('chain', 'thorchain')?.dashboardId).toBe('bfqwxro9m0xnc9z')
 	})
 
 	it('does not resolve a dashboard under the wrong entity type', () => {
@@ -39,15 +40,20 @@ describe('mainSiteDashboards', () => {
 		expect(getMainSiteIrDashboard('protocol', 'near')?.dashboardId).toBe('n34rr3v3nu3d4sh')
 	})
 
+	it('surfaces thorchain as both a chain and a protocol dashboard', () => {
+		expect(getMainSiteIrDashboard('chain', 'thorchain')?.dashboardId).toBe('bfqwxro9m0xnc9z')
+		expect(getMainSiteIrDashboard('protocol', 'thorchain')?.dashboardId).toBe('bfqwxro9m0xnc9z')
+	})
+
 	it('returns undefined for entities without an IR dashboard', () => {
 		expect(getMainSiteIrDashboard('protocol', 'aave')).toBeUndefined()
 		expect(hasMainSiteIrDashboard('chain', 'ethereum')).toBe(false)
 	})
 
 	it('exposes protocol and chain slug lists that match the dashboard table', () => {
-		expect(new Set(MAIN_SITE_IR_PROTOCOL_SLUGS)).toEqual(new Set(['spark', 'odyssey-finance', 'near']))
-		expect(new Set(MAIN_SITE_IR_CHAIN_SLUGS)).toEqual(new Set(['near', 'sonic']))
-		expect(MAIN_SITE_IR_DASHBOARDS).toHaveLength(5)
+		expect(new Set(MAIN_SITE_IR_PROTOCOL_SLUGS)).toEqual(new Set(['spark', 'odyssey-finance', 'near', 'thorchain']))
+		expect(new Set(MAIN_SITE_IR_CHAIN_SLUGS)).toEqual(new Set(['near', 'sonic', 'thorchain']))
+		expect(MAIN_SITE_IR_DASHBOARDS).toHaveLength(7)
 	})
 
 	it('uses a non-empty brand gradient for every dashboard', () => {

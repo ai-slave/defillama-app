@@ -82,7 +82,7 @@ afterEach(() => {
 })
 
 describe('Protocol Investor Relations tab', () => {
-	it('shows the Investor Relations tab for an is_llama user on an IR protocol', async () => {
+	it('shows the Investor Relations tab on an IR protocol', async () => {
 		setupLayoutMocks({ flags: { is_llama: true } })
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -98,7 +98,7 @@ describe('Protocol Investor Relations tab', () => {
 		expect(markup).toContain('href="/protocol/investor-relations/spark"')
 	})
 
-	it('hides the Investor Relations tab for a non-llama user', async () => {
+	it('shows the Investor Relations tab for a signed-out user', async () => {
 		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -110,7 +110,7 @@ describe('Protocol Investor Relations tab', () => {
 			)
 		)
 
-		expect(markup).not.toContain('href="/protocol/investor-relations/spark"')
+		expect(markup).toContain('href="/protocol/investor-relations/spark"')
 	})
 
 	it('hides the Investor Relations tab on a protocol without an IR dashboard', async () => {
@@ -143,7 +143,7 @@ describe('Protocol Investor Relations tab', () => {
 		expect(markup).not.toContain('investors.defillama.com/spark')
 	})
 
-	it('still shows the external IR announcement banner for a non-llama user on Spark', async () => {
+	it('suppresses the external IR announcement banner for a signed-out user on Spark', async () => {
 		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -155,7 +155,7 @@ describe('Protocol Investor Relations tab', () => {
 			)
 		)
 
-		expect(markup).toContain('investors.defillama.com/spark')
+		expect(markup).not.toContain('investors.defillama.com/spark')
 	})
 
 	it('labels the IR tab "Enterprise Dashboard" for odyssey', async () => {

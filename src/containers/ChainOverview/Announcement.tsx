@@ -11,10 +11,7 @@ const NEAR_CHAIN_ICON = chainIconUrl('near')
 export const ChainOverviewAnnouncement = ({ chainName }: { chainName?: string }) => {
 	const { user } = useAuthContext()
 	const normalizedChainName = chainName?.toLowerCase()
-	// is_llama users get the in-page Investor Relations tab on chains that have a main-site IR dashboard,
-	// so don't also show them the external IR announcement banner (mirrors ProtocolOverview/Layout.tsx).
-	const showsInPageIr =
-		user?.flags?.is_llama === true && !!chainName && !!getMainSiteIrDashboard('chain', slug(chainName))
+	const showsInPageIr = !!chainName && !!getMainSiteIrDashboard('chain', slug(chainName))
 
 	if (normalizedChainName === 'near') {
 		if (showsInPageIr) return null

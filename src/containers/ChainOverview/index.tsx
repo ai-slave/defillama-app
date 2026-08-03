@@ -1,6 +1,5 @@
 import { useRouter } from 'next/router'
 import { lazy, Suspense } from 'react'
-import { useAuthContext } from '~/auth'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
@@ -19,19 +18,15 @@ import { SmolStats } from './SmolStats'
 import { Stats } from './Stats'
 import type { IChainOverviewData } from './types'
 
-// Lazy-loaded: pulls in the full ProDashboard stack (@dnd-kit, react-query, ChartGrid, dataset modules).
-// ChainOverview is in the homepage's initial bundle, so keep that stack out of it — it only renders for
-// is_llama users who open the IR tab. Matches the lazy() pattern used by pages/pro and pages/investors.
 const InvestorRelationsView = lazy(() =>
 	import('~/containers/Investors/InvestorRelationsView').then((m) => ({ default: m.InvestorRelationsView }))
 )
 
 export function ChainOverview(props: IChainOverviewData) {
 	const router = useRouter()
-	const { user } = useAuthContext()
 	const entitySlug = slug(props.metadata.name)
 	const irDashboard = getMainSiteIrDashboard('chain', entitySlug)
-	const showInvestorRelations = !!irDashboard && user?.flags?.is_llama === true
+	const showInvestorRelations = !!irDashboard
 	const irActive = showInvestorRelations && router.query.tab === 'investor-relations'
 
 	const goToTab = (tab?: string) => {

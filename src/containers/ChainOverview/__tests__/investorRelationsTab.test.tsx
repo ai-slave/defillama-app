@@ -53,7 +53,7 @@ beforeEach(() => {
 })
 
 describe('Chain Investor Relations tab', () => {
-	it('shows the Overview / Investor Relations tab row for an is_llama user on an IR chain', async () => {
+	it('shows the Overview / Investor Relations tab row on an IR chain', async () => {
 		setupChainState({ user: { flags: { is_llama: true } }, query: {} })
 
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('NEAR')))
@@ -76,22 +76,22 @@ describe('Chain Investor Relations tab', () => {
 		expect(markup).not.toContain('QUESTIONS-MARKER')
 	})
 
-	it('hides the Investor Relations tab for a non-llama user', async () => {
+	it('shows the Investor Relations tab for a signed-out user', async () => {
 		setupChainState({ user: null, query: {} })
 
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('NEAR')))
 
-		expect(markup).not.toContain('Investor Relations')
+		expect(markup).toContain('Investor Relations')
 	})
 
-	it('does not render the IR view for a non-llama user even with the tab query', async () => {
+	it('renders the IR tab for a signed-out user when the tab query is set', async () => {
 		setupChainState({ user: null, query: { tab: 'investor-relations' } })
 
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('NEAR')))
 
-		// Non-llama: irActive is false, so the Overview branch renders regardless of the tab query.
-		expect(markup).not.toContain('IR-VIEW-MARKER')
-		expect(markup).toContain('OVERVIEW-MARKER')
+		expect(markup).toContain('IR-VIEW-MARKER')
+		expect(markup).not.toContain('OVERVIEW-MARKER')
+		expect(markup).toContain('Investor Relations')
 	})
 
 	it('hides the Investor Relations tab on a chain without an IR dashboard', async () => {
