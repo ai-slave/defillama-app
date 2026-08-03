@@ -175,6 +175,24 @@
 	--sl-btn-inactive-bg: rgba(0, 0, 0, 0.04);
 	--sl-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
 
+	--color-pro-text-primary: var(--pro-text-primary);
+	--color-pro-text-secondary: var(--pro-text-secondary);
+	--color-pro-text-tertiary: var(--pro-text-tertiary);
+	--color-pro-text-label: var(--pro-text-label);
+	--color-pro-text-form: var(--pro-text-form);
+	--color-pro-cards-bg: var(--pro-cards-bg);
+	--color-pro-cards-border: var(--pro-cards-border);
+	--color-pro-app-bg: var(--pro-app-bg);
+	--color-pro-form-control-border: var(--pro-form-control-border);
+	--color-pro-accent: var(--pro-accent);
+	--color-sl-accent: var(--sl-accent);
+	--color-sl-accent-hover: var(--sl-accent-hover);
+	--color-sl-accent-muted: var(--sl-accent-muted);
+	--color-sl-btn-inactive-bg: var(--sl-btn-inactive-bg);
+	--color-sl-divider: var(--sl-divider);
+	--color-sl-hover-bg: var(--sl-hover-bg);
+	--color-sl-text-brand: var(--sl-text-brand);
+
 	html.dark & {
 		--pro-panel-bg: #08090c;
 		--pro-panel-raised: #0c0e13;
