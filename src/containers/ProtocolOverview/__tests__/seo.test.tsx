@@ -371,7 +371,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 		expect(overviewMarkup).toContain('toggle Active Loans')
 	})
 
-	it.each(['Vesper', 'Odyssey Finance', 'Metronome', 'Metronome Synth'])(
+	it.each(['Vesper', 'Metronome', 'Metronome Synth'])(
 		'shows the Odyssey enterprise dashboard announcement for %s',
 		async (name) => {
 			setupLayoutMocks()
@@ -389,6 +389,22 @@ describe('ProtocolOverviewLayout SEO', () => {
 			expect(markup).not.toContain('investor relations dashboard')
 		}
 	)
+
+	it('shows the in-page enterprise dashboard for Odyssey Finance without the external announcement', async () => {
+		setupLayoutMocks()
+
+		const { ProtocolOverviewLayout } = await import('../Layout')
+		const markup = renderToStaticMarkup(
+			<ProtocolOverviewLayout name="Odyssey Finance" category="Lending" metrics={metrics} tab="information">
+				{null}
+			</ProtocolOverviewLayout>
+		)
+
+		expect(markup).toContain('href="/protocol/investor-relations/odyssey-finance"')
+		expect(markup).toContain('Enterprise Dashboard')
+		expect(markup).not.toContain('href="https://enterprise.defillama.com/odyssey-ecosystem"')
+		expect(markup).not.toContain('Odyssey Enterprise')
+	})
 })
 
 describe('ProtocolOverview SEO contract', () => {
