@@ -62,6 +62,10 @@ describe('Chain Investor Relations tab', () => {
 		expect(markup).toContain('Overview')
 		expect(markup).not.toContain('IR-VIEW-MARKER')
 		expect(markup).toContain('QUESTIONS-MARKER')
+		expect(markup).toContain('data-umami-event="investor-relations-tab-click"')
+		expect(markup).toContain('data-umami-event-entity-type="chain"')
+		expect(markup).toContain('data-umami-event-entity="near"')
+		expect(markup).toContain('data-umami-event-dashboard-id="n34rr3v3nu3d4sh"')
 	})
 
 	it('renders the Investor Relations view (not the Overview) when ?tab=investor-relations is set', async () => {

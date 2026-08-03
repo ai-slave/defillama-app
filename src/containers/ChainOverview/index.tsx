@@ -53,6 +53,10 @@ export function ChainOverview(props: IChainOverviewData) {
 							type="button"
 							onClick={() => goToTab('investor-relations')}
 							data-active={irActive}
+							data-umami-event="investor-relations-tab-click"
+							data-umami-event-entity-type="chain"
+							data-umami-event-entity={entitySlug}
+							data-umami-event-dashboard-id={irDashboard.dashboardId}
 							className="flex items-center gap-1.5"
 						>
 							<IrTabLabel label={irDashboard.tabLabel} gradient={irDashboard.brandGradient} active={irActive} />

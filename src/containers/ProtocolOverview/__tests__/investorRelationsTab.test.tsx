@@ -59,8 +59,8 @@ function setupLayoutMocks(user: unknown) {
 	vi.doMock('~/components/Link', () => ({
 		BasicLink: ({ children, href }: { children: React.ReactNode; href: string }) =>
 			React.createElement('a', { href }, children),
-		ButtonLink: ({ children, href }: { children: React.ReactNode; href: string }) =>
-			React.createElement('a', { href }, children)
+		ButtonLink: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) =>
+			React.createElement('a', props, children)
 	}))
 	vi.doMock('~/components/TokenLogo', () => ({
 		TokenLogo: () => null
@@ -96,6 +96,10 @@ describe('Protocol Investor Relations tab', () => {
 
 		expect(markup).toContain('Investor Relations')
 		expect(markup).toContain('href="/protocol/investor-relations/spark"')
+		expect(markup).toContain('data-umami-event="investor-relations-tab-click"')
+		expect(markup).toContain('data-umami-event-entity-type="protocol"')
+		expect(markup).toContain('data-umami-event-entity="spark"')
+		expect(markup).toContain('data-umami-event-dashboard-id="9vn8xp43tdzo6gt"')
 	})
 
 	it('shows the Investor Relations tab for a signed-out user', async () => {

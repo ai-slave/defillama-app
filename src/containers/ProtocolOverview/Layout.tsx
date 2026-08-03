@@ -393,6 +393,10 @@ export function ProtocolOverviewLayout({
 							as={ButtonLink}
 							href={`/protocol/investor-relations/${entitySlug}`}
 							data-active={tab === 'investorRelations'}
+							data-umami-event="investor-relations-tab-click"
+							data-umami-event-entity-type="protocol"
+							data-umami-event-entity={entitySlug}
+							data-umami-event-dashboard-id={irDashboard.dashboardId}
 							className="flex items-center gap-1.5"
 						>
 							<IrTabLabel
