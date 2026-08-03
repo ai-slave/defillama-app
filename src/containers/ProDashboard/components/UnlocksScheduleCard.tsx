@@ -9,7 +9,7 @@ import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { slug } from '~/utils'
 import { formatIsoDate } from '~/utils/dateFormat'
-import { download } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksScheduleConfig } from '../types'
@@ -86,9 +86,8 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 				...selectedDimensionIndexes.map((index) => item[index] ?? '')
 			]
 		})
-		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
 		const filename = `${protocolName || protocol}-unlock-schedule-${resolvedDataType}`
-		download(filename, csvContent)
+		downloadCSV(filename, [headers, ...rows])
 	}, [hasChartData, activeCategories, dataset, protocolName, protocol, resolvedDataType])
 
 	if (isLoading || (!streamDone && data === undefined)) {

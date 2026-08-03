@@ -19,7 +19,7 @@ import {
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formatIsoDate } from '~/utils/dateFormat'
-import { download } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { StablecoinsChartConfig } from '../types'
@@ -141,7 +141,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 			]
 		}
 
-		if (rows.length > 0) download(filename, rows.map((row) => row.join(',')).join('\n'))
+		if (rows.length > 0) downloadCSV(filename, rows)
 	}
 
 	const chartTypeLabel = CHART_TYPE_LABELS[chartType] || chartType

@@ -19,7 +19,7 @@ import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { LocalLoader } from '~/ui/Loaders'
 import { formatIsoDate } from '~/utils/dateFormat'
-import { download } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { getTimePeriodBounds } from '../queries'
@@ -209,8 +209,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 		}
 
 		if (rows.length > 0) {
-			const csvContent = rows.map((row) => row.join(',')).join('\n')
-			download(filename, csvContent)
+			downloadCSV(filename, rows)
 		}
 	}
 

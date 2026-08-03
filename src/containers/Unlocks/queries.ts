@@ -429,7 +429,10 @@ interface ProtocolEmissionMeta {
 	maxSupply?: number | null
 }
 
-export async function getProtocolEmissionsPieData(protocolName: string): Promise<{
+export async function getProtocolEmissionsPieData(
+	protocolName: string,
+	includeSupplyMeta: boolean
+): Promise<{
 	pieChartData: {
 		documented: Array<{ name: string; value: number }>
 		realtime: Array<{ name: string; value: number }>
@@ -462,8 +465,11 @@ export async function getProtocolEmissionsPieData(protocolName: string): Promise
 		realtime: buildColorsForPie(pieChartData.realtime, colorFromMap)
 	}
 
-	const allEmissions = await fetchAllProtocolEmissions()
-	const meta = allEmissions.find((p) => p?.token === res?.metadata?.token) ?? {}
+	const token = res.metadata?.token
+	const meta =
+		includeSupplyMeta && token
+			? ((await fetchAllProtocolEmissions()).find((protocol) => protocol.token === token) ?? {})
+			: {}
 
 	return { pieChartData, stackColors, meta }
 }

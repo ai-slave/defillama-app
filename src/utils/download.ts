@@ -17,6 +17,8 @@ export interface DatasetCSVParams {
 export type CsvCell = string | number | boolean | object | null | undefined
 export type CsvData = CsvCell[][] | string
 
+const CSV_FORMULA_PREFIX_REGEX = /^[=+\-@\t\r\n＝＋－＠]/u
+
 export function download(filename: string, text: string): void {
 	const element = document.createElement('a')
 	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
@@ -127,9 +129,11 @@ export function downloadCSV(filename: string, csvData: CsvData, options: CSVDown
 					row
 						.map((cell) => {
 							if (cell == null) return ''
-							if (typeof cell === 'object') return JSON.stringify(cell)
-							const cellStr = String(cell)
-							if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+							// Preserve typed negative numbers; only text can be interpreted as a spreadsheet formula.
+							const formulaPrefixed = typeof cell === 'string' && CSV_FORMULA_PREFIX_REGEX.test(cell)
+							const cellStr =
+								typeof cell === 'object' ? JSON.stringify(cell) : formulaPrefixed ? `'${cell}` : String(cell)
+							if (formulaPrefixed || cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
 								return `"${cellStr.replace(/"/g, '""')}"`
 							}
 							return cellStr

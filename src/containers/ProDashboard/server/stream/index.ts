@@ -667,20 +667,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			// Emission data — stream per source
 			for (const item of items) {
 				if (item.kind === 'unlocks-pie') {
-					const cacheKey = JSON.stringify(['pro-dashboard', 'unlocks-pie', item.protocol])
+					const includeSupplyMeta = item.chartType === 'locked-unlocked'
+					const cacheKey = JSON.stringify(['pro-dashboard', 'unlocks-pie', item.protocol, includeSupplyMeta])
 					if (!claimStreamSource('emissions-pie', [cacheKey])) continue
 					phase2Promises.push(
-						scheduleSource(() =>
-							withTimeout(getProtocolEmissionsPieData(slug(item.protocol)), 10_000).then(async (data) => {
-								if (data)
-									await writeLine({
-										type: 'emissionData',
-										view: 'pie',
-										key: cacheKey,
-										data
-									})
-							})
-						).catch(() => {})
+						scheduleSource(async () => {
+							const data = await withTimeout(
+								getProtocolEmissionsPieData(slug(item.protocol), includeSupplyMeta),
+								10_000
+							)
+							await writeLine({ type: 'emissionData', view: 'pie', key: cacheKey, data })
+						}).catch(() => {})
 					)
 				} else if (item.kind === 'unlocks-schedule') {
 					const resolvedDataType = item.dataType === 'realtime' ? 'documented' : item.dataType

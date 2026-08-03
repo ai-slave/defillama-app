@@ -117,8 +117,7 @@ export async function fetchAllProtocolEmissions(): Promise<ProtocolEmission[]> {
 		}
 
 		return protocols
-	} catch (error) {
-		console.error('Failed to fetch all protocol emissions:', error)
+	} catch {
 		return []
 	}
 }

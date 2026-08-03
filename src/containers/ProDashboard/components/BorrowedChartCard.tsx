@@ -9,7 +9,7 @@ import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formatIsoDate } from '~/utils/dateFormat'
-import { download } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPE_LABELS } from '../borrowedChartConstants'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
@@ -146,7 +146,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 				break
 		}
 
-		if (rows.length > 0) download(filename, rows.map((row) => row.join(',')).join('\n'))
+		if (rows.length > 0) downloadCSV(filename, rows)
 	}
 
 	const chartTypeLabel = BORROWED_CHART_TYPE_LABELS[chartType] || chartType

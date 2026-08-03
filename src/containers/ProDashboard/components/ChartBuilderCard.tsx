@@ -9,7 +9,7 @@ import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { Icon } from '~/ui/Icon'
 import type { ChartSeries } from '~/utils/breakdowns'
-import { download } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
 import { chartBuilderHasExactRemainder } from '../chartBuilderCapabilities'
 import { getChartBuilderQueryKey } from '../chartBuilderQueryKey'
@@ -297,8 +297,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 				}
 				rows[i] = row
 			}
-			const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
-			download(fileName, csvContent)
+			downloadCSV(fileName, [headers, ...rows])
 			return
 		}
 
@@ -334,8 +333,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			rows.push(row)
 		}
 
-		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
-		download(fileName, csvContent)
+		downloadCSV(fileName, [headers, ...rows])
 	}
 
 	const updateSeriesColors = (nextColors: Record<string, string>) => {

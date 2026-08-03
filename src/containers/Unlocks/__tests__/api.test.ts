@@ -92,4 +92,16 @@ describe('unlocks api', () => {
 		expect(result[1]).toBe(normalizedProtocol)
 		expect(result[1]?.events).toBe(normalizedProtocol.events)
 	})
+
+	it('returns an empty list without re-logging a failed list request', async () => {
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+		mocks.fetchJson.mockRejectedValue(new Error('Failed to fetch'))
+
+		const api = await import('../api')
+		const result = await api.fetchAllProtocolEmissions()
+
+		expect(result).toEqual([])
+		expect(consoleError).not.toHaveBeenCalled()
+		consoleError.mockRestore()
+	})
 })

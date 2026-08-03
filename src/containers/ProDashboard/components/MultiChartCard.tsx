@@ -8,7 +8,7 @@ import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { capitalizeFirstLetter } from '~/utils'
-import { download } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { getChartDataPrerequisite, toChartRuntimeState, type ChartRuntimeView } from '../chartRuntime'
 import {
@@ -274,11 +274,9 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 
 	const handleCsvExport = useCallback(() => {
 		if (chartView.charts.length === 0) return
-		const csvContent = buildMultiChartCsvRows(chartView)
-			.map((row) => row.join(','))
-			.join('\n')
+		const rows = buildMultiChartCsvRows(chartView)
 		const fileName = `${multi.name || 'multi_chart'}_${new Date().toISOString().split('T')[0]}.csv`
-		download(fileName, csvContent)
+		downloadCSV(fileName, rows)
 	}, [chartView, multi.name])
 
 	const hasAnyData = validItems.length > 0

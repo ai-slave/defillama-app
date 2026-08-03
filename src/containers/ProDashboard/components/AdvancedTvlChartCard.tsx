@@ -19,7 +19,7 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formatIsoDate } from '~/utils/dateFormat'
-import { download } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
@@ -225,7 +225,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				break
 		}
 
-		if (rows.length > 0) download(filename, rows.map((row) => row.join(',')).join('\n'))
+		if (rows.length > 0) downloadCSV(filename, rows)
 	}
 
 	const chartTypeLabel = CHART_TYPE_LABELS[chartType] || chartType

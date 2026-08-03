@@ -5,7 +5,7 @@ import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSer
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
-import { download } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext } from '../queries'
@@ -144,10 +144,9 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				])
 		}
 
-		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
 		const chartTypeSuffix = chartType !== 'tvl-apy' ? `_${chartType}` : ''
 		const fileName = `${poolName.replace(/\s+/g, '_')}${chartTypeSuffix}_${new Date().toISOString().split('T')[0]}.csv`
-		download(fileName, csvContent)
+		downloadCSV(fileName, [headers, ...rows])
 	}
 
 	const imageFilename = `${poolName.replace(/\s+/g, '_')}`

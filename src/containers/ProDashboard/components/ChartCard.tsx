@@ -9,7 +9,7 @@ import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { capitalizeFirstLetter } from '~/utils'
-import { download } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { getChartDataPrerequisite, toChartRuntimeState } from '../chartRuntime'
 import {
 	useProDashboardCatalog,
@@ -219,11 +219,10 @@ export function ChartCard({ chart }: ChartCardProps) {
 			if (typeof timestamp !== 'number') throw new Error(`Invalid dashboard chart timestamp at index ${index}`)
 			return [new Date(timestamp).toISOString().slice(0, 10), row[1]]
 		})
-		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
 		const fileName = `${itemName}_${chartTypeDetails.title.replace(/\s+/g, '_')}_${
 			new Date().toISOString().split('T')[0]
 		}.csv`
-		download(fileName, csvContent)
+		downloadCSV(fileName, [headers, ...rows])
 	}
 
 	const imageFilename = `${itemName}_${chartTypeDetails.title.replace(/\s+/g, '_')}`

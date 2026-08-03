@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useContext, useMemo } from 'react'
 import { getProtocolEmissionsPieData } from '~/containers/Unlocks/queries'
 import { slug } from '~/utils'
-import { download } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksPieConfig } from '../types'
 import { CSVExportButton } from './CSVExportButton'
@@ -23,11 +23,12 @@ interface UnlocksPieCardProps {
 
 export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 	const { protocol, protocolName, chartType } = config
+	const includeSupplyMeta = chartType === 'locked-unlocked'
 
 	const streamDone = useContext(StreamDoneContext)
 	const { data, isLoading } = useQuery({
-		queryKey: ['pro-dashboard', 'unlocks-pie', protocol],
-		queryFn: () => getProtocolEmissionsPieData(slug(protocol)),
+		queryKey: ['pro-dashboard', 'unlocks-pie', protocol, includeSupplyMeta],
+		queryFn: () => getProtocolEmissionsPieData(slug(protocol), includeSupplyMeta),
 		enabled: streamDone && Boolean(protocol),
 		staleTime: 60 * 60 * 1000
 	})
@@ -61,8 +62,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 	const handleCsvExport = useCallback(() => {
 		if (!hasChartData) return
 		const rows = [['Category', 'Value'], ...chartData.map((item) => [item.name, String(item.value)])]
-		const csvContent = rows.map((row) => row.join(',')).join('\n')
-		download(csvFileName, csvContent)
+		downloadCSV(csvFileName, rows)
 	}, [chartData, csvFileName, hasChartData])
 
 	if (isLoading || (!streamDone && data === undefined)) {

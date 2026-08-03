@@ -33,6 +33,7 @@ import { buildUnlocksHistoricalPriceRequests } from '~/utils/unlocks/historicalP
 import {
 	buildUnlockTypesByTimestamp,
 	getAllProtocolEmissions,
+	getProtocolEmissionsPieData,
 	getProtocolEmissons,
 	isEmptyProtocolEmissionResult
 } from '../queries'
@@ -61,6 +62,44 @@ describe('buildUnlockTypesByTimestamp', () => {
 			])
 		)
 		expect(events.map((event) => event.timestamp)).toEqual(timestamps)
+	})
+})
+
+describe('getProtocolEmissionsPieData', () => {
+	afterEach(() => {
+		fetchProtocolEmissionMock.mockReset()
+		fetchAllProtocolEmissionsMock.mockReset()
+	})
+
+	const protocolDetail = {
+		name: 'Curve Finance',
+		metadata: { token: 'CRV', events: [] },
+		documentedData: {
+			data: [{ label: 'team', data: [{ timestamp: 1, unlocked: 10 }] }]
+		},
+		realTimeData: { data: [] }
+	}
+
+	it('builds allocation data without fetching global supply metadata', async () => {
+		fetchProtocolEmissionMock.mockResolvedValue(protocolDetail)
+
+		const result = await getProtocolEmissionsPieData('curve-finance', false)
+
+		expect(result.pieChartData.documented).toEqual([{ name: 'Team', value: 10 }])
+		expect(result.meta).toEqual({})
+		expect(fetchAllProtocolEmissionsMock).not.toHaveBeenCalled()
+	})
+
+	it('fetches supply metadata for the locked/unlocked chart', async () => {
+		fetchProtocolEmissionMock.mockResolvedValue(protocolDetail)
+		fetchAllProtocolEmissionsMock.mockResolvedValue([
+			{ name: 'Curve Finance', token: 'CRV', totalLocked: 25, maxSupply: 100 }
+		])
+
+		const result = await getProtocolEmissionsPieData('curve-finance', true)
+
+		expect(fetchAllProtocolEmissionsMock).toHaveBeenCalledTimes(1)
+		expect(result.meta).toMatchObject({ totalLocked: 25, maxSupply: 100 })
 	})
 })
 
