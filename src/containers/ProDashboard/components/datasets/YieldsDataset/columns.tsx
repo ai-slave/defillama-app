@@ -5,7 +5,7 @@ import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { PercentChange } from '~/ui/PercentChange'
 import { formatUsd } from '~/utils/numberFormat'
-import type { ProYieldRow } from './data'
+import type { ProYieldRow } from '../../../yieldData'
 
 export const YIELDS_COLUMN_IDS = [
 	'pool',
@@ -30,7 +30,8 @@ export const YIELDS_COLUMN_ID_SET = new Set<string>(YIELDS_COLUMN_IDS)
 export type YieldColumnId = (typeof YIELDS_COLUMN_IDS)[number]
 
 function PercentCell({ value, bold = false }: { value: number | null | undefined; bold?: boolean }) {
-	return value == null ? <>-</> : <PercentChange percent={value} noSign fontWeight={bold ? 700 : undefined} />
+	if (value == null) return <>-</>
+	return bold ? <PercentChange percent={value} noSign fontWeight={700} /> : <PercentChange percent={value} noSign />
 }
 
 function DollarCell({ value }: { value: number | null | undefined }) {
@@ -47,7 +48,7 @@ export const yieldsDatasetColumns: ColumnDef<ProYieldRow>[] = [
 		id: 'pool',
 		accessorFn: (row) => row.pool,
 		enableSorting: false,
-		cell: ({ getValue, row }) => (
+		cell: ({ row }) => (
 			<span className="relative flex items-center gap-2 pl-6">
 				<TokenLogo
 					size={20}
@@ -57,7 +58,7 @@ export const yieldsDatasetColumns: ColumnDef<ProYieldRow>[] = [
 					data-lgonly
 				/>
 				<BasicLink href={`/yields/pool/${row.original.configID}`} className="truncate text-sm font-medium text-link">
-					{getValue() as string}
+					{row.original.pool}
 				</BasicLink>
 				{row.original.poolMeta ? <span className="text-xs text-secondary">{row.original.poolMeta}</span> : null}
 			</span>
@@ -67,9 +68,9 @@ export const yieldsDatasetColumns: ColumnDef<ProYieldRow>[] = [
 	{
 		header: 'Protocol',
 		accessorKey: 'project',
-		cell: ({ getValue, row }) => (
+		cell: ({ row }) => (
 			<BasicLink href={`/yields?protocol=${encodeURIComponent(row.original.project)}`} className="text-sm text-link">
-				{getValue() as string}
+				{row.original.project}
 			</BasicLink>
 		),
 		size: 140,
@@ -79,39 +80,37 @@ export const yieldsDatasetColumns: ColumnDef<ProYieldRow>[] = [
 		header: 'Chain',
 		accessorKey: 'chains',
 		enableSorting: false,
-		cell: (info) => (
-			<IconsRow items={toChainIconItems(info.getValue() as string[], (chain) => yieldsChainHref(chain))} />
-		),
+		cell: ({ row }) => <IconsRow items={toChainIconItems(row.original.chains, (chain) => yieldsChainHref(chain))} />,
 		size: 60,
 		meta: { align: 'end' }
 	},
 	{
 		header: 'TVL',
 		accessorKey: 'tvl',
-		cell: ({ getValue }) => <DollarCell value={getValue() as number | null} />,
+		cell: ({ row }) => <DollarCell value={row.original.tvl} />,
 		size: 120,
 		meta: { align: 'end' }
 	},
 	{
 		header: 'Supply APY',
 		accessorKey: 'apy',
-		cell: ({ getValue }) => <PercentCell value={getValue() as number | null} bold />,
+		cell: ({ row }) => <PercentCell value={row.original.apy} bold />,
 		size: 110,
 		meta: { align: 'end' }
 	},
 	{
 		header: 'Base APY',
 		accessorKey: 'apyBase',
-		cell: ({ getValue }) => <PercentCell value={getValue() as number | null} />,
+		cell: ({ row }) => <PercentCell value={row.original.apyBase} />,
 		size: 100,
 		meta: { align: 'end' }
 	},
 	{
 		header: 'Reward APY',
 		accessorKey: 'apyReward',
-		cell: ({ getValue, row }) => (
+		cell: ({ row }) => (
 			<span className="flex items-center justify-end gap-1">
-				<PercentCell value={getValue() as number | null} />
+				<PercentCell value={row.original.apyReward} />
 				{row.original.rewardTokensSymbols.length ? (
 					<span className="text-xs text-secondary">({row.original.rewardTokensSymbols.join(', ')})</span>
 				) : null}
@@ -123,64 +122,64 @@ export const yieldsDatasetColumns: ColumnDef<ProYieldRow>[] = [
 	{
 		header: '30d Avg APY',
 		accessorKey: 'apyMean30d',
-		cell: ({ getValue }) => <PercentCell value={getValue() as number | null} />,
+		cell: ({ row }) => <PercentCell value={row.original.apyMean30d} />,
 		size: 120,
 		meta: { align: 'end' }
 	},
 	{
 		header: '30d Stability',
 		accessorKey: 'stabilityRating',
-		cell: ({ getValue }) => <span className="capitalize">{(getValue() as string | null) ?? '-'}</span>,
+		cell: ({ row }) => <span className="capitalize">{row.original.stabilityRating ?? '-'}</span>,
 		size: 120,
 		meta: { align: 'end' }
 	},
 	{
 		header: '24h Volume',
 		accessorKey: 'volumeUsd1d',
-		cell: ({ getValue }) => <DollarCell value={getValue() as number | null} />,
+		cell: ({ row }) => <DollarCell value={row.original.volumeUsd1d} />,
 		size: 120,
 		meta: { align: 'end' }
 	},
 	{
 		header: 'IL Risk',
 		accessorKey: 'ilRisk',
-		cell: ({ getValue }) => ((getValue() as boolean) ? 'Yes' : 'No'),
+		cell: ({ row }) => (row.original.ilRisk ? 'Yes' : 'No'),
 		size: 80,
 		meta: { align: 'end' }
 	},
 	{
 		header: 'Borrow Cost APY',
 		accessorKey: 'apyBorrow',
-		cell: ({ getValue }) => <PercentCell value={getValue() as number | null} />,
+		cell: ({ row }) => <PercentCell value={row.original.apyBorrow} />,
 		size: 130,
 		meta: { align: 'end' }
 	},
 	{
 		header: 'Total Supplied',
 		accessorKey: 'totalSupplyUsd',
-		cell: ({ getValue }) => <DollarCell value={getValue() as number | null} />,
+		cell: ({ row }) => <DollarCell value={row.original.totalSupplyUsd} />,
 		size: 130,
 		meta: { align: 'end' }
 	},
 	{
 		header: 'Total Borrowed',
 		accessorKey: 'totalBorrowUsd',
-		cell: ({ getValue }) => <DollarCell value={getValue() as number | null} />,
+		cell: ({ row }) => <DollarCell value={row.original.totalBorrowUsd} />,
 		size: 130,
 		meta: { align: 'end' }
 	},
 	{
 		header: 'Available',
 		accessorKey: 'totalAvailableUsd',
-		cell: ({ getValue }) => <DollarCell value={getValue() as number | null} />,
+		cell: ({ row }) => <DollarCell value={row.original.totalAvailableUsd} />,
 		size: 120,
 		meta: { align: 'end' }
 	},
 	{
 		header: 'LTV',
 		accessorKey: 'ltv',
-		cell: ({ getValue }) => {
-			const value = getValue() as number | null
+		cell: ({ row }) => {
+			const value = row.original.ltv
 			return <PercentCell value={value == null ? null : value * 100} />
 		},
 		size: 80,

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { FEATURES_SERVER } from '~/constants'
+import type { PersistedDashboard } from '~/containers/ProDashboard/dashboardConfig/persisted'
 import { type CloudflarePurgeResult, purgeCloudflareDashboardUrls } from './cloudflarePurge'
 
 export type ProxiedDashboard = { id?: string; slug?: string | null; visibility?: string | null }
@@ -23,16 +24,6 @@ export function dashboardIdFromQuery(req: NextApiRequest): string | null {
 	return typeof id === 'string' && id ? id : null
 }
 
-export function parseJsonObject(body: string): Record<string, unknown> | null {
-	if (!body) return null
-	try {
-		const parsed = JSON.parse(body)
-		return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null
-	} catch {
-		return null
-	}
-}
-
 export async function fetchExistingDashboard(
 	id: string,
 	authHeader: Record<string, string>
@@ -42,22 +33,20 @@ export async function fetchExistingDashboard(
 			headers: authHeader
 		})
 		if (!response.ok) return null
-		return parseJsonObject(await response.text()) as ProxiedDashboard | null
+		const dashboard: PersistedDashboard = await response.json()
+		return dashboard
 	} catch {
 		return null
 	}
 }
 
 export async function sendBackendResponse(response: Response, res: NextApiResponse): Promise<void> {
-	const body = await response.text()
-	if (body) {
-		const payload = parseJsonObject(body)
-		if (payload) {
-			res.status(response.status).json(payload)
-			return
-		}
+	try {
+		const payload: { message?: string; error?: string } = await response.json()
+		res.status(response.status).json(payload)
+	} catch {
+		res.status(response.status).json({ error: response.statusText || 'Dashboard request failed' })
 	}
-	res.status(response.status).json({ error: body || response.statusText || 'Dashboard request failed' })
 }
 
 export async function purgeDashboardCache(params: {

@@ -1,6 +1,6 @@
 import type { IScatterChartProps, ScatterTooltipParams } from '~/components/ECharts/ScatterChart/types'
 import { formatChartValue } from '~/components/ECharts/shared/formatters'
-import type { ChartConfiguration, ChartDataSeries } from '~/containers/LlamaAI/types'
+import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
 
 export interface AdaptedScatterChartData {
 	chartType: 'scatter'
@@ -49,13 +49,13 @@ export function adaptScatterChartData(config: ChartConfiguration, rawData: Chart
 
 		const scatterData: Array<[number, number, string, string]> = []
 		for (const row of rawData) {
-			const record = row as Record<string, unknown>
-			const xValue = parseScatterNumber(record[xField])
-			const yValue = parseScatterNumber(record[yField])
+			if (!isChartDataRow(row)) continue
+			const xValue = parseScatterNumber(row[xField])
+			const yValue = parseScatterNumber(row[yField])
 			// Missing legacy scatter coordinates must be dropped; coercing them to 0
 			// creates phantom origin points in restored pre-keyed chart sessions.
 			if (xValue == null || yValue == null) continue
-			const entityName = String(record[entityField] ?? 'Unknown')
+			const entityName = String(row[entityField] ?? 'Unknown')
 			const entitySlug = entityName.toLowerCase().replace(/\s+/g, '-')
 			scatterData.push([xValue, yValue, entityName, entitySlug])
 		}

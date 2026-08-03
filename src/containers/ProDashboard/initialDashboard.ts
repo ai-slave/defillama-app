@@ -1,7 +1,7 @@
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
+import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
-import type { DashboardItemConfig } from './types'
-import { cleanItemsForSaving, sanitizeItemsForAPI } from './utils/dashboardUtils'
+import { toPersistedDashboardItems } from './utils/dashboardUtils'
 
 const initialRenderDashboards = new WeakSet<Dashboard>()
 
@@ -38,7 +38,7 @@ export type PublicDashboardInitialRenderPayload = Omit<
 }
 
 function initialRenderItems(items: DashboardItemConfig[]): DashboardItemConfig[] {
-	return sanitizeItemsForAPI(cleanItemsForSaving(items)).map((item) => {
+	return toPersistedDashboardItems(items).map((item) => {
 		if (item.kind !== 'llamaai-chart' || !item.inlineChartData) return item
 		const { inlineChartData: _inlineChartData, ...config } = item
 		return config
@@ -93,14 +93,14 @@ export function hydrateDashboardInitialRenderPayload(payload: DashboardInitialRe
 		user: payload.ownerId ?? '',
 		data: payload.data,
 		visibility: payload.visibility,
-		tags: payload.tags,
-		description: payload.description,
-		viewCount: payload.viewCount,
-		likeCount: payload.likeCount,
-		author: payload.author,
+		...(payload.tags !== undefined ? { tags: payload.tags } : {}),
+		...(payload.description !== undefined ? { description: payload.description } : {}),
+		...(payload.viewCount !== undefined ? { viewCount: payload.viewCount } : {}),
+		...(payload.likeCount !== undefined ? { likeCount: payload.likeCount } : {}),
+		...(payload.author !== undefined ? { author: payload.author } : {}),
 		created: payload.created,
 		updated: payload.updated,
-		editedAt: payload.editedAt
+		...(payload.editedAt !== undefined ? { editedAt: payload.editedAt } : {})
 	}
 	initialRenderDashboards.add(dashboard)
 	return dashboard

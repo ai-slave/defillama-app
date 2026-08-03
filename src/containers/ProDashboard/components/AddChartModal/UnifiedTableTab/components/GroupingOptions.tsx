@@ -1,5 +1,5 @@
 import { useMemo, type ComponentProps } from 'react'
-import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/types'
+import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { Icon } from '~/ui/Icon'
 
 type IconName = ComponentProps<typeof Icon>['name']

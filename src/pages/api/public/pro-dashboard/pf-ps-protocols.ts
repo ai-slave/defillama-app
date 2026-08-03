@@ -1,1 +1,3 @@
-export { pfPsProtocolsHandler as default } from '~/containers/ProDashboard/server/pfPsRoutes'
+import { pfPsProtocolsHandler } from '~/containers/ProDashboard/server/pfPsRoutes'
+
+export default pfPsProtocolsHandler

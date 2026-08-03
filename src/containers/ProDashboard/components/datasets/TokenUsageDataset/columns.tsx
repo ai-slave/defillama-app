@@ -1,9 +1,25 @@
-import type { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef, Row, Table } from '@tanstack/react-table'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
+
+const ranksBySortedRows = new WeakMap<readonly Row<ProtocolTokenUsageData>[], ReadonlyMap<string, number>>()
+
+function getSortedRowIndex(table: Table<ProtocolTokenUsageData>, rowId: string): number {
+	const sortedRows = table.getSortedRowModel().rows
+	let ranks = ranksBySortedRows.get(sortedRows)
+	if (!ranks) {
+		const nextRanks = new Map<string, number>()
+		for (const [index, row] of sortedRows.entries()) nextRanks.set(row.id, index)
+		ranks = nextRanks
+		ranksBySortedRows.set(sortedRows, ranks)
+	}
+	const index = ranks.get(rowId)
+	if (index === undefined) throw new Error(`Missing sorted token-usage row: ${rowId}`)
+	return index
+}
 
 export const getColumns = (tokenSymbols: string[]): ColumnDef<ProtocolTokenUsageData>[] => {
 	const isMultiToken = tokenSymbols.length > 1
@@ -13,9 +29,9 @@ export const getColumns = (tokenSymbols: string[]): ColumnDef<ProtocolTokenUsage
 			header: 'Protocol',
 			accessorKey: 'name',
 			enableSorting: false,
-			cell: ({ getValue, row, table }) => {
-				const value = getValue() as string
-				const index = row.depth === 0 ? table.getSortedRowModel().rows.findIndex((x) => x.id === row.id) : row.index
+			cell: ({ row, table }) => {
+				const value = row.original.name
+				const index = row.depth === 0 ? getSortedRowIndex(table, row.id) : row.index
 
 				return (
 					<div className="flex items-center gap-2">
@@ -32,8 +48,8 @@ export const getColumns = (tokenSymbols: string[]): ColumnDef<ProtocolTokenUsage
 			header: 'Category',
 			accessorKey: 'category',
 			enableSorting: false,
-			cell: ({ getValue }) => {
-				const value = getValue() as string
+			cell: ({ row }) => {
+				const value = row.original.category
 				return <span className="text-xs font-medium text-pro-text-primary">{value || 'Unknown'}</span>
 			}
 		}
@@ -43,9 +59,9 @@ export const getColumns = (tokenSymbols: string[]): ColumnDef<ProtocolTokenUsage
 		for (const symbol of tokenSymbols) {
 			baseColumns.push({
 				header: symbol.toUpperCase(),
-				accessorFn: (row) => row.tokens[symbol] || 0,
-				cell: ({ getValue }) => {
-					const value = getValue() as number
+				accessorFn: (row) => row.tokens[symbol] ?? 0,
+				cell: ({ row }) => {
+					const value = row.original.tokens[symbol] ?? 0
 					return value > 0 ? (
 						<span className="text-sm font-medium">
 							{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
@@ -64,8 +80,8 @@ export const getColumns = (tokenSymbols: string[]): ColumnDef<ProtocolTokenUsage
 	baseColumns.push({
 		header: isMultiToken ? 'Total Amount' : 'Token Amount',
 		accessorKey: 'amountUsd',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
+		cell: ({ row }) => {
+			const value = row.original.amountUsd
 			return (
 				<span className="text-sm font-semibold">
 					{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}

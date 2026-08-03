@@ -5,14 +5,13 @@ import {
 	normalizeChartDataByKey,
 	normalizeDashboardArtifactOutcomes,
 	normalizeDashboardChartData,
-	normalizeDashboardItems
+	migrateDashboardItems
 } from '~/containers/LlamaAI/chartPayloads'
+import type { ChartConfiguration, ChartDataByKey } from '~/containers/LlamaAI/chartTypes'
 import type {
 	AgenticAnswerMode,
 	AlertProposedData,
-	ChartConfiguration,
 	ChartArtifactRefs,
-	ChartDataByKey,
 	DashboardArtifact,
 	GeneratedImage,
 	MessageMetadata,
@@ -21,6 +20,7 @@ import type {
 	UnifiedCitationReference
 } from '~/containers/LlamaAI/types'
 import { normalizeAlertProposedData } from '~/containers/LlamaAI/utils/restoredAlerts'
+import type { PersistedDashboardItemConfig } from '~/containers/ProDashboard/dashboardConfig/persisted'
 import { getErrorMessage } from '~/utils/error'
 
 export interface CsvExport {
@@ -127,7 +127,7 @@ interface DashboardEvent {
 	dashboard_id?: string
 	dashboardConfig?: {
 		dashboardName?: unknown
-		items?: unknown
+		items?: PersistedDashboardItemConfig[]
 		timePeriod?: unknown
 		sourceDashboardId?: unknown
 	}
@@ -137,7 +137,7 @@ interface DashboardEvent {
 		dashboard_id?: string
 		dashboardConfig?: {
 			dashboardName?: unknown
-			items?: unknown
+			items?: PersistedDashboardItemConfig[]
 			timePeriod?: unknown
 			sourceDashboardId?: unknown
 		}
@@ -277,23 +277,61 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
-function normalizeArray<T>(value: unknown): T[] {
-	return Array.isArray(value) ? (value as T[]) : []
+function normalizeArray<T>(value: unknown, isItem: (item: unknown) => item is T): T[] {
+	return Array.isArray(value) ? value.filter(isItem) : []
+}
+
+function isGeneratedImage(value: unknown): value is GeneratedImage {
+	return (
+		isRecord(value) &&
+		typeof value.url === 'string' &&
+		(value.id === undefined || typeof value.id === 'string') &&
+		(value.size === undefined || typeof value.size === 'string') &&
+		(value.prompt === undefined || typeof value.prompt === 'string') &&
+		(value.revised_prompt === undefined || typeof value.revised_prompt === 'string')
+	)
+}
+
+function isCsvExport(value: unknown): value is CsvExport {
+	return (
+		isRecord(value) &&
+		typeof value.id === 'string' &&
+		typeof value.title === 'string' &&
+		typeof value.url === 'string' &&
+		typeof value.rowCount === 'number' &&
+		typeof value.filename === 'string'
+	)
+}
+
+function isMdExport(value: unknown): value is MdExport {
+	return (
+		isRecord(value) &&
+		typeof value.id === 'string' &&
+		typeof value.title === 'string' &&
+		typeof value.url === 'string' &&
+		typeof value.filename === 'string'
+	)
+}
+
+function isTodoItem(value: unknown): value is TodoItem {
+	return (
+		isRecord(value) &&
+		typeof value.id === 'string' &&
+		typeof value.content === 'string' &&
+		(value.status === 'pending' ||
+			value.status === 'in_progress' ||
+			value.status === 'completed' ||
+			value.status === 'cancelled')
+	)
+}
+
+function isString(value: unknown): value is string {
+	return typeof value === 'string'
 }
 
 function dashboardItemsHash(items: DashboardArtifact['items']): string {
 	const normalized = items.map((item) => {
-		const record = item as unknown as Record<string, unknown>
-		return [
-			typeof record.kind === 'string' ? record.kind : '',
-			typeof record.chartRef === 'string'
-				? record.chartRef
-				: typeof record.savedChartId === 'string'
-					? record.savedChartId
-					: typeof record.id === 'string'
-						? record.id
-						: ''
-		]
+		return [item.kind, item.kind === 'llamaai-chart' ? (item.chartRef ?? item.savedChartId ?? item.id) : item.id]
 	})
 	const serialized = JSON.stringify(normalized)
 	let hash = 0xcbf29ce484222325n
@@ -310,15 +348,28 @@ interface RateLimitErrorDetails {
 	resetTime?: string | null
 }
 
-interface RateLimitError extends Error {
-	code?:
-		| 'USAGE_LIMIT_EXCEEDED'
-		| 'FREE_QUESTION_LIMIT'
-		| 'FREE_FORM_LIMIT'
-		| 'FREE_DAILY_LIMIT'
-		| 'FACT_CHECKED_REQUIRES_SUBSCRIPTION'
-	details?: RateLimitErrorDetails
-	upgradeUrl?: string
+type RateLimitCode =
+	| 'USAGE_LIMIT_EXCEEDED'
+	| 'FREE_QUESTION_LIMIT'
+	| 'FREE_FORM_LIMIT'
+	| 'FREE_DAILY_LIMIT'
+	| 'FACT_CHECKED_REQUIRES_SUBSCRIPTION'
+
+class RateLimitError extends Error {
+	readonly code: RateLimitCode
+	readonly details?: RateLimitErrorDetails
+	readonly upgradeUrl?: string
+
+	constructor(
+		message: string,
+		code: RateLimitCode,
+		options: { details?: RateLimitErrorDetails; upgradeUrl?: string } = {}
+	) {
+		super(message)
+		this.code = code
+		if (options.details !== undefined) this.details = options.details
+		if (options.upgradeUrl !== undefined) this.upgradeUrl = options.upgradeUrl
+	}
 }
 
 interface AgenticErrorResponse {
@@ -328,6 +379,42 @@ interface AgenticErrorResponse {
 	message?: string
 	details?: RateLimitErrorDetails
 	upgradeUrl?: string
+}
+
+function parseRateLimitErrorDetails(value: unknown): RateLimitErrorDetails | undefined {
+	if (typeof value !== 'object' || value === null) return undefined
+	const period = 'period' in value && typeof value.period === 'string' ? value.period : undefined
+	const limit = 'limit' in value && typeof value.limit === 'number' ? value.limit : undefined
+	let resetTime: string | null | undefined
+	if ('resetTime' in value) {
+		const candidate = value.resetTime
+		if (typeof candidate === 'string') resetTime = candidate
+		else if (candidate === null) resetTime = null
+	}
+	if (period === undefined && limit === undefined && resetTime === undefined) return undefined
+	return {
+		...(period === undefined ? {} : { period }),
+		...(limit === undefined ? {} : { limit }),
+		...(resetTime === undefined ? {} : { resetTime })
+	}
+}
+
+function parseAgenticErrorResponse(value: unknown): AgenticErrorResponse | null {
+	if (typeof value !== 'object' || value === null) return null
+	const code = 'code' in value && typeof value.code === 'string' ? value.code : undefined
+	const content = 'content' in value && typeof value.content === 'string' ? value.content : undefined
+	const error = 'error' in value && typeof value.error === 'string' ? value.error : undefined
+	const message = 'message' in value && typeof value.message === 'string' ? value.message : undefined
+	const details = 'details' in value ? parseRateLimitErrorDetails(value.details) : undefined
+	const upgradeUrl = 'upgradeUrl' in value && typeof value.upgradeUrl === 'string' ? value.upgradeUrl : undefined
+	return {
+		...(code === undefined ? {} : { code }),
+		...(content === undefined ? {} : { content }),
+		...(error === undefined ? {} : { error }),
+		...(message === undefined ? {} : { message }),
+		...(details === undefined ? {} : { details }),
+		...(upgradeUrl === undefined ? {} : { upgradeUrl })
+	}
 }
 
 interface FetchAgenticResponseParams {
@@ -358,8 +445,8 @@ async function getResponseErrorMessage(response: Response, fallback: string) {
 	const text = await response.text().catch(() => '')
 	if (contentType.includes('application/json') && text) {
 		try {
-			const errorData = JSON.parse(text) as AgenticErrorResponse
-			const detailedMessage = errorData.error || errorData.message || errorData.content
+			const errorData = parseAgenticErrorResponse(JSON.parse(text))
+			const detailedMessage = errorData?.error || errorData?.message || errorData?.content
 			if (detailedMessage) return `${fallback}: ${detailedMessage}`
 		} catch {}
 	}
@@ -410,13 +497,13 @@ export function parseSSEStream(
 					break
 				}
 				case 'generated_images':
-					callbacks.onGeneratedImages?.(normalizeArray<GeneratedImage>(data.images))
+					callbacks.onGeneratedImages?.(normalizeArray(data.images, isGeneratedImage))
 					break
 				case 'csv_export':
-					callbacks.onCsvExport?.(normalizeArray<CsvExport>(data.exports))
+					callbacks.onCsvExport?.(normalizeArray(data.exports, isCsvExport))
 					break
 				case 'md_export':
-					callbacks.onMdExport?.(normalizeArray<MdExport>(data.exports))
+					callbacks.onMdExport?.(normalizeArray(data.exports, isMdExport))
 					break
 				case 'alert_proposed':
 					callbacks.onAlertProposed?.(normalizeAlertProposedData(data))
@@ -425,10 +512,10 @@ export function parseSSEStream(
 					const config = data.dashboardConfig || data.content?.dashboardConfig
 					const chartData = data.chartData || data.content?.chartData
 					const artifactOutcomes = data.artifactOutcomes || data.content?.artifactOutcomes
-					if (isRecord(config) && callbacks.onDashboard) {
+					if (config && callbacks.onDashboard) {
 						// Dashboard events can arrive in both top-level and nested `content`
 						// forms around PR #2790; normalize both shapes here.
-						const items = normalizeDashboardItems(config.items)
+						const items = migrateDashboardItems(config.items)
 						const dashboardName =
 							typeof config.dashboardName === 'string' && config.dashboardName.trim()
 								? config.dashboardName
@@ -463,7 +550,7 @@ export function parseSSEStream(
 					callbacks.onToolExecution?.(data)
 					break
 				case 'todo_snapshot':
-					callbacks.onTodos?.(normalizeArray<TodoItem>(data.todos))
+					callbacks.onTodos?.(normalizeArray(data.todos, isTodoItem))
 					break
 				case 'message_metadata':
 					callbacks.onMessageMetadata?.(data.content)
@@ -472,7 +559,7 @@ export function parseSSEStream(
 					if (typeof data.content === 'string') callbacks.onThinking?.(data.content)
 					break
 				case 'citations':
-					callbacks.onCitations(normalizeArray<string>(data.citations))
+					callbacks.onCitations(normalizeArray(data.citations, isString))
 					break
 				case 'fact_check_status':
 					callbacks.onFactCheckStatus?.(data.status)
@@ -682,37 +769,37 @@ export async function fetchAgenticResponse({
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(requestBody),
-		signal: abortSignal
+		...(abortSignal === undefined ? {} : { signal: abortSignal })
 	})
 
 	// Map backend usage-limit and concurrency responses into UI-specific error shapes.
 	if (!response.ok) {
-		const errorData = (await response.json().catch(() => null)) as AgenticErrorResponse | null
+		const errorPayload: unknown = await response.json().catch(() => null)
+		const errorData = parseAgenticErrorResponse(errorPayload)
 		if (
 			response.status === 403 &&
 			(errorData?.code === 'FREE_QUESTION_LIMIT' ||
 				errorData?.code === 'FREE_FORM_LIMIT' ||
 				errorData?.code === 'FREE_DAILY_LIMIT')
 		) {
-			const err = new Error(errorData.content || 'Upgrade required') as RateLimitError
-			err.code = errorData.code as RateLimitError['code']
-			err.upgradeUrl = errorData.upgradeUrl
-			err.details = errorData.details
-			throw err
+			throw new RateLimitError(errorData.content || 'Upgrade required', errorData.code, {
+				...(errorData.upgradeUrl === undefined ? {} : { upgradeUrl: errorData.upgradeUrl }),
+				...(errorData.details === undefined ? {} : { details: errorData.details })
+			})
 		}
 		if (response.status === 403 && errorData?.code === 'FACT_CHECKED_REQUIRES_SUBSCRIPTION') {
-			const err = new Error(
-				errorData.content || 'Fact-checked answers require an active subscription.'
-			) as RateLimitError
-			err.code = 'FACT_CHECKED_REQUIRES_SUBSCRIPTION'
-			err.upgradeUrl = errorData.upgradeUrl
-			throw err
+			throw new RateLimitError(
+				errorData.content || 'Fact-checked answers require an active subscription.',
+				'FACT_CHECKED_REQUIRES_SUBSCRIPTION',
+				errorData.upgradeUrl === undefined ? {} : { upgradeUrl: errorData.upgradeUrl }
+			)
 		}
 		if (response.status === 403 && errorData?.code === 'USAGE_LIMIT_EXCEEDED') {
-			const err = new Error(errorData.content || 'Usage limit exceeded') as RateLimitError
-			err.code = 'USAGE_LIMIT_EXCEEDED'
-			err.details = errorData.details
-			throw err
+			throw new RateLimitError(
+				errorData.content || 'Usage limit exceeded',
+				'USAGE_LIMIT_EXCEEDED',
+				errorData.details === undefined ? {} : { details: errorData.details }
+			)
 		}
 		if (response.status === 429) {
 			throw new Error(errorData?.error || 'Too many concurrent requests. Please wait.')
@@ -810,7 +897,7 @@ export async function resumeAgenticStream({
 			? `${AI_SERVER}/agentic/stream/${encodeURIComponent(sessionId)}?from=${from}`
 			: `${AI_SERVER}/agentic/stream/${encodeURIComponent(sessionId)}`
 	const res = await (fetchFn || fetch)(url, {
-		signal: abortSignal
+		...(abortSignal === undefined ? {} : { signal: abortSignal })
 	})
 
 	if (!res.ok) {

@@ -1,10 +1,28 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { mapWithConcurrency } from '../async'
 
 const jsonResponse = (value: unknown) =>
 	new Response(JSON.stringify(value), {
 		status: 200,
 		headers: { 'Content-Type': 'application/json' }
 	})
+
+describe('mapWithConcurrency', () => {
+	it('bounds active work and preserves input order', async () => {
+		let active = 0
+		let maxActive = 0
+		const results = await mapWithConcurrency([1, 2, 3, 4, 5], 2, async (value) => {
+			active += 1
+			maxActive = Math.max(maxActive, active)
+			await Promise.resolve()
+			active -= 1
+			return value * 2
+		})
+
+		expect(maxActive).toBe(2)
+		expect(results).toEqual([2, 4, 6, 8, 10])
+	})
+})
 
 describe('fetchJson singleflight', () => {
 	afterEach(() => {

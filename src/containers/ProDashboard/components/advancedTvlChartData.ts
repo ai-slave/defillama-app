@@ -5,7 +5,8 @@ import {
 	buildComputedBreakdownResult,
 	type ProtocolBreakdownChart
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
-import type { ProtocolTvlBreakdownChart, ProtocolTvlBreakdownSource } from '../services/protocolTvl'
+import type { ProtocolBreakdownChart as ProtocolValueBreakdownChart } from '~/containers/ProtocolOverview/valueChartSources'
+import type { ProtocolTvlBreakdownSource } from '../services/protocolTvl'
 import type { AdvancedTvlChartType } from '../types'
 
 export interface AdvancedTvlChartData {
@@ -53,7 +54,7 @@ function excludeBinanceCexInflowPoints(
 export function buildAdvancedTvlChartData(
 	chartType: AdvancedTvlChartType,
 	sources: ProtocolTvlBreakdownSource[],
-	breakdowns: Array<ProtocolTvlBreakdownChart | null | undefined>,
+	breakdowns: Array<ProtocolValueBreakdownChart | null | undefined>,
 	protocolName: string
 ): AdvancedTvlChartData {
 	const chainBreakdownCharts: Array<IProtocolChainBreakdownChart | null | undefined> = []

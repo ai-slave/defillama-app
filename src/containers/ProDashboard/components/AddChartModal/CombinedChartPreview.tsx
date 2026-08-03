@@ -1,18 +1,20 @@
 import { lazy, Suspense, useMemo } from 'react'
+import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
-import { CHART_TYPES, type ChartConfig, type DashboardGrouping } from '../../types'
-import { EXTENDED_COLOR_PALETTE } from '../../utils/colorManager'
+import { type DashboardGrouping, getProDashboardChartTypeConfig } from '../../types'
+import { EXTENDED_COLOR_PALETTE, getPaletteColor } from '../../utils/colorManager'
 import { buildMultiChartSeriesView, type MultiChartInputSeries } from '../multiChartSeries'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const CHART_OPTIONS = {
 	xAxis: { show: true },
-	yAxis: { show: true, min: undefined, max: undefined }
-}
+	yAxis: { show: true, min: undefined }
+} satisfies MultiSeriesChartOptions
 
 interface CombinedChartPreviewProps {
-	composerItems: ChartConfig[]
+	composerItems: ChartRuntimeView[]
 }
 
 const mapGroupingToGroupBy = (grouping: DashboardGrouping): 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' => {
@@ -24,21 +26,16 @@ const mapGroupingToGroupBy = (grouping: DashboardGrouping): 'daily' | 'weekly' |
 }
 
 export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProps) {
-	const { getProtocolInfo, protocols } = useProDashboardCatalog()
+	const { getProtocolInfo } = useProDashboardCatalog()
 
 	const previewGrouping = useMemo<DashboardGrouping>(() => {
-		const definedGroupings = composerItems
-			.map((item) => item.grouping)
-			.filter((grouping): grouping is NonNullable<typeof grouping> => Boolean(grouping))
-
-		if (definedGroupings.length === 0) {
-			return 'day'
+		let grouping: DashboardGrouping | undefined
+		for (const item of composerItems) {
+			if (item.grouping === undefined) continue
+			if (grouping === undefined) grouping = item.grouping
+			else if (grouping !== item.grouping) return 'day'
 		}
-
-		const [firstGrouping] = definedGroupings
-		const allMatch = definedGroupings.every((grouping) => grouping === firstGrouping)
-
-		return allMatch ? firstGrouping : 'day'
+		return grouping ?? 'day'
 	}, [composerItems])
 
 	const chartView = useMemo(() => {
@@ -46,25 +43,22 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 		let colorIndex = 0
 
 		for (const item of composerItems) {
-			if (item.data?.length) {
-				const meta = CHART_TYPES[item.type]
-				const displayName = item.protocol
-					? getProtocolInfo(item.protocol)?.name || item.protocol
-					: item.chain ||
-						(item.geckoId && protocols.find((protocol) => protocol.geckoId === item.geckoId)?.name) ||
-						item.geckoId ||
-						''
+			if (item.data.length > 0) {
+				const meta = getProDashboardChartTypeConfig(item.type)
+				const displayName =
+					item.subjectType === 'protocol' ? getProtocolInfo(item.protocol)?.name || item.protocol : item.chain
 
-				if (item.data.length > 0) {
-					series.push({
-						name: `${displayName} ${meta?.title || item.type}`,
-						baseType: meta?.chartType as MultiChartInputSeries['baseType'],
-						data: item.data,
-						color: item.color || EXTENDED_COLOR_PALETTE[colorIndex % EXTENDED_COLOR_PALETTE.length],
-						metricType: item.type
-					})
-					colorIndex++
-				}
+				series.push({
+					name: `${displayName} ${meta?.title || item.type}`,
+					baseType:
+						meta?.chartType === 'bar' || meta?.chartType === 'area' || meta?.chartType === 'line'
+							? meta.chartType
+							: undefined,
+					data: item.data,
+					color: item.color || getPaletteColor(EXTENDED_COLOR_PALETTE, colorIndex),
+					metricType: item.type
+				})
+				colorIndex++
 			}
 		}
 
@@ -74,7 +68,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 			showPercentage: false,
 			stackSeries: false
 		})
-	}, [getProtocolInfo, protocols, composerItems])
+	}, [getProtocolInfo, composerItems])
 
 	const anyLoading = composerItems.some((item) => item.isLoading)
 
@@ -94,12 +88,14 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 						<>
 							<p className="mb-2 text-sm text-pro-text-secondary">Chart Preview</p>
 							<p className="text-xs text-pro-text-tertiary">
-								{composerItems.length} chart{composerItems.length > 1 ? 's' : ''} selected
+								{composerItems.length} chart
+								{composerItems.length > 1 ? 's' : ''} selected
 							</p>
 							<div className="mt-3 space-y-1">
 								{composerItems.map((item) => (
 									<div key={item.id} className="text-xs text-pro-text-tertiary">
-										• {item.protocol || item.chain} - {CHART_TYPES[item.type]?.title || item.type}
+										• {item.subjectType === 'protocol' ? item.protocol : item.chain} -{' '}
+										{getProDashboardChartTypeConfig(item.type)?.title || item.type}
 									</div>
 								))}
 							</div>

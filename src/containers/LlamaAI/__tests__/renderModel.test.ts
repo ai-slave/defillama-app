@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import type { ChartConfiguration } from '../chartTypes'
 import { parseMessageToRenderModel } from '../renderModel'
-import type { ChartConfiguration, Message } from '../types'
+import type { Message } from '../types'
 
 const chart = {
 	id: 'chart-1',

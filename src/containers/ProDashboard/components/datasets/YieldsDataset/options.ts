@@ -1,4 +1,4 @@
-import type { ProYieldRow } from './data'
+import type { ProYieldRow } from '../../../yieldData'
 
 export interface YieldsFilterOptions {
 	availableTokens: string[]
@@ -6,7 +6,9 @@ export interface YieldsFilterOptions {
 	availableCategories: string[]
 }
 
-export function buildYieldsFilterOptions(data: ProYieldRow[]): YieldsFilterOptions {
+export type YieldsFilterSourceRow = Pick<ProYieldRow, 'project' | 'projectslug' | 'tvl' | 'tokenSymbols' | 'category'>
+
+export function buildYieldsFilterOptions(data: readonly YieldsFilterSourceRow[]): YieldsFilterOptions {
 	const tokenTvl = new Map<string, number>()
 	const protocols = new Map<string, { value: string; label: string; tvl: number }>()
 	const categories = new Set<string>()

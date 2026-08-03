@@ -36,25 +36,26 @@ interface YieldsColumnManagementPanelProps {
 	currentColumns: Record<string, boolean>
 	columnOrder: string[]
 	toggleColumnVisibility: (columnKey: string, isVisible: boolean) => void
-	moveColumnUp?: (columnKey: string) => void
-	moveColumnDown?: (columnKey: string) => void
+	moveColumnUp: (columnKey: string) => void
+	moveColumnDown: (columnKey: string) => void
 }
 
-function ColumnButton({
-	columnKey,
-	currentColumns,
-	columnOrder,
-	moveColumnUp,
-	moveColumnDown,
-	toggleColumnVisibility
-}: {
+type ColumnButtonProps = {
 	columnKey: YieldColumnId
 	currentColumns: Record<string, boolean>
 	columnOrder: string[]
-	moveColumnUp?: (columnKey: string) => void
-	moveColumnDown?: (columnKey: string) => void
 	toggleColumnVisibility: (columnKey: string, isVisible: boolean) => void
-}) {
+} & (
+	| {
+			kind: 'active'
+			moveColumnUp: (columnKey: string) => void
+			moveColumnDown: (columnKey: string) => void
+	  }
+	| { kind: 'available' }
+)
+
+function ColumnButton(props: ColumnButtonProps) {
+	const { columnKey, currentColumns, columnOrder, toggleColumnVisibility } = props
 	const metadata = yieldsColumnMetadata[columnKey]
 	const isActive = currentColumns[columnKey]
 	const visibleColumns = columnOrder.filter((key) => currentColumns[key])
@@ -70,18 +71,20 @@ function ColumnButton({
 				<span className="text-xs text-primary">{metadata.name}</span>
 			</div>
 			<div className="flex items-center gap-1">
-				{moveColumnUp && index > 0 ? (
+				{props.kind === 'active' && index > 0 ? (
 					<button
-						onClick={() => moveColumnUp(columnKey)}
+						type="button"
+						onClick={() => props.moveColumnUp(columnKey)}
 						className="p-1 text-tertiary hover:text-primary"
 						title="Move up"
 					>
 						<Icon name="chevron-up" className="size-2.5" />
 					</button>
 				) : null}
-				{moveColumnDown && index >= 0 && index < visibleColumns.length - 1 ? (
+				{props.kind === 'active' && index >= 0 && index < visibleColumns.length - 1 ? (
 					<button
-						onClick={() => moveColumnDown(columnKey)}
+						type="button"
+						onClick={() => props.moveColumnDown(columnKey)}
 						className="p-1 text-tertiary hover:text-primary"
 						title="Move down"
 					>
@@ -89,6 +92,7 @@ function ColumnButton({
 					</button>
 				) : null}
 				<button
+					type="button"
 					onClick={() => toggleColumnVisibility(columnKey, false)}
 					className="p-1 text-tertiary hover:text-primary"
 					title="Remove column"
@@ -99,6 +103,7 @@ function ColumnButton({
 		</div>
 	) : (
 		<button
+			type="button"
 			onClick={() => toggleColumnVisibility(columnKey, true)}
 			className="hover:bg-surface-secondary flex w-full items-center gap-2 rounded-md border border-subtle bg-surface p-2 text-left"
 			title={metadata.description}
@@ -170,6 +175,7 @@ export function YieldsColumnManagementPanel({
 							.map((columnKey) => (
 								<ColumnButton
 									key={columnKey}
+									kind="active"
 									columnKey={columnKey}
 									currentColumns={currentColumns}
 									columnOrder={columnOrder}
@@ -193,6 +199,7 @@ export function YieldsColumnManagementPanel({
 										{columns.map((columnKey) => (
 											<ColumnButton
 												key={columnKey}
+												kind="available"
 												columnKey={columnKey}
 												currentColumns={currentColumns}
 												columnOrder={columnOrder}

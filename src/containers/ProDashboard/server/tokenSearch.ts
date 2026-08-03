@@ -45,4 +45,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	}
 }
 
-export default withApiRouteTelemetry('/api/dynamic/pro-dashboard/tokens/search', handler)
+export const tokenSearchApiHandler = withApiRouteTelemetry('/api/dynamic/pro-dashboard/tokens/search', handler)

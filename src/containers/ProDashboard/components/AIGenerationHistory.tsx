@@ -7,12 +7,12 @@ interface AIGenerationHistoryProps {
 }
 
 export function AIGenerationHistory({ aiGenerated }: AIGenerationHistoryProps) {
-	const sessions = Object.entries(aiGenerated)
-		.map(([sessionId, data]) => ({
-			sessionId,
-			...data
-		}))
-		.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+	const sessions: Array<AIGeneratedData[string] & { sessionId: string }> = []
+	for (const sessionId in aiGenerated) {
+		const data = aiGenerated[sessionId]
+		if (data !== undefined) sessions.push({ sessionId, ...data })
+	}
+	sessions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
 	if (sessions.length === 0) return null
 

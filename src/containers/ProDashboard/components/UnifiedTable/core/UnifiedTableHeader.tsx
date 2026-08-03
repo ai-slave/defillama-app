@@ -1,9 +1,6 @@
-'use no memo'
-
-import * as React from 'react'
 import { Icon } from '~/ui/Icon'
-import type { UnifiedRowHeaderType } from '../../../types'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
+import type { UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
+import { CSVExportButton } from '../../CSVExportButton'
 import type { ActiveFilterChip } from '../utils/filterChips'
 import { CsvExportDropdown, type CsvExportLevel } from './CsvExportDropdown'
 
@@ -16,25 +13,25 @@ interface UnifiedTableHeaderProps {
 	title: string
 	scopeDescription: string
 	rowHeadersSummary: string | null
-	onCustomizeColumns?: () => void
-	onCsvExport?: () => void
-	onCsvExportLevel?: (level: CsvExportLevel) => void
+	onCustomizeColumns?: (() => void) | undefined
+	onCsvExport?: (() => void) | undefined
+	onCsvExportLevel?: ((level: CsvExportLevel) => void) | undefined
 	rowHeaders?: UnifiedRowHeaderType[]
 	isExportDisabled?: boolean
 	isLoading?: boolean
 	onSearchChange: (value: string) => void
 	filterChips: ActiveFilterChip[]
-	onFilterRemove?: (chip: ActiveFilterChip) => void
-	onClearFilters?: () => void
+	onFilterRemove?: ((chip: ActiveFilterChip) => void) | undefined
+	onClearFilters?: (() => void) | undefined
 	filtersEditable?: boolean
 	activeFilterCount: number
-	onFiltersClick?: () => void
+	onFiltersClick?: (() => void) | undefined
 	groupingOptions?: GroupingOption[]
-	selectedGroupingId?: string
-	onGroupingChange?: (optionId: string) => void
+	selectedGroupingId?: string | undefined
+	onGroupingChange?: ((optionId: string) => void) | undefined
 }
 
-export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
+export function UnifiedTableHeader({
 	title,
 	scopeDescription,
 	rowHeadersSummary,
@@ -65,21 +62,10 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 		? groupingOptions.find((option) => option.id === selectedGroupingId)?.id || groupingOptions[0]?.id || ''
 		: ''
 
-	const handleGroupingSelectChange = React.useCallback(
-		(event: React.ChangeEvent<HTMLSelectElement>) => {
-			onGroupingChange?.(event.target.value)
-		},
-		[onGroupingChange]
-	)
-
-	const handleCustomizeColumnsClick = React.useCallback(() => {
-		onCustomizeColumns?.()
-	}, [onCustomizeColumns])
-
-	const handleCsvExportClick = React.useCallback(() => {
+	const handleCsvExportClick = () => {
 		if (csvDisabled) return
 		onCsvExport?.()
-	}, [csvDisabled, onCsvExport])
+	}
 
 	return (
 		<div className="mb-3 flex flex-col gap-2">
@@ -101,7 +87,7 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 						<div className="relative">
 							<select
 								value={groupingSelectValue}
-								onChange={handleGroupingSelectChange}
+								onChange={(event) => onGroupingChange?.(event.target.value)}
 								disabled={!isGroupingInteractive}
 								className={`appearance-none rounded-md border pro-border pro-panel-bg px-3 py-1.5 pr-8 text-sm text-pro-text-primary transition-colors ${
 									isGroupingInteractive ? 'pro-hover-bg' : 'cursor-not-allowed opacity-60'
@@ -139,7 +125,7 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 					) : null}
 					<button
 						type="button"
-						onClick={handleCustomizeColumnsClick}
+						onClick={onCustomizeColumns}
 						disabled={customizeDisabled}
 						className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition-colors ${
 							customizeDisabled
@@ -158,7 +144,7 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 							disabled={csvDisabled}
 						/>
 					) : (
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={handleCsvExportClick}
 							isLoading={isLoading}
 							className={`flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors ${
@@ -215,4 +201,4 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 			</div>
 		</div>
 	)
-})
+}

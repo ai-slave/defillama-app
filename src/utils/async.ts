@@ -56,6 +56,26 @@ export async function sleep(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+export async function mapWithConcurrency<Item, Result>(
+	items: readonly Item[],
+	limit: number,
+	worker: (item: Item, index: number) => Promise<Result>
+): Promise<Result[]> {
+	if (!Number.isInteger(limit) || limit < 1) throw new Error('Concurrency limit must be a positive integer')
+	const results = new Array<Result>(items.length)
+	const entries = items.entries()
+	const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+		for (;;) {
+			const next = entries.next()
+			if (next.done) return
+			const [index, item] = next.value
+			results[index] = await worker(item, index)
+		}
+	})
+	await Promise.all(workers)
+	return results
+}
+
 export function getJitteredDelay(baseMs: number, attempt: number, maxMs: number): number {
 	const exp = Math.min(baseMs * 2 ** attempt, maxMs)
 	return Math.floor(exp * (0.5 + Math.random()))

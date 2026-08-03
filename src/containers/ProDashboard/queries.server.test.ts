@@ -1,34 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildProDashboardProtocolRelations, type ProDashboardProtocolCatalog } from './protocolCatalog'
 
-const { protocolCharts } = vi.hoisted(() => ({
-	protocolCharts: {
-		tvl: vi.fn(),
-		volume: vi.fn(),
-		fees: vi.fn(),
-		revenue: vi.fn(),
-		holdersRevenue: vi.fn(),
-		perps: vi.fn(),
-		openInterest: vi.fn(),
-		aggregators: vi.fn(),
-		perpsAggregators: vi.fn(),
-		bridgeAggregators: vi.fn(),
-		optionsPremium: vi.fn(),
-		optionsNotional: vi.fn(),
-		liquidity: vi.fn(),
-		treasury: vi.fn(),
-		incentives: vi.fn(),
-		unlocks: vi.fn(),
-		tokenMcap: vi.fn(),
-		tokenPrice: vi.fn(),
-		tokenVolume: vi.fn(),
-		medianApy: vi.fn(),
-		borrowed: vi.fn()
-	}
-}))
+const { getProtocolDataMock } = vi.hoisted(() => ({ getProtocolDataMock: vi.fn() }))
 
-vi.mock('./services/ProtocolCharts', () => ({ default: protocolCharts }))
-vi.mock('./services/ChainCharts', () => ({ default: { getData: vi.fn() } }))
+vi.mock('./services/ProtocolCharts', () => ({ fetchProProtocolChartData: getProtocolDataMock }))
+vi.mock('./services/ChainCharts', () => ({ fetchProChainChartData: vi.fn() }))
 vi.mock('./server/pfPsQueries', () => ({
 	fetchPfPsChartData: vi.fn().mockResolvedValue([]),
 	fetchPfPsProtocols: vi.fn().mockResolvedValue({ pf: [], ps: [] })
@@ -38,9 +14,25 @@ import { fetchSingleChartData } from './queries.server'
 
 const catalog: ProDashboardProtocolCatalog = {
 	protocols: [
-		{ id: 'parent#aave', name: 'Aave', slug: 'aave', tvl: 30 },
-		{ id: '1', name: 'Aave V2', slug: 'aave-v2', symbol: 'AAVE', tvl: 10, parentProtocol: 'parent#aave' },
-		{ id: '2', name: 'Aave V3', slug: 'aave-v3', symbol: 'AAVE', tvl: 20, parentProtocol: 'parent#aave' }
+		{ id: 'parent#aave', name: 'Aave', slug: 'aave', tvl: 30, chains: [] },
+		{
+			id: '1',
+			name: 'Aave V2',
+			slug: 'aave-v2',
+			symbol: 'AAVE',
+			tvl: 10,
+			chains: [],
+			parentProtocol: 'parent#aave'
+		},
+		{
+			id: '2',
+			name: 'Aave V3',
+			slug: 'aave-v3',
+			symbol: 'AAVE',
+			tvl: 20,
+			chains: [],
+			parentProtocol: 'parent#aave'
+		}
 	],
 	chains: []
 }
@@ -48,11 +40,12 @@ const protocolRelations = buildProDashboardProtocolRelations(catalog)
 
 describe('fetchSingleChartData parent fallback', () => {
 	beforeEach(() => {
-		for (const mock of Object.values(protocolCharts)) mock.mockReset()
+		getProtocolDataMock.mockReset()
+		getProtocolDataMock.mockResolvedValue([])
 	})
 
 	it('sums child series when a parent has no direct adapter chart', async () => {
-		protocolCharts.fees.mockImplementation(async (protocol: string) => {
+		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) => {
 			if (protocol === 'aave') return []
 			if (protocol === 'aave-v2') return [[1, 10]]
 			return [
@@ -62,7 +55,7 @@ describe('fetchSingleChartData parent fallback', () => {
 		})
 
 		await expect(
-			fetchSingleChartData({ type: 'fees', protocol: 'aave', chain: '' }, 'all', null, protocolRelations)
+			fetchSingleChartData({ type: 'fees', subjectType: 'protocol', protocol: 'aave' }, 'all', null, protocolRelations)
 		).resolves.toEqual([
 			[1, 30],
 			[2, 5]
@@ -70,29 +63,64 @@ describe('fetchSingleChartData parent fallback', () => {
 	})
 
 	it('uses each child symbol for parent liquidity fallback', async () => {
-		protocolCharts.liquidity.mockImplementation(async (protocol: string) =>
+		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) =>
 			protocol === 'aave' ? [] : [[1, protocol === 'aave-v2' ? 10 : 20]]
 		)
 
-		await fetchSingleChartData({ type: 'liquidity', protocol: 'aave', chain: '' }, 'all', null, protocolRelations)
+		await fetchSingleChartData(
+			{ type: 'liquidity', subjectType: 'protocol', protocol: 'aave' },
+			'all',
+			null,
+			protocolRelations
+		)
 
-		expect(protocolCharts.liquidity).toHaveBeenCalledWith('aave-v2', 'AAVE')
-		expect(protocolCharts.liquidity).toHaveBeenCalledWith('aave-v3', 'AAVE')
+		expect(getProtocolDataMock).toHaveBeenCalledWith(
+			'liquidity',
+			'aave-v2',
+			expect.objectContaining({ protocolSymbol: 'AAVE' })
+		)
+		expect(getProtocolDataMock).toHaveBeenCalledWith(
+			'liquidity',
+			'aave-v3',
+			expect.objectContaining({ protocolSymbol: 'AAVE' })
+		)
+	})
+
+	it('rejects a partial child set instead of caching an understated parent total', async () => {
+		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) => {
+			if (protocol === 'aave') return []
+			if (protocol === 'aave-v2') return [[1, 10]]
+			throw new Error('child source failed')
+		})
+
+		await expect(
+			fetchSingleChartData({ type: 'fees', subjectType: 'protocol', protocol: 'aave' }, 'all', null, protocolRelations)
+		).rejects.toThrow('child source failed')
 	})
 
 	it('does not turn a standalone source failure into a successful empty result', async () => {
-		protocolCharts.fees.mockRejectedValue(new Error('upstream failed'))
+		getProtocolDataMock.mockRejectedValue(new Error('upstream failed'))
 
 		await expect(
-			fetchSingleChartData({ type: 'fees', protocol: 'standalone', chain: '' }, 'all', null, protocolRelations)
+			fetchSingleChartData(
+				{ type: 'fees', subjectType: 'protocol', protocol: 'standalone' },
+				'all',
+				null,
+				protocolRelations
+			)
 		).rejects.toThrow('upstream failed')
 	})
 
 	it('rejects unknown saved chart types without invoking a chart service', async () => {
 		await expect(
-			fetchSingleChartData({ type: 'legacy-unknown', protocol: 'aave', chain: '' }, 'all', null, protocolRelations)
+			fetchSingleChartData(
+				{ type: 'legacy-unknown', subjectType: 'protocol', protocol: 'aave' },
+				'all',
+				null,
+				protocolRelations
+			)
 		).resolves.toEqual([])
 
-		for (const mock of Object.values(protocolCharts)) expect(mock).not.toHaveBeenCalled()
+		expect(getProtocolDataMock).not.toHaveBeenCalled()
 	})
 })

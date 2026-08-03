@@ -1,41 +1,39 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { DIMENSION_DATASET_SPECS } from '~/containers/AdapterMetrics/server/datasets'
+import { createDimensionDatasetRequestScope } from '~/containers/AdapterMetrics/server/datasets'
 import { fetchChainsDatasetRows } from '~/containers/ChainsByCategory/server/dataset'
-import { getChartBuilderQueryKey, resolveChartBuilderFilterMode } from '~/containers/ProDashboard/chartBuilderQueryKey'
+import { fetchOracleMetrics } from '~/containers/Oracles/api'
+import { getChartBuilderQueryKey } from '~/containers/ProDashboard/chartBuilderQueryKey'
 import { buildProDashboardChartSourcePlan } from '~/containers/ProDashboard/chartSourcePlan'
-import { sanitizeRowHeaders } from '~/containers/ProDashboard/components/UnifiedTable/utils/rowHeaders'
-import type { DashboardStreamChunk } from '~/containers/ProDashboard/dashboardStreamContract'
+import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
+import { dashboardStreamNeedsProtocolCatalog } from '~/containers/ProDashboard/dashboardStreamCapabilities'
 import {
-	getProEquitiesFilingsQueryKey,
-	getProEquitiesStatementsQueryKey
-} from '~/containers/ProDashboard/equitiesTableQueryKeys'
+	INITIAL_DASHBOARD_STREAM_ITEM_COUNT,
+	type DashboardStreamChunk
+} from '~/containers/ProDashboard/dashboardStreamContract'
+import { getEquitiesTableQueryKey } from '~/containers/ProDashboard/equitiesTableQueryKeys'
 import { buildProDashboardProtocolRelations } from '~/containers/ProDashboard/protocolCatalog'
 import {
-	extractYieldsItems,
 	fetchAppMetadata,
 	fetchDashboardConfig,
 	fetchProtocolsAndChains,
 	fetchSingleChartData,
 	withTimeout
 } from '~/containers/ProDashboard/queries.server'
-import { getProRwaBreakdown, getProRwaBreakdownQueryKey } from '~/containers/ProDashboard/rwaBreakdown'
-import { fetchProDimensionDataset } from '~/containers/ProDashboard/server/dimensionDataset'
+import { getProRwaBreakdownQueryKey } from '~/containers/ProDashboard/rwaBreakdown'
+import { fetchChartBuilderServerData } from '~/containers/ProDashboard/server/chartBuilder/data'
 import { buildProtocolTvlStreamSourcePlan } from '~/containers/ProDashboard/server/protocolTvlSourcePlan'
+import { createBoundedTaskScheduler } from '~/containers/ProDashboard/server/stream/taskScheduler'
+import { streamProTokenUsageData } from '~/containers/ProDashboard/server/tableQueries'
+import { fetchProtocolsTable } from '~/containers/ProDashboard/server/unifiedTable/protocols'
+import { fetchProYieldsDataset } from '~/containers/ProDashboard/server/yieldsDataset'
 import {
 	buildStablecoinsTableData,
 	buildStablecoinsChartCacheValue,
 	fetchStablecoinAssetChartCacheValue
-} from '~/containers/ProDashboard/server/stablecoinFetchers'
-import { partitionDashboardStreamItems } from '~/containers/ProDashboard/server/stream/stages'
-import { fetchTableServerData } from '~/containers/ProDashboard/server/tableQueries'
-import { fetchProtocolsTable } from '~/containers/ProDashboard/server/unifiedTable/protocols'
-import { fetchProYieldsDataset } from '~/containers/ProDashboard/server/yieldsDataset'
-import ProtocolChartBuilderData from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
-import { getProtocolTvlValueQueryKey } from '~/containers/ProDashboard/services/protocolTvl'
+} from '~/containers/ProDashboard/stablecoinData'
 import {
 	getProCexShareQueryKey,
 	getProChainsDatasetQueryKey,
-	getProDimensionDatasetQueryKey,
 	getProStablecoinsTableQueryKey,
 	getProYieldsDatasetQueryKey,
 	PRO_CEX_SNAPSHOT_QUERY_KEY,
@@ -44,37 +42,43 @@ import {
 import type {
 	ChartBuilderConfig,
 	IncomeStatementConfig,
-	ProtocolsTableConfig,
+	DatasetTableConfig,
 	RWAAssetChartConfig,
 	RWAOverviewChartConfig,
 	StablecoinsChartConfig,
-	StablecoinAssetChartConfig,
-	UnifiedTableConfig
+	StablecoinAssetChartConfig
 } from '~/containers/ProDashboard/types'
-import { normalizeYieldChartType } from '~/containers/ProDashboard/types'
-import { getUnifiedTableQueryIdentity } from '~/containers/ProDashboard/unifiedTableQuery'
+import { MAX_MULTI_CHART_SERIES, normalizeYieldChartType } from '~/containers/ProDashboard/types'
+import { createProtocolsUnifiedTableResponse } from '~/containers/ProDashboard/unifiedTable/contracts'
+import { buildUnifiedTableStreamSourcePlan } from '~/containers/ProDashboard/unifiedTableSourcePlan'
 import { STREAM_PROTOCOL_SERIES_SKIP_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
+import { buildProtocolValueChartQueryKey } from '~/containers/ProtocolOverview/valueChartSources'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
 import type { IRWABreakdownChartResponse } from '~/containers/RWA/api.types'
 import {
 	fetchStablecoinAssetsApi,
 	fetchStablecoinChartApi,
+	fetchStablecoinPeggedConfigApi,
 	fetchStablecoinPricesApi,
 	fetchStablecoinRatesApi
 } from '~/containers/Stablecoins/api'
 import { getProtocolEmissionsPieData, getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
+import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import { slug } from '~/utils'
-import type { ChartSeries } from '~/utils/breakdowns'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
 import { recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
 
 export const config = {
 	api: { responseLimit: false }
 }
+
+export const DASHBOARD_STREAM_SOURCE_CONCURRENCY = 8
+export const DASHBOARD_STREAM_CLASSIC_SOURCE_LIMIT = MAX_MULTI_CHART_SERIES
+const CHART_BUILDER_STREAM_TIMEOUT_MS = 25_000
 
 function getAuthToken(req: NextApiRequest): string | null {
 	const normalizeToken = (value: string | undefined): string | null => {
@@ -97,7 +101,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		return
 	}
 
-	const dashboardId = req.query.dashboardId as string
+	const dashboardIdParam = req.query.dashboardId
+	const dashboardId = Array.isArray(dashboardIdParam) ? dashboardIdParam[0] : dashboardIdParam
 	if (!dashboardId) {
 		res.status(400).end()
 		return
@@ -105,19 +110,62 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 	const authToken = getAuthToken(req)
 	let streamEnded = false
-
-	const writeLine = (chunk: DashboardStreamChunk) => {
-		if (streamEnded || res.destroyed) return
-		try {
-			res.write(JSON.stringify(chunk) + '\n')
-		} catch {}
-	}
-	const endStream = () => {
+	let writeQueue = Promise.resolve()
+	const isStreamStopped = () => streamEnded || res.destroyed
+	const sourceScheduler = createBoundedTaskScheduler(DASHBOARD_STREAM_SOURCE_CONCURRENCY, isStreamStopped)
+	const stopStream = () => {
 		if (streamEnded) return
 		streamEnded = true
-		res.end()
+		sourceScheduler.cancelPending()
 	}
+	const removeDisconnectListener = () => {
+		req.off('aborted', stopStream)
+		res.off('close', stopStream)
+		res.off('error', stopStream)
+	}
+	req.once('aborted', stopStream)
+	res.once('close', stopStream)
+	res.once('error', stopStream)
 
+	const waitForDrain = () =>
+		new Promise<void>((resolve) => {
+			const cleanup = () => {
+				res.off('drain', drained)
+				res.off('close', closed)
+				res.off('error', closed)
+			}
+			const drained = () => {
+				cleanup()
+				resolve()
+			}
+			const closed = () => {
+				stopStream()
+				drained()
+			}
+			res.once('drain', drained)
+			res.once('close', closed)
+			res.once('error', closed)
+			if (isStreamStopped()) closed()
+		})
+	const writeLine = (chunk: DashboardStreamChunk): Promise<void> => {
+		writeQueue = writeQueue.then(async () => {
+			if (streamEnded || res.destroyed) return
+			try {
+				if (!res.write(JSON.stringify(chunk) + '\n') && !res.destroyed) await waitForDrain()
+			} catch {
+				stopStream()
+			}
+		})
+		return writeQueue
+	}
+	const endStream = async () => {
+		await writeQueue
+		removeDisconnectListener()
+		if (isStreamStopped()) return
+		streamEnded = true
+		sourceScheduler.cancelPending()
+		if (!res.destroyed) res.end()
+	}
 	try {
 		// The page may already have sanitized render config, but the stream still fetches the
 		// trusted record to authorize the request and plan/cache its dashboard data sources.
@@ -126,6 +174,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			dashboard = await fetchDashboardConfig(dashboardId, authToken)
 		} catch {
 			dashboard = null
+		}
+		if (isStreamStopped()) {
+			await endStream()
+			return
 		}
 
 		// Set streaming headers — only cache at edge for confirmed-public, unauthenticated reads
@@ -140,29 +192,49 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 				: 'private, no-cache, no-store, must-revalidate'
 		)
 
-		writeLine({ type: 'dashboard', data: dashboard })
+		await writeLine({ type: 'dashboard', data: dashboard })
+		if (isStreamStopped()) {
+			await endStream()
+			return
+		}
 
-		// Catalog and app metadata are independent. Only source planning waits for the catalog.
-		const protocolsListPromise = fetchProtocols()
-		const protocolsAndChainsPromise = fetchProtocolsAndChains(protocolsListPromise)
-			.then((d) => {
-				writeLine({ type: 'protocolsAndChains', data: d })
-				return d
-			})
-			.catch(() => null)
-		let resolvedAppMetadata: Awaited<ReturnType<typeof fetchAppMetadata>> = null
-		void fetchAppMetadata()
-			.then((d) => {
-				resolvedAppMetadata = d
-				writeLine({ type: 'appMetadata', data: d })
-			})
-			.catch(() => {})
+		const dashboardItems = dashboard?.data?.items ?? []
+		const items = dashboardItems.slice(0, INITIAL_DASHBOARD_STREAM_ITEM_COUNT)
+		let needsAppMetadata = false
+		for (const item of items) {
+			if (item.kind === 'chart' || (item.kind === 'multi' && item.items.length > 0) || item.kind === 'metric') {
+				needsAppMetadata = true
+				break
+			}
+		}
 
-		const dashboardItems = dashboard?.data?.items
-		if (!dashboardItems?.length) {
-			await Promise.allSettled([protocolsAndChainsPromise])
-			writeLine({ type: 'done' })
-			endStream()
+		let oracleMetricsPromise: ReturnType<typeof fetchOracleMetrics> | null = null
+		const getOracleMetrics = () => (oracleMetricsPromise ??= fetchOracleMetrics())
+		const needsProtocolCatalog = dashboardStreamNeedsProtocolCatalog(items)
+		let protocolsAndChainsPromise: Promise<Awaited<ReturnType<typeof fetchProtocolsAndChains>> | null> | null = null
+		const getProtocolsAndChains = () =>
+			(protocolsAndChainsPromise ??= needsProtocolCatalog
+				? fetchProtocolsAndChains(undefined, fetchProtocols())
+						.then(async (d) => {
+							await writeLine({ type: 'protocolsAndChains', data: d })
+							return d
+						})
+						.catch(() => null)
+				: Promise.resolve(null))
+		let appMetadataPromise: Promise<Awaited<ReturnType<typeof fetchAppMetadata>> | null> | null = null
+		const getAppMetadata = () =>
+			(appMetadataPromise ??= needsAppMetadata
+				? fetchAppMetadata()
+						.then(async (d) => {
+							await writeLine({ type: 'appMetadata', data: d })
+							return d
+						})
+						.catch(() => null)
+				: Promise.resolve(null))
+
+		if (items.length === 0) {
+			if (!isStreamStopped()) await writeLine({ type: 'done' })
+			await endStream()
 			return
 		}
 
@@ -172,19 +244,48 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			peggedData: Awaited<ReturnType<typeof fetchStablecoinAssetsApi>>
 			priceData: Awaited<ReturnType<typeof fetchStablecoinPricesApi>>
 			rateData: Awaited<ReturnType<typeof fetchStablecoinRatesApi>>
+			peggedConfig: Awaited<ReturnType<typeof fetchStablecoinPeggedConfigApi>>
 		}> | null = null
 		const getStablecoinTableBaseline = () =>
 			(stablecoinTableBaselinePromise ??= Promise.all([
 				getStablecoinAssets(),
 				fetchStablecoinPricesApi(),
-				fetchStablecoinRatesApi()
-			]).then(([peggedData, priceData, rateData]) => ({ peggedData, priceData, rateData })))
+				fetchStablecoinRatesApi(),
+				fetchStablecoinPeggedConfigApi()
+			]).then(([peggedData, priceData, rateData, peggedConfig]) => ({
+				peggedData,
+				priceData,
+				rateData,
+				peggedConfig
+			})))
 		let rwaAssetsTablePromise: Promise<IFetchedRWAProject[]> | null = null
 		const getRwaAssetsTable = () =>
 			(rwaAssetsTablePromise ??= import('~/containers/RWA/api').then(({ fetchRWAActiveTVLs }) =>
 				withTimeout(fetchRWAActiveTVLs(), 10_000)
 			))
+		let rwaApiPromise: Promise<typeof import('~/containers/RWA/api')> | null = null
+		const getRwaApi = () => (rwaApiPromise ??= import('~/containers/RWA/api'))
+		let incomeMetadataPromise: Promise<Map<string, IProtocolMetadata>> | null = null
+		const getIncomeMetadata = () =>
+			(incomeMetadataPromise ??= import('~/utils/metadata').then((metadataModule) => {
+				const metadataByDisplayNameSlug = new Map<string, IProtocolMetadata>()
+				for (const key in metadataModule.default.protocolMetadata) {
+					const record = metadataModule.default.protocolMetadata[key]
+					if (record === undefined) throw new Error(`Missing protocol metadata for ${key}`)
+					metadataByDisplayNameSlug.set(slug(record.displayName), record)
+				}
+				return metadataByDisplayNameSlug
+			}))
+		let yieldsSnapshotPromise: Promise<YieldsSnapshot> | null = null
+		const getYieldsSnapshot = () =>
+			(yieldsSnapshotPromise ??= import('~/containers/Yields/server/dataset.server').then(({ acquireYieldsSnapshot }) =>
+				acquireYieldsSnapshot('background')
+			))
+		let cexAnalyticsPromise: Promise<typeof import('~/containers/Cexs/server/analytics')> | null = null
+		const getCexAnalytics = () => (cexAnalyticsPromise ??= import('~/containers/Cexs/server/analytics'))
 		const claimedStreamSources = new Set<string>()
+		const claimedUnifiedTableCacheKeys = new Set<string>()
+		const dimensionDatasetRequestScope = createDimensionDatasetRequestScope()
 		const claimStreamSource = (kind: string, key: readonly unknown[]) => {
 			const sourceKey = `${kind}:${JSON.stringify(key)}`
 			if (claimedStreamSources.has(sourceKey)) return false
@@ -192,57 +293,76 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			return true
 		}
 
-		for (const items of partitionDashboardStreamItems(dashboardItems)) {
-			// Sources within a stage resolve independently. Later rows do not start until the initial
-			// card window settles, and the client fallback gate stays closed until every stage finishes.
-			const phase2Promises: Promise<unknown>[] = [protocolsAndChainsPromise]
-			type DatasetType = NonNullable<ProtocolsTableConfig['datasetType']>
-			const tableItemsByDataset = new Map<DatasetType, ProtocolsTableConfig[]>()
+		const streamPromises: Promise<unknown>[] = [
+			...(needsProtocolCatalog ? [sourceScheduler.schedule(async () => void (await getProtocolsAndChains()))] : []),
+			...(needsAppMetadata ? [sourceScheduler.schedule(async () => void (await getAppMetadata()))] : [])
+		]
+		if (!isStreamStopped()) {
+			const scheduleSource = (run: () => Promise<void>) => sourceScheduler.schedule(run)
+			const phase2Promises: Promise<unknown>[] = []
+			type DatasetType = DatasetTableConfig['datasetType']
+			type DatasetConfigFor<T extends DatasetType> = DatasetTableConfig extends infer Config
+				? Config extends DatasetTableConfig
+					? T extends Config['datasetType']
+						? Config
+						: never
+					: never
+				: never
+			const tableItems: DatasetTableConfig[] = []
+			const classicChartItems: DashboardItemConfig[] = []
 			for (const item of items) {
-				if (item.kind !== 'table' || item.tableType !== 'dataset') continue
-				// Old stablecoin tables were persisted before datasetType was introduced.
-				const datasetType = item.datasetType ?? 'stablecoins'
-				const datasetItems = tableItemsByDataset.get(datasetType)
-				if (datasetItems) datasetItems.push(item)
-				else tableItemsByDataset.set(datasetType, [item])
+				if (item.kind === 'dataset-table') tableItems.push(item)
+				else if (item.kind === 'chart' || (item.kind === 'multi' && item.items.length > 0) || item.kind === 'metric') {
+					classicChartItems.push(item)
+				}
 			}
-			const getTableItems = (datasetType: DatasetType) => tableItemsByDataset.get(datasetType) ?? []
+			const getTableItems = <T extends DatasetType>(datasetType: T) =>
+				tableItems.filter((item): item is DatasetConfigFor<T> => item.datasetType === datasetType)
 			// Chart and metric cards share the same raw source and observer-local presentation.
-			phase2Promises.push(
-				(async () => {
-					const catalog = await protocolsAndChainsPromise
+			if (classicChartItems.length > 0) {
+				const chartSourcePromises: Promise<void>[] = []
+				const planChartSources = scheduleSource(async () => {
+					const [catalog, appMetadata] = await Promise.all([getProtocolsAndChains(), getAppMetadata()])
+					if (isStreamStopped()) return
 					const protocolRelations = buildProDashboardProtocolRelations(catalog)
-					const chartSourcePromises = buildProDashboardChartSourcePlan(items, catalog, resolvedAppMetadata)
-						.filter((source) => claimStreamSource('chart', source.queryKey))
-						.map((source) =>
-							(source.skipReason
-								? Promise.resolve([])
-								: withTimeout(fetchSingleChartData(source.request, 'all', null, protocolRelations), 10_000)
-							)
-								.then((data) => {
-									writeLine({ type: 'chartData', queryKey: source.queryKey, data })
-								})
-								.catch(() => {})
+					const sources = buildProDashboardChartSourcePlan(classicChartItems, catalog, appMetadata).slice(
+						0,
+						DASHBOARD_STREAM_CLASSIC_SOURCE_LIMIT
+					)
+					for (const source of sources) {
+						if (!claimStreamSource('chart', source.queryKey)) continue
+						chartSourcePromises.push(
+							scheduleSource(async () => {
+								const data = source.skipReason
+									? []
+									: await withTimeout(fetchSingleChartData(source.request, 'all', null, protocolRelations), 10_000)
+								await writeLine({ type: 'chartData', queryKey: source.queryKey, data })
+							}).catch(() => {})
 						)
-					await Promise.allSettled(chartSourcePromises)
-				})()
-			)
+					}
+				}).catch(() => {})
+				phase2Promises.push(
+					planChartSources.then(async () => {
+						await Promise.allSettled(chartSourcePromises)
+					})
+				)
+			}
 
 			// Table sources stream independently so optional metrics cannot delay the base table.
 			phase2Promises.push(
-				fetchTableServerData(
-					items,
-					claimStreamSource,
-					(data) => writeLine({ type: 'tableData', data }),
-					() => protocolsListPromise
+				streamProTokenUsageData(items, claimStreamSource, scheduleSource, (data) =>
+					writeLine({ type: 'tokenUsageData', ...data })
 				).catch(() => {})
 			)
 
 			// Yields — stream per pool
-			const yieldsItems = extractYieldsItems(items)
 			const needsByPool = new Map<string, { supply: boolean; borrow: boolean }>()
-			for (const item of yieldsItems) {
-				const needs = needsByPool.get(item.poolConfigId) ?? { supply: false, borrow: false }
+			for (const item of items) {
+				if (item.kind !== 'yields') continue
+				const needs = needsByPool.get(item.poolConfigId) ?? {
+					supply: false,
+					borrow: false
+				}
 				const chartType = normalizeYieldChartType(item.chartType)
 				if (chartType === 'borrow-apy' || chartType === 'net-borrow-apy') needs.borrow = true
 				else needs.supply = true
@@ -253,14 +373,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 				const fetchBorrow = needs.borrow && claimStreamSource('yields-chart-borrow', [poolConfigId])
 				if (!fetchSupply && !fetchBorrow) continue
 				phase2Promises.push(
-					(async () => {
+					scheduleSource(async () => {
 						const [supplyResult, borrowResult] = await Promise.allSettled([
 							fetchSupply ? withTimeout(fetchPoolDetailHistory(poolConfigId, 'max'), 10_000) : Promise.resolve(null),
 							fetchBorrow
 								? withTimeout(fetchBorrowMarketDetailHistory(poolConfigId, 'max'), 10_000)
 								: Promise.resolve(null)
 						])
-						writeLine({
+						await writeLine({
 							type: 'yieldsChartData',
 							id: poolConfigId,
 							data: {
@@ -268,100 +388,105 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 								...(fetchBorrow && borrowResult.status === 'fulfilled' ? { borrow: borrowResult.value } : null)
 							}
 						})
-					})().catch(() => {})
+					}).catch(() => {})
 				)
 			}
 
 			// Advanced TVL basic data — stream per protocol
-			const advTvlProtocols = new Set<string>()
 			for (const item of items) {
-				if (item.kind === 'advanced-tvl' && item.chartType === 'tvl') {
-					advTvlProtocols.add(item.protocol)
-				}
-			}
-			for (const protocol of advTvlProtocols) {
-				const queryKey = getProtocolTvlValueQueryKey(protocol)
+				if (item.kind !== 'advanced-tvl' || item.chartType !== 'tvl') continue
+				const protocol = item.protocol
+				const queryKey = buildProtocolValueChartQueryKey({
+					source: 'tvl',
+					protocol
+				})
 				if (!claimStreamSource('advanced-tvl', queryKey)) continue
 				phase2Promises.push(
-					withTimeout(fetchProtocolTvlChart({ protocol }), 10_000)
-						.then((data) => {
-							writeLine({ type: 'protocolTvlChartData', queryKey, data: data ?? [] })
+					scheduleSource(() =>
+						withTimeout(fetchProtocolTvlChart({ protocol }), 10_000).then((data) => {
+							return writeLine({
+								type: 'protocolTvlChartData',
+								queryKey,
+								data: data ?? []
+							})
 						})
-						.catch(() => {})
+					).catch(() => {})
 				)
 			}
 
 			// Stream only the base V2 breakdown required by each active Advanced TVL or Borrowed view.
 			// User-enabled extra TVL keys live in local storage and are fetched by the client after this stream completes.
-			phase2Promises.push(
-				(async () => {
-					const catalog = await protocolsAndChainsPromise
-					const sourcePromises = buildProtocolTvlStreamSourcePlan(items, catalog)
-						.filter(({ queryKey }) => claimStreamSource('protocol-tvl', queryKey))
-						.map(({ queryKey, request }) =>
-							withTimeout(fetchProtocolTvlChart(request), 15_000)
-								.then((data) => {
-									writeLine({ type: 'protocolTvlChartData', queryKey, data: data ?? [] })
-								})
-								.catch(() => {})
-						)
-					await Promise.allSettled(sourcePromises)
-				})()
+			const protocolTvlItems = items.filter(
+				(item) => item.kind === 'advanced-borrowed' || (item.kind === 'advanced-tvl' && item.chartType !== 'tvl')
 			)
-
-			// Unified table data — stream per config
-			const unifiedTableItems = items.filter((item): item is UnifiedTableConfig => item.kind === 'unified-table')
-			const seenUnifiedTableKeys = new Set<string>()
-			for (const utConfig of unifiedTableItems) {
-				const headers = sanitizeRowHeaders(utConfig.rowHeaders)
-				const { queryKey } = getUnifiedTableQueryIdentity(utConfig, headers)
-				const cacheKey = JSON.stringify(queryKey)
-				if (seenUnifiedTableKeys.has(cacheKey) || !claimStreamSource('unified-table', [cacheKey])) continue
-				seenUnifiedTableKeys.add(cacheKey)
+			if (protocolTvlItems.length > 0) {
+				const protocolTvlSourcePromises: Promise<void>[] = []
+				const planProtocolTvlSources = scheduleSource(async () => {
+					const catalog = await getProtocolsAndChains()
+					if (isStreamStopped()) return
+					for (const { queryKey, request } of buildProtocolTvlStreamSourcePlan(protocolTvlItems, catalog)) {
+						if (!claimStreamSource('protocol-tvl', queryKey)) continue
+						protocolTvlSourcePromises.push(
+							scheduleSource(async () => {
+								const data = await withTimeout(fetchProtocolTvlChart(request), 15_000)
+								await writeLine({ type: 'protocolTvlChartData', queryKey, data: data ?? [] })
+							}).catch(() => {})
+						)
+					}
+				}).catch(() => {})
 				phase2Promises.push(
-					(async () => {
-						const data = await withTimeout(fetchProtocolsTable({ config: utConfig, rowHeaders: headers }), 15_000)
-						if (data) writeLine({ type: 'unifiedTableData', key: cacheKey, data })
-					})().catch(() => {})
+					planProtocolTvlSources.then(async () => {
+						await Promise.allSettled(protocolTvlSourcePromises)
+					})
+				)
+			}
+
+			// Exact table requests stream independently so a broader or slower table does not
+			// delay an otherwise-ready card or widen its failure boundary.
+			for (const source of buildUnifiedTableStreamSourcePlan(items)) {
+				if (claimedUnifiedTableCacheKeys.has(source.cacheKey)) continue
+				claimedUnifiedTableCacheKeys.add(source.cacheKey)
+				phase2Promises.push(
+					scheduleSource(async () => {
+						const data = await withTimeout(
+							fetchProtocolsTable(
+								{
+									config: source.config,
+									rowHeaders: source.rowHeaders,
+									baseMetricFamilies: source.baseMetricFamilies,
+									pointMetrics: source.pointMetrics,
+									supplementalMetrics: source.supplementalMetrics,
+									needsOracleMembership: source.needsOracleMembership,
+									rowMembership: source.rowMembership
+								},
+								{
+									...(source.needsOracleMembership ? { oracleMetricsPromise: getOracleMetrics() } : {}),
+									dimensionDatasetRequestScope
+								}
+							),
+							15_000
+						)
+						const response = createProtocolsUnifiedTableResponse(data)
+						await writeLine({ type: 'unifiedTableData', key: source.cacheKey, data: response })
+					}).catch(() => {})
 				)
 			}
 
 			// Stablecoins chart data — shared baseline then per-chain
 			const stablecoinsItems = items.filter((item): item is StablecoinsChartConfig => item.kind === 'stablecoins')
-			if (stablecoinsItems.length > 0) {
+			for (const item of stablecoinsItems) {
+				const chain = item.chain
+				if (!claimStreamSource('stablecoins-chart', [chain])) continue
 				phase2Promises.push(
-					(async () => {
+					scheduleSource(async () => {
 						const FETCH_TIMEOUT = 10_000
-						try {
-							const peggedData = await withTimeout(getStablecoinAssets(), FETCH_TIMEOUT)
-
-							const uniqueChains = new Set<string>()
-							for (const item of stablecoinsItems) uniqueChains.add(item.chain)
-
-							const chainPromises: Promise<void>[] = []
-							for (const chain of uniqueChains) {
-								if (!claimStreamSource('stablecoins-chart', [chain])) continue
-								chainPromises.push(
-									(async () => {
-										const chainLabel = chain === 'All' ? 'all' : chain
-										const chainData = await withTimeout(fetchStablecoinChartApi(chainLabel), FETCH_TIMEOUT)
-										const data = buildStablecoinsChartCacheValue({
-											peggedData,
-											chainData,
-											chain
-										})
-
-										writeLine({
-											type: 'stablecoinsChartData',
-											chain,
-											data
-										})
-									})().catch(() => {})
-								)
-							}
-							await Promise.allSettled(chainPromises)
-						} catch {}
-					})()
+						const [peggedData, chainData] = await Promise.all([
+							withTimeout(getStablecoinAssets(), FETCH_TIMEOUT),
+							withTimeout(fetchStablecoinChartApi(chain === 'All' ? 'all' : chain), FETCH_TIMEOUT)
+						])
+						const data = buildStablecoinsChartCacheValue({ peggedData, chainData, chain })
+						await writeLine({ type: 'stablecoinsChartData', chain, data })
+					}).catch(() => {})
 				)
 			}
 
@@ -370,19 +495,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			const rwaAssetItems = items.filter((item): item is RWAAssetChartConfig => item.kind === 'rwa-asset')
 
 			if (rwaOverviewItems.length > 0 || rwaAssetItems.length > 0) {
-				const rwaApi = await import('~/containers/RWA/api')
-
-				const seenOverviewKeys = new Set<string>()
 				for (const item of rwaOverviewItems) {
 					const { metric, chain } = item
-					const breakdown = getProRwaBreakdown(item.breakdown)
+					const breakdown = item.breakdown
 					const resolvedChain = chain || 'All'
 					const cacheKey = JSON.stringify(getProRwaBreakdownQueryKey(breakdown, metric, resolvedChain))
-					if (seenOverviewKeys.has(cacheKey) || !claimStreamSource('rwa-overview', [cacheKey])) continue
-					seenOverviewKeys.add(cacheKey)
+					if (!claimStreamSource('rwa-overview', [cacheKey])) continue
 
 					phase2Promises.push(
-						(async () => {
+						scheduleSource(async () => {
+							const rwaApi = await getRwaApi()
 							let data: IRWABreakdownChartResponse | null = null
 							if (resolvedChain !== 'All') {
 								data = await withTimeout(
@@ -417,7 +539,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 							}
 							if (data) {
 								const { toRwaPositionalChartDataset } = await import('~/containers/RWA/breakdownDataset')
-								writeLine({
+								await writeLine({
 									type: 'rwaBreakdownData',
 									breakdown,
 									metric,
@@ -425,58 +547,52 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 									data: toRwaPositionalChartDataset(data)
 								})
 							}
-						})().catch(() => {})
+						}).catch(() => {})
 					)
 				}
 
-				const seenAssetIds = new Set<string>()
 				for (const item of rwaAssetItems) {
 					const { assetId } = item
-					if (!assetId || seenAssetIds.has(assetId) || !claimStreamSource('rwa-asset', [assetId])) continue
-					seenAssetIds.add(assetId)
+					if (!assetId || !claimStreamSource('rwa-asset', [assetId])) continue
 
 					phase2Promises.push(
-						withTimeout(rwaApi.fetchRWAAssetChartData(assetId), 10_000)
-							.then((data) => {
-								if (data) writeLine({ type: 'rwaAssetChartData', id: assetId, data })
+						scheduleSource(async () => {
+							const rwaApi = await getRwaApi()
+							await withTimeout(rwaApi.fetchRWAAssetChartData(assetId), 10_000).then(async (data) => {
+								if (data)
+									await writeLine({
+										type: 'rwaAssetChartData',
+										id: assetId,
+										data
+									})
 							})
-							.catch(() => {})
+						}).catch(() => {})
 					)
 				}
 			}
 
 			// RWA table data — stream assets list and/or stats
-			const rwaSelectedChainItems = getTableItems('rwa-selected-chain')
-			const hasRwaAssetsTable = getTableItems('rwa').length > 0 || rwaSelectedChainItems.length > 0
+			const hasRwaAssetsTable = getTableItems('rwa').length > 0 || getTableItems('rwa-selected-chain').length > 0
 			const hasRwaChainsTable = getTableItems('rwa-chains').length > 0
 
 			if (hasRwaAssetsTable) {
 				phase2Promises.push(
-					(async () => {
+					scheduleSource(async () => {
 						const data = await getRwaAssetsTable()
-						if (data) {
-							if (claimStreamSource('rwa-assets-table', [])) writeLine({ type: 'rwaAssetsTableData', data })
-							const seenChains = new Set<string>()
-							for (const item of rwaSelectedChainItems) {
-								const chain = item.datasetChain || 'Ethereum'
-								if (seenChains.has(chain) || !claimStreamSource('rwa-chain-assets-table', [chain])) continue
-								seenChains.add(chain)
-								writeLine({ type: 'rwaChainAssetsTableData', chain, data })
-							}
+						if (data && claimStreamSource('rwa-assets-table', [])) {
+							await writeLine({ type: 'rwaAssetsTableData', data })
 						}
-					})().catch(() => {})
+					}).catch(() => {})
 				)
 			}
 
 			if (hasRwaChainsTable && claimStreamSource('rwa-chains-table', [])) {
 				phase2Promises.push(
-					(async () => {
+					scheduleSource(async () => {
 						const { fetchRWAStats: fetchStats } = await import('~/containers/RWA/api')
 						const data = await withTimeout(fetchStats(), 10_000)
-						if (data) {
-							writeLine({ type: 'rwaChainsTableData', data })
-						}
-					})().catch(() => {})
+						if (data) await writeLine({ type: 'rwaChainsTableData', data })
+					}).catch(() => {})
 				)
 			}
 
@@ -487,29 +603,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 			if (hasEquitiesCompaniesTable && claimStreamSource('equities-companies', [])) {
 				phase2Promises.push(
-					(async () => {
+					scheduleSource(async () => {
 						const { fetchEquitiesCompanies } = await import('~/containers/Equities/api')
 						const data = await withTimeout(fetchEquitiesCompanies(), 15_000)
-						if (data) {
-							writeLine({ type: 'equitiesCompaniesData', data })
-						}
-					})().catch(() => {})
+						if (data) await writeLine({ type: 'equitiesCompaniesData', data })
+					}).catch(() => {})
 				)
 			}
 
-			const seenEquitiesStatementsTickers = new Set<string>()
 			for (const item of equitiesFinancialsItems) {
-				const tickerParam = item.datasetChain
-				const queryKey = getProEquitiesStatementsQueryKey(tickerParam || '')
+				const tickerParam = item.ticker
+				const queryKey = getEquitiesTableQueryKey('statements', tickerParam || '')
 				const queryTicker = queryKey?.[2]
-				if (
-					queryTicker &&
-					!seenEquitiesStatementsTickers.has(queryTicker) &&
-					claimStreamSource('equities-statements', [queryTicker])
-				) {
-					seenEquitiesStatementsTickers.add(queryTicker)
+				if (queryTicker && claimStreamSource('equities-statements', [queryTicker])) {
 					phase2Promises.push(
-						(async () => {
+						scheduleSource(async () => {
 							const { fetchEquitiesStatements } = await import('~/containers/Equities/api')
 							const { parseEquityTickerCountryParam, buildEquityTickerCountrySlug } =
 								await import('~/containers/Equities/tickerCountry')
@@ -520,30 +628,24 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 								15_000
 							)
 							if (data) {
-								writeLine({
+								await writeLine({
 									type: 'equitiesStatementsData',
 									ticker: buildEquityTickerCountrySlug(tickerCountry.ticker, tickerCountry.country),
 									data
 								})
 							}
-						})().catch(() => {})
+						}).catch(() => {})
 					)
 				}
 			}
 
-			const seenEquitiesFilingsTickers = new Set<string>()
 			for (const item of equitiesFilingsItems) {
-				const tickerParam = item.datasetChain
-				const queryKey = getProEquitiesFilingsQueryKey(tickerParam || '')
+				const tickerParam = item.ticker
+				const queryKey = getEquitiesTableQueryKey('filings', tickerParam || '')
 				const queryTicker = queryKey?.[2]
-				if (
-					queryTicker &&
-					!seenEquitiesFilingsTickers.has(queryTicker) &&
-					claimStreamSource('equities-filings', [queryTicker])
-				) {
-					seenEquitiesFilingsTickers.add(queryTicker)
+				if (queryTicker && claimStreamSource('equities-filings', [queryTicker])) {
 					phase2Promises.push(
-						(async () => {
+						scheduleSource(async () => {
 							const { fetchEquitiesFilings } = await import('~/containers/Equities/api')
 							const { parseEquityTickerCountryParam, buildEquityTickerCountrySlug } =
 								await import('~/containers/Equities/tickerCountry')
@@ -551,96 +653,70 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 							if (!tickerCountry) return
 							const data = await withTimeout(fetchEquitiesFilings(tickerCountry.ticker, tickerCountry.country), 15_000)
 							if (data) {
-								writeLine({
+								await writeLine({
 									type: 'equitiesFilingsData',
 									ticker: buildEquityTickerCountrySlug(tickerCountry.ticker, tickerCountry.country),
 									data
 								})
 							}
-						})().catch(() => {})
+						}).catch(() => {})
 					)
 				}
 			}
 
-			// Emission data — stream per task
-			const emissionTasks: Array<{
-				key: string
-				fn: () => Promise<unknown>
-			}> = []
-			const seenPieKeys = new Set<string>()
-			const seenScheduleKeys = new Set<string>()
+			// Emission data — stream per source
 			for (const item of items) {
 				if (item.kind === 'unlocks-pie') {
 					const cacheKey = JSON.stringify(['pro-dashboard', 'unlocks-pie', item.protocol])
-					if (!seenPieKeys.has(cacheKey) && claimStreamSource('emissions-pie', [cacheKey])) {
-						seenPieKeys.add(cacheKey)
-						emissionTasks.push({
-							key: cacheKey,
-							fn: () => withTimeout(getProtocolEmissionsPieData(slug(item.protocol)), 10_000)
-						})
-					}
+					if (!claimStreamSource('emissions-pie', [cacheKey])) continue
+					phase2Promises.push(
+						scheduleSource(() =>
+							withTimeout(getProtocolEmissionsPieData(slug(item.protocol)), 10_000).then(async (data) => {
+								if (data)
+									await writeLine({
+										type: 'emissionData',
+										view: 'pie',
+										key: cacheKey,
+										data
+									})
+							})
+						).catch(() => {})
+					)
 				} else if (item.kind === 'unlocks-schedule') {
 					const resolvedDataType = item.dataType === 'realtime' ? 'documented' : item.dataType
 					const cacheKey = JSON.stringify(['pro-dashboard', 'unlocks-schedule', item.protocol, resolvedDataType])
-					if (!seenScheduleKeys.has(cacheKey) && claimStreamSource('emissions-schedule', [cacheKey])) {
-						seenScheduleKeys.add(cacheKey)
-						emissionTasks.push({
-							key: cacheKey,
-							fn: () => withTimeout(getProtocolEmissionsScheduleData(slug(item.protocol)), 10_000)
-						})
-					}
-				}
-			}
-			for (const task of emissionTasks) {
-				phase2Promises.push(
-					task
-						.fn()
-						.then((data) => {
-							if (data) writeLine({ type: 'emissionData', key: task.key, data })
-						})
-						.catch(() => {})
-				)
-			}
-
-			// Dimension dataset tables — seed under the per-card hook keys
-			const seenDimensionDatasetKeys = new Set<string>()
-			for (const spec of DIMENSION_DATASET_SPECS) {
-				const matchingItems = getTableItems(spec.datasetType)
-				for (const item of matchingItems) {
-					const itemChains = item.chains
-					const cacheKey = JSON.stringify(getProDimensionDatasetQueryKey(spec.datasetType, itemChains))
-					if (seenDimensionDatasetKeys.has(cacheKey) || !claimStreamSource('dimension-dataset', [cacheKey])) continue
-					seenDimensionDatasetKeys.add(cacheKey)
+					if (!claimStreamSource('emissions-schedule', [cacheKey])) continue
 					phase2Promises.push(
-						withTimeout(fetchProDimensionDataset(spec, itemChains), 15_000)
-							.then((data) => {
-								if (data) writeLine({ type: 'dimensionDatasetData', key: cacheKey, data })
+						scheduleSource(() =>
+							withTimeout(getProtocolEmissionsScheduleData(slug(item.protocol)), 10_000).then(async (data) => {
+								if (data)
+									await writeLine({
+										type: 'emissionData',
+										view: 'schedule',
+										key: cacheKey,
+										data
+									})
 							})
-							.catch(() => {})
+						).catch(() => {})
 					)
 				}
 			}
 
 			// CEX analytics dataset tables — seed under the per-view hook keys
-			const cexAnalyticsItems = [...getTableItems('cex'), ...getTableItems('cex-analytics')]
+			const cexAnalyticsItems = getTableItems('cex-analytics')
 			if (cexAnalyticsItems.length > 0) {
 				let needsSnapshot = false
 				let needsTotals = false
 				const shareSpecs = new Map<string, { metric: 'spot' | 'derivatives'; topNData: number }>()
 				for (const item of cexAnalyticsItems) {
-					// `efficiency` is a legacy persisted view migrated to comparison by the editor and renderer.
-					const rawView =
-						item.datasetType === 'cex'
-							? 'comparison'
-							: (item.cexAnalyticsView as typeof item.cexAnalyticsView | 'efficiency')
-					const view = rawView === 'efficiency' ? 'comparison' : rawView || 'comparison'
+					const view = item.cexAnalyticsView
 					if (view === 'summary' || view === 'comparison') {
 						if (!needsSnapshot) needsSnapshot = claimStreamSource('cex-snapshot', [])
 					} else if (view === 'spot-vs-derivatives') {
 						if (!needsTotals) needsTotals = claimStreamSource('cex-totals', [])
 					} else if (view === 'market-share') {
-						const metric = item.cexAnalyticsMetric === 'spot' ? 'spot' : 'derivatives'
-						const topNRaw = item.cexAnalyticsTopN ?? 8
+						const metric = item.cexAnalyticsMetric
+						const topNRaw = item.cexAnalyticsTopN
 						const topNData = Math.min(Math.max(topNRaw, 1), 12)
 						const shareKey = JSON.stringify(getProCexShareQueryKey(metric, topNRaw))
 						if (!shareSpecs.has(shareKey) && claimStreamSource('cex-share', [shareKey])) {
@@ -649,130 +725,142 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 					}
 				}
 				if (needsSnapshot || needsTotals || shareSpecs.size > 0) {
-					phase2Promises.push(
-						(async () => {
-							const { getCexAnalyticsMarketShare, getCexAnalyticsSnapshot, getCexAnalyticsTotals } =
-								await import('~/containers/Cexs/server/analytics')
-							const tasks: Promise<void>[] = []
-							if (needsSnapshot) {
-								tasks.push(
-									withTimeout(getCexAnalyticsSnapshot(), 15_000)
-										.then((data) => {
-											if (data)
-												writeLine({
-													type: 'cexAnalyticsData',
-													key: JSON.stringify(PRO_CEX_SNAPSHOT_QUERY_KEY),
-													data
-												})
-										})
-										.catch(() => {})
-								)
-							}
-							if (needsTotals) {
-								tasks.push(
-									withTimeout(getCexAnalyticsTotals(), 15_000)
-										.then((data) => {
-											if (data)
-												writeLine({
-													type: 'cexAnalyticsData',
-													key: JSON.stringify(PRO_CEX_TOTALS_QUERY_KEY),
-													data
-												})
-										})
-										.catch(() => {})
-								)
-							}
-							for (const [shareKey, { metric, topNData }] of shareSpecs) {
-								tasks.push(
-									withTimeout(getCexAnalyticsMarketShare(metric, topNData), 15_000)
-										.then((data) => {
-											if (data) writeLine({ type: 'cexAnalyticsData', key: shareKey, data })
-										})
-										.catch(() => {})
-								)
-							}
-							await Promise.allSettled(tasks)
-						})().catch(() => {})
-					)
+					if (needsSnapshot) {
+						phase2Promises.push(
+							scheduleSource(async () => {
+								const { getCexAnalyticsSnapshot } = await getCexAnalytics()
+								const data = await withTimeout(getCexAnalyticsSnapshot(), 15_000)
+								if (data)
+									await writeLine({
+										type: 'cexAnalyticsData',
+										view: 'snapshot',
+										key: JSON.stringify(PRO_CEX_SNAPSHOT_QUERY_KEY),
+										data
+									})
+							}).catch(() => {})
+						)
+					}
+					if (needsTotals) {
+						phase2Promises.push(
+							scheduleSource(async () => {
+								const { getCexAnalyticsTotals } = await getCexAnalytics()
+								const data = await withTimeout(getCexAnalyticsTotals(), 15_000)
+								if (data)
+									await writeLine({
+										type: 'cexAnalyticsData',
+										view: 'totals',
+										key: JSON.stringify(PRO_CEX_TOTALS_QUERY_KEY),
+										data
+									})
+							}).catch(() => {})
+						)
+					}
+					for (const [shareKey, { metric, topNData }] of shareSpecs) {
+						phase2Promises.push(
+							scheduleSource(async () => {
+								const { getCexAnalyticsMarketShare } = await getCexAnalytics()
+								const data = await withTimeout(getCexAnalyticsMarketShare(metric, topNData), 15_000)
+								if (data)
+									await writeLine({
+										type: 'cexAnalyticsData',
+										view: 'market-share',
+										key: shareKey,
+										data
+									})
+							}).catch(() => {})
+						)
+					}
 				}
 			}
 
 			// Chains dataset tables
-			const seenChainsKeys = new Set<string>()
 			for (const item of getTableItems('chains')) {
-				const category = item.datasetChain
+				const category = item.category
 				const cacheKey = JSON.stringify(getProChainsDatasetQueryKey(category))
-				if (seenChainsKeys.has(cacheKey) || !claimStreamSource('chains-dataset', [cacheKey])) continue
-				seenChainsKeys.add(cacheKey)
+				if (!claimStreamSource('chains-dataset', [cacheKey])) continue
 				phase2Promises.push(
-					withTimeout(fetchChainsDatasetRows({ category }), 15_000)
-						.then((data) => {
-							if (data) writeLine({ type: 'chainsDatasetData', key: cacheKey, data })
+					scheduleSource(() =>
+						withTimeout(fetchChainsDatasetRows(category ? { category } : {}), 15_000).then(async (data) => {
+							if (data)
+								await writeLine({
+									type: 'chainsDatasetData',
+									key: cacheKey,
+									data
+								})
 						})
-						.catch(() => {})
+					).catch(() => {})
 				)
 			}
 
 			// Yields dataset tables
-			const seenYieldsTableKeys = new Set<string>()
-			const yieldsTables = getTableItems('yields').filter((item) =>
-				claimStreamSource('yields-dataset', [JSON.stringify(getProYieldsDatasetQueryKey(item.chains))])
-			)
-			if (yieldsTables.length > 0) {
-				const yieldsSnapshot = await import('~/containers/Yields/server/dataset.server').then(
-					({ acquireYieldsSnapshot }) => acquireYieldsSnapshot('background')
-				)
-				for (const item of yieldsTables) {
-					const itemChains = item.chains
-					const cacheKey = JSON.stringify(getProYieldsDatasetQueryKey(itemChains))
-					if (seenYieldsTableKeys.has(cacheKey)) continue
-					seenYieldsTableKeys.add(cacheKey)
+			const yieldsTableSources: Array<{ cacheKey: string; chains: string[] }> = []
+			for (const item of getTableItems('yields')) {
+				const cacheKey = JSON.stringify(getProYieldsDatasetQueryKey(item.chains))
+				if (claimStreamSource('yields-dataset', [cacheKey])) {
+					yieldsTableSources.push({ cacheKey, chains: item.chains })
+				}
+			}
+			if (yieldsTableSources.length > 0) {
+				for (const source of yieldsTableSources) {
 					phase2Promises.push(
-						withTimeout(fetchProYieldsDataset(yieldsSnapshot, itemChains), 15_000)
-							.then((data) => {
-								if (data) writeLine({ type: 'yieldsDatasetData', key: cacheKey, data })
-							})
-							.catch(() => {})
+						scheduleSource(async () => {
+							const yieldsSnapshot = await getYieldsSnapshot()
+							const data = await withTimeout(fetchProYieldsDataset(yieldsSnapshot, source.chains), 15_000)
+							if (data)
+								await writeLine({
+									type: 'yieldsDatasetData',
+									key: source.cacheKey,
+									data
+								})
+						}).catch(() => {})
 					)
 				}
 			}
 
 			// Stablecoins dataset tables
-			const seenStablecoinsTableKeys = new Set<string>()
 			for (const item of getTableItems('stablecoins')) {
-				const chain = item.datasetChain || 'All'
+				const chain = item.chain
 				const cacheKey = JSON.stringify(getProStablecoinsTableQueryKey(chain))
-				if (seenStablecoinsTableKeys.has(cacheKey) || !claimStreamSource('stablecoins-table', [cacheKey])) continue
-				seenStablecoinsTableKeys.add(cacheKey)
+				if (!claimStreamSource('stablecoins-table', [cacheKey])) continue
 				phase2Promises.push(
-					(async () => {
+					scheduleSource(async () => {
 						const [baseline, chainData] = await Promise.all([
 							withTimeout(getStablecoinTableBaseline(), 15_000),
 							withTimeout(fetchStablecoinChartApi(chain === 'All' ? 'all-llama-app' : chain), 15_000)
 						])
-						const data = buildStablecoinsTableData({ baseline, chainData, chain })
-						writeLine({ type: 'stablecoinsTableData', key: cacheKey, data })
-					})().catch(() => {})
+						const data = buildStablecoinsTableData({
+							baseline,
+							chainData,
+							chain
+						})
+						await writeLine({
+							type: 'stablecoinsTableData',
+							key: cacheKey,
+							data
+						})
+					}).catch(() => {})
 				)
 			}
 
 			// Stablecoin asset chart items
-			const seenStablecoinAssetSlugs = new Set<string>()
 			const stablecoinAssetItems = items.filter(
 				(item): item is StablecoinAssetChartConfig => item.kind === 'stablecoin-asset'
 			)
 			for (const item of stablecoinAssetItems) {
 				const slugId = item.stablecoinId
-				if (!slugId || seenStablecoinAssetSlugs.has(slugId) || !claimStreamSource('stablecoin-asset', [slugId]))
-					continue
-				seenStablecoinAssetSlugs.add(slugId)
+				if (!slugId || !claimStreamSource('stablecoin-asset', [slugId])) continue
 				const cacheKey = JSON.stringify(['pro-dashboard', 'stablecoin-asset-chart-data', slugId])
 				phase2Promises.push(
-					withTimeout(fetchStablecoinAssetChartCacheValue(slugId), 15_000)
-						.then((data) => {
-							if (data) writeLine({ type: 'stablecoinAssetData', key: cacheKey, data })
+					scheduleSource(() =>
+						withTimeout(fetchStablecoinAssetChartCacheValue(slugId), 15_000).then(async (data) => {
+							if (data)
+								await writeLine({
+									type: 'stablecoinAssetData',
+									key: cacheKey,
+									data
+								})
 						})
-						.catch(() => {})
+					).catch(() => {})
 				)
 			}
 
@@ -780,111 +868,58 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			const incomeStatementItems = items.filter(
 				(item): item is IncomeStatementConfig => item.kind === 'income-statement'
 			)
-			const seenIncomeProtocols = new Set<string>()
 			if (incomeStatementItems.length > 0) {
-				const metadataModule = await import('~/utils/metadata')
-				const { protocolMetadata } = metadataModule.default
-				const metadataByDisplayNameSlug = new Map<string, IProtocolMetadata>()
-				for (const key in protocolMetadata) {
-					const record = protocolMetadata[key]
-					metadataByDisplayNameSlug.set(slug(record.displayName), record)
-				}
 				for (const incomeItem of incomeStatementItems) {
 					const protocol = incomeItem.protocol
-					if (!protocol || seenIncomeProtocols.has(protocol) || !claimStreamSource('income-statement', [protocol]))
-						continue
-					seenIncomeProtocols.add(protocol)
-					const metadata = metadataByDisplayNameSlug.get(slug(protocol))
-					if (!metadata) continue
+					if (!protocol || !claimStreamSource('income-statement', [protocol])) continue
 					const cacheKey = JSON.stringify(['pro-dashboard', 'income-statement', protocol])
 					phase2Promises.push(
-						withTimeout(getProtocolIncomeStatement({ metadata }), 15_000)
-							.then((data) => {
-								if (data) writeLine({ type: 'incomeStatementData', key: cacheKey, data })
+						scheduleSource(async () => {
+							const metadata = (await getIncomeMetadata()).get(slug(protocol))
+							if (!metadata) return
+							await withTimeout(getProtocolIncomeStatement({ metadata }), 15_000).then(async (data) => {
+								if (data)
+									await writeLine({
+										type: 'incomeStatementData',
+										key: cacheKey,
+										data
+									})
 							})
-							.catch(() => {})
+						}).catch(() => {})
 					)
 				}
 			}
 
 			// Chart builder items
 			const chartBuilderItems = items.filter((item): item is ChartBuilderConfig => item.kind === 'builder')
-			const seenChartBuilderKeys = new Set<string>()
 			for (const builderItem of chartBuilderItems) {
 				const cfg = builderItem.config
 				if (cfg.mode !== 'protocol' && STREAM_PROTOCOL_SERIES_SKIP_METRICS.has(cfg.metric)) continue
-				const filterMode = cfg.filterMode
-				const chainFilterMode = resolveChartBuilderFilterMode(cfg.chainFilterMode, filterMode)
-				const categoryFilterMode = resolveChartBuilderFilterMode(cfg.categoryFilterMode, filterMode)
-				const chainCategoryFilterMode = resolveChartBuilderFilterMode(cfg.chainCategoryFilterMode, filterMode)
-				const protocolCategoryFilterMode = resolveChartBuilderFilterMode(cfg.protocolCategoryFilterMode, filterMode)
 				const cacheKey = JSON.stringify(getChartBuilderQueryKey(cfg))
-				if (seenChartBuilderKeys.has(cacheKey) || !claimStreamSource('chart-builder', [cacheKey])) continue
-				seenChartBuilderKeys.add(cacheKey)
+				if (!claimStreamSource('chart-builder', [cacheKey])) continue
 				phase2Promises.push(
-					(async () => {
-						try {
-							let result: { series: ChartSeries[] } = { series: [] }
-							if (cfg.mode === 'protocol') {
-								const data = await withTimeout(
-									ProtocolChartBuilderData.getProtocolChainData(
-										cfg.protocol,
-										cfg.metric,
-										cfg.chains.length > 0 ? cfg.chains : undefined,
-										cfg.limit,
-										chainFilterMode,
-										cfg.chainCategories?.length > 0 ? cfg.chainCategories : undefined,
-										cfg.protocolCategories?.length > 0 ? cfg.protocolCategories : undefined,
-										chainCategoryFilterMode,
-										protocolCategoryFilterMode
-									),
-									15_000
-								)
-								let series = data?.series ?? []
-								if (cfg.hideOthers || cfg.chainCategories?.length > 0 || cfg.protocolCategories?.length > 0) {
-									series = series.filter((entry) => !entry.name.startsWith('Others'))
-								}
-								result = { series }
-							} else {
-								const data = await withTimeout(
-									ProtocolChartBuilderData.getProtocolBreakdownData(
-										cfg.metric as Exclude<
-											ChartBuilderConfig['config']['metric'],
-											'stablecoins' | 'chain-fees' | 'chain-revenue'
-										>,
-										cfg.chains,
-										cfg.limit,
-										cfg.categories,
-										cfg.groupByParent,
-										chainFilterMode,
-										categoryFilterMode
-									),
-									15_000
-								)
-								let series = data?.series ?? []
-								if (cfg.hideOthers || cfg.chainCategories?.length > 0) {
-									series = series.filter((entry) => !entry.name.startsWith('Others'))
-								}
-								result = { series }
-							}
-							writeLine({ type: 'chartBuilderData', key: cacheKey, data: result })
-						} catch {}
-					})()
+					scheduleSource(() =>
+						withTimeout(fetchChartBuilderServerData(cfg), CHART_BUILDER_STREAM_TIMEOUT_MS).then((data) =>
+							writeLine({ type: 'chartBuilderData', key: cacheKey, data })
+						)
+					).catch(() => {})
 				)
 			}
 
-			await Promise.allSettled(phase2Promises)
+			streamPromises.push(...phase2Promises)
 		}
+		await Promise.allSettled(streamPromises)
 
-		writeLine({ type: 'done' })
-		endStream()
+		if (!isStreamStopped()) await writeLine({ type: 'done' })
+		await endStream()
 	} catch (error) {
 		recordRouteRuntimeError(error, 'apiRoute')
-		if (!res.destroyed) {
-			writeLine({ type: 'done' })
-			endStream()
-		}
+		if (!isStreamStopped()) await writeLine({ type: 'done' })
+		await endStream()
 	}
 }
 
-export default withApiRouteTelemetry('/api/dynamic/pro-dashboard/[dashboardId]/stream', handler)
+export const dashboardStreamApiHandler = withApiRouteTelemetry(
+	'/api/dynamic/pro-dashboard/[dashboardId]/stream',
+	handler
+)

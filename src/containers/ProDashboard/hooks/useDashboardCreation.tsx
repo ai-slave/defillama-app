@@ -3,7 +3,13 @@ import { useRouter } from 'next/router'
 import { useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { UNIFIED_TABLE_PRESETS_BY_ID } from '~/containers/ProDashboard/components/UnifiedTable/config/PresetRegistry'
+import { applyPresetToConfig } from '~/containers/ProDashboard/components/UnifiedTable/utils/configHelpers'
 import { dashboardAPI, dashboardUrlKey } from '~/containers/ProDashboard/services/DashboardAPI'
+import {
+	UNIFIED_TABLE_CONFIG_VERSION,
+	type UnifiedTableConfig
+} from '~/containers/ProDashboard/unifiedTable/config/current'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 
 type DatasetType = 'dexs' | 'perps' | 'options' | 'aggregators' | 'bridge-aggregators'
@@ -24,8 +30,35 @@ const getDashboardName = (datasetType: DatasetType): string => {
 		options: 'Options Volume Dashboard',
 		aggregators: 'Aggregators Dashboard',
 		'bridge-aggregators': 'Bridge Aggregators Dashboard'
+	} satisfies Readonly<Record<DatasetType, string>>
+	return names[datasetType]
+}
+
+const PROTOCOL_METRIC_PRESET_BY_DATASET = {
+	dexs: 'volume-protocols',
+	perps: 'perps-protocols',
+	options: 'options-protocols',
+	aggregators: 'aggregators-protocols',
+	'bridge-aggregators': 'bridge-aggregators-protocols'
+} satisfies Readonly<Record<DatasetType, string>>
+
+function createProtocolMetricTable(datasetType: DatasetType): UnifiedTableConfig {
+	const presetId = PROTOCOL_METRIC_PRESET_BY_DATASET[datasetType]
+	const preset = UNIFIED_TABLE_PRESETS_BY_ID.get(presetId)
+	if (!preset) throw new Error(`Missing Unified Table preset: ${presetId}`)
+	const config = applyPresetToConfig({ preset, includeRowHeaderRules: true, mergeWithDefaults: true })
+	return {
+		id: generateItemId('unified-table', datasetType),
+		kind: 'unified-table',
+		configVersion: UNIFIED_TABLE_CONFIG_VERSION,
+		strategy: 'protocols',
+		rowHeaders: config.rowHeaders,
+		defaultSorting: config.sorting,
+		columnOrder: config.columnOrder,
+		columnVisibility: config.columnVisibility,
+		activePresetId: presetId,
+		colSpan: 2
 	}
-	return names[datasetType] || 'New Dashboard'
 }
 
 export const useDashboardCreation = () => {
@@ -35,18 +68,11 @@ export const useDashboardCreation = () => {
 
 	const createMutation = useMutation({
 		mutationFn: async (datasetType: DatasetType) => {
-			if (!authorizedFetch) {
+			if (!isAuthenticated) {
 				throw new Error('Not authenticated')
 			}
 
-			const tableItem = {
-				id: generateItemId('table', datasetType),
-				kind: 'table' as const,
-				tableType: 'dataset' as const,
-				chains: [],
-				datasetType,
-				colSpan: 2 as const
-			}
+			const tableItem = createProtocolMetricTable(datasetType)
 
 			const dashboard = await dashboardAPI.createDashboard(
 				{
@@ -80,7 +106,7 @@ export const useDashboardCreation = () => {
 			return
 		}
 
-		if (!authorizedFetch) {
+		if (!isAuthenticated) {
 			toast.error('Please sign in to create dashboards')
 			return
 		}
@@ -92,7 +118,7 @@ export const useDashboardCreation = () => {
 				toast.dismiss(loadingToast)
 			}
 		})
-	}, [router.pathname, authorizedFetch, createMutation])
+	}, [router.pathname, isAuthenticated, createMutation])
 
 	return {
 		createDashboardWithDataset,

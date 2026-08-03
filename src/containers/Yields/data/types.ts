@@ -248,7 +248,7 @@ export interface EarnPageRow {
 	project: string
 	airdrop: boolean
 	raiseValuationUsd: number | null
-	chains: string[]
+	chains: [string, ...string[]]
 	url: string
 	category: string | null
 	referenceAsset: string | null

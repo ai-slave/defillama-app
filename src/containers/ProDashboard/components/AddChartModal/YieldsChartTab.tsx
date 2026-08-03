@@ -2,9 +2,8 @@ import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useReducer, useRef } from 'react'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import type { ProYieldRow } from '~/containers/ProDashboard/components/datasets/YieldsDataset/data'
 import { useYieldsData } from '~/containers/ProDashboard/components/datasets/YieldsDataset/useYieldsData'
+import type { ProYieldRow } from '~/containers/ProDashboard/yieldData'
 import { normalizeYieldToken } from '~/containers/Yields/domain/tokenNormalization'
 import { useYieldChartData, useYieldChartLendBorrow } from '~/containers/Yields/queries.client'
 import { Icon } from '~/ui/Icon'
@@ -24,7 +23,7 @@ import {
 	tvlApyCharts
 } from '../yieldChartConfig'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 interface YieldsChartTabProps {
 	selectedYieldPool: {
@@ -156,7 +155,6 @@ export function YieldsChartTab({
 		const chainTvlMap = new Map<string, number>()
 		for (const p of yieldsData) {
 			const chain = p.chains[0]
-			if (!chain) continue
 			const currentTvl = chainTvlMap.get(chain) || 0
 			chainTvlMap.set(chain, currentTvl + (p.tvl || 0))
 		}
@@ -269,11 +267,14 @@ export function YieldsChartTab({
 		}
 	}
 
-	const normalizedSelectedTokens = useMemo(
-		() => selectedYieldTokens.map((token) => normalizeYieldToken(token)),
-		[selectedYieldTokens]
-	)
-	const normalizedSelectedTokenSet = useMemo(() => new Set(normalizedSelectedTokens), [normalizedSelectedTokens])
+	const normalizedSelectedTokenSet = useMemo(() => {
+		const tokens = new Set<string>()
+		for (const token of selectedYieldTokens) tokens.add(normalizeYieldToken(token))
+		return tokens
+	}, [selectedYieldTokens])
+	const selectedYieldChainSet = useMemo(() => new Set(selectedYieldChains), [selectedYieldChains])
+	const selectedYieldProjectSet = useMemo(() => new Set(selectedYieldProjects), [selectedYieldProjects])
+	const selectedYieldCategorySet = useMemo(() => new Set(selectedYieldCategories), [selectedYieldCategories])
 
 	const toggleToken = (value: string) => {
 		const normalizedValue = normalizeYieldToken(value)
@@ -287,23 +288,23 @@ export function YieldsChartTab({
 
 	const filteredPools = useMemo(() => {
 		return yieldsData.filter((pool) => {
-			if (selectedYieldChains.length > 0 && !selectedYieldChains.includes(pool.chains[0])) {
+			if (selectedYieldChainSet.size > 0 && !selectedYieldChainSet.has(pool.chains[0])) {
 				return false
 			}
 
-			if (selectedYieldProjects.length > 0 && !selectedYieldProjects.includes(pool.project)) {
+			if (selectedYieldProjectSet.size > 0 && !selectedYieldProjectSet.has(pool.project)) {
 				return false
 			}
 
-			if (selectedYieldCategories.length > 0 && !selectedYieldCategories.includes(pool.category)) {
+			if (
+				selectedYieldCategorySet.size > 0 &&
+				(pool.category === null || !selectedYieldCategorySet.has(pool.category))
+			) {
 				return false
 			}
 
-			if (normalizedSelectedTokens.length > 0) {
-				const tokensInPool = new Set(pool.tokenSymbols.map(normalizeYieldToken))
-				const matchesToken = normalizedSelectedTokens.some((token) => tokensInPool.has(token))
-
-				if (!matchesToken) {
+			if (normalizedSelectedTokenSet.size > 0) {
+				if (!pool.tokenSymbols.some((token) => normalizedSelectedTokenSet.has(normalizeYieldToken(token)))) {
 					return false
 				}
 			}
@@ -319,10 +320,10 @@ export function YieldsChartTab({
 		})
 	}, [
 		yieldsData,
-		selectedYieldChains,
-		selectedYieldProjects,
-		selectedYieldCategories,
-		normalizedSelectedTokens,
+		selectedYieldChainSet,
+		selectedYieldProjectSet,
+		selectedYieldCategorySet,
+		normalizedSelectedTokenSet,
 		minTvl,
 		maxTvl
 	])
@@ -332,7 +333,7 @@ export function YieldsChartTab({
 
 		if (deferredPoolSearch) {
 			result = matchSorter(result, deferredPoolSearch, {
-				keys: ['pool', 'project', (item: ProYieldRow) => item.chains[0] ?? '']
+				keys: ['pool', 'project', (item: ProYieldRow) => item.chains[0]]
 			})
 		}
 

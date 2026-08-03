@@ -1,7 +1,7 @@
 import { skipToken, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { AddToDashboardButton } from '~/components/AddToDashboard'
+import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
@@ -417,6 +417,7 @@ export const AdapterByChainChart = ({
 				{
 					id: generateItemId('chart', `${chain}-${dashboardChartType}`),
 					kind: 'chart',
+					subjectType: 'chain',
 					chain: chain,
 					type: dashboardChartType,
 					grouping,

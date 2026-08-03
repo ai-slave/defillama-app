@@ -27,7 +27,8 @@ import {
 	subscribeSqlRefreshProgress
 } from './components/SqlChart/sqlRefreshBus'
 import type { UnifiedTableFocusSection } from './components/UnifiedTable/types'
-import type { AIGeneratedData, TimePeriod } from './dashboardTypes'
+import type { DashboardItemConfig } from './dashboardItemConfig'
+import type { TimePeriod } from './dashboardTypes'
 import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import {
 	useDashboardMode,
@@ -35,11 +36,10 @@ import {
 	useProDashboardDashboard,
 	useProDashboardItemsState,
 	useProDashboardPermissions,
-	useProDashboardServerAppMetadata,
 	useProDashboardTime,
 	useProDashboardUI
 } from './ProDashboardAPIContext'
-import type { DashboardItemConfig, SqlChartConfig } from './types'
+import type { SqlChartConfig } from './types'
 
 const DemoPreview = lazy(() => import('./components/DemoPreview').then((m) => ({ default: m.DemoPreview })))
 
@@ -129,7 +129,7 @@ function ProDashboardContent() {
 	const [editModalState, setEditModalState] = useState<{
 		item: DashboardItemConfig | null
 		focusSection?: UnifiedTableFocusSection
-	}>({ item: null, focusSection: undefined })
+	}>({ item: null })
 	const [sqlModalState, setSqlModalState] = useState<{ open: boolean; item: SqlChartConfig | null }>({
 		open: false,
 		item: null
@@ -270,13 +270,13 @@ function ProDashboardContent() {
 			setSqlModalState({ open: true, item })
 			return
 		}
-		setEditModalState({ item, focusSection })
+		setEditModalState({ item, ...(focusSection === undefined ? {} : { focusSection }) })
 		setShowAddModal(true)
 	}
 
 	const openSqlModal = () => {
 		setShowAddModal(false)
-		setEditModalState({ item: null, focusSection: undefined })
+		setEditModalState({ item: null })
 		setSqlModalState({ open: true, item: null })
 	}
 
@@ -324,7 +324,7 @@ function ProDashboardContent() {
 								</p>
 							) : null}
 						</div>
-						<DashboardAuthorByline author={currentDashboard?.author} />
+						<DashboardAuthorByline {...(currentDashboard?.author ? { author: currentDashboard.author } : {})} />
 						{shouldShowAuthorProfileSetup ? <AuthorProfileSetupNotice /> : null}
 						{dashboardDescription ? (
 							<p className="mt-2 max-w-3xl text-sm leading-6 text-pro-text-form">{dashboardDescription}</p>
@@ -415,24 +415,26 @@ function ProDashboardContent() {
 								<span className="tabular-nums">{formatNumber(currentDashboard?.viewCount ?? 0)}</span>
 								<span className="sr-only">Views</span>
 							</Tooltip>
-							<LikeDashboardButton
-								currentDashboard={currentDashboard}
-								dashboardVisibility={dashboardVisibility}
-								dashboardId={dashboardId}
-							/>
-							<CopyDashboardLinkButton
-								dashboardVisibility={dashboardVisibility}
-								dashboardId={dashboardId}
-								dashboardSlug={currentDashboard?.slug}
-							/>
+							{currentDashboard && dashboardId ? (
+								<>
+									<LikeDashboardButton
+										currentDashboard={currentDashboard}
+										dashboardVisibility={dashboardVisibility}
+										dashboardId={dashboardId}
+									/>
+									<CopyDashboardLinkButton
+										dashboardVisibility={dashboardVisibility}
+										dashboardId={dashboardId}
+										{...(currentDashboard.slug ? { dashboardSlug: currentDashboard.slug } : {})}
+									/>
+								</>
+							) : null}
 						</div>
 					</div>
 				</div>
 			</div>
 
-			{currentDashboard?.aiGenerated ? (
-				<AIGenerationHistory aiGenerated={currentDashboard.aiGenerated as AIGeneratedData} />
-			) : null}
+			{currentDashboard?.aiGenerated ? <AIGenerationHistory aiGenerated={currentDashboard.aiGenerated} /> : null}
 
 			{currentRatingSession && !isReadOnly ? (
 				<Suspense fallback={<></>}>
@@ -559,7 +561,7 @@ function ProDashboardContent() {
 						isOpen
 						onClose={() => {
 							setShowAddModal(false)
-							setEditModalState({ item: null, focusSection: undefined })
+							setEditModalState({ item: null })
 						}}
 						editItem={editModalState.item}
 						initialUnifiedFocusSection={editModalState.focusSection}
@@ -638,7 +640,7 @@ function ProDashboardContent() {
 						tags: dashboardTags,
 						description: dashboardDescription,
 						items,
-						aiGenerated: currentDashboard?.aiGenerated
+						...(currentDashboard?.aiGenerated ? { aiGenerated: currentDashboard.aiGenerated } : {})
 					}}
 					onGenerate={(prompt) => {
 						void handleIterateDashboard(prompt)
@@ -654,9 +656,8 @@ function ProDashboardContent() {
 }
 
 export default function ProDashboard() {
-	const serverAppMetadata = useProDashboardServerAppMetadata()
 	return (
-		<AppMetadataProvider initialData={serverAppMetadata}>
+		<AppMetadataProvider>
 			<ProDashboardContent />
 		</AppMetadataProvider>
 	)

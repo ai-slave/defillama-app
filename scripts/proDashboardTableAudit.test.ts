@@ -1,18 +1,40 @@
 import { describe, expect, it } from 'vitest'
+import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
 import type { DashboardStreamChunk } from '~/containers/ProDashboard/dashboardStreamContract'
-import type { ProDashboardTableSource } from '~/containers/ProDashboard/tableSourcePlan'
 import { auditProDashboardTableSources } from './proDashboardTableAudit'
+import { buildProDashboardTableSourcePlan, type ProDashboardTableSource } from './proDashboardTableSourcePlan'
+
+describe('buildProDashboardTableSourcePlan', () => {
+	it('shares one RWA asset source across global and selected-chain tables', () => {
+		const items: DashboardItemConfig[] = [
+			{ id: 'all-assets', kind: 'dataset-table', datasetType: 'rwa' },
+			{ id: 'ethereum-assets', kind: 'dataset-table', datasetType: 'rwa-selected-chain', chain: 'Ethereum' },
+			{ id: 'base-assets', kind: 'dataset-table', datasetType: 'rwa-selected-chain', chain: 'Base' }
+		]
+
+		expect(buildProDashboardTableSourcePlan(items).streamSources).toEqual([
+			{
+				chunkType: 'rwaAssetsTableData',
+				key: '["pro-dashboard","rwa-assets-table"]'
+			}
+		])
+	})
+})
 
 describe('auditProDashboardTableSources', () => {
 	it('reports exact missing, duplicate, unexpected, and empty table identities', () => {
 		const expected: ProDashboardTableSource[] = [
 			{
-				chunkType: 'tableData',
-				key: '["pro-dashboard","protocols-volume-by-chain","Base"]'
+				chunkType: 'tokenUsageData',
+				key: '["pro-dashboard","token-usage",["USDC"],false]'
 			},
 			{
 				chunkType: 'stablecoinsTableData',
 				key: '["pro-dashboard","stablecoins-overview","Base"]'
+			},
+			{
+				chunkType: 'unifiedTableData',
+				key: '["pro-dashboard","unified-table","fees"]'
 			},
 			{
 				chunkType: 'rwaChainsTableData',
@@ -21,16 +43,9 @@ describe('auditProDashboardTableSources', () => {
 		]
 		const chunks: DashboardStreamChunk[] = [
 			{
-				type: 'tableData',
-				data: {
-					protocolsList: null,
-					volumeByChain: { Base: { chain: 'Base', protocols: [] } },
-					feesByChain: {},
-					perpsByChain: {},
-					openInterestByChain: {},
-					datasetsByQueryKey: {},
-					tokenUsageByQueryKey: {}
-				}
+				type: 'tokenUsageData',
+				key: '["pro-dashboard","token-usage",["USDC"],false]',
+				data: []
 			},
 			{
 				type: 'stablecoinsTableData',
@@ -46,6 +61,11 @@ describe('auditProDashboardTableSources', () => {
 				type: 'chainsDatasetData',
 				key: '["pro-dashboard","chains-overview","all"]',
 				data: []
+			},
+			{
+				type: 'unifiedTableData',
+				key: '["pro-dashboard","unified-table","fees"]',
+				data: { strategy: 'protocols', rows: [], parentMetrics: {} }
 			}
 		]
 
@@ -56,7 +76,7 @@ describe('auditProDashboardTableSources', () => {
 		expect(result.unexpected).toEqual(['chainsDatasetData:["pro-dashboard","chains-overview","all"]'])
 		expect(result.empty).toEqual(
 			expect.arrayContaining([
-				'tableData:["pro-dashboard","protocols-volume-by-chain","Base"]',
+				'tokenUsageData:["pro-dashboard","token-usage",["USDC"],false]',
 				'stablecoinsTableData:["pro-dashboard","stablecoins-overview","Base"]'
 			])
 		)

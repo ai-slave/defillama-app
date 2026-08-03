@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
-import { AddToDashboardButton } from '~/components/AddToDashboard'
+import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	ChartGroupingSelector,

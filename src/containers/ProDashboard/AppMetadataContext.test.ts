@@ -26,9 +26,10 @@ describe('buildProtocolMetadataIndex', () => {
 })
 
 describe('Pro dashboard chain chart availability', () => {
-	it('exposes Gas Used when chain metadata advertises it', () => {
-		const flags = { name: 'Avalanche', gasUsed: true } as IChainMetadata
+	it('exposes canonical adapter metrics when chain metadata advertises them', () => {
+		const flags = { name: 'Avalanche', gasUsed: true, openInterest: true } as IChainMetadata
 
 		expect(getAvailableChainChartTypes(flags)).toContain('gasUsed')
+		expect(getAvailableChainChartTypes(flags)).toContain('openInterest')
 	})
 })

@@ -1,9 +1,8 @@
-import type { DashboardGrouping, MetricAggregator, MetricWindow } from '../../types'
+import type { DashboardGrouping, MetricAggregator, MetricChartType, MetricWindow } from '../../types'
 
 export type ComparisonType = 'chains' | 'protocols'
 export type WizardStep = 'select-type' | 'select-items' | 'select-metrics' | 'preview'
 
-export type GroupingInterval = DashboardGrouping
 export type DisplayMode = 'default' | 'stacked' | 'cumulative' | 'percentage'
 
 export type ComparisonPreset = {
@@ -15,7 +14,7 @@ export interface MetricSettings {
 	aggregator: MetricAggregator
 	window: MetricWindow
 	compareMode: 'previous_window' | 'previous_value' | 'none'
-	showSparkline: boolean
+	chartType: MetricChartType
 }
 
 export interface ComparisonWizardState {
@@ -28,7 +27,7 @@ export interface ComparisonWizardState {
 	visibility: 'private' | 'public'
 	tags: string[]
 	description: string
-	grouping: GroupingInterval
+	grouping: DashboardGrouping
 	displayMode: DisplayMode
 	metricSettings: MetricSettings
 	includeTable: boolean
@@ -62,7 +61,7 @@ export type WizardAction =
 	| { type: 'ADD_TAG'; tag: string }
 	| { type: 'REMOVE_TAG'; tag: string }
 	| { type: 'SET_DESCRIPTION'; description: string }
-	| { type: 'SET_GROUPING'; grouping: GroupingInterval }
+	| { type: 'SET_GROUPING'; grouping: DashboardGrouping }
 	| { type: 'SET_DISPLAY_MODE'; displayMode: DisplayMode }
 	| { type: 'SET_INCLUDE_TABLE'; include: boolean }
 	| { type: 'RESET' }
@@ -73,10 +72,10 @@ export const getStepIndex = (step: WizardStep): number => WIZARD_STEPS.indexOf(s
 
 export const getNextStep = (step: WizardStep): WizardStep | null => {
 	const index = getStepIndex(step)
-	return index < WIZARD_STEPS.length - 1 ? WIZARD_STEPS[index + 1] : null
+	return WIZARD_STEPS[index + 1] ?? null
 }
 
 export const getPrevStep = (step: WizardStep): WizardStep | null => {
 	const index = getStepIndex(step)
-	return index > 0 ? WIZARD_STEPS[index - 1] : null
+	return index > 0 ? (WIZARD_STEPS[index - 1] ?? null) : null
 }

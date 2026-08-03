@@ -1,25 +1,40 @@
-import type { TableFilters } from '~/containers/ProDashboard/types'
+import type {
+	UnifiedBooleanTableFilterKey,
+	UnifiedNumericTableFilterKey
+} from '~/containers/ProDashboard/unifiedTable/config/current'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 
-type FilterType = 'numeric-range' | 'numeric-single' | 'boolean' | 'array'
 type FilterFormat = 'currency' | 'percent' | 'number'
 export type NumericOperator = '>' | '>=' | '<' | '<=' | 'between'
 
-export interface FilterConfig {
+interface FilterConfigBase {
 	id: string
 	label: string
 	description?: string
-	type: FilterType
 	category: FilterCategory
 	strategies: Array<'protocols' | 'chains'>
 	format?: FilterFormat
 	min?: number
-	minKey?: keyof TableFilters
-	maxKey?: keyof TableFilters
-	booleanKey?: keyof TableFilters
-	arrayKey?: keyof TableFilters
 	options?: Array<{ value: string; label: string }>
 }
+
+export interface NumericRangeFilterConfig extends FilterConfigBase {
+	type: 'numeric-range'
+	minKey: UnifiedNumericTableFilterKey
+	maxKey: UnifiedNumericTableFilterKey
+}
+
+export interface NumericSingleFilterConfig extends FilterConfigBase {
+	type: 'numeric-single'
+	minKey: UnifiedNumericTableFilterKey
+}
+
+export interface BooleanFilterConfig extends FilterConfigBase {
+	type: 'boolean'
+	booleanKey: UnifiedBooleanTableFilterKey
+}
+
+export type FilterConfig = NumericRangeFilterConfig | NumericSingleFilterConfig | BooleanFilterConfig
 
 export type FilterCategory =
 	| 'metrics'
@@ -196,16 +211,6 @@ export const FILTER_CONFIGS: FilterConfig[] = [
 		maxKey: 'holderRevenue24hMax'
 	},
 	{
-		id: 'treasuryRevenue24h',
-		label: 'Treasury Revenue (24h)',
-		type: 'numeric-range',
-		category: 'revenue',
-		strategies: ['protocols'],
-		format: 'currency',
-		minKey: 'treasuryRevenue24hMin',
-		maxKey: 'treasuryRevenue24hMax'
-	},
-	{
 		id: 'change1d',
 		label: 'TVL Change (1d)',
 		type: 'numeric-range',
@@ -257,8 +262,8 @@ export const FILTER_CONFIGS: FilterConfig[] = [
 		strategies: ['protocols'],
 		format: 'percent',
 		min: -1000,
-		minKey: 'volumeChange7dMin',
-		maxKey: 'volumeChange7dMax'
+		minKey: 'volumeChange7dOver7dMin',
+		maxKey: 'volumeChange7dOver7dMax'
 	},
 	{
 		id: 'volumeChange1m',
@@ -268,8 +273,8 @@ export const FILTER_CONFIGS: FilterConfig[] = [
 		strategies: ['protocols'],
 		format: 'percent',
 		min: -1000,
-		minKey: 'volumeChange1mMin',
-		maxKey: 'volumeChange1mMax'
+		minKey: 'volumeChange30dOver30dMin',
+		maxKey: 'volumeChange30dOver30dMax'
 	},
 	{
 		id: 'feesChange1d',
@@ -290,8 +295,8 @@ export const FILTER_CONFIGS: FilterConfig[] = [
 		strategies: ['protocols', 'chains'],
 		format: 'percent',
 		min: -1000,
-		minKey: 'feesChange7dMin',
-		maxKey: 'feesChange7dMax'
+		minKey: 'feesChange7dOver7dMin',
+		maxKey: 'feesChange7dOver7dMax'
 	},
 	{
 		id: 'feesChange1m',
@@ -301,8 +306,8 @@ export const FILTER_CONFIGS: FilterConfig[] = [
 		strategies: ['protocols', 'chains'],
 		format: 'percent',
 		min: -1000,
-		minKey: 'feesChange1mMin',
-		maxKey: 'feesChange1mMax'
+		minKey: 'feesChange30dOver30dMin',
+		maxKey: 'feesChange30dOver30dMax'
 	},
 	{
 		id: 'revenueChange1d',
@@ -323,8 +328,8 @@ export const FILTER_CONFIGS: FilterConfig[] = [
 		strategies: ['protocols', 'chains'],
 		format: 'percent',
 		min: -1000,
-		minKey: 'revenueChange7dMin',
-		maxKey: 'revenueChange7dMax'
+		minKey: 'revenueChange7dOver7dMin',
+		maxKey: 'revenueChange7dOver7dMax'
 	},
 	{
 		id: 'revenueChange1m',
@@ -334,8 +339,8 @@ export const FILTER_CONFIGS: FilterConfig[] = [
 		strategies: ['protocols', 'chains'],
 		format: 'percent',
 		min: -1000,
-		minKey: 'revenueChange1mMin',
-		maxKey: 'revenueChange1mMax'
+		minKey: 'revenueChange30dOver30dMin',
+		maxKey: 'revenueChange30dOver30dMax'
 	},
 	{
 		id: 'volumeDominance24h',
@@ -579,14 +584,6 @@ export const FILTER_CONFIGS: FilterConfig[] = [
 		booleanKey: 'hasHolderRevenue'
 	},
 	{
-		id: 'hasTreasuryRevenue',
-		label: 'Has Treasury Revenue',
-		type: 'boolean',
-		category: 'flags',
-		strategies: ['protocols'],
-		booleanKey: 'hasTreasuryRevenue'
-	},
-	{
 		id: 'hasMcapTVLRatio',
 		label: 'Has MC/TVL Ratio',
 		type: 'boolean',
@@ -613,11 +610,6 @@ export function getFiltersByCategory(): Map<FilterCategory, FilterConfig[]> {
 	return grouped
 }
 
-// oxlint-disable-next-line no-unused-vars
-function getFilterConfigById(id: string): FilterConfig | undefined {
-	return FILTER_CONFIGS.find((config) => config.id === id)
-}
-
 export function formatFilterValue(value: number, format: FilterFormat = 'currency'): string {
 	if (format === 'percent') {
 		return formatPercent(value, { input: 'percent' })
@@ -626,22 +618,4 @@ export function formatFilterValue(value: number, format: FilterFormat = 'currenc
 		return formatNumber(value)
 	}
 	return formatUsd(value, { compact: true, maximumFractionDigits: 1 })
-}
-
-// oxlint-disable-next-line no-unused-vars
-function getOperatorLabel(operator: NumericOperator): string {
-	switch (operator) {
-		case '>':
-			return '>'
-		case '>=':
-			return '>='
-		case '<':
-			return '<'
-		case '<=':
-			return '<='
-		case 'between':
-			return 'between'
-		default:
-			return '>'
-	}
 }

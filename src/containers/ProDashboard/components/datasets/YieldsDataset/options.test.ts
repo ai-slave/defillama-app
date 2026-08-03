@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ProYieldRow } from './data'
-import { buildYieldsFilterOptions } from './options'
+import { buildYieldsFilterOptions, type YieldsFilterSourceRow } from './options'
 
 const row = ({
 	project = '',
@@ -14,7 +13,7 @@ const row = ({
 	tvl?: number | null
 	tokenSymbols?: string[]
 	category?: string | null
-}): ProYieldRow => ({ project, projectslug, tvl, tokenSymbols, category }) as ProYieldRow
+}): YieldsFilterSourceRow => ({ project, projectslug, tvl, tokenSymbols, category })
 
 describe('buildYieldsFilterOptions', () => {
 	it('returns empty option collections for empty data', () => {

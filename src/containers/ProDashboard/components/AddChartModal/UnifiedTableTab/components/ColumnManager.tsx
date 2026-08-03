@@ -31,14 +31,9 @@ const SubscribeProModal = lazy(() =>
 		default: m.SubscribeProModal
 	}))
 )
-import {
-	COLUMN_DICTIONARY_BY_ID,
-	UNIFIED_TABLE_COLUMN_DICTIONARY
-} from '~/containers/ProDashboard/components/UnifiedTable/config/ColumnDictionary'
 import { isColumnSupported } from '~/containers/ProDashboard/components/UnifiedTable/config/metricCapabilities'
-import type { MetricGroup } from '~/containers/ProDashboard/components/UnifiedTable/types'
 import {
-	evaluateExpression,
+	compileExpression,
 	formatPreviewNumber,
 	generateCustomColumnId,
 	getAvailableVariables,
@@ -47,12 +42,20 @@ import {
 	SAMPLE_METRICS,
 	validateExpression
 } from '~/containers/ProDashboard/components/UnifiedTable/utils/customColumns'
-import type { CustomColumnDefinition } from '~/containers/ProDashboard/types'
+import {
+	COLUMN_DICTIONARY_BY_ID,
+	UNIFIED_TABLE_COLUMN_DICTIONARY
+} from '~/containers/ProDashboard/unifiedTable/config/columnDictionary'
+import type { MetricGroup } from '~/containers/ProDashboard/unifiedTable/config/columnDictionary'
+import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 
 const AVAILABLE_VARIABLES = getAvailableVariables()
+const AVAILABLE_VARIABLES_BY_KEY = new Map(AVAILABLE_VARIABLES.map((variable) => [variable.key, variable]))
+const SAMPLE_METRICS_BY_KEY = new Map(Object.entries(SAMPLE_METRICS))
 const EMPTY_CUSTOM_COLUMNS: CustomColumnDefinition[] = []
 
 interface ColumnManagerProps {
+	rowHeaders: readonly UnifiedRowHeaderType[]
 	columnOrder: ColumnOrderState
 	columnVisibility: VisibilityState
 	onChange: (columnOrder: ColumnOrderState, columnVisibility: VisibilityState) => void
@@ -87,13 +90,22 @@ const GROUP_FILTERS: Array<{ id: ColumnGroupId | 'all'; label: string }> = [
 	{ id: 'custom', label: 'Custom' }
 ]
 
-const GROUP_LABELS: Record<ColumnGroupId | 'all', string> = GROUP_FILTERS.reduce(
-	(acc, filter) => {
-		acc[filter.id as ColumnGroupId | 'all'] = filter.label
-		return acc
-	},
-	{} as Record<ColumnGroupId | 'all', string>
-)
+const GROUP_LABELS: Record<ColumnGroupId | 'all', string> = {
+	all: 'All',
+	meta: 'Meta',
+	tvl: 'TVL',
+	fees: 'Fees',
+	volume: 'Volume',
+	revenue: 'Revenue',
+	earnings: 'Earnings',
+	ratios: 'Valuation',
+	perps: 'Perps',
+	aggregators: 'Aggregators',
+	'bridge-aggregators': 'Bridge Aggregators',
+	'derivatives-aggregators': 'Derivatives Aggregators',
+	options: 'Options',
+	custom: 'Custom'
+}
 
 const FORMAT_OPTIONS: Array<{ id: ColumnFormat; label: string; description: string }> = [
 	{ id: 'usd', label: '$', description: 'Currency' },
@@ -109,12 +121,12 @@ const AGGREGATION_OPTIONS: Array<{ id: ColumnAggregation; label: string; descrip
 	{ id: 'none', label: 'None', description: 'Show dash (-) for grouped rows' }
 ]
 
-const EXAMPLE_PRESETS = [
-	{ name: 'TVL/MCap', expression: 'tvl / mcap', format: 'ratio' as ColumnFormat },
-	{ name: 'Fees (24h Run Rate)', expression: 'fees24h * 365', format: 'usd' as ColumnFormat },
-	{ name: 'Fee Yield (24h Run Rate)', expression: '(fees24h * 365) / tvl * 100', format: 'percent' as ColumnFormat },
-	{ name: 'P/F Ratio (24h Run Rate)', expression: 'mcap / (fees24h * 365)', format: 'ratio' as ColumnFormat },
-	{ name: 'Revenue Margin', expression: 'revenue24h / fees24h * 100', format: 'percent' as ColumnFormat }
+const EXAMPLE_PRESETS: Array<{ name: string; expression: string; format: ColumnFormat }> = [
+	{ name: 'TVL/MCap', expression: 'tvl / mcap', format: 'ratio' },
+	{ name: 'Fees (24h Run Rate)', expression: 'fees24h * 365', format: 'usd' },
+	{ name: 'Fee Yield (24h Run Rate)', expression: '(fees24h * 365) / tvl * 100', format: 'percent' },
+	{ name: 'P/F Ratio (24h Run Rate)', expression: 'mcap / (fees24h * 365)', format: 'ratio' },
+	{ name: 'Revenue Margin', expression: 'revenue24h / fees24h * 100', format: 'percent' }
 ]
 
 interface AutocompleteSuggestion {
@@ -141,25 +153,29 @@ const getColumnMeta = (id: string, customColumns?: CustomColumnDefinition[]): Co
 	return {
 		id: dictionaryEntry.id,
 		header: dictionaryEntry.header,
-		group: (dictionaryEntry.group as ColumnGroupId) ?? 'meta'
+		group: dictionaryEntry.group
 	}
 }
 
-const buildAllColumns = (customColumns?: CustomColumnDefinition[]): ColumnMeta[] => {
-	const dictionaryMetas = UNIFIED_TABLE_COLUMN_DICTIONARY.filter((column) => isColumnSupported(column.id))
+const buildAllColumns = (
+	rowHeaders: readonly UnifiedRowHeaderType[],
+	customColumns?: CustomColumnDefinition[]
+): ColumnMeta[] => {
+	const dictionaryMetas = UNIFIED_TABLE_COLUMN_DICTIONARY.filter((column) => isColumnSupported(column.id, rowHeaders))
 		.map(({ id }) => getColumnMeta(id))
 		.filter((meta): meta is ColumnMeta => Boolean(meta))
 
 	const customMetas: ColumnMeta[] = (customColumns ?? EMPTY_CUSTOM_COLUMNS).map((col) => ({
 		id: col.id,
 		header: col.name,
-		group: 'custom' as const
+		group: 'custom'
 	}))
 
 	return [NAME_COLUMN, ...dictionaryMetas, ...customMetas]
 }
 
 export function ColumnManager({
+	rowHeaders,
 	columnOrder,
 	columnVisibility,
 	onChange,
@@ -276,7 +292,7 @@ export function ColumnManager({
 	}
 	const expressionInputRef = useRef<HTMLInputElement>(null)
 
-	const allColumns = useMemo(() => buildAllColumns(customColumns), [customColumns])
+	const allColumns = useMemo(() => buildAllColumns(rowHeaders, customColumns), [rowHeaders, customColumns])
 	const allColumnIds = useMemo(() => new Set(allColumns.map((c) => c.id)), [allColumns])
 
 	const visibleSet = useMemo(() => {
@@ -415,7 +431,7 @@ export function ColumnManager({
 
 	const preview = useMemo(() => {
 		if (!customExpression.trim() || !expressionValidation.isValid) return null
-		const result = evaluateExpression(customExpression, SAMPLE_METRICS)
+		const result = compileExpression(customExpression).evaluate(SAMPLE_METRICS)
 		if (result === null) return null
 		return formatPreviewNumber(result, customFormat)
 	}, [customExpression, expressionValidation.isValid, customFormat])
@@ -423,12 +439,11 @@ export function ColumnManager({
 	const usedVariables = useMemo(() => {
 		if (!customExpression.trim() || !expressionValidation.isValid) return []
 		const vars = getExpressionVariables(customExpression)
-		const availableVarsMap = new Map(availableVariables.map((v) => [v.key, v]))
 		return vars
-			.filter((v) => v in SAMPLE_METRICS)
 			.map((v) => {
-				const meta = availableVarsMap.get(v)
-				const value = SAMPLE_METRICS[v as keyof typeof SAMPLE_METRICS]
+				const meta = AVAILABLE_VARIABLES_BY_KEY.get(v)
+				const value = SAMPLE_METRICS_BY_KEY.get(v)
+				if (value === undefined) return null
 				return {
 					key: v,
 					name: meta?.name ?? v,
@@ -436,7 +451,8 @@ export function ColumnManager({
 					formatted: formatPreviewNumber(value, meta?.format ?? 'number')
 				}
 			})
-	}, [customExpression, expressionValidation.isValid, availableVariables])
+			.filter((variable) => variable !== null)
+	}, [customExpression, expressionValidation.isValid])
 	const resolvedCustomAggregation =
 		customExpression && expressionValidation.isValid && !editingId && !aggregationTouched
 			? getDefaultAggregation(customExpression)
@@ -445,12 +461,16 @@ export function ColumnManager({
 	const insertSuggestion = (suggestion: AutocompleteSuggestion) => {
 		if (!expressionInputRef.current) return
 		const input = expressionInputRef.current
-		const start = input.selectionStart || 0
-		const end = input.selectionEnd || 0
+		const start = input.selectionStart ?? 0
+		const end = input.selectionEnd ?? 0
 		const value = input.value
 
 		let wordStart = start
-		while (wordStart > 0 && /[a-zA-Z0-9_]/.test(value[wordStart - 1])) wordStart -= 1
+		while (wordStart > 0) {
+			const previousCharacter = value[wordStart - 1]
+			if (previousCharacter === undefined || !/[a-zA-Z0-9_]/.test(previousCharacter)) break
+			wordStart -= 1
+		}
 
 		const newValue = value.slice(0, wordStart) + suggestion.value + value.slice(end)
 		setCustomExpression(newValue)
@@ -468,11 +488,15 @@ export function ColumnManager({
 
 	const handleExpressionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const newValue = e.target.value
-		const cursorPos = e.target.selectionStart || 0
+		const cursorPos = e.target.selectionStart ?? 0
 		setCustomExpression(newValue)
 
 		let wordStart = cursorPos
-		while (wordStart > 0 && /[a-zA-Z0-9_]/.test(newValue[wordStart - 1])) wordStart -= 1
+		while (wordStart > 0) {
+			const previousCharacter = newValue[wordStart - 1]
+			if (previousCharacter === undefined || !/[a-zA-Z0-9_]/.test(previousCharacter)) break
+			wordStart -= 1
+		}
 		const currentWord = newValue.slice(wordStart, cursorPos)
 
 		if (currentWord.length >= 1) {
@@ -507,8 +531,10 @@ export function ColumnManager({
 			case 'Enter':
 			case 'Tab':
 				if (autocompleteIndex >= 0) {
+					const suggestion = filteredSuggestions[autocompleteIndex]
+					if (!suggestion) break
 					e.preventDefault()
-					insertSuggestion(filteredSuggestions[autocompleteIndex])
+					insertSuggestion(suggestion)
 				}
 				break
 			case 'Escape':
@@ -547,7 +573,7 @@ export function ColumnManager({
 		setCustomColumnExpanded(false)
 	}
 
-	const handleApplyPreset = (preset: (typeof EXAMPLE_PRESETS)[0]) => {
+	const handleApplyPreset = (preset: { name: string; expression: string; format: ColumnFormat }) => {
 		setAggregationTouched(false)
 		setCustomName(preset.name)
 		setCustomExpression(preset.expression)
@@ -1091,7 +1117,7 @@ function SortingSection({
 	selectableColumns: ColumnMeta[]
 	onColumnChange: (value: string) => void
 	onDirectionChange: (desc: boolean) => void
-	onReset?: () => void
+	onReset?: (() => void) | undefined
 }) {
 	const popover = usePopoverStore({ placement: 'bottom-start' })
 

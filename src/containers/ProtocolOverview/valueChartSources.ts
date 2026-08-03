@@ -1,4 +1,8 @@
+import { fetchJson } from '~/utils/async'
 import type {
+	IProtocolChainBreakdownChart,
+	IProtocolTokenBreakdownChart,
+	IProtocolValueChart,
 	ProtocolChartBreakdownType,
 	ProtocolChartCurrency,
 	ProtocolChartSelector,
@@ -29,6 +33,8 @@ export type ProtocolTreasuryValueChartRequest<TProtocol extends string | null = 
 export type ProtocolValueChartRequest<TProtocol extends string | null = string> =
 	| ProtocolTvlValueChartRequest<TProtocol>
 	| ProtocolTreasuryValueChartRequest<TProtocol>
+
+export type ProtocolBreakdownChart = IProtocolChainBreakdownChart | IProtocolTokenBreakdownChart
 
 export type ProtocolValueChartQueryKey = [
 	'protocol-overview',
@@ -82,3 +88,21 @@ export const buildProtocolValueChartQueryKey = (
 	request.breakdownType,
 	request.source === 'tvl' ? request.tokenExclusions?.queryValue : undefined
 ]
+
+export function fetchProtocolValueChart(
+	request: ProtocolValueChartRequest & { breakdownType: 'chain-breakdown' }
+): Promise<IProtocolChainBreakdownChart>
+export function fetchProtocolValueChart(
+	request: ProtocolValueChartRequest & { breakdownType: 'token-breakdown' }
+): Promise<IProtocolTokenBreakdownChart>
+export function fetchProtocolValueChart(
+	request: ProtocolValueChartRequest & { breakdownType?: never }
+): Promise<IProtocolValueChart>
+export function fetchProtocolValueChart(
+	request: ProtocolValueChartRequest
+): Promise<IProtocolValueChart | ProtocolBreakdownChart>
+export function fetchProtocolValueChart(
+	request: ProtocolValueChartRequest
+): Promise<IProtocolValueChart | ProtocolBreakdownChart> {
+	return fetchJson(buildProtocolValueChartApiUrl(request))
+}

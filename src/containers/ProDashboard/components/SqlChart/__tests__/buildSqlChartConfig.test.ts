@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import type { ChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import type { RegisteredTable } from '~/containers/Downloads/sql/useTableRegistry'
+import { SQL_SNAPSHOT_ROW_CAP } from '../../../sqlSnapshot'
 import type { SqlChartConfig } from '../../../types'
 import { buildSqlChartConfig } from '../buildSqlChartConfig'
-import { SQL_SNAPSHOT_ROW_CAP } from '../snapshot'
 
 const protocolsTable: RegisteredTable = {
 	name: 'protocols',
@@ -25,7 +26,17 @@ const result = {
 	rows: [[1], [2]]
 }
 
-const chartConfig = { chartType: 'bar', xCol: null, yCols: ['tvl'] } as any
+const chartConfig: ChartConfig = {
+	chartType: 'bar',
+	xCol: null,
+	yCols: ['tvl'],
+	splitByCol: null,
+	stackMode: 'off',
+	rightAxisCols: [],
+	seriesKinds: {},
+	seriesColors: {},
+	numberFormat: 'auto'
+}
 
 const baseParams = {
 	editItem: null,

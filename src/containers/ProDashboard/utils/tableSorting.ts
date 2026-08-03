@@ -1,12 +1,8 @@
 import type { Row } from '@tanstack/react-table'
 
-export const percentageSortingFn = <T extends Record<string, any>>(
-	rowA: Row<T>,
-	rowB: Row<T>,
-	columnId: string
-): number => {
-	const a = rowA.getValue(columnId) as number | null | undefined
-	const b = rowB.getValue(columnId) as number | null | undefined
+export const percentageSortingFn = <T extends object>(rowA: Row<T>, rowB: Row<T>, columnId: string): number => {
+	const a = rowA.getValue<number | null | undefined>(columnId)
+	const b = rowB.getValue<number | null | undefined>(columnId)
 
 	if (a == null && b == null) {
 		return 0

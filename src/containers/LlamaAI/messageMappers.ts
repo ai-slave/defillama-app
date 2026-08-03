@@ -1,9 +1,7 @@
+import type { ChartConfiguration, ChartDataByKey } from '~/containers/LlamaAI/chartTypes'
 import type { CsvExport, MdExport } from '~/containers/LlamaAI/fetchAgenticResponse'
 import type {
-	ChartConfiguration,
-	ChartDataByKey,
 	DashboardArtifact,
-	DashboardItem,
 	FactCheckReference,
 	Message,
 	TodoItem,
@@ -11,13 +9,15 @@ import type {
 	UnifiedCitationReference
 } from '~/containers/LlamaAI/types'
 import { buildRestoredAlerts, type RestoredAlertMetadata } from '~/containers/LlamaAI/utils/restoredAlerts'
+import type { PersistedDashboardItemConfig } from '~/containers/ProDashboard/dashboardConfig/persisted'
+import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
 import {
 	normalizeChartConfigs,
 	normalizeChartArtifactRefs,
 	normalizeChartDataByKey,
 	normalizeDashboardArtifactOutcomes,
 	normalizeDashboardChartData,
-	normalizeDashboardItems
+	migrateDashboardItems
 } from './chartPayloads'
 
 export interface PersistedToolExecution extends Partial<ToolExecution> {
@@ -30,7 +30,7 @@ export interface PersistedMessageMetadata extends RestoredAlertMetadata {
 	quotedText?: string
 	dashboardConfig?: {
 		dashboardName?: string
-		items?: unknown
+		items?: PersistedDashboardItemConfig[]
 		timePeriod?: string
 		sourceDashboardId?: string
 	}
@@ -164,7 +164,7 @@ function getRestoredDashboardIdSuffix(message: PersistedMessage, index?: number)
 function buildRestoredDashboard(message: PersistedMessage, index?: number): DashboardArtifact | null {
 	const dashboardConfig = message.metadata?.dashboardConfig
 	if (!dashboardConfig) return null
-	const items = normalizeDashboardItems(dashboardConfig.items)
+	const items = migrateDashboardItems(dashboardConfig.items)
 	const charts = normalizeChartConfigs(message.charts)
 	const chartData = normalizeChartDataByKey(message.chartData, charts)
 	const artifactOutcomes = normalizeDashboardArtifactOutcomes(message.metadata?.dashboardResult?.artifactOutcomes)
@@ -177,13 +177,15 @@ function buildRestoredDashboard(message: PersistedMessage, index?: number): Dash
 		id: `dashboard_restored_${restoredDashboardIdSuffix}`,
 		dashboardName: dashboardConfig.dashboardName || 'Dashboard',
 		items,
-		timePeriod: dashboardConfig.timePeriod,
-		sourceDashboardId: dashboardConfig.sourceDashboardId,
+		...(dashboardConfig.timePeriod === undefined ? {} : { timePeriod: dashboardConfig.timePeriod }),
+		...(dashboardConfig.sourceDashboardId === undefined
+			? {}
+			: { sourceDashboardId: dashboardConfig.sourceDashboardId }),
 		...(restoredChartData && { chartData: restoredChartData }),
 		...(artifactOutcomes && { artifactOutcomes })
 	}
 	const chartRefs = items.filter(
-		(item): item is Extract<DashboardItem, { kind: 'llamaai-chart' }> & { chartRef: string } =>
+		(item): item is Extract<DashboardItemConfig, { kind: 'llamaai-chart' }> & { chartRef: string } =>
 			item.kind === 'llamaai-chart' && typeof item.chartRef === 'string'
 	)
 	if (!restoredChartData && chartRefs.length > 0 && charts.length > 0) {
@@ -250,36 +252,41 @@ export function mapPersistedMessage(message: PersistedMessage, index?: number): 
 	const chartData = normalizeChartDataByKey(message.chartData, charts)
 	const artifactRefs = normalizeChartArtifactRefs(message.metadata?.chartSaveContext?.artifactRefs)
 	const { citations, legacyUrlCitations } = resolveCitationFields(message.metadata, message.citations)
-	return {
-		role: message.role,
-		content: message.content,
-		charts:
-			charts.length > 0 && hasChartData(chartData)
-				? [{ charts, chartData, ...(artifactRefs && { artifactRefs }) }]
-				: undefined,
-		citations,
-		legacyUrlCitations,
-		csvExports: message.csvExports,
-		mdExports: message.mdExports ?? message.metadata?.mdExports,
-		dashboards: restoredDashboard ? [restoredDashboard] : undefined,
-		alerts: buildRestoredAlerts({
-			content: message.content,
-			messageId: message.messageId,
-			metadata: message.metadata,
-			savedAlertIds: message.savedAlertIds
-		}),
-		savedAlertIds: message.savedAlertIds,
-		images: message.images,
-		generatedImages: message.generatedImages,
-		toolExecutions: message.metadata?.toolExecutions?.map(mapToolExecution),
-		thinking: message.metadata?.thinking,
-		quotedText: message.metadata?.quotedText,
-		messageMetadata: message.messageMetadata,
-		id: message.messageId ?? (index != null ? `persisted-${index}` : undefined),
-		parentId: message.parentId,
-		siblingInfo: message.siblingInfo,
-		timestamp: mapPersistedTimestamp(message.timestamp)
-	}
+	const chartsForMessage =
+		charts.length > 0 && hasChartData(chartData)
+			? [{ charts, chartData, ...(artifactRefs && { artifactRefs }) }]
+			: undefined
+	const alerts = buildRestoredAlerts({
+		...(message.content === undefined ? {} : { content: message.content }),
+		...(message.messageId === undefined ? {} : { messageId: message.messageId }),
+		...(message.metadata === undefined ? {} : { metadata: message.metadata }),
+		...(message.savedAlertIds === undefined ? {} : { savedAlertIds: message.savedAlertIds })
+	})
+	const mdExports = message.mdExports ?? message.metadata?.mdExports
+	const toolExecutions = message.metadata?.toolExecutions?.map(mapToolExecution)
+	const id = message.messageId ?? (index != null ? `persisted-${index}` : undefined)
+	const timestamp = mapPersistedTimestamp(message.timestamp)
+	const mapped: Message = { role: message.role }
+	if (message.content !== undefined) mapped.content = message.content
+	if (chartsForMessage !== undefined) mapped.charts = chartsForMessage
+	if (citations !== undefined) mapped.citations = citations
+	if (legacyUrlCitations !== undefined) mapped.legacyUrlCitations = legacyUrlCitations
+	if (message.csvExports !== undefined) mapped.csvExports = message.csvExports
+	if (mdExports !== undefined) mapped.mdExports = mdExports
+	if (restoredDashboard) mapped.dashboards = [restoredDashboard]
+	if (alerts !== undefined) mapped.alerts = alerts
+	if (message.savedAlertIds !== undefined) mapped.savedAlertIds = message.savedAlertIds
+	if (message.images !== undefined) mapped.images = message.images
+	if (message.generatedImages !== undefined) mapped.generatedImages = message.generatedImages
+	if (toolExecutions !== undefined) mapped.toolExecutions = toolExecutions
+	if (message.metadata?.thinking !== undefined) mapped.thinking = message.metadata.thinking
+	if (message.metadata?.quotedText !== undefined) mapped.quotedText = message.metadata.quotedText
+	if (message.messageMetadata !== undefined) mapped.messageMetadata = message.messageMetadata
+	if (id !== undefined) mapped.id = id
+	if (message.parentId !== undefined) mapped.parentId = message.parentId
+	if (message.siblingInfo !== undefined) mapped.siblingInfo = message.siblingInfo
+	if (timestamp !== undefined) mapped.timestamp = timestamp
+	return mapped
 }
 
 export function mapPersistedMessages(messages: PersistedMessage[] | undefined): Message[] {
@@ -299,27 +306,35 @@ export function mapSharedSessionMessage(message: SharedSessionMessage, index?: n
 	const charts = normalizeChartConfigs(message.charts)
 	const chartData = normalizeSharedChartDataByChartId(charts, message.chartData)
 	const { citations, legacyUrlCitations } = resolveCitationFields(message.metadata, message.citations)
-	return {
-		role: message.role,
-		content: message.content || undefined,
-		charts: charts.length > 0 && chartData && hasChartData(chartData) ? [{ charts, chartData }] : undefined,
-		csvExports: message.csvExports,
-		mdExports: message.mdExports ?? message.metadata?.mdExports,
-		citations,
-		legacyUrlCitations,
-		alerts: buildRestoredAlerts({
-			content: message.content,
-			messageId: message.messageId,
-			metadata: message.metadata,
-			savedAlertIds: message.savedAlertIds
-		}),
-		savedAlertIds: message.savedAlertIds,
-		images: message.images,
-		generatedImages: message.generatedImages,
-		toolExecutions: message.metadata?.toolExecutions?.map(mapToolExecution),
-		thinking: message.metadata?.thinking,
-		quotedText: message.quotedText ?? message.metadata?.quotedText,
-		id: message.messageId ?? (index != null ? `shared-${index}` : undefined),
-		timestamp: mapPersistedTimestamp(message.timestamp)
-	}
+	const content = message.content || undefined
+	const chartsForMessage =
+		charts.length > 0 && chartData && hasChartData(chartData) ? [{ charts, chartData }] : undefined
+	const mdExports = message.mdExports ?? message.metadata?.mdExports
+	const alerts = buildRestoredAlerts({
+		content: message.content,
+		...(message.messageId === undefined ? {} : { messageId: message.messageId }),
+		...(message.metadata === undefined ? {} : { metadata: message.metadata }),
+		...(message.savedAlertIds === undefined ? {} : { savedAlertIds: message.savedAlertIds })
+	})
+	const toolExecutions = message.metadata?.toolExecutions?.map(mapToolExecution)
+	const quotedText = message.quotedText ?? message.metadata?.quotedText
+	const id = message.messageId ?? (index != null ? `shared-${index}` : undefined)
+	const timestamp = mapPersistedTimestamp(message.timestamp)
+	const mapped: Message = { role: message.role }
+	if (content !== undefined) mapped.content = content
+	if (chartsForMessage !== undefined) mapped.charts = chartsForMessage
+	if (message.csvExports !== undefined) mapped.csvExports = message.csvExports
+	if (mdExports !== undefined) mapped.mdExports = mdExports
+	if (citations !== undefined) mapped.citations = citations
+	if (legacyUrlCitations !== undefined) mapped.legacyUrlCitations = legacyUrlCitations
+	if (alerts !== undefined) mapped.alerts = alerts
+	if (message.savedAlertIds !== undefined) mapped.savedAlertIds = message.savedAlertIds
+	if (message.images !== undefined) mapped.images = message.images
+	if (message.generatedImages !== undefined) mapped.generatedImages = message.generatedImages
+	if (toolExecutions !== undefined) mapped.toolExecutions = toolExecutions
+	if (message.metadata?.thinking !== undefined) mapped.thinking = message.metadata.thinking
+	if (quotedText !== undefined) mapped.quotedText = quotedText
+	if (id !== undefined) mapped.id = id
+	if (timestamp !== undefined) mapped.timestamp = timestamp
+	return mapped
 }

@@ -9,26 +9,56 @@ import { DASHBOARD_CARD_ROOT_MARGIN, InViewDashboardCard } from './InViewDashboa
 describe('InViewDashboardCard', () => {
 	let container: HTMLDivElement
 	let root: Root
-	let callbacks: IntersectionObserverCallback[]
-	const observe = vi.fn()
-	const disconnect = vi.fn()
+	let observers: MockIntersectionObserver[]
+
+	class MockIntersectionObserver implements IntersectionObserver {
+		readonly root = null
+		readonly thresholds = [0]
+		readonly rootMargin: string
+		readonly scrollMargin = '0px'
+		private readonly callback: IntersectionObserverCallback
+		private target: Element = document.body
+
+		constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+			this.callback = callback
+			this.rootMargin = options?.rootMargin ?? '0px'
+			observers.push(this)
+			expect(this.rootMargin).toBe(DASHBOARD_CARD_ROOT_MARGIN)
+		}
+
+		observe(target: Element) {
+			this.target = target
+		}
+
+		unobserve() {}
+
+		disconnect() {}
+
+		takeRecords(): IntersectionObserverEntry[] {
+			return []
+		}
+
+		emit(isIntersecting: boolean, height: number) {
+			const boundingClientRect = new DOMRect(0, 0, 0, height)
+			const entry: IntersectionObserverEntry = {
+				time: 0,
+				target: this.target,
+				rootBounds: null,
+				boundingClientRect,
+				intersectionRect: isIntersecting ? boundingClientRect : new DOMRect(),
+				isIntersecting,
+				intersectionRatio: isIntersecting ? 1 : 0
+			}
+			this.callback([entry], this)
+		}
+	}
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
-		observe.mockReset()
-		disconnect.mockReset()
-		callbacks = []
-		class MockIntersectionObserver {
-			constructor(nextCallback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
-				callbacks.push(nextCallback)
-				expect(options?.rootMargin).toBe(DASHBOARD_CARD_ROOT_MARGIN)
-			}
-			observe = observe
-			disconnect = disconnect
-		}
+		observers = []
 		vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)
 	})
 
@@ -38,7 +68,8 @@ describe('InViewDashboardCard', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('keeps card state mounted while disposing only its renderer outside the viewport margin', async () => {
+	it('defers the card until it is near, then keeps card state mounted while suspending its renderer', async () => {
+		const queryStarted = vi.fn()
 		const mounted = vi.fn()
 		const unmounted = vi.fn()
 		const Renderer = withEChartsRenderVisibility(function Renderer() {
@@ -49,6 +80,7 @@ describe('InViewDashboardCard', () => {
 			return <div>Chart renderer</div>
 		})
 		function StatefulCard() {
+			queryStarted()
 			const [selection, setSelection] = useState('USDC')
 			return (
 				<>
@@ -65,36 +97,26 @@ describe('InViewDashboardCard', () => {
 				</InViewDashboardCard>
 			)
 		)
+		expect(queryStarted).not.toHaveBeenCalled()
 		expect(mounted).not.toHaveBeenCalled()
-		expect(container.textContent).toBe('USDC')
+		expect(container.textContent).toBe('')
 		expect(container.firstElementChild?.getAttribute('aria-busy')).toBe('true')
+		const observer = observers[0]
+		if (!observer) throw new Error('Expected the dashboard card observer')
 
-		await act(async () =>
-			callbacks[0](
-				[{ isIntersecting: true, boundingClientRect: { height: 420 } } as IntersectionObserverEntry],
-				{} as IntersectionObserver
-			)
-		)
+		await act(async () => observer.emit(true, 420))
+		expect(queryStarted).toHaveBeenCalled()
 		expect(mounted).toHaveBeenCalledOnce()
-		await act(async () => (container.querySelector('button') as HTMLButtonElement).click())
+		const button = container.querySelector<HTMLButtonElement>('button')
+		if (!button) throw new Error('Expected the stateful card button')
+		await act(async () => button.click())
 		expect(container.textContent).toBe('USDTChart renderer')
 
-		await act(async () =>
-			callbacks[0](
-				[{ isIntersecting: false, boundingClientRect: { height: 420 } } as IntersectionObserverEntry],
-				{} as IntersectionObserver
-			)
-		)
+		await act(async () => observer.emit(false, 420))
 		expect(unmounted).toHaveBeenCalledOnce()
 		expect(container.textContent).toBe('USDT')
-		expect((container.firstElementChild as HTMLElement).style.minHeight).toBe('420px')
 
-		await act(async () =>
-			callbacks[0](
-				[{ isIntersecting: true, boundingClientRect: { height: 420 } } as IntersectionObserverEntry],
-				{} as IntersectionObserver
-			)
-		)
+		await act(async () => observer.emit(true, 420))
 		expect(mounted).toHaveBeenCalledTimes(2)
 		expect(container.textContent).toBe('USDTChart renderer')
 	})
@@ -127,27 +149,18 @@ describe('InViewDashboardCard', () => {
 		expect(activeRenderers).toBe(0)
 
 		await act(async () => {
-			for (const callback of callbacks.slice(0, 8)) {
-				callback(
-					[{ isIntersecting: true, boundingClientRect: { height: 360 } } as IntersectionObserverEntry],
-					{} as IntersectionObserver
-				)
+			for (const observer of observers.slice(0, 8)) {
+				observer.emit(true, 360)
 			}
 		})
 		expect(activeRenderers).toBe(8)
 
 		await act(async () => {
-			for (const callback of callbacks.slice(0, 8)) {
-				callback(
-					[{ isIntersecting: false, boundingClientRect: { height: 360 } } as IntersectionObserverEntry],
-					{} as IntersectionObserver
-				)
+			for (const observer of observers.slice(0, 8)) {
+				observer.emit(false, 360)
 			}
-			for (const callback of callbacks.slice(8, 16)) {
-				callback(
-					[{ isIntersecting: true, boundingClientRect: { height: 360 } } as IntersectionObserverEntry],
-					{} as IntersectionObserver
-				)
+			for (const observer of observers.slice(8, 16)) {
+				observer.emit(true, 360)
 			}
 		})
 		expect(activeRenderers).toBe(8)

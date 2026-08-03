@@ -13,18 +13,24 @@ import {
 	type VisibilityState
 } from '@tanstack/react-table'
 import * as React from 'react'
+import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { downloadCSV } from '~/utils/download'
 import { formatPercent } from '~/utils/numberFormat'
-import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
 import { LoadingSpinner } from '../../LoadingSpinner'
-import { TableBody } from '../../ProTable/TableBody'
+import { TableBody } from '../../Table/TableBody'
+import { TablePagination } from '../../Table/TablePagination'
+import { buildChainShareTotals, CHAIN_SHARE_METRICS, getChainMetricShare } from './chainShares'
 import { ChainsTableHeader } from './ChainsTableHeader'
 import { ColumnManagementPanel } from './ColumnManagementPanel'
 import { chainsDatasetColumns } from './columns'
 import { useChainsData } from './useChainsData'
 
-const EMPTY_DATA: any[] = []
-const CHAIN_COLUMN_PRESETS: Record<string, string[]> = {
+const EMPTY_DATA: ChainsDatasetRow[] = []
+const getChainsCoreRowModel = getCoreRowModel<ChainsDatasetRow>()
+const getChainsSortedRowModel = getSortedRowModel<ChainsDatasetRow>()
+const getChainsFilteredRowModel = getFilteredRowModel<ChainsDatasetRow>()
+const getChainsPaginationRowModel = getPaginationRowModel<ChainsDatasetRow>()
+const CHAIN_COLUMN_PRESETS = {
 	essential: ['name', 'protocols', 'users', 'change_1d', 'change_7d', 'tvl', 'stablesMcap'],
 	defi: [
 		'name',
@@ -80,24 +86,38 @@ const CHAIN_COLUMN_PRESETS: Record<string, string[]> = {
 		'totalFees24h_share',
 		'totalAppRevenue24h_share'
 	]
+} satisfies Record<string, string[]>
+
+function getChainColumnPreset(preset: string): string[] | undefined {
+	switch (preset) {
+		case 'essential':
+			return CHAIN_COLUMN_PRESETS.essential
+		case 'defi':
+			return CHAIN_COLUMN_PRESETS.defi
+		case 'volume':
+			return CHAIN_COLUMN_PRESETS.volume
+		case 'advanced':
+			return CHAIN_COLUMN_PRESETS.advanced
+		case 'shares':
+			return CHAIN_COLUMN_PRESETS.shares
+		default:
+			return undefined
+	}
 }
 
 interface ChainsDatasetProps {
 	category?: string
-	tableId?: string
 	columnOrder?: string[]
 	columnVisibility?: Record<string, boolean>
+	onColumnsChange?: (columnOrder: string[], columnVisibility: Record<string, boolean>) => void
 }
 
 export function ChainsDataset({
 	category,
-	tableId,
 	columnOrder: savedColumnOrder,
-	columnVisibility: savedColumnVisibility
+	columnVisibility: savedColumnVisibility,
+	onColumnsChange
 }: ChainsDatasetProps) {
-	const { handleTableColumnsChange } = useProDashboardEditorActions()
-	const uniqueTableId = tableId || `chains-dataset-${category || 'all'}`
-
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'tvl', desc: true }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({})
@@ -114,40 +134,11 @@ export function ChainsDataset({
 
 	const { data, isLoading, error } = useChainsData(category)
 
-	const totals = React.useMemo(() => {
-		const sums: Record<string, number> = {}
-		const metrics = ['tvl', 'stablesMcap', 'totalVolume24h', 'totalFees24h', 'totalAppRevenue24h', 'nftVolume']
-
-		for (const metric of metrics) {
-			sums[metric] = 0
-		}
-
-		if (data && Array.isArray(data)) {
-			for (const chain of data) {
-				for (const metric of metrics) {
-					const value = chain[metric]
-					if (typeof value === 'number' && value > 0) {
-						sums[metric] += value
-					}
-				}
-			}
-		}
-
-		return sums
-	}, [data])
+	const totals = React.useMemo(() => buildChainShareTotals(data), [data])
 
 	const percentageShareColumns = React.useMemo(() => {
-		const shareMetrics = [
-			{ key: 'tvl', name: 'DeFi TVL % Share' },
-			{ key: 'stablesMcap', name: 'Stables % Share' },
-			{ key: 'totalVolume24h', name: '24h Volume % Share' },
-			{ key: 'totalFees24h', name: '24h Fees % Share' },
-			{ key: 'totalAppRevenue24h', name: '24h Revenue % Share' },
-			{ key: 'nftVolume', name: 'NFT Volume % Share' }
-		]
-
-		return shareMetrics.map(
-			(metric): ColumnDef<any> => ({
+		return CHAIN_SHARE_METRICS.map(
+			(metric): ColumnDef<ChainsDatasetRow> => ({
 				id: `${metric.key}_share`,
 				header: metric.name,
 				size: 120,
@@ -155,13 +146,12 @@ export function ChainsDataset({
 					const value = row[metric.key]
 					const total = totals[metric.key]
 
-					if (typeof value === 'number' && value > 0 && total > 0) {
-						return (value / total) * 100
-					}
-					return null
+					return getChainMetricShare(value, total)
 				},
-				cell: ({ getValue }) => {
-					const value = getValue() as number | null
+				cell: ({ row }) => {
+					const sourceValue = row.original[metric.key]
+					const total = totals[metric.key]
+					const value = getChainMetricShare(sourceValue, total)
 					if (value == null) return <span className="text-pro-text-secondary">-</span>
 
 					return (
@@ -175,20 +165,20 @@ export function ChainsDataset({
 						</span>
 					)
 				},
-				sortingFn: (rowA, rowB, columnId) => {
-					const a = rowA.getValue(columnId) as number | null
-					const b = rowB.getValue(columnId) as number | null
-					if (a === null && b !== null) return 1
-					if (a !== null && b === null) return -1
-					if (a === null && b === null) return 0
-					return (a ?? 0) - (b ?? 0)
+				sortingFn: (rowA, rowB) => {
+					if (totals[metric.key] <= 0) return 0
+					const sourceA = rowA.original[metric.key]
+					const sourceB = rowB.original[metric.key]
+					if (sourceA === null) return sourceB === null ? 0 : 1
+					if (sourceB === null) return -1
+					return sourceA - sourceB
 				}
 			})
 		)
 	}, [totals])
 
 	const allColumns = React.useMemo(() => {
-		return [...chainsDatasetColumns, ...percentageShareColumns] as ColumnDef<any>[]
+		return [...chainsDatasetColumns, ...percentageShareColumns]
 	}, [percentageShareColumns])
 
 	const instance = useReactTable({
@@ -209,15 +199,15 @@ export function ChainsDataset({
 		onColumnFiltersChange: setColumnFilters,
 		onColumnVisibilityChange: setColumnVisibility,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		autoResetPageIndex: false
+		getCoreRowModel: getChainsCoreRowModel,
+		getSortedRowModel: getChainsSortedRowModel,
+		getFilteredRowModel: getChainsFilteredRowModel,
+		getPaginationRowModel: getChainsPaginationRowModel,
+		autoResetPageIndex: true
 	})
 
 	const applyPreset = (preset: string) => {
-		const presetColumns = CHAIN_COLUMN_PRESETS[preset as keyof typeof CHAIN_COLUMN_PRESETS]
+		const presetColumns = getChainColumnPreset(preset)
 		if (presetColumns) {
 			const tableColumns = instance.getAllColumns()
 			const newVisibility: Record<string, boolean> = {}
@@ -232,9 +222,7 @@ export function ChainsDataset({
 			setColumnOrder(presetColumns)
 			setSelectedPreset(preset)
 
-			if (uniqueTableId && handleTableColumnsChange) {
-				handleTableColumnsChange(uniqueTableId, presetColumns, newVisibility)
-			}
+			onColumnsChange?.(presetColumns, newVisibility)
 		}
 	}
 
@@ -256,6 +244,7 @@ export function ChainsDataset({
 
 				for (let i = originalIndex + 1; i < leafColumnIds.length; i++) {
 					const colId = leafColumnIds[i]
+					if (!colId) continue
 					const orderIndex = newOrder.indexOf(colId)
 					if (orderIndex !== -1) {
 						insertIndex = orderIndex
@@ -266,13 +255,9 @@ export function ChainsDataset({
 				newOrder.splice(insertIndex, 0, columnId)
 				setColumnOrder(newOrder)
 
-				if (uniqueTableId && handleTableColumnsChange) {
-					handleTableColumnsChange(uniqueTableId, newOrder, newVisibility)
-				}
+				onColumnsChange?.(newOrder, newVisibility)
 			} else {
-				if (uniqueTableId && handleTableColumnsChange) {
-					handleTableColumnsChange(uniqueTableId, columnOrder, newVisibility)
-				}
+				onColumnsChange?.(columnOrder, newVisibility)
 			}
 		}
 	}
@@ -371,22 +356,23 @@ export function ChainsDataset({
 
 	const columnOptions = React.useMemo(
 		() =>
-			[...chainsDatasetColumns, ...percentageShareColumns].map((col) => ({
-				id: (col as any).accessorKey || col.id,
-				name: typeof col.header === 'string' ? col.header : col.id || ''
+			instance.getAllLeafColumns().map((column) => ({
+				id: column.id,
+				name: typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id
 			})),
-		[percentageShareColumns]
+		[instance]
 	)
 
 	const moveColumnUp = (columnId: string) => {
 		const currentOrder = [...columnOrder]
 		const index = currentOrder.indexOf(columnId)
 		if (index > 0) {
-			;[currentOrder[index - 1], currentOrder[index]] = [currentOrder[index], currentOrder[index - 1]]
+			const column = currentOrder[index]
+			if (!column) return
+			currentOrder.splice(index, 1)
+			currentOrder.splice(index - 1, 0, column)
 			setColumnOrder(currentOrder)
-			if (uniqueTableId && handleTableColumnsChange) {
-				handleTableColumnsChange(uniqueTableId, currentOrder, columnVisibility)
-			}
+			onColumnsChange?.(currentOrder, columnVisibility)
 		}
 	}
 
@@ -394,11 +380,12 @@ export function ChainsDataset({
 		const currentOrder = [...columnOrder]
 		const index = currentOrder.indexOf(columnId)
 		if (index < currentOrder.length - 1) {
-			;[currentOrder[index], currentOrder[index + 1]] = [currentOrder[index + 1], currentOrder[index]]
+			const column = currentOrder[index]
+			if (!column) return
+			currentOrder.splice(index, 1)
+			currentOrder.splice(index + 1, 0, column)
 			setColumnOrder(currentOrder)
-			if (uniqueTableId && handleTableColumnsChange) {
-				handleTableColumnsChange(uniqueTableId, currentOrder, columnVisibility)
-			}
+			onColumnsChange?.(currentOrder, columnVisibility)
 		}
 	}
 
@@ -408,7 +395,6 @@ export function ChainsDataset({
 				<ChainsTableHeader
 					selectedPreset="essential"
 					setSelectedPreset={() => {}}
-					columnPresets={CHAIN_COLUMN_PRESETS}
 					applyPreset={() => {}}
 					showColumnSelector={false}
 					setShowColumnSelector={() => {}}
@@ -429,7 +415,6 @@ export function ChainsDataset({
 				<ChainsTableHeader
 					selectedPreset="essential"
 					setSelectedPreset={() => {}}
-					columnPresets={CHAIN_COLUMN_PRESETS}
 					applyPreset={() => {}}
 					showColumnSelector={false}
 					setShowColumnSelector={() => {}}
@@ -448,7 +433,6 @@ export function ChainsDataset({
 			<ChainsTableHeader
 				selectedPreset={selectedPreset}
 				setSelectedPreset={setSelectedPreset}
-				columnPresets={CHAIN_COLUMN_PRESETS}
 				applyPreset={applyPreset}
 				showColumnSelector={showColumnPanel}
 				setShowColumnSelector={setShowColumnPanel}
@@ -471,37 +455,17 @@ export function ChainsDataset({
 				<TableBody table={instance} />
 			</div>
 
-			<div className="mt-3 flex w-full flex-wrap items-center justify-between gap-2 rounded-md border border-pro-cards-border bg-pro-cards-bg px-3 py-2">
-				<div className="flex items-center gap-2">
-					<button
-						onClick={() => instance.previousPage()}
-						disabled={!instance.getCanPreviousPage()}
-						className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						Previous
-					</button>
-					<button
-						onClick={() => instance.nextPage()}
-						disabled={!instance.getCanNextPage()}
-						className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						Next
-					</button>
-				</div>
-
-				<div className="flex items-center gap-2">
-					<span className="text-sm text-pro-text-secondary">Rows per page:</span>
-					<select
-						value={pagination.pageSize}
-						onChange={(e) => setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value), pageIndex: 0 }))}
-						className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
-					>
-						<option value="10">10</option>
-						<option value="30">30</option>
-						<option value="50">50</option>
-					</select>
-				</div>
-			</div>
+			<TablePagination
+				pageSize={pagination.pageSize}
+				pageIndex={pagination.pageIndex}
+				pageCount={instance.getPageCount()}
+				canPreviousPage={instance.getCanPreviousPage()}
+				canNextPage={instance.getCanNextPage()}
+				previousPage={instance.previousPage}
+				nextPage={instance.nextPage}
+				setPageSize={instance.setPageSize}
+				showPageSizes={(data?.length ?? 0) > 10}
+			/>
 		</div>
 	)
 }

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useEffectEvent, useRef } from 'react'
 import toast from 'react-hot-toast'
 import pb from '~/utils/pocketbase'
-import type { CustomTimePeriod, TimePeriod } from '../dashboardTypes'
+import type { DashboardItemConfig } from '../dashboardItemConfig'
+import type { AIGeneratedData, CustomTimePeriod, Dashboard, TimePeriod } from '../dashboardTypes'
 import { buildDashboardSaveRequest } from '../services/DashboardAPI'
-import type { DashboardItemConfig } from '../types'
 
 interface UseAutoSaveOptions {
 	dashboardId: string | null
@@ -15,7 +15,7 @@ interface UseAutoSaveOptions {
 	customTimePeriod: CustomTimePeriod | null
 	isAuthenticated: boolean
 	isReadOnly: boolean
-	currentDashboard: { user: string; aiGenerated?: Record<string, any> | null } | null
+	currentDashboard: { user: string; aiGenerated?: AIGeneratedData | null } | null
 	userId: string | undefined
 	updateDashboard: (params: {
 		id: string
@@ -27,10 +27,10 @@ interface UseAutoSaveOptions {
 			visibility: 'private' | 'public'
 			tags: string[]
 			description: string
-			aiGenerated?: Record<string, any> | null
+			aiGenerated?: AIGeneratedData | null
 		}
-	}) => Promise<any>
-	cleanItemsForSaving: (items: DashboardItemConfig[]) => DashboardItemConfig[]
+	}) => Promise<Dashboard>
+	toPersistedDashboardItems: (items: DashboardItemConfig[]) => DashboardItemConfig[]
 	isFreeUser: boolean
 	mode?: 'view' | 'edit'
 	delay?: number
@@ -51,7 +51,7 @@ interface PendingSaveData {
 		visibility: 'private' | 'public'
 		tags: string[]
 		description: string
-		aiGenerated?: Record<string, any> | null
+		aiGenerated?: AIGeneratedData | null
 	}
 }
 
@@ -123,7 +123,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 			dashboardDescription,
 			timePeriod,
 			customTimePeriod,
-			cleanItemsForSaving,
+			toPersistedDashboardItems,
 			updateDashboard,
 			isFreeUser,
 			mode = 'edit',
@@ -141,7 +141,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 			clearTimeout(autoSaveTimeoutRef.current)
 		}
 
-		const cleanedItems = cleanItemsForSaving(newItems)
+		const cleanedItems = toPersistedDashboardItems(newItems)
 		const data = {
 			items: cleanedItems,
 			dashboardName,

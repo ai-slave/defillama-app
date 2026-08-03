@@ -7,7 +7,7 @@ import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import { useAppMetadata } from '~/containers/ProDashboard/AppMetadataContext'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import { ChartTypePills } from '~/containers/ProDashboard/components/AddChartModal/ChartTypePills'
-import type { TimePeriod } from '~/containers/ProDashboard/dashboardReducer'
+import type { TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
 import { buildProDashboardParentMapping, buildProtocolSymbolMap } from '~/containers/ProDashboard/protocolCatalog'
 import {
 	filterDataByTimePeriod,
@@ -15,7 +15,7 @@ import {
 	ProxyAuthTokenContext,
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
-import { CHART_TYPES, getChainChartTypes, getProtocolChartTypes } from '~/containers/ProDashboard/types'
+import { CHAIN_CHART_TYPES, CHART_TYPES, PROTOCOL_CHART_TYPES } from '~/containers/ProDashboard/types'
 import { Icon } from '~/ui/Icon'
 import { tokenIconUrl, chainIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
@@ -30,9 +30,6 @@ import type {
 } from '../types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
-
-const PROTOCOL_CHART_TYPES = getProtocolChartTypes()
-const CHAIN_CHART_TYPES = getChainChartTypes()
 
 const SERIES_COLORS = ['#3e6dcc', '#e07b39', '#16a34a', '#a855f7']
 const ARTICLE_TOOLTIP_FORMATTER = createCappedRemainderTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
@@ -129,8 +126,9 @@ function MultiPreview({
 		queries: series.map((s) => ({
 			queryKey: getProDashboardChartSourceQueryKey({
 				type: s.chartType,
-				protocol: s.entityType === 'protocol' ? s.slug : '',
-				chain: s.entityType === 'chain' ? s.slug : '',
+				...(s.entityType === 'protocol'
+					? { subjectType: 'protocol', protocol: s.slug }
+					: { subjectType: 'chain', chain: s.slug }),
 				geckoId: s.geckoId ?? null
 			}),
 			queryFn: getChartQueryFn(
@@ -286,7 +284,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 	const availableTypesForEntity = (entityType: ArticleChartEntityType, slug: string, geckoId?: string | null) => {
 		const order = entityType === 'protocol' ? PROTOCOL_CHART_TYPES : CHAIN_CHART_TYPES
 		const fn = entityType === 'protocol' ? availableProtocolChartTypes : availableChainChartTypes
-		const allowed = new Set(fn(slug, { hasGeckoId: !!geckoId }))
+		const allowed: ReadonlySet<string> = new Set(fn(slug, { hasGeckoId: !!geckoId }))
 		return order.filter((t) => allowed.has(t))
 	}
 
@@ -294,7 +292,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 		const q = query.trim().toLowerCase()
 		const fn = tab === 'protocol' ? availableProtocolChartTypes : availableChainChartTypes
 		const supportsCurrent = (e: Entity) => {
-			const allowed = new Set(fn(e.slug, { hasGeckoId: !!e.geckoId }))
+			const allowed: ReadonlySet<string> = new Set(fn(e.slug, { hasGeckoId: !!e.geckoId }))
 			return allowed.has(currentMetric)
 		}
 		const list = entities.filter(supportsCurrent)

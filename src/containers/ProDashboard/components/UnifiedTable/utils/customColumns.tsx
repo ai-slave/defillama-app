@@ -1,23 +1,16 @@
-import type { ColumnDef, Row } from '@tanstack/react-table'
+import type { ColumnDef } from '@tanstack/react-table'
 import { Parser } from 'expr-eval'
-import type { ChainMetrics } from '~/containers/ProDashboard/server/unifiedTable/protocols'
 import { PercentChange } from '~/ui/PercentChange'
 import { formatRatio, formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
-import type { CustomColumnDefinition } from '../../../types'
-import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '../config/ColumnDictionary'
-import { getChainMetricsByName } from '../core/chainMetricsStore'
-import { getAggregationContextFromLeafRows } from '../core/groupingUtils'
-import type { NormalizedRow, NumericMetrics } from '../types'
+import {
+	isProtocolTableMetricKey,
+	UNIFIED_TABLE_COLUMN_DICTIONARY
+} from '../../../unifiedTable/config/columnDictionary'
+import type { CustomColumnDefinition } from '../../../unifiedTable/config/types'
+import type { ProtocolTableMetrics } from '../../../unifiedTable/contracts'
+import type { ProtocolTableRow } from '../types'
 
 const parser = new Parser()
-
-const CHAIN_METRIC_KEYS: (keyof ChainMetrics)[] = [
-	'stablesMcap',
-	'bridgedTvl',
-	'tvlShare',
-	'stablesShare',
-	'volume24hShare'
-]
 
 const EXPR_CACHE_MAX_SIZE = 100
 const expressionCache = new Map<string, ReturnType<typeof parser.parse>>()
@@ -75,16 +68,6 @@ const renderRatio = (value: number | null | undefined) => {
 	)
 }
 
-const numericSorting = (a: number | null | undefined, b: number | null | undefined) => {
-	if (a == null) {
-		return b == null ? 0 : -1
-	}
-	if (b == null) {
-		return 1
-	}
-	return a - b
-}
-
 export function generateCustomColumnId(): string {
 	return `custom_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 }
@@ -111,6 +94,61 @@ export function getExpressionVariables(expression: string): string[] {
 	const expr = getParsedExpression(expression)
 	if (!expr) return []
 	return expr.variables()
+}
+
+export interface CompiledCustomColumn {
+	id: string
+	aggregation: CustomColumnDefinition['aggregation']
+	usesChainMetric: boolean
+	evaluate: (metrics: ProtocolTableMetrics) => number | null
+}
+
+export function compileExpression(expression: string): {
+	variables: readonly (keyof ProtocolTableMetrics)[]
+	evaluate: (metrics: ProtocolTableMetrics) => number | null
+} {
+	const expr = getParsedExpression(expression)
+	if (!expr) return { variables: [], evaluate: () => null }
+
+	const variables: (keyof ProtocolTableMetrics)[] = []
+	for (const variable of expr.variables()) {
+		if (!isProtocolTableMetricKey(variable)) return { variables: [], evaluate: () => null }
+		variables.push(variable)
+	}
+	const context: Record<string, number> = {}
+	for (const variable of variables) context[variable] = 0
+
+	return {
+		variables,
+		evaluate: (metrics) => {
+			try {
+				for (const variable of variables) {
+					const value = metrics[variable]
+					if (value == null || Number.isNaN(value)) return null
+					context[variable] = value
+				}
+				const result = expr.evaluate(context)
+				return typeof result === 'number' && !Number.isNaN(result) && Number.isFinite(result) ? result : null
+			} catch {
+				return null
+			}
+		}
+	}
+}
+
+export function compileCustomColumns(
+	definitions: readonly CustomColumnDefinition[],
+	chainMetricKeys: ReadonlySet<keyof ProtocolTableMetrics>
+): CompiledCustomColumn[] {
+	return definitions.map((definition) => {
+		const expression = compileExpression(definition.expression)
+		return {
+			id: definition.id,
+			aggregation: definition.aggregation,
+			usesChainMetric: expression.variables.some((variable) => chainMetricKeys.has(variable)),
+			evaluate: expression.evaluate
+		}
+	})
 }
 
 export function validateExpression(expression: string): { isValid: boolean; error?: string } {
@@ -142,8 +180,8 @@ export function validateExpression(expression: string): { isValid: boolean; erro
 		}
 		expr.evaluate(testContext)
 		return { isValid: true }
-	} catch (e: any) {
-		return { isValid: false, error: e.message || 'Invalid expression' }
+	} catch (error) {
+		return { isValid: false, error: error instanceof Error ? error.message : 'Invalid expression' }
 	}
 }
 
@@ -152,38 +190,6 @@ export function validateCustomColumnOnLoad(def: CustomColumnDefinition): { isVal
 		return { isValid: false, error: 'Missing expression' }
 	}
 	return validateExpression(def.expression)
-}
-
-export function evaluateExpression(expression: string, metrics: NumericMetrics): number | null {
-	const expr = getParsedExpression(expression)
-	if (!expr) return null
-
-	try {
-		const usedVars = expr.variables()
-
-		for (const varName of usedVars) {
-			const value = metrics[varName as keyof NumericMetrics]
-			if (value == null) {
-				return null
-			}
-		}
-
-		const context: Record<string, number> = {}
-		for (const key in metrics) {
-			const value = metrics[key as keyof NumericMetrics]
-			if (typeof value === 'number' && !Number.isNaN(value)) {
-				context[key] = value
-			}
-		}
-
-		const result = expr.evaluate(context)
-		if (typeof result === 'number' && !Number.isNaN(result) && Number.isFinite(result)) {
-			return result
-		}
-		return null
-	} catch {
-		return null
-	}
 }
 
 interface AvailableVariable {
@@ -198,15 +204,20 @@ let ALL_VARIABLES_CACHE: AvailableVariable[] | null = null
 function getAllVariables(): AvailableVariable[] {
 	if (ALL_VARIABLES_CACHE) return ALL_VARIABLES_CACHE
 
-	ALL_VARIABLES_CACHE = UNIFIED_TABLE_COLUMN_DICTIONARY.filter((col) => col.group !== 'meta').map((col) => ({
-		key: col.id,
-		name: col.header,
-		group: col.group,
-		format:
-			col.render === 'usd' || col.render === 'percent' || col.render === 'ratio' || col.render === 'number'
-				? col.render
-				: 'number'
-	}))
+	const variables: AvailableVariable[] = []
+	for (const col of UNIFIED_TABLE_COLUMN_DICTIONARY) {
+		if (!isProtocolTableMetricKey(col.id)) continue
+		variables.push({
+			key: col.id,
+			name: col.header,
+			group: col.group,
+			format:
+				col.render === 'usd' || col.render === 'percent' || col.render === 'ratio' || col.render === 'number'
+					? col.render
+					: 'number'
+		})
+	}
+	ALL_VARIABLES_CACHE = variables
 	return ALL_VARIABLES_CACHE
 }
 
@@ -230,7 +241,7 @@ export function getAvailableVariables(options?: GetAvailableVariablesOptions): A
 	})
 }
 
-export const SAMPLE_METRICS: NumericMetrics = {
+export const SAMPLE_METRICS: ProtocolTableMetrics = {
 	tvl: 1_500_000_000,
 	change1d: 1.35,
 	change7d: 7.14,
@@ -245,8 +256,10 @@ export const SAMPLE_METRICS: NumericMetrics = {
 	volume_30d: 1_500_000_000,
 	cumulativeVolume: 50_000_000_000,
 	volumeChange_1d: 5.2,
-	volumeChange_7d: 12.8,
-	volumeChange_1m: -3.5,
+	volume24hChange7dAgo: 18.4,
+	volume24hChange30dAgo: -4.1,
+	volumeChange7dOver7d: 12.8,
+	volumeChange30dOver30d: -3.5,
 	volumeDominance_24h: 8.5,
 	volumeMarketShare7d: 7.2,
 	volume24hShare: 15.3,
@@ -257,14 +270,14 @@ export const SAMPLE_METRICS: NumericMetrics = {
 	fees_1y: 90_000_000,
 	average_1y: 7_500_000,
 	cumulativeFees: 500_000_000,
-	userFees_24h: 200_000,
 	holderRevenue_24h: 50_000,
 	holderRevenue_7d: 350_000,
 	holdersRevenue30d: 1_500_000,
-	treasuryRevenue_24h: 25_000,
 	feesChange_1d: 3.2,
-	feesChange_7d: 8.5,
-	feesChange_1m: 15.0,
+	fees24hChange7dAgo: 9.4,
+	fees24hChange30dAgo: 14.2,
+	feesChange7dOver7d: 8.5,
+	feesChange30dOver30d: 15.0,
 
 	revenue24h: 150_000,
 	revenue_7d: 1_050_000,
@@ -273,15 +286,19 @@ export const SAMPLE_METRICS: NumericMetrics = {
 	average_revenue_1y: 4_500_000,
 	cumulativeRevenue: 650_000_000,
 	revenueChange_1d: 2.8,
-	revenueChange_7d: 6.3,
-	revenueChange_1m: 12.0,
+	revenue24hChange7dAgo: 7.1,
+	revenue24hChange30dAgo: 11.7,
+	revenueChange7dOver7d: 6.3,
+	revenueChange30dOver30d: 12.0,
 
 	perpsVolume24h: 20_000_000,
 	perps_volume_7d: 140_000_000,
 	perps_volume_30d: 600_000_000,
 	perps_volume_change_1d: 4.5,
-	perps_volume_change_7d: 10.2,
-	perps_volume_change_1m: -2.1,
+	perpsVolume24hChange7dAgo: 13.5,
+	perpsVolume24hChange30dAgo: -1.8,
+	perpsVolumeChange7dOver7d: 10.2,
+	perpsVolumeChange30dOver30d: -2.1,
 	perps_volume_dominance_24h: 5.8,
 	openInterest: 100_000_000,
 
@@ -289,7 +306,9 @@ export const SAMPLE_METRICS: NumericMetrics = {
 	aggregators_volume_7d: 105_000_000,
 	aggregators_volume_30d: 450_000_000,
 	aggregators_volume_change_1d: 6.1,
-	aggregators_volume_change_7d: 14.3,
+	aggregatorVolume24hChange7dAgo: 16.8,
+	aggregatorVolume24hChange30dAgo: 3.7,
+	aggregatorVolumeChange7dOver7d: 14.3,
 	aggregators_volume_dominance_24h: 3.2,
 	aggregators_volume_marketShare7d: 2.8,
 
@@ -297,14 +316,18 @@ export const SAMPLE_METRICS: NumericMetrics = {
 	derivatives_aggregators_volume_7d: 56_000_000,
 	derivatives_aggregators_volume_30d: 240_000_000,
 	derivatives_aggregators_volume_change_1d: 7.2,
-	derivatives_aggregators_volume_change_7d: 11.5,
-	derivatives_aggregators_volume_change_1m: 18.0,
+	derivativesAggregatorVolume24hChange7dAgo: 12.4,
+	derivativesAggregatorVolume24hChange30dAgo: 17.3,
+	derivativesAggregatorVolumeChange7dOver7d: 11.5,
+	derivativesAggregatorVolumeChange30dOver30d: 18.0,
 
 	options_volume_24h: 5_000_000,
 	options_volume_7d: 35_000_000,
 	options_volume_30d: 150_000_000,
 	options_volume_change_1d: 8.3,
-	options_volume_change_7d: 15.7,
+	optionsVolume24hChange7dAgo: 19.6,
+	optionsVolume24hChange30dAgo: 6.4,
+	optionsVolumeChange7dOver7d: 15.7,
 	options_volume_dominance_24h: 2.1,
 
 	mcap: 2_000_000_000,
@@ -312,16 +335,6 @@ export const SAMPLE_METRICS: NumericMetrics = {
 	mcaptvl: 1.33,
 	pf: 22.0,
 	ps: 36.5
-}
-
-// oxlint-disable-next-line no-unused-vars
-function evaluateWithSampleData(expression: string): { value: number | null; error?: string } {
-	const validation = validateExpression(expression)
-	if (!validation.isValid) {
-		return { value: null, error: validation.error }
-	}
-	const value = evaluateExpression(expression, SAMPLE_METRICS)
-	return { value }
 }
 
 const getRenderer = (format: CustomColumnDefinition['format']) => {
@@ -338,98 +351,19 @@ const getRenderer = (format: CustomColumnDefinition['format']) => {
 	}
 }
 
-const isChainLevelGrouping = (leafRows: Row<NormalizedRow>[]): boolean => {
-	if (leafRows.length <= 1) return false
-	const parentIds = new Set<string>()
-	for (const row of leafRows) {
-		const id = row.original?.parentProtocolId || row.original?.protocolId || row.original?.id
-		if (id) parentIds.add(id)
-		if (parentIds.size > 1) return true
-	}
-	return false
-}
-
-const createAggregationFn = (def: CustomColumnDefinition) => {
-	const expressionVars = getExpressionVariables(def.expression)
-	const usesChainMetrics = expressionVars.some((v) => CHAIN_METRIC_KEYS.includes(v as keyof ChainMetrics))
-
-	return (_columnId: string, leafRows: Row<NormalizedRow>[]): number | null => {
-		if (!leafRows.length) return null
-
-		if (usesChainMetrics) {
-			const firstChain = leafRows[0]?.original?.chain
-			if (!firstChain) return null
-
-			const allSameChain = leafRows.length === 1 || leafRows.every((row) => row.original?.chain === firstChain)
-			if (!allSameChain) return null
-
-			if (!isChainLevelGrouping(leafRows)) return null
-
-			const chainMetrics = getChainMetricsByName(firstChain)
-			if (chainMetrics) {
-				const context = getAggregationContextFromLeafRows(leafRows)
-				const mergedMetrics: NumericMetrics = { ...context.metrics }
-				for (const key of CHAIN_METRIC_KEYS) {
-					const value = chainMetrics[key]
-					if (value !== null && value !== undefined) {
-						;(mergedMetrics as any)[key] = value
-					}
-				}
-				return evaluateExpression(def.expression, mergedMetrics)
-			}
-			return null
-		}
-
-		switch (def.aggregation) {
-			case 'none':
-				return null
-
-			case 'first': {
-				const firstRow = leafRows[0]?.original
-				if (!firstRow) return null
-				return evaluateExpression(def.expression, firstRow.metrics)
-			}
-
-			case 'sum': {
-				let sum = 0
-				let hasValidValue = false
-				for (const row of leafRows) {
-					const value = evaluateExpression(def.expression, row.original.metrics)
-					if (value !== null) {
-						sum += value
-						hasValidValue = true
-					}
-				}
-				return hasValidValue ? sum : null
-			}
-
-			case 'recalculate':
-			default: {
-				const context = getAggregationContextFromLeafRows(leafRows)
-				return evaluateExpression(def.expression, context.metrics)
-			}
-		}
-	}
-}
-
-export function createCustomColumnDef(def: CustomColumnDefinition): ColumnDef<NormalizedRow> {
-	const renderer = getRenderer(def.format)
+export function createCustomColumnDef({
+	definition
+}: {
+	definition: CustomColumnDefinition
+}): ColumnDef<ProtocolTableRow> {
+	const renderer = getRenderer(definition.format)
 
 	return {
-		id: def.id,
-		header: def.name,
-		accessorFn: (row: NormalizedRow) => evaluateExpression(def.expression, row.metrics),
+		id: definition.id,
+		header: definition.name,
+		accessorFn: (row) => row.customValues[definition.id] ?? null,
 		meta: { align: 'end' as const },
-		cell: (ctx) => {
-			const value = ctx.getValue() as number | null
-			return renderer(value)
-		},
-		sortingFn: (rowA: Row<NormalizedRow>, rowB: Row<NormalizedRow>, columnId: string) => {
-			const a = rowA.getValue(columnId) as number | null | undefined
-			const b = rowB.getValue(columnId) as number | null | undefined
-			return numericSorting(a, b)
-		},
-		aggregationFn: createAggregationFn(def)
+		cell: ({ row }) => renderer(row.original.customValues[definition.id] ?? null)
 	}
 }
 

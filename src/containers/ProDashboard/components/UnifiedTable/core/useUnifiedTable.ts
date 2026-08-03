@@ -3,30 +3,59 @@
 import { useQuery } from '@tanstack/react-query'
 import {
 	type ColumnOrderState,
+	type ExpandedState,
 	getCoreRowModel,
 	getExpandedRowModel,
-	getGroupedRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
 	type PaginationState,
 	type SortingState,
 	useReactTable,
 	type VisibilityState,
-	type Table
+	type Row
 } from '@tanstack/react-table'
-import { useCallback, useContext, useDeferredValue, useEffect, useMemo, useState } from 'react'
-import type { ChainMetrics } from '~/containers/ProDashboard/server/unifiedTable/protocols'
+import { useContext, useDeferredValue, useMemo, useState } from 'react'
+import type {
+	ParentProtocolMetrics,
+	ProtocolTableSourceRow,
+	ProtocolsUnifiedTableResponse
+} from '~/containers/ProDashboard/unifiedTable/contracts'
+import { fetchJson } from '~/utils/async'
 import { StreamDoneContext } from '../../../queries'
-import type { UnifiedRowHeaderType, UnifiedTableConfig } from '../../../types'
-import { getUnifiedTableQueryIdentity } from '../../../unifiedTableQuery'
+import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../../../queryPolicy'
+import type { UnifiedTableConfig } from '../../../unifiedTable/config/current'
+import {
+	FILTERED_SHARE_METRIC_KEYS,
+	getFilteredShareMetricKey,
+	type FilteredShareMetricKey
+} from '../../../unifiedTable/config/filteredShareColumns'
+import type { UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
+import { buildUnifiedTableQueryString, getUnifiedTableQueryIdentity } from '../../../unifiedTableQuery'
 import { getUnifiedTableColumns } from '../config/ColumnRegistry'
-import type { NormalizedRow } from '../types'
-import { filterRowsByConfig, filterRowsBySearch } from '../utils/dataFilters'
-import { setChainMetrics } from './chainMetricsStore'
-import { getGroupingColumnIdsForHeaders } from './grouping'
-import { getRowHeaderFromGroupingColumn, isSelfGroupingValue } from './groupingUtils'
+import {
+	buildProtocolTableReadModel,
+	collectProtocolTableLeaves,
+	filterProtocolTableSourceRows,
+	setProtocolTableFilteredShares
+} from '../readModel'
+import type { ProtocolTableRow } from '../types'
+import { getProtocolAggregationPlan } from '../utils/aggregation'
+import { filterReadModelRowsByConfig, filterRowsByConfig, hasProtocolSubsetFilters } from '../utils/dataFilters'
 
-const EMPTY_ROWS: NormalizedRow[] = []
+const EMPTY_ROWS: ProtocolTableSourceRow[] = []
+const EMPTY_PARENT_METRICS: Record<string, ParentProtocolMetrics> = {}
+const EMPTY_CHAIN_METRICS: NonNullable<ProtocolsUnifiedTableResponse['chainMetrics']> = {}
+const getProtocolTableRowId = (row: ProtocolTableRow) => row.id
+const getProtocolTableSubRows = (row: ProtocolTableRow) => (row.nodeType === 'group' ? row.subRows : undefined)
+const getProtocolTableRowCanExpand = (row: Row<ProtocolTableRow>) => {
+	if (row.original.nodeType === 'leaf') return false
+	if (row.original.header === 'protocol') return row.original.subRows.length > 1
+	return row.original.subRows.length > 0
+}
+const getProtocolTableCoreRowModel = getCoreRowModel<ProtocolTableRow>()
+const getProtocolTableExpandedRowModel = getExpandedRowModel<ProtocolTableRow>()
+const getProtocolTableSortedRowModel = getSortedRowModel<ProtocolTableRow>()
+const getProtocolTablePaginationRowModel = getPaginationRowModel<ProtocolTableRow>()
 
 interface UseUnifiedTableArgs {
 	config: UnifiedTableConfig
@@ -35,51 +64,14 @@ interface UseUnifiedTableArgs {
 	columnOrder: ColumnOrderState
 	columnVisibility: VisibilityState
 	sorting: SortingState
-	onColumnOrderChange: (stateUpdater: ColumnOrderState | ((prev: ColumnOrderState) => ColumnOrderState)) => void
-	onColumnVisibilityChange: (stateUpdater: VisibilityState | ((prev: VisibilityState) => VisibilityState)) => void
 	onSortingChange: (updater: SortingState | ((prev: SortingState) => SortingState)) => void
 }
 
-interface UseUnifiedTableResult {
-	table: Table<NormalizedRow>
-	isLoading: boolean
-	rowHeaders: UnifiedRowHeaderType[]
-	leafRows: NormalizedRow[]
-	columns: ReturnType<typeof getUnifiedTableColumns>
-	expanded: Record<string, boolean>
-}
-
-type UnifiedTableApiResponse = {
-	rows: NormalizedRow[]
-	chainMetrics?: Record<string, ChainMetrics>
-}
-
-const buildQueryString = (config: UnifiedTableConfig, rowHeaders: UnifiedRowHeaderType[]): string => {
-	const params = new URLSearchParams()
-
-	for (const header of rowHeaders) {
-		params.append('rowHeaders[]', header)
-	}
-
-	if (config.params?.chains) {
-		for (const chain of config.params.chains) {
-			params.append('chains[]', chain)
-		}
-	}
-	if (config.params?.category) params.set('category', config.params.category)
-
-	return params.toString()
-}
-
 const fetchUnifiedTableRows = async (config: UnifiedTableConfig, rowHeaders: UnifiedRowHeaderType[]) => {
-	const queryString = buildQueryString(config, rowHeaders)
-	const response = await fetch(`/api/public/pro-dashboard/unified-table/protocols?${queryString}`)
-
-	if (!response.ok) {
-		throw new Error('Failed to load ProTable data')
-	}
-
-	return (await response.json()) as UnifiedTableApiResponse
+	const queryString = buildUnifiedTableQueryString(config, rowHeaders)
+	return fetchJson<ProtocolsUnifiedTableResponse>(
+		`/api/public/pro-dashboard/unified-table/${config.strategy}?${queryString}`
+	)
 }
 
 export function useUnifiedTable({
@@ -89,174 +81,173 @@ export function useUnifiedTable({
 	columnOrder,
 	columnVisibility,
 	sorting,
-	onColumnOrderChange,
-	onColumnVisibilityChange,
 	onSortingChange
-}: UseUnifiedTableArgs): UseUnifiedTableResult {
-	const [expanded, setExpandedState] = useState<Record<string, boolean>>({})
+}: UseUnifiedTableArgs) {
+	const [expanded, setExpanded] = useState<ExpandedState>({})
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 30 })
 
-	// Preserve identity when unchanged so React can skip re-renders.
-	const setExpanded = useCallback(
-		(updater: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => {
-			setExpandedState((prevExpanded) => {
-				const next = typeof updater === 'function' ? updater(prevExpanded) : updater
-				return next === prevExpanded ? prevExpanded : next
-			})
-		},
-		[]
-	)
-
-	const { queryKey } = getUnifiedTableQueryIdentity(config, rowHeaders)
+	const queryIdentity = useMemo(() => getUnifiedTableQueryIdentity(config, rowHeaders), [config, rowHeaders])
+	const { queryKey } = queryIdentity
+	const aggregationPlan = getProtocolAggregationPlan(queryIdentity)
 
 	const streamDone = useContext(StreamDoneContext)
-	const { data, isLoading } = useQuery({
+	const { data, isError, isLoading, refetch } = useQuery({
 		queryKey,
 		queryFn: () => fetchUnifiedTableRows(config, rowHeaders),
-		staleTime: Infinity,
+		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
 		retry: 1,
 		enabled: streamDone
 	})
 
-	useEffect(() => {
-		setChainMetrics(data?.chainMetrics)
-	}, [data?.chainMetrics])
-
 	const deferredSearchTerm = useDeferredValue(searchTerm)
 
-	const filteredRows = useMemo(() => {
-		const withFilters = filterRowsByConfig(data?.rows ?? EMPTY_ROWS, config.filters)
-		return filterRowsBySearch(withFilters, deferredSearchTerm)
-	}, [data?.rows, config.filters, deferredSearchTerm])
-
-	const columns = useMemo(() => getUnifiedTableColumns(config.customColumns), [config.customColumns])
-	const groupingColumnIds = useMemo(() => getGroupingColumnIdsForHeaders(rowHeaders), [rowHeaders])
-
-	const groupingColumnSet = useMemo(() => new Set(groupingColumnIds), [groupingColumnIds])
-
-	const mergeColumnOrder = useCallback(
-		(order: ColumnOrderState): ColumnOrderState => {
-			const withoutGrouping = order.filter((columnId) => !groupingColumnSet.has(columnId))
-			return [...groupingColumnIds, ...withoutGrouping]
-		},
-		[groupingColumnIds, groupingColumnSet]
+	const parentMetrics = data?.parentMetrics ?? EMPTY_PARENT_METRICS
+	const chainMetrics = data?.chainMetrics ?? EMPTY_CHAIN_METRICS
+	const sourceRows = useMemo(
+		() => filterRowsByConfig(data?.rows ?? EMPTY_ROWS, config.filters, parentMetrics, chainMetrics),
+		[data?.rows, config.filters, parentMetrics, chainMetrics]
 	)
-
-	const stripGroupingFromOrder = useCallback(
-		(order: ColumnOrderState): ColumnOrderState => order.filter((columnId) => !groupingColumnSet.has(columnId)),
-		[groupingColumnSet]
+	const visibleSourceRows = useMemo(
+		() => filterProtocolTableSourceRows(sourceRows, deferredSearchTerm, parentMetrics),
+		[sourceRows, deferredSearchTerm, parentMetrics]
 	)
-
-	const tableColumnOrder = useMemo(() => mergeColumnOrder(columnOrder), [columnOrder, mergeColumnOrder])
-
-	const handleColumnOrderChange = useCallback(
-		(updater: ColumnOrderState | ((prev: ColumnOrderState) => ColumnOrderState)) => {
-			if (typeof updater === 'function') {
-				onColumnOrderChange((prev) => stripGroupingFromOrder(updater(mergeColumnOrder(prev))))
-				return
-			}
-			onColumnOrderChange(stripGroupingFromOrder(updater))
-		},
-		[mergeColumnOrder, onColumnOrderChange, stripGroupingFromOrder]
-	)
-
-	const mergeColumnVisibility = useCallback(
-		(visibility: VisibilityState): VisibilityState => {
-			const merged = { ...visibility }
-			for (const columnId of groupingColumnIds) {
-				merged[columnId] = false
-			}
-			return merged
-		},
-		[groupingColumnIds]
-	)
-
-	const stripGroupingFromVisibility = useCallback(
-		(visibility: VisibilityState): VisibilityState => {
-			const next: VisibilityState = { ...visibility }
-			for (const columnId of groupingColumnIds) {
-				delete next[columnId]
-			}
-			return next
-		},
-		[groupingColumnIds]
-	)
-
-	const tableColumnVisibility = useMemo(
-		() => mergeColumnVisibility(columnVisibility),
-		[columnVisibility, mergeColumnVisibility]
+	const filteredShareMetricKey = useMemo(() => {
+		const metricKeys = new Set<FilteredShareMetricKey>()
+		const addMetricKey = (columnId: string) => {
+			const metricKey = getFilteredShareMetricKey(columnId)
+			if (metricKey) metricKeys.add(metricKey)
+		}
+		for (const columnId of columnOrder) {
+			if (columnVisibility[columnId] === false) continue
+			addMetricKey(columnId)
+		}
+		for (const columnId in columnVisibility) {
+			if (!columnVisibility[columnId]) continue
+			addMetricKey(columnId)
+		}
+		for (const sort of sorting) {
+			addMetricKey(sort.id)
+		}
+		const orderedMetricKeys: FilteredShareMetricKey[] = []
+		for (const metricKey of FILTERED_SHARE_METRIC_KEYS) {
+			if (metricKeys.has(metricKey)) orderedMetricKeys.push(metricKey)
+		}
+		return orderedMetricKeys.join('|')
+	}, [columnOrder, columnVisibility, sorting])
+	const filteredShareMetricKeys = useMemo(() => {
+		if (!filteredShareMetricKey) return []
+		const selected = new Set(filteredShareMetricKey.split('|'))
+		return FILTERED_SHARE_METRIC_KEYS.filter((metricKey) => selected.has(metricKey))
+	}, [filteredShareMetricKey])
+	const readModel = useMemo(() => {
+		const chainMetricScope =
+			rowHeaders[0] !== 'chain'
+				? 'group'
+				: queryIdentity.rowMembership.kind === 'all-protocols' &&
+					  !deferredSearchTerm.trim() &&
+					  !config.params?.category &&
+					  !hasProtocolSubsetFilters(config.filters)
+					? 'canonical'
+					: 'partial'
+		const model = buildProtocolTableReadModel({
+			rows: visibleSourceRows,
+			rowHeaders,
+			parentMetrics,
+			chainMetrics,
+			customColumns: config.customColumns ?? [],
+			chainMetricScope,
+			aggregationPlan
+		})
+		const rows = filterReadModelRowsByConfig(model.rows, config.filters)
+		setProtocolTableFilteredShares(rows, filteredShareMetricKeys)
+		if (rows === model.rows) return model
+		return { rows, leaves: collectProtocolTableLeaves(rows) }
+	}, [
+		visibleSourceRows,
+		rowHeaders,
+		parentMetrics,
+		chainMetrics,
+		config.customColumns,
+		config.filters,
+		config.params?.category,
+		queryIdentity.rowMembership.kind,
+		deferredSearchTerm,
+		filteredShareMetricKeys,
+		aggregationPlan
+	])
+	const runtimeColumnIdsKey = useMemo(() => {
+		const ids = new Set<string>(['name'])
+		for (const columnId of columnOrder) {
+			if (columnVisibility[columnId] !== false) ids.add(columnId)
+		}
+		for (const columnId in columnVisibility) {
+			if (columnVisibility[columnId]) ids.add(columnId)
+		}
+		for (const sort of sorting) ids.add(sort.id)
+		return Array.from(ids).sort().join('\0')
+	}, [columnOrder, columnVisibility, sorting])
+	const runtimeColumnIds = useMemo(() => runtimeColumnIdsKey.split('\0'), [runtimeColumnIdsKey])
+	const earningsAreEstimated =
+		rowHeaders.includes('chain') ||
+		Boolean(config.params?.chains?.some((chain) => chain.trim().toLowerCase() !== 'all'))
+	const columns = useMemo(
+		() =>
+			getUnifiedTableColumns({
+				customColumns: config.customColumns,
+				columnIds: runtimeColumnIds,
+				earningsAreEstimated
+			}),
+		[config.customColumns, runtimeColumnIds, earningsAreEstimated]
 	)
 
 	const tableState = useMemo(
 		() => ({
-			columnOrder: tableColumnOrder,
-			columnVisibility: tableColumnVisibility,
+			columnOrder,
+			columnVisibility,
 			sorting,
-			grouping: groupingColumnIds,
 			expanded,
 			pagination
 		}),
-		[expanded, groupingColumnIds, pagination, sorting, tableColumnOrder, tableColumnVisibility]
+		[expanded, pagination, sorting, columnOrder, columnVisibility]
 	)
 
-	const handleColumnVisibilityChange = useCallback(
-		(updater: VisibilityState | ((prev: VisibilityState) => VisibilityState)) => {
-			if (typeof updater === 'function') {
-				onColumnVisibilityChange((prev) => stripGroupingFromVisibility(updater(mergeColumnVisibility(prev))))
-				return
-			}
-			onColumnVisibilityChange(stripGroupingFromVisibility(updater))
-		},
-		[mergeColumnVisibility, onColumnVisibilityChange, stripGroupingFromVisibility]
-	)
-
-	const table = useReactTable<NormalizedRow>({
-		data: filteredRows,
+	const table = useReactTable<ProtocolTableRow>({
+		data: readModel.rows,
 		columns,
-		getRowId: (row) => row.id,
+		getRowId: getProtocolTableRowId,
+		getSubRows: getProtocolTableSubRows,
 		state: tableState,
-		onColumnOrderChange: handleColumnOrderChange,
-		onColumnVisibilityChange: handleColumnVisibilityChange,
 		onSortingChange,
 		onExpandedChange: setExpanded,
 		onPaginationChange: setPagination,
 		paginateExpandedRows: true,
-		getRowCanExpand: (row) => {
-			if (!row.getIsGrouped()) {
-				return false
-			}
-			const header = getRowHeaderFromGroupingColumn(row.groupingColumnId)
-			if (!header) {
-				return false
-			}
-			if (header === 'protocol') {
-				return row.subRows.length > 1
-			}
-			if (header === 'parent-protocol') {
-				const isSelfParentGroup = isSelfGroupingValue(row.groupingValue as string | undefined)
-				if (isSelfParentGroup) {
-					return row.subRows.length > 1
-				}
-				return row.subRows.length > 0
-			}
-			return row.subRows.length > 0
-		},
-		getCoreRowModel: getCoreRowModel(),
-		getGroupedRowModel: getGroupedRowModel(),
-		getExpandedRowModel: getExpandedRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		groupedColumnMode: 'remove',
+		getRowCanExpand: getProtocolTableRowCanExpand,
+		getCoreRowModel: getProtocolTableCoreRowModel,
+		getExpandedRowModel: getProtocolTableExpandedRowModel,
+		getSortedRowModel: getProtocolTableSortedRowModel,
+		getPaginationRowModel: getProtocolTablePaginationRowModel,
 		autoResetExpanded: false,
-		autoResetPageIndex: false
+		autoResetPageIndex: true
 	})
+	const rows = table.getRowModel().rows
 
 	return {
 		table,
-		isLoading: isLoading || !streamDone,
-		rowHeaders,
-		leafRows: filteredRows,
-		columns,
-		expanded
+		isLoading: isLoading || (!streamDone && data === undefined),
+		hasInitialError: isError && data === undefined,
+		refetch,
+		leafRows: readModel.leaves,
+		rows,
+		headerGroups: table.getHeaderGroups(),
+		visibleLeafColumns: table.getVisibleLeafColumns(),
+		totalTableWidth: table.getTotalSize(),
+		pageIndex: pagination.pageIndex,
+		pageSize: pagination.pageSize,
+		pageCount: table.getPageCount(),
+		canPreviousPage: table.getCanPreviousPage(),
+		canNextPage: table.getCanNextPage(),
+		previousPage: table.previousPage,
+		nextPage: table.nextPage,
+		setPageSize: table.setPageSize
 	}
 }

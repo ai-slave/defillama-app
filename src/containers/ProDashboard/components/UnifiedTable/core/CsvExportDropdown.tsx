@@ -1,9 +1,7 @@
-'use no memo'
-
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
-import type { UnifiedRowHeaderType } from '../../../types'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
+import type { UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
+import { CSVExportButton } from '../../CSVExportButton'
 
 export type CsvExportLevel = 'all' | UnifiedRowHeaderType
 
@@ -22,26 +20,18 @@ interface CsvExportDropdownProps {
 	disabled: boolean
 }
 
-export const CsvExportDropdown = memo(function CsvExportDropdown({
-	rowHeaders,
-	onExport,
-	isLoading,
-	disabled
-}: CsvExportDropdownProps) {
+export function CsvExportDropdown({ rowHeaders, onExport, isLoading, disabled }: CsvExportDropdownProps) {
 	const [isOpen, setIsOpen] = useState(false)
 	const dropdownRef = useRef<HTMLDivElement>(null)
 
-	const exportOptions = useMemo<CsvExportLevel[]>(
-		() => [
-			'all',
-			...rowHeaders.filter((header): header is Exclude<UnifiedRowHeaderType, 'protocol'> => header !== 'protocol')
-		],
-		[rowHeaders]
-	)
+	const exportOptions: CsvExportLevel[] = [
+		'all',
+		...rowHeaders.filter((header): header is Exclude<UnifiedRowHeaderType, 'protocol'> => header !== 'protocol')
+	]
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+			if (event.target instanceof Node && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
 				setIsOpen(false)
 			}
 		}
@@ -55,22 +45,14 @@ export const CsvExportDropdown = memo(function CsvExportDropdown({
 		}
 	}, [isOpen])
 
-	const handleOptionClick = useCallback(
-		(level: CsvExportLevel) => {
-			setIsOpen(false)
-			onExport(level)
-		},
-		[onExport]
-	)
-
-	const handleButtonClick = useCallback(() => {
+	const handleButtonClick = () => {
 		if (disabled) return
 		setIsOpen((prev) => !prev)
-	}, [disabled])
+	}
 
 	return (
 		<div ref={dropdownRef} className="relative">
-			<ProTableCSVButton
+			<CSVExportButton
 				onClick={handleButtonClick}
 				isLoading={isLoading}
 				className={`flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors ${
@@ -83,7 +65,10 @@ export const CsvExportDropdown = memo(function CsvExportDropdown({
 						<button
 							key={level}
 							type="button"
-							onClick={() => handleOptionClick(level)}
+							onClick={() => {
+								setIsOpen(false)
+								onExport(level)
+							}}
 							className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-pro-text-primary transition-colors hover:bg-border-subtle"
 						>
 							<Icon name="download-paper" className="size-3 shrink-0 text-pro-text-tertiary" />
@@ -94,4 +79,4 @@ export const CsvExportDropdown = memo(function CsvExportDropdown({
 			) : null}
 		</div>
 	)
-})
+}

@@ -1,11 +1,16 @@
-export const reactSelectStyles = {
-	control: (provided: any, state: any) => ({
+import type { CSSObjectWithLabel, GroupBase, StylesConfig } from 'react-select'
+
+export const reactSelectStyles = <Option, IsMulti extends boolean, Group extends GroupBase<Option>>(
+	controlOverrides: CSSObjectWithLabel = {}
+): StylesConfig<Option, IsMulti, Group> => ({
+	control: (provided, state) => ({
 		...provided,
 		backgroundColor: 'var(--bg-surface-elevated-1)',
 		border: '1px solid var(--pro-form-control-border)',
 		borderRadius: 6,
 		minHeight: '40px',
 		boxShadow: 'none',
+		...controlOverrides,
 		'&:hover': {
 			border: '1px solid var(--pro-form-control-border)'
 		},
@@ -16,19 +21,19 @@ export const reactSelectStyles = {
 			}
 		})
 	}),
-	menu: (provided: any) => ({
+	menu: (provided) => ({
 		...provided,
 		backgroundColor: 'var(--pro-cards-bg)',
 		border: '1px solid var(--pro-cards-border)',
 		borderRadius: 6,
 		boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
 	}),
-	menuList: (provided: any) => ({
+	menuList: (provided) => ({
 		...provided,
 		padding: 0,
 		backgroundColor: 'var(--pro-panel-bg)'
 	}),
-	option: (provided: any, state: any) => ({
+	option: (provided, state) => ({
 		...provided,
 		backgroundColor: state.isSelected
 			? 'var(--bg-brand)'
@@ -41,26 +46,26 @@ export const reactSelectStyles = {
 			backgroundColor: state.isSelected ? 'var(--bg-brand)' : 'var(--bg-surface-elevated-2)'
 		}
 	}),
-	singleValue: (provided: any) => ({
+	singleValue: (provided) => ({
 		...provided,
 		color: 'var(--pro-text-primary)'
 	}),
-	placeholder: (provided: any) => ({
+	placeholder: (provided) => ({
 		...provided,
 		color: 'var(--pro-text-tertiary)'
 	}),
-	input: (provided: any) => ({
+	input: (provided) => ({
 		...provided,
 		color: 'var(--pro-text-primary)'
 	}),
 	indicatorSeparator: () => ({
 		display: 'none'
 	}),
-	dropdownIndicator: (provided: any) => ({
+	dropdownIndicator: (provided) => ({
 		...provided,
 		color: 'var(--pro-text-tertiary)',
 		'&:hover': {
 			color: 'var(--pro-text-primary)'
 		}
 	})
-}
+})

@@ -4,7 +4,6 @@ import { startTransition, useMemo, useRef, useState } from 'react'
 import { Announcement } from '~/components/Announcement'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
-import { basicProtocolPropertiesToKeepV1List } from '~/containers/ProtocolLists/utils.old'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
@@ -16,7 +15,7 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('directory', async () => {
-	const { protocols } = await fetchProtocols().then(basicProtocolPropertiesToKeepV1List(['name', 'logo', 'url']))
+	const { protocols } = await fetchProtocols()
 	return {
 		props: {
 			protocols: protocols
@@ -33,18 +32,56 @@ export const getStaticProps = withPerformanceLogging('directory', async () => {
 
 const RECENTS_KEY = 'recent_protocols'
 
+interface RecentProtocol {
+	name: string
+	logo?: string
+	route: string
+	count: number
+	lastVisited: number
+}
+
+function readRecentProtocol(value: unknown): RecentProtocol | null {
+	if (value === null || typeof value !== 'object' || Array.isArray(value)) return null
+	const name = Reflect.get(value, 'name')
+	const logo = Reflect.get(value, 'logo')
+	const route = Reflect.get(value, 'route')
+	const count = Reflect.get(value, 'count')
+	const lastVisited = Reflect.get(value, 'lastVisited')
+	if (typeof name !== 'string' || typeof route !== 'string') return null
+	return {
+		name,
+		...(typeof logo === 'string' ? { logo } : {}),
+		route,
+		count: typeof count === 'number' && Number.isFinite(count) ? count : 1,
+		lastVisited: typeof lastVisited === 'number' && Number.isFinite(lastVisited) ? lastVisited : 0
+	}
+}
+
+function readRecentProtocols(raw: string): RecentProtocol[] {
+	try {
+		const parsed: unknown = JSON.parse(raw)
+		if (!Array.isArray(parsed)) return []
+		const protocols: RecentProtocol[] = []
+		for (const value of parsed) {
+			const protocol = readRecentProtocol(value)
+			if (protocol) protocols.push(protocol)
+		}
+		return protocols
+	} catch {
+		return []
+	}
+}
+
 const saveRecent = (protocol: { name: string; logo?: string; route: string }) => {
 	try {
 		const existingRaw = typeof window !== 'undefined' ? window.localStorage.getItem(RECENTS_KEY) : null
-		let arr: Array<{ name: string; logo?: string; route: string; count: number; lastVisited: number }> = existingRaw
-			? JSON.parse(existingRaw)
-			: []
+		let arr = existingRaw ? readRecentProtocols(existingRaw) : []
 
 		const now = Date.now()
-		const idx = arr.findIndex((x) => x.route === protocol.route)
-		if (idx >= 0) {
-			arr[idx].count = (arr[idx].count || 0) + 1
-			arr[idx].lastVisited = now
+		const existing = arr.find((item) => item.route === protocol.route)
+		if (existing) {
+			existing.count = (existing.count || 0) + 1
+			existing.lastVisited = now
 		} else {
 			arr.push({ ...protocol, count: 1, lastVisited: now })
 		}
@@ -78,23 +115,14 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 
 	const recentProtocolsInStorage = useStorageItem(RECENTS_KEY, '[]')
 
-	const recentProtocols: Array<{ name: string; logo?: string; route: string; count: number; lastVisited: number }> =
-		useMemo(() => {
-			return JSON.parse(recentProtocolsInStorage)
-				.map((protocol) => ({
-					name: protocol.name,
-					logo: protocol.logo,
-					route: protocol.route,
-					count: protocol.count ?? 1,
-					lastVisited:
-						typeof protocol.lastVisited === 'number' && Number.isFinite(protocol.lastVisited) ? protocol.lastVisited : 0
-				}))
-				.sort((a, b) => {
-					if (b.count !== a.count) return b.count - a.count
-					return b.lastVisited - a.lastVisited
-				})
-				.slice(0, 6)
-		}, [recentProtocolsInStorage])
+	const recentProtocols = useMemo(() => {
+		return readRecentProtocols(recentProtocolsInStorage)
+			.sort((a, b) => {
+				if (b.count !== a.count) return b.count - a.count
+				return b.lastVisited - a.lastVisited
+			})
+			.slice(0, 6)
+	}, [recentProtocolsInStorage])
 
 	const handleSeeMore = (e: React.MouseEvent<HTMLDivElement>) => {
 		e.preventDefault()
@@ -106,8 +134,8 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 		setTimeout(() => {
 			const items = comboboxRef.current?.querySelectorAll('[role="option"]')
 			if (items && items.length > previousCount) {
-				const firstNewItem = items[previousCount] as HTMLElement
-				firstNewItem?.focus()
+				const firstNewItem = items.item(previousCount)
+				if (firstNewItem instanceof HTMLElement) firstNewItem.focus()
 			}
 		}, 0)
 	}

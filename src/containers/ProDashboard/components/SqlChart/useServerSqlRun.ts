@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
+import { useRef } from 'react'
 import { useAuthContext } from '~/auth'
-import { useProDashboardDashboard } from '../../ProDashboardAPIContext'
+import { useProDashboardDashboard, useProDashboardPermissions } from '../../ProDashboardAPIContext'
 import type { SqlSnapshot } from '../../types'
 
 export type ServerSqlSnapshot = SqlSnapshot & { error?: string }
@@ -15,14 +16,17 @@ export interface ServerSqlRunState {
 
 export function useServerSqlRun(itemId: string, fallbackSnapshot: SqlSnapshot | null): ServerSqlRunState {
 	const { dashboardId } = useProDashboardDashboard()
+	const { isReadOnly } = useProDashboardPermissions()
 	const { authorizedFetch } = useAuthContext()
+	const forceRefreshRef = useRef(false)
 
 	const query = useQuery<ServerSqlSnapshot>({
 		queryKey: ['pro-dashboard', 'sql-run', dashboardId, itemId],
 		queryFn: async () => {
+			const refreshParam = forceRefreshRef.current ? '&refresh=1' : ''
 			const url = `/api/private/pro-dashboard/sql-run?dashboardId=${encodeURIComponent(
 				dashboardId ?? ''
-			)}&itemId=${encodeURIComponent(itemId)}`
+			)}&itemId=${encodeURIComponent(itemId)}${refreshParam}`
 			const response = (await authorizedFetch(url)) ?? (await fetch(url))
 			const body = await response.json().catch(() => null)
 			if (!response.ok) {
@@ -42,9 +46,13 @@ export function useServerSqlRun(itemId: string, fallbackSnapshot: SqlSnapshot | 
 		snapshot,
 		isRefreshing: query.isFetching,
 		error: query.data?.error ?? (query.error instanceof Error ? query.error.message : null),
-		canRefresh: !!dashboardId,
+		canRefresh: !!dashboardId && !isReadOnly,
 		refresh: () => {
-			if (!query.isFetching) void query.refetch()
+			if (isReadOnly || query.isFetching) return
+			forceRefreshRef.current = true
+			void query.refetch().finally(() => {
+				forceRefreshRef.current = false
+			})
 		}
 	}
 }

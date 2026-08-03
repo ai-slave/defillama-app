@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { SqlQueryRecipe } from '~/containers/ProDashboard/types'
 import { hashSqlQuery } from '../queryHash'
 
 describe('hashSqlQuery', () => {
@@ -28,5 +29,11 @@ describe('hashSqlQuery', () => {
 		expect(
 			hashSqlQuery({ sql: 'SELECT 1', tableSources: [{ kind: 'chart', slug: 'protocols', param: 'x' }] })
 		).not.toBe(base)
+	})
+
+	it('separates execution snapshots with different row caps', () => {
+		const query: SqlQueryRecipe = { sql: 'SELECT 1', tableSources: [{ kind: 'dataset', slug: 'protocols' }] }
+		expect(hashSqlQuery(query, { rowCap: 100 })).not.toBe(hashSqlQuery(query, { rowCap: 500 }))
+		expect(hashSqlQuery(query)).toBe(hashSqlQuery(query, {}))
 	})
 })

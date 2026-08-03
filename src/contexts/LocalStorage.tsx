@@ -1,6 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { MAX_RECENT_DOWNLOADS, sameSavedConfigShape, type SavedDownload } from '~/containers/Downloads/savedDownloads'
-import type { CustomView } from '~/containers/ProDashboard/types'
 import { useIsClient } from '~/hooks/useIsClient'
 import { slug } from '~/utils'
 import { getThemeCookie, setThemeCookie } from '~/utils/cookies'
@@ -213,7 +212,6 @@ export type AppStorage = SettingsStore & {
 	[TOKENS_SELECTED_PORTFOLIO]?: string
 	[SAVED_DOWNLOADS]?: SavedDownload[]
 	[RECENT_DOWNLOADS]?: SavedDownload[]
-	tableViews?: CustomView[]
 }
 
 const CHAINS_CATEGORY_GROUP_KEYS = CHAINS_CATEGORY_GROUP_SETTINGS.map((g) => g.key)

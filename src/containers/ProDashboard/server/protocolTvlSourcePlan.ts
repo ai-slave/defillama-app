@@ -1,17 +1,16 @@
+import { buildProtocolValueChartQueryKey } from '~/containers/ProtocolOverview/valueChartSources'
+import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { ProDashboardProtocolCatalog } from '../protocolCatalog'
 import {
 	getAdvancedTvlBreakdownSources,
-	getBorrowedBreakdownQueryKey,
 	getBorrowedBreakdownSources,
-	getProtocolTvlBreakdownQueryKey,
 	shouldSuppressAdvancedTvlTokenBreakdown,
 	shouldSuppressBorrowedTokenBreakdown,
 	type ProtocolTvlBreakdownRequest
 } from '../services/protocolTvl'
-import type { DashboardItemConfig } from '../types'
 
 export interface ProtocolTvlStreamSource {
-	queryKey: ReturnType<typeof getProtocolTvlBreakdownQueryKey>
+	queryKey: ReturnType<typeof buildProtocolValueChartQueryKey>
 	request: ProtocolTvlBreakdownRequest
 }
 
@@ -30,7 +29,7 @@ export function buildProtocolTvlStreamSourcePlan(
 			if (shouldSuppressBorrowedTokenBreakdown(item.chartType, misrepresentedProtocols.has(item.protocol))) continue
 
 			for (const source of getBorrowedBreakdownSources(item.protocol, item.chartType)) {
-				const queryKey = getBorrowedBreakdownQueryKey(source.request)
+				const queryKey = buildProtocolValueChartQueryKey({ source: 'tvl', ...source.request })
 				sources.set(JSON.stringify(queryKey), { queryKey, request: source.request })
 			}
 		} else if (item.kind === 'advanced-tvl' && item.chartType !== 'tvl') {
@@ -39,7 +38,7 @@ export function buildProtocolTvlStreamSourcePlan(
 			}
 
 			for (const source of getAdvancedTvlBreakdownSources(item.protocol, item.chartType, {})) {
-				const queryKey = getProtocolTvlBreakdownQueryKey(source.request)
+				const queryKey = buildProtocolValueChartQueryKey({ source: 'tvl', ...source.request })
 				sources.set(JSON.stringify(queryKey), { queryKey, request: source.request })
 			}
 		}

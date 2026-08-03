@@ -1,54 +1,26 @@
-import { describe, expect, expectTypeOf, it } from 'vitest'
-import type {
-	IProtocolChainBreakdownChart,
-	IProtocolTokenBreakdownChart,
-	IProtocolValueChart
-} from '~/containers/ProtocolOverview/api.types'
+import { describe, expect, it } from 'vitest'
+import { buildProtocolValueChartQueryKey } from '~/containers/ProtocolOverview/valueChartSources'
 import {
-	fetchProtocolTvlBreakdownForDashboard,
-	fetchProtocolTvlValueForDashboard,
 	getAdvancedTvlBreakdownSources,
-	getBorrowedBreakdownQueryKey,
 	getBorrowedBreakdownSources,
-	getProtocolTvlValueQueryKey,
 	shouldSuppressAdvancedTvlTokenBreakdown,
-	shouldSuppressBorrowedTokenBreakdown,
-	type ProtocolTvlBreakdownSource
+	shouldSuppressBorrowedTokenBreakdown
 } from './protocolTvl'
 
-type ChainBreakdownSource = Extract<ProtocolTvlBreakdownSource, { kind: 'chain' }>
-type TokenUsdBreakdownSource = Extract<ProtocolTvlBreakdownSource, { kind: 'token-usd' }>
-type TokenRawBreakdownSource = Extract<ProtocolTvlBreakdownSource, { kind: 'token-raw' }>
-
-describe('protocol TVL service contracts', () => {
-	it('correlates source kinds with exact request modes and non-null successes', () => {
-		expectTypeOf<ChainBreakdownSource['request']['breakdownType']>().toEqualTypeOf<'chain-breakdown'>()
-		expectTypeOf<TokenUsdBreakdownSource['request']>().toMatchTypeOf<{
-			breakdownType: 'token-breakdown'
-			currency?: never
-		}>()
-		expectTypeOf<TokenRawBreakdownSource['request']['currency']>().toEqualTypeOf<'token'>()
-		expectTypeOf(fetchProtocolTvlValueForDashboard).returns.toEqualTypeOf<Promise<IProtocolValueChart>>()
-		expectTypeOf(fetchProtocolTvlBreakdownForDashboard).toMatchTypeOf<
-			(request: ChainBreakdownSource['request']) => Promise<IProtocolChainBreakdownChart>
-		>()
-		expectTypeOf(fetchProtocolTvlBreakdownForDashboard).toMatchTypeOf<
-			(request: TokenUsdBreakdownSource['request']) => Promise<IProtocolTokenBreakdownChart>
-		>()
-		expectTypeOf(fetchProtocolTvlBreakdownForDashboard).toMatchTypeOf<
-			(request: TokenRawBreakdownSource['request']) => Promise<IProtocolTokenBreakdownChart>
-		>()
-	})
-})
+function requireSource<T>(source: T | undefined): T {
+	if (source === undefined) throw new Error('Expected protocol TVL source')
+	return source
+}
 
 describe('borrowed TVL source selection', () => {
 	it('shares one USD token source between line and pie cards', () => {
-		const [line] = getBorrowedBreakdownSources('aave', 'tokenBorrowedUsd')
-		const [pie] = getBorrowedBreakdownSources('aave', 'tokensBorrowedPie')
+		const line = requireSource(getBorrowedBreakdownSources('aave', 'tokenBorrowedUsd')[0])
+		const pie = requireSource(getBorrowedBreakdownSources('aave', 'tokensBorrowedPie')[0])
 
 		expect(line).toEqual(pie)
-		if (!line || !pie) throw new Error('Expected borrowed token breakdown sources')
-		expect(getBorrowedBreakdownQueryKey(line.request)).toEqual(getBorrowedBreakdownQueryKey(pie.request))
+		expect(buildProtocolValueChartQueryKey({ source: 'tvl', ...line.request })).toEqual(
+			buildProtocolValueChartQueryKey({ source: 'tvl', ...pie.request })
+		)
 	})
 
 	it('pairs the USD ranking source with the raw token source', () => {
@@ -70,13 +42,12 @@ describe('borrowed TVL source selection', () => {
 	})
 
 	it('keeps chain, USD token and raw token cache identities distinct', () => {
-		const [chainSource] = getBorrowedBreakdownSources('aave', 'chainsBorrowed')
-		const [usdSource] = getBorrowedBreakdownSources('aave', 'tokenBorrowedUsd')
-		const [, rawSource] = getBorrowedBreakdownSources('aave', 'tokenBorrowedRaw')
-		if (!chainSource || !usdSource || !rawSource) throw new Error('Expected all borrowed breakdown source modes')
-		const chain = getBorrowedBreakdownQueryKey(chainSource.request)
-		const usd = getBorrowedBreakdownQueryKey(usdSource.request)
-		const raw = getBorrowedBreakdownQueryKey(rawSource.request)
+		const chainSource = requireSource(getBorrowedBreakdownSources('aave', 'chainsBorrowed')[0])
+		const usdSource = requireSource(getBorrowedBreakdownSources('aave', 'tokenBorrowedUsd')[0])
+		const rawSource = requireSource(getBorrowedBreakdownSources('aave', 'tokenBorrowedRaw')[1])
+		const chain = buildProtocolValueChartQueryKey({ source: 'tvl', ...chainSource.request })
+		const usd = buildProtocolValueChartQueryKey({ source: 'tvl', ...usdSource.request })
+		const raw = buildProtocolValueChartQueryKey({ source: 'tvl', ...rawSource.request })
 
 		expect(new Set([JSON.stringify(chain), JSON.stringify(usd), JSON.stringify(raw)])).toHaveLength(3)
 	})
@@ -92,7 +63,7 @@ describe('borrowed TVL source selection', () => {
 
 describe('advanced TVL source selection', () => {
 	it('uses the canonical Protocol Overview cache key for base TVL', () => {
-		expect(getProtocolTvlValueQueryKey('aave')).toEqual([
+		expect(buildProtocolValueChartQueryKey({ source: 'tvl', protocol: 'aave' })).toEqual([
 			'protocol-overview',
 			'tvl-chart',
 			'aave',
@@ -117,12 +88,6 @@ describe('advanced TVL source selection', () => {
 				request: { protocol: 'aave', key: undefined, breakdownType: 'token-breakdown', currency: 'token' }
 			}
 		])
-	})
-
-	it('uses USD token values to keep huge low-value raw quantities off the chart', () => {
-		const sources = getAdvancedTvlBreakdownSources('aave', 'tokenBalances', {})
-
-		expect(sources.map((source) => source.kind)).toEqual(['token-usd', 'token-raw'])
 	})
 
 	it('requests both token currencies only for inflow views', () => {

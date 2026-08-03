@@ -1,34 +1,50 @@
-import type { NormalizedRow, NumericMetrics } from '~/containers/ProDashboard/components/UnifiedTable/types'
-import type { UnifiedRowHeaderType, UnifiedTableConfig } from '~/containers/ProDashboard/types'
-import { llamaDb } from '~/server/db/llama'
 import {
-	computeShare,
-	derivePreviousValue,
-	extractChainFilters,
-	formatDisplayName,
-	resolveLogoUrl,
-	toPercent
-} from './utils'
-
-export interface ChainMetrics {
-	bridgedTvl: number | null
-	stablesMcap: number | null
-	tvlShare: number | null
-	stablesShare: number | null
-	volume24hShare: number | null
-	protocolCount: number | null
-}
+	createDimensionDatasetRequestScope,
+	type DimensionDatasetRequestScope
+} from '~/containers/AdapterMetrics/server/datasets'
+import { fetchOracleMetrics } from '~/containers/Oracles/api'
+import { buildOracleNamesByProtocol } from '~/containers/Oracles/membership'
+import type { UnifiedTableConfig } from '~/containers/ProDashboard/unifiedTable/config/current'
+import type { ProtocolRowMembership } from '~/containers/ProDashboard/unifiedTable/config/protocolRowMembership'
+import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
+import type {
+	ProtocolAggregateTableRow,
+	ProtocolChainTableRow,
+	ProtocolTableMetrics,
+	ProtocolTableSourceRow
+} from '~/containers/ProDashboard/unifiedTable/contracts'
+import type {
+	CanonicalChainMetrics,
+	ChainMetrics,
+	ParentProtocolMetrics
+} from '~/containers/ProDashboard/unifiedTable/contracts'
+import {
+	PROTOCOL_BASE_METRIC_FAMILIES,
+	PROTOCOL_SUPPLEMENTAL_METRICS,
+	type ProtocolBaseMetricFamily,
+	type ProtocolPointMetric,
+	type ProtocolSupplementalMetric
+} from '~/containers/ProDashboard/unifiedTable/protocolCapabilities'
+import { llamaDb } from '~/server/db/llama'
+import { slug } from '~/utils'
+import { toDisplayName, toInternalSlug } from '~/utils/chainNormalizer'
+import { tokenIconUrl } from '~/utils/icons'
+import {
+	applyChainPointComparisons,
+	applyProtocolPointComparisons,
+	fetchProtocolPointComparisons
+} from './pointComparisons'
+import { fetchProtocolRowMembershipDataset, filterProtocolRowsByDatasetMembership } from './rowMembership'
+import { applyProtocolSupplementalMetrics, fetchProtocolSupplementalMetrics } from './supplementalMetrics'
+import { computeShare, derivePreviousValue, extractChainFilters, formatDisplayName, toPercent } from './utils'
 
 interface ProtocolsTableResult {
-	rows: NormalizedRow[]
+	rows: ProtocolTableSourceRow[]
+	parentMetrics: Record<string, ParentProtocolMetrics>
 	chainMetrics?: Record<string, ChainMetrics>
 }
 
-type ProtocolAggregateRow = {
-	protocol: string
-	protocol_category: string | null
-	chain_slugs: string[] | null
-	oracle_names: string[] | null
+type LensMetricRow = Partial<{
 	tvl_base: number | null
 	tvl_base_1d_pct_change: number | null
 	tvl_base_7d_pct_change: number | null
@@ -88,21 +104,125 @@ type ProtocolAggregateRow = {
 	volume_options_30d_pct_change: number | null
 	mcap: number | null
 	fdv: number | null
-	chain_mcap?: number | null
-	pf_ratio: number | null
-	ps_ratio: number | null
 	open_interest: number | null
-	chain_slug?: string | null
+}>
+
+type ProjectedLensMetricColumn = Exclude<keyof LensMetricRow, 'open_interest'>
+
+const LENS_METRIC_COLUMNS_BY_FAMILY: Readonly<
+	Partial<Record<ProtocolBaseMetricFamily, readonly ProjectedLensMetricColumn[]>>
+> = {
+	tvl: ['tvl_base', 'tvl_base_1d_pct_change', 'tvl_base_7d_pct_change', 'tvl_base_30d_pct_change'],
+	'dex-volume': [
+		'volume_dexs_1d',
+		'volume_dexs_7d',
+		'volume_dexs_30d',
+		'volume_dexs_1d_pct_change',
+		'volume_dexs_7d_pct_change',
+		'volume_dexs_30d_pct_change',
+		'volume_dexs_alltime'
+	],
+	fees: [
+		'fees_1d',
+		'fees_7d',
+		'fees_30d',
+		'fees_365d',
+		'fees_alltime',
+		'fees_annualised',
+		'fees_1d_pct_change',
+		'fees_7d_pct_change',
+		'fees_30d_pct_change'
+	],
+	'holder-revenue': ['holder_revenue_1d', 'holder_revenue_7d', 'holder_revenue_30d', 'holder_revenue_30d_pct_change'],
+	revenue: [
+		'revenue_1d',
+		'revenue_7d',
+		'revenue_30d',
+		'revenue_365d',
+		'revenue_annualised',
+		'revenue_alltime',
+		'revenue_1d_pct_change',
+		'revenue_7d_pct_change',
+		'revenue_30d_pct_change'
+	],
+	'perps-volume': [
+		'volume_derivatives_1d',
+		'volume_derivatives_7d',
+		'volume_derivatives_30d',
+		'volume_derivatives_1d_pct_change',
+		'volume_derivatives_7d_pct_change',
+		'volume_derivatives_30d_pct_change'
+	],
+	'aggregator-volume': [
+		'volume_aggregators_1d',
+		'volume_aggregators_7d',
+		'volume_aggregators_30d',
+		'volume_aggregators_1d_pct_change',
+		'volume_aggregators_7d_pct_change',
+		'volume_aggregators_30d_pct_change'
+	],
+	'derivatives-aggregator-volume': [
+		'volume_aggr_derivatives_1d',
+		'volume_aggr_derivatives_7d',
+		'volume_aggr_derivatives_30d',
+		'volume_aggr_derivatives_1d_pct_change',
+		'volume_aggr_derivatives_7d_pct_change',
+		'volume_aggr_derivatives_30d_pct_change'
+	],
+	'options-volume': [
+		'volume_options_1d',
+		'volume_options_7d',
+		'volume_options_30d',
+		'volume_options_1d_pct_change',
+		'volume_options_7d_pct_change',
+		'volume_options_30d_pct_change'
+	],
+	'market-cap': ['mcap', 'fdv']
+}
+
+const buildLensMetricProjection = (
+	alias: 'mp' | 'msp' | 'mpc' | 'mspc',
+	requestedFamilies: readonly ProtocolBaseMetricFamily[]
+): string => {
+	const requested = new Set(requestedFamilies)
+	const projection: string[] = []
+	for (const family of PROTOCOL_BASE_METRIC_FAMILIES) {
+		for (const column of LENS_METRIC_COLUMNS_BY_FAMILY[family] ?? []) {
+			if (requested.has(family)) projection.push(`${alias}.${column}`)
+		}
+	}
+	return projection.length > 0 ? projection.join(',\n\t\t\t') : 'NULL::numeric AS no_requested_metrics'
+}
+
+type ProtocolAggregateRow = LensMetricRow & {
+	protocol: string
+	protocol_name: string | null
+	protocol_category: string | null
+	chain_slugs: string[] | null
+	exclude_tvl_from_parent: boolean
 }
 
 type SubProtocolRow = ProtocolAggregateRow & {
 	sub_protocol: string
-	protocol: string
+	parent_protocol_name: string | null
 }
+
+type ProtocolChainAggregateRow = ProtocolAggregateRow & { chain_slug: string }
+type SubProtocolChainRow = SubProtocolRow & { chain_slug: string }
 
 interface ProtocolQueryOptions {
 	config: UnifiedTableConfig
 	rowHeaders: UnifiedRowHeaderType[]
+	baseMetricFamilies: ProtocolBaseMetricFamily[]
+	pointMetrics: ProtocolPointMetric[]
+	supplementalMetrics: ProtocolSupplementalMetric[]
+	needsOracleMembership: boolean
+	rowMembership: ProtocolRowMembership
+}
+
+interface ProtocolTableRequestContext {
+	oracleMetricsPromise?: ReturnType<typeof fetchOracleMetrics>
+	dimensionDatasetRequestScope?: DimensionDatasetRequestScope
 }
 
 const computeMarketCapToAnnualizedMetricRatio = (
@@ -115,223 +235,527 @@ const computeMarketCapToAnnualizedMetricRatio = (
 	return marketCap / annualizedMetric
 }
 
-type ProtocolMetricTotals = {
+type ProtocolMetricTotals = Partial<{
 	tvl_base: number | null
 	volume_dexs_1d: number | null
 	volume_dexs_7d: number | null
 	volume_aggregators_1d: number | null
 	volume_aggregators_7d: number | null
 	volume_derivatives_1d: number | null
-	volume_aggr_derivatives_1d: number | null
 	volume_options_1d: number | null
+}>
+
+function retainReferencedParentMetrics(
+	parentMetrics: Record<string, ParentProtocolMetrics>,
+	rows: readonly ProtocolTableSourceRow[]
+): Record<string, ParentProtocolMetrics> {
+	const referencedParents = new Set<string>()
+	for (const row of rows) {
+		if (row.parentProtocolId) referencedParents.add(row.parentProtocolId)
+	}
+	const retained: Record<string, ParentProtocolMetrics> = {}
+	for (const parentId of referencedParents) {
+		const metrics = parentMetrics[parentId]
+		if (metrics) retained[parentId] = metrics
+	}
+	return retained
 }
 
+const TOTAL_DEPENDENT_METRIC_FAMILIES = new Set<ProtocolBaseMetricFamily>([
+	'tvl',
+	'dex-volume',
+	'perps-volume',
+	'aggregator-volume',
+	'options-volume'
+])
+
 const PROTOCOL_METRIC_TOTALS_TTL_MS = 5 * 60 * 1000
-const PROTOCOL_METRIC_TOTALS_QUERY = `
+const PROTOCOL_METRIC_TOTALS_CACHE_LIMIT = 16
+const buildProtocolMetricTotalsQuery = (baseMetricFamilies: readonly ProtocolBaseMetricFamily[]): string => {
+	const requested = new Set(baseMetricFamilies)
+	const columns: string[] = []
+	const select = (family: ProtocolBaseMetricFamily, column: keyof ProtocolMetricTotals) => {
+		if (requested.has(family)) columns.push(column)
+	}
+	select('tvl', 'tvl_base')
+	select('dex-volume', 'volume_dexs_1d')
+	select('dex-volume', 'volume_dexs_7d')
+	select('aggregator-volume', 'volume_aggregators_1d')
+	select('aggregator-volume', 'volume_aggregators_7d')
+	select('perps-volume', 'volume_derivatives_1d')
+	select('options-volume', 'volume_options_1d')
+	return `
 	SELECT
-		tvl_base,
-		volume_dexs_1d,
-		volume_dexs_7d,
-		volume_aggregators_1d,
-		volume_aggregators_7d,
-		volume_derivatives_1d,
-		volume_aggr_derivatives_1d,
-		volume_options_1d
+		${columns.length > 0 ? columns.join(',\n\t\t') : 'NULL::numeric AS no_requested_metrics'}
 	FROM lens.metrics_total_current
 `
+}
 
-let protocolMetricTotalsCache: { value: Promise<ProtocolMetricTotals>; expiresAt: number } | null = null
+interface ProtocolMetricTotalsCacheEntry {
+	value: Promise<ProtocolMetricTotals>
+	expiresAt: number
+}
 
-function getProtocolMetricTotals(): Promise<ProtocolMetricTotals> {
+const protocolMetricTotalsCache = new Map<string, ProtocolMetricTotalsCacheEntry>()
+
+function getProtocolMetricTotals(
+	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
+): Promise<ProtocolMetricTotals> {
 	const now = Date.now()
-	if (protocolMetricTotalsCache && protocolMetricTotalsCache.expiresAt > now) {
-		return protocolMetricTotalsCache.value
+	const key = baseMetricFamilies.join('|')
+	for (const [cachedKey, entry] of protocolMetricTotalsCache) {
+		if (entry.expiresAt <= now) protocolMetricTotalsCache.delete(cachedKey)
+	}
+	const cached = protocolMetricTotalsCache.get(key)
+	if (cached) {
+		protocolMetricTotalsCache.delete(key)
+		protocolMetricTotalsCache.set(key, cached)
+		return cached.value
 	}
 
 	// Share concurrent table requests, but refresh alongside the route's five-minute cache window.
-	const value = llamaDb.one<ProtocolMetricTotals>(PROTOCOL_METRIC_TOTALS_QUERY).catch((error) => {
-		if (protocolMetricTotalsCache?.value === value) protocolMetricTotalsCache = null
+	const value = llamaDb.one<ProtocolMetricTotals>(buildProtocolMetricTotalsQuery(baseMetricFamilies)).catch((error) => {
+		if (protocolMetricTotalsCache.get(key)?.value === value) protocolMetricTotalsCache.delete(key)
 		throw error
 	})
-	protocolMetricTotalsCache = { value, expiresAt: now + PROTOCOL_METRIC_TOTALS_TTL_MS }
+	protocolMetricTotalsCache.set(key, { value, expiresAt: now + PROTOCOL_METRIC_TOTALS_TTL_MS })
+	if (protocolMetricTotalsCache.size > PROTOCOL_METRIC_TOTALS_CACHE_LIMIT) {
+		const oldest = protocolMetricTotalsCache.keys().next()
+		if (!oldest.done) protocolMetricTotalsCache.delete(oldest.value)
+	}
 	return value
 }
 
-export async function fetchProtocolsTable(options: ProtocolQueryOptions): Promise<ProtocolsTableResult> {
+export async function fetchProtocolsTable(
+	options: ProtocolQueryOptions,
+	context: ProtocolTableRequestContext = {}
+): Promise<ProtocolsTableResult> {
 	const chainFilters = extractChainFilters(options.config)
 	const category = options.config.params?.category
-	const totals = await getProtocolMetricTotals()
+	const rowMembership = options.rowMembership
+	const dimensionDatasetRequestScope = context.dimensionDatasetRequestScope ?? createDimensionDatasetRequestScope()
+	const requestedFamilySet = new Set<ProtocolBaseMetricFamily>(options.baseMetricFamilies)
+	if (rowMembership.kind === 'base-metric') requestedFamilySet.add(rowMembership.family)
+	const baseMetricFamilies = PROTOCOL_BASE_METRIC_FAMILIES.filter((family) => requestedFamilySet.has(family))
+	const supplementalMetricSet = new Set<ProtocolSupplementalMetric>(options.supplementalMetrics)
+	if (rowMembership.kind === 'supplemental-metric') supplementalMetricSet.add(rowMembership.metric)
+	const supplementalMetricRequests = PROTOCOL_SUPPLEMENTAL_METRICS.filter((metric) => supplementalMetricSet.has(metric))
+	const needsMetricTotals = baseMetricFamilies.some((family) => TOTAL_DEPENDENT_METRIC_FAMILIES.has(family))
+	const totalsPromise = needsMetricTotals
+		? getProtocolMetricTotals(baseMetricFamilies)
+		: Promise.resolve<ProtocolMetricTotals>({})
 	const shouldExplodeByChain = options.rowHeaders.includes('chain') || chainFilters.length > 0
-	if (shouldExplodeByChain) {
-		const [rows, chainMetrics] = await Promise.all([
-			fetchProtocolChainRows(chainFilters, totals),
-			fetchChainMetricsForGrouping(chainFilters, totals)
-		])
-		return { rows: filterRowsByCategory(rows, category), chainMetrics }
-	}
-	const [parentRows, childRows] = await Promise.all([
-		fetchProtocolAggregateRows(chainFilters, totals),
-		fetchSubProtocolRows(chainFilters, totals)
-	])
-
-	const parentProtocolIds = new Set<string>()
-	for (const row of childRows) {
-		if (row.parentProtocolId) parentProtocolIds.add(row.parentProtocolId)
-	}
-	const subProtocolIds = new Set(childRows.map((row) => row.protocolId))
-	const filteredParents = parentRows.filter(
-		(row) => !parentProtocolIds.has(row.protocolId) && !subProtocolIds.has(row.protocolId)
+	const tableDataPromise = shouldExplodeByChain
+		? fetchProtocolChainTableData(chainFilters, totalsPromise, baseMetricFamilies)
+		: fetchProtocolTableData(chainFilters, totalsPromise, baseMetricFamilies)
+	const pointComparisonsPromise = options.pointMetrics.length
+		? fetchProtocolPointComparisons({ chainFilters, byChain: shouldExplodeByChain, metrics: options.pointMetrics })
+		: null
+	const supplementalMetricsPromise = fetchProtocolSupplementalMetrics(
+		supplementalMetricRequests,
+		shouldExplodeByChain ? { kind: 'chain', chains: chainFilters } : { kind: 'protocol' },
+		dimensionDatasetRequestScope
 	)
+	const rowMembershipDatasetPromise = fetchProtocolRowMembershipDataset(
+		rowMembership,
+		shouldExplodeByChain ? { kind: 'chain', chains: chainFilters } : { kind: 'protocol' },
+		dimensionDatasetRequestScope
+	)
+	const requestedOracleMetrics = options.needsOracleMembership
+		? (context.oracleMetricsPromise ?? fetchOracleMetrics())
+		: null
+	const [tableData, oracleMetrics, pointComparisons, resolvedSupplementalMetrics, rowMembershipDataset] =
+		await Promise.all([
+			tableDataPromise,
+			requestedOracleMetrics,
+			pointComparisonsPromise,
+			supplementalMetricsPromise,
+			rowMembershipDatasetPromise
+		])
 
-	const allRows = [...filteredParents, ...childRows]
-
-	const uniqueRows = new Map<string, NormalizedRow>()
-	for (const row of allRows) {
-		if (!uniqueRows.has(row.id)) {
-			uniqueRows.set(row.id, row)
+	const oracleNamesByProtocolId = new Map<string, readonly string[]>()
+	if (oracleMetrics) {
+		for (const [protocolName, oracleNames] of buildOracleNamesByProtocol(oracleMetrics.oracles)) {
+			oracleNamesByProtocolId.set(slug(protocolName), oracleNames)
 		}
 	}
 
-	return { rows: filterRowsByCategory(Array.from(uniqueRows.values()), category) }
+	const categoryRows = filterRowsByCategory(tableData.rows, category)
+	const membershipRows = filterProtocolRowsByDatasetMembership(categoryRows, rowMembershipDataset)
+	const pointRows = pointComparisons
+		? applyProtocolPointComparisons(membershipRows, pointComparisons, options.pointMetrics)
+		: membershipRows
+	const supplemented = applyProtocolSupplementalMetrics(
+		pointRows,
+		tableData.parentMetrics,
+		resolvedSupplementalMetrics,
+		tableData.rows
+	)
+	const membershipParentMetrics =
+		rowMembership.kind === 'all-protocols'
+			? supplemented.parentMetrics
+			: retainReferencedParentMetrics(supplemented.parentMetrics, supplemented.rows)
+	const parentMetrics = applyParentOracleMembership(membershipParentMetrics, oracleNamesByProtocolId)
+	const chainMetrics = pointComparisons
+		? applyChainPointComparisons(tableData.chainMetrics, pointComparisons, options.pointMetrics)
+		: tableData.chainMetrics
+
+	return {
+		rows: applyOracleMembership(supplemented.rows, oracleNamesByProtocolId),
+		parentMetrics,
+		...(chainMetrics ? { chainMetrics } : {})
+	}
 }
 
-function filterRowsByCategory(rows: NormalizedRow[], category: string | null | undefined): NormalizedRow[] {
+function applyParentOracleMembership(
+	parentMetrics: Record<string, ParentProtocolMetrics>,
+	oracleNamesByProtocolId: ReadonlyMap<string, readonly string[]>
+): Record<string, ParentProtocolMetrics> {
+	if (oracleNamesByProtocolId.size === 0) return parentMetrics
+	const result: Record<string, ParentProtocolMetrics> = {}
+	for (const parentId in parentMetrics) {
+		const metrics = parentMetrics[parentId]
+		if (!metrics) continue
+		const oracles = oracleNamesByProtocolId.get(slug(parentId))
+		result[parentId] = oracles?.length
+			? { ...metrics, oracles: [...oracles].sort((a, b) => a.localeCompare(b)) }
+			: metrics
+	}
+	return result
+}
+
+async function fetchProtocolTableData(
+	chainFilters: string[],
+	totalsPromise: Promise<ProtocolMetricTotals>,
+	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
+): Promise<ProtocolsTableResult> {
+	const [parentRows, childRows] = await Promise.all([
+		fetchProtocolAggregateRows(chainFilters, totalsPromise, baseMetricFamilies),
+		fetchSubProtocolRows(chainFilters, totalsPromise, baseMetricFamilies)
+	])
+
+	const parentProtocolIds = new Set<string>()
+	const subProtocolIds = new Set<string>()
+	for (const row of childRows) {
+		if (row.parentProtocolId) parentProtocolIds.add(row.parentProtocolId)
+		subProtocolIds.add(row.protocolId)
+	}
+	const uniqueRows = new Map<string, ProtocolTableSourceRow>()
+	for (const row of parentRows) {
+		if (row.protocolId && (parentProtocolIds.has(row.protocolId) || subProtocolIds.has(row.protocolId))) continue
+		if (!uniqueRows.has(row.id)) uniqueRows.set(row.id, row)
+	}
+	for (const row of childRows) if (!uniqueRows.has(row.id)) uniqueRows.set(row.id, row)
+
+	return {
+		rows: Array.from(uniqueRows.values()),
+		parentMetrics: buildParentMetrics(parentRows, childRows)
+	}
+}
+
+function buildParentMetrics(
+	parentRows: ProtocolTableSourceRow[],
+	childRows: ProtocolTableSourceRow[]
+): Record<string, ParentProtocolMetrics> {
+	const childProtocolIdsByParent = new Map<string, Set<string>>()
+	const childProtocolIdsByParentChain = new Map<string, Map<string, Set<string>>>()
+	for (const row of childRows) {
+		if (!row.parentProtocolId) continue
+		const childIds = childProtocolIdsByParent.get(row.parentProtocolId) ?? new Set<string>()
+		childIds.add(row.protocolId)
+		childProtocolIdsByParent.set(row.parentProtocolId, childIds)
+		if (!row.chain) continue
+		const chainSlug = toInternalSlug(row.chain)
+		const childIdsByChain = childProtocolIdsByParentChain.get(row.parentProtocolId) ?? new Map<string, Set<string>>()
+		const chainChildIds = childIdsByChain.get(chainSlug) ?? new Set<string>()
+		chainChildIds.add(row.protocolId)
+		childIdsByChain.set(chainSlug, chainChildIds)
+		childProtocolIdsByParentChain.set(row.parentProtocolId, childIdsByChain)
+	}
+
+	type ParentMetricAccumulator = {
+		mcap: number | null
+		fdv: number | null
+		openInterest: number | null
+		openInterestByChain: Record<string, number | null>
+		hasOpenInterest: boolean
+	}
+	const accumulators = new Map<string, ParentMetricAccumulator>()
+	for (const row of parentRows) {
+		if (!childProtocolIdsByParent.has(row.protocolId)) continue
+		const accumulator = accumulators.get(row.protocolId) ?? {
+			mcap: null,
+			fdv: null,
+			openInterest: null,
+			openInterestByChain: {},
+			hasOpenInterest: false
+		}
+		accumulator.mcap ??= row.metrics.mcap ?? null
+		accumulator.fdv ??= row.metrics.fdv ?? null
+		if (Object.hasOwn(row.metrics, 'openInterest')) {
+			accumulator.hasOpenInterest = true
+			const openInterest = row.metrics.openInterest
+			if (openInterest != null) accumulator.openInterest = (accumulator.openInterest ?? 0) + openInterest
+			if (row.chain) accumulator.openInterestByChain[toInternalSlug(row.chain)] = openInterest ?? null
+		}
+		accumulators.set(row.protocolId, accumulator)
+	}
+
+	const parentMetrics: Record<string, ParentProtocolMetrics> = {}
+	for (const [parentId, accumulator] of accumulators) {
+		const childProtocolIdsByChain: Record<string, string[]> = {}
+		for (const [chainSlug, childIds] of childProtocolIdsByParentChain.get(parentId) ?? []) {
+			childProtocolIdsByChain[chainSlug] = Array.from(childIds)
+		}
+		const openInterestMetricsByChain: Record<string, Pick<ProtocolTableMetrics, 'openInterest'>> = {}
+		for (const chainSlug in accumulator.openInterestByChain) {
+			const openInterest = accumulator.openInterestByChain[chainSlug]
+			if (openInterest === undefined) throw new Error(`Missing parent open interest for ${parentId} on ${chainSlug}`)
+			openInterestMetricsByChain[chainSlug] = { openInterest }
+		}
+		parentMetrics[parentId] = {
+			mcap: accumulator.mcap,
+			fdv: accumulator.fdv,
+			...(accumulator.hasOpenInterest
+				? {
+						supplements: {
+							openInterest: {
+								childProtocolIds: Array.from(childProtocolIdsByParent.get(parentId) ?? []),
+								childProtocolIdsByChain,
+								metrics: { openInterest: accumulator.openInterest },
+								metricsByChain: openInterestMetricsByChain
+							}
+						}
+					}
+				: {})
+		}
+	}
+	return parentMetrics
+}
+
+function applyOracleMembership(
+	rows: ProtocolTableSourceRow[],
+	oracleNamesByProtocolId: ReadonlyMap<string, readonly string[]>
+): ProtocolTableSourceRow[] {
+	if (oracleNamesByProtocolId.size === 0) return rows
+	return rows.map((row) => {
+		const oracles = oracleNamesByProtocolId.get(row.protocolId)
+		return oracles?.length ? { ...row, oracles: [...oracles] } : row
+	})
+}
+
+function filterRowsByCategory(
+	rows: ProtocolTableSourceRow[],
+	category: string | null | undefined
+): ProtocolTableSourceRow[] {
 	if (!category) return rows
 	const normalizedCategory = formatDisplayName(category).toLowerCase()
 	return rows.filter((row) => row.category?.toLowerCase() === normalizedCategory)
 }
 
-const baseMetricsMapping = (row: ProtocolAggregateRow, totals: ProtocolMetricTotals): NumericMetrics => {
-	const tvl = row.tvl_base ?? null
-	const volume24h = row.volume_dexs_1d ?? null
-	const volume7d = row.volume_dexs_7d ?? null
-	const fees24h = row.fees_1d ?? null
-	const fees7d = row.fees_7d ?? null
-	const fees30d = row.fees_30d ?? null
-	const perps24h = row.volume_derivatives_1d ?? null
-	const holderRevenue7d = row.holder_revenue_7d ?? null
-	const holderRevenue30d = row.holder_revenue_30d ?? null
+const baseMetricsMapping = (
+	row: ProtocolAggregateRow,
+	totals: ProtocolMetricTotals,
+	requested: ReadonlySet<ProtocolBaseMetricFamily>
+): ProtocolTableMetrics => {
+	const metrics: ProtocolTableMetrics = {}
 
-	return {
-		tvl,
-		tvlPrevDay: derivePreviousValue(tvl, row.tvl_base_1d_pct_change),
-		tvlPrevWeek: derivePreviousValue(tvl, row.tvl_base_7d_pct_change),
-		tvlPrevMonth: derivePreviousValue(tvl, row.tvl_base_30d_pct_change),
-		change1d: toPercent(row.tvl_base_1d_pct_change),
-		change7d: toPercent(row.tvl_base_7d_pct_change),
-		change1m: toPercent(row.tvl_base_30d_pct_change),
-		volume24h,
-		volume_7d: volume7d,
-		volume_30d: row.volume_dexs_30d ?? null,
-		cumulativeVolume: row.volume_dexs_alltime ?? null,
-		volumeChange_1d: toPercent(row.volume_dexs_1d_pct_change),
-		volumeChange_7d: toPercent(row.volume_dexs_7d_pct_change),
-		volumeChange_1m: toPercent(row.volume_dexs_30d_pct_change),
-		volumeDominance_24h: computeShare(volume24h, totals.volume_dexs_1d),
-		volumeMarketShare7d: computeShare(volume7d, totals.volume_dexs_7d),
-		fees24h,
-		fees_7d: fees7d,
-		fees_30d: fees30d,
-		fees_1y: row.fees_365d ?? null,
-		feesAnnualized1y: row.fees_annualised ?? null,
-		average_1y: row.fees_annualised ? row.fees_annualised / 12 : null,
-		cumulativeFees: row.fees_alltime ?? null,
-		userFees_24h: null,
-		holderRevenue_24h: row.holder_revenue_1d ?? null,
-		holderRevenue_7d: holderRevenue7d,
-		holdersRevenue30d: holderRevenue30d,
-		treasuryRevenue_24h: null,
-		feesChange_1d: toPercent(row.fees_1d_pct_change),
-		feesChange_7d: toPercent(row.fees_7d_pct_change),
-		feesChange_1m: toPercent(row.fees_30d_pct_change),
-		revenue24h: row.revenue_1d ?? null,
-		revenue_7d: row.revenue_7d ?? null,
-		revenue_30d: row.revenue_30d ?? null,
-		revenue_1y: row.revenue_365d ?? null,
-		revenueAnnualized1y: row.revenue_annualised ?? null,
-		average_revenue_1y: row.revenue_annualised ? row.revenue_annualised / 12 : null,
-		cumulativeRevenue: row.revenue_alltime ?? null,
-		revenueChange_1d: toPercent(row.revenue_1d_pct_change),
-		revenueChange_7d: toPercent(row.revenue_7d_pct_change),
-		revenueChange_1m: toPercent(row.revenue_30d_pct_change),
-		perpsVolume24h: perps24h,
-		perps_volume_7d: row.volume_derivatives_7d ?? null,
-		perps_volume_30d: row.volume_derivatives_30d ?? null,
-		perps_volume_change_1d: toPercent(row.volume_derivatives_1d_pct_change),
-		perps_volume_change_7d: toPercent(row.volume_derivatives_7d_pct_change),
-		perps_volume_change_1m: toPercent(row.volume_derivatives_30d_pct_change),
-		perps_volume_dominance_24h: computeShare(perps24h, totals.volume_derivatives_1d),
-		aggregators_volume_24h: row.volume_aggregators_1d ?? null,
-		aggregators_volume_7d: row.volume_aggregators_7d ?? null,
-		aggregators_volume_30d: row.volume_aggregators_30d ?? null,
-		aggregators_volume_change_1d: toPercent(row.volume_aggregators_1d_pct_change),
-		aggregators_volume_change_7d: toPercent(row.volume_aggregators_7d_pct_change),
-		aggregators_volume_dominance_24h: computeShare(row.volume_aggregators_1d, totals.volume_aggregators_1d),
-		aggregators_volume_marketShare7d: computeShare(row.volume_aggregators_7d, totals.volume_aggregators_7d),
-		derivatives_aggregators_volume_24h: row.volume_aggr_derivatives_1d ?? null,
-		derivatives_aggregators_volume_7d: row.volume_aggr_derivatives_7d ?? null,
-		derivatives_aggregators_volume_30d: row.volume_aggr_derivatives_30d ?? null,
-		derivatives_aggregators_volume_change_1d: toPercent(row.volume_aggr_derivatives_1d_pct_change),
-		derivatives_aggregators_volume_change_7d: toPercent(row.volume_aggr_derivatives_7d_pct_change),
-		derivatives_aggregators_volume_change_1m: toPercent(row.volume_aggr_derivatives_30d_pct_change),
-		options_volume_24h: row.volume_options_1d ?? null,
-		options_volume_7d: row.volume_options_7d ?? null,
-		options_volume_30d: row.volume_options_30d ?? null,
-		options_volume_change_1d: toPercent(row.volume_options_1d_pct_change),
-		options_volume_change_7d: toPercent(row.volume_options_7d_pct_change),
-		options_volume_dominance_24h: computeShare(row.volume_options_1d, totals.volume_options_1d),
-		openInterest: row.open_interest ?? null,
-		mcap: row.mcap ?? null,
-		fdv: row.fdv ?? null,
-		chainMcap: row.chain_mcap ?? null,
-		mcaptvl: row.mcap != null && tvl != null ? row.mcap / tvl : null,
-		pf: computeMarketCapToAnnualizedMetricRatio(row.mcap, row.fees_annualised),
-		ps: computeMarketCapToAnnualizedMetricRatio(row.mcap, row.revenue_annualised),
-		protocolCount: null
+	if (requested.has('tvl')) {
+		const tvl = row.tvl_base ?? null
+		metrics.tvl = tvl
+		metrics.tvlPrevDay = derivePreviousValue(tvl, row.tvl_base_1d_pct_change)
+		metrics.tvlPrevWeek = derivePreviousValue(tvl, row.tvl_base_7d_pct_change)
+		metrics.tvlPrevMonth = derivePreviousValue(tvl, row.tvl_base_30d_pct_change)
+		metrics.change1d = toPercent(row.tvl_base_1d_pct_change)
+		metrics.change7d = toPercent(row.tvl_base_7d_pct_change)
+		metrics.change1m = toPercent(row.tvl_base_30d_pct_change)
 	}
+
+	if (requested.has('dex-volume')) {
+		const volume24h = row.volume_dexs_1d ?? null
+		const volume7d = row.volume_dexs_7d ?? null
+		metrics.volume24h = volume24h
+		metrics.volume_7d = volume7d
+		metrics.volume_30d = row.volume_dexs_30d ?? null
+		metrics.cumulativeVolume = row.volume_dexs_alltime ?? null
+		metrics.volumeChange_1d = toPercent(row.volume_dexs_1d_pct_change)
+		metrics.volumeChange7dOver7d = toPercent(row.volume_dexs_7d_pct_change)
+		metrics.volumeChange30dOver30d = toPercent(row.volume_dexs_30d_pct_change)
+		metrics.volumeDominance_24h = computeShare(volume24h, totals.volume_dexs_1d)
+		metrics.volumeMarketShare7d = computeShare(volume7d, totals.volume_dexs_7d)
+	}
+
+	if (requested.has('fees')) {
+		metrics.fees24h = row.fees_1d ?? null
+		metrics.fees_7d = row.fees_7d ?? null
+		metrics.fees_30d = row.fees_30d ?? null
+		metrics.fees_1y = row.fees_365d ?? null
+		metrics.feesAnnualized1y = row.fees_annualised ?? null
+		metrics.average_1y = row.fees_annualised != null ? row.fees_annualised / 12 : null
+		metrics.cumulativeFees = row.fees_alltime ?? null
+		metrics.feesChange_1d = toPercent(row.fees_1d_pct_change)
+		metrics.feesChange7dOver7d = toPercent(row.fees_7d_pct_change)
+		metrics.feesChange30dOver30d = toPercent(row.fees_30d_pct_change)
+	}
+
+	if (requested.has('holder-revenue')) {
+		metrics.holderRevenue_24h = row.holder_revenue_1d ?? null
+		metrics.holderRevenue_7d = row.holder_revenue_7d ?? null
+		metrics.holdersRevenue30d = row.holder_revenue_30d ?? null
+		metrics.holderRevenueChange30dOver30d = toPercent(row.holder_revenue_30d_pct_change)
+	}
+
+	if (requested.has('revenue')) {
+		metrics.revenue24h = row.revenue_1d ?? null
+		metrics.revenue_7d = row.revenue_7d ?? null
+		metrics.revenue_30d = row.revenue_30d ?? null
+		metrics.revenue_1y = row.revenue_365d ?? null
+		metrics.revenueAnnualized1y = row.revenue_annualised ?? null
+		metrics.average_revenue_1y = row.revenue_annualised != null ? row.revenue_annualised / 12 : null
+		metrics.cumulativeRevenue = row.revenue_alltime ?? null
+		metrics.revenueChange_1d = toPercent(row.revenue_1d_pct_change)
+		metrics.revenueChange7dOver7d = toPercent(row.revenue_7d_pct_change)
+		metrics.revenueChange30dOver30d = toPercent(row.revenue_30d_pct_change)
+	}
+
+	if (requested.has('perps-volume')) {
+		const perps24h = row.volume_derivatives_1d ?? null
+		metrics.perpsVolume24h = perps24h
+		metrics.perps_volume_7d = row.volume_derivatives_7d ?? null
+		metrics.perps_volume_30d = row.volume_derivatives_30d ?? null
+		metrics.perps_volume_change_1d = toPercent(row.volume_derivatives_1d_pct_change)
+		metrics.perpsVolumeChange7dOver7d = toPercent(row.volume_derivatives_7d_pct_change)
+		metrics.perpsVolumeChange30dOver30d = toPercent(row.volume_derivatives_30d_pct_change)
+		metrics.perps_volume_dominance_24h = computeShare(perps24h, totals.volume_derivatives_1d)
+	}
+
+	if (requested.has('aggregator-volume')) {
+		metrics.aggregators_volume_24h = row.volume_aggregators_1d ?? null
+		metrics.aggregators_volume_7d = row.volume_aggregators_7d ?? null
+		metrics.aggregators_volume_30d = row.volume_aggregators_30d ?? null
+		metrics.aggregators_volume_change_1d = toPercent(row.volume_aggregators_1d_pct_change)
+		metrics.aggregatorVolumeChange7dOver7d = toPercent(row.volume_aggregators_7d_pct_change)
+		metrics.aggregators_volume_dominance_24h = computeShare(row.volume_aggregators_1d, totals.volume_aggregators_1d)
+		metrics.aggregators_volume_marketShare7d = computeShare(row.volume_aggregators_7d, totals.volume_aggregators_7d)
+	}
+
+	if (requested.has('derivatives-aggregator-volume')) {
+		metrics.derivatives_aggregators_volume_24h = row.volume_aggr_derivatives_1d ?? null
+		metrics.derivatives_aggregators_volume_7d = row.volume_aggr_derivatives_7d ?? null
+		metrics.derivatives_aggregators_volume_30d = row.volume_aggr_derivatives_30d ?? null
+		metrics.derivatives_aggregators_volume_change_1d = toPercent(row.volume_aggr_derivatives_1d_pct_change)
+		metrics.derivativesAggregatorVolumeChange7dOver7d = toPercent(row.volume_aggr_derivatives_7d_pct_change)
+		metrics.derivativesAggregatorVolumeChange30dOver30d = toPercent(row.volume_aggr_derivatives_30d_pct_change)
+	}
+
+	if (requested.has('options-volume')) {
+		metrics.options_volume_24h = row.volume_options_1d ?? null
+		metrics.options_volume_7d = row.volume_options_7d ?? null
+		metrics.options_volume_30d = row.volume_options_30d ?? null
+		metrics.options_volume_change_1d = toPercent(row.volume_options_1d_pct_change)
+		metrics.optionsVolumeChange7dOver7d = toPercent(row.volume_options_7d_pct_change)
+		metrics.options_volume_dominance_24h = computeShare(row.volume_options_1d, totals.volume_options_1d)
+	}
+
+	if (requested.has('open-interest')) metrics.openInterest = row.open_interest ?? null
+	if (requested.has('market-cap')) {
+		metrics.mcap = row.mcap ?? null
+		metrics.fdv = row.fdv ?? null
+		if (requested.has('tvl')) {
+			metrics.mcaptvl = row.mcap != null && row.tvl_base != null && row.tvl_base > 0 ? row.mcap / row.tvl_base : null
+		}
+		if (requested.has('fees')) metrics.pf = computeMarketCapToAnnualizedMetricRatio(row.mcap, row.fees_annualised)
+		if (requested.has('revenue')) {
+			metrics.ps = computeMarketCapToAnnualizedMetricRatio(row.mcap, row.revenue_annualised)
+		}
+	}
+
+	return metrics
+}
+
+function getCanonicalChainDisplayName(chain: string): string {
+	const canonicalName = toDisplayName(chain)
+	return canonicalName === chain ? formatDisplayName(chain) || chain : canonicalName
+}
+
+type ProtocolRowParentIdentity =
+	| { parentSlug: null; parentDisplayName?: never }
+	| { parentSlug: string; parentDisplayName: string | null }
+
+type ProtocolRowBuildOptions = ProtocolRowParentIdentity & {
+	slug: string
+	displayName: string | null
+	category: string | null
+	requestedMetricFamilies: ReadonlySet<ProtocolBaseMetricFamily>
 }
 
 const buildBaseRow = (
 	row: ProtocolAggregateRow,
 	totals: ProtocolMetricTotals,
-	options: {
-		slug: string
-		parentSlug?: string | null
-		category?: string | null
-		chainSlugs?: string[] | null
-	}
-): NormalizedRow => {
-	const metrics = baseMetricsMapping(row, totals)
-	const displayName = formatDisplayName(options.slug) || options.slug
-	const parentDisplayName = options.parentSlug ? formatDisplayName(options.parentSlug) || options.parentSlug : null
+	options: ProtocolRowBuildOptions & { chainSlugs: string[] | null }
+): ProtocolAggregateTableRow => {
+	const metrics = baseMetricsMapping(row, totals, options.requestedMetricFamilies)
+	const displayName = options.displayName ?? (formatDisplayName(options.slug) || options.slug)
+	const parentDisplayName = options.parentSlug
+		? (options.parentDisplayName ?? (formatDisplayName(options.parentSlug) || options.parentSlug))
+		: null
 
 	return {
+		rowType: 'protocol',
 		id: `protocol-${options.slug}`,
 		name: displayName,
 		displayName,
 		protocolId: options.slug,
-		logo: resolveLogoUrl(options.slug),
+		logo: tokenIconUrl(options.slug),
 		category: options.category ? formatDisplayName(options.category) : null,
-		chains: options.chainSlugs ? options.chainSlugs.map((chain) => formatDisplayName(chain)) : [],
-		oracles: row.oracle_names ? row.oracle_names.map((oracle) => formatDisplayName(oracle)) : [],
+		chains: options.chainSlugs ? options.chainSlugs.map(getCanonicalChainDisplayName) : [],
+		oracles: [],
 		parentProtocolId: options.parentSlug ?? null,
 		parentProtocolName: parentDisplayName,
-		parentProtocolLogo: options.parentSlug ? resolveLogoUrl(options.parentSlug) : null,
+		parentProtocolLogo: options.parentSlug ? tokenIconUrl(options.parentSlug) : null,
+		...(row.exclude_tvl_from_parent ? { excludeTvlFromParent: true } : null),
 		metrics,
-		chain: null,
-		original: {
-			source: 'lens',
-			protocol: options.slug
-		}
+		chain: null
+	}
+}
+
+const buildChainRow = (
+	row: ProtocolAggregateRow,
+	totals: ProtocolMetricTotals,
+	options: ProtocolRowBuildOptions & { chainSlug: string }
+): ProtocolChainTableRow => {
+	const chainName = getCanonicalChainDisplayName(options.chainSlug)
+	const displayName = options.displayName ?? (formatDisplayName(options.slug) || options.slug)
+	return {
+		rowType: 'protocol-chain',
+		id: `protocol-${options.slug}-${options.chainSlug}`,
+		name: displayName,
+		displayName,
+		protocolId: options.slug,
+		logo: tokenIconUrl(options.slug),
+		category: options.category ? formatDisplayName(options.category) : null,
+		chains: [chainName],
+		oracles: [],
+		parentProtocolId: options.parentSlug,
+		parentProtocolName: options.parentSlug
+			? (options.parentDisplayName ?? (formatDisplayName(options.parentSlug) || options.parentSlug))
+			: null,
+		parentProtocolLogo: options.parentSlug ? tokenIconUrl(options.parentSlug) : null,
+		...(row.exclude_tvl_from_parent ? { excludeTvlFromParent: true } : null),
+		metrics: baseMetricsMapping(row, totals, options.requestedMetricFamilies),
+		chain: chainName
 	}
 }
 
 const fetchProtocolAggregateRows = async (
 	chainFilters: string[],
-	totals: ProtocolMetricTotals
-): Promise<NormalizedRow[]> => {
+	totalsPromise: Promise<ProtocolMetricTotals>,
+	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
+): Promise<ProtocolTableSourceRow[]> => {
+	const requestedMetricFamilies = new Set(baseMetricFamilies)
+	const includeOpenInterest = requestedMetricFamilies.has('open-interest')
 	const conditions: string[] = []
-	const values: any[] = []
+	const values: string[][] = []
 
 	if (chainFilters.length) {
 		conditions.push(
@@ -343,16 +767,44 @@ const fetchProtocolAggregateRows = async (
 		)
 		values.push(chainFilters)
 	}
-
 	const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+	const openInterestCte = includeOpenInterest
+		? `,
+		open_interest AS (
+			SELECT
+				protocol,
+				SUM(open_interest) AS open_interest
+			FROM lens.open_interest_current
+			GROUP BY protocol
+		),
+		protocol_anchor AS (
+			SELECT protocol FROM lens.metrics_protocol_current
+			UNION
+			SELECT protocol FROM open_interest
+		)`
+		: ''
+	const openInterestSelect = includeOpenInterest ? 'oi.open_interest' : 'NULL::numeric AS open_interest'
+	const chainMetaSource = includeOpenInterest
+		? `(SELECT protocol, lower(chain) AS chain FROM lens.metrics_protocol_by_chain_current
+			UNION
+			SELECT protocol, lower(chain) AS chain FROM lens.open_interest_current) protocol_chains`
+		: 'lens.metrics_protocol_by_chain_current'
+	const protocolSource = includeOpenInterest
+		? `protocol_anchor anchor
+		LEFT JOIN lens.metrics_protocol_current mp ON mp.protocol = anchor.protocol`
+		: 'lens.metrics_protocol_current mp'
+	const protocolIdentity = includeOpenInterest ? 'anchor.protocol' : 'mp.protocol'
+	const openInterestJoin = includeOpenInterest ? `LEFT JOIN open_interest oi ON oi.protocol = ${protocolIdentity}` : ''
+	const metricProjection = buildLensMetricProjection('mp', baseMetricFamilies)
 
-	const rows = await llamaDb.any<ProtocolAggregateRow>(
-		`
+	const [rows, totals] = await Promise.all([
+		llamaDb.any<ProtocolAggregateRow>(
+			`
 		WITH chain_meta AS (
 			SELECT
 				protocol,
 				array_remove(array_agg(DISTINCT lower(chain) ORDER BY lower(chain)), NULL) AS chain_slugs
-			FROM lens.metrics_protocol_by_chain_current
+			FROM ${chainMetaSource}
 			GROUP BY protocol
 		),
 		category_meta AS (
@@ -361,112 +813,49 @@ const fetchProtocolAggregateRows = async (
 				MIN(category) AS category
 			FROM lens.metrics_sub_protocol_current
 			GROUP BY protocol
-		),
-		oracle_meta AS (
-			SELECT
-				protocol,
-				array_remove(array_agg(DISTINCT oracle ORDER BY oracle), NULL) AS oracle_names
-			FROM lens.oracle_tvs_current
-			WHERE protocol IS NOT NULL
-			GROUP BY protocol
-		),
-		open_interest AS (
-			SELECT
-				protocol,
-				SUM(open_interest) AS open_interest
-			FROM lens.open_interest_current
-			GROUP BY protocol
 		)
+		${openInterestCte}
 		SELECT
-			mp.protocol,
+			${protocolIdentity} AS protocol,
+			metadata.name AS protocol_name,
 			cat.category AS protocol_category,
 			chains.chain_slugs,
-			oracles.oracle_names,
-			mp.tvl_base,
-			mp.tvl_base_1d_pct_change,
-			mp.tvl_base_7d_pct_change,
-			mp.tvl_base_30d_pct_change,
-			mp.volume_dexs_1d,
-			mp.volume_dexs_7d,
-			mp.volume_dexs_30d,
-			mp.volume_dexs_1d_pct_change,
-			mp.volume_dexs_7d_pct_change,
-			mp.volume_dexs_30d_pct_change,
-			mp.volume_dexs_alltime,
-			mp.fees_1d,
-			mp.fees_7d,
-			mp.fees_30d,
-			mp.fees_365d,
-			mp.fees_alltime,
-			mp.fees_annualised,
-			mp.fees_1d_pct_change,
-			mp.fees_7d_pct_change,
-			mp.fees_30d_pct_change,
-			mp.holder_revenue_1d,
-			mp.holder_revenue_7d,
-			mp.holder_revenue_30d,
-			mp.holder_revenue_30d_pct_change,
-			mp.revenue_1d,
-			mp.revenue_7d,
-			mp.revenue_30d,
-			mp.revenue_365d,
-			mp.revenue_annualised,
-			mp.revenue_alltime,
-			mp.revenue_1d_pct_change,
-			mp.revenue_7d_pct_change,
-			mp.revenue_30d_pct_change,
-			mp.volume_derivatives_1d,
-			mp.volume_derivatives_7d,
-			mp.volume_derivatives_30d,
-			mp.volume_derivatives_1d_pct_change,
-			mp.volume_derivatives_7d_pct_change,
-			mp.volume_derivatives_30d_pct_change,
-			mp.volume_aggregators_1d,
-			mp.volume_aggregators_7d,
-			mp.volume_aggregators_30d,
-			mp.volume_aggregators_1d_pct_change,
-			mp.volume_aggregators_7d_pct_change,
-			mp.volume_aggregators_30d_pct_change,
-			mp.volume_aggr_derivatives_1d,
-			mp.volume_aggr_derivatives_7d,
-			mp.volume_aggr_derivatives_30d,
-			mp.volume_aggr_derivatives_1d_pct_change,
-			mp.volume_aggr_derivatives_7d_pct_change,
-			mp.volume_aggr_derivatives_30d_pct_change,
-			mp.volume_options_1d,
-			mp.volume_options_7d,
-			mp.volume_options_30d,
-			mp.volume_options_1d_pct_change,
-			mp.volume_options_7d_pct_change,
-			mp.volume_options_30d_pct_change,
-			mp.mcap,
-			mp.fdv,
-			mp.pf_ratio,
-			mp.ps_ratio,
-			oi.open_interest
-		FROM lens.metrics_protocol_current mp
-		LEFT JOIN chain_meta chains ON chains.protocol = mp.protocol
-		LEFT JOIN category_meta cat ON cat.protocol = mp.protocol
-		LEFT JOIN oracle_meta oracles ON oracles.protocol = mp.protocol
-		LEFT JOIN open_interest oi ON oi.protocol = mp.protocol
+			${metricProjection},
+			${openInterestSelect},
+			FALSE AS exclude_tvl_from_parent
+		FROM ${protocolSource}
+		LEFT JOIN dim.protocol metadata ON metadata.slug = ${protocolIdentity}
+		LEFT JOIN chain_meta chains ON chains.protocol = ${protocolIdentity}
+		LEFT JOIN category_meta cat ON cat.protocol = ${protocolIdentity}
+		${openInterestJoin}
 		${whereClause}
 	`,
-		values
-	)
+			values
+		),
+		totalsPromise
+	])
 
 	return rows.map((row) =>
 		buildBaseRow(row, totals, {
 			slug: row.protocol,
+			displayName: row.protocol_name,
 			parentSlug: null,
 			category: row.protocol_category,
-			chainSlugs: row.chain_slugs
+			chainSlugs: row.chain_slugs,
+			requestedMetricFamilies
 		})
 	)
 }
 
-const fetchSubProtocolRows = async (chainFilters: string[], totals: ProtocolMetricTotals): Promise<NormalizedRow[]> => {
+const fetchSubProtocolRows = async (
+	chainFilters: string[],
+	totalsPromise: Promise<ProtocolMetricTotals>,
+	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
+): Promise<ProtocolTableSourceRow[]> => {
+	const requestedMetricFamilies = new Set(baseMetricFamilies)
+	const includeOpenInterest = requestedMetricFamilies.has('open-interest')
 	const conditions: string[] = []
-	const values: any[] = []
+	const values: string[][] = []
 
 	if (chainFilters.length) {
 		conditions.push(
@@ -478,489 +867,652 @@ const fetchSubProtocolRows = async (chainFilters: string[], totals: ProtocolMetr
 		)
 		values.push(chainFilters)
 	}
-
 	const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+	const openInterestCte = includeOpenInterest
+		? `,
+		open_interest AS (
+			SELECT
+				sub_protocol,
+				protocol,
+				SUM(open_interest) AS open_interest
+			FROM lens.open_interest_current
+			WHERE sub_protocol IS NOT NULL
+			GROUP BY sub_protocol, protocol
+		),
+		sub_protocol_anchor AS (
+			SELECT sub_protocol, protocol FROM lens.metrics_sub_protocol_current
+			UNION
+			SELECT sub_protocol, protocol FROM open_interest
+		)`
+		: ''
+	const openInterestSelect = includeOpenInterest ? 'oi.open_interest' : 'NULL::numeric AS open_interest'
+	const chainMetaSource = includeOpenInterest
+		? `(SELECT sub_protocol, lower(chain) AS chain
+			FROM lens.metrics_sub_protocol_by_chain_current
+			UNION
+			SELECT sub_protocol, lower(chain) AS chain
+			FROM lens.open_interest_current
+			WHERE sub_protocol IS NOT NULL) sub_protocol_chains`
+		: 'lens.metrics_sub_protocol_by_chain_current'
+	const subProtocolSource = includeOpenInterest
+		? `sub_protocol_anchor anchor
+		LEFT JOIN lens.metrics_sub_protocol_current msp ON msp.sub_protocol = anchor.sub_protocol AND msp.protocol = anchor.protocol`
+		: 'lens.metrics_sub_protocol_current msp'
+	const subProtocolIdentity = includeOpenInterest ? 'anchor.sub_protocol' : 'msp.sub_protocol'
+	const parentProtocolIdentity = includeOpenInterest ? 'anchor.protocol' : 'msp.protocol'
+	const openInterestJoin = includeOpenInterest
+		? `LEFT JOIN open_interest oi ON oi.sub_protocol = ${subProtocolIdentity} AND oi.protocol = ${parentProtocolIdentity}`
+		: ''
+	const metricProjection = buildLensMetricProjection('msp', baseMetricFamilies)
 
-	const rows = await llamaDb.any<SubProtocolRow>(
-		`
+	const [rows, totals] = await Promise.all([
+		llamaDb.any<SubProtocolRow>(
+			`
 		WITH chain_meta AS (
 			SELECT
 				sub_protocol,
 				array_remove(array_agg(DISTINCT lower(chain) ORDER BY lower(chain)), NULL) AS chain_slugs
-			FROM lens.metrics_sub_protocol_by_chain_current
-			GROUP BY sub_protocol
-		),
-		oracle_meta AS (
-			SELECT
-				COALESCE(sub_protocol, protocol) AS sub_protocol,
-				array_remove(array_agg(DISTINCT oracle ORDER BY oracle), NULL) AS oracle_names
-			FROM lens.oracle_tvs_current
-			WHERE sub_protocol IS NOT NULL OR protocol IS NOT NULL
-			GROUP BY COALESCE(sub_protocol, protocol)
-		),
-		open_interest AS (
-			SELECT
-				sub_protocol,
-				SUM(open_interest) AS open_interest
-			FROM lens.open_interest_current
-			WHERE sub_protocol IS NOT NULL
+			FROM ${chainMetaSource}
 			GROUP BY sub_protocol
 		)
+		${openInterestCte}
 		SELECT
-			msp.sub_protocol,
-			msp.protocol,
+			${subProtocolIdentity} AS sub_protocol,
+			${parentProtocolIdentity} AS protocol,
+			metadata.name AS protocol_name,
+			parent_metadata.name AS parent_protocol_name,
 			msp.category AS protocol_category,
 			chains.chain_slugs,
-			oracles.oracle_names,
-			msp.tvl_base,
-			msp.tvl_base_1d_pct_change,
-			msp.tvl_base_7d_pct_change,
-			msp.tvl_base_30d_pct_change,
-			msp.volume_dexs_1d,
-			msp.volume_dexs_7d,
-			msp.volume_dexs_30d,
-			msp.volume_dexs_1d_pct_change,
-			msp.volume_dexs_7d_pct_change,
-			msp.volume_dexs_30d_pct_change,
-			msp.volume_dexs_alltime,
-			msp.fees_1d,
-			msp.fees_7d,
-			msp.fees_30d,
-			msp.fees_365d,
-			msp.fees_alltime,
-			msp.fees_annualised,
-			msp.fees_1d_pct_change,
-			msp.fees_7d_pct_change,
-			msp.fees_30d_pct_change,
-			msp.holder_revenue_1d,
-			msp.holder_revenue_7d,
-			msp.holder_revenue_30d,
-			msp.holder_revenue_30d_pct_change,
-			msp.revenue_1d,
-			msp.revenue_7d,
-			msp.revenue_30d,
-			msp.revenue_365d,
-			msp.revenue_annualised,
-			msp.revenue_alltime,
-			msp.revenue_1d_pct_change,
-			msp.revenue_7d_pct_change,
-			msp.revenue_30d_pct_change,
-			msp.volume_derivatives_1d,
-			msp.volume_derivatives_7d,
-			msp.volume_derivatives_30d,
-			msp.volume_derivatives_1d_pct_change,
-			msp.volume_derivatives_7d_pct_change,
-			msp.volume_derivatives_30d_pct_change,
-			msp.volume_aggregators_1d,
-			msp.volume_aggregators_7d,
-			msp.volume_aggregators_30d,
-			msp.volume_aggregators_1d_pct_change,
-			msp.volume_aggregators_7d_pct_change,
-			msp.volume_aggregators_30d_pct_change,
-			msp.volume_aggr_derivatives_1d,
-			msp.volume_aggr_derivatives_7d,
-			msp.volume_aggr_derivatives_30d,
-			msp.volume_aggr_derivatives_1d_pct_change,
-			msp.volume_aggr_derivatives_7d_pct_change,
-			msp.volume_aggr_derivatives_30d_pct_change,
-			msp.volume_options_1d,
-			msp.volume_options_7d,
-			msp.volume_options_30d,
-			msp.volume_options_1d_pct_change,
-			msp.volume_options_7d_pct_change,
-			msp.volume_options_30d_pct_change,
-			msp.mcap,
-			msp.fdv,
-			msp.pf_ratio,
-			msp.ps_ratio,
-			oi.open_interest
-		FROM lens.metrics_sub_protocol_current msp
-		LEFT JOIN chain_meta chains ON chains.sub_protocol = msp.sub_protocol
-		LEFT JOIN oracle_meta oracles ON oracles.sub_protocol = msp.sub_protocol
-		LEFT JOIN open_interest oi ON oi.sub_protocol = msp.sub_protocol
+			${metricProjection},
+			${openInterestSelect},
+			COALESCE(metadata.exclude_tvl_from_parent, FALSE) AS exclude_tvl_from_parent
+		FROM ${subProtocolSource}
+		LEFT JOIN chain_meta chains ON chains.sub_protocol = ${subProtocolIdentity}
+		${openInterestJoin}
+		LEFT JOIN dim.protocol metadata ON metadata.slug = ${subProtocolIdentity}
+		LEFT JOIN dim.protocol parent_metadata ON parent_metadata.slug = ${parentProtocolIdentity}
 		${whereClause}
 	`,
-		values
-	)
+			values
+		),
+		totalsPromise
+	])
 
-	const normalizedRows: NormalizedRow[] = []
+	const normalizedRows: ProtocolTableSourceRow[] = []
 	for (const row of rows) {
 		if (!row.sub_protocol || !row.protocol || row.sub_protocol === row.protocol) continue
 		normalizedRows.push(
 			buildBaseRow(row, totals, {
 				slug: row.sub_protocol,
+				displayName: row.protocol_name,
 				parentSlug: row.protocol,
+				parentDisplayName: row.parent_protocol_name,
 				category: row.protocol_category,
-				chainSlugs: row.chain_slugs
+				chainSlugs: row.chain_slugs,
+				requestedMetricFamilies
 			})
 		)
 	}
 	return normalizedRows
 }
 
-const fetchProtocolChainRows = async (
+const fetchProtocolChainTableData = async (
 	chainFilters: string[],
-	totals: ProtocolMetricTotals
-): Promise<NormalizedRow[]> => {
-	const [parentChainRows, subProtocolChainRows] = await Promise.all([
-		fetchParentProtocolsByChain(chainFilters, totals),
-		fetchSubProtocolsByChain(chainFilters, totals)
+	totalsPromise: Promise<ProtocolMetricTotals>,
+	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
+): Promise<ProtocolsTableResult> => {
+	const [parentChainRows, subProtocolChainRows, chainMetrics] = await Promise.all([
+		fetchParentProtocolsByChain(chainFilters, totalsPromise, baseMetricFamilies),
+		fetchSubProtocolsByChain(chainFilters, totalsPromise, baseMetricFamilies),
+		fetchChainMetricsForGrouping(chainFilters, totalsPromise, baseMetricFamilies)
 	])
 
 	const parentProtocolIds = new Set<string>()
+	const subProtocolIds = new Set<string>()
 	for (const row of subProtocolChainRows) {
 		if (row.parentProtocolId) parentProtocolIds.add(row.parentProtocolId)
+		subProtocolIds.add(row.protocolId)
 	}
-	const subProtocolIds = new Set(subProtocolChainRows.map((row) => row.protocolId))
-	const filteredParents = parentChainRows.filter(
-		(row) => !parentProtocolIds.has(row.protocolId) && !subProtocolIds.has(row.protocolId)
-	)
-
-	const allRows = [...filteredParents, ...subProtocolChainRows]
-
-	const uniqueRows = new Map<string, NormalizedRow>()
-	for (const row of allRows) {
-		if (!uniqueRows.has(row.id)) {
-			uniqueRows.set(row.id, row)
-		}
+	const uniqueRows = new Map<string, ProtocolTableSourceRow>()
+	const addRow = (row: ProtocolTableSourceRow) => {
+		const chainSlug = row.chain ? toInternalSlug(row.chain) : null
+		if (chainSlug && !chainMetrics[chainSlug]) chainMetrics[chainSlug] = { availability: 'unavailable' }
+		if (!uniqueRows.has(row.id)) uniqueRows.set(row.id, row)
 	}
+	for (const row of parentChainRows) {
+		if (row.protocolId && (parentProtocolIds.has(row.protocolId) || subProtocolIds.has(row.protocolId))) continue
+		addRow(row)
+	}
+	for (const row of subProtocolChainRows) addRow(row)
 
-	return Array.from(uniqueRows.values())
+	return {
+		rows: Array.from(uniqueRows.values()),
+		parentMetrics: buildParentMetrics(parentChainRows, subProtocolChainRows),
+		chainMetrics
+	}
 }
 
 const fetchParentProtocolsByChain = async (
 	chainFilters: string[],
-	totals: ProtocolMetricTotals
-): Promise<NormalizedRow[]> => {
-	const rows = await llamaDb.any<ProtocolAggregateRow>(
-		`
+	totalsPromise: Promise<ProtocolMetricTotals>,
+	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
+): Promise<ProtocolChainTableRow[]> => {
+	const requestedMetricFamilies = new Set(baseMetricFamilies)
+	const includeOpenInterest = requestedMetricFamilies.has('open-interest')
+	const openInterestCte = includeOpenInterest
+		? `,
+		open_interest AS (
+			SELECT
+				protocol,
+				lower(chain) AS chain,
+				SUM(open_interest) AS open_interest
+			FROM lens.open_interest_current
+			GROUP BY protocol, lower(chain)
+		),
+		protocol_chain_anchor AS (
+			SELECT protocol, lower(chain) AS chain FROM lens.metrics_protocol_by_chain_current
+			UNION
+			SELECT protocol, chain FROM open_interest
+		)`
+		: ''
+	const openInterestSelect = includeOpenInterest ? 'oi.open_interest' : 'NULL::numeric AS open_interest'
+	const protocolChainSource = includeOpenInterest
+		? `protocol_chain_anchor anchor
+		LEFT JOIN lens.metrics_protocol_by_chain_current mpc
+			ON mpc.protocol = anchor.protocol AND lower(mpc.chain) = anchor.chain`
+		: 'lens.metrics_protocol_by_chain_current mpc'
+	const protocolIdentity = includeOpenInterest ? 'anchor.protocol' : 'mpc.protocol'
+	const chainIdentity = includeOpenInterest ? 'anchor.chain' : 'mpc.chain'
+	const openInterestJoin = includeOpenInterest
+		? `LEFT JOIN open_interest oi ON oi.protocol = ${protocolIdentity} AND oi.chain = ${chainIdentity}`
+		: ''
+	const metricProjection = buildLensMetricProjection('mpc', baseMetricFamilies)
+	const [rows, totals] = await Promise.all([
+		llamaDb.any<ProtocolChainAggregateRow>(
+			`
 		WITH category_meta AS (
 			SELECT
 				protocol,
 				MIN(category) AS category
 			FROM lens.metrics_sub_protocol_current
 			GROUP BY protocol
-		),
-		oracle_meta AS (
-			SELECT
-				protocol,
-				lower(chain) AS chain,
-				array_remove(array_agg(DISTINCT oracle ORDER BY oracle), NULL) AS oracle_names
-			FROM lens.oracle_tvs_current
-			WHERE protocol IS NOT NULL
-			GROUP BY protocol, lower(chain)
-		),
-		open_interest AS (
-			SELECT
-				protocol,
-				chain,
-				SUM(open_interest) AS open_interest
-			FROM lens.open_interest_current
-			GROUP BY protocol, chain
-		),
-		chain_mcap AS (
-			SELECT
-				lower(chain) AS chain,
-				mcap
-			FROM lens.metrics_chain_current
 		)
+		${openInterestCte}
 		SELECT
-			mpc.protocol,
+			${protocolIdentity} AS protocol,
+			metadata.name AS protocol_name,
 			cat.category AS protocol_category,
-			ARRAY[lower(mpc.chain)] AS chain_slugs,
-			oracles.oracle_names,
-			mpc.chain AS chain_slug,
-			mpc.tvl_base,
-			mpc.tvl_base_1d_pct_change,
-			mpc.tvl_base_7d_pct_change,
-			mpc.tvl_base_30d_pct_change,
-			mpc.volume_dexs_1d,
-			mpc.volume_dexs_7d,
-			mpc.volume_dexs_30d,
-			mpc.volume_dexs_1d_pct_change,
-			mpc.volume_dexs_7d_pct_change,
-			mpc.volume_dexs_30d_pct_change,
-			mpc.volume_dexs_alltime,
-			mpc.fees_1d,
-			mpc.fees_7d,
-			mpc.fees_30d,
-			mpc.fees_365d,
-			mpc.fees_alltime,
-			mpc.fees_annualised,
-			mpc.fees_1d_pct_change,
-			mpc.fees_7d_pct_change,
-			mpc.fees_30d_pct_change,
-			mpc.holder_revenue_1d,
-			mpc.holder_revenue_7d,
-			mpc.holder_revenue_30d,
-			mpc.holder_revenue_30d_pct_change,
-			mpc.revenue_1d,
-			mpc.revenue_7d,
-			mpc.revenue_30d,
-			mpc.revenue_365d,
-			mpc.revenue_annualised,
-			mpc.revenue_alltime,
-			mpc.revenue_1d_pct_change,
-			mpc.revenue_7d_pct_change,
-			mpc.revenue_30d_pct_change,
-			mpc.volume_derivatives_1d,
-			mpc.volume_derivatives_7d,
-			mpc.volume_derivatives_30d,
-			mpc.volume_derivatives_1d_pct_change,
-			mpc.volume_derivatives_7d_pct_change,
-			mpc.volume_derivatives_30d_pct_change,
-			mpc.volume_aggregators_1d,
-			mpc.volume_aggregators_7d,
-			mpc.volume_aggregators_30d,
-			mpc.volume_aggregators_1d_pct_change,
-			mpc.volume_aggregators_7d_pct_change,
-			mpc.volume_aggregators_30d_pct_change,
-			mpc.volume_aggr_derivatives_1d,
-			mpc.volume_aggr_derivatives_7d,
-			mpc.volume_aggr_derivatives_30d,
-			mpc.volume_aggr_derivatives_1d_pct_change,
-			mpc.volume_aggr_derivatives_7d_pct_change,
-			mpc.volume_aggr_derivatives_30d_pct_change,
-			mpc.volume_options_1d,
-			mpc.volume_options_7d,
-			mpc.volume_options_30d,
-			mpc.volume_options_1d_pct_change,
-			mpc.volume_options_7d_pct_change,
-			mpc.volume_options_30d_pct_change,
-			mpc.mcap,
-			mpc.fdv,
-			cm.mcap AS chain_mcap,
-			mpc.pf_ratio,
-			mpc.ps_ratio,
-			oi.open_interest
-		FROM lens.metrics_protocol_by_chain_current mpc
-		LEFT JOIN category_meta cat ON cat.protocol = mpc.protocol
-		LEFT JOIN oracle_meta oracles ON oracles.protocol = mpc.protocol AND oracles.chain = lower(mpc.chain)
-		LEFT JOIN open_interest oi ON oi.protocol = mpc.protocol AND oi.chain = mpc.chain
-		LEFT JOIN chain_mcap cm ON cm.chain = lower(mpc.chain)
-		WHERE COALESCE(cardinality($1::text[]), 0) = 0 OR lower(mpc.chain) = ANY($1)
+			ARRAY[lower(${chainIdentity})] AS chain_slugs,
+			${chainIdentity} AS chain_slug,
+			${metricProjection},
+			${openInterestSelect},
+			FALSE AS exclude_tvl_from_parent
+		FROM ${protocolChainSource}
+		LEFT JOIN dim.protocol metadata ON metadata.slug = ${protocolIdentity}
+		LEFT JOIN category_meta cat ON cat.protocol = ${protocolIdentity}
+		${openInterestJoin}
+		WHERE (COALESCE(cardinality($1::text[]), 0) = 0 OR lower(${chainIdentity}) = ANY($1))
 	`,
-		[chainFilters]
-	)
+			[chainFilters]
+		),
+		totalsPromise
+	])
 
 	return rows.map((row) => {
-		const base = buildBaseRow(row, totals, {
+		return buildChainRow(row, totals, {
 			slug: row.protocol,
+			displayName: row.protocol_name,
 			parentSlug: null,
 			category: row.protocol_category,
-			chainSlugs: row.chain_slugs
+			chainSlug: row.chain_slug,
+			requestedMetricFamilies
 		})
-		const chainSlug = row.chain_slug ?? 'unknown'
-		const chainName = formatDisplayName(chainSlug) || chainSlug
-		return {
-			...base,
-			id: `protocol-${row.protocol}-${chainSlug}`,
-			chain: chainName,
-			chains: [chainName],
-			allChains: base.chains,
-			metrics: baseMetricsMapping(row, totals)
-		}
 	})
-}
-
-type SubProtocolChainRow = ProtocolAggregateRow & {
-	sub_protocol: string
-	protocol: string
 }
 
 const fetchSubProtocolsByChain = async (
 	chainFilters: string[],
-	totals: ProtocolMetricTotals
-): Promise<NormalizedRow[]> => {
-	const rows = await llamaDb.any<SubProtocolChainRow>(
-		`
-		WITH oracle_meta AS (
-			SELECT
-				COALESCE(sub_protocol, protocol) AS sub_protocol,
-				lower(chain) AS chain,
-				array_remove(array_agg(DISTINCT oracle ORDER BY oracle), NULL) AS oracle_names
-			FROM lens.oracle_tvs_current
-			WHERE sub_protocol IS NOT NULL OR protocol IS NOT NULL
-			GROUP BY COALESCE(sub_protocol, protocol), lower(chain)
-		),
-		chain_mcap AS (
-			SELECT
-				lower(chain) AS chain,
-				mcap
-			FROM lens.metrics_chain_current
-		),
-		open_interest AS (
+	totalsPromise: Promise<ProtocolMetricTotals>,
+	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
+): Promise<ProtocolChainTableRow[]> => {
+	const requestedMetricFamilies = new Set(baseMetricFamilies)
+	const includeOpenInterest = requestedMetricFamilies.has('open-interest')
+	const openInterestCte = includeOpenInterest
+		? `WITH open_interest AS (
 			SELECT
 				sub_protocol,
-				chain,
+				protocol,
+				lower(chain) AS chain,
 				SUM(open_interest) AS open_interest
 			FROM lens.open_interest_current
 			WHERE sub_protocol IS NOT NULL
-			GROUP BY sub_protocol, chain
-		)
+			GROUP BY sub_protocol, protocol, lower(chain)
+		),
+		sub_protocol_chain_anchor AS (
+			SELECT sub_protocol, protocol, lower(chain) AS chain FROM lens.metrics_sub_protocol_by_chain_current
+			UNION
+			SELECT sub_protocol, protocol, chain FROM open_interest
+		)`
+		: ''
+	const openInterestSelect = includeOpenInterest ? 'oi.open_interest' : 'NULL::numeric AS open_interest'
+	const subProtocolChainSource = includeOpenInterest
+		? `sub_protocol_chain_anchor anchor
+		LEFT JOIN lens.metrics_sub_protocol_by_chain_current mspc
+			ON mspc.sub_protocol = anchor.sub_protocol
+			AND mspc.protocol = anchor.protocol
+			AND lower(mspc.chain) = anchor.chain
+		LEFT JOIN lens.metrics_sub_protocol_current msp
+			ON msp.sub_protocol = anchor.sub_protocol AND msp.protocol = anchor.protocol`
+		: 'lens.metrics_sub_protocol_by_chain_current mspc'
+	const subProtocolIdentity = includeOpenInterest ? 'anchor.sub_protocol' : 'mspc.sub_protocol'
+	const parentProtocolIdentity = includeOpenInterest ? 'anchor.protocol' : 'mspc.protocol'
+	const chainIdentity = includeOpenInterest ? 'anchor.chain' : 'mspc.chain'
+	const categoryExpression = includeOpenInterest ? 'COALESCE(mspc.category, msp.category)' : 'mspc.category'
+	const openInterestJoin = includeOpenInterest
+		? `LEFT JOIN open_interest oi
+			ON oi.sub_protocol = ${subProtocolIdentity}
+			AND oi.protocol = ${parentProtocolIdentity}
+			AND oi.chain = ${chainIdentity}`
+		: ''
+	const metricProjection = buildLensMetricProjection('mspc', baseMetricFamilies)
+	const [rows, totals] = await Promise.all([
+		llamaDb.any<SubProtocolChainRow>(
+			`
+		${openInterestCte}
 		SELECT
-			mspc.sub_protocol,
-			mspc.protocol,
-			mspc.category AS protocol_category,
-			ARRAY[lower(mspc.chain)] AS chain_slugs,
-			oracles.oracle_names,
-			mspc.chain AS chain_slug,
-			mspc.tvl_base,
-			mspc.tvl_base_1d_pct_change,
-			mspc.tvl_base_7d_pct_change,
-			mspc.tvl_base_30d_pct_change,
-			mspc.volume_dexs_1d,
-			mspc.volume_dexs_7d,
-			mspc.volume_dexs_30d,
-			mspc.volume_dexs_1d_pct_change,
-			mspc.volume_dexs_7d_pct_change,
-			mspc.volume_dexs_30d_pct_change,
-			mspc.volume_dexs_alltime,
-			mspc.fees_1d,
-			mspc.fees_7d,
-			mspc.fees_30d,
-			mspc.fees_365d,
-			mspc.fees_alltime,
-			mspc.fees_annualised,
-			mspc.fees_1d_pct_change,
-			mspc.fees_7d_pct_change,
-			mspc.fees_30d_pct_change,
-			mspc.holder_revenue_1d,
-			mspc.holder_revenue_7d,
-			mspc.holder_revenue_30d,
-			mspc.holder_revenue_30d_pct_change,
-			mspc.revenue_1d,
-			mspc.revenue_7d,
-			mspc.revenue_30d,
-			mspc.revenue_365d,
-			mspc.revenue_annualised,
-			mspc.revenue_alltime,
-			mspc.revenue_1d_pct_change,
-			mspc.revenue_7d_pct_change,
-			mspc.revenue_30d_pct_change,
-			mspc.volume_derivatives_1d,
-			mspc.volume_derivatives_7d,
-			mspc.volume_derivatives_30d,
-			mspc.volume_derivatives_1d_pct_change,
-			mspc.volume_derivatives_7d_pct_change,
-			mspc.volume_derivatives_30d_pct_change,
-			mspc.volume_aggregators_1d,
-			mspc.volume_aggregators_7d,
-			mspc.volume_aggregators_30d,
-			mspc.volume_aggregators_1d_pct_change,
-			mspc.volume_aggregators_7d_pct_change,
-			mspc.volume_aggregators_30d_pct_change,
-			mspc.volume_aggr_derivatives_1d,
-			mspc.volume_aggr_derivatives_7d,
-			mspc.volume_aggr_derivatives_30d,
-			mspc.volume_aggr_derivatives_1d_pct_change,
-			mspc.volume_aggr_derivatives_7d_pct_change,
-			mspc.volume_aggr_derivatives_30d_pct_change,
-			mspc.volume_options_1d,
-			mspc.volume_options_7d,
-			mspc.volume_options_30d,
-			mspc.volume_options_1d_pct_change,
-			mspc.volume_options_7d_pct_change,
-			mspc.volume_options_30d_pct_change,
-			mspc.mcap,
-			mspc.fdv,
-			cm.mcap AS chain_mcap,
-			mspc.pf_ratio,
-			mspc.ps_ratio,
-			oi.open_interest
-		FROM lens.metrics_sub_protocol_by_chain_current mspc
-		LEFT JOIN oracle_meta oracles ON oracles.sub_protocol = mspc.sub_protocol AND oracles.chain = lower(mspc.chain)
-		LEFT JOIN chain_mcap cm ON cm.chain = lower(mspc.chain)
-		LEFT JOIN open_interest oi ON oi.sub_protocol = mspc.sub_protocol AND oi.chain = mspc.chain
+			${subProtocolIdentity} AS sub_protocol,
+			${parentProtocolIdentity} AS protocol,
+			metadata.name AS protocol_name,
+			parent_metadata.name AS parent_protocol_name,
+			${categoryExpression} AS protocol_category,
+			ARRAY[lower(${chainIdentity})] AS chain_slugs,
+			${chainIdentity} AS chain_slug,
+			${metricProjection},
+			${openInterestSelect},
+			COALESCE(metadata.exclude_tvl_from_parent, FALSE) AS exclude_tvl_from_parent
+		FROM ${subProtocolChainSource}
+		${openInterestJoin}
+		LEFT JOIN dim.protocol metadata ON metadata.slug = ${subProtocolIdentity}
+		LEFT JOIN dim.protocol parent_metadata ON parent_metadata.slug = ${parentProtocolIdentity}
 		WHERE
-			mspc.sub_protocol != mspc.protocol
-			AND (COALESCE(cardinality($1::text[]), 0) = 0 OR lower(mspc.chain) = ANY($1))
+			${subProtocolIdentity} != ${parentProtocolIdentity}
+			AND (COALESCE(cardinality($1::text[]), 0) = 0 OR lower(${chainIdentity}) = ANY($1))
 	`,
-		[chainFilters]
-	)
+			[chainFilters]
+		),
+		totalsPromise
+	])
 
 	return rows.map((row) => {
-		const base = buildBaseRow(row, totals, {
+		return buildChainRow(row, totals, {
 			slug: row.sub_protocol,
+			displayName: row.protocol_name,
 			parentSlug: row.protocol,
+			parentDisplayName: row.parent_protocol_name,
 			category: row.protocol_category,
-			chainSlugs: row.chain_slugs
+			chainSlug: row.chain_slug,
+			requestedMetricFamilies
 		})
-		const chainSlug = row.chain_slug ?? 'unknown'
-		const chainName = formatDisplayName(chainSlug) || chainSlug
-		return {
-			...base,
-			id: `protocol-${row.sub_protocol}-${chainSlug}`,
-			chain: chainName,
-			chains: [chainName],
-			allChains: base.chains,
-			metrics: baseMetricsMapping(row, totals)
-		}
 	})
 }
 
-type ChainMetricsRow = {
-	chain: string
+type ChainMetricsRow = { chain: string } & Partial<{
 	protocol_count: number | null
 	tvl_base: number | null
+	tvl_base_1d_pct_change: number | null
+	tvl_base_7d_pct_change: number | null
+	tvl_base_30d_pct_change: number | null
 	volume_dexs_1d: number | null
+	volume_dexs_7d: number | null
+	volume_dexs_30d: number | null
+	volume_dexs_1d_pct_change: number | null
+	volume_dexs_7d_pct_change: number | null
+	volume_dexs_30d_pct_change: number | null
+	volume_dexs_alltime: number | null
+	app_fees_1d: number | null
+	app_fees_7d: number | null
+	app_fees_30d: number | null
+	app_fees_365d: number | null
+	app_fees_alltime: number | null
+	app_fees_annualised: number | null
+	app_fees_1d_pct_change: number | null
+	app_fees_7d_pct_change: number | null
+	app_fees_30d_pct_change: number | null
+	app_revenue_1d: number | null
+	app_revenue_7d: number | null
+	app_revenue_30d: number | null
+	app_revenue_365d: number | null
+	app_revenue_alltime: number | null
+	app_revenue_annualised: number | null
+	app_revenue_1d_pct_change: number | null
+	app_revenue_7d_pct_change: number | null
+	app_revenue_30d_pct_change: number | null
+	volume_derivatives_1d: number | null
+	volume_derivatives_7d: number | null
+	volume_derivatives_30d: number | null
+	volume_derivatives_1d_pct_change: number | null
+	volume_derivatives_7d_pct_change: number | null
+	volume_derivatives_30d_pct_change: number | null
+	volume_aggregators_1d: number | null
+	volume_aggregators_7d: number | null
+	volume_aggregators_30d: number | null
+	volume_aggregators_1d_pct_change: number | null
+	volume_aggregators_7d_pct_change: number | null
+	volume_aggr_derivatives_1d: number | null
+	volume_aggr_derivatives_7d: number | null
+	volume_aggr_derivatives_30d: number | null
+	volume_aggr_derivatives_1d_pct_change: number | null
+	volume_aggr_derivatives_7d_pct_change: number | null
+	volume_aggr_derivatives_30d_pct_change: number | null
+	volume_options_1d: number | null
+	volume_options_7d: number | null
+	volume_options_30d: number | null
+	volume_options_1d_pct_change: number | null
+	volume_options_7d_pct_change: number | null
+	open_interest: number | null
 	bridged_tvl: number | null
 	stables_mcap: number | null
+	total_stables_mcap: number | null
+}>
+
+type ProjectedChainMetricColumn = Exclude<
+	keyof ChainMetricsRow,
+	'chain' | 'open_interest' | 'bridged_tvl' | 'stables_mcap' | 'total_stables_mcap'
+>
+
+const CHAIN_METRIC_COLUMNS_BY_FAMILY: Readonly<
+	Partial<Record<ProtocolBaseMetricFamily, readonly ProjectedChainMetricColumn[]>>
+> = {
+	'protocol-count': ['protocol_count'],
+	tvl: ['tvl_base', 'tvl_base_1d_pct_change', 'tvl_base_7d_pct_change', 'tvl_base_30d_pct_change'],
+	'dex-volume': [
+		'volume_dexs_1d',
+		'volume_dexs_7d',
+		'volume_dexs_30d',
+		'volume_dexs_1d_pct_change',
+		'volume_dexs_7d_pct_change',
+		'volume_dexs_30d_pct_change',
+		'volume_dexs_alltime'
+	],
+	fees: [
+		'app_fees_1d',
+		'app_fees_7d',
+		'app_fees_30d',
+		'app_fees_365d',
+		'app_fees_alltime',
+		'app_fees_annualised',
+		'app_fees_1d_pct_change',
+		'app_fees_7d_pct_change',
+		'app_fees_30d_pct_change'
+	],
+	revenue: [
+		'app_revenue_1d',
+		'app_revenue_7d',
+		'app_revenue_30d',
+		'app_revenue_365d',
+		'app_revenue_alltime',
+		'app_revenue_annualised',
+		'app_revenue_1d_pct_change',
+		'app_revenue_7d_pct_change',
+		'app_revenue_30d_pct_change'
+	],
+	'perps-volume': [
+		'volume_derivatives_1d',
+		'volume_derivatives_7d',
+		'volume_derivatives_30d',
+		'volume_derivatives_1d_pct_change',
+		'volume_derivatives_7d_pct_change',
+		'volume_derivatives_30d_pct_change'
+	],
+	'aggregator-volume': [
+		'volume_aggregators_1d',
+		'volume_aggregators_7d',
+		'volume_aggregators_30d',
+		'volume_aggregators_1d_pct_change',
+		'volume_aggregators_7d_pct_change'
+	],
+	'derivatives-aggregator-volume': [
+		'volume_aggr_derivatives_1d',
+		'volume_aggr_derivatives_7d',
+		'volume_aggr_derivatives_30d',
+		'volume_aggr_derivatives_1d_pct_change',
+		'volume_aggr_derivatives_7d_pct_change',
+		'volume_aggr_derivatives_30d_pct_change'
+	],
+	'options-volume': [
+		'volume_options_1d',
+		'volume_options_7d',
+		'volume_options_30d',
+		'volume_options_1d_pct_change',
+		'volume_options_7d_pct_change'
+	]
+}
+
+const buildChainMetricProjection = (requestedFamilies: readonly ProtocolBaseMetricFamily[]): string[] => {
+	const requested = new Set(requestedFamilies)
+	const projection: string[] = []
+	for (const family of PROTOCOL_BASE_METRIC_FAMILIES) {
+		for (const column of CHAIN_METRIC_COLUMNS_BY_FAMILY[family] ?? []) {
+			if (requested.has(family)) projection.push(`mc.${column}`)
+		}
+	}
+	return projection
+}
+
+const mapCanonicalChainMetrics = (
+	row: ChainMetricsRow,
+	totals: ProtocolMetricTotals,
+	requested: ReadonlySet<ProtocolBaseMetricFamily>
+): CanonicalChainMetrics => {
+	const metrics: CanonicalChainMetrics = {}
+
+	if (requested.has('tvl')) {
+		const tvl = row.tvl_base ?? null
+		metrics.tvl = tvl
+		metrics.tvlPrevDay = derivePreviousValue(tvl, row.tvl_base_1d_pct_change)
+		metrics.tvlPrevWeek = derivePreviousValue(tvl, row.tvl_base_7d_pct_change)
+		metrics.tvlPrevMonth = derivePreviousValue(tvl, row.tvl_base_30d_pct_change)
+		metrics.change1d = toPercent(row.tvl_base_1d_pct_change)
+		metrics.change7d = toPercent(row.tvl_base_7d_pct_change)
+		metrics.change1m = toPercent(row.tvl_base_30d_pct_change)
+		metrics.tvlShare = computeShare(tvl, totals.tvl_base)
+	}
+
+	if (requested.has('dex-volume')) {
+		const volume24h = row.volume_dexs_1d ?? null
+		const volume7d = row.volume_dexs_7d ?? null
+		metrics.volume24h = volume24h
+		metrics.volume_7d = volume7d
+		metrics.volume_30d = row.volume_dexs_30d ?? null
+		metrics.cumulativeVolume = row.volume_dexs_alltime ?? null
+		metrics.volumeChange_1d = toPercent(row.volume_dexs_1d_pct_change)
+		metrics.volumeChange7dOver7d = toPercent(row.volume_dexs_7d_pct_change)
+		metrics.volumeChange30dOver30d = toPercent(row.volume_dexs_30d_pct_change)
+		metrics.volumeDominance_24h = computeShare(volume24h, totals.volume_dexs_1d)
+		metrics.volumeMarketShare7d = computeShare(volume7d, totals.volume_dexs_7d)
+		metrics.volume24hShare = computeShare(volume24h, totals.volume_dexs_1d)
+	}
+
+	if (requested.has('fees')) {
+		const feesAnnualized1y = row.app_fees_annualised ?? null
+		metrics.fees24h = row.app_fees_1d ?? null
+		metrics.fees_7d = row.app_fees_7d ?? null
+		metrics.fees_30d = row.app_fees_30d ?? null
+		metrics.fees_1y = row.app_fees_365d ?? null
+		metrics.feesAnnualized1y = feesAnnualized1y
+		metrics.average_1y = feesAnnualized1y == null ? null : feesAnnualized1y / 12
+		metrics.cumulativeFees = row.app_fees_alltime ?? null
+		metrics.feesChange_1d = toPercent(row.app_fees_1d_pct_change)
+		metrics.feesChange7dOver7d = toPercent(row.app_fees_7d_pct_change)
+		metrics.feesChange30dOver30d = toPercent(row.app_fees_30d_pct_change)
+	}
+
+	if (requested.has('revenue')) {
+		const revenueAnnualized1y = row.app_revenue_annualised ?? null
+		metrics.revenue24h = row.app_revenue_1d ?? null
+		metrics.revenue_7d = row.app_revenue_7d ?? null
+		metrics.revenue_30d = row.app_revenue_30d ?? null
+		metrics.revenue_1y = row.app_revenue_365d ?? null
+		metrics.revenueAnnualized1y = revenueAnnualized1y
+		metrics.average_revenue_1y = revenueAnnualized1y == null ? null : revenueAnnualized1y / 12
+		metrics.cumulativeRevenue = row.app_revenue_alltime ?? null
+		metrics.revenueChange_1d = toPercent(row.app_revenue_1d_pct_change)
+		metrics.revenueChange7dOver7d = toPercent(row.app_revenue_7d_pct_change)
+		metrics.revenueChange30dOver30d = toPercent(row.app_revenue_30d_pct_change)
+	}
+
+	if (requested.has('perps-volume')) {
+		const perpsVolume24h = row.volume_derivatives_1d ?? null
+		metrics.perpsVolume24h = perpsVolume24h
+		metrics.perps_volume_7d = row.volume_derivatives_7d ?? null
+		metrics.perps_volume_30d = row.volume_derivatives_30d ?? null
+		metrics.perps_volume_change_1d = toPercent(row.volume_derivatives_1d_pct_change)
+		metrics.perpsVolumeChange7dOver7d = toPercent(row.volume_derivatives_7d_pct_change)
+		metrics.perpsVolumeChange30dOver30d = toPercent(row.volume_derivatives_30d_pct_change)
+		metrics.perps_volume_dominance_24h = computeShare(perpsVolume24h, totals.volume_derivatives_1d)
+	}
+
+	if (requested.has('aggregator-volume')) {
+		metrics.aggregators_volume_24h = row.volume_aggregators_1d ?? null
+		metrics.aggregators_volume_7d = row.volume_aggregators_7d ?? null
+		metrics.aggregators_volume_30d = row.volume_aggregators_30d ?? null
+		metrics.aggregators_volume_change_1d = toPercent(row.volume_aggregators_1d_pct_change)
+		metrics.aggregatorVolumeChange7dOver7d = toPercent(row.volume_aggregators_7d_pct_change)
+		metrics.aggregators_volume_dominance_24h = computeShare(row.volume_aggregators_1d, totals.volume_aggregators_1d)
+		metrics.aggregators_volume_marketShare7d = computeShare(row.volume_aggregators_7d, totals.volume_aggregators_7d)
+	}
+
+	if (requested.has('derivatives-aggregator-volume')) {
+		metrics.derivatives_aggregators_volume_24h = row.volume_aggr_derivatives_1d ?? null
+		metrics.derivatives_aggregators_volume_7d = row.volume_aggr_derivatives_7d ?? null
+		metrics.derivatives_aggregators_volume_30d = row.volume_aggr_derivatives_30d ?? null
+		metrics.derivatives_aggregators_volume_change_1d = toPercent(row.volume_aggr_derivatives_1d_pct_change)
+		metrics.derivativesAggregatorVolumeChange7dOver7d = toPercent(row.volume_aggr_derivatives_7d_pct_change)
+		metrics.derivativesAggregatorVolumeChange30dOver30d = toPercent(row.volume_aggr_derivatives_30d_pct_change)
+	}
+
+	if (requested.has('options-volume')) {
+		metrics.options_volume_24h = row.volume_options_1d ?? null
+		metrics.options_volume_7d = row.volume_options_7d ?? null
+		metrics.options_volume_30d = row.volume_options_30d ?? null
+		metrics.options_volume_change_1d = toPercent(row.volume_options_1d_pct_change)
+		metrics.optionsVolumeChange7dOver7d = toPercent(row.volume_options_7d_pct_change)
+		metrics.options_volume_dominance_24h = computeShare(row.volume_options_1d, totals.volume_options_1d)
+	}
+
+	if (requested.has('open-interest')) metrics.openInterest = row.open_interest ?? null
+	if (requested.has('bridged-tvl')) metrics.bridgedTvl = row.bridged_tvl ?? null
+	if (requested.has('stablecoins')) {
+		metrics.stablesMcap = row.stables_mcap ?? null
+		metrics.stablesShare = computeShare(row.stables_mcap, row.total_stables_mcap)
+	}
+	if (requested.has('protocol-count')) metrics.protocolCount = row.protocol_count ?? null
+
+	return metrics
 }
 
 const fetchChainMetricsForGrouping = async (
 	chainFilters: string[],
-	totals: ProtocolMetricTotals
+	totalsPromise: Promise<ProtocolMetricTotals>,
+	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
 ): Promise<Record<string, ChainMetrics>> => {
+	const requestedFamilies = new Set(baseMetricFamilies)
+	const includeOpenInterest = requestedFamilies.has('open-interest')
+	const includeBridgedTvl = requestedFamilies.has('bridged-tvl')
+	const includeStablecoins = requestedFamilies.has('stablecoins')
 	const conditions: string[] = []
-	const values: any[] = []
+	const values: string[][] = []
 
+	const chainIdentity = includeOpenInterest ? 'anchor.chain' : 'mc.chain'
 	if (chainFilters.length) {
-		conditions.push(`lower(mc.chain) = ANY($${values.length + 1})`)
+		conditions.push(`lower(${chainIdentity}) = ANY($${values.length + 1})`)
 		values.push(chainFilters)
 	}
 
 	const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+	const chainSource = includeOpenInterest
+		? `chain_anchor anchor
+		LEFT JOIN lens.metrics_chain_current mc ON lower(mc.chain) = anchor.chain`
+		: 'lens.metrics_chain_current mc'
+	const openInterestJoin = includeOpenInterest ? `LEFT JOIN open_interest oi ON oi.chain = ${chainIdentity}` : ''
+	const bridgedTvlJoin = includeBridgedTvl
+		? `LEFT JOIN bridged_tvl ON lower(bridged_tvl.chain) = lower(${chainIdentity})`
+		: ''
+	const stablecoinsJoin = includeStablecoins
+		? `LEFT JOIN stablecoin_supply ON lower(stablecoin_supply.chain) = lower(${chainIdentity})
+		CROSS JOIN total_stablecoin_supply`
+		: ''
+	const ctes = [
+		includeBridgedTvl
+			? `bridged_tvl AS (
+			SELECT chain, SUM(tvl) AS bridged_tvl
+			FROM lens.bridged_token_tvl_current
+			GROUP BY chain
+		)`
+			: null,
+		includeStablecoins
+			? `stablecoin_supply AS (
+			SELECT chain, SUM(mcap) AS stables_mcap
+			FROM lens.stablecoin_supply_current
+			GROUP BY chain
+		),
+		total_stablecoin_supply AS (
+			SELECT SUM(mcap) AS total_stables_mcap
+			FROM lens.stablecoin_supply_current
+		)`
+			: null,
+		includeOpenInterest
+			? `open_interest AS (
+			SELECT
+				lower(chain) AS chain,
+				SUM(open_interest) AS open_interest
+			FROM lens.open_interest_current
+			GROUP BY lower(chain)
+		),
+		chain_anchor AS (
+			SELECT lower(chain) AS chain FROM lens.metrics_chain_current
+			UNION
+			SELECT chain FROM open_interest
+		)`
+			: null
+	].filter((cte): cte is string => cte !== null)
+	const withClause = ctes.length ? `WITH ${ctes.join(',\n\t\t')}` : ''
+	const requestedMetricProjection = [
+		...buildChainMetricProjection(baseMetricFamilies),
+		includeOpenInterest ? 'oi.open_interest' : null,
+		includeBridgedTvl ? 'bridged_tvl.bridged_tvl' : null,
+		includeStablecoins ? 'stablecoin_supply.stables_mcap' : null,
+		includeStablecoins ? 'total_stablecoin_supply.total_stables_mcap' : null
+	].filter((projection): projection is string => projection !== null)
+	const metricProjection =
+		requestedMetricProjection.length > 0
+			? requestedMetricProjection.join(',\n\t\t\t')
+			: 'NULL::numeric AS no_requested_metrics'
 
-	const totalStables = await llamaDb.oneOrNone<{ total: number | null }>(
-		`SELECT SUM(mcap) AS total FROM lens.stablecoin_supply_current`
-	)
-
-	const rows = await llamaDb.any<ChainMetricsRow>(
-		`
+	const [rows, totals] = await Promise.all([
+		llamaDb.any<ChainMetricsRow>(
+			`
+		${withClause}
 		SELECT
-			mc.chain,
-			mc.protocol_count,
-			mc.tvl_base,
-			mc.volume_dexs_1d,
-			COALESCE(bridged_data.bridged_tvl, NULL) AS bridged_tvl,
-			COALESCE(stables_data.stables_mcap, NULL) AS stables_mcap
-		FROM lens.metrics_chain_current mc
-		LEFT JOIN LATERAL (
-			SELECT SUM(tvl) AS bridged_tvl
-			FROM lens.bridged_token_tvl_current b
-			WHERE b.chain = mc.chain
-		) bridged_data ON TRUE
-		LEFT JOIN LATERAL (
-			SELECT SUM(mcap) AS stables_mcap
-			FROM lens.stablecoin_supply_current s
-			WHERE s.chain = mc.chain
-		) stables_data ON TRUE
+			${chainIdentity} AS chain,
+			${metricProjection}
+		FROM ${chainSource}
+		${openInterestJoin}
+		${bridgedTvlJoin}
+		${stablecoinsJoin}
 		${whereClause}
 		`,
-		values
-	)
+			values
+		),
+		totalsPromise
+	])
 
 	const result: Record<string, ChainMetrics> = {}
 	for (const row of rows) {
-		const chainSlug = row.chain?.toLowerCase().replace(/\s+/g, '-') ?? 'unknown'
+		const chainSlug = toInternalSlug(row.chain)
 		result[chainSlug] = {
-			bridgedTvl: row.bridged_tvl ?? null,
-			stablesMcap: row.stables_mcap ?? null,
-			tvlShare: computeShare(row.tvl_base, totals.tvl_base),
-			stablesShare: computeShare(row.stables_mcap, totalStables?.total),
-			volume24hShare: computeShare(row.volume_dexs_1d, totals.volume_dexs_1d),
-			protocolCount: row.protocol_count ?? null
+			availability: 'available',
+			metrics: mapCanonicalChainMetrics(row, totals, requestedFamilies)
 		}
 	}
 

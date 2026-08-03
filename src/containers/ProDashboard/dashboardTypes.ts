@@ -1,5 +1,5 @@
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
-import type { DashboardItemConfig } from './types'
+import type { DashboardItemConfig } from './dashboardItemConfig'
 
 export type TimePeriod = '30d' | '90d' | '365d' | 'ytd' | '3y' | 'all' | 'custom'
 
@@ -23,6 +23,12 @@ export interface AISessionData {
 
 export type AIGeneratedData = Record<string, AISessionData>
 
+export interface AIUndoState {
+	items: DashboardItemConfig[]
+	timestamp: string
+	sessionId: string
+}
+
 export type DashboardMode = 'view' | 'edit'
 
 export interface Dashboard {
@@ -34,11 +40,7 @@ export interface Dashboard {
 		dashboardName: string
 		timePeriod?: TimePeriod
 		customTimePeriod?: CustomTimePeriod | null
-		aiUndoState?: {
-			items: DashboardItemConfig[]
-			timestamp: string
-			sessionId: string
-		}
+		aiUndoState?: AIUndoState
 	}
 	visibility?: 'private' | 'public'
 	tags?: string[]

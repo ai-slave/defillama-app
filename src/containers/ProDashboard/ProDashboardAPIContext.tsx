@@ -6,7 +6,6 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
-	useLayoutEffect,
 	useMemo,
 	useReducer,
 	useRef,
@@ -15,19 +14,22 @@ import {
 } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
-import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import pb from '~/utils/pocketbase'
+import type { ChartDataPrerequisite } from './chartRuntime'
 import { getDashboardHydrationState, isDashboardEditingLocked } from './dashboardHydrationState'
+import type { DashboardItemConfig } from './dashboardItemConfig'
 import { dashboardReducer, initDashboardState } from './dashboardReducer'
+import { dashboardStreamNeedsProtocolCatalog } from './dashboardStreamCapabilities'
+import { INITIAL_DASHBOARD_STREAM_ITEM_COUNT } from './dashboardStreamContract'
 import type {
 	AIGeneratedData,
+	AIUndoState,
 	AISessionData,
 	CustomTimePeriod,
 	Dashboard,
 	DashboardMode,
 	TimePeriod
 } from './dashboardTypes'
-import type { ProDashboardAppMetadata } from './dataContracts'
 import { useAutoSave } from './hooks/useAutoSave'
 import { useDashboardAPI } from './hooks/useDashboardAPI'
 import { useDashboardConfigFallback } from './hooks/useDashboardConfigFallback'
@@ -35,28 +37,13 @@ import { useDashboardPermissions } from './hooks/useDashboardPermissions'
 import { useDashboardStream } from './hooks/useDashboardStream'
 import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import { isDashboardInitialRenderHydration } from './initialDashboard'
-import { ProxyAuthTokenContext, StreamDoneContext, useChartsData, useProtocolsAndChains } from './queries'
-import { createDashboardChartResolutionCache, resolveDashboardChartItems } from './resolveChartItems'
-import { matchesDashboardKey } from './services/DashboardAPI'
-import type {
-	Chain,
-	ChartBuilderConfig,
-	ChartConfig,
-	DashboardGrouping,
-	DashboardItemConfig,
-	MultiChartConfig,
-	MetricConfig,
-	SqlChartConfig,
-	Protocol,
-	StoredColSpan,
-	TableFilters,
-	UnifiedTableConfig
-} from './types'
-import { limitMultiChartItems } from './types'
+import { buildProDashboardParentMapping, buildProtocolSymbolMap } from './protocolCatalog'
+import { ProxyAuthTokenContext, StreamDoneContext, useProtocolsAndChains } from './queries'
+import { DashboardError, matchesDashboardKey } from './services/DashboardAPI'
+import type { Chain, Protocol } from './types'
 import { useDashboardActions } from './useDashboardActions'
-import { cleanItemsForSaving } from './utils/dashboardUtils'
+import { toPersistedDashboardItems } from './utils/dashboardUtils'
 
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 const EMPTY_PROTOCOLS: Protocol[] = []
 const EMPTY_CHAINS: Chain[] = []
 const NOOP = () => {}
@@ -84,7 +71,27 @@ function getDashboardInitialUpdatedAt(dashboard?: Dashboard | null) {
 	return Number.isFinite(updatedAt) ? updatedAt : undefined
 }
 
-export type { AIGeneratedData, CustomTimePeriod, DashboardMode, TimePeriod } from './dashboardTypes'
+function isPendingRating(session: AISessionData, userId: string): boolean {
+	return session.userId === userId && session.rating === undefined && !session.skipped
+}
+
+function getLatestPendingRating(
+	aiGenerated: AIGeneratedData,
+	userId: string
+): (AISessionData & { sessionId: string }) | null {
+	let latest: (AISessionData & { sessionId: string }) | null = null
+	let latestTimestamp = Number.NEGATIVE_INFINITY
+	for (const sessionId in aiGenerated) {
+		if (!Object.hasOwn(aiGenerated, sessionId)) continue
+		const session = aiGenerated[sessionId]
+		if (!session || !isPendingRating(session, userId)) continue
+		const timestamp = Date.parse(session.timestamp)
+		if (latest && timestamp <= latestTimestamp) continue
+		latest = { ...session, sessionId, rated: false }
+		latestTimestamp = timestamp
+	}
+	return latest
+}
 
 type DialogStore = ReturnType<typeof Ariakit.useDialogStore>
 
@@ -99,8 +106,12 @@ interface ProDashboardCatalogContextType {
 	protocols: Protocol[]
 	chains: Chain[]
 	protocolsLoading: boolean
+	protocolCatalog: ChartDataPrerequisite
 	getChainInfo: (chainName: string) => Chain | undefined
 	getProtocolInfo: (protocolId: string) => Protocol | undefined
+	parentMapping: ReadonlyMap<string, readonly string[]>
+	protocolBySlug: ReadonlyMap<string, Protocol>
+	protocolSymbols: ReadonlyMap<string, string>
 }
 
 interface ProDashboardPermissionsContextType {
@@ -138,7 +149,7 @@ interface ProDashboardDashboardContextType {
 		description?: string
 		aiGenerated?: AIGeneratedData | null
 		items?: DashboardItemConfig[]
-		aiUndoState?: any
+		aiUndoState?: AIUndoState | null
 	}) => Promise<void>
 	copyDashboard: () => Promise<void>
 	handleCreateDashboard: (data: {
@@ -182,102 +193,22 @@ interface ProDashboardDashboardContextType {
 	canUndo: boolean
 }
 
-interface ProDashboardEditorActionsContextType {
-	handleAddChart: (
-		item: string,
-		chartType: string,
-		itemType: 'chain' | 'protocol',
-		geckoId?: string | null,
-		color?: string,
-		dataType?: 'documented' | 'realtime'
-	) => void
-	handleAddUnlocksSchedule: (protocol: string, protocolName: string) => void
-	handleAddUnlocksPie: (protocol: string, protocolName: string, chartType: 'allocation' | 'locked-unlocked') => void
-	handleAddYieldChart: (
-		poolConfigId: string,
-		poolName: string,
-		project: string,
-		chain: string,
-		chartType?: string
-	) => void
-	handleAddStablecoinsChart: (chain: string, chartType: string) => void
-	handleAddStablecoinAssetChart: (stablecoin: string, stablecoinId: string, chartType: string) => void
-	handleAddAdvancedTvlChart: (protocol: string, protocolName: string, chartType: string) => void
-	handleAddBorrowedChart: (protocol: string, protocolName: string, chartType: string) => void
-	handleAddIncomeStatement: (protocol: string, protocolName: string) => void
-	handleAddTable: (
-		chains: string[],
-		tableType?: 'protocols' | 'dataset',
-		datasetType?:
-			| 'stablecoins'
-			| 'cex'
-			| 'cex-analytics'
-			| 'revenue'
-			| 'holders-revenue'
-			| 'earnings'
-			| 'token-usage'
-			| 'yields'
-			| 'dexs'
-			| 'perps'
-			| 'aggregators'
-			| 'options'
-			| 'bridge-aggregators'
-			| 'trending-contracts'
-			| 'chains'
-			| 'fees'
-			| 'rwa'
-			| 'rwa-chains'
-			| 'rwa-selected-chain'
-			| 'equities'
-			| 'equities-financials'
-			| 'equities-filings',
-		datasetChain?: string,
-		tokenSymbol?: string | string[],
-		includeCex?: boolean,
-		datasetTimeframe?: string,
-		cexAnalyticsView?: CexAnalyticsView,
-		cexAnalyticsMetric?: CexAnalyticsMetric,
-		cexAnalyticsTopN?: number
-	) => void
-	handleAddMultiChart: (chartItems: ChartConfig[], name?: string) => void
-	handleAddText: (title: string | undefined, content: string) => void
-	handleAddMetric: (config: MetricConfig) => void
-	handleAddSqlChart: (config: SqlChartConfig) => void
-	handleAddUnifiedTable: (config?: Partial<UnifiedTableConfig>) => void
-	handleAddChartBuilder: (name: string | undefined, config: ChartBuilderConfig['config']) => void
-	handleAddLlamaAIChart: (savedChartId: string, title?: string) => void
-	handleAddRWAOverviewChart: (...args: any[]) => void
-	handleAddRWAAssetChart: (...args: any[]) => void
-	handleDuplicateChartBuilder: (builder: ChartBuilderConfig) => void
-	handleDuplicateMultiChart: (multi: MultiChartConfig) => void
-	handleEditItem: (itemId: string, newItem: DashboardItemConfig) => void
-	handleRemoveItem: (itemId: string) => void
-	handleChartsReordered: (newCharts: DashboardItemConfig[]) => void
-	handleGroupingChange: (chartId: string, newGrouping: DashboardGrouping) => void
-	handleColSpanChange: (chartId: string, newColSpan: StoredColSpan) => void
-	handleCumulativeChange: (itemId: string, showCumulative: boolean) => void
-	handlePercentageChange: (itemId: string, showPercentage: boolean) => void
-	handleStackedChange: (itemId: string, showStacked: boolean) => void
-	handleTreemapChange: (itemId: string, showTreemap: boolean) => void
-	handleHideOthersChange: (itemId: string, hideOthers: boolean) => void
-	handleChartTypeChange: (itemId: string, chartType: 'stackedBar' | 'stackedArea' | 'line' | 'treemap') => void
-	handleTableFiltersChange: (tableId: string, filters: TableFilters) => void
-	handleTableColumnsChange: (
-		tableId: string,
-		columnOrder?: string[],
-		columnVisibility?: Record<string, boolean>,
-		customColumns?: any[],
-		activeViewId?: string,
-		activePresetId?: string
-	) => void
-}
+type ProDashboardEditorActionsContextType = Omit<
+	ReturnType<typeof useDashboardActions>,
+	| 'setTimePeriod'
+	| 'setCustomTimePeriod'
+	| 'setDashboardName'
+	| 'setDashboardVisibility'
+	| 'setDashboardTags'
+	| 'setDashboardDescription'
+	| 'setShowGenerateDashboardModal'
+	| 'setShowIterateDashboardModal'
+	| 'setItems'
+	| 'setCurrentDashboard'
+>
 
 interface ProDashboardItemsStateContextType {
 	items: DashboardItemConfig[]
-}
-
-interface ProDashboardChartsDataContextType {
-	chartsWithData: DashboardItemConfig[]
 }
 
 interface ProDashboardUIContextType {
@@ -291,13 +222,13 @@ interface ProDashboardUIContextType {
 const ProDashboardTimeContext = createContext<ProDashboardTimeContextType | undefined>(undefined)
 const ProDashboardCatalogContext = createContext<ProDashboardCatalogContextType | undefined>(undefined)
 const ProDashboardPermissionsContext = createContext<ProDashboardPermissionsContextType | undefined>(undefined)
-const ProDashboardModeContext = createContext<ProDashboardModeContextType>({ mode: 'view' })
+const ProDashboardModeContext = createContext<ProDashboardModeContextType>({
+	mode: 'view'
+})
 const ProDashboardDashboardContext = createContext<ProDashboardDashboardContextType | undefined>(undefined)
 const ProDashboardEditorActionsContext = createContext<ProDashboardEditorActionsContextType | undefined>(undefined)
 const ProDashboardItemsStateContext = createContext<ProDashboardItemsStateContextType | undefined>(undefined)
-const ProDashboardChartsDataContext = createContext<ProDashboardChartsDataContextType | undefined>(undefined)
 const ProDashboardUIContext = createContext<ProDashboardUIContextType | undefined>(undefined)
-const ProDashboardServerAppMetadataContext = createContext<ProDashboardAppMetadata | null | undefined>(undefined)
 
 export function ProDashboardAPIProvider({
 	children,
@@ -338,14 +269,13 @@ export function ProDashboardAPIProvider({
 					<ProDashboardAPIProviderInner
 						stream={stream}
 						dashboardReady={dashboardReady}
-						streamDone={streamDone}
 						streamHasResolved={streamHasResolved}
 						shouldFetchTrustedDashboardFallback={shouldFetchTrustedDashboardFallback}
 						mode={mode}
-						initialDashboardId={initialDashboardId}
-						initialDashboard={hasInitialDashboard ? initialDashboard : null}
-						initialItems={initialItems}
-						hideDuplicateButton={hideDuplicateButton}
+						{...(initialDashboardId === undefined ? {} : { initialDashboardId })}
+						initialDashboard={hasInitialDashboard ? (initialDashboard ?? null) : null}
+						{...(initialItems === undefined ? {} : { initialItems })}
+						{...(hideDuplicateButton ? { hideDuplicateButton } : {})}
 					>
 						{children}
 					</ProDashboardAPIProviderInner>
@@ -359,7 +289,6 @@ function ProDashboardAPIProviderInner({
 	children,
 	stream,
 	dashboardReady,
-	streamDone,
 	streamHasResolved,
 	shouldFetchTrustedDashboardFallback,
 	mode,
@@ -371,7 +300,6 @@ function ProDashboardAPIProviderInner({
 	children: ReactNode
 	stream: ReturnType<typeof useDashboardStream>
 	dashboardReady: boolean
-	streamDone: boolean
 	streamHasResolved: boolean
 	shouldFetchTrustedDashboardFallback: boolean
 	mode: DashboardMode
@@ -384,7 +312,6 @@ function ProDashboardAPIProviderInner({
 
 	const { isAuthenticated, user } = useAuthContext()
 	const { canCreateDashboard, isFreeUser } = useFreeTierStatus()
-	const { data: protocolsAndChains, isLoading: protocolsLoading } = useProtocolsAndChains()
 
 	const dashboardQueryKey = useMemo(
 		() => ['pro-dashboard', 'dashboard', initialDashboardId, isAuthenticated, user?.id],
@@ -392,18 +319,19 @@ function ProDashboardAPIProviderInner({
 	)
 	useEffect(() => {
 		if (stream.dashboard) {
-			queryClient.setQueryData(dashboardQueryKey, stream.dashboard, { updatedAt: Date.now() })
+			queryClient.setQueryData(dashboardQueryKey, stream.dashboard, {
+				updatedAt: Date.now()
+			})
 		}
 	}, [stream.dashboard, queryClient, dashboardQueryKey])
-
-	const protocols = protocolsAndChains?.protocols ?? EMPTY_PROTOCOLS
-	const rawChains = protocolsAndChains?.chains ?? EMPTY_CHAINS
-	const chains = rawChains as Chain[]
 
 	const initArg = initialDashboard
 		? { dashboard: initialDashboard }
 		: initialItems?.length
-			? { dashboardId: initialDashboardId, items: initialItems }
+			? {
+					...(initialDashboardId === undefined ? {} : { dashboardId: initialDashboardId }),
+					items: initialItems
+				}
 			: initialDashboardId
 	const [state, dispatch] = useReducer(dashboardReducer, initArg, initDashboardState)
 
@@ -426,6 +354,33 @@ function ProDashboardAPIProviderInner({
 		showGenerateDashboardModal,
 		showIterateDashboardModal
 	} = state
+	const needsProtocolCatalog = mode !== 'view' || dashboardStreamNeedsProtocolCatalog(items)
+	const waitForStreamedProtocolCatalog =
+		!dashboardReady || dashboardStreamNeedsProtocolCatalog(items.slice(0, INITIAL_DASHBOARD_STREAM_ITEM_COUNT))
+	const {
+		data: protocolsAndChains,
+		isError: protocolCatalogHasError,
+		refetch: refetchProtocolCatalog
+	} = useProtocolsAndChains({ enabled: needsProtocolCatalog, waitForStream: waitForStreamedProtocolCatalog })
+	const retryProtocolCatalog = useCallback(() => {
+		void refetchProtocolCatalog()
+	}, [refetchProtocolCatalog])
+	const protocolCatalog = useMemo<ChartDataPrerequisite>(() => {
+		if (!needsProtocolCatalog || protocolsAndChains !== undefined) return { status: 'ready' }
+		if (protocolCatalogHasError) return { status: 'error', retry: retryProtocolCatalog }
+		return { status: 'loading' }
+	}, [needsProtocolCatalog, protocolCatalogHasError, protocolsAndChains, retryProtocolCatalog])
+	const protocolsLoading = protocolCatalog.status === 'loading'
+	const protocols = protocolsAndChains?.protocols ?? EMPTY_PROTOCOLS
+	const rawChains = protocolsAndChains?.chains ?? EMPTY_CHAINS
+	const chains = rawChains
+	const parentMapping = useMemo(() => buildProDashboardParentMapping(protocols), [protocols])
+	const protocolBySlug = useMemo(() => {
+		const map = new Map<string, Protocol>()
+		for (const protocol of protocols) map.set(protocol.slug, protocol)
+		return map
+	}, [protocols])
+	const protocolSymbols = useMemo(() => buildProtocolSymbolMap(protocols), [protocols])
 
 	const applyDashboard = useCallback((dashboard: Dashboard) => {
 		dispatch({ type: 'APPLY_DASHBOARD', payload: dashboard })
@@ -488,7 +443,7 @@ function ProDashboardAPIProviderInner({
 		currentDashboard,
 		userId: user?.id,
 		updateDashboard,
-		cleanItemsForSaving,
+		toPersistedDashboardItems,
 		isFreeUser,
 		mode
 	})
@@ -496,42 +451,8 @@ function ProDashboardAPIProviderInner({
 	const actions = useDashboardActions(dispatch, state, autoSave, isReadOnlyUntilDashboardLoaded)
 
 	const {
-		handleAddChart,
-		handleAddUnlocksSchedule,
-		handleAddUnlocksPie,
-		handleAddYieldChart,
-		handleAddStablecoinsChart,
-		handleAddStablecoinAssetChart,
-		handleAddAdvancedTvlChart,
-		handleAddBorrowedChart,
-		handleAddIncomeStatement,
-		handleAddTable,
-		handleAddUnifiedTable,
-		handleAddMultiChart,
-		handleAddText,
-		handleAddChartBuilder,
-		handleAddLlamaAIChart,
-		handleAddRWAOverviewChart,
-		handleAddRWAAssetChart,
-		handleDuplicateChartBuilder,
-		handleDuplicateMultiChart,
-		handleEditItem,
-		handleRemoveItem,
-		handleAddMetric,
-		handleAddSqlChart,
 		setTimePeriod,
 		setCustomTimePeriod,
-		handleChartsReordered,
-		handleGroupingChange,
-		handleColSpanChange,
-		handleCumulativeChange,
-		handlePercentageChange,
-		handleStackedChange,
-		handleTreemapChange,
-		handleHideOthersChange,
-		handleChartTypeChange,
-		handleTableFiltersChange,
-		handleTableColumnsChange,
 		setDashboardName,
 		setDashboardVisibility,
 		setDashboardTags,
@@ -544,34 +465,17 @@ function ProDashboardAPIProviderInner({
 
 	const getCurrentRatingSession = useCallback(() => {
 		if (!isAuthenticated || !currentDashboard?.aiGenerated || !user?.id) return null
-
-		const unratedSessions = Object.entries(currentDashboard.aiGenerated)
-			.filter(
-				([_, sessionData]: [string, AISessionData]) =>
-					sessionData.userId === user.id && sessionData.rating === undefined && !sessionData.skipped
-			)
-			.map(([sessionId, sessionData]) => ({
-				sessionId,
-				...sessionData
-			}))
-
-		if (unratedSessions.length === 0) return null
-
-		unratedSessions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-
-		return {
-			...unratedSessions[0],
-			rated: false
-		}
+		return getLatestPendingRating(currentDashboard.aiGenerated, user.id)
 	}, [isAuthenticated, currentDashboard, user])
 
 	// Load initial dashboard — stream seeds this cache key, queryFn fires as fallback after stream
+	const initialDashboardUpdatedAt = getDashboardInitialUpdatedAt(initialDashboard)
 	const {
 		data: currentDashboard2 = null,
 		isLoading: isQueryLoadingDashboard,
 		error: dashboardQueryError,
 		refetch: refetchDashboardQuery
-	} = useQuery({
+	} = useQuery<Dashboard | null>({
 		queryKey: dashboardQueryKey,
 		queryFn: async () => {
 			if (!initialDashboardId) {
@@ -582,10 +486,12 @@ function ProDashboardAPIProviderInner({
 		},
 		staleTime: 1000 * 60 * 5,
 		refetchOnMount: initialDashboard ? false : 'always',
-		retry: (failureCount, err: any) => err?.status >= 500 && failureCount < 3,
+		retry: (failureCount, error) => error instanceof DashboardError && error.status >= 500 && failureCount < 3,
 		enabled: dashboardReady && !!initialDashboardId,
-		initialData: matchesDashboardKey(initialDashboard, initialDashboardId) ? initialDashboard : undefined,
-		initialDataUpdatedAt: getDashboardInitialUpdatedAt(initialDashboard)
+		...(initialDashboard && matchesDashboardKey(initialDashboard, initialDashboardId)
+			? { initialData: initialDashboard }
+			: {}),
+		...(initialDashboardUpdatedAt === undefined ? {} : { initialDataUpdatedAt: initialDashboardUpdatedAt })
 	})
 	useDashboardConfigFallback(shouldFetchTrustedDashboardFallback, refetchDashboardQuery)
 	// Loading until dashboard config arrives from stream (or query fallback)
@@ -599,8 +505,8 @@ function ProDashboardAPIProviderInner({
 	const loadError = useMemo<{ status: number; message: string } | null>(() => {
 		if (!initialDashboardId || currentDashboard) return null
 		if (dashboardQueryError) {
-			const status = (dashboardQueryError as any)?.status ?? 500
-			const message = (dashboardQueryError as Error)?.message ?? 'Failed to load dashboard'
+			const status = dashboardQueryError instanceof DashboardError ? dashboardQueryError.status : 500
+			const message = dashboardQueryError instanceof Error ? dashboardQueryError.message : 'Failed to load dashboard'
 			return { status, message }
 		}
 		if (streamHasResolved && !currentDashboard2 && stream.error) {
@@ -630,9 +536,9 @@ function ProDashboardAPIProviderInner({
 			visibility?: 'private' | 'public'
 			tags?: string[]
 			description?: string
-			aiGenerated?: Record<string, any> | null
+			aiGenerated?: AIGeneratedData | null
 			items?: DashboardItemConfig[]
-			aiUndoState?: any
+			aiUndoState?: AIUndoState | null
 		}) => {
 			if (!isAuthenticated) {
 				toast.error('Please sign in to save dashboards')
@@ -644,8 +550,10 @@ function ProDashboardAPIProviderInner({
 			}
 
 			const itemsToSave = overrides?.items ?? items
-			const cleanedItems = cleanItemsForSaving(itemsToSave)
+			const cleanedItems = toPersistedDashboardItems(itemsToSave)
 			const nameToSave = overrides?.dashboardName ?? dashboardName
+			const aiGeneratedToSave =
+				overrides && 'aiGenerated' in overrides ? overrides.aiGenerated : (currentDashboard?.aiGenerated ?? null)
 			const data = {
 				items: cleanedItems,
 				dashboardName: nameToSave,
@@ -654,8 +562,8 @@ function ProDashboardAPIProviderInner({
 				visibility: isFreeUser ? ('public' as const) : (overrides?.visibility ?? dashboardVisibility),
 				tags: overrides?.tags ?? dashboardTags,
 				description: overrides?.description ?? dashboardDescription,
-				aiGenerated: overrides?.aiGenerated ?? currentDashboard?.aiGenerated ?? null,
-				...(overrides?.aiUndoState && { aiUndoState: overrides.aiUndoState })
+				aiGenerated: aiGeneratedToSave,
+				...(overrides && 'aiUndoState' in overrides ? { aiUndoState: overrides.aiUndoState } : {})
 			}
 
 			if (dashboardId) {
@@ -697,31 +605,21 @@ function ProDashboardAPIProviderInner({
 
 	const autoSkipOlderSessionsForRating = useCallback(async () => {
 		if (!isAuthenticated || !currentDashboard?.aiGenerated || !user?.id || !dashboardId) return
-
-		const unratedSessions = Object.entries(currentDashboard.aiGenerated)
-			.filter(
-				([_, sessionData]: [string, AISessionData]) =>
-					sessionData.userId === user.id && sessionData.rating === undefined && !sessionData.skipped
-			)
-			.map(([sessionId, sessionData]) => ({
-				sessionId,
-				...sessionData
-			}))
-
-		if (unratedSessions.length <= 1) return
-
-		unratedSessions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-
-		const olderSessions = unratedSessions.slice(1)
-
-		const updatedAiGenerated = { ...currentDashboard.aiGenerated }
-		for (const session of olderSessions) {
-			updatedAiGenerated[session.sessionId] = {
-				...updatedAiGenerated[session.sessionId],
+		const latestSession = getLatestPendingRating(currentDashboard.aiGenerated, user.id)
+		if (!latestSession) return
+		let updatedAiGenerated: AIGeneratedData | null = null
+		for (const sessionId in currentDashboard.aiGenerated) {
+			if (!Object.hasOwn(currentDashboard.aiGenerated, sessionId) || sessionId === latestSession.sessionId) continue
+			const session = currentDashboard.aiGenerated[sessionId]
+			if (!session || !isPendingRating(session, user.id)) continue
+			if (updatedAiGenerated === null) updatedAiGenerated = { ...currentDashboard.aiGenerated }
+			updatedAiGenerated[sessionId] = {
+				...session,
 				rated: false,
 				skipped: true
-			} as AISessionData
+			}
 		}
+		if (!updatedAiGenerated) return
 
 		try {
 			await saveDashboard({ aiGenerated: updatedAiGenerated })
@@ -753,7 +651,7 @@ function ProDashboardAPIProviderInner({
 			return
 		}
 
-		const cleanedItems = cleanItemsForSaving(items)
+		const cleanedItems = toPersistedDashboardItems(items)
 		const data = {
 			items: cleanedItems,
 			dashboardName: `${dashboardName} (Copy)`,
@@ -795,10 +693,11 @@ function ProDashboardAPIProviderInner({
 				return
 			}
 
+			const defaultTimePeriod: TimePeriod = '365d'
 			const dashboardData = {
 				items: data.items ?? [],
 				dashboardName: data.dashboardName,
-				timePeriod: '365d' as TimePeriod,
+				timePeriod: defaultTimePeriod,
 				visibility: isFreeUser ? ('public' as const) : data.visibility,
 				tags: data.tags,
 				description: data.description,
@@ -829,12 +728,11 @@ function ProDashboardAPIProviderInner({
 				prompt: string
 			}
 		}) => {
-			let aiGeneratedData = null
+			let aiGeneratedData: AIGeneratedData | null = null
 			if (data.aiGenerationContext && user?.id) {
 				const { sessionId, mode: aiMode, timestamp, prompt } = data.aiGenerationContext
 				aiGeneratedData = {
 					[sessionId]: {
-						rating: undefined,
 						mode: aiMode,
 						timestamp,
 						prompt,
@@ -866,7 +764,7 @@ function ProDashboardAPIProviderInner({
 				prompt: string
 			}
 		}) => {
-			let updatedAiGenerated = null
+			let updatedAiGenerated: AIGeneratedData | null = null
 			if (data.aiGenerationContext && user?.id) {
 				const { sessionId, mode: aiMode, timestamp, prompt } = data.aiGenerationContext
 				const currentAiGenerated = currentDashboard?.aiGenerated || {}
@@ -874,7 +772,6 @@ function ProDashboardAPIProviderInner({
 				updatedAiGenerated = {
 					...currentAiGenerated,
 					[sessionId]: {
-						rating: undefined,
 						mode: aiMode,
 						timestamp,
 						prompt,
@@ -885,7 +782,7 @@ function ProDashboardAPIProviderInner({
 			}
 
 			if (dashboardId) {
-				const aiUndoState = data.aiGenerationContext
+				const aiUndoState: AIUndoState | undefined = data.aiGenerationContext
 					? {
 							items: items,
 							timestamp: new Date().toISOString(),
@@ -898,8 +795,8 @@ function ProDashboardAPIProviderInner({
 					visibility: data.visibility,
 					tags: data.tags,
 					description: data.description,
-					aiGenerated: updatedAiGenerated,
-					aiUndoState
+					...(updatedAiGenerated ? { aiGenerated: updatedAiGenerated } : {}),
+					...(aiUndoState === undefined ? {} : { aiUndoState })
 				})
 
 				setItems(data.items)
@@ -910,9 +807,9 @@ function ProDashboardAPIProviderInner({
 								data: {
 									...prev.data,
 									items: data.items,
-									aiUndoState
+									...(aiUndoState === undefined ? {} : { aiUndoState })
 								},
-								aiGenerated: updatedAiGenerated || prev.aiGenerated
+								...(updatedAiGenerated ? { aiGenerated: updatedAiGenerated } : {})
 							}
 						: null
 				)
@@ -932,14 +829,16 @@ function ProDashboardAPIProviderInner({
 
 			const currentAiGenerated = currentDashboard?.aiGenerated ?? {}
 			const existingSession = currentAiGenerated[sessionId]
-			const updatedAiGenerated = {
+			if (!existingSession) {
+				toast.error('This rating session is no longer available')
+				return
+			}
+			const updatedAiGenerated: AIGeneratedData = {
 				...currentAiGenerated,
 				[sessionId]: {
 					...existingSession,
 					rating,
-					feedback,
-					mode: existingSession?.mode ?? 'create',
-					timestamp: existingSession?.timestamp ?? new Date().toISOString(),
+					...(feedback === undefined ? {} : { feedback }),
 					userId: user.id,
 					rated: true
 				}
@@ -977,12 +876,11 @@ function ProDashboardAPIProviderInner({
 
 			const currentAiGenerated = currentDashboard?.aiGenerated ?? {}
 			const existingSession = currentAiGenerated[sessionId]
-			const updatedAiGenerated = {
+			if (!existingSession) return
+			const updatedAiGenerated: AIGeneratedData = {
 				...currentAiGenerated,
 				[sessionId]: {
 					...existingSession,
-					mode: existingSession?.mode ?? 'create',
-					timestamp: existingSession?.timestamp ?? new Date().toISOString(),
 					userId: user.id,
 					rated: false,
 					skipped: true
@@ -1025,151 +923,35 @@ function ProDashboardAPIProviderInner({
 		const previousItems = currentDashboard.data.aiUndoState.items
 		const sessionId = currentDashboard.data.aiUndoState.sessionId
 
-		const updatedAiGenerated = currentDashboard.aiGenerated
-			? {
-					...currentDashboard.aiGenerated,
-					[sessionId]: {
-						...currentDashboard.aiGenerated[sessionId],
-						rating: -99
+		const existingSession = currentDashboard.aiGenerated?.[sessionId]
+		const updatedAiGenerated: AIGeneratedData | null = currentDashboard.aiGenerated
+			? existingSession
+				? {
+						...currentDashboard.aiGenerated,
+						[sessionId]: { ...existingSession, rating: -99 }
 					}
-				}
+				: currentDashboard.aiGenerated
 			: null
 
 		await saveDashboard({
 			items: previousItems,
-			aiUndoState: undefined,
+			aiUndoState: null,
 			aiGenerated: updatedAiGenerated
 		})
 
 		setItems(previousItems)
-		setCurrentDashboard((prev) =>
-			prev
-				? {
-						...prev,
-						data: {
-							...prev.data,
-							items: previousItems,
-							aiUndoState: undefined
-						},
-						aiGenerated: updatedAiGenerated
-					}
-				: null
-		)
+		setCurrentDashboard((prev) => {
+			if (!prev) return null
+			const { aiUndoState: _aiUndoState, ...dashboardData } = prev.data
+			return {
+				...prev,
+				data: { ...dashboardData, items: previousItems },
+				aiGenerated: updatedAiGenerated
+			}
+		})
 	}, [currentDashboard, dashboardId, saveDashboard, setItems, setCurrentDashboard])
 
 	const canUndo = !!currentDashboard?.data?.aiUndoState?.items
-
-	// Load dashboard
-	const allChartItems: ChartConfig[] = useMemo(() => {
-		const chartItems: ChartConfig[] = []
-		for (const item of items) {
-			if (item.kind === 'chart') {
-				chartItems.push(item)
-			} else if (item.kind === 'multi') {
-				chartItems.push(...limitMultiChartItems(item.items))
-			}
-		}
-		return chartItems
-	}, [items])
-
-	const proxyAuthToken = useContext(ProxyAuthTokenContext)
-	const chartQueries = useChartsData(allChartItems, timePeriod, customTimePeriod, proxyAuthToken)
-	const chartIndexById = useMemo(() => {
-		const map = new Map<string, number>()
-		for (let index = 0; index < allChartItems.length; index++) {
-			map.set(allChartItems[index].id, index)
-		}
-		return map
-	}, [allChartItems])
-	const chartResolutionCacheRef = useRef(createDashboardChartResolutionCache())
-
-	const chartsWithData: DashboardItemConfig[] = useMemo(
-		() =>
-			resolveDashboardChartItems({
-				items,
-				chartIndexById,
-				chartQueries,
-				streamDone,
-				cache: chartResolutionCacheRef.current
-			}),
-		[items, chartIndexById, chartQueries, streamDone]
-	)
-
-	const handlersRef = useRef<{
-		handleAddChart: typeof handleAddChart
-		handleAddUnlocksSchedule: typeof handleAddUnlocksSchedule
-		handleAddUnlocksPie: typeof handleAddUnlocksPie
-		handleAddYieldChart: typeof handleAddYieldChart
-		handleAddStablecoinsChart: typeof handleAddStablecoinsChart
-		handleAddStablecoinAssetChart: typeof handleAddStablecoinAssetChart
-		handleAddAdvancedTvlChart: typeof handleAddAdvancedTvlChart
-		handleAddBorrowedChart: typeof handleAddBorrowedChart
-		handleAddIncomeStatement: typeof handleAddIncomeStatement
-		handleAddTable: typeof handleAddTable
-		handleAddMultiChart: typeof handleAddMultiChart
-		handleAddText: typeof handleAddText
-		handleAddMetric: typeof handleAddMetric
-		handleAddSqlChart: typeof handleAddSqlChart
-		handleAddUnifiedTable: typeof handleAddUnifiedTable
-		handleAddChartBuilder: typeof handleAddChartBuilder
-		handleAddLlamaAIChart: typeof handleAddLlamaAIChart
-		handleAddRWAOverviewChart: typeof handleAddRWAOverviewChart
-		handleAddRWAAssetChart: typeof handleAddRWAAssetChart
-		handleDuplicateChartBuilder: typeof handleDuplicateChartBuilder
-		handleDuplicateMultiChart: typeof handleDuplicateMultiChart
-		handleEditItem: typeof handleEditItem
-		handleRemoveItem: typeof handleRemoveItem
-		handleChartsReordered: typeof handleChartsReordered
-		handleGroupingChange: typeof handleGroupingChange
-		handleColSpanChange: typeof handleColSpanChange
-		handleCumulativeChange: typeof handleCumulativeChange
-		handlePercentageChange: typeof handlePercentageChange
-		handleStackedChange: typeof handleStackedChange
-		handleTreemapChange: typeof handleTreemapChange
-		handleHideOthersChange: typeof handleHideOthersChange
-		handleChartTypeChange: typeof handleChartTypeChange
-		handleTableFiltersChange: typeof handleTableFiltersChange
-		handleTableColumnsChange: typeof handleTableColumnsChange
-	}>(null as any)
-
-	useIsomorphicLayoutEffect(() => {
-		handlersRef.current = {
-			handleAddChart,
-			handleAddUnlocksSchedule,
-			handleAddUnlocksPie,
-			handleAddYieldChart,
-			handleAddStablecoinsChart,
-			handleAddStablecoinAssetChart,
-			handleAddAdvancedTvlChart,
-			handleAddBorrowedChart,
-			handleAddIncomeStatement,
-			handleAddTable,
-			handleAddMultiChart,
-			handleAddText,
-			handleAddMetric,
-			handleAddSqlChart,
-			handleAddUnifiedTable,
-			handleAddChartBuilder,
-			handleAddLlamaAIChart,
-			handleAddRWAOverviewChart,
-			handleAddRWAAssetChart,
-			handleDuplicateChartBuilder,
-			handleDuplicateMultiChart,
-			handleEditItem,
-			handleRemoveItem,
-			handleChartsReordered,
-			handleGroupingChange,
-			handleColSpanChange,
-			handleCumulativeChange,
-			handlePercentageChange,
-			handleStackedChange,
-			handleTreemapChange,
-			handleHideOthersChange,
-			handleChartTypeChange,
-			handleTableFiltersChange,
-			handleTableColumnsChange
-		}
-	})
 
 	const chainByName = useMemo(() => {
 		const map = new Map<string, Chain>()
@@ -1178,14 +960,6 @@ function ProDashboardAPIProviderInner({
 		}
 		return map
 	}, [chains])
-
-	const protocolBySlug = useMemo(() => {
-		const map = new Map<string, Protocol>()
-		for (const protocol of protocols as Protocol[]) {
-			map.set(protocol.slug, protocol)
-		}
-		return map
-	}, [protocols])
 
 	const getChainInfo = useCallback(
 		(chainName: string) => {
@@ -1216,10 +990,24 @@ function ProDashboardAPIProviderInner({
 			protocols,
 			chains,
 			protocolsLoading,
+			protocolCatalog,
 			getChainInfo,
-			getProtocolInfo
+			getProtocolInfo,
+			parentMapping,
+			protocolBySlug,
+			protocolSymbols
 		}),
-		[protocols, chains, protocolsLoading, getChainInfo, getProtocolInfo]
+		[
+			protocols,
+			chains,
+			protocolsLoading,
+			protocolCatalog,
+			getChainInfo,
+			getProtocolInfo,
+			parentMapping,
+			protocolBySlug,
+			protocolSymbols
+		]
 	)
 
 	const permissionsContextValue = useMemo(
@@ -1292,86 +1080,13 @@ function ProDashboardAPIProviderInner({
 		]
 	)
 
-	const editorActionsContextValue = useMemo(
-		(): ProDashboardEditorActionsContextType => ({
-			handleAddChart: (...args: Parameters<typeof handleAddChart>) => handlersRef.current.handleAddChart(...args),
-			handleAddUnlocksSchedule: (...args: Parameters<typeof handleAddUnlocksSchedule>) =>
-				handlersRef.current.handleAddUnlocksSchedule(...args),
-			handleAddUnlocksPie: (...args: Parameters<typeof handleAddUnlocksPie>) =>
-				handlersRef.current.handleAddUnlocksPie(...args),
-			handleAddYieldChart: (...args: Parameters<typeof handleAddYieldChart>) =>
-				handlersRef.current.handleAddYieldChart(...args),
-			handleAddStablecoinsChart: (...args: Parameters<typeof handleAddStablecoinsChart>) =>
-				handlersRef.current.handleAddStablecoinsChart(...args),
-			handleAddStablecoinAssetChart: (...args: Parameters<typeof handleAddStablecoinAssetChart>) =>
-				handlersRef.current.handleAddStablecoinAssetChart(...args),
-			handleAddAdvancedTvlChart: (...args: Parameters<typeof handleAddAdvancedTvlChart>) =>
-				handlersRef.current.handleAddAdvancedTvlChart(...args),
-			handleAddBorrowedChart: (...args: Parameters<typeof handleAddBorrowedChart>) =>
-				handlersRef.current.handleAddBorrowedChart(...args),
-			handleAddIncomeStatement: (...args: Parameters<typeof handleAddIncomeStatement>) =>
-				handlersRef.current.handleAddIncomeStatement(...args),
-			handleAddTable: (...args: Parameters<typeof handleAddTable>) => handlersRef.current.handleAddTable(...args),
-			handleAddMultiChart: (...args: Parameters<typeof handleAddMultiChart>) =>
-				handlersRef.current.handleAddMultiChart(...args),
-			handleAddText: (...args: Parameters<typeof handleAddText>) => handlersRef.current.handleAddText(...args),
-			handleAddMetric: (...args: Parameters<typeof handleAddMetric>) => handlersRef.current.handleAddMetric(...args),
-			handleAddSqlChart: (...args: Parameters<typeof handleAddSqlChart>) =>
-				handlersRef.current.handleAddSqlChart(...args),
-			handleAddUnifiedTable: (...args: Parameters<typeof handleAddUnifiedTable>) =>
-				handlersRef.current.handleAddUnifiedTable(...args),
-			handleAddChartBuilder: (...args: Parameters<typeof handleAddChartBuilder>) =>
-				handlersRef.current.handleAddChartBuilder(...args),
-			handleAddLlamaAIChart: (...args: Parameters<typeof handleAddLlamaAIChart>) =>
-				handlersRef.current.handleAddLlamaAIChart(...args),
-			handleAddRWAOverviewChart: (...args: Parameters<typeof handleAddRWAOverviewChart>) =>
-				handlersRef.current.handleAddRWAOverviewChart(...args),
-			handleAddRWAAssetChart: (...args: Parameters<typeof handleAddRWAAssetChart>) =>
-				handlersRef.current.handleAddRWAAssetChart(...args),
-			handleDuplicateChartBuilder: (...args: Parameters<typeof handleDuplicateChartBuilder>) =>
-				handlersRef.current.handleDuplicateChartBuilder(...args),
-			handleDuplicateMultiChart: (...args: Parameters<typeof handleDuplicateMultiChart>) =>
-				handlersRef.current.handleDuplicateMultiChart(...args),
-			handleEditItem: (...args: Parameters<typeof handleEditItem>) => handlersRef.current.handleEditItem(...args),
-			handleRemoveItem: (...args: Parameters<typeof handleRemoveItem>) => handlersRef.current.handleRemoveItem(...args),
-			handleChartsReordered: (...args: Parameters<typeof handleChartsReordered>) =>
-				handlersRef.current.handleChartsReordered(...args),
-			handleGroupingChange: (...args: Parameters<typeof handleGroupingChange>) =>
-				handlersRef.current.handleGroupingChange(...args),
-			handleColSpanChange: (...args: Parameters<typeof handleColSpanChange>) =>
-				handlersRef.current.handleColSpanChange(...args),
-			handleCumulativeChange: (...args: Parameters<typeof handleCumulativeChange>) =>
-				handlersRef.current.handleCumulativeChange(...args),
-			handlePercentageChange: (...args: Parameters<typeof handlePercentageChange>) =>
-				handlersRef.current.handlePercentageChange(...args),
-			handleStackedChange: (...args: Parameters<typeof handleStackedChange>) =>
-				handlersRef.current.handleStackedChange(...args),
-			handleTreemapChange: (...args: Parameters<typeof handleTreemapChange>) =>
-				handlersRef.current.handleTreemapChange(...args),
-			handleHideOthersChange: (...args: Parameters<typeof handleHideOthersChange>) =>
-				handlersRef.current.handleHideOthersChange(...args),
-			handleChartTypeChange: (...args: Parameters<typeof handleChartTypeChange>) =>
-				handlersRef.current.handleChartTypeChange(...args),
-			handleTableFiltersChange: (...args: Parameters<typeof handleTableFiltersChange>) =>
-				handlersRef.current.handleTableFiltersChange(...args),
-			handleTableColumnsChange: (...args: Parameters<typeof handleTableColumnsChange>) =>
-				handlersRef.current.handleTableColumnsChange(...args)
-		}),
-		[]
-	)
+	const editorActionsContextValue: ProDashboardEditorActionsContextType = actions
 
 	const itemsStateContextValue = useMemo(
 		() => ({
 			items
 		}),
 		[items]
-	)
-
-	const chartsDataContextValue = useMemo(
-		() => ({
-			chartsWithData
-		}),
-		[chartsWithData]
 	)
 
 	const uiContextValue = useMemo(
@@ -1398,13 +1113,7 @@ function ProDashboardAPIProviderInner({
 					<ProDashboardDashboardContext.Provider value={dashboardContextValue}>
 						<ProDashboardEditorActionsContext.Provider value={editorActionsContextValue}>
 							<ProDashboardItemsStateContext.Provider value={itemsStateContextValue}>
-								<ProDashboardChartsDataContext.Provider value={chartsDataContextValue}>
-									<ProDashboardUIContext.Provider value={uiContextValue}>
-										<ProDashboardServerAppMetadataContext.Provider value={stream.appMetadata}>
-											{children}
-										</ProDashboardServerAppMetadataContext.Provider>
-									</ProDashboardUIContext.Provider>
-								</ProDashboardChartsDataContext.Provider>
+								<ProDashboardUIContext.Provider value={uiContextValue}>{children}</ProDashboardUIContext.Provider>
 							</ProDashboardItemsStateContext.Provider>
 						</ProDashboardEditorActionsContext.Provider>
 					</ProDashboardDashboardContext.Provider>
@@ -1462,24 +1171,12 @@ export function useProDashboardItemsState() {
 	return context
 }
 
-export function useProDashboardChartsData() {
-	const context = useContext(ProDashboardChartsDataContext)
-	if (context === undefined) {
-		throw new Error('useProDashboardChartsData must be used within a ProDashboardAPIProvider')
-	}
-	return context
-}
-
 export function useProDashboardUI() {
 	const context = useContext(ProDashboardUIContext)
 	if (context === undefined) {
 		throw new Error('useProDashboardUI must be used within a ProDashboardAPIProvider')
 	}
 	return context
-}
-
-export function useProDashboardServerAppMetadata() {
-	return useContext(ProDashboardServerAppMetadataContext)
 }
 
 export function useDashboardMode() {

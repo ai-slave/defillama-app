@@ -1,48 +1,17 @@
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
-import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
-import {
-	DEFAULT_COLUMN_ORDER,
-	DEFAULT_ROW_HEADERS,
-	DEFAULT_UNIFIED_TABLE_SORTING
-} from './components/UnifiedTable/constants'
-import { sanitizeRowHeaders } from './components/UnifiedTable/utils/rowHeaders'
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import type { StoredColSpan } from './dashboardConfig/colSpan'
+import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { DashboardAction, DashboardState } from './dashboardReducer'
 import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
+import type { ChartBuilderConfig, DashboardGrouping, MultiChartConfig, SqlChartConfig } from './types'
+import { limitMultiChartItems } from './types'
+import { UNIFIED_TABLE_CONFIG_VERSION, type UnifiedTableConfig } from './unifiedTable/config/current'
+import { DEFAULT_COLUMN_ORDER } from './unifiedTable/config/defaults'
 import {
-	type AdvancedTvlChartConfig,
-	type AdvancedTvlChartType,
-	type BorrowedChartConfig,
-	type BorrowedChartType,
-	CHART_TYPES,
-	type ChartBuilderConfig,
-	type ChartConfig,
-	type DashboardGrouping,
-	type DashboardItemConfig,
-	type IncomeStatementConfig,
-	type LlamaAIChartConfig,
-	limitMultiChartItems,
-	type MetricConfig,
-	type MultiChartConfig,
-	type SqlChartConfig,
-	type ProtocolsTableConfig,
-	type StablecoinAssetChartConfig,
-	type StablecoinAssetChartType,
-	type StablecoinChartType,
-	type StablecoinsChartConfig,
-	type StoredColSpan,
-	type TableFilters,
-	type TextConfig,
-	type UnifiedTableConfig,
-	type UnlocksScheduleConfig,
-	type UnlocksPieConfig,
-	type YieldsChartConfig,
-	type RWAOverviewChartConfig,
-	type RWAOverviewChartMetric,
-	type RWAOverviewChartView,
-	type RWAOverviewChartBreakdown,
-	type RWAAssetChartConfig,
-	normalizeYieldChartType
-} from './types'
+	DEFAULT_UNIFIED_TABLE_ROW_HEADERS,
+	DEFAULT_UNIFIED_TABLE_SORTING,
+	sanitizeUnifiedTableRowHeaders
+} from './unifiedTable/config/layoutPolicy'
 import { generateItemId } from './utils/dashboardUtils'
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -53,6 +22,7 @@ type AutoSaveOverrides = {
 }
 
 type AutoSaveFunction = (items: DashboardItemConfig[], overrides?: AutoSaveOverrides) => void
+type DashboardItemsFactory = (existingItems: readonly DashboardItemConfig[]) => DashboardItemConfig[]
 
 export function useDashboardActions(
 	dispatch: Dispatch<DashboardAction>,
@@ -76,6 +46,7 @@ export function useDashboardActions(
 			}
 			const prevItems = itemsRef.current
 			const newItems = typeof updater === 'function' ? updater(prevItems) : updater
+			if (newItems === prevItems) return
 			itemsRef.current = newItems
 			dispatch({ type: 'SET_ITEMS', payload: newItems })
 			autoSave(newItems)
@@ -83,267 +54,13 @@ export function useDashboardActions(
 		[dispatch, autoSave]
 	)
 
-	const handleAddChart = useCallback(
-		(
-			item: string,
-			chartType: string,
-			itemType: 'chain' | 'protocol',
-			geckoId?: string | null,
-			color?: string,
-			dataType?: 'documented' | 'realtime'
-		) => {
+	const handleAppendItems = useCallback(
+		(createItems: DashboardItemsFactory) => {
 			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newChartId = generateItemId(chartType, item)
-			const chartTypeDetails = CHART_TYPES[chartType]
-
-			const newChartBase: Partial<ChartConfig> = {
-				id: newChartId,
-				kind: 'chart',
-				type: chartType,
-				colSpan: 1,
-				color,
-				dataType
-			}
-
-			if (chartTypeDetails?.groupable) {
-				newChartBase.grouping = 'day'
-			}
-
-			let newChart: ChartConfig
-			if (itemType === 'protocol') {
-				newChart = {
-					...newChartBase,
-					protocol: item,
-					chain: '',
-					geckoId
-				} as ChartConfig
-			} else {
-				newChart = {
-					...newChartBase,
-					chain: item,
-					geckoId
-				} as ChartConfig
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newChart])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddUnlocksSchedule = useCallback(
-		(protocol: string, protocolName: string) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newUnlocksSchedule: UnlocksScheduleConfig = {
-				id: generateItemId('unlocks-schedule', protocol),
-				kind: 'unlocks-schedule',
-				protocol,
-				protocolName,
-				dataType: 'documented',
-				colSpan: 2
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newUnlocksSchedule])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddUnlocksPie = useCallback(
-		(protocol: string, protocolName: string, chartType: 'allocation' | 'locked-unlocked') => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newUnlocksPie: UnlocksPieConfig = {
-				id: generateItemId('unlocks-pie', `${protocol}-${chartType}`),
-				kind: 'unlocks-pie',
-				protocol,
-				protocolName,
-				chartType,
-				colSpan: 1
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newUnlocksPie])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddYieldChart = useCallback(
-		(poolConfigId: string, poolName: string, project: string, chain: string, chartType?: string) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newYieldChart: YieldsChartConfig = {
-				id: generateItemId('yields', poolConfigId),
-				kind: 'yields',
-				poolConfigId,
-				poolName,
-				project,
-				chain,
-				chartType: normalizeYieldChartType(chartType),
-				colSpan: 1
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newYieldChart])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddStablecoinsChart = useCallback(
-		(chain: string, chartType: string) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newStablecoinsChart: StablecoinsChartConfig = {
-				id: generateItemId('stablecoins', `${chain}-${chartType}`),
-				kind: 'stablecoins',
-				chain,
-				chartType: chartType as StablecoinChartType,
-				colSpan: 1
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newStablecoinsChart])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddStablecoinAssetChart = useCallback(
-		(stablecoin: string, stablecoinId: string, chartType: string) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newStablecoinAssetChart: StablecoinAssetChartConfig = {
-				id: generateItemId('stablecoin-asset', `${stablecoin}-${chartType}`),
-				kind: 'stablecoin-asset',
-				stablecoin,
-				stablecoinId,
-				chartType: chartType as StablecoinAssetChartType,
-				colSpan: 1
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newStablecoinAssetChart])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddAdvancedTvlChart = useCallback(
-		(protocol: string, protocolName: string, chartType: string) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newAdvancedTvlChart: AdvancedTvlChartConfig = {
-				id: generateItemId('advanced-tvl', `${protocol}-${chartType}`),
-				kind: 'advanced-tvl',
-				protocol,
-				protocolName,
-				chartType: chartType as AdvancedTvlChartType,
-				colSpan: 1
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newAdvancedTvlChart])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddBorrowedChart = useCallback(
-		(protocol: string, protocolName: string, chartType: string) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newBorrowedChart: BorrowedChartConfig = {
-				id: generateItemId('advanced-borrowed', `${protocol}-${chartType}`),
-				kind: 'advanced-borrowed',
-				protocol,
-				protocolName,
-				chartType: chartType as BorrowedChartType,
-				colSpan: 1
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newBorrowedChart])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddIncomeStatement = useCallback(
-		(protocol: string, protocolName: string) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newIncomeStatement: IncomeStatementConfig = {
-				id: generateItemId('income-statement', protocol),
-				kind: 'income-statement',
-				protocol,
-				protocolName,
-				colSpan: 2
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newIncomeStatement])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddTable = useCallback(
-		(
-			chains: string[],
-			tableType: 'protocols' | 'dataset' = 'protocols',
-			datasetType?:
-				| 'stablecoins'
-				| 'cex'
-				| 'cex-analytics'
-				| 'revenue'
-				| 'holders-revenue'
-				| 'earnings'
-				| 'token-usage'
-				| 'yields'
-				| 'dexs'
-				| 'perps'
-				| 'aggregators'
-				| 'options'
-				| 'bridge-aggregators'
-				| 'trending-contracts'
-				| 'chains'
-				| 'fees'
-				| 'rwa'
-				| 'rwa-chains'
-				| 'rwa-selected-chain'
-				| 'equities'
-				| 'equities-financials'
-				| 'equities-filings',
-			datasetChain?: string,
-			tokenSymbol?: string | string[],
-			includeCex?: boolean,
-			datasetTimeframe?: string,
-			cexAnalyticsView?: CexAnalyticsView,
-			cexAnalyticsMetric?: CexAnalyticsMetric,
-			cexAnalyticsTopN?: number
-		) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const chainIdentifier = chains.length > 1 ? 'multi' : chains[0] || 'table'
-			const datasetIdentifier =
-				tableType === 'dataset'
-					? [datasetType, datasetChain, datasetTimeframe, cexAnalyticsView, cexAnalyticsMetric, cexAnalyticsTopN]
-							.filter(Boolean)
-							.join('-') || chainIdentifier
-					: chainIdentifier
-			const newTable: ProtocolsTableConfig = {
-				id: generateItemId('table', datasetIdentifier),
-				kind: 'table',
-				tableType,
-				chains,
-				colSpan: 2,
-				...(tableType === 'dataset' && {
-					datasetType,
-					datasetChain,
-					...(datasetType === 'token-usage' && {
-						tokenSymbols: Array.isArray(tokenSymbol) ? tokenSymbol : tokenSymbol ? [tokenSymbol] : [],
-						includeCex
-					}),
-					...(datasetType === 'trending-contracts' && {
-						datasetTimeframe: datasetTimeframe || '1d'
-					}),
-					...(datasetType === 'cex-analytics' && {
-						cexAnalyticsView: cexAnalyticsView || 'comparison',
-						cexAnalyticsMetric: cexAnalyticsMetric || 'derivatives',
-						cexAnalyticsTopN: cexAnalyticsTopN || 8
-					})
-				})
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newTable])
+			dispatchItemsAndSave((existingItems) => {
+				const newItems = createItems(existingItems)
+				return newItems.length > 0 ? [...existingItems, ...newItems] : existingItems
+			})
 		},
 		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
 	)
@@ -360,76 +77,20 @@ export function useDashboardActions(
 			const newUnifiedTable: UnifiedTableConfig = {
 				id: generateItemId('unified-table', 'protocols'),
 				kind: 'unified-table',
-				rowHeaders: sanitizeRowHeaders(configOverrides?.rowHeaders ?? DEFAULT_ROW_HEADERS),
+				configVersion: UNIFIED_TABLE_CONFIG_VERSION,
+				strategy: 'protocols',
+				rowHeaders: sanitizeUnifiedTableRowHeaders(configOverrides?.rowHeaders ?? DEFAULT_UNIFIED_TABLE_ROW_HEADERS),
 				defaultSorting: resolvedSorting,
 				params: configOverrides?.params ?? { chains: ['All'] },
-				filters: configOverrides?.filters,
+				...(configOverrides?.filters === undefined ? {} : { filters: configOverrides.filters }),
 				columnOrder: configOverrides?.columnOrder ?? [...DEFAULT_COLUMN_ORDER],
 				columnVisibility: configOverrides?.columnVisibility ?? {},
-				activePresetId: configOverrides?.activePresetId,
+				...(configOverrides?.activePresetId === undefined ? {} : { activePresetId: configOverrides.activePresetId }),
 				colSpan: configOverrides?.colSpan ?? 2,
-				customColumns: configOverrides?.customColumns
+				...(configOverrides?.customColumns === undefined ? {} : { customColumns: configOverrides.customColumns })
 			}
 
 			dispatchItemsAndSave((prev) => [...prev, newUnifiedTable])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddMultiChart = useCallback(
-		(chartItems: ChartConfig[], name?: string) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const defaultGrouping = 'day'
-
-			dispatchItemsAndSave((prev) => {
-				const newMultiChart: MultiChartConfig = {
-					id: generateItemId('multi', ''),
-					kind: 'multi',
-					name: name || `Multi-Chart ${prev.filter((item) => item.kind === 'multi').length + 1}`,
-					items: limitMultiChartItems(chartItems).map((chart) => ({
-						...chart,
-						grouping: chart.grouping || defaultGrouping
-					})),
-					grouping: defaultGrouping,
-					colSpan: 1
-				}
-				return [...prev, newMultiChart]
-			})
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddText = useCallback(
-		(title: string | undefined, content: string) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newText: TextConfig = {
-				id: generateItemId('text', ''),
-				kind: 'text',
-				title,
-				content,
-				colSpan: 1
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newText])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddChartBuilder = useCallback(
-		(name: string | undefined, config: ChartBuilderConfig['config']) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newBuilder = {
-				id: generateItemId('builder', ''),
-				kind: 'builder' as const,
-				name,
-				config,
-				colSpan: 1 as const
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newBuilder])
 		},
 		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
 	)
@@ -442,82 +103,20 @@ export function useDashboardActions(
 				...builder.config,
 				chains: [...builder.config.chains],
 				categories: [...builder.config.categories],
-				chainCategories: builder.config.chainCategories ? [...builder.config.chainCategories] : undefined,
-				protocolCategories: builder.config.protocolCategories ? [...builder.config.protocolCategories] : undefined,
-				additionalFilters: builder.config.additionalFilters ? { ...builder.config.additionalFilters } : undefined,
-				seriesColors: builder.config.seriesColors ? { ...builder.config.seriesColors } : undefined
+				...(builder.config.chainCategories ? { chainCategories: [...builder.config.chainCategories] } : {}),
+				...(builder.config.protocolCategories ? { protocolCategories: [...builder.config.protocolCategories] } : {}),
+				...(builder.config.seriesColors ? { seriesColors: { ...builder.config.seriesColors } } : {})
 			}
 
 			dispatchItemsAndSave((prev) => {
 				const newBuilder: ChartBuilderConfig = {
 					...builder,
 					id: generateItemId('builder', ''),
-					name: builder.name ? `${builder.name} (Duplicate)` : builder.name,
+					...(builder.name ? { name: `${builder.name} (Duplicate)` } : {}),
 					config: clonedConfig
 				}
 				return [...prev, newBuilder]
 			})
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddLlamaAIChart = useCallback(
-		(savedChartId: string, title?: string) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newChart: LlamaAIChartConfig = {
-				id: generateItemId('llamaai-chart', savedChartId),
-				kind: 'llamaai-chart',
-				savedChartId,
-				title,
-				colSpan: 1
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newChart])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddRWAOverviewChart = useCallback(
-		(
-			metric: RWAOverviewChartMetric,
-			chartView: RWAOverviewChartView,
-			breakdown: RWAOverviewChartBreakdown,
-			treemapNestedBy?: string,
-			chain?: string
-		) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newChart: RWAOverviewChartConfig = {
-				id: generateItemId('rwa-overview', `${chain || 'all'}-${metric}-${chartView}-${breakdown}`),
-				kind: 'rwa-overview',
-				metric,
-				chartView,
-				breakdown,
-				chain: chain || undefined,
-				treemapNestedBy: treemapNestedBy || 'none',
-				colSpan: 1
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newChart])
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddRWAAssetChart = useCallback(
-		(assetId: string, assetName: string, metrics: RWAOverviewChartMetric[]) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const newChart: RWAAssetChartConfig = {
-				id: generateItemId('rwa-asset', `${assetId}-${metrics.join('-')}`),
-				kind: 'rwa-asset',
-				assetId,
-				assetName,
-				metrics,
-				colSpan: 1
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newChart])
 		},
 		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
 	)
@@ -527,17 +126,14 @@ export function useDashboardActions(
 			if (isReadOnlyUntilDashboardLoaded) return
 
 			dispatchItemsAndSave((prev) => {
-				const newItems = limitMultiChartItems(multi.items).map((item) => {
-					const { data: _data, isLoading: _isLoading, hasError: _hasError, refetch: _refetch, ...rest } = item
-					return {
-						...rest,
-						id: generateItemId('chart', `${item.protocol || item.chain || 'chart'}-${item.type}`)
-					}
-				})
+				const newItems = limitMultiChartItems(multi.items).map((item) => ({
+					...item,
+					id: generateItemId('chart', `${item.subjectType === 'protocol' ? item.protocol : item.chain}-${item.type}`)
+				}))
 				const newMulti: MultiChartConfig = {
 					...multi,
 					id: generateItemId('multi', ''),
-					name: multi.name ? `${multi.name} (Duplicate)` : multi.name,
+					...(multi.name ? { name: `${multi.name} (Duplicate)` } : {}),
 					items: newItems
 				}
 				return [...prev, newMulti]
@@ -562,29 +158,6 @@ export function useDashboardActions(
 			if (isReadOnlyUntilDashboardLoaded) return
 
 			dispatchItemsAndSave((prev) => prev.filter((item) => item.id !== itemId))
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleAddMetric = useCallback(
-		(config: MetricConfig) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			const metric: MetricConfig = {
-				id: generateItemId('metric', ''),
-				kind: 'metric',
-				subject: config.subject,
-				type: config.type,
-				aggregator: config.aggregator,
-				window: config.window,
-				compare: config.compare,
-				label: config.label,
-				format: config.format,
-				chartType: config.chartType ?? (config.showSparkline === false ? 'none' : 'sparkline'),
-				colSpan: (config.colSpan ?? 0.5) as StoredColSpan
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, metric])
 		},
 		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
 	)
@@ -616,10 +189,9 @@ export function useDashboardActions(
 		(newCharts: DashboardItemConfig[]) => {
 			if (isReadOnlyUntilDashboardLoaded) return
 
-			dispatch({ type: 'SET_ITEMS', payload: newCharts })
-			autoSave(newCharts)
+			dispatchItemsAndSave(newCharts)
 		},
-		[dispatch, autoSave, isReadOnlyUntilDashboardLoaded]
+		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
 	)
 
 	const handleGroupingChange = useCallback(
@@ -657,11 +229,10 @@ export function useDashboardActions(
 				prev.map((item) => {
 					if (item.id === chartId) {
 						if (item.kind === 'metric') {
-							const clampedMetric = Math.min(1, Math.max(0.5, newColSpan)) as StoredColSpan
+							const clampedMetric: StoredColSpan = newColSpan > 1 ? 1 : newColSpan
 							return { ...item, colSpan: clampedMetric }
 						}
-						const clamped = Math.min(2, Math.max(0.5, newColSpan)) as StoredColSpan
-						return { ...item, colSpan: clamped }
+						return { ...item, colSpan: newColSpan }
 					}
 					return item
 				})
@@ -701,9 +272,9 @@ export function useDashboardActions(
 							...item,
 							config: {
 								...item.config,
-								displayAs: (showPercentage ? 'percentage' : 'timeSeries') as 'percentage' | 'timeSeries'
+								displayAs: showPercentage ? 'percentage' : 'timeSeries'
 							}
-						} as ChartBuilderConfig
+						} satisfies ChartBuilderConfig
 					}
 					return item
 				})
@@ -757,7 +328,7 @@ export function useDashboardActions(
 								...item.config,
 								hideOthers
 							}
-						} as ChartBuilderConfig
+						} satisfies ChartBuilderConfig
 					}
 					return item
 				})
@@ -767,7 +338,7 @@ export function useDashboardActions(
 	)
 
 	const handleChartTypeChange = useCallback(
-		(itemId: string, newChartType: 'stackedBar' | 'stackedArea' | 'line') => {
+		(itemId: string, newChartType: 'stackedBar' | 'stackedArea' | 'line' | 'treemap') => {
 			if (isReadOnlyUntilDashboardLoaded) return
 
 			dispatchItemsAndSave((prev) =>
@@ -779,53 +350,7 @@ export function useDashboardActions(
 								...item.config,
 								chartType: newChartType
 							}
-						} as ChartBuilderConfig
-					}
-					return item
-				})
-			)
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleTableFiltersChange = useCallback(
-		(tableId: string, filters: TableFilters) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			dispatchItemsAndSave((prev) =>
-				prev.map((item) => {
-					if (item.id === tableId && item.kind === 'table') {
-						return { ...item, filters } as ProtocolsTableConfig
-					}
-					return item
-				})
-			)
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
-	)
-
-	const handleTableColumnsChange = useCallback(
-		(
-			tableId: string,
-			columnOrder?: string[],
-			columnVisibility?: Record<string, boolean>,
-			customColumns?: any[],
-			activeViewId?: string,
-			activePresetId?: string
-		) => {
-			if (isReadOnlyUntilDashboardLoaded) return
-
-			dispatchItemsAndSave((prev) =>
-				prev.map((item) => {
-					if (item.id === tableId && item.kind === 'table') {
-						return {
-							...item,
-							columnOrder,
-							columnVisibility,
-							customColumns,
-							activeViewId,
-							activePresetId
-						} as ProtocolsTableConfig
+						} satisfies ChartBuilderConfig
 					}
 					return item
 				})
@@ -890,50 +415,62 @@ export function useDashboardActions(
 		[dispatch]
 	)
 
-	return {
-		handleAddChart,
-		handleAddUnlocksSchedule,
-		handleAddUnlocksPie,
-		handleAddYieldChart,
-		handleAddStablecoinsChart,
-		handleAddStablecoinAssetChart,
-		handleAddAdvancedTvlChart,
-		handleAddBorrowedChart,
-		handleAddIncomeStatement,
-		handleAddTable,
-		handleAddUnifiedTable,
-		handleAddMultiChart,
-		handleAddText,
-		handleAddChartBuilder,
-		handleAddLlamaAIChart,
-		handleAddRWAOverviewChart,
-		handleAddRWAAssetChart,
-		handleDuplicateChartBuilder,
-		handleDuplicateMultiChart,
-		handleEditItem,
-		handleRemoveItem,
-		handleAddMetric,
-		handleAddSqlChart,
-		setTimePeriod,
-		setCustomTimePeriod,
-		handleChartsReordered,
-		handleGroupingChange,
-		handleColSpanChange,
-		handleCumulativeChange,
-		handlePercentageChange,
-		handleStackedChange,
-		handleTreemapChange,
-		handleHideOthersChange,
-		handleChartTypeChange,
-		handleTableFiltersChange,
-		handleTableColumnsChange,
-		setDashboardName,
-		setDashboardVisibility,
-		setDashboardTags,
-		setDashboardDescription,
-		setShowGenerateDashboardModal,
-		setShowIterateDashboardModal,
-		setItems,
-		setCurrentDashboard
-	}
+	return useMemo(
+		() => ({
+			handleAppendItems,
+			handleAddUnifiedTable,
+			handleDuplicateChartBuilder,
+			handleDuplicateMultiChart,
+			handleEditItem,
+			handleRemoveItem,
+			handleAddSqlChart,
+			setTimePeriod,
+			setCustomTimePeriod,
+			handleChartsReordered,
+			handleGroupingChange,
+			handleColSpanChange,
+			handleCumulativeChange,
+			handlePercentageChange,
+			handleStackedChange,
+			handleTreemapChange,
+			handleHideOthersChange,
+			handleChartTypeChange,
+			setDashboardName,
+			setDashboardVisibility,
+			setDashboardTags,
+			setDashboardDescription,
+			setShowGenerateDashboardModal,
+			setShowIterateDashboardModal,
+			setItems,
+			setCurrentDashboard
+		}),
+		[
+			handleAppendItems,
+			handleAddUnifiedTable,
+			handleDuplicateChartBuilder,
+			handleDuplicateMultiChart,
+			handleEditItem,
+			handleRemoveItem,
+			handleAddSqlChart,
+			setTimePeriod,
+			setCustomTimePeriod,
+			handleChartsReordered,
+			handleGroupingChange,
+			handleColSpanChange,
+			handleCumulativeChange,
+			handlePercentageChange,
+			handleStackedChange,
+			handleTreemapChange,
+			handleHideOthersChange,
+			handleChartTypeChange,
+			setDashboardName,
+			setDashboardVisibility,
+			setDashboardTags,
+			setDashboardDescription,
+			setShowGenerateDashboardModal,
+			setShowIterateDashboardModal,
+			setItems,
+			setCurrentDashboard
+		]
+	)
 }

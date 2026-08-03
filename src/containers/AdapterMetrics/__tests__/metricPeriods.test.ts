@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import { deriveMetricChanges, mergeMetricPeriods, mergeParentMetricPeriods } from '../metricPeriods'
+import {
+	deriveMetricChanges,
+	mergeEarningsMetricPeriods,
+	mergeMetricPeriods,
+	mergeParentMetricPeriods
+} from '../metricPeriods'
 
 describe('dimension metric periods', () => {
 	test('derives period changes from current and previous period totals', () => {
@@ -32,7 +37,7 @@ describe('dimension metric periods', () => {
 		expect(protocol.change_7dover7d).toBeNull()
 	})
 
-	test('merges nullable period totals before deriving changes', () => {
+	test('uses available periods when aggregating while keeping leaf availability explicit', () => {
 		const protocol = mergeMetricPeriods(
 			{
 				total24h: 100,
@@ -71,6 +76,33 @@ describe('dimension metric periods', () => {
 		expect(protocol.change_30dover30d).toBe(87.5)
 	})
 
+	test('preserves unavailable Earnings periods when merging successful chain rows', () => {
+		const protocol = mergeEarningsMetricPeriods(
+			{
+				total24h: -5,
+				total7d: null,
+				total30d: -50,
+				total1y: null,
+				totalAllTime: null
+			},
+			{
+				total24h: -7,
+				total7d: null,
+				total30d: -70,
+				total1y: null,
+				totalAllTime: null
+			}
+		)
+
+		expect(protocol).toMatchObject({
+			total24h: -12,
+			total7d: null,
+			total30d: -120,
+			total1y: null,
+			totalAllTime: null
+		})
+	})
+
 	test('merges parent annualized totals when every contributing child has annualized data', () => {
 		const protocol = mergeParentMetricPeriods([
 			{ total24h: 100, total30d: 3000, annualized1y: 20_000 },
@@ -101,6 +133,18 @@ describe('dimension metric periods', () => {
 
 		expect(protocol.total24h).toBe(100)
 		expect(protocol.total30d).toBe(3000)
+		expect(protocol.annualized1y).toBe(20_000)
+	})
+
+	test('retains comparison-period activity from a child that is inactive today', () => {
+		const protocol = mergeParentMetricPeriods([
+			{ total24h: 100, total48hto24h: 100, annualized1y: 20_000 },
+			{ total24h: 0, total48hto24h: 5, annualized1y: null }
+		])
+
+		expect(protocol.total24h).toBe(100)
+		expect(protocol.total48hto24h).toBe(105)
+		expect(protocol.change_1d).toBeCloseTo(-4.7619, 4)
 		expect(protocol.annualized1y).toBe(20_000)
 	})
 })

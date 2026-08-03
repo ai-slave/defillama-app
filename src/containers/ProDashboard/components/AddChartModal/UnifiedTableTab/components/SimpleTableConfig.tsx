@@ -1,17 +1,14 @@
-import { useQuery } from '@tanstack/react-query'
-import { useContext, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
-import type { IEquitiesCompanyApiItem } from '~/containers/Equities/api.types'
-import { buildEquityTickerCountrySlug } from '~/containers/Equities/tickerCountry'
-import { ProxyAuthTokenContext } from '~/containers/ProDashboard/queries'
-import { fetchEquitiesCompaniesViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
-import type { ProtocolsTableConfig } from '~/containers/ProDashboard/types'
+import { createDatasetTableConfig } from '~/containers/ProDashboard/dashboardConfig/datasetTableConfig'
+import type { CexDatasetTableConfig } from '~/containers/ProDashboard/types'
 import { getItemIconUrl } from '../../../../utils'
 import { AriakitSelect } from '../../../AriakitSelect'
 import { AriakitVirtualizedMultiSelect } from '../../../AriakitVirtualizedMultiSelect'
 import { AriakitVirtualizedSelect } from '../../../AriakitVirtualizedSelect'
 import { CexAnalyticsDataset } from '../../../datasets/CexAnalyticsDataset'
+import { useEquitiesTickerOptions } from '../../../datasets/EquitiesDataset/useEquitiesTickerOptions'
 import { useTokenSearch } from '../../../datasets/TokenUsageDataset/useTokenSearch'
 import type { CombinedTableType } from '../../types'
 
@@ -22,8 +19,6 @@ interface SimpleTableConfigProps {
 	onChainsChange: (values: string[]) => void
 	selectedDatasetChain: string | null
 	onDatasetChainChange: (value: string | null) => void
-	selectedDatasetTimeframe: string | null
-	onDatasetTimeframeChange: (timeframe: string) => void
 	selectedCexAnalyticsView: 'starter' | CexAnalyticsView
 	onCexAnalyticsViewChange: (view: 'starter' | CexAnalyticsView) => void
 	selectedCexAnalyticsMetric: CexAnalyticsMetric
@@ -36,9 +31,8 @@ interface SimpleTableConfigProps {
 	onTokensChange: (tokens: string[]) => void
 	includeCex: boolean
 	onIncludeCexChange: (include: boolean) => void
-	legacyTableTypes?: CombinedTableType[]
 	onBackToTypeSelector: () => void
-	isEditing?: boolean
+	isEditing?: boolean | undefined
 }
 
 const tableTypeOptions: Array<{
@@ -46,7 +40,6 @@ const tableTypeOptions: Array<{
 	label: string
 	description: string
 	icon: string
-	hidden?: boolean
 }> = [
 	{
 		value: 'yields',
@@ -73,79 +66,10 @@ const tableTypeOptions: Array<{
 		icon: '💵'
 	},
 	{
-		value: 'fees',
-		label: 'Fees',
-		description: 'Protocol fees generated across timeframes',
-		icon: '💸',
-		hidden: true
-	},
-	{
-		value: 'revenue',
-		label: 'Revenue',
-		description: 'Protocol revenue generation across timeframes',
-		icon: '💰',
-		hidden: true
-	},
-	{
-		value: 'holders-revenue',
-		label: 'Holders Revenue',
-		description: 'Revenue distributed to token holders',
-		icon: '👥',
-		hidden: true
-	},
-	{
-		value: 'earnings',
-		label: 'Earnings',
-		description: 'Protocol profitability and earnings data',
-		icon: '📈',
-		hidden: true
-	},
-	{
 		value: 'token-usage',
 		label: 'Token Usage',
 		description: 'Track protocol adoption by token usage',
 		icon: '🪙'
-	},
-	{
-		value: 'aggregators',
-		label: 'DEX Aggregators',
-		description: 'Aggregator trading volume and market dominance',
-		icon: '🔄',
-		hidden: true
-	},
-	{
-		value: 'perps',
-		label: 'Perpetuals',
-		description: 'Perpetual futures trading volume and trends',
-		icon: '📉',
-		hidden: true
-	},
-	{
-		value: 'options',
-		label: 'Options',
-		description: 'Options trading volume across protocols',
-		icon: '⚡',
-		hidden: true
-	},
-	{
-		value: 'dexs',
-		label: 'DEXs',
-		description: 'Decentralized exchange volume and market share',
-		icon: '💱',
-		hidden: true
-	},
-	{
-		value: 'bridge-aggregators',
-		label: 'Bridge Aggregators',
-		description: 'Cross-chain bridge aggregator volume and metrics',
-		icon: '🌉',
-		hidden: true
-	},
-	{
-		value: 'trending-contracts',
-		label: 'Trending Contracts',
-		description: 'Most active smart contracts by transactions and gas usage',
-		icon: '🔥'
 	},
 	{
 		value: 'rwa',
@@ -185,33 +109,27 @@ const tableTypeOptions: Array<{
 	}
 ]
 
-const TRENDING_TIME_PERIOD_OPTIONS = [
-	{ value: '1d', label: '1 Day' },
-	{ value: '7d', label: '7 Days' },
-	{ value: '30d', label: '30 Days' }
-]
-
-const CEX_ANALYTICS_VIEW_OPTIONS = [
+const CEX_ANALYTICS_VIEW_OPTIONS: Array<{ value: 'starter' | CexAnalyticsView; label: string }> = [
 	{ value: 'starter', label: 'Starter Preset' },
 	{ value: 'summary', label: 'Summary Cards' },
 	{ value: 'comparison', label: 'Comparison Table' },
 	{ value: 'spot-vs-derivatives', label: 'Spot vs Derivatives Chart' },
 	{ value: 'market-share', label: 'Market Share Chart' }
-] as const
+]
 
 const CEX_ANALYTICS_VIEW_OPTIONS_EDIT = CEX_ANALYTICS_VIEW_OPTIONS.filter((option) => option.value !== 'starter')
 
-const CEX_ANALYTICS_METRIC_OPTIONS = [
+const CEX_ANALYTICS_METRIC_OPTIONS: Array<{ value: CexAnalyticsMetric; label: string }> = [
 	{ value: 'spot', label: 'Spot Volume' },
 	{ value: 'derivatives', label: 'Derivatives Volume' }
-] as const
+]
 
-const CEX_ANALYTICS_TOP_N_OPTIONS = [
+const CEX_ANALYTICS_TOP_N_OPTIONS: Array<{ value: string; label: string }> = [
 	{ value: '5', label: 'Top 5' },
 	{ value: '8', label: 'Top 8' },
 	{ value: '10', label: 'Top 10' },
 	{ value: '12', label: 'Top 12' }
-] as const
+]
 
 function CexAnalyticsPreview({
 	view,
@@ -222,17 +140,15 @@ function CexAnalyticsPreview({
 	metric: CexAnalyticsMetric
 	topN: number
 }) {
-	const previewItems = useMemo<ProtocolsTableConfig[]>(() => {
-		const createConfig = (previewView: CexAnalyticsView, idSuffix: string): ProtocolsTableConfig => ({
-			id: `cex-preview-${idSuffix}`,
-			kind: 'table',
-			tableType: 'dataset',
-			datasetType: 'cex-analytics',
-			chains: [],
-			cexAnalyticsView: previewView,
-			cexAnalyticsMetric: metric,
-			cexAnalyticsTopN: topN
-		})
+	const previewItems = useMemo<CexDatasetTableConfig[]>(() => {
+		const createConfig = (previewView: CexAnalyticsView, idSuffix: string): CexDatasetTableConfig =>
+			createDatasetTableConfig({
+				id: `cex-preview-${idSuffix}`,
+				datasetType: 'cex-analytics',
+				cexAnalyticsView: previewView,
+				cexAnalyticsMetric: metric,
+				cexAnalyticsTopN: topN
+			})
 
 		if (view === 'starter') {
 			return [
@@ -268,7 +184,6 @@ function CexAnalyticsPreview({
 	)
 }
 
-const EMPTY_LEGACY_TABLE_TYPES: CombinedTableType[] = []
 const EMPTY_TOKEN_OPTIONS: Array<{ value: string; label: string; logo?: string }> = []
 const CHAIN_CATEGORY_OPTIONS = [
 	{ value: 'All', label: 'All Chains' },
@@ -296,8 +211,6 @@ export function SimpleTableConfig({
 	onChainsChange,
 	selectedDatasetChain,
 	onDatasetChainChange,
-	selectedDatasetTimeframe,
-	onDatasetTimeframeChange,
 	selectedCexAnalyticsView,
 	onCexAnalyticsViewChange,
 	selectedCexAnalyticsMetric,
@@ -310,37 +223,17 @@ export function SimpleTableConfig({
 	onTokensChange,
 	includeCex,
 	onIncludeCexChange,
-	legacyTableTypes = EMPTY_LEGACY_TABLE_TYPES,
 	onBackToTypeSelector,
 	isEditing = false
 }: SimpleTableConfigProps) {
 	const { hasActiveSubscription } = useAuthContext()
-	const authToken = useContext(ProxyAuthTokenContext)
-	const { data: equitiesCompaniesData, isLoading: equitiesCompaniesLoading } = useQuery({
-		queryKey: ['pro-dashboard', 'equities-companies-table'],
-		queryFn: () => fetchEquitiesCompaniesViaProxy(authToken!),
-		staleTime: 5 * 60 * 1000,
-		refetchOnWindowFocus: false,
-		enabled:
-			Boolean(authToken) && (selectedTableType === 'equities-financials' || selectedTableType === 'equities-filings')
-	})
-	const equitiesTickerOptions = useMemo(() => {
-		if (!equitiesCompaniesData) return []
-		const sortedCompanies = [...(equitiesCompaniesData as IEquitiesCompanyApiItem[])].sort(
-			(a, b) => b.marketCap - a.marketCap
-		)
-		const options: Array<{ value: string; label: string }> = []
-		for (const item of sortedCompanies) {
-			options.push({
-				value: buildEquityTickerCountrySlug(item.ticker, item.country),
-				label: `${item.ticker}:${item.country} — ${item.name}`
-			})
-		}
-		return options
-	}, [equitiesCompaniesData])
+	const isEquitiesTickerTable = selectedTableType === 'equities-financials' || selectedTableType === 'equities-filings'
+	const { options: equitiesTickerOptions, isLoading: equitiesCompaniesLoading } =
+		useEquitiesTickerOptions(isEquitiesTickerTable)
 	const [tokenSearchInput, setTokenSearchInput] = useState('')
-	const { data: tokenOptionsData, isLoading: isLoadingTokens } = useTokenSearch(tokenSearchInput)
-	const { data: defaultTokensData } = useTokenSearch('')
+	const isTokenUsageTable = selectedTableType === 'token-usage'
+	const { data: tokenOptionsData, isLoading: isLoadingTokens } = useTokenSearch(tokenSearchInput, isTokenUsageTable)
+	const { data: defaultTokensData } = useTokenSearch('', isTokenUsageTable)
 	const tokenOptions = tokenOptionsData ?? EMPTY_TOKEN_OPTIONS
 	const defaultTokens = defaultTokensData ?? EMPTY_TOKEN_OPTIONS
 
@@ -361,25 +254,15 @@ export function SimpleTableConfig({
 	}, [tokenSearchInput, tokenOptions, defaultTokens, selectedTokens])
 
 	const datasetSelectOptions = useMemo(() => {
-		const legacySet = new Set(legacyTableTypes)
 		return tableTypeOptions
-			.filter((option) => !option.hidden || legacySet.has(option.value))
 			.filter((option) => hasActiveSubscription || !PRO_ONLY_TABLE_TYPES.has(option.value))
 			.map((option) => ({
 				value: option.value,
-				label: option.hidden ? `${option.label} (Legacy)` : option.label,
+				label: option.label,
 				icon: option.icon,
 				description: option.description
 			}))
-	}, [legacyTableTypes, hasActiveSubscription])
-
-	const trendingChainOptions = useMemo(
-		() =>
-			chainOptions.filter((opt) =>
-				['Ethereum', 'Arbitrum', 'Polygon', 'Optimism', 'OP Mainnet', 'Base'].includes(opt.label)
-			),
-		[chainOptions]
-	)
+	}, [hasActiveSubscription])
 
 	const chainCategoryOptions = CHAIN_CATEGORY_OPTIONS
 
@@ -406,7 +289,11 @@ export function SimpleTableConfig({
 				label="Table Type"
 				options={datasetSelectOptions}
 				selectedValue={selectedTableType}
-				onChange={(option) => onTableTypeChange(option.value as CombinedTableType)}
+				onChange={(option) => {
+					const tableType = tableTypeOptions.find((candidate) => candidate.value === option.value)?.value
+					if (!tableType) throw new Error(`Unsupported table type: ${option.value}`)
+					onTableTypeChange(tableType)
+				}}
 				placeholder="Select table type..."
 			/>
 
@@ -420,16 +307,7 @@ export function SimpleTableConfig({
 					isLoading={protocolsLoading}
 					renderIcon={(option) => (option.value === 'All' ? null : getItemIconUrl('chain', null, option.value))}
 				/>
-			) : selectedTableType === 'revenue' ||
-			  selectedTableType === 'holders-revenue' ||
-			  selectedTableType === 'earnings' ||
-			  selectedTableType === 'fees' ||
-			  selectedTableType === 'yields' ||
-			  selectedTableType === 'aggregators' ||
-			  selectedTableType === 'perps' ||
-			  selectedTableType === 'options' ||
-			  selectedTableType === 'dexs' ||
-			  selectedTableType === 'bridge-aggregators' ? (
+			) : selectedTableType === 'yields' ? (
 				<AriakitVirtualizedMultiSelect
 					label="Select Chains (optional)"
 					options={chainOptions}
@@ -447,46 +325,37 @@ export function SimpleTableConfig({
 					onChange={(option) => onDatasetChainChange(option.value)}
 					placeholder="All chains..."
 				/>
-			) : selectedTableType === 'trending-contracts' ? (
-				<>
-					<AriakitVirtualizedSelect
-						label="Select Chain"
-						options={trendingChainOptions}
-						selectedValue={selectedDatasetChain}
-						onChange={(option) => onDatasetChainChange(option.value)}
-						placeholder="Select chain..."
-						isLoading={protocolsLoading}
-						renderIcon={(option) => (option.value === 'All' ? null : getItemIconUrl('chain', null, option.value))}
-					/>
-					<AriakitSelect
-						label="Time Period"
-						options={TRENDING_TIME_PERIOD_OPTIONS}
-						selectedValue={selectedDatasetTimeframe}
-						onChange={(option) => onDatasetTimeframeChange(option.value)}
-						placeholder="Select time period..."
-					/>
-				</>
 			) : selectedTableType === 'cex-analytics' ? (
 				<>
 					<AriakitSelect
 						label="CEX View"
-						options={isEditing ? [...CEX_ANALYTICS_VIEW_OPTIONS_EDIT] : [...CEX_ANALYTICS_VIEW_OPTIONS]}
+						options={isEditing ? CEX_ANALYTICS_VIEW_OPTIONS_EDIT : CEX_ANALYTICS_VIEW_OPTIONS}
 						selectedValue={selectedCexAnalyticsView}
-						onChange={(option) => onCexAnalyticsViewChange(option.value as 'starter' | CexAnalyticsView)}
+						onChange={(option) => {
+							const view = CEX_ANALYTICS_VIEW_OPTIONS.find((candidate) => candidate.value === option.value)?.value
+							if (!view) throw new Error(`Unsupported CEX analytics view: ${option.value}`)
+							onCexAnalyticsViewChange(view)
+						}}
 						placeholder="Select CEX view..."
 					/>
 					{selectedCexAnalyticsView === 'market-share' ? (
 						<>
 							<AriakitSelect
 								label="Share Metric"
-								options={[...CEX_ANALYTICS_METRIC_OPTIONS]}
+								options={CEX_ANALYTICS_METRIC_OPTIONS}
 								selectedValue={selectedCexAnalyticsMetric}
-								onChange={(option) => onCexAnalyticsMetricChange(option.value as CexAnalyticsMetric)}
+								onChange={(option) => {
+									const metric = CEX_ANALYTICS_METRIC_OPTIONS.find(
+										(candidate) => candidate.value === option.value
+									)?.value
+									if (!metric) throw new Error(`Unsupported CEX analytics metric: ${option.value}`)
+									onCexAnalyticsMetricChange(metric)
+								}}
 								placeholder="Select metric..."
 							/>
 							<AriakitSelect
 								label="Top CEXs"
-								options={[...CEX_ANALYTICS_TOP_N_OPTIONS]}
+								options={CEX_ANALYTICS_TOP_N_OPTIONS}
 								selectedValue={String(selectedCexAnalyticsTopN)}
 								onChange={(option) => onCexAnalyticsTopNChange(Number(option.value))}
 								placeholder="Select top N..."

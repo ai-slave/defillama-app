@@ -6,6 +6,10 @@ export interface ChartSeries {
 	color?: string
 }
 
+type ProtocolBreakdownEntityMetadata =
+	| { entityType: 'protocol'; totalProtocols: number }
+	| { entityType: 'protocol-family'; totalProtocolFamilies: number }
+
 export interface ProtocolBreakdownData {
 	series: ChartSeries[]
 	metadata: {
@@ -14,11 +18,10 @@ export interface ProtocolBreakdownData {
 		categories: string[]
 		metric: string
 		topN: number
-		totalProtocols: number
 		othersCount: number
 		marketSector: string | null
 		error?: string
-	}
+	} & ProtocolBreakdownEntityMetadata
 }
 
 export interface ProtocolChainData {

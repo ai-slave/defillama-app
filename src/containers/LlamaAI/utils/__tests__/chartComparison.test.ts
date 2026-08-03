@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { areChartDataEqual, areChartsEqual } from '~/containers/LlamaAI/utils/chartComparison'
+
+const chartSeries: ChartConfiguration['series'][number] = {
+	name: 'Value',
+	type: 'line',
+	yAxisId: 'value',
+	metricClass: 'stock',
+	dataMapping: { xField: 'timestamp', yField: 'value' },
+	styling: { color: '#123456' }
+}
 
 const chart = {
 	id: 'chart-1',
@@ -11,16 +20,7 @@ const chart = {
 		x: { field: 'timestamp', label: 'Date', type: 'time' },
 		yAxes: [{ id: 'value', fields: ['value'], label: 'USD', position: 'left' }]
 	},
-	series: [
-		{
-			name: 'Value',
-			type: 'line',
-			yAxisId: 'value',
-			metricClass: 'stock',
-			dataMapping: { xField: 'timestamp', yField: 'value' },
-			styling: { color: '#123456' }
-		}
-	],
+	series: [chartSeries],
 	dataTransformation: { timeField: 'timestamp', metrics: ['value'] },
 	displayOptions: {
 		canStack: false,
@@ -36,7 +36,7 @@ describe('areChartsEqual', () => {
 		expect(
 			areChartsEqual(
 				[chart],
-				[{ ...structuredClone(chart), displayOptions: { ...chart.displayOptions!, defaultStacked: true } }]
+				[{ ...structuredClone(chart), displayOptions: { ...chart.displayOptions, defaultStacked: true } }]
 			)
 		).toBe(false)
 		expect(
@@ -45,7 +45,7 @@ describe('areChartsEqual', () => {
 				[
 					{
 						...structuredClone(chart),
-						series: [{ ...structuredClone(chart.series[0]), styling: { color: '#abcdef' } }]
+						series: [{ ...structuredClone(chartSeries), styling: { color: '#abcdef' } }]
 					}
 				]
 			)

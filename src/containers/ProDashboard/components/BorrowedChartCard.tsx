@@ -2,31 +2,27 @@ import { lazy, Suspense, useContext, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
-import type {
-	IMultiSeriesChartProps,
-	MultiSeriesChartDataset,
-	MultiSeriesChartSeriesConfig
-} from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
-import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
+import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { download } from '~/utils/download'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPE_LABELS } from '../borrowedChartConstants'
-import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
+import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import { shouldSuppressBorrowedTokenBreakdown } from '../services/protocolTvl'
 import type { BorrowedChartConfig } from '../types'
+import { CSVExportButton } from './CSVExportButton'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
-import { ProTableCSVButton } from './ProTable/CsvButton'
 import { useBorrowedChartData } from './useBorrowedChartData'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 
 const EMPTY_DATASET: TimestampDataset = {
 	source: [],
@@ -57,11 +53,15 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		chartType,
 		getProtocolInfo(protocol)?.misrepresentedTokens
 	)
-	const { data: borrowedData, isLoading } = useBorrowedChartData({
+	const {
+		data: borrowedData,
+		isLoading,
+		hasSourceData
+	} = useBorrowedChartData({
 		protocol,
 		chartType,
 		enabled: streamDone && !suppressTokenBreakdown,
-		staleTime: Infinity
+		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME
 	})
 	const seriesNames = borrowedData.seriesNames
 	const pieSeriesNames = useMemo(
@@ -116,10 +116,14 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 			const indexes = columnNames.map((name) => dataset.dimensions.indexOf(name))
 			return [
 				['Date', ...columnNames],
-				...dataset.source.map((row) => [
-					formatIsoDate(row[0] as number, { input: 'milliseconds' }) ?? '',
-					...indexes.map((index) => row[index] ?? '')
-				])
+				...dataset.source.map((row, rowIndex) => {
+					const timestamp = row[0]
+					if (typeof timestamp !== 'number') throw new Error(`Invalid borrowed chart timestamp at index ${rowIndex}`)
+					return [
+						formatIsoDate(timestamp, { input: 'milliseconds' }) ?? '',
+						...indexes.map((index) => row[index] ?? '')
+					]
+				})
 			]
 		}
 
@@ -149,7 +153,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 	const imageTitle = `${protocolName} - ${chartTypeLabel}`
 	const imageFilename = `${protocol.toLowerCase().replace(/\s+/g, '-')}-${chartType}`
 
-	if (isLoading || !streamDone) {
+	if (isLoading || (!streamDone && !hasSourceData && !suppressTokenBreakdown)) {
 		return (
 			<div className="flex h-full min-h-[360px] items-center justify-center">
 				<LoadingSpinner />
@@ -251,7 +255,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 							/>
 						) : null}
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={handleCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"

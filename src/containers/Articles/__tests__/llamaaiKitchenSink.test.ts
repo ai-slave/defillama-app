@@ -2,17 +2,30 @@
 // One fixture with every content shape, through both pipelines. If any handling
 // regresses (drops, ordering, stripping, hydration), the inventory here breaks.
 import { describe, expect, it } from 'vitest'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { llamaaiMarkdownToTiptap, llamaaiSelectionToTiptap } from '../import/llamaaiToTiptap'
 
-const config = (id: string): ChartConfiguration =>
-	({
-		id,
-		type: 'bar',
-		title: `Chart ${id}`,
-		description: '',
-		axes: { x: { field: 'ts' }, yAxes: [{ field: 'value' }] }
-	}) as unknown as ChartConfiguration
+const config = (id: string): ChartConfiguration => ({
+	id,
+	type: 'bar',
+	title: `Chart ${id}`,
+	description: '',
+	axes: {
+		x: { field: 'ts', label: 'Date', type: 'time' },
+		yAxes: [{ id: 'value', fields: ['value'], label: 'Value', position: 'left' }]
+	},
+	series: [
+		{
+			name: 'Value',
+			type: 'bar',
+			yAxisId: 'value',
+			metricClass: 'stock',
+			dataMapping: { xField: 'ts', yField: 'value' },
+			styling: {}
+		}
+	],
+	dataTransformation: { timeField: 'ts', metrics: ['value'] }
+})
 
 const charts = {
 	c1: { config: config('c1'), data: [{ ts: 1, value: 42 }] },
@@ -82,7 +95,7 @@ describe('kitchen sink — markdown pipeline', () => {
 	})
 
 	it('demotes h1 and keeps formatting, links, table cells, and code', () => {
-		expect(blocks[0].attrs?.level).toBe(2)
+		expect(blocks.filter((block) => block.type === 'heading').map((block) => block.attrs?.level)).toEqual([2])
 		expect(json).toContain('bold')
 		expect(json).toContain('https://defillama.com/protocol/uniswap')
 		expect(json).toContain('base')
@@ -91,8 +104,16 @@ describe('kitchen sink — markdown pipeline', () => {
 
 	it('hydrates known charts, downsamples large ones, drops unknown artifacts silently', () => {
 		const chartBlocks = blocks.filter((b) => b.type === 'llamaaiChart')
-		expect(chartBlocks[0].attrs?.chartConfig).toMatchObject({ id: 'c1' })
-		expect((chartBlocks[1].attrs!.chartData as unknown[]).length).toBeLessThanOrEqual(2000)
+		expect(chartBlocks.map((block) => block.attrs?.chartConfig)).toEqual([
+			expect.objectContaining({ id: 'c1' }),
+			expect.objectContaining({ id: 'c2' })
+		])
+		expect(
+			chartBlocks.map((block) => {
+				const chartData = block.attrs?.chartData
+				return Array.isArray(chartData) ? chartData.length : null
+			})
+		).toEqual([1, 2000])
 		expect(json).not.toContain('csv9')
 		expect(json).not.toContain('md9')
 		expect(json).not.toContain('al9')
@@ -131,7 +152,7 @@ describe('kitchen sink — selection pipeline', () => {
 	})
 
 	it('demotes h1, unwraps wrappers, drops widgets, cleans orphan whitespace', () => {
-		expect(blocks[0].attrs?.level).toBe(2)
+		expect(blocks.filter((block) => block.type === 'heading').map((block) => block.attrs?.level)).toEqual([2])
 		expect(json).toContain('today.')
 		expect(json).not.toContain('today .')
 		expect(json).not.toContain('.csv')
@@ -146,7 +167,6 @@ describe('kitchen sink — selection pipeline', () => {
 
 	it('hydrates the known chart and drops the unknown one', () => {
 		const chartBlocks = blocks.filter((b) => b.type === 'llamaaiChart')
-		expect(chartBlocks).toHaveLength(1)
-		expect(chartBlocks[0].attrs?.chartConfig).toMatchObject({ id: 'c1' })
+		expect(chartBlocks.map((block) => block.attrs?.chartConfig)).toEqual([expect.objectContaining({ id: 'c1' })])
 	})
 })

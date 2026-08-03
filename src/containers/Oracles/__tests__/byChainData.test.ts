@@ -57,6 +57,18 @@ describe('buildOraclesByChainTableAndPieData', () => {
 		])
 	})
 
+	it('keeps unavailable TVS out of the pie without converting it to zero', () => {
+		const unavailableTableData = [{ ...tableData[0], tvl: null }]
+		const result = buildOraclesByChainTableAndPieData({
+			tableData: unavailableTableData,
+			extraTvlsEnabled,
+			hasEnabledExtras: false
+		})
+
+		expect(result.tableData).toBe(unavailableTableData)
+		expect(result.pieSeries.peers).toEqual([])
+	})
+
 	it('adjusts table and pie tvs with enabled extra tvl settings', () => {
 		const result = buildOraclesByChainTableAndPieData({
 			tableData,

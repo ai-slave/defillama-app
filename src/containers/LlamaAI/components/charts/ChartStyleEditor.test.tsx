@@ -3,8 +3,17 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 import { ChartStyleEditor } from './ChartStyleEditor'
+
+const revenueSeries: ChartConfiguration['series'][number] = {
+	name: 'Revenue',
+	type: 'line',
+	yAxisId: 'value',
+	metricClass: 'flow',
+	dataMapping: { xField: 'timestamp', yField: 'value' },
+	styling: {}
+}
 
 const config = {
 	id: 'chart-1',
@@ -16,16 +25,7 @@ const config = {
 		yAxes: [{ id: 'value', fields: ['value'], label: 'USD', position: 'left' }]
 	},
 	hallmarks: [[1_768_867_200, 'Existing note']],
-	series: [
-		{
-			name: 'Revenue',
-			type: 'line',
-			yAxisId: 'value',
-			metricClass: 'flow',
-			dataMapping: { xField: 'timestamp', yField: 'value' },
-			styling: {}
-		}
-	],
+	series: [revenueSeries],
 	dataTransformation: { timeField: 'timestamp', metrics: ['value'] }
 } satisfies ChartConfiguration
 
@@ -135,9 +135,12 @@ describe('ChartStyleEditor', () => {
 		await act(async () => saveButton.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 
 		expect(onSave).toHaveBeenCalledOnce()
-		const [savedConfig, savedPatch] = onSave.mock.calls[0]!
-		expect(savedConfig.hallmarks?.[0]?.[1]).toBe('hello')
-		expect(savedPatch.hallmarks?.[0]?.[1]).toBe('hello')
+		expect(onSave.mock.calls).toEqual([
+			[
+				expect.objectContaining({ hallmarks: [[expect.any(Number), 'hello']] }),
+				expect.objectContaining({ hallmarks: [[expect.any(Number), 'hello']] })
+			]
+		])
 		expect(container.querySelector('[data-testid="saved-annotation"]')?.textContent).toBe('hello')
 	})
 
@@ -184,9 +187,9 @@ describe('ChartStyleEditor', () => {
 			...config,
 			type: 'combo',
 			series: [
-				config.series[0],
+				revenueSeries,
 				{
-					...config.series[0],
+					...revenueSeries,
 					name: 'Fees',
 					type: 'bar',
 					dataMapping: { xField: 'timestamp', yField: 'fees' }

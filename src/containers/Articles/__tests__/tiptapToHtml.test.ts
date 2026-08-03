@@ -221,7 +221,27 @@ describe('llamaaiChart html fallback', () => {
 				{
 					type: 'llamaaiChart',
 					attrs: {
-						chartConfig: { id: 'c1', type: 'bar', title: 'Uniswap Fees' },
+						chartConfig: {
+							id: 'c1',
+							type: 'bar',
+							title: 'Uniswap Fees',
+							description: '',
+							axes: {
+								x: { field: 'ts', label: 'Timestamp', type: 'time' },
+								yAxes: [{ id: 'value', fields: ['value'], label: 'Value', position: 'left' }]
+							},
+							series: [
+								{
+									name: 'Value',
+									type: 'bar',
+									yAxisId: 'value',
+									metricClass: 'flow',
+									dataMapping: { xField: 'ts', yField: 'value' },
+									styling: {}
+								}
+							],
+							dataTransformation: { timeField: 'ts', metrics: ['value'] }
+						},
 						chartData: [{ ts: 1, value: 42 }],
 						caption: 'Weekly fees by chain'
 					}

@@ -1,40 +1,47 @@
 import * as React from 'react'
-import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
+import type { YieldsFilters } from '~/containers/ProDashboard/types'
+import type { ProYieldRow } from '../../../yieldData'
 import { LoadingSpinner } from '../../LoadingSpinner'
-import { TableBody } from '../../ProTable/TableBody'
-import { TablePagination } from '../../ProTable/TablePagination'
-import type { ProYieldRow } from './data'
+import { TableBody } from '../../Table/TableBody'
+import { TablePagination } from '../../Table/TablePagination'
 import { useYieldsData } from './useYieldsData'
 import { useYieldsTable } from './useYieldsTable'
 import { YieldsColumnManagementPanel } from './YieldsColumnManagementPanel'
-import { type YieldsFilters, YieldsFiltersPanel } from './YieldsFiltersPanel'
+import { YieldsFiltersPanel } from './YieldsFiltersPanel'
 import { YieldsTableHeader } from './YieldsTableHeader'
 
 const EMPTY_YIELDS_ROWS: ProYieldRow[] = []
 
 interface YieldsDatasetProps {
 	chains?: string[]
-	tableId?: string
 	columnOrder?: string[]
 	columnVisibility?: Record<string, boolean>
 	filters?: YieldsFilters
+	onColumnsChange?: (columnOrder: string[], columnVisibility: Record<string, boolean>) => void
+	onFiltersChange?: (filters: YieldsFilters) => void
 }
 
 export function YieldsDataset({
 	chains,
-	tableId,
 	columnOrder: initialColumnOrder,
 	columnVisibility: initialColumnVisibility,
-	filters: savedFilters
+	filters: savedFilters,
+	onColumnsChange = NOOP_COLUMNS_CHANGE,
+	onFiltersChange = NOOP_FILTERS_CHANGE
 }: YieldsDatasetProps) {
 	const { data, isLoading, error } = useYieldsData(chains)
-	const { handleTableColumnsChange, handleTableFiltersChange } = useProDashboardEditorActions()
-
-	const [fallbackTableId] = React.useState(() => `yields-table-${Date.now()}`)
-	const uniqueTableId = tableId || fallbackTableId
 
 	const {
 		table,
+		pageIndex,
+		pageSize,
+		pageCount,
+		canPreviousPage,
+		canNextPage,
+		previousPage,
+		nextPage,
+		setPageSize,
+		rowCount,
 		showColumnPanel,
 		setShowColumnPanel,
 		searchTerm,
@@ -65,18 +72,8 @@ export function YieldsDataset({
 		initialColumnOrder,
 		initialColumnVisibility,
 		initialFilters: savedFilters,
-		onColumnsChange: React.useMemo(() => {
-			if (!uniqueTableId) return undefined
-			return (order: string[], visibility: Record<string, boolean>) => {
-				handleTableColumnsChange(uniqueTableId, order, visibility, [])
-			}
-		}, [handleTableColumnsChange, uniqueTableId]),
-		onFiltersChange: React.useMemo(() => {
-			if (!uniqueTableId) return undefined
-			return (nextFilters: YieldsFilters) => {
-				handleTableFiltersChange(uniqueTableId, nextFilters)
-			}
-		}, [handleTableFiltersChange, uniqueTableId])
+		onColumnsChange,
+		onFiltersChange
 	})
 
 	return (
@@ -134,8 +131,17 @@ export function YieldsDataset({
 					) : null}
 
 					<TableBody table={table} />
-
-					<TablePagination table={table} />
+					<TablePagination
+						pageSize={pageSize}
+						pageIndex={pageIndex}
+						pageCount={pageCount}
+						canPreviousPage={canPreviousPage}
+						canNextPage={canNextPage}
+						previousPage={previousPage}
+						nextPage={nextPage}
+						setPageSize={setPageSize}
+						showPageSizes={rowCount > 10}
+					/>
 				</>
 			)}
 		</div>
@@ -143,3 +149,5 @@ export function YieldsDataset({
 }
 
 const NOOP = () => {}
+const NOOP_COLUMNS_CHANGE = (_columnOrder: string[], _columnVisibility: Record<string, boolean>) => {}
+const NOOP_FILTERS_CHANGE = (_filters: YieldsFilters) => {}

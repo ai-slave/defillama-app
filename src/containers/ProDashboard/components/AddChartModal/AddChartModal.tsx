@@ -1,5 +1,4 @@
 import * as Ariakit from '@ariakit/react'
-import { useMemo } from 'react'
 import { useIsSqlAllowed } from '../../hooks/useIsSqlAllowed'
 import type { VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { SqlChartUpsell } from '../SqlChart/SqlChartUpsell'
@@ -10,29 +9,12 @@ import { ModalHeader } from './ModalHeader'
 import { SubmitButton } from './SubmitButton'
 import { TabNavigation } from './TabNavigation'
 import { TextTab } from './TextTab'
-import type { AddChartModalProps, CombinedTableType } from './types'
+import type { AddChartModalProps } from './types'
 import { UnifiedTableTab } from './UnifiedTableTab'
 import { useComposerItemsData } from './useComposerItemsData'
 import { useModalActions } from './useModalActions'
 
 const EMPTY_CHAIN_OPTIONS: VirtualizedSelectOption[] = []
-const PRIMARY_TABLE_TYPES: CombinedTableType[] = [
-	'protocols',
-	'stablecoins',
-	'cex-analytics',
-	'token-usage',
-	'yields',
-	'trending-contracts',
-	'chains',
-	'rwa',
-	'rwa-chains',
-	'rwa-selected-chain',
-	'equities',
-	'equities-financials',
-	'equities-filings'
-]
-const PRIMARY_TABLE_TYPES_SET = new Set(PRIMARY_TABLE_TYPES)
-
 export function AddChartModal({
 	isOpen,
 	onClose,
@@ -50,25 +32,73 @@ export function AddChartModal({
 		actions.handleMainTabChange(tab)
 	}
 
-	const _getCurrentItemType = () => {
-		if (state.selectedMainTab === 'charts') {
-			return state.selectedChartTab
-		} else {
-			return 'chain'
-		}
-	}
-
-	const chartTypesLoading = false
-
 	const composerItemsWithData = useComposerItemsData(state.composerItems, computed.timePeriod)
 
-	const legacyTableTypes = useMemo(
-		() => (PRIMARY_TABLE_TYPES_SET.has(state.selectedTableType) ? [] : [state.selectedTableType]),
-		[state.selectedTableType]
-	)
 	const handleMetricChainChange = (opt: { value: string; label: string }) => actions.setMetricChain(opt?.value ?? null)
 	const handleMetricProtocolChange = (opt: { value: string; label: string }) =>
 		actions.setMetricProtocol(opt?.value ?? null)
+	const handleYieldChartTypeChange = (chartType: string) => {
+		switch (chartType) {
+			case 'tvl-apy':
+			case 'supply-apy':
+			case 'supply-apy-7d':
+			case 'borrow-apy':
+			case 'net-borrow-apy':
+			case 'pool-liquidity':
+				return actions.setSelectedYieldChartType(chartType)
+			default:
+				throw new Error(`Unsupported yield chart type: ${chartType}`)
+		}
+	}
+	const handleStablecoinChartTypeChange = (chartType: string) => {
+		switch (chartType) {
+			case 'totalMcap':
+			case 'tokenMcaps':
+			case 'pie':
+			case 'dominance':
+			case 'usdInflows':
+			case 'tokenInflows':
+				return actions.setSelectedStablecoinChartType(chartType)
+			default:
+				throw new Error(`Unsupported stablecoin chart type: ${chartType}`)
+		}
+	}
+	const handleStablecoinAssetChartTypeChange = (chartType: string) => {
+		switch (chartType) {
+			case 'totalCirc':
+			case 'chainMcaps':
+			case 'chainPie':
+			case 'chainDominance':
+				return actions.setSelectedStablecoinAssetChartType(chartType)
+			default:
+				throw new Error(`Unsupported stablecoin asset chart type: ${chartType}`)
+		}
+	}
+	const handleAdvancedTvlChartTypeChange = (chartType: string) => {
+		switch (chartType) {
+			case 'tvl':
+			case 'chainsTvl':
+			case 'tokenValuesUsd':
+			case 'tokensPie':
+			case 'tokenBalances':
+			case 'usdInflows':
+			case 'tokenInflows':
+				return actions.setSelectedAdvancedTvlChartType(chartType)
+			default:
+				throw new Error(`Unsupported advanced TVL chart type: ${chartType}`)
+		}
+	}
+	const handleBorrowedChartTypeChange = (chartType: string) => {
+		switch (chartType) {
+			case 'chainsBorrowed':
+			case 'tokenBorrowedUsd':
+			case 'tokensBorrowedPie':
+			case 'tokenBorrowedRaw':
+				return actions.setSelectedBorrowedChartType(chartType)
+			default:
+				throw new Error(`Unsupported borrowed chart type: ${chartType}`)
+		}
+	}
 
 	return (
 		<Ariakit.DialogProvider
@@ -122,7 +152,7 @@ export function AddChartModal({
 							onMinTvlChange={actions.setMinTvl}
 							onMaxTvlChange={actions.setMaxTvl}
 							selectedYieldChartType={state.selectedYieldChartType}
-							onSelectedYieldChartTypeChange={actions.setSelectedYieldChartType}
+							onSelectedYieldChartTypeChange={handleYieldChartTypeChange}
 							selectedStablecoinChain={state.selectedStablecoinChain}
 							selectedStablecoinChartType={state.selectedStablecoinChartType}
 							stablecoinMode={state.stablecoinMode}
@@ -130,23 +160,23 @@ export function AddChartModal({
 							selectedStablecoinAssetId={state.selectedStablecoinAssetId}
 							selectedStablecoinAssetChartType={state.selectedStablecoinAssetChartType}
 							onSelectedStablecoinChainChange={actions.setSelectedStablecoinChain}
-							onSelectedStablecoinChartTypeChange={actions.setSelectedStablecoinChartType}
+							onSelectedStablecoinChartTypeChange={handleStablecoinChartTypeChange}
 							onStablecoinModeChange={actions.setStablecoinMode}
 							onSelectedStablecoinAssetChange={actions.setSelectedStablecoinAsset}
 							onSelectedStablecoinAssetIdChange={actions.setSelectedStablecoinAssetId}
-							onSelectedStablecoinAssetChartTypeChange={actions.setSelectedStablecoinAssetChartType}
+							onSelectedStablecoinAssetChartTypeChange={handleStablecoinAssetChartTypeChange}
 							selectedAdvancedTvlProtocol={state.selectedAdvancedTvlProtocol}
 							selectedAdvancedTvlProtocolName={state.selectedAdvancedTvlProtocolName}
 							selectedAdvancedTvlChartType={state.selectedAdvancedTvlChartType}
 							onSelectedAdvancedTvlProtocolChange={actions.setSelectedAdvancedTvlProtocol}
 							onSelectedAdvancedTvlProtocolNameChange={actions.setSelectedAdvancedTvlProtocolName}
-							onSelectedAdvancedTvlChartTypeChange={actions.setSelectedAdvancedTvlChartType}
+							onSelectedAdvancedTvlChartTypeChange={handleAdvancedTvlChartTypeChange}
 							selectedBorrowedProtocol={state.selectedBorrowedProtocol}
 							selectedBorrowedProtocolName={state.selectedBorrowedProtocolName}
 							selectedBorrowedChartType={state.selectedBorrowedChartType}
 							onSelectedBorrowedProtocolChange={actions.setSelectedBorrowedProtocol}
 							onSelectedBorrowedProtocolNameChange={actions.setSelectedBorrowedProtocolName}
-							onSelectedBorrowedChartTypeChange={actions.setSelectedBorrowedChartType}
+							onSelectedBorrowedChartTypeChange={handleBorrowedChartTypeChange}
 							selectedIncomeStatementProtocol={state.selectedIncomeStatementProtocol}
 							selectedIncomeStatementProtocolName={state.selectedIncomeStatementProtocolName}
 							onSelectedIncomeStatementProtocolChange={actions.setSelectedIncomeStatementProtocol}
@@ -222,8 +252,6 @@ export function AddChartModal({
 							onChainsChange={actions.handleChainsChange}
 							selectedDatasetChain={state.selectedDatasetChain}
 							onDatasetChainChange={actions.handleDatasetChainChange}
-							selectedDatasetTimeframe={state.selectedDatasetTimeframe}
-							onDatasetTimeframeChange={actions.setSelectedDatasetTimeframe}
 							selectedCexAnalyticsView={state.selectedCexAnalyticsView}
 							onCexAnalyticsViewChange={actions.setSelectedCexAnalyticsView}
 							selectedCexAnalyticsMetric={state.selectedCexAnalyticsMetric}
@@ -235,7 +263,6 @@ export function AddChartModal({
 							includeCex={state.includeCex}
 							onIncludeCexChange={actions.setIncludeCex}
 							protocolsLoading={computed.protocolsLoading}
-							legacyTableTypes={legacyTableTypes}
 							isEditingItem={Boolean(editItem)}
 						/>
 					) : null}
@@ -270,7 +297,6 @@ export function AddChartModal({
 							selectedYieldPool={state.selectedYieldPool}
 							composerItems={state.composerItems}
 							textContent={state.textContent}
-							chartTypesLoading={chartTypesLoading}
 							selectedTableType={state.selectedTableType}
 							selectedDatasetChain={state.selectedDatasetChain}
 							selectedTokens={state.selectedTokens}

@@ -1,7 +1,7 @@
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { AddToDashboardButton } from '~/components/AddToDashboard'
+import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
@@ -371,13 +371,14 @@ export function StablecoinsByChain({
 	} else {
 		activeChartState = { status: 'ready', data: deferredSelectedChartData }
 	}
+	const activeChartData = activeChartState.status === 'ready' ? activeChartState.data : null
 
 	const runtimeSeries = React.useMemo(
 		() =>
-			seriesSelectorLabel && !marketCapSeries && activeChartState.status === 'ready'
-				? getStablecoinRuntimeSeries(activeChartState.data)
+			seriesSelectorLabel && !marketCapSeries && activeChartData
+				? getStablecoinRuntimeSeries(activeChartData)
 				: EMPTY_RUNTIME_SERIES,
-		[activeChartState, marketCapSeries, seriesSelectorLabel]
+		[activeChartData, marketCapSeries, seriesSelectorLabel]
 	)
 	const { activeSeries, selectableSeries, renderedCharts, setSelectedSeries } = useStablecoinChartSelection({
 		marketCapSeries,
@@ -525,7 +526,7 @@ export function StablecoinsByChain({
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : EMPTY_PIE_DATA}
-								stackColors={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.stackColors : undefined}
+								{...(marketCapPresentation?.kind === 'pie' ? { stackColors: marketCapPresentation.stackColors } : {})}
 								onReady={handleChartReady}
 							/>
 						</React.Suspense>
@@ -556,10 +557,10 @@ export function StablecoinsByChain({
 					) : (
 						<MultiSeriesChartPanel
 							state={activeChartState}
-							selectedCharts={activeSelectedCharts}
-							chartOptions={chartOptions}
+							{...(activeSelectedCharts !== undefined ? { selectedCharts: activeSelectedCharts } : {})}
+							{...(chartOptions !== undefined ? { chartOptions } : {})}
 							hideDefaultLegend={!showDefaultLegend}
-							groupBy={isGroupedBarChart ? volumeGroupBy : undefined}
+							{...(isGroupedBarChart ? { groupBy: volumeGroupBy } : {})}
 							onReady={handleChartReady}
 						/>
 					)}
@@ -614,14 +615,14 @@ function MultiSeriesChartPanel({
 			<MultiSeriesChart
 				dataset={state.data.dataset}
 				charts={state.data.charts}
-				selectedCharts={selectedCharts}
-				stacked={state.data.stacked}
-				expandTo100Percent={state.data.expandTo100Percent}
-				valueSymbol={state.data.valueSymbol}
-				showTotalInTooltip={state.data.showTotalInTooltip}
-				chartOptions={chartOptions}
-				hideDefaultLegend={hideDefaultLegend}
-				groupBy={groupBy}
+				{...(selectedCharts !== undefined ? { selectedCharts } : {})}
+				{...(state.data.stacked !== undefined ? { stacked: state.data.stacked } : {})}
+				{...(state.data.expandTo100Percent !== undefined ? { expandTo100Percent: state.data.expandTo100Percent } : {})}
+				{...(state.data.valueSymbol !== undefined ? { valueSymbol: state.data.valueSymbol } : {})}
+				{...(state.data.showTotalInTooltip !== undefined ? { showTotalInTooltip: state.data.showTotalInTooltip } : {})}
+				{...(chartOptions !== undefined ? { chartOptions } : {})}
+				{...(hideDefaultLegend !== undefined ? { hideDefaultLegend } : {})}
+				{...(groupBy !== undefined ? { groupBy } : {})}
 				onReady={onReady}
 			/>
 		</React.Suspense>
@@ -630,37 +631,18 @@ function MultiSeriesChartPanel({
 
 function handleRouting(selectedChain: string, queryParams: Record<string, string | string[] | undefined>) {
 	const { chain: _chain, ...filters } = queryParams
-
-	let params = ''
-
-	const filterKeys: string[] = []
-	for (const filterKey in filters) {
-		filterKeys.push(filterKey)
-	}
-	for (let index = 0; index < filterKeys.length; index++) {
-		const filter = filterKeys[index]
-		// append '?' before all query params and '&' bertween diff params
-		if (index === 0) {
-			params += '?'
-		} else params += '&'
-
-		// query params of same query like pegType will return in array form - pegType=['USD','EUR'], expected output is pegType=USD&pegType=EUR
-		if (Array.isArray(filters[filter])) {
-			for (let i = 0; i < filters[filter].length; i++) {
-				const f = filters[filter][i]
-				if (i > 0) {
-					params += '&'
-				}
-
-				params += `${encodeURIComponent(filter)}=${encodeURIComponent(f)}`
+	const encodedFilters: string[] = []
+	for (const [filter, value] of Object.entries(filters)) {
+		if (Array.isArray(value)) {
+			for (const item of value) {
+				encodedFilters.push(`${encodeURIComponent(filter)}=${encodeURIComponent(item)}`)
 			}
-		} else {
-			const value = filters[filter]
-			if (typeof value !== 'string') continue
-			params += `${encodeURIComponent(filter)}=${encodeURIComponent(value)}`
+		} else if (typeof value === 'string') {
+			encodedFilters.push(`${encodeURIComponent(filter)}=${encodeURIComponent(value)}`)
 		}
 	}
+	const query = encodedFilters.length > 0 ? `?${encodedFilters.join('&')}` : ''
 
-	if (selectedChain === 'All') return `/stablecoins${params}`
-	return `/stablecoins/${slug(selectedChain)}${params}`
+	if (selectedChain === 'All') return `/stablecoins${query}`
+	return `/stablecoins/${slug(selectedChain)}${query}`
 }

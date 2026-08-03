@@ -35,7 +35,7 @@ export const EXTENDED_COLOR_PALETTE = [
 	'#c94e36',
 	'#3acba6',
 	'#b034c5'
-]
+] satisfies readonly [string, ...string[]]
 
 export const COLOR_PALETTE_2 = [
 	'#cc5f3e',
@@ -76,7 +76,13 @@ export const COLOR_PALETTE_2 = [
 	'#c95d36',
 	'#3680c9',
 	'#36c936'
-]
+] satisfies readonly [string, ...string[]]
+
+export function getPaletteColor(palette: readonly string[], index: number): string {
+	const color = palette[index % palette.length]
+	if (color === undefined) throw new Error('Dashboard color palette must not be empty')
+	return color
+}
 
 function simpleHash(str: string): number {
 	let hash = 0
@@ -103,7 +109,7 @@ export const generateConsistentChartColor = (
 
 	const colorIndex = hash % EXTENDED_COLOR_PALETTE.length
 
-	return EXTENDED_COLOR_PALETTE[colorIndex]
+	return getPaletteColor(EXTENDED_COLOR_PALETTE, colorIndex)
 }
 
 export const colorManager = {

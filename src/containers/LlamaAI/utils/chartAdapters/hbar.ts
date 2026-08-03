@@ -1,4 +1,4 @@
-import type { ChartConfiguration, ChartDataSeries } from '~/containers/LlamaAI/types'
+import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
 import { buildLogoByCategory, parseStringNumber } from '~/containers/LlamaAI/utils/chartAdapters/shared'
 import { getNDistinctColors } from '~/utils'
 
@@ -61,38 +61,43 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 			const categories: string[] = []
 			const categoryIndex = new Map<string, number>()
 			for (const row of rawData) {
-				const category = String((row as Record<string, unknown>)[xField] ?? 'Unknown')
+				if (!isChartDataRow(row)) continue
+				const category = String(row[xField] ?? 'Unknown')
 				if (!categoryIndex.has(category)) {
 					categoryIndex.set(category, categories.length)
 					categories.push(category)
 				}
 			}
 			const palette = getNDistinctColors(config.series.length)
-			const series = new Array<HBarGroupedSeries>(config.series.length)
-			for (let seriesIndex = 0; seriesIndex < config.series.length; seriesIndex++) {
-				const seriesConfig = config.series[seriesIndex]
-				series[seriesIndex] = {
-					name: seriesConfig.name,
-					values: new Array<number>(categories.length).fill(0),
-					color: seriesConfig.styling?.color || palette[seriesIndex]
-				}
+			const runtimeSeries: Array<{ config: ChartConfiguration['series'][number]; output: HBarGroupedSeries }> = []
+			for (const [seriesIndex, seriesConfig] of config.series.entries()) {
+				runtimeSeries.push({
+					config: seriesConfig,
+					output: {
+						name: seriesConfig.name,
+						values: new Array<number>(categories.length).fill(0),
+						color: seriesConfig.styling.color || palette[seriesIndex] || '#2563eb'
+					}
+				})
 			}
 			for (const row of rawData) {
-				const record = row as Record<string, unknown>
-				const index = categoryIndex.get(String(record[xField] ?? 'Unknown'))
+				if (!isChartDataRow(row)) continue
+				const index = categoryIndex.get(String(row[xField] ?? 'Unknown'))
 				if (index == null) continue
-				for (let seriesIndex = 0; seriesIndex < config.series.length; seriesIndex++) {
-					const seriesConfig = config.series[seriesIndex]
+				for (const { config: seriesConfig, output } of runtimeSeries) {
 					const filter = seriesConfig.dataMapping.entityFilter
-					if (filter && !matchesEntityFilter(record[filter.field], filter.value)) continue
-					series[seriesIndex].values[index] = parseStringNumber(record[seriesConfig.dataMapping.yField])
+					if (filter && !matchesEntityFilter(row[filter.field], filter.value)) continue
+					output.values[index] = parseStringNumber(row[seriesConfig.dataMapping.yField])
 				}
 			}
+			const series = runtimeSeries.map(({ output }) => output)
 			const logos = logoByCategory ? categories.map((c) => logoByCategory.get(c.toLowerCase()) ?? '') : undefined
 			const completeLogos = logos?.every(Boolean) ? logos : undefined
-			const data = new Array<[string, number]>(categories.length)
-			for (let index = 0; index < categories.length; index++) {
-				data[index] = [categories[index], series[0].values[index]]
+			const data: Array<[string, number]> = []
+			const primaryOutput = runtimeSeries[0]?.output
+			if (!primaryOutput) throw new Error('No series configuration found')
+			for (const [index, category] of categories.entries()) {
+				data.push([category, primaryOutput.values[index] ?? 0])
 			}
 			return {
 				chartType: 'hbar',
@@ -114,18 +119,24 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 		const logoByCategory = buildLogoByCategory(config.axes.x)
 		const chartData: Array<[string, number]> = []
 		const logos: string[] | undefined = logoByCategory ? [] : undefined
-		for (let index = 0; index < rawData.length; index++) {
-			const record = rawData[index] as Record<string, unknown>
-			const category = record[primarySeries.dataMapping.xField] ?? 'Unknown'
-			const value = parseStringNumber(record[primarySeries.dataMapping.yField])
+		for (const row of rawData) {
+			if (!isChartDataRow(row)) continue
+			const category = row[primarySeries.dataMapping.xField] ?? 'Unknown'
+			const value = parseStringNumber(row[primarySeries.dataMapping.yField])
 			chartData.push([String(category), value])
-			if (logos) logos.push(logoByCategory!.get(String(category).toLowerCase()) ?? '')
+			if (logos && logoByCategory) logos.push(logoByCategory.get(String(category).toLowerCase()) ?? '')
 		}
 		const completeLogos = logos?.every(Boolean) ? logos : undefined
 
 		// Distinct color per bar by default; honor an explicit per-category override from the editor.
 		const distinct = getNDistinctColors(chartData.length)
-		const colors = chartData.map(([category], i) => config.seriesColors?.[category] ?? distinct[i])
+		const colors: string[] = []
+		const distinctColors = distinct.values()
+		for (const [category] of chartData) {
+			const nextColor = distinctColors.next()
+			if (nextColor.done) throw new Error('Distinct color count did not match chart data')
+			colors.push(config.seriesColors?.[category] ?? nextColor.value)
+		}
 
 		return {
 			chartType: 'hbar',

@@ -58,7 +58,9 @@ describe('focused protocol TVL breakdown construction', () => {
 		})
 
 		expect(result.chains).toEqual(['Base'])
-		expect(result.series[0].data).toEqual([
+		const [baseSeries] = result.series
+		if (!baseSeries) throw new Error('Expected the Base series')
+		expect(baseSeries.data).toEqual([
 			[1_000, 0],
 			[2_000, 8],
 			[3_000, 7]

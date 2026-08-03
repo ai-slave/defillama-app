@@ -10,22 +10,56 @@ import { resultBody } from '~/server/api/__tests__/resultBody'
 
 const mocks = vi.hoisted(() => ({
 	fetchChainsByCategory: vi.fn(),
-	fetchJson: vi.fn()
+	fetchAdapterChainMetrics: vi.fn(),
+	fetchAdapterProtocolChartData: vi.fn()
 }))
 
 vi.mock('~/containers/Chains/api', () => ({
 	fetchChainsByCategory: mocks.fetchChainsByCategory
 }))
 
-vi.mock('~/utils/async', () => ({
-	fetchJson: mocks.fetchJson
+vi.mock('~/containers/AdapterMetrics/api', () => ({
+	fetchAdapterChainMetrics: mocks.fetchAdapterChainMetrics,
+	fetchAdapterProtocolChartData: mocks.fetchAdapterProtocolChartData
 }))
 
 beforeEach(() => {
 	vi.clearAllMocks()
+	mocks.fetchAdapterChainMetrics.mockResolvedValue({ protocols: [], allChains: [] })
+	mocks.fetchAdapterProtocolChartData.mockResolvedValue([])
 })
 
 describe('breakdown route partitioning', () => {
+	it('rejects oversized chart-builder fan-out before fetching upstream data', async () => {
+		const { adapterMetricBreakdown } =
+			await import('~/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes')
+		const chains = Array.from({ length: 51 }, (_, index) => `Chain ${index}`).join(',')
+
+		await expect(
+			adapterMetricBreakdown.handle({
+				method: 'GET',
+				url: '',
+				headers: {},
+				query: { metric: 'fees', chains }
+			})
+		).resolves.toEqual({
+			status: 400,
+			body: { error: 'chains supports at most 50 values' }
+		})
+		expect(mocks.fetchAdapterChainMetrics).not.toHaveBeenCalled()
+	})
+
+	it('rejects category resolution when any requested category is incomplete', async () => {
+		mocks.fetchChainsByCategory.mockImplementation(async (category: string) => {
+			if (category === 'EVM') return { chainsUnique: ['Ethereum'] }
+			throw new Error('category source failed')
+		})
+		const { resolveAllowedChainNamesFromCategories } =
+			await import('~/containers/ProDashboard/server/chartBuilder/breakdownChains')
+
+		await expect(resolveAllowedChainNamesFromCategories(['EVM', 'Rollups'])).rejects.toThrow('category source failed')
+	})
+
 	it('routes by-chain metrics to their owning domains', () => {
 		expect(getProtocolChainBreakdownRoute('tvl')).toBe(
 			'/api/public/pro-dashboard/chart-builder/protocols/breakdowns/by-chain/tvl'
@@ -102,30 +136,18 @@ describe('breakdown route partitioning', () => {
 
 	it('filters chain-native breakdown categories against overview row slugs, not Dimensions aliases', async () => {
 		mocks.fetchChainsByCategory.mockResolvedValue({ chainsUnique: ['OP Mainnet'] })
-		mocks.fetchJson.mockImplementation(async (url: string) => {
-			if (url.includes('/overview/fees?')) {
-				return {
-					protocols: [
-						{ name: 'OP Mainnet', slug: 'op-mainnet', protocolType: 'chain', total24h: 30 },
-						{ name: 'Gnosis', slug: 'gnosis', protocolType: 'chain', total24h: 20 },
-						{ name: 'Aave', slug: 'aave', protocolType: 'protocol', total24h: 100 }
-					],
-					totalDataChart: [
-						[1, 50],
-						[2, 60]
-					]
-				}
-			}
-			if (url.includes('/summary/fees/op-mainnet')) {
-				return {
-					totalDataChart: [
-						[1, 10],
-						[2, 30]
-					]
-				}
-			}
-			return { totalDataChart: [] }
+		mocks.fetchAdapterChainMetrics.mockResolvedValue({
+			protocols: [
+				{ name: 'OP Mainnet', slug: 'op-mainnet', protocolType: 'chain', total24h: 30 },
+				{ name: 'Gnosis', slug: 'gnosis', protocolType: 'chain', total24h: 20 },
+				{ name: 'Aave', slug: 'aave', protocolType: 'protocol', total24h: 100 }
+			],
+			allChains: []
 		})
+		mocks.fetchAdapterProtocolChartData.mockResolvedValue([
+			[1, 10],
+			[2, 30]
+		])
 		const { chainNativeByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/chains')
 
 		const result = await chainNativeByChainBreakdown.handle({
@@ -145,38 +167,25 @@ describe('breakdown route partitioning', () => {
 	})
 
 	it('normalizes saved legacy chain aliases for chain-native breakdown filters', async () => {
-		mocks.fetchJson.mockImplementation(async (url: string) => {
-			if (url.includes('/overview/fees?')) {
-				return {
-					protocols: [
-						{ name: 'OP Mainnet', slug: 'op-mainnet', protocolType: 'chain', total24h: 30 },
-						{ name: 'Gnosis', slug: 'gnosis', protocolType: 'chain', total24h: 20 },
-						{ name: 'BSC', slug: 'bsc', protocolType: 'chain', total24h: 10 }
-					],
-					totalDataChart: [
-						[1, 60],
-						[2, 70]
-					]
-				}
-			}
-			if (url.includes('/summary/fees/op-mainnet')) {
-				return {
-					totalDataChart: [
+		mocks.fetchAdapterChainMetrics.mockResolvedValue({
+			protocols: [
+				{ name: 'OP Mainnet', slug: 'op-mainnet', protocolType: 'chain', total24h: 30 },
+				{ name: 'Gnosis', slug: 'gnosis', protocolType: 'chain', total24h: 20 },
+				{ name: 'BSC', slug: 'bsc', protocolType: 'chain', total24h: 10 }
+			],
+			allChains: []
+		})
+		mocks.fetchAdapterProtocolChartData.mockImplementation(async ({ protocol }: { protocol: string }) =>
+			protocol === 'op-mainnet'
+				? [
 						[1, 10],
 						[2, 30]
 					]
-				}
-			}
-			if (url.includes('/summary/fees/gnosis')) {
-				return {
-					totalDataChart: [
+				: [
 						[1, 5],
 						[2, 20]
 					]
-				}
-			}
-			return { totalDataChart: [] }
-		})
+		)
 		const { chainNativeByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/chains')
 
 		const result = await chainNativeByChainBreakdown.handle({
@@ -197,29 +206,17 @@ describe('breakdown route partitioning', () => {
 
 	it('matches chain-native category filters by overview row names when slugs differ', async () => {
 		mocks.fetchChainsByCategory.mockResolvedValue({ chainsUnique: ['Abbrev Chain'] })
-		mocks.fetchJson.mockImplementation(async (url: string) => {
-			if (url.includes('/overview/fees?')) {
-				return {
-					protocols: [
-						{ name: 'Abbrev Chain', slug: 'ac', protocolType: 'chain', total24h: 40 },
-						{ name: 'Other Chain', slug: 'other-chain', protocolType: 'chain', total24h: 30 }
-					],
-					totalDataChart: [
-						[1, 70],
-						[2, 80]
-					]
-				}
-			}
-			if (url.includes('/summary/fees/ac')) {
-				return {
-					totalDataChart: [
-						[1, 20],
-						[2, 40]
-					]
-				}
-			}
-			return { totalDataChart: [] }
+		mocks.fetchAdapterChainMetrics.mockResolvedValue({
+			protocols: [
+				{ name: 'Abbrev Chain', slug: 'ac', protocolType: 'chain', total24h: 40 },
+				{ name: 'Other Chain', slug: 'other-chain', protocolType: 'chain', total24h: 30 }
+			],
+			allChains: []
 		})
+		mocks.fetchAdapterProtocolChartData.mockResolvedValue([
+			[1, 20],
+			[2, 40]
+		])
 		const { chainNativeByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/chains')
 
 		const result = await chainNativeByChainBreakdown.handle({

@@ -2,13 +2,18 @@ import { useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
-import { getProDashboardChartTypeConfig, type MetricAggregator, type MetricWindow } from '../../../types'
+import {
+	type DashboardGrouping,
+	getProDashboardChartTypeConfig,
+	type MetricAggregator,
+	type MetricWindow
+} from '../../../types'
 import { AriakitCheckbox } from '../../AriakitCheckbox'
 import { AriakitSelect, type SelectOption } from '../../AriakitSelect'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
-import type { DisplayMode, GroupingInterval } from '../types'
+import type { DisplayMode } from '../types'
 
-const GROUPING_OPTIONS: SelectOption[] = [
+const GROUPING_OPTIONS: SelectOption<DashboardGrouping>[] = [
 	{ value: 'day', label: 'Day' },
 	{ value: 'week', label: 'Week' },
 	{ value: 'month', label: 'Month' },
@@ -16,14 +21,14 @@ const GROUPING_OPTIONS: SelectOption[] = [
 	{ value: 'year', label: 'Year' }
 ]
 
-const DISPLAY_OPTIONS: SelectOption[] = [
+const DISPLAY_OPTIONS: SelectOption<DisplayMode>[] = [
 	{ value: 'default', label: 'Default' },
 	{ value: 'stacked', label: 'Stacked' },
 	{ value: 'cumulative', label: 'Cumulative' },
 	{ value: 'percentage', label: 'Percentage' }
 ]
 
-const AGGREGATOR_OPTIONS: SelectOption[] = [
+const AGGREGATOR_OPTIONS: SelectOption<MetricAggregator>[] = [
 	{ value: 'latest', label: 'Latest' },
 	{ value: 'avg', label: 'Average' },
 	{ value: 'sum', label: 'Total' },
@@ -32,7 +37,7 @@ const AGGREGATOR_OPTIONS: SelectOption[] = [
 	{ value: 'growth', label: 'Growth' }
 ]
 
-const WINDOW_OPTIONS: SelectOption[] = [
+const WINDOW_OPTIONS: SelectOption<MetricWindow>[] = [
 	{ value: '7d', label: '7d' },
 	{ value: '30d', label: '30d' },
 	{ value: '90d', label: '90d' },
@@ -134,13 +139,13 @@ export function PreviewStep() {
 						label="Grouping"
 						options={GROUPING_OPTIONS}
 						selectedValue={state.grouping}
-						onChange={(opt) => actions.setGrouping(opt.value as GroupingInterval)}
+						onChange={(opt) => actions.setGrouping(opt.value)}
 					/>
 					<AriakitSelect
 						label="Display"
 						options={DISPLAY_OPTIONS}
 						selectedValue={state.displayMode}
-						onChange={(opt) => actions.setDisplayMode(opt.value as DisplayMode)}
+						onChange={(opt) => actions.setDisplayMode(opt.value)}
 					/>
 				</div>
 
@@ -246,13 +251,13 @@ export function PreviewStep() {
 							<AriakitSelect
 								options={AGGREGATOR_OPTIONS}
 								selectedValue={state.metricSettings.aggregator}
-								onChange={(opt) => actions.setMetricSettings({ aggregator: opt.value as MetricAggregator })}
+								onChange={(opt) => actions.setMetricSettings({ aggregator: opt.value })}
 								className="min-w-[80px]"
 							/>
 							<AriakitSelect
 								options={WINDOW_OPTIONS}
 								selectedValue={state.metricSettings.window}
-								onChange={(opt) => actions.setMetricSettings({ window: opt.value as MetricWindow })}
+								onChange={(opt) => actions.setMetricSettings({ window: opt.value })}
 								className="min-w-[60px]"
 							/>
 						</div>

@@ -1,12 +1,12 @@
+import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { Dashboard } from '../dashboardTypes'
-import { dashboardAPI } from '../services/DashboardAPI'
-import type { DashboardItemConfig } from '../types'
-import { cleanItemsForSaving } from './dashboardUtils'
+import { dashboardAPI, type DashboardAuthorizedFetch } from '../services/DashboardAPI'
+import { toPersistedDashboardItems } from './dashboardUtils'
 
 export async function addItemToDashboard(
 	dashboardId: string,
 	newItem: DashboardItemConfig,
-	authorizedFetch: (url: string, options?: any) => Promise<Response>
+	authorizedFetch: DashboardAuthorizedFetch
 ): Promise<Dashboard> {
 	const dashboard = await dashboardAPI.getDashboard(dashboardId, authorizedFetch)
 
@@ -15,13 +15,13 @@ export async function addItemToDashboard(
 	return dashboardAPI.updateDashboard(
 		dashboardId,
 		{
-			items: cleanItemsForSaving(updatedItems),
+			items: toPersistedDashboardItems(updatedItems),
 			dashboardName: dashboard.data.dashboardName,
-			timePeriod: dashboard.data.timePeriod,
-			customTimePeriod: dashboard.data.customTimePeriod,
-			visibility: dashboard.visibility,
-			tags: dashboard.tags,
-			description: dashboard.description,
+			...(dashboard.data.timePeriod === undefined ? {} : { timePeriod: dashboard.data.timePeriod }),
+			...(dashboard.data.customTimePeriod === undefined ? {} : { customTimePeriod: dashboard.data.customTimePeriod }),
+			...(dashboard.visibility === undefined ? {} : { visibility: dashboard.visibility }),
+			...(dashboard.tags === undefined ? {} : { tags: dashboard.tags }),
+			...(dashboard.description === undefined ? {} : { description: dashboard.description }),
 			aiGenerated: dashboard.aiGenerated ?? null
 		},
 		authorizedFetch
@@ -33,36 +33,37 @@ export function replaceDashboardItem(
 	targetItemId: string,
 	replacement: DashboardItemConfig
 ): DashboardItemConfig[] {
-	const targetIndex = items.findIndex((item) => item.id === targetItemId && item.kind === 'llamaai-chart')
-	if (targetIndex === -1) throw new Error('The chart repair slot no longer exists')
-	const target = items[targetIndex]
-	const nextItems = [...items]
-	nextItems[targetIndex] = {
-		...replacement,
-		id: target.id,
-		...(target.colSpan !== undefined && { colSpan: target.colSpan })
-	} as DashboardItemConfig
-	return nextItems
+	const target = items.find((item) => item.id === targetItemId && item.kind === 'llamaai-chart')
+	if (!target) throw new Error('The chart repair slot no longer exists')
+	return items.map((item) =>
+		item === target
+			? {
+					...replacement,
+					id: target.id,
+					...(target.colSpan === undefined ? {} : { colSpan: target.colSpan })
+				}
+			: item
+	)
 }
 
 export async function replaceItemInDashboard(
 	dashboardId: string,
 	targetItemId: string,
 	replacement: DashboardItemConfig,
-	authorizedFetch: (url: string, options?: any) => Promise<Response>
+	authorizedFetch: DashboardAuthorizedFetch
 ): Promise<Dashboard> {
 	const dashboard = await dashboardAPI.getDashboard(dashboardId, authorizedFetch)
 	const updatedItems = replaceDashboardItem(dashboard.data.items ?? [], targetItemId, replacement)
 	return dashboardAPI.updateDashboard(
 		dashboardId,
 		{
-			items: cleanItemsForSaving(updatedItems),
+			items: toPersistedDashboardItems(updatedItems),
 			dashboardName: dashboard.data.dashboardName,
-			timePeriod: dashboard.data.timePeriod,
-			customTimePeriod: dashboard.data.customTimePeriod,
-			visibility: dashboard.visibility,
-			tags: dashboard.tags,
-			description: dashboard.description,
+			...(dashboard.data.timePeriod === undefined ? {} : { timePeriod: dashboard.data.timePeriod }),
+			...(dashboard.data.customTimePeriod === undefined ? {} : { customTimePeriod: dashboard.data.customTimePeriod }),
+			...(dashboard.visibility === undefined ? {} : { visibility: dashboard.visibility }),
+			...(dashboard.tags === undefined ? {} : { tags: dashboard.tags }),
+			...(dashboard.description === undefined ? {} : { description: dashboard.description }),
 			aiGenerated: dashboard.aiGenerated ?? null
 		},
 		authorizedFetch

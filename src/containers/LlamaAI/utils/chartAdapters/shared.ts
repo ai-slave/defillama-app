@@ -1,10 +1,8 @@
-import { CHART_COLORS, oldBlue } from '~/constants/colors'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import { CHART_COLORS } from '~/constants/colors'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { chainIconUrl, equityIconUrl, geckoTokenIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
 
 type AxisEntityType = NonNullable<ChartConfiguration['axes']['x']['entityType']>
-
-export { oldBlue }
 
 function logoUrlForKey(entityType: AxisEntityType, key: string): string {
 	switch (entityType) {
@@ -29,7 +27,8 @@ export function buildLogoByCategory(x: ChartConfiguration['axes']['x']): Map<str
 	if (!entityType) return undefined
 	const map = new Map<string, string>()
 	if (logoKeys) {
-		for (const [label, key] of Object.entries(logoKeys)) {
+		for (const label in logoKeys) {
+			const key = logoKeys[label]
 			if (label && key) map.set(label.toLowerCase(), logoUrlForKey(entityType, key))
 		}
 	} else if (logoCategories?.length) {
@@ -43,12 +42,8 @@ export function buildLogoByCategory(x: ChartConfiguration['axes']['x']): Map<str
 	return map.size ? map : undefined
 }
 
-export const getChartColor = (_entityValue?: string, seriesIndex?: number, fallbackColor: string = oldBlue): string => {
-	if (seriesIndex !== undefined) {
-		return CHART_COLORS[seriesIndex % CHART_COLORS.length]
-	}
-	return fallbackColor
-}
+export const getChartColor = (seriesIndex: number): string =>
+	CHART_COLORS[seriesIndex % CHART_COLORS.length] ?? CHART_COLORS[0]
 
 export const parseStringNumber = (value: unknown): number => {
 	if (typeof value === 'number') return value

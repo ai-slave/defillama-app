@@ -5,7 +5,7 @@ import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/Mult
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
-import ProtocolChartBuilderData from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
+import { fetchProtocolChainBreakdownData } from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
 import { carryForwardCumulative, parseDateToUnix, sumDailySeries, type Chart } from './transform'
 import {
@@ -19,7 +19,7 @@ import {
 	withNetworkFee
 } from './ui'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+const MultiSeriesChart: React.FC<IMultiSeriesChartProps> = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const GOLD = '#f5c842'
 const THORCHAIN = 'THORChain'
@@ -56,7 +56,23 @@ const CHART_OPTIONS = {
 } satisfies NonNullable<IMultiSeriesChartProps['chartOptions']>
 const QUERY_OPTS = { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false } as const
 
-function aggregate(series: RawSeries[], view: View, stacked: boolean) {
+function getPaletteColor(index: number): string {
+	const paletteIndex = index % PALETTE.length
+	for (const [currentIndex, color] of PALETTE.entries()) {
+		if (currentIndex === paletteIndex) return color
+	}
+	throw new Error('THORChain chart palette must not be empty')
+}
+
+function pairChartDatesWithValues(dates: string[], values: Array<number | null | undefined>): Pts {
+	const points: Pts = []
+	for (const [index, date] of dates.entries()) {
+		points.push([parseDateToUnix(date), values.at(index) ?? 0])
+	}
+	return points
+}
+
+function aggregate(series: RawSeries[], view: View, stacked: boolean): SparseCartesianSeries[] {
 	if (!series.length) return []
 	const grouping = view === 'cumulative' ? 'day' : view
 	const isCumulative = view === 'cumulative'
@@ -78,7 +94,7 @@ function aggregate(series: RawSeries[], view: View, stacked: boolean) {
 		}
 		return {
 			name: s.name,
-			color: s.color || PALETTE[i % PALETTE.length],
+			color: s.color ? s.color : getPaletteColor(i),
 			points
 		}
 	})
@@ -87,7 +103,7 @@ function aggregate(series: RawSeries[], view: View, stacked: boolean) {
 		name: s.name,
 		data: s.points,
 		color: s.color,
-		type: (view === 'cumulative' ? 'line' : 'bar') as 'line' | 'bar',
+		type: view === 'cumulative' ? 'line' : 'bar',
 		...(view === 'cumulative' ? { connectNulls: true } : {}),
 		...(stacked ? { stack: 'total' } : {}),
 		...(view === 'cumulative' && useArea ? { areaStyle: {} } : {})
@@ -125,7 +141,7 @@ function TrendCard({
 	return (
 		<ChartCard
 			title={title}
-			subtitle={subtitle}
+			{...(subtitle !== undefined ? { subtitle } : {})}
 			control={<SegToggle options={VIEWS} value={view} onChange={setView} />}
 		>
 			{isLoading ? (
@@ -171,7 +187,7 @@ export function ChainBreakdownChart({
 	const [view, setView] = useState<View>('day')
 	const { data, isLoading, isError } = useQuery<{ series: RawSeries[] }>({
 		queryKey: ['thorchain-breakdown', protocol, metric, limit],
-		queryFn: () => ProtocolChartBuilderData.getProtocolChainData(protocol, metric, undefined, limit),
+		queryFn: () => fetchProtocolChainBreakdownData({ protocol, metric, limit }),
 		...QUERY_OPTS
 	})
 	const networkFeeDataType = protocol === DEX ? NETWORK_FEE_DATA_TYPES[metric] : undefined
@@ -207,7 +223,7 @@ export function ChainBreakdownChart({
 	return (
 		<TrendCard
 			title={title}
-			subtitle={subtitle}
+			{...(subtitle !== undefined ? { subtitle } : {})}
 			valueSymbol={valueSymbol}
 			view={view}
 			setView={setView}
@@ -237,15 +253,16 @@ export function ApiTrendChart({
 		if (!chart?.dates?.length) return []
 		return chart.series.map((s) => ({
 			name: s.name,
-			data: chart.dates.map((d, i) => [parseDateToUnix(d), s.data?.[i] ?? 0] as [number, number])
+			data: pairChartDatesWithValues(chart.dates, s.data ?? [])
 		}))
 	}, [chart])
 	const stacked = Boolean(chart?.series?.some((s) => s.stack))
 	const chartSeries = useMemo(() => aggregate(rawSeries, view, stacked), [rawSeries, view, stacked])
+	const resolvedSubtitle = subtitle ?? chart?.subtitle
 	return (
 		<TrendCard
 			title={chart?.title ?? ''}
-			subtitle={subtitle ?? chart?.subtitle}
+			{...(resolvedSubtitle !== undefined ? { subtitle: resolvedSubtitle } : {})}
 			valueSymbol={valueSymbol}
 			view={view}
 			setView={setView}
@@ -261,21 +278,24 @@ export function ApiTrendChart({
 export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subtitle?: string }) {
 	const model = useMemo(() => {
 		if (!chart?.dates?.length || !chart.series.length) return undefined
-		const colors = [THOR_TEAL, GOLD]
 		const series: SparseCartesianSeries[] = chart.series.map((s, i) => ({
 			name: s.name,
-			type: (s.type ?? 'line') as 'line' | 'bar',
-			color: colors[i % colors.length],
+			type: s.type === 'bar' ? 'bar' : 'line',
+			color: i % 2 === 0 ? THOR_TEAL : GOLD,
 			yAxisIndex: i,
 			// Keep the overlay line un-filled so it doesn't obscure the bars below.
 			...(s.type === 'line' ? { areaStyle: { opacity: 0 } } : {}),
-			data: chart.dates.map((d, j) => [parseDateToUnix(d), s.data?.[j] ?? 0] as [number, number])
+			data: pairChartDatesWithValues(chart.dates, s.data ?? [])
 		}))
-		return buildSparseCartesianChartModel(series)
-	}, [chart])
+		return {
+			...buildSparseCartesianChartModel(series),
+			title: chart.title ?? '',
+			subtitle: subtitle ?? chart.subtitle
+		}
+	}, [chart, subtitle])
 	if (!model) return null
 	return (
-		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle}>
+		<ChartCard title={model.title} {...(model.subtitle !== undefined ? { subtitle: model.subtitle } : {})}>
 			<MultiSeriesChart
 				dataset={model.dataset}
 				charts={model.charts}
@@ -325,7 +345,7 @@ export function FeeRevenueChart({
 	return (
 		<TrendCard
 			title={title}
-			subtitle={subtitle}
+			{...(subtitle !== undefined ? { subtitle } : {})}
 			valueSymbol="$"
 			view={view}
 			setView={setView}

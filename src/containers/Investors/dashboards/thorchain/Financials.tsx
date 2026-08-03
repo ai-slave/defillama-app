@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
-import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { readInvestorApiJson } from '../../api.types'
@@ -113,9 +113,19 @@ export default function Financials() {
 	// the Overview), so each window matches across tabs. All windows are Lifetime / 1Y / 30D / 7D.
 	const fees = useAdapterSeries('total-fees', withNetworkFee(ADAPTER_DATA_TYPES.DAILY_FEES))
 	const revenue = useAdapterSeries('total-revenue', withNetworkFee(ADAPTER_DATA_TYPES.DAILY_REVENUE))
-	const holdersRev = useAdapterSeries('dex-holders-revenue', () => ProtocolCharts.holdersRevenue(DEX))
+	const holdersRev = useAdapterSeries('dex-holders-revenue', () =>
+		fetchAdapterProtocolChartData({
+			adapterType: ADAPTER_TYPES.FEES,
+			protocol: DEX,
+			dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
+		})
+	)
 	const supplySide = useAdapterSeries('dex-supply-side-revenue', () =>
-		ProtocolCharts.summary(DEX, ADAPTER_TYPES.FEES, ADAPTER_DATA_TYPES.DAILY_SUPPLY_SIDE_REVENUE)
+		fetchAdapterProtocolChartData({
+			adapterType: ADAPTER_TYPES.FEES,
+			protocol: DEX,
+			dataType: ADAPTER_DATA_TYPES.DAILY_SUPPLY_SIDE_REVENUE
+		})
 	)
 	const protocolRev = useAdapterSeries(
 		'total-protocol-revenue',

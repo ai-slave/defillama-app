@@ -1,23 +1,25 @@
-import type {
-	Chain,
-	CHART_TYPES,
-	ChartConfig,
-	DashboardItemConfig,
-	MetricConfig,
-	MultiChartConfig,
-	Protocol,
-	UnifiedTableConfig
+import { createChartConfig, createMetricConfig } from './dashboardConfig/classicChartConfig'
+import type { DashboardItemConfig } from './dashboardItemConfig'
+import {
+	getProDashboardChartTypeConfig,
+	type Chain,
+	type ChartConfig,
+	type MetricConfig,
+	type MultiChartConfig,
+	type ProDashboardChartType,
+	type Protocol
 } from './types'
+import { UNIFIED_TABLE_CONFIG_VERSION, type UnifiedTableConfig } from './unifiedTable/config/current'
 
 export interface DashboardTemplate {
 	id: string
 	name: string
 	description: string
 	type: 'chains' | 'protocols'
-	metrics: string[]
+	metrics: ProDashboardChartType[]
 	filter: {
 		category?: string
-		metadataFlag?: string
+		metadataFlag?: keyof DimensionProtocols
 		chainNames?: string[]
 		chainCategory?: string
 		excludeChainCategory?: string
@@ -232,7 +234,7 @@ function getSelectedItems(
 ): SelectedItem[] {
 	if (template.type === 'protocols') {
 		if (template.filter.metadataFlag && dimensionProtocols) {
-			const dimensionKey = template.filter.metadataFlag as keyof DimensionProtocols
+			const dimensionKey = template.filter.metadataFlag
 			const dimensionData = dimensionProtocols[dimensionKey]
 			if (dimensionData && dimensionData.length > 0) {
 				return dimensionData.slice(0, template.count).map((p) => ({
@@ -249,15 +251,16 @@ function getSelectedItems(
 		}
 
 		if (template.filter.metadataFlag) {
+			const metadataFlag = template.filter.metadataFlag
 			filtered = filtered.filter((p) => {
 				const meta = protocolMetadata.get(p.slug)
-				return meta?.flags?.[template.filter.metadataFlag!]
+				return meta?.flags?.[metadataFlag]
 			})
 		}
 
 		return filtered
 			.filter((p) => template.filter.metadataFlag || !p.parentProtocol)
-			.sort((a, b) => (b.tvl || 0) - (a.tvl || 0))
+			.sort((a, b) => b.tvl - a.tvl)
 			.slice(0, template.count)
 			.map((p) => ({ slug: p.slug, name: p.name }))
 	} else {
@@ -283,31 +286,35 @@ function getSelectedItems(
 		}
 
 		return filteredChains
-			.sort((a, b) => (b.tvl || 0) - (a.tvl || 0))
+			.sort((a, b) => b.tvl - a.tvl)
 			.slice(0, template.count)
 			.map((c) => ({ slug: c.name, name: c.name }))
 	}
 }
 
 function generateTemplateMetrics(template: DashboardTemplate, selectedItems: SelectedItem[]): MetricConfig[] {
-	const primaryMetric = template.metrics.find((m): m is string => !!m)
+	const primaryMetric = template.metrics[0]
 	if (!primaryMetric) return []
 
-	return selectedItems.map((item) => ({
-		id: generateId('metric', `${item.slug}-${primaryMetric}`),
-		kind: 'metric' as const,
-		subject: {
-			itemType: template.type === 'chains' ? ('chain' as const) : ('protocol' as const),
-			chain: template.type === 'chains' ? item.slug : undefined,
-			protocol: template.type === 'protocols' ? item.slug : undefined
-		},
-		type: primaryMetric,
-		aggregator: 'latest' as const,
-		window: '30d' as const,
-		compare: { mode: 'previous_window' as const, format: 'percent' as const },
-		showSparkline: true,
-		colSpan: 0.5 as const
-	}))
+	const metrics: MetricConfig[] = []
+	for (const item of selectedItems) {
+		const metric = createMetricConfig({
+			id: generateId('metric', `${item.slug}-${primaryMetric}`),
+			kind: 'metric',
+			subject:
+				template.type === 'chains'
+					? { itemType: 'chain', chain: item.slug }
+					: { itemType: 'protocol', protocol: item.slug },
+			type: primaryMetric,
+			aggregator: 'latest',
+			window: '30d',
+			compare: { mode: 'previous_window', format: 'percent' },
+			chartType: 'sparkline',
+			colSpan: 0.5
+		})
+		if (metric) metrics.push(metric)
+	}
+	return metrics
 }
 
 function generateTemplateTable(template: DashboardTemplate, selectedItems: SelectedItem[]): UnifiedTableConfig {
@@ -325,49 +332,50 @@ function generateTemplateTable(template: DashboardTemplate, selectedItems: Selec
 
 	return {
 		id: generateId('unified-table', `template-${template.id}`),
-		kind: 'unified-table' as const,
+		kind: 'unified-table',
+		configVersion: UNIFIED_TABLE_CONFIG_VERSION,
+		strategy: 'protocols',
 		rowHeaders: template.type === 'chains' ? ['chain'] : ['protocol'],
-		filters: {
-			protocols: template.type === 'protocols' ? itemSlugs : undefined,
-			chains: template.type === 'chains' ? itemSlugs : undefined
-		},
+		filters: template.type === 'protocols' ? { protocols: itemSlugs } : { chains: itemSlugs },
 		columnOrder: tableConfig.columns,
 		columnVisibility,
 		defaultSorting: [{ id: tableConfig.sortBy, desc: true }],
-		colSpan: 2 as const
+		colSpan: 2
 	}
 }
 
-function generateTemplateMultiCharts(
-	template: DashboardTemplate,
-	selectedItems: SelectedItem[],
-	chartTypes: typeof CHART_TYPES
-): MultiChartConfig[] {
-	const validMetrics = template.metrics.filter((m): m is string => !!m)
-	return validMetrics.map((metric) => {
-		const chartTypeInfo = chartTypes[metric as keyof typeof chartTypes]
+function generateTemplateMultiCharts(template: DashboardTemplate, selectedItems: SelectedItem[]): MultiChartConfig[] {
+	return template.metrics.flatMap((metric) => {
+		const chartTypeInfo = getProDashboardChartTypeConfig(metric)
 		const isGroupable = chartTypeInfo && 'groupable' in chartTypeInfo && chartTypeInfo.groupable
 
-		const chartItems: ChartConfig[] = selectedItems.map((item) => ({
-			id: generateId('chart', `${item.slug}-${metric}`),
-			kind: 'chart' as const,
-			chain: template.type === 'chains' ? item.slug : '',
-			protocol: template.type === 'protocols' ? item.slug : undefined,
-			type: metric,
-			grouping: isGroupable ? template.grouping : undefined
-		}))
+		const chartItems: ChartConfig[] = []
+		for (const item of selectedItems) {
+			const chartBase = {
+				id: generateId('chart', `${item.slug}-${metric}`),
+				kind: 'chart' as const,
+				...(isGroupable && template.grouping !== undefined ? { grouping: template.grouping } : {})
+			}
+			const chart =
+				template.type === 'chains'
+					? createChartConfig({ ...chartBase, subjectType: 'chain', chain: item.slug, type: metric })
+					: createChartConfig({ ...chartBase, subjectType: 'protocol', protocol: item.slug, type: metric })
+			if (chart) chartItems.push(chart)
+		}
+		if (chartItems.length === 0) return []
 
-		return {
+		const chart: MultiChartConfig = {
 			id: generateId('multi', `template-${metric}`),
-			kind: 'multi' as const,
+			kind: 'multi',
 			name: `${chartTypeInfo?.title || metric} Comparison`,
 			items: chartItems,
-			grouping: isGroupable ? template.grouping : undefined,
+			...(isGroupable && template.grouping !== undefined ? { grouping: template.grouping } : {}),
 			showStacked: template.displayMode === 'stacked',
 			showCumulative: false,
 			showPercentage: false,
-			colSpan: 1 as const
+			colSpan: 1
 		}
+		return [chart]
 	})
 }
 
@@ -376,7 +384,6 @@ export function generateTemplateCharts(
 	protocols: Protocol[],
 	chains: Chain[],
 	protocolMetadata: Map<string, ProtocolMetadata>,
-	chartTypes: typeof CHART_TYPES,
 	chainCategoryData?: ChainCategoryData,
 	dimensionProtocols?: DimensionProtocols
 ): DashboardItemConfig[] {
@@ -394,14 +401,15 @@ export function generateTemplateCharts(
 	}
 
 	const metricCards = generateTemplateMetrics(template, selectedItems)
-	const multiCharts = generateTemplateMultiCharts(template, selectedItems, chartTypes)
+	const multiCharts = generateTemplateMultiCharts(template, selectedItems)
 	const table = generateTemplateTable(template, selectedItems)
 
 	const totalEffectiveCols = metricCards.length * 1 + multiCharts.length * 2
 	const remainder = totalEffectiveCols % 4
 
 	if (remainder === 2 && multiCharts.length > 0) {
-		multiCharts[multiCharts.length - 1].colSpan = 2
+		const lastChart = multiCharts.at(-1)
+		if (lastChart) lastChart.colSpan = 2
 	}
 
 	return [...metricCards, ...multiCharts, table]

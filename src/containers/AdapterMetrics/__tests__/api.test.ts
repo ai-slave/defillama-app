@@ -18,7 +18,6 @@ import {
 	fetchAdapterChainChartData,
 	fetchAdapterChainMetrics,
 	fetchAdapterChainProtocolTotals,
-	fetchAdapterMetrics,
 	fetchCexVolume
 } from '../api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
@@ -67,28 +66,6 @@ describe('dimension adapter api telemetry', () => {
 				}
 			}
 		})
-	})
-
-	it('fetches aggregate liquidations metrics by data type', async () => {
-		fetchJsonMock.mockResolvedValue({ protocols: [], allChains: [] })
-
-		await fetchAdapterMetrics({
-			adapterType: ADAPTER_TYPES.LIQUIDATIONS,
-			dataType: ADAPTER_DATA_TYPES.DAILY_COLLATERAL_LIQUIDATED
-		})
-
-		expect(fetchJsonMock).toHaveBeenCalledWith(
-			expect.stringContaining('/metrics/liquidations?dataType=dailyCollateralLiquidated'),
-			{
-				timeout: 30_000,
-				telemetry: {
-					attributes: {
-						adapter_type: 'liquidations',
-						data_type: 'dailyCollateralLiquidated'
-					}
-				}
-			}
-		)
 	})
 
 	it('returns only the protocol totals needed by chain tables', async () => {

@@ -190,6 +190,7 @@ export function MetricSentenceBuilder({
 
 		subjectCombobox.setValue('')
 		subjectCombobox.setOpen(false)
+		return undefined
 	}, [activeToken, subjectCombobox])
 
 	const closePopover = () => {
@@ -207,7 +208,7 @@ export function MetricSentenceBuilder({
 		[chains]
 	)
 
-	const { protocolOptions, protocolFamilySet: _protocolFamilySet } = useMemo(() => {
+	const protocolOptions = useMemo(() => {
 		const childrenByParentId = new Map<string, Protocol[]>()
 		const parentsOrSolo: Protocol[] = []
 
@@ -224,29 +225,42 @@ export function MetricSentenceBuilder({
 		parentsOrSolo.sort((a, b) => (b.tvl || 0) - (a.tvl || 0))
 
 		const options: Array<{ value: string; label: string; logo?: string; isChild?: boolean }> = []
-		const familySet = new Set<string>()
+		const includedSlugs = new Set<string>()
 
 		for (const parent of parentsOrSolo) {
 			if (!parent.slug) continue
 			const childProtocols = (childrenByParentId.get(parent.id) || []).sort((a, b) => (b.tvl || 0) - (a.tvl || 0))
-			if (childProtocols.length > 0) {
-				familySet.add(parent.slug)
-			}
-			options.push({ value: parent.slug, label: parent.name, logo: parent.logo })
+			options.push({
+				value: parent.slug,
+				label: parent.name,
+				...(parent.logo === undefined ? {} : { logo: parent.logo })
+			})
+			includedSlugs.add(parent.slug)
 			for (const child of childProtocols) {
 				if (!child.slug) continue
-				options.push({ value: child.slug, label: child.name, logo: child.logo, isChild: true })
+				options.push({
+					value: child.slug,
+					label: child.name,
+					...(child.logo === undefined ? {} : { logo: child.logo }),
+					isChild: true
+				})
+				includedSlugs.add(child.slug)
 			}
 		}
 
 		for (const protocol of protocols) {
 			if (!protocol.slug || !protocol.parentProtocol) continue
-			const alreadyIncluded = options.some((option) => option.value === protocol.slug)
-			if (alreadyIncluded) continue
-			options.push({ value: protocol.slug, label: protocol.name, logo: protocol.logo, isChild: true })
+			if (includedSlugs.has(protocol.slug)) continue
+			options.push({
+				value: protocol.slug,
+				label: protocol.name,
+				...(protocol.logo === undefined ? {} : { logo: protocol.logo }),
+				isChild: true
+			})
+			includedSlugs.add(protocol.slug)
 		}
 
-		return { protocolOptions: options, protocolFamilySet: familySet }
+		return options
 	}, [protocols])
 
 	const globalAvailableMetricTypes = useMemo(() => {
@@ -271,7 +285,7 @@ export function MetricSentenceBuilder({
 		for (const chain of chains) {
 			const geckoId = chain.gecko_id
 			const types = availableChainChartTypes(chain.name, { hasGeckoId: !!geckoId })
-			if (types.includes(metricType)) s.add(chain.name)
+			if (types.some((type) => type === metricType)) s.add(chain.name)
 		}
 		return s
 	}, [metricType, chains, availableChainChartTypes])
@@ -293,7 +307,7 @@ export function MetricSentenceBuilder({
 			if (!protocol.slug) continue
 			const geckoId = protocol.geckoId
 			const types = availableProtocolChartTypes(protocol.slug, { hasGeckoId: !!geckoId })
-			if (types.includes(metricType)) s.add(protocol.slug)
+			if (types.some((type) => type === metricType)) s.add(protocol.slug)
 		}
 		return s
 	}, [metricType, protocols, availableProtocolChartTypes])

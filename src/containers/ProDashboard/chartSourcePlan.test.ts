@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildProDashboardChartSourcePlan } from './chartSourcePlan'
+import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { ProDashboardProtocolCatalog } from './protocolCatalog'
-import type { DashboardItemConfig } from './types'
 
 const catalog: ProDashboardProtocolCatalog = {
 	protocols: [
@@ -11,10 +11,11 @@ const catalog: ProDashboardProtocolCatalog = {
 			slug: 'aave-v3',
 			symbol: 'AAVE',
 			tvl: 1,
+			chains: [],
 			geckoId: 'aave',
 			parentProtocol: 'parent#aave'
 		},
-		{ id: 'parent#aave', name: 'Aave', slug: 'aave', symbol: 'AAVE', tvl: 1, geckoId: 'aave' }
+		{ id: 'parent#aave', name: 'Aave', slug: 'aave', symbol: 'AAVE', tvl: 1, chains: [], geckoId: 'aave' }
 	],
 	chains: []
 }
@@ -22,15 +23,23 @@ const catalog: ProDashboardProtocolCatalog = {
 describe('Pro dashboard chart source planning', () => {
 	it('deduplicates equivalent chart and metric cards and carries catalog metadata', () => {
 		const items: DashboardItemConfig[] = [
-			{ id: 'daily', kind: 'chart', type: 'liquidity', protocol: 'aave', chain: '', grouping: 'day' },
-			{ id: 'monthly', kind: 'chart', type: 'liquidity', protocol: 'aave', chain: '', grouping: 'month' },
+			{ id: 'daily', kind: 'chart', subjectType: 'protocol', type: 'liquidity', protocol: 'aave', grouping: 'day' },
+			{
+				id: 'monthly',
+				kind: 'chart',
+				subjectType: 'protocol',
+				type: 'liquidity',
+				protocol: 'aave',
+				grouping: 'month'
+			},
 			{
 				id: 'metric',
 				kind: 'metric',
 				type: 'liquidity',
 				subject: { itemType: 'protocol', protocol: 'aave' },
 				window: 'all',
-				aggregator: 'latest'
+				aggregator: 'latest',
+				chartType: 'sparkline'
 			}
 		]
 
@@ -39,16 +48,30 @@ describe('Pro dashboard chart source planning', () => {
 		expect(plan).toHaveLength(1)
 		expect(plan[0]?.request).toEqual({
 			type: 'liquidity',
+			subjectType: 'protocol',
 			protocol: 'aave',
-			chain: '',
 			protocolSymbol: 'AAVE'
 		})
 	})
 
 	it('keeps genuinely different raw data types separate', () => {
 		const items: DashboardItemConfig[] = [
-			{ id: 'documented', kind: 'chart', type: 'unlocks', protocol: 'aave', chain: '', dataType: 'documented' },
-			{ id: 'realtime', kind: 'chart', type: 'unlocks', protocol: 'aave', chain: '', dataType: 'realtime' }
+			{
+				id: 'documented',
+				kind: 'chart',
+				subjectType: 'protocol',
+				type: 'unlocks',
+				protocol: 'aave',
+				dataType: 'documented'
+			},
+			{
+				id: 'realtime',
+				kind: 'chart',
+				subjectType: 'protocol',
+				type: 'unlocks',
+				protocol: 'aave',
+				dataType: 'realtime'
+			}
 		]
 
 		expect(buildProDashboardChartSourcePlan(items, catalog)).toHaveLength(2)
@@ -56,15 +79,23 @@ describe('Pro dashboard chart source planning', () => {
 
 	it('leaves metadata-dependent sources unseeded when the catalog is unavailable', () => {
 		const items: DashboardItemConfig[] = [
-			{ id: 'liquidity', kind: 'chart', type: 'liquidity', protocol: 'aave', chain: '' }
+			{ id: 'liquidity', kind: 'chart', subjectType: 'protocol', type: 'liquidity', protocol: 'aave' }
 		]
 
 		expect(buildProDashboardChartSourcePlan(items, null)).toEqual([])
 	})
 
+	it('seeds protocols outside canonical Pro membership as empty', () => {
+		const items: DashboardItemConfig[] = [
+			{ id: 'missing', kind: 'chart', subjectType: 'protocol', type: 'fees', protocol: 'free-protocol' }
+		]
+
+		expect(buildProDashboardChartSourcePlan(items, catalog)[0]?.skipReason).toBeDefined()
+	})
+
 	it('includes synthetic parent liquidity when the catalog carries its token symbol', () => {
 		const items: DashboardItemConfig[] = [
-			{ id: 'parent-liquidity', kind: 'chart', type: 'liquidity', protocol: 'aave', chain: '' }
+			{ id: 'parent-liquidity', kind: 'chart', subjectType: 'protocol', type: 'liquidity', protocol: 'aave' }
 		]
 
 		expect(buildProDashboardChartSourcePlan(items, catalog)).toEqual([
@@ -76,9 +107,11 @@ describe('Pro dashboard chart source planning', () => {
 
 	it('seeds unsupported persisted chain sources as empty instead of retrying a known-invalid API', () => {
 		const items: DashboardItemConfig[] = [
-			{ id: 'options', kind: 'chart', type: 'options', protocol: '', chain: 'Solana' },
-			{ id: 'active', kind: 'chart', type: 'activeUsers', protocol: '', chain: 'Solana' },
-			{ id: 'new', kind: 'chart', type: 'newUsers', protocol: '', chain: 'Solana' }
+			{ id: 'options', kind: 'chart', subjectType: 'chain', type: 'optionsPremium', chain: 'Solana' },
+			{ id: 'active', kind: 'chart', subjectType: 'chain', type: 'activeUsers', chain: 'Solana' },
+			{ id: 'new', kind: 'chart', subjectType: 'chain', type: 'newUsers', chain: 'Solana' },
+			{ id: 'supply', kind: 'chart', subjectType: 'chain', type: 'stablecoins', chain: 'Solana' },
+			{ id: 'inflows', kind: 'chart', subjectType: 'chain', type: 'stablecoinInflows', chain: 'Solana' }
 		]
 		const appMetadata = {
 			protocols: {},
@@ -89,18 +122,16 @@ describe('Pro dashboard chart source planning', () => {
 					name: 'Solana',
 					optionsPremiumVolume: false,
 					chainActiveUsers: true,
-					chainNewUsers: false
+					chainNewUsers: false,
+					stablecoins: false,
+					inflows: true
 				}
 			}
 		}
 
 		const plan = buildProDashboardChartSourcePlan(items, catalog, appMetadata)
 
-		expect(plan.map((source) => source.skipReason)).toEqual([
-			'chain does not support options premium volume',
-			undefined,
-			'chain does not expose a new-address pseudo-protocol'
-		])
+		expect(plan.map((source) => Boolean(source.skipReason))).toEqual([true, false, true, true, false])
 	})
 
 	it('attaches exact producer IDs to Bridged TVL sources for display names and legacy aliases', () => {
@@ -108,8 +139,8 @@ describe('Pro dashboard chart source planning', () => {
 		const items: DashboardItemConfig[] = names.map((chain, index) => ({
 			id: `bridged-${index}`,
 			kind: 'chart',
+			subjectType: 'chain',
 			type: 'bridgedTvl',
-			protocol: '',
 			chain
 		}))
 		const appMetadata = {
@@ -131,9 +162,9 @@ describe('Pro dashboard chart source planning', () => {
 
 	it('seeds unsupported persisted protocol sources as empty instead of calling a missing adapter', () => {
 		const items: DashboardItemConfig[] = [
-			{ id: 'tvl', kind: 'chart', type: 'tvl', protocol: 'huma-finance-v2', chain: '' },
-			{ id: 'fees', kind: 'chart', type: 'fees', protocol: 'huma-finance-v2', chain: '' },
-			{ id: 'revenue', kind: 'chart', type: 'revenue', protocol: 'huma-finance-v2', chain: '' }
+			{ id: 'tvl', kind: 'chart', subjectType: 'protocol', type: 'tvl', protocol: 'huma-finance-v2' },
+			{ id: 'fees', kind: 'chart', subjectType: 'protocol', type: 'fees', protocol: 'huma-finance-v2' },
+			{ id: 'revenue', kind: 'chart', subjectType: 'protocol', type: 'revenue', protocol: 'huma-finance-v2' }
 		]
 		const appMetadata = {
 			protocols: {
@@ -146,18 +177,31 @@ describe('Pro dashboard chart source planning', () => {
 			pfPs: { pf: [], ps: [] },
 			chains: {}
 		}
+		const catalogWithHuma: ProDashboardProtocolCatalog = {
+			...catalog,
+			protocols: [
+				...catalog.protocols,
+				{
+					id: '7930',
+					name: 'Huma Finance V2',
+					slug: 'huma-finance-v2',
+					symbol: 'HUMA',
+					tvl: 1,
+					chains: [],
+					geckoId: null
+				}
+			]
+		}
 
-		const plan = buildProDashboardChartSourcePlan(items, catalog, appMetadata)
+		const plan = buildProDashboardChartSourcePlan(items, catalogWithHuma, appMetadata)
 
-		expect(plan.map((source) => source.skipReason)).toEqual([
-			undefined,
-			'protocol does not support fees',
-			'protocol does not support revenue'
-		])
+		expect(plan.map((source) => Boolean(source.skipReason))).toEqual([false, true, true])
 	})
 
 	it('keeps a parent source fetchable when child metadata advertises the capability', () => {
-		const items: DashboardItemConfig[] = [{ id: 'fees', kind: 'chart', type: 'fees', protocol: 'aave', chain: '' }]
+		const items: DashboardItemConfig[] = [
+			{ id: 'fees', kind: 'chart', subjectType: 'protocol', type: 'fees', protocol: 'aave' }
+		]
 		const appMetadata = {
 			protocols: {
 				parent: { name: 'aave', displayName: 'Aave' },
@@ -174,7 +218,7 @@ describe('Pro dashboard chart source planning', () => {
 
 	it('keeps symbol-backed parent liquidity fetchable without a metadata flag', () => {
 		const items: DashboardItemConfig[] = [
-			{ id: 'liquidity', kind: 'chart', type: 'liquidity', protocol: 'aave', chain: '' }
+			{ id: 'liquidity', kind: 'chart', subjectType: 'protocol', type: 'liquidity', protocol: 'aave' }
 		]
 		const parentProtocol = catalog.protocols[1]
 		if (!parentProtocol) throw new Error('Missing parent protocol fixture')

@@ -1,53 +1,82 @@
 import type { Column, Row, Table } from '@tanstack/react-table'
 import { formatFixedNumber } from '~/utils/numberFormat'
-import type { UnifiedRowHeaderType } from '../../../types'
-import { getAggregationContextFromRow, getRowDisplayProps, getRowHeaderFromGroupingColumn } from '../core/groupingUtils'
-import type { NormalizedRow } from '../types'
+import { isProtocolTableMetricKey } from '../../../unifiedTable/config/columnDictionary'
+import { getFilteredShareMetricKey } from '../../../unifiedTable/config/filteredShareColumns'
+import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
+import type { ProtocolTableRow } from '../types'
 import { isCustomColumnId } from './customColumns'
 
-export function getRowsAtGroupLevel(table: Table<NormalizedRow>, level: UnifiedRowHeaderType): Row<NormalizedRow>[] {
-	const result: Row<NormalizedRow>[] = []
+export function getRowsAtGroupLevel(
+	table: Table<ProtocolTableRow>,
+	level: UnifiedRowHeaderType
+): Row<ProtocolTableRow>[] {
+	const result: Row<ProtocolTableRow>[] = []
 
-	const collectRows = (rows: Row<NormalizedRow>[]) => {
+	const collectRows = (rows: Row<ProtocolTableRow>[]) => {
 		for (const row of rows) {
-			if (row.getIsGrouped()) {
-				const rowHeader = getRowHeaderFromGroupingColumn(row.groupingColumnId)
-				if (rowHeader === level) {
+			if (row.original.nodeType === 'group') {
+				if (row.original.header === level) {
 					result.push(row)
 				} else if (row.subRows?.length) {
 					collectRows(row.subRows)
 				}
+			} else if (level === 'protocol') {
+				result.push(row)
 			}
 		}
 	}
 
-	const rowModel = table.getRowModel()
+	const rowModel = table.getPreExpandedRowModel()
 	collectRows(rowModel.rows)
 
 	return result
 }
 
-function getGroupedRowCsvValue(row: Row<NormalizedRow>, columnId: string, percentColumns: Set<string>): string {
-	const display = getRowDisplayProps(row)
-
+export function getProtocolTableCsvValue(
+	row: ProtocolTableRow,
+	columnId: string,
+	percentColumns: Set<string>,
+	customColumnsById: ReadonlyMap<string, CustomColumnDefinition>
+): string {
 	if (columnId === 'name') {
-		return display.label
+		return row.displayName
+	}
+
+	if (columnId === 'chain') {
+		if (row.nodeType === 'leaf') return row.chain ?? ''
+		return row.header === 'chain' ? row.displayName : row.chains.join(';')
+	}
+
+	if (columnId === 'category') {
+		if (row.nodeType === 'group' && row.header === 'category') return row.displayName
+		return row.category ?? ''
+	}
+
+	if (columnId === 'chains') {
+		return row.chains.join(';')
+	}
+
+	if (columnId === 'oracles') {
+		return row.oracles.join(';')
 	}
 
 	if (isCustomColumnId(columnId)) {
-		const value = row.getValue(columnId)
+		const customColumn = customColumnsById.get(columnId)
+		if (!customColumn) return ''
+		const value = row.customValues[customColumn.id] ?? null
 		if (value == null) {
 			return ''
 		}
-		return typeof value === 'number' ? String(value) : ''
+		if (typeof value !== 'number') return ''
+		return customColumn.format === 'percent' ? formatFixedNumber(value, 2) : String(value)
 	}
 
-	const aggregation = getAggregationContextFromRow(row)
-	if (!aggregation) {
-		return ''
-	}
-
-	const value = aggregation.metrics[columnId as keyof typeof aggregation.metrics]
+	const shareMetric = getFilteredShareMetricKey(columnId)
+	const value = shareMetric
+		? row.filteredShares[shareMetric]
+		: isProtocolTableMetricKey(columnId)
+			? row.metrics[columnId]
+			: null
 
 	if (value == null) {
 		return ''
@@ -67,13 +96,21 @@ const GROUP_LEVEL_HEADERS: Record<UnifiedRowHeaderType, string> = {
 	protocol: 'Protocol'
 }
 
-export function buildGroupedCsvData(
-	rows: Row<NormalizedRow>[],
-	columns: Column<NormalizedRow>[],
-	percentColumns: Set<string>,
+export function buildGroupedCsvData({
+	rows,
+	columns,
+	percentColumns,
+	level,
+	customColumns
+}: {
+	rows: Row<ProtocolTableRow>[]
+	columns: Column<ProtocolTableRow>[]
+	percentColumns: Set<string>
 	level: UnifiedRowHeaderType
-): { headers: string[]; data: string[][] } {
+	customColumns: readonly CustomColumnDefinition[]
+}): { headers: string[]; data: string[][] } {
 	const groupHeader = GROUP_LEVEL_HEADERS[level]
+	const customColumnsById = new Map(customColumns.map((column) => [column.id, column]))
 	const columnHeaders = columns.map((column) => {
 		const header = column.columnDef.header
 		return typeof header === 'string' ? header : (column.id ?? '')
@@ -82,7 +119,9 @@ export function buildGroupedCsvData(
 	const hasGroupColumn = columnHeaders.some((h) => h.toLowerCase() === groupHeader.toLowerCase())
 
 	if (hasGroupColumn) {
-		const data = rows.map((row) => columns.map((column) => getGroupedRowCsvValue(row, column.id, percentColumns)))
+		const data = rows.map((row) =>
+			columns.map((column) => getProtocolTableCsvValue(row.original, column.id, percentColumns, customColumnsById))
+		)
 		return { headers: columnHeaders, data }
 	}
 
@@ -91,9 +130,14 @@ export function buildGroupedCsvData(
 	const headers = [...columnHeaders.slice(0, insertIndex), groupHeader, ...columnHeaders.slice(insertIndex)]
 
 	const data = rows.map((row) => {
-		const display = getRowDisplayProps(row)
-		const rowData = columns.map((column) => getGroupedRowCsvValue(row, column.id, percentColumns))
-		return [...rowData.slice(0, insertIndex), display.label, ...rowData.slice(insertIndex)]
+		const display = row.original
+		const rowData: string[] = []
+		for (let index = 0; index <= columns.length; index++) {
+			if (index === insertIndex) rowData.push(display.displayName)
+			const column = columns[index]
+			if (column) rowData.push(getProtocolTableCsvValue(display, column.id, percentColumns, customColumnsById))
+		}
+		return rowData
 	})
 
 	return { headers, data }

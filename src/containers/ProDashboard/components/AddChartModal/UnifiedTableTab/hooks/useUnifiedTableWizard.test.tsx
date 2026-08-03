@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import type { UnifiedTableConfig } from '~/containers/ProDashboard/types'
+import type { UnifiedTableConfig } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { useUnifiedTableWizard } from './useUnifiedTableWizard'
 
 let captured: ReturnType<typeof useUnifiedTableWizard> | null = null
@@ -16,6 +16,8 @@ describe('useUnifiedTableWizard normalization', () => {
 		const config: UnifiedTableConfig = {
 			id: 'persisted',
 			kind: 'unified-table',
+			configVersion: 3,
+			strategy: 'protocols',
 			rowHeaders: ['protocol', 'chain', 'chain', 'parent-protocol'],
 			defaultSorting: sorting,
 			params: { chains: ['All'] }

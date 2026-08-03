@@ -1,8 +1,9 @@
 import { Icon } from '~/ui/Icon'
+import type { ChartRuntimeView } from '../../chartRuntime'
 import type { CustomTimePeriod, TimePeriod } from '../../dashboardTypes'
-import type { ChartConfig, RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
+import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
 import { ChartBuilderTab } from './ChartBuilderTab'
-import type { ChartBuilderConfig, ChartModeType, ChartTabType } from './types'
+import type { ChartBuilderConfig, ChartBuilderUpdate, ChartModeType, ChartTabType } from './types'
 import { UnifiedChartTab } from './UnifiedChartTab'
 
 interface ChartTabProps {
@@ -10,17 +11,29 @@ interface ChartTabProps {
 	onChartModeChange: (mode: ChartModeType) => void
 	selectedChartTab: ChartTabType
 	selectedChartTypes: string[]
-	selectedYieldPool?: { configID: string; name: string; project: string; chain: string } | null
+	selectedYieldPool?: {
+		configID: string
+		name: string
+		project: string
+		chain: string
+	} | null
 	chainOptions: Array<{ value: string; label: string }>
 	protocolOptions: Array<{ value: string; label: string; logo?: string }>
 	protocolsLoading: boolean
 	unifiedChartName: string
 	chartCreationMode: 'separate' | 'combined'
-	composerItems: ChartConfig[]
+	composerItems: ChartRuntimeView[]
 	onChartTabChange: (tab: ChartTabType) => void
 	onChartTypesChange: (types: string[]) => void
 	onBulkChartTypeChange: (nextType: string) => void
-	onSelectedYieldPoolChange?: (pool: { configID: string; name: string; project: string; chain: string } | null) => void
+	onSelectedYieldPoolChange?: (
+		pool: {
+			configID: string
+			name: string
+			project: string
+			chain: string
+		} | null
+	) => void
 	selectedYieldChains?: string[]
 	selectedYieldProjects?: string[]
 	selectedYieldCategories?: string[]
@@ -94,7 +107,7 @@ interface ChartTabProps {
 	onRemoveFromComposer: (id: string) => void
 	chartBuilder: ChartBuilderConfig
 	chartBuilderName: string
-	onChartBuilderChange: (updates: Partial<ChartBuilderConfig>) => void
+	onChartBuilderChange: (updates: ChartBuilderUpdate) => void
 	onChartBuilderNameChange: (name: string) => void
 	timePeriod: TimePeriod
 	customTimePeriod?: CustomTimePeriod | null
@@ -156,95 +169,10 @@ export function ChartTab(props: ChartTabProps) {
 					onChartBuilderChange={props.onChartBuilderChange}
 					onChartBuilderNameChange={props.onChartBuilderNameChange}
 					timePeriod={props.timePeriod}
-					customTimePeriod={props.customTimePeriod}
+					{...(props.customTimePeriod === undefined ? {} : { customTimePeriod: props.customTimePeriod })}
 				/>
 			) : (
-				<UnifiedChartTab
-					selectedChartTab={props.selectedChartTab}
-					selectedChartTypes={props.selectedChartTypes}
-					selectedYieldPool={props.selectedYieldPool}
-					chainOptions={props.chainOptions}
-					protocolOptions={props.protocolOptions}
-					protocolsLoading={props.protocolsLoading}
-					unifiedChartName={props.unifiedChartName}
-					chartCreationMode={props.chartCreationMode}
-					composerItems={props.composerItems}
-					onChartTabChange={props.onChartTabChange}
-					onChartTypesChange={props.onChartTypesChange}
-					onBulkChartTypeChange={props.onBulkChartTypeChange}
-					onSelectedYieldPoolChange={props.onSelectedYieldPoolChange}
-					selectedYieldChains={props.selectedYieldChains}
-					selectedYieldProjects={props.selectedYieldProjects}
-					selectedYieldCategories={props.selectedYieldCategories}
-					selectedYieldTokens={props.selectedYieldTokens}
-					minTvl={props.minTvl}
-					maxTvl={props.maxTvl}
-					onSelectedYieldChainsChange={props.onSelectedYieldChainsChange}
-					onSelectedYieldProjectsChange={props.onSelectedYieldProjectsChange}
-					onSelectedYieldCategoriesChange={props.onSelectedYieldCategoriesChange}
-					onSelectedYieldTokensChange={props.onSelectedYieldTokensChange}
-					onMinTvlChange={props.onMinTvlChange}
-					onMaxTvlChange={props.onMaxTvlChange}
-					selectedYieldChartType={props.selectedYieldChartType}
-					onSelectedYieldChartTypeChange={props.onSelectedYieldChartTypeChange}
-					selectedStablecoinChain={props.selectedStablecoinChain}
-					selectedStablecoinChartType={props.selectedStablecoinChartType}
-					stablecoinMode={props.stablecoinMode}
-					selectedStablecoinAsset={props.selectedStablecoinAsset}
-					selectedStablecoinAssetId={props.selectedStablecoinAssetId}
-					selectedStablecoinAssetChartType={props.selectedStablecoinAssetChartType}
-					onSelectedStablecoinChainChange={props.onSelectedStablecoinChainChange}
-					onSelectedStablecoinChartTypeChange={props.onSelectedStablecoinChartTypeChange}
-					onStablecoinModeChange={props.onStablecoinModeChange}
-					onSelectedStablecoinAssetChange={props.onSelectedStablecoinAssetChange}
-					onSelectedStablecoinAssetIdChange={props.onSelectedStablecoinAssetIdChange}
-					onSelectedStablecoinAssetChartTypeChange={props.onSelectedStablecoinAssetChartTypeChange}
-					selectedAdvancedTvlProtocol={props.selectedAdvancedTvlProtocol}
-					selectedAdvancedTvlProtocolName={props.selectedAdvancedTvlProtocolName}
-					selectedAdvancedTvlChartType={props.selectedAdvancedTvlChartType}
-					onSelectedAdvancedTvlProtocolChange={props.onSelectedAdvancedTvlProtocolChange}
-					onSelectedAdvancedTvlProtocolNameChange={props.onSelectedAdvancedTvlProtocolNameChange}
-					onSelectedAdvancedTvlChartTypeChange={props.onSelectedAdvancedTvlChartTypeChange}
-					selectedBorrowedProtocol={props.selectedBorrowedProtocol}
-					selectedBorrowedProtocolName={props.selectedBorrowedProtocolName}
-					selectedBorrowedChartType={props.selectedBorrowedChartType}
-					onSelectedBorrowedProtocolChange={props.onSelectedBorrowedProtocolChange}
-					onSelectedBorrowedProtocolNameChange={props.onSelectedBorrowedProtocolNameChange}
-					onSelectedBorrowedChartTypeChange={props.onSelectedBorrowedChartTypeChange}
-					selectedIncomeStatementProtocol={props.selectedIncomeStatementProtocol}
-					selectedIncomeStatementProtocolName={props.selectedIncomeStatementProtocolName}
-					onSelectedIncomeStatementProtocolChange={props.onSelectedIncomeStatementProtocolChange}
-					onSelectedIncomeStatementProtocolNameChange={props.onSelectedIncomeStatementProtocolNameChange}
-					selectedUnlocksProtocol={props.selectedUnlocksProtocol}
-					selectedUnlocksProtocolName={props.selectedUnlocksProtocolName}
-					selectedUnlocksChartType={props.selectedUnlocksChartType}
-					onSelectedUnlocksProtocolChange={props.onSelectedUnlocksProtocolChange}
-					onSelectedUnlocksProtocolNameChange={props.onSelectedUnlocksProtocolNameChange}
-					onSelectedUnlocksChartTypeChange={props.onSelectedUnlocksChartTypeChange}
-					rwaMode={props.rwaMode}
-					selectedRwaChain={props.selectedRwaChain}
-					selectedRwaMetric={props.selectedRwaMetric}
-					selectedRwaChartView={props.selectedRwaChartView}
-					selectedRwaBreakdown={props.selectedRwaBreakdown}
-					selectedRwaTreemapNestedBy={props.selectedRwaTreemapNestedBy}
-					selectedRwaAssetId={props.selectedRwaAssetId}
-					selectedRwaAssetName={props.selectedRwaAssetName}
-					selectedRwaAssetMetrics={props.selectedRwaAssetMetrics}
-					onRwaModeChange={props.onRwaModeChange}
-					onSelectedRwaChainChange={props.onSelectedRwaChainChange}
-					onSelectedRwaMetricChange={props.onSelectedRwaMetricChange}
-					onSelectedRwaChartViewChange={props.onSelectedRwaChartViewChange}
-					onSelectedRwaBreakdownChange={props.onSelectedRwaBreakdownChange}
-					onSelectedRwaTreemapNestedByChange={props.onSelectedRwaTreemapNestedByChange}
-					onSelectedRwaAssetIdChange={props.onSelectedRwaAssetIdChange}
-					onSelectedRwaAssetNameChange={props.onSelectedRwaAssetNameChange}
-					onSelectedRwaAssetMetricsChange={props.onSelectedRwaAssetMetricsChange}
-					onUnifiedChartNameChange={props.onUnifiedChartNameChange}
-					onChartCreationModeChange={props.onChartCreationModeChange}
-					onComposerItemColorChange={props.onComposerItemColorChange}
-					onAddToComposer={props.onAddToComposer}
-					onRemoveFromComposer={props.onRemoveFromComposer}
-				/>
+				<UnifiedChartTab {...props} />
 			)}
 		</div>
 	)

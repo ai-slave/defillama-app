@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
@@ -13,11 +13,11 @@ import { download } from '~/utils/download'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksScheduleConfig } from '../types'
+import { CSVExportButton } from './CSVExportButton'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
-import { ProTableCSVButton } from './ProTable/CsvButton'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const EMPTY_STACKS: string[] = []
 const EMPTY_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp'] }
@@ -79,8 +79,10 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 		const selectedDimensionIndexes = activeCategories.map((name) => dataset.dimensions.indexOf(name))
 		const headers = ['Date', ...activeCategories]
 		const rows = dataset.source.map((item) => {
+			const timestamp = item[0]
+			if (typeof timestamp !== 'number') throw new Error('Unlock schedule rows require a numeric timestamp')
 			return [
-				formatIsoDate(item[0] as number, { input: 'milliseconds' }) ?? '',
+				formatIsoDate(timestamp, { input: 'milliseconds' }) ?? '',
 				...selectedDimensionIndexes.map((index) => item[index] ?? '')
 			]
 		})
@@ -89,7 +91,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 		download(filename, csvContent)
 	}, [hasChartData, activeCategories, dataset, protocolName, protocol, resolvedDataType])
 
-	if (isLoading || !streamDone) {
+	if (isLoading || (!streamDone && data === undefined)) {
 		return (
 			<div className="flex min-h-[422px] items-center justify-center md:min-h-[438px]">
 				<LoadingSpinner />
@@ -118,7 +120,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 							/>
 						) : null}
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={handleCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
@@ -131,7 +133,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 					<Suspense fallback={<div className="min-h-[360px]" />}>
 						<MultiSeriesChart
 							dataset={dataset}
-							charts={apiCharts}
+							{...(apiCharts === undefined ? {} : { charts: apiCharts })}
 							selectedCharts={selectedChartsSet}
 							hallmarks={todayHallmarks}
 							hideDataZoom

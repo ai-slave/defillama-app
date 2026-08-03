@@ -1,11 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useMemo } from 'react'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
-import {
-	fetchRWABreakdownViaProxy,
-	fetchRWAAssetChartViaProxy,
-	fetchRWAAssetsListViaProxy
-} from '~/containers/ProDashboard/services/fetchViaProxy'
+import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import {
 	fetchRWAActiveTVLs,
 	fetchRWAAssetChartData,
@@ -15,28 +11,21 @@ import {
 	fetchRWAAssetGroupBreakdownChartData,
 	fetchRWAChartMetricDataByAsset
 } from '~/containers/RWA/api'
-import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
+import type { IFetchedRWAProject, RWAOverviewBreakdownRequest } from '~/containers/RWA/api.types'
 import { toRwaPositionalChartDataset } from '~/containers/RWA/breakdownDataset'
 import { tokenIconUrl } from '~/utils/icons'
-import { getProRwaBreakdown, getProRwaBreakdownQueryKey } from '../../../rwaBreakdown'
+import { getProRwaBreakdownQueryKey } from '../../../rwaBreakdown'
+import { sumRwaMetricBreakdown } from '../../../rwaMetrics'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric } from '../../../types'
 
 const STALE_TIME = 60 * 60 * 1000
 
-function getBreakdownFetcher(breakdown: RWAOverviewChartBreakdown) {
-	switch (breakdown) {
-		case 'chain':
-			return fetchRWAChainBreakdownChartData
-		case 'category':
-			return fetchRWACategoryBreakdownChartData
-		case 'platform':
-			return fetchRWAPlatformBreakdownChartData
-		case 'assetGroup':
-			return fetchRWAAssetGroupBreakdownChartData
-		default:
-			return fetchRWAChainBreakdownChartData
-	}
-}
+const RWA_BREAKDOWN_FETCHERS = {
+	chain: fetchRWAChainBreakdownChartData,
+	category: fetchRWACategoryBreakdownChartData,
+	platform: fetchRWAPlatformBreakdownChartData,
+	assetGroup: fetchRWAAssetGroupBreakdownChartData
+} satisfies Record<RWAOverviewBreakdownRequest['breakdown'], typeof fetchRWAChainBreakdownChartData>
 
 export function useRWABreakdownChartData(
 	breakdown: RWAOverviewChartBreakdown,
@@ -45,19 +34,18 @@ export function useRWABreakdownChartData(
 ) {
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
-	const actualBreakdown = getProRwaBreakdown(breakdown)
-	const isChainSpecific = chain && chain !== 'All'
+	const selectedChain = chain && chain !== 'All' ? chain : null
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: getProRwaBreakdownQueryKey(actualBreakdown, metric, chain),
+		queryKey: getProRwaBreakdownQueryKey(breakdown, metric, chain),
 		enabled: streamDone,
 		queryFn: async () => {
-			if (isChainSpecific) {
+			if (selectedChain) {
 				if (authToken) {
-					return fetchRWABreakdownViaProxy(actualBreakdown, metric, authToken, chain)
+					return fetchProDashboardProxy('rwaBreakdown', { breakdown, metric, chain: selectedChain }, authToken)
 				}
 				const rows = await fetchRWAChartMetricDataByAsset({
-					target: { kind: 'chain', slug: chain },
+					target: { kind: 'chain', slug: selectedChain },
 					metric,
 					includeStablecoins: false,
 					includeGovernance: false
@@ -66,9 +54,9 @@ export function useRWABreakdownChartData(
 			}
 
 			if (authToken) {
-				return fetchRWABreakdownViaProxy(actualBreakdown, metric, authToken)
+				return fetchProDashboardProxy('rwaBreakdown', { breakdown, metric }, authToken)
 			}
-			const fetcher = getBreakdownFetcher(actualBreakdown)
+			const fetcher = RWA_BREAKDOWN_FETCHERS[breakdown]
 			const rows = await fetcher({
 				key: metric,
 				includeStablecoin: false,
@@ -81,7 +69,7 @@ export function useRWABreakdownChartData(
 		retry: 1
 	})
 
-	return { chartDataset: data ?? null, isLoading, error }
+	return { chartDataset: data ?? null, isLoading: isLoading || (!streamDone && data === undefined), error }
 }
 
 export function useRWAChainsList() {
@@ -93,7 +81,7 @@ export function useRWAChainsList() {
 		enabled: streamDone,
 		queryFn: async () => {
 			if (authToken) {
-				return fetchRWABreakdownViaProxy('chain', 'activeMcap', authToken)
+				return fetchProDashboardProxy('rwaBreakdown', { breakdown: 'chain', metric: 'activeMcap' }, authToken)
 			}
 			const rows = await fetchRWAChainBreakdownChartData({
 				key: 'activeMcap',
@@ -109,17 +97,19 @@ export function useRWAChainsList() {
 
 	const chains = useMemo(() => {
 		if (!data || data.source.length === 0) return []
-		const lastRow = data.source[data.source.length - 1]
+		const lastRow = data.source.at(-1)
+		if (!lastRow) return []
 		const chains: Array<{ chain: string; tvl: number }> = []
-		for (let index = 1; index < data.dimensions.length; index++) {
-			const tvl = lastRow[index] as number | null | undefined
-			if (tvl != null && tvl > 0) chains.push({ chain: data.dimensions[index], tvl })
+		for (const [index, chain] of data.dimensions.entries()) {
+			if (index === 0) continue
+			const tvl = lastRow[index]
+			if (typeof tvl === 'number' && tvl > 0) chains.push({ chain, tvl })
 		}
 		chains.sort((a, b) => b.tvl - a.tvl)
 		return chains
 	}, [data])
 
-	return { chains, isLoading }
+	return { chains, isLoading: isLoading || (!streamDone && data === undefined) }
 }
 
 export function useRWAAssetChartData(assetId: string | null) {
@@ -130,17 +120,22 @@ export function useRWAAssetChartData(assetId: string | null) {
 		queryKey: ['pro-dashboard', 'rwa-asset-chart', assetId],
 		enabled: streamDone && !!assetId,
 		queryFn: async () => {
+			if (!assetId) throw new Error('Missing RWA asset ID')
 			if (authToken) {
-				return fetchRWAAssetChartViaProxy(assetId!, authToken)
+				return fetchProDashboardProxy('rwaAssetChart', { assetId }, authToken)
 			}
-			return fetchRWAAssetChartData(assetId!)
+			return fetchRWAAssetChartData(assetId)
 		},
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 1
 	})
 
-	return { chartDataset: data ?? null, isLoading, error }
+	return {
+		chartDataset: data ?? null,
+		isLoading: isLoading || (assetId !== null && !streamDone && data === undefined),
+		error
+	}
 }
 
 export type RWAAssetOption = {
@@ -148,14 +143,7 @@ export type RWAAssetOption = {
 	ticker: string
 	assetName: string | null
 	iconUrl: string | null
-	totalActiveMcap: number
-}
-
-function getTotalFromMap(map: Record<string, number> | null | undefined): number {
-	if (!map) return 0
-	let total = 0
-	for (const chain in map) total += map[chain]
-	return total
+	totalActiveMcap: number | null
 }
 
 function resolveIconUrl(asset: IFetchedRWAProject): string | null {
@@ -172,7 +160,7 @@ export function useRWAAssetsList() {
 		queryKey: ['pro-dashboard', 'rwa-assets-list'],
 		queryFn: async () => {
 			if (authToken) {
-				return fetchRWAAssetsListViaProxy(authToken)
+				return fetchProDashboardProxy('rwaAssetsList', {}, authToken)
 			}
 			return fetchRWAActiveTVLs()
 		},
@@ -191,10 +179,14 @@ export function useRWAAssetsList() {
 				ticker: asset.ticker,
 				assetName: asset.assetName ?? null,
 				iconUrl: resolveIconUrl(asset),
-				totalActiveMcap: getTotalFromMap(asset.activeMcap)
+				totalActiveMcap: sumRwaMetricBreakdown(asset.activeMcap)
 			})
 		}
-		assets.sort((a, b) => b.totalActiveMcap - a.totalActiveMcap)
+		assets.sort((a, b) => {
+			if (a.totalActiveMcap === null) return b.totalActiveMcap === null ? 0 : 1
+			if (b.totalActiveMcap === null) return -1
+			return b.totalActiveMcap - a.totalActiveMcap
+		})
 		return assets
 	}, [data])
 

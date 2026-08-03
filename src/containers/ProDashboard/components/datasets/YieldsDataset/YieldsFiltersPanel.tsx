@@ -1,21 +1,7 @@
 import * as React from 'react'
+import type { YieldsFilters } from '~/containers/ProDashboard/types'
 import { formatNumber } from '~/utils/numberFormat'
 import { AriakitVirtualizedMultiSelect } from '../../AriakitVirtualizedMultiSelect'
-
-export interface YieldsFilters {
-	apyMin?: number
-	apyMax?: number
-	tvlMin?: number
-	tvlMax?: number
-	baseApyMin?: number
-	baseApyMax?: number
-	chains?: string[]
-	protocols?: string[]
-	tokens?: string[]
-	hasRewards?: boolean
-	stablesOnly?: boolean
-	categories?: string[]
-}
 
 const EMPTY_CATEGORIES: string[] = []
 const EMPTY_PROTOCOLS: string[] = []

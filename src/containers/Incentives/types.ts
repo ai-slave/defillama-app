@@ -36,3 +36,7 @@ export interface DimensionEarningsOverview extends Omit<IAdapterChainOverview, '
 	total1y: number | null
 	protocols: DimensionEarningsProtocolWithEmissions[]
 }
+
+export type DimensionEarningsOverviewResult =
+	| { status: 'available'; overview: DimensionEarningsOverview }
+	| { status: 'unavailable' }

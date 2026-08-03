@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { Button } from '~/ui/Button'
 import { getNDistinctColors } from '~/utils'
@@ -38,7 +38,7 @@ interface ChartStyleEditorProps {
 	onCancel: () => void
 }
 
-const clone = (c: ChartConfiguration): ChartConfiguration => JSON.parse(JSON.stringify(c))
+const clone = (config: ChartConfiguration): ChartConfiguration => structuredClone(config)
 
 const LEGEND_TYPES: ChartConfiguration['type'][] = ['line', 'area', 'bar', 'combo']
 
@@ -49,29 +49,60 @@ const toDateInput = (unixSeconds: number): string => {
 const fromDateInput = (value: string): number => Math.floor(new Date(`${value}T00:00:00Z`).getTime() / 1000)
 
 function toPatch(c: ChartConfiguration, view: ChartStyleEditorView): ChartStylePatch {
-	return {
+	const yAxes: NonNullable<ChartStylePatch['yAxes']> = []
+	for (const axis of c.axes.yAxes) {
+		const patchAxis: NonNullable<ChartStylePatch['yAxes']>[number] = {
+			id: axis.id,
+			label: axis.label,
+			position: axis.position
+		}
+		if (axis.valueSymbol !== undefined) patchAxis.valueSymbol = axis.valueSymbol
+		if (axis.min !== undefined) patchAxis.min = axis.min
+		if (axis.max !== undefined) patchAxis.max = axis.max
+		if (axis.interval !== undefined) patchAxis.interval = axis.interval
+		yAxes.push(patchAxis)
+	}
+
+	const series: NonNullable<ChartStylePatch['series']> = []
+	for (const item of c.series) {
+		const patchSeries: NonNullable<ChartStylePatch['series']>[number] = { name: item.name }
+		if (item.styling.color !== undefined) patchSeries.color = item.styling.color
+		if (isSeriesType(item.type)) patchSeries.type = item.type
+		series.push(patchSeries)
+	}
+
+	const patch: ChartStylePatch = {
 		title: c.title,
 		type: c.type,
-		valueSymbol: c.valueSymbol,
-		seriesColors: c.seriesColors,
 		showLabels: view.showLabels,
 		defaultStacked: view.stacked,
 		defaultPercentage: view.percentage,
 		defaultLogScale: view.logScale,
-		hallmarkStyle: c.hallmarkStyle,
-		hallmarks: c.hallmarks?.map((h) => [h[0], h[1] ?? ''] as [number, string]),
-		legend: c.legend,
-		xAxisLabel: c.axes?.x?.label,
-		yAxes: c.axes?.yAxes?.map((a) => ({
-			id: a.id,
-			label: a.label,
-			position: a.position,
-			valueSymbol: a.valueSymbol,
-			min: a.min,
-			max: a.max,
-			interval: a.interval
-		})),
-		series: c.series?.map((s) => ({ name: s.name, color: s.styling?.color, type: s.type as any }))
+		xAxisLabel: c.axes.x.label,
+		yAxes,
+		series
+	}
+	if (c.valueSymbol !== undefined) patch.valueSymbol = c.valueSymbol
+	if (c.seriesColors !== undefined) patch.seriesColors = c.seriesColors
+	if (c.hallmarkStyle !== undefined) patch.hallmarkStyle = c.hallmarkStyle
+	if (c.hallmarks !== undefined) {
+		const hallmarks: [number, string][] = []
+		for (const hallmark of c.hallmarks) hallmarks.push([hallmark[0], hallmark[1] ?? ''])
+		patch.hallmarks = hallmarks
+	}
+	if (c.legend !== undefined) patch.legend = c.legend
+	return patch
+}
+
+function isSeriesType(value: string): value is (typeof SERIES_TYPES)[number] {
+	return value === 'line' || value === 'bar' || value === 'area'
+}
+
+function updateItemAt<T>(items: T[], targetIndex: number, update: (item: T) => void): void {
+	for (const [index, item] of items.entries()) {
+		if (index !== targetIndex) continue
+		update(item)
+		return
 	}
 }
 
@@ -86,8 +117,8 @@ const PREVIEW_DEBOUNCE_MS = 350
 
 function getSeriesNameProblem(series: ChartConfiguration['series']): string | null {
 	const names = new Set<string>()
-	for (let index = 0; index < series.length; index++) {
-		const name = series[index].name.trim()
+	for (const [index, item] of series.entries()) {
+		const name = item.name.trim()
 		if (!name) return `Series ${index + 1} name cannot be empty`
 		if (names.has(name)) return `Series name "${name}" must be unique`
 		names.add(name)
@@ -196,8 +227,8 @@ export function ChartStyleEditor({
 	}, [draft.series, draft.title, yAxes])
 
 	const save = async () => {
-		if (problems.length > 0) {
-			setError(problems[0])
+		for (const problem of problems) {
+			setError(problem)
 			return
 		}
 		setSaving(true)
@@ -220,16 +251,16 @@ export function ChartStyleEditor({
 		publishPreview(resetDraft, nextView, 'immediate')
 	}
 
-	const toggles = (
-		[
-			[caps.showLabels, 'showLabels', 'Logos'],
-			[caps.showStack, 'stacked', 'Stacked'],
-			[caps.showPercentage, 'percentage', 'Percentage'],
-			[caps.showLogScale, 'logScale', 'Log scale']
-		] as Array<[boolean, ViewKey, string]>
-	)
-		.filter(([enabled]) => enabled)
-		.map(([, key, text]) => [key, text] as [ViewKey, string])
+	const toggleOptions: Array<{ enabled: boolean; key: ViewKey; label: string }> = [
+		{ enabled: caps.showLabels, key: 'showLabels', label: 'Logos' },
+		{ enabled: caps.showStack, key: 'stacked', label: 'Stacked' },
+		{ enabled: caps.showPercentage, key: 'percentage', label: 'Percentage' },
+		{ enabled: caps.showLogScale, key: 'logScale', label: 'Log scale' }
+	]
+	const toggles: Array<[ViewKey, string]> = []
+	for (const option of toggleOptions) {
+		if (option.enabled) toggles.push([option.key, option.label])
+	}
 
 	return (
 		<div className="flex min-h-full flex-col gap-3 p-4 text-secondary" onBlurCapture={flushPendingPreview}>
@@ -292,7 +323,9 @@ export function ChartStyleEditor({
 									value={s.styling?.color ?? '#2563eb'}
 									onChange={(e) =>
 										update((d) => {
-											d.series[i].styling = { ...(d.series[i].styling ?? {}), color: e.target.value }
+											updateItemAt(d.series, i, (item) => {
+												item.styling = { ...item.styling, color: e.target.value }
+											})
 										}, 'immediate')
 									}
 									className={swatch}
@@ -301,14 +334,18 @@ export function ChartStyleEditor({
 									className={`${input} flex-1`}
 									aria-label={`Series ${i + 1} name`}
 									value={s.name}
-									onChange={(e) => update((d) => (d.series[i].name = e.target.value))}
+									onChange={(e) => update((d) => updateItemAt(d.series, i, (item) => (item.name = e.target.value)))}
 								/>
 								{isCombo ? (
 									<select
 										className={`${input} w-24`}
 										aria-label={`Series ${i + 1} type`}
 										value={s.type}
-										onChange={(e) => update((d) => (d.series[i].type = e.target.value as any), 'immediate')}
+										onChange={(e) => {
+											if (!isSeriesType(e.target.value)) return
+											const type = e.target.value
+											update((d) => updateItemAt(d.series, i, (item) => (item.type = type)), 'immediate')
+										}}
 									>
 										{SERIES_TYPES.map((t) => (
 											<option key={t} value={t}>
@@ -342,13 +379,15 @@ export function ChartStyleEditor({
 								className={`${input} flex-1`}
 								placeholder="Y-axis label"
 								value={a.label ?? ''}
-								onChange={(e) => update((d) => (d.axes.yAxes[i].label = e.target.value))}
+								onChange={(e) => update((d) => updateItemAt(d.axes.yAxes, i, (axis) => (axis.label = e.target.value)))}
 							/>
 							<input
 								className={`${input} w-16`}
 								placeholder="unit"
 								value={a.valueSymbol ?? draft.valueSymbol ?? ''}
-								onChange={(e) => update((d) => (d.axes.yAxes[i].valueSymbol = e.target.value))}
+								onChange={(e) =>
+									update((d) => updateItemAt(d.axes.yAxes, i, (axis) => (axis.valueSymbol = e.target.value)))
+								}
 							/>
 						</div>
 						<div className="flex items-center gap-2 pl-5.5">
@@ -360,8 +399,12 @@ export function ChartStyleEditor({
 									update((d) => {
 										const v = e.target.value.trim()
 										const n = Number(v)
-										d.axes.yAxes[i].min =
-											v === '' ? undefined : v === 'dataMin' ? 'dataMin' : Number.isFinite(n) ? n : undefined
+										updateItemAt(d.axes.yAxes, i, (axis) => {
+											if (v === '') delete axis.min
+											else if (v === 'dataMin') axis.min = 'dataMin'
+											else if (Number.isFinite(n)) axis.min = n
+											else delete axis.min
+										})
 									})
 								}
 							/>
@@ -373,8 +416,12 @@ export function ChartStyleEditor({
 									update((d) => {
 										const v = e.target.value.trim()
 										const n = Number(v)
-										d.axes.yAxes[i].max =
-											v === '' ? undefined : v === 'dataMax' ? 'dataMax' : Number.isFinite(n) ? n : undefined
+										updateItemAt(d.axes.yAxes, i, (axis) => {
+											if (v === '') delete axis.max
+											else if (v === 'dataMax') axis.max = 'dataMax'
+											else if (Number.isFinite(n)) axis.max = n
+											else delete axis.max
+										})
 									})
 								}
 							/>
@@ -386,7 +433,10 @@ export function ChartStyleEditor({
 									update((d) => {
 										const v = e.target.value.trim()
 										const n = Number(v)
-										d.axes.yAxes[i].interval = v === '' || !Number.isFinite(n) || n <= 0 ? undefined : n
+										updateItemAt(d.axes.yAxes, i, (axis) => {
+											if (v === '' || !Number.isFinite(n) || n <= 0) delete axis.interval
+											else axis.interval = n
+										})
 									})
 								}
 							/>

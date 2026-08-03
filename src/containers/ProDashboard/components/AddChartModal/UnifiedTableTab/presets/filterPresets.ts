@@ -1,4 +1,4 @@
-import type { TableFilters } from '~/containers/ProDashboard/types'
+import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 
 export type FilterPresetCategory = 'size' | 'revenue' | 'investment' | 'category' | 'quick' | 'growth' | 'activity'
 
@@ -7,7 +7,7 @@ export interface FilterPreset {
 	name: string
 	description: string
 	category: FilterPresetCategory
-	filters: Partial<TableFilters>
+	filters: Partial<UnifiedTableFilters>
 	tooltip?: string
 	sortBy?: {
 		field: string
@@ -194,11 +194,11 @@ const GROWTH_PRESETS: FilterPreset[] = [
 		description: 'Protocols with spiking trading volume',
 		category: 'growth',
 		filters: {
-			volumeChange7dMin: 50,
+			volumeChange7dOver7dMin: 50,
 			volumeDex24hMin: 1_000_000
 		},
 		tooltip: 'Volume change 7d ≥ 50%, Volume ≥ $1M',
-		sortBy: { field: 'volumeChange_7d', direction: 'desc' },
+		sortBy: { field: 'volumeChange7dOver7d', direction: 'desc' },
 		strategyType: 'protocols'
 	},
 	{
@@ -207,11 +207,11 @@ const GROWTH_PRESETS: FilterPreset[] = [
 		description: 'Protocols with increasing revenue',
 		category: 'growth',
 		filters: {
-			revenueChange7dMin: 20,
+			revenueChange7dOver7dMin: 20,
 			revenue24hMin: 10_000
 		},
 		tooltip: 'Revenue change 7d ≥ 20%, Revenue ≥ $10k',
-		sortBy: { field: 'revenueChange_7d', direction: 'desc' },
+		sortBy: { field: 'revenueChange7dOver7d', direction: 'desc' },
 		strategyType: 'protocols'
 	},
 	{
@@ -220,11 +220,11 @@ const GROWTH_PRESETS: FilterPreset[] = [
 		description: 'Protocols with growing fee generation',
 		category: 'growth',
 		filters: {
-			feesChange7dMin: 25,
+			feesChange7dOver7dMin: 25,
 			fees24hMin: 10_000
 		},
 		tooltip: 'Fees change 7d ≥ 25%, Fees ≥ $10k',
-		sortBy: { field: 'feesChange_7d', direction: 'desc' },
+		sortBy: { field: 'feesChange7dOver7d', direction: 'desc' },
 		strategyType: 'protocols'
 	},
 	{
@@ -234,7 +234,7 @@ const GROWTH_PRESETS: FilterPreset[] = [
 		category: 'growth',
 		filters: {
 			change1mMin: 20,
-			volumeChange1mMin: 20,
+			volumeChange30dOver30dMin: 20,
 			tvlMin: 5_000_000
 		},
 		tooltip: 'TVL & Volume change 30d ≥ 20%, TVL ≥ $5M',

@@ -1,27 +1,36 @@
 import type * as echarts from 'echarts/core'
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useContext, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { Select } from '~/components/Select/Select'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
+import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { capitalizeFirstLetter } from '~/utils'
 import { download } from '~/utils/download'
-import { useChartImageExport } from '../hooks/useChartImageExport'
+import { getChartDataPrerequisite, toChartRuntimeState } from '../chartRuntime'
 import {
 	useProDashboardCatalog,
 	useProDashboardEditorActions,
-	useProDashboardPermissions
+	useProDashboardPermissions,
+	useProDashboardTime
 } from '../ProDashboardAPIContext'
-import { type Chain, CHART_TYPES, type ChartConfig, type DashboardGrouping, type Protocol } from '../types'
+import { ProxyAuthTokenContext, StreamDoneContext, useChartData } from '../queries'
+import {
+	type Chain,
+	type ChartConfig,
+	type DashboardGrouping,
+	getProDashboardChartTypeConfig,
+	type Protocol
+} from '../types'
 import { generateChartColor, getItemIconUrl } from '../utils'
+import { CSVExportButton } from './CSVExportButton'
 import { LoadingSpinner } from './LoadingSpinner'
-import { ProTableCSVButton } from './ProTable/CsvButton'
 import { buildSingleMetricChartDataset } from './singleMetricChart'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 interface ChartCardProps {
 	chart: ChartConfig
@@ -38,7 +47,7 @@ interface ChartRendererProps {
 	onChartReady: (instance: echarts.ECharts | null) => void
 }
 
-const userMetricTypes = ['users', 'activeUsers', 'newUsers', 'txs', 'gasUsed']
+const userMetricTypes = ['activeUsers', 'newUsers', 'txs', 'gasUsed']
 const percentMetricTypes = ['medianApy']
 const ratioMetricTypes = ['pfRatio', 'psRatio']
 const CUMULATIVE_DISPLAY_OPTIONS = [
@@ -56,7 +65,8 @@ function ChartRenderer({
 	color,
 	onChartReady
 }: ChartRendererProps) {
-	const chartType = CHART_TYPES[type]
+	const chartType = getProDashboardChartTypeConfig(type)
+	if (!chartType) throw new Error(`Unsupported dashboard chart type: ${type}`)
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
 	const valueSymbol =
 		userMetricTypes.includes(type) || ratioMetricTypes.includes(type)
@@ -66,6 +76,7 @@ function ChartRenderer({
 				: '$'
 	const chartOptions = useMemo(() => createSingleSeriesChartOptions(valueSymbol), [valueSymbol])
 	const seriesName = dataset.dimensions[1]
+	if (!seriesName) throw new Error(`Missing series dimension for dashboard chart type: ${type}`)
 	const charts = useMemo<NonNullable<IMultiSeriesChartProps['charts']>>(() => {
 		return [
 			{
@@ -91,7 +102,13 @@ function ChartRenderer({
 			<div className="flex flex-1 flex-col items-center justify-center">
 				<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
 				<p className="text-pro-text-form">Error loading data</p>
-				<button className="text-sm text-link hover:underline" onClick={() => refetch()}>
+				<button
+					type="button"
+					className="text-sm text-link hover:underline"
+					onClick={() => {
+						refetch()
+					}}
+				>
 					Try again
 				</button>
 			</div>
@@ -102,8 +119,8 @@ function ChartRenderer({
 		return <p className="flex flex-1 items-center justify-center text-pro-text-form">No data available</p>
 	}
 
-	const todayHallmarks: [number, string][] | null =
-		type === 'unlocks' ? [[todayTimestamp, formatUnlockDate(todayTimestamp)]] : null
+	const todayHallmarks: [number, string][] | undefined =
+		type === 'unlocks' ? [[todayTimestamp, formatUnlockDate(todayTimestamp)]] : undefined
 
 	return (
 		<Suspense fallback={<div className="h-[300px]" />}>
@@ -113,9 +130,9 @@ function ChartRenderer({
 				valueSymbol={valueSymbol}
 				height={type === 'unlocks' ? '360px' : '300px'}
 				hideDataZoom
-				hallmarks={todayHallmarks}
+				{...(todayHallmarks ? { hallmarks: todayHallmarks } : {})}
 				hallmarkStyle="mark-line"
-				chartOptions={chartOptions}
+				{...(chartOptions ? { chartOptions } : {})}
 				exportButtons="hidden"
 				onReady={onChartReady}
 			/>
@@ -126,38 +143,52 @@ function ChartRenderer({
 const groupingOptions: DashboardGrouping[] = ['day', 'week', 'month', 'quarter', 'year']
 
 export function ChartCard({ chart }: ChartCardProps) {
-	const { getChainInfo, getProtocolInfo, protocols } = useProDashboardCatalog()
+	const { getChainInfo, getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog, protocolSymbols } =
+		useProDashboardCatalog()
+	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { handleGroupingChange, handleCumulativeChange } = useProDashboardEditorActions()
 	const { isReadOnly } = useProDashboardPermissions()
 	const { chartInstance, handleChartReady } = useChartImageExport()
+	const authToken = useContext(ProxyAuthTokenContext)
+	const streamDone = useContext(StreamDoneContext)
+	const chartQuery = useChartData(
+		chart,
+		protocolCatalog,
+		protocolBySlug,
+		timePeriod,
+		customTimePeriod,
+		authToken,
+		parentMapping,
+		protocolSymbols
+	)
+	const chartState = toChartRuntimeState(
+		chartQuery,
+		streamDone,
+		getChartDataPrerequisite(chart, protocolCatalog, protocolBySlug)
+	)
 
 	const { itemName, itemIconUrl, chartTypeDetails, isGroupable, isBarChart, showCumulative, chartColor } =
 		useMemo(() => {
-			const chartTypeDetails = CHART_TYPES[chart.type]
-			const isGroupable = chartTypeDetails?.groupable
-			const isBarChart = chartTypeDetails?.chartType === 'bar'
+			const chartTypeDetails = getProDashboardChartTypeConfig(chart.type)
+			if (!chartTypeDetails) throw new Error(`Unsupported dashboard chart type: ${chart.type}`)
+			const isGroupable = 'groupable' in chartTypeDetails && chartTypeDetails.groupable
+			const isBarChart = chartTypeDetails.chartType === 'bar'
 			const showCumulative = chart.showCumulative || false
 
-			let itemName: string = ''
-			let itemIconUrl: string | undefined = undefined
+			let itemName: string
+			let itemIconUrl: string | undefined
 			let itemInfo: Chain | Protocol | undefined
-			let itemIdentifier: string = ''
-			if (chart.protocol) {
+			let itemIdentifier: string
+			if (chart.subjectType === 'protocol') {
 				itemInfo = getProtocolInfo(chart.protocol)
 				itemName = itemInfo?.name || chart.protocol
 				itemIconUrl = getItemIconUrl('protocol', itemInfo, chart.protocol)
 				itemIdentifier = chart.protocol
-			} else if (chart.chain) {
+			} else {
 				itemInfo = getChainInfo(chart.chain)
 				itemName = chart.chain
 				itemIconUrl = getItemIconUrl('chain', itemInfo, chart.chain)
 				itemIdentifier = chart.chain
-			} else if (chart.geckoId) {
-				const protocolInfo = protocols.find((protocol) => protocol.geckoId === chart.geckoId)
-				itemInfo = protocolInfo
-				itemName = protocolInfo?.name || chart.geckoId
-				itemIconUrl = protocolInfo ? getItemIconUrl('protocol', protocolInfo, protocolInfo.slug) : undefined
-				itemIdentifier = chart.geckoId
 			}
 
 			const chartColor = chart.color || generateChartColor(itemIdentifier, chartTypeDetails?.color)
@@ -173,17 +204,21 @@ export function ChartCard({ chart }: ChartCardProps) {
 				isBarChart,
 				showCumulative
 			}
-		}, [chart, getChainInfo, getProtocolInfo, protocols])
+		}, [chart, getChainInfo, getProtocolInfo])
 
 	const chartDataset = useMemo(
-		() => buildSingleMetricChartDataset(chart.data, chartTypeDetails.title, showCumulative && isBarChart),
-		[chart.data, chartTypeDetails.title, isBarChart, showCumulative]
+		() => buildSingleMetricChartDataset(chartState.data, chartTypeDetails.title, showCumulative && isBarChart),
+		[chartState.data, chartTypeDetails.title, isBarChart, showCumulative]
 	)
 
 	const handleCsvExport = () => {
 		if (chartDataset.source.length === 0) return
 		const headers = ['Date', `${itemName} ${chartTypeDetails.title}`]
-		const rows = chartDataset.source.map((row) => [new Date(row[0] as number).toISOString().slice(0, 10), row[1]])
+		const rows = chartDataset.source.map((row, index) => {
+			const timestamp = row[0]
+			if (typeof timestamp !== 'number') throw new Error(`Invalid dashboard chart timestamp at index ${index}`)
+			return [new Date(timestamp).toISOString().slice(0, 10), row[1]]
+		})
 		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
 		const fileName = `${itemName}_${chartTypeDetails.title.replace(/\s+/g, '_')}_${
 			new Date().toISOString().split('T')[0]
@@ -198,7 +233,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 		<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]">
 			<div className="flex flex-wrap items-center justify-end gap-2 p-1 md:p-3">
 				<div className="mr-auto flex items-center gap-1">
-					{chart.chain !== 'All' ? (
+					{chart.subjectType === 'protocol' || chart.chain !== 'All' ? (
 						itemIconUrl ? (
 							<img src={itemIconUrl} alt={itemName} width={20} height={20} className="size-5 shrink-0 rounded-full" />
 						) : (
@@ -235,7 +270,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 									size="sm"
 									allValues={CUMULATIVE_DISPLAY_OPTIONS}
 									selectedValues={showCumulative ? 'Cumulative' : 'Individual'}
-									setSelectedValues={(value) => {
+									setSelectedValues={(value: string) => {
 										handleCumulativeChange(chart.id, value === 'Cumulative')
 									}}
 									label={showCumulative ? 'Cumulative' : 'Individual'}
@@ -248,7 +283,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 					{chartDataset.source.length > 0 ? (
 						<>
 							<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-							<ProTableCSVButton
+							<CSVExportButton
 								onClick={handleCsvExport}
 								smol
 								className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
@@ -261,9 +296,9 @@ export function ChartCard({ chart }: ChartCardProps) {
 				type={chart.type}
 				showCumulative={chart.showCumulative}
 				dataset={chartDataset}
-				isLoading={chart.isLoading}
-				hasError={chart.hasError}
-				refetch={chart.refetch}
+				isLoading={chartState.isLoading}
+				hasError={chartState.hasError}
+				refetch={chartState.refetch}
 				color={chartColor}
 				onChartReady={handleChartReady}
 			/>

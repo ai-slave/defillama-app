@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import type { CustomTimePeriod, TimePeriod } from '../dashboardTypes'
 
 const DATE_LIKE_FIELD_RE = /(^|_)(date|day|month|time|timestamp)$/i
@@ -47,18 +47,29 @@ function getTimeField(config: ChartConfiguration): string {
 	return config.dataTransformation?.timeField || config.axes.x.field
 }
 
-function isTimeSeriesChart(config: ChartConfiguration, rows: any[]): boolean {
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function getRowField(row: unknown, field: string): unknown {
+	return isRecord(row) ? row[field] : undefined
+}
+
+function isTimeSeriesChart<Row>(config: ChartConfiguration, rows: Row[]): boolean {
 	if (config.axes.x.type === 'time') return true
 	if (config.type === 'pie' || config.type === 'hbar') return false
 
 	const timeField = getTimeField(config)
 	if (config.axes.x.type !== 'category' || !DATE_LIKE_FIELD_RE.test(timeField)) return false
 
-	const values = rows.map((row) => row?.[timeField]).filter((value) => value != null && String(value).trim().length > 0)
-
-	if (values.length === 0) return false
-
-	return values.every((value) => parseRowTimestampSec(value) != null)
+	let hasValue = false
+	for (const row of rows) {
+		const value = getRowField(row, timeField)
+		if (value == null || String(value).trim().length === 0) continue
+		hasValue = true
+		if (parseRowTimestampSec(value) == null) return false
+	}
+	return hasValue
 }
 
 export function getTimePeriodBounds(
@@ -103,20 +114,20 @@ export function getTimePeriodBounds(
 	return { start: cutoffDate.unix(), end: Infinity }
 }
 
-function filterRowsByTimePeriod(rows: any[], timeField: string, bounds: { start: number; end: number }): any[] {
+function filterRowsByTimePeriod<Row>(rows: Row[], timeField: string, bounds: { start: number; end: number }): Row[] {
 	return rows.filter((row) => {
-		const timestamp = parseRowTimestampSec(row?.[timeField])
+		const timestamp = parseRowTimestampSec(getRowField(row, timeField))
 		if (timestamp == null) return true
 		return timestamp >= bounds.start && timestamp <= bounds.end
 	})
 }
 
-function filterChartRows(
+function filterChartRows<Row>(
 	config: ChartConfiguration,
-	rows: any[],
+	rows: Row[],
 	timePeriod: TimePeriod,
 	customPeriod?: CustomTimePeriod | null
-): any[] {
+): Row[] {
 	if (!rows.length) return rows
 
 	const bounds = getTimePeriodBounds(timePeriod, customPeriod)
@@ -125,19 +136,31 @@ function filterChartRows(
 	return filterRowsByTimePeriod(rows, getTimeField(config), bounds)
 }
 
-export function filterLlamaAIChartPayload(
+export function filterLlamaAIChartPayload<Row>(
 	charts: ChartConfiguration[],
-	chartData: any[] | Record<string, any[]>,
+	chartData: Row[],
 	timePeriod: TimePeriod,
 	customPeriod?: CustomTimePeriod | null
-): any[] | Record<string, any[]> {
+): Row[]
+export function filterLlamaAIChartPayload<Datasets extends Record<string, unknown[]>>(
+	charts: ChartConfiguration[],
+	chartData: Datasets,
+	timePeriod: TimePeriod,
+	customPeriod?: CustomTimePeriod | null
+): Datasets
+export function filterLlamaAIChartPayload(
+	charts: ChartConfiguration[],
+	chartData: unknown[] | Record<string, unknown[]>,
+	timePeriod: TimePeriod,
+	customPeriod?: CustomTimePeriod | null
+): unknown[] | Record<string, unknown[]> {
 	if (Array.isArray(chartData)) {
 		const config = charts[0]
 		if (!config) return chartData
 		return filterChartRows(config, chartData, timePeriod, customPeriod)
 	}
 
-	const filtered: Record<string, any[]> = { ...chartData }
+	const filtered: Record<string, unknown[]> = { ...chartData }
 
 	for (const chart of charts) {
 		const key = chart.datasetName || chart.id

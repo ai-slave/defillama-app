@@ -1,25 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { feesMock } = vi.hoisted(() => ({ feesMock: vi.fn() }))
+const { getProtocolDataMock } = vi.hoisted(() => ({ getProtocolDataMock: vi.fn() }))
 
-vi.mock('./services/ProtocolCharts', () => ({ default: { fees: feesMock } }))
-vi.mock('./services/ChainCharts', () => ({ default: { tvl: vi.fn() } }))
+vi.mock('./services/ProtocolCharts', () => ({ fetchProProtocolChartData: getProtocolDataMock }))
+vi.mock('./services/ChainCharts', () => ({ fetchProChainChartData: vi.fn() }))
 
 import { getChartQueryFn } from './queries'
 
 describe('getChartQueryFn protocol fallback', () => {
 	beforeEach(() => {
-		feesMock.mockReset()
+		getProtocolDataMock.mockReset()
 	})
 
 	it('preserves a standalone source error for React Query retries and error UI', async () => {
-		feesMock.mockRejectedValue(new Error('upstream failed'))
+		getProtocolDataMock.mockRejectedValue(new Error('upstream failed'))
 
 		await expect(getChartQueryFn('fees', 'protocol', 'standalone')()).rejects.toThrow('upstream failed')
 	})
 
 	it('recovers a parent source failure by summing successful children', async () => {
-		feesMock.mockImplementation(async (protocol: string) => {
+		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) => {
 			if (protocol === 'parent') throw new Error('no parent adapter')
 			if (protocol === 'child-a') return [[1, 10]]
 			return [

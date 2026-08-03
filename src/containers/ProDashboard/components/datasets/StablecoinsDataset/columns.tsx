@@ -5,38 +5,22 @@ import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import type { StablecoinsTableRow } from './useStablecoinsData'
 
-interface IPeggedAssetRow {
-	name: string
-	symbol: string
-	mcap: number
-	price: number
-	change_1d: number
-	change_7d: number
-	change_1m: number
-	pegDeviation?: number
-	chains: string[]
-	pegType?: string
-	gecko_id?: string
-}
-
-export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
+export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 	{
 		header: 'Name',
 		id: 'name',
 		accessorFn: (row) => row.name,
 		enableSorting: false,
-		cell: ({ getValue, row }) => {
-			const name = getValue() as string
+		cell: ({ row }) => {
+			const name = row.original.name
 			const symbol = row.original.symbol
 
 			return (
 				<span className="relative flex items-center gap-2 pl-6">
 					<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} data-lgonly />
-					<BasicLink
-						href={`/stablecoins/${row.original.gecko_id || name}`}
-						className="truncate text-sm font-medium text-link"
-					>
+					<BasicLink href={`/stablecoin/${row.original.slug}`} className="truncate text-sm font-medium text-link">
 						{name}
 						{symbol && symbol !== '-' ? <span className="text-pro-text-tertiary"> ({symbol})</span> : null}
 					</BasicLink>
@@ -48,8 +32,8 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 	{
 		header: 'Price',
 		accessorKey: 'price',
-		cell: ({ getValue, row }) => {
-			const value = parseFloat(getValue() as string)
+		cell: ({ row }) => {
+			const value = row.original.price
 			const pegDeviation = row.original.pegDeviation
 
 			return (
@@ -66,7 +50,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 							/>
 						</Tooltip>
 					) : null}
-					<span>{formatUsd(value, { minimumFractionDigits: 4, maximumFractionDigits: 4 }) ?? '$0.0000'}</span>
+					<span>{value == null ? '-' : formatUsd(value, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}</span>
 				</span>
 			)
 		},
@@ -78,9 +62,15 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 	{
 		header: 'Market Cap',
 		accessorKey: 'mcap',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return <>{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</>
+		cell: ({ row }) => {
+			const value = row.original.mcap
+			return (
+				<>
+					{value == null
+						? '-'
+						: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				</>
+			)
 		},
 		size: 145,
 		meta: {
@@ -90,11 +80,11 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 	{
 		header: '1d Change',
 		accessorKey: 'change_1d',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
+		cell: ({ row }) => {
+			const value = row.original.change_1d
 			return (
-				<span className={` ${value < 0 ? 'text-error' : 'text-success'}`}>
-					<PercentChange percent={value} />
+				<span className={` ${value != null && value < 0 ? 'text-error' : 'text-success'}`}>
+					{value == null ? '-' : <PercentChange percent={value} />}
 				</span>
 			)
 		},
@@ -106,11 +96,11 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 	{
 		header: '7d Change',
 		accessorKey: 'change_7d',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
+		cell: ({ row }) => {
+			const value = row.original.change_7d
 			return (
-				<span className={` ${value < 0 ? 'text-error' : 'text-success'}`}>
-					<PercentChange percent={value} />
+				<span className={` ${value != null && value < 0 ? 'text-error' : 'text-success'}`}>
+					{value == null ? '-' : <PercentChange percent={value} />}
 				</span>
 			)
 		},
@@ -122,11 +112,11 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 	{
 		header: '1m Change',
 		accessorKey: 'change_1m',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
+		cell: ({ row }) => {
+			const value = row.original.change_1m
 			return (
-				<span className={` ${value < 0 ? 'text-error' : 'text-success'}`}>
-					<PercentChange percent={value} />
+				<span className={` ${value != null && value < 0 ? 'text-error' : 'text-success'}`}>
+					{value == null ? '-' : <PercentChange percent={value} />}
 				</span>
 			)
 		},
@@ -138,8 +128,8 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 	{
 		header: 'Chains',
 		accessorKey: 'chains',
-		cell: ({ getValue }) => {
-			const chains = getValue() as string[]
+		cell: ({ row }) => {
+			const chains = row.original.chains
 			const displayChains = chains.slice(0, 3)
 			const remainingCount = chains.length - 3
 

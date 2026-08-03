@@ -210,7 +210,27 @@ describe('llamaaiChart figure captions', () => {
 	const chartNode = (caption: string) => ({
 		type: 'llamaaiChart',
 		attrs: {
-			chartConfig: { id: 'c1', type: 'bar', title: 'Top 10 Chains by TVL' },
+			chartConfig: {
+				id: 'c1',
+				type: 'bar',
+				title: 'Top 10 Chains by TVL',
+				description: '',
+				axes: {
+					x: { field: 'chain', label: 'Chain', type: 'category' },
+					yAxes: [{ id: 'tvl', fields: ['tvl'], label: 'TVL', position: 'left' }]
+				},
+				series: [
+					{
+						name: 'TVL',
+						type: 'bar',
+						yAxisId: 'tvl',
+						metricClass: 'stock',
+						dataMapping: { xField: 'chain', yField: 'tvl' },
+						styling: {}
+					}
+				],
+				dataTransformation: { timeField: 'chain', metrics: ['tvl'] }
+			},
 			chartData: [{ chain: 'eth', tvl: 1 }],
 			caption,
 			savedChartId: null

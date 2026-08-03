@@ -1,22 +1,13 @@
 import type { NextApiHandler } from 'next'
+import { getDimensionDatasetTypeByPublicRoute } from '~/containers/AdapterMetrics/datasetTypes'
+import { normalizeCacheList } from '~/server/api/cacheKey'
+import { validateQueryList } from '~/server/api/params'
 import { recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
-import { DIMENSION_DATASET_SPEC_BY_TYPE, fetchDimensionDataset } from './datasets'
-
-const ADAPTER_METRIC_DATASET_ROUTE_BY_PUBLIC_METRIC: Record<string, string> = {
-	dexs: 'dexs',
-	perps: 'perps',
-	'dex-aggregators': 'aggregators',
-	'bridge-aggregators': 'bridge-aggregators',
-	fees: 'fees',
-	revenue: 'revenue',
-	earnings: 'earnings',
-	'holders-revenue': 'holders-revenue',
-	options: 'options'
-}
+import { fetchDimensionDataset, getDimensionDatasetSpec } from './datasets'
 
 export function createAdapterMetricDatasetHandler(publicMetric: string): NextApiHandler {
-	const datasetType = ADAPTER_METRIC_DATASET_ROUTE_BY_PUBLIC_METRIC[publicMetric]
-	const spec = datasetType ? DIMENSION_DATASET_SPEC_BY_TYPE[datasetType] : null
+	const datasetType = getDimensionDatasetTypeByPublicRoute(publicMetric)
+	const spec = datasetType ? getDimensionDatasetSpec(datasetType) : undefined
 	const route = `/api/dynamic/adapter-metrics/${publicMetric}`
 
 	return withApiRouteTelemetry(route, async (req, res) => {
@@ -27,7 +18,12 @@ export function createAdapterMetricDatasetHandler(publicMetric: string): NextApi
 
 		try {
 			const { chains } = req.query
-			const chainList = typeof chains === 'string' ? [chains] : chains || []
+			const chainList = normalizeCacheList(typeof chains === 'string' ? [chains] : chains || [])
+			const validationError = validateQueryList('chains', chainList, { maxItems: 50, maxItemLength: 200 })
+			if (validationError) {
+				res.status(400).json({ error: validationError })
+				return
+			}
 			const result = await fetchDimensionDataset({ ...spec.options, chains: chainList })
 			res.status(200).json(result)
 		} catch (error) {

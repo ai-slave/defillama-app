@@ -7,7 +7,6 @@ import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardUrlKey } from '../services/DashboardAPI'
-import type { DashboardItemConfig } from '../types'
 import { CardLikeButton } from './CardLikeButton'
 import { ConfirmationModal } from './ConfirmationModal'
 
@@ -70,41 +69,36 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 	}
 
 	const itemTypes = useMemo(() => {
-		const counts: Record<string, number> = {}
+		const counts = new Map<string, number>()
 		for (const item of dashboard.data.items ?? []) {
-			if (!item || typeof item !== 'object') {
-				continue
-			}
+			if (!item) continue
 
 			switch (item.kind) {
 				case 'chart':
-					counts['charts'] = (counts['charts'] || 0) + 1
+					counts.set('charts', (counts.get('charts') ?? 0) + 1)
 					break
 				case 'multi':
-					counts['multi-charts'] = (counts['multi-charts'] || 0) + 1
+					counts.set('multi-charts', (counts.get('multi-charts') ?? 0) + 1)
 					break
-				case 'table':
-					counts['tables'] = (counts['tables'] || 0) + 1
+				case 'dataset-table':
+					counts.set('tables', (counts.get('tables') ?? 0) + 1)
 					break
 				case 'text':
-					counts['text blocks'] = (counts['text blocks'] || 0) + 1
+					counts.set('text blocks', (counts.get('text blocks') ?? 0) + 1)
 					break
 				default:
-					const otherItem = item as DashboardItemConfig
-					counts[otherItem.kind] = (counts[otherItem.kind] || 0) + 1
+					counts.set(item.kind, (counts.get(item.kind) ?? 0) + 1)
 			}
 		}
 
-		const sorted = Object.entries(counts)
+		const sorted = Array.from(counts)
 			.sort(([, a], [, b]) => b - a)
 			.slice(0, 3)
 
 		const summary = sorted.map(([type, count]) => `${count} ${type}`).join(', ')
 
-		let countsLength = 0
-		for (const _ in counts) countsLength++
-		if (countsLength > 3) {
-			return `${summary} +${countsLength - 3} more`
+		if (counts.size > 3) {
+			return `${summary} +${counts.size - 3} more`
 		}
 
 		return summary
@@ -125,7 +119,9 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 						<DashboardAuthorLink author={dashboard.author} />
 					</div>
 
-					{viewMode !== 'grid' ? <Tags dashboard={dashboard} onTagClick={onTagClick} /> : null}
+					{viewMode !== 'grid' ? (
+						<Tags dashboard={dashboard} {...(onTagClick !== undefined ? { onTagClick } : {})} />
+					) : null}
 
 					{onDelete ? (
 						<div className="flex shrink-0 items-center gap-2">
@@ -158,7 +154,9 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 					) : null}
 				</div>
 
-				{viewMode === 'grid' ? <Tags dashboard={dashboard} onTagClick={onTagClick} /> : null}
+				{viewMode === 'grid' ? (
+					<Tags dashboard={dashboard} {...(onTagClick !== undefined ? { onTagClick } : {})} />
+				) : null}
 
 				{dashboard.description ? (
 					<p className="mt-0.5 line-clamp-2 text-sm leading-snug text-pro-text-label opacity-80">
@@ -182,9 +180,13 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 							title="Views"
 						>
 							<Icon name="eye" height={12} width={12} />
-							{dashboard.viewCount || 0}
+							{dashboard.viewCount ?? 0}
 						</span>
-						<CardLikeButton dashboardId={dashboard.id} liked={dashboard.liked} likeCount={dashboard.likeCount} />
+						<CardLikeButton
+							dashboardId={dashboard.id}
+							{...(dashboard.liked !== undefined ? { liked: dashboard.liked } : {})}
+							{...(dashboard.likeCount !== undefined ? { likeCount: dashboard.likeCount } : {})}
+						/>
 					</div>
 					<p className="flex items-center gap-1.5 text-xs text-pro-text-form">
 						<Icon name="clock" height={10} width={10} />

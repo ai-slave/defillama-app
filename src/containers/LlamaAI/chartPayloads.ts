@@ -1,30 +1,34 @@
-import type {
-	ChartArtifactRefs,
-	ChartConfiguration,
-	ChartDataByKey,
-	ChartDataSeries,
-	DashboardArtifactOutcome,
-	DashboardChartData,
-	DashboardItem
-} from './types'
+import { migrateDashboardItemConfig } from '~/containers/ProDashboard/dashboardConfig/migrate'
+import type { PersistedDashboardItemConfig } from '~/containers/ProDashboard/dashboardConfig/persisted'
+import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
+import type { ChartConfiguration, ChartDataByKey } from './chartTypes'
+import type { ChartArtifactRefs, DashboardArtifactOutcome, DashboardChartData } from './types'
+
+function isArtifactVersionId(value: unknown): value is string | null {
+	return value === null || typeof value === 'string'
+}
+
+function isArtifactStatus(value: unknown): value is ChartArtifactRefs[string]['status'] {
+	return value === 'live' || value === 'snapshot-only' || value === 'needs-repair'
+}
 
 export function normalizeChartArtifactRefs(value: unknown): ChartArtifactRefs | undefined {
 	if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
 	const refs: ChartArtifactRefs = {}
 	for (const [chartId, candidate] of Object.entries(value)) {
-		if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) continue
-		const ref = candidate as Record<string, unknown>
+		if (!isRecord(candidate)) continue
+		const { artifactId, versionId, status, containsPremium, estimatedMaxCostUsd } = candidate
 		if (
-			typeof ref.artifactId !== 'string' ||
-			!ref.artifactId ||
-			(ref.versionId !== null && typeof ref.versionId !== 'string') ||
-			!['live', 'snapshot-only', 'needs-repair'].includes(String(ref.status)) ||
-			typeof ref.containsPremium !== 'boolean' ||
-			typeof ref.estimatedMaxCostUsd !== 'number' ||
-			!Number.isFinite(ref.estimatedMaxCostUsd)
+			typeof artifactId !== 'string' ||
+			!artifactId ||
+			!isArtifactVersionId(versionId) ||
+			!isArtifactStatus(status) ||
+			typeof containsPremium !== 'boolean' ||
+			typeof estimatedMaxCostUsd !== 'number' ||
+			!Number.isFinite(estimatedMaxCostUsd)
 		)
 			continue
-		refs[chartId] = ref as unknown as ChartArtifactRefs[string]
+		refs[chartId] = { artifactId, versionId, status, containsPremium, estimatedMaxCostUsd }
 	}
 	return Object.keys(refs).length > 0 ? refs : undefined
 }
@@ -81,13 +85,13 @@ export function normalizeChartDataByKey(value: unknown, charts?: ChartConfigurat
 	return normalized
 }
 
-export function normalizeDashboardItems(value: unknown): DashboardItem[] {
-	if (!Array.isArray(value)) return []
-	const items: DashboardItem[] = []
-	for (const item of value) {
-		if (isRecord(item) && typeof item.kind === 'string') items.push(item as unknown as DashboardItem)
+export function migrateDashboardItems(items: PersistedDashboardItemConfig[] | undefined): DashboardItemConfig[] {
+	const migratedItems: DashboardItemConfig[] = []
+	for (const item of items ?? []) {
+		const migrated = migrateDashboardItemConfig(item)
+		if (migrated) migratedItems.push(migrated)
 	}
-	return items
+	return migratedItems
 }
 
 export function normalizeDashboardArtifactOutcomes(value: unknown): DashboardArtifactOutcome[] | undefined {
@@ -116,7 +120,7 @@ export function normalizeDashboardChartData(value: unknown): DashboardChartData 
 		if (!isRecord(entry) || !isLikelyChartConfiguration(entry.config) || !Array.isArray(entry.data)) continue
 		normalized[key] = {
 			config: entry.config,
-			data: entry.data as ChartDataSeries,
+			data: entry.data,
 			toolChain: Array.isArray(entry.toolChain) ? entry.toolChain : []
 		}
 	}

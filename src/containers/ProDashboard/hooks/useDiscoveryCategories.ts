@@ -1,15 +1,8 @@
 import { useQueries } from '@tanstack/react-query'
 import { useAuthContext } from '~/auth'
 import type { Dashboard } from '../dashboardTypes'
-import {
-	DISCOVERY_CATEGORIES,
-	type DiscoveryCategoriesInitialData,
-	type DiscoveryCategoryResponse
-} from '../discoveryCategories'
+import { DISCOVERY_CATEGORIES, type DiscoveryCategoriesInitialData } from '../discoveryCategories'
 import { dashboardAPI } from '../services/DashboardAPI'
-
-export { DISCOVERY_CATEGORIES }
-export type { DiscoveryCategoriesInitialData, DiscoveryCategoryResponse }
 
 const EMPTY_DASHBOARDS: Dashboard[] = []
 
@@ -30,7 +23,7 @@ export function useDiscoveryCategories(initialData?: DiscoveryCategoriesInitialD
 					{
 						visibility: 'public',
 						sortBy: category.sortBy,
-						timeFrame: category.timeFrame,
+						...(category.timeFrame ? { timeFrame: category.timeFrame } : {}),
 						page: 1,
 						limit: category.limit
 					},
@@ -45,10 +38,12 @@ export function useDiscoveryCategories(initialData?: DiscoveryCategoriesInitialD
 	const categories: Record<string, CategoryData> = {}
 	for (let index = 0; index < DISCOVERY_CATEGORIES.length; index++) {
 		const category = DISCOVERY_CATEGORIES[index]
+		const query = queries[index]
+		if (!category || !query) throw new Error(`Missing discovery category query ${index}`)
 		categories[category.key] = {
-			dashboards: queries[index].data?.items ?? EMPTY_DASHBOARDS,
-			isLoading: queries[index].isLoading,
-			error: queries[index].error as Error | null
+			dashboards: query.data?.items ?? EMPTY_DASHBOARDS,
+			isLoading: query.isLoading,
+			error: query.error
 		}
 	}
 

@@ -1,4 +1,5 @@
 import { getChainsByCategory } from '~/containers/ChainsByCategory/queries'
+import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { chainIconUrl } from '~/utils/icons'
 
 export async function fetchChainsDatasetRows({
@@ -7,7 +8,7 @@ export async function fetchChainsDatasetRows({
 }: {
 	category?: string
 	limit?: number | null
-}): Promise<any[]> {
+}): Promise<ChainsDatasetRow[]> {
 	let categoryParam = typeof category === 'string' && category ? category : 'All'
 	const normalizedLimit = typeof limit === 'number' && Number.isFinite(limit) && limit > 0 ? limit : null
 
@@ -25,7 +26,7 @@ export async function fetchChainsDatasetRows({
 
 	const chains = data.chains || []
 
-	const formattedChains = chains.map((chain: any) => ({
+	const formattedChains: ChainsDatasetRow[] = chains.map((chain) => ({
 		name: chain.name,
 		icon: chainIconUrl(chain.name),
 		protocols: chain.protocols || 0,
@@ -57,8 +58,8 @@ export async function fetchChainsDatasetRows({
 	}))
 
 	const sortedChains = formattedChains
-		.filter((chain: any) => chain.tvl > 0)
-		.sort((a: any, b: any) => (b.tvl || 0) - (a.tvl || 0))
+		.filter((chain) => chain.tvl !== null && chain.tvl > 0)
+		.sort((a, b) => (b.tvl ?? 0) - (a.tvl ?? 0))
 
 	return normalizedLimit !== null ? sortedChains.slice(0, normalizedLimit) : sortedChains
 }

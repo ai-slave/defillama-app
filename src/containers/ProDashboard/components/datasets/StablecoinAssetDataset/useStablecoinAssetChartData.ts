@@ -3,14 +3,11 @@ import { useContext, useMemo } from 'react'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
+import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import {
 	buildStablecoinAssetCacheValue,
 	type StablecoinAssetCacheValue
-} from '~/containers/ProDashboard/server/stablecoinFetchers'
-import {
-	fetchStablecoinAssetViaProxy,
-	fetchStablecoinsListViaProxy
-} from '~/containers/ProDashboard/services/fetchViaProxy'
+} from '~/containers/ProDashboard/stablecoinData'
 import {
 	fetchStablecoinAssetApi,
 	fetchStablecoinAssetsApi,
@@ -80,7 +77,6 @@ const getStablecoinAssetChartParams = (rawData: Pick<StablecoinAssetCacheValue, 
 	chartDataByAssetOrChain: rawData.chainsData,
 	assetsOrChainsList: rawData.chainsUnique,
 	issuanceType: 'circulating' as const,
-	selectedChain: undefined,
 	totalChartTooltipLabel: 'Circulating'
 })
 
@@ -94,10 +90,11 @@ export function buildStablecoinAssetPresentation(
 	const params = getStablecoinAssetChartParams(rawData)
 	if (chartType === 'totalCirc') {
 		const dataset = buildTotalMcapPayload(params, { totalName: 'Circulating' }).dataset
+		const latestTotal = dataset.source.at(-1)?.[1]
 		return {
 			chartType,
 			dataset,
-			totalCirculating: (dataset.source.at(-1)?.[1] as number | undefined) ?? null
+			totalCirculating: typeof latestTotal === 'number' ? latestTotal : null
 		}
 	}
 	if (chartType === 'chainMcaps') {
@@ -137,7 +134,9 @@ export function buildStablecoinAssetPresentation(
 	let latestTimestamp = Number.NEGATIVE_INFINITY
 	for (const chain of rawData.chainsData) {
 		for (let index = chain.length - 1; index >= 0; index--) {
-			const timestamp = chain[index].date
+			const point = chain[index]
+			if (!point) continue
+			const timestamp = point.date
 			if (!isStablecoinChartDateVisible(undefined, timestamp)) continue
 			if (periodBounds && (timestamp < periodBounds.start || timestamp > periodBounds.end)) continue
 			if (timestamp > latestTimestamp) latestTimestamp = timestamp
@@ -149,15 +148,18 @@ export function buildStablecoinAssetPresentation(
 	let totalCirculating = 0
 	for (let chainIndex = 0; chainIndex < rawData.chainsData.length; chainIndex++) {
 		const chain = rawData.chainsData[chainIndex]
+		const chainName = rawData.chainsUnique[chainIndex]
+		if (!chain || !chainName) throw new Error('Stablecoin chain names and histories must have matching indexes')
 		let value = 0
 		for (let pointIndex = chain.length - 1; pointIndex >= 0; pointIndex--) {
 			const point = chain[pointIndex]
+			if (!point) continue
 			if (point.date < latestTimestamp) break
 			if (point.date !== latestTimestamp) continue
 			value = getStablecoinValueFromPoint(point, 'circulating') ?? 0
 			break
 		}
-		chainData.push({ name: rawData.chainsUnique[chainIndex], circulating: value })
+		chainData.push({ name: chainName, circulating: value })
 		totalCirculating += value
 	}
 	return {
@@ -191,7 +193,7 @@ export function useStablecoinAssetChartData(
 
 			let res: StablecoinDetailResponse | null
 			if (authToken) {
-				res = await fetchStablecoinAssetViaProxy(stablecoinSlug, authToken)
+				res = await fetchProDashboardProxy('stablecoinAsset', { slug: stablecoinSlug }, authToken)
 			} else {
 				const peggedNameToPeggedIDMapping = await fetchStablecoinPeggedConfigApi()
 				const peggedID = peggedNameToPeggedIDMapping[stablecoinSlug]
@@ -224,9 +226,9 @@ export function useStablecoinAssetChartData(
 	return useMemo(
 		() => ({
 			presentation,
-			chainsUnique: rawData?.chainsUnique || [],
-			stablecoinName: rawData?.stablecoinName || '',
-			stablecoinSymbol: rawData?.stablecoinSymbol || '',
+			chainsUnique: rawData?.chainsUnique ?? [],
+			stablecoinName: rawData?.stablecoinName ?? '',
+			stablecoinSymbol: rawData?.stablecoinSymbol ?? '',
 			isLoading,
 			error
 		}),
@@ -246,21 +248,27 @@ export function useStablecoinAssetsList() {
 	return useQuery({
 		queryKey: ['pro-dashboard', 'stablecoin-assets-list'],
 		queryFn: async () => {
-			const data = authToken ? await fetchStablecoinsListViaProxy(authToken) : await fetchStablecoinAssetsApi()
-			const peggedAssets = data.peggedAssets
-			return peggedAssets
-				.map((asset) => {
-					let mcap = 0
-					for (const pegType in asset.circulating) mcap += asset.circulating[pegType]
-					return {
+			const data = authToken
+				? await fetchProDashboardProxy('stablecoinsList', {}, authToken)
+				: await fetchStablecoinAssetsApi()
+			const assets: StablecoinAssetInfo[] = []
+			for (const asset of data.peggedAssets) {
+				let mcap = 0
+				for (const key in asset.circulating) {
+					const value = asset.circulating[key]
+					if (value !== undefined) mcap += value
+				}
+				if (mcap > 0) {
+					assets.push({
 						name: asset.name,
 						symbol: asset.symbol,
 						mcap,
 						geckoId: asset.gecko_id
-					}
-				})
-				.filter((a: StablecoinAssetInfo) => a.mcap > 0)
-				.sort((a: StablecoinAssetInfo, b: StablecoinAssetInfo) => b.mcap - a.mcap)
+					})
+				}
+			}
+			assets.sort((a, b) => b.mcap - a.mcap)
+			return assets
 		},
 		staleTime: 60 * 60 * 1000
 	})

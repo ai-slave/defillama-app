@@ -1,8 +1,7 @@
+import type { ChartConfiguration, ChartDataByKey } from '~/containers/LlamaAI/chartTypes'
 import type {
 	AlertProposedData,
 	ChartArtifactRef,
-	ChartConfiguration,
-	ChartDataByKey,
 	DashboardArtifact,
 	GeneratedImage,
 	Message,
@@ -126,14 +125,15 @@ function buildArtifactRegistry(message: Message): ArtifactRegistry {
 	}
 
 	for (const alert of message.alerts ?? []) {
-		artifacts.set(alert.alertId, {
+		const record: AlertArtifactRecord = {
 			type: 'alert',
 			id: alert.alertId,
 			title: alert.title,
-			alert,
-			messageId: message.id,
-			savedAlertIds: message.savedAlertIds
-		})
+			alert
+		}
+		if (message.id !== undefined) record.messageId = message.id
+		if (message.savedAlertIds !== undefined) record.savedAlertIds = message.savedAlertIds
+		artifacts.set(alert.alertId, record)
 	}
 
 	if (message.dashboards) {
@@ -182,9 +182,7 @@ export function parseMessageToRenderModel(
 		actionGroup = []
 	}
 
-	for (let index = 0; index < parsed.parts.length; index++) {
-		const part = parsed.parts[index]
-
+	for (const [index, part] of parsed.parts.entries()) {
 		if (part.type === 'action') {
 			actionGroup.push({ label: part.actionLabel, message: part.actionMessage })
 			continue
@@ -205,13 +203,14 @@ export function parseMessageToRenderModel(
 
 		if (part.type === 'text') {
 			if (!part.content) continue
-			blocks.push({
+			const block: Extract<MessageRenderBlock, { type: 'markdown' }> = {
 				type: 'markdown',
 				key: `markdown-${markdownBlockIndex++}`,
-				content: part.content,
-				citations: message.citations,
-				legacyUrlCitations: message.legacyUrlCitations
-			})
+				content: part.content
+			}
+			if (message.citations !== undefined) block.citations = message.citations
+			if (message.legacyUrlCitations !== undefined) block.legacyUrlCitations = message.legacyUrlCitations
+			blocks.push(block)
 			continue
 		}
 

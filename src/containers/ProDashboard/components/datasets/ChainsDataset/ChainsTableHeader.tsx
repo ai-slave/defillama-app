@@ -1,21 +1,19 @@
 import { Icon } from '~/ui/Icon'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
+import { CSVExportButton } from '../../CSVExportButton'
 
 interface ChainsTableHeaderProps {
 	selectedPreset: string | null
 	setSelectedPreset: (preset: string | null) => void
-	columnPresets: Record<string, string[]>
 	applyPreset: (preset: string) => void
 	showColumnSelector: boolean
 	setShowColumnSelector: (show: boolean) => void
 	handleExportCSV: () => void
-	category?: string
+	category: string | undefined
 }
 
 export function ChainsTableHeader({
 	selectedPreset,
 	setSelectedPreset,
-	columnPresets: _columnPresets,
 	applyPreset,
 	showColumnSelector,
 	setShowColumnSelector,
@@ -58,7 +56,7 @@ export function ChainsTableHeader({
 					</div>
 
 					<div className="flex items-center gap-2">
-						<ProTableCSVButton onClick={handleExportCSV} smol />
+						<CSVExportButton onClick={handleExportCSV} smol />
 
 						<button
 							onClick={() => setShowColumnSelector(!showColumnSelector)}

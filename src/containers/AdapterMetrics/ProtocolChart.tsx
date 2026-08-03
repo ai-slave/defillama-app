@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
-import { AddToDashboardButton } from '~/components/AddToDashboard'
+import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type {
@@ -295,6 +295,10 @@ const ChartByType = ({
 				protocol: slug(protocolName),
 				chains: [],
 				categories: [],
+				chainFilterMode: 'include',
+				categoryFilterMode: 'include',
+				chainCategoryFilterMode: 'include',
+				protocolCategoryFilterMode: 'include',
 				groupBy: 'protocol',
 				limit: 10,
 				chartType: 'stackedBar',

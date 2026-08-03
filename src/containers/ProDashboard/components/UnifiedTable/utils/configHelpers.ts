@@ -1,15 +1,16 @@
 import type { SortingState, VisibilityState } from '@tanstack/react-table'
-import type { CustomColumnDefinition, UnifiedRowHeaderType, UnifiedTableConfig } from '../../../types'
-import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '../config/ColumnDictionary'
+import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '../../../unifiedTable/config/columnDictionary'
+import type { UnifiedTableConfig } from '../../../unifiedTable/config/current'
+import { DEFAULT_COLUMN_ORDER, DEFAULT_COLUMN_VISIBILITY } from '../../../unifiedTable/config/defaults'
+import {
+	applyUnifiedTableRowHeaderVisibility,
+	DEFAULT_UNIFIED_TABLE_ROW_HEADERS,
+	normalizeUnifiedTableSorting,
+	sanitizeUnifiedTableRowHeaders
+} from '../../../unifiedTable/config/layoutPolicy'
+import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
 import { sanitizeConfigColumns } from '../config/metricCapabilities'
 import type { UnifiedTablePreset } from '../config/PresetRegistry'
-import {
-	DEFAULT_COLUMN_ORDER,
-	DEFAULT_COLUMN_VISIBILITY,
-	DEFAULT_ROW_HEADERS,
-	DEFAULT_UNIFIED_TABLE_SORTING
-} from '../constants'
-import { sanitizeRowHeaders } from '../utils/rowHeaders'
 
 const ALL_COLUMNS_HIDDEN: Record<string, boolean> = UNIFIED_TABLE_COLUMN_DICTIONARY.reduce<Record<string, boolean>>(
 	(acc, column) => {
@@ -19,7 +20,20 @@ const ALL_COLUMNS_HIDDEN: Record<string, boolean> = UNIFIED_TABLE_COLUMN_DICTION
 	{ name: false }
 )
 
-export function getDefaultColumnOrder(config: UnifiedTableConfig, fallbackPreset?: UnifiedTablePreset): string[] {
+type ColumnOrderConfig = {
+	columnOrder?: UnifiedTableConfig['columnOrder']
+	customColumns?: UnifiedTableConfig['customColumns']
+}
+
+type ColumnVisibilityConfig = ColumnOrderConfig & {
+	columnVisibility?: UnifiedTableConfig['columnVisibility']
+}
+
+export function getDefaultColumnOrder(
+	config: ColumnOrderConfig,
+	rowHeaders: readonly UnifiedRowHeaderType[],
+	fallbackPreset?: UnifiedTablePreset
+): string[] {
 	let order: string[]
 
 	if (config.columnOrder && config.columnOrder.length) {
@@ -34,14 +48,16 @@ export function getDefaultColumnOrder(config: UnifiedTableConfig, fallbackPreset
 		order,
 		visibility: {},
 		sorting: [],
-		customColumns: config.customColumns
+		customColumns: config.customColumns,
+		rowHeaders
 	})
 
 	return sanitized.order
 }
 
 export function getDefaultColumnVisibility(
-	config: UnifiedTableConfig,
+	config: ColumnVisibilityConfig,
+	rowHeaders: readonly UnifiedRowHeaderType[],
 	fallbackPreset?: UnifiedTablePreset,
 	includeDefaults: boolean = false
 ): VisibilityState {
@@ -76,7 +92,8 @@ export function getDefaultColumnVisibility(
 		order: [],
 		visibility,
 		sorting: [],
-		customColumns: config.customColumns
+		customColumns: config.customColumns,
+		rowHeaders
 	})
 
 	return sanitized.visibility
@@ -87,41 +104,14 @@ export function getDefaultRowHeaders(
 	fallbackPreset?: UnifiedTablePreset
 ): UnifiedRowHeaderType[] {
 	if (config.rowHeaders && config.rowHeaders.length) {
-		return sanitizeRowHeaders(config.rowHeaders)
+		return sanitizeUnifiedTableRowHeaders(config.rowHeaders)
 	}
 
 	if (fallbackPreset) {
-		return sanitizeRowHeaders(fallbackPreset.rowHeaders as UnifiedRowHeaderType[])
+		return sanitizeUnifiedTableRowHeaders(fallbackPreset.rowHeaders)
 	}
 
-	return sanitizeRowHeaders(DEFAULT_ROW_HEADERS)
-}
-
-export function normalizeSorting(sorting?: Array<{ id: string; desc?: boolean }>): SortingState {
-	const base = sorting && sorting.length ? sorting : DEFAULT_UNIFIED_TABLE_SORTING
-
-	return base.map((item) => ({
-		id: item.id,
-		desc: item.desc ?? false
-	}))
-}
-
-export function applyRowHeaderVisibilityRules(
-	rowHeaders: UnifiedRowHeaderType[],
-	baseVisibility: VisibilityState
-): VisibilityState {
-	const nextVisibility = { ...baseVisibility }
-
-	if (rowHeaders.includes('chain')) {
-		nextVisibility.chains = false
-		nextVisibility.category = false
-	}
-
-	if (rowHeaders.includes('category')) {
-		nextVisibility.category = false
-	}
-
-	return nextVisibility
+	return sanitizeUnifiedTableRowHeaders(DEFAULT_UNIFIED_TABLE_ROW_HEADERS)
 }
 
 interface ApplyPresetOptions {
@@ -139,7 +129,7 @@ export function applyPresetToConfig(options: ApplyPresetOptions): {
 } {
 	const { preset, includeRowHeaderRules = true, mergeWithDefaults = true, customColumns } = options
 
-	const rowHeaders = sanitizeRowHeaders(preset.rowHeaders as UnifiedRowHeaderType[])
+	const rowHeaders = sanitizeUnifiedTableRowHeaders(preset.rowHeaders)
 
 	let columnVisibility = mergeWithDefaults
 		? { ...DEFAULT_COLUMN_VISIBILITY, ...preset.columnVisibility }
@@ -148,12 +138,13 @@ export function applyPresetToConfig(options: ApplyPresetOptions): {
 	const sanitized = sanitizeConfigColumns({
 		order: [...preset.columnOrder],
 		visibility: columnVisibility,
-		sorting: normalizeSorting(preset.defaultSorting),
-		customColumns
+		sorting: normalizeUnifiedTableSorting(preset.defaultSorting),
+		customColumns,
+		rowHeaders
 	})
 
 	if (includeRowHeaderRules) {
-		sanitized.visibility = applyRowHeaderVisibilityRules(rowHeaders, sanitized.visibility)
+		sanitized.visibility = applyUnifiedTableRowHeaderVisibility(rowHeaders, sanitized.visibility)
 	}
 
 	return {

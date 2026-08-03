@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import {
 	mapPersistedMessage,
 	mapPersistedMessages,
@@ -6,7 +7,7 @@ import {
 	type PersistedMessage,
 	type SharedSessionMessage
 } from '~/containers/LlamaAI/messageMappers'
-import type { ChartConfiguration, DashboardItem } from '~/containers/LlamaAI/types'
+import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
 
 const chart: ChartConfiguration = {
 	id: 'chart-1',
@@ -41,7 +42,7 @@ const dashboardItem = {
 	kind: 'llamaai-chart',
 	chartRef: 'chart-1',
 	title: 'TVL'
-} satisfies DashboardItem
+} satisfies DashboardItemConfig
 
 describe('messageMappers', () => {
 	it('restores safe chart artifact refs for direct save after process loss', () => {
@@ -63,7 +64,7 @@ describe('messageMappers', () => {
 				}
 			}
 		})
-		expect(mapped.charts?.[0].artifactRefs?.['chart-1']).toEqual({
+		expect(mapped.charts?.[0]?.artifactRefs?.['chart-1']).toEqual({
 			artifactId: 'artifact-1',
 			versionId: 'version-1',
 			status: 'live',
@@ -205,7 +206,7 @@ describe('messageMappers', () => {
 		})
 	})
 
-	it('normalizes malformed restored dashboard items and missing chart refs', () => {
+	it('preserves restored dashboard items with missing chart refs', () => {
 		const message: PersistedMessage = {
 			role: 'assistant',
 			content: 'Dashboard ready',
@@ -216,7 +217,7 @@ describe('messageMappers', () => {
 			metadata: {
 				dashboardConfig: {
 					dashboardName: 'Protocol dashboard',
-					items: [{ id: 'bad' }, { ...dashboardItem, chartRef: 'missing-chart' }, dashboardItem]
+					items: [{ ...dashboardItem, chartRef: 'missing-chart' }, dashboardItem]
 				}
 			}
 		}

@@ -84,6 +84,19 @@ describe('cachedResult', () => {
 		expect(compute).toHaveBeenCalledTimes(1)
 	})
 
+	it('evicts serialized JSON entries when the namespace byte budget is exceeded', async () => {
+		const namespace = 'result-cache-json-byte-budget-test'
+		const compute = vi.fn(async (key: string) => ({ key, padding: '1234567890' }))
+		const options = { ttlMs: 60_000, maxBytes: 70 }
+
+		await cachedJsonResult(namespace, 'a', options, () => compute('a'))
+		await cachedJsonResult(namespace, 'b', options, () => compute('b'))
+		await cachedJsonResult(namespace, 'c', options, () => compute('c'))
+		await cachedJsonResult(namespace, 'a', options, () => compute('a'))
+
+		expect(compute.mock.calls.map(([key]) => key)).toEqual(['a', 'b', 'c', 'a'])
+	})
+
 	it('records background stale refresh failures with route phase attributes', async () => {
 		vi.stubEnv('OPS_TELEMETRY_URL', 'test-ingest-url')
 		vi.stubEnv('OPS_TELEMETRY_TOKEN', 'secret')

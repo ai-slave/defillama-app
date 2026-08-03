@@ -1,15 +1,15 @@
 import * as React from 'react'
 import { Icon } from '~/ui/Icon'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
+import { CSVExportButton } from '../../CSVExportButton'
 
 interface YieldsTableHeaderProps {
-	chains?: string[]
-	columnPresets: Record<string, string[]>
+	chains: string[] | undefined
+	columnPresets: Record<string, readonly string[]>
 	applyPreset: (presetName: string) => void
 	activePreset: string | null
 	showColumnPanel: boolean
 	setShowColumnPanel: (show: boolean) => void
-	downloadCSV?: () => void
+	downloadCSV: (() => void) | undefined
 	poolName: string
 	setPoolName: (name: string) => void
 	showFiltersPanel: boolean
@@ -81,7 +81,7 @@ export function YieldsTableHeader({
 				</div>
 
 				<div className="flex items-center gap-2">
-					{downloadCSV && <ProTableCSVButton onClick={downloadCSV} smol />}
+					{downloadCSV && <CSVExportButton onClick={downloadCSV} smol />}
 
 					<button
 						onClick={() => setShowFiltersPanel(!showFiltersPanel)}

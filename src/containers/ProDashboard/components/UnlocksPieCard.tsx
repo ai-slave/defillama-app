@@ -1,15 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useContext, useMemo } from 'react'
-import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { getProtocolEmissionsPieData } from '~/containers/Unlocks/queries'
 import { slug } from '~/utils'
 import { download } from '~/utils/download'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksPieConfig } from '../types'
+import { CSVExportButton } from './CSVExportButton'
 import { LoadingSpinner } from './LoadingSpinner'
-import { ProTableCSVButton } from './ProTable/CsvButton'
 
-const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
+const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 
 const LOCKED_UNLOCKED_COLORS = {
 	Unlocked: '#0c5dff',
@@ -66,7 +65,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 		download(csvFileName, csvContent)
 	}, [chartData, csvFileName, hasChartData])
 
-	if (isLoading || !streamDone) {
+	if (isLoading || (!streamDone && data === undefined)) {
 		return (
 			<div className="flex h-full min-h-[360px] items-center justify-center">
 				<LoadingSpinner />
@@ -83,7 +82,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 				</div>
 				{hasChartData ? (
 					<div className="flex gap-2">
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={handleCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"

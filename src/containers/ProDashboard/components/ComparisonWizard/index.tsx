@@ -1,14 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAppMetadata } from '../../AppMetadataContext'
+import { createChartConfig, createMetricConfig } from '../../dashboardConfig/classicChartConfig'
+import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
-import {
-	type ChartConfig,
-	type DashboardItemConfig,
-	getProDashboardChartTypeConfig,
-	type MetricConfig,
-	type MultiChartConfig,
-	type UnifiedTableConfig
-} from '../../types'
+import { type ChartConfig, getProDashboardChartTypeConfig, type MetricConfig, type MultiChartConfig } from '../../types'
+import { UNIFIED_TABLE_CONFIG_VERSION, type UnifiedTableConfig } from '../../unifiedTable/config/current'
 import { generateItemId } from '../../utils/dashboardUtils'
 import { ComparisonWizardProvider, useComparisonWizardContext } from './ComparisonWizardContext'
 import { WizardNavigation } from './components/WizardNavigation'
@@ -53,53 +49,52 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 
 		if (!comparisonType) return []
 
-		return selectedMetrics
-			.map((metric) => {
-				const chartTypeInfo = getProDashboardChartTypeConfig(metric)
-				const metricInfo = availableMetrics.find((m) => m.metric === metric)
+		return selectedMetrics.flatMap((metric): MultiChartConfig[] => {
+			const chartTypeInfo = getProDashboardChartTypeConfig(metric)
+			const metricInfo = availableMetrics.find((m) => m.metric === metric)
+			const isChain = comparisonType === 'chains'
+			const isGroupable = chartTypeInfo && 'groupable' in chartTypeInfo && chartTypeInfo.groupable
+			const chartItems: ChartConfig[] = []
+			for (const item of selectedItems) {
+				const chainMeta = isChain ? chainsByName.get(item) : undefined
+				const protocol = isChain ? undefined : getProtocolInfo(item)
+				if (isChain ? !chainMeta : !protocol) continue
 
-				const chartItems: ChartConfig[] = selectedItems
-					.filter((item) => {
-						if (comparisonType === 'chains') {
-							return chainsByName.has(item)
-						}
-						return !!getProtocolInfo(item)
-					})
-					.map((item) => {
-						const isChain = comparisonType === 'chains'
-						const chainMeta = isChain ? chainsByName.get(item) : null
-						const protocol = !isChain ? getProtocolInfo(item) : null
-						const isGroupable = chartTypeInfo && 'groupable' in chartTypeInfo && chartTypeInfo.groupable
+				const chartBase = {
+					id: generateItemId('chart', `${item}-${metric}`),
+					kind: 'chart' as const,
+					...(isGroupable ? { grouping: 'day' as const } : {}),
+					...(chainMeta?.gecko_id != null
+						? { geckoId: chainMeta.gecko_id }
+						: protocol?.geckoId != null
+							? { geckoId: protocol.geckoId }
+							: {})
+				}
+				const chart = isChain
+					? createChartConfig({ ...chartBase, subjectType: 'chain', chain: item, type: metric })
+					: createChartConfig({ ...chartBase, subjectType: 'protocol', protocol: item, type: metric })
+				if (chart) chartItems.push(chart)
+			}
 
-						return {
-							id: generateItemId('chart', `${item}-${metric}`),
-							kind: 'chart' as const,
-							chain: isChain ? item : '',
-							protocol: !isChain ? item : undefined,
-							type: metric,
-							grouping: isGroupable ? ('day' as const) : undefined,
-							geckoId: isChain ? chainMeta?.gecko_id : protocol?.geckoId
-						}
-					})
+			if (chartItems.length === 0) return []
 
-				if (chartItems.length === 0) return null
+			const metricTitle = metricInfo?.title || chartTypeInfo?.title || metric
+			const chartName = selectedItems.length === 1 ? metricTitle : `${metricTitle} Comparison`
 
-				const metricTitle = metricInfo?.title || chartTypeInfo?.title || metric
-				const chartName = selectedItems.length === 1 ? metricTitle : `${metricTitle} Comparison`
-
-				return {
+			return [
+				{
 					id: generateItemId('multi', `comparison-${metric}`),
-					kind: 'multi' as const,
+					kind: 'multi',
 					name: chartName,
 					items: chartItems,
-					grouping: state.grouping,
+					...(state.grouping !== undefined ? { grouping: state.grouping } : {}),
 					showStacked: state.displayMode === 'stacked',
 					showCumulative: state.displayMode === 'cumulative',
 					showPercentage: state.displayMode === 'percentage',
-					colSpan: 1 as const
+					colSpan: 1
 				}
-			})
-			.filter(Boolean) as MultiChartConfig[]
+			]
+		})
 	}
 
 	const generateComparisonMetrics = (): MetricConfig[] => {
@@ -119,29 +114,31 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 					subject = {
 						itemType: 'chain',
 						chain: item,
-						geckoId: chainMeta?.gecko_id
+						...(chainMeta?.gecko_id !== undefined ? { geckoId: chainMeta.gecko_id } : {})
 					}
 				} else {
 					const protocol = getProtocolInfo(item)
 					subject = {
 						itemType: 'protocol',
 						protocol: item,
-						geckoId: protocol?.geckoId
+						...(protocol?.geckoId !== undefined ? { geckoId: protocol.geckoId } : {})
 					}
 				}
 
-				metrics.push({
+				const metric = createMetricConfig({
 					id: generateItemId('metric', `${item}-${metricType}`),
 					kind: 'metric',
 					subject,
 					type: metricType,
 					aggregator: metricSettings.aggregator,
 					window: metricSettings.window,
-					compare:
-						metricSettings.compareMode !== 'none' ? { mode: metricSettings.compareMode, format: 'percent' } : undefined,
-					showSparkline: metricSettings.showSparkline,
+					...(metricSettings.compareMode !== 'none'
+						? { compare: { mode: metricSettings.compareMode, format: 'percent' as const } }
+						: {}),
+					chartType: metricSettings.chartType,
 					colSpan: 0.5
 				})
+				if (metric) metrics.push(metric)
 			}
 		}
 
@@ -156,11 +153,10 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 		return {
 			id: generateItemId('unified-table', 'comparison'),
 			kind: 'unified-table',
+			configVersion: UNIFIED_TABLE_CONFIG_VERSION,
+			strategy: 'protocols',
 			rowHeaders: isChains ? ['chain'] : ['parent-protocol', 'protocol'],
-			filters: {
-				protocols: !isChains ? state.selectedItems : undefined,
-				chains: isChains ? state.selectedItems : undefined
-			},
+			filters: isChains ? { chains: state.selectedItems } : { protocols: state.selectedItems },
 			columnOrder: isChains
 				? ['name', 'tvl', 'change7d', 'fees24h', 'revenue24h', 'volume24h', 'bridgedTvl']
 				: ['name', 'tvl', 'change7d', 'fees24h', 'revenue24h', 'volume24h'],
@@ -190,7 +186,8 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 		const remainder = totalEffectiveCols % 4
 
 		if (remainder === 2 && charts.length > 0) {
-			charts[charts.length - 1].colSpan = 2
+			const lastChart = charts.at(-1)
+			if (lastChart) lastChart.colSpan = 2
 		}
 
 		const items: DashboardItemConfig[] = [...metricCards, ...charts]
@@ -244,7 +241,10 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 export function ComparisonWizard({ onComplete, comparisonPreset }: ComparisonWizardProps) {
 	return (
 		<ComparisonWizardProvider>
-			<ComparisonWizardContent onComplete={onComplete} comparisonPreset={comparisonPreset} />
+			<ComparisonWizardContent
+				onComplete={onComplete}
+				{...(comparisonPreset !== undefined ? { comparisonPreset } : {})}
+			/>
 		</ComparisonWizardProvider>
 	)
 }

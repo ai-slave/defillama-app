@@ -1,5 +1,4 @@
 import {
-	type ColumnDef,
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ColumnSizingState,
@@ -11,42 +10,66 @@ import {
 	type SortingState,
 	useReactTable
 } from '@tanstack/react-table'
-import { lazy, Suspense, useContext, useEffect, useMemo, useState, type FC, type ReactNode } from 'react'
+import { lazy, Suspense, useContext, useMemo, useState, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
-import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
-import type {
-	IMultiSeriesChartProps,
-	MultiSeriesChartDataset,
-	MultiSeriesChartSeriesConfig
-} from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useTableSearch } from '~/components/Table/utils'
 import type {
 	CexAnalyticsMarketSharePoint,
 	CexAnalyticsMetric,
 	CexAnalyticsSnapshotResponse,
+	CexAnalyticsSnapshotRow,
 	CexAnalyticsTotalsPoint
 } from '~/containers/Cexs/api.types'
 import { useProDashboardTime } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { getTimePeriodBounds, StreamDoneContext } from '~/containers/ProDashboard/queries'
-import type { ProtocolsTableConfig } from '~/containers/ProDashboard/types'
-import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
+import type { CexDatasetTableConfig } from '~/containers/ProDashboard/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formatDateTime } from '~/utils/dateFormat'
-import { downloadCSV } from '~/utils/download'
+import { downloadCSV, type CsvCell } from '~/utils/download'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
+import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
-import { TableBody } from '../../ProTable/TableBody'
-import { TablePagination } from '../../ProTable/TablePagination'
+import { TableBody } from '../../Table/TableBody'
+import { TablePagination } from '../../Table/TablePagination'
 import { cexAnalyticsColumns } from './columns'
 import { useCexAnalyticsMarketShare, useCexAnalyticsSnapshot, useCexAnalyticsTotals } from './useCexAnalyticsData'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as FC<IMultiSeriesChartProps>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-const EMPTY_ROWS: any[] = []
+const EMPTY_ROWS: CexAnalyticsSnapshotRow[] = []
+const CEX_COLUMN_ORDER: ColumnOrderState = [
+	'venue',
+	'spotVolume24h',
+	'derivativesVolume24h',
+	'spotShare',
+	'derivativesShare',
+	'derivativesToSpotRatio',
+	'openInterest',
+	'avgLeverage',
+	'cleanTvl',
+	'volumeToTvl'
+]
+const CEX_COLUMN_SIZING: ColumnSizingState = {
+	venue: 280,
+	spotVolume24h: 140,
+	derivativesVolume24h: 150,
+	spotShare: 110,
+	derivativesShare: 140,
+	derivativesToSpotRatio: 145,
+	openInterest: 135,
+	avgLeverage: 120,
+	cleanTvl: 120,
+	volumeToTvl: 120
+}
+const getCexCoreRowModel = getCoreRowModel<CexAnalyticsSnapshotRow>()
+const getCexSortedRowModel = getSortedRowModel<CexAnalyticsSnapshotRow>()
+const getCexFilteredRowModel = getFilteredRowModel<CexAnalyticsSnapshotRow>()
+const getCexPaginationRowModel = getPaginationRowModel<CexAnalyticsSnapshotRow>()
 const STACK_COLORS = {
 	Spot: '#2d8cf0',
 	Derivatives: '#f28b36'
@@ -61,7 +84,7 @@ const SHARE_PALETTE = [
 	'#ffa94d',
 	'#577590',
 	'#94a3b8'
-]
+] as const
 const SPOT_VS_DERIVATIVES_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{
 		type: 'bar',
@@ -80,11 +103,10 @@ const SPOT_VS_DERIVATIVES_CHARTS: MultiSeriesChartSeriesConfig[] = [
 		large: false
 	}
 ]
-const DOLLAR_CHART_OPTIONS = createTimeSeriesChartOptions('$')
-const STACKED_PERCENT_CHART_OPTIONS = createTimeSeriesChartOptions('%')
+const STACKED_PERCENT_CHART_OPTIONS = { grid: { top: CHART_LEGEND_RESERVE } }
 
 type CexAnalyticsDatasetProps = {
-	config: ProtocolsTableConfig
+	config: CexDatasetTableConfig
 }
 
 function DatasetState({
@@ -146,7 +168,9 @@ function filterTimeSeriesRows<T extends { date: number }>(
 	let high = rows.length
 	while (low < high) {
 		const mid = (low + high) >>> 1
-		if (rows[mid].date < bounds.start) low = mid + 1
+		const row = rows[mid]
+		if (!row) return rows
+		if (row.date < bounds.start) low = mid + 1
 		else high = mid
 	}
 	const startIndex = low
@@ -154,13 +178,16 @@ function filterTimeSeriesRows<T extends { date: number }>(
 	high = rows.length
 	while (low < high) {
 		const mid = (low + high) >>> 1
-		if (rows[mid].date <= bounds.end) low = mid + 1
+		const row = rows[mid]
+		if (!row) return rows
+		if (row.date <= bounds.end) low = mid + 1
 		else high = mid
 	}
 	return startIndex === 0 && low === rows.length ? rows : rows.slice(startIndex, low)
 }
 
 function SummaryCards({ data }: { data: CexAnalyticsSnapshotResponse }) {
+	const weightedAvgLeverage = formatRatio(data.summary.weightedAvgLeverage)
 	const cards = [
 		{
 			label: 'Spot Volume',
@@ -194,7 +221,7 @@ function SummaryCards({ data }: { data: CexAnalyticsSnapshotResponse }) {
 				compactSuffix: 'lowercase'
 			})
 		},
-		{ label: 'Weighted Avg Leverage', value: `${formatRatio(data.summary.weightedAvgLeverage) ?? '-'}x` }
+		{ label: 'Weighted Avg Leverage', value: weightedAvgLeverage === null ? null : `${weightedAvgLeverage}x` }
 	]
 
 	return (
@@ -224,19 +251,17 @@ function SummaryCards({ data }: { data: CexAnalyticsSnapshotResponse }) {
 
 function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'derivativesVolume24h', desc: true }])
-	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
-	const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({})
+	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(CEX_COLUMN_ORDER)
+	const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(CEX_COLUMN_SIZING)
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [pagination, setPagination] = useState<PaginationState>({
 		pageIndex: 0,
 		pageSize: 10
 	})
 
-	const width = useBreakpointWidth()
-
 	const instance = useReactTable({
 		data: data.rows ?? EMPTY_ROWS,
-		columns: cexAnalyticsColumns as ColumnDef<any>[],
+		columns: cexAnalyticsColumns,
 		state: {
 			sorting,
 			columnOrder,
@@ -250,31 +275,12 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		autoResetPageIndex: false
+		getCoreRowModel: getCexCoreRowModel,
+		getSortedRowModel: getCexSortedRowModel,
+		getFilteredRowModel: getCexFilteredRowModel,
+		getPaginationRowModel: getCexPaginationRowModel,
+		autoResetPageIndex: true
 	})
-
-	useEffect(() => {
-		const defaultOrder = instance.getAllLeafColumns().map((column) => column.id)
-		const defaultSizing = {
-			venue: 280,
-			spotVolume24h: 140,
-			derivativesVolume24h: 150,
-			spotShare: 110,
-			derivativesShare: 140,
-			derivativesToSpotRatio: 145,
-			openInterest: 135,
-			avgLeverage: 120,
-			cleanTvl: 120,
-			volumeToTvl: 120
-		}
-
-		instance.setColumnOrder(defaultOrder)
-		instance.setColumnSizing(defaultSizing)
-	}, [instance, width])
 
 	const [_venueName, setVenueName] = useTableSearch({ instance, columnToSearch: 'venue' })
 
@@ -289,38 +295,38 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 						</p>
 					</div>
 					<div className="flex flex-wrap items-center justify-end gap-2">
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={() => {
-								const rows = instance.getFilteredRowModel().rows.map((row) => row.original)
-								const headers = [
-									'CEX',
-									'Spot 24h',
-									'Derivatives 24h',
-									'Spot Share %',
-									'Derivatives Share %',
-									'Derivatives / Spot',
-									'Open Interest',
-									'Avg Leverage',
-									'Clean TVL',
-									'Volume / TVL'
+								const rows = instance.getFilteredRowModel().rows
+								const csv: CsvCell[][] = [
+									[
+										'CEX',
+										'Spot 24h',
+										'Derivatives 24h',
+										'Spot Share %',
+										'Derivatives Share %',
+										'Derivatives / Spot',
+										'Open Interest',
+										'Avg Leverage',
+										'Clean TVL',
+										'Volume / TVL'
+									]
 								]
-								const csv = [
-									headers.join(','),
-									...rows.map((row) =>
-										[
-											row.venue,
-											row.spotVolume24h,
-											row.derivativesVolume24h,
-											row.spotShare,
-											row.derivativesShare,
-											row.derivativesToSpotRatio ?? '',
-											row.openInterest ?? '',
-											row.avgLeverage ?? '',
-											row.cleanTvl ?? '',
-											row.volumeToTvl ?? ''
-										].join(',')
-									)
-								].join('\n')
+								for (const tableRow of rows) {
+									const row = tableRow.original
+									csv.push([
+										row.venue,
+										row.spotVolume24h,
+										row.derivativesVolume24h,
+										row.spotShare,
+										row.derivativesShare,
+										row.derivativesToSpotRatio,
+										row.openInterest,
+										row.avgLeverage,
+										row.cleanTvl,
+										row.volumeToTvl
+									])
+								}
 
 								downloadCSV('cexs-comparison.csv', csv, { addTimestamp: true })
 							}}
@@ -336,7 +342,17 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 				</div>
 			</div>
 			<TableBody table={instance} />
-			<TablePagination table={instance} />
+			<TablePagination
+				pageSize={pagination.pageSize}
+				pageIndex={pagination.pageIndex}
+				pageCount={instance.getPageCount()}
+				canPreviousPage={instance.getCanPreviousPage()}
+				canNextPage={instance.getCanNextPage()}
+				previousPage={instance.previousPage}
+				nextPage={instance.nextPage}
+				setPageSize={instance.setPageSize}
+				showPageSizes={instance.getRowCount() > 10}
+			/>
 		</div>
 	)
 }
@@ -370,7 +386,6 @@ function SpotVsDerivativesChart({ data }: { data: CexAnalyticsTotalsPoint[] }) {
 					title="Spot vs Derivatives Volume"
 					dataset={dataset}
 					charts={SPOT_VS_DERIVATIVES_CHARTS}
-					chartOptions={DOLLAR_CHART_OPTIONS}
 					valueSymbol="$"
 					height="360px"
 					hideDefaultLegend={false}
@@ -419,21 +434,22 @@ function VenueMarketShareChart({
 		for (const [date, values] of byDate) {
 			const row = new Array<number>(order.length + 1)
 			row[0] = date * 1e3
-			for (let venueIndex = 0; venueIndex < order.length; venueIndex++) {
-				row[venueIndex + 1] = values.get(order[venueIndex]) ?? 0
+			for (const [venueIndex, venue] of order.entries()) {
+				row[venueIndex + 1] = values.get(venue) ?? 0
 			}
 			source[rowIndex++] = row
 		}
-		const charts: MultiSeriesChartSeriesConfig[] = new Array(order.length)
-		for (let index = 0; index < order.length; index++) {
-			const venue = order[index]
-			charts[index] = {
+		const charts: MultiSeriesChartSeriesConfig[] = []
+		for (const [index, venue] of order.entries()) {
+			const color = SHARE_PALETTE[index % SHARE_PALETTE.length]
+			if (!color) throw new Error('CEX market-share palette must not be empty')
+			charts.push({
 				type: 'line',
 				name: venue,
 				encode: { x: 0, y: index + 1 },
 				stack: 'Total',
-				color: SHARE_PALETTE[index % SHARE_PALETTE.length]
-			}
+				color
+			})
 		}
 
 		return {
@@ -510,24 +526,21 @@ function VenueMarketShareChart({
 
 export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 	const streamDone = useContext(StreamDoneContext)
-	const rawView = config.cexAnalyticsView as string | undefined
-	const view = rawView === 'efficiency' ? 'comparison' : config.cexAnalyticsView || 'comparison'
+	const view = config.cexAnalyticsView
 	const needsSnapshot = view === 'summary' || view === 'comparison'
 	const needsTotals = view === 'spot-vs-derivatives'
 	const needsShare = view === 'market-share'
+	const shareMetric = needsShare ? config.cexAnalyticsMetric : 'derivatives'
+	const shareTopN = needsShare ? config.cexAnalyticsTopN : 8
 	const snapshotQuery = useCexAnalyticsSnapshot(needsSnapshot && streamDone)
 	const totalsQuery = useCexAnalyticsTotals(needsTotals && streamDone)
-	const shareQuery = useCexAnalyticsMarketShare(
-		config.cexAnalyticsMetric || 'derivatives',
-		config.cexAnalyticsTopN || 8,
-		needsShare && streamDone
-	)
+	const shareQuery = useCexAnalyticsMarketShare(shareMetric, shareTopN, needsShare && streamDone)
 
 	if (view === 'summary') {
 		return (
 			<DatasetState
 				title="CEX Summary"
-				isLoading={snapshotQuery.isLoading}
+				isLoading={snapshotQuery.isLoading || (!streamDone && snapshotQuery.data === undefined)}
 				isError={Boolean(snapshotQuery.error)}
 				errorMessage="Failed to load CEX summary"
 			>
@@ -540,7 +553,7 @@ export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 		return (
 			<DatasetState
 				title="CEX Comparison"
-				isLoading={snapshotQuery.isLoading}
+				isLoading={snapshotQuery.isLoading || (!streamDone && snapshotQuery.data === undefined)}
 				isError={Boolean(snapshotQuery.error)}
 				errorMessage="Failed to load CEX comparison data"
 			>
@@ -553,7 +566,7 @@ export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 		return (
 			<DatasetState
 				title="Spot vs Derivatives Volume"
-				isLoading={totalsQuery.isLoading}
+				isLoading={totalsQuery.isLoading || (!streamDone && totalsQuery.data === undefined)}
 				isError={Boolean(totalsQuery.error)}
 				errorMessage="Failed to load CEX volume history"
 			>
@@ -566,31 +579,21 @@ export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 		return (
 			<DatasetState
 				title="CEX Market Share"
-				isLoading={shareQuery.isLoading}
+				isLoading={shareQuery.isLoading || (!streamDone && shareQuery.data === undefined)}
 				isError={Boolean(shareQuery.error)}
 				errorMessage="Failed to load CEX market share"
 			>
 				{shareQuery.data ? (
 					<VenueMarketShareChart
 						data={shareQuery.data}
-						metric={config.cexAnalyticsMetric || 'derivatives'}
-						topN={config.cexAnalyticsTopN || 8}
+						metric={config.cexAnalyticsMetric}
+						topN={config.cexAnalyticsTopN}
 					/>
 				) : null}
 			</DatasetState>
 		)
 	}
 
-	return (
-		<DatasetState
-			title="CEX Comparison"
-			isLoading={snapshotQuery.isLoading}
-			isError={Boolean(snapshotQuery.error)}
-			errorMessage="Failed to load CEX comparison data"
-		>
-			{snapshotQuery.data ? <VenueComparisonTable data={snapshotQuery.data} /> : null}
-		</DatasetState>
-	)
+	const exhaustiveView: never = view
+	return exhaustiveView
 }
-
-export default CexAnalyticsDataset

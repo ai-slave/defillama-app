@@ -1,7 +1,7 @@
-import handler from '~/containers/ProDashboard/server/fetchRoute'
+import { dashboardFetchApiHandler } from '~/containers/ProDashboard/server/fetchRoute'
 
 export const config = {
 	api: { responseLimit: false }
 }
 
-export default handler
+export default dashboardFetchApiHandler

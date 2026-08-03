@@ -1,10 +1,10 @@
 import { Suspense } from 'react'
+import { isChartConfiguration, isChartData } from '~/containers/LlamaAI/chartTypes'
 import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
-import { validateLlamaAIChartConfig, type LlamaAIChartData } from '../llamaaiChart'
 
 export function LlamaAIChartBlock({ attrs, index }: { attrs: Record<string, unknown>; index: number | null }) {
-	const config = validateLlamaAIChartConfig(attrs.chartConfig)
-	const chartData = attrs.chartData as LlamaAIChartData | null | undefined
+	const config = isChartConfiguration(attrs.chartConfig) ? attrs.chartConfig : null
+	const chartData = isChartData(attrs.chartData) ? attrs.chartData : null
 	if (!config || !chartData) return null
 	const caption = typeof attrs.caption === 'string' ? attrs.caption.trim() : ''
 

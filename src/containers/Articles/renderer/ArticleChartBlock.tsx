@@ -4,7 +4,7 @@ import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeries
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
-import type { TimePeriod } from '~/containers/ProDashboard/dashboardReducer'
+import type { TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
 import { buildProDashboardParentMapping, buildProtocolSymbolMap } from '~/containers/ProDashboard/protocolCatalog'
 import {
 	filterDataByTimePeriod,
@@ -84,8 +84,9 @@ export function ArticleChartBlock({
 		queries: series.map((s) => ({
 			queryKey: getProDashboardChartSourceQueryKey({
 				type: s.chartType,
-				protocol: s.entityType === 'protocol' ? s.slug : '',
-				chain: s.entityType === 'chain' ? s.slug : '',
+				...(s.entityType === 'protocol'
+					? { subjectType: 'protocol', protocol: s.slug }
+					: { subjectType: 'chain', chain: s.slug }),
 				geckoId: s.geckoId ?? null
 			}),
 			queryFn: getChartQueryFn(

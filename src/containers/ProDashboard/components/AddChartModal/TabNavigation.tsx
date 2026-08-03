@@ -1,13 +1,21 @@
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
-import type { DashboardItemConfig } from '../../types'
+import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { MainTabType } from './types'
 
 const PRO_ONLY_TABS = new Set<MainTabType>(['llamaai'])
+const ALL_TABS: Array<{ id: MainTabType; label: string; subtitle?: string; mobileLabel: string }> = [
+	{ id: 'charts', label: 'Charts', subtitle: '', mobileLabel: 'Charts' },
+	{ id: 'metric', label: 'Metric', mobileLabel: 'Metric' },
+	{ id: 'table', label: 'Table', mobileLabel: 'Table' },
+	{ id: 'text', label: 'Text', subtitle: '(Markdown)', mobileLabel: 'Text' },
+	{ id: 'llamaai', label: 'LlamaAI', subtitle: '', mobileLabel: 'LlamaAI' },
+	{ id: 'sql', label: 'SQL', subtitle: '', mobileLabel: 'SQL' }
+]
 
 interface TabNavigationProps {
 	selectedMainTab: MainTabType
-	editItem?: DashboardItemConfig | null
+	editItem?: DashboardItemConfig | null | undefined
 	onTabChange: (tab: MainTabType) => void
 	isSqlAllowed?: boolean
 }
@@ -15,19 +23,10 @@ interface TabNavigationProps {
 export function TabNavigation({ selectedMainTab, editItem, onTabChange, isSqlAllowed }: TabNavigationProps) {
 	const { hasActiveSubscription } = useAuthContext()
 
-	const allTabs = [
-		{ id: 'charts' as const, label: 'Charts', subtitle: '', mobileLabel: 'Charts' },
-		{ id: 'metric' as const, label: 'Metric', mobileLabel: 'Metric' },
-		{ id: 'table' as const, label: 'Table', mobileLabel: 'Table' },
-		{ id: 'text' as const, label: 'Text', subtitle: '(Markdown)', mobileLabel: 'Text' },
-		{ id: 'llamaai' as const, label: 'LlamaAI', subtitle: '', mobileLabel: 'LlamaAI' },
-		{ id: 'sql' as const, label: 'SQL', subtitle: '', mobileLabel: 'SQL' }
-	]
-
 	return (
 		<div className="rounded-xl border border-pro-cards-border p-1 shadow-sm">
 			<div className="grid grid-cols-6 gap-1">
-				{allTabs.map((tab) => {
+				{ALL_TABS.map((tab) => {
 					const locked = (PRO_ONLY_TABS.has(tab.id) && !hasActiveSubscription) || (tab.id === 'sql' && !isSqlAllowed)
 					return (
 						<button

@@ -1,9 +1,5 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { useAuthContext } from '~/auth'
-import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	useRWAAssetChartData,
@@ -16,18 +12,19 @@ import { getChartMetricOptions, getChartViewOptions, getChartMetricLabel } from 
 import { LocalLoader } from '~/ui/Loaders'
 import { formatUsd } from '~/utils/numberFormat'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
-import { AriakitSelect } from '../AriakitSelect'
+import { AriakitSelect, type SelectOption } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
 import { buildProRwaAssetChartSeries } from '../rwaAssetChart'
 import { buildRwaSnapshotPresentation } from '../rwaSnapshot'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
-const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
+const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
+const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart'))
 
 const EMPTY_RWA_SNAPSHOT_ITEMS: Array<{ name: string; value: number }> = []
+const EMPTY_RWA_BAR_DATA = { categories: [], values: [] }
 
 interface RWAChartTabProps {
 	rwaMode: 'overview' | 'asset'
@@ -50,7 +47,7 @@ interface RWAChartTabProps {
 	onSelectedRwaAssetMetricsChange: (metrics: RWAOverviewChartMetric[]) => void
 }
 
-const BREAKDOWN_OPTIONS = [
+const BREAKDOWN_OPTIONS: Array<SelectOption<RWAOverviewChartBreakdown>> = [
 	{ value: 'chain', label: 'Chain' },
 	{ value: 'category', label: 'Category' },
 	{ value: 'platform', label: 'Platform' },
@@ -65,8 +62,14 @@ const METRIC_LABELS: Record<RWAOverviewChartMetric, string> = {
 	defiActiveTvl: 'DeFi Active TVL'
 }
 
-const RWA_METRIC_OPTIONS = getChartMetricOptions().map((option) => ({ value: option.key, label: option.label }))
-const RWA_CHART_VIEW_OPTIONS = getChartViewOptions().map((option) => ({ value: option.key, label: option.name }))
+const RWA_METRIC_OPTIONS: Array<SelectOption<RWAOverviewChartMetric>> = getChartMetricOptions().map((option) => ({
+	value: option.key,
+	label: option.label
+}))
+const RWA_CHART_VIEW_OPTIONS: Array<SelectOption<RWAOverviewChartView>> = getChartViewOptions().map((option) => ({
+	value: option.key,
+	label: option.name
+}))
 
 export function RWAChartTab(props: RWAChartTabProps) {
 	const { hasActiveSubscription } = useAuthContext()
@@ -161,20 +164,20 @@ function RWAChartTabInner({
 						label="Metric"
 						options={metricOptions}
 						selectedValue={selectedRwaMetric}
-						onChange={(opt) => onSelectedRwaMetricChange(opt.value as RWAOverviewChartMetric)}
+						onChange={(opt) => onSelectedRwaMetricChange(opt.value)}
 					/>
 					<AriakitSelect
 						label="Chart Type"
 						options={chartViewOptions}
 						selectedValue={selectedRwaChartView}
-						onChange={(opt) => onSelectedRwaChartViewChange(opt.value as RWAOverviewChartView)}
+						onChange={(opt) => onSelectedRwaChartViewChange(opt.value)}
 					/>
 					{!isChainSpecific ? (
 						<AriakitSelect
 							label="Breakdown"
 							options={BREAKDOWN_OPTIONS}
 							selectedValue={selectedRwaBreakdown}
-							onChange={(opt) => onSelectedRwaBreakdownChange(opt.value as RWAOverviewChartBreakdown)}
+							onChange={(opt) => onSelectedRwaBreakdownChange(opt.value)}
 						/>
 					) : null}
 				</div>
@@ -228,7 +231,7 @@ function AssetControls({
 				value: a.id,
 				label: a.assetName || a.ticker,
 				description:
-					a.totalActiveMcap > 0
+					a.totalActiveMcap !== null && a.totalActiveMcap > 0
 						? formatUsd(a.totalActiveMcap, {
 								compact: true,
 								minimumCompactValue: 1_000_000,
@@ -316,12 +319,12 @@ function OverviewPreview({
 	const pieColors = useMemo(() => {
 		const colors: Record<string, string> = {}
 		for (const [idx, item] of pieData.entries()) {
-			colors[item.name] = CHART_COLORS[idx % CHART_COLORS.length]
+			colors[item.name] = CHART_COLORS[idx % CHART_COLORS.length] ?? CHART_COLORS[0]
 		}
 		return colors
 	}, [pieData])
 
-	const barData = snapshot?.view === 'hbar' ? snapshot : { categories: [] as string[], values: [] as number[] }
+	const barData = snapshot?.view === 'hbar' ? snapshot : EMPTY_RWA_BAR_DATA
 	const treemapData = snapshot?.view === 'treemap' ? snapshot.data : []
 
 	if (isLoading || !chartDataset) {

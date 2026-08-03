@@ -12,6 +12,20 @@ export function queryList(query: ApiQuery, name: string): string[] {
 	return value ? value.split(',').filter(Boolean) : []
 }
 
+export function validateQueryList(
+	name: string,
+	values: readonly string[],
+	limits: { maxItems: number; maxItemLength: number }
+): string | null {
+	if (values.length > limits.maxItems) return `${name} supports at most ${limits.maxItems} values`
+	for (const value of values) {
+		if (value.length > limits.maxItemLength) {
+			return `${name} values must be at most ${limits.maxItemLength} characters`
+		}
+	}
+	return null
+}
+
 export function queryEnum<T extends string>(query: ApiQuery, name: string, allowed: readonly T[]): T | undefined {
 	const value = queryString(query, name)
 	return value !== undefined && (allowed as readonly string[]).includes(value) ? (value as T) : undefined

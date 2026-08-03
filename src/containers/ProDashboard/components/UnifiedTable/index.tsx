@@ -1,93 +1,79 @@
-'use no memo'
-
-import type { ColumnOrderState, SortingState, VisibilityState } from '@tanstack/react-table'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { SortingState, VisibilityState } from '@tanstack/react-table'
+import { useCallback, useMemo, useState } from 'react'
+import { SurfaceBodyStatus } from '~/ui/Status'
 import { downloadCSV } from '~/utils/download'
-import { formatFixedNumber } from '~/utils/numberFormat'
 import { useProDashboardEditorActions, useProDashboardPermissions } from '../../ProDashboardAPIContext'
-import type { CustomColumnDefinition, TableFilters, UnifiedRowHeaderType, UnifiedTableConfig } from '../../types'
-import { DEFAULT_UNIFIED_TABLE_SORTING } from './constants'
-import type { CsvExportLevel } from './core/CsvExportDropdown'
-import { isGroupingColumnId } from './core/grouping'
-import { UnifiedTablePagination } from './core/TablePagination'
-import { TableRenderer } from './core/TableRenderer'
-import { UnifiedTableHeader } from './core/UnifiedTableHeader'
-import { useUnifiedTable } from './core/useUnifiedTable'
-import type { NormalizedRow, UnifiedTableProps } from './types'
+import type { UnifiedTableConfig, UnifiedTableFilters } from '../../unifiedTable/config/current'
+import { FILTERED_SHARE_METRIC_KEYS, getFilteredShareColumnId } from '../../unifiedTable/config/filteredShareColumns'
+import { sanitizeFiltersForGrouping } from '../../unifiedTable/config/groupingCapabilities'
 import {
-	applyRowHeaderVisibilityRules,
-	getDefaultColumnOrder,
-	getDefaultColumnVisibility,
-	normalizeSorting
-} from './utils/configHelpers'
-import { buildGroupedCsvData, getRowsAtGroupLevel } from './utils/csvExport'
-import { evaluateExpression } from './utils/customColumns'
+	applyUnifiedTableRowHeaderVisibility,
+	normalizeUnifiedTableSorting,
+	sanitizeUnifiedTableRowHeaders
+} from '../../unifiedTable/config/layoutPolicy'
+import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../unifiedTable/config/types'
+import { LoadingSpinner } from '../LoadingSpinner'
+import { TablePagination } from '../Table/TablePagination'
+import { sanitizeConfigColumns } from './config/metricCapabilities'
+import type { CsvExportLevel } from './core/CsvExportDropdown'
+import { UnifiedTableHeader } from './core/UnifiedTableHeader'
+import { UnifiedVirtualTable } from './core/UnifiedVirtualTable'
+import { useUnifiedTable } from './core/useUnifiedTable'
+import type { ProtocolTableRow, UnifiedTableProps } from './types'
+import { getDefaultColumnOrder, getDefaultColumnVisibility } from './utils/configHelpers'
+import { buildGroupedCsvData, getProtocolTableCsvValue, getRowsAtGroupLevel } from './utils/csvExport'
 import { getActiveFilterChips } from './utils/filterChips'
 import type { ActiveFilterChip } from './utils/filterChips'
-import { sanitizeRowHeaders } from './utils/rowHeaders'
-
-const arraysEqual = (a: string[], b: string[]) => {
-	if (a.length !== b.length) return false
-	for (let i = 0; i < a.length; i++) {
-		if (a[i] !== b[i]) return false
-	}
-	return true
-}
-
-// Count keys in 'a' while comparing values, then verify 'b' has the same count
-const recordsEqual = (a: Record<string, boolean>, b: Record<string, boolean>) => {
-	let count = 0
-	for (const key in a) {
-		if (a[key] !== b[key]) return false
-		count++
-	}
-	for (const _ in b) {
-		if (--count < 0) return false
-	}
-	return count === 0
-}
-
-const sortingEquals = (a: SortingState, b: SortingState) => {
-	if (a.length !== b.length) return false
-	for (let i = 0; i < a.length; i++) {
-		const value = a[i]
-		const other = b[i]
-		if (!other || value.id !== other.id || Boolean(value.desc) !== Boolean(other.desc)) {
-			return false
-		}
-	}
-	return true
-}
 
 const CSV_PERCENT_COLUMNS = new Set([
 	'change1d',
 	'change7d',
 	'change1m',
 	'volumeChange_1d',
-	'volumeChange_7d',
-	'volumeChange_1m',
+	'volume24hChange7dAgo',
+	'volume24hChange30dAgo',
+	'volumeChange7dOver7d',
+	'volumeChange30dOver30d',
 	'volumeDominance_24h',
 	'volumeMarketShare7d',
 	'feesChange_1d',
-	'feesChange_7d',
-	'feesChange_1m',
+	'fees24hChange7dAgo',
+	'fees24hChange30dAgo',
+	'feesChange7dOver7d',
+	'feesChange30dOver30d',
+	'holderRevenueChange30dOver30d',
 	'revenueChange_1d',
-	'revenueChange_7d',
-	'revenueChange_1m',
+	'revenue24hChange7dAgo',
+	'revenue24hChange30dAgo',
+	'revenueChange7dOver7d',
+	'revenueChange30dOver30d',
 	'perps_volume_change_1d',
-	'perps_volume_change_7d',
-	'perps_volume_change_1m',
+	'perpsVolume24hChange7dAgo',
+	'perpsVolume24hChange30dAgo',
+	'perpsVolumeChange7dOver7d',
+	'perpsVolumeChange30dOver30d',
 	'perps_volume_dominance_24h',
 	'aggregators_volume_change_1d',
-	'aggregators_volume_change_7d',
+	'aggregatorVolume24hChange7dAgo',
+	'aggregatorVolume24hChange30dAgo',
+	'aggregatorVolumeChange7dOver7d',
 	'aggregators_volume_dominance_24h',
 	'aggregators_volume_marketShare7d',
 	'derivatives_aggregators_volume_change_1d',
-	'derivatives_aggregators_volume_change_7d',
-	'derivatives_aggregators_volume_change_1m',
+	'derivativesAggregatorVolume24hChange7dAgo',
+	'derivativesAggregatorVolume24hChange30dAgo',
+	'derivativesAggregatorVolumeChange7dOver7d',
+	'derivativesAggregatorVolumeChange30dOver30d',
 	'options_volume_change_1d',
-	'options_volume_change_7d',
-	'options_volume_dominance_24h'
+	'optionsVolume24hChange7dAgo',
+	'optionsVolume24hChange30dAgo',
+	'optionsVolumeChange7dOver7d',
+	'options_volume_dominance_24h',
+	'tvlShare',
+	'stablesShare',
+	'volume24hShare',
+	'bridgeAggregatorVolumeDominance24h',
+	...FILTERED_SHARE_METRIC_KEYS.map(getFilteredShareColumnId)
 ])
 
 const ROW_HEADER_LABELS: Record<UnifiedRowHeaderType, string> = {
@@ -118,17 +104,12 @@ const PROTOCOL_GROUPING_OPTIONS: RowGroupingOption[] = [
 const PROTOCOL_GROUPING_OPTION_MAP = new Map(PROTOCOL_GROUPING_OPTIONS.map((option) => [option.id, option]))
 const PROTOCOL_GROUPING_HEADERS = PROTOCOL_GROUPING_OPTIONS.map(({ id, label }) => ({ id, label }))
 const EMPTY_COLUMN_ORDER: string[] = []
+const EMPTY_COLUMN_VISIBILITY: VisibilityState = {}
+const EMPTY_CUSTOM_COLUMNS: CustomColumnDefinition[] = []
 const EMPTY_CHAINS: string[] = []
 
-const buildTableStateKey = (config: UnifiedTableConfig) => {
-	const customColumnIds = (config.customColumns ?? []).map((column) => column.id)
-	return JSON.stringify({
-		id: config.id,
-		columnOrder: config.columnOrder ?? EMPTY_COLUMN_ORDER,
-		columnVisibility: config.columnVisibility ?? {},
-		sorting: normalizeSorting(config.defaultSorting),
-		customColumnIds
-	})
+type ConfigOverrides = Omit<Partial<UnifiedTableConfig>, 'filters'> & {
+	filters?: UnifiedTableFilters | undefined
 }
 
 const rowHeadersMatch = (a: UnifiedRowHeaderType[], b: UnifiedRowHeaderType[]) => {
@@ -139,110 +120,20 @@ const rowHeadersMatch = (a: UnifiedRowHeaderType[], b: UnifiedRowHeaderType[]) =
 	return true
 }
 
-const sanitizeFilters = (filters: TableFilters): TableFilters | undefined => {
-	const result: Record<string, unknown> = {}
-	let hasKeys = false
-	for (const key in filters) {
-		const value = filters[key]
-		if (value == null) {
-			continue
-		}
-		if (typeof value === 'boolean') {
-			if (value === true) {
-				result[key] = value
-				hasKeys = true
-			}
-			continue
-		}
-		if (typeof value === 'string') {
-			if (value.trim().length > 0) {
-				result[key] = value
-				hasKeys = true
-			}
-			continue
-		}
-		if (Array.isArray(value)) {
-			if (value.length > 0) {
-				result[key] = value
-				hasKeys = true
-			}
-			continue
-		}
-		result[key] = value
-		hasKeys = true
-	}
-
-	return hasKeys ? (result as TableFilters) : undefined
-}
-
-const metricFromColumn = (columnId: string) => columnId
-
-const toCsvValue = (columnId: string, row: NormalizedRow, customColumns?: CustomColumnDefinition[]): string => {
-	if (columnId === 'name') {
-		return row.name
-	}
-
-	if (columnId === 'chain') {
-		return row.chain ?? ''
-	}
-
-	if (columnId === 'category') {
-		return row.category ?? ''
-	}
-
-	if (columnId.startsWith('custom_')) {
-		const customCol = customColumns?.find((c) => c.id === columnId)
-		if (customCol) {
-			const value = evaluateExpression(customCol.expression, row.metrics)
-			if (value === null) return ''
-			if (customCol.format === 'percent') {
-				return formatFixedNumber(value, 2)
-			}
-			return String(value)
-		}
-		return ''
-	}
-
-	const metricKey = metricFromColumn(columnId)
-	const value = row.metrics?.[metricKey as keyof typeof row.metrics]
-
-	if (value == null) {
-		return ''
-	}
-
-	if (CSV_PERCENT_COLUMNS.has(columnId) && typeof value === 'number') {
-		return formatFixedNumber(value, 2)
-	}
-
-	return typeof value === 'number' ? String(value) : ''
-}
-
-function UnifiedTableInner({
-	config,
-	previewMode = false,
-	columnOrderOverride,
-	columnVisibilityOverride,
-	sortingOverride,
-	onPreviewColumnOrderChange,
-	onPreviewColumnVisibilityChange,
-	onPreviewSortingChange,
-	onEdit,
-	onOpenColumnModal
-}: UnifiedTableProps) {
+function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 	const { handleEditItem } = useProDashboardEditorActions()
 	const { isReadOnly } = useProDashboardPermissions()
 	const [searchTerm, setSearchTerm] = useState('')
-	const [columnOrderState, setColumnOrderState] = useState<ColumnOrderState>(() => getDefaultColumnOrder(config))
-	const [columnVisibilityState, setColumnVisibilityState] = useState<VisibilityState>(() =>
-		getDefaultColumnVisibility(config)
+	const canEditFilters = !isReadOnly
+	const resolvedRowHeaders = useMemo(() => sanitizeUnifiedTableRowHeaders(config.rowHeaders), [config.rowHeaders])
+	const configuredFilters = useMemo(
+		() => sanitizeFiltersForGrouping(config.filters, resolvedRowHeaders),
+		[config.filters, resolvedRowHeaders]
 	)
-	const [sortingState, setSortingState] = useState<SortingState>(() => normalizeSorting(config.defaultSorting))
-	const hydratingRef = useRef(false)
-	const canEditFilters = !previewMode && !isReadOnly
-	const resolvedRowHeaders = useMemo(() => sanitizeRowHeaders(config.rowHeaders), [config.rowHeaders])
-	const filterChips = useMemo(() => getActiveFilterChips(config.filters), [config.filters])
+	const filterChips = useMemo(() => getActiveFilterChips(configuredFilters), [configuredFilters])
 	const activeFilterCount = filterChips.length
-	const canEditGrouping = !previewMode && !isReadOnly && PROTOCOL_GROUPING_OPTIONS.length > 0
+	const canEditGrouping = !isReadOnly && PROTOCOL_GROUPING_OPTIONS.length > 0
+	const { columnOrder, columnVisibility, customColumns } = config
 	const selectedGroupingId = useMemo(() => {
 		if (!PROTOCOL_GROUPING_OPTIONS.length) {
 			return undefined
@@ -251,161 +142,123 @@ function UnifiedTableInner({
 		return match?.id
 	}, [resolvedRowHeaders])
 
-	const effectiveColumnOrder = previewMode ? (columnOrderOverride ?? getDefaultColumnOrder(config)) : columnOrderState
-	const effectiveColumnVisibility = previewMode
-		? (columnVisibilityOverride ?? getDefaultColumnVisibility(config))
-		: columnVisibilityState
-	const effectiveSorting = previewMode ? (sortingOverride ?? normalizeSorting(config.defaultSorting)) : sortingState
-	const effectiveColumnOrderRef = useRef(effectiveColumnOrder)
-	const effectiveColumnVisibilityRef = useRef(effectiveColumnVisibility)
-	const effectiveSortingRef = useRef(effectiveSorting)
-
-	useLayoutEffect(() => {
-		effectiveColumnOrderRef.current = effectiveColumnOrder
-		effectiveColumnVisibilityRef.current = effectiveColumnVisibility
-		effectiveSortingRef.current = effectiveSorting
-	}, [effectiveColumnOrder, effectiveColumnVisibility, effectiveSorting])
-
-	useEffect(() => {
-		if (previewMode) return
-		hydratingRef.current = true
-		const timer = setTimeout(() => {
-			hydratingRef.current = false
-		}, 0)
-		return () => clearTimeout(timer)
-	}, [config.columnOrder, config.columnVisibility, config.defaultSorting, previewMode])
-
-	useEffect(() => {
-		if (previewMode || isReadOnly) return
-		if (hydratingRef.current) return
-		const configOrder = config.columnOrder ?? EMPTY_COLUMN_ORDER
-		const configVisibility = config.columnVisibility ?? {}
-		const configSorting =
-			config.defaultSorting && config.defaultSorting.length ? config.defaultSorting : DEFAULT_UNIFIED_TABLE_SORTING
-
-		const orderChanged = !arraysEqual(columnOrderState, configOrder)
-		const visibilityChanged = !recordsEqual(columnVisibilityState, configVisibility)
-		const sortingChanged = !sortingEquals(sortingState, configSorting)
-
-		if (!orderChanged && !visibilityChanged && !sortingChanged) return
-
-		handleEditItem(config.id, {
-			...config,
-			rowHeaders: resolvedRowHeaders,
-			columnOrder: columnOrderState,
-			columnVisibility: columnVisibilityState,
-			defaultSorting: sortingState
-		})
-	}, [
-		columnOrderState,
-		columnVisibilityState,
-		config,
-		handleEditItem,
-		isReadOnly,
-		previewMode,
-		resolvedRowHeaders,
-		sortingState
-	])
-
-	const handleColumnOrderChange = useCallback(
-		(updater: ColumnOrderState | ((prev: ColumnOrderState) => ColumnOrderState)) => {
-			if (previewMode) {
-				const next = typeof updater === 'function' ? updater(effectiveColumnOrderRef.current) : updater
-				onPreviewColumnOrderChange?.(next)
-				return
-			}
-			setColumnOrderState((prev) => (typeof updater === 'function' ? updater(prev) : updater))
-		},
-		[onPreviewColumnOrderChange, previewMode]
+	const configuredColumnOrder = useMemo(
+		() =>
+			getDefaultColumnOrder(
+				{
+					columnOrder: columnOrder ?? EMPTY_COLUMN_ORDER,
+					customColumns: customColumns ?? EMPTY_CUSTOM_COLUMNS
+				},
+				resolvedRowHeaders
+			),
+		[columnOrder, customColumns, resolvedRowHeaders]
+	)
+	const configuredColumnVisibility = useMemo(
+		() =>
+			getDefaultColumnVisibility(
+				{
+					columnOrder: columnOrder ?? EMPTY_COLUMN_ORDER,
+					columnVisibility: columnVisibility ?? EMPTY_COLUMN_VISIBILITY,
+					customColumns: customColumns ?? EMPTY_CUSTOM_COLUMNS
+				},
+				resolvedRowHeaders
+			),
+		[columnOrder, columnVisibility, customColumns, resolvedRowHeaders]
+	)
+	const configuredSorting = useMemo(
+		() =>
+			sanitizeConfigColumns({
+				order: [],
+				visibility: {},
+				sorting: normalizeUnifiedTableSorting(config.defaultSorting),
+				customColumns: config.customColumns,
+				rowHeaders: resolvedRowHeaders
+			}).sorting,
+		[config.defaultSorting, config.customColumns, resolvedRowHeaders]
 	)
 
-	const handleColumnVisibilityChange = useCallback(
-		(updater: VisibilityState | ((prev: VisibilityState) => VisibilityState)) => {
-			if (previewMode) {
-				const next = typeof updater === 'function' ? updater(effectiveColumnVisibilityRef.current) : updater
-				onPreviewColumnVisibilityChange?.(next)
-				return
+	const persistConfigChanges = useCallback(
+		(overrides: ConfigOverrides) => {
+			if (isReadOnly) return
+			const { filters, ...otherOverrides } = overrides
+			const nextRowHeaders = sanitizeUnifiedTableRowHeaders(otherOverrides.rowHeaders ?? resolvedRowHeaders)
+			const nextColumns = sanitizeConfigColumns({
+				order: otherOverrides.columnOrder ?? configuredColumnOrder,
+				visibility: otherOverrides.columnVisibility ?? configuredColumnVisibility,
+				sorting: otherOverrides.defaultSorting ?? configuredSorting,
+				customColumns: otherOverrides.customColumns ?? config.customColumns,
+				rowHeaders: nextRowHeaders
+			})
+			const sourceFilters = Object.hasOwn(overrides, 'filters') ? filters : configuredFilters
+			const nextFilters = sanitizeFiltersForGrouping(sourceFilters, nextRowHeaders)
+			const { filters: _configFilters, ...configWithoutFilters } = config
+			const nextConfig: UnifiedTableConfig = {
+				...configWithoutFilters,
+				...otherOverrides,
+				rowHeaders: nextRowHeaders,
+				columnOrder: nextColumns.order,
+				columnVisibility: nextColumns.visibility,
+				defaultSorting: nextColumns.sorting
 			}
-			setColumnVisibilityState((prev) => (typeof updater === 'function' ? updater(prev) : updater))
+			if (nextFilters) nextConfig.filters = nextFilters
+			handleEditItem(config.id, nextConfig)
 		},
-		[onPreviewColumnVisibilityChange, previewMode]
+		[
+			config,
+			configuredColumnOrder,
+			configuredColumnVisibility,
+			configuredSorting,
+			configuredFilters,
+			handleEditItem,
+			isReadOnly,
+			resolvedRowHeaders
+		]
 	)
 
 	const handleSortingChange = useCallback(
 		(updater: SortingState | ((prev: SortingState) => SortingState)) => {
-			if (previewMode) {
-				const next = typeof updater === 'function' ? updater(effectiveSortingRef.current) : updater
-				onPreviewSortingChange?.(next)
-				return
-			}
-			setSortingState((prev) => (typeof updater === 'function' ? updater(prev) : updater))
+			const next = typeof updater === 'function' ? updater(configuredSorting) : updater
+			persistConfigChanges({ defaultSorting: next })
 		},
-		[onPreviewSortingChange, previewMode]
+		[configuredSorting, persistConfigChanges]
 	)
 
-	const memoizedConfig = useMemo<UnifiedTableConfig>(
-		() => ({
-			id: config.id,
-			kind: config.kind,
+	const memoizedConfig = useMemo<UnifiedTableConfig>(() => {
+		const nextConfig: UnifiedTableConfig = {
+			...config,
 			rowHeaders: resolvedRowHeaders,
-			params: config.params,
-			filters: config.filters,
-			customColumns: config.customColumns
-		}),
-		[config.id, config.kind, config.params, config.filters, config.customColumns, resolvedRowHeaders]
-	)
+			columnOrder: configuredColumnOrder,
+			columnVisibility: configuredColumnVisibility,
+			defaultSorting: configuredSorting
+		}
+		if (configuredFilters === undefined) delete nextConfig.filters
+		else nextConfig.filters = configuredFilters
+		return nextConfig
+	}, [
+		config,
+		configuredFilters,
+		configuredColumnOrder,
+		configuredColumnVisibility,
+		configuredSorting,
+		resolvedRowHeaders
+	])
 
 	const unifiedTable = useUnifiedTable({
 		config: memoizedConfig,
 		rowHeaders: resolvedRowHeaders,
 		searchTerm,
-		columnOrder: effectiveColumnOrder,
-		columnVisibility: effectiveColumnVisibility,
-		sorting: effectiveSorting,
-		onColumnOrderChange: handleColumnOrderChange,
-		onColumnVisibilityChange: handleColumnVisibilityChange,
+		columnOrder: configuredColumnOrder,
+		columnVisibility: configuredColumnVisibility,
+		sorting: configuredSorting,
 		onSortingChange: handleSortingChange
 	})
-	const tableRef = useRef(unifiedTable.table)
-	useEffect(() => {
-		tableRef.current = unifiedTable.table
-	}, [unifiedTable.table])
-	const rowCount = unifiedTable.table.getRowModel().rows.length
-	const expandedCount = Object.keys(unifiedTable.expanded).length
-	const rowStateVersion = `${rowCount}:${expandedCount}`
-
-	const persistConfigChanges = useCallback(
-		(overrides: Partial<UnifiedTableConfig>) => {
-			if (previewMode || isReadOnly) {
-				return
-			}
-			handleEditItem(config.id, {
-				...config,
-				rowHeaders: resolvedRowHeaders,
-				columnOrder: columnOrderState,
-				columnVisibility: columnVisibilityState,
-				defaultSorting: sortingState,
-				...overrides
-			})
-		},
-		[
-			columnOrderState,
-			columnVisibilityState,
-			config,
-			handleEditItem,
-			isReadOnly,
-			previewMode,
-			resolvedRowHeaders,
-			sortingState
-		]
-	)
 
 	const handleFilterChipRemove = useCallback(
 		(chip: ActiveFilterChip) => {
 			if (!canEditFilters) {
 				return
 			}
-			const currentFilters: TableFilters = { ...(config.filters ?? {}) }
+			const currentFilters: UnifiedTableFilters = { ...(configuredFilters ?? {}) }
 			let changed = false
 			for (const key of chip.clearKeys) {
 				if (key in currentFilters) {
@@ -416,21 +269,21 @@ function UnifiedTableInner({
 			if (!changed) {
 				return
 			}
-			const nextFilters = sanitizeFilters(currentFilters)
+			const nextFilters = Object.keys(currentFilters).length ? currentFilters : undefined
 			persistConfigChanges(nextFilters ? { filters: nextFilters } : { filters: undefined })
 		},
-		[canEditFilters, config.filters, persistConfigChanges]
+		[canEditFilters, configuredFilters, persistConfigChanges]
 	)
 
 	const handleClearFilters = useCallback(() => {
 		if (!canEditFilters) {
 			return
 		}
-		if (!config.filters) {
+		if (!configuredFilters) {
 			return
 		}
 		let hasFilters = false
-		for (const _ in config.filters) {
+		for (const _ in configuredFilters) {
 			hasFilters = true
 			break
 		}
@@ -438,7 +291,7 @@ function UnifiedTableInner({
 			return
 		}
 		persistConfigChanges({ filters: undefined })
-	}, [canEditFilters, config.filters, persistConfigChanges])
+	}, [canEditFilters, configuredFilters, persistConfigChanges])
 
 	const handleGroupingChange = useCallback(
 		(groupingId: string) => {
@@ -446,45 +299,45 @@ function UnifiedTableInner({
 			if (!option) {
 				return
 			}
-			const nextVisibility = applyRowHeaderVisibilityRules(option.headers, { ...columnVisibilityState })
+			const nextVisibility = applyUnifiedTableRowHeaderVisibility(option.headers, configuredColumnVisibility)
 			persistConfigChanges({ rowHeaders: option.headers, columnVisibility: nextVisibility })
 		},
-		[columnVisibilityState, persistConfigChanges]
+		[configuredColumnVisibility, persistConfigChanges]
 	)
 
 	const handleExportClick = useCallback(() => {
-		const table = tableRef.current
-		const leafColumns = table
-			.getAllLeafColumns()
-			.filter((column) => column.getIsVisible() && !isGroupingColumnId(column.id))
+		const table = unifiedTable.table
+		const leafColumns = table.getAllLeafColumns().filter((column) => column.getIsVisible())
 
 		const columnHeaders = leafColumns.map((column) => {
 			const header = column.columnDef.header
 			return typeof header === 'string' ? header : (column.id ?? '')
 		})
 
-		const sortedLeafRows: NormalizedRow[] = []
-		const collectLeafRows = (rows: ReturnType<(typeof table)['getRowModel']>['rows']) => {
-			for (const row of rows) {
-				if (row.getIsGrouped() && row.subRows?.length) {
-					collectLeafRows(row.subRows)
-				} else if (row.original) {
-					sortedLeafRows.push(row.original)
-				}
-			}
-		}
-		collectLeafRows(table.getRowModel().rows)
-
 		const nameIndex = columnHeaders.findIndex((h) => h === 'Name' || h === 'name')
 		const insertIndex = nameIndex >= 0 ? nameIndex + 1 : 0
 		const headers = [...columnHeaders.slice(0, insertIndex), 'Chain', ...columnHeaders.slice(insertIndex)]
-		const csvRows = sortedLeafRows.map((row) => {
-			const rowData = leafColumns.map((column) => toCsvValue(column.id, row, config.customColumns))
-			return [...rowData.slice(0, insertIndex), row.chain ?? '', ...rowData.slice(insertIndex)]
-		})
+		const customColumnsById = new Map((config.customColumns ?? []).map((column) => [column.id, column]))
+		const csvRows: string[][] = [headers]
+		const appendLeafRow = (row: Extract<ProtocolTableRow, { nodeType: 'leaf' }>) => {
+			const rowData: string[] = []
+			for (let index = 0; index <= leafColumns.length; index++) {
+				if (index === insertIndex) rowData.push(row.chain ?? '')
+				const column = leafColumns[index]
+				if (column) rowData.push(getProtocolTableCsvValue(row, column.id, CSV_PERCENT_COLUMNS, customColumnsById))
+			}
+			csvRows.push(rowData)
+		}
+		const appendLeafRows = (rows: ReturnType<(typeof table)['getPreExpandedRowModel']>['rows']) => {
+			for (const row of rows) {
+				if (row.original.nodeType === 'group' && row.subRows.length) appendLeafRows(row.subRows)
+				else if (row.original.nodeType === 'leaf') appendLeafRow(row.original)
+			}
+		}
+		appendLeafRows(table.getPreExpandedRowModel().rows)
 
-		downloadCSV(`unified-table.csv`, [headers, ...csvRows])
-	}, [config.customColumns])
+		downloadCSV(`unified-table.csv`, csvRows)
+	}, [config.customColumns, unifiedTable.table])
 
 	const handleCsvClick = useCallback(() => {
 		if (!unifiedTable.leafRows.length) return
@@ -495,10 +348,8 @@ function UnifiedTableInner({
 		(level: CsvExportLevel) => {
 			if (!unifiedTable.leafRows.length) return
 
-			const table = tableRef.current
-			const leafColumns = table
-				.getAllLeafColumns()
-				.filter((column) => column.getIsVisible() && !isGroupingColumnId(column.id))
+			const table = unifiedTable.table
+			const leafColumns = table.getAllLeafColumns().filter((column) => column.getIsVisible())
 
 			if (level === 'all') {
 				handleExportClick()
@@ -511,10 +362,17 @@ function UnifiedTableInner({
 				return
 			}
 
-			const { headers, data } = buildGroupedCsvData(groupedRows, leafColumns, CSV_PERCENT_COLUMNS, level)
-			downloadCSV(`unified-table-${level}.csv`, [headers, ...data])
+			const { headers, data } = buildGroupedCsvData({
+				rows: groupedRows,
+				columns: leafColumns,
+				percentColumns: CSV_PERCENT_COLUMNS,
+				level,
+				customColumns: config.customColumns ?? []
+			})
+			data.unshift(headers)
+			downloadCSV(`unified-table-${level}.csv`, data)
 		},
-		[handleExportClick, unifiedTable.leafRows.length]
+		[handleExportClick, unifiedTable.leafRows.length, unifiedTable.table, config.customColumns]
 	)
 
 	const title = 'Protocols overview'
@@ -538,19 +396,15 @@ function UnifiedTableInner({
 	}, [resolvedRowHeaders])
 
 	const handleCustomizeColumns = useCallback(() => {
-		if (previewMode || isReadOnly) return
-		if (onOpenColumnModal) {
-			onOpenColumnModal()
-			return
-		}
+		if (isReadOnly) return
 		onEdit?.('columns')
-	}, [isReadOnly, onEdit, onOpenColumnModal, previewMode])
+	}, [isReadOnly, onEdit])
 
 	const handleFiltersClick = useCallback(() => {
 		onEdit?.('filters')
 	}, [onEdit])
 
-	const canCustomizeColumns = Boolean(!previewMode && !isReadOnly && (onOpenColumnModal || onEdit))
+	const canCustomizeColumns = Boolean(!isReadOnly && onEdit)
 
 	return (
 		<div className="flex h-full w-full flex-col overflow-hidden p-2 sm:p-4">
@@ -575,21 +429,57 @@ function UnifiedTableInner({
 				selectedGroupingId={selectedGroupingId}
 				onGroupingChange={canEditGrouping ? handleGroupingChange : undefined}
 			/>
-			<TableRenderer
-				table={unifiedTable.table}
-				isLoading={unifiedTable.isLoading}
-				isEmpty={!unifiedTable.leafRows.length}
-				emptyMessage="No rows match your scope or filters."
-				rowStateVersion={rowStateVersion}
+			{unifiedTable.isLoading ? (
+				<div className="relative isolate h-[450px] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
+					<div className="flex h-full items-center justify-center">
+						<LoadingSpinner />
+					</div>
+				</div>
+			) : unifiedTable.hasInitialError ? (
+				<div className="relative isolate flex h-[450px] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
+					<SurfaceBodyStatus variant="error" contentClassName="flex flex-col items-center gap-2">
+						<span>Failed to load table data.</span>
+						<button
+							type="button"
+							className="text-sm text-link hover:underline"
+							onClick={() => void unifiedTable.refetch()}
+						>
+							Try again
+						</button>
+					</SurfaceBodyStatus>
+				</div>
+			) : (
+				<div className="relative isolate flex h-[450px] flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
+					<UnifiedVirtualTable
+						rows={unifiedTable.rows}
+						headerGroups={unifiedTable.headerGroups}
+						visibleLeafColumns={unifiedTable.visibleLeafColumns}
+						totalTableWidth={unifiedTable.totalTableWidth}
+						pageIndex={unifiedTable.pageIndex}
+						pageSize={unifiedTable.pageSize}
+					/>
+					{!unifiedTable.leafRows.length ? (
+						<div className="pointer-events-none absolute inset-0 z-5 flex items-center justify-center bg-linear-to-b from-transparent via-pro-cards-bg/90 to-pro-cards-bg">
+							<div className="pointer-events-auto rounded-md border border-pro-cards-border bg-pro-cards-bg px-4 py-3 text-sm text-pro-text-secondary">
+								No rows match your scope or filters.
+							</div>
+						</div>
+					) : null}
+				</div>
+			)}
+			<TablePagination
+				pageSize={unifiedTable.pageSize}
+				pageIndex={unifiedTable.pageIndex}
+				pageCount={unifiedTable.pageCount}
+				canPreviousPage={unifiedTable.canPreviousPage}
+				canNextPage={unifiedTable.canNextPage}
+				previousPage={unifiedTable.previousPage}
+				nextPage={unifiedTable.nextPage}
+				setPageSize={unifiedTable.setPageSize}
+				showPageSizes
 			/>
-			<UnifiedTablePagination table={unifiedTable.table} />
 		</div>
 	)
-}
-
-function UnifiedTable(props: UnifiedTableProps) {
-	const stateResetKey = buildTableStateKey(props.config)
-	return <UnifiedTableInner key={stateResetKey} {...props} />
 }
 
 export default UnifiedTable

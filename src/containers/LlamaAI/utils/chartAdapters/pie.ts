@@ -1,6 +1,6 @@
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import type { ChartConfiguration, ChartDataSeries } from '~/containers/LlamaAI/types'
-import { getChartColor, oldBlue, parseStringNumber } from '~/containers/LlamaAI/utils/chartAdapters/shared'
+import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
+import { getChartColor, parseStringNumber } from '~/containers/LlamaAI/utils/chartAdapters/shared'
 
 export interface AdaptedPieChartData {
 	chartType: 'pie'
@@ -22,19 +22,19 @@ export function adaptPieChartData(config: ChartConfiguration, rawData: ChartData
 
 		const totalsByEntity = new Map<string, number>()
 		for (const row of rawData) {
-			const record = row as Record<string, unknown>
-			const entity = String(record[entityField] ?? 'Unknown')
-			totalsByEntity.set(entity, (totalsByEntity.get(entity) ?? 0) + parseStringNumber(record[valueField]))
+			if (!isChartDataRow(row)) continue
+			const entity = String(row[entityField] ?? 'Unknown')
+			totalsByEntity.set(entity, (totalsByEntity.get(entity) ?? 0) + parseStringNumber(row[valueField]))
 		}
 
 		const pieData = Array.from(totalsByEntity, ([name, value]) => ({ name, value }))
 		pieData.sort((a, b) => b.value - a.value)
 
-		const stackColorEntries = new Array<[string, string]>(pieData.length)
-		for (let index = 0; index < pieData.length; index++) {
-			const name = pieData[index].name
+		const stackColors: Record<string, string> = {}
+		for (const [index, point] of pieData.entries()) {
+			const name = point.name
 			// Honor an explicit per-slice color from the config; fall back to the palette.
-			stackColorEntries[index] = [name, config.seriesColors?.[name] ?? getChartColor(name, index, oldBlue)]
+			stackColors[name] = config.seriesColors?.[name] ?? getChartColor(index)
 		}
 
 		return {
@@ -43,7 +43,7 @@ export function adaptPieChartData(config: ChartConfiguration, rawData: ChartData
 				title: config.title,
 				chartData: pieData,
 				height: '360px',
-				stackColors: Object.fromEntries(stackColorEntries),
+				stackColors,
 				valueSymbol: config.valueSymbol ?? '',
 				showLegend: true
 			},

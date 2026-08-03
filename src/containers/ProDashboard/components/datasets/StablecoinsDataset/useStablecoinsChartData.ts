@@ -3,14 +3,11 @@ import { useContext, useMemo, useRef } from 'react'
 import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { useIdleChartComputation } from '~/containers/ProDashboard/hooks/useIdleChartComputation'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
+import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import {
 	buildStablecoinsChartCacheValue,
 	type StablecoinsChartCacheValue
-} from '~/containers/ProDashboard/server/stablecoinFetchers'
-import {
-	fetchStablecoinsListViaProxy,
-	fetchStablecoinsViaProxy
-} from '~/containers/ProDashboard/services/fetchViaProxy'
+} from '~/containers/ProDashboard/stablecoinData'
 import { fetchStablecoinAssetsApi, fetchStablecoinChartApi } from '~/containers/Stablecoins/api'
 import {
 	buildStablecoinOverviewPayload,
@@ -42,13 +39,15 @@ const EMPTY_CHART_PAYLOAD: StablecoinChartSeriesPayload = {
 	charts: []
 }
 const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 10, upstreamOthersValue: 0 }
-const EMPTY_STABLECOIN_PRESENTATION = {
+type StablecoinPresentation = Omit<UseStablecoinsChartDataResult, 'isLoading' | 'error'>
+
+const EMPTY_STABLECOIN_PRESENTATION: StablecoinPresentation = {
 	chartPayload: EMPTY_CHART_PAYLOAD,
 	pieSeries: EMPTY_PIE_SERIES,
-	seriesNames: [] as string[],
-	availableSeries: [] as string[],
-	defaultSeries: [] as string[],
-	totalMcapCurrent: null as number | null
+	seriesNames: [],
+	availableSeries: [],
+	defaultSeries: [],
+	totalMcapCurrent: null
 }
 
 export function buildProStablecoinOverviewPayload(
@@ -60,7 +59,7 @@ export function buildProStablecoinOverviewPayload(
 	return buildStablecoinOverviewPayload(params, chart, topToken, {
 		selectedNames,
 		seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
-		usdInflowsName: chart === 'usdInflows' ? 'USD Inflows' : undefined
+		...(chart === 'usdInflows' ? { usdInflowsName: 'USD Inflows' } : {})
 	})
 }
 
@@ -103,8 +102,9 @@ const buildProStablecoinPresentationResult = (
 	} else {
 		const lastEntry = chartPayload.dataset.source.at(-1)
 		const mcapIndex = chartPayload.dataset.dimensions.indexOf('Mcap')
-		if (lastEntry && mcapIndex >= 0 && lastEntry[mcapIndex] != null) {
-			totalMcapCurrent = lastEntry[mcapIndex] as number
+		const latestMcap = mcapIndex >= 0 ? lastEntry?.[mcapIndex] : null
+		if (typeof latestMcap === 'number') {
+			totalMcapCurrent = latestMcap
 		} else if (chartType === 'pie') {
 			let total = pieSeries.upstreamOthersValue
 			for (const peer of pieSeries.peers) total += peer.value
@@ -143,12 +143,7 @@ export function collectProStablecoinChart({
 	const chartPayload =
 		chartType === 'pie'
 			? EMPTY_CHART_PAYLOAD
-			: buildProStablecoinOverviewPayload(
-					params,
-					chartType as StablecoinOverviewChartType,
-					getTopStablecoinFromLatestPoints(params),
-					null
-				)
+			: buildProStablecoinOverviewPayload(params, chartType, getTopStablecoinFromLatestPoints(params), null)
 	return { kind: 'fixed', presentation: buildProStablecoinPresentationResult(rawData, chartType, chartPayload) }
 }
 
@@ -182,7 +177,7 @@ export function useStablecoinsChartData(
 		enabled: enabled && streamDone,
 		queryFn: async () => {
 			if (authToken) {
-				return fetchStablecoinsViaProxy(chain, authToken)
+				return fetchProDashboardProxy('stablecoins', { chain }, authToken)
 			}
 
 			const [peggedData, chainData] = await Promise.all([
@@ -236,18 +231,23 @@ export function useStablecoinChainsList() {
 	return useQuery({
 		queryKey: ['pro-dashboard', 'stablecoin-chains-list'],
 		queryFn: async () => {
-			const data = authToken ? await fetchStablecoinsListViaProxy(authToken) : await fetchStablecoinAssetsApi()
-			const chains = data.chains
-			return chains
-				.map((chain) => {
-					let tvl = 0
-					for (const pegType in chain.totalCirculatingUSD) tvl += chain.totalCirculatingUSD[pegType]
-					return {
-						name: chain.name,
-						tvl
-					}
+			const data = authToken
+				? await fetchProDashboardProxy('stablecoinsList', {}, authToken)
+				: await fetchStablecoinAssetsApi()
+			const chains: StablecoinChainInfo[] = []
+			for (const chain of data.chains) {
+				let tvl = 0
+				for (const key in chain.totalCirculatingUSD) {
+					const value = chain.totalCirculatingUSD[key]
+					if (value !== undefined) tvl += value
+				}
+				chains.push({
+					name: chain.name,
+					tvl
 				})
-				.sort((a: StablecoinChainInfo, b: StablecoinChainInfo) => b.tvl - a.tvl)
+			}
+			chains.sort((a, b) => b.tvl - a.tvl)
+			return chains
 		},
 		staleTime: 60 * 60 * 1000
 	})

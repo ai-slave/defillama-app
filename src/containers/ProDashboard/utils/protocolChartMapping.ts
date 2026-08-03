@@ -1,6 +1,7 @@
 import type { ProtocolChartsLabels } from '~/containers/ProtocolOverview/constants'
+import type { ProtocolChartType } from '../types'
 
-const PROTOCOL_TO_DASHBOARD_CHART_TYPE: Record<ProtocolChartsLabels, string | null> = {
+const PROTOCOL_TO_DASHBOARD_CHART_TYPE: Record<ProtocolChartsLabels, ProtocolChartType | null> = {
 	TVL: 'tvl',
 	'Total Assets': 'tvl',
 	Mcap: 'tokenMcap',
@@ -12,7 +13,7 @@ const PROTOCOL_TO_DASHBOARD_CHART_TYPE: Record<ProtocolChartsLabels, string | nu
 	Revenue: 'revenue',
 	'Holders Revenue': 'holdersRevenue',
 	'DEX Volume': 'volume',
-	'DEX Notional Volume': 'dexsNotionalVolume',
+	'DEX Notional Volume': null,
 	'Perp Volume': 'perps',
 	'Open Interest': 'openInterest',
 	'Options Premium Volume': 'optionsPremium',
@@ -27,7 +28,7 @@ const PROTOCOL_TO_DASHBOARD_CHART_TYPE: Record<ProtocolChartsLabels, string | nu
 	Staking: null,
 	'Active Loans': 'borrowed',
 	'Median APY': 'medianApy',
-	'USD Inflows': 'stablecoinInflows',
+	'USD Inflows': null,
 	Treasury: 'treasury',
 	'Bridge Deposits': null,
 	'Bridge Withdrawals': null,
@@ -46,13 +47,15 @@ const PROTOCOL_TO_DASHBOARD_CHART_TYPE: Record<ProtocolChartsLabels, string | nu
 
 export function getSupportedProtocolCharts(
 	labels: ProtocolChartsLabels[]
-): { label: ProtocolChartsLabels; dashboardType: string }[] {
+): { label: ProtocolChartsLabels; dashboardType: ProtocolChartType }[] {
 	return labels
 		.map((label) => ({
 			label,
 			dashboardType: PROTOCOL_TO_DASHBOARD_CHART_TYPE[label]
 		}))
-		.filter((item): item is { label: ProtocolChartsLabels; dashboardType: string } => item.dashboardType !== null)
+		.filter(
+			(item): item is { label: ProtocolChartsLabels; dashboardType: ProtocolChartType } => item.dashboardType !== null
+		)
 }
 
 export function getUnsupportedProtocolCharts(labels: ProtocolChartsLabels[]): ProtocolChartsLabels[] {

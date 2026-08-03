@@ -1,4 +1,8 @@
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
 
 /**
  * Compare two string arrays for equality.
@@ -23,15 +27,13 @@ function areChartConfigValuesEqual(a: unknown, b: unknown): boolean {
 		}
 		return true
 	}
-	if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false
+	if (!isRecord(a) || !isRecord(b)) return false
 
-	const aRecord = a as Record<string, unknown>
-	const bRecord = b as Record<string, unknown>
-	const aKeys = Object.keys(aRecord)
-	if (aKeys.length !== Object.keys(bRecord).length) return false
+	const aKeys = Object.keys(a)
+	if (aKeys.length !== Object.keys(b).length) return false
 	for (const key of aKeys) {
-		if (!Object.prototype.hasOwnProperty.call(bRecord, key)) return false
-		if (!areChartConfigValuesEqual(aRecord[key], bRecord[key])) return false
+		if (!Object.hasOwn(b, key)) return false
+		if (!areChartConfigValuesEqual(a[key], b[key])) return false
 	}
 	return true
 }
@@ -45,23 +47,32 @@ export function areChartsEqual(a: ChartConfiguration[] | undefined, b: ChartConf
 	if (a === b) return true
 	if (!a || !b) return false
 	if (a.length !== b.length) return false
-	for (let i = 0; i < a.length; i++) {
-		if (!areChartConfigsEqual(a[i], b[i])) return false
+	const bCharts = b.values()
+	for (const chart of a) {
+		const other = bCharts.next()
+		if (other.done || !areChartConfigsEqual(chart, other.value)) return false
 	}
 	return true
 }
 
 function areRowsEqual(a: unknown, b: unknown): boolean {
 	if (a === b) return true
-	if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false
-	const aRecord = a as Record<string, unknown>
-	const bRecord = b as Record<string, unknown>
-	const aKeys = Object.keys(aRecord)
-	const bKeys = Object.keys(bRecord)
+	if (Array.isArray(a) || Array.isArray(b)) {
+		if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false
+		const bValues = b.values()
+		for (const value of a) {
+			const other = bValues.next()
+			if (other.done || value !== other.value) return false
+		}
+		return true
+	}
+	if (!isRecord(a) || !isRecord(b)) return false
+	const aKeys = Object.keys(a)
+	const bKeys = Object.keys(b)
 	if (aKeys.length !== bKeys.length) return false
 	for (const key of aKeys) {
-		if (!Object.prototype.hasOwnProperty.call(bRecord, key)) return false
-		if (aRecord[key] !== bRecord[key]) return false
+		if (!Object.hasOwn(b, key)) return false
+		if (a[key] !== b[key]) return false
 	}
 	return true
 }
@@ -80,13 +91,13 @@ function areSeriesEqual(a: unknown, b: unknown): boolean {
  * Compare chart data for equality.
  * Treats empty arrays, null, undefined, and false as equivalent.
  */
-export function areChartDataEqual(a: any, b: any): boolean {
+export function areChartDataEqual(a: unknown, b: unknown): boolean {
 	if (a === b) return true
 	// Treat "new []" as equal to "[]"
 	if (Array.isArray(a) && Array.isArray(b)) return areSeriesEqual(a, b)
 	// Treat undefined/null/false similarly
 	if ((a == null || a === false) && (b == null || b === false)) return true
-	if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) || Array.isArray(b)) return false
+	if (!isRecord(a) || !isRecord(b)) return false
 	const aKeys = Object.keys(a)
 	const bKeys = Object.keys(b)
 	if (aKeys.length !== bKeys.length) return false

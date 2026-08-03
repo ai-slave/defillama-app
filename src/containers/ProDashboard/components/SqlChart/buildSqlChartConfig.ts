@@ -2,9 +2,9 @@ import type { ChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import { extractTableRefs } from '~/containers/Downloads/sql/completions'
 import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import type { RegisteredTable } from '~/containers/Downloads/sql/useTableRegistry'
+import { captureSnapshot, clampRowCap, SQL_SNAPSHOT_ROW_CAP } from '../../sqlSnapshot'
 import type { SqlChartConfig } from '../../types'
 import { generateItemId } from '../../utils/dashboardUtils'
-import { captureSnapshot, clampRowCap, SQL_SNAPSHOT_ROW_CAP } from './snapshot'
 
 interface BuildSqlChartConfigParams {
 	editItem: SqlChartConfig | null
@@ -39,15 +39,16 @@ export function buildSqlChartConfig({
 	const tableSources = ranFresh
 		? registryTables.filter((t) => referencedTables.has(t.name)).map((t) => t.source)
 		: (editItem?.query.tableSources ?? [])
-	return {
+	const config: SqlChartConfig = {
 		id: editItem?.id ?? generateItemId('sql', trimmedName || 'query'),
 		kind: 'sql',
-		name: trimmedName || undefined,
 		query: { sql: trimmedSql, tableSources },
 		chart: chartConfig,
 		displayMode,
-		rowCap: cap === SQL_SNAPSHOT_ROW_CAP ? undefined : cap,
-		snapshot,
-		colSpan: editItem?.colSpan
+		snapshot
 	}
+	if (trimmedName) config.name = trimmedName
+	if (cap !== SQL_SNAPSHOT_ROW_CAP) config.rowCap = cap
+	if (editItem?.colSpan !== undefined) config.colSpan = editItem.colSpan
+	return config
 }

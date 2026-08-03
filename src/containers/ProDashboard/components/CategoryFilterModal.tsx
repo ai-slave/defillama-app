@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
+import type { GroupBase, MenuListProps, MultiValue } from 'react-select'
 import { ReactSelect } from '~/components/MultiSelect/ReactSelect'
 import { Icon } from '~/ui/Icon'
 import { reactSelectStyles } from '../utils/reactSelectStyles'
@@ -14,7 +15,12 @@ interface CategoryFilterModalProps {
 	initialExclude: string[]
 }
 
-function SimpleMenuList(props: any) {
+interface CategoryOption {
+	value: string
+	label: string
+}
+
+function SimpleMenuList(props: MenuListProps<CategoryOption, true, GroupBase<CategoryOption>>) {
 	return (
 		<div
 			style={{
@@ -91,16 +97,16 @@ export function CategoryFilterModal({
 						<label htmlFor="category-filter-include" className="mb-2 block text-sm font-medium text-pro-text-secondary">
 							Include Categories
 						</label>
-						<ReactSelect
+						<ReactSelect<CategoryOption, true>
 							inputId="category-filter-include"
 							isMulti
 							options={includeOptions}
 							value={includeValue}
-							onChange={(selection: any) => {
-								setSelectedInclude(selection ? selection.map((item: any) => item.value) : [])
+							onChange={(selection: MultiValue<CategoryOption>) => {
+								setSelectedInclude(selection.map((item) => item.value))
 							}}
 							placeholder="Select categories to include..."
-							styles={reactSelectStyles}
+							styles={reactSelectStyles<CategoryOption, true, GroupBase<CategoryOption>>()}
 							components={{ MenuList: SimpleMenuList }}
 							closeMenuOnSelect={false}
 							menuPosition="fixed"
@@ -111,16 +117,16 @@ export function CategoryFilterModal({
 						<label htmlFor="category-filter-exclude" className="mb-2 block text-sm font-medium text-pro-text-secondary">
 							Exclude Categories
 						</label>
-						<ReactSelect
+						<ReactSelect<CategoryOption, true>
 							inputId="category-filter-exclude"
 							isMulti
 							options={excludeOptions}
 							value={excludeValue}
-							onChange={(selection: any) => {
-								setSelectedExclude(selection ? selection.map((item: any) => item.value) : [])
+							onChange={(selection: MultiValue<CategoryOption>) => {
+								setSelectedExclude(selection.map((item) => item.value))
 							}}
 							placeholder="Select categories to exclude..."
-							styles={reactSelectStyles}
+							styles={reactSelectStyles<CategoryOption, true, GroupBase<CategoryOption>>()}
 							components={{ MenuList: SimpleMenuList }}
 							closeMenuOnSelect={false}
 							menuPosition="fixed"

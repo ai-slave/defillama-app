@@ -2,15 +2,27 @@ import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 
 export type TokenUsageCategoryStats = { count: number; amount: number }
 
-export interface TokenUsageSummary {
+export type ProtocolOverlap = {
+	exclusive: number
+	shared: number
+	exclusiveByToken: Record<string, number>
+}
+
+interface TokenUsageSummaryBase {
 	totalAmount: number
 	protocolCount: number
-	tokenStats: Record<string, { total: number; protocols: number }> | null
 	categoryBreakdown: Record<string, TokenUsageCategoryStats>
 	topCategories: Array<[string, TokenUsageCategoryStats]>
-	protocolOverlap: Record<string, number> | null
 	multiTokenProtocolCount: number
 }
+
+export type TokenUsageSummary =
+	| (TokenUsageSummaryBase & { kind: 'single'; tokenStats: null; protocolOverlap: null })
+	| (TokenUsageSummaryBase & {
+			kind: 'comparison'
+			tokenStats: Record<string, { total: number; protocols: number }>
+			protocolOverlap: ProtocolOverlap
+	  })
 
 export function buildTokenUsageSummary(
 	rawData: ProtocolTokenUsageData[],
@@ -18,10 +30,12 @@ export function buildTokenUsageSummary(
 ): TokenUsageSummary {
 	const isMultiToken = selectedSymbols.length > 1
 	const tokenStats: Record<string, { total: number; protocols: number }> | null = isMultiToken ? {} : null
-	const protocolOverlap: Record<string, number> | null = isMultiToken ? { exclusive: 0, shared: 0 } : null
+	const protocolOverlap: ProtocolOverlap | null = isMultiToken
+		? { exclusive: 0, shared: 0, exclusiveByToken: {} }
+		: null
 	for (const symbol of selectedSymbols) {
 		if (tokenStats) tokenStats[symbol] = { total: 0, protocols: 0 }
-		if (protocolOverlap) protocolOverlap[`${symbol}_only`] = 0
+		if (protocolOverlap) protocolOverlap.exclusiveByToken[symbol] = 0
 	}
 
 	let totalAmount = 0
@@ -39,28 +53,29 @@ export function buildTokenUsageSummary(
 			categoryStats.set(category, { count: 1, amount: row.amountUsd })
 		}
 
-		// The card counts every token key, while overlap counts only positive selected-token amounts.
-		let tokenKeyCount = 0
-		for (const _symbol in row.tokens) tokenKeyCount++
-		if (tokenKeyCount > 1) multiTokenProtocolCount++
-
 		let usedSelectedTokenCount = 0
 		let soleUsedSelectedSymbol = ''
 		for (const symbol of selectedSymbols) {
 			const amount = row.tokens[symbol]
 			if (tokenStats && amount !== undefined) {
-				tokenStats[symbol].total += amount
-				tokenStats[symbol].protocols++
+				const stats = tokenStats[symbol]
+				if (!stats) throw new Error(`Missing token-usage summary bucket for ${symbol}`)
+				stats.total += amount
+				if (amount > 0) stats.protocols++
 			}
 			if (protocolOverlap && amount !== undefined && amount > 0) {
 				usedSelectedTokenCount++
 				soleUsedSelectedSymbol = symbol
 			}
 		}
+		if (usedSelectedTokenCount > 1) multiTokenProtocolCount++
 
 		if (protocolOverlap) {
 			if (usedSelectedTokenCount === 1) {
-				protocolOverlap[`${soleUsedSelectedSymbol}_only`]++
+				const exclusiveCount = protocolOverlap.exclusiveByToken[soleUsedSelectedSymbol]
+				if (exclusiveCount === undefined)
+					throw new Error(`Missing token-usage overlap bucket for ${soleUsedSelectedSymbol}`)
+				protocolOverlap.exclusiveByToken[soleUsedSelectedSymbol] = exclusiveCount + 1
 				protocolOverlap.exclusive++
 			} else if (usedSelectedTokenCount > 1) {
 				protocolOverlap.shared++
@@ -69,13 +84,14 @@ export function buildTokenUsageSummary(
 	}
 
 	const categoryEntries = Array.from(categoryStats.entries())
-	return {
+	const common = {
 		totalAmount,
 		protocolCount: rawData.length,
-		tokenStats,
 		categoryBreakdown: Object.fromEntries(categoryEntries),
 		topCategories: [...categoryEntries].sort(([, a], [, b]) => b.amount - a.amount).slice(0, 3),
-		protocolOverlap,
 		multiTokenProtocolCount
 	}
+	return tokenStats && protocolOverlap
+		? { ...common, kind: 'comparison', tokenStats, protocolOverlap }
+		: { ...common, kind: 'single', tokenStats: null, protocolOverlap: null }
 }

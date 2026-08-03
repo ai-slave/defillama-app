@@ -17,25 +17,25 @@ interface ChartTypePillsProps {
 	mode?: 'chain' | 'protocol'
 }
 
-const PROTOCOL_GROUPS: Record<string, string[]> = {
-	Value: ['tvl', 'treasury'],
-	Volume: ['volume', 'aggregators', 'perps', 'perpsAggregators', 'bridgeAggregators'],
-	'Fees & Revenue': ['fees', 'revenue', 'unlocks', 'incentives', 'holdersRevenue'],
-	Derivatives: ['openInterest', 'optionsPremium', 'optionsNotional'],
-	Token: ['tokenMcap', 'tokenPrice', 'tokenVolume'],
-	DeFi: ['medianApy', 'borrowed'],
-	Ratios: ['pfRatio', 'psRatio']
-}
+const PROTOCOL_GROUPS = [
+	['Value', ['tvl', 'treasury']],
+	['Volume', ['volume', 'aggregators', 'perps', 'perpsAggregators', 'bridgeAggregators']],
+	['Fees & Revenue', ['fees', 'revenue', 'unlocks', 'incentives', 'holdersRevenue']],
+	['Derivatives', ['openInterest', 'optionsPremium', 'optionsNotional']],
+	['Token', ['tokenMcap', 'tokenPrice', 'tokenVolume']],
+	['DeFi', ['medianApy', 'borrowed']],
+	['Ratios', ['pfRatio', 'psRatio']]
+] as const satisfies ReadonlyArray<readonly [string, readonly string[]]>
 
-const CHAIN_GROUPS: Record<string, string[]> = {
-	Value: ['tvl', 'bridgedTvl'],
-	Volume: ['volume', 'aggregators', 'perps', 'perpsAggregators', 'bridgeAggregators'],
-	Derivatives: ['optionsPremium', 'optionsNotional'],
-	'Fees & Revenue': ['fees', 'revenue', 'chainFees', 'chainRevenue'],
-	Activity: ['users', 'txs', 'activeUsers', 'newUsers', 'gasUsed'],
-	Stablecoins: ['stablecoins', 'stablecoinInflows'],
-	'Native Token': ['chainMcap', 'chainPrice']
-}
+const CHAIN_GROUPS = [
+	['Value', ['tvl', 'bridgedTvl']],
+	['Volume', ['volume', 'aggregators', 'perps', 'perpsAggregators', 'bridgeAggregators']],
+	['Derivatives', ['optionsPremium', 'optionsNotional']],
+	['Fees & Revenue', ['fees', 'revenue', 'chainFees', 'chainRevenue']],
+	['Activity', ['txs', 'activeUsers', 'newUsers', 'gasUsed']],
+	['Stablecoins', ['stablecoins', 'stablecoinInflows']],
+	['Native Token', ['chainMcap', 'chainPrice']]
+] as const satisfies ReadonlyArray<readonly [string, readonly string[]]>
 
 export function ChartTypePills({
 	chartTypes,
@@ -57,8 +57,7 @@ export function ChartTypePills({
 	const groupedOptions = useMemo(() => {
 		const result: Array<{ group: string; options: ChartTypeOption[] }> = []
 
-		for (const groupName in groups) {
-			const typeIds = groups[groupName]
+		for (const [groupName, typeIds] of groups) {
 			const options: ChartTypeOption[] = []
 			for (const id of typeIds) {
 				const chartType = chartTypeMap.get(id)

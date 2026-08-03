@@ -3,22 +3,17 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration, ChartDataByKey, ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
 import {
 	normalizeCitationMarkerWhitespace,
 	parseArtifactPlaceholders,
 	processUnifiedCitations
 } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { createArticleEditorExtensions } from '../editor/extensions'
-import {
-	LLAMAAI_CHART_MAX_DATA_BYTES,
-	downsampleChartData,
-	validateLlamaAIChartConfig,
-	type LlamaAIChartData
-} from '../llamaaiChart'
+import { createLlamaAIChartAttrs } from '../llamaaiChart'
 import type { TiptapJson } from '../types'
 
-export type LlamaAIImportChart = { config: ChartConfiguration; data: LlamaAIChartData }
+export type LlamaAIImportChart = { config: ChartConfiguration; data: ChartDataSeries | ChartDataByKey }
 export type LlamaAIImportImage = { imageId: string; src: string; width?: number; height?: number }
 
 export type LlamaAIImportOptions = {
@@ -51,19 +46,12 @@ function htmlToBlocks(html: string): TiptapJson[] {
 	return (doc.content as TiptapJson[]) ?? []
 }
 
-function hasRows(data: LlamaAIChartData): boolean {
-	if (Array.isArray(data)) return data.length > 0
-	return Object.values(data ?? {}).some((rows) => Array.isArray(rows) && rows.length > 0)
-}
-
-export function buildLlamaAIChartNode(config: unknown, data: LlamaAIChartData): TiptapJson | null {
-	const validConfig = validateLlamaAIChartConfig(config)
-	if (!validConfig || !data || !hasRows(data)) return null
-	const sampled = downsampleChartData(data)
-	if (JSON.stringify(sampled).length > LLAMAAI_CHART_MAX_DATA_BYTES) return null
+export function buildLlamaAIChartNode(config: unknown, data: unknown): TiptapJson | null {
+	const attrs = createLlamaAIChartAttrs(config, data)
+	if (!attrs) return null
 	return {
 		type: 'llamaaiChart',
-		attrs: { chartConfig: validConfig, chartData: sampled, caption: '', savedChartId: null }
+		attrs
 	}
 }
 

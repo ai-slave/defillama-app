@@ -5,13 +5,15 @@ const {
 	fetchAdapterProtocolChartDataMock,
 	fetchChainAssetsChartMock,
 	resolveChainAssetIdMock,
-	fetchStablecoinChartApiMock
+	fetchStablecoinChartApiMock,
+	fetchChainChartMock
 } = vi.hoisted(() => ({
 	fetchAdapterChainChartDataMock: vi.fn(),
 	fetchAdapterProtocolChartDataMock: vi.fn(),
 	fetchChainAssetsChartMock: vi.fn(),
 	resolveChainAssetIdMock: vi.fn(),
-	fetchStablecoinChartApiMock: vi.fn()
+	fetchStablecoinChartApiMock: vi.fn(),
+	fetchChainChartMock: vi.fn()
 }))
 
 vi.mock('~/containers/AdapterMetrics/api', () => ({
@@ -31,9 +33,25 @@ vi.mock('~/containers/Stablecoins/api', () => ({
 	fetchStablecoinChartApi: fetchStablecoinChartApiMock
 }))
 
-import ChainCharts from '../services/ChainCharts'
+vi.mock('~/containers/Chains/api', () => ({
+	fetchChainChart: fetchChainChartMock
+}))
 
-describe('ChainCharts Bridged TVL', () => {
+import { fetchProChainChartData } from '../services/ChainCharts'
+
+describe('fetchProChainChartData TVL', () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	it('rejects a failed chain source instead of returning a cacheable empty chart', async () => {
+		fetchChainChartMock.mockRejectedValue(new Error('chain TVL unavailable'))
+
+		await expect(fetchProChainChartData('tvl', 'Ethereum')).rejects.toThrow('chain TVL unavailable')
+	})
+})
+
+describe('fetchProChainChartData Bridged TVL', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		fetchAdapterChainChartDataMock.mockResolvedValue([])
@@ -43,7 +61,7 @@ describe('ChainCharts Bridged TVL', () => {
 	})
 
 	it('resolves saved chain names to the producer metadata ID', async () => {
-		await expect(ChainCharts.getData('bridgedTvl', 'Hyperliquid L1')).resolves.toEqual([[1_700_000_000, 42]])
+		await expect(fetchProChainChartData('bridgedTvl', 'Hyperliquid L1')).resolves.toEqual([[1_700_000_000, 42]])
 
 		expect(resolveChainAssetIdMock).toHaveBeenCalledWith('Hyperliquid L1')
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(1)
@@ -54,7 +72,7 @@ describe('ChainCharts Bridged TVL', () => {
 		fetchChainAssetsChartMock.mockRejectedValue(new Error('missing chart'))
 
 		resolveChainAssetIdMock.mockResolvedValue('base')
-		await expect(ChainCharts.getData('bridgedTvl', 'Base')).rejects.toThrow('missing chart')
+		await expect(fetchProChainChartData('bridgedTvl', 'Base')).rejects.toThrow('missing chart')
 
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(1)
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('base')
@@ -63,19 +81,19 @@ describe('ChainCharts Bridged TVL', () => {
 	it('rejects when chain metadata resolution fails', async () => {
 		resolveChainAssetIdMock.mockRejectedValue(new Error('metadata unavailable'))
 
-		await expect(ChainCharts.getData('bridgedTvl', 'Base')).rejects.toThrow('metadata unavailable')
+		await expect(fetchProChainChartData('bridgedTvl', 'Base')).rejects.toThrow('metadata unavailable')
 		expect(fetchChainAssetsChartMock).not.toHaveBeenCalled()
 	})
 
 	it('returns an empty chart for empty chain inputs without fetching', async () => {
-		await expect(ChainCharts.getData('bridgedTvl', '')).resolves.toEqual([])
+		await expect(fetchProChainChartData('bridgedTvl', '')).resolves.toEqual([])
 
 		expect(resolveChainAssetIdMock).not.toHaveBeenCalled()
 		expect(fetchChainAssetsChartMock).not.toHaveBeenCalled()
 	})
 
 	it('uses an already-resolved producer ID without another metadata lookup', async () => {
-		await expect(ChainCharts.getData('bridgedTvl', 'OP Mainnet', undefined, 'optimism')).resolves.toEqual([
+		await expect(fetchProChainChartData('bridgedTvl', 'OP Mainnet', undefined, 'optimism')).resolves.toEqual([
 			[1_700_000_000, 42]
 		])
 
@@ -87,13 +105,13 @@ describe('ChainCharts Bridged TVL', () => {
 	it('does not fetch charts for chains without the metadata capability', async () => {
 		resolveChainAssetIdMock.mockResolvedValue(null)
 
-		await expect(ChainCharts.getData('bridgedTvl', 'Unknown')).resolves.toEqual([])
+		await expect(fetchProChainChartData('bridgedTvl', 'Unknown')).resolves.toEqual([])
 
 		expect(fetchChainAssetsChartMock).not.toHaveBeenCalled()
 	})
 })
 
-describe('ChainCharts adapter metrics', () => {
+describe('fetchProChainChartData adapter metrics', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		fetchAdapterChainChartDataMock.mockResolvedValue([[1_700_000_000, 42]])
@@ -101,7 +119,7 @@ describe('ChainCharts adapter metrics', () => {
 	})
 
 	it('uses the focused chain adapter chart for options premium volume', async () => {
-		await expect(ChainCharts.options('Ethereum')).resolves.toEqual([[1_700_000_000, 42]])
+		await expect(fetchProChainChartData('optionsPremium', 'Ethereum')).resolves.toEqual([[1_700_000_000, 42]])
 
 		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
 			adapterType: 'options',
@@ -111,7 +129,7 @@ describe('ChainCharts adapter metrics', () => {
 	})
 
 	it('uses the focused chain adapter chart for options notional volume', async () => {
-		await expect(ChainCharts.getData('optionsNotional', 'Ethereum')).resolves.toEqual([[1_700_000_000, 42]])
+		await expect(fetchProChainChartData('optionsNotional', 'Ethereum')).resolves.toEqual([[1_700_000_000, 42]])
 
 		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
 			adapterType: 'options',
@@ -120,11 +138,20 @@ describe('ChainCharts adapter metrics', () => {
 		})
 	})
 
+	it('uses the focused chain adapter chart for open interest', async () => {
+		await expect(fetchProChainChartData('openInterest', 'Hyperliquid L1')).resolves.toEqual([[1_700_000_000, 42]])
+
+		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
+			adapterType: 'open-interest',
+			chain: 'Hyperliquid L1',
+			dataType: 'openInterestAtEnd'
+		})
+	})
+
 	it('uses chain pseudo-protocol activity instead of retired userData endpoints', async () => {
-		await expect(ChainCharts.users('Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
-		await expect(ChainCharts.activeUsers('Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
-		await expect(ChainCharts.newUsers('Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
-		await expect(ChainCharts.txs('Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
+		await expect(fetchProChainChartData('activeUsers', 'Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
+		await expect(fetchProChainChartData('newUsers', 'Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
+		await expect(fetchProChainChartData('txs', 'Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
 
 		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(1, {
 			adapterType: 'active-users',
@@ -132,16 +159,11 @@ describe('ChainCharts adapter metrics', () => {
 			dataType: undefined
 		})
 		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(2, {
-			adapterType: 'active-users',
-			protocol: 'Ethereum',
-			dataType: undefined
-		})
-		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(3, {
 			adapterType: 'new-users',
 			protocol: 'Ethereum',
 			dataType: undefined
 		})
-		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(4, {
+		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(3, {
 			adapterType: 'active-users',
 			protocol: 'Ethereum',
 			dataType: 'dailyTransactionsCount'
@@ -149,7 +171,7 @@ describe('ChainCharts adapter metrics', () => {
 	})
 
 	it('uses the chain aggregate endpoint for gas used', async () => {
-		await expect(ChainCharts.gasUsed('Avalanche')).resolves.toEqual([[1_700_000_000, 42]])
+		await expect(fetchProChainChartData('gasUsed', 'Avalanche')).resolves.toEqual([[1_700_000_000, 42]])
 
 		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
 			adapterType: 'active-users',
@@ -160,7 +182,7 @@ describe('ChainCharts adapter metrics', () => {
 	})
 })
 
-describe('ChainCharts stablecoins', () => {
+describe('fetchProChainChartData stablecoins', () => {
 	it('shares one raw chain response between concurrent supply and inflow charts', async () => {
 		fetchStablecoinChartApiMock.mockResolvedValue({
 			aggregated: [
@@ -171,8 +193,8 @@ describe('ChainCharts stablecoins', () => {
 
 		await expect(
 			Promise.all([
-				ChainCharts.getData('stablecoins', 'Ethereum'),
-				ChainCharts.getData('stablecoinInflows', 'Ethereum')
+				fetchProChainChartData('stablecoins', 'Ethereum'),
+				fetchProChainChartData('stablecoinInflows', 'Ethereum')
 			])
 		).resolves.toEqual([
 			[

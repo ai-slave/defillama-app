@@ -8,75 +8,89 @@ import {
 	useSensors
 } from '@dnd-kit/core'
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable'
-import { lazy, memo, Suspense, useState } from 'react'
+import { lazy, memo, type ReactNode, Suspense, useContext, useMemo, useState } from 'react'
 import { SortableItem } from '~/containers/ProtocolOverview/ProtocolPro'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import type { StoredColSpan } from '../dashboardConfig/colSpan'
+import type { DashboardItemConfig } from '../dashboardItemConfig'
+import { INITIAL_DASHBOARD_STREAM_ITEM_COUNT } from '../dashboardStreamContract'
 import {
-	useProDashboardChartsData,
-	useProDashboardDashboard,
 	useProDashboardEditorActions,
+	useProDashboardItemsState,
 	useProDashboardPermissions
 } from '../ProDashboardAPIContext'
-import type { DashboardItemConfig, SqlChartConfig, StoredColSpan, UnifiedTableConfig } from '../types'
+import { StreamDoneContext } from '../queries'
+import type { SqlChartConfig } from '../types'
+import type { UnifiedTableConfig } from '../unifiedTable/config/current'
 import { ConfirmationModal } from './ConfirmationModal'
-import { AggregatorsDataset } from './datasets/AggregatorsDataset'
-import { BridgeAggregatorsDataset } from './datasets/BridgeAggregatorsDataset'
-import { CexAnalyticsDataset } from './datasets/CexAnalyticsDataset'
-import { ChainsDataset } from './datasets/ChainsDataset'
-import { DexsDataset } from './datasets/DexsDataset'
-import { EarningsDataset } from './datasets/EarningsDataset'
-import { EquitiesCompaniesDataset } from './datasets/EquitiesDataset/EquitiesCompaniesDataset'
-import { EquitiesFilingsDataset } from './datasets/EquitiesDataset/EquitiesFilingsDataset'
-import { EquitiesFinancialsDataset } from './datasets/EquitiesDataset/EquitiesFinancialsDataset'
-import { FeesDataset } from './datasets/FeesDataset'
-import { HoldersRevenueDataset } from './datasets/HoldersRevenueDataset'
-import { OptionsDataset } from './datasets/OptionsDataset'
-import { PerpsDataset } from './datasets/PerpsDataset'
-import { RevenueDataset } from './datasets/RevenueDataset'
-import { RWAAssetsDataset } from './datasets/RWADataset/RWAAssetsDataset'
-import { RWAChainAssetsDataset } from './datasets/RWADataset/RWAChainAssetsDataset'
-import { RWAChainsDataset } from './datasets/RWADataset/RWAChainsDataset'
-import { StablecoinsDataset } from './datasets/StablecoinsDataset'
-import TokenUsageDataset from './datasets/TokenUsageDataset'
-import { TrendingContractsDataset } from './datasets/TrendingContractsDataset'
-import { YieldsDataset } from './datasets/YieldsDataset'
 import { InViewDashboardCard } from './InViewDashboardCard'
-import { ProtocolsByChainTable } from './ProTable'
-import { Rating } from './Rating'
 import { TextCard } from './TextCard'
 import type { UnifiedTableFocusSection } from './UnifiedTable/types'
 
 const YieldsChartCard = lazy(() => import('./YieldsChartCard').then((mod) => ({ default: mod.YieldsChartCard })))
 const ChartCard = lazy(() => import('./ChartCard').then((mod) => ({ default: mod.ChartCard })))
-const SqlChartCard = lazy(() => import('./SqlChart/SqlChartCard').then((mod) => ({ default: mod.SqlChartCard })))
+const SqlChartCard = lazy(() =>
+	import('./SqlChart/SqlChartCard').then((mod) => ({
+		default: mod.SqlChartCard
+	}))
+)
 const MultiChartCard = lazy(() => import('./MultiChartCard'))
-const ChartBuilderCard = lazy(() => import('./ChartBuilderCard').then((mod) => ({ default: mod.ChartBuilderCard })))
+const ChartBuilderCard = lazy(() =>
+	import('./ChartBuilderCard').then((mod) => ({
+		default: mod.ChartBuilderCard
+	}))
+)
 const MetricCard = lazy(() => import('./MetricCard').then((mod) => ({ default: mod.MetricCard })))
 const UnifiedTable = lazy(() => import('./UnifiedTable'))
 const StablecoinsChartCard = lazy(() =>
-	import('./StablecoinsChartCard').then((mod) => ({ default: mod.StablecoinsChartCard }))
+	import('./StablecoinsChartCard').then((mod) => ({
+		default: mod.StablecoinsChartCard
+	}))
 )
 const StablecoinAssetChartCard = lazy(() =>
-	import('./StablecoinAssetChartCard').then((mod) => ({ default: mod.StablecoinAssetChartCard }))
+	import('./StablecoinAssetChartCard').then((mod) => ({
+		default: mod.StablecoinAssetChartCard
+	}))
 )
 const AdvancedTvlChartCard = lazy(() =>
-	import('./AdvancedTvlChartCard').then((mod) => ({ default: mod.AdvancedTvlChartCard }))
+	import('./AdvancedTvlChartCard').then((mod) => ({
+		default: mod.AdvancedTvlChartCard
+	}))
 )
-const BorrowedChartCard = lazy(() => import('./BorrowedChartCard').then((mod) => ({ default: mod.BorrowedChartCard })))
+const BorrowedChartCard = lazy(() =>
+	import('./BorrowedChartCard').then((mod) => ({
+		default: mod.BorrowedChartCard
+	}))
+)
 const IncomeStatementCard = lazy(() =>
-	import('./IncomeStatementCard').then((mod) => ({ default: mod.IncomeStatementCard }))
+	import('./IncomeStatementCard').then((mod) => ({
+		default: mod.IncomeStatementCard
+	}))
 )
 const UnlocksScheduleCard = lazy(() =>
-	import('./UnlocksScheduleCard').then((mod) => ({ default: mod.UnlocksScheduleCard }))
+	import('./UnlocksScheduleCard').then((mod) => ({
+		default: mod.UnlocksScheduleCard
+	}))
 )
 const UnlocksPieCard = lazy(() => import('./UnlocksPieCard').then((mod) => ({ default: mod.UnlocksPieCard })))
 const LlamaAIChartCard = lazy(() => import('./LlamaAIChartCard'))
 const RWAOverviewChartCard = lazy(() =>
-	import('./RWAOverviewChartCard').then((mod) => ({ default: mod.RWAOverviewChartCard }))
+	import('./RWAOverviewChartCard').then((mod) => ({
+		default: mod.RWAOverviewChartCard
+	}))
 )
-const RWAAssetChartCard = lazy(() => import('./RWAAssetChartCard').then((mod) => ({ default: mod.RWAAssetChartCard })))
+const RWAAssetChartCard = lazy(() =>
+	import('./RWAAssetChartCard').then((mod) => ({
+		default: mod.RWAAssetChartCard
+	}))
+)
+const DatasetTableCard = lazy(() =>
+	import('./DatasetTableCard').then((mod) => ({
+		default: mod.DatasetTableCard
+	}))
+)
 
 const STORED_COL_SPANS = [0.5, 1, 1.5, 2] as const satisfies readonly StoredColSpan[]
 const METRIC_COL_SPANS = [0.5, 1] as const satisfies readonly StoredColSpan[]
@@ -88,33 +102,41 @@ const COL_SPAN_CLASS_MAP: Record<1 | 2 | 3 | 4, string> = {
 }
 
 const normalizeStoredColSpan = (span: StoredColSpan | undefined, fallback: StoredColSpan = 1): StoredColSpan =>
-	(span ?? fallback) as StoredColSpan
+	span ?? fallback
 
-const getEffectiveColSpan = (span?: StoredColSpan) => {
+const getEffectiveColSpan = (span?: StoredColSpan): 1 | 2 | 3 | 4 => {
 	const stored = normalizeStoredColSpan(span)
-	return Math.round(stored * 2) as 1 | 2 | 3 | 4
+	if (stored === 0.5) return 1
+	if (stored === 1) return 2
+	if (stored === 1.5) return 3
+	return 4
 }
+
+type StoredColSpanOptions = readonly [StoredColSpan, ...StoredColSpan[]]
 
 const getPreviousStoredColSpan = (
 	span: StoredColSpan,
-	options: readonly StoredColSpan[] = STORED_COL_SPANS
+	options: StoredColSpanOptions = STORED_COL_SPANS
 ): StoredColSpan => {
 	const index = options.indexOf(span)
 	if (index <= 0) {
 		return options[0]
 	}
-	return options[index - 1]
+	const previous = options[index - 1]
+	if (previous === undefined) throw new Error(`Missing previous column span for ${span}`)
+	return previous
 }
 
-const getNextStoredColSpan = (
-	span: StoredColSpan,
-	options: readonly StoredColSpan[] = STORED_COL_SPANS
-): StoredColSpan => {
+const getNextStoredColSpan = (span: StoredColSpan, options: StoredColSpanOptions = STORED_COL_SPANS): StoredColSpan => {
 	const index = options.indexOf(span)
 	if (index === -1 || index >= options.length - 1) {
-		return options[options.length - 1]
+		const last = options.at(-1)
+		if (last === undefined) throw new Error('Column span options must not be empty')
+		return last
 	}
-	return options[index + 1]
+	const next = options[index + 1]
+	if (next === undefined) throw new Error(`Missing next column span for ${span}`)
+	return next
 }
 
 interface ChartGridProps {
@@ -132,17 +154,9 @@ function UnifiedTableCard({ item, onEditItem }: UnifiedTableCardProps) {
 		onEditItem?.(item, focusSection)
 	}
 
-	const handleOpenColumnModal = () => {
-		onEditItem?.(item, 'columns')
-	}
-
 	return (
 		<Suspense fallback={<div className="flex min-h-[360px] flex-col p-1 md:min-h-[380px]" />}>
-			<UnifiedTable
-				config={item}
-				onEdit={onEditItem ? handleEdit : undefined}
-				onOpenColumnModal={onEditItem ? handleOpenColumnModal : undefined}
-			/>
+			<UnifiedTable config={item} {...(onEditItem ? { onEdit: handleEdit } : {})} />
 		</Suspense>
 	)
 }
@@ -155,24 +169,22 @@ function SqlChartItem({ item }: { item: SqlChartConfig }) {
 	)
 }
 
-interface DashboardItemRendererProps {
+interface DashboardItemRendererBaseProps {
 	item: DashboardItemConfig
 	onEditItem?: (item: DashboardItemConfig, focusSection?: UnifiedTableFocusSection) => void
-	handleEditItem: (itemId: string, newItem: DashboardItemConfig) => void
 }
 
-const DashboardItemRenderer = memo(function DashboardItemRenderer({
-	item,
-	onEditItem,
-	handleEditItem
-}: DashboardItemRendererProps) {
-	const handleConfigChange = (newConfig: DashboardItemConfig) => handleEditItem(item.id, newConfig)
+type DashboardItemRendererProps = DashboardItemRendererBaseProps &
+	(
+		| {
+				isEditable: true
+				handleEditItem: (itemId: string, newItem: DashboardItemConfig) => void
+		  }
+		| { isEditable: false; handleEditItem?: never }
+	)
 
-	const handleDatasetChainChange = (newChain: string) =>
-		handleEditItem(item.id, { ...item, datasetChain: newChain } as DashboardItemConfig)
-
-	const handleDatasetTimeframeChange = (newTimeframe: string) =>
-		handleEditItem(item.id, { ...item, datasetTimeframe: newTimeframe } as DashboardItemConfig)
+const DashboardItemRenderer = memo(function DashboardItemRenderer(props: DashboardItemRendererProps) {
+	const { item, isEditable, onEditItem } = props
 
 	if (item.kind === 'chart') {
 		return (
@@ -185,7 +197,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer({
 	if (item.kind === 'multi') {
 		return (
 			<Suspense fallback={<div className="flex min-h-[402px] flex-col p-1 md:min-h-[418px]" />}>
-				<MultiChartCard key={`${item.id}-${item.items?.map((i) => i.id).join('-')}`} multi={item} />
+				<MultiChartCard multi={item} />
 			</Suspense>
 		)
 	}
@@ -303,97 +315,23 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer({
 	}
 
 	if (item.kind === 'unified-table') {
-		return <UnifiedTableCard item={item} onEditItem={onEditItem} />
+		return <UnifiedTableCard item={item} {...(isEditable && onEditItem ? { onEditItem } : {})} />
 	}
 
-	if (item.kind === 'table') {
-		if (item.tableType === 'dataset') {
-			if (item.datasetType === 'cex')
-				return (
-					<CexAnalyticsDataset config={{ ...item, datasetType: 'cex-analytics', cexAnalyticsView: 'comparison' }} />
-				)
-			if (item.datasetType === 'cex-analytics') return <CexAnalyticsDataset config={item} />
-			if (item.datasetType === 'revenue')
-				return <RevenueDataset chains={item.chains} tableId={item.id} filters={item.filters} />
-			if (item.datasetType === 'holders-revenue')
-				return <HoldersRevenueDataset chains={item.chains} tableId={item.id} filters={item.filters} />
-			if (item.datasetType === 'earnings')
-				return <EarningsDataset chains={item.chains} tableId={item.id} filters={item.filters} />
-			if (item.datasetType === 'fees') return <FeesDataset chains={item.chains} />
-			if (item.datasetType === 'token-usage')
-				return <TokenUsageDataset config={item} onConfigChange={handleConfigChange} />
-			if (item.datasetType === 'yields')
-				return (
-					<div className="relative" style={{ isolation: 'isolate' }}>
-						<YieldsDataset
-							chains={item.chains}
-							tableId={item.id}
-							columnOrder={item.columnOrder}
-							columnVisibility={item.columnVisibility}
-							filters={item.filters}
-						/>
-					</div>
-				)
-			if (item.datasetType === 'aggregators') return <AggregatorsDataset chains={item.chains} />
-			if (item.datasetType === 'perps') return <PerpsDataset chains={item.chains} />
-			if (item.datasetType === 'options') return <OptionsDataset chains={item.chains} />
-			if (item.datasetType === 'dexs') return <DexsDataset chains={item.chains} />
-			if (item.datasetType === 'bridge-aggregators') return <BridgeAggregatorsDataset chains={item.chains} />
-			if (item.datasetType === 'trending-contracts')
-				return (
-					<TrendingContractsDataset
-						chain={item.datasetChain}
-						timeframe={item.datasetTimeframe}
-						tableId={item.id}
-						onChainChange={handleDatasetChainChange}
-						onTimeframeChange={handleDatasetTimeframeChange}
-					/>
-				)
-			if (item.datasetType === 'chains')
-				return (
-					<ChainsDataset
-						category={item.datasetChain}
-						tableId={item.id}
-						columnOrder={item.columnOrder}
-						columnVisibility={item.columnVisibility}
-					/>
-				)
-			if (item.datasetType === 'rwa') return <RWAAssetsDataset />
-			if (item.datasetType === 'rwa-chains') return <RWAChainsDataset />
-			if (item.datasetType === 'rwa-selected-chain')
-				return <RWAChainAssetsDataset chain={item.datasetChain || 'Ethereum'} />
-			if (item.datasetType === 'equities') return <EquitiesCompaniesDataset />
-			if (item.datasetType === 'equities-financials')
-				return <EquitiesFinancialsDataset ticker={item.datasetChain || ''} />
-			if (item.datasetType === 'equities-filings') return <EquitiesFilingsDataset ticker={item.datasetChain || ''} />
-			// Old saved stablecoin tables predate datasetType. Keep that compatibility without treating unknown types as stables.
-			if (item.datasetType === 'stablecoins' || item.datasetType == null) {
-				return <StablecoinsDataset chain={item.datasetChain || 'All'} />
-			}
-			return (
-				<p className="flex min-h-[360px] items-center justify-center text-sm text-pro-text-tertiary">
-					Unsupported dataset: {item.datasetType}
-				</p>
-			)
-		}
-
-		const tableColSpan = (item.colSpan ?? 2) >= 2 ? 2 : 1
+	if (item.kind === 'dataset-table') {
 		return (
-			<ProtocolsByChainTable
-				tableId={item.id}
-				chains={item.chains}
-				colSpan={tableColSpan}
-				filters={item.filters}
-				columnOrder={item.columnOrder}
-				columnVisibility={item.columnVisibility}
-				customColumns={item.customColumns}
-				activeViewId={item.activeViewId}
-				activePresetId={item.activePresetId}
-			/>
+			<Suspense fallback={<div className="flex min-h-[360px] flex-col p-1" />}>
+				{props.isEditable ? (
+					<DatasetTableCard config={item} onConfigChange={(config) => props.handleEditItem(item.id, config)} />
+				) : (
+					<DatasetTableCard config={item} />
+				)}
+			</Suspense>
 		)
 	}
 
-	return null
+	const exhaustiveItem: never = item
+	return exhaustiveItem
 })
 
 function getReadOnlyCardMinHeight(item: DashboardItemConfig) {
@@ -404,16 +342,39 @@ function getReadOnlyCardMinHeight(item: DashboardItemConfig) {
 	return 360
 }
 
+function StreamPrefetchEligibleScope({ children }: { children: ReactNode }) {
+	const streamDone = useContext(StreamDoneContext)
+	return <StreamDoneContext.Provider value={streamDone}>{children}</StreamDoneContext.Provider>
+}
+
+function DashboardCardStreamScope({
+	children,
+	streamPrefetchEligible
+}: {
+	children: ReactNode
+	streamPrefetchEligible: boolean
+}) {
+	return streamPrefetchEligible ? (
+		<StreamPrefetchEligibleScope>{children}</StreamPrefetchEligibleScope>
+	) : (
+		<StreamDoneContext.Provider value>{children}</StreamDoneContext.Provider>
+	)
+}
+
+interface ReadOnlyDashboardItemProps {
+	item: DashboardItemConfig
+	streamPrefetchEligible: boolean
+}
+
 const ReadOnlyDashboardItem = memo(function ReadOnlyDashboardItem({
 	item,
-	onEditItem,
-	handleEditItem
-}: DashboardItemRendererProps) {
+	streamPrefetchEligible
+}: ReadOnlyDashboardItemProps) {
 	const spanOptions = item.kind === 'metric' ? METRIC_COL_SPANS : STORED_COL_SPANS
 	const fallbackSpan: StoredColSpan = item.kind === 'metric' ? spanOptions[0] : 1
 	const storedColSpan = normalizeStoredColSpan(item.colSpan, fallbackSpan)
 	const effectiveColSpan = getEffectiveColSpan(storedColSpan)
-	const content = <DashboardItemRenderer item={item} onEditItem={onEditItem} handleEditItem={handleEditItem} />
+	const content = <DashboardItemRenderer item={item} isEditable={false} />
 
 	return (
 		<div
@@ -422,35 +383,23 @@ const ReadOnlyDashboardItem = memo(function ReadOnlyDashboardItem({
 			{item.kind === 'text' ? (
 				content
 			) : (
-				<InViewDashboardCard minHeight={getReadOnlyCardMinHeight(item)}>{content}</InViewDashboardCard>
+				<InViewDashboardCard minHeight={getReadOnlyCardMinHeight(item)}>
+					<DashboardCardStreamScope streamPrefetchEligible={streamPrefetchEligible}>{content}</DashboardCardStreamScope>
+				</InViewDashboardCard>
 			)}
 		</div>
 	)
 })
 
 export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
-	const { chartsWithData } = useProDashboardChartsData()
+	const { items } = useProDashboardItemsState()
 	const { handleChartsReordered, handleRemoveItem, handleColSpanChange, handleEditItem } =
 		useProDashboardEditorActions()
 	const { isReadOnly } = useProDashboardPermissions()
-	const { getCurrentRatingSession, autoSkipOlderSessionsForRating, submitRating, skipRating } =
-		useProDashboardDashboard()
 	const [deleteConfirmItem, setDeleteConfirmItem] = useState<string | null>(null)
 	const isSmallScreen = useMedia('(max-width: 768px)')
 
-	const sortableItemIds = chartsWithData.map((c) => c.id)
-
-	const currentRatingSession = getCurrentRatingSession()
-
-	const handleRatingSubmit = async (sessionId: string, rating: number, feedback?: string) => {
-		await submitRating(sessionId, rating, feedback)
-		await autoSkipOlderSessionsForRating()
-	}
-
-	const handleRatingSkip = async (sessionId: string) => {
-		await skipRating(sessionId)
-		await autoSkipOlderSessionsForRating()
-	}
+	const sortableItemIds = useMemo(() => items.map((item) => item.id), [items])
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
@@ -465,9 +414,9 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 		const { active, over } = event
 
 		if (over && active.id !== over.id) {
-			const oldIndex = chartsWithData.findIndex((item) => item.id === active.id)
-			const newIndex = chartsWithData.findIndex((item) => item.id === over.id)
-			const newCharts = arrayMove(chartsWithData, oldIndex, newIndex)
+			const oldIndex = items.findIndex((item) => item.id === active.id)
+			const newIndex = items.findIndex((item) => item.id === over.id)
+			const newCharts = arrayMove(items, oldIndex, newIndex)
 			handleChartsReordered(newCharts)
 		}
 	}
@@ -490,14 +439,11 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 	if (isReadOnly) {
 		return (
 			<div className="grid grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-4">
-				{chartsWithData.map((item) => (
+				{items.map((item, index) => (
 					<ReadOnlyDashboardItem
-						key={`${item.id}-${item.colSpan}${
-							item.kind === 'multi' ? `-${item.items?.map((i) => i.id).join('-')}` : ''
-						}`}
+						key={item.id}
 						item={item}
-						onEditItem={onEditItem}
-						handleEditItem={handleEditItem}
+						streamPrefetchEligible={index < INITIAL_DASHBOARD_STREAM_ITEM_COUNT}
 					/>
 				))}
 			</div>
@@ -509,7 +455,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 			<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
 				<SortableContext items={sortableItemIds} strategy={rectSortingStrategy}>
 					<div className="grid grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-4">
-						{chartsWithData.map((item) => {
+						{items.map((item, index) => {
 							const spanOptions = item.kind === 'metric' ? METRIC_COL_SPANS : STORED_COL_SPANS
 							const fallbackSpan: StoredColSpan = item.kind === 'metric' ? spanOptions[0] : 1
 							const storedColSpan = normalizeStoredColSpan(item.colSpan, fallbackSpan)
@@ -518,19 +464,18 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 							const expandTarget = getNextStoredColSpan(storedColSpan, spanOptions)
 							const disableShrink = shrinkTarget === storedColSpan
 							const disableExpand = expandTarget === storedColSpan
+							const streamPrefetchEligible = index < INITIAL_DASHBOARD_STREAM_ITEM_COUNT
 
 							return (
 								<SortableItem
-									key={`${item.id}-${item.colSpan}${
-										item.kind === 'multi' ? `-${item.items?.map((i) => i.id).join('-')}` : ''
-									}`}
+									key={item.id}
 									id={item.id}
-									isTable={item.kind === 'table'}
+									isTable={item.kind === 'dataset-table'}
 									data-col={item.colSpan}
 									className={`col-span-1 flex flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
 								>
 									<div className="flex flex-wrap items-center justify-end border-b border-pro-cards-border">
-										{item.kind !== 'table' ? (
+										{item.kind !== 'dataset-table' ? (
 											<>
 												<Tooltip
 													content="Shrink width"
@@ -563,7 +508,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 										{onEditItem && !(item.kind === 'text' && item.allowHtml) ? (
 											<Tooltip
 												content="Edit item"
-												render={<button onClick={() => onEditItem(item)} />}
+												render={<button type="button" onClick={() => onEditItem(item)} />}
 												className="px-3 py-2 hover:pro-btn-primary"
 											>
 												<Icon name="pencil" height={14} width={14} />
@@ -572,7 +517,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 										) : null}
 										<Tooltip
 											content="Remove item"
-											render={<button onClick={() => handleDeleteClick(item.id)} />}
+											render={<button type="button" onClick={() => handleDeleteClick(item.id)} />}
 											className="rounded-tr-md px-3 py-2 hover:bg-error/10 hover:text-error"
 										>
 											<Icon name="x" height={14} width={14} />
@@ -580,24 +525,31 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 										</Tooltip>
 									</div>
 									<div className="min-h-0 flex-1">
-										<DashboardItemRenderer item={item} onEditItem={onEditItem} handleEditItem={handleEditItem} />
+										{item.kind === 'text' ? (
+											<DashboardItemRenderer
+												item={item}
+												isEditable
+												handleEditItem={handleEditItem}
+												{...(onEditItem !== undefined ? { onEditItem } : {})}
+											/>
+										) : (
+											<InViewDashboardCard minHeight={getReadOnlyCardMinHeight(item)}>
+												<DashboardCardStreamScope streamPrefetchEligible={streamPrefetchEligible}>
+													<DashboardItemRenderer
+														item={item}
+														isEditable
+														handleEditItem={handleEditItem}
+														{...(onEditItem !== undefined ? { onEditItem } : {})}
+													/>
+												</DashboardCardStreamScope>
+											</InViewDashboardCard>
+										)}
 									</div>
 								</SortableItem>
 							)
 						})}
-						{currentRatingSession && !isReadOnly ? (
-							<div className="col-span-full flex animate-pro-glow flex-col items-center justify-center gap-6 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4">
-								<Rating
-									sessionId={currentRatingSession.sessionId}
-									mode={currentRatingSession.mode}
-									variant="inline"
-									prompt={currentRatingSession.prompt}
-									onRate={handleRatingSubmit}
-									onSkip={handleRatingSkip}
-								/>
-							</div>
-						) : null}
 						<button
+							type="button"
 							onClick={onAddChartClick}
 							className="relative isolate flex min-h-[340px] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-pro-cards-border bg-pro-cards-bg p-2.5 text-link hover:bg-pro-info-300/5 dark:hover:bg-pro-info-300/10"
 						>

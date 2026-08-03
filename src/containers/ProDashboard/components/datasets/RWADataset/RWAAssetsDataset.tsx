@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import {
-	type ColumnDef,
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ColumnSizingState,
@@ -13,56 +12,30 @@ import {
 	type SortingState,
 	useReactTable
 } from '@tanstack/react-table'
-import * as React from 'react'
-import { useContext } from 'react'
+import { useCallback, useContext, useState } from 'react'
 import { useTableSearch } from '~/components/Table/utils'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
-import { fetchRWAAssetsListViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { PRO_RWA_ASSETS_TABLE_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import { fetchRWAActiveTVLs } from '~/containers/RWA/api'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
-import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
-import { downloadCSV } from '~/utils/download'
+import { downloadCSV, type CsvCell } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
+import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
-import { TableBody } from '../../ProTable/TableBody'
-import { TablePagination } from '../../ProTable/TablePagination'
+import { TableBody } from '../../Table/TableBody'
+import { TablePagination } from '../../Table/TablePagination'
+import {
+	buildRWAAllChainsAssetTableRows,
+	buildRWAChainAssetTableRows,
+	type RWAAssetTableRow
+} from './rwaAssetsTableData'
 
-type RWAAssetRow = {
-	name: string
-	ticker: string
-	assetGroup: string
-	activeMcap: number
-	onChainMcap: number
-	defiActiveTvl: number
-	category: string
-	type: string
-}
+const columnHelper = createColumnHelper<RWAAssetTableRow>()
+const formatNullableUsd = (value: number | null) =>
+	value == null ? '—' : formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
-function getTotalFromMap(map: Record<string, number> | null | undefined): number {
-	if (!map) return 0
-	let total = 0
-	for (const v of Object.values(map)) {
-		if (Number.isFinite(v)) total += v
-	}
-	return total
-}
-
-function getDefiTvlTotal(map: Record<string, Record<string, number>> | null | undefined): number {
-	if (!map) return 0
-	let total = 0
-	for (const chain of Object.values(map)) {
-		for (const v of Object.values(chain)) {
-			if (Number.isFinite(v)) total += v
-		}
-	}
-	return total
-}
-
-const columnHelper = createColumnHelper<RWAAssetRow>()
-
-const columns: ColumnDef<RWAAssetRow, any>[] = [
+const columns = [
 	columnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
@@ -79,16 +52,14 @@ const columns: ColumnDef<RWAAssetRow, any>[] = [
 	columnHelper.accessor('activeMcap', {
 		id: 'activeMcap',
 		header: 'Active Mcap',
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: (info) => formatNullableUsd(info.getValue()),
 		meta: { align: 'end' },
 		size: 150
 	}),
 	columnHelper.accessor('onChainMcap', {
 		id: 'onChainMcap',
 		header: 'Onchain Mcap',
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: (info) => formatNullableUsd(info.getValue()),
 		meta: { align: 'end' },
 		size: 150
 	}),
@@ -114,110 +85,110 @@ const columns: ColumnDef<RWAAssetRow, any>[] = [
 	})
 ]
 
+const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
+	'name',
+	'assetGroup',
+	'activeMcap',
+	'onChainMcap',
+	'defiActiveTvl',
+	'category',
+	'type'
+]
+const DEFAULT_COLUMN_SIZING: ColumnSizingState = {
+	name: 240,
+	assetGroup: 140,
+	activeMcap: 150,
+	onChainMcap: 150,
+	defiActiveTvl: 150,
+	category: 140,
+	type: 120
+}
+const getAssetsCoreRowModel = getCoreRowModel<RWAAssetTableRow>()
+const getAssetsSortedRowModel = getSortedRowModel<RWAAssetTableRow>()
+const getAssetsFilteredRowModel = getFilteredRowModel<RWAAssetTableRow>()
+const getAssetsPaginationRowModel = getPaginationRowModel<RWAAssetTableRow>()
+const EMPTY_DATA: RWAAssetTableRow[] = []
 const STALE_TIME = 5 * 60 * 1000
 
-function useRWAAssetsTableData() {
+function useRWAAssetsTableData(chain?: string) {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
+	const selectRows = useCallback(
+		(data: IFetchedRWAProject[]) =>
+			chain === undefined ? buildRWAAllChainsAssetTableRows(data) : buildRWAChainAssetTableRows(data, chain),
+		[chain]
+	)
 
-	return useQuery({
+	const hasValidChain = chain === undefined || chain.length > 0
+	const { data, isLoading, error } = useQuery({
 		queryKey: PRO_RWA_ASSETS_TABLE_QUERY_KEY,
-		enabled: streamDone,
-		queryFn: async () => {
-			if (authToken) {
-				return fetchRWAAssetsListViaProxy(authToken)
-			}
-			return fetchRWAActiveTVLs()
-		},
+		enabled: streamDone && hasValidChain,
+		queryFn: () => (authToken ? fetchProDashboardProxy('rwaAssetsList', {}, authToken) : fetchRWAActiveTVLs()),
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		select: (data: IFetchedRWAProject[]): RWAAssetRow[] => {
-			if (!data) return []
-			const rows: RWAAssetRow[] = []
-			for (const asset of data) {
-				if (!asset.id || !asset.ticker || asset.stablecoin || asset.governance) continue
-				rows.push({
-					name: asset.assetName || asset.ticker || asset.id,
-					ticker: asset.ticker,
-					assetGroup: asset.assetGroup || '',
-					activeMcap: getTotalFromMap(asset.activeMcap),
-					onChainMcap: getTotalFromMap(asset.onChainMcap),
-					defiActiveTvl: getDefiTvlTotal(asset.defiActiveTvl),
-					category: Array.isArray(asset.category) ? asset.category.join(', ') : '',
-					type: asset.type || ''
-				})
-			}
-			return rows.sort((a, b) => b.activeMcap - a.activeMcap)
-		}
+		select: selectRows
 	})
+	return { data, isLoading: isLoading || (hasValidChain && !streamDone && data === undefined), error }
 }
 
-const EMPTY_DATA: RWAAssetRow[] = []
+function buildAssetCsv(rows: RWAAssetTableRow[], includeTicker: boolean): CsvCell[][] {
+	const csv: CsvCell[][] = [
+		includeTicker
+			? ['Name', 'Ticker', 'Asset Group', 'Active Mcap', 'Onchain Mcap', 'DeFi Active TVL', 'Category', 'Type']
+			: ['Name', 'Asset Group', 'Active Mcap', 'Onchain Mcap', 'DeFi Active TVL', 'Category', 'Type']
+	]
+	for (const item of rows) {
+		const metrics: CsvCell[] = [
+			item.assetGroup,
+			item.activeMcap,
+			item.onChainMcap,
+			item.defiActiveTvl,
+			item.category,
+			item.type
+		]
+		csv.push(includeTicker ? [item.name, item.ticker, ...metrics] : [item.name, ...metrics])
+	}
+	return csv
+}
 
-export function RWAAssetsDataset() {
-	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'activeMcap', desc: true }])
-	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
-	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({})
-	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-	const [pagination, setPagination] = React.useState<PaginationState>({
-		pageIndex: 0,
-		pageSize: 10
-	})
-
-	const { data, isLoading, error } = useRWAAssetsTableData()
-	const width = useBreakpointWidth()
-
+function RWAAssetsTable({ chain }: { chain?: string }) {
+	const [sorting, setSorting] = useState<SortingState>([{ id: 'activeMcap', desc: true }])
+	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(DEFAULT_COLUMN_ORDER)
+	const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(DEFAULT_COLUMN_SIZING)
+	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
+	const { data, isLoading, error } = useRWAAssetsTableData(chain)
 	const instance = useReactTable({
 		data: data ?? EMPTY_DATA,
-		columns: columns as ColumnDef<any>[],
-		state: {
-			sorting,
-			columnOrder,
-			columnSizing,
-			columnFilters,
-			pagination
-		},
+		columns,
+		state: { sorting, columnOrder, columnSizing, columnFilters, pagination },
 		onSortingChange: setSorting,
 		enableSortingRemoval: false,
 		onColumnOrderChange: setColumnOrder,
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		autoResetPageIndex: false
+		getCoreRowModel: getAssetsCoreRowModel,
+		getSortedRowModel: getAssetsSortedRowModel,
+		getFilteredRowModel: getAssetsFilteredRowModel,
+		getPaginationRowModel: getAssetsPaginationRowModel,
+		autoResetPageIndex: true
 	})
-
-	React.useEffect(() => {
-		const defaultOrder = instance.getAllLeafColumns().map((d) => d.id)
-		const defaultSizing = {
-			name: 240,
-			assetGroup: 140,
-			activeMcap: 150,
-			onChainMcap: 150,
-			defiActiveTvl: 150,
-			category: 140,
-			type: 120
-		}
-
-		instance.setColumnSizing(defaultSizing)
-		instance.setColumnOrder(defaultOrder)
-	}, [instance, width])
-
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const title = chain === undefined ? 'RWA Assets' : `RWA on ${chain}`
 
 	if (isLoading) {
 		return (
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">RWA Assets</h3>
+					<h3 className="text-lg font-semibold text-pro-text-primary">{title}</h3>
 				</div>
 				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
 					<LoadingSpinner />
-					<p className="text-sm text-pro-text-secondary">Loading RWA assets data...</p>
+					<p className="text-sm text-pro-text-secondary">
+						{chain === undefined ? 'Loading RWA assets data...' : `Loading RWA assets for ${chain}...`}
+					</p>
 				</div>
 			</div>
 		)
@@ -227,7 +198,7 @@ export function RWAAssetsDataset() {
 		return (
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">RWA Assets</h3>
+					<h3 className="text-lg font-semibold text-pro-text-primary">{title}</h3>
 				</div>
 				<div className="flex min-h-[500px] flex-1 items-center justify-center">
 					<div className="text-center text-pro-text-secondary">Failed to load RWA assets data</div>
@@ -240,53 +211,48 @@ export function RWAAssetsDataset() {
 		<div className="flex h-full w-full flex-col p-4">
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
-					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">RWA Assets</h3>
+					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">{title}</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={() => {
-								const rows = instance.getFilteredRowModel().rows
-								const csvData = rows.map((row) => row.original)
-								const headers = [
-									'Name',
-									'Ticker',
-									'Asset Group',
-									'Active Mcap',
-									'Onchain Mcap',
-									'DeFi Active TVL',
-									'Category',
-									'Type'
-								]
-								const csv = [
-									headers.join(','),
-									...csvData.map((item) =>
-										[
-											`"${item.name}"`,
-											`"${item.ticker}"`,
-											`"${item.assetGroup}"`,
-											item.activeMcap,
-											item.onChainMcap,
-											item.defiActiveTvl,
-											`"${item.category}"`,
-											`"${item.type}"`
-										].join(',')
-									)
-								].join('\n')
-
-								downloadCSV('rwa-assets.csv', csv, { addTimestamp: true })
+								const rows = instance.getFilteredRowModel().rows.map((row) => row.original)
+								downloadCSV(
+									chain === undefined ? 'rwa-assets.csv' : `rwa-${chain}.csv`,
+									buildAssetCsv(rows, chain === undefined),
+									{ addTimestamp: true }
+								)
 							}}
 							smol
 						/>
 						<input
 							type="text"
 							placeholder="Search assets..."
-							onInput={(e) => setProjectName(e.currentTarget.value)}
+							onInput={(event) => setProjectName(event.currentTarget.value)}
 							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>
 			</div>
 			<TableBody table={instance} />
-			<TablePagination table={instance} />
+			<TablePagination
+				pageSize={pagination.pageSize}
+				pageIndex={pagination.pageIndex}
+				pageCount={instance.getPageCount()}
+				canPreviousPage={instance.getCanPreviousPage()}
+				canNextPage={instance.getCanNextPage()}
+				previousPage={instance.previousPage}
+				nextPage={instance.nextPage}
+				setPageSize={instance.setPageSize}
+				showPageSizes={instance.getRowCount() > 10}
+			/>
 		</div>
 	)
+}
+
+export function RWAAssetsDataset() {
+	return <RWAAssetsTable />
+}
+
+export function RWAChainAssetsDataset({ chain }: { chain: string }) {
+	return <RWAAssetsTable chain={chain} />
 }

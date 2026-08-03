@@ -1,5 +1,6 @@
 import { QueryClient, QueryObserver } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
+import type { DashboardItemConfig } from './dashboardItemConfig'
 import { initDashboardState } from './dashboardReducer'
 import type { Dashboard } from './dashboardTypes'
 import {
@@ -8,7 +9,7 @@ import {
 	toOwnerDashboardInitialRenderPayload,
 	toPublicDashboardInitialRenderPayload
 } from './initialDashboard'
-import type { ChartConfig, DashboardItemConfig } from './types'
+import type { ChartConfig } from './types'
 import { buildDashboardSeo } from './utils/seo'
 
 function dashboard(items: DashboardItemConfig[]): Dashboard {
@@ -35,7 +36,11 @@ function dashboard(items: DashboardItemConfig[]): Dashboard {
 		data: {
 			dashboardName: 'Public Dashboard',
 			timePeriod: '365d',
-			aiUndoState: { items: [], timestamp: '2026-01-01T00:00:00.000Z', sessionId: 'private' },
+			aiUndoState: {
+				items: [],
+				timestamp: '2026-01-01T00:00:00.000Z',
+				sessionId: 'private'
+			},
 			items
 		}
 	}
@@ -46,12 +51,9 @@ describe('dashboard initial render payload', () => {
 		const chart: ChartConfig = {
 			id: 'chart-1',
 			kind: 'chart',
+			subjectType: 'chain',
 			chain: 'Ethereum',
-			type: 'fees',
-			data: [[1_700_000_000, 42]],
-			isLoading: false,
-			hasError: false,
-			refetch: () => {}
+			type: 'fees'
 		}
 		const payload = toPublicDashboardInitialRenderPayload(
 			dashboard([
@@ -67,7 +69,14 @@ describe('dashboard initial render payload', () => {
 						description: 'AI chart description',
 						axes: {
 							x: { field: 'timestamp', label: 'Date', type: 'time' },
-							yAxes: [{ id: 'value', fields: ['value'], label: 'Value', position: 'left' }]
+							yAxes: [
+								{
+									id: 'value',
+									fields: ['value'],
+									label: 'Value',
+									position: 'left'
+								}
+							]
 						},
 						series: [
 							{
@@ -89,6 +98,7 @@ describe('dashboard initial render payload', () => {
 		expect(payload.data.items[0]).toEqual({
 			id: 'chart-1',
 			kind: 'chart',
+			subjectType: 'chain',
 			chain: 'Ethereum',
 			type: 'fees'
 		})
@@ -100,26 +110,6 @@ describe('dashboard initial render payload', () => {
 		expect(payload).not.toHaveProperty('collectionName')
 	})
 
-	it('drops saved chart types that are no longer supported', () => {
-		const unsupportedChart = {
-			id: 'legacy-chart',
-			kind: 'chart',
-			protocol: 'aave',
-			type: 'legacy-adapter-metric'
-		} as unknown as DashboardItemConfig
-		const source = dashboard([
-			unsupportedChart,
-			{ id: 'text-1', kind: 'text', title: 'Summary', content: 'Still supported' }
-		])
-
-		expect(toPublicDashboardInitialRenderPayload(source).data.items).toEqual([
-			{ id: 'text-1', kind: 'text', title: 'Summary', content: 'Still supported' }
-		])
-		expect(initDashboardState({ dashboard: source }).items).toEqual([
-			{ id: 'text-1', kind: 'text', title: 'Summary', content: 'Still supported' }
-		])
-	})
-
 	it('includes verified owner identity for edit hydration without editor history', () => {
 		const payload = toOwnerDashboardInitialRenderPayload(dashboard([]))
 
@@ -127,15 +117,28 @@ describe('dashboard initial render payload', () => {
 		expect(payload).not.toHaveProperty('aiGenerated')
 		expect(payload.data).not.toHaveProperty('aiUndoState')
 		expect(hydrateDashboardInitialRenderPayload(payload)).toEqual(
-			expect.objectContaining({ id: 'dashboard-1', user: 'owner-1', visibility: 'public' })
+			expect.objectContaining({
+				id: 'dashboard-1',
+				user: 'owner-1',
+				visibility: 'public'
+			})
 		)
 	})
 
 	it('makes dashboard shell config available synchronously before stream data arrives', () => {
 		const payload = toPublicDashboardInitialRenderPayload(
-			dashboard([{ id: 'text-1', kind: 'text', title: 'Summary', content: 'Ready on first render' }])
+			dashboard([
+				{
+					id: 'text-1',
+					kind: 'text',
+					title: 'Summary',
+					content: 'Ready on first render'
+				}
+			])
 		)
-		const state = initDashboardState({ dashboard: hydrateDashboardInitialRenderPayload(payload) })
+		const state = initDashboardState({
+			dashboard: hydrateDashboardInitialRenderPayload(payload)
+		})
 
 		expect(state.dashboardName).toBe('Public Dashboard')
 		expect(state.items).toEqual(payload.data.items)
@@ -182,9 +185,10 @@ describe('dashboard initial render payload', () => {
 			config: {
 				metric: 'protocol-revenue',
 				mode: 'protocol',
-				filterMode: 'include',
 				chainFilterMode: 'include',
 				categoryFilterMode: 'include',
+				chainCategoryFilterMode: 'include',
+				protocolCategoryFilterMode: 'include',
 				chains: ['Ethereum', 'Arbitrum', 'Base'],
 				chainCategories: ['EVM'],
 				protocolCategories: ['Lending', 'Dexes'],

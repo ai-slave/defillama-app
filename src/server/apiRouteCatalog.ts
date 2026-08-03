@@ -53,6 +53,8 @@ export const dynamicApiRoutePaths = [
 	'emission/[protocol]',
 	'maple/graphql',
 	'pro-dashboard/[dashboardId]/stream',
+	'pro-dashboard/protocol-catalog-source',
+	'pro-dashboard/token-usage',
 	'pro-dashboard/tokens/search',
 	'roundupMarkdown',
 	'sonic/burn-stream'
@@ -148,6 +150,8 @@ export const allApiRoutePaths = [
 	'pro-dashboard/chart-builder/stablecoins/breakdowns/by-chain',
 	'pro-dashboard/pf-ps-chart',
 	'pro-dashboard/pf-ps-protocols',
+	'pro-dashboard/protocol-catalog-source',
+	'pro-dashboard/token-usage',
 	'pro-dashboard/tokens/search',
 	'pro-dashboard/unified-table/[strategy]',
 	'protocol-icon',

@@ -2,17 +2,11 @@ import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
-import type { ChartArtifactRef } from '~/containers/LlamaAI/types'
-import type {
-	ChartBuilderConfig,
-	MultiChartConfig,
-	StablecoinAssetChartConfig,
-	StablecoinsChartConfig,
-	YieldsChartConfig
-} from '~/containers/ProDashboard/types'
+import type { MultiChartConfig } from '~/containers/ProDashboard/types'
 import { useIsClient } from '~/hooks/useIsClient'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import type { DashboardChartConfig, LlamaAIChartInput } from './addToDashboardContract'
 import { AddToDashboardModal } from './AddToDashboardModal'
 
 const SubscribeProModal = lazy(() =>
@@ -20,19 +14,6 @@ const SubscribeProModal = lazy(() =>
 		default: m.SubscribeProModal
 	}))
 )
-
-export type DashboardChartConfig =
-	| MultiChartConfig
-	| ChartBuilderConfig
-	| YieldsChartConfig
-	| StablecoinsChartConfig
-	| StablecoinAssetChartConfig
-
-export interface LlamaAIChartInput {
-	chartId: string
-	title: string
-	artifactRef: ChartArtifactRef
-}
 
 interface AddToDashboardButtonProps {
 	chartConfig: DashboardChartConfig | null
@@ -78,7 +59,8 @@ export function AddToDashboardButton({
 		}
 	}
 
-	const baseClassName = `${buttonStyles({ square: smol, size: 'md' })} ${className ?? ''}`.trim()
+	const baseClassName =
+		`${buttonStyles({ size: 'md', ...(smol === undefined ? {} : { square: smol }) })} ${className ?? ''}`.trim()
 	const button = (
 		<button
 			onClick={handleClick}
@@ -100,8 +82,8 @@ export function AddToDashboardButton({
 					<AddToDashboardModal
 						dialogStore={dashboardDialogStore}
 						chartConfig={config ?? null}
-						llamaAIChart={llamaAIChart}
-						unsupportedMetrics={unsupportedMetrics}
+						{...(llamaAIChart === undefined ? {} : { llamaAIChart })}
+						{...(unsupportedMetrics === undefined ? {} : { unsupportedMetrics })}
 					/>
 					{shouldRenderModal ? (
 						<Suspense fallback={null}>

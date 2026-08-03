@@ -1,10 +1,10 @@
 import { useCallback, useReducer } from 'react'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
+import type { DashboardGrouping } from '../../../types'
 import type {
 	ComparisonType,
 	ComparisonWizardState,
 	DisplayMode,
-	GroupingInterval,
 	MetricSettings,
 	WizardAction,
 	WizardStep
@@ -27,7 +27,7 @@ const initialState: ComparisonWizardState = {
 		aggregator: 'latest',
 		window: '30d',
 		compareMode: 'previous_value',
-		showSparkline: true
+		chartType: 'sparkline'
 	},
 	includeTable: true
 }
@@ -149,7 +149,8 @@ export function useComparisonWizard() {
 	const setSelectedItems = useCallback((items: string[]) => dispatch({ type: 'SET_SELECTED_ITEMS', items }), [])
 
 	const toggleSelectedItem = useCallback(
-		(item: string, maxItems?: number) => dispatch({ type: 'TOGGLE_SELECTED_ITEM', item, maxItems }),
+		(item: string, maxItems?: number) =>
+			dispatch({ type: 'TOGGLE_SELECTED_ITEM', item, ...(maxItems === undefined ? {} : { maxItems }) }),
 		[]
 	)
 
@@ -186,7 +187,7 @@ export function useComparisonWizard() {
 
 	const setDescription = useCallback((description: string) => dispatch({ type: 'SET_DESCRIPTION', description }), [])
 
-	const setGrouping = useCallback((grouping: GroupingInterval) => dispatch({ type: 'SET_GROUPING', grouping }), [])
+	const setGrouping = useCallback((grouping: DashboardGrouping) => dispatch({ type: 'SET_GROUPING', grouping }), [])
 
 	const setDisplayMode = useCallback(
 		(displayMode: DisplayMode) => dispatch({ type: 'SET_DISPLAY_MODE', displayMode }),
@@ -206,12 +207,15 @@ export function useComparisonWizard() {
 					return getProtocolInfo(item)?.name || item
 				})
 				if (!state.dashboardName) {
+					const firstName = displayNames.slice(0, 1).join('')
 					const defaultName =
-						displayNames.length === 1
-							? displayNames[0]
-							: displayNames.length === 2
-								? `${displayNames[0]} vs ${displayNames[1]}`
-								: `${displayNames[0]} vs ${displayNames.length - 1} competitors`
+						displayNames.length === 0
+							? 'Comparison'
+							: displayNames.length === 1
+								? firstName
+								: displayNames.length === 2
+									? displayNames.join(' vs ')
+									: `${firstName} vs ${displayNames.length - 1} competitors`
 					setDashboardName(defaultName)
 				}
 				if (state.tags.length === 0) {

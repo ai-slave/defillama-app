@@ -1,13 +1,26 @@
 import type {
+	CexAnalyticsMarketSharePoint,
+	CexAnalyticsSnapshotResponse,
+	CexAnalyticsTotalsPoint
+} from '~/containers/Cexs/api.types'
+import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
+import type {
 	IEquitiesCompanyApiItem,
 	IEquitiesFilingApiItem,
 	IEquitiesStatementsResponse
 } from '~/containers/Equities/api.types'
 import type {
+	StablecoinAssetCacheValue,
+	StablecoinsChartCacheValue,
+	StablecoinsTableData
+} from '~/containers/ProDashboard/stablecoinData'
+import type { ProYieldRow } from '~/containers/ProDashboard/yieldData'
+import type {
 	IProtocolChainBreakdownChart,
 	IProtocolTokenBreakdownChart,
 	IProtocolValueChart
 } from '~/containers/ProtocolOverview/api.types'
+import type { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import type {
 	IFetchedRWAProject,
 	IRWAAssetData,
@@ -16,40 +29,45 @@ import type {
 	RWAOverviewBreakdownRequest
 } from '~/containers/RWA/api.types'
 import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
+import type { getProtocolEmissionsPieData, getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import type { Dashboard } from './dashboardTypes'
-import type { ProDashboardAppMetadata } from './dataContracts'
+import type { ChartBuilderSeriesData, ProDashboardAppMetadata } from './dataContracts'
 import type { ProDashboardProtocolCatalog } from './protocolCatalog'
-import type { StablecoinsChartCacheValue } from './server/stablecoinFetchers'
-import type { TableServerData } from './server/tableQueries'
+import type { TokenUsageStreamData } from './tokenUsageSourcePlan'
+import type { ProtocolsUnifiedTableResponse } from './unifiedTable/contracts'
+
+export const INITIAL_DASHBOARD_STREAM_ITEM_COUNT = 8
 
 export type DashboardQueryKey = readonly unknown[]
 export type DashboardChartPoint = [number, number]
 export type ProtocolTvlChartData = IProtocolValueChart | IProtocolChainBreakdownChart | IProtocolTokenBreakdownChart
+type ProtocolIncomeStatementData = NonNullable<Awaited<ReturnType<typeof getProtocolIncomeStatement>>>
+type EmissionsPieData = Awaited<ReturnType<typeof getProtocolEmissionsPieData>>
+type EmissionsScheduleData = Awaited<ReturnType<typeof getProtocolEmissionsScheduleData>>
 
-type SerializedCacheChunkType =
-	| 'dimensionDatasetData'
-	| 'incomeStatementData'
-	| 'chartBuilderData'
-	| 'cexAnalyticsData'
-	| 'chainsDatasetData'
-	| 'yieldsDatasetData'
-	| 'stablecoinsTableData'
-	| 'stablecoinAssetData'
+type CexAnalyticsStreamChunk =
+	| { type: 'cexAnalyticsData'; view: 'snapshot'; key: string; data: CexAnalyticsSnapshotResponse }
+	| { type: 'cexAnalyticsData'; view: 'totals'; key: string; data: CexAnalyticsTotalsPoint[] }
+	| { type: 'cexAnalyticsData'; view: 'market-share'; key: string; data: CexAnalyticsMarketSharePoint[] }
+
+type EmissionStreamChunk =
+	| { type: 'emissionData'; view: 'pie'; key: string; data: EmissionsPieData }
+	| { type: 'emissionData'; view: 'schedule'; key: string; data: EmissionsScheduleData }
 
 export type DashboardStreamChunk =
 	| { type: 'dashboard'; data: Dashboard | null }
 	| { type: 'protocolsAndChains'; data: ProDashboardProtocolCatalog | null }
 	| { type: 'appMetadata'; data: ProDashboardAppMetadata | null }
 	| { type: 'chartData'; queryKey: DashboardQueryKey; data: DashboardChartPoint[] }
-	| { type: 'tableData'; data: TableServerData }
+	| ({ type: 'tokenUsageData' } & TokenUsageStreamData)
 	| {
 			type: 'yieldsChartData'
 			id: string
 			data: { supply?: PoolHistory | null; borrow?: BorrowMarketHistory | null }
 	  }
 	| { type: 'protocolTvlChartData'; queryKey: DashboardQueryKey; data: ProtocolTvlChartData }
-	| { type: 'unifiedTableData'; key: string; data: unknown }
+	| { type: 'unifiedTableData'; key: string; data: ProtocolsUnifiedTableResponse }
 	| { type: 'stablecoinsChartData'; chain: string; data: StablecoinsChartCacheValue }
 	| {
 			type: 'rwaBreakdownData'
@@ -61,10 +79,15 @@ export type DashboardStreamChunk =
 	| { type: 'rwaAssetChartData'; id: string; data: IRWAAssetData['chartDataset'] }
 	| { type: 'rwaAssetsTableData'; data: IFetchedRWAProject[] }
 	| { type: 'rwaChainsTableData'; data: IRWAStatsResponse }
-	| { type: 'rwaChainAssetsTableData'; chain: string; data: IFetchedRWAProject[] }
 	| { type: 'equitiesCompaniesData'; data: IEquitiesCompanyApiItem[] }
 	| { type: 'equitiesStatementsData'; ticker: string; data: IEquitiesStatementsResponse }
 	| { type: 'equitiesFilingsData'; ticker: string; data: IEquitiesFilingApiItem[] }
-	| { type: 'emissionData'; key: string; data: unknown }
-	| { type: SerializedCacheChunkType; key: string; data: unknown }
+	| EmissionStreamChunk
+	| { type: 'chartBuilderData'; key: string; data: ChartBuilderSeriesData }
+	| { type: 'incomeStatementData'; key: string; data: ProtocolIncomeStatementData }
+	| CexAnalyticsStreamChunk
+	| { type: 'chainsDatasetData'; key: string; data: ChainsDatasetRow[] }
+	| { type: 'yieldsDatasetData'; key: string; data: ProYieldRow[] }
+	| { type: 'stablecoinsTableData'; key: string; data: StablecoinsTableData }
+	| { type: 'stablecoinAssetData'; key: string; data: StablecoinAssetCacheValue }
 	| { type: 'done' }

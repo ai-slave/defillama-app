@@ -1,26 +1,35 @@
-import { lazy, memo, Suspense, useCallback, useMemo, useState } from 'react'
+import { lazy, memo, Suspense, useCallback, useContext, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
+import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { Select } from '~/components/Select/Select'
 import { getMetricUnitGroup } from '~/containers/ProDashboard/components/metricGroups'
+import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { capitalizeFirstLetter } from '~/utils'
 import { download } from '~/utils/download'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
-import { useChartImageExport } from '../hooks/useChartImageExport'
+import { getChartDataPrerequisite, toChartRuntimeState, type ChartRuntimeView } from '../chartRuntime'
 import {
 	useProDashboardCatalog,
 	useProDashboardEditorActions,
-	useProDashboardPermissions
+	useProDashboardPermissions,
+	useProDashboardTime
 } from '../ProDashboardAPIContext'
-import { CHART_TYPES, limitMultiChartItems, type DashboardGrouping, type MultiChartConfig } from '../types'
+import { ProxyAuthTokenContext, StreamDoneContext, useChartsData } from '../queries'
+import {
+	getProDashboardChartTypeConfig,
+	limitMultiChartItems,
+	type DashboardGrouping,
+	type MultiChartConfig
+} from '../types'
 import { generateChartColor } from '../utils'
-import { COLOR_PALETTE_2, EXTENDED_COLOR_PALETTE } from '../utils/colorManager'
+import { COLOR_PALETTE_2, EXTENDED_COLOR_PALETTE, getPaletteColor } from '../utils/colorManager'
 import { buildProTreemapData } from '../utils/treemap'
 import { ConfirmationModal } from './ConfirmationModal'
-import { buildMultiChartCsvRows, buildMultiChartSeriesView } from './multiChartSeries'
-import { ProTableCSVButton } from './ProTable/CsvButton'
+import { CSVExportButton } from './CSVExportButton'
+import { buildMultiChartCsvRows, buildMultiChartSeriesView, type MultiChartInputSeries } from './multiChartSeries'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const BuilderTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/Builder'))
@@ -49,8 +58,17 @@ interface MultiChartCardProps {
 	multi: MultiChartConfig
 }
 
+const isLoadedMultiChartItem = (item: ChartRuntimeView): boolean =>
+	!item.isLoading && !item.hasError && item.data.length > 0
+
+const normalizeBaseType = (chartType: string | undefined): MultiChartInputSeries['baseType'] => {
+	if (chartType === 'bar' || chartType === 'area' || chartType === 'line') return chartType
+	return undefined
+}
+
 const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardProps) {
-	const { getProtocolInfo, protocols } = useProDashboardCatalog()
+	const { getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog, protocolSymbols } = useProDashboardCatalog()
+	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const {
 		handleGroupingChange,
 		handleCumulativeChange,
@@ -61,35 +79,59 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 	} = useProDashboardEditorActions()
 	const { isReadOnly, hideDuplicateButton } = useProDashboardPermissions()
 	const { chartInstance, handleChartReady } = useChartImageExport()
+	const authToken = useContext(ProxyAuthTokenContext)
+	const streamDone = useContext(StreamDoneContext)
 	const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false)
 	const showStacked = multi.showStacked !== false
 	const showCumulative = multi.showCumulative || false
 	const showPercentage = multi.showPercentage || false
 	const showTreemap = multi.showTreemap || false
 	const limitedItems = useMemo(() => limitMultiChartItems(multi.items), [multi.items])
-
-	const validItems = useMemo(
+	const chartQueries = useChartsData(
+		limitedItems,
+		protocolCatalog,
+		protocolBySlug,
+		timePeriod,
+		customTimePeriod,
+		authToken,
+		parentMapping,
+		protocolSymbols
+	)
+	const runtimeItems = useMemo<ChartRuntimeView[]>(
 		() =>
-			limitedItems.filter((cfg) => {
-				if (cfg.isLoading || cfg.hasError) return false
-				return Boolean(cfg.data?.length)
+			chartQueries.map((query, index) => {
+				const item = limitedItems[index]
+				if (!item) throw new Error(`Missing multi-chart config at index ${index}`)
+				return {
+					...item,
+					...toChartRuntimeState(query, streamDone, getChartDataPrerequisite(item, protocolCatalog, protocolBySlug))
+				}
 			}),
-		[limitedItems]
+		[chartQueries, limitedItems, protocolBySlug, protocolCatalog, streamDone]
 	)
 
-	const failedItems = useMemo(
-		() =>
-			limitedItems.filter((cfg) => {
-				if (cfg.isLoading) return false
-				return cfg.hasError || !Array.isArray(cfg.data) || (Array.isArray(cfg.data) && cfg.data.length === 0)
-			}),
-		[limitedItems]
-	)
-
-	const loadingItems = useMemo(() => limitedItems.filter((cfg) => cfg.isLoading), [limitedItems])
+	const { validItems, failedItems, loadingItems } = useMemo(() => {
+		const validItems: ChartRuntimeView[] = []
+		const failedItems: ChartRuntimeView[] = []
+		const loadingItems: ChartRuntimeView[] = []
+		for (const item of runtimeItems) {
+			if (isLoadedMultiChartItem(item)) validItems.push(item)
+			else if (item.isLoading) loadingItems.push(item)
+			else failedItems.push(item)
+		}
+		return { validItems, failedItems, loadingItems }
+	}, [runtimeItems])
+	const failedItemRetries = useMemo(() => {
+		const retries = new Set<() => void>()
+		for (const item of failedItems) if (item.canRetry) retries.add(item.refetch)
+		return Array.from(retries)
+	}, [failedItems])
+	const retryFailedItems = useCallback(() => {
+		for (const retry of failedItemRetries) retry()
+	}, [failedItemRetries])
 
 	const colorContext = useMemo(() => {
-		const uniqueChains = new Set<string | undefined>()
+		const uniqueChains = new Set<string>()
 		const uniqueProtocols = new Set<string>()
 		const itemIdsByProtocol = new Map<string, string[]>()
 		const itemIdsByChain = new Map<string, string[]>()
@@ -97,7 +139,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		let onlyProtocols = true
 
 		for (const item of validItems) {
-			if (item.protocol) {
+			if (item.subjectType === 'protocol') {
 				onlyChains = false
 				uniqueProtocols.add(item.protocol)
 				const ids = itemIdsByProtocol.get(item.protocol)
@@ -106,8 +148,6 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 			} else {
 				onlyProtocols = false
 				uniqueChains.add(item.chain)
-			}
-			if (item.chain) {
 				const ids = itemIdsByChain.get(item.chain)
 				if (ids) ids.push(item.id)
 				else itemIdsByChain.set(item.chain, [item.id])
@@ -136,7 +176,8 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		const colorIndexByItemId = new Map<string, number>()
 		const sortedItemIds = Array.from(colorItemIds).sort()
 		for (let index = 0; index < sortedItemIds.length; index++) {
-			colorIndexByItemId.set(sortedItemIds[index], index)
+			const itemId = sortedItemIds[index]
+			if (itemId) colorIndexByItemId.set(itemId, index)
 		}
 
 		return { isSingleChain, isSingleProtocol, colorIndexByItemId }
@@ -147,28 +188,23 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		const colorIndexesTaken = new Set<number>()
 
 		const getColorItemId = (item: (typeof validItems)[0]) => {
-			if (isSingleProtocol) return `${item.chain}_${item.type}`
-			else if (isSingleChain) return `${item.protocol}_${item.type}`
-			else return `${item.chain}_${item.protocol}_${item.type}`
+			if (isSingleProtocol || isSingleChain) return item.type
+			const subject = item.subjectType === 'protocol' ? item.protocol : item.chain
+			return `${item.subjectType}_${subject}_${item.type}`
 		}
 
-		return validItems.map((cfg, index) => {
-			const data = cfg.data!
-			const meta = CHART_TYPES[cfg.type]
-			const name = cfg.protocol
-				? getProtocolInfo(cfg.protocol)?.name || cfg.protocol
-				: cfg.chain ||
-					(cfg.geckoId && protocols.find((protocol) => protocol.geckoId === cfg.geckoId)?.name) ||
-					cfg.geckoId ||
-					''
+		const series: MultiChartInputSeries[] = validItems.map((cfg, index) => {
+			const data = cfg.data
+			const meta = getProDashboardChartTypeConfig(cfg.type)
+			const name = cfg.subjectType === 'protocol' ? getProtocolInfo(cfg.protocol)?.name || cfg.protocol : cfg.chain
 
-			const itemIdentifier = cfg.protocol || cfg.chain || 'unknown'
+			const itemIdentifier = cfg.subjectType === 'protocol' ? cfg.protocol : cfg.chain
 			const colorItemId = getColorItemId(cfg)
 
 			let color =
 				cfg.color ||
 				(isSingleChain || isSingleProtocol
-					? EXTENDED_COLOR_PALETTE[index % EXTENDED_COLOR_PALETTE.length]
+					? getPaletteColor(EXTENDED_COLOR_PALETTE, index)
 					: generateChartColor(colorItemId, meta?.color || '#8884d8'))
 
 			let colorIndex = colorIndexByItemId.get(itemIdentifier) ?? -1
@@ -177,36 +213,48 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 			}
 
 			if (!cfg.color && colorIndex !== -1) {
-				color = COLOR_PALETTE_2[colorIndex % COLOR_PALETTE_2.length]
+				color = getPaletteColor(COLOR_PALETTE_2, colorIndex)
 				colorIndexesTaken.add(colorIndex)
 			}
 
 			return {
 				name: `${name} ${meta?.title || capitalizeFirstLetter(cfg.type)}`,
-				baseType: meta?.chartType as 'bar' | 'area' | 'line' | undefined,
+				baseType: normalizeBaseType(meta?.chartType),
 				data,
 				color,
 				metricType: cfg.type
 			}
 		})
-	}, [validItems, colorContext, getProtocolInfo, protocols])
+		return series
+	}, [validItems, colorContext, getProtocolInfo])
 
 	const chartTypeInfo = useMemo(() => {
-		const uniqueTypes = new Set(validItems.map((item) => item.type))
-		const allBarType =
-			uniqueTypes.size === 1 &&
-			validItems.every((item) => {
-				const chartType = CHART_TYPES[item.type]
-				return chartType?.chartType === 'bar'
-			})
-		const allAreaType =
-			uniqueTypes.size === 1 &&
-			validItems.every((item) => {
-				const chartType = CHART_TYPES[item.type]
-				return chartType?.chartType === 'area'
-			})
-		return { allBarType, allAreaType }
-	}, [validItems])
+		let firstMetricType: string | undefined
+		let hasMultipleMetrics = false
+		let allBarType = validItems.length > 0
+		let allAreaType = validItems.length > 0
+		for (const item of validItems) {
+			if (firstMetricType === undefined) firstMetricType = item.type
+			else if (item.type !== firstMetricType) hasMultipleMetrics = true
+			const chartType = getProDashboardChartTypeConfig(item.type)
+			if (chartType?.chartType !== 'bar') allBarType = false
+			if (chartType?.chartType !== 'area') allAreaType = false
+		}
+		if (hasMultipleMetrics) {
+			allBarType = false
+			allAreaType = false
+		}
+
+		let allChartsGroupable = true
+		for (const item of limitedItems) {
+			const chartType = getProDashboardChartTypeConfig(item.type)
+			if (chartType === undefined || !('groupable' in chartType) || chartType.groupable !== true) {
+				allChartsGroupable = false
+				break
+			}
+		}
+		return { allBarType, allAreaType, hasMultipleMetrics, allChartsGroupable }
+	}, [limitedItems, validItems])
 
 	const treemapData = useMemo(() => {
 		if (!showTreemap) return []
@@ -234,42 +282,31 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 	}, [chartView, multi.name])
 
 	const hasAnyData = validItems.length > 0
-	const isAllLoading = loadingItems.length === limitedItems.length
+	const isPrimaryLoading = !hasAnyData && loadingItems.length > 0
 
-	const uniqueMetricTypes = new Set(validItems.map((item) => item.type))
-	const allPercentMetrics =
-		baseSeries.length > 0 && baseSeries.every((series) => getMetricUnitGroup(series.metricType) === 'percent')
-	const allCountMetrics =
-		baseSeries.length > 0 && baseSeries.every((series) => getMetricUnitGroup(series.metricType) === 'count')
-	const allRatioMetrics =
-		baseSeries.length > 0 && baseSeries.every((series) => getMetricUnitGroup(series.metricType) === 'ratio')
-	const hasMultipleUnitGroups = new Set(baseSeries.map((series) => getMetricUnitGroup(series.metricType))).size > 1
-	const hasMultipleMetrics = uniqueMetricTypes.size > 1
-
-	const allChartsGroupable = limitedItems.every((item) => {
-		const chartType = CHART_TYPES[item.type]
-		return chartType?.groupable === true
-	})
-
-	const allChartsAreBarType =
-		!hasMultipleMetrics &&
-		validItems.every((item) => {
-			const chartType = CHART_TYPES[item.type]
-			return chartType?.chartType === 'bar'
-		})
-
-	const allChartsAreAreaType =
-		!hasMultipleMetrics &&
-		validItems.every((item) => {
-			const chartType = CHART_TYPES[item.type]
-			return chartType?.chartType === 'area'
-		})
-
-	const canStack = allChartsAreBarType || allChartsAreAreaType
+	const { allPercentMetrics, allCountMetrics, allRatioMetrics, hasMultipleUnitGroups } = useMemo(() => {
+		let firstUnitGroup: ReturnType<typeof getMetricUnitGroup> | undefined
+		let hasMultipleUnitGroups = false
+		for (const series of baseSeries) {
+			const unitGroup = getMetricUnitGroup(series.metricType)
+			if (firstUnitGroup === undefined) firstUnitGroup = unitGroup
+			else if (unitGroup !== firstUnitGroup) hasMultipleUnitGroups = true
+		}
+		return {
+			allPercentMetrics: baseSeries.length > 0 && !hasMultipleUnitGroups && firstUnitGroup === 'percent',
+			allCountMetrics: baseSeries.length > 0 && !hasMultipleUnitGroups && firstUnitGroup === 'count',
+			allRatioMetrics: baseSeries.length > 0 && !hasMultipleUnitGroups && firstUnitGroup === 'ratio',
+			hasMultipleUnitGroups
+		}
+	}, [baseSeries])
+	const { allChartsGroupable, hasMultipleMetrics, allBarType, allAreaType } = chartTypeInfo
+	const canStack = allBarType || allAreaType
 
 	const seriesCount = chartView.charts.length
-	const chartOptions = useMemo(() => {
-		const grid = chartGrid({ top: seriesCount > 5 ? 80 : CHART_LEGEND_RESERVE })
+	const chartOptions = useMemo<MultiSeriesChartOptions>(() => {
+		const grid = chartGrid({
+			top: seriesCount > 5 ? 80 : CHART_LEGEND_RESERVE
+		})
 		const legend = {
 			top: CHART_INSET,
 			type: 'scroll',
@@ -289,13 +326,11 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 				legend
 			}
 		}
-		if (hasMultipleUnitGroups) return { yAxis: { min: undefined, max: undefined }, grid, legend }
+		if (hasMultipleUnitGroups) return { yAxis: {}, grid, legend }
 
 		if (allPercentMetrics) {
 			return {
 				yAxis: {
-					max: undefined,
-					min: undefined,
 					axisLabel: {
 						formatter: '{value}%'
 					}
@@ -308,8 +343,6 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		if (allCountMetrics || allRatioMetrics) {
 			return {
 				yAxis: {
-					max: undefined,
-					min: undefined,
 					axisLabel: {
 						formatter: (value: number) => formatCompactNumber(value, { maximumFractionDigits: 1 })
 					}
@@ -321,8 +354,6 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 
 		return {
 			yAxis: {
-				max: undefined,
-				min: undefined,
 				axisLabel: {
 					formatter: (value: number) => formatUsd(value, { compact: true, maximumFractionDigits: 1 })
 				}
@@ -357,12 +388,12 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 					</div>
 				) : null}
 
-				{!isReadOnly && hasAnyData && !hasMultipleMetrics && allChartsAreBarType ? (
+				{!isReadOnly && hasAnyData && !hasMultipleMetrics && allBarType ? (
 					<Select
 						size="sm"
 						allValues={CUMULATIVE_DISPLAY_OPTIONS}
 						selectedValues={showCumulative ? 'Cumulative' : 'Individual'}
-						setSelectedValues={(value) => {
+						setSelectedValues={(value: string) => {
 							handleCumulativeChange(multi.id, value === 'Cumulative')
 							if (value === 'Cumulative') {
 								handleStackedChange(multi.id, false)
@@ -378,7 +409,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 						size="sm"
 						allValues={STACKING_DISPLAY_OPTIONS}
 						selectedValues={showStacked ? 'Stacked' : 'Separate'}
-						setSelectedValues={(value) => {
+						setSelectedValues={(value: string) => {
 							handleStackedChange(multi.id, value !== 'Separate')
 							handlePercentageChange(multi.id, false)
 						}}
@@ -392,7 +423,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 						size="sm"
 						allValues={VALUE_TYPE_OPTIONS}
 						selectedValues={showPercentage ? '% Percentage' : '$ Absolute'}
-						setSelectedValues={(value) => {
+						setSelectedValues={(value: string) => {
 							handlePercentageChange(multi.id, value === '% Percentage')
 							handleStackedChange(multi.id, false)
 						}}
@@ -406,7 +437,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 						size="sm"
 						allValues={CHART_LAYOUT_OPTIONS}
 						selectedValues={showTreemap ? 'treemap' : 'chart'}
-						setSelectedValues={(value) => {
+						setSelectedValues={(value: string) => {
 							handleTreemapChange(multi.id, value === 'treemap')
 						}}
 						label={showTreemap ? 'Tree Map' : 'Time Series'}
@@ -432,7 +463,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 							title={showTreemap ? undefined : capitalizeFirstLetter(multi.name) || 'Multi Chart'}
 							smol
 						/>
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={handleCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
@@ -449,19 +480,41 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 					</span>
 				</div>
 			) : null}
+			{hasAnyData && failedItems.length > 0 ? (
+				<div className="flex items-center gap-1.5 px-1 text-xs text-pro-text-form md:px-3">
+					<Icon name="alert-triangle" height={14} width={14} className="text-sub-orange" />
+					<span>
+						{failedItems.length} {failedItems.length === 1 ? 'series is' : 'series are'} unavailable.
+					</span>
+					{failedItemRetries.length > 0 ? (
+						<button type="button" className="text-link hover:underline" onClick={retryFailedItems}>
+							Try again
+						</button>
+					) : null}
+				</div>
+			) : null}
 
-			{!hasAnyData && isAllLoading ? (
+			{isPrimaryLoading ? (
 				<div className="flex flex-1 flex-col items-center justify-center">
 					<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-brand"></div>
 					<p className="text-sm text-pro-text-form">Loading charts...</p>
 				</div>
 			) : !hasAnyData ? (
 				<div className="flex flex-1 flex-col items-center justify-center">
-					<Icon name="alert-triangle" height={24} width={24} className="mx-auto mb-2 text-error" />
-					<p className="text-sm text-pro-text-label">Failed to load chart data</p>
-					<p className="mt-1 text-xs text-pro-text-form">
-						{failedItems.length} of {limitedItems.length} charts failed
-					</p>
+					{failedItemRetries.length > 0 ? (
+						<>
+							<Icon name="alert-triangle" height={24} width={24} className="mx-auto mb-2 text-error" />
+							<p className="text-sm text-pro-text-label">Failed to load chart data</p>
+							<p className="mt-1 text-xs text-pro-text-form">
+								{failedItems.length} of {limitedItems.length} charts failed
+							</p>
+							<button type="button" className="mt-1 text-sm text-link hover:underline" onClick={retryFailedItems}>
+								Try again
+							</button>
+						</>
+					) : (
+						<p className="text-sm text-pro-text-label">No chart data available</p>
+					)}
 				</div>
 			) : showTreemap && treemapData.length > 0 ? (
 				<Suspense fallback={<div className="min-h-[360px]" />}>

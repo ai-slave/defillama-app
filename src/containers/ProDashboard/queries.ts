@@ -1,30 +1,27 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query'
 import dayjs from 'dayjs'
-import { createContext, useContext, useMemo, useRef } from 'react'
+import { createContext, useCallback, useContext, useMemo } from 'react'
 import { fetchChainsList } from '~/containers/Chains/api'
+import { fetchOracleMetrics } from '~/containers/Oracles/api'
+import { buildOracleNamesByProtocol } from '~/containers/Oracles/membership'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
+import { fetchJson } from '~/utils/async'
 import { sumSeriesByTimestamp } from '~/utils/breakdowns'
-import {
-	getProDashboardChartSourceQueryKey,
-	isChainTokenChartType,
-	isProtocolTokenChartType,
-	normalizeUnlocksDataType
-} from './chartSource'
+import { getChartDataPrerequisite, type ChartDataPrerequisite } from './chartRuntime'
+import { getProDashboardChartSourceQueryKey, isChainTokenChartType, isProtocolTokenChartType } from './chartSource'
 import type { CustomTimePeriod, TimePeriod } from './dashboardTypes'
+import { buildProDashboardProtocolCatalog } from './protocolCatalog'
+import type { ProProtocolCatalogSourceRow } from './protocolCatalog'
+import { fetchProChainChartData } from './services/ChainCharts'
+import { fetchProDashboardBridgedTvl } from './services/fetchBridgedTvl'
+import { fetchProDashboardProxy } from './services/fetchViaProxy'
+import { fetchProProtocolChartData } from './services/ProtocolCharts'
+import { ORACLE_MEMBERSHIP_QUERY_KEY } from './tableQueryKeys'
 import {
-	buildProDashboardParentMapping,
-	buildProDashboardProtocolCatalog,
-	buildProtocolSymbolMap
-} from './protocolCatalog'
-import ChainCharts from './services/ChainCharts'
-import { fetchChartViaProxy } from './services/fetchViaProxy'
-import ProtocolCharts from './services/ProtocolCharts'
-import {
-	CHART_TYPES,
+	getProDashboardChartTypeConfig,
 	isProDashboardChartType,
 	type ChartConfig,
-	type DashboardGrouping,
-	type ProDashboardChartType
+	type DashboardGrouping
 } from './types'
 import { groupData } from './utils'
 
@@ -56,7 +53,9 @@ export function filterDataByTimePeriod(
 	let high = data.length
 	while (low < high) {
 		const mid = (low + high) >>> 1
-		if (data[mid][0] < bounds.start) low = mid + 1
+		const point = data.at(mid)
+		if (!point) throw new Error(`Missing chart point at binary-search index ${mid}`)
+		if (point[0] < bounds.start) low = mid + 1
 		else high = mid
 	}
 	const startIndex = low
@@ -65,7 +64,9 @@ export function filterDataByTimePeriod(
 	high = data.length
 	while (low < high) {
 		const mid = (low + high) >>> 1
-		if (data[mid][0] <= bounds.end) low = mid + 1
+		const point = data.at(mid)
+		if (!point) throw new Error(`Missing chart point at binary-search index ${mid}`)
+		if (point[0] <= bounds.end) low = mid + 1
 		else high = mid
 	}
 
@@ -114,243 +115,6 @@ export function getTimePeriodBounds(
 	return { start: cutoffDate.unix(), end: Infinity }
 }
 
-export function getChartCardQueryKey(chart: Pick<ChartConfig, 'type' | 'protocol' | 'chain' | 'geckoId' | 'dataType'>) {
-	return getProDashboardChartSourceQueryKey(chart)
-}
-
-export function getMetricQueryKey(type: string, itemType: 'chain' | 'protocol', item: string, geckoId?: string | null) {
-	return getProDashboardChartSourceQueryKey({
-		type,
-		protocol: itemType === 'protocol' ? item : '',
-		chain: itemType === 'chain' ? item : '',
-		geckoId
-	})
-}
-
-// Object maps for chart query functions
-type ProtocolChartHandler = (
-	item: string,
-	geckoId?: string | null,
-	timePeriod?: TimePeriod,
-	customPeriod?: CustomTimePeriod | null,
-	dataType?: string,
-	protocolSymbol?: string | null
-) => () => Promise<[number, number][]>
-
-const protocolChartHandlers: Partial<Record<ProDashboardChartType, ProtocolChartHandler>> = {
-	tvl: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.tvl(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	volume: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.volume(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	fees: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.fees(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	liquidity: (item, geckoId, timePeriod, customPeriod, _dataType, protocolSymbol) => async () => {
-		const data = await ProtocolCharts.liquidity(item, protocolSymbol)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	treasury: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.treasury(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	incentives: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.incentives(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	unlocks: (item, geckoId, timePeriod, customPeriod, dataType) => async () => {
-		const data = await ProtocolCharts.unlocks(item, normalizeUnlocksDataType(dataType))
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	revenue: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.revenue(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	holdersRevenue: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.holdersRevenue(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	perps: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.perps(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	openInterest: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.openInterest(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	aggregators: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.aggregators(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	perpsAggregators: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.perpsAggregators(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	bridgeAggregators: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.bridgeAggregators(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	optionsPremium: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.optionsPremium(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	optionsNotional: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.optionsNotional(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	activeUsers: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.activeUsers(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	newUsers: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.newUsers(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	txs: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.txs(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	gasUsed: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.gasUsed(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	tokenMcap: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.tokenMcap(item, geckoId)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	tokenPrice: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.tokenPrice(item, geckoId)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	tokenVolume: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.tokenVolume(item, geckoId)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	medianApy: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.medianApy(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	borrowed: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.borrowed(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	pfRatio: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.pfRatio(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	psRatio: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ProtocolCharts.psRatio(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	}
-}
-
-type ChainChartHandler = (
-	item: string,
-	geckoId?: string | null,
-	timePeriod?: TimePeriod,
-	customPeriod?: CustomTimePeriod | null,
-	dataType?: string
-) => () => Promise<[number, number][]>
-
-const chainChartHandlers: Partial<Record<ProDashboardChartType, ChainChartHandler>> = {
-	tvl: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.tvl(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	volume: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.volume(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	fees: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.fees(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	users: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.users(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	txs: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.txs(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	aggregators: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.aggregators(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	perps: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.perps(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	bridgeAggregators: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.bridgeAggregators(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	perpsAggregators: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.perpsAggregators(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	options: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.options(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	optionsPremium: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.getData('optionsPremium', item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	optionsNotional: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.getData('optionsNotional', item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	revenue: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.revenue(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	activeUsers: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.activeUsers(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	newUsers: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.newUsers(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	gasUsed: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.gasUsed(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	stablecoins: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.stablecoins(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	stablecoinInflows: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.stablecoinInflows(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	chainFees: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.chainFees(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	chainRevenue: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.chainRevenue(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	bridgedTvl: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.bridgedTvl(item)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	chainMcap: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.chainMcap(item, geckoId)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	},
-	chainPrice: (item, geckoId, timePeriod, customPeriod) => async () => {
-		const data = await ChainCharts.chainPrice(item, geckoId)
-		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
-	}
-}
-
 function fetchChartDirect(
 	type: string,
 	itemType: 'chain' | 'protocol',
@@ -361,15 +125,17 @@ function fetchChartDirect(
 	dataType?: string,
 	protocolSymbol?: string | null
 ): () => Promise<[number, number][]> {
-	if (itemType === 'protocol') {
-		const handler = isProDashboardChartType(type) ? protocolChartHandlers[type] : undefined
-		if (!handler) return () => Promise.resolve([])
-		return handler(item, geckoId, timePeriod, customPeriod, dataType, protocolSymbol)
-	}
-	const handler = isProDashboardChartType(type) ? chainChartHandlers[type] : undefined
-	if (handler) return handler(item, geckoId, timePeriod, customPeriod, dataType)
 	return async () => {
-		const data = await ChainCharts.tvl(item)
+		const data =
+			itemType === 'protocol'
+				? await fetchProProtocolChartData(type, item, {
+						...(geckoId !== undefined ? { geckoId } : {}),
+						...(dataType !== undefined ? { dataType } : {}),
+						...(protocolSymbol !== undefined ? { protocolSymbol } : {})
+					})
+				: type === 'bridgedTvl'
+					? await fetchProDashboardBridgedTvl(item)
+					: await fetchProChainChartData(type, item, geckoId ?? undefined)
 		return filterDataByTimePeriod(data, timePeriod || 'all', customPeriod)
 	}
 }
@@ -384,31 +150,36 @@ function fetchChartProxied(
 	protocolSymbol?: string | null
 ): () => Promise<[number, number][]> {
 	return () =>
-		fetchChartViaProxy(
+		fetchProDashboardProxy(
+			'chart',
 			{
-				type,
-				protocol: itemType === 'protocol' ? item : '',
-				chain: itemType === 'chain' ? item : '',
-				geckoId,
-				dataType,
-				protocolSymbol
+				chart: {
+					type,
+					...(itemType === 'protocol'
+						? { subjectType: 'protocol', protocol: item }
+						: { subjectType: 'chain', chain: item }),
+					...(geckoId !== undefined ? { geckoId } : {}),
+					...(dataType !== undefined ? { dataType } : {}),
+					...(protocolSymbol !== undefined ? { protocolSymbol } : {})
+				}
 			},
 			authToken
 		)
 }
 
-function getChartQueryFn(
+export function getChartQueryFn(
 	type: string,
 	itemType: 'chain' | 'protocol',
 	item: string,
 	geckoId?: string | null,
 	timePeriod?: TimePeriod,
-	parentMapping?: Map<string, string[]>,
+	parentMapping?: ReadonlyMap<string, readonly string[]>,
 	customPeriod?: CustomTimePeriod | null,
 	dataType?: string,
 	authToken?: string | null,
 	protocolSymbols?: ReadonlyMap<string, string>
 ) {
+	if (!isProDashboardChartType(type)) return async () => []
 	const protocolSymbol = protocolSymbols?.get(item)
 	const fetcher = authToken
 		? fetchChartProxied(type, itemType, item, authToken, geckoId, dataType, protocolSymbol)
@@ -427,7 +198,7 @@ function getChartQueryFn(
 			} catch (error) {
 				directError = error
 			}
-			if (Array.isArray(direct) && direct.length > 0) return direct
+			if (direct.length > 0) return direct
 
 			const children = parentMapping?.get(item) || []
 			if (children.length === 0) {
@@ -462,18 +233,10 @@ function getChartQueryFn(
 						)
 			)
 
-			const settled = await Promise.allSettled(
-				childFetchers.map(async (fn) => {
-					try {
-						return await fn()
-					} catch {
-						return [] as [number, number][]
-					}
-				})
-			)
-			const seriesList = settled
-				.map((res) => (res.status === 'fulfilled' ? res.value : ([] as [number, number][])))
-				.filter((arr) => Array.isArray(arr))
+			// A parent total must never be assembled from a partial child set. If one
+			// canonical child source fails, surface the query error instead of rendering
+			// an understated series as though it were complete.
+			const seriesList = await Promise.all(childFetchers.map((fetchChild) => fetchChild()))
 
 			return Array.from(sumSeriesByTimestamp(seriesList).entries()).sort((a, b) => a[0] - b[0])
 		}
@@ -482,16 +245,18 @@ function getChartQueryFn(
 	}
 }
 
-export { getChartQueryFn }
-
-export function useProtocolsAndChains() {
+export function useProtocolsAndChains({ enabled = true, waitForStream = true } = {}) {
 	const streamDone = useContext(StreamDoneContext)
 	return useQuery({
 		queryKey: ['pro-dashboard', 'protocols-and-chains'],
-		enabled: streamDone,
+		enabled: enabled && (!waitForStream || streamDone),
 		queryFn: async () => {
-			const [protocolsData, chainsData] = await Promise.all([fetchProtocols(), fetchChainsList()])
-			return buildProDashboardProtocolCatalog(protocolsData, chainsData)
+			const [protocolCatalogSource, protocolsData, chainsData] = await Promise.all([
+				fetchJson<ProProtocolCatalogSourceRow[]>('/api/dynamic/pro-dashboard/protocol-catalog-source'),
+				fetchProtocols(),
+				fetchChainsList()
+			])
+			return buildProDashboardProtocolCatalog(protocolCatalogSource, protocolsData, chainsData)
 		},
 		staleTime: 1000 * 60 * 60,
 		gcTime: 1000 * 60 * 60 * 24,
@@ -501,10 +266,14 @@ export function useProtocolsAndChains() {
 	})
 }
 
-type GroupingCacheEntry = {
-	data: [number, number][]
-	grouping: DashboardGrouping
-	result: [number, number][]
+export function useOracleNamesByProtocol() {
+	return useQuery({
+		queryKey: ORACLE_MEMBERSHIP_QUERY_KEY,
+		queryFn: async () => buildOracleNamesByProtocol((await fetchOracleMetrics()).oracles),
+		staleTime: 1000 * 60 * 60,
+		gcTime: 1000 * 60 * 60 * 24,
+		refetchOnWindowFocus: false
+	})
 }
 
 export type ProDashboardChartObserverPlan = {
@@ -518,9 +287,8 @@ export function buildProDashboardChartObserverPlan(charts: ChartConfig[]): ProDa
 	const sourceIndexByChart = new Array<number>(charts.length)
 	const sourceIndexByKey = new Map<string, number>()
 
-	for (let index = 0; index < charts.length; index++) {
-		const chart = charts[index]
-		const serializedKey = JSON.stringify(getChartCardQueryKey(chart))
+	for (const [index, chart] of charts.entries()) {
+		const serializedKey = JSON.stringify(getProDashboardChartSourceQueryKey(chart))
 		let sourceIndex = sourceIndexByKey.get(serializedKey)
 		if (sourceIndex === undefined) {
 			sourceIndex = sources.length
@@ -533,75 +301,147 @@ export function buildProDashboardChartObserverPlan(charts: ChartConfig[]): ProDa
 	return { sources, sourceIndexByChart }
 }
 
-function computeGrouped(
-	groupingCache: Map<string, GroupingCacheEntry>,
-	id: string,
-	data: [number, number][],
-	grouping: DashboardGrouping
+function projectChartData(
+	sourceData: [number, number][],
+	timePeriod: TimePeriod,
+	customPeriod: CustomTimePeriod | null | undefined,
+	grouping: DashboardGrouping | null
 ): [number, number][] {
-	const prev = groupingCache.get(id)
-	if (prev && prev.data === data && prev.grouping === grouping) return prev.result
-	const result = groupData(data, grouping)
-	groupingCache.set(id, { data, grouping, result })
-	return result
+	const relevantCustomPeriod = timePeriod === 'custom' ? customPeriod : null
+	const filtered = filterDataByTimePeriod(sourceData, timePeriod, relevantCustomPeriod)
+	return grouping ? groupData(filtered, grouping) : filtered
+}
+
+function getChartSourceQueryOptions(
+	chart: ChartConfig,
+	streamDone: boolean,
+	prerequisite: ChartDataPrerequisite,
+	authToken: string | null | undefined,
+	parentMapping: ReadonlyMap<string, readonly string[]> | undefined,
+	protocolSymbols: ReadonlyMap<string, string> | undefined
+) {
+	const itemType = chart.subjectType
+	const item = chart.subjectType === 'protocol' ? chart.protocol : chart.chain
+	return {
+		// Raw source keys intentionally exclude card-local time and grouping settings.
+		queryKey: getProDashboardChartSourceQueryKey(chart),
+		queryFn: getChartQueryFn(
+			chart.type,
+			itemType,
+			item,
+			chart.geckoId,
+			undefined,
+			parentMapping,
+			undefined,
+			chart.dataType,
+			authToken,
+			itemType === 'protocol' ? protocolSymbols : undefined
+		),
+		staleTime: 1000 * 60 * 5,
+		gcTime: 1000 * 60 * 30,
+		refetchOnWindowFocus: false,
+		enabled:
+			streamDone &&
+			prerequisite.status === 'ready' &&
+			((isProtocolTokenChartType(chart.type) && !!chart.geckoId) ||
+				(!!item &&
+					((itemType === 'protocol' && (!isProtocolTokenChartType(chart.type) || !!chart.geckoId)) ||
+						(itemType === 'chain' && (!isChainTokenChartType(chart.type) || !!chart.geckoId)))))
+	}
+}
+
+export function useChartData(
+	chart: ChartConfig,
+	protocolCatalog: ChartDataPrerequisite,
+	protocolBySlug: Pick<ReadonlyMap<string, unknown>, 'has'>,
+	timePeriod?: TimePeriod,
+	customPeriod?: CustomTimePeriod | null,
+	authToken?: string | null,
+	parentMapping?: ReadonlyMap<string, readonly string[]>,
+	protocolSymbols?: ReadonlyMap<string, string>
+) {
+	const streamDone = useContext(StreamDoneContext)
+	const prerequisite = getChartDataPrerequisite(chart, protocolCatalog, protocolBySlug)
+	const sourceQueryOptions = useMemo(
+		() => getChartSourceQueryOptions(chart, streamDone, prerequisite, authToken, parentMapping, protocolSymbols),
+		[authToken, chart, parentMapping, prerequisite, protocolSymbols, streamDone]
+	)
+	const projectionTimePeriod = timePeriod ?? 'all'
+	const relativeBoundaryDay =
+		projectionTimePeriod !== 'all' &&
+		(projectionTimePeriod !== 'custom' || !customPeriod || customPeriod.type === 'relative')
+			? dayjs().startOf('day').unix()
+			: null
+	const selectData = useCallback(
+		(sourceData: [number, number][]) => {
+			// A relative period must be projected again after the UTC day boundary even when source data is unchanged.
+			void relativeBoundaryDay
+			const chartTypeDetails = getProDashboardChartTypeConfig(chart.type)
+			const groupable = chartTypeDetails && 'groupable' in chartTypeDetails && chartTypeDetails.groupable
+			const grouping = groupable && chart.grouping && chart.grouping !== 'day' ? chart.grouping : null
+			return projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping)
+		},
+		[chart.grouping, chart.type, customPeriod, projectionTimePeriod, relativeBoundaryDay]
+	)
+
+	return useQuery({ ...sourceQueryOptions, select: selectData })
 }
 
 export function useChartsData(
 	charts: ChartConfig[],
+	protocolCatalog: ChartDataPrerequisite,
+	protocolBySlug: Pick<ReadonlyMap<string, unknown>, 'has'>,
 	timePeriod?: TimePeriod,
 	customPeriod?: CustomTimePeriod | null,
-	authToken?: string | null
+	authToken?: string | null,
+	parentMapping?: ReadonlyMap<string, readonly string[]>,
+	protocolSymbols?: ReadonlyMap<string, string>
 ) {
 	const streamDone = useContext(StreamDoneContext)
-	const { data: catalog } = useProtocolsAndChains()
-	const parentMapping = useMemo(() => buildProDashboardParentMapping(catalog?.protocols ?? []), [catalog])
-	const protocolSymbols = useMemo(() => buildProtocolSymbolMap(catalog?.protocols ?? []), [catalog])
-	const groupingCacheRef = useRef<Map<string, GroupingCacheEntry>>(new Map())
 	const observerPlan = useMemo(() => buildProDashboardChartObserverPlan(charts), [charts])
-	const sourceQueries = useQueries({
-		queries: observerPlan.sources.map((chart) => {
-			const itemType = chart.protocol ? 'protocol' : 'chain'
-			const item = chart.protocol || chart.chain
-
-			return {
-				// Raw source keys intentionally exclude card-local time and grouping settings.
-				queryKey: getChartCardQueryKey(chart),
-				queryFn: getChartQueryFn(
-					chart.type,
-					itemType,
-					item,
-					chart.geckoId,
-					undefined,
-					parentMapping,
-					undefined,
-					chart.dataType,
+	const sourceQueryOptions = useMemo(
+		() =>
+			observerPlan.sources.map((chart) =>
+				getChartSourceQueryOptions(
+					chart,
+					streamDone,
+					getChartDataPrerequisite(chart, protocolCatalog, protocolBySlug),
 					authToken,
-					itemType === 'protocol' ? protocolSymbols : undefined
-				),
-				staleTime: 1000 * 60 * 5,
-				gcTime: 1000 * 60 * 30,
-				refetchOnWindowFocus: false,
-				enabled:
-					streamDone &&
-					((isProtocolTokenChartType(chart.type) && !!chart.geckoId) ||
-						(!!item &&
-							((itemType === 'protocol' && (!isProtocolTokenChartType(chart.type) || !!chart.geckoId)) ||
-								(itemType === 'chain' && (!isChainTokenChartType(chart.type) || !!chart.geckoId)))))
-			}
-		})
-	})
+					parentMapping,
+					protocolSymbols
+				)
+			),
+		[authToken, observerPlan.sources, parentMapping, protocolBySlug, protocolCatalog, protocolSymbols, streamDone]
+	)
+	const projectionTimePeriod = timePeriod ?? 'all'
+	const relativeBoundaryDay =
+		projectionTimePeriod !== 'all' &&
+		(projectionTimePeriod !== 'custom' || !customPeriod || customPeriod.type === 'relative')
+			? dayjs().startOf('day').unix()
+			: null
+	const combineSourceQueries = useCallback(
+		(sourceQueries: UseQueryResult<[number, number][]>[]) => {
+			// A relative period must be projected again after the UTC day boundary even when source data is unchanged.
+			void relativeBoundaryDay
+			return charts.map((chart, chartIndex) => {
+				const sourceIndex = observerPlan.sourceIndexByChart.at(chartIndex)
+				if (sourceIndex === undefined) throw new Error(`Missing chart observer source index for ${chart.id}`)
+				const query = sourceQueries.at(sourceIndex)
+				if (!query) throw new Error(`Missing chart observer query for ${chart.id}`)
+				const sourceData = query.data
+				if (!sourceData) return query
 
-	return charts.map((chart, chartIndex) => {
-		const query = sourceQueries[observerPlan.sourceIndexByChart[chartIndex]]
-		const sourceData = query.data
-		if (!sourceData) return query
+				const chartTypeDetails = getProDashboardChartTypeConfig(chart.type)
+				const groupable = chartTypeDetails && 'groupable' in chartTypeDetails && chartTypeDetails.groupable
+				const grouping = groupable && chart.grouping && chart.grouping !== 'day' ? chart.grouping : null
+				return {
+					...query,
+					data: projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping)
+				}
+			})
+		},
+		[charts, customPeriod, observerPlan.sourceIndexByChart, projectionTimePeriod, relativeBoundaryDay]
+	)
 
-		const filtered = filterDataByTimePeriod(sourceData, timePeriod || 'all', customPeriod)
-		const chartTypeDetails = CHART_TYPES[chart.type]
-		const data =
-			chartTypeDetails?.groupable && chart.grouping && chart.grouping !== 'day'
-				? computeGrouped(groupingCacheRef.current, chart.id, filtered, chart.grouping)
-				: filtered
-		return { ...query, data }
-	})
+	return useQueries({ queries: sourceQueryOptions, combine: combineSourceQueries })
 }

@@ -1,5 +1,5 @@
 import type { ICandlestickChartProps } from '~/components/ECharts/CandlestickChart/types'
-import type { ChartConfiguration, ChartDataSeries } from '~/containers/LlamaAI/types'
+import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
 
 export function adaptCandlestickData(
 	config: ChartConfiguration,
@@ -12,7 +12,10 @@ export function adaptCandlestickData(
 		return { data, indicators }
 	}
 
-	const rows = rawData as Array<Record<string, unknown>>
+	const rows: Record<string, unknown>[] = []
+	for (const row of rawData) {
+		if (isChartDataRow(row)) rows.push(row)
+	}
 	const timeField = config.dataTransformation?.timeField
 	const getTs = (row: Record<string, unknown>) => {
 		const candidates = timeField ? [row[timeField], row.timestamp, row.date] : [row.timestamp, row.date]
@@ -22,7 +25,7 @@ export function adaptCandlestickData(
 			if (Number.isFinite(t)) {
 				return t < 1e12 ? t * 1000 : t
 			}
-			const d = new Date(raw as string).getTime()
+			const d = new Date(String(raw)).getTime()
 			if (Number.isFinite(d)) return d
 		}
 		return NaN
@@ -63,15 +66,14 @@ export function adaptCandlestickData(
 	if (bbUpper && bbMiddle && bbLower) {
 		let hasValidBB = false
 		const values: NonNullable<ICandlestickChartProps['indicators']>[number]['values'] = []
-		for (let index = 0; index < timestampedRows.length; index++) {
-			const r = timestampedRows[index]!.row
+		for (const { row: r, timestamp } of timestampedRows) {
 			const u = parseFloat(String(r[bbUpper]))
 			const m = parseFloat(String(r[bbMiddle]))
 			const l = parseFloat(String(r[bbLower]))
 			hasValidBB ||=
 				(Number.isFinite(u) && u !== 0) || (Number.isFinite(m) && m !== 0) || (Number.isFinite(l) && l !== 0)
 			values.push([
-				data[index][0],
+				timestamp,
 				{
 					upper: Number.isFinite(u) && u !== 0 ? u : null,
 					middle: Number.isFinite(m) && m !== 0 ? m : null,
@@ -92,9 +94,9 @@ export function adaptCandlestickData(
 	const maFields = keys.filter((k) => /^(sma|ema|dema|tema|wma|vwap)_?\d*$/i.test(k))
 	for (const field of maFields) {
 		const indicatorData: NonNullable<ICandlestickChartProps['indicators']>[number]['data'] = []
-		for (let index = 0; index < timestampedRows.length; index++) {
-			const v = parseFloat(String(timestampedRows[index]!.row[field]))
-			indicatorData.push([data[index][0], Number.isFinite(v) ? v : null])
+		for (const { row, timestamp } of timestampedRows) {
+			const v = parseFloat(String(row[field]))
+			indicatorData.push([timestamp, Number.isFinite(v) ? v : null])
 		}
 		indicators.push({
 			name: field.toUpperCase(),
@@ -106,9 +108,9 @@ export function adaptCandlestickData(
 	const rsiField = keys.find((k) => /^rsi(_\d+)?$/i.test(k))
 	if (rsiField) {
 		const rsiData: NonNullable<ICandlestickChartProps['indicators']>[number]['data'] = []
-		for (let index = 0; index < timestampedRows.length; index++) {
-			const v = parseFloat(String(timestampedRows[index]!.row[rsiField]))
-			rsiData.push([data[index][0], Number.isFinite(v) ? v : null])
+		for (const { row, timestamp } of timestampedRows) {
+			const v = parseFloat(String(row[rsiField]))
+			rsiData.push([timestamp, Number.isFinite(v) ? v : null])
 		}
 		indicators.push({
 			name: 'RSI',
@@ -123,14 +125,13 @@ export function adaptCandlestickData(
 	if (macdField || signalField || histField) {
 		let hasValidMACD = false
 		const values: NonNullable<ICandlestickChartProps['indicators']>[number]['values'] = []
-		for (let index = 0; index < timestampedRows.length; index++) {
-			const r = timestampedRows[index]!.row
-			const m = parseFloat(String(r[macdField as string]))
-			const s = parseFloat(String(r[signalField as string]))
-			const h = parseFloat(String(r[histField as string]))
+		for (const { row: r, timestamp } of timestampedRows) {
+			const m = parseFloat(String(macdField ? r[macdField] : undefined))
+			const s = parseFloat(String(signalField ? r[signalField] : undefined))
+			const h = parseFloat(String(histField ? r[histField] : undefined))
 			hasValidMACD ||= Number.isFinite(m) || Number.isFinite(s) || Number.isFinite(h)
 			values.push([
-				data[index][0],
+				timestamp,
 				{
 					macd: Number.isFinite(m) ? m : null,
 					signal: Number.isFinite(s) ? s : null,
@@ -153,12 +154,11 @@ export function adaptCandlestickData(
 	if (stochK || stochD) {
 		let hasValidStoch = false
 		const values: NonNullable<ICandlestickChartProps['indicators']>[number]['values'] = []
-		for (let index = 0; index < timestampedRows.length; index++) {
-			const r = timestampedRows[index]!.row
-			const k = parseFloat(String(r[stochK as string]))
-			const d = parseFloat(String(r[stochD as string]))
+		for (const { row: r, timestamp } of timestampedRows) {
+			const k = parseFloat(String(stochK ? r[stochK] : undefined))
+			const d = parseFloat(String(stochD ? r[stochD] : undefined))
 			hasValidStoch ||= Number.isFinite(k) || Number.isFinite(d)
-			values.push([data[index][0], { k: Number.isFinite(k) ? k : null, d: Number.isFinite(d) ? d : null }])
+			values.push([timestamp, { k: Number.isFinite(k) ? k : null, d: Number.isFinite(d) ? d : null }])
 		}
 		if (hasValidStoch) {
 			indicators.push({

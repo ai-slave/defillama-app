@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
 	getTvlBreakdownData: vi.fn(),
 	getProtocolChainBreakdownData: vi.fn(),
-	fetchJson: vi.fn()
+	fetchAdapterChainMetrics: vi.fn(),
+	fetchAdapterProtocolChartData: vi.fn()
 }))
 
 vi.mock('~/containers/ProDashboard/server/chartBuilder/protocols/breakdowns/tvl', () => ({
@@ -14,7 +15,10 @@ vi.mock('~/containers/ProDashboard/server/chartBuilder/protocols/breakdowns/byCh
 	getProtocolChainBreakdownData: mocks.getProtocolChainBreakdownData
 }))
 
-vi.mock('~/utils/async', () => ({ fetchJson: mocks.fetchJson }))
+vi.mock('~/containers/AdapterMetrics/api', () => ({
+	fetchAdapterChainMetrics: mocks.fetchAdapterChainMetrics,
+	fetchAdapterProtocolChartData: mocks.fetchAdapterProtocolChartData
+}))
 
 import { chainNativeByChainBreakdown } from '../server/chartBuilder/chains'
 import { protocolTvlBreakdown, protocolTvlByChainBreakdown } from '../server/chartBuilder/protocols'
@@ -59,22 +63,18 @@ describe('Pro Dashboard final breakdown response caches', () => {
 	})
 
 	it('serializes and reuses the chain-native by-chain breakdown', async () => {
-		mocks.fetchJson.mockImplementation(async (url: string) => {
-			if (url.includes('/overview/fees?')) {
-				return {
-					protocols: [
-						{
-							name: 'Serialized Cache Chain',
-							slug: 'serialized-cache-chain',
-							protocolType: 'chain',
-							total24h: 2
-						}
-					],
-					totalDataChart: [[1, 2]]
+		mocks.fetchAdapterChainMetrics.mockResolvedValue({
+			protocols: [
+				{
+					name: 'Serialized Cache Chain',
+					slug: 'serialized-cache-chain',
+					protocolType: 'chain',
+					total24h: 2
 				}
-			}
-			return { totalDataChart: [[1, 2]] }
+			],
+			allChains: []
 		})
+		mocks.fetchAdapterProtocolChartData.mockResolvedValue([[1, 2]])
 		const request = {
 			method: 'GET',
 			url: '/api/public/pro-dashboard/chart-builder/chains/breakdowns/by-chain/chain-fees?chains=Serialized%20Cache%20Chain',
@@ -87,6 +87,7 @@ describe('Pro Dashboard final breakdown response caches', () => {
 
 		expect(first).toMatchObject({ status: 200, serializedJson: expect.any(String) })
 		expect(second).toEqual(first)
-		expect(mocks.fetchJson).toHaveBeenCalledTimes(2)
+		expect(mocks.fetchAdapterChainMetrics).toHaveBeenCalledTimes(1)
+		expect(mocks.fetchAdapterProtocolChartData).toHaveBeenCalledTimes(1)
 	})
 })

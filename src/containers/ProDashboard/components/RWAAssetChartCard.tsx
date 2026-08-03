@@ -1,7 +1,6 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { useChartImageExport } from '../hooks/useChartImageExport'
+import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { RWAAssetChartConfig } from '../types'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
@@ -9,7 +8,7 @@ import { useRWAAssetChartData } from './datasets/RWADataset/useRWAChartData'
 import { LoadingSpinner } from './LoadingSpinner'
 import { buildProRwaAssetChartSeries, RWA_ASSET_METRIC_DIMENSIONS } from './rwaAssetChart'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 interface RWAAssetChartCardProps {
 	config: RWAAssetChartConfig

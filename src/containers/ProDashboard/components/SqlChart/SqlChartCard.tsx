@@ -1,3 +1,4 @@
+import type * as echarts from 'echarts/core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRouter } from '~/containers/Downloads/sql/chart'
@@ -11,9 +12,9 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
+import { snapshotToResult } from '../../sqlSnapshot'
 import type { SqlChartConfig } from '../../types'
-import { ProTableCSVButton } from '../ProTable/CsvButton'
-import { snapshotToResult } from './snapshot'
+import { CSVExportButton } from '../CSVExportButton'
 import { SqlQueryView } from './SqlQueryView'
 import { reportSqlRefreshEnd, reportSqlRefreshStart, subscribeSqlRefreshAll } from './sqlRefreshBus'
 import { useServerSqlRun } from './useServerSqlRun'
@@ -54,7 +55,7 @@ function timeAgo(iso: string): string {
 }
 
 export function SqlChartCard({ config }: SqlChartCardProps) {
-	const { snapshot, isRefreshing, error, canRefresh, refresh } = useServerSqlRun(config.id, config.snapshot)
+	const { snapshot, isRefreshing, error, canRefresh, refresh } = useServerSqlRun(config.id, config.snapshot ?? null)
 	const [cardView, setCardView] = useState<'output' | 'query'>('output')
 
 	const refreshRef = useRef(refresh)
@@ -72,7 +73,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 		return () => reportSqlRefreshEnd(config.id, !errorRef.current)
 	}, [isRefreshing, config.id])
 
-	const chartInstanceRef = useRef<any>(null)
+	const chartInstanceRef = useRef<echarts.ECharts | null>(null)
 	const getChartInstance = useCallback(() => chartInstanceRef.current, [])
 
 	const result = useMemo(() => (snapshot ? snapshotToResult(snapshot) : null), [snapshot])
@@ -143,7 +144,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 						/>
 					) : null}
 					{cardView === 'output' && canExportCsv ? (
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={() => exportQueryResult(result, 'csv', config.name || 'sql-chart')}
 							smol
 							className={EXPORT_BUTTON_CLASSNAME}

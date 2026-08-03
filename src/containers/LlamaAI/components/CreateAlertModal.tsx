@@ -156,7 +156,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 	const generationRef = useRef(0)
 	const pendingSubmissionGenerationRef = useRef<number | null>(null)
 
-	const { data: tokenOptionsResponse, isLoading: isLoadingTokens } = useTokenSearch(tokenSearchInput)
+	const { data: tokenOptionsResponse, isLoading: isLoadingTokens } = useTokenSearch(tokenSearchInput, true)
 	const tokenOptions = tokenOptionsResponse ?? []
 
 	const telegramLink = useIntegrationLink()
@@ -181,8 +181,10 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 
 	useEffect(() => {
 		if (deliveryChannel !== 'slack' || slackTeamId || activeSlackWorkspaces.length !== 1) return
-		setSlackTeamId(activeSlackWorkspaces[0].team_id)
-		if (activeSlackWorkspaces[0].default_channel_id) setSlackChannelId(activeSlackWorkspaces[0].default_channel_id)
+		const workspace = activeSlackWorkspaces[0]
+		if (!workspace) return
+		setSlackTeamId(workspace.team_id)
+		if (workspace.default_channel_id) setSlackChannelId(workspace.default_channel_id)
 	}, [deliveryChannel, slackTeamId, activeSlackWorkspaces])
 
 	const createAlertMutation = useMutation<
@@ -302,6 +304,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 		triggerType === 'schedule'
 			? `Runs ${formatScheduleExpression(buildScheduleExpressionRaw({ frequency, hour, dayOfWeek, timezone }))}`
 			: getPriceCaption(priceToken?.symbol.toUpperCase() ?? 'the token', priceOp, priceValue || '0')
+	const currentPrice = priceToken?.currentPrice
 
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
@@ -426,17 +429,15 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 											/>
 											<PriceInput value={priceValue} onValueChange={setPriceValue} />
 										</div>
-										{priceToken?.currentPrice ? (
+										{currentPrice ? (
 											<button
 												type="button"
-												onClick={() => setPriceValue(roundPriceValue(priceToken.currentPrice))}
+												onClick={() => setPriceValue(roundPriceValue(currentPrice))}
 												className="self-start text-xs text-ai-tertiary transition-colors hover:text-link"
 											>
 												{priceToken.symbol.toUpperCase()} is trading around{' '}
-												<span className="font-mono font-medium text-primary">
-													{formatPriceLabel(priceToken.currentPrice)}
-												</span>{' '}
-												— tap to use
+												<span className="font-mono font-medium text-primary">{formatPriceLabel(currentPrice)}</span> —
+												tap to use
 											</button>
 										) : (
 											<p className="m-0 text-xs text-ai-muted">

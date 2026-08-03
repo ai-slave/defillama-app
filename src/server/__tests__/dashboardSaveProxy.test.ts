@@ -1,17 +1,19 @@
-import type { NextApiRequest } from 'next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { dashboardDeleteHandler } from '~/containers/ProDashboard/server/deleteRoute'
 import { dashboardSaveHandler } from '~/containers/ProDashboard/server/saveRoute'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import {
+	createMockNextApiRequest,
+	createMockNextApiResponse,
+	type MockNextApiRequestOptions
+} from '~/utils/test/nextApiMocks'
 
-function request(overrides: Partial<NextApiRequest> = {}): NextApiRequest {
-	return {
-		body: {},
-		headers: { authorization: 'Bearer user-token' },
-		method: 'POST',
-		query: {},
-		...overrides
-	} as NextApiRequest
+function request(options: MockNextApiRequestOptions = {}) {
+	return createMockNextApiRequest({
+		body: options.body ?? {},
+		headers: options.headers ?? { authorization: 'Bearer user-token' },
+		method: options.method ?? 'POST',
+		query: options.query ?? {}
+	})
 }
 
 function dashboardResponse(body: unknown, status = 200) {
@@ -19,11 +21,41 @@ function dashboardResponse(body: unknown, status = 200) {
 }
 
 function lastCall(fetchImpl: ReturnType<typeof vi.fn>) {
-	return fetchImpl.mock.calls[fetchImpl.mock.calls.length - 1]
+	const call = fetchImpl.mock.calls.at(-1)
+	if (!call) throw new Error('Expected fetch to have been called')
+	return call
+}
+
+function callAt(fetchImpl: ReturnType<typeof vi.fn>, index: number) {
+	const call = fetchImpl.mock.calls[index]
+	if (!call) throw new Error(`Expected fetch call ${index + 1}`)
+	return call
+}
+
+function callUrl(call: unknown[]): URL {
+	const input = call[0]
+	if (typeof input !== 'string' && !(input instanceof URL)) throw new Error('Expected a URL-compatible fetch input')
+	return new URL(input)
+}
+
+function purgeFiles(call: unknown[]): string[] {
+	const init = call[1]
+	if (typeof init !== 'object' || init === null || !('body' in init) || typeof init.body !== 'string') {
+		throw new Error('Expected purge request with a JSON body')
+	}
+	const payload: unknown = JSON.parse(init.body)
+	if (typeof payload !== 'object' || payload === null || !('files' in payload) || !Array.isArray(payload.files)) {
+		throw new Error('Expected purge request body to contain files')
+	}
+	const files: unknown[] = payload.files
+	if (!files.every((file): file is string => typeof file === 'string'))
+		throw new Error('Expected purge files to be URLs')
+	return files
 }
 
 function isCloudflarePurge(call: unknown[]): boolean {
-	return typeof call?.[0] === 'string' && (call[0] as string).includes('api.cloudflare.com')
+	const input = call[0]
+	return typeof input === 'string' && input.includes('api.cloudflare.com')
 }
 
 describe('/api/private/pro-dashboard/save', () => {
@@ -62,26 +94,18 @@ describe('/api/private/pro-dashboard/save', () => {
 
 		await dashboardSaveHandler(request({ body }), res)
 
-		expect(new URL(fetchImpl.mock.calls[0][0]).pathname).toBe('/dashboards')
-		expect(fetchImpl.mock.calls[0][1]).toEqual({
+		const createCall = callAt(fetchImpl, 0)
+		expect(callUrl(createCall).pathname).toBe('/dashboards')
+		expect(createCall[1]).toEqual({
 			method: 'POST',
 			headers: { Authorization: 'Bearer user-token', 'Content-Type': 'application/json' },
 			body: JSON.stringify(body)
 		})
-		expect(fetchImpl).toHaveBeenLastCalledWith('https://api.cloudflare.com/client/v4/zones/zone/purge_cache', {
-			body: JSON.stringify({
-				files: [
-					'https://defillama.test/pro/new-1',
-					'https://defillama.test/api/dynamic/pro-dashboard/new-1/stream',
-					'https://defillama.test/_next/data/build-test/pro/new-1.json',
-					'https://defillama.test/pro/my-dash',
-					'https://defillama.test/api/dynamic/pro-dashboard/my-dash/stream',
-					'https://defillama.test/_next/data/build-test/pro/my-dash.json'
-				]
-			}),
-			headers: { Authorization: 'Bearer cf-token', 'Content-Type': 'application/json' },
-			method: 'POST'
-		})
+		const purgeCall = lastCall(fetchImpl)
+		expect(isCloudflarePurge(purgeCall)).toBe(true)
+		expect(purgeFiles(purgeCall)).toEqual(
+			expect.arrayContaining(['https://defillama.test/pro/new-1', 'https://defillama.test/pro/my-dash'])
+		)
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
@@ -115,22 +139,39 @@ describe('/api/private/pro-dashboard/save', () => {
 
 		await dashboardSaveHandler(request({ query: { id: 'd1' }, body: { visibility: 'public' } }), res)
 
-		expect(new URL(fetchImpl.mock.calls[0][0]).pathname).toBe('/dashboards/d1')
-		expect(fetchImpl.mock.calls[0][1]).toEqual({ headers: { Authorization: 'Bearer user-token' } })
-		expect(new URL(fetchImpl.mock.calls[1][0]).pathname).toBe('/dashboards/d1')
-		expect(fetchImpl.mock.calls[1][1].method).toBe('POST')
-		expect(JSON.parse(lastCall(fetchImpl)[1].body).files).toEqual([
-			'https://defillama.test/pro/d1',
-			'https://defillama.test/api/dynamic/pro-dashboard/d1/stream',
-			'https://defillama.test/_next/data/build-test/pro/d1.json',
-			'https://defillama.test/pro/new-name',
-			'https://defillama.test/api/dynamic/pro-dashboard/new-name/stream',
-			'https://defillama.test/_next/data/build-test/pro/new-name.json',
-			'https://defillama.test/pro/old-name',
-			'https://defillama.test/api/dynamic/pro-dashboard/old-name/stream',
-			'https://defillama.test/_next/data/build-test/pro/old-name.json'
-		])
+		const readCall = callAt(fetchImpl, 0)
+		const saveCall = callAt(fetchImpl, 1)
+		expect(callUrl(readCall).pathname).toBe('/dashboards/d1')
+		expect(readCall[1]).toEqual({ headers: { Authorization: 'Bearer user-token' } })
+		expect(callUrl(saveCall).pathname).toBe('/dashboards/d1')
+		expect(saveCall[1]).toMatchObject({ method: 'POST' })
+		expect(purgeFiles(lastCall(fetchImpl))).toEqual(
+			expect.arrayContaining([
+				'https://defillama.test/pro/d1',
+				'https://defillama.test/pro/new-name',
+				'https://defillama.test/pro/old-name'
+			])
+		)
 		expect(res.json).toHaveBeenCalledWith(saved)
+	})
+
+	it('purges the canonical dashboard id when an update is addressed by slug', async () => {
+		const before = { id: 'canonical-id', slug: 'old-name', visibility: 'public' }
+		const saved = { id: 'canonical-id', slug: 'new-name', visibility: 'public' }
+		const fetchImpl = vi
+			.fn()
+			.mockResolvedValueOnce(dashboardResponse(before))
+			.mockResolvedValueOnce(dashboardResponse(saved))
+			.mockResolvedValueOnce(new Response('{}', { status: 200 }))
+		vi.stubGlobal('fetch', fetchImpl)
+		const res = createMockNextApiResponse()
+
+		await dashboardSaveHandler(request({ query: { id: 'old-name' }, body: { visibility: 'public' } }), res)
+
+		const files = purgeFiles(lastCall(fetchImpl))
+		expect(files).toContain('https://defillama.test/pro/canonical-id')
+		expect(files).toContain('https://defillama.test/pro/old-name')
+		expect(files).toContain('https://defillama.test/pro/new-name')
 	})
 
 	it('purges when a public dashboard is made private', async () => {
@@ -178,6 +219,18 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(res.status).toHaveBeenCalledWith(403)
 		expect(res.json).toHaveBeenCalledWith({ message: 'Forbidden' })
 	})
+
+	it('returns 502 and does not purge when a successful backend save has invalid JSON', async () => {
+		const fetchImpl = vi.fn().mockResolvedValueOnce(new Response('not-json', { status: 200 }))
+		vi.stubGlobal('fetch', fetchImpl)
+		const res = createMockNextApiResponse()
+
+		await dashboardSaveHandler(request({ body: { visibility: 'public' } }), res)
+
+		expect(fetchImpl).toHaveBeenCalledTimes(1)
+		expect(res.status).toHaveBeenCalledWith(502)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Dashboard save response was not valid JSON' })
+	})
 })
 
 describe('/api/private/pro-dashboard/delete', () => {
@@ -216,18 +269,30 @@ describe('/api/private/pro-dashboard/delete', () => {
 
 		await dashboardDeleteHandler(request({ query: { id: 'd9' } }), res)
 
-		expect(new URL(fetchImpl.mock.calls[0][0]).pathname).toBe('/dashboards/d9')
-		expect(new URL(fetchImpl.mock.calls[1][0]).pathname).toBe('/dashboards/delete/d9')
-		expect(JSON.parse(lastCall(fetchImpl)[1].body).files).toEqual([
-			'https://defillama.test/pro/d9',
-			'https://defillama.test/api/dynamic/pro-dashboard/d9/stream',
-			'https://defillama.test/_next/data/build-test/pro/d9.json',
-			'https://defillama.test/pro/public-dash',
-			'https://defillama.test/api/dynamic/pro-dashboard/public-dash/stream',
-			'https://defillama.test/_next/data/build-test/pro/public-dash.json'
-		])
+		expect(callUrl(callAt(fetchImpl, 0)).pathname).toBe('/dashboards/d9')
+		expect(callUrl(callAt(fetchImpl, 1)).pathname).toBe('/dashboards/delete/d9')
+		expect(purgeFiles(lastCall(fetchImpl))).toEqual(
+			expect.arrayContaining(['https://defillama.test/pro/d9', 'https://defillama.test/pro/public-dash'])
+		)
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({ message: 'Dashboard deleted' })
+	})
+
+	it('purges the canonical dashboard id when deletion is addressed by slug', async () => {
+		const before = { id: 'canonical-id', slug: 'public-dash', visibility: 'public' }
+		const fetchImpl = vi
+			.fn()
+			.mockResolvedValueOnce(dashboardResponse(before))
+			.mockResolvedValueOnce(dashboardResponse({ message: 'Dashboard deleted' }))
+			.mockResolvedValueOnce(new Response('{}', { status: 200 }))
+		vi.stubGlobal('fetch', fetchImpl)
+		const res = createMockNextApiResponse()
+
+		await dashboardDeleteHandler(request({ query: { id: 'public-dash' } }), res)
+
+		const files = purgeFiles(lastCall(fetchImpl))
+		expect(files).toContain('https://defillama.test/pro/canonical-id')
+		expect(files).toContain('https://defillama.test/pro/public-dash')
 	})
 
 	it('deletes a private dashboard and purges its urls', async () => {

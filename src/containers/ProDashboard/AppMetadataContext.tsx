@@ -1,11 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { fetchJson } from '~/utils/async'
 import { getDisplayAliases } from '~/utils/chainNormalizer'
 import type { IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
 import { getAvailableChainChartTypes } from './appMetadataChartTypes'
-import type { ProDashboardAppMetadata } from './dataContracts'
 import { StreamDoneContext } from './queries'
-import { type ChartBuilderConfig, getProtocolChartTypes } from './types'
+import {
+	type ChainChartType,
+	type ChartBuilderConfig,
+	isProtocolDashboardChartType,
+	type ProtocolChartType
+} from './types'
 
 type BuilderMetric = ChartBuilderConfig['config']['metric']
 
@@ -37,68 +42,63 @@ const PROTOCOL_FLAG_KEYS = [
 
 type ProtocolFlag = (typeof PROTOCOL_FLAG_KEYS)[number]
 type ProtocolFlags = Partial<Record<ProtocolFlag, true>>
-type ChainFlags = IChainMetadata
 
 type ProtocolRecord = {
 	slug: string
-	displayName?: string
-	chains?: string[]
+	displayName: string | undefined
+	chains: string[]
 	builderMetrics: Set<BuilderMetric>
 	flags: ProtocolFlags
 }
 
 type ChainRecord = {
 	name: string
-	id?: string
-	gecko_id?: string
-	tokenSymbol?: string
-	flags: ChainFlags
+	id: string
+	gecko_id: string | undefined
+	tokenSymbol: string | null | undefined
+	flags: IChainMetadata
 }
 
 type AppMetadataContextType = {
 	loading: boolean
-	error?: string
+	error: string | undefined
 	protocolsBySlug: Map<string, ProtocolRecord>
 	hasProtocolBuilderMetric: (slug: string, metric: BuilderMetric) => boolean
-	availableProtocolChartTypes: (slug: string, opts?: { hasGeckoId?: boolean }) => string[]
+	availableProtocolChartTypes: (slug: string, opts?: { hasGeckoId?: boolean }) => ProtocolChartType[]
 	chainsByName: Map<string, ChainRecord>
-	availableChainChartTypes: (chainName: string, opts?: { hasGeckoId?: boolean }) => string[]
+	availableChainChartTypes: (chainName: string, opts?: { hasGeckoId?: boolean }) => ChainChartType[]
 }
 
-const AppMetadataContext = createContext<AppMetadataContextType | undefined>(undefined)
+type AppMetadataContextValue = AppMetadataContextType & { requestMetadata: () => void }
 
-const PROTOCOL_FLAG_BY_BUILDER_METRIC: Record<BuilderMetric, ProtocolFlag | null> = {
-	tvl: 'tvl',
-	fees: 'fees',
-	revenue: 'revenue',
-	volume: 'dexs',
-	perps: 'perps',
-	'open-interest': 'openInterest',
-	'options-notional': 'optionsNotionalVolume',
-	'options-premium': 'optionsPremiumVolume',
-	'bridge-aggregators': 'bridgeAggregators',
-	'dex-aggregators': 'dexAggregators',
-	'perps-aggregators': 'perpsAggregators',
-	'user-fees': 'fees',
-	'holders-revenue': 'holdersRevenue',
-	'protocol-revenue': 'revenue',
-	'supply-side-revenue': 'fees',
-	stablecoins: 'stablecoins',
-	'chain-fees': null,
-	'chain-revenue': null
-}
+const AppMetadataContext = createContext<AppMetadataContextValue | undefined>(undefined)
 
-async function fetchJson<T>(url: string): Promise<T> {
-	const res = await fetch(url)
-	if (!res.ok) throw new Error(`${url} -> ${res.status}`)
-	return res.json()
-}
-
+const PROTOCOL_BUILDER_METRIC_FLAGS = [
+	['tvl', 'tvl'],
+	['fees', 'fees'],
+	['revenue', 'revenue'],
+	['volume', 'dexs'],
+	['perps', 'perps'],
+	['open-interest', 'openInterest'],
+	['options-notional', 'optionsNotionalVolume'],
+	['options-premium', 'optionsPremiumVolume'],
+	['bridge-aggregators', 'bridgeAggregators'],
+	['dex-aggregators', 'dexAggregators'],
+	['perps-aggregators', 'perpsAggregators'],
+	['user-fees', 'fees'],
+	['holders-revenue', 'holdersRevenue'],
+	['protocol-revenue', 'revenue'],
+	['supply-side-revenue', 'fees'],
+	['stablecoins', 'stablecoins'],
+	['chain-fees', null],
+	['chain-revenue', null]
+] as const satisfies readonly (readonly [BuilderMetric, ProtocolFlag | null])[]
 export function buildProtocolMetadataIndex(protocolsRaw: Record<string, IProtocolMetadata>) {
 	const aggregatedProtocols = new Map<string, { flags: ProtocolFlags; chains: Set<string>; displayName?: string }>()
 
 	for (const key in protocolsRaw) {
 		const item = protocolsRaw[key]
+		if (!item) continue
 		const slug = item.name
 		if (!slug) continue
 
@@ -119,9 +119,8 @@ export function buildProtocolMetadataIndex(protocolsRaw: Record<string, IProtoco
 	const protocolsBySlug = new Map<string, ProtocolRecord>()
 	for (const [slug, aggregate] of aggregatedProtocols) {
 		const builderMetrics = new Set<BuilderMetric>()
-		for (const metric in PROTOCOL_FLAG_BY_BUILDER_METRIC) {
-			const flagKey = PROTOCOL_FLAG_BY_BUILDER_METRIC[metric as BuilderMetric]
-			if (flagKey && aggregate.flags[flagKey]) builderMetrics.add(metric as BuilderMetric)
+		for (const [metric, flagKey] of PROTOCOL_BUILDER_METRIC_FLAGS) {
+			if (flagKey && aggregate.flags[flagKey]) builderMetrics.add(metric)
 		}
 		const record: ProtocolRecord = {
 			slug,
@@ -137,15 +136,10 @@ export function buildProtocolMetadataIndex(protocolsRaw: Record<string, IProtoco
 	return protocolsBySlug
 }
 
-export function AppMetadataProvider({
-	children,
-	initialData
-}: {
-	children: React.ReactNode
-	initialData?: ProDashboardAppMetadata | null
-}) {
+export function AppMetadataProvider({ children }: { children: React.ReactNode }) {
 	const streamDone = useContext(StreamDoneContext)
-	const [mountedAt] = useState(Date.now)
+	const [metadataRequested, setMetadataRequested] = useState(false)
+	const requestMetadata = useCallback(() => setMetadataRequested(true), [])
 	const {
 		data: rawData,
 		isLoading: loading,
@@ -171,10 +165,8 @@ export function AppMetadataProvider({
 
 			return { protocols, chains, pfPs }
 		},
-		initialData: initialData ?? undefined,
-		staleTime: initialData ? Infinity : 0,
-		initialDataUpdatedAt: initialData ? mountedAt : undefined,
-		enabled: streamDone || !!initialData
+		staleTime: Infinity,
+		enabled: streamDone && metadataRequested
 	})
 
 	const error = queryError ? String(queryError.message) : undefined
@@ -196,6 +188,7 @@ export function AppMetadataProvider({
 		if (chainsRaw) {
 			for (const key in chainsRaw) {
 				const item = chainsRaw[key]
+				if (!item) continue
 				const name = item.name
 				if (!name) continue
 				const record: ChainRecord = {
@@ -268,8 +261,7 @@ export function AppMetadataProvider({
 			if (pfPsProtocols.ps.has(slug) || pfPsProtocols.ps.has(slug.toLowerCase())) {
 				types.add('psRatio')
 			}
-			const allowed = new Set(getProtocolChartTypes())
-			return Array.from(types).filter((t) => allowed.has(t))
+			return Array.from(types).filter(isProtocolDashboardChartType)
 		},
 		[protocolsBySlug, pfPsProtocols.pf, pfPsProtocols.ps]
 	)
@@ -280,32 +272,39 @@ export function AppMetadataProvider({
 		[chainsByName]
 	)
 
-	const value: AppMetadataContextType = useMemo(
+	const value: AppMetadataContextValue = useMemo(
 		() => ({
-			loading,
+			loading: !metadataRequested || loading || (!streamDone && rawData === undefined),
 			error,
 			protocolsBySlug,
 			hasProtocolBuilderMetric,
 			availableProtocolChartTypes,
 			chainsByName,
-			availableChainChartTypes
+			availableChainChartTypes,
+			requestMetadata
 		}),
 		[
+			metadataRequested,
 			loading,
+			streamDone,
+			rawData,
 			error,
 			protocolsBySlug,
 			chainsByName,
 			availableProtocolChartTypes,
 			availableChainChartTypes,
-			hasProtocolBuilderMetric
+			hasProtocolBuilderMetric,
+			requestMetadata
 		]
 	)
 
 	return <AppMetadataContext.Provider value={value}>{children}</AppMetadataContext.Provider>
 }
 
-export function useAppMetadata() {
+export function useAppMetadata(): AppMetadataContextType {
 	const ctx = useContext(AppMetadataContext)
+	const requestMetadata = ctx?.requestMetadata
+	useEffect(() => requestMetadata?.(), [requestMetadata])
 	if (!ctx) throw new Error('useAppMetadata must be used within an AppMetadataProvider')
 	return ctx
 }

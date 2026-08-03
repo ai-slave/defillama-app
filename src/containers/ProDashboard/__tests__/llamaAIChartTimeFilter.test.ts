@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { filterLlamaAIChartPayload } from '../utils/llamaAIChartTimeFilter'
 
 const baseConfig: ChartConfiguration = {
@@ -43,7 +43,7 @@ describe('filterLlamaAIChartPayload', () => {
 			type: 'absolute',
 			startDate: 1577836800,
 			endDate: 1717209600
-		}) as typeof rows
+		})
 		expect(filtered.map((row) => row.date)).toEqual(['2020-01-01', '2024-06-01'])
 	})
 
@@ -52,7 +52,7 @@ describe('filterLlamaAIChartPayload', () => {
 			type: 'absolute',
 			startDate: 1577836800,
 			endDate: 1717209600
-		}) as Record<string, typeof rows>
+		})
 		expect(filtered['chart-1'].map((row) => row.date)).toEqual(['2020-01-01', '2024-06-01'])
 	})
 

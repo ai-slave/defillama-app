@@ -7,16 +7,19 @@ import {
 } from '~/utils/telemetry'
 
 const DEFAULT_MAX_ENTRIES = 256
+const DEFAULT_MAX_JSON_BYTES = 16 * 1024 * 1024
 
 type CacheEntry<T> = {
 	value: T
 	expiresAt: number
 	staleUntil: number
+	sizeBytes: number
 }
 
 type Store<T> = {
 	entries: Map<string, CacheEntry<T>>
 	inFlight: Map<string, Promise<T>>
+	totalBytes: number
 }
 
 const stores = new Map<string, Store<unknown>>()
@@ -24,23 +27,32 @@ const stores = new Map<string, Store<unknown>>()
 function getStore<T>(namespace: string): Store<T> {
 	let store = stores.get(namespace)
 	if (!store) {
-		store = { entries: new Map(), inFlight: new Map() }
+		store = { entries: new Map(), inFlight: new Map(), totalBytes: 0 }
 		stores.set(namespace, store)
 	}
 	return store as Store<T>
 }
 
-function evictIfNeeded<T>(store: Store<T>, maxEntries: number) {
+function deleteCacheEntry<T>(store: Store<T>, key: string): void {
+	const entry = store.entries.get(key)
+	if (!entry) return
+	store.totalBytes -= entry.sizeBytes
+	store.entries.delete(key)
+}
+
+function evictIfNeeded<T>(store: Store<T>, maxEntries: number, maxBytes: number | undefined) {
 	const now = Date.now()
 	for (const [key, entry] of store.entries) {
-		if (entry.staleUntil <= now) store.entries.delete(key)
+		if (entry.staleUntil <= now) deleteCacheEntry(store, key)
 	}
-	while (store.entries.size > maxEntries) {
+	let exceedsLimit = store.entries.size > maxEntries || (maxBytes !== undefined && store.totalBytes > maxBytes)
+	while (exceedsLimit) {
 		// Map iterates in insertion order; reads refresh entries, so this evicts
 		// the least recently used key.
 		const oldest = store.entries.keys().next().value
 		if (oldest === undefined) break
-		store.entries.delete(oldest)
+		deleteCacheEntry(store, oldest)
+		exceedsLimit = store.entries.size > maxEntries || (maxBytes !== undefined && store.totalBytes > maxBytes)
 	}
 }
 
@@ -51,13 +63,22 @@ export type CachedResultOptions = {
 	/** Serve an expired value while one request refreshes it in the background. */
 	staleWhileRevalidateMs?: number
 	maxEntries?: number
+	/** Maximum retained payload bytes for a namespace. Used by serialized JSON caches. */
+	maxBytes?: number
 }
 
 type CacheStatus = 'hit' | 'miss' | 'inflight_wait' | 'stale'
 
-export type CachedJsonPayload = {
+declare const cachedJsonValueType: unique symbol
+
+export type CachedJsonPayload<T = unknown> = {
 	serializedJson: string
 	responseBytes: number
+	readonly [cachedJsonValueType]?: T
+}
+
+export function parseCachedJsonResult<T>(payload: CachedJsonPayload<T>): T {
+	return JSON.parse(payload.serializedJson)
 }
 
 function hashCacheKey(key: string): string {
@@ -86,6 +107,7 @@ function recordCacheTelemetry<T>(
 		result_cache_elapsed_ms: Math.max(0, Date.now() - startedAt),
 		result_cache_entries: store.entries.size,
 		result_cache_inflight: store.inFlight.size,
+		result_cache_bytes: store.totalBytes,
 		...(extra.computeMs !== undefined ? { result_cache_compute_ms: extra.computeMs } : null),
 		...(extra.waitMs !== undefined ? { result_cache_wait_ms: extra.waitMs } : null)
 	})
@@ -97,14 +119,17 @@ function ttlWithJitter(options: CachedResultOptions): number {
 	return Math.max(1, options.ttlMs + jitter)
 }
 
-function setCacheEntry<T>(store: Store<T>, key: string, value: T, options: CachedResultOptions) {
+function setCacheEntry<T>(store: Store<T>, key: string, value: T, options: CachedResultOptions, sizeBytes: number) {
 	const ttlMs = ttlWithJitter(options)
+	deleteCacheEntry(store, key)
 	store.entries.set(key, {
 		value,
 		expiresAt: Date.now() + ttlMs,
-		staleUntil: Date.now() + ttlMs + (options.staleWhileRevalidateMs ?? 0)
+		staleUntil: Date.now() + ttlMs + (options.staleWhileRevalidateMs ?? 0),
+		sizeBytes
 	})
-	evictIfNeeded(store, options.maxEntries ?? DEFAULT_MAX_ENTRIES)
+	store.totalBytes += sizeBytes
+	evictIfNeeded(store, options.maxEntries ?? DEFAULT_MAX_ENTRIES, options.maxBytes)
 }
 
 function refreshAttributes(namespace: string, key: string): TelemetryAttributes {
@@ -121,7 +146,8 @@ function refreshInBackground<T>(
 	store: Store<T>,
 	key: string,
 	options: CachedResultOptions,
-	compute: () => Promise<T>
+	compute: () => Promise<T>,
+	measureBytes: (value: T) => number
 ) {
 	if (store.inFlight.has(key)) return
 
@@ -129,7 +155,7 @@ function refreshInBackground<T>(
 	const attributes = refreshAttributes(namespace, key)
 	const runRefresh = async () => {
 		const value = await compute()
-		setCacheEntry(store, key, value, options)
+		setCacheEntry(store, key, value, options, measureBytes(value))
 		return value
 	}
 	const promise = (
@@ -175,7 +201,8 @@ export async function cachedResult<T>(
 	namespace: string,
 	key: string,
 	options: CachedResultOptions,
-	compute: () => Promise<T>
+	compute: () => Promise<T>,
+	measureBytes: (value: T) => number = () => 0
 ): Promise<T> {
 	const startedAt = Date.now()
 	const store = getStore<T>(namespace)
@@ -191,12 +218,12 @@ export async function cachedResult<T>(
 	if (cached && cached.staleUntil > now && options.staleWhileRevalidateMs && options.staleWhileRevalidateMs > 0) {
 		store.entries.delete(key)
 		store.entries.set(key, cached)
-		refreshInBackground(namespace, store, key, options, compute)
+		refreshInBackground(namespace, store, key, options, compute, measureBytes)
 		recordCacheTelemetry(namespace, key, store, 'stale', startedAt)
 		return cached.value
 	}
 	if (cached) {
-		store.entries.delete(key)
+		deleteCacheEntry(store, key)
 	}
 
 	const inFlight = store.inFlight.get(key)
@@ -215,7 +242,7 @@ export async function cachedResult<T>(
 	const promise = Promise.resolve()
 		.then(compute)
 		.then((value) => {
-			setCacheEntry(store, key, value, options)
+			setCacheEntry(store, key, value, options, measureBytes(value))
 			return value
 		})
 		.finally(() => {
@@ -237,18 +264,25 @@ export async function cachedJsonResult<T>(
 	key: string,
 	options: CachedResultOptions,
 	compute: () => Promise<T>
-): Promise<CachedJsonPayload> {
-	const payload = await cachedResult(namespace, key, options, async () => {
-		const value = await compute()
-		const serializeStartedAt = Date.now()
-		const serializedJson = JSON.stringify(value) ?? 'null'
-		const serializeMs = Math.max(0, Date.now() - serializeStartedAt)
-		const responseBytes = Buffer.byteLength(serializedJson)
-		addRouteTelemetryAttributes({
-			api_json_serialize_ms: serializeMs
-		})
-		return { serializedJson, responseBytes }
-	})
+): Promise<CachedJsonPayload<T>> {
+	const payload = await cachedResult(
+		namespace,
+		key,
+		{ ...options, maxBytes: options.maxBytes ?? DEFAULT_MAX_JSON_BYTES },
+		async () => {
+			const value = await compute()
+			const serializeStartedAt = Date.now()
+			const serializedJson = JSON.stringify(value) ?? 'null'
+			const responseBytes = Buffer.byteLength(serializedJson)
+			addRouteTelemetryAttributes({
+				api_json_serialize_ms: Math.max(0, Date.now() - serializeStartedAt),
+				api_json_response_mode: 'serialized',
+				response_bytes: responseBytes
+			})
+			return { serializedJson, responseBytes } satisfies CachedJsonPayload<T>
+		},
+		(value) => value.responseBytes
+	)
 
 	addRouteTelemetryAttributes({
 		api_json_response_mode: 'serialized',

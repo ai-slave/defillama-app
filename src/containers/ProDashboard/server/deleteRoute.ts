@@ -34,7 +34,7 @@ export async function dashboardDeleteHandler(req: NextApiRequest, res: NextApiRe
 		return sendBackendResponse(deleteResponse, res)
 	}
 
-	const purgeResult = await purgeDashboardCache({ id, before, after: null })
+	const purgeResult = await purgeDashboardCache({ id: before?.id ?? id, before, after: null })
 	if (purgeResult.status !== 'purged') {
 		console.error(
 			`Dashboard delete cache purge ${purgeResult.status}: ${'reason' in purgeResult ? purgeResult.reason : 'unknown'}`
@@ -45,4 +45,7 @@ export async function dashboardDeleteHandler(req: NextApiRequest, res: NextApiRe
 	return sendBackendResponse(deleteResponse, res)
 }
 
-export default withApiRouteTelemetry('/api/private/pro-dashboard/delete', dashboardDeleteHandler)
+export const dashboardDeleteApiHandler = withApiRouteTelemetry(
+	'/api/private/pro-dashboard/delete',
+	dashboardDeleteHandler
+)

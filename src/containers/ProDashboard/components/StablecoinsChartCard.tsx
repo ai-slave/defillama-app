@@ -1,8 +1,6 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
-import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	filterStablecoinDatasetByTimePeriod,
@@ -18,18 +16,18 @@ import {
 	useStablecoinChartSelection,
 	useStablecoinSelectionIntent
 } from '~/containers/Stablecoins/useStablecoinChartSelection'
+import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { download } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
-import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { StablecoinsChartConfig } from '../types'
+import { CSVExportButton } from './CSVExportButton'
 import { LoadingSpinner } from './LoadingSpinner'
-import { ProTableCSVButton } from './ProTable/CsvButton'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 
 interface StablecoinsChartCardProps {
 	config: StablecoinsChartConfig
@@ -100,11 +98,15 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 
 	const charts = useMemo(
 		() =>
-			chartPayload.charts.map((chart) => ({
-				...chart,
-				color: stackColors[chart.name] ?? chart.color,
-				...(chartType === 'tokenMcaps' ? { hideAreaStyle: true } : {})
-			})),
+			chartPayload.charts.map((chart) => {
+				const { color, ...chartWithoutColor } = chart
+				const resolvedColor = stackColors[chart.name] ?? color
+				return {
+					...chartWithoutColor,
+					...(resolvedColor ? { color: resolvedColor } : {}),
+					...(chartType === 'tokenMcaps' ? { hideAreaStyle: true } : {})
+				}
+			}),
 		[chartPayload.charts, chartType, stackColors]
 	)
 	const dataset = useMemo(
@@ -112,8 +114,8 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		[chartPayload.dataset, timePeriod, customTimePeriod]
 	)
 	const latestMcapIndex = dataset.dimensions.indexOf('Mcap')
-	const latestMcap =
-		latestMcapIndex < 0 ? null : ((dataset.source.at(-1)?.[latestMcapIndex] as number | undefined) ?? null)
+	const latestMcapValue = latestMcapIndex < 0 ? undefined : dataset.source.at(-1)?.[latestMcapIndex]
+	const latestMcap = typeof latestMcapValue === 'number' ? latestMcapValue : null
 
 	const handleCsvExport = () => {
 		let rows: (string | number)[][] = []
@@ -128,10 +130,14 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 			const indexes = dimensions.map((name) => dataset.dimensions.indexOf(name))
 			rows = [
 				['Date', ...dimensions],
-				...dataset.source.map((row) => [
-					formatIsoDate(row[0] as number, { input: 'milliseconds' }) ?? '',
-					...indexes.map((index) => row[index] ?? '')
-				])
+				...dataset.source.map((row, rowIndex) => {
+					const timestamp = row[0]
+					if (typeof timestamp !== 'number') throw new Error(`Invalid stablecoin timestamp at index ${rowIndex}`)
+					return [
+						formatIsoDate(timestamp, { input: 'milliseconds' }) ?? '',
+						...indexes.map((index) => row[index] ?? '')
+					]
+				})
 			]
 		}
 
@@ -195,7 +201,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 							/>
 						) : null}
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={handleCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
@@ -234,13 +240,17 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 							title=""
 							dataset={dataset}
 							charts={charts}
-							selectedCharts={SERIES_SELECTION_CHARTS.has(chartType) ? renderedCharts : undefined}
+							{...(SERIES_SELECTION_CHARTS.has(chartType) ? { selectedCharts: renderedCharts } : {})}
 							valueSymbol={chartPayload.valueSymbol ?? ''}
-							stacked={chartPayload.stacked}
-							expandTo100Percent={chartPayload.expandTo100Percent}
-							showTotalInTooltip={chartPayload.showTotalInTooltip}
-							hallmarks={chartType === 'totalMcap' ? EMPTY_HALLMARKS : undefined}
-							chartOptions={chartOptions}
+							{...(chartPayload.stacked === undefined ? {} : { stacked: chartPayload.stacked })}
+							{...(chartPayload.expandTo100Percent === undefined
+								? {}
+								: { expandTo100Percent: chartPayload.expandTo100Percent })}
+							{...(chartPayload.showTotalInTooltip === undefined
+								? {}
+								: { showTotalInTooltip: chartPayload.showTotalInTooltip })}
+							{...(chartType === 'totalMcap' ? { hallmarks: EMPTY_HALLMARKS } : {})}
+							{...(chartOptions ? { chartOptions } : {})}
 							exportButtons="hidden"
 							onReady={handleChartReady}
 						/>

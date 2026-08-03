@@ -3,16 +3,17 @@ import { EChartsRenderVisibilityProvider } from '~/components/ECharts/renderVisi
 
 export const DASHBOARD_CARD_ROOT_MARGIN = '1000px 0px'
 
+type DashboardCardRenderState = 'deferred' | 'visible' | 'mounted-offscreen'
+
 export function InViewDashboardCard({ children, minHeight }: { children: ReactNode; minHeight: number }) {
 	const containerRef = useRef<HTMLDivElement>(null)
-	const [isNearViewport, setIsNearViewport] = useState(false)
-	const [placeholderHeight, setPlaceholderHeight] = useState(minHeight)
+	const [renderState, setRenderState] = useState<DashboardCardRenderState>('deferred')
 
 	useEffect(() => {
 		const element = containerRef.current
 		if (!element) return
 		if (typeof IntersectionObserver === 'undefined') {
-			setIsNearViewport(true)
+			setRenderState('visible')
 			return
 		}
 
@@ -20,20 +21,22 @@ export function InViewDashboardCard({ children, minHeight }: { children: ReactNo
 			(entries) => {
 				const entry = entries[0]
 				if (!entry) return
-				if (!entry.isIntersecting) {
-					setPlaceholderHeight((height) => Math.max(height, Math.ceil(entry.boundingClientRect.height)))
-				}
-				setIsNearViewport(entry.isIntersecting)
+				setRenderState((current) =>
+					entry.isIntersecting ? 'visible' : current === 'deferred' ? current : 'mounted-offscreen'
+				)
 			},
 			{ rootMargin: DASHBOARD_CARD_ROOT_MARGIN }
 		)
 		observer.observe(element)
 		return () => observer.disconnect()
 	}, [])
+	const hasMounted = renderState !== 'deferred'
 
 	return (
-		<div ref={containerRef} aria-busy={!isNearViewport} style={{ minHeight: placeholderHeight }}>
-			<EChartsRenderVisibilityProvider visible={isNearViewport}>{children}</EChartsRenderVisibilityProvider>
+		<div ref={containerRef} aria-busy={!hasMounted} style={{ minHeight }}>
+			<EChartsRenderVisibilityProvider visible={renderState === 'visible'}>
+				{hasMounted ? children : null}
+			</EChartsRenderVisibilityProvider>
 		</div>
 	)
 }

@@ -3,12 +3,13 @@ import type {
 	AdapterChainProtocol,
 	IAdapterChainMetrics
 } from '~/containers/AdapterMetrics/api.types'
+import { getDimensionChainNameMap } from '~/containers/AdapterMetrics/chainNameMap'
 import { slug } from '~/utils'
-import { fetchEmissionsBreakdownAggregated, fetchEmissionsChainNameMap } from './api'
+import { fetchEmissionsBreakdownAggregated } from './api'
 import type { EmissionsBreakdownAggregatedResponse, EmissionsBreakdownProtocol } from './api.types'
 import type {
 	ChainIncentivesSummary,
-	DimensionEarningsOverview,
+	DimensionEarningsOverviewResult,
 	DimensionEarningsProtocolWithEmissions,
 	ProtocolEmissionsLookup,
 	ProtocolEmissionsLookupEntry,
@@ -18,21 +19,10 @@ import type {
 const INCENTIVES_METHODOLOGY =
 	'Tokens allocated to users through liquidity mining or incentive schemes, typically as part of governance or reward mechanisms.'
 
-let emissionsChainNameMapCache: Record<string, string> | null = null
 type NonEmptyArray<T> = [T, ...T[]]
 
-async function getEmissionsChainNameMap(): Promise<Record<string, string>> {
-	if (emissionsChainNameMapCache) {
-		return emissionsChainNameMapCache
-	}
-
-	const mapping = await fetchEmissionsChainNameMap()
-	emissionsChainNameMapCache = mapping
-	return mapping
-}
-
 function resolveInternalChainName(displayChain: string, chainNameMap: Record<string, string>) {
-	return chainNameMap[displayChain] ?? slug(displayChain)
+	return chainNameMap[displayChain] ?? null
 }
 
 function groupProtocolsByParent<T extends { parentProtocol?: string | null; defillamaId: string }>(
@@ -95,34 +85,126 @@ function sumRevenueBreakdown(breakdown: AdapterBreakdown | null | undefined): nu
 	return total
 }
 
+type DimensionEarningsChainSource = Pick<
+	DimensionEarningsProtocolWithEmissions,
+	'total24h' | 'total30d' | 'breakdown24h' | 'breakdown30d' | '_emissions'
+>
+
 function calculateChainPeriodEarnings({
 	breakdown,
 	totalRevenue,
-	chain,
+	chainName,
 	emission,
 	hasEmissionsMatch
 }: {
 	breakdown: AdapterBreakdown | null | undefined
-	totalRevenue: number | null | undefined
-	chain: string
+	totalRevenue: number | null
+	chainName: string
 	emission: number | null
 	hasEmissionsMatch: boolean
 }): number | null {
+	if (hasEmissionsMatch && emission === null) return null
+
+	const resolvedEmission = emission ?? 0
 	if (breakdown == null) {
-		// A missing breakdown on an inactive period is successful zero activity. A nonzero
-		// aggregate without its chain allocation cannot be attributed to the selected chain.
-		if ((totalRevenue ?? 0) !== 0) return null
-		return hasEmissionsMatch && emission !== 0 ? null : 0
+		return totalRevenue === 0 && resolvedEmission === 0 ? 0 : null
 	}
 
-	const chainRevenue = sumRevenueValues(breakdown[chain])
-	if (hasEmissionsMatch && emission === null) return null
-	const emissions = emission ?? 0
-	if (emissions === 0) return chainRevenue
+	const chainRevenue = sumRevenueValues(breakdown[chainName])
+	if (resolvedEmission === 0) return chainRevenue
 
-	const revenueBasis = sumRevenueBreakdown(breakdown)
-	if (revenueBasis <= 0) return null
-	return chainRevenue - emissions * (chainRevenue / revenueBasis)
+	if (totalRevenue === null || totalRevenue <= 0) return null
+	return chainRevenue - resolvedEmission * (chainRevenue / totalRevenue)
+}
+
+function resolveRevenueTotal(
+	breakdown: AdapterBreakdown | null | undefined,
+	totalEarnings: number | null | undefined,
+	emission: number | null,
+	hasEmissionsMatch: boolean
+): number | null {
+	if (breakdown != null) return sumRevenueBreakdown(breakdown)
+	if (hasEmissionsMatch && emission === null) return null
+	return (totalEarnings ?? 0) + (emission ?? 0)
+}
+
+function calculateEstimatedDimensionProtocolChainEarnings(
+	protocol: DimensionEarningsChainSource,
+	chainName: string,
+	totalRevenue24h = resolveRevenueTotal(
+		protocol.breakdown24h,
+		protocol.total24h,
+		protocol._emissions?.emission24h ?? null,
+		protocol._emissions !== undefined
+	),
+	totalRevenue30d = resolveRevenueTotal(
+		protocol.breakdown30d,
+		protocol.total30d,
+		protocol._emissions?.emission30d ?? null,
+		protocol._emissions !== undefined
+	)
+): { total24h: number | null; total30d: number | null } | undefined {
+	if (protocol.breakdown24h?.[chainName] === undefined && protocol.breakdown30d?.[chainName] === undefined) {
+		return undefined
+	}
+
+	const emissions = protocol._emissions
+	const hasEmissionsMatch = emissions !== undefined
+	return {
+		total24h: calculateChainPeriodEarnings({
+			breakdown: protocol.breakdown24h,
+			totalRevenue: totalRevenue24h,
+			chainName,
+			emission: emissions?.emission24h ?? null,
+			hasEmissionsMatch
+		}),
+		total30d: calculateChainPeriodEarnings({
+			breakdown: protocol.breakdown30d,
+			totalRevenue: totalRevenue30d,
+			chainName,
+			emission: emissions?.emission30d ?? null,
+			hasEmissionsMatch
+		})
+	}
+}
+
+export function getEstimatedDimensionProtocolChainEarnings(
+	protocol: DimensionEarningsChainSource,
+	chainName: string
+): { total24h: number | null; total30d: number | null } | undefined {
+	return calculateEstimatedDimensionProtocolChainEarnings(protocol, chainName)
+}
+
+export function forEachEstimatedDimensionProtocolChainEarnings(
+	protocol: DimensionEarningsChainSource,
+	visit: (chainName: string, total24h: number | null, total30d: number | null) => void
+): void {
+	const chainNames = new Set<string>()
+	for (const chainName in protocol.breakdown24h ?? {}) chainNames.add(chainName)
+	for (const chainName in protocol.breakdown30d ?? {}) chainNames.add(chainName)
+	const hasEmissionsMatch = protocol._emissions !== undefined
+	const totalRevenue24h = resolveRevenueTotal(
+		protocol.breakdown24h,
+		protocol.total24h,
+		protocol._emissions?.emission24h ?? null,
+		hasEmissionsMatch
+	)
+	const totalRevenue30d = resolveRevenueTotal(
+		protocol.breakdown30d,
+		protocol.total30d,
+		protocol._emissions?.emission30d ?? null,
+		hasEmissionsMatch
+	)
+
+	for (const chainName of chainNames) {
+		const earnings = calculateEstimatedDimensionProtocolChainEarnings(
+			protocol,
+			chainName,
+			totalRevenue24h,
+			totalRevenue30d
+		)
+		if (earnings) visit(chainName, earnings.total24h, earnings.total30d)
+	}
 }
 
 function aggregateDimensionProtocolVersions(
@@ -170,26 +252,52 @@ function aggregateDimensionProtocolVersions(
 	}
 }
 
+interface IndexedEmission {
+	index: number
+	protocol: EmissionsBreakdownProtocol
+}
+
+interface DimensionEmissionIndex {
+	byIdentity: Map<string, IndexedEmission>
+	byName: Map<string, IndexedEmission>
+}
+
+function buildDimensionEmissionIndex(emissionsData: EmissionsBreakdownAggregatedResponse): DimensionEmissionIndex {
+	const byIdentity = new Map<string, IndexedEmission>()
+	const byName = new Map<string, IndexedEmission>()
+	for (const [index, protocol] of emissionsData.protocols.entries()) {
+		const indexed = { index, protocol }
+		if (!byIdentity.has(protocol.defillamaId)) byIdentity.set(protocol.defillamaId, indexed)
+		for (const linkedId of protocol.linked) {
+			if (!byIdentity.has(linkedId)) byIdentity.set(linkedId, indexed)
+		}
+		if (!byName.has(protocol.name)) byName.set(protocol.name, indexed)
+	}
+	return { byIdentity, byName }
+}
+
 function findMatchedEmissionForDimensionProtocol(
 	protocolVersions: NonEmptyArray<AdapterChainProtocol>,
-	emissionsData: EmissionsBreakdownAggregatedResponse
+	emissionIndex: DimensionEmissionIndex
 ): EmissionsBreakdownProtocol | undefined {
 	const parentKey = protocolVersions[0].parentProtocol || protocolVersions[0].defillamaId
-
-	let emissions = emissionsData.protocols.find((p) => {
-		if (p.defillamaId === parentKey) return true
-		if (protocolVersions.some((pv) => p.defillamaId === pv.defillamaId)) return true
-		if (p.linked && protocolVersions.some((pv) => p.linked.includes(pv.defillamaId))) return true
-		return false
-	})
-
-	// Chain category entries sometimes only match by protocol name.
-	if (!emissions && protocolVersions.length === 1 && protocolVersions[0].category === 'Chain') {
-		const protocol = protocolVersions[0]
-		emissions = emissionsData.protocols.find((p) => p.name === protocol.name || p.name === protocol.displayName)
+	let matched = emissionIndex.byIdentity.get(parentKey)
+	for (const protocol of protocolVersions) {
+		const candidate = emissionIndex.byIdentity.get(protocol.defillamaId)
+		if (candidate && (!matched || candidate.index < matched.index)) matched = candidate
 	}
 
-	return emissions
+	// Chain category entries sometimes only match by protocol name.
+	if (!matched && protocolVersions.length === 1 && protocolVersions[0].category === 'Chain') {
+		const protocol = protocolVersions[0]
+		const nameMatch = emissionIndex.byName.get(protocol.name)
+		const displayNameMatch = emissionIndex.byName.get(protocol.displayName)
+		if (!nameMatch) matched = displayNameMatch
+		else if (!displayNameMatch || nameMatch.index < displayNameMatch.index) matched = nameMatch
+		else matched = displayNameMatch
+	}
+
+	return matched?.protocol
 }
 
 function calculateDimensionProtocolEarnings(
@@ -230,10 +338,11 @@ function buildDimensionEarningsProtocols(
 	emissionsData: EmissionsBreakdownAggregatedResponse
 ): DimensionEarningsProtocolWithEmissions[] {
 	const protocolGroups = groupProtocolsByParent(data.protocols)
+	const emissionIndex = buildDimensionEmissionIndex(emissionsData)
 	const processedData: DimensionEarningsProtocolWithEmissions[] = []
 
 	for (const [_parentKey, protocolVersions] of protocolGroups) {
-		const emissions = findMatchedEmissionForDimensionProtocol(protocolVersions, emissionsData)
+		const emissions = findMatchedEmissionForDimensionProtocol(protocolVersions, emissionIndex)
 		if (protocolVersions.length === 1) {
 			processedData.push(calculateDimensionProtocolEarnings(protocolVersions[0], emissions))
 		} else {
@@ -245,59 +354,6 @@ function buildDimensionEarningsProtocols(
 	return processedData
 }
 
-function buildUnavailableDimensionEarningsOverview({
-	chain,
-	overviewData
-}: {
-	chain: string
-	overviewData: IAdapterChainMetrics
-}): DimensionEarningsOverview {
-	return {
-		...overviewData,
-		chain,
-		totalDataChart: [],
-		total24h: null,
-		total48hto24h: null,
-		total7d: null,
-		total14dto7d: null,
-		total30d: null,
-		total60dto30d: null,
-		total7DaysAgo: null,
-		total30DaysAgo: null,
-		total1y: null,
-		annualized1y: null,
-		totalAllTime: null,
-		change_1d: null,
-		change_7d: null,
-		change_1m: null,
-		change_7dover7d: null,
-		change_30dover30d: null,
-		breakdown24h: null,
-		breakdown30d: null,
-		protocols: overviewData.protocols.map((protocol) => ({
-			...protocol,
-			total24h: null,
-			total48hto24h: null,
-			total7d: null,
-			total14dto7d: null,
-			total30d: null,
-			total60dto30d: null,
-			total7DaysAgo: null,
-			total30DaysAgo: null,
-			total1y: null,
-			annualized1y: null,
-			totalAllTime: null,
-			change_1d: null,
-			change_7d: null,
-			change_1m: null,
-			change_7dover7d: null,
-			change_30dover30d: null,
-			breakdown24h: null,
-			breakdown30d: null
-		}))
-	}
-}
-
 export async function getDimensionAdapterChainEarningsOverview({
 	chain,
 	overviewData,
@@ -306,12 +362,13 @@ export async function getDimensionAdapterChainEarningsOverview({
 	chain: string
 	overviewData: IAdapterChainMetrics
 	totalDataChart: Array<[number, number]>
-}): Promise<DimensionEarningsOverview> {
+}): Promise<DimensionEarningsOverviewResult> {
+	const isChainSpecific = chain !== '' && chain !== 'All'
 	const [emissionsData, chainNameMap] = await Promise.all([
 		fetchEmissionsBreakdownAggregated(),
-		getEmissionsChainNameMap()
+		isChainSpecific ? getDimensionChainNameMap() : Promise.resolve<Record<string, string>>({})
 	])
-	if (emissionsData === null) return buildUnavailableDimensionEarningsOverview({ chain, overviewData })
+	if (emissionsData === null || chainNameMap === null) return { status: 'unavailable' }
 
 	const earningsData = buildDimensionEarningsProtocols(overviewData, emissionsData)
 
@@ -322,42 +379,29 @@ export async function getDimensionAdapterChainEarningsOverview({
 	let chainSpecificTotal1y: number | null = null
 	let chainSpecificTotalAllTime: number | null = null
 
-	if (chain && chain !== 'All') {
+	if (isChainSpecific) {
 		const internalChainName = resolveInternalChainName(chain, chainNameMap)
+		if (internalChainName === null) return { status: 'unavailable' }
 
 		filteredEarningsData = []
 		for (const protocol of earningsData) {
-			const chainBreakdown24h = protocol.breakdown24h?.[internalChainName]
-			const chainBreakdown30d = protocol.breakdown30d?.[internalChainName]
-			if (chainBreakdown24h === undefined && chainBreakdown30d === undefined) continue
-
-			const emissions = protocol._emissions
-			const hasEmissionsMatch = emissions !== undefined
-			const chainEarnings24h = calculateChainPeriodEarnings({
-				breakdown: protocol.breakdown24h,
-				totalRevenue: protocol.total24h,
-				chain: internalChainName,
-				emission: emissions?.emission24h ?? null,
-				hasEmissionsMatch
-			})
-			const chainEarnings30d = calculateChainPeriodEarnings({
-				breakdown: protocol.breakdown30d,
-				totalRevenue: protocol.total30d,
-				chain: internalChainName,
-				emission: emissions?.emission30d ?? null,
-				hasEmissionsMatch
-			})
+			const estimatedChainEarnings = getEstimatedDimensionProtocolChainEarnings(protocol, internalChainName)
+			if (!estimatedChainEarnings) continue
 
 			chainSpecificTotal24h =
-				chainSpecificTotal24h === null || chainEarnings24h === null ? null : chainSpecificTotal24h + chainEarnings24h
+				chainSpecificTotal24h === null || estimatedChainEarnings.total24h === null
+					? null
+					: chainSpecificTotal24h + estimatedChainEarnings.total24h
 			chainSpecificTotal30d =
-				chainSpecificTotal30d === null || chainEarnings30d === null ? null : chainSpecificTotal30d + chainEarnings30d
+				chainSpecificTotal30d === null || estimatedChainEarnings.total30d === null
+					? null
+					: chainSpecificTotal30d + estimatedChainEarnings.total30d
 
 			filteredEarningsData.push({
 				...protocol,
-				total24h: chainEarnings24h,
+				total24h: estimatedChainEarnings.total24h,
 				total7d: null,
-				total30d: chainEarnings30d,
+				total30d: estimatedChainEarnings.total30d,
 				total1y: null,
 				totalAllTime: null
 			})
@@ -384,26 +428,29 @@ export async function getDimensionAdapterChainEarningsOverview({
 	}
 
 	return {
-		...overviewData,
-		totalDataChart,
-		chain,
-		total24h: chainSpecificTotal24h,
-		total48hto24h: null,
-		total7d: chainSpecificTotal7d,
-		total14dto7d: null,
-		total30d: chainSpecificTotal30d,
-		total60dto30d: null,
-		total7DaysAgo: null,
-		total30DaysAgo: null,
-		total1y: chainSpecificTotal1y,
-		annualized1y: null,
-		totalAllTime: chainSpecificTotalAllTime,
-		change_1d: null,
-		change_7d: null,
-		change_1m: null,
-		change_7dover7d: null,
-		change_30dover30d: null,
-		protocols: filteredEarningsData
+		status: 'available',
+		overview: {
+			...overviewData,
+			totalDataChart,
+			chain,
+			total24h: chainSpecificTotal24h,
+			total48hto24h: null,
+			total7d: chainSpecificTotal7d,
+			total14dto7d: null,
+			total30d: chainSpecificTotal30d,
+			total60dto30d: null,
+			total7DaysAgo: null,
+			total30DaysAgo: null,
+			total1y: chainSpecificTotal1y,
+			annualized1y: null,
+			totalAllTime: chainSpecificTotalAllTime,
+			change_1d: null,
+			change_7d: null,
+			change_1m: null,
+			change_7dover7d: null,
+			change_30dover30d: null,
+			protocols: filteredEarningsData
+		}
 	}
 }
 
@@ -467,9 +514,8 @@ export function buildProtocolEmissionsLookup(
 	return lookup
 }
 
-export async function getProtocolEmissionsLookupFromAggregated(): Promise<ProtocolEmissionsLookup | null> {
+export async function getProtocolEmissionsLookupFromAggregated(): Promise<ProtocolEmissionsLookup> {
 	const emissionsData = await fetchEmissionsBreakdownAggregated()
-	if (emissionsData === null) return null
 	return buildProtocolEmissionsLookup(emissionsData)
 }
 

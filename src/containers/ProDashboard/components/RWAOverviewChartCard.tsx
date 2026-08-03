@@ -1,32 +1,35 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
-import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricLabel } from '~/containers/RWA/chartState'
-import { useChartImageExport } from '../hooks/useChartImageExport'
+import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { RWAOverviewChartConfig, RWAOverviewChartBreakdown } from '../types'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWABreakdownChartData } from './datasets/RWADataset/useRWAChartData'
 import { LoadingSpinner } from './LoadingSpinner'
-import { buildRwaSnapshotPresentation, hasRwaOverviewChartExportData } from './rwaSnapshot'
+import {
+	buildRwaSnapshotPresentation,
+	hasRwaOverviewChartExportData,
+	type RwaSnapshotPresentation
+} from './rwaSnapshot'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
-const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
+const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
+const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart'))
 
 const EMPTY_RWA_SNAPSHOT_ITEMS: Array<{ name: string; value: number }> = []
+const EMPTY_RWA_BAR_DATA: Extract<RwaSnapshotPresentation, { view: 'hbar' }> = {
+	view: 'hbar',
+	categories: [],
+	values: []
+}
 
 const BREAKDOWN_LABELS: Record<RWAOverviewChartBreakdown, string> = {
 	chain: 'Chain',
 	category: 'Category',
-	assetClass: 'Asset Class',
-	assetName: 'Asset Name',
 	platform: 'Platform',
 	assetGroup: 'Asset Group'
 }
@@ -54,8 +57,8 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 		return filterChartDatasetByTimePeriod(rawDataset, timePeriod, customTimePeriod)
 	}, [chartView, customTimePeriod, rawDataset, timePeriod])
 
-	const metricLabel = getChartMetricLabel(metric as any)
-	const breakdownLabel = BREAKDOWN_LABELS[breakdown] || breakdown
+	const metricLabel = getChartMetricLabel(metric)
+	const breakdownLabel = BREAKDOWN_LABELS[breakdown]
 	const chainLabel = chain ? chain : 'All Chains'
 	const viewLabel = VIEW_LABELS[chartView] || chartView
 	const imageTitle = `RWA ${metricLabel} - ${chainLabel} by ${breakdownLabel}`
@@ -79,12 +82,14 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	const pieColors = useMemo(() => {
 		const colors: Record<string, string> = {}
 		for (const [idx, item] of pieData.entries()) {
-			colors[item.name] = CHART_COLORS[idx % CHART_COLORS.length]
+			const color = CHART_COLORS[idx % CHART_COLORS.length]
+			if (color === undefined) throw new Error(`Missing RWA chart color at index ${idx}`)
+			colors[item.name] = color
 		}
 		return colors
 	}, [pieData])
 
-	const barData = snapshot?.view === 'hbar' ? snapshot : { categories: [] as string[], values: [] as number[] }
+	const barData = snapshot?.view === 'hbar' ? snapshot : EMPTY_RWA_BAR_DATA
 	const treemapData = snapshot?.view === 'treemap' ? snapshot.data : []
 
 	if (isLoading) {

@@ -1,6 +1,6 @@
 import { AI_SERVER } from '~/constants'
 import type { AuthorizedFetch } from '~/containers/LlamaAI/api/transport'
-import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 
 /**
  * Persist an in-place chart style edit. Owner-only; the server applies only whitelisted presentation

@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import { UNIFIED_TABLE_PRESETS_BY_ID } from '~/containers/ProDashboard/components/UnifiedTable/config/PresetRegistry'
-import type { TableFilters } from '~/containers/ProDashboard/types'
+import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 
 interface UsePresetRecommendationsProps {
-	filters: TableFilters
+	filters: UnifiedTableFilters
 	chains: string[]
 }
 
@@ -18,19 +18,17 @@ export function usePresetRecommendations({ filters, chains }: UsePresetRecommend
 
 		const normalizeValue = (value: string) => value.trim().toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ')
 
-		const includeCategories = Array.isArray(filters.categories) ? (filters.categories as string[]) : []
-		const excludeCategories = Array.isArray(filters.excludedCategories) ? (filters.excludedCategories as string[]) : []
+		const includeCategories = filters.categories ?? []
+		const excludeCategories = filters.excludedCategories ?? []
 		const combinedCategories = [...includeCategories, ...excludeCategories].map(normalizeValue)
 		const normalizedCategorySet = new Set(combinedCategories)
 
-		const protocolFilters = Array.isArray(filters.protocols) ? (filters.protocols as string[]) : []
+		const protocolFilters = filters.protocols ?? []
 		const normalizedProtocols = protocolFilters.map(normalizeValue)
 
 		const normalizedChains = chains.map(normalizeValue)
 
-		const hasOracles = Array.isArray(filters.oracles) && filters.oracles.length > 0
-		const hasRewards = Boolean(filters.hasRewards)
-		const hasActiveLending = Boolean(filters.activeLending)
+		const hasOracles = Boolean(filters.oracles?.length)
 
 		const CATEGORY_PRESET_MAP: Record<string, string[]> = {
 			dexs: ['volume-protocols'],
@@ -97,8 +95,7 @@ export function usePresetRecommendations({ filters, chains }: UsePresetRecommend
 		addPreset('revenue-protocols')
 
 		for (const categoryValue of combinedCategories) {
-			for (const matchKey in CATEGORY_PRESET_MAP) {
-				const presets = CATEGORY_PRESET_MAP[matchKey]
+			for (const [matchKey, presets] of Object.entries(CATEGORY_PRESET_MAP)) {
 				if (categoryValue.includes(matchKey)) {
 					for (const preset of presets) {
 						addPreset(preset)
@@ -131,11 +128,6 @@ export function usePresetRecommendations({ filters, chains }: UsePresetRecommend
 			addPreset('perps-protocols')
 		}
 
-		if (hasRewards || hasActiveLending) {
-			addPreset('growth-protocols')
-			addPreset('revenue-protocols')
-		}
-
 		if (normalizedChains.some((value) => value !== 'all')) {
 			addPreset('volume-protocols')
 			addPreset('revenue-protocols')
@@ -145,13 +137,5 @@ export function usePresetRecommendations({ filters, chains }: UsePresetRecommend
 			const preset = UNIFIED_TABLE_PRESETS_BY_ID.get(id)
 			return Boolean(preset)
 		})
-	}, [
-		filters.categories,
-		filters.excludedCategories,
-		filters.protocols,
-		filters.oracles,
-		filters.hasRewards,
-		filters.activeLending,
-		chains
-	])
+	}, [filters.categories, filters.excludedCategories, filters.protocols, filters.oracles, chains])
 }

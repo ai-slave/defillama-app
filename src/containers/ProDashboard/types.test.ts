@@ -4,6 +4,7 @@ import { getProDashboardChartTypeConfig, limitMultiChartItems, MAX_MULTI_CHART_S
 const chart = (index: number): ChartConfig => ({
 	id: `chart-${index}`,
 	kind: 'chart',
+	subjectType: 'chain',
 	chain: `Chain ${index}`,
 	type: 'tvl'
 })

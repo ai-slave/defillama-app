@@ -2,25 +2,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { resultBody } from '~/server/api/__tests__/resultBody'
 
 const mocks = vi.hoisted(() => ({
-	fetchWithPoolingOnServer: vi.fn(),
+	fetchAdapterChainChartData: vi.fn(),
+	fetchAdapterChainChartDataByProtocolBreakdown: vi.fn(),
+	fetchAdapterChainMetrics: vi.fn(),
+	fetchAdapterProtocolChartDataByBreakdownType: vi.fn(),
 	fetchProtocols: vi.fn()
 }))
 
-vi.mock('~/utils/http-client', () => ({
-	fetchWithPoolingOnServer: mocks.fetchWithPoolingOnServer
+vi.mock('~/containers/AdapterMetrics/api', () => ({
+	fetchAdapterChainChartData: mocks.fetchAdapterChainChartData,
+	fetchAdapterChainChartDataByProtocolBreakdown: mocks.fetchAdapterChainChartDataByProtocolBreakdown,
+	fetchAdapterChainMetrics: mocks.fetchAdapterChainMetrics,
+	fetchAdapterProtocolChartDataByBreakdownType: mocks.fetchAdapterProtocolChartDataByBreakdownType
 }))
 
 vi.mock('~/containers/ProtocolLists/api', () => ({
 	fetchProtocols: mocks.fetchProtocols
 }))
 
-function jsonResponse(value: unknown) {
-	return new Response(JSON.stringify(value), { status: 200 })
-}
-
 beforeEach(() => {
 	vi.clearAllMocks()
 	mocks.fetchProtocols.mockResolvedValue({ protocols: [] })
+	mocks.fetchAdapterChainChartData.mockResolvedValue([])
+	mocks.fetchAdapterChainChartDataByProtocolBreakdown.mockResolvedValue([])
 })
 
 describe('AdapterMetrics breakdown routes', () => {
@@ -28,22 +32,18 @@ describe('AdapterMetrics breakdown routes', () => {
 		const today = Math.floor(Date.now() / 86_400_000) * 86_400
 		const day = (daysAgo: number) => today - daysAgo * 86_400
 
-		mocks.fetchWithPoolingOnServer.mockResolvedValue(
-			jsonResponse({
-				totalDataChartBreakdown: [
-					[day(9), { Filler: 1 }],
-					[day(8), { Expired: 1_000 }],
-					[day(7), { Filler: 1 }],
-					[day(6), { Filler: 1 }],
-					[day(5), { Changing: 900, Filler: 1 }],
-					[day(4), { Filler: 1 }],
-					[day(3), { Recent: 600, Filler: 1 }],
-					[day(2), { Changing: 400, Filler: 1 }],
-					[day(1), { Fresh: 500, Competitor: 450, Filler: 1 }],
-					[today, { Current: 2_000 }]
-				]
-			})
-		)
+		mocks.fetchAdapterChainChartDataByProtocolBreakdown.mockResolvedValue([
+			[day(9), { Filler: 1 }],
+			[day(8), { Expired: 1_000 }],
+			[day(7), { Filler: 1 }],
+			[day(6), { Filler: 1 }],
+			[day(5), { Changing: 900, Filler: 1 }],
+			[day(4), { Filler: 1 }],
+			[day(3), { Recent: 600, Filler: 1 }],
+			[day(2), { Changing: 400, Filler: 1 }],
+			[day(1), { Fresh: 500, Competitor: 450, Filler: 1 }],
+			[today, { Current: 2_000 }]
+		])
 
 		const { adapterMetricBreakdown } =
 			await import('~/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes')
@@ -60,27 +60,65 @@ describe('AdapterMetrics breakdown routes', () => {
 
 		expect(result.status).toBe(200)
 		const body = resultBody(result)
-		expect(body.series.slice(0, 3).map((series) => series.name)).toEqual(['Recent', 'Fresh', 'Competitor'])
-		expect(body.series.find((series) => series.name === 'Recent')?.data).toContainEqual([day(1), 0])
-		expect(body.series.map((series) => series.name)).not.toContain('Changing')
-		expect(body.series.map((series) => series.name)).not.toContain('Expired')
-		expect(body.series.map((series) => series.name)).not.toContain('Current')
+		expect(body.series.slice(0, 3).map((series: { name: string }) => series.name)).toEqual([
+			'Recent',
+			'Fresh',
+			'Competitor'
+		])
+		expect(
+			body.series.find((series: { name: string; data: Array<[number, number]> }) => series.name === 'Recent')?.data
+		).toContainEqual([day(1), 0])
+		expect(body.series.map((series: { name: string }) => series.name)).not.toContain('Changing')
+		expect(body.series.map((series: { name: string }) => series.name)).not.toContain('Expired')
+		expect(body.series.map((series: { name: string }) => series.name)).not.toContain('Current')
 		expect(body.metadata).toMatchObject({
+			entityType: 'protocol',
 			topN: 3,
 			totalProtocols: 5,
 			othersCount: 2
 		})
 	})
 
+	it('labels and counts grouped protocol families without calling them protocols', async () => {
+		vi.resetModules()
+		const today = Math.floor(Date.now() / 86_400_000) * 86_400
+		mocks.fetchProtocols.mockResolvedValue({
+			protocols: [
+				{ name: 'Child A', category: 'Dexs', parentProtocol: 'parent#family' },
+				{ name: 'Child B', category: 'Dexs', parentProtocol: 'parent#family' },
+				{ name: 'Standalone', category: 'Dexs' }
+			],
+			parentProtocols: [{ id: 'parent#family', name: 'Family' }]
+		})
+		mocks.fetchAdapterChainChartDataByProtocolBreakdown.mockResolvedValue([
+			[today - 2 * 86_400, { 'Child A': 40, 'Child B': 30, Standalone: 60 }],
+			[today - 86_400, { 'Child A': 60, 'Child B': 50, Standalone: 100 }]
+		])
+		const { adapterMetricBreakdown } =
+			await import('~/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes')
+
+		const result = await adapterMetricBreakdown.handle({
+			method: 'GET',
+			url: 'grouped-families',
+			headers: {},
+			query: { metric: 'volume', limit: '1', groupByParent: 'true' }
+		})
+		const body = resultBody(result)
+
+		expect(body.series.map((series: { name: string }) => series.name)).toEqual(['Family', 'Others (1 protocol family)'])
+		expect(body.metadata).toMatchObject({
+			entityType: 'protocol-family',
+			totalProtocolFamilies: 2,
+			othersCount: 1
+		})
+		expect(body.metadata).not.toHaveProperty('totalProtocols')
+	})
+
 	it('filters protocol-specific chain summaries by display-name chain keys', async () => {
-		mocks.fetchWithPoolingOnServer.mockResolvedValue(
-			jsonResponse({
-				totalDataChartBreakdown: [
-					[1, { BSC: { v1: 10 }, Ethereum: { v1: 50 } }],
-					[2, { BSC: { v1: 30 }, Ethereum: { v1: 60 } }]
-				]
-			})
-		)
+		mocks.fetchAdapterProtocolChartDataByBreakdownType.mockResolvedValue([
+			[1, { BSC: 10, Ethereum: 50 }],
+			[2, { BSC: 30, Ethereum: 60 }]
+		])
 		const { adapterMetricByChainBreakdown } =
 			await import('~/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes')
 
@@ -102,18 +140,18 @@ describe('AdapterMetrics breakdown routes', () => {
 				chains: ['BSC']
 			})
 		})
-		expect(mocks.fetchWithPoolingOnServer).toHaveBeenCalledWith(expect.stringContaining('/fees/aave'))
+		expect(mocks.fetchAdapterProtocolChartDataByBreakdownType).toHaveBeenCalledWith({
+			adapterType: 'fees',
+			protocol: 'aave',
+			type: 'chain'
+		})
 	})
 
 	it('normalizes saved legacy aliases for protocol-specific chain summary filters', async () => {
-		mocks.fetchWithPoolingOnServer.mockResolvedValue(
-			jsonResponse({
-				totalDataChartBreakdown: [
-					[1, { BSC: { v1: 10 }, Ethereum: { v1: 50 } }],
-					[2, { BSC: { v1: 30 }, Ethereum: { v1: 60 } }]
-				]
-			})
-		)
+		mocks.fetchAdapterProtocolChartDataByBreakdownType.mockResolvedValue([
+			[1, { BSC: 10, Ethereum: 50 }],
+			[2, { BSC: 30, Ethereum: 60 }]
+		])
 		const { adapterMetricByChainBreakdown } =
 			await import('~/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes')
 
@@ -139,35 +177,25 @@ describe('AdapterMetrics breakdown routes', () => {
 
 	it('does not mutate the cached protocol category lookup with overview protocol aliases', async () => {
 		let overviewCalls = 0
-		mocks.fetchWithPoolingOnServer.mockImplementation(async (url: string) => {
-			if (/\/(fees|revenue)\/[^/?]+\?/.test(url)) {
-				return jsonResponse({
-					totalDataChart: [
-						[1, 10],
-						[2, 20]
-					]
-				})
-			}
+		mocks.fetchAdapterChainMetrics.mockImplementation(async () => {
 			overviewCalls += 1
-			return jsonResponse({
+			return {
 				protocols: [
 					{
+						name: 'Transient Protocol',
 						displayName: 'Transient Protocol',
-						category: overviewCalls === 1 ? 'Lending' : undefined,
+						slug: 'transient-protocol',
+						category: overviewCalls === 1 ? 'Lending' : null,
 						breakdown24h: { bsc: { v1: 10 } }
 					}
 				],
-				allChains: ['BSC'],
-				totalDataChart: [
-					[1, 10],
-					[2, 20]
-				],
-				totalDataChartBreakdown: [
-					[1, { 'Transient Protocol': { v1: 10 } }],
-					[2, { 'Transient Protocol': { v1: 20 } }]
-				]
-			})
+				allChains: ['BSC']
+			}
 		})
+		mocks.fetchAdapterChainChartDataByProtocolBreakdown.mockResolvedValue([
+			[1, { 'Transient Protocol': 10 }],
+			[2, { 'Transient Protocol': 20 }]
+		])
 		const { adapterMetricByChainBreakdown } =
 			await import('~/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes')
 
@@ -197,5 +225,60 @@ describe('AdapterMetrics breakdown routes', () => {
 		expect(resultBody(firstResult)).toMatchObject({ metadata: expect.objectContaining({ totalChains: 1 }) })
 		expect(resultBody(secondResult)).toMatchObject({ metadata: expect.objectContaining({ totalChains: 0 }) })
 		expect(overviewCalls).toBe(2)
+	})
+
+	it.each(['include', 'exclude'] as const)(
+		'rejects a partial selected-chain protocol aggregate in %s mode',
+		async (chainFilterMode) => {
+			mocks.fetchAdapterChainChartDataByProtocolBreakdown.mockImplementation(async ({ chain }) => {
+				if (chain === 'Base') throw new Error('Base unavailable')
+				return []
+			})
+			const { adapterMetricBreakdown } =
+				await import('~/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes')
+
+			const result = await adapterMetricBreakdown.handle({
+				method: 'GET',
+				url: `partial-${chainFilterMode}`,
+				headers: {},
+				query: {
+					metric: 'volume',
+					chains: 'Base,Ethereum',
+					chainFilterMode
+				}
+			})
+
+			expect(result.status).toBe(500)
+		}
+	)
+
+	it('rejects an all-protocol chain chart when a ranked chain request fails', async () => {
+		mocks.fetchAdapterChainMetrics.mockResolvedValue({
+			protocols: [
+				{
+					name: 'Protocol',
+					displayName: 'Protocol',
+					slug: 'protocol',
+					category: null,
+					breakdown24h: { bsc: { v1: 10 } }
+				}
+			],
+			allChains: ['BSC']
+		})
+		mocks.fetchAdapterChainChartData.mockImplementation(async ({ chain }) => {
+			if (chain === 'BSC') throw new Error('BSC unavailable')
+			return []
+		})
+		const { adapterMetricByChainBreakdown } =
+			await import('~/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes')
+
+		const result = await adapterMetricByChainBreakdown.handle({
+			method: 'GET',
+			url: 'ranked-chain-failure',
+			headers: {},
+			query: { metric: 'perps', protocol: 'All' }
+		})
+
+		expect(result.status).toBe(500)
 	})
 })

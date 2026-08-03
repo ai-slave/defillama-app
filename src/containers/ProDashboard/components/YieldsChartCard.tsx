@@ -1,17 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
+import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
+import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { download } from '~/utils/download'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
-import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext } from '../queries'
-import { fetchYieldsLendBorrowViaProxy, fetchYieldsViaProxy } from '../services/fetchViaProxy'
+import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
+import { fetchProDashboardProxy } from '../services/fetchViaProxy'
 import { normalizeYieldChartType, type ActiveYieldChartType, type YieldsChartConfig } from '../types'
+import { CSVExportButton } from './CSVExportButton'
 import { LoadingSpinner } from './LoadingSpinner'
-import { ProTableCSVButton } from './ProTable/CsvButton'
 import { useYieldChartTransformations } from './useYieldChartTransformations'
 import {
 	borrowApyCharts,
@@ -24,6 +26,14 @@ import {
 } from './yieldChartConfig'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+
+type ChartConfigWithUndefinedColor = Omit<MultiSeriesChartSeriesConfig, 'color'> & { color?: string | undefined }
+
+const normalizeChartColors = (charts: ChartConfigWithUndefinedColor[]): MultiSeriesChartSeriesConfig[] =>
+	charts.map(({ color, ...chart }) => ({ ...chart, ...(color ? { color } : {}) }))
+
+const SUPPLY_APY_CHARTS = normalizeChartColors(supplyApyCharts)
+const BORROW_APY_CHARTS = normalizeChartColors(borrowApyCharts)
 
 interface YieldsChartCardProps {
 	config: YieldsChartConfig
@@ -39,36 +49,38 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const needsBorrowData = chartType === 'borrow-apy' || chartType === 'net-borrow-apy'
 	const needsSupplyData = !needsBorrowData
-	const gatedPoolId = streamDone && needsSupplyData ? poolConfigId : null
 	const {
 		data: chart,
 		isLoading: fetchingChartData,
 		isError: chartError
 	} = useQuery({
-		queryKey: ['yield-supply-history', gatedPoolId],
-		queryFn: (): Promise<PoolHistory> =>
-			authToken ? fetchYieldsViaProxy(gatedPoolId!, authToken) : fetchPoolDetailHistory(gatedPoolId!, 'max'),
-		staleTime: Infinity,
+		queryKey: ['yield-supply-history', poolConfigId],
+		queryFn: (): Promise<PoolHistory> => {
+			return authToken
+				? fetchProDashboardProxy('yields', { poolConfigId }, authToken)
+				: fetchPoolDetailHistory(poolConfigId, 'max')
+		},
+		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		enabled: !!gatedPoolId
+		enabled: streamDone && needsSupplyData && Boolean(poolConfigId)
 	})
 
-	const borrowPoolId = streamDone && needsBorrowData ? poolConfigId : null
 	const {
 		data: borrowChart,
 		isLoading: fetchingBorrowData,
 		isError: borrowError
 	} = useQuery({
-		queryKey: ['yield-borrow-history', borrowPoolId],
-		queryFn: (): Promise<BorrowMarketHistory> =>
-			authToken
-				? fetchYieldsLendBorrowViaProxy(borrowPoolId!, authToken)
-				: fetchBorrowMarketDetailHistory(borrowPoolId!, 'max'),
-		staleTime: Infinity,
+		queryKey: ['yield-borrow-history', poolConfigId],
+		queryFn: (): Promise<BorrowMarketHistory> => {
+			return authToken
+				? fetchProDashboardProxy('yieldsLendBorrow', { poolConfigId }, authToken)
+				: fetchBorrowMarketDetailHistory(poolConfigId, 'max')
+		},
+		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		enabled: !!borrowPoolId
+		enabled: streamDone && needsBorrowData && Boolean(poolConfigId)
 	})
 
 	const { dataset: currentChartDataset, latestData } = useYieldChartTransformations({
@@ -81,6 +93,11 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 
 	const handleCsvExport = () => {
 		if (currentChartDataset.source.length === 0) return
+		const formatPointDate = (point: (typeof currentChartDataset.source)[number], pointIndex: number) => {
+			const timestamp = point[0]
+			if (typeof timestamp !== 'number') throw new Error(`Invalid yield chart timestamp at index ${pointIndex}`)
+			return new Date(timestamp).toISOString().slice(0, 10)
+		}
 
 		let headers: string[]
 		let rows: Array<Array<string | number>>
@@ -88,16 +105,16 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		switch (chartType) {
 			case 'tvl-apy':
 				headers = ['Date', 'Supply APY', 'TVL']
-				rows = currentChartDataset.source.map((point) => [
-					new Date(point[0] as number).toISOString().slice(0, 10),
+				rows = currentChartDataset.source.map((point, pointIndex) => [
+					formatPointDate(point, pointIndex),
 					point[1] ?? '',
 					point[2] ?? ''
 				])
 				break
 			case 'supply-apy':
 				headers = ['Date', 'Base', 'Reward', 'Intrinsic']
-				rows = currentChartDataset.source.map((point) => [
-					new Date(point[0] as number).toISOString().slice(0, 10),
+				rows = currentChartDataset.source.map((point, pointIndex) => [
+					formatPointDate(point, pointIndex),
 					point[1] ?? '',
 					point[2] ?? '',
 					point[3] ?? ''
@@ -105,8 +122,8 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				break
 			case 'borrow-apy':
 				headers = ['Date', 'Base cost', 'Reward offset', 'Intrinsic']
-				rows = currentChartDataset.source.map((point) => [
-					new Date(point[0] as number).toISOString().slice(0, 10),
+				rows = currentChartDataset.source.map((point, pointIndex) => [
+					formatPointDate(point, pointIndex),
 					point[1] ?? '',
 					point[2] ?? '',
 					point[3] ?? ''
@@ -114,16 +131,16 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				break
 			case 'supply-apy-7d':
 				headers = ['Date', '7d Supply APY']
-				rows = currentChartDataset.source.map((point) => [
-					new Date(point[0] as number).toISOString().slice(0, 10),
-					point[1]
+				rows = currentChartDataset.source.map((point, pointIndex) => [
+					formatPointDate(point, pointIndex),
+					point[1] ?? ''
 				])
 				break
 			case 'net-borrow-apy':
 				headers = ['Date', 'Net borrow cost']
-				rows = currentChartDataset.source.map((point) => [
-					new Date(point[0] as number).toISOString().slice(0, 10),
-					point[1]
+				rows = currentChartDataset.source.map((point, pointIndex) => [
+					formatPointDate(point, pointIndex),
+					point[1] ?? ''
 				])
 		}
 
@@ -136,7 +153,9 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const imageFilename = `${poolName.replace(/\s+/g, '_')}`
 	const imageTitle = `${poolName} - ${project} (${chain})`
 
-	const isLoading = (needsBorrowData ? fetchingBorrowData : fetchingChartData) || !streamDone
+	const selectedData = needsBorrowData ? borrowChart : chart
+	const isLoading =
+		(needsBorrowData ? fetchingBorrowData : fetchingChartData) || (!streamDone && selectedData === undefined)
 
 	const hasError = needsBorrowData ? chartError || borrowError : chartError
 
@@ -188,7 +207,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				{currentChartDataset.source.length > 0 ? (
 					<div className="flex gap-2">
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={handleCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
@@ -237,8 +256,8 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						<MultiSeriesChart
 							height="320px"
 							dataset={currentChartDataset}
-							charts={supplyApyCharts}
-							chartOptions={percentTimeChartOptions}
+							charts={SUPPLY_APY_CHARTS}
+							{...(percentTimeChartOptions ? { chartOptions: percentTimeChartOptions } : {})}
 							valueSymbol="%"
 							hideDefaultLegend={false}
 							onReady={handleChartReady}
@@ -249,7 +268,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 							height="320px"
 							dataset={currentChartDataset}
 							charts={supplyApy7dCharts}
-							chartOptions={singlePercentTimeChartOptions}
+							{...(singlePercentTimeChartOptions ? { chartOptions: singlePercentTimeChartOptions } : {})}
 							valueSymbol="%"
 							onReady={handleChartReady}
 						/>
@@ -258,8 +277,8 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						<MultiSeriesChart
 							height="320px"
 							dataset={currentChartDataset}
-							charts={borrowApyCharts}
-							chartOptions={percentTimeChartOptions}
+							charts={BORROW_APY_CHARTS}
+							{...(percentTimeChartOptions ? { chartOptions: percentTimeChartOptions } : {})}
 							valueSymbol="%"
 							hideDefaultLegend={false}
 							onReady={handleChartReady}
@@ -270,7 +289,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 							height="320px"
 							dataset={currentChartDataset}
 							charts={netBorrowApyCharts}
-							chartOptions={singlePercentTimeChartOptions}
+							{...(singlePercentTimeChartOptions ? { chartOptions: singlePercentTimeChartOptions } : {})}
 							valueSymbol="%"
 							onReady={handleChartReady}
 						/>

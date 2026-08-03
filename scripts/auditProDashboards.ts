@@ -3,13 +3,18 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { buildProDashboardChartSourcePlan } from '~/containers/ProDashboard/chartSourcePlan'
-import type { DashboardStreamChunk } from '~/containers/ProDashboard/dashboardStreamContract'
+import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
+import { dashboardStreamNeedsProtocolCatalog } from '~/containers/ProDashboard/dashboardStreamCapabilities'
+import {
+	INITIAL_DASHBOARD_STREAM_ITEM_COUNT,
+	type DashboardStreamChunk
+} from '~/containers/ProDashboard/dashboardStreamContract'
 import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'
 import { DISCOVERY_CATEGORIES } from '~/containers/ProDashboard/discoveryCategories'
 import { dashboardAPI, dashboardUrlKey } from '~/containers/ProDashboard/services/DashboardAPI'
-import { buildProDashboardTableSourcePlan } from '~/containers/ProDashboard/tableSourcePlan'
-import type { DashboardItemConfig } from '~/containers/ProDashboard/types'
+import { STREAM_PROTOCOL_SERIES_SKIP_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { auditProDashboardTableSources } from './proDashboardTableAudit'
+import { buildProDashboardTableSourcePlan } from './proDashboardTableSourcePlan'
 
 type AuditSeverity = 'error' | 'warning'
 
@@ -49,7 +54,6 @@ interface DashboardAuditResult {
 	missingTableSources: string[]
 	duplicateTableSources: string[]
 	unexpectedTableSources: string[]
-	clientOnlyTableSources: string[]
 	chunkTypes: Record<string, number>
 	durationMs: number
 	issues: AuditIssue[]
@@ -96,6 +100,7 @@ function parseCliOptions(argv: string[]): CliOptions {
 	}
 
 	const cacheDir = values.get('cache-dir') ?? path.join(tmpdir(), 'defillama-pro-dashboard-audit')
+	const dashboard = values.get('dashboard')
 	return {
 		baseUrl: (values.get('base-url') ?? 'http://127.0.0.1:3000').replace(/\/$/, ''),
 		sectionLimit: Math.max(1, Number(values.get('section-limit') ?? 10)),
@@ -103,7 +108,7 @@ function parseCliOptions(argv: string[]): CliOptions {
 		cacheDir,
 		output: values.get('output') ?? path.join(cacheDir, 'report.json'),
 		reuseCache: parseBoolean(values.get('reuse-cache')),
-		dashboard: values.get('dashboard')
+		...(dashboard === undefined ? {} : { dashboard })
 	}
 }
 
@@ -119,7 +124,7 @@ function createCachedFetch(cacheDir: string, reuseCache: boolean) {
 		if (reuseCache) {
 			const cached = await readFile(cacheFile, 'utf8').catch(() => null)
 			if (cached) {
-				const entry = JSON.parse(cached) as CachedResponse
+				const entry: CachedResponse = JSON.parse(cached)
 				return new Response(entry.body, {
 					status: entry.status,
 					statusText: entry.statusText,
@@ -148,12 +153,11 @@ function createCachedFetch(cacheDir: string, reuseCache: boolean) {
 function parseStream(body: string): ParsedStream {
 	const chunks: DashboardStreamChunk[] = []
 	const issues: AuditIssue[] = []
-	const lines = body.split('\n')
-	for (let index = 0; index < lines.length; index++) {
-		const line = lines[index].trim()
+	for (const [index, lineValue] of body.split('\n').entries()) {
+		const line = lineValue.trim()
 		if (!line) continue
 		try {
-			const value = JSON.parse(line) as DashboardStreamChunk
+			const value: DashboardStreamChunk = JSON.parse(line)
 			if (!value || typeof value !== 'object' || !('type' in value)) throw new Error('chunk has no type')
 			chunks.push(value)
 		} catch (error) {
@@ -183,16 +187,22 @@ function countChartConsumers(items: DashboardItemConfig[]): number {
 }
 
 function expectedChunkTypes(items: DashboardItemConfig[]): Set<string> {
-	const expected = new Set<string>(['dashboard', 'protocolsAndChains', 'appMetadata', 'done'])
+	const expected = new Set<string>(['dashboard', 'done'])
+	if (dashboardStreamNeedsProtocolCatalog(items)) expected.add('protocolsAndChains')
+	if (countChartConsumers(items) > 0) expected.add('appMetadata')
 	for (const item of items) {
 		switch (item.kind) {
 			case 'chart':
-			case 'multi':
 			case 'metric':
 				expected.add('chartData')
 				break
+			case 'multi':
+				if (item.items.length > 0) expected.add('chartData')
+				break
 			case 'builder':
-				expected.add('chartBuilderData')
+				if (item.config.mode === 'protocol' || !STREAM_PROTOCOL_SERIES_SKIP_METRICS.has(item.config.metric)) {
+					expected.add('chartBuilderData')
+				}
 				break
 			case 'yields':
 				expected.add('yieldsChartData')
@@ -231,11 +241,13 @@ async function runWithConcurrency<T, R>(
 	worker: (item: T) => Promise<R>
 ): Promise<R[]> {
 	const results = new Array<R>(items.length)
-	let nextIndex = 0
+	const queue = items.entries()
 	const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-		while (nextIndex < items.length) {
-			const index = nextIndex++
-			results[index] = await worker(items[index])
+		for (;;) {
+			const next = queue.next()
+			if (next.done) return
+			const [index, item] = next.value
+			results[index] = await worker(item)
 		}
 	})
 	await Promise.all(workers)
@@ -265,7 +277,7 @@ async function auditDashboard({
 	if (!response) {
 		return {
 			id: dashboardSummary.id,
-			slug: dashboardSummary.slug,
+			...(dashboardSummary.slug === undefined ? {} : { slug: dashboardSummary.slug }),
 			name: dashboardSummary.data?.dashboardName ?? dashboardKey,
 			sections,
 			itemKinds: {},
@@ -281,7 +293,6 @@ async function auditDashboard({
 			missingTableSources: [],
 			duplicateTableSources: [],
 			unexpectedTableSources: [],
-			clientOnlyTableSources: [],
 			chunkTypes: {},
 			durationMs: Math.round(performance.now() - startedAt),
 			issues
@@ -310,15 +321,15 @@ async function auditDashboard({
 	if (!dashboard) {
 		issues.push({ severity: 'error', code: 'dashboard-missing', message: 'No dashboard config was returned' })
 	}
+	const items = (dashboard?.data?.items ?? []).slice(0, INITIAL_DASHBOARD_STREAM_ITEM_COUNT)
 
 	const catalogChunk = parsed.chunks.find((chunk) => chunk.type === 'protocolsAndChains')
 	const catalog = catalogChunk?.type === 'protocolsAndChains' ? catalogChunk.data : null
-	if (!catalog)
+	if (dashboardStreamNeedsProtocolCatalog(items) && !catalog)
 		issues.push({ severity: 'warning', code: 'catalog-missing', message: 'Protocol catalog was unavailable' })
 	const appMetadataChunk = parsed.chunks.find((chunk) => chunk.type === 'appMetadata')
 	const appMetadata = appMetadataChunk?.type === 'appMetadata' ? appMetadataChunk.data : null
 
-	const items = dashboard?.data?.items ?? []
 	const sourcePlan = buildProDashboardChartSourcePlan(items, catalog, appMetadata)
 	const receivedCounts = new Map<string, number>()
 	const emptyChartSources: string[] = []
@@ -358,10 +369,6 @@ async function auditDashboard({
 	for (const source of tableAudit.empty) {
 		issues.push({ severity: 'warning', code: 'table-source-empty', message: source })
 	}
-	for (const source of tablePlan.clientOnlySources) {
-		issues.push({ severity: 'warning', code: 'table-source-client-only', message: source })
-	}
-
 	for (const expectedType of expectedChunkTypes(items)) {
 		if (!chunkTypes[expectedType]) {
 			issues.push({
@@ -372,9 +379,10 @@ async function auditDashboard({
 		}
 	}
 
+	const slug = dashboard?.slug ?? dashboardSummary.slug
 	return {
 		id: dashboard?.id ?? dashboardSummary.id,
-		slug: dashboard?.slug ?? dashboardSummary.slug,
+		...(slug === undefined ? {} : { slug }),
 		name: dashboard?.data?.dashboardName ?? dashboardSummary.data?.dashboardName ?? dashboardKey,
 		sections,
 		itemKinds: countItemKinds(items),
@@ -390,7 +398,6 @@ async function auditDashboard({
 		missingTableSources: tableAudit.missing,
 		duplicateTableSources: tableAudit.duplicate,
 		unexpectedTableSources: tableAudit.unexpected,
-		clientOnlyTableSources: tablePlan.clientOnlySources,
 		chunkTypes,
 		durationMs: Math.round(performance.now() - startedAt),
 		issues
@@ -413,7 +420,7 @@ async function main(): Promise<void> {
 					{
 						visibility: 'public',
 						sortBy: section.sortBy,
-						timeFrame: section.timeFrame,
+						...(section.timeFrame === undefined ? {} : { timeFrame: section.timeFrame }),
 						page: 1,
 						limit: options.sectionLimit
 					},
@@ -423,8 +430,7 @@ async function main(): Promise<void> {
 		)
 
 		for (const { section, response } of sectionResults) {
-			for (let index = 0; index < response.items.length; index++) {
-				const dashboard = response.items[index]
+			for (const [index, dashboard] of response.items.entries()) {
 				const existing = discovered.get(dashboard.id)
 				if (existing) existing.sections.push({ key: section.key, rank: index + 1 })
 				else discovered.set(dashboard.id, { dashboard, sections: [{ key: section.key, rank: index + 1 }] })

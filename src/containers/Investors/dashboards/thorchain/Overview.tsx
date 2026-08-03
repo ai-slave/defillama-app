@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
-import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
+import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
+import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { ApiTrendChart, FeeRevenueChart } from './ChainBreakdownChart'
 import type { ApiTableData, Chart, Distribution, Kpi as KpiT } from './transform'
 import {
@@ -41,9 +41,19 @@ export default function Overview() {
 	const defs = useThorchainDefs()
 	const fees = useAdapterSeries('total-fees', withNetworkFee(ADAPTER_DATA_TYPES.DAILY_FEES))
 	const revenue = useAdapterSeries('total-revenue', withNetworkFee(ADAPTER_DATA_TYPES.DAILY_REVENUE))
-	const holdersRevenue = useAdapterSeries('dex-holders-revenue', () => ProtocolCharts.holdersRevenue(DEX))
+	const holdersRevenue = useAdapterSeries('dex-holders-revenue', () =>
+		fetchAdapterProtocolChartData({
+			adapterType: ADAPTER_TYPES.FEES,
+			protocol: DEX,
+			dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
+		})
+	)
 	const supplySideRevenue = useAdapterSeries('dex-supply-side-revenue', () =>
-		ProtocolCharts.summary(DEX, 'fees', 'dailySupplySideRevenue')
+		fetchAdapterProtocolChartData({
+			adapterType: ADAPTER_TYPES.FEES,
+			protocol: DEX,
+			dataType: ADAPTER_DATA_TYPES.DAILY_SUPPLY_SIDE_REVENUE
+		})
 	)
 	// Volume from the ir-server volume payload (Midgard daily history, same series as the
 	// Volume tab — same query key, so the tab loads instantly). The DefiLlama dex-volume

@@ -1,5 +1,5 @@
 import type { PngExportProfile } from '~/components/ChartExport/ChartPngExportButton'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatIsoDate } from '~/utils/dateFormat'
@@ -79,39 +79,43 @@ export function buildExportModel(config: ChartConfiguration, adaptedChart: Adapt
 		case 'pie': {
 			const pieData = adaptedChart.props.chartData ?? []
 			const total = pieData.reduce((sum, item) => sum + item.value, 0)
+			const csvRows: CsvCell[][] = [['Name', 'Value', 'Percentage']]
+			for (const item of pieData) {
+				csvRows.push([item.name, item.value, formatChartPercent(item.value, total)])
+			}
 			return {
-				csvRows: [
-					['Name', 'Value', 'Percentage'],
-					...(pieData.map((item) => [item.name, item.value, formatChartPercent(item.value, total)]) as CsvCell[][])
-				],
+				csvRows,
 				csvFilename,
 				pngProfile: 'default'
 			}
 		}
-		case 'scatter':
+		case 'scatter': {
+			const csvRows: CsvCell[][] = [
+				[adaptedChart.props.xAxisLabel || 'X', adaptedChart.props.yAxisLabel || 'Y', 'Entity']
+			]
+			for (const point of adaptedChart.props.chartData ?? []) {
+				if (!Array.isArray(point) || point.length < 3) continue
+				csvRows.push([toCsvCell(point[0]), toCsvCell(point[1]), toCsvCell(point[2])])
+			}
 			return {
-				csvRows: [
-					[adaptedChart.props.xAxisLabel || 'X', adaptedChart.props.yAxisLabel || 'Y', 'Entity'],
-					...((adaptedChart.props.chartData ?? []).flatMap((point) => {
-						if (!Array.isArray(point) || point.length < 3) return []
-						return [[toCsvCell(point[0]), toCsvCell(point[1]), toCsvCell(point[2])]]
-					}) as CsvCell[][])
-				],
+				csvRows,
 				csvFilename,
 				pngProfile: 'scatterWithImageSymbols'
 			}
+		}
 		case 'hbar': {
 			const groupedSeries = adaptedChart.props.series
+			const csvRows: CsvCell[][] = []
+			if (groupedSeries) {
+				csvRows.push(['Category', ...groupedSeries.map((series) => series.name)])
+				for (const [index, [category]] of adaptedChart.data.entries()) {
+					csvRows.push([category, ...groupedSeries.map((series) => toCsvCell(series.values[index]))])
+				}
+			} else {
+				csvRows.push(['Category', 'Value'], ...adaptedChart.data)
+			}
 			return {
-				csvRows: groupedSeries
-					? [
-							['Category', ...groupedSeries.map((series) => series.name)],
-							...adaptedChart.data.map(([category], index) => [
-								category,
-								...groupedSeries.map((series) => series.values[index]!)
-							])
-						]
-					: [['Category', 'Value'], ...adaptedChart.data.map(([category, value]) => [category, value])],
+				csvRows,
 				csvFilename,
 				pngProfile: 'hbar'
 			}

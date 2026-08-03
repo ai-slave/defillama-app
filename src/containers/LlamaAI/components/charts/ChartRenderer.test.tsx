@@ -3,7 +3,7 @@
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptChartData } from '~/containers/LlamaAI/utils/chartAdapter'
 import type { ChartViewState } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransformer'
@@ -475,9 +475,17 @@ describe('ChartRenderer', () => {
 			...config,
 			axes: {
 				...config.axes,
-				yAxes: [{ ...config.axes.yAxes[0], label: 'Revenue (USD)' }]
+				yAxes: [
+					{
+						id: 'value',
+						fields: ['fees', 'revenue'],
+						label: 'Revenue (USD)',
+						position: 'left',
+						valueSymbol: '$'
+					}
+				]
 			}
-		}
+		} satisfies ChartConfiguration
 		await act(async () =>
 			root.render(
 				<ChartRenderer charts={[externallyUpdated]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />

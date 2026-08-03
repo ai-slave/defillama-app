@@ -51,8 +51,8 @@ export interface CexAnalyticsSnapshotRow {
 export interface CexAnalyticsSummary {
 	totalSpotVolume: number
 	totalDerivativesVolume: number
-	totalOpenInterest: number
-	totalCleanTvl: number
+	totalOpenInterest: number | null
+	totalCleanTvl: number | null
 	weightedAvgLeverage: number | null
 	loadedAt: string | null
 }

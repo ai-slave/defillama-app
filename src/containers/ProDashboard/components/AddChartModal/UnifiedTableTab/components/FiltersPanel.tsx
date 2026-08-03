@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { AriakitVirtualizedMultiSelect } from '~/containers/ProDashboard/components/AriakitVirtualizedMultiSelect'
+import { buildOracleFilterOptions } from '~/containers/ProDashboard/oracleFilterOptions'
 import { useProDashboardCatalog } from '~/containers/ProDashboard/ProDashboardAPIContext'
-import type { TableFilters } from '~/containers/ProDashboard/types'
+import { useOracleNamesByProtocol } from '~/containers/ProDashboard/queries'
+import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { getItemIconUrl } from '~/containers/ProDashboard/utils'
 
 const EMPTY_CATEGORIES: string[] = []
@@ -11,14 +13,15 @@ const ALL_CHAINS_SELECTION = ['All']
 
 interface FiltersPanelProps {
 	chains: string[]
-	filters: TableFilters
+	filters: UnifiedTableFilters
 	availableChains: Array<{ label: string; value: string }>
 	onChainsChange: (chains: string[]) => void
-	onFiltersChange: (filters: TableFilters) => void
+	onFiltersChange: (filters: UnifiedTableFilters) => void
 }
 
 export function FiltersPanel({ chains, filters, availableChains, onChainsChange, onFiltersChange }: FiltersPanelProps) {
 	const { protocols } = useProDashboardCatalog()
+	const { data: oracleNamesByProtocol } = useOracleNamesByProtocol()
 	const [categoryMode, setCategoryMode] = useState<'include' | 'exclude'>('include')
 
 	const chainSelectOptions = useMemo(() => {
@@ -35,8 +38,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 		if (!protocols || protocols.length === 0) return []
 		const set = new Set<string>()
 		for (const protocol of protocols) {
-			const protocolCategory = (protocol as any).category as string | undefined
-			if (protocolCategory) set.add(protocolCategory)
+			if (protocol.category) set.add(protocol.category)
 		}
 		return Array.from(set)
 			.sort((a, b) => a.localeCompare(b))
@@ -59,15 +61,20 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 			}
 		}
 
-		parentsOrSolo.sort((a, b) => (b.tvl || 0) - (a.tvl || 0))
+		parentsOrSolo.sort((a, b) => b.tvl - a.tvl)
 
 		const options: Array<{ value: string; label: string; logo?: string; isChild?: boolean }> = []
 
 		for (const parent of parentsOrSolo) {
-			const childProtocols = (childrenByParentId.get(parent.id) || []).sort((a, b) => (b.tvl || 0) - (a.tvl || 0))
-			options.push({ value: parent.name, label: parent.name, logo: parent.logo })
+			const childProtocols = (childrenByParentId.get(parent.id) ?? []).sort((a, b) => b.tvl - a.tvl)
+			options.push({ value: parent.name, label: parent.name, ...(parent.logo ? { logo: parent.logo } : {}) })
 			for (const child of childProtocols) {
-				options.push({ value: child.name, label: child.name, logo: child.logo, isChild: true })
+				options.push({
+					value: child.name,
+					label: child.name,
+					...(child.logo ? { logo: child.logo } : {}),
+					isChild: true
+				})
 			}
 		}
 
@@ -75,41 +82,18 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 	}, [protocols])
 
 	const oracleOptions = useMemo(() => {
-		if (!protocols || protocols.length === 0) return []
-		const totals = new Map<string, number>()
-		const add = (oracle: string, weight: number) => {
-			if (!oracle) return
-			totals.set(oracle, (totals.get(oracle) || 0) + weight)
-		}
+		return oracleNamesByProtocol ? buildOracleFilterOptions(protocols, oracleNamesByProtocol) : []
+	}, [protocols, oracleNamesByProtocol])
 
-		for (const protocol of protocols as any[]) {
-			const weight = Number(protocol?.tvl) || 0
-			if (Array.isArray(protocol?.oracles)) {
-				for (const oracle of protocol.oracles) {
-					add(oracle, weight)
-				}
-			}
-			if (protocol?.oraclesByChain) {
-				for (const oracle of Object.values(protocol.oraclesByChain as Record<string, string[]>).flat()) {
-					add(oracle, weight)
-				}
-			}
-		}
-
-		return Array.from(totals.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([oracle]) => ({ value: oracle, label: oracle }))
-	}, [protocols])
-
-	const includeCategories = (filters.categories as string[]) ?? EMPTY_CATEGORIES
-	const excludeCategories = (filters.excludedCategories as string[]) ?? EMPTY_CATEGORIES
+	const includeCategories = filters.categories ?? EMPTY_CATEGORIES
+	const excludeCategories = filters.excludedCategories ?? EMPTY_CATEGORIES
 	const categoryValues = categoryMode === 'include' ? includeCategories : excludeCategories
 
 	const handleMultiSelectChange = (
 		key: 'categories' | 'excludedCategories' | 'protocols' | 'oracles',
 		values: string[]
 	) => {
-		const next: TableFilters = { ...filters }
+		const next: UnifiedTableFilters = { ...filters }
 		if (values.length === 0) {
 			delete next[key]
 		} else {
@@ -120,7 +104,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 
 	const handleCategoryMultiSelectChange = (values: string[]) => {
 		const key = categoryMode === 'include' ? 'categories' : 'excludedCategories'
-		const next: TableFilters = { ...filters }
+		const next: UnifiedTableFilters = { ...filters }
 		if (values.length === 0) {
 			delete next[key]
 		} else {
@@ -205,7 +189,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 				<AriakitVirtualizedMultiSelect
 					label="Protocols"
 					options={protocolOptions}
-					selectedValues={(filters.protocols as string[]) ?? EMPTY_PROTOCOLS}
+					selectedValues={filters.protocols ?? EMPTY_PROTOCOLS}
 					onChange={(values) => handleMultiSelectChange('protocols', values)}
 					placeholder="All protocols..."
 					renderIcon={(option) => option.logo || getItemIconUrl('protocol', option, option.value)}
@@ -214,7 +198,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 				<AriakitVirtualizedMultiSelect
 					label="Oracles"
 					options={oracleOptions}
-					selectedValues={(filters.oracles as string[]) ?? EMPTY_ORACLES}
+					selectedValues={filters.oracles ?? EMPTY_ORACLES}
 					onChange={(values) => handleMultiSelectChange('oracles', values)}
 					placeholder="All oracles..."
 					className="flex flex-col gap-1.5"

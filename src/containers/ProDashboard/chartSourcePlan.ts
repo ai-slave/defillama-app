@@ -4,11 +4,12 @@ import {
 	getProDashboardChartSourceQueryKey,
 	type ProDashboardChartSourceQueryKey
 } from './chartSource'
+import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { ProDashboardAppMetadata, ProDashboardChartRequest } from './dataContracts'
 import { buildProDashboardParentMapping, type ProDashboardProtocolCatalog } from './protocolCatalog'
 import {
 	type ChartConfig,
-	type DashboardItemConfig,
+	isProDashboardChartType,
 	limitMultiChartItems,
 	type MetricConfig,
 	type ProDashboardChartType
@@ -75,7 +76,8 @@ function getUnsupportedProtocolSourceReason(
 	const protocolSlug = request.protocol.toLowerCase()
 	const metadata = protocolsBySlug.get(protocolSlug)
 	if (!metadata) return undefined
-	const requiredFlags = PROTOCOL_SOURCE_FLAGS[request.type as ProDashboardChartType]
+	if (!isProDashboardChartType(request.type)) return undefined
+	const requiredFlags = PROTOCOL_SOURCE_FLAGS[request.type]
 	if (!requiredFlags) return undefined
 	// Liquidity is resolved by the catalog symbol rather than an adapter capability.
 	if (request.type === 'liquidity' && request.protocolSymbol) return undefined
@@ -108,12 +110,16 @@ function getUnsupportedChainSourceReason(
 	if (!metadata) return undefined
 
 	switch (request.type) {
-		case 'options':
+		case 'stablecoins':
+			return metadata.stablecoins ? undefined : 'chain does not support stablecoin supply'
+		case 'stablecoinInflows':
+			return metadata.inflows ? undefined : 'chain does not support stablecoin inflows'
 		case 'optionsPremium':
 			return metadata.optionsPremiumVolume ? undefined : 'chain does not support options premium volume'
 		case 'optionsNotional':
 			return metadata.optionsNotionalVolume ? undefined : 'chain does not support options notional volume'
-		case 'users':
+		case 'openInterest':
+			return metadata.openInterest ? undefined : 'chain does not support open interest'
 		case 'activeUsers':
 			return metadata.chainActiveUsers ? undefined : 'chain does not expose an active-address pseudo-protocol'
 		case 'newUsers':
@@ -127,14 +133,12 @@ function getUnsupportedChainSourceReason(
 	}
 }
 
-function toChartRequest(
-	chart: Pick<ChartConfig, 'type' | 'protocol' | 'chain' | 'geckoId' | 'dataType'>,
-	protocolSymbol?: string
-): ProDashboardChartRequest {
+function toChartRequest(chart: ChartConfig, protocolSymbol?: string): ProDashboardChartRequest {
 	return {
 		type: chart.type,
-		...(chart.protocol !== undefined ? { protocol: chart.protocol } : {}),
-		...(chart.chain !== undefined ? { chain: chart.chain } : {}),
+		...(chart.subjectType === 'protocol'
+			? { subjectType: 'protocol', protocol: chart.protocol }
+			: { subjectType: 'chain', chain: chart.chain }),
 		...(chart.geckoId !== undefined ? { geckoId: chart.geckoId } : {}),
 		...(chart.dataType !== undefined ? { dataType: chart.dataType } : {}),
 		...(protocolSymbol !== undefined ? { protocolSymbol } : {})
@@ -145,16 +149,15 @@ function toMetricRequest(
 	metric: MetricConfig,
 	protocolsBySlug: Map<string, ProDashboardProtocolCatalog['protocols'][number]>,
 	chainsByName: Map<string, ProDashboardProtocolCatalog['chains'][number]>
-): ProDashboardChartRequest | null {
+): ProDashboardChartRequest {
 	const itemType = metric.subject.itemType
 	const item = itemType === 'protocol' ? metric.subject.protocol : metric.subject.chain
-	if (!item) return null
 
 	const protocol = itemType === 'protocol' ? protocolsBySlug.get(item) : undefined
 	const chain = itemType === 'chain' ? chainsByName.get(item) : undefined
 	return {
 		type: metric.type,
-		...(itemType === 'protocol' ? { protocol: item } : { chain: item }),
+		...(itemType === 'protocol' ? { subjectType: 'protocol', protocol: item } : { subjectType: 'chain', chain: item }),
 		geckoId: metric.subject.geckoId ?? protocol?.geckoId ?? chain?.gecko_id ?? null,
 		...(protocol?.symbol !== undefined ? { protocolSymbol: protocol.symbol } : {})
 	}
@@ -176,14 +179,15 @@ export function buildProDashboardChartSourcePlan(
 
 	const plan = new Map<string, ProDashboardChartSourcePlanEntry>()
 	const addRequest = (inputRequest: ProDashboardChartRequest) => {
-		const chainMetadata = inputRequest.chain
-			? getProDashboardChainMetadata(chainMetadataByName, inputRequest.chain)
-			: undefined
+		const chainMetadata =
+			inputRequest.subjectType === 'chain'
+				? getProDashboardChainMetadata(chainMetadataByName, inputRequest.chain)
+				: undefined
 		const request =
 			inputRequest.type === 'bridgedTvl' && chainMetadata
 				? { ...inputRequest, chainAssetId: chainMetadata.id }
 				: inputRequest
-		const itemType = request.protocol ? 'protocol' : 'chain'
+		const itemType = request.subjectType
 		// Missing catalog metadata must remain an unseeded query so the client can retry it.
 		if (chartNeedsGeckoId(request.type, itemType) && !request.geckoId) return
 		if (itemType === 'protocol' && request.type === 'liquidity' && !request.protocolSymbol) return
@@ -191,6 +195,9 @@ export function buildProDashboardChartSourcePlan(
 		const serializedKey = JSON.stringify(queryKey)
 		if (!plan.has(serializedKey)) {
 			const skipReason =
+				(itemType === 'protocol' && catalog && !protocolsBySlug.has(request.protocol)
+					? 'protocol is not in the canonical Pro catalog'
+					: undefined) ??
 				getUnsupportedProtocolSourceReason(request, protocolMetadataBySlug, childrenByParentSlug) ??
 				getUnsupportedChainSourceReason(request, chainMetadataByName)
 			plan.set(serializedKey, {
@@ -203,18 +210,25 @@ export function buildProDashboardChartSourcePlan(
 
 	for (const item of items) {
 		if (item.kind === 'chart') {
-			addRequest(toChartRequest(item, item.protocol ? protocolsBySlug.get(item.protocol)?.symbol : undefined))
+			addRequest(
+				toChartRequest(item, item.subjectType === 'protocol' ? protocolsBySlug.get(item.protocol)?.symbol : undefined)
+			)
 			continue
 		}
 		if (item.kind === 'multi') {
 			for (const chart of limitMultiChartItems(item.items)) {
-				addRequest(toChartRequest(chart, chart.protocol ? protocolsBySlug.get(chart.protocol)?.symbol : undefined))
+				addRequest(
+					toChartRequest(
+						chart,
+						chart.subjectType === 'protocol' ? protocolsBySlug.get(chart.protocol)?.symbol : undefined
+					)
+				)
 			}
 			continue
 		}
 		if (item.kind === 'metric') {
 			const request = toMetricRequest(item, protocolsBySlug, chainsByName)
-			if (request) addRequest(request)
+			addRequest(request)
 		}
 	}
 

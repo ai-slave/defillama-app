@@ -16,19 +16,21 @@ import {
 } from '~/containers/Equities/financialStatements'
 import { parseEquityTickerCountryParam } from '~/containers/Equities/tickerCountry'
 import type { IEquitiesStatementTableRow } from '~/containers/Equities/types'
-import { getProEquitiesStatementsQueryKey } from '~/containers/ProDashboard/equitiesTableQueryKeys'
+import { getEquitiesTableQueryKey } from '~/containers/ProDashboard/equitiesTableQueryKeys'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
-import { fetchEquitiesStatementsViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { getProEquitiesStatementsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { Icon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
-import { downloadCSV } from '~/utils/download'
+import { downloadCSV, type CsvCell } from '~/utils/download'
+import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
 
-function formatStatementPeriodLabel(periodEnding: string): string {
-	return formatDate(periodEnding) ?? '-'
+function formatStatementPeriodLabel(periodEnding: string | undefined): string {
+	return periodEnding ? (formatDate(periodEnding) ?? '-') : '-'
 }
+
+const EMPTY_PERIOD_ENDINGS: string[] = []
 
 function FinancialRow({
 	row,
@@ -110,17 +112,27 @@ function useEquitiesStatementsData(ticker: string) {
 	const streamDone = useContext(StreamDoneContext)
 	const tickerCountry = parseEquityTickerCountryParam(ticker)
 
-	return useQuery({
-		queryKey: getProEquitiesStatementsQueryKey(ticker) ?? getProEquitiesStatementsCacheKey(ticker),
+	const { data, isLoading, error } = useQuery({
+		queryKey: getEquitiesTableQueryKey('statements', ticker) ?? getProEquitiesStatementsCacheKey(ticker),
 		queryFn: async () => {
 			if (!tickerCountry) throw new Error('Missing ticker param')
-			return fetchEquitiesStatementsViaProxy(tickerCountry.ticker, tickerCountry.country, authToken!)
+			if (!authToken) throw new Error('Missing Pro dashboard proxy auth token')
+			return fetchProDashboardProxy(
+				'equitiesStatements',
+				{ ticker: tickerCountry.ticker, country: tickerCountry.country },
+				authToken
+			)
 		},
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 1,
 		enabled: Boolean(tickerCountry) && Boolean(authToken) && streamDone
 	})
+	return {
+		data,
+		isLoading: isLoading || (tickerCountry !== null && !streamDone && data === undefined),
+		error
+	}
 }
 
 export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
@@ -146,6 +158,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 		() => (periodData ? getEquitiesStatementHeaderIndexes(periodData.periodEnding) : []),
 		[periodData]
 	)
+	const periodEndings = periodData?.periodEnding ?? EMPTY_PERIOD_ENDINGS
 
 	const hasAnyBreakdownRows = rows.some((row) => (row.subRows?.length ?? 0) > 0)
 
@@ -227,22 +240,21 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 								</button>
 							))}
 						</div>
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={() => {
-								const headers = ['"Name"']
+								const headers: CsvCell[] = ['Name']
 								for (const index of headerIndexes) {
-									headers.push(`"${formatStatementPeriodLabel(periodData!.periodEnding[index])}"`)
+									headers.push(formatStatementPeriodLabel(periodEndings[index]))
 								}
 								const flattenedRows = flattenEquitiesStatementRows(rows)
-								const csvRows: string[] = []
+								const csv: CsvCell[][] = [headers]
 								for (const row of flattenedRows) {
-									const csvRow: Array<string | number> = [`"${row.depth > 0 ? '  ' + row.label : row.label}"`]
+									const csvRow: CsvCell[] = [row.depth > 0 ? '  ' + row.label : row.label]
 									for (const index of headerIndexes) {
-										csvRow.push(row.values[index] ?? '')
+										csvRow.push(row.values[index])
 									}
-									csvRows.push(csvRow.join(','))
+									csv.push(csvRow)
 								}
-								const csv = [headers.join(','), ...csvRows].join('\n')
 								downloadCSV(
 									`equities-${ticker}-${resolvedStatementType.toLowerCase().replaceAll(' ', '-')}-${periodType.toLowerCase()}.csv`,
 									csv,
@@ -263,10 +275,10 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 							</th>
 							{headerIndexes.map((index) => (
 								<th
-									key={`${resolvedStatementType}-${periodType}-${periodData!.periodEnding[index]}`}
+									key={`${resolvedStatementType}-${periodType}-${periodEndings[index]}`}
 									className="min-w-[132px] truncate border border-medium bg-pro-app-bg p-2 text-left font-semibold"
 								>
-									{formatStatementPeriodLabel(periodData!.periodEnding[index])}
+									{formatStatementPeriodLabel(periodEndings[index])}
 								</th>
 							))}
 						</tr>

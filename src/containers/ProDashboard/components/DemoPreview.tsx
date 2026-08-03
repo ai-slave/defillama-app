@@ -7,10 +7,10 @@ import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/EChar
 import { Icon } from '~/ui/Icon'
 import { formatUsd } from '~/utils/numberFormat'
 import type { ChartConfig, MultiChartConfig, TextConfig } from '../types'
-import { CHART_TYPES } from '../types'
+import { getProDashboardChartTypeConfig } from '../types'
 import { buildMultiChartSeriesView, type MultiChartInputSeries } from './multiChartSeries'
-import { ProtocolsByChainTable } from './ProTable'
 import { TextCard } from './TextCard'
+import UnifiedTable from './UnifiedTable'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -37,12 +37,12 @@ const generateFakeChartData = (baseValue: number, volatility: number = 0.1): Mul
 }
 
 const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
-	const chartTypeDetails = CHART_TYPES[chart.type] || {
+	const chartTypeDetails = getProDashboardChartTypeConfig(chart.type) ?? {
 		title: chart.type.toUpperCase(),
 		color: '#2172E5',
 		chartType: 'area'
 	}
-	const itemName = chart.protocol || chart.chain || 'Demo'
+	const itemName = chart.subjectType === 'protocol' ? chart.protocol : chart.chain
 
 	const dataset = React.useMemo<MultiSeriesChartDataset>(
 		() => ({
@@ -95,7 +95,18 @@ const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
 	)
 }
 
-const DEMO_CHART_COLORS = ['#2172E5', '#5CCA93', '#F2994A']
+const DEMO_CHART_COLORS = ['#2172E5', '#5CCA93', '#F2994A'] as const
+
+const getDemoChartColor = (index: number): string => {
+	const color = DEMO_CHART_COLORS[index % DEMO_CHART_COLORS.length]
+	if (!color) throw new Error('Demo chart color palette must not be empty')
+	return color
+}
+
+const normalizeDemoBaseType = (chartType: string): MultiChartInputSeries['baseType'] => {
+	if (chartType === 'bar' || chartType === 'area') return chartType
+	return 'line'
+}
 
 const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 	const chartView = React.useMemo(() => {
@@ -105,15 +116,22 @@ const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 				0.08
 			)
 
-			const data: [number, number][] = fakeData.map((row) => [Math.floor((row[0] as number) / 1000), row[1] as number])
+			const data: [number, number][] = fakeData.map((row, rowIndex) => {
+				const timestamp = row[0]
+				const value = row[1]
+				if (typeof timestamp !== 'number' || typeof value !== 'number') {
+					throw new Error(`Invalid demo chart point at index ${rowIndex}`)
+				}
+				return [Math.floor(timestamp / 1000), value]
+			})
 
-			const chartType = CHART_TYPES[item.type] || { title: item.type, chartType: 'line' }
+			const chartType = getProDashboardChartTypeConfig(item.type) ?? { title: item.type, chartType: 'line' }
 
 			return {
-				name: `${item.chain} ${chartType.title}`,
-				baseType: chartType.chartType as MultiChartInputSeries['baseType'],
+				name: `${item.subjectType === 'protocol' ? item.protocol : item.chain} ${chartType.title}`,
+				baseType: normalizeDemoBaseType(chartType.chartType),
 				data,
-				color: DEMO_CHART_COLORS[index] || DEMO_CHART_COLORS[0],
+				color: getDemoChartColor(index),
 				metricType: item.type
 			}
 		})
@@ -128,8 +146,6 @@ const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 	const chartOptions = React.useMemo(
 		() => ({
 			yAxis: {
-				max: undefined,
-				min: undefined,
 				axisLabel: { formatter: (value: number) => formatUsd(value, { compact: true, maximumFractionDigits: 1 }) }
 			},
 			grid: chartGrid({ top: chartView.charts.length > 5 ? 80 : CHART_LEGEND_RESERVE }),
@@ -167,6 +183,7 @@ const demoCharts: ChartConfig[] = [
 	{
 		id: 'demo-ethereum-tvl',
 		kind: 'chart',
+		subjectType: 'chain',
 		chain: 'Ethereum',
 		type: 'tvl',
 		grouping: 'day',
@@ -175,6 +192,7 @@ const demoCharts: ChartConfig[] = [
 	{
 		id: 'demo-ethereum-volume',
 		kind: 'chart',
+		subjectType: 'chain',
 		chain: 'Ethereum',
 		type: 'volume',
 		grouping: 'day',
@@ -183,6 +201,7 @@ const demoCharts: ChartConfig[] = [
 	{
 		id: 'demo-arbitrum-users',
 		kind: 'chart',
+		subjectType: 'chain',
 		chain: 'Arbitrum',
 		type: 'activeUsers',
 		grouping: 'day',
@@ -191,7 +210,7 @@ const demoCharts: ChartConfig[] = [
 	{
 		id: 'demo-uniswap-tvl',
 		kind: 'chart',
-		chain: '',
+		subjectType: 'protocol',
 		protocol: 'Uniswap',
 		geckoId: 'uniswap',
 		type: 'tvl',
@@ -201,7 +220,7 @@ const demoCharts: ChartConfig[] = [
 	{
 		id: 'demo-aave-tokenPrice',
 		kind: 'chart',
-		chain: '',
+		subjectType: 'protocol',
 		protocol: 'Aave',
 		geckoId: 'aave',
 		type: 'tokenPrice',
@@ -211,6 +230,7 @@ const demoCharts: ChartConfig[] = [
 	{
 		id: 'demo-ethereum-fees',
 		kind: 'chart',
+		subjectType: 'chain',
 		chain: 'Ethereum',
 		type: 'fees',
 		grouping: 'week',
@@ -219,6 +239,7 @@ const demoCharts: ChartConfig[] = [
 	{
 		id: 'demo-base-txs',
 		kind: 'chart',
+		subjectType: 'chain',
 		chain: 'Base',
 		type: 'txs',
 		grouping: 'day',
@@ -227,6 +248,7 @@ const demoCharts: ChartConfig[] = [
 	{
 		id: 'demo-polygon-gasUsed',
 		kind: 'chart',
+		subjectType: 'chain',
 		chain: 'Polygon',
 		type: 'gasUsed',
 		grouping: 'day',
@@ -235,6 +257,7 @@ const demoCharts: ChartConfig[] = [
 	{
 		id: 'demo-ethereum-perps',
 		kind: 'chart',
+		subjectType: 'chain',
 		chain: 'Ethereum',
 		type: 'perps',
 		grouping: 'day',
@@ -251,6 +274,7 @@ const demoMultiCharts: MultiChartConfig[] = [
 			{
 				id: 'polygon-tvl-multi',
 				kind: 'chart',
+				subjectType: 'chain',
 				chain: 'Polygon',
 				type: 'tvl',
 				grouping: 'day'
@@ -258,6 +282,7 @@ const demoMultiCharts: MultiChartConfig[] = [
 			{
 				id: 'arbitrum-tvl-multi',
 				kind: 'chart',
+				subjectType: 'chain',
 				chain: 'Arbitrum',
 				type: 'tvl',
 				grouping: 'day'
@@ -265,6 +290,7 @@ const demoMultiCharts: MultiChartConfig[] = [
 			{
 				id: 'base-tvl-multi',
 				kind: 'chart',
+				subjectType: 'chain',
 				chain: 'Base',
 				type: 'tvl',
 				grouping: 'day'
@@ -281,7 +307,7 @@ const demoMultiCharts: MultiChartConfig[] = [
 			{
 				id: 'uniswap-tvl-multi2',
 				kind: 'chart',
-				chain: '',
+				subjectType: 'protocol',
 				protocol: 'Uniswap',
 				type: 'tvl',
 				grouping: 'day'
@@ -289,7 +315,7 @@ const demoMultiCharts: MultiChartConfig[] = [
 			{
 				id: 'aave-tvl-multi2',
 				kind: 'chart',
-				chain: '',
+				subjectType: 'protocol',
 				protocol: 'Aave',
 				type: 'tvl',
 				grouping: 'day'
@@ -297,7 +323,7 @@ const demoMultiCharts: MultiChartConfig[] = [
 			{
 				id: 'curve-tvl-multi2',
 				kind: 'chart',
-				chain: '',
+				subjectType: 'protocol',
 				protocol: 'Curve',
 				type: 'tvl',
 				grouping: 'day'
@@ -314,6 +340,7 @@ const demoMultiCharts: MultiChartConfig[] = [
 			{
 				id: 'ethereum-volume-multi3',
 				kind: 'chart',
+				subjectType: 'chain',
 				chain: 'Ethereum',
 				type: 'volume',
 				grouping: 'day'
@@ -321,6 +348,7 @@ const demoMultiCharts: MultiChartConfig[] = [
 			{
 				id: 'arbitrum-volume-multi3',
 				kind: 'chart',
+				subjectType: 'chain',
 				chain: 'Arbitrum',
 				type: 'volume',
 				grouping: 'day'
@@ -328,6 +356,7 @@ const demoMultiCharts: MultiChartConfig[] = [
 			{
 				id: 'solana-volume-multi3',
 				kind: 'chart',
+				subjectType: 'chain',
 				chain: 'Solana',
 				type: 'volume',
 				grouping: 'day'
@@ -373,10 +402,10 @@ const demoTextCard2: TextConfig = {
 }
 
 const demoTextCard3: TextConfig = {
-	id: 'demo-text-protable',
+	id: 'demo-text-dashboard-table',
 	kind: 'text',
 	title: '🔧 Advanced Protocol Rankings',
-	content: `**ProTable Features:**
+	content: `**Dashboard Table Features:**
 
 - **Dynamic Columns**: Show/hide columns, reorder as needed
 - **Column Presets**: Essential, Fees, Volume, Advanced views
@@ -423,10 +452,14 @@ const features = [
 		icon: 'layers',
 		title: 'Multi-Charts'
 	}
-]
+] satisfies Array<{ icon: React.ComponentProps<typeof Icon>['name']; title: string }>
 
 export const DemoPreview = () => {
 	const router = useRouter()
+	const [firstMultiChart, secondMultiChart, thirdMultiChart] = demoMultiCharts
+	if (!firstMultiChart || !secondMultiChart || !thirdMultiChart) {
+		throw new Error('Demo preview requires three multi-chart examples')
+	}
 
 	return (
 		<div className="relative min-h-screen pro-dashboard">
@@ -445,7 +478,7 @@ export const DemoPreview = () => {
 									className="flex flex-wrap items-center justify-center gap-2 pro-info-card px-8 py-15 text-sm text-pro-text-secondary"
 								>
 									<div className="align-center flex gap-2">
-										<Icon name={feature.icon as any} height={32} width={32} className="shrink-0 text-brand" />
+										<Icon name={feature.icon} height={32} width={32} className="shrink-0 text-brand" />
 										<span className="text-lg leading-[170%] font-bold whitespace-nowrap">{feature.title}</span>
 									</div>
 								</div>
@@ -550,9 +583,9 @@ export const DemoPreview = () => {
 				))}
 
 				<div
-					className={`${demoMultiCharts[0].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+					className={`${firstMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 				>
-					<DemoMultiChartCard multi={demoMultiCharts[0]} />
+					<DemoMultiChartCard multi={firstMultiChart} />
 				</div>
 
 				{demoCharts.slice(2, 4).map((chart) => (
@@ -565,7 +598,16 @@ export const DemoPreview = () => {
 				))}
 
 				<div className={`col-span-2 rounded-md border border-pro-cards-border bg-pro-cards-bg`}>
-					<ProtocolsByChainTable tableId="demo-ethereum-protocols" chains={DEMO_CHAINS} colSpan={2} />
+					<UnifiedTable
+						config={{
+							id: 'demo-ethereum-protocols',
+							kind: 'unified-table',
+							configVersion: 3,
+							strategy: 'protocols',
+							rowHeaders: ['parent-protocol', 'protocol'],
+							params: { chains: DEMO_CHAINS }
+						}}
+					/>
 				</div>
 
 				<div
@@ -581,9 +623,9 @@ export const DemoPreview = () => {
 				</div>
 
 				<div
-					className={`${demoMultiCharts[1].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+					className={`${secondMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 				>
-					<DemoMultiChartCard multi={demoMultiCharts[1]} />
+					<DemoMultiChartCard multi={secondMultiChart} />
 				</div>
 
 				{demoCharts.slice(4).map((chart) => (
@@ -602,9 +644,9 @@ export const DemoPreview = () => {
 				</div>
 
 				<div
-					className={`${demoMultiCharts[2].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+					className={`${thirdMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 				>
-					<DemoMultiChartCard multi={demoMultiCharts[2]} />
+					<DemoMultiChartCard multi={thirdMultiChart} />
 				</div>
 			</div>
 		</div>

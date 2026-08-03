@@ -89,7 +89,8 @@ export function MetricCard({ metric }: MetricCardProps) {
 		sparklineData,
 		lastUpdatedTs: _lastUpdatedTs,
 		isLoading,
-		isError
+		isError,
+		refetch
 	} = useMetricData(metric)
 
 	const { displayTitle, baseTitle, iconUrl, format } = useMemo(() => {
@@ -97,13 +98,13 @@ export function MetricCard({ metric }: MetricCardProps) {
 		let name = ''
 		let iconUrl: string | undefined
 		if (subject.itemType === 'protocol') {
-			const info = subject.protocol ? getProtocolInfo(subject.protocol) : undefined
-			name = info?.name || subject.protocol || ''
-			iconUrl = getItemIconUrl('protocol', info, subject.protocol || '')
+			const info = getProtocolInfo(subject.protocol)
+			name = info?.name || subject.protocol
+			iconUrl = getItemIconUrl('protocol', info, subject.protocol)
 		} else {
-			const info = subject.chain ? getChainInfo(subject.chain) : undefined
-			name = subject.chain || ''
-			iconUrl = getItemIconUrl('chain', info, subject.chain || '')
+			const info = getChainInfo(subject.chain)
+			name = subject.chain
+			iconUrl = getItemIconUrl('chain', info, subject.chain)
 		}
 		const typeConfig = getProDashboardChartTypeConfig(metric.type)
 		const typeLabel = typeConfig?.title || metric.type
@@ -113,7 +114,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 
 		let auto: 'currency' | 'number' | 'percent' = ['medianApy'].includes(metric.type)
 			? 'percent'
-			: ['users', 'activeUsers', 'newUsers', 'txs', 'gasUsed'].includes(metric.type)
+			: ['activeUsers', 'newUsers', 'txs', 'gasUsed'].includes(metric.type)
 				? 'number'
 				: 'currency'
 
@@ -131,7 +132,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 			return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		if (format === 'number')
 			return formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-		return `${formatPercent(value as number, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+		return `${formatPercent(value, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 	})()
 
 	const compareFormat = metric.compare?.format ?? 'percent'
@@ -180,8 +181,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 
 	const hasCustomLabel = Boolean(metric.label?.trim())
 
-	// Legacy support: showSparkline true/undefined -> sparkline, false -> none.
-	const chartType: MetricChartType = metric.chartType ?? (metric.showSparkline === false ? 'none' : 'sparkline')
+	const chartType: MetricChartType = metric.chartType
 
 	const chartSeries = chartType === 'none' ? EMPTY_CHART_SERIES : sparklineData
 
@@ -201,6 +201,9 @@ export function MetricCard({ metric }: MetricCardProps) {
 				<div className="flex flex-1 flex-col items-center justify-center gap-1 text-pro-text-form">
 					<Icon name="alert-triangle" height={18} width={18} />
 					<span className="text-sm">Error</span>
+					<button type="button" className="text-sm text-link hover:underline" onClick={refetch}>
+						Try again
+					</button>
 				</div>
 			)
 		}
@@ -240,6 +243,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 		isError,
 		isLoading,
 		metric.aggregator,
+		refetch,
 		chartSeries,
 		sparklineColor,
 		summaryText

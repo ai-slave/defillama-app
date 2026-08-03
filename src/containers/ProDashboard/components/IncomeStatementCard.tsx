@@ -18,7 +18,7 @@ interface IncomeStatementCardProps {
 
 export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 	const { getProtocolInfo } = useProDashboardCatalog()
-	const { protocolsBySlug } = useAppMetadata()
+	const { loading: metadataLoading, protocolsBySlug } = useAppMetadata()
 	const [view, setView] = useState<ViewMode>('sankey')
 
 	const protocolInfo = getProtocolInfo(config.protocol)
@@ -57,8 +57,8 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 
 	const hasIncentives = Boolean(record?.flags?.incentives || record?.flags?.emissions)
 	const iconUrl = getItemIconUrl('protocol', protocolInfo, config.protocol)
-	const isWaitingForMetadata = !metadata.fees || !metadata.revenue
-	const showLoader = isLoading || isWaitingForMetadata
+	const queryRequired = Boolean(config.protocol && displayName && metadata.fees && metadata.revenue)
+	const showLoader = metadataLoading || isLoading || (queryRequired && !streamDone && incomeStatement === undefined)
 
 	return (
 		<div className="flex min-h-[360px] flex-col p-2">

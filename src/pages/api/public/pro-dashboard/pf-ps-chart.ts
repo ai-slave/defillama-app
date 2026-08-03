@@ -1,1 +1,3 @@
-export { pfPsChartHandler as default } from '~/containers/ProDashboard/server/pfPsRoutes'
+import { pfPsChartHandler } from '~/containers/ProDashboard/server/pfPsRoutes'
+
+export default pfPsChartHandler

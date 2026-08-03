@@ -1,16 +1,29 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { buildLlamaAIChartNode, llamaaiMarkdownToTiptap, llamaaiSelectionToTiptap } from '../import/llamaaiToTiptap'
 
-const chartConfig = (id: string): ChartConfiguration =>
-	({
-		id,
-		type: 'bar',
-		title: `Chart ${id}`,
-		description: '',
-		axes: { x: { field: 'ts' }, yAxes: [{ field: 'value' }] }
-	}) as unknown as ChartConfiguration
+const chartConfig = (id: string): ChartConfiguration => ({
+	id,
+	type: 'bar',
+	title: `Chart ${id}`,
+	description: '',
+	axes: {
+		x: { field: 'ts', label: 'Date', type: 'time' },
+		yAxes: [{ id: 'value', fields: ['value'], label: 'Value', position: 'left' }]
+	},
+	series: [
+		{
+			name: 'Value',
+			type: 'bar',
+			yAxisId: 'value',
+			metricClass: 'stock',
+			dataMapping: { xField: 'ts', yField: 'value' },
+			styling: {}
+		}
+	],
+	dataTransformation: { timeField: 'ts', metrics: ['value'] }
+})
 
 const charts = {
 	c1: { config: chartConfig('c1'), data: [{ ts: 1, value: 42 }] }
@@ -25,8 +38,7 @@ describe('llamaaiMarkdownToTiptap', () => {
 			}
 		)
 		const types = blocks.map((b) => b.type)
-		expect(types[0]).toBe('heading')
-		expect(blocks[0].attrs?.level).toBe(2)
+		expect(blocks.filter((block) => block.type === 'heading').map((block) => block.attrs?.level)).toEqual([2])
 		expect(types).toContain('paragraph')
 		expect(types).toContain('table')
 	})
@@ -43,9 +55,12 @@ describe('llamaaiMarkdownToTiptap', () => {
 		const blocks = llamaaiMarkdownToTiptap('Before chart.\n\n[CHART:c1]\n\nAfter chart.', { charts })
 		const types = blocks.map((b) => b.type)
 		expect(types).toEqual(['paragraph', 'llamaaiChart', 'paragraph'])
-		const chart = blocks[1]
-		expect(chart.attrs?.chartConfig).toMatchObject({ id: 'c1' })
-		expect(chart.attrs?.chartData).toEqual([{ ts: 1, value: 42 }])
+		expect(blocks.filter((block) => block.type === 'llamaaiChart').map((block) => block.attrs)).toEqual([
+			expect.objectContaining({
+				chartConfig: expect.objectContaining({ id: 'c1' }),
+				chartData: [{ ts: 1, value: 42 }]
+			})
+		])
 	})
 
 	it('drops chart placeholders with no matching chart, and drops CSV/MD/ALERT/DASHBOARD/ACTION/IMAGE artifacts', () => {
@@ -62,7 +77,9 @@ describe('llamaaiMarkdownToTiptap', () => {
 			images: { img1: { imageId: 'up_1', src: 'https://cdn.llama.fi/x.png', width: 800, height: 400 } }
 		})
 		expect(blocks.map((b) => b.type)).toEqual(['paragraph', 'articleImage'])
-		expect(blocks[1].attrs?.src).toBe('https://cdn.llama.fi/x.png')
+		expect(blocks.filter((block) => block.type === 'articleImage').map((block) => block.attrs?.src)).toEqual([
+			'https://cdn.llama.fi/x.png'
+		])
 	})
 
 	it('strips content before [REPORT_START]', () => {
@@ -87,8 +104,9 @@ describe('llamaaiSelectionToTiptap', () => {
 		const html = `<p>Before.</p><div data-chart-id="c1"><canvas></canvas><button>gear</button></div><p>After.</p>`
 		const blocks = llamaaiSelectionToTiptap(html, charts)
 		expect(blocks.map((b) => b.type)).toEqual(['paragraph', 'llamaaiChart', 'paragraph'])
-		expect(blocks[1].attrs?.chartConfig).toMatchObject({ id: 'c1' })
-		expect(blocks[1].attrs?.chartRef ?? null).toBeNull()
+		const chartAttrs = blocks.filter((block) => block.type === 'llamaaiChart').map((block) => block.attrs)
+		expect(chartAttrs).toEqual([expect.objectContaining({ chartConfig: expect.objectContaining({ id: 'c1' }) })])
+		expect(chartAttrs.map((attrs) => attrs?.chartRef ?? null)).toEqual([null])
 	})
 
 	it('scrubs interactive junk and unwraps stylistic wrappers while keeping text', () => {
@@ -96,8 +114,7 @@ describe('llamaaiSelectionToTiptap', () => {
 			'<h1>Title</h1><p><span class="entity-wrap">Aave</span> rose<button data-citation-pill>1</button><svg></svg> 40%.</p><canvas></canvas>'
 		const blocks = llamaaiSelectionToTiptap(html, {})
 		const json = JSON.stringify(blocks)
-		expect(blocks[0].type).toBe('heading')
-		expect(blocks[0].attrs?.level).toBe(2)
+		expect(blocks.filter((block) => block.type === 'heading').map((block) => block.attrs?.level)).toEqual([2])
 		expect(json).toContain('Aave rose 40%.')
 		expect(json).not.toContain('gear')
 		expect(json).not.toContain('citation')

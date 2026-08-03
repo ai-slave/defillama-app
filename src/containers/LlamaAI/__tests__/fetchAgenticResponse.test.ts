@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import {
 	fetchAgenticResponse,
 	parseSSEStream,
 	type AgenticSSECallbacks
 } from '~/containers/LlamaAI/fetchAgenticResponse'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
 
 type MockFetch = (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => Promise<Response>
 type MockFetchSpy = ReturnType<typeof vi.fn<MockFetch>>

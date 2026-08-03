@@ -2,9 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { StreamDoneContext } from '../queries'
+import type { ChartBuilderConfig } from '../types'
 import { ChartBuilderCard } from './ChartBuilderCard'
 
-vi.mock('../hooks/useChartImageExport', () => ({
+vi.mock('~/hooks/useChartImageExport', () => ({
 	useChartImageExport: () => ({ chartInstance: null, handleChartReady: vi.fn() })
 }))
 
@@ -22,31 +23,30 @@ vi.mock('../ProDashboardAPIContext', () => ({
 	useProDashboardTime: () => ({ timePeriod: '3y', customTimePeriod: null })
 }))
 
-const config = {
-	additionalFilters: {},
+const config: ChartBuilderConfig['config'] = {
 	categories: [],
 	chainCategories: [],
-	chainCategoryFilterMode: 'include' as const,
-	chainFilterMode: 'include' as const,
+	chainCategoryFilterMode: 'include',
+	chainFilterMode: 'include',
 	chains: ['All'],
-	chartType: 'stackedBar' as const,
-	displayAs: 'timeSeries' as const,
-	filterMode: 'include' as const,
-	groupBy: 'protocol' as const,
+	chartType: 'stackedBar',
+	displayAs: 'timeSeries',
+	categoryFilterMode: 'include',
+	groupBy: 'protocol',
 	groupByParent: true,
 	hideOthers: true,
 	limit: 10,
-	metric: 'revenue' as const,
-	mode: 'chains' as const,
+	metric: 'revenue',
+	mode: 'chains',
 	protocolCategories: [],
-	protocolCategoryFilterMode: 'include' as const
+	protocolCategoryFilterMode: 'include'
 }
 
-const builder = {
+const builder: ChartBuilderConfig = {
 	id: 'builder-revenue',
-	kind: 'builder' as const,
+	kind: 'builder',
 	name: 'Top Revenue Protocols',
-	grouping: 'week' as const,
+	grouping: 'week',
 	config
 }
 
@@ -64,7 +64,7 @@ const queryKey = [
 	config.hideOthers,
 	config.groupByParent,
 	config.chainFilterMode,
-	config.filterMode,
+	config.categoryFilterMode,
 	config.chainCategoryFilterMode,
 	config.protocolCategoryFilterMode
 ]

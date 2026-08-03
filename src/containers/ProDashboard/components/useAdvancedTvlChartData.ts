@@ -1,19 +1,19 @@
-import { useQueries, type UseQueryResult } from '@tanstack/react-query'
+import { useQueries } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { ProtocolBreakdownChart } from '~/containers/ProtocolOverview/valueChartSources'
 import {
-	fetchProtocolTvlBreakdownForDashboard,
+	fetchProtocolTvlBreakdown,
 	getAdvancedTvlBreakdownSources,
-	getProtocolTvlBreakdownQueryKey,
-	type ProtocolTvlBreakdownChart
+	getProtocolTvlBreakdownQueryKey
 } from '../services/protocolTvl'
 import type { AdvancedTvlChartType } from '../types'
 import { buildAdvancedTvlChartData, type AdvancedTvlChartData } from './advancedTvlChartData'
 
-const EMPTY_ADVANCED_TVL_DATA = {
+const EMPTY_ADVANCED_TVL_DATA: AdvancedTvlChartData = {
 	dataset: null,
 	breakdown: null,
-	seriesNames: [] as string[],
-	defaultSeriesNames: [] as string[],
+	seriesNames: [],
+	defaultSeriesNames: [],
 	pieSeries: { peers: [], limit: 15, upstreamOthersValue: 0 }
 }
 
@@ -34,16 +34,18 @@ export function useAdvancedTvlChartData({
 		() => getAdvancedTvlBreakdownSources(protocol, chartType, extraTvlsEnabled),
 		[protocol, chartType, extraTvlsEnabled]
 	)
-	const queries: Array<UseQueryResult<ProtocolTvlBreakdownChart>> = useQueries({
+	const queries = useQueries({
 		queries: sources.map((source) => ({
 			queryKey: getProtocolTvlBreakdownQueryKey(source.request),
-			queryFn: () => fetchProtocolTvlBreakdownForDashboard(source.request),
+			queryFn: () => fetchProtocolTvlBreakdown(source.request),
 			enabled,
 			staleTime: 60 * 60 * 1000,
 			refetchOnWindowFocus: false,
 			retry: 0
 		}))
 	})
+	const hasSourceData = sources.length > 0 && queries.every((query) => query.data !== undefined)
+	const canCompute = enabled || hasSourceData
 	const isNetworkLoading = enabled && queries.some((query) => query.isLoading)
 	const computeSignature = [
 		protocol,
@@ -52,7 +54,7 @@ export function useAdvancedTvlChartData({
 		sources.map((source) => JSON.stringify(getProtocolTvlBreakdownQueryKey(source.request))).join('|'),
 		queries.map((query) => query.dataUpdatedAt).join('|')
 	].join('::')
-	const latestBreakdowns = useRef<Array<ProtocolTvlBreakdownChart | undefined>>([])
+	const latestBreakdowns = useRef<Array<ProtocolBreakdownChart | null | undefined>>([])
 	latestBreakdowns.current = queries.map((query) => query.data)
 	const [computed, setComputed] = useState<{ signature: string; data: AdvancedTvlChartData }>({
 		signature: '',
@@ -60,7 +62,7 @@ export function useAdvancedTvlChartData({
 	})
 
 	useEffect(() => {
-		if (!enabled || isNetworkLoading) return
+		if (!canCompute || isNetworkLoading) return
 
 		let cancelled = false
 		const runComputation = () => {
@@ -84,11 +86,12 @@ export function useAdvancedTvlChartData({
 			}
 			if (timeoutId !== undefined) window.clearTimeout(timeoutId)
 		}
-	}, [enabled, isNetworkLoading, computeSignature, chartType, sources, protocolName])
+	}, [canCompute, isNetworkLoading, computeSignature, chartType, sources, protocolName])
 
 	return {
-		data: enabled && computed.signature === computeSignature ? computed.data : EMPTY_ADVANCED_TVL_DATA,
-		isLoading: isNetworkLoading || (enabled && computed.signature !== computeSignature),
+		data: canCompute && computed.signature === computeSignature ? computed.data : EMPTY_ADVANCED_TVL_DATA,
+		isLoading: isNetworkLoading || (canCompute && computed.signature !== computeSignature),
+		hasSourceData,
 		sources
 	}
 }

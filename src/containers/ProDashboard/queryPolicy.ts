@@ -1,0 +1,1 @@
+export const PRO_DASHBOARD_METRIC_STALE_TIME = 5 * 60 * 1000

@@ -5,7 +5,8 @@ import {
 	buildComputedBreakdownResult,
 	type ProtocolBreakdownChart
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
-import type { BorrowedBreakdownSource, ProtocolTvlBreakdownChart } from '../services/protocolTvl'
+import type { ProtocolBreakdownChart as ProtocolValueBreakdownChart } from '~/containers/ProtocolOverview/valueChartSources'
+import type { BorrowedBreakdownSource } from '../services/protocolTvl'
 import type { BorrowedChartType } from '../types'
 
 interface BorrowedChartData {
@@ -21,7 +22,7 @@ const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 15, upstreamOt
 export function buildBorrowedChartData(
 	chartType: BorrowedChartType,
 	sources: BorrowedBreakdownSource[],
-	breakdowns: Array<ProtocolTvlBreakdownChart | null | undefined>
+	breakdowns: Array<ProtocolValueBreakdownChart | null | undefined>
 ): BorrowedChartData {
 	const chainBreakdownCharts: Array<IProtocolChainBreakdownChart | null | undefined> = []
 	const tokenBreakdownUsdCharts: Array<IProtocolChainBreakdownChart | null | undefined> = []

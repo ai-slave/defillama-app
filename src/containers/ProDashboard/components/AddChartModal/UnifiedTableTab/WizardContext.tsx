@@ -1,13 +1,14 @@
 import type { ColumnOrderState, SortingState, VisibilityState } from '@tanstack/react-table'
 import { createContext, useContext } from 'react'
-import type { CustomColumnDefinition, TableFilters, UnifiedRowHeaderType, UnifiedTableConfig } from '../../../types'
+import type { UnifiedTableConfig, UnifiedTableFilters } from '../../../unifiedTable/config/current'
+import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
 import { useUnifiedTableWizard } from './hooks/useUnifiedTableWizard'
 
 interface WizardContextValue {
 	state: {
 		chains: string[]
 		rowHeaders: UnifiedRowHeaderType[]
-		filters: TableFilters
+		filters: UnifiedTableFilters
 		activePresetId: string
 		columnOrder: ColumnOrderState
 		columnVisibility: VisibilityState
@@ -25,7 +26,7 @@ export const UnifiedTableWizardProvider = ({
 	initialConfig
 }: {
 	children: React.ReactNode
-	initialConfig?: UnifiedTableConfig | null
+	initialConfig?: UnifiedTableConfig | null | undefined
 }) => {
 	const wizard = useUnifiedTableWizard(initialConfig?.activePresetId, initialConfig ?? undefined)
 

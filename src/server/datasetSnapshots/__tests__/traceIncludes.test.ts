@@ -23,7 +23,7 @@ const SNAPSHOT_ENTRY_IMPORTS: Array<{ importPath: string; domains: DatasetSnapsh
 	{ importPath: '~/containers/Token/server/dataset.risk.server', domains: ['risk'] },
 	{ importPath: '~/containers/Tokens/queries.server', domains: ['markets', 'token-rights'] },
 	{ importPath: '~/containers/Tokens/server/api', domains: ['markets', 'token-rights'] },
-	{ importPath: '~/containers/ProDashboard/server/stream', domains: ['yields'] },
+	{ importPath: '~/containers/ProDashboard/server/stream/index', domains: ['yields'] },
 	{ importPath: '~/server/routeRegistry/sitemap', domains: ['markets', 'liquidations', 'raises'] }
 ]
 
@@ -59,9 +59,7 @@ function routeMatches(pattern: string, route: string): boolean {
 
 function tracedDomainsForRoute(route: string): Set<DatasetSnapshotDomain> {
 	const domains = new Set<DatasetSnapshotDomain>()
-	for (const [pattern, patternDomains] of Object.entries(DATASET_SNAPSHOT_ROUTE_DOMAINS) as Array<
-		[string, readonly DatasetSnapshotDomain[]]
-	>) {
+	for (const [pattern, patternDomains] of Object.entries(DATASET_SNAPSHOT_ROUTE_DOMAINS)) {
 		if (routeMatches(pattern, route)) for (const domain of patternDomains) domains.add(domain)
 	}
 	return domains

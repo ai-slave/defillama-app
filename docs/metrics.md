@@ -70,7 +70,9 @@ Examples of ambiguous pairings:
 
 Interpret nullable adapter activity periods using source provenance rather than a global fallback:
 
-- In a successful authoritative protocol or chain listing, an omitted row or nullable period means zero activity for that period. A successful empty listing therefore totals zero, and an inactive or deprecated child must not hide active siblings.
+- A protocol present in a successful authoritative listing is canonical membership even when one or more activity periods are nullable. Preserve those nullable leaf periods as unavailable so inactive integrations render blank rather than as an invented zero.
+- When combining canonical siblings or selected chains, a nullable period contributes nothing if another contributor has an available value; if every contributor is nullable, the aggregate period remains unavailable. This keeps inactive children from hiding active siblings without converting an entirely unavailable period to zero.
+- A successful empty listing has no members and therefore an aggregate total of zero; this is distinct from a listed protocol whose requested period is nullable.
 - A failed whole request remains unavailable (`null`). Do not convert a request failure into a successful zero or present a best-effort multi-source result as complete.
 - Selected-chain datasets that retain successful chains after another chain fails must carry explicit partial-coverage metadata through APIs, server-stream cache seeding, and consumers.
 - These activity rules do not apply to exact TVL snapshots, ratio denominators, required bridge legs, or chart points. Missing required values for those metrics remain unknown.
@@ -82,6 +84,18 @@ Earnings additionally combines two authoritative sources:
 - Within successful listings, nullable revenue activity and a missing protocol emissions row each contribute zero.
 - A matched emissions row with a nullable period is unavailable for that period; it must not become zero or a partial parent sum.
 - Earnings comparison fields remain unavailable when the emissions producer has no matching comparison periods. Selected-chain earnings must not relabel all-chain periods as chain-specific values.
+- The emissions producer has no chain allocation. Chain Earnings therefore estimates each protocol's chain emissions in proportion to that chain's share of the protocol's revenue for the same period. Chain-scoped table headers must say `Est.`; global protocol Earnings remain the exact revenue-minus-emissions calculation.
+- Adapter protocol breakdowns currently support batched chain totals only for 24h and 30d. All-chain Pro tables keep unsupported 7d, 1y, comparison, and change cells blank. Explicit selected-chain requests may expose more periods when their chain endpoint supplies them.
+
+### Pro Protocol Table Shares
+
+Pro protocol tables expose three distinct percentage denominators:
+
+- DEX, perpetuals, DEX aggregator, and options volume dominance divide protocol activity by the global Lens metric total. A selected-chain filter changes the rows and their activity values, but these columns remain global shares.
+- Bridge Aggregator volume share uses the current selected-chain scope. An all-chain table uses the global canonical total; a chain-filtered table uses the canonical total for those selected chains.
+- Filtered-row shares divide each positive top-level row by the positive total after source filters and search. They are computed separately from producer dominance and are labeled `% of Filtered Rows`.
+
+Global, current-scope, and filtered-row shares must remain visibly distinct in column labels and descriptions. Changing one denominator is a product-semantic change, not a presentation refactor.
 
 ### Protocol Liquidations
 

@@ -64,6 +64,16 @@ function getCexDisplayName(raw: string, lookup: Map<string, string>) {
 	return lookup.get(toCexKey(raw)) ?? fallbackCexName(raw)
 }
 
+function addKnownValue(total: number | null, value: number | null): number | null {
+	return value === null ? total : (total ?? 0) + value
+}
+
+function latestLoadedAt(current: string | null, candidate: string | null): string | null {
+	if (candidate === null) return current
+	if (current === null) return candidate
+	return Date.parse(candidate) > Date.parse(current) ? candidate : current
+}
+
 export async function getCexAnalyticsSnapshot(): Promise<CexAnalyticsSnapshotResponse> {
 	const cexNameLookup = await getCexNameLookup()
 	const rows = await llamaDb.any<SnapshotSourceRow>(`
@@ -102,11 +112,11 @@ export async function getCexAnalyticsSnapshot(): Promise<CexAnalyticsSnapshotRes
 			avgLeverageDenominator: 0
 		}
 
-		current.loadedAt = current.loadedAt ?? row.loaded_at
+		current.loadedAt = latestLoadedAt(current.loadedAt, row.loaded_at)
 		current.spotVolume24h += row.spotVolume24h
 		current.derivativesVolume24h += row.derivativesVolume24h
-		current.openInterest = (current.openInterest ?? 0) + (row.openInterest ?? 0)
-		current.cleanTvl = (current.cleanTvl ?? 0) + (row.cleanTvl ?? 0)
+		current.openInterest = addKnownValue(current.openInterest, row.openInterest)
+		current.cleanTvl = addKnownValue(current.cleanTvl, row.cleanTvl)
 
 		if (row.openInterest && row.openInterest > 0 && row.avgLeverage != null) {
 			current.avgLeverageNumerator += row.openInterest * row.avgLeverage
@@ -128,8 +138,14 @@ export async function getCexAnalyticsSnapshot(): Promise<CexAnalyticsSnapshotRes
 
 	const totalSpotVolume = mergedRows.reduce((sum, row) => sum + row.spotVolume24h, 0)
 	const totalDerivativesVolume = mergedRows.reduce((sum, row) => sum + row.derivativesVolume24h, 0)
-	const totalOpenInterest = mergedRows.reduce((sum, row) => sum + (row.openInterest ?? 0), 0)
-	const totalCleanTvl = mergedRows.reduce((sum, row) => sum + Math.max(row.cleanTvl ?? 0, 0), 0)
+	let totalOpenInterest: number | null = null
+	let totalCleanTvl: number | null = null
+	let loadedAt: string | null = null
+	for (const row of mergedRows) {
+		totalOpenInterest = addKnownValue(totalOpenInterest, row.openInterest)
+		totalCleanTvl = addKnownValue(totalCleanTvl, row.cleanTvl === null ? null : Math.max(row.cleanTvl, 0))
+		loadedAt = latestLoadedAt(loadedAt, row.loaded_at)
+	}
 
 	let weightedLeverageNumerator = 0
 	let weightedLeverageDenominator = 0
@@ -172,7 +188,7 @@ export async function getCexAnalyticsSnapshot(): Promise<CexAnalyticsSnapshotRes
 			totalCleanTvl,
 			weightedAvgLeverage:
 				weightedLeverageDenominator > 0 ? weightedLeverageNumerator / weightedLeverageDenominator : null,
-			loadedAt: rows[0]?.loaded_at ?? null
+			loadedAt
 		}
 	}
 }
@@ -210,14 +226,17 @@ export async function getCexAnalyticsMarketShare(
 		return []
 	}
 
-	const latestDate = rows[rows.length - 1].date
+	const latestRow = rows.at(-1)
+	if (!latestRow) return []
+	const latestDate = latestRow.date
 	const cutoff = latestDate - 29 * DAILY_SECONDS
 	const metricKey = metric === 'spot' ? 'spotVolume' : 'derivativesVolume'
 
 	const recentTotals = new Map<string, number>()
 	for (const row of rows) {
 		if (row.date < cutoff) continue
-		recentTotals.set(row.venue, (recentTotals.get(row.venue) ?? 0) + row[metricKey])
+		const venue = getCexDisplayName(row.venue, cexNameLookup)
+		recentTotals.set(venue, (recentTotals.get(venue) ?? 0) + row[metricKey])
 	}
 
 	const topVenues = new Set(
@@ -229,7 +248,8 @@ export async function getCexAnalyticsMarketShare(
 
 	const valuesByDate = new Map<number, Map<string, number>>()
 	for (const row of rows) {
-		const bucket = topVenues.has(row.venue) ? getCexDisplayName(row.venue, cexNameLookup) : 'Other'
+		const venue = getCexDisplayName(row.venue, cexNameLookup)
+		const bucket = topVenues.has(venue) ? venue : 'Other'
 		const dateMap = valuesByDate.get(row.date) ?? new Map<string, number>()
 		dateMap.set(bucket, (dateMap.get(bucket) ?? 0) + row[metricKey])
 		valuesByDate.set(row.date, dateMap)

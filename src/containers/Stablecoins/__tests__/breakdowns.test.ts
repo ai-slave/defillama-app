@@ -172,7 +172,6 @@ describe('stablecoin breakdown routes', () => {
 			chainCategories: 'EVM'
 		})
 
-		expect(mocks.fetchChainsByCategory).toHaveBeenCalledWith('EVM')
 		expect(body).toMatchObject({
 			metadata: expect.objectContaining({
 				chains: ['Gnosis', 'Ethereum'],

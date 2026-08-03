@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
-import ChainCharts from '~/containers/ProDashboard/services/ChainCharts'
+import { fetchProChainChartData } from '~/containers/ProDashboard/services/ChainCharts'
 import { readInvestorApiJson } from '../../api.types'
 
 const STALE_TIME = 10 * 60 * 1000
+const EMPTY_TIME_SERIES: Array<[number, number]> = []
 
 export interface HoneyRevenueKpi {
 	value: number
@@ -49,38 +50,37 @@ export interface BerachainIncomeServerData {
 
 export async function fetchBerachainIncomeServerData(): Promise<BerachainIncomeServerData> {
 	const [chainFees, bexRevenue, bexVolume, bendFees, bendRevenue] = await Promise.all([
-		ChainCharts.chainFees('Berachain').catch(() => [] as [number, number][]),
+		fetchProChainChartData('chainFees', 'Berachain').catch(() => EMPTY_TIME_SERIES),
 		fetchAdapterProtocolChartData({
 			adapterType: 'fees',
 			protocol: 'bex',
 			dataType: 'dailyRevenue'
-		}).catch(() => [] as [number, number][]),
+		}).catch(() => EMPTY_TIME_SERIES),
 		fetchAdapterProtocolChartData({
 			adapterType: 'dexs',
 			protocol: 'bex'
-		}).catch(() => [] as [number, number][]),
+		}).catch(() => EMPTY_TIME_SERIES),
 		fetchAdapterProtocolChartData({
 			adapterType: 'fees',
 			protocol: 'bend',
 			dataType: 'dailyFees'
-		}).catch(() => [] as [number, number][]),
+		}).catch(() => EMPTY_TIME_SERIES),
 		fetchAdapterProtocolChartData({
 			adapterType: 'fees',
 			protocol: 'bend',
 			dataType: 'dailyRevenue'
-		}).catch(() => [] as [number, number][])
+		}).catch(() => EMPTY_TIME_SERIES)
 	])
 
 	return { chainFees, bexRevenue, bexVolume, bendFees, bendRevenue }
 }
 
-type TimestampRow = number[]
+type TimestampRow = [timestamp: number, ...values: number[]]
 
 function buildTimeSeries(data: [number, number][]) {
-	const source = new Array<TimestampRow>(data.length)
-	for (let i = 0; i < data.length; i++) {
-		const [timestamp, value] = data[i]
-		source[i] = [timestamp * 1000, value ?? 0]
+	const source: TimestampRow[] = []
+	for (const [timestamp, value] of data) {
+		source.push([timestamp * 1000, value])
 	}
 	return source
 }
@@ -90,26 +90,26 @@ function buildMonthlyAndCumulative(daily: TimestampRow[], seriesCount: number) {
 	const totals = new Array<number>(seriesCount).fill(0)
 
 	const cumulative = new Array<TimestampRow>(daily.length)
-	for (let i = 0; i < daily.length; i++) {
-		const entry = daily[i]
+	for (const [entryIndex, entry] of daily.entries()) {
 		const date = new Date(entry[0])
 		const monthTimestamp = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)
 		let month = monthMap.get(monthTimestamp)
 		if (!month) {
-			month = new Array(seriesCount + 1).fill(0)
-			month[0] = monthTimestamp
+			month = [monthTimestamp]
+			for (let seriesIndex = 0; seriesIndex < seriesCount; seriesIndex++) month.push(0)
 			monthMap.set(monthTimestamp, month)
 		}
 
-		const cumulativeEntry = new Array<number>(seriesCount + 1)
-		cumulativeEntry[0] = entry[0]
+		const cumulativeValues = new Array<number>(seriesCount)
 		for (let seriesIndex = 0; seriesIndex < seriesCount; seriesIndex++) {
-			const value = entry[seriesIndex + 1] ?? 0
-			month[seriesIndex + 1] += value
-			totals[seriesIndex] += value
-			cumulativeEntry[seriesIndex + 1] = totals[seriesIndex]
+			const value = entry.at(seriesIndex + 1) ?? 0
+			const monthlyValue = (month.at(seriesIndex + 1) ?? 0) + value
+			const cumulativeValue = (totals.at(seriesIndex) ?? 0) + value
+			month[seriesIndex + 1] = monthlyValue
+			totals[seriesIndex] = cumulativeValue
+			cumulativeValues[seriesIndex] = cumulativeValue
 		}
-		cumulative[i] = cumulativeEntry
+		cumulative[entryIndex] = [entry[0], ...cumulativeValues]
 	}
 
 	return {
@@ -122,15 +122,14 @@ function buildCumulative(daily: TimestampRow[], seriesCount: number) {
 	const totals = new Array<number>(seriesCount).fill(0)
 
 	const cumulative = new Array<TimestampRow>(daily.length)
-	for (let i = 0; i < daily.length; i++) {
-		const entry = daily[i]
-		const cumulativeEntry = new Array<number>(seriesCount + 1)
-		cumulativeEntry[0] = entry[0]
+	for (const [entryIndex, entry] of daily.entries()) {
+		const cumulativeValues = new Array<number>(seriesCount)
 		for (let seriesIndex = 0; seriesIndex < seriesCount; seriesIndex++) {
-			totals[seriesIndex] += entry[seriesIndex + 1] ?? 0
-			cumulativeEntry[seriesIndex + 1] = totals[seriesIndex]
+			const cumulativeValue = (totals.at(seriesIndex) ?? 0) + (entry.at(seriesIndex + 1) ?? 0)
+			totals[seriesIndex] = cumulativeValue
+			cumulativeValues[seriesIndex] = cumulativeValue
 		}
-		cumulative[i] = cumulativeEntry
+		cumulative[entryIndex] = [entry[0], ...cumulativeValues]
 	}
 	return cumulative
 }
@@ -138,17 +137,16 @@ function buildCumulative(daily: TimestampRow[], seriesCount: number) {
 function mergeSeries(series: Array<[number, number][]>) {
 	const dateMap = new Map<number, TimestampRow>()
 
-	for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex++) {
-		const data = series[seriesIndex]
+	for (const [seriesIndex, data] of series.entries()) {
 		for (const [timestampSeconds, value] of data) {
 			const timestamp = timestampSeconds * 1000
 			let entry = dateMap.get(timestamp)
 			if (!entry) {
-				entry = new Array(series.length + 1).fill(0)
-				entry[0] = timestamp
+				entry = [timestamp]
+				for (let emptyIndex = 0; emptyIndex < series.length; emptyIndex++) entry.push(0)
 				dateMap.set(timestamp, entry)
 			}
-			entry[seriesIndex + 1] = value ?? 0
+			entry[seriesIndex + 1] = value
 		}
 	}
 
@@ -157,9 +155,13 @@ function mergeSeries(series: Array<[number, number][]>) {
 
 function datasetView(source: TimestampRow[], allKeys: string[], selectedKeys: string[] = allKeys) {
 	if (selectedKeys === allKeys) return { source, dimensions: ['timestamp', ...allKeys] }
-	const indexes = selectedKeys.map((key) => allKeys.indexOf(key) + 1)
+	const indexes = selectedKeys.map((key) => {
+		const index = allKeys.indexOf(key)
+		if (index < 0) throw new Error(`Unknown Berachain dataset series: ${key}`)
+		return index
+	})
 	return {
-		source: source.map((row) => [row[0], ...indexes.map((index) => row[index])]),
+		source: source.map((row) => [row[0], ...indexes.map((index) => row.at(index + 1) ?? 0)]),
 		dimensions: ['timestamp', ...selectedKeys]
 	}
 }
@@ -167,7 +169,7 @@ function datasetView(source: TimestampRow[], allKeys: string[], selectedKeys: st
 export function useBerachainIncomeData(serverData?: BerachainIncomeServerData) {
 	const chainFees = useQuery({
 		queryKey: ['berachain-chain-fees-chart'],
-		queryFn: () => ChainCharts.chainFees('Berachain'),
+		queryFn: () => fetchProChainChartData('chainFees', 'Berachain'),
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false,
 		initialData: serverData?.chainFees

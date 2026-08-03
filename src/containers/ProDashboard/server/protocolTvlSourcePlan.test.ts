@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
+import { buildProtocolValueChartQueryKey } from '~/containers/ProtocolOverview/valueChartSources'
+import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { ProDashboardProtocolCatalog } from '../protocolCatalog'
-import { getProtocolTvlBreakdownQueryKey } from '../services/protocolTvl'
-import type { DashboardItemConfig } from '../types'
 import { buildProtocolTvlStreamSourcePlan } from './protocolTvlSourcePlan'
 
 const catalog: ProDashboardProtocolCatalog = {
 	protocols: [
-		{ id: 'gearbox', name: 'Gearbox', slug: 'gearbox', tvl: 1, misrepresentedTokens: true },
-		{ id: 'aave', name: 'Aave', slug: 'aave', tvl: 1 }
+		{ id: 'gearbox', name: 'Gearbox', slug: 'gearbox', tvl: 1, chains: [], misrepresentedTokens: true },
+		{ id: 'aave', name: 'Aave', slug: 'aave', tvl: 1, chains: [] }
 	],
 	chains: []
 }
@@ -83,7 +83,7 @@ describe('buildProtocolTvlStreamSourcePlan', () => {
 			}
 		])
 		for (const source of plan) {
-			expect(source.queryKey).toEqual(getProtocolTvlBreakdownQueryKey(source.request))
+			expect(source.queryKey).toEqual(buildProtocolValueChartQueryKey({ source: 'tvl', ...source.request }))
 		}
 	})
 

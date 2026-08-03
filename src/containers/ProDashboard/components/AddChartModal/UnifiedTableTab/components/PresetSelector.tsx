@@ -1,10 +1,11 @@
-import type { TableFilters } from '~/containers/ProDashboard/types'
+import { useMemo } from 'react'
+import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { Tooltip } from '~/ui/Tooltip'
 import type { FilterPreset, FilterPresetCategory } from '../presets/filterPresets'
 import { CORE_FILTER_PRESETS } from '../presets/filterPresets'
 
 interface PresetSelectorProps {
-	currentFilters: TableFilters
+	currentFilters: UnifiedTableFilters
 	onApplyPreset: (preset: FilterPreset) => void
 }
 
@@ -28,26 +29,27 @@ const CATEGORY_ORDER: FilterPresetCategory[] = [
 	'category'
 ]
 
-const normalizeEntries = (filters: Partial<TableFilters>): Array<[string, unknown]> => {
-	const result: Array<[string, unknown]> = []
-	for (const key in filters) {
-		const value = filters[key]
+const normalizeEntries = (filters: Partial<UnifiedTableFilters>): Map<string, string> => {
+	const result = new Map<string, string>()
+	for (const [key, value] of Object.entries(filters)) {
 		if (value == null) continue
 		if (Array.isArray(value) && value.length === 0) continue
-		result.push([key, value])
+		result.set(key, JSON.stringify(value))
 	}
 	return result
 }
 
-const filtersEqual = (current: TableFilters, presetFilters: Partial<TableFilters>) => {
-	const presetEntries = normalizeEntries(presetFilters)
-	const currentEntries = normalizeEntries(current)
-	if (presetEntries.length !== currentEntries.length) return false
-	return presetEntries.every(([key, value]) => {
-		const currentValue = current[key]
-		return JSON.stringify(currentValue) === JSON.stringify(value)
-	})
+const filtersEqual = (currentEntries: Map<string, string>, presetEntries: Map<string, string>) => {
+	if (presetEntries.size !== currentEntries.size) return false
+	for (const [key, value] of presetEntries) {
+		if (currentEntries.get(key) !== value) return false
+	}
+	return true
 }
+
+const PRESET_FILTER_ENTRIES = new Map(
+	CORE_FILTER_PRESETS.map((preset) => [preset.id, normalizeEntries(preset.filters)])
+)
 
 const GROUPED_PRESETS = (() => {
 	const filtered = CORE_FILTER_PRESETS.filter(
@@ -64,6 +66,7 @@ const GROUPED_PRESETS = (() => {
 
 export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelectorProps) {
 	const groupedPresets = GROUPED_PRESETS
+	const currentEntries = useMemo(() => normalizeEntries(currentFilters), [currentFilters])
 
 	if (!groupedPresets.size) {
 		return null
@@ -85,7 +88,8 @@ export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelector
 						</div>
 						<div className="flex flex-wrap gap-1.5">
 							{presets.map((preset) => {
-								const isActive = filtersEqual(currentFilters, preset.filters)
+								const presetEntries = PRESET_FILTER_ENTRIES.get(preset.id)
+								const isActive = presetEntries ? filtersEqual(currentEntries, presetEntries) : false
 								return (
 									<Tooltip content={preset.tooltip} key={preset.id}>
 										<button

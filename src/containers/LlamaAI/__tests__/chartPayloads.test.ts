@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
 	normalizeChartConfigs,
 	normalizeChartDataByKey,
-	normalizeDashboardChartData,
-	normalizeDashboardItems
+	normalizeDashboardChartData
 } from '~/containers/LlamaAI/chartPayloads'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 
 const chartConfig: ChartConfiguration = {
 	id: 'chart-1',
@@ -68,8 +67,7 @@ describe('chart payload normalization', () => {
 		)
 	})
 
-	it('normalizes dashboard items and bundled chart data defensively', () => {
-		const items = [{ id: 'item-1', kind: 'llamaai-chart', chartRef: 'chart-1', title: 'TVL' }, { id: 'bad' }, null]
+	it('normalizes bundled chart data defensively', () => {
 		const chartData = {
 			'chart-1': { config: chartConfig, data: [{ date: 1, value: 10 }], toolChain: [{ name: 'generate_chart' }] },
 			'chart-2': { config: chartConfig, data: [{ date: 2, value: 20 }], toolChain: 'legacy-bad-tool-chain' },
@@ -77,9 +75,6 @@ describe('chart payload normalization', () => {
 			'chart-4': { config: chartConfig, data: { date: 4, value: 40 }, toolChain: [] }
 		}
 
-		expect(normalizeDashboardItems(items)).toEqual([
-			{ id: 'item-1', kind: 'llamaai-chart', chartRef: 'chart-1', title: 'TVL' }
-		])
 		expect(normalizeDashboardChartData(chartData)).toEqual({
 			'chart-1': { config: chartConfig, data: [{ date: 1, value: 10 }], toolChain: [{ name: 'generate_chart' }] },
 			'chart-2': { config: chartConfig, data: [{ date: 2, value: 20 }], toolChain: [] }
@@ -87,9 +82,9 @@ describe('chart payload normalization', () => {
 	})
 
 	it('ignores inherited and prototype-polluting dashboard chart-data keys', () => {
-		const data = Object.create({
+		const data: Record<string, unknown> = Object.create({
 			inherited: { config: chartConfig, data: [{ date: 0, value: 0 }], toolChain: [] }
-		}) as Record<string, unknown>
+		})
 		data['chart-1'] = { config: chartConfig, data: [{ date: 1, value: 10 }], toolChain: [] }
 		data['constructor'] = { config: chartConfig, data: [{ date: 2, value: 20 }], toolChain: [] }
 		data.prototype = { config: chartConfig, data: [{ date: 3, value: 30 }], toolChain: [] }

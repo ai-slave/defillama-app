@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, expect, it, vi } from 'vitest'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import {
 	buildExportBlocks,
 	buildMessageExportRequest,
@@ -8,14 +8,27 @@ import {
 	summarizeSelectionHtml
 } from '../articleExport'
 
-const config = (id: string): ChartConfiguration =>
-	({
-		id,
-		type: 'bar',
-		title: `Chart ${id}`,
-		description: '',
-		axes: { x: { field: 'ts' }, yAxes: [{ field: 'value' }] }
-	}) as unknown as ChartConfiguration
+const config = (id: string): ChartConfiguration => ({
+	id,
+	type: 'bar',
+	title: `Chart ${id}`,
+	description: '',
+	axes: {
+		x: { field: 'ts', label: 'Timestamp', type: 'time' },
+		yAxes: [{ id: 'value', fields: ['value'], label: 'Value', position: 'left' }]
+	},
+	series: [
+		{
+			name: 'Value',
+			type: 'bar',
+			yAxisId: 'value',
+			metricClass: 'flow',
+			dataMapping: { xField: 'ts', yField: 'value' },
+			styling: {}
+		}
+	],
+	dataTransformation: { timeField: 'ts', metrics: ['value'] }
+})
 
 const charts = {
 	c1: { config: config('c1'), data: [{ ts: 1, value: 42 }] },
@@ -30,9 +43,12 @@ describe('buildExportBlocks — chart export', () => {
 			{ text: true, chartIds: ['c1'], imageIds: [] },
 			{ saveChart }
 		)
-		expect(blocks).toHaveLength(1)
-		expect(blocks[0].type).toBe('llamaaiChart')
-		expect(blocks[0].attrs?.savedChartId).toBe('saved_123')
+		expect(blocks).toEqual([
+			expect.objectContaining({
+				type: 'llamaaiChart',
+				attrs: expect.objectContaining({ savedChartId: 'saved_123' })
+			})
+		])
 		expect(saveChart).toHaveBeenCalledWith('c1')
 	})
 
@@ -43,7 +59,7 @@ describe('buildExportBlocks — chart export', () => {
 			{ text: true, chartIds: ['c1'], imageIds: [] },
 			{ saveChart }
 		)
-		expect(blocks[0].attrs?.savedChartId).toBeNull()
+		expect(blocks).toEqual([expect.objectContaining({ attrs: expect.objectContaining({ savedChartId: null }) })])
 		expect(notes).toHaveLength(0)
 	})
 })
@@ -57,8 +73,12 @@ describe('buildExportBlocks — message export', () => {
 			{ text: false, chartIds: ['c2'], imageIds: [] },
 			{}
 		)
-		expect(blocks.map((b) => b.type)).toEqual(['llamaaiChart'])
-		expect(blocks[0].attrs?.chartConfig).toMatchObject({ id: 'c2' })
+		expect(blocks).toEqual([
+			expect.objectContaining({
+				type: 'llamaaiChart',
+				attrs: expect.objectContaining({ chartConfig: expect.objectContaining({ id: 'c2' }) })
+			})
+		])
 	})
 
 	it('uploads included images and notes the ones that fail', async () => {
@@ -103,14 +123,16 @@ describe('buildMessageExportRequest', () => {
 			sessionId: 's1',
 			chartGroups: [
 				{ charts: [config('c1')], chartData: { c1: [{ ts: 1, value: 2 }] } },
-				{ charts: [config('c2')], chartData: [{ ts: 9, value: 9 }] as never }
+				{ charts: [config('c2')], chartData: [{ ts: 9, value: 9 }] }
 			],
 			generatedImages: [{ id: 'img1', url: 'https://x/y.png' }]
 		})
 		expect(request.kind).toBe('message')
 		if (request.kind !== 'message') return
-		expect(request.charts.c1.data).toEqual([{ ts: 1, value: 2 }])
-		expect(request.charts.c2.data).toEqual([{ ts: 9, value: 9 }])
+		expect(request.charts).toMatchObject({
+			c1: { data: [{ ts: 1, value: 2 }] },
+			c2: { data: [{ ts: 9, value: 9 }] }
+		})
 		expect(request.images).toEqual({ img1: { url: 'https://x/y.png' } })
 		expect(request.messageId).toBe('m1')
 	})
@@ -121,8 +143,7 @@ describe('splitMarkdownTables', () => {
 		const md = 'Intro.\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n\nOutro.\n\n| x |\n| --- |\n| 9 |'
 		const segments = splitMarkdownTables(md)
 		expect(segments.map((s) => s.kind)).toEqual(['text', 'table', 'text', 'table'])
-		expect(segments[1].kind === 'table' && segments[1].rows).toBe(2)
-		expect(segments[3].kind === 'table' && segments[3].rows).toBe(1)
+		expect(segments.filter((segment) => segment.kind === 'table').map((segment) => segment.rows)).toEqual([2, 1])
 	})
 
 	it('ignores pipe lines inside code fences', () => {
@@ -168,15 +189,13 @@ describe('table titles', () => {
 	it('takes the immediately preceding heading as the markdown table title', () => {
 		const md = '### Top 5 fee days\n\n| a |\n| --- |\n| 1 |\n\nProse.\n\n| b |\n| --- |\n| 2 |'
 		const tables = splitMarkdownTables(md).filter((s) => s.kind === 'table')
-		expect(tables[0].kind === 'table' && tables[0].title).toBe('Top 5 fee days')
-		expect(tables[1].kind === 'table' && tables[1].title).toBeUndefined()
+		expect(tables.map((table) => table.title)).toEqual(['Top 5 fee days', undefined])
 	})
 
 	it('accepts a bold-only line as a title and strips emphasis from headings', () => {
 		const md = '**Fee comparison:**\n\n| a |\n| --- |\n| 1 |\n\n## **Top days**\n\n| b |\n| --- |\n| 2 |'
 		const tables = splitMarkdownTables(md).filter((s) => s.kind === 'table')
-		expect(tables[0].kind === 'table' && tables[0].title).toBe('Fee comparison')
-		expect(tables[1].kind === 'table' && tables[1].title).toBe('Top days')
+		expect(tables.map((table) => table.title)).toEqual(['Fee comparison', 'Top days'])
 	})
 })
 

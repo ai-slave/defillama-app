@@ -29,13 +29,17 @@ export function sumProtocolTvlBreakdown(
 	if (!chart?.length) return []
 
 	const series = new Array<[number, number]>(chart.length)
-	for (let rowIndex = 0; rowIndex < chart.length; rowIndex++) {
-		const [timestamp, values] = chart[rowIndex]
+	let rowIndex = 0
+	for (const [timestamp, values] of chart) {
 		let total = 0
 		for (const chain in values) {
-			if (includesChain(chain, filter)) total += values[chain]
+			if (!includesChain(chain, filter)) continue
+			const value = values[chain]
+			if (value === undefined) throw new Error(`Missing protocol TVL value for ${chain}`)
+			total += value
 		}
 		series[rowIndex] = [Math.floor(timestamp / 1e3), total]
+		rowIndex++
 	}
 	return series
 }
@@ -61,7 +65,10 @@ export function buildTopProtocolChainSeries({
 	const latestValues = new Map<string, number>()
 	for (const [, values] of chart) {
 		for (const chain in values) {
-			if (includesChain(chain, filter)) latestValues.set(chain, values[chain])
+			if (!includesChain(chain, filter)) continue
+			const value = values[chain]
+			if (value === undefined) throw new Error(`Missing protocol TVL value for ${chain}`)
+			latestValues.set(chain, value)
 		}
 	}
 
@@ -75,29 +82,39 @@ export function buildTopProtocolChainSeries({
 
 	const othersData = new Array<[number, number]>(chart.length)
 	let hasOthersValue = false
-	for (let rowIndex = 0; rowIndex < chart.length; rowIndex++) {
-		const [timestamp, values] = chart[rowIndex]
+	let rowIndex = 0
+	for (const [timestamp, values] of chart) {
 		const timestampSeconds = Math.floor(timestamp / 1e3)
 		let others = 0
 		for (const chain in values) {
 			if (!includesChain(chain, filter) || selectedSet.has(chain)) continue
-			others += values[chain]
+			const value = values[chain]
+			if (value === undefined) throw new Error(`Missing protocol TVL value for ${chain}`)
+			others += value
 		}
 		if (others > 0) hasOthersValue = true
 		othersData[rowIndex] = [timestampSeconds, others]
 		for (const chain of selectedChains) {
-			pointsByChain.get(chain)![rowIndex] = [timestampSeconds, values[chain] ?? 0]
+			const points = pointsByChain.get(chain)
+			if (!points) throw new Error(`Missing selected protocol TVL series for ${chain}`)
+			points[rowIndex] = [timestampSeconds, values[chain] ?? 0]
 		}
+		rowIndex++
 	}
 
-	const series = new Array<ChartSeries>(selectedCount)
-	for (let index = 0; index < selectedCount; index++) {
-		const chain = selectedChains[index]
-		series[index] = {
+	const series: ChartSeries[] = []
+	let colorIndex = 0
+	for (const chain of selectedChains) {
+		const data = pointsByChain.get(chain)
+		if (!data) throw new Error(`Missing selected protocol TVL series for ${chain}`)
+		const color = BREAKDOWN_COLOR_PALETTE[colorIndex % BREAKDOWN_COLOR_PALETTE.length]
+		if (color === undefined) throw new Error('Breakdown color palette must not be empty')
+		series.push({
 			name: chain,
-			data: pointsByChain.get(chain)!,
-			color: BREAKDOWN_COLOR_PALETTE[index % BREAKDOWN_COLOR_PALETTE.length]
-		}
+			data,
+			color
+		})
+		colorIndex++
 	}
 
 	const othersCount = rankedChains.length - selectedCount

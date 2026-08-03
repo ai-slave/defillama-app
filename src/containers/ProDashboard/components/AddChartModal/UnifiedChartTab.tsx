@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { useAppMetadata } from '../../AppMetadataContext'
+import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import {
-	CHART_TYPES,
-	type ChartConfig,
 	getProDashboardChartTypeConfig,
-	getChainChartTypes,
-	getProtocolChartTypes,
+	CHAIN_CHART_TYPES,
+	PROTOCOL_CHART_TYPES,
 	type RWAOverviewChartBreakdown,
 	type RWAOverviewChartMetric,
 	type RWAOverviewChartView
@@ -29,9 +28,6 @@ import { YieldsChartTab } from './YieldsChartTab'
 
 const EMPTY_ARRAY: string[] = []
 
-const PROTOCOL_CHART_TYPES = getProtocolChartTypes()
-const CHAIN_CHART_TYPES = getChainChartTypes()
-
 interface UnifiedChartTabProps {
 	selectedChartTab: ChartTabType
 	selectedChartTypes: string[]
@@ -40,7 +36,7 @@ interface UnifiedChartTabProps {
 	protocolsLoading: boolean
 	unifiedChartName: string
 	chartCreationMode: 'separate' | 'combined'
-	composerItems: ChartConfig[]
+	composerItems: ChartRuntimeView[]
 	onChartTabChange: (tab: ChartTabType) => void
 	onChartTypesChange: (types: string[]) => void
 	onBulkChartTypeChange: (nextType: string) => void
@@ -52,8 +48,20 @@ interface UnifiedChartTabProps {
 }
 
 interface UnifiedChartTabPropsExtended extends UnifiedChartTabProps {
-	selectedYieldPool?: { configID: string; name: string; project: string; chain: string } | null
-	onSelectedYieldPoolChange?: (pool: { configID: string; name: string; project: string; chain: string } | null) => void
+	selectedYieldPool?: {
+		configID: string
+		name: string
+		project: string
+		chain: string
+	} | null
+	onSelectedYieldPoolChange?: (
+		pool: {
+			configID: string
+			name: string
+			project: string
+			chain: string
+		} | null
+	) => void
 	selectedYieldChains?: string[]
 	selectedYieldProjects?: string[]
 	selectedYieldCategories?: string[]
@@ -251,7 +259,7 @@ export function UnifiedChartTab({
 	}, [composerItems])
 	const defaultChartType = useMemo(() => {
 		if (composerItems.length === 0) return 'tvl'
-		const matchingItem = composerItems.find((item) => (selectedChartTab === 'chain' ? item.chain : item.protocol))
+		const matchingItem = composerItems.find((item) => item.subjectType === selectedChartTab)
 		return (matchingItem || composerItems[0])?.type || 'tvl'
 	}, [composerItems, selectedChartTab])
 
@@ -264,10 +272,12 @@ export function UnifiedChartTab({
 
 	const selectedEntitiesForCurrentType = useMemo(() => {
 		if (!selectedChartTypeSingle) return []
-		return composerItems
-			.filter((item) => item.type === selectedChartTypeSingle)
-			.map((item) => (selectedChartTab === 'chain' ? item.chain : item.protocol))
-			.filter(Boolean) as string[]
+		const entities: string[] = []
+		for (const item of composerItems) {
+			if (item.type !== selectedChartTypeSingle || item.subjectType !== selectedChartTab) continue
+			entities.push(item.subjectType === 'chain' ? item.chain : item.protocol)
+		}
+		return entities
 	}, [composerItems, selectedChartTypeSingle, selectedChartTab])
 
 	const handleEntityToggle = useCallback(
@@ -280,7 +290,8 @@ export function UnifiedChartTab({
 				const itemToRemove = composerItems.find(
 					(item) =>
 						item.type === selectedChartTypeSingle &&
-						(selectedChartTab === 'chain' ? item.chain === entityValue : item.protocol === entityValue)
+						item.subjectType === selectedChartTab &&
+						(item.subjectType === 'chain' ? item.chain === entityValue : item.protocol === entityValue)
 				)
 				if (itemToRemove) {
 					onRemoveFromComposer(itemToRemove.id)
@@ -288,7 +299,7 @@ export function UnifiedChartTab({
 			} else {
 				onAddToComposer([selectedChartTypeSingle], {
 					entity: entityValue,
-					mode: selectedChartTab as 'chain' | 'protocol'
+					mode: selectedChartTab === 'protocol' ? 'protocol' : 'chain'
 				})
 			}
 		},
@@ -314,12 +325,18 @@ export function UnifiedChartTab({
 		const set = new Set<string>()
 		for (const c of chains) {
 			const geckoId = c.gecko_id
-			for (const t of availableChainChartTypes(c.name, { hasGeckoId: !!geckoId })) set.add(t)
+			for (const t of availableChainChartTypes(c.name, {
+				hasGeckoId: !!geckoId
+			}))
+				set.add(t)
 		}
 		for (const p of protocols) {
 			if (!p.slug) continue
 			const geckoId = p.geckoId
-			for (const t of availableProtocolChartTypes(p.slug, { hasGeckoId: !!geckoId })) set.add(t)
+			for (const t of availableProtocolChartTypes(p.slug, {
+				hasGeckoId: !!geckoId
+			}))
+				set.add(t)
 		}
 		return Array.from(set)
 	}, [chains, protocols, availableChainChartTypes, availableProtocolChartTypes])
@@ -352,16 +369,15 @@ export function UnifiedChartTab({
 
 	const bulkAvailableChartTypes = useMemo(() => {
 		if (!bulkChartType) return new Set<string>()
-		const getAvailableTypes = (item: ChartConfig) => {
-			if (item.chain) {
-				return availableChainChartTypes(item.chain, { hasGeckoId: chainHasGeckoIdByName.get(item.chain) ?? false })
-			}
-			if (item.protocol) {
-				return availableProtocolChartTypes(item.protocol, {
-					hasGeckoId: protocolHasGeckoIdBySlug.get(item.protocol) ?? false
+		const getAvailableTypes = (item: ChartRuntimeView) => {
+			if (item.subjectType === 'chain') {
+				return availableChainChartTypes(item.chain, {
+					hasGeckoId: chainHasGeckoIdByName.get(item.chain) ?? false
 				})
 			}
-			return []
+			return availableProtocolChartTypes(item.protocol, {
+				hasGeckoId: protocolHasGeckoIdBySlug.get(item.protocol) ?? false
+			})
 		}
 		const [firstItem, ...restItems] = composerItems
 		if (!firstItem) return new Set<string>()
@@ -402,14 +418,14 @@ export function UnifiedChartTab({
 				const available = availableChainChartTypes(chain.value, {
 					hasGeckoId: chainHasGeckoIdByName.get(chain.value) ?? false
 				})
-				return available.includes(selectedChartTypeSingle)
+				return available.some((type) => type === selectedChartTypeSingle)
 			})
 		} else {
 			return protocolOptions.filter((protocol) => {
 				const available = availableProtocolChartTypes(protocol.value, {
 					hasGeckoId: protocolHasGeckoIdBySlug.get(protocol.value) ?? false
 				})
-				return available.includes(selectedChartTypeSingle)
+				return available.some((type) => type === selectedChartTypeSingle)
 			})
 		}
 	}, [
@@ -725,13 +741,13 @@ export function UnifiedChartTab({
 							selectedType={selectedChartTypeSingle}
 							onSelect={handleChartTypeSelect}
 							isLoading={metaLoading}
-							mode={selectedChartTab as 'chain' | 'protocol'}
+							mode={selectedChartTab === 'protocol' ? 'protocol' : 'chain'}
 						/>
 					</div>
 
 					<div className="min-h-0 flex-1">
 						<EntityPickerList
-							mode={selectedChartTab as 'chain' | 'protocol'}
+							mode={selectedChartTab === 'protocol' ? 'protocol' : 'chain'}
 							entities={filteredEntities}
 							selectedEntities={selectedEntitiesForCurrentType}
 							onToggle={handleEntityToggle}
@@ -758,7 +774,7 @@ export function UnifiedChartTab({
 								selectedType={bulkChartType}
 								onSelect={handleBulkChartTypeSelect}
 								isLoading={metaLoading}
-								mode={selectedChartTab as 'chain' | 'protocol'}
+								mode={selectedChartTab === 'protocol' ? 'protocol' : 'chain'}
 							/>
 						</div>
 					) : null}
@@ -787,7 +803,8 @@ export function UnifiedChartTab({
 										className="size-4 cursor-pointer rounded-sm border-0 bg-transparent p-0"
 									/>
 									<span className="whitespace-nowrap text-pro-text-primary">
-										{item.protocol || item.chain} - {CHART_TYPES[item.type]?.title || item.type}
+										{item.subjectType === 'protocol' ? item.protocol : item.chain} -{' '}
+										{getProDashboardChartTypeConfig(item.type)?.title || item.type}
 									</span>
 									<button
 										onClick={() => onRemoveFromComposer(item.id)}

@@ -30,8 +30,7 @@ The `/protocol/[protocol]` entity page belongs to `ProtocolOverview`. The `/prot
 - `ProtocolsWithTokens.tsx`: protocol token metric list UI.
 - `ExtraTvlByChain.tsx`: active loans, total staked, and pool2 chain views.
 - `utils.ts`: TVL toggle transforms and list filtering helpers.
-- `utils.old.ts`: legacy protocol list shaping still used by some pages.
-- `types.ts`, `protocol-table.types.ts`: read-model and table types.
+- `types.ts`: protocol-list read-model types.
 - `airdrop-exclude.ts`, `airdrops.ts`, `data.json`: airdrop-specific local data.
 
 ## Data Flows

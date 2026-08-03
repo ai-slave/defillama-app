@@ -1,3 +1,3 @@
-import handler from '~/containers/ProDashboard/server/deleteRoute'
+import { dashboardDeleteApiHandler } from '~/containers/ProDashboard/server/deleteRoute'
 
-export default handler
+export default dashboardDeleteApiHandler

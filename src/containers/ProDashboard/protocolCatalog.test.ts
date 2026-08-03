@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { ChainListItem } from '~/containers/Chains/api.types'
-import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
+import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import {
 	buildProDashboardParentMapping,
 	buildProDashboardProtocolCatalog,
 	buildProtocolSymbolMap
 } from './protocolCatalog'
 
-const protocol = (overrides: Partial<ProtocolLite> = {}): ProtocolLite => ({
+const protocol = (
+	overrides: Partial<ProtocolsResponse['protocols'][number]> = {}
+): ProtocolsResponse['protocols'][number] => ({
 	name: 'Child',
 	symbol: 'CHILD',
 	logo: 'child.png',
@@ -20,16 +22,28 @@ const protocol = (overrides: Partial<ProtocolLite> = {}): ProtocolLite => ({
 	tvlPrevWeek: 8,
 	tvlPrevMonth: 7,
 	mcap: null,
-	defillamaId: '1',
 	geckoId: null,
+	defillamaId: '1',
+	...overrides
+})
+
+const parentProtocol = (
+	overrides: Partial<ProtocolsResponse['parentProtocols'][number]> = {}
+): ProtocolsResponse['parentProtocols'][number] => ({
+	id: 'parent#group',
+	name: 'Group',
+	chains: [] as string[],
+	gecko_id: null,
+	mcap: null,
+	logo: 'group.png',
 	...overrides
 })
 
 describe('buildProDashboardProtocolCatalog', () => {
-	it('builds one canonical sorted catalog with parent totals and gecko fallbacks', () => {
-		const protocolsData = {
+	it('uses Lens membership and metrics while Lite contributes display metadata only', () => {
+		const protocolsData: ProtocolsResponse = {
 			protocols: [
-				protocol({ parentProtocol: 'parent#group' }),
+				protocol({ parentProtocol: 'parent#group', tvl: 999, geckoId: 'wrong' }),
 				protocol({ name: 'Standalone', defillamaId: '2', tvl: null, geckoId: 'standalone' })
 			],
 			chains: ['Ethereum', 'Base'],
@@ -40,12 +54,12 @@ describe('buildProDashboardProtocolCatalog', () => {
 					symbol: 'GROUP',
 					chains: ['Ethereum'],
 					gecko_id: 'group-token',
-					logo: 'group.png',
-					mcap: null
+					mcap: null,
+					logo: 'group.png'
 				}
 			],
-			protocolCategories: ['Lending']
-		} satisfies ProtocolsResponse
+			protocolCategories: []
+		}
 		const chainsData: ChainListItem[] = [
 			{
 				name: 'Ethereum',
@@ -65,172 +79,83 @@ describe('buildProDashboardProtocolCatalog', () => {
 			}
 		]
 
-		const result = buildProDashboardProtocolCatalog(protocolsData, chainsData)
+		const result = buildProDashboardProtocolCatalog(
+			[
+				{
+					slug: 'child',
+					name: 'Child SQL',
+					parentSlug: 'group',
+					category: 'Dexes',
+					tvl: 10,
+					symbol: 'CHILD',
+					geckoId: 'group-token',
+					hasMisrepresentedTokens: true,
+					excludeTvlFromParent: false
+				},
+				{
+					slug: 'standalone',
+					name: 'Standalone',
+					parentSlug: 'standalone',
+					category: null,
+					tvl: null,
+					symbol: null,
+					geckoId: 'standalone',
+					hasMisrepresentedTokens: false,
+					excludeTvlFromParent: false
+				}
+			],
+			protocolsData,
+			chainsData
+		)
 
 		expect(result.chains.map((chain) => chain.name)).toEqual(['Base', 'Ethereum'])
 		expect(result.protocols).toEqual([
 			expect.objectContaining({
-				id: '1',
+				id: 'child',
 				slug: 'child',
 				symbol: 'CHILD',
 				geckoId: 'group-token',
-				parentProtocol: 'parent#group'
+				parentProtocol: 'group',
+				misrepresentedTokens: true
 			}),
 			expect.objectContaining({
-				id: '2',
+				id: 'standalone',
 				slug: 'standalone',
-				tvl: null,
+				tvl: 0,
 				geckoId: 'standalone',
 				parentProtocol: null
 			}),
 			expect.objectContaining({
-				id: 'parent#group',
+				id: 'group',
 				slug: 'group',
-				symbol: 'GROUP',
+				symbol: 'CHILD',
 				tvl: 10,
-				geckoId: 'group-token'
+				geckoId: 'group-token',
+				misrepresentedTokens: true
 			})
 		])
 	})
 
-	it('skips no-TVL children without erasing measured parent TVL', () => {
-		const result = buildProDashboardProtocolCatalog(
-			{
-				protocols: [
-					protocol({ defillamaId: 'known', parentProtocol: 'parent#group', tvl: 10 }),
-					protocol({ defillamaId: 'unknown', parentProtocol: 'parent#group', tvl: null, deprecated: true })
-				],
-				chains: [],
-				parentProtocols: [
-					{
-						id: 'parent#group',
-						name: 'Group',
-						chains: [],
-						gecko_id: null,
-						logo: 'group.png',
-						mcap: null
-					}
-				],
-				protocolCategories: []
-			} satisfies ProtocolsResponse,
-			[]
-		)
-
-		expect(result.protocols.find((entry) => entry.id === 'parent#group')?.tvl).toBe(10)
-	})
-
-	it('keeps a parent without a measured TVL child unavailable', () => {
-		const result = buildProDashboardProtocolCatalog(
-			{
-				protocols: [protocol({ defillamaId: 'unknown', parentProtocol: 'parent#group', tvl: null })],
-				chains: [],
-				parentProtocols: [
-					{
-						id: 'parent#group',
-						name: 'Group',
-						chains: [],
-						gecko_id: null,
-						logo: 'group.png',
-						mcap: null
-					}
-				],
-				protocolCategories: []
-			} satisfies ProtocolsResponse,
-			[]
-		)
-
-		expect(result.protocols.find((entry) => entry.id === 'parent#group')?.tvl).toBeNull()
-	})
-
-	it('subtracts child TVL excluded from its synthetic parent', () => {
-		const result = buildProDashboardProtocolCatalog(
-			{
-				protocols: [
-					protocol({
-						parentProtocol: 'parent#group',
-						tvl: 100,
-						chainTvls: {
-							excludeParent: { tvl: 30, tvlPrevDay: 20, tvlPrevWeek: 10, tvlPrevMonth: 5 }
-						}
-					})
-				],
-				chains: [],
-				parentProtocols: [
-					{
-						id: 'parent#group',
-						name: 'Group',
-						chains: [],
-						gecko_id: null,
-						logo: 'group.png',
-						mcap: null
-					}
-				],
-				protocolCategories: []
-			} satisfies ProtocolsResponse,
-			[]
-		)
-
-		expect(result.protocols.find((entry) => entry.id === 'parent#group')?.tvl).toBe(70)
-	})
-
-	it('keeps synthetic parent TVL unavailable when its required exclusion is unavailable', () => {
-		const result = buildProDashboardProtocolCatalog(
-			{
-				protocols: [
-					protocol({
-						parentProtocol: 'parent#group',
-						chainTvls: {
-							excludeParent: { tvl: null, tvlPrevDay: 0, tvlPrevWeek: 0, tvlPrevMonth: 0 }
-						}
-					})
-				],
-				chains: [],
-				parentProtocols: [
-					{
-						id: 'parent#group',
-						name: 'Group',
-						chains: [],
-						gecko_id: null,
-						logo: 'group.png',
-						mcap: null
-					}
-				],
-				protocolCategories: []
-			} satisfies ProtocolsResponse,
-			[]
-		)
-
-		expect(result.protocols.find((entry) => entry.id === 'parent#group')?.tvl).toBeNull()
-	})
-
-	it('preserves explicit zero TVL for children and parent totals', () => {
-		const result = buildProDashboardProtocolCatalog(
-			{
-				protocols: [protocol({ defillamaId: 'zero', parentProtocol: 'parent#group', tvl: 0 })],
-				chains: [],
-				parentProtocols: [
-					{
-						id: 'parent#group',
-						name: 'Group',
-						chains: [],
-						gecko_id: null,
-						logo: 'group.png',
-						mcap: null
-					}
-				],
-				protocolCategories: []
-			} satisfies ProtocolsResponse,
-			[]
-		)
-
-		expect(result.protocols.find((entry) => entry.id === 'zero')?.tvl).toBe(0)
-		expect(result.protocols.find((entry) => entry.id === 'parent#group')?.tvl).toBe(0)
-	})
-
 	it('builds reusable parent and symbol indexes regardless of catalog order', () => {
 		const protocols = [
-			{ id: 'child', name: 'Child', slug: 'child', symbol: 'CHILD', tvl: 1, parentProtocol: 'parent' },
-			{ id: 'parent', name: 'Parent', slug: 'parent', symbol: 'PARENT', tvl: 2, parentProtocol: null }
+			{
+				id: 'child',
+				name: 'Child',
+				slug: 'child',
+				symbol: 'CHILD',
+				tvl: 1,
+				chains: [],
+				parentProtocol: 'parent'
+			},
+			{
+				id: 'parent',
+				name: 'Parent',
+				slug: 'parent',
+				symbol: 'PARENT',
+				tvl: 2,
+				chains: [],
+				parentProtocol: null
+			}
 		]
 
 		expect(buildProDashboardParentMapping(protocols)).toEqual(new Map([['parent', ['child']]]))
@@ -242,28 +167,102 @@ describe('buildProDashboardProtocolCatalog', () => {
 		)
 	})
 
-	it('keeps the API protocol when a synthetic parent has the same slug', () => {
+	it('keeps the canonical Lens protocol when its slug matches Lite parent metadata', () => {
 		const result = buildProDashboardProtocolCatalog(
+			[
+				{
+					slug: 'group',
+					name: 'Group',
+					parentSlug: 'group',
+					category: null,
+					tvl: 4,
+					symbol: null,
+					geckoId: null,
+					hasMisrepresentedTokens: false,
+					excludeTvlFromParent: false
+				}
+			],
 			{
 				protocols: [protocol({ name: 'Group', defillamaId: 'real', tvl: 4 })],
 				chains: [],
-				parentProtocols: [
-					{
-						id: 'parent#group',
-						name: 'Group',
-						symbol: 'GROUP',
-						chains: [],
-						gecko_id: null,
-						mcap: null,
-						logo: ''
-					}
-				],
+				parentProtocols: [parentProtocol()],
 				protocolCategories: []
-			} satisfies ProtocolsResponse,
+			},
 			[]
 		)
 
 		expect(result.protocols).toHaveLength(1)
-		expect(result.protocols[0]?.id).toBe('real')
+		expect(result.protocols[0]).toMatchObject({ id: 'group', tvl: 4 })
+	})
+
+	it('keeps a zero-TVL parent when every child is excluded from its parent total', () => {
+		const result = buildProDashboardProtocolCatalog(
+			[
+				{
+					slug: 'excluded-child',
+					name: 'Excluded Child',
+					parentSlug: 'group',
+					category: 'Dexes',
+					tvl: 25,
+					symbol: null,
+					geckoId: null,
+					hasMisrepresentedTokens: false,
+					excludeTvlFromParent: true
+				}
+			],
+			{ protocols: [], chains: [], parentProtocols: [parentProtocol()], protocolCategories: [] },
+			[]
+		)
+
+		expect(result.protocols).toEqual([
+			expect.objectContaining({ id: 'excluded-child', tvl: 25, parentProtocol: 'group' }),
+			expect.objectContaining({ id: 'group', tvl: 0, parentProtocol: null })
+		])
+	})
+
+	it('replaces a parent self row with the aggregate of its eligible children', () => {
+		const result = buildProDashboardProtocolCatalog(
+			[
+				{
+					slug: 'group',
+					name: 'Group',
+					parentSlug: 'group',
+					category: 'Dexes',
+					tvl: 999,
+					symbol: null,
+					geckoId: null,
+					hasMisrepresentedTokens: false,
+					excludeTvlFromParent: false
+				},
+				{
+					slug: 'included-child',
+					name: 'Included Child',
+					parentSlug: 'group',
+					category: 'Dexes',
+					tvl: 40,
+					symbol: null,
+					geckoId: null,
+					hasMisrepresentedTokens: false,
+					excludeTvlFromParent: false
+				},
+				{
+					slug: 'excluded-child',
+					name: 'Excluded Child',
+					parentSlug: 'group',
+					category: 'Dexes',
+					tvl: 25,
+					symbol: null,
+					geckoId: null,
+					hasMisrepresentedTokens: false,
+					excludeTvlFromParent: true
+				}
+			],
+			{ protocols: [], chains: [], parentProtocols: [parentProtocol()], protocolCategories: [] },
+			[]
+		)
+
+		expect(result.protocols.filter((item) => item.slug === 'group')).toEqual([
+			expect.objectContaining({ tvl: 40, parentProtocol: null })
+		])
 	})
 })

@@ -1,4 +1,4 @@
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import type { AdaptedLlamaAICartesianChart } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 
@@ -70,11 +70,13 @@ function getLogEligibleYAxes(adaptedChart: AdaptedLlamaAICartesianChart): number
 
 // Scatter log scale needs both axes strictly positive (x and y are the first two tuple slots).
 function isScatterLogEligible(adaptedChart: Extract<AdaptedChartData, { chartType: 'scatter' }>): boolean {
-	const points = (adaptedChart.props.chartData ?? []) as unknown as Array<Array<number | string | null | undefined>>
+	const points = adaptedChart.props.chartData ?? []
 	if (points.length === 0) return false
-	return points.every(
-		(point) => typeof point?.[0] === 'number' && point[0] > 0 && typeof point?.[1] === 'number' && point[1] > 0
-	)
+	return points.every((point) => {
+		if (!Array.isArray(point)) return false
+		const [x, y] = point
+		return typeof x === 'number' && x > 0 && typeof y === 'number' && y > 0
+	})
 }
 
 export function deriveCapabilities(config: ChartConfiguration, adaptedChart: AdaptedChartData): ChartCapabilities {
@@ -188,8 +190,7 @@ export function buildControlsModel(
 	state: ChartViewState,
 	capabilities: ChartCapabilities
 ): ChartControlsModel {
-	return {
-		title,
+	const controls: ChartControlsModel = {
 		state,
 		showGrouping: capabilities.allowGrouping,
 		showStack: capabilities.allowStack && !state.cumulative,
@@ -200,4 +201,6 @@ export function buildControlsModel(
 		showLogScale: capabilities.allowLogScale && !state.percentage && !state.stacked,
 		groupingOptions: capabilities.groupingOptions
 	}
+	if (title !== undefined) controls.title = title
+	return controls
 }

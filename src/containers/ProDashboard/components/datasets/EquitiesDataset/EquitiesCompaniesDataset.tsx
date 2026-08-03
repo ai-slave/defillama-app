@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import {
-	type ColumnDef,
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ColumnSizingState,
@@ -18,35 +17,18 @@ import { useContext } from 'react'
 import { useTableSearch } from '~/components/Table/utils'
 import type { IEquitiesCompanyApiItem } from '~/containers/Equities/api.types'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
-import { fetchEquitiesCompaniesViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { PRO_EQUITIES_COMPANIES_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
-import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
-import { downloadCSV } from '~/utils/download'
+import { downloadCSV, type CsvCell } from '~/utils/download'
 import { formatPercentChange, formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
+import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
-import { TableBody } from '../../ProTable/TableBody'
-import { TablePagination } from '../../ProTable/TablePagination'
+import { TableBody } from '../../Table/TableBody'
+import { TablePagination } from '../../Table/TablePagination'
 
-type EquitiesCompanyRow = {
-	ticker: string
-	country: string
-	name: string
-	currentPrice: number
-	volume: number
-	marketCap: number
-	priceChangePercentage1d: number
-	priceChangePercentage7d: number
-	priceChangePercentage1m: number
-	trailingPE: number | null
-	dividendYield: number | null
-	revenueTTM: number | null
-	earningsTTM: number | null
-}
+const columnHelper = createColumnHelper<IEquitiesCompanyApiItem>()
 
-const columnHelper = createColumnHelper<EquitiesCompanyRow>()
-
-const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
+const columns = [
 	columnHelper.accessor('ticker', {
 		id: 'ticker',
 		header: 'Ticker',
@@ -92,6 +74,7 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 		header: '1d Change',
 		cell: (info) => {
 			const val = info.getValue()
+			if (val == null) return '—'
 			const color = val >= 0 ? 'text-success' : 'text-error'
 			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
 		},
@@ -103,6 +86,7 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 		header: '7d Change',
 		cell: (info) => {
 			const val = info.getValue()
+			if (val == null) return '—'
 			const color = val >= 0 ? 'text-success' : 'text-error'
 			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
 		},
@@ -114,6 +98,7 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 		header: '1m Change',
 		cell: (info) => {
 			const val = info.getValue()
+			if (val == null) return '—'
 			const color = val >= 0 ? 'text-success' : 'text-error'
 			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
 		},
@@ -132,7 +117,7 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 		header: 'Div Yield',
 		cell: (info) => {
 			const val = info.getValue()
-			return val != null && Number.isFinite(val)
+			return val != null
 				? `${formatPercent(val, { input: 'fraction', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 				: '—'
 		},
@@ -157,49 +142,50 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 	})
 ]
 
+const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
+	'ticker',
+	'name',
+	'currentPrice',
+	'marketCap',
+	'volume',
+	'priceChangePercentage1d',
+	'priceChangePercentage7d',
+	'priceChangePercentage1m',
+	'trailingPE',
+	'dividendYield',
+	'revenueTTM',
+	'earningsTTM'
+]
+const getEquitiesCompaniesCoreRowModel = getCoreRowModel<IEquitiesCompanyApiItem>()
+const getEquitiesCompaniesSortedRowModel = getSortedRowModel<IEquitiesCompanyApiItem>()
+const getEquitiesCompaniesFilteredRowModel = getFilteredRowModel<IEquitiesCompanyApiItem>()
+const getEquitiesCompaniesPaginationRowModel = getPaginationRowModel<IEquitiesCompanyApiItem>()
+
 const STALE_TIME = 5 * 60 * 1000
 
 function useEquitiesCompaniesTableData() {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
 
-	return useQuery({
+	const { data, isLoading, error } = useQuery({
 		queryKey: PRO_EQUITIES_COMPANIES_QUERY_KEY,
-		queryFn: () => fetchEquitiesCompaniesViaProxy(authToken!),
+		queryFn: () => {
+			if (!authToken) throw new Error('Missing Pro dashboard proxy auth token')
+			return fetchProDashboardProxy('equitiesCompanies', {}, authToken)
+		},
 		enabled: streamDone && Boolean(authToken),
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false,
-		retry: 1,
-		select: (data: IEquitiesCompanyApiItem[]): EquitiesCompanyRow[] => {
-			if (!data) return []
-			const rows: EquitiesCompanyRow[] = []
-			for (const item of data) {
-				rows.push({
-					ticker: item.ticker,
-					country: item.country,
-					name: item.name,
-					currentPrice: item.currentPrice,
-					volume: item.volume,
-					marketCap: item.marketCap,
-					priceChangePercentage1d: item.priceChangePercentage1d,
-					priceChangePercentage7d: item.priceChangePercentage7d,
-					priceChangePercentage1m: item.priceChangePercentage1m,
-					trailingPE: item.trailingPE,
-					dividendYield: item.dividendYield,
-					revenueTTM: item.revenueTTM,
-					earningsTTM: item.earningsTTM
-				})
-			}
-			return rows.sort((a, b) => b.marketCap - a.marketCap)
-		}
+		retry: 1
 	})
+	return { data, isLoading: isLoading || (!streamDone && data === undefined), error }
 }
 
-const EMPTY_DATA: EquitiesCompanyRow[] = []
+const EMPTY_DATA: IEquitiesCompanyApiItem[] = []
 
 export function EquitiesCompaniesDataset() {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'marketCap', desc: true }])
-	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
+	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(DEFAULT_COLUMN_ORDER)
 	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({})
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [pagination, setPagination] = React.useState<PaginationState>({
@@ -208,11 +194,9 @@ export function EquitiesCompaniesDataset() {
 	})
 
 	const { data, isLoading, error } = useEquitiesCompaniesTableData()
-	const width = useBreakpointWidth()
-
 	const instance = useReactTable({
 		data: data ?? EMPTY_DATA,
-		columns: columns as ColumnDef<any>[],
+		columns,
 		state: {
 			sorting,
 			columnOrder,
@@ -226,17 +210,12 @@ export function EquitiesCompaniesDataset() {
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		autoResetPageIndex: false
+		getCoreRowModel: getEquitiesCompaniesCoreRowModel,
+		getSortedRowModel: getEquitiesCompaniesSortedRowModel,
+		getFilteredRowModel: getEquitiesCompaniesFilteredRowModel,
+		getPaginationRowModel: getEquitiesCompaniesPaginationRowModel,
+		autoResetPageIndex: true
 	})
-
-	React.useEffect(() => {
-		const defaultOrder = instance.getAllLeafColumns().map((d) => d.id)
-		instance.setColumnOrder(defaultOrder)
-	}, [instance, width])
 
 	const [_searchValue, setSearchValue] = useTableSearch({ instance, columnToSearch: 'name' })
 
@@ -273,43 +252,42 @@ export function EquitiesCompaniesDataset() {
 				<div className="flex flex-wrap items-center justify-end gap-4">
 					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">Equities</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
-								const csvData = rows.map((row) => row.original)
-								const headers = [
-									'Ticker',
-									'Name',
-									'Price',
-									'Market Cap',
-									'Volume',
-									'1d Change',
-									'7d Change',
-									'1m Change',
-									'P/E',
-									'Div Yield',
-									'Revenue TTM',
-									'Earnings TTM'
+								const csv: CsvCell[][] = [
+									[
+										'Ticker',
+										'Name',
+										'Price',
+										'Market Cap',
+										'Volume',
+										'1d Change',
+										'7d Change',
+										'1m Change',
+										'P/E',
+										'Div Yield',
+										'Revenue TTM',
+										'Earnings TTM'
+									]
 								]
-								const csv = [
-									headers.join(','),
-									...csvData.map((item: EquitiesCompanyRow) =>
-										[
-											`"${item.ticker}"`,
-											`"${item.name}"`,
-											item.currentPrice,
-											item.marketCap,
-											item.volume,
-											item.priceChangePercentage1d,
-											item.priceChangePercentage7d,
-											item.priceChangePercentage1m,
-											item.trailingPE ?? '',
-											item.dividendYield ?? '',
-											item.revenueTTM,
-											item.earningsTTM
-										].join(',')
-									)
-								].join('\n')
+								for (const row of rows) {
+									const item = row.original
+									csv.push([
+										item.ticker,
+										item.name,
+										item.currentPrice,
+										item.marketCap,
+										item.volume,
+										item.priceChangePercentage1d,
+										item.priceChangePercentage7d,
+										item.priceChangePercentage1m,
+										item.trailingPE,
+										item.dividendYield,
+										item.revenueTTM,
+										item.earningsTTM
+									])
+								}
 
 								downloadCSV('equities-companies.csv', csv, { addTimestamp: true })
 							}}
@@ -325,7 +303,17 @@ export function EquitiesCompaniesDataset() {
 				</div>
 			</div>
 			<TableBody table={instance} />
-			<TablePagination table={instance} />
+			<TablePagination
+				pageSize={pagination.pageSize}
+				pageIndex={pagination.pageIndex}
+				pageCount={instance.getPageCount()}
+				canPreviousPage={instance.getCanPreviousPage()}
+				canNextPage={instance.getCanNextPage()}
+				previousPage={instance.previousPage}
+				nextPage={instance.nextPage}
+				setPageSize={instance.setPageSize}
+				showPageSizes={instance.getRowCount() > 10}
+			/>
 		</div>
 	)
 }

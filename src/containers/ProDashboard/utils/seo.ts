@@ -1,14 +1,17 @@
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import { slug } from '~/utils'
 import { sluggifyProtocol } from '~/utils/cache-client'
+import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { Dashboard } from '../dashboardTypes'
-import type { DashboardItemConfig } from '../types'
 
 const SITE_URL = 'https://defillama.com'
 const DEFAULT_DASHBOARD_NAME = 'Untitled Dashboard'
 const DEFAULT_DESCRIPTION = 'Community-built DefiLlama Pro dashboard.'
 const MAX_DESCRIPTION_LENGTH = 155
 const MAX_SUMMARY_ITEMS = 24
+
+type DashboardJsonLdValue = string | number | boolean | null | DashboardJsonLdValue[] | DashboardJsonLdObject
+type DashboardJsonLdObject = { [key: string]: DashboardJsonLdValue }
 
 export interface DashboardItemSummary {
 	id: string
@@ -24,7 +27,7 @@ export interface DashboardSeo {
 	tags: string[]
 	itemCount: number
 	itemSummaries: DashboardItemSummary[]
-	jsonLd: Record<string, unknown>
+	jsonLd: DashboardJsonLdObject
 }
 
 export interface DashboardSeoPublicDashboard {
@@ -47,19 +50,19 @@ export interface DashboardSeoPublicDashboard {
 export function toDashboardSeoPublicDashboard(dashboard: Dashboard): DashboardSeoPublicDashboard {
 	return {
 		id: dashboard.id,
-		slug: dashboard.slug,
+		...(dashboard.slug === undefined ? {} : { slug: dashboard.slug }),
 		data: {
 			dashboardName: dashboard.data?.dashboardName || DEFAULT_DASHBOARD_NAME
 		},
 		visibility: 'public',
 		tags: Array.isArray(dashboard.tags) ? dashboard.tags.filter((tag) => typeof tag === 'string' && tag.trim()) : [],
 		description: typeof dashboard.description === 'string' ? dashboard.description : '',
-		viewCount: dashboard.viewCount,
-		likeCount: dashboard.likeCount,
-		author: dashboard.author,
+		...(dashboard.viewCount === undefined ? {} : { viewCount: dashboard.viewCount }),
+		...(dashboard.likeCount === undefined ? {} : { likeCount: dashboard.likeCount }),
+		...(dashboard.author === undefined ? {} : { author: dashboard.author }),
 		created: dashboard.created,
 		updated: dashboard.updated,
-		editedAt: dashboard.editedAt
+		...(dashboard.editedAt === undefined ? {} : { editedAt: dashboard.editedAt })
 	}
 }
 
@@ -132,22 +135,33 @@ function chainHref(chain: unknown): string | undefined {
 }
 
 function subjectLabel(item: DashboardItemConfig): { label: string; href?: string } {
-	if ('subject' in item && item.subject) {
-		if (item.subject.itemType === 'protocol' && item.subject.protocol) {
-			return { label: titleCaseToken(item.subject.protocol), href: protocolHref(item.subject.protocol) }
+	if (item.kind === 'metric') {
+		if (item.subject.itemType === 'protocol') {
+			const href = protocolHref(item.subject.protocol)
+			return { label: titleCaseToken(item.subject.protocol), ...(href === undefined ? {} : { href }) }
 		}
-		if (item.subject.itemType === 'chain' && item.subject.chain) {
-			return { label: item.subject.chain, href: chainHref(item.subject.chain) }
+		const href = chainHref(item.subject.chain)
+		return { label: item.subject.chain, ...(href === undefined ? {} : { href }) }
+	}
+	if (item.kind === 'chart') {
+		if (item.subjectType === 'protocol') {
+			const href = protocolHref(item.protocol)
+			return { label: titleCaseToken(item.protocol), ...(href === undefined ? {} : { href }) }
 		}
+		const href = chainHref(item.chain)
+		return { label: item.chain, ...(href === undefined ? {} : { href }) }
 	}
 	if ('protocolName' in item && item.protocolName) {
-		return { label: item.protocolName, href: protocolHref(item.protocol) }
+		const href = protocolHref(item.protocol)
+		return { label: item.protocolName, ...(href === undefined ? {} : { href }) }
 	}
 	if ('protocol' in item && item.protocol) {
-		return { label: titleCaseToken(item.protocol), href: protocolHref(item.protocol) }
+		const href = protocolHref(item.protocol)
+		return { label: titleCaseToken(item.protocol), ...(href === undefined ? {} : { href }) }
 	}
 	if ('chain' in item && item.chain) {
-		return { label: item.chain, href: chainHref(item.chain) }
+		const href = chainHref(item.chain)
+		return { label: item.chain, ...(href === undefined ? {} : { href }) }
 	}
 	return { label: 'DefiLlama' }
 }
@@ -156,6 +170,15 @@ function createDashboardItemSummary(id: string, label: string, href?: string): D
 	// `getServerSideProps` must return JSON-serializable values. Omit optional links
 	// instead of emitting `href: undefined`, which makes the whole dashboard return 500.
 	return { id, label, ...(href ? { href } : {}) }
+}
+
+function unifiedTableSummaryLabel(item: Extract<DashboardItemConfig, { kind: 'unified-table' }>): string {
+	const presetName = item.activePresetId?.replace(/-protocols$/, '')
+	const tableName = presetName && presetName !== 'custom' ? titleCaseToken(presetName) : null
+	const chains = item.params?.chains
+	const chainScope = chains?.length ? ` for ${chains.slice(0, 3).join(', ')}` : ''
+	const headerName = item.rowHeaders.map(titleCaseToken).join(', ') || 'Protocol'
+	return `${tableName ?? headerName} table${chainScope}`
 }
 
 function summarizeSingleItem(item: DashboardItemConfig, index: number): DashboardItemSummary {
@@ -171,13 +194,13 @@ function summarizeSingleItem(item: DashboardItemConfig, index: number): Dashboar
 				id,
 				label: item.name || `${item.items.length} chart comparison`
 			}
-		case 'table': {
-			const dataset = titleCaseToken(item.datasetType || item.tableType || 'protocols')
-			const chains = item.chains?.length ? ` for ${item.chains.slice(0, 3).join(', ')}` : ''
+		case 'dataset-table': {
+			const dataset = titleCaseToken(item.datasetType)
+			const chains = 'chains' in item && item.chains.length ? ` for ${item.chains.slice(0, 3).join(', ')}` : ''
 			return { id, label: `${dataset} table${chains}` }
 		}
 		case 'unified-table':
-			return { id, label: `${item.rowHeaders.map(titleCaseToken).join(', ') || 'Protocol'} table` }
+			return { id, label: unifiedTableSummaryLabel(item) }
 		case 'text': {
 			const text = markdownToPlainText(item.title || item.content)
 			return { id, label: text ? `Text note: ${truncateText(text, 90)}` : 'Text note' }
@@ -226,8 +249,8 @@ function summarizeSingleItem(item: DashboardItemConfig, index: number): Dashboar
 			return { id, label: `${titleCaseToken(item.metric)} by ${titleCaseToken(item.breakdown)} RWA ${item.chartView}` }
 		case 'rwa-asset':
 			return { id, label: `${item.assetName} RWA asset chart` }
-		default:
-			return { id, label: `${titleCaseToken((item as DashboardItemConfig).kind)} item` }
+		case 'sql':
+			return { id, label: item.name || 'SQL chart' }
 	}
 }
 
@@ -299,7 +322,7 @@ export function buildDashboardSeo(dashboard: Dashboard): DashboardSeo {
 		}
 	}
 
-	const graph: Record<string, unknown>[] = [
+	const graph: DashboardJsonLdObject[] = [
 		webPage,
 		{
 			'@type': 'BreadcrumbList',

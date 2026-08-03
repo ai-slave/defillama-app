@@ -1,5 +1,4 @@
 import {
-	flexRender,
 	getCoreRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
@@ -8,43 +7,46 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import { matchSorter } from 'match-sorter'
-import { useDeferredValue, useMemo, useState } from 'react'
-import { components } from 'react-select'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { components, type GroupBase, type MultiValue, type OptionProps, type ValueContainerProps } from 'react-select'
 import { ReactSelect } from '~/components/MultiSelect/ReactSelect'
-import { SortIcon } from '~/components/Table/SortIcon'
 import { normalizeProTokenSymbols } from '~/containers/ProDashboard/tableQueryKeys'
-import { download } from '~/utils/download'
+import type { TokenUsageDatasetTableConfig } from '~/containers/ProDashboard/types'
+import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
+import { downloadCSV as downloadCSVFile, type CsvCell } from '~/utils/download'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { reactSelectStyles } from '../../../utils/reactSelectStyles'
+import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
+import { TableBody } from '../../Table/TableBody'
+import { TablePagination } from '../../Table/TablePagination'
 import { getColumns } from './columns'
 import { buildTokenUsageSummary } from './summary'
-import { useTokenSearch } from './useTokenSearch'
-import { type TokenUsageData, useTokenUsageData } from './useTokenUsageData'
+import { type TokenOption, useTokenSearch } from './useTokenSearch'
+import { useTokenUsageData } from './useTokenUsageData'
 
-interface _TokenOption {
-	value: string
-	label: string
-	logo?: string
-}
-
-const EMPTY_TOKEN_OPTIONS: _TokenOption[] = []
-const EMPTY_SELECTED_TOKENS: _TokenOption[] = []
-const EMPTY_USAGE_DATA: TokenUsageData[] = []
-const EMPTY_TOKEN_SYMBOLS: string[] = []
+const EMPTY_TOKEN_OPTIONS: TokenOption[] = []
+const EMPTY_USAGE_DATA: ProtocolTokenUsageData[] = []
+const getTokenUsageCoreRowModel = getCoreRowModel<ProtocolTokenUsageData>()
+const getTokenUsageSortedRowModel = getSortedRowModel<ProtocolTokenUsageData>()
+const getTokenUsagePaginationRowModel = getPaginationRowModel<ProtocolTokenUsageData>()
 
 interface TokenUsageDatasetProps {
-	config: {
-		id: string
-		tokenSymbols?: string[]
-		includeCex?: boolean
-	}
-	onConfigChange: (config: any) => void
+	config: TokenUsageDatasetTableConfig
 	enableColumnManagement?: boolean
 }
 
-const TokenOptionComponent = ({ innerProps, label, data }: any) => (
+type EditableTokenUsageDatasetProps = TokenUsageDatasetProps & {
+	editable: true
+	onConfigChange: (config: TokenUsageDatasetTableConfig) => void
+}
+
+type ReadOnlyTokenUsageDatasetProps = TokenUsageDatasetProps & {
+	editable: false
+	onConfigChange?: never
+}
+
+const TokenOptionComponent = ({ innerProps, label, data }: OptionProps<TokenOption, true>) => (
 	<div {...innerProps} className="flex cursor-pointer items-center gap-2 p-2">
 		{data.logo ? (
 			<img src={data.logo?.replace('/0/', '')} alt="" width={20} height={20} className="size-5 rounded-full" />
@@ -55,11 +57,11 @@ const TokenOptionComponent = ({ innerProps, label, data }: any) => (
 	</div>
 )
 
-const CustomValueContainer = ({ children, ...props }: any) => {
+const CustomValueContainer = ({ children, ...props }: ValueContainerProps<TokenOption, true>) => {
 	const { getValue } = props
 	const values = getValue()
 
-	if (!values || values.length === 0) {
+	if (values.length === 0) {
 		return <components.ValueContainer {...props}>{children}</components.ValueContainer>
 	}
 
@@ -78,30 +80,70 @@ const CustomValueContainer = ({ children, ...props }: any) => {
 	)
 }
 
-export default function TokenUsageDataset({ config, onConfigChange }: TokenUsageDatasetProps) {
-	const [search, setSearch] = useState('')
-	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'amountUsd' }])
-	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 })
+interface TokenSelectorProps {
+	config: TokenUsageDatasetTableConfig
+	onConfigChange: (config: TokenUsageDatasetTableConfig) => void
+	placeholder: string
+	menuPortalTarget?: HTMLElement | null
+}
+
+function TokenSelector({ config, onConfigChange, placeholder, menuPortalTarget }: TokenSelectorProps) {
 	const [tokenSearchInput, setTokenSearchInput] = useState('')
-	const includeCex = config.includeCex ?? false
-
-	const tokenSymbols = useMemo(
-		() => normalizeProTokenSymbols(config.tokenSymbols ?? EMPTY_TOKEN_SYMBOLS),
-		[config.tokenSymbols]
-	)
-
-	const tokenSymbolSelectValue = useMemo(
-		() => tokenSymbols.map((symbol) => ({ label: symbol.toUpperCase(), value: symbol })),
+	const tokenSymbols = useMemo(() => normalizeProTokenSymbols(config.tokenSymbols), [config.tokenSymbols])
+	const { data: tokenOptionsResponse, isLoading } = useTokenSearch(tokenSearchInput, true)
+	const { data: defaultTokensResponse } = useTokenSearch('', true)
+	const tokenOptions = tokenOptionsResponse ?? EMPTY_TOKEN_OPTIONS
+	const defaultTokens = defaultTokensResponse ?? EMPTY_TOKEN_OPTIONS
+	const value = useMemo(
+		() => tokenSymbols.map((symbol) => ({ id: symbol, label: symbol, value: symbol })),
 		[tokenSymbols]
 	)
 
+	const handleChange = (selectedOptions: MultiValue<TokenOption>) => {
+		const symbols = selectedOptions.map((option) => option.value)
+		if (symbols.length > 4) return
+		onConfigChange({ ...config, tokenSymbols: symbols })
+	}
+
+	return (
+		<ReactSelect
+			placeholder={placeholder}
+			value={value}
+			onChange={handleChange}
+			options={tokenSearchInput ? tokenOptions : defaultTokens}
+			onInputChange={setTokenSearchInput}
+			isLoading={isLoading}
+			isClearable
+			isMulti
+			components={{ Option: TokenOptionComponent, ValueContainer: CustomValueContainer }}
+			styles={{
+				...reactSelectStyles<TokenOption, true, GroupBase<TokenOption>>({ minHeight: '38px', height: '38px' }),
+				valueContainer: (provided) => ({ ...provided, height: '36px', padding: '0 8px' }),
+				input: (provided) => ({ ...provided, margin: '0', padding: '0' })
+			}}
+			{...(menuPortalTarget !== undefined ? { menuPortalTarget } : {})}
+		/>
+	)
+}
+
+export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOnlyTokenUsageDatasetProps) {
+	const { config } = props
+	const [menuPortalTarget, setMenuPortalTarget] = useState<HTMLElement | null>(null)
+	const [search, setSearch] = useState('')
+	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'amountUsd' }])
+	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
+	const includeCex = config.includeCex
+
+	useEffect(() => {
+		if (!props.editable) return
+		setMenuPortalTarget(document.querySelector<HTMLElement>('.pro-dashboard-container'))
+	}, [props.editable])
+
+	const tokenSymbols = useMemo(() => normalizeProTokenSymbols(config.tokenSymbols), [config.tokenSymbols])
+
 	const { data: rawDataResponse, isLoading, isError, refetch } = useTokenUsageData(tokenSymbols, includeCex)
-	const { data: tokenOptionsResponse, isLoading: isLoadingTokens } = useTokenSearch(tokenSearchInput)
-	const { data: defaultTokensResponse } = useTokenSearch('')
 
 	const rawData = rawDataResponse ?? EMPTY_USAGE_DATA
-	const tokenOptions = tokenOptionsResponse ?? EMPTY_TOKEN_OPTIONS
-	const defaultTokens = defaultTokensResponse ?? EMPTY_TOKEN_OPTIONS
 	const deferredSearch = useDeferredValue(search)
 
 	const filteredData = useMemo(() => {
@@ -124,38 +166,18 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 		onSortingChange: setSorting,
 		enableSortingRemoval: false,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		autoResetPageIndex: false
+		getCoreRowModel: getTokenUsageCoreRowModel,
+		getSortedRowModel: getTokenUsageSortedRowModel,
+		getPaginationRowModel: getTokenUsagePaginationRowModel,
+		autoResetPageIndex: true
 	})
 
-	const handleTokenChange = (selectedOptions: any) => {
-		const symbols = selectedOptions ? selectedOptions.map((opt: any) => opt.value) : []
-		if (symbols.length > 4) {
-			return
-		}
-		onConfigChange({
-			...config,
-			tokenSymbols: symbols
-		})
-	}
-
-	const handleIncludeCexChange = () => {
-		onConfigChange({
-			...config,
-			includeCex: !includeCex
-		})
-	}
-
-	const { totalAmount, protocolCount, tokenStats, topCategories, protocolOverlap, multiTokenProtocolCount } = useMemo(
-		() => buildTokenUsageSummary(rawData, tokenSymbols),
-		[rawData, tokenSymbols]
-	)
+	const summary = useMemo(() => buildTokenUsageSummary(rawData, tokenSymbols), [rawData, tokenSymbols])
+	const { totalAmount, protocolCount, topCategories, multiTokenProtocolCount } = summary
 
 	const downloadCSV = () => {
 		const isMultiToken = tokenSymbols.length > 1
-		const headers = ['Protocol', 'Category']
+		const headers: CsvCell[] = ['Protocol', 'Category']
 
 		if (isMultiToken) {
 			for (const symbol of tokenSymbols) {
@@ -164,28 +186,24 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 		}
 		headers.push('Total Amount (USD)')
 
-		const csvData = table.getRowModel().rows.map((row) => {
-			const data: Record<string, any> = {
-				Protocol: row.original.name,
-				Category: row.original.category || ''
-			}
+		const csv: CsvCell[][] = [headers]
+		for (const row of table.getPrePaginationRowModel().rows) {
+			const data: CsvCell[] = [row.original.name, row.original.category ?? '']
 
 			if (isMultiToken) {
 				for (const symbol of tokenSymbols) {
-					data[`${symbol.toUpperCase()} (USD)`] = row.original.tokens?.[symbol] || 0
+					data.push(row.original.tokens[symbol] ?? 0)
 				}
 			}
 
-			data['Total Amount (USD)'] = row.original.amountUsd
-			return data
-		})
+			data.push(row.original.amountUsd)
+			csv.push(data)
+		}
 
-		const csv = [headers.join(','), ...csvData.map((row) => headers.map((h) => row[h]).join(','))].join('\n')
-
-		download(`token-usage-${tokenSymbols.join('-') || 'unknown'}.csv`, csv)
+		downloadCSVFile(`token-usage-${tokenSymbols.join('-')}.csv`, csv)
 	}
 
-	if (!tokenSymbols || tokenSymbols.length === 0) {
+	if (tokenSymbols.length === 0) {
 		return (
 			<div className="flex size-full flex-col p-4">
 				<div className="mb-3">
@@ -194,46 +212,24 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 					</div>
 				</div>
 				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4 px-4">
-					<h3 className="text-center text-lg font-medium text-pro-text-primary md:text-xl">Select Tokens to Compare</h3>
-					<div className="w-full max-w-md">
-						<ReactSelect
-							placeholder="Search tokens..."
-							value={EMPTY_SELECTED_TOKENS}
-							onChange={handleTokenChange}
-							options={tokenSearchInput ? tokenOptions : defaultTokens}
-							onInputChange={(value) => setTokenSearchInput(value)}
-							isLoading={isLoadingTokens}
-							isClearable
-							isMulti
-							components={{
-								Option: TokenOptionComponent,
-								ValueContainer: CustomValueContainer
-							}}
-							styles={{
-								...reactSelectStyles,
-								control: (provided) => ({
-									...reactSelectStyles.control(provided, {
-										minHeight: '38px',
-										height: '38px'
-									})
-								}),
-								valueContainer: (provided) => ({
-									...provided,
-									height: '36px',
-									padding: '0 8px'
-								}),
-								input: (provided) => ({
-									...provided,
-									margin: '0',
-									padding: '0'
-								})
-							}}
-							menuPortalTarget={
-								typeof document !== 'undefined' ? document.querySelector('.pro-dashboard-container') : null
-							}
-						/>
-					</div>
-					<p className="mt-2 text-sm text-pro-text-tertiary">Select up to 4 tokens for comparison (max 4)</p>
+					{props.editable ? (
+						<>
+							<h3 className="text-center text-lg font-medium text-pro-text-primary md:text-xl">
+								Select Tokens to Compare
+							</h3>
+							<div className="w-full max-w-md">
+								<TokenSelector
+									config={config}
+									onConfigChange={props.onConfigChange}
+									placeholder="Search tokens..."
+									menuPortalTarget={menuPortalTarget}
+								/>
+							</div>
+							<p className="mt-2 text-sm text-pro-text-tertiary">Select up to 4 tokens for comparison (max 4)</p>
+						</>
+					) : (
+						<p className="text-sm text-pro-text-secondary">No tokens configured.</p>
+					)}
 				</div>
 			</div>
 		)
@@ -290,7 +286,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 				</div>
 			</div>
 
-			{tokenSymbols.length === 1 ? (
+			{summary.kind === 'single' ? (
 				<div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
 					<div className="border border-subtle p-3">
 						<div className="mb-1 text-xs text-pro-text-tertiary">Total Value</div>
@@ -327,45 +323,41 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 			) : (
 				<>
 					<div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-						{tokenSymbols.map((symbol) => (
-							<div key={symbol} className="border border-subtle p-3">
-								<div className="mb-1 text-xs text-pro-text-tertiary">{symbol.toUpperCase()} Value</div>
-								<div className="text-lg font-semibold text-pro-text-primary">
-									{tokenStats && tokenStats[symbol]
-										? formatUsd(tokenStats[symbol].total, {
-												compact: true,
-												minimumCompactValue: 1_000_000,
-												compactSuffix: 'lowercase'
-											})
-										: '$0'}
-								</div>
-								<div className="text-xs text-pro-text-tertiary">
-									{tokenStats && tokenStats[symbol] ? `${tokenStats[symbol].protocols} protocols` : '0 protocols'}
-								</div>
-								<div className="mt-2">
-									<div className="mb-1 flex items-center justify-between">
-										<span className="text-xs text-pro-text-tertiary">Share</span>
-										<span className="text-xs font-medium">
-											{tokenStats && tokenStats[symbol] && totalAmount > 0
-												? `${formatPercent(tokenStats[symbol].total / totalAmount, { input: 'fraction', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
-												: '0%'}
-										</span>
+						{tokenSymbols.map((symbol) => {
+							const stats = summary.tokenStats[symbol]
+							if (!stats) throw new Error(`Missing token-usage summary bucket for ${symbol}`)
+							return (
+								<div key={symbol} className="border border-subtle p-3">
+									<div className="mb-1 text-xs text-pro-text-tertiary">{symbol.toUpperCase()} Value</div>
+									<div className="text-lg font-semibold text-pro-text-primary">
+										{formatUsd(stats.total, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
 									</div>
-									<div className="h-1.5 overflow-hidden bg-surface-elevated-1">
-										<div
-											className="h-full bg-brand transition-all duration-300"
-											style={{
-												width: `${
-													tokenStats && tokenStats[symbol] && totalAmount > 0
-														? (tokenStats[symbol].total / totalAmount) * 100
-														: 0
-												}%`
-											}}
-										/>
+									<div className="text-xs text-pro-text-tertiary">{stats.protocols} protocols</div>
+									<div className="mt-2">
+										<div className="mb-1 flex items-center justify-between">
+											<span className="text-xs text-pro-text-tertiary">Share</span>
+											<span className="text-xs font-medium">
+												{totalAmount > 0
+													? `${formatPercent(stats.total / totalAmount, { input: 'fraction', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
+													: '0%'}
+											</span>
+										</div>
+										<div className="h-1.5 overflow-hidden bg-surface-elevated-1">
+											<div
+												className="h-full bg-brand transition-[width] duration-300"
+												style={{
+													width: `${totalAmount > 0 ? (stats.total / totalAmount) * 100 : 0}%`
+												}}
+											/>
+										</div>
 									</div>
 								</div>
-							</div>
-						))}
+							)
+						})}
 
 						{tokenSymbols.length <= 2 ? (
 							<div className="border border-subtle p-3">
@@ -392,29 +384,35 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 						) : null}
 					</div>
 
-					{protocolOverlap ? (
-						<div className="mb-4 border border-subtle p-3">
-							<div className="mb-2 text-xs text-pro-text-tertiary">Protocol Distribution</div>
-							<div className="flex flex-wrap items-center gap-4">
-								<div className="flex items-center gap-2">
-									<div className="size-3 bg-brand" />
-									<span className="text-sm">
-										<span className="font-semibold">{protocolOverlap.shared}</span>
-										<span className="text-pro-text-tertiary"> shared</span>
+					<div className="mb-4 border border-subtle p-3">
+						<div className="mb-2 text-xs text-pro-text-tertiary">Protocol Distribution</div>
+						<div className="flex flex-wrap items-center gap-4">
+							<div className="flex items-center gap-2">
+								<div className="size-3 bg-brand" />
+								<span className="text-sm">
+									<span className="font-semibold">{summary.protocolOverlap.shared}</span>
+									<span className="text-pro-text-tertiary"> shared</span>
+									{protocolCount > 0 ? (
 										<span className="text-xs text-pro-text-tertiary">
 											{' '}
 											(
-											{formatPercent(protocolOverlap.shared / protocolCount, {
+											{formatPercent(summary.protocolOverlap.shared / protocolCount, {
 												input: 'fraction',
 												maximumFractionDigits: 0,
 												useGrouping: false
 											})}
 											)
 										</span>
-									</span>
-								</div>
+									) : null}
+								</span>
+							</div>
 
-								{tokenSymbols.map((symbol, index) => (
+							{tokenSymbols.map((symbol, index) => {
+								const exclusiveCount = summary.protocolOverlap.exclusiveByToken[symbol]
+								if (exclusiveCount === undefined) {
+									throw new Error(`Missing token-usage overlap bucket for ${symbol}`)
+								}
+								return (
 									<div key={symbol} className="flex items-center gap-2">
 										<div
 											className="size-3 border-2 border-subtle"
@@ -424,97 +422,73 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 											}}
 										/>
 										<span className="text-sm">
-											<span className="font-semibold">{protocolOverlap[`${symbol}_only`] || 0}</span>
+											<span className="font-semibold">{exclusiveCount}</span>
 											<span className="text-pro-text-tertiary"> {symbol.toUpperCase()} only</span>
 										</span>
 									</div>
-								))}
+								)
+							})}
 
-								<div className="ml-auto text-sm text-pro-text-tertiary">Total: {protocolCount} protocols</div>
-							</div>
+							<div className="ml-auto text-sm text-pro-text-tertiary">Total: {protocolCount} protocols</div>
 						</div>
-					) : null}
+					</div>
 				</>
 			)}
 
 			<div className="mb-3">
 				<div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 					<h3 className="truncate text-base font-semibold text-pro-text-primary md:text-lg">
-						{tokenSymbols.length === 1
+						{tokenSymbols.length === 1 && tokenSymbols[0]
 							? `${tokenSymbols[0].toUpperCase()} Usage`
 							: `Comparing ${tokenSymbols.map((t) => t.toUpperCase()).join(', ')}`}
 					</h3>
 					<div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
-						<div className="order-2 w-full sm:order-1 sm:w-64 lg:w-96">
-							<ReactSelect
-								placeholder="Add or remove tokens (max 4)..."
-								value={tokenSymbolSelectValue}
-								onChange={handleTokenChange}
-								options={tokenSearchInput ? tokenOptions : defaultTokens}
-								onInputChange={(value) => setTokenSearchInput(value)}
-								isLoading={isLoadingTokens}
-								isClearable
-								isMulti
-								components={{
-									Option: TokenOptionComponent,
-									ValueContainer: CustomValueContainer
-								}}
-								styles={{
-									...reactSelectStyles,
-									control: (provided) => ({
-										...reactSelectStyles.control(provided, {
-											minHeight: '38px',
-											height: '38px'
-										})
-									}),
-									valueContainer: (provided) => ({
-										...provided,
-										height: '36px',
-										padding: '0 8px'
-									}),
-									input: (provided) => ({
-										...provided,
-										margin: '0',
-										padding: '0'
-									})
-								}}
-							/>
-						</div>
+						{props.editable ? (
+							<div className="order-2 w-full sm:order-1 sm:w-64 lg:w-96">
+								<TokenSelector
+									config={config}
+									onConfigChange={props.onConfigChange}
+									placeholder="Add or remove tokens (max 4)..."
+								/>
+							</div>
+						) : null}
 						<div className="order-1 flex items-center gap-2 sm:order-2 sm:gap-3">
-							<button
-								type="button"
-								className="flex h-[38px] items-center gap-2 border border-subtle px-2 text-sm transition-colors hover:border-pro-text-tertiary sm:px-3"
-								onClick={handleIncludeCexChange}
-							>
-								<div className="relative size-4">
-									<input type="checkbox" checked={includeCex} readOnly className="sr-only" />
-									<div
-										className={`size-4 border-2 transition-all ${
-											includeCex ? 'border-brand bg-brand' : 'border-pro-text-tertiary bg-transparent'
-										}`}
-									>
-										{includeCex ? (
-											<svg
-												className="size-3 text-on-brand"
-												fill="currentColor"
-												viewBox="0 0 20 20"
-												aria-hidden="true"
-												focusable="false"
-											>
-												<path
-													fillRule="evenodd"
-													d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-													clipRule="evenodd"
-												/>
-											</svg>
-										) : null}
+							{props.editable ? (
+								<button
+									type="button"
+									className="flex h-[38px] items-center gap-2 border border-subtle px-2 text-sm transition-colors hover:border-pro-text-tertiary sm:px-3"
+									onClick={() => props.onConfigChange({ ...config, includeCex: !includeCex })}
+								>
+									<div className="relative size-4">
+										<input type="checkbox" checked={includeCex} readOnly className="sr-only" />
+										<div
+											className={`size-4 border-2 transition-all ${
+												includeCex ? 'border-brand bg-brand' : 'border-pro-text-tertiary bg-transparent'
+											}`}
+										>
+											{includeCex ? (
+												<svg
+													className="size-3 text-on-brand"
+													fill="currentColor"
+													viewBox="0 0 20 20"
+													aria-hidden="true"
+													focusable="false"
+												>
+													<path
+														fillRule="evenodd"
+														d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+														clipRule="evenodd"
+													/>
+												</svg>
+											) : null}
+										</div>
 									</div>
-								</div>
-								<span className="text-xs font-medium whitespace-nowrap text-pro-text-primary sm:text-sm">
-									Include CEXs
-								</span>
-							</button>
-							<ProTableCSVButton
+									<span className="text-xs font-medium whitespace-nowrap text-pro-text-primary sm:text-sm">
+										Include CEXs
+									</span>
+								</button>
+							) : null}
+							<CSVExportButton
 								onClick={downloadCSV}
 								className="flex h-[38px] items-center gap-2 border pro-border bg-surface px-3 text-sm text-pro-text-primary transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#070e0f]"
 							/>
@@ -530,106 +504,18 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 				</div>
 			</div>
 
-			<div className="relative min-h-0 w-full flex-1 overflow-x-auto overflow-y-auto" style={{ height: '100%' }}>
-				<table className="min-w-full border-collapse text-sm text-pro-text-primary">
-					<thead>
-						{table.getHeaderGroups().map((headerGroup) => (
-							<tr key={headerGroup.id}>
-								{headerGroup.headers.map((header) => (
-									<th
-										key={header.id}
-										colSpan={header.colSpan}
-										{...(header.column.getCanSort()
-											? {
-													'aria-sort':
-														header.column.getIsSorted() === 'asc'
-															? 'ascending'
-															: header.column.getIsSorted() === 'desc'
-																? 'descending'
-																: 'none'
-												}
-											: {})}
-										className="border-r border-b border-subtle bg-transparent p-2 font-medium last:border-r-0"
-									>
-										{header.isPlaceholder ? null : header.column.getCanSort() ? (
-											<button
-												type="button"
-												className="flex items-center gap-1 bg-transparent p-0 text-left"
-												onClick={() => header.column.toggleSorting()}
-											>
-												{flexRender(header.column.columnDef.header, header.getContext())}
-												<SortIcon dir={header.column.getIsSorted()} />
-											</button>
-										) : (
-											<span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
-										)}
-									</th>
-								))}
-							</tr>
-						))}
-					</thead>
-					<tbody>
-						{table.getRowModel().rows.map((row) => (
-							<tr key={row.id} className="border-b border-subtle hover:bg-surface-elevated-2">
-								{row.getVisibleCells().map((cell) => (
-									<td key={cell.id} className="border-r border-subtle p-2 whitespace-nowrap last:border-r-0">
-										{flexRender(cell.column.columnDef.cell, cell.getContext())}
-									</td>
-								))}
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
-
-			{table.getPageCount() > 1 ? (
-				<div className="mt-2 flex w-full items-center justify-between p-2">
-					<div className="flex items-center gap-2">
-						<button
-							className="border pro-border pro-panel-bg px-3 py-1 text-sm text-pro-text-primary hover:pro-panel-raised disabled:cursor-not-allowed disabled:opacity-50"
-							onClick={() => table.setPageIndex(0)}
-							disabled={!table.getCanPreviousPage()}
-						>
-							{'<<'}
-						</button>
-						<button
-							className="border pro-border pro-panel-bg px-3 py-1 text-sm text-pro-text-primary hover:pro-panel-raised disabled:cursor-not-allowed disabled:opacity-50"
-							onClick={() => table.previousPage()}
-							disabled={!table.getCanPreviousPage()}
-						>
-							Previous
-						</button>
-						<button
-							className="border pro-border pro-panel-bg px-3 py-1 text-sm text-pro-text-primary hover:pro-panel-raised disabled:cursor-not-allowed disabled:opacity-50"
-							onClick={() => table.nextPage()}
-							disabled={!table.getCanNextPage()}
-						>
-							Next
-						</button>
-						<button
-							className="border pro-border pro-panel-bg px-3 py-1 text-sm text-pro-text-primary hover:pro-panel-raised disabled:cursor-not-allowed disabled:opacity-50"
-							onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-							disabled={!table.getCanNextPage()}
-						>
-							{'>>'}
-						</button>
-					</div>
-					<span className="text-sm text-pro-text-secondary">
-						Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-					</span>
-					<select
-						value={table.getState().pagination.pageSize}
-						onChange={(e) => table.setPageSize(Number(e.target.value))}
-						className="border pro-border pro-panel-bg px-3 py-1 text-sm text-pro-text-primary"
-					>
-						{[10, 25, 50, 100].map((pageSize) => (
-							<option key={pageSize} value={pageSize}>
-								Show {pageSize}
-							</option>
-						))}
-					</select>
-				</div>
-			) : null}
+			<TableBody table={table} isLoading={isLoading} />
+			<TablePagination
+				pageSize={pagination.pageSize}
+				pageIndex={pagination.pageIndex}
+				pageCount={table.getPageCount()}
+				canPreviousPage={table.getCanPreviousPage()}
+				canNextPage={table.getCanNextPage()}
+				previousPage={table.previousPage}
+				nextPage={table.nextPage}
+				setPageSize={table.setPageSize}
+				showPageSizes={filteredData.length > 10}
+			/>
 		</div>
 	)
 }

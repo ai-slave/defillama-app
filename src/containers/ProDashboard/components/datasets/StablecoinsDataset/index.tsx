@@ -1,5 +1,4 @@
 import {
-	type ColumnDef,
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ColumnSizingState,
@@ -13,25 +12,46 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { useTableSearch } from '~/components/Table/utils'
-import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
-import { downloadCSV } from '~/utils/download'
+import { downloadCSV, type CsvCell } from '~/utils/download'
+import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
-import { TableBody } from '../../ProTable/TableBody'
-import { TablePagination } from '../../ProTable/TablePagination'
+import { TableBody } from '../../Table/TableBody'
+import { TablePagination } from '../../Table/TablePagination'
 import { stablecoinsDatasetColumns } from './columns'
-import { useStablecoinsData } from './useStablecoinsData'
+import { type StablecoinsTableRow, useStablecoinsData } from './useStablecoinsData'
 
 interface StablecoinsDatasetProps {
 	chain: string
 }
 
-const EMPTY_DATA: any[] = []
+const EMPTY_DATA: StablecoinsTableRow[] = []
+const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
+	'name',
+	'price',
+	'mcap',
+	'change_1d',
+	'change_7d',
+	'change_1m',
+	'chains'
+]
+const DEFAULT_COLUMN_SIZING: ColumnSizingState = {
+	name: 280,
+	mcap: 145,
+	change_1d: 100,
+	change_7d: 100,
+	change_1m: 100,
+	price: 100,
+	chains: 200
+}
+const getStablecoinsCoreRowModel = getCoreRowModel<StablecoinsTableRow>()
+const getStablecoinsSortedRowModel = getSortedRowModel<StablecoinsTableRow>()
+const getStablecoinsFilteredRowModel = getFilteredRowModel<StablecoinsTableRow>()
+const getStablecoinsPaginationRowModel = getPaginationRowModel<StablecoinsTableRow>()
 
 export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'mcap', desc: true }])
-	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
-	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({})
+	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(DEFAULT_COLUMN_ORDER)
+	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>(DEFAULT_COLUMN_SIZING)
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [pagination, setPagination] = React.useState<PaginationState>({
 		pageIndex: 0,
@@ -39,11 +59,9 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 	})
 
 	const { data, isLoading, error } = useStablecoinsData(chain)
-	const width = useBreakpointWidth()
-
 	const instance = useReactTable({
 		data: data ?? EMPTY_DATA,
-		columns: stablecoinsDatasetColumns as ColumnDef<any>[],
+		columns: stablecoinsDatasetColumns,
 		state: {
 			sorting,
 			columnOrder,
@@ -57,28 +75,12 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		autoResetPageIndex: false
+		getCoreRowModel: getStablecoinsCoreRowModel,
+		getSortedRowModel: getStablecoinsSortedRowModel,
+		getFilteredRowModel: getStablecoinsFilteredRowModel,
+		getPaginationRowModel: getStablecoinsPaginationRowModel,
+		autoResetPageIndex: true
 	})
-
-	React.useEffect(() => {
-		const defaultOrder = instance.getAllLeafColumns().map((d) => d.id)
-		const defaultSizing = {
-			name: 280,
-			mcap: 145,
-			change_1d: 100,
-			change_7d: 100,
-			change_1m: 100,
-			price: 100,
-			chains: 200
-		}
-
-		instance.setColumnSizing(defaultSizing)
-		instance.setColumnOrder(defaultOrder)
-	}, [instance, width])
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
@@ -119,25 +121,24 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 				<div className="flex flex-wrap items-center justify-end gap-4">
 					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">{chain} Stablecoins</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
-								const csvData = rows.map((row) => row.original)
-								const headers = ['Stablecoin', 'Market Cap', '24h Change', '7d Change', '1m Change', 'Price', 'Chains']
-								const csv = [
-									headers.join(','),
-									...csvData.map((item) =>
-										[
-											item.name,
-											item.mcap,
-											item.change_1d,
-											item.change_7d,
-											item.change_1m,
-											item.price,
-											item.chains?.join(';') || ''
-										].join(',')
-									)
-								].join('\n')
+								const csv: CsvCell[][] = [
+									['Stablecoin', 'Market Cap', '24h Change', '7d Change', '1m Change', 'Price', 'Chains']
+								]
+								for (const row of rows) {
+									const item = row.original
+									csv.push([
+										item.name,
+										item.mcap,
+										item.change_1d,
+										item.change_7d,
+										item.change_1m,
+										item.price,
+										item.chains?.join(';')
+									])
+								}
 
 								downloadCSV(`stablecoins-${chain}.csv`, csv, { addTimestamp: true })
 							}}
@@ -153,7 +154,17 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 				</div>
 			</div>
 			<TableBody table={instance} />
-			<TablePagination table={instance} />
+			<TablePagination
+				pageSize={pagination.pageSize}
+				pageIndex={pagination.pageIndex}
+				pageCount={instance.getPageCount()}
+				canPreviousPage={instance.getCanPreviousPage()}
+				canNextPage={instance.getCanNextPage()}
+				previousPage={instance.previousPage}
+				nextPage={instance.nextPage}
+				setPageSize={instance.setPageSize}
+				showPageSizes={instance.getRowCount() > 10}
+			/>
 		</div>
 	)
 }

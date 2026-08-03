@@ -1,14 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import {
-	isProDashboardProxyType,
-	type ProDashboardProxyRequest,
-	type ProDashboardProxyResponseValue
+import type {
+	ProDashboardProxyRequest,
+	ProDashboardProxyResponseValue
 } from '~/containers/ProDashboard/dashboardProxyContract'
 import { buildProDashboardProtocolRelations } from '~/containers/ProDashboard/protocolCatalog'
 import { fetchProtocolsAndChains, fetchSingleChartData, withTimeout } from '~/containers/ProDashboard/queries.server'
-import { buildStablecoinsChartCacheValue } from '~/containers/ProDashboard/server/stablecoinFetchers'
+import { buildStablecoinsChartCacheValue } from '~/containers/ProDashboard/stablecoinData'
 import { fetchStablecoinAssetsApi, fetchStablecoinChartApi } from '~/containers/Stablecoins/api'
-import { fetchProtocolsByToken } from '~/containers/TokenUsage/api'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import { requireSubscription } from '~/server/api/requireSubscription'
 import { addRouteTelemetryAttributes, recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
@@ -29,14 +27,12 @@ async function dispatchFetch(request: ProDashboardProxyRequest): Promise<ProDash
 	switch (request.type) {
 		case 'chart': {
 			const { chart } = request.params
-			if (!chart?.type) throw new Error('Missing chart config')
-			const catalog = chart.protocol ? await fetchProtocolsAndChains() : null
+			const catalog = chart.subjectType === 'protocol' ? await fetchProtocolsAndChains() : null
 			return fetchSingleChartData(chart, 'all', null, buildProDashboardProtocolRelations(catalog))
 		}
 
 		case 'stablecoins': {
 			const { chain } = request.params
-			if (!chain) throw new Error('Missing chain param')
 
 			const peggedData = await withTimeout(fetchStablecoinAssetsApi(), FETCH_TIMEOUT)
 
@@ -51,32 +47,23 @@ async function dispatchFetch(request: ProDashboardProxyRequest): Promise<ProDash
 
 		case 'yields': {
 			const { poolConfigId } = request.params
-			if (!poolConfigId) throw new Error('Missing poolConfigId param')
 			return withTimeout(fetchPoolDetailHistory(poolConfigId, 'max'), FETCH_TIMEOUT)
 		}
 
 		case 'yieldsLendBorrow': {
 			const { poolConfigId } = request.params
-			if (!poolConfigId) throw new Error('Missing poolConfigId param')
 			return withTimeout(fetchBorrowMarketDetailHistory(poolConfigId, 'max'), FETCH_TIMEOUT)
-		}
-
-		case 'tokenUsage': {
-			const { symbol } = request.params
-			if (!symbol) throw new Error('Missing symbol param')
-			return withTimeout(fetchProtocolsByToken(symbol), FETCH_TIMEOUT)
 		}
 
 		case 'rwaBreakdown': {
 			const { breakdown, metric, chain } = request.params
-			if (!breakdown) throw new Error('Missing breakdown param')
 			const rwaApi = await import('~/containers/RWA/api')
 
 			if (chain && chain !== 'All') {
 				const rows = await withTimeout(
 					rwaApi.fetchRWAChartMetricDataByAsset({
 						target: { kind: 'chain', slug: chain },
-						metric: metric || 'activeMcap',
+						metric,
 						includeStablecoins: false,
 						includeGovernance: false
 					}),
@@ -87,7 +74,7 @@ async function dispatchFetch(request: ProDashboardProxyRequest): Promise<ProDash
 				)
 			}
 
-			const breakdownParams = { key: metric || 'activeMcap', includeStablecoin: false, includeGovernance: false }
+			const breakdownParams = { key: metric, includeStablecoin: false, includeGovernance: false }
 			const rows = await (async () => {
 				switch (breakdown) {
 					case 'category':
@@ -106,7 +93,6 @@ async function dispatchFetch(request: ProDashboardProxyRequest): Promise<ProDash
 
 		case 'rwaAssetChart': {
 			const { assetId } = request.params
-			if (!assetId) throw new Error('Missing assetId param')
 			const { fetchRWAAssetChartData } = await import('~/containers/RWA/api')
 			return withTimeout(fetchRWAAssetChartData(assetId), FETCH_TIMEOUT)
 		}
@@ -127,15 +113,13 @@ async function dispatchFetch(request: ProDashboardProxyRequest): Promise<ProDash
 		}
 
 		case 'equitiesStatements': {
-			const { ticker, country = 'US' } = request.params
-			if (!ticker) throw new Error('Missing ticker param')
+			const { ticker, country } = request.params
 			const { fetchEquitiesStatements } = await import('~/containers/Equities/api')
 			return withTimeout(fetchEquitiesStatements(ticker, country), FETCH_TIMEOUT)
 		}
 
 		case 'equitiesFilings': {
-			const { ticker, country = 'US' } = request.params
-			if (!ticker) throw new Error('Missing ticker param')
+			const { ticker, country } = request.params
 			const { fetchEquitiesFilings } = await import('~/containers/Equities/api')
 			return withTimeout(fetchEquitiesFilings(ticker, country), FETCH_TIMEOUT)
 		}
@@ -146,7 +130,6 @@ async function dispatchFetch(request: ProDashboardProxyRequest): Promise<ProDash
 
 		case 'stablecoinAsset': {
 			const { slug } = request.params
-			if (!slug) throw new Error('Missing slug param')
 			const { fetchStablecoinPeggedConfigApi, fetchStablecoinAssetApi } = await import('~/containers/Stablecoins/api')
 			const peggedNameToPeggedIDMapping = await withTimeout(fetchStablecoinPeggedConfigApi(), FETCH_TIMEOUT)
 			const peggedID = peggedNameToPeggedIDMapping[slug]
@@ -156,7 +139,7 @@ async function dispatchFetch(request: ProDashboardProxyRequest): Promise<ProDash
 	}
 }
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function dashboardFetchHandler(req: NextApiRequest, res: NextApiResponse) {
 	if (req.method !== 'GET') {
 		res.setHeader('Allow', ['GET'])
 		return res.status(405).json({ error: 'Method Not Allowed' })
@@ -165,21 +148,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	const auth = await requireSubscription(dashboardProxyAuthHeader(req), res)
 	if (!auth) return
 
-	const { type, params: paramsStr } = req.query
-	if (!isProDashboardProxyType(type) || typeof paramsStr !== 'string') {
-		return res.status(400).json({ error: 'Missing type or params' })
+	const requestParam = req.query.request
+	if (typeof requestParam !== 'string') {
+		return res.status(400).json({ error: 'Missing request' })
 	}
 
-	let params: unknown
+	let request: ProDashboardProxyRequest
 	try {
-		params = JSON.parse(paramsStr)
+		request = JSON.parse(requestParam)
 	} catch {
-		return res.status(400).json({ error: 'Invalid params JSON' })
+		return res.status(400).json({ error: 'Invalid request JSON' })
 	}
-	if (!params || typeof params !== 'object' || Array.isArray(params)) {
-		return res.status(400).json({ error: 'Invalid params JSON' })
-	}
-	const request = { type, params } as ProDashboardProxyRequest
 
 	try {
 		const fetchStart = Date.now()
@@ -197,9 +176,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		res.setHeader('Content-Type', 'application/json')
 		return res.status(200).send(payload)
 	} catch (error) {
-		recordRouteRuntimeError(error, 'apiRoute', { type })
+		recordRouteRuntimeError(error, 'apiRoute', { type: request.type })
 		return res.status(500).json({ error: 'Failed to fetch data' })
 	}
 }
 
-export default withApiRouteTelemetry('/api/private/pro-dashboard/fetch', handler)
+export const dashboardFetchApiHandler = withApiRouteTelemetry('/api/private/pro-dashboard/fetch', dashboardFetchHandler)

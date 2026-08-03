@@ -2,41 +2,42 @@
 
 // TODO(PRO-2004): Remove this opt-out once React Compiler no longer regresses virtualized column sizing/layout sync.
 
-import type { Table } from '@tanstack/react-table'
-import { flexRender } from '@tanstack/react-table'
+import { flexRender, type Column, type HeaderGroup, type Row } from '@tanstack/react-table'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useLayoutEffect, useRef } from 'react'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { Tooltip } from '~/ui/Tooltip'
-import type { NormalizedRow } from '../types'
+import type { ProtocolTableRow } from '../types'
 
 interface UnifiedVirtualTableProps {
-	table: Table<NormalizedRow>
-	rowStateVersion?: string
+	rows: Row<ProtocolTableRow>[]
+	headerGroups: HeaderGroup<ProtocolTableRow>[]
+	visibleLeafColumns: Column<ProtocolTableRow, unknown>[]
+	totalTableWidth: number
+	pageIndex: number
+	pageSize: number
 	rowSize?: number
 	stripedBg?: boolean
 	compact?: boolean
 }
 
-const isGroupingColumn = (columnId?: string) => typeof columnId === 'string' && columnId.startsWith('__group_')
-
 export function UnifiedVirtualTable({
-	table,
-	rowStateVersion,
+	rows,
+	headerGroups,
+	visibleLeafColumns,
+	totalTableWidth,
+	pageIndex,
+	pageSize,
 	rowSize = 50,
 	stripedBg = false,
 	compact = false
 }: UnifiedVirtualTableProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
-	const { rows } = table.getRowModel()
-
-	const visibleLeafColumns = table.getVisibleLeafColumns().filter((column) => !isGroupingColumn(column.id))
 	const gridTemplateColumns =
-		visibleLeafColumns.map((column) => `minmax(${column.getSize() ?? 100}px, 1fr)`).join(' ') || '1fr'
+		visibleLeafColumns.map((column) => `minmax(${column.getSize()}px, 1fr)`).join(' ') || '1fr'
 
 	const firstColumn = visibleLeafColumns[0]
 	const firstColumnId = firstColumn?.id
-	const totalTableWidth = table.getTotalSize()
 
 	const rowVirtualizer = useVirtualizer({
 		count: rows.length,
@@ -46,13 +47,10 @@ export function UnifiedVirtualTable({
 	})
 
 	const virtualItems = rowVirtualizer.getVirtualItems()
-	const headerGroups = table.getHeaderGroups()
-	const expandedCount = Object.keys(table.getState().expanded ?? {}).length
 
 	useLayoutEffect(() => {
-		rowVirtualizer.measure()
-		rowVirtualizer.scrollToOffset(rowVirtualizer.scrollOffset, { align: 'start' })
-	}, [expandedCount, rowStateVersion, rowVirtualizer])
+		rowVirtualizer.scrollToOffset(0, { align: 'start' })
+	}, [pageIndex, pageSize, rowVirtualizer])
 
 	return (
 		<div
@@ -71,7 +69,7 @@ export function UnifiedVirtualTable({
 				}}
 			>
 				{headerGroups.map((headerGroup) => {
-					const headers = headerGroup.headers.filter((header) => !header.column.columnDef.meta?.hidden)
+					const headers = headerGroup.headers
 					if (!headers.length) {
 						return null
 					}
@@ -138,8 +136,9 @@ export function UnifiedVirtualTable({
 					position: 'relative'
 				}}
 			>
-				{virtualItems.map((virtualRow, i) => {
+				{virtualItems.map((virtualRow) => {
 					const row = rows[virtualRow.index]
+					if (!row) return null
 					const trStyle: React.CSSProperties = {
 						display: 'grid',
 						gridTemplateColumns,
@@ -149,46 +148,42 @@ export function UnifiedVirtualTable({
 						left: 0,
 						width: '100%',
 						height: `${virtualRow.size}px`,
-						opacity: (row.original as { disabled?: boolean } | undefined)?.disabled ? 0.3 : 1,
 						transform: `translateY(${virtualRow.start}px)`
 					}
 
 					return (
 						<div key={row.id} style={trStyle}>
-							{row
-								.getVisibleCells()
-								.filter((cell) => !cell.column.columnDef.meta?.hidden)
-								.map((cell) => {
-									const textAlign = cell.column.columnDef.meta?.align ?? 'start'
-									const isSticky = cell.column.id === firstColumnId
-									return (
-										<div
-											key={cell.id}
-											data-lighter={stripedBg && i % 2 === 0}
-											className={`truncate border-t border-r border-subtle p-3 ${
-												compact
-													? 'flex items-center border-t-black/10 border-r-transparent px-5 dark:border-t-white/10'
-													: ''
-											}`}
-											style={{
-												textAlign,
-												justifyContent: compact
-													? textAlign === 'center'
-														? 'center'
-														: textAlign === 'end'
-															? 'flex-end'
-															: 'flex-start'
-													: undefined,
-												position: isSticky ? 'sticky' : undefined,
-												left: isSticky ? 0 : undefined,
-												zIndex: isSticky ? 1 : undefined,
-												background: isSticky ? 'var(--pro-cards-bg)' : undefined
-											}}
-										>
-											{flexRender(cell.column.columnDef.cell, cell.getContext())}
-										</div>
-									)
-								})}
+							{row.getVisibleCells().map((cell) => {
+								const textAlign = cell.column.columnDef.meta?.align ?? 'start'
+								const isSticky = cell.column.id === firstColumnId
+								return (
+									<div
+										key={cell.id}
+										data-lighter={stripedBg && virtualRow.index % 2 === 0}
+										className={`truncate border-t border-r border-subtle p-3 ${
+											compact
+												? 'flex items-center border-t-black/10 border-r-transparent px-5 dark:border-t-white/10'
+												: ''
+										}`}
+										style={{
+											textAlign,
+											justifyContent: compact
+												? textAlign === 'center'
+													? 'center'
+													: textAlign === 'end'
+														? 'flex-end'
+														: 'flex-start'
+												: undefined,
+											position: isSticky ? 'sticky' : undefined,
+											left: isSticky ? 0 : undefined,
+											zIndex: isSticky ? 1 : undefined,
+											background: isSticky ? 'var(--pro-cards-bg)' : undefined
+										}}
+									>
+										{flexRender(cell.column.columnDef.cell, cell.getContext())}
+									</div>
+								)
+							})}
 						</div>
 					)
 				})}
@@ -199,7 +194,7 @@ export function UnifiedVirtualTable({
 
 interface HeaderWithTooltipProps {
 	children: React.ReactNode
-	content?: string
+	content?: string | undefined
 }
 
 function HeaderWithTooltip({ children, content }: HeaderWithTooltipProps) {

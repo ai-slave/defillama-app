@@ -1,5 +1,34 @@
-import type { NextApiResponse } from 'next'
+import { EventEmitter } from 'node:events'
+import { IncomingMessage } from 'node:http'
+import { Socket } from 'node:net'
+import type { NextApiRequest, NextApiResponse } from 'next'
 import { vi } from 'vitest'
+
+export interface MockNextApiRequestOptions {
+	body?: unknown
+	headers?: NextApiRequest['headers']
+	method?: string
+	query?: NextApiRequest['query']
+}
+
+class MockNextApiRequest extends IncomingMessage implements NextApiRequest {
+	body: unknown
+	cookies: NextApiRequest['cookies'] = {}
+	env: NextApiRequest['env'] = {}
+	query: NextApiRequest['query']
+
+	constructor(options: MockNextApiRequestOptions) {
+		super(new Socket())
+		this.body = options.body
+		this.headers = options.headers ?? {}
+		this.method = options.method
+		this.query = options.query ?? {}
+	}
+}
+
+export function createMockNextApiRequest(options: MockNextApiRequestOptions = {}): NextApiRequest {
+	return new MockNextApiRequest(options)
+}
 
 export type MockNextApiResponse = NextApiResponse & {
 	setHeader: ReturnType<typeof vi.fn>
@@ -14,6 +43,7 @@ export type MockNextApiResponse = NextApiResponse & {
 
 export function createMockNextApiResponse(): MockNextApiResponse {
 	const headers = new Map<string, unknown>()
+	const events = new EventEmitter()
 	const res = {
 		statusCode: 200,
 		setHeader: vi.fn(),
@@ -23,7 +53,11 @@ export function createMockNextApiResponse(): MockNextApiResponse {
 		send: vi.fn(),
 		revalidate: vi.fn(),
 		write: vi.fn(),
-		end: vi.fn()
+		end: vi.fn(),
+		on: events.on.bind(events),
+		once: events.once.bind(events),
+		off: events.off.bind(events),
+		emit: events.emit.bind(events)
 	} as unknown as MockNextApiResponse
 
 	res.setHeader.mockImplementation((name: string, value: unknown) => {

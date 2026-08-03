@@ -1,82 +1,75 @@
-'use no memo'
-
 import type { SortingState, VisibilityState } from '@tanstack/react-table'
-import type { CustomColumnDefinition } from '../../../types'
-import { validateCustomColumnOnLoad } from '../utils/customColumns'
-import { UNIFIED_TABLE_COLUMN_DICTIONARY } from './ColumnDictionary'
+import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '../../../unifiedTable/config/columnDictionary'
+import { isColumnAvailableForGrouping } from '../../../unifiedTable/config/groupingCapabilities'
+import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
+import { isCustomColumnId, validateCustomColumnOnLoad } from '../utils/customColumns'
 
-const ALWAYS_INCLUDE = new Set(['name'])
-let CAPABILITIES_CACHE: Set<string> | null = null
+const SUPPORTED_COLUMN_IDS = new Set<string>(['name'])
+for (const column of UNIFIED_TABLE_COLUMN_DICTIONARY) SUPPORTED_COLUMN_IDS.add(column.id)
 
-function getCapabilitiesFromDictionary(): Set<string> {
-	if (CAPABILITIES_CACHE) return CAPABILITIES_CACHE
-
-	const ids = UNIFIED_TABLE_COLUMN_DICTIONARY.map((column) => column.id)
-	const capabilities = new Set<string>([...ALWAYS_INCLUDE, ...ids])
-	CAPABILITIES_CACHE = capabilities
-	return capabilities
-}
-
-// oxlint-disable-next-line no-unused-vars
-function getCapabilities(): Set<string> {
-	return new Set(getCapabilitiesFromDictionary())
-}
-
-function isCustomColumnId(id: string): boolean {
-	return id.startsWith('custom_')
-}
-
-export function isColumnSupported(id: string, validCustomColumnIds?: Set<string>): boolean {
+export function isColumnSupported(
+	id: string,
+	rowHeaders: readonly UnifiedRowHeaderType[],
+	validCustomColumnIds?: Set<string>
+): boolean {
 	if (isCustomColumnId(id)) {
 		if (!validCustomColumnIds) return false
 		return validCustomColumnIds.has(id)
 	}
-	return getCapabilitiesFromDictionary().has(id)
+	return SUPPORTED_COLUMN_IDS.has(id) && isColumnAvailableForGrouping(id, rowHeaders)
 }
 
-function filterByCapabilities(ids: string[], validCustomColumnIds?: Set<string>): string[] {
-	return ids.filter((id) => isColumnSupported(id, validCustomColumnIds))
+function filterByCapabilities(
+	ids: string[],
+	rowHeaders: readonly UnifiedRowHeaderType[],
+	validCustomColumnIds?: Set<string>
+): string[] {
+	return ids.filter((id) => isColumnSupported(id, rowHeaders, validCustomColumnIds))
 }
 
-function pruneVisibility(visibility: VisibilityState | undefined, validCustomColumnIds?: Set<string>): VisibilityState {
+function pruneVisibility(
+	visibility: VisibilityState | undefined,
+	rowHeaders: readonly UnifiedRowHeaderType[],
+	validCustomColumnIds?: Set<string>
+): VisibilityState {
 	if (!visibility) return {}
 	const result: VisibilityState = {}
 	for (const key in visibility) {
-		if (isColumnSupported(key, validCustomColumnIds)) {
-			result[key] = visibility[key]
-		}
+		const isVisible = visibility[key]
+		if (isVisible !== undefined && isColumnSupported(key, rowHeaders, validCustomColumnIds)) result[key] = isVisible
 	}
 	return result
 }
 
-function sanitizeSorting(sorting: SortingState | undefined, validCustomColumnIds?: Set<string>): SortingState {
+function sanitizeSorting(
+	sorting: SortingState | undefined,
+	rowHeaders: readonly UnifiedRowHeaderType[],
+	validCustomColumnIds?: Set<string>
+): SortingState {
 	if (!sorting) return []
-	return sorting.filter((sort) => isColumnSupported(sort.id, validCustomColumnIds))
+	return sorting.filter((sort) => isColumnSupported(sort.id, rowHeaders, validCustomColumnIds))
 }
 
 function getValidCustomColumnIds(customColumns?: CustomColumnDefinition[]): Set<string> {
-	if (!customColumns || customColumns.length === 0) return new Set()
-	return new Set(
-		customColumns
-			.filter((col) => isValidCustomColumnId(col.id) && validateCustomColumnOnLoad(col).isValid)
-			.map((col) => col.id)
-	)
-}
-
-function isValidCustomColumnId(id: string): boolean {
-	return typeof id === 'string' && id.startsWith('custom_')
+	const validIds = new Set<string>()
+	for (const column of customColumns ?? []) {
+		if (isCustomColumnId(column.id) && validateCustomColumnOnLoad(column).isValid) validIds.add(column.id)
+	}
+	return validIds
 }
 
 export function sanitizeConfigColumns({
 	order,
 	visibility,
 	sorting,
-	customColumns
+	customColumns,
+	rowHeaders
 }: {
 	order: string[]
 	visibility?: VisibilityState
 	sorting?: SortingState
-	customColumns?: CustomColumnDefinition[]
+	customColumns?: CustomColumnDefinition[] | undefined
+	rowHeaders: readonly UnifiedRowHeaderType[]
 }): {
 	order: string[]
 	visibility: VisibilityState
@@ -84,8 +77,8 @@ export function sanitizeConfigColumns({
 } {
 	const validCustomColumnIds = getValidCustomColumnIds(customColumns)
 	return {
-		order: filterByCapabilities(order, validCustomColumnIds),
-		visibility: pruneVisibility(visibility, validCustomColumnIds),
-		sorting: sanitizeSorting(sorting, validCustomColumnIds)
+		order: filterByCapabilities(order, rowHeaders, validCustomColumnIds),
+		visibility: pruneVisibility(visibility, rowHeaders, validCustomColumnIds),
+		sorting: sanitizeSorting(sorting, rowHeaders, validCustomColumnIds)
 	}
 }

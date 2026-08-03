@@ -1,25 +1,30 @@
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
+import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type {
 	ChartBuilderConfig as StoredChartBuilderConfig,
+	AdvancedTvlChartType,
+	BorrowedChartType,
 	ChartConfig,
-	DashboardItemConfig,
 	MetricAggregator,
 	MetricChartType,
 	RWAOverviewChartBreakdown,
 	RWAOverviewChartMetric,
-	RWAOverviewChartView
+	RWAOverviewChartView,
+	StablecoinAssetChartType,
+	StablecoinChartType,
+	YieldChartType
 } from '../../types'
 import type { UnifiedTableFocusSection } from '../UnifiedTable/types'
 
 export interface AddChartModalProps {
 	isOpen: boolean
 	onClose: () => void
-	editItem?: DashboardItemConfig | null
-	initialUnifiedFocusSection?: UnifiedTableFocusSection
+	editItem?: DashboardItemConfig | null | undefined
+	initialUnifiedFocusSection?: UnifiedTableFocusSection | undefined
 	onOpenSqlModal?: () => void
 }
 
-export type MainTabType = 'charts' | 'metric' | 'table' | 'text' | 'builder' | 'llamaai' | 'sql'
+export type MainTabType = 'charts' | 'metric' | 'table' | 'text' | 'llamaai' | 'sql'
 export type ChartModeType = 'manual' | 'builder'
 export type ChartTabType =
 	| 'chain'
@@ -37,18 +42,8 @@ export type CombinedTableType =
 	| 'cex'
 	| 'cex-analytics'
 	| 'stablecoins'
-	| 'revenue'
-	| 'holders-revenue'
-	| 'earnings'
-	| 'fees'
 	| 'token-usage'
 	| 'yields'
-	| 'aggregators'
-	| 'perps'
-	| 'options'
-	| 'dexs'
-	| 'bridge-aggregators'
-	| 'trending-contracts'
 	| 'chains'
 	| 'rwa'
 	| 'rwa-chains'
@@ -58,6 +53,10 @@ export type CombinedTableType =
 	| 'equities-filings'
 
 export type ChartBuilderConfig = StoredChartBuilderConfig['config']
+export type ChartBuilderUpdate = Omit<Partial<ChartBuilderConfig>, 'protocol' | 'protocolCategories'> & {
+	protocol?: string | undefined
+	protocolCategories?: string[] | undefined
+}
 
 export interface ModalState {
 	selectedMainTab: MainTabType
@@ -76,7 +75,6 @@ export interface ModalState {
 	textContent: string
 	selectedTableType: CombinedTableType
 	selectedDatasetChain: string | null
-	selectedDatasetTimeframe: string | null
 	selectedCexAnalyticsView: CexAnalyticsView | 'starter'
 	selectedCexAnalyticsMetric: CexAnalyticsMetric
 	selectedCexAnalyticsTopN: number
@@ -93,7 +91,7 @@ export interface ModalState {
 	metricLabel: string
 	metricChartType: MetricChartType
 	selectedYieldPool: { configID: string; name: string; project: string; chain: string } | null
-	selectedYieldChartType: string
+	selectedYieldChartType: YieldChartType
 	selectedYieldChains: string[]
 	selectedYieldProjects: string[]
 	selectedYieldCategories: string[]
@@ -101,17 +99,17 @@ export interface ModalState {
 	minTvl: number | null
 	maxTvl: number | null
 	selectedStablecoinChain: string
-	selectedStablecoinChartType: string
+	selectedStablecoinChartType: StablecoinChartType
 	stablecoinMode: 'chain' | 'asset'
 	selectedStablecoinAsset: string | null
 	selectedStablecoinAssetId: string | null
-	selectedStablecoinAssetChartType: string
+	selectedStablecoinAssetChartType: StablecoinAssetChartType
 	selectedAdvancedTvlProtocol: string | null
 	selectedAdvancedTvlProtocolName: string | null
-	selectedAdvancedTvlChartType: string
+	selectedAdvancedTvlChartType: AdvancedTvlChartType
 	selectedBorrowedProtocol: string | null
 	selectedBorrowedProtocolName: string | null
-	selectedBorrowedChartType: string
+	selectedBorrowedChartType: BorrowedChartType
 	selectedIncomeStatementProtocol: string | null
 	selectedIncomeStatementProtocolName: string | null
 	selectedLlamaAIChart: { id: string; title: string } | null

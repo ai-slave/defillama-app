@@ -4,8 +4,8 @@ import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
-import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -34,8 +34,8 @@ export function withNetworkFee(dataType: `${ADAPTER_DATA_TYPES}`) {
 	return async () =>
 		sumDailySeries(
 			await Promise.all([
-				ProtocolCharts.summary(DEX, ADAPTER_TYPES.FEES, dataType),
-				ProtocolCharts.summary(CHAIN, ADAPTER_TYPES.FEES, dataType).catch((error) => {
+				fetchAdapterProtocolChartData({ adapterType: ADAPTER_TYPES.FEES, protocol: DEX, dataType }),
+				fetchAdapterProtocolChartData({ adapterType: ADAPTER_TYPES.FEES, protocol: CHAIN, dataType }).catch((error) => {
 					recordRuntimeError(error, 'clientRuntime')
 					return []
 				})
@@ -55,7 +55,7 @@ export const NETWORK_FEE_DATA_TYPES: Record<string, `${ADAPTER_DATA_TYPES}` | un
 export function networkFeeQuery(dataType: `${ADAPTER_DATA_TYPES}` = ADAPTER_DATA_TYPES.DAILY_FEES) {
 	return {
 		queryKey: ['thorchain-network-fee', dataType],
-		queryFn: () => ProtocolCharts.summary(CHAIN, ADAPTER_TYPES.FEES, dataType),
+		queryFn: () => fetchAdapterProtocolChartData({ adapterType: ADAPTER_TYPES.FEES, protocol: CHAIN, dataType }),
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
 	}

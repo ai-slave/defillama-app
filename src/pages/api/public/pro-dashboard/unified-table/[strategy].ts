@@ -1,1 +1,3 @@
-export { default } from '~/containers/ProDashboard/server/unifiedTable/route'
+import { unifiedTableApiHandler } from '~/containers/ProDashboard/server/unifiedTable/route'
+
+export default unifiedTableApiHandler

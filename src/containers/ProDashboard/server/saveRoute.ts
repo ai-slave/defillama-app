@@ -4,12 +4,11 @@ import {
 	dashboardIdFromQuery,
 	featuresServerUrl,
 	fetchExistingDashboard,
-	parseJsonObject,
-	type ProxiedDashboard,
 	purgeDashboardCache,
 	sendBackendResponse
 } from '~/server/dashboardPurgeProxy'
 import { withApiRouteTelemetry } from '~/utils/telemetry'
+import type { PersistedDashboard } from '../dashboardConfig/persisted'
 
 function outboundBody(req: NextApiRequest): string {
 	if (typeof req.body === 'string') return req.body
@@ -41,13 +40,13 @@ export async function dashboardSaveHandler(req: NextApiRequest, res: NextApiResp
 		return sendBackendResponse(saveResponse, res)
 	}
 
-	const saved = parseJsonObject(await saveResponse.text())
-	if (!saved) {
+	let saved: PersistedDashboard
+	try {
+		saved = await saveResponse.json()
+	} catch {
 		return res.status(502).json({ error: 'Dashboard save response was not valid JSON' })
 	}
-
-	const after = saved as ProxiedDashboard
-	const purgeResult = await purgeDashboardCache({ id: id ?? after.id ?? '', before, after })
+	const purgeResult = await purgeDashboardCache({ id: saved.id, before, after: saved })
 	if (purgeResult.status !== 'purged') {
 		console.error(
 			`Dashboard save cache purge ${purgeResult.status}: ${'reason' in purgeResult ? purgeResult.reason : 'unknown'}`
@@ -58,4 +57,4 @@ export async function dashboardSaveHandler(req: NextApiRequest, res: NextApiResp
 	return res.status(saveResponse.status).json(saved)
 }
 
-export default withApiRouteTelemetry('/api/private/pro-dashboard/save', dashboardSaveHandler)
+export const dashboardSaveApiHandler = withApiRouteTelemetry('/api/private/pro-dashboard/save', dashboardSaveHandler)

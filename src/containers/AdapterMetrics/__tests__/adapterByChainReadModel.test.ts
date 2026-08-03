@@ -137,6 +137,35 @@ describe('buildAdapterByChainReadModel', () => {
 		expect(result.protocols.map(({ name }) => name)).toEqual(['Protocol A', 'Protocol B'])
 	})
 
+	it('preserves nullable activity and API changes in a successful adapter listing', () => {
+		const result = buildReadModel({
+			protocols: [
+				protocol({
+					total24h: null,
+					total48hto24h: 5,
+					total7d: null,
+					total14dto7d: null,
+					total30d: null,
+					total60dto30d: null,
+					total7DaysAgo: null,
+					total30DaysAgo: null,
+					total1y: null,
+					totalAllTime: null
+				})
+			]
+		})
+
+		expect(result.protocols[0]).toMatchObject({
+			total24h: null,
+			total48hto24h: 5,
+			total7d: null,
+			total30d: null,
+			total1y: null,
+			totalAllTime: null,
+			change_1d: 100
+		})
+	})
+
 	it('keeps a parent annualized total null when a contributing child is missing it', () => {
 		const result = buildReadModel({
 			protocols: [
@@ -160,6 +189,40 @@ describe('buildAdapterByChainReadModel', () => {
 
 		expect(result.protocols).toHaveLength(1)
 		expect(result.protocols[0]).toMatchObject({ name: 'Parent', total24h: 20, annualized1y: null })
+	})
+
+	it('does not let an inactive normalized child hide an active parent annualized total', () => {
+		const result = buildReadModel({
+			protocols: [
+				protocol({
+					name: 'Child A',
+					displayName: 'Child A',
+					slug: 'child-a',
+					parentProtocol: 'Parent',
+					linkedProtocols: ['Parent', 'Child A']
+				}),
+				protocol({
+					name: 'Child B',
+					displayName: 'Child B',
+					slug: 'child-b',
+					parentProtocol: 'Parent',
+					linkedProtocols: ['Parent', 'Child B'],
+					total24h: null,
+					total48hto24h: null,
+					total7d: null,
+					total14dto7d: null,
+					total30d: null,
+					total60dto30d: null,
+					total7DaysAgo: null,
+					total30DaysAgo: null,
+					total1y: null,
+					totalAllTime: null,
+					annualized1y: null
+				})
+			]
+		})
+
+		expect(result.protocols[0]).toMatchObject({ name: 'Parent', total24h: 10, annualized1y: 3_600 })
 	})
 
 	it('sums parent annualized data when every contributing child provides it', () => {

@@ -1,7 +1,7 @@
-import handler from '~/containers/ProDashboard/server/stream'
+import { dashboardStreamApiHandler } from '~/containers/ProDashboard/server/stream'
 
 export const config = {
 	api: { responseLimit: false }
 }
 
-export default handler
+export default dashboardStreamApiHandler

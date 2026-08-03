@@ -1,105 +1,6 @@
 import type { PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
-import type { DashboardItemConfig } from '~/containers/ProDashboard/types'
-
-export interface ChartConfiguration {
-	id: string
-	datasetName?: string
-	type: 'line' | 'area' | 'bar' | 'combo' | 'pie' | 'scatter' | 'hbar' | 'candlestick'
-	title: string
-	description: string
-	valueSymbol?: string
-	/** Explicit colors keyed by slice/point name — used by pie & scatter, which color per-category not per-series. */
-	seriesColors?: Record<string, string>
-	source?: string
-
-	axes: {
-		x: {
-			field: string
-			label: string
-			type: 'time' | 'category' | 'value'
-			valueSymbol?: string
-			entityType?: 'protocol' | 'chain' | 'token' | 'stablecoin' | 'equity'
-			logoCategories?: string[]
-			logoKeys?: Record<string, string>
-		}
-		yAxes: Array<{
-			id: string
-			fields: string[]
-			label: string
-			position: 'left' | 'right'
-			scale?: 'linear' | 'log'
-			valueSymbol?: string
-			min?: number | 'dataMin'
-			max?: number | 'dataMax'
-			interval?: number
-		}>
-	}
-
-	series: Array<{
-		name: string
-		type: 'line' | 'area' | 'bar' | 'hbar' | 'scatter' | 'candlestick'
-		yAxisId: string
-		metricClass: 'flow' | 'stock'
-		dataMapping: {
-			xField: string
-			yField: string
-			entityFilter?: { field: string; value: string }
-		}
-		styling: {
-			color?: string
-			opacity?: number
-		}
-	}>
-
-	dataTransformation: {
-		groupBy?: string
-		timeField: string
-		metrics: string[]
-	}
-
-	hallmarks?: Array<[number] | [number, string]>
-	hallmarkStyle?: 'event-rail' | 'mark-line'
-	legend?: { show?: boolean }
-
-	displayOptions?: {
-		canStack: boolean
-		canShowPercentage: boolean
-		canShowCumulative: boolean
-		supportsGrouping: boolean
-		defaultStacked?: boolean
-		defaultPercentage?: boolean
-		defaultLogScale?: boolean
-		showLabels?: boolean
-	}
-}
-
-/** User-editable presentation fields sent to POST /agentic/update-chart-style. Data bindings are not editable. */
-export interface ChartStylePatch {
-	title?: string
-	description?: string
-	source?: string
-	valueSymbol?: string
-	type?: ChartConfiguration['type']
-	seriesColors?: Record<string, string>
-	showLabels?: boolean
-	defaultStacked?: boolean
-	defaultPercentage?: boolean
-	defaultLogScale?: boolean
-	hallmarkStyle?: 'mark-line' | 'event-rail'
-	hallmarks?: Array<[number, string]>
-	legend?: { show?: boolean }
-	xAxisLabel?: string
-	yAxes?: Array<{
-		id: string
-		label?: string
-		position?: 'left' | 'right'
-		valueSymbol?: string
-		min?: number | 'dataMin'
-		max?: number | 'dataMax'
-		interval?: number
-	}>
-	series?: Array<{ name?: string; color?: string; opacity?: number; type?: 'line' | 'bar' | 'area' }>
-}
+import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
+import type { ChartConfiguration, ChartDataByKey, ChartDataSeries } from './chartTypes'
 
 export interface CsvExport {
 	id: string
@@ -153,9 +54,6 @@ export interface AlertProposedData {
 	next_run_at: string
 }
 
-export type DashboardItem = DashboardItemConfig
-export type ChartDataSeries = unknown[]
-export type ChartDataByKey = Record<string, ChartDataSeries>
 export interface ChartArtifactRef {
 	artifactId: string
 	versionId: string | null
@@ -172,7 +70,7 @@ export type DashboardChartData = Record<
 export interface DashboardArtifact {
 	id: string
 	dashboardName: string
-	items: DashboardItem[]
+	items: DashboardItemConfig[]
 	timePeriod?: string
 	sourceDashboardId?: string
 	chartData?: DashboardChartData

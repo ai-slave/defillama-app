@@ -1,9 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
-import type { DashboardItemConfig } from '../../types'
+import type { DashboardItemConfig } from '../../dashboardItemConfig'
 
 interface ModalHeaderProps {
-	editItem?: DashboardItemConfig | null
+	editItem?: DashboardItemConfig | null | undefined
 }
 
 export function ModalHeader({ editItem }: ModalHeaderProps) {

@@ -2,12 +2,7 @@ import { resolveApy, resolveVariant, stabilityRatingFromScore } from '~/containe
 import { getEntityEarn, getEntityMarkets } from '~/containers/Yields/data/enrich.server'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import type { ApyComponent, EntityEarnRow } from '~/containers/Yields/data/types'
-import {
-	joinEarnAndBorrowMarkets,
-	type ProBorrowMarketRow,
-	type ProEarnRow,
-	type ProYieldRow
-} from '../components/datasets/YieldsDataset/data'
+import { joinEarnAndBorrowMarkets, type ProBorrowMarketRow, type ProEarnRow, type ProYieldRow } from '../yieldData'
 
 const DEFAULT_COMPONENTS: ApyComponent[] = ['base', 'reward']
 
@@ -34,7 +29,7 @@ export async function fetchProYieldsDataset(snapshot: YieldsSnapshot, chains: st
 	for (const row of earnRows) {
 		if (selectedChains && !selectedChains.has(row.chain)) continue
 		const apy = resolveApy(row.apy, row.intrinsic, 'current', DEFAULT_COMPONENTS)
-		const stabilityScore = resolveVariant<number>(row.stability_30d, DEFAULT_COMPONENTS)
+		const stabilityScore = resolveVariant(row.stability_30d, DEFAULT_COMPONENTS)
 		const rewardTokensSymbols: string[] = []
 		for (const token of row.reward_tokens) if (token.symbol) rewardTokensSymbols.push(token.symbol)
 		earn.push({

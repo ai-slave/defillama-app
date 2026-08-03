@@ -1,5 +1,5 @@
 import { Icon } from '~/ui/Icon'
-import { CHART_TYPES, type ChartConfig, MAX_MULTI_CHART_SERIES } from '../../types'
+import { type ChartConfig, getProDashboardChartTypeConfig, MAX_MULTI_CHART_SERIES } from '../../types'
 
 interface SelectionFooterProps {
 	composerItems: ChartConfig[]
@@ -45,30 +45,33 @@ export function SelectionFooter({
 					/>
 					<span>Multi-Chart</span>
 				</label>
-				{composerItems.map((item) => (
-					<div
-						key={item.id}
-						className="flex shrink-0 items-center gap-1.5 rounded-md border border-pro-cards-border bg-pro-cards-bg px-2 py-1 text-xs"
-					>
-						<span className="text-pro-text-primary">
-							{item.protocol || item.chain} - {CHART_TYPES[item.type]?.title || item.type}
-						</span>
-						<input
-							type="color"
-							value={item.color || CHART_TYPES[item.type]?.color || '#3e61cc'}
-							onChange={(e) => onComposerItemColorChange(item.id, e.target.value)}
-							className="size-5 cursor-pointer rounded-sm border border-pro-cards-border bg-transparent p-0"
-							aria-label="Select chart color"
-						/>
-						<button
-							onClick={() => onRemoveFromComposer(item.id)}
-							className="text-pro-text-tertiary transition-colors hover:text-error"
-							title="Remove from selection"
+				{composerItems.map((item) => {
+					const chartType = getProDashboardChartTypeConfig(item.type)
+					return (
+						<div
+							key={item.id}
+							className="flex shrink-0 items-center gap-1.5 rounded-md border border-pro-cards-border bg-pro-cards-bg px-2 py-1 text-xs"
 						>
-							<Icon name="x" height={12} width={12} />
-						</button>
-					</div>
-				))}
+							<span className="text-pro-text-primary">
+								{item.subjectType === 'protocol' ? item.protocol : item.chain} - {chartType?.title || item.type}
+							</span>
+							<input
+								type="color"
+								value={item.color || chartType?.color || '#3e61cc'}
+								onChange={(e) => onComposerItemColorChange(item.id, e.target.value)}
+								className="size-5 cursor-pointer rounded-sm border border-pro-cards-border bg-transparent p-0"
+								aria-label="Select chart color"
+							/>
+							<button
+								onClick={() => onRemoveFromComposer(item.id)}
+								className="text-pro-text-tertiary transition-colors hover:text-error"
+								title="Remove from selection"
+							>
+								<Icon name="x" height={12} width={12} />
+							</button>
+						</div>
+					)
+				})}
 			</div>
 			<div className="text-[10px] text-pro-text-tertiary">
 				{chartCreationMode === 'combined'

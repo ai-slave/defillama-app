@@ -1,7 +1,7 @@
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import type { ChainChartLabels } from '~/containers/ChainOverview/constants'
 import type { ProtocolChartsLabels } from '~/containers/ProtocolOverview/constants'
-import type { ChartConfig, MultiChartConfig } from '../types'
+import type { ChartConfig, DashboardGrouping, MultiChartConfig } from '../types'
 import { getSupportedChainCharts, getUnsupportedChainCharts } from './chainChartMapping'
 import { generateItemId } from './dashboardUtils'
 import { getSupportedProtocolCharts, getUnsupportedProtocolCharts } from './protocolChartMapping'
@@ -15,7 +15,7 @@ interface ProtocolChartSerializationParams {
 	groupBy: ChartTimeGroupingWithCumulative
 }
 
-function getDashboardGrouping(groupBy: ChartTimeGroupingWithCumulative): MultiChartConfig['grouping'] {
+function getDashboardGrouping(groupBy: ChartTimeGroupingWithCumulative): DashboardGrouping {
 	switch (groupBy) {
 		case 'weekly':
 			return 'week'
@@ -49,12 +49,12 @@ export function serializeProtocolChartToMultiChart(params: ProtocolChartSerializ
 		return {
 			id: generateItemId('chart', `${protocolId}-${dashboardType}`),
 			kind: 'chart',
+			subjectType: 'protocol',
 			protocol: protocolId,
-			chain: '',
 			type: dashboardType,
 			grouping,
 			geckoId: geckoId ?? null,
-			color: chartColors[label]
+			...(chartColors[label] === undefined ? {} : { color: chartColors[label] })
 		}
 	})
 
@@ -101,12 +101,12 @@ export function serializeChainChartToMultiChart(params: ChainChartSerializationP
 		return {
 			id: generateItemId('chart', `${chainName}-${dashboardType}`),
 			kind: 'chart',
+			subjectType: 'chain',
 			chain: chainName,
-			protocol: undefined,
 			type: dashboardType,
 			grouping,
 			geckoId: geckoId ?? null,
-			color: chartColors[label]
+			...(chartColors[label] === undefined ? {} : { color: chartColors[label] })
 		}
 	})
 

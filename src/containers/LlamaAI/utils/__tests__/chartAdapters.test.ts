@@ -1,10 +1,19 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptCandlestickData } from '~/containers/LlamaAI/utils/chartAdapters/candlestick'
 import { adaptCartesianChartData } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import { adaptHBarChartData } from '~/containers/LlamaAI/utils/chartAdapters/hbar'
 import { adaptPieChartData } from '~/containers/LlamaAI/utils/chartAdapters/pie'
 import { adaptScatterChartData } from '~/containers/LlamaAI/utils/chartAdapters/scatter'
+
+const baseSeries: ChartConfiguration['series'][number] = {
+	name: 'Series',
+	type: 'scatter',
+	yAxisId: 'left',
+	metricClass: 'stock',
+	dataMapping: { xField: 'x', yField: 'y', entityFilter: { field: 'protocol', value: 'all' } },
+	styling: {}
+}
 
 const baseConfig: ChartConfiguration = {
 	id: 'chart-1',
@@ -15,16 +24,7 @@ const baseConfig: ChartConfiguration = {
 		x: { field: 'x', label: 'X', type: 'value' },
 		yAxes: [{ id: 'left', fields: ['y'], label: 'Y', position: 'left' }]
 	},
-	series: [
-		{
-			name: 'Series',
-			type: 'scatter',
-			yAxisId: 'left',
-			metricClass: 'stock',
-			dataMapping: { xField: 'x', yField: 'y', entityFilter: { field: 'protocol', value: 'all' } },
-			styling: {}
-		}
-	],
+	series: [baseSeries],
 	dataTransformation: { timeField: 'x', metrics: ['y'] },
 	displayOptions: {
 		canStack: false,
@@ -45,7 +45,7 @@ describe('chart adapters', () => {
 			},
 			series: [
 				{
-					...baseConfig.series[0]!,
+					...baseSeries,
 					type: 'line' as const,
 					yAxisId: 'right',
 					dataMapping: { xField: 'date', yField: 'value' }
@@ -55,7 +55,10 @@ describe('chart adapters', () => {
 
 		const result = adaptCartesianChartData(config, [{ date: 1_767_225_600, value: 10 }])
 
-		expect(result.props.chartOptions.yAxis[0].position).toBe('right')
+		const yAxis = Array.isArray(result.props.chartOptions?.yAxis)
+			? result.props.chartOptions.yAxis[0]
+			: result.props.chartOptions?.yAxis
+		expect(yAxis?.position).toBe('right')
 	})
 
 	it('supports display names that match logical dimensions but rejects duplicate series identities', () => {
@@ -66,24 +69,26 @@ describe('chart adapters', () => {
 			axes: { x: { field: 'date', label: 'Date', type: 'time' as const }, yAxes: baseConfig.axes.yAxes },
 			series: [
 				{
-					...baseConfig.series[0]!,
+					...baseSeries,
 					name: 'timestamp',
 					type: 'line' as const,
 					dataMapping: { xField: 'date', yField: 'y' }
 				}
 			]
 		} satisfies ChartConfiguration
+		const timestampChartSeries = timestampSeries.series[0]
+		if (!timestampChartSeries) throw new Error('Expected timestamp series')
 		const duplicateNames = {
 			...timestampSeries,
 			series: [
-				{ ...timestampSeries.series[0], name: 'Duplicate' },
-				{ ...timestampSeries.series[0], name: 'Duplicate' }
+				{ ...timestampChartSeries, name: 'Duplicate' },
+				{ ...timestampChartSeries, name: 'Duplicate' }
 			]
 		} satisfies ChartConfiguration
 
 		const timestampResult = adaptCartesianChartData(timestampSeries, [{ date: 1, y: 2 }])
 		expect(timestampResult.props.dataset.dimensions).toEqual(['timestamp', 'timestamp'])
-		expect(timestampResult.props.charts?.[0].encode).toEqual({ x: 0, y: 1 })
+		expect(timestampResult.props.charts?.[0]?.encode).toEqual({ x: 0, y: 1 })
 		expect(adaptCartesianChartData(duplicateNames, [{ date: 1, y: 2 }]).description).toContain('Duplicate')
 		expect(consoleLog).toHaveBeenCalledWith('Cartesian chart adapter error:', expect.any(Error))
 		consoleLog.mockRestore()
@@ -96,7 +101,7 @@ describe('chart adapters', () => {
 			axes: { ...baseConfig.axes, x: { field: 'x', label: 'X', type: 'category' as const } },
 			series: [
 				{
-					...baseConfig.series[0]!,
+					...baseSeries,
 					type: 'bar' as const,
 					dataMapping: { xField: 'x', yField: 'y' }
 				}
@@ -108,9 +113,8 @@ describe('chart adapters', () => {
 			{ name: '0', value: 1 }
 		])
 		expect(
-			adaptHBarChartData({ ...baseConfig, type: 'hbar', series: [{ ...baseConfig.series[0]!, type: 'hbar' }] }, [
-				{ x: 0, y: 1 }
-			]).data
+			adaptHBarChartData({ ...baseConfig, type: 'hbar', series: [{ ...baseSeries, type: 'hbar' }] }, [{ x: 0, y: 1 }])
+				.data
 		).toEqual([['0', 1]])
 		expect(adaptScatterChartData(baseConfig, [{ x: 1, y: 2, protocol: 0 }]).props.chartData).toEqual([[1, 2, '0', '0']])
 	})
@@ -122,7 +126,7 @@ describe('chart adapters', () => {
 			axes: { ...baseConfig.axes, x: { field: 'x', label: 'X', type: 'category' as const } },
 			series: [
 				{
-					...baseConfig.series[0]!,
+					...baseSeries,
 					type: 'bar' as const,
 					dataMapping: { xField: 'x', yField: 'y' }
 				}
@@ -195,18 +199,17 @@ describe('chart adapters', () => {
 			...baseConfig,
 			type: 'pie',
 			seriesColors: { Uniswap: '#ff007a', Curve: '#0000ff' },
-			series: [{ ...baseConfig.series[0]!, dataMapping: { xField: 'protocol', yField: 'v' } }]
+			series: [{ ...baseSeries, dataMapping: { xField: 'protocol', yField: 'v' } }]
 		} satisfies ChartConfiguration
 		const result = adaptPieChartData(pieConfig, [
 			{ protocol: 'Uniswap', v: 100 },
 			{ protocol: 'Curve', v: 60 },
 			{ protocol: 'Balancer', v: 30 }
 		])
-		expect(result.props.stackColors!.Uniswap).toBe('#ff007a')
-		expect(result.props.stackColors!.Curve).toBe('#0000ff')
+		expect(result.props.stackColors).toMatchObject({ Uniswap: '#ff007a', Curve: '#0000ff' })
 		// unspecified slice falls back to the palette (any non-empty color)
-		expect(result.props.stackColors!.Balancer).toMatch(/^#|rgb/)
-		expect(result.props.stackColors!.Balancer).not.toBe('#ff007a')
+		expect(result.props.stackColors?.Balancer).toMatch(/^#|rgb/)
+		expect(result.props.stackColors?.Balancer).not.toBe('#ff007a')
 	})
 
 	it('rotates a crowded category x-axis so long labels do not drop, and reserves grid bottom', () => {
@@ -241,12 +244,12 @@ describe('chart adapters', () => {
 		].map((venue, i) => ({ venue, v: 20 + i }))
 
 		const out = adaptCartesianChartData(cfg, rows)
-		const xAxis = Array.isArray(out.props.chartOptions.xAxis)
+		const xAxis = Array.isArray(out.props.chartOptions?.xAxis)
 			? out.props.chartOptions.xAxis[0]
-			: out.props.chartOptions.xAxis
-		const grid = Array.isArray(out.props.chartOptions.grid)
+			: out.props.chartOptions?.xAxis
+		const grid = Array.isArray(out.props.chartOptions?.grid)
 			? out.props.chartOptions.grid[0]
-			: out.props.chartOptions.grid
+			: out.props.chartOptions?.grid
 		expect(xAxis?.axisLabel).toMatchObject({ interval: 0, rotate: 35 })
 		expect(grid?.bottom).toBeGreaterThan(44)
 	})
@@ -276,13 +279,18 @@ describe('chart adapters', () => {
 			{ venue: 'BTC', v: 2 },
 			{ venue: 'SOL', v: 3 }
 		])
-		const xAxis = Array.isArray(out.props.chartOptions.xAxis)
+		const xAxis = Array.isArray(out.props.chartOptions?.xAxis)
 			? out.props.chartOptions.xAxis[0]
-			: out.props.chartOptions.xAxis
+			: out.props.chartOptions?.xAxis
 		expect(xAxis?.axisLabel).toBeUndefined()
 	})
 
 	it('uses category logos only when every rendered category has one', () => {
+		const categorySeries: ChartConfiguration['series'][number] = {
+			...baseSeries,
+			type: 'bar',
+			dataMapping: { xField: 'chain', yField: 'value' }
+		}
 		const categoryConfig = {
 			...baseConfig,
 			type: 'bar',
@@ -296,13 +304,7 @@ describe('chart adapters', () => {
 				},
 				yAxes: [{ id: 'value', fields: ['value'], label: 'TVL', position: 'left' as const }]
 			},
-			series: [
-				{
-					...baseConfig.series[0],
-					type: 'bar' as const,
-					dataMapping: { xField: 'chain', yField: 'value' }
-				}
-			]
+			series: [categorySeries]
 		} satisfies ChartConfiguration
 		const rows = [
 			{ chain: 'Ethereum', value: 10 },
@@ -321,7 +323,7 @@ describe('chart adapters', () => {
 			rows
 		)
 		const partialHBar = adaptHBarChartData(
-			{ ...categoryConfig, type: 'hbar', series: [{ ...categoryConfig.series[0], type: 'hbar' }] },
+			{ ...categoryConfig, type: 'hbar', series: [{ ...categorySeries, type: 'hbar' }] },
 			rows
 		)
 		const completeHBar = adaptHBarChartData(
@@ -332,7 +334,7 @@ describe('chart adapters', () => {
 					...categoryConfig.axes,
 					x: { ...categoryConfig.axes.x, logoKeys: { Ethereum: 'ethereum', Solana: 'solana' } }
 				},
-				series: [{ ...categoryConfig.series[0], type: 'hbar' }]
+				series: [{ ...categorySeries, type: 'hbar' }]
 			},
 			rows
 		)
@@ -393,7 +395,7 @@ describe('chart adapters', () => {
 			...baseConfig,
 			type: 'hbar',
 			seriesColors: { binance: '#ff007a' },
-			series: [{ ...baseConfig.series[0]!, type: 'hbar' as const, styling: {} }]
+			series: [{ ...baseSeries, type: 'hbar', styling: {} }]
 		} satisfies ChartConfiguration
 		const result = adaptHBarChartData(hbar, [
 			{ x: 'binance', y: 20 },
@@ -409,7 +411,7 @@ describe('chart adapters', () => {
 		const hbar = {
 			...baseConfig,
 			type: 'hbar',
-			series: [{ ...baseConfig.series[0]!, type: 'hbar' as const, styling: { color: '#2563eb' } }]
+			series: [{ ...baseSeries, type: 'hbar', styling: { color: '#2563eb' } }]
 		} satisfies ChartConfiguration
 
 		const result = adaptHBarChartData(hbar, [
@@ -450,7 +452,7 @@ describe('chart adapters', () => {
 			axes: { ...baseConfig.axes, x: { field: 'timestamp', label: 'Date', type: 'time' as const } },
 			series: [
 				{
-					...baseConfig.series[0]!,
+					...baseSeries,
 					type: 'line' as const,
 					dataMapping: { xField: 'timestamp', yField: 'y' }
 				}
@@ -484,7 +486,7 @@ describe('chart adapters', () => {
 			},
 			series: [
 				{
-					...baseConfig.series[0]!,
+					...baseSeries,
 					name: 'TVL',
 					type: 'line' as const,
 					yAxisId: 'usd',
@@ -492,7 +494,7 @@ describe('chart adapters', () => {
 					styling: { color: '#111111' }
 				},
 				{
-					...baseConfig.series[0]!,
+					...baseSeries,
 					name: 'Fees',
 					type: 'bar' as const,
 					yAxisId: 'usd',
@@ -501,7 +503,7 @@ describe('chart adapters', () => {
 					styling: { color: '#222222' }
 				},
 				{
-					...baseConfig.series[0]!,
+					...baseSeries,
 					name: 'APY',
 					type: 'area' as const,
 					yAxisId: 'apy',
@@ -546,7 +548,7 @@ describe('chart adapters', () => {
 			axes: { ...baseConfig.axes, x: { field: 'timestamp', label: 'Date', type: 'time' as const } },
 			series: [
 				{
-					...baseConfig.series[0]!,
+					...baseSeries,
 					type: 'candlestick' as const,
 					dataMapping: { xField: 'timestamp', yField: 'close' }
 				}

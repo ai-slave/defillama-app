@@ -4,11 +4,84 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { Icon } from '~/ui/Icon'
-import type { DashboardItemConfig } from '../types'
-import { sanitizeItemsForAPI } from '../utils/dashboardUtils'
+import { migrateDashboardItems } from '../dashboardConfig/migrate'
+import type { PersistedDashboardItemConfig } from '../dashboardConfig/persisted'
+import type { DashboardItemConfig } from '../dashboardItemConfig'
+import { createDashboardStreamLineParser } from '../dashboardStreamLines'
 
 const EMPTY_DASHBOARD_ITEMS: DashboardItemConfig[] = []
 const EMPTY_DASHBOARD_TAGS: string[] = []
+
+type AIGeneratedHistory = Record<
+	string,
+	{
+		mode: 'create' | 'iterate'
+		prompt: string
+		rated: boolean
+		rating?: number
+		feedback?: string
+		skipped?: boolean
+		timestamp: string
+		userId: string
+	}
+>
+
+type DashboardCreatorRequest =
+	| { message: string; dashboardName: string }
+	| {
+			message: string
+			mode: 'iterate'
+			existingDashboard: {
+				dashboardName: string
+				items: DashboardItemConfig[]
+				aiGenerated?: AIGeneratedHistory
+			}
+	  }
+
+interface DashboardCompleteEvent {
+	type: 'dashboard_complete'
+	dashboardConfig: { items: PersistedDashboardItemConfig[] }
+	metadata?: { sessionId?: string; mode?: 'create' | 'iterate' }
+}
+
+interface DashboardErrorEvent {
+	type: 'error'
+	message?: string
+}
+
+type DashboardStreamEvent = DashboardCompleteEvent | DashboardErrorEvent
+
+const parseDashboardStreamEvent = (line: string): DashboardStreamEvent => JSON.parse(line)
+
+async function readDashboardCreatorStream(reader: ReadableStreamDefaultReader<Uint8Array>) {
+	const completedDashboards: DashboardCompleteEvent[] = []
+	const decoder = new TextDecoder()
+	const lineParser = createDashboardStreamLineParser((line) => {
+		if (!line.startsWith('data: ')) return
+		let event: DashboardStreamEvent
+		try {
+			event = parseDashboardStreamEvent(line.slice(6))
+		} catch {
+			return
+		}
+		if (event.type === 'dashboard_complete') completedDashboards.push(event)
+		else throw new Error(event.message || 'Failed to generate dashboard')
+	})
+
+	try {
+		for (;;) {
+			const { done, value } = await reader.read()
+			if (done) {
+				lineParser.push(decoder.decode())
+				lineParser.finish()
+				return completedDashboards.at(-1) ?? null
+			}
+			lineParser.push(decoder.decode(value, { stream: true }))
+		}
+	} finally {
+		reader.releaseLock()
+	}
+}
 
 interface GenerateDashboardModalProps {
 	isOpen: boolean
@@ -20,19 +93,7 @@ interface GenerateDashboardModalProps {
 		tags: string[]
 		description: string
 		items: DashboardItemConfig[]
-		aiGenerated?: Record<
-			string,
-			{
-				mode: 'create' | 'iterate'
-				prompt: string
-				rated: boolean
-				rating?: number
-				feedback?: string
-				skipped?: boolean
-				timestamp: string
-				userId: string
-			}
-		>
+		aiGenerated?: AIGeneratedHistory
 	}
 	onGenerate: (data: {
 		dashboardName: string
@@ -77,11 +138,14 @@ export function GenerateDashboardModal({
 
 		const form = e.currentTarget
 		const formData = new FormData(form)
-		const dashboardName = (formData.get('dashboardName') as string)?.trim() ?? ''
-		const aiDescription = (formData.get('aiDescription') as string) ?? ''
+		const dashboardNameValue = formData.get('dashboardName')
+		const descriptionValue = formData.get('aiDescription')
+		const dashboardName = typeof dashboardNameValue === 'string' ? dashboardNameValue.trim() : ''
+		const aiDescription = typeof descriptionValue === 'string' ? descriptionValue : ''
 
 		if (mode === 'create') {
-			const nameInput = form.elements.namedItem('dashboardName') as HTMLInputElement | null
+			const nameElement = form.elements.namedItem('dashboardName')
+			const nameInput = nameElement instanceof HTMLInputElement ? nameElement : null
 			if (!dashboardName) {
 				nameInput?.setCustomValidity('Dashboard name is required')
 				nameInput?.reportValidity()
@@ -89,7 +153,8 @@ export function GenerateDashboardModal({
 			}
 		}
 
-		const descInput = form.elements.namedItem('aiDescription') as HTMLTextAreaElement | null
+		const descriptionElement = form.elements.namedItem('aiDescription')
+		const descInput = descriptionElement instanceof HTMLTextAreaElement ? descriptionElement : null
 		if (!aiDescription.trim()) {
 			descInput?.setCustomValidity('Description is required')
 			descInput?.reportValidity()
@@ -106,12 +171,12 @@ export function GenerateDashboardModal({
 			return
 		}
 
-		let sanitizedItems = EMPTY_DASHBOARD_ITEMS
+		let existingItems = EMPTY_DASHBOARD_ITEMS
 		if (mode === 'iterate' && existingDashboard && existingDashboard.items) {
-			sanitizedItems = sanitizeItemsForAPI(existingDashboard.items)
+			existingItems = existingDashboard.items
 		}
 
-		let requestBody: Record<string, unknown>
+		let requestBody: DashboardCreatorRequest
 		if (mode === 'iterate') {
 			let existingName = ''
 			if (existingDashboard && existingDashboard.dashboardName) {
@@ -122,8 +187,8 @@ export function GenerateDashboardModal({
 				mode: 'iterate',
 				existingDashboard: {
 					dashboardName: existingName,
-					items: sanitizedItems,
-					aiGenerated: existingDashboard && existingDashboard.aiGenerated
+					items: existingItems,
+					...(existingDashboard?.aiGenerated ? { aiGenerated: existingDashboard.aiGenerated } : {})
 				}
 			}
 		} else {
@@ -163,131 +228,64 @@ export function GenerateDashboardModal({
 		}
 
 		setIsLoading(true)
-		let response: Response | null | undefined
 		try {
-			response = await authorizedFetch(`${AI_SERVER}/dashboard-creator`, {
+			const response = await authorizedFetch(`${AI_SERVER}/dashboard-creator`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify(requestBody)
 			})
+
+			if (!response) {
+				toast.error('Authentication failed. Please sign in again.')
+				return
+			}
+			if (!response.ok) {
+				toast.error('Failed to generate dashboard. Please try again.')
+				return
+			}
+
+			const reader = response.body?.getReader()
+			if (!reader) {
+				toast.error('Failed to read response stream')
+				return
+			}
+			const data = await readDashboardCreatorStream(reader)
+			if (!data) {
+				toast.error('Invalid response format from AI service')
+				return
+			}
+
+			const items = migrateDashboardItems(data.dashboardConfig.items)
+			const sessionId = data.metadata?.sessionId
+			const generationMode = data.metadata?.mode ?? mode
+			const aiGenerationContext = sessionId
+				? {
+						sessionId,
+						mode: generationMode,
+						timestamp: new Date().toISOString(),
+						prompt: aiDescription.trim()
+					}
+				: undefined
+
+			onGenerate({
+				dashboardName: dashboardNameForGenerate,
+				visibility: visibilityForGenerate,
+				tags: tagsForGenerate,
+				description: descriptionForGenerate,
+				items,
+				...(aiGenerationContext ? { aiGenerationContext } : {})
+			})
+
+			resetModalState()
+			onClose()
 		} catch (error) {
 			console.error('Failed to generate dashboard:', error)
-			toast.error('Failed to generate dashboard. Please try again.')
-			setIsLoading(false)
-			return
-		}
-
-		if (!response) {
-			toast.error('Authentication failed. Please sign in again.')
-			setIsLoading(false)
-			return
-		}
-
-		if (!response.ok) {
-			toast.error('Failed to generate dashboard. Please try again.')
-			setIsLoading(false)
-			return
-		}
-
-		const reader = response.body?.getReader()
-		if (!reader) {
-			toast.error('Failed to read response stream')
-			setIsLoading(false)
-			return
-		}
-
-		let data: any = null
-		try {
-			const decoder = new TextDecoder()
-			let lineBuffer = ''
-
-			while (true) {
-				const { done, value } = await reader.read()
-				if (done) {
-					if (lineBuffer.trim()) {
-						const line = lineBuffer.trim()
-						if (line.startsWith('data: ')) {
-							try {
-								const event = JSON.parse(line.slice(6))
-								if (event.type === 'dashboard_complete') data = event
-							} catch {}
-						}
-					}
-					break
-				}
-
-				const chunk = decoder.decode(value, { stream: true })
-				lineBuffer += chunk
-				const lines = lineBuffer.split('\n')
-
-				if (lines.length > 0 && !chunk.endsWith('\n')) {
-					lineBuffer = lines.pop() || ''
-				} else {
-					lineBuffer = ''
-				}
-
-				for (const line of lines) {
-					if (!line.startsWith('data: ')) continue
-					try {
-						const event = JSON.parse(line.slice(6))
-						if (event.type === 'dashboard_complete') {
-							data = event
-						} else if (event.type === 'error') {
-							toast.error(event.message || 'Failed to generate dashboard')
-							setIsLoading(false)
-							return
-						}
-					} catch {}
-				}
-			}
+			toast.error(error instanceof Error ? error.message : 'Failed to generate dashboard. Please try again.')
 		} finally {
-			try {
-				reader.releaseLock()
-			} catch {}
-		}
-
-		if (!data?.dashboardConfig || !Array.isArray(data.dashboardConfig.items)) {
-			toast.error('Invalid response format from AI service')
 			setIsLoading(false)
-			return
 		}
-
-		const items = data.dashboardConfig.items as DashboardItemConfig[]
-		let sessionId: string | undefined
-		if (data.metadata && typeof data.metadata.sessionId === 'string') {
-			sessionId = data.metadata.sessionId
-		}
-		let generationMode: 'create' | 'iterate' = mode
-		if (data.metadata && (data.metadata.mode === 'create' || data.metadata.mode === 'iterate')) {
-			generationMode = data.metadata.mode
-		}
-
-		let aiGenerationContext:
-			| { sessionId: string; mode: 'create' | 'iterate'; timestamp: string; prompt: string }
-			| undefined
-		if (sessionId) {
-			aiGenerationContext = {
-				sessionId,
-				mode: generationMode,
-				timestamp: new Date().toISOString(),
-				prompt: aiDescription.trim()
-			}
-		}
-
-		onGenerate({
-			dashboardName: dashboardNameForGenerate,
-			visibility: visibilityForGenerate,
-			tags: tagsForGenerate,
-			description: descriptionForGenerate,
-			items,
-			aiGenerationContext
-		})
-
-		resetModalState()
-		onClose()
-		setIsLoading(false)
 	}
 
 	const handleClose = () => {

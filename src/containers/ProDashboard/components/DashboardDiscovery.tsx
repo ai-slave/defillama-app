@@ -4,8 +4,8 @@ import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
 import { Icon } from '~/ui/Icon'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import type { DiscoveryCategoriesInitialData } from '../discoveryCategories'
 import { useDashboardDiscovery } from '../hooks/useDashboardDiscovery'
-import type { DiscoveryCategoriesInitialData } from '../hooks/useDiscoveryCategories'
 import { DashboardBrowse } from './DashboardBrowse'
 import { DashboardCard } from './DashboardCard'
 import { DashboardSearch } from './DashboardSearch'
@@ -15,6 +15,7 @@ const SUGGESTED_TAGS = ['DeFi', 'NFT', 'Analytics', 'DEX', 'Lending', 'L2']
 
 const viewModes = ['grid', 'list'] as const
 type ViewMode = (typeof viewModes)[number]
+const isViewMode = (value: string): value is ViewMode => viewModes.some((candidate) => candidate === value)
 const DEFAULT_PAGE_LIMIT = 20
 const itemsPerPageOptions = [
 	{ key: '20', name: '20' },
@@ -28,12 +29,17 @@ const sortOptions = [
 	{ key: 'trending', name: 'Trending' }
 ] as const
 type SortOption = (typeof sortOptions)[number]
+type SortOptionKey = SortOption['key']
+const isSortOptionKey = (value: string): value is SortOptionKey => sortOptions.some((option) => option.key === value)
 const timeFrameOptions = [
 	{ key: '1d', name: 'Last 24 hours' },
 	{ key: '7d', name: 'Last 7 days' },
 	{ key: '30d', name: 'Last 30 days' }
 ] as const
 type TimeFrameOption = (typeof timeFrameOptions)[number]
+type TimeFrameOptionKey = TimeFrameOption['key']
+const isTimeFrameOptionKey = (value: string): value is TimeFrameOptionKey =>
+	timeFrameOptions.some((option) => option.key === value)
 
 export function DashboardDiscovery({
 	initialCategories
@@ -56,7 +62,7 @@ export function DashboardDiscovery({
 		selectedPage,
 		itemsPerPage
 	} = useMemo(() => {
-		const viewMode = typeof view === 'string' && viewModes.includes(view as ViewMode) ? (view as ViewMode) : 'grid'
+		const viewMode = typeof view === 'string' && isViewMode(view) ? view : 'grid'
 		const selectedTags = tagQuery ? (typeof tagQuery === 'string' ? [tagQuery] : tagQuery) : []
 		const selectedSortBy =
 			typeof sortBy === 'string'
@@ -95,8 +101,8 @@ export function DashboardDiscovery({
 		query: searchQuery,
 		tags: selectedTags,
 		visibility: 'public',
-		sortBy: selectedSortBy.key as 'popular' | 'recent' | 'likes' | 'trending',
-		timeFrame: selectedSortBy.key === 'trending' ? (selectedTimeFrame.key as '1d' | '7d' | '30d') : undefined,
+		sortBy: selectedSortBy.key,
+		...(selectedSortBy.key === 'trending' ? { timeFrame: selectedTimeFrame.key } : {}),
 		page: selectedPage,
 		limit: itemsPerPage
 	})
@@ -194,10 +200,11 @@ export function DashboardDiscovery({
 								size="sm"
 								allValues={sortOptions}
 								selectedValues={selectedSortBy.key}
-								setSelectedValues={(value) => {
+								setSelectedValues={(value: string) => {
+									if (!isSortOptionKey(value)) return
 									const updates: Record<string, string | number | string[] | undefined> = {
 										page: undefined,
-										sortBy: value as SortOption['key']
+										sortBy: value
 									}
 									if (value === 'trending') {
 										updates.timeFrame = '7d'
@@ -224,10 +231,11 @@ export function DashboardDiscovery({
 									size="sm"
 									allValues={timeFrameOptions}
 									selectedValues={selectedTimeFrame.key}
-									setSelectedValues={(value) => {
+									setSelectedValues={(value: string) => {
+										if (!isTimeFrameOptionKey(value)) return
 										pushProQuery({
 											page: undefined,
-											timeFrame: value as TimeFrameOption['key']
+											timeFrame: value
 										})
 									}}
 									label={
@@ -313,7 +321,10 @@ export function DashboardDiscovery({
 			</div>
 
 			{isBrowseMode ? (
-				<DashboardBrowse onTagClick={handleTagClick} initialCategories={initialCategories} />
+				<DashboardBrowse
+					onTagClick={handleTagClick}
+					{...(initialCategories !== undefined ? { initialCategories } : {})}
+				/>
 			) : isLoading ? (
 				<>
 					<p className="-mb-2 text-xs text-pro-text-label">Loading dashboards…</p>

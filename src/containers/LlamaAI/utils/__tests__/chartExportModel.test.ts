@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptHBarChartData } from '~/containers/LlamaAI/utils/chartAdapters/hbar'
 import { buildExportModel } from '~/containers/LlamaAI/utils/chartExportModel'
 

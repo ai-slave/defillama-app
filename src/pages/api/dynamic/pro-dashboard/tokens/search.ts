@@ -1,1 +1,3 @@
-export { default } from '~/containers/ProDashboard/server/tokenSearch'
+import { tokenSearchApiHandler } from '~/containers/ProDashboard/server/tokenSearch'
+
+export default tokenSearchApiHandler

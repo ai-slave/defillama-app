@@ -1,12 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { normalizeSqlResultRows } from '~/containers/Downloads/sql/resultNormalization'
-import { captureSnapshot } from '~/containers/ProDashboard/components/SqlChart/snapshot'
-import type { SqlChartConfig, SqlSnapshot } from '~/containers/ProDashboard/types'
-import { authorizationHeader, featuresServerUrl, parseJsonObject } from '~/server/dashboardPurgeProxy'
+import { captureSnapshot, clampRowCap } from '~/containers/ProDashboard/sqlSnapshot'
+import type { SqlQueryRecipe, SqlSnapshot } from '~/containers/ProDashboard/types'
+import { authorizationHeader, featuresServerUrl } from '~/server/dashboardPurgeProxy'
 import { hashSqlQuery } from '~/server/sql/queryHash'
 import { getStoredSqlResult, putStoredSqlResult } from '~/server/sql/resultsStore'
 import { runServerSql, SqlQueueFullError } from '~/server/sql/runner'
+import { validateSubscription } from '~/utils/apiAuth'
 import { withApiRouteTelemetry } from '~/utils/telemetry'
+import type { PersistedDashboard } from '../dashboardConfig/persisted'
+import { fetchAuthenticatedUserId } from './auth'
 
 const SQL_RESULT_TTL_MS = 60 * 60 * 1000
 
@@ -24,34 +28,43 @@ function isFresh(computedAt: string): boolean {
 	return Date.now() - timestamp < SQL_RESULT_TTL_MS
 }
 
-function findSqlItem(dashboard: Record<string, unknown>, itemId: string): SqlChartConfig | null {
-	const data = dashboard.data as { items?: unknown[] } | undefined
-	if (!Array.isArray(data?.items)) return null
-	for (const item of data.items) {
-		if (
-			item &&
-			typeof item === 'object' &&
-			(item as { id?: unknown }).id === itemId &&
-			(item as { kind?: unknown }).kind === 'sql'
-		) {
-			return item as SqlChartConfig
+async function canForceRefresh(req: NextApiRequest, dashboard: PersistedDashboard): Promise<boolean> {
+	const authorization = req.headers.authorization
+	if (Array.isArray(authorization) || !authorization?.startsWith('Bearer ')) return false
+	const token = authorization.slice('Bearer '.length).trim()
+	if (!token) return false
+	const userId = await fetchAuthenticatedUserId(token)
+	if (userId !== dashboard.user) return false
+	if (dashboard.visibility === 'public') return true
+	return (await validateSubscription(authorization)).valid
+}
+
+type SqlRunItem = { query: SqlQueryRecipe; rowCap?: number }
+
+function findSqlItem(dashboard: PersistedDashboard, itemId: string): SqlRunItem | null {
+	for (const item of dashboard.data.items) {
+		if (item.id === itemId && item.kind === 'sql') {
+			return { query: item.query, ...(item.rowCap === undefined ? {} : { rowCap: item.rowCap }) }
 		}
 	}
 	return null
 }
 
-async function executeAndStore(hash: string, item: SqlChartConfig): Promise<SqlSnapshot> {
+async function executeAndStore(hash: string, item: SqlRunItem): Promise<SqlSnapshot> {
 	const pending = inFlightRuns.get(hash)
 	if (pending) return pending
 
 	const promise = (async () => {
 		const serverResult = await runServerSql(item.query)
-		const rows = new Array<unknown[]>(serverResult.rows.length)
+		const rows: QueryResult['rows'] = new Array(serverResult.rows.length)
 		for (let rowIndex = 0; rowIndex < serverResult.rows.length; rowIndex++) {
 			const input = serverResult.rows[rowIndex]
-			const row = new Array<unknown>(serverResult.columns.length)
+			if (input === undefined) throw new Error(`Missing SQL result row ${rowIndex}`)
+			const row: QueryResult['rows'][number] = new Array(serverResult.columns.length)
 			for (let columnIndex = 0; columnIndex < serverResult.columns.length; columnIndex++) {
-				row[columnIndex] = input[serverResult.columns[columnIndex].name]
+				const column = serverResult.columns[columnIndex]
+				if (column === undefined) throw new Error(`Missing SQL result column ${columnIndex}`)
+				row[columnIndex] = input[column.name]
 			}
 			rows[rowIndex] = row
 		}
@@ -68,6 +81,7 @@ async function executeAndStore(hash: string, item: SqlChartConfig): Promise<SqlS
 }
 
 export async function sqlRunHandler(req: NextApiRequest, res: NextApiResponse) {
+	res.setHeader('Cache-Control', 'private, no-store')
 	if (req.method !== 'GET') {
 		res.setHeader('Allow', ['GET'])
 		return res.status(405).json({ error: 'Method Not Allowed' })
@@ -75,8 +89,8 @@ export async function sqlRunHandler(req: NextApiRequest, res: NextApiResponse) {
 
 	const dashboardId = queryParam(req, 'dashboardId')
 	const itemId = queryParam(req, 'itemId')
+	const forceRefresh = queryParam(req, 'refresh') === '1'
 	if (!dashboardId || !itemId) {
-		res.setHeader('Cache-Control', 'no-store')
 		return res.status(400).json({ error: 'Missing dashboardId or itemId' })
 	}
 
@@ -85,36 +99,34 @@ export async function sqlRunHandler(req: NextApiRequest, res: NextApiResponse) {
 		signal: AbortSignal.timeout(15_000)
 	})
 	if (!dashboardResponse.ok) {
-		res.setHeader('Cache-Control', 'no-store')
 		const status = dashboardResponse.status === 401 ? 401 : 404
 		return res.status(status).json({ error: 'Dashboard not found' })
 	}
 
-	const dashboard = parseJsonObject(await dashboardResponse.text())
-	if (!dashboard) {
-		res.setHeader('Cache-Control', 'no-store')
+	let dashboard: PersistedDashboard
+	try {
+		dashboard = await dashboardResponse.json()
+	} catch {
 		return res.status(502).json({ error: 'Dashboard response was not valid JSON' })
 	}
-
+	if (forceRefresh && !(await canForceRefresh(req, dashboard))) {
+		return res.status(403).json({ error: 'Only an editor can refresh this SQL widget' })
+	}
 	const item = findSqlItem(dashboard, itemId)
 	if (!item) {
-		res.setHeader('Cache-Control', 'no-store')
 		return res.status(404).json({ error: 'SQL widget not found on dashboard' })
 	}
 
-	const hash = hashSqlQuery(item.query)
+	const hash = hashSqlQuery(item.query, { rowCap: clampRowCap(item.rowCap) })
 	const stored = await getStoredSqlResult(hash)
-	if (stored && isFresh(stored.computedAt)) {
-		res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+	if (!forceRefresh && stored && isFresh(stored.computedAt)) {
 		return res.status(200).json(stored.snapshot)
 	}
 
 	try {
 		const snapshot = await executeAndStore(hash, item)
-		res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
 		return res.status(200).json(snapshot)
 	} catch (error) {
-		res.setHeader('Cache-Control', 'no-store')
 		if (error instanceof SqlQueueFullError) {
 			res.setHeader('Retry-After', '5')
 			return res.status(429).json({ error: error.message })
@@ -127,4 +139,4 @@ export async function sqlRunHandler(req: NextApiRequest, res: NextApiResponse) {
 	}
 }
 
-export default withApiRouteTelemetry('/api/private/pro-dashboard/sql-run', sqlRunHandler)
+export const dashboardSqlRunApiHandler = withApiRouteTelemetry('/api/private/pro-dashboard/sql-run', sqlRunHandler)

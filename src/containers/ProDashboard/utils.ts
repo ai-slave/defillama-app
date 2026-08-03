@@ -11,13 +11,12 @@ export const convertToNumberFormat = (
 	convertToSeconds: boolean = false
 ): [number, number][] => {
 	const divisor = convertToSeconds ? 1000 : 1
-	const points = new Array<[number, number]>(data.length)
-	for (let index = 0; index < data.length; index++) {
-		const [timestamp, value] = data[index]
-		points[index] = [
+	const points: [number, number][] = []
+	for (const [timestamp, value] of data) {
+		points.push([
 			(typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp) / divisor,
 			typeof value === 'string' ? parseFloat(value) : value
-		]
+		])
 	}
 	return points
 }
@@ -31,8 +30,17 @@ export const normalizeHourlyToDaily = (
 
 	const intervalCount = Math.min(9, data.length - 1)
 	let intervalTotal = 0
-	for (let i = 1; i <= intervalCount; i++) intervalTotal += data[i][0] - data[i - 1][0]
-	const avgTimeDiff = intervalTotal / intervalCount
+	let previousTimestamp: number | null = null
+	let sampledIntervals = 0
+	for (const [timestamp] of data) {
+		if (previousTimestamp !== null) {
+			intervalTotal += timestamp - previousTimestamp
+			sampledIntervals++
+			if (sampledIntervals === intervalCount) break
+		}
+		previousTimestamp = timestamp
+	}
+	const avgTimeDiff = intervalTotal / sampledIntervals
 
 	const isHourlyData = avgTimeDiff < 24 * 60 * 60 && avgTimeDiff > 30 * 60
 
@@ -93,20 +101,6 @@ export const groupData = (
 	}
 
 	return groupedData
-}
-
-/** Convert ascending flow points to running totals without re-sorting or coercing the typed input. */
-export const convertToCumulative = (data: [number, number][] | undefined): [number, number][] => {
-	if (!data || data.length === 0) return []
-
-	const result = new Array<[number, number]>(data.length)
-	let cumulative = 0
-	for (let i = 0; i < data.length; i++) {
-		const [timestamp, value] = data[i]
-		cumulative += value
-		result[i] = [timestamp, cumulative]
-	}
-	return result
 }
 
 // Icon URL helper functions

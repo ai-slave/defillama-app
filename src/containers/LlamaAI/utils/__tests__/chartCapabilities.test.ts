@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptCartesianChartData } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import type { ChartCapabilities, ChartViewState } from '../chartCapabilities'
 import { buildControlsModel, deriveCapabilities, normalizeViewState } from '../chartCapabilities'

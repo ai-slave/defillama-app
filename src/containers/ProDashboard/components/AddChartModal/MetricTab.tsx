@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { Icon } from '~/ui/Icon'
 import { useAppMetadata } from '../../AppMetadataContext'
+import { createMetricConfig } from '../../dashboardConfig/classicChartConfig'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
-import type { MetricAggregator, MetricChartType } from '../../types'
+import { type MetricAggregator, type MetricChartType, type MetricConfig, type MetricSubject } from '../../types'
 import { MetricCard } from '../MetricCard'
 import { MetricSentenceBuilder } from './MetricSentenceBuilder'
 
@@ -69,35 +70,40 @@ export function MetricTab(props: MetricTabProps) {
 		availableChainChartTypes
 	])
 
-	const selectedSubject = useMemo(() => {
+	const selectedSubject = useMemo<MetricSubject | null>(() => {
 		if (metricSubjectType === 'protocol' && metricProtocol) {
 			const geckoId = protocolList.find((p) => p.slug === metricProtocol)?.geckoId
-			return {
-				itemType: 'protocol' as const,
+			const subject: MetricSubject = {
+				itemType: 'protocol',
 				protocol: metricProtocol,
-				geckoId
+				...(geckoId === undefined ? {} : { geckoId })
 			}
+			return subject
 		}
 		if (metricSubjectType === 'chain' && metricChain) {
 			const geckoId = chainList.find((c) => c.name === metricChain)?.gecko_id
-			return { itemType: 'chain' as const, chain: metricChain, geckoId }
+			const subject: MetricSubject = {
+				itemType: 'chain',
+				chain: metricChain,
+				...(geckoId === undefined ? {} : { geckoId })
+			}
+			return subject
 		}
 		return null
 	}, [metricSubjectType, metricProtocol, metricChain, protocolList, chainList])
 
-	const previewMetric = useMemo(() => {
+	const previewMetric = useMemo<MetricConfig | null>(() => {
 		if (!selectedSubject || !metricType) return null
-		return {
+		const base = {
 			id: 'metric-preview',
-			kind: 'metric',
-			subject: selectedSubject,
-			type: metricType,
+			kind: 'metric' as const,
 			aggregator: metricAggregator,
 			window: metricWindow,
-			compare: { mode: 'previous_value', format: 'percent' },
+			compare: { mode: 'previous_value' as const, format: 'percent' as const },
 			chartType: metricChartType,
 			label: metricLabel
-		} as const
+		}
+		return createMetricConfig({ ...base, subject: selectedSubject, type: metricType })
 	}, [selectedSubject, metricType, metricAggregator, metricWindow, metricChartType, metricLabel])
 
 	return (

@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import {
-	type ColumnDef,
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ColumnSizingState,
@@ -18,22 +17,21 @@ import { useContext, useMemo, useState } from 'react'
 import { useTableSearch } from '~/components/Table/utils'
 import type { IEquitiesFilingApiItem } from '~/containers/Equities/api.types'
 import { parseEquityTickerCountryParam } from '~/containers/Equities/tickerCountry'
-import { getProEquitiesFilingsQueryKey } from '~/containers/ProDashboard/equitiesTableQueryKeys'
+import { getEquitiesTableQueryKey } from '~/containers/ProDashboard/equitiesTableQueryKeys'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
-import { fetchEquitiesFilingsViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { getProEquitiesFilingsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
-import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { Icon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
-import { downloadCSV } from '~/utils/download'
+import { downloadCSV, type CsvCell } from '~/utils/download'
+import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
-import { TableBody } from '../../ProTable/TableBody'
-import { TablePagination } from '../../ProTable/TablePagination'
+import { TableBody } from '../../Table/TableBody'
+import { TablePagination } from '../../Table/TablePagination'
 
 const columnHelper = createColumnHelper<IEquitiesFilingApiItem>()
 
-const columns: ColumnDef<IEquitiesFilingApiItem, any>[] = [
+const columns = [
 	columnHelper.accessor('filingDate', {
 		id: 'filingDate',
 		header: 'Filing Date',
@@ -80,6 +78,18 @@ const columns: ColumnDef<IEquitiesFilingApiItem, any>[] = [
 	})
 ]
 
+const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
+	'filingDate',
+	'reportDate',
+	'form',
+	'documentDescription',
+	'primaryDocumentUrl'
+]
+const getEquitiesFilingsCoreRowModel = getCoreRowModel<IEquitiesFilingApiItem>()
+const getEquitiesFilingsSortedRowModel = getSortedRowModel<IEquitiesFilingApiItem>()
+const getEquitiesFilingsFilteredRowModel = getFilteredRowModel<IEquitiesFilingApiItem>()
+const getEquitiesFilingsPaginationRowModel = getPaginationRowModel<IEquitiesFilingApiItem>()
+
 const STALE_TIME = 5 * 60 * 1000
 
 function useEquitiesFilingsData(ticker: string) {
@@ -87,24 +97,34 @@ function useEquitiesFilingsData(ticker: string) {
 	const streamDone = useContext(StreamDoneContext)
 	const tickerCountry = parseEquityTickerCountryParam(ticker)
 
-	return useQuery({
-		queryKey: getProEquitiesFilingsQueryKey(ticker) ?? getProEquitiesFilingsCacheKey(ticker),
+	const { data, isLoading, error } = useQuery({
+		queryKey: getEquitiesTableQueryKey('filings', ticker) ?? getProEquitiesFilingsCacheKey(ticker),
 		queryFn: async () => {
 			if (!tickerCountry) throw new Error('Missing ticker param')
-			return fetchEquitiesFilingsViaProxy(tickerCountry.ticker, tickerCountry.country, authToken!)
+			if (!authToken) throw new Error('Missing Pro dashboard proxy auth token')
+			return fetchProDashboardProxy(
+				'equitiesFilings',
+				{ ticker: tickerCountry.ticker, country: tickerCountry.country },
+				authToken
+			)
 		},
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 1,
 		enabled: Boolean(tickerCountry) && Boolean(authToken) && streamDone
 	})
+	return {
+		data,
+		isLoading: isLoading || (tickerCountry !== null && !streamDone && data === undefined),
+		error
+	}
 }
 
 const EMPTY_DATA: IEquitiesFilingApiItem[] = []
 
 export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'filingDate', desc: true }])
-	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
+	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(DEFAULT_COLUMN_ORDER)
 	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({})
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [pagination, setPagination] = React.useState<PaginationState>({
@@ -114,8 +134,6 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 	const [selectedForm, setSelectedForm] = useState<string>('All')
 
 	const { data, isLoading, error } = useEquitiesFilingsData(ticker)
-	const width = useBreakpointWidth()
-
 	const filingForms = useMemo(() => {
 		if (!data) return []
 		const forms = new Set<string>()
@@ -137,7 +155,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 
 	const instance = useReactTable({
 		data: filteredData,
-		columns: columns as ColumnDef<any>[],
+		columns,
 		state: {
 			sorting,
 			columnOrder,
@@ -151,17 +169,12 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		autoResetPageIndex: false
+		getCoreRowModel: getEquitiesFilingsCoreRowModel,
+		getSortedRowModel: getEquitiesFilingsSortedRowModel,
+		getFilteredRowModel: getEquitiesFilingsFilteredRowModel,
+		getPaginationRowModel: getEquitiesFilingsPaginationRowModel,
+		autoResetPageIndex: true
 	})
-
-	React.useEffect(() => {
-		const defaultOrder = instance.getAllLeafColumns().map((d) => d.id)
-		instance.setColumnOrder(defaultOrder)
-	}, [instance, width])
 
 	const [_searchValue, setSearchValue] = useTableSearch({ instance, columnToSearch: 'documentDescription' })
 
@@ -226,23 +239,20 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 								))}
 							</select>
 						</label>
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
-								const csvData = rows.map((row) => row.original)
-								const headers = ['Filing Date', 'Report Date', 'Form', 'Description', 'URL']
-								const csv = [
-									headers.join(','),
-									...csvData.map((item: IEquitiesFilingApiItem) =>
-										[
-											`"${item.filingDate}"`,
-											`"${item.reportDate}"`,
-											`"${item.form}"`,
-											`"${item.documentDescription}"`,
-											`"${item.primaryDocumentUrl}"`
-										].join(',')
-									)
-								].join('\n')
+								const csv: CsvCell[][] = [['Filing Date', 'Report Date', 'Form', 'Description', 'URL']]
+								for (const row of rows) {
+									const item = row.original
+									csv.push([
+										item.filingDate,
+										item.reportDate,
+										item.form,
+										item.documentDescription,
+										item.primaryDocumentUrl
+									])
+								}
 
 								downloadCSV(`equities-${ticker}-filings.csv`, csv, { addTimestamp: true })
 							}}
@@ -258,7 +268,17 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 				</div>
 			</div>
 			<TableBody table={instance} />
-			<TablePagination table={instance} />
+			<TablePagination
+				pageSize={pagination.pageSize}
+				pageIndex={pagination.pageIndex}
+				pageCount={instance.getPageCount()}
+				canPreviousPage={instance.getCanPreviousPage()}
+				canNextPage={instance.getCanNextPage()}
+				previousPage={instance.previousPage}
+				nextPage={instance.nextPage}
+				setPageSize={instance.setPageSize}
+				showPageSizes={instance.getRowCount() > 10}
+			/>
 		</div>
 	)
 }

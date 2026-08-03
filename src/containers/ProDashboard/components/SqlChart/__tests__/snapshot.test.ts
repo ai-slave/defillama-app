@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
-import { captureSnapshot, snapshotToResult, SQL_SNAPSHOT_ROW_CAP } from '../snapshot'
+import { captureSnapshot, snapshotToResult, SQL_SNAPSHOT_ROW_CAP } from '../../../sqlSnapshot'
 
 function resultWithRows(n: number): QueryResult {
 	return {
@@ -64,8 +64,7 @@ describe('captureSnapshot', () => {
 			rows: [[42n, new Date('2026-06-24T00:00:00.000Z')]]
 		}
 		const snap = captureSnapshot(result, 'browser', AT)
-		expect(snap.rows[0][0]).toBe(42)
-		expect(snap.rows[0][1]).toBe('2026-06-24T00:00:00.000Z')
+		expect(snap.rows).toEqual([[42, '2026-06-24T00:00:00.000Z']])
 		expect(() => JSON.stringify(snap)).not.toThrow()
 	})
 })

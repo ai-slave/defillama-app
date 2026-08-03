@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useReducer } from 'react'
-import type { ChartConfig, DashboardItemConfig, MetricAggregator, MetricChartType } from '../../types'
+import type { DashboardItemConfig } from '../../dashboardItemConfig'
+import type { ChartConfig, MetricAggregator, MetricChartType } from '../../types'
 import { initializeFromEditItem, modalReducer } from './modalReducer'
 import type {
 	ChartBuilderConfig,
@@ -38,8 +39,6 @@ export function useModalState(editItem?: DashboardItemConfig | null) {
 			setSelectedTableType: (type: CombinedTableType) => dispatch({ type: 'SET_SELECTED_TABLE_TYPE', payload: type }),
 			setSelectedDatasetChain: (chain: string | null) =>
 				dispatch({ type: 'SET_SELECTED_DATASET_CHAIN', payload: chain }),
-			setSelectedDatasetTimeframe: (timeframe: string | null) =>
-				dispatch({ type: 'SET_SELECTED_DATASET_TIMEFRAME', payload: timeframe }),
 			setSelectedCexAnalyticsView: (view: ModalState['selectedCexAnalyticsView']) =>
 				dispatch({ type: 'SET_SELECTED_CEX_ANALYTICS_VIEW', payload: view }),
 			setSelectedCexAnalyticsMetric: (metric: ModalState['selectedCexAnalyticsMetric']) =>
@@ -62,7 +61,7 @@ export function useModalState(editItem?: DashboardItemConfig | null) {
 			setMetricChartType: (v: MetricChartType) => dispatch({ type: 'SET_METRIC_CHART_TYPE', payload: v }),
 			setSelectedYieldPool: (pool: { configID: string; name: string; project: string; chain: string } | null) =>
 				dispatch({ type: 'SET_SELECTED_YIELD_POOL', payload: pool }),
-			setSelectedYieldChartType: (chartType: string) =>
+			setSelectedYieldChartType: (chartType: ModalState['selectedYieldChartType']) =>
 				dispatch({ type: 'SET_SELECTED_YIELD_CHART_TYPE', payload: chartType }),
 			setSelectedYieldChains: (chains: string[]) => dispatch({ type: 'SET_SELECTED_YIELD_CHAINS', payload: chains }),
 			setSelectedYieldProjects: (projects: string[]) =>
@@ -74,26 +73,26 @@ export function useModalState(editItem?: DashboardItemConfig | null) {
 			setMaxTvl: (tvl: number | null) => dispatch({ type: 'SET_MAX_TVL', payload: tvl }),
 			setSelectedStablecoinChain: (chain: string) =>
 				dispatch({ type: 'SET_SELECTED_STABLECOIN_CHAIN', payload: chain }),
-			setSelectedStablecoinChartType: (chartType: string) =>
+			setSelectedStablecoinChartType: (chartType: ModalState['selectedStablecoinChartType']) =>
 				dispatch({ type: 'SET_SELECTED_STABLECOIN_CHART_TYPE', payload: chartType }),
 			setStablecoinMode: (mode: 'chain' | 'asset') => dispatch({ type: 'SET_STABLECOIN_MODE', payload: mode }),
 			setSelectedStablecoinAsset: (asset: string | null) =>
 				dispatch({ type: 'SET_SELECTED_STABLECOIN_ASSET', payload: asset }),
 			setSelectedStablecoinAssetId: (id: string | null) =>
 				dispatch({ type: 'SET_SELECTED_STABLECOIN_ASSET_ID', payload: id }),
-			setSelectedStablecoinAssetChartType: (chartType: string) =>
+			setSelectedStablecoinAssetChartType: (chartType: ModalState['selectedStablecoinAssetChartType']) =>
 				dispatch({ type: 'SET_SELECTED_STABLECOIN_ASSET_CHART_TYPE', payload: chartType }),
 			setSelectedAdvancedTvlProtocol: (protocol: string | null) =>
 				dispatch({ type: 'SET_SELECTED_ADVANCED_TVL_PROTOCOL', payload: protocol }),
 			setSelectedAdvancedTvlProtocolName: (name: string | null) =>
 				dispatch({ type: 'SET_SELECTED_ADVANCED_TVL_PROTOCOL_NAME', payload: name }),
-			setSelectedAdvancedTvlChartType: (chartType: string) =>
+			setSelectedAdvancedTvlChartType: (chartType: ModalState['selectedAdvancedTvlChartType']) =>
 				dispatch({ type: 'SET_SELECTED_ADVANCED_TVL_CHART_TYPE', payload: chartType }),
 			setSelectedBorrowedProtocol: (protocol: string | null) =>
 				dispatch({ type: 'SET_SELECTED_BORROWED_PROTOCOL', payload: protocol }),
 			setSelectedBorrowedProtocolName: (name: string | null) =>
 				dispatch({ type: 'SET_SELECTED_BORROWED_PROTOCOL_NAME', payload: name }),
-			setSelectedBorrowedChartType: (chartType: string) =>
+			setSelectedBorrowedChartType: (chartType: ModalState['selectedBorrowedChartType']) =>
 				dispatch({ type: 'SET_SELECTED_BORROWED_CHART_TYPE', payload: chartType }),
 			setSelectedIncomeStatementProtocol: (protocol: string | null) =>
 				dispatch({ type: 'SET_SELECTED_INCOME_STATEMENT_PROTOCOL', payload: protocol }),

@@ -29,7 +29,7 @@ vi.mock('@ariakit/react', () => ({
 	Dialog: () => null
 }))
 
-vi.mock('~/components/AddToDashboard', () => ({ AddToDashboardButton: () => null }))
+vi.mock('~/components/AddToDashboard/AddToDashboardButton', () => ({ AddToDashboardButton: () => null }))
 vi.mock('~/components/ChartExport/ChartExportButtons', () => ({ ChartExportButtons: () => null }))
 vi.mock('~/components/EmbedChart', () => ({ EmbedChart: () => null }))
 

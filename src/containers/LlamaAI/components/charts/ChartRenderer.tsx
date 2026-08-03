@@ -20,19 +20,20 @@ import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboard
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { saveChartToLibrary } from '~/containers/LlamaAI/api/saveChartToLibrary'
 import { updateChartStyle } from '~/containers/LlamaAI/api/updateChartStyle'
-import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/useArticleExport'
-import { ChartControls } from '~/containers/LlamaAI/components/charts/ChartControls'
-import { ChartStyleEditor, type ChartStyleEditorView } from '~/containers/LlamaAI/components/charts/ChartStyleEditor'
-import { canAddChartArtifactToDashboard } from '~/containers/LlamaAI/dashboardArtifactFlow'
 import type {
-	ChartArtifactRef,
-	ChartArtifactRefs,
 	ChartConfiguration,
 	ChartDataByKey,
 	ChartDataSeries,
 	ChartStylePatch
-} from '~/containers/LlamaAI/types'
+} from '~/containers/LlamaAI/chartTypes'
+import { isChartDataRow } from '~/containers/LlamaAI/chartTypes'
+import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/useArticleExport'
+import { ChartControls } from '~/containers/LlamaAI/components/charts/ChartControls'
+import { ChartStyleEditor, type ChartStyleEditorView } from '~/containers/LlamaAI/components/charts/ChartStyleEditor'
+import { canAddChartArtifactToDashboard } from '~/containers/LlamaAI/dashboardArtifactFlow'
+import type { ChartArtifactRef, ChartArtifactRefs } from '~/containers/LlamaAI/types'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
+import type { ArticleExportRequest } from '~/containers/LlamaAI/utils/articleExport'
 import { adaptChartData } from '~/containers/LlamaAI/utils/chartAdapter'
 import { adaptCandlestickData } from '~/containers/LlamaAI/utils/chartAdapters/candlestick'
 import {
@@ -79,16 +80,30 @@ interface ChartRendererProps {
 	onLocalStyleSave?: (config: ChartConfiguration) => void
 }
 
+interface ChartRendererRuntimeProps {
+	charts: ChartConfiguration[]
+	chartData: ChartDataSeries | ChartDataByKey
+	isLoading: boolean
+	hasError: boolean
+	chartTypes: string[] | undefined
+	resizeTrigger: number
+	sessionId: string | null | undefined
+	messageId: string | undefined
+	readOnly: boolean | undefined
+	artifactRefs: ChartArtifactRefs | undefined
+	onLocalStyleSave: ((config: ChartConfiguration) => void) | undefined
+}
+
 interface SingleChartProps {
 	config: ChartConfiguration
 	data: ChartDataSeries
 	isActive: boolean
-	title?: string
-	sessionId?: string | null
-	messageId?: string
-	readOnly?: boolean
-	artifactRef?: ChartArtifactRef
-	onLocalStyleSave?: (config: ChartConfiguration) => void
+	title: string | undefined
+	sessionId: string | null | undefined
+	messageId: string | undefined
+	readOnly: boolean | undefined
+	artifactRef: ChartArtifactRef | undefined
+	onLocalStyleSave: ((config: ChartConfiguration) => void) | undefined
 }
 
 type ChartAction =
@@ -147,10 +162,19 @@ function applySavedStyleDefaults(state: ChartViewState, config: ChartConfigurati
 	}
 }
 
-function removeAdaptedChartTitle<T extends AdaptedChartData>(adaptedChart: T): T {
-	if (!adaptedChart.props || !('title' in adaptedChart.props)) return adaptedChart
-	const { title: _title, ...restProps } = adaptedChart.props
-	return { ...adaptedChart, props: restProps } as T
+function removeAdaptedChartTitle(adaptedChart: AdaptedChartData): AdaptedChartData {
+	switch (adaptedChart.chartType) {
+		case 'pie': {
+			const { title: _title, ...props } = adaptedChart.props
+			return { ...adaptedChart, props }
+		}
+		case 'scatter': {
+			const { title: _title, ...props } = adaptedChart.props
+			return { ...adaptedChart, props }
+		}
+		default:
+			return adaptedChart
+	}
 }
 
 interface ChartPresentationBase {
@@ -228,8 +252,8 @@ function ChartExportButtonsSlot({
 	renderPlan: ChartRenderPlan
 	chartTitle: string | undefined
 	chartId: string
-	sessionId?: string | null
-	messageId?: string
+	sessionId: string | null | undefined
+	messageId: string | undefined
 }) {
 	const prepareCsvDirect = useMemo(
 		() => (exportModel ? () => ({ filename: exportModel.csvFilename, rows: exportModel.csvRows }) : undefined),
@@ -443,12 +467,13 @@ function SingleChart({
 		if (!authorizedFetch || savingToLibrary) return
 		setSavingToLibrary(true)
 		try {
-			const id = await saveChartToLibrary(authorizedFetch, {
+			const request: Parameters<typeof saveChartToLibrary>[1] = {
 				chartId: baseConfig.id,
-				sessionId,
-				messageId,
 				frozen: true
-			})
+			}
+			if (sessionId !== undefined) request.sessionId = sessionId
+			if (messageId !== undefined) request.messageId = messageId
+			const id = await saveChartToLibrary(authorizedFetch, request)
 			if (id) toast.success('Chart saved to your library (frozen)')
 			else toast.error('Failed to save chart')
 		} finally {
@@ -459,18 +484,19 @@ function SingleChart({
 	const handleSaveStyle = useCallback(
 		async (draft: ChartConfiguration, patch: ChartStylePatch) => {
 			if (onLocalStyleSave) {
-				const updated: ChartConfiguration = draft.displayOptions
-					? {
-							...draft,
-							displayOptions: {
-								...draft.displayOptions,
-								defaultStacked: patch.defaultStacked,
-								defaultPercentage: patch.defaultPercentage,
-								defaultLogScale: patch.defaultLogScale,
-								showLabels: patch.showLabels
-							}
-						}
-					: draft
+				let updated = draft
+				if (draft.displayOptions) {
+					const displayOptions: NonNullable<ChartConfiguration['displayOptions']> = { ...draft.displayOptions }
+					if (patch.defaultStacked === undefined) delete displayOptions.defaultStacked
+					else displayOptions.defaultStacked = patch.defaultStacked
+					if (patch.defaultPercentage === undefined) delete displayOptions.defaultPercentage
+					else displayOptions.defaultPercentage = patch.defaultPercentage
+					if (patch.defaultLogScale === undefined) delete displayOptions.defaultLogScale
+					else displayOptions.defaultLogScale = patch.defaultLogScale
+					if (patch.showLabels === undefined) delete displayOptions.showLabels
+					else displayOptions.showLabels = patch.showLabels
+					updated = { ...draft, displayOptions }
+				}
 				onLocalStyleSave(updated)
 				setAppliedConfigOverride({ config: updated, source: baseConfig })
 				dispatch({ type: 'RESET_VIEW', payload: applySavedStyleDefaults(chartState, updated) })
@@ -542,7 +568,7 @@ function ActiveSingleChart({
 	data: ChartDataSeries
 	chartState: ChartViewState
 	dispatch: Dispatch<ChartAction>
-	title?: string
+	title: string | undefined
 	appliedConfig: ChartConfiguration | null
 	editing: boolean
 	setEditing: Dispatch<SetStateAction<boolean>>
@@ -551,10 +577,10 @@ function ActiveSingleChart({
 	savingToLibrary: boolean
 	handleSaveToLibrary: () => Promise<void>
 	handleSaveStyle: (draft: ChartConfiguration, patch: ChartStylePatch) => Promise<void>
-	sessionId?: string | null
-	messageId?: string
-	readOnly?: boolean
-	artifactRef?: ChartArtifactRef
+	sessionId: string | null | undefined
+	messageId: string | undefined
+	readOnly: boolean | undefined
+	artifactRef: ChartArtifactRef | undefined
 }) {
 	// category names (bars/slices) for per-category color pickers on single-series hbar & pie
 	const editorCategories = useMemo(() => {
@@ -563,7 +589,8 @@ function ActiveSingleChart({
 		const seen = new Set<string>()
 		const out: string[] = []
 		for (const row of data) {
-			const v = (row as Record<string, unknown>)?.[field]
+			if (!isChartDataRow(row)) continue
+			const v = row[field]
 			const key = v == null ? 'Unknown' : String(v)
 			if (!seen.has(key)) {
 				seen.add(key)
@@ -637,11 +664,15 @@ function ActiveSingleChart({
 
 	if (config.type === 'candlestick') {
 		const candlestickData = adaptCandlestickData(config, data)
+		const candlestickProps =
+			candlestickData.indicators === undefined
+				? { data: candlestickData.data }
+				: { data: candlestickData.data, indicators: candlestickData.indicators }
 		return (
 			<div className="flex flex-col p-2" data-chart-id={config.id}>
 				{addToDashboardButton ? <div className="flex justify-end">{addToDashboardButton}</div> : null}
 				<Suspense fallback={<div className="h-[480px]" />}>
-					<CandlestickChart data={candlestickData.data} indicators={candlestickData.indicators} />
+					<CandlestickChart {...candlestickProps} />
 				</Suspense>
 			</div>
 		)
@@ -676,11 +707,12 @@ function ActiveSingleChart({
 	const exportModel = renderPlan.exportModel
 	const chartKey = `${config.id}-${normalizedState.stacked}-${normalizedState.percentage}-${normalizedState.cumulative}-${normalizedState.grouping}-${normalizedState.showHallmarks}-${normalizedState.showLabels}-${normalizedState.logScale}`
 	const chartContent = renderChartContent(renderPlan, chartKey, handleChartReady)
+	const controls = title === undefined ? renderPlan.controls : { ...renderPlan.controls, title }
 
 	return (
 		<div className="flex flex-col *:[2n-1]:m-2" data-chart-id={config.id}>
 			<ChartControls
-				controls={{ ...renderPlan.controls, title }}
+				controls={controls}
 				onStackedChange={handleStackedChange}
 				onPercentageChange={handlePercentageChange}
 				onCumulativeChange={handleCumulativeChange}
@@ -728,15 +760,16 @@ function ActiveSingleChart({
 							type="button"
 							size="md"
 							square
-							onClick={() =>
-								openArticleExport({
+							onClick={() => {
+								const request: ArticleExportRequest = {
 									kind: 'chart',
 									chartId: baseConfig.id,
 									charts: { [baseConfig.id]: { config: baseConfig, data } },
-									sessionId,
 									messageId
-								})
-							}
+								}
+								if (sessionId !== undefined) request.sessionId = sessionId
+								openArticleExport(request)
+							}}
 							title="Add to research article"
 							aria-label="Add to research article"
 						>
@@ -819,7 +852,7 @@ const ChartLoadingSpinner = () => (
 	<div className="size-4 animate-spin rounded-full border-b-2 border-ai-accent-blue"></div>
 )
 
-const ChartLoadingPlaceholder = ({ chartTypes }: { chartTypes?: string[] }) => (
+const ChartLoadingPlaceholder = ({ chartTypes }: { chartTypes: string[] | undefined }) => (
 	<div className="flex flex-col items-center justify-center gap-2 rounded-md border border-ai-line px-1 py-8">
 		<ChartLoadingSpinner />
 		<p className="text-ai-tertiary">
@@ -879,13 +912,13 @@ function ChartRendererImpl({
 	isLoading = false,
 	hasError = false,
 	chartTypes,
-	resizeTrigger = 0,
+	resizeTrigger,
 	sessionId,
 	messageId,
 	readOnly,
 	artifactRefs,
 	onLocalStyleSave
-}: ChartRendererProps) {
+}: ChartRendererRuntimeProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [selectedChartId, setSelectedChartId] = useState(charts[0]?.id)
 	const activeChartId = charts.some((chart) => chart.id === selectedChartId) ? selectedChartId : charts[0]?.id
@@ -915,12 +948,11 @@ function ChartRendererImpl({
 	}, [])
 
 	useEffect(() => {
-		if (resizeTrigger > 0) {
-			const timer = setTimeout(() => {
-				window.dispatchEvent(new CustomEvent('chartResize'))
-			}, 100)
-			return () => clearTimeout(timer)
-		}
+		if (resizeTrigger <= 0) return undefined
+		const timer = setTimeout(() => {
+			window.dispatchEvent(new CustomEvent('chartResize'))
+		}, 100)
+		return () => clearTimeout(timer)
 	}, [resizeTrigger])
 
 	if (hasError && (!charts || charts.length === 0)) {

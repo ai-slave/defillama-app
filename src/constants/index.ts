@@ -1,11 +1,13 @@
 import { getDirectUrlEnv } from '~/utils/directApi'
 
 const API_KEY = process.env.API_KEY
+const SKIP_BUILD_STATIC_GENERATION_ENV = process.env.SKIP_BUILD_STATIC_GENERATION
 
 export const PRO_API_BASE_URL = 'https://pro-api.llama.fi'
 export const COINGECKO_KEY = process.env.CG_KEY
 export const SEARCH_API_TOKEN = process.env.NEXT_PUBLIC_SEARCH_API_TOKEN
-export const SKIP_BUILD_STATIC_GENERATION = !['false', '0'].includes(process.env.SKIP_BUILD_STATIC_GENERATION)
+export const SKIP_BUILD_STATIC_GENERATION =
+	SKIP_BUILD_STATIC_GENERATION_ENV !== 'false' && SKIP_BUILD_STATIC_GENERATION_ENV !== '0'
 export const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ''
 
 // Base servers
@@ -65,8 +67,6 @@ export const PROTOCOL_RISK_API = `${VAULT_RISK_SERVER_URL}/v1/protocol-risks`
 
 // Core llama APIs
 export const CONFIG_API = `${SERVER_URL}/config`
-export const DIMENSIONS_OVERVIEW_API = `${SERVER_URL}/overview`
-export const DIMENSIONS_SUMMARY_API = `${SERVER_URL}/summary`
 
 // Coins
 export const COINS_CHART_API = `${COINS_SERVER_URL}/chart`

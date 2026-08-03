@@ -163,12 +163,6 @@ export function buildChainMatchSet(chains: string[]): Set<string> {
 	return set
 }
 
-/** @deprecated Prefer stored v2/display-name chain values instead of normalizing filters at read time. */
-export function normalizeChainSlug(chain: string | null | undefined): string | null {
-	if (!chain) return null
-	return toInternalSlug(chain)
-}
-
 /** @deprecated Keep only while legacy saved filters can contain these aliases. */
 export const CHAIN_SLUG_ALIASES: Record<string, string> = {
 	optimism: 'op-mainnet',

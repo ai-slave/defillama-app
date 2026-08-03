@@ -1,4 +1,4 @@
-import type { ChartConfiguration, ChartDataSeries } from '~/containers/LlamaAI/types'
+import type { ChartConfiguration, ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import { adaptCartesianChartData } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import { adaptHBarChartData } from '~/containers/LlamaAI/utils/chartAdapters/hbar'

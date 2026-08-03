@@ -3,7 +3,7 @@ import { Icon } from '~/ui/Icon'
 
 interface CollapsibleSectionProps {
 	title: string
-	badge?: string | number
+	badge?: string | number | undefined
 	children: React.ReactNode
 	className?: string
 }

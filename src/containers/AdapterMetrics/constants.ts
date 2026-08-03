@@ -18,6 +18,7 @@ export enum ADAPTER_TYPES {
 
 export enum ADAPTER_DATA_TYPES {
 	DAILY_FEES = 'dailyFees',
+	DAILY_USER_FEES = 'dailyUserFees',
 	DAILY_REVENUE = 'dailyRevenue',
 	DAILY_PROTOCOL_REVENUE = 'dailyProtocolRevenue',
 	DAILY_HOLDERS_REVENUE = 'dailyHoldersRevenue',
@@ -43,6 +44,7 @@ export enum ADAPTER_DATA_TYPES {
 
 export const ADAPTER_DATA_TYPE_KEYS: Partial<Record<`${ADAPTER_DATA_TYPES}`, string>> = {
 	dailyFees: 'df',
+	dailyUserFees: 'duf',
 	dailyRevenue: 'dr',
 	dailyProtocolRevenue: 'dpr',
 	dailyHoldersRevenue: 'dhr',
@@ -80,6 +82,7 @@ const CHAIN_METADATA_KEYS: Record<string, ChainMetadataKey> = {
 	[`${ADAPTER_TYPES.OPTIONS}:${ADAPTER_DATA_TYPES.DAILY_NOTIONAL_VOLUME}`]: 'optionsNotionalVolume',
 	// unambiguous data types
 	[ADAPTER_DATA_TYPES.DAILY_FEES]: 'fees',
+	[ADAPTER_DATA_TYPES.DAILY_USER_FEES]: 'fees',
 	[ADAPTER_DATA_TYPES.DAILY_REVENUE]: 'revenue',
 	[ADAPTER_DATA_TYPES.DAILY_PROTOCOL_REVENUE]: 'revenue',
 	[ADAPTER_DATA_TYPES.DAILY_PREMIUM_VOLUME]: 'optionsPremiumVolume',

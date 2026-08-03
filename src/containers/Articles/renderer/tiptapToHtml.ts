@@ -1,11 +1,11 @@
 import { FEATURES_SERVER } from '~/constants'
+import { isChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { SITEMAP_BASE_URL } from '~/utils/sitemapXml'
 import { validateArticleChartConfig } from '../chartAdapters'
 import { validateArticlePeoplePanel } from '../editor/peoplePanel'
 import { getEmbedProviderLabel, validateEmbedConfig } from '../embedProviders'
 import { getArticleEntityRoute, isValidArticleEntityType } from '../entityLinks'
 import { getTiptapNodeText } from '../extractors'
-import { validateLlamaAIChartConfig } from '../llamaaiChart'
 import type { ArticleCalloutTone, ArticleEntityType, TiptapJson, TiptapMark } from '../types'
 
 const SITE_ORIGIN = SITEMAP_BASE_URL
@@ -20,6 +20,16 @@ export type FeedImageInput = {
 	headline?: string | null
 	href?: string | null
 }
+
+const FEED_IMAGE_KEYS: Array<keyof FeedImageInput> = [
+	'src',
+	'alt',
+	'caption',
+	'credit',
+	'copyright',
+	'headline',
+	'href'
+]
 
 function escapeHtml(value: string): string {
 	return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -132,13 +142,14 @@ function renderChart(node: TiptapJson): string {
 	if (!config) return ''
 	const label = config.caption || config.series.map((series) => series.name).join(' vs ')
 	const primary = config.series[0]
+	if (!primary) return ''
 	const href = `${SITE_ORIGIN}${getArticleEntityRoute(primary.entityType, primary.slug)}`
 	return `<p><em>[Chart: ${escapeHtml(label)}]</em> — <a href="${escapeAttr(href)}">View on DefiLlama</a></p>`
 }
 
 function renderLlamaAIChart(node: TiptapJson): string {
-	const config = validateLlamaAIChartConfig(node.attrs?.chartConfig)
-	if (!config) return ''
+	const config = node.attrs?.chartConfig
+	if (!isChartConfiguration(config)) return ''
 	const caption = typeof node.attrs?.caption === 'string' ? node.attrs.caption : ''
 	return `<p><em>[Chart: ${escapeHtml(caption || config.title || 'LlamaAI chart')}]</em></p>`
 }
@@ -225,15 +236,12 @@ function renderNode(node: TiptapJson): string {
 	if (node.type === 'llamaaiChart') return renderLlamaAIChart(node)
 	if (node.type === 'articleEmbed') return renderEmbed(node)
 	if (node.type === 'articleImage') {
-		return imageFigureHtml({
-			src: stringAttr(node.attrs, 'src'),
-			alt: stringAttr(node.attrs, 'alt'),
-			caption: stringAttr(node.attrs, 'caption'),
-			credit: stringAttr(node.attrs, 'credit'),
-			copyright: stringAttr(node.attrs, 'copyright'),
-			headline: stringAttr(node.attrs, 'headline'),
-			href: stringAttr(node.attrs, 'href')
-		})
+		const image: FeedImageInput = {}
+		for (const key of FEED_IMAGE_KEYS) {
+			const value = stringAttr(node.attrs, key)
+			if (value !== undefined) image[key] = value
+		}
+		return imageFigureHtml(image)
 	}
 	if (node.type === 'articlePeoplePanel') return renderPeoplePanel(node)
 	if (node.type === 'qa') return `<dl>${renderChildren(node)}</dl>`

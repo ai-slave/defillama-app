@@ -1,9 +1,10 @@
+import type { useAuthContext } from '~/auth'
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import { FEATURES_SERVER } from '../../../constants'
-import type { AIGeneratedData, CustomTimePeriod, Dashboard, TimePeriod } from '../dashboardTypes'
-import type { DashboardItemConfig } from '../types'
-
-export type { Dashboard } from '../dashboardTypes'
+import { migrateDashboardConfig } from '../dashboardConfig/migrate'
+import type { PersistedDashboard } from '../dashboardConfig/persisted'
+import type { DashboardItemConfig } from '../dashboardItemConfig'
+import type { AIGeneratedData, AIUndoState, CustomTimePeriod, Dashboard, TimePeriod } from '../dashboardTypes'
 
 export interface FollowingShelf {
 	author: PublicDashboardAuthor
@@ -12,11 +13,37 @@ export interface FollowingShelf {
 	dashboards: Dashboard[]
 }
 
-interface LiteDashboard {
+type PersistedFollowingShelf = Omit<FollowingShelf, 'dashboards'> & { dashboards: PersistedDashboard[] }
+
+interface DashboardPage<T> {
+	items: T[]
+	page: number
+	perPage: number
+	totalItems: number
+	totalPages: number
+}
+
+interface DashboardSearchParams {
+	query: string
+	tags: string[]
+	visibility: 'public' | 'private'
+	sortBy: 'popular' | 'recent' | 'likes' | 'trending'
+	timeFrame: '1d' | '7d' | '30d' | 'all'
+	page: number
+	limit: number
+}
+
+function migrateDashboardPage(page: DashboardPage<PersistedDashboard>): DashboardPage<Dashboard> {
+	return { ...page, items: page.items.map(migrateDashboardConfig) }
+}
+
+export interface LiteDashboardSummary {
 	id: string
 	name: string
 	slug?: string
 }
+
+export type DashboardAuthorizedFetch = ReturnType<typeof useAuthContext>['authorizedFetch']
 
 export function dashboardUrlKey(dashboard: { id: string; slug?: string }): string {
 	return dashboard.slug || dashboard.id
@@ -40,11 +67,22 @@ export class DashboardError extends Error {
 	}
 }
 
-type DashboardSavePayload = {
+async function requireAuthorizedResponse(
+	authorizedFetch: DashboardAuthorizedFetch,
+	url: string,
+	options?: Parameters<DashboardAuthorizedFetch>[1]
+): Promise<Response> {
+	const response = options === undefined ? await authorizedFetch(url) : await authorizedFetch(url, options)
+	if (response === null) throw new DashboardError('Authentication required', 401)
+	return response
+}
+
+export type DashboardSavePayload = {
 	items: DashboardItemConfig[]
 	dashboardName: string
 	timePeriod?: TimePeriod
 	customTimePeriod?: CustomTimePeriod | null
+	aiUndoState?: AIUndoState | null
 	visibility?: 'private' | 'public'
 	tags?: string[]
 	description?: string
@@ -85,8 +123,8 @@ class DashboardAPIService {
 			let message = response.statusText || 'An error occurred'
 
 			try {
-				const errorData = await response.json()
-				message = errorData.message || message
+				const errorData: { message?: string; error?: string } = await response.json()
+				message = errorData.message || errorData.error || message
 			} catch {}
 
 			throw new DashboardError(message, response.status)
@@ -95,104 +133,82 @@ class DashboardAPIService {
 		return response.json()
 	}
 
-	async listDashboards(authorizedFetch: (url: string, options?: any) => Promise<Response>): Promise<Dashboard[]> {
-		const response = await authorizedFetch(`${FEATURES_SERVER}/dashboards?_=${Date.now()}`)
-		const data = await this.handleResponse<{ items: Dashboard[] }>(response)
-		return data.items || []
+	async listDashboards(authorizedFetch: DashboardAuthorizedFetch): Promise<Dashboard[]> {
+		const response = await requireAuthorizedResponse(authorizedFetch, `${FEATURES_SERVER}/dashboards?_=${Date.now()}`)
+		const data = await this.handleResponse<{ items: PersistedDashboard[] }>(response)
+		return data.items.map(migrateDashboardConfig)
 	}
 
-	async listLiteDashboards(
-		authorizedFetch: (url: string, options?: any) => Promise<Response>
-	): Promise<LiteDashboard[]> {
-		const response = await authorizedFetch(`${FEATURES_SERVER}/lite/dashboards?_=${Date.now()}`)
-		const data = await this.handleResponse<{ items: LiteDashboard[] }>(response)
-		return data.items || []
+	async listLiteDashboards(authorizedFetch: DashboardAuthorizedFetch): Promise<LiteDashboardSummary[]> {
+		const response = await requireAuthorizedResponse(
+			authorizedFetch,
+			`${FEATURES_SERVER}/lite/dashboards?_=${Date.now()}`
+		)
+		const data = await this.handleResponse<{ items: LiteDashboardSummary[] }>(response)
+		return data.items
 	}
 
 	async listDashboardsPaginated(
 		params: { page?: number; limit?: number },
-		authorizedFetch: (url: string, options?: any) => Promise<Response>
+		authorizedFetch: DashboardAuthorizedFetch
 	): Promise<{ items: Dashboard[]; page: number; perPage: number; totalItems: number; totalPages: number }> {
 		const searchParams = new URLSearchParams()
 		if (params.page) searchParams.append('page', params.page.toString())
 		if (params.limit) searchParams.append('limit', params.limit.toString())
 		searchParams.append('_', Date.now().toString())
 
-		const response = await authorizedFetch(`${FEATURES_SERVER}/dashboards?${searchParams.toString()}`)
-		return this.handleResponse(response)
+		const response = await requireAuthorizedResponse(
+			authorizedFetch,
+			`${FEATURES_SERVER}/dashboards?${searchParams.toString()}`
+		)
+		return migrateDashboardPage(await this.handleResponse<DashboardPage<PersistedDashboard>>(response))
 	}
 
-	async getDashboard(
-		id: string,
-		authorizedFetch?: (url: string, options?: any) => Promise<Response>
-	): Promise<Dashboard> {
-		const url = `${FEATURES_SERVER}/dashboards/${id}?_=${Date.now()}`
-		const response = authorizedFetch ? await authorizedFetch(url) : await fetch(url)
-		return this.handleResponse<Dashboard>(response)
+	async getDashboard(id: string, authorizedFetch?: DashboardAuthorizedFetch): Promise<Dashboard> {
+		const url = `${FEATURES_SERVER}/dashboards/${encodeURIComponent(id)}?_=${Date.now()}`
+		const response = authorizedFetch ? await requireAuthorizedResponse(authorizedFetch, url) : await fetch(url)
+		return migrateDashboardConfig(await this.handleResponse<PersistedDashboard>(response))
 	}
 
-	async createDashboard(
-		data: {
-			items: DashboardItemConfig[]
-			dashboardName: string
-			timePeriod?: TimePeriod
-			customTimePeriod?: CustomTimePeriod | null
-			visibility?: 'private' | 'public'
-			tags?: string[]
-			description?: string
-			aiGenerated?: AIGeneratedData | null
-			copySourceDashboardId?: string
-		},
-		authorizedFetch: (url: string, options?: any) => Promise<Response>
-	): Promise<Dashboard> {
+	async createDashboard(data: DashboardSavePayload, authorizedFetch: DashboardAuthorizedFetch): Promise<Dashboard> {
 		const { url, options } = buildDashboardSaveRequest({ data })
-		const response = await authorizedFetch(url, options)
+		const response = await requireAuthorizedResponse(authorizedFetch, url, options)
 
-		return this.handleResponse<Dashboard>(response)
+		return migrateDashboardConfig(await this.handleResponse<PersistedDashboard>(response))
 	}
 
 	async updateDashboard(
 		id: string,
-		data: {
-			items: DashboardItemConfig[]
-			dashboardName: string
-			timePeriod?: TimePeriod
-			customTimePeriod?: CustomTimePeriod | null
-			visibility?: 'private' | 'public'
-			tags?: string[]
-			description?: string
-			aiGenerated?: AIGeneratedData | null
-		},
-		authorizedFetch: (url: string, options?: any) => Promise<Response>
+		data: DashboardSavePayload,
+		authorizedFetch: DashboardAuthorizedFetch
 	): Promise<Dashboard> {
 		const { url, options } = buildDashboardSaveRequest({ id, data })
-		const response = await authorizedFetch(url, options)
+		const response = await requireAuthorizedResponse(authorizedFetch, url, options)
 
-		return this.handleResponse<Dashboard>(response)
+		return migrateDashboardConfig(await this.handleResponse<PersistedDashboard>(response))
 	}
 
-	async deleteDashboard(
-		id: string,
-		authorizedFetch: (url: string, options?: any) => Promise<Response>
-	): Promise<{ message: string }> {
-		const response = await authorizedFetch(`/api/private/pro-dashboard/delete?id=${encodeURIComponent(id)}`, {
-			method: 'POST'
-		})
+	async deleteDashboard(id: string, authorizedFetch: DashboardAuthorizedFetch): Promise<{ message: string }> {
+		const response = await requireAuthorizedResponse(
+			authorizedFetch,
+			`/api/private/pro-dashboard/delete?id=${encodeURIComponent(id)}`,
+			{ method: 'POST' }
+		)
 
 		return this.handleResponse<{ message: string }>(response)
 	}
 
 	async discoverDashboards(
 		params?: { page?: number; limit?: number },
-		authorizedFetch?: (url: string, options?: any) => Promise<Response>
+		authorizedFetch?: DashboardAuthorizedFetch
 	): Promise<{ items: Dashboard[]; page: number; perPage: number; totalItems: number; totalPages: number }> {
 		const queryParams = new URLSearchParams()
 		if (params?.page) queryParams.append('page', params.page.toString())
 		if (params?.limit) queryParams.append('limit', params.limit.toString())
 
 		const url = `${FEATURES_SERVER}/dashboards/discover?${queryParams.toString()}`
-		const response = authorizedFetch ? await authorizedFetch(url) : await fetch(url)
-		return this.handleResponse(response)
+		const response = authorizedFetch ? await requireAuthorizedResponse(authorizedFetch, url) : await fetch(url)
+		return migrateDashboardPage(await this.handleResponse<DashboardPage<PersistedDashboard>>(response))
 	}
 
 	async searchDashboards(
@@ -205,14 +221,14 @@ class DashboardAPIService {
 			page?: number
 			limit?: number
 		},
-		authorizedFetch?: (url: string, options?: any) => Promise<Response>
+		authorizedFetch?: DashboardAuthorizedFetch
 	): Promise<{
 		items: Dashboard[]
 		page: number
 		perPage: number
 		totalItems: number
 		totalPages: number
-		searchParams: any
+		searchParams: DashboardSearchParams
 	}> {
 		const queryParams = new URLSearchParams()
 		if (params.query) queryParams.append('query', params.query)
@@ -224,27 +240,29 @@ class DashboardAPIService {
 		if (params.limit) queryParams.append('limit', params.limit.toString())
 
 		const url = `${FEATURES_SERVER}/dashboards/search?${queryParams.toString()}`
-		const response = authorizedFetch ? await authorizedFetch(url) : await fetch(url)
-		return this.handleResponse(response)
+		const response = authorizedFetch ? await requireAuthorizedResponse(authorizedFetch, url) : await fetch(url)
+		const result = await this.handleResponse<
+			DashboardPage<PersistedDashboard> & { searchParams: DashboardSearchParams }
+		>(response)
+		return { ...migrateDashboardPage(result), searchParams: result.searchParams }
 	}
 
-	async viewDashboard(
-		id: string,
-		authorizedFetch?: (url: string, options?: any) => Promise<Response>
-	): Promise<Dashboard> {
-		const url = `${FEATURES_SERVER}/dashboards/${id}/view`
-		const response = authorizedFetch ? await authorizedFetch(url) : await fetch(url)
-		return this.handleResponse<Dashboard>(response)
+	async viewDashboard(id: string, authorizedFetch?: DashboardAuthorizedFetch): Promise<Dashboard> {
+		const url = `${FEATURES_SERVER}/dashboards/${encodeURIComponent(id)}/view`
+		const response = authorizedFetch ? await requireAuthorizedResponse(authorizedFetch, url) : await fetch(url)
+		return migrateDashboardConfig(await this.handleResponse<PersistedDashboard>(response))
 	}
 
 	async likeDashboard(
 		id: string,
-		authorizedFetch: (url: string, options?: any) => Promise<Response>
+		authorizedFetch: DashboardAuthorizedFetch
 	): Promise<{ liked: boolean; likeCount: number }> {
-		const response = await authorizedFetch(`${FEATURES_SERVER}/dashboards/${id}/like`, {
-			method: 'POST'
-		})
-		return this.handleResponse(response)
+		const response = await requireAuthorizedResponse(
+			authorizedFetch,
+			`${FEATURES_SERVER}/dashboards/${encodeURIComponent(id)}/like`,
+			{ method: 'POST' }
+		)
+		return this.handleResponse<{ liked: boolean; likeCount: number }>(response)
 	}
 
 	async getLikedDashboards(
@@ -252,7 +270,7 @@ class DashboardAPIService {
 			page?: number
 			limit?: number
 		},
-		authorizedFetch: (url: string, options?: any) => Promise<Response>
+		authorizedFetch: DashboardAuthorizedFetch
 	): Promise<{
 		items: Dashboard[]
 		page: number
@@ -264,8 +282,11 @@ class DashboardAPIService {
 		if (params.page) searchParams.append('page', params.page.toString())
 		if (params.limit) searchParams.append('limit', params.limit.toString())
 
-		const response = await authorizedFetch(`${FEATURES_SERVER}/dashboards/liked?${searchParams}`)
-		return this.handleResponse(response)
+		const response = await requireAuthorizedResponse(
+			authorizedFetch,
+			`${FEATURES_SERVER}/dashboards/liked?${searchParams}`
+		)
+		return migrateDashboardPage(await this.handleResponse<DashboardPage<PersistedDashboard>>(response))
 	}
 
 	async getFollowingAuthors(
@@ -273,7 +294,7 @@ class DashboardAPIService {
 			page?: number
 			limit?: number
 		},
-		authorizedFetch: (url: string, options?: any) => Promise<Response>
+		authorizedFetch: DashboardAuthorizedFetch
 	): Promise<{
 		items: FollowingShelf[]
 		page: number
@@ -285,8 +306,18 @@ class DashboardAPIService {
 		if (params.page) searchParams.append('page', params.page.toString())
 		if (params.limit) searchParams.append('limit', params.limit.toString())
 
-		const response = await authorizedFetch(`${FEATURES_SERVER}/authors/following?${searchParams}`)
-		return this.handleResponse(response)
+		const response = await requireAuthorizedResponse(
+			authorizedFetch,
+			`${FEATURES_SERVER}/authors/following?${searchParams}`
+		)
+		const result = await this.handleResponse<DashboardPage<PersistedFollowingShelf>>(response)
+		return {
+			...result,
+			items: result.items.map((shelf) => ({
+				...shelf,
+				dashboards: shelf.dashboards.map(migrateDashboardConfig)
+			}))
+		}
 	}
 }
 

@@ -1,10 +1,11 @@
-import type { ChartConfig, DashboardItemConfig } from '../../types'
+import type { DashboardItemConfig } from '../../dashboardItemConfig'
+import type { ChartConfig } from '../../types'
 import type { ChartBuilderConfig, ChartModeType, ChartTabType, CombinedTableType, MainTabType } from './types'
 
 const EMPTY_ARRAY: string[] = []
 
 interface SubmitButtonProps {
-	editItem?: DashboardItemConfig | null
+	editItem?: DashboardItemConfig | null | undefined
 	selectedMainTab: MainTabType
 	selectedChartTab: ChartTabType
 	selectedChain: string | null
@@ -14,7 +15,6 @@ interface SubmitButtonProps {
 	selectedYieldPool?: { configID: string; name: string; project: string; chain: string } | null
 	composerItems: ChartConfig[]
 	textContent: string
-	chartTypesLoading: boolean
 	selectedTableType?: CombinedTableType
 	selectedDatasetChain?: string | null
 	selectedTokens?: string[]
@@ -56,7 +56,6 @@ export function SubmitButton({
 	selectedYieldPool,
 	composerItems,
 	textContent,
-	chartTypesLoading,
 	selectedTableType = 'protocols',
 	selectedDatasetChain,
 	selectedTokens = EMPTY_ARRAY,
@@ -97,7 +96,6 @@ export function SubmitButton({
 	const isRwaAssetInvalid = rwaMode === 'asset' && (!selectedRwaAssetId || selectedRwaAssetMetrics.length === 0)
 
 	const isDisabled =
-		chartTypesLoading ||
 		(selectedMainTab === 'charts' && chartMode === 'manual' && selectedChartTab === 'yields' && !selectedYieldPool) ||
 		(selectedMainTab === 'charts' &&
 			chartMode === 'manual' &&
@@ -126,7 +124,6 @@ export function SubmitButton({
 			composerItems.length === 0) ||
 		(selectedMainTab === 'charts' && chartMode === 'builder' && !chartBuilder?.metric) ||
 		(selectedMainTab === 'table' && selectedTableType === 'stablecoins' && !selectedDatasetChain) ||
-		(selectedMainTab === 'table' && selectedTableType === 'trending-contracts' && !selectedDatasetChain) ||
 		(selectedMainTab === 'table' && selectedTableType === 'rwa-selected-chain' && !selectedDatasetChain) ||
 		(selectedMainTab === 'table' &&
 			selectedTableType === 'token-usage' &&

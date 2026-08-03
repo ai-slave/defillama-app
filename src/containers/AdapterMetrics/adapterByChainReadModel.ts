@@ -2,7 +2,7 @@ import { slug, getMarketCapToAnnualizedMetricRatio } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import type { IAdapterChainMetrics } from './api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES, ZERO_FEE_PERPS } from './constants'
-import { mergeParentMetricPeriods } from './metricPeriods'
+import { mergeParentEarningsMetricPeriods, mergeParentMetricPeriods } from './metricPeriods'
 import type { IAdapterByChainPageData, IAdapterChainOverview, IProtocol } from './types'
 import type { ActiveLiquidityData, NormalizedVolumeData, OpenInterestData } from './utils'
 
@@ -144,14 +144,19 @@ function buildSingleChildParentSummary(protocol: string, childProtocol: IProtoco
 function buildParentProtocolSummary({
 	protocol,
 	childProtocols,
-	protocolsMcap
+	protocolsMcap,
+	dataType
 }: {
 	protocol: string
 	childProtocols: NonEmptyArray<IProtocol>
 	protocolsMcap: Map<string, number | null>
+	dataType: AdapterByChainDataType | undefined
 }): IProtocol {
 	const [firstChildProtocol] = childProtocols
-	const periodTotals = mergeParentMetricPeriods(childProtocols)
+	const periodTotals =
+		dataType === ADAPTER_DATA_TYPES.DAILY_EARNINGS
+			? mergeParentEarningsMetricPeriods(childProtocols)
+			: mergeParentMetricPeriods(childProtocols)
 	let doublecounted = false
 	let zeroFeePerp = false
 	let warning: string | null = null
@@ -369,7 +374,7 @@ export function buildAdapterByChainReadModel({
 			protocols.set(protocol, buildSingleChildParentSummary(protocol, childProtocols[0]))
 			continue
 		}
-		protocols.set(protocol, buildParentProtocolSummary({ protocol, childProtocols, protocolsMcap }))
+		protocols.set(protocol, buildParentProtocolSummary({ protocol, childProtocols, protocolsMcap, dataType }))
 	}
 
 	return {

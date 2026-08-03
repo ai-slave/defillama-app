@@ -356,7 +356,6 @@ export async function getExtraTvlByChain({
 	const change24hPct = getPercentChange(totalValue, previousDayValue)
 	const change24h = change24hPct == null || !Number.isFinite(change24hPct) ? null : roundNumber(change24hPct, 2)
 	const chartColor = CHART_COLORS[0]
-	if (chartColor === undefined) throw new Error('Chart palette has no primary color')
 
 	return {
 		protocols: finalProtocols.sort((a, b) => (b.value ?? 0) - (a.value ?? 0)),

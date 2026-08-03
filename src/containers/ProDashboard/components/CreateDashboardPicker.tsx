@@ -5,6 +5,7 @@ import { useAuthContext } from '~/auth'
 import { fetchChainsByCategory as fetchChainsByCategoryApi } from '~/containers/Chains/api'
 import { Icon } from '~/ui/Icon'
 import { useAppMetadata } from '../AppMetadataContext'
+import type { DashboardItemConfig } from '../dashboardItemConfig'
 import { useDimensionProtocols } from '../hooks/useDimensionProtocols'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import {
@@ -13,8 +14,6 @@ import {
 	type ChainCategoryData,
 	type DashboardTemplate
 } from '../templates'
-import type { DashboardItemConfig } from '../types'
-import { CHART_TYPES } from '../types'
 import type { ComparisonPreset } from './ComparisonWizard/types'
 
 const ComparisonWizard = lazy(() => import('./ComparisonWizard').then((m) => ({ default: m.ComparisonWizard })))
@@ -35,10 +34,7 @@ interface CreateDashboardPickerProps {
 
 async function fetchChainsByCategory(category: string): Promise<{ category: string; chains: string[] }> {
 	return fetchChainsByCategoryApi(category)
-		.then((data) => {
-			const chains = Array.isArray(data?.chainsUnique) ? (data.chainsUnique as string[]) : []
-			return { category, chains }
-		})
+		.then((data) => ({ category, chains: data.chainsUnique }))
 		.catch(() => ({ category, chains: [] }))
 }
 
@@ -113,7 +109,6 @@ export function CreateDashboardPicker({ dialogStore, onCreate, comparisonPreset 
 			protocols,
 			chains,
 			protocolsBySlug,
-			CHART_TYPES,
 			chainCategoryData,
 			dimensionProtocols
 		)
@@ -181,7 +176,10 @@ export function CreateDashboardPicker({ dialogStore, onCreate, comparisonPreset 
 						</div>
 					}
 				>
-					<ComparisonWizard onComplete={handleCreateComparison} comparisonPreset={comparisonPreset ?? undefined} />
+					<ComparisonWizard
+						onComplete={handleCreateComparison}
+						{...(comparisonPreset !== null ? { comparisonPreset } : {})}
+					/>
 				</Suspense>
 			</Ariakit.Dialog>
 		)
@@ -281,10 +279,13 @@ function CreateDashboardModalContent({
 		e.preventDefault()
 		const form = e.currentTarget
 		const formData = new FormData(form)
-		const dashboardName = (formData.get('dashboardName') as string)?.trim() ?? ''
-		const description = (formData.get('description') as string)?.slice(0, 200) ?? ''
+		const dashboardNameValue = formData.get('dashboardName')
+		const descriptionValue = formData.get('description')
+		const dashboardName = typeof dashboardNameValue === 'string' ? dashboardNameValue.trim() : ''
+		const description = typeof descriptionValue === 'string' ? descriptionValue.slice(0, 200) : ''
 
-		const nameInput = form.elements.namedItem('dashboardName') as HTMLInputElement | null
+		const nameElement = form.elements.namedItem('dashboardName')
+		const nameInput = nameElement instanceof HTMLInputElement ? nameElement : null
 		if (!dashboardName) {
 			nameInput?.setCustomValidity('Dashboard name is required')
 			nameInput?.reportValidity()

@@ -12,6 +12,7 @@ const row = (
 describe('buildTokenUsageSummary', () => {
 	it('preserves empty and one-token behavior', () => {
 		expect(buildTokenUsageSummary([], ['usdc'])).toEqual({
+			kind: 'single',
 			totalAmount: 0,
 			protocolCount: 0,
 			tokenStats: null,
@@ -26,7 +27,7 @@ describe('buildTokenUsageSummary', () => {
 		const summary = buildTokenUsageSummary(input, ['usdc'])
 		expect(summary.tokenStats).toBeNull()
 		expect(summary.protocolOverlap).toBeNull()
-		expect(summary.multiTokenProtocolCount).toBe(1)
+		expect(summary.multiTokenProtocolCount).toBe(0)
 		expect(input).toEqual(snapshot)
 	})
 
@@ -47,13 +48,13 @@ describe('buildTokenUsageSummary', () => {
 
 		expect(summary.totalAmount).toBe(51)
 		expect(summary.protocolCount).toBe(4)
-		expect(summary.multiTokenProtocolCount).toBe(3)
-		expect(summary.tokenStats?.usdc).toEqual({ total: 17, protocols: 3 })
-		expect(summary.tokenStats?.dai).toEqual({ total: 20, protocols: 2 })
+		expect(summary.multiTokenProtocolCount).toBe(1)
+		expect(summary.tokenStats?.usdc).toEqual({ total: 17, protocols: 2 })
+		expect(summary.tokenStats?.dai).toEqual({ total: 20, protocols: 1 })
 		if (symbols.includes('usdt')) expect(summary.tokenStats?.usdt).toEqual({ total: 5, protocols: 1 })
-		if (symbols.includes('frax')) expect(summary.tokenStats?.frax).toEqual({ total: 0, protocols: 1 })
+		if (symbols.includes('frax')) expect(summary.tokenStats?.frax).toEqual({ total: 0, protocols: 0 })
 		expect(summary.protocolOverlap?.exclusive).toBe(1)
-		expect(summary.protocolOverlap?.usdc_only).toBe(1)
+		expect(summary.protocolOverlap?.exclusiveByToken.usdc).toBe(1)
 		expect(summary.protocolOverlap?.shared).toBe(symbols.length > 1 ? 1 : 0)
 	})
 
@@ -69,11 +70,15 @@ describe('buildTokenUsageSummary', () => {
 		)
 
 		expect(summary.tokenStats).toEqual({
-			usdc: { total: 8, protocols: 3 },
-			dai: { total: 3, protocols: 2 }
+			usdc: { total: 8, protocols: 2 },
+			dai: { total: 3, protocols: 1 }
 		})
-		expect(summary.protocolOverlap).toEqual({ exclusive: 3, shared: 0, usdc_only: 2, dai_only: 1 })
-		expect(summary.multiTokenProtocolCount).toBe(3)
+		expect(summary.protocolOverlap).toEqual({
+			exclusive: 3,
+			shared: 0,
+			exclusiveByToken: { usdc: 2, dai: 1 }
+		})
+		expect(summary.multiTokenProtocolCount).toBe(0)
 	})
 
 	it('uses Unknown categories and stable encounter order for amount ties', () => {

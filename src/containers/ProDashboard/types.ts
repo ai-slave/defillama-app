@@ -1,13 +1,9 @@
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
-export type {
-	CexAnalyticsMarketSharePoint,
-	CexAnalyticsMetric,
-	CexAnalyticsSnapshotResponse,
-	CexAnalyticsSnapshotRow,
-	CexAnalyticsSummary,
-	CexAnalyticsTotalsPoint,
-	CexAnalyticsView
-} from '~/containers/Cexs/api.types'
+import type { ChartConfig as DownloadChartConfig } from '~/containers/Downloads/sql/chartConfig'
+import type { TableSource } from '~/containers/Downloads/sql/useTableRegistry'
+import type { ChartConfiguration, ChartDataByKey } from '~/containers/LlamaAI/chartTypes'
+import type { RWAChartMetricKey, RWAOverviewBreakdownRequest } from '~/containers/RWA/api.types'
+import type { StoredColSpan } from './dashboardConfig/colSpan'
 
 const dashboardBlue = '#326abd'
 
@@ -21,8 +17,6 @@ export interface Chain {
 	chainId: number | string | null
 	cmcId: string | null
 }
-
-export type StoredColSpan = 0.5 | 1 | 1.5 | 2
 
 export interface MultiChartConfig {
 	id: string
@@ -63,24 +57,35 @@ export type MetricWindow = '7d' | '30d' | '90d' | '365d' | 'ytd' | '3y' | 'all'
 
 export type MetricChartType = 'sparkline' | 'bar' | 'none'
 
-export interface MetricConfig {
+export type MetricSubject =
+	| {
+			itemType: 'chain'
+			chain: string
+			protocol?: never
+			geckoId?: string | null
+	  }
+	| {
+			itemType: 'protocol'
+			protocol: string
+			chain?: never
+			geckoId?: string | null
+	  }
+
+export type ProtocolChartType = (typeof PROTOCOL_CHART_TYPES)[number]
+export type ChainChartType = (typeof CHAIN_CHART_TYPES)[number]
+
+interface MetricConfigBase<Type extends ProDashboardChartType, Subject extends MetricSubject> {
 	id: string
 	kind: 'metric'
-	subject: {
-		itemType: 'chain' | 'protocol'
-		chain?: string
-		protocol?: string
-		geckoId?: string | null
-	}
-	type: string
+	subject: Subject
+	type: Type
 	aggregator: MetricAggregator
 	window: MetricWindow
 	compare?: {
 		mode: 'previous_window' | 'previous_value' | 'none'
 		format?: 'percent' | 'absolute'
 	}
-	showSparkline?: boolean // deprecated, use chartType
-	chartType?: MetricChartType
+	chartType: MetricChartType
 	label?: string
 	format?: {
 		value?: 'currency' | 'number' | 'percent' | 'auto'
@@ -89,6 +94,10 @@ export interface MetricConfig {
 	}
 	colSpan?: StoredColSpan
 }
+
+export type MetricConfig =
+	| MetricConfigBase<ChainChartType, Extract<MetricSubject, { itemType: 'chain' }>>
+	| MetricConfigBase<ProtocolChartType, Extract<MetricSubject, { itemType: 'protocol' }>>
 
 export interface ChartBuilderConfig {
 	id: string
@@ -115,11 +124,10 @@ export interface ChartBuilderConfig {
 			| 'chain-fees'
 			| 'chain-revenue'
 		mode: 'chains' | 'protocol'
-		filterMode?: 'include' | 'exclude'
-		chainFilterMode?: 'include' | 'exclude'
-		categoryFilterMode?: 'include' | 'exclude'
-		chainCategoryFilterMode?: 'include' | 'exclude'
-		protocolCategoryFilterMode?: 'include' | 'exclude'
+		chainFilterMode: 'include' | 'exclude'
+		categoryFilterMode: 'include' | 'exclude'
+		chainCategoryFilterMode: 'include' | 'exclude'
+		protocolCategoryFilterMode: 'include' | 'exclude'
 		protocol?: string
 		chains: string[]
 		chainCategories?: string[]
@@ -132,7 +140,6 @@ export interface ChartBuilderConfig {
 		displayAs: 'timeSeries' | 'percentage'
 		hideOthers?: boolean
 		groupByParent?: boolean
-		additionalFilters?: Record<string, unknown>
 		seriesColors?: Record<string, string>
 	}
 	grouping?: DashboardGrouping
@@ -245,14 +252,12 @@ export interface LlamaAIChartConfig {
 	artifactContainsPremium?: boolean
 	artifactEstimatedMaxCostUsd?: number
 	title?: string
-	inlineChartConfig?: import('~/containers/LlamaAI/types').ChartConfiguration
-	inlineChartData?: Record<string, any[]>
+	inlineChartConfig?: ChartConfiguration
+	inlineChartData?: ChartDataByKey
 	colSpan?: StoredColSpan
 }
 
-export type UnifiedRowHeaderType = 'parent-protocol' | 'protocol' | 'chain' | 'category'
-
-type UnlocksDataType = 'documented' | 'realtime'
+export type UnlocksDataType = 'documented' | 'realtime'
 
 export interface UnlocksScheduleConfig {
 	id: string
@@ -275,8 +280,8 @@ export interface UnlocksPieConfig {
 }
 
 export type RWAOverviewChartView = 'timeSeries' | 'pie' | 'treemap' | 'hbar'
-export type RWAOverviewChartMetric = 'activeMcap' | 'onChainMcap' | 'defiActiveTvl'
-export type RWAOverviewChartBreakdown = 'chain' | 'category' | 'assetClass' | 'assetName' | 'platform' | 'assetGroup'
+export type RWAOverviewChartMetric = RWAChartMetricKey
+export type RWAOverviewChartBreakdown = RWAOverviewBreakdownRequest['breakdown']
 
 export interface RWAOverviewChartConfig {
 	id: string
@@ -298,10 +303,18 @@ export interface RWAAssetChartConfig {
 	colSpan?: StoredColSpan
 }
 
+export type SqlSnapshotValue =
+	| string
+	| number
+	| boolean
+	| null
+	| SqlSnapshotValue[]
+	| { [key: string]: SqlSnapshotValue }
+
 export interface SqlSnapshot {
 	columns: { name: string; type: string }[]
 	/** New snapshots are positional; object rows remain readable for persisted legacy snapshots. */
-	rows: unknown[][] | Record<string, unknown>[]
+	rows: SqlSnapshotValue[][] | Record<string, SqlSnapshotValue>[]
 	computedAt: string
 	rowCount: number
 	truncated?: boolean
@@ -310,7 +323,7 @@ export interface SqlSnapshot {
 
 export interface SqlQueryRecipe {
 	sql: string
-	tableSources: import('~/containers/Downloads/sql/useTableRegistry').TableSource[]
+	tableSources: TableSource[]
 }
 
 export interface SqlChartConfig {
@@ -318,46 +331,18 @@ export interface SqlChartConfig {
 	kind: 'sql'
 	name?: string
 	query: SqlQueryRecipe
-	chart: import('~/containers/Downloads/sql/chartConfig').ChartConfig
+	chart: DownloadChartConfig
 	displayMode?: 'chart' | 'table'
 	rowCap?: number
 	snapshot?: SqlSnapshot | null
 	colSpan?: StoredColSpan
 }
 
-export type DashboardItemConfig =
-	| ChartConfig
-	| ProtocolsTableConfig
-	| MultiChartConfig
-	| TextConfig
-	| MetricConfig
-	| ChartBuilderConfig
-	| YieldsChartConfig
-	| StablecoinsChartConfig
-	| StablecoinAssetChartConfig
-	| AdvancedTvlChartConfig
-	| BorrowedChartConfig
-	| IncomeStatementConfig
-	| UnlocksScheduleConfig
-	| UnlocksPieConfig
-	| UnifiedTableConfig
-	| LlamaAIChartConfig
-	| RWAOverviewChartConfig
-	| RWAAssetChartConfig
-	| SqlChartConfig
-
-export interface ChartConfig {
+interface ChartConfigBase<Type extends ProDashboardChartType> {
 	id: string
 	kind: 'chart'
-	chain: string
-	protocol?: string
-	type: string
+	type: Type
 	color?: string
-	/** Strictly ascending, unique Unix-second points returned by the dashboard query layer. */
-	data?: [number, number][]
-	isLoading?: boolean
-	hasError?: boolean
-	refetch?: () => void
 	grouping?: DashboardGrouping
 	geckoId?: string | null
 	dataType?: UnlocksDataType
@@ -365,16 +350,25 @@ export interface ChartConfig {
 	showCumulative?: boolean
 }
 
+export type ChartSubject =
+	| { subjectType: 'chain'; chain: string; protocol?: never }
+	| { subjectType: 'protocol'; protocol: string; chain?: never }
+
+export type ChartConfig =
+	| (ChartConfigBase<ChainChartType> & Extract<ChartSubject, { subjectType: 'chain' }>)
+	| (ChartConfigBase<ProtocolChartType> & Extract<ChartSubject, { subjectType: 'protocol' }>)
+
 export function limitMultiChartItems(items: ChartConfig[]): ChartConfig[] {
 	return items.length > MAX_MULTI_CHART_SERIES ? items.slice(0, MAX_MULTI_CHART_SERIES) : items
 }
 
-export interface TableFilters {
-	protocols?: string[]
-	tokens?: string[]
-	categories?: string[]
-	excludedCategories?: string[]
-	oracles?: string[]
+interface DatasetTableConfigBase {
+	id: string
+	kind: 'dataset-table'
+	colSpan?: StoredColSpan
+}
+
+export interface YieldsFilters {
 	apyMin?: number
 	apyMax?: number
 	tvlMin?: number
@@ -382,207 +376,90 @@ export interface TableFilters {
 	baseApyMin?: number
 	baseApyMax?: number
 	chains?: string[]
+	protocols?: string[]
+	tokens?: string[]
 	hasRewards?: boolean
 	stablesOnly?: boolean
-	activeLending?: boolean
-	poolTypes?: string[]
-	mcapMin?: number
-	mcapMax?: number
-	volumeDex24hMin?: number
-	volumeDex24hMax?: number
-	fees24hMin?: number
-	fees24hMax?: number
-	revenue24hMin?: number
-	revenue24hMax?: number
-	volume7dMin?: number
-	volume7dMax?: number
-	volume30dMin?: number
-	volume30dMax?: number
-	fees7dMin?: number
-	fees7dMax?: number
-	fees30dMin?: number
-	fees30dMax?: number
-	fees1yMin?: number
-	fees1yMax?: number
-	revenue7dMin?: number
-	revenue7dMax?: number
-	revenue30dMin?: number
-	revenue30dMax?: number
-	revenue1yMin?: number
-	revenue1yMax?: number
-	change1dMin?: number
-	change1dMax?: number
-	change7dMin?: number
-	change7dMax?: number
-	change1mMin?: number
-	change1mMax?: number
-	volumeChange1dMin?: number
-	volumeChange1dMax?: number
-	volumeChange7dMin?: number
-	volumeChange7dMax?: number
-	volumeChange1mMin?: number
-	volumeChange1mMax?: number
-	feesChange1dMin?: number
-	feesChange1dMax?: number
-	feesChange7dMin?: number
-	feesChange7dMax?: number
-	feesChange1mMin?: number
-	feesChange1mMax?: number
-	revenueChange1dMin?: number
-	revenueChange1dMax?: number
-	revenueChange7dMin?: number
-	revenueChange7dMax?: number
-	revenueChange1mMin?: number
-	revenueChange1mMax?: number
-	volumeDominance24hMin?: number
-	volumeDominance24hMax?: number
-	volumeMarketShare7dMin?: number
-	volumeMarketShare7dMax?: number
-	tvlShareMin?: number
-	tvlShareMax?: number
-	perpsVolumeDominance24hMin?: number
-	perpsVolumeDominance24hMax?: number
-	optionsVolumeDominance24hMin?: number
-	optionsVolumeDominance24hMax?: number
-	holderRevenue24hMin?: number
-	holderRevenue24hMax?: number
-	treasuryRevenue24hMin?: number
-	treasuryRevenue24hMax?: number
-	stablesMcapMin?: number
-	stablesMcapMax?: number
-	bridgedTvlMin?: number
-	bridgedTvlMax?: number
-	aggregatorsVolume24hMin?: number
-	aggregatorsVolume24hMax?: number
-	aggregatorsVolume7dMin?: number
-	aggregatorsVolume7dMax?: number
-	aggregatorsVolume30dMin?: number
-	aggregatorsVolume30dMax?: number
-	derivativesAggregatorsVolume24hMin?: number
-	derivativesAggregatorsVolume24hMax?: number
-	derivativesAggregatorsVolume7dMin?: number
-	derivativesAggregatorsVolume7dMax?: number
-	derivativesAggregatorsVolume30dMin?: number
-	derivativesAggregatorsVolume30dMax?: number
-	hasPerps?: boolean
-	hasOptions?: boolean
-	hasOpenInterest?: boolean
-	hasVolume?: boolean
-	hasFees?: boolean
-	hasRevenue?: boolean
-	hasMarketCap?: boolean
-	hasAggregators?: boolean
-	hasDerivativesAggregators?: boolean
-	hasBridgedTVL?: boolean
-	hasStables?: boolean
-	hasHolderRevenue?: boolean
-	hasTreasuryRevenue?: boolean
-	hasMcapTVLRatio?: boolean
-	protocolCountMin?: number
-	protocolCountMax?: number
-	pfRatioMin?: number
-	pfRatioMax?: number
-	[key: string]: any // Allow for future filter types
+	categories?: string[]
 }
 
-export interface CustomView {
-	id: string
-	name: string
-	columnOrder: string[]
-	columnVisibility: Record<string, boolean>
-	customColumns?: Array<{
-		id: string
-		name: string
-		expression: string
-		isValid: boolean
-		errorMessage?: string
-	}>
-	createdAt: number
+export interface StablecoinsDatasetTableConfig extends DatasetTableConfigBase {
+	datasetType: 'stablecoins'
+	chain: string
 }
 
-export interface ProtocolsTableConfig {
-	id: string
-	kind: 'table'
-	tableType: 'protocols' | 'dataset'
+type CexSnapshotView = Exclude<CexAnalyticsView, 'market-share'>
+
+export type CexDatasetTableConfig =
+	| (DatasetTableConfigBase & {
+			datasetType: 'cex-analytics'
+			cexAnalyticsView: CexSnapshotView
+	  })
+	| (DatasetTableConfigBase & {
+			datasetType: 'cex-analytics'
+			cexAnalyticsView: 'market-share'
+			cexAnalyticsMetric: CexAnalyticsMetric
+			cexAnalyticsTopN: number
+	  })
+
+export interface TokenUsageDatasetTableConfig extends DatasetTableConfigBase {
+	datasetType: 'token-usage'
+	tokenSymbols: string[]
+	includeCex: boolean
+}
+
+export interface YieldsDatasetTableConfig extends DatasetTableConfigBase {
+	datasetType: 'yields'
 	chains: string[]
-	colSpan?: StoredColSpan
-	filters?: TableFilters
+	filters?: YieldsFilters
 	columnOrder?: string[]
 	columnVisibility?: Record<string, boolean>
-	customColumns?: Array<{
-		id: string
-		name: string
-		expression: string
-		isValid: boolean
-		errorMessage?: string
-	}>
-	activeViewId?: string
-	activePresetId?: string
-	datasetType?:
-		| 'stablecoins'
-		| 'cex'
-		| 'cex-analytics'
-		| 'revenue'
-		| 'holders-revenue'
-		| 'earnings'
-		| 'fees'
-		| 'token-usage'
-		| 'yields'
-		| 'aggregators'
-		| 'perps'
-		| 'options'
-		| 'dexs'
-		| 'bridge-aggregators'
-		| 'trending-contracts'
-		| 'chains'
-		| 'rwa'
-		| 'rwa-chains'
-		| 'rwa-selected-chain'
-		| 'equities'
-		| 'equities-financials'
-		| 'equities-filings'
-	datasetChain?: string
-	tokenSymbols?: string[]
-	includeCex?: boolean
-	datasetTimeframe?: string
-	cexAnalyticsView?: CexAnalyticsView
-	cexAnalyticsMetric?: CexAnalyticsMetric
-	cexAnalyticsTopN?: number
 }
 
-export interface CustomColumnDefinition {
-	id: string
-	name: string
-	expression: string
-	format: 'usd' | 'percent' | 'ratio' | 'number'
-	aggregation: 'sum' | 'first' | 'none' | 'recalculate'
-}
-
-export interface UnifiedTableConfig {
-	id: string
-	kind: 'unified-table'
-	rowHeaders: UnifiedRowHeaderType[]
-	defaultSorting?: Array<{ id: string; desc: boolean }>
-	params?: {
-		chains?: string[]
-		category?: string | null
-		[key: string]: any
-	} | null
-	filters?: TableFilters
+export interface ChainsDatasetTableConfig extends DatasetTableConfigBase {
+	datasetType: 'chains'
+	category?: string
 	columnOrder?: string[]
 	columnVisibility?: Record<string, boolean>
-	activePresetId?: string
-	colSpan?: StoredColSpan
-	customColumns?: CustomColumnDefinition[]
 }
+
+export type RwaDatasetTableConfig =
+	| (DatasetTableConfigBase & { datasetType: 'rwa' })
+	| (DatasetTableConfigBase & { datasetType: 'rwa-chains' })
+	| (DatasetTableConfigBase & {
+			datasetType: 'rwa-selected-chain'
+			chain: string
+	  })
+
+export type EquitiesDatasetTableConfig =
+	| (DatasetTableConfigBase & { datasetType: 'equities' })
+	| (DatasetTableConfigBase & {
+			datasetType: 'equities-financials'
+			ticker: string
+	  })
+	| (DatasetTableConfigBase & {
+			datasetType: 'equities-filings'
+			ticker: string
+	  })
+
+export type DatasetTableConfig =
+	| StablecoinsDatasetTableConfig
+	| CexDatasetTableConfig
+	| TokenUsageDatasetTableConfig
+	| YieldsDatasetTableConfig
+	| ChainsDatasetTableConfig
+	| RwaDatasetTableConfig
+	| EquitiesDatasetTableConfig
 
 export interface Protocol {
 	id: string
 	name: string
 	symbol?: string
-	logo?: string | null
+	logo?: string
 	slug: string
-	tvl: number | null
+	tvl: number
+	chains: string[]
+	deprecated?: boolean
 	geckoId?: string | null
 	parentProtocol?: string | null
 	category?: string
@@ -591,16 +468,59 @@ export interface Protocol {
 
 export const CHART_TYPES = {
 	tvl: { id: 'tvl', title: 'TVL', chartType: 'area', color: dashboardBlue },
-	volume: { id: 'volume', title: 'Volume', chartType: 'bar', color: '#46c385', groupable: true },
-	fees: { id: 'fees', title: 'Fees', chartType: 'bar', color: '#cc803e', groupable: true },
-	users: { id: 'users', title: 'Users', chartType: 'bar', color: '#8942cd', groupable: true },
-	txs: { id: 'txs', title: 'Transactions', chartType: 'bar', color: '#cc533e', groupable: true },
-	options: { id: 'options', title: 'Options Premium Volume', chartType: 'bar', color: '#cc3e87', groupable: true },
-	revenue: { id: 'revenue', title: 'Revenue', chartType: 'bar', color: '#cb8e3a', groupable: true },
-	incentives: { id: 'incentives', title: 'Incentives', chartType: 'bar', color: '#2a9d77', groupable: true },
-	unlocks: { id: 'unlocks', title: 'Unlocks', chartType: 'line', color: '#3e6dcc' },
-	liquidity: { id: 'liquidity', title: 'Liquidity', chartType: 'area', color: '#3394c1' },
-	treasury: { id: 'treasury', title: 'Treasury', chartType: 'area', color: '#65758b' },
+	volume: {
+		id: 'volume',
+		title: 'Volume',
+		chartType: 'bar',
+		color: '#46c385',
+		groupable: true
+	},
+	fees: {
+		id: 'fees',
+		title: 'Fees',
+		chartType: 'bar',
+		color: '#cc803e',
+		groupable: true
+	},
+	txs: {
+		id: 'txs',
+		title: 'Transactions',
+		chartType: 'bar',
+		color: '#cc533e',
+		groupable: true
+	},
+	revenue: {
+		id: 'revenue',
+		title: 'Revenue',
+		chartType: 'bar',
+		color: '#cb8e3a',
+		groupable: true
+	},
+	incentives: {
+		id: 'incentives',
+		title: 'Incentives',
+		chartType: 'bar',
+		color: '#2a9d77',
+		groupable: true
+	},
+	unlocks: {
+		id: 'unlocks',
+		title: 'Unlocks',
+		chartType: 'line',
+		color: '#3e6dcc'
+	},
+	liquidity: {
+		id: 'liquidity',
+		title: 'Liquidity',
+		chartType: 'area',
+		color: '#3394c1'
+	},
+	treasury: {
+		id: 'treasury',
+		title: 'Treasury',
+		chartType: 'area',
+		color: '#65758b'
+	},
 	aggregators: {
 		id: 'aggregators',
 		title: 'DEX Aggregators Volume',
@@ -608,7 +528,13 @@ export const CHART_TYPES = {
 		color: '#c98c36',
 		groupable: true
 	},
-	perps: { id: 'perps', title: 'Perps Volume', chartType: 'bar', color: '#a92d2d', groupable: true },
+	perps: {
+		id: 'perps',
+		title: 'Perps Volume',
+		chartType: 'bar',
+		color: '#a92d2d',
+		groupable: true
+	},
 	bridgeAggregators: {
 		id: 'bridgeAggregators',
 		title: 'Bridge Aggregators Volume',
@@ -630,7 +556,12 @@ export const CHART_TYPES = {
 		color: '#778192',
 		groupable: true
 	},
-	openInterest: { id: 'openInterest', title: 'Open Interest', chartType: 'area', color: '#3394c1' },
+	openInterest: {
+		id: 'openInterest',
+		title: 'Open Interest',
+		chartType: 'area',
+		color: '#3394c1'
+	},
 	optionsPremium: {
 		id: 'optionsPremium',
 		title: 'Options Premium Volume',
@@ -645,14 +576,58 @@ export const CHART_TYPES = {
 		color: '#cc3e53',
 		groupable: true
 	},
-	tokenPrice: { id: 'tokenPrice', title: 'Token Price', chartType: 'area', color: '#27914e' },
-	tokenMcap: { id: 'tokenMcap', title: 'Token Market Cap', chartType: 'area', color: '#426ecd' },
-	tokenVolume: { id: 'tokenVolume', title: 'Token Volume', chartType: 'bar', color: '#c99336', groupable: true },
-	activeUsers: { id: 'activeUsers', title: 'Active Addresses', chartType: 'bar', color: '#cc3e85', groupable: true },
-	newUsers: { id: 'newUsers', title: 'New Addresses', chartType: 'bar', color: '#683ecc', groupable: true },
-	gasUsed: { id: 'gasUsed', title: 'Gas Used', chartType: 'bar', color: '#c99336', groupable: true },
-	medianApy: { id: 'medianApy', title: 'Median APY', chartType: 'area', color: '#299976' },
-	stablecoins: { id: 'stablecoins', title: 'Stablecoins', chartType: 'area', color: '#2e9aad' },
+	tokenPrice: {
+		id: 'tokenPrice',
+		title: 'Token Price',
+		chartType: 'area',
+		color: '#27914e'
+	},
+	tokenMcap: {
+		id: 'tokenMcap',
+		title: 'Token Market Cap',
+		chartType: 'area',
+		color: '#426ecd'
+	},
+	tokenVolume: {
+		id: 'tokenVolume',
+		title: 'Token Volume',
+		chartType: 'bar',
+		color: '#c99336',
+		groupable: true
+	},
+	activeUsers: {
+		id: 'activeUsers',
+		title: 'Active Addresses',
+		chartType: 'bar',
+		color: '#cc3e85',
+		groupable: true
+	},
+	newUsers: {
+		id: 'newUsers',
+		title: 'New Addresses',
+		chartType: 'bar',
+		color: '#683ecc',
+		groupable: true
+	},
+	gasUsed: {
+		id: 'gasUsed',
+		title: 'Gas Used',
+		chartType: 'bar',
+		color: '#c99336',
+		groupable: true
+	},
+	medianApy: {
+		id: 'medianApy',
+		title: 'Median APY',
+		chartType: 'area',
+		color: '#299976'
+	},
+	stablecoins: {
+		id: 'stablecoins',
+		title: 'Stablecoins',
+		chartType: 'area',
+		color: '#2e9aad'
+	},
 	stablecoinInflows: {
 		id: 'stablecoinInflows',
 		title: 'Stablecoin Inflows',
@@ -660,19 +635,61 @@ export const CHART_TYPES = {
 		color: '#c99336',
 		groupable: true
 	},
-	chainFees: { id: 'chainFees', title: 'Chain Fees', chartType: 'bar', color: '#c99336', groupable: true },
-	chainRevenue: { id: 'chainRevenue', title: 'Chain Revenue', chartType: 'bar', color: '#c99336', groupable: true },
-	bridgedTvl: { id: 'bridgedTvl', title: 'Bridged TVL', chartType: 'area', color: '#873ecc' },
-	chainMcap: { id: 'chainMcap', title: 'Native Token Market Cap', chartType: 'area', color: '#426ecd' },
-	chainPrice: { id: 'chainPrice', title: 'Native Token Price', chartType: 'area', color: '#27914e' },
-	borrowed: { id: 'borrowed', title: 'Borrowed', chartType: 'area', color: '#cc3e3e' },
-	pfRatio: { id: 'pfRatio', title: 'P/F Ratio (30d Run Rate)', chartType: 'line', color: '#683ecc' },
-	psRatio: { id: 'psRatio', title: 'P/S Ratio (30d Run Rate)', chartType: 'line', color: '#2e9aad' }
+	chainFees: {
+		id: 'chainFees',
+		title: 'Chain Fees',
+		chartType: 'bar',
+		color: '#c99336',
+		groupable: true
+	},
+	chainRevenue: {
+		id: 'chainRevenue',
+		title: 'Chain Revenue',
+		chartType: 'bar',
+		color: '#c99336',
+		groupable: true
+	},
+	bridgedTvl: {
+		id: 'bridgedTvl',
+		title: 'Bridged TVL',
+		chartType: 'area',
+		color: '#873ecc'
+	},
+	chainMcap: {
+		id: 'chainMcap',
+		title: 'Native Token Market Cap',
+		chartType: 'area',
+		color: '#426ecd'
+	},
+	chainPrice: {
+		id: 'chainPrice',
+		title: 'Native Token Price',
+		chartType: 'area',
+		color: '#27914e'
+	},
+	borrowed: {
+		id: 'borrowed',
+		title: 'Borrowed',
+		chartType: 'area',
+		color: '#cc3e3e'
+	},
+	pfRatio: {
+		id: 'pfRatio',
+		title: 'P/F Ratio (30d Run Rate)',
+		chartType: 'line',
+		color: '#683ecc'
+	},
+	psRatio: {
+		id: 'psRatio',
+		title: 'P/S Ratio (30d Run Rate)',
+		chartType: 'line',
+		color: '#2e9aad'
+	}
 }
 
 export type ProDashboardChartType = keyof typeof CHART_TYPES
 
-/** Saved dashboards are unvalidated JSON, so narrow chart types at the lookup boundary. */
+/** Draft and persisted inputs are unvalidated strings, so narrow them before constructing current config. */
 export function isProDashboardChartType(type: string): type is ProDashboardChartType {
 	return Object.hasOwn(CHART_TYPES, type)
 }
@@ -681,95 +698,68 @@ export function getProDashboardChartTypeConfig(type: string) {
 	return isProDashboardChartType(type) ? CHART_TYPES[type] : undefined
 }
 
-// Helper functions to extract chart types from CHART_TYPES
-export const getProtocolChartTypes = (): string[] => {
-	return [
-		'tvl',
-		'volume',
-		'fees',
-		'revenue',
-		'unlocks',
-		'incentives',
-		'treasury',
-		'holdersRevenue',
-		'perps',
-		'openInterest',
-		'aggregators',
-		'perpsAggregators',
-		'bridgeAggregators',
-		'optionsPremium',
-		'optionsNotional',
-		'activeUsers',
-		'newUsers',
-		'txs',
-		'gasUsed',
-		'tokenMcap',
-		'tokenPrice',
-		'tokenVolume',
-		'medianApy',
-		'borrowed',
-		'pfRatio',
-		'psRatio'
-	]
+export const PROTOCOL_CHART_TYPES = [
+	'tvl',
+	'volume',
+	'fees',
+	'revenue',
+	'unlocks',
+	'incentives',
+	'liquidity',
+	'treasury',
+	'holdersRevenue',
+	'perps',
+	'openInterest',
+	'aggregators',
+	'perpsAggregators',
+	'bridgeAggregators',
+	'optionsPremium',
+	'optionsNotional',
+	'activeUsers',
+	'newUsers',
+	'txs',
+	'gasUsed',
+	'tokenMcap',
+	'tokenPrice',
+	'tokenVolume',
+	'medianApy',
+	'borrowed',
+	'pfRatio',
+	'psRatio'
+] as const satisfies readonly ProDashboardChartType[]
+
+export const CHAIN_CHART_TYPES = [
+	'tvl',
+	'volume',
+	'fees',
+	'txs',
+	'aggregators',
+	'perps',
+	'openInterest',
+	'bridgeAggregators',
+	'perpsAggregators',
+	'optionsPremium',
+	'optionsNotional',
+	'revenue',
+	'activeUsers',
+	'newUsers',
+	'gasUsed',
+	'stablecoins',
+	'stablecoinInflows',
+	'chainFees',
+	'chainRevenue',
+	'bridgedTvl',
+	'chainMcap',
+	'chainPrice'
+] as const satisfies readonly ProDashboardChartType[]
+
+const PROTOCOL_CHART_TYPE_SET: ReadonlySet<string> = new Set(PROTOCOL_CHART_TYPES)
+const CHAIN_CHART_TYPE_SET: ReadonlySet<string> = new Set(CHAIN_CHART_TYPES)
+
+export function isProtocolDashboardChartType(type: string): type is ProtocolChartType {
+	return PROTOCOL_CHART_TYPE_SET.has(type)
 }
 
-export const getChainChartTypes = (): string[] => {
-	return [
-		'tvl',
-		'volume',
-		'fees',
-		'users',
-		'txs',
-		'aggregators',
-		'perps',
-		'bridgeAggregators',
-		'perpsAggregators',
-		'optionsPremium',
-		'optionsNotional',
-		'revenue',
-		'activeUsers',
-		'newUsers',
-		'gasUsed',
-		'stablecoins',
-		'stablecoinInflows',
-		'chainFees',
-		'chainRevenue',
-		'bridgedTvl',
-		'chainMcap',
-		'chainPrice'
-	]
+export function isChainDashboardChartType(type: string): type is ChainChartType {
+	return CHAIN_CHART_TYPE_SET.has(type)
 }
-
-interface BaseDatasetItem {
-	id: string
-	name: string
-	slug?: string
-	logo?: string
-	category?: string
-	chains?: string[]
-	total24h?: number
-	total7d?: number
-	total30d?: number
-	totalAllTime?: number
-	change_1d?: number
-	change_7d?: number
-}
-
-export interface DexItem extends BaseDatasetItem {
-	childProtocols?: Array<{
-		name: string
-		slug: string
-		logo?: string
-		chains?: string[]
-		category?: string
-		total24h?: number
-		total7d?: number
-		total30d?: number
-		total1y?: number
-		totalAllTime?: number
-		mcap?: number | null
-	}>
-}
-
-// oxlint-disable-next-line typescript/no-empty-object-type
-export interface AggregatorItem extends BaseDatasetItem {}

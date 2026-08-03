@@ -1,50 +1,27 @@
 import { useCallback, useMemo } from 'react'
+import { normalizeChartBuilderConfig } from '../../chartBuilderCapabilities'
 import { isChainTokenChartType } from '../../chartSource'
+import { createChartConfig } from '../../dashboardConfig/classicChartConfig'
+import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import { useProDashboardCatalog, useProDashboardEditorActions, useProDashboardTime } from '../../ProDashboardAPIContext'
 import {
 	type Chain,
 	CHART_TYPES,
 	type ChartConfig,
-	type DashboardItemConfig,
-	type IncomeStatementConfig,
-	type LlamaAIChartConfig,
 	MAX_MULTI_CHART_SERIES,
-	type MultiChartConfig,
 	type Protocol,
-	type ProtocolsTableConfig,
-	type StoredColSpan,
-	type TextConfig,
-	type UnlocksScheduleConfig,
-	type YieldsChartConfig,
-	normalizeYieldChartType
+	isProDashboardChartType
 } from '../../types'
 import { EXTENDED_COLOR_PALETTE } from '../../utils/colorManager'
-import type { ChartTabType, MainTabType } from './types'
+import { generateItemId } from '../../utils/dashboardUtils'
+import { buildEditedDashboardItem, buildNewDashboardItems } from './modalSubmissions'
+import type { ChartBuilderUpdate, ChartTabType, MainTabType } from './types'
 import { useModalState } from './useModalState'
 
 export function useModalActions(editItem: DashboardItemConfig | null | undefined, onClose: () => void) {
 	const { protocols, chains, protocolsLoading } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const {
-		handleAddChart,
-		handleAddYieldChart,
-		handleAddStablecoinsChart,
-		handleAddStablecoinAssetChart,
-		handleAddAdvancedTvlChart,
-		handleAddBorrowedChart,
-		handleAddIncomeStatement,
-		handleAddUnlocksSchedule,
-		handleAddUnlocksPie,
-		handleAddTable,
-		handleAddMultiChart,
-		handleAddText,
-		handleAddMetric,
-		handleAddChartBuilder,
-		handleAddLlamaAIChart,
-		handleAddRWAOverviewChart,
-		handleAddRWAAssetChart,
-		handleEditItem
-	} = useProDashboardEditorActions()
+	const { handleAppendItems, handleEditItem } = useProDashboardEditorActions()
 
 	const { state, actions } = useModalState(editItem)
 
@@ -73,7 +50,7 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 		const childrenByParentId = new Map<string, Protocol[]>()
 		const parentsOrSolo: Protocol[] = []
 
-		for (const p of protocols as Protocol[]) {
+		for (const p of protocols) {
 			if (p.parentProtocol) {
 				const arr = childrenByParentId.get(p.parentProtocol) || []
 				arr.push(p)
@@ -83,20 +60,20 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 			}
 		}
 
-		parentsOrSolo.sort((a, b) => (b.tvl || 0) - (a.tvl || 0))
+		parentsOrSolo.sort((a, b) => b.tvl - a.tvl)
 
 		const options: Array<{ value: string; label: string; logo?: string; isChild?: boolean; parentValue?: string }> = []
 
 		for (const parent of parentsOrSolo) {
-			options.push({ value: parent.slug, label: parent.name, logo: parent.logo })
+			options.push({ value: parent.slug, label: parent.name, ...(parent.logo ? { logo: parent.logo } : {}) })
 			const children = childrenByParentId.get(parent.id) || []
 			if (children.length > 0) {
-				children.sort((a, b) => (b.tvl || 0) - (a.tvl || 0))
+				children.sort((a, b) => b.tvl - a.tvl)
 				for (const child of children) {
 					options.push({
 						value: child.slug,
 						label: child.name,
-						logo: child.logo,
+						...(child.logo ? { logo: child.logo } : {}),
 						isChild: true,
 						parentValue: parent.slug
 					})
@@ -108,7 +85,7 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 	}, [protocols])
 
 	const handleChainChange = useCallback(
-		(option: any) => {
+		(option: { value: string }) => {
 			actions.setSelectedChain(option.value)
 			actions.setSelectedProtocol(null)
 			actions.setSelectedProtocols([])
@@ -125,7 +102,7 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 	)
 
 	const handleProtocolChange = useCallback(
-		(option: any) => {
+		(option: { value: string }) => {
 			actions.setSelectedProtocol(option.value)
 			actions.setSelectedChain(null)
 			actions.setSelectedProtocols([])
@@ -153,12 +130,12 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 	const handleAddToComposer = useCallback(
 		(typesToAdd?: string[], options?: { entity?: string; mode?: 'chain' | 'protocol' }) => {
 			const incomingTypes = typesToAdd ?? state.selectedChartTypes
-			const chartTypesToAdd = Array.from(new Set(incomingTypes))
+			const uniqueChartTypes = Array.from(new Set(incomingTypes))
 			let addedCount = 0
 
-			const resolveTargetGrouping = () => {
+			const resolveTargetGrouping = (): ChartConfig['grouping'] => {
 				if (state.chartCreationMode !== 'combined') {
-					return 'day' as const
+					return 'day'
 				}
 
 				const existingGroupings = state.composerItems
@@ -166,13 +143,13 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 					.filter((grouping): grouping is NonNullable<typeof grouping> => Boolean(grouping))
 
 				if (existingGroupings.length === 0) {
-					return 'day' as const
+					return 'day'
 				}
 
 				const [firstGrouping] = existingGroupings
 				const allMatch = existingGroupings.every((grouping) => grouping === firstGrouping)
 
-				return allMatch ? firstGrouping : ('day' as const)
+				return allMatch ? firstGrouping : 'day'
 			}
 
 			const targetGrouping = resolveTargetGrouping()
@@ -180,7 +157,7 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 
 			const effectiveMode = options?.mode ?? state.selectedChartTab
 
-			if (effectiveMode === 'chain' && chartTypesToAdd.length > 0) {
+			if (effectiveMode === 'chain' && uniqueChartTypes.length > 0) {
 				const chainsToUse = options?.entity
 					? [options.entity]
 					: state.selectedChains.length > 0
@@ -192,25 +169,34 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 					const remainingSlots = MAX_MULTI_CHART_SERIES - state.composerItems.length - addedCount
 					if (remainingSlots <= 0) break
 					const chain = chains.find((c: Chain) => c.name === chainName)
-					const filteredTypes = chartTypesToAdd.filter((chartType) => {
-						return !state.composerItems.some((item) => item.chain === chainName && item.type === chartType)
+					const filteredTypes = uniqueChartTypes.filter((chartType) => {
+						return !state.composerItems.some(
+							(item) => item.subjectType === 'chain' && item.chain === chainName && item.type === chartType
+						)
 					})
 					if (filteredTypes.length > 0) {
 						const colorStartIndex = getNextColorIndex() + addedCount
-						const newCharts = filteredTypes.slice(0, remainingSlots).map((chartType, idx) => ({
-							id: `${chainName}-${chartType}-${Date.now()}-${Math.random()}`,
-							kind: 'chart' as const,
-							chain: chainName,
-							type: chartType,
-							grouping: targetGrouping,
-							geckoId: isChainTokenChartType(chartType) ? chain?.gecko_id : undefined,
-							color: EXTENDED_COLOR_PALETTE[(colorStartIndex + idx) % EXTENDED_COLOR_PALETTE.length]
-						}))
+						const newCharts: ChartConfig[] = []
+						for (const [idx, chartType] of filteredTypes.slice(0, remainingSlots).entries()) {
+							const color = EXTENDED_COLOR_PALETTE[(colorStartIndex + idx) % EXTENDED_COLOR_PALETTE.length]
+							const geckoId = isChainTokenChartType(chartType) ? chain?.gecko_id : undefined
+							const chart = createChartConfig({
+								id: `${chainName}-${chartType}-${Date.now()}-${Math.random()}`,
+								kind: 'chart',
+								subjectType: 'chain',
+								chain: chainName,
+								type: chartType,
+								...(targetGrouping ? { grouping: targetGrouping } : {}),
+								...(geckoId === undefined ? {} : { geckoId }),
+								...(color ? { color } : {})
+							})
+							if (chart) newCharts.push(chart)
+						}
 						actions.setComposerItems((prev) => [...prev, ...newCharts])
 						addedCount += newCharts.length
 					}
 				}
-			} else if (effectiveMode === 'protocol' && chartTypesToAdd.length > 0) {
+			} else if (effectiveMode === 'protocol' && uniqueChartTypes.length > 0) {
 				const protocolsToUse = options?.entity
 					? [options.entity]
 					: state.selectedProtocols && state.selectedProtocols.length > 0
@@ -222,22 +208,29 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 					const remainingSlots = MAX_MULTI_CHART_SERIES - state.composerItems.length - addedCount
 					if (remainingSlots <= 0) break
 					const protocol = protocols.find((p: Protocol) => p.slug === slug)
-					const filteredTypes = chartTypesToAdd.filter((chartType) => {
-						return !state.composerItems.some((item) => item.protocol === slug && item.type === chartType)
+					const filteredTypes = uniqueChartTypes.filter((chartType) => {
+						return !state.composerItems.some(
+							(item) => item.subjectType === 'protocol' && item.protocol === slug && item.type === chartType
+						)
 					})
 					if (filteredTypes.length > 0) {
 						const colorStartIndex = getNextColorIndex() + addedCount
-						const newCharts = filteredTypes.slice(0, remainingSlots).map((chartType, idx) => ({
-							id: `${slug}-${chartType}-${Date.now()}-${Math.random()}`,
-							kind: 'chart' as const,
-							protocol: slug,
-							chain: '',
-							type: chartType,
-							grouping: targetGrouping,
-							geckoId: protocol?.geckoId,
-							color: EXTENDED_COLOR_PALETTE[(colorStartIndex + idx) % EXTENDED_COLOR_PALETTE.length],
-							dataType: chartType === 'unlocks' ? ('documented' as const) : undefined
-						}))
+						const newCharts: ChartConfig[] = []
+						for (const [idx, chartType] of filteredTypes.slice(0, remainingSlots).entries()) {
+							const color = EXTENDED_COLOR_PALETTE[(colorStartIndex + idx) % EXTENDED_COLOR_PALETTE.length]
+							const chart = createChartConfig({
+								id: `${slug}-${chartType}-${Date.now()}-${Math.random()}`,
+								kind: 'chart',
+								subjectType: 'protocol',
+								protocol: slug,
+								type: chartType,
+								...(targetGrouping ? { grouping: targetGrouping } : {}),
+								...(protocol?.geckoId === undefined ? {} : { geckoId: protocol.geckoId }),
+								...(color ? { color } : {}),
+								...(chartType === 'unlocks' ? { dataType: 'documented' } : {})
+							})
+							if (chart) newCharts.push(chart)
+						}
 						actions.setComposerItems((prev) => [...prev, ...newCharts])
 						addedCount += newCharts.length
 					}
@@ -275,24 +268,27 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 
 	const handleBulkChartTypeChange = useCallback(
 		(nextType: string) => {
+			if (!isProDashboardChartType(nextType)) return
 			actions.setComposerItems((prev) =>
 				prev.map((item) => {
-					const isGroupable = CHART_TYPES[nextType]?.groupable
+					const chartTypeConfig = CHART_TYPES[nextType]
+					const isGroupable = 'groupable' in chartTypeConfig && chartTypeConfig.groupable
 					let geckoId: string | null | undefined
-					if (item.chain) {
+					if (item.subjectType === 'chain') {
 						const chain = chains.find((c: Chain) => c.name === item.chain)
 						geckoId = isChainTokenChartType(nextType) ? chain?.gecko_id : undefined
-					} else if (item.protocol) {
+					} else {
 						const protocol = protocols.find((p: Protocol) => p.slug === item.protocol)
 						geckoId = protocol?.geckoId
 					}
-					return {
+					const chart = createChartConfig({
 						...item,
 						type: nextType,
-						geckoId,
-						dataType: nextType === 'unlocks' ? ('documented' as const) : undefined,
-						grouping: isGroupable ? item.grouping : undefined
-					}
+						...(geckoId === undefined ? {} : { geckoId }),
+						...(nextType === 'unlocks' ? { dataType: 'documented' } : {}),
+						...(isGroupable && item.grouping ? { grouping: item.grouping } : {})
+					})
+					return chart ?? item
 				})
 			)
 			actions.setSelectedChartType(nextType)
@@ -332,708 +328,36 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 	)
 
 	const updateChartBuilder = useCallback(
-		(updates: Partial<typeof state.chartBuilder>) => {
-			actions.setChartBuilder((prev) => ({ ...prev, ...updates }))
+		(updates: ChartBuilderUpdate) => {
+			actions.setChartBuilder((prev) => {
+				const { protocol, protocolCategories, ...ordinaryUpdates } = updates
+				const next = { ...prev, ...ordinaryUpdates }
+				if ('protocol' in updates) {
+					if (protocol === undefined) delete next.protocol
+					else next.protocol = protocol
+				}
+				if ('protocolCategories' in updates) {
+					if (protocolCategories === undefined) delete next.protocolCategories
+					else next.protocolCategories = protocolCategories
+				}
+				return normalizeChartBuilderConfig(next)
+			})
 		},
 		[actions]
 	)
 
 	const handleSubmit = useCallback(() => {
 		if (editItem) {
-			let newItem: DashboardItemConfig | null = null
-			if (state.selectedMainTab === 'charts' && state.selectedChartTab === 'yields' && state.selectedYieldPool) {
-				const yieldsItem: YieldsChartConfig = {
-					...editItem,
-					kind: 'yields',
-					poolConfigId: state.selectedYieldPool.configID,
-					poolName: state.selectedYieldPool.name,
-					project: state.selectedYieldPool.project,
-					chain: state.selectedYieldPool.chain,
-					chartType: normalizeYieldChartType(state.selectedYieldChartType)
-				}
-				newItem = yieldsItem
-			} else if (state.selectedMainTab === 'charts' && state.selectedChartTab === 'stablecoins') {
-				if (state.stablecoinMode === 'asset' && state.selectedStablecoinAsset && state.selectedStablecoinAssetId) {
-					newItem = {
-						...editItem,
-						kind: 'stablecoin-asset',
-						stablecoin: state.selectedStablecoinAsset,
-						stablecoinId: state.selectedStablecoinAssetId,
-						chartType: state.selectedStablecoinAssetChartType
-					} as any
-				} else {
-					newItem = {
-						...editItem,
-						kind: 'stablecoins',
-						chain: state.selectedStablecoinChain,
-						chartType: state.selectedStablecoinChartType
-					} as any
-				}
-			} else if (state.selectedMainTab === 'charts' && state.selectedChartTab === 'rwa') {
-				if (state.rwaMode === 'asset' && state.selectedRwaAssetId && state.selectedRwaAssetName) {
-					newItem = {
-						...editItem,
-						kind: 'rwa-asset',
-						assetId: state.selectedRwaAssetId,
-						assetName: state.selectedRwaAssetName,
-						metrics: state.selectedRwaAssetMetrics
-					} as any
-				} else {
-					newItem = {
-						...editItem,
-						kind: 'rwa-overview',
-						metric: state.selectedRwaMetric,
-						chartView: state.selectedRwaChartView,
-						breakdown: state.selectedRwaBreakdown,
-						chain: state.selectedRwaChain === 'All' ? undefined : state.selectedRwaChain,
-						treemapNestedBy: state.selectedRwaTreemapNestedBy
-					} as any
-				}
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.selectedChartTab === 'unlocks' &&
-				state.selectedUnlocksProtocol
-			) {
-				const protocol = protocols.find((p: Protocol) => p.slug === state.selectedUnlocksProtocol)
-				if (state.selectedUnlocksChartType === 'schedule') {
-					newItem = {
-						id: editItem.id,
-						kind: 'unlocks-schedule',
-						protocol: state.selectedUnlocksProtocol,
-						protocolName: state.selectedUnlocksProtocolName || protocol?.name || state.selectedUnlocksProtocol,
-						dataType: 'documented',
-						colSpan: editItem.colSpan
-					} as UnlocksScheduleConfig
-				} else if (
-					state.selectedUnlocksChartType === 'allocation' ||
-					state.selectedUnlocksChartType === 'locked-unlocked'
-				) {
-					newItem = {
-						id: editItem.id,
-						kind: 'unlocks-pie',
-						protocol: state.selectedUnlocksProtocol,
-						protocolName: state.selectedUnlocksProtocolName || protocol?.name || state.selectedUnlocksProtocol,
-						chartType: state.selectedUnlocksChartType,
-						colSpan: editItem.colSpan
-					}
-				} else {
-					newItem = {
-						id: editItem.id,
-						kind: 'chart',
-						chain: '',
-						protocol: state.selectedUnlocksProtocol,
-						type: 'unlocks',
-						dataType: 'documented',
-						geckoId: protocol?.geckoId,
-						colSpan: editItem.colSpan
-					} as ChartConfig
-				}
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.selectedChartTab === 'advanced-tvl' &&
-				state.selectedAdvancedTvlProtocol &&
-				state.selectedAdvancedTvlProtocolName
-			) {
-				newItem = {
-					...editItem,
-					kind: 'advanced-tvl',
-					protocol: state.selectedAdvancedTvlProtocol,
-					protocolName: state.selectedAdvancedTvlProtocolName,
-					chartType: state.selectedAdvancedTvlChartType
-				} as any
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.selectedChartTab === 'borrowed' &&
-				state.selectedBorrowedProtocol &&
-				state.selectedBorrowedProtocolName &&
-				state.selectedBorrowedChartType
-			) {
-				newItem = {
-					...editItem,
-					kind: 'advanced-borrowed',
-					protocol: state.selectedBorrowedProtocol,
-					protocolName: state.selectedBorrowedProtocolName,
-					chartType: state.selectedBorrowedChartType
-				} as any
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.selectedChartTab === 'income-statement' &&
-				state.selectedIncomeStatementProtocol &&
-				state.selectedIncomeStatementProtocolName
-			) {
-				newItem = {
-					...editItem,
-					kind: 'income-statement',
-					protocol: state.selectedIncomeStatementProtocol,
-					protocolName: state.selectedIncomeStatementProtocolName
-				} as IncomeStatementConfig
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.chartCreationMode === 'combined' &&
-				state.composerItems.length > 0
-			) {
-				newItem = {
-					...editItem,
-					kind: 'multi',
-					name: state.unifiedChartName.trim() || undefined,
-					items: state.composerItems
-				} as MultiChartConfig
-			} else if (state.selectedMainTab === 'charts' && state.selectedChartTab === 'chain' && state.selectedChain) {
-				const chain = chains.find((c: Chain) => c.name === state.selectedChain)
-				const chartType = state.selectedChartTypes[0] || state.selectedChartType
-				const chartTypeDetails = CHART_TYPES[chartType]
-				newItem = {
-					...editItem,
-					kind: 'chart',
-					chain: state.selectedChain,
-					protocol: undefined,
-					type: chartType,
-					grouping: chartTypeDetails?.groupable ? 'day' : undefined,
-					geckoId: isChainTokenChartType(chartType) ? chain?.gecko_id : undefined
-				} as ChartConfig
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.selectedChartTab === 'protocol' &&
-				state.selectedProtocol
-			) {
-				const protocol = protocols.find((p: Protocol) => p.slug === state.selectedProtocol)
-				const chartType = state.selectedChartTypes[0] || state.selectedChartType
-				const chartTypeDetails = CHART_TYPES[chartType]
-				newItem = {
-					...editItem,
-					kind: 'chart',
-					chain: '',
-					protocol: state.selectedProtocol,
-					type: chartType,
-					grouping: chartTypeDetails?.groupable ? 'day' : undefined,
-					geckoId: protocol?.geckoId
-				} as ChartConfig
-			} else if (state.selectedMainTab === 'table') {
-				if (state.selectedTableType === 'stablecoins' && state.selectedDatasetChain) {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'stablecoins',
-						datasetChain: state.selectedDatasetChain,
-						chains: [state.selectedDatasetChain]
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'cex') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'cex-analytics',
-						chains: [],
-						cexAnalyticsView: 'comparison',
-						cexAnalyticsMetric: 'derivatives',
-						cexAnalyticsTopN: 8
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'cex-analytics') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'cex-analytics',
-						chains: [],
-						cexAnalyticsView:
-							state.selectedCexAnalyticsView === 'starter' ? 'comparison' : state.selectedCexAnalyticsView,
-						cexAnalyticsMetric: state.selectedCexAnalyticsMetric,
-						cexAnalyticsTopN: state.selectedCexAnalyticsTopN
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'revenue') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'revenue',
-						chains: state.selectedChains
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'holders-revenue') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'holders-revenue',
-						chains: state.selectedChains
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'earnings') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'earnings',
-						chains: state.selectedChains
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'fees') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'fees',
-						chains: state.selectedChains
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'token-usage') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'token-usage',
-						chains: [],
-						tokenSymbols: state.selectedTokens,
-						includeCex: state.includeCex
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'yields') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'yields',
-						chains: state.selectedChains
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'aggregators') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'aggregators',
-						chains: state.selectedChains
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'perps') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'perps',
-						chains: state.selectedChains
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'options') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'options',
-						chains: state.selectedChains
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'dexs') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'dexs',
-						chains: state.selectedChains
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'bridge-aggregators') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'bridge-aggregators',
-						chains: state.selectedChains
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'trending-contracts' && state.selectedDatasetChain) {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'trending-contracts',
-						datasetChain: state.selectedDatasetChain,
-						datasetTimeframe: state.selectedDatasetTimeframe || '1d',
-						chains: [state.selectedDatasetChain]
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'chains') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'chains',
-						datasetChain: state.selectedDatasetChain,
-						chains: []
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'rwa') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'rwa',
-						chains: []
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'rwa-chains') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'rwa-chains',
-						chains: []
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'rwa-selected-chain' && state.selectedDatasetChain) {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'rwa-selected-chain',
-						datasetChain: state.selectedDatasetChain,
-						chains: [state.selectedDatasetChain]
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'equities') {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'equities',
-						chains: []
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'equities-financials' && state.selectedDatasetChain) {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'equities-financials',
-						datasetChain: state.selectedDatasetChain,
-						chains: []
-					} as ProtocolsTableConfig
-				} else if (state.selectedTableType === 'equities-filings' && state.selectedDatasetChain) {
-					newItem = {
-						...editItem,
-						kind: 'table',
-						tableType: 'dataset',
-						datasetType: 'equities-filings',
-						datasetChain: state.selectedDatasetChain,
-						chains: []
-					} as ProtocolsTableConfig
-				}
-			} else if (state.selectedMainTab === 'text' && state.textContent.trim()) {
-				newItem = {
-					...editItem,
-					kind: 'text',
-					title: state.textTitle.trim() || undefined,
-					content: state.textContent.trim()
-				} as TextConfig
-			} else if (state.selectedMainTab === 'charts' && state.chartMode === 'builder') {
-				newItem = {
-					...editItem,
-					kind: 'builder',
-					name: state.chartBuilderName.trim() || undefined,
-					config: state.chartBuilder
-				}
-			} else if (state.selectedMainTab === 'metric') {
-				if (
-					(state.metricSubjectType === 'chain' && state.metricChain) ||
-					(state.metricSubjectType === 'protocol' && state.metricProtocol)
-				) {
-					const subject =
-						state.metricSubjectType === 'protocol'
-							? {
-									itemType: 'protocol' as const,
-									protocol: state.metricProtocol || undefined
-								}
-							: { itemType: 'chain' as const, chain: state.metricChain || undefined }
-					newItem = {
-						...editItem,
-						kind: 'metric',
-						subject: subject as any,
-						type: state.metricType,
-						aggregator: state.metricAggregator,
-						window: state.metricWindow,
-						compare: { mode: 'previous_value', format: 'percent' },
-						chartType: state.metricChartType,
-						label: state.metricLabel
-					} as any
-				}
-			} else if (state.selectedMainTab === 'llamaai' && state.selectedLlamaAIChart?.id) {
-				newItem = {
-					...editItem,
-					kind: 'llamaai-chart',
-					savedChartId: state.selectedLlamaAIChart.id,
-					title: state.selectedLlamaAIChart.title || undefined
-				} as LlamaAIChartConfig
-			}
-
-			if (newItem) {
-				handleEditItem(editItem.id, newItem)
-			}
+			const newItem = buildEditedDashboardItem({ editItem, state, protocols, chains })
+			if (newItem) handleEditItem(editItem.id, newItem)
 		} else {
-			if (
-				state.selectedMainTab === 'charts' &&
-				state.chartMode === 'manual' &&
-				state.selectedChartTab === 'yields' &&
-				state.selectedYieldPool
-			) {
-				handleAddYieldChart(
-					state.selectedYieldPool.configID,
-					state.selectedYieldPool.name,
-					state.selectedYieldPool.project,
-					state.selectedYieldPool.chain,
-					state.selectedYieldChartType
-				)
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.chartMode === 'manual' &&
-				state.selectedChartTab === 'unlocks' &&
-				state.selectedUnlocksProtocol
-			) {
-				const protocol = protocols.find((p: Protocol) => p.slug === state.selectedUnlocksProtocol)
-				if (state.selectedUnlocksChartType === 'schedule') {
-					handleAddUnlocksSchedule(
-						state.selectedUnlocksProtocol,
-						state.selectedUnlocksProtocolName || protocol?.name || state.selectedUnlocksProtocol
-					)
-				} else if (
-					state.selectedUnlocksChartType === 'allocation' ||
-					state.selectedUnlocksChartType === 'locked-unlocked'
-				) {
-					handleAddUnlocksPie(
-						state.selectedUnlocksProtocol,
-						state.selectedUnlocksProtocolName || protocol?.name || state.selectedUnlocksProtocol,
-						state.selectedUnlocksChartType
-					)
-				} else {
-					handleAddChart(
-						state.selectedUnlocksProtocol,
-						'unlocks',
-						'protocol',
-						protocol?.geckoId,
-						undefined,
-						'documented'
-					)
-				}
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.chartMode === 'manual' &&
-				state.selectedChartTab === 'stablecoins'
-			) {
-				if (state.stablecoinMode === 'asset' && state.selectedStablecoinAsset && state.selectedStablecoinAssetId) {
-					handleAddStablecoinAssetChart(
-						state.selectedStablecoinAsset,
-						state.selectedStablecoinAssetId,
-						state.selectedStablecoinAssetChartType
-					)
-				} else {
-					handleAddStablecoinsChart(state.selectedStablecoinChain, state.selectedStablecoinChartType)
-				}
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.chartMode === 'manual' &&
-				state.selectedChartTab === 'rwa'
-			) {
-				if (state.rwaMode === 'asset' && state.selectedRwaAssetId && state.selectedRwaAssetName) {
-					handleAddRWAAssetChart(state.selectedRwaAssetId, state.selectedRwaAssetName, state.selectedRwaAssetMetrics)
-				} else {
-					handleAddRWAOverviewChart(
-						state.selectedRwaMetric,
-						state.selectedRwaChartView,
-						state.selectedRwaBreakdown,
-						state.selectedRwaTreemapNestedBy,
-						state.selectedRwaChain === 'All' ? undefined : state.selectedRwaChain
-					)
-				}
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.chartMode === 'manual' &&
-				state.selectedChartTab === 'advanced-tvl' &&
-				state.selectedAdvancedTvlProtocol &&
-				state.selectedAdvancedTvlProtocolName
-			) {
-				handleAddAdvancedTvlChart(
-					state.selectedAdvancedTvlProtocol,
-					state.selectedAdvancedTvlProtocolName,
-					state.selectedAdvancedTvlChartType
-				)
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.chartMode === 'manual' &&
-				state.selectedChartTab === 'borrowed' &&
-				state.selectedBorrowedProtocol &&
-				state.selectedBorrowedProtocolName &&
-				state.selectedBorrowedChartType
-			) {
-				handleAddBorrowedChart(
-					state.selectedBorrowedProtocol,
-					state.selectedBorrowedProtocolName,
-					state.selectedBorrowedChartType
-				)
-			} else if (
-				state.selectedMainTab === 'charts' &&
-				state.chartMode === 'manual' &&
-				state.selectedChartTab === 'income-statement' &&
-				state.selectedIncomeStatementProtocol &&
-				state.selectedIncomeStatementProtocolName
-			) {
-				handleAddIncomeStatement(state.selectedIncomeStatementProtocol, state.selectedIncomeStatementProtocolName)
-			} else if (state.selectedMainTab === 'charts' && state.chartMode === 'manual') {
-				if (state.composerItems.length > 0) {
-					if (state.chartCreationMode === 'combined') {
-						handleAddMultiChart(state.composerItems, state.unifiedChartName.trim() || undefined)
-					} else {
-						for (const item of state.composerItems) {
-							if (item.chain) {
-								handleAddChart(item.chain, item.type, 'chain', item.geckoId, item.color, item.dataType)
-							} else if (item.protocol) {
-								handleAddChart(item.protocol, item.type, 'protocol', item.geckoId, item.color, item.dataType)
-							}
-						}
-					}
-				} else if (state.chartCreationMode === 'separate' && state.selectedChartTypes.length > 0) {
-					if (state.selectedChain) {
-						const chain = chains.find((c: Chain) => c.name === state.selectedChain)
-						for (const chartType of state.selectedChartTypes) {
-							const geckoId = isChainTokenChartType(chartType) ? chain?.gecko_id : undefined
-							handleAddChart(state.selectedChain, chartType, 'chain', geckoId)
-						}
-					} else if (state.selectedProtocol) {
-						const protocol = protocols.find((p: Protocol) => p.slug === state.selectedProtocol)
-						for (const chartType of state.selectedChartTypes) {
-							handleAddChart(
-								state.selectedProtocol,
-								chartType,
-								'protocol',
-								protocol?.geckoId,
-								undefined,
-								chartType === 'unlocks' ? 'documented' : undefined
-							)
-						}
-					}
-				}
-			} else if (state.selectedMainTab === 'table') {
-				if (state.selectedTableType === 'cex') {
-					handleAddTable([], 'dataset', 'cex-analytics', undefined, undefined, undefined, undefined, 'comparison')
-				} else if (state.selectedTableType === 'cex-analytics') {
-					if (state.selectedCexAnalyticsView === 'starter') {
-						handleAddTable([], 'dataset', 'cex-analytics', undefined, undefined, undefined, undefined, 'summary')
-						handleAddTable([], 'dataset', 'cex-analytics', undefined, undefined, undefined, undefined, 'comparison')
-						handleAddTable(
-							[],
-							'dataset',
-							'cex-analytics',
-							undefined,
-							undefined,
-							undefined,
-							undefined,
-							'spot-vs-derivatives'
-						)
-					} else {
-						handleAddTable(
-							[],
-							'dataset',
-							'cex-analytics',
-							undefined,
-							undefined,
-							undefined,
-							undefined,
-							state.selectedCexAnalyticsView,
-							state.selectedCexAnalyticsMetric,
-							state.selectedCexAnalyticsTopN
-						)
-					}
-				} else if (state.selectedTableType === 'stablecoins' && state.selectedDatasetChain) {
-					handleAddTable([state.selectedDatasetChain], 'dataset', 'stablecoins', state.selectedDatasetChain)
-				} else if (state.selectedTableType === 'revenue') {
-					handleAddTable(state.selectedChains, 'dataset', 'revenue')
-				} else if (state.selectedTableType === 'holders-revenue') {
-					handleAddTable(state.selectedChains, 'dataset', 'holders-revenue')
-				} else if (state.selectedTableType === 'earnings') {
-					handleAddTable(state.selectedChains, 'dataset', 'earnings')
-				} else if (state.selectedTableType === 'fees') {
-					handleAddTable(state.selectedChains, 'dataset', 'fees')
-				} else if (state.selectedTableType === 'token-usage' && state.selectedTokens.length > 0) {
-					handleAddTable([], 'dataset', 'token-usage', undefined, state.selectedTokens, state.includeCex)
-				} else if (state.selectedTableType === 'yields') {
-					handleAddTable(state.selectedChains, 'dataset', 'yields')
-				} else if (state.selectedTableType === 'aggregators') {
-					handleAddTable(state.selectedChains, 'dataset', 'aggregators')
-				} else if (state.selectedTableType === 'perps') {
-					handleAddTable(state.selectedChains, 'dataset', 'perps')
-				} else if (state.selectedTableType === 'options') {
-					handleAddTable(state.selectedChains, 'dataset', 'options')
-				} else if (state.selectedTableType === 'dexs') {
-					handleAddTable(state.selectedChains, 'dataset', 'dexs')
-				} else if (state.selectedTableType === 'bridge-aggregators') {
-					handleAddTable(state.selectedChains, 'dataset', 'bridge-aggregators')
-				} else if (state.selectedTableType === 'trending-contracts' && state.selectedDatasetChain) {
-					handleAddTable(
-						[state.selectedDatasetChain],
-						'dataset',
-						'trending-contracts',
-						state.selectedDatasetChain,
-						undefined,
-						undefined,
-						state.selectedDatasetTimeframe || '1d'
-					)
-				} else if (state.selectedTableType === 'chains') {
-					handleAddTable([], 'dataset', 'chains', state.selectedDatasetChain)
-				} else if (state.selectedTableType === 'rwa') {
-					handleAddTable([], 'dataset', 'rwa')
-				} else if (state.selectedTableType === 'rwa-chains') {
-					handleAddTable([], 'dataset', 'rwa-chains')
-				} else if (state.selectedTableType === 'rwa-selected-chain' && state.selectedDatasetChain) {
-					handleAddTable([state.selectedDatasetChain], 'dataset', 'rwa-selected-chain', state.selectedDatasetChain)
-				} else if (state.selectedTableType === 'equities') {
-					handleAddTable([], 'dataset', 'equities')
-				} else if (state.selectedTableType === 'equities-financials' && state.selectedDatasetChain) {
-					handleAddTable([], 'dataset', 'equities-financials', state.selectedDatasetChain)
-				} else if (state.selectedTableType === 'equities-filings' && state.selectedDatasetChain) {
-					handleAddTable([], 'dataset', 'equities-filings', state.selectedDatasetChain)
-				}
-			} else if (state.selectedMainTab === 'text' && state.textContent.trim()) {
-				handleAddText(state.textTitle.trim() || undefined, state.textContent.trim())
-			} else if (state.selectedMainTab === 'metric') {
-				if (
-					(state.metricSubjectType === 'chain' && state.metricChain) ||
-					(state.metricSubjectType === 'protocol' && state.metricProtocol)
-				) {
-					const subject =
-						state.metricSubjectType === 'protocol'
-							? {
-									itemType: 'protocol' as const,
-									protocol: state.metricProtocol || undefined
-								}
-							: { itemType: 'chain' as const, chain: state.metricChain || undefined }
-					handleAddMetric({
-						id: '',
-						kind: 'metric',
-						subject: subject as any,
-						type: state.metricType,
-						aggregator: state.metricAggregator,
-						window: state.metricWindow,
-						compare: { mode: 'previous_value', format: 'percent' },
-						chartType: state.metricChartType,
-						label: state.metricLabel,
-						colSpan: 0.5 as StoredColSpan
-					} as any)
-				}
-			} else if (state.selectedMainTab === 'charts' && state.chartMode === 'builder') {
-				handleAddChartBuilder(state.chartBuilderName.trim() || undefined, state.chartBuilder)
-			} else if (state.selectedMainTab === 'llamaai' && state.selectedLlamaAIChart) {
-				handleAddLlamaAIChart(state.selectedLlamaAIChart.id, state.selectedLlamaAIChart.title)
-			}
+			handleAppendItems((existingItems) =>
+				buildNewDashboardItems({ state, protocols, chains, existingItems, idFactory: generateItemId })
+			)
 		}
 
 		onClose()
-	}, [
-		editItem,
-		state,
-		chains,
-		protocols,
-		handleEditItem,
-		handleAddMultiChart,
-		handleAddChart,
-		handleAddYieldChart,
-		handleAddStablecoinsChart,
-		handleAddStablecoinAssetChart,
-		handleAddRWAOverviewChart,
-		handleAddRWAAssetChart,
-		handleAddAdvancedTvlChart,
-		handleAddBorrowedChart,
-		handleAddIncomeStatement,
-		handleAddUnlocksSchedule,
-		handleAddUnlocksPie,
-		handleAddTable,
-		handleAddText,
-		handleAddMetric,
-		handleAddChartBuilder,
-		handleAddLlamaAIChart,
-		onClose
-	])
+	}, [editItem, state, chains, protocols, handleEditItem, handleAppendItems, onClose])
 
 	const uiActions = useMemo(
 		() => ({

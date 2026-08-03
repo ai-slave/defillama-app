@@ -1,6 +1,6 @@
 import { AI_SERVER } from '~/constants'
 import { roundNumber } from '~/utils/numberFormat'
-import type { DashboardItemConfig } from '../ProDashboard/types'
+import type { DashboardItemConfig } from '../ProDashboard/dashboardItemConfig'
 import type { DashboardArtifactOutcome, ChartArtifactRef } from './types'
 
 export function canAddChartArtifactToDashboard(artifactRef: ChartArtifactRef | undefined, readOnly = false): boolean {
@@ -133,13 +133,8 @@ export async function activateDashboardArtifacts(
 			response.status
 		)
 	}
-	const result = await response.json()
-	const activatedItemIds = Array.isArray(result?.outcomes)
-		? result.outcomes
-				.map((outcome: any) => outcome?.itemId)
-				.filter(Boolean)
-				.sort()
-		: []
+	const result: { outcomes: DashboardArtifactOutcome[] } = await response.json()
+	const activatedItemIds = result.outcomes.map((outcome) => outcome.itemId).sort()
 	if (JSON.stringify(activatedItemIds) !== JSON.stringify(plan.expectedItemIds)) {
 		throw new Error('Dashboard refresh setup did not account for every chart')
 	}

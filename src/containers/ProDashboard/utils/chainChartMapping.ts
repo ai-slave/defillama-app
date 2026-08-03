@@ -1,6 +1,7 @@
 import type { ChainChartLabels } from '~/containers/ChainOverview/constants'
+import type { ChainChartType } from '../types'
 
-const CHAIN_TO_DASHBOARD_CHART_TYPE: Record<ChainChartLabels, string | null> = {
+const CHAIN_TO_DASHBOARD_CHART_TYPE: Record<ChainChartLabels, ChainChartType | null> = {
 	TVL: 'tvl',
 	'Stablecoins Mcap': 'stablecoins',
 	'Chain Fees': 'chainFees',
@@ -26,7 +27,7 @@ const CHAIN_TO_DASHBOARD_CHART_TYPE: Record<ChainChartLabels, string | null> = {
 export function getSupportedChainCharts(labels: ChainChartLabels[]) {
 	return labels
 		.map((label) => ({ label, dashboardType: CHAIN_TO_DASHBOARD_CHART_TYPE[label] }))
-		.filter((x): x is { label: ChainChartLabels; dashboardType: string } => x.dashboardType !== null)
+		.filter((x): x is { label: ChainChartLabels; dashboardType: ChainChartType } => x.dashboardType !== null)
 }
 
 export function getUnsupportedChainCharts(labels: ChainChartLabels[]): ChainChartLabels[] {

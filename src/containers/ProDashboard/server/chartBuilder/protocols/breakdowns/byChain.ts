@@ -1,6 +1,7 @@
 import { fetchChainChart, fetchChainsTvlOverview } from '~/containers/Chains/api'
 import { resolveAllowedChainNamesFromCategories } from '~/containers/ProDashboard/server/chartBuilder/breakdownChains'
 import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
+import { mapWithConcurrency } from '~/utils/async'
 import {
 	BREAKDOWN_COLOR_PALETTE,
 	buildAlignedTopAndOthers,
@@ -32,7 +33,11 @@ async function getTvlProtocolChainData(
 			chart,
 			topN,
 			filter: {
-				...(chainFilterMode === 'include' ? { includeChains: chainSet } : { excludeChains: chainSet }),
+				...(chainSet
+					? chainFilterMode === 'include'
+						? { includeChains: chainSet }
+						: { excludeChains: chainSet }
+					: {}),
 				categoryChains: allowNamesFromCategories,
 				categoryFilterMode: chainCategoryFilterMode
 			}
@@ -51,15 +56,7 @@ async function getTvlProtocolChainData(
 		}
 	} catch (error) {
 		console.log(`Error fetching TVL for protocol ${protocol}:`, error)
-		return {
-			series: [],
-			metadata: {
-				protocol,
-				metric: 'TVL',
-				chains: [],
-				totalChains: 0
-			}
-		}
+		throw error
 	}
 }
 
@@ -94,32 +91,45 @@ async function getAllProtocolsTopChainsTvlData(
 
 		const picked = ranked.slice(0, Math.min(topN, ranked.length))
 		const pickedNames = picked.map((c) => c.name)
+		const hasScopedFilter = Boolean(chains?.length || chainCategories?.length)
 
-		const [globalJson, ...chainResponses] = await Promise.all([
-			fetchChainChart(),
-			...pickedNames.map((name) =>
-				fetchChainChart(name)
-					.then((data) => ({ name, data }))
-					.catch(() => null)
-			)
+		const [globalJson, chainResponses] = await Promise.all([
+			hasScopedFilter ? null : fetchChainChart(),
+			mapWithConcurrency(pickedNames, 8, (name) => fetchChainChart(name).then((data) => ({ name, data })))
 		])
-		const adjustedGlobalTvl = processAdjustedTvl(globalJson)
-		const totalSeries = filterOutToday(normalizeDailyPairs(adjustedGlobalTvl.map(([ts, v]) => [Number(ts), Number(v)])))
 
 		const topSeriesRaw: ChartSeries[] = []
 		let colorIndex = 0
 		for (const chainResponse of chainResponses) {
-			if (!chainResponse) continue
 			const { name, data: j } = chainResponse
 			const adjustedTvl = processAdjustedTvl(j)
 			const normalized = filterOutToday(normalizeDailyPairs(adjustedTvl.map(([ts, v]) => [Number(ts), Number(v)])))
+			const color = BREAKDOWN_COLOR_PALETTE[colorIndex % BREAKDOWN_COLOR_PALETTE.length]
+			colorIndex++
 			topSeriesRaw.push({
 				name,
 				data: normalized,
-				color: BREAKDOWN_COLOR_PALETTE[colorIndex++ % BREAKDOWN_COLOR_PALETTE.length]
+				...(color === undefined ? {} : { color })
 			})
 		}
 
+		if (hasScopedFilter) {
+			return {
+				series: topSeriesRaw,
+				metadata: {
+					protocol: 'All Protocols',
+					metric: 'TVL',
+					chains: topSeriesRaw.map((series) => series.name),
+					totalChains: ranked.length,
+					topN: topSeriesRaw.length,
+					othersCount: Math.max(0, ranked.length - topSeriesRaw.length)
+				}
+			}
+		}
+
+		if (!globalJson) throw new Error('Missing the unfiltered global TVL series')
+		const adjustedGlobalTvl = processAdjustedTvl(globalJson)
+		const totalSeries = filterOutToday(normalizeDailyPairs(adjustedGlobalTvl.map(([ts, v]) => [Number(ts), Number(v)])))
 		const { alignedTopSeries, othersData } = buildAlignedTopAndOthers(topSeriesRaw, totalSeries)
 
 		const includedTopCount = topSeriesRaw.length
@@ -142,7 +152,7 @@ async function getAllProtocolsTopChainsTvlData(
 		}
 	} catch (e) {
 		console.log('Error building all-protocols TVL by chain:', e)
-		return { series: [], metadata: { protocol: 'All Protocols', metric: 'TVL', chains: [], totalChains: 0 } }
+		throw e
 	}
 }
 
@@ -165,8 +175,7 @@ export const getProtocolChainBreakdownData = async ({
 	chainCategoryFilterMode,
 	chainCategories
 }: ProtocolChainBreakdownParams): Promise<ProtocolChainData> => {
-	const protocolStr = typeof protocol === 'string' ? protocol : undefined
-	const isProtocolAll = !protocolStr || protocolStr.toLowerCase() === 'all'
+	const isProtocolAll = !protocol || protocol.toLowerCase() === 'all'
 
 	if (metric !== 'tvl') {
 		throw new Error('Unsupported ProtocolOverview by-chain metric: ' + metric)
@@ -176,5 +185,5 @@ export const getProtocolChainBreakdownData = async ({
 		return getAllProtocolsTopChainsTvlData(topN, chains, chainFilterMode, chainCategoryFilterMode, chainCategories)
 	}
 
-	return getTvlProtocolChainData(protocolStr, chains, topN, chainFilterMode, chainCategoryFilterMode, chainCategories)
+	return getTvlProtocolChainData(protocol, chains, topN, chainFilterMode, chainCategoryFilterMode, chainCategories)
 }

@@ -21,9 +21,9 @@ vi.mock('~/containers/ProtocolOverview/api', () => ({
 	fetchProtocolTvlChart
 }))
 
-import ProtocolCharts from './ProtocolCharts'
+import { fetchProProtocolChartData } from './ProtocolCharts'
 
-describe('ProtocolCharts focused TVL sources', () => {
+describe('fetchProProtocolChartData focused TVL sources', () => {
 	beforeEach(() => {
 		fetchProtocolTvlChart.mockReset()
 		fetchAdapterProtocolChartData.mockReset()
@@ -34,10 +34,10 @@ describe('ProtocolCharts focused TVL sources', () => {
 	it('uses typed adapter contracts for protocol activity charts', async () => {
 		fetchAdapterProtocolChartData.mockResolvedValue([[1_700_000_000, 10]])
 
-		await expect(ProtocolCharts.activeUsers('compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
-		await expect(ProtocolCharts.newUsers('compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
-		await expect(ProtocolCharts.txs('compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
-		await expect(ProtocolCharts.gasUsed('compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
+		await expect(fetchProProtocolChartData('activeUsers', 'compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
+		await expect(fetchProProtocolChartData('newUsers', 'compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
+		await expect(fetchProProtocolChartData('txs', 'compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
+		await expect(fetchProProtocolChartData('gasUsed', 'compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
 
 		expect(fetchAdapterProtocolChartData).toHaveBeenNthCalledWith(1, {
 			adapterType: 'active-users',
@@ -67,7 +67,7 @@ describe('ProtocolCharts focused TVL sources', () => {
 			[2_000, 20]
 		])
 
-		await expect(ProtocolCharts.tvl('aave')).resolves.toEqual([
+		await expect(fetchProProtocolChartData('tvl', 'aave')).resolves.toEqual([
 			[1, 10],
 			[2, 20]
 		])
@@ -77,14 +77,14 @@ describe('ProtocolCharts focused TVL sources', () => {
 	it('requests the focused borrowed value series instead of reconstructing V1 chain TVLs', async () => {
 		fetchProtocolTvlChart.mockResolvedValue([[3_000, 30]])
 
-		await expect(ProtocolCharts.borrowed('aave')).resolves.toEqual([[3, 30]])
+		await expect(fetchProProtocolChartData('borrowed', 'aave')).resolves.toEqual([[3, 30]])
 		expect(fetchProtocolTvlChart).toHaveBeenCalledWith({ protocol: 'aave', key: 'borrowed' })
 	})
 
 	it('returns no points when the focused endpoint has no series', async () => {
 		fetchProtocolTvlChart.mockResolvedValue(null)
 
-		await expect(ProtocolCharts.tvl('missing')).resolves.toEqual([])
+		await expect(fetchProProtocolChartData('tvl', 'missing')).resolves.toEqual([])
 	})
 
 	it('resolves liquidity from the lite-catalog symbol without fetching full protocol data', async () => {
@@ -94,7 +94,7 @@ describe('ProtocolCharts focused TVL sources', () => {
 			['2', 20]
 		])
 
-		await expect(ProtocolCharts.liquidity('aave-v3', 'AAVE')).resolves.toEqual([
+		await expect(fetchProProtocolChartData('liquidity', 'aave-v3', { protocolSymbol: 'AAVE' })).resolves.toEqual([
 			[1, 10],
 			[2, 20]
 		])

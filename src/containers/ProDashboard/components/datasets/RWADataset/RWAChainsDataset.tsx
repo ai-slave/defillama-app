@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import {
-	type ColumnDef,
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ColumnSizingState,
@@ -17,17 +16,16 @@ import * as React from 'react'
 import { useContext } from 'react'
 import { useTableSearch } from '~/components/Table/utils'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
-import { fetchRWAStatsViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { PRO_RWA_CHAINS_TABLE_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import { fetchRWAStats } from '~/containers/RWA/api'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
-import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
-import { downloadCSV } from '~/utils/download'
+import { downloadCSV, type CsvCell } from '~/utils/download'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
-import { ProTableCSVButton } from '../../ProTable/CsvButton'
-import { TableBody } from '../../ProTable/TableBody'
-import { TablePagination } from '../../ProTable/TablePagination'
+import { TableBody } from '../../Table/TableBody'
+import { TablePagination } from '../../Table/TablePagination'
 
 type RWAChainsTableRow = {
 	chain: string
@@ -40,7 +38,7 @@ type RWAChainsTableRow = {
 
 const columnHelper = createColumnHelper<RWAChainsTableRow>()
 
-const columns: ColumnDef<RWAChainsTableRow, any>[] = [
+const columns = [
 	columnHelper.accessor('chain', {
 		id: 'chain',
 		header: 'Chain',
@@ -90,50 +88,74 @@ const columns: ColumnDef<RWAChainsTableRow, any>[] = [
 	})
 ]
 
+const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
+	'chain',
+	'totalAssetIssuers',
+	'totalAssetCount',
+	'totalActiveMcap',
+	'totalOnChainMcap',
+	'totalDefiActiveTvl'
+]
+const DEFAULT_COLUMN_SIZING: ColumnSizingState = {
+	chain: 200,
+	totalAssetIssuers: 140,
+	totalAssetCount: 140,
+	totalActiveMcap: 160,
+	totalOnChainMcap: 160,
+	totalDefiActiveTvl: 160
+}
+const getRWAChainsCoreRowModel = getCoreRowModel<RWAChainsTableRow>()
+const getRWAChainsSortedRowModel = getSortedRowModel<RWAChainsTableRow>()
+const getRWAChainsFilteredRowModel = getFilteredRowModel<RWAChainsTableRow>()
+const getRWAChainsPaginationRowModel = getPaginationRowModel<RWAChainsTableRow>()
+
 const STALE_TIME = 5 * 60 * 1000
+
+function selectRWAChainRows(data: IRWAStatsResponse): RWAChainsTableRow[] {
+	if (!data.byChain) return []
+	const rows: RWAChainsTableRow[] = []
+	for (const chain in data.byChain) {
+		const stats = data.byChain[chain]
+		if (!stats) continue
+		rows.push({
+			chain,
+			totalAssetIssuers: stats.base.assetIssuers.length,
+			totalAssetCount: stats.base.assetCount,
+			totalActiveMcap: stats.base.activeMcap,
+			totalOnChainMcap: stats.base.onChainMcap,
+			totalDefiActiveTvl: stats.base.defiActiveTvl
+		})
+	}
+	return rows
+}
 
 function useRWAChainsTableData() {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
 
-	return useQuery({
+	const { data, isLoading, error } = useQuery({
 		queryKey: PRO_RWA_CHAINS_TABLE_QUERY_KEY,
 		enabled: streamDone,
 		queryFn: async () => {
 			if (authToken) {
-				return fetchRWAStatsViaProxy(authToken)
+				return fetchProDashboardProxy('rwaStats', {}, authToken)
 			}
 			return fetchRWAStats()
 		},
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		select: (data: IRWAStatsResponse): RWAChainsTableRow[] => {
-			if (!data?.byChain) return []
-			const rows: RWAChainsTableRow[] = []
-			for (const chain in data.byChain) {
-				const stats = data.byChain[chain]
-				// Use base stats (excluding stablecoins and governance tokens)
-				rows.push({
-					chain,
-					totalAssetIssuers: stats.base.assetIssuers.length,
-					totalAssetCount: stats.base.assetCount,
-					totalActiveMcap: stats.base.activeMcap,
-					totalOnChainMcap: stats.base.onChainMcap,
-					totalDefiActiveTvl: stats.base.defiActiveTvl
-				})
-			}
-			return rows.sort((a, b) => b.totalActiveMcap - a.totalActiveMcap)
-		}
+		select: selectRWAChainRows
 	})
+	return { data, isLoading: isLoading || (!streamDone && data === undefined), error }
 }
 
 const EMPTY_DATA: RWAChainsTableRow[] = []
 
 export function RWAChainsDataset() {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'totalActiveMcap', desc: true }])
-	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
-	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({})
+	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(DEFAULT_COLUMN_ORDER)
+	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>(DEFAULT_COLUMN_SIZING)
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [pagination, setPagination] = React.useState<PaginationState>({
 		pageIndex: 0,
@@ -141,11 +163,9 @@ export function RWAChainsDataset() {
 	})
 
 	const { data, isLoading, error } = useRWAChainsTableData()
-	const width = useBreakpointWidth()
-
 	const instance = useReactTable({
 		data: data ?? EMPTY_DATA,
-		columns: columns as ColumnDef<any>[],
+		columns,
 		state: {
 			sorting,
 			columnOrder,
@@ -159,27 +179,12 @@ export function RWAChainsDataset() {
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		autoResetPageIndex: false
+		getCoreRowModel: getRWAChainsCoreRowModel,
+		getSortedRowModel: getRWAChainsSortedRowModel,
+		getFilteredRowModel: getRWAChainsFilteredRowModel,
+		getPaginationRowModel: getRWAChainsPaginationRowModel,
+		autoResetPageIndex: true
 	})
-
-	React.useEffect(() => {
-		const defaultOrder = instance.getAllLeafColumns().map((d) => d.id)
-		const defaultSizing = {
-			chain: 200,
-			totalAssetIssuers: 140,
-			totalAssetCount: 140,
-			totalActiveMcap: 160,
-			totalOnChainMcap: 160,
-			totalDefiActiveTvl: 160
-		}
-
-		instance.setColumnSizing(defaultSizing)
-		instance.setColumnOrder(defaultOrder)
-	}, [instance, width])
 
 	const [_chainName, setChainName] = useTableSearch({ instance, columnToSearch: 'chain' })
 
@@ -216,31 +221,23 @@ export function RWAChainsDataset() {
 				<div className="flex flex-wrap items-center justify-end gap-4">
 					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">RWA By Chain</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
-								const csvData = rows.map((row) => row.original)
-								const headers = [
-									'Chain',
-									'Asset Issuers',
-									'Asset Count',
-									'Active Mcap',
-									'Onchain Mcap',
-									'DeFi Active TVL'
+								const csv: CsvCell[][] = [
+									['Chain', 'Asset Issuers', 'Asset Count', 'Active Mcap', 'Onchain Mcap', 'DeFi Active TVL']
 								]
-								const csv = [
-									headers.join(','),
-									...csvData.map((item) =>
-										[
-											`"${item.chain}"`,
-											item.totalAssetIssuers,
-											item.totalAssetCount,
-											item.totalActiveMcap,
-											item.totalOnChainMcap,
-											item.totalDefiActiveTvl
-										].join(',')
-									)
-								].join('\n')
+								for (const row of rows) {
+									const item = row.original
+									csv.push([
+										item.chain,
+										item.totalAssetIssuers,
+										item.totalAssetCount,
+										item.totalActiveMcap,
+										item.totalOnChainMcap,
+										item.totalDefiActiveTvl
+									])
+								}
 
 								downloadCSV('rwa-by-chain.csv', csv, { addTimestamp: true })
 							}}
@@ -256,7 +253,17 @@ export function RWAChainsDataset() {
 				</div>
 			</div>
 			<TableBody table={instance} />
-			<TablePagination table={instance} />
+			<TablePagination
+				pageSize={pagination.pageSize}
+				pageIndex={pagination.pageIndex}
+				pageCount={instance.getPageCount()}
+				canPreviousPage={instance.getCanPreviousPage()}
+				canNextPage={instance.getCanNextPage()}
+				previousPage={instance.previousPage}
+				nextPage={instance.nextPage}
+				setPageSize={instance.setPageSize}
+				showPageSizes={instance.getRowCount() > 10}
+			/>
 		</div>
 	)
 }

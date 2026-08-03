@@ -1,6 +1,6 @@
-import type { ChartBuilderConfig } from '../types'
+import type { ChainChartType, ChartBuilderConfig } from '../types'
 
-const ADAPTER_TO_DASHBOARD_TYPE: Record<string, string | null> = {
+const ADAPTER_TO_DASHBOARD_TYPE: Record<string, ChainChartType | null> = {
 	dexs: 'volume',
 	fees: 'fees',
 	derivatives: 'perps',
@@ -22,7 +22,7 @@ const ADAPTER_TO_BUILDER_METRIC: Record<string, ChartBuilderConfig['config']['me
 	'open-interest': 'open-interest'
 }
 
-export function getAdapterDashboardType(adapterType: string): string | null {
+export function getAdapterDashboardType(adapterType: string): ChainChartType | null {
 	return ADAPTER_TO_DASHBOARD_TYPE[adapterType] ?? null
 }
 

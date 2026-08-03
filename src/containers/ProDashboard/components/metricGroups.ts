@@ -1,7 +1,7 @@
 export type MetricUnitGroup = 'usd' | 'percent' | 'count' | 'ratio'
 
 const PERCENT_METRIC_TYPES = new Set(['medianApy'])
-const COUNT_METRIC_TYPES = new Set(['txs', 'users', 'activeUsers', 'newUsers', 'gasUsed'])
+const COUNT_METRIC_TYPES = new Set(['txs', 'activeUsers', 'newUsers', 'gasUsed'])
 const RATIO_METRIC_TYPES = new Set(['pfRatio', 'psRatio'])
 
 export function getMetricUnitGroup(metricType?: string): MetricUnitGroup {
@@ -37,12 +37,11 @@ export interface SeriesAxisLayout {
 export function resolveSeriesAxisLayout(series: SeriesAxisInput[]): SeriesAxisLayout {
 	const distinctUnitGroups: MetricUnitGroup[] = []
 	const unitGroupIndex = new Map<MetricUnitGroup, number>()
-	const seriesUnitGroups = new Array<MetricUnitGroup>(series.length)
+	const normalizedSeries: Array<{ unitGroup: MetricUnitGroup; yAxisIndex: number | undefined }> = []
 	let maxExplicitAxisIndex = 0
-	for (let index = 0; index < series.length; index++) {
-		const item = series[index]
+	for (const item of series) {
 		const group = getMetricUnitGroup(item.metricType)
-		seriesUnitGroups[index] = group
+		normalizedSeries.push({ unitGroup: group, yAxisIndex: item.yAxisIndex })
 		if (!unitGroupIndex.has(group)) {
 			unitGroupIndex.set(group, distinctUnitGroups.length)
 			distinctUnitGroups.push(group)
@@ -58,15 +57,12 @@ export function resolveSeriesAxisLayout(series: SeriesAxisInput[]): SeriesAxisLa
 		? Math.min(Math.max(distinctUnitGroups.length, maxExplicitAxisIndex + 1, 2), MAX_Y_AXES)
 		: 1
 
-	const seriesAxisIndexes = new Array<number>(series.length)
-	for (let index = 0; index < series.length; index++) {
-		const axisIndex = series[index].yAxisIndex ?? unitGroupIndex.get(seriesUnitGroups[index]) ?? 0
-		seriesAxisIndexes[index] = Math.min(Math.max(axisIndex, 0), MAX_Y_AXES - 1)
-	}
+	const seriesAxisIndexes: number[] = []
 	const axisUnitGroups = new Array<MetricUnitGroup | undefined>(axisCount)
-	for (let index = 0; index < seriesAxisIndexes.length; index++) {
-		const axisIndex = seriesAxisIndexes[index]
-		axisUnitGroups[axisIndex] ??= seriesUnitGroups[index]
+	for (const item of normalizedSeries) {
+		const axisIndex = Math.min(Math.max(item.yAxisIndex ?? unitGroupIndex.get(item.unitGroup) ?? 0, 0), MAX_Y_AXES - 1)
+		seriesAxisIndexes.push(axisIndex)
+		if (axisUnitGroups[axisIndex] === undefined) axisUnitGroups[axisIndex] = item.unitGroup
 	}
 
 	return { needMultipleAxes, axisCount, axisUnitGroups, seriesAxisIndexes }

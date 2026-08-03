@@ -154,12 +154,14 @@ export async function getAdapterChainOverview({
 			: fetchAdapterChainChartData({ adapterType, chain, dataType: 'dailyRevenue' })
 	])
 
-	const overview: IAdapterChainOverview = await getDimensionAdapterChainEarningsOverview({
+	const earnings = await getDimensionAdapterChainEarningsOverview({
 		chain,
 		overviewData,
 		totalDataChart
 	})
-	return overview
+	if (earnings.status === 'unavailable')
+		throw new Error('Earnings are unavailable because emissions data could not be loaded')
+	return earnings.overview
 }
 
 export async function getAdapterProtocolOverview({

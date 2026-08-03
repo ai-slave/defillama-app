@@ -79,3 +79,34 @@ export type IFormattedDataWithExtraTvlBase = {
 export interface IFormattedDataWithExtraTvl extends IFormattedDataWithExtraTvlBase {
 	subRows?: Array<IFormattedDataWithExtraTvlBase>
 }
+
+export interface ChainsDatasetRow {
+	name: string
+	icon: string
+	protocols: number
+	deprecated: boolean
+	users: number | null
+	change_1d: number | null
+	change_7d: number | null
+	change_1m: number | null
+	tvl: number | null
+	stablesMcap: number | null
+	totalVolume24h: number | null
+	totalVolume7d: number | null
+	totalVolume30d: number | null
+	totalFees24h: number | null
+	totalFees7d: number | null
+	totalFees30d: number | null
+	totalRevenue24h: number | null
+	totalRevenue7d: number | null
+	totalRevenue30d: number | null
+	totalAppRevenue24h: number | null
+	totalAppRevenue7d: number | null
+	totalAppRevenue30d: number | null
+	bridgedTvl: number | null
+	mcaptvl: number | null
+	nftVolume: number | null
+	mcap: number | null
+	symbol: string | null
+	extraTvl: IChain['extraTvl'] | null
+}

@@ -1,7 +1,7 @@
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { AddToDashboardButton } from '~/components/AddToDashboard'
+import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
@@ -173,8 +173,8 @@ export function ChainsWithStablecoins({
 	})
 
 	let topChain = { name: 'Ethereum', mcap: 0 }
-	if (chainTotals.length > 0) {
-		const topChainData = chainTotals[0]
+	const topChainData = chainTotals.at(0)
+	if (topChainData) {
 		topChain.name = topChainData.name
 		topChain.mcap = topChainData.mcap ?? 0
 	}
@@ -364,7 +364,7 @@ export function ChainsWithStablecoins({
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : EMPTY_PIE_DATA}
-								stackColors={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.stackColors : undefined}
+								{...(marketCapPresentation?.kind === 'pie' ? { stackColors: marketCapPresentation.stackColors } : {})}
 								onReady={handleChartReady}
 							/>
 						</React.Suspense>
@@ -398,7 +398,7 @@ export function ChainsWithStablecoins({
 							isLoading={isVolumeChartLoading}
 							isError={!isVolumeChartLoading && volumeChartQuery.error != null}
 							hideDefaultLegend={!showDefaultLegend}
-							selectedCharts={activeSelectedCharts}
+							{...(activeSelectedCharts !== undefined ? { selectedCharts: activeSelectedCharts } : {})}
 							groupBy={volumeGroupBy}
 							onReady={handleChartReady}
 						/>
@@ -408,7 +408,7 @@ export function ChainsWithStablecoins({
 							isLoading={isSelectedChartLoading}
 							isError={!isSelectedChartLoading && chartSeriesQuery.error != null}
 							hideDefaultLegend={!showDefaultLegend}
-							selectedCharts={activeSelectedCharts}
+							{...(activeSelectedCharts !== undefined ? { selectedCharts: activeSelectedCharts } : {})}
 							onReady={handleChartReady}
 						/>
 					)}
@@ -463,13 +463,13 @@ function SelectedChainsChart({
 			<MultiSeriesChart
 				dataset={data.dataset}
 				charts={data.charts}
-				selectedCharts={selectedCharts}
-				stacked={data.stacked}
-				expandTo100Percent={data.expandTo100Percent}
-				valueSymbol={data.valueSymbol}
-				showTotalInTooltip={data.showTotalInTooltip}
+				{...(selectedCharts !== undefined ? { selectedCharts } : {})}
+				{...(data.stacked !== undefined ? { stacked: data.stacked } : {})}
+				{...(data.expandTo100Percent !== undefined ? { expandTo100Percent: data.expandTo100Percent } : {})}
+				{...(data.valueSymbol !== undefined ? { valueSymbol: data.valueSymbol } : {})}
+				{...(data.showTotalInTooltip !== undefined ? { showTotalInTooltip: data.showTotalInTooltip } : {})}
 				hideDefaultLegend={hideDefaultLegend}
-				groupBy={groupBy}
+				{...(groupBy !== undefined ? { groupBy } : {})}
 				onReady={onReady}
 			/>
 		</React.Suspense>

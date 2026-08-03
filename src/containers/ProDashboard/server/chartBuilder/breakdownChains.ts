@@ -1,33 +1,24 @@
 import { fetchChainsByCategory } from '~/containers/Chains/api'
+import { mapWithConcurrency } from '~/utils/async'
 import { toDimensionsSlug, toDisplayName } from '~/utils/chainNormalizer'
-export {
-	CHAIN_NATIVE_BREAKDOWN_METRICS,
-	getProtocolChainBreakdownRoute,
-	NON_ADAPTER_BY_CHAIN_BREAKDOWN_METRICS,
-	PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS,
-	STREAM_PROTOCOL_SERIES_SKIP_METRICS
-} from '~/containers/ProDashboard/utils/breakdownMetrics'
 
 export const displayChainName = (slug: string): string => {
-	// TODO(chain-normalizer): only needed to display Dimensions chain keys from
-	// legacy all-protocol `breakdown24h` responses. Remove with that route.
+	// Adapter metric breakdowns use Dimensions slugs while chart labels use display names.
 	const display = toDisplayName(slug)
 	if (display !== slug) return display
 	const normalized = slug.toLowerCase().replace(/_/g, '-')
 	return normalized
 		.split('-')
-		.map((part) => (part.length ? part[0].toUpperCase() + part.slice(1) : part))
+		.map((part) => (part.length ? part.charAt(0).toUpperCase() + part.slice(1) : part))
 		.join(' ')
 }
 
 export async function resolveAllowedChainNamesFromCategories(categories: string[]): Promise<Set<string>> {
-	if (!categories || categories.length === 0) return new Set()
-	const responses = await Promise.allSettled(categories.map((category) => fetchChainsByCategory(category)))
+	if (categories.length === 0) return new Set()
+	const responses = await mapWithConcurrency(categories, 8, fetchChainsByCategory)
 	const names = new Set<string>()
 	for (const response of responses) {
-		if (response.status !== 'fulfilled') continue
-		const chains: string[] = Array.isArray(response.value?.chainsUnique) ? response.value.chainsUnique : []
-		for (const chain of chains) names.add(chain)
+		for (const chain of response.chainsUnique) names.add(chain)
 	}
 	return names
 }
@@ -36,8 +27,6 @@ export async function resolveAllowedChainSlugsFromCategories(categories: string[
 	const names = await resolveAllowedChainNamesFromCategories(categories)
 	const slugs = new Set<string>()
 	for (const name of names) {
-		// TODO(chain-normalizer): only Dimensions overview `breakdown24h` uses these keys.
-		// Remove after ProDashboard chart builder migrates off legacy overview routes.
 		slugs.add(toDimensionsSlug(name))
 	}
 	return slugs

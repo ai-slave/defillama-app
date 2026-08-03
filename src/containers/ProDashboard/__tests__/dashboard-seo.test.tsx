@@ -32,16 +32,18 @@ describe('pro dashboard SEO shell', () => {
 				{
 					id: 'chart-1',
 					kind: 'chart',
-					chain: 'Ethereum',
+					subjectType: 'protocol',
 					protocol: 'aave',
 					type: 'fees'
 				},
 				{
 					id: 'table-1',
-					kind: 'table',
-					tableType: 'dataset',
-					datasetType: 'revenue',
-					chains: ['Ethereum']
+					kind: 'unified-table',
+					configVersion: 3,
+					strategy: 'protocols',
+					rowHeaders: ['parent-protocol', 'protocol'],
+					params: { chains: ['Ethereum'] },
+					activePresetId: 'revenue-protocols'
 				}
 			]
 		},

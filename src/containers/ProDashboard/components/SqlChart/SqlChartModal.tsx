@@ -22,10 +22,10 @@ import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { formatNumber } from '~/utils/numberFormat'
 import { useProDashboardEditorActions } from '../../ProDashboardAPIContext'
+import { clampRowCap, snapshotToResult, SQL_SNAPSHOT_ROW_CAP_MAX, SQL_SNAPSHOT_ROW_CAP_MIN } from '../../sqlSnapshot'
 import type { SqlChartConfig } from '../../types'
 import { buildSqlChartConfig } from './buildSqlChartConfig'
 import { loadChartOptions } from './chartOptions'
-import { clampRowCap, snapshotToResult, SQL_SNAPSHOT_ROW_CAP_MAX, SQL_SNAPSHOT_ROW_CAP_MIN } from './snapshot'
 import { SqlChartModalSidebar } from './SqlChartModalSidebar'
 
 interface SqlChartModalProps {
@@ -108,20 +108,18 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 			setRunning(false)
 			setLoadingStage(null)
 			if (res.ok) {
-				const okRes = res as Extract<typeof res, { ok: true }>
-				const classified = classifyColumns(okRes.result)
+				const classified = classifyColumns(res.result)
 				const nextChartConfig = chartConfigRef.current
 					? migrateChartConfig(chartConfigRef.current, classified)
 					: defaultChartConfig(classified)
-				setResult(okRes.result)
+				setResult(res.result)
 				setResultSql(trimmed)
 				setRanFresh(true)
-				setDurationMs(okRes.durationMs)
+				setDurationMs(res.durationMs)
 				setChartConfig(nextChartConfig)
-				return { result: okRes.result, chartConfig: nextChartConfig }
+				return { result: res.result, chartConfig: nextChartConfig }
 			}
-			const errRes = res as Extract<typeof res, { ok: false }>
-			if (!errRes.cancelled) setError(errRes.error)
+			if ('error' in res && !res.cancelled) setError(res.error)
 			return null
 		},
 		[duckdb.conn, registry.tables, registry.load, chartOptionsMap, sql]
@@ -156,7 +154,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 	const editorHeight = `${(Math.min(Math.max(editorLineCount + 1, 6), 22) * 19 + 16).toString()}px`
 
 	const isDirty = sql.trim() !== resultSql
-	const oversized = !!result && result.rows.length > rowCap
+	const resultRowCount = result?.rows.length ?? null
 	const needsRun = isDirty || !result || !chartConfig
 	const engineLoading = duckdb.status === 'loading'
 	const engineError = duckdb.status === 'error'
@@ -304,9 +302,9 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 							</div>
 						) : null}
 
-						{oversized ? (
+						{resultRowCount !== null && resultRowCount > rowCap ? (
 							<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-pro-text-secondary">
-								Result has {formatNumber(result!.rows.length)} rows. Only the first {formatNumber(rowCap)} will be saved
+								Result has {formatNumber(resultRowCount)} rows. The widget will show the first {formatNumber(rowCap)}
 								with this widget.
 							</div>
 						) : null}
@@ -352,7 +350,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 							{displayMode === 'table' ? 'Widget shows the result as a table.' : 'Widget shows the result as a chart.'}
 						</span>
 						<label className="flex items-center gap-2 text-xs text-pro-text-tertiary">
-							Rows to store
+							Rows to display
 							<input
 								type="number"
 								min={SQL_SNAPSHOT_ROW_CAP_MIN}
@@ -364,7 +362,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 									if (Number.isFinite(next)) setRowCap(next)
 								}}
 								onBlur={() => setRowCap((prev) => clampRowCap(prev))}
-								title={`How many result rows are stored with the widget (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). Larger snapshots make the dashboard heavier.`}
+								title={`How many query result rows the widget can display (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). Query results are refreshed at request time and are not stored in the dashboard.`}
 								className="w-20 rounded-md border pro-border bg-page px-2 py-1 text-xs text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden"
 							/>
 						</label>

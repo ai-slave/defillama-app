@@ -2,39 +2,46 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { buildTimeSeriesDataset, type TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
-import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
-import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
+import type { IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
+import {
+	buildProtocolBreakdownPresentation,
+	MAX_PROTOCOL_BREAKDOWN_SERIES,
+	type ProtocolBreakdownChart
+} from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
+import {
+	buildProtocolValueChartQueryKey,
+	fetchProtocolValueChart
+} from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
+import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { download } from '~/utils/download'
-import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
-import {
-	fetchProtocolTvlValueForDashboard,
-	getProtocolTvlValueQueryKey,
-	shouldSuppressAdvancedTvlTokenBreakdown
-} from '../services/protocolTvl'
+import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
+import { shouldSuppressAdvancedTvlTokenBreakdown } from '../services/protocolTvl'
 import type { AdvancedTvlChartConfig } from '../types'
 import { buildAdvancedTvlPresentation } from './advancedTvlPresentation'
+import { CSVExportButton } from './CSVExportButton'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
-import { ProTableCSVButton } from './ProTable/CsvButton'
 import { useAdvancedTvlChartData } from './useAdvancedTvlChartData'
 
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 
 const EMPTY_DATASET: TimestampDataset = {
 	source: [],
 	dimensions: ['timestamp']
 }
 const EMPTY_STACKS: string[] = []
+const EMPTY_BREAKDOWN: ProtocolBreakdownChart = []
 const HIDDEN_EXPORTS = 'hidden' as const
+const selectBasicTvlDataset = (data: IProtocolValueChart | null) => buildTimeSeriesDataset(data ?? [], 'TVL', 1)
 
 interface AdvancedTvlChartCardProps {
 	config: AdvancedTvlChartConfig
@@ -63,13 +70,17 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	)
 
 	const { data: basicTvlDataset, isLoading: isBasicTvlLoading } = useQuery({
-		queryKey: getProtocolTvlValueQueryKey(protocol),
-		queryFn: () => fetchProtocolTvlValueForDashboard(protocol),
+		queryKey: buildProtocolValueChartQueryKey({ source: 'tvl', protocol }),
+		queryFn: () => fetchProtocolValueChart({ source: 'tvl', protocol }),
 		enabled: streamDone && chartType === 'tvl',
-		staleTime: Infinity,
-		select: (data) => buildTimeSeriesDataset(data, 'TVL', 1)
+		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
+		select: selectBasicTvlDataset
 	})
-	const { data: advancedData, isLoading: isAdvancedLoading } = useAdvancedTvlChartData({
+	const {
+		data: advancedData,
+		isLoading: isAdvancedLoading,
+		hasSourceData: hasAdvancedSourceData
+	} = useAdvancedTvlChartData({
 		protocol,
 		protocolName,
 		chartType,
@@ -88,18 +99,48 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		chartType === 'tokenBalances' ||
 		chartType === 'tokenInflows'
 	const selectorValues = isRuntimeBreakdown ? advancedSeriesNames : EMPTY_STACKS
-	const runtimePresentation = useProtocolBreakdownPresentation({
-		breakdown: advancedData.breakdown ?? [],
+	const aggregateOthers = chartType === 'chainsTvl' || chartType === 'tokenValuesUsd' || chartType === 'tokenInflows'
+	const { activeSeries, setSelectedSeries, isDefaultSelection } = useSeriesSelection({
 		availableSeries: selectorValues,
 		defaultSeries: advancedData.defaultSeriesNames,
-		aggregateOthers: chartType === 'chainsTvl' || chartType === 'tokenValuesUsd' || chartType === 'tokenInflows',
-		type: chartType === 'tokenInflows' ? 'bar' : 'line',
-		...(chartType === 'tokenInflows' ? { stack: 'stackA' } : {}),
-		fillMissingWithZero: true,
-		selectionKey: `${protocol}:${chartType}`
+		...(aggregateOthers ? {} : { maxSelectedSeries: MAX_PROTOCOL_BREAKDOWN_SERIES }),
+		allowEmptySelection: true,
+		resetToDefaultWhenStale: true,
+		selectionKey: `${protocol}:${chartType}`,
+		storeDefaultAsIntent: true
 	})
+	const runtimePresentation = useMemo(() => {
+		const presentation = buildProtocolBreakdownPresentation({
+			breakdown: advancedData.breakdown ?? EMPTY_BREAKDOWN,
+			availableSeries: selectorValues,
+			activeSeries,
+			aggregateOthers,
+			includeUpstreamOthers: aggregateOthers && isDefaultSelection,
+			type: chartType === 'tokenInflows' ? 'bar' : 'line',
+			...(chartType === 'tokenInflows' ? { stack: 'stackA' } : {}),
+			fillMissingWithZero: true
+		})
+		return {
+			...presentation,
+			dataset: presentation.dataset ?? EMPTY_DATASET,
+			activeSeries,
+			setSelectedSeries,
+			selectedCharts: new Set(presentation.charts.map((chart) => chart.name))
+		}
+	}, [
+		activeSeries,
+		advancedData.breakdown,
+		aggregateOthers,
+		chartType,
+		isDefaultSelection,
+		selectorValues,
+		setSelectedSeries
+	])
 	const advancedDataset = isRuntimeBreakdown ? runtimePresentation.dataset : (advancedData.dataset ?? EMPTY_DATASET)
-	const renderedSeries = runtimePresentation.charts.map((chart) => chart.name)
+	const renderedSeries = useMemo(
+		() => runtimePresentation.charts.map((chart) => chart.name),
+		[runtimePresentation.charts]
+	)
 
 	const presentation = useMemo(
 		() =>
@@ -142,10 +183,14 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 			const indexes = columnNames.map((name) => dataset.dimensions.indexOf(name))
 			return [
 				['Date', ...columnNames],
-				...dataset.source.map((row) => [
-					formatIsoDate(row[0] as number, { input: 'milliseconds' }) ?? '',
-					...indexes.map((index) => row[index] ?? '')
-				])
+				...dataset.source.map((row, rowIndex) => {
+					const timestamp = row[0]
+					if (typeof timestamp !== 'number') throw new Error(`Invalid advanced TVL timestamp at index ${rowIndex}`)
+					return [
+						formatIsoDate(timestamp, { input: 'milliseconds' }) ?? '',
+						...indexes.map((index) => row[index] ?? '')
+					]
+				})
 			]
 		}
 
@@ -186,7 +231,10 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	const chartTypeLabel = CHART_TYPE_LABELS[chartType] || chartType
 	const imageTitle = `${protocolName} - ${chartTypeLabel}`
 	const imageFilename = `${protocol.toLowerCase().replace(/\s+/g, '-')}-${chartType}`
-	const isLoading = (chartType === 'tvl' ? isBasicTvlLoading : isAdvancedLoading) || !streamDone
+	const isLoading =
+		chartType === 'tvl'
+			? isBasicTvlLoading || (!streamDone && basicTvlDataset === undefined)
+			: isAdvancedLoading || (!streamDone && !hasAdvancedSourceData && !suppressTokenBreakdowns)
 
 	if (isLoading) {
 		return (
@@ -215,7 +263,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				hideDefaultLegend
 				hideDataZoom={presentation.hideDataZoom}
 				solidChartAreaStyle={presentation.solidChartAreaStyle}
-				chartOptions={presentation.chartOptions}
+				{...(presentation.chartOptions ? { chartOptions: presentation.chartOptions } : {})}
 				exportButtons={HIDDEN_EXPORTS}
 				height="360px"
 				onReady={handleChartReady}
@@ -258,7 +306,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 							/>
 						) : null}
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-						<ProTableCSVButton
+						<CSVExportButton
 							onClick={handleCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"

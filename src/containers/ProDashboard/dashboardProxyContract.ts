@@ -3,7 +3,7 @@ import type {
 	IEquitiesFilingApiItem,
 	IEquitiesStatementsResponse
 } from '~/containers/Equities/api.types'
-import type { StablecoinsChartCacheValue } from '~/containers/ProDashboard/server/stablecoinFetchers'
+import type { StablecoinsChartCacheValue } from '~/containers/ProDashboard/stablecoinData'
 import type {
 	IFetchedRWAProject,
 	IRWAAssetData,
@@ -13,7 +13,6 @@ import type {
 } from '~/containers/RWA/api.types'
 import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
 import type { StablecoinDetailResponse, StablecoinsListResponse } from '~/containers/Stablecoins/api.types'
-import type { RawProtocolTokenUsageEntry } from '~/containers/TokenUsage/api.types'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import type { ProDashboardChartRequest } from './dataContracts'
 
@@ -22,7 +21,6 @@ interface ProDashboardProxyContract {
 	stablecoins: { params: { chain: string }; response: StablecoinsChartCacheValue }
 	yields: { params: { poolConfigId: string }; response: PoolHistory }
 	yieldsLendBorrow: { params: { poolConfigId: string }; response: BorrowMarketHistory }
-	tokenUsage: { params: { symbol: string }; response: RawProtocolTokenUsageEntry[] }
 	rwaBreakdown: {
 		params: {
 			breakdown: RWAOverviewBreakdownRequest['breakdown']
@@ -49,24 +47,3 @@ export type ProDashboardProxyResponseValue = ProDashboardProxyContract[ProDashbo
 export type ProDashboardProxyRequest = {
 	[TType in ProDashboardProxyType]: { type: TType; params: ProDashboardProxyParams<TType> }
 }[ProDashboardProxyType]
-
-const PRO_DASHBOARD_PROXY_TYPES: ReadonlySet<string> = new Set<ProDashboardProxyType>([
-	'chart',
-	'stablecoins',
-	'yields',
-	'yieldsLendBorrow',
-	'tokenUsage',
-	'rwaBreakdown',
-	'rwaAssetChart',
-	'rwaAssetsList',
-	'rwaStats',
-	'equitiesCompanies',
-	'equitiesStatements',
-	'equitiesFilings',
-	'stablecoinsList',
-	'stablecoinAsset'
-])
-
-export function isProDashboardProxyType(value: unknown): value is ProDashboardProxyType {
-	return typeof value === 'string' && PRO_DASHBOARD_PROXY_TYPES.has(value)
-}

@@ -1,9 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { anyMock, oneMock } = vi.hoisted(() => ({
+const {
+	anyMock,
+	fetchOracleMetricsMock,
+	fetchProtocolRowMembershipDatasetMock,
+	fetchProtocolSupplementalMetricsMock,
+	oneMock
+} = vi.hoisted(() => ({
 	anyMock: vi.fn(),
+	fetchOracleMetricsMock: vi.fn(),
+	fetchProtocolRowMembershipDatasetMock: vi.fn(),
+	fetchProtocolSupplementalMetricsMock: vi.fn(),
 	oneMock: vi.fn()
 }))
+
+vi.mock('~/containers/Oracles/api', () => ({ fetchOracleMetrics: fetchOracleMetricsMock }))
+
+vi.mock('./supplementalMetrics', async (importOriginal) => {
+	const original = await importOriginal<typeof import('./supplementalMetrics')>()
+	return { ...original, fetchProtocolSupplementalMetrics: fetchProtocolSupplementalMetricsMock }
+})
+
+vi.mock('./rowMembership', async (importOriginal) => {
+	const original = await importOriginal<typeof import('./rowMembership')>()
+	return { ...original, fetchProtocolRowMembershipDataset: fetchProtocolRowMembershipDatasetMock }
+})
 
 vi.mock('~/server/db/llama', () => ({
 	llamaDb: {
@@ -27,10 +48,17 @@ const options = {
 	config: {
 		id: 'table',
 		kind: 'unified-table' as const,
+		configVersion: 3 as const,
+		strategy: 'protocols' as const,
 		rowHeaders: ['protocol' as const],
 		params: null
 	},
-	rowHeaders: ['protocol' as const]
+	rowHeaders: ['protocol' as const],
+	baseMetricFamilies: [],
+	pointMetrics: [],
+	supplementalMetrics: [],
+	needsOracleMembership: false,
+	rowMembership: { kind: 'all-protocols' as const }
 }
 
 describe('unified table metric totals cache', () => {
@@ -39,6 +67,9 @@ describe('unified table metric totals cache', () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2026-07-19T00:00:00Z'))
 		anyMock.mockReset().mockResolvedValue([])
+		fetchOracleMetricsMock.mockReset().mockResolvedValue({ oracles: {}, chainsByOracle: {}, oraclesTVS: {} })
+		fetchProtocolRowMembershipDatasetMock.mockReset().mockResolvedValue(null)
+		fetchProtocolSupplementalMetricsMock.mockReset().mockResolvedValue({})
 		oneMock.mockReset().mockResolvedValue(totals)
 	})
 
@@ -48,13 +79,14 @@ describe('unified table metric totals cache', () => {
 
 	it('reuses totals briefly and refreshes them after the TTL', async () => {
 		const { fetchProtocolsTable } = await import('./protocols')
+		const tvlOptions = { ...options, baseMetricFamilies: ['tvl' as const] }
 
-		await fetchProtocolsTable(options)
-		await fetchProtocolsTable(options)
+		await fetchProtocolsTable(tvlOptions)
+		await fetchProtocolsTable(tvlOptions)
 		expect(oneMock).toHaveBeenCalledTimes(1)
 
 		vi.setSystemTime(new Date('2026-07-19T00:05:01Z'))
-		await fetchProtocolsTable(options)
+		await fetchProtocolsTable(tvlOptions)
 		expect(oneMock).toHaveBeenCalledTimes(2)
 	})
 
@@ -62,8 +94,392 @@ describe('unified table metric totals cache', () => {
 		oneMock.mockRejectedValueOnce(new Error('temporary database failure')).mockResolvedValueOnce(totals)
 		const { fetchProtocolsTable } = await import('./protocols')
 
-		await expect(fetchProtocolsTable(options)).rejects.toThrow('temporary database failure')
-		await expect(fetchProtocolsTable(options)).resolves.toEqual({ rows: [] })
+		const tvlOptions = { ...options, baseMetricFamilies: ['tvl' as const] }
+		await expect(fetchProtocolsTable(tvlOptions)).rejects.toThrow('temporary database failure')
+		await expect(fetchProtocolsTable(tvlOptions)).resolves.toEqual({ rows: [], parentMetrics: {} })
 		expect(oneMock).toHaveBeenCalledTimes(2)
+	})
+
+	it('retains independent totals projections within the TTL', async () => {
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		await fetchProtocolsTable({ ...options, baseMetricFamilies: ['tvl'] })
+		await fetchProtocolsTable({ ...options, baseMetricFamilies: ['dex-volume'] })
+		await fetchProtocolsTable({ ...options, baseMetricFamilies: ['tvl'] })
+
+		expect(oneMock).toHaveBeenCalledTimes(2)
+	})
+
+	it('skips the global totals query when the requested columns do not use global shares', async () => {
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		await fetchProtocolsTable({ ...options, baseMetricFamilies: ['fees', 'revenue', 'market-cap'] })
+
+		expect(oneMock).not.toHaveBeenCalled()
+	})
+
+	it('maps the canonical Lens holder revenue comparison to a percentage metric', async () => {
+		fetchOracleMetricsMock.mockResolvedValue({
+			oracles: { Chainlink: ['example--protocol'] },
+			chainsByOracle: {},
+			oraclesTVS: {}
+		})
+		anyMock
+			.mockResolvedValueOnce([
+				{
+					protocol: 'example--protocol',
+					protocol_category: 'Dexs',
+					chain_slugs: ['ethereum'],
+					holder_revenue_30d: 125,
+					holder_revenue_30d_pct_change: 0.25,
+					exclude_tvl_from_parent: false
+				}
+			])
+			.mockResolvedValueOnce([])
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		const result = await fetchProtocolsTable({
+			...options,
+			baseMetricFamilies: ['holder-revenue'],
+			needsOracleMembership: true
+		})
+
+		expect(result.rows).toHaveLength(1)
+		expect(result.rows[0]?.metrics.holdersRevenue30d).toBe(125)
+		expect(result.rows[0]?.metrics.holderRevenueChange30dOver30d).toBe(25)
+		expect(result.rows[0]?.oracles).toEqual(['Chainlink'])
+	})
+
+	it('uses canonical protocol and chain display names from Lens metadata', async () => {
+		anyMock
+			.mockResolvedValueOnce([
+				{
+					protocol: 'gmx',
+					protocol_name: 'GMX',
+					protocol_category: 'Derivatives',
+					chain_slugs: ['bsc', 'op-mainnet'],
+					exclude_tvl_from_parent: false
+				}
+			])
+			.mockResolvedValueOnce([
+				{
+					sub_protocol: 'gmx-v2',
+					protocol: 'gmx',
+					protocol_name: 'GMX V2',
+					parent_protocol_name: 'GMX',
+					protocol_category: 'Derivatives',
+					chain_slugs: ['bsc', 'op-mainnet'],
+					exclude_tvl_from_parent: false
+				}
+			])
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		const result = await fetchProtocolsTable(options)
+
+		expect(result.rows).toHaveLength(1)
+		expect(result.rows[0]).toMatchObject({
+			displayName: 'GMX V2',
+			parentProtocolName: 'GMX',
+			chains: ['BSC', 'OP Mainnet']
+		})
+	})
+
+	it('does not request oracle membership for unrelated tables', async () => {
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		await fetchProtocolsTable(options)
+
+		expect(fetchOracleMetricsMock).not.toHaveBeenCalled()
+	})
+
+	it('constructs only requested metric families and their exact ratio dependencies', async () => {
+		anyMock
+			.mockResolvedValueOnce([
+				{
+					protocol: 'example--protocol',
+					protocol_category: 'Dexs',
+					chain_slugs: ['ethereum'],
+					tvl_base: 100,
+					fees_1d: 0,
+					fees_annualised: 50,
+					revenue_annualised: 25,
+					mcap: 1_000,
+					fdv: 2_000,
+					volume_dexs_1d: 999,
+					exclude_tvl_from_parent: false
+				}
+			])
+			.mockResolvedValueOnce([])
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		const result = await fetchProtocolsTable({
+			...options,
+			baseMetricFamilies: ['market-cap', 'tvl', 'fees', 'revenue']
+		})
+		const metrics = result.rows[0]?.metrics
+
+		expect(metrics).toMatchObject({
+			tvl: 100,
+			fees24h: 0,
+			feesAnnualized1y: 50,
+			revenueAnnualized1y: 25,
+			mcap: 1_000,
+			fdv: 2_000,
+			mcaptvl: 10,
+			pf: 20,
+			ps: 40
+		})
+		expect(metrics).not.toHaveProperty('volume24h')
+		expect(metrics).not.toHaveProperty('protocolCount')
+	})
+
+	it('preserves omitted activity in a successful Lens row as unavailable', async () => {
+		anyMock
+			.mockResolvedValueOnce([
+				{
+					protocol: 'inactive--protocol',
+					protocol_category: 'Dexs',
+					chain_slugs: ['ethereum'],
+					exclude_tvl_from_parent: false
+				}
+			])
+			.mockResolvedValueOnce([])
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		const result = await fetchProtocolsTable({
+			...options,
+			baseMetricFamilies: [
+				'tvl',
+				'dex-volume',
+				'fees',
+				'holder-revenue',
+				'revenue',
+				'perps-volume',
+				'aggregator-volume',
+				'derivatives-aggregator-volume',
+				'options-volume',
+				'open-interest',
+				'market-cap'
+			]
+		})
+		const metrics = result.rows[0]?.metrics
+
+		expect(metrics).toMatchObject({
+			tvl: null,
+			volume24h: null,
+			volume_7d: null,
+			volume_30d: null,
+			cumulativeVolume: null,
+			fees24h: null,
+			fees_1y: null,
+			cumulativeFees: null,
+			holderRevenue_24h: null,
+			holdersRevenue30d: null,
+			revenue24h: null,
+			revenue_1y: null,
+			cumulativeRevenue: null,
+			perpsVolume24h: null,
+			aggregators_volume_24h: null,
+			derivatives_aggregators_volume_24h: null,
+			options_volume_24h: null,
+			mcap: null,
+			fdv: null,
+			openInterest: null
+		})
+		expect(metrics?.feesAnnualized1y).toBeNull()
+		expect(metrics?.revenueAnnualized1y).toBeNull()
+		expect(metrics?.feesChange_1d).toBeNull()
+	})
+
+	it('exposes open interest only when that metric family is requested', async () => {
+		const lensRows = [
+			{
+				protocol: 'perps-protocol',
+				protocol_category: 'Derivatives',
+				chain_slugs: ['ethereum'],
+				open_interest: 42,
+				exclude_tvl_from_parent: false
+			}
+		]
+		anyMock.mockResolvedValueOnce(lensRows).mockResolvedValueOnce([])
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		const withoutOpenInterest = await fetchProtocolsTable(options)
+		expect(withoutOpenInterest.rows[0]?.metrics).not.toHaveProperty('openInterest')
+
+		anyMock.mockReset().mockResolvedValueOnce(lensRows).mockResolvedValueOnce([])
+		const withOpenInterest = await fetchProtocolsTable({ ...options, baseMetricFamilies: ['open-interest'] })
+		expect(withOpenInterest.rows[0]?.metrics.openInterest).toBe(42)
+	})
+
+	it('retains canonical parent open interest when child metric allocation is absent', async () => {
+		anyMock
+			.mockResolvedValueOnce([
+				{
+					protocol: 'gmx',
+					protocol_name: 'GMX',
+					protocol_category: 'Derivatives',
+					chain_slugs: ['arbitrum'],
+					open_interest: 100,
+					exclude_tvl_from_parent: false
+				}
+			])
+			.mockResolvedValueOnce([
+				{
+					sub_protocol: 'gmx-v2',
+					protocol: 'gmx',
+					protocol_name: 'GMX V2',
+					parent_protocol_name: 'GMX',
+					protocol_category: 'Derivatives',
+					chain_slugs: ['arbitrum'],
+					open_interest: null,
+					exclude_tvl_from_parent: false
+				}
+			])
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		const result = await fetchProtocolsTable({ ...options, baseMetricFamilies: ['open-interest'] })
+
+		expect(result.rows.map((row) => row.protocolId)).toEqual(['gmx-v2'])
+		expect(result.parentMetrics.gmx?.supplements?.openInterest).toEqual({
+			childProtocolIds: ['gmx-v2'],
+			childProtocolIdsByChain: {},
+			metrics: { openInterest: 100 },
+			metricsByChain: {}
+		})
+	})
+
+	it('filters metric presets by canonical dataset membership without narrowing broad custom tables', async () => {
+		const { fetchProtocolsTable } = await import('./protocols')
+		const lensRows = [
+			{
+				protocol: 'canonical',
+				protocol_name: 'Canonical',
+				chain_slugs: ['ethereum'],
+				open_interest: null,
+				exclude_tvl_from_parent: false
+			},
+			{
+				protocol: 'lens-only',
+				protocol_name: 'Lens only',
+				chain_slugs: ['ethereum'],
+				open_interest: 100,
+				exclude_tvl_from_parent: false
+			}
+		]
+		anyMock.mockResolvedValueOnce(lensRows).mockResolvedValueOnce([])
+		fetchProtocolRowMembershipDatasetMock.mockResolvedValueOnce({
+			status: 'complete',
+			protocols: [{ name: 'Canonical', slug: 'canonical', chains: ['Ethereum'], total24h: null }]
+		})
+
+		const preset = await fetchProtocolsTable({
+			...options,
+			baseMetricFamilies: ['open-interest'],
+			rowMembership: { kind: 'base-metric', family: 'open-interest' }
+		})
+		expect(preset.rows.map((row) => row.protocolId)).toEqual(['canonical'])
+
+		anyMock.mockClear().mockResolvedValueOnce(lensRows).mockResolvedValueOnce([])
+		fetchProtocolRowMembershipDatasetMock.mockResolvedValueOnce(null)
+		const broad = await fetchProtocolsTable({ ...options, baseMetricFamilies: ['open-interest'] })
+		expect(broad.rows.map((row) => row.protocolId)).toEqual(['canonical', 'lens-only'])
+	})
+
+	it('constructs only requested optional chain metrics', async () => {
+		const { fetchProtocolsTable } = await import('./protocols')
+		const chainOptions = { ...options, rowHeaders: ['chain' as const, 'protocol' as const] }
+		const canonicalChainRows = [
+			{
+				chain: 'ethereum',
+				open_interest: 42,
+				bridged_tvl: 100,
+				stables_mcap: 30,
+				total_stables_mcap: 120
+			}
+		]
+		anyMock.mockReset().mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce(canonicalChainRows)
+
+		const minimal = await fetchProtocolsTable(chainOptions)
+		const minimalMetrics = minimal.chainMetrics?.ethereum
+		expect(minimalMetrics?.availability).toBe('available')
+		if (minimalMetrics?.availability !== 'available') throw new Error('Expected canonical Ethereum metrics')
+		expect(minimalMetrics.metrics).toEqual({})
+
+		anyMock.mockReset().mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce(canonicalChainRows)
+		const expanded = await fetchProtocolsTable({
+			...chainOptions,
+			baseMetricFamilies: ['open-interest', 'bridged-tvl', 'stablecoins']
+		})
+		const expandedMetrics = expanded.chainMetrics?.ethereum
+		expect(expandedMetrics?.availability).toBe('available')
+		if (expandedMetrics?.availability !== 'available') throw new Error('Expected canonical Ethereum metrics')
+		expect(expandedMetrics.metrics).toEqual({ openInterest: 42, bridgedTvl: 100, stablesMcap: 30, stablesShare: 25 })
+	})
+
+	it('constructs sparse canonical chain metrics from requested families', async () => {
+		anyMock
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([
+				{
+					chain: 'ethereum',
+					app_fees_1d: 0,
+					app_fees_annualised: 120,
+					tvl_base: 999
+				}
+			])
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		const result = await fetchProtocolsTable({
+			...options,
+			rowHeaders: ['chain', 'protocol'],
+			baseMetricFamilies: ['fees']
+		})
+		const ethereum = result.chainMetrics?.ethereum
+
+		expect(ethereum?.availability).toBe('available')
+		if (ethereum?.availability !== 'available') throw new Error('Expected canonical Ethereum metrics')
+		expect(ethereum.metrics).toMatchObject({ fees24h: 0, fees_7d: null, feesAnnualized1y: 120, average_1y: 10 })
+		expect(ethereum.metrics).not.toHaveProperty('tvl')
+		expect(ethereum.metrics).not.toHaveProperty('tvlShare')
+		expect(ethereum.metrics).not.toHaveProperty('protocolCount')
+	})
+
+	it('shares one request scope between supplemental values and canonical membership', async () => {
+		anyMock
+			.mockResolvedValueOnce([
+				{
+					protocol: 'protocol',
+					protocol_category: 'Dexs',
+					chain_slugs: ['ethereum'],
+					chain_slug: 'Ethereum',
+					exclude_tvl_from_parent: false
+				},
+				{
+					protocol: 'protocol',
+					protocol_category: 'Dexs',
+					chain_slugs: ['base'],
+					chain_slug: 'Base',
+					exclude_tvl_from_parent: false
+				}
+			])
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([])
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		await fetchProtocolsTable({
+			...options,
+			rowHeaders: ['chain', 'protocol'],
+			supplementalMetrics: ['earnings'],
+			rowMembership: { kind: 'supplemental-metric', metric: 'earnings' }
+		})
+
+		expect(fetchProtocolSupplementalMetricsMock).toHaveBeenCalledOnce()
+		expect(fetchProtocolRowMembershipDatasetMock).toHaveBeenCalledOnce()
+		const supplementalScope = fetchProtocolSupplementalMetricsMock.mock.calls[0]?.[2]
+		const membershipScope = fetchProtocolRowMembershipDatasetMock.mock.calls[0]?.[2]
+		expect(supplementalScope).toBeDefined()
+		expect(membershipScope).toBe(supplementalScope)
 	})
 })

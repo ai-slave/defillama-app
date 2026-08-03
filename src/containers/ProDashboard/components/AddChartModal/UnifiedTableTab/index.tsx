@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { useQuery } from '@tanstack/react-query'
 import type { ColumnOrderState, SortingState, VisibilityState } from '@tanstack/react-table'
-import { lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { Icon } from '~/ui/Icon'
@@ -12,26 +11,24 @@ const SubscribeProModal = lazy(() =>
 	}))
 )
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
-import type { IEquitiesCompanyApiItem } from '~/containers/Equities/api.types'
-import { buildEquityTickerCountrySlug } from '~/containers/Equities/tickerCountry'
-import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '~/containers/ProDashboard/components/UnifiedTable/config/ColumnDictionary'
 import {
 	UNIFIED_TABLE_PRESETS,
 	UNIFIED_TABLE_PRESETS_BY_ID
 } from '~/containers/ProDashboard/components/UnifiedTable/config/PresetRegistry'
-import type { TableFilters, UnifiedRowHeaderType, UnifiedTableConfig } from '~/containers/ProDashboard/types'
+import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '~/containers/ProDashboard/unifiedTable/config/columnDictionary'
+import type { UnifiedTableConfig, UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
+import { normalizeUnifiedTableSorting } from '~/containers/ProDashboard/unifiedTable/config/layoutPolicy'
+import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
-import { ProxyAuthTokenContext } from '../../../queries'
-import { fetchEquitiesCompaniesViaProxy } from '../../../services/fetchViaProxy'
 import { AriakitVirtualizedSelect } from '../../AriakitVirtualizedSelect'
 import { EquitiesCompaniesDataset } from '../../datasets/EquitiesDataset/EquitiesCompaniesDataset'
 import { EquitiesFilingsDataset } from '../../datasets/EquitiesDataset/EquitiesFilingsDataset'
 import { EquitiesFinancialsDataset } from '../../datasets/EquitiesDataset/EquitiesFinancialsDataset'
-import { RWAAssetsDataset } from '../../datasets/RWADataset/RWAAssetsDataset'
-import { RWAChainAssetsDataset } from '../../datasets/RWADataset/RWAChainAssetsDataset'
+import { useEquitiesTickerOptions } from '../../datasets/EquitiesDataset/useEquitiesTickerOptions'
+import { RWAAssetsDataset, RWAChainAssetsDataset } from '../../datasets/RWADataset/RWAAssetsDataset'
 import { RWAChainsDataset } from '../../datasets/RWADataset/RWAChainsDataset'
 import type { UnifiedTableFocusSection } from '../../UnifiedTable/types'
-import { applyPresetToConfig, normalizeSorting } from '../../UnifiedTable/utils/configHelpers'
+import { applyPresetToConfig } from '../../UnifiedTable/utils/configHelpers'
 import { getOrderedCustomColumnIds } from '../../UnifiedTable/utils/customColumns'
 import { getActiveFilterChips } from '../../UnifiedTable/utils/filterChips'
 import type { CombinedTableType } from '../types'
@@ -52,17 +49,15 @@ import { UnifiedTableWizardProvider, useUnifiedTableWizardContext } from './Wiza
 interface UnifiedTableTabProps {
 	onClose: () => void
 	chainOptions: Array<{ label: string; value: string }>
-	editItem?: UnifiedTableConfig | null
-	initialFocusSection?: UnifiedTableFocusSection
-	focusedSectionOnly?: 'filters' | 'columns'
+	editItem?: UnifiedTableConfig | null | undefined
+	initialFocusSection?: UnifiedTableFocusSection | undefined
+	focusedSectionOnly?: 'filters' | 'columns' | undefined
 	selectedTableType: CombinedTableType
 	onTableTypeChange: (type: CombinedTableType) => void
 	selectedChains: string[]
 	onChainsChange: (values: string[]) => void
 	selectedDatasetChain: string | null
 	onDatasetChainChange: (value: string | null) => void
-	selectedDatasetTimeframe: string | null
-	onDatasetTimeframeChange: (timeframe: string) => void
 	selectedCexAnalyticsView: 'starter' | CexAnalyticsView
 	onCexAnalyticsViewChange: (view: 'starter' | CexAnalyticsView) => void
 	selectedCexAnalyticsMetric: CexAnalyticsMetric
@@ -74,17 +69,14 @@ interface UnifiedTableTabProps {
 	includeCex: boolean
 	onIncludeCexChange: (include: boolean) => void
 	protocolsLoading: boolean
-	legacyTableTypes?: CombinedTableType[]
-	isEditingItem?: boolean
+	isEditingItem?: boolean | undefined
 }
 
 const PROTOCOL_ROW_HEADER_ORDER: UnifiedRowHeaderType[] = ['chain', 'category', 'parent-protocol']
 
-type ArrayFilterKey = 'categories' | 'excludedCategories' | 'protocols' | 'oracles'
-
 type TabKey = 'setup' | 'columns' | 'filters'
 
-const countActiveFilters = (filters: TableFilters | undefined): number => {
+const countActiveFilters = (filters: UnifiedTableFilters | undefined): number => {
 	if (!filters) return 0
 	let count = 0
 	for (const value of Object.values(filters)) {
@@ -139,32 +131,6 @@ type TableTypeCardIcon =
 	| 'landmark'
 	| 'bar-chart-2'
 
-function useEquitiesTickerOptions() {
-	const authToken = useContext(ProxyAuthTokenContext)
-	const { data, isLoading } = useQuery({
-		queryKey: ['pro-dashboard', 'equities-companies-table'],
-		queryFn: () => fetchEquitiesCompaniesViaProxy(authToken!),
-		enabled: Boolean(authToken),
-		staleTime: 5 * 60 * 1000,
-		refetchOnWindowFocus: false
-	})
-
-	const options = useMemo(() => {
-		if (!data) return []
-		const sortedCompanies = [...(data as IEquitiesCompanyApiItem[])].sort((a, b) => b.marketCap - a.marketCap)
-		const options: Array<{ value: string; label: string }> = []
-		for (const item of sortedCompanies) {
-			options.push({
-				value: buildEquityTickerCountrySlug(item.ticker, item.country),
-				label: `${item.ticker}:${item.country} — ${item.name}`
-			})
-		}
-		return options
-	}, [data])
-
-	return { options, isLoading }
-}
-
 const TABLE_TYPE_CARDS: Array<{
 	value: CombinedTableType
 	label: string
@@ -216,13 +182,6 @@ const TABLE_TYPE_CARDS: Array<{
 		tags: ['Adoption', 'Protocols']
 	},
 	{
-		value: 'trending-contracts',
-		label: 'Trending Contracts',
-		description: 'Most active smart contracts by transactions and gas usage',
-		icon: 'flame',
-		tags: ['Transactions', 'Gas']
-	},
-	{
 		value: 'rwa',
 		label: 'RWA',
 		description: 'Real World Assets overview and chain breakdown',
@@ -266,8 +225,6 @@ function TabContent({
 	onChainsChange,
 	selectedDatasetChain,
 	onDatasetChainChange,
-	selectedDatasetTimeframe,
-	onDatasetTimeframeChange,
 	selectedCexAnalyticsView,
 	onCexAnalyticsViewChange,
 	selectedCexAnalyticsMetric,
@@ -279,7 +236,6 @@ function TabContent({
 	includeCex,
 	onIncludeCexChange,
 	protocolsLoading,
-	legacyTableTypes,
 	isEditingItem
 }: UnifiedTableTabProps) {
 	const { handleAddUnifiedTable, handleEditItem } = useProDashboardEditorActions()
@@ -299,7 +255,6 @@ function TabContent({
 		derived: { draftConfig }
 	} = useUnifiedTableWizardContext()
 	const { hasActiveSubscription } = useAuthContext()
-	const { options: equitiesTickerOptions, isLoading: equitiesTickerLoading } = useEquitiesTickerOptions()
 	const [shouldRenderSubscribeModal, setShouldRenderSubscribeModal] = useState(false)
 	const subscribeModalStore = Ariakit.useDialogStore({
 		open: shouldRenderSubscribeModal,
@@ -312,6 +267,8 @@ function TabContent({
 	const [showTypeSelector, setShowTypeSelector] = useState(!isEditing && selectedTableType === 'protocols')
 	const [showRwaSelector, setShowRwaSelector] = useState(isEditing && isRwaType)
 	const [showEquitiesSelector, setShowEquitiesSelector] = useState(isEditing && isEquitiesType)
+	const { options: equitiesTickerOptions, isLoading: equitiesTickerLoading } =
+		useEquitiesTickerOptions(showEquitiesSelector)
 
 	const initialTab: TabKey =
 		focusedSectionOnly === 'filters'
@@ -328,10 +285,7 @@ function TabContent({
 	const activePreset = UNIFIED_TABLE_PRESETS_BY_ID.get(activePresetId)
 
 	const allColumns = useMemo(() => {
-		const dictColumns = [
-			'name',
-			...UNIFIED_TABLE_COLUMN_DICTIONARY.filter((column) => column.id !== 'name').map((column) => column.id)
-		]
+		const dictColumns = ['name', ...UNIFIED_TABLE_COLUMN_DICTIONARY.map((column) => column.id)]
 		const customIds = customColumns.map((c) => c.id)
 		return [...dictColumns, ...customIds]
 	}, [customColumns])
@@ -359,7 +313,7 @@ function TabContent({
 				sorting: presetConfig.sorting
 			}
 		}
-		const baseOrder = [allColumns[0], ...allColumns.slice(1)]
+		const baseOrder = ['name', ...allColumns.slice(1)]
 		const baseVisibility = allColumns.reduce<VisibilityState>((acc, id) => {
 			acc[id] = id === 'name' || customColumnIds.includes(id)
 			return acc
@@ -367,12 +321,12 @@ function TabContent({
 		return {
 			order: baseOrder,
 			visibility: baseVisibility,
-			sorting: [] as SortingState
+			sorting: []
 		}
 	}, [activePreset, allColumns, customColumnIds, columnVisibility, customColumns])
 
 	const presetSortingFallback = useMemo<SortingState>(() => {
-		return normalizeSorting(activePreset?.defaultSorting)
+		return normalizeUnifiedTableSorting(activePreset?.defaultSorting)
 	}, [activePreset])
 
 	const recommendedPresetIds = usePresetRecommendations({
@@ -420,20 +374,6 @@ function TabContent({
 
 	const handlePresetSelect = (presetId: string) => {
 		setPreset(presetId)
-		const preset = UNIFIED_TABLE_PRESETS_BY_ID.get(presetId)
-		if (preset) {
-			const presetConfig = applyPresetToConfig({
-				preset,
-				includeRowHeaderRules: true,
-				mergeWithDefaults: true,
-				customColumns
-			})
-			const baseOrderSet = new Set(presetConfig.columnOrder)
-			const mergedOrder = [...presetConfig.columnOrder, ...customColumnIds.filter((id) => !baseOrderSet.has(id))]
-			const customVisibility = Object.fromEntries(customColumnIds.map((id) => [id, columnVisibility[id] ?? true]))
-			setColumns(mergedOrder, { ...presetConfig.columnVisibility, ...customVisibility })
-			setSorting(presetConfig.sorting)
-		}
 	}
 
 	const handleResetToPreset = () => {
@@ -449,31 +389,9 @@ function TabContent({
 		setSorting(newSorting)
 	}
 
-	const _handleClearFilters = () => {
-		setFilters({})
-		setChains(['All'])
-	}
-
 	const handlePanelFiltersChange = useCallback(
-		(nextFilters: TableFilters) => {
-			setFilters(nextFilters ?? {})
-		},
-		[setFilters]
-	)
-
-	const _handleRemoveArrayFilterValue = useCallback(
-		(key: ArrayFilterKey, value: string) => {
-			setFilters((prev) => {
-				const next: TableFilters = { ...(prev ?? {}) }
-				const current = Array.isArray(next[key]) ? [...(next[key] as string[])] : []
-				const updated = current.filter((item) => item !== value)
-				if (updated.length > 0) {
-					next[key] = updated
-				} else {
-					delete next[key]
-				}
-				return next
-			})
+		(nextFilters: UnifiedTableFilters) => {
+			setFilters(nextFilters)
 		},
 		[setFilters]
 	)
@@ -498,7 +416,7 @@ function TabContent({
 			const updatedConfig: UnifiedTableConfig = {
 				...editItem,
 				...draftConfig
-			} as UnifiedTableConfig
+			}
 			handleEditItem(editItem.id, updatedConfig)
 		} else {
 			handleAddUnifiedTable(draftConfig)
@@ -558,19 +476,6 @@ function TabContent({
 	const filterCount = countActiveFilters(filters)
 	const totalFilterCount = scopeCount + filterCount
 
-	const _headerTitle =
-		focusedSectionOnly === 'filters'
-			? 'Configure Filters'
-			: focusedSectionOnly === 'columns'
-				? 'Customize Columns'
-				: 'Build ProTable'
-	const _headerDescription =
-		focusedSectionOnly === 'filters'
-			? 'Adjust filters to refine the data shown in your table.'
-			: focusedSectionOnly === 'columns'
-				? 'Select and arrange columns to customize your table view.'
-				: ''
-
 	const setupBadge = activePreset?.name ? `Protocols · ${activePreset.name}` : 'Protocols'
 
 	const tabOptions = useMemo(
@@ -602,8 +507,9 @@ function TabContent({
 		return tabOptions
 	}, [tabOptions, focusedSectionOnly])
 
+	const firstAvailableTab = availableTabs[0]
 	const effectiveActiveTab: TabKey =
-		!availableTabs.length || availableTabs.some((tab) => tab.key === activeTab) ? activeTab : availableTabs[0].key
+		!firstAvailableTab || availableTabs.some((tab) => tab.key === activeTab) ? activeTab : firstAvailableTab.key
 
 	const tabContent: Record<TabKey, React.ReactNode> = {
 		setup: (
@@ -665,6 +571,7 @@ function TabContent({
 							</button>
 						</div>
 						<ColumnManager
+							rowHeaders={rowHeaders}
 							columnOrder={columnOrder}
 							columnVisibility={columnVisibility}
 							onChange={handleColumnChange}
@@ -887,6 +794,7 @@ function TabContent({
 	if (showTypeSelector) {
 		const heroCard = TABLE_TYPE_CARDS[0]
 		const otherCards = TABLE_TYPE_CARDS.slice(1)
+		if (!heroCard) throw new Error('The table type catalog must define a primary card')
 
 		return (
 			<div className="flex h-full flex-col p-4">
@@ -997,8 +905,6 @@ function TabContent({
 				onChainsChange={onChainsChange}
 				selectedDatasetChain={selectedDatasetChain}
 				onDatasetChainChange={onDatasetChainChange}
-				selectedDatasetTimeframe={selectedDatasetTimeframe}
-				onDatasetTimeframeChange={onDatasetTimeframeChange}
 				selectedCexAnalyticsView={selectedCexAnalyticsView}
 				onCexAnalyticsViewChange={onCexAnalyticsViewChange}
 				selectedCexAnalyticsMetric={selectedCexAnalyticsMetric}
@@ -1011,7 +917,6 @@ function TabContent({
 				onTokensChange={onTokensChange}
 				includeCex={includeCex}
 				onIncludeCexChange={onIncludeCexChange}
-				legacyTableTypes={legacyTableTypes}
 				onBackToTypeSelector={handleBackToTypeSelector}
 				isEditing={isEditingItem}
 			/>

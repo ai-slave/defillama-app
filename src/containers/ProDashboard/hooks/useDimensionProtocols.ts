@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import type { DimensionDatasetResult } from '~/containers/AdapterMetrics/server/datasets'
+import type { DimensionDatasetResult } from '~/containers/AdapterMetrics/datasetTypes'
 import { fetchJson } from '~/utils/async'
 import type { DimensionProtocols } from '../templates'
 

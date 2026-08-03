@@ -6,13 +6,13 @@ import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
+import { isChartDataRow } from '~/containers/LlamaAI/chartTypes'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formatDate } from '~/utils/dateFormat'
-import { buildLlamaAIChartNode } from '../import/llamaaiToTiptap'
-import type { LlamaAIChartData } from '../llamaaiChart'
+import { createLlamaAIChartAttrs } from '../llamaaiChart'
 
 interface SavedChartListItem {
 	id: string
@@ -20,6 +20,26 @@ interface SavedChartListItem {
 	chart_type?: string
 	created_at: string
 	frozen?: boolean
+}
+
+function parseSavedChartList(value: unknown): SavedChartListItem[] {
+	if (!isChartDataRow(value) || !Array.isArray(value.charts)) return []
+	const charts: SavedChartListItem[] = []
+	for (const chart of value.charts) {
+		if (!isChartDataRow(chart)) continue
+		if (typeof chart.id !== 'string' || typeof chart.title !== 'string' || typeof chart.created_at !== 'string')
+			continue
+		if (chart.chart_type !== undefined && typeof chart.chart_type !== 'string') continue
+		if (chart.frozen !== undefined && typeof chart.frozen !== 'boolean') continue
+		charts.push({
+			id: chart.id,
+			title: chart.title,
+			created_at: chart.created_at,
+			...(typeof chart.chart_type === 'string' ? { chart_type: chart.chart_type } : {}),
+			...(typeof chart.frozen === 'boolean' ? { frozen: chart.frozen } : {})
+		})
+	}
+	return charts
 }
 
 export function LlamaAIChartPickerDialog({
@@ -39,8 +59,7 @@ export function LlamaAIChartPickerDialog({
 		queryFn: async () => {
 			const res = await authorizedFetch(`${AI_SERVER}/charts`)
 			if (!res?.ok) throw new Error('Failed to load saved charts')
-			const json = await res.json()
-			return (json.charts ?? []) as SavedChartListItem[]
+			return parseSavedChartList(await res.json())
 		},
 		enabled: open && isAuthenticated,
 		staleTime: 60_000
@@ -59,14 +78,15 @@ export function LlamaAIChartPickerDialog({
 			// Snapshot at insert time: the article keeps this data forever; no live link.
 			const res = await authorizedFetch(`${AI_SERVER}/charts/${item.id}`)
 			if (!res?.ok) throw new Error('Failed to load chart data')
-			const detail = (await res.json()) as { chartConfig: unknown; chartData: LlamaAIChartData | null }
-			const node = detail.chartData ? buildLlamaAIChartNode(detail.chartConfig, detail.chartData) : null
-			if (!node?.attrs) throw new Error('Chart has no usable data to insert')
+			const detail = await res.json()
+			if (!isChartDataRow(detail)) throw new Error('Chart has no usable data to insert')
+			const attrs = createLlamaAIChartAttrs(detail.chartConfig, detail.chartData)
+			if (!attrs) throw new Error('Chart has no usable data to insert')
 			editor
 				.chain()
 				.focus()
 				.insertLlamaAIChart({
-					...(node.attrs as Parameters<typeof editor.commands.insertLlamaAIChart>[0]),
+					...attrs,
 					savedChartId: item.id
 				})
 				.run()

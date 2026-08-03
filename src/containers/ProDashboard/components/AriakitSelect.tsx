@@ -1,26 +1,26 @@
 import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import { useId, useMemo } from 'react'
-import { Icon } from '~/ui/Icon'
+import { Icon, type IIcon } from '~/ui/Icon'
 import { LoadingSpinner } from './LoadingSpinner'
 
-export interface SelectOption {
-	value: string
+export interface SelectOption<TValue extends string = string> {
+	value: TValue
 	label: string
-	icon?: string
+	icon?: IIcon['name']
 	disabled?: boolean
 }
 
-interface AriakitSelectProps {
+interface AriakitSelectProps<TValue extends string> {
 	label?: string
-	options: SelectOption[]
-	selectedValue: string | null
-	onChange: (option: SelectOption) => void
+	options: readonly SelectOption<TValue>[]
+	selectedValue: TValue | null
+	onChange: (option: SelectOption<TValue>) => void
 	placeholder?: string
 	isLoading?: boolean
 	className?: string
 }
 
-export function AriakitSelect({
+export function AriakitSelect<TValue extends string>({
 	label,
 	options,
 	selectedValue,
@@ -28,7 +28,7 @@ export function AriakitSelect({
 	placeholder = 'Select...',
 	isLoading = false,
 	className = ''
-}: AriakitSelectProps) {
+}: AriakitSelectProps<TValue>) {
 	const popover = usePopoverStore({ placement: 'bottom-start' })
 	const disclosureId = useId()
 
@@ -96,7 +96,7 @@ export function AriakitSelect({
 										}`}
 									>
 										<div className="flex items-center gap-2">
-											{option.icon ? <Icon name={option.icon as any} width={14} height={14} /> : null}
+											{option.icon ? <Icon name={option.icon} width={14} height={14} /> : null}
 											<span className="truncate">{option.label}</span>
 										</div>
 										{isActive ? (

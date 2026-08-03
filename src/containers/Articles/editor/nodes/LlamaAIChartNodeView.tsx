@@ -1,9 +1,8 @@
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
 import { Suspense, useEffect, useRef, useState } from 'react'
+import { isChartConfiguration, isChartData, type ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
-import type { ChartConfiguration } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
-import { validateLlamaAIChartConfig, type LlamaAIChartData } from '../../llamaaiChart'
 
 function CaptionEditor({ caption, onChange }: { caption: string; onChange: (caption: string) => void }) {
 	const [draft, setDraft] = useState(caption)
@@ -35,7 +34,7 @@ function CaptionEditor({ caption, onChange }: { caption: string; onChange: (capt
 			onKeyDown={(e) => {
 				if (e.key === 'Enter' && !e.shiftKey) {
 					e.preventDefault()
-					;(e.target as HTMLTextAreaElement).blur()
+					e.currentTarget.blur()
 				}
 			}}
 			onMouseDown={(e) => e.stopPropagation()}
@@ -45,8 +44,8 @@ function CaptionEditor({ caption, onChange }: { caption: string; onChange: (capt
 }
 
 export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttributes }: NodeViewProps) {
-	const config = validateLlamaAIChartConfig(node.attrs.chartConfig)
-	const chartData = node.attrs.chartData as LlamaAIChartData | null
+	const config = isChartConfiguration(node.attrs.chartConfig) ? node.attrs.chartConfig : null
+	const chartData = isChartData(node.attrs.chartData) ? node.attrs.chartData : null
 	const caption = typeof node.attrs.caption === 'string' ? node.attrs.caption : ''
 
 	// TipTap mounts node views detached from the document and attaches them a beat

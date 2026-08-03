@@ -1,7 +1,10 @@
 import type { IChainMetadata } from '~/utils/metadata/types'
-import { getChainChartTypes } from './types'
+import { isChainDashboardChartType, type ChainChartType } from './types'
 
-export function getAvailableChainChartTypes(flags: IChainMetadata | undefined, opts?: { hasGeckoId?: boolean }) {
+export function getAvailableChainChartTypes(
+	flags: IChainMetadata | undefined,
+	opts?: { hasGeckoId?: boolean }
+): ChainChartType[] {
 	if (!flags) return []
 	const types = new Set<string>()
 	types.add('tvl')
@@ -12,13 +15,13 @@ export function getAvailableChainChartTypes(flags: IChainMetadata | undefined, o
 	if (flags.revenue) types.add('revenue')
 	if (flags.dexAggregators) types.add('aggregators')
 	if (flags.perps) types.add('perps')
+	if (flags.openInterest) types.add('openInterest')
 	if (flags.bridgeAggregators) types.add('bridgeAggregators')
 	if (flags.perpsAggregators) types.add('perpsAggregators')
 	if (flags.optionsPremiumVolume) types.add('optionsPremium')
 	if (flags.optionsNotionalVolume) types.add('optionsNotional')
 	if (flags.chainActiveUsers) {
 		types.add('activeUsers')
-		types.add('users')
 	}
 	if (flags.chainNewUsers) types.add('newUsers')
 	if (flags.txCount) types.add('txs')
@@ -32,6 +35,5 @@ export function getAvailableChainChartTypes(flags: IChainMetadata | undefined, o
 		types.add('chainMcap')
 		types.add('chainPrice')
 	}
-	const allowed = new Set(getChainChartTypes())
-	return Array.from(types).filter((type) => allowed.has(type))
+	return Array.from(types).filter(isChainDashboardChartType)
 }

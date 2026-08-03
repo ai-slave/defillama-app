@@ -1,10 +1,5 @@
-import {
-	type ChartConfig,
-	type DashboardItemConfig,
-	type MetricAggregator,
-	type MetricChartType,
-	normalizeYieldChartType
-} from '../../types'
+import type { DashboardItemConfig } from '../../dashboardItemConfig'
+import { type ChartConfig, type MetricAggregator, type MetricChartType, normalizeYieldChartType } from '../../types'
 import type {
 	ChartBuilderConfig,
 	ChartModeType,
@@ -33,7 +28,6 @@ type ModalAction =
 	| { type: 'SET_TEXT_CONTENT'; payload: string }
 	| { type: 'SET_SELECTED_TABLE_TYPE'; payload: CombinedTableType }
 	| { type: 'SET_SELECTED_DATASET_CHAIN'; payload: string | null }
-	| { type: 'SET_SELECTED_DATASET_TIMEFRAME'; payload: string | null }
 	| { type: 'SET_SELECTED_CEX_ANALYTICS_VIEW'; payload: ModalState['selectedCexAnalyticsView'] }
 	| { type: 'SET_SELECTED_CEX_ANALYTICS_METRIC'; payload: ModalState['selectedCexAnalyticsMetric'] }
 	| { type: 'SET_SELECTED_CEX_ANALYTICS_TOP_N'; payload: number }
@@ -53,7 +47,7 @@ type ModalAction =
 			type: 'SET_SELECTED_YIELD_POOL'
 			payload: { configID: string; name: string; project: string; chain: string } | null
 	  }
-	| { type: 'SET_SELECTED_YIELD_CHART_TYPE'; payload: string }
+	| { type: 'SET_SELECTED_YIELD_CHART_TYPE'; payload: ModalState['selectedYieldChartType'] }
 	| { type: 'SET_SELECTED_YIELD_CHAINS'; payload: string[] }
 	| { type: 'SET_SELECTED_YIELD_PROJECTS'; payload: string[] }
 	| { type: 'SET_SELECTED_YIELD_CATEGORIES'; payload: string[] }
@@ -61,17 +55,17 @@ type ModalAction =
 	| { type: 'SET_MIN_TVL'; payload: number | null }
 	| { type: 'SET_MAX_TVL'; payload: number | null }
 	| { type: 'SET_SELECTED_STABLECOIN_CHAIN'; payload: string }
-	| { type: 'SET_SELECTED_STABLECOIN_CHART_TYPE'; payload: string }
+	| { type: 'SET_SELECTED_STABLECOIN_CHART_TYPE'; payload: ModalState['selectedStablecoinChartType'] }
 	| { type: 'SET_STABLECOIN_MODE'; payload: 'chain' | 'asset' }
 	| { type: 'SET_SELECTED_STABLECOIN_ASSET'; payload: string | null }
 	| { type: 'SET_SELECTED_STABLECOIN_ASSET_ID'; payload: string | null }
-	| { type: 'SET_SELECTED_STABLECOIN_ASSET_CHART_TYPE'; payload: string }
+	| { type: 'SET_SELECTED_STABLECOIN_ASSET_CHART_TYPE'; payload: ModalState['selectedStablecoinAssetChartType'] }
 	| { type: 'SET_SELECTED_ADVANCED_TVL_PROTOCOL'; payload: string | null }
 	| { type: 'SET_SELECTED_ADVANCED_TVL_PROTOCOL_NAME'; payload: string | null }
-	| { type: 'SET_SELECTED_ADVANCED_TVL_CHART_TYPE'; payload: string }
+	| { type: 'SET_SELECTED_ADVANCED_TVL_CHART_TYPE'; payload: ModalState['selectedAdvancedTvlChartType'] }
 	| { type: 'SET_SELECTED_BORROWED_PROTOCOL'; payload: string | null }
 	| { type: 'SET_SELECTED_BORROWED_PROTOCOL_NAME'; payload: string | null }
-	| { type: 'SET_SELECTED_BORROWED_CHART_TYPE'; payload: string }
+	| { type: 'SET_SELECTED_BORROWED_CHART_TYPE'; payload: ModalState['selectedBorrowedChartType'] }
 	| { type: 'SET_SELECTED_INCOME_STATEMENT_PROTOCOL'; payload: string | null }
 	| { type: 'SET_SELECTED_INCOME_STATEMENT_PROTOCOL_NAME'; payload: string | null }
 	| { type: 'SET_SELECTED_LLAMAAI_CHART'; payload: { id: string; title: string } | null }
@@ -102,7 +96,6 @@ const CUMULATIVE_METRIC_TYPES = new Set([
 	'optionsPremium',
 	'optionsNotional',
 	'tokenVolume',
-	'users',
 	'txs',
 	'activeUsers',
 	'newUsers',
@@ -110,8 +103,7 @@ const CUMULATIVE_METRIC_TYPES = new Set([
 	'stablecoinInflows',
 	'chainFees',
 	'chainRevenue',
-	'incentives',
-	'options'
+	'incentives'
 ])
 
 function getDefaultAggregator(metricType: string): MetricAggregator {
@@ -121,7 +113,6 @@ function getDefaultAggregator(metricType: string): MetricAggregator {
 const DEFAULT_CHART_BUILDER: ChartBuilderConfig = {
 	metric: 'tvl',
 	mode: 'chains',
-	filterMode: 'include',
 	chainFilterMode: 'include',
 	categoryFilterMode: 'include',
 	chainCategoryFilterMode: 'include',
@@ -135,7 +126,6 @@ const DEFAULT_CHART_BUILDER: ChartBuilderConfig = {
 	chartType: 'stackedArea',
 	treemapValue: 'latest',
 	displayAs: 'timeSeries',
-	additionalFilters: {},
 	seriesColors: {}
 }
 
@@ -156,7 +146,6 @@ const INITIAL_MODAL_STATE: ModalState = {
 	textContent: '',
 	selectedTableType: 'protocols',
 	selectedDatasetChain: null,
-	selectedDatasetTimeframe: null,
 	selectedCexAnalyticsView: 'starter',
 	selectedCexAnalyticsMetric: 'derivatives',
 	selectedCexAnalyticsTopN: 8,
@@ -247,7 +236,7 @@ export function initializeFromEditItem(editItem: DashboardItemConfig | null | un
 	}
 
 	if (editItem.kind === 'chart') {
-		if (editItem.type === 'unlocks' && editItem.protocol) {
+		if (editItem.type === 'unlocks' && editItem.subjectType === 'protocol') {
 			return {
 				...base,
 				selectedMainTab: 'charts',
@@ -262,9 +251,9 @@ export function initializeFromEditItem(editItem: DashboardItemConfig | null | un
 			...base,
 			selectedMainTab: 'charts',
 			chartMode: 'manual',
-			selectedChartTab: editItem.protocol ? 'protocol' : 'chain',
-			selectedChain: editItem.chain || null,
-			selectedProtocol: editItem.protocol || null,
+			selectedChartTab: editItem.subjectType,
+			selectedChain: editItem.subjectType === 'chain' ? editItem.chain : null,
+			selectedProtocol: editItem.subjectType === 'protocol' ? editItem.protocol : null,
 			selectedChartType: editItem.type,
 			selectedChartTypes: [editItem.type],
 			chartCreationMode: 'combined',
@@ -281,34 +270,36 @@ export function initializeFromEditItem(editItem: DashboardItemConfig | null | un
 			composerItems: editItem.items,
 			unifiedChartName: editItem.name || '',
 			chartCreationMode: 'combined',
-			selectedChartTab: firstItem?.protocol ? 'protocol' : 'chain',
+			selectedChartTab: firstItem?.subjectType ?? 'chain',
 			selectedChartTypes: [],
-			selectedProtocol: firstItem?.protocol || null,
-			selectedChain: firstItem?.chain || null
+			selectedProtocol: firstItem?.subjectType === 'protocol' ? firstItem.protocol : null,
+			selectedChain: firstItem?.subjectType === 'chain' ? firstItem.chain : null
 		}
 	}
 
-	if (editItem.kind === 'table') {
-		const normalizedDatasetType = editItem.datasetType === 'cex' ? 'cex-analytics' : editItem.datasetType
-		const normalizedCexAnalyticsView =
-			(editItem.cexAnalyticsView as string | undefined) === 'efficiency'
-				? 'comparison'
-				: editItem.cexAnalyticsView || 'comparison'
+	if (editItem.kind === 'dataset-table') {
+		const cexConfig = editItem.datasetType === 'cex-analytics' ? editItem : undefined
+		const tokenUsageConfig = editItem.datasetType === 'token-usage' ? editItem : undefined
+		const datasetChain =
+			editItem.datasetType === 'stablecoins' || editItem.datasetType === 'rwa-selected-chain'
+				? editItem.chain
+				: editItem.datasetType === 'chains'
+					? editItem.category
+					: editItem.datasetType === 'equities-financials' || editItem.datasetType === 'equities-filings'
+						? editItem.ticker
+						: undefined
 		return {
 			...base,
 			selectedMainTab: 'table',
-			selectedChains: editItem.chains || [],
-			selectedTableType:
-				editItem.tableType === 'dataset'
-					? ((normalizedDatasetType || 'stablecoins') as CombinedTableType)
-					: 'protocols',
-			selectedDatasetChain: editItem.datasetChain || null,
-			selectedDatasetTimeframe: editItem.datasetTimeframe || null,
-			selectedCexAnalyticsView: normalizedCexAnalyticsView,
-			selectedCexAnalyticsMetric: editItem.cexAnalyticsMetric || 'derivatives',
-			selectedCexAnalyticsTopN: editItem.cexAnalyticsTopN || 8,
-			selectedTokens: editItem.tokenSymbols || [],
-			includeCex: editItem.includeCex || false
+			selectedChains: 'chains' in editItem ? editItem.chains : [],
+			selectedTableType: editItem.datasetType,
+			selectedDatasetChain: datasetChain ?? null,
+			selectedCexAnalyticsView: cexConfig?.cexAnalyticsView ?? 'comparison',
+			selectedCexAnalyticsMetric:
+				cexConfig?.cexAnalyticsView === 'market-share' ? cexConfig.cexAnalyticsMetric : 'derivatives',
+			selectedCexAnalyticsTopN: cexConfig?.cexAnalyticsView === 'market-share' ? cexConfig.cexAnalyticsTopN : 8,
+			selectedTokens: tokenUsageConfig?.tokenSymbols ?? [],
+			includeCex: tokenUsageConfig?.includeCex ?? false
 		}
 	}
 
@@ -326,7 +317,6 @@ export function initializeFromEditItem(editItem: DashboardItemConfig | null | un
 	}
 
 	if (editItem.kind === 'builder') {
-		const legacyMode = editItem.config.filterMode
 		return {
 			...base,
 			selectedMainTab: 'charts',
@@ -334,14 +324,9 @@ export function initializeFromEditItem(editItem: DashboardItemConfig | null | un
 			chartBuilderName: editItem.name || '',
 			chartBuilder: {
 				...editItem.config,
-				mode: editItem.config.mode || 'chains',
 				protocolCategories: editItem.config.protocolCategories || [],
 				seriesColors: editItem.config.seriesColors || {},
-				treemapValue: editItem.config.treemapValue || 'latest',
-				chainFilterMode: editItem.config.chainFilterMode || legacyMode || 'include',
-				categoryFilterMode: editItem.config.categoryFilterMode || legacyMode || 'include',
-				chainCategoryFilterMode: editItem.config.chainCategoryFilterMode || legacyMode || 'include',
-				protocolCategoryFilterMode: editItem.config.protocolCategoryFilterMode || legacyMode || 'include'
+				treemapValue: editItem.config.treemapValue || 'latest'
 			}
 		}
 	}
@@ -357,7 +342,7 @@ export function initializeFromEditItem(editItem: DashboardItemConfig | null | un
 			metricAggregator: editItem.aggregator,
 			metricWindow: editItem.window,
 			metricLabel: editItem.label || '',
-			metricChartType: editItem.chartType ?? (editItem.showSparkline === false ? 'none' : 'sparkline')
+			metricChartType: editItem.chartType
 		}
 	}
 
@@ -552,9 +537,6 @@ export function modalReducer(state: ModalState, action: ModalAction): ModalState
 
 		case 'SET_SELECTED_DATASET_CHAIN':
 			return { ...state, selectedDatasetChain: action.payload }
-
-		case 'SET_SELECTED_DATASET_TIMEFRAME':
-			return { ...state, selectedDatasetTimeframe: action.payload }
 
 		case 'SET_SELECTED_CEX_ANALYTICS_VIEW':
 			return { ...state, selectedCexAnalyticsView: action.payload }

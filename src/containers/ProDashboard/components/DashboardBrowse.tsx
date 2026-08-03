@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { Icon, type IIcon } from '~/ui/Icon'
 import type { Dashboard } from '../dashboardTypes'
-import { type DiscoveryCategoriesInitialData, useDiscoveryCategories } from '../hooks/useDiscoveryCategories'
+import type { DiscoveryCategoriesInitialData } from '../discoveryCategories'
+import { useDiscoveryCategories } from '../hooks/useDiscoveryCategories'
 import { DiscoverySection } from './DiscoverySection'
 import { TopAuthorsRail } from './TopAuthorsRail'
 
@@ -77,9 +78,10 @@ export function DashboardBrowse({ onTagClick, initialCategories }: DashboardBrow
 				<div className="-mx-4 flex scrollbar-none gap-2 overflow-x-auto px-4 pb-2">
 					{TRENDING_TAGS.map((tag) => (
 						<button
+							type="button"
 							key={tag}
 							onClick={() => onTagClick(tag)}
-							className="shrink-0 rounded-full border border-brand/20 bg-brand/15 px-3.5 py-1.5 text-xs font-medium text-link transition-all duration-150 hover:scale-105 hover:shadow-sm"
+							className="shrink-0 rounded-full border border-brand/20 bg-brand/15 px-3.5 py-1.5 text-xs font-medium text-link transition-[color,background-color,border-color,box-shadow,transform] duration-150 hover:scale-105 hover:shadow-sm"
 						>
 							{tag}
 						</button>

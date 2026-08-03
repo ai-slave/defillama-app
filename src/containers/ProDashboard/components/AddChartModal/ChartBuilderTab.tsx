@@ -1,20 +1,22 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useCallback, useEffect, useMemo, type ComponentProps } from 'react'
+import { lazy, Suspense, useCallback, useMemo, type ComponentProps } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { fetchChainsCategories } from '~/containers/Chains/api'
 import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
 import { filterDataByTimePeriod } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
-import { fetchProtocols } from '~/containers/ProtocolLists/api'
-import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { Icon } from '~/ui/Icon'
 import { formatUsd } from '~/utils/numberFormat'
 import { useAppMetadata } from '../../AppMetadataContext'
-import { resolveChartBuilderFilterMode } from '../../chartBuilderQueryKey'
+import { chartBuilderHasExactRemainder } from '../../chartBuilderCapabilities'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
-import ProtocolChartBuilderData from '../../services/ProtocolChartBuilderData'
+import {
+	fetchProtocolBreakdownData,
+	fetchProtocolChainBreakdownData,
+	type ProtocolBreakdownMetric
+} from '../../services/ProtocolChartBuilderData'
 import { getItemIconUrl } from '../../utils'
 import { buildProTreemapData } from '../../utils/treemap'
 import { AriakitMultiSelect } from '../AriakitMultiSelect'
@@ -23,17 +25,27 @@ import { AriakitVirtualizedMultiSelect } from '../AriakitVirtualizedMultiSelect'
 import { AriakitVirtualizedSelect } from '../AriakitVirtualizedSelect'
 import { buildChartBuilderSeriesView, isChartBuilderSnapshotMetric } from '../chartBuilderSeries'
 import { createChartBuilderTooltipFormatter } from '../chartBuilderTooltip'
-import type { ChartBuilderConfig } from './types'
+import type { ChartBuilderConfig, ChartBuilderUpdate } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const BuilderTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/Builder'))
 
-const EMPTY_PROTOCOLS: ProtocolLite[] = []
 const EMPTY_CATEGORIES: string[] = []
 const EMPTY_SELECT_OPTIONS: Array<{ value: string; label: string }> = []
 
 const DEFAULT_SERIES_COLOR = '#3e61cc'
 const HEX_COLOR_REGEX = /^#([0-9a-f]{3}){1,2}$/i
+
+const getProtocolBreakdownMetric = (metric: ChartBuilderConfig['metric']): ProtocolBreakdownMetric => {
+	switch (metric) {
+		case 'stablecoins':
+		case 'chain-fees':
+		case 'chain-revenue':
+			throw new Error(`Metric does not have a protocol breakdown: ${metric}`)
+		default:
+			return metric
+	}
+}
 
 interface ChartBuilderTabProps {
 	chartBuilder: ChartBuilderConfig
@@ -41,13 +53,13 @@ interface ChartBuilderTabProps {
 	chainOptions: Array<{ value: string; label: string }>
 	protocolOptions: Array<{ value: string; label: string; logo?: string }>
 	protocolsLoading: boolean
-	onChartBuilderChange: (updates: Partial<ChartBuilderConfig>) => void
+	onChartBuilderChange: (updates: ChartBuilderUpdate) => void
 	onChartBuilderNameChange: (name: string) => void
 	timePeriod: TimePeriod
 	customTimePeriod?: CustomTimePeriod | null
 }
 
-const METRIC_OPTIONS = [
+const METRIC_OPTIONS: Array<{ value: ChartBuilderConfig['metric']; label: string }> = [
 	{ value: 'tvl', label: 'TVL' },
 	{ value: 'fees', label: 'Fees' },
 	{ value: 'revenue', label: 'Revenue' },
@@ -101,7 +113,7 @@ const MODE_OPTIONS: Array<{ value: ChartBuilderConfig['mode']; label: string }> 
 	{ value: 'protocol', label: 'Group by Chains' } // group by chains filter by protocol
 ]
 
-const FILTER_MODE_OPTIONS = [
+const FILTER_MODE_OPTIONS: Array<{ value: 'include' | 'exclude'; label: string }> = [
 	{ value: 'include', label: 'Include' },
 	{ value: 'exclude', label: 'Exclude' }
 ]
@@ -117,9 +129,10 @@ const FilterModeToggle = ({
 		<div className="grid grid-cols-2 gap-0.5">
 			{FILTER_MODE_OPTIONS.map((option) => (
 				<button
+					type="button"
 					key={option.value}
-					onClick={() => onChange(option.value as 'include' | 'exclude')}
-					className={`rounded-md px-2 py-1 text-[10px] font-medium transition-all duration-200 ${
+					onClick={() => onChange(option.value)}
+					className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors duration-200 ${
 						value === option.value
 							? 'bg-pro-accent text-on-brand shadow-sm'
 							: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
@@ -144,21 +157,13 @@ export function ChartBuilderTab({
 	customTimePeriod
 }: ChartBuilderTabProps) {
 	const { loading: metaLoading, error: metaError, hasProtocolBuilderMetric } = useAppMetadata()
-	const { getProtocolInfo } = useProDashboardCatalog()
-	const { data: protocols } = useQuery({
-		queryKey: ['pro-dashboard', 'protocols'],
-		queryFn: async () => {
-			const data = await fetchProtocols()
-			return data.protocols ?? EMPTY_PROTOCOLS
-		},
-		staleTime: 60 * 60 * 1000
-	})
+	const { getProtocolInfo, protocols } = useProDashboardCatalog()
 
 	const { data: chainCategoriesList } = useQuery({
 		queryKey: ['pro-dashboard', 'chain-categories'],
 		queryFn: async () => {
 			const data = await fetchChainsCategories()
-			return (data?.categories as string[]) ?? EMPTY_CATEGORIES
+			return data.categories
 		},
 		staleTime: 60 * 60 * 1000
 	})
@@ -193,16 +198,10 @@ export function ChartBuilderTab({
 		)
 	}, [chartBuilder.mode, chartBuilder.metric])
 
-	const chainFilterMode = resolveChartBuilderFilterMode(chartBuilder.chainFilterMode, chartBuilder.filterMode)
-	const categoryFilterMode = resolveChartBuilderFilterMode(chartBuilder.categoryFilterMode, chartBuilder.filterMode)
-	const chainCategoryFilterMode = resolveChartBuilderFilterMode(
-		chartBuilder.chainCategoryFilterMode,
-		chartBuilder.filterMode
-	)
-	const protocolCategoryFilterMode = resolveChartBuilderFilterMode(
-		chartBuilder.protocolCategoryFilterMode,
-		chartBuilder.filterMode
-	)
+	const chainFilterMode = chartBuilder.chainFilterMode
+	const categoryFilterMode = chartBuilder.categoryFilterMode
+	const chainCategoryFilterMode = chartBuilder.chainCategoryFilterMode
+	const protocolCategoryFilterMode = chartBuilder.protocolCategoryFilterMode
 
 	const { data: previewData, isLoading: previewLoading } = useQuery({
 		queryKey: [
@@ -226,21 +225,17 @@ export function ChartBuilderTab({
 		],
 		queryFn: async () => {
 			if (chartBuilder.mode === 'protocol') {
-				const data = await ProtocolChartBuilderData.getProtocolChainData(
-					chartBuilder.protocol,
-					chartBuilder.metric,
-					chartBuilder.chains.length > 0 ? chartBuilder.chains : undefined,
-					chartBuilder.limit,
+				const data = await fetchProtocolChainBreakdownData({
+					protocol: chartBuilder.protocol,
+					metric: chartBuilder.metric,
+					chains: chartBuilder.chains.length > 0 ? chartBuilder.chains : undefined,
+					limit: chartBuilder.limit,
 					chainFilterMode,
-					chartBuilder.chainCategories && chartBuilder.chainCategories.length > 0
-						? chartBuilder.chainCategories
-						: undefined,
-					chartBuilder.protocolCategories && chartBuilder.protocolCategories.length > 0
-						? chartBuilder.protocolCategories
-						: undefined,
+					chainCategories: chartBuilder.chainCategories,
+					protocolCategories: chartBuilder.protocolCategories,
 					chainCategoryFilterMode,
 					protocolCategoryFilterMode
-				)
+				})
 
 				return data?.series.length
 					? {
@@ -254,6 +249,9 @@ export function ChartBuilderTab({
 			}
 
 			if (PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS.has(chartBuilder.metric)) {
+				const entityMetadata = chartBuilder.groupByParent
+					? ({ entityType: 'protocol-family', totalProtocolFamilies: 0 } as const)
+					: ({ entityType: 'protocol', totalProtocols: 0 } as const)
 				return {
 					series: [],
 					metadata: {
@@ -262,22 +260,22 @@ export function ChartBuilderTab({
 						categories: chartBuilder.categories,
 						metric: chartBuilder.metric,
 						topN: chartBuilder.limit,
-						totalProtocols: 0,
+						...entityMetadata,
 						othersCount: 0,
 						marketSector: chartBuilder.categories.join(',') || null
 					}
 				}
 			}
 
-			const data = await ProtocolChartBuilderData.getProtocolBreakdownData(
-				chartBuilder.metric as Exclude<ChartBuilderConfig['metric'], 'stablecoins' | 'chain-fees' | 'chain-revenue'>,
-				chartBuilder.chains,
-				chartBuilder.limit,
-				chartBuilder.categories,
-				chartBuilder.groupByParent,
+			const data = await fetchProtocolBreakdownData({
+				metric: getProtocolBreakdownMetric(chartBuilder.metric),
+				chains: chartBuilder.chains,
+				limit: chartBuilder.limit,
+				categories: chartBuilder.categories,
+				groupByParent: chartBuilder.groupByParent,
 				chainFilterMode,
 				categoryFilterMode
-			)
+			})
 
 			return data?.series.length
 				? {
@@ -302,14 +300,16 @@ export function ChartBuilderTab({
 			break
 		}
 	}
+	const hasExactRemainder = chartBuilderHasExactRemainder(chartBuilder)
+	const displayAs = hasExactRemainder ? chartBuilder.displayAs : 'timeSeries'
 
 	const visibleSeries = useMemo(() => {
 		if (!previewData?.series) {
 			return []
 		}
 
-		const hasChainCategoryFilter = (chartBuilder.chainCategories?.length || 0) > 0
-		const hasProtocolCategoryFilter = (chartBuilder.protocolCategories?.length || 0) > 0
+		const hasChainCategoryFilter = (chartBuilder.chainCategories?.length ?? 0) > 0
+		const hasProtocolCategoryFilter = (chartBuilder.protocolCategories?.length ?? 0) > 0
 		const forceHideOthers = chartBuilder.mode === 'protocol' && (hasChainCategoryFilter || hasProtocolCategoryFilter)
 
 		return chartBuilder.hideOthers || forceHideOthers
@@ -354,11 +354,11 @@ export function ChartBuilderTab({
 			buildChartBuilderSeriesView({
 				series: chartBuilder.chartType === 'treemap' ? [] : visibleSeries,
 				useLastValue: isSnapshotMetric,
-				displayAs: chartBuilder.displayAs,
+				displayAs,
 				chartType: chartBuilder.chartType === 'treemap' ? 'line' : chartBuilder.chartType,
 				resolveColor: resolveSeriesColor
 			}),
-		[visibleSeries, isSnapshotMetric, chartBuilder.chartType, chartBuilder.displayAs, resolveSeriesColor]
+		[visibleSeries, isSnapshotMetric, chartBuilder.chartType, displayAs, resolveSeriesColor]
 	)
 
 	const previewChartOptions = useMemo<MultiSeriesChartOptions>(
@@ -375,12 +375,12 @@ export function ChartBuilderTab({
 			},
 			tooltip: {
 				formatter: createChartBuilderTooltipFormatter({
-					displayAs: chartBuilder.displayAs,
+					displayAs,
 					useTwoColumns: chartBuilder.limit > 10
 				})
 			},
 			yAxis:
-				chartBuilder.displayAs === 'percentage'
+				displayAs === 'percentage'
 					? {
 							max: 100,
 							min: 0,
@@ -396,7 +396,7 @@ export function ChartBuilderTab({
 							}
 						}
 		}),
-		[chartBuilder.displayAs, chartBuilder.limit, previewChart.seriesNames]
+		[chartBuilder.limit, displayAs, previewChart.seriesNames]
 	)
 
 	const protocolOptionsFiltered = useMemo(() => {
@@ -407,12 +407,13 @@ export function ChartBuilderTab({
 	}, [protocolOptions, chartBuilder.mode, chartBuilder.metric, hasProtocolBuilderMetric, metaLoading, metaError])
 
 	const handleMetricChange = (option: SelectOption) => {
-		const newMetric = option.value as ChartBuilderConfig['metric']
+		const newMetric = METRIC_OPTIONS.find((metricOption) => metricOption.value === option.value)?.value
+		if (!newMetric) throw new Error(`Unsupported chart builder metric: ${option.value}`)
 		let newChartType: 'stackedBar' | 'stackedArea' | 'line' = 'stackedBar'
 		if (newMetric === 'tvl' || newMetric === 'stablecoins') {
 			newChartType = 'stackedArea'
 		}
-		const updates: Partial<ChartBuilderConfig> = {
+		const updates: ChartBuilderUpdate = {
 			metric: newMetric,
 			chartType: newChartType
 		}
@@ -479,7 +480,7 @@ export function ChartBuilderTab({
 	}
 
 	const handleModeChange = (mode: 'chains' | 'protocol') => {
-		const updates: Partial<ChartBuilderConfig> = {
+		const updates: ChartBuilderUpdate = {
 			mode,
 			chains: [],
 			protocol: undefined
@@ -517,43 +518,8 @@ export function ChartBuilderTab({
 		onChartBuilderChange({ seriesColors: {} })
 	}
 
-	useEffect(() => {
-		if (
-			chartBuilder.mode === 'chains' &&
-			chartBuilder.metric &&
-			PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS.has(chartBuilder.metric)
-		) {
-			onChartBuilderChange({ metric: 'tvl', chartType: 'stackedArea' })
-		}
-	}, [chartBuilder.mode, chartBuilder.metric, onChartBuilderChange])
-
-	useEffect(() => {
-		if (chartBuilder.mode === 'protocol' && isProtocolUnsupportedMetric && chartBuilder.protocol) {
-			onChartBuilderChange({ protocol: undefined })
-		}
-	}, [chartBuilder.mode, isProtocolUnsupportedMetric, chartBuilder.protocol, onChartBuilderChange])
-
-	useEffect(() => {
-		if (chartBuilder.mode === 'protocol') {
-			const shouldHideOthers =
-				(chartBuilder.chainCategories && chartBuilder.chainCategories.length > 0) ||
-				!!(chartBuilder.protocolCategories && chartBuilder.protocolCategories.length > 0)
-			if (chartBuilder.hideOthers !== shouldHideOthers) {
-				onChartBuilderChange({ hideOthers: shouldHideOthers })
-			}
-		}
-	}, [
-		chartBuilder.mode,
-		chartBuilder.chainCategories,
-		chartBuilder.protocolCategories,
-		chartBuilder.hideOthers,
-		onChartBuilderChange
-	])
-
-	const handleProtocolChange = (option: SelectOption) => {
-		const updates: Partial<ChartBuilderConfig> = {
-			protocol: option.value || undefined
-		}
+	const handleProtocolChange = (option: { value: string }) => {
+		const updates: ChartBuilderUpdate = { protocol: option.value || undefined }
 		if (option.value) {
 			updates.protocolCategories = undefined
 		}
@@ -800,7 +766,11 @@ export function ChartBuilderTab({
 										isLoading={false}
 									/>
 								</div>
-								{!chartBuilder.chainCategories || chartBuilder.chainCategories.length === 0 ? (
+								{!hasExactRemainder ? (
+									<p className="mb-1 text-[10px] text-pro-text-secondary">
+										This source returns exact Top {chartBuilder.limit} chain series only.
+									</p>
+								) : !chartBuilder.chainCategories || chartBuilder.chainCategories.length === 0 ? (
 									<div className="mb-1">
 										<Ariakit.CheckboxProvider value={chartBuilder.hideOthers || false}>
 											<label className="flex cursor-pointer items-center gap-1.5">
@@ -860,19 +830,22 @@ export function ChartBuilderTab({
 						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Display value as</h4>
 						<div className="rounded-lg border border-pro-cards-border p-0.5">
 							<div className="grid grid-cols-2 gap-0.5">
-								{DISPLAY_OPTIONS.map((option) => (
-									<button
-										key={option.value}
-										onClick={() => handleDisplayChange(option.value)}
-										className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all duration-200 ${
-											chartBuilder.displayAs === option.value
-												? 'bg-pro-accent text-on-brand shadow-sm'
-												: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
-										}`}
-									>
-										{option.label}
-									</button>
-								))}
+								{DISPLAY_OPTIONS.map((option) =>
+									!hasExactRemainder && option.value === 'percentage' ? null : (
+										<button
+											type="button"
+											key={option.value}
+											onClick={() => handleDisplayChange(option.value)}
+											className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors duration-200 ${
+												displayAs === option.value
+													? 'bg-pro-accent text-on-brand shadow-sm'
+													: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
+											}`}
+										>
+											{option.label}
+										</button>
+									)
+								)}
 							</div>
 						</div>
 					</div>
@@ -910,7 +883,7 @@ export function ChartBuilderTab({
 											height="450px"
 											dataset={previewChart.dataset}
 											charts={previewChart.charts}
-											valueSymbol={chartBuilder.displayAs === 'percentage' ? '%' : '$'}
+											valueSymbol={displayAs === 'percentage' ? '%' : '$'}
 											hideDataZoom={true}
 											hideDefaultLegend={false}
 											solidChartAreaStyle={chartBuilder.chartType === 'stackedArea'}
@@ -1004,6 +977,9 @@ export function ChartBuilderTab({
 								{chartBuilder.mode === 'protocol' && chartBuilder.chains.length > 0
 									? ` ${chainFilterMode === 'exclude' ? 'excluding' : 'on'} ${chartBuilder.chains.join(', ')}`
 									: null}
+								{chartBuilder.mode === 'protocol' && !hasExactRemainder
+									? ` using the exact Top ${chartBuilder.limit} chains`
+									: null}
 								{chartBuilder.mode === 'protocol' &&
 								chartBuilder.chainCategories &&
 								chartBuilder.chainCategories.length > 0
@@ -1023,8 +999,7 @@ export function ChartBuilderTab({
 											', '
 										)} categories`
 									: null}
-								. Data is displayed as{' '}
-								{chartBuilder.displayAs === 'percentage' ? 'percentage of total' : 'absolute values'}.
+								. Data is displayed as {displayAs === 'percentage' ? 'percentage of total' : 'absolute values'}.
 							</p>
 						</div>
 					</div>

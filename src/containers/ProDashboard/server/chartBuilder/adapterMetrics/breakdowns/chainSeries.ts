@@ -1,4 +1,10 @@
-import { DIMENSIONS_OVERVIEW_API, DIMENSIONS_SUMMARY_API } from '~/constants'
+import {
+	fetchAdapterChainChartData,
+	fetchAdapterChainChartDataByProtocolBreakdown,
+	fetchAdapterChainMetrics,
+	fetchAdapterProtocolChartDataByBreakdownType
+} from '~/containers/AdapterMetrics/api'
+import type { AdapterChainProtocol, IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import {
 	displayChainName,
 	resolveAllowedChainNamesFromCategories,
@@ -8,6 +14,7 @@ import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { stableCacheKey } from '~/server/api/cacheKey'
 import { addApiRoutePhase, timeApiRoutePhase } from '~/server/api/phaseTelemetry'
 import { cachedResult } from '~/server/api/resultCache'
+import { mapWithConcurrency } from '~/utils/async'
 import {
 	BREAKDOWN_COLOR_PALETTE,
 	buildAlignedTopAndOthers,
@@ -19,8 +26,11 @@ import {
 	type ProtocolChainData
 } from '~/utils/breakdowns'
 import { toDimensionsSlug, toDisplayName } from '~/utils/chainNormalizer'
-import { fetchWithPoolingOnServer } from '~/utils/http-client'
-import { DIMENSIONS_API_METRIC_CONFIG } from './config'
+import {
+	DIMENSIONS_API_METRIC_CONFIG,
+	type AdapterChartBuilderMetric,
+	type AdapterMetricChartBuilderConfig
+} from './config'
 
 type ProtocolCategoryLookup = {
 	byName: Map<string, string>
@@ -45,7 +55,7 @@ const CHAIN_OVERVIEW_STALE_MS = 20 * 60 * 1000
 const registerCategoryLookupEntry = (
 	lookup: ProtocolCategoryLookup,
 	identifier: string | undefined,
-	category: string | undefined,
+	category: string | null | undefined,
 	options: { asSlug?: boolean } = {}
 ) => {
 	if (!lookup || !identifier || !category) return
@@ -58,85 +68,81 @@ const registerCategoryLookupEntry = (
 	}
 }
 
-const extendLookupWithOverviewProtocols = (lookup: ProtocolCategoryLookup | null, overviewProtocols: any[]) => {
-	if (!lookup || !Array.isArray(overviewProtocols)) return
+const extendLookupWithOverviewProtocols = (
+	lookup: ProtocolCategoryLookup | null,
+	overviewProtocols: AdapterChainProtocol[]
+) => {
+	if (!lookup) return
 	for (const proto of overviewProtocols) {
-		const category = (proto?.category || '').toLowerCase()
+		const category = (proto.category || '').toLowerCase()
 		if (!category) continue
-		registerCategoryLookupEntry(lookup, proto?.name, category)
-		registerCategoryLookupEntry(lookup, proto?.displayName, category)
-		registerCategoryLookupEntry(lookup, proto?.slug, category, { asSlug: true })
+		registerCategoryLookupEntry(lookup, proto.name, category)
+		registerCategoryLookupEntry(lookup, proto.displayName, category)
+		registerCategoryLookupEntry(lookup, proto.slug, category, { asSlug: true })
 	}
 }
 
 const getCategoryFromLookup = (lookup: ProtocolCategoryLookup | null, name?: string): string => {
 	if (!lookup || !name) return ''
 	const normalizedName = name.toLowerCase()
-	if (lookup.byName.has(normalizedName)) {
-		return lookup.byName.get(normalizedName)!
-	}
+	const categoryByName = lookup.byName.get(normalizedName)
+	if (categoryByName !== undefined) return categoryByName
 	const slug = toSlug(name)
-	if (slug && lookup.bySlug.has(slug)) {
-		return lookup.bySlug.get(slug)!
-	}
+	const categoryBySlug = slug ? lookup.bySlug.get(slug) : undefined
+	if (categoryBySlug !== undefined) return categoryBySlug
 	return ''
 }
 
-const sumNestedValues = (value: any): number => {
-	if (typeof value === 'number') {
-		return Number.isFinite(value) ? value : 0
+const sumValues = (values: Record<string, number>): number => {
+	let total = 0
+	for (const key in values) {
+		const value = values[key]
+		if (value === undefined) throw new Error(`Missing adapter metric value for ${key}`)
+		total += value
 	}
-	if (Array.isArray(value)) {
-		return value.reduce((acc: number, curr) => acc + sumNestedValues(curr), 0)
-	}
-	if (value && typeof value === 'object') {
-		let total = 0
-		for (const key in value as Record<string, any>) total += sumNestedValues(value[key])
-		return total
-	}
-	return 0
+	return total
 }
 
-const fetchDimensionsJson = async <T>(url: string): Promise<T> => {
-	const response = await fetchWithPoolingOnServer(url)
-	if (!response.ok) {
-		throw new Error(`Dimensions API responded with ${response.status}`)
-	}
-	return response.json()
+const getBreakdownColor = (index: number): string => {
+	const color = BREAKDOWN_COLOR_PALETTE[index % BREAKDOWN_COLOR_PALETTE.length]
+	if (color === undefined) throw new Error('Breakdown color palette must not be empty')
+	return color
 }
 
-const fetchCachedDimensionsOverview = async <T>(url: string): Promise<T> =>
+const fetchCachedAdapterChainMetrics = async (config: AdapterMetricChartBuilderConfig): Promise<IAdapterChainMetrics> =>
 	cachedResult(
 		'adapter-metrics-chain-overview-base',
-		stableCacheKey([url]),
+		stableCacheKey([config.endpoint, config.dataType]),
 		{ ttlMs: CHAIN_OVERVIEW_CACHE_MS, ttlJitter: 0.2, staleWhileRevalidateMs: CHAIN_OVERVIEW_STALE_MS },
-		() => timeApiRoutePhase('adapter_chain_fetch_overview', () => fetchDimensionsJson<T>(url))
+		() =>
+			timeApiRoutePhase('adapter_chain_fetch_metrics', () =>
+				fetchAdapterChainMetrics({
+					adapterType: config.endpoint,
+					chain: 'All',
+					...(config.dataType ? { dataType: config.dataType } : {})
+				})
+			)
 	)
 
-const getProtocolCategoryLookup = async (): Promise<ProtocolCategoryLookup | null> => {
+const getProtocolCategoryLookup = async (): Promise<ProtocolCategoryLookup> => {
 	if (protocolCategoryCache && Date.now() - protocolCategoryCache.timestamp < PROTOCOL_CATEGORY_CACHE_MS) {
 		return protocolCategoryCache.data
 	}
-	try {
-		const json = await fetchProtocols()
-		const lookup = createEmptyCategoryLookup()
-		for (const proto of json.protocols) {
-			const category = proto.category.toLowerCase()
-			if (!category) continue
-			registerCategoryLookupEntry(lookup, proto.name, category)
-			registerCategoryLookupEntry(lookup, toSlug(proto.name), category, { asSlug: true })
-		}
-		protocolCategoryCache = { data: lookup, timestamp: Date.now() }
-		return lookup
-	} catch (error) {
-		console.log('Failed to prepare protocol category lookup for chain builder filters:', error)
-		return null
+	const json = await fetchProtocols()
+	const lookup = createEmptyCategoryLookup()
+	for (const proto of json.protocols) {
+		const category = (proto.category || '').toLowerCase()
+		if (!category) continue
+		registerCategoryLookupEntry(lookup, proto.name, category)
+		registerCategoryLookupEntry(lookup, toSlug(proto.name), category, { asSlug: true })
 	}
+	protocolCategoryCache = { data: lookup, timestamp: Date.now() }
+	return lookup
 }
 
 async function getDimensionsProtocolChainData(
 	protocol: string,
-	metric: string,
+	metric: AdapterChartBuilderMetric,
 	chains?: string[],
 	topN: number = 5,
 	chainFilterMode: 'include' | 'exclude' = 'include',
@@ -144,21 +150,19 @@ async function getDimensionsProtocolChainData(
 	chainCategories?: string[]
 ): Promise<ProtocolChainData> {
 	const config = DIMENSIONS_API_METRIC_CONFIG[metric]
-	if (!config) {
-		throw new Error(`Unsupported metric: ${metric}`)
-	}
 
 	try {
-		let apiUrl = `${DIMENSIONS_SUMMARY_API}/${config.endpoint}/${protocol}`
-		if (config.dataType) {
-			apiUrl += `?dataType=${config.dataType}`
-		}
-
-		const data = await timeApiRoutePhase('adapter_protocol_chain_fetch_summary', () => fetchDimensionsJson<any>(apiUrl))
+		const breakdown = await timeApiRoutePhase('adapter_protocol_chain_fetch_breakdown', () =>
+			fetchAdapterProtocolChartDataByBreakdownType({
+				adapterType: config.endpoint,
+				protocol,
+				type: 'chain',
+				...(config.dataType ? { dataType: config.dataType } : {})
+			})
+		)
 		const projectStartedAt = Date.now()
 
-		const breakdown = data?.totalDataChartBreakdown || []
-		if (!Array.isArray(breakdown) || breakdown.length === 0) {
+		if (breakdown.length === 0) {
 			return {
 				series: [],
 				metadata: {
@@ -179,10 +183,10 @@ async function getDimensionsProtocolChainData(
 		}
 		for (const item of breakdown) {
 			const [timestamp, chainData] = item
-			if (!chainData || typeof chainData !== 'object') continue
 
 			for (const chain in chainData) {
-				const versions = (chainData as Record<string, any>)[chain]
+				const chainTotal = chainData[chain]
+				if (chainTotal === undefined) throw new Error(`Missing adapter chain total for ${chain}`)
 				if (chains && chains.length > 0) {
 					const matches = chainSet.has(chain)
 					if (chainFilterMode === 'include') {
@@ -200,19 +204,10 @@ async function getDimensionsProtocolChainData(
 					}
 				}
 
-				if (typeof versions === 'object' && versions !== null) {
-					let chainTotal = 0
-					for (const version in versions as Record<string, unknown>) {
-						const value = versions[version]
-						if (typeof value === 'number') chainTotal += value
-					}
-
-					if (chainTotal > 0) {
-						if (!chainDataMap.has(chain)) {
-							chainDataMap.set(chain, [])
-						}
-						chainDataMap.get(chain)!.push([timestamp, chainTotal])
-					}
+				if (chainTotal > 0) {
+					const existing = chainDataMap.get(chain)
+					if (existing) existing.push([timestamp, chainTotal])
+					else chainDataMap.set(chain, [[timestamp, chainTotal]])
 				}
 			}
 		}
@@ -220,14 +215,12 @@ async function getDimensionsProtocolChainData(
 		const series: ChartSeries[] = []
 		let colorIndex = 0
 
-		for (const chain of chainDataMap.keys()) {
-			const chainSeriesData = chainDataMap.get(chain)!
+		for (const [chain, chainSeriesData] of chainDataMap) {
 			const sortedData = chainSeriesData.toSorted((a, b) => a[0] - b[0])
-			const color = BREAKDOWN_COLOR_PALETTE[colorIndex % BREAKDOWN_COLOR_PALETTE.length]
 			series.push({
 				name: chain,
 				data: filterOutToday(sortedData),
-				...(color ? { color } : {})
+				color: getBreakdownColor(colorIndex)
 			})
 			colorIndex++
 		}
@@ -245,7 +238,7 @@ async function getDimensionsProtocolChainData(
 
 		const totalSeries = Array.from(sumSeriesByTimestamp(sortedSeries.map((s) => s.data)).entries()).sort(
 			(a, b) => a[0] - b[0]
-		) as [number, number][]
+		)
 		const { alignedTopSeries, othersData } = buildAlignedTopAndOthers(topSeries, totalSeries)
 
 		const hasOthers = othersSeries.length > 0 && othersData.some(([, v]) => v > 0)
@@ -273,20 +266,12 @@ async function getDimensionsProtocolChainData(
 		}
 	} catch (error) {
 		console.log(`Error fetching ${metric} for protocol ${protocol}:`, error)
-		return {
-			series: [],
-			metadata: {
-				protocol,
-				metric: config.metricName,
-				chains: [],
-				totalChains: 0
-			}
-		}
+		throw error
 	}
 }
 
 async function getAllProtocolsTopChainsDimensionsData(
-	metric: string,
+	metric: AdapterChartBuilderMetric,
 	topN: number = 5,
 	chains?: string[],
 	chainFilterMode: 'include' | 'exclude' = 'include',
@@ -296,12 +281,9 @@ async function getAllProtocolsTopChainsDimensionsData(
 	protocolCategories?: string[]
 ): Promise<ProtocolChainData> {
 	const config = DIMENSIONS_API_METRIC_CONFIG[metric]
-	if (!config) throw new Error(`Unsupported metric: ${metric}`)
 
 	try {
-		let overviewUrl = `${DIMENSIONS_OVERVIEW_API}/${config.endpoint}?excludeTotalDataChartBreakdown=false`
-		if (config.dataType) overviewUrl += `&dataType=${config.dataType}`
-		const overview = await fetchCachedDimensionsOverview<any>(overviewUrl)
+		const overview = await fetchCachedAdapterChainMetrics(config)
 		const rankStartedAt = Date.now()
 
 		const protocolCategoryFilterSet = new Set<string>()
@@ -313,13 +295,12 @@ async function getAllProtocolsTopChainsDimensionsData(
 
 		let protocolCategoryLookup: ProtocolCategoryLookup | null = null
 		if (hasProtocolCategoryFilter) {
-			const cachedLookup = await getProtocolCategoryLookup()
-			protocolCategoryLookup = cachedLookup ? cloneCategoryLookup(cachedLookup) : null
+			protocolCategoryLookup = cloneCategoryLookup(await getProtocolCategoryLookup())
 		}
 
 		const chainTotals = new Map<string, number>()
-		const protocols: any[] = Array.isArray(overview?.protocols) ? overview.protocols : []
-		const allChainsFromApi: string[] = Array.isArray(overview?.allChains) ? overview.allChains : []
+		const protocols = overview.protocols
+		const allChainsFromApi = overview.allChains
 
 		if (protocolCategoryLookup) {
 			extendLookupWithOverviewProtocols(protocolCategoryLookup, protocols)
@@ -341,37 +322,32 @@ async function getAllProtocolsTopChainsDimensionsData(
 			return !protocolCategoryFilterSet.has(category)
 		}
 
-		const aggregateProtocolsForTimestamp = (protocolsMap: Record<string, any>): number => {
-			if (!protocolsMap || typeof protocolsMap !== 'object') return 0
+		const aggregateProtocolsForTimestamp = (protocolsMap: Record<string, number>): number => {
 			let total = 0
 			for (const protocolName in protocolsMap) {
-				const value = protocolsMap[protocolName]
 				if (!shouldIncludeProtocol(protocolName)) continue
-				total += sumNestedValues(value)
+				const value = protocolsMap[protocolName]
+				if (value === undefined) throw new Error(`Missing adapter protocol value for ${protocolName}`)
+				total += value
 			}
 			return total
 		}
 		for (const p of protocols) {
-			const protocolName = (p?.name || p?.displayName || p?.slug || '') as string
-			if (!shouldIncludeProtocol(protocolName, p?.category)) continue
+			const protocolName = p.name || p.displayName || p.slug
+			if (!shouldIncludeProtocol(protocolName, p.category || undefined)) continue
 
-			const br24 = p?.breakdown24h
-			if (!br24 || typeof br24 !== 'object') continue
+			const br24 = p.breakdown24h
+			if (!br24) continue
 			for (const chainSlug in br24) {
 				const versions = br24[chainSlug]
-				let sum = 0
-				if (versions && typeof versions === 'object') {
-					for (const version in versions as Record<string, unknown>) sum += Number(versions[version]) || 0
-				} else if (typeof versions === 'number') {
-					sum += Number(versions) || 0
-				}
+				if (versions === undefined) throw new Error(`Missing adapter chain breakdown for ${chainSlug}`)
+				const sum = sumValues(versions)
 				chainTotals.set(chainSlug, (chainTotals.get(chainSlug) || 0) + sum)
 			}
 		}
 
-		// TODO(chain-normalizer): all-protocol Dimensions overview `protocols[].breakdown24h`
-		// still uses Dimensions chain keys. Remove this after ProDashboard chart builder
-		// migrates to v2 metric/chart APIs with display-name chain keys.
+		// The canonical metrics contract uses Dimensions slugs in `protocols[].breakdown24h`
+		// while `allChains` contains display names, so normalize both before filtering.
 		const filterSet = new Set<string>((chains || []).map((c) => toDimensionsSlug(c)))
 		const filterSetOriginal = new Set<string>((chains || []).map((c) => c.toLowerCase()))
 		let allowSlugsFromCategories: Set<string> | null = null
@@ -388,128 +364,96 @@ async function getAllProtocolsTopChainsDimensionsData(
 			}
 		}
 
-		let ranked = Array.from(chainTotals.entries())
-			.filter(([slug, v]) => {
-				if (chains && chains.length > 0) {
-					if (chainFilterMode === 'include') {
-						return filterSet.has(slug)
-					}
-					if (filterSet.has(slug)) return false
+		const ranked: Array<[string, number]> = []
+		const keepsExplicitlyIncludedZero = Boolean(chains && chains.length > 0 && chainFilterMode === 'include')
+		for (const [slug, value] of chainTotals) {
+			if (chains && chains.length > 0) {
+				if (chainFilterMode === 'include') {
+					if (!filterSet.has(slug)) continue
+				} else if (filterSet.has(slug)) {
+					continue
 				}
-				return v > 0
-			})
-			.filter(([slug]) => {
-				if (!allowSlugsFromCategories || allowSlugsFromCategories.size === 0) return true
-				const normalizedSlug = toDimensionsSlug(slug)
-				const result =
-					chainCategoryFilterMode === 'include'
-						? allowSlugsFromCategories.has(normalizedSlug)
-						: !allowSlugsFromCategories.has(normalizedSlug)
+			}
+			if (!keepsExplicitlyIncludedZero && value <= 0) continue
 
-				return result
-			})
-			.sort((a, b) => b[1] - a[1])
+			if (allowSlugsFromCategories && allowSlugsFromCategories.size > 0) {
+				const categoryMatches = allowSlugsFromCategories.has(toDimensionsSlug(slug))
+				if (chainCategoryFilterMode === 'include' ? !categoryMatches : categoryMatches) continue
+			}
+
+			ranked.push([slug, value])
+		}
+		ranked.sort((a, b) => b[1] - a[1])
 
 		const picked = ranked.slice(0, Math.min(topN, ranked.length)).map(([slug]) => slug)
 		addApiRoutePhase('adapter_chain_rank', Date.now() - rankStartedAt)
 
-		const chainSeriesPromises = picked.map(async (slug, idx) => {
-			const includeBreakdownParam = hasProtocolCategoryFilter ? 'false' : 'true'
-			const endpointSlug = toDisplayName(slug)
-			let url = `${DIMENSIONS_OVERVIEW_API}/${config.endpoint}/${endpointSlug}?excludeTotalDataChartBreakdown=${includeBreakdownParam}`
-			if (config.dataType) url += `&dataType=${config.dataType}`
-			const j = await fetchDimensionsJson<any>(url).catch(() => null)
-			if (!j) return null
-			const tdc: Array<[number, number]> = Array.isArray(j?.totalDataChart) ? j.totalDataChart : []
-			let normalized = filterOutToday(
-				normalizeDailyPairs((tdc as Array<[number | string, number]>).map(([ts, v]) => [Number(ts), Number(v)]))
-			)
-
-			if (hasProtocolCategoryFilter) {
-				const breakdownSeries: Array<[number | string, Record<string, number>]> = Array.isArray(
-					j?.totalDataChartBreakdown
-				)
-					? j.totalDataChartBreakdown
-					: []
-				if (breakdownSeries.length > 0) {
-					const filteredPairs: Array<[number, number]> = breakdownSeries.map(([timestamp, protocolsAtTimestamp]) => [
-						Number(timestamp),
-						aggregateProtocolsForTimestamp(protocolsAtTimestamp)
-					])
-					normalized = filterOutToday(normalizeDailyPairs(filteredPairs))
+		const seriesRaw = await timeApiRoutePhase('adapter_chain_fetch_series', () =>
+			mapWithConcurrency(picked, 8, async (slug, idx) => {
+				const endpointSlug = toDisplayName(slug)
+				let normalized: Array<[number, number]>
+				if (hasProtocolCategoryFilter) {
+					const breakdownSeries = await fetchAdapterChainChartDataByProtocolBreakdown({
+						adapterType: config.endpoint,
+						chain: endpointSlug,
+						...(config.dataType ? { dataType: config.dataType } : {})
+					})
+					normalized = filterOutToday(
+						normalizeDailyPairs(
+							breakdownSeries.map(([timestamp, protocolsAtTimestamp]) => [
+								timestamp,
+								aggregateProtocolsForTimestamp(protocolsAtTimestamp)
+							])
+						)
+					)
+				} else {
+					const totalDataChart = await fetchAdapterChainChartData({
+						adapterType: config.endpoint,
+						chain: endpointSlug,
+						...(config.dataType ? { dataType: config.dataType } : {})
+					})
+					normalized = filterOutToday(normalizeDailyPairs(totalDataChart))
 				}
-			}
 
-			const color = BREAKDOWN_COLOR_PALETTE[idx % BREAKDOWN_COLOR_PALETTE.length]
-			const chainSeries: ChartSeries = {
-				name: displayChainName(slug),
-				data: normalized,
-				...(color ? { color } : {})
-			}
-			return chainSeries
-		})
-
-		const seriesRaw = (
-			await timeApiRoutePhase('adapter_chain_fetch_series', () => Promise.all(chainSeriesPromises))
-		).filter(Boolean) as ChartSeries[]
+				return {
+					name: displayChainName(slug),
+					data: normalized,
+					color: getBreakdownColor(idx)
+				}
+			})
+		)
 
 		const projectStartedAt = Date.now()
-		const totalChart: Array<[number, number]> = Array.isArray(overview?.totalDataChart) ? overview.totalDataChart : []
-		let totalNormalized = filterOutToday(
-			normalizeDailyPairs((totalChart as Array<[number | string, number]>).map(([ts, v]) => [Number(ts), Number(v)]))
+		const totalNormalized = Array.from(sumSeriesByTimestamp(seriesRaw.map((series) => series.data))).sort(
+			(a, b) => a[0] - b[0]
 		)
-		if (hasProtocolCategoryFilter) {
-			const totalBreakdown: Array<[number | string, Record<string, number>]> = Array.isArray(
-				overview?.totalDataChartBreakdown
-			)
-				? overview.totalDataChartBreakdown
-				: []
-			if (totalBreakdown.length > 0) {
-				const filteredTotal: Array<[number, number]> = totalBreakdown.map(([timestamp, protocolsAtTimestamp]) => [
-					Number(timestamp),
-					aggregateProtocolsForTimestamp(protocolsAtTimestamp)
-				])
-				totalNormalized = filterOutToday(normalizeDailyPairs(filteredTotal))
-			}
-		}
 
-		const { alignedTopSeries, othersData } = buildAlignedTopAndOthers(seriesRaw, totalNormalized)
+		const { alignedTopSeries } = buildAlignedTopAndOthers(seriesRaw, totalNormalized)
 
 		const includedTopCount = alignedTopSeries.length
-		const othersCount = Math.max(0, seriesRaw.length - includedTopCount)
-		const hasOthers = othersCount > 0 && othersData.some(([, v]) => v > 0)
-		const finalSeries = [...alignedTopSeries]
-		if (hasOthers) finalSeries.push({ name: `Others (${othersCount} chains)`, data: othersData, color: '#999999' })
+		const othersCount = Math.max(0, ranked.length - includedTopCount)
 		addApiRoutePhase('adapter_chain_project', Date.now() - projectStartedAt)
 
 		return {
-			series: finalSeries,
+			series: alignedTopSeries,
 			metadata: {
 				protocol: 'All Protocols',
 				metric: config.metricName,
 				chains: alignedTopSeries.map((entry) => entry.name),
-				totalChains: seriesRaw.length,
+				totalChains: ranked.length,
 				topN: includedTopCount,
 				othersCount
 			}
 		}
 	} catch (e) {
 		console.log(`Error building all-protocols ${metric} by chain:`, e)
-		return {
-			series: [],
-			metadata: {
-				protocol: 'All Protocols',
-				metric: DIMENSIONS_API_METRIC_CONFIG[metric]?.metricName || metric,
-				chains: [],
-				totalChains: 0
-			}
-		}
+		throw e
 	}
 }
 
 type AdapterMetricChainBreakdownParams = {
 	protocol?: string
-	metric: string
+	metric: AdapterChartBuilderMetric
 	chains: string[]
 	topN: number
 	chainFilterMode: 'include' | 'exclude'

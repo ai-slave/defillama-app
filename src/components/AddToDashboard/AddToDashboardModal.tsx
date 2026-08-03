@@ -15,9 +15,10 @@ import {
 	buildLlamaAIChartDashboardItem,
 	prepareStoredDashboardActivation
 } from '~/containers/LlamaAI/dashboardArtifactFlow'
+import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
+import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'
 import { useGetLiteDashboards } from '~/containers/ProDashboard/hooks/useDashboardAPI'
-import { type Dashboard, dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
-import type { DashboardItemConfig } from '~/containers/ProDashboard/types'
+import { dashboardAPI, type LiteDashboardSummary } from '~/containers/ProDashboard/services/DashboardAPI'
 import { addItemToDashboard, replaceItemInDashboard } from '~/containers/ProDashboard/utils/dashboardItemsUtils'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
@@ -27,9 +28,9 @@ import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
-import type { DashboardChartConfig, LlamaAIChartInput } from './AddToDashboardButton'
+import type { DashboardChartConfig, LlamaAIChartInput } from './addToDashboardContract'
 
-const EMPTY_DASHBOARDS: Dashboard[] = []
+const EMPTY_DASHBOARDS: LiteDashboardSummary[] = []
 const EMPTY_UNSUPPORTED_METRICS: string[] = []
 type AddToDashboardSubmitType = 'new-dashboard' | 'existing-dashboard'
 
@@ -138,10 +139,19 @@ async function activateAddedLlamaAIChart(
 ): Promise<'active' | 'declined' | 'pending'> {
 	const plan = prepareStoredDashboardActivation(dashboard.data.items)
 	if (plan.expectedItemIds.length === 0) return 'active'
-	return activateDashboardArtifactsWithConfirmation(authorizedFetch, dashboard.id, plan, (estimatedMaxCostUsd) =>
-		window.confirm(
-			`This dashboard uses premium data. Daily refreshes will bill your account up to ${formatUsd(estimatedMaxCostUsd, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} per refresh window. Continue?`
-		)
+	const fetchAuthenticatedResponse = async (url: string, options?: RequestInit): Promise<Response> => {
+		const response = await authorizedFetch(url, options)
+		if (!response) throw new Error('Authentication is required to activate dashboard refreshes')
+		return response
+	}
+	return activateDashboardArtifactsWithConfirmation(
+		fetchAuthenticatedResponse,
+		dashboard.id,
+		plan,
+		(estimatedMaxCostUsd) =>
+			window.confirm(
+				`This dashboard uses premium data. Daily refreshes will bill your account up to ${formatUsd(estimatedMaxCostUsd, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} per refresh window. Continue?`
+			)
 	)
 }
 
@@ -192,7 +202,7 @@ async function submitAddToDashboard({
 }: SubmitAddToDashboardParams): Promise<AddToDashboardMutationResult> {
 	const chartToAdd = await buildChartToAdd({
 		chartConfig,
-		llamaAIChart,
+		...(llamaAIChart === undefined ? {} : { llamaAIChart }),
 		configName,
 		nextChartName: variables.nextChartName
 	})
@@ -317,7 +327,7 @@ export function AddToDashboardModal({
 			return submitAddToDashboard({
 				authorizedFetch,
 				chartConfig,
-				llamaAIChart,
+				...(llamaAIChart === undefined ? {} : { llamaAIChart }),
 				configName,
 				dashboardNameById,
 				dashboardSlugById,

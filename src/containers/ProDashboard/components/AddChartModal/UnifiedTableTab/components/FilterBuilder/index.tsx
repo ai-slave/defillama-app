@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo, useState } from 'react'
-import type { TableFilters } from '~/containers/ProDashboard/types'
+import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import {
@@ -15,17 +15,17 @@ import {
 } from './filterConfig'
 
 interface FilterBuilderProps {
-	filters: TableFilters | undefined
-	onFiltersChange: (filters: TableFilters) => void
+	filters: UnifiedTableFilters | undefined
+	onFiltersChange: (filters: UnifiedTableFilters) => void
 }
 
 interface ActiveFilter {
 	config: FilterConfig
-	operator?: NumericOperator
-	value?: number
-	minValue?: number
-	maxValue?: number
-	enabled?: boolean
+	operator: NumericOperator | undefined
+	value: number | undefined
+	minValue: number | undefined
+	maxValue: number | undefined
+	enabled: boolean | undefined
 }
 
 const OPERATORS: Array<{ value: NumericOperator; label: string }> = [
@@ -42,38 +42,50 @@ function parseNumberWithAbbreviation(input: string): number | undefined {
 	const match = cleaned.match(/^(-?\d+\.?\d*)\s*([kmb])?$/)
 	if (!match) return undefined
 
-	const [, numStr, suffix] = match
+	const numStr = match[1]
+	const suffix = match[2]
+	if (numStr === undefined) return undefined
 	const base = parseFloat(numStr)
 	if (Number.isNaN(base)) return undefined
-
-	const multipliers: Record<string, number> = {
-		k: 1_000,
-		m: 1_000_000,
-		b: 1_000_000_000
-	}
-
-	return suffix ? base * multipliers[suffix] : base
+	if (suffix === 'k') return base * 1_000
+	if (suffix === 'm') return base * 1_000_000
+	if (suffix === 'b') return base * 1_000_000_000
+	return base
 }
 
-function filtersToActiveFilters(filters: TableFilters | undefined): ActiveFilter[] {
+function filtersToActiveFilters(filters: UnifiedTableFilters | undefined): ActiveFilter[] {
 	if (!filters) return []
 
 	const result: ActiveFilter[] = []
 	const relevantConfigs = getFiltersForProtocols()
 
 	for (const config of relevantConfigs) {
-		if (config.type === 'boolean' && config.booleanKey) {
+		if (config.type === 'boolean') {
 			if (filters[config.booleanKey]) {
-				result.push({ config, enabled: true })
+				result.push({
+					config,
+					enabled: true,
+					operator: undefined,
+					value: undefined,
+					minValue: undefined,
+					maxValue: undefined
+				})
 			}
-		} else if (config.type === 'numeric-single' && config.minKey) {
-			const value = filters[config.minKey] as number | undefined
+		} else if (config.type === 'numeric-single') {
+			const value = filters[config.minKey]
 			if (value !== undefined) {
-				result.push({ config, value })
+				result.push({
+					config,
+					value,
+					enabled: undefined,
+					operator: undefined,
+					minValue: undefined,
+					maxValue: undefined
+				})
 			}
-		} else if (config.type === 'numeric-range' && config.minKey) {
-			const minValue = filters[config.minKey] as number | undefined
-			const maxValue = config.maxKey ? (filters[config.maxKey] as number | undefined) : undefined
+		} else if (config.type === 'numeric-range') {
+			const minValue = filters[config.minKey]
+			const maxValue = filters[config.maxKey]
 
 			if (minValue !== undefined || maxValue !== undefined) {
 				let operator: NumericOperator = '>'
@@ -84,7 +96,7 @@ function filtersToActiveFilters(filters: TableFilters | undefined): ActiveFilter
 				} else {
 					operator = '>='
 				}
-				result.push({ config, operator, minValue, maxValue })
+				result.push({ config, operator, minValue, maxValue, value: undefined, enabled: undefined })
 			}
 		}
 	}
@@ -94,41 +106,38 @@ function filtersToActiveFilters(filters: TableFilters | undefined): ActiveFilter
 
 function activeFilterToTableFilters(
 	activeFilters: ActiveFilter[],
-	existingFilters: TableFilters | undefined
-): TableFilters {
-	const result: TableFilters = { ...existingFilters }
+	existingFilters: UnifiedTableFilters | undefined
+): UnifiedTableFilters {
+	const result: UnifiedTableFilters = { ...existingFilters }
 
 	for (const config of FILTER_CONFIGS) {
-		if (config.booleanKey) {
+		if (config.type === 'boolean') {
 			delete result[config.booleanKey]
-		}
-		if (config.minKey) {
+		} else if (config.type === 'numeric-range') {
 			delete result[config.minKey]
-		}
-		if (config.maxKey) {
 			delete result[config.maxKey]
+		} else if (config.type === 'numeric-single') {
+			delete result[config.minKey]
 		}
 	}
 
 	for (const filter of activeFilters) {
 		const { config, operator, value, minValue, maxValue, enabled } = filter
 
-		if (config.type === 'boolean' && config.booleanKey && enabled) {
+		if (config.type === 'boolean' && enabled) {
 			result[config.booleanKey] = true
-		} else if (config.type === 'numeric-single' && config.minKey && value !== undefined) {
+		} else if (config.type === 'numeric-single' && value !== undefined) {
 			result[config.minKey] = value
-		} else if (config.type === 'numeric-range' && config.minKey) {
+		} else if (config.type === 'numeric-range') {
 			if (operator === 'between') {
 				if (minValue !== undefined) result[config.minKey] = minValue
-				if (maxValue !== undefined && config.maxKey) result[config.maxKey] = maxValue
+				if (maxValue !== undefined) result[config.maxKey] = maxValue
 			} else if (operator === '>' || operator === '>=') {
 				if (value !== undefined) result[config.minKey] = value
 				else if (minValue !== undefined) result[config.minKey] = minValue
 			} else if (operator === '<' || operator === '<=') {
-				if (config.maxKey) {
-					if (value !== undefined) result[config.maxKey] = value
-					else if (maxValue !== undefined) result[config.maxKey] = maxValue
-				}
+				if (value !== undefined) result[config.maxKey] = value
+				else if (maxValue !== undefined) result[config.maxKey] = maxValue
 			}
 		}
 	}
@@ -160,13 +169,17 @@ const CATEGORY_BADGE_COLORS: Record<FilterCategory, string> = {
 	flags: 'bg-warning/20 text-warning'
 }
 
-const CATEGORY_LABELS: Record<FilterCategory, string> = FILTER_CATEGORIES.reduce(
-	(acc, { key, label }) => {
-		acc[key] = label
-		return acc
-	},
-	{} as Record<FilterCategory, string>
-)
+const CATEGORY_LABELS: Record<FilterCategory, string> = {
+	metrics: 'Metrics',
+	volume: 'Volume',
+	fees: 'Fees',
+	revenue: 'Revenue',
+	changes: 'Changes',
+	dominance: 'Dominance',
+	aggregators: 'Aggregators',
+	'chain-metrics': 'Chain Metrics',
+	flags: 'Data Availability'
+}
 
 const FILTERS_BY_CATEGORY = getFiltersByCategory()
 const EMPTY_CATEGORY_FILTERS: FilterConfig[] = []
@@ -249,9 +262,10 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 		setLocalInputs((prev) => ({ ...prev, minValue: input }))
 		const parsed = parseNumberWithAbbreviation(input)
 		if (parsed !== undefined && parsed >= minAllowed) {
-			if (filter.maxValue !== undefined && parsed > filter.maxValue) {
-				onUpdate({ ...filter, minValue: filter.maxValue, maxValue: parsed })
-				setLocalInputs((prev) => ({ ...prev, minValue: filter.maxValue.toString(), maxValue: parsed.toString() }))
+			const currentMax = filter.maxValue
+			if (currentMax !== undefined && parsed > currentMax) {
+				onUpdate({ ...filter, minValue: currentMax, maxValue: parsed })
+				setLocalInputs((prev) => ({ ...prev, minValue: currentMax.toString(), maxValue: parsed.toString() }))
 			} else {
 				onUpdate({ ...filter, minValue: parsed })
 			}
@@ -264,9 +278,10 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 		setLocalInputs((prev) => ({ ...prev, maxValue: input }))
 		const parsed = parseNumberWithAbbreviation(input)
 		if (parsed !== undefined && parsed >= minAllowed) {
-			if (filter.minValue !== undefined && parsed < filter.minValue) {
-				onUpdate({ ...filter, minValue: parsed, maxValue: filter.minValue })
-				setLocalInputs((prev) => ({ ...prev, minValue: parsed.toString(), maxValue: filter.minValue.toString() }))
+			const currentMin = filter.minValue
+			if (currentMin !== undefined && parsed < currentMin) {
+				onUpdate({ ...filter, minValue: parsed, maxValue: currentMin })
+				setLocalInputs((prev) => ({ ...prev, minValue: parsed.toString(), maxValue: currentMin.toString() }))
 			} else {
 				onUpdate({ ...filter, maxValue: parsed })
 			}
@@ -446,7 +461,11 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 			</div>
 			<Ariakit.SelectProvider
 				value={filter.operator || '>='}
-				setValue={(val) => handleOperatorChange(val as NumericOperator)}
+				setValue={(value) => {
+					const operator = OPERATORS.find((option) => option.value === value)?.value
+					if (!operator) throw new Error(`Unsupported numeric filter operator: ${value}`)
+					handleOperatorChange(operator)
+				}}
 			>
 				<Ariakit.Select className="flex h-6 w-full cursor-pointer items-center justify-between rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden focus:border-current/50">
 					<Ariakit.SelectValue />
@@ -575,22 +594,24 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 		if (activeFilterIds.has(config.id)) return
 
 		if (config.type === 'boolean') {
-			const newFilter: ActiveFilter = { config, enabled: true }
-			let filtersToUse = savedFilters
-			if (config.booleanKey === 'parentProtocolsOnly') {
-				filtersToUse = savedFilters.filter((f) => f.config.booleanKey !== 'subProtocolsOnly')
-			} else if (config.booleanKey === 'subProtocolsOnly') {
-				filtersToUse = savedFilters.filter((f) => f.config.booleanKey !== 'parentProtocolsOnly')
+			const newFilter: ActiveFilter = {
+				config,
+				enabled: true,
+				operator: undefined,
+				value: undefined,
+				minValue: undefined,
+				maxValue: undefined
 			}
-			const newFilters = activeFilterToTableFilters([...filtersToUse, newFilter], filters)
+			const newFilters = activeFilterToTableFilters([...savedFilters, newFilter], filters)
 			onFiltersChange(newFilters)
 		} else {
 			const newFilter: ActiveFilter = {
 				config,
-				operator: '>=' as NumericOperator,
+				operator: '>=',
 				value: undefined,
 				minValue: undefined,
-				maxValue: undefined
+				maxValue: undefined,
+				enabled: undefined
 			}
 			setPendingFilters((prev) => [...prev, newFilter])
 			setEditingFilterId(config.id)
