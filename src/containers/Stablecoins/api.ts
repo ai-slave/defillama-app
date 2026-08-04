@@ -7,6 +7,9 @@ import type {
 	StablecoinConfigResponse,
 	StablecoinDetailResponse,
 	StablecoinDominanceResponse,
+	RawStablecoinDetailResponse,
+	RawStablecoinPricesResponse,
+	RawStablecoinsListResponse,
 	StablecoinPricesResponse,
 	StablecoinRatesResponse,
 	StablecoinRecentCoinsDataResponse,
@@ -36,6 +39,7 @@ export const getStablecoinVolumeChainId = (
 	const chainSlug = slug(chain)
 	for (const key in chainMetadata) {
 		const metadata = chainMetadata[key]
+		if (!metadata) continue
 		if (slug(metadata.name) === chainSlug) return metadata.id
 	}
 	return null
@@ -44,20 +48,31 @@ export const getStablecoinVolumeChainId = (
 /**
  * Fetch the stablecoin assets list.
  */
-export const fetchStablecoinAssetsApi = async (options?: {
-	includePrices?: boolean
-}): Promise<StablecoinsListResponse> => {
-	const url =
-		options?.includePrices === undefined ? PEGGEDS_API : `${PEGGEDS_API}?includePrices=${options.includePrices}`
-
-	return fetchJson<StablecoinsListResponse>(url)
+export const fetchStablecoinAssetsApi = async (): Promise<StablecoinsListResponse> => {
+	const response = await fetchJson<RawStablecoinsListResponse>(PEGGEDS_API)
+	return {
+		chains: response.chains,
+		peggedAssets: response.peggedAssets.map((asset) => ({
+			...asset,
+			pegMechanism: asset.pegMechanism === 'crytpo-backed' ? 'crypto-backed' : asset.pegMechanism
+		}))
+	}
 }
 
 /**
  * Fetch stablecoin price snapshots.
  */
 export const fetchStablecoinPricesApi = async (): Promise<StablecoinPricesResponse> => {
-	return fetchJson<StablecoinPricesResponse>(PEGGEDPRICES_API)
+	const snapshots = await fetchJson<RawStablecoinPricesResponse>(PEGGEDPRICES_API)
+	return snapshots.map((snapshot) => {
+		const prices: Record<string, number> = {}
+		for (const geckoId in snapshot.prices) {
+			const price = snapshot.prices[geckoId]
+			if (price === undefined) continue
+			prices[geckoId] = typeof price === 'string' ? Number(price) : price
+		}
+		return { date: snapshot.date, prices }
+	})
 }
 
 /**
@@ -94,7 +109,7 @@ export const fetchStablecoinChartApi = async (chainLabel: string): Promise<Stabl
  * Fetch aggregated stablecoin chart data across all chains.
  */
 export const fetchStablecoinChartAllApi = async (): Promise<StablecoinChartResponse> => {
-	return fetchJson<StablecoinChartResponse>(`${PEGGEDCHART_API}/all`)
+	return fetchStablecoinChartApi('all')
 }
 
 /**
@@ -152,11 +167,45 @@ export const fetchStablecoinDominanceAllApi = async (): Promise<StablecoinDomina
 /**
  * Fetch details for a single stablecoin.
  *
- * Returns `null` only when the upstream API responds with a literal `null` body.
- * Network/HTTP failures are not converted to `null` and will throw.
+ * Unknown IDs and request failures are non-2xx responses and throw.
  */
-export const fetchStablecoinAssetApi = async (peggedId: string): Promise<StablecoinDetailResponse | null> => {
-	return fetchJson<StablecoinDetailResponse | null>(`${PEGGED_API}/${peggedId}`)
+export const fetchStablecoinAssetApi = async (peggedId: string): Promise<StablecoinDetailResponse> => {
+	const response = await fetchJson<RawStablecoinDetailResponse>(`${PEGGED_API}/${peggedId}`)
+	const auditLinks =
+		response.auditLinks == null
+			? null
+			: Array.isArray(response.auditLinks)
+				? response.auditLinks
+				: [response.auditLinks]
+
+	return {
+		id: response.id,
+		name: response.name,
+		address: response.address,
+		symbol: response.symbol,
+		url: response.url,
+		description: response.description,
+		mintRedeemDescription: response.mintRedeemDescription,
+		onCoinGecko: response.onCoinGecko === true || response.onCoinGecko === 'true',
+		gecko_id: response.gecko_id,
+		cmcId: response.cmcId,
+		pegType: response.pegType,
+		pegMechanism: response.pegMechanism === 'crytpo-backed' ? 'crypto-backed' : response.pegMechanism,
+		priceSource: response.priceSource ?? null,
+		auditLinks,
+		twitter: response.twitter,
+		wiki: response.wiki ?? null,
+		price: response.price,
+		module: response.module ?? response.gecko_id,
+		...(response.deprecated === true ? { deprecated: true } : {}),
+		...(response.delisted === true ? { delisted: true } : {}),
+		...(response.yieldBearing === true ? { yieldBearing: true } : {}),
+		...(response.doublecounted === true ? { doublecounted: true } : {}),
+		...(response.deadFrom !== undefined ? { deadFrom: response.deadFrom } : {}),
+		tokens: response.tokens,
+		chainBalances: response.chainBalances,
+		currentChainBalances: response.currentChainBalances
+	}
 }
 
 /**

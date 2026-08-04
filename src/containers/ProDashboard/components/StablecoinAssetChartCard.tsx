@@ -20,7 +20,7 @@ import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { LocalLoader } from '~/ui/Loaders'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { getTimePeriodBounds } from '../queries'
 import type { StablecoinAssetChartConfig } from '../types'
@@ -63,12 +63,8 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 		[chartType, customTimePeriod, timePeriod]
 	)
 
-	const { presentation, chainsUnique, stablecoinName, stablecoinSymbol, isLoading } = useStablecoinAssetChartData(
-		stablecoinId,
-		chartType,
-		piePeriodBounds,
-		selectionOptions
-	)
+	const { presentation, chainsUnique, stablecoinName, stablecoinSymbol, isInactive, isLoading } =
+		useStablecoinAssetChartData(stablecoinId, chartType, piePeriodBounds, selectionOptions)
 
 	const chainColors = useMemo(() => {
 		const colors: Record<string, string> = {}
@@ -109,6 +105,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				? getStablecoinRuntimeSeries(presentation)
 				: {
 						selectableSeries: EMPTY_SERIES,
+						defaultSeries: EMPTY_SERIES,
 						renderedSelectableSeries: EMPTY_SERIES,
 						fixedRemainderSeries: [],
 						alwaysVisibleSeries: []
@@ -154,7 +151,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	const chainsCirculatingValues = piePresentation.chartData
 	const latestCirculatingValue =
 		presentation.chartType === 'totalCirc' ? filteredDataset?.source.at(-1)?.[1] : undefined
-	const latestCirculating = typeof latestCirculatingValue === 'number' ? latestCirculatingValue : null
+	const latestCirculating = !isInactive && typeof latestCirculatingValue === 'number' ? latestCirculatingValue : null
 	const visibleSeries = useMemo(() => {
 		const charts =
 			chartType === 'chainMcaps' ? chainCharts : chartType === 'chainDominance' ? chainDominanceCharts : null
@@ -208,9 +205,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				break
 		}
 
-		if (rows.length > 0) {
-			downloadCSV(filename, rows)
-		}
+		if (rows.length > 0) downloadCSV(`${filename}.csv`, rows)
 	}
 
 	const chartTypeLabel = CHART_TYPE_LABELS[chartType] || chartType
@@ -241,7 +236,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 						title=""
 						dataset={filteredDataset!}
 						charts={TOTAL_CIRCULATING_CHARTS}
-						valueSymbol="$"
+						valueSymbol={stablecoinSymbol}
 						hallmarks={EMPTY_HALLMARKS}
 						chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
 						exportButtons="hidden"
@@ -264,7 +259,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 						dataset={filteredDataset!}
 						charts={chainCharts}
 						selectedCharts={selectedCharts}
-						valueSymbol="$"
+						valueSymbol={stablecoinSymbol}
 						chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
 						exportButtons="hidden"
 						onReady={handleChartReady}
@@ -284,6 +279,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 					<PieChart
 						chartData={chainsCirculatingValues}
 						stackColors={{ ...piePresentation.stackColors, ...chainColors }}
+						valueSymbol={stablecoinSymbol}
 						exportButtons="hidden"
 						onReady={handleChartReady}
 					/>
@@ -368,11 +364,11 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 					<p className="flex flex-col">
 						<span className="text-[10px] text-pro-text-tertiary uppercase">Total Circulating</span>
 						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
-							{formatUsd(latestCirculating, {
-								compact: true,
+							{formatCompactNumber(latestCirculating, {
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
-							})}
+							})}{' '}
+							{stablecoinSymbol}
 						</span>
 					</p>
 				</div>

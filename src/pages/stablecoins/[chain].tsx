@@ -21,7 +21,7 @@ type StablecoinsByChainPageProps = PeggedOverviewPageData & {
 	deprecated?: boolean
 }
 
-export const getStaticProps = withPerformanceLogging<StablecoinsByChainPageProps>(
+export const getStaticProps = withPerformanceLogging<StablecoinsByChainPageProps, StablecoinsByChainRouteParams>(
 	'stablecoins/[chain]',
 	async ({ params }: GetStaticPropsContext<StablecoinsByChainRouteParams>) => {
 		const chain = params?.chain
@@ -58,7 +58,7 @@ export const getStaticProps = withPerformanceLogging<StablecoinsByChainPageProps
 		const stablecoinsContext = {
 			subPage: 'stablecoins',
 			totalCount: props.filteredPeggedAssets.length,
-			totalMcap: props.filteredPeggedAssets.reduce((sum, s) => sum + (s.mcap || 0), 0),
+			totalMcap: props.defaultChartData.summary?.totalMcapCurrent ?? null,
 			topStablecoins: props.filteredPeggedAssets.slice(0, 15).map((s) => {
 				const symbol = typeof s.symbol === 'string' ? s.symbol : null
 				const change7d = typeof s.change_7d === 'number' ? s.change_7d : null
@@ -90,7 +90,7 @@ export const getStaticProps = withPerformanceLogging<StablecoinsByChainPageProps
 				...props,
 				availableBackings,
 				availablePegTypes,
-				entityQuestions,
+				...(entityQuestions === undefined ? {} : { entityQuestions }),
 				...(metadata.deprecated ? { deprecated: true } : {})
 			},
 			revalidate: maxAgeForNext([22])
@@ -141,8 +141,8 @@ export default function StablecoinsByChainPage({
 				availableBackings={availableBackings}
 				availablePegTypes={availablePegTypes}
 				defaultChartData={defaultChartData}
-				entityQuestions={entityQuestions}
-				deprecated={deprecated}
+				{...(entityQuestions === undefined ? {} : { entityQuestions })}
+				{...(deprecated === undefined ? {} : { deprecated })}
 			/>
 		</Layout>
 	)

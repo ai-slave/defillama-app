@@ -139,6 +139,23 @@ describe('/api/public/stablecoins/chart-series', () => {
 		expect(getOverviewMock).toHaveBeenCalledWith(expect.objectContaining({ excludedNames: ['USDT'] }))
 	})
 
+	it('preserves an empty exclusion as an explicit select-all intent', async () => {
+		const req = {
+			method: 'GET',
+			query: {
+				scope: 'overview',
+				chain: 'all',
+				chart: 'dominance',
+				exclude: 'true'
+			}
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(getOverviewMock).toHaveBeenCalledWith(expect.objectContaining({ excludedNames: [] }))
+	})
+
 	it('returns 404 when an asset chart is missing', async () => {
 		getAssetMock.mockResolvedValue(null)
 		const req = {

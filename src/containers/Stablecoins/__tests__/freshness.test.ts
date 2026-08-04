@@ -18,16 +18,16 @@ describe('stablecoin change freshness', () => {
 	it('validates each period independently without requiring intermediate days', () => {
 		const chart = [point('2026-06-14', 70), point('2026-07-07', 80), point('2026-07-13', 90), point('2026-07-14', 100)]
 
-		expect(getPrevStablecoinTotalFromChart(chart, 1, 'mcap', '', { currentTimeMs: NOW })).toBe(90)
-		expect(getPrevStablecoinTotalFromChart(chart, 7, 'mcap', '', { currentTimeMs: NOW })).toBe(80)
-		expect(getPrevStablecoinTotalFromChart(chart, 30, 'mcap', '', { currentTimeMs: NOW })).toBe(70)
+		expect(getPrevStablecoinTotalFromChart(chart, 1, 'mcap', undefined, { currentTimeMs: NOW })).toBe(90)
+		expect(getPrevStablecoinTotalFromChart(chart, 7, 'mcap', undefined, { currentTimeMs: NOW })).toBe(80)
+		expect(getPrevStablecoinTotalFromChart(chart, 30, 'mcap', undefined, { currentTimeMs: NOW })).toBe(70)
 	})
 
 	it('hides only the period whose exact comparison endpoint is missing', () => {
 		const chart = [point('2026-06-13', 60), point('2026-06-15', 70), point('2026-07-13', 90), point('2026-07-14', 100)]
 
-		expect(getPrevStablecoinTotalFromChart(chart, 1, 'mcap', '', { currentTimeMs: NOW })).toBe(90)
-		expect(getPrevStablecoinTotalFromChart(chart, 30, 'mcap', '', { currentTimeMs: NOW })).toBeNull()
+		expect(getPrevStablecoinTotalFromChart(chart, 1, 'mcap', undefined, { currentTimeMs: NOW })).toBe(90)
+		expect(getPrevStablecoinTotalFromChart(chart, 30, 'mcap', undefined, { currentTimeMs: NOW })).toBeNull()
 	})
 
 	it('keeps the current total but nulls all changes when the latest point is stale', () => {
@@ -63,9 +63,9 @@ describe('stablecoin change freshness', () => {
 			{ ...point('2026-07-15', 90), isSynthetic: true }
 		]
 
-		expect(getPrevStablecoinTotalFromChart(chart, 1, 'mcap', '', { currentTimeMs: ROLLOVER_NOW })).toBe(85)
-		expect(getPrevStablecoinTotalFromChart(chart, 7, 'mcap', '', { currentTimeMs: ROLLOVER_NOW })).toBe(80)
-		expect(getPrevStablecoinTotalFromChart(chart, 30, 'mcap', '', { currentTimeMs: ROLLOVER_NOW })).toBe(70)
+		expect(getPrevStablecoinTotalFromChart(chart, 1, 'mcap', undefined, { currentTimeMs: ROLLOVER_NOW })).toBe(85)
+		expect(getPrevStablecoinTotalFromChart(chart, 7, 'mcap', undefined, { currentTimeMs: ROLLOVER_NOW })).toBe(80)
+		expect(getPrevStablecoinTotalFromChart(chart, 30, 'mcap', undefined, { currentTimeMs: ROLLOVER_NOW })).toBe(70)
 		expect(
 			getStablecoinMcapStatsFromTotals(
 				[
@@ -87,7 +87,7 @@ describe('stablecoin change freshness', () => {
 	it('does not fall back to yesterday when today exists but its comparison endpoint is missing', () => {
 		const chart = [point('2026-07-07', 80), point('2026-07-14', 90), point('2026-07-15', 100)]
 
-		expect(getPrevStablecoinTotalFromChart(chart, 7, 'mcap', '', { currentTimeMs: ROLLOVER_NOW })).toBeNull()
+		expect(getPrevStablecoinTotalFromChart(chart, 7, 'mcap', undefined, { currentTimeMs: ROLLOVER_NOW })).toBeNull()
 	})
 
 	it('keeps chain changes available from the previous UTC day', () => {
@@ -107,6 +107,44 @@ describe('stablecoin change freshness', () => {
 			mcapPrevWeek: 80,
 			change_7d: 25
 		})
+	})
+
+	it('makes ended current market caps unavailable without affecting deprecated active assets', () => {
+		const asset: StablecoinListAsset = {
+			id: 'ended',
+			name: 'Ended USD',
+			symbol: 'ENDED',
+			gecko_id: null,
+			chains: ['Ethereum'],
+			pegType: 'peggedUSD',
+			pegMechanism: 'fiat-backed',
+			price: 1,
+			circulating: { peggedUSD: 100 },
+			circulatingPrevDay: { peggedUSD: 90 },
+			circulatingPrevWeek: { peggedUSD: 80 },
+			circulatingPrevMonth: { peggedUSD: 70 },
+			chainCirculating: {}
+		}
+		const rows = formatPeggedAssetsData({
+			peggedAssets: [
+				{ ...asset, deadFrom: '2026-07-01' },
+				{ ...asset, id: 'delisted', name: 'Delisted USD', symbol: 'DELISTED', delisted: true },
+				{ ...asset, id: 'deprecated', name: 'Deprecated USD', symbol: 'DEPRECATED', deprecated: true }
+			],
+			chartDataByPeggedAsset: [[point('2026-07-14', 100)], [point('2026-07-14', 50)], [point('2026-07-14', 25)]],
+			peggedAssetIdToChartDataIndex: { ended: 0, delisted: 1, deprecated: 2 },
+			currentTimeMs: NOW
+		})
+
+		expect(rows[0]).toMatchObject({
+			deadFrom: '2026-07-01',
+			mcap: null,
+			change_1d: null,
+			change_7d: null,
+			change_1m: null
+		})
+		expect(rows[1]).toMatchObject({ delisted: true, mcap: null })
+		expect(rows[2]).toMatchObject({ deprecated: true, mcap: 25 })
 	})
 
 	it('hides the monthly peg deviation when a daily price snapshot is missing', () => {
@@ -139,7 +177,35 @@ describe('stablecoin change freshness', () => {
 				currentTimeMs: NOW
 			})[0]
 
-		expect(format(completePrices).pegDeviation_1m).toBeCloseTo(-10)
-		expect(format(completePrices.filter((_, index) => index !== 10)).pegDeviation_1m).toBeNull()
+		const complete = format(completePrices)
+		const incomplete = format(completePrices.filter((_, index) => index !== 10))
+		if (!complete || !incomplete) throw new Error('Expected the formatted stablecoin')
+		expect(complete.pegDeviation_1m).toBeCloseTo(-10)
+		expect(incomplete.pegDeviation_1m).toBeNull()
+	})
+
+	it('uses the producer BRL ticker for real-pegged assets', () => {
+		const asset: StablecoinListAsset = {
+			id: 'real',
+			name: 'Brazilian Real',
+			symbol: 'BRL',
+			gecko_id: null,
+			chains: ['Ethereum'],
+			pegType: 'peggedREAL',
+			pegMechanism: 'fiat-backed',
+			price: 0.2,
+			circulating: { peggedREAL: 100 },
+			circulatingPrevDay: { peggedREAL: 100 },
+			circulatingPrevWeek: { peggedREAL: 100 },
+			circulatingPrevMonth: { peggedREAL: 100 },
+			chainCirculating: {}
+		}
+		const [formatted] = formatPeggedAssetsData({
+			peggedAssets: [asset],
+			rateData: [{ date: NOW / 1e3, rates: { BRL: 5 } }],
+			currentTimeMs: NOW
+		})
+
+		expect(formatted?.pegDeviation).toBe(0)
 	})
 })

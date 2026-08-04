@@ -52,12 +52,15 @@ export function useStablecoinChartSelection({
 	setSelectionIntent
 }: {
 	marketCapSeries: StablecoinMarketCapSeries | null
-	runtimeSeries: Pick<StablecoinRuntimeSeries, 'selectableSeries' | 'renderedSelectableSeries' | 'fixedRemainderSeries'>
+	runtimeSeries: Pick<
+		StablecoinRuntimeSeries,
+		'selectableSeries' | 'defaultSeries' | 'renderedSelectableSeries' | 'fixedRemainderSeries'
+	>
 	selectionIntent: StablecoinSeriesSelectionIntent
 	setSelectionIntent: (intent: StablecoinSeriesSelectionIntent) => void
 }) {
 	const selectableSeries = marketCapSeries?.selectionSeries ?? runtimeSeries.selectableSeries
-	const defaultSeries = selectableSeries
+	const defaultSeries = marketCapSeries?.defaultSeries ?? runtimeSeries.defaultSeries
 	const selectedNames = React.useMemo(() => {
 		if (!selectionIntent) return null
 		if (selectionIntent.mode === 'include') return selectionIntent.names
@@ -85,8 +88,9 @@ export function useStablecoinChartSelection({
 	const setSelectedSeries = React.useCallback(
 		(nextSelection: string[]) => {
 			const selected = new Set(nextSelection)
-			const selectsAll = selectableSeries.length > 0 && selectableSeries.every((name) => selected.has(name))
-			if (selectsAll) {
+			const selectsDefault =
+				nextSelection.length === defaultSeries.length && defaultSeries.every((name) => selected.has(name))
+			if (selectsDefault) {
 				setSelectionIntent(null)
 				return
 			}
@@ -97,7 +101,7 @@ export function useStablecoinChartSelection({
 					: { mode: 'exclude', names: excludedNames }
 			)
 		},
-		[selectableSeries, setSelectionIntent]
+		[defaultSeries, selectableSeries, setSelectionIntent]
 	)
 
 	return { activeSeries, selectableSeries, renderedCharts, setSelectedSeries }

@@ -35,7 +35,7 @@ export const getStaticProps: GetStaticProps<StablecoinsPageProps> = withPerforma
 
 	const stablecoinsContext = {
 		totalCount: props.filteredPeggedAssets.length,
-		totalMcap: props.filteredPeggedAssets.reduce((sum, s) => sum + (s.mcap || 0), 0),
+		totalMcap: props.defaultChartData.summary?.totalMcapCurrent ?? null,
 		topStablecoins: props.filteredPeggedAssets.slice(0, 15).map((s) => {
 			const symbol = typeof s.symbol === 'string' ? s.symbol : null
 			const change7d = typeof s.change_7d === 'number' ? s.change_7d : null
@@ -59,7 +59,12 @@ export const getStaticProps: GetStaticProps<StablecoinsPageProps> = withPerforma
 	const { questions: entityQuestions } = await fetchEntityQuestions('stablecoins', 'page', stablecoinsContext)
 
 	return {
-		props: { ...props, availableBackings, availablePegTypes, entityQuestions },
+		props: {
+			...props,
+			availableBackings,
+			availablePegTypes,
+			...(entityQuestions === undefined ? {} : { entityQuestions })
+		},
 		revalidate: maxAgeForNext([22])
 	}
 })
@@ -89,7 +94,7 @@ export default function StablecoinsPage({
 				availableBackings={availableBackings}
 				availablePegTypes={availablePegTypes}
 				defaultChartData={defaultChartData}
-				entityQuestions={entityQuestions}
+				{...(entityQuestions === undefined ? {} : { entityQuestions })}
 			/>
 		</Layout>
 	)

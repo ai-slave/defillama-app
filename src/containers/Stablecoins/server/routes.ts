@@ -11,6 +11,7 @@ function getStablecoinChainSlugsFromMetadata(metadataCache: MetadataCache): stri
 
 	for (const chainSlug in metadataCache.chainMetadata) {
 		const metadata = metadataCache.chainMetadata[chainSlug]
+		if (!metadata) continue
 		if (!metadata.stablecoins) continue
 
 		const canonicalSlug = slug(metadata.name)

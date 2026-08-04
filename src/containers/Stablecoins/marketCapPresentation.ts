@@ -1,5 +1,5 @@
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, oldBlue } from '~/constants/colors'
 import { roundNumber } from '~/utils/numberFormat'
 
 const PIE_SLICE_LIMIT = 10
@@ -11,6 +11,7 @@ export type StablecoinMarketCapSeries = {
 	kind: 'pie' | 'hbar' | 'treemap'
 	peers: MarketCapSlice[]
 	selectionSeries: string[]
+	defaultSeries: string[]
 	upstreamRemainderValue: number
 }
 
@@ -24,14 +25,17 @@ export function prepareStablecoinMarketCapSeries<T>({
 	rows,
 	view,
 	getName,
-	getValue
+	getValue,
+	isAggregateIncluded = () => true
 }: {
 	rows: T[]
 	view: StablecoinMarketCapSeries['kind']
 	getName: (row: NoInfer<T>) => string
 	getValue: (row: NoInfer<T>) => number
+	isAggregateIncluded?: (row: NoInfer<T>) => boolean
 }): StablecoinMarketCapSeries {
 	const valueByPeer = new Map<string, number>()
+	const aggregateIncludedPeers = new Set<string>()
 	let upstreamRemainderValue = 0
 
 	for (const row of rows) {
@@ -42,6 +46,7 @@ export function prepareStablecoinMarketCapSeries<T>({
 			continue
 		}
 		valueByPeer.set(name, (valueByPeer.get(name) ?? 0) + value)
+		if (isAggregateIncluded(row)) aggregateIncludedPeers.add(name)
 	}
 	const rankedPeers: Array<{ name: string; value: number }> = []
 	for (const [name, value] of valueByPeer) {
@@ -50,7 +55,7 @@ export function prepareStablecoinMarketCapSeries<T>({
 	rankedPeers.sort((left, right) => right.value - left.value)
 	const peers = rankedPeers.map<MarketCapSlice>((peer, index) => ({
 		...peer,
-		color: CHART_COLORS[index % CHART_COLORS.length]
+		color: CHART_COLORS[index % CHART_COLORS.length] ?? oldBlue
 	}))
 
 	const selectionSeries = peers.map((peer) => peer.name)
@@ -58,6 +63,7 @@ export function prepareStablecoinMarketCapSeries<T>({
 		kind: view,
 		peers,
 		selectionSeries,
+		defaultSeries: selectionSeries.filter((name) => aggregateIncludedPeers.has(name)),
 		upstreamRemainderValue: upstreamRemainderValue > 0 ? upstreamRemainderValue : 0
 	}
 }
@@ -79,16 +85,15 @@ export function buildStablecoinMarketCapPresentation({
 
 		let total = 0
 		for (const slice of visibleSlices) total += slice.value
-		const treeData = new Array<TreemapNode>(visibleSlices.length)
-		for (let i = 0; i < visibleSlices.length; i++) {
-			const slice = visibleSlices[i]
+		const treeData: TreemapNode[] = []
+		for (const slice of visibleSlices) {
 			const share = total > 0 ? roundNumber((slice.value / total) * 100, 2) : 0
-			treeData[i] = {
+			treeData.push({
 				name: slice.name,
 				path: `Stablecoins/${slice.name}`,
 				value: [slice.value, share, share],
 				itemStyle: { color: slice.color }
-			}
+			})
 		}
 		return { kind: 'treemap', treeData }
 	}
@@ -113,24 +118,22 @@ export function buildStablecoinMarketCapPresentation({
 	}
 
 	if (series.kind === 'pie') {
-		const chartData = new Array<{ name: string; value: number }>(visibleSlices.length)
+		const chartData: Array<{ name: string; value: number }> = []
 		const stackColors: Record<string, string> = {}
-		for (let i = 0; i < visibleSlices.length; i++) {
-			const slice = visibleSlices[i]
-			chartData[i] = { name: slice.name, value: slice.value }
+		for (const slice of visibleSlices) {
+			chartData.push({ name: slice.name, value: slice.value })
 			stackColors[slice.name] = slice.color
 		}
 		return { kind: 'pie', chartData, stackColors }
 	}
 
-	const categories = new Array<string>(visibleSlices.length)
-	const values = new Array<number>(visibleSlices.length)
-	const colors = new Array<string>(visibleSlices.length)
-	for (let i = 0; i < visibleSlices.length; i++) {
-		const slice = visibleSlices[i]
-		categories[i] = slice.name
-		values[i] = slice.value
-		colors[i] = slice.color
+	const categories: string[] = []
+	const values: number[] = []
+	const colors: string[] = []
+	for (const slice of visibleSlices) {
+		categories.push(slice.name)
+		values.push(slice.value)
+		colors.push(slice.color)
 	}
 	return { kind: 'hbar', categories, values, colors }
 }

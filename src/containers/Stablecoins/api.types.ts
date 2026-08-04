@@ -1,5 +1,56 @@
+export type StablecoinPegType =
+	| 'peggedUSD'
+	| 'peggedVAR'
+	| 'peggedEUR'
+	| 'peggedSGD'
+	| 'peggedJPY'
+	| 'peggedCNY'
+	| 'peggedMXN'
+	| 'peggedMYR'
+	| 'peggedUAH'
+	| 'peggedARS'
+	| 'peggedGBP'
+	| 'peggedCAD'
+	| 'peggedTRY'
+	| 'peggedCHF'
+	| 'peggedCOP'
+	| 'peggedREAL'
+	| 'peggedRUB'
+	| 'peggedAUD'
+	| 'peggedKES'
+	| 'peggedZAR'
+	| 'peggedNGN'
+	| 'peggedXOF'
+	| 'peggedGHS'
+	| 'peggedCLP'
+	| 'peggedPEN'
+	| 'peggedPHP'
+	| 'peggedKRW'
+
+export type StablecoinPegMechanism = 'algorithmic' | 'fiat-backed' | 'crypto-backed'
+export type RawStablecoinPegMechanism = StablecoinPegMechanism | 'crytpo-backed'
+
+export type StablecoinPriceSource =
+	| 'chainlink'
+	| 'uniswap'
+	| 'dexscreener'
+	| 'curve'
+	| 'coingecko'
+	| 'birdeye'
+	| 'kucoin'
+	| 'defillama'
+	| 'kaddex'
+
+export type StablecoinPegBalances = Partial<Record<StablecoinPegType, number>>
+export type StablecoinNullablePegBalances = Partial<Record<StablecoinPegType, number | null>>
+
 export interface StablecoinsListResponse {
 	peggedAssets: StablecoinListAsset[]
+	chains: StablecoinListChain[]
+}
+
+export interface RawStablecoinsListResponse {
+	peggedAssets: RawStablecoinListAsset[]
 	chains: StablecoinListChain[]
 }
 
@@ -9,33 +60,91 @@ export interface StablecoinListAsset {
 	symbol: string
 	gecko_id: string | null
 	chains: string[]
-	pegType: string
-	pegMechanism: string
-	priceSource?: string | null
+	pegType: StablecoinPegType
+	pegMechanism: StablecoinPegMechanism
+	priceSource?: StablecoinPriceSource | null
 	price: number | null
-	circulating: Record<string, number>
-	circulatingPrevDay: Record<string, number>
-	circulatingPrevWeek: Record<string, number>
-	circulatingPrevMonth: Record<string, number>
+	circulating: StablecoinPegBalances
+	circulatingPrevDay: StablecoinPegBalances
+	circulatingPrevWeek: StablecoinPegBalances
+	circulatingPrevMonth: StablecoinPegBalances
 	chainCirculating: Record<
 		string,
 		{
-			current: Record<string, number>
-			circulatingPrevDay: Record<string, number>
-			circulatingPrevWeek: Record<string, number>
-			circulatingPrevMonth: Record<string, number>
+			current: StablecoinPegBalances
+			circulatingPrevDay: StablecoinPegBalances
+			circulatingPrevWeek: StablecoinPegBalances
+			circulatingPrevMonth: StablecoinPegBalances
 		}
 	>
-	deprecated?: boolean
-	delisted?: boolean
-	yieldBearing?: boolean
+	deprecated?: true
+	delisted?: true
+	deadFrom?: string
+	yieldBearing?: true
 }
 
-interface StablecoinListChain {
-	gecko_id?: string | null
-	tokenSymbol?: string | null
+export type RawStablecoinListAsset = Omit<StablecoinListAsset, 'pegMechanism'> & {
+	pegMechanism: RawStablecoinPegMechanism
+}
+
+export interface StablecoinListChain {
 	name: string
-	totalCirculatingUSD: Record<string, number>
+	totalCirculatingUSD: StablecoinPegBalances
+}
+
+interface RawStablecoinBridgeConfig {
+	lzConfig?: {
+		symbols?: string[]
+		excludeChains?: string[]
+		oftTypes?: string[]
+		chainMap?: Record<string, string>
+		requirePeggedToSource?: boolean
+	}
+	hyperlaneConfig?: {
+		symbols?: string[]
+		excludeChains?: string[]
+		standardTypes?: string[]
+		chainMap?: Record<string, string>
+		sourceChain?: string
+	}
+}
+
+interface RawStablecoinChainConfig {
+	decimals?: number
+	chains: Record<string, Record<string, string | string[]>>
+}
+
+export interface RawStablecoinDetailResponse {
+	id: string
+	name: string
+	address: string | null
+	symbol: string
+	url: string
+	description: string
+	mintRedeemDescription: string
+	onCoinGecko: string | boolean
+	gecko_id: string | null
+	cmcId: string | number | null
+	pegType: StablecoinPegType
+	pegMechanism: RawStablecoinPegMechanism
+	priceSource?: StablecoinPriceSource | null
+	auditLinks?: string[] | string | null
+	twitter: string | null
+	wiki?: string | null
+	price: number | null
+	module?: string
+	deprecated?: true
+	delisted?: true
+	yieldBearing?: true
+	doublecounted?: true
+	deadFrom?: string
+	deadUrl?: boolean
+	coin_icon?: string
+	bridgeConfig?: RawStablecoinBridgeConfig
+	chainConfig?: RawStablecoinChainConfig
+	tokens: StablecoinDetailToken[]
+	chainBalances: Record<string, { tokens: StablecoinChainBalanceToken[] }>
+	currentChainBalances: Record<string, StablecoinNullablePegBalances>
 }
 
 export interface StablecoinDetailResponse {
@@ -46,58 +155,59 @@ export interface StablecoinDetailResponse {
 	url: string
 	description: string
 	mintRedeemDescription: string
-	onCoinGecko: string
+	onCoinGecko: boolean
 	gecko_id: string | null
-	cmcId: string | null
-	pegType: string
-	pegMechanism: string
-	priceSource: string
+	cmcId: string | number | null
+	pegType: StablecoinPegType
+	pegMechanism: StablecoinPegMechanism
+	priceSource: StablecoinPriceSource | null
 	auditLinks: string[] | null
-	twitter: string
+	twitter: string | null
 	wiki: string | null
 	price: number | null
-	module?: string
-	deprecated?: boolean
-	delisted?: boolean
-	yieldBearing?: boolean
-	doublecounted?: boolean
+	module: string | null
+	deprecated?: true
+	delisted?: true
+	yieldBearing?: true
+	doublecounted?: true
 	deadFrom?: string
 	tokens: StablecoinDetailToken[]
 	chainBalances: Record<string, { tokens: StablecoinChainBalanceToken[] }>
-	currentChainBalances: Record<string, Record<string, number>>
+	currentChainBalances: Record<string, StablecoinNullablePegBalances>
 }
 
-interface StablecoinDetailToken {
+export type StablecoinRawBridgeAmount = number | `${number}`
+export type StablecoinLegacyBridgeValue = { source: string; amount?: StablecoinRawBridgeAmount }
+export type StablecoinBridgeSourceAmounts = Record<string, { amount: StablecoinRawBridgeAmount }> & {
+	source?: never
+	amount?: never
+}
+export type StablecoinRawBridgeBreakdown = Record<
+	string,
+	number | StablecoinLegacyBridgeValue | StablecoinBridgeSourceAmounts
+>
+
+export type StablecoinIssuanceBalances = StablecoinNullablePegBalances & {
+	bridges?: StablecoinRawBridgeBreakdown
+}
+
+export type StablecoinDetailIssuanceAmount = 0 | StablecoinIssuanceBalances
+
+export interface StablecoinDetailToken {
 	date: number
-	circulating?: Record<string, number>
-	unreleased?: Record<string, number>
-	minted?: Record<string, number> | number
-	bridgedTo?: Record<string, number> | number
+	circulating?: StablecoinDetailIssuanceAmount
+	unreleased?: StablecoinDetailIssuanceAmount
+	minted?: StablecoinDetailIssuanceAmount
+	bridgedTo?: StablecoinDetailIssuanceAmount
 }
 
-export type StablecoinChainBalanceToken = {
-	date: number
-	circulating?: Record<string, number>
-	unreleased?: Record<string, number>
-	minted?: StablecoinChainBalanceAmount
-	bridgedTo?: StablecoinChainBalanceAmount
-}
-
-export type StablecoinChainBalanceAmount = Record<string, number | StablecoinBridgeBreakdown>
-
-export type StablecoinBridgeBreakdown = Record<string, StablecoinBridgeValue>
-
-export type StablecoinBridgeValue =
-	| number
-	| { amount: number; source: string }
-	| { amount?: never; source: string }
-	| Record<string, { amount: number }>
+export type StablecoinChainBalanceToken = StablecoinDetailToken
 
 export interface StablecoinChartResponse {
 	aggregated: StablecoinChartPoint[]
 	breakdown: Record<string, StablecoinChartPoint[]>
-	/** Omitted only by the reduced `all-llama-app` response. IDs refer to `StablecoinListAsset.id`. */
-	doublecountedIds?: string[]
+	/** IDs refer to `StablecoinListAsset.id`. */
+	doublecountedIds: string[]
 }
 
 export type StablecoinVolumeGlobalChartKind = 'total' | 'chain' | 'token' | 'currency'
@@ -106,7 +216,6 @@ export type StablecoinVolumeTokenChartKind = 'total' | 'chain'
 export type StablecoinVolumeChartKind = StablecoinVolumeGlobalChartKind
 
 export type StablecoinVolumeTotalChartPoint = [timestamp: number, volume: number]
-
 export type StablecoinVolumeBreakdownChartPoint = [timestamp: number, breakdown: Record<string, number>]
 
 export type StablecoinVolumeChartResponse = StablecoinVolumeTotalChartPoint[] | StablecoinVolumeBreakdownChartPoint[]
@@ -115,13 +224,13 @@ export type StablecoinVolumeChartResponseFor<TChart extends StablecoinVolumeChar
 	? StablecoinVolumeTotalChartPoint[]
 	: StablecoinVolumeBreakdownChartPoint[]
 
-export type StablecoinChartPoint = {
+export interface StablecoinChartPoint {
 	date: string
-	totalCirculatingUSD?: Record<string, number>
-	totalCirculating?: Record<string, number>
-	totalUnreleased?: Record<string, number>
-	totalBridgedToUSD?: Record<string, number>
-	totalMintedUSD?: Record<string, number>
+	totalCirculatingUSD?: StablecoinPegBalances
+	totalCirculating?: StablecoinPegBalances
+	totalUnreleased?: StablecoinPegBalances
+	totalBridgedToUSD?: StablecoinPegBalances
+	totalMintedUSD?: StablecoinPegBalances
 }
 
 export interface StablecoinDominanceResponse {
@@ -131,53 +240,45 @@ export interface StablecoinDominanceResponse {
 
 export interface StablecoinDominanceEntry {
 	date: string
-	totalCirculatingUSD: Record<string, number>
+	totalCirculatingUSD: StablecoinPegBalances
 	greatestMcap?: {
-		gecko_id: string
+		gecko_id: string | null
 		symbol: string
 		mcap: number
 	}
 }
 
-export interface StablecoinDominanceChartPoint {
-	date: string
-	totalCirculatingUSD?: Record<string, number>
-	totalCirculating?: Record<string, number>
-	totalUnreleased?: Record<string, number>
-	totalBridgedToUSD?: Record<string, number>
-	totalMintedUSD?: Record<string, number>
-}
+export type StablecoinDominanceChartPoint = StablecoinChartPoint
 
 export type StablecoinRecentCoinsDataResponse = Record<string, StablecoinRecentCoinDataPoint[]>
+export type StablecoinRecentCoinDataPoint = StablecoinChartPoint
 
-interface StablecoinRecentCoinDataPoint {
-	date: string
-	totalCirculatingUSD?: Record<string, number>
-	totalCirculating?: Record<string, number>
-	totalUnreleased?: Record<string, number>
-	totalBridgedToUSD?: Record<string, number>
-	totalMintedUSD?: Record<string, number>
+export interface RawStablecoinPriceSnapshot {
+	date: number
+	prices: Record<string, string | number>
+}
+
+export type RawStablecoinPricesResponse = RawStablecoinPriceSnapshot[]
+
+export interface StablecoinPriceSnapshot {
+	date: number
+	prices: Record<string, number>
 }
 
 export type StablecoinPricesResponse = StablecoinPriceSnapshot[]
 
-interface StablecoinPriceSnapshot {
+export interface StablecoinRateSnapshot {
 	date: number
-	prices?: Record<string, string | number>
+	rates: Record<string, number>
 }
 
 export type StablecoinRatesResponse = StablecoinRateSnapshot[]
 
-interface StablecoinRateSnapshot {
-	date: number
-	rates?: Record<string, number>
-}
-
 export type StablecoinConfigResponse = Record<string, string>
 
-export type StablecoinBridgeInfoResponse = Record<string, StablecoinBridgeInfo>
-
-interface StablecoinBridgeInfo {
+export interface StablecoinBridgeInfo {
 	name: string
 	link?: string
 }
+
+export type StablecoinBridgeInfoResponse = Record<string, StablecoinBridgeInfo>

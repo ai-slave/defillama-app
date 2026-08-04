@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { StablecoinChartPoint } from '~/containers/Stablecoins/api.types'
 import { resultBody } from '~/server/api/__tests__/resultBody'
 
 const mocks = vi.hoisted(() => ({
@@ -21,18 +22,23 @@ beforeEach(() => {
 	vi.clearAllMocks()
 })
 
-const point = (date: number, value: number) => ({ date, totalCirculatingUSD: { peggedUSD: value } })
+const point = (date: number, value: number): StablecoinChartPoint => ({
+	date: String(date),
+	totalCirculatingUSD: { peggedUSD: value }
+})
 
 function mockAggregate(value = 1_000) {
 	mocks.fetchStablecoinChartAllApi.mockResolvedValue({
-		aggregated: [point(1, value), point(2, value)]
+		aggregated: [point(86_400, value), point(172_800, value)],
+		breakdown: {},
+		doublecountedIds: []
 	})
 }
 
 function mockDominance(values: Record<string, number>) {
 	mocks.fetchStablecoinDominanceAllApi.mockResolvedValue({
 		chainChartMap: Object.fromEntries(
-			Object.entries(values).map(([chain, value]) => [chain, [point(1, value / 2), point(2, value)]])
+			Object.entries(values).map(([chain, value]) => [chain, [point(86_400, value / 2), point(172_800, value)]])
 		)
 	})
 }
@@ -59,10 +65,9 @@ describe('stablecoin breakdown routes', () => {
 			})
 		)
 		mocks.fetchStablecoinChartAllApi.mockResolvedValue({
-			aggregated: [
-				{ date: 1, totalCirculatingUSD: { tether: 10 } },
-				{ date: 2, totalCirculatingUSD: { tether: 20 } }
-			]
+			aggregated: [point(1, 10), point(2, 20)],
+			breakdown: {},
+			doublecountedIds: []
 		})
 		const { stablecoinByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/stablecoins')
 
@@ -78,10 +83,7 @@ describe('stablecoin breakdown routes', () => {
 		})
 		resolveDominance({
 			chainChartMap: {
-				Ethereum: [
-					{ date: 1, totalCirculatingUSD: { tether: 10 } },
-					{ date: 2, totalCirculatingUSD: { tether: 20 } }
-				]
+				Ethereum: [point(1, 10), point(2, 20)]
 			}
 		})
 
@@ -177,6 +179,63 @@ describe('stablecoin breakdown routes', () => {
 				chains: ['Gnosis', 'Ethereum'],
 				totalChains: 2
 			})
+		})
+	})
+
+	it('calculates filtered Others from the filtered chains only', async () => {
+		mockAggregate()
+		mockDominance({
+			Gnosis: 40,
+			'OP Mainnet': 30,
+			Ethereum: 20
+		})
+		mocks.fetchChainsByCategory.mockResolvedValue({ chainsUnique: ['Gnosis', 'Ethereum'] })
+
+		const body = await fetchBreakdown({
+			limit: '1',
+			chainCategories: 'EVM'
+		})
+
+		expect(body).toMatchObject({
+			series: [
+				{
+					name: 'Gnosis',
+					data: [
+						[86_400, 20],
+						[172_800, 40]
+					]
+				},
+				{
+					name: 'Others (1 chains)',
+					data: [
+						[86_400, 10],
+						[172_800, 20]
+					]
+				}
+			]
+		})
+	})
+
+	it('keeps the last stablecoin supply snapshot when multiple points share a UTC day', async () => {
+		mocks.fetchStablecoinChartAllApi.mockResolvedValue({
+			aggregated: [point(86_401, 70), point(86_402, 90)],
+			breakdown: {},
+			doublecountedIds: []
+		})
+		mocks.fetchStablecoinDominanceAllApi.mockResolvedValue({
+			chainChartMap: {
+				Ethereum: [point(86_401, 40), point(86_402, 50)],
+				Base: [point(86_401, 30), point(86_402, 40)]
+			}
+		})
+
+		const body = await fetchBreakdown({ limit: '1' })
+
+		expect(body).toMatchObject({
+			series: [
+				{ name: 'Ethereum', data: [[86_400, 50]] },
+				{ name: 'Others (1 chains)', data: [[86_400, 40]] }
+			]
 		})
 	})
 })

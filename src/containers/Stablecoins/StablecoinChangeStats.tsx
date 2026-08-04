@@ -43,7 +43,9 @@ export function StablecoinChangeStats({ stats }: { stats: StablecoinChangeStat[]
 	)
 	if (validStats.length === 0) return null
 
-	const [primary, ...secondary] = validStats
+	const primary = validStats[0]
+	if (!primary) return null
+	const secondary = validStats.slice(1)
 	if (secondary.length === 0) {
 		return (
 			<div className="text-base">

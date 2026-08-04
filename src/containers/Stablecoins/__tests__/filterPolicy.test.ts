@@ -10,12 +10,30 @@ import type { FormattedStablecoinAsset } from '../utils'
 
 const stablecoin = (overrides: Partial<FormattedStablecoinAsset>): FormattedStablecoinAsset => ({
 	id: 'usdc',
+	chartLabel: 'USDC',
 	name: 'USD Coin',
 	symbol: 'USDC',
 	gecko_id: 'usd-coin',
 	chains: ['Ethereum'],
 	pegType: 'peggedUSD',
 	pegMechanism: 'fiat-backed',
+	circulating: 0,
+	circulatingPrevDay: null,
+	circulatingPrevWeek: null,
+	circulatingPrevMonth: null,
+	unreleased: null,
+	mcap: null,
+	price: null,
+	change_1d: null,
+	change_7d: null,
+	change_1m: null,
+	change_1d_nol: null,
+	change_7d_nol: null,
+	change_1m_nol: null,
+	pegDeviation: null,
+	pegDeviation_1m: null,
+	pegDeviationInfo: null,
+	doublecounted: false,
 	...overrides
 })
 

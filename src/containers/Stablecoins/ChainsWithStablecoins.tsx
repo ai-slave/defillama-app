@@ -32,9 +32,9 @@ import {
 	getStablecoinChartViewQueryValue,
 	getStablecoinSeriesSelectorLabel,
 	parseStablecoinChartState,
+	parseStablecoinChartView,
 	parseStablecoinVolumeGroupBy,
-	type StablecoinChartType as StablecoinChartCategory,
-	type StablecoinChartView
+	type StablecoinChartType as StablecoinChartCategory
 } from '~/containers/Stablecoins/chartState'
 import { useCalcCirculating, useGroupChainsPegged } from '~/containers/Stablecoins/hooks'
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
@@ -69,6 +69,7 @@ const EMPTY_TREEMAP_DATA: TreemapChartProps['treeData'] = []
 const EMPTY_SERIES: string[] = []
 const EMPTY_RUNTIME_SERIES = {
 	selectableSeries: EMPTY_SERIES,
+	defaultSeries: EMPTY_SERIES,
 	renderedSelectableSeries: EMPTY_SERIES,
 	fixedRemainderSeries: EMPTY_SERIES,
 	alwaysVisibleSeries: EMPTY_SERIES
@@ -137,7 +138,8 @@ export function ChainsWithStablecoins({
 	)
 	const onChartViewChange = React.useCallback(
 		(nextChartView: string) => {
-			const view = nextChartView as StablecoinChartView
+			const view = parseStablecoinChartView(nextChartView)
+			if (!view) return
 			handleChartReady(null)
 			void pushShallowQuery(router, {
 				chartView: getStablecoinChartViewQueryValue(CHAINS_CHART_MODE, chartType, view)
@@ -173,7 +175,7 @@ export function ChainsWithStablecoins({
 	})
 
 	let topChain = { name: 'Ethereum', mcap: 0 }
-	const topChainData = chainTotals.at(0)
+	const topChainData = chainTotals[0]
 	if (topChainData) {
 		topChain.name = topChainData.name
 		topChain.mcap = topChainData.mcap ?? 0
@@ -398,7 +400,7 @@ export function ChainsWithStablecoins({
 							isLoading={isVolumeChartLoading}
 							isError={!isVolumeChartLoading && volumeChartQuery.error != null}
 							hideDefaultLegend={!showDefaultLegend}
-							{...(activeSelectedCharts !== undefined ? { selectedCharts: activeSelectedCharts } : {})}
+							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							groupBy={volumeGroupBy}
 							onReady={handleChartReady}
 						/>
@@ -408,7 +410,7 @@ export function ChainsWithStablecoins({
 							isLoading={isSelectedChartLoading}
 							isError={!isSelectedChartLoading && chartSeriesQuery.error != null}
 							hideDefaultLegend={!showDefaultLegend}
-							{...(activeSelectedCharts !== undefined ? { selectedCharts: activeSelectedCharts } : {})}
+							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							onReady={handleChartReady}
 						/>
 					)}
@@ -463,13 +465,13 @@ function SelectedChainsChart({
 			<MultiSeriesChart
 				dataset={data.dataset}
 				charts={data.charts}
-				{...(selectedCharts !== undefined ? { selectedCharts } : {})}
-				{...(data.stacked !== undefined ? { stacked: data.stacked } : {})}
-				{...(data.expandTo100Percent !== undefined ? { expandTo100Percent: data.expandTo100Percent } : {})}
-				{...(data.valueSymbol !== undefined ? { valueSymbol: data.valueSymbol } : {})}
-				{...(data.showTotalInTooltip !== undefined ? { showTotalInTooltip: data.showTotalInTooltip } : {})}
+				{...(selectedCharts === undefined ? {} : { selectedCharts })}
+				stacked={data.stacked}
+				{...(data.expandTo100Percent === undefined ? {} : { expandTo100Percent: data.expandTo100Percent })}
+				valueSymbol={data.valueSymbol}
+				showTotalInTooltip={data.showTotalInTooltip}
 				hideDefaultLegend={hideDefaultLegend}
-				{...(groupBy !== undefined ? { groupBy } : {})}
+				{...(groupBy === undefined ? {} : { groupBy })}
 				onReady={onReady}
 			/>
 		</React.Suspense>

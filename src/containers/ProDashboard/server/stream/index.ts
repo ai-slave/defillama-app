@@ -823,7 +823,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 					scheduleSource(async () => {
 						const [baseline, chainData] = await Promise.all([
 							withTimeout(getStablecoinTableBaseline(), 15_000),
-							withTimeout(fetchStablecoinChartApi(chain === 'All' ? 'all-llama-app' : chain), 15_000)
+							withTimeout(fetchStablecoinChartApi(chain === 'All' ? 'all' : chain), 15_000)
 						])
 						const data = buildStablecoinsTableData({
 							baseline,

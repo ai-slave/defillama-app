@@ -2,16 +2,22 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { StablecoinRuntimeSeries } from '../chartSeries'
 import { prepareStablecoinMarketCapSeries, type StablecoinMarketCapSeries } from '../marketCapPresentation'
 import { useStablecoinChartSelection, useStablecoinSelectionIntent } from '../useStablecoinChartSelection'
+import { buildUniqueStablecoinChartLabels } from '../utils'
 
-const EMPTY_RUNTIME_SERIES = { selectableSeries: [], renderedSelectableSeries: [], fixedRemainderSeries: [] }
 type RuntimeSeries = Pick<
 	StablecoinRuntimeSeries,
-	'selectableSeries' | 'renderedSelectableSeries' | 'fixedRemainderSeries'
+	'selectableSeries' | 'defaultSeries' | 'renderedSelectableSeries' | 'fixedRemainderSeries'
 >
+const EMPTY_RUNTIME_SERIES: RuntimeSeries = {
+	selectableSeries: [],
+	defaultSeries: [],
+	renderedSelectableSeries: [],
+	fixedRemainderSeries: []
+}
 type SelectionResult = ReturnType<typeof useStablecoinChartSelection>
 
 function SelectionHarness({
@@ -42,7 +48,7 @@ describe('useStablecoinChartSelection', () => {
 	let latest: SelectionResult
 
 	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -51,6 +57,7 @@ describe('useStablecoinChartSelection', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
+		vi.unstubAllGlobals()
 	})
 
 	const renderSelection = async (
@@ -117,9 +124,51 @@ describe('useStablecoinChartSelection', () => {
 		expect(latest.activeSeries).toEqual(['Token 20', 'Token 21'])
 	})
 
+	it('keeps duplicate symbols distinct while excluding only double-counted peers by default', async () => {
+		const [canonicalLabel, doubleCountedLabel, reservedLabel] = buildUniqueStablecoinChartLabels(
+			[
+				{ id: '1', name: 'Canonical USX', symbol: 'USX', gecko_id: 'canonical-usx' },
+				{ id: '2', name: 'Wrapped USX', symbol: 'USX', gecko_id: 'wrapped-usx' },
+				{ id: '3', name: 'Other Coin', symbol: 'Others', gecko_id: 'other-coin' }
+			],
+			'symbol'
+		)
+		if (!canonicalLabel || !doubleCountedLabel || !reservedLabel) {
+			throw new Error('Expected a chart label for each stablecoin')
+		}
+		expect(reservedLabel).toBe('Other Coin')
+		const canonicalRow = { chartLabel: canonicalLabel, symbol: 'USX', value: 100, doublecounted: false }
+		const doubleCountedRow = { chartLabel: doubleCountedLabel, symbol: 'USX', value: 50, doublecounted: true }
+		const rows = [canonicalRow, doubleCountedRow]
+		const series = prepareStablecoinMarketCapSeries({
+			rows,
+			view: 'pie',
+			getName: (row) => row.chartLabel,
+			getValue: (row) => row.value,
+			isAggregateIncluded: (row) => !row.doublecounted
+		})
+
+		await renderSelection(series)
+		expect(latest.selectableSeries).toEqual([canonicalLabel, doubleCountedLabel])
+		expect(latest.activeSeries).toEqual([canonicalLabel])
+
+		act(() => latest.setSelectedSeries([doubleCountedLabel]))
+		expect(latest.activeSeries).toEqual([doubleCountedLabel])
+
+		const filteredSeries = prepareStablecoinMarketCapSeries({
+			rows: [doubleCountedRow],
+			view: 'pie',
+			getName: (row) => row.chartLabel,
+			getValue: (row) => row.value,
+			isAggregateIncluded: (row) => !row.doublecounted
+		})
+		expect(filteredSeries.selectionSeries).toEqual([doubleCountedLabel])
+	})
+
 	it('preserves runtime selection and fixed-remainder behavior across snapshot views', async () => {
 		const runtimeSeries: RuntimeSeries = {
 			selectableSeries: ['A', 'B', 'C'],
+			defaultSeries: ['A', 'B', 'C'],
 			renderedSelectableSeries: ['A', 'B', 'C'],
 			fixedRemainderSeries: ['Others']
 		}
@@ -159,6 +208,7 @@ describe('useStablecoinChartSelection', () => {
 		await renderSelection(snapshot, runtimeSeries)
 		await renderSelection(null, {
 			selectableSeries: ['D', 'E'],
+			defaultSeries: ['D', 'E'],
 			renderedSelectableSeries: ['D', 'E'],
 			fixedRemainderSeries: ['Others']
 		})
@@ -166,9 +216,24 @@ describe('useStablecoinChartSelection', () => {
 		expect(latest.renderedCharts).toEqual(new Set())
 	})
 
+	it('selects every default peer while rendering a bounded breakdown plus Others', async () => {
+		const runtimeSeries: RuntimeSeries = {
+			selectableSeries: ['A', 'B', 'C', 'D'],
+			defaultSeries: ['A', 'B', 'C', 'D'],
+			renderedSelectableSeries: ['A', 'B'],
+			fixedRemainderSeries: ['Others']
+		}
+
+		await renderSelection(null, runtimeSeries)
+
+		expect(latest.activeSeries).toEqual(['A', 'B', 'C', 'D'])
+		expect(latest.renderedCharts).toEqual(new Set(['A', 'B', 'C', 'D', 'Others']))
+	})
+
 	it('carries an explicit select-all intent into a larger peer universe', async () => {
 		const runtimeSeries: RuntimeSeries = {
 			selectableSeries: ['A', 'B'],
+			defaultSeries: ['A', 'B'],
 			renderedSelectableSeries: ['A', 'B'],
 			fixedRemainderSeries: ['Others']
 		}

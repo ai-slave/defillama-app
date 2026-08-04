@@ -36,7 +36,10 @@ interface UseStablecoinsChartDataResult {
 
 const EMPTY_CHART_PAYLOAD: StablecoinChartSeriesPayload = {
 	dataset: { source: [], dimensions: ['timestamp'] },
-	charts: []
+	charts: [],
+	valueSymbol: '$',
+	stacked: false,
+	showTotalInTooltip: false
 }
 const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 10, upstreamOthersValue: 0 }
 type StablecoinPresentation = Omit<UseStablecoinsChartDataResult, 'isLoading' | 'error'>
@@ -76,10 +79,9 @@ const getProStablecoinChartParams = (rawData: StablecoinsChartCacheValue, chain:
 	chartDataByAssetOrChain: rawData.chartDataByPeggedAsset,
 	assetsOrChainsList: rawData.peggedAssetNames,
 	filteredIndexes: rawData.chartDataByPeggedAsset.map((_, index) => index),
-	issuanceType: 'mcap',
+	issuanceType: 'mcap' as const,
 	selectedChain: chain,
-	doublecountedIds: rawData.doublecountedIds,
-	carryForwardAfterSeriesEnd: true
+	doublecountedIds: rawData.doublecountedIds
 })
 
 const buildProStablecoinPresentationResult = (
@@ -106,10 +108,23 @@ const buildProStablecoinPresentationResult = (
 		if (typeof latestMcap === 'number') {
 			totalMcapCurrent = latestMcap
 		} else if (chartType === 'pie') {
-			let total = pieSeries.upstreamOthersValue
-			for (const peer of pieSeries.peers) total += peer.value
-			totalMcapCurrent = pieSeries.peers.length > 0 || pieSeries.upstreamOthersValue > 0 ? total : null
+			let total = 0
+			let hasAggregateValue = false
+			for (const asset of rawData.pieAssets) {
+				if (!asset.aggregateIncluded || asset.mcap == null) continue
+				total += asset.mcap
+				hasAggregateValue = true
+			}
+			totalMcapCurrent = hasAggregateValue ? total : null
 		}
+	}
+	const defaultSeries: string[] = []
+	if (chartType === 'pie') {
+		for (const asset of rawData.pieAssets) {
+			if (asset.aggregateIncluded && asset.mcap != null && asset.mcap > 0) defaultSeries.push(asset.symbol)
+		}
+	} else {
+		defaultSeries.push(...(chartPayload.defaultSeries ?? []))
 	}
 
 	return {
@@ -117,7 +132,7 @@ const buildProStablecoinPresentationResult = (
 		pieSeries,
 		seriesNames: rawData.peggedAssetNames,
 		availableSeries: chartPayload.availableSeries ?? [],
-		defaultSeries: chartPayload.defaultSeries ?? [],
+		defaultSeries,
 		totalMcapCurrent
 	}
 }

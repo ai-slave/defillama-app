@@ -25,7 +25,7 @@ import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
-import { formatRatio, formatPercent, formatUsd } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 
 type StablecoinsByChainRow = ReturnType<typeof useGroupChainsPegged>[number]
 type StablecoinsChainsTableMeta = { deprecatedChains: Record<string, true> }
@@ -156,14 +156,6 @@ const stablecoinsByChainColumns = [
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {
 			headerClassName: 'w-[min(185px,40vw)]',
-			align: 'end'
-		}
-	}),
-	columnHelper.accessor('mcaptvl', {
-		header: 'Stables Mcap / DeFi Tvl',
-		cell: (info) => formatRatio(info.getValue()),
-		meta: {
-			headerClassName: 'w-[min(195px,40vw)]',
 			align: 'end'
 		}
 	})

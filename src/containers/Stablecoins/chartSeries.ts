@@ -47,28 +47,30 @@ export interface StablecoinChartSeriesPayload {
 	charts: MultiSeriesChartSeriesConfig[]
 	availableSeries?: string[]
 	defaultSeries?: string[]
-	valueSymbol?: string
-	stacked?: boolean
-	showTotalInTooltip?: boolean
+	valueSymbol: string
+	stacked: boolean
+	showTotalInTooltip: boolean
 	expandTo100Percent?: boolean
 	summary?: StablecoinChartSummary
 }
 
 export interface StablecoinRuntimeSeries {
 	selectableSeries: string[]
+	defaultSeries: string[]
 	renderedSelectableSeries: string[]
 	fixedRemainderSeries: string[]
 	alwaysVisibleSeries: string[]
 }
 
 export function getStablecoinRuntimeSeries(
-	payload: Pick<StablecoinChartSeriesPayload, 'charts' | 'availableSeries'>
+	payload: Pick<StablecoinChartSeriesPayload, 'charts' | 'availableSeries' | 'defaultSeries'>
 ): StablecoinRuntimeSeries {
 	const configuredSeries = payload.charts.map((chart) => chart.name)
 	const fixedRemainderSeries = configuredSeries.filter((name) => name === STABLECOIN_OTHERS_SERIES_NAME)
 	if (!payload.availableSeries) {
 		return {
 			selectableSeries: configuredSeries.filter((name) => name !== STABLECOIN_OTHERS_SERIES_NAME),
+			defaultSeries: configuredSeries.filter((name) => name !== STABLECOIN_OTHERS_SERIES_NAME),
 			renderedSelectableSeries: configuredSeries.filter((name) => name !== STABLECOIN_OTHERS_SERIES_NAME),
 			fixedRemainderSeries,
 			alwaysVisibleSeries: []
@@ -78,6 +80,9 @@ export function getStablecoinRuntimeSeries(
 	const availableSet = new Set(payload.availableSeries)
 	return {
 		selectableSeries: payload.availableSeries.filter((name) => name !== STABLECOIN_OTHERS_SERIES_NAME),
+		defaultSeries: (payload.defaultSeries ?? payload.availableSeries).filter(
+			(name) => name !== STABLECOIN_OTHERS_SERIES_NAME
+		),
 		renderedSelectableSeries: configuredSeries.filter(
 			(name) => name !== STABLECOIN_OTHERS_SERIES_NAME && availableSet.has(name)
 		),
@@ -105,7 +110,7 @@ type StablecoinBreakdownSelection = {
 	explicitSeries: string[]
 	omittedSeries: string[]
 	visibleSeries: string[]
-	includesAllSeries: boolean
+	deriveOmittedFromAggregate: boolean
 	excludedSeries: string[]
 }
 
@@ -114,31 +119,14 @@ const resolveStablecoinBreakdownSelection = ({
 	selectedNames,
 	excludedNames,
 	seriesLimit,
-	getLatestValue
+	getLatestValue,
+	defaultSeriesNames
 }: StablecoinBreakdownSelectionOptions & {
 	seriesNames: string[]
 	getLatestValue: (name: string) => number
+	defaultSeriesNames?: readonly string[]
 }): StablecoinBreakdownSelection => {
-	const hasExclusions = excludedNames != null && excludedNames.length > 0
-	if (seriesLimit == null && selectedNames == null && !hasExclusions) {
-		const visibleSeries: string[] = []
-		const seen = new Set<string>()
-		for (const name of seriesNames) {
-			if (!name || seen.has(name)) continue
-			seen.add(name)
-			visibleSeries.push(name)
-		}
-		return {
-			availableSeries: visibleSeries,
-			defaultSeries: visibleSeries,
-			explicitSeries: visibleSeries,
-			omittedSeries: [],
-			visibleSeries,
-			includesAllSeries: true,
-			excludedSeries: []
-		}
-	}
-
+	const hasExclusionIntent = excludedNames != null
 	const uniqueNames: string[] = []
 	const seen = new Set<string>()
 	let hasReservedOthers = false
@@ -155,30 +143,45 @@ const resolveStablecoinBreakdownSelection = ({
 	// Ranking once at the presentation boundary keeps the default chart bounded
 	// without changing the chronological order of the underlying dataset.
 	const originalOrder = new Map(uniqueNames.map((name, index) => [name, index]))
-	const availableSeries = [...uniqueNames].sort((a, b) => {
-		const valueDifference = getLatestValue(b) - getLatestValue(a)
-		return valueDifference || (originalOrder.get(a) ?? 0) - (originalOrder.get(b) ?? 0)
-	})
-	const selectionLimit = Math.min(availableSeries.length, Math.max(0, seriesLimit ?? availableSeries.length))
-	const defaultSeries = availableSeries.slice(0, selectionLimit)
+	const availableSeries =
+		seriesLimit == null && selectedNames == null && !hasExclusionIntent
+			? uniqueNames
+			: [...uniqueNames].sort((a, b) => {
+					const valueDifference = getLatestValue(b) - getLatestValue(a)
+					return valueDifference || (originalOrder.get(a) ?? 0) - (originalOrder.get(b) ?? 0)
+				})
+	const aggregateNameSet = defaultSeriesNames ? new Set(defaultSeriesNames) : null
+	const aggregateCandidates = aggregateNameSet
+		? availableSeries.filter((name) => aggregateNameSet.has(name))
+		: availableSeries
+	const selectionLimit = Math.max(0, seriesLimit ?? availableSeries.length)
+	const defaultSeries = aggregateCandidates
 
-	let explicitSeries = defaultSeries
-	let omittedSeries = availableSeries.slice(selectionLimit)
+	let explicitSeries = aggregateCandidates.slice(0, selectionLimit)
+	let omittedSeries = aggregateCandidates.slice(selectionLimit)
 	let excludedSeries: string[] = []
-	if (hasExclusions) {
+	if (hasExclusionIntent) {
 		const excludedSet = new Set(excludedNames)
-		excludedSeries = availableSeries.filter((name) => excludedSet.has(name))
+		excludedSeries = aggregateCandidates.filter((name) => excludedSet.has(name))
 		const includedSeries = availableSeries.filter((name) => !excludedSet.has(name))
 		explicitSeries = includedSeries.slice(0, selectionLimit)
-		omittedSeries = includedSeries.length > selectionLimit ? [STABLECOIN_OTHERS_SERIES_NAME] : []
+		omittedSeries = aggregateNameSet
+			? includedSeries.slice(selectionLimit).filter((name) => aggregateNameSet.has(name))
+			: includedSeries.slice(selectionLimit)
 	} else if (selectedNames != null) {
 		const selectedSet = new Set(selectedNames)
 		const validSelectedSeries = availableSeries.filter((name) => selectedSet.has(name))
 		explicitSeries = validSelectedSeries.slice(0, selectionLimit)
-		omittedSeries = validSelectedSeries.slice(selectionLimit)
+		omittedSeries = aggregateNameSet
+			? validSelectedSeries.slice(selectionLimit).filter((name) => aggregateNameSet.has(name))
+			: validSelectedSeries.slice(selectionLimit)
 	}
 
-	if (selectedNames == null && !hasExclusions && hasReservedOthers) {
+	if (
+		selectedNames == null &&
+		hasReservedOthers &&
+		(!aggregateNameSet || aggregateNameSet.has(STABLECOIN_OTHERS_SERIES_NAME))
+	) {
 		omittedSeries.push(STABLECOIN_OTHERS_SERIES_NAME)
 	}
 	const visibleSeries = omittedSeries.length > 0 ? [...explicitSeries, STABLECOIN_OTHERS_SERIES_NAME] : explicitSeries
@@ -189,7 +192,7 @@ const resolveStablecoinBreakdownSelection = ({
 		explicitSeries,
 		omittedSeries,
 		visibleSeries,
-		includesAllSeries: selectedNames == null && !hasExclusions,
+		deriveOmittedFromAggregate: selectedNames == null && !hasExclusionIntent,
 		excludedSeries
 	}
 }
@@ -216,27 +219,36 @@ const TOTAL_CIRC_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{ type: 'line', name: 'Circulating', encode: { x: 0, y: 1 }, color: CHART_COLORS[0] }
 ]
 
-const USD_INFLOWS_CHARTS: MultiSeriesChartSeriesConfig[] = [
-	{ type: 'bar', name: 'Inflows', encode: { x: 0, y: 1 }, color: CHART_COLORS[0] }
-]
+const USD_INFLOWS_CHART: MultiSeriesChartSeriesConfig = {
+	type: 'bar',
+	name: 'Inflows',
+	encode: { x: 0, y: 1 },
+	color: CHART_COLORS[0]
+}
 
-const getSeriesNames = (
-	assetsOrChainsList: string[],
-	filteredIndexes?: number[],
-	doublecountedIds?: number[]
-): string[] => {
+const USD_INFLOWS_CHARTS: MultiSeriesChartSeriesConfig[] = [USD_INFLOWS_CHART]
+
+const getStablecoinSeriesColor = (name: string, index: number): string =>
+	TOKEN_COLORS[name] ?? CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
+
+const buildTimestampValueRows = (timestamps: readonly number[], values: readonly number[]) => {
+	const source: MultiSeriesTimeSeriesDataset['source'] = []
+	for (const [index, timestamp] of timestamps.entries()) {
+		source.push([timestamp, values[index]!])
+	}
+	return source
+}
+
+const getSeriesNames = (assetsOrChainsList: string[], filteredIndexes?: number[]): string[] => {
 	const names: string[] = []
-	const doublecountedSet = doublecountedIds?.length ? new Set(doublecountedIds) : null
 	if (!filteredIndexes) {
 		for (let i = 0; i < assetsOrChainsList.length; i++) {
-			if (doublecountedSet?.has(i)) continue
 			const name = assetsOrChainsList[i]
 			if (name) names.push(name)
 		}
 		return names
 	}
 	for (const index of filteredIndexes) {
-		if (doublecountedSet?.has(index)) continue
 		const name = assetsOrChainsList[index]
 		if (name) names.push(name)
 	}
@@ -250,8 +262,6 @@ export type StablecoinCanonicalSeries = {
 	latestVisibleValue: number
 	offset: number
 	length: number
-	carryAfterTimestamp: number | null
-	carryValue: number
 }
 
 export type StablecoinCanonicalHistory = {
@@ -262,41 +272,17 @@ export type StablecoinCanonicalHistory = {
 	seriesValues: Float64Array
 	totalPoints: StablecoinMcapPoint[]
 	topToken: { symbol: string; mcap: number }
+	aggregateSeries: string[]
 }
 
-type StablecoinTailCarry = { timestamp: number; value: number }
-
-const applyStablecoinTailCarry = (
-	timestamps: number[],
-	totalByTimestamp: Map<number, number>,
-	carryPoints: StablecoinTailCarry[]
-): void => {
-	for (const carry of carryPoints) {
-		let low = 0
-		let high = timestamps.length
-		while (low < high) {
-			const middle = (low + high) >>> 1
-			if (timestamps[middle] <= carry.timestamp) low = middle + 1
-			else high = middle
-		}
-		for (let index = low; index < timestamps.length; index++) {
-			const timestamp = timestamps[index]
-			totalByTimestamp.set(timestamp, (totalByTimestamp.get(timestamp) ?? 0) + carry.value)
-		}
-	}
-}
-
-const getEligibleStablecoinIndexes = ({
+const getStablecoinIndexes = ({
 	chartDataByAssetOrChain,
-	filteredIndexes,
-	doublecountedIds = []
+	filteredIndexes
 }: IBuildStablecoinChartDataParams): number[] => {
 	const included = filteredIndexes ? new Set(filteredIndexes) : null
-	const excluded = doublecountedIds.length ? new Set(doublecountedIds) : null
 	const indexes: number[] = []
 	for (let index = 0; index < chartDataByAssetOrChain.length; index++) {
 		if (included && !included.has(index)) continue
-		if (excluded?.has(index)) continue
 		indexes.push(index)
 	}
 	return indexes
@@ -319,7 +305,8 @@ export const collectCanonicalStablecoinArea = (
 			seriesTimestamps: new Float64Array(),
 			seriesValues: new Float64Array(),
 			totalPoints: [],
-			topToken: { symbol: 'USDT', mcap: 0 }
+			topToken: { symbol: 'USDT', mcap: 0 },
+			aggregateSeries: []
 		}
 	}
 
@@ -330,14 +317,17 @@ export const collectCanonicalStablecoinArea = (
 	const seriesMode = options.seriesMode ?? 'none'
 	let topToken = { symbol: 'USDT', mcap: 0 }
 	const seriesByName = new Map<string, StablecoinCanonicalSeries>()
-	const carryPoints: StablecoinTailCarry[] = []
-	const eligibleIndexes = getEligibleStablecoinIndexes(params)
+	const indexes = getStablecoinIndexes(params)
+	const doublecountedSet = params.doublecountedIds?.length ? new Set(params.doublecountedIds) : null
+	const processedIndexes = seriesMode === 'history' ? indexes : indexes.filter((index) => !doublecountedSet?.has(index))
+	const seriesTimeline = seriesMode === 'history' ? new Set<number>() : null
+	const aggregateSeries = seriesMode === 'history' ? new Set<string>() : null
 	let seriesCapacity = 0
 	if (seriesMode !== 'none') {
 		if (seriesMode === 'history') {
-			for (const index of eligibleIndexes) seriesCapacity += params.chartDataByAssetOrChain[index]?.length ?? 0
+			for (const index of processedIndexes) seriesCapacity += params.chartDataByAssetOrChain[index]?.length ?? 0
 		}
-		for (const name of getSeriesNames(params.assetsOrChainsList, params.filteredIndexes, params.doublecountedIds)) {
+		for (const name of getSeriesNames(params.assetsOrChainsList, params.filteredIndexes)) {
 			if (!seriesByName.has(name)) {
 				seriesByName.set(name, {
 					name,
@@ -345,9 +335,7 @@ export const collectCanonicalStablecoinArea = (
 					latestVisibleTimestamp: null,
 					latestVisibleValue: 0,
 					offset: 0,
-					length: 0,
-					carryAfterTimestamp: null,
-					carryValue: 0
+					length: 0
 				})
 			}
 		}
@@ -356,31 +344,36 @@ export const collectCanonicalStablecoinArea = (
 	const seriesValues = new Float64Array(seriesCapacity)
 	let writeIndex = 0
 
-	for (const index of eligibleIndexes) {
+	for (const index of processedIndexes) {
 		const inputChart = params.chartDataByAssetOrChain[index]
 		const name = params.assetsOrChainsList[index]
-		if (!inputChart?.length || !name) continue
+		if (!name) continue
+		const contributesToAggregate = !doublecountedSet?.has(index)
+		if (contributesToAggregate) aggregateSeries?.add(name)
+		if (!inputChart?.length) continue
 		const canonicalSeries = seriesByName.get(name)
 		if (canonicalSeries && seriesMode === 'history') canonicalSeries.offset = writeIndex
-		let latestTimestamp: number | null = null
-		let latestValue = 0
 		for (const point of inputChart) {
 			const circulating = getStablecoinValueFromPoint(point, issuanceType)
 			if (circulating == null) continue
-			const value = options.includeUnreleased
-				? circulating + (getStablecoinValueFromPoint(point, 'unreleased') ?? 0)
-				: circulating
+			let value = circulating
+			if (options.includeUnreleased) {
+				const unreleased = getStablecoinValueFromPoint(point, 'unreleased')
+				if (unreleased == null) continue
+				value += unreleased
+			}
 			if (canonicalSeries) canonicalSeries.latestValue = value
-			latestTimestamp = Number(point.date) * 1e3
-			latestValue = value
 			if (!isStablecoinChartDateVisible(params.selectedChain, point.date)) continue
-			const timestamp = latestTimestamp
+			const timestamp = Number(point.date) * 1e3
 			if (canonicalSeries) {
 				canonicalSeries.latestVisibleTimestamp = timestamp
 				canonicalSeries.latestVisibleValue = value
 			}
-			totalByTimestamp.set(timestamp, (totalByTimestamp.get(timestamp) ?? 0) + value)
-			if (point.isSynthetic !== true) realTimestamps?.add(timestamp)
+			seriesTimeline?.add(timestamp)
+			if (contributesToAggregate) {
+				totalByTimestamp.set(timestamp, (totalByTimestamp.get(timestamp) ?? 0) + value)
+				if (point.isSynthetic !== true) realTimestamps?.add(timestamp)
+			}
 			if (canonicalSeries && seriesMode === 'history') {
 				const priorIndex = writeIndex - 1
 				if (canonicalSeries.length > 0 && seriesTimestamps[priorIndex] === timestamp) seriesValues[priorIndex] = value
@@ -392,36 +385,18 @@ export const collectCanonicalStablecoinArea = (
 				}
 			}
 		}
-		if (params.carryForwardAfterSeriesEnd && latestTimestamp != null) {
-			carryPoints.push({ timestamp: latestTimestamp, value: latestValue })
-			if (canonicalSeries) {
-				canonicalSeries.carryAfterTimestamp = latestTimestamp
-				canonicalSeries.carryValue = latestValue
-			}
-		}
-		if (canonicalSeries && canonicalSeries.latestValue > topToken.mcap) {
+		if (contributesToAggregate && canonicalSeries && canonicalSeries.latestValue > topToken.mcap) {
 			topToken = { symbol: name, mcap: canonicalSeries.latestValue }
 		}
 	}
 
 	// Each API series is ascending, but independently timed series interleave in the shared map.
-	const timestamps = Array.from(totalByTimestamp.keys()).sort((a, b) => a - b)
-	if (params.carryForwardAfterSeriesEnd) applyStablecoinTailCarry(timestamps, totalByTimestamp, carryPoints)
-	const latestTimelineTimestamp = timestamps[timestamps.length - 1]
-	if (latestTimelineTimestamp != null) {
-		for (const series of seriesByName.values()) {
-			if (series.carryAfterTimestamp != null && series.carryAfterTimestamp < latestTimelineTimestamp) {
-				series.latestVisibleTimestamp = latestTimelineTimestamp
-				series.latestVisibleValue = series.carryValue
-			}
-		}
-	}
-	const totals = new Array<number>(timestamps.length)
+	const timestamps = Array.from(seriesTimeline ?? totalByTimestamp.keys()).sort((a, b) => a - b)
+	const totals: number[] = []
 	const totalPoints: StablecoinMcapPoint[] = []
-	for (let index = 0; index < timestamps.length; index++) {
-		const timestamp = timestamps[index]
+	for (const timestamp of timestamps) {
 		const total = totalByTimestamp.get(timestamp) ?? 0
-		totals[index] = total
+		totals.push(total)
 		if (options.includeSummary) {
 			totalPoints.push({
 				date: String(timestamp / 1e3),
@@ -439,7 +414,8 @@ export const collectCanonicalStablecoinArea = (
 		seriesTimestamps,
 		seriesValues,
 		totalPoints,
-		topToken
+		topToken,
+		aggregateSeries: aggregateSeries ? Array.from(aggregateSeries) : []
 	}
 }
 
@@ -455,32 +431,35 @@ const collectCanonicalStablecoinInflowHistory = (
 			seriesTimestamps: new Float64Array(),
 			seriesValues: new Float64Array(),
 			totalPoints: [],
-			topToken: { symbol: 'USDT', mcap: 0 }
+			topToken: { symbol: 'USDT', mcap: 0 },
+			aggregateSeries: []
 		}
 	}
 	const totalInflowsByTimestamp = new Map<number, number>()
 	const totalByTimestamp = new Map<number, number>()
 	const realTimestamps = includeSummary ? new Set<number>() : null
 	const series: StablecoinCanonicalSeries[] = []
-	const carryPoints: StablecoinTailCarry[] = []
+	const timelineTimestamps = new Set<number>()
 	let topToken = { symbol: 'USDT', mcap: 0 }
-	const eligibleIndexes = getEligibleStablecoinIndexes(params)
+	const indexes = getStablecoinIndexes(params)
+	const doublecountedSet = params.doublecountedIds?.length ? new Set(params.doublecountedIds) : null
+	const aggregateSeries = new Set<string>()
 	let seriesCapacity = 0
-	for (const index of eligibleIndexes) seriesCapacity += params.chartDataByAssetOrChain[index]?.length ?? 0
+	for (const index of indexes) seriesCapacity += params.chartDataByAssetOrChain[index]?.length ?? 0
 	const seriesTimestamps = new Float64Array(seriesCapacity)
 	const seriesValues = new Float64Array(seriesCapacity)
 	let writeIndex = 0
 
-	for (const index of eligibleIndexes) {
+	for (const index of indexes) {
 		const inputChart = params.chartDataByAssetOrChain[index]
 		const name = params.assetsOrChainsList[index]
 		if (!inputChart?.length || !name) continue
+		const contributesToAggregate = !doublecountedSet?.has(index)
 		let previousValue: number | null = null
 		let hasInflows = false
 		let priorAdjustedTimestamp = Number.NEGATIVE_INFINITY
 		let priorContribution = 0
 		let latestValue = 0
-		let latestTimestamp: number | null = null
 		let latestVisibleTimestamp: number | null = null
 		let latestVisibleValue = 0
 		const offset = writeIndex
@@ -491,25 +470,27 @@ const collectCanonicalStablecoinInflowHistory = (
 			previousValue = value
 			if (value == null) continue
 			latestValue = value
-			latestTimestamp = Number(point.date) * 1e3
 			if (!isStablecoinChartDateVisible(params.selectedChain, point.date)) continue
-			const timestamp = latestTimestamp
+			const timestamp = Number(point.date) * 1e3
 			latestVisibleTimestamp = timestamp
 			latestVisibleValue = value
-			if (includeSummary) {
+			if (includeSummary && contributesToAggregate) {
 				totalByTimestamp.set(timestamp, (totalByTimestamp.get(timestamp) ?? 0) + value)
 				if (point.isSynthetic !== true) realTimestamps?.add(timestamp)
 			}
 			const difference = value - (priorValue ?? 0)
 			if (hasInflows) {
 				const adjustedTimestamp = timestamp - 86_400_000
+				timelineTimestamps.add(adjustedTimestamp)
 				const previousContribution = priorAdjustedTimestamp === adjustedTimestamp ? priorContribution : 0
 				priorAdjustedTimestamp = adjustedTimestamp
 				priorContribution = difference
-				totalInflowsByTimestamp.set(
-					adjustedTimestamp,
-					(totalInflowsByTimestamp.get(adjustedTimestamp) ?? 0) + difference - previousContribution
-				)
+				if (contributesToAggregate) {
+					totalInflowsByTimestamp.set(
+						adjustedTimestamp,
+						(totalInflowsByTimestamp.get(adjustedTimestamp) ?? 0) + difference - previousContribution
+					)
+				}
 				const priorIndex = writeIndex - 1
 				if (length > 0 && seriesTimestamps[priorIndex] === adjustedTimestamp) seriesValues[priorIndex] = difference
 				else {
@@ -521,37 +502,39 @@ const collectCanonicalStablecoinInflowHistory = (
 			}
 			if (difference) hasInflows = true
 		}
-		if (latestValue > topToken.mcap) topToken = { symbol: name, mcap: latestValue }
-		if (params.carryForwardAfterSeriesEnd && latestTimestamp != null) {
-			carryPoints.push({ timestamp: latestTimestamp, value: latestValue })
-		}
+		if (contributesToAggregate && latestValue > topToken.mcap) topToken = { symbol: name, mcap: latestValue }
 		if (length) {
+			if (contributesToAggregate) aggregateSeries.add(name)
 			series.push({
 				name,
 				latestValue,
 				latestVisibleTimestamp,
 				latestVisibleValue,
 				offset,
-				length,
-				carryAfterTimestamp: null,
-				carryValue: 0
+				length
 			})
 		}
 	}
 
 	// Each API series is ascending, but independently timed series interleave in the shared map.
-	const timestamps = Array.from(totalInflowsByTimestamp.keys()).sort((a, b) => a - b)
+	const timestamps = Array.from(timelineTimestamps).sort((a, b) => a - b)
 	const totals = timestamps.map((timestamp) => totalInflowsByTimestamp.get(timestamp) ?? 0)
 	const totalTimestamps = includeSummary ? Array.from(totalByTimestamp.keys()).sort((a, b) => a - b) : []
-	if (includeSummary && params.carryForwardAfterSeriesEnd) {
-		applyStablecoinTailCarry(totalTimestamps, totalByTimestamp, carryPoints)
-	}
 	const totalPoints = totalTimestamps.map((timestamp) => ({
 		date: String(timestamp / 1e3),
 		Mcap: totalByTimestamp.get(timestamp) ?? 0,
 		...(!realTimestamps?.has(timestamp) ? { isSynthetic: true } : {})
 	}))
-	return { timestamps, totals, series, seriesTimestamps, seriesValues, totalPoints, topToken }
+	return {
+		timestamps,
+		totals,
+		series,
+		seriesTimestamps,
+		seriesValues,
+		totalPoints,
+		topToken,
+		aggregateSeries: Array.from(aggregateSeries)
+	}
 }
 
 const buildStablecoinBreakdownDatasetFromCollection = ({
@@ -570,24 +553,22 @@ const buildStablecoinBreakdownDatasetFromCollection = ({
 		return row
 	})
 	const seriesByName = new Map(collection.series.map((series) => [series.name, series]))
-	for (let seriesIndex = 0; seriesIndex < selection.explicitSeries.length; seriesIndex++) {
-		const series = seriesByName.get(selection.explicitSeries[seriesIndex])
+	for (const [seriesIndex, seriesName] of selection.explicitSeries.entries()) {
+		const series = seriesByName.get(seriesName)
 		if (!series) continue
 		let pointIndex = 0
-		for (let rowIndex = 0; rowIndex < collection.timestamps.length && pointIndex < series.length; rowIndex++) {
-			const timestamp = collection.timestamps[rowIndex]
-			while (pointIndex < series.length && collection.seriesTimestamps[series.offset + pointIndex] < timestamp) {
+		for (let rowIndex = 0; rowIndex < collection.timestamps.length; rowIndex++) {
+			if (pointIndex >= series.length) break
+			const timestamp = collection.timestamps[rowIndex]!
+			let pointTimestamp = collection.seriesTimestamps[series.offset + pointIndex]!
+			while (pointIndex < series.length && pointTimestamp < timestamp) {
 				pointIndex++
-			}
-			if (pointIndex < series.length && collection.seriesTimestamps[series.offset + pointIndex] === timestamp) {
-				source[rowIndex][seriesIndex + 1] = collection.seriesValues[series.offset + pointIndex]
-			}
-		}
-		if (series.carryAfterTimestamp != null) {
-			for (let rowIndex = 0; rowIndex < collection.timestamps.length; rowIndex++) {
-				if (collection.timestamps[rowIndex] > series.carryAfterTimestamp) {
-					source[rowIndex][seriesIndex + 1] = series.carryValue
+				if (pointIndex < series.length) {
+					pointTimestamp = collection.seriesTimestamps[series.offset + pointIndex]!
 				}
+			}
+			if (pointIndex < series.length && pointTimestamp === timestamp) {
+				source[rowIndex]![seriesIndex + 1] = collection.seriesValues[series.offset + pointIndex]!
 			}
 		}
 	}
@@ -599,35 +580,37 @@ const buildStablecoinBreakdownDatasetFromCollection = ({
 			const series = seriesByName.get(name)
 			if (!series) continue
 			let pointIndex = 0
-			for (let rowIndex = 0; rowIndex < collection.timestamps.length && pointIndex < series.length; rowIndex++) {
-				const timestamp = collection.timestamps[rowIndex]
-				while (pointIndex < series.length && collection.seriesTimestamps[series.offset + pointIndex] < timestamp)
+			for (let rowIndex = 0; rowIndex < collection.timestamps.length; rowIndex++) {
+				if (pointIndex >= series.length) break
+				const timestamp = collection.timestamps[rowIndex]!
+				let pointTimestamp = collection.seriesTimestamps[series.offset + pointIndex]!
+				while (pointIndex < series.length && pointTimestamp < timestamp) {
 					pointIndex++
-				if (pointIndex < series.length && collection.seriesTimestamps[series.offset + pointIndex] === timestamp) {
-					totals[rowIndex] += collection.seriesValues[series.offset + pointIndex]
+					if (pointIndex < series.length) {
+						pointTimestamp = collection.seriesTimestamps[series.offset + pointIndex]!
+					}
 				}
-			}
-			if (series.carryAfterTimestamp != null) {
-				for (let rowIndex = 0; rowIndex < collection.timestamps.length; rowIndex++) {
-					if (collection.timestamps[rowIndex] > series.carryAfterTimestamp) totals[rowIndex] += series.carryValue
+				if (pointIndex < series.length && pointTimestamp === timestamp) {
+					totals[rowIndex]! += collection.seriesValues[series.offset + pointIndex]!
 				}
 			}
 		}
 		return totals
 	}
-	const omittedTotals =
-		!selection.includesAllSeries && selection.excludedSeries.length === 0
-			? accumulateSeries(selection.omittedSeries)
-			: null
+	const omittedTotals = selection.deriveOmittedFromAggregate ? null : accumulateSeries(selection.omittedSeries)
 	const excludedTotals = accumulateSeries(selection.excludedSeries)
 	for (let rowIndex = 0; rowIndex < source.length; rowIndex++) {
-		const row = source[rowIndex]
+		const row = source[rowIndex]!
 		if (othersIndex >= 0) {
 			let explicitTotal = 0
 			for (let index = 1; index < othersIndex; index++) explicitTotal += row[index] ?? 0
-			row[othersIndex] = omittedTotals
-				? omittedTotals[rowIndex]
-				: collection.totals[rowIndex] - explicitTotal - (excludedTotals?.[rowIndex] ?? 0)
+			if (omittedTotals) {
+				row[othersIndex] = omittedTotals[rowIndex]!
+			} else {
+				const aggregateTotal = collection.totals[rowIndex]!
+				const excludedTotal = excludedTotals ? excludedTotals[rowIndex]! : 0
+				row[othersIndex] = aggregateTotal - explicitTotal - excludedTotal
+			}
 		}
 		if (fillMissingValues) {
 			for (let index = 1; index < row.length; index++) row[index] ??= 0
@@ -644,10 +627,11 @@ const getStablecoinSelectionFromCollection = (
 	const latestValues = new Map(collection.series.map((series) => [series.name, series.latestValue]))
 	return resolveStablecoinBreakdownSelection({
 		seriesNames,
-		selectedNames: options?.selectedNames,
-		excludedNames: options?.excludedNames,
-		seriesLimit: options?.seriesLimit,
-		getLatestValue: (name) => latestValues.get(name) ?? 0
+		...(options?.selectedNames !== undefined ? { selectedNames: options.selectedNames } : {}),
+		...(options?.excludedNames !== undefined ? { excludedNames: options.excludedNames } : {}),
+		...(options?.seriesLimit !== undefined ? { seriesLimit: options.seriesLimit } : {}),
+		getLatestValue: (name) => latestValues.get(name) ?? 0,
+		defaultSeriesNames: collection.aggregateSeries
 	})
 }
 
@@ -716,21 +700,26 @@ export const buildStablecoinMcapSummary = (params: IBuildStablecoinChartDataPara
 
 export const buildTotalMcapPayload = (
 	params: IBuildStablecoinChartDataParams,
-	options?: { totalName?: string; summaryTopToken?: { symbol: string; mcap: number }; includeUnreleased?: boolean }
+	options?: {
+		totalName?: string
+		summaryTopToken?: { symbol: string; mcap: number }
+		includeUnreleased?: boolean
+		valueSymbol?: string
+	}
 ): StablecoinChartSeriesPayload => {
 	const totalName = options?.totalName ?? 'Mcap'
 	const collected = collectCanonicalStablecoinArea(params, {
 		totalName,
 		includeSummary: options?.summaryTopToken != null,
-		includeUnreleased: options?.includeUnreleased
+		...(options?.includeUnreleased !== undefined ? { includeUnreleased: options.includeUnreleased } : {})
 	})
 	const payload: StablecoinChartSeriesPayload = {
 		dataset: {
 			dimensions: ['timestamp', totalName],
-			source: collected.timestamps.map((timestamp, index) => [timestamp, collected.totals[index]])
+			source: buildTimestampValueRows(collected.timestamps, collected.totals)
 		},
 		charts: totalName === 'Circulating' ? TOTAL_CIRC_CHARTS : TOTAL_MCAP_CHARTS,
-		valueSymbol: totalName === 'Circulating' ? '' : '$',
+		valueSymbol: options?.valueSymbol ?? (totalName === 'Circulating' ? '' : '$'),
 		stacked: false,
 		showTotalInTooltip: false
 	}
@@ -761,13 +750,13 @@ export const buildAreaPayloadFromCollection = (
 		dataset: buildStablecoinBreakdownDatasetFromCollection({
 			collection: collected,
 			selection,
-			fillMissingValues: options.fillMissingValues
+			...(options.fillMissingValues !== undefined ? { fillMissingValues: options.fillMissingValues } : {})
 		}),
 		charts: selection.visibleSeries.map((name, index) => ({
 			type: 'line',
 			name,
 			encode: { x: 0, y: index + 1 },
-			color: TOKEN_COLORS[name] ?? CHART_COLORS[(canonicalColorIndex.get(name) ?? index) % CHART_COLORS.length],
+			color: getStablecoinSeriesColor(name, canonicalColorIndex.get(name) ?? index),
 			...(stacked ? { stack: options.stackName } : {})
 		})),
 		availableSeries: selection.availableSeries,
@@ -815,14 +804,14 @@ export const buildDominancePayloadFromCollection = (
 		for (let index = 1; index < inputRow.length; index++) total += inputRow[index] ?? 0
 		let lastPositiveIndex = -1
 		for (let index = 1; index < inputRow.length; index++) {
-			const percentage = getDominancePercent((inputRow[index] as number | undefined) ?? 0, total)
+			const percentage = getDominancePercent(inputRow[index] ?? 0, total)
 			row[index] = percentage
 			if (percentage > 0) lastPositiveIndex = index
 		}
 		if (lastPositiveIndex !== -1) {
 			let otherSeriesTotal = 0
 			for (let index = 1; index < inputRow.length; index++) {
-				if (index !== lastPositiveIndex) otherSeriesTotal += row[index]
+				if (index !== lastPositiveIndex) otherSeriesTotal += row[index] ?? 0
 			}
 			row[lastPositiveIndex] = 100 - otherSeriesTotal
 		}
@@ -834,7 +823,7 @@ export const buildDominancePayloadFromCollection = (
 			type: 'line',
 			name,
 			encode: { x: 0, y: index + 1 },
-			color: TOKEN_COLORS[name] ?? CHART_COLORS[(canonicalColorIndex.get(name) ?? index) % CHART_COLORS.length],
+			color: getStablecoinSeriesColor(name, canonicalColorIndex.get(name) ?? index),
 			stack: options?.stackName ?? 'dominance'
 		})),
 		availableSeries: selection.availableSeries,
@@ -856,7 +845,7 @@ export const buildDominancePayload = (
 ): StablecoinChartSeriesPayload => {
 	const collected = collectCanonicalStablecoinArea(params, {
 		includeSummary: options?.summaryTopToken != null,
-		includeUnreleased: options?.includeUnreleased,
+		...(options?.includeUnreleased !== undefined ? { includeUnreleased: options.includeUnreleased } : {}),
 		seriesMode: 'history'
 	})
 	return buildDominancePayloadFromCollection(collected, options)
@@ -871,14 +860,10 @@ const buildUsdInflowsPayloadFromCollection = (
 	const payload: StablecoinChartSeriesPayload = {
 		dataset: {
 			dimensions: ['timestamp', seriesName],
-			source: useFallback
-				? [[1652486400 * 1e3, 0]]
-				: collected.timestamps.map((timestamp, index) => [timestamp, collected.totals[index]])
+			source: useFallback ? [[1652486400 * 1e3, 0]] : buildTimestampValueRows(collected.timestamps, collected.totals)
 		},
-		charts:
-			seriesName === 'Inflows'
-				? USD_INFLOWS_CHARTS
-				: [{ ...USD_INFLOWS_CHARTS[0], name: seriesName, encode: { x: 0, y: 1 } }],
+		charts: seriesName === 'Inflows' ? USD_INFLOWS_CHARTS : [{ ...USD_INFLOWS_CHART, name: seriesName }],
+		valueSymbol: '$',
 		stacked: false,
 		showTotalInTooltip: false
 	}
@@ -915,14 +900,13 @@ const buildTokenInflowsPayloadFromCollection = (
 					latestVisibleTimestamp: 1652486400 * 1e3,
 					latestVisibleValue: 0,
 					offset: 0,
-					length: 1,
-					carryAfterTimestamp: null,
-					carryValue: 0
+					length: 1
 				}
 			],
 			seriesTimestamps: new Float64Array([1652486400 * 1e3]),
 			seriesValues: new Float64Array([0]),
-			topToken: { symbol: 'USDT', mcap: 0 }
+			topToken: { symbol: 'USDT', mcap: 0 },
+			aggregateSeries: ['USDT']
 		}
 	}
 	const selection = getStablecoinSelectionFromCollection(collected, options)
@@ -933,12 +917,13 @@ const buildTokenInflowsPayloadFromCollection = (
 			type: 'bar',
 			name,
 			encode: { x: 0, y: index + 1 },
-			color: TOKEN_COLORS[name] ?? CHART_COLORS[(canonicalColorIndex.get(name) ?? index) % CHART_COLORS.length],
+			color: getStablecoinSeriesColor(name, canonicalColorIndex.get(name) ?? index),
 			stack: 'tokenInflows',
 			large: false
 		})),
 		availableSeries: selection.availableSeries,
 		defaultSeries: selection.defaultSeries,
+		valueSymbol: '$',
 		stacked: true,
 		showTotalInTooltip: true
 	}
@@ -1017,7 +1002,7 @@ export const buildStablecoinOverviewPayload = (
 	if (chart === 'usdInflows') {
 		return buildUsdInflowsPayload(params, {
 			summaryTopToken: topToken,
-			seriesName: selectionOptions?.usdInflowsName
+			...(selectionOptions?.usdInflowsName !== undefined ? { seriesName: selectionOptions.usdInflowsName } : {})
 		})
 	}
 	return buildStablecoinOverviewPayloadFromCollection(

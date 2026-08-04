@@ -3,6 +3,7 @@ import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { StablecoinsTableRow } from './useStablecoinsData'
@@ -38,7 +39,7 @@ export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 
 			return (
 				<span className="flex items-center gap-1">
-					{pegDeviation && Math.abs(pegDeviation) >= 0.5 ? (
+					{pegDeviation != null && Math.abs(pegDeviation) >= 0.5 ? (
 						<Tooltip
 							content={`${pegDeviation > 0 ? '+' : ''}${formatPercent(pegDeviation, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })} from peg`}
 						>
@@ -50,7 +51,9 @@ export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 							/>
 						</Tooltip>
 					) : null}
-					<span>{value == null ? '-' : formatUsd(value, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}</span>
+					<span>
+						{value == null ? 'N/A' : formatUsd(value, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+					</span>
 				</span>
 			)
 		},
@@ -65,11 +68,20 @@ export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 		cell: ({ row }) => {
 			const value = row.original.mcap
 			return (
-				<>
-					{value == null
-						? '-'
-						: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-				</>
+				<span className="flex items-center justify-end gap-1">
+					{row.original.doublecounted ? (
+						<QuestionHelper text="This stablecoin is excluded from aggregate stablecoin market cap to avoid double counting." />
+					) : null}
+					<span className={row.original.doublecounted ? 'text-pro-text-tertiary' : ''}>
+						{value == null
+							? '-'
+							: formatUsd(value, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+					</span>
+				</span>
 			)
 		},
 		size: 145,
@@ -83,8 +95,8 @@ export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 		cell: ({ row }) => {
 			const value = row.original.change_1d
 			return (
-				<span className={` ${value != null && value < 0 ? 'text-error' : 'text-success'}`}>
-					{value == null ? '-' : <PercentChange percent={value} />}
+				<span className={value == null ? undefined : value < 0 ? 'text-error' : 'text-success'}>
+					<PercentChange percent={value} />
 				</span>
 			)
 		},
@@ -99,8 +111,8 @@ export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 		cell: ({ row }) => {
 			const value = row.original.change_7d
 			return (
-				<span className={` ${value != null && value < 0 ? 'text-error' : 'text-success'}`}>
-					{value == null ? '-' : <PercentChange percent={value} />}
+				<span className={value == null ? undefined : value < 0 ? 'text-error' : 'text-success'}>
+					<PercentChange percent={value} />
 				</span>
 			)
 		},
@@ -115,8 +127,8 @@ export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 		cell: ({ row }) => {
 			const value = row.original.change_1m
 			return (
-				<span className={` ${value != null && value < 0 ? 'text-error' : 'text-success'}`}>
-					{value == null ? '-' : <PercentChange percent={value} />}
+				<span className={value == null ? undefined : value < 0 ? 'text-error' : 'text-success'}>
+					<PercentChange percent={value} />
 				</span>
 			)
 		},

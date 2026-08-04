@@ -23,6 +23,8 @@ const chainPoint = (
 	...extra
 })
 
+const aggregatePoint = (days: number, Mcap: number) => ({ date: daysAgo(days), Mcap })
+
 const chainsRawFixture = (): StablecoinChainsPageInput => ({
 	peggedAssets: [],
 	chains: [
@@ -35,12 +37,7 @@ const chainsRawFixture = (): StablecoinChainsPageInput => ({
 		Arbitrum: { parent: { chain: 'Ethereum', types: ['L2'] } },
 		Base: { parent: { chain: 'Ethereum', types: ['L2'] } }
 	},
-	aggregatedChart: [
-		chainPoint(30, { peggedUSD: 700 }),
-		chainPoint(7, { peggedUSD: 800 }),
-		chainPoint(1, { peggedUSD: 900 }),
-		chainPoint(0, { peggedUSD: 1000 })
-	],
+	aggregatedChart: [aggregatePoint(30, 700), aggregatePoint(7, 800), aggregatePoint(1, 900), aggregatePoint(0, 1000)],
 	dominanceMap: {
 		Ethereum: [
 			{
@@ -83,41 +80,24 @@ const chainsRawFixture = (): StablecoinChainsPageInput => ({
 })
 
 describe('stablecoin server query helpers', () => {
-	it('normalizes bridge payloads while ignoring optional or missing bridge fields', () => {
+	it('normalizes measured bridge payloads and ignores source-only metadata', () => {
 		expect(
 			normalizeStablecoinBridges({
 				celer: {
-					Ethereum: { amount: 10 },
-					Polygon: {},
-					Base: null
+					Ethereum: { amount: '10' }
 				},
 				layerzero: {
-					Arbitrum: { amount: 0 },
-					Optimism: { amount: '12' }
+					source: 'Arbitrum',
+					amount: 0
 				},
-				empty: {},
-				invalid: null
+				sourceOnly: { source: 'Base' },
+				nomad: 25
 			})
 		).toEqual({
-			celer: {
-				Ethereum: { amount: 10 }
-			},
-			layerzero: {
-				Arbitrum: { amount: 0 },
-				Optimism: { amount: 12 }
-			}
+			celer: [{ amount: 10, sourceChain: 'Ethereum' }],
+			layerzero: [{ amount: 0, sourceChain: 'Arbitrum' }],
+			nomad: [{ amount: 25, sourceChain: null }]
 		})
-	})
-
-	it('returns null when no bridge source has a finite amount', () => {
-		expect(
-			normalizeStablecoinBridges({
-				celer: {
-					Ethereum: {},
-					Polygon: { amount: 'not-a-number' }
-				}
-			})
-		).toBeNull()
 	})
 
 	it('keeps duplicate display names as distinct asset-ID chart histories', () => {
@@ -140,6 +120,7 @@ describe('stablecoin server query helpers', () => {
 				{ ...baseAsset, id: '405' },
 				{ ...baseAsset, id: '192' }
 			],
+			doublecountedSourceIds: [],
 			breakdown: {
 				'405': [{ date: '1', totalCirculatingUSD: { peggedUSD: 40 } }],
 				'192': [{ date: '1', totalCirculatingUSD: { peggedUSD: 85 } }]
@@ -148,7 +129,13 @@ describe('stablecoin server query helpers', () => {
 
 		expect(inputs.peggedAssetIdToChartDataIndex).toEqual({ '192': 1, '405': 0 })
 		expect(inputs.peggedAssetNames).toEqual(['USDA', 'USDA (192)'])
-		expect(inputs.chartDataByPeggedAsset.map((history) => history[0].mcap.peggedUSD)).toEqual([40, 85])
+		expect(
+			inputs.chartDataByPeggedAsset.map((history) => {
+				const firstPoint = history[0]
+				if (!firstPoint) throw new Error('Expected each asset history to contain a point')
+				return firstPoint.mcap.peggedUSD
+			})
+		).toEqual([40, 85])
 		expect(
 			buildTotalMcapPayload({
 				chartDataByAssetOrChain: inputs.chartDataByPeggedAsset,
@@ -160,7 +147,7 @@ describe('stablecoin server query helpers', () => {
 		).toEqual([[1_000, 125]])
 	})
 
-	it('keeps stale histories compact for canonical carry-forward construction', () => {
+	it('keeps producer-supplied histories compact without extending stale series', () => {
 		const asset = (id: string, name: string): StablecoinListAsset => ({
 			id,
 			name,
@@ -178,6 +165,7 @@ describe('stablecoin server query helpers', () => {
 		})
 		const inputs = buildOverviewChartInputs({
 			peggedAssets: [asset('stale', 'Stale'), asset('current', 'Current')],
+			doublecountedSourceIds: [],
 			breakdown: {
 				stale: [{ date: '1', totalCirculatingUSD: { peggedUSD: 10 } }],
 				current: [
@@ -193,12 +181,11 @@ describe('stablecoin server query helpers', () => {
 				chartDataByAssetOrChain: inputs.chartDataByPeggedAsset,
 				assetsOrChainsList: inputs.peggedAssetNames,
 				issuanceType: 'mcap',
-				selectedChain: 'All',
-				carryForwardAfterSeriesEnd: true
+				selectedChain: 'All'
 			}).dataset.source
 		).toEqual([
 			[1_000, 30],
-			[86_401_000, 40]
+			[86_401_000, 30]
 		])
 	})
 
@@ -219,7 +206,8 @@ describe('stablecoin server query helpers', () => {
 			chainCirculating: {}
 		})
 		const inputs = buildOverviewChartInputs({
-			peggedAssets: [asset('Sparse'), asset('Zero')],
+			peggedAssets: [asset('Sparse'), asset('Zero'), asset('PrunedZero'), asset('Absent')],
+			doublecountedSourceIds: [],
 			breakdown: {
 				Sparse: [
 					{ date: '3', totalCirculatingUSD: { peggedUSD: 30 } },
@@ -228,7 +216,8 @@ describe('stablecoin server query helpers', () => {
 				Zero: [
 					{ date: '3', totalCirculatingUSD: { peggedUSD: 0 } },
 					{ date: '5', totalCirculatingUSD: { peggedUSD: 5 } }
-				]
+				],
+				PrunedZero: [{ date: '3', totalCirculating: { peggedUSD: 10 } }]
 			}
 		})
 
@@ -240,7 +229,9 @@ describe('stablecoin server query helpers', () => {
 			[
 				{ date: 3, mcap: { peggedUSD: 0 } },
 				{ date: 5, mcap: { peggedUSD: 5 } }
-			]
+			],
+			[{ date: 3, mcap: {} }],
+			[]
 		])
 	})
 
@@ -293,10 +284,10 @@ describe('stablecoin server query helpers', () => {
 	it('preserves signed zero labels and reports stale aggregate timestamps exactly', () => {
 		const raw = chainsRawFixture()
 		raw.aggregatedChart = [
-			chainPoint(40, { peggedUSD: 1000 }),
-			chainPoint(39, { peggedUSD: 1000 }),
-			chainPoint(33, { peggedUSD: 1000 }),
-			chainPoint(10, { peggedUSD: 1000 })
+			aggregatePoint(40, 1000),
+			aggregatePoint(39, 1000),
+			aggregatePoint(33, 1000),
+			aggregatePoint(10, 1000)
 		]
 
 		const page = buildStablecoinChainsPageSummary(raw, { currentTimeMs: NOW, chainMetadata: {} })
@@ -313,10 +304,10 @@ describe('stablecoin server query helpers', () => {
 		})
 
 		raw.aggregatedChart = [
-			chainPoint(30, { peggedUSD: 1000 }),
-			chainPoint(7, { peggedUSD: 1000 }),
-			chainPoint(1, { peggedUSD: 1000 }),
-			chainPoint(0, { peggedUSD: 1000 })
+			aggregatePoint(30, 1000),
+			aggregatePoint(7, 1000),
+			aggregatePoint(1, 1000),
+			aggregatePoint(0, 1000)
 		]
 		const unchanged = buildStablecoinChainsPageSummary(raw, { currentTimeMs: NOW, chainMetadata: {} })
 		expect(unchanged).toMatchObject({
@@ -329,18 +320,22 @@ describe('stablecoin server query helpers', () => {
 		})
 	})
 
-	it('converts chain chart histories without sorting, mutating, or collapsing missing values into zero', () => {
+	it('preserves chronology and interprets producer-pruned historical metrics as zero', () => {
 		const raw = chainsRawFixture()
-		raw.chainChartMap.Base = [chainPoint(7, {}), chainPoint(30, { peggedUSD: 0 }), chainPoint(0, undefined)]
+		raw.chainChartMap.Base = [
+			chainPoint(7, undefined, { totalUnreleased: { peggedUSD: 5 } }),
+			chainPoint(30, { peggedUSD: 0 }),
+			chainPoint(0, { peggedUSD: 0 })
+		]
 		const before = structuredClone(raw)
 
 		const source = buildStablecoinChainsChartSource(raw)
 
 		expect(source.chainList).toEqual(['Ethereum', 'Arbitrum', 'Base', 'Empty'])
 		expect(source.chartDataByChain[2]).toEqual([
-			{ date: Number(daysAgo(7)), mcap: null },
+			{ date: Number(daysAgo(7)), mcap: 0 },
 			{ date: Number(daysAgo(30)), mcap: 0 },
-			{ date: Number(daysAgo(0)), mcap: null }
+			{ date: Number(daysAgo(0)), mcap: 0 }
 		])
 		expect(source.chartDataByChain[3]).toBeNull()
 		expect(raw).toEqual(before)
@@ -367,7 +362,7 @@ describe('stablecoin server query helpers', () => {
 			]
 		})
 		expect(chains.availableSeries).toEqual(['Base', 'Ethereum', 'Arbitrum', 'Empty'])
-		expect(chains.defaultSeries).toEqual(['Base'])
+		expect(chains.defaultSeries).toEqual(['Base', 'Ethereum', 'Arbitrum', 'Empty'])
 		expect(chains).toMatchObject({ valueSymbol: '$', stacked: false, showTotalInTooltip: false })
 		expect(chains.dataset.dimensions).toEqual(['timestamp', 'Base', 'Others'])
 		expect(chains.dataset.source.at(-1)).toEqual([Number(daysAgo(0)) * 1000, 300, 180])

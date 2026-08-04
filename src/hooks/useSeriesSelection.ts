@@ -60,7 +60,8 @@ export function reconcileSeriesSelection({
 	for (const name of defaultSeries) {
 		if (availableSet.has(name)) return [name]
 	}
-	return [available[0]]
+	const firstAvailable = available[0]
+	return allowEmptySelection || firstAvailable === undefined ? [] : [firstAvailable]
 }
 
 const selectionsEqual = (left: readonly string[], right: readonly string[]): boolean => {
@@ -85,7 +86,9 @@ export function boundSeriesSelection(current: readonly string[], next: string[],
 	const addedSeries = next.filter((name) => !current.includes(name))
 	if (addedSeries.length === 1) {
 		const addedName = addedSeries[0]
-		return [...next.filter((name) => name !== addedName).slice(0, limit - 1), addedName]
+		if (addedName !== undefined) {
+			return [...next.filter((name) => name !== addedName).slice(0, limit - 1), addedName]
+		}
 	}
 	return next.slice(0, limit)
 }
@@ -110,7 +113,7 @@ export function useSeriesSelection({
 				availableSeries,
 				selectedSeries,
 				defaultSeries,
-				maxSelectedSeries,
+				...(maxSelectedSeries === undefined ? {} : { maxSelectedSeries }),
 				allowEmptySelection,
 				resetToDefaultWhenStale
 			}),
@@ -124,7 +127,7 @@ export function useSeriesSelection({
 				availableSeries,
 				selectedSeries: current.values,
 				defaultSeries,
-				maxSelectedSeries,
+				...(maxSelectedSeries === undefined ? {} : { maxSelectedSeries }),
 				allowEmptySelection,
 				resetToDefaultWhenStale
 			})
@@ -139,7 +142,7 @@ export function useSeriesSelection({
 					availableSeries,
 					selectedSeries: current?.key === selectionKey ? current.values : null,
 					defaultSeries,
-					maxSelectedSeries,
+					...(maxSelectedSeries === undefined ? {} : { maxSelectedSeries }),
 					allowEmptySelection,
 					resetToDefaultWhenStale
 				})
@@ -151,7 +154,7 @@ export function useSeriesSelection({
 					availableSeries,
 					selectedSeries: boundedSelection,
 					defaultSeries,
-					maxSelectedSeries,
+					...(maxSelectedSeries === undefined ? {} : { maxSelectedSeries }),
 					allowEmptySelection,
 					resetToDefaultWhenStale
 				})
@@ -160,7 +163,7 @@ export function useSeriesSelection({
 						availableSeries,
 						selectedSeries: null,
 						defaultSeries,
-						maxSelectedSeries,
+						...(maxSelectedSeries === undefined ? {} : { maxSelectedSeries }),
 						allowEmptySelection,
 						resetToDefaultWhenStale
 					})
@@ -256,16 +259,16 @@ export function useSeriesSelectionWithFixedRemainder({
 				availableSeries: selectableSeries,
 				selectedSeries: null,
 				defaultSeries: defaultSeries?.filter((name) => name !== FIXED_REMAINDER_SERIES_NAME) ?? selectableSeries,
-				maxSelectedSeries
+				...(maxSelectedSeries === undefined ? {} : { maxSelectedSeries })
 			}),
 		[defaultSeries, maxSelectedSeries, selectableSeries]
 	)
 	const selection = useSeriesSelection({
 		availableSeries: selectableSeries,
 		defaultSeries: defaultSelectableSeries,
-		maxSelectedSeries,
 		allowEmptySelection,
-		selectionKey
+		...(maxSelectedSeries === undefined ? {} : { maxSelectedSeries }),
+		...(selectionKey === undefined ? {} : { selectionKey })
 	})
 	const renderedCharts = React.useMemo(() => {
 		const rendered = new Set(selection.selectedCharts)

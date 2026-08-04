@@ -70,7 +70,23 @@ const aggregateHistory = [
 	{ date: timestamp(0), totalCirculatingUSD: { peggedUSD: 150 } }
 ]
 const stablecoinAssets = {
-	peggedAssets: [],
+	peggedAssets: [
+		{
+			id: 'asset',
+			name: 'Stablecoin',
+			symbol: 'STABLE',
+			gecko_id: null,
+			chains: ['Ethereum', 'Arbitrum'],
+			pegType: 'peggedUSD',
+			pegMechanism: 'fiat-backed',
+			price: 1,
+			circulating: { peggedUSD: 150 },
+			circulatingPrevDay: { peggedUSD: 135 },
+			circulatingPrevWeek: { peggedUSD: 120 },
+			circulatingPrevMonth: { peggedUSD: 105 },
+			chainCirculating: {}
+		}
+	],
 	chains: [
 		{ name: 'Ethereum', totalCirculatingUSD: { peggedUSD: 80 } },
 		{ name: 'Arbitrum', totalCirculatingUSD: { peggedUSD: 60 } }
@@ -100,7 +116,19 @@ const findStoredValue = (key: string): unknown => {
 }
 
 const findStoredPageEntry = (): PageCacheEntry => {
-	return findStoredValue('stablecoins:chains-page-data-v4') as PageCacheEntry
+	return findStoredValue('stablecoins:chains-page-data-v5') as PageCacheEntry
+}
+
+const getCachedChainTimestamp = (entry: PageCacheEntry, chain: string): number | null => {
+	const value = entry.latestChainTimestamps[chain]
+	if (value === undefined) throw new Error(`Missing cached timestamp for ${chain}`)
+	return value
+}
+
+const getChainRow = (pageData: PeggedChainsPageData, chain: string) => {
+	const row = pageData.chainCirculatings.find((candidate) => candidate.name === chain)
+	if (!row) throw new Error(`Missing ${chain} chain row`)
+	return row
 }
 
 const rejectStablecoinChainUpstreams = () => {
@@ -112,8 +140,8 @@ const rejectStablecoinChainUpstreams = () => {
 
 const serveCachedEntries = (pageEntry: PageCacheEntry, chartSource?: unknown) => {
 	mocks.getObjectCache.mockImplementation(async (key: string) => {
-		if (key === 'stablecoins:chains-page-data-v4') return pageEntry
-		if (key === 'stablecoins:chains-chart-source-v3') return chartSource ?? null
+		if (key === 'stablecoins:chains-page-data-v5') return pageEntry
+		if (key === 'stablecoins:chains-chart-source-v4') return chartSource ?? null
 		return null
 	})
 }
@@ -127,7 +155,11 @@ describe('stablecoin chain consumer caches', () => {
 		mocks.setObjectCache.mockResolvedValue(undefined)
 		mocks.fetchStablecoinAssetsApi.mockResolvedValue(stablecoinAssets)
 		mocks.fetchLlamaConfig.mockResolvedValue({ chainCoingeckoIds: {} })
-		mocks.fetchStablecoinChartAllApi.mockResolvedValue({ aggregated: aggregateHistory })
+		mocks.fetchStablecoinChartAllApi.mockResolvedValue({
+			aggregated: aggregateHistory,
+			breakdown: { asset: aggregateHistory },
+			doublecountedIds: []
+		})
 		mocks.fetchStablecoinDominanceAllApi.mockResolvedValue(dominance)
 	})
 	afterEach(() => vi.useRealTimers())
@@ -151,9 +183,39 @@ describe('stablecoin chain consumer caches', () => {
 		expect(mocks.fetchStablecoinDominanceAllApi).toHaveBeenCalledOnce()
 	})
 
+	it('builds the chain-page headline from exclusion-safe asset histories', async () => {
+		const doublecountedAsset = {
+			...stablecoinAssets.peggedAssets[0],
+			id: 'double',
+			name: 'Double Stablecoin',
+			symbol: 'DOUBLE'
+		}
+		const doublecountedHistory = aggregateHistory.map((point) => ({
+			...point,
+			totalCirculatingUSD: { peggedUSD: 50 }
+		}))
+		mocks.fetchStablecoinAssetsApi.mockResolvedValue({
+			...stablecoinAssets,
+			peggedAssets: [...stablecoinAssets.peggedAssets, doublecountedAsset]
+		})
+		mocks.fetchStablecoinChartAllApi.mockResolvedValue({
+			aggregated: aggregateHistory.map((point) => ({
+				...point,
+				totalCirculatingUSD: { peggedUSD: (point.totalCirculatingUSD.peggedUSD ?? 0) + 50 }
+			})),
+			breakdown: { asset: aggregateHistory, double: doublecountedHistory },
+			doublecountedIds: ['double']
+		})
+
+		const page = await getStablecoinChainsPageData()
+
+		expect(page.totalMcapCurrent).toBe(150)
+		expect(page.change1d).toBe('+11.11')
+	})
+
 	it('stores only normalized chart histories and avoids page-only requests', async () => {
 		await getStablecoinChainsChartSeries('chainMcaps', false, 10)
-		const cachedSource = findStoredValue('stablecoins:chains-chart-source-v3')
+		const cachedSource = findStoredValue('stablecoins:chains-chart-source-v4')
 
 		expect(cachedSource).toEqual({
 			chainList: ['Ethereum', 'Arbitrum'],
@@ -196,7 +258,7 @@ describe('stablecoin chain consumer caches', () => {
 		const page = await getStablecoinChainsPageData()
 		const pageEntry = findStoredPageEntry()
 		const chart = await getStablecoinChainsChartSeries('totalMcap')
-		const cachedChartSource = findStoredValue('stablecoins:chains-chart-source-v3')
+		const cachedChartSource = findStoredValue('stablecoins:chains-chart-source-v4')
 
 		rejectStablecoinChainUpstreams()
 		serveCachedEntries(pageEntry, cachedChartSource)
@@ -227,7 +289,7 @@ describe('stablecoin chain consumer caches', () => {
 			pageData: storedEntry.pageData,
 			latestChainTimestamps: {
 				Ethereum: Date.parse('2026-07-25T00:00:00Z') / 1e3,
-				Arbitrum: storedEntry.latestChainTimestamps.Arbitrum
+				Arbitrum: getCachedChainTimestamp(storedEntry, 'Arbitrum')
 			}
 		}
 		rejectStablecoinChainUpstreams()
@@ -247,10 +309,11 @@ describe('stablecoin chain consumer caches', () => {
 			totalMcapCurrent: storedEntry.pageData.totalMcapCurrent,
 			dataTimestamp: storedEntry.pageData.dataTimestamp
 		})
-		expect(fallback.chainCirculatings[0]).toBe(storedEntry.pageData.chainCirculatings[0])
-		expect(fallback.chainCirculatings[0].mcapPrevDay).not.toBeNull()
-		expect(fallback.chainCirculatings[1]).toEqual({
-			...storedEntry.pageData.chainCirculatings[1],
+		const fallbackEthereum = getChainRow(fallback, 'Ethereum')
+		expect(fallbackEthereum).toBe(getChainRow(storedEntry.pageData, 'Ethereum'))
+		expect(fallbackEthereum.mcapPrevDay).not.toBeNull()
+		expect(getChainRow(fallback, 'Arbitrum')).toEqual({
+			...getChainRow(storedEntry.pageData, 'Arbitrum'),
 			mcapPrevDay: null,
 			mcapPrevWeek: null,
 			mcapPrevMonth: null,
@@ -266,7 +329,7 @@ describe('stablecoin chain consumer caches', () => {
 		const cachedEntry: PageCacheEntry = {
 			pageData: storedEntry.pageData,
 			latestChainTimestamps: {
-				Ethereum: storedEntry.latestChainTimestamps.Ethereum,
+				Ethereum: getCachedChainTimestamp(storedEntry, 'Ethereum'),
 				Arbitrum: Date.parse('2026-07-19T00:00:00Z') / 1e3
 			}
 		}
@@ -283,8 +346,8 @@ describe('stablecoin chain consumer caches', () => {
 		expect(firstFallback.isDataStale).toBe(false)
 		expect(firstFallback.chainCirculatings[0]).toBe(storedEntry.pageData.chainCirculatings[0])
 		expect(firstFallback.chainCirculatings[1]).not.toBe(storedEntry.pageData.chainCirculatings[1])
-		expect(firstFallback.chainCirculatings[1]).toMatchObject({
-			mcap: storedEntry.pageData.chainCirculatings[1].mcap,
+		expect(getChainRow(firstFallback, 'Arbitrum')).toMatchObject({
+			mcap: getChainRow(storedEntry.pageData, 'Arbitrum').mcap,
 			mcapPrevDay: null,
 			mcapPrevWeek: null,
 			mcapPrevMonth: null,
@@ -302,7 +365,7 @@ describe('stablecoin chain consumer caches', () => {
 		const cachedEntry: PageCacheEntry = {
 			pageData: { ...storedEntry.pageData, dataTimestamp: null, isDataStale: false },
 			latestChainTimestamps: {
-				Ethereum: storedEntry.latestChainTimestamps.Ethereum,
+				Ethereum: getCachedChainTimestamp(storedEntry, 'Ethereum'),
 				Arbitrum: Date.parse('2026-07-19T00:00:00Z') / 1e3
 			}
 		}

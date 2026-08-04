@@ -17,7 +17,7 @@ import {
 	useStablecoinSelectionIntent
 } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
+import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
@@ -60,7 +60,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		}),
 		[selectionIntent]
 	)
-	const { chartPayload, pieSeries, seriesNames, isLoading } = useStablecoinsChartData(
+	const { chartPayload, pieSeries, seriesNames, defaultSeries, isLoading } = useStablecoinsChartData(
 		chain,
 		chartType,
 		true,
@@ -74,8 +74,12 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		setSelectionIntent
 	})
 	const pieSeriesNames = useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
-	const pieSelection = useAllSeriesSelection({
+	const pieSelection = useSeriesSelection({
 		availableSeries: pieSeriesNames,
+		defaultSeries,
+		allowEmptySelection: true,
+		resetToDefaultWhenStale: true,
+		storeDefaultAsIntent: true,
 		selectionKey: `${chain}:pie`
 	})
 	const piePresentation = useMemo(
@@ -83,9 +87,15 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 			buildRuntimePieChartPresentation({
 				series: pieSeries,
 				selectedSeries: pieSelection.selectedCharts,
-				includeUpstreamOthers: pieSelection.includeUpstreamOthers
+				includeUpstreamOthers: pieSelection.isDefaultSelection && defaultSeries.length === pieSeriesNames.length
 			}),
-		[pieSelection.includeUpstreamOthers, pieSelection.selectedCharts, pieSeries]
+		[
+			defaultSeries.length,
+			pieSelection.isDefaultSelection,
+			pieSelection.selectedCharts,
+			pieSeries,
+			pieSeriesNames.length
+		]
 	)
 
 	const stackColors = useMemo(() => {
@@ -141,7 +151,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 			]
 		}
 
-		if (rows.length > 0) downloadCSV(filename, rows)
+		if (rows.length > 0) downloadCSV(`${filename}.csv`, rows)
 	}
 
 	const chartTypeLabel = CHART_TYPE_LABELS[chartType] || chartType

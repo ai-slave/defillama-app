@@ -23,12 +23,20 @@ export interface StablecoinVolumeChartPayload {
 }
 
 interface StablecoinVolumeChartOptions {
-	chart: StablecoinVolumeChartKind
 	limit?: number
 	trimIncompleteTail?: boolean
 	selectedNames?: string[] | null
 	excludedNames?: string[] | null
 }
+
+export type StablecoinVolumeChartSource =
+	| { chart: 'total'; data: StablecoinVolumeTotalChartPoint[] }
+	| {
+			chart: Exclude<StablecoinVolumeChartKind, 'total'>
+			data: StablecoinVolumeBreakdownChartPoint[]
+	  }
+
+type StablecoinVolumeChartInput = StablecoinVolumeChartSource & StablecoinVolumeChartOptions
 
 const DEFAULT_BREAKDOWN_LIMIT = 20
 const MAX_BREAKDOWN_LIMIT = 50
@@ -51,13 +59,13 @@ const buildCharts = (
 	colorIndexByName?: ReadonlyMap<string, number>
 ): MultiSeriesChartSeriesConfig[] => {
 	const charts: MultiSeriesChartSeriesConfig[] = []
-	for (let i = 0; i < names.length; i++) {
-		const name = names[i]
+	for (const [index, name] of names.entries()) {
+		const colorIndex = (colorIndexByName?.get(name) ?? index) % CHART_COLORS.length
 		charts.push({
 			type: 'bar',
 			name,
 			encode: { x: 'timestamp', y: name },
-			color: name === OTHERS_NAME ? '#AAAAAA' : CHART_COLORS[(colorIndexByName?.get(name) ?? i) % CHART_COLORS.length],
+			color: name === OTHERS_NAME ? '#AAAAAA' : (CHART_COLORS[colorIndex] ?? CHART_COLORS[0]),
 			barMinWidth: 1,
 			barMaxWidth: 24,
 			...(stacked ? { stack: 'stablecoin-volume', large: false } : {})
@@ -68,7 +76,8 @@ const buildCharts = (
 
 const hasBreakdownVolume = (breakdown: Record<string, number>): boolean => {
 	for (const key in breakdown) {
-		if (breakdown[key] !== 0) return true
+		const value = breakdown[key]
+		if (value !== undefined && value !== 0) return true
 	}
 	return false
 }
@@ -76,13 +85,10 @@ const hasBreakdownVolume = (breakdown: Record<string, number>): boolean => {
 const getLastCompletePointIndex = (data: StablecoinVolumeChartResponse, trimIncompleteTail: boolean): number => {
 	if (!trimIncompleteTail) return data.length - 1
 	// The volume APIs can append an unfinished all-zero bucket. Keep interior zeroes, but avoid a false trailing cliff.
-	let index = data.length - 1
-	while (index >= 0) {
-		const value = data[index][1]
-		if (typeof value === 'number' ? value !== 0 : hasBreakdownVolume(value)) break
-		index--
-	}
-	return index
+	return data.findLastIndex((point) => {
+		const value = point[1]
+		return typeof value === 'number' ? value !== 0 : hasBreakdownVolume(value)
+	})
 }
 
 const buildTotalVolumePayload = (
@@ -91,8 +97,8 @@ const buildTotalVolumePayload = (
 ): StablecoinVolumeChartPayload => {
 	const source: MultiSeriesTimeSeriesDataset['source'] = []
 	const lastCompletePointIndex = getLastCompletePointIndex(data, trimIncompleteTail)
-	for (let i = 0; i <= lastCompletePointIndex; i++) {
-		const point = data[i]
+	for (const [index, point] of data.entries()) {
+		if (index > lastCompletePointIndex) break
 		source.push([point[0] * 1e3, point[1]])
 	}
 
@@ -126,61 +132,68 @@ const getRankedBreakdownKeys = (
 	const latest = getLatestBreakdown(points, lastCompletePointIndex)
 	const keys: string[] = []
 	const seen = new Set<string>()
-	for (let i = 0; i <= lastCompletePointIndex; i++) {
-		for (const key in points[i][1] as Record<string, number>) {
+	for (const [index, point] of points.entries()) {
+		if (index > lastCompletePointIndex) break
+		for (const key in point[1]) {
 			if (seen.has(key)) continue
 			seen.add(key)
 			keys.push(key)
 		}
 	}
 	const originalOrder = new Map(keys.map((key, index) => [key, index]))
-	keys.sort((a, b) => (latest[b] ?? 0) - (latest[a] ?? 0) || originalOrder.get(a)! - originalOrder.get(b)!)
+	keys.sort((a, b) => {
+		const valueDifference = (latest[b] ?? 0) - (latest[a] ?? 0)
+		if (valueDifference !== 0) return valueDifference
+		const aOrder = originalOrder.get(a)
+		const bOrder = originalOrder.get(b)
+		return aOrder !== undefined && bOrder !== undefined ? aOrder - bOrder : 0
+	})
 	return keys
 }
 
 const buildBreakdownVolumePayload = (
-	data: StablecoinVolumeChartResponse,
-	options: StablecoinVolumeChartOptions
+	points: StablecoinVolumeBreakdownChartPoint[],
+	options: StablecoinVolumeChartOptions & { chart: Exclude<StablecoinVolumeChartKind, 'total'> }
 ): StablecoinVolumeChartPayload => {
-	const points = data as StablecoinVolumeBreakdownChartPoint[]
 	const lastCompletePointIndex = getLastCompletePointIndex(points, options.trimIncompleteTail === true)
 	const rankedKeys = getRankedBreakdownKeys(points, lastCompletePointIndex)
-	const labelsByKey = new Map(rankedKeys.map((key) => [key, formatDimensionLabel(key, options.chart)]))
-	const availableSeries = rankedKeys.map((key) => labelsByKey.get(key)!)
+	const rankedSeries = rankedKeys.map((key) => ({ key, label: formatDimensionLabel(key, options.chart) }))
+	const availableSeries = rankedSeries.map((series) => series.label)
 	const colorIndexByName = new Map(availableSeries.map((name, index) => [name, index]))
 	const selectedSet = options.selectedNames == null ? null : new Set(options.selectedNames)
 	const excludedSet = options.excludedNames == null ? null : new Set(options.excludedNames)
-	const selectedKeys = selectedSet
-		? rankedKeys.filter((key) => selectedSet.has(labelsByKey.get(key)!))
+	const selectedSeries = selectedSet
+		? rankedSeries.filter((series) => selectedSet.has(series.label))
 		: excludedSet
-			? rankedKeys.filter((key) => !excludedSet.has(labelsByKey.get(key)!))
-			: rankedKeys
+			? rankedSeries.filter((series) => !excludedSet.has(series.label))
+			: rankedSeries
 	const limit = clampLimit(options.limit)
-	const keys = selectedKeys.slice(0, limit)
-	const omittedKeys = selectedKeys.slice(limit)
+	const series = selectedSeries.slice(0, limit)
+	const omittedSeries = selectedSeries.slice(limit)
 	const dimensions: MultiSeriesTimeSeriesDataset['dimensions'] = ['timestamp']
-	for (const key of keys) {
-		const label = labelsByKey.get(key)!
-		dimensions.push(label)
-	}
-	const includeOthers = omittedKeys.length > 0
+	for (const selected of series) dimensions.push(selected.label)
+	const includeOthers = omittedSeries.length > 0
 	let hasOthersValue = false
 
-	const omittedKeysSet = new Set(omittedKeys)
+	const omittedKeys = new Set(omittedSeries.map((item) => item.key))
 	const source: MultiSeriesTimeSeriesDataset['source'] = []
-	for (let i = 0; i <= lastCompletePointIndex; i++) {
-		const [timestamp, breakdown] = points[i]
+	for (const [index, point] of points.entries()) {
+		if (index > lastCompletePointIndex) break
+		const [timestamp, breakdown] = point
 		const row: MultiSeriesTimeSeriesDataset['source'][number] = [timestamp * 1e3]
-		row.length = keys.length + 2
-		for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
-			row[keyIndex + 1] = breakdown[keys[keyIndex]] ?? 0
+		row.length = series.length + 2
+		for (const [seriesIndex, selected] of series.entries()) {
+			row[seriesIndex + 1] = breakdown[selected.key] ?? 0
 		}
 
 		if (includeOthers) {
 			let others = 0
-			for (const key in breakdown) if (omittedKeysSet.has(key)) others += breakdown[key]
+			for (const key in breakdown) {
+				const value = breakdown[key]
+				if (value !== undefined && omittedKeys.has(key)) others += value
+			}
 			if (others > 0) hasOthersValue = true
-			row[keys.length + 1] = others
+			row[series.length + 1] = others
 		}
 
 		source.push(row)
@@ -193,7 +206,8 @@ const buildBreakdownVolumePayload = (
 
 	const seriesNames: string[] = []
 	for (let i = 1; i < dimensions.length; i++) {
-		seriesNames.push(dimensions[i])
+		const dimension = dimensions[i]
+		if (dimension) seriesNames.push(dimension)
 	}
 	const stacked = seriesNames.length > 1
 
@@ -210,14 +224,11 @@ const buildBreakdownVolumePayload = (
 	}
 }
 
-export const buildStablecoinVolumeChartPayload = (
-	data: StablecoinVolumeChartResponse,
-	options: StablecoinVolumeChartOptions
-): StablecoinVolumeChartPayload => {
-	if (options.chart === 'total') {
-		return buildTotalVolumePayload(data as StablecoinVolumeTotalChartPoint[], options.trimIncompleteTail === true)
+export const buildStablecoinVolumeChartPayload = (input: StablecoinVolumeChartInput): StablecoinVolumeChartPayload => {
+	if (input.chart === 'total') {
+		return buildTotalVolumePayload(input.data, input.trimIncompleteTail === true)
 	}
-	return buildBreakdownVolumePayload(data, options)
+	return buildBreakdownVolumePayload(input.data, input)
 }
 
 export const groupStablecoinVolumeChartPayload = (

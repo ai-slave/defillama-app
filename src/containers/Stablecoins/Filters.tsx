@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
@@ -20,7 +19,7 @@ const isStablecoinChartQueryKey = (key: string) => key === 'chartType' || key ==
 
 type StablecoinFilterKey = string
 
-function Attribute({ nestedMenu }: { nestedMenu: boolean; pathname?: string }) {
+function Attribute({ nestedMenu }: { nestedMenu: boolean }) {
 	const router = useRouter()
 	const { attribute, excludeAttribute } = router.query
 
@@ -52,8 +51,7 @@ function BackingType({
 	availableBackings
 }: {
 	nestedMenu: boolean
-	pathname?: string
-	availableBackings?: StablecoinFilterKey[]
+	availableBackings: StablecoinFilterKey[]
 }) {
 	const router = useRouter()
 	const { backing, excludeBacking } = router.query
@@ -87,14 +85,7 @@ function BackingType({
 	)
 }
 
-function PegType({
-	nestedMenu,
-	availablePegTypes
-}: {
-	nestedMenu: boolean
-	pathname?: string
-	availablePegTypes?: StablecoinFilterKey[]
-}) {
+function PegType({ nestedMenu, availablePegTypes }: { nestedMenu: boolean; availablePegTypes: StablecoinFilterKey[] }) {
 	const router = useRouter()
 	const { pegtype, excludePegtype } = router.query
 
@@ -127,13 +118,7 @@ function PegType({
 	)
 }
 
-function McapRange({
-	nestedMenu,
-	placement
-}: {
-	nestedMenu?: boolean
-	placement?: Ariakit.PopoverStoreProps['placement']
-}) {
+function McapRange({ nestedMenu }: { nestedMenu: boolean }) {
 	const { min, max, handleSubmit, handleClear } = useRangeFilter('minMcap', 'maxMcap')
 
 	return (
@@ -155,7 +140,7 @@ function McapRange({
 			nestedMenu={nestedMenu}
 			min={min}
 			max={max}
-			placement={placement}
+			placement="bottom-start"
 			variant="primary"
 			size="md"
 		/>
@@ -200,15 +185,15 @@ function PeggedFiltersDropdowns({
 }: {
 	pathname: string
 	nestedMenu?: boolean
-	availableBackings?: StablecoinFilterKey[]
-	availablePegTypes?: StablecoinFilterKey[]
+	availableBackings: StablecoinFilterKey[]
+	availablePegTypes: StablecoinFilterKey[]
 }) {
 	return (
 		<>
 			<Attribute nestedMenu={!!nestedMenu} />
 			<BackingType nestedMenu={!!nestedMenu} availableBackings={availableBackings} />
 			<PegType nestedMenu={!!nestedMenu} availablePegTypes={availablePegTypes} />
-			<McapRange nestedMenu={nestedMenu} placement="bottom-start" />
+			<McapRange nestedMenu={!!nestedMenu} />
 			<ResetAllStablecoinFilters pathname={pathname} nestedMenu={!!nestedMenu} />
 		</>
 	)
@@ -216,8 +201,8 @@ function PeggedFiltersDropdowns({
 
 export function PeggedFilters(props: {
 	pathname: string
-	availableBackings?: StablecoinFilterKey[]
-	availablePegTypes?: StablecoinFilterKey[]
+	availableBackings: StablecoinFilterKey[]
+	availablePegTypes: StablecoinFilterKey[]
 }) {
 	return (
 		<Card padding="sm" className="flex flex-col gap-2">

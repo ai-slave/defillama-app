@@ -10,7 +10,7 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
+import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
@@ -42,7 +42,7 @@ type StablecoinsTableInputRow = {
 	yieldBearing?: boolean
 	depeggedTwoPercent?: boolean
 	floatingPeg?: boolean
-	chains?: string[]
+	chains: string[]
 	pegDeviation?: number | null
 	pegDeviation_1m?: number | null
 	pegDeviationInfo?: StablecoinDeviationInfo | null
@@ -56,7 +56,9 @@ type StablecoinsTableInputRow = {
 	mcap?: number | null
 	pegType?: string | null
 	unreleased?: number | null
+	doublecounted?: boolean
 	delisted?: boolean
+	deadFrom?: string
 	circulating?: number | null
 	subRows?: StablecoinsTableInputRow[]
 }
@@ -69,26 +71,24 @@ const stablecoinsColumns = [
 		header: 'Name',
 		enableSorting: false,
 		cell: ({ getValue, row }) => {
+			const lifecycleStatus = row.original.deadFrom
+				? `Ended on ${row.original.deadFrom}`
+				: row.original.delisted
+					? 'Delisted stablecoin'
+					: row.original.deprecated
+						? 'Deprecated stablecoin'
+						: null
 			return (
 				<span className="flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo name={row.original.name} kind="pegged" alt={`Logo of ${row.original.name}`} data-lgonly />
-					{row.original?.deprecated ? (
-						<BasicLink
-							href={`/stablecoin/${slug(row.original.name)}`}
-							className="flex items-center gap-1 truncate text-sm font-medium text-link hover:underline"
-						>
-							<span className="truncate hover:underline">{getValue()}</span>
-							<DeprecatedProtocolMarker />
-						</BasicLink>
-					) : (
-						<BasicLink
-							href={`/stablecoin/${slug(row.original.name)}`}
-							className="truncate text-sm font-medium text-link hover:underline"
-						>
-							{getValue()}
-						</BasicLink>
-					)}
+					<BasicLink
+						href={`/stablecoin/${slug(row.original.name)}`}
+						className="flex items-center gap-1 truncate text-sm font-medium text-link hover:underline"
+					>
+						<span className="truncate">{getValue()}</span>
+						{lifecycleStatus ? <DeprecatedEntityMarker content={lifecycleStatus} /> : null}
+					</BasicLink>
 				</span>
 			)
 		},
@@ -234,10 +234,39 @@ const stablecoinsColumns = [
 	}),
 	columnHelper.accessor('mcap', {
 		header: 'Market Cap',
-		cell: (info) =>
-			info.getValue() != null
-				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: null,
+		cell: (info) => {
+			const value = info.getValue()
+			if (value != null) {
+				return (
+					<span className="flex w-full items-center justify-end gap-1">
+						{info.row.original.doublecounted ? (
+							<QuestionHelper text="This stablecoin is excluded from aggregate stablecoin market cap to avoid double counting." />
+						) : null}
+						<span className={info.row.original.doublecounted ? 'text-tertiary' : ''}>
+							{formatUsd(value, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						</span>
+					</span>
+				)
+			}
+			return info.row.original.deadFrom || info.row.original.delisted ? (
+				<Tooltip
+					content={
+						info.row.original.deadFrom
+							? `No current market cap after ${info.row.original.deadFrom}`
+							: 'No current market cap for this delisted stablecoin'
+					}
+					className="w-full justify-end underline decoration-dotted"
+				>
+					N/A
+				</Tooltip>
+			) : (
+				<span className="flex w-full justify-end">N/A</span>
+			)
+		},
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'

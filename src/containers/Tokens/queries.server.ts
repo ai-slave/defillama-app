@@ -468,7 +468,7 @@ export async function fetchTokensSourceRows(revision: number): Promise<TokensSou
 		await Promise.all([
 			getTokensMarketSnapshot(revision),
 			fetchTokenRightsEntries().catch(() => []),
-			fetchStablecoinAssetsApi({ includePrices: false })
+			fetchStablecoinAssetsApi()
 				.then((data) => {
 					const geckoIds = new Set<string>()
 					for (const asset of data.peggedAssets) {

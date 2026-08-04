@@ -25,7 +25,6 @@ import { TableToolbar } from '~/ui/Toolbar'
 import { formatCompactNumber } from '~/utils/numberFormat'
 
 type StablecoinByChainRow = ReturnType<typeof useGroupBridgeData>[number]
-type BridgeInfoCell = StablecoinByChainRow['bridgeInfo']
 const columnHelper = createColumnHelper<StablecoinByChainRow>()
 
 const stablecoinsByChainColumns = [
@@ -34,7 +33,7 @@ const stablecoinsByChainColumns = [
 		header: 'Name',
 		enableSorting: false,
 		cell: ({ getValue, row }) => {
-			const isSubRow = row.original.name.startsWith('Bridged from')
+			const isSubRow = row.depth > 0
 
 			return (
 				<span
@@ -87,7 +86,7 @@ const stablecoinsByChainColumns = [
 		header: 'Bridge',
 		enableSorting: false,
 		cell: ({ getValue }) => {
-			const value = getValue() as BridgeInfoCell
+			const value = getValue()
 			if (!value.name || value.name === '-' || value.name === 'not-found') return null
 			return (
 				<>

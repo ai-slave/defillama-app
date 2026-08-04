@@ -23,7 +23,11 @@ import {
 	type StablecoinBreakdownSelectionOptions,
 	type StablecoinCanonicalHistory
 } from '~/containers/Stablecoins/chartSeries'
-import { getStablecoinValueFromPoint, isStablecoinChartDateVisible } from '~/containers/Stablecoins/utils'
+import {
+	getStablecoinValueFromPoint,
+	isInactiveStablecoin,
+	isStablecoinChartDateVisible
+} from '~/containers/Stablecoins/utils'
 import type { StablecoinAssetChartType } from '../../../types'
 
 type StablecoinAssetPresentation =
@@ -42,6 +46,7 @@ interface UseStablecoinAssetChartDataResult {
 	chainsUnique: string[]
 	stablecoinName: string
 	stablecoinSymbol: string
+	isInactive: boolean
 	isLoading: boolean
 	error: Error | null
 }
@@ -81,7 +86,7 @@ const getStablecoinAssetChartParams = (rawData: Pick<StablecoinAssetCacheValue, 
 })
 
 export function buildStablecoinAssetPresentation(
-	rawData: Pick<StablecoinAssetCacheValue, 'chainsData' | 'chainsUnique'>,
+	rawData: Pick<StablecoinAssetCacheValue, 'chainsData' | 'chainsUnique' | 'stablecoinSymbol'>,
 	chartType: StablecoinAssetChartType,
 	periodBounds?: { start: number; end: number } | null,
 	selectionOptions?: StablecoinBreakdownSelectionOptions,
@@ -89,7 +94,10 @@ export function buildStablecoinAssetPresentation(
 ): StablecoinAssetPresentation {
 	const params = getStablecoinAssetChartParams(rawData)
 	if (chartType === 'totalCirc') {
-		const dataset = buildTotalMcapPayload(params, { totalName: 'Circulating' }).dataset
+		const dataset = buildTotalMcapPayload(params, {
+			totalName: 'Circulating',
+			valueSymbol: rawData.stablecoinSymbol
+		}).dataset
 		const latestTotal = dataset.source.at(-1)?.[1]
 		return {
 			chartType,
@@ -102,7 +110,7 @@ export function buildStablecoinAssetPresentation(
 			canonicalHistory ?? collectCanonicalStablecoinArea(params, { includeSummary: true, seriesMode: 'history' })
 		const payload = buildAreaPayloadFromCollection(history, {
 			stackName: 'chainMcaps',
-			fillMissingValues: true,
+			valueSymbol: rawData.stablecoinSymbol,
 			summary: true,
 			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
 			...selectionOptions
@@ -150,15 +158,16 @@ export function buildStablecoinAssetPresentation(
 		const chain = rawData.chainsData[chainIndex]
 		const chainName = rawData.chainsUnique[chainIndex]
 		if (!chain || !chainName) throw new Error('Stablecoin chain names and histories must have matching indexes')
-		let value = 0
+		let value: number | null = null
 		for (let pointIndex = chain.length - 1; pointIndex >= 0; pointIndex--) {
 			const point = chain[pointIndex]
 			if (!point) continue
 			if (point.date < latestTimestamp) break
 			if (point.date !== latestTimestamp) continue
-			value = getStablecoinValueFromPoint(point, 'circulating') ?? 0
+			value = getStablecoinValueFromPoint(point, 'circulating')
 			break
 		}
+		if (value == null) continue
 		chainData.push({ name: chainName, circulating: value })
 		totalCirculating += value
 	}
@@ -222,6 +231,7 @@ export function useStablecoinAssetChartData(
 				: EMPTY_ASSET_PRESENTATIONS[chartType],
 		[rawData, chartType, periodBounds, selectionOptions, canonicalHistory]
 	)
+	const isInactive = rawData ? isInactiveStablecoin(rawData.peggedAssetData) : false
 
 	return useMemo(
 		() => ({
@@ -229,17 +239,26 @@ export function useStablecoinAssetChartData(
 			chainsUnique: rawData?.chainsUnique ?? [],
 			stablecoinName: rawData?.stablecoinName ?? '',
 			stablecoinSymbol: rawData?.stablecoinSymbol ?? '',
+			isInactive,
 			isLoading,
 			error
 		}),
-		[presentation, rawData?.chainsUnique, rawData?.stablecoinName, rawData?.stablecoinSymbol, isLoading, error]
+		[
+			presentation,
+			rawData?.chainsUnique,
+			rawData?.stablecoinName,
+			rawData?.stablecoinSymbol,
+			isInactive,
+			isLoading,
+			error
+		]
 	)
 }
 
 export interface StablecoinAssetInfo {
 	name: string
 	symbol: string
-	mcap: number
+	mcap: number | null
 	geckoId: string | null
 }
 
@@ -258,16 +277,17 @@ export function useStablecoinAssetsList() {
 					const value = asset.circulating[key]
 					if (value !== undefined) mcap += value
 				}
-				if (mcap > 0) {
+				const isInactive = isInactiveStablecoin(asset)
+				if (mcap > 0 || isInactive) {
 					assets.push({
 						name: asset.name,
 						symbol: asset.symbol,
-						mcap,
+						mcap: isInactive ? null : mcap,
 						geckoId: asset.gecko_id
 					})
 				}
 			}
-			assets.sort((a, b) => b.mcap - a.mcap)
+			assets.sort((a, b) => (b.mcap ?? 0) - (a.mcap ?? 0))
 			return assets
 		},
 		staleTime: 60 * 60 * 1000

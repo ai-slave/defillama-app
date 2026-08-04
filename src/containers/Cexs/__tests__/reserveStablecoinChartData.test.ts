@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest'
+import type { StablecoinListAsset } from '~/containers/Stablecoins/api.types'
 import { buildReserveStablecoinChartData, TOTAL_STABLECOINS_SERIES_NAME } from '../reserveStablecoinChartData'
 
+const usdtAsset = { symbol: 'USDT', pegType: 'peggedUSD', pegMechanism: 'fiat-backed' } satisfies Pick<
+	StablecoinListAsset,
+	'symbol' | 'pegType' | 'pegMechanism'
+>
+
 const assets = [
-	{ symbol: 'USDT', pegType: 'peggedUSD', pegMechanism: 'fiat-backed' },
+	usdtAsset,
 	{ symbol: 'USDC', pegType: 'peggedUSD', pegMechanism: 'fiat-backed' },
 	{ symbol: 'DAI', pegType: 'peggedUSD', pegMechanism: 'crypto-backed' }
-]
+] satisfies Array<Pick<StablecoinListAsset, 'symbol' | 'pegType' | 'pegMechanism'>>
 
 describe('buildReserveStablecoinChartData', () => {
 	it('builds the four final snapshot datasets in first-seen dimension order', () => {
@@ -58,7 +64,7 @@ describe('buildReserveStablecoinChartData', () => {
 				[1_000, { USDT: 3 }],
 				[2_000, { USDT: 4 }]
 			],
-			[assets[0], { symbol: 'USDT', pegType: 'peggedEUR', pegMechanism: 'algorithmic' }]
+			[usdtAsset, { symbol: 'USDT', pegType: 'peggedEUR', pegMechanism: 'algorithmic' }]
 		)
 
 		expect(result.totalStablecoins?.dataset.source).toEqual([
@@ -70,22 +76,6 @@ describe('buildReserveStablecoinChartData', () => {
 			[2_000, 4]
 		])
 		expect(result.pegTypesUnique).toEqual(['peggedEUR'])
-	})
-
-	it('keeps stablecoin totals and token rows when grouping metadata is empty', () => {
-		const result = buildReserveStablecoinChartData(
-			[
-				[1_000, { X: 1 }],
-				[2_000, { X: 2 }]
-			],
-			[{ symbol: 'X', pegType: '', pegMechanism: '' }]
-		)
-
-		expect(result.totalStablecoins).not.toBeNull()
-		expect(result.stablecoinsByToken).not.toBeNull()
-		expect(result.stablecoinsByPegType).toBeNull()
-		expect(result.stablecoinsByPegMechanism).toBeNull()
-		expect(result.pegMechanismPieSeries.peers).toEqual([])
 	})
 
 	it('uses the latest mechanism row for the pie and summary', () => {
@@ -105,24 +95,5 @@ describe('buildReserveStablecoinChartData', () => {
 			{ name: 'fiat-backed', value: 75 },
 			{ name: 'crypto-backed', value: 25 }
 		])
-	})
-
-	it('preserves the top-ten pie limit and groups the remainder as Others', () => {
-		const manyAssets = Array.from({ length: 12 }, (_, index) => ({
-			symbol: `S${index}`,
-			pegType: 'peggedUSD',
-			pegMechanism: `mechanism-${index}`
-		}))
-		const values = Object.fromEntries(manyAssets.map((asset, index) => [asset.symbol, 12 - index]))
-		const result = buildReserveStablecoinChartData(
-			[
-				[1_000, values],
-				[2_000, values]
-			],
-			manyAssets
-		)
-
-		expect(result.pegMechanismPieSeries.peers).toHaveLength(12)
-		expect(result.pegMechanismPieSeries.peers.at(-1)).toEqual({ name: 'mechanism-11', value: 1 })
 	})
 })

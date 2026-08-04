@@ -52,14 +52,10 @@ describe('buildStablecoinsChartCacheValue', () => {
 
 		expect(result.doublecountedIds).toEqual([0])
 		expect(result.chartDataByPeggedAsset[0]).toEqual([{ date: 1, mcap: { peggedUSD: 10 } }])
-		expect(result.pieAssets).toEqual([{ symbol: 'ONE', mcap: 10 }])
+		expect(result.pieAssets).toEqual([{ symbol: 'ONE', mcap: 10, aggregateIncluded: false }])
 	})
 
-	it('does not exclude assets when the response omits double-count metadata', () => {
-		expect(build({ aggregated: chartData.aggregated, breakdown: chartData.breakdown }).doublecountedIds).toEqual([])
-	})
-
-	it('keeps stale chart histories compact while canonical totals carry them forward', () => {
+	it('keeps producer-supplied histories compact without extending stale series', () => {
 		const currentAsset: StablecoinListAsset = {
 			...baseAsset,
 			id: 'asset-2',
@@ -76,28 +72,69 @@ describe('buildStablecoinsChartCacheValue', () => {
 						{ date: '1', totalCirculatingUSD: { peggedUSD: 20 } },
 						{ date: '86401', totalCirculatingUSD: { peggedUSD: 30 } }
 					]
-				}
+				},
+				doublecountedIds: []
 			},
 			chain: 'All'
 		})
 
 		expect(result.chartDataByPeggedAsset.map((series) => series.length)).toEqual([1, 2])
 		expect(result.pieAssets).toEqual([
-			{ symbol: 'ONE', mcap: 10 },
-			{ symbol: 'TWO', mcap: 30 }
+			{ symbol: 'ONE', mcap: 10, aggregateIncluded: true },
+			{ symbol: 'TWO', mcap: 30, aggregateIncluded: true }
 		])
 		expect(
 			buildTotalMcapPayload({
 				chartDataByAssetOrChain: result.chartDataByPeggedAsset,
 				assetsOrChainsList: result.peggedAssetNames,
 				issuanceType: 'mcap',
-				selectedChain: 'All',
-				carryForwardAfterSeriesEnd: true
+				selectedChain: 'All'
 			}).dataset.source
 		).toEqual([
 			[1_000, 30],
-			[86_401_000, 40]
+			[86_401_000, 30]
 		])
+	})
+
+	it('keeps ended history but removes it from current snapshots while preserving active zero', () => {
+		const endedAsset = { ...baseAsset, deadFrom: '2026-01-01' }
+		const zeroAsset: StablecoinListAsset = {
+			...baseAsset,
+			id: 'asset-2',
+			name: 'Stable Zero',
+			symbol: 'ZERO'
+		}
+		const lifecycleChartData: StablecoinChartResponse = {
+			aggregated: [],
+			breakdown: {
+				'asset-1': [{ date: '1', totalCirculatingUSD: { peggedUSD: 10 } }],
+				'asset-2': [{ date: '1', totalCirculatingUSD: { peggedUSD: 0 } }]
+			},
+			doublecountedIds: []
+		}
+		const lifecyclePeggedData = { ...peggedData, peggedAssets: [endedAsset, zeroAsset] }
+		const cache = buildStablecoinsChartCacheValue({
+			peggedData: lifecyclePeggedData,
+			chainData: lifecycleChartData,
+			chain: 'All'
+		})
+		const rows = buildStablecoinsTableData({
+			baseline: {
+				peggedData: lifecyclePeggedData,
+				priceData: [],
+				rateData: [],
+				peggedConfig: { ...peggedConfig, 'stable-zero': 'asset-2' }
+			},
+			chainData: lifecycleChartData,
+			chain: 'All'
+		})
+
+		expect(cache.chartDataByPeggedAsset[0]).toEqual([{ date: 1, mcap: { peggedUSD: 10 } }])
+		expect(cache.pieAssets).toEqual([
+			{ symbol: 'ONE', mcap: null, aggregateIncluded: true },
+			{ symbol: 'ZERO', mcap: 0, aggregateIncluded: true }
+		])
+		expect(rows.map((row) => row.mcap)).toEqual([null, 0])
 	})
 
 	it('constructs table rows from a shared baseline without changing values', () => {
@@ -113,6 +150,7 @@ describe('buildStablecoinsChartCacheValue', () => {
 			slug: 'stable-one',
 			symbol: 'ONE',
 			mcap: 10,
+			doublecounted: true,
 			price: 1,
 			chains: ['Ethereum'],
 			pegType: 'peggedUSD'
@@ -154,7 +192,8 @@ describe('buildStablecoinsChartCacheValue', () => {
 			breakdown: {
 				'405': [{ date: '1', totalCirculatingUSD: { peggedUSD: 40 } }],
 				'192': [{ date: '1', totalCirculatingUSD: { peggedUSD: 85 } }]
-			}
+			},
+			doublecountedIds: []
 		}
 
 		const cache = buildStablecoinsChartCacheValue({
@@ -171,8 +210,8 @@ describe('buildStablecoinsChartCacheValue', () => {
 		expect(cache.peggedAssetIdToChartDataIndex).toEqual({ '192': 1, '405': 0 })
 		expect(cache.peggedAssetNames).toEqual(['USDA', 'USDA (192)'])
 		expect(cache.pieAssets).toEqual([
-			{ symbol: 'USDA', mcap: 40 },
-			{ symbol: 'USDA (192)', mcap: 85 }
+			{ symbol: 'USDA', mcap: 40, aggregateIncluded: true },
+			{ symbol: 'USDA (192)', mcap: 85, aggregateIncluded: true }
 		])
 		expect(
 			cache.chartDataByPeggedAsset.map((history) => {

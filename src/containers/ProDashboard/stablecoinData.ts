@@ -1,6 +1,7 @@
 import {
 	fetchStablecoinAssetApi,
 	fetchStablecoinAssetsApi,
+	fetchStablecoinChartAllApi,
 	fetchStablecoinChartApi,
 	fetchStablecoinPeggedConfigApi,
 	fetchStablecoinPricesApi,
@@ -15,18 +16,18 @@ import type {
 	StablecoinRatesResponse,
 	StablecoinsListResponse
 } from '~/containers/Stablecoins/api.types'
-import type { StablecoinOverviewChartInputs } from '~/containers/Stablecoins/types'
-import { buildUniqueStablecoinChartLabels, formatPeggedAssetsData } from '~/containers/Stablecoins/utils'
+import type { StablecoinOverviewChartInputs, StablecoinOverviewChartPoint } from '~/containers/Stablecoins/types'
+import {
+	buildUniqueStablecoinChartLabels,
+	formatPeggedAssetsData,
+	isInactiveStablecoin,
+	sumStablecoinPegBalances
+} from '~/containers/Stablecoins/utils'
 
 /** Canonical normalized Stablecoin data shared by Pro server producers and browser fallbacks. */
 
-type StablecoinChartMcapPoint = {
-	date: number
-	mcap: Record<string, number>
-}
-
 export type StablecoinsChartCacheValue = StablecoinOverviewChartInputs & {
-	pieAssets: Array<{ symbol: string; mcap: number | null }>
+	pieAssets: Array<{ symbol: string; mcap: number | null; aggregateIncluded: boolean }>
 }
 
 export interface StablecoinBaselineData {
@@ -57,22 +58,21 @@ export function buildStablecoinsChartCacheValue({
 	chain: string
 }): StablecoinsChartCacheValue {
 	const { peggedAssets } = peggedData
-	const chartDataByPeggedAsset: StablecoinChartMcapPoint[][] = []
+	const chartDataByPeggedAsset: StablecoinOverviewChartPoint[][] = []
 	const peggedAssetNames = buildUniqueStablecoinChartLabels(peggedAssets, 'name')
 	const pieAssetLabels = buildUniqueStablecoinChartLabels(peggedAssets, 'symbol')
 	const peggedAssetIdToChartDataIndex: Record<string, number> = {}
 	const doublecountedIds: number[] = []
-	const doublecountedSourceIds = new Set(chainData.doublecountedIds ?? [])
+	const doublecountedSourceIds = new Set(chainData.doublecountedIds)
 
 	for (const [index, asset] of peggedAssets.entries()) {
 		peggedAssetIdToChartDataIndex[asset.id] = index
 		if (doublecountedSourceIds.has(asset.id)) doublecountedIds.push(index)
 
 		const charts = chainData.breakdown[asset.id] ?? []
-		const formattedCharts: StablecoinChartMcapPoint[] = []
+		const formattedCharts: StablecoinOverviewChartPoint[] = []
 		for (const chart of charts) {
-			if (!chart.totalCirculatingUSD) continue
-			formattedCharts.push({ date: Number(chart.date), mcap: chart.totalCirculatingUSD })
+			formattedCharts.push({ date: Number(chart.date), mcap: chart.totalCirculatingUSD ?? {} })
 		}
 
 		chartDataByPeggedAsset.push(formattedCharts)
@@ -82,17 +82,14 @@ export function buildStablecoinsChartCacheValue({
 	for (const [index, asset] of peggedAssets.entries()) {
 		if (chain !== 'All' && !asset.chains.includes(chain)) continue
 		const latestPoint = chartDataByPeggedAsset[index]?.at(-1)
-		let mcap = 0
-		if (latestPoint) {
-			for (const pegType in latestPoint.mcap) {
-				const value = latestPoint.mcap[pegType]
-				if (value === undefined) throw new Error(`Missing stablecoin market cap for peg type ${pegType}`)
-				mcap += value
-			}
-		}
+		const mcap = !latestPoint || isInactiveStablecoin(asset) ? null : sumStablecoinPegBalances(latestPoint.mcap)
 		const symbol = pieAssetLabels[index]
 		if (symbol === undefined) throw new Error(`Missing stablecoin chart label for asset ${asset.id}`)
-		pieAssets.push({ symbol, mcap: latestPoint ? mcap : null })
+		pieAssets.push({
+			symbol,
+			mcap,
+			aggregateIncluded: !doublecountedSourceIds.has(asset.id)
+		})
 	}
 
 	return {
@@ -124,7 +121,8 @@ export function buildStablecoinsTableData({
 		priceData: baseline.priceData,
 		rateData: baseline.rateData,
 		peggedAssetIdToChartDataIndex: chartCache.peggedAssetIdToChartDataIndex,
-		chain: chain === 'All' ? '' : chain
+		doublecountedIndexes: chartCache.doublecountedIds,
+		...(chain === 'All' ? {} : { chain })
 	})
 
 	const slugByAssetId = new Map<string, string>()
@@ -146,6 +144,7 @@ export function buildStablecoinsTableData({
 			change_7d: asset.change_7d,
 			change_1m: asset.change_1m,
 			pegDeviation: asset.pegDeviation,
+			doublecounted: asset.doublecounted,
 			chains: asset.chains,
 			pegType: asset.pegType
 		}
@@ -157,8 +156,7 @@ export type StablecoinsTableData = ReturnType<typeof buildStablecoinsTableData>
 export async function fetchStablecoinsTableData(chain: string) {
 	const [baseline, chainData] = await Promise.all([
 		fetchStablecoinBaselineData(),
-		// The table does not apply chart double-count exclusions, so keep its reduced payload.
-		fetchStablecoinChartApi(chain === 'All' ? 'all-llama-app' : chain)
+		chain === 'All' ? fetchStablecoinChartAllApi() : fetchStablecoinChartApi(chain)
 	])
 	return buildStablecoinsTableData({ baseline, chainData, chain })
 }

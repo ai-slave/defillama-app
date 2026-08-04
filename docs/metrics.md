@@ -313,6 +313,48 @@ Before refactoring TVL:
 - Preserve displayed numbers unless a product/API migration explicitly asks for a change.
 - Prefer local container modules for route-specific behavior. Use `src/metrics` only if a stable cross-container semantic invariant is proven.
 
+## Stablecoins
+
+Stablecoin aggregate supply, dominance, and inflow totals exclude producer-marked double-counted assets. Historical
+breakdown selectors keep all aggregate-eligible peers checked by default, while double-counted peers remain available for
+explicit selection. The bounded chart renders only the top named peers plus their exact `Others` remainder; a double-counted
+peer must never leak into `Others`. Table rows keep their measured value but mute and identify double-counted values as
+excluded from aggregate market cap. Historical and snapshot series use a stable per-asset label generated from the full
+unfiltered asset universe, so duplicate symbols remain separate after chain or URL filtering. `Others` is reserved for the
+renderer's homogeneous remainder and cannot be assigned to a real asset. The same inclusion rule applies to Pro pie charts:
+a double-counted peer is available for explicit selection, but an all-double-counted scope has an empty default and no
+headline total.
+
+Stablecoin history preserves the producer's sparse-zero contract:
+
+- No time-series point means unavailable.
+- A top-level supply metric omitted from a present historical point means the producer pruned a zero and is restored as zero. The supply-chart producer does not emit that top-level metric as null.
+- Nullable detail measurements, such as chain issuance or unreleased supply, remain unavailable when null.
+- An explicit zero remains zero.
+
+The producer owns active/dead lifecycle extension. Frontend chart construction must use only the points it receives and
+must not carry a series forward after its last producer point. When multiple supply snapshots fall in one UTC-day bucket,
+daily normalization keeps the last snapshot; it must not add stock values together. Additive flow metrics use sum mode.
+
+Filtered Stablecoin pages derive headline totals from the same filtered rows as the chart and table. Asset supply charts
+use token units and the asset symbol; USD is used only by explicitly USD-valued metrics. Enabling unreleased supply does
+not turn an unavailable unreleased measurement into zero or publish a partial value labeled as complete. Likewise, a
+bridge row is inferred to represent the full supply only when both compared measurements are present.
+
+The Stablecoins chain list does not supply DeFi TVL. Its `chains[].totalCirculatingUSD` value is Stablecoin market cap,
+so it cannot be reused as the denominator for a “Stables Mcap / DeFi TVL” ratio. Do not restore that column without an
+actual canonical DeFi-TVL source.
+
+Grouped chain rows calculate current and comparison totals from the same current-contributing rows. A chain with
+unavailable current market cap does not erase measured siblings and does not contribute to a prior-period total. If a
+current-contributing row lacks one comparison period, only that grouped period and its percentage change are unavailable.
+
+Active stablecoin histories may be extended only by the producer, which owns lifecycle metadata such as `deadFrom`.
+Frontend blanket carry-forward is invalid because it cannot distinguish a delayed active asset from an intentionally
+ended one. Assets marked `deadFrom` or `delisted` retain their historical charts, but current table values and snapshot
+contributions are unavailable rather than zero. `deprecated` alone does not imply that current measurements are
+unavailable.
+
 ## Bridged TVL
 
 Bridged TVL is the value of tokens held on a chain, sourced from chain-assets data. Do not treat it as DeFi protocol TVL.

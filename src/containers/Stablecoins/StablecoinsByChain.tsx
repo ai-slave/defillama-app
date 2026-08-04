@@ -40,9 +40,9 @@ import {
 	getStablecoinOverviewVolumeChartKind,
 	getStablecoinSeriesSelectorLabel,
 	parseStablecoinChartState,
+	parseStablecoinChartView,
 	parseStablecoinVolumeGroupBy,
-	type StablecoinChartType as StablecoinChartCategory,
-	type StablecoinChartView
+	type StablecoinChartType as StablecoinChartCategory
 } from '~/containers/Stablecoins/chartState'
 import { filterStablecoinAssets, resolveStablecoinFilterState } from '~/containers/Stablecoins/filterPolicy'
 import { PeggedFilters } from '~/containers/Stablecoins/Filters'
@@ -58,7 +58,6 @@ import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
-import type { StablecoinVolumeChainChartKind, StablecoinVolumeGlobalChartKind } from './api.types'
 import {
 	buildStablecoinMarketCapPresentation,
 	prepareStablecoinMarketCapSeries,
@@ -84,11 +83,12 @@ const EMPTY_TREEMAP_DATA: TreemapChartProps['treeData'] = []
 const EMPTY_SERIES: string[] = []
 const EMPTY_RUNTIME_SERIES = {
 	selectableSeries: EMPTY_SERIES,
+	defaultSeries: EMPTY_SERIES,
 	renderedSelectableSeries: EMPTY_SERIES,
 	fixedRemainderSeries: EMPTY_SERIES,
 	alwaysVisibleSeries: EMPTY_SERIES
 }
-const getStablecoinSnapshotName = (asset: FormattedStablecoinAsset) => asset.symbol || asset.name
+const getStablecoinSnapshotName = (asset: FormattedStablecoinAsset) => asset.chartLabel
 
 type MultiSeriesChartState =
 	| { status: 'loading' }
@@ -145,7 +145,8 @@ export function StablecoinsByChain({
 	)
 	const onChartViewChange = React.useCallback(
 		(nextChartView: string) => {
-			const view = nextChartView as StablecoinChartView
+			const view = parseStablecoinChartView(nextChartView)
+			if (!view) return
 			handleChartReady(null)
 			void pushShallowQuery(router, {
 				chartView: getStablecoinChartViewQueryValue(chartMode, chartType, view)
@@ -159,23 +160,23 @@ export function StablecoinsByChain({
 		},
 		[router]
 	)
-	const volumeChartKind = getStablecoinOverviewVolumeChartKind(chartType, chartView, selectedChain)
 	const volumeChartQuery = useStablecoinVolumeChartData(
 		selectedChain === 'All'
 			? {
 					scope: 'global',
-					chart: volumeChartKind as StablecoinVolumeGlobalChartKind | null,
+					chart: getStablecoinOverviewVolumeChartKind(chartType, chartView, 'All'),
 					selectionIntent,
-					enabled: volumeChartKind != null
+					enabled: chartType === 'volume'
 				}
 			: {
 					scope: 'chain',
 					chain: selectedChain,
-					chart: volumeChartKind as StablecoinVolumeChainChartKind | null,
+					chart: getStablecoinOverviewVolumeChartKind(chartType, chartView, selectedChain),
 					selectionIntent,
-					enabled: volumeChartKind != null
+					enabled: chartType === 'volume'
 				}
 	)
+	const volumeChartKind = getStablecoinOverviewVolumeChartKind(chartType, chartView, selectedChain)
 	const unreleasedQueryParam = router.query[UNRELEASED_QUERY_KEY]
 
 	const includeUnreleased = isTruthyQueryParam(unreleasedQueryParam)
@@ -230,7 +231,8 @@ export function StablecoinsByChain({
 			rows: peggedTotals,
 			view: chartView,
 			getName: getStablecoinSnapshotName,
-			getValue: (row) => row.mcap ?? 0
+			getValue: (row) => row.mcap ?? 0,
+			isAggregateIncluded: (row) => !row.doublecounted
 		})
 	}, [chartType, chartView, peggedTotals])
 
@@ -275,10 +277,11 @@ export function StablecoinsByChain({
 			(selectedChartData == null && (overviewChartQuery.isFetching || overviewChartQuery.data != null)))
 	const isSelectedChartUnavailable =
 		shouldFetchOverviewChart && !isSelectedChartLoading && (overviewChartQuery.error != null || !selectedChartData)
-	const chartSummary =
-		(isMarketCapTableChart && hasActiveStablecoinUrlFilters
-			? summaryChartQuery.data?.summary
-			: selectedChartData?.summary) ?? defaultChartData.summary
+	const chartSummary = hasActiveStablecoinUrlFilters
+		? isMarketCapTableChart
+			? (summaryChartQuery.data?.summary ?? null)
+			: (selectedChartData?.summary ?? null)
+		: (selectedChartData?.summary ?? defaultChartData.summary)
 	const toChangeStat = (
 		days: StablecoinChangeStat['days'],
 		percent: string | null | undefined,
@@ -518,7 +521,7 @@ export function StablecoinsByChain({
 							chartInstance={exportChartInstance}
 							filename={getImageExportFilename()}
 							title={getImageExportTitle()}
-							iconUrl={selectedChain !== 'All' ? chainIconUrl(selectedChain) : undefined}
+							{...(selectedChain !== 'All' ? { iconUrl: chainIconUrl(selectedChain) } : {})}
 							prepareCsvDirect={prepareCsvDirect}
 						/>
 					</ChartPanelToolbar>
@@ -557,8 +560,8 @@ export function StablecoinsByChain({
 					) : (
 						<MultiSeriesChartPanel
 							state={activeChartState}
-							{...(activeSelectedCharts !== undefined ? { selectedCharts: activeSelectedCharts } : {})}
-							{...(chartOptions !== undefined ? { chartOptions } : {})}
+							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
+							{...(chartOptions === undefined ? {} : { chartOptions })}
 							hideDefaultLegend={!showDefaultLegend}
 							{...(isGroupedBarChart ? { groupBy: volumeGroupBy } : {})}
 							onReady={handleChartReady}
@@ -615,14 +618,14 @@ function MultiSeriesChartPanel({
 			<MultiSeriesChart
 				dataset={state.data.dataset}
 				charts={state.data.charts}
-				{...(selectedCharts !== undefined ? { selectedCharts } : {})}
-				{...(state.data.stacked !== undefined ? { stacked: state.data.stacked } : {})}
-				{...(state.data.expandTo100Percent !== undefined ? { expandTo100Percent: state.data.expandTo100Percent } : {})}
-				{...(state.data.valueSymbol !== undefined ? { valueSymbol: state.data.valueSymbol } : {})}
-				{...(state.data.showTotalInTooltip !== undefined ? { showTotalInTooltip: state.data.showTotalInTooltip } : {})}
-				{...(chartOptions !== undefined ? { chartOptions } : {})}
-				{...(hideDefaultLegend !== undefined ? { hideDefaultLegend } : {})}
-				{...(groupBy !== undefined ? { groupBy } : {})}
+				{...(selectedCharts === undefined ? {} : { selectedCharts })}
+				stacked={state.data.stacked}
+				{...(state.data.expandTo100Percent === undefined ? {} : { expandTo100Percent: state.data.expandTo100Percent })}
+				valueSymbol={state.data.valueSymbol}
+				showTotalInTooltip={state.data.showTotalInTooltip}
+				{...(chartOptions === undefined ? {} : { chartOptions })}
+				{...(hideDefaultLegend === undefined ? {} : { hideDefaultLegend })}
+				{...(groupBy === undefined ? {} : { groupBy })}
 				onReady={onReady}
 			/>
 		</React.Suspense>
@@ -631,17 +634,18 @@ function MultiSeriesChartPanel({
 
 function handleRouting(selectedChain: string, queryParams: Record<string, string | string[] | undefined>) {
 	const { chain: _chain, ...filters } = queryParams
-	const encodedFilters: string[] = []
-	for (const [filter, value] of Object.entries(filters)) {
+	const queryParts: string[] = []
+	for (const filter in filters) {
+		const value = filters[filter]
 		if (Array.isArray(value)) {
 			for (const item of value) {
-				encodedFilters.push(`${encodeURIComponent(filter)}=${encodeURIComponent(item)}`)
+				queryParts.push(`${encodeURIComponent(filter)}=${encodeURIComponent(item)}`)
 			}
 		} else if (typeof value === 'string') {
-			encodedFilters.push(`${encodeURIComponent(filter)}=${encodeURIComponent(value)}`)
+			queryParts.push(`${encodeURIComponent(filter)}=${encodeURIComponent(value)}`)
 		}
 	}
-	const query = encodedFilters.length > 0 ? `?${encodedFilters.join('&')}` : ''
+	const query = queryParts.length > 0 ? `?${queryParts.join('&')}` : ''
 
 	if (selectedChain === 'All') return `/stablecoins${query}`
 	return `/stablecoins/${slug(selectedChain)}${query}`

@@ -5,7 +5,8 @@ import { fetchChainAssetsChart } from '~/containers/BridgedTVL/api'
 import { resolveChainAssetId } from '~/containers/BridgedTVL/chainAssetIds'
 import { fetchChainChart } from '~/containers/Chains/api'
 import { fetchStablecoinChartApi } from '~/containers/Stablecoins/api'
-import type { StablecoinChartPoint, StablecoinChartResponse } from '~/containers/Stablecoins/api.types'
+import type { StablecoinChartResponse } from '~/containers/Stablecoins/api.types'
+import { buildStablecoinAggregatePairs, type StablecoinAggregatePair } from '~/containers/Stablecoins/utils'
 import { toDisplayName } from '~/utils/chainNormalizer'
 import { processAdjustedTvl } from '~/utils/tvl'
 import { convertToNumberFormat, normalizeHourlyToDaily } from '../utils'
@@ -161,20 +162,16 @@ async function fetchChainStablecoinsData(chain: string, dataType?: string): Prom
 	const apiChain = toDisplayName(chain)
 	const encodedChain = apiChain.includes(' ') ? encodeURIComponent(apiChain) : apiChain
 	const data = await fetchStablecoinChartOnce(encodedChain)
+	const totals = buildStablecoinAggregatePairs(data)
 
 	if (dataType === 'inflows') {
-		return calculateStablecoinInflows(data.aggregated)
+		return calculateStablecoinInflows(totals)
 	}
 
-	const formattedData: [number, number][] = data.aggregated.map((item) => [
-		parseInt(item.date, 10),
-		item.totalCirculatingUSD?.peggedUSD || 0
-	])
-
-	return formattedData
+	return totals
 }
 
-function calculateStablecoinInflows(aggregatedData: StablecoinChartPoint[]): [number, number][] {
+function calculateStablecoinInflows(aggregatedData: StablecoinAggregatePair[]): [number, number][] {
 	if (aggregatedData.length < 2) return []
 
 	const inflowsData: [number, number][] = []
@@ -184,11 +181,7 @@ function calculateStablecoinInflows(aggregatedData: StablecoinChartPoint[]): [nu
 		const prevDay = aggregatedData[i - 1]
 		if (!currentDay || !prevDay) throw new Error(`Missing stablecoin chart point at index ${i}`)
 
-		const currentMcap = currentDay.totalCirculatingUSD?.peggedUSD || 0
-		const prevMcap = prevDay.totalCirculatingUSD?.peggedUSD || 0
-		const inflow = currentMcap - prevMcap
-
-		inflowsData.push([parseInt(currentDay.date, 10), inflow])
+		inflowsData.push([currentDay[0], currentDay[1] - prevDay[1]])
 	}
 	return inflowsData
 }

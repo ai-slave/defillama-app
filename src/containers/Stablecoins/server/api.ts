@@ -1,12 +1,10 @@
 import {
 	fetchStablecoinChainVolumeChartApi,
-	fetchStablecoinChartApi,
 	fetchStablecoinTokenVolumeChartApi,
 	fetchStablecoinVolumeChartApi
 } from '~/containers/Stablecoins/api'
 import type {
 	StablecoinVolumeChainChartKind,
-	StablecoinVolumeChartResponse,
 	StablecoinVolumeGlobalChartKind,
 	StablecoinVolumeTokenChartKind
 } from '~/containers/Stablecoins/api.types'
@@ -22,8 +20,10 @@ import {
 	getStablecoinChainsChartSeries,
 	getStablecoinOverviewChartSeries
 } from '~/containers/Stablecoins/queries.server'
-import { getStablecoinValueFromPoint } from '~/containers/Stablecoins/utils'
-import { buildStablecoinVolumeChartPayload } from '~/containers/Stablecoins/volumeChart'
+import {
+	buildStablecoinVolumeChartPayload,
+	type StablecoinVolumeChartSource
+} from '~/containers/Stablecoins/volumeChart'
 import { queryString } from '~/server/api/params'
 import { badRequest, notFound, ok, upstreamError } from '~/server/api/respond'
 import { cachedResult } from '~/server/api/resultCache'
@@ -33,21 +33,19 @@ import { recordRouteRuntimeError } from '~/utils/telemetry'
 
 type StablecoinMcapSeriesPoint = [number, number]
 
+const resolveStablecoinOverviewChain = async (chain: string): Promise<{ chain: string | null } | null> => {
+	if (chain.toLowerCase() === 'all') return { chain: null }
+	const [{ default: metadataCache }, { resolveChainParamFromMetadata }] = await Promise.all([
+		import('~/utils/metadata'),
+		import('~/containers/ChainOverview/server/routes')
+	])
+	const route = resolveChainParamFromMetadata(chain, metadataCache)
+	return route ? { chain: route.canonicalName } : null
+}
+
 // ---------------------------------------------------------------------------
 // /api/public/stablecoins/chart
 // ---------------------------------------------------------------------------
-
-function buildStablecoinMcapSeries(
-	aggregated: Awaited<ReturnType<typeof fetchStablecoinChartApi>>['aggregated']
-): StablecoinMcapSeriesPoint[] {
-	const series: StablecoinMcapSeriesPoint[] = []
-	for (const point of aggregated ?? []) {
-		const timestamp = +point.date * 1e3
-		const mcap = getStablecoinValueFromPoint(point, 'totalCirculatingUSD')
-		if (Number.isFinite(timestamp) && Number.isFinite(mcap)) series.push([timestamp, mcap])
-	}
-	return series
-}
 
 export const stablecoinMcapChart = defineApiRoute({
 	route: '/api/public/stablecoins/chart',
@@ -59,12 +57,19 @@ export const stablecoinMcapChart = defineApiRoute({
 		}
 
 		try {
-			// The legacy stablecoin chart API uses this special label for the global
-			// aggregate instead of accepting "all" directly.
-			const chainLabel = chain.toLowerCase() === 'all' ? 'all-llama-app' : chain
-			const data = await fetchStablecoinChartApi(chainLabel)
-
-			return ok(buildStablecoinMcapSeries(data.aggregated))
+			const resolvedChain = await resolveStablecoinOverviewChain(chain)
+			if (!resolvedChain) return notFound('chain not found')
+			const payload = await getStablecoinOverviewChartSeries({
+				chain: resolvedChain.chain,
+				chart: 'totalMcap'
+			})
+			const series: StablecoinMcapSeriesPoint[] = []
+			for (const row of payload.dataset.source) {
+				const timestamp = row[0]
+				const mcap = row[1]
+				if (typeof timestamp === 'number' && typeof mcap === 'number') series.push([timestamp, mcap])
+			}
+			return ok(series)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch stablecoin chart')
@@ -91,19 +96,43 @@ const parseSeriesSelectionIntent = (
 	if (includes && excludes) return 'invalid'
 	if (!includes && !excludes) return null
 	const names = Array.isArray(query.series) ? query.series : query.series ? [query.series] : []
-	if (excludes && names.length === 0) return null
 	return { mode: excludes ? 'exclude' : 'include', names }
 }
 
-const OVERVIEW_CHARTS = new Set<StablecoinOverviewChartType>([
-	'totalMcap',
-	'tokenMcaps',
-	'dominance',
-	'usdInflows',
-	'tokenInflows'
-])
-const CHAINS_CHARTS = new Set<StablecoinChainsChartType>(['totalMcap', 'chainMcaps', 'dominance'])
-const ASSET_CHARTS = new Set<StablecoinAssetChartType>(['totalCirc', 'chainMcaps', 'chainDominance'])
+const parseOverviewChart = (value: string): StablecoinOverviewChartType | null => {
+	switch (value) {
+		case 'totalMcap':
+		case 'tokenMcaps':
+		case 'dominance':
+		case 'usdInflows':
+		case 'tokenInflows':
+			return value
+		default:
+			return null
+	}
+}
+
+const parseChainsChart = (value: string): StablecoinChainsChartType | null => {
+	switch (value) {
+		case 'totalMcap':
+		case 'chainMcaps':
+		case 'dominance':
+			return value
+		default:
+			return null
+	}
+}
+
+const parseAssetChart = (value: string): StablecoinAssetChartType | null => {
+	switch (value) {
+		case 'totalCirc':
+		case 'chainMcaps':
+		case 'chainDominance':
+			return value
+		default:
+			return null
+	}
+}
 
 export const stablecoinChartSeries = defineApiRoute({
 	route: '/api/public/stablecoins/chart-series',
@@ -122,21 +151,15 @@ export const stablecoinChartSeries = defineApiRoute({
 
 		try {
 			if (scope === 'overview') {
-				if (!OVERVIEW_CHARTS.has(rawChart as StablecoinOverviewChartType)) {
-					return badRequest('unsupported overview chart')
-				}
+				const chart = parseOverviewChart(rawChart)
+				if (!chart) return badRequest('unsupported overview chart')
 				const chain = queryString(req.query, 'chain')
 				if (!chain) return badRequest('chain parameter is required')
-				const [{ default: metadataCache }, { resolveChainParamFromMetadata }] = await Promise.all([
-					import('~/utils/metadata'),
-					import('~/containers/ChainOverview/server/routes')
-				])
-				const isAllChain = chain.toLowerCase() === 'all'
-				const chainRoute = isAllChain ? null : resolveChainParamFromMetadata(chain, metadataCache)
-				if (!isAllChain && !chainRoute) return notFound('chain not found')
+				const resolvedChain = await resolveStablecoinOverviewChain(chain)
+				if (!resolvedChain) return notFound('chain not found')
 				const payload = await getStablecoinOverviewChartSeries({
-					chain: isAllChain ? null : chainRoute.canonicalName,
-					chart: rawChart as StablecoinOverviewChartType,
+					chain: resolvedChain.chain,
+					chart,
 					...(seriesLimit == null ? {} : { seriesLimit }),
 					...(selectedNames == null ? {} : { selectedNames }),
 					...(excludedNames == null ? {} : { excludedNames }),
@@ -155,10 +178,8 @@ export const stablecoinChartSeries = defineApiRoute({
 			}
 
 			if (scope === 'chains') {
-				if (!CHAINS_CHARTS.has(rawChart as StablecoinChainsChartType)) {
-					return badRequest('unsupported chains chart')
-				}
-				const chart = rawChart as StablecoinChainsChartType
+				const chart = parseChainsChart(rawChart)
+				if (!chart) return badRequest('unsupported chains chart')
 				const includeUnreleased = isTruthyQueryParam(req.query.unreleased)
 				const payload =
 					selectedNames == null && excludedNames == null
@@ -170,9 +191,8 @@ export const stablecoinChartSeries = defineApiRoute({
 			}
 
 			if (scope === 'asset') {
-				if (!ASSET_CHARTS.has(rawChart as StablecoinAssetChartType)) {
-					return badRequest('unsupported asset chart')
-				}
+				const chart = parseAssetChart(rawChart)
+				if (!chart) return badRequest('unsupported asset chart')
 				const stablecoin = queryString(req.query, 'stablecoin')
 				if (!stablecoin) return badRequest('stablecoin parameter is required')
 				const [{ default: metadataCache }, { resolveStablecoinAssetParamFromMetadata }] = await Promise.all([
@@ -183,7 +203,7 @@ export const stablecoinChartSeries = defineApiRoute({
 				if (!stablecoinSlug) return notFound('stablecoin not found')
 				const payload = await getStablecoinAssetChartSeries({
 					peggedasset: stablecoinSlug,
-					chart: rawChart as StablecoinAssetChartType,
+					chart,
 					includeUnreleased: isTruthyQueryParam(req.query.unreleased),
 					...(seriesLimit == null ? {} : { seriesLimit }),
 					...(selectedNames == null ? {} : { selectedNames }),
@@ -205,9 +225,38 @@ export const stablecoinChartSeries = defineApiRoute({
 // /api/public/stablecoins/volume-chart
 // ---------------------------------------------------------------------------
 
-const GLOBAL_CHARTS = new Set<StablecoinVolumeGlobalChartKind>(['total', 'chain', 'token', 'currency'])
-const CHAIN_CHARTS = new Set<StablecoinVolumeChainChartKind>(['total', 'token', 'currency'])
-const TOKEN_CHARTS = new Set<StablecoinVolumeTokenChartKind>(['total', 'chain'])
+const parseGlobalVolumeChart = (value: string): StablecoinVolumeGlobalChartKind | null => {
+	switch (value) {
+		case 'total':
+		case 'chain':
+		case 'token':
+		case 'currency':
+			return value
+		default:
+			return null
+	}
+}
+
+const parseChainVolumeChart = (value: string): StablecoinVolumeChainChartKind | null => {
+	switch (value) {
+		case 'total':
+		case 'token':
+		case 'currency':
+			return value
+		default:
+			return null
+	}
+}
+
+const parseTokenVolumeChart = (value: string): StablecoinVolumeTokenChartKind | null => {
+	switch (value) {
+		case 'total':
+		case 'chain':
+			return value
+		default:
+			return null
+	}
+}
 const VOLUME_SOURCE_CACHE_OPTIONS = {
 	ttlMs: 5 * 60 * 1000,
 	staleWhileRevalidateMs: 5 * 60 * 1000,
@@ -229,20 +278,27 @@ export const stablecoinVolumeChart = defineApiRoute({
 		const excludedNames = selectionIntent?.mode === 'exclude' ? selectionIntent.names : null
 
 		try {
-			let chart: StablecoinVolumeGlobalChartKind | StablecoinVolumeChainChartKind | StablecoinVolumeTokenChartKind
-			let data: StablecoinVolumeChartResponse
+			let source: StablecoinVolumeChartSource
 			if (scope === 'global') {
-				if (!GLOBAL_CHARTS.has(rawChart as StablecoinVolumeGlobalChartKind)) {
-					return badRequest('unsupported global volume chart')
+				const chart = parseGlobalVolumeChart(rawChart)
+				if (!chart) return badRequest('unsupported global volume chart')
+				if (chart === 'total') {
+					const data = await cachedResult('stablecoin-volume-source', 'global:total', VOLUME_SOURCE_CACHE_OPTIONS, () =>
+						fetchStablecoinVolumeChartApi('total')
+					)
+					source = { chart, data }
+				} else {
+					const data = await cachedResult(
+						'stablecoin-volume-source',
+						`global:${chart}`,
+						VOLUME_SOURCE_CACHE_OPTIONS,
+						() => fetchStablecoinVolumeChartApi(chart)
+					)
+					source = { chart, data }
 				}
-				chart = rawChart as StablecoinVolumeGlobalChartKind
-				data = await cachedResult('stablecoin-volume-source', `global:${chart}`, VOLUME_SOURCE_CACHE_OPTIONS, () =>
-					fetchStablecoinVolumeChartApi(chart as StablecoinVolumeGlobalChartKind)
-				)
 			} else if (scope === 'chain') {
-				if (!CHAIN_CHARTS.has(rawChart as StablecoinVolumeChainChartKind)) {
-					return badRequest('unsupported chain volume chart')
-				}
+				const chart = parseChainVolumeChart(rawChart)
+				if (!chart) return badRequest('unsupported chain volume chart')
 				const chain = queryString(req.query, 'chain')
 				if (!chain) return badRequest('chain parameter is required')
 				const [{ default: metadataCache }, { resolveChainParamFromMetadata }] = await Promise.all([
@@ -251,38 +307,53 @@ export const stablecoinVolumeChart = defineApiRoute({
 				])
 				const chainRoute = resolveChainParamFromMetadata(chain, metadataCache)
 				if (!chainRoute) return notFound('chain not found')
-				chart = rawChart as StablecoinVolumeChainChartKind
-				data = await cachedResult(
-					'stablecoin-volume-source',
-					`chain:${chainRoute.canonicalName}:${chart}`,
-					VOLUME_SOURCE_CACHE_OPTIONS,
-					() =>
-						fetchStablecoinChainVolumeChartApi(
-							chainRoute.canonicalName,
-							chart as StablecoinVolumeChainChartKind,
-							metadataCache.chainMetadata
-						)
-				)
-			} else if (scope === 'token') {
-				if (!TOKEN_CHARTS.has(rawChart as StablecoinVolumeTokenChartKind)) {
-					return badRequest('unsupported token volume chart')
+				if (chart === 'total') {
+					const data = await cachedResult(
+						'stablecoin-volume-source',
+						`chain:${chainRoute.canonicalName}:total`,
+						VOLUME_SOURCE_CACHE_OPTIONS,
+						() => fetchStablecoinChainVolumeChartApi(chainRoute.canonicalName, 'total', metadataCache.chainMetadata)
+					)
+					source = { chart, data }
+				} else {
+					const data = await cachedResult(
+						'stablecoin-volume-source',
+						`chain:${chainRoute.canonicalName}:${chart}`,
+						VOLUME_SOURCE_CACHE_OPTIONS,
+						() => fetchStablecoinChainVolumeChartApi(chainRoute.canonicalName, chart, metadataCache.chainMetadata)
+					)
+					source = { chart, data }
 				}
+			} else if (scope === 'token') {
+				const chart = parseTokenVolumeChart(rawChart)
+				if (!chart) return badRequest('unsupported token volume chart')
 				const token = queryString(req.query, 'token')
 				if (!token) return badRequest('token parameter is required')
-				chart = rawChart as StablecoinVolumeTokenChartKind
-				data = await cachedResult(
-					'stablecoin-volume-source',
-					`token:${token}:${chart}`,
-					VOLUME_SOURCE_CACHE_OPTIONS,
-					() => fetchStablecoinTokenVolumeChartApi(token, chart as StablecoinVolumeTokenChartKind)
-				)
+				if (chart === 'total') {
+					const data = await cachedResult(
+						'stablecoin-volume-source',
+						`token:${token}:total`,
+						VOLUME_SOURCE_CACHE_OPTIONS,
+						() => fetchStablecoinTokenVolumeChartApi(token, 'total')
+					)
+					source = { chart, data }
+				} else {
+					const data = await cachedResult(
+						'stablecoin-volume-source',
+						`token:${token}:${chart}`,
+						VOLUME_SOURCE_CACHE_OPTIONS,
+						() => fetchStablecoinTokenVolumeChartApi(token, chart)
+					)
+					source = { chart, data }
+				}
 			} else {
 				return badRequest('unsupported scope')
 			}
 
-			const payload = buildStablecoinVolumeChartPayload(data, {
-				chart,
-				limit: parseLimit(req.query.limit),
+			const limit = parseLimit(req.query.limit)
+			const payload = buildStablecoinVolumeChartPayload({
+				...source,
+				...(limit === undefined ? {} : { limit }),
 				selectedNames,
 				excludedNames,
 				trimIncompleteTail: scope === 'global'

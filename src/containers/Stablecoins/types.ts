@@ -6,20 +6,20 @@ import type {
 	StablecoinDetailResponse,
 	StablecoinDominanceResponse,
 	StablecoinListAsset,
+	StablecoinPegBalances,
 	StablecoinsListResponse
 } from './api.types'
 import type { StablecoinChartSeriesPayload } from './chartSeries'
-import type { FormattedStablecoinAsset, IFormattedStablecoinChainRow } from './utils'
+import type { FormattedStablecoinAsset, IFormattedStablecoinChainRow, StablecoinMcapPoint } from './utils'
 
-type StablecoinOverviewChartPoint = {
+export type StablecoinOverviewChartPoint = {
 	date: number
-	mcap: Record<string, number>
+	mcap: StablecoinPegBalances
 }
 
 export interface StablecoinsGlobalDataCache {
 	chainList: string[]
 	chains: string[]
-	chainsTVLData: number[]
 }
 
 export interface StablecoinOverviewChartInputs {
@@ -56,7 +56,7 @@ export interface StablecoinChainsPageInput {
 	peggedAssets: StablecoinListAsset[]
 	chains: PeggedAssetsInput['chains']
 	chainCoingeckoIds: LlamaConfigResponse['chainCoingeckoIds']
-	aggregatedChart: StablecoinChartPoint[]
+	aggregatedChart: StablecoinMcapPoint[]
 	dominanceMap: StablecoinDominanceResponse['dominanceMap']
 	chainChartMap: StablecoinDominanceResponse['chainChartMap']
 }
@@ -76,7 +76,12 @@ export interface StablecoinChainsChartSource {
 	chartDataByChain: Array<Array<{ date: number; mcap: number | null }> | null>
 }
 
-export type StablecoinBridges = Record<string, Record<string, { amount: number }>> | null
+export interface StablecoinBridgeAmount {
+	amount: number
+	sourceChain: string | null
+}
+
+export type StablecoinBridges = Record<string, StablecoinBridgeAmount[]> | null
 
 export interface PeggedAssetPageProps {
 	chainsUnique: string[]
@@ -118,5 +123,5 @@ export type PeggedAssetsInput = Pick<StablecoinsListResponse, 'peggedAssets' | '
 export type PeggedAssetsForChartInput = {
 	peggedAssets: StablecoinListAsset[]
 	breakdown: Record<string, StablecoinChartPoint[]>
-	doublecountedSourceIds?: string[]
+	doublecountedSourceIds: string[]
 }

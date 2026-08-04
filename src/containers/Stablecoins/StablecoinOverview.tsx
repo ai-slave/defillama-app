@@ -35,9 +35,9 @@ import {
 	getStablecoinChartViewQueryValue,
 	getStablecoinSeriesSelectorLabel,
 	parseStablecoinChartState,
+	parseStablecoinChartView,
 	parseStablecoinVolumeGroupBy,
-	type StablecoinChartType as StablecoinChartCategory,
-	type StablecoinChartView
+	type StablecoinChartType as StablecoinChartCategory
 } from '~/containers/Stablecoins/chartState'
 import { useCalcCirculating, useGroupBridgeData } from '~/containers/Stablecoins/hooks'
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
@@ -79,12 +79,19 @@ const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
 const EMPTY_SERIES: string[] = []
 const EMPTY_RUNTIME_SERIES = {
 	selectableSeries: EMPTY_SERIES,
+	defaultSeries: EMPTY_SERIES,
 	renderedSelectableSeries: EMPTY_SERIES,
 	fixedRemainderSeries: EMPTY_SERIES,
 	alwaysVisibleSeries: EMPTY_SERIES
 }
 
 export default function PeggedContainer(props: PeggedAssetPageProps) {
+	const previewTvl = formatUsd(props.mcap, {
+		compact: true,
+		minimumCompactValue: 1_000_000,
+		compactSuffix: 'lowercase'
+	})?.toString()
+
 	return (
 		<>
 			<LinkPreviewCard
@@ -92,11 +99,7 @@ export default function PeggedContainer(props: PeggedAssetPageProps) {
 				cardName={props.peggedAssetData.name}
 				token={props.peggedAssetData.name}
 				logo={peggedAssetIconUrl(props.peggedAssetData.name)}
-				tvl={formatUsd(props.mcap, {
-					compact: true,
-					minimumCompactValue: 1_000_000,
-					compactSuffix: 'lowercase'
-				})?.toString()}
+				{...(previewTvl === undefined ? {} : { tvl: previewTvl })}
 			/>
 			<PeggedAssetInfo {...props} />
 		</>
@@ -116,10 +119,18 @@ export const PeggedAssetInfo = ({
 	blockExplorerName
 }: PeggedAssetPageProps) => {
 	const router = useRouter()
+	const lifecycleStatus = peggedAssetData.deadFrom
+		? `Ended on ${peggedAssetData.deadFrom}`
+		: peggedAssetData.delisted
+			? 'Delisted stablecoin'
+			: peggedAssetData.deprecated
+				? 'Deprecated stablecoin'
+				: null
 	let {
 		name,
 		onCoinGecko,
 		gecko_id,
+		module,
 		symbol,
 		description,
 		mintRedeemDescription,
@@ -156,7 +167,8 @@ export const PeggedAssetInfo = ({
 	)
 	const onChartViewChange = React.useCallback(
 		(nextChartView: string) => {
-			const view = nextChartView as StablecoinChartView
+			const view = parseStablecoinChartView(nextChartView)
+			if (!view) return
 			handleChartReady(null)
 			void pushShallowQuery(router, {
 				chartView: getStablecoinChartViewQueryValue(ASSET_CHART_MODE, chartType, view)
@@ -206,25 +218,13 @@ export const PeggedAssetInfo = ({
 
 	const displayedTotalCirculating = React.useMemo(() => {
 		if (!includeUnreleased) return totalCirculating
-		let total = 0
-		let hasValue = false
-		for (const chain of chainTotals) {
-			const value = Number(chain.circulating ?? 0)
-			if (!Number.isFinite(value)) continue
-			total += value
-			hasValue = true
-		}
-		return hasValue ? total : totalCirculating
-	}, [chainTotals, includeUnreleased, totalCirculating])
+		return totalCirculating == null || unreleased == null ? null : totalCirculating + unreleased
+	}, [includeUnreleased, totalCirculating, unreleased])
 
 	const displayedMarketCap = React.useMemo(() => {
 		if (!includeUnreleased) return mcap
-		const baseMcap = typeof mcap === 'number' && Number.isFinite(mcap) ? mcap : null
-		const unreleasedSupply = typeof unreleased === 'number' && Number.isFinite(unreleased) ? unreleased : null
-		const tokenPrice = typeof price === 'number' && Number.isFinite(price) ? price : null
-		if (baseMcap == null) return null
-		if (unreleasedSupply == null || tokenPrice == null) return baseMcap
-		return baseMcap + unreleasedSupply * tokenPrice
+		if (mcap == null || unreleased == null || price == null) return null
+		return mcap + unreleased * price
 	}, [includeUnreleased, mcap, unreleased, price])
 
 	const groupedChains = useGroupBridgeData(chainTotals, bridgeInfo)
@@ -344,7 +344,7 @@ export const PeggedAssetInfo = ({
 						<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} size={24} />
 						<span className="font-bold">{name}</span>
 						{symbol && symbol !== '-' ? <span className="font-normal">({symbol})</span> : null}
-						{peggedAssetData.deprecated ? <DeprecatedProtocolMarker size={18} /> : null}
+						{lifecycleStatus ? <DeprecatedProtocolMarker size={18} content={lifecycleStatus} /> : null}
 						{url ? (
 							<span className="-m-2 ml-auto flex items-center justify-end gap-1">
 								<WebsiteGlobeLink
@@ -360,11 +360,13 @@ export const PeggedAssetInfo = ({
 					<p className="flex flex-col">
 						<span className="label-md text-secondary">Market Cap</span>
 						<span className="min-h-8 mono-xl">
-							{formatUsd(displayedMarketCap ?? '0', {
-								compact: true,
-								minimumCompactValue: 1_000_000,
-								compactSuffix: 'lowercase'
-							})}
+							{displayedMarketCap == null
+								? 'N/A'
+								: formatUsd(displayedMarketCap, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
 						</span>
 					</p>
 
@@ -461,7 +463,8 @@ export const PeggedAssetInfo = ({
 						<React.Suspense fallback={<ChartPanelBodyFallback className="w-full" />}>
 							<PieChart
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : []}
-								stackColors={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.stackColors : undefined}
+								{...(marketCapPresentation?.kind === 'pie' ? { stackColors: marketCapPresentation.stackColors } : {})}
+								valueSymbol={symbol}
 								onReady={handleChartReady}
 							/>
 						</React.Suspense>
@@ -471,7 +474,7 @@ export const PeggedAssetInfo = ({
 							isLoading={isVolumeChartLoading}
 							isError={!isVolumeChartLoading && volumeChartQuery.error != null}
 							hideDefaultLegend={chartView !== 'byChain'}
-							selectedCharts={activeSelectedCharts}
+							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							groupBy={volumeGroupBy}
 							onReady={handleChartReady}
 						/>
@@ -481,7 +484,7 @@ export const PeggedAssetInfo = ({
 							isLoading={isSelectedChartLoading}
 							isError={isSelectedChartError}
 							hideDefaultLegend={!showDefaultLegend}
-							selectedCharts={activeSelectedCharts}
+							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							onReady={handleChartReady}
 						/>
 					)}
@@ -541,14 +544,14 @@ export const PeggedAssetInfo = ({
 								{blockExplorerUrl ? (
 									<ExternalLinkButton href={blockExplorerUrl}>{blockExplorerName}</ExternalLinkButton>
 								) : null}
-								{onCoinGecko === 'true' && gecko_id ? (
+								{onCoinGecko && gecko_id ? (
 									<ExternalLinkButton href={`https://www.coingecko.com/en/coins/${gecko_id}`}>
 										CoinGecko
 									</ExternalLinkButton>
 								) : null}
-								{gecko_id ? (
+								{module ? (
 									<ExternalLinkButton
-										href={`https://github.com/DefiLlama/peggedassets-server/tree/master/src/adapters/peggedAssets/${gecko_id}`}
+										href={`https://github.com/DefiLlama/peggedassets-server/tree/master/src/adapters/peggedAssets/${module}`}
 										icon="github"
 									>
 										Check the code
@@ -608,13 +611,13 @@ function SelectedAssetChart({
 			<MultiSeriesChart
 				dataset={data.dataset}
 				charts={data.charts}
-				selectedCharts={selectedCharts}
+				{...(selectedCharts === undefined ? {} : { selectedCharts })}
 				stacked={data.stacked}
-				expandTo100Percent={data.expandTo100Percent}
+				{...(data.expandTo100Percent === undefined ? {} : { expandTo100Percent: data.expandTo100Percent })}
 				valueSymbol={data.valueSymbol}
 				showTotalInTooltip={data.showTotalInTooltip}
 				hideDefaultLegend={hideDefaultLegend}
-				groupBy={groupBy}
+				{...(groupBy === undefined ? {} : { groupBy })}
 				onReady={onReady}
 			/>
 		</React.Suspense>

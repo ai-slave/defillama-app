@@ -186,9 +186,16 @@ describe('fetchProChainChartData stablecoins', () => {
 	it('shares one raw chain response between concurrent supply and inflow charts', async () => {
 		fetchStablecoinChartApiMock.mockResolvedValue({
 			aggregated: [
-				{ date: '1', totalCirculatingUSD: { peggedUSD: 10 } },
-				{ date: '2', totalCirculatingUSD: { peggedUSD: 15 } }
-			]
+				{ date: '1', totalCirculatingUSD: { peggedUSD: 10, peggedEUR: 5 } },
+				{ date: '2', totalCirculatingUSD: { peggedUSD: 15, peggedEUR: 10 } }
+			],
+			breakdown: {
+				double: [
+					{ date: '1', totalCirculatingUSD: { peggedUSD: 2, peggedEUR: 1 } },
+					{ date: '2', totalCirculatingUSD: { peggedUSD: 4, peggedEUR: 1 } }
+				]
+			},
+			doublecountedIds: ['double']
 		})
 
 		await expect(
@@ -198,10 +205,10 @@ describe('fetchProChainChartData stablecoins', () => {
 			])
 		).resolves.toEqual([
 			[
-				[1, 10],
-				[2, 15]
+				[1, 12],
+				[2, 20]
 			],
-			[[2, 5]]
+			[[2, 8]]
 		])
 
 		expect(fetchStablecoinChartApiMock).toHaveBeenCalledTimes(1)

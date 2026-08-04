@@ -3,6 +3,7 @@ import {
 	getTopStablecoinFromLatestPoints,
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT
 } from '~/containers/Stablecoins/chartSeries'
+import { reconcileSeriesSelection } from '~/hooks/useSeriesSelection'
 import {
 	buildProStablecoinChartPresentationFromCollection,
 	buildProStablecoinOverviewPayload,
@@ -26,7 +27,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 	it('bounds the default null selection and aggregates the remaining assets', () => {
 		const result = buildProStablecoinOverviewPayload(params, 'tokenMcaps', topToken, null)
 
-		expect(result.defaultSeries).toEqual(assetNames.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT))
+		expect(result.defaultSeries).toEqual(assetNames)
 		expect(result.charts.map((chart) => chart.name)).toEqual([
 			...assetNames.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT),
 			'Others'
@@ -39,7 +40,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 		const result = buildProStablecoinOverviewPayload(params, 'tokenMcaps', topToken, [selectedName])
 
 		expect(result.availableSeries).toContain(selectedName)
-		expect(result.defaultSeries).toEqual(assetNames.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT))
+		expect(result.defaultSeries).toEqual(assetNames)
 		expect(result.charts.map((chart) => chart.name)).toEqual([selectedName])
 		expect(result.dataset.source.at(-1)?.[result.dataset.dimensions.indexOf(selectedName)]).toBe(189)
 		expect(result.dataset.dimensions).not.toContain('Others')
@@ -64,7 +65,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 			...assetNames.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT),
 			'Others'
 		])
-		expect(result.chartPayload.defaultSeries).toEqual(assetNames.slice(0, STABLECOIN_BREAKDOWN_SERIES_LIMIT))
+		expect(result.chartPayload.defaultSeries).toEqual(assetNames)
 		expect(result.chartPayload.dataset.source.at(-1)?.at(-1)).toBe(379)
 		expect(result.chartPayload.charts.every((chart) => chart.stack == null)).toBe(true)
 	})
@@ -144,7 +145,11 @@ describe('buildProStablecoinOverviewPayload', () => {
 	})
 
 	it('keeps every pie token canonical until runtime presentation', () => {
-		const pieAssets = Array.from({ length: 12 }, (_, index) => ({ symbol: `TOKEN_${index}`, mcap: 12 - index }))
+		const pieAssets = Array.from({ length: 12 }, (_, index) => ({
+			symbol: `TOKEN_${index}`,
+			mcap: 12 - index,
+			aggregateIncluded: index !== 1
+		}))
 		const result = buildProStablecoinChartPresentationFromCollection(
 			collectProStablecoinChart({
 				rawData: {
@@ -162,5 +167,44 @@ describe('buildProStablecoinOverviewPayload', () => {
 		expect(result.pieSeries.peers).toHaveLength(12)
 		expect(result.pieSeries.peers.at(-1)).toEqual({ name: 'TOKEN_11', value: 1 })
 		expect(result.pieSeries.limit).toBe(10)
+		expect(result.defaultSeries).toEqual(
+			pieAssets.filter((asset) => asset.aggregateIncluded).map((asset) => asset.symbol)
+		)
+		expect(result.totalMcapCurrent).toBe(67)
+	})
+
+	it('keeps an all-double-counted pie empty by default but explicitly selectable', () => {
+		const result = buildProStablecoinChartPresentationFromCollection(
+			collectProStablecoinChart({
+				rawData: {
+					chartDataByPeggedAsset: [],
+					peggedAssetNames: [],
+					peggedAssetIdToChartDataIndex: {},
+					doublecountedIds: [0],
+					pieAssets: [{ symbol: 'DOUBLE', mcap: 10, aggregateIncluded: false }]
+				},
+				chain: 'All',
+				chartType: 'pie'
+			})
+		)
+
+		expect(result.defaultSeries).toEqual([])
+		expect(result.totalMcapCurrent).toBeNull()
+		expect(
+			reconcileSeriesSelection({
+				availableSeries: ['DOUBLE'],
+				selectedSeries: null,
+				defaultSeries: result.defaultSeries,
+				allowEmptySelection: true
+			})
+		).toEqual([])
+		expect(
+			reconcileSeriesSelection({
+				availableSeries: ['DOUBLE'],
+				selectedSeries: ['DOUBLE'],
+				defaultSeries: result.defaultSeries,
+				allowEmptySelection: true
+			})
+		).toEqual(['DOUBLE'])
 	})
 })

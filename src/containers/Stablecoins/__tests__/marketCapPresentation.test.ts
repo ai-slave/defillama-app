@@ -163,7 +163,9 @@ describe('buildStablecoinMarketCapPresentation', () => {
 
 		expect(result.kind).toBe('treemap')
 		if (result.kind !== 'treemap') return
-		expect(result.treeData[1].value[1]).toBe(0.07)
+		const smallSlice = result.treeData.at(1)
+		if (!smallSlice) throw new Error('Expected the small treemap slice')
+		expect(smallSlice.value[1]).toBe(0.07)
 	})
 
 	it('renders an explicit selection without Others and keeps canonical colors', () => {
@@ -255,7 +257,13 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		if (result.kind !== 'treemap') return
 		expect(result.treeData).toHaveLength(22)
 		expect(result.treeData.some((node) => node.name === 'Others')).toBe(false)
-		expect(result.treeData.reduce((total, node) => total + node.value[1], 0)).toBeCloseTo(100, 1)
+		expect(
+			result.treeData.reduce((total, node) => {
+				const share = node.value[1]
+				if (share == null) throw new Error(`Missing treemap share for ${node.name}`)
+				return total + share
+			}, 0)
+		).toBeCloseTo(100, 1)
 	})
 
 	it('selects every source entity by default while rendering top N plus selected-tail Others', () => {
@@ -278,7 +286,7 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		})
 		expect(withoutTopChain.kind).toBe('pie')
 		if (withoutTopChain.kind !== 'pie') return
-		expect(withoutTopChain.chartData[0].name).toBe('Chain 1')
+		expect(withoutTopChain.chartData.at(0)?.name).toBe('Chain 1')
 		expect(withoutTopChain.chartData.at(-1)).toEqual({
 			name: 'Others',
 			value: rows.slice(11).reduce((total, row) => total + (row.mcap ?? 0), 0)
@@ -325,7 +333,7 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		const series = prepareStablecoinMarketCapSeries({ rows, view: 'pie', getName, getValue: (row) => row.mcap ?? 0 })
 
 		expect(series.selectionSeries).toEqual(['Net Positive'])
-		expect(series.peers[0].value).toBe(2)
+		expect(series.peers.at(0)?.value).toBe(2)
 	})
 
 	it('restores upstream Others only after matching every canonical peer', () => {

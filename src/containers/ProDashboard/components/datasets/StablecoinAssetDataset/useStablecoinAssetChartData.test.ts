@@ -4,6 +4,7 @@ import { buildStablecoinAssetPresentation } from './useStablecoinAssetChartData'
 const day = 86_400
 const firstDate = 1_700_000_000
 const rawData = {
+	stablecoinSymbol: 'USDC',
 	chainsUnique: ['Ethereum', 'Base'],
 	chainsData: [
 		[
@@ -39,7 +40,7 @@ describe('buildStablecoinAssetPresentation', () => {
 		expect(area.chartType).toBe('chainMcaps')
 		if (area.chartType === 'chainMcaps') {
 			expect(area.dataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Base'])
-			expect(area.dataset.source[1]).toEqual([(firstDate + day) * 1e3, 0, 50])
+			expect(area.dataset.source[1]).toEqual([(firstDate + day) * 1e3, undefined, 50])
 			expect(area.totalCirculating).toBe(0)
 		}
 		expect(dominance.chartType).toBe('chainDominance')

@@ -1,6 +1,7 @@
 import { resolveAllowedChainNamesFromCategories } from '~/containers/ProDashboard/server/chartBuilder/breakdownChains'
 import { fetchStablecoinChartAllApi, fetchStablecoinDominanceAllApi } from '~/containers/Stablecoins/api'
 import type { StablecoinChartPoint, StablecoinDominanceChartPoint } from '~/containers/Stablecoins/api.types'
+import { buildStablecoinAggregatePairs, sumStablecoinPegBalances } from '~/containers/Stablecoins/utils'
 import { stableCacheKey } from '~/server/api/cacheKey'
 import { addApiRoutePhase, timeApiRoutePhase } from '~/server/api/phaseTelemetry'
 import { cachedJsonResult, cachedResult, type CachedJsonPayload } from '~/server/api/resultCache'
@@ -29,21 +30,10 @@ interface StablecoinByChainBase {
 	totalPairs: [number, number][]
 }
 
-const sumStablecoinUsd = (value: Record<string, number> | undefined): number => {
-	let total = 0
-	if (value) {
-		for (const pegType in value) {
-			const amount = value[pegType]
-			if (amount !== undefined) total += amount
-		}
-	}
-	return total
-}
-
 // Pegged-assets chart dates are Unix-second strings and USD totals are flat peg-type maps.
 const toStablecoinPair = (point: StablecoinChartPoint | StablecoinDominanceChartPoint): [number, number] => [
 	Number(point.date),
-	sumStablecoinUsd(point.totalCirculatingUSD)
+	sumStablecoinPegBalances(point.totalCirculatingUSD)
 ]
 
 async function getStablecoinByChainBaseData(): Promise<StablecoinByChainBase> {
@@ -62,15 +52,15 @@ async function getStablecoinByChainBaseData(): Promise<StablecoinByChainBase> {
 			for (const chainName in dominanceJson.chainChartMap) {
 				const charts = dominanceJson.chainChartMap[chainName]
 				if (chainName === 'All' || !charts?.length) continue
-				const normalized = filterOutToday(normalizeDailyPairs(charts.map(toStablecoinPair)))
-				const lastValue = normalized[normalized.length - 1]?.[1] || 0
+				const normalized = filterOutToday(normalizeDailyPairs(charts.map(toStablecoinPair), 'last'))
+				const lastValue = normalized[normalized.length - 1]?.[1] ?? 0
 				if (lastValue <= 0) continue
 				candidates.push({ name: chainName, data: normalized, lastValue })
 			}
 			addApiRoutePhase('stablecoin_base_chains', Date.now() - candidateStartedAt)
 
 			const aggregateStartedAt = Date.now()
-			const totalPairs = filterOutToday(normalizeDailyPairs(aggregatedJson.aggregated.map(toStablecoinPair)))
+			const totalPairs = filterOutToday(normalizeDailyPairs(buildStablecoinAggregatePairs(aggregatedJson), 'last'))
 			addApiRoutePhase('stablecoin_base_total', Date.now() - aggregateStartedAt)
 			return { candidates, totalPairs }
 		}
@@ -107,7 +97,7 @@ async function getStablecoinByChainBreakdownData({
 			const matches = includeSet.has(candidate.name)
 			if (chainFilterMode === 'include' ? !matches : matches) continue
 		}
-		if (allowedCategoryNames?.size) {
+		if (allowedCategoryNames !== null) {
 			const matches = allowedCategoryNames.has(candidate.name)
 			if (chainCategoryFilterMode === 'include' ? !matches : matches) continue
 		}
@@ -136,7 +126,7 @@ async function getStablecoinByChainBreakdownData({
 		return { name: entry.name, data: entry.data, ...(color === undefined ? {} : { color }) }
 	})
 	let scopedTotalPairs = base.totalPairs
-	if (includeSet || allowedCategoryNames?.size) {
+	if (includeSet || allowedCategoryNames !== null) {
 		const totalsByTimestamp = new Map<number, number>()
 		for (const candidate of candidates) {
 			for (const [timestamp, value] of candidate.data) {
