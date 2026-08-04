@@ -148,6 +148,7 @@ export const allApiRoutePaths = [
 	'pro-dashboard/chart-builder/protocols/breakdowns/by-chain/tvl',
 	'pro-dashboard/chart-builder/protocols/breakdowns/tvl',
 	'pro-dashboard/chart-builder/stablecoins/breakdowns/by-chain',
+	'pro-dashboard/dashboard-token-usage',
 	'pro-dashboard/pf-ps-chart',
 	'pro-dashboard/pf-ps-protocols',
 	'pro-dashboard/protocol-catalog-source',

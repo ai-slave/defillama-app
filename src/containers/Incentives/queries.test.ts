@@ -3,7 +3,7 @@ import type { AdapterChainProtocol } from '~/containers/AdapterMetrics/api.types
 import { getDimensionChainNameMap } from '~/containers/AdapterMetrics/chainNameMap'
 import { fetchEmissionsBreakdownAggregated } from './api'
 import type { EmissionsBreakdownAggregatedResponse, EmissionsBreakdownProtocol } from './api.types'
-import { getDimensionAdapterChainEarningsOverview } from './queries'
+import { getDimensionAdapterChainEarningsOverview, getProtocolEmissionsLookupFromAggregated } from './queries'
 import type { DimensionEarningsOverviewResult } from './types'
 
 vi.mock('./api', () => ({
@@ -319,5 +319,13 @@ describe('dimension earnings aggregation', () => {
 		})
 
 		expect(result).toEqual({ status: 'unavailable' })
+	})
+})
+
+describe('protocol emissions lookup availability', () => {
+	it('preserves a whole-source failure as unavailable instead of an empty successful lookup', async () => {
+		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(null)
+
+		await expect(getProtocolEmissionsLookupFromAggregated()).resolves.toBeNull()
 	})
 })

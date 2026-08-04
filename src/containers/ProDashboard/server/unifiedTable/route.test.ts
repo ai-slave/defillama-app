@@ -1,10 +1,18 @@
 import { describe, expect, it, vi } from 'vitest'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
-vi.mock('~/server/db/llama', () => ({ llamaDb: { any: vi.fn(), one: vi.fn() } }))
+const { fetchProtocolsTableMock } = vi.hoisted(() => ({ fetchProtocolsTableMock: vi.fn() }))
+
+vi.mock('./protocols', () => ({ fetchProtocolsTable: fetchProtocolsTableMock }))
 vi.mock('~/containers/Oracles/api', () => ({ fetchOracleMetrics: vi.fn() }))
+vi.mock('~/utils/telemetry', () => ({
+	recordRouteRuntimeError: vi.fn(),
+	withApiRouteTelemetry: (_route: string, handler: unknown) => handler
+}))
 
+import { PROTOCOL_BASE_METRIC_FAMILIES } from '../../unifiedTable/protocolCapabilities'
 import { buildUnifiedTableQueryString } from '../../unifiedTableQuery'
-import { parseUnifiedTableQuery } from './route'
+import { parseUnifiedTableQuery, unifiedTableHandler } from './route'
 
 describe('parseUnifiedTableQuery', () => {
 	it('accepts, validates, and deduplicates canonical base metric families', () => {
@@ -21,6 +29,23 @@ describe('parseUnifiedTableQuery', () => {
 		expect(parseUnifiedTableQuery({ strategy: 'protocols', oracleMembership: 'true' })?.needsOracleMembership).toBe(
 			true
 		)
+	})
+
+	it('restores the full producer contract for requests from pre-capability clients', () => {
+		const parsed = parseUnifiedTableQuery({
+			strategy: 'protocols',
+			'rowHeaders[]': ['protocol', 'chain'],
+			'chains[]': 'Ethereum'
+		})
+
+		expect(parsed).toMatchObject({
+			baseMetricFamilies: [...PROTOCOL_BASE_METRIC_FAMILIES],
+			pointMetrics: [],
+			supplementalMetrics: [],
+			needsOracleMembership: true,
+			rowMembership: { kind: 'all-protocols' },
+			usesLegacyContract: true
+		})
 	})
 
 	it('rejects unknown base metric families', () => {
@@ -58,6 +83,54 @@ describe('parseUnifiedTableQuery', () => {
 		expect(parseUnifiedTableQuery({ ...query, strategy: 'protocols' })?.rowMembership).toEqual({
 			kind: 'base-metric',
 			family: 'fees'
+		})
+	})
+
+	it('returns legacy chain metrics without the new availability envelope', async () => {
+		fetchProtocolsTableMock.mockResolvedValueOnce({
+			rows: [],
+			parentMetrics: {},
+			chainMetrics: {
+				ethereum: {
+					availability: 'available',
+					metrics: {
+						bridgedTvl: 1,
+						stablesMcap: 2,
+						tvlShare: 3,
+						stablesShare: 4,
+						volume24hShare: 5,
+						protocolCount: 6
+					}
+				}
+			}
+		})
+		const req = createMockNextApiRequest({
+			method: 'GET',
+			query: { strategy: 'protocols', 'rowHeaders[]': ['protocol', 'chain'], 'chains[]': 'Ethereum' }
+		})
+		const res = createMockNextApiResponse()
+
+		await unifiedTableHandler(req, res)
+
+		expect(fetchProtocolsTableMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				baseMetricFamilies: [...PROTOCOL_BASE_METRIC_FAMILIES],
+				needsOracleMembership: true,
+				rowMembership: { kind: 'all-protocols' }
+			})
+		)
+		expect(res.json).toHaveBeenCalledWith({
+			rows: [],
+			chainMetrics: {
+				ethereum: {
+					bridgedTvl: 1,
+					stablesMcap: 2,
+					tvlShare: 3,
+					stablesShare: 4,
+					volume24hShare: 5,
+					protocolCount: 6
+				}
+			}
 		})
 	})
 })

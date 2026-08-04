@@ -9,7 +9,10 @@ import {
 	type ProtocolRowMembership
 } from '~/containers/ProDashboard/unifiedTable/config/protocolRowMembership'
 import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
-import { createProtocolsUnifiedTableResponse } from '~/containers/ProDashboard/unifiedTable/contracts'
+import {
+	createLegacyProtocolsUnifiedTableResponse,
+	createProtocolsUnifiedTableResponse
+} from '~/containers/ProDashboard/unifiedTable/contracts'
 import {
 	PROTOCOL_BASE_METRIC_FAMILIES,
 	isProtocolPointMetric,
@@ -33,6 +36,7 @@ interface ParsedUnifiedTableQuery {
 	supplementalMetrics: ProtocolSupplementalMetric[]
 	needsOracleMembership: boolean
 	rowMembership: ProtocolRowMembership
+	usesLegacyContract: boolean
 }
 
 export const parseUnifiedTableQuery = (query: NextApiRequest['query']): ParsedUnifiedTableQuery | null => {
@@ -45,10 +49,18 @@ export const parseUnifiedTableQuery = (query: NextApiRequest['query']): ParsedUn
 
 	const category = Array.isArray(query.category) ? query.category[0] : query.category
 	if (category && category.length > MAX_CHAIN_NAME_LENGTH) return null
+	const usesLegacyContract =
+		query['baseMetricFamilies[]'] === undefined &&
+		query['pointMetrics[]'] === undefined &&
+		query['supplementalMetrics[]'] === undefined &&
+		query.oracleMembership === undefined &&
+		query.rowMembership === undefined
 	const requestedBaseMetricFamilies = toRawArrayParam(query['baseMetricFamilies[]'])
 	if (!requestedBaseMetricFamilies.every(isProtocolBaseMetricFamily)) return null
 	const requestedBaseMetricFamilySet = new Set(requestedBaseMetricFamilies)
-	const baseMetricFamilies = PROTOCOL_BASE_METRIC_FAMILIES.filter((family) => requestedBaseMetricFamilySet.has(family))
+	const baseMetricFamilies = usesLegacyContract
+		? [...PROTOCOL_BASE_METRIC_FAMILIES]
+		: PROTOCOL_BASE_METRIC_FAMILIES.filter((family) => requestedBaseMetricFamilySet.has(family))
 	const requestedPointMetrics = toRawArrayParam(query['pointMetrics[]'])
 	if (!requestedPointMetrics.every(isProtocolPointMetric)) return null
 	const pointMetrics = Array.from(new Set(requestedPointMetrics))
@@ -73,12 +85,13 @@ export const parseUnifiedTableQuery = (query: NextApiRequest['query']): ParsedUn
 		baseMetricFamilies,
 		pointMetrics,
 		supplementalMetrics,
-		needsOracleMembership: query.oracleMembership === 'true',
-		rowMembership
+		needsOracleMembership: usesLegacyContract || query.oracleMembership === 'true',
+		rowMembership,
+		usesLegacyContract
 	}
 }
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function unifiedTableHandler(req: NextApiRequest, res: NextApiResponse) {
 	if (req.method !== 'GET') {
 		res.setHeader('Allow', ['GET'])
 		return res.status(405).json({ error: 'Method Not Allowed' })
@@ -88,7 +101,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	if (!parsed) {
 		return res.status(400).json({ error: 'Invalid unified table configuration' })
 	}
-	const { config, baseMetricFamilies, pointMetrics, supplementalMetrics, needsOracleMembership, rowMembership } = parsed
+	const {
+		config,
+		baseMetricFamilies,
+		pointMetrics,
+		supplementalMetrics,
+		needsOracleMembership,
+		rowMembership,
+		usesLegacyContract
+	} = parsed
 
 	const rowHeadersFromQuery = toRawArrayParam(req.query['rowHeaders[]']).filter(
 		(value): value is UnifiedRowHeaderType =>
@@ -111,7 +132,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		})
 
 		res.setHeader('Cache-Control', 'public, max-age=300')
-		return res.status(200).json(createProtocolsUnifiedTableResponse(result))
+		return res
+			.status(200)
+			.json(
+				usesLegacyContract
+					? createLegacyProtocolsUnifiedTableResponse(result)
+					: createProtocolsUnifiedTableResponse(result)
+			)
 	} catch (error) {
 		recordRouteRuntimeError(error, 'apiRoute')
 		return res.status(500).json({ error: 'Failed to load unified table data' })
@@ -120,5 +147,5 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 export const unifiedTableApiHandler = withApiRouteTelemetry(
 	'/api/public/pro-dashboard/unified-table/[strategy]',
-	handler
+	unifiedTableHandler
 )

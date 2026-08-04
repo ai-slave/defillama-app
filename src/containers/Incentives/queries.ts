@@ -514,8 +514,9 @@ export function buildProtocolEmissionsLookup(
 	return lookup
 }
 
-export async function getProtocolEmissionsLookupFromAggregated(): Promise<ProtocolEmissionsLookup> {
+export async function getProtocolEmissionsLookupFromAggregated(): Promise<ProtocolEmissionsLookup | null> {
 	const emissionsData = await fetchEmissionsBreakdownAggregated()
+	if (!emissionsData) return null
 	return buildProtocolEmissionsLookup(emissionsData)
 }
 

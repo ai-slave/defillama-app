@@ -310,6 +310,44 @@ export interface ProtocolsUnifiedTableResponse {
 	chainMetrics?: Record<string, ChainMetrics>
 }
 
+export interface LegacyChainMetrics {
+	bridgedTvl: number | null
+	stablesMcap: number | null
+	tvlShare: number | null
+	stablesShare: number | null
+	volume24hShare: number | null
+	protocolCount: number | null
+}
+
+export interface LegacyProtocolsUnifiedTableResponse {
+	rows: ProtocolTableSourceRow[]
+	chainMetrics?: Record<string, LegacyChainMetrics>
+}
+
+/** Keep pre-capability clients working while deployed tabs and cached bundles age out. */
+export function createLegacyProtocolsUnifiedTableResponse(data: {
+	rows: ProtocolTableSourceRow[]
+	chainMetrics?: Record<string, ChainMetrics>
+}): LegacyProtocolsUnifiedTableResponse {
+	if (!data.chainMetrics) return { rows: data.rows }
+
+	const chainMetrics: Record<string, LegacyChainMetrics> = {}
+	for (const chain in data.chainMetrics) {
+		const entry = data.chainMetrics[chain]
+		const metrics = entry?.availability === 'available' ? entry.metrics : null
+		chainMetrics[chain] = {
+			bridgedTvl: metrics?.bridgedTvl ?? null,
+			stablesMcap: metrics?.stablesMcap ?? null,
+			tvlShare: metrics?.tvlShare ?? null,
+			stablesShare: metrics?.stablesShare ?? null,
+			volume24hShare: metrics?.volume24hShare ?? null,
+			protocolCount: metrics?.protocolCount ?? null
+		}
+	}
+
+	return { rows: data.rows, chainMetrics }
+}
+
 export function createProtocolsUnifiedTableResponse(data: {
 	rows: ProtocolTableSourceRow[]
 	parentMetrics: Record<string, ParentProtocolMetrics>
