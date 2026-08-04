@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { SubscriptionBackground, SubscriptionFooter, SubscriptionHeader } from '~/containers/Subscription/sections'
 import { Icon } from '~/ui/Icon'
+import { formatNumber } from '~/utils/numberFormat'
 
 export const APP_STORE_URL = 'https://apps.apple.com/us/app/defillama-defi-tracker/id6761379469'
 export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.defillama.mobile'
@@ -277,7 +278,7 @@ function Hero({ protocols, chains }: { protocols: number; chains: number }) {
 
 				<p className="max-w-[620px] text-center text-lg leading-8 text-sub-text-secondary md:text-xl md:leading-9">
 					Your AI research analyst for crypto — full theses, live charts, forecasts and backtests, backed by DefiLlama
-					data on {protocols.toLocaleString('en-US')} protocols across {chains.toLocaleString('en-US')} chains.
+					data on {formatNumber(protocols)} protocols across {formatNumber(chains)} chains.
 				</p>
 
 				<StoreButtons className="w-full sm:w-auto" eventSuffix="hero" />
