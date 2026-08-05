@@ -371,7 +371,7 @@ export function TokenBorrowSection({
 								<div className="relative flex flex-col gap-3">
 									<React.Suspense fallback={<div className="min-h-[360px]" />}>
 										<DeferredPaginatedBorrowRoutesTable
-											key={`${activeTab}-${data ? 'full' : 'initial'}-${requestedPageIndexByTab[activeTab]}-${sortingKey}`}
+											key={`${activeTab}-${data ? 'full' : 'initial'}-${requestedPageIndexByTab[activeTab]}`}
 											data={filteredRows}
 											manualPagination={false}
 											manualSorting={false}

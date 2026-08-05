@@ -1,3 +1,8 @@
+// @vitest-environment happy-dom
+
+import type { SortingState } from '@tanstack/react-table'
+import React, { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
@@ -53,15 +58,25 @@ vi.mock('../deferred/DeferredPaginatedBorrowRoutesTable', () => ({
 		data,
 		appearance,
 		initialPageSize,
-		initialPageIndex
+		initialPageIndex,
+		onSortingChange
 	}: {
 		data: RouteTableRow[]
 		appearance?: string
 		initialPageSize?: number
 		initialPageIndex?: number
+		onSortingChange?: (sorting: SortingState) => void
 	}) => {
 		routesTableCalls.push({ appearance, dataLength: data.length, initialPageIndex, initialPageSize })
-		return <div>Routes table</div>
+		return (
+			<button
+				type="button"
+				data-routes-table
+				onClick={() => onSortingChange?.([{ id: 'available_borrow', desc: true }])}
+			>
+				Routes table
+			</button>
+		)
 	}
 }))
 
@@ -126,6 +141,27 @@ function makeRouteRow(overrides: Partial<RouteTableRow> = {}): RouteTableRow {
 const hydrationBase = { tokenKeys: ['family:eth'] }
 
 describe('TokenBorrowSection', () => {
+	it('preserves the controlled table instance when sorting changes', async () => {
+		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		strategiesState.data = { useAsCollateral: [makeRouteRow()], borrowThis: [] }
+		const container = document.createElement('div')
+		document.body.appendChild(container)
+		const root = createRoot(container)
+
+		try {
+			await act(async () => root.render(<TokenBorrowSection tokenSymbol="ETH" />))
+			const table = container.querySelector<HTMLButtonElement>('[data-routes-table]')
+			expect(table).not.toBeNull()
+
+			await act(async () => table!.click())
+
+			expect(container.querySelector('[data-routes-table]')).toBe(table)
+		} finally {
+			await act(async () => root.unmount())
+			container.remove()
+		}
+	})
+
 	it('shows a loader while shared token routes are loading', () => {
 		strategiesState.data = undefined
 		strategiesState.error = null

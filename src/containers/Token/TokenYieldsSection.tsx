@@ -236,7 +236,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 							<div className="relative flex flex-col gap-3">
 								<React.Suspense fallback={<div className="min-h-[360px]" />}>
 									<DeferredPaginatedYieldsPoolTable
-										key={`${fetchedRows ? 'full' : 'initial'}-${requestedPageIndex}-${tableSortingKey}`}
+										key={`${fetchedRows ? 'full' : 'initial'}-${requestedPageIndex}`}
 										data={filteredPools}
 										initialPageSize={hydrationPageSize}
 										initialPageIndex={fetchedRows ? requestedPageIndex : 0}

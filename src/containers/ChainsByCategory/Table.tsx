@@ -120,7 +120,8 @@ export function ChainsByCategoryTable({
 	const setAggrOptions: React.Dispatch<React.SetStateAction<Array<string>>> = (selectedKeys) => {
 		const nextSelectedKeys = typeof selectedKeys === 'function' ? selectedKeys(selectedAggregateTypes) : selectedKeys
 		const selectedKeysSet = new Set(nextSelectedKeys)
-		React.startTransition(() => setExpanded(true))
+		// Keep expansion synchronous so persisted setting notifications cannot restart it.
+		setExpanded(true)
 		for (const item of CHAINS_CATEGORY_GROUP_SETTINGS) {
 			const shouldEnable = selectedKeysSet.has(item.key)
 			if (groupTvls[item.key] !== shouldEnable) {

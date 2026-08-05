@@ -1,4 +1,8 @@
-import React from 'react'
+// @vitest-environment happy-dom
+
+import type { SortingState } from '@tanstack/react-table'
+import React, { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
@@ -88,7 +92,8 @@ vi.mock('../deferred/DeferredPaginatedYieldsPoolTable', () => ({
 		initialPageSize,
 		initialPageIndex,
 		interactionDisabled,
-		loadingLabel
+		loadingLabel,
+		onSortingChange
 	}: {
 		data: Array<{ pool: string }>
 		appearance?: string
@@ -96,6 +101,7 @@ vi.mock('../deferred/DeferredPaginatedYieldsPoolTable', () => ({
 		initialPageIndex?: number
 		interactionDisabled?: boolean
 		loadingLabel?: string
+		onSortingChange?: (sorting: SortingState) => void
 	}) => {
 		yieldsTableCalls.push({
 			appearance,
@@ -105,7 +111,11 @@ vi.mock('../deferred/DeferredPaginatedYieldsPoolTable', () => ({
 			interactionDisabled,
 			loadingLabel
 		})
-		return <div>Yield pools table</div>
+		return (
+			<button type="button" data-yields-table onClick={() => onSortingChange?.([{ id: 'tvlUsd', desc: true }])}>
+				Yield pools table
+			</button>
+		)
 	}
 }))
 
@@ -185,6 +195,27 @@ function makeHydration(overrides: Partial<import('../types').TokenYieldsHydratio
 }
 
 describe('TokenYieldsSection', () => {
+	it('preserves the controlled table instance when sorting changes', async () => {
+		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		queryState = { data: [makeYieldRow()], error: null, isLoading: false }
+		const container = document.createElement('div')
+		document.body.appendChild(container)
+		const root = createRoot(container)
+
+		try {
+			await act(async () => root.render(<TokenYieldsSection />))
+			const table = container.querySelector<HTMLButtonElement>('[data-yields-table]')
+			expect(table).not.toBeNull()
+
+			await act(async () => table!.click())
+
+			expect(container.querySelector('[data-yields-table]')).toBe(table)
+		} finally {
+			await act(async () => root.unmount())
+			container.remove()
+		}
+	})
+
 	it('renders the yields filter controls and paginated table (no token/column filters)', () => {
 		queryState = {
 			data: [makeYieldRow()],
