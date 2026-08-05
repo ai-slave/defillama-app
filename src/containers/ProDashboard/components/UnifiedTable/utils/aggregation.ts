@@ -47,12 +47,6 @@ interface ChangeAccumulator {
 	isInvalid: boolean
 }
 
-interface CompleteSumAccumulator {
-	total: number
-	hasValue: boolean
-	isIncomplete: boolean
-}
-
 interface PercentChangeDefinition {
 	family: ProtocolBaseMetricFamily | ProtocolSupplementalMetric
 	changeKey: keyof ProtocolTableMetrics
@@ -656,9 +650,9 @@ export function aggregateMetrics(
 	const tvlChanges = plan.includeTvlChanges
 		? TVL_CHANGE_DEFINITIONS.map((definition) => ({ definition, accumulator: emptyChangeAccumulator() }))
 		: []
-	const additiveShares: Array<CompleteSumAccumulator & { key: keyof ProtocolTableMetrics }> = []
+	const additiveShares: Array<{ key: keyof ProtocolTableMetrics; total: number; hasValue: boolean }> = []
 	for (const key of plan.additiveShareMetricKeys) {
-		additiveShares.push({ key, total: 0, hasValue: false, isIncomplete: false })
+		additiveShares.push({ key, total: 0, hasValue: false })
 	}
 
 	for (const row of rows) {
@@ -711,8 +705,7 @@ export function aggregateMetrics(
 		for (const share of additiveShares) {
 			if (options.excludeParentTvl && row.excludeTvlFromParent && share.key === 'tvlShare') continue
 			const value = metrics[share.key]
-			if (value == null) share.isIncomplete = true
-			else {
+			if (value != null) {
 				share.total += value
 				share.hasValue = true
 			}
@@ -750,7 +743,7 @@ export function aggregateMetrics(
 	}
 
 	for (const share of additiveShares) {
-		aggregated[share.key] = !share.isIncomplete && share.hasValue ? share.total : null
+		aggregated[share.key] = share.hasValue ? share.total : null
 	}
 	if (plan.includeBridgeAggregatorVolume) {
 		aggregated.bridgeAggregatorVolumeDominance24h =

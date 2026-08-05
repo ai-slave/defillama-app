@@ -4,7 +4,8 @@ export function mergeChainAssetTotals(
 	current: ChainAssetTotals | null,
 	next: ChainAssetTotals | null
 ): ChainAssetTotals | null {
-	if (!current || !next) return null
+	if (!current) return next
+	if (!next) return current
 
 	const nativeTotal =
 		current.native !== undefined || next.native !== undefined

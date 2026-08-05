@@ -20,7 +20,7 @@ export function getTopLevelGroupedChains<T extends GroupableChain>(
 	return chains.filter((chain) => !childNames.has(chain.name))
 }
 
-const EXACT_GROUPED_NUMBER_FIELDS = [
+const GROUPED_NUMBER_FIELDS = [
 	'tvl',
 	'tvlPrevDay',
 	'tvlPrevWeek',
@@ -47,22 +47,39 @@ const EXACT_GROUPED_NUMBER_FIELDS = [
 	'nftVolume30d'
 ] as const satisfies ReadonlyArray<keyof IFormattedDataWithExtraTvlBase>
 
-type ExactGroupedNumberField = (typeof EXACT_GROUPED_NUMBER_FIELDS)[number]
-export type GroupedChainTotals = Pick<IFormattedDataWithExtraTvlBase, ExactGroupedNumberField | 'protocols'> & {
+type GroupedNumberField = (typeof GROUPED_NUMBER_FIELDS)[number]
+type GroupedTvlComparisonField = 'tvlPrevDay' | 'tvlPrevWeek' | 'tvlPrevMonth'
+export type GroupedChainTotals = Pick<IFormattedDataWithExtraTvlBase, GroupedNumberField | 'protocols'> & {
 	chainAssets: Exclude<IFormattedDataWithExtraTvlBase['chainAssets'], undefined>
 }
 
-function sumGroupedField(
-	rows: readonly IFormattedDataWithExtraTvlBase[],
-	field: ExactGroupedNumberField
-): number | null {
+function sumGroupedField(rows: readonly IFormattedDataWithExtraTvlBase[], field: GroupedNumberField): number | null {
 	let total = 0
+	let hasValue = false
 	for (const row of rows) {
+		const value = row[field]
+		if (value == null) continue
+		total += value
+		hasValue = true
+	}
+	return hasValue ? total : null
+}
+
+function sumCurrentTvlContributors(
+	rows: readonly IFormattedDataWithExtraTvlBase[],
+	field: GroupedTvlComparisonField
+): number | null {
+	// Compare the same measured cohort in both periods; a row without current TVL is unavailable, not zero.
+	let total = 0
+	let hasContributor = false
+	for (const row of rows) {
+		if (row.tvl == null) continue
+		hasContributor = true
 		const value = row[field]
 		if (value == null) return null
 		total += value
 	}
-	return total
+	return hasContributor ? total : null
 }
 
 export function aggregateGroupedChainRows(rows: readonly IFormattedDataWithExtraTvlBase[]): GroupedChainTotals {
@@ -73,9 +90,9 @@ export function aggregateGroupedChainRows(rows: readonly IFormattedDataWithExtra
 
 	return {
 		tvl: sumGroupedField(rows, 'tvl'),
-		tvlPrevDay: sumGroupedField(rows, 'tvlPrevDay'),
-		tvlPrevWeek: sumGroupedField(rows, 'tvlPrevWeek'),
-		tvlPrevMonth: sumGroupedField(rows, 'tvlPrevMonth'),
+		tvlPrevDay: sumCurrentTvlContributors(rows, 'tvlPrevDay'),
+		tvlPrevWeek: sumCurrentTvlContributors(rows, 'tvlPrevWeek'),
+		tvlPrevMonth: sumCurrentTvlContributors(rows, 'tvlPrevMonth'),
 		// Producer counts are per chain; summing would double-count multichain protocols.
 		protocols: null,
 		mcap: sumGroupedField(rows, 'mcap'),

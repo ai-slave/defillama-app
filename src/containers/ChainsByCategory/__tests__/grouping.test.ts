@@ -95,7 +95,6 @@ describe('chains by category grouping', () => {
 	})
 
 	it.each([
-		'tvl',
 		'mcap',
 		'stablesMcap',
 		'activeUsers24h',
@@ -104,11 +103,51 @@ describe('chains by category grouping', () => {
 		'revenue24h',
 		'appRevenue24h',
 		'nftVolume24h'
-	] as const)('keeps grouped %s unknown when any child is unknown', (field) => {
+	] as const)('sums known grouped %s values when a child is unavailable', (field) => {
+		const parent = row('Parent')
+		parent[field] = 12
 		const child = row('Child')
 		child[field] = null
 
-		expect(aggregateGroupedChainRows([row('Parent'), child])[field]).toBeNull()
+		expect(aggregateGroupedChainRows([parent, child])[field]).toBe(12)
+		parent[field] = null
+		expect(aggregateGroupedChainRows([parent, child])[field]).toBeNull()
+	})
+
+	it('uses current TVL contributors for grouped comparison periods', () => {
+		const parent = row('Parent')
+		Object.assign(parent, { tvl: 100, tvlPrevDay: 80, tvlPrevWeek: 70, tvlPrevMonth: 60 })
+		const unavailable = row('Unavailable')
+		Object.assign(unavailable, { tvl: null, tvlPrevDay: 50, tvlPrevWeek: 40, tvlPrevMonth: 30 })
+		const active = row('Active')
+		Object.assign(active, { tvl: 50, tvlPrevDay: null, tvlPrevWeek: 25, tvlPrevMonth: 20 })
+
+		expect(aggregateGroupedChainRows([parent, unavailable, active])).toMatchObject({
+			tvl: 150,
+			tvlPrevDay: null,
+			tvlPrevWeek: 95,
+			tvlPrevMonth: 80
+		})
+	})
+
+	it('keeps explicit zero TVL and all-unavailable TVL distinct', () => {
+		const zero = row('Zero')
+		const unavailable = row('Unavailable')
+		Object.assign(unavailable, { tvl: null, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null })
+
+		expect(aggregateGroupedChainRows([zero, unavailable])).toMatchObject({
+			tvl: 0,
+			tvlPrevDay: 0,
+			tvlPrevWeek: 0,
+			tvlPrevMonth: 0
+		})
+		Object.assign(zero, { tvl: null, tvlPrevDay: 0, tvlPrevWeek: 0, tvlPrevMonth: 0 })
+		expect(aggregateGroupedChainRows([zero, unavailable])).toMatchObject({
+			tvl: null,
+			tvlPrevDay: null,
+			tvlPrevWeek: null,
+			tvlPrevMonth: null
+		})
 	})
 
 	it('does not add per-chain protocol counts that may contain the same protocol', () => {
@@ -120,7 +159,7 @@ describe('chains by category grouping', () => {
 		expect(aggregateGroupedChainRows([parent, child]).protocols).toBeNull()
 	})
 
-	it('preserves known zero totals and makes assets unknown when any child asset record is missing', () => {
+	it('preserves known asset totals when a child asset record is missing', () => {
 		const parent = row('Parent')
 		const child = row('Child')
 		expect(aggregateGroupedChainRows([parent, child])).toMatchObject({
@@ -135,6 +174,8 @@ describe('chains by category grouping', () => {
 		})
 
 		child.chainAssets = null
+		expect(aggregateGroupedChainRows([parent, child]).chainAssets).toEqual(parent.chainAssets)
+		parent.chainAssets = null
 		expect(aggregateGroupedChainRows([parent, child]).chainAssets).toBeNull()
 	})
 })

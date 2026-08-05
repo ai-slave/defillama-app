@@ -218,18 +218,23 @@ describe('aggregateMetrics changes', () => {
 		expect(result.revenueChange_1d).toBeNull()
 	})
 
-	it('sums exact source shares and preserves incomplete membership as unknown', () => {
+	it('sums available source shares without inventing an all-unavailable total', () => {
 		const exact = aggregateMetrics([
 			protocolRow('one', 'One', { volumeDominance_24h: 10 }),
 			protocolRow('two', 'Two', { volumeDominance_24h: 5 })
 		])
-		const incomplete = aggregateMetrics([
+		const partial = aggregateMetrics([
 			protocolRow('one', 'One', { perps_volume_dominance_24h: 10 }),
 			protocolRow('two', 'Two', { perps_volume_dominance_24h: null })
 		])
+		const unavailable = aggregateMetrics([
+			protocolRow('one', 'One', { options_volume_dominance_24h: null }),
+			protocolRow('two', 'Two', { options_volume_dominance_24h: null })
+		])
 
 		expect(exact.volumeDominance_24h).toBe(15)
-		expect(incomplete.perps_volume_dominance_24h).toBeNull()
+		expect(partial.perps_volume_dominance_24h).toBe(10)
+		expect(unavailable.options_volume_dominance_24h).toBeNull()
 	})
 
 	it('requires a previous TVL value for every current TVL contributor', () => {

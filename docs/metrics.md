@@ -95,6 +95,8 @@ Pro protocol tables expose three distinct percentage denominators:
 - Bridge Aggregator volume share uses the current selected-chain scope. An all-chain table uses the global canonical total; a chain-filtered table uses the canonical total for those selected chains.
 - Filtered-row shares divide each positive top-level row by the positive total after source filters and search. They are computed separately from producer dominance and are labeled `% of Filtered Rows`.
 
+Grouped rows sum the available leaf shares because each leaf uses the same denominator for that source and scope. An unavailable leaf remains blank without erasing measured siblings; a group with no measured shares remains unavailable. Canonical parent supplements that require complete filtered membership, including Bridge Aggregator share, remain strict.
+
 Global, current-scope, and filtered-row shares must remain visibly distinct in column labels and descriptions. Changing one denominator is a product-semantic change, not a presentation refactor.
 
 ### Protocol Liquidations
