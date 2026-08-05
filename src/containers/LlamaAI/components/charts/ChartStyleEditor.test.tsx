@@ -44,11 +44,13 @@ const PREVIEW_DELAY = 350
 function EditorHarness({
 	onSave,
 	onPreview,
-	editorConfig = config
+	editorConfig = config,
+	originalConfig
 }: {
 	onSave: (config: ChartConfiguration, patch: ChartStylePatch) => Promise<void>
 	onPreview?: (config: ChartConfiguration) => void
 	editorConfig?: ChartConfiguration
+	originalConfig?: ChartConfiguration
 }) {
 	const [saved, setSaved] = useState<ChartConfiguration>(editorConfig)
 	const [preview, setPreview] = useState<ChartConfiguration>(editorConfig)
@@ -70,7 +72,7 @@ function EditorHarness({
 			<span data-testid="preview-series-names">{preview.series.map((series) => series.name).join('|')}</span>
 			<ChartStyleEditor
 				config={editorConfig}
-				original={editorConfig}
+				original={originalConfig ?? editorConfig}
 				caps={caps}
 				view={view}
 				resetView={resetView}
@@ -231,5 +233,92 @@ describe('ChartStyleEditor', () => {
 		expect(saveButton.disabled).toBe(false)
 		expect(onPreview).toHaveBeenCalledOnce()
 		expect(container.querySelector('[data-testid="preview-series-names"]')?.textContent).toBe('Revenue|Net Revenue')
+	})
+
+	const bucketSeries = (name: string, yField: string): ChartConfiguration['series'][number] => ({
+		...revenueSeries,
+		name,
+		type: 'bar',
+		dataMapping: { xField: 'timestamp', yField }
+	})
+
+	const bucketConfig = {
+		...config,
+		type: 'bar',
+		series: [
+			bucketSeries('11-20 days', 'd11_20'),
+			bucketSeries('2 days', 'd2'),
+			bucketSeries('6-10 days', 'd6_10'),
+			bucketSeries('1 day', 'd1')
+		]
+	} satisfies ChartConfiguration
+
+	const clickButton = async (label: string) => {
+		const button =
+			container.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`) ??
+			[...container.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === label)
+		if (!button) throw new Error(`Expected button "${label}"`)
+		await act(async () => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+	}
+
+	const previewNames = () => container.querySelector('[data-testid="preview-series-names"]')?.textContent
+
+	it('moves a series up and saves the permutation in the patch', async () => {
+		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
+		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
+
+		await clickButton('Move series 2 up')
+		expect(previewNames()).toBe('2 days|11-20 days|6-10 days|1 day')
+
+		await clickButton('Save')
+		expect(onSave).toHaveBeenCalledOnce()
+		const patch = onSave.mock.calls[0][1]
+		expect(patch.order).toEqual([1, 0, 2, 3])
+		expect(patch.series?.map((s) => s.name)).toEqual(['2 days', '11-20 days', '6-10 days', '1 day'])
+	})
+
+	it('sorts series naturally with the sort button', async () => {
+		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
+		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
+
+		await clickButton('Sort series')
+		expect(previewNames()).toBe('1 day|2 days|6-10 days|11-20 days')
+
+		await clickButton('Save')
+		const patch = onSave.mock.calls[0][1]
+		expect(patch.order).toEqual([3, 1, 2, 0])
+	})
+
+	it('omits order from the patch when series were not reordered', async () => {
+		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
+		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
+
+		await clickButton('Save')
+		const patch = onSave.mock.calls[0][1]
+		expect(patch.order).toBeUndefined()
+	})
+
+	it('maps reset back to the original series order relative to the saved config', async () => {
+		const editorConfig = {
+			...config,
+			type: 'bar',
+			series: [bucketSeries('1 day', 'd1'), bucketSeries('2 days', 'd2')]
+		} satisfies ChartConfiguration
+		const originalConfig = {
+			...config,
+			type: 'bar',
+			series: [bucketSeries('2 days', 'd2'), bucketSeries('1 day', 'd1')]
+		} satisfies ChartConfiguration
+		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
+		await act(async () =>
+			root.render(<EditorHarness editorConfig={editorConfig} originalConfig={originalConfig} onSave={onSave} />)
+		)
+
+		await clickButton('Reset')
+		expect(previewNames()).toBe('2 days|1 day')
+
+		await clickButton('Save')
+		const patch = onSave.mock.calls[0][1]
+		expect(patch.order).toEqual([1, 0])
 	})
 })

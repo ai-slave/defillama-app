@@ -211,7 +211,7 @@ export function ProjectsSidebarSection({
 														</li>
 													)
 												})}
-												{(activeProjectSessions?.length ?? 0) > NESTED_SESSIONS_LIMIT ? (
+												{(activeProjectSessions?.length ?? 0) > nestedSessions.length ? (
 													<li>
 														<button
 															type="button"

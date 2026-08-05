@@ -10,11 +10,10 @@ export function orderVisibleProjectSessions(
 		.filter((s) => s.isPinned)
 		.sort((a, b) => new Date(b.pinnedAt || 0).getTime() - new Date(a.pinnedAt || 0).getTime())
 	const unpinned = sessions.filter((s) => !s.isPinned)
-	const ordered = [...pinned, ...unpinned]
-	const next = ordered.slice(0, limit)
+	const recencySlots = Math.max(2, limit - pinned.length)
+	const next = [...pinned, ...unpinned.slice(0, recencySlots)]
 	if (!currentSessionId || next.some((s) => s.sessionId === currentSessionId)) return next
-	const currentSession = ordered.find((s) => s.sessionId === currentSessionId)
+	const currentSession = sessions.find((s) => s.sessionId === currentSessionId)
 	if (!currentSession) return next
-	if (next.length < limit) return [...next, currentSession]
-	return [...next.slice(0, limit - 1), currentSession]
+	return [...next, currentSession]
 }

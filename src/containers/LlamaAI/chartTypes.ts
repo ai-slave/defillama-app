@@ -91,6 +91,7 @@ export interface ChartStylePatch {
 		interval?: number
 	}>
 	series?: Array<{ name?: string; color?: string; opacity?: number; type?: 'line' | 'bar' | 'area' }>
+	order?: number[]
 }
 
 export type ChartDataSeries = unknown[]

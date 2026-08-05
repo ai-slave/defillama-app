@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { Button } from '~/ui/Button'
+import { Checkbox } from '~/ui/Checkbox'
+import { Icon } from '~/ui/Icon'
+import { Input, inputStyles } from '~/ui/Input'
 import { getNDistinctColors } from '~/utils'
 
 const ALL_TYPES: ChartConfiguration['type'][] = ['line', 'area', 'bar', 'hbar', 'combo', 'pie', 'scatter']
@@ -48,7 +51,30 @@ const toDateInput = (unixSeconds: number): string => {
 }
 const fromDateInput = (value: string): number => Math.floor(new Date(`${value}T00:00:00Z`).getTime() / 1000)
 
-function toPatch(c: ChartConfiguration, view: ChartStyleEditorView): ChartStylePatch {
+const identityOrder = (length: number): number[] => Array.from({ length }, (_, i) => i)
+
+// Series carry no id; their data binding is the only edit-proof identity (names are editable).
+const seriesKey = (s: ChartConfiguration['series'][number]): string => JSON.stringify([s.yAxisId, s.dataMapping])
+
+// Express `target`'s series order as indices into `base`'s series (what the server currently holds).
+// Falls back to identity when the two configs don't describe the same series set.
+function orderRelativeTo(target: ChartConfiguration, base: ChartConfiguration): number[] {
+	if (target.series.length !== base.series.length) return identityOrder(target.series.length)
+	const pool = new Map<string, number[]>()
+	for (const [index, s] of base.series.entries()) {
+		const key = seriesKey(s)
+		pool.set(key, [...(pool.get(key) ?? []), index])
+	}
+	const out: number[] = []
+	for (const s of target.series) {
+		const index = pool.get(seriesKey(s))?.shift()
+		if (index === undefined) return identityOrder(target.series.length)
+		out.push(index)
+	}
+	return out
+}
+
+function toPatch(c: ChartConfiguration, view: ChartStyleEditorView, order?: number[]): ChartStylePatch {
 	const yAxes: NonNullable<ChartStylePatch['yAxes']> = []
 	for (const axis of c.axes.yAxes) {
 		const patchAxis: NonNullable<ChartStylePatch['yAxes']>[number] = {
@@ -91,6 +117,7 @@ function toPatch(c: ChartConfiguration, view: ChartStyleEditorView): ChartStyleP
 		patch.hallmarks = hallmarks
 	}
 	if (c.legend !== undefined) patch.legend = c.legend
+	if (order && order.some((originalIndex, position) => originalIndex !== position)) patch.order = order
 	return patch
 }
 
@@ -106,13 +133,11 @@ function updateItemAt<T>(items: T[], targetIndex: number, update: (item: T) => v
 	}
 }
 
-const section = 'flex flex-col gap-2 border-t border-ai-line pt-3 first:border-t-0 first:pt-0'
-const label = 'text-[10.5px] font-semibold uppercase tracking-[0.07em] text-ai-muted'
-const input =
-	'rounded-md border border-medium bg-transparent px-2.5 py-1.5 text-sm text-secondary outline-hidden transition-colors focus:border-brand'
+const section = 'flex flex-col gap-2 border-t border-subtle pt-3 first:border-t-0 first:pt-0'
+const sectionLabel = 'label-xs text-ai-muted uppercase'
 const swatch =
-	'size-7 shrink-0 cursor-pointer rounded-md border border-medium bg-transparent p-0.75 transition-transform hover:scale-105'
-const axisTag = 'w-3.5 shrink-0 text-center text-[11px] font-medium text-ai-muted'
+	'size-8 shrink-0 cursor-pointer rounded-lg border border-medium bg-page p-1 transition-transform hover:scale-105'
+const axisTag = 'w-3.5 shrink-0 text-center label-sm text-ai-muted'
 const PREVIEW_DEBOUNCE_MS = 350
 
 function getSeriesNameProblem(series: ChartConfiguration['series']): string | null {
@@ -139,6 +164,8 @@ export function ChartStyleEditor({
 }: ChartStyleEditorProps) {
 	// The editor owns this config-only draft. Keystrokes rerender the form, never SingleChart or its dataset pipeline.
 	const [draft, setDraft] = useState<ChartConfiguration>(() => config)
+	// Draft render order expressed as indices into `config.series` — what update-chart-style permutes.
+	const [seriesOrder, setSeriesOrder] = useState<number[]>(() => identityOrder(config.series?.length ?? 0))
 	const [draftView, setDraftView] = useState<ChartStyleEditorView>(() => ({ ...view }))
 	const [saving, setSaving] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -196,6 +223,30 @@ export function ChartStyleEditor({
 		publishPreview(next, draftView, mode)
 	}
 
+	// `positions[i]` = current draft position of the series that lands at position i.
+	const reorderSeries = (positions: number[]) => {
+		const next = clone(draft)
+		next.series = positions.map((p) => next.series[p])
+		setSeriesOrder((prev) => positions.map((p) => prev[p]))
+		setDraft(next)
+		publishPreview(next, draftView, 'immediate')
+	}
+
+	const moveSeries = (from: number, to: number) => {
+		if (to < 0 || to >= (draft.series?.length ?? 0)) return
+		const positions = identityOrder(draft.series.length)
+		positions[from] = to
+		positions[to] = from
+		reorderSeries(positions)
+	}
+
+	const sortSeries = () => {
+		const positions = identityOrder(draft.series.length).sort((a, b) =>
+			draft.series[a].name.localeCompare(draft.series[b].name, undefined, { numeric: true, sensitivity: 'base' })
+		)
+		reorderSeries(positions)
+	}
+
 	const updateView = (key: ViewKey, value: boolean) => {
 		const nextView = { ...draftView, [key]: value }
 		setDraftView(nextView)
@@ -207,6 +258,7 @@ export function ChartStyleEditor({
 	// hbar (single series) & pie color per category, not per series — offer a picker per bar/slice.
 	const perCategory = draft.type === 'pie' || (draft.type === 'hbar' && (draft.series?.length ?? 1) <= 1)
 	const categoryPalette = useMemo(() => getNDistinctColors(categories.length), [categories.length])
+	const canReorder = !perCategory && (draft.series?.length ?? 0) > 1
 	const hasHallmarks = caps.showHallmarks && (draft.hallmarks?.length ?? 0) > 0
 	const canEditHallmarks = draft.axes?.x?.type === 'time'
 	const canLegend = LEGEND_TYPES.includes(draft.type) && (draft.series?.length ?? 0) > 1
@@ -234,7 +286,7 @@ export function ChartStyleEditor({
 		setSaving(true)
 		setError(null)
 		try {
-			await onSave(draft, toPatch(draft, draftView))
+			await onSave(draft, toPatch(draft, draftView, seriesOrder))
 		} catch (e) {
 			setError(e instanceof Error ? e.message : 'Save failed')
 		} finally {
@@ -246,6 +298,7 @@ export function ChartStyleEditor({
 		const resetDraft = clone(original)
 		const nextView = { ...resetView }
 		setDraft(resetDraft)
+		setSeriesOrder(orderRelativeTo(original, config))
 		setDraftView(nextView)
 		setError(null)
 		publishPreview(resetDraft, nextView, 'immediate')
@@ -264,28 +317,29 @@ export function ChartStyleEditor({
 
 	return (
 		<div className="flex min-h-full flex-col gap-3 p-4 text-secondary" onBlurCapture={flushPendingPreview}>
-			<span className="text-[10.5px] font-semibold tracking-[0.07em] text-ai-muted uppercase">Style</span>
+			<span className={sectionLabel}>Style</span>
 
 			<div className={section}>
-				<span className={label}>Type</span>
+				<span className={sectionLabel}>Type</span>
 				<div className="flex flex-wrap gap-1.5">
 					{availableTypes.map((t) => (
-						<button
+						<Button
 							key={t}
-							data-active={draft.type === t}
+							type="button"
+							size="sm"
+							variant={draft.type === t ? 'primary' : 'secondary'}
 							onClick={() => update((d) => (d.type = t), 'immediate')}
-							className="rounded-md border border-medium px-2.5 py-1 text-xs capitalize transition-colors hover:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
 						>
-							{t}
-						</button>
+							<span className="capitalize">{t}</span>
+						</Button>
 					))}
 				</div>
 			</div>
 
 			<div className={section}>
-				<span className={label}>Title</span>
-				<input
-					className={`${input} w-full`}
+				<span className={sectionLabel}>Title</span>
+				<Input
+					className="w-full"
 					aria-label="Chart title"
 					value={draft.title}
 					onChange={(e) => update((d) => (d.title = e.target.value))}
@@ -293,7 +347,14 @@ export function ChartStyleEditor({
 			</div>
 
 			<div className={section}>
-				<span className={label}>{perCategory ? 'Colors' : 'Series'}</span>
+				<div className="flex items-center justify-between">
+					<span className={sectionLabel}>{perCategory ? 'Colors' : 'Series'}</span>
+					{canReorder ? (
+						<Button type="button" size="sm" aria-label="Sort series" onClick={sortSeries}>
+							Sort
+						</Button>
+					) : null}
+				</div>
 				{perCategory ? (
 					<div className="grid grid-cols-1 gap-x-5 gap-y-1.5 sm:grid-cols-2">
 						{categories.map((cat, i) => (
@@ -308,7 +369,7 @@ export function ChartStyleEditor({
 									}
 									className={swatch}
 								/>
-								<span className="truncate text-sm" title={cat}>
+								<span className="truncate body-md" title={cat}>
 									{cat}
 								</span>
 							</label>
@@ -330,15 +391,15 @@ export function ChartStyleEditor({
 									}
 									className={swatch}
 								/>
-								<input
-									className={`${input} flex-1`}
+								<Input
+									className="flex-1"
 									aria-label={`Series ${i + 1} name`}
 									value={s.name}
 									onChange={(e) => update((d) => updateItemAt(d.series, i, (item) => (item.name = e.target.value)))}
 								/>
 								{isCombo ? (
 									<select
-										className={`${input} w-24`}
+										className={`${inputStyles} w-24`}
 										aria-label={`Series ${i + 1} type`}
 										value={s.type}
 										onChange={(e) => {
@@ -354,6 +415,30 @@ export function ChartStyleEditor({
 										))}
 									</select>
 								) : null}
+								{canReorder ? (
+									<div className="flex shrink-0 gap-0.5">
+										<Button
+											type="button"
+											size="sm"
+											square
+											aria-label={`Move series ${i + 1} up`}
+											disabled={i === 0}
+											onClick={() => moveSeries(i, i - 1)}
+										>
+											<Icon name="chevron-up" height={16} width={16} />
+										</Button>
+										<Button
+											type="button"
+											size="sm"
+											square
+											aria-label={`Move series ${i + 1} down`}
+											disabled={i === draft.series.length - 1}
+											onClick={() => moveSeries(i, i + 1)}
+										>
+											<Icon name="chevron-down" height={16} width={16} />
+										</Button>
+									</div>
+								) : null}
 							</div>
 						))}
 					</div>
@@ -361,11 +446,11 @@ export function ChartStyleEditor({
 			</div>
 
 			<div className={section}>
-				<span className={label}>Axes</span>
+				<span className={sectionLabel}>Axes</span>
 				<div className="flex items-center gap-2">
 					<span className={axisTag}>X</span>
-					<input
-						className={`${input} flex-1`}
+					<Input
+						className="flex-1"
 						placeholder="X-axis label"
 						value={draft.axes?.x?.label ?? ''}
 						onChange={(e) => update((d) => (d.axes.x.label = e.target.value))}
@@ -375,14 +460,14 @@ export function ChartStyleEditor({
 					<div key={a.id} className="flex flex-col gap-1.5">
 						<div className="flex items-center gap-2">
 							<span className={axisTag}>Y</span>
-							<input
-								className={`${input} flex-1`}
+							<Input
+								className="flex-1"
 								placeholder="Y-axis label"
 								value={a.label ?? ''}
 								onChange={(e) => update((d) => updateItemAt(d.axes.yAxes, i, (axis) => (axis.label = e.target.value)))}
 							/>
-							<input
-								className={`${input} w-16`}
+							<Input
+								className="w-16"
 								placeholder="unit"
 								value={a.valueSymbol ?? draft.valueSymbol ?? ''}
 								onChange={(e) =>
@@ -391,8 +476,8 @@ export function ChartStyleEditor({
 							/>
 						</div>
 						<div className="flex items-center gap-2 pl-5.5">
-							<input
-								className={`${input} flex-1`}
+							<Input
+								className="flex-1"
 								placeholder="min"
 								value={a.min === undefined ? '' : String(a.min)}
 								onChange={(e) =>
@@ -408,8 +493,8 @@ export function ChartStyleEditor({
 									})
 								}
 							/>
-							<input
-								className={`${input} flex-1`}
+							<Input
+								className="flex-1"
 								placeholder="max"
 								value={a.max === undefined ? '' : String(a.max)}
 								onChange={(e) =>
@@ -425,8 +510,8 @@ export function ChartStyleEditor({
 									})
 								}
 							/>
-							<input
-								className={`${input} flex-1`}
+							<Input
+								className="flex-1"
 								placeholder="step"
 								value={a.interval === undefined ? '' : String(a.interval)}
 								onChange={(e) =>
@@ -447,13 +532,13 @@ export function ChartStyleEditor({
 
 			{canEditHallmarks ? (
 				<div className={section}>
-					<span className={label}>Annotations</span>
+					<span className={sectionLabel}>Annotations</span>
 					<div className="flex flex-col gap-1.5">
 						{(draft.hallmarks ?? []).map((h, i) => (
 							<div key={i} className="flex items-center gap-2">
-								<input
+								<Input
 									type="date"
-									className={`${input} w-[140px]`}
+									className="w-36"
 									aria-label={`Annotation ${i + 1} date`}
 									value={toDateInput(h[0])}
 									onChange={(e) =>
@@ -465,8 +550,8 @@ export function ChartStyleEditor({
 										})
 									}
 								/>
-								<input
-									className={`${input} flex-1`}
+								<Input
+									className="flex-1"
 									aria-label={`Annotation ${i + 1} label`}
 									placeholder="label"
 									value={h[1] ?? ''}
@@ -478,7 +563,11 @@ export function ChartStyleEditor({
 										})
 									}
 								/>
-								<button
+								<Button
+									type="button"
+									size="sm"
+									square
+									variant="destructive"
 									onClick={() =>
 										update((d) => {
 											const hs = [...(d.hallmarks ?? [])]
@@ -487,39 +576,41 @@ export function ChartStyleEditor({
 										}, 'immediate')
 									}
 									aria-label="Remove annotation"
-									className="shrink-0 rounded-md border border-medium px-2 py-1 text-sm text-ai-muted transition-colors hover:border-ai-error-vivid hover:text-ai-error-vivid"
 								>
-									×
-								</button>
+									<Icon name="x" height={16} width={16} />
+								</Button>
 							</div>
 						))}
 					</div>
-					<button
+					<Button
+						type="button"
+						size="sm"
 						onClick={() =>
 							update((d) => {
 								d.hallmarks = [...(d.hallmarks ?? []), [Math.floor(Date.now() / 1000), '']]
 							}, 'immediate')
 						}
-						className="self-start rounded-md border border-medium px-2.5 py-1 text-xs text-secondary transition-colors hover:border-brand"
+						className="self-start"
 					>
 						+ Add annotation
-					</button>
+					</Button>
 				</div>
 			) : null}
 
 			{hasHallmarks ? (
 				<div className={section}>
-					<span className={label}>Event markers</span>
+					<span className={sectionLabel}>Event markers</span>
 					<div className="flex flex-wrap gap-1.5">
 						{(['mark-line', 'event-rail'] as const).map((s) => (
-							<button
+							<Button
 								key={s}
-								data-active={(draft.hallmarkStyle ?? 'mark-line') === s}
+								type="button"
+								size="sm"
+								variant={(draft.hallmarkStyle ?? 'mark-line') === s ? 'primary' : 'secondary'}
 								onClick={() => update((d) => (d.hallmarkStyle = s), 'immediate')}
-								className="rounded-md border border-medium px-2.5 py-1 text-xs transition-colors hover:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
 							>
 								{s === 'mark-line' ? 'Lines' : 'Event rail'}
-							</button>
+							</Button>
 						))}
 					</div>
 				</div>
@@ -529,26 +620,23 @@ export function ChartStyleEditor({
 				<div className={section}>
 					<div className="flex flex-wrap gap-x-5 gap-y-2">
 						{toggles.map(([key, text]) => (
-							<label key={key} className="flex cursor-pointer items-center gap-1.5 text-xs">
-								<input
-									type="checkbox"
-									className="size-3.5 accent-brand"
-									checked={draftView[key]}
-									onChange={(e) => updateView(key, e.target.checked)}
-								/>
+							<Checkbox
+								key={key}
+								variant="inline"
+								checked={draftView[key]}
+								onChange={(e) => updateView(key, e.target.checked)}
+							>
 								{text}
-							</label>
+							</Checkbox>
 						))}
 						{canLegend ? (
-							<label className="flex cursor-pointer items-center gap-1.5 text-xs">
-								<input
-									type="checkbox"
-									className="size-3.5 accent-brand"
-									checked={draft.legend?.show ?? true}
-									onChange={(e) => update((d) => (d.legend = { show: e.target.checked }), 'immediate')}
-								/>
+							<Checkbox
+								variant="inline"
+								checked={draft.legend?.show ?? true}
+								onChange={(e) => update((d) => (d.legend = { show: e.target.checked }), 'immediate')}
+							>
 								Legend
-							</label>
+							</Checkbox>
 						) : null}
 					</div>
 				</div>
