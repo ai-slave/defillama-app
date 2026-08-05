@@ -1,11 +1,47 @@
+import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
-import { buildRWAPerpsTimeSeriesCharts, buildRWAPerpsTimeSeriesDatasetForRows, RWAPerpsDashboard } from '../Dashboard'
+import type { RWAChartDataset } from '~/containers/RWA/chartDataset'
+import type { IRWAPerpsMarket } from '../api.types'
+import { RWAPerpsDashboard } from '../Dashboard'
+import {
+	buildRWAPerpsTimeSeriesCharts,
+	buildRWAPerpsTimeSeriesDatasetForRows,
+	getRWAPerpsIncludedRows
+} from '../dashboardData'
+import type { IRWAPerpsAssetGroupPageData, IRWAPerpsOverviewPageData, IRWAPerpsVenuePageData } from '../types'
 
 let routerQuery: Record<string, string | string[]> = {}
-let lastTableWithSearchProps: any = null
-let lastUseQueryOptions: any = null
+type CapturedQueryOptions = {
+	queryKey: unknown[]
+	queryFn: () => Promise<unknown>
+	enabled: boolean
+}
+
+type CapturedColumn = {
+	id?: string
+	header?: string
+	cell?: (info: { row: { original: IRWAPerpsMarket }; getValue: () => string }) => ReactNode
+}
+
+type CapturedTableProps = {
+	data: IRWAPerpsMarket[]
+	columns: CapturedColumn[]
+}
+
+let lastTableWithSearchProps: CapturedTableProps | null = null
+let lastUseQueryOptions: CapturedQueryOptions | null = null
+
+function getLastTableWithSearchProps(): CapturedTableProps {
+	if (!lastTableWithSearchProps) throw new Error('Expected the table props to be captured')
+	return lastTableWithSearchProps
+}
+
+function getLastUseQueryOptions(): CapturedQueryOptions {
+	if (!lastUseQueryOptions) throw new Error('Expected the query options to be captured')
+	return lastUseQueryOptions
+}
 
 vi.mock('next/router', () => ({
 	useRouter: () => ({
@@ -14,14 +50,15 @@ vi.mock('next/router', () => ({
 	})
 }))
 
-let queryState: { data: any; isLoading: boolean; error: any } = {
+let queryState: { data: RWAChartDataset | null; isLoading: boolean; error: Error | null } = {
 	data: null,
 	isLoading: false,
 	error: null
 }
 
 vi.mock('@tanstack/react-query', () => ({
-	useQuery: (options: any) => {
+	skipToken: Symbol('skipToken'),
+	useQuery: (options: CapturedQueryOptions) => {
 		lastUseQueryOptions = options
 		return queryState
 	}
@@ -49,8 +86,12 @@ vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
 	ChartExportButtons: () => <div>exports</div>
 }))
 
+vi.mock('~/ui/QuestionHelper', () => ({
+	QuestionHelper: ({ text }: { text: string }) => <span>{text}</span>
+}))
+
 vi.mock('~/components/Table/TableWithSearch', () => ({
-	TableWithSearch: (props: any) => {
+	TableWithSearch: (props: CapturedTableProps) => {
 		lastTableWithSearchProps = props
 		return <div>table</div>
 	}
@@ -83,53 +124,56 @@ vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
 	default: () => <div>timeseries</div>
 }))
 
+const overviewMarket: IRWAPerpsMarket = {
+	id: 'xyz:meta',
+	timestamp: 1775011512,
+	contract: 'xyz:META',
+	venue: 'xyz',
+	openInterest: 100,
+	openInterestChange24h: 25,
+	volume24h: 50,
+	volume24hChange24h: -10,
+	price: 500,
+	priceChange24h: 5,
+	fundingRate: 0.00001,
+	premium: 0.0002,
+	cumulativeFunding: 10,
+	referenceAsset: 'Meta',
+	referenceAssetGroup: 'Equities',
+	assetClass: ['Stock Perp'],
+	parentPlatform: 'trade[XYZ]',
+	pair: '',
+	marginAsset: 'USDC',
+	settlementAsset: 'USDC',
+	category: ['RWA Perps'],
+	issuer: 'XYZ',
+	website: ['https://trade.xyz/'],
+	link: null,
+	oracleProvider: 'Pyth equity feed',
+	description: 'Perpetual market',
+	accessModel: 'Permissionless',
+	rwaClassification: 'Programmable Finance',
+	makerFeeRate: 0.0002,
+	takerFeeRate: 0.0005,
+	deployerFeeShare: 0.5,
+	oraclePx: 501,
+	midPx: 500.5,
+	prevDayPx: 480,
+	maxLeverage: 10,
+	szDecimals: 2,
+	fundingIntervalHours: 1,
+	volume7d: 300,
+	volume30d: 1000,
+	volumeAllTime: 5000,
+	estimatedProtocolFees24h: 1,
+	estimatedProtocolFees7d: 3,
+	estimatedProtocolFees30d: 10,
+	estimatedProtocolFeesAllTime: 50,
+	suspicious: false
+}
+
 const overviewData = {
-	markets: [
-		{
-			id: 'xyz:meta',
-			timestamp: 1775011512,
-			contract: 'xyz:META',
-			venue: 'xyz',
-			openInterest: 100,
-			openInterestChange24h: 25,
-			volume24h: 50,
-			volume24hChange24h: -10,
-			price: 500,
-			priceChange24h: 5,
-			fundingRate: 0.00001,
-			premium: 0.0002,
-			cumulativeFunding: 10,
-			referenceAsset: 'Meta',
-			referenceAssetGroup: 'Equities',
-			assetClass: ['Stock Perp'],
-			parentPlatform: 'trade[XYZ]',
-			pair: '',
-			marginAsset: 'USDC',
-			settlementAsset: 'USDC',
-			category: ['RWA Perps'],
-			issuer: 'XYZ',
-			website: ['https://trade.xyz/'],
-			oracleProvider: 'Pyth equity feed',
-			description: 'Perpetual market',
-			accessModel: 'Permissionless',
-			rwaClassification: 'Programmable Finance',
-			makerFeeRate: 0.0002,
-			takerFeeRate: 0.0005,
-			deployerFeeShare: 0.5,
-			oraclePx: 501,
-			midPx: 500.5,
-			prevDayPx: 480,
-			maxLeverage: 10,
-			szDecimals: 2,
-			volume7d: 300,
-			volume30d: 1000,
-			volumeAllTime: 5000,
-			estimatedProtocolFees24h: 1,
-			estimatedProtocolFees7d: 3,
-			estimatedProtocolFees30d: 10,
-			estimatedProtocolFeesAllTime: 50
-		}
-	],
+	markets: [overviewMarket],
 	initialChartDataset: { source: [], dimensions: ['timestamp'] },
 	totals: {
 		openInterest: 100,
@@ -140,14 +184,14 @@ const overviewData = {
 		protocolFees24h: 1,
 		cumulativeFunding: 10
 	}
-}
+} satisfies IRWAPerpsOverviewPageData
 
 const multiBaseAssetOverviewData = {
 	...overviewData,
 	markets: [
-		overviewData.markets[0],
+		overviewMarket,
 		{
-			...overviewData.markets[0],
+			...overviewMarket,
 			id: 'xyz:nvda',
 			contract: 'xyz:NVDA',
 			referenceAsset: 'NVIDIA',
@@ -158,7 +202,7 @@ const multiBaseAssetOverviewData = {
 			estimatedProtocolFees24h: 2
 		},
 		{
-			...overviewData.markets[0],
+			...overviewMarket,
 			id: 'flx:gold',
 			contract: 'flx:GOLD',
 			venue: 'flx',
@@ -179,7 +223,7 @@ const multiBaseAssetOverviewData = {
 		markets: 3,
 		protocolFees24h: 6
 	}
-}
+} satisfies IRWAPerpsOverviewPageData
 
 const venueData = {
 	venue: 'xyz',
@@ -194,7 +238,7 @@ const venueData = {
 		markets: 1,
 		protocolFees24h: 1
 	}
-}
+} satisfies IRWAPerpsVenuePageData
 
 const assetGroupData = {
 	assetGroup: 'Equities',
@@ -209,7 +253,26 @@ const assetGroupData = {
 		markets: 1,
 		protocolFees24h: 1
 	}
-}
+} satisfies IRWAPerpsAssetGroupPageData
+
+describe('getRWAPerpsIncludedRows', () => {
+	const suspiciousMarket: IRWAPerpsMarket = { ...overviewMarket, id: 'parcl:nyc', venue: 'Parcl', suspicious: true }
+	const markets = [overviewMarket, suspiciousMarket]
+
+	it('excludes suspicious markets from cross-venue charts', () => {
+		expect(getRWAPerpsIncludedRows(markets, 'overview')).toEqual([overviewMarket])
+		expect(getRWAPerpsIncludedRows(markets, 'assetGroup')).toEqual([overviewMarket])
+	})
+
+	it('keeps suspicious markets in venue totals and charts', () => {
+		expect(getRWAPerpsIncludedRows(markets, 'venue')).toBe(markets)
+	})
+
+	it('reuses an unchanged cross-venue population when no suspicious market exists', () => {
+		const ordinaryMarkets = [overviewMarket]
+		expect(getRWAPerpsIncludedRows(ordinaryMarkets, 'overview')).toBe(ordinaryMarkets)
+	})
+})
 
 describe('RWAPerpsDashboard treemap controls', () => {
 	beforeEach(() => {
@@ -246,7 +309,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 	it('requests no-Forex overview time-series data by default', async () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
 
-		expect(lastUseQueryOptions.queryKey).toEqual([
+		expect(getLastUseQueryOptions().queryKey).toEqual([
 			'rwa-perps-chart',
 			'overview',
 			'openInterest',
@@ -257,7 +320,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			'overview-breakdown'
 		])
 
-		await lastUseQueryOptions.queryFn()
+		await getLastUseQueryOptions().queryFn()
 
 		expect(fetchJson).toHaveBeenCalledWith(
 			'/api/public/rwa/perps/overview-breakdown?breakdown=assetGroup&key=openInterest&excludeAssetClass=Forex+Perps'
@@ -268,7 +331,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		routerQuery = { includeForex: 'true' }
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
 
-		expect(lastUseQueryOptions.queryKey).toEqual([
+		expect(getLastUseQueryOptions().queryKey).toEqual([
 			'rwa-perps-chart',
 			'overview',
 			'openInterest',
@@ -279,7 +342,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			'overview-breakdown'
 		])
 
-		await lastUseQueryOptions.queryFn()
+		await getLastUseQueryOptions().queryFn()
 
 		expect(fetchJson).toHaveBeenCalledWith(
 			'/api/public/rwa/perps/overview-breakdown?breakdown=assetGroup&key=openInterest'
@@ -304,13 +367,13 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			/>
 		)
 
-		expect(lastUseQueryOptions.enabled).toBe(true)
+		expect(getLastUseQueryOptions().enabled).toBe(true)
 	})
 
 	it('requests asset-class-filtered overview time-series data when the dashboard is filtered', async () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} assetClassFilter="Forex Perps" />)
 
-		expect(lastUseQueryOptions.queryKey).toEqual([
+		expect(getLastUseQueryOptions().queryKey).toEqual([
 			'rwa-perps-chart',
 			'overview',
 			'openInterest',
@@ -321,7 +384,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			'overview-breakdown'
 		])
 
-		await lastUseQueryOptions.queryFn()
+		await getLastUseQueryOptions().queryFn()
 
 		expect(fetchJson).toHaveBeenCalledWith(
 			'/api/public/rwa/perps/overview-breakdown?breakdown=assetGroup&key=openInterest&assetClass=Forex+Perps'
@@ -339,7 +402,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		)
 
 		expect(html).toContain('Base Asset')
-		expect(lastUseQueryOptions.queryKey).toEqual([
+		expect(getLastUseQueryOptions().queryKey).toEqual([
 			'rwa-perps-chart',
 			'overview',
 			'openInterest',
@@ -350,7 +413,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			'overview-breakdown'
 		])
 
-		await lastUseQueryOptions.queryFn()
+		await getLastUseQueryOptions().queryFn()
 
 		expect(fetchJson).toHaveBeenCalledWith(
 			'/api/public/rwa/perps/overview-breakdown?breakdown=baseAsset&key=openInterest&assetClass=Forex+Perps'
@@ -363,21 +426,21 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			...overviewData,
 			markets: [
 				{
-					...overviewData.markets[0],
+					...overviewMarket,
 					id: 'fx:eurusd',
 					contract: 'EURUSD',
 					referenceAsset: 'EUR/USD',
 					assetClass: ['Forex Perps']
 				},
 				{
-					...overviewData.markets[0],
+					...overviewMarket,
 					id: 'fx:gbpusd',
 					contract: 'GBPUSD',
 					referenceAsset: 'GBP/USD',
 					assetClass: ['Forex Perps']
 				}
 			]
-		}
+		} satisfies IRWAPerpsOverviewPageData
 
 		renderToStaticMarkup(
 			<RWAPerpsDashboard
@@ -388,8 +451,8 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			/>
 		)
 
-		expect(lastTableWithSearchProps.data.map((row: any) => row.contract)).toEqual(['EURUSD'])
-		expect(lastUseQueryOptions.queryKey).toEqual([
+		expect(getLastTableWithSearchProps().data.map((row) => row.contract)).toEqual(['EURUSD'])
+		expect(getLastUseQueryOptions().queryKey).toEqual([
 			'rwa-perps-chart',
 			'overview',
 			'openInterest',
@@ -400,7 +463,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			'market-breakdown'
 		])
 
-		await lastUseQueryOptions.queryFn()
+		await getLastUseQueryOptions().queryFn()
 
 		expect(fetchJson).toHaveBeenCalledWith(
 			'/api/public/rwa/perps/market-breakdown?key=openInterest&assetClass=Forex+Perps'
@@ -413,21 +476,21 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			...overviewData,
 			markets: [
 				{
-					...overviewData.markets[0],
+					...overviewMarket,
 					id: 'fx:eurusd',
 					contract: 'EURUSD',
 					referenceAsset: 'EUR/USD',
 					assetClass: ['Forex Perps']
 				},
 				{
-					...overviewData.markets[0],
+					...overviewMarket,
 					id: 'fx:gbpusd',
 					contract: 'GBPUSD',
 					referenceAsset: 'GBP/USD',
 					assetClass: ['Forex Perps']
 				}
 			]
-		}
+		} satisfies IRWAPerpsOverviewPageData
 
 		renderToStaticMarkup(
 			<RWAPerpsDashboard
@@ -438,8 +501,8 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			/>
 		)
 
-		expect(lastTableWithSearchProps.data.map((row: any) => row.contract)).toEqual(['EURUSD', 'GBPUSD'])
-		expect(lastUseQueryOptions.queryKey).toEqual([
+		expect(getLastTableWithSearchProps().data.map((row) => row.contract)).toEqual(['EURUSD', 'GBPUSD'])
+		expect(getLastUseQueryOptions().queryKey).toEqual([
 			'rwa-perps-chart',
 			'overview',
 			'openInterest',
@@ -464,8 +527,8 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		routerQuery = { baseAssets: 'Meta' }
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={multiBaseAssetOverviewData} />)
 
-		expect(lastTableWithSearchProps.data.map((row: any) => row.contract)).toEqual(['xyz:META'])
-		expect(lastUseQueryOptions.queryKey).toEqual([
+		expect(getLastTableWithSearchProps().data.map((row) => row.contract)).toEqual(['xyz:META'])
+		expect(getLastUseQueryOptions().queryKey).toEqual([
 			'rwa-perps-chart',
 			'overview',
 			'openInterest',
@@ -476,7 +539,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			'market-breakdown'
 		])
 
-		await lastUseQueryOptions.queryFn()
+		await getLastUseQueryOptions().queryFn()
 
 		expect(fetchJson).toHaveBeenCalledWith(
 			'/api/public/rwa/perps/market-breakdown?key=openInterest&excludeAssetClass=Forex+Perps'
@@ -487,20 +550,21 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		routerQuery = { excludeBaseAssets: 'Gold' }
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={multiBaseAssetOverviewData} />)
 
-		expect(lastTableWithSearchProps.data.map((row: any) => row.contract)).toEqual(['xyz:META', 'xyz:NVDA'])
+		expect(getLastTableWithSearchProps().data.map((row) => row.contract)).toEqual(['xyz:META', 'xyz:NVDA'])
 	})
 
 	it('regroups fetched contract time-series data by the selected breakdown for Base Asset filters', () => {
 		const dataset = buildRWAPerpsTimeSeriesDatasetForRows({
 			dataset: {
 				source: [
+					{ timestamp: 1774396800000, 'flx:GOLD': 4 },
 					{ timestamp: 1774483200000, 'xyz:META': 10, 'xyz:NVDA': 20, 'flx:GOLD': 5 },
+					{ timestamp: 1774526400000, 'flx:GOLD': 5.5 },
 					{ timestamp: 1774569600000, 'xyz:META': 12, 'xyz:NVDA': 22, 'flx:GOLD': 6 }
 				],
 				dimensions: ['timestamp', 'xyz:META', 'xyz:NVDA', 'flx:GOLD']
 			},
 			rows: multiBaseAssetOverviewData.markets.slice(0, 2),
-			mode: 'overview',
 			breakdown: 'assetGroup'
 		})
 
@@ -524,21 +588,20 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			},
 			rows: [
 				{
-					...overviewData.markets[0],
+					...overviewMarket,
 					id: 'alpha:aapl',
 					contract: 'AAPL',
 					venue: 'Alpha',
 					referenceAssetGroup: 'Equities'
 				},
 				{
-					...overviewData.markets[0],
+					...overviewMarket,
 					id: 'beta:aapl',
 					contract: 'AAPL',
 					venue: 'Beta',
 					referenceAssetGroup: 'Equities'
 				}
 			],
-			mode: 'overview',
 			breakdown: 'venue',
 			seriesKey: 'id'
 		})
@@ -559,7 +622,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		}
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} assetClassFilter="Forex Perps" />)
 
-		await lastUseQueryOptions.queryFn()
+		await getLastUseQueryOptions().queryFn()
 
 		expect(fetchJson).toHaveBeenCalledWith(
 			'/api/public/rwa/perps/contract-breakdown?key=openInterest&assetClass=Forex+Perps'
@@ -618,47 +681,86 @@ describe('RWAPerpsDashboard treemap controls', () => {
 	it('keeps the requested overview table column order', () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
 
-		expect(lastTableWithSearchProps.columns.slice(0, 5).map((column: any) => column.header)).toEqual([
-			'Contract',
-			'Venue',
-			'Asset Class',
-			'Asset Group',
-			'Base Asset'
-		])
+		expect(
+			getLastTableWithSearchProps()
+				.columns.slice(0, 5)
+				.map((column) => column.header)
+		).toEqual(['Contract', 'Venue', 'Asset Class', 'Asset Group', 'Base Asset'])
 	})
 
 	it('keeps the requested venue table column order', () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="venue" data={venueData} />)
 
-		expect(lastTableWithSearchProps.columns.slice(0, 4).map((column: any) => column.header)).toEqual([
-			'Contract',
-			'Base Asset',
-			'Asset Group',
-			'Asset Class'
-		])
+		expect(
+			getLastTableWithSearchProps()
+				.columns.slice(0, 4)
+				.map((column) => column.header)
+		).toEqual(['Contract', 'Base Asset', 'Asset Group', 'Asset Class'])
 	})
 
 	it('shows asset-group detail tables with the venue column restored', () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="assetGroup" data={assetGroupData} />)
 
-		expect(lastTableWithSearchProps.columns.slice(0, 4).map((column: any) => column.header)).toEqual([
-			'Contract',
-			'Venue',
-			'Base Asset',
-			'Asset Class'
-		])
+		expect(
+			getLastTableWithSearchProps()
+				.columns.slice(0, 4)
+				.map((column) => column.header)
+		).toEqual(['Contract', 'Venue', 'Base Asset', 'Asset Class'])
+	})
+
+	it('excludes suspicious markets from cross-venue headlines while retaining and explaining their table rows', () => {
+		const ordinaryMarket = {
+			...overviewMarket,
+			openInterest: 1_000_000,
+			volume24h: 500_000,
+			estimatedProtocolFees24h: 1_000
+		}
+		const suspiciousMarket = {
+			...overviewMarket,
+			id: 'parcl:nyc',
+			contract: 'parcl:NYC',
+			venue: 'Parcl',
+			openInterest: 9_000_000,
+			volume24h: 4_500_000,
+			estimatedProtocolFees24h: 9_000,
+			suspicious: true
+		}
+		const data = {
+			...overviewData,
+			markets: [ordinaryMarket, suspiciousMarket],
+			totals: {
+				...overviewData.totals,
+				openInterest: 10_000_000,
+				volume24h: 5_000_000,
+				markets: 2,
+				protocolFees24h: 10_000
+			}
+		} satisfies IRWAPerpsOverviewPageData
+
+		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={data} />)
+
+		expect(html).toContain('$1m')
+		expect(html).not.toContain('$10m')
+		expect(getLastTableWithSearchProps().data).toEqual([ordinaryMarket, suspiciousMarket])
+
+		const contractColumn = getLastTableWithSearchProps().columns.find((column) => column.id === 'contract')
+		if (!contractColumn?.cell) throw new Error('Expected the contract cell renderer')
+		const cellHtml = renderToStaticMarkup(
+			<>{contractColumn.cell({ row: { original: suspiciousMarket }, getValue: () => suspiciousMarket.contract })}</>
+		)
+		expect(cellHtml).toContain('marked as suspicious and is excluded from cross-venue totals and charts')
 	})
 
 	it('omits the access model column from the shared tables', () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
 
-		expect(lastTableWithSearchProps.columns.map((column: any) => column.id)).not.toContain('accessModel')
+		expect(getLastTableWithSearchProps().columns.map((column) => column.id)).not.toContain('accessModel')
 	})
 
 	it('shows 24h open interest and volume change columns in the shared tables', () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
 
-		expect(lastTableWithSearchProps.columns.map((column: any) => column.id)).toEqual(
+		expect(getLastTableWithSearchProps().columns.map((column) => column.id)).toEqual(
 			expect.arrayContaining(['openInterestChange24h', 'volume24hChange24h', 'priceChange24h'])
 		)
 	})
@@ -679,8 +781,33 @@ describe('RWAPerpsDashboard treemap controls', () => {
 
 		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
 
-		expect(html).toContain('Only a single snapshot is available')
+		expect(html).toContain('There is not enough time-series history for this selection yet.')
 		expect(html).not.toContain('timeseries')
+	})
+
+	it('ignores a cached query error while rendering a reusable server-preloaded dataset', () => {
+		routerQuery = { chartView: 'timeSeries' }
+		queryState = {
+			data: null,
+			isLoading: false,
+			error: new Error('stale cached error')
+		}
+		const data = {
+			...overviewData,
+			initialChartDataset: {
+				source: [
+					{ timestamp: 1774483200000, Equities: 100 },
+					{ timestamp: 1774569600000, Equities: 120 }
+				],
+				dimensions: ['timestamp', 'Equities']
+			}
+		} satisfies IRWAPerpsOverviewPageData
+
+		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={data} />)
+
+		expect(getLastUseQueryOptions().enabled).toBe(false)
+		expect(html).not.toContain('stale cached error')
+		expect(html).not.toContain('There is not enough time-series history for this selection yet.')
 	})
 
 	it('renders fetched default time-series data when no server-preloaded dataset is available', () => {

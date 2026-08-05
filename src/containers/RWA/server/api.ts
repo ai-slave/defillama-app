@@ -4,7 +4,7 @@ import {
 	fetchRWACategoryBreakdownChartData,
 	fetchRWAChainBreakdownChartData,
 	fetchRWAPlatformBreakdownChartData,
-	toUnixMsTimestamp
+	rwaUnixSecondsToMilliseconds
 } from '~/containers/RWA/api'
 import type {
 	IRWAChartDataByAsset,
@@ -17,7 +17,8 @@ import { toOverviewBreakdownChartDataset } from '~/containers/RWA/breakdownDatas
 import {
 	fetchRWAPerpsContractBreakdownChartData,
 	fetchRWAPerpsMarketBreakdownChartData,
-	fetchRWAPerpsOverviewBreakdownChartData
+	fetchRWAPerpsOverviewBreakdownChartData,
+	setRWAPerpsChartTarget
 } from '~/containers/RWA/Perps/api'
 import { toRWAPerpsBreakdownChartDataset } from '~/containers/RWA/Perps/breakdownDataset'
 import {
@@ -27,7 +28,8 @@ import {
 import type {
 	IRWAPerpsContractBreakdownRequest,
 	IRWAPerpsMarketBreakdownRequest,
-	IRWAPerpsOverviewBreakdownRequest
+	IRWAPerpsOverviewBreakdownRequest,
+	RWAPerpsChartTarget
 } from '~/containers/RWA/Perps/types'
 import {
 	hasExactlyOneTarget,
@@ -83,7 +85,7 @@ export function buildAssetBreakdownUrl(request: RWAAssetBreakdownRequest): strin
 }
 
 export function normalizeAssetBreakdownRows(rows: IRWAChartMetricRows): IRWAChartMetricRows {
-	return (rows ?? []).map((row) => ({ ...row, timestamp: toUnixMsTimestamp(row.timestamp) }))
+	return rows.map((row) => ({ ...row, timestamp: rwaUnixSecondsToMilliseconds(row.timestamp) }))
 }
 
 function assertNever(value: never): never {
@@ -107,7 +109,7 @@ function parseTarget(query: ApiQuery): RWAAssetChartTarget | null {
 	if (chain) return { kind: 'chain', slug: chain }
 	if (category) return { kind: 'category', slug: category }
 	if (platform) return { kind: 'platform', slug: platform }
-	return { kind: 'assetGroup', slug: assetGroup! }
+	return assetGroup ? { kind: 'assetGroup', slug: assetGroup } : null
 }
 
 export function parseAssetBreakdownRequest(req: { query: ApiQuery }): RWAAssetBreakdownRequest | null {
@@ -249,70 +251,62 @@ export const rwaOverviewBreakdown = defineApiRoute({
 	}
 })
 
-async function hasKnownPerpsTarget(request: { venue?: string; assetGroup?: string }): Promise<boolean> {
-	if (!request.venue && !request.assetGroup) return true
+async function hasKnownPerpsTarget(target: RWAPerpsChartTarget): Promise<boolean> {
+	if (target.kind !== 'venue' && target.kind !== 'assetGroup') return true
 
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
-	if (request.venue) {
-		const requestSlug = rwaSlug(request.venue)
+	if (target.kind === 'venue') {
+		const requestSlug = rwaSlug(target.slug)
 		for (const venue of metadataCache.rwaPerpsList.venues) {
 			if (rwaSlug(venue) === requestSlug) return true
 		}
 		return false
 	}
 
-	if (request.assetGroup) {
-		const requestSlug = rwaSlug(request.assetGroup)
-		for (const assetGroup of metadataCache.rwaPerpsList.assetGroups) {
-			if (rwaSlug(assetGroup) === requestSlug) return true
-		}
-		return false
+	const requestSlug = rwaSlug(target.slug)
+	for (const assetGroup of metadataCache.rwaPerpsList.assetGroups) {
+		if (rwaSlug(assetGroup) === requestSlug) return true
 	}
-
-	return true
-}
-
-type ParsedPerpsOverviewBreakdownRequest = IRWAPerpsOverviewBreakdownRequest & {
-	venue?: string
-	assetGroup?: string
-	assetClass?: string
-	excludeAssetClass?: string
+	return false
 }
 
 const RWA_PERPS_OVERVIEW_BREAKDOWNS = ['venue', 'assetClass', 'assetGroup', 'baseAsset'] as const
 
-export function parsePerpsOverviewBreakdownRequest(req: {
-	query: ApiQuery
-}): ParsedPerpsOverviewBreakdownRequest | null {
+function parsePerpsChartTarget(query: ApiQuery): RWAPerpsChartTarget | null {
+	const venue = parseOptionalTarget(query.venue)
+	const assetGroup = parseOptionalTarget(query.assetGroup)
+	const assetClass = parseOptionalTarget(query.assetClass)
+	const excludeAssetClass = parseOptionalTarget(query.excludeAssetClass)
+	if (venue === null || assetGroup === null || assetClass === null || excludeAssetClass === null) return null
+
+	if (!hasExactlyOneTarget([venue, assetGroup, assetClass, excludeAssetClass])) {
+		return venue || assetGroup || assetClass || excludeAssetClass ? null : { kind: 'all' }
+	}
+	if (venue) return { kind: 'venue', slug: venue }
+	if (assetGroup) return { kind: 'assetGroup', slug: assetGroup }
+	if (assetClass) return { kind: 'assetClass', slug: assetClass }
+	return excludeAssetClass ? { kind: 'excludeAssetClass', slug: excludeAssetClass } : null
+}
+
+export function parsePerpsOverviewBreakdownRequest(req: { query: ApiQuery }): IRWAPerpsOverviewBreakdownRequest | null {
 	const breakdown = parseEnumQueryValue(req.query.breakdown, RWA_PERPS_OVERVIEW_BREAKDOWNS)
 	const key = parsePerpsChartMetricKey(req.query.key)
 	if (breakdown == null || key == null) return null
 
-	const venue = parseOptionalTarget(req.query.venue)
-	const assetGroup = parseOptionalTarget(req.query.assetGroup)
-	const assetClass = parseOptionalTarget(req.query.assetClass)
-	const excludeAssetClass = parseOptionalTarget(req.query.excludeAssetClass)
-	if (venue === null || assetGroup === null || assetClass === null || excludeAssetClass === null) return null
-	if (!hasExactlyOneTarget([venue, assetGroup, assetClass, excludeAssetClass])) {
-		if (venue || assetGroup || assetClass || excludeAssetClass) return null
+	const target = parsePerpsChartTarget(req.query)
+	if (target == null) return null
+	if (target.kind === 'venue') {
+		return breakdown === 'venue' ? null : { breakdown, key, target }
 	}
-
-	return {
-		breakdown,
-		key,
-		...(venue ? { venue } : {}),
-		...(assetGroup ? { assetGroup } : {}),
-		...(assetClass ? { assetClass } : {}),
-		...(excludeAssetClass ? { excludeAssetClass } : {})
+	if (target.kind === 'assetGroup') {
+		return breakdown === 'assetGroup' ? null : { breakdown, key, target }
 	}
+	return { breakdown, key, target }
 }
 
-function buildPerpsOverviewBreakdownCacheKey(request: ParsedPerpsOverviewBreakdownRequest): string {
+function buildPerpsOverviewBreakdownCacheKey(request: IRWAPerpsOverviewBreakdownRequest): string {
 	const searchParams = new URLSearchParams({ breakdown: request.breakdown, key: request.key })
-	if (request.venue) searchParams.set('venue', request.venue)
-	if (request.assetGroup) searchParams.set('assetGroup', request.assetGroup)
-	if (request.assetClass) searchParams.set('assetClass', request.assetClass)
-	if (request.excludeAssetClass) searchParams.set('excludeAssetClass', request.excludeAssetClass)
+	setRWAPerpsChartTarget(searchParams, request.target)
 	return `/api/public/rwa/perps/overview-breakdown?${searchParams.toString()}`
 }
 
@@ -327,7 +321,7 @@ export const rwaPerpsOverviewBreakdown = defineApiRoute({
 		}
 
 		try {
-			if (!(await hasKnownPerpsTarget(request))) {
+			if (!(await hasKnownPerpsTarget(request.target))) {
 				return notFound('RWA perps target not found')
 			}
 
@@ -355,30 +349,13 @@ export function parsePerpsContractBreakdownRequest(req: { query: ApiQuery }): IR
 	const key = parsePerpsChartMetricKey(req.query.key)
 	if (key == null) return null
 
-	const venue = parseOptionalTarget(req.query.venue)
-	const assetGroup = parseOptionalTarget(req.query.assetGroup)
-	const assetClass = parseOptionalTarget(req.query.assetClass)
-	const excludeAssetClass = parseOptionalTarget(req.query.excludeAssetClass)
-	if (venue === null || assetGroup === null || assetClass === null || excludeAssetClass === null) return null
-	if (!hasExactlyOneTarget([venue, assetGroup, assetClass, excludeAssetClass])) {
-		if (venue || assetGroup || assetClass || excludeAssetClass) return null
-	}
-
-	return {
-		key,
-		...(venue ? { venue } : {}),
-		...(assetGroup ? { assetGroup } : {}),
-		...(assetClass ? { assetClass } : {}),
-		...(excludeAssetClass ? { excludeAssetClass } : {})
-	}
+	const target = parsePerpsChartTarget(req.query)
+	return target == null ? null : { key, target }
 }
 
 function buildPerpsContractBreakdownCacheKey(request: IRWAPerpsContractBreakdownRequest): string {
 	const searchParams = new URLSearchParams({ key: request.key })
-	if (request.venue) searchParams.set('venue', request.venue)
-	if (request.assetGroup) searchParams.set('assetGroup', request.assetGroup)
-	if (request.assetClass) searchParams.set('assetClass', request.assetClass)
-	if (request.excludeAssetClass) searchParams.set('excludeAssetClass', request.excludeAssetClass)
+	setRWAPerpsChartTarget(searchParams, request.target)
 	return `/api/public/rwa/perps/contract-breakdown?${searchParams.toString()}`
 }
 
@@ -393,7 +370,7 @@ export const rwaPerpsContractBreakdown = defineApiRoute({
 		}
 
 		try {
-			if (!(await hasKnownPerpsTarget(request))) {
+			if (!(await hasKnownPerpsTarget(request.target))) {
 				return notFound('RWA perps target not found')
 			}
 
@@ -421,27 +398,14 @@ export function parsePerpsMarketBreakdownRequest(req: { query: ApiQuery }): IRWA
 	const key = parsePerpsChartMetricKey(req.query.key)
 	if (key == null) return null
 
-	const venue = parseOptionalTarget(req.query.venue)
-	const assetGroup = parseOptionalTarget(req.query.assetGroup)
-	const assetClass = parseOptionalTarget(req.query.assetClass)
-	const excludeAssetClass = parseOptionalTarget(req.query.excludeAssetClass)
-	if (venue === null || assetGroup === null || assetClass === null || excludeAssetClass === null) return null
-	if (venue || assetGroup) return null
-	if (!hasExactlyOneTarget([assetClass, excludeAssetClass])) {
-		if (assetClass || excludeAssetClass) return null
-	}
-
-	return {
-		key,
-		...(assetClass ? { assetClass } : {}),
-		...(excludeAssetClass ? { excludeAssetClass } : {})
-	}
+	const target = parsePerpsChartTarget(req.query)
+	if (target == null || target.kind === 'venue' || target.kind === 'assetGroup') return null
+	return { key, target }
 }
 
 function buildPerpsMarketBreakdownCacheKey(request: IRWAPerpsMarketBreakdownRequest): string {
 	const searchParams = new URLSearchParams({ key: request.key })
-	if (request.assetClass) searchParams.set('assetClass', request.assetClass)
-	if (request.excludeAssetClass) searchParams.set('excludeAssetClass', request.excludeAssetClass)
+	setRWAPerpsChartTarget(searchParams, request.target)
 	return `/api/public/rwa/perps/market-breakdown?${searchParams.toString()}`
 }
 
@@ -500,7 +464,7 @@ export const rwaAssetBreakdown = defineApiRoute({
 					const raw = await fetchJson<IRWAChartDataByAsset>(buildAssetBreakdownUrl(request), {
 						timeout: 30_000
 					})
-					return normalizeAssetBreakdownRows(raw[request.key] ?? [])
+					return normalizeAssetBreakdownRows(raw[request.key])
 				}
 			)
 			return okSerializedJson(result)

@@ -1,3 +1,4 @@
+import type { InferGetStaticPropsType } from 'next'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { RWACategories } from '~/containers/RWA/Categories'
 import { filterCategoriesForStandardRwaOverview } from '~/containers/RWA/constants'
@@ -37,7 +38,11 @@ export const getStaticProps = withPerformanceLogging(`rwa/categories`, async () 
 
 const pageName = ['RWA']
 
-export default function RWACategoriesPage({ categories, categoryLinks, initialChartDataset }) {
+export default function RWACategoriesPage({
+	categories,
+	categoryLinks,
+	initialChartDataset
+}: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title="Real World Asset (RWA) by Category Dashboard & Analytics - DefiLlama"

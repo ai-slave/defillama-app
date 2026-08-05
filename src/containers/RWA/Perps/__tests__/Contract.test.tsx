@@ -41,7 +41,9 @@ const TEST_CONTRACT: IRWAPerpsContractData = {
 		contract: 'xyz:META',
 		venue: 'XYZ Exchange',
 		openInterest: 100,
+		openInterestChange24h: null,
 		volume24h: 50,
+		volume24hChange24h: null,
 		price: 500,
 		priceChange24h: 5,
 		fundingRate: 0.00001,
@@ -70,13 +72,15 @@ const TEST_CONTRACT: IRWAPerpsContractData = {
 		prevDayPx: 480,
 		maxLeverage: 10,
 		szDecimals: 2,
+		fundingIntervalHours: 1,
 		volume7d: 300,
 		volume30d: 1000,
 		volumeAllTime: 5000,
 		estimatedProtocolFees24h: 1,
 		estimatedProtocolFees7d: 3,
 		estimatedProtocolFees30d: 10,
-		estimatedProtocolFeesAllTime: 50
+		estimatedProtocolFeesAllTime: 50,
+		suspicious: false
 	},
 	marketChart: null,
 	fundingHistory: null

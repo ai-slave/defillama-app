@@ -52,12 +52,11 @@ function getLegendSeriesNames(seriesNames: string[]) {
 	return ['Total', ...seriesNames.filter((name) => name !== 'Total')]
 }
 
-function isChartMetricKey(value: string): value is RWAPerpsChartMetricKey {
-	return VALID_CHART_TYPES.has(value as RWAPerpsChartMetricKey)
-}
-
 export function getRWAPerpsOverviewChartType(chartTypeQuery: string | undefined): RWAPerpsChartMetricKey {
-	return chartTypeQuery && isChartMetricKey(chartTypeQuery) ? chartTypeQuery : DEFAULT_CHART_TYPE
+	for (const chartType of VALID_CHART_TYPES) {
+		if (chartType === chartTypeQuery) return chartType
+	}
+	return DEFAULT_CHART_TYPE
 }
 
 export function getRWAPerpsOverviewChartTypeQueryPatch(nextChartType: RWAPerpsChartMetricKey) {
@@ -103,21 +102,39 @@ export function getRWAPerpsChartDatasetForSelectedStacks(
 	selectedStacks: string[],
 	stackOptions: string[]
 ): RWAChartDataset {
-	if (selectedStacks.length === 0 || selectedStacks.length === stackOptions.length) return dataset
+	if (selectedStacks.length === stackOptions.length) return dataset
 
-	for (let i = 0; i < dataset.source.length; i++) {
-		const row = dataset.source[i]
-		for (const stack of selectedStacks) {
-			if (row[stack] != null) {
-				return {
-					...dataset,
-					source: dataset.source.slice(i)
+	const availableDimensions = new Set(dataset.dimensions)
+	const dimensions = ['timestamp']
+	if (availableDimensions.has('Total')) dimensions.push('Total')
+	for (const stack of selectedStacks) {
+		if (availableDimensions.has(stack)) dimensions.push(stack)
+	}
+	if (dimensions.length === 1) return EMPTY_DATASET
+
+	const source: RWAChartDataset['source'] = []
+	let hasStarted = selectedStacks.length === 0
+	for (const row of dataset.source) {
+		if (!hasStarted) {
+			for (const stack of selectedStacks) {
+				if (row[stack] != null) {
+					hasStarted = true
+					break
 				}
 			}
+			if (!hasStarted) continue
 		}
+
+		const selectedRow: RWAChartDataset['source'][number] = { timestamp: row.timestamp }
+		for (const dimension of dimensions) {
+			if (dimension === 'timestamp') continue
+			const value = row[dimension]
+			if (value !== undefined) selectedRow[dimension] = value
+		}
+		source.push(selectedRow)
 	}
 
-	return dataset
+	return { source, dimensions }
 }
 
 function fetchOverviewBreakdownDataset(request: IRWAPerpsOverviewBreakdownRequest): Promise<RWAChartDataset> {
@@ -141,28 +158,30 @@ export function buildRWAPerpsOverviewChartSeries({
 	const seriesType: MultiSeriesChartSeriesConfig['type'] = chartType === 'volume24h' ? 'bar' : 'line'
 	const hasTotalOverlay = timeSeriesMode === 'breakdown' && chartType !== 'volume24h' && stackOptions.includes('Total')
 	const breakdownSeries = stackOptions.filter((seriesName) => !(hasTotalOverlay && seriesName === 'Total'))
+	const charts: MultiSeriesChartSeriesConfig[] = []
 
-	return [
-		...breakdownSeries.map((seriesName, index) => ({
+	for (const [index, seriesName] of breakdownSeries.entries()) {
+		charts.push({
 			name: seriesName,
 			type: seriesType,
 			...(chartType === 'volume24h' ? { stack: 'A', large: false } : {}),
 			encode: { x: 'timestamp', y: seriesName },
-			color: CHART_COLORS[(index + (hasTotalOverlay ? 1 : 0)) % CHART_COLORS.length]
-		})),
-		...(hasTotalOverlay
-			? [
-					{
-						name: 'Total',
-						type: 'line' as const,
-						encode: { x: 'timestamp', y: 'Total' },
-						color: CHART_COLORS[0],
-						hideAreaStyle: true,
-						excludeFromTooltipTotal: true
-					}
-				]
-			: [])
-	]
+			color: CHART_COLORS[(index + (hasTotalOverlay ? 1 : 0)) % CHART_COLORS.length] ?? CHART_COLORS[0]
+		})
+	}
+
+	if (hasTotalOverlay) {
+		charts.push({
+			name: 'Total',
+			type: 'line',
+			encode: { x: 'timestamp', y: 'Total' },
+			color: CHART_COLORS[0],
+			hideAreaStyle: true,
+			excludeFromTooltipTotal: true
+		})
+	}
+
+	return charts
 }
 
 export function RWAPerpsOverviewChart({
@@ -181,7 +200,7 @@ export function RWAPerpsOverviewChart({
 	const isDefaultState = chartType === DEFAULT_CHART_TYPE
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['rwa-perps-overview-breakdown', breakdown, chartType],
-		queryFn: () => fetchOverviewBreakdownDataset({ breakdown, key: chartType }),
+		queryFn: () => fetchOverviewBreakdownDataset({ breakdown, key: chartType, target: { kind: 'all' } }),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 1,
@@ -193,12 +212,15 @@ export function RWAPerpsOverviewChart({
 		[rawDataset]
 	)
 	const shouldShowTotalOverlay = timeSeriesMode === 'breakdown' && chartType !== 'volume24h'
-	const ungroupedDataset =
-		timeSeriesMode === 'grouped'
-			? groupRWAPerpsTimeSeriesDataset(rawDataset)
-			: shouldShowTotalOverlay
-				? appendRWAPerpsTimeSeriesDatasetTotal(rawDataset)
-				: rawDataset
+	const ungroupedDataset = useMemo(
+		() =>
+			timeSeriesMode === 'grouped'
+				? groupRWAPerpsTimeSeriesDataset(rawDataset)
+				: shouldShowTotalOverlay
+					? appendRWAPerpsTimeSeriesDatasetTotal(rawDataset)
+					: rawDataset,
+		[rawDataset, shouldShowTotalOverlay, timeSeriesMode]
+	)
 	const showLoadingState = !isDefaultState && isLoading
 	const chartSeries = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
@@ -209,8 +231,8 @@ export function RWAPerpsOverviewChart({
 			}),
 		[chartType, timeSeriesMode, ungroupedDataset.dimensions]
 	)
-	const selectedStacksQ = router.query[STACKS_QUERY_KEY] as string | string[] | undefined
-	const excludeStacksQ = router.query[EXCLUDE_STACKS_QUERY_KEY] as string | string[] | undefined
+	const selectedStacksQ = router.query[STACKS_QUERY_KEY]
+	const excludeStacksQ = router.query[EXCLUDE_STACKS_QUERY_KEY]
 	const selectedStacks = useMemo(
 		() =>
 			resolveRWAPerpsOverviewSelectedStacks({
@@ -263,12 +285,10 @@ export function RWAPerpsOverviewChart({
 	}
 
 	const onSelectTimeSeriesMode = (nextTimeSeriesMode: string | string[]) => {
-		void pushShallowQuery(
-			router,
-			getRWAPerpsOverviewTimeSeriesModeQueryPatch(
-				(Array.isArray(nextTimeSeriesMode) ? nextTimeSeriesMode[0] : nextTimeSeriesMode) as RWAPerpsTimeSeriesMode
-			)
+		const selectedMode = getRWAPerpsOverviewTimeSeriesMode(
+			Array.isArray(nextTimeSeriesMode) ? nextTimeSeriesMode[0] : nextTimeSeriesMode
 		)
+		void pushShallowQuery(router, getRWAPerpsOverviewTimeSeriesModeQueryPatch(selectedMode))
 	}
 
 	return (
@@ -333,7 +353,7 @@ export function RWAPerpsOverviewChart({
 				</ChartPanelBodyFallback>
 			) : !hasTimeSeriesHistory ? (
 				<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
-					Only a single snapshot is available; time-series history is not available for this selection yet.
+					There is not enough time-series history for this selection yet.
 				</ChartPanelBodyFallback>
 			) : (
 				<Suspense fallback={<ChartPanelBodyFallback />}>
@@ -343,10 +363,10 @@ export function RWAPerpsOverviewChart({
 						chartOptions={chartOptions}
 						hideDefaultLegend={false}
 						showTotalInTooltip={!selectedDataset.dimensions.includes('Total')}
-						selectedCharts={visibleCharts}
+						{...(visibleCharts ? { selectedCharts: visibleCharts } : {})}
 						onReady={handleChartReady}
 						valueSymbol={chartType === 'markets' ? '' : '$'}
-						groupBy={chartType === 'volume24h' ? volumeGroupBy : undefined}
+						{...(chartType === 'volume24h' ? { groupBy: volumeGroupBy } : {})}
 					/>
 				</Suspense>
 			)}

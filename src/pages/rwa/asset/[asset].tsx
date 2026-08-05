@@ -1,4 +1,4 @@
-import type { GetStaticPropsContext } from 'next'
+import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { RWAAssetPage } from '~/containers/RWA/Asset'
 import { getRWAAssetData } from '~/containers/RWA/queries'
@@ -32,7 +32,7 @@ function getRWAAssetId(canonicalMarketId: string, idMap: Record<string, string>)
 
 	const normalizedMarketId = canonicalMarketId.toLowerCase()
 	for (const marketId in idMap) {
-		if (marketId.toLowerCase() === normalizedMarketId) return idMap[marketId]
+		if (marketId.toLowerCase() === normalizedMarketId) return idMap[marketId] ?? null
 	}
 
 	return null
@@ -98,7 +98,10 @@ export const getStaticProps = withPerformanceLogging(
 
 const pageName = ['RWA']
 
-export default function RWAAssetDetailPage({ asset, canonicalMarketId }) {
+export default function RWAAssetDetailPage({
+	asset,
+	canonicalMarketId
+}: InferGetStaticPropsType<typeof getStaticProps>) {
 	const displayName =
 		asset.assetName && asset.ticker
 			? `${asset.assetName} (${asset.ticker})`

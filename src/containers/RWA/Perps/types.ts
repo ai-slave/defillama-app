@@ -44,7 +44,7 @@ export interface IRWAPerpsContractData {
 export type RWAPerpsChartMetricKey = 'openInterest' | 'volume24h' | 'markets'
 export type RWAPerpsChartView = 'timeSeries' | 'pie' | 'treemap' | 'hbar'
 export type RWAPerpsTimeSeriesMode = 'grouped' | 'breakdown'
-export type RWAPerpsTreemapNestedBy = 'none' | 'venue' | 'assetClass' | 'baseAsset' | 'contract'
+export type RWAPerpsTreemapNestedBy = 'none' | 'assetClass' | 'baseAsset' | 'contract'
 
 export type RWAPerpsOverviewBreakdown = 'venue' | 'assetClass' | 'assetGroup' | 'baseAsset' | 'contract'
 export type RWAPerpsOverviewTimeSeriesBreakdown = 'venue' | 'assetClass' | 'assetGroup' | 'baseAsset' | 'contract'
@@ -63,37 +63,33 @@ export type RWAPerpsVenueSnapshotBreakdown = RWAPerpsVenueNonTimeSeriesBreakdown
 export type RWAPerpsAssetGroupSnapshotBreakdown = RWAPerpsAssetGroupNonTimeSeriesBreakdown
 export type RWAPerpsChartMode = 'overview' | 'venue' | 'assetGroup'
 
+export type RWAPerpsAllChartTarget = { kind: 'all' }
+export type RWAPerpsVenueChartTarget = { kind: 'venue'; slug: string }
+export type RWAPerpsAssetGroupChartTarget = { kind: 'assetGroup'; slug: string }
+export type RWAPerpsAssetClassChartTarget = { kind: 'assetClass'; slug: string }
+export type RWAPerpsExcludeAssetClassChartTarget = { kind: 'excludeAssetClass'; slug: string }
+
+export type RWAPerpsChartTarget =
+	| RWAPerpsAllChartTarget
+	| RWAPerpsVenueChartTarget
+	| RWAPerpsAssetGroupChartTarget
+	| RWAPerpsAssetClassChartTarget
+	| RWAPerpsExcludeAssetClassChartTarget
+
 export interface IRWAPerpsOverviewBreakdownRequest {
+	key: RWAPerpsChartMetricKey
+	target: RWAPerpsChartTarget
 	breakdown: Exclude<RWAPerpsOverviewBreakdown, 'contract'>
-	key: RWAPerpsChartMetricKey
-	assetClass?: string
-	excludeAssetClass?: string
-}
-
-export interface IRWAPerpsVenueBreakdownRequest {
-	venue: string
-	breakdown: Exclude<RWAPerpsVenueBreakdown, 'contract'>
-	key: RWAPerpsChartMetricKey
-}
-
-export interface IRWAPerpsAssetGroupBreakdownRequest {
-	assetGroup: string
-	breakdown: Exclude<RWAPerpsAssetGroupBreakdown, 'contract'>
-	key: RWAPerpsChartMetricKey
 }
 
 export interface IRWAPerpsContractBreakdownRequest {
 	key: RWAPerpsChartMetricKey
-	venue?: string
-	assetGroup?: string
-	assetClass?: string
-	excludeAssetClass?: string
+	target: RWAPerpsChartTarget
 }
 
 export interface IRWAPerpsMarketBreakdownRequest {
 	key: RWAPerpsChartMetricKey
-	assetClass?: string
-	excludeAssetClass?: string
+	target: RWAPerpsAllChartTarget | RWAPerpsAssetClassChartTarget | RWAPerpsExcludeAssetClassChartTarget
 }
 
 export interface IRWAPerpsOverviewPageData {

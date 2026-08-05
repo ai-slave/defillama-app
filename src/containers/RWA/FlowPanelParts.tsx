@@ -162,7 +162,7 @@ export function RWAFlowVsPriceStrip({
 				label={definitions.flows.deltaMcap.label}
 				value={summary.mcapChange}
 				tooltip={definitions.flows.deltaMcap.description}
-				breakdown={breakdown}
+				{...(breakdown ? { breakdown } : {})}
 				valueKey="mcapChange"
 			/>
 			<span aria-hidden className="text-tertiary">
@@ -172,7 +172,7 @@ export function RWAFlowVsPriceStrip({
 				label={definitions.flows.netFlowsStat.label}
 				value={summary.netCapital}
 				tooltip={definitions.flows.netFlowsStat.description}
-				breakdown={breakdown}
+				{...(breakdown ? { breakdown } : {})}
 				valueKey="netCapital"
 			/>
 			<span aria-hidden className="text-tertiary">
@@ -182,7 +182,7 @@ export function RWAFlowVsPriceStrip({
 				label={definitions.flows.priceUnattributed.label}
 				value={summary.price}
 				tooltip={definitions.flows.priceUnattributed.description}
-				breakdown={breakdown}
+				{...(breakdown ? { breakdown } : {})}
 				valueKey="price"
 			/>
 		</p>

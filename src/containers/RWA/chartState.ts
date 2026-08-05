@@ -87,6 +87,13 @@ const NON_TIME_SERIES_DEFAULTS: Record<RWAOverviewMode, RWAChartBreakdown> = {
 	assetGroup: 'assetName'
 }
 
+const TIME_SERIES_DEFAULTS: Record<RWAOverviewMode, RWAChartBreakdown> = {
+	chain: 'assetGroup',
+	category: 'assetGroup',
+	platform: 'assetGroup',
+	assetGroup: 'assetName'
+}
+
 const TREEMAP_NESTED_BY_OPTIONS: Record<RwaTreemapParentGrouping, readonly RwaTreemapNestedBy[]> = {
 	chain: ['none', 'assetName'],
 	category: ['none', 'assetClass', 'assetName'],
@@ -107,9 +114,6 @@ const TREEMAP_DEFAULT_NESTED_BY: Record<RwaTreemapParentGrouping, RwaTreemapNest
 
 const DEFAULT_CHART_VIEW: RWAChartView = 'timeSeries'
 const DEFAULT_CHART_METRIC: RWAChartMetric = 'activeMcap'
-const VALID_CHART_VIEWS = new Set<RWAChartView>(CHART_VIEW_OPTIONS.map(({ key }) => key))
-const VALID_CHART_METRICS = new Set<RWAChartMetric>(CHART_METRIC_OPTIONS.map(({ key }) => key))
-
 function assert(condition: unknown, message: string): asserts condition {
 	if (!condition) {
 		throw new Error(message)
@@ -158,7 +162,7 @@ export function getTreemapNestedByLabel(nestedBy: RwaTreemapNestedBy): string {
 }
 
 export function getDefaultChartBreakdown(mode: RWAChartModeState, view: RWAChartView): RWAChartBreakdown {
-	if (view === 'timeSeries') return TIME_SERIES_BREAKDOWNS[mode.mode][0]
+	if (view === 'timeSeries') return TIME_SERIES_DEFAULTS[mode.mode]
 	return NON_TIME_SERIES_DEFAULTS[mode.mode]
 }
 
@@ -252,18 +256,21 @@ function getBreakdownQueryKey(view: RWAChartView): 'timeSeriesChartBreakdown' | 
 
 function normalizeChartView(value: string | undefined): RWAChartView {
 	if (value === 'bar') return 'hbar'
-	if (value && VALID_CHART_VIEWS.has(value as RWAChartView)) return value as RWAChartView
+	const matchedView = CHART_VIEW_OPTIONS.find((option) => option.key === value)?.key
+	if (matchedView) return matchedView
 	return DEFAULT_CHART_VIEW
 }
 
 function normalizeChartMetric(value: string | undefined): RWAChartMetric {
-	if (value && VALID_CHART_METRICS.has(value as RWAChartMetric)) return value as RWAChartMetric
+	const matchedMetric = CHART_METRIC_OPTIONS.find((option) => option.key === value)?.key
+	if (matchedMetric) return matchedMetric
 	return DEFAULT_CHART_METRIC
 }
 
 function normalizeBreakdown(mode: RWAChartModeState, view: RWAChartView, value: string | undefined): RWAChartBreakdown {
 	const allowedBreakdowns = getAllowedBreakdowns(mode, view)
-	if (value && allowedBreakdowns.includes(value as RWAChartBreakdown)) return value as RWAChartBreakdown
+	const matchedBreakdown = allowedBreakdowns.find((breakdown) => breakdown === value)
+	if (matchedBreakdown) return matchedBreakdown
 	return getDefaultChartBreakdown(mode, view)
 }
 
@@ -272,6 +279,7 @@ function normalizeTreemapNestedBy(
 	value: string | undefined
 ): RwaTreemapNestedBy {
 	const allowedNestedBy = TREEMAP_NESTED_BY_OPTIONS[parentGrouping]
-	if (value && allowedNestedBy.includes(value as RwaTreemapNestedBy)) return value as RwaTreemapNestedBy
+	const matchedNestedBy = allowedNestedBy.find((nestedBy) => nestedBy === value)
+	if (matchedNestedBy) return matchedNestedBy
 	return TREEMAP_DEFAULT_NESTED_BY[parentGrouping]
 }

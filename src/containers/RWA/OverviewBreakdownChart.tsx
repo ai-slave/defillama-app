@@ -58,7 +58,6 @@ const CHART_TYPE_OPTIONS: Array<{ key: RWAOverviewBreakdownChartType; label: str
 	{ key: 'flows', label: definitions.flows.overviewNetFlows.label }
 ]
 
-const VALID_CHART_TYPES = new Set<RWAChartMetricKey>(['activeMcap', 'onChainMcap', 'defiActiveTvl'])
 const DEFAULT_CHART_TYPE: RWAChartMetricKey = 'activeMcap'
 const EMPTY_DATASET: RWAPositionalChartDataset = { source: [], dimensions: ['timestamp'] }
 const EMPTY_MULTI_SERIES_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp'] }
@@ -77,7 +76,7 @@ function getOverviewBreakdownFlowGrouping(value: string | undefined): RWAFlowGro
 }
 
 function isChartMetricKey(value: string): value is RWAChartMetricKey {
-	return VALID_CHART_TYPES.has(value as RWAChartMetricKey)
+	return value === 'activeMcap' || value === 'onChainMcap' || value === 'defiActiveTvl'
 }
 
 function getFlowSplitBy(page: RWAOverviewPage) {
@@ -165,13 +164,15 @@ export function buildOverviewBreakdownChartSeries(dimensions: string[]): Array<M
 
 	return seriesDimensions.map((name) => {
 		const reservedColorSlot = getRwaReservedSeriesColorSlot(name)
+		const colorSlot = colorSlots[name]
+		if (colorSlot === undefined) throw new Error(`Missing RWA chart color slot for "${name}"`)
 		const isTotalSeries = isRwaTotalSeriesLabel(name)
 
 		return {
 			type: 'line',
 			name,
 			encode: { x: 0, y: dimensions.indexOf(name) },
-			color: CHART_COLORS[colorSlots[name] % CHART_COLORS.length],
+			color: CHART_COLORS[colorSlot % CHART_COLORS.length] ?? CHART_COLORS[0],
 			...(reservedColorSlot !== null
 				? {
 						hideAreaStyle: true,
@@ -190,13 +191,12 @@ export function getOverviewBreakdownChartDatasetForSelectedStacks(
 	if (selectedStacks.length === 0 || selectedStacks.length === stackOptions.length) return dataset
 	const selectedDimensionIndexes = selectedStacks.map((stack) => dataset.dimensions.indexOf(stack))
 
-	for (let i = 0; i < dataset.source.length; i++) {
-		const row = dataset.source[i]
+	for (const [index, row] of dataset.source.entries()) {
 		for (const dimensionIndex of selectedDimensionIndexes) {
 			if (dimensionIndex >= 0 && row[dimensionIndex] != null) {
 				return {
 					...dataset,
-					source: dataset.source.slice(i)
+					source: dataset.source.slice(index)
 				}
 			}
 		}
@@ -287,8 +287,8 @@ export function RWAOverviewBreakdownChart({
 		() => (isFlowHeatmap ? stackOptions : chartSeries.slice(0, MAX_VISIBLE_TIME_SERIES).map((series) => series.name)),
 		[chartSeries, isFlowHeatmap, stackOptions]
 	)
-	const selectedStacksQ = router.query[STACKS_QUERY_KEY] as string | string[] | undefined
-	const excludeStacksQ = router.query[EXCLUDE_STACKS_QUERY_KEY] as string | string[] | undefined
+	const selectedStacksQ = router.query[STACKS_QUERY_KEY]
+	const excludeStacksQ = router.query[EXCLUDE_STACKS_QUERY_KEY]
 	const selectedStacks = useMemo(() => {
 		if (stackOptions.length === 0) return []
 		const availableStacks = new Set(stackOptions)
@@ -354,7 +354,7 @@ export function RWAOverviewBreakdownChart({
 					options={CHART_TYPE_OPTIONS.map(({ key, label }) => ({
 						value: key,
 						label,
-						tooltip: key === 'flows' ? definitions.flows.overviewNetFlows.description : undefined
+						...(key === 'flows' ? { tooltip: definitions.flows.overviewNetFlows.description } : {})
 					}))}
 					label="Chart type"
 					variant="default"
@@ -365,7 +365,7 @@ export function RWAOverviewBreakdownChart({
 					<Select
 						allValues={RWA_FLOW_TREEMAP_VIEW_OPTIONS}
 						selectedValues={flowChartView}
-						setSelectedValues={(view) => {
+						setSelectedValues={(view: string) => {
 							void pushShallowQuery(router, { flowRotationView: view === 'bar' ? undefined : view })
 						}}
 						label={flowChartView === 'heatmap' ? 'Heatmap Chart' : 'Bar Chart'}
@@ -378,7 +378,7 @@ export function RWAOverviewBreakdownChart({
 					<Select
 						allValues={RWA_FLOW_TREEMAP_SIZE_OPTIONS}
 						selectedValues={flowTreemapSizeMetric}
-						setSelectedValues={(metric) => {
+						setSelectedValues={(metric: string) => {
 							void pushShallowQuery(router, {
 								flowHeatmapSize: metric === 'onChainMcap' ? undefined : metric,
 								flowTreemapSize: undefined
@@ -467,7 +467,7 @@ export function RWAOverviewBreakdownChart({
 							charts={chartSeries}
 							hideDefaultLegend={false}
 							showTotalInTooltip={!dataset.dimensions.some(isRwaTotalSeriesLabel)}
-							groupBy={isFlowChart ? flowFrequency : undefined}
+							{...(isFlowChart ? { groupBy: flowFrequency } : {})}
 							selectedCharts={selectedStacksSet}
 							onReady={handleChartReady}
 						/>

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchJson } from '~/utils/async'
 import type {
 	IRWAFlowAssetBreakdownRow,
+	IRWAFlowPointWithMcap,
 	IRWAFlowOverviewSplitPoint,
 	IRWAFlowSummaryResponse,
 	IRWAFlowsResponse,
@@ -29,9 +30,12 @@ export function useRWAFlowSummary() {
 }
 
 export function useRWAAssetFlows(assetId: string, enabled: boolean) {
-	return useQuery<IRWAFlowsResponse>({
+	return useQuery<IRWAFlowsResponse<IRWAFlowPointWithMcap>>({
 		queryKey: ['rwa-flows', 'asset', assetId],
-		queryFn: () => fetchJson<IRWAFlowsResponse>(`${RWA_FLOWS_API}/asset/${encodeURIComponent(assetId)}?withMcap=true`),
+		queryFn: () =>
+			fetchJson<IRWAFlowsResponse<IRWAFlowPointWithMcap>>(
+				`${RWA_FLOWS_API}/asset/${encodeURIComponent(assetId)}?withMcap=true`
+			),
 		staleTime: RWA_FLOWS_STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 1,

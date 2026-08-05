@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import type { IRWAPerpsMarketChartPoint } from '../api.types'
 import { RWAPerpsContractSummaryMetrics } from '../Contract'
 import {
 	buildRWAPerpsContractChartSpec,
@@ -8,7 +9,12 @@ import {
 	DEFAULT_ENABLED_RWA_PERPS_CONTRACT_CHART_METRICS,
 	type RWAPerpsContractChartMetricKey
 } from '../contractPageUtils'
-import type { IRWAPerpsContractData } from '../types'
+import type { IRWAPerpsContractData, IRWAPerpsContractFundingHistoryPoint } from '../types'
+
+function defined<T>(value: T | undefined): T {
+	if (value === undefined) throw new Error('Expected test value')
+	return value
+}
 
 const baseContract: IRWAPerpsContractData = {
 	contract: {
@@ -34,7 +40,9 @@ const baseContract: IRWAPerpsContractData = {
 		contract: 'xyz:META',
 		venue: 'xyz',
 		openInterest: 100,
+		openInterestChange24h: null,
 		volume24h: 50,
+		volume24hChange24h: null,
 		price: 500,
 		priceChange24h: 5,
 		fundingRate: 0.00001,
@@ -50,6 +58,7 @@ const baseContract: IRWAPerpsContractData = {
 		category: ['RWA Perps'],
 		issuer: 'XYZ',
 		website: ['https://trade.xyz/'],
+		link: null,
 		oracleProvider: 'Pyth equity feed',
 		description: null,
 		accessModel: 'Permissionless',
@@ -62,19 +71,21 @@ const baseContract: IRWAPerpsContractData = {
 		prevDayPx: 480,
 		maxLeverage: 10,
 		szDecimals: 2,
+		fundingIntervalHours: 1,
 		volume7d: 300,
 		volume30d: 1000,
 		volumeAllTime: 5000,
 		estimatedProtocolFees24h: 1,
 		estimatedProtocolFees7d: 3,
 		estimatedProtocolFees30d: 10,
-		estimatedProtocolFeesAllTime: 50
+		estimatedProtocolFeesAllTime: 50,
+		suspicious: false
 	},
 	marketChart: null,
 	fundingHistory: null
 }
 
-const chartPoints = [
+const chartPoints: [IRWAPerpsMarketChartPoint, IRWAPerpsMarketChartPoint, IRWAPerpsMarketChartPoint] = [
 	{
 		timestamp: Date.UTC(2026, 2, 1),
 		openInterest: 100,
@@ -107,7 +118,7 @@ const chartPoints = [
 	}
 ]
 
-const fundingHistoryPoints = [
+const fundingHistoryPoints: [IRWAPerpsContractFundingHistoryPoint, IRWAPerpsContractFundingHistoryPoint] = [
 	{
 		timestamp: Date.UTC(2026, 2, 1),
 		fundingRate: 0.001,
@@ -172,32 +183,19 @@ describe('buildRWAPerpsContractInfoRows', () => {
 })
 
 describe('buildRWAPerpsContractMetricSections', () => {
-	it('keeps UI display fallbacks at "-" for malformed numeric values', () => {
+	it('shows unavailable max leverage as "-"', () => {
 		const sections = buildRWAPerpsContractMetricSections({
 			...baseContract,
 			market: {
 				...baseContract.market,
-				openInterest: Number.NaN,
-				volume30d: Number.POSITIVE_INFINITY,
-				makerFeeRate: Number.NaN,
-				deployerFeeShare: Number.NaN,
-				oraclePx: Number.NaN,
-				maxLeverage: Number.NaN,
-				szDecimals: Number.NaN
+				maxLeverage: null
 			}
 		})
 
-		expect(sections.openInterest.value).toBe('-')
-		expect(sections.volume.value).toBe('-')
+		expect(sections.tradingParameters.value).toBe('-')
 		expect(sections.tradingParameters.children).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({ label: 'Max Leverage', value: '-' }),
-				expect.objectContaining({ label: 'Maker Fee', value: '-' }),
-				expect.objectContaining({ label: 'Size Decimals', value: '-' })
-			])
+			expect.arrayContaining([expect.objectContaining({ label: 'Max Leverage', value: '-' })])
 		)
-		expect(sections.tradingParameters.children.some((row) => row.label === 'Deployer Fee Share')).toBe(false)
-		expect(sections.marketReference.value).toBe('-')
 	})
 })
 
@@ -314,18 +312,19 @@ describe('buildRWAPerpsContractChartSpec', () => {
 	})
 
 	it('preserves full chart config and dimensions in noncanonical selection order', () => {
+		const enabledMetrics: RWAPerpsContractChartMetricKey[] = [
+			'premium',
+			'volume24h',
+			'openInterest',
+			'price',
+			'fundingRate',
+			'volume24h'
+		]
 		const spec = buildRWAPerpsContractChartSpec({
 			marketPoints: chartPoints,
 			fundingHistory: fundingHistoryPoints,
 			groupBy: 'monthly',
-			enabledMetrics: [
-				'premium',
-				'volume24h',
-				'openInterest',
-				'price',
-				'fundingRate',
-				'volume24h'
-			] as RWAPerpsContractChartMetricKey[]
+			enabledMetrics
 		})
 
 		expect(spec.charts.map(({ data: _data, ...chart }) => chart)).toEqual([
@@ -390,8 +389,9 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			'Volume 24h'
 		])
 		expect(spec.dataset.source).toEqual([])
-		expect(spec.charts[1].data).toEqual([])
-		expect(spec.charts[5].data?.[0][1]).toBe(30)
+		expect(defined(spec.charts[1]).data).toEqual([])
+		const volumePoint = defined(defined(spec.charts[5]).data)[0]
+		expect(defined(volumePoint)[1]).toBe(30)
 	})
 
 	it('keeps market and funding lines on their independent timestamp calendars', () => {
@@ -451,7 +451,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 
 		expect(spec.charts.map((chart) => chart.name)).toEqual(['Funding Rate'])
 		expect(spec.dataset.dimensions).toEqual(['timestamp', 'Funding Rate'])
-		expect(spec.charts[0].data).toEqual([
+		expect(defined(spec.charts[0]).data).toEqual([
 			[Date.UTC(2026, 2, 1), 0.1],
 			[Date.UTC(2026, 2, 2), 0.2]
 		])
@@ -478,29 +478,5 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		])
 		expect(marketPoints).toEqual(originalMarketPoints)
 		expect(fundingHistory).toEqual(originalFundingHistory)
-	})
-
-	it('normalizes second-based timestamps to milliseconds before grouping', () => {
-		const spec = buildRWAPerpsContractChartSpec({
-			marketPoints: [
-				{
-					...chartPoints[0],
-					timestamp: Math.floor(Date.UTC(2026, 2, 1) / 1e3)
-				}
-			],
-			fundingHistory: [
-				{
-					...fundingHistoryPoints[0],
-					timestamp: Math.floor(Date.UTC(2026, 2, 2) / 1e3)
-				}
-			],
-			groupBy: 'daily',
-			enabledMetrics: ['openInterest', 'fundingRate']
-		})
-
-		expect(spec.charts.map((chart) => chart.data)).toEqual([
-			[[Date.UTC(2026, 2, 1), 100]],
-			[[Date.UTC(2026, 2, 2), 0.1]]
-		])
 	})
 })

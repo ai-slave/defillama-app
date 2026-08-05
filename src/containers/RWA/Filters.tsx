@@ -78,6 +78,14 @@ const CHART_QUERY_KEYS = [
 	'timeSeriesChartBreakdown',
 	'nonTimeSeriesChartBreakdown',
 	'treemapNestedBy',
+	'flowMode',
+	'flowOverlays',
+	'flowRotationView',
+	'flowRotationBy',
+	'flowRotationFrequency',
+	'flowHeatmapSize',
+	// Legacy key kept for cleanup when present in shared links/bookmarks.
+	'flowTreemapSize',
 	// Legacy key kept for cleanup when present in shared links/bookmarks.
 	'pieChartBreakdown'
 ] as const

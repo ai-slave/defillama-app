@@ -98,7 +98,13 @@ export function getDefaultRWAOverviewInclusion({
 	platformSlug,
 	assetGroupSlug
 }: RWAOverviewInclusionContext): RWAOverviewInclusionDefaults {
-	const path = getRWAOverviewPath({ mode, chainSlug, categorySlug, platformSlug, assetGroupSlug })
+	const path = getRWAOverviewPath({
+		mode,
+		...(chainSlug !== undefined ? { chainSlug } : {}),
+		...(categorySlug !== undefined ? { categorySlug } : {}),
+		...(platformSlug !== undefined ? { platformSlug } : {}),
+		...(assetGroupSlug !== undefined ? { assetGroupSlug } : {})
+	})
 
 	return {
 		includeStablecoins: path ? STABLECOINS_DEFAULT_RWA_PATHS.has(path) : false,

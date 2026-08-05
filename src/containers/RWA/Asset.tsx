@@ -256,7 +256,7 @@ const AssetHeader = ({
 				label={definitions.onChainMcap.label}
 				tooltip={definitions.onChainMcap.description}
 				total={asset.onChainMcap?.total}
-				byChain={asset.onChainMcap?.breakdown}
+				{...(asset.onChainMcap?.breakdown ? { byChain: asset.onChainMcap.breakdown } : {})}
 			/>
 		</>
 	)
@@ -457,9 +457,12 @@ const ChainBadge = ({
 				</div>
 				{contracts && contracts.length > 0 ? (
 					<>
-						{contracts.map((address) => (
-							<ContractItem key={`${chain}-${address}`} address={address} explorerUrl={contractUrls?.[address]} />
-						))}
+						{contracts.map((address) => {
+							const explorerUrl = contractUrls?.[address]
+							return (
+								<ContractItem key={`${chain}-${address}`} address={address} {...(explorerUrl ? { explorerUrl } : {})} />
+							)
+						})}
 					</>
 				) : null}
 			</div>
@@ -471,6 +474,8 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 	const router = useRouter()
 	const displayName = asset.assetName ?? asset.ticker ?? 'Unknown asset'
 	const keyBase = asset.ticker ?? asset.assetName ?? 'asset'
+	const categories = asset.category ?? []
+	const assetClasses = asset.assetClass ?? []
 	const chartTypeQuery = readSingleQueryValue(router.query.chartType)
 	const flowModeQuery = readSingleQueryValue(router.query.flowMode)
 	const flowQueryState = parseRWAFlowQueryState(chartTypeQuery, flowModeQuery, true)
@@ -479,23 +484,9 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 	const flowGroupBy = flowQueryState.groupBy
 	const isFlowChart = chartMetric !== 'marketData'
 	const showMcapOverlay = readSingleQueryValue(router.query.flowOverlay) !== 'false'
-	const attestationFrequency = Array.isArray(asset.attestationFrequency)
-		? asset.attestationFrequency.length > 0
-			? asset.attestationFrequency.join('; ')
-			: null
-		: (asset.attestationFrequency ?? null)
+	const attestationFrequency = asset.attestationFrequency ?? null
 	const parentPlatforms = getRwaPlatforms(asset.parentPlatform)
-	let hasParentPlatformName = false
-	if (typeof asset.parentPlatform === 'string') {
-		hasParentPlatformName = asset.parentPlatform.trim().length > 0
-	} else if (Array.isArray(asset.parentPlatform)) {
-		for (const platform of asset.parentPlatform) {
-			if (platform.trim()) {
-				hasParentPlatformName = true
-				break
-			}
-		}
-	}
+	const hasParentPlatformName = asset.parentPlatform != null && asset.parentPlatform.trim().length > 0
 
 	const { data: yieldHistory, isLoading: isLoadingYieldChart } = useNativeYieldHistory(asset.nativeYieldPoolId)
 	const { chartInstance: nativeYieldChartInstance, handleChartReady: onNativeYieldChartReady } = useGetChartInstance()
@@ -515,7 +506,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 		chartMetric === 'flows' ? 'Net Flows' : chartMetric === 'flowVsPrice' ? 'Flow vs Price' : 'Market Data'
 	const assetChartExportFilename = `${asset.ticker ?? asset.assetName ?? 'asset'}-${chartMetric === 'flows' ? 'flows' : chartMetric === 'flowVsPrice' ? 'flow-vs-price' : 'market-data'}`
 	const assetChartExportTitle = `${asset.ticker ?? asset.assetName ?? 'Asset'} ${assetChartLabel}`
-	const flowSummaryKey = asset.canonicalMarketId ?? asset.slug
+	const flowSummaryKey = asset.canonicalMarketId
 	const flow7d = flowSummary?.windows['7d'].asset[flowSummaryKey]
 	const flow30d = flowSummary?.windows['30d'].asset[flowSummaryKey]
 	const flowCoverage = assetFlows?.coverage ?? flow30d?.coverage ?? null
@@ -537,7 +528,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 
 	const displayPools = asset.yieldPools ?? []
 
-	const chartDimensions = (asset.chartDataset?.dimensions ?? []) as string[]
+	const chartDimensions: readonly string[] = asset.chartDataset?.dimensions ?? []
 	const assetChartDataset = asset.chartDataset
 	const timeSeriesCharts =
 		chartDimensions.length > 0
@@ -702,9 +693,9 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								>
 									{definitions.category.label}
 								</Tooltip>
-								{asset.category && asset.category.length > 0 ? (
+								{categories.length > 0 ? (
 									<span className="flex flex-wrap items-center gap-1 font-medium">
-										{asset.category.map((category, idx) => (
+										{categories.map((category, idx) => (
 											<span key={category} className="flex items-center gap-0.5">
 												<BasicLink href={`/rwa/category/${rwaSlug(category)}`} className="text-link hover:underline">
 													{category}
@@ -712,7 +703,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 												{definitions.category.values?.[category] ? (
 													<QuestionHelper text={definitions.category.values[category]} />
 												) : null}
-												{idx < asset.category!.length - 1 ? ',' : null}
+												{idx < categories.length - 1 ? ',' : null}
 											</span>
 										))}
 									</span>
@@ -727,15 +718,15 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								>
 									{definitions.assetClass.label}
 								</Tooltip>
-								{asset.assetClass && asset.assetClass.length > 0 ? (
+								{assetClasses.length > 0 ? (
 									<span className="flex flex-wrap items-center gap-1 font-medium">
-										{asset.assetClass.map((ac, idx) => (
+										{assetClasses.map((ac, idx) => (
 											<span key={ac} className="flex items-center gap-0.5">
 												{ac}
 												{asset.assetClassDescriptions?.[ac] ? (
 													<QuestionHelper text={asset.assetClassDescriptions[ac]} />
 												) : null}
-												{idx < asset.assetClass!.length - 1 ? ',' : null}
+												{idx < assetClasses.length - 1 ? ',' : null}
 											</span>
 										))}
 									</span>
@@ -946,12 +937,12 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 										GitHub
 									</ExternalLinkButton>
 								) : null}
-								{typeof asset.discord === 'string' ? (
+								{asset.discord != null ? (
 									<ExternalLinkButton href={asset.discord} icon="discord">
 										Discord
 									</ExternalLinkButton>
 								) : null}
-								{typeof asset.telegram === 'string' ? (
+								{asset.telegram != null ? (
 									<ExternalLinkButton href={asset.telegram} icon="telegram">
 										Telegram
 									</ExternalLinkButton>
@@ -1098,8 +1089,8 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								key={chain}
 								chain={chain}
 								isPrimary={chain === asset.primaryChain}
-								contracts={asset.contracts?.[chain]}
-								contractUrls={asset.contractUrls?.[chain]}
+								{...(asset.contracts?.[chain] ? { contracts: asset.contracts[chain] } : {})}
+								{...(asset.contractUrls?.[chain] ? { contractUrls: asset.contractUrls[chain] } : {})}
 							/>
 						))}
 					</div>

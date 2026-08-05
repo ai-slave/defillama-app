@@ -19,7 +19,7 @@ const baseAsset: RWAAssetOverviewRow = {
 	parentPlatform: null,
 	category: ['Government Securities'],
 	assetClass: ['Public Credit'],
-	accessModel: null,
+	accessModel: 'Unknown',
 	type: null,
 	rwaClassification: null,
 	issuer: null,
@@ -30,8 +30,8 @@ const baseAsset: RWAAssetOverviewRow = {
 	kycAllowlistedWhitelistedToTransferHold: null,
 	transferable: null,
 	selfCustody: null,
-	stablecoin: null,
-	governance: null,
+	stablecoin: false,
+	governance: false,
 	trueRWA: true,
 	onChainMcap: {
 		total: 100,
@@ -77,27 +77,6 @@ describe('buildRwaTreemapTreeData', () => {
 				path: 'Asset Group/Beta',
 				value: [75, 42.86, 42.86],
 				itemStyle: { color: CHART_COLORS[1] }
-			}
-		])
-	})
-
-	it('normalizes malformed runtime values before aggregating flat treemap totals', () => {
-		const tree = buildRwaTreemapTreeData(
-			[
-				{ name: 'Alpha', value: '100' as any },
-				{ name: 'Beta', value: Number.NaN },
-				{ name: 'Gamma', value: 'nope' as any },
-				{ name: 'Alpha', value: 25 }
-			],
-			'Asset Group'
-		)
-
-		expect(tree).toEqual([
-			{
-				name: 'Alpha',
-				path: 'Asset Group/Alpha',
-				value: [125, 100, 100],
-				itemStyle: { color: CHART_COLORS[0] }
 			}
 		])
 	})
@@ -177,45 +156,6 @@ describe('buildRwaNestedTreemapTreeData', () => {
 						path: 'Chain/Ethereum/Beta',
 						value: [50, 33.33, 33.33],
 						itemStyle: { color: '#6ca5e0' }
-					}
-				]
-			}
-		])
-	})
-
-	it('normalizes malformed runtime values before aggregating nested chain totals', () => {
-		const tree = buildRwaNestedTreemapTreeData({
-			assets: [
-				{
-					...baseAsset,
-					onChainMcap: {
-						total: Number.NaN,
-						breakdown: [
-							['Ethereum', '100' as any],
-							['Base', Number.NaN],
-							['Polygon', 'nope' as any]
-						]
-					}
-				}
-			],
-			metric: 'onChainMcap',
-			rootLabel: 'Chain',
-			parentGrouping: 'chain',
-			childGrouping: 'assetName'
-		})
-
-		expect(tree).toEqual([
-			{
-				name: 'Ethereum',
-				path: 'Chain/Ethereum',
-				value: [100, 100, 100],
-				itemStyle: { color: '#2b7aca' },
-				children: [
-					{
-						name: 'Alpha',
-						path: 'Chain/Ethereum/Alpha',
-						value: [100, 100, 100],
-						itemStyle: { color: '#2b7aca' }
 					}
 				]
 			}

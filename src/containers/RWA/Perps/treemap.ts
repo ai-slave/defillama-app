@@ -4,7 +4,6 @@ import type { IRWAPerpsMarket } from './api.types'
 import { getRWAPerpsSharedBreakdownLabel } from './breakdownLabels'
 import type {
 	RWAPerpsChartMetricKey,
-	RWAPerpsChartMode,
 	RWAPerpsOverviewTreemapBreakdown,
 	RWAPerpsTreemapNestedBy,
 	RWAPerpsVenueTreemapBreakdown
@@ -20,6 +19,8 @@ export type RWAPerpsTreemapNode = {
 
 type ParentGrouping = RWAPerpsOverviewTreemapBreakdown | RWAPerpsVenueTreemapBreakdown
 type ChildGrouping = Exclude<RWAPerpsTreemapNestedBy, 'none'>
+
+type TreemapScope = { mode: 'overview' } | { mode: 'venue' | 'assetGroup'; scopeLabel: string }
 
 function getGroupLabel(market: IRWAPerpsMarket, grouping: ParentGrouping | ChildGrouping): string {
 	return getRWAPerpsSharedBreakdownLabel(market, grouping)
@@ -83,14 +84,13 @@ function buildFlatNodes(entries: Iterable<[string, number]>, rootLabel: string):
 	}
 
 	const nodes: RWAPerpsTreemapNode[] = []
-	for (let index = 0; index < sortedEntries.length; index++) {
-		const [name, value] = sortedEntries[index]
+	for (const [index, [name, value]] of sortedEntries.entries()) {
 		const share = toShare(value, total)
 		nodes.push({
 			name,
 			path: `${rootLabel}/${name}`,
 			value: [value, share, share],
-			itemStyle: { color: CHART_COLORS[index % CHART_COLORS.length] }
+			itemStyle: { color: CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0] }
 		})
 	}
 	return nodes
@@ -119,21 +119,19 @@ function buildNestedNodes(
 	}
 
 	const nodes: RWAPerpsTreemapNode[] = []
-	for (let parentIndex = 0; parentIndex < parentRows.length; parentIndex++) {
-		const row = parentRows[parentIndex]
-		const parentColor = CHART_COLORS[parentIndex % CHART_COLORS.length]
+	for (const [parentIndex, row] of parentRows.entries()) {
+		const parentColor = CHART_COLORS[parentIndex % CHART_COLORS.length] ?? CHART_COLORS[0]
 		const childColors = deriveChildColors(parentColor, row.childRows.length)
 		const parentPath = `${rootLabel}/${row.parentLabel}`
 		const parentShare = toShare(row.parentTotal, total)
 		const children: RWAPerpsTreemapNode[] = []
 
-		for (let childIndex = 0; childIndex < row.childRows.length; childIndex++) {
-			const [childLabel, childValue] = row.childRows[childIndex]
+		for (const [childIndex, [childLabel, childValue]] of row.childRows.entries()) {
 			children.push({
 				name: childLabel,
 				path: `${parentPath}/${childLabel}`,
 				value: [childValue, toShare(childValue, row.parentTotal), toShare(childValue, total)],
-				itemStyle: { color: childColors[childIndex] }
+				itemStyle: { color: childColors[childIndex] ?? parentColor }
 			})
 		}
 
@@ -195,23 +193,17 @@ function getRootLabel(grouping: ParentGrouping): string {
 	}
 }
 
-export function buildRWAPerpsTreemapTreeData({
-	mode,
-	markets,
-	metric,
-	parentGrouping,
-	nestedBy,
-	venueLabel
-}: {
-	mode: RWAPerpsChartMode
-	markets: IRWAPerpsMarket[]
-	metric: RWAPerpsChartMetricKey
-	parentGrouping: ParentGrouping
-	nestedBy: RWAPerpsTreemapNestedBy
-	venueLabel?: string
-}): RWAPerpsTreemapNode[] {
+export function buildRWAPerpsTreemapTreeData(
+	args: {
+		markets: IRWAPerpsMarket[]
+		metric: RWAPerpsChartMetricKey
+		parentGrouping: ParentGrouping
+		nestedBy: RWAPerpsTreemapNestedBy
+	} & TreemapScope
+): RWAPerpsTreemapNode[] {
+	const { mode, markets, metric, parentGrouping, nestedBy } = args
 	if (!markets.length) return []
-	const rootLabel = mode === 'overview' ? getRootLabel(parentGrouping) : normalizeLabel(venueLabel, 'Venue')
+	const rootLabel = mode === 'overview' ? getRootLabel(parentGrouping) : args.scopeLabel
 
 	if (nestedBy === 'none') {
 		const totalsByParent = new Map<string, number>()
@@ -230,17 +222,10 @@ export function buildRWAPerpsTreemapTreeData({
 	return buildNestedTreeData({
 		markets,
 		metric,
-		parentGrouping:
-			mode === 'overview'
-				? (parentGrouping as RWAPerpsOverviewTreemapBreakdown)
-				: (parentGrouping as RWAPerpsVenueTreemapBreakdown),
-		nestedBy: nestedBy as ChildGrouping,
+		parentGrouping,
+		nestedBy,
 		rootLabel
 	})
-}
-
-function normalizeLabel(value: string | null | undefined, fallback: string): string {
-	return typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback
 }
 
 function assertNever(value: never): never {

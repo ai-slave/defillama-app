@@ -61,7 +61,7 @@ describe('OverviewChart helpers', () => {
 		).toEqual(['Meta'])
 	})
 
-	it('slices selected stack datasets to the first non-null selected value', () => {
+	it('projects selected stack datasets after the first selected value while retaining the all-stack total', () => {
 		const dataset = {
 			source: [
 				{ timestamp: 1, Total: 10, PreStocks: null, Securitize: 10 },
@@ -72,12 +72,29 @@ describe('OverviewChart helpers', () => {
 			dimensions: ['timestamp', 'Total', 'PreStocks', 'Securitize']
 		}
 
+		expect(getRWAPerpsChartDatasetForSelectedStacks(dataset, ['PreStocks'], ['PreStocks', 'Securitize'])).toEqual({
+			source: [
+				{ timestamp: 3, Total: 23, PreStocks: 12 },
+				{ timestamp: 4, Total: 11, PreStocks: 0 }
+			],
+			dimensions: ['timestamp', 'Total', 'PreStocks']
+		})
+	})
+
+	it('keeps only Total when every breakdown stack is deselected', () => {
 		expect(
-			getRWAPerpsChartDatasetForSelectedStacks(dataset, ['PreStocks'], ['PreStocks', 'Securitize']).source
-		).toEqual([
-			{ timestamp: 3, Total: 23, PreStocks: 12, Securitize: 11 },
-			{ timestamp: 4, Total: 11, PreStocks: 0, Securitize: 11 }
-		])
+			getRWAPerpsChartDatasetForSelectedStacks(
+				{
+					source: [{ timestamp: 1, Total: 30, Meta: 10, NVIDIA: 20 }],
+					dimensions: ['timestamp', 'Total', 'Meta', 'NVIDIA']
+				},
+				[],
+				['Meta', 'NVIDIA']
+			)
+		).toEqual({
+			source: [{ timestamp: 1, Total: 30 }],
+			dimensions: ['timestamp', 'Total']
+		})
 	})
 
 	it('keeps the full dataset when all stacks are selected', () => {

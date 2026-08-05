@@ -28,12 +28,10 @@ export const emptyRWAYieldResult = (): RWAYieldResult => ({
 // quirk), so these match the earn row's `projectslug`.
 async function resolveIssuerProtocolSlugs(asset: IFetchedRWAProject): Promise<Set<string>> {
 	const slugs = new Set<string>()
-	// projectId is typed string | string[] | null but the upstream can also send `false`.
-	const raw = asset.projectId as unknown
-	const ids = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : []
+	const ids = Array.isArray(asset.projectId) ? asset.projectId : asset.projectId != null ? [asset.projectId] : []
 	const metadataCache = await import('~/utils/metadata').then((module) => module.default)
 	for (const id of ids) {
-		const meta = metadataCache.protocolMetadata[String(id)] as { name?: string } | undefined
+		const meta = metadataCache.protocolMetadata[id]
 		if (meta?.name) slugs.add(meta.name)
 	}
 	return slugs

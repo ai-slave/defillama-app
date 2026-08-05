@@ -9,22 +9,21 @@ import type {
 	IRWAAssetChartApiRow,
 	IRWABreakdownChartParams,
 	IRWABreakdownChartResponse,
-	IRWABreakdownChartRow,
-	IRWAFlowAggregateResponse,
+	IRWAFlowGroupAggregateResponse,
+	IRWAFlowOverviewAggregateResponse,
 	IRWAFlowAssetBreakdownRow,
 	IRWAFlowOverviewRequest,
 	IRWAFlowOverviewSplitPoint,
 	IRWAFlowSummaryResponse,
+	IRWAFlowPointWithMcap,
 	IRWAFlowsRequest,
 	IRWAFlowsResponse,
 	RWAAssetChartTarget,
 	RWAChartMetricKey
 } from './api.types'
 
-export function toUnixMsTimestamp(ts: number): number {
-	// API timestamps are historically in unix seconds. Normalize to ms for ECharts time axis.
-	// Keep this tolerant to already-ms values to avoid double conversion.
-	return Number.isFinite(ts) && ts > 0 && ts < 1e12 ? ts * 1e3 : ts
+export function rwaUnixSecondsToMilliseconds(ts: number): number {
+	return ts * 1e3
 }
 
 function assertNever(value: never): never {
@@ -66,15 +65,23 @@ function buildRWAFlowsUrl(assetId: string, request: IRWAFlowsRequest = {}): stri
 /**
  * Fetch daily net USD flows for a single RWA asset.
  */
-export async function fetchRWAFlows(assetId: string, request: IRWAFlowsRequest = {}): Promise<IRWAFlowsResponse> {
-	return fetchJson<IRWAFlowsResponse>(buildRWAFlowsUrl(assetId, request))
+export function fetchRWAFlows(
+	assetId: string,
+	request: IRWAFlowsRequest & { withMcap: true }
+): Promise<IRWAFlowsResponse<IRWAFlowPointWithMcap>>
+export function fetchRWAFlows(assetId: string, request?: IRWAFlowsRequest): Promise<IRWAFlowsResponse>
+export async function fetchRWAFlows(
+	assetId: string,
+	request: IRWAFlowsRequest = {}
+): Promise<IRWAFlowsResponse | IRWAFlowsResponse<IRWAFlowPointWithMcap>> {
+	return fetchJson<IRWAFlowsResponse | IRWAFlowsResponse<IRWAFlowPointWithMcap>>(buildRWAFlowsUrl(assetId, request))
 }
 
-export function fetchRWAFlowsOverview(): Promise<IRWAFlowAggregateResponse>
+export function fetchRWAFlowsOverview(): Promise<IRWAFlowOverviewAggregateResponse>
 export function fetchRWAFlowsOverview(request: IRWAFlowOverviewRequest): Promise<IRWAFlowOverviewSplitPoint[]>
 export async function fetchRWAFlowsOverview(
 	request?: IRWAFlowOverviewRequest
-): Promise<IRWAFlowAggregateResponse | IRWAFlowOverviewSplitPoint[]> {
+): Promise<IRWAFlowOverviewAggregateResponse | IRWAFlowOverviewSplitPoint[]> {
 	const searchParams = new URLSearchParams()
 	if (request) {
 		searchParams.set('splitBy', request.splitBy)
@@ -82,7 +89,7 @@ export async function fetchRWAFlowsOverview(
 		searchParams.set('includeGovernance', String(request.includeGovernance))
 	}
 	const qs = searchParams.toString()
-	return fetchJson<IRWAFlowAggregateResponse | IRWAFlowOverviewSplitPoint[]>(
+	return fetchJson<IRWAFlowOverviewAggregateResponse | IRWAFlowOverviewSplitPoint[]>(
 		`${RWA_SERVER_URL}/flows/overview${qs ? `?${qs}` : ''}`
 	)
 }
@@ -91,20 +98,22 @@ export async function fetchRWAFlowsSummary(): Promise<IRWAFlowSummaryResponse> {
 	return fetchJson<IRWAFlowSummaryResponse>(`${RWA_SERVER_URL}/flows/summary`)
 }
 
-export async function fetchRWAFlowsAssetGroup(assetGroup: string): Promise<IRWAFlowAggregateResponse> {
-	return fetchJson<IRWAFlowAggregateResponse>(`${RWA_SERVER_URL}/flows/assetGroup/${encodeURIComponent(assetGroup)}`)
+export async function fetchRWAFlowsAssetGroup(assetGroup: string): Promise<IRWAFlowGroupAggregateResponse> {
+	return fetchJson<IRWAFlowGroupAggregateResponse>(
+		`${RWA_SERVER_URL}/flows/assetGroup/${encodeURIComponent(assetGroup)}`
+	)
 }
 
-export async function fetchRWAFlowsCategory(category: string): Promise<IRWAFlowAggregateResponse> {
-	return fetchJson<IRWAFlowAggregateResponse>(`${RWA_SERVER_URL}/flows/category/${encodeURIComponent(category)}`)
+export async function fetchRWAFlowsCategory(category: string): Promise<IRWAFlowGroupAggregateResponse> {
+	return fetchJson<IRWAFlowGroupAggregateResponse>(`${RWA_SERVER_URL}/flows/category/${encodeURIComponent(category)}`)
 }
 
-export async function fetchRWAFlowsPlatform(platform: string): Promise<IRWAFlowAggregateResponse> {
-	return fetchJson<IRWAFlowAggregateResponse>(`${RWA_SERVER_URL}/flows/platform/${encodeURIComponent(platform)}`)
+export async function fetchRWAFlowsPlatform(platform: string): Promise<IRWAFlowGroupAggregateResponse> {
+	return fetchJson<IRWAFlowGroupAggregateResponse>(`${RWA_SERVER_URL}/flows/platform/${encodeURIComponent(platform)}`)
 }
 
-export async function fetchRWAFlowsChain(chain: string): Promise<IRWAFlowAggregateResponse> {
-	return fetchJson<IRWAFlowAggregateResponse>(`${RWA_SERVER_URL}/flows/chain/${encodeURIComponent(chain)}`)
+export async function fetchRWAFlowsChain(chain: string): Promise<IRWAFlowGroupAggregateResponse> {
+	return fetchJson<IRWAFlowGroupAggregateResponse>(`${RWA_SERVER_URL}/flows/chain/${encodeURIComponent(chain)}`)
 }
 
 export async function fetchRWAFlowAssetBreakdown(target: RWAAssetChartTarget): Promise<IRWAFlowAssetBreakdownRow[]> {
@@ -163,24 +172,11 @@ export function normalizeRWAChartMetricRows(
 	data: IRWAChartDataByAsset,
 	metric: RWAChartMetricKey
 ): IRWAChartMetricRows {
-	return (data[metric] ?? []).map((row) => ({ ...row, timestamp: toUnixMsTimestamp(row.timestamp) }))
+	return data[metric].map((row) => ({ ...row, timestamp: rwaUnixSecondsToMilliseconds(row.timestamp) }))
 }
 
 function normalizeRWABreakdownChartRows(rows: IRWABreakdownChartResponse): IRWABreakdownChartResponse {
-	const normalizedRows: IRWABreakdownChartResponse = []
-
-	for (const row of rows ?? []) {
-		const normalizedRow: IRWABreakdownChartRow = { timestamp: toUnixMsTimestamp(row.timestamp) }
-
-		for (const key in row) {
-			if (key === 'timestamp') continue
-			normalizedRow[key] = row[key]
-		}
-
-		normalizedRows.push(normalizedRow)
-	}
-
-	return normalizedRows
+	return rows.map((row) => ({ ...row, timestamp: rwaUnixSecondsToMilliseconds(row.timestamp) }))
 }
 
 /**
@@ -196,7 +192,7 @@ export async function fetchRWAChainBreakdownChartData(
 	const qs = searchParams.toString()
 	const url = `${RWA_SERVER_URL}/chart/chain-breakdown${qs ? `?${qs}` : ''}`
 	return fetchJson<IRWABreakdownChartResponse>(url)
-		.then((rows) => normalizeRWABreakdownChartRows(rows ?? []))
+		.then(normalizeRWABreakdownChartRows)
 		.catch((error) => {
 			console.error('Failed to fetch RWA chain breakdown chart data:', error)
 			return null
@@ -216,7 +212,7 @@ export async function fetchRWACategoryBreakdownChartData(
 	const qs = searchParams.toString()
 	const url = `${RWA_SERVER_URL}/chart/category-breakdown${qs ? `?${qs}` : ''}`
 	return fetchJson<IRWABreakdownChartResponse>(url)
-		.then((rows) => normalizeRWABreakdownChartRows(rows ?? []))
+		.then(normalizeRWABreakdownChartRows)
 		.catch((error) => {
 			console.error('Failed to fetch RWA category breakdown chart data:', error)
 			return null
@@ -236,7 +232,7 @@ export async function fetchRWAPlatformBreakdownChartData(
 	const qs = searchParams.toString()
 	const url = `${RWA_SERVER_URL}/chart/platform-breakdown${qs ? `?${qs}` : ''}`
 	return fetchJson<IRWABreakdownChartResponse>(url)
-		.then((rows) => normalizeRWABreakdownChartRows(rows ?? []))
+		.then(normalizeRWABreakdownChartRows)
 		.catch((error) => {
 			console.error('Failed to fetch RWA platform breakdown chart data:', error)
 			return null
@@ -256,7 +252,7 @@ export async function fetchRWAAssetGroupBreakdownChartData(
 	const qs = searchParams.toString()
 	const url = `${RWA_SERVER_URL}/chart/assetGroup-breakdown${qs ? `?${qs}` : ''}`
 	return fetchJson<IRWABreakdownChartResponse>(url)
-		.then((rows) => normalizeRWABreakdownChartRows(rows ?? []))
+		.then(normalizeRWABreakdownChartRows)
 		.catch((error) => {
 			console.error('Failed to fetch RWA asset-group breakdown chart data:', error)
 			return null
@@ -277,15 +273,11 @@ export async function fetchRWAAssetChartData(assetId: string): Promise<IRWAAsset
 }
 
 export function buildRWAAssetChartDataset(data: IRWAAssetChartApiRow[]): NonNullable<IRWAAssetData['chartDataset']> {
-	const source = new Array<[number, number | null, number | null, number | null]>(data.length)
-	for (let index = 0; index < data.length; index++) {
-		const item = data[index]
-		source[index] = [
-			toUnixMsTimestamp(item.timestamp),
-			item.defiActiveTvl ?? null,
-			item.activeMcap ?? null,
-			item.onChainMcap ?? null
-		]
-	}
+	const source = data.map<[number, number | null, number | null, number | null]>((item) => [
+		rwaUnixSecondsToMilliseconds(item.timestamp),
+		item.defiActiveTvl ?? null,
+		item.activeMcap ?? null,
+		item.onChainMcap ?? null
+	])
 	return { source, dimensions: ['timestamp', 'DeFi Active TVL', 'Active Mcap', 'Onchain Mcap'] }
 }

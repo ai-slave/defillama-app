@@ -3,12 +3,9 @@ import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from
 import { buildCsvFromDataset, ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
-import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
-import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { ChartGroupingSelector } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
-import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { Select } from '~/components/Select/Select'
 import { CHART_COLORS } from '~/constants/colors'
@@ -117,10 +114,10 @@ import {
 	canBuildRwaNestedTreemap
 } from './treemap'
 
-const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
-const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
+const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
+const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart'))
 const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ default: module.RWAFlowsChart })))
 const RWAFlowRotationChart = lazy(() =>
 	import('./FlowRotationChart').then((module) => ({ default: module.RWAFlowRotationChart }))
@@ -180,7 +177,6 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		]
 	)
 	const router = useRouter()
-	const getSelectedFilterValue = (value: string | string[]) => (Array.isArray(value) ? value[0] : value)
 
 	const mode = getRWAOverviewMode(props)
 	const isChainMode = mode === 'chain'
@@ -582,32 +578,19 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 
 	// Preserve filter/toggle query params only in chain mode.
 	// (The chain/category/platform itself is in the pathname, so we strip the dynamic param from the query object.)
-	const navLinks = useMemo(() => {
-		const baseLinks = getModeLinks(
-			mode,
-			props.chainLinks,
-			props.categoryLinks,
-			props.platformLinks,
-			props.assetGroupLinks
-		)
-
-		// Only preserve query filters/toggles on chain mode. In category/platform mode, links should be "clean".
-		const shouldPreserveQuery = isChainMode
-		if (!shouldPreserveQuery) return baseLinks
-
-		const { chain: _chain, category: _category, platform: _platform, ...restQuery } = router.query
-		const qs = toQueryString(restQuery as Record<string, string | string[] | undefined>)
-		if (!qs) return baseLinks
-		return baseLinks.map((link) => ({ ...link, to: `${link.to}${qs}` }))
-	}, [
-		isChainMode,
+	const baseNavLinks = getModeLinks(
 		mode,
-		props.assetGroupLinks,
+		props.chainLinks,
 		props.categoryLinks,
 		props.platformLinks,
-		props.chainLinks,
-		router.query
-	])
+		props.assetGroupLinks
+	)
+	let navLinks = baseNavLinks
+	if (isChainMode) {
+		const { chain: _chain, category: _category, platform: _platform, ...restQuery } = router.query
+		const qs = toQueryString(restQuery)
+		if (qs) navLinks = baseNavLinks.map((link) => ({ ...link, to: `${link.to}${qs}` }))
+	}
 
 	const showFilters = props.assets.length > 0
 
@@ -701,7 +684,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const deferredSelectedPieChartData = useDeferredValue(selectedPieChartData)
 	const valueSortedPieChartStackColors = useMemo(() => {
 		if (chartView !== 'pie' && chartView !== 'hbar') return EMPTY_CHART_STACK_COLORS
-		const stackColors = { ...pieChartStackColors }
+		const stackColors: Record<string, string> = { ...pieChartStackColors }
 		const sortedData: Array<{ name: string; value: number }> = []
 		for (const item of deferredSelectedPieChartData) {
 			if (item.value > 0) sortedData.push(item)
@@ -709,7 +692,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		sortedData.sort((a, b) => b.value - a.value || a.name.localeCompare(b.name))
 
 		for (const [index, item] of sortedData.entries()) {
-			stackColors[item.name] = CHART_COLORS[index % CHART_COLORS.length]
+			stackColors[item.name] = CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
 		}
 
 		return stackColors
@@ -720,8 +703,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		const categories = new Array<string>(rows.length)
 		const values = new Array<number>(rows.length)
 		const colors = new Array<string>(rows.length)
-		for (let index = 0; index < rows.length; index++) {
-			const row = rows[index]
+		for (const [index, row] of rows.entries()) {
 			categories[index] = row.name
 			values[index] = row.value
 			colors[index] = valueSortedPieChartStackColors[row.name] ?? '#1f77b4'
@@ -749,12 +731,14 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			options={chartMetricOptions.map(({ key, label }) => ({
 				value: key,
 				label,
-				tooltip:
-					key === 'flows'
-						? definitions.flows.overviewNetFlows.description
-						: key === 'flowVsPrice'
-							? definitions.flows.flowVsPrice.description
-							: undefined
+				...(key === 'flows' || key === 'flowVsPrice'
+					? {
+							tooltip:
+								key === 'flows'
+									? definitions.flows.overviewNetFlows.description
+									: definitions.flows.flowVsPrice.description
+						}
+					: {})
 			}))}
 			label="Chart type"
 			variant="default"
@@ -767,7 +751,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			<Select
 				allValues={RWA_FLOW_OVERLAY_OPTIONS}
 				selectedValues={selectedFlowOverlayMetrics}
-				setSelectedValues={(values) => {
+				setSelectedValues={(values: string[]) => {
 					void pushShallowQuery(router, { flowOverlays: getRWAFlowOverlayQueryValue(values) })
 				}}
 				label="Overlays"
@@ -782,11 +766,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		<Select
 			allValues={chartViewOptions}
 			selectedValues={chartView}
-			setSelectedValues={(value) => {
-				const selectedView = getSelectedFilterValue(value) as RWAChartState['view']
+			setSelectedValues={(value: string) => {
+				const selectedView = chartViewOptions.find((option) => option.key === value)?.key ?? chartView
 				void pushShallowQuery(router, { chartView: getChartViewQueryValue(selectedView) })
 			}}
-			label={chartViewOptions.find(({ key }) => key === chartView)?.name ?? chartViewOptions[0].name}
+			label={chartViewOptions.find(({ key }) => key === chartView)?.name ?? 'Time Series Chart'}
 			labelType="none"
 			variant="filter"
 			size="md"
@@ -803,8 +787,9 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		<Select
 			allValues={timeSeriesChartBreakdownOptions}
 			selectedValues={isTotalTimeSeriesSelected ? 'total' : chartState.breakdown}
-			setSelectedValues={(value) => {
-				const nextBreakdown = getSelectedFilterValue(value)
+			setSelectedValues={(value: string) => {
+				const nextBreakdown = timeSeriesChartBreakdownOptions.find((option) => option.key === value)?.key
+				if (!nextBreakdown) throw new Error(`Unknown RWA chart breakdown: ${value}`)
 				if (nextBreakdown === 'total') {
 					void pushShallowQuery(router, {
 						timeSeriesChartBreakdown: 'total'
@@ -812,7 +797,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					return
 				}
 
-				const nextState = setChartBreakdown(chartState, nextBreakdown as RWAChartState['breakdown'])
+				const nextState = setChartBreakdown(chartState, nextBreakdown)
 				void pushShallowQuery(router, {
 					timeSeriesChartBreakdown: getChartBreakdownQueryValue(nextState)
 				})
@@ -835,8 +820,9 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		<Select
 			allValues={chartBreakdownOptions}
 			selectedValues={chartState.breakdown}
-			setSelectedValues={(value) => {
-				const nextBreakdown = getSelectedFilterValue(value) as RWAChartState['breakdown']
+			setSelectedValues={(value: string) => {
+				const nextBreakdown = chartBreakdownOptions.find((option) => option.key === value)?.key
+				if (!nextBreakdown) throw new Error(`Unknown RWA chart breakdown: ${value}`)
 				const nextState = setChartBreakdown(chartState, nextBreakdown)
 				void pushShallowQuery(router, {
 					nonTimeSeriesChartBreakdown: getChartBreakdownQueryValue(nextState),
@@ -854,8 +840,9 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		<Select
 			allValues={treemapNestedByOptions}
 			selectedValues={treemapNestedBy}
-			setSelectedValues={(value) => {
-				const selectedNestedBy = getSelectedFilterValue(value) as RWAChartState['treemapNestedBy']
+			setSelectedValues={(value: string) => {
+				const selectedNestedBy = treemapNestedByOptions.find((option) => option.key === value)?.key
+				if (!selectedNestedBy) throw new Error(`Unknown RWA treemap grouping: ${value}`)
 				const nextState = setTreemapNestedBy(chartState, selectedNestedBy)
 				void pushShallowQuery(router, { treemapNestedBy: getTreemapNestedByQueryValue(nextState) })
 			}}
@@ -1085,7 +1072,10 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 								/>
 							</ChartPanelToolbar>
 							{isFlowVsPrice && flowVsPriceSummary ? (
-								<RWAFlowVsPriceStrip summary={flowVsPriceSummary} breakdown={flowVsPriceBreakdown} />
+								<RWAFlowVsPriceStrip
+									summary={flowVsPriceSummary}
+									{...(flowVsPriceBreakdown ? { breakdown: flowVsPriceBreakdown } : {})}
+								/>
 							) : null}
 							{isFlowMetric ? (
 								isFlowLoading || (isFlowVsPrice && isFlowMcapLoading) ? (
@@ -1105,7 +1095,9 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									<Suspense fallback={<ChartPanelBodyFallback />}>
 										<RWAFlowsChart
 											chart={flowChart}
-											defaultStartTimestamp={flowDefaultStartTimestamp}
+											{...(flowDefaultStartTimestamp !== undefined
+												? { defaultStartTimestamp: flowDefaultStartTimestamp }
+												: {})}
 											onVisibleRangeChange={handleFlowVisibleRangeChange}
 											onReady={handleMultiSeriesChartReady}
 										/>
@@ -1223,7 +1215,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 						<Select
 							allValues={RWA_FLOW_TREEMAP_VIEW_OPTIONS}
 							selectedValues={flowRotationView}
-							setSelectedValues={(nextView) => {
+							setSelectedValues={(value: string) => {
+								const nextView = parseRWAFlowTreemapView(value)
 								void pushShallowQuery(router, {
 									flowRotationView: nextView === 'bar' ? undefined : nextView
 								})
@@ -1236,7 +1229,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 						<Select
 							allValues={RWA_FLOW_ROTATION_SPLIT_OPTIONS}
 							selectedValues={flowRotationSplitBy}
-							setSelectedValues={(nextSplitBy) => {
+							setSelectedValues={(value: string) => {
+								const nextSplitBy = getRwaFlowRotationSplitBy(value)
 								void pushShallowQuery(router, {
 									flowRotationBy: nextSplitBy === 'assetGroup' ? undefined : nextSplitBy
 								})
@@ -1253,7 +1247,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 							<Select
 								allValues={RWA_FLOW_TREEMAP_SIZE_OPTIONS}
 								selectedValues={flowTreemapSizeMetric}
-								setSelectedValues={(metric) => {
+								setSelectedValues={(value: string) => {
+									const metric = parseRWAFlowTreemapSizeMetric(value)
 									void pushShallowQuery(router, {
 										flowHeatmapSize: metric === 'onChainMcap' ? undefined : metric,
 										flowTreemapSize: undefined
@@ -1370,6 +1365,7 @@ export function buildRwaTimeSeriesCharts(dataset: RWAPositionalChartDataset): Ar
 	return seriesDimensions.map((name) => {
 		const reservedColorSlot = getRwaReservedSeriesColorSlot(name)
 		const colorSlot = colorSlots[name]
+		if (colorSlot === undefined) throw new Error(`Missing RWA chart color slot for "${name}"`)
 		const isReservedSeries = reservedColorSlot !== null
 		const isTotalSeries = isRwaTotalSeriesLabel(name)
 		const data = independentSeries.get(name)
@@ -1379,7 +1375,7 @@ export function buildRwaTimeSeriesCharts(dataset: RWAPositionalChartDataset): Ar
 			name,
 			encode: data ? { x: 0, y: 1 } : { x: 'timestamp', y: name },
 			...(data ? { data } : {}),
-			color: CHART_COLORS[colorSlot % CHART_COLORS.length],
+			color: CHART_COLORS[colorSlot % CHART_COLORS.length] ?? CHART_COLORS[0],
 			...(isReservedSeries
 				? {
 						hideAreaStyle: true,
@@ -1442,8 +1438,8 @@ const getRwaTotalMetricByTimestamp = (
 
 	const values = new Map<number, number | null>()
 	for (const row of dataset.source) {
-		const value = row[totalIndex] as number | null | undefined
-		values.set(row[0] as number, value ?? null)
+		const value = row[totalIndex]
+		values.set(row[0], value ?? null)
 	}
 	return values
 }

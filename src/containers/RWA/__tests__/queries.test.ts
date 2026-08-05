@@ -22,8 +22,7 @@ vi.mock('../api', () => ({
 	fetchRWAPlatformBreakdownChartData: (...args: unknown[]) => fetchRWAPlatformBreakdownChartDataMock(...args),
 	fetchRWAAssetGroupBreakdownChartData: (...args: unknown[]) => fetchRWAAssetGroupBreakdownChartDataMock(...args),
 	fetchRWAAssetDataById: (...args: unknown[]) => fetchRWAAssetDataByIdMock(...args),
-	fetchRWAAssetChartData: (...args: unknown[]) => fetchRWAAssetChartDataMock(...args),
-	toUnixMsTimestamp: (timestamp: number) => timestamp
+	fetchRWAAssetChartData: (...args: unknown[]) => fetchRWAAssetChartDataMock(...args)
 }))
 
 vi.mock('../Perps/api', () => ({
@@ -113,7 +112,7 @@ describe('rwa queries', () => {
 				category: ['Treasuries'],
 				onChainMcap: { Ethereum: 12 },
 				activeMcap: { Ethereum: 10 },
-				defiActiveTvl: null
+				defiActiveTvl: {}
 			}
 		])
 		fetchRWAChartMetricDataByAssetMock.mockResolvedValue([{ timestamp: 1_000, alpha: 10 }])
@@ -199,7 +198,9 @@ describe('rwa queries', () => {
 				contract: 'xyz:usdy',
 				venue: 'xyz',
 				openInterest: 10,
+				openInterestChange24h: null,
 				volume24h: 20,
+				volume24hChange24h: null,
 				price: 1.01,
 				priceChange24h: 0,
 				fundingRate: 0,
@@ -215,6 +216,7 @@ describe('rwa queries', () => {
 				category: ['RWA Perps', 'Treasuries'],
 				issuer: 'Ondo',
 				website: null,
+				link: null,
 				oracleProvider: null,
 				description: null,
 				accessModel: 'Permissioned',
@@ -227,13 +229,15 @@ describe('rwa queries', () => {
 				prevDayPx: 0,
 				maxLeverage: 0,
 				szDecimals: 0,
+				fundingIntervalHours: 1,
 				volume7d: 0,
 				volume30d: 0,
 				volumeAllTime: 0,
 				estimatedProtocolFees24h: 0,
 				estimatedProtocolFees7d: 0,
 				estimatedProtocolFees30d: 0,
-				estimatedProtocolFeesAllTime: 0
+				estimatedProtocolFeesAllTime: 0,
+				suspicious: false
 			}
 		])
 		fetchRWAPerpsContractBreakdownChartDataMock.mockResolvedValue([{ timestamp: 1_000, 'xyz:usdy': 10 }])
@@ -369,7 +373,8 @@ describe('rwa queries', () => {
 				stablecoin: true,
 				governance: false,
 				onChainMcap: { Ethereum: 100 },
-				activeMcap: { Ethereum: 90 }
+				activeMcap: { Ethereum: 90 },
+				defiActiveTvl: {}
 			}
 		])
 
@@ -406,7 +411,8 @@ describe('rwa queries', () => {
 				stablecoin: false,
 				governance: false,
 				onChainMcap: { Ethereum: 100 },
-				activeMcap: { Ethereum: 90 }
+				activeMcap: { Ethereum: 90 },
+				defiActiveTvl: {}
 			},
 			{
 				id: 'stable',
@@ -416,7 +422,8 @@ describe('rwa queries', () => {
 				stablecoin: true,
 				governance: false,
 				onChainMcap: { Ethereum: 50 },
-				activeMcap: { Ethereum: 45 }
+				activeMcap: { Ethereum: 45 },
+				defiActiveTvl: {}
 			}
 		])
 
@@ -484,7 +491,9 @@ describe('rwa queries', () => {
 				contract: 'xyz:gold',
 				venue: 'xyz',
 				openInterest: 10,
+				openInterestChange24h: null,
 				volume24h: 20,
+				volume24hChange24h: null,
 				price: 1.01,
 				priceChange24h: 0,
 				fundingRate: 0,
@@ -500,6 +509,7 @@ describe('rwa queries', () => {
 				category: ['Commodities'],
 				issuer: 'XYZ',
 				website: null,
+				link: null,
 				oracleProvider: null,
 				description: null,
 				accessModel: 'Permissionless',
@@ -512,13 +522,15 @@ describe('rwa queries', () => {
 				prevDayPx: 0,
 				maxLeverage: 0,
 				szDecimals: 0,
+				fundingIntervalHours: 1,
 				volume7d: 0,
 				volume30d: 0,
 				volumeAllTime: 0,
 				estimatedProtocolFees24h: 0,
 				estimatedProtocolFees7d: 0,
 				estimatedProtocolFees30d: 0,
-				estimatedProtocolFeesAllTime: 0
+				estimatedProtocolFeesAllTime: 0,
+				suspicious: false
 			}
 		])
 
@@ -591,8 +603,7 @@ describe('rwa queries', () => {
 		])
 	})
 
-	it('returns null for an empty or missing tvl map', () => {
-		expect(buildRwaDefiTvlProtocolChainBreakdown(null)).toBeNull()
+	it('returns null for an empty tvl map', () => {
 		expect(buildRwaDefiTvlProtocolChainBreakdown({})).toBeNull()
 	})
 })

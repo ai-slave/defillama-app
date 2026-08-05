@@ -28,7 +28,8 @@ describe('parseMarketBreakdownRequest', () => {
 				}
 			})
 		).toEqual({
-			key: 'openInterest'
+			key: 'openInterest',
+			target: { kind: 'all' }
 		})
 
 		expect(
@@ -39,8 +40,8 @@ describe('parseMarketBreakdownRequest', () => {
 				}
 			})
 		).toEqual({
-			assetClass: 'Forex Perps',
-			key: 'markets'
+			key: 'markets',
+			target: { kind: 'assetClass', slug: 'Forex Perps' }
 		})
 
 		expect(
@@ -51,8 +52,8 @@ describe('parseMarketBreakdownRequest', () => {
 				}
 			})
 		).toEqual({
-			excludeAssetClass: 'Forex Perps',
-			key: 'volume24h'
+			key: 'volume24h',
+			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' }
 		})
 	})
 

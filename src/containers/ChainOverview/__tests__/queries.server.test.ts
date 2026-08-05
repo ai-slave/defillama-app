@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ChainChartResponse } from '~/containers/Chains/api.types'
+import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
 import type { ICategoriesAndTags, IChainMetadata } from '~/utils/metadata/types'
 import { createRoutePhaseTimer } from '~/utils/perf'
 import {
@@ -199,8 +200,8 @@ describe('getRwaActiveMcapForChain', () => {
 		totalOnChainMcap: 120,
 		totalActiveMcap: 90,
 		totalDefiActiveTvl: 10,
-		totalAssets: 1,
-		totalIssuers: 1,
+		assetCount: 1,
+		assetIssuers: 1,
 		byChain: {
 			'XDC Network': {
 				base: { onChainMcap: 120, activeMcap: 90, defiActiveTvl: 10, assetCount: 1, assetIssuers: ['Issuer A'] },
@@ -215,8 +216,10 @@ describe('getRwaActiveMcapForChain', () => {
 				stablecoinsAndGovernance: { onChainMcap: 0, activeMcap: 0, defiActiveTvl: 0, assetCount: 0, assetIssuers: [] }
 			}
 		},
-		byCategory: {}
-	}
+		byCategory: {},
+		byPlatform: {},
+		byAssetGroup: {}
+	} satisfies IRWAStatsResponse
 
 	it('resolves active market cap by RWA chain slug', () => {
 		expect(getRwaActiveMcapForChain(stats, 'XDC-Network')).toBe(90)

@@ -44,22 +44,26 @@ export { resolveRWAOverviewInclusionFlag } from './filterState'
 
 type PieChartDatum = { name: string; value: number }
 
+function emptyPieChartResult(): { pieChartData: PieChartDatum[]; pieChartStackColors: Record<string, string> } {
+	return { pieChartData: [], pieChartStackColors: {} }
+}
+
 export const limitRwaPieChartData = (data: PieChartDatum[], maxLabels: number): PieChartDatum[] => {
 	if (data.length <= maxLabels) return data
 
 	let othersValue = 0
-	for (let index = maxLabels - 1; index < data.length; index++) {
-		othersValue += data[index].value
+	for (const [index, item] of data.entries()) {
+		if (index >= maxLabels - 1) othersValue += item.value
 	}
 	const visible = data.slice(0, maxLabels - 1)
 	if (othersValue > 0) visible.push({ name: 'Others', value: othersValue })
 	return visible
 }
 
-const buildStackColors = (order: string[]) => {
-	const stackColors = {}
-	for (const [idx, key] of order.entries()) {
-		stackColors[key] = CHART_COLORS[idx % CHART_COLORS.length]
+const buildStackColors = (order: string[]): Record<string, string> => {
+	const stackColors: Record<string, string> = {}
+	for (const [index, key] of order.entries()) {
+		stackColors[key] = CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
 	}
 	return stackColors
 }
@@ -631,10 +635,7 @@ export function useRWAAssetCategoryPieChartData({
 }) {
 	return useMemo(() => {
 		if (!enabled) {
-			return {
-				pieChartData: [] as PieChartDatum[],
-				pieChartStackColors: {}
-			}
+			return emptyPieChartResult()
 		}
 		const pieChartStackColors = buildStackColors(categories)
 		const selectedCategoriesSet = new Set(selectedCategories)
@@ -675,10 +676,7 @@ export function useRwaCategoryAssetClassPieChartData({
 }) {
 	return useMemo(() => {
 		if (!enabled) {
-			return {
-				pieChartData: [] as PieChartDatum[],
-				pieChartStackColors: {}
-			}
+			return emptyPieChartResult()
 		}
 
 		const pieChartStackColors = buildStackColors(assetClasses)
@@ -719,18 +717,12 @@ export function useRwaAssetNamePieChartData({
 }) {
 	return useMemo(() => {
 		if (!enabled) {
-			return {
-				pieChartData: [] as PieChartDatum[],
-				pieChartStackColors: {}
-			}
+			return emptyPieChartResult()
 		}
 
 		const selectedAssetNamesSet = new Set(selectedAssetNames)
 		if (selectedAssetNamesSet.size === 0) {
-			return {
-				pieChartData: [] as PieChartDatum[],
-				pieChartStackColors: {}
-			}
+			return emptyPieChartResult()
 		}
 
 		const discoveredNames = new Set<string>()
@@ -771,10 +763,7 @@ export function useRwaAssetGroupPieChartData({
 }) {
 	return useMemo(() => {
 		if (!enabled || assets.length === 0) {
-			return {
-				pieChartData: [] as PieChartDatum[],
-				pieChartStackColors: {}
-			}
+			return emptyPieChartResult()
 		}
 
 		const totalsByGroup = new Map<string, number>()
@@ -812,33 +801,21 @@ export function useRwaAssetPlatformPieChartData({
 		const UNKNOWN = 'Unknown'
 
 		if (!enabled || assets.length === 0) {
-			return {
-				pieChartData: [] as PieChartDatum[],
-				pieChartStackColors: {}
-			}
+			return emptyPieChartResult()
 		}
 
 		// Coalesce by slug to avoid casing/spacing duplicates in platform names.
 		const totalsBySlug = new Map<string, { label: string; value: number }>()
 		for (const asset of assets) {
-			const platformRaw = asset.parentPlatform as unknown
-			const platformCandidates = Array.isArray(platformRaw) ? platformRaw : [platformRaw]
-			const normalizedPlatforms = platformCandidates
-				.map((platform) => (typeof platform === 'string' ? platform.trim() : ''))
-				.filter((platform): platform is string => platform.length > 0)
-			const platforms = normalizedPlatforms.length > 0 ? Array.from(new Set(normalizedPlatforms)) : [UNKNOWN]
-			const platformWeight = 1 / platforms.length
+			const platform = asset.parentPlatform?.trim() || UNKNOWN
+			const key = rwaSlug(platform)
+			const prev = totalsBySlug.get(key) ?? { label: platform, value: 0 }
 
-			for (const platform of platforms) {
-				const key = rwaSlug(platform)
-				const prev = totalsBySlug.get(key) ?? { label: platform, value: 0 }
+			// Prefer a non-Unknown label if we previously only had Unknown.
+			if (prev.label === UNKNOWN && platform !== UNKNOWN) prev.label = platform
 
-				// Prefer a non-Unknown label if we previously only had Unknown.
-				if (prev.label === UNKNOWN && platform !== UNKNOWN) prev.label = platform
-
-				prev.value += (asset[metric]?.total ?? 0) * platformWeight
-				totalsBySlug.set(key, prev)
-			}
+			prev.value += asset[metric]?.total ?? 0
+			totalsBySlug.set(key, prev)
 		}
 
 		const colorOrder: string[] = []
@@ -877,17 +854,11 @@ export function useRwaChainBreakdownPieChartData({
 		const UNKNOWN = 'Unknown'
 
 		if (!enabled) {
-			return {
-				pieChartData: [] as PieChartDatum[],
-				pieChartStackColors: {}
-			}
+			return emptyPieChartResult()
 		}
 
 		if (assets.length === 0) {
-			return {
-				pieChartData: [] as PieChartDatum[],
-				pieChartStackColors: {}
-			}
+			return emptyPieChartResult()
 		}
 
 		// Aggregate using per-chain breakdowns (prevents "random" chain attribution on multi-chain assets).
@@ -1100,6 +1071,11 @@ export function useRwaChartDataset({
 	isChartLoading: boolean
 	chartError: string | null
 } {
+	const hasSpotAssets = filteredAssets.some((asset) => asset.kind === 'spot')
+	const hasPerpsAssets = filteredAssets.some((asset) => asset.kind === 'perps')
+	const shouldFetchAssetRows = enabled && !useInitialDataset && hasSpotAssets
+	const shouldFetchOpenInterest =
+		enabled && includeRwaPerps && hasPerpsAssets && (!useInitialDataset || initialOpenInterestDataset == null)
 	const {
 		data: assetRows,
 		isLoading,
@@ -1116,7 +1092,7 @@ export function useRwaChartDataset({
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		enabled: enabled && !useInitialDataset && filteredAssets.some((asset) => asset.kind === 'spot')
+		enabled: shouldFetchAssetRows
 	})
 	const {
 		data: openInterestRows,
@@ -1128,7 +1104,7 @@ export function useRwaChartDataset({
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		enabled: enabled && !useInitialDataset && includeRwaPerps && filteredAssets.some((asset) => asset.kind === 'perps')
+		enabled: shouldFetchOpenInterest
 	})
 
 	assert(initialDataset == null || initialDataset.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
@@ -1155,11 +1131,12 @@ export function useRwaChartDataset({
 
 		if (!includeRwaPerps) return spotDataset
 
-		const openInterestDataset: RWAPositionalChartDataset = useInitialDataset
-			? toRwaMultiSeriesChartDataset(initialOpenInterestDataset ?? { source: [], dimensions: ['timestamp'] })
-			: openInterestRows
-				? toRwaMultiSeriesChartDataset(buildRwaOpenInterestDataset(filteredAssets, openInterestRows))
-				: { source: [], dimensions: ['timestamp'] }
+		const openInterestDataset: RWAPositionalChartDataset =
+			useInitialDataset && initialOpenInterestDataset
+				? toRwaMultiSeriesChartDataset(initialOpenInterestDataset)
+				: openInterestRows
+					? toRwaMultiSeriesChartDataset(buildRwaOpenInterestDataset(filteredAssets, openInterestRows))
+					: { source: [], dimensions: ['timestamp'] }
 
 		return mergeRwaPositionalChartDatasets(spotDataset, openInterestDataset)
 	}, [
@@ -1178,13 +1155,12 @@ export function useRwaChartDataset({
 	return {
 		chartDataset,
 		assetRows,
-		isChartLoading: enabled && !useInitialDataset && (isLoading || isOpenInterestLoading),
-		chartError: enabled
-			? error
+		isChartLoading: (shouldFetchAssetRows && isLoading) || (shouldFetchOpenInterest && isOpenInterestLoading),
+		chartError:
+			shouldFetchAssetRows && error
 				? getErrorMessage(error)
-				: openInterestError
+				: shouldFetchOpenInterest && openInterestError
 					? getErrorMessage(openInterestError)
 					: null
-			: null
 	}
 }

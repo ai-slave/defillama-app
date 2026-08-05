@@ -1,5 +1,5 @@
 import type { EChartsOption } from 'echarts'
-import { TreemapChart as EChartTreemap } from 'echarts/charts'
+import { TreemapChart as EChartTreemap, type TreemapSeriesOption } from 'echarts/charts'
 import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { LabelLayout } from 'echarts/features'
@@ -52,7 +52,7 @@ function getColorCap(nodes: readonly RWAFlowTreemapNode[]): number {
 		cumulativeWeight += entry.weight
 		if (cumulativeWeight >= threshold) return Math.max(entry.value, MIN_COLOR_CAP_PERCENT)
 	}
-	return Math.max(values[values.length - 1].value, MIN_COLOR_CAP_PERCENT)
+	return MIN_COLOR_CAP_PERCENT
 }
 
 function getFlowColor(value: number | null, colorCap: number): string {
@@ -64,9 +64,21 @@ function getFlowColor(value: number | null, colorCap: number): string {
 
 export function buildRWAFlowTreemapChartData(nodes: readonly RWAFlowTreemapNode[]) {
 	const colorCap = getColorCap(nodes)
-	const data: Array<RWAFlowTreemapNode & { itemStyle: { color: string } }> = []
+	const data: Array<
+		Omit<RWAFlowTreemapNode, 'value'> & {
+			value: [number, number]
+			netFlowPercent: number | null
+			itemStyle: { color: string }
+		}
+	> = []
 	for (const node of nodes) {
-		data.push({ ...node, itemStyle: { color: getFlowColor(node.value[1], colorCap) } })
+		data.push({
+			name: node.name,
+			value: [node.value[0], node.value[1] ?? 0],
+			netFlowUsd: node.netFlowUsd,
+			netFlowPercent: node.value[1],
+			itemStyle: { color: getFlowColor(node.value[1], colorCap) }
+		})
 	}
 	return { data, colorCap }
 }
@@ -81,6 +93,24 @@ function pickLabel(width: number, height: number, name: string, flow: string, pe
 	if (width >= 64 && height >= 42) return `{nameSmall|${name}}\n{percentSmall|${percentage}}`
 	if (width >= 38 && height >= 22) return `{nameTiny|${name}}`
 	return ''
+}
+
+type TreemapItemLayout = { width?: number; height?: number }
+
+function getTreemapItemLayout(
+	instance: echarts.ECharts,
+	seriesIndex: number,
+	dataIndex: number
+): TreemapItemLayout | undefined {
+	// ECharts exposes this model API at runtime but marks it private in its public declarations.
+	const layoutApi = instance as unknown as {
+		getModel(): {
+			getSeriesByIndex(
+				index: number
+			): { getData(): { getItemLayout(index: number): TreemapItemLayout | undefined } } | undefined
+		}
+	}
+	return layoutApi.getModel().getSeriesByIndex(seriesIndex)?.getData().getItemLayout(dataIndex)
 }
 
 export function RWAFlowTreemapChart({
@@ -130,6 +160,57 @@ export function RWAFlowTreemapChart({
 	useEffect(() => {
 		const instance = chartRef.current
 		if (!instance) return
+		type ChartNode = (typeof chartData)[number]
+		const series: TreemapSeriesOption = {
+			name: 'RWA Net Flow',
+			type: 'treemap',
+			top: 0,
+			left: 0,
+			right: 0,
+			bottom: 0,
+			roam: true,
+			nodeClick: 'zoomToNode',
+			zoomToNodeRatio: 0.35,
+			squareRatio: 0.9,
+			breadcrumb: { show: false },
+			label: {
+				position: 'inside',
+				formatter: (params) => {
+					const data = params.data as ChartNode
+					const layout = getTreemapItemLayout(instance, params.seriesIndex ?? 0, params.dataIndex)
+					return pickLabel(
+						layout?.width ?? 0,
+						layout?.height ?? 0,
+						data.name,
+						formatSignedRWAFlow(data.netFlowUsd),
+						formatFlowPercent(data.netFlowPercent)
+					)
+				},
+				rich: {
+					name: { color: '#fff', fontSize: 15, fontWeight: 600, lineHeight: 20 },
+					flow: { color: '#fff', fontSize: 13, lineHeight: 18 },
+					percent: { color: '#fff', fontSize: 13, lineHeight: 18 },
+					nameSmall: { color: '#fff', fontSize: 12, fontWeight: 600, lineHeight: 17 },
+					percentSmall: { color: '#fff', fontSize: 11, lineHeight: 15 },
+					nameTiny: { color: '#fff', fontSize: 10, fontWeight: 600 }
+				}
+			},
+			labelLayout: (params) => {
+				if (!params?.rect || typeof params.text !== 'string' || !params.text) return {}
+				const lineCount = params.text.split('\n').length
+				const contentHeight = lineCount === 3 ? 56 : lineCount === 2 ? 32 : 14
+				return { dy: (params.rect.height - contentHeight) / 2 }
+			},
+			itemStyle: { borderColor: isDark ? '#2d3139' : '#d1d5db', borderWidth: 1, gapWidth: 1 },
+			levels: [
+				{ itemStyle: { borderWidth: 0, gapWidth: 1 }, upperLabel: { show: false } },
+				{
+					itemStyle: { borderColor: isDark ? '#2d3139' : '#d1d5db', borderWidth: 1, gapWidth: 1 },
+					upperLabel: { show: false }
+				}
+			],
+			data: chartData
+		}
 
 		const option: EChartsOption = {
 			graphic: [buildWatermarkGraphic(isDark)],
@@ -139,73 +220,18 @@ export function RWAFlowTreemapChart({
 				backgroundColor: 'transparent',
 				borderWidth: 0,
 				formatter: (info) => {
-					const data = info?.data as RWAFlowTreemapNode | undefined
-					if (!data) return ''
+					const params = Array.isArray(info) ? info[0] : info
+					if (!params) return ''
+					const data = params.data as ChartNode
 					return [
 						`<strong>${data.name}</strong><br>`,
 						`${sizeLabel}: ${formatUsd(data.value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`,
 						`${periodLabel} Net Flow: ${formatSignedRWAFlow(data.netFlowUsd)}<br>`,
-						`Net Flow / ${sizeLabel}: ${formatFlowPercent(data.value[1])}`
+						`Net Flow / ${sizeLabel}: ${formatFlowPercent(data.netFlowPercent)}`
 					].join('')
 				}
 			},
-			series: [
-				{
-					name: 'RWA Net Flow',
-					type: 'treemap',
-					top: 0,
-					left: 0,
-					right: 0,
-					bottom: 0,
-					roam: true,
-					nodeClick: 'zoomToNode',
-					zoomToNodeRatio: 0.35,
-					squareRatio: 0.9,
-					breadcrumb: { show: false },
-					label: {
-						position: 'inside',
-						formatter: (params) => {
-							const data = params?.data as RWAFlowTreemapNode | undefined
-							if (!data) return ''
-							const layout = (instance as any)
-								.getModel?.()
-								?.getSeriesByIndex?.(params.seriesIndex ?? 0)
-								?.getData?.()
-								?.getItemLayout?.(params.dataIndex)
-							return pickLabel(
-								layout?.width ?? 0,
-								layout?.height ?? 0,
-								data.name,
-								formatSignedRWAFlow(data.netFlowUsd),
-								formatFlowPercent(data.value[1])
-							)
-						},
-						rich: {
-							name: { color: '#fff', fontSize: 15, fontWeight: 600, lineHeight: 20 },
-							flow: { color: '#fff', fontSize: 13, lineHeight: 18 },
-							percent: { color: '#fff', fontSize: 13, lineHeight: 18 },
-							nameSmall: { color: '#fff', fontSize: 12, fontWeight: 600, lineHeight: 17 },
-							percentSmall: { color: '#fff', fontSize: 11, lineHeight: 15 },
-							nameTiny: { color: '#fff', fontSize: 10, fontWeight: 600 }
-						}
-					},
-					labelLayout: (params) => {
-						if (!params?.rect || typeof params.text !== 'string' || !params.text) return {}
-						const lineCount = params.text.split('\n').length
-						const contentHeight = lineCount === 3 ? 56 : lineCount === 2 ? 32 : 14
-						return { dy: (params.rect.height - contentHeight) / 2 }
-					},
-					itemStyle: { borderColor: isDark ? '#2d3139' : '#d1d5db', borderWidth: 1, gapWidth: 1 },
-					levels: [
-						{ itemStyle: { borderWidth: 0, gapWidth: 1 }, upperLabel: { show: false } },
-						{
-							itemStyle: { borderColor: isDark ? '#2d3139' : '#d1d5db', borderWidth: 1, gapWidth: 1 },
-							upperLabel: { show: false }
-						}
-					],
-					data: chartData
-				}
-			]
+			series: [series]
 		}
 
 		clearTreemapFocus(instance)

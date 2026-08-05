@@ -62,4 +62,21 @@ describe('aggregateRwaMetrics', () => {
 			defiActiveTvl: false
 		})
 	})
+
+	it('preserves explicit zero as measured selected-chain data', () => {
+		const result = aggregateRwaMetrics({
+			onChainMcapBreakdown: { Ethereum: 0 },
+			activeMcapBreakdown: null,
+			defiActiveTvlBreakdown: { Ethereum: {} },
+			selectedChain: 'ethereum'
+		})
+
+		expect(result.hasSelectedChainData).toEqual({
+			onChainMcap: true,
+			activeMcap: false,
+			defiActiveTvl: true
+		})
+		expect(result.breakdowns.onChainMcapByChain).toEqual({ Ethereum: 0 })
+		expect(result.breakdowns.defiActiveTvlByChain).toEqual({ Ethereum: 0 })
+	})
 })

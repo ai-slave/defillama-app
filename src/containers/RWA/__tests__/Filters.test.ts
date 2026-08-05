@@ -181,11 +181,22 @@ describe('RWA overview filter dialog helpers', () => {
 		expect(updates.excludeTypes).toBeUndefined()
 	})
 
-	it('keeps reset enabled for hidden filter params and chart params', () => {
-		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ types: 'Asset' } as any)).toBe(true)
-		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ chartView: 'treemap' } as any)).toBe(true)
-		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ timeSeriesChartBreakdown: 'total' } as any)).toBe(true)
-		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({} as any)).toBe(false)
+	it('keeps reset enabled for hidden filter, chart, and flow params', () => {
+		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ types: 'Asset' })).toBe(true)
+		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ chartView: 'treemap' })).toBe(true)
+		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ timeSeriesChartBreakdown: 'total' })).toBe(true)
+		for (const key of [
+			'flowMode',
+			'flowOverlays',
+			'flowRotationView',
+			'flowRotationBy',
+			'flowRotationFrequency',
+			'flowHeatmapSize',
+			'flowTreemapSize'
+		]) {
+			expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ [key]: 'custom' })).toBe(true)
+		}
+		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({})).toBe(false)
 	})
 
 	it('does not render an active pill for an empty or stale exclude query', () => {

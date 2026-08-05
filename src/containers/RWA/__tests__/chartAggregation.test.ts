@@ -69,7 +69,7 @@ function createSpotAsset(
 		parentPlatform: null,
 		category: null,
 		assetClass: null,
-		accessModel: null,
+		accessModel: 'Unknown',
 		type: null,
 		rwaClassification: null,
 		issuer: null,
@@ -80,12 +80,13 @@ function createSpotAsset(
 		kycAllowlistedWhitelistedToTransferHold: null,
 		transferable: null,
 		selfCustody: null,
-		stablecoin: null,
-		governance: null,
+		stablecoin: false,
+		governance: false,
 		trueRWA: false,
 		onChainMcap: null,
 		activeMcap: null,
-		defiActiveTvl: null,
+		defiActiveTvl: { total: 0, breakdown: [] },
+		defiActiveTvlByChain: { total: 0, breakdown: [] },
 		...overrides
 	}
 }
@@ -138,7 +139,7 @@ const assets: IRWAAssetsOverview['assets'] = [
 		canonicalMarketId: 'superstate/ustb',
 		ticker: 'BBB',
 		assetName: 'Beta',
-		parentPlatform: ['Centrifuge', 'Maple']
+		parentPlatform: 'Maple'
 	}),
 	createSpotAsset({
 		id: '3',
@@ -168,7 +169,7 @@ describe('aggregateRwaMetricData', () => {
 		})
 	})
 
-	it('aggregates platform series for scalar, array, and missing parentPlatform values', () => {
+	it('aggregates platform series for scalar and missing parentPlatform values', () => {
 		expect(
 			aggregateRwaMetricData(
 				assets,
@@ -180,10 +181,17 @@ describe('aggregateRwaMetricData', () => {
 			)
 		).toEqual({
 			source: [
-				{ timestamp: 1, Centrifuge: 145, Maple: 45, Unknown: 50 },
-				{ timestamp: 2, Centrifuge: 160, Maple: 40, Unknown: 40 }
+				{ timestamp: 1, Centrifuge: 100, Maple: 90, Unknown: 50 },
+				{ timestamp: 2, Centrifuge: 120, Maple: 80, Unknown: 40 }
 			],
 			dimensions: ['timestamp', 'Centrifuge', 'Maple', 'Unknown']
+		})
+	})
+
+	it('preserves an explicitly measured zero in an asset series', () => {
+		expect(aggregateRwaMetricData(assets, [{ timestamp: 1, 'ondo/usdy': 0 }], 'assetName')).toEqual({
+			source: [{ timestamp: 1, Alpha: 0 }],
+			dimensions: ['timestamp', 'Alpha']
 		})
 	})
 
@@ -216,18 +224,6 @@ describe('aggregateRwaMetricData', () => {
 		).toEqual({
 			source: [{ timestamp: 1, Stablecoins: 100, Unknown: 50 }],
 			dimensions: ['timestamp', 'Stablecoins', 'Unknown']
-		})
-	})
-
-	it('ignores inherited chart row keys while aggregating asset series', () => {
-		const row = Object.assign(Object.create({ 'superstate/ustb': 999 }), {
-			timestamp: 1,
-			'ondo/usdy': 100
-		})
-
-		expect(aggregateRwaMetricData(assets, [row], 'assetName')).toEqual({
-			source: [{ timestamp: 1, Alpha: 100 }],
-			dimensions: ['timestamp', 'Alpha']
 		})
 	})
 })
@@ -291,6 +287,26 @@ describe('buildRwaOpenInterestDataset', () => {
 			source: [
 				{ timestamp: 1, 'RWA Perps OI': 0 },
 				{ timestamp: 2, 'RWA Perps OI': 0 }
+			],
+			dimensions: ['timestamp', 'RWA Perps OI']
+		})
+	})
+
+	it('omits prelaunch and gap timestamps without selected-contract measurements', () => {
+		expect(
+			buildRwaOpenInterestDataset([createPerpsAsset({ contract: 'xyz:alpha' })], {
+				source: [
+					{ timestamp: 1, 'xyz:beta': 20 },
+					{ timestamp: 2, 'xyz:alpha': 0 },
+					{ timestamp: 3, 'xyz:beta': 30 },
+					{ timestamp: 4, 'xyz:alpha': 12 }
+				],
+				dimensions: ['timestamp', 'xyz:alpha', 'xyz:beta']
+			})
+		).toEqual({
+			source: [
+				{ timestamp: 2, 'RWA Perps OI': 0 },
+				{ timestamp: 4, 'RWA Perps OI': 12 }
 			],
 			dimensions: ['timestamp', 'RWA Perps OI']
 		})

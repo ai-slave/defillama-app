@@ -78,7 +78,7 @@ describe('RWA flow treemap', () => {
 				kind: 'spot',
 				assetGroup: 'Treasury Funds',
 				category: ['Treasuries'],
-				parentPlatform: ['Platform A', 'Platform B'],
+				parentPlatform: 'Platform A',
 				onChainMcap: {
 					total: 100,
 					breakdown: [
@@ -108,8 +108,7 @@ describe('RWA flow treemap', () => {
 		])
 		expect(buildRWAFlowTreemapSizeRowsFromAssets(assets, 'category')[0]).toMatchObject({ name: 'Treasuries' })
 		expect(buildRWAFlowTreemapSizeRowsFromAssets(assets, 'platform')).toEqual([
-			{ name: 'Platform A', activeMcap: 40, onChainMcap: 50, defiActiveTvl: 5 },
-			{ name: 'Platform B', activeMcap: 40, onChainMcap: 50, defiActiveTvl: 5 }
+			{ name: 'Platform A', activeMcap: 80, onChainMcap: 100, defiActiveTvl: 10 }
 		])
 		expect(buildRWAFlowTreemapSizeRowsFromAssets(assets, 'chain')).toEqual([
 			{ name: 'Ethereum', activeMcap: 60, onChainMcap: 70, defiActiveTvl: 8 },

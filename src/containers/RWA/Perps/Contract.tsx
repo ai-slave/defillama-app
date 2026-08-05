@@ -38,8 +38,8 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 const normalizeChartGroup = (value: string | null | undefined): LowercaseDwmGrouping | null => {
 	const normalizedValue = value?.toLowerCase() ?? null
-	if (DWM_GROUPING_OPTIONS_LOWERCASE.some((option) => option.value === normalizedValue)) {
-		return normalizedValue as LowercaseDwmGrouping
+	for (const option of DWM_GROUPING_OPTIONS_LOWERCASE) {
+		if (option.value === normalizedValue) return option.value
 	}
 	return null
 }
@@ -164,13 +164,17 @@ function RWAPerpsContractMetricsList({ contract }: { contract: IRWAPerpsContract
 				value={sections.openInterest.value}
 			/>
 
-			<MetricSection label={sections.volume.label} tooltip={sections.volume.tooltip} value={sections.volume.value}>
+			<MetricSection
+				label={sections.volume.label}
+				tooltip={sections.volume.tooltip ?? null}
+				value={sections.volume.value}
+			>
 				{sections.volume.children.map((row) => (
 					<SubMetricRow key={row.label} label={row.label} tooltip={row.tooltip} value={row.value} />
 				))}
 			</MetricSection>
 
-			<MetricSection label={sections.fees.label} tooltip={sections.fees.tooltip} value={sections.fees.value}>
+			<MetricSection label={sections.fees.label} tooltip={sections.fees.tooltip ?? null} value={sections.fees.value}>
 				{sections.fees.children.map((row) => (
 					<SubMetricRow key={row.label} label={row.label} tooltip={row.tooltip} value={row.value} />
 				))}
@@ -182,7 +186,7 @@ function RWAPerpsContractMetricsList({ contract }: { contract: IRWAPerpsContract
 
 			<MetricSection
 				label={sections.tradingParameters.label}
-				tooltip={sections.tradingParameters.tooltip}
+				tooltip={sections.tradingParameters.tooltip ?? null}
 				value={sections.tradingParameters.value}
 			>
 				{sections.tradingParameters.children.map((row) => (
@@ -192,7 +196,7 @@ function RWAPerpsContractMetricsList({ contract }: { contract: IRWAPerpsContract
 
 			<MetricSection
 				label={sections.marketReference.label}
-				tooltip={sections.marketReference.tooltip}
+				tooltip={sections.marketReference.tooltip ?? null}
 				value={sections.marketReference.value}
 			>
 				{sections.marketReference.children.map((row) => (

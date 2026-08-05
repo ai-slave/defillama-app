@@ -5,15 +5,40 @@ import type {
 	IRWAPerpsBreakdownChartResponse,
 	IRWAPerpsFundingHistoryParams,
 	IRWAPerpsFundingHistoryPoint,
+	IRWAPerpsFundingHistoryWirePoint,
 	IRWAPerpsListResponse,
 	IRWAPerpsMarket,
 	IRWAPerpsMarketChartPoint,
 	IRWAPerpsStatsResponse
 } from './api.types'
-import type { IRWAPerpsMarketBreakdownRequest } from './types'
+import type {
+	IRWAPerpsContractBreakdownRequest,
+	IRWAPerpsMarketBreakdownRequest,
+	IRWAPerpsOverviewBreakdownRequest,
+	RWAPerpsChartTarget
+} from './types'
 
 function encodeRWAPerpsPathSegment(value: string): string {
 	return encodeURIComponent(value)
+}
+
+export function setRWAPerpsChartTarget(searchParams: URLSearchParams, target: RWAPerpsChartTarget): void {
+	switch (target.kind) {
+		case 'all':
+			return
+		case 'venue':
+			searchParams.set('venue', target.slug)
+			return
+		case 'assetGroup':
+			searchParams.set('assetGroup', target.slug)
+			return
+		case 'assetClass':
+			searchParams.set('assetClass', target.slug)
+			return
+		case 'excludeAssetClass':
+			searchParams.set('excludeAssetClass', target.slug)
+			return
+	}
 }
 
 function createRWAPerpsFundingHistoryUrl(id: string, params?: IRWAPerpsFundingHistoryParams): string {
@@ -101,26 +126,15 @@ export async function fetchRWAPerpsVenueChart(venue: string): Promise<IRWAPerpsA
 	return fetchJson<IRWAPerpsAggregateHistoricalPoint[]>(`${RWA_PERPS_SERVER_URL}/chart/venue/${encodedVenue}?zz=18`)
 }
 
-type IRWAPerpsBreakdownChartParams = {
-	key: 'openInterest' | 'volume24h' | 'markets'
-	venue?: string
-	assetGroup?: string
-	assetClass?: string
-	excludeAssetClass?: string
-}
-
 export async function fetchRWAPerpsOverviewBreakdownChartData(
-	params: IRWAPerpsBreakdownChartParams & { breakdown: 'venue' | 'assetGroup' | 'assetClass' | 'baseAsset' }
+	params: IRWAPerpsOverviewBreakdownRequest
 ): Promise<IRWAPerpsBreakdownChartResponse | null> {
 	const searchParams = new URLSearchParams({
 		breakdown: params.breakdown,
 		key: params.key
 	})
 
-	if (params.venue) searchParams.set('venue', params.venue)
-	if (params.assetGroup) searchParams.set('assetGroup', params.assetGroup)
-	if (params.assetClass) searchParams.set('assetClass', params.assetClass)
-	if (params.excludeAssetClass) searchParams.set('excludeAssetClass', params.excludeAssetClass)
+	setRWAPerpsChartTarget(searchParams, params.target)
 
 	return fetchJson<IRWAPerpsBreakdownChartResponse>(
 		`${RWA_PERPS_SERVER_URL}/chart/overview-breakdown?${searchParams.toString()}`
@@ -131,16 +145,13 @@ export async function fetchRWAPerpsOverviewBreakdownChartData(
 }
 
 export async function fetchRWAPerpsContractBreakdownChartData(
-	params: IRWAPerpsBreakdownChartParams
+	params: IRWAPerpsContractBreakdownRequest
 ): Promise<IRWAPerpsBreakdownChartResponse | null> {
 	const searchParams = new URLSearchParams({
 		key: params.key
 	})
 
-	if (params.venue) searchParams.set('venue', params.venue)
-	if (params.assetGroup) searchParams.set('assetGroup', params.assetGroup)
-	if (params.assetClass) searchParams.set('assetClass', params.assetClass)
-	if (params.excludeAssetClass) searchParams.set('excludeAssetClass', params.excludeAssetClass)
+	setRWAPerpsChartTarget(searchParams, params.target)
 
 	return fetchJson<IRWAPerpsBreakdownChartResponse>(
 		`${RWA_PERPS_SERVER_URL}/chart/contract-breakdown?${searchParams.toString()}`
@@ -157,8 +168,7 @@ export async function fetchRWAPerpsMarketBreakdownChartData(
 		key: params.key
 	})
 
-	if (params.assetClass) searchParams.set('assetClass', params.assetClass)
-	if (params.excludeAssetClass) searchParams.set('excludeAssetClass', params.excludeAssetClass)
+	setRWAPerpsChartTarget(searchParams, params.target)
 
 	return fetchJson<IRWAPerpsBreakdownChartResponse>(
 		`${RWA_PERPS_SERVER_URL}/chart/market-breakdown?${searchParams.toString()}`
@@ -175,5 +185,16 @@ export async function fetchRWAPerpsFundingHistory(
 	id: string,
 	params?: IRWAPerpsFundingHistoryParams
 ): Promise<IRWAPerpsFundingHistoryPoint[]> {
-	return fetchJson<IRWAPerpsFundingHistoryPoint[]>(createRWAPerpsFundingHistoryUrl(id, params))
+	const points = await fetchJson<IRWAPerpsFundingHistoryWirePoint[]>(createRWAPerpsFundingHistoryUrl(id, params))
+	return points.map((point) => ({
+		timestamp: point.timestamp * 1e3,
+		id: point.id,
+		contract: point.contract,
+		venue: point.venue,
+		fundingRate: Number(point.funding_rate),
+		premium: Number(point.premium),
+		openInterest: Number(point.open_interest),
+		fundingPayment: Number(point.funding_payment),
+		createdAt: point.created_at
+	}))
 }

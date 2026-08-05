@@ -1,24 +1,25 @@
 import type { EarnPageRow } from '~/containers/Yields/data/types'
 import type { RWAChartDataset, RWAPositionalChartDataset } from './chartDataset'
 import type { RWAOverviewInclusionDefaults } from './constants'
-import type { RWAParentPlatform } from './grouping'
 
 type RWANumberMap = Record<string, number>
 type RWAContractsByChain = Record<string, string[]>
 type RWATvlByChain = Record<string, Record<string, number>>
 type RWAHoldersByChain = Record<string, string[]>
 
+export type RWAAccessModel = 'Permissioned' | 'Permissionless' | 'Non-transferable' | 'Custodial Only' | 'Unknown'
+
 // Raw API response types
 export interface IFetchedRWAProject {
 	id: string
-	canonicalMarketId?: string | null
+	canonicalMarketId: string
 	ticker: string
 	assetName?: string | null
 	assetGroup?: string | null
 	website?: string[] | null
 	twitter?: string[] | null
-	docs?: string | false | null
-	linkedin?: string | false | null
+	docs?: string | null
+	linkedin?: string | null
 	primaryChain?: string | null
 	chain?: string[] | null
 	contracts?: RWAContractsByChain | null
@@ -26,7 +27,7 @@ export interface IFetchedRWAProject {
 	assetClass?: string[] | null
 	type?: string | null
 	rwaClassification?: string | null
-	accessModel?: 'Permissioned' | 'Permissionless' | 'Non-transferable' | 'Custodial Only' | 'Unknown'
+	accessModel: RWAAccessModel
 	issuer?: string | null
 	issuerSourceLink?: string[] | null
 	issuerRegistryInfo?: string[] | null
@@ -40,25 +41,25 @@ export interface IFetchedRWAProject {
 	transferable?: boolean | null
 	selfCustody?: boolean | null
 	descriptionNotes?: string[] | null
-	parentPlatform?: RWAParentPlatform
-	stablecoin?: boolean | null
-	governance?: boolean | null
-	defiActiveTvl?: RWATvlByChain | null
-	onChainMcap?: RWANumberMap | null
-	activeMcap?: RWANumberMap | null
-	price?: number | null
-	activeMcapData?: boolean
+	parentPlatform?: string | null
+	stablecoin: boolean
+	governance: boolean
+	defiActiveTvl: RWATvlByChain
+	onChainMcap: RWANumberMap
+	activeMcap?: RWANumberMap
+	price: number | null
+	activeMcapData?: boolean | null
 	projectId?: string | string[] | null
 	coingeckoId?: string | null
 	oracleProvider?: string | null
 	oracleProofLink?: string | null
-	logo?: string | false | null
+	logo?: string | null
 	rwaGithub?: string | null
 	dateOfLastAttestation?: string | null
-	attestationFrequency?: string | string[] | null
+	attestationFrequency?: string | null
 	holdersToRemove?: RWAHoldersByChain | null
-	discord?: boolean | string | null
-	telegram?: boolean | string | null
+	discord?: string | null
+	telegram?: string | null
 }
 
 /** One classification slice in segmented RWA stats (base, stablecoins-only, governance, both). */
@@ -82,12 +83,12 @@ export interface IRWAStatsResponse {
 	totalOnChainMcap: number
 	totalActiveMcap: number
 	totalDefiActiveTvl: number
-	totalAssets: number
-	totalIssuers: number
+	assetCount: number
+	assetIssuers: number
 	byChain: Record<string, RWAStatsSegmented>
 	byCategory: Record<string, RWAStatsSegmented>
-	byPlatform?: Record<string, RWAStatsSegmented>
-	byAssetGroup?: Record<string, RWAStatsSegmented>
+	byPlatform: Record<string, RWAStatsSegmented>
+	byAssetGroup: Record<string, RWAStatsSegmented>
 }
 
 export interface IRWAProject extends Omit<IFetchedRWAProject, 'onChainMcap' | 'activeMcap' | 'defiActiveTvl'> {
@@ -120,7 +121,7 @@ export type RWAOverviewDisplayRowBase = {
 	kind: 'spot' | 'perps'
 	detailHref: string
 	assetName: string
-	logo?: string | false | null
+	logo?: string | null
 	ticker: string
 	primaryChain: string | null
 	chain: string[] | null
@@ -129,7 +130,7 @@ export type RWAOverviewDisplayRowBase = {
 	volume24h: number | null
 	volume30d: number | null
 	assetGroup: string | null
-	parentPlatform: string | string[] | null
+	parentPlatform: string | null
 	category: string[] | null
 	assetClass: string[] | null
 	accessModel: string | null
@@ -155,6 +156,11 @@ export type RWAOverviewDisplayRowBase = {
 export type RWAAssetOverviewRow = RWAOverviewDisplayRowBase & {
 	kind: 'spot'
 	canonicalMarketId: string
+	accessModel: RWAAccessModel
+	stablecoin: boolean
+	governance: boolean
+	defiActiveTvl: Exclude<RWAOverviewMetric, null>
+	defiActiveTvlByChain: Exclude<RWAOverviewMetric, null>
 }
 
 export type RWAPerpsContractOverlayRow = RWAOverviewDisplayRowBase & {
@@ -171,11 +177,11 @@ export type RWAOverviewAsset = RWAOverviewDisplayRow
 
 export interface IRWAAssetsOverview {
 	assets: Array<RWAOverviewDisplayRow>
-	typeOptions: Array<{ key: string; name: string; help: string | null }>
-	assetClassOptions: Array<{ key: string; name: string; help: string | null }>
-	rwaClassificationOptions: Array<{ key: string; name: string; help: string | null }>
-	accessModelOptions: Array<{ key: string; name: string; help: string | null }>
-	categoriesOptions: Array<{ key: string; name: string; help: string | null }>
+	typeOptions: Array<{ key: string; name: string; help?: string }>
+	assetClassOptions: Array<{ key: string; name: string; help?: string }>
+	rwaClassificationOptions: Array<{ key: string; name: string; help?: string }>
+	accessModelOptions: Array<{ key: string; name: string; help?: string }>
+	categoriesOptions: Array<{ key: string; name: string; help?: string }>
 	platforms: Array<string>
 	assetGroups: Array<string>
 	assetNames: Array<string>
@@ -257,7 +263,16 @@ export type IRWAAssetChartApiRow = {
 	onChainMcap: number | null
 	activeMcap: number | null
 	defiActiveTvl: number | null
-	totalSupply?: number | null
+	totalSupply: number | null
+	chains: Record<
+		string,
+		{
+			onChainMcap: number
+			activeMcap: number
+			defiActiveTvl: number
+			totalSupply: number | null
+		}
+	>
 }
 
 export type IRWAFlowsRequest = {
@@ -272,14 +287,15 @@ export type IRWAFlowPoint = {
 	netFlowByChain: Record<string, number>
 	missingChains?: string[]
 	unpricedChains?: string[]
-	mcap?: number | null
 }
 
-export type IRWAFlowsResponse = {
+export type IRWAFlowPointWithMcap = IRWAFlowPoint & { mcap: number | null }
+
+export type IRWAFlowsResponse<TPoint extends IRWAFlowPoint = IRWAFlowPoint> = {
 	id: string
 	start: number
 	end: number
-	data: IRWAFlowPoint[]
+	data: TPoint[]
 	coverage: number
 }
 
@@ -289,11 +305,12 @@ export type IRWAFlowAggregatePoint = {
 	coverage: number
 }
 
-export type IRWAFlowAggregateResponse = {
+export type IRWAFlowOverviewAggregateResponse = {
 	series: IRWAFlowAggregatePoint[]
 	coverage: number
-	members?: string[]
 }
+
+export type IRWAFlowGroupAggregateResponse = IRWAFlowOverviewAggregateResponse & { members: string[] }
 
 export type RWAFlowOverviewSplitBy = 'assetGroup' | 'category' | 'platform' | 'chain'
 

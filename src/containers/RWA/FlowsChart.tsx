@@ -52,7 +52,7 @@ export function RWAFlowsChart({
 		() =>
 			getRWAFlowChartOptions({
 				hasOverlayAxis: hasSecondaryAxis,
-				defaultStartTimestamp,
+				...(defaultStartTimestamp !== undefined ? { defaultStartTimestamp } : {}),
 				legendTooltips: true
 			}),
 		[defaultStartTimestamp, hasSecondaryAxis]
@@ -67,7 +67,9 @@ export function RWAFlowsChart({
 
 	// Keep visible-range tracking local to RWA flows instead of expanding the shared
 	// MultiSeriesChart API. Other charts retain their existing lifecycle and zoom behavior.
-	const handleDataZoom = useCallback((event: DataZoomPayload) => {
+	const handleDataZoom = useCallback((...args: unknown[]) => {
+		// ECharts types custom event payloads as unknown; the datazoom event has this documented shape.
+		const event = args[0] as DataZoomPayload
 		onVisibleRangeChangeRef.current?.(getVisibleRangeFromZoom(sourceRef.current, event))
 	}, [])
 

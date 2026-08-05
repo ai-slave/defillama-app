@@ -4,9 +4,9 @@ export interface IRWAPerpsMarket {
 	contract: string
 	venue: string
 	openInterest: number
-	openInterestChange24h?: number | null
+	openInterestChange24h: number | null
 	volume24h: number
-	volume24hChange24h?: number | null
+	volume24hChange24h: number | null
 	price: number
 	priceChange24h: number | null
 	fundingRate: number
@@ -22,7 +22,7 @@ export interface IRWAPerpsMarket {
 	category: string[] | null
 	issuer: string | null
 	website: string[] | null
-	link?: string | null
+	link: string | null
 	oracleProvider: string | null
 	description: string | null
 	accessModel: string | null
@@ -33,8 +33,9 @@ export interface IRWAPerpsMarket {
 	oraclePx: number
 	midPx: number
 	prevDayPx: number
-	maxLeverage: number
+	maxLeverage: number | null
 	szDecimals: number
+	fundingIntervalHours: number | null
 	volume7d: number
 	volume30d: number
 	volumeAllTime: number
@@ -42,6 +43,7 @@ export interface IRWAPerpsMarket {
 	estimatedProtocolFees7d: number
 	estimatedProtocolFees30d: number
 	estimatedProtocolFeesAllTime: number
+	suspicious: boolean
 }
 
 export interface IRWAPerpsAggregateHistoricalPoint {
@@ -55,6 +57,7 @@ export interface IRWAPerpsAggregateHistoricalPoint {
 	category: string[]
 	openInterest: number
 	volume24h: number
+	suspicious: boolean
 }
 
 export interface IRWAPerpsMarketChartPoint {
@@ -98,7 +101,7 @@ export type IRWAPerpsBreakdownChartResponse = IRWAPerpsBreakdownChartRow[]
 
 export type IRWAPerpsIdMapResponse = Record<string, string>
 
-export interface IRWAPerpsFundingHistoryPoint {
+export interface IRWAPerpsFundingHistoryWirePoint {
 	timestamp: number
 	id: string
 	contract: string
@@ -108,6 +111,18 @@ export interface IRWAPerpsFundingHistoryPoint {
 	open_interest: string
 	funding_payment: string
 	created_at: string
+}
+
+export interface IRWAPerpsFundingHistoryPoint {
+	timestamp: number
+	id: string
+	contract: string
+	venue: string
+	fundingRate: number
+	premium: number
+	openInterest: number
+	fundingPayment: number
+	createdAt: string
 }
 
 export interface IRWAPerpsFundingHistoryParams {

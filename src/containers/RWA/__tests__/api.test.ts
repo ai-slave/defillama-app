@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { buildRWAAssetChartDataset, normalizeRWAChartMetricRows, toUnixMsTimestamp } from '../api'
+import { buildRWAAssetChartDataset, normalizeRWAChartMetricRows, rwaUnixSecondsToMilliseconds } from '../api'
 
 describe('RWA api timestamp normalization', () => {
-	it('keeps unix seconds versus milliseconds behavior unchanged', () => {
-		expect(toUnixMsTimestamp(1_774_483_200)).toBe(1_774_483_200_000)
-		expect(toUnixMsTimestamp(1_774_483_200_000)).toBe(1_774_483_200_000)
+	it("converts the API's unix-second timestamps to milliseconds", () => {
+		expect(rwaUnixSecondsToMilliseconds(1_774_483_200)).toBe(1_774_483_200_000)
 	})
 })
 
@@ -28,7 +27,7 @@ describe('RWA metric history normalization', () => {
 		])
 	})
 
-	it('returns an empty history for a missing selected metric', () => {
+	it('returns an empty history when the selected metric has no rows', () => {
 		expect(
 			normalizeRWAChartMetricRows({ activeMcap: [], onChainMcap: [], defiActiveTvl: [] }, 'defiActiveTvl')
 		).toEqual([])
@@ -39,8 +38,22 @@ describe('RWA asset chart construction', () => {
 	it('constructs the canonical positional history once while preserving gaps, negatives, and duplicate timestamps', () => {
 		expect(
 			buildRWAAssetChartDataset([
-				{ timestamp: 1_000, defiActiveTvl: null, activeMcap: -2, onChainMcap: 0 },
-				{ timestamp: 1_000, defiActiveTvl: 3, activeMcap: 4, onChainMcap: null }
+				{
+					timestamp: 1_000,
+					defiActiveTvl: null,
+					activeMcap: -2,
+					onChainMcap: 0,
+					totalSupply: null,
+					chains: {}
+				},
+				{
+					timestamp: 1_000,
+					defiActiveTvl: 3,
+					activeMcap: 4,
+					onChainMcap: null,
+					totalSupply: 5,
+					chains: {}
+				}
 			])
 		).toEqual({
 			dimensions: ['timestamp', 'DeFi Active TVL', 'Active Mcap', 'Onchain Mcap'],

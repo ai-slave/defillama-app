@@ -17,8 +17,8 @@ import {
 } from '../flows'
 
 const day = (year: number, month: number, date: number) => Date.UTC(year, month, date)
-const aggregatePoint = (timestamp: number, netFlowUsd: number | null, coverage = 1): IRWAFlowAggregatePoint => ({
-	timestamp,
+const aggregatePoint = (timestampMs: number, netFlowUsd: number | null, coverage = 1): IRWAFlowAggregatePoint => ({
+	timestamp: timestampMs / 1e3,
 	netFlowUsd,
 	coverage
 })
@@ -79,7 +79,7 @@ describe('RWA flow chart data', () => {
 		])
 
 		const chart = buildRWAFlowChart({
-			points: [aggregatePoint(jan1 / 1e3, 6), aggregatePoint(jan2 / 1e3, -4)],
+			points: [aggregatePoint(jan1, 6), aggregatePoint(jan2, -4)],
 			selection: {
 				view: 'netFlows',
 				groupBy: 'daily',
@@ -461,12 +461,12 @@ describe('RWA flow chart data', () => {
 		])
 	})
 
-	it('builds filtered platform and chain rotation without double-counting multi-platform assets', () => {
+	it('builds filtered platform and chain rotation from scalar platform metadata', () => {
 		const assets = [
 			{
 				kind: 'spot',
 				canonicalMarketId: 'bond/a',
-				parentPlatform: ['Platform A', 'Platform B'],
+				parentPlatform: 'Platform A',
 				chain: ['Ethereum', 'Solana Mainnet']
 			},
 			{ kind: 'spot', canonicalMarketId: 'no-platform' }
@@ -482,9 +482,7 @@ describe('RWA flow chart data', () => {
 			}
 		]
 
-		expect(buildRWAFilteredFlowBreakdown(rows, assets, 'platform')).toEqual([
-			{ timestamp: 1, 'Platform A': 5, 'Platform B': 5 }
-		])
+		expect(buildRWAFilteredFlowBreakdown(rows, assets, 'platform')).toEqual([{ timestamp: 1, 'Platform A': 10 }])
 		expect(buildRWAFilteredFlowBreakdown(rows, assets, 'chain')).toEqual([
 			{ timestamp: 1, Ethereum: 7, 'Solana Mainnet': 3 }
 		])

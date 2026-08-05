@@ -85,23 +85,16 @@ export const DEFAULT_ENABLED_RWA_PERPS_CONTRACT_CHART_METRICS = RWA_PERPS_CONTRA
 	(metric) => metric.defaultEnabled
 ).map((metric) => metric.key)
 
-function toUnixMsTimestamp(timestamp: number): number {
-	return timestamp > 1e12 ? timestamp : timestamp * 1e3
-}
-
-// Contract detail metrics are display fallbacks; null or malformed values should render as "-" instead of NaN.
-function formatFractionPercent(value: number | null | undefined): string {
-	if (value == null || !Number.isFinite(value)) return '-'
+function formatFractionPercent(value: number): string {
 	return `${formatPercent(value, { input: 'fraction', minimumFractionDigits: Math.abs(value * 100) >= 1 ? 2 : 4, maximumFractionDigits: Math.abs(value * 100) >= 1 ? 2 : 4, useGrouping: false })}`
 }
 
-function formatMaybeCurrency(value: number | null | undefined): string {
-	if (value == null || !Number.isFinite(value)) return '-'
+function formatCurrency(value: number): string {
 	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
-function formatMaybeNumber(value: number | null | undefined): string {
-	if (value == null || !Number.isFinite(value)) return '-'
+function formatMaybeNumber(value: number | null): string {
+	if (value == null) return '-'
 	return formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 }
 
@@ -109,7 +102,7 @@ function formatTextValue(value: string | null | undefined): string | null {
 	return value ?? null
 }
 export function formatRWAPerpsContractChartDate(value: number): string {
-	return dayjs.utc(toUnixMsTimestamp(value)).format('D MMM, YYYY HH:mm')
+	return dayjs.utc(value).format('D MMM, YYYY HH:mm')
 }
 
 type MetricRowData = {
@@ -134,6 +127,9 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 	pointInTimeRows: MetricRowData[]
 } {
 	const maxLeverage = formatMaybeNumber(contractData.market.maxLeverage)
+	const pair = formatTextValue(contractData.market.pair)
+	const marginAsset = formatTextValue(contractData.market.marginAsset)
+	const settlementAsset = formatTextValue(contractData.market.settlementAsset)
 	const tradingParameterChildren = [
 		{
 			label: d.maxLeverage.label,
@@ -150,15 +146,11 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 			tooltip: d.takerFeeRate.description,
 			value: formatFractionPercent(contractData.market.takerFeeRate)
 		},
-		...(contractData.market.deployerFeeShare == null || !Number.isFinite(contractData.market.deployerFeeShare)
-			? []
-			: [
-					{
-						label: d.deployerFeeShare.label,
-						tooltip: d.deployerFeeShare.description,
-						value: formatFractionPercent(contractData.market.deployerFeeShare)
-					}
-				]),
+		{
+			label: d.deployerFeeShare.label,
+			tooltip: d.deployerFeeShare.description,
+			value: formatFractionPercent(contractData.market.deployerFeeShare)
+		},
 		{
 			label: d.sizeDecimals.label,
 			tooltip: d.sizeDecimals.description,
@@ -170,26 +162,22 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 		{
 			label: d.oraclePrice.label,
 			tooltip: d.oraclePrice.description,
-			value: formatMaybeCurrency(contractData.market.oraclePx)
+			value: formatCurrency(contractData.market.oraclePx)
 		},
-		{ label: d.midPrice.label, tooltip: d.midPrice.description, value: formatMaybeCurrency(contractData.market.midPx) },
+		{ label: d.midPrice.label, tooltip: d.midPrice.description, value: formatCurrency(contractData.market.midPx) },
 		{
 			label: d.previousDayPrice.label,
 			tooltip: d.previousDayPrice.description,
-			value: formatMaybeCurrency(contractData.market.prevDayPx)
+			value: formatCurrency(contractData.market.prevDayPx)
 		},
-		...(formatTextValue(contractData.market.pair)
-			? [{ label: d.pair.label, tooltip: d.pair.description, value: contractData.market.pair }]
-			: []),
-		...(formatTextValue(contractData.market.marginAsset)
-			? [{ label: d.marginAsset.label, tooltip: d.marginAsset.description, value: contractData.market.marginAsset }]
-			: []),
-		...(formatTextValue(contractData.market.settlementAsset)
+		...(pair ? [{ label: d.pair.label, tooltip: d.pair.description, value: pair }] : []),
+		...(marginAsset ? [{ label: d.marginAsset.label, tooltip: d.marginAsset.description, value: marginAsset }] : []),
+		...(settlementAsset
 			? [
 					{
 						label: d.settlementAsset.label,
 						tooltip: d.settlementAsset.description,
-						value: contractData.market.settlementAsset
+						value: settlementAsset
 					}
 				]
 			: [])
@@ -199,62 +187,62 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 		openInterest: {
 			label: d.openInterest.label,
 			tooltip: d.openInterest.description,
-			value: formatMaybeCurrency(contractData.market.openInterest)
+			value: formatCurrency(contractData.market.openInterest)
 		},
 		volume: {
 			label: d.volume30d.label,
 			tooltip: d.volume30d.description,
-			value: formatMaybeCurrency(contractData.market.volume30d),
+			value: formatCurrency(contractData.market.volume30d),
 			children: [
 				{
 					label: d.volume7d.label,
 					tooltip: d.volume7d.description,
-					value: formatMaybeCurrency(contractData.market.volume7d)
+					value: formatCurrency(contractData.market.volume7d)
 				},
 				{
 					label: 'Volume 24h',
 					tooltip: d.volume24h.description,
-					value: formatMaybeCurrency(contractData.market.volume24h)
+					value: formatCurrency(contractData.market.volume24h)
 				},
 				{
 					label: d.cumulativeVolume.label,
 					tooltip: d.cumulativeVolume.description,
-					value: formatMaybeCurrency(contractData.market.volumeAllTime)
+					value: formatCurrency(contractData.market.volumeAllTime)
 				}
 			]
 		},
 		fees: {
 			label: d.estimatedProtocolFees30d.label,
 			tooltip: d.estimatedProtocolFees30d.description,
-			value: formatMaybeCurrency(contractData.market.estimatedProtocolFees30d),
+			value: formatCurrency(contractData.market.estimatedProtocolFees30d),
 			children: [
 				{
 					label: d.estimatedProtocolFees7d.label,
 					tooltip: d.estimatedProtocolFees7d.description,
-					value: formatMaybeCurrency(contractData.market.estimatedProtocolFees7d)
+					value: formatCurrency(contractData.market.estimatedProtocolFees7d)
 				},
 				{
 					label: d.estimatedProtocolFees24h.label,
 					tooltip: d.estimatedProtocolFees24h.description,
-					value: formatMaybeCurrency(contractData.market.estimatedProtocolFees24h)
+					value: formatCurrency(contractData.market.estimatedProtocolFees24h)
 				},
 				{
 					label: d.estimatedCumulativeProtocolFees.label,
 					tooltip: d.estimatedCumulativeProtocolFees.description,
-					value: formatMaybeCurrency(contractData.market.estimatedProtocolFeesAllTime)
+					value: formatCurrency(contractData.market.estimatedProtocolFeesAllTime)
 				}
 			]
 		},
 		tradingParameters: {
 			label: d.tradingParameters.label,
 			tooltip: d.tradingParameters.description,
-			value: `${contractData.market.maxLeverage}x`,
+			value: maxLeverage === '-' ? '-' : `${maxLeverage}x`,
 			children: tradingParameterChildren
 		},
 		marketReference: {
 			label: d.marketReference.label,
 			tooltip: d.marketReference.description,
-			value: formatMaybeCurrency(contractData.market.oraclePx),
+			value: formatCurrency(contractData.market.oraclePx),
 			children: marketReferenceChildren
 		},
 		pointInTimeRows: [
@@ -276,60 +264,61 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 			{
 				label: d.cumulativeFunding.label,
 				tooltip: d.cumulativeFunding.description,
-				value: formatMaybeCurrency(contractData.market.cumulativeFunding)
+				value: formatCurrency(contractData.market.cumulativeFunding)
 			}
 		]
 	}
 }
 
 export function buildRWAPerpsContractInfoRows(contractData: IRWAPerpsContractData): MetricRowData[] {
-	const marketTimestampMs = toUnixMsTimestamp(contractData.market.timestamp)
+	const marketTimestampMs = contractData.market.timestamp * 1e3
 	const baseAsset = formatTextValue(contractData.contract.baseAsset)
+	const assetClass = formatTextValue(contractData.contract.assetClass)
+	const rwaClassification = formatTextValue(contractData.contract.rwaClassification)
+	const accessModel = formatTextValue(contractData.contract.accessModel)
+	const parentPlatform = formatTextValue(contractData.contract.parentPlatform)
+	const issuer = formatTextValue(contractData.contract.issuer)
+	const oracleProvider = formatTextValue(contractData.contract.oracleProvider)
 	const symbolSuffix = contractData.contract.contract.split(':')[1] ?? contractData.contract.contract
-	const shouldShowBaseAsset = baseAsset != null && baseAsset.toLowerCase() !== symbolSuffix.toLowerCase()
 
 	return [
 		{ label: d.venue.label, tooltip: d.venue.description, value: contractData.contract.venue },
-		...(formatTextValue(contractData.contract.assetClass)
-			? [{ label: d.assetClass.label, tooltip: d.assetClass.description, value: contractData.contract.assetClass! }]
-			: []),
-		...(formatTextValue(contractData.contract.rwaClassification)
+		...(assetClass ? [{ label: d.assetClass.label, tooltip: d.assetClass.description, value: assetClass }] : []),
+		...(rwaClassification
 			? [
 					{
 						label: d.rwaClassification.label,
 						tooltip: d.rwaClassification.description,
-						value: contractData.contract.rwaClassification!
+						value: rwaClassification
 					}
 				]
 			: []),
-		...(formatTextValue(contractData.contract.accessModel)
-			? [{ label: d.accessModel.label, tooltip: d.accessModel.description, value: contractData.contract.accessModel! }]
-			: []),
-		...(formatTextValue(contractData.contract.parentPlatform)
+		...(accessModel ? [{ label: d.accessModel.label, tooltip: d.accessModel.description, value: accessModel }] : []),
+		...(parentPlatform
 			? [
 					{
 						label: d.parentPlatform.label,
 						tooltip: d.parentPlatform.description,
-						value: contractData.contract.parentPlatform!
+						value: parentPlatform
 					}
 				]
 			: []),
-		...(formatTextValue(contractData.contract.issuer)
-			? [{ label: d.issuer.label, tooltip: d.issuer.description, value: contractData.contract.issuer! }]
-			: []),
-		...(formatTextValue(contractData.contract.oracleProvider)
+		...(issuer ? [{ label: d.issuer.label, tooltip: d.issuer.description, value: issuer }] : []),
+		...(oracleProvider
 			? [
 					{
 						label: d.oracleProvider.label,
 						tooltip: d.oracleProvider.description,
-						value: contractData.contract.oracleProvider!
+						value: oracleProvider
 					}
 				]
 			: []),
 		...(contractData.contract.website
 			? [{ label: d.website.label, tooltip: d.website.description, value: contractData.contract.website }]
 			: []),
-		...(shouldShowBaseAsset ? [{ label: d.baseAsset.label, tooltip: d.baseAsset.description, value: baseAsset! }] : []),
+		...(baseAsset == null || baseAsset.toLowerCase() === symbolSuffix.toLowerCase()
+			? []
+			: [{ label: d.baseAsset.label, tooltip: d.baseAsset.description, value: baseAsset }]),
 		{
 			label: d.snapshotTime.label,
 			tooltip: d.snapshotTime.description,
@@ -416,31 +405,33 @@ export function buildRWAPerpsContractChartSpec({
 
 	const marketCollectors = Array.from(marketMetrics)
 	const fundingCollectors = Array.from(fundingMetrics)
-	for (const point of marketMetrics.size > 0 ? marketPoints! : []) {
-		const timestampMs = toUnixMsTimestamp(point.timestamp)
-		const timestamp = groupBy === 'daily' ? timestampMs : getBucketTimestampMs(timestampMs, groupBy)
-		for (let collectorIndex = 0; collectorIndex < marketCollectors.length; collectorIndex++) {
-			const [metricKey, data] = marketCollectors[collectorIndex]
-			const value = getMetricValue(point, metricKey)
-			const latest = data[data.length - 1]
-			if (latest?.[0] !== timestamp) {
-				data.push([timestamp, value])
-			} else if (metricKey === 'volume24h' && groupBy !== 'daily') {
-				latest[1] = (latest[1] ?? 0) + value
-			} else {
-				latest[1] = value
+	if (marketMetrics.size > 0 && marketPoints) {
+		for (const point of marketPoints) {
+			const timestampMs = point.timestamp
+			const timestamp = groupBy === 'daily' ? timestampMs : getBucketTimestampMs(timestampMs, groupBy)
+			for (const [metricKey, data] of marketCollectors) {
+				const value = getMetricValue(point, metricKey)
+				const latest = data[data.length - 1]
+				if (!latest || latest[0] !== timestamp) {
+					data.push([timestamp, value])
+				} else if (metricKey === 'volume24h' && groupBy !== 'daily') {
+					latest[1] = (latest[1] ?? 0) + value
+				} else {
+					latest[1] = value
+				}
 			}
 		}
 	}
-	for (const point of fundingMetrics.size > 0 ? fundingHistory! : []) {
-		const timestampMs = toUnixMsTimestamp(point.timestamp)
-		const timestamp = groupBy === 'daily' ? timestampMs : getBucketTimestampMs(timestampMs, groupBy)
-		for (let collectorIndex = 0; collectorIndex < fundingCollectors.length; collectorIndex++) {
-			const [metricKey, data] = fundingCollectors[collectorIndex]
-			const value = getFundingHistoryMetricValue(point, metricKey)
-			const latest = data[data.length - 1]
-			if (latest?.[0] === timestamp) latest[1] = value
-			else data.push([timestamp, value])
+	if (fundingMetrics.size > 0 && fundingHistory) {
+		for (const point of fundingHistory) {
+			const timestampMs = point.timestamp
+			const timestamp = groupBy === 'daily' ? timestampMs : getBucketTimestampMs(timestampMs, groupBy)
+			for (const [metricKey, data] of fundingCollectors) {
+				const value = getFundingHistoryMetricValue(point, metricKey)
+				const latest = data[data.length - 1]
+				if (latest && latest[0] === timestamp) latest[1] = value
+				else data.push([timestamp, value])
+			}
 		}
 	}
 

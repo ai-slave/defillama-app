@@ -1,7 +1,5 @@
-import { rwaSlug } from './rwaSlug'
-
 export type WeightedGroup = { value: string; weight: number }
-export type RWAParentPlatform = string | string[] | null | undefined
+export type RWAParentPlatform = string | null | undefined
 export const UNKNOWN_PLATFORM = 'Unknown'
 
 export const toUniqueNonEmptyValues = (values: Array<string> | null | undefined): string[] => {
@@ -26,29 +24,7 @@ export const getPrimaryRwaCategory = (values: Array<string> | null | undefined):
 	return toUniqueNonEmptyValues(values)[0] ?? null
 }
 
-export const getRwaPlatforms = (value: RWAParentPlatform): string[] => {
-	const values = typeof value === 'string' ? [value] : Array.isArray(value) ? value : []
-	const seen = new Set<string>()
-	const out: string[] = []
-
-	for (const item of values) {
-		const platform = item.trim()
-		if (!platform) continue
-
-		const key = rwaSlug(platform)
-		if (seen.has(key)) continue
-
-		seen.add(key)
-		out.push(platform)
-	}
-
-	return out.length > 0 ? out : [UNKNOWN_PLATFORM]
-}
-
-export const matchesRwaPlatform = (value: RWAParentPlatform, selectedPlatform: string): boolean => {
-	for (const platform of getRwaPlatforms(value)) {
-		if (rwaSlug(platform) === selectedPlatform) return true
-	}
-
-	return false
+export const getRwaPlatforms = (value: RWAParentPlatform): [string] => {
+	const platform = value?.trim()
+	return platform ? [platform] : [UNKNOWN_PLATFORM]
 }

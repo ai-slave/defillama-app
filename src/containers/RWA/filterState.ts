@@ -3,7 +3,6 @@ import { isTrueQueryParam, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { RWAAssetOverviewRow, RWAOverviewDisplayRow, RWAPerpsContractOverlayRow } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import type { RWAOverviewInclusionDefaults } from './constants'
-import { getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
 
 export const RWA_ATTRIBUTE_FILTER_STATES = ['yes', 'no', 'unknown'] as const
 export type RWAAttributeFilterState = (typeof RWA_ATTRIBUTE_FILTER_STATES)[number]
@@ -69,6 +68,48 @@ export type RWAFilteredRowsResult = {
 	totalIssuersCount: number
 }
 
+type PreparedRwaFilters = {
+	selectedAssetNames: Set<string> | null
+	selectedTypes: Set<string>
+	selectedCategories: Set<string>
+	selectedPlatforms: Set<string>
+	selectedAssetGroups: Set<string>
+	selectedAssetClasses: Set<string>
+	selectedRwaClassifications: Set<string>
+	selectedAccessModels: Set<string>
+	selectedIssuers: Set<string>
+	selectedRedeemableStates: Set<RWAAttributeFilterState>
+	selectedAttestationsStates: Set<RWAAttributeFilterState>
+	selectedCexListedStates: Set<RWAAttributeFilterState>
+	selectedKycForMintRedeemStates: Set<RWAAttributeFilterState>
+	selectedKycAllowlistedWhitelistedToTransferHoldStates: Set<RWAAttributeFilterState>
+	selectedTransferableStates: Set<RWAAttributeFilterState>
+	selectedSelfCustodyStates: Set<RWAAttributeFilterState>
+}
+
+function prepareRwaFilters(filterState: RWAFilterState): PreparedRwaFilters {
+	return {
+		selectedAssetNames: filterState.isPlatformMode ? new Set(filterState.selectedAssetNames) : null,
+		selectedTypes: new Set(filterState.selectedTypes),
+		selectedCategories: new Set(filterState.selectedCategories),
+		selectedPlatforms: new Set(filterState.selectedPlatforms),
+		selectedAssetGroups: new Set(filterState.selectedAssetGroups),
+		selectedAssetClasses: new Set(filterState.selectedAssetClasses),
+		selectedRwaClassifications: new Set(filterState.selectedRwaClassifications),
+		selectedAccessModels: new Set(filterState.selectedAccessModels),
+		selectedIssuers: new Set(filterState.selectedIssuers),
+		selectedRedeemableStates: new Set(filterState.selectedRedeemableStates),
+		selectedAttestationsStates: new Set(filterState.selectedAttestationsStates),
+		selectedCexListedStates: new Set(filterState.selectedCexListedStates),
+		selectedKycForMintRedeemStates: new Set(filterState.selectedKycForMintRedeemStates),
+		selectedKycAllowlistedWhitelistedToTransferHoldStates: new Set(
+			filterState.selectedKycAllowlistedWhitelistedToTransferHoldStates
+		),
+		selectedTransferableStates: new Set(filterState.selectedTransferableStates),
+		selectedSelfCustodyStates: new Set(filterState.selectedSelfCustodyStates)
+	}
+}
+
 export const parseAttributeFilterStatesParam = (param: string | string[] | undefined): RWAAttributeFilterState[] => {
 	if (!param) return [...RWA_ATTRIBUTE_FILTER_STATES]
 
@@ -77,8 +118,8 @@ export const parseAttributeFilterStatesParam = (param: string | string[] | undef
 
 	const selectedSet = new Set<RWAAttributeFilterState>()
 	for (const value of values) {
-		if (RWA_ATTRIBUTE_FILTER_STATE_SET.has(value as RWAAttributeFilterState)) {
-			selectedSet.add(value as RWAAttributeFilterState)
+		for (const state of RWA_ATTRIBUTE_FILTER_STATES) {
+			if (value === state) selectedSet.add(state)
 		}
 	}
 
@@ -133,22 +174,10 @@ export function filterRwaAssetOverviewRows(
 	filterState: RWAFilterState
 ): RWAAssetOverviewRow[] {
 	const filteredRows: RWAAssetOverviewRow[] = []
-	const selectedAssetNamesSet = filterState.isPlatformMode ? new Set(filterState.selectedAssetNames) : null
+	const preparedFilters = prepareRwaFilters(filterState)
 
 	for (const asset of assets) {
-		if (selectedAssetNamesSet) {
-			const name = asset.assetName || asset.ticker
-			if (!selectedAssetNamesSet.has(name)) continue
-		}
-
-		if (!filterState.includeStablecoins && asset.stablecoin) continue
-		if (!filterState.includeGovernance && asset.governance) continue
-		if (!matchesAssetAttributeFilters(asset, filterState)) continue
-		if (!matchesAssetRatioFilters(asset, filterState)) continue
-		if (!new Set(filterState.selectedTypes).has(asset.type || 'Unknown')) continue
-		if (!matchesSharedRwaFilters(asset, filterState)) continue
-
-		filteredRows.push(asset)
+		if (matchesRwaAssetFilters(asset, filterState, preparedFilters)) filteredRows.push(asset)
 	}
 
 	return filteredRows
@@ -159,22 +188,25 @@ export function filterRwaPerpsContractOverlayRows(
 	filterState: RWAFilterState
 ): RWAPerpsContractOverlayRow[] {
 	if (!filterState.includeRwaPerps || filterState.hasPerpsOverlayBlockingFilters) return []
-
-	return rows.filter((row) => matchesSharedRwaFilters(row, filterState))
+	const preparedFilters = prepareRwaFilters(filterState)
+	return rows.filter((row) => matchesSharedRwaFilters(row, preparedFilters))
 }
 
 export function filterRwaOverviewDisplayRows(
 	assets: RWAOverviewDisplayRow[],
 	filterState: RWAFilterState
 ): RWAFilteredRowsResult {
-	const filteredSpotRows = filterRwaAssetOverviewRows(
-		assets.filter((asset): asset is RWAAssetOverviewRow => asset.kind === 'spot'),
-		filterState
-	)
-	const filteredPerpsRows = filterRwaPerpsContractOverlayRows(
-		assets.filter((asset): asset is RWAPerpsContractOverlayRow => asset.kind === 'perps'),
-		filterState
-	)
+	const preparedFilters = prepareRwaFilters(filterState)
+	const filteredSpotRows: RWAAssetOverviewRow[] = []
+	const filteredPerpsRows: RWAPerpsContractOverlayRow[] = []
+	const includePerps = filterState.includeRwaPerps && !filterState.hasPerpsOverlayBlockingFilters
+	for (const asset of assets) {
+		if (asset.kind === 'spot') {
+			if (matchesRwaAssetFilters(asset, filterState, preparedFilters)) filteredSpotRows.push(asset)
+		} else if (includePerps && matchesSharedRwaFilters(asset, preparedFilters)) {
+			filteredPerpsRows.push(asset)
+		}
+	}
 	const filteredAssets: RWAOverviewDisplayRow[] = [...filteredSpotRows, ...filteredPerpsRows]
 
 	let totalOnChainMcap = 0
@@ -211,53 +243,52 @@ export function getEmptyRwaFilteredRowsResult(): RWAFilteredRowsResult {
 		totalIssuersCount: 0
 	}
 }
-function matchesSharedRwaFilters(asset: RWAOverviewDisplayRow, filterState: RWAFilterState): boolean {
-	const selectedCategoriesSet = new Set(filterState.selectedCategories)
-	const selectedPlatformsSet = new Set(filterState.selectedPlatforms)
-	const selectedAssetGroupsSet = new Set(filterState.selectedAssetGroups)
-	const selectedAssetClassesSet = new Set(filterState.selectedAssetClasses)
-	const selectedRwaClassificationsSet = new Set(filterState.selectedRwaClassifications)
-	const selectedAccessModelsSet = new Set(filterState.selectedAccessModels)
-	const selectedIssuersSet = new Set(filterState.selectedIssuers)
-
+function matchesSharedRwaFilters(asset: RWAOverviewDisplayRow, filters: PreparedRwaFilters): boolean {
 	const assetGroup = normalizeRwaAssetGroup(asset.assetGroup)
-	const platforms = getRwaPlatforms(asset.parentPlatform).filter((platform) => platform !== UNKNOWN_PLATFORM)
+	const platform = asset.parentPlatform?.trim()
 
 	return (
-		(asset.category?.length ? asset.category.some((category) => selectedCategoriesSet.has(category)) : true) &&
-		(platforms.length > 0 ? platforms.some((platform) => selectedPlatformsSet.has(platform)) : true) &&
-		selectedAssetGroupsSet.has(assetGroup) &&
+		(asset.category?.length ? asset.category.some((category) => filters.selectedCategories.has(category)) : true) &&
+		(platform ? filters.selectedPlatforms.has(platform) : true) &&
+		filters.selectedAssetGroups.has(assetGroup) &&
 		(asset.assetClass?.length
-			? asset.assetClass.some((assetClass) => selectedAssetClassesSet.has(assetClass))
+			? asset.assetClass.some((assetClass) => filters.selectedAssetClasses.has(assetClass))
 			: true) &&
-		(asset.rwaClassification ? selectedRwaClassificationsSet.has(asset.rwaClassification) : true) &&
-		(asset.accessModel ? selectedAccessModelsSet.has(asset.accessModel) : true) &&
-		selectedIssuersSet.has(asset.issuer || 'Unknown')
+		(asset.rwaClassification ? filters.selectedRwaClassifications.has(asset.rwaClassification) : true) &&
+		(asset.accessModel ? filters.selectedAccessModels.has(asset.accessModel) : true) &&
+		filters.selectedIssuers.has(asset.issuer || 'Unknown')
 	)
 }
 
-function matchesAssetAttributeFilters(asset: RWAAssetOverviewRow, filterState: RWAFilterState): boolean {
-	const selectedRedeemableStatesSet = new Set(filterState.selectedRedeemableStates)
-	const selectedAttestationsStatesSet = new Set(filterState.selectedAttestationsStates)
-	const selectedCexListedStatesSet = new Set(filterState.selectedCexListedStates)
-	const selectedKycForMintRedeemStatesSet = new Set(filterState.selectedKycForMintRedeemStates)
-	const selectedKycAllowlistedWhitelistedToTransferHoldStatesSet = new Set(
-		filterState.selectedKycAllowlistedWhitelistedToTransferHoldStates
-	)
-	const selectedTransferableStatesSet = new Set(filterState.selectedTransferableStates)
-	const selectedSelfCustodyStatesSet = new Set(filterState.selectedSelfCustodyStates)
-
+function matchesAssetAttributeFilters(asset: RWAAssetOverviewRow, filters: PreparedRwaFilters): boolean {
 	return (
-		selectedRedeemableStatesSet.has(toAttributeFilterState(asset.redeemable)) &&
-		selectedAttestationsStatesSet.has(toAttributeFilterState(asset.attestations)) &&
-		selectedCexListedStatesSet.has(toAttributeFilterState(asset.cexListed)) &&
-		selectedKycForMintRedeemStatesSet.has(toAttributeFilterState(asset.kycForMintRedeem)) &&
-		selectedKycAllowlistedWhitelistedToTransferHoldStatesSet.has(
+		filters.selectedRedeemableStates.has(toAttributeFilterState(asset.redeemable)) &&
+		filters.selectedAttestationsStates.has(toAttributeFilterState(asset.attestations)) &&
+		filters.selectedCexListedStates.has(toAttributeFilterState(asset.cexListed)) &&
+		filters.selectedKycForMintRedeemStates.has(toAttributeFilterState(asset.kycForMintRedeem)) &&
+		filters.selectedKycAllowlistedWhitelistedToTransferHoldStates.has(
 			toAttributeFilterState(asset.kycAllowlistedWhitelistedToTransferHold)
 		) &&
-		selectedTransferableStatesSet.has(toAttributeFilterState(asset.transferable)) &&
-		selectedSelfCustodyStatesSet.has(toAttributeFilterState(asset.selfCustody))
+		filters.selectedTransferableStates.has(toAttributeFilterState(asset.transferable)) &&
+		filters.selectedSelfCustodyStates.has(toAttributeFilterState(asset.selfCustody))
 	)
+}
+
+function matchesRwaAssetFilters(
+	asset: RWAAssetOverviewRow,
+	filterState: RWAFilterState,
+	filters: PreparedRwaFilters
+): boolean {
+	if (filters.selectedAssetNames) {
+		const name = asset.assetName || asset.ticker
+		if (!filters.selectedAssetNames.has(name)) return false
+	}
+	if (!filterState.includeStablecoins && asset.stablecoin) return false
+	if (!filterState.includeGovernance && asset.governance) return false
+	if (!matchesAssetAttributeFilters(asset, filters)) return false
+	if (!matchesAssetRatioFilters(asset, filterState)) return false
+	if (!filters.selectedTypes.has(asset.type || 'Unknown')) return false
+	return matchesSharedRwaFilters(asset, filters)
 }
 
 function matchesAssetRatioFilters(asset: RWAAssetOverviewRow, filterState: RWAFilterState): boolean {
@@ -294,8 +325,8 @@ function meetsRatioPercent(
 	maxPercent: number | null
 ) {
 	if (minPercent == null && maxPercent == null) return true
-	// Ratio filters are query-driven; rows without a valid positive denominator must not pass a bounded ratio.
-	if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0) return false
+	// A zero denominator has no defined percentage and must not pass a bounded ratio.
+	if (denominator <= 0) return false
 	const percent = (numerator / denominator) * 100
 	if (minPercent != null && percent < minPercent) return false
 	if (maxPercent != null && percent > maxPercent) return false

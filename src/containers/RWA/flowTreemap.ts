@@ -1,4 +1,4 @@
-import { toUnixMsTimestamp } from './api'
+import { rwaUnixSecondsToMilliseconds } from './api'
 import type {
 	IRWAAssetsOverview,
 	IRWAFlowOverviewSplitPoint,
@@ -7,7 +7,7 @@ import type {
 } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import { sortRWAFlowRotationSeriesNames, type RWAFlowGrouping } from './flows'
-import { getPrimaryRwaCategory, getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
+import { getPrimaryRwaCategory } from './grouping'
 
 export type RWAFlowTreemapView = 'bar' | 'heatmap'
 export type RWAFlowTreemapSizeMetric = RWAChartMetricKey
@@ -88,7 +88,7 @@ export function buildRWAFlowTreemapWindowData(
 ): RWAFlowTreemapWindowData {
 	const seriesNames = new Set<string>()
 	const latestPoint = points[points.length - 1]
-	const latestTimestamp = latestPoint ? toUnixMsTimestamp(latestPoint.timestamp) : 0
+	const latestTimestamp = latestPoint ? rwaUnixSecondsToMilliseconds(latestPoint.timestamp) : 0
 	for (const point of points) {
 		for (const name in point) {
 			if (name !== 'timestamp') seriesNames.add(name)
@@ -109,8 +109,8 @@ export function buildRWAFlowTreemapWindowData(
 	const scanStart = Math.min(cutoff30d, windowStart)
 
 	for (let pointIndex = points.length - 1; pointIndex >= 0; pointIndex--) {
-		const point = points[pointIndex]
-		const timestamp = toUnixMsTimestamp(point.timestamp)
+		const point = points[pointIndex]!
+		const timestamp = rwaUnixSecondsToMilliseconds(point.timestamp)
 		if (timestamp <= scanStart) break
 		const in7d = timestamp > cutoff7d
 		const in30d = timestamp > cutoff30d
@@ -118,6 +118,7 @@ export function buildRWAFlowTreemapWindowData(
 		for (const name in point) {
 			if (name === 'timestamp') continue
 			const value = point[name]
+			if (value === undefined) continue
 			if (in30d) flow30d.set(name, (flow30d.get(name) ?? 0) + value)
 			if (in7d) flow7d.set(name, (flow7d.get(name) ?? 0) + value)
 			if (flows !== flow7d && flows !== flow30d && inSelectedWindow) {
@@ -137,7 +138,7 @@ export function aggregateRWAFlowTreemapWindow(
 	groupBy: RWAFlowGrouping
 ): Map<string, number> {
 	const latestPoint = points[points.length - 1]
-	const latestTimestamp = latestPoint ? toUnixMsTimestamp(latestPoint.timestamp) : 0
+	const latestTimestamp = latestPoint ? rwaUnixSecondsToMilliseconds(latestPoint.timestamp) : 0
 	const startTimestamp =
 		groupBy === 'cumulative'
 			? Number.NEGATIVE_INFINITY
@@ -147,12 +148,13 @@ export function aggregateRWAFlowTreemapWindow(
 	const flows = new Map<string, number>()
 
 	for (let pointIndex = points.length - 1; pointIndex >= 0; pointIndex--) {
-		const point = points[pointIndex]
-		const timestamp = toUnixMsTimestamp(point.timestamp)
+		const point = points[pointIndex]!
+		const timestamp = rwaUnixSecondsToMilliseconds(point.timestamp)
 		if (groupBy === 'daily' ? timestamp !== startTimestamp : timestamp <= startTimestamp) break
 		for (const name in point) {
 			if (name === 'timestamp') continue
 			const value = point[name]
+			if (value === undefined) continue
 			flows.set(name, (flows.get(name) ?? 0) + value)
 		}
 	}
@@ -254,10 +256,8 @@ export function buildRWAFlowTreemapSizeRowsFromAssets(
 			continue
 		}
 
-		const platforms = getRwaPlatforms(asset.parentPlatform)
-		if (platforms.length === 1 && platforms[0] === UNKNOWN_PLATFORM) continue
-		const weight = platforms.length > 0 ? 1 / platforms.length : 0
-		for (const platform of platforms) addSizeValues(rows, platform, values, weight)
+		const platform = asset.parentPlatform?.trim()
+		if (platform) addSizeValues(rows, platform, values)
 	}
 
 	return Array.from(rows, ([name, values]) => ({ name, ...values }))

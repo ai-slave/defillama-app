@@ -14,7 +14,7 @@ import {
 	type RWAPositionalChartDataset
 } from './chartDataset'
 import { isTypeIncludedByDefault, type RWAOverviewMode } from './constants'
-import { computeWeightedGroups, getPrimaryRwaCategory, getRwaPlatforms } from './grouping'
+import { computeWeightedGroups, getPrimaryRwaCategory, UNKNOWN_PLATFORM } from './grouping'
 
 export type RWAChartAggregationMode = 'total' | 'category' | 'assetClass' | 'assetName' | 'platform' | 'assetGroup'
 
@@ -48,24 +48,23 @@ export function buildRwaCanonicalMetricDataset(
 	const dimensions: RWAPositionalChartDataset['dimensions'] = onlyTotal
 		? ['timestamp', totalLabel]
 		: ['timestamp', totalLabel, ...seriesDimensions]
-	const source = new Array<RWAPositionalChartDataset['source'][number]>(dataset.source.length)
+	const source: RWAPositionalChartDataset['source'] = []
 
-	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
-		const input = dataset.source[rowIndex]
+	for (const input of dataset.source) {
 		const row: RWAPositionalChartDataset['source'][number] = [input.timestamp]
-		row.length = dimensions.length
 		if (onlyTotal) {
-			row[1] = input.Total ?? null
+			row.push(input.Total ?? null)
 		} else {
 			let total = 0
-			for (let seriesIndex = 0; seriesIndex < seriesDimensions.length; seriesIndex++) {
-				const value = input[seriesDimensions[seriesIndex]]
+			const values: Array<number | null> = []
+			for (const dimension of seriesDimensions) {
+				const value = input[dimension]
 				total += value ?? 0
-				row[seriesIndex + 2] = value ?? null
+				values.push(value ?? null)
 			}
-			row[1] = total
+			row.push(total, ...values)
 		}
-		source[rowIndex] = row
+		source.push(row)
 	}
 
 	return { source, dimensions }
@@ -83,28 +82,28 @@ export function buildRwaOpenInterestDataset(
 
 	if (contracts.size === 0 || dataset.source.length === 0) return emptyChartDataset()
 
-	let hasOpenInterestData = false
 	const source: RWAChartDataset['source'] = []
 	for (const row of dataset.source) {
 		let totalOpenInterest = 0
+		let hasOpenInterest = false
 
 		for (const contract of contracts) {
 			const value = row[contract]
 			if (value != null) {
-				hasOpenInterestData = true
+				hasOpenInterest = true
 				totalOpenInterest += value
 			}
 		}
 
-		source.push({
-			timestamp: row.timestamp,
-			[RWA_OPEN_INTEREST_SERIES_LABEL]: totalOpenInterest
-		})
+		if (hasOpenInterest) {
+			source.push({
+				timestamp: row.timestamp,
+				[RWA_OPEN_INTEREST_SERIES_LABEL]: totalOpenInterest
+			})
+		}
 	}
 
-	if (!hasOpenInterestData) {
-		return emptyChartDataset()
-	}
+	if (source.length === 0) return emptyChartDataset()
 
 	return {
 		source,
@@ -122,7 +121,6 @@ function buildAssetGroupMapping(
 		if (asset.kind !== 'spot') continue
 
 		const assetKey = asset.canonicalMarketId
-		if (!assetKey) continue
 
 		let weightedGroups: ReturnType<typeof computeWeightedGroups>
 		switch (mode) {
@@ -143,7 +141,12 @@ function buildAssetGroupMapping(
 				break
 			}
 			case 'platform':
-				weightedGroups = computeWeightedGroups(getRwaPlatforms(asset.parentPlatform))
+				weightedGroups = [
+					{
+						value: asset.parentPlatform?.trim() || UNKNOWN_PLATFORM,
+						weight: 1
+					}
+				]
 				break
 			case 'assetGroup': {
 				weightedGroups = computeWeightedGroups([normalizeRwaAssetGroup(asset.assetGroup)])
@@ -172,15 +175,14 @@ function aggregateMetricRows(
 ): RWAChartRow[] {
 	const out: RWAChartRow[] = []
 
-	for (const row of rows ?? []) {
-		const outRow = { timestamp: row.timestamp } as { timestamp: number } & Record<string, number | null> as RWAChartRow
+	for (const row of rows) {
+		const outRow: RWAChartRow = { timestamp: row.timestamp }
 		let hasData = false
 
 		for (const assetKey in row) {
-			if (!Object.prototype.hasOwnProperty.call(row, assetKey)) continue
 			if (assetKey === 'timestamp') continue
 			const value = row[assetKey]
-			if (value == null || value === 0) continue
+			if (value == null) continue
 
 			const groups = assetToGroups.get(assetKey)
 			if (!groups || groups.size === 0) continue

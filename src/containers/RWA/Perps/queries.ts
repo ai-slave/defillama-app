@@ -17,15 +17,13 @@ import type {
 	IRWAPerpsBreakdownChartResponse,
 	IRWAPerpsFundingHistoryPoint,
 	IRWAPerpsMarket,
-	IRWAPerpsMarketChartPoint,
-	IRWAPerpsStatsResponse
+	IRWAPerpsMarketChartPoint
 } from './api.types'
 import { toRWAPerpsBreakdownChartDataset } from './breakdownDataset'
 import { getRWAPerpsOverviewSnapshotBreakdownLabel, getRWAPerpsVenueSnapshotBreakdownLabel } from './breakdownLabels'
 import { getDefaultRWAPerpsChartBreakdown, getDefaultRWAPerpsChartView } from './chartState'
 import type { RWAPerpsTimeSeriesBreakdown } from './chartState'
 import type {
-	IRWAPerpsAssetGroupBreakdownRequest,
 	IRWAPerpsAssetGroupPageData,
 	IRWAPerpsAssetGroupsOverview,
 	IRWAPerpsAssetGroupsOverviewRow,
@@ -35,12 +33,15 @@ import type {
 	IRWAPerpsContractMarketChartPoint,
 	IRWAPerpsOverviewPageData,
 	IRWAPerpsOverviewBreakdownRequest,
-	IRWAPerpsVenueBreakdownRequest,
 	IRWAPerpsVenuePageData,
 	IRWAPerpsVenuesOverview,
 	IRWAPerpsVenuesOverviewRow,
 	RWAPerpsAssetGroupSnapshotBreakdown,
 	RWAPerpsChartMetricKey,
+	RWAPerpsAllChartTarget,
+	RWAPerpsAssetClassChartTarget,
+	RWAPerpsExcludeAssetClassChartTarget,
+	RWAPerpsChartTarget,
 	RWAPerpsChartView,
 	RWAPerpsOverviewTimeSeriesBreakdown,
 	RWAPerpsOverviewSnapshotBreakdown,
@@ -60,52 +61,39 @@ function shouldPreloadInitialChartDataset(activeView: RWAPerpsChartView) {
 	return activeView === 'timeSeries'
 }
 
-function safeNumber(value: unknown): number {
-	// Funding history DB DECIMAL fields and current estimated fees are passthrough values at their API boundaries.
-	const parsed = typeof value === 'number' ? value : Number(value)
-	return Number.isFinite(parsed) ? parsed : 0
-}
-
 function safeRatio(value: number, total: number): number {
-	// Stats are served from a passthrough API schema, and empty/invalid totals should not leak NaN shares into UI rows.
-	if (!Number.isFinite(value) || !Number.isFinite(total) || total <= 0) return 0
-	return value / total
-}
-
-function toUnixMsTimestamp(timestamp: number): number {
-	return timestamp > 1e12 ? timestamp : timestamp * 1e3
+	return total > 0 ? value / total : 0
 }
 
 function getPrimaryAssetClass(assetClass: string[] | null): string | null {
 	return assetClass?.[0] ?? null
 }
 
-function normalizeMarketChart(points: IRWAPerpsMarketChartPoint[] | null): IRWAPerpsContractMarketChartPoint[] | null {
-	if (!points?.length) return null
+function normalizeMarketChart(points: IRWAPerpsMarketChartPoint[]): IRWAPerpsContractMarketChartPoint[] | null {
+	if (points.length === 0) return null
 
 	return points.map((point) => ({
 		...point,
-		timestamp: toUnixMsTimestamp(point.timestamp)
+		timestamp: point.timestamp * 1e3
 	}))
 }
 
 function normalizeFundingHistory(
-	points: IRWAPerpsFundingHistoryPoint[] | null
+	points: IRWAPerpsFundingHistoryPoint[]
 ): IRWAPerpsContractFundingHistoryPoint[] | null {
-	if (!points?.length) return null
+	if (points.length === 0) return null
 
-	return points.map((point) => ({
-		timestamp: toUnixMsTimestamp(point.timestamp),
-		fundingRate: safeNumber(point.funding_rate),
-		premium: safeNumber(point.premium),
-		openInterest: safeNumber(point.open_interest),
-		fundingPayment: safeNumber(point.funding_payment)
-	}))
+	return points
 }
 
 function resolveContractMarket(markets: IRWAPerpsMarket[], contract: string): IRWAPerpsMarket | null {
-	const exactMatches = markets.filter((market) => market.contract === contract)
-	return exactMatches.length === 1 ? exactMatches[0] : null
+	let match: IRWAPerpsMarket | null = null
+	for (const market of markets) {
+		if (market.contract !== contract) continue
+		if (match) return null
+		match = market
+	}
+	return match
 }
 
 function buildSnapshotBreakdownTotals<TBreakdown extends SnapshotBreakdown>({
@@ -137,33 +125,18 @@ function buildSnapshotBreakdownTotals<TBreakdown extends SnapshotBreakdown>({
 		.sort((a, b) => b.value - a.value || a.name.localeCompare(b.name))
 }
 
-function assertHasAssetGroupBuckets(stats: IRWAPerpsStatsResponse | null): asserts stats is IRWAPerpsStatsResponse {
-	if (!stats?.byAssetGroup) {
-		throw new Error('Failed to get RWA perps asset-group stats')
-	}
-
-	for (const _assetGroup in stats.byAssetGroup) {
-		return
-	}
-
-	throw new Error('Failed to get RWA perps asset-group stats')
-}
-
 export function hasEnoughTimeSeriesHistory(dataset: RWAChartDataset) {
-	if ((dataset.source?.length ?? 0) === 0) return false
-	let hasSeriesDimension = false
-	for (const dimension of dataset.dimensions) {
-		if (dimension !== 'timestamp') {
-			hasSeriesDimension = true
-			break
-		}
-	}
-	if (!hasSeriesDimension) return false
-
-	const uniqueTimestamps = new Set<number>()
+	const firstTimestampBySeries = new Map<string, number>()
 	for (const row of dataset.source) {
-		uniqueTimestamps.add(row.timestamp)
-		if (uniqueTimestamps.size >= 2) return true
+		for (const series in row) {
+			if (series === 'timestamp' || row[series] == null) continue
+			const firstTimestamp = firstTimestampBySeries.get(series)
+			if (firstTimestamp === undefined) {
+				firstTimestampBySeries.set(series, row.timestamp)
+			} else if (firstTimestamp !== row.timestamp) {
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -174,18 +147,6 @@ export function groupRWAPerpsTimeSeriesDataset(dataset: RWAChartDataset): RWACha
 
 export function appendRWAPerpsTimeSeriesDatasetTotal(dataset: RWAChartDataset): RWAChartDataset {
 	return buildRwaChartDatasetTotal({ dataset })
-}
-
-function assertHasVenueBuckets(stats: IRWAPerpsStatsResponse | null): asserts stats is IRWAPerpsStatsResponse {
-	if (!stats?.byVenue) {
-		throw new Error('Failed to get RWA perps venue stats')
-	}
-
-	for (const _venue in stats.byVenue) {
-		return
-	}
-
-	throw new Error('Failed to get RWA perps venue stats')
 }
 
 function toVenueDetailLink(venue: string) {
@@ -202,7 +163,7 @@ export function sumMarketMetric(
 ) {
 	let total = 0
 	for (const market of markets) {
-		total += key === 'estimatedProtocolFees24h' ? safeNumber(market[key]) : market[key]
+		total += market[key]
 	}
 	return total
 }
@@ -211,17 +172,11 @@ function sortMarketsByOpenInterest(markets: IRWAPerpsMarket[]) {
 	return markets.toSorted((a, b) => b.openInterest - a.openInterest)
 }
 
-function derivePreviousValueFromPercentChange(
-	currentValue: number,
-	percentChange: number | null | undefined
-): number | null {
-	// Aggregate change math combines optional per-market changes; malformed or degenerate rows are not comparable.
-	if (!Number.isFinite(currentValue) || currentValue < 0 || percentChange == null || !Number.isFinite(percentChange)) {
-		return null
-	}
+function derivePreviousValueFromPercentChange(currentValue: number, percentChange: number | null): number | null {
+	if (percentChange == null) return null
 
 	const denominator = 1 + percentChange / 100
-	if (!Number.isFinite(denominator) || denominator <= 0) return null
+	if (denominator <= 0) return null
 
 	return currentValue / denominator
 }
@@ -281,7 +236,7 @@ export async function getRWAPerpsContractData({
 }): Promise<IRWAPerpsContractData | null> {
 	try {
 		const markets = await fetchRWAPerpsMarketsByContract(contract)
-		if (!markets?.length) {
+		if (markets.length === 0) {
 			return null
 		}
 
@@ -385,10 +340,7 @@ function toAssetGroupDetailLink(assetGroup: string) {
 }
 
 async function getRequiredOverviewBreakdownRows(
-	request:
-		| (IRWAPerpsOverviewBreakdownRequest & { venue?: string; assetGroup?: string })
-		| IRWAPerpsVenueBreakdownRequest
-		| IRWAPerpsAssetGroupBreakdownRequest
+	request: IRWAPerpsOverviewBreakdownRequest
 ): Promise<IRWAPerpsBreakdownChartResponse> {
 	const rows = await fetchRWAPerpsOverviewBreakdownChartData(request)
 	if (!rows) throw new Error('Failed to get RWA perps breakdown chart data')
@@ -403,27 +355,10 @@ async function getRequiredContractBreakdownRows(
 	return rows
 }
 
-export async function getRWAPerpsBreakdownChartDataset({
-	breakdown,
-	key,
-	venue,
-	assetGroup,
-	assetClass,
-	excludeAssetClass
-}: IRWAPerpsOverviewBreakdownRequest & {
-	venue?: string
-	assetGroup?: string
-	assetClass?: string
-	excludeAssetClass?: string
-}): Promise<RWAChartDataset> {
-	const rows = await getRequiredOverviewBreakdownRows({
-		breakdown,
-		key,
-		venue,
-		assetGroup,
-		assetClass,
-		excludeAssetClass
-	})
+export async function getRWAPerpsBreakdownChartDataset(
+	request: IRWAPerpsOverviewBreakdownRequest
+): Promise<RWAChartDataset> {
+	const rows = await getRequiredOverviewBreakdownRows(request)
 	return toRWAPerpsBreakdownChartDataset(rows)
 }
 
@@ -436,65 +371,45 @@ export async function getRWAPerpsContractBreakdownChartDataset(
 
 async function getInitialTimeSeriesDataset({
 	mode,
-	venue,
-	assetGroup,
-	assetClass,
-	excludeAssetClass,
+	target,
 	defaultTimeSeriesBreakdown
 }: {
 	mode: 'overview' | 'venue' | 'assetGroup'
-	venue?: string
-	assetGroup?: string
-	assetClass?: string
-	excludeAssetClass?: string
+	target: RWAPerpsChartTarget
 	defaultTimeSeriesBreakdown?: RWAPerpsTimeSeriesBreakdown
 }): Promise<RWAChartDataset> {
-	const defaultBreakdown = getDefaultRWAPerpsChartBreakdown(mode, 'timeSeries', {
-		timeSeriesBreakdown: defaultTimeSeriesBreakdown
-	})
+	const chartDefaults = defaultTimeSeriesBreakdown ? { timeSeriesBreakdown: defaultTimeSeriesBreakdown } : undefined
+	const defaultBreakdown = getDefaultRWAPerpsChartBreakdown(mode, 'timeSeries', chartDefaults)
 	if (defaultBreakdown === 'contract') {
 		return getRWAPerpsContractBreakdownChartDataset({
 			key: 'openInterest',
-			venue,
-			assetGroup,
-			assetClass,
-			excludeAssetClass
+			target
 		})
 	}
 
 	return getRWAPerpsBreakdownChartDataset({
-		breakdown: defaultBreakdown as IRWAPerpsOverviewBreakdownRequest['breakdown'],
+		breakdown: defaultBreakdown,
 		key: 'openInterest',
-		venue,
-		assetGroup,
-		assetClass,
-		excludeAssetClass
+		target
 	})
 }
 
 export async function getRWAPerpsOverview({
 	activeView = getDefaultRWAPerpsChartView('overview'),
-	assetClass,
-	excludeAssetClass,
+	target = { kind: 'all' },
 	defaultTimeSeriesBreakdown
 }: {
 	activeView?: RWAPerpsChartView
-	assetClass?: string
-	excludeAssetClass?: string
+	target?: RWAPerpsAllChartTarget | RWAPerpsAssetClassChartTarget | RWAPerpsExcludeAssetClassChartTarget
 	defaultTimeSeriesBreakdown?: RWAPerpsOverviewTimeSeriesBreakdown
 } = {}): Promise<IRWAPerpsOverviewPageData> {
 	const [stats, current] = await Promise.all([fetchRWAPerpsStats(), fetchRWAPerpsCurrent()])
 
-	if (!stats || !current) {
-		throw new Error('Failed to get RWA perps overview')
-	}
-
 	const initialChartDataset = shouldPreloadInitialChartDataset(activeView)
 		? await getInitialTimeSeriesDataset({
 				mode: 'overview',
-				assetClass,
-				excludeAssetClass,
-				defaultTimeSeriesBreakdown
+				target,
+				...(defaultTimeSeriesBreakdown ? { defaultTimeSeriesBreakdown } : {})
 			})
 		: EMPTY_CHART_DATASET
 	const totalOpenInterest = sumMarketMetric(current, 'openInterest')
@@ -523,7 +438,6 @@ export async function getRWAPerpsVenuePage({
 	activeView?: RWAPerpsChartView
 }): Promise<IRWAPerpsVenuePageData | null> {
 	const [list, stats] = await Promise.all([fetchRWAPerpsList(), fetchRWAPerpsStats()])
-	if (!list || !stats) return null
 
 	const resolvedVenue = findByRwaSlug(venue, list.venues)
 	if (!resolvedVenue) return null
@@ -535,7 +449,7 @@ export async function getRWAPerpsVenuePage({
 	if (markets.length === 0) return null
 
 	const initialChartDataset = shouldPreloadInitialChartDataset(activeView)
-		? await getInitialTimeSeriesDataset({ mode: 'venue', venue: resolvedVenue })
+		? await getInitialTimeSeriesDataset({ mode: 'venue', target: { kind: 'venue', slug: resolvedVenue } })
 		: EMPTY_CHART_DATASET
 
 	const statsBucket = stats.byVenue?.[resolvedVenue]
@@ -562,16 +476,19 @@ export async function getRWAPerpsVenuePage({
 }
 
 export async function getRWAPerpsVenuesOverview(): Promise<IRWAPerpsVenuesOverview> {
-	const stats = await fetchRWAPerpsStats()
-	assertHasVenueBuckets(stats)
-	const initialChartDataset = await getRWAPerpsBreakdownChartDataset({
-		breakdown: 'venue',
-		key: 'openInterest'
-	})
+	const [stats, initialChartDataset] = await Promise.all([
+		fetchRWAPerpsStats(),
+		getRWAPerpsBreakdownChartDataset({
+			breakdown: 'venue',
+			key: 'openInterest',
+			target: { kind: 'all' }
+		})
+	])
 
 	const rows: IRWAPerpsVenuesOverviewRow[] = []
 	for (const venue in stats.byVenue) {
 		const bucket = stats.byVenue[venue]
+		if (!bucket) continue
 		rows.push({
 			venue,
 			openInterest: bucket.openInterest,
@@ -596,7 +513,6 @@ export async function getRWAPerpsAssetGroupPage({
 	activeView?: RWAPerpsChartView
 }): Promise<IRWAPerpsAssetGroupPageData | null> {
 	const [list, stats] = await Promise.all([fetchRWAPerpsList(), fetchRWAPerpsStats()])
-	if (!list || !stats) return null
 
 	const resolvedAssetGroup = findByRwaSlug(assetGroup, list.assetGroups)
 	if (!resolvedAssetGroup) return null
@@ -605,7 +521,10 @@ export async function getRWAPerpsAssetGroupPage({
 	if (!markets?.length) return null
 
 	const initialChartDataset = shouldPreloadInitialChartDataset(activeView)
-		? await getInitialTimeSeriesDataset({ mode: 'assetGroup', assetGroup: resolvedAssetGroup })
+		? await getInitialTimeSeriesDataset({
+				mode: 'assetGroup',
+				target: { kind: 'assetGroup', slug: resolvedAssetGroup }
+			})
 		: EMPTY_CHART_DATASET
 
 	const statsBucket = stats.byAssetGroup?.[resolvedAssetGroup]
@@ -632,16 +551,19 @@ export async function getRWAPerpsAssetGroupPage({
 }
 
 export async function getRWAPerpsAssetGroupsOverview(): Promise<IRWAPerpsAssetGroupsOverview> {
-	const stats = await fetchRWAPerpsStats()
-	assertHasAssetGroupBuckets(stats)
-	const initialChartDataset = await getRWAPerpsBreakdownChartDataset({
-		breakdown: 'assetGroup',
-		key: 'openInterest'
-	})
+	const [stats, initialChartDataset] = await Promise.all([
+		fetchRWAPerpsStats(),
+		getRWAPerpsBreakdownChartDataset({
+			breakdown: 'assetGroup',
+			key: 'openInterest',
+			target: { kind: 'all' }
+		})
+	])
 
 	const rows: IRWAPerpsAssetGroupsOverviewRow[] = []
 	for (const assetGroup in stats.byAssetGroup) {
 		const bucket = stats.byAssetGroup[assetGroup]
+		if (!bucket) continue
 		rows.push({
 			assetGroup,
 			openInterest: bucket.openInterest,

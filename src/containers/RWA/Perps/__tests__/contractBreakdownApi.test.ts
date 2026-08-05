@@ -28,7 +28,8 @@ describe('parseContractBreakdownRequest', () => {
 				}
 			})
 		).toEqual({
-			key: 'markets'
+			key: 'markets',
+			target: { kind: 'all' }
 		})
 	})
 
@@ -41,8 +42,8 @@ describe('parseContractBreakdownRequest', () => {
 				}
 			})
 		).toEqual({
-			venue: 'xyz',
-			key: 'openInterest'
+			key: 'openInterest',
+			target: { kind: 'venue', slug: 'xyz' }
 		})
 
 		expect(
@@ -53,8 +54,8 @@ describe('parseContractBreakdownRequest', () => {
 				}
 			})
 		).toEqual({
-			assetGroup: 'US Equities',
-			key: 'volume24h'
+			key: 'volume24h',
+			target: { kind: 'assetGroup', slug: 'US Equities' }
 		})
 
 		expect(
@@ -65,8 +66,8 @@ describe('parseContractBreakdownRequest', () => {
 				}
 			})
 		).toEqual({
-			assetClass: 'Forex Perps',
-			key: 'markets'
+			key: 'markets',
+			target: { kind: 'assetClass', slug: 'Forex Perps' }
 		})
 
 		expect(
@@ -77,8 +78,8 @@ describe('parseContractBreakdownRequest', () => {
 				}
 			})
 		).toEqual({
-			excludeAssetClass: 'Forex Perps',
-			key: 'markets'
+			key: 'markets',
+			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' }
 		})
 	})
 

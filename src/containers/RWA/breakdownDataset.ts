@@ -22,35 +22,30 @@ export function toRwaPositionalChartDataset(
 ): RWAPositionalChartDataset {
 	if (!rows || rows.length === 0) return { source: [], dimensions: ['timestamp'] }
 
-	const appendTotal = totalLabel != null
 	const seenSeries = new Set<string>()
 	for (const row of rows) {
 		for (const series in row) {
-			if (series === 'timestamp' || (appendTotal && (series === 'Total' || isRwaTotalSeriesLabel(series)))) continue
+			if (series === 'timestamp' || (totalLabel && (series === 'Total' || isRwaTotalSeriesLabel(series)))) continue
 			seenSeries.add(series)
 		}
 	}
 
 	const seriesDimensions = [...seenSeries]
-	const dimensions: RWAPositionalChartDataset['dimensions'] = appendTotal
+	const dimensions: RWAPositionalChartDataset['dimensions'] = totalLabel
 		? ['timestamp', totalLabel, ...seriesDimensions]
 		: ['timestamp', ...seriesDimensions]
-	const source = new Array<RWAPositionalChartDataset['source'][number]>(rows.length)
-	for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-		const input = rows[rowIndex]
+	const source: RWAPositionalChartDataset['source'] = []
+	for (const input of rows) {
 		const output: RWAPositionalChartDataset['source'][number] = [input.timestamp]
-		output.length = dimensions.length
-		let offset = 1
-		if (appendTotal) {
+		if (totalLabel) {
 			let total = 0
 			for (const series of seriesDimensions) total += input[series] ?? 0
-			output[1] = total
-			offset = 2
+			output.push(total)
 		}
-		for (let seriesIndex = 0; seriesIndex < seriesDimensions.length; seriesIndex++) {
-			output[seriesIndex + offset] = input[seriesDimensions[seriesIndex]] ?? null
+		for (const series of seriesDimensions) {
+			output.push(input[series] ?? null)
 		}
-		source[rowIndex] = output
+		source.push(output)
 	}
 
 	return { source, dimensions }

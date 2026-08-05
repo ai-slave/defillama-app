@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useQuery } from '@tanstack/react-query'
+import { skipToken, useQuery } from '@tanstack/react-query'
 import { createColumnHelper, type VisibilityState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo, useState, type ReactNode } from 'react'
@@ -7,7 +7,7 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
-import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
@@ -28,8 +28,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import {
 	limitRwaHorizontalBarData,
 	toRwaMultiSeriesChartDataset,
-	type RWAChartDataset,
-	type RWAChartRow
+	type RWAChartDataset
 } from '~/containers/RWA/chartDataset'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -41,6 +40,7 @@ import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dial
 import { Icon } from '~/ui/Icon'
 import { LoadingDots } from '~/ui/Loaders'
 import { PercentChange } from '~/ui/PercentChange'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
@@ -53,13 +53,9 @@ import {
 	pushShallowQuery,
 	toNonEmptyArrayParam
 } from '~/utils/routerQuery'
+import { setRWAPerpsChartTarget } from './api'
 import type { IRWAPerpsMarket } from './api.types'
-import {
-	getRWAPerpsAssetGroupBreakdownLabel,
-	getRWAPerpsBaseAssetBreakdownLabel,
-	getRWAPerpsOverviewBreakdownLabel,
-	getRWAPerpsVenueBreakdownLabel
-} from './breakdownLabels'
+import { getRWAPerpsAssetGroupBreakdownLabel, getRWAPerpsBaseAssetBreakdownLabel } from './breakdownLabels'
 import {
 	getDefaultRWAPerpsChartBreakdown,
 	getRWAPerpsBreakdownLabel,
@@ -82,6 +78,12 @@ import {
 	setRWAPerpsTreemapNestedBy,
 	setRWAPerpsChartView
 } from './chartState'
+import type { RWAPerpsChartDefaults } from './chartState'
+import {
+	buildRWAPerpsTimeSeriesCharts,
+	buildRWAPerpsTimeSeriesDatasetForRows,
+	getRWAPerpsIncludedRows
+} from './dashboardData'
 import { perpsDefinitions as d } from './definitions'
 import {
 	buildRWAPerpsAssetGroupSnapshotBreakdownTotals,
@@ -98,24 +100,15 @@ import {
 import { buildRWAPerpsTreemapTreeData } from './treemap'
 import type {
 	IRWAPerpsAssetGroupPageData,
-	RWAPerpsAssetGroupBreakdown,
 	IRWAPerpsContractBreakdownRequest,
 	IRWAPerpsMarketBreakdownRequest,
-	RWAPerpsOverviewBreakdown,
 	IRWAPerpsOverviewBreakdownRequest,
 	IRWAPerpsOverviewPageData,
 	IRWAPerpsVenuePageData,
-	RWAPerpsVenueBreakdown,
-	RWAPerpsAssetGroupSnapshotBreakdown,
 	RWAPerpsAssetGroupTimeSeriesBreakdown,
-	RWAPerpsAssetGroupTreemapBreakdown,
-	RWAPerpsChartMode,
+	RWAPerpsChartTarget,
 	RWAPerpsOverviewTimeSeriesBreakdown,
-	RWAPerpsOverviewSnapshotBreakdown,
-	RWAPerpsOverviewTreemapBreakdown,
-	RWAPerpsVenueSnapshotBreakdown,
-	RWAPerpsVenueTimeSeriesBreakdown,
-	RWAPerpsVenueTreemapBreakdown
+	RWAPerpsVenueTimeSeriesBreakdown
 } from './types'
 
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -240,11 +233,6 @@ type RWAPerpsActiveFilterPill = {
 	onRemove: () => void
 }
 
-type RWAPerpsTimeSeriesBreakdownForMode =
-	| RWAPerpsOverviewBreakdown
-	| RWAPerpsVenueBreakdown
-	| RWAPerpsAssetGroupBreakdown
-
 type RWAPerpsDashboardProps = (
 	| {
 			mode: 'overview'
@@ -283,6 +271,9 @@ const overviewColumns = [
 				>
 					{info.row.original.contract}
 				</BasicLink>
+				{info.row.original.suspicious ? (
+					<QuestionHelper text="This market is marked as suspicious and is excluded from cross-venue totals and charts." />
+				) : null}
 			</span>
 		),
 		meta: {
@@ -1480,126 +1471,6 @@ function RWAPerpsDraftFilterEditor({
 	)
 }
 
-function getTimeSeriesBreakdownLabel({
-	mode,
-	row,
-	breakdown
-}: {
-	mode: RWAPerpsChartMode
-	row: IRWAPerpsMarket
-	breakdown: RWAPerpsTimeSeriesBreakdownForMode
-}) {
-	if (mode === 'venue') {
-		return getRWAPerpsVenueBreakdownLabel(row, breakdown as RWAPerpsVenueBreakdown)
-	}
-
-	return getRWAPerpsOverviewBreakdownLabel(row, breakdown as RWAPerpsOverviewBreakdown)
-}
-
-function getRWAPerpsTimeSeriesDatasetDimensions(source: RWAChartDataset['source']) {
-	const latestValueBySeries = new Map<string, number>()
-
-	for (let rowIndex = source.length - 1; rowIndex >= 0; rowIndex--) {
-		const row = source[rowIndex]
-
-		for (const series in row) {
-			if (series === 'timestamp' || latestValueBySeries.has(series)) continue
-			latestValueBySeries.set(series, row[series] ?? 0)
-		}
-	}
-
-	return [
-		'timestamp',
-		...[...latestValueBySeries.entries()]
-			.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-			.map(([series]) => series)
-	]
-}
-
-export function buildRWAPerpsTimeSeriesDatasetForRows({
-	dataset,
-	rows,
-	mode,
-	breakdown,
-	seriesKey = 'contract'
-}: {
-	dataset: RWAChartDataset
-	rows: IRWAPerpsMarket[]
-	mode: RWAPerpsChartMode
-	breakdown: RWAPerpsTimeSeriesBreakdownForMode
-	seriesKey?: 'contract' | 'id'
-}): RWAChartDataset {
-	if (dataset.source.length === 0 || rows.length === 0) return EMPTY_DATASET
-
-	const labelBySeries = new Map<string, string>()
-
-	for (const row of rows) {
-		labelBySeries.set(
-			seriesKey === 'id' ? row.id : row.contract,
-			getTimeSeriesBreakdownLabel({
-				mode,
-				row,
-				breakdown
-			})
-		)
-	}
-
-	if (labelBySeries.size === 0) return EMPTY_DATASET
-
-	const source = dataset.source.map((row) => {
-		const nextRow = { timestamp: row.timestamp } as { timestamp: number } & Record<string, number | null> as RWAChartRow
-
-		for (const [series, label] of labelBySeries) {
-			const value = row[series]
-			if (value == null) continue
-
-			nextRow[label] = (nextRow[label] ?? 0) + value
-		}
-
-		return nextRow
-	})
-	const dimensions = getRWAPerpsTimeSeriesDatasetDimensions(source)
-
-	return dimensions.length > 1 ? { source, dimensions } : EMPTY_DATASET
-}
-
-export function buildRWAPerpsTimeSeriesCharts({
-	metric,
-	dimensions,
-	timeSeriesMode
-}: {
-	metric: 'openInterest' | 'volume24h' | 'markets'
-	dimensions: string[]
-	timeSeriesMode: 'grouped' | 'breakdown'
-}): Array<MultiSeriesChartSeriesConfig> {
-	const seriesType: MultiSeriesChartSeriesConfig['type'] = metric === 'volume24h' ? 'bar' : 'line'
-	const seriesKeys = dimensions.filter((dimension) => dimension !== 'timestamp')
-	const hasTotalOverlay = timeSeriesMode === 'breakdown' && metric !== 'volume24h' && seriesKeys.includes('Total')
-	const breakdownSeries = seriesKeys.filter((seriesName) => !(hasTotalOverlay && seriesName === 'Total'))
-
-	return [
-		...breakdownSeries.map((seriesName, index) => ({
-			name: seriesName,
-			type: seriesType,
-			...(metric === 'volume24h' ? { stack: 'A', large: false } : {}),
-			encode: { x: 'timestamp', y: seriesName },
-			color: CHART_COLORS[(index + (hasTotalOverlay ? 1 : 0)) % CHART_COLORS.length]
-		})),
-		...(hasTotalOverlay
-			? [
-					{
-						name: 'Total',
-						type: 'line' as const,
-						encode: { x: 'timestamp', y: 'Total' },
-						color: CHART_COLORS[0],
-						hideAreaStyle: true,
-						excludeFromTooltipTotal: true
-					}
-				]
-			: [])
-	]
-}
-
 const StatCard = ({
 	label,
 	tooltip,
@@ -1648,17 +1519,12 @@ const StatCard = ({
 	)
 }
 
-function fetchOverviewTimeSeriesDataset(
-	request: IRWAPerpsOverviewBreakdownRequest & { venue?: string; assetGroup?: string }
-): Promise<RWAChartDataset> {
+function fetchOverviewTimeSeriesDataset(request: IRWAPerpsOverviewBreakdownRequest): Promise<RWAChartDataset> {
 	const searchParams = new URLSearchParams({
 		breakdown: request.breakdown,
 		key: request.key
 	})
-	if (request.venue) searchParams.set('venue', request.venue)
-	if (request.assetGroup) searchParams.set('assetGroup', request.assetGroup)
-	if (request.assetClass) searchParams.set('assetClass', request.assetClass)
-	if (request.excludeAssetClass) searchParams.set('excludeAssetClass', request.excludeAssetClass)
+	setRWAPerpsChartTarget(searchParams, request.target)
 
 	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/overview-breakdown?${searchParams.toString()}`)
 }
@@ -1667,10 +1533,7 @@ function fetchContractTimeSeriesDataset(request: IRWAPerpsContractBreakdownReque
 	const searchParams = new URLSearchParams({
 		key: request.key
 	})
-	if (request.venue) searchParams.set('venue', request.venue)
-	if (request.assetGroup) searchParams.set('assetGroup', request.assetGroup)
-	if (request.assetClass) searchParams.set('assetClass', request.assetClass)
-	if (request.excludeAssetClass) searchParams.set('excludeAssetClass', request.excludeAssetClass)
+	setRWAPerpsChartTarget(searchParams, request.target)
 
 	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/contract-breakdown?${searchParams.toString()}`)
 }
@@ -1679,16 +1542,50 @@ function fetchMarketTimeSeriesDataset(request: IRWAPerpsMarketBreakdownRequest):
 	const searchParams = new URLSearchParams({
 		key: request.key
 	})
-	if (request.assetClass) searchParams.set('assetClass', request.assetClass)
-	if (request.excludeAssetClass) searchParams.set('excludeAssetClass', request.excludeAssetClass)
+	setRWAPerpsChartTarget(searchParams, request.target)
 
 	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/market-breakdown?${searchParams.toString()}`)
 }
 
 export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const router = useRouter()
-	const chartDefaults = { timeSeriesBreakdown: props.defaultTimeSeriesBreakdown }
-	const chartState = parseRWAPerpsChartState(router.query, props.mode, chartDefaults)
+	const {
+		chartType,
+		chartView,
+		nonTimeSeriesChartBreakdown,
+		timeSeriesChartBreakdown,
+		timeSeriesMode,
+		treemapNestedBy
+	} = router.query
+	const chartDefaults = useMemo<RWAPerpsChartDefaults>(
+		() => (props.defaultTimeSeriesBreakdown ? { timeSeriesBreakdown: props.defaultTimeSeriesBreakdown } : {}),
+		[props.defaultTimeSeriesBreakdown]
+	)
+	const chartState = useMemo(
+		() =>
+			parseRWAPerpsChartState(
+				{
+					chartType,
+					chartView,
+					nonTimeSeriesChartBreakdown,
+					timeSeriesChartBreakdown,
+					timeSeriesMode,
+					treemapNestedBy
+				},
+				props.mode,
+				chartDefaults
+			),
+		[
+			chartType,
+			chartView,
+			chartDefaults,
+			nonTimeSeriesChartBreakdown,
+			props.mode,
+			timeSeriesChartBreakdown,
+			timeSeriesMode,
+			treemapNestedBy
+		]
+	)
 	const volumeGroupBy = parseRWAPerpsVolumeGroupBy(router.query.groupBy)
 	const chartMetricLabel = getRWAPerpsChartMetricLabel(chartState.metric, d)
 	const chartMetricOptions = getRWAPerpsChartMetricOptions(d)
@@ -1703,10 +1600,8 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			? ([{ key: 'total', name: 'Total' }, ...chartBreakdownOptions] as const)
 			: chartBreakdownOptions
 	const showBreakdownSelect = chartBreakdownOptions.length > 1
-	const treemapBreakdown = chartState.breakdown as
-		| RWAPerpsOverviewTreemapBreakdown
-		| RWAPerpsVenueTreemapBreakdown
-		| RWAPerpsAssetGroupTreemapBreakdown
+	const treemapBreakdown =
+		chartState.view === 'treemap' ? chartState.breakdown : getDefaultRWAPerpsChartBreakdown(chartState.mode, 'treemap')
 	const treemapNestedByOptions = getRWAPerpsTreemapNestedByOptions(props.mode, treemapBreakdown, d)
 	const showTreemapNestedBySelect = chartState.view === 'treemap' && treemapNestedByOptions.length > 1
 	const treemapNestedByLabel = getRWAPerpsTreemapNestedByLabel(chartState.treemapNestedBy, d)
@@ -1814,20 +1709,21 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			return true
 		})
 	}, [activeMarketFilters, hasActiveMarketFilters, rowsBeforeUserFilters])
-	const isRowsFiltered = currentRows !== props.data.markets
+	const includedRows = getRWAPerpsIncludedRows(currentRows, props.mode)
+	const isTotalsPopulationFiltered = includedRows !== props.data.markets
 	const computedTotals = useMemo(
 		() =>
-			isRowsFiltered
+			isTotalsPopulationFiltered
 				? {
-						openInterest: sumMarketMetric(currentRows, 'openInterest'),
-						openInterestChange24h: getAggregateOpenInterestChange24h(currentRows),
-						volume24h: sumMarketMetric(currentRows, 'volume24h'),
-						volume24hChange24h: getAggregateVolume24hChange24h(currentRows),
-						markets: currentRows.length,
-						protocolFees24h: sumProtocolFees24h(currentRows)
+						openInterest: sumMarketMetric(includedRows, 'openInterest'),
+						openInterestChange24h: getAggregateOpenInterestChange24h(includedRows),
+						volume24h: sumMarketMetric(includedRows, 'volume24h'),
+						volume24hChange24h: getAggregateVolume24hChange24h(includedRows),
+						markets: includedRows.length,
+						protocolFees24h: sumProtocolFees24h(includedRows)
 					}
 				: null,
-		[currentRows, isRowsFiltered]
+		[includedRows, isTotalsPopulationFiltered]
 	)
 	const displayTotals = computedTotals ?? props.data.totals
 	const timeSeriesAssetClass = assetClassFilter
@@ -1836,21 +1732,30 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		void pushShallowQuery(router, { includeForex: includeForex ? undefined : 'true' })
 	}
 	const initialChartDataset = props.data.initialChartDataset
-	const venueLabel = isVenueMode ? props.data.venue : undefined
+	const venueLabel = props.mode === 'venue' ? props.data.venue : null
+	const assetGroupLabel = props.mode === 'assetGroup' ? props.data.assetGroup : null
+	const treemapScope = useMemo(() => {
+		if (venueLabel !== null) return { mode: 'venue', scopeLabel: venueLabel } as const
+		if (assetGroupLabel !== null) return { mode: 'assetGroup', scopeLabel: assetGroupLabel } as const
+		return { mode: 'overview' } as const
+	}, [assetGroupLabel, venueLabel])
 	const targetQueryValue = isVenueMode ? props.data.venue : isAssetGroupMode ? props.data.assetGroup : 'all'
 	const timeSeriesSource = hasActiveMarketFilters
 		? 'market-breakdown'
 		: chartState.breakdown === 'contract'
 			? 'contract-breakdown'
 			: 'overview-breakdown'
-	const timeSeriesClassParams = {
-		...(timeSeriesAssetClass ? { assetClass: timeSeriesAssetClass } : {}),
-		...(timeSeriesExcludeAssetClass ? { excludeAssetClass: timeSeriesExcludeAssetClass } : {})
-	}
-	const timeSeriesTargetParams = {
-		...(isVenueMode ? { venue: props.data.venue } : {}),
-		...(isAssetGroupMode ? { assetGroup: props.data.assetGroup } : {})
-	}
+	const timeSeriesClassTarget: RWAPerpsChartTarget | null = timeSeriesAssetClass
+		? { kind: 'assetClass', slug: timeSeriesAssetClass }
+		: timeSeriesExcludeAssetClass
+			? { kind: 'excludeAssetClass', slug: timeSeriesExcludeAssetClass }
+			: null
+	const pageTarget: RWAPerpsChartTarget = isVenueMode
+		? { kind: 'venue', slug: props.data.venue }
+		: isAssetGroupMode
+			? { kind: 'assetGroup', slug: props.data.assetGroup }
+			: { kind: 'all' }
+	const timeSeriesTarget = timeSeriesClassTarget ?? pageTarget
 	const isDefaultTimeSeriesState =
 		chartState.view === 'timeSeries' &&
 		chartState.metric === 'openInterest' &&
@@ -1861,6 +1766,30 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const canUseInitialTimeSeriesDataset = !hasActiveMarketFilters && (!showForexToggle || !includeForex)
 	const shouldUseInitialTimeSeriesDataset =
 		isDefaultTimeSeriesState && hasPreloadedTimeSeriesDataset && canUseInitialTimeSeriesDataset
+	const timeSeriesQueryFn =
+		chartState.view === 'timeSeries'
+			? () => {
+					if (hasActiveMarketFilters) {
+						return fetchMarketTimeSeriesDataset({
+							key: chartState.metric,
+							target: timeSeriesClassTarget ?? { kind: 'all' }
+						})
+					}
+					if (chartState.breakdown === 'contract') {
+						return fetchContractTimeSeriesDataset({
+							key: chartState.metric,
+							target: timeSeriesTarget
+						})
+					}
+					return fetchOverviewTimeSeriesDataset({
+						breakdown: chartState.breakdown,
+						key: chartState.metric,
+						target: timeSeriesTarget
+					})
+				}
+			: skipToken
+	const isTimeSeriesQueryEnabled =
+		chartState.view === 'timeSeries' && !shouldUseInitialTimeSeriesDataset && includedRows.length > 0
 
 	const timeSeriesQuery = useQuery({
 		queryKey: [
@@ -1873,32 +1802,11 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			timeSeriesExcludeAssetClass,
 			timeSeriesSource
 		],
-		queryFn: () => {
-			switch (timeSeriesSource) {
-				case 'market-breakdown':
-					return fetchMarketTimeSeriesDataset({
-						key: chartState.metric,
-						...timeSeriesClassParams
-					})
-				case 'contract-breakdown':
-					return fetchContractTimeSeriesDataset({
-						key: chartState.metric,
-						...timeSeriesTargetParams,
-						...timeSeriesClassParams
-					})
-				case 'overview-breakdown':
-					return fetchOverviewTimeSeriesDataset({
-						breakdown: chartState.breakdown as IRWAPerpsOverviewBreakdownRequest['breakdown'],
-						key: chartState.metric,
-						...timeSeriesTargetParams,
-						...timeSeriesClassParams
-					})
-			}
-		},
+		queryFn: timeSeriesQueryFn,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		enabled: chartState.view === 'timeSeries' && !shouldUseInitialTimeSeriesDataset && currentRows.length > 0
+		enabled: isTimeSeriesQueryEnabled
 	})
 
 	const fetchedTimeSeriesDataset =
@@ -1906,24 +1814,16 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			? initialChartDataset
 			: (timeSeriesQuery.data ?? EMPTY_DATASET)
 	const rawTimeSeriesDataset = useMemo(() => {
-		if (!isTimeSeriesView) return EMPTY_DATASET
+		if (chartState.view !== 'timeSeries') return EMPTY_DATASET
 		return hasActiveMarketFilters
 			? buildRWAPerpsTimeSeriesDatasetForRows({
 					dataset: fetchedTimeSeriesDataset,
-					rows: currentRows,
-					mode: props.mode,
-					breakdown: chartState.breakdown as RWAPerpsTimeSeriesBreakdownForMode,
+					rows: includedRows,
+					breakdown: chartState.breakdown,
 					seriesKey: 'id'
 				})
 			: fetchedTimeSeriesDataset
-	}, [
-		chartState.breakdown,
-		currentRows,
-		fetchedTimeSeriesDataset,
-		hasActiveMarketFilters,
-		isTimeSeriesView,
-		props.mode
-	])
+	}, [chartState, includedRows, fetchedTimeSeriesDataset, hasActiveMarketFilters])
 	const shouldShowTotalOverlay = chartState.timeSeriesMode === 'breakdown' && chartState.metric !== 'volume24h'
 	const ungroupedTimeSeriesDataset = useMemo(() => {
 		if (!isTimeSeriesView) return EMPTY_DATASET
@@ -1958,25 +1858,28 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const timeSeriesChartOptions = useMemo(() => ({ legend: { data: timeSeriesLegendNames } }), [timeSeriesLegendNames])
 
 	const snapshotBreakdownRows = useMemo(() => {
-		if (!isPieView && !isHBarView) return EMPTY_SNAPSHOT_BREAKDOWN_ROWS
-		return props.mode === 'overview'
-			? buildRWAPerpsOverviewSnapshotBreakdownTotals({
-					rows: currentRows,
-					breakdown: chartState.breakdown as RWAPerpsOverviewSnapshotBreakdown,
+		if (chartState.view !== 'pie' && chartState.view !== 'hbar') return EMPTY_SNAPSHOT_BREAKDOWN_ROWS
+		switch (chartState.mode) {
+			case 'overview':
+				return buildRWAPerpsOverviewSnapshotBreakdownTotals({
+					rows: includedRows,
+					breakdown: chartState.breakdown,
 					key: chartState.metric
 				})
-			: props.mode === 'venue'
-				? buildRWAPerpsVenueSnapshotBreakdownTotals({
-						rows: currentRows,
-						breakdown: chartState.breakdown as RWAPerpsVenueSnapshotBreakdown,
-						key: chartState.metric
-					})
-				: buildRWAPerpsAssetGroupSnapshotBreakdownTotals({
-						rows: currentRows,
-						breakdown: chartState.breakdown as RWAPerpsAssetGroupSnapshotBreakdown,
-						key: chartState.metric
-					})
-	}, [chartState.breakdown, chartState.metric, currentRows, isHBarView, isPieView, props.mode])
+			case 'venue':
+				return buildRWAPerpsVenueSnapshotBreakdownTotals({
+					rows: includedRows,
+					breakdown: chartState.breakdown,
+					key: chartState.metric
+				})
+			case 'assetGroup':
+				return buildRWAPerpsAssetGroupSnapshotBreakdownTotals({
+					rows: includedRows,
+					breakdown: chartState.breakdown,
+					key: chartState.metric
+				})
+		}
+	}, [includedRows, chartState])
 
 	const pieChartData = useMemo(
 		() => (isPieView || isHBarView ? preparePieChartData({ data: snapshotBreakdownRows, limit: 10 }) : []),
@@ -1984,12 +1887,15 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	)
 	const deferredPieChartData = useDeferredValue(pieChartData)
 	const deferredTimeSeriesDataset = useDeferredValue(selectedTimeSeriesDataset)
-	const hasTimeSeriesHistory = useMemo(() => hasEnoughTimeSeriesHistory(rawTimeSeriesDataset), [rawTimeSeriesDataset])
+	const hasTimeSeriesHistory = useMemo(
+		() => hasEnoughTimeSeriesHistory(ungroupedTimeSeriesDataset),
+		[ungroupedTimeSeriesDataset]
+	)
 	const pieChartColors = useMemo(() => {
 		if (!isPieView && !isHBarView) return {}
 		const colorMap: Record<string, string> = {}
 		for (const [index, item] of deferredPieChartData.entries()) {
-			colorMap[item.name] = CHART_COLORS[index % CHART_COLORS.length]
+			colorMap[item.name] = CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
 		}
 		return colorMap
 	}, [deferredPieChartData, isHBarView, isPieView])
@@ -2003,23 +1909,14 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		() =>
 			isTreemapView
 				? buildRWAPerpsTreemapTreeData({
-						mode: props.mode,
-						markets: currentRows,
+						...treemapScope,
+						markets: includedRows,
 						metric: chartState.metric,
 						parentGrouping: treemapBreakdown,
-						nestedBy: chartState.treemapNestedBy,
-						venueLabel
+						nestedBy: chartState.treemapNestedBy
 					})
 				: [],
-		[
-			chartState.metric,
-			chartState.treemapNestedBy,
-			currentRows,
-			isTreemapView,
-			props.mode,
-			treemapBreakdown,
-			venueLabel
-		]
+		[chartState.metric, chartState.treemapNestedBy, includedRows, isTreemapView, treemapBreakdown, treemapScope]
 	)
 	const hasNonTimeSeriesData = isTreemapView ? treemapTreeData.length > 0 : snapshotBreakdownRows.length > 0
 	const { chartInstance: timeSeriesChartInstance, handleChartReady: handleTimeSeriesChartReady } = useGetChartInstance()
@@ -2049,7 +1946,8 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const nonTimeSeriesFilename = `${filenameBase}-${chartState.view}-${chartState.metric}-${chartState.breakdown}`
 
 	const onSelectView = (value: string | string[]) => {
-		const selectedView = (Array.isArray(value) ? value[0] : value) as typeof chartState.view
+		const selectedView = Array.isArray(value) ? value[0] : value
+		if (!selectedView) return
 		const nextState = setRWAPerpsChartView(chartState, selectedView)
 		void pushShallowQuery(router, {
 			chartView: getRWAPerpsChartViewQueryValueForMode(props.mode, nextState.view),
@@ -2062,6 +1960,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 
 	const onSelectBreakdown = (value: string | string[]) => {
 		const selectedBreakdown = Array.isArray(value) ? value[0] : value
+		if (!selectedBreakdown) return
 		if (chartState.view === 'timeSeries') {
 			if (selectedBreakdown === 'total') {
 				const nextState = setRWAPerpsTimeSeriesMode(chartState, 'grouped')
@@ -2072,10 +1971,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				return
 			}
 
-			const nextState = setRWAPerpsTimeSeriesMode(
-				setRWAPerpsChartBreakdown(chartState, selectedBreakdown as typeof chartState.breakdown),
-				'breakdown'
-			)
+			const nextState = setRWAPerpsTimeSeriesMode(setRWAPerpsChartBreakdown(chartState, selectedBreakdown), 'breakdown')
 			void pushShallowQuery(router, {
 				timeSeriesChartBreakdown: getRWAPerpsChartBreakdownQueryValue(nextState, chartDefaults),
 				timeSeriesMode: getRWAPerpsTimeSeriesModeQueryValue(nextState.timeSeriesMode)
@@ -2083,7 +1979,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			return
 		}
 
-		const nextState = setRWAPerpsChartBreakdown(chartState, selectedBreakdown as typeof chartState.breakdown)
+		const nextState = setRWAPerpsChartBreakdown(chartState, selectedBreakdown)
 		void pushShallowQuery(router, {
 			timeSeriesChartBreakdown:
 				nextState.view === 'timeSeries' ? getRWAPerpsChartBreakdownQueryValue(nextState, chartDefaults) : undefined,
@@ -2093,7 +1989,8 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	}
 
 	const onSelectTreemapNestedBy = (value: string | string[]) => {
-		const selectedNestedBy = (Array.isArray(value) ? value[0] : value) as typeof chartState.treemapNestedBy
+		const selectedNestedBy = Array.isArray(value) ? value[0] : value
+		if (!selectedNestedBy) return
 		const nextState = setRWAPerpsTreemapNestedBy(chartState, selectedNestedBy)
 		void pushShallowQuery(router, {
 			treemapNestedBy: getRWAPerpsTreemapNestedByQueryValue(nextState)
@@ -2222,14 +2119,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			/>
 			<div className="flex flex-col gap-2 md:flex-row md:items-center">
 				{statCards.map((card) => (
-					<StatCard
-						key={card.label}
-						label={card.label}
-						tooltip={card.tooltip}
-						value={card.value}
-						change={card.change}
-						changeTooltip={card.changeTooltip}
-					/>
+					<StatCard key={card.label} {...card} />
 				))}
 			</div>
 			{chartState.view === 'timeSeries' ? (
@@ -2240,9 +2130,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							allValues={chartViewOptions}
 							selectedValues={chartState.view}
 							setSelectedValues={onSelectView}
-							label={
-								chartViewOptions.find((option) => option.key === chartState.view)?.name ?? chartViewOptions[0].name
-							}
+							label={chartViewOptions.find((option) => option.key === chartState.view)?.name ?? 'Time Series Chart'}
 							labelType="none"
 							variant="filter"
 							size="md"
@@ -2275,18 +2163,18 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							csvSource={{ type: 'dataset', dataset: selectedTimeSeriesDataset }}
 						/>
 					</ChartPanelToolbar>
-					{timeSeriesQuery.error ? (
+					{isTimeSeriesQueryEnabled && timeSeriesQuery.error ? (
 						<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
 							{getErrorMessage(timeSeriesQuery.error)}
 						</ChartPanelBodyFallback>
-					) : timeSeriesQuery.isLoading && !shouldUseInitialTimeSeriesDataset ? (
+					) : isTimeSeriesQueryEnabled && timeSeriesQuery.isLoading ? (
 						<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
 							Loading
 							<LoadingDots />
 						</ChartPanelBodyFallback>
 					) : !hasTimeSeriesHistory ? (
 						<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
-							Only a single snapshot is available; time-series history is not available for this selection yet.
+							There is not enough time-series history for this selection yet.
 						</ChartPanelBodyFallback>
 					) : (
 						<Suspense fallback={<ChartPanelBodyFallback />}>
@@ -2296,7 +2184,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 								chartOptions={timeSeriesChartOptions}
 								hideDefaultLegend={false}
 								showTotalInTooltip={!deferredTimeSeriesDataset.dimensions.includes('Total')}
-								groupBy={chartState.metric === 'volume24h' ? volumeGroupBy : undefined}
+								{...(chartState.metric === 'volume24h' ? { groupBy: volumeGroupBy } : {})}
 								valueSymbol={valueSymbol}
 								onReady={handleTimeSeriesChartReady}
 							/>
@@ -2311,9 +2199,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							allValues={chartViewOptions}
 							selectedValues={chartState.view}
 							setSelectedValues={onSelectView}
-							label={
-								chartViewOptions.find((option) => option.key === chartState.view)?.name ?? chartViewOptions[0].name
-							}
+							label={chartViewOptions.find((option) => option.key === chartState.view)?.name ?? 'Time Series Chart'}
 							labelType="none"
 							variant="filter"
 							size="md"

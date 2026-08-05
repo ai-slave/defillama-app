@@ -2,9 +2,7 @@ import {
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	createColumnHelper,
-	type ExpandedState,
 	getCoreRowModel,
-	getExpandedRowModel,
 	getFilteredRowModel,
 	getSortedRowModel,
 	type SortingState,
@@ -47,7 +45,6 @@ export function RWAAssetsTable({
 	const { data: flowSummary, isLoading: isLoadingFlowSummary, isError: isFlowSummaryError } = useRWAFlowSummary()
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'activeMcap.total', desc: true }])
-	const [expanded, setExpanded] = useState<ExpandedState>({})
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
 
 	const [searchValue, setSearchValue] = useState('')
@@ -69,39 +66,37 @@ export function RWAAssetsTable({
 		[flowSummary, includeRwaPerps, isFlowSummaryError, isLoadingFlowSummary]
 	)
 
-	const instance = useReactTable({
+	const instance = useReactTable<AssetTableRow>({
 		data: assetsData,
 		columns,
 		state: {
 			sorting,
 			columnFilters,
-			expanded,
 			columnOrder
 		},
 		defaultColumn: {
 			sortUndefined: 'last'
 		},
 		enableSortingRemoval: false,
-		filterFromLeafRows: true,
-		onExpandedChange: (updater) => startTransition(() => setExpanded(updater)),
-		getSubRows: (row: any) => row.subRows,
 		onSortingChange: (updater) => startTransition(() => setSorting(updater)),
 		onColumnFiltersChange: (updater) => startTransition(() => setColumnFilters(updater)),
 		onColumnOrderChange: (updater) => startTransition(() => setColumnOrder(updater)),
 		getFilteredRowModel: getFilteredRowModel(),
 		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getExpandedRowModel: getExpandedRowModel()
+		getSortedRowModel: getSortedRowModel()
 	})
 
 	const columnsOptions = useMemo(
 		() =>
-			columns.map((c: any) => {
-				const headerName = typeof c.header === 'function' ? (c.id ?? (c.accessorKey as string)) : (c.header as string)
+			columns.map((column) => {
+				const key = column.id ?? ('accessorKey' in column ? String(column.accessorKey) : '')
+				if (!key) throw new Error('RWA asset table column is missing an id')
+				const headerName = typeof column.header === 'string' ? column.header : key
+				const help = column.meta?.headerHelperText
 				return {
 					name: headerName,
-					key: c.id ?? (c.accessorKey as string),
-					help: c.meta?.headerHelperText as string | undefined
+					key,
+					...(help ? { help } : {})
 				}
 			}),
 		[columns]
@@ -161,7 +156,7 @@ export function RWAAssetsTable({
 	)
 }
 
-type AssetRow = IRWAAssetsOverview['assets'][0]
+type AssetRow = IRWAAssetsOverview['assets'][number]
 type AssetTableRow = AssetRow & {
 	flowSummaries: Partial<Record<RWAFlowWindow, IRWAAssetFlowSummary>>
 }
@@ -170,16 +165,16 @@ export function createAssetTableRows(
 	assets: IRWAAssetsOverview['assets'],
 	flowSummary: IRWAFlowSummaryResponse | undefined
 ): AssetTableRow[] {
-	return assets.map((asset) => ({
-		...asset,
-		flowSummaries:
-			asset.kind === 'spot'
-				? {
-						'7d': flowSummary?.windows['7d'].asset[asset.canonicalMarketId],
-						'30d': flowSummary?.windows['30d'].asset[asset.canonicalMarketId]
-					}
-				: {}
-	}))
+	return assets.map((asset): AssetTableRow => {
+		const flowSummaries: AssetTableRow['flowSummaries'] = {}
+		if (asset.kind === 'spot' && flowSummary) {
+			const flow7d = flowSummary.windows['7d'].asset[asset.canonicalMarketId]
+			const flow30d = flowSummary.windows['30d'].asset[asset.canonicalMarketId]
+			if (flow7d) flowSummaries['7d'] = flow7d
+			if (flow30d) flowSummaries['30d'] = flow30d
+		}
+		return { ...asset, flowSummaries }
+	})
 }
 
 const columnHelper = createColumnHelper<AssetTableRow>()
@@ -511,7 +506,8 @@ function createRWAAssetColumns(
 				if (!assetClasses || assetClasses.length === 0) return null
 				// For single asset class with definition, show tooltip
 				if (assetClasses.length === 1) {
-					const ac = assetClasses[0]
+					const [ac] = assetClasses
+					if (!ac) return null
 					const description = definitions.assetClass.values?.[ac]
 					if (description) {
 						return (
@@ -561,7 +557,7 @@ function createRWAAssetColumns(
 			header: definitions.accessModel.label,
 			cell: (info) => {
 				const value = info.getValue()
-				const valueDescription = definitions.accessModel.values?.[value]
+				const valueDescription = value ? definitions.accessModel.values?.[value] : undefined
 				if (valueDescription) {
 					return (
 						<Tooltip
@@ -604,7 +600,7 @@ function createRWAAssetColumns(
 			header: definitions.type.label,
 			cell: (info) => {
 				const value = info.getValue()
-				const tooltipContent = definitions.type.values?.[value]
+				const tooltipContent = value ? definitions.type.values?.[value] : undefined
 				if (tooltipContent) {
 					return (
 						<Tooltip content={tooltipContent} className="inline-block max-w-full justify-end truncate">
@@ -634,7 +630,9 @@ function createRWAAssetColumns(
 				// If trueRWA flag, show green color with True RWA definition but display "RWA"
 				const tooltipContent = isTrueRWA
 					? definitions.rwaClassification.values?.['True RWA']
-					: definitions.rwaClassification.values?.[value]
+					: value
+						? definitions.rwaClassification.values?.[value]
+						: undefined
 				if (tooltipContent) {
 					return (
 						<Tooltip

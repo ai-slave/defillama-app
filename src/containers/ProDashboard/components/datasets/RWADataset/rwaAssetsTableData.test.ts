@@ -4,7 +4,19 @@ import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
 import { buildRWAAllChainsAssetTableRows, buildRWAChainAssetTableRows } from './rwaAssetsTableData'
 
 function asset(overrides: Partial<IFetchedRWAProject> = {}): IFetchedRWAProject {
-	return { id: 'asset', ticker: 'ASSET', assetName: 'Asset', ...overrides }
+	return {
+		id: 'asset',
+		canonicalMarketId: 'asset',
+		ticker: 'ASSET',
+		assetName: 'Asset',
+		accessModel: 'Unknown',
+		stablecoin: false,
+		governance: false,
+		defiActiveTvl: {},
+		onChainMcap: {},
+		price: null,
+		...overrides
+	}
 }
 
 describe('RWA asset table data', () => {

@@ -28,7 +28,7 @@ const baseAsset: RWAAssetOverviewRow = {
 	parentPlatform: null,
 	category: ['Treasuries'],
 	assetClass: null,
-	accessModel: null,
+	accessModel: 'Unknown',
 	type: 'Asset',
 	rwaClassification: null,
 	issuer: 'Issuer One',
@@ -57,7 +57,7 @@ const baseFilterState: RWAFilterState = {
 	selectedAssetGroups: ['Treasuries'],
 	selectedAssetClasses: [],
 	selectedRwaClassifications: [],
-	selectedAccessModels: [],
+	selectedAccessModels: ['Unknown'],
 	selectedIssuers: ['Issuer One'],
 	selectedRedeemableStates: ['yes', 'no', 'unknown'],
 	selectedAttestationsStates: ['yes', 'no', 'unknown'],
@@ -107,7 +107,7 @@ describe('RWA filter state', () => {
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeGovernance: 'false' }, DEFAULT_ALL_INCLUSION)).toBe(true)
 	})
 
-	it('does not include ratio-filtered rows with invalid numerator or denominator values', () => {
+	it('does not include ratio-filtered rows with a zero denominator', () => {
 		const filterState: RWAFilterState = {
 			...baseFilterState,
 			minActiveMcapToOnChainMcapPct: 1
@@ -121,11 +121,6 @@ describe('RWA filter state', () => {
 						...baseAsset,
 						id: 'zero-denominator',
 						onChainMcap: { total: 0, breakdown: [['Ethereum', 0]] }
-					},
-					{
-						...baseAsset,
-						id: 'invalid-numerator',
-						activeMcap: { total: Number.NaN, breakdown: [['Ethereum', Number.NaN]] }
 					}
 				],
 				filterState

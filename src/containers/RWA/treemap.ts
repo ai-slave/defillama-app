@@ -2,7 +2,6 @@ import { CHART_COLORS } from '~/constants/colors'
 import { roundNumber } from '~/utils/numberFormat'
 import type { IRWAAssetsOverview } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
-import { toFiniteRwaChartValue } from './chartDataset'
 import type { RWAChartMetric, RwaTreemapNestedBy, RwaTreemapParentGrouping } from './chartState'
 import { computeWeightedGroups } from './grouping'
 import { rwaSlug } from './rwaSlug'
@@ -22,7 +21,7 @@ type RWAAsset = IRWAAssetsOverview['assets'][number]
 export const buildRwaTreemapTreeData = (pieData: RwaPieChartDatum[], breakdownLabel: string): RwaTreemapNode[] => {
 	const totalsByLabel = new Map<string, number>()
 	for (const item of pieData) {
-		const value = toFiniteRwaChartValue(item.value)
+		const value = item.value
 		if (value <= 0) continue
 		const label = sanitizeTreemapLabel(item.name)
 		if (!label) continue
@@ -41,11 +40,9 @@ export const buildRwaTreemapTreeData = (pieData: RwaPieChartDatum[], breakdownLa
 	const rootLabel = breakdownLabel || 'Breakdown'
 	// Assign colors in value-descending order so the biggest block gets CHART_COLORS[0].
 	const children: RwaTreemapNode[] = []
-	for (let index = 0; index < data.length; index++) {
-		const item = data[index]
+	for (const [index, item] of data.entries()) {
 		const sharePct = total > 0 ? roundNumber((item.value / total) * 100, 2) : 0
-		const color =
-			index < TREEMAP_COLORS.length ? TREEMAP_COLORS[index] : createGeneratedColor(index - TREEMAP_COLORS.length)
+		const color = TREEMAP_COLORS[index] ?? createGeneratedColor(index - TREEMAP_COLORS.length)
 		children.push({
 			name: item.name,
 			path: `${rootLabel}/${item.name}`,
@@ -104,7 +101,7 @@ const getRwaMetricBreakdownByChain = (asset: RWAAsset, metric: RWAChartMetric): 
 	const totalsBySlug = new Map<string, RwaMetricByChainRow>()
 
 	for (const [chainRaw, valueRaw] of breakdown) {
-		const value = toFiniteRwaChartValue(valueRaw)
+		const value = valueRaw
 		if (value <= 0) continue
 
 		const label = sanitizeTreemapLabel((chainRaw ?? '').trim()) || UNKNOWN
@@ -161,22 +158,14 @@ const getAssetGroupsByGrouping = (
 			return normalizeLabels(asset.category ?? [])
 		case 'assetGroup':
 			return normalizeLabels([normalizeRwaAssetGroup(asset.assetGroup)])
-		case 'platform': {
-			const platformRaw = asset.parentPlatform as unknown
-			const platformCandidates = Array.isArray(platformRaw) ? platformRaw : [platformRaw]
-			return normalizeLabelsBySlug(
-				platformCandidates.map((platform) => (typeof platform === 'string' ? platform : null)),
-				'Unknown'
-			)
-		}
+		case 'platform':
+			return normalizeLabelsBySlug([asset.parentPlatform], 'Unknown')
 		case 'chain':
 		default: {
 			if (asset.kind === 'perps') return ['Unknown']
 
-			const chains = [
-				...(asset.kind === 'spot' ? (asset.chain ?? []) : []),
-				asset.kind === 'spot' && typeof asset.primaryChain === 'string' ? asset.primaryChain : null
-			] as Array<string | null | undefined>
+			const chains = [...(asset.chain ?? [])]
+			if (asset.primaryChain) chains.push(asset.primaryChain)
 			return normalizeLabelsBySlug(chains, 'Unknown')
 		}
 	}
@@ -196,7 +185,7 @@ const sanitizeTreemapLabel = (value: string): string => {
 	const trimmed = value.trim()
 	if (!trimmed) return ''
 	const richWrapperMatch = trimmed.match(/^\{[A-Za-z0-9_]+\|([\s\S]+)\}$/)
-	return richWrapperMatch ? richWrapperMatch[1] : trimmed
+	return richWrapperMatch?.[1] ?? trimmed
 }
 
 /** Convert HSL values to a hex color (#RRGGBB) so downstream helpers (hexToHsl) can parse it. */
@@ -237,9 +226,9 @@ const buildHueSpacedColorMap = (labels: string[]): Record<string, string> => {
 	const saturation = 65
 	const lightness = 48
 
-	for (let i = 0; i < unique.length; i++) {
+	for (const [i, label] of unique.entries()) {
 		const hue = (startHue + i * 137.508) % 360
-		colorMap[unique[i]] = hslToHex(hue, saturation, lightness)
+		colorMap[label] = hslToHex(hue, saturation, lightness)
 	}
 	return colorMap
 }
@@ -340,7 +329,7 @@ export const buildRwaNestedTreemapTreeData = ({
 			continue
 		}
 
-		const metricValue = toFiniteRwaChartValue(getRwaMetricValue(asset, metric))
+		const metricValue = getRwaMetricValue(asset, metric)
 		if (metricValue <= 0) continue
 
 		const parentGroups = getWeightedAssetGroupsByGrouping(asset, parentGrouping)
@@ -362,7 +351,7 @@ export const buildRwaNestedTreemapTreeData = ({
 		const childRows: Array<[string, number]> = []
 		let parentTotal = 0
 		for (const [childLabel, valueRaw] of childTotals.entries()) {
-			const value = toFiniteRwaChartValue(valueRaw)
+			const value = valueRaw
 			if (value <= 0) continue
 			childRows.push([childLabel, value])
 			parentTotal += value
@@ -397,7 +386,7 @@ export const buildRwaNestedTreemapTreeData = ({
 				name: childLabel,
 				path: `${parentPath}/${childLabel}`,
 				value: [childTotal, childSharePct, childShareOfTotalPct],
-				itemStyle: { color: childShades[childIndex] }
+				itemStyle: { color: childShades[childIndex] ?? parentColor }
 			}
 		})
 

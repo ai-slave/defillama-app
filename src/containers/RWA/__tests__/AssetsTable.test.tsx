@@ -40,12 +40,13 @@ function createSpotAsset(
 		kycAllowlistedWhitelistedToTransferHold: null,
 		transferable: null,
 		selfCustody: null,
-		stablecoin: null,
-		governance: null,
+		stablecoin: false,
+		governance: false,
 		trueRWA: false,
 		onChainMcap: { total: 200, breakdown: [] },
 		activeMcap: { total: 100, breakdown: [] },
 		defiActiveTvl: { total: 25, breakdown: [] },
+		defiActiveTvlByChain: { total: 25, breakdown: [] },
 		...overrides
 	}
 }
@@ -153,16 +154,19 @@ describe('RWAAssetsTable', () => {
 		const assets = [createSpotAsset()]
 		const initialRows = createAssetTableRows(assets, undefined)
 		const loadedRows = createAssetTableRows(assets, createFlowSummary())
+		const initialRow = initialRows[0]
+		const loadedRow = loadedRows[0]
 
-		expect(initialRows[0].flowSummaries['7d']).toBeUndefined()
-		expect(loadedRows[0].flowSummaries['7d']?.flow).toBe(0)
-		expect(loadedRows[0].flowSummaries['30d']?.flow).toBe(-50)
+		if (!initialRow || !loadedRow) throw new Error('Expected one table row for the fixture asset')
+
+		expect(initialRow.flowSummaries['7d']).toBeUndefined()
+		expect(loadedRow.flowSummaries['7d']?.flow).toBe(0)
+		expect(loadedRow.flowSummaries['30d']?.flow).toBe(-50)
 	})
 
 	it('calculates DeFi utilization from nullable typed metrics without coercion', () => {
 		expect(getDefiUtilization(createSpotAsset())).toBe(25)
 		expect(getDefiUtilization(createSpotAsset({ defiActiveTvl: { total: 0, breakdown: [] } }))).toBe(0)
-		expect(getDefiUtilization(createSpotAsset({ defiActiveTvl: null }))).toBeUndefined()
 		expect(getDefiUtilization(createSpotAsset({ activeMcap: null }))).toBeUndefined()
 		expect(getDefiUtilization(createSpotAsset({ activeMcap: { total: 0, breakdown: [] } }))).toBeUndefined()
 		expect(getDefiUtilization(createSpotAsset({ activeMcap: { total: -100, breakdown: [] } }))).toBe(-25)

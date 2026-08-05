@@ -1,5 +1,5 @@
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
-import { aggregateRwaMetrics, isEmptyObject } from '~/containers/RWA/overviewAssembly'
+import { aggregateRwaMetrics, hasMetricBreakdown } from '~/containers/RWA/overviewAssembly'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 
 export type RWAAssetTableRow = {
@@ -14,14 +14,13 @@ export type RWAAssetTableRow = {
 }
 
 function buildMetricValues(asset: IFetchedRWAProject, chain?: string) {
-	const onChainMcapBreakdown = isEmptyObject(asset.onChainMcap) ? null : (asset.onChainMcap ?? null)
-	const activeMcapBreakdown = isEmptyObject(asset.activeMcap) ? null : (asset.activeMcap ?? null)
-	const defiActiveTvlBreakdown = isEmptyObject(asset.defiActiveTvl) ? null : (asset.defiActiveTvl ?? null)
+	const onChainMcapBreakdown = hasMetricBreakdown(asset.onChainMcap) ? asset.onChainMcap : null
+	const activeMcapBreakdown = hasMetricBreakdown(asset.activeMcap) ? asset.activeMcap : null
 	const selectedChain = chain && chain !== 'All' ? rwaSlug(chain) : undefined
 	const metrics = aggregateRwaMetrics({
 		onChainMcapBreakdown,
 		activeMcapBreakdown,
-		defiActiveTvlBreakdown,
+		defiActiveTvlBreakdown: asset.defiActiveTvl,
 		...(selectedChain === undefined ? {} : { selectedChain })
 	})
 
@@ -41,11 +40,7 @@ function buildMetricValues(asset: IFetchedRWAProject, chain?: string) {
 				? metrics.filteredTotals.activeMcap
 				: metrics.totals.activeMcap
 			: null,
-		defiActiveTvl: defiActiveTvlBreakdown
-			? selectedChain
-				? metrics.filteredTotals.defiActiveTvl
-				: metrics.totals.defiActiveTvl
-			: 0
+		defiActiveTvl: selectedChain ? metrics.filteredTotals.defiActiveTvl : metrics.totals.defiActiveTvl
 	}
 }
 

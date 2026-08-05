@@ -12,7 +12,7 @@ const DEFAULT_TIME_SERIES_BREAKDOWN = 'baseAsset' as const
 export const getStaticProps = withPerformanceLogging(`rwa/perps/forex`, async () => {
 	const data = await getRWAPerpsOverview({
 		activeView: getDefaultRWAPerpsChartView('overview'),
-		assetClass: 'Forex Perps',
+		target: { kind: 'assetClass', slug: 'Forex Perps' },
 		defaultTimeSeriesBreakdown: DEFAULT_TIME_SERIES_BREAKDOWN
 	})
 

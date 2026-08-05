@@ -22,6 +22,12 @@ const DEFAULT_INCLUSION = { includeStablecoins: false, includeGovernance: false,
 const DEFAULT_ALL_INCLUSION = { includeStablecoins: true, includeGovernance: true, includeRwaPerps: false }
 const DEFAULT_STABLECOIN_INCLUSION = { ...DEFAULT_INCLUSION, includeStablecoins: true }
 
+function getUseQueryOptions(index: number): unknown {
+	const call = useQueryMock.mock.calls[index]
+	if (!call || call[0] === undefined) throw new Error(`Missing useQuery call ${index}`)
+	return call[0]
+}
+
 vi.mock('@tanstack/react-query', () => ({
 	useQuery: (options: unknown) => useQueryMock(options)
 }))
@@ -50,7 +56,7 @@ function createSpotAsset(
 		parentPlatform: null,
 		category: null,
 		assetClass: null,
-		accessModel: null,
+		accessModel: 'Unknown',
 		type: null,
 		rwaClassification: null,
 		issuer: null,
@@ -61,12 +67,13 @@ function createSpotAsset(
 		kycAllowlistedWhitelistedToTransferHold: null,
 		transferable: null,
 		selfCustody: null,
-		stablecoin: null,
-		governance: null,
+		stablecoin: false,
+		governance: false,
 		trueRWA: false,
 		onChainMcap: null,
 		activeMcap: null,
-		defiActiveTvl: null,
+		defiActiveTvl: { total: 0, breakdown: [] },
+		defiActiveTvlByChain: { total: 0, breakdown: [] },
 		...overrides
 	}
 }
@@ -146,7 +153,7 @@ function DatasetProbe({
 	includeRwaPerps?: boolean
 	useInitialDataset?: boolean
 }) {
-	const { chartDataset } = useRwaChartDataset({
+	const { chartDataset, chartError } = useRwaChartDataset({
 		selectedMetric,
 		initialDataset,
 		initialOpenInterestDataset,
@@ -159,7 +166,7 @@ function DatasetProbe({
 		useInitialDataset
 	})
 
-	return React.createElement('pre', null, chartDataset.dimensions.join('|'))
+	return React.createElement('pre', null, `${chartDataset.dimensions.join('|')};${chartError ?? ''}`)
 }
 
 function AssetGroupProbe({
@@ -217,18 +224,12 @@ function FilteredAssetsProbe({
 }) {
 	const selectedCategories = Array.from(new Set(chartAssets.flatMap((asset) => asset.category ?? [])))
 	const selectedPlatforms = Array.from(
-		new Set(
-			chartAssets.flatMap((asset) => {
-				const platformRaw = asset.parentPlatform as unknown
-				const platformCandidates = Array.isArray(platformRaw) ? platformRaw : [platformRaw]
-
-				return platformCandidates.filter(
-					(platform): platform is string => typeof platform === 'string' && platform.length > 0
-				)
-			})
-		)
+		new Set(chartAssets.flatMap((asset) => (asset.parentPlatform ? [asset.parentPlatform] : [])))
 	)
 	const selectedAssetGroups = Array.from(new Set(chartAssets.map((asset) => normalizeRwaAssetGroup(asset.assetGroup))))
+	const selectedAccessModels = Array.from(
+		new Set(chartAssets.flatMap((asset) => (asset.accessModel ? [asset.accessModel] : [])))
+	)
 	const selectedIssuers = Array.from(new Set(chartAssets.map((asset) => asset.issuer || 'Unknown')))
 
 	const result = useFilteredRwaAssets({
@@ -241,7 +242,7 @@ function FilteredAssetsProbe({
 		selectedAssetGroups,
 		selectedAssetClasses: [],
 		selectedRwaClassifications: [],
-		selectedAccessModels: [],
+		selectedAccessModels,
 		selectedIssuers,
 		selectedRedeemableStates: ['yes', 'no', 'unknown'],
 		selectedAttestationsStates: ['yes', 'no', 'unknown'],
@@ -275,8 +276,9 @@ function FilteredAssetsProbe({
 
 function readJsonMarkup(markup: string) {
 	const match = markup.match(/<script type="application\/json">([\s\S]*)<\/script>/)
-	expect(match?.[1]).toBeTruthy()
-	return JSON.parse(match![1])
+	const json = match?.[1]
+	if (!json) throw new Error('Expected JSON script markup')
+	return JSON.parse(json)
 }
 
 describe('useRwaChartDataset', () => {
@@ -313,14 +315,14 @@ describe('useRwaChartDataset', () => {
 		expect(platformMarkup).toContain('timestamp|Total Onchain Mcap|Centrifuge|Maple')
 		expect(totalMarkup).toContain('timestamp|Total Onchain Mcap')
 		expect(useQueryMock).toHaveBeenCalledTimes(6)
-		expect(useQueryMock.mock.calls[0][0]).toMatchObject({
+		expect(getUseQueryOptions(0)).toMatchObject({
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false)
 		})
-		expect(useQueryMock.mock.calls[1][0]).toMatchObject({
+		expect(getUseQueryOptions(1)).toMatchObject({
 			queryKey: getRwaOpenInterestChartQueryKey(),
 			enabled: false
 		})
-		expect(useQueryMock.mock.calls[2][0]).toMatchObject({
+		expect(getUseQueryOptions(2)).toMatchObject({
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false)
 		})
 	})
@@ -329,14 +331,14 @@ describe('useRwaChartDataset', () => {
 		renderToStaticMarkup(React.createElement(DatasetProbe, { mode: 'category', includeStablecoins: false }))
 		renderToStaticMarkup(React.createElement(DatasetProbe, { mode: 'category', includeStablecoins: true }))
 
-		expect(useQueryMock.mock.calls[0][0]).toMatchObject({
+		expect(getUseQueryOptions(0)).toMatchObject({
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false)
 		})
-		expect(useQueryMock.mock.calls[1][0]).toMatchObject({
+		expect(getUseQueryOptions(1)).toMatchObject({
 			queryKey: getRwaOpenInterestChartQueryKey(),
 			enabled: false
 		})
-		expect(useQueryMock.mock.calls[2][0]).toMatchObject({
+		expect(getUseQueryOptions(2)).toMatchObject({
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', true, false)
 		})
 	})
@@ -384,7 +386,8 @@ describe('useRwaChartDataset', () => {
 			})
 		)
 
-		await capturedOptions?.queryFn()
+		if (!capturedOptions) throw new Error('Expected the asset chart query options')
+		await capturedOptions.queryFn()
 
 		expect(fetchJsonMock).toHaveBeenCalledWith(
 			'/api/public/rwa/asset-breakdown?key=onChainMcap&includeStablecoin=true&includeGovernance=false'
@@ -411,11 +414,11 @@ describe('useRwaChartDataset', () => {
 
 		expect(markup).toContain('timestamp|Total Onchain Mcap|Prerendered')
 		expect(useQueryMock).toHaveBeenCalledTimes(2)
-		expect(useQueryMock.mock.calls[0][0]).toMatchObject({
+		expect(getUseQueryOptions(0)).toMatchObject({
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false),
 			enabled: false
 		})
-		expect(useQueryMock.mock.calls[1][0]).toMatchObject({
+		expect(getUseQueryOptions(1)).toMatchObject({
 			queryKey: getRwaOpenInterestChartQueryKey(),
 			enabled: false
 		})
@@ -449,13 +452,78 @@ describe('useRwaChartDataset', () => {
 
 		expect(markup).toContain('timestamp|Total Active Mcap|Treasuries|RWA Perps OI')
 		expect(useQueryMock).toHaveBeenCalledTimes(2)
-		expect(useQueryMock.mock.calls[0][0]).toMatchObject({
+		expect(getUseQueryOptions(0)).toMatchObject({
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'activeMcap', false, false),
 			enabled: false
 		})
-		expect(useQueryMock.mock.calls[1][0]).toMatchObject({
+		expect(getUseQueryOptions(1)).toMatchObject({
 			queryKey: getRwaOpenInterestChartQueryKey(),
 			enabled: false
+		})
+	})
+
+	it('ignores cached errors from disabled queries while using complete prerendered data', () => {
+		useQueryMock.mockReturnValue({
+			data: undefined,
+			isLoading: false,
+			error: new Error('stale cached error')
+		})
+
+		const markup = renderToStaticMarkup(
+			React.createElement(DatasetProbe, {
+				mode: 'category',
+				chartAssets: [createSpotAsset(), createPerpsAsset()],
+				initialDataset: {
+					source: [[1, 100, 100]],
+					dimensions: ['timestamp', 'Total Active Mcap', 'Treasuries']
+				},
+				initialOpenInterestDataset: {
+					source: [{ timestamp: 1, 'RWA Perps OI': 25 }],
+					dimensions: ['timestamp', 'RWA Perps OI']
+				},
+				selectedMetric: 'activeMcap',
+				includeRwaPerps: true,
+				useInitialDataset: true
+			})
+		)
+
+		expect(markup).toContain('timestamp|Total Active Mcap|Treasuries|RWA Perps OI')
+		expect(markup).not.toContain('stale cached error')
+	})
+
+	it('retries a missing prerendered RWA Perps OI dataset without refetching the spot dataset', () => {
+		useQueryMock.mockImplementation((options: { queryKey: unknown[] }) => ({
+			data:
+				options.queryKey[0] === getRwaOpenInterestChartQueryKey()[0]
+					? {
+							source: [{ timestamp: 1, 'xyz:alpha': 25 }],
+							dimensions: ['timestamp', 'xyz:alpha']
+						}
+					: undefined,
+			isLoading: false,
+			error: null
+		}))
+
+		const markup = renderToStaticMarkup(
+			React.createElement(DatasetProbe, {
+				mode: 'category',
+				chartAssets: [createSpotAsset(), createPerpsAsset({ contract: 'xyz:alpha' })],
+				initialDataset: {
+					source: [[1, 100, 100]],
+					dimensions: ['timestamp', 'Total Active Mcap', 'Treasuries']
+				},
+				initialOpenInterestDataset: null,
+				selectedMetric: 'activeMcap',
+				includeRwaPerps: true,
+				useInitialDataset: true
+			})
+		)
+
+		expect(markup).toContain('timestamp|Total Active Mcap|Treasuries|RWA Perps OI')
+		expect(getUseQueryOptions(0)).toMatchObject({ enabled: false })
+		expect(getUseQueryOptions(1)).toMatchObject({
+			queryKey: getRwaOpenInterestChartQueryKey(),
+			enabled: true
 		})
 	})
 
@@ -479,11 +547,11 @@ describe('useRwaChartDataset', () => {
 
 		expect(markup).toContain('timestamp|Total Onchain Mcap')
 		expect(useQueryMock).toHaveBeenCalledTimes(2)
-		expect(useQueryMock.mock.calls[0][0]).toMatchObject({
+		expect(getUseQueryOptions(0)).toMatchObject({
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false),
 			enabled: false
 		})
-		expect(useQueryMock.mock.calls[1][0]).toMatchObject({
+		expect(getUseQueryOptions(1)).toMatchObject({
 			queryKey: getRwaOpenInterestChartQueryKey(),
 			enabled: false
 		})
@@ -507,11 +575,11 @@ describe('useRwaChartDataset', () => {
 		)
 
 		expect(markup).toContain('timestamp|Total DeFi Active TVL|Treasuries|RWA Perps OI')
-		expect(useQueryMock.mock.calls[0][0]).toMatchObject({
+		expect(getUseQueryOptions(0)).toMatchObject({
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'defiActiveTvl', false, false),
 			enabled: true
 		})
-		expect(useQueryMock.mock.calls[1][0]).toMatchObject({
+		expect(getUseQueryOptions(1)).toMatchObject({
 			queryKey: getRwaOpenInterestChartQueryKey(),
 			enabled: true
 		})
@@ -611,29 +679,31 @@ describe('useFilteredRwaAssets', () => {
 })
 
 describe('useRwaAssetGroupPieChartData', () => {
-	it.each([
+	const metricCases: Array<{ metric: RWAChartMetricKey; expected: Array<{ name: string; value: number }> }> = [
 		{
-			metric: 'onChainMcap' as const,
+			metric: 'onChainMcap',
 			expected: [
 				{ name: 'Stablecoins', value: 100 },
 				{ name: 'Unknown', value: 50 }
 			]
 		},
 		{
-			metric: 'activeMcap' as const,
+			metric: 'activeMcap',
 			expected: [
 				{ name: 'Stablecoins', value: 90 },
 				{ name: 'Unknown', value: 20 }
 			]
 		},
 		{
-			metric: 'defiActiveTvl' as const,
+			metric: 'defiActiveTvl',
 			expected: [
 				{ name: 'Stablecoins', value: 30 },
 				{ name: 'Unknown', value: 10 }
 			]
 		}
-	])('groups only the selected $metric values and keeps Unknown', ({ metric, expected }) => {
+	]
+
+	it.each(metricCases)('groups only the selected $metric values and keeps Unknown', ({ metric, expected }) => {
 		const chartAssets: IRWAAssetsOverview['assets'] = [
 			createSpotAsset({
 				assetGroup: 'Stablecoins',

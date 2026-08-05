@@ -23,7 +23,7 @@ export function RWAFlowRotationChart({
 			chartOptions={getRWAFlowChartOptions()}
 			hideDefaultLegend={false}
 			showTotalInTooltip
-			onReady={onReady}
+			{...(onReady ? { onReady } : {})}
 		/>
 	)
 }

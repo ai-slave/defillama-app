@@ -52,14 +52,12 @@ export function buildRWAPerpsContractOverlayRows({
 	markets,
 	selectedCategory,
 	selectedPlatform,
-	selectedAssetGroup,
-	excludedAssetNames
+	selectedAssetGroup
 }: {
 	markets: IRWAPerpsMarket[]
 	selectedCategory?: string
 	selectedPlatform?: string
 	selectedAssetGroup?: string
-	excludedAssetNames: Set<string>
 }): RWAPerpsContractOverlayRow[] {
 	const rows: RWAPerpsContractOverlayRow[] = []
 
@@ -75,7 +73,7 @@ export function buildRWAPerpsContractOverlayRows({
 			? rwaSlug(normalizeRwaAssetGroup(row.assetGroup)) === selectedAssetGroup
 			: true
 
-		if (!hasCategoryMatch || !hasPlatformMatch || !hasAssetGroupMatch || excludedAssetNames.has(row.assetName)) {
+		if (!hasCategoryMatch || !hasPlatformMatch || !hasAssetGroupMatch) {
 			continue
 		}
 
