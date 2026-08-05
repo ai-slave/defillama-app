@@ -14,6 +14,11 @@ export const TAG_GROUP_VARIANTS = {
 		button:
 			'hover-wash shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
+	chips: {
+		container: 'flex w-fit max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto',
+		button:
+			'hover-wash shrink-0 rounded-full border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+	},
 	responsive: {
 		container:
 			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full',
@@ -166,6 +171,7 @@ type TagGroupProps<V extends readonly string[] = readonly string[]> = React.Comp
 	variant: TagGroupVariant
 	size: TagGroupSize
 	label?: string
+	ariaLabel?: string
 	disabledValues?: readonly V[number][]
 }
 
@@ -179,6 +185,7 @@ export function TagGroup<V extends readonly string[]>({
 	variant,
 	size,
 	label,
+	ariaLabel,
 	disabledValues,
 	...props
 }: TagGroupProps<V>) {
@@ -191,7 +198,7 @@ export function TagGroup<V extends readonly string[]>({
 				label: `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`,
 				disabled: disabledValues?.includes(value)
 			}))}
-			label={label ?? 'Options'}
+			label={ariaLabel ?? label ?? 'Options'}
 			leading={label}
 			variant={variant}
 			size={size}

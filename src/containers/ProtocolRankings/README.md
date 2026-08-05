@@ -21,7 +21,8 @@ Start from the route file in `src/pages`, then follow imports here when the page
 
 - `Table.tsx`: shared protocol ranking table and `ChainProtocolsTable` rendering.
 - `queries.server.ts`: `getProtocolsByChain` fetch orchestration, parent/child aggregation, and row assembly.
-- `readModel.ts`: pure adapter metric row enrichment for protocol fees, revenue, holders revenue, and DEX volume.
+- `readModel.ts`: pure adapter metric row enrichment for protocol fees, revenue, holders revenue, DEX volume, and the
+  extended trading/activity metrics used by ChainOverview rankings.
 - `types.ts`: shared protocol row, child protocol, and TVL types.
 - `utils.ts`: protocol, fork, and `strikeTvl` filtering helpers.
 - `customColumnsUtils.ts`: custom protocol table column definitions.
@@ -63,7 +64,8 @@ Keep this shared row model stable. Changes here can affect multiple pages that d
 `getProtocolsByChain` combines protocol list data with adapter metrics and metadata:
 
 - base protocol rows come from `ProtocolLists/api`.
-- fees, revenue, holders revenue, and DEX data come from AdapterMetrics fetchers.
+- fees, revenue, holders revenue, spot DEX volume, perp volume, normalized volume, active liquidity,
+  open interest, options volume, and aggregator volume data come from AdapterMetrics fetchers.
 - token prices are fetched for protocol and parent protocol market-cap derived fields.
 - emissions/incentives are merged from Incentives data.
 - TVL sections come from protocol `chainTvls`.
@@ -76,9 +78,27 @@ Important rules:
 - `toStrikeTvl` derives strike presentation from removed categories or the presence of
   upstream `doublecounted`/`liquidstaking` classification sections. Hidden chain-only
   settings do not change it.
-- Fees, revenue, holders revenue, and DEX sources fail independently. A successful
-  source normalizes omitted/null activity periods to zero for listed rows and supplies
-  zero rows for inactive protocols; whole-source failure leaves that metric unavailable.
+- Adapter sources fail independently. Existing fees, revenue, holders revenue, and DEX rows retain their legacy
+  nullable-period normalization. Extended activity sources preserve nullable listed periods and leave protocols absent
+  from the source blank; whole-source failure leaves that metric unavailable.
+- Normalized perp volume follows the `/perps` rule for 24h only: each leaf uses the lower of normalized and reported
+  perp volume before parent aggregation. Normalized 7d and 30d remain unchanged from their source.
+- Extended activity sources are opt-in because this read model has consumers outside ChainOverview. The homepage and
+  `/chain/:chain` enable them; other shared-table consumers keep the smaller request set.
+- Primary metric presets are Fees, Revenue, Spot, Perps, and TVL. Metric and period selections are independent; when
+  both are selected the visible columns are their intersection. Options and DEX/perp/bridge aggregator metrics stay
+  available as individually selected columns but are excluded from metric and period presets by default.
+- Routed-volume columns follow their market domain rather than a combined Aggregators group: DEX aggregators live under
+  Spot, perp aggregators under Perps, and bridge aggregators under Bridges. Their tooltips warn against adding routed and
+  venue volume because the same trade can appear in both.
+- Period presets always retain the latest TVL, Open Interest, and Active Liquidity snapshots alongside the selected
+  TVL change and flow period. Other columns without a period are not implicitly included.
+- The ranking search filters the already-loaded virtualized table by protocol name only. It does not issue another
+  server request or build a second protocol dataset.
+- The second-row Reset action restores the compact overview columns and TVL sort, clears name search, expanded rows,
+  metric/period preset storage, legacy preset storage, column visibility storage, and the URL-backed TVL range. It
+  preserves custom-column definitions because resetting filters must not delete user-authored formulas.
+- DEX notional volume is not part of this general ranking table; Spot refers only to spot token-swap volume.
 - Parent/child protocol aggregation affects names, chains, TVL, and adapter metric fields.
 - A parent row requires at least two eligible children and canonical parent metadata;
   otherwise children remain ordinary public rows and internal grouping IDs are omitted.

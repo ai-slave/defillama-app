@@ -67,10 +67,12 @@ describe('buildDimensionProtocolMetrics', () => {
 					metricRow('kept', { total24h: 2, total7d: 14, totalAllTime: 100 }),
 					metricRow('kept-without-24h', { total24h: null, totalAllTime: 1000 })
 				]),
-				dexs: dexResponse([
-					metricRow('kept', { total24h: 20, total7d: 140, change_7dover7d: 12, totalAllTime: 900 }),
-					metricRow('kept-without-24h', { total24h: null, total7d: 700, change_7dover7d: 10 })
-				])
+				activity: {
+					dexs: dexResponse([
+						metricRow('kept', { total24h: 20, total7d: 140, change_7dover7d: 12, totalAllTime: 900 }),
+						metricRow('kept-without-24h', { total24h: null, total7d: 700, change_7dover7d: 10 })
+					])
+				}
 			})
 		).toEqual({
 			kept: {
@@ -103,6 +105,7 @@ describe('buildDimensionProtocolMetrics', () => {
 				dexs: {
 					total24h: 20,
 					total7d: 140,
+					total30d: 0,
 					change_7dover7d: 12,
 					totalAllTime: 900
 				}
@@ -137,6 +140,7 @@ describe('buildDimensionProtocolMetrics', () => {
 				dexs: {
 					total24h: 0,
 					total7d: 700,
+					total30d: 0,
 					change_7dover7d: 10,
 					totalAllTime: 0
 				}
@@ -153,6 +157,73 @@ describe('buildDimensionProtocolMetrics', () => {
 				}
 			}
 		})
+	})
+
+	it('keeps extended activity sources distinct and preserves listed nullable periods', () => {
+		const result = buildDimensionProtocolMetrics({
+			fees: null,
+			revenue: null,
+			holdersRevenue: null,
+			activity: {
+				perps: metricResponse([
+					metricRow('venue', { total24h: 100, total7d: null, total30d: 3000, change_7dover7d: 20 })
+				]),
+				normalizedVolume: metricResponse([metricRow('venue', { total24h: 80, total7d: 500 })]),
+				activeLiquidity: metricResponse([metricRow('venue', { total24h: 400 })]),
+				openInterest: metricResponse([metricRow('venue', { total24h: 250 })]),
+				optionsPremiumVolume: metricResponse([metricRow('options', { total24h: 5 })]),
+				optionsNotionalVolume: metricResponse([metricRow('options', { total24h: 50 })]),
+				dexAggregators: metricResponse([metricRow('router', { total24h: 40 })]),
+				perpsAggregators: metricResponse([metricRow('router', { total24h: 30 })]),
+				bridgeAggregators: metricResponse([metricRow('router', { total24h: 20 })])
+			}
+		})
+
+		expect(result.venue).toMatchObject({
+			perps: { total24h: 100, total7d: null, total30d: 3000, change_7dover7d: 20 },
+			normalizedVolume: { total24h: 80, total7d: 500 },
+			activeLiquidity: { total24h: 400 },
+			openInterest: { total24h: 250 }
+		})
+		expect(result.options).toMatchObject({
+			optionsPremiumVolume: { total24h: 5 },
+			optionsNotionalVolume: { total24h: 50 }
+		})
+		expect(result.router).toMatchObject({
+			dexAggregators: { total24h: 40 },
+			perpsAggregators: { total24h: 30 },
+			bridgeAggregators: { total24h: 20 }
+		})
+	})
+
+	it('clamps only normalized 24h volume to reported perp volume', () => {
+		const result = buildDimensionProtocolMetrics({
+			fees: null,
+			revenue: null,
+			holdersRevenue: null,
+			activity: {
+				perps: metricResponse([
+					metricRow('clamped', { total24h: 100, total7d: 400, total30d: 1_000 }),
+					metricRow('lower-normalized', { total24h: 100 }),
+					metricRow('missing-reported', { total24h: null })
+				]),
+				normalizedVolume: metricResponse([
+					metricRow('clamped', { total24h: 120, total7d: 500, total30d: 1_200 }),
+					metricRow('lower-normalized', { total24h: 80 }),
+					metricRow('missing-reported', { total24h: 50 }),
+					metricRow('normalized-only', { total24h: 25 })
+				])
+			}
+		})
+
+		expect(result.clamped.normalizedVolume).toMatchObject({
+			total24h: 100,
+			total7d: 500,
+			total30d: 1_200
+		})
+		expect(result['lower-normalized'].normalizedVolume?.total24h).toBe(80)
+		expect(result['missing-reported'].normalizedVolume?.total24h).toBeNull()
+		expect(result['normalized-only'].normalizedVolume?.total24h).toBeNull()
 	})
 })
 

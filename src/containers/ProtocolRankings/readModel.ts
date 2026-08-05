@@ -1,16 +1,39 @@
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
-import type { IAdapterChainOverview } from '~/containers/AdapterMetrics/types'
-import type { IChildProtocol } from './types'
+import type { IChildProtocol, ProtocolRankingActivityMetric } from './types'
 
 type DimensionFees = Omit<NonNullable<IChildProtocol['fees']>, 'pf'>
 type DimensionRevenue = Omit<NonNullable<IChildProtocol['revenue']>, 'ps'>
+export type ProtocolRankingActivityMetricKey =
+	| 'dexs'
+	| 'perps'
+	| 'normalizedVolume'
+	| 'activeLiquidity'
+	| 'openInterest'
+	| 'optionsPremiumVolume'
+	| 'optionsNotionalVolume'
+	| 'dexAggregators'
+	| 'perpsAggregators'
+	| 'bridgeAggregators'
 
 export interface IProtocolRankingsDimensionMetrics {
 	fees?: DimensionFees
 	revenue?: DimensionRevenue
 	holdersRevenue?: NonNullable<IChildProtocol['holdersRevenue']>
-	dexs?: NonNullable<IChildProtocol['dexs']>
+	dexs?: ProtocolRankingActivityMetric
+	perps?: ProtocolRankingActivityMetric
+	normalizedVolume?: ProtocolRankingActivityMetric
+	activeLiquidity?: ProtocolRankingActivityMetric
+	openInterest?: ProtocolRankingActivityMetric
+	optionsPremiumVolume?: ProtocolRankingActivityMetric
+	optionsNotionalVolume?: ProtocolRankingActivityMetric
+	dexAggregators?: ProtocolRankingActivityMetric
+	perpsAggregators?: ProtocolRankingActivityMetric
+	bridgeAggregators?: ProtocolRankingActivityMetric
 }
+
+export type ProtocolRankingActivitySources = Partial<
+	Record<ProtocolRankingActivityMetricKey, IAdapterChainMetrics | null>
+>
 
 export function getProtocolEarningsValue(
 	revenue: number | null | undefined,
@@ -23,14 +46,18 @@ export function buildDimensionProtocolMetrics({
 	fees,
 	revenue,
 	holdersRevenue,
-	dexs
+	activity
 }: {
 	fees: IAdapterChainMetrics | null
 	revenue: IAdapterChainMetrics | null
 	holdersRevenue: IAdapterChainMetrics | null
-	dexs: IAdapterChainOverview | null
+	activity: ProtocolRankingActivitySources
 }) {
 	const dimensionProtocols: Record<string, IProtocolRankingsDimensionMetrics> = {}
+	const reportedPerpVolume24hByProtocol = new Map<string, number | null>()
+	for (const protocol of activity.perps?.protocols ?? []) {
+		reportedPerpVolume24hByProtocol.set(protocol.defillamaId, protocol.total24h ?? null)
+	}
 
 	for (const protocol of fees?.protocols ?? []) {
 		const row = (dimensionProtocols[protocol.defillamaId] ??= {})
@@ -70,13 +97,26 @@ export function buildDimensionProtocolMetrics({
 		}
 	}
 
-	for (const protocol of dexs?.protocols ?? []) {
-		const row = (dimensionProtocols[protocol.defillamaId] ??= {})
-		row.dexs = {
-			total24h: protocol.total24h ?? 0,
-			total7d: protocol.total7d ?? 0,
-			change_7dover7d: protocol.change_7dover7d ?? null,
-			totalAllTime: protocol.totalAllTime ?? 0
+	for (const metricKey of Object.keys(activity) as ProtocolRankingActivityMetricKey[]) {
+		for (const protocol of activity[metricKey]?.protocols ?? []) {
+			const row = (dimensionProtocols[protocol.defillamaId] ??= {})
+			const preserveLegacyDexZeros = metricKey === 'dexs'
+			const reportedPerpVolume24h = reportedPerpVolume24hByProtocol.get(protocol.defillamaId)
+			const total24h =
+				metricKey === 'normalizedVolume'
+					? protocol.total24h != null && reportedPerpVolume24h != null
+						? Math.min(protocol.total24h, reportedPerpVolume24h)
+						: null
+					: preserveLegacyDexZeros
+						? (protocol.total24h ?? 0)
+						: (protocol.total24h ?? null)
+			row[metricKey] = {
+				total24h,
+				total7d: preserveLegacyDexZeros ? (protocol.total7d ?? 0) : (protocol.total7d ?? null),
+				total30d: preserveLegacyDexZeros ? (protocol.total30d ?? 0) : (protocol.total30d ?? null),
+				change_7dover7d: protocol.change_7dover7d ?? null,
+				totalAllTime: preserveLegacyDexZeros ? (protocol.totalAllTime ?? 0) : (protocol.totalAllTime ?? null)
+			}
 		}
 	}
 

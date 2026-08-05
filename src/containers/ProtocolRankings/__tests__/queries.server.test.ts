@@ -1108,4 +1108,65 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(data?.fees).not.toBeNull()
 		expect(data?.dexs).toBeNull()
 	})
+
+	it('loads extended activity metrics only when requested', async () => {
+		fetchAdapterChainMetricsMock.mockImplementation(
+			({ adapterType, dataType }: { adapterType: string; dataType?: string }) => {
+				if (adapterType === 'fees') return Promise.resolve({ protocols: [] })
+				const valueByRequest: Record<string, number> = {
+					derivatives: 20,
+					'normalized-volume': 30,
+					'normalized-volume:dailyActiveLiquidity': 40,
+					'open-interest:openInterestAtEnd': 50,
+					'options:dailyPremiumVolume': 60,
+					'options:dailyNotionalVolume': 70,
+					aggregators: 80,
+					'aggregator-derivatives': 90,
+					'bridge-aggregators': 100
+				}
+				const total24h = valueByRequest[`${adapterType}${dataType ? `:${dataType}` : ''}`]
+				return Promise.resolve({
+					protocols: total24h ? [metricRow('solo-protocol', { total24h })] : []
+				})
+			}
+		)
+		getAdapterChainOverviewMock.mockResolvedValue({ protocols: [] })
+		fetchProtocolsMock.mockResolvedValue(
+			protocolsResponse({
+				protocols: [
+					liteProtocol({
+						defillamaId: 'solo-protocol',
+						name: 'Solo Raw',
+						tvl: 10,
+						chainTvls: { Ethereum: tvlEntry(10, 9, 8, 7) }
+					})
+				]
+			})
+		)
+
+		const withoutExtended = await getProtocolsByChain({ chain: 'All', chainMetadata, protocolMetadata })
+		expect(withoutExtended?.protocols[0]?.perps).toBeUndefined()
+
+		const withExtended = await getProtocolsByChain({
+			chain: 'All',
+			chainMetadata,
+			protocolMetadata,
+			includeExtendedMetrics: true
+		})
+
+		expect(withExtended?.protocols[0]).toMatchObject({
+			perps: { total24h: 20 },
+			normalizedVolume: { total24h: 20 },
+			activeLiquidity: { total24h: 40 },
+			openInterest: { total24h: 50 },
+			optionsPremiumVolume: { total24h: 60 },
+			optionsNotionalVolume: { total24h: 70 },
+			dexAggregators: { total24h: 80 },
+			perpsAggregators: { total24h: 90 },
+			bridgeAggregators: { total24h: 100 }
+		})
+		expect(fetchAdapterChainMetricsMock).not.toHaveBeenCalledWith(
+			expect.objectContaining({ adapterType: 'dexs', dataType: 'dailyNotionalVolume' })
+		)
+	})
 })

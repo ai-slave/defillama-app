@@ -14,13 +14,25 @@ export type ProtocolRankingTvls = Partial<Record<TVL_TYPES, ProtocolRankingTvlEn
 	default: ProtocolRankingTvlEntry
 }
 
+export type ProtocolRankingActivityMetric = {
+	total24h: number | null
+	total7d: number | null
+	total30d: number | null
+	totalAllTime: number | null
+	change_7dover7d: number | null
+}
+
 export interface IChildProtocol {
 	name: string
 	slug: string
 	logo?: string | null
 	category: string | null
 	tvl: ProtocolRankingTvls | null
-	tvlChange: { change1d: number | null; change7d: number | null; change1m: number | null } | null
+	tvlChange: {
+		change1d: number | null
+		change7d: number | null
+		change1m: number | null
+	} | null
 	chains: Array<string>
 	mcap: number | null
 	tokenPrice: number | null
@@ -55,12 +67,16 @@ export interface IChildProtocol {
 		monthlyAverage1y: number | null
 		totalAllTime: number | null
 	}
-	dexs?: {
-		total24h: number | null
-		total7d: number | null
-		totalAllTime: number | null
-		change_7dover7d: number | null
-	}
+	dexs?: ProtocolRankingActivityMetric
+	perps?: ProtocolRankingActivityMetric
+	normalizedVolume?: ProtocolRankingActivityMetric
+	activeLiquidity?: ProtocolRankingActivityMetric
+	openInterest?: ProtocolRankingActivityMetric
+	optionsPremiumVolume?: ProtocolRankingActivityMetric
+	optionsNotionalVolume?: ProtocolRankingActivityMetric
+	dexAggregators?: ProtocolRankingActivityMetric
+	perpsAggregators?: ProtocolRankingActivityMetric
+	bridgeAggregators?: ProtocolRankingActivityMetric
 	emissions?: {
 		total24h: number | null
 		total7d: number | null

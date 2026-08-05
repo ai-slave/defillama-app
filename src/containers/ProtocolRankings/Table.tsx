@@ -3,13 +3,14 @@ import {
 	createColumnHelper,
 	getCoreRowModel,
 	getExpandedRowModel,
+	getFilteredRowModel,
 	getSortedRowModel,
 	useReactTable,
 	type ExpandedState,
 	type SortingState
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { startTransition, useDeferredValue, useMemo, useRef, useState } from 'react'
+import { startTransition, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
@@ -28,19 +29,21 @@ import {
 	type CustomColumnDef,
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
-import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
+import { removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { popoverFooterActionStyles } from '~/ui/Popover'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { TableToolbar } from '~/ui/Toolbar'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
-import { parseNumberQueryParam } from '~/utils/routerQuery'
+import { parseNumberQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { CustomColumnModal } from './CustomColumnModal'
 import { parseProtocolTableColumnVisibility, replaceAliases, sampleProtocol } from './customColumnsUtils'
 import { createFormulaEvaluator, formatCustomColumnValue, getSortableValue } from './formula.service'
@@ -56,26 +59,38 @@ type ChainProtocolsTableProps = {
 	headingAs?: 'h1' | 'h2'
 	tvlSettings?: Record<TvlSettingsKey, boolean>
 	suppressTvlStrike?: boolean
+	showExtendedMetrics?: boolean
 }
 
-type TableCategory = (typeof TABLE_CATEGORIES_VALUES)[number]
+type TablePreset = (typeof TABLE_PRESET_VALUES)[number]
 type TablePeriod = (typeof TABLE_PERIODS_VALUES)[number]
-type TableFilterState = TableCategory | TablePeriod
-type FilterKey = 'category' | 'period'
-type FilterStateByKey = {
-	category: TableCategory
-	period: TablePeriod
-}
 
 type ChainProtocolsTableInnerProps = ChainProtocolsTableProps & {
-	filterState: TableFilterState | null
+	selectedMetricPreset: TablePreset | null
+	selectedPeriod: TablePeriod | null
+	tablePresets: readonly TablePreset[]
 }
 
 export const ChainProtocolsTable = (props: ChainProtocolsTableProps) => {
-	const rawFilterState = useStorageItem(tableFilterStateKey, null)
-	const filterState = isTableFilterState(rawFilterState) ? rawFilterState : null
+	const legacyFilterState = useStorageItem(legacyTableFilterStateKey, null)
+	const storedMetricPreset = useStorageItem(tableMetricPresetKey, null)
+	const storedPeriod = useStorageItem(tablePeriodKey, null)
+	const normalizedLegacyFilterState = legacyFilterState === 'Volume' ? TABLE_PRESETS.SPOT : legacyFilterState
+	const tablePresets = getTablePresets(props.protocols, props.showExtendedMetrics ?? false)
+	const metricPresetCandidate = storedMetricPreset ?? normalizedLegacyFilterState
+	const periodCandidate = storedPeriod ?? normalizedLegacyFilterState
+	const selectedMetricPreset =
+		isTablePreset(metricPresetCandidate) && tablePresets.includes(metricPresetCandidate) ? metricPresetCandidate : null
+	const selectedPeriod = isTablePeriod(periodCandidate) ? periodCandidate : null
 
-	return <ChainProtocolsTableInner {...props} filterState={filterState} key={`filter-state-${filterState}`} />
+	return (
+		<ChainProtocolsTableInner
+			{...props}
+			selectedMetricPreset={selectedMetricPreset}
+			selectedPeriod={selectedPeriod}
+			tablePresets={tablePresets}
+		/>
+	)
 }
 
 const ChainProtocolsTableInner = ({
@@ -86,7 +101,10 @@ const ChainProtocolsTableInner = ({
 	headingAs = 'h2',
 	tvlSettings,
 	suppressTvlStrike = false,
-	filterState
+	showExtendedMetrics = false,
+	selectedMetricPreset,
+	selectedPeriod,
+	tablePresets
 }: ChainProtocolsTableInnerProps) => {
 	const { customColumns, setCustomColumns } = useCustomColumns()
 
@@ -95,6 +113,12 @@ const ChainProtocolsTableInner = ({
 	const extraTvlsEnabled = tvlSettings ?? globalExtraTvlsEnabled
 	const minTvl = parseNumberQueryParam(router.query.minTvl)
 	const maxTvl = parseNumberQueryParam(router.query.maxTvl)
+	const [nameSearch, setNameSearch] = useState('')
+	const deferredNameSearch = useDeferredValue(nameSearch.trim())
+	const columnFilters = useMemo(
+		() => (deferredNameSearch ? [{ id: 'name', value: deferredNameSearch }] : []),
+		[deferredNameSearch]
+	)
 
 	const finalProtocols = useMemo(
 		() =>
@@ -110,6 +134,39 @@ const ChainProtocolsTableInner = ({
 
 	const rawColumnsInStorage = useStorageItem(tableColumnOptionsKey, defaultColumns)
 	const columnsInStorage = useDeferredValue(rawColumnsInStorage)
+	const availableActivityMetrics = useMemo(() => {
+		const available = new Set<ActivityMetricKey>()
+		if (!showExtendedMetrics) return available
+		for (const protocol of protocols) {
+			for (const metricKey of ACTIVITY_METRIC_KEYS) {
+				if (protocol[metricKey] !== undefined) available.add(metricKey)
+			}
+			if (available.size === ACTIVITY_METRIC_KEYS.length) break
+		}
+		return available
+	}, [protocols, showExtendedMetrics])
+	const availableColumnOptions = useMemo(
+		() =>
+			columnOptions.filter(
+				(column) =>
+					!column.extended ||
+					(showExtendedMetrics && (!column.metricKey || availableActivityMetrics.has(column.metricKey)))
+			),
+		[availableActivityMetrics, showExtendedMetrics]
+	)
+	const getMainColumnForPreset = useCallback(
+		(preset: TablePreset, period: TablePeriod | null) =>
+			preset === TABLE_PRESETS.TVL
+				? 'tvl'
+				: ((period
+						? availableColumnOptions.find((column) => column.preset === preset && column.period === period)?.key
+						: availableColumnOptions.find(
+								(column) => column.preset === preset && column.period === TABLE_PERIODS.ONE_DAY
+							)?.key) ??
+					availableColumnOptions.find((column) => column.preset === preset)?.key ??
+					MAIN_COLUMN_BY_PRESET[preset]),
+		[availableColumnOptions]
+	)
 
 	const [customColumnModalEditIndex, setCustomColumnModalEditIndex] = useState<number | null>(null)
 	const [customColumnModalInitialValues, setCustomColumnModalInitialValues] = useState<
@@ -118,6 +175,11 @@ const ChainProtocolsTableInner = ({
 
 	const customColumnDialogStore = Ariakit.useDialogStore()
 	const customColumnDialogOpen = Ariakit.useStoreState(customColumnDialogStore, 'open')
+	const clearPresetSelection = () => {
+		removeStorageItem(legacyTableFilterStateKey)
+		removeStorageItem(tableMetricPresetKey)
+		removeStorageItem(tablePeriodKey)
+	}
 	const handleAddCustomColumn = () => {
 		setCustomColumnModalEditIndex(null)
 		setCustomColumnModalInitialValues(undefined)
@@ -145,6 +207,7 @@ const ChainProtocolsTableInner = ({
 		customColumnDialogStore.toggle()
 
 		if (newColumnKey) {
+			clearPresetSelection()
 			const allKeys = [...columnOptions.map((c) => c.key), ...next.map((_, idx) => `custom_formula_${idx}`)]
 			const ops = parseProtocolTableColumnVisibility(localStorage.getItem(tableColumnOptionsKey))
 			for (const key of allKeys) {
@@ -155,51 +218,47 @@ const ChainProtocolsTableInner = ({
 				}
 			}
 			setStorageItem(tableColumnOptionsKey, JSON.stringify(ops))
-			if (instance && instance.setColumnVisibility) {
-				instance.setColumnVisibility(ops)
-			}
 		}
 	}
 
 	const { mergedColumns, columnVisibility, selectedColumns } = useMemo(() => {
-		const mergedColumns = [
-			...columnOptions,
-			...customColumns.map((col, idx) => ({
-				name: col.name,
-				key: `custom_formula_${idx}`,
-				isCustom: true,
-				customIndex: idx,
-				formula: col.formula,
-				formatType: col.formatType
-			}))
-		]
-		const defaultColumnVisibility: Record<string, boolean> = {}
-		for (const column of mergedColumns) defaultColumnVisibility[column.key] = true
+		const customColumnOptions = customColumns.map((col, idx) => ({
+			name: col.name,
+			key: `custom_formula_${idx}`,
+			isCustom: true,
+			customIndex: idx,
+			formula: col.formula,
+			formatType: col.formatType
+		}))
+		const mergedColumns = [...availableColumnOptions, ...customColumnOptions]
+		const defaultColumnVisibility = getProtocolRankingDefaultColumnVisibility(customColumnOptions.length)
 
 		const parsedColumnVisibility = parseProtocolTableColumnVisibility(columnsInStorage)
 
 		const columnVisibility = { ...defaultColumnVisibility, ...parsedColumnVisibility }
+		for (const column of columnOptions) {
+			if (column.extended && !availableColumnOptions.includes(column)) columnVisibility[column.key] = false
+		}
 		const selectedColumns = mergedColumns.flatMap((column) => (columnVisibility[column.key] ? [column.key] : []))
 
 		return { mergedColumns, columnVisibility, selectedColumns }
-	}, [customColumns, columnsInStorage])
+	}, [availableColumnOptions, customColumns, columnsInStorage])
 
 	const setColumnOptions = (newColumns: string[]) => {
-		const allKeys = mergedColumns.map((col) => col.key)
+		clearPresetSelection()
+		const allKeys = [
+			...columnOptions.map((column) => column.key),
+			...customColumns.map((_, idx) => `custom_formula_${idx}`)
+		]
 		const ops = Object.fromEntries(allKeys.map((key) => [key, newColumns.includes(key)]))
 		setStorageItem(tableColumnOptionsKey, JSON.stringify(ops))
-
-		if (instance && instance.setColumnVisibility) {
-			instance.setColumnVisibility(ops)
-		}
-	}
-
-	const toggleAllColumns = () => {
-		setColumnOptions(mergedColumns.map((col) => col.key))
 	}
 
 	const [sorting, setSorting] = useState<SortingState>([
-		{ desc: true, id: filterState && isTableCategory(filterState) ? MAIN_COLUMN_BY_CATEGORY[filterState] : 'tvl' }
+		{
+			desc: true,
+			id: selectedMetricPreset ? getMainColumnForPreset(selectedMetricPreset, selectedPeriod) : 'tvl'
+		}
 	])
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 	const sortingRef = useRef(sorting)
@@ -278,7 +337,11 @@ const ChainProtocolsTableInner = ({
 					},
 					meta: {
 						headerClassName:
-							displayFormat === 'string' ? 'w-[220px]' : displayFormat === 'boolean' ? 'w-[110px]' : 'w-[140px]',
+							displayFormat === 'string'
+								? 'w-[220px] min-w-[220px]'
+								: displayFormat === 'boolean'
+									? 'w-[110px] min-w-[110px]'
+									: 'w-[140px] min-w-[140px]',
 						align: displayFormat === 'string' ? 'start' : displayFormat === 'boolean' ? 'center' : 'end',
 						headerHelperText: col.formula
 					}
@@ -306,7 +369,8 @@ const ChainProtocolsTableInner = ({
 		state: {
 			sorting,
 			expanded,
-			columnVisibility
+			columnVisibility,
+			columnFilters
 		},
 		defaultColumn: {
 			sortUndefined: 'last'
@@ -315,53 +379,61 @@ const ChainProtocolsTableInner = ({
 		filterFromLeafRows: true,
 		onExpandedChange: (updater) => startTransition(() => setExpanded(updater)),
 		getSubRows: (row: IProtocol) => row.childProtocols,
-		onSortingChange: (updater) => startTransition(() => setSorting(updater)),
+		onSortingChange: setSorting,
 		getCoreRowModel: getCoreRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getExpandedRowModel: getExpandedRowModel()
 	})
 
-	const selectedCategory = isTableCategory(filterState) ? filterState : null
-	const selectedPeriod = isTablePeriod(filterState) ? filterState : null
-
-	const setFilter =
-		<K extends FilterKey>(key: K) =>
-		(newState: FilterStateByKey[K]) => {
-			const newColumns = Object.fromEntries(
-				columnOptions.map((column) => [
-					column.key,
-					['name', 'category'].includes(column.key) ? true : column[key] === newState
-				])
-			)
-
-			if (columnsInStorage === JSON.stringify(newColumns)) {
-				toggleAllColumns()
-				setStorageItem(tableFilterStateKey, 'null')
-				instance.setSorting([{ id: 'tvl', desc: true }])
-				// window.dispatchEvent(new Event('storage'))
-			} else {
-				setStorageItem(tableColumnOptionsKey, JSON.stringify(newColumns))
-				setStorageItem(tableFilterStateKey, newState)
-				instance.setSorting([{ id: isTableCategory(newState) ? MAIN_COLUMN_BY_CATEGORY[newState] : 'tvl', desc: true }])
-				// window.dispatchEvent(new Event('storage'))
-			}
-		}
+	const applyPresetSelection = (metricPreset: TablePreset | null, period: TablePeriod | null) => {
+		const newColumns = getProtocolRankingPresetColumnVisibility(metricPreset, period, tablePresets)
+		for (let index = 0; index < customColumns.length; index++) newColumns[`custom_formula_${index}`] = false
+		setStorageItem(tableColumnOptionsKey, JSON.stringify(newColumns))
+		setSorting([{ id: metricPreset ? getMainColumnForPreset(metricPreset, period) : 'tvl', desc: true }])
+	}
+	const setMetricPreset = (metricPreset: TablePreset) => {
+		removeStorageItem(legacyTableFilterStateKey)
+		setStorageItem(tableMetricPresetKey, metricPreset)
+		applyPresetSelection(metricPreset, selectedPeriod)
+	}
+	const setPeriod = (period: TablePeriod) => {
+		removeStorageItem(legacyTableFilterStateKey)
+		setStorageItem(tablePeriodKey, period)
+		applyPresetSelection(selectedMetricPreset, period)
+	}
+	const resetTable = () => {
+		setNameSearch('')
+		setExpanded({})
+		setSorting([{ id: 'tvl', desc: true }])
+		removeStorageItem(legacyTableFilterStateKey)
+		removeStorageItem(tableMetricPresetKey)
+		removeStorageItem(tablePeriodKey)
+		removeStorageItem(tableColumnOptionsKey)
+		void pushShallowQuery(router, { minTvl: undefined, maxTvl: undefined })
+	}
 	const chainQuery = router.query.chain
 	const activeChain = Array.isArray(chainQuery) ? chainQuery[0] : chainQuery
-	const toolbarControls = (
+	const primaryToolbarControls = (
 		<>
+			<label className={searchFieldInlineWrapperStyles}>
+				<span className="sr-only">Search protocols by name</span>
+				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+				<input
+					type="search"
+					value={nameSearch}
+					onChange={(event) => setNameSearch(event.currentTarget.value)}
+					placeholder="Search protocols..."
+					autoComplete="off"
+					className={searchFieldInputStyles}
+				/>
+			</label>
 			<TagGroup
 				variant="default"
-				setValue={setFilter('category')}
-				selectedValue={selectedCategory}
-				values={TABLE_CATEGORIES_VALUES}
-				size="md"
-			/>
-			<TagGroup
-				variant="default"
-				setValue={setFilter('period')}
+				setValue={setPeriod}
 				selectedValue={selectedPeriod}
 				values={TABLE_PERIODS_VALUES}
+				ariaLabel="Period"
 				size="md"
 			/>
 
@@ -391,19 +463,40 @@ const ChainProtocolsTableInner = ({
 			/>
 		</>
 	)
+	const secondaryToolbarControls = (
+		<div className="flex w-full items-center gap-2">
+			<div className="min-w-0 flex-1 overflow-x-auto">
+				<TagGroup
+					variant="chips"
+					setValue={setMetricPreset}
+					selectedValue={selectedMetricPreset}
+					values={tablePresets}
+					ariaLabel="Metric view"
+					size="md"
+				/>
+			</div>
+			<Button type="button" size="md" className="ml-auto" onClick={resetTable}>
+				Reset
+			</Button>
+		</div>
+	)
 
 	return (
 		<div className={borderless ? 'isolate' : 'isolate rounded-lg border border-subtle bg-surface'}>
 			{!borderless && headingAs === 'h1' ? (
 				<PanelHeader className="justify-end">
 					<PanelTitle as="h1">Protocol Rankings</PanelTitle>
-					{toolbarControls}
+					<TableToolbarControlGroup className="justify-end">{primaryToolbarControls}</TableToolbarControlGroup>
+					<div className="w-full pt-1">{secondaryToolbarControls}</div>
 				</PanelHeader>
 			) : (
-				<TableToolbar className="justify-end">
-					{borderless ? null : <h2 className="mr-auto flex w-full grow label-md md:w-auto">Protocol Rankings</h2>}
-					{toolbarControls}
-				</TableToolbar>
+				<div className="border-b border-subtle">
+					<TableToolbar className="justify-end">
+						{borderless ? null : <h2 className="mr-auto flex w-full grow label-md md:w-auto">Protocol Rankings</h2>}
+						{primaryToolbarControls}
+					</TableToolbar>
+					<div className="px-2 pb-2">{secondaryToolbarControls}</div>
+				</div>
 			)}
 			<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
 			{customColumnDialogOpen ? (
@@ -420,20 +513,31 @@ const ChainProtocolsTableInner = ({
 }
 
 const tableColumnOptionsKey = 'ptc'
-const tableFilterStateKey = 'ptcfs'
+const legacyTableFilterStateKey = 'ptcfs'
+const tableMetricPresetKey = 'ptcmp'
+const tablePeriodKey = 'ptcp'
 
-enum TABLE_CATEGORIES {
+enum TABLE_PRESETS {
 	FEES = 'Fees',
 	REVENUE = 'Revenue',
-	VOLUME = 'Volume',
+	SPOT = 'Spot',
+	PERPS = 'Perps',
 	TVL = 'TVL'
 }
 
-const MAIN_COLUMN_BY_CATEGORY: Record<TableCategory, string> = {
-	[TABLE_CATEGORIES.TVL]: 'tvl',
-	[TABLE_CATEGORIES.FEES]: 'fees_24h',
-	[TABLE_CATEGORIES.REVENUE]: 'revenue_24h',
-	[TABLE_CATEGORIES.VOLUME]: 'dex_volume_24h'
+enum TABLE_COLUMN_GROUPS {
+	SPOT = 'Spot',
+	PERPS = 'Perps',
+	OPTIONS = 'Options',
+	BRIDGES = 'Bridges'
+}
+
+const MAIN_COLUMN_BY_PRESET: Record<TablePreset, string> = {
+	[TABLE_PRESETS.TVL]: 'tvl',
+	[TABLE_PRESETS.FEES]: 'fees_24h',
+	[TABLE_PRESETS.REVENUE]: 'revenue_24h',
+	[TABLE_PRESETS.SPOT]: 'dex_volume_24h',
+	[TABLE_PRESETS.PERPS]: 'perp_volume_24h'
 }
 
 enum TABLE_PERIODS {
@@ -442,137 +546,396 @@ enum TABLE_PERIODS {
 	ONE_MONTH = '1m'
 }
 
-const TABLE_CATEGORIES_VALUES = [
-	TABLE_CATEGORIES.FEES,
-	TABLE_CATEGORIES.REVENUE,
-	TABLE_CATEGORIES.VOLUME,
-	TABLE_CATEGORIES.TVL
+const TABLE_PRESET_VALUES = [
+	TABLE_PRESETS.FEES,
+	TABLE_PRESETS.REVENUE,
+	TABLE_PRESETS.SPOT,
+	TABLE_PRESETS.PERPS,
+	TABLE_PRESETS.TVL
 ] as const
+const BASE_TABLE_PRESET_VALUES: readonly TablePreset[] = [
+	TABLE_PRESETS.FEES,
+	TABLE_PRESETS.REVENUE,
+	TABLE_PRESETS.SPOT,
+	TABLE_PRESETS.TVL
+]
 const TABLE_PERIODS_VALUES = [TABLE_PERIODS.ONE_DAY, TABLE_PERIODS.SEVEN_DAYS, TABLE_PERIODS.ONE_MONTH] as const
 
-function isTableCategory(value: string | null): value is TableCategory {
-	return value != null && TABLE_CATEGORIES_VALUES.some((category) => category === value)
+function isTablePreset(value: string | null): value is TablePreset {
+	return value != null && TABLE_PRESET_VALUES.some((preset) => preset === value)
 }
 
 function isTablePeriod(value: string | null): value is TablePeriod {
 	return value != null && TABLE_PERIODS_VALUES.some((period) => period === value)
 }
 
-function isTableFilterState(value: string | null): value is TableFilterState {
-	return isTableCategory(value) || isTablePeriod(value)
+function getTablePresets(protocols: Array<IProtocol>, showExtendedMetrics: boolean): readonly TablePreset[] {
+	if (!showExtendedMetrics) return BASE_TABLE_PRESET_VALUES
+
+	const presets: TablePreset[] = [...BASE_TABLE_PRESET_VALUES]
+	if (
+		protocols.some(
+			(protocol) => protocol.perps || protocol.normalizedVolume || protocol.activeLiquidity || protocol.openInterest
+		)
+	) {
+		presets.splice(3, 0, TABLE_PRESETS.PERPS)
+	}
+	return presets
 }
 
-const columnOptions = [
+type ActivityMetricKey =
+	| 'perps'
+	| 'normalizedVolume'
+	| 'activeLiquidity'
+	| 'openInterest'
+	| 'optionsPremiumVolume'
+	| 'optionsNotionalVolume'
+	| 'dexAggregators'
+	| 'perpsAggregators'
+	| 'bridgeAggregators'
+
+const ACTIVITY_METRIC_KEYS: readonly ActivityMetricKey[] = [
+	'perps',
+	'normalizedVolume',
+	'activeLiquidity',
+	'openInterest',
+	'optionsPremiumVolume',
+	'optionsNotionalVolume',
+	'dexAggregators',
+	'perpsAggregators',
+	'bridgeAggregators'
+]
+
+type ProtocolTableColumnOption = {
+	name: string
+	key: string
+	preset?: TablePreset
+	period?: TablePeriod
+	snapshot?: boolean
+	extended?: boolean
+	defaultVisible?: boolean
+	metricKey?: ActivityMetricKey
+}
+
+const ACTIVITY_PERIODS = [
+	{ field: 'total24h', suffix: '24h', tablePeriod: TABLE_PERIODS.ONE_DAY },
+	{ field: 'total7d', suffix: '7d', tablePeriod: TABLE_PERIODS.SEVEN_DAYS },
+	{ field: 'total30d', suffix: '30d', tablePeriod: TABLE_PERIODS.ONE_MONTH }
+] as const
+
+const EXTENDED_ACTIVITY_METRICS: Array<{
+	metricKey: Exclude<ActivityMetricKey, 'openInterest' | 'activeLiquidity'>
+	idPrefix: string
+	label: string
+	group: TABLE_COLUMN_GROUPS
+	preset?: TablePreset
+	helperText: readonly [string, string, string]
+	widths: readonly [string, string, string]
+	overlapWarning?: string
+}> = [
+	{
+		metricKey: 'perps',
+		idPrefix: 'perp_volume',
+		label: 'Perp Volume',
+		group: TABLE_COLUMN_GROUPS.PERPS,
+		preset: TABLE_PRESETS.PERPS,
+		helperText: [
+			definitions.perps.protocol['24h'],
+			definitions.perps.protocol['7d'],
+			definitions.perps.protocol['30d']
+		],
+		widths: ['w-[154px] min-w-[154px]', 'w-[143px] min-w-[143px]', 'w-[154px] min-w-[154px]']
+	},
+	{
+		metricKey: 'normalizedVolume',
+		idPrefix: 'normalized_volume',
+		label: 'Normalized Volume',
+		group: TABLE_COLUMN_GROUPS.PERPS,
+		preset: TABLE_PRESETS.PERPS,
+		helperText: [
+			definitions.normalizedVolume.protocol['24h'],
+			definitions.normalizedVolume.protocol['7d'],
+			definitions.normalizedVolume.protocol['30d']
+		],
+		widths: ['w-[199px] min-w-[199px]', 'w-[189px] min-w-[189px]', 'w-[199px] min-w-[199px]']
+	},
+	{
+		metricKey: 'optionsPremiumVolume',
+		idPrefix: 'options_premium_volume',
+		label: 'Options Premium Volume',
+		group: TABLE_COLUMN_GROUPS.OPTIONS,
+		helperText: [
+			definitions.optionsPremium.protocol['24h'],
+			definitions.optionsPremium.protocol['7d'],
+			definitions.optionsPremium.protocol['30d']
+		],
+		widths: ['w-[237px] min-w-[237px]', 'w-[227px] min-w-[227px]', 'w-[238px] min-w-[238px]']
+	},
+	{
+		metricKey: 'optionsNotionalVolume',
+		idPrefix: 'options_notional_volume',
+		label: 'Options Notional Volume',
+		group: TABLE_COLUMN_GROUPS.OPTIONS,
+		helperText: [
+			definitions.optionsNotional.protocol['24h'],
+			definitions.optionsNotional.protocol['7d'],
+			definitions.optionsNotional.protocol['30d']
+		],
+		widths: ['w-[234px] min-w-[234px]', 'w-[224px] min-w-[224px]', 'w-[234px] min-w-[234px]']
+	},
+	{
+		metricKey: 'dexAggregators',
+		idPrefix: 'dex_aggregator_volume',
+		label: 'DEX Aggregator Volume',
+		group: TABLE_COLUMN_GROUPS.SPOT,
+		helperText: [
+			definitions.dexAggregators.protocol['24h'],
+			definitions.dexAggregators.protocol['7d'],
+			definitions.dexAggregators.protocol['30d']
+		],
+		widths: ['w-[230px] min-w-[230px]', 'w-[220px] min-w-[220px]', 'w-[230px] min-w-[230px]'],
+		overlapWarning: 'Routed volume can overlap spot venue volume; do not add them together'
+	},
+	{
+		metricKey: 'perpsAggregators',
+		idPrefix: 'perp_aggregator_volume',
+		label: 'Perp Aggregator Volume',
+		group: TABLE_COLUMN_GROUPS.PERPS,
+		helperText: [
+			definitions.perpsAggregators.protocol['24h'],
+			definitions.perpsAggregators.protocol['7d'],
+			definitions.perpsAggregators.protocol['30d']
+		],
+		widths: ['w-[233px] min-w-[233px]', 'w-[223px] min-w-[223px]', 'w-[233px] min-w-[233px]'],
+		overlapWarning: 'Routed volume can overlap perp venue volume; do not add them together'
+	},
+	{
+		metricKey: 'bridgeAggregators',
+		idPrefix: 'bridge_aggregator_volume',
+		label: 'Bridge Aggregator Volume',
+		group: TABLE_COLUMN_GROUPS.BRIDGES,
+		helperText: [
+			definitions.bridgeAggregators.protocol['24h'],
+			definitions.bridgeAggregators.protocol['7d'],
+			definitions.bridgeAggregators.protocol['30d']
+		],
+		widths: ['w-[245px] min-w-[245px]', 'w-[235px] min-w-[235px]', 'w-[246px] min-w-[246px]'],
+		overlapWarning: 'Routed volume can overlap underlying bridge volume; do not add them together'
+	}
+]
+
+const columnOptions: ProtocolTableColumnOption[] = [
 	{ name: 'Name', key: 'name' },
 	{ name: 'Category', key: 'category' },
-	{ name: 'TVL', key: 'tvl', category: TABLE_CATEGORIES.TVL },
-	{ name: 'TVL 1d change', key: 'change_1d', category: TABLE_CATEGORIES.TVL, period: TABLE_PERIODS.ONE_DAY },
-	{ name: 'TVL 7d change', key: 'change_7d', category: TABLE_CATEGORIES.TVL, period: TABLE_PERIODS.SEVEN_DAYS },
-	{ name: 'TVL 1m change', key: 'change_1m', category: TABLE_CATEGORIES.TVL, period: TABLE_PERIODS.ONE_MONTH },
+	{
+		name: 'TVL',
+		key: 'tvl',
+		preset: TABLE_PRESETS.TVL,
+		snapshot: true
+	},
+	{ name: 'TVL 1d change', key: 'change_1d', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.ONE_DAY },
+	{ name: 'TVL 7d change', key: 'change_7d', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.SEVEN_DAYS },
+	{ name: 'TVL 1m change', key: 'change_1m', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.ONE_MONTH },
 	{ name: 'Token Price', key: 'token_price' },
 	{ name: 'Market Cap', key: 'mcap' },
 	{ name: 'Mcap/TVL', key: 'mcaptvl' },
-	{ name: 'Fees 24h', key: 'fees_24h', category: TABLE_CATEGORIES.FEES, period: TABLE_PERIODS.ONE_DAY },
-	{ name: 'Fees 7d', key: 'fees_7d', category: TABLE_CATEGORIES.FEES, period: TABLE_PERIODS.SEVEN_DAYS },
-	{ name: 'Fees 30d', key: 'fees_30d', category: TABLE_CATEGORIES.FEES, period: TABLE_PERIODS.ONE_MONTH },
+	{ name: 'Fees 24h', key: 'fees_24h', preset: TABLE_PRESETS.FEES, period: TABLE_PERIODS.ONE_DAY },
+	{ name: 'Fees 7d', key: 'fees_7d', preset: TABLE_PRESETS.FEES, period: TABLE_PERIODS.SEVEN_DAYS },
+	{ name: 'Fees 30d', key: 'fees_30d', preset: TABLE_PRESETS.FEES, period: TABLE_PERIODS.ONE_MONTH },
 	{
 		name: 'Fees 1Y',
 		key: 'fees_1y',
-		category: TABLE_CATEGORIES.FEES
+		preset: TABLE_PRESETS.FEES
 	},
 	{
 		name: 'Monthly Avg 1Y Fees',
 		key: 'average_fees_1y',
-		category: TABLE_CATEGORIES.FEES
+		preset: TABLE_PRESETS.FEES
 	},
-	{ name: 'Cumulative Fees', key: 'fees_cumulative', category: TABLE_CATEGORIES.FEES },
-	{ name: 'Revenue 24h', key: 'revenue_24h', category: TABLE_CATEGORIES.REVENUE, period: TABLE_PERIODS.ONE_DAY },
-	{ name: 'Revenue 7d', key: 'revenue_7d', category: TABLE_CATEGORIES.REVENUE, period: TABLE_PERIODS.SEVEN_DAYS },
-	{ name: 'Revenue 30d', key: 'revenue_30d', category: TABLE_CATEGORIES.REVENUE, period: TABLE_PERIODS.ONE_MONTH },
-	{ name: 'Revenue 1y', key: 'revenue_1y', category: TABLE_CATEGORIES.REVENUE },
+	{ name: 'Cumulative Fees', key: 'fees_cumulative', preset: TABLE_PRESETS.FEES },
+	{ name: 'Revenue 24h', key: 'revenue_24h', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.ONE_DAY },
+	{ name: 'Revenue 7d', key: 'revenue_7d', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.SEVEN_DAYS },
+	{ name: 'Revenue 30d', key: 'revenue_30d', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.ONE_MONTH },
+	{ name: 'Revenue 1y', key: 'revenue_1y', preset: TABLE_PRESETS.REVENUE },
 	{
 		name: 'Monthly Avg 1Y Rev',
 		key: 'average_revenue_1y',
-		category: TABLE_CATEGORIES.REVENUE
+		preset: TABLE_PRESETS.REVENUE
 	},
-	{ name: 'Cumulative Revenue', key: 'cumulativeRevenue', category: TABLE_CATEGORIES.REVENUE },
+	{ name: 'Cumulative Revenue', key: 'cumulativeRevenue', preset: TABLE_PRESETS.REVENUE },
 	{
 		name: 'Holders Revenue 24h',
 		key: 'holdersRevenue_24h',
-		category: TABLE_CATEGORIES.REVENUE,
+		preset: TABLE_PRESETS.REVENUE,
 		period: TABLE_PERIODS.ONE_DAY
 	},
 	{
 		name: 'Holders Revenue 7d',
 		key: 'holdersRevenue_7d',
-		category: TABLE_CATEGORIES.REVENUE,
+		preset: TABLE_PRESETS.REVENUE,
 		period: TABLE_PERIODS.SEVEN_DAYS
 	},
 	{
 		name: 'Holders Revenue 30d',
 		key: 'holdersRevenue_30d',
-		category: TABLE_CATEGORIES.REVENUE,
+		preset: TABLE_PRESETS.REVENUE,
 		period: TABLE_PERIODS.ONE_MONTH
 	},
-	{ name: 'Holders Revenue 1y', key: 'holdersRevenue_1y', category: TABLE_CATEGORIES.REVENUE },
+	{ name: 'Holders Revenue 1y', key: 'holdersRevenue_1y', preset: TABLE_PRESETS.REVENUE },
 	{
 		name: 'Monthly Avg 1Y Holders Revenue',
 		key: 'average_holdersRevenue_1y',
-		category: TABLE_CATEGORIES.REVENUE
+		preset: TABLE_PRESETS.REVENUE
 	},
-	{ name: 'Cumulative Holders Revenue', key: 'cumulativeHoldersRevenue', category: TABLE_CATEGORIES.REVENUE },
-	{ name: 'Incentives 24h', key: 'emissions_24h', category: TABLE_CATEGORIES.REVENUE, period: TABLE_PERIODS.ONE_DAY },
-	{ name: 'Incentives 7d', key: 'emissions_7d', category: TABLE_CATEGORIES.REVENUE, period: TABLE_PERIODS.SEVEN_DAYS },
-	{ name: 'Incentives 30d', key: 'emissions_30d', category: TABLE_CATEGORIES.REVENUE, period: TABLE_PERIODS.ONE_MONTH },
+	{ name: 'Cumulative Holders Revenue', key: 'cumulativeHoldersRevenue', preset: TABLE_PRESETS.REVENUE },
+	{ name: 'Incentives 24h', key: 'emissions_24h', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.ONE_DAY },
+	{ name: 'Incentives 7d', key: 'emissions_7d', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.SEVEN_DAYS },
+	{ name: 'Incentives 30d', key: 'emissions_30d', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.ONE_MONTH },
 	{
 		name: 'Incentives 1Y',
 		key: 'emissions_1y',
-		category: TABLE_CATEGORIES.REVENUE
+		preset: TABLE_PRESETS.REVENUE
 	},
 	{
 		name: 'Monthly Avg 1Y Incentives',
 		key: 'average_emissions_1y',
-		category: TABLE_CATEGORIES.REVENUE
+		preset: TABLE_PRESETS.REVENUE
 	},
-	{ name: 'Cumulative Incentives', key: 'cumulativeEmissions', category: TABLE_CATEGORIES.REVENUE },
-	{ name: 'Earnings 24h', key: 'earnings_24h', category: TABLE_CATEGORIES.REVENUE, period: TABLE_PERIODS.ONE_DAY },
-	{ name: 'Earnings 7d', key: 'earnings_7d', category: TABLE_CATEGORIES.REVENUE, period: TABLE_PERIODS.SEVEN_DAYS },
-	{ name: 'Earnings 30d', key: 'earnings_30d', category: TABLE_CATEGORIES.REVENUE, period: TABLE_PERIODS.ONE_MONTH },
+	{ name: 'Cumulative Incentives', key: 'cumulativeEmissions', preset: TABLE_PRESETS.REVENUE },
+	{ name: 'Earnings 24h', key: 'earnings_24h', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.ONE_DAY },
+	{ name: 'Earnings 7d', key: 'earnings_7d', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.SEVEN_DAYS },
+	{ name: 'Earnings 30d', key: 'earnings_30d', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.ONE_MONTH },
 	{
 		name: 'Earnings 1Y',
 		key: 'earnings_1y',
-		category: TABLE_CATEGORIES.REVENUE
+		preset: TABLE_PRESETS.REVENUE
 	},
 	{
 		name: 'Monthly Avg 1Y Earnings',
 		key: 'average_earnings_1y',
-		category: TABLE_CATEGORIES.REVENUE
+		preset: TABLE_PRESETS.REVENUE
 	},
 	{
 		name: 'Cumulative Earnings',
 		key: 'cumulativeEarnings',
-		category: TABLE_CATEGORIES.REVENUE
+		preset: TABLE_PRESETS.REVENUE
 	},
-	{ name: 'P/S', key: 'ps', category: TABLE_CATEGORIES.REVENUE },
-	{ name: 'P/F', key: 'pf', category: TABLE_CATEGORIES.FEES },
-	{ name: 'Spot Volume 24h', key: 'dex_volume_24h', category: TABLE_CATEGORIES.VOLUME, period: TABLE_PERIODS.ONE_DAY },
-	{ name: 'Spot Volume 7d', key: 'dex_volume_7d', category: TABLE_CATEGORIES.VOLUME, period: TABLE_PERIODS.SEVEN_DAYS },
+	{ name: 'P/S', key: 'ps', preset: TABLE_PRESETS.REVENUE },
+	{ name: 'P/F', key: 'pf', preset: TABLE_PRESETS.FEES },
+	{ name: 'Spot Volume 24h', key: 'dex_volume_24h', preset: TABLE_PRESETS.SPOT, period: TABLE_PERIODS.ONE_DAY },
+	{ name: 'Spot Volume 7d', key: 'dex_volume_7d', preset: TABLE_PRESETS.SPOT, period: TABLE_PERIODS.SEVEN_DAYS },
+	{
+		name: 'Spot Volume 30d',
+		key: 'dex_volume_30d',
+		preset: TABLE_PRESETS.SPOT,
+		period: TABLE_PERIODS.ONE_MONTH
+	},
 	{
 		name: 'Spot Volume Change 7d',
 		key: 'dex_volume_change_7d',
-		category: TABLE_CATEGORIES.VOLUME,
+		preset: TABLE_PRESETS.SPOT,
 		period: TABLE_PERIODS.SEVEN_DAYS
 	},
-	{ name: 'Spot Cumulative Volume', key: 'dex_cumulative_volume', category: TABLE_CATEGORIES.VOLUME }
+	{ name: 'Spot Cumulative Volume', key: 'dex_cumulative_volume', preset: TABLE_PRESETS.SPOT },
+	...EXTENDED_ACTIVITY_METRICS.flatMap((metric) =>
+		ACTIVITY_PERIODS.map((period) => ({
+			name: `${metric.label} ${period.suffix}`,
+			key: `${metric.idPrefix}_${period.suffix}`,
+			preset: metric.preset,
+			period: period.tablePeriod,
+			extended: true,
+			defaultVisible: false,
+			metricKey: metric.metricKey
+		}))
+	),
+	{
+		name: 'Open Interest',
+		key: 'open_interest',
+		preset: TABLE_PRESETS.PERPS,
+		snapshot: true,
+		extended: true,
+		defaultVisible: false,
+		metricKey: 'openInterest'
+	},
+	{
+		name: 'Active Liquidity',
+		key: 'active_liquidity',
+		preset: TABLE_PRESETS.PERPS,
+		snapshot: true,
+		extended: true,
+		defaultVisible: false,
+		metricKey: 'activeLiquidity'
+	}
 ]
 
+export function getProtocolRankingPresetColumnVisibility(
+	metricPreset: string | null,
+	period: string | null,
+	availablePresets: readonly string[]
+): Record<string, boolean> {
+	return Object.fromEntries(
+		columnOptions.map((column) => {
+			if (column.key === 'name' || column.key === 'category') return [column.key, true]
+			if (column.key === 'tvl') return [column.key, true]
+			if (column.preset == null || !availablePresets.includes(column.preset)) return [column.key, false]
+			if (metricPreset && column.preset !== metricPreset) return [column.key, false]
+			if (period && column.period !== period && column.snapshot !== true) return [column.key, false]
+			return [column.key, true]
+		})
+	)
+}
+
 const columnHelper = createColumnHelper<IProtocol>()
+
+const activityMetricColumn = ({
+	metricKey,
+	period,
+	id,
+	header,
+	headerHelperText,
+	headerClassName
+}: {
+	metricKey: ActivityMetricKey
+	period: 'total24h' | 'total7d' | 'total30d'
+	id: string
+	header: string
+	headerHelperText: string
+	headerClassName: string
+}) =>
+	columnHelper.accessor((row) => row[metricKey]?.[period] ?? undefined, {
+		id,
+		header,
+		cell: (info) =>
+			info.getValue() != null
+				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				: null,
+		meta: {
+			headerClassName,
+			align: 'end',
+			headerHelperText
+		}
+	})
+
+const activityMetricColumnsByGroup = (group: TABLE_COLUMN_GROUPS) =>
+	EXTENDED_ACTIVITY_METRICS.filter((metric) => metric.group === group).flatMap((metric) =>
+		ACTIVITY_PERIODS.map((period, index) =>
+			activityMetricColumn({
+				metricKey: metric.metricKey,
+				period: period.field,
+				id: `${metric.idPrefix}_${period.suffix}`,
+				header: `${metric.label} ${period.suffix}`,
+				headerHelperText: [metric.helperText[index], metric.overlapWarning].filter(Boolean).join('. '),
+				headerClassName: metric.widths[index]
+			})
+		)
+	)
 
 const columns = [
 	columnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
 		enableSorting: false,
+		filterFn: 'includesString',
 		cell: ({ getValue, row }) => {
 			const value = getValue()
 
@@ -627,7 +990,7 @@ const columns = [
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(240px,40vw)]'
+			headerClassName: 'w-[257px] min-w-[257px]'
 		}
 	}),
 	columnHelper.accessor('category', {
@@ -648,7 +1011,7 @@ const columns = [
 			)
 		},
 		meta: {
-			headerClassName: 'w-[140px]',
+			headerClassName: 'w-[139px] min-w-[139px]',
 			align: 'end'
 		}
 	}),
@@ -672,7 +1035,7 @@ const columns = [
 						)
 					) : null,
 				meta: {
-					headerClassName: 'w-[120px]',
+					headerClassName: 'w-[120px] min-w-[120px]',
 					align: 'end',
 					headerHelperText: 'Value of all coins held in smart contracts of the protocol'
 				}
@@ -682,7 +1045,7 @@ const columns = [
 				header: '1d Change',
 				cell: ({ getValue }) => <PercentChange percent={getValue()} />,
 				meta: {
-					headerClassName: 'w-[110px]',
+					headerClassName: 'w-[109px] min-w-[109px]',
 					align: 'end',
 					headerHelperText: 'Change in TVL in the last 24 hours'
 				}
@@ -692,7 +1055,7 @@ const columns = [
 				header: '7d Change',
 				cell: ({ getValue }) => <PercentChange percent={getValue()} />,
 				meta: {
-					headerClassName: 'w-[110px]',
+					headerClassName: 'w-[110px] min-w-[110px]',
 					align: 'end',
 					headerHelperText: 'Change in TVL in the last 7 days'
 				}
@@ -702,7 +1065,7 @@ const columns = [
 				header: '1m Change',
 				cell: ({ getValue }) => <PercentChange percent={getValue()} />,
 				meta: {
-					headerClassName: 'w-[110px]',
+					headerClassName: 'w-[112px] min-w-[112px]',
 					align: 'end',
 					headerHelperText: 'Change in TVL in the last 30 days'
 				}
@@ -718,7 +1081,7 @@ const columns = [
 				? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Current protocol token market cap'
 		}
@@ -731,7 +1094,7 @@ const columns = [
 				? formatUsd(getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 				: null,
 		meta: {
-			headerClassName: 'w-[120px]',
+			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Current protocol token price'
 		}
@@ -741,7 +1104,7 @@ const columns = [
 		header: 'Mcap/TVL',
 		cell: (info) => formatRatio(info.getValue()),
 		meta: {
-			headerClassName: 'w-[110px]',
+			headerClassName: 'w-[110px] min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Market cap / TVL ratio'
 		}
@@ -758,7 +1121,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[100px]',
+					headerClassName: 'w-[100px] min-w-[100px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['24h']
 				}
@@ -771,7 +1134,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[125px]',
+					headerClassName: 'w-[126px] min-w-[126px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['24h']
 				}
@@ -784,7 +1147,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(180px,40vw)]',
+					headerClassName: 'w-[182px] min-w-[182px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['24h']
 				}
@@ -797,7 +1160,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[125px]',
+					headerClassName: 'w-[137px] min-w-[137px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['24h']
 				}
@@ -810,7 +1173,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[100px]',
+					headerClassName: 'w-[90px] min-w-[90px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['7d']
 				}
@@ -823,7 +1186,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[120px]',
+					headerClassName: 'w-[116px] min-w-[116px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['7d']
 				}
@@ -836,7 +1199,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(180px,40vw)]',
+					headerClassName: 'w-[172px] min-w-[172px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['7d']
 				}
@@ -849,7 +1212,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[125px]',
+					headerClassName: 'w-[127px] min-w-[127px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['7d']
 				}
@@ -862,7 +1225,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[100px]',
+					headerClassName: 'w-[100px] min-w-[100px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['30d']
 				}
@@ -875,7 +1238,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[125px]',
+					headerClassName: 'w-[127px] min-w-[127px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['30d']
 				}
@@ -888,7 +1251,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(180px,40vw)]',
+					headerClassName: 'w-[183px] min-w-[183px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['30d']
 				}
@@ -901,7 +1264,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[125px]',
+					headerClassName: 'w-[137px] min-w-[137px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['30d']
 				}
@@ -914,7 +1277,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[100px]',
+					headerClassName: 'w-[93px] min-w-[93px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['1y']
 				}
@@ -927,7 +1290,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(180px,40vw)]',
+					headerClassName: 'w-[177px] min-w-[177px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['monthlyAverage1y']
 				}
@@ -940,7 +1303,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[120px]',
+					headerClassName: 'w-[116px] min-w-[116px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['1y']
 				}
@@ -953,7 +1316,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(180px,40vw)]',
+					headerClassName: 'w-[172px] min-w-[172px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['1y']
 				}
@@ -966,7 +1329,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(180px,40vw)]',
+					headerClassName: 'w-[170px] min-w-[170px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['monthlyAverage1y']
 				}
@@ -979,7 +1342,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(260px,40vw)]',
+					headerClassName: 'w-[259px] min-w-[259px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['monthlyAverage1y']
 				}
@@ -992,7 +1355,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[125px]',
+					headerClassName: 'w-[127px] min-w-[127px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['1y']
 				}
@@ -1005,7 +1368,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(220px,40vw)]',
+					headerClassName: 'w-[214px] min-w-[214px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['monthlyAverage1y']
 				}
@@ -1018,7 +1381,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[150px]',
+					headerClassName: 'w-[149px] min-w-[149px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['cumulative']
 				}
@@ -1031,7 +1394,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(180px,40vw)]',
+					headerClassName: 'w-[175px] min-w-[175px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['cumulative']
 				}
@@ -1044,7 +1407,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(220px,40vw)]',
+					headerClassName: 'w-[231px] min-w-[231px]',
 					align: 'end',
 					headerHelperText: definitions.holdersRevenue.protocol['cumulative']
 				}
@@ -1057,7 +1420,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(180px,40vw)]',
+					headerClassName: 'w-[186px] min-w-[186px]',
 					align: 'end',
 					headerHelperText: definitions.incentives.protocol['cumulative']
 				}
@@ -1067,7 +1430,7 @@ const columns = [
 				header: 'P/F',
 				cell: (info) => (info.getValue() != null ? `${formatRatio(info.getValue())}x` : null),
 				meta: {
-					headerClassName: 'w-[80px]',
+					headerClassName: 'w-[68px] min-w-[68px]',
 					align: 'end',
 					headerHelperText: definitions.fees.protocol['pf']
 				}
@@ -1077,7 +1440,7 @@ const columns = [
 				header: 'P/S',
 				cell: (info) => (info.getValue() != null ? `${formatRatio(info.getValue())}x` : null),
 				meta: {
-					headerClassName: 'w-[80px]',
+					headerClassName: 'w-[67px] min-w-[67px]',
 					align: 'end',
 					headerHelperText: definitions.revenue.protocol['ps']
 				}
@@ -1091,7 +1454,7 @@ const columns = [
 						: null,
 
 				meta: {
-					headerClassName: 'w-[125px]',
+					headerClassName: 'w-[127px] min-w-[127px]',
 					align: 'end',
 					headerHelperText: definitions.earnings.protocol['24h']
 				}
@@ -1105,7 +1468,7 @@ const columns = [
 						: null,
 
 				meta: {
-					headerClassName: 'w-[125px]',
+					headerClassName: 'w-[117px] min-w-[117px]',
 					align: 'end',
 					headerHelperText: definitions.earnings.protocol['7d']
 				}
@@ -1118,7 +1481,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[125px]',
+					headerClassName: 'w-[127px] min-w-[127px]',
 					align: 'end',
 					headerHelperText: definitions.earnings.protocol['30d']
 				}
@@ -1131,7 +1494,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[125px]',
+					headerClassName: 'w-[116px] min-w-[116px]',
 					align: 'end',
 					headerHelperText: definitions.earnings.protocol['1y']
 				}
@@ -1150,7 +1513,7 @@ const columns = [
 								})
 							: null,
 					meta: {
-						headerClassName: 'w-[min(200px,40vw)]',
+						headerClassName: 'w-[204px] min-w-[204px]',
 						align: 'end',
 						headerHelperText: definitions.earnings.protocol['monthlyAverage1y']
 					}
@@ -1164,7 +1527,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(180px,40vw)]',
+					headerClassName: 'w-[176px] min-w-[176px]',
 					align: 'end',
 					headerHelperText: definitions.earnings.protocol['cumulative']
 				}
@@ -1176,8 +1539,8 @@ const columns = [
 		}
 	}),
 	columnHelper.group({
-		id: 'volume',
-		header: 'Volume',
+		id: 'spot',
+		header: 'Spot Volume',
 		columns: [
 			columnHelper.accessor((row) => row.dexs?.total24h ?? undefined, {
 				id: 'dex_volume_24h',
@@ -1187,7 +1550,7 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[150px]',
+					headerClassName: 'w-[153px] min-w-[153px]',
 					align: 'end',
 					headerHelperText: definitions.dexs.protocol['24h']
 				}
@@ -1200,9 +1563,22 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[150px]',
+					headerClassName: 'w-[143px] min-w-[143px]',
 					align: 'end',
 					headerHelperText: definitions.dexs.protocol['7d']
+				}
+			}),
+			columnHelper.accessor((row) => row.dexs?.total30d ?? undefined, {
+				id: 'dex_volume_30d',
+				header: 'Spot Volume 30d',
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
+				meta: {
+					headerClassName: 'w-[154px] min-w-[154px]',
+					align: 'end',
+					headerHelperText: definitions.dexs.protocol['30d']
 				}
 			}),
 			columnHelper.accessor((row) => row.dexs?.change_7dover7d ?? undefined, {
@@ -1210,7 +1586,7 @@ const columns = [
 				header: 'Spot Change 7d',
 				cell: ({ getValue }) => (getValue() !== 0 ? <PercentChange percent={getValue()} /> : null),
 				meta: {
-					headerClassName: 'w-[140px]',
+					headerClassName: 'w-[145px] min-w-[145px]',
 					align: 'end',
 					headerHelperText: definitions.dexs.protocol['change7d']
 				}
@@ -1223,14 +1599,57 @@ const columns = [
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						: null,
 				meta: {
-					headerClassName: 'w-[min(200px,40vw)]',
+					headerClassName: 'w-[202px] min-w-[202px]',
 					align: 'end',
 					headerHelperText: definitions.dexs.protocol['cumulative']
 				}
-			})
+			}),
+			...activityMetricColumnsByGroup(TABLE_COLUMN_GROUPS.SPOT)
 		],
 		meta: {
 			headerHelperText: definitions.dexs.common
+		}
+	}),
+	columnHelper.group({
+		id: 'perps',
+		header: 'Perps',
+		columns: [
+			...activityMetricColumnsByGroup(TABLE_COLUMN_GROUPS.PERPS),
+			activityMetricColumn({
+				metricKey: 'openInterest',
+				period: 'total24h',
+				id: 'open_interest',
+				header: 'Open Interest',
+				headerHelperText: definitions.openInterest.protocol,
+				headerClassName: 'w-[129px] min-w-[129px]'
+			}),
+			activityMetricColumn({
+				metricKey: 'activeLiquidity',
+				period: 'total24h',
+				id: 'active_liquidity',
+				header: 'Active Liquidity',
+				headerHelperText: definitions.activeLiquidity.protocol,
+				headerClassName: 'w-[142px] min-w-[142px]'
+			})
+		],
+		meta: {
+			headerHelperText: `${definitions.perps.common}\n\n${definitions.normalizedVolume.common}\n\n${definitions.openInterest.common}\n\n${definitions.activeLiquidity.common}`
+		}
+	}),
+	columnHelper.group({
+		id: 'options',
+		header: 'Options',
+		columns: activityMetricColumnsByGroup(TABLE_COLUMN_GROUPS.OPTIONS),
+		meta: {
+			headerHelperText: `${definitions.optionsPremium.common}\n\n${definitions.optionsNotional.common}`
+		}
+	}),
+	columnHelper.group({
+		id: 'bridges',
+		header: 'Bridges',
+		columns: activityMetricColumnsByGroup(TABLE_COLUMN_GROUPS.BRIDGES),
+		meta: {
+			headerHelperText: definitions.bridgeAggregators.common
 		}
 	})
 ]
@@ -1246,6 +1665,15 @@ const defaultColumns = JSON.stringify({
 	fees_24h: true,
 	revenue_24h: true
 })
+
+export function getProtocolRankingDefaultColumnVisibility(customColumnCount = 0): Record<string, boolean> {
+	const configuredDefaults = parseProtocolTableColumnVisibility(defaultColumns)
+	const visibility = Object.fromEntries(
+		columnOptions.map((column) => [column.key, configuredDefaults[column.key] === true])
+	)
+	for (let index = 0; index < customColumnCount; index++) visibility[`custom_formula_${index}`] = false
+	return visibility
+}
 
 const ProtocolTvlCell = ({ rowValues }: { rowValues: IProtocol }) => {
 	const tvl = rowValues.tvl

@@ -15,8 +15,18 @@ import {
 } from '~/containers/ProtocolLists/api.types'
 import { getMarketCapToAnnualizedMetricRatio, getPercentChange, slug } from '~/utils'
 import type { IChainMetadata, IProtocolMetadata, ProtocolLlamaswapMetadata } from '~/utils/metadata/types'
-import { buildDimensionProtocolMetrics } from './readModel'
-import type { IChildProtocol, IProtocol, ProtocolRankingTvlEntry, ProtocolRankingTvls } from './types'
+import {
+	buildDimensionProtocolMetrics,
+	type ProtocolRankingActivityMetricKey,
+	type ProtocolRankingActivitySources
+} from './readModel'
+import type {
+	IChildProtocol,
+	IProtocol,
+	ProtocolRankingActivityMetric,
+	ProtocolRankingTvlEntry,
+	ProtocolRankingTvls
+} from './types'
 import { protocolMatchesForkFilter, toFilterProtocol, toStrikeTvl } from './utils'
 
 type ClassificationTvlType = 'doublecounted' | 'liquidstaking'
@@ -30,7 +40,6 @@ type StoredChildProtocol = {
 type FeeMetrics = NonNullable<IChildProtocol['fees']>
 type RevenueMetrics = NonNullable<IChildProtocol['revenue']>
 type HoldersRevenueMetrics = NonNullable<IChildProtocol['holdersRevenue']>
-type DexMetrics = NonNullable<IChildProtocol['dexs']>
 type EmissionsMetrics = NonNullable<IChildProtocol['emissions']>
 
 const CLASSIFICATION_TVL_TYPES: readonly ClassificationTvlType[] = ['doublecounted', 'liquidstaking']
@@ -78,7 +87,14 @@ function toEmissionsMetrics(entry: ProtocolEmissionsLookup[string]): EmissionsMe
 }
 
 function createZeroEmissionsMetrics(): EmissionsMetrics {
-	return { total24h: 0, total7d: 0, total30d: 0, total1y: 0, monthlyAverage1y: 0, totalAllTime: 0 }
+	return {
+		total24h: 0,
+		total7d: 0,
+		total30d: 0,
+		total1y: 0,
+		monthlyAverage1y: 0,
+		totalAllTime: 0
+	}
 }
 
 function createInactiveFeesMetrics(): Omit<FeeMetrics, 'pf'> {
@@ -106,11 +122,24 @@ function createInactiveRevenueMetrics(): Omit<RevenueMetrics, 'ps'> {
 }
 
 function createInactiveHoldersRevenueMetrics(): HoldersRevenueMetrics {
-	return { total24h: 0, total7d: 0, total30d: 0, total1y: 0, monthlyAverage1y: 0, totalAllTime: 0 }
+	return {
+		total24h: 0,
+		total7d: 0,
+		total30d: 0,
+		total1y: 0,
+		monthlyAverage1y: 0,
+		totalAllTime: 0
+	}
 }
 
-function createInactiveDexMetrics(): DexMetrics {
-	return { total24h: 0, total7d: 0, totalAllTime: 0, change_7dover7d: null }
+function createInactiveActivityMetric(): ProtocolRankingActivityMetric {
+	return {
+		total24h: 0,
+		total7d: 0,
+		total30d: 0,
+		totalAllTime: 0,
+		change_7dover7d: null
+	}
 }
 
 function mergeTvlValue(current: number | null, incoming: number | null): number | null {
@@ -121,7 +150,12 @@ function mergeTvlEntry(
 	current: ProtocolRankingTvlEntry | undefined,
 	incoming: ProtocolRankingTvlEntry
 ): ProtocolRankingTvlEntry {
-	const base = current ?? { tvl: 0, tvlPrevDay: 0, tvlPrevWeek: 0, tvlPrevMonth: 0 }
+	const base = current ?? {
+		tvl: 0,
+		tvlPrevDay: 0,
+		tvlPrevWeek: 0,
+		tvlPrevMonth: 0
+	}
 	return {
 		tvl: mergeTvlValue(base.tvl, incoming.tvl),
 		tvlPrevDay: mergeTvlValue(base.tvlPrevDay, incoming.tvlPrevDay),
@@ -303,20 +337,25 @@ function aggregateEmissions(children: StoredChildProtocol[]): EmissionsMetrics |
 	}
 }
 
-function aggregateDexs(children: StoredChildProtocol[]): DexMetrics | undefined {
+function aggregateActivityMetric(
+	children: StoredChildProtocol[],
+	metricKey: ProtocolRankingActivityMetricKey
+): ProtocolRankingActivityMetric | undefined {
 	let hasMetric = false
 	const total24h: AvailableMetricTotal = { value: 0, hasValue: false }
 	const total7d: AvailableMetricTotal = { value: 0, hasValue: false }
+	const total30d: AvailableMetricTotal = { value: 0, hasValue: false }
 	const totalAllTime: AvailableMetricTotal = { value: 0, hasValue: false }
 	let previous7d = 0
 	let hasChangeInput = false
 	let changeIsIncomplete = false
 	for (const child of children) {
-		const metric = child.row.dexs
+		const metric = child.row[metricKey]
 		if (!metric) continue
 		hasMetric = true
 		addAvailableMetricValue(total24h, metric.total24h)
 		addAvailableMetricValue(total7d, metric.total7d)
+		addAvailableMetricValue(total30d, metric.total30d)
 		addAvailableMetricValue(totalAllTime, metric.totalAllTime)
 		if (metric.total7d === null) continue
 		if (metric.total7d === 0 && metric.change_7dover7d === null) continue
@@ -333,6 +372,7 @@ function aggregateDexs(children: StoredChildProtocol[]): DexMetrics | undefined 
 	return {
 		total24h: getAvailableMetricTotal(total24h),
 		total7d: total7dValue,
+		total30d: getAvailableMetricTotal(total30d),
 		totalAllTime: getAvailableMetricTotal(totalAllTime),
 		change_7dover7d:
 			changeIsIncomplete || !hasChangeInput || total7dValue === null ? null : getPercentChange(total7dValue, previous7d)
@@ -345,6 +385,8 @@ export const getProtocolsByChain = async ({
 	protocolMetadata,
 	protocolLlamaswapDataset = null,
 	shouldFetchDexs,
+	shouldFetchPerps,
+	includeExtendedMetrics = false,
 	fork = null
 }: {
 	chain: string
@@ -352,25 +394,68 @@ export const getProtocolsByChain = async ({
 	protocolMetadata: Record<string, IProtocolMetadata>
 	protocolLlamaswapDataset?: ProtocolLlamaswapMetadata | null
 	shouldFetchDexs?: boolean
+	shouldFetchPerps?: boolean
+	includeExtendedMetrics?: boolean
 	fork?: string | null
 }) => {
-	const currentChainMetadata =
+	const currentChainMetadata: IChainMetadata | undefined =
 		chain === 'All'
-			? { name: 'All', stablecoins: true, fees: true, dexs: true, perps: true, id: 'all' }
+			? {
+					name: 'All',
+					stablecoins: true,
+					fees: true,
+					dexs: true,
+					perps: true,
+					normalizedVolume: true,
+					activeLiquidity: true,
+					openInterest: true,
+					optionsPremiumVolume: true,
+					optionsNotionalVolume: true,
+					dexAggregators: true,
+					perpsAggregators: true,
+					bridgeAggregators: true,
+					id: 'all'
+				}
 			: chainMetadata[slug(chain)]
 
 	if (!currentChainMetadata) return null
 	const shouldFetchDexsForChain = shouldFetchDexs ?? currentChainMetadata.dexs ?? false
+	const shouldFetchPerpsForChain = shouldFetchPerps ?? currentChainMetadata.perps ?? false
 
 	const normalizedFork = fork ? slug(fork) : null
 
-	const [{ protocols, chains, parentProtocols }, fees, revenue, holdersRevenue, dexs, emissionsProtocols]: [
+	const [
+		{ protocols, chains, parentProtocols },
+		fees,
+		revenue,
+		holdersRevenue,
+		dexs,
+		emissionsProtocols,
+		perps,
+		normalizedVolume,
+		activeLiquidity,
+		openInterest,
+		optionsPremiumVolume,
+		optionsNotionalVolume,
+		dexAggregators,
+		perpsAggregators,
+		bridgeAggregators
+	]: [
 		ProtocolsResponse,
 		IAdapterChainMetrics | null,
 		IAdapterChainMetrics | null,
 		IAdapterChainMetrics | null,
 		IAdapterChainOverview | null,
-		ProtocolEmissionsLookup | null
+		ProtocolEmissionsLookup | null,
+		IAdapterChainMetrics | null,
+		IAdapterChainMetrics | null,
+		IAdapterChainMetrics | null,
+		IAdapterChainMetrics | null,
+		IAdapterChainMetrics | null,
+		IAdapterChainMetrics | null,
+		IAdapterChainMetrics | null,
+		IAdapterChainMetrics | null,
+		IAdapterChainMetrics | null
 	] = await Promise.all([
 		fetchProtocols(),
 		currentChainMetadata.fees
@@ -405,12 +490,73 @@ export const getProtocolsByChain = async ({
 					console.log(err)
 					return null
 				})
+			: Promise.resolve(null),
+		includeExtendedMetrics && shouldFetchPerpsForChain
+			? fetchAdapterChainMetrics({
+					adapterType: 'derivatives',
+					chain: currentChainMetadata.name
+				}).catch(() => null)
+			: Promise.resolve(null),
+		includeExtendedMetrics && currentChainMetadata.normalizedVolume
+			? fetchAdapterChainMetrics({
+					adapterType: 'normalized-volume',
+					chain: currentChainMetadata.name
+				}).catch(() => null)
+			: Promise.resolve(null),
+		includeExtendedMetrics && currentChainMetadata.activeLiquidity
+			? fetchAdapterChainMetrics({
+					adapterType: 'normalized-volume',
+					chain: currentChainMetadata.name,
+					dataType: 'dailyActiveLiquidity'
+				}).catch(() => null)
+			: Promise.resolve(null),
+		includeExtendedMetrics && currentChainMetadata.openInterest
+			? fetchAdapterChainMetrics({
+					adapterType: 'open-interest',
+					chain: currentChainMetadata.name,
+					dataType: 'openInterestAtEnd'
+				}).catch(() => null)
+			: Promise.resolve(null),
+		includeExtendedMetrics && currentChainMetadata.optionsPremiumVolume
+			? fetchAdapterChainMetrics({
+					adapterType: 'options',
+					chain: currentChainMetadata.name,
+					dataType: 'dailyPremiumVolume'
+				}).catch(() => null)
+			: Promise.resolve(null),
+		includeExtendedMetrics && currentChainMetadata.optionsNotionalVolume
+			? fetchAdapterChainMetrics({
+					adapterType: 'options',
+					chain: currentChainMetadata.name,
+					dataType: 'dailyNotionalVolume'
+				}).catch(() => null)
+			: Promise.resolve(null),
+		includeExtendedMetrics && currentChainMetadata.dexAggregators
+			? fetchAdapterChainMetrics({
+					adapterType: 'aggregators',
+					chain: currentChainMetadata.name
+				}).catch(() => null)
+			: Promise.resolve(null),
+		includeExtendedMetrics && currentChainMetadata.perpsAggregators
+			? fetchAdapterChainMetrics({
+					adapterType: 'aggregator-derivatives',
+					chain: currentChainMetadata.name
+				}).catch(() => null)
+			: Promise.resolve(null),
+		includeExtendedMetrics && currentChainMetadata.bridgeAggregators
+			? fetchAdapterChainMetrics({
+					adapterType: 'bridge-aggregators',
+					chain: currentChainMetadata.name
+				}).catch(() => null)
 			: Promise.resolve(null)
 	])
 
 	const parentProtocolsMap = new Map<string, ProtocolsResponse['parentProtocols'][number]>()
 	for (const parentProtocol of parentProtocols) parentProtocolsMap.set(parentProtocol.id, parentProtocol)
-	const eligibleProtocols: Array<{ protocol: ProtocolsResponse['protocols'][number]; metadata: IProtocolMetadata }> = []
+	const eligibleProtocols: Array<{
+		protocol: ProtocolsResponse['protocols'][number]
+		metadata: IProtocolMetadata
+	}> = []
 	for (const protocol of protocols) {
 		if (protocol.defillamaId.startsWith('chain#')) continue
 		const metadata = protocolMetadata[protocol.defillamaId]
@@ -445,7 +591,24 @@ export const getProtocolsByChain = async ({
 	const protocolTokenPrices: Record<string, PriceObject> =
 		geckoIds.size > 0 ? await fetchCoinPrices(Array.from(geckoIds)).catch(() => ({})) : {}
 
-	const dimensionProtocols = buildDimensionProtocolMetrics({ fees, revenue, holdersRevenue, dexs })
+	const activity: ProtocolRankingActivitySources = {}
+	if (dexs) activity.dexs = dexs
+	if (perps) activity.perps = perps
+	if (normalizedVolume) activity.normalizedVolume = normalizedVolume
+	if (activeLiquidity) activity.activeLiquidity = activeLiquidity
+	if (openInterest) activity.openInterest = openInterest
+	if (optionsPremiumVolume) activity.optionsPremiumVolume = optionsPremiumVolume
+	if (optionsNotionalVolume) activity.optionsNotionalVolume = optionsNotionalVolume
+	if (dexAggregators) activity.dexAggregators = dexAggregators
+	if (perpsAggregators) activity.perpsAggregators = perpsAggregators
+	if (bridgeAggregators) activity.bridgeAggregators = bridgeAggregators
+	const activityMetricKeys = Object.keys(activity) as ProtocolRankingActivityMetricKey[]
+	const dimensionProtocols = buildDimensionProtocolMetrics({
+		fees,
+		revenue,
+		holdersRevenue,
+		activity
+	})
 	const protocolsStore: Record<string, IProtocol> = {}
 
 	const parentStore: Record<string, StoredChildProtocol[]> = {}
@@ -559,8 +722,10 @@ export const getProtocolsByChain = async ({
 			childRow.holdersRevenue = dimensionProtocol?.holdersRevenue ?? createInactiveHoldersRevenueMetrics()
 		}
 
-		if (dexs !== null) {
-			childRow.dexs = dimensionProtocol?.dexs ?? createInactiveDexMetrics()
+		for (const metricKey of activityMetricKeys) {
+			const metric = dimensionProtocol?.[metricKey]
+			if (metric) childRow[metricKey] = metric
+			else if (metricKey === 'dexs') childRow.dexs = createInactiveActivityMetric()
 		}
 
 		const emissionsMatch = emissionsProtocols?.[protocol.defillamaId] ?? emissionsProtocols?.[displayName]
@@ -616,7 +781,11 @@ export const getProtocolsByChain = async ({
 		const parentFees = aggregateFees(childProtocols, parentProtocol.mcap)
 		const parentRevenue = aggregateRevenue(childProtocols, parentProtocol.mcap)
 		const parentHoldersRevenue = aggregateHoldersRevenue(childProtocols)
-		const parentDexs = aggregateDexs(childProtocols)
+		const parentActivity = {} as Partial<Record<ProtocolRankingActivityMetricKey, ProtocolRankingActivityMetric>>
+		for (const metricKey of activityMetricKeys) {
+			const metric = aggregateActivityMetric(childProtocols, metricKey)
+			if (metric) parentActivity[metricKey] = metric
+		}
 		let parentEmissions = aggregateEmissions(childProtocols)
 		if (!parentEmissions) {
 			const parentEmissionsMatch = emissionsProtocols?.[parentMetadata.displayName]
@@ -674,7 +843,7 @@ export const getProtocolsByChain = async ({
 			mcaptvl: parentMcapTvl,
 			...(parentFees ? { fees: parentFees } : {}),
 			...(parentRevenue ? { revenue: parentRevenue } : {}),
-			...(parentDexs ? { dexs: parentDexs } : {}),
+			...parentActivity,
 			...(parentHoldersRevenue ? { holdersRevenue: parentHoldersRevenue } : {}),
 			...(parentEmissions ? { emissions: parentEmissions } : {})
 		}
@@ -695,6 +864,7 @@ export const getProtocolsByChain = async ({
 		chains,
 		fees,
 		dexs,
+		perps,
 		emissionsData: emissionsProtocols
 	}
 }

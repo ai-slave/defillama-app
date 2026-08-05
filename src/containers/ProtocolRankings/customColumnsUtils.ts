@@ -63,6 +63,7 @@ export const sampleProtocol: IProtocol = {
 	dexs: {
 		total24h: 377779013,
 		total7d: 1177832690,
+		total30d: 4820195300,
 		change_7dover7d: 194.74,
 		totalAllTime: 22702816840
 	}

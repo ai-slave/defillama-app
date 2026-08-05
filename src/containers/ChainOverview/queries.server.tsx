@@ -281,7 +281,6 @@ export async function getChainOverviewData({
 			appFees,
 			chainFees,
 			chainRevenue,
-			perps,
 			cexVolume,
 			etfData,
 			homepageUnlocks,
@@ -295,7 +294,15 @@ export async function getChainOverviewData({
 				fallback: emptyLiteChart()
 			}),
 			timePhase('protocols_by_chain', () =>
-				getProtocolsByChain({ chain, chainMetadata, protocolMetadata, protocolLlamaswapDataset, shouldFetchDexs })
+				getProtocolsByChain({
+					chain,
+					chainMetadata,
+					protocolMetadata,
+					protocolLlamaswapDataset,
+					shouldFetchDexs,
+					shouldFetchPerps,
+					includeExtendedMetrics: true
+				})
 			),
 			timePhase(
 				'stablecoins',
@@ -404,14 +411,6 @@ export async function getChainOverviewData({
 						})
 					: Promise.resolve(null)
 			),
-			timePhase('perps', () =>
-				shouldFetchPerps
-					? fetchAdapterChainMetrics({
-							adapterType: 'derivatives',
-							chain: currentChainMetadata.name
-						})
-					: Promise.resolve(null)
-			),
 			timePhase('cex_volume', () => fetchCexVolume(), { fallback: null }),
 			timePhase(
 				'etf_data',
@@ -475,7 +474,7 @@ export async function getChainOverviewData({
 		if (!protocolsByChain) {
 			throw new Error(`Missing protocol aggregation for ${currentChainMetadata.name}`)
 		}
-		const { protocols, chains, fees, dexs } = protocolsByChain
+		const { protocols, chains, fees, dexs, perps } = protocolsByChain
 		const stopOverviewTransform = phaseTimer?.start('overview_transform')
 
 		const {
