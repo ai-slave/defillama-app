@@ -20,14 +20,14 @@ type DimensionsBreakdownParams = {
 
 type ChainResult = { chain: string; data: IAdapterBreakdownChartData }
 
-type ProtocolLookup = {
+export type ProtocolLookup = {
 	protocolCategories: Map<string, string>
 	protocolCategoriesBySlug: Map<string, string>
 	protocolToParentId: Map<string, string>
 	parentIdToName: Map<string, string>
 }
 
-type ProtocolBreakdownBase = {
+export type ProtocolBreakdownBase = {
 	chainsArray: string[]
 	metricName: string
 	chainResultsCount: number
@@ -73,7 +73,7 @@ const buildEmptyBreakdown = (
 	}
 }
 
-const getProtocolLookup = async (): Promise<ProtocolLookup> => {
+export const getProtocolLookup = async (): Promise<ProtocolLookup> => {
 	if (protocolLookupCache && Date.now() - protocolLookupCache.timestamp < PROTOCOL_LOOKUP_CACHE_MS) {
 		return protocolLookupCache.data
 	}
@@ -194,7 +194,7 @@ const buildAggregatedBreakdown = (
 	return aggregatedBreakdown
 }
 
-const getAdapterMetricProtocolBase = async (
+export const getAdapterMetricProtocolBase = async (
 	metric: AdapterChartBuilderMetric,
 	chainsArray: string[],
 	chainFilterMode: 'include' | 'exclude'
@@ -226,6 +226,15 @@ const getAdapterMetricProtocolBase = async (
 						: Promise.resolve(null)
 				])
 			)
+			const directResult = chainFilterMode === 'include' && chainResults.length === 1 ? chainResults[0] : undefined
+			if (directResult) {
+				return {
+					chainResultsCount: 1,
+					chainsArray,
+					metricName: config.metricName,
+					totalDataChartBreakdown: directResult.data
+				}
+			}
 			const aggregatedBreakdown = await timeApiRoutePhase('adapter_protocol_aggregate', () =>
 				buildAggregatedBreakdown(chainFilterMode, chainResults, allBreakdown)
 			)

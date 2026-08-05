@@ -233,6 +233,12 @@ export function RWAPerpsOverviewChart({
 			? groupMultiSeriesBarChartDataset({ dataset: canonicalDataset, groupBy: volumeGroupBy })
 			: canonicalDataset
 	}, [chartType, selectedRawDataset, volumeGroupBy])
+	const csvDataset = useMemo(() => {
+		const canonicalDataset = toRwaMultiSeriesChartDataset(ungroupedDataset)
+		return chartType === 'volume24h'
+			? groupMultiSeriesBarChartDataset({ dataset: canonicalDataset, groupBy: volumeGroupBy })
+			: canonicalDataset
+	}, [chartType, ungroupedDataset, volumeGroupBy])
 	const hasTimeSeriesHistory = useMemo(() => hasEnoughTimeSeriesHistory(selectedRawDataset), [selectedRawDataset])
 	const showStackSelect = timeSeriesMode === 'breakdown' && stackOptions.length > 1
 	const visibleCharts = useMemo(
@@ -313,6 +319,7 @@ export function RWAPerpsOverviewChart({
 					filename={`rwa-perps-overview-breakdown-${breakdown}-${chartType}-${timeSeriesMode}`}
 					title={`RWA Perps ${CHART_TYPE_OPTIONS.find((option) => option.key === chartType)?.label ?? 'Breakdown'}`}
 					smol
+					csvSource={{ type: 'dataset', dataset: csvDataset }}
 				/>
 			</ChartPanelToolbar>
 			{error ? (

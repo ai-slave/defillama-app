@@ -21,8 +21,9 @@ import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashbo
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { getProEquitiesStatementsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { Icon } from '~/ui/Icon'
+import type { CsvCell } from '~/utils/csvCell'
 import { formatDate } from '~/utils/dateFormat'
-import { downloadCSV, type CsvCell } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
 

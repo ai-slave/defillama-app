@@ -350,7 +350,7 @@ export const stablecoinVolumeChart = defineApiRoute({
 				return badRequest('unsupported scope')
 			}
 
-			const limit = parseLimit(req.query.limit)
+			const limit = isTruthyQueryParam(req.query.all) ? null : parseLimit(req.query.limit)
 			const payload = buildStablecoinVolumeChartPayload({
 				...source,
 				...(limit === undefined ? {} : { limit }),

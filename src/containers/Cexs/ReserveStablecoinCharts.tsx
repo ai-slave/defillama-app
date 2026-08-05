@@ -3,11 +3,14 @@ import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	buildSelectedAdditiveChart,
-	buildSelectedSeriesCsv,
 	rankSeriesByPeakAbsoluteValue
 } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildRuntimePieChartPresentation, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import {
+	buildRuntimePieChartCsvDataset,
+	buildRuntimePieChartPresentation,
+	type RuntimePieChartData
+} from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
@@ -98,14 +101,7 @@ function MultiSeriesChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={exportIconUrl}
-						prepareCsvDirect={() =>
-							buildSelectedSeriesCsv({
-								dataset: presentation.dataset,
-								charts: presentation.charts,
-								selectedCharts: new Set(presentation.charts.map((chart) => chart.name)),
-								filename: exportFilenameBase
-							})
-						}
+						csvSource={presentation.csvSource}
 					/>
 				</>
 			}
@@ -114,6 +110,7 @@ function MultiSeriesChartCard({
 				<MultiSeriesChart
 					dataset={presentation.dataset}
 					charts={presentation.charts}
+					csvSource={presentation.csvSource}
 					valueSymbol={valueSymbol}
 					hideDefaultLegend={false}
 					onReady={handleChartReady}
@@ -171,6 +168,7 @@ function PieChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={exportIconUrl}
+						csvSource={{ type: 'prepare-dataset', prepare: () => buildRuntimePieChartCsvDataset(series) }}
 					/>
 				</>
 			}

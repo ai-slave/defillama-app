@@ -54,7 +54,7 @@ async function getStablecoinByChainBaseData(): Promise<StablecoinByChainBase> {
 				if (chainName === 'All' || !charts?.length) continue
 				const normalized = filterOutToday(normalizeDailyPairs(charts.map(toStablecoinPair), 'last'))
 				const lastValue = normalized[normalized.length - 1]?.[1] ?? 0
-				if (lastValue <= 0) continue
+				if (normalized.length === 0) continue
 				candidates.push({ name: chainName, data: normalized, lastValue })
 			}
 			addApiRoutePhase('stablecoin_base_chains', Date.now() - candidateStartedAt)
@@ -69,10 +69,11 @@ async function getStablecoinByChainBaseData(): Promise<StablecoinByChainBase> {
 
 interface StablecoinChainBreakdownRequest {
 	chains: string[]
-	topN: number
+	topN: number | null
 	chainFilterMode: 'include' | 'exclude'
 	chainCategoryFilterMode: 'include' | 'exclude'
 	chainCategories: string[]
+	includeHistoricalSeries?: boolean
 }
 
 async function getStablecoinByChainBreakdownData({
@@ -80,7 +81,8 @@ async function getStablecoinByChainBreakdownData({
 	topN,
 	chainFilterMode,
 	chainCategoryFilterMode,
-	chainCategories
+	chainCategories,
+	includeHistoricalSeries = false
 }: StablecoinChainBreakdownRequest): Promise<ProtocolChainData> {
 	const base = await getStablecoinByChainBaseData()
 	const projectStartedAt = Date.now()
@@ -93,6 +95,7 @@ async function getStablecoinByChainBreakdownData({
 			: null
 	const candidates: StablecoinChainCandidate[] = []
 	for (const candidate of base.candidates) {
+		if (!includeHistoricalSeries && candidate.lastValue <= 0) continue
 		if (includeSet) {
 			const matches = includeSet.has(candidate.name)
 			if (chainFilterMode === 'include' ? !matches : matches) continue
@@ -120,7 +123,7 @@ async function getStablecoinByChainBreakdownData({
 	}
 
 	candidates.sort((a, b) => b.lastValue - a.lastValue)
-	const picked = candidates.slice(0, Math.min(topN, candidates.length))
+	const picked = topN === null ? candidates : candidates.slice(0, Math.min(topN, candidates.length))
 	const pickedSeries: ChartSeries[] = picked.map((entry, index) => {
 		const color = BREAKDOWN_COLOR_PALETTE[index % BREAKDOWN_COLOR_PALETTE.length]
 		return { name: entry.name, data: entry.data, ...(color === undefined ? {} : { color }) }
@@ -182,4 +185,14 @@ export function getCachedStablecoinChainBreakdown(
 		{ ttlMs: BREAKDOWN_RESULT_TTL_MS, ttlJitter: 0.2, staleWhileRevalidateMs: BREAKDOWN_STALE_MS },
 		() => timeApiRoutePhase('stablecoin_breakdown_compute', () => getStablecoinByChainBreakdownData(request))
 	)
+}
+
+export async function getCompleteStablecoinChainSeries(
+	request: Omit<StablecoinChainBreakdownRequest, 'topN' | 'includeHistoricalSeries'>
+): Promise<ProtocolChainData> {
+	return getStablecoinByChainBreakdownData({
+		...request,
+		topN: null,
+		includeHistoricalSeries: true
+	})
 }

@@ -1,8 +1,11 @@
 import type { GetStaticPropsContext } from 'next'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
-import { buildRuntimePieChartPresentation, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import {
+	buildRuntimePieChartCsvDataset,
+	buildRuntimePieChartPresentation,
+	type RuntimePieChartData
+} from '~/components/ECharts/PieChart/data'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
@@ -73,7 +76,8 @@ function MultiSeriesChartCard({
 		setSelectedSeries,
 		dataset,
 		charts,
-		selectedCharts
+		selectedCharts,
+		csvSource
 	} = useProtocolBreakdownPresentation({
 		breakdown,
 		availableSeries: allSeries,
@@ -107,20 +111,14 @@ function MultiSeriesChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
-					prepareCsvDirect={() =>
-						buildSelectedSeriesCsv({
-							dataset,
-							charts,
-							selectedCharts,
-							filename: exportFilenameBase
-						})
-					}
+					csvSource={csvSource}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					csvSource={csvSource}
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}
 					selectedCharts={selectedCharts}
 					onReady={handleChartReady}
@@ -176,6 +174,7 @@ function TokensBreakdownPieChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
+					csvSource={{ type: 'prepare-dataset', prepare: () => buildRuntimePieChartCsvDataset(series) }}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>

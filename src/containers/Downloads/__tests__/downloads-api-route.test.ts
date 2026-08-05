@@ -8,6 +8,7 @@ const {
 	fetchWithPoolingOnServerMock,
 	getYieldsExportRowsMock,
 	recordRouteRuntimeErrorMock,
+	streamProtocolTvlCsvMock,
 	validateSubscriptionMock
 } = vi.hoisted(() => ({
 	extractItemsMock: vi.fn(),
@@ -15,6 +16,7 @@ const {
 	fetchWithPoolingOnServerMock: vi.fn(),
 	getYieldsExportRowsMock: vi.fn(),
 	recordRouteRuntimeErrorMock: vi.fn(),
+	streamProtocolTvlCsvMock: vi.fn(),
 	validateSubscriptionMock: vi.fn()
 }))
 
@@ -84,6 +86,10 @@ vi.mock('~/containers/Yields/server/dataset.server', () => ({
 	acquireYieldsSnapshot: vi.fn().mockResolvedValue({ readJson: vi.fn() })
 }))
 
+vi.mock('~/containers/ProDashboard/server/chartBuilder/protocolTvlCsv', () => ({
+	streamProtocolTvlCsv: streamProtocolTvlCsvMock
+}))
+
 vi.mock('~/containers/Downloads/chart-datasets', () => ({
 	chartDatasetsBySlug: new Map([
 		[
@@ -136,11 +142,6 @@ const chartRows = Array.from({ length: 11 }, (_, index) => ({
 	value: index + 1
 }))
 
-const breakdownCsv = [
-	['Protocol', ...Array.from({ length: 11 }, (_, index) => `${index + 1}/01/2024`)].join(','),
-	['Aave', ...Array.from({ length: 11 }, (_, index) => String(index + 1))].join(',')
-].join('\n')
-
 function request({
 	method = 'GET',
 	query,
@@ -161,8 +162,7 @@ function mockSuccessfulFetch() {
 	fetchWithPoolingOnServerMock.mockResolvedValue({
 		ok: true,
 		status: 200,
-		json: vi.fn().mockResolvedValue({ items: datasetRows, rows: chartRows }),
-		text: vi.fn().mockResolvedValue(breakdownCsv)
+		json: vi.fn().mockResolvedValue({ items: datasetRows, rows: chartRows })
 	})
 }
 
@@ -173,6 +173,7 @@ beforeEach(() => {
 	extractRowsMock.mockImplementation((json) => json.rows)
 	mockSuccessfulFetch()
 	getYieldsExportRowsMock.mockResolvedValue(datasetRows)
+	streamProtocolTvlCsvMock.mockResolvedValue(10)
 })
 
 describe('/api/private/downloads/[dataset]', () => {
@@ -373,12 +374,19 @@ describe('/api/private/downloads/chart-breakdown/[slug]', () => {
 
 		await chartBreakdownHandler(request({ query: { slug: 'protocol-tvl-chart', category: 'Lending' } }), res)
 
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalled()
+		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(streamProtocolTvlCsvMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				config: expect.objectContaining({ categories: ['Lending'] }),
+				timePeriod: 'custom',
+				customTimePeriod: { type: 'relative', relativeDays: 10 }
+			}),
+			res
+		)
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.setHeader).toHaveBeenCalledWith('X-Preview', 'true')
 		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.send).toHaveBeenCalledWith(expect.not.stringContaining('2024-01-01'))
-		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('2024-01-11'))
+		expect(res.end).toHaveBeenCalledOnce()
 	})
 
 	it('returns full breakdown CSV rows for paid auth', async () => {
@@ -390,11 +398,18 @@ describe('/api/private/downloads/chart-breakdown/[slug]', () => {
 		)
 
 		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer paid')
+		expect(streamProtocolTvlCsvMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				config: expect.objectContaining({ categories: ['Lending'] }),
+				timePeriod: 'all',
+				customTimePeriod: null
+			}),
+			res
+		)
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.setHeader).not.toHaveBeenCalledWith('X-Preview', 'true')
 		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('2024-01-01'))
-		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('2024-01-11'))
+		expect(res.end).toHaveBeenCalledOnce()
 	})
 
 	it('rejects trial breakdown CSV downloads before fetching data', async () => {
@@ -406,7 +421,7 @@ describe('/api/private/downloads/chart-breakdown/[slug]', () => {
 			res
 		)
 
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(streamProtocolTvlCsvMock).not.toHaveBeenCalled()
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(403)
 		expect(res.json).toHaveBeenCalledWith({ error: 'CSV downloads are available only for paid users.' })

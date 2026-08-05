@@ -1,4 +1,5 @@
 import { trackUmamiEvent } from './analytics/umami'
+import { serializeCsv, type CsvData, type CsvSerializableCell } from './csv'
 
 export interface CSVDownloadOptions {
 	mimeType?: string
@@ -13,11 +14,6 @@ export interface DatasetCSVParams {
 	filenameSuffix?: string
 	addTimestamp?: boolean
 }
-
-export type CsvCell = string | number | boolean | object | null | undefined
-export type CsvData = CsvCell[][] | string
-
-const CSV_FORMULA_PREFIX_REGEX = /^[=+\-@\t\r\n＝＋－＠]/u
 
 export function download(filename: string, text: string): void {
 	const element = document.createElement('a')
@@ -45,7 +41,20 @@ export function downloadDataURL(filename: string, dataURL: string): void {
 	document.body.removeChild(element)
 }
 
-function stringifyCell(cell: CsvCell): string {
+export function downloadBlob(filename: string, blob: Blob): void {
+	const downloadUrl = window.URL.createObjectURL(blob)
+	const link = document.createElement('a')
+	link.href = downloadUrl
+	link.download = filename
+	link.style.display = 'none'
+
+	document.body.appendChild(link)
+	link.click()
+	document.body.removeChild(link)
+	window.URL.revokeObjectURL(downloadUrl)
+}
+
+function stringifyCell(cell: CsvSerializableCell): string {
 	if (cell == null) return ''
 	if (typeof cell === 'object') return JSON.stringify(cell)
 	return String(cell)
@@ -60,7 +69,11 @@ export function addTimestampToFilename(filename: string, date: string): string {
 	return `${filename.slice(0, extensionIndex)}_${date}${filename.slice(extensionIndex)}`
 }
 
-export function downloadJSON(filename: string, data: CsvCell[][], options: { addTimestamp?: boolean } = {}): void {
+export function downloadJSON(
+	filename: string,
+	data: CsvSerializableCell[][],
+	options: { addTimestamp?: boolean } = {}
+): void {
 	try {
 		const [header, ...rows] = data
 		if (!header) {
@@ -83,19 +96,7 @@ export function downloadJSON(filename: string, data: CsvCell[][], options: { add
 			? addTimestampToFilename(filename, new Date().toISOString().slice(0, 10))
 			: filename
 
-		const blob = new Blob([content], { type: 'application/json;charset=utf-8;' })
-		const downloadUrl = window.URL.createObjectURL(blob)
-
-		const link = document.createElement('a')
-		link.href = downloadUrl
-		link.download = finalFilename
-		link.style.display = 'none'
-
-		document.body.appendChild(link)
-		link.click()
-		document.body.removeChild(link)
-
-		window.URL.revokeObjectURL(downloadUrl)
+		downloadBlob(finalFilename, new Blob([content], { type: 'application/json;charset=utf-8;' }))
 	} catch (error) {
 		console.log('JSON download error:', error)
 	}
@@ -106,7 +107,7 @@ export type DownloadFormat = 'csv' | 'json'
 export function downloadTabular(
 	format: DownloadFormat,
 	filename: string,
-	data: CsvCell[][],
+	data: CsvSerializableCell[][],
 	options: { addTimestamp?: boolean } = {}
 ): void {
 	const base = filename.replace(/\.(csv|json)$/i, '')
@@ -121,29 +122,7 @@ export function downloadCSV(filename: string, csvData: CsvData, options: CSVDown
 	try {
 		const { mimeType = 'text/csv;charset=utf-8;', addTimestamp = false } = options
 
-		let csvContent: string
-
-		if (Array.isArray(csvData)) {
-			csvContent = csvData
-				.map((row) =>
-					row
-						.map((cell) => {
-							if (cell == null) return ''
-							// Preserve typed negative numbers; only text can be interpreted as a spreadsheet formula.
-							const formulaPrefixed = typeof cell === 'string' && CSV_FORMULA_PREFIX_REGEX.test(cell)
-							const cellStr =
-								typeof cell === 'object' ? JSON.stringify(cell) : formulaPrefixed ? `'${cell}` : String(cell)
-							if (formulaPrefixed || cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
-								return `"${cellStr.replace(/"/g, '""')}"`
-							}
-							return cellStr
-						})
-						.join(',')
-				)
-				.join('\n')
-		} else {
-			csvContent = String(csvData)
-		}
+		const csvContent = serializeCsv(csvData)
 
 		trackUmamiEvent('export-csv-success', { filename })
 
@@ -151,19 +130,7 @@ export function downloadCSV(filename: string, csvData: CsvData, options: CSVDown
 			? addTimestampToFilename(filename, new Date().toISOString().slice(0, 10))
 			: filename
 
-		const blob = new Blob([csvContent], { type: mimeType })
-		const downloadUrl = window.URL.createObjectURL(blob)
-
-		const link = document.createElement('a')
-		link.href = downloadUrl
-		link.download = finalFilename
-		link.style.display = 'none'
-
-		document.body.appendChild(link)
-		link.click()
-		document.body.removeChild(link)
-
-		window.URL.revokeObjectURL(downloadUrl)
+		downloadBlob(finalFilename, new Blob([csvContent], { type: mimeType }))
 	} catch (error) {
 		console.log('CSV download error:', error)
 		download(filename, String(csvData))

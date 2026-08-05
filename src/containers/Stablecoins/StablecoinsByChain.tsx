@@ -2,11 +2,11 @@ import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
@@ -58,10 +58,11 @@ import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
+import { fetchCompleteStablecoinSeriesCsvDataset, fetchCompleteStablecoinVolumeCsvDataset } from './csvDataset'
 import {
+	buildStablecoinMarketCapCsvDataset,
 	buildStablecoinMarketCapPresentation,
-	prepareStablecoinMarketCapSeries,
-	prepareStablecoinMarketCapTreemapCsv
+	prepareStablecoinMarketCapSeries
 } from './marketCapPresentation'
 import { StablecoinChangeStats, type StablecoinChangeStat } from './StablecoinChangeStats'
 import { StablecoinsTable } from './StablecoinsAssetsTable'
@@ -413,22 +414,36 @@ export function StablecoinsByChain({
 				: undefined,
 		[chartType, chartView, inflowsTooltipFormatter, selectedChartsWithHelpers.size]
 	)
-	const prepareCsvDirect =
-		marketCapPresentation?.kind === 'treemap'
-			? () =>
-					prepareStablecoinMarketCapTreemapCsv({
-						treeData: marketCapPresentation.treeData,
-						filename: getImageExportFilename()
-					})
-			: activeSelectedCharts && activeChartState.status === 'ready'
-				? () =>
-						buildSelectedSeriesCsv({
-							dataset: activeChartState.data.dataset,
-							charts: activeChartState.data.charts,
-							selectedCharts: activeSelectedCharts,
-							filename: getImageExportFilename()
-						})
-				: undefined
+	const csvSource: ChartCsvSource | null = marketCapSeries
+		? { type: 'prepare-dataset', prepare: () => buildStablecoinMarketCapCsvDataset(marketCapSeries) }
+		: activeSelectedCharts && volumeChartKind != null
+			? {
+					type: 'prepare-dataset',
+					prepare: () =>
+						fetchCompleteStablecoinVolumeCsvDataset(
+							selectedChain === 'All'
+								? { scope: 'global', chart: volumeChartKind }
+								: { scope: 'chain', chain: selectedChain, chart: volumeChartKind },
+							volumeGroupBy
+						)
+				}
+			: activeSelectedCharts && overviewChartType != null
+				? {
+						type: 'prepare-dataset',
+						prepare: () =>
+							fetchCompleteStablecoinSeriesCsvDataset(
+								{
+									scope: 'overview',
+									chain: selectedChain,
+									chart: overviewChartType,
+									filters: stablecoinFilterQuery
+								},
+								chartType === 'inflows' ? volumeGroupBy : null
+							)
+					}
+				: activeChartData
+					? { type: 'dataset', dataset: activeChartData.dataset }
+					: null
 
 	return (
 		<>
@@ -522,7 +537,7 @@ export function StablecoinsByChain({
 							filename={getImageExportFilename()}
 							title={getImageExportTitle()}
 							{...(selectedChain !== 'All' ? { iconUrl: chainIconUrl(selectedChain) } : {})}
-							prepareCsvDirect={prepareCsvDirect}
+							csvSource={csvSource}
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (

@@ -1,10 +1,13 @@
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildRuntimePieChartPresentation, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import {
+	buildRuntimePieChartCsvDataset,
+	buildRuntimePieChartPresentation,
+	type RuntimePieChartData
+} from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { oldBlue } from '~/constants/colors'
@@ -70,7 +73,8 @@ function ChainsChartCard({
 		setSelectedSeries: setSelectedChains,
 		dataset,
 		charts,
-		selectedCharts
+		selectedCharts,
+		csvSource
 	} = useProtocolBreakdownPresentation({
 		breakdown,
 		availableSeries: allChains,
@@ -104,14 +108,7 @@ function ChainsChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
-						prepareCsvDirect={() =>
-							buildSelectedSeriesCsv({
-								dataset,
-								charts,
-								selectedCharts,
-								filename: exportFilenameBase
-							})
-						}
+						csvSource={csvSource}
 					/>
 				</>
 			}
@@ -120,6 +117,7 @@ function ChainsChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					csvSource={csvSource}
 					hideDefaultLegend={false}
 					valueSymbol="$"
 					selectedCharts={selectedCharts}
@@ -145,7 +143,8 @@ function TokenValuesUSDChartCard({
 		setSelectedSeries: setSelectedTokensUSD,
 		dataset,
 		charts,
-		selectedCharts
+		selectedCharts,
+		csvSource
 	} = useProtocolBreakdownPresentation({
 		breakdown,
 		availableSeries: allTokens,
@@ -179,14 +178,7 @@ function TokenValuesUSDChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
-						prepareCsvDirect={() =>
-							buildSelectedSeriesCsv({
-								dataset,
-								charts,
-								selectedCharts,
-								filename: exportFilenameBase
-							})
-						}
+						csvSource={csvSource}
 					/>
 				</>
 			}
@@ -195,6 +187,7 @@ function TokenValuesUSDChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					csvSource={csvSource}
 					hideDefaultLegend={false}
 					valueSymbol="$"
 					selectedCharts={selectedCharts}
@@ -259,6 +252,10 @@ function TokensBreakdownPieChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
+						csvSource={{
+							type: 'prepare-dataset',
+							prepare: () => buildRuntimePieChartCsvDataset(tokenBreakdownPieSeries)
+						}}
 					/>
 				</>
 			}
@@ -290,7 +287,8 @@ function TokenBalancesRawChartCard({
 		setSelectedSeries: setSelectedTokensRaw,
 		dataset,
 		charts,
-		selectedCharts
+		selectedCharts,
+		csvSource
 	} = useProtocolBreakdownPresentation({
 		breakdown,
 		availableSeries: allTokens,
@@ -325,14 +323,7 @@ function TokenBalancesRawChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
-						prepareCsvDirect={() =>
-							buildSelectedSeriesCsv({
-								dataset,
-								charts,
-								selectedCharts,
-								filename: exportFilenameBase
-							})
-						}
+						csvSource={csvSource}
 					/>
 				</>
 			}
@@ -341,6 +332,7 @@ function TokenBalancesRawChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					csvSource={csvSource}
 					hideDefaultLegend={false}
 					valueSymbol=""
 					selectedCharts={selectedCharts}
@@ -366,6 +358,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={reserveExchangeIconUrl(protocolName)}
+					csvSource={{ type: 'dataset', dataset }}
 				/>
 			}
 		>
@@ -396,7 +389,8 @@ function InflowsByTokenChartCard({
 		setSelectedSeries: setSelectedTokenInflows,
 		dataset,
 		charts,
-		selectedCharts
+		selectedCharts,
+		csvSource
 	} = useProtocolBreakdownPresentation({
 		breakdown,
 		availableSeries: allTokens,
@@ -431,14 +425,7 @@ function InflowsByTokenChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
-						prepareCsvDirect={() =>
-							buildSelectedSeriesCsv({
-								dataset,
-								charts,
-								selectedCharts,
-								filename: exportFilenameBase
-							})
-						}
+						csvSource={csvSource}
 					/>
 				</>
 			}
@@ -447,6 +434,7 @@ function InflowsByTokenChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					csvSource={csvSource}
 					hideDefaultLegend={false}
 					valueSymbol="$"
 					selectedCharts={selectedCharts}

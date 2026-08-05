@@ -1,5 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
+import { toast } from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
@@ -9,7 +11,7 @@ import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { Icon } from '~/ui/Icon'
 import type { ChartSeries } from '~/utils/breakdowns'
-import { downloadCSV } from '~/utils/download'
+import { downloadBlob } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
 import { chartBuilderHasExactRemainder } from '../chartBuilderCapabilities'
 import { getChartBuilderQueryKey } from '../chartBuilderQueryKey'
@@ -74,6 +76,45 @@ const getProtocolBreakdownMetric = (metric: BuilderMetric): ProtocolBreakdownMet
 	}
 }
 
+async function fetchChartBuilderSeries(config: ChartBuilderConfig['config']): Promise<ChartSeries[]> {
+	if (config.mode === 'protocol') {
+		const data = await fetchProtocolChainBreakdownData({
+			protocol: config.protocol,
+			metric: config.metric,
+			chains: config.chains.length > 0 ? config.chains : undefined,
+			limit: config.limit,
+			chainFilterMode: config.chainFilterMode,
+			chainCategories: config.chainCategories,
+			protocolCategories: config.protocolCategories,
+			chainCategoryFilterMode: config.chainCategoryFilterMode,
+			protocolCategoryFilterMode: config.protocolCategoryFilterMode
+		})
+		if (
+			config.hideOthers ||
+			(config.chainCategories && config.chainCategories.length > 0) ||
+			(config.protocolCategories && config.protocolCategories.length > 0)
+		) {
+			return data.series.filter((series) => !series.name.startsWith('Others'))
+		}
+		return data.series
+	}
+
+	if (PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS.has(config.metric)) return []
+	const data = await fetchProtocolBreakdownData({
+		metric: getProtocolBreakdownMetric(config.metric),
+		chains: config.chains,
+		limit: config.limit,
+		categories: config.categories,
+		groupByParent: config.groupByParent,
+		chainFilterMode: config.chainFilterMode,
+		categoryFilterMode: config.categoryFilterMode
+	})
+	if (config.hideOthers || (config.chainCategories && config.chainCategories.length > 0)) {
+		return data.series.filter((series) => !series.name.startsWith('Others'))
+	}
+	return data.series
+}
+
 export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	const {
 		handlePercentageChange,
@@ -85,6 +126,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	} = useProDashboardEditorActions()
 	const { isReadOnly, hideDuplicateButton } = useProDashboardPermissions()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
+	const { authorizedFetch } = useAuthContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const { chartInstance, handleChartReady } = useChartImageExport()
 	const config = builder.config
@@ -129,54 +171,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	)
 	const { data: chartData, isPending: isChartDataPending } = useQuery({
 		queryKey: getChartBuilderQueryKey(config),
-		queryFn: async () => {
-			if (config.mode === 'protocol') {
-				const data = await fetchProtocolChainBreakdownData({
-					protocol: config.protocol,
-					metric: config.metric,
-					chains: config.chains.length > 0 ? config.chains : undefined,
-					limit: config.limit,
-					chainFilterMode,
-					chainCategories: config.chainCategories,
-					protocolCategories: config.protocolCategories,
-					chainCategoryFilterMode,
-					protocolCategoryFilterMode
-				})
-
-				let series = data.series
-				if (
-					config.hideOthers ||
-					(config.mode === 'protocol' &&
-						((config.chainCategories && config.chainCategories.length > 0) ||
-							(config.protocolCategories && config.protocolCategories.length > 0)))
-				) {
-					series = series.filter((s) => !s.name.startsWith('Others'))
-				}
-
-				return { series }
-			}
-
-			if (PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS.has(config.metric)) {
-				return { series: [] }
-			}
-
-			const data = await fetchProtocolBreakdownData({
-				metric: getProtocolBreakdownMetric(config.metric),
-				chains: config.chains,
-				limit: config.limit,
-				categories: config.categories,
-				groupByParent: config.groupByParent,
-				chainFilterMode,
-				categoryFilterMode
-			})
-
-			let series = data.series
-			if (config.hideOthers || (config.chainCategories && config.chainCategories.length > 0)) {
-				series = series.filter((s) => !s.name.startsWith('Others'))
-			}
-
-			return { series }
-		},
+		queryFn: () => fetchChartBuilderSeries(config).then((series) => ({ series })),
 		select: selectChartData,
 		enabled: streamDone && !!config.metric,
 		staleTime: 5 * 60 * 1000,
@@ -273,68 +268,41 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		}
 	}, [builder.grouping, chartSeriesNames, config.limit, displayAs])
 
-	const handleCsvExport = () => {
-		const exportSeries = chartData?.series ?? []
-		if (exportSeries.length === 0) return
-		const fileName = `${builder.name || config.metric}_${config.chains.join(
-			'-'
-		)}_${config.categories.length > 0 ? config.categories.join('-') + '_' : ''}${
-			config.chainCategories && config.chainCategories.length > 0 ? config.chainCategories.join('-') + '_' : ''
-		}${
-			config.protocolCategories && config.protocolCategories.length > 0 ? config.protocolCategories.join('-') + '_' : ''
-		}${new Date().toISOString().split('T')[0]}.csv`
-		if (config.chartType !== 'treemap') {
-			const headers = ['Date', ...chartView.seriesNames]
-			const rows = new Array<string[]>(chartView.dataset.source.length)
-			for (let i = 0; i < chartView.dataset.source.length; i++) {
-				const input = chartView.dataset.source[i]
-				if (!input) throw new Error(`Missing chart builder row at index ${i}`)
-				const timestamp = input[0]
-				if (typeof timestamp !== 'number') throw new Error(`Invalid chart builder timestamp at index ${i}`)
-				const row = [new Date(timestamp).toISOString().slice(0, 10)]
-				for (let j = 1; j < chartView.dataset.dimensions.length; j++) {
-					row.push(input[j] == null ? '' : String(input[j]))
-				}
-				rows[i] = row
+	const csvExportMutation = useMutation({
+		mutationFn: async () => {
+			const fileName = `${builder.name || config.metric}_${config.chains.join(
+				'-'
+			)}_${config.categories.length > 0 ? config.categories.join('-') + '_' : ''}${
+				config.chainCategories && config.chainCategories.length > 0 ? config.chainCategories.join('-') + '_' : ''
+			}${
+				config.protocolCategories && config.protocolCategories.length > 0
+					? config.protocolCategories.join('-') + '_'
+					: ''
+			}${new Date().toISOString().split('T')[0]}.csv`
+			const response = await authorizedFetch('/api/private/pro-dashboard/chart-builder-csv', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					config,
+					grouping: builder.grouping ?? 'day',
+					timePeriod,
+					customTimePeriod,
+					filename: fileName
+				})
+			})
+			if (!response) throw new Error('Sign in to download this CSV')
+			if (!response.ok) {
+				let message = 'Failed to download CSV'
+				try {
+					const body: { error?: string } = await response.json()
+					if (body.error) message = body.error
+				} catch {}
+				throw new Error(message)
 			}
-			downloadCSV(fileName, [headers, ...rows])
-			return
-		}
-
-		const timestampSet = new Set<number>()
-		for (const s of exportSeries) {
-			for (const [timestamp] of s.data) {
-				timestampSet.add(timestamp)
-			}
-		}
-		const timestamps = Array.from(timestampSet).sort((a, b) => a - b)
-
-		const headers = ['Date', ...exportSeries.map((s: ChartSeries) => s.name)]
-		const seriesIndexes = new Array(exportSeries.length).fill(0)
-		const rows: string[][] = []
-		for (const timestamp of timestamps) {
-			const _d = new Date(timestamp * 1000)
-			const row = [_d.toISOString().slice(0, 10)]
-			for (let i = 0; i < exportSeries.length; i++) {
-				const series = exportSeries[i]
-				if (!series) throw new Error(`Missing chart builder series at index ${i}`)
-				const data = series.data
-				const storedPointIndex = seriesIndexes[i]
-				if (storedPointIndex === undefined) throw new Error(`Missing chart builder series index at ${i}`)
-				let pointIndex = storedPointIndex
-				let point = data[pointIndex]
-				while (point && point[0] < timestamp) {
-					pointIndex++
-					point = data[pointIndex]
-				}
-				seriesIndexes[i] = pointIndex
-				row.push(point?.[0] === timestamp ? point[1].toString() : '')
-			}
-			rows.push(row)
-		}
-
-		downloadCSV(fileName, [headers, ...rows])
-	}
+			downloadBlob(fileName, await response.blob())
+		},
+		onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to download CSV')
+	})
 
 	const updateSeriesColors = (nextColors: Record<string, string>) => {
 		if (isReadOnly) {
@@ -528,7 +496,8 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 								smol
 							/>
 							<CSVExportButton
-								onClick={handleCsvExport}
+								onClick={() => csvExportMutation.mutate()}
+								isLoading={csvExportMutation.isPending}
 								smol
 								className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 							/>

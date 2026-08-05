@@ -1,11 +1,11 @@
 import { normalizeCacheList } from '~/server/api/cacheKey'
-import { queryBoolean, queryFilterMode, queryIntClamped, queryList, queryString } from '~/server/api/params'
+import { queryBoolean, queryFilterMode, queryList, queryString } from '~/server/api/params'
 import { badRequest, okSerializedJson } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 import { normalizeLegacyChartBuilderChains } from './filters'
 import { getCachedProtocolTvlBreakdown, getCachedProtocolTvlChainBreakdown } from './protocols/data'
-import { validateCategoryChainFanOut, validateChartBuilderFilters } from './requestLimits'
+import { getChartBuilderSeriesLimit, validateCategoryChainFanOut, validateChartBuilderFilters } from './requestLimits'
 
 const BREAKDOWN_CACHE_CONTROL = 'public, s-maxage=600, stale-while-revalidate=1200'
 
@@ -13,7 +13,7 @@ export const protocolTvlBreakdown = defineApiRoute({
 	route: '/api/public/pro-dashboard/chart-builder/protocols/breakdowns/tvl',
 	cacheControl: BREAKDOWN_CACHE_CONTROL,
 	handle: async (req) => {
-		const topN = queryIntClamped(req.query, 'limit', 10, 1, 20)
+		const topN = getChartBuilderSeriesLimit(req.query, 10)
 		const categories = normalizeCacheList(queryList(req.query, 'categories'), { lowercase: true })
 		const groupByParent = queryBoolean(req.query, 'groupByParent')
 		const chainMode = queryFilterMode(req.query, 'chainFilterMode', 'filterMode')
@@ -52,7 +52,7 @@ export const protocolTvlByChainBreakdown = defineApiRoute({
 		const chainCategories = normalizeCacheList(queryList(req.query, 'chainCategories'))
 		const chainMode = queryFilterMode(req.query, 'chainFilterMode', 'filterMode')
 		const chainCategoryMode = queryFilterMode(req.query, 'chainCategoryFilterMode', 'filterMode')
-		const topN = queryIntClamped(req.query, 'limit', 5, 1, 20)
+		const topN = getChartBuilderSeriesLimit(req.query, 5)
 		const protocol = queryString(req.query, 'protocol')
 		const validationError = validateChartBuilderFilters({ chains, chainCategories, protocol })
 		if (validationError) return badRequest(validationError)

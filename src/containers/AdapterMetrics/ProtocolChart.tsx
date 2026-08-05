@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type {
 	MultiSeriesChartSeriesConfig,
 	MultiSeriesTimeSeriesDataset,
@@ -349,14 +348,7 @@ const ChartByType = ({
 					filename={exportFilename}
 					title={exportTitle}
 					iconUrl={tokenIconUrl(exportProtocolName)}
-					prepareCsvDirect={() =>
-						buildSelectedSeriesCsv({
-							dataset: deferredMainChartData.dataset,
-							charts: deferredMainChartData.charts,
-							selectedCharts: renderedCharts,
-							filename: exportFilename
-						})
-					}
+					csvSource={{ type: 'dataset', dataset: deferredMainChartData.dataset }}
 				/>
 				{chartBuilderConfig ? <AddToDashboardButton chartConfig={chartBuilderConfig} smol /> : null}
 			</ChartPanelToolbar>

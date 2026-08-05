@@ -14,6 +14,7 @@ import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
+import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -2271,6 +2272,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							filename={timeSeriesFilename}
 							title={`${pageLabel} ${chartMetricLabel}`}
 							smol
+							csvSource={{ type: 'dataset', dataset: selectedTimeSeriesDataset }}
 						/>
 					</ChartPanelToolbar>
 					{timeSeriesQuery.error ? (
@@ -2344,6 +2346,17 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							filename={nonTimeSeriesFilename}
 							title={`${pageLabel} ${chartMetricLabel}`}
 							smol
+							csvSource={
+								chartState.view === 'treemap'
+									? { type: 'prepare-dataset', prepare: () => buildTreemapCsvDataset(treemapTreeData) }
+									: {
+											type: 'prepare-dataset',
+											prepare: () => ({
+												dimensions: ['Name', 'Value'],
+												source: snapshotBreakdownRows.map(({ name, value }) => [name, value])
+											})
+										}
+							}
 						/>
 					</ChartPanelToolbar>
 					{!hasNonTimeSeriesData ? (

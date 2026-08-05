@@ -1,7 +1,8 @@
 import * as React from 'react'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -209,6 +210,11 @@ export function BridgesOverviewByChain({
 
 	const chartFilename = getBridgeChartFilename(selectedChain, chartType)
 	const selectedChainIconUrl = selectedChain !== 'All' ? chainIconUrl(selectedChain) : undefined
+	const activeChartCsvSource: ChartCsvSource | null = activeChart
+		? 'dataset' in activeChart
+			? { type: 'dataset', dataset: activeChart.dataset }
+			: { type: 'prepare-dataset', prepare: () => buildRuntimePieChartCsvDataset(activeChart.series) }
+		: null
 	const prepareCsv = () => {
 		const resolvedFilteredBridges = filteredBridges ?? EMPTY_PROTOCOLS
 		const resolvedMessagingProtocols = messagingProtocols ?? EMPTY_PROTOCOLS
@@ -348,6 +354,7 @@ export function BridgesOverviewByChain({
 									chartInstance={exportChartInstance}
 									filename={chartView === 'volume' ? 'bridge-volume' : 'bridge-netflow-by-chain'}
 									title={chartView === 'volume' ? 'Bridge Volume' : 'Bridge Net Flows'}
+									csvSource="rendered-chart"
 								/>
 							</ChartPanelToolbar>
 
@@ -384,6 +391,7 @@ export function BridgesOverviewByChain({
 										filename={chartFilename}
 										title={`${selectedChain} ${chartType}`}
 										iconUrl={selectedChainIconUrl}
+										csvSource={activeChartCsvSource}
 									/>
 								</ChartPanelToolbar>
 							)}
@@ -405,6 +413,7 @@ export function BridgesOverviewByChain({
 											filename={chartFilename}
 											title={`${selectedChain} ${chartType}`}
 											iconUrl={selectedChainIconUrl}
+											csvSource="rendered-chart"
 										/>
 									}
 								/>

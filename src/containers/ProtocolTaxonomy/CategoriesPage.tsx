@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedAdditiveChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
+import { buildSelectedAdditiveChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -220,14 +220,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 						chartInstance={chartInstance}
 						filename="categories-tvl"
 						title="Protocol TVL"
-						prepareCsvDirect={() =>
-							buildSelectedSeriesCsv({
-								dataset: selectedPresentation.dataset,
-								charts: selectedPresentation.charts,
-								selectedCharts: new Set(selectedPresentation.charts.map((chart) => chart.name)),
-								filename: 'categories-tvl'
-							})
-						}
+						csvSource={selectedPresentation.csvSource}
 					/>
 				</ChartPanelToolbar>
 				{shouldFetchChartData && chartDataQuery.isLoading ? (
@@ -243,6 +236,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 						<MultiSeriesChart
 							dataset={selectedPresentation.dataset}
 							charts={selectedPresentation.charts}
+							csvSource={selectedPresentation.csvSource}
 							valueSymbol="$"
 							solidChartAreaStyle
 							onReady={handleChartReady}

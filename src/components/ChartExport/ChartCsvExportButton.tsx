@@ -1,7 +1,7 @@
 import type { DatasetComponentOption } from 'echarts'
 import type * as echarts from 'echarts/core'
 import { useCallback } from 'react'
-import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { CSVDownloadButton, type CsvPayload, type PrepareCsv } from '~/components/CsvDownloadButton'
 import { buttonStyles } from '~/ui/Button'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatIsoDate } from '~/utils/dateFormat'
@@ -292,12 +292,25 @@ function buildCsvFromChart({
 	return { filename: `${base}-${date}`, rows: rowsSafe }
 }
 
+export interface ChartCsvDataset {
+	dimensions: string[] | null
+	source: unknown[] | null
+}
+
+export type PrepareChartCsvDataset = () => ChartCsvDataset | Promise<ChartCsvDataset>
+
+export type ChartCsvSource =
+	| 'rendered-chart'
+	| { type: 'dataset'; dataset: ChartCsvDataset }
+	| { type: 'prepare-dataset'; prepare: PrepareChartCsvDataset }
+	| { type: 'prepare-csv'; prepare: PrepareCsv }
+
 interface ChartCsvExportButtonProps {
 	chartInstance: () => echarts.ECharts | null
 	className?: string | undefined
 	smol?: boolean | undefined
 	filename?: string | undefined
-	prepareCsvDirect?: (() => { filename: string; rows: Array<Array<CsvCell>> }) | undefined
+	source: ChartCsvSource
 	onExport?: ((info: { filename: string }) => void) | undefined
 }
 
@@ -308,22 +321,34 @@ export function ChartCsvExportButton({
 	className = DEFAULT_CLASSNAME,
 	smol = true,
 	filename,
-	prepareCsvDirect,
+	source,
 	onExport
 }: ChartCsvExportButtonProps) {
-	const prepareCsv = useCallback(() => {
-		const result = prepareCsvDirect
-			? prepareCsvDirect()
-			: (() => {
-					const instance = chartInstance()
-					if (!instance) {
-						throw new Error('Failed to get chart instance')
-					}
-					return buildCsvFromChart({ instance, filenameBase: filename })
-				})()
+	const prepareCsv = useCallback(async (): Promise<CsvPayload> => {
+		let result: CsvPayload
+		if (source === 'rendered-chart') {
+			const instance = chartInstance()
+			if (!instance) throw new Error('Failed to get chart instance')
+			result = buildCsvFromChart({ instance, filenameBase: filename })
+		} else if (source.type === 'dataset') {
+			result = buildCsvFromDataset({
+				dimensions: source.dataset.dimensions,
+				source: source.dataset.source,
+				filenameBase: filename
+			})
+		} else if (source.type === 'prepare-dataset') {
+			const dataset = await source.prepare()
+			result = buildCsvFromDataset({
+				dimensions: dataset.dimensions,
+				source: dataset.source,
+				filenameBase: filename
+			})
+		} else {
+			result = await source.prepare()
+		}
 		onExport?.({ filename: result.filename })
 		return result
-	}, [chartInstance, filename, prepareCsvDirect, onExport])
+	}, [chartInstance, filename, source, onExport])
 
 	return (
 		<CSVDownloadButton prepareCsv={prepareCsv} replaceClassName className={className} smol={smol}>

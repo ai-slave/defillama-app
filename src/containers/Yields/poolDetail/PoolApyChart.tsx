@@ -409,7 +409,11 @@ export function PoolApyChart({
 							void pushShallowQuery(router, { range: getRangeQueryValue(next) }, router.pathname)
 						}
 					/>
-					<ChartExportButtons chartInstance={() => chartRef.current} filename={`yields-${poolId}-${kind}`} />
+					<ChartExportButtons
+						chartInstance={() => chartRef.current}
+						filename={`yields-${poolId}-${kind}`}
+						csvSource={{ type: 'dataset', dataset }}
+					/>
 				</div>
 			</PanelHeader>
 

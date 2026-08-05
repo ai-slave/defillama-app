@@ -1,3 +1,4 @@
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { CHART_COLORS, oldBlue } from '~/constants/colors'
 import { roundNumber } from '~/utils/numberFormat'
@@ -19,6 +20,14 @@ export type StablecoinMarketCapPresentation =
 	| { kind: 'pie'; chartData: Array<{ name: string; value: number }>; stackColors: Record<string, string> }
 	| { kind: 'hbar'; categories: string[]; values: number[]; colors: string[] }
 	| { kind: 'treemap'; treeData: TreemapNode[] }
+
+/** Export every canonical peer; visual top-N and legend state are presentation-only. */
+export function buildStablecoinMarketCapCsvDataset(series: StablecoinMarketCapSeries): MultiSeriesChartDataset {
+	const source: MultiSeriesChartDataset['source'] = []
+	for (const peer of series.peers) source.push([peer.name, peer.value])
+	if (series.upstreamRemainderValue > 0) source.push(['Others', series.upstreamRemainderValue])
+	return { dimensions: ['Name', 'Market Cap'], source }
+}
 
 /** Build one canonical ranked snapshot; every real peer remains selectable. */
 export function prepareStablecoinMarketCapSeries<T>({
@@ -136,16 +145,4 @@ export function buildStablecoinMarketCapPresentation({
 		colors.push(slice.color)
 	}
 	return { kind: 'hbar', categories, values, colors }
-}
-
-export function prepareStablecoinMarketCapTreemapCsv({
-	treeData,
-	filename
-}: {
-	treeData: TreemapNode[]
-	filename: string
-}) {
-	const rows: Array<Array<string | number>> = [['Name', 'Market Cap', 'Share (%)']]
-	for (const node of treeData) rows.push([node.name, node.value[0], node.value[1] ?? 0])
-	return { filename, rows }
 }

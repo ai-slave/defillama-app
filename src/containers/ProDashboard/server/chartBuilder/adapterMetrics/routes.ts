@@ -1,10 +1,10 @@
 import { normalizeCacheList } from '~/server/api/cacheKey'
-import { queryBoolean, queryFilterMode, queryIntClamped, queryList, queryString } from '~/server/api/params'
+import { queryBoolean, queryFilterMode, queryList, queryString } from '~/server/api/params'
 import { badRequest, okSerializedJson } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 import { normalizeLegacyChartBuilderChains } from '../filters'
-import { validateChartBuilderFilters } from '../requestLimits'
+import { getChartBuilderSeriesLimit, validateChartBuilderFilters } from '../requestLimits'
 import { parseAdapterChartBuilderMetric } from './breakdowns/config'
 import { getCachedAdapterMetricChainBreakdown, getCachedAdapterMetricProtocolBreakdown } from './data'
 
@@ -15,7 +15,7 @@ export const adapterMetricBreakdown = defineApiRoute({
 	cacheControl: BREAKDOWN_CACHE_CONTROL,
 	handle: async (req) => {
 		const metricParam = queryString(req.query, 'metric') ?? ''
-		const topN = queryIntClamped(req.query, 'limit', 10, 1, 20)
+		const topN = getChartBuilderSeriesLimit(req.query, 10)
 		const categories = normalizeCacheList(queryList(req.query, 'categories'), { lowercase: true })
 		const groupByParent = queryBoolean(req.query, 'groupByParent')
 		const chainMode = queryFilterMode(req.query, 'chainFilterMode', 'filterMode')
@@ -72,7 +72,7 @@ export const adapterMetricByChainBreakdown = defineApiRoute({
 		const chainMode = queryFilterMode(req.query, 'chainFilterMode', 'filterMode')
 		const chainCategoryMode = queryFilterMode(req.query, 'chainCategoryFilterMode', 'filterMode')
 		const protocolCategoryMode = queryFilterMode(req.query, 'protocolCategoryFilterMode', 'filterMode')
-		const topN = queryIntClamped(req.query, 'limit', 5, 1, 20)
+		const topN = getChartBuilderSeriesLimit(req.query, 5)
 		const validationError = validateChartBuilderFilters({
 			chains,
 			chainCategories,

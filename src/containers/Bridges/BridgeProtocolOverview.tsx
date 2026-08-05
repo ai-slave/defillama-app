@@ -1,6 +1,7 @@
 import * as React from 'react'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	ChartGroupingSelector,
@@ -184,6 +185,14 @@ export const BridgeInfo = ({
 
 	const chartScopeTitle = isAllChains ? displayName : `${displayName} on ${currentChain}`
 	const chartFilename = `${slug(displayName)}-${isAllChains ? 'all-chains' : slug(currentChain)}-${chartType === 'Volume' ? 'volume' : chartType === 'Inflows' ? 'inflows' : chartType === 'Tokens To' ? 'tokens-to' : 'tokens-from'}`
+	const csvSource: ChartCsvSource | null =
+		chartType === 'Volume' && isAllChains
+			? { type: 'dataset', dataset: volumeDataset }
+			: chartType === 'Inflows' && !isAllChains
+				? { type: 'dataset', dataset: inflowsDataset }
+				: activeTokenSeries
+					? { type: 'prepare-dataset', prepare: () => buildRuntimePieChartCsvDataset(activeTokenSeries) }
+					: null
 
 	return (
 		<>
@@ -311,6 +320,7 @@ export const BridgeInfo = ({
 							filename={chartFilename}
 							title={`${chartScopeTitle} ${chartType}`}
 							iconUrl={logo}
+							csvSource={csvSource}
 						/>
 					</ChartPanelToolbar>
 					<>

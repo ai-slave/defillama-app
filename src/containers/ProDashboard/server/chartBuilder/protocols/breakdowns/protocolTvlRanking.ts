@@ -197,16 +197,17 @@ export function buildProtocolTvlRanking({
 
 	const grouped = new Map<string, ProtocolTvlRankingItem>()
 	for (const row of eligibleRows) {
-		const key = row.parentProtocolSlug ?? `protocol:${row.protocolSlug}`
+		const belongsToParent = row.parentProtocolSlug !== null && !row.excludeTvlFromParent
+		const key = belongsToParent ? row.parentProtocolSlug : `protocol:${row.protocolSlug}`
 		const current = grouped.get(key)
-		const value = row.parentProtocolSlug && row.excludeTvlFromParent ? 0 : (row.tvl ?? 0)
+		const value = row.tvl ?? 0
 		if (current) current.value += value
 		else {
 			grouped.set(key, {
-				protocolSlug: row.parentProtocolSlug ?? row.protocolSlug,
-				parentProtocolSlug: row.parentProtocolSlug,
+				protocolSlug: belongsToParent ? row.parentProtocolSlug : row.protocolSlug,
+				parentProtocolSlug: belongsToParent ? row.parentProtocolSlug : null,
 				value,
-				isParent: row.parentProtocolSlug != null
+				isParent: belongsToParent
 			})
 		}
 	}

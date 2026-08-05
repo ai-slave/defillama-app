@@ -3,11 +3,12 @@ import { lazy, Suspense, useContext, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { buildTimeSeriesDataset, type TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
 import {
 	buildProtocolBreakdownPresentation,
+	buildCompleteProtocolBreakdownDataset,
 	MAX_PROTOCOL_BREAKDOWN_SERIES,
 	type ProtocolBreakdownChart
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
@@ -18,14 +19,13 @@ import {
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
-import { formatIsoDate } from '~/utils/dateFormat'
-import { downloadCSV } from '~/utils/download'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import { shouldSuppressAdvancedTvlTokenBreakdown } from '../services/protocolTvl'
 import type { AdvancedTvlChartConfig } from '../types'
 import { buildAdvancedTvlPresentation } from './advancedTvlPresentation'
+import { prepareProChartCsv } from './chartCsv'
 import { CSVExportButton } from './CSVExportButton'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
@@ -175,57 +175,48 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	)
 	const canonicalDataset = filteredDataset
 
-	const handleCsvExport = () => {
-		let rows: (string | number)[][] = []
-		let filename = ''
+	const prepareCsvExport = () => {
+		let exportDataset: MultiSeriesChartDataset = filteredDataset
 		const protocolSlug = protocol.toLowerCase().replace(/\s+/g, '-')
-		const buildRows = (dataset: MultiSeriesChartDataset, columnNames: string[]) => {
-			const indexes = columnNames.map((name) => dataset.dimensions.indexOf(name))
-			return [
-				['Date', ...columnNames],
-				...dataset.source.map((row, rowIndex) => {
-					const timestamp = row[0]
-					if (typeof timestamp !== 'number') throw new Error(`Invalid advanced TVL timestamp at index ${rowIndex}`)
-					return [
-						formatIsoDate(timestamp, { input: 'milliseconds' }) ?? '',
-						...indexes.map((index) => row[index] ?? '')
-					]
-				})
-			]
-		}
+		let filename: string
 
 		switch (chartType) {
 			case 'tvl':
-				rows = buildRows(filteredDataset, ['TVL'])
 				filename = `${protocolSlug}-tvl`
 				break
 			case 'chainsTvl':
-				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-tvl-by-chains`
 				break
 			case 'tokenValuesUsd':
-				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-token-values-usd`
 				break
 			case 'tokensPie':
-				rows = [['Token', 'Value'], ...piePresentation.chartData.map((row) => [row.name, row.value])]
+				exportDataset = buildRuntimePieChartCsvDataset(advancedData.pieSeries)
 				filename = `${protocolSlug}-tokens-breakdown`
 				break
 			case 'tokenBalances':
-				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-token-balances`
 				break
 			case 'usdInflows':
-				rows = buildRows(filteredDataset, ['USD Inflows'])
 				filename = `${protocolSlug}-usd-inflows`
 				break
 			case 'tokenInflows':
-				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-token-inflows`
 				break
 		}
 
-		if (rows.length > 0) downloadCSV(filename, rows)
+		if (isRuntimeBreakdown) {
+			const completeDataset = buildCompleteProtocolBreakdownDataset({
+				breakdown: advancedData.breakdown,
+				availableSeries: selectorValues,
+				includeUpstreamOthers: aggregateOthers,
+				fillMissingWithZero: true
+			})
+			if (!completeDataset) throw new Error('Advanced TVL data is unavailable')
+			exportDataset = filterChartDatasetByTimePeriod(completeDataset, timePeriod, customTimePeriod)
+		}
+
+		return prepareProChartCsv(exportDataset, filename)
 	}
 
 	const chartTypeLabel = CHART_TYPE_LABELS[chartType] || chartType
@@ -307,7 +298,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 						) : null}
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 						<CSVExportButton
-							onClick={handleCsvExport}
+							prepareCsv={prepareCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 						/>

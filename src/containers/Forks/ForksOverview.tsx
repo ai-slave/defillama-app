@@ -2,8 +2,8 @@ import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
-import { buildSelectedPercentageChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
-import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { buildSelectedPercentageChart } from '~/components/ECharts/MultiSeriesChart/selection'
+import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -176,6 +176,10 @@ export const ForksOverview = ({
 									chartInstance={pieChartInstance}
 									filename="forks-tvl-pie"
 									title="Forks TVL Breakdown"
+									csvSource={{
+										type: 'prepare-dataset',
+										prepare: () => buildRuntimePieChartCsvDataset(pieSeries)
+									}}
 								/>
 							</ChartPanelToolbar>
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
@@ -200,20 +204,14 @@ export const ForksOverview = ({
 									chartInstance={chartInstance}
 									filename="forks-dominance-chart"
 									title="Forks TVL Dominance (%)"
-									prepareCsvDirect={() =>
-										buildSelectedSeriesCsv({
-											dataset: selectedDominance.dataset,
-											charts: selectedDominance.charts,
-											selectedCharts: new Set(activeSeries),
-											filename: 'forks-dominance-chart'
-										})
-									}
+									csvSource={selectedDominance.csvSource}
 								/>
 							</ChartPanelToolbar>
 							<React.Suspense fallback={<ChartPanelBodyFallback />}>
 								<MultiSeriesChart
 									dataset={selectedDominance.dataset}
 									charts={selectedDominance.charts}
+									csvSource={selectedDominance.csvSource}
 									stacked={true}
 									expandTo100Percent={true}
 									hideDefaultLegend

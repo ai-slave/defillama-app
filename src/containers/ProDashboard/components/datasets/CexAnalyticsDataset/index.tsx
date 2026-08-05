@@ -12,7 +12,6 @@ import {
 } from '@tanstack/react-table'
 import { lazy, Suspense, useContext, useMemo, useState, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -29,8 +28,9 @@ import { getTimePeriodBounds, StreamDoneContext } from '~/containers/ProDashboar
 import type { CexDatasetTableConfig } from '~/containers/ProDashboard/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
+import type { CsvCell } from '~/utils/csvCell'
 import { formatDateTime } from '~/utils/dateFormat'
-import { downloadCSV, type CsvCell } from '~/utils/download'
+import { downloadCSV } from '~/utils/download'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
@@ -493,15 +493,8 @@ function VenueMarketShareChart({
 						chartInstance={chartInstance}
 						filename={`cex-${metric}-market-share`}
 						title={title}
+						csvSource={{ type: 'dataset', dataset }}
 						smol
-						prepareCsvDirect={() =>
-							buildSelectedSeriesCsv({
-								dataset,
-								charts,
-								selectedCharts,
-								filename: `cex-${metric}-market-share`
-							})
-						}
 					/>
 				</div>
 			</div>

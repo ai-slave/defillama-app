@@ -1,5 +1,6 @@
 import { trackUmamiEvent } from '~/utils/analytics/umami'
-import { downloadTabular, type CsvCell, type DownloadFormat } from '~/utils/download'
+import type { CsvSerializableCell } from '~/utils/csv'
+import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { classifyColumns } from './columnKind'
 
 export interface QueryResult {
@@ -8,7 +9,7 @@ export interface QueryResult {
 }
 
 // LlamaSQL/Arrow results contain native types that the CSV writer can't round-trip directly.
-// Convert once, here, and pass a CsvCell[][] to the shared downloadTabular pipeline so we
+// Convert once, here, and pass serializable cells to the shared downloadTabular pipeline so we
 // reuse the same escaping, file-naming, and analytics hooks as the rest of the app.
 export function exportQueryResult(result: QueryResult, format: DownloadFormat, filename = 'query-result'): void {
 	trackUmamiEvent('sql-studio-download', { format })
@@ -17,15 +18,15 @@ export function exportQueryResult(result: QueryResult, format: DownloadFormat, f
 		downloadTabular(format, filename, [result.columns.map((c) => c.name)], { addTimestamp: true })
 		return
 	}
-	const header: CsvCell[] = result.columns.map((c) => c.name)
+	const header: CsvSerializableCell[] = result.columns.map((c) => c.name)
 	const columnKinds = classifyColumns(result)
-	const data: CsvCell[][] = result.rows.map((row) =>
+	const data: CsvSerializableCell[][] = result.rows.map((row) =>
 		result.columns.map((_, index) => toCell(row[index], columnKinds[index].fine === 'date'))
 	)
 	downloadTabular(format, filename, [header, ...data], { addTimestamp: true })
 }
 
-function toCell(value: unknown, isDate: boolean): CsvCell {
+function toCell(value: unknown, isDate: boolean): CsvSerializableCell {
 	if (value === null || value === undefined) return ''
 	if (isDate && typeof value === 'number' && Number.isFinite(value)) return new Date(value).toISOString()
 	if (typeof value === 'bigint') return value.toString()
@@ -33,7 +34,8 @@ function toCell(value: unknown, isDate: boolean): CsvCell {
 	if (typeof value === 'object') {
 		// Arrow may hand us Date-like, Map-like, or array values. Fall through to the CSV writer's
 		// object handling (JSON.stringify) rather than guessing semantic types here.
-		return value as CsvCell
+		return value
 	}
-	return value as CsvCell
+	if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
+	return String(value)
 }

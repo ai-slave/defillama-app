@@ -1,3 +1,4 @@
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 
 type PieInputRow = Record<string, unknown>
@@ -11,6 +12,14 @@ export interface RuntimePieChartData {
 	peers: Array<{ name: string; value: number }>
 	limit: number
 	upstreamOthersValue: number
+}
+
+/** Export canonical slices without applying top-N or interactive legend selection. */
+export function buildRuntimePieChartCsvDataset(series: RuntimePieChartData): MultiSeriesChartDataset {
+	const source: MultiSeriesChartDataset['source'] = []
+	for (const peer of series.peers) source.push([peer.name, peer.value])
+	if (series.upstreamOthersValue > 0) source.push(['Others', series.upstreamOthersValue])
+	return { dimensions: ['Name', 'Value'], source }
 }
 
 /** Normalize and rank pie slices, folding the tail and any explicit remainder into `Others`. */

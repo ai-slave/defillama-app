@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedPercentageChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
+import { buildSelectedPercentageChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import type {
 	CanonicalMultiSeriesChartDataset,
 	IMultiSeriesChartProps,
@@ -154,12 +154,8 @@ function LanguageSeriesChart({
 						selectedCharts,
 						missingValuePolicy: 'require-complete'
 					})
-				: { dataset, charts },
+				: { dataset, charts, csvSource: { type: 'dataset' as const, dataset } },
 		[charts, dataset, expandTo100Percent, selectedCharts]
-	)
-	const displayedSelectedCharts = React.useMemo(
-		() => (expandTo100Percent ? new Set(activeSeries) : selectedCharts),
-		[activeSeries, expandTo100Percent, selectedCharts]
 	)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const filename = title
@@ -186,20 +182,14 @@ function LanguageSeriesChart({
 					chartInstance={chartInstance}
 					filename={filename}
 					title={title}
-					prepareCsvDirect={() =>
-						buildSelectedSeriesCsv({
-							dataset: selectedPercentage.dataset,
-							charts: selectedPercentage.charts,
-							selectedCharts: displayedSelectedCharts,
-							filename
-						})
-					}
+					csvSource={selectedPercentage.csvSource}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={selectedPercentage.dataset}
 					charts={selectedPercentage.charts}
+					csvSource={selectedPercentage.csvSource}
 					selectedCharts={expandTo100Percent ? undefined : selectedCharts}
 					valueSymbol={expandTo100Percent ? '%' : '$'}
 					stacked={stacked}

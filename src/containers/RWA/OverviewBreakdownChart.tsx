@@ -324,6 +324,22 @@ export function RWAOverviewBreakdownChart({
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 	const flowTreemapSizeLabel = getRWAFlowTreemapSizeLabel(flowTreemapSizeMetric)
 	const exportFilename = `rwa-overview-breakdown-${chartType}-${isFlowChart ? flowChartView : 'time-series'}`
+	const prepareCompleteFlowTreemapCsv = () => {
+		const completeTreemap = flowTreemapWindow
+			? buildRWAFlowTreemap({
+					flows: flowTreemapWindow.flows,
+					sizeRows: treemapSizeRows,
+					sizeMetric: flowTreemapSizeMetric,
+					selectedNames: new Set(stackOptions)
+				})
+			: EMPTY_FLOW_TREEMAP
+		return prepareRWAFlowTreemapCsv({
+			nodes: completeTreemap.nodes,
+			sizeMetric: flowTreemapSizeMetric,
+			groupBy: flowFrequency,
+			filename: exportFilename
+		})
+	}
 
 	const onSelectChartType = (nextChartType: RWAOverviewBreakdownChartType) => {
 		void pushShallowQuery(router, { chartType: nextChartType === DEFAULT_CHART_TYPE ? undefined : nextChartType })
@@ -404,16 +420,18 @@ export function RWAOverviewBreakdownChart({
 					filename={exportFilename}
 					title={`RWA ${CHART_TYPE_OPTIONS.find((option) => option.key === chartType)?.label ?? 'Breakdown'}`}
 					smol
-					prepareCsvDirect={
+					csvSource={
 						isFlowHeatmap
-							? () =>
-									prepareRWAFlowTreemapCsv({
-										nodes: flowTreemap.nodes,
-										sizeMetric: flowTreemapSizeMetric,
-										groupBy: flowFrequency,
-										filename: exportFilename
-									})
-							: undefined
+							? {
+									type: 'prepare-csv',
+									prepare: prepareCompleteFlowTreemapCsv
+								}
+							: isFlowChart
+								? {
+										type: 'prepare-dataset',
+										prepare: () => buildRWAFlowRotationChart(flowData ?? [], flowFrequency, { allSeries: true }).dataset
+									}
+								: { type: 'dataset', dataset }
 					}
 					pngProfile={isFlowHeatmap ? 'treemapNormalized' : undefined}
 				/>

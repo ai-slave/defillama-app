@@ -454,6 +454,7 @@ function PieChart({
 								iconUrl={exportButtonsConfig?.pngIconUrl}
 								showCsv={csvDownloadEnabled}
 								showPng={imageExportEnabled}
+								csvSource="rendered-chart"
 							/>
 						}
 					/>

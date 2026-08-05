@@ -1,5 +1,6 @@
 import {
 	fetchAdapterChainChartData,
+	fetchAdapterChainChartDataByChainBreakdown,
 	fetchAdapterChainChartDataByProtocolBreakdown,
 	fetchAdapterChainMetrics,
 	fetchAdapterProtocolChartDataByBreakdownType
@@ -144,7 +145,7 @@ async function getDimensionsProtocolChainData(
 	protocol: string,
 	metric: AdapterChartBuilderMetric,
 	chains?: string[],
-	topN: number = 5,
+	topN: number | null = 5,
 	chainFilterMode: 'include' | 'exclude' = 'include',
 	chainCategoryFilterMode: 'include' | 'exclude' = 'include',
 	chainCategories?: string[]
@@ -233,8 +234,9 @@ async function getDimensionsProtocolChainData(
 
 		const availableChains = sortedSeries.map((s) => s.name)
 
-		const topSeries = sortedSeries.slice(0, Math.min(topN, sortedSeries.length))
-		const othersSeries = sortedSeries.slice(Math.min(topN, sortedSeries.length))
+		const selectedCount = topN === null ? sortedSeries.length : Math.min(topN, sortedSeries.length)
+		const topSeries = sortedSeries.slice(0, selectedCount)
+		const othersSeries = sortedSeries.slice(selectedCount)
 
 		const totalSeries = Array.from(sumSeriesByTimestamp(sortedSeries.map((s) => s.data)).entries()).sort(
 			(a, b) => a[0] - b[0]
@@ -260,8 +262,8 @@ async function getDimensionsProtocolChainData(
 				metric: config.metricName,
 				chains: availableChains,
 				totalChains: availableChains.length,
-				topN: Math.min(topN, sortedSeries.length),
-				othersCount: Math.max(0, sortedSeries.length - Math.min(topN, sortedSeries.length))
+				topN: selectedCount,
+				othersCount: sortedSeries.length - selectedCount
 			}
 		}
 	} catch (error) {
@@ -272,7 +274,7 @@ async function getDimensionsProtocolChainData(
 
 async function getAllProtocolsTopChainsDimensionsData(
 	metric: AdapterChartBuilderMetric,
-	topN: number = 5,
+	topN: number | null = 5,
 	chains?: string[],
 	chainFilterMode: 'include' | 'exclude' = 'include',
 	chainCategoryFilterMode: 'include' | 'exclude' = 'include',
@@ -345,6 +347,20 @@ async function getAllProtocolsTopChainsDimensionsData(
 				chainTotals.set(chainSlug, (chainTotals.get(chainSlug) || 0) + sum)
 			}
 		}
+		if (topN === null && hasProtocolCategoryFilter) {
+			const completeBreakdown = await fetchAdapterChainChartDataByChainBreakdown({
+				adapterType: config.endpoint,
+				...(config.dataType ? { dataType: config.dataType } : {})
+			})
+			for (const [, values] of completeBreakdown) {
+				for (const chain in values) {
+					const value = values[chain]
+					if (value === undefined) throw new Error(`Missing adapter chain value for ${chain}`)
+					const chainSlug = toDimensionsSlug(chain)
+					if (value > (chainTotals.get(chainSlug) ?? 0)) chainTotals.set(chainSlug, value)
+				}
+			}
+		}
 
 		// The canonical metrics contract uses Dimensions slugs in `protocols[].breakdown24h`
 		// while `allChains` contains display names, so normalize both before filtering.
@@ -385,7 +401,8 @@ async function getAllProtocolsTopChainsDimensionsData(
 		}
 		ranked.sort((a, b) => b[1] - a[1])
 
-		const picked = ranked.slice(0, Math.min(topN, ranked.length)).map(([slug]) => slug)
+		const selectedCount = topN === null ? ranked.length : Math.min(topN, ranked.length)
+		const picked = ranked.slice(0, selectedCount).map(([slug]) => slug)
 		addApiRoutePhase('adapter_chain_rank', Date.now() - rankStartedAt)
 
 		const seriesRaw = await timeApiRoutePhase('adapter_chain_fetch_series', () =>
@@ -499,4 +516,103 @@ export const getAdapterMetricChainSeries = async ({
 		chainCategoryFilterMode,
 		chainCategories
 	)
+}
+
+export function getCompleteAdapterMetricChainSeries(
+	params: Omit<AdapterMetricChainBreakdownParams, 'topN'>
+): Promise<ProtocolChainData> {
+	const protocol = params.protocol?.trim()
+	if (protocol && protocol.toLowerCase() !== 'all') {
+		return getDimensionsProtocolChainData(
+			protocol,
+			params.metric,
+			params.chains,
+			null,
+			params.chainFilterMode,
+			params.chainCategoryFilterMode,
+			params.chainCategories
+		)
+	}
+	return getCompleteAllProtocolsAdapterChainSeries(params)
+}
+
+async function getCompleteAllProtocolsAdapterChainSeries(
+	params: Omit<AdapterMetricChainBreakdownParams, 'topN' | 'protocol'>
+): Promise<ProtocolChainData> {
+	const config = DIMENSIONS_API_METRIC_CONFIG[params.metric]
+	const categories = params.protocolCategories.filter(Boolean)
+	if (categories.length > 0) {
+		// Chart Builder categories come from protocol metadata, which is not identical to the
+		// Dimensions producer's category aggregates. Preserve the selected UI contract here.
+		return getAllProtocolsTopChainsDimensionsData(
+			params.metric,
+			null,
+			params.chains,
+			params.chainFilterMode,
+			params.chainCategoryFilterMode,
+			params.protocolCategoryFilterMode,
+			params.chainCategories,
+			params.protocolCategories
+		)
+	}
+	const payload = await timeApiRoutePhase('adapter_chain_fetch_complete_breakdown', () =>
+		fetchAdapterChainChartDataByChainBreakdown({
+			adapterType: config.endpoint,
+			...(config.dataType ? { dataType: config.dataType } : {})
+		})
+	)
+
+	const selectedChains = new Set(params.chains.map(toDimensionsSlug))
+	let allowedCategoryChains: Set<string> | null = null
+	if (params.chainCategories.length > 0) {
+		allowedCategoryChains = await resolveAllowedChainSlugsFromCategories(params.chainCategories)
+	}
+	const valuesByChain = new Map<string, [number, number][]>()
+	for (const [timestamp, chainValues] of payload) {
+		for (const chain in chainValues) {
+			const chainSlug = toDimensionsSlug(chain)
+			if (selectedChains.size > 0) {
+				const matches = selectedChains.has(chainSlug)
+				if (params.chainFilterMode === 'include' ? !matches : matches) continue
+			}
+			if (allowedCategoryChains && allowedCategoryChains.size > 0) {
+				const matches = allowedCategoryChains.has(chainSlug)
+				if (params.chainCategoryFilterMode === 'include' ? !matches : matches) continue
+			}
+			const value = chainValues[chain]
+			if (value === undefined) throw new Error(`Missing adapter chain value for ${chain}`)
+			let points = valuesByChain.get(chainSlug)
+			if (!points) {
+				points = []
+				valuesByChain.set(chainSlug, points)
+			}
+			const lastPoint = points[points.length - 1]
+			if (lastPoint?.[0] === timestamp) lastPoint[1] += value
+			else points.push([timestamp, value])
+		}
+	}
+
+	const series: ChartSeries[] = []
+	let colorIndex = 0
+	for (const [chain, values] of valuesByChain) {
+		const data = filterOutToday(normalizeDailyPairs(values))
+		if (data.length === 0) continue
+		series.push({ name: displayChainName(chain), data, color: getBreakdownColor(colorIndex++) })
+	}
+	series.sort((left, right) => left.name.localeCompare(right.name))
+	const total = Array.from(sumSeriesByTimestamp(series.map((entry) => entry.data))).sort(
+		([left], [right]) => left - right
+	)
+	const { alignedTopSeries } = buildAlignedTopAndOthers(series, total)
+	return {
+		series: alignedTopSeries,
+		metadata: {
+			protocol: 'All Protocols',
+			metric: config.metricName,
+			chains: alignedTopSeries.map((entry) => entry.name),
+			totalChains: alignedTopSeries.length,
+			topN: alignedTopSeries.length,
+			othersCount: 0
+		}
+	}
 }

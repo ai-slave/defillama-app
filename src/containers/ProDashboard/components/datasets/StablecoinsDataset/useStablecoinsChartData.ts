@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { useContext, useMemo, useRef } from 'react'
-import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import { useCallback, useContext, useMemo, useRef } from 'react'
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import {
+	buildRuntimePieChartCsvDataset,
+	prepareRuntimePieChartData,
+	type RuntimePieChartData
+} from '~/components/ECharts/PieChart/data'
 import { useIdleChartComputation } from '~/containers/ProDashboard/hooks/useIdleChartComputation'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
@@ -30,6 +35,7 @@ interface UseStablecoinsChartDataResult {
 	availableSeries: string[]
 	defaultSeries: string[]
 	totalMcapCurrent: number | null
+	prepareCompleteCsvDataset: () => MultiSeriesChartDataset
 	isLoading: boolean
 	error: Error | null
 }
@@ -42,7 +48,7 @@ const EMPTY_CHART_PAYLOAD: StablecoinChartSeriesPayload = {
 	showTotalInTooltip: false
 }
 const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 10, upstreamOthersValue: 0 }
-type StablecoinPresentation = Omit<UseStablecoinsChartDataResult, 'isLoading' | 'error'>
+type StablecoinPresentation = Omit<UseStablecoinsChartDataResult, 'prepareCompleteCsvDataset' | 'isLoading' | 'error'>
 
 const EMPTY_STABLECOIN_PRESENTATION: StablecoinPresentation = {
 	chartPayload: EMPTY_CHART_PAYLOAD,
@@ -73,7 +79,7 @@ type ProStablecoinChartCollection =
 			rawData: StablecoinsChartCacheValue
 			chartType: StablecoinChartType
 	  }
-	| { kind: 'fixed'; presentation: typeof EMPTY_STABLECOIN_PRESENTATION }
+	| { kind: 'fixed'; chartType: StablecoinChartType; presentation: typeof EMPTY_STABLECOIN_PRESENTATION }
 
 const getProStablecoinChartParams = (rawData: StablecoinsChartCacheValue, chain: string) => ({
 	chartDataByAssetOrChain: rawData.chartDataByPeggedAsset,
@@ -159,7 +165,11 @@ export function collectProStablecoinChart({
 		chartType === 'pie'
 			? EMPTY_CHART_PAYLOAD
 			: buildProStablecoinOverviewPayload(params, chartType, getTopStablecoinFromLatestPoints(params), null)
-	return { kind: 'fixed', presentation: buildProStablecoinPresentationResult(rawData, chartType, chartPayload) }
+	return {
+		kind: 'fixed',
+		chartType,
+		presentation: buildProStablecoinPresentationResult(rawData, chartType, chartPayload)
+	}
 }
 
 export function buildProStablecoinChartPresentationFromCollection(
@@ -172,6 +182,15 @@ export function buildProStablecoinChartPresentationFromCollection(
 		...selectionOptions
 	})
 	return buildProStablecoinPresentationResult(collected.rawData, collected.chartType, chartPayload)
+}
+
+export function buildCompleteProStablecoinCsvDataset(collected: ProStablecoinChartCollection): MultiSeriesChartDataset {
+	if (collected.kind === 'selectable') {
+		return buildStablecoinOverviewPayloadFromCollection(collected.collection).dataset
+	}
+	return collected.chartType === 'pie'
+		? buildRuntimePieChartCsvDataset(collected.presentation.pieSeries)
+		: collected.presentation.chartPayload.dataset
 }
 
 export function useStablecoinsChartData(
@@ -220,17 +239,19 @@ export function useStablecoinsChartData(
 			const input = latestInputRef.current
 			return input.rawData
 				? collectProStablecoinChart({ rawData: input.rawData, chain: input.chain, chartType: input.chartType })
-				: { kind: 'fixed' as const, presentation: EMPTY_STABLECOIN_PRESENTATION }
+				: { kind: 'fixed' as const, chartType: input.chartType, presentation: EMPTY_STABLECOIN_PRESENTATION }
 		},
-		emptyValue: { kind: 'fixed' as const, presentation: EMPTY_STABLECOIN_PRESENTATION }
+		emptyValue: { kind: 'fixed' as const, chartType, presentation: EMPTY_STABLECOIN_PRESENTATION }
 	})
 	const presentation = useMemo(
 		() => buildProStablecoinChartPresentationFromCollection(collected, selectionOptions),
 		[collected, selectionOptions]
 	)
+	const prepareCompleteCsvDataset = useCallback(() => buildCompleteProStablecoinCsvDataset(collected), [collected])
 
 	return {
 		...presentation,
+		prepareCompleteCsvDataset,
 		isLoading: enabled && (isLoading || (!streamDone && !rawData) || isComputing),
 		error
 	}

@@ -28,11 +28,12 @@ interface CSVDownloadButtonProps {
 	free?: boolean
 }
 
-type CsvPayload = { filename: string; rows: Array<Array<string | number | boolean | null | undefined>> }
+export type CsvPayload = { filename: string; rows: Array<Array<string | number | boolean | null | undefined>> }
+export type PrepareCsv = () => CsvPayload | Promise<CsvPayload>
 
 // Option 1: With prepareCsv
 interface CSVDownloadButtonWithPrepareCsv extends CSVDownloadButtonProps {
-	prepareCsv: () => CsvPayload | Promise<CsvPayload>
+	prepareCsv: PrepareCsv
 	onClick?: never
 	isLoading?: never
 }

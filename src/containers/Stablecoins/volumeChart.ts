@@ -23,7 +23,8 @@ export interface StablecoinVolumeChartPayload {
 }
 
 interface StablecoinVolumeChartOptions {
-	limit?: number
+	/** `null` is reserved for user-requested complete exports. */
+	limit?: number | null
 	trimIncompleteTail?: boolean
 	selectedNames?: string[] | null
 	excludedNames?: string[] | null
@@ -48,7 +49,8 @@ const formatDimensionLabel = (key: string, chart: StablecoinVolumeChartKind): st
 	return key
 }
 
-const clampLimit = (limit: number | undefined): number => {
+const clampLimit = (limit: number | null | undefined, seriesCount: number): number => {
+	if (limit === null) return seriesCount
 	if (limit == null) return DEFAULT_BREAKDOWN_LIMIT
 	return Math.min(MAX_BREAKDOWN_LIMIT, limit)
 }
@@ -167,7 +169,7 @@ const buildBreakdownVolumePayload = (
 		: excludedSet
 			? rankedSeries.filter((series) => !excludedSet.has(series.label))
 			: rankedSeries
-	const limit = clampLimit(options.limit)
+	const limit = clampLimit(options.limit, selectedSeries.length)
 	const series = selectedSeries.slice(0, limit)
 	const omittedSeries = selectedSeries.slice(limit)
 	const dimensions: MultiSeriesTimeSeriesDataset['dimensions'] = ['timestamp']

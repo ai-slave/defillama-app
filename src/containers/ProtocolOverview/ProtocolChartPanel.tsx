@@ -466,7 +466,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 					<AddToDashboardButton chartConfig={multiChart} unsupportedMetrics={unsupportedMetrics} smol />
 					<ChartExportButtons
 						chartInstance={overviewChartInstance}
-						prepareCsvDirect={prepareCsv}
+						csvSource={{ type: 'prepare-csv', prepare: prepareCsv }}
 						filename={overviewImageFilename}
 						title={overviewImageTitle}
 						iconUrl={tokenIconUrl(props.name)}

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
+import { lazy, Suspense, useContext, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -8,11 +8,10 @@ import { getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { slug } from '~/utils'
-import { formatIsoDate } from '~/utils/dateFormat'
-import { downloadCSV } from '~/utils/download'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksScheduleConfig } from '../types'
+import { prepareProChartCsv } from './chartCsv'
 import { CSVExportButton } from './CSVExportButton'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
@@ -74,21 +73,8 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	const imageTitle = `${protocolName} Unlocks Schedule`
 	const imageFilename = `${protocolName || protocol}-unlock-schedule-${resolvedDataType}`
 
-	const handleCsvExport = useCallback(() => {
-		if (!hasChartData) return
-		const selectedDimensionIndexes = activeCategories.map((name) => dataset.dimensions.indexOf(name))
-		const headers = ['Date', ...activeCategories]
-		const rows = dataset.source.map((item) => {
-			const timestamp = item[0]
-			if (typeof timestamp !== 'number') throw new Error('Unlock schedule rows require a numeric timestamp')
-			return [
-				formatIsoDate(timestamp, { input: 'milliseconds' }) ?? '',
-				...selectedDimensionIndexes.map((index) => item[index] ?? '')
-			]
-		})
-		const filename = `${protocolName || protocol}-unlock-schedule-${resolvedDataType}`
-		downloadCSV(filename, [headers, ...rows])
-	}, [hasChartData, activeCategories, dataset, protocolName, protocol, resolvedDataType])
+	const prepareCsvExport = () =>
+		prepareProChartCsv(dataset, `${protocolName || protocol}-unlock-schedule-${resolvedDataType}`)
 
 	if (isLoading || (!streamDone && data === undefined)) {
 		return (
@@ -120,7 +106,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 						) : null}
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 						<CSVExportButton
-							onClick={handleCsvExport}
+							prepareCsv={prepareCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 						/>

@@ -4,6 +4,7 @@ import type { RawNftMarketplaceVolume } from './api.types'
 import {
 	buildNFTMarketplaceChartData,
 	buildNFTMarketplaceChartPresentation,
+	buildNFTMarketplaceCsvDataset,
 	buildNFTMarketplaceRelativeChartData
 } from './marketplaceCharts'
 
@@ -47,7 +48,7 @@ describe('NFT marketplace chart data', () => {
 			dimensions,
 			source: [
 				[Date.UTC(2024, 0, 1), 3, 1],
-				[Date.UTC(2024, 0, 2), 2.346, 0],
+				[Date.UTC(2024, 0, 2), 2.3456, 0],
 				[Date.UTC(2024, 0, 3), 0, 0]
 			]
 		})
@@ -55,18 +56,18 @@ describe('NFT marketplace chart data', () => {
 			dimensions,
 			source: [
 				[Date.UTC(2024, 0, 1), 4, 2],
-				[Date.UTC(2024, 0, 2), 2.346, 0],
+				[Date.UTC(2024, 0, 2), 2.3456, 0],
 				[Date.UTC(2024, 0, 3), 0, 0]
 			]
 		})
 		expect(result.relativeVolumeDataset.source).toEqual([
 			[Date.UTC(2024, 0, 1), 75, 25],
-			[Date.UTC(2024, 0, 2), 100.02, 0],
+			[Date.UTC(2024, 0, 2), 100, 0],
 			[Date.UTC(2024, 0, 3), 0, 0]
 		])
 		expect(result.relativeTradesDataset.source).toEqual([
 			[Date.UTC(2024, 0, 1), 66.67, 33.33],
-			[Date.UTC(2024, 0, 2), 100.02, 0],
+			[Date.UTC(2024, 0, 2), 100, 0],
 			[Date.UTC(2024, 0, 3), 0, 0]
 		])
 		expect(result.relativeVolumeDataset.dimensions).toBe(result.absoluteVolumeDataset.dimensions)
@@ -74,7 +75,7 @@ describe('NFT marketplace chart data', () => {
 		expect(input).toEqual(before)
 	})
 
-	it('keeps positional pre-rounding totals as the relative denominator', () => {
+	it('uses the same unrounded values for series and dominance totals', () => {
 		const absolute = buildNFTMarketplaceChartData([
 			row('2024-01-01', 'OpenSea', 1.23456, 1.23456),
 			row('2024-01-01', 'Blur', 2.34567, 2.34567)
@@ -83,8 +84,8 @@ describe('NFT marketplace chart data', () => {
 		const relative = buildNFTMarketplaceRelativeChartData(presentation)
 
 		expect(absolute.dailyTotals).toEqual([[3.5802300000000002, 3.5802300000000002]])
-		expect(absolute.absoluteVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 2.346, 1.235]])
-		expect(relative.relativeVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 65.53, 34.49]])
+		expect(absolute.absoluteVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 2.34567, 1.23456]])
+		expect(relative.relativeVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 65.52, 34.48]])
 	})
 
 	it('builds matching bar and area series with stable colors and stacks', () => {
@@ -159,6 +160,27 @@ describe('NFT marketplace chart data', () => {
 		expect(result.absoluteVolumeDataset.source[0]?.[30]).toBe(3)
 		expect(result.absoluteTradesDataset.source[0]?.[30]).toBe(3)
 		expect(result.relativeVolumeDataset.source[0]?.[30]).toBe(0.6)
+		const canonical = buildNFTMarketplaceChartData(
+			marketplaces.map((name, index) =>
+				row('2024-01-01', name, marketplaces.length - index, marketplaces.length - index)
+			)
+		)
+		const csvDataset = buildNFTMarketplaceCsvDataset({ canonical, metric: 'volume', relative: false })
+		expect(csvDataset.dimensions).toEqual(['timestamp', ...marketplaces])
+		expect(csvDataset.dimensions).not.toContain('Others')
+	})
+
+	it('uses the full market denominator and retains only a real upstream Others in relative exports', () => {
+		const canonical = buildNFTMarketplaceChartData([
+			row('2024-01-01', 'OpenSea', 60, 6),
+			row('2024-01-01', 'Blur', 30, 3),
+			row('2024-01-01', 'Others', 10, 1)
+		])
+
+		expect(buildNFTMarketplaceCsvDataset({ canonical, metric: 'volume', relative: true })).toEqual({
+			dimensions: ['timestamp', 'OpenSea', 'Blur', 'Others'],
+			source: [[Date.UTC(2024, 0, 1), 60, 30, 10]]
+		})
 	})
 
 	it('aggregates only the selected tail and renormalizes the selected set', () => {

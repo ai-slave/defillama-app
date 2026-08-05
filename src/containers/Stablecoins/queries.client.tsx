@@ -38,7 +38,7 @@ export const useGetStabelcoinsChartDataByChain = (chain?: string) => {
 	return { data: data ?? null, error, isLoading }
 }
 
-type StablecoinChartSeriesQuery =
+export type StablecoinChartSeriesQuery =
 	| {
 			scope: 'overview'
 			chain: string
@@ -97,15 +97,18 @@ export const buildStablecoinChartSeriesUrl = (query: StablecoinChartSeriesQuery)
 	return `/api/public/stablecoins/chart-series?${params.toString()}`
 }
 
+export const fetchStablecoinChartSeriesData = async (
+	query: StablecoinChartSeriesQuery
+): Promise<StablecoinChartSeriesPayload | null> => {
+	const url = buildStablecoinChartSeriesUrl(query)
+	return url ? fetchJson<StablecoinChartSeriesPayload>(url) : null
+}
+
 export const useStablecoinChartSeriesData = (query: StablecoinChartSeriesQuery) => {
 	const { enabled = true, ...queryKey } = query
 	return useQuery({
 		queryKey: ['stablecoins', 'chart-series', queryKey],
-		queryFn: () => {
-			const url = buildStablecoinChartSeriesUrl(query)
-			if (!url) return null
-			return fetchJson<StablecoinChartSeriesPayload>(url)
-		},
+		queryFn: () => fetchStablecoinChartSeriesData(query),
 		staleTime: STABLECOIN_CHART_STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 0,
@@ -113,11 +116,12 @@ export const useStablecoinChartSeriesData = (query: StablecoinChartSeriesQuery) 
 	})
 }
 
-type StablecoinVolumeChartQuery =
+export type StablecoinVolumeChartQuery =
 	| {
 			scope?: 'global'
 			chart: StablecoinVolumeGlobalChartKind | null
 			limit?: number
+			allSeries?: boolean
 			selectionIntent?: StablecoinSeriesSelectionIntent
 			enabled?: boolean
 	  }
@@ -126,6 +130,7 @@ type StablecoinVolumeChartQuery =
 			chain: string
 			chart: StablecoinVolumeChainChartKind | null
 			limit?: number
+			allSeries?: boolean
 			selectionIntent?: StablecoinSeriesSelectionIntent
 			enabled?: boolean
 	  }
@@ -134,6 +139,7 @@ type StablecoinVolumeChartQuery =
 			token: string | null
 			chart: StablecoinVolumeTokenChartKind | null
 			limit?: number
+			allSeries?: boolean
 			selectionIntent?: StablecoinSeriesSelectionIntent
 			enabled?: boolean
 	  }
@@ -143,7 +149,7 @@ export const buildStablecoinVolumeChartUrl = (query: StablecoinVolumeChartQuery)
 	const params = new URLSearchParams({
 		scope: query.scope ?? 'global',
 		chart: query.chart,
-		limit: String(query.limit ?? 20)
+		...(query.allSeries ? { all: 'true' } : { limit: String(query.limit ?? 20) })
 	})
 	if (query.selectionIntent) {
 		params.set(query.selectionIntent.mode, 'true')
@@ -158,15 +164,19 @@ export const buildStablecoinVolumeChartUrl = (query: StablecoinVolumeChartQuery)
 	return `/api/public/stablecoins/volume-chart?${params.toString()}`
 }
 
+export const fetchStablecoinVolumeChartData = async (
+	query: StablecoinVolumeChartQuery
+): Promise<StablecoinVolumeChartPayload | null> => {
+	const url = buildStablecoinVolumeChartUrl(query)
+	return url ? fetchJson<StablecoinVolumeChartPayload>(url) : null
+}
+
 export const useStablecoinVolumeChartData = (query: StablecoinVolumeChartQuery) => {
 	const { enabled = true, ...queryKey } = query
 	const url = buildStablecoinVolumeChartUrl(query)
 	return useQuery({
 		queryKey: ['stablecoins', 'volume-chart', queryKey],
-		queryFn: () => {
-			if (!url) return null
-			return fetchJson<StablecoinVolumeChartPayload>(url)
-		},
+		queryFn: () => fetchStablecoinVolumeChartData(query),
 		staleTime: STABLECOIN_CHART_STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 0,

@@ -1,10 +1,13 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildRuntimePieChartPresentation, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import {
+	buildRuntimePieChartCsvDataset,
+	buildRuntimePieChartPresentation,
+	type RuntimePieChartData
+} from '~/components/ECharts/PieChart/data'
 import { tvlOptionsMap } from '~/components/Filters/options'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -139,12 +142,13 @@ function ChainsChartCard({
 	exportTitle: string
 	exportIconUrl: string | undefined
 }) {
-	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts } = useProtocolBreakdownPresentation({
-		breakdown,
-		availableSeries: allValues,
-		aggregateOthers: true,
-		type: 'line'
-	})
+	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts, csvSource } =
+		useProtocolBreakdownPresentation({
+			breakdown,
+			availableSeries: allValues,
+			aggregateOthers: true,
+			type: 'line'
+		})
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const deferredDataset = React.useDeferredValue(dataset)
@@ -170,20 +174,14 @@ function ChainsChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
-					prepareCsvDirect={() =>
-						buildSelectedSeriesCsv({
-							dataset: deferredDataset,
-							charts: deferredCharts,
-							selectedCharts,
-							filename: exportFilenameBase
-						})
-					}
+					csvSource={csvSource}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={deferredDataset}
 					charts={deferredCharts}
+					csvSource={csvSource}
 					hideDefaultLegend={false}
 					valueSymbol="$"
 					selectedCharts={selectedCharts}
@@ -216,13 +214,14 @@ function TokenLineChartCard({
 	exportTitle: string
 	exportIconUrl: string | undefined
 }) {
-	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts } = useProtocolBreakdownPresentation({
-		breakdown,
-		availableSeries: allValues,
-		...(defaultValues ? { defaultSeries: defaultValues } : {}),
-		aggregateOthers,
-		type: 'line'
-	})
+	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts, csvSource } =
+		useProtocolBreakdownPresentation({
+			breakdown,
+			availableSeries: allValues,
+			...(defaultValues ? { defaultSeries: defaultValues } : {}),
+			aggregateOthers,
+			type: 'line'
+		})
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const deferredDataset = React.useDeferredValue(dataset)
@@ -248,20 +247,14 @@ function TokenLineChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
-					prepareCsvDirect={() =>
-						buildSelectedSeriesCsv({
-							dataset: deferredDataset,
-							charts: deferredCharts,
-							selectedCharts,
-							filename: exportFilenameBase
-						})
-					}
+					csvSource={csvSource}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={deferredDataset}
 					charts={deferredCharts}
+					csvSource={csvSource}
 					hideDefaultLegend={false}
 					valueSymbol={valueSymbol}
 					selectedCharts={selectedCharts}
@@ -329,6 +322,10 @@ function TokensBreakdownPieChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
+					csvSource={{
+						type: 'prepare-dataset',
+						prepare: () => buildRuntimePieChartCsvDataset(tokenBreakdownPieSeries)
+					}}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
@@ -367,6 +364,7 @@ function USDInflowsChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
+					csvSource={{ type: 'dataset', dataset }}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
@@ -397,13 +395,14 @@ function InflowsByTokenChartCard({
 	exportTitle: string
 	exportIconUrl: string | undefined
 }) {
-	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts } = useProtocolBreakdownPresentation({
-		breakdown,
-		availableSeries: allValues,
-		aggregateOthers: true,
-		type: 'bar',
-		stack: 'tokenInflows'
-	})
+	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts, csvSource } =
+		useProtocolBreakdownPresentation({
+			breakdown,
+			availableSeries: allValues,
+			aggregateOthers: true,
+			type: 'bar',
+			stack: 'tokenInflows'
+		})
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const deferredDataset = React.useDeferredValue(dataset)
@@ -429,20 +428,14 @@ function InflowsByTokenChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
-					prepareCsvDirect={() =>
-						buildSelectedSeriesCsv({
-							dataset: deferredDataset,
-							charts: deferredCharts,
-							selectedCharts,
-							filename: exportFilenameBase
-						})
-					}
+					csvSource={csvSource}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={deferredDataset}
 					charts={deferredCharts}
+					csvSource={csvSource}
 					hideDefaultLegend={false}
 					valueSymbol="$"
 					selectedCharts={selectedCharts}

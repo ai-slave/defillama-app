@@ -7,6 +7,7 @@ import type {
 } from 'echarts'
 import type { LineSeriesOption } from 'echarts/charts'
 import type * as echarts from 'echarts/core'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type { ChartExportButtonsMode } from '~/components/ChartExport/types'
 
 export type ChartTimeGrouping = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
@@ -123,6 +124,8 @@ export interface IMultiSeriesChartProps {
 	onReady?: (instance: echarts.ECharts | null) => void
 	hideDefaultLegend?: boolean
 	dataset: MultiSeriesChartDataset
+	/** Explicit complete export source when `dataset` is only a visual presentation. */
+	csvSource?: ChartCsvSource
 	title?: string
 	headingAs?: 'h1' | 'h2' | 'h3'
 	/** One logo per category dimension, rendered below a category x-axis. */

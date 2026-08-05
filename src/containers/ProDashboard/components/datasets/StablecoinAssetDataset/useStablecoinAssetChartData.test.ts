@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildStablecoinAssetPresentation } from './useStablecoinAssetChartData'
+import { buildCompleteStablecoinAssetCsvDataset, buildStablecoinAssetPresentation } from './useStablecoinAssetChartData'
 
 const day = 86_400
 const firstDate = 1_700_000_000
@@ -72,6 +72,7 @@ describe('buildStablecoinAssetPresentation', () => {
 		const result = buildStablecoinAssetPresentation(rawData, 'chainDominance', null, {
 			selectedNames: ['Ethereum']
 		})
+		const completeCsvDataset = buildCompleteStablecoinAssetCsvDataset(rawData, 'chainDominance')
 
 		expect(result.chartType).toBe('chainDominance')
 		if (result.chartType === 'chainDominance') {
@@ -79,6 +80,7 @@ describe('buildStablecoinAssetPresentation', () => {
 			expect(result.dataset.dimensions).toEqual(['timestamp', 'Ethereum'])
 			expect(result.dataset.source[0]).toEqual([firstDate * 1e3, 100])
 		}
+		expect(completeCsvDataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Base'])
 	})
 
 	it('returns an empty snapshot when the active period has no points', () => {

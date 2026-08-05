@@ -1,23 +1,28 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { buildProTreemapData } from './treemap'
 
 const resolveColor = (name: string, fallback?: string) => fallback ?? `color:${name}`
 
+afterEach(() => vi.useRealTimers())
+
 describe('buildProTreemapData', () => {
-	it('keeps the intentional second-to-last snapshot and one-point fallback', () => {
+	it('uses the latest completed snapshot and skips an actual current-day point', () => {
+		const day = 86_400
+		vi.useFakeTimers()
+		vi.setSystemTime(new Date(4 * day * 1_000))
 		expect(
 			buildProTreemapData(
 				[
 					{
 						name: 'Multiple',
 						data: [
-							[1, 10],
-							[2, 20],
-							[3, 30]
+							[day, 10],
+							[2 * day, 20],
+							[4 * day, 30]
 						],
 						color: '#123456'
 					},
-					{ name: 'Single', data: [[4, 40]] }
+					{ name: 'Single', data: [[2 * day, 40]] }
 				],
 				'latest',
 				resolveColor
@@ -28,8 +33,10 @@ describe('buildProTreemapData', () => {
 		])
 	})
 
-	it('anchors windows at the second-to-last point and preserves exact day boundaries', () => {
+	it('anchors windows at the latest completed point and preserves exact day boundaries', () => {
 		const day = 86_400
+		vi.useFakeTimers()
+		vi.setSystemTime(new Date(18 * day * 1_000))
 		const series = [
 			{
 				name: 'Windowed',
@@ -42,8 +49,8 @@ describe('buildProTreemapData', () => {
 			}
 		]
 
-		expect(buildProTreemapData(series, 'sum7d', resolveColor)[0].value).toBe(6)
-		expect(buildProTreemapData(series, 'sum30d', resolveColor)[0].value).toBe(7)
+		expect(buildProTreemapData(series, 'sum7d', resolveColor)[0].value).toBe(12)
+		expect(buildProTreemapData(series, 'sum30d', resolveColor)[0].value).toBe(15)
 	})
 
 	it('filters non-positive nodes before resolving their colors', () => {

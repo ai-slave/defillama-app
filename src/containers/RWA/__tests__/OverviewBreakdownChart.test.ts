@@ -2,6 +2,7 @@ import { Writable } from 'node:stream'
 import { createElement, type ReactElement } from 'react'
 import { renderToPipeableStream } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { RWAPositionalChartDataset } from '../chartDataset'
 import {
@@ -24,6 +25,7 @@ let lastTreemapProps: {
 	periodLabel: string
 } | null = null
 let lastStackOptions: string[] | null = null
+let lastCsvSource: ChartCsvSource | null = null
 
 const mocks = vi.hoisted(() => ({
 	buildRWAFlowRotationChart: vi.fn()
@@ -49,7 +51,10 @@ vi.mock('../flows', async (importOriginal) => {
 })
 
 vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
-	ChartExportButtons: () => null
+	ChartExportButtons: ({ csvSource }: { csvSource: ChartCsvSource | null }) => {
+		lastCsvSource = csvSource
+		return null
+	}
 }))
 
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
@@ -115,6 +120,7 @@ beforeEach(() => {
 	lastChartProps = null
 	lastTreemapProps = null
 	lastStackOptions = null
+	lastCsvSource = null
 	mocks.buildRWAFlowRotationChart.mockClear()
 })
 
@@ -261,7 +267,12 @@ describe('getOverviewBreakdownRequestState', () => {
 	})
 
 	it('renders a sized net-flow heatmap for the selected listing entities', async () => {
-		routerQuery = { chartType: 'flows', flowRotationView: 'heatmap', flowHeatmapSize: 'activeMcap' }
+		routerQuery = {
+			chartType: 'flows',
+			flowRotationView: 'heatmap',
+			flowHeatmapSize: 'activeMcap',
+			stacks: 'Ethereum'
+		}
 		queryState = {
 			data: [{ timestamp: 1, Ethereum: 10, Solana: -4 }],
 			isLoading: false,
@@ -284,12 +295,15 @@ describe('getOverviewBreakdownRequestState', () => {
 		expect(lastChartProps).toBeNull()
 		expect(lastTreemapProps).toMatchObject({ sizeLabel: 'Active Mcap', periodLabel: '30d' })
 		expect(lastTreemapProps?.nodes.map(({ name, netFlowUsd }) => ({ name, netFlowUsd }))).toEqual([
-			{ name: 'Ethereum', netFlowUsd: 10 },
-			{ name: 'Solana', netFlowUsd: -4 },
-			{ name: 'No Coverage', netFlowUsd: null }
+			{ name: 'Ethereum', netFlowUsd: 10 }
 		])
 		expect(lastStackOptions).toEqual(['Ethereum', 'Solana', 'No Coverage'])
 		expect(mocks.buildRWAFlowRotationChart).not.toHaveBeenCalled()
+		if (!lastCsvSource || lastCsvSource === 'rendered-chart' || lastCsvSource.type !== 'prepare-csv') {
+			throw new Error('Expected a lazy complete heatmap CSV source')
+		}
+		const csv = await lastCsvSource.prepare()
+		expect(csv.rows.slice(1).map((row) => row[0])).toEqual(['Ethereum', 'Solana', 'No Coverage'])
 	})
 
 	it('slices selected stack charts to the first non-null selected value', async () => {

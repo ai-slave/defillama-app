@@ -1053,6 +1053,7 @@ const ChartContainer = ({
 								chartInstance={exportChartInstance}
 								filename={`${data.name}-unlock-schedule`}
 								title={`${data.name} Unlock Schedule`}
+								csvSource={{ type: 'dataset', dataset: deferredScheduleChartData.dataset }}
 							/>
 						</ChartPanelToolbar>
 						{isPriceOrMcapLoading ? (

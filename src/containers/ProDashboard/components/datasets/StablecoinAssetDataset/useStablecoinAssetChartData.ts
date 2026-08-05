@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { useContext, useMemo } from 'react'
+import { useCallback, useContext, useMemo } from 'react'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import {
+	buildRuntimePieChartCsvDataset,
+	prepareRuntimePieChartData,
+	type RuntimePieChartData
+} from '~/components/ECharts/PieChart/data'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import {
@@ -47,6 +51,7 @@ interface UseStablecoinAssetChartDataResult {
 	stablecoinName: string
 	stablecoinSymbol: string
 	isInactive: boolean
+	prepareCompleteCsvDataset: () => MultiSeriesChartDataset
 	isLoading: boolean
 	error: Error | null
 }
@@ -183,6 +188,18 @@ export function buildStablecoinAssetPresentation(
 	}
 }
 
+export function buildCompleteStablecoinAssetCsvDataset(
+	rawData: Pick<StablecoinAssetCacheValue, 'chainsData' | 'chainsUnique' | 'stablecoinSymbol'>,
+	chartType: StablecoinAssetChartType,
+	periodBounds?: { start: number; end: number } | null,
+	canonicalHistory?: StablecoinCanonicalHistory | null
+): MultiSeriesChartDataset {
+	const presentation = buildStablecoinAssetPresentation(rawData, chartType, periodBounds, undefined, canonicalHistory)
+	return presentation.chartType === 'chainPie'
+		? buildRuntimePieChartCsvDataset(presentation.pieSeries)
+		: presentation.dataset
+}
+
 export function useStablecoinAssetChartData(
 	stablecoinSlug: string,
 	chartType: StablecoinAssetChartType,
@@ -232,6 +249,10 @@ export function useStablecoinAssetChartData(
 		[rawData, chartType, periodBounds, selectionOptions, canonicalHistory]
 	)
 	const isInactive = rawData ? isInactiveStablecoin(rawData.peggedAssetData) : false
+	const prepareCompleteCsvDataset = useCallback(() => {
+		if (!rawData) throw new Error('Stablecoin asset data is unavailable')
+		return buildCompleteStablecoinAssetCsvDataset(rawData, chartType, periodBounds, canonicalHistory)
+	}, [canonicalHistory, chartType, periodBounds, rawData])
 
 	return useMemo(
 		() => ({
@@ -240,6 +261,7 @@ export function useStablecoinAssetChartData(
 			stablecoinName: rawData?.stablecoinName ?? '',
 			stablecoinSymbol: rawData?.stablecoinSymbol ?? '',
 			isInactive,
+			prepareCompleteCsvDataset,
 			isLoading,
 			error
 		}),
@@ -249,6 +271,7 @@ export function useStablecoinAssetChartData(
 			rawData?.stablecoinName,
 			rawData?.stablecoinSymbol,
 			isInactive,
+			prepareCompleteCsvDataset,
 			isLoading,
 			error
 		]

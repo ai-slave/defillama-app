@@ -344,6 +344,16 @@ export const HacksContainer = ({
 	const displayPieChartData = derivedStats?.pieChartData ?? pieChartData
 	const deferredMonthlyHacksChartData = React.useDeferredValue(displayMonthlyHacksChartData)
 	const deferredPieChartData = React.useDeferredValue(displayPieChartData)
+	const prepareCompleteTechniqueDataset = React.useCallback(() => {
+		const totals = new Map<string, number>()
+		for (const row of filteredData) {
+			if (!row.technique) continue
+			totals.set(row.technique, (totals.get(row.technique) ?? 0) + row.amountUsd)
+		}
+		const source = Array.from(totals, ([name, value]) => [name, value] as [string, number])
+		source.sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+		return { dimensions: ['Name', 'Value'], source }
+	}, [filteredData])
 
 	return (
 		<>
@@ -374,6 +384,14 @@ export const HacksContainer = ({
 							chartInstance={exportChartInstance}
 							filename="total-value-hacked"
 							title="Total Value Hacked"
+							csvSource={
+								chartType === 'Monthly Sum'
+									? { type: 'dataset', dataset: deferredMonthlyHacksChartData.dataset }
+									: {
+											type: 'prepare-dataset',
+											prepare: prepareCompleteTechniqueDataset
+										}
+							}
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'Monthly Sum' ? (

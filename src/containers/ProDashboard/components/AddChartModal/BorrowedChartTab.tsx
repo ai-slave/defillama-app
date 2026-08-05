@@ -159,6 +159,7 @@ export function BorrowedChartTab({
 							valueSymbol="$"
 							hideDefaultLegend
 							chartOptions={DOLLAR_CHART_OPTIONS}
+							csvSource={runtimePresentation.csvSource}
 							exportButtons={PREVIEW_EXPORTS}
 						/>
 					</Suspense>
@@ -181,6 +182,7 @@ export function BorrowedChartTab({
 							valueSymbol="$"
 							hideDefaultLegend
 							chartOptions={DOLLAR_CHART_OPTIONS}
+							csvSource={runtimePresentation.csvSource}
 							exportButtons={PREVIEW_EXPORTS}
 						/>
 					</Suspense>
@@ -216,6 +218,7 @@ export function BorrowedChartTab({
 							valueSymbol=""
 							hideDefaultLegend
 							chartOptions={UNITLESS_CHART_OPTIONS}
+							csvSource={runtimePresentation.csvSource}
 							exportButtons={PREVIEW_EXPORTS}
 						/>
 					</Suspense>

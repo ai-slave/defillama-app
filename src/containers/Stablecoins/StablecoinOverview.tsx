@@ -2,9 +2,9 @@ import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	ChartGroupingSelector,
@@ -53,7 +53,12 @@ import { capitalizeFirstLetter, slug } from '~/utils'
 import { peggedAssetIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
-import { buildStablecoinMarketCapPresentation, prepareStablecoinMarketCapSeries } from './marketCapPresentation'
+import { fetchCompleteStablecoinSeriesCsvDataset, fetchCompleteStablecoinVolumeCsvDataset } from './csvDataset'
+import {
+	buildStablecoinMarketCapCsvDataset,
+	buildStablecoinMarketCapPresentation,
+	prepareStablecoinMarketCapSeries
+} from './marketCapPresentation'
 import { StablecoinByChainUsageTable } from './StablecoinUsageByChainTable'
 import type { PeggedAssetPageProps } from './types'
 import { useStablecoinChartSelection, useStablecoinSelectionIntent } from './useStablecoinChartSelection'
@@ -321,16 +326,34 @@ export const PeggedAssetInfo = ({
 	)
 	const activeSelectedCharts =
 		seriesSelectorLabel && selectableSeries.length > 1 ? selectedChartsWithHelpers : undefined
-	const prepareCsvDirect =
-		activeSelectedCharts && selectedPayload
-			? () =>
-					buildSelectedSeriesCsv({
-						dataset: selectedPayload.dataset,
-						charts: selectedPayload.charts,
-						selectedCharts: activeSelectedCharts,
-						filename: getImageExportFilename()
-					})
-			: undefined
+	const csvSource: ChartCsvSource | null = marketCapSeries
+		? { type: 'prepare-dataset', prepare: () => buildStablecoinMarketCapCsvDataset(marketCapSeries) }
+		: activeSelectedCharts && volumeChartKind != null
+			? {
+					type: 'prepare-dataset',
+					prepare: () =>
+						fetchCompleteStablecoinVolumeCsvDataset(
+							{ scope: 'token', token: volumeToken, chart: volumeChartKind },
+							volumeGroupBy
+						)
+				}
+			: activeSelectedCharts && selectedSeriesChart != null
+				? {
+						type: 'prepare-dataset',
+						prepare: () =>
+							fetchCompleteStablecoinSeriesCsvDataset(
+								{
+									scope: 'asset',
+									stablecoin: slug(name),
+									chart: selectedSeriesChart,
+									includeUnreleased
+								},
+								null
+							)
+					}
+				: selectedPayload
+					? { type: 'dataset', dataset: selectedPayload.dataset }
+					: null
 
 	const hasInfo =
 		description || pegMechanism || mintRedeemDescription || (auditLinks != null && auditLinks.length > 0) || url
@@ -456,7 +479,7 @@ export const PeggedAssetInfo = ({
 							filename={getImageExportFilename()}
 							title={getImageExportTitle()}
 							iconUrl={peggedAssetIconUrl(name)}
-							prepareCsvDirect={prepareCsvDirect}
+							csvSource={csvSource}
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (

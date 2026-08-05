@@ -396,7 +396,7 @@ export function ChainChartPanel({
 					) : null}
 					<ChartExportButtons
 						chartInstance={chainChartInstance}
-						prepareCsvDirect={prepareCsv}
+						csvSource={{ type: 'prepare-csv', prepare: prepareCsv }}
 						filename={imageExportFilename}
 						title={imageExportTitle}
 						iconUrl={metadata.name !== 'All' ? chainIconUrl(metadata.name) : undefined}

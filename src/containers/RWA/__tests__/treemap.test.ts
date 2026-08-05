@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import type { RWAAssetOverviewRow } from '../api.types'
-import { buildRwaNestedTreemapTreeData, buildRwaTreemapTreeData } from '../treemap'
+import { buildCompleteRwaTreemapTreeData, buildRwaNestedTreemapTreeData, buildRwaTreemapTreeData } from '../treemap'
 
 const baseAsset: RWAAssetOverviewRow = {
 	id: 'alpha',
@@ -100,6 +100,19 @@ describe('buildRwaTreemapTreeData', () => {
 				itemStyle: { color: CHART_COLORS[0] }
 			}
 		])
+	})
+
+	it('uses every filtered group when a nested presentation falls back to flat data', () => {
+		const tree = buildCompleteRwaTreemapTreeData({
+			nestedTreeData: [],
+			completePieData: [
+				{ name: 'Visible', value: 100 },
+				{ name: 'Outside visual limit', value: 25 }
+			],
+			breakdownLabel: 'Asset Group'
+		})
+
+		expect(tree.map((node) => node.name)).toEqual(['Visible', 'Outside visual limit'])
 	})
 })
 

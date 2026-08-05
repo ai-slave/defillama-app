@@ -208,6 +208,19 @@ export async function fetchAdapterChainChartDataByProtocolBreakdown({
 	return fetchJson<IAdapterBreakdownChartData>(totalDataChartUrl, { timeout: 30_000 })
 }
 
+/** Fetch the complete chain breakdown for an adapter metric. */
+export async function fetchAdapterChainChartDataByChainBreakdown({
+	adapterType,
+	dataType
+}: {
+	adapterType: `${ADAPTER_TYPES}`
+	dataType?: `${ADAPTER_DATA_TYPES}`
+}): Promise<IAdapterBreakdownChartData> {
+	const totalDataChartUrl = new URL(`${V2_SERVER_URL}/chart/${adapterType}/chain-breakdown`)
+	if (dataType) totalDataChartUrl.searchParams.set('dataType', dataType)
+	return fetchJson<IAdapterBreakdownChartData>(totalDataChartUrl.toString(), { timeout: 30_000 })
+}
+
 export async function fetchChainsByAdapterPageChartData({
 	adapterType,
 	dataType

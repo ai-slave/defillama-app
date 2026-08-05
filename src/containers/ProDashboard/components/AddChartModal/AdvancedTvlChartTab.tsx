@@ -194,6 +194,9 @@ export function AdvancedTvlChartTab({
 	)
 	const selectorLabel = chartType === 'chainsTvl' ? 'Chain' : 'Token'
 	const canonicalDataset = chartType === 'tvl' ? resolvedBasicTvlDataset : advancedDataset
+	const csvSource = isRuntimeBreakdown
+		? runtimePresentation.csvSource
+		: { type: 'dataset' as const, dataset: canonicalDataset }
 
 	const chartTypeOptions = useMemo(
 		() =>
@@ -259,6 +262,7 @@ export function AdvancedTvlChartTab({
 						solidChartAreaStyle={presentation.solidChartAreaStyle}
 						{...(selectorValues.length > 0 ? { selectedCharts: runtimePresentation.selectedCharts } : {})}
 						{...(presentation.chartOptions ? { chartOptions: presentation.chartOptions } : {})}
+						csvSource={csvSource}
 						exportButtons={
 							chartType === 'usdInflows' || chartType === 'tokenInflows' ? BAR_PREVIEW_EXPORTS : AREA_PREVIEW_EXPORTS
 						}

@@ -327,7 +327,12 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								setValue={setActiveTimeframe}
 								values={EQUITIES_PRICE_HISTORY_TIMEFRAMES}
 							/>
-							<ChartExportButtons chartInstance={priceChartInstance} filename={exportFilename} title={exportTitle} />
+							<ChartExportButtons
+								chartInstance={priceChartInstance}
+								filename={exportFilename}
+								title={exportTitle}
+								csvSource={{ type: 'dataset', dataset: activePriceHistoryChart.dataset }}
+							/>
 						</ChartPanelToolbar>
 						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
@@ -369,6 +374,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								chartInstance={fundamentalsChartInstance}
 								filename={fundamentalsExportFilename}
 								title={fundamentalsExportTitle}
+								csvSource={{ type: 'dataset', dataset: activeFundamentalsChart.dataset }}
 							/>
 						</div>
 					</ChartPanelToolbar>

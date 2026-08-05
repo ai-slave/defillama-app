@@ -18,11 +18,10 @@ import {
 } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
-import { formatIsoDate } from '~/utils/dateFormat'
-import { downloadCSV } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { StablecoinsChartConfig } from '../types'
+import { prepareProChartCsv } from './chartCsv'
 import { CSVExportButton } from './CSVExportButton'
 import { LoadingSpinner } from './LoadingSpinner'
 
@@ -60,12 +59,8 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		}),
 		[selectionIntent]
 	)
-	const { chartPayload, pieSeries, seriesNames, defaultSeries, isLoading } = useStablecoinsChartData(
-		chain,
-		chartType,
-		true,
-		selectionOptions
-	)
+	const { chartPayload, pieSeries, seriesNames, defaultSeries, prepareCompleteCsvDataset, isLoading } =
+		useStablecoinsChartData(chain, chartType, true, selectionOptions)
 	const runtimeSeries = useMemo(() => getStablecoinRuntimeSeries(chartPayload), [chartPayload])
 	const { activeSeries, selectableSeries, renderedCharts, setSelectedSeries } = useStablecoinChartSelection({
 		marketCapSeries: null,
@@ -127,31 +122,16 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 	const latestMcapValue = latestMcapIndex < 0 ? undefined : dataset.source.at(-1)?.[latestMcapIndex]
 	const latestMcap = typeof latestMcapValue === 'number' ? latestMcapValue : null
 
-	const handleCsvExport = () => {
-		let rows: (string | number)[][] = []
+	const prepareCsvExport = () => {
 		const chainSlug = chain === 'All' ? 'all' : chain.toLowerCase().replace(/\s+/g, '-')
 		let filename = `stablecoins-${chainSlug}-${chartType}`
-
-		if (chartType === 'pie') {
-			rows = [['Token', 'Market Cap'], ...piePresentation.chartData.map((slice) => [slice.name, slice.value])]
-			filename = `stablecoins-${chainSlug}-pie`
-		} else {
-			const dimensions = charts.filter((chart) => renderedCharts.has(chart.name)).map((chart) => chart.name)
-			const indexes = dimensions.map((name) => dataset.dimensions.indexOf(name))
-			rows = [
-				['Date', ...dimensions],
-				...dataset.source.map((row, rowIndex) => {
-					const timestamp = row[0]
-					if (typeof timestamp !== 'number') throw new Error(`Invalid stablecoin timestamp at index ${rowIndex}`)
-					return [
-						formatIsoDate(timestamp, { input: 'milliseconds' }) ?? '',
-						...indexes.map((index) => row[index] ?? '')
-					]
-				})
-			]
-		}
-
-		if (rows.length > 0) downloadCSV(`${filename}.csv`, rows)
+		const completeDataset = prepareCompleteCsvDataset()
+		const exportDataset =
+			chartType === 'pie'
+				? completeDataset
+				: filterStablecoinDatasetByTimePeriod(completeDataset, timePeriod, customTimePeriod)
+		if (chartType === 'pie') filename = `stablecoins-${chainSlug}-pie`
+		return prepareProChartCsv(exportDataset, filename)
 	}
 
 	const chartTypeLabel = CHART_TYPE_LABELS[chartType] || chartType
@@ -212,7 +192,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 						) : null}
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 						<CSVExportButton
-							onClick={handleCsvExport}
+							prepareCsv={prepareCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 						/>

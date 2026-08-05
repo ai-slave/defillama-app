@@ -16,7 +16,7 @@ import {
 	EQUITIES_TREEMAP_DEFAULT_LIMIT,
 	EQUITIES_TREEMAP_SIZE_METRICS,
 	groupEquitiesTreemapLeaves,
-	prepareEquitiesTreemapCsv,
+	prepareCompleteEquitiesTreemapCsv,
 	rankEquitiesTreemapRows,
 	type EquitiesTreemapColorMetric,
 	type EquitiesTreemapGroupBy,
@@ -174,14 +174,17 @@ export function EquitiesTreemapSection({ companies }: { companies: IEquitiesList
 								className={CHART_ACTION_BUTTON_CLASSNAME}
 								filename={EXPORT_FILENAME}
 								title="Equities Market Map"
-								prepareCsvDirect={() =>
-									prepareEquitiesTreemapCsv({
-										leaves,
-										sizeLabel,
-										colorLabel,
-										filename: EXPORT_FILENAME
-									})
-								}
+								csvSource={{
+									type: 'prepare-csv',
+									prepare: () =>
+										prepareCompleteEquitiesTreemapCsv({
+											ranking,
+											colorMetric,
+											sizeLabel,
+											colorLabel,
+											filename: EXPORT_FILENAME
+										})
+								}}
 								pngProfile="treemapNormalized"
 								smol
 							/>

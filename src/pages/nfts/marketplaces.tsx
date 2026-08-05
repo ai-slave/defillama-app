@@ -3,6 +3,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	buildNFTMarketplaceChartPresentation,
+	buildNFTMarketplaceCsvDataset,
 	buildNFTMarketplaceRelativeChartData
 } from '~/containers/Nft/marketplaceCharts'
 import { NftsMarketplaceTable } from '~/containers/Nft/NftsMarketplaceTable'
@@ -46,30 +47,20 @@ function Marketplaces({
 }: Awaited<ReturnType<typeof getNFTMarketplacesData>>) {
 	const [viewType, setViewType] = React.useState<ViewType>('Absolute')
 	const { activeSeries, setSelectedSeries, includeUpstreamOthers } = useAllSeriesSelection({ availableSeries })
-	const presentation = React.useMemo(
-		() =>
-			buildNFTMarketplaceChartPresentation(
-				{
-					absoluteVolumeDataset,
-					absoluteTradesDataset,
-					absoluteBarCharts,
-					dailyTotals,
-					upstreamRemainder,
-					availableSeries
-				},
-				activeSeries,
-				includeUpstreamOthers
-			),
-		[
-			absoluteBarCharts,
-			absoluteTradesDataset,
+	const canonicalChartData = React.useMemo(
+		() => ({
 			absoluteVolumeDataset,
-			activeSeries,
-			availableSeries,
+			absoluteTradesDataset,
+			absoluteBarCharts,
 			dailyTotals,
-			includeUpstreamOthers,
-			upstreamRemainder
-		]
+			upstreamRemainder,
+			availableSeries
+		}),
+		[absoluteBarCharts, absoluteTradesDataset, absoluteVolumeDataset, availableSeries, dailyTotals, upstreamRemainder]
+	)
+	const presentation = React.useMemo(
+		() => buildNFTMarketplaceChartPresentation(canonicalChartData, activeSeries, includeUpstreamOthers),
+		[activeSeries, canonicalChartData, includeUpstreamOthers]
 	)
 	const relativeData = React.useMemo(
 		() => (viewType === 'Relative' ? buildNFTMarketplaceRelativeChartData(presentation) : null),
@@ -115,6 +106,15 @@ function Marketplaces({
 						<MultiSeriesChart
 							title="Volume"
 							dataset={relativeData?.relativeVolumeDataset ?? presentation.absoluteVolumeDataset}
+							csvSource={{
+								type: 'prepare-dataset',
+								prepare: () =>
+									buildNFTMarketplaceCsvDataset({
+										canonical: canonicalChartData,
+										metric: 'volume',
+										relative: viewType === 'Relative'
+									})
+							}}
 							charts={relativeData?.relativeAreaCharts ?? presentation.absoluteBarCharts}
 							selectedCharts={renderedCharts}
 							stacked={viewType === 'Relative'}
@@ -136,6 +136,15 @@ function Marketplaces({
 						<MultiSeriesChart
 							title="Trades"
 							dataset={relativeData?.relativeTradesDataset ?? presentation.absoluteTradesDataset}
+							csvSource={{
+								type: 'prepare-dataset',
+								prepare: () =>
+									buildNFTMarketplaceCsvDataset({
+										canonical: canonicalChartData,
+										metric: 'trades',
+										relative: viewType === 'Relative'
+									})
+							}}
 							charts={relativeData?.relativeAreaCharts ?? presentation.absoluteBarCharts}
 							selectedCharts={renderedCharts}
 							stacked={viewType === 'Relative'}

@@ -1,6 +1,5 @@
 import type * as echarts from 'echarts/core'
-import type { CsvCell } from '~/utils/csvCell'
-import { ChartCsvExportButton } from './ChartCsvExportButton'
+import { ChartCsvExportButton, type ChartCsvSource } from './ChartCsvExportButton'
 import { ChartPngExportButton, type PngExportProfile } from './ChartPngExportButton'
 
 interface ChartExportButtonsProps {
@@ -13,7 +12,8 @@ interface ChartExportButtonsProps {
 	smol?: boolean | undefined
 	showCsv?: boolean | undefined
 	showPng?: boolean | undefined
-	prepareCsvDirect?: (() => { filename: string; rows: Array<Array<CsvCell>> }) | undefined
+	/** Explicitly declares whether CSV uses rendered, complete, lazy, or specialized data. */
+	csvSource: ChartCsvSource | null
 	pngProfile?: PngExportProfile | undefined
 	onCsvExport?: ((info: { filename: string }) => void) | undefined
 	onPngExport?: ((info: { kind: 'download' | 'copy'; filename: string }) => void) | undefined
@@ -29,20 +29,20 @@ export function ChartExportButtons({
 	smol,
 	showCsv = true,
 	showPng = true,
-	prepareCsvDirect,
+	csvSource,
 	pngProfile,
 	onCsvExport,
 	onPngExport
 }: ChartExportButtonsProps) {
 	return (
 		<>
-			{showCsv ? (
+			{showCsv && csvSource ? (
 				<ChartCsvExportButton
 					chartInstance={chartInstance}
 					filename={filename}
 					className={className}
 					smol={smol}
-					prepareCsvDirect={prepareCsvDirect}
+					source={csvSource}
 					onExport={onCsvExport}
 				/>
 			) : null}

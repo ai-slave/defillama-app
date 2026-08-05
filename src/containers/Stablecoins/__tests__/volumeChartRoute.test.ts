@@ -58,6 +58,24 @@ describe('/api/public/stablecoins/volume-chart', () => {
 		expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ valueSymbol: '$' }))
 	})
 
+	it('returns every series only when a complete export requests it', async () => {
+		const names = Array.from({ length: 55 }, (_, index) => `token-${index + 1}`)
+		fetchGlobalMock.mockResolvedValueOnce([
+			[1609459200, Object.fromEntries(names.map((name, index) => [name, names.length - index]))]
+		])
+		const req = {
+			method: 'GET',
+			query: { scope: 'global', chart: 'chain', all: 'true' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.json).toHaveBeenCalledWith(
+			expect.objectContaining({ dataset: expect.objectContaining({ dimensions: ['timestamp', ...names] }) })
+		)
+	})
+
 	it('uses chain scoped volume fetchers', async () => {
 		const req = {
 			method: 'GET',

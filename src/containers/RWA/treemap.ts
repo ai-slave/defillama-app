@@ -57,6 +57,18 @@ export const buildRwaTreemapTreeData = (pieData: RwaPieChartDatum[], breakdownLa
 	return children
 }
 
+export function buildCompleteRwaTreemapTreeData({
+	nestedTreeData,
+	completePieData,
+	breakdownLabel
+}: {
+	nestedTreeData: RwaTreemapNode[]
+	completePieData: RwaPieChartDatum[]
+	breakdownLabel: string
+}): RwaTreemapNode[] {
+	return nestedTreeData.length > 0 ? nestedTreeData : buildRwaTreemapTreeData(completePieData, breakdownLabel)
+}
+
 export const canBuildRwaNestedTreemap = ({
 	parentGrouping,
 	childGrouping

@@ -174,6 +174,7 @@ export function StablecoinsChartTab({
 		seriesNames,
 		defaultSeries: chainDefaultSeries,
 		totalMcapCurrent,
+		prepareCompleteCsvDataset: prepareCompleteChainCsvDataset,
 		isLoading: chainChartDataLoading
 	} = useStablecoinsChartData(
 		selectedStablecoinChain,
@@ -233,6 +234,7 @@ export function StablecoinsChartTab({
 		chainsUnique,
 		stablecoinName,
 		stablecoinSymbol,
+		prepareCompleteCsvDataset: prepareCompleteAssetCsvDataset,
 		isLoading: assetChartDataLoading
 	} = useStablecoinAssetChartData(
 		stablecoinMode === 'asset' ? selectedStablecoinAssetId || '' : '',
@@ -396,6 +398,7 @@ export function StablecoinsChartTab({
 					showTotalInTooltip={chainChartPayload.showTotalInTooltip}
 					{...(chainChartType === 'totalMcap' ? { hallmarks: EMPTY_HALLMARKS } : {})}
 					chartOptions={chartOptions}
+					csvSource={{ type: 'prepare-dataset', prepare: prepareCompleteChainCsvDataset }}
 					exportButtons={exportButtons}
 				/>
 			</Suspense>
@@ -429,6 +432,7 @@ export function StablecoinsChartTab({
 							valueSymbol={stablecoinSymbol}
 							hallmarks={EMPTY_HALLMARKS}
 							chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
+							csvSource={{ type: 'prepare-dataset', prepare: prepareCompleteAssetCsvDataset }}
 							exportButtons={AREA_EXPORT_BUTTONS}
 						/>
 					</Suspense>
@@ -450,6 +454,7 @@ export function StablecoinsChartTab({
 							selectedCharts={selectedAssetCharts}
 							valueSymbol={stablecoinSymbol}
 							chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
+							csvSource={{ type: 'prepare-dataset', prepare: prepareCompleteAssetCsvDataset }}
 							exportButtons={AREA_EXPORT_BUTTONS}
 						/>
 					</Suspense>
@@ -488,6 +493,7 @@ export function StablecoinsChartTab({
 							selectedCharts={selectedAssetCharts}
 							expandTo100Percent={true}
 							chartOptions={STABLECOIN_PERCENT_CHART_OPTIONS}
+							csvSource={{ type: 'prepare-dataset', prepare: prepareCompleteAssetCsvDataset }}
 							exportButtons={AREA_EXPORT_BUTTONS}
 						/>
 					</Suspense>

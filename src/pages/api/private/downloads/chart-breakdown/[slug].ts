@@ -1,61 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { SERVER_URL, V2_SERVER_URL } from '~/constants'
 import { chartDatasetsBySlug, type ChartDatasetDefinition } from '~/containers/Downloads/chart-datasets'
+import type { ChartBuilderCsvRequest } from '~/containers/ProDashboard/chartBuilderCsvContract'
+import { streamProtocolTvlCsv } from '~/containers/ProDashboard/server/chartBuilder/protocolTvlCsv'
 import { withDownloadRoute, type DownloadAccess } from '~/server/api/withDownloadRoute'
 import { slug as toSlug } from '~/utils'
+import { serializeCsvRow } from '~/utils/csv'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 
 function sanitizeFilenameParam(s: string): string {
 	return s.replace(/["\r\n;\\]/g, '_').trim()
-}
-
-function escapeCsvField(value: string): string {
-	if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
-		return `"${value.replace(/"/g, '""')}"`
-	}
-	return value
-}
-
-function parseCsvLine(line: string): string[] {
-	const fields: string[] = []
-	let i = 0
-	while (i < line.length) {
-		if (line[i] === '"') {
-			i++
-			let field = ''
-			while (i < line.length) {
-				if (line[i] === '"' && line[i + 1] === '"') {
-					field += '"'
-					i += 2
-				} else if (line[i] === '"') {
-					i++
-					break
-				} else {
-					field += line[i]
-					i++
-				}
-			}
-			fields.push(field)
-			if (i < line.length && line[i] === ',') i++
-		} else {
-			let field = ''
-			while (i < line.length && line[i] !== ',') {
-				field += line[i]
-				i++
-			}
-			fields.push(field)
-			if (i < line.length && line[i] === ',') i++
-			else break
-		}
-	}
-	return fields
-}
-
-function ddmmyyyyToIso(ddmmyyyy: string): string | null {
-	const m = ddmmyyyy.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
-	if (!m) return null
-	const [, dd, mm, yyyy] = m
-	return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`
 }
 
 function timestampToIsoDate(ts: number): string {
@@ -64,62 +18,11 @@ function timestampToIsoDate(ts: number): string {
 }
 
 function buildWideCsv(headers: string[], rows: Array<Record<string, string>>): string {
-	const lines = [headers.map(escapeCsvField).join(',')]
+	const lines = [serializeCsvRow(headers)]
 	for (const row of rows) {
-		const line = headers.map((h) => escapeCsvField(row[h] ?? '')).join(',')
-		lines.push(line)
+		lines.push(serializeCsvRow(headers.map((header) => row[header] ?? '')))
 	}
 	return lines.join('\r\n')
-}
-
-async function buildTvlBreakdownCsv(
-	category: string
-): Promise<{ headers: string[]; rows: Array<Record<string, string>> } | null> {
-	// TVL category breakdowns come from simpleChainDataset CSV, which is already
-	// shaped as dates by protocol names.
-	const url = `${SERVER_URL}/simpleChainDataset/All?category=${encodeURIComponent(category)}`
-	const upstream = await fetchWithPoolingOnServer(url)
-	if (!upstream.ok) return null
-	const text = await upstream.text()
-	const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0)
-	if (lines.length < 2) return null
-
-	const rawHeaders = parseCsvLine(lines[0])
-	if (rawHeaders.length < 2) return null
-	const dateColumns = rawHeaders.slice(1)
-	const isoDates = dateColumns.map(ddmmyyyyToIso)
-
-	const protocols: string[] = []
-	const perProtocolValues: string[][] = []
-
-	for (let i = 1; i < lines.length; i++) {
-		const cells = parseCsvLine(lines[i])
-		const name = cells[0]?.trim()
-		if (!name) continue
-		if (name === 'Total') continue
-		protocols.push(name)
-		perProtocolValues.push(cells.slice(1))
-	}
-
-	if (protocols.length === 0) return null
-
-	const headers = ['date', ...protocols]
-	const rows: Array<Record<string, string>> = []
-
-	for (let d = 0; d < isoDates.length; d++) {
-		const iso = isoDates[d]
-		if (!iso) continue
-		const row: Record<string, string> = { date: iso }
-		for (let p = 0; p < protocols.length; p++) {
-			const v = perProtocolValues[p][d] ?? ''
-			row[protocols[p]] = v
-		}
-		rows.push(row)
-	}
-
-	rows.sort((a, b) => a.date.localeCompare(b.date))
-
-	return { headers, rows }
 }
 
 async function buildDimensionBreakdownCsv(
@@ -236,10 +139,38 @@ async function handler(
 	}
 
 	const bd = dataset.categoryBreakdown!
-	const result =
-		bd.kind === 'tvl'
-			? await buildTvlBreakdownCsv(category.trim())
-			: await buildDimensionBreakdownCsv(bd.adapterType, bd.dataType, category.trim())
+	const filename = `${datasetSlug}_${sanitizeFilenameParam(toSlug(category))}.csv`
+	if (bd.kind === 'tvl') {
+		const tvlRequest: ChartBuilderCsvRequest = {
+			config: {
+				metric: 'tvl',
+				mode: 'chains',
+				chainFilterMode: 'include',
+				categoryFilterMode: 'include',
+				chainCategoryFilterMode: 'include',
+				protocolCategoryFilterMode: 'include',
+				chains: [],
+				categories: [category.trim()],
+				groupBy: 'protocol',
+				limit: 20,
+				chartType: 'line',
+				displayAs: 'timeSeries',
+				groupByParent: false
+			},
+			grouping: 'day',
+			timePeriod: access === 'preview' ? 'custom' : 'all',
+			customTimePeriod: access === 'preview' ? { type: 'relative', relativeDays: 10 } : null,
+			filename
+		}
+		res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+		res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+		if (access === 'preview') res.setHeader('X-Preview', 'true')
+		res.status(200)
+		await streamProtocolTvlCsv(tvlRequest, res)
+		return res.end()
+	}
+
+	const result = await buildDimensionBreakdownCsv(bd.adapterType, bd.dataType, category.trim())
 
 	if (!result || result.rows.length === 0) {
 		return res.status(404).json({ error: 'No data returned for the specified category' })
@@ -252,7 +183,6 @@ async function handler(
 
 	const csv = buildWideCsv(headers, rows)
 
-	const filename = `${datasetSlug}_${sanitizeFilenameParam(toSlug(category))}.csv`
 	res.setHeader('Content-Type', 'text/csv; charset=utf-8')
 	res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
 	if (access === 'preview') {

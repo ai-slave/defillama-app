@@ -1,5 +1,4 @@
-import { buildCsvFromDataset } from '~/components/ChartExport/ChartCsvExportButton'
-import { projectMultiSeriesDatasetForCharts } from './datasetAdapter'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from './types'
 
 export const DEFAULT_ADDITIVE_SERIES_LIMIT = 30
@@ -47,7 +46,7 @@ function resolveDimensionIndex(dimension: MultiSeriesChartSeriesConfig['encode']
  * that selected denominator. The canonical dataset remains untouched and colors/order
  * continue to come from the canonical chart configs.
  */
-export function buildSelectedPercentageChart({
+function projectPercentageChart({
 	dataset,
 	charts,
 	selectedCharts,
@@ -115,6 +114,44 @@ export function buildSelectedPercentageChart({
 	}
 }
 
+export function buildSelectedPercentageChart({
+	dataset,
+	charts,
+	selectedCharts,
+	missingValuePolicy
+}: {
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
+	selectedCharts: ReadonlySet<string>
+	missingValuePolicy: 'require-complete' | 'sum-available'
+}): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[]; csvSource: ChartCsvSource } {
+	return {
+		...projectPercentageChart({ dataset, charts, selectedCharts, missingValuePolicy }),
+		csvSource: {
+			type: 'prepare-dataset',
+			prepare: () => buildCompletePercentageChartDataset({ dataset, charts, missingValuePolicy })
+		}
+	}
+}
+
+/** Recompute a peer-relative metric over every canonical input series for complete export. */
+export function buildCompletePercentageChartDataset({
+	dataset,
+	charts,
+	missingValuePolicy
+}: {
+	dataset: MultiSeriesChartDataset
+	charts: MultiSeriesChartSeriesConfig[]
+	missingValuePolicy: 'require-complete' | 'sum-available'
+}): MultiSeriesChartDataset {
+	return projectPercentageChart({
+		dataset,
+		charts,
+		selectedCharts: new Set(charts.map((chart) => chart.name)),
+		missingValuePolicy
+	}).dataset
+}
+
 /** Bound an additive peer chart while retaining the exact selected tail as Others. */
 export function buildSelectedAdditiveChart({
 	dataset,
@@ -130,7 +167,7 @@ export function buildSelectedAdditiveChart({
 	selectedCharts: ReadonlySet<string>
 	limit?: number
 	includeUpstreamRemainder?: boolean
-}): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } {
+}): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[]; csvSource: ChartCsvSource } {
 	const chartByName = new Map(charts.map((chart) => [chart.name, chart]))
 	const selectedSeries: MultiSeriesChartSeriesConfig[] = []
 	for (const name of seriesOrder) {
@@ -143,7 +180,8 @@ export function buildSelectedAdditiveChart({
 	if (selectedNames.length <= namedLimit && !includesUpstreamRemainder) {
 		return {
 			dataset,
-			charts: selectedSeries
+			charts: selectedSeries,
+			csvSource: { type: 'dataset', dataset }
 		}
 	}
 	const visibleSeries = selectedSeries.slice(0, namedLimit)
@@ -208,25 +246,9 @@ export function buildSelectedAdditiveChart({
 		}
 	}
 
-	return { dataset: { dimensions, source }, charts: outputCharts }
-}
-
-export function buildSelectedSeriesCsv({
-	dataset,
-	charts,
-	selectedCharts,
-	filename
-}: {
-	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
-	selectedCharts: Set<string>
-	filename: string
-}) {
-	const displayedCharts = charts.filter((chart) => selectedCharts.has(chart.name))
-	const exportDataset = projectMultiSeriesDatasetForCharts(dataset, displayedCharts)
-	return buildCsvFromDataset({
-		dimensions: exportDataset.dimensions,
-		source: exportDataset.source,
-		filenameBase: filename
-	})
+	return {
+		dataset: { dimensions, source },
+		charts: outputCharts,
+		csvSource: { type: 'dataset', dataset }
+	}
 }

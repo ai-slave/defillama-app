@@ -70,6 +70,18 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		expect(payload.charts.find((chart) => chart.name === 'Others')?.color).toBe('#AAAAAA')
 	})
 
+	it('keeps every breakdown series when a complete export explicitly disables the limit', () => {
+		const names = Array.from({ length: 55 }, (_, index) => `chain-${index + 1}`)
+		const payload = buildStablecoinVolumeChartPayload({
+			data: [[1609459200, Object.fromEntries(names.map((name, index) => [name, names.length - index]))]],
+			chart: 'chain',
+			limit: null
+		})
+
+		expect(payload.dataset.dimensions).toEqual(['timestamp', ...names])
+		expect(payload.dataset.dimensions).not.toContain('Others')
+	})
+
 	it('keeps zero and missing breakdown values exact while preserving input order', () => {
 		const payload = buildStablecoinVolumeChartPayload({
 			data: [

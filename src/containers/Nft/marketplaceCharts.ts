@@ -1,6 +1,5 @@
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { getNDistinctColors } from '~/utils'
-import { roundNumber } from '~/utils/numberFormat'
 import type { RawNftMarketplaceVolume } from './api.types'
 
 type DailyMarketplaceValues = {
@@ -15,10 +14,12 @@ type DailyMarketplaceValues = {
 
 const MAX_MARKETPLACE_SERIES = 30
 const REMAINDER_SERIES_NAME = 'Others'
+type NFTMarketplaceDatasetRow = [timestamp: number, ...values: number[]]
+type NFTMarketplaceDataset = Omit<MultiSeriesChartDataset, 'source'> & { source: NFTMarketplaceDatasetRow[] }
 
 export type NFTMarketplaceChartData = {
-	absoluteVolumeDataset: MultiSeriesChartDataset
-	absoluteTradesDataset: MultiSeriesChartDataset
+	absoluteVolumeDataset: NFTMarketplaceDataset
+	absoluteTradesDataset: NFTMarketplaceDataset
 	absoluteBarCharts: MultiSeriesChartSeriesConfig[]
 	dailyTotals: Array<[volume: number, trades: number]>
 	upstreamRemainder: Array<[volume: number, trades: number]>
@@ -26,14 +27,12 @@ export type NFTMarketplaceChartData = {
 }
 
 export type NFTMarketplaceRelativeChartData = {
-	relativeVolumeDataset: MultiSeriesChartDataset
-	relativeTradesDataset: MultiSeriesChartDataset
+	relativeVolumeDataset: NFTMarketplaceDataset
+	relativeTradesDataset: NFTMarketplaceDataset
 	relativeAreaCharts: MultiSeriesChartSeriesConfig[]
 }
 
-function roundToThreeDecimals(value: number): number {
-	return roundNumber(value, 3)
-}
+export type NFTMarketplaceCsvMetric = 'volume' | 'trades'
 
 function getNumericDominance(value: number, total: number): number {
 	if (!value || !total) return 0
@@ -69,12 +68,12 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 		day.volumeTotal += volumeValue
 		day.tradeTotal += entry.count
 		if (entry.exchangeName === REMAINDER_SERIES_NAME) {
-			day.upstreamRemainderVolume += roundToThreeDecimals(volumeValue)
-			day.upstreamRemainderTrades += roundToThreeDecimals(entry.count)
+			day.upstreamRemainderVolume += volumeValue
+			day.upstreamRemainderTrades += entry.count
 			continue
 		}
-		day.volume.set(entry.exchangeName, (day.volume.get(entry.exchangeName) ?? 0) + roundToThreeDecimals(volumeValue))
-		day.trades.set(entry.exchangeName, (day.trades.get(entry.exchangeName) ?? 0) + roundToThreeDecimals(entry.count))
+		day.volume.set(entry.exchangeName, (day.volume.get(entry.exchangeName) ?? 0) + volumeValue)
+		day.trades.set(entry.exchangeName, (day.trades.get(entry.exchangeName) ?? 0) + entry.count)
 		volumeByMarketplace.set(entry.exchangeName, (volumeByMarketplace.get(entry.exchangeName) ?? 0) + volumeValue)
 
 		if (!seenMarketplaces.has(entry.exchangeName)) {
@@ -89,17 +88,15 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 	)
 
 	const dimensions = ['timestamp', ...displayedMarketplaces]
-	const absoluteVolumeSource = new Array<MultiSeriesChartDataset['source'][number]>(days.length)
-	const absoluteTradesSource = new Array<MultiSeriesChartDataset['source'][number]>(days.length)
+	const absoluteVolumeSource = new Array<NFTMarketplaceDatasetRow>(days.length)
+	const absoluteTradesSource = new Array<NFTMarketplaceDatasetRow>(days.length)
 	const dailyTotals = new Array<[volume: number, trades: number]>(days.length)
 	const upstreamRemainder = new Array<[volume: number, trades: number]>(days.length)
 
 	for (let i = 0; i < days.length; i++) {
 		const day = days[i]
-		const absoluteVolume = new Array<number>(dimensions.length)
-		const absoluteTrades = new Array<number>(dimensions.length)
-		absoluteVolume[0] = day.timestamp
-		absoluteTrades[0] = day.timestamp
+		const absoluteVolume: NFTMarketplaceDatasetRow = [day.timestamp]
+		const absoluteTrades: NFTMarketplaceDatasetRow = [day.timestamp]
 		for (let j = 0; j < displayedMarketplaces.length; j++) {
 			const marketplace = displayedMarketplaces[j]
 			const volumeValue = day.volume.get(marketplace) ?? 0
@@ -152,19 +149,26 @@ export function buildNFTMarketplaceChartPresentation(
 	const hasRemainder = omittedSeries.length > 0 || hasUpstreamRemainder
 	const visibleSeries = hasRemainder ? [...explicitSeries, REMAINDER_SERIES_NAME] : explicitSeries
 	const canonicalIndex = new Map(canonical.absoluteVolumeDataset.dimensions.map((name, index) => [name, index]))
-	const omittedIndexes = omittedSeries.map((name) => canonicalIndex.get(name)!)
-	const project = (dataset: MultiSeriesChartDataset, remainderMetricIndex: 0 | 1) => ({
+	const omittedIndexes: number[] = []
+	for (const name of omittedSeries) {
+		const index = canonicalIndex.get(name)
+		if (index === undefined) throw new Error(`Missing NFT marketplace dimension: ${name}`)
+		omittedIndexes.push(index)
+	}
+	const project = (dataset: NFTMarketplaceDataset, remainderMetricIndex: 0 | 1): NFTMarketplaceDataset => ({
 		dimensions: ['timestamp', ...visibleSeries],
 		source: dataset.source.map((input, rowIndex) => {
-			const row = new Array<number>(visibleSeries.length + 1)
-			row[0] = input[0] as number
+			const row: NFTMarketplaceDatasetRow = [input[0]]
 			for (let index = 0; index < explicitSeries.length; index++) {
-				row[index + 1] = (input[canonicalIndex.get(explicitSeries[index])!] as number | undefined) ?? 0
+				const name = explicitSeries[index]!
+				const inputIndex = canonicalIndex.get(name)
+				if (inputIndex === undefined) throw new Error(`Missing NFT marketplace dimension: ${name}`)
+				row.push(input[inputIndex] ?? 0)
 			}
 			if (hasRemainder) {
-				let others = hasUpstreamRemainder ? canonical.upstreamRemainder[rowIndex][remainderMetricIndex] : 0
-				for (const inputIndex of omittedIndexes) others += (input[inputIndex] as number | undefined) ?? 0
-				row[row.length - 1] = others
+				let others = hasUpstreamRemainder ? (canonical.upstreamRemainder[rowIndex]?.[remainderMetricIndex] ?? 0) : 0
+				for (const inputIndex of omittedIndexes) others += input[inputIndex] ?? 0
+				row.push(others)
 			}
 			return row
 		})
@@ -192,8 +196,8 @@ export function buildNFTMarketplaceChartPresentation(
 					let volume = 0
 					let trades = 0
 					for (let index = 1; index < volumeRow.length; index++) {
-						volume += (volumeRow[index] as number | undefined) ?? 0
-						trades += (tradesRow[index] as number | undefined) ?? 0
+						volume += volumeRow[index] ?? 0
+						trades += tradesRow[index] ?? 0
 					}
 					return [volume, trades] as [number, number]
 				})
@@ -211,20 +215,18 @@ export function buildNFTMarketplaceRelativeChartData(
 	absolute: NFTMarketplaceChartData
 ): NFTMarketplaceRelativeChartData {
 	const dimensions = absolute.absoluteVolumeDataset.dimensions
-	const relativeVolumeSource = new Array<MultiSeriesChartDataset['source'][number]>(absolute.dailyTotals.length)
-	const relativeTradesSource = new Array<MultiSeriesChartDataset['source'][number]>(absolute.dailyTotals.length)
+	const relativeVolumeSource = new Array<NFTMarketplaceDatasetRow>(absolute.dailyTotals.length)
+	const relativeTradesSource = new Array<NFTMarketplaceDatasetRow>(absolute.dailyTotals.length)
 
 	for (let i = 0; i < absolute.dailyTotals.length; i++) {
 		const absoluteVolume = absolute.absoluteVolumeDataset.source[i]
 		const absoluteTrades = absolute.absoluteTradesDataset.source[i]
 		const totals = absolute.dailyTotals[i]
-		const relativeVolume = new Array<number>(dimensions.length)
-		const relativeTrades = new Array<number>(dimensions.length)
-		relativeVolume[0] = absoluteVolume[0] as number
-		relativeTrades[0] = absoluteTrades[0] as number
+		const relativeVolume: NFTMarketplaceDatasetRow = [absoluteVolume[0]]
+		const relativeTrades: NFTMarketplaceDatasetRow = [absoluteTrades[0]]
 		for (let j = 1; j < dimensions.length; j++) {
-			relativeVolume[j] = getNumericDominance(absoluteVolume[j] as number, totals[0])
-			relativeTrades[j] = getNumericDominance(absoluteTrades[j] as number, totals[1])
+			relativeVolume.push(getNumericDominance(absoluteVolume[j] ?? 0, totals[0]))
+			relativeTrades.push(getNumericDominance(absoluteTrades[j] ?? 0, totals[1]))
 		}
 		relativeVolumeSource[i] = relativeVolume
 		relativeTradesSource[i] = relativeTrades
@@ -240,4 +242,38 @@ export function buildNFTMarketplaceRelativeChartData(
 			color
 		}))
 	}
+}
+
+/** Export every marketplace plus the irreducible upstream remainder, independent of legend state. */
+export function buildNFTMarketplaceCsvDataset({
+	canonical,
+	metric,
+	relative
+}: {
+	canonical: NFTMarketplaceChartData
+	metric: NFTMarketplaceCsvMetric
+	relative: boolean
+}): MultiSeriesChartDataset {
+	const metricIndex = metric === 'volume' ? 0 : 1
+	const dataset = metric === 'volume' ? canonical.absoluteVolumeDataset : canonical.absoluteTradesDataset
+	const includeUpstreamRemainder = canonical.upstreamRemainder.some((values) => values[metricIndex] !== 0)
+	if (!relative && !includeUpstreamRemainder) return dataset
+
+	const dimensions = includeUpstreamRemainder ? [...dataset.dimensions, REMAINDER_SERIES_NAME] : dataset.dimensions
+	const source = new Array<MultiSeriesChartDataset['source'][number]>(dataset.source.length)
+	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
+		const input = dataset.source[rowIndex]
+		const total = canonical.dailyTotals[rowIndex][metricIndex]
+		const row: NFTMarketplaceDatasetRow = [input[0]]
+		for (let valueIndex = 1; valueIndex < dataset.dimensions.length; valueIndex++) {
+			const value = input[valueIndex] ?? 0
+			row.push(relative ? getNumericDominance(value, total) : value)
+		}
+		if (includeUpstreamRemainder) {
+			const value = canonical.upstreamRemainder[rowIndex]?.[metricIndex] ?? 0
+			row.push(relative ? getNumericDominance(value, total) : value)
+		}
+		source[rowIndex] = row
+	}
+	return { dimensions, source }
 }

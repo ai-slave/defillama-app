@@ -5,6 +5,7 @@ import {
 } from '~/containers/Stablecoins/chartSeries'
 import { reconcileSeriesSelection } from '~/hooks/useSeriesSelection'
 import {
+	buildCompleteProStablecoinCsvDataset,
 	buildProStablecoinChartPresentationFromCollection,
 	buildProStablecoinOverviewPayload,
 	collectProStablecoinChart
@@ -97,6 +98,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 		const selectedPresentation = buildProStablecoinChartPresentationFromCollection(collection, {
 			selectedNames: ['USDC']
 		})
+		const completeCsvDataset = buildCompleteProStablecoinCsvDataset(collection)
 
 		expect(reads).toBe(4)
 		expect(presentation.chartPayload.dataset).toEqual({
@@ -113,6 +115,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 				[1_660_086_400_000, 75]
 			]
 		})
+		expect(completeCsvDataset).toEqual(presentation.chartPayload.dataset)
 	})
 
 	it('preserves one backend Others remainder when peers are below the series limit', () => {

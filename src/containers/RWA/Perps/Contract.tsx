@@ -356,6 +356,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 						filename={`${contractSlugBase}-market-metrics`}
 						title={`${contract.contract.contract} Market Metrics`}
 						smol
+						csvSource={{ type: 'dataset', dataset: deferredChartSpec.dataset }}
 					/>
 				</div>
 			</ChartPanelToolbar>

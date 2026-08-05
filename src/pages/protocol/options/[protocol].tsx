@@ -273,6 +273,7 @@ export default function Protocols(props: OptionsProtocolPageProps) {
 							filename={`${props.name}-options-volume`}
 							title={props.name}
 							iconUrl={tokenIconUrl(props.name)}
+							csvSource={{ type: 'dataset', dataset: deferredFinalCharts.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>

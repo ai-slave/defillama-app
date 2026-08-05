@@ -1,9 +1,14 @@
-import { validateQueryList } from '~/server/api/params'
+import { queryIntClamped, validateQueryList } from '~/server/api/params'
+import type { ApiQuery } from '~/server/api/types'
 
 const MAX_CHAINS = 50
 const MAX_CATEGORIES = 25
 const MAX_FILTER_LENGTH = 200
 const MAX_CATEGORY_CHAIN_REQUESTS = 160
+
+export function getChartBuilderSeriesLimit(query: ApiQuery, fallback: number): number {
+	return queryIntClamped(query, 'limit', fallback, 1, 20)
+}
 
 interface ChartBuilderFilters {
 	chains?: readonly string[]

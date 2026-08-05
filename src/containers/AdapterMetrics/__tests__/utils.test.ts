@@ -6,10 +6,11 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IProtocol } from '../types'
 import {
-	buildProtocolBreakdownNormalization,
 	buildAdapterByChainBreakdownPresentation,
 	buildAdapterByChainLatestValuePresentation,
+	buildAdapterMetricsCsvDataset,
 	buildChainsByAdapterChartPresentation,
+	buildProtocolBreakdownNormalization,
 	getCategoryProtocolNameFilterForChart,
 	leafProtocolNamesFromTableRows,
 	normalizeProtocolBreakdownChartData,
@@ -616,7 +617,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		])
 	})
 
-	it('builds hbar data from the latest-value ranking and groups overflow into Others', () => {
+	it('bounds hbar rendering while exporting every chain without synthetic Others', async () => {
 		const extendedChainChartData = toDataset({
 			dimensions: ['timestamp', ...Array.from({ length: 11 }, (_, index) => `Chain ${index + 1}`)],
 			source: [
@@ -664,6 +665,13 @@ describe('buildChainsByAdapterChartPresentation', () => {
 				expect.objectContaining({ name: 'Others', value: 15, share: expect.closeTo((15 / 555) * 100) })
 			])
 		)
+		if (presentation.csvSource === 'rendered-chart' || presentation.csvSource.type !== 'prepare-dataset') {
+			throw new Error('Expected a prepared complete export')
+		}
+		const csvDataset = await presentation.csvSource.prepare()
+		expect(csvDataset.dimensions).toEqual(['Chain', 'Value'])
+		expect(csvDataset.source).toHaveLength(11)
+		expect(csvDataset.source.some(([name]) => name === 'Others')).toBe(false)
 	})
 
 	it('keeps latest-value colors stable after filtering and across snapshot views', () => {
@@ -801,8 +809,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 			chartKind: 'hbar',
 			selectedProtocols: ['Hyperliquid', 'dYdX'],
 			groupBy: 'weekly',
-			chartData: lineBackedChartData,
-			seriesType: 'dominance'
+			chartData: lineBackedChartData
 		})
 
 		expect(presentation.kind).toBe('hbar')
@@ -1079,6 +1086,33 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 		expect(presentation.dataset.source).toEqual([
 			[timestamp, ...protocolNames.slice(0, 29).map((_, index) => protocolNames.length - index), 6]
 		])
+	})
+
+	it('exports the complete daily absolute dataset without copying it', () => {
+		expect(
+			buildAdapterMetricsCsvDataset({
+				chartData: adapterBreakdownChartData,
+				state: { chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' }
+			})
+		).toBe(adapterBreakdownChartData)
+	})
+
+	it('exports dominance for every canonical protocol without a visual Others bucket', () => {
+		const protocolNames = Array.from({ length: 32 }, (_, index) => `Protocol ${index + 1}`)
+		const timestamp = toMs(2024, 1, 1)
+		const chartData = toDataset({
+			dimensions: ['timestamp', ...protocolNames],
+			source: [Object.assign({ timestamp }, Object.fromEntries(protocolNames.map((name) => [name, 1])))]
+		})
+
+		const csvDataset = buildAdapterMetricsCsvDataset({
+			chartData,
+			state: { chartKind: 'dominance', groupBy: 'daily' }
+		})
+
+		expect(csvDataset.dimensions).toEqual(['timestamp', ...protocolNames])
+		expect(csvDataset.dimensions).not.toContain('Others')
+		expect(csvDataset.source[0]?.slice(1)).toEqual(protocolNames.map(() => 100 / protocolNames.length))
 	})
 
 	it('keeps a narrow selection exact when the source has many sparse dimensions', () => {

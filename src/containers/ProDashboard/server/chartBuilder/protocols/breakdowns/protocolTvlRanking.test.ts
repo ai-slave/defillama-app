@@ -27,7 +27,7 @@ describe('protocol TVL Lens ranking', () => {
 		anyMock.mockReset().mockResolvedValue([])
 	})
 
-	it('ranks grouped parents by the sum of eligible children instead of their largest child', () => {
+	it('ranks parent sums while keeping parent-excluded children standalone', () => {
 		const result = buildProtocolTvlRanking({
 			rows: [
 				row({ protocolSlug: 'child-a', parentProtocolSlug: 'parent', tvl: 60 }),
@@ -35,13 +35,14 @@ describe('protocol TVL Lens ranking', () => {
 				row({ protocolSlug: 'excluded-child', parentProtocolSlug: 'parent', tvl: 1_000, excludeTvlFromParent: true }),
 				row({ protocolSlug: 'standalone', tvl: 100 })
 			],
-			topN: 2,
+			topN: 3,
 			groupByParent: true,
 			categories: [],
 			categoryFilterMode: 'include'
 		})
 
 		expect(result.items).toEqual([
+			{ protocolSlug: 'excluded-child', parentProtocolSlug: null, value: 1_000, isParent: false },
 			{ protocolSlug: 'parent', parentProtocolSlug: 'parent', value: 110, isParent: true },
 			{ protocolSlug: 'standalone', parentProtocolSlug: null, value: 100, isParent: false }
 		])

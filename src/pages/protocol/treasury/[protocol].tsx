@@ -3,9 +3,12 @@ import type { GetStaticPropsContext } from 'next'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildRuntimePieChartPresentation, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import {
+	buildRuntimePieChartCsvDataset,
+	buildRuntimePieChartPresentation,
+	type RuntimePieChartData
+} from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -99,6 +102,7 @@ function TokensBreakdownPieChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
+					csvSource={{ type: 'prepare-dataset', prepare: () => buildRuntimePieChartCsvDataset(series) }}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
@@ -137,6 +141,7 @@ function HistoricalTreasuryChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
+					csvSource={{ type: 'dataset', dataset }}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
@@ -179,7 +184,8 @@ function TokensMultiSeriesChartCard({
 		setSelectedSeries: setSelectedTokens,
 		dataset,
 		charts,
-		selectedCharts
+		selectedCharts,
+		csvSource
 	} = useProtocolBreakdownPresentation({
 		breakdown,
 		availableSeries: allTokens,
@@ -213,20 +219,14 @@ function TokensMultiSeriesChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
-					prepareCsvDirect={() =>
-						buildSelectedSeriesCsv({
-							dataset,
-							charts,
-							selectedCharts,
-							filename: exportFilenameBase
-						})
-					}
+					csvSource={csvSource}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					csvSource={csvSource}
 					hideDefaultLegend={false}
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}
 					selectedCharts={selectedCharts}

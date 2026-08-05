@@ -4,11 +4,10 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import {
 	buildSelectedAdditiveChart,
-	buildSelectedPercentageChart,
-	buildSelectedSeriesCsv
+	buildSelectedPercentageChart
 } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
-import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	ChartGroupingSelector,
@@ -359,7 +358,15 @@ export const LSTOverview = ({
 											size="md"
 										/>
 									) : null}
-									<ChartExportButtons chartInstance={pieChartInstance} filename="lst-breakdown" title="LST Breakdown" />
+									<ChartExportButtons
+										chartInstance={pieChartInstance}
+										filename="lst-breakdown"
+										title="LST Breakdown"
+										csvSource={{
+											type: 'prepare-dataset',
+											prepare: () => buildRuntimePieChartCsvDataset(pieSeries)
+										}}
+									/>
 								</ChartPanelToolbar>
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<PieChart chartData={deferredPieChartData} stackColors={lsdColors} onReady={handlePieReady} />
@@ -382,17 +389,7 @@ export const LSTOverview = ({
 										chartInstance={breakdownChartInstance}
 										filename={breakdownExportFilenameBase}
 										title={breakdownExportTitle}
-										prepareCsvDirect={
-											selectedBreakdownPresentation
-												? () =>
-														buildSelectedSeriesCsv({
-															dataset: selectedBreakdownPresentation.dataset,
-															charts: selectedBreakdownPresentation.charts,
-															selectedCharts: new Set(selectedBreakdownTokens),
-															filename: breakdownExportFilenameBase
-														})
-												: undefined
-										}
+										csvSource={selectedBreakdownPresentation?.csvSource ?? null}
 									/>
 								</div>
 								{selectedBreakdownPresentation ? (
@@ -400,6 +397,7 @@ export const LSTOverview = ({
 										<MultiSeriesChart
 											dataset={selectedBreakdownPresentation.dataset}
 											charts={selectedBreakdownPresentation.charts}
+											csvSource={selectedBreakdownPresentation.csvSource}
 											stacked={true}
 											expandTo100Percent={true}
 											hideDefaultLegend
@@ -436,17 +434,7 @@ export const LSTOverview = ({
 									chartInstance={inflowsChartInstance}
 									filename={inflowsExportFilenameBase}
 									title={inflowsExportTitle}
-									prepareCsvDirect={
-										selectedInflowsPresentation
-											? () =>
-													buildSelectedSeriesCsv({
-														dataset: selectedInflowsPresentation.dataset,
-														charts: selectedInflowsPresentation.charts,
-														selectedCharts: new Set(selectedInflowsPresentation.charts.map((chart) => chart.name)),
-														filename: inflowsExportFilenameBase
-													})
-											: undefined
-									}
+									csvSource={selectedInflowsPresentation?.csvSource ?? null}
 								/>
 							</div>
 
@@ -455,6 +443,7 @@ export const LSTOverview = ({
 									<MultiSeriesChart
 										dataset={selectedInflowsPresentation.dataset}
 										charts={selectedInflowsPresentation.charts}
+										csvSource={selectedInflowsPresentation.csvSource}
 										hideDefaultLegend
 										groupBy={groupBy}
 										valueSymbol="ETH"

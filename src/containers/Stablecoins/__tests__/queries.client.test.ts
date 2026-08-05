@@ -65,6 +65,12 @@ describe('buildStablecoinVolumeChartUrl', () => {
 		)
 	})
 
+	it('requests every volume series only for a complete export', () => {
+		expect(buildStablecoinVolumeChartUrl({ scope: 'global', chart: 'token', allSeries: true })).toBe(
+			'/api/public/stablecoins/volume-chart?scope=global&chart=token&all=true'
+		)
+	})
+
 	it('encodes compact volume exclusions', () => {
 		expect(
 			buildStablecoinVolumeChartUrl({

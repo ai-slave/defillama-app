@@ -44,16 +44,16 @@ export { resolveRWAOverviewInclusionFlag } from './filterState'
 
 type PieChartDatum = { name: string; value: number }
 
-const limitPieChartData = (data: PieChartDatum[], maxLabels: number) => {
+export const limitRwaPieChartData = (data: PieChartDatum[], maxLabels: number): PieChartDatum[] => {
 	if (data.length <= maxLabels) return data
 
 	let othersValue = 0
 	for (let index = maxLabels - 1; index < data.length; index++) {
 		othersValue += data[index].value
 	}
-	data.length = maxLabels - 1
-	if (othersValue > 0) data.push({ name: 'Others', value: othersValue })
-	return data
+	const visible = data.slice(0, maxLabels - 1)
+	if (othersValue > 0) visible.push({ name: 'Others', value: othersValue })
+	return visible
 }
 
 const buildStackColors = (order: string[]) => {
@@ -718,8 +718,6 @@ export function useRwaAssetNamePieChartData({
 	metric: RWAChartMetricKey
 }) {
 	return useMemo(() => {
-		const MAX_LABELS = 24
-
 		if (!enabled) {
 			return {
 				pieChartData: [] as PieChartDatum[],
@@ -755,8 +753,6 @@ export function useRwaAssetNamePieChartData({
 			if (value > 0) pieChartData.push({ name, value })
 		}
 		pieChartData.sort((a, b) => b.value - a.value)
-		limitPieChartData(pieChartData, MAX_LABELS)
-
 		return {
 			pieChartData,
 			pieChartStackColors
@@ -774,8 +770,6 @@ export function useRwaAssetGroupPieChartData({
 	metric: RWAChartMetricKey
 }) {
 	return useMemo(() => {
-		const MAX_LABELS = 24
-
 		if (!enabled || assets.length === 0) {
 			return {
 				pieChartData: [] as PieChartDatum[],
@@ -798,8 +792,6 @@ export function useRwaAssetGroupPieChartData({
 			if (value > 0) pieChartData.push({ name, value })
 		}
 		pieChartData.sort((a, b) => b.value - a.value)
-		limitPieChartData(pieChartData, MAX_LABELS)
-
 		return {
 			pieChartData,
 			pieChartStackColors
@@ -817,7 +809,6 @@ export function useRwaAssetPlatformPieChartData({
 	metric: RWAChartMetricKey
 }) {
 	return useMemo(() => {
-		const MAX_LABELS = 24
 		const UNKNOWN = 'Unknown'
 
 		if (!enabled || assets.length === 0) {
@@ -866,8 +857,6 @@ export function useRwaAssetPlatformPieChartData({
 			if (value > 0) pieChartData.push({ name: label || UNKNOWN, value })
 		}
 		pieChartData.sort((a, b) => b.value - a.value)
-		limitPieChartData(pieChartData, MAX_LABELS)
-
 		return {
 			pieChartData,
 			pieChartStackColors
@@ -885,7 +874,6 @@ export function useRwaChainBreakdownPieChartData({
 	metric: RWAChartMetricKey
 }) {
 	return useMemo(() => {
-		const MAX_LABELS = 10
 		const UNKNOWN = 'Unknown'
 
 		if (!enabled) {
@@ -951,8 +939,6 @@ export function useRwaChainBreakdownPieChartData({
 			if (value > 0) pieChartData.push({ name: label || UNKNOWN, value })
 		}
 		pieChartData.sort((a, b) => b.value - a.value)
-		limitPieChartData(pieChartData, MAX_LABELS)
-
 		return {
 			pieChartData,
 			pieChartStackColors

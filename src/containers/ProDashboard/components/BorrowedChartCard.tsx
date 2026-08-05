@@ -3,19 +3,19 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { buildCompleteProtocolBreakdownDataset } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
-import { formatIsoDate } from '~/utils/dateFormat'
-import { downloadCSV } from '~/utils/download'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPE_LABELS } from '../borrowedChartConstants'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import { shouldSuppressBorrowedTokenBreakdown } from '../services/protocolTvl'
 import type { BorrowedChartConfig } from '../types'
+import { prepareProChartCsv } from './chartCsv'
 import { CSVExportButton } from './CSVExportButton'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
@@ -79,7 +79,6 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		selectionKey: `${protocol}:${chartType}`
 	})
 	const rawDataset = isRuntimeBreakdown ? runtimePresentation.dataset : EMPTY_DATASET
-	const renderedSeries = runtimePresentation.charts.map((chart) => chart.name)
 	const visibleCharts = useMemo(() => {
 		if (chartType === 'tokensBorrowedPie') return EMPTY_CHARTS
 		return runtimePresentation.charts.map((chart) => ({ ...chart, hideAreaStyle: true }))
@@ -108,45 +107,39 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 	)
 	const canonicalDataset = chartType === 'tokensBorrowedPie' ? EMPTY_DATASET : filteredDataset
 
-	const handleCsvExport = () => {
-		let rows: (string | number)[][] = []
-		let filename = ''
+	const prepareCsvExport = () => {
+		let exportDataset: MultiSeriesChartDataset = filteredDataset
 		const protocolSlug = protocol.toLowerCase().replace(/\s+/g, '-')
-		const buildRows = (dataset: MultiSeriesChartDataset, columnNames: string[]) => {
-			const indexes = columnNames.map((name) => dataset.dimensions.indexOf(name))
-			return [
-				['Date', ...columnNames],
-				...dataset.source.map((row, rowIndex) => {
-					const timestamp = row[0]
-					if (typeof timestamp !== 'number') throw new Error(`Invalid borrowed chart timestamp at index ${rowIndex}`)
-					return [
-						formatIsoDate(timestamp, { input: 'milliseconds' }) ?? '',
-						...indexes.map((index) => row[index] ?? '')
-					]
-				})
-			]
-		}
+		let filename: string
 
 		switch (chartType) {
 			case 'chainsBorrowed':
-				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-borrowed-by-chain`
 				break
 			case 'tokenBorrowedUsd':
-				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-borrowed-by-token-usd`
 				break
 			case 'tokensBorrowedPie':
-				rows = [['Token', 'Value'], ...piePresentation.chartData.map((row) => [row.name, row.value])]
+				exportDataset = buildRuntimePieChartCsvDataset(borrowedData.pieSeries)
 				filename = `${protocolSlug}-borrowed-tokens-breakdown`
 				break
 			case 'tokenBorrowedRaw':
-				rows = buildRows(filteredDataset, renderedSeries)
 				filename = `${protocolSlug}-borrowed-by-token-raw`
 				break
 		}
 
-		if (rows.length > 0) downloadCSV(filename, rows)
+		if (isRuntimeBreakdown) {
+			const completeDataset = buildCompleteProtocolBreakdownDataset({
+				breakdown: borrowedData.breakdown,
+				availableSeries: seriesNames,
+				includeUpstreamOthers: chartType === 'chainsBorrowed' || chartType === 'tokenBorrowedUsd',
+				fillMissingWithZero: true
+			})
+			if (!completeDataset) throw new Error('Borrowed chart data is unavailable')
+			exportDataset = filterChartDatasetByTimePeriod(completeDataset, timePeriod, customTimePeriod)
+		}
+
+		return prepareProChartCsv(exportDataset, filename)
 	}
 
 	const chartTypeLabel = BORROWED_CHART_TYPE_LABELS[chartType] || chartType
@@ -256,7 +249,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 						) : null}
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 						<CSVExportButton
-							onClick={handleCsvExport}
+							prepareCsv={prepareCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 						/>

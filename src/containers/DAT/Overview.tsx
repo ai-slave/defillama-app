@@ -2,7 +2,6 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { buildTimeSeriesChart } from '~/components/ECharts/MultiSeriesChart/timeSeriesBuilder'
 import {
 	ChartGroupingSelector,
@@ -94,14 +93,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						chartInstance={chartInstance}
 						filename="digital-asset-treasuries-inflows-by-asset"
 						title="DAT Inflows by Asset"
-						prepareCsvDirect={() =>
-							buildSelectedSeriesCsv({
-								dataset: deferredChartData.dataset,
-								charts: deferredChartData.charts,
-								selectedCharts,
-								filename: 'digital-asset-treasuries-inflows-by-asset'
-							})
-						}
+						csvSource={{ type: 'dataset', dataset: deferredChartData.dataset }}
 					/>
 				</ChartPanelToolbar>
 				<Suspense fallback={<ChartPanelBodyFallback />}>

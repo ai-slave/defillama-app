@@ -30,8 +30,8 @@ import type { IAdapterByChainPageData, IChainsByAdapterPageData } from './types'
 import {
 	buildAdapterByChainBreakdownPresentation,
 	buildAdapterByChainLatestValuePresentation,
-	buildProtocolBreakdownNormalization,
 	buildChainsByAdapterChartPresentation,
+	buildProtocolBreakdownNormalization,
 	normalizeProtocolBreakdownChartData,
 	normalizeChainsByAdapterChartState,
 	type ChainsByAdapterChartPresentation,
@@ -366,8 +366,7 @@ export const AdapterByChainChart = ({
 					chartKind: breakdownChartDataBuildState.chartKind,
 					selectedProtocols,
 					groupBy: breakdownChartDataBuildState.groupBy,
-					chartData: breakdownChartData,
-					seriesType: 'bar'
+					chartData: breakdownChartData
 				})
 			case 'dominance':
 			case 'bar':
@@ -506,7 +505,6 @@ export const AdapterByChainChart = ({
 			title: chartBaseTitle
 		}
 	}, [breakdownChartState, chain, chartName])
-
 	return (
 		<ChartPanel className="col-span-2">
 			<ChartPanelToolbar>
@@ -601,6 +599,7 @@ export const AdapterByChainChart = ({
 								filename={breakdownExportConfig.filename}
 								title={breakdownExportConfig.title}
 								iconUrl={chain !== 'All' ? chainIconUrl(chain) : undefined}
+								csvSource={deferredBreakdownPresentation.csvSource}
 								pngProfile={breakdownChartState.chartKind === 'treemap' ? 'treemapNormalized' : undefined}
 							/>
 						) : null
@@ -610,6 +609,7 @@ export const AdapterByChainChart = ({
 							filename={`${chain}-${adapterType}-${chartName}`}
 							title={chain === 'All' ? 'All Chains' : chain}
 							iconUrl={chain !== 'All' ? chainIconUrl(chain) : undefined}
+							csvSource={{ type: 'dataset', dataset: deferredCombinedFinalCharts.dataset }}
 						/>
 					)}
 				</div>
@@ -652,6 +652,7 @@ export const AdapterByChainChart = ({
 						<MultiSeriesChart
 							dataset={deferredBreakdownPresentation.dataset}
 							charts={deferredBreakdownPresentation.charts}
+							csvSource={deferredBreakdownPresentation.csvSource}
 							height={breakdownChartHeight}
 							valueSymbol={
 								deferredBreakdownPresentation.kind === 'bar' && deferredBreakdownPresentation.valueMode === 'absolute'
@@ -674,6 +675,7 @@ export const AdapterByChainChart = ({
 					<MultiSeriesChart
 						dataset={deferredCombinedFinalCharts.dataset}
 						charts={deferredCombinedFinalCharts.charts}
+						csvSource={{ type: 'dataset', dataset: deferredCombinedFinalCharts.dataset }}
 						hideDefaultLegend={deferredCombinedFinalCharts.charts.length === 1}
 						groupBy={combinedChartInterval}
 						onReady={handleChartReady}
@@ -832,8 +834,7 @@ export const ChainsByAdapterChart = ({
 			buildChainsByAdapterChartPresentation({
 				chartData: currentChartData,
 				selectedChains,
-				state: chartDataBuildState,
-				latestValueSeriesType: 'bar'
+				state: chartDataBuildState
 			}),
 		[currentChartData, selectedChains, chartDataBuildState]
 	)
@@ -936,7 +937,6 @@ export const ChainsByAdapterChart = ({
 	const canExportChart =
 		(deferredChartPresentation.kind !== 'treemap' && deferredChartPresentation.kind !== 'hbar') ||
 		deferredChartPresentation.data.length > 0
-
 	return (
 		<ChartPanel className="col-span-2">
 			<ChartPanelToolbar>
@@ -1002,6 +1002,7 @@ export const ChainsByAdapterChart = ({
 							chartInstance={exportChartInstance}
 							filename={exportConfig.filename}
 							title={exportConfig.title}
+							csvSource={deferredChartPresentation.csvSource}
 							pngProfile={chartState.chartKind === 'treemap' ? 'treemapNormalized' : undefined}
 						/>
 					) : null}
@@ -1049,6 +1050,7 @@ export const ChainsByAdapterChart = ({
 					<MultiSeriesChart
 						dataset={deferredChartPresentation.dataset}
 						charts={deferredChartPresentation.charts}
+						csvSource={deferredChartPresentation.csvSource}
 						height={chartHeight}
 						valueSymbol={
 							deferredChartPresentation.kind === 'bar' && deferredChartPresentation.valueMode === 'absolute' ? '$' : '%'

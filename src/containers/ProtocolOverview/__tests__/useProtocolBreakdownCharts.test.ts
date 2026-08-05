@@ -819,7 +819,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		expect(datasetValue(presentation.dataset, 0, 'Others')).toBe(15)
 	})
 
-	it('preserves a backend Others series when no additional aggregation is needed', () => {
+	it('preserves a backend Others series in both the bounded chart and complete export', async () => {
 		const result = buildComputedBreakdownResult({
 			tvlCharts: [],
 			chainBreakdownCharts: [[[DAY_MS, { Ethereum: 100, Others: 25 }]]],
@@ -856,6 +856,16 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		})
 		expect(datasetValue(chains.dataset, 0, 'Others')).toBe(25)
 		expect(datasetValue(tokens.dataset, 1, 'Others')).toBe(30)
+		if (tokens.csvSource === 'rendered-chart' || tokens.csvSource.type !== 'prepare-dataset') {
+			throw new Error('Expected a prepared complete export')
+		}
+		expect(await tokens.csvSource.prepare()).toEqual({
+			dimensions: ['timestamp', 'USDC', 'Others'],
+			source: [
+				[DAY_MS, 100, 25],
+				[DAY_MS * 2, 110, 30]
+			]
+		})
 		expect(result.rawTokensUnique).not.toContain('Others')
 		expect(result.inflowTokensUnique).toEqual(['USDC'])
 		expect(result.usdInflowsDataset?.source).toEqual([[DAY_MS * 2, 5.238095238095238]])
@@ -976,7 +986,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		expect(result.inflowTokensUnique).toEqual(['PAST_LEADER', 'CURRENT_LEADER', 'UNCHANGED'])
 	})
 
-	it('projects only the selected tail into Others and keeps canonical colors stable', () => {
+	it('projects only the selected visual tail while exporting every canonical peer', async () => {
 		const values = Object.fromEntries(Array.from({ length: 35 }, (_, index) => [`TOKEN_${index}`, index + 1]))
 		const availableSeries = Object.keys(values).toReversed()
 		const full = buildProtocolBreakdownPresentation({
@@ -1008,5 +1018,11 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			tailSelection.charts.find((chart) => chart.name === 'TOKEN_5')?.color
 		)
 		expect(subset.dataset?.dimensions).not.toContain('Others')
+		if (subset.csvSource === 'rendered-chart' || subset.csvSource.type !== 'prepare-dataset') {
+			throw new Error('Expected a prepared complete export')
+		}
+		const csvDataset = await subset.csvSource.prepare()
+		expect(csvDataset.dimensions).toEqual(['timestamp', ...availableSeries])
+		expect(csvDataset.dimensions).not.toContain('Others')
 	})
 })

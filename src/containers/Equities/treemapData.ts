@@ -108,6 +108,27 @@ export function prepareEquitiesTreemapCsv({
 	return { filename, rows }
 }
 
+export function prepareCompleteEquitiesTreemapCsv({
+	ranking,
+	colorMetric,
+	sizeLabel,
+	colorLabel,
+	filename
+}: {
+	ranking: IEquitiesTreemapRanking
+	colorMetric: EquitiesTreemapColorMetric
+	sizeLabel: string
+	colorLabel: string
+	filename: string
+}) {
+	return prepareEquitiesTreemapCsv({
+		leaves: buildEquitiesTreemapLeaves(ranking, colorMetric),
+		sizeLabel,
+		colorLabel,
+		filename
+	})
+}
+
 export function rankEquitiesTreemapRows(
 	rows: IEquitiesListCompanyRow[],
 	sizeMetric: EquitiesTreemapSizeMetric,

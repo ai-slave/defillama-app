@@ -8,7 +8,11 @@ import {
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
-import { buildRuntimePieChartPresentation, prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import {
+	buildRuntimePieChartCsvDataset,
+	buildRuntimePieChartPresentation,
+	prepareRuntimePieChartData
+} from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { FormattedName } from '~/components/FormattedName'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -243,6 +247,7 @@ export function BridgedTVLByChain({
 							filename={`${slug(chainName)}-bridged-tvl-${chartType}`}
 							title={exportTitle}
 							iconUrl={chainIconUrl(chain)}
+							csvSource={{ type: 'prepare-dataset', prepare: () => buildRuntimePieChartCsvDataset(pieSeries) }}
 						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>

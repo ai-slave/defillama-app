@@ -46,7 +46,7 @@ import { useChartTheme } from '../shared/chartTheme'
 import { formatChartEmphasisDate } from '../shared/formatters'
 import { validateIconUrl } from '../shared/icon'
 import { mergeDeep } from '../shared/merge'
-import { prepareMultiSeriesDataset, projectMultiSeriesDatasetForCharts } from './datasetAdapter'
+import { prepareMultiSeriesDataset } from './datasetAdapter'
 import {
 	attachEventHoverHandlers,
 	buildEventRailData,
@@ -176,6 +176,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		hideDefaultLegend = true,
 		selectedCharts,
 		dataset,
+		csvSource,
 		exportButtons,
 		title,
 		headingAs,
@@ -338,10 +339,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		() => (selectedCharts ? effectiveCharts.filter((chart) => selectedCharts.has(chart.name)) : effectiveCharts),
 		[effectiveCharts, selectedCharts]
 	)
-	const preparedDataset = useMemo(
-		() => prepareMultiSeriesDataset(dataset, effectiveCharts, selectedCharts),
-		[dataset, effectiveCharts, selectedCharts]
-	)
+	const preparedDataset = useMemo(() => prepareMultiSeriesDataset(dataset, effectiveCharts), [dataset, effectiveCharts])
 	const renderedDatasetDimensions = preparedDataset.logicalDimensions
 	const echartsDatasetDimensions = preparedDataset.dimensions
 	const renderedDatasetSource = preparedDataset.source
@@ -525,51 +523,41 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 
 	const exportFilename = exportButtonsConfig?.filename || (title ? slug(title) : 'multi-series-chart')
 	const exportTitle = exportButtonsConfig?.pngTitle || title
-	const prepareCsvDirect = useMemo(
-		() => () => {
-			if (!displayedRenderedCharts.some((chart) => chart.data)) {
-				const exportDataset = selectedCharts
-					? projectMultiSeriesDatasetForCharts(
-							{ dimensions: renderedDatasetDimensions, source: renderedDatasetSource },
-							displayedRenderedCharts
-						)
-					: { dimensions: renderedDatasetDimensions, source: renderedDatasetSource }
+	const defaultCsvSource = useMemo(() => {
+		if (!renderedCharts.some((chart) => chart.data)) return { type: 'dataset' as const, dataset }
+		return {
+			type: 'prepare-csv' as const,
+			prepare: () => {
+				const independentSeries: Array<{
+					name: string
+					data: Array<[timestamp: number, value: number | null]>
+				}> = []
+				for (const chart of renderedCharts) {
+					if (chart.data) {
+						independentSeries.push({ name: chart.name, data: chart.data })
+						continue
+					}
+					const xIndex = typeof chart.encode.x === 'number' ? chart.encode.x : -1
+					const yIndex = typeof chart.encode.y === 'number' ? chart.encode.y : -1
+					const data: Array<[number, number | null]> = []
+					for (const row of renderedDatasetSource) {
+						const timestamp = row[xIndex]
+						const value = row[yIndex]
+						if (typeof timestamp !== 'number') continue
+						if (typeof value === 'number') data.push([timestamp, value])
+						else if (value === null) data.push([timestamp, null])
+					}
+					independentSeries.push({ name: chart.name, data })
+				}
+				const exportDataset = buildSparseTimeSeriesDataset(independentSeries)
 				return buildCsvFromDataset({
 					dimensions: exportDataset.dimensions,
 					source: exportDataset.source,
 					filenameBase: exportFilename
 				})
 			}
-			const independentSeries: Array<{
-				name: string
-				data: Array<[timestamp: number, value: number | null]>
-			}> = []
-			for (const chart of displayedRenderedCharts) {
-				if (chart.data) {
-					independentSeries.push({ name: chart.name, data: chart.data })
-					continue
-				}
-				const xIndex = typeof chart.encode.x === 'number' ? chart.encode.x : -1
-				const yIndex = typeof chart.encode.y === 'number' ? chart.encode.y : -1
-				const data: Array<[number, number | null]> = []
-				for (const row of renderedDatasetSource) {
-					const timestamp = row[xIndex]
-					const value = row[yIndex]
-					if (typeof timestamp !== 'number') continue
-					if (typeof value === 'number') data.push([timestamp, value])
-					else if (value === null) data.push([timestamp, null])
-				}
-				independentSeries.push({ name: chart.name, data })
-			}
-			const exportDataset = buildSparseTimeSeriesDataset(independentSeries)
-			return buildCsvFromDataset({
-				dimensions: exportDataset.dimensions,
-				source: exportDataset.source,
-				filenameBase: exportFilename
-			})
-		},
-		[displayedRenderedCharts, renderedDatasetDimensions, renderedDatasetSource, exportFilename, selectedCharts]
-	)
+		}
+	}, [dataset, renderedCharts, renderedDatasetSource, exportFilename])
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
@@ -996,7 +984,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 								iconUrl={exportButtonsConfig?.pngIconUrl}
 								showCsv={shouldEnableCSVDownload}
 								showPng={shouldEnableImageExport}
-								prepareCsvDirect={prepareCsvDirect}
+								csvSource={csvSource ?? defaultCsvSource}
 							/>
 						}
 					/>

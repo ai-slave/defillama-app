@@ -1,7 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -348,14 +347,7 @@ function MNAVChart({
 					chartInstance={chartInstance}
 					filename={`${metadata.name}-${title}`}
 					title={`${metadata.name} ${title}`}
-					prepareCsvDirect={() =>
-						buildSelectedSeriesCsv({
-							dataset: data.dataset,
-							charts: data.charts,
-							selectedCharts,
-							filename: `${metadata.name}-${title}`
-						})
-					}
+					csvSource={{ type: 'dataset', dataset: data.dataset }}
 				/>
 			</ChartPanelToolbar>
 			<Suspense fallback={<ChartPanelBodyFallback />}>

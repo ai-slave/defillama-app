@@ -820,7 +820,8 @@ export function getRWAFlowRotationSeriesNames(points: readonly IRWAFlowOverviewS
 
 export function buildRWAFlowRotationChart(
 	points: readonly IRWAFlowOverviewSplitPoint[],
-	groupBy: RWAFlowGrouping
+	groupBy: RWAFlowGrouping,
+	options: { allSeries?: boolean } = {}
 ): RWAFlowRotationChart {
 	const seriesNames = new Set<string>()
 	const latestPoint = points[points.length - 1]
@@ -851,7 +852,7 @@ export function buildRWAFlowRotationChart(
 	const allSeriesNames = sortRWAFlowRotationSeriesNames(seriesNames, flow7d, flow30d)
 	let orderedSeriesNames = allSeriesNames
 	let omittedSeriesNames: string[] = []
-	if (allSeriesNames.length > MAX_FLOW_ROTATION_SERIES) {
+	if (!options.allSeries && allSeriesNames.length > MAX_FLOW_ROTATION_SERIES) {
 		const rankedWithoutOthers = allSeriesNames.filter((name) => name !== 'Others')
 		orderedSeriesNames = rankedWithoutOthers.slice(0, MAX_FLOW_ROTATION_SERIES - 1)
 		const displayedSet = new Set(orderedSeriesNames)

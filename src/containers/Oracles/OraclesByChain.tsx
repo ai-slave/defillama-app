@@ -1,8 +1,8 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedPercentageChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
-import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { buildSelectedPercentageChart } from '~/components/ECharts/MultiSeriesChart/selection'
+import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
@@ -125,7 +125,15 @@ export const OraclesByChain = ({
 								size="md"
 							/>
 						) : null}
-						<ChartExportButtons chartInstance={pieChartInstance} filename="oracles-tvs-pie" title="Oracles TVS" />
+						<ChartExportButtons
+							chartInstance={pieChartInstance}
+							filename="oracles-tvs-pie"
+							title="Oracles TVS"
+							csvSource={{
+								type: 'prepare-dataset',
+								prepare: () => buildRuntimePieChartCsvDataset(tableAndPieData.pieSeries)
+							}}
+						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>
 						<PieChart chartData={visiblePieData} stackColors={oraclesColors} onReady={handlePieChartReady} />
@@ -149,14 +157,7 @@ export const OraclesByChain = ({
 							chartInstance={chartInstance}
 							filename="oracles-dominance"
 							title="Oracle Dominance"
-							prepareCsvDirect={() =>
-								buildSelectedSeriesCsv({
-									dataset: selectedDominance.dataset,
-									charts: selectedDominance.charts,
-									selectedCharts: new Set(activeSeries),
-									filename: 'oracles-dominance'
-								})
-							}
+							csvSource={selectedDominance.csvSource}
 						/>
 					</ChartPanelToolbar>
 					{isFetchingExtraBreakdowns ? (
@@ -173,6 +174,7 @@ export const OraclesByChain = ({
 							<MultiSeriesChart
 								dataset={selectedDominance.dataset}
 								charts={selectedDominance.charts}
+								csvSource={selectedDominance.csvSource}
 								stacked={true}
 								expandTo100Percent={true}
 								hideDefaultLegend

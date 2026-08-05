@@ -18,12 +18,11 @@ import {
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { LocalLoader } from '~/ui/Loaders'
-import { formatIsoDate } from '~/utils/dateFormat'
-import { downloadCSV } from '~/utils/download'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { getTimePeriodBounds } from '../queries'
 import type { StablecoinAssetChartConfig } from '../types'
+import { prepareProChartCsv } from './chartCsv'
 import { CSVExportButton } from './CSVExportButton'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -63,8 +62,15 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 		[chartType, customTimePeriod, timePeriod]
 	)
 
-	const { presentation, chainsUnique, stablecoinName, stablecoinSymbol, isInactive, isLoading } =
-		useStablecoinAssetChartData(stablecoinId, chartType, piePeriodBounds, selectionOptions)
+	const {
+		presentation,
+		chainsUnique,
+		stablecoinName,
+		stablecoinSymbol,
+		isInactive,
+		prepareCompleteCsvDataset,
+		isLoading
+	} = useStablecoinAssetChartData(stablecoinId, chartType, piePeriodBounds, selectionOptions)
 
 	const chainColors = useMemo(() => {
 		const colors: Record<string, string> = {}
@@ -152,60 +158,29 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	const latestCirculatingValue =
 		presentation.chartType === 'totalCirc' ? filteredDataset?.source.at(-1)?.[1] : undefined
 	const latestCirculating = !isInactive && typeof latestCirculatingValue === 'number' ? latestCirculatingValue : null
-	const visibleSeries = useMemo(() => {
-		const charts =
-			chartType === 'chainMcaps' ? chainCharts : chartType === 'chainDominance' ? chainDominanceCharts : null
-		if (!charts) return EMPTY_SERIES
-		const names: string[] = []
-		for (const chart of charts) if (selectedCharts.has(chart.name)) names.push(chart.name)
-		return names
-	}, [chainCharts, chainDominanceCharts, chartType, selectedCharts])
-
-	const handleCsvExport = () => {
-		let rows: (string | number)[][] = []
-		let filename = ''
-
+	const prepareCsvExport = () => {
 		const assetSlug = stablecoin.toLowerCase().replace(/\s+/g, '-')
-		const selectedDimensionIndexes = visibleSeries.map((name) => filteredDataset?.dimensions.indexOf(name) ?? -1)
-		const buildRow = (
-			row: NonNullable<typeof filteredDataset>['source'][number],
-			rowIndex: number,
-			indexes: number[]
-		) => {
-			const timestamp = row[0]
-			if (typeof timestamp !== 'number') throw new Error(`Invalid stablecoin asset timestamp at index ${rowIndex}`)
-			return [formatIsoDate(timestamp, { input: 'milliseconds' }) ?? '', ...indexes.map((index) => row[index] ?? '')]
-		}
-
+		let filename: string
 		switch (chartType) {
 			case 'totalCirc':
-				rows = [
-					['Date', 'Circulating'],
-					...(filteredDataset?.source ?? []).map((row, rowIndex) => buildRow(row, rowIndex, [1]))
-				]
 				filename = `${assetSlug}-total-circulating`
 				break
 			case 'chainMcaps':
-				rows = [
-					['Date', ...visibleSeries],
-					...(filteredDataset?.source ?? []).map((row, rowIndex) => buildRow(row, rowIndex, selectedDimensionIndexes))
-				]
 				filename = `${assetSlug}-by-chain`
 				break
 			case 'chainDominance':
-				rows = [
-					['Date', ...visibleSeries],
-					...(filteredDataset?.source ?? []).map((row, rowIndex) => buildRow(row, rowIndex, selectedDimensionIndexes))
-				]
 				filename = `${assetSlug}-chain-dominance`
 				break
 			case 'chainPie':
-				rows = [['Chain', 'Circulating'], ...chainsCirculatingValues.map((slice) => [slice.name, slice.value])]
 				filename = `${assetSlug}-chain-pie`
 				break
 		}
-
-		if (rows.length > 0) downloadCSV(`${filename}.csv`, rows)
+		const completeDataset = prepareCompleteCsvDataset()
+		const exportDataset =
+			chartType === 'chainPie'
+				? completeDataset
+				: filterStablecoinDatasetByTimePeriod(completeDataset, timePeriod, customTimePeriod)
+		return prepareProChartCsv(exportDataset, filename)
 	}
 
 	const chartTypeLabel = CHART_TYPE_LABELS[chartType] || chartType
@@ -351,7 +326,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 						) : null}
 						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
 						<CSVExportButton
-							onClick={handleCsvExport}
+							prepareCsv={prepareCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 						/>

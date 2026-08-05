@@ -62,6 +62,7 @@ export function useProtocolBreakdownPresentation({
 		setSelectedSeries,
 		dataset: presentation.dataset ?? EMPTY_DATASET,
 		charts: presentation.charts,
-		selectedCharts
+		selectedCharts,
+		csvSource: presentation.csvSource
 	}
 }

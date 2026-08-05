@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { lazy, Suspense } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedAdditiveChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
+import { buildSelectedAdditiveChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
@@ -274,17 +274,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 						chartInstance={exportChartInstance}
 						filename={`unlocks-${viewMode.toLowerCase()}-view`}
 						title={`Unlocks ${viewMode} View`}
-						prepareCsvDirect={
-							selectedChart
-								? () =>
-										buildSelectedSeriesCsv({
-											dataset: selectedChart.dataset,
-											charts: selectedChart.charts,
-											selectedCharts: new Set(selectedChart.charts.map((chart) => chart.name)),
-											filename: `unlocks-${viewMode.toLowerCase()}-view`
-										})
-								: undefined
-						}
+						csvSource={selectedChart?.csvSource ?? null}
 					/>
 				) : null}
 			</div>

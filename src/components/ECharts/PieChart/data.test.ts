@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
-import { buildRuntimePieChartPresentation, preparePieChartData, prepareRuntimePieChartData } from './data'
+import {
+	buildRuntimePieChartCsvDataset,
+	buildRuntimePieChartPresentation,
+	preparePieChartData,
+	prepareRuntimePieChartData
+} from './data'
 
 const buildRuntimePieChartData = (args: Parameters<typeof buildRuntimePieChartPresentation>[0]) =>
 	buildRuntimePieChartPresentation(args).chartData
@@ -121,6 +126,10 @@ describe('runtime pie selection', () => {
 		expect(rendered.at(-1)).toEqual({
 			name: 'Others',
 			value: series.peers.slice(11).reduce((total, peer) => total + peer.value, 0)
+		})
+		expect(buildRuntimePieChartCsvDataset(series)).toEqual({
+			dimensions: ['Name', 'Value'],
+			source: series.peers.map(({ name, value }) => [name, value])
 		})
 	})
 

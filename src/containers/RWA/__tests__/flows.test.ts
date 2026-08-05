@@ -431,10 +431,14 @@ describe('RWA flow chart data', () => {
 		for (let index = 0; index < 32; index++) point[`Series ${index + 1}`] = 32 - index
 
 		const chart = buildRWAFlowRotationChart([point], 'daily')
+		const completeDataset = buildRWAFlowRotationChart([point], 'daily', { allSeries: true }).dataset
 
 		expect(chart.charts).toHaveLength(30)
 		expect(chart.dataset.dimensions.at(-1)).toBe('Others')
 		expect(chart.dataset.source).toEqual([[timestamp, ...Array.from({ length: 29 }, (_, index) => 32 - index), 6]])
+		expect(completeDataset.dimensions).toHaveLength(33)
+		expect(completeDataset.dimensions).not.toContain('Others')
+		expect(completeDataset.source[0]?.slice(1)).toEqual(Array.from({ length: 32 }, (_, index) => 32 - index))
 	})
 
 	it('aggregates only the assets left by the page filters and preserves missing days', () => {

@@ -6,7 +6,6 @@ import { Announcement } from '~/components/Announcement'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	buildSelectedAdditiveChart,
-	buildSelectedSeriesCsv,
 	rankSeriesByPeakAbsoluteValue
 } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
@@ -223,17 +222,7 @@ function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeri
 							chartInstance={exportChartInstance}
 							filename="upcoming-unlocks"
 							title="Upcoming Unlocks"
-							prepareCsvDirect={
-								deferredViewMode === 'Breakdown View'
-									? () =>
-											buildSelectedSeriesCsv({
-												dataset: selectedBreakdown!.dataset,
-												charts: selectedBreakdown!.charts,
-												selectedCharts: new Set(selectedBreakdown!.charts.map((chart) => chart.name)),
-												filename: 'upcoming-unlocks'
-											})
-									: undefined
-							}
+							csvSource={selectedBreakdown?.csvSource ?? { type: 'dataset', dataset: deferredChartData.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>

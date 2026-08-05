@@ -206,6 +206,7 @@ const TokenPnlContent = ({
 						chartInstance={exportChartInstance}
 						filename="token-pnl-price"
 						title={`${tokenExportName} Price Over Time`}
+						csvSource={{ type: 'dataset', dataset: chartData.dataset }}
 					/>
 				</PanelHeader>
 				<Suspense fallback={<ChartPanelBodyFallback />}>

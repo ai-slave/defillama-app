@@ -2,7 +2,6 @@ import type { ECharts } from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type {
 	IMultiSeriesChartProps,
 	MultiSeriesChartDataset,
@@ -204,14 +203,7 @@ function LiquidationsDistributionChartCard({
 						.filter(Boolean)
 						.join(' - ')}
 					iconUrl={iconUrl}
-					prepareCsvDirect={() =>
-						buildSelectedSeriesCsv({
-							dataset: deferredChartModel.dataset,
-							charts: deferredChartModel.charts,
-							selectedCharts,
-							filename: exportFilename
-						})
-					}
+					csvSource={{ type: 'dataset', dataset: deferredChartModel.dataset }}
 					smol
 				/>
 			</ChartPanelToolbar>

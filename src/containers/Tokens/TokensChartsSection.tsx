@@ -133,9 +133,15 @@ export function TokensChartsSection({ data }: { data: TokensChartDataset }) {
 									className={CHART_ACTION_BUTTON_CLASSNAME}
 									filename={EXPORT_FILENAME}
 									title="Tokens Market Map"
-									prepareCsvDirect={() =>
-										prepareTokensTreemapCsv({ leaves: treemap.leaves, colorWindow: colorBy, filename: EXPORT_FILENAME })
-									}
+									csvSource={{
+										type: 'prepare-csv',
+										prepare: () =>
+											prepareTokensTreemapCsv({
+												leaves: treemap.leaves,
+												colorWindow: colorBy,
+												filename: EXPORT_FILENAME
+											})
+									}}
 									pngProfile="treemapNormalized"
 									smol
 								/>
@@ -157,13 +163,15 @@ export function TokensChartsSection({ data }: { data: TokensChartDataset }) {
 								chartInstance={chartInstance}
 								className={CHART_ACTION_BUTTON_CLASSNAME}
 								filename={`tokens-movers-${moversWindow}-top-${universe}`}
-								prepareCsvDirect={() =>
-									prepareTokensMoversCsv({
-										movers,
-										window: moversWindow,
-										filename: `tokens-movers-${moversWindow}-top-${universe}`
-									})
-								}
+								csvSource={{
+									type: 'prepare-csv',
+									prepare: () =>
+										prepareTokensMoversCsv({
+											movers,
+											window: moversWindow,
+											filename: `tokens-movers-${moversWindow}-top-${universe}`
+										})
+								}}
 								showPng={false}
 								smol
 							/>

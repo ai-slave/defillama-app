@@ -1,10 +1,10 @@
 import { normalizeCacheList } from '~/server/api/cacheKey'
-import { queryFilterMode, queryIntClamped, queryList, queryString } from '~/server/api/params'
+import { queryFilterMode, queryList, queryString } from '~/server/api/params'
 import { badRequest, okSerializedJson } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 import { normalizeLegacyChartBuilderChains } from './filters'
-import { validateChartBuilderFilters } from './requestLimits'
+import { getChartBuilderSeriesLimit, validateChartBuilderFilters } from './requestLimits'
 import { getCachedStablecoinChainBreakdown } from './stablecoinData'
 
 const BREAKDOWN_CACHE_CONTROL = 'public, s-maxage=600, stale-while-revalidate=1200'
@@ -22,7 +22,7 @@ export const stablecoinByChainBreakdown = defineApiRoute({
 		const chainCategories = normalizeCacheList(queryList(req.query, 'chainCategories'))
 		const chainMode = queryFilterMode(req.query, 'chainFilterMode', 'filterMode')
 		const chainCategoryMode = queryFilterMode(req.query, 'chainCategoryFilterMode', 'filterMode')
-		const topN = queryIntClamped(req.query, 'limit', 5, 1, 20)
+		const topN = getChartBuilderSeriesLimit(req.query, 5)
 		const validationError = validateChartBuilderFilters({ chains, chainCategories, protocol })
 		if (validationError) return badRequest(validationError)
 

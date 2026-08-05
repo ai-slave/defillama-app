@@ -1,4 +1,5 @@
 import * as React from 'react'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
@@ -286,6 +287,40 @@ const hasBreakdownSeries = (breakdown: ProtocolBreakdownChart, name: string): bo
 	return false
 }
 
+export function buildCompleteProtocolBreakdownDataset({
+	breakdown,
+	availableSeries,
+	includeUpstreamOthers,
+	fillMissingWithZero
+}: {
+	breakdown: ProtocolBreakdownChart | null | undefined
+	availableSeries: readonly string[]
+	includeUpstreamOthers: boolean
+	fillMissingWithZero: boolean
+}): TimestampDataset | null {
+	if (!breakdown?.length) return null
+	const seriesNames = [...availableSeries]
+	if (
+		includeUpstreamOthers &&
+		hasBreakdownSeries(breakdown, OTHERS_SERIES_NAME) &&
+		!seriesNames.includes(OTHERS_SERIES_NAME)
+	) {
+		seriesNames.push(OTHERS_SERIES_NAME)
+	}
+	const source = new Array<TimestampDataset['source'][number]>(breakdown.length)
+	for (const [rowIndex, [timestamp, values]] of breakdown.entries()) {
+		const point: TimestampDataset['source'][number] = [timestamp]
+		point.length = seriesNames.length + 1
+		if (fillMissingWithZero) point.fill(0, 1)
+		for (const [seriesIndex, name] of seriesNames.entries()) {
+			const value = values[name]
+			if (value != null) point[seriesIndex + 1] = value
+		}
+		source[rowIndex] = point
+	}
+	return { source, dimensions: ['timestamp', ...seriesNames] }
+}
+
 export const buildProtocolBreakdownPresentation = ({
 	breakdown,
 	availableSeries,
@@ -304,15 +339,26 @@ export const buildProtocolBreakdownPresentation = ({
 	fillMissingWithZero?: boolean
 	type: 'line' | 'bar'
 	stack?: string
-}): { dataset: TimestampDataset | null; charts: MultiSeriesCharts } => {
+}): { dataset: TimestampDataset | null; charts: MultiSeriesCharts; csvSource: ChartCsvSource } => {
+	const csvSource: ChartCsvSource = {
+		type: 'prepare-dataset',
+		prepare: () =>
+			buildCompleteProtocolBreakdownDataset({
+				breakdown,
+				availableSeries,
+				includeUpstreamOthers: aggregateOthers,
+				fillMissingWithZero
+			}) ?? { source: [], dimensions: ['timestamp'] }
+	}
 	if (!breakdown?.length) {
-		return { dataset: null, charts: EMPTY_MULTI_SERIES_CHARTS }
+		return { dataset: null, charts: EMPTY_MULTI_SERIES_CHARTS, csvSource }
 	}
 	const includesUpstreamOthers = includeUpstreamOthers && hasBreakdownSeries(breakdown, OTHERS_SERIES_NAME)
 	if (activeSeries.length === 0 && !includesUpstreamOthers) {
 		return {
 			dataset: { source: breakdown.map(([timestamp]) => [timestamp]), dimensions: ['timestamp'] },
-			charts: EMPTY_MULTI_SERIES_CHARTS
+			charts: EMPTY_MULTI_SERIES_CHARTS,
+			csvSource
 		}
 	}
 
@@ -321,7 +367,8 @@ export const buildProtocolBreakdownPresentation = ({
 	if (orderedActive.length === 0 && !includesUpstreamOthers) {
 		return {
 			dataset: { source: breakdown.map(([timestamp]) => [timestamp]), dimensions: ['timestamp'] },
-			charts: EMPTY_MULTI_SERIES_CHARTS
+			charts: EMPTY_MULTI_SERIES_CHARTS,
+			csvSource
 		}
 	}
 	const needsRemainder =
@@ -333,7 +380,7 @@ export const buildProtocolBreakdownPresentation = ({
 	const remainderNames = orderedActive.slice(namedLimit)
 	if (includesUpstreamOthers) remainderNames.push(OTHERS_SERIES_NAME)
 	const dataset = buildProjectedBreakdownDataset(breakdown, renderedNames, remainderNames, fillMissingWithZero)
-	if (!dataset) return { dataset: null, charts: EMPTY_MULTI_SERIES_CHARTS }
+	if (!dataset) return { dataset: null, charts: EMPTY_MULTI_SERIES_CHARTS, csvSource }
 
 	const canonicalColorIndex = new Map<string, number>()
 	for (const [index, name] of availableSeries.entries()) canonicalColorIndex.set(name, index)
@@ -356,7 +403,7 @@ export const buildProtocolBreakdownPresentation = ({
 			...(stack ? { stack } : {})
 		})
 	}
-	return { dataset, charts }
+	return { dataset, charts, csvSource }
 }
 
 const buildProjectedBreakdownDataset = (

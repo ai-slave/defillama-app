@@ -7,6 +7,7 @@ import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { ChartGroupingSelector } from '~/components/ECharts/shared/ChartGroupingSelector'
+import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { Select } from '~/components/Select/Select'
@@ -65,6 +66,7 @@ import {
 	aggregateRWAFlowRows,
 	buildRWAFlowChart,
 	buildRWAFilteredFlowBreakdown,
+	buildRWAFlowRotationChart,
 	getRWAFlowDefaultStartTimestamp,
 	getRWAFlowOverlayQueryValue,
 	getRWAFlowVsPriceAssetSummaries,
@@ -102,12 +104,18 @@ import {
 	useRwaCategoryAssetClassPieChartData,
 	useRwaChainBreakdownPieChartData,
 	useRwaChartDataset,
-	hasActiveChartFilters
+	hasActiveChartFilters,
+	limitRwaPieChartData
 } from './hooks'
 import { perpsDefinitions } from './Perps/definitions'
 import { getRankedRwaFilterValues } from './rankedFilterValues'
 import { rwaSlug } from './rwaSlug'
-import { buildRwaNestedTreemapTreeData, buildRwaTreemapTreeData, canBuildRwaNestedTreemap } from './treemap'
+import {
+	buildCompleteRwaTreemapTreeData,
+	buildRwaNestedTreemapTreeData,
+	buildRwaTreemapTreeData,
+	canBuildRwaNestedTreemap
+} from './treemap'
 
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -510,36 +518,36 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		})
 
 	// Select pie chart breakdown based on route mode (same precedence as nav links).
-	const { selectedPieChartData, pieChartStackColors } = useMemo(() => {
+	const { completePieChartData, pieChartStackColors } = useMemo(() => {
 		switch (nonTimeSeriesBreakdown) {
 			case 'chain':
 				return {
-					selectedPieChartData: chainPieChartData,
+					completePieChartData: chainPieChartData,
 					pieChartStackColors: chainPieChartStackColors
 				}
 			case 'assetGroup':
 				return {
-					selectedPieChartData: assetGroupPieChartData,
+					completePieChartData: assetGroupPieChartData,
 					pieChartStackColors: assetGroupPieChartStackColors
 				}
 			case 'platform':
 				return {
-					selectedPieChartData: assetPlatformPieChartData,
+					completePieChartData: assetPlatformPieChartData,
 					pieChartStackColors: assetPlatformPieChartStackColors
 				}
 			case 'assetClass':
 				return {
-					selectedPieChartData: assetClassPieChartData,
+					completePieChartData: assetClassPieChartData,
 					pieChartStackColors: assetClassPieChartStackColors
 				}
 			case 'assetName':
 				return {
-					selectedPieChartData: assetNamePieChartData,
+					completePieChartData: assetNamePieChartData,
 					pieChartStackColors: assetNamePieChartStackColors
 				}
 			case 'category':
 				return {
-					selectedPieChartData: assetCategoryPieChartData,
+					completePieChartData: assetCategoryPieChartData,
 					pieChartStackColors: assetCategoryPieChartStackColors
 				}
 			default:
@@ -560,6 +568,17 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		chainPieChartData,
 		chainPieChartStackColors
 	])
+	const selectedPieChartData = useMemo(() => {
+		const limit =
+			nonTimeSeriesBreakdown === 'chain'
+				? 10
+				: nonTimeSeriesBreakdown === 'assetName' ||
+					  nonTimeSeriesBreakdown === 'assetGroup' ||
+					  nonTimeSeriesBreakdown === 'platform'
+					? 24
+					: null
+		return limit == null ? completePieChartData : limitRwaPieChartData(completePieChartData, limit)
+	}, [completePieChartData, nonTimeSeriesBreakdown])
 
 	// Preserve filter/toggle query params only in chain mode.
 	// (The chain/category/platform itself is in the pathname, so we strip the dynamic param from the query object.)
@@ -847,29 +866,32 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		/>
 	)
 
-	const treemapTreeData = useMemo(() => {
+	const nestedTreemapTreeData = useMemo(() => {
 		if (chartView !== 'treemap') return []
-		if (isNestedTreemapSupported) {
-			const nestedTreeData = buildRwaNestedTreemapTreeData({
-				assets: filteredAssets,
-				metric: chartTypeKey,
-				rootLabel: chartBreakdownLabel,
-				parentGrouping: treemapParentGrouping,
-				childGrouping: treemapNestedBy
-			})
-			if (nestedTreeData.length > 0) return nestedTreeData
-		}
-		return buildRwaTreemapTreeData(selectedPieChartData, chartBreakdownLabel)
+		if (!isNestedTreemapSupported) return []
+		return buildRwaNestedTreemapTreeData({
+			assets: filteredAssets,
+			metric: chartTypeKey,
+			rootLabel: chartBreakdownLabel,
+			parentGrouping: treemapParentGrouping,
+			childGrouping: treemapNestedBy
+		})
 	}, [
 		chartView,
 		chartTypeKey,
 		filteredAssets,
 		chartBreakdownLabel,
 		isNestedTreemapSupported,
-		selectedPieChartData,
 		treemapNestedBy,
 		treemapParentGrouping
 	])
+	const treemapTreeData = useMemo(
+		() =>
+			nestedTreemapTreeData.length > 0
+				? nestedTreemapTreeData
+				: buildRwaTreemapTreeData(selectedPieChartData, chartBreakdownLabel),
+		[chartBreakdownLabel, nestedTreemapTreeData, selectedPieChartData]
+	)
 	const nonTimeSeriesChartInstance =
 		chartView === 'treemap' ? treemapChartInstance : chartView === 'hbar' ? barChartInstance : pieChartInstance
 	const nonTimeSeriesChartFilename =
@@ -1041,16 +1063,19 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 								<ChartCsvExportButton
 									chartInstance={multiSeriesChart2Instance}
 									filename={timeSeriesChartFilename}
-									prepareCsvDirect={() => {
-										const exportDataset =
-											isFlowMetric && flowChart
-												? flowChart.dataset
-												: materializeRwaIndependentChartDataset(deferredSelectedTimeSeriesDataset)
-										return buildCsvFromDataset({
-											dimensions: exportDataset.dimensions,
-											source: exportDataset.source,
-											filenameBase: timeSeriesChartFilename
-										})
+									source={{
+										type: 'prepare-csv',
+										prepare: () => {
+											const exportDataset =
+												isFlowMetric && flowChart
+													? flowChart.dataset
+													: materializeRwaIndependentChartDataset(deferredSelectedTimeSeriesDataset)
+											return buildCsvFromDataset({
+												dimensions: exportDataset.dimensions,
+												source: exportDataset.source,
+												filenameBase: timeSeriesChartFilename
+											})
+										}
 									}}
 								/>
 								<ChartPngExportButton
@@ -1123,6 +1148,27 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 								<ChartCsvExportButton
 									chartInstance={nonTimeSeriesChartInstance}
 									filename={nonTimeSeriesChartFilename}
+									source={
+										chartView === 'treemap'
+											? {
+													type: 'prepare-dataset',
+													prepare: () =>
+														buildTreemapCsvDataset(
+															buildCompleteRwaTreemapTreeData({
+																nestedTreeData: nestedTreemapTreeData,
+																completePieData: completePieChartData,
+																breakdownLabel: chartBreakdownLabel
+															})
+														)
+												}
+											: {
+													type: 'prepare-dataset',
+													prepare: () => ({
+														dimensions: ['Name', 'Value'],
+														source: completePieChartData.map(({ name, value }) => [name, value])
+													})
+												}
+									}
 								/>
 								<ChartPngExportButton
 									chartInstance={nonTimeSeriesChartInstance}
@@ -1232,16 +1278,25 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 						<ChartCsvExportButton
 							chartInstance={flowRotationChartInstance}
 							filename={flowRotationFilename}
-							prepareCsvDirect={
+							source={
 								flowRotationView === 'heatmap'
-									? () =>
-											prepareRWAFlowTreemapCsv({
-												nodes: flowTreemap.nodes,
-												sizeMetric: flowTreemapSizeMetric,
-												groupBy: flowRotationFrequency,
-												filename: flowRotationFilename
-											})
-									: undefined
+									? {
+											type: 'prepare-csv',
+											prepare: () =>
+												prepareRWAFlowTreemapCsv({
+													nodes: flowTreemap.nodes,
+													sizeMetric: flowTreemapSizeMetric,
+													groupBy: flowRotationFrequency,
+													filename: flowRotationFilename
+												})
+										}
+									: {
+											type: 'prepare-dataset',
+											prepare: () =>
+												buildRWAFlowRotationChart(flowRotationData ?? [], flowRotationFrequency, {
+													allSeries: true
+												}).dataset
+										}
 							}
 						/>
 						<ChartPngExportButton

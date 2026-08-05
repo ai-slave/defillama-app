@@ -1,7 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
@@ -311,17 +310,7 @@ export const CategoryPerformanceContainer = ({
 						showCsv={tab !== 'heatmap'}
 						filename={`category-performance-${tab}`}
 						title={`Category Performance ${tab}`}
-						prepareCsvDirect={
-							tab === 'heatmap'
-								? undefined
-								: () =>
-										buildSelectedSeriesCsv({
-											dataset: deferredChartData.dataset,
-											charts: tab === 'barchart' ? deferredChartData.barCharts : deferredChartData.lineCharts,
-											selectedCharts: displayedSelectedCharts,
-											filename: `category-performance-${tab}`
-										})
-						}
+						csvSource={{ type: 'dataset', dataset: deferredChartData.dataset }}
 					/>
 				</div>
 

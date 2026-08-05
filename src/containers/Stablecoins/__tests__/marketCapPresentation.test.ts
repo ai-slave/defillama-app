@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import {
+	buildStablecoinMarketCapCsvDataset,
 	buildStablecoinMarketCapPresentation,
-	prepareStablecoinMarketCapSeries,
-	prepareStablecoinMarketCapTreemapCsv
+	prepareStablecoinMarketCapSeries
 } from '../marketCapPresentation'
 
 type Row = { name: string; mcap: number | null }
@@ -60,6 +60,10 @@ describe('buildStablecoinMarketCapPresentation', () => {
 			'Token 11'
 		])
 		expect(series.selectionSeries).toEqual(series.peers.map((peer) => peer.name))
+		expect(buildStablecoinMarketCapCsvDataset(series)).toEqual({
+			dimensions: ['Name', 'Market Cap'],
+			source: [...series.peers.map(({ name, value }) => [name, value]), ['Others', 100]]
+		})
 	})
 
 	it('builds horizontal-bar columns and colors only for its selected slices', () => {
@@ -227,16 +231,6 @@ describe('buildStablecoinMarketCapPresentation', () => {
 			['Beta', 75],
 			['Gamma', 25]
 		])
-		expect(
-			prepareStablecoinMarketCapTreemapCsv({ treeData: result.treeData, filename: 'stablecoins-market-cap-treemap' })
-		).toEqual({
-			filename: 'stablecoins-market-cap-treemap',
-			rows: [
-				['Name', 'Market Cap', 'Share (%)'],
-				['Beta', 3, 75],
-				['Gamma', 1, 25]
-			]
-		})
 	})
 
 	it('keeps treemap remainder-free and renders every selected peer', () => {

@@ -3,6 +3,7 @@ import {
 	buildEquitiesTreemap,
 	buildEquitiesTreemapLeaves,
 	groupEquitiesTreemapLeaves,
+	prepareCompleteEquitiesTreemapCsv,
 	prepareEquitiesTreemapCsv,
 	rankEquitiesTreemapRows,
 	type IEquitiesTreemapGroup,
@@ -276,5 +277,26 @@ describe('prepareEquitiesTreemapCsv', () => {
 				['SMALL', 'Small Co', 'US', 'Technology', 'Software', 'Market Cap', 100, 'Price 1D', '', 100]
 			]
 		})
+	})
+
+	it('exports the complete eligible ranking independently of the visual company limit', () => {
+		const ranking = rankEquitiesTreemapRows(
+			[
+				makeRow({ ticker: 'BIG', name: 'Big Co', marketCap: 200 }),
+				makeRow({ ticker: 'SMALL', name: 'Small Co', marketCap: 100 })
+			],
+			'marketCap',
+			0
+		)
+
+		const csv = prepareCompleteEquitiesTreemapCsv({
+			ranking,
+			colorMetric: 'priceChangePercentage1d',
+			sizeLabel: 'Market Cap',
+			colorLabel: 'Price 1D',
+			filename: 'equities-market-map'
+		})
+
+		expect(csv.rows.slice(1).map((row) => row[0])).toEqual(['BIG', 'SMALL'])
 	})
 })

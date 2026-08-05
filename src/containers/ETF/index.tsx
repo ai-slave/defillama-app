@@ -1,7 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -105,14 +104,7 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							chartInstance={chartInstance}
 							filename="etf-flows"
 							title="ETF Flows"
-							prepareCsvDirect={() =>
-								buildSelectedSeriesCsv({
-									dataset: finalCharts.dataset,
-									charts: finalCharts.charts,
-									selectedCharts,
-									filename: 'etf-flows'
-								})
-							}
+							csvSource={{ type: 'dataset', dataset: finalCharts.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>

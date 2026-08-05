@@ -15,9 +15,13 @@ export function buildProTreemapData(
 ): ProTreemapNode[] {
 	const nodes: ProTreemapNode[] = []
 	const windowSeconds = valueMode === 'sum7d' ? 7 * 86_400 : 30 * 86_400
+	const startOfTodayUtc = Math.floor(Date.now() / 86_400_000) * 86_400
 
 	for (const item of series) {
-		const pointIndex = Math.max(0, item.data.length - 2)
+		const lastPoint = item.data[item.data.length - 1]
+		if (!lastPoint) continue
+		const pointIndex = lastPoint[0] >= startOfTodayUtc ? item.data.length - 2 : item.data.length - 1
+		if (pointIndex < 0) continue
 		const point = item.data[pointIndex]
 		if (!point) continue
 

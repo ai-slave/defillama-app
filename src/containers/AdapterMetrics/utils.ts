@@ -1,4 +1,6 @@
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type {
+	MultiSeriesChartDataset,
 	ChartTimeGroupingWithCumulative,
 	MultiSeriesTimeSeriesDataset,
 	MultiSeriesTimeSeriesRow,
@@ -357,6 +359,7 @@ type BreakdownLatestValueRow = {
 
 type ChainsByAdapterBarPresentation = {
 	kind: 'bar'
+	csvSource: ChartCsvSource
 	dataset: MultiSeriesTimeSeriesDataset
 	charts: MultiSeriesChartSeriesConfig[]
 	valueMode: ChainsByAdapterValueMode
@@ -367,6 +370,7 @@ type ChainsByAdapterBarPresentation = {
 
 type ChainsByAdapterDominancePresentation = {
 	kind: 'dominance'
+	csvSource: ChartCsvSource
 	dataset: MultiSeriesTimeSeriesDataset
 	charts: MultiSeriesChartSeriesConfig[]
 	groupBy: ChartTimeGroupingWithCumulative
@@ -374,11 +378,13 @@ type ChainsByAdapterDominancePresentation = {
 
 type ChainsByAdapterTreemapPresentation = {
 	kind: 'treemap'
+	csvSource: ChartCsvSource
 	data: ChainsByAdapterLatestValueDatum[]
 }
 
 type ChainsByAdapterHBarPresentation = {
 	kind: 'hbar'
+	csvSource: ChartCsvSource
 	data: ChainsByAdapterLatestValueDatum[]
 }
 
@@ -390,7 +396,6 @@ export type ChainsByAdapterChartPresentation =
 
 type ChainsByAdapterBarState = Extract<ChainsByAdapterChartState, { chartKind: 'bar' }>
 type ChainsByAdapterDominanceState = Extract<ChainsByAdapterChartState, { chartKind: 'dominance' }>
-type LatestValueSeriesType = 'bar' | 'dominance'
 
 const DEFAULT_CHAINS_BY_ADAPTER_GROUP_BY: ChartTimeGroupingWithCumulative = 'daily'
 const VALID_GROUPINGS = new Set<ChartTimeGroupingWithCumulative>([
@@ -916,6 +921,27 @@ function buildGroupedFlowDataset({
 	return { source, dimensions: ['timestamp', ...seriesNames] }
 }
 
+/** Build the complete chart metric for CSV without visual selection or overflow grouping. */
+export function buildAdapterMetricsCsvDataset({
+	chartData,
+	state
+}: {
+	chartData: MultiSeriesTimeSeriesDataset
+	state: ChainsByAdapterBarState | ChainsByAdapterDominanceState
+}): MultiSeriesTimeSeriesDataset {
+	if (state.chartKind === 'bar' && state.groupBy === 'daily' && state.valueMode === 'absolute') return chartData
+
+	const seriesNames = chartData.dimensions.slice(1)
+	return buildGroupedFlowDataset({
+		chartData,
+		topEntityNames: seriesNames,
+		otherEntityNames: [],
+		seriesNames,
+		groupBy: state.groupBy,
+		relative: state.chartKind === 'dominance' || state.valueMode === 'relative'
+	})
+}
+
 function buildBarPresentation({
 	chartData,
 	topEntityNames,
@@ -943,6 +969,10 @@ function buildBarPresentation({
 
 	return {
 		kind: 'bar',
+		csvSource: {
+			type: 'prepare-dataset',
+			prepare: () => buildAdapterMetricsCsvDataset({ chartData, state })
+		},
 		dataset: finalDataset,
 		charts: topSeriesNames.map((seriesName, index) => ({
 			type: isCumulative ? 'line' : 'bar',
@@ -985,6 +1015,10 @@ function buildDominancePresentation({
 
 	return {
 		kind: 'dominance',
+		csvSource: {
+			type: 'prepare-dataset',
+			prepare: () => buildAdapterMetricsCsvDataset({ chartData, state })
+		},
 		dataset: relativeDataset,
 		charts: topSeriesNames.map((seriesName, index) => ({
 			type: 'line',
@@ -1152,7 +1186,6 @@ function buildLatestValueRowsFromChartData({
 	chartData: MultiSeriesTimeSeriesDataset
 	selectedNames: string[]
 	groupBy: ChartTimeGroupingWithCumulative
-	seriesType: LatestValueSeriesType
 }): BreakdownLatestValueRow[] {
 	if (groupBy === 'daily') {
 		const sourceRow = getEffectiveDailyLatestRow(chartData)
@@ -1240,6 +1273,28 @@ function getEffectiveDailyLatestRow(chartData: MultiSeriesTimeSeriesDataset): Mu
 	return !isUtcMidnight || gapMs < MIN_COMPLETE_DAILY_GAP_MS ? previousTimestampRow : lastTimestampRow
 }
 
+function buildLatestValuesCsvDataset({
+	chartData,
+	groupBy,
+	entityDimension
+}: {
+	chartData: MultiSeriesTimeSeriesDataset
+	groupBy: ChartTimeGroupingWithCumulative
+	entityDimension: 'Chain' | 'Protocol'
+}): MultiSeriesChartDataset {
+	const names = chartData.dimensions.slice(1)
+	const latestRows = buildLatestValueRowsFromChartData({ chartData, selectedNames: names, groupBy })
+	const source = new Array<MultiSeriesChartDataset['source'][number]>(latestRows.length)
+	for (let index = 0; index < latestRows.length; index++) {
+		const row = latestRows[index]!
+		source[index] = [row.name, row.total24h]
+	}
+	return {
+		dimensions: [entityDimension, 'Value'],
+		source
+	}
+}
+
 function buildHBarPresentation({
 	chartData,
 	cacheKey,
@@ -1272,24 +1327,30 @@ function buildHBarPresentation({
 export function buildChainsByAdapterChartPresentation({
 	chartData,
 	selectedChains,
-	state,
-	latestValueSeriesType = 'bar'
+	state
 }: {
 	chartData: IChainsByAdapterPageData['chartData']
 	selectedChains: string[]
 	state: ChainsByAdapterChartState
-	latestValueSeriesType?: LatestValueSeriesType
 }): ChainsByAdapterChartPresentation {
 	switch (state.chartKind) {
 		case 'treemap': {
 			const latestRows = buildLatestValueRowsFromChartData({
 				chartData,
 				selectedNames: selectedChains,
-				groupBy: state.groupBy,
-				seriesType: latestValueSeriesType
+				groupBy: state.groupBy
 			})
 			return {
 				kind: 'treemap',
+				csvSource: {
+					type: 'prepare-dataset',
+					prepare: () =>
+						buildLatestValuesCsvDataset({
+							chartData,
+							groupBy: state.groupBy,
+							entityDimension: 'Chain'
+						})
+				},
 				data: buildTreemapPresentation({
 					chartData,
 					cacheKey: 'chains',
@@ -1302,11 +1363,19 @@ export function buildChainsByAdapterChartPresentation({
 			const latestRows = buildLatestValueRowsFromChartData({
 				chartData,
 				selectedNames: selectedChains,
-				groupBy: state.groupBy,
-				seriesType: latestValueSeriesType
+				groupBy: state.groupBy
 			})
 			return {
 				kind: 'hbar',
+				csvSource: {
+					type: 'prepare-dataset',
+					prepare: () =>
+						buildLatestValuesCsvDataset({
+							chartData,
+							groupBy: state.groupBy,
+							entityDimension: 'Chain'
+						})
+				},
 				data: buildHBarPresentation({
 					chartData,
 					cacheKey: 'chains',
@@ -1366,8 +1435,7 @@ function createProtocolBreakdownSeriesUniverse({
 	const latestRows = buildLatestValueRowsFromChartData({
 		chartData,
 		selectedNames: protocolNames,
-		groupBy: state.groupBy,
-		seriesType: state.chartKind
+		groupBy: state.groupBy
 	})
 	const rankingScores = new Map<string, number>()
 	for (const row of latestRows) {
@@ -1498,25 +1566,26 @@ export function buildAdapterByChainLatestValuePresentation({
 	chartKind,
 	selectedProtocols,
 	groupBy,
-	chartData,
-	seriesType = 'bar'
+	chartData
 }: {
 	chartKind: 'treemap' | 'hbar'
 	selectedProtocols: string[]
 	groupBy: ChartTimeGroupingWithCumulative
 	chartData: MultiSeriesTimeSeriesDataset
-	seriesType?: LatestValueSeriesType
 }): ChainsByAdapterTreemapPresentation | ChainsByAdapterHBarPresentation {
 	const latestRows = buildLatestValueRowsFromChartData({
 		chartData,
 		selectedNames: selectedProtocols,
-		groupBy,
-		seriesType
+		groupBy
 	})
 
 	if (chartKind === 'treemap') {
 		return {
 			kind: 'treemap',
+			csvSource: {
+				type: 'prepare-dataset',
+				prepare: () => buildLatestValuesCsvDataset({ chartData, groupBy, entityDimension: 'Protocol' })
+			},
 			data: buildTreemapPresentation({
 				chartData,
 				cacheKey: 'protocols',
@@ -1528,6 +1597,10 @@ export function buildAdapterByChainLatestValuePresentation({
 
 	return {
 		kind: 'hbar',
+		csvSource: {
+			type: 'prepare-dataset',
+			prepare: () => buildLatestValuesCsvDataset({ chartData, groupBy, entityDimension: 'Protocol' })
+		},
 		data: buildHBarPresentation({
 			chartData,
 			cacheKey: 'protocols',

@@ -2,9 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedPercentageChart, buildSelectedSeriesCsv } from '~/components/ECharts/MultiSeriesChart/selection'
+import { buildSelectedPercentageChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildRuntimePieChartPresentation, prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import {
+	buildRuntimePieChartCsvDataset,
+	buildRuntimePieChartPresentation,
+	prepareRuntimePieChartData
+} from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
@@ -145,14 +149,6 @@ export function ChainsByCategory({
 	)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
-	const prepareDominanceCsv = () =>
-		buildSelectedSeriesCsv({
-			dataset: selectedDominance.dataset,
-			charts: selectedDominance.charts,
-			selectedCharts: new Set(activeSeries),
-			filename: 'chains-dominance'
-		})
-
 	const { showByGroup, chainsTableData } = useGroupAndFormatChains({ chains, category: categoryName })
 
 	return (
@@ -199,7 +195,15 @@ export function ChainsByCategory({
 									size="md"
 								/>
 							) : null}
-							<ChartExportButtons chartInstance={pieChartInstance} filename="chains-tvl-pie" title="Chains TVL" />
+							<ChartExportButtons
+								chartInstance={pieChartInstance}
+								filename="chains-tvl-pie"
+								title="Chains TVL"
+								csvSource={{
+									type: 'prepare-dataset',
+									prepare: () => buildRuntimePieChartCsvDataset(pieSeries)
+								}}
+							/>
 						</ChartPanelToolbar>
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart chartData={visiblePieChartData} stackColors={colorsByChain} onReady={handlePieChartReady} />
@@ -222,13 +226,14 @@ export function ChainsByCategory({
 								chartInstance={chartInstance}
 								filename="chains-dominance"
 								title="Chains Dominance"
-								prepareCsvDirect={prepareDominanceCsv}
+								csvSource={selectedDominance.csvSource}
 							/>
 						</ChartPanelToolbar>
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
 								dataset={selectedDominance.dataset}
 								charts={selectedDominance.charts}
+								csvSource={selectedDominance.csvSource}
 								valueSymbol="%"
 								expandTo100Percent
 								solidChartAreaStyle

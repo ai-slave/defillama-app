@@ -3,7 +3,6 @@ import { lazy, Suspense } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	buildSelectedAdditiveChart,
-	buildSelectedSeriesCsv,
 	DEFAULT_ADDITIVE_SERIES_LIMIT,
 	rankSeriesByPeakAbsoluteValue
 } from '~/components/ECharts/MultiSeriesChart/selection'
@@ -69,14 +68,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 						chartInstance={exportChartInstance}
 						filename={`bridge-inflows-by-chain`}
 						title="Bridge Inflows"
-						prepareCsvDirect={() =>
-							buildSelectedSeriesCsv({
-								dataset: presentation.dataset,
-								charts: presentation.charts,
-								selectedCharts: new Set(presentation.charts.map((item) => item.name)),
-								filename: 'bridge-inflows-by-chain'
-							})
-						}
+						csvSource={presentation.csvSource}
 					/>
 				</ChartPanelToolbar>
 
@@ -85,6 +77,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 						<MultiSeriesChart
 							dataset={presentation.dataset}
 							charts={presentation.charts}
+							csvSource={presentation.csvSource}
 							hideDefaultLegend
 							valueSymbol="$"
 							showTotalInTooltip

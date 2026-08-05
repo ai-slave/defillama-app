@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-	buildSelectedAdditiveChart,
-	buildSelectedPercentageChart,
-	buildSelectedSeriesCsv,
-	rankSeriesByPeakAbsoluteValue
-} from './selection'
+import { buildSelectedAdditiveChart, buildSelectedPercentageChart, rankSeriesByPeakAbsoluteValue } from './selection'
 
 it('ranks additive peers by peak absolute value with stable ties', () => {
 	expect(
@@ -24,6 +19,7 @@ it('ranks additive peers by peak absolute value with stable ties', () => {
 describe('buildSelectedAdditiveChart', () => {
 	it('keeps selected peers visible and folds only the selected tail into fixed-color Others', () => {
 		const names = Array.from({ length: 5 }, (_, index) => `Series${index + 1}`)
+		const dataset = { dimensions: ['timestamp', ...names], source: [[1, 50, 40, 30, 20, 10]] }
 		const charts = names.map((name, index) => ({
 			type: 'bar' as const,
 			name,
@@ -32,7 +28,7 @@ describe('buildSelectedAdditiveChart', () => {
 			stack: 'A'
 		}))
 		const result = buildSelectedAdditiveChart({
-			dataset: { dimensions: ['timestamp', ...names], source: [[1, 50, 40, 30, 20, 10]] },
+			dataset,
 			charts,
 			seriesOrder: names,
 			selectedCharts: new Set(names),
@@ -50,6 +46,7 @@ describe('buildSelectedAdditiveChart', () => {
 			['Others', '#AAAAAA', 4]
 		])
 		expect(result.charts.every((chart) => chart.type === 'bar' && chart.stack === 'A')).toBe(true)
+		expect(result.csvSource).toEqual({ type: 'dataset', dataset })
 	})
 
 	it('keeps Others unavailable when any selected remainder member is unavailable', () => {
@@ -120,7 +117,7 @@ describe('buildSelectedPercentageChart', () => {
 		{ type: 'line' as const, name: 'Base', encode: { x: 0, y: 3 }, color: '#333333' }
 	]
 
-	it('renormalizes selected peers to 100% without changing canonical order or colors', () => {
+	it('renormalizes selected peers visually while exporting the full canonical denominator', async () => {
 		const result = buildSelectedPercentageChart({
 			dataset,
 			charts,
@@ -136,6 +133,16 @@ describe('buildSelectedPercentageChart', () => {
 			{ ...charts[1], encode: { x: 0, y: 2 } }
 		])
 		expect(dataset.source[0]).toEqual([1, 60, 30, 10])
+		if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'prepare-dataset') {
+			throw new Error('Expected a prepared complete export')
+		}
+		expect(await result.csvSource.prepare()).toEqual({
+			dimensions: ['timestamp', 'Ethereum', 'Solana', 'Base'],
+			source: [
+				[1, 60, 30, 10],
+				[2, null, null, null]
+			]
+		})
 	})
 
 	it('makes a single selected peer 100% while preserving missing values', () => {
@@ -211,26 +218,5 @@ describe('buildSelectedPercentageChart', () => {
 				.map(Number)
 				.reduce((total, value) => total + value, 0)
 		).toBe(100)
-	})
-})
-
-describe('buildSelectedSeriesCsv', () => {
-	it('exports only the visible chart series in canonical order', () => {
-		const result = buildSelectedSeriesCsv({
-			dataset: {
-				dimensions: ['timestamp', 'Ethereum', 'Solana', 'Base'],
-				source: [[1_700_000_000_000, 3, 2, 1]]
-			},
-			charts: [
-				{ type: 'line', name: 'Ethereum', encode: { x: 0, y: 1 }, color: '#111111' },
-				{ type: 'line', name: 'Solana', encode: { x: 0, y: 2 }, color: '#222222' },
-				{ type: 'line', name: 'Base', encode: { x: 0, y: 3 }, color: '#333333' }
-			],
-			selectedCharts: new Set(['Solana', 'Base']),
-			filename: 'chains'
-		})
-
-		expect(result.rows[0]).toEqual(['Timestamp', 'Date', 'Solana', 'Base'])
-		expect(result.rows[1]).toEqual([1_700_000_000_000, '2023-11-14', 2, 1])
 	})
 })
