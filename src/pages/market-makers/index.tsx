@@ -1,5 +1,4 @@
 import type { InferGetStaticPropsType } from 'next'
-import { MarketMakersAccessGate } from '~/containers/MarketMakers/AccessGate'
 import { PerformanceIndex } from '~/containers/MarketMakers/PerformanceIndex'
 import { getPerformanceIndexProps, mergePerformanceIndex } from '~/containers/MarketMakers/PerformanceIndex/data'
 import { forgdFetch } from '~/containers/MarketMakers/server/client'
@@ -20,9 +19,7 @@ export default function MarketMakersPerformanceIndex(props: InferGetStaticPropsT
 			canonicalUrl="/market-makers"
 			pageName={['Market Makers', 'Performance Index']}
 		>
-			<MarketMakersAccessGate>
-				<PerformanceIndex {...props} />
-			</MarketMakersAccessGate>
+			<PerformanceIndex {...props} />
 		</Layout>
 	)
 }

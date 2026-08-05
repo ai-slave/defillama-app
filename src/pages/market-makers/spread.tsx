@@ -1,5 +1,4 @@
 import type { InferGetStaticPropsType } from 'next'
-import { MarketMakersAccessGate } from '~/containers/MarketMakers/AccessGate'
 import { SPREAD_COLUMNS } from '~/containers/MarketMakers/constants'
 import { Leaderboard } from '~/containers/MarketMakers/Leaderboard'
 import { forgdFetch } from '~/containers/MarketMakers/server/client'
@@ -22,16 +21,14 @@ export default function SpreadLeaderboard({ rows }: InferGetStaticPropsType<type
 			canonicalUrl="/market-makers/spread"
 			pageName={['Market Makers', 'Spread']}
 		>
-			<MarketMakersAccessGate>
-				<Leaderboard
-					active="Spread"
-					title="Spread Leaderboard"
-					subtitle="See how Market Makers rank based on Spread KPIs such as the avg. top-of-book spread as well as their adherence to contractual obligations."
-					columns={SPREAD_COLUMNS}
-					initialData={rows}
-					fetchPath="spread"
-				/>
-			</MarketMakersAccessGate>
+			<Leaderboard
+				active="Spread"
+				title="Spread Leaderboard"
+				subtitle="See how Market Makers rank based on Spread KPIs such as the avg. top-of-book spread as well as their adherence to contractual obligations."
+				columns={SPREAD_COLUMNS}
+				initialData={rows}
+				fetchPath="spread"
+			/>
 		</Layout>
 	)
 }

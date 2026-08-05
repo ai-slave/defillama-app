@@ -1,5 +1,4 @@
 import type { InferGetStaticPropsType } from 'next'
-import { MarketMakersAccessGate } from '~/containers/MarketMakers/AccessGate'
 import { KPI_COLUMNS } from '~/containers/MarketMakers/constants'
 import { Leaderboard } from '~/containers/MarketMakers/Leaderboard'
 import { forgdFetch } from '~/containers/MarketMakers/server/client'
@@ -22,16 +21,14 @@ export default function KpiLeaderboard({ rows }: InferGetStaticPropsType<typeof 
 			canonicalUrl="/market-makers/kpi"
 			pageName={['Market Makers', 'KPI Adherence']}
 		>
-			<MarketMakersAccessGate>
-				<Leaderboard
-					active="KPI Adherence"
-					title="KPI Adherence Leaderboard"
-					subtitle="See how Market Makers rank based on adherence to contractual obligations."
-					columns={KPI_COLUMNS}
-					initialData={rows}
-					fetchPath="kpi"
-				/>
-			</MarketMakersAccessGate>
+			<Leaderboard
+				active="KPI Adherence"
+				title="KPI Adherence Leaderboard"
+				subtitle="See how Market Makers rank based on adherence to contractual obligations."
+				columns={KPI_COLUMNS}
+				initialData={rows}
+				fetchPath="kpi"
+			/>
 		</Layout>
 	)
 }

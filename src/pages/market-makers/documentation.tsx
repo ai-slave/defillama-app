@@ -1,4 +1,3 @@
-import { MarketMakersAccessGate } from '~/containers/MarketMakers/AccessGate'
 import { MarketMakersDocumentation } from '~/containers/MarketMakers/Documentation'
 import Layout from '~/layout'
 
@@ -10,9 +9,7 @@ export default function MarketMakersDocumentationPage() {
 			canonicalUrl="/market-makers/documentation"
 			pageName={['Market Makers', 'Documentation']}
 		>
-			<MarketMakersAccessGate>
-				<MarketMakersDocumentation />
-			</MarketMakersAccessGate>
+			<MarketMakersDocumentation />
 		</Layout>
 	)
 }

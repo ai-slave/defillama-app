@@ -22,7 +22,7 @@ const rows: PerformanceRow[] = [
 		marketMakerId: 'wintermute',
 		marketMakerName: 'Wintermute',
 		marketMakerImageUrl: null,
-		composite: 5,
+		composite: 5.25,
 		tradingKpis: null,
 		trustIntegration: 4,
 		coverageCapabilities: 3,

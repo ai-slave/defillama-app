@@ -23,4 +23,14 @@ describe('DocsDrawer', () => {
 		expect(html).toContain('id="how-to-interpret"')
 		expect(html).toContain('id="filtering"')
 	})
+
+	it('renders the Forgd composite score grade bands', () => {
+		const html = renderToStaticMarkup(<DocsDrawer open onClose={() => {}} />)
+
+		expect(html).toContain('9.50 – 10.00')
+		expect(html).toContain('9.00 – 9.49')
+		expect(html).toContain('8.25 – 8.99')
+		expect(html).toContain('>A</td>')
+		expect(html).toContain('&lt;5.25')
+	})
 })

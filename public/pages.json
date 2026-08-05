@@ -1086,7 +1086,6 @@
       "name": "Market Makers",
       "route": "/market-makers",
       "icon": "star",
-      "requireForgdPreview": true,
       "searchKeywords": [
         "market maker",
         "leaderboard",

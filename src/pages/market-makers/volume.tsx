@@ -1,5 +1,4 @@
 import type { InferGetStaticPropsType } from 'next'
-import { MarketMakersAccessGate } from '~/containers/MarketMakers/AccessGate'
 import { VOLUME_COLUMNS } from '~/containers/MarketMakers/constants'
 import { Leaderboard } from '~/containers/MarketMakers/Leaderboard'
 import { forgdFetch } from '~/containers/MarketMakers/server/client'
@@ -22,16 +21,14 @@ export default function VolumeLeaderboard({ rows }: InferGetStaticPropsType<type
 			canonicalUrl="/market-makers/volume"
 			pageName={['Market Makers', 'Volume']}
 		>
-			<MarketMakersAccessGate>
-				<Leaderboard
-					active="Volume"
-					title="Volume Leaderboard"
-					subtitle="See how Market Makers rank based on Volume KPIs such as the avg. daily fill volume (maker & taker) as well as percentage of market share"
-					columns={VOLUME_COLUMNS}
-					initialData={rows}
-					fetchPath="volume"
-				/>
-			</MarketMakersAccessGate>
+			<Leaderboard
+				active="Volume"
+				title="Volume Leaderboard"
+				subtitle="See how Market Makers rank based on Volume KPIs such as the avg. daily fill volume (maker & taker) as well as percentage of market share"
+				columns={VOLUME_COLUMNS}
+				initialData={rows}
+				fetchPath="volume"
+			/>
 		</Layout>
 	)
 }

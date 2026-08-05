@@ -1,7 +1,6 @@
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { useAuthContext } from '~/auth'
-import { hasForgdPreview } from '~/containers/MarketMakers/AccessGate'
 import { useGetLiteDashboards } from '~/containers/ProDashboard/hooks/useDashboardAPI'
 import { useStorageItem } from '~/contexts/localStorageStore'
 import defillamaPages from '~/public/pages.json'
@@ -18,7 +17,6 @@ type DefillamaPage = {
 	oldCategory?: string
 	oldName?: string
 	requireLlama?: boolean
-	requireForgdPreview?: boolean
 }
 
 type DefillamaPages = Record<string, DefillamaPage[]> & {
@@ -93,12 +91,11 @@ export function Nav({ tvlOptions }: { tvlOptions?: { name: string; key: string }
 	const { isAuthenticated, user } = useAuthContext()
 	const shouldSkipLanding = isAuthenticated
 	const isLlamaUser = user?.flags?.is_llama === true
-	const hasForgd = hasForgdPreview(user)
 
 	const mainLinks = useMemo(() => {
-		const main = mainPages.filter((p) => (!p.requireLlama || isLlamaUser) && (!p.requireForgdPreview || hasForgd))
+		const main = mainPages.filter((p) => !p.requireLlama || isLlamaUser)
 		const premium = premiumPages
-			.filter((p) => (!p.requireLlama || isLlamaUser) && (!p.requireForgdPreview || hasForgd))
+			.filter((p) => !p.requireLlama || isLlamaUser)
 			.map((p) => {
 				const route = normalizeAiRoute(p.route, shouldSkipLanding)
 				return route !== p.route ? { ...p, route } : p
@@ -107,7 +104,7 @@ export function Nav({ tvlOptions }: { tvlOptions?: { name: string; key: string }
 			{ category: 'Main', pages: main },
 			{ category: 'Premium', pages: premium }
 		]
-	}, [shouldSkipLanding, isLlamaUser, hasForgd])
+	}, [shouldSkipLanding, isLlamaUser])
 
 	const userDashboards = useMemo(
 		() =>
