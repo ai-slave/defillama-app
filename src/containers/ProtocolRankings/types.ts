@@ -23,6 +23,8 @@ export type ProtocolRankingActivityMetric = {
 }
 
 export interface IChildProtocol {
+	/** Canonical DefiLlama protocol or parent-protocol id. */
+	id?: string
 	name: string
 	slug: string
 	logo?: string | null

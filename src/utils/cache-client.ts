@@ -6,6 +6,7 @@ import {
 } from './regex-constants'
 
 let redis: import('ioredis').Redis | null = null
+let redisConnection: Promise<import('ioredis').Redis | null> | null = null
 const REDIS_URL = process.env.REDIS_URL as string
 const USE_REDIS = !!process.env.USE_REDIS
 const EXT_REDIS_URL = process.env.EXT_REDIS_URL as string | undefined
@@ -16,7 +17,7 @@ if (typeof window === 'undefined' && USE_REDIS) {
 	const redisUrl = IS_RUNTIME ? REDIS_URL : EXT_REDIS_URL
 
 	if (redisUrl) {
-		import('ioredis')
+		redisConnection = import('ioredis')
 			.then((Redis) => {
 				console.log('[cache] [connecting to redis]')
 
@@ -24,15 +25,20 @@ if (typeof window === 'undefined' && USE_REDIS) {
 					redis = new Redis.default(redisUrl)
 					redis.on('connect', () => console.log('[cache] [redis] connected'))
 					redis.on('error', () => console.log('[cache] [redis error]'))
+					return redis
 				} catch {
 					console.log('[cache] [redis connection error]')
+					return null
 				}
 			})
 			.catch(() => {
 				console.log('[cache] [redis import error]')
+				return null
 			})
 	}
 }
+
+const getRedisClient = async () => redis ?? (redisConnection ? await redisConnection : null)
 
 export const sluggify = (input: string) => {
 	const slug = decodeURIComponent(input).toLowerCase().replace(NON_WORD_SLASH_REGEX, '-')
@@ -66,7 +72,8 @@ export type RedisCachePayload = {
 }
 
 export const setCache = async (payload: RedisCachePayload, ttl?: string | number) => {
-	if (!redis) {
+	const client = await getRedisClient()
+	if (!client) {
 		return false
 	}
 
@@ -78,9 +85,9 @@ export const setCache = async (payload: RedisCachePayload, ttl?: string | number
 			...(payload.StatusText ? { StatusText: payload.StatusText } : {})
 		}
 		if (ttl) {
-			await redis.set(payload.Key, JSON.stringify(cacheObject), 'EX', ttl)
+			await client.set(payload.Key, JSON.stringify(cacheObject), 'EX', ttl)
 		} else {
-			await redis.set(payload.Key, JSON.stringify(cacheObject))
+			await client.set(payload.Key, JSON.stringify(cacheObject))
 		}
 		return true
 	} catch (error) {
@@ -91,12 +98,13 @@ export const setCache = async (payload: RedisCachePayload, ttl?: string | number
 }
 
 export const setPageBuildTimes = async (pageUrl: string, cacheObject: unknown) => {
-	if (!redis) {
+	const client = await getRedisClient()
+	if (!client) {
 		return false
 	}
 
 	try {
-		await redis.hset('page_build_times', pageUrl, JSON.stringify(cacheObject))
+		await client.hset('page_build_times', pageUrl, JSON.stringify(cacheObject))
 		return true
 	} catch (error) {
 		console.log('[error] [cache] [failed to set]', cacheObject)
@@ -105,12 +113,13 @@ export const setPageBuildTimes = async (pageUrl: string, cacheObject: unknown) =
 	}
 }
 export const getCache = async (Key: string) => {
-	if (!redis) {
+	const client = await getRedisClient()
+	if (!client) {
 		return null
 	}
 
 	try {
-		const res = await redis.get(Key)
+		const res = await client.get(Key)
 		if (res === null) {
 			return null
 		}
@@ -130,12 +139,13 @@ export const getCache = async (Key: string) => {
 	}
 }
 export const setObjectCache = async (key: string, data: unknown, ttl = 3600) => {
-	if (!redis) {
+	const client = await getRedisClient()
+	if (!client) {
 		return false
 	}
 
 	try {
-		await redis.set(key, JSON.stringify(data), 'EX', ttl)
+		await client.set(key, JSON.stringify(data), 'EX', ttl)
 		return true
 	} catch (error) {
 		console.log('[error] [cache] [failed to set]', key)
@@ -145,12 +155,13 @@ export const setObjectCache = async (key: string, data: unknown, ttl = 3600) => 
 }
 
 export const getObjectCache = async <T = unknown>(key: string): Promise<T | null> => {
-	if (!redis) {
+	const client = await getRedisClient()
+	if (!client) {
 		return null
 	}
 
 	try {
-		const res = await redis.get(key)
+		const res = await client.get(key)
 		if (!res) return null
 		const parsed: unknown = JSON.parse(res)
 		return parsed as T

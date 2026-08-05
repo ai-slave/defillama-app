@@ -10,7 +10,9 @@ import { fetchChainChart } from '~/containers/Chains/api'
 import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import { getETFData } from '~/containers/ETF/queries'
 import { getChainIncentivesFromAggregatedEmissions } from '~/containers/Incentives/queries'
-import { getProtocolsByChain } from '~/containers/ProtocolRankings/queries.server'
+import { queryProtocolRankingSnapshot } from '~/containers/ProtocolRankings/pagination.server'
+import { DEFAULT_PROTOCOL_RANKING_QUERY, PROTOCOL_RANKINGS_INITIAL_LIMIT } from '~/containers/ProtocolRankings/query'
+import { getProtocolRankingsSnapshot } from '~/containers/ProtocolRankings/snapshot.server'
 import { fetchRaises } from '~/containers/Raises/api'
 import { fetchRWAStats } from '~/containers/RWA/api'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
@@ -266,7 +268,7 @@ export async function getChainOverviewData({
 	try {
 		const [
 			chartData,
-			protocolsByChain,
+			protocolRankingsSnapshot,
 			stablecoins,
 			inflowsData,
 			activeUsers,
@@ -294,14 +296,12 @@ export async function getChainOverviewData({
 				fallback: emptyLiteChart()
 			}),
 			timePhase('protocols_by_chain', () =>
-				getProtocolsByChain({
+				getProtocolRankingsSnapshot({
 					chain,
 					chainMetadata,
 					protocolMetadata,
-					protocolLlamaswapDataset,
-					shouldFetchDexs,
-					shouldFetchPerps,
-					includeExtendedMetrics: true
+					categoriesAndTagsMetadata,
+					protocolLlamaswapDataset
 				})
 			),
 			timePhase(
@@ -471,10 +471,17 @@ export async function getChainOverviewData({
 				fallback: null
 			})
 		])
-		if (!protocolsByChain) {
-			throw new Error(`Missing protocol aggregation for ${currentChainMetadata.name}`)
-		}
-		const { protocols, chains, fees, dexs, perps } = protocolsByChain
+		const { protocols: allProtocols, snapshot: rankingsSnapshot, availableActivityMetrics } = protocolRankingsSnapshot
+		const { chains, feeProtocols, dexs, perps } = protocolRankingsSnapshot.source
+		const initialProtocolPage = queryProtocolRankingSnapshot({
+			snapshot: {
+				snapshot: rankingsSnapshot,
+				protocols: allProtocols,
+				availableActivityMetrics
+			},
+			query: DEFAULT_PROTOCOL_RANKING_QUERY,
+			limit: PROTOCOL_RANKINGS_INITIAL_LIMIT
+		})
 		const stopOverviewTransform = phaseTimer?.start('overview_transform')
 
 		const {
@@ -526,18 +533,15 @@ export async function getChainOverviewData({
 					['Services', 'Chain', 'Foundation'].includes(t?.category)
 			) ?? null
 
-		const feeProtocols = fees?.protocols ?? null
 		let topProtocolsByFeesChart: Array<[string, number, string]> | null = null
-		if (feeProtocols && feeProtocols.length > 0) {
-			const protocolsByFees: Array<{ protocol: (typeof protocols)[number]; total24h: number }> = []
-			for (const protocol of protocols) {
+		if (feeProtocols?.length) {
+			const protocolsByFees: Array<{ protocol: (typeof allProtocols)[number]; total24h: number }> = []
+			for (const protocol of allProtocols) {
 				protocolsByFees.push({ protocol, total24h: protocol.fees?.total24h ?? 0 })
 			}
 			protocolsByFees.sort((a, b) => b.total24h - a.total24h)
 			topProtocolsByFeesChart = []
-			let protocolIndex = 0
 			for (const { protocol, total24h } of protocolsByFees) {
-				protocols[protocolIndex++] = protocol
 				if (!total24h || topProtocolsByFeesChart.length === 14) continue
 				topProtocolsByFeesChart.push([protocol.name, total24h, tokenIconUrl(protocol.name)])
 			}
@@ -619,14 +623,21 @@ export async function getChainOverviewData({
 			? getRwaActiveMcapForChain(rwaStats, currentChainMetadata.name)
 			: null
 		const descriptionMetrics = rwaActiveMcap != null ? [...charts, 'RWA Active Mcap'] : charts
-		const isDataAvailable = charts.length > 0 || protocols.length > 0 || rwaActiveMcap != null
+		const isDataAvailable = charts.length > 0 || allProtocols.length > 0 || rwaActiveMcap != null
 		const chainGeckoId = currentChainMetadata.gecko_id
 		const nftVolume = chain !== 'All' ? nftVolumesData?.[currentChainMetadata.name.toLowerCase()] : undefined
 
 		const result: IChainOverviewData = {
 			chain,
 			metadata: currentChainMetadata,
-			protocols,
+			protocols: initialProtocolPage.rows,
+			protocolRankings: {
+				nextCursor: initialProtocolPage.nextCursor,
+				snapshot: initialProtocolPage.snapshot,
+				total: initialProtocolPage.total,
+				hasMore: initialProtocolPage.hasMore,
+				availableActivityMetrics: initialProtocolPage.availableActivityMetrics
+			},
 			tvlChart,
 			tvlChartSummary,
 			extraTvlCharts,
@@ -662,9 +673,7 @@ export async function getChainOverviewData({
 				total7d: dexs?.total7d ?? null,
 				change_7dover7d: dexs?.change_7dover7d ?? null,
 				dexsDominance: getDexDominance(cexVolume, dexs?.total24h ?? null),
-				chart: dexs
-					? dexs.totalDataChart.slice(-14).map((point): [number, number] => [point[0] * 1000, point[1]])
-					: null
+				chart: dexs ? dexs.recentChart.map((point): [number, number] => [point[0] * 1000, point[1]]) : null
 			},
 			perps: {
 				total24h: perps?.total24h ?? null,
@@ -691,11 +700,11 @@ export async function getChainOverviewData({
 			description:
 				currentChainMetadata.name === 'All'
 					? 'Comprehensive overview of all metrics tracked on all chains, including TVL, Stablecoins Mcap, DEXs Volume, Perps Volume, protocols on all chains. DefiLlama is committed to providing accurate data without ads or sponsored content, as well as transparency.'
-					: descriptionMetrics.length > 0 && protocols.length > 0
+					: descriptionMetrics.length > 0 && allProtocols.length > 0
 						? `Comprehensive overview of all metrics tracked on ${currentChainMetadata.name}, including ${descriptionMetrics.join(', ')}, and protocols on ${currentChainMetadata.name}.`
 						: descriptionMetrics.length > 0
 							? `Comprehensive overview of all metrics tracked on ${currentChainMetadata.name}, including ${descriptionMetrics.join(', ')}.`
-							: protocols.length > 0
+							: allProtocols.length > 0
 								? `Comprehensive overview of all metrics tracked on ${currentChainMetadata.name}, including protocols on ${currentChainMetadata.name}.`
 								: `Comprehensive overview of all metrics tracked on ${currentChainMetadata.name}`,
 			isDataAvailable,

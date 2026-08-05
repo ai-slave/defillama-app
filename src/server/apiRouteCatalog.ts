@@ -15,6 +15,7 @@ export interface ApiRouteCatalogEntry {
 export const privateApiRoutePaths = [
 	'cex/inflows',
 	'cex/inflows/batch',
+	'pro-dashboard/chart-builder-csv',
 	'pro-dashboard/delete',
 	'pro-dashboard/fetch',
 	'pro-dashboard/save',
@@ -54,6 +55,7 @@ export const dynamicApiRoutePaths = [
 	'maple/graphql',
 	'pro-dashboard/[dashboardId]/stream',
 	'pro-dashboard/protocol-catalog-source',
+	'protocol-rankings/export',
 	'pro-dashboard/token-usage',
 	'pro-dashboard/tokens/search',
 	'roundupMarkdown',
@@ -138,6 +140,7 @@ export const allApiRoutePaths = [
 	'page-data/chains/charts',
 	'page-data/dimension-adapters/chains-chart',
 	'pro-dashboard/[dashboardId]/stream',
+	'pro-dashboard/chart-builder-csv',
 	'pro-dashboard/delete',
 	'pro-dashboard/fetch',
 	'pro-dashboard/save',
@@ -156,6 +159,8 @@ export const allApiRoutePaths = [
 	'pro-dashboard/tokens/search',
 	'pro-dashboard/unified-table/[strategy]',
 	'protocol-icon',
+	'protocol-rankings',
+	'protocol-rankings/export',
 	'protocols/charts',
 	'research/articles/[id]/publish',
 	'research/articles/[id]/unpublish',
@@ -211,9 +216,11 @@ const routeMethodOverrides: Partial<Record<ApiRoutePath, readonly ApiRouteMethod
 	'market-makers/lead/claim': ['POST'],
 	'market-makers/lead/connect': ['POST'],
 	'pro-dashboard/delete': ['POST'],
+	'pro-dashboard/chart-builder-csv': ['POST'],
 	'pro-dashboard/save': ['POST'],
 	'maple/graphql': ['POST'],
 	'protocols/charts': ['GET', 'POST'],
+	'protocol-rankings/export': ['POST'],
 	'revalidate-instances': ['POST']
 }
 

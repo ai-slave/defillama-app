@@ -44,7 +44,14 @@ const chainProps = (name: string) =>
 		metadata: { name },
 		entityQuestions: [],
 		isDataAvailable: true,
-		protocols: []
+		protocols: [],
+		protocolRankings: {
+			nextCursor: null,
+			snapshot: 'abcdefghijklmnopqrst',
+			total: 0,
+			hasMore: false,
+			availableActivityMetrics: []
+		}
 	}) as unknown as IChainOverviewData
 
 beforeEach(() => {

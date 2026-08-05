@@ -10,7 +10,7 @@ import {
 	type SortingState
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { startTransition, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
+import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
@@ -48,7 +48,19 @@ import { CustomColumnModal } from './CustomColumnModal'
 import { parseProtocolTableColumnVisibility, replaceAliases, sampleProtocol } from './customColumnsUtils'
 import { createFormulaEvaluator, formatCustomColumnValue, getSortableValue } from './formula.service'
 import { prepareProtocolsForTable } from './prepareProtocolsForTable'
-import { getProtocolEarningsValue } from './readModel'
+import type { ProtocolRankingInitialPage } from './query'
+import { RemoteProtocolRankingsStatus, useRemoteProtocolRankingsTable } from './remoteTable'
+import {
+	PROTOCOL_RANKING_RESET_QUERY,
+	PROTOCOL_RANKING_RESET_STORAGE_KEYS,
+	PROTOCOL_RANKING_STORAGE_KEYS
+} from './settings'
+import {
+	getProtocolRankingSortValue,
+	PROTOCOL_RANKING_ACTIVITY_METRIC_KEYS,
+	type ProtocolRankingActivityMetricKey,
+	type ProtocolRankingSortKey
+} from './sortAccessors'
 import type { IProtocol } from './types'
 
 type ChainProtocolsTableProps = {
@@ -60,6 +72,8 @@ type ChainProtocolsTableProps = {
 	tvlSettings?: Record<TvlSettingsKey, boolean>
 	suppressTvlStrike?: boolean
 	showExtendedMetrics?: boolean
+	chain?: string
+	protocolRankings?: ProtocolRankingInitialPage
 }
 
 type TablePreset = (typeof TABLE_PRESET_VALUES)[number]
@@ -81,7 +95,11 @@ export const ChainProtocolsTable = (props: ChainProtocolsTableProps) => {
 	const storedMetricPreset = useStorageItem(tableMetricPresetKey, null)
 	const storedPeriod = useStorageItem(tablePeriodKey, null)
 	const normalizedLegacyFilterState = legacyFilterState === 'Volume' ? TABLE_PRESETS.SPOT : legacyFilterState
-	const tablePresets = getTablePresets(props.protocols, props.showExtendedMetrics ?? false)
+	const tablePresets = getTablePresets(
+		props.protocols,
+		props.showExtendedMetrics ?? false,
+		props.protocolRankings?.availableActivityMetrics
+	)
 	const metricPresetCandidate = storedMetricPreset ?? normalizedLegacyFilterState
 	const periodCandidate = storedPeriod ?? normalizedLegacyFilterState
 	const selectedMetricPreset =
@@ -107,49 +125,50 @@ const ChainProtocolsTableInner = ({
 	tvlSettings,
 	suppressTvlStrike = false,
 	showExtendedMetrics = false,
+	chain = 'All',
+	protocolRankings,
 	selectedMetricPreset,
 	selectedPeriod,
 	tablePresets
 }: ChainProtocolsTableInnerProps) => {
 	const { customColumns, setCustomColumns } = useCustomColumns()
+	const remoteEnabled = protocolRankings !== undefined
 
 	const router = useRouter()
 	const [globalExtraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const extraTvlsEnabled = tvlSettings ?? globalExtraTvlsEnabled
 	const minTvl = parseNumberQueryParam(router.query.minTvl)
 	const maxTvl = parseNumberQueryParam(router.query.maxTvl)
+	const [ignoreTvlRangeDuringReset, setIgnoreTvlRangeDuringReset] = useState(false)
+	const effectiveMinTvl = ignoreTvlRangeDuringReset ? null : minTvl
+	const effectiveMaxTvl = ignoreTvlRangeDuringReset ? null : maxTvl
+	useEffect(() => {
+		if (ignoreTvlRangeDuringReset && minTvl === null && maxTvl === null) setIgnoreTvlRangeDuringReset(false)
+	}, [ignoreTvlRangeDuringReset, maxTvl, minTvl])
 	const [nameSearch, setNameSearch] = useState('')
 	const deferredNameSearch = useDeferredValue(nameSearch.trim())
 	const columnFilters = useMemo(
-		() => (deferredNameSearch ? [{ id: 'name', value: deferredNameSearch }] : []),
-		[deferredNameSearch]
-	)
-
-	const finalProtocols = useMemo(
-		() =>
-			prepareProtocolsForTable({
-				protocols,
-				extraTvlsEnabled,
-				minTvl,
-				maxTvl,
-				suppressTvlStrike
-			}),
-		[protocols, extraTvlsEnabled, minTvl, maxTvl, suppressTvlStrike]
+		() => (!remoteEnabled && deferredNameSearch ? [{ id: 'name', value: deferredNameSearch }] : []),
+		[deferredNameSearch, remoteEnabled]
 	)
 
 	const rawColumnsInStorage = useStorageItem(tableColumnOptionsKey, defaultColumns)
 	const columnsInStorage = useDeferredValue(rawColumnsInStorage)
 	const availableActivityMetrics = useMemo(() => {
-		const available = new Set<ActivityMetricKey>()
+		const available = new Set<ProtocolRankingActivityMetricKey>()
 		if (!showExtendedMetrics) return available
+		if (remoteEnabled) {
+			for (const key of protocolRankings?.availableActivityMetrics ?? []) available.add(key)
+			return available
+		}
 		for (const protocol of protocols) {
-			for (const metricKey of ACTIVITY_METRIC_KEYS) {
+			for (const metricKey of PROTOCOL_RANKING_ACTIVITY_METRIC_KEYS) {
 				if (protocol[metricKey] !== undefined) available.add(metricKey)
 			}
-			if (available.size === ACTIVITY_METRIC_KEYS.length) break
+			if (available.size === PROTOCOL_RANKING_ACTIVITY_METRIC_KEYS.length) break
 		}
 		return available
-	}, [protocols, showExtendedMetrics])
+	}, [protocolRankings, protocols, remoteEnabled, showExtendedMetrics])
 	const availableColumnOptions = useMemo(
 		() =>
 			columnOptions.filter(
@@ -276,9 +295,68 @@ const ChainProtocolsTableInner = ({
 			id: selectedMetricPreset ? getMainColumnForPreset(selectedMetricPreset, selectedPeriod) : 'tvl'
 		}
 	])
+	// Persisted presets become available only after hydration; reconcile the SSR-safe TVL sort
+	// without remounting the table and losing search, expansion, or loaded-page state.
+	useEffect(() => {
+		if (!selectedMetricPreset && !selectedPeriod) return
+		const id = selectedMetricPreset ? getMainColumnForPreset(selectedMetricPreset, selectedPeriod) : 'tvl'
+		setSorting((current) =>
+			current.length === 1 && current[0]?.id === id && current[0]?.desc ? current : [{ id, desc: true }]
+		)
+	}, [getMainColumnForPreset, selectedMetricPreset, selectedPeriod])
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 	const sortingRef = useRef(sorting)
 	sortingRef.current = sorting
+	const chainQuery = router.query.chain
+	const activeChain = Array.isArray(chainQuery) ? chainQuery[0] : chainQuery
+	const exportColumns = useMemo(() => {
+		const selected = new Set(selectedColumns)
+		const result = []
+		for (const column of mergedColumns) {
+			if (!selected.has(column.key)) continue
+			result.push({
+				key: column.key,
+				name: column.name,
+				...('isCustom' in column && column.isCustom && column.formula ? { formula: column.formula } : {})
+			})
+		}
+		return result
+	}, [mergedColumns, selectedColumns])
+	const remoteRankings = useRemoteProtocolRankingsTable({
+		enabled: remoteEnabled,
+		chain,
+		initialRows: protocols,
+		initialPage: protocolRankings,
+		nameSearch,
+		minTvl: effectiveMinTvl,
+		maxTvl: effectiveMaxTvl,
+		sorting,
+		customColumns,
+		extraTvlsEnabled,
+		exportColumns,
+		exportFilename: `defillama-${activeChain ?? 'all'}-protocols.csv`
+	})
+	const finalProtocols = useMemo(
+		() =>
+			remoteEnabled
+				? remoteRankings.rows
+				: prepareProtocolsForTable({
+						protocols,
+						extraTvlsEnabled,
+						minTvl: effectiveMinTvl,
+						maxTvl: effectiveMaxTvl,
+						suppressTvlStrike
+					}),
+		[
+			effectiveMaxTvl,
+			effectiveMinTvl,
+			extraTvlsEnabled,
+			remoteEnabled,
+			protocols,
+			remoteRankings.rows,
+			suppressTvlStrike
+		]
+	)
 
 	const allColumns = useMemo(() => {
 		const customColumnDefs = customColumns.map((col, idx) => {
@@ -384,7 +462,7 @@ const ChainProtocolsTableInner = ({
 		columns: allColumns,
 		state: {
 			sorting,
-			expanded,
+			expanded: (remoteEnabled ? remoteRankings.searchExpanded : null) ?? expanded,
 			columnVisibility,
 			columnFilters
 		},
@@ -395,10 +473,13 @@ const ChainProtocolsTableInner = ({
 		filterFromLeafRows: true,
 		onExpandedChange: (updater) => startTransition(() => setExpanded(updater)),
 		getSubRows: (row: IProtocol) => row.childProtocols,
+		getRowId: (row, index, parent) => row.id ?? `${parent?.id ?? 'root'}:${row.slug || index}`,
 		onSortingChange: setSorting,
+		manualSorting: remoteEnabled,
+		manualFiltering: remoteEnabled,
 		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getSortedRowModel: getSortedRowModel(),
+		getFilteredRowModel: remoteEnabled ? undefined : getFilteredRowModel(),
+		getSortedRowModel: remoteEnabled ? undefined : getSortedRowModel(),
 		getExpandedRowModel: getExpandedRowModel()
 	})
 
@@ -429,14 +510,12 @@ const ChainProtocolsTableInner = ({
 		setNameSearch('')
 		setExpanded({})
 		setSorting([{ id: 'tvl', desc: true }])
-		removeStorageItem(legacyTableFilterStateKey)
-		removeStorageItem(tableMetricPresetKey)
-		removeStorageItem(tablePeriodKey)
-		removeStorageItem(tableColumnOptionsKey)
-		void pushShallowQuery(router, { minTvl: undefined, maxTvl: undefined })
+		for (const key of PROTOCOL_RANKING_RESET_STORAGE_KEYS) removeStorageItem(key)
+		setIgnoreTvlRangeDuringReset(true)
+		void Promise.resolve(pushShallowQuery(router, PROTOCOL_RANKING_RESET_QUERY)).catch(() =>
+			setIgnoreTvlRangeDuringReset(false)
+		)
 	}
-	const chainQuery = router.query.chain
-	const activeChain = Array.isArray(chainQuery) ? chainQuery[0] : chainQuery
 	const primaryToolbarControls = (
 		<>
 			<label className={searchFieldInlineWrapperStyles}>
@@ -479,11 +558,15 @@ const ChainProtocolsTableInner = ({
 				onDeleteCustomColumn={handleDeleteCustomColumn}
 			/>
 			<TVLRange size="md" />
-			<CSVDownloadButton
-				prepareCsv={() => prepareTableCsv({ instance, filename: `defillama-${activeChain ?? 'all'}-protocols` })}
-				smol
-				size="md"
-			/>
+			{remoteEnabled ? (
+				remoteRankings.csvButton
+			) : (
+				<CSVDownloadButton
+					prepareCsv={() => prepareTableCsv({ instance, filename: `defillama-${activeChain ?? 'all'}-protocols` })}
+					smol
+					size="md"
+				/>
+			)}
 		</>
 	)
 	const secondaryToolbarControls = (
@@ -522,6 +605,18 @@ const ChainProtocolsTableInner = ({
 				</div>
 			)}
 			<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
+			{remoteEnabled ? (
+				<RemoteProtocolRankingsStatus
+					sentinelRef={remoteRankings.sentinelRef}
+					error={remoteRankings.error}
+					isReplacing={remoteRankings.isReplacing}
+					isLoadingMore={remoteRankings.isLoadingMore}
+					rowCount={remoteRankings.rows.length}
+					total={remoteRankings.total}
+					hasMore={remoteRankings.hasMore}
+					retry={remoteRankings.retry}
+				/>
+			) : null}
 			{customColumnDialogOpen ? (
 				<CustomColumnModal
 					dialogStore={customColumnDialogStore}
@@ -535,10 +630,10 @@ const ChainProtocolsTableInner = ({
 	)
 }
 
-const tableColumnOptionsKey = 'ptc'
-const legacyTableFilterStateKey = 'ptcfs'
-const tableMetricPresetKey = 'ptcmp'
-const tablePeriodKey = 'ptcp'
+const tableColumnOptionsKey = PROTOCOL_RANKING_STORAGE_KEYS.columns
+const legacyTableFilterStateKey = PROTOCOL_RANKING_STORAGE_KEYS.legacyPreset
+const tableMetricPresetKey = PROTOCOL_RANKING_STORAGE_KEYS.metricPreset
+const tablePeriodKey = PROTOCOL_RANKING_STORAGE_KEYS.period
 
 const TABLE_PRESETS = {
 	FEES: 'Fees',
@@ -599,11 +694,18 @@ function getTablePresetSelection(metric: TablePreset | null, period: TablePeriod
 	return null
 }
 
-function getTablePresets(protocols: Array<IProtocol>, showExtendedMetrics: boolean): readonly TablePreset[] {
+function getTablePresets(
+	protocols: Array<IProtocol>,
+	showExtendedMetrics: boolean,
+	availableActivityMetrics?: readonly string[]
+): readonly TablePreset[] {
 	if (!showExtendedMetrics) return BASE_TABLE_PRESET_VALUES
 
 	const presets: TablePreset[] = [...BASE_TABLE_PRESET_VALUES]
 	if (
+		availableActivityMetrics?.some((key) =>
+			['perps', 'normalizedVolume', 'activeLiquidity', 'openInterest'].includes(key)
+		) ||
 		protocols.some(
 			(protocol) => protocol.perps || protocol.normalizedVolume || protocol.activeLiquidity || protocol.openInterest
 		)
@@ -613,29 +715,6 @@ function getTablePresets(protocols: Array<IProtocol>, showExtendedMetrics: boole
 	return presets
 }
 
-type ActivityMetricKey =
-	| 'perps'
-	| 'normalizedVolume'
-	| 'activeLiquidity'
-	| 'openInterest'
-	| 'optionsPremiumVolume'
-	| 'optionsNotionalVolume'
-	| 'dexAggregators'
-	| 'perpsAggregators'
-	| 'bridgeAggregators'
-
-const ACTIVITY_METRIC_KEYS: readonly ActivityMetricKey[] = [
-	'perps',
-	'normalizedVolume',
-	'activeLiquidity',
-	'openInterest',
-	'optionsPremiumVolume',
-	'optionsNotionalVolume',
-	'dexAggregators',
-	'perpsAggregators',
-	'bridgeAggregators'
-]
-
 type ProtocolTableColumnOption = {
 	name: string
 	key: string
@@ -644,17 +723,17 @@ type ProtocolTableColumnOption = {
 	snapshot?: boolean
 	extended?: boolean
 	defaultVisible?: boolean
-	metricKey?: ActivityMetricKey
+	metricKey?: ProtocolRankingActivityMetricKey
 }
 
 const ACTIVITY_PERIODS = [
-	{ field: 'total24h', suffix: '24h', tablePeriod: TABLE_PERIODS.ONE_DAY },
-	{ field: 'total7d', suffix: '7d', tablePeriod: TABLE_PERIODS.SEVEN_DAYS },
-	{ field: 'total30d', suffix: '30d', tablePeriod: TABLE_PERIODS.ONE_MONTH }
+	{ suffix: '24h', tablePeriod: TABLE_PERIODS.ONE_DAY },
+	{ suffix: '7d', tablePeriod: TABLE_PERIODS.SEVEN_DAYS },
+	{ suffix: '30d', tablePeriod: TABLE_PERIODS.ONE_MONTH }
 ] as const
 
 const EXTENDED_ACTIVITY_METRICS: Array<{
-	metricKey: Exclude<ActivityMetricKey, 'openInterest' | 'activeLiquidity'>
+	metricKey: Exclude<ProtocolRankingActivityMetricKey, 'openInterest' | 'activeLiquidity'>
 	idPrefix: string
 	label: string
 	group: TABLE_COLUMN_GROUPS
@@ -928,22 +1007,23 @@ export function getProtocolRankingPresetColumnVisibility(
 
 const columnHelper = createColumnHelper<IProtocol>()
 
+const protocolRankingAccessor = (key: ProtocolRankingSortKey) => (row: IProtocol) => {
+	const value = getProtocolRankingSortValue(row, key)
+	return typeof value === 'number' ? value : undefined
+}
+
 const activityMetricColumn = ({
-	metricKey,
-	period,
 	id,
 	header,
 	headerHelperText,
 	headerClassName
 }: {
-	metricKey: ActivityMetricKey
-	period: 'total24h' | 'total7d' | 'total30d'
-	id: string
+	id: ProtocolRankingSortKey
 	header: string
 	headerHelperText: string
 	headerClassName: string
 }) =>
-	columnHelper.accessor((row) => row[metricKey]?.[period] ?? undefined, {
+	columnHelper.accessor(protocolRankingAccessor(id), {
 		id,
 		header,
 		cell: (info) =>
@@ -961,9 +1041,7 @@ const activityMetricColumnsByGroup = (group: TABLE_COLUMN_GROUPS) =>
 	EXTENDED_ACTIVITY_METRICS.filter((metric) => metric.group === group).flatMap((metric) =>
 		ACTIVITY_PERIODS.map((period, index) =>
 			activityMetricColumn({
-				metricKey: metric.metricKey,
-				period: period.field,
-				id: `${metric.idPrefix}_${period.suffix}`,
+				id: `${metric.idPrefix}_${period.suffix}` as ProtocolRankingSortKey,
 				header: `${metric.label} ${period.suffix}`,
 				headerHelperText: [metric.helperText[index], metric.overlapWarning].filter(Boolean).join('. '),
 				headerClassName: metric.widths[index]
@@ -984,7 +1062,9 @@ const columns = [
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-12' : 'pl-6'}`}>
 					{row.subRows?.length > 0 ? (
 						<button
+							type="button"
 							className="absolute -left-0.5"
+							aria-expanded={row.getIsExpanded()}
 							{...{
 								onClick: row.getToggleExpandedHandler()
 							}}
@@ -992,12 +1072,12 @@ const columns = [
 							{row.getIsExpanded() ? (
 								<>
 									<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
-									<span className="sr-only">View child protocols</span>
+									<span className="sr-only">Hide child protocols</span>
 								</>
 							) : (
 								<>
 									<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
-									<span className="sr-only">Hide child protocols</span>
+									<span className="sr-only">View child protocols</span>
 								</>
 							)}
 						</button>
@@ -1060,7 +1140,7 @@ const columns = [
 		id: 'tvl',
 		header: 'TVL',
 		columns: [
-			columnHelper.accessor((row) => row.tvl?.default?.tvl ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('tvl'), {
 				id: 'tvl',
 				header: 'TVL',
 				cell: ({ row }) =>
@@ -1081,7 +1161,7 @@ const columns = [
 					headerHelperText: 'Value of all coins held in smart contracts of the protocol'
 				}
 			}),
-			columnHelper.accessor((row) => row.tvlChange?.change1d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('change_1d'), {
 				id: 'change_1d',
 				header: '1d Change',
 				cell: ({ getValue }) => <PercentChange percent={getValue()} />,
@@ -1091,7 +1171,7 @@ const columns = [
 					headerHelperText: 'Change in TVL in the last 24 hours'
 				}
 			}),
-			columnHelper.accessor((row) => row.tvlChange?.change7d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('change_7d'), {
 				id: 'change_7d',
 				header: '7d Change',
 				cell: ({ getValue }) => <PercentChange percent={getValue()} />,
@@ -1101,7 +1181,7 @@ const columns = [
 					headerHelperText: 'Change in TVL in the last 7 days'
 				}
 			}),
-			columnHelper.accessor((row) => row.tvlChange?.change1m ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('change_1m'), {
 				id: 'change_1m',
 				header: '1m Change',
 				cell: ({ getValue }) => <PercentChange percent={getValue()} />,
@@ -1114,7 +1194,7 @@ const columns = [
 		],
 		meta: { headerHelperText: 'Value of all coins held in smart contracts of the protocol' }
 	}),
-	columnHelper.accessor((row) => row.mcap ?? undefined, {
+	columnHelper.accessor(protocolRankingAccessor('mcap'), {
 		id: 'mcap',
 		header: 'Market Cap',
 		cell: ({ getValue }) =>
@@ -1127,7 +1207,7 @@ const columns = [
 			headerHelperText: 'Current protocol token market cap'
 		}
 	}),
-	columnHelper.accessor((row) => row.tokenPrice ?? undefined, {
+	columnHelper.accessor(protocolRankingAccessor('token_price'), {
 		id: 'token_price',
 		header: 'Token Price',
 		cell: ({ getValue }) =>
@@ -1140,7 +1220,7 @@ const columns = [
 			headerHelperText: 'Current protocol token price'
 		}
 	}),
-	columnHelper.accessor((row) => row.mcaptvl ?? undefined, {
+	columnHelper.accessor(protocolRankingAccessor('mcaptvl'), {
 		id: 'mcaptvl',
 		header: 'Mcap/TVL',
 		cell: (info) => formatRatio(info.getValue()),
@@ -1154,7 +1234,7 @@ const columns = [
 		id: 'fees',
 		header: 'Fees & Revenue',
 		columns: [
-			columnHelper.accessor((row) => row.fees?.total24h ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('fees_24h'), {
 				id: 'fees_24h',
 				header: 'Fees 24h',
 				cell: (info) =>
@@ -1167,7 +1247,7 @@ const columns = [
 					headerHelperText: definitions.fees.protocol['24h']
 				}
 			}),
-			columnHelper.accessor((row) => row.revenue?.total24h ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('revenue_24h'), {
 				id: 'revenue_24h',
 				header: 'Revenue 24h',
 				cell: (info) =>
@@ -1180,7 +1260,7 @@ const columns = [
 					headerHelperText: definitions.revenue.protocol['24h']
 				}
 			}),
-			columnHelper.accessor((row) => row.holdersRevenue?.total24h ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('holdersRevenue_24h'), {
 				id: 'holdersRevenue_24h',
 				header: 'Holders Revenue 24h',
 				cell: (info) =>
@@ -1193,7 +1273,7 @@ const columns = [
 					headerHelperText: definitions.holdersRevenue.protocol['24h']
 				}
 			}),
-			columnHelper.accessor((row) => row.emissions?.total24h ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('emissions_24h'), {
 				id: 'emissions_24h',
 				header: 'Incentives 24h',
 				cell: (info) =>
@@ -1206,7 +1286,7 @@ const columns = [
 					headerHelperText: definitions.incentives.protocol['24h']
 				}
 			}),
-			columnHelper.accessor((row) => row.fees?.total7d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('fees_7d'), {
 				id: 'fees_7d',
 				header: 'Fees 7d',
 				cell: (info) =>
@@ -1219,7 +1299,7 @@ const columns = [
 					headerHelperText: definitions.fees.protocol['7d']
 				}
 			}),
-			columnHelper.accessor((row) => row.revenue?.total7d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('revenue_7d'), {
 				id: 'revenue_7d',
 				header: 'Revenue 7d',
 				cell: (info) =>
@@ -1232,7 +1312,7 @@ const columns = [
 					headerHelperText: definitions.revenue.protocol['7d']
 				}
 			}),
-			columnHelper.accessor((row) => row.holdersRevenue?.total7d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('holdersRevenue_7d'), {
 				id: 'holdersRevenue_7d',
 				header: 'Holders Revenue 7d',
 				cell: (info) =>
@@ -1245,7 +1325,7 @@ const columns = [
 					headerHelperText: definitions.holdersRevenue.protocol['7d']
 				}
 			}),
-			columnHelper.accessor((row) => row.emissions?.total7d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('emissions_7d'), {
 				id: 'emissions_7d',
 				header: 'Incentives 7d',
 				cell: (info) =>
@@ -1258,7 +1338,7 @@ const columns = [
 					headerHelperText: definitions.incentives.protocol['7d']
 				}
 			}),
-			columnHelper.accessor((row) => row.fees?.total30d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('fees_30d'), {
 				id: 'fees_30d',
 				header: 'Fees 30d',
 				cell: (info) =>
@@ -1271,7 +1351,7 @@ const columns = [
 					headerHelperText: definitions.fees.protocol['30d']
 				}
 			}),
-			columnHelper.accessor((row) => row.revenue?.total30d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('revenue_30d'), {
 				id: 'revenue_30d',
 				header: 'Revenue 30d',
 				cell: (info) =>
@@ -1284,7 +1364,7 @@ const columns = [
 					headerHelperText: definitions.revenue.protocol['30d']
 				}
 			}),
-			columnHelper.accessor((row) => row.holdersRevenue?.total30d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('holdersRevenue_30d'), {
 				id: 'holdersRevenue_30d',
 				header: 'Holders Revenue 30d',
 				cell: (info) =>
@@ -1297,7 +1377,7 @@ const columns = [
 					headerHelperText: definitions.holdersRevenue.protocol['30d']
 				}
 			}),
-			columnHelper.accessor((row) => row.emissions?.total30d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('emissions_30d'), {
 				id: 'emissions_30d',
 				header: 'Incentives 30d',
 				cell: (info) =>
@@ -1310,7 +1390,7 @@ const columns = [
 					headerHelperText: definitions.incentives.protocol['30d']
 				}
 			}),
-			columnHelper.accessor((row) => row.fees?.total1y ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('fees_1y'), {
 				id: 'fees_1y',
 				header: 'Fees 1Y',
 				cell: (info) =>
@@ -1323,7 +1403,7 @@ const columns = [
 					headerHelperText: definitions.fees.protocol['1y']
 				}
 			}),
-			columnHelper.accessor((row) => row.fees?.monthlyAverage1y ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('average_fees_1y'), {
 				id: 'average_fees_1y',
 				header: 'Monthly Avg 1Y Fees',
 				cell: (info) =>
@@ -1336,7 +1416,7 @@ const columns = [
 					headerHelperText: definitions.fees.protocol['monthlyAverage1y']
 				}
 			}),
-			columnHelper.accessor((row) => row.revenue?.total1y ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('revenue_1y'), {
 				id: 'revenue_1y',
 				header: 'Revenue 1Y',
 				cell: (info) =>
@@ -1349,7 +1429,7 @@ const columns = [
 					headerHelperText: definitions.revenue.protocol['1y']
 				}
 			}),
-			columnHelper.accessor((row) => row.holdersRevenue?.total1y ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('holdersRevenue_1y'), {
 				id: 'holdersRevenue_1y',
 				header: 'Holders Revenue 1Y',
 				cell: (info) =>
@@ -1362,7 +1442,7 @@ const columns = [
 					headerHelperText: definitions.holdersRevenue.protocol['1y']
 				}
 			}),
-			columnHelper.accessor((row) => row.revenue?.monthlyAverage1y ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('average_revenue_1y'), {
 				id: 'average_revenue_1y',
 				header: 'Monthly Avg 1Y Rev',
 				cell: (info) =>
@@ -1375,7 +1455,7 @@ const columns = [
 					headerHelperText: definitions.revenue.protocol['monthlyAverage1y']
 				}
 			}),
-			columnHelper.accessor((row) => row.holdersRevenue?.monthlyAverage1y ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('average_holdersRevenue_1y'), {
 				id: 'average_holdersRevenue_1y',
 				header: 'Monthly Avg 1Y Holders Revenue',
 				cell: (info) =>
@@ -1388,7 +1468,7 @@ const columns = [
 					headerHelperText: definitions.holdersRevenue.protocol['monthlyAverage1y']
 				}
 			}),
-			columnHelper.accessor((row) => row.emissions?.total1y ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('emissions_1y'), {
 				id: 'emissions_1y',
 				header: 'Incentives 1Y',
 				cell: (info) =>
@@ -1401,7 +1481,7 @@ const columns = [
 					headerHelperText: definitions.incentives.protocol['1y']
 				}
 			}),
-			columnHelper.accessor((row) => row.emissions?.monthlyAverage1y ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('average_emissions_1y'), {
 				id: 'average_emissions_1y',
 				header: 'Monthly Avg 1Y Incentives',
 				cell: (info) =>
@@ -1414,7 +1494,7 @@ const columns = [
 					headerHelperText: definitions.incentives.protocol['monthlyAverage1y']
 				}
 			}),
-			columnHelper.accessor((row) => row.fees?.totalAllTime ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('fees_cumulative'), {
 				id: 'fees_cumulative',
 				header: 'Cumulative Fees',
 				cell: (info) =>
@@ -1427,7 +1507,7 @@ const columns = [
 					headerHelperText: definitions.fees.protocol['cumulative']
 				}
 			}),
-			columnHelper.accessor((row) => row.revenue?.totalAllTime ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('cumulativeRevenue'), {
 				id: 'cumulativeRevenue',
 				header: 'Cumulative Revenue',
 				cell: (info) =>
@@ -1440,7 +1520,7 @@ const columns = [
 					headerHelperText: definitions.revenue.protocol['cumulative']
 				}
 			}),
-			columnHelper.accessor((row) => row.holdersRevenue?.totalAllTime ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('cumulativeHoldersRevenue'), {
 				id: 'cumulativeHoldersRevenue',
 				header: 'Cumulative Holders Revenue',
 				cell: (info) =>
@@ -1453,7 +1533,7 @@ const columns = [
 					headerHelperText: definitions.holdersRevenue.protocol['cumulative']
 				}
 			}),
-			columnHelper.accessor((row) => row.emissions?.totalAllTime ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('cumulativeEmissions'), {
 				id: 'cumulativeEmissions',
 				header: 'Cumulative Incentives',
 				cell: (info) =>
@@ -1466,7 +1546,7 @@ const columns = [
 					headerHelperText: definitions.incentives.protocol['cumulative']
 				}
 			}),
-			columnHelper.accessor((row) => row.fees?.pf ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('pf'), {
 				id: 'pf',
 				header: 'P/F',
 				cell: (info) => (info.getValue() != null ? `${formatRatio(info.getValue())}x` : null),
@@ -1476,7 +1556,7 @@ const columns = [
 					headerHelperText: definitions.fees.protocol['pf']
 				}
 			}),
-			columnHelper.accessor((row) => row.revenue?.ps ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('ps'), {
 				id: 'ps',
 				header: 'P/S',
 				cell: (info) => (info.getValue() != null ? `${formatRatio(info.getValue())}x` : null),
@@ -1486,7 +1566,7 @@ const columns = [
 					headerHelperText: definitions.revenue.protocol['ps']
 				}
 			}),
-			columnHelper.accessor((row) => getProtocolEarningsValue(row.revenue?.total24h, row.emissions?.total24h), {
+			columnHelper.accessor(protocolRankingAccessor('earnings_24h'), {
 				id: 'earnings_24h',
 				header: 'Earnings 24h',
 				cell: (info) =>
@@ -1500,7 +1580,7 @@ const columns = [
 					headerHelperText: definitions.earnings.protocol['24h']
 				}
 			}),
-			columnHelper.accessor((row) => getProtocolEarningsValue(row.revenue?.total7d, row.emissions?.total7d), {
+			columnHelper.accessor(protocolRankingAccessor('earnings_7d'), {
 				id: 'earnings_7d',
 				header: 'Earnings 7d',
 				cell: (info) =>
@@ -1514,7 +1594,7 @@ const columns = [
 					headerHelperText: definitions.earnings.protocol['7d']
 				}
 			}),
-			columnHelper.accessor((row) => getProtocolEarningsValue(row.revenue?.total30d, row.emissions?.total30d), {
+			columnHelper.accessor(protocolRankingAccessor('earnings_30d'), {
 				id: 'earnings_30d',
 				header: 'Earnings 30d',
 				cell: (info) =>
@@ -1527,7 +1607,7 @@ const columns = [
 					headerHelperText: definitions.earnings.protocol['30d']
 				}
 			}),
-			columnHelper.accessor((row) => getProtocolEarningsValue(row.revenue?.total1y, row.emissions?.total1y), {
+			columnHelper.accessor(protocolRankingAccessor('earnings_1y'), {
 				id: 'earnings_1y',
 				header: 'Earnings 1Y',
 				cell: (info) =>
@@ -1540,27 +1620,24 @@ const columns = [
 					headerHelperText: definitions.earnings.protocol['1y']
 				}
 			}),
-			columnHelper.accessor(
-				(row) => getProtocolEarningsValue(row.revenue?.monthlyAverage1y, row.emissions?.monthlyAverage1y),
-				{
-					id: 'average_earnings_1y',
-					header: 'Monthly Avg 1Y Earnings',
-					cell: (info) =>
-						info.getValue() != null
-							? formatUsd(info.getValue(), {
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								})
-							: null,
-					meta: {
-						headerClassName: 'w-[204px] min-w-[204px]',
-						align: 'end',
-						headerHelperText: definitions.earnings.protocol['monthlyAverage1y']
-					}
+			columnHelper.accessor(protocolRankingAccessor('average_earnings_1y'), {
+				id: 'average_earnings_1y',
+				header: 'Monthly Avg 1Y Earnings',
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})
+						: null,
+				meta: {
+					headerClassName: 'w-[204px] min-w-[204px]',
+					align: 'end',
+					headerHelperText: definitions.earnings.protocol['monthlyAverage1y']
 				}
-			),
-			columnHelper.accessor((row) => getProtocolEarningsValue(row.revenue?.totalAllTime, row.emissions?.totalAllTime), {
+			}),
+			columnHelper.accessor(protocolRankingAccessor('cumulativeEarnings'), {
 				id: 'cumulativeEarnings',
 				header: 'Cumulative Earnings',
 				cell: (info) =>
@@ -1583,7 +1660,7 @@ const columns = [
 		id: 'spot',
 		header: 'Spot Volume',
 		columns: [
-			columnHelper.accessor((row) => row.dexs?.total24h ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('dex_volume_24h'), {
 				id: 'dex_volume_24h',
 				header: 'Spot Volume 24h',
 				cell: (info) =>
@@ -1596,7 +1673,7 @@ const columns = [
 					headerHelperText: definitions.dexs.protocol['24h']
 				}
 			}),
-			columnHelper.accessor((row) => row.dexs?.total7d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('dex_volume_7d'), {
 				id: 'dex_volume_7d',
 				header: 'Spot Volume 7d',
 				cell: (info) =>
@@ -1609,7 +1686,7 @@ const columns = [
 					headerHelperText: definitions.dexs.protocol['7d']
 				}
 			}),
-			columnHelper.accessor((row) => row.dexs?.total30d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('dex_volume_30d'), {
 				id: 'dex_volume_30d',
 				header: 'Spot Volume 30d',
 				cell: (info) =>
@@ -1622,7 +1699,7 @@ const columns = [
 					headerHelperText: definitions.dexs.protocol['30d']
 				}
 			}),
-			columnHelper.accessor((row) => row.dexs?.change_7dover7d ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('dex_volume_change_7d'), {
 				id: 'dex_volume_change_7d',
 				header: 'Spot Change 7d',
 				cell: ({ getValue }) => (getValue() !== 0 ? <PercentChange percent={getValue()} /> : null),
@@ -1632,7 +1709,7 @@ const columns = [
 					headerHelperText: definitions.dexs.protocol['change7d']
 				}
 			}),
-			columnHelper.accessor((row) => row.dexs?.totalAllTime ?? undefined, {
+			columnHelper.accessor(protocolRankingAccessor('dex_cumulative_volume'), {
 				id: 'dex_cumulative_volume',
 				header: 'Spot Cumulative Volume',
 				cell: (info) =>
@@ -1657,16 +1734,12 @@ const columns = [
 		columns: [
 			...activityMetricColumnsByGroup(TABLE_COLUMN_GROUPS.PERPS),
 			activityMetricColumn({
-				metricKey: 'openInterest',
-				period: 'total24h',
 				id: 'open_interest',
 				header: 'Open Interest',
 				headerHelperText: definitions.openInterest.protocol,
 				headerClassName: 'w-[129px] min-w-[129px]'
 			}),
 			activityMetricColumn({
-				metricKey: 'activeLiquidity',
-				period: 'total24h',
 				id: 'active_liquidity',
 				header: 'Active Liquidity',
 				headerHelperText: definitions.activeLiquidity.protocol,

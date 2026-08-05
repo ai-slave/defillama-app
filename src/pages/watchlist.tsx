@@ -1,9 +1,9 @@
 import type { InferGetStaticPropsType } from 'next'
 import { useRouter } from 'next/router'
 import { tvlOptions } from '~/components/Filters/options'
-import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
 import { getChainsByCategory } from '~/containers/ChainsByCategory/queries'
 import { DefiWatchlistContainer } from '~/containers/DeFiWatchlist'
+import { getProtocolRankingsSnapshot } from '~/containers/ProtocolRankings/snapshot.server'
 import { getTokensSourceData } from '~/containers/Tokens/queries.server'
 import { TokensWatchlistContainer } from '~/containers/TokensWatchlist'
 import Layout from '~/layout'
@@ -13,8 +13,8 @@ import { withPerformanceLogging } from '~/utils/perf'
 export const getStaticProps = withPerformanceLogging('watchlist', async () => {
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 
-	const [{ protocols }, { chains }, tokenUniverse] = await Promise.all([
-		getChainOverviewData({
+	const [protocolSnapshot, { chains }, tokenUniverse] = await Promise.all([
+		getProtocolRankingsSnapshot({
 			chain: 'All',
 			chainMetadata: metadataCache.chainMetadata,
 			protocolMetadata: metadataCache.protocolMetadata,
@@ -34,7 +34,7 @@ export const getStaticProps = withPerformanceLogging('watchlist', async () => {
 	return {
 		props: {
 			chains,
-			protocols,
+			protocols: protocolSnapshot.protocols,
 			tokenUniverse
 		},
 		revalidate: maxAgeForNext([22])

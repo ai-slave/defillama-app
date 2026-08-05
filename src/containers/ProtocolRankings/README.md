@@ -28,6 +28,13 @@ Start from the route file in `src/pages`, then follow imports here when the page
 - `customColumnsUtils.ts`: custom protocol table column definitions.
 - `CustomColumnModal.tsx`: custom column UI.
 - `formula.service.ts`: formula evaluation for custom columns.
+- `snapshot.server.ts`: Redis-backed, versioned canonical ranking snapshots shared by ISR and API routes.
+- `sortAccessors.ts`: canonical typed sort registry shared by table columns, pagination, validation, and export.
+- `query.ts`: browser-safe ranking query types, validation, and signatures.
+- `pagination.server.ts`: global filtering, deterministic sorting, and snapshot-bound cursors with boundary validation.
+- `api.server.ts`: paginated ranking API over the canonical snapshot, with prepared row order cached once per query.
+- `remoteTable.tsx`: remote-only debounce, query construction, CSV, scroll sentinel, and progress UI.
+- `useProtocolRankingPages.ts`: stale-request cancellation, replacement requests, and incremental page loading.
 
 ## Data Flow
 
@@ -45,8 +52,10 @@ ChainOverview example:
 ```text
 ChainOverview/queries.server.tsx
   -> getProtocolsByChain(...)
-  -> ChainOverview page data
+  -> versioned canonical ranking snapshot
+  -> first 20 TVL-ranked rows in ChainOverview page data
   -> ProtocolRankings/ChainProtocolsTable
+  -> /api/public/protocol-rankings for 75-row incremental pages
 ```
 
 Watchlist example:
@@ -58,6 +67,29 @@ DeFiWatchlist
 ```
 
 Keep this shared row model stable. Changes here can affect multiple pages that do not live under `ProtocolRankings`.
+
+## Snapshot And Cache Lifecycle
+
+The cache layers have different jobs and deliberately different lifetimes:
+
+- The Redis `latest` pointer lives for 55 minutes. Its versioned, gzipped snapshot lives for 4 hours, so a cursor minted
+  before a refresh can continue reading its immutable row set after `latest` advances.
+- The process-local latest-snapshot cache lives for 5 minutes with no stale-while-revalidate window. On expiry, one caller
+  checks Redis while concurrent callers coalesce behind it. This prevents process uptime or a new deployment from extending
+  an expired shared pointer through another ISR cycle. Versioned process-local snapshots still live for 4 hours.
+- A filtered/sorted row order is cached in-process for 5 minutes per chain, snapshot, and canonical query signature. All
+  cursor pages and the full CSV export reuse that order instead of sorting the full snapshot again.
+- Serialized API pages are cached in-process for 5 minutes. The HTTP response separately uses 30-second browser freshness,
+  5-minute CDN freshness, and 10-minute stale-while-revalidate.
+- The browser keeps only one active query's loaded pages. Replacement requests retain those visible rows until the latest
+  response wins; they do not retain parallel copies for prior presets or searches. The virtual table bounds rendered DOM.
+
+If a requested versioned snapshot has expired, the API returns `409 snapshot_mismatch`; the client restarts that query at
+the latest snapshot. Do not shorten the versioned lifetime below the latest-pointer or cursor-use window.
+
+The canonical snapshot also retains the compact chain list and adapter summaries already produced while assembling rows.
+ChainOverview consumes those values during ISR so it does not refetch the same adapter sources. This summary is fixed and
+small (including only a 14-point DEX chart); paginated API responses expose ranking rows, not this server-only summary.
 
 ## Metric Semantics
 
@@ -93,8 +125,22 @@ Important rules:
   venue volume because the same trade can appear in both.
 - Period presets always retain the latest TVL, Open Interest, and Active Liquidity snapshots alongside the selected
   TVL change and flow period. Other columns without a period are not implicitly included.
-- The ranking search filters the already-loaded virtualized table by protocol name only. It does not issue another
-  server request or build a second protocol dataset.
+- On the homepage and ChainOverview routes, ranking search is debounced and queries protocol names across the complete
+  canonical server snapshot. Sorting, presets, periods, additive TVL settings, and TVL bounds replace the current page
+  from that same full snapshot while retaining visible rows until the latest request wins. Other shared-table consumers
+  keep local table behavior.
+- ChainOverview ISR includes only the first 20 default TVL-ranked rows. Subsequent pages contain 75 rows and load near
+  the scroll boundary; there is no one-shot background request for the remaining protocols.
+- Snapshot tokens are embedded in cursors, and each offset is checked against its prior sort value and protocol ID.
+  Sort values use canonical protocol IDs as deterministic tie-breakers.
+  A still-retained old snapshot serves its own cursor; an expired snapshot returns a mismatch so the client starts a
+  fresh first page rather than mixing versions.
+- Parent rows include their eligible children in the same page row, so expansion is immediate. Child-name searches
+  return and automatically expand the parent with only its matching children; direct parent-name matches remain
+  collapsed. Normal pages include all of that parent's children.
+- ChainOverview CSV downloads use the separate server export route over the full filtered/sorted snapshot and selected
+  local columns. Export never depends on how many scroll pages the browser has loaded and emits the complete matching
+  top-level ranking set without flattening nested children into duplicate records.
 - The second-row Reset action restores the compact overview columns and TVL sort, clears name search, expanded rows,
   metric/period preset storage, legacy preset storage, column visibility storage, and the URL-backed TVL range. It
   preserves custom-column definitions because resetting filters must not delete user-authored formulas.

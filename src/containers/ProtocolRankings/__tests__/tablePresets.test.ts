@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest'
+import { PROTOCOL_RANKING_RESET_QUERY, PROTOCOL_RANKING_RESET_STORAGE_KEYS } from '../settings'
 import { getProtocolRankingDefaultColumnVisibility, getProtocolRankingPresetColumnVisibility } from '../Table'
 
 const primaryPresets = ['Fees', 'Revenue', 'Spot', 'Perps', 'TVL'] as const
 
 describe('Protocol Rankings period presets', () => {
+	it('keeps Reset scoped to ranking state while clearing both TVL bounds', () => {
+		expect(PROTOCOL_RANKING_RESET_STORAGE_KEYS).toEqual(['ptcfs', 'ptcmp', 'ptcp', 'ptc'])
+		expect(PROTOCOL_RANKING_RESET_QUERY).toEqual({ minTvl: undefined, maxTvl: undefined })
+	})
 	it('restores the compact overview and hides custom columns by default', () => {
 		const visibility = getProtocolRankingDefaultColumnVisibility(2)
 

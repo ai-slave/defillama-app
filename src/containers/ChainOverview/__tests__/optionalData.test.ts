@@ -38,6 +38,21 @@ vi.mock('~/containers/Incentives/queries', () => ({
 	getChainIncentivesFromAggregatedEmissions: mocks.getChainIncentivesFromAggregatedEmissions
 }))
 vi.mock('~/containers/ProtocolRankings/queries.server', () => ({ getProtocolsByChain: mocks.getProtocolsByChain }))
+vi.mock('~/containers/ProtocolRankings/snapshot.server', () => ({
+	getProtocolRankingsSnapshot: async () => {
+		const result = await mocks.getProtocolsByChain()
+		if (!result) throw new Error('Missing protocol aggregation for Ethereum')
+		const { protocols, chains, fees, dexs, perps } = result
+		return {
+			chain: 'Ethereum',
+			createdAt: 1,
+			snapshot: 'test-snapshot',
+			protocols,
+			availableActivityMetrics: [],
+			source: { chains, feeProtocols: fees?.protocols ?? null, dexs, perps }
+		}
+	}
+}))
 vi.mock('~/containers/Raises/api', () => ({ fetchRaises: mocks.fetchRaises }))
 vi.mock('~/containers/RWA/api', () => ({ fetchRWAStats: mocks.fetchRWAStats }))
 vi.mock('~/containers/Stablecoins/api', () => ({ fetchStablecoinAssetsApi: mocks.fetchStablecoinAssetsApi }))
@@ -210,10 +225,21 @@ describe('getChainOverviewData optional sections', () => {
 	it('keeps the top fee protocol ordering, positive-value filter, and 14-row limit', async () => {
 		resetMocks()
 		const protocols = Array.from({ length: 16 }, (_, index) => ({
+			id: `protocol-${index + 1}`,
 			name: `Protocol ${index + 1}`,
+			slug: `protocol-${index + 1}`,
+			tvl: {
+				default: { tvl: 100 - index, tvlPrevDay: 100 - index, tvlPrevWeek: 100 - index, tvlPrevMonth: 100 - index }
+			},
 			fees: { total24h: index + 1 }
 		}))
-		protocols.push({ name: 'Zero Protocol', fees: { total24h: 0 } })
+		protocols.push({
+			id: 'zero-protocol',
+			name: 'Zero Protocol',
+			slug: 'zero-protocol',
+			tvl: { default: { tvl: 0, tvlPrevDay: 0, tvlPrevWeek: 0, tvlPrevMonth: 0 } },
+			fees: { total24h: 0 }
+		})
 		mocks.getProtocolsByChain.mockResolvedValue({
 			protocols,
 			chains: [],
@@ -233,7 +259,7 @@ describe('getChainOverviewData optional sections', () => {
 			Array.from({ length: 14 }, (_, index) => [`Protocol ${16 - index}`, 16 - index])
 		)
 		expect(data?.protocols.map((protocol) => protocol.name)).toEqual([
-			...Array.from({ length: 16 }, (_, index) => `Protocol ${16 - index}`),
+			...Array.from({ length: 16 }, (_, index) => `Protocol ${index + 1}`),
 			'Zero Protocol'
 		])
 	})

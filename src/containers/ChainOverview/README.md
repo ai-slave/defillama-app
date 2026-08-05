@@ -51,8 +51,10 @@ Protocol rows on chain pages:
 
 ```text
 getChainOverviewData(...)
-  -> getProtocolsByChain(...)
+  -> cached ProtocolRankings snapshot
+  -> first 20 rows in static page data
   -> ProtocolRankings/ChainProtocolsTable
+  -> paginated ranking API while scrolling
 ```
 
 Keep chain overview orchestration here, but keep shared protocol table/read-model behavior in `ProtocolRankings`.

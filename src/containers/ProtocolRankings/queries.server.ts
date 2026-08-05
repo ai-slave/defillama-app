@@ -664,6 +664,7 @@ export const getProtocolsByChain = async ({
 		if (!displayName || !metadataChains) continue
 		const hasDisplayTvl = protocol.category !== 'Bridge' && (chain !== 'All' || protocol.tvl != null)
 		const childRow: IChildProtocol = {
+			id: protocol.defillamaId,
 			name: displayName,
 			slug: slug(displayName),
 			logo: protocol.logo,
@@ -826,6 +827,7 @@ export const getProtocolsByChain = async ({
 		const publicChildren: IChildProtocol[] = []
 		for (const child of childProtocols) publicChildren.push(child.row)
 		const parentRow: IProtocol = {
+			id: parentProtocol.id,
 			name: parentMetadata.displayName,
 			slug: slug(parentMetadata.displayName),
 			logo: parentProtocol.logo,

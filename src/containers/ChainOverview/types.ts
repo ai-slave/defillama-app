@@ -1,3 +1,4 @@
+import type { ProtocolRankingInitialPage } from '~/containers/ProtocolRankings/query'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import type { Raise } from '~/containers/Raises/model'
 import type { IChainMetadata, IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
@@ -11,6 +12,7 @@ export interface IChainOverviewData {
 	chain: string
 	metadata: IChainMetadata
 	protocols: Array<IProtocol>
+	protocolRankings: ProtocolRankingInitialPage
 	tvlChart: Array<[number, number]>
 	/** Pre-computed TVL values to avoid client-side iteration */
 	tvlChartSummary: {

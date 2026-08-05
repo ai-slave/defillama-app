@@ -138,8 +138,13 @@ export function ChainOverview(props: IChainOverviewData) {
 							</div>
 						) : null}
 						<NewsletterSignup layout="strip" />
-						{props.protocols.length > 0 ? (
-							<ChainProtocolsTable protocols={props.protocols} showExtendedMetrics />
+						{props.protocolRankings.total > 0 ? (
+							<ChainProtocolsTable
+								protocols={props.protocols}
+								protocolRankings={props.protocolRankings}
+								chain={props.chain}
+								showExtendedMetrics
+							/>
 						) : null}
 					</>
 				)}
