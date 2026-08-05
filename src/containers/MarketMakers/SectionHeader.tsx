@@ -8,7 +8,7 @@ import { forgdPrimaryLinkStyles } from './styles'
 export function RfqButton() {
 	return (
 		<a
-			href="https://www.forgd.com/tools/engage-a-market-maker"
+			href="https://www.forgd.com/engage-a-market-maker/request-for-quotations"
 			target="_blank"
 			rel="noreferrer noopener"
 			className={forgdPrimaryLinkStyles}
