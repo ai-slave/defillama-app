@@ -65,6 +65,11 @@ type ChainProtocolsTableProps = {
 type TablePreset = (typeof TABLE_PRESET_VALUES)[number]
 type TablePeriod = (typeof TABLE_PERIODS_VALUES)[number]
 
+type TablePresetSelection =
+	| { type: 'metric'; metric: TablePreset }
+	| { type: 'period'; period: TablePeriod }
+	| { type: 'metric-period'; metric: TablePreset; period: TablePeriod }
+
 type ChainProtocolsTableInnerProps = ChainProtocolsTableProps & {
 	selectedMetricPreset: TablePreset | null
 	selectedPeriod: TablePeriod | null
@@ -172,6 +177,10 @@ const ChainProtocolsTableInner = ({
 	const [customColumnModalInitialValues, setCustomColumnModalInitialValues] = useState<
 		Partial<CustomColumnDef> | undefined
 	>(undefined)
+	const presetSelection = useMemo(
+		() => getTablePresetSelection(selectedMetricPreset, selectedPeriod),
+		[selectedMetricPreset, selectedPeriod]
+	)
 
 	const customColumnDialogStore = Ariakit.useDialogStore()
 	const customColumnDialogOpen = Ariakit.useStoreState(customColumnDialogStore, 'open')
@@ -209,7 +218,9 @@ const ChainProtocolsTableInner = ({
 		if (newColumnKey) {
 			clearPresetSelection()
 			const allKeys = [...columnOptions.map((c) => c.key), ...next.map((_, idx) => `custom_formula_${idx}`)]
-			const ops = parseProtocolTableColumnVisibility(localStorage.getItem(tableColumnOptionsKey))
+			const ops = presetSelection
+				? getProtocolRankingPresetColumnVisibility(presetSelection, tablePresets)
+				: parseProtocolTableColumnVisibility(localStorage.getItem(tableColumnOptionsKey))
 			for (const key of allKeys) {
 				if (key === newColumnKey) {
 					ops[key] = true
@@ -231,18 +242,23 @@ const ChainProtocolsTableInner = ({
 			formatType: col.formatType
 		}))
 		const mergedColumns = [...availableColumnOptions, ...customColumnOptions]
-		const defaultColumnVisibility = getProtocolRankingDefaultColumnVisibility(customColumnOptions.length)
-
-		const parsedColumnVisibility = parseProtocolTableColumnVisibility(columnsInStorage)
-
-		const columnVisibility = { ...defaultColumnVisibility, ...parsedColumnVisibility }
+		// An active preset is canonical; persisted columns belong only to manual column selection.
+		const columnVisibility = presetSelection
+			? getProtocolRankingPresetColumnVisibility(presetSelection, tablePresets)
+			: {
+					...getProtocolRankingDefaultColumnVisibility(customColumnOptions.length),
+					...parseProtocolTableColumnVisibility(columnsInStorage)
+				}
+		if (presetSelection) {
+			for (const column of customColumnOptions) columnVisibility[column.key] = false
+		}
 		for (const column of columnOptions) {
 			if (column.extended && !availableColumnOptions.includes(column)) columnVisibility[column.key] = false
 		}
 		const selectedColumns = mergedColumns.flatMap((column) => (columnVisibility[column.key] ? [column.key] : []))
 
 		return { mergedColumns, columnVisibility, selectedColumns }
-	}, [availableColumnOptions, customColumns, columnsInStorage])
+	}, [availableColumnOptions, customColumns, columnsInStorage, presetSelection, tablePresets])
 
 	const setColumnOptions = (newColumns: string[]) => {
 		clearPresetSelection()
@@ -386,21 +402,28 @@ const ChainProtocolsTableInner = ({
 		getExpandedRowModel: getExpandedRowModel()
 	})
 
-	const applyPresetSelection = (metricPreset: TablePreset | null, period: TablePeriod | null) => {
-		const newColumns = getProtocolRankingPresetColumnVisibility(metricPreset, period, tablePresets)
-		for (let index = 0; index < customColumns.length; index++) newColumns[`custom_formula_${index}`] = false
-		setStorageItem(tableColumnOptionsKey, JSON.stringify(newColumns))
+	const setSortingForPresetSelection = (selection: TablePresetSelection) => {
+		const metricPreset = selection.type === 'period' ? null : selection.metric
+		const period = selection.type === 'metric' ? null : selection.period
 		setSorting([{ id: metricPreset ? getMainColumnForPreset(metricPreset, period) : 'tvl', desc: true }])
 	}
 	const setMetricPreset = (metricPreset: TablePreset) => {
 		removeStorageItem(legacyTableFilterStateKey)
 		setStorageItem(tableMetricPresetKey, metricPreset)
-		applyPresetSelection(metricPreset, selectedPeriod)
+		setSortingForPresetSelection(
+			selectedPeriod
+				? { type: 'metric-period', metric: metricPreset, period: selectedPeriod }
+				: { type: 'metric', metric: metricPreset }
+		)
 	}
 	const setPeriod = (period: TablePeriod) => {
 		removeStorageItem(legacyTableFilterStateKey)
 		setStorageItem(tablePeriodKey, period)
-		applyPresetSelection(selectedMetricPreset, period)
+		setSortingForPresetSelection(
+			selectedMetricPreset
+				? { type: 'metric-period', metric: selectedMetricPreset, period }
+				: { type: 'period', period }
+		)
 	}
 	const resetTable = () => {
 		setNameSearch('')
@@ -517,13 +540,13 @@ const legacyTableFilterStateKey = 'ptcfs'
 const tableMetricPresetKey = 'ptcmp'
 const tablePeriodKey = 'ptcp'
 
-enum TABLE_PRESETS {
-	FEES = 'Fees',
-	REVENUE = 'Revenue',
-	SPOT = 'Spot',
-	PERPS = 'Perps',
-	TVL = 'TVL'
-}
+const TABLE_PRESETS = {
+	FEES: 'Fees',
+	REVENUE: 'Revenue',
+	SPOT: 'Spot',
+	PERPS: 'Perps',
+	TVL: 'TVL'
+} as const
 
 enum TABLE_COLUMN_GROUPS {
 	SPOT = 'Spot',
@@ -540,11 +563,11 @@ const MAIN_COLUMN_BY_PRESET: Record<TablePreset, string> = {
 	[TABLE_PRESETS.PERPS]: 'perp_volume_24h'
 }
 
-enum TABLE_PERIODS {
-	ONE_DAY = '1d',
-	SEVEN_DAYS = '7d',
-	ONE_MONTH = '1m'
-}
+const TABLE_PERIODS = {
+	ONE_DAY: '1d',
+	SEVEN_DAYS: '7d',
+	ONE_MONTH: '1m'
+} as const
 
 const TABLE_PRESET_VALUES = [
 	TABLE_PRESETS.FEES,
@@ -567,6 +590,13 @@ function isTablePreset(value: string | null): value is TablePreset {
 
 function isTablePeriod(value: string | null): value is TablePeriod {
 	return value != null && TABLE_PERIODS_VALUES.some((period) => period === value)
+}
+
+function getTablePresetSelection(metric: TablePreset | null, period: TablePeriod | null): TablePresetSelection | null {
+	if (metric && period) return { type: 'metric-period', metric, period }
+	if (metric) return { type: 'metric', metric }
+	if (period) return { type: 'period', period }
+	return null
 }
 
 function getTablePresets(protocols: Array<IProtocol>, showExtendedMetrics: boolean): readonly TablePreset[] {
@@ -869,18 +899,29 @@ const columnOptions: ProtocolTableColumnOption[] = [
 ]
 
 export function getProtocolRankingPresetColumnVisibility(
-	metricPreset: string | null,
-	period: string | null,
-	availablePresets: readonly string[]
+	selection: TablePresetSelection,
+	availablePresets: readonly TablePreset[]
 ): Record<string, boolean> {
 	return Object.fromEntries(
 		columnOptions.map((column) => {
 			if (column.key === 'name' || column.key === 'category') return [column.key, true]
-			if (column.key === 'tvl') return [column.key, true]
 			if (column.preset == null || !availablePresets.includes(column.preset)) return [column.key, false]
-			if (metricPreset && column.preset !== metricPreset) return [column.key, false]
-			if (period && column.period !== period && column.snapshot !== true) return [column.key, false]
-			return [column.key, true]
+
+			switch (selection.type) {
+				case 'metric':
+					return [column.key, column.preset === selection.metric]
+				case 'period':
+					return [column.key, column.period === selection.period || column.snapshot === true]
+				case 'metric-period':
+					return [
+						column.key,
+						column.preset === selection.metric && (column.period === selection.period || column.snapshot === true)
+					]
+				default: {
+					const exhaustiveSelection: never = selection
+					return exhaustiveSelection
+				}
+			}
 		})
 	)
 }

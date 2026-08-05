@@ -13,8 +13,6 @@ import { streamChainTvlCsv } from './chainTvlCsv'
 import { buildChartBuilderCsvPayload, getCompleteChartBuilderSeries } from './csvData'
 import { streamProtocolTvlCsv } from './protocolTvlCsv'
 
-export const config = { api: { responseLimit: false } }
-
 function authHeader(req: NextApiRequest): string | undefined {
 	const value = req.headers.authorization
 	return Array.isArray(value) ? value[0] : value
