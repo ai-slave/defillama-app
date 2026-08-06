@@ -11,6 +11,7 @@ export type UploadScope =
 	| 'banner-image-horizontal'
 	| 'banner-landing-desktop'
 	| 'banner-landing-mobile'
+	| 'banner-landing-square'
 	| 'promo-card'
 	| 'report-carousel'
 	| 'report-sponsor-logo'

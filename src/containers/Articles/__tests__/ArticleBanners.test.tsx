@@ -25,7 +25,13 @@ vi.mock('~/auth', () => ({
 	})
 }))
 
-const emptyLookup = (): BannerLookupResult => ({ text: null, image: null, imageHorizontal: null, promo: null })
+const emptyLookup = (): BannerLookupResult => ({
+	text: null,
+	image: null,
+	imageHorizontal: null,
+	promo: null,
+	imageSquare: null
+})
 
 const banner = (overrides: Partial<Banner>): Banner => ({
 	id: 'banner-id',

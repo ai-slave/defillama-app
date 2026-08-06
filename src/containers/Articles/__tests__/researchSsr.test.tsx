@@ -167,7 +167,8 @@ const emptyBanner: BannerLookupResult = {
 	text: null,
 	image: null,
 	imageHorizontal: null,
-	promo: null
+	promo: null,
+	imageSquare: null
 }
 
 const emptyTrustedBy: TrustedByLookupResult = {

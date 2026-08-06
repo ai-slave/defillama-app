@@ -310,22 +310,24 @@ export const BANNER_SCOPE_LABELS: Record<BannerScope, string> = {
 	all_articles: 'All articles'
 }
 
-export type BannerKind = 'text' | 'image' | 'image-horizontal' | 'promo'
+export type BannerKind = 'text' | 'image' | 'image-horizontal' | 'promo' | 'image-square'
 
-export const BANNER_KINDS: BannerKind[] = ['text', 'image', 'image-horizontal', 'promo']
+export const BANNER_KINDS: BannerKind[] = ['text', 'image', 'image-horizontal', 'promo', 'image-square']
 
 export const BANNER_KIND_LABELS: Record<BannerKind, string> = {
 	text: 'Text strip',
 	image: 'Desktop image',
 	'image-horizontal': 'Wide/mobile image',
-	promo: 'Promo'
+	promo: 'Promo',
+	'image-square': 'Square landing banner'
 }
 
 export const BANNER_KIND_DESCRIPTIONS: Record<BannerKind, string> = {
 	text: 'Full-width dismissible strip at the top of the page',
 	image: 'Desktop image used by landing placements or the article right rail',
 	'image-horizontal': 'Wide image used by landing placements or the mobile article body',
-	promo: 'Global promo shown below Latest on the landing page and on every article'
+	promo: 'Global promo shown below Latest on the landing page and on every article',
+	'image-square': 'Square promo shown inside Latest on the landing page in place of articles 4-6'
 }
 
 export type Banner = {
@@ -377,6 +379,7 @@ export type BannerLookupResult = {
 	image: Banner | null
 	imageHorizontal: Banner | null
 	promo: Banner | null
+	imageSquare: Banner | null
 }
 
 export type TrustedLogo = {

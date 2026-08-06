@@ -1,8 +1,11 @@
+import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import React from 'react'
+import { getLandingBanner } from '~/containers/Articles/api'
+import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref } from '~/containers/Articles/landing/utils'
-import type { ArticleDocument } from '~/containers/Articles/types'
+import type { ArticleDocument, Banner, BannerLookupResult } from '~/containers/Articles/types'
 
 const NAV_ITEMS: Array<{ id: string; label: string; anchor: string }> = [
 	{ id: 'spotlight', label: 'Spotlight', anchor: '#spotlight' },
@@ -74,6 +77,21 @@ function normalizeItem(article: ArticleDocument, index: number): NormalizedItem 
 	}
 }
 
+const CardSlot = ({
+	item,
+	titlePlacement = 'bottom',
+	className
+}: {
+	item?: NormalizedItem
+	titlePlacement?: TitlePlacement
+	className: string
+}) =>
+	item ? (
+		<div className={className}>
+			<ContentCard item={item} titlePlacement={titlePlacement} className="h-full" />
+		</div>
+	) : null
+
 const ContentCard = ({
 	item,
 	titlePlacement,
@@ -106,17 +124,62 @@ const ContentCard = ({
 	</Link>
 )
 
-interface ResearchLatestProps {
-	articles?: ArticleDocument[]
+const SquareBannerCard = ({ banner }: { banner: Banner }) => {
+	const content = (
+		// eslint-disable-next-line @next/next/no-img-element
+		<img
+			src={banner.imageUrl ?? ''}
+			alt={banner.imageAlt?.trim() ?? ''}
+			className="h-full w-full object-cover"
+			loading="lazy"
+			decoding="async"
+		/>
+	)
+	const linkUrl = banner.linkUrl?.trim()
+
+	return (
+		<div className="aspect-[1088/1016] w-full overflow-hidden rounded-[16px] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:h-full lg:w-auto">
+			<InViewAnalytics eventParams={[null, 'widget_impression', 'DefiLlama Research square banner']} />
+			{linkUrl ? (
+				<Link
+					href={linkUrl}
+					target="_blank"
+					rel="noopener noreferrer sponsored"
+					aria-label={banner.imageAlt?.trim() || 'DefiLlama Research banner'}
+					className="block h-full w-full"
+					onClick={() => pushResearchAnalyticsEvent(null, 'widget_click', 'DefiLlama Research square banner')}
+				>
+					{content}
+				</Link>
+			) : (
+				content
+			)}
+		</div>
+	)
 }
 
-export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [] }) => {
+interface ResearchLatestProps {
+	articles?: ArticleDocument[]
+	initialData?: BannerLookupResult | null
+}
+
+export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [], initialData }) => {
+	const { data } = useQuery<BannerLookupResult>({
+		queryKey: ['research', 'banner', 'landing'],
+		queryFn: () => getLandingBanner(),
+		initialData: initialData ?? undefined,
+		retry: false,
+		staleTime: 60_000
+	})
+
 	const normalized = articles
 		.slice(0, 6)
 		.map((a, i) => normalizeItem(a, i))
 		.filter(Boolean) as NormalizedItem[]
 
 	if (normalized.length === 0) return null
+
+	const squareBanner = data?.imageSquare?.enabled && data.imageSquare.imageUrl?.trim() ? data.imageSquare : null
 
 	const [item1, item2, item3, item4, item5, item6] = normalized
 
@@ -126,47 +189,38 @@ export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [] })
 				<TitleLine title="Latest from DefiLlama Research" />
 			</div>
 
-			<div className="mb-4 grid grid-cols-1 gap-3 lg:mb-8 lg:grid-cols-2 lg:gap-5">
-				<div className="flex flex-col gap-3 lg:h-[490px] lg:flex-row lg:gap-5">
-					{item1 ? (
-						<div className="h-[200px] w-full lg:h-full lg:w-1/2">
-							<ContentCard item={item1} titlePlacement="bottom" className="h-full" />
-						</div>
-					) : null}
-					<div className="flex w-full gap-3 lg:flex lg:h-full lg:w-1/2 lg:flex-col lg:gap-5">
-						{item2 ? (
-							<div className="h-[250px] w-1/2 lg:h-[calc((100%-20px)*286/473)] lg:w-full">
-								<ContentCard item={item2} titlePlacement="bottom" className="h-full" />
-							</div>
-						) : null}
-						{item3 ? (
-							<div className="h-[250px] w-1/2 lg:h-[calc((100%-20px)*187/473)] lg:w-full">
-								<ContentCard item={item3} titlePlacement="right50" className="h-full" />
-							</div>
-						) : null}
+			{squareBanner ? (
+				<div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:mb-8 lg:h-[490px] lg:grid-cols-[minmax(0,1fr)_auto] lg:grid-rows-[calc((100%-20px)*211/474)_minmax(0,1fr)] lg:gap-5">
+					<div className="flex gap-3 md:col-span-2 lg:col-span-1 lg:gap-5">
+						<CardSlot item={item1} className="h-[250px] w-1/2 lg:h-full" />
+						<CardSlot item={item2} className="h-[250px] w-1/2 lg:h-full" />
 					</div>
+					<CardSlot item={item3} className="h-[250px] w-full md:h-auto" />
+					<SquareBannerCard banner={squareBanner} />
 				</div>
+			) : (
+				<div className="mb-4 grid grid-cols-1 gap-3 lg:mb-8 lg:grid-cols-2 lg:gap-5">
+					<div className="flex flex-col gap-3 lg:h-[490px] lg:gap-5">
+						<div className="flex gap-3 lg:h-[calc((100%-20px)*211/474)] lg:gap-5">
+							<CardSlot item={item1} className="h-[250px] w-1/2 lg:h-full" />
+							<CardSlot item={item2} className="h-[250px] w-1/2 lg:h-full" />
+						</div>
+						<CardSlot item={item3} className="h-[250px] w-full lg:h-[calc((100%-20px)*263/474)]" />
+					</div>
 
-				<div className="flex flex-col gap-3 lg:h-full lg:gap-5">
-					<div className="flex gap-3 lg:h-[calc((100%-20px)*211/474)] lg:gap-5">
-						{item4 ? (
-							<div className="h-[250px] w-1/2 lg:h-full">
-								<ContentCard item={item4} titlePlacement="bottom" className="h-full" />
-							</div>
-						) : null}
-						{item5 ? (
-							<div className="h-[250px] w-1/2 lg:h-full">
-								<ContentCard item={item5} titlePlacement="bottom" className="h-full" />
-							</div>
-						) : null}
-					</div>
-					{item6 ? (
-						<div className="h-[250px] w-full lg:h-[calc((100%-20px)*263/474)]">
-							<ContentCard item={item6} titlePlacement="bottom" className="h-full" />
+					<div className="flex flex-col gap-3 lg:h-full lg:flex-row lg:gap-5">
+						<CardSlot item={item4} className="h-[200px] w-full lg:h-full lg:w-1/2" />
+						<div className="flex w-full gap-3 lg:h-full lg:w-1/2 lg:flex-col lg:gap-5">
+							<CardSlot item={item5} className="h-[250px] w-1/2 lg:h-[calc((100%-20px)*286/473)] lg:w-full" />
+							<CardSlot
+								item={item6}
+								titlePlacement="right50"
+								className="h-[250px] w-1/2 lg:h-[calc((100%-20px)*187/473)] lg:w-full"
+							/>
 						</div>
-					) : null}
+					</div>
 				</div>
-			</div>
+			)}
 
 			<div className="grid grid-cols-2 gap-3 lg:flex lg:flex-wrap lg:justify-start">
 				{NAV_ITEMS.map((cat) => (

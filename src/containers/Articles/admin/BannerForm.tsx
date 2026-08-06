@@ -92,6 +92,27 @@ function bannerToForm(banner: Banner | null): FormState {
 
 function buildPayload(state: FormState): BannerPayload {
 	const linkUrl = state.linkUrl.trim() || null
+	if (state.kind === 'image-square') {
+		return {
+			type: 'image-square',
+			scope: 'landing',
+			section: null,
+			articleId: null,
+			excludedArticleIds: [],
+			linkUrl,
+			enabled: state.enabled,
+			text: null,
+			linkLabel: null,
+			imageUrl: state.imageUrl.trim(),
+			imageAlt: state.imageAlt.trim() || null,
+			imageWideUrl: null,
+			imageCardUrl: null,
+			imageMobileUrl: null,
+			disclosureText: null,
+			disclosureUrl: null,
+			showOnLanding: true
+		}
+	}
 	if (state.kind === 'promo') {
 		return {
 			type: 'promo',
@@ -166,7 +187,7 @@ function validate(state: FormState): FormErrors {
 	} else {
 		if (!state.imageUrl.trim()) errors.imageUrl = 'Image is required'
 	}
-	if (state.kind !== 'promo') {
+	if (state.kind !== 'promo' && state.kind !== 'image-square') {
 		if (state.scope === 'section' && !state.section) errors.section = 'Pick a section'
 		if (state.scope === 'article' && !state.articleId) errors.articleId = 'Pick an article'
 	}
@@ -178,6 +199,12 @@ function validate(state: FormState): FormErrors {
 }
 
 function imageUploadConfig(state: FormState): { scope: UploadScope; helperText: string } {
+	if (state.kind === 'image-square') {
+		return {
+			scope: 'banner-landing-square',
+			helperText: 'Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1088 × 1016, transcoded to WebP.'
+		}
+	}
 	if (state.scope === 'landing') {
 		if (state.kind === 'image-horizontal') {
 			return {
@@ -294,9 +321,9 @@ export function BannerForm({ banner }: Props) {
 	const previewBanner: Banner = {
 		id: banner?.id ?? 'preview',
 		type: state.kind,
-		scope: state.kind === 'promo' ? 'landing' : state.scope,
-		section: state.scope === 'section' ? (state.section as ArticleSection) : null,
-		articleId: state.scope === 'article' ? state.articleId : null,
+		scope: state.kind === 'promo' || state.kind === 'image-square' ? 'landing' : state.scope,
+		section: state.kind !== 'image-square' && state.scope === 'section' ? (state.section as ArticleSection) : null,
+		articleId: state.kind !== 'image-square' && state.scope === 'article' ? state.articleId : null,
 		excludedArticleIds: state.excludedArticleIds,
 		text: state.kind === 'text' ? state.text || 'Banner preview text — write your message above' : null,
 		linkUrl: state.linkUrl.trim() || null,
@@ -321,7 +348,7 @@ export function BannerForm({ banner }: Props) {
 
 			<Section
 				title="Kind"
-				description="Text shows as a dismissible strip at the top of the page. Desktop images are used by landing placements or the article right rail. Wide/mobile images are used by landing placements or the mobile article body. Promo is a single global placement below Latest on the landing page and on every article."
+				description="Text shows as a dismissible strip at the top of the page. Desktop images are used by landing placements or the article right rail. Wide/mobile images are used by landing placements or the mobile article body. Promo is a single global placement below Latest on the landing page and on every article. Square landing banner shows inside Latest on the landing page in place of articles 4-6."
 			>
 				<div className="grid gap-2 sm:grid-cols-2">
 					{BANNER_KINDS.map((kind) => (
@@ -348,7 +375,13 @@ export function BannerForm({ banner }: Props) {
 				</div>
 			</Section>
 
-			{state.kind === 'promo' ? (
+			{state.kind === 'image-square' ? (
+				<Section title="Placement" description="Where this banner appears.">
+					<p className="text-sm text-secondary">
+						Shows inside the Latest widget on /research, replacing articles 4-6. Hidden automatically when disabled.
+					</p>
+				</Section>
+			) : state.kind === 'promo' ? (
 				<Section
 					title="Placement"
 					description="The promo shows below Latest on the landing page and on every article. Narrow it down here."
@@ -808,11 +841,14 @@ function PromoPreview({ banner }: { banner: Banner }) {
 
 function ImagePreview({ banner }: { banner: Banner }) {
 	const isHorizontal = banner.type === 'image-horizontal'
-	const widthClass = isHorizontal ? 'max-w-[640px]' : 'max-w-[280px]'
-	const placeholderHeight = isHorizontal ? 'h-32' : 'h-48'
+	const isSquare = banner.type === 'image-square'
+	const widthClass = isHorizontal ? 'max-w-[640px]' : isSquare ? 'max-w-[320px]' : 'max-w-[280px]'
+	const placeholderHeight = isHorizontal ? 'h-32' : isSquare ? 'h-72' : 'h-48'
 	const placeholderCopy = isHorizontal
 		? 'Upload an image to preview the mobile inline banner'
-		: 'Upload an image to preview the right-rail banner'
+		: isSquare
+			? 'Upload an image to preview the square banner inside Latest'
+			: 'Upload an image to preview the right-rail banner'
 	return (
 		<div className={widthClass}>
 			{banner.imageUrl ? (

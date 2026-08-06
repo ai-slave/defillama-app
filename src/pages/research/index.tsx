@@ -206,7 +206,7 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 				></div>
 
 				<div className="relative z-1 mx-auto w-full max-w-7xl space-y-7.5 px-4 sm:px-6 lg:space-y-17.5 lg:px-8">
-					<ResearchLatest articles={landingData?.latest ?? []} />
+					<ResearchLatest articles={landingData?.latest ?? []} initialData={landingQuery.data?.landingBanner} />
 
 					<ResearchPromoBanner initialData={landingQuery.data?.landingBanner} />
 
