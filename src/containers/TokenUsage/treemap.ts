@@ -201,6 +201,12 @@ export function filterTokenUsageTreemapTreeData(
 	return filteredTree
 }
 
+export function getTokenUsageTreemapTotal(treeData: TokenUsageTreemapNode[]): number {
+	let total = 0
+	for (const category of treeData) total += category.value[0]
+	return total
+}
+
 export function prepareTokenUsageTreemapCsv(treeData: TokenUsageTreemapNode[], filename: string) {
 	const rows: Array<Array<string | number>> = [
 		['Protocol', 'Category', 'Amount', 'Category Share (%)', 'Total Share (%)']

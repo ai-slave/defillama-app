@@ -4,6 +4,7 @@ import {
 	buildTokenUsageTreemapTreeData,
 	filterTokenUsageTreemapTreeData,
 	getTokenUsageTreemapProtocolOptions,
+	getTokenUsageTreemapTotal,
 	prepareTokenUsageTreemapCsv
 } from './treemap'
 
@@ -85,6 +86,23 @@ describe('buildTokenUsageTreemapTreeData', () => {
 				['Desk', 'CEX', 50, 100, 55.56]
 			]
 		})
+	})
+
+	it('totals the visible protocols as CEX and protocol filters change', () => {
+		const rows = [
+			{ name: 'Alpha', amountUsd: 60, category: 'DeFi' },
+			{ name: 'Beta', amountUsd: 40, category: 'DeFi' },
+			{ name: 'Desk', amountUsd: 50, category: 'CEX' }
+		]
+		const allProtocols = buildTokenUsageTreemapTreeData(rows)
+		const withoutCex = buildTokenUsageTreemapTreeData(rows.filter((row) => row.category !== 'CEX'))
+		const options = getTokenUsageTreemapProtocolOptions(allProtocols)
+		const oneProtocol = filterTokenUsageTreemapTreeData(allProtocols, new Set([options[0].key]))
+
+		expect(getTokenUsageTreemapTotal(allProtocols)).toBe(150)
+		expect(getTokenUsageTreemapTotal(withoutCex)).toBe(100)
+		expect(getTokenUsageTreemapTotal(oneProtocol)).toBe(60)
+		expect(getTokenUsageTreemapTotal([])).toBe(0)
 	})
 
 	it('uses composite keys and disambiguated labels for duplicate names in different categories', () => {

@@ -26,6 +26,7 @@ import {
 	buildTokenUsageTreemapTreeData,
 	filterTokenUsageTreemapTreeData,
 	getTokenUsageTreemapProtocolOptions,
+	getTokenUsageTreemapTotal,
 	prepareTokenUsageTreemapCsv
 } from '~/containers/TokenUsage/treemap'
 import { useDebouncedValue } from '~/hooks/useDebounce'
@@ -125,6 +126,7 @@ export default function Tokens() {
 		() => filterTokenUsageTreemapTreeData(canonicalTreemapTreeData, selectedTreemapProtocolSet),
 		[canonicalTreemapTreeData, selectedTreemapProtocolSet]
 	)
+	const totalTrackedUsd = useMemo(() => getTokenUsageTreemapTotal(treemapTreeData), [treemapTreeData])
 
 	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'amountUsd' }])
 	const tableInstance = useReactTable({
@@ -190,7 +192,19 @@ export default function Tokens() {
 			) : (
 				<Panel padding="none" className="w-full flex-1">
 					<ChartPanelToolbar className="items-center justify-between">
-						<h2 className="mr-auto flex w-full grow heading-xs sm:w-auto">{`${tokenSymbol.toUpperCase()} usage in protocols`}</h2>
+						<div className="mr-auto flex w-full grow flex-col sm:w-auto">
+							<h2 className="heading-xs">{`${tokenSymbol.toUpperCase()} usage in protocols`}</h2>
+							<p className="flex items-center gap-1 body-sm" title="Sum of amounts for currently selected protocols">
+								<span className="font-jetbrains font-semibold">
+									{formatUsd(totalTrackedUsd, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								</span>
+								<span className="text-secondary">total tracked</span>
+							</p>
+						</div>
 
 						<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5 max-sm:w-full">
 							<Checkbox
