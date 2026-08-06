@@ -35,6 +35,7 @@ function createPayload(overrides: Partial<CoreMetadataPayload> = {}): CoreMetada
 		categoriesAndTags: { categories: [], tags: [], tagCategoryMap: {}, configs: {} },
 		cexs: [],
 		rwaList: { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} },
+		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
 		rwaPerpsList: { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 },
 		tokenlist: { aave: tokenEntry },
 		tokenDirectory: { aave: { name: 'Aave', symbol: 'AAVE', route: '/token/AAVE' } },
@@ -102,6 +103,7 @@ describe('metadata artifact contract', () => {
 		expect(metadata.chainRouteKeyBySlug.ethereum).toBe('Ethereum')
 		expect(metadata.chainDisplayNames.get('ethereum')).toBe('Ethereum')
 		expect(metadata.chainCategories).toEqual(['EVM'])
+		expect(metadata.rwaPlatformsIndex).toEqual({ generatedAt: 0, byPid: {}, platforms: {} })
 		expect(metadata.liquidationsTokenSymbolsSet.has('ETH')).toBe(true)
 		expect(metadata.emissionsProtocolBySlug.aave).toBe('aave')
 		expect(metadata.bridgeProtocolSlugsSet.has('stargate')).toBe(true)

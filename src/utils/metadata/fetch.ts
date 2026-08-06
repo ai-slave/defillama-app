@@ -1,4 +1,5 @@
 import { COINS_SERVER_URL } from '~/constants'
+import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import {
 	buildUnlocksHistoricalPriceRequests,
 	type UnlockHistoricalPriceProtocol
@@ -68,6 +69,7 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 			chainCategories,
 			cexsResponse,
 			rwaList,
+			rwaPlatformsIndex,
 			rwaPerpsList,
 			tokenlistArray,
 			tokenDirectory,
@@ -130,6 +132,20 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 	const chainDisplayNames = buildChainDisplayNameLookupRecord(chains)
 	const liquidationsTokenSymbols = extractLiquidationsTokenSymbols(liquidationsResponse)
 	const emissionsHistoricalPrices = await fetchEmissionsHistoricalPrices(emissions)
+	const platformRoutesBySlug = new Map<string, { name: string; slug: string }>()
+	for (const platform of rwaList.platforms) {
+		const slug = rwaSlug(platform)
+		if (slug) platformRoutesBySlug.set(slug, { name: platform, slug })
+	}
+	for (const slug in rwaPlatformsIndex.platforms) {
+		const platform = rwaPlatformsIndex.platforms[slug]
+		if (!platform) continue
+		const nameSlug = rwaSlug(platform.name)
+		if (nameSlug !== platform.slug) platformRoutesBySlug.delete(nameSlug)
+		platformRoutesBySlug.set(platform.slug, { name: platform.name, slug: platform.slug })
+	}
+	const platformRoutes = Array.from(platformRoutesBySlug.values())
+	const platformNames = platformRoutes.map((platform) => platform.name)
 
 	return {
 		protocols,
@@ -138,7 +154,8 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 		chainCategories,
 		cexs: cexsResponse.cexs,
 		cgExchangeIdentifiers: cexsResponse.cg_volume_cexs,
-		rwaList,
+		rwaList: { ...rwaList, platforms: platformNames, platformRoutes },
+		rwaPlatformsIndex,
 		rwaPerpsList,
 		tokenlist,
 		tokenDirectory,

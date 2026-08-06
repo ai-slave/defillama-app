@@ -15,6 +15,7 @@ function createPayload(): CoreMetadataPayload {
 		categoriesAndTags: { categories: [], tags: [], tagCategoryMap: {}, configs: {} },
 		cexs: [],
 		rwaList: { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} },
+		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
 		rwaPerpsList: { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 },
 		tokenlist: {},
 		tokenDirectory: {},
@@ -58,6 +59,7 @@ describe('metadata artifact loader', () => {
 		expect(artifacts.manifest?.pulledAt).toBe(123)
 		expect(artifacts.payload.protocols['parent#aave'].displayName).toBe('Aave')
 		expect(artifacts.payload.chainCategories).toEqual(['EVM'])
+		expect(artifacts.payload.rwaPlatformsIndex).toEqual({ generatedAt: 0, byPid: {}, platforms: {} })
 	})
 
 	it('loads parsed JSON artifacts without semantic validation', async () => {

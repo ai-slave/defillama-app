@@ -1,6 +1,8 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { RWAOverview } from '~/containers/RWA'
+import { buildRWAPlatformPageData } from '~/containers/RWA/PlatformPage/buildPlatformPageData'
+import { getRWAPlatformRoutes } from '~/containers/RWA/platformRoutes'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { RWATabNav } from '~/containers/RWA/TabNav'
@@ -23,7 +25,9 @@ export async function getStaticPaths() {
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 	const rwaList = metadataCache.rwaList
 	return {
-		paths: rwaList.platforms.slice(0, 10).map((platform) => ({ params: { platform: rwaSlug(platform) } })),
+		paths: getRWAPlatformRoutes(rwaList)
+			.slice(0, 10)
+			.map((platform) => ({ params: { platform: platform.slug } })),
 		fallback: 'blocking'
 	}
 }
@@ -40,9 +44,10 @@ export const getStaticProps = withPerformanceLogging(
 		let platformName = null
 		const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 		const rwaList = metadataCache.rwaList
-		for (const platform of rwaList.platforms) {
-			if (rwaSlug(platform) === platformSlug) {
-				platformName = platform
+		const platformsIndex = metadataCache.rwaPlatformsIndex
+		for (const platform of getRWAPlatformRoutes(rwaList)) {
+			if (platform.slug === platformSlug) {
+				platformName = platform.name
 				break
 			}
 		}
@@ -61,8 +66,17 @@ export const getStaticProps = withPerformanceLogging(
 			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
 
+		const meta = platformsIndex.platforms[platformSlug] ?? null
+		const platformPage =
+			meta && props.platformAssetSummary
+				? buildRWAPlatformPageData({
+						meta,
+						assetSummary: props.platformAssetSummary
+					})
+				: null
+
 		return {
-			props: { ...props, platformName },
+			props: { ...props, platformPage, platformName },
 			revalidate: maxAgeForNext([22])
 		}
 	}
@@ -74,7 +88,10 @@ export default function RWAPage(props: InferGetStaticPropsType<typeof getStaticP
 	return (
 		<Layout
 			title={`${props.platformName} RWA Dashboard & Analytics - DefiLlama`}
-			description={`Explore ${props.platformName}, an RWA platform enabling issuance, custody, trading, or management of tokenized real-world assets across blockchains.`}
+			description={
+				props.platformPage?.meta.description ??
+				`Explore ${props.platformName}, an RWA platform enabling issuance, custody, trading, or management of tokenized real-world assets across blockchains.`
+			}
 			pageName={pageName}
 			canonicalUrl={`/rwa/platform/${props.platformSlug}`}
 		>

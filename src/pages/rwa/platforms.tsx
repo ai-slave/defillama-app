@@ -1,8 +1,8 @@
 import type { InferGetStaticPropsType } from 'next'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { getRWAPlatformRoutes } from '~/containers/RWA/platformRoutes'
 import { RWAPlatforms } from '~/containers/RWA/Platforms'
 import { getRWAPlatformsOverview } from '~/containers/RWA/queries'
-import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { RWATabNav } from '~/containers/RWA/TabNav'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -17,9 +17,9 @@ export const getStaticProps = withPerformanceLogging(`rwa/platforms`, async () =
 		throw new Error('platforms not found in RWA list')
 	}
 
-	const platformLinks = rwaList.platforms.map((platform) => ({
-		label: platform,
-		to: `/rwa/platform/${rwaSlug(platform)}`
+	const platformLinks = getRWAPlatformRoutes(rwaList).map((platform) => ({
+		label: platform.name,
+		to: `/rwa/platform/${platform.slug}`
 	}))
 
 	if (platformLinks.length === 0) {

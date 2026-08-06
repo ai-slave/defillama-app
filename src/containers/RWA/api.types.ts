@@ -1,6 +1,7 @@
 import type { EarnPageRow } from '~/containers/Yields/data/types'
 import type { RWAChartDataset, RWAPositionalChartDataset } from './chartDataset'
 import type { RWAOverviewInclusionDefaults } from './constants'
+import type { RWAPlatformAssetSummary, RWAPlatformPageData } from './PlatformPage/types'
 
 type RWANumberMap = Record<string, number>
 type RWAContractsByChain = Record<string, string[]>
@@ -176,6 +177,8 @@ export type RWAPerpsOverviewAsset = RWAPerpsContractOverlayRow
 export type RWAOverviewAsset = RWAOverviewDisplayRow
 
 export interface IRWAAssetsOverview {
+	platformPage: RWAPlatformPageData | null
+	platformAssetSummary: RWAPlatformAssetSummary | null
 	assets: Array<RWAOverviewDisplayRow>
 	typeOptions: Array<{ key: string; name: string; help?: string }>
 	assetClassOptions: Array<{ key: string; name: string; help?: string }>

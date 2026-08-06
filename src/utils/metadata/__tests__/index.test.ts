@@ -70,6 +70,7 @@ function createMetadataPayload(overrides: Partial<CoreMetadataPayload> = {}): Co
 			assetGroups: [],
 			idMap: {}
 		},
+		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
 		rwaPerpsList: {
 			contracts: [],
 			venues: [],

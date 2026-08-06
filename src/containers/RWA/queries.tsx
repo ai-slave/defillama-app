@@ -55,6 +55,8 @@ import {
 	buildRWAPerpsOpenInterestOverlayDataset,
 	getRealRwaPlatforms
 } from './perpsOverlay'
+import { buildRWAPlatformAssetSummary } from './PlatformPage/buildPlatformPageData'
+import { getRWAPlatformRoutes } from './platformRoutes'
 import { rwaSlug } from './rwaSlug'
 import { emptyRWAYieldResult, getRWAYieldPools } from './yieldPools.server'
 
@@ -159,6 +161,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		const filteredData = data.filter(
 			(item) => !(item.category ?? []).some((category) => !isCategoryIncludedInStandardRwaOverview(category))
 		)
+		const platformAssetSummary = selectedPlatform ? buildRWAPlatformAssetSummary(data, selectedPlatform) : null
 		const filteredPerpsMarkets = perpsMarkets.map((market) => ({
 			...market,
 			category: (market.category ?? []).filter((category) => isCategoryIncludedInStandardRwaOverview(category))
@@ -530,9 +533,9 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			label: category,
 			to: `/rwa/category/${rwaSlug(category)}`
 		}))
-		const platformNavValues = params.rwaList.platforms.map((platform) => ({
-			label: platform,
-			to: `/rwa/platform/${rwaSlug(platform)}`
+		const platformNavValues = getRWAPlatformRoutes(params.rwaList).map((platform) => ({
+			label: platform.name,
+			to: `/rwa/platform/${platform.slug}`
 		}))
 		const assetGroupNavValues = assetGroupValues.map((assetGroup) => {
 			const normalizedAssetGroup = normalizeRwaAssetGroup(assetGroup)
@@ -581,6 +584,8 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 					})
 
 		return {
+			platformPage: null,
+			platformAssetSummary,
 			assets: assets.sort((a, b) => (b.onChainMcap?.total ?? 0) - (a.onChainMcap?.total ?? 0)),
 			typeOptions: formattedTypes.map((type) => {
 				const help = definitions.type.values?.[type]

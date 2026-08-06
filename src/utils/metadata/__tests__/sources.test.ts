@@ -39,6 +39,9 @@ function responseForUrl(url: string): unknown {
 	if (url.includes('/rwa/list') || url === 'https://rwa.example.com/list') {
 		return { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} }
 	}
+	if (url.includes('/rwa/rwa/platforms') || url === 'https://rwa.example.com/rwa/platforms') {
+		return { generatedAt: 0, byPid: {}, platforms: {} }
+	}
 	if (url.includes('/rwa-perps/list') || url === 'https://rwa-perps.example.com/list') {
 		return { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 }
 	}
@@ -80,6 +83,7 @@ describe('metadata source adapters', () => {
 		expect(sources.equitiesCompanyRoutes).toEqual([{ ticker: 'NVDA', country: 'US' }])
 		expectMetadataRequest('https://api.llama.fi/config/smol/appMetadata-protocols.json')
 		expectMetadataRequest('https://api.llama.fi/rwa/list')
+		expectMetadataRequest('https://api.llama.fi/rwa/rwa/platforms')
 		expectMetadataRequest('https://defillama-datasets.llama.fi/tokenlist/rankings.json')
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/config/smol/token.json', {
 			timeout: 180_000
@@ -131,6 +135,7 @@ describe('metadata source adapters', () => {
 
 		expectMetadataRequest('https://core.example.com/api/config/smol/appMetadata-protocols.json')
 		expectMetadataRequest('https://rwa.example.com/list')
+		expectMetadataRequest('https://rwa.example.com/rwa/platforms')
 		expectMetadataRequest('https://rwa-perps.example.com/list')
 		expectMetadataRequest('https://datasets.example.com/tokenlist/rankings.json')
 		expectMetadataRequest('https://liquidations.example.com/all')

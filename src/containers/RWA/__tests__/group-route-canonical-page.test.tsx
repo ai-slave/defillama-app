@@ -1,3 +1,4 @@
+import type { GetStaticPropsContext } from 'next'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockState = {
@@ -20,6 +21,9 @@ vi.mock('~/utils/metadata', () => ({
 				platforms: mockState.platforms,
 				assetGroups: mockState.assetGroups
 			}
+		},
+		get rwaPlatformsIndex() {
+			return { generatedAt: 1, byPid: {}, platforms: {} }
 		}
 	}
 }))
@@ -61,7 +65,11 @@ describe('rwa group route canonical redirects', () => {
 	})
 
 	it('redirects noncanonical asset group params to the canonical slug', async () => {
-		await expect(assetGroupPage.getStaticProps({ params: { assetGroup: 'US Treasuries' } } as never)).resolves.toEqual({
+		await expect(
+			assetGroupPage.getStaticProps({
+				params: { assetGroup: 'US Treasuries' }
+			} as never)
+		).resolves.toEqual({
 			redirect: {
 				destination: '/rwa/asset-group/us-treasuries',
 				permanent: false
@@ -79,11 +87,29 @@ describe('rwa group route canonical redirects', () => {
 	})
 
 	it('redirects noncanonical platform params to the canonical slug', async () => {
-		await expect(platformPage.getStaticProps({ params: { platform: 'Ondo Finance' } } as never)).resolves.toEqual({
+		await expect(
+			platformPage.getStaticProps({
+				params: { platform: 'Ondo Finance' }
+			} as never)
+		).resolves.toEqual({
 			redirect: {
 				destination: '/rwa/platform/ondo-finance',
 				permanent: false
 			}
+		})
+	})
+
+	it('keeps the legacy platform page when the platform metadata is absent', async () => {
+		const context: GetStaticPropsContext<{ platform: string }> = {
+			params: { platform: 'ondo-finance' }
+		}
+		await expect(platformPage.getStaticProps(context)).resolves.toEqual({
+			props: {
+				assets: [{ id: 'asset-1' }],
+				platformName: 'Ondo Finance',
+				platformPage: null
+			},
+			revalidate: 123
 		})
 	})
 })

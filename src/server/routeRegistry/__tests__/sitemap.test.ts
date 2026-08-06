@@ -45,6 +45,7 @@ const metadataCache = vi.hoisted(
 			assetGroups: ['US Treasury Bills'],
 			idMap: {}
 		},
+		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
 		rwaPerpsList: {
 			contracts: ['xyz:sp500'],
 			venues: ['CME'],

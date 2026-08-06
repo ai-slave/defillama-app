@@ -1,3 +1,4 @@
+import { getRWAPlatformRoutes } from '~/containers/RWA/platformRoutes'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 
@@ -8,8 +9,8 @@ export function getRWARoutesFromMetadata(metadataCache: MetadataCache): string[]
 	for (const canonicalMarketId of rwaList.canonicalMarketIds) {
 		routes.push(`rwa/asset/${encodeURIComponent(canonicalMarketId)}`)
 	}
-	for (const platform of rwaList.platforms) {
-		routes.push(`rwa/platform/${rwaSlug(platform)}`)
+	for (const platform of getRWAPlatformRoutes(rwaList)) {
+		routes.push(`rwa/platform/${platform.slug}`)
 	}
 	for (const chain of rwaList.chains) {
 		routes.push(`rwa/chain/${rwaSlug(chain)}`)

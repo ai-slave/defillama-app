@@ -1,4 +1,5 @@
 import type { IEquitiesCompanyRoute } from '~/containers/Equities/api.types'
+import type { RWAPlatformsIndex } from '~/containers/RWA/PlatformPage/api.types'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { slug } from '~/utils'
 import {
@@ -30,6 +31,7 @@ export type CoreMetadataPayload = {
 	categoriesAndTags: ICategoriesAndTags
 	cexs: ICexItem[]
 	rwaList: IRWAList
+	rwaPlatformsIndex: RWAPlatformsIndex
 	rwaPerpsList: IRWAPerpsList
 	tokenlist: Record<string, ITokenListEntry>
 	tokenDirectory: TokenDirectory
@@ -66,6 +68,7 @@ export type MetadataCache = {
 	cexRouteIdBySlug: Record<string, string>
 	cexMetadataBySlug: Record<string, ICexItem>
 	rwaList: IRWAList
+	rwaPlatformsIndex: RWAPlatformsIndex
 	rwaPerpsList: IRWAPerpsList
 	tokenlist: Record<string, ITokenListEntry>
 	tokenDirectory: TokenDirectory
@@ -141,8 +144,21 @@ export const METADATA_ARTIFACT_REGISTRY = defineMetadataArtifactRegistry({
 	},
 	rwaList: {
 		file: 'rwa.json',
-		stub: { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} },
+		stub: {
+			canonicalMarketIds: [],
+			platforms: [],
+			platformRoutes: [],
+			chains: [],
+			categories: [],
+			assetGroups: [],
+			idMap: {}
+		},
 		parse: parseArtifact<IRWAList>
+	},
+	rwaPlatformsIndex: {
+		file: 'rwaPlatforms.json',
+		stub: { generatedAt: 0, byPid: {}, platforms: {} },
+		parse: parseArtifact<RWAPlatformsIndex>
 	},
 	rwaPerpsList: {
 		file: 'rwaPerps.json',
@@ -294,6 +310,7 @@ export function hydrateMetadataCache(payload: CoreMetadataPayload): MetadataCach
 		cexRouteIdBySlug: cexRouteIndexes.routeIdBySlug,
 		cexMetadataBySlug: cexRouteIndexes.metadataBySlug,
 		rwaList: payload.rwaList,
+		rwaPlatformsIndex: payload.rwaPlatformsIndex,
 		rwaPerpsList: payload.rwaPerpsList,
 		tokenlist: payload.tokenlist,
 		tokenDirectory: payload.tokenDirectory,

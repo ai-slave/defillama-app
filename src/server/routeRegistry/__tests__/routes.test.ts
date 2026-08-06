@@ -71,6 +71,7 @@ function metadataFixture(): MetadataCache {
 			'binance-alias': { name: 'Binance Alias', slug: 'binance-alias' }
 		},
 		rwaList: { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} },
+		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
 		rwaPerpsList: { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 },
 		tokenlist: {},
 		tokenDirectory: {},

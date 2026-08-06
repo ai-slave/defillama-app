@@ -123,6 +123,7 @@ export interface ICategoriesAndTags {
 export interface IRWAList {
 	canonicalMarketIds: Array<string>
 	platforms: Array<string>
+	platformRoutes?: Array<{ name: string; slug: string }>
 	chains: Array<string>
 	categories: Array<string>
 	assetGroups: Array<string>

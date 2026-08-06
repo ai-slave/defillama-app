@@ -4,6 +4,7 @@ import type { RawCexsResponse } from '~/containers/Cexs/api.types'
 import type { IEquitiesCompanyRoute } from '~/containers/Equities/api.types'
 import { fetchEquitiesCompanyRouteMetadata } from '~/containers/Equities/server/metadata'
 import type { RawAllLiquidationsResponse } from '~/containers/LiquidationsV2/api.types'
+import type { RWAPlatformsIndex } from '~/containers/RWA/PlatformPage/api.types'
 import { fetchEmissionsProtocolsList } from '~/containers/Unlocks/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { getErrorMessage } from '~/utils/error'
@@ -29,7 +30,8 @@ export type CoreMetadataSources = {
 	categoriesAndTags: ICategoriesAndTags
 	chainCategories: string[]
 	cexsResponse: RawCexsResponse
-	rwaList: IRWAList
+	rwaList: Omit<IRWAList, 'platformRoutes'>
+	rwaPlatformsIndex: RWAPlatformsIndex
 	rwaPerpsList: IRWAPerpsList
 	tokenlistArray: RawTokenListItem[]
 	tokenDirectory: TokenDirectory
@@ -62,6 +64,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		chainCategoriesResponse,
 		cexsResponse,
 		rwaList,
+		rwaPlatformsIndex,
 		rwaPerpsList,
 		tokenlistArray,
 		tokenDirectory,
@@ -93,7 +96,11 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		fetchNamedMetadataSource('CEX metadata API', fetchMetadataJson<RawCexsResponse>(`${coreApiBase}/cexs?zz=18`)),
 		fetchNamedMetadataSource(
 			'RWA metadata API',
-			fetchMetadataJson<IRWAList>(`${getMetadataUpstreamBase('rwa')}/list?zz=18`)
+			fetchMetadataJson<Omit<IRWAList, 'platformRoutes'>>(`${getMetadataUpstreamBase('rwa')}/list?zz=18`)
+		),
+		fetchNamedMetadataSource(
+			'RWA platforms metadata API',
+			fetchMetadataJson<RWAPlatformsIndex>(`${getMetadataUpstreamBase('rwa')}/rwa/platforms`)
 		),
 		fetchNamedMetadataSource(
 			'RWA perps metadata API',
@@ -134,6 +141,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		chainCategories: chainCategoriesResponse.categories,
 		cexsResponse,
 		rwaList,
+		rwaPlatformsIndex,
 		rwaPerpsList,
 		tokenlistArray,
 		tokenDirectory,

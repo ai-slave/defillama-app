@@ -1,10 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+type MetadataFetchOptions = {
+	method: 'POST'
+	headers: Record<string, string>
+	body: string
+}
+
+type MetadataFetchCall = [url: string, options: MetadataFetchOptions]
+
 const { fetchCoreMetadataSourcesMock, fetchMetadataJsonMock, fetchMetadataRouteIndexesMock } = vi.hoisted(() => ({
 	fetchCoreMetadataSourcesMock: vi.fn(),
-	fetchMetadataJsonMock: vi.fn(),
+	fetchMetadataJsonMock: vi.fn<(...args: MetadataFetchCall) => Promise<unknown>>(),
 	fetchMetadataRouteIndexesMock: vi.fn()
 }))
+
+function getFetchMetadataCall(index: number): MetadataFetchCall {
+	const call = fetchMetadataJsonMock.mock.calls[index]
+	if (!call) throw new Error(`Missing metadata fetch call at index ${index}`)
+	return call
+}
 
 vi.mock('../sources', () => ({
 	fetchCoreMetadataSources: fetchCoreMetadataSourcesMock
@@ -25,6 +39,7 @@ function createCoreMetadataSources(overrides: Record<string, unknown> = {}) {
 		categoriesAndTags: { categories: [], tags: [], tagCategoryMap: {}, configs: {} },
 		cexsResponse: { cexs: [], cg_volume_cexs: ['binance'] },
 		rwaList: { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} },
+		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
 		rwaPerpsList: { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 },
 		tokenlistArray: [
 			{
@@ -108,8 +123,8 @@ describe('fetchCoreMetadata', () => {
 
 		expect(payload.cexs).toEqual([])
 		expect(payload.cgExchangeIdentifiers).toEqual(['binance'])
-		expect(payload.tokenlist.aave.symbol).toBe('AAVE')
-		expect(payload.tokenDirectory.aave.symbol).toBe('AAVE')
+		expect(payload.tokenlist.aave?.symbol).toBe('AAVE')
+		expect(payload.tokenDirectory.aave?.symbol).toBe('AAVE')
 		expect(payload.bridgeProtocolSlugs).toContain('stargate')
 		expect(payload.bridgeChainSlugs).toEqual(['ethereum', 'arbitrum'])
 		expect(payload.liquidationsTokenSymbols).toContain('ETH')
@@ -120,7 +135,49 @@ describe('fetchCoreMetadata', () => {
 		expect(payload.digitalAssetTreasuryRoutes.assetSlugs).toEqual(['bitcoin'])
 		expect(payload.stablecoinPeggedAssetSlugs).toEqual(['tether'])
 		expect(payload.equitiesCompanyRoutes).toEqual([{ ticker: 'NVDA', country: 'US' }])
+		expect(payload.rwaPlatformsIndex).toEqual({ generatedAt: 0, byPid: {}, platforms: {} })
 		expect(fetchMetadataJsonMock).not.toHaveBeenCalled()
+	})
+
+	it('merges legacy and metadata-only RWA platform routes by canonical slug', async () => {
+		fetchCoreMetadataSourcesMock.mockResolvedValue(
+			createCoreMetadataSources({
+				rwaList: {
+					canonicalMarketIds: [],
+					platforms: ['Legacy Platform', 'Old Active Name'],
+					chains: [],
+					categories: [],
+					assetGroups: [],
+					idMap: {}
+				},
+				rwaPlatformsIndex: {
+					generatedAt: 1,
+					byPid: { '1': 'old-active-name', '2': 'metadata-only' },
+					platforms: {
+						'old-active-name': { name: 'Canonical Active Name', slug: 'old-active-name' },
+						'metadata-only': { name: 'Metadata Only', slug: 'metadata-only' }
+					}
+				}
+			})
+		)
+		const { fetchCoreMetadata } = await import('../fetch')
+
+		const payload = await fetchCoreMetadata()
+
+		expect(payload.rwaList.platformRoutes).toEqual([
+			{ name: 'Legacy Platform', slug: 'legacy-platform' },
+			{ name: 'Canonical Active Name', slug: 'old-active-name' },
+			{ name: 'Metadata Only', slug: 'metadata-only' }
+		])
+		expect(payload.rwaList.platforms).toEqual(['Legacy Platform', 'Canonical Active Name', 'Metadata Only'])
+		expect(payload.rwaPlatformsIndex).toEqual({
+			generatedAt: 1,
+			byPid: { '1': 'old-active-name', '2': 'metadata-only' },
+			platforms: {
+				'old-active-name': { name: 'Canonical Active Name', slug: 'old-active-name' },
+				'metadata-only': { name: 'Metadata Only', slug: 'metadata-only' }
+			}
+		})
 	})
 
 	it('precomputes emissions historical prices with a 6h POST', async () => {
@@ -154,11 +211,11 @@ describe('fetchCoreMetadata', () => {
 		const { fetchCoreMetadata } = await import('../fetch')
 
 		const payload = await fetchCoreMetadata()
-		const [, requestOptions] = fetchMetadataJsonMock.mock.calls[0]
+		const [requestUrl, requestOptions] = getFetchMetadataCall(0)
 		const requestBody = JSON.parse(requestOptions.body)
 
 		expect(fetchMetadataJsonMock).toHaveBeenCalledTimes(1)
-		expect(fetchMetadataJsonMock.mock.calls[0][0]).toContain('/pro/prices/historical')
+		expect(requestUrl).toContain('/pro/prices/historical')
 		expect(requestOptions).toMatchObject({
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' }
@@ -198,8 +255,8 @@ describe('fetchCoreMetadata', () => {
 		const { fetchCoreMetadata } = await import('../fetch')
 
 		const payload = await fetchCoreMetadata()
-		const firstRequestBody = JSON.parse(fetchMetadataJsonMock.mock.calls[0][1].body)
-		const secondRequestBody = JSON.parse(fetchMetadataJsonMock.mock.calls[1][1].body)
+		const firstRequestBody = JSON.parse(getFetchMetadataCall(0)[1].body)
+		const secondRequestBody = JSON.parse(getFetchMetadataCall(1)[1].body)
 		let firstRequestCoins = 0
 		let secondRequestCoins = 0
 		let resultCoins = 0

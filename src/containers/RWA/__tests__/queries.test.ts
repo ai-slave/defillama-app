@@ -548,6 +548,26 @@ describe('rwa queries', () => {
 		expect(result?.assets.map((asset) => asset.kind)).toEqual(['perps'])
 	})
 
+	it('resolves active metadata-only platforms without inventing assets', async () => {
+		fetchRWAActiveTVLsMock.mockResolvedValue([])
+
+		const result = await getRWAAssetsOverview({
+			platform: 'metadata-only',
+			rwaList: {
+				canonicalMarketIds: [],
+				chains: [],
+				categories: [],
+				platforms: ['Metadata Only'],
+				platformRoutes: [{ name: 'Metadata Only', slug: 'metadata-only' }],
+				assetGroups: [],
+				idMap: {}
+			}
+		})
+
+		expect(result?.selectedPlatform).toBe('Metadata Only')
+		expect(result?.assets).toEqual([])
+	})
+
 	it('excludes the RWA Perps bucket from category overview rows', async () => {
 		fetchRWAStatsMock.mockResolvedValue({
 			byCategory: {

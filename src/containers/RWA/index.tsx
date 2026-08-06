@@ -105,6 +105,7 @@ import {
 	limitRwaPieChartData
 } from './hooks'
 import { perpsDefinitions } from './Perps/definitions'
+import { RWAPlatformDetails, RWAPlatformHeader } from './PlatformPage'
 import { getRankedRwaFilterValues } from './rankedFilterValues'
 import { rwaSlug } from './rwaSlug'
 import {
@@ -890,6 +891,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				Stablecoins, Governance are not included by default. To include them, toggle the corresponding filters.
 			</Announcement> */}
 			<RowLinksWithDropdown links={navLinks} activeLink={selectedModeLabel} />
+			{props.platformPage ? <RWAPlatformHeader data={props.platformPage} /> : null}
 			<RWAOverviewFilters
 				enabled={showFilters}
 				defaultInclusion={props.defaultInclusion}
@@ -1341,6 +1343,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					)}
 				</ChartPanel>
 			) : null}
+			{props.platformPage ? <RWAPlatformDetails data={props.platformPage} /> : null}
 			<RWAAssetsTable assets={filteredAssets} selectedChain={props.selectedChain} includeRwaPerps={includeRwaPerps} />
 		</>
 	)
