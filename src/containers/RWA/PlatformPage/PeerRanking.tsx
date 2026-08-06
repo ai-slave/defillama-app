@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { formatCompactNumber, formatNumber, formatUsd } from '~/utils/numberFormat'
 import type { RWAPlatformPeerRow } from './types'
@@ -22,7 +22,14 @@ export function fetchRWAPlatformPeers(): Promise<RWAPlatformPeerRow[]> {
 	return fetchJson<RWAPlatformPeerRow[]>('/api/public/rwa/platform-peers')
 }
 
-export function PeerRanking({ selectedSlug }: { selectedSlug: string }) {
+export function PeerRanking({
+	selectedSlug,
+	headerSlot
+}: {
+	selectedSlug: string
+	/** View switcher rendered in the panel header when the panel is tabbed. */
+	headerSlot?: React.ReactNode
+}) {
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
 	const selectedRowRef = useRef<HTMLTableRowElement>(null)
 	const {
@@ -51,26 +58,38 @@ export function PeerRanking({ selectedSlug }: { selectedSlug: string }) {
 		container.scrollTop += rowRect.top - containerRect.top - (container.clientHeight - rowRect.height) / 2
 	}, [peers, selectedSlug])
 
-	if (isLoading) return <PanelLoadingStatus label="Loading peer ranking" />
-	if (error || !peers) return <PanelStatus variant="error">Failed to load peer ranking.</PanelStatus>
+	// The header carries the view switcher when the panel is tabbed, so loading
+	// and error states render inside the shell — never instead of it.
+	if (isLoading || error || !peers) {
+		return (
+			<Panel padding="none">
+				{headerSlot ? <PanelHeader>{headerSlot}</PanelHeader> : null}
+				{isLoading ? (
+					<SurfaceBodyLoadingStatus label="Loading peer ranking" />
+				) : (
+					<SurfaceBodyStatus variant="error">Failed to load peer ranking.</SurfaceBodyStatus>
+				)}
+			</Panel>
+		)
+	}
 
 	return (
 		<Panel padding="none">
 			<PanelHeader>
-				<PanelTitle>Peer ranking</PanelTitle>
-				<span className="body-sm text-tertiary">{peers.length} active platforms</span>
+				{headerSlot ?? <PanelTitle>Peer ranking</PanelTitle>}
+				<span className="ml-auto body-sm text-tertiary">{peers.length} active platforms</span>
 			</PanelHeader>
 			<div ref={scrollContainerRef} className="max-h-[720px] overflow-auto">
 				<table className="w-full min-w-[850px] border-collapse text-left">
 					<thead className="sticky top-0 z-10 bg-surface">
-						<tr className="border-b border-subtle text-sm font-medium text-secondary">
-							<th className="px-3 py-2 text-right">#</th>
-							<th className="px-3 py-2">Platform</th>
-							<th className="px-3 py-2 text-right">On-chain AUM</th>
-							<th className="px-3 py-2 text-right">Live assets</th>
-							<th className="px-3 py-2 text-right">Holder fee</th>
-							<th className="px-3 py-2 text-right">Mint fee</th>
-							<th className="px-3 py-2 text-right">Redemption fee</th>
+						<tr className="border-b border-subtle label-md text-secondary">
+							<th className="p-3 text-right font-medium">#</th>
+							<th className="p-3 font-medium">Platform</th>
+							<th className="p-3 text-right font-medium">On-chain AUM</th>
+							<th className="p-3 text-right font-medium">Live assets</th>
+							<th className="p-3 text-right font-medium">Holder fee</th>
+							<th className="p-3 text-right font-medium">Mint fee</th>
+							<th className="p-3 text-right font-medium">Redemption fee</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -84,8 +103,8 @@ export function PeerRanking({ selectedSlug }: { selectedSlug: string }) {
 										isSelected ? 'bg-brand-muted' : 'hover:bg-hover-row'
 									}`}
 								>
-									<td className="px-3 py-2 text-right">{peer.rank}</td>
-									<td className="px-3 py-2">
+									<td className="p-3 text-right">{peer.rank}</td>
+									<td className="p-3">
 										<span className="flex items-center gap-2">
 											<TokenLogo src={peer.logo} size={24} alt={`${peer.name} logo`} />
 											<BasicLink
@@ -102,13 +121,13 @@ export function PeerRanking({ selectedSlug }: { selectedSlug: string }) {
 											) : null}
 										</span>
 									</td>
-									<td className="px-3 py-2 text-right">{formatUsd(peer.onchainAum, compactUsdOptions)}</td>
-									<td className="px-3 py-2 text-right">{formatCompactNumber(peer.assetCount)}</td>
-									<td className="px-3 py-2 text-right">
+									<td className="p-3 text-right">{formatUsd(peer.onchainAum, compactUsdOptions)}</td>
+									<td className="p-3 text-right">{formatCompactNumber(peer.assetCount)}</td>
+									<td className="p-3 text-right">
 										{peer.holderTotalFeeBps == null ? '–' : formatBps(peer.holderTotalFeeBps)}
 									</td>
-									<td className="px-3 py-2 text-right">{peer.mintFeeBps == null ? '–' : formatBps(peer.mintFeeBps)}</td>
-									<td className="px-3 py-2 text-right">
+									<td className="p-3 text-right">{peer.mintFeeBps == null ? '–' : formatBps(peer.mintFeeBps)}</td>
+									<td className="p-3 text-right">
 										{peer.redemptionFeeBps == null ? '–' : formatBps(peer.redemptionFeeBps)}
 									</td>
 								</tr>

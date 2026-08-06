@@ -14,7 +14,7 @@ import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingDots } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { StatItem } from '~/ui/SummaryStats'
+import { StatItem, SummaryCardGrid } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
@@ -105,7 +105,7 @@ import {
 	limitRwaPieChartData
 } from './hooks'
 import { perpsDefinitions } from './Perps/definitions'
-import { RWAPlatformDetails, RWAPlatformHeader } from './PlatformPage'
+import { RWAPlatformDataViews, RWAPlatformHeader, type RWAPlatformListedTotal } from './PlatformPage'
 import { getRankedRwaFilterValues } from './rankedFilterValues'
 import { rwaSlug } from './rwaSlug'
 import {
@@ -747,6 +747,12 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			className="mr-auto"
 		/>
 	)
+	/* The chart sits in two thirds of the summary grid on platform pages, where
+	   the full toolbar no longer fits one line. Rather than let it wrap raggedly
+	   — splitting the view/breakdown pair across lines and leaving one control
+	   stranded top-right — the metric switch takes a line of its own and the
+	   secondary controls right-align beneath it. */
+	const chartTypeSwitchRow = isPlatformMode ? <div className="w-full">{chartTypeSwitch}</div> : chartTypeSwitch
 	const flowOverlaySelect = (
 		<Tooltip content={definitions.flows.marketcapOverlay.description}>
 			<Select
@@ -885,13 +891,308 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const nonTimeSeriesChartFilename =
 		chartView === 'treemap' ? treemapChartFilename : chartView === 'hbar' ? barChartFilename : pieChartFilename
 
+	const summaryStatCards = (
+		<div className="flex flex-col gap-2 md:flex-row md:items-center">
+			<Card padding="sm" className="flex-1">
+				<StatItem
+					className="gap-1"
+					label={definitions.totalActiveMcap.label}
+					tooltip={definitions.totalActiveMcap.description}
+					value={formatUsd(totalActiveMcap, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+			</Card>
+			<Card padding="sm" className="flex-1">
+				<StatItem
+					className="gap-1"
+					label={definitions.totalOnChainMcap.label}
+					tooltip={definitions.totalOnChainMcap.description}
+					value={formatUsd(totalOnChainMcap, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+			</Card>
+			<Card padding="sm" className="flex-1">
+				<StatItem
+					className="gap-1"
+					label={definitions.totalDefiActiveTvl.label}
+					tooltip={definitions.totalDefiActiveTvl.description}
+					value={formatUsd(totalOnChainDeFiActiveTvl, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+			</Card>
+			{includeRwaPerps ? (
+				<Card padding="sm" className="flex-1">
+					<StatItem
+						className="gap-1"
+						label="RWA Perps OI"
+						tooltip={perpsDefinitions.totalOpenInterest.description}
+						value={formatUsd(totalOpenInterest, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
+				</Card>
+			) : null}
+			<Card padding="sm" className="flex-1">
+				<StatItem
+					className="gap-1"
+					label={definitions.totalAssetIssuers.label}
+					tooltip={definitions.totalAssetIssuers.description}
+					value={formatCompactNumber(totalIssuersCount, {
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+			</Card>
+		</div>
+	)
+
+	/* Platform pages already headline the platform's own AUM and DeFi TVL, so the
+	   same aggregates recomputed over the *filtered* asset set join the identity
+	   card as their own group rather than competing as a row of big cards. */
+	const platformListedTotals: RWAPlatformListedTotal[] = [
+		{
+			// Names the scope the money rows below are summed over: without it the
+			// group's numbers silently disagree with the platform's own asset count.
+			label: 'Assets shown',
+			tooltip: 'Assets matching the current filters, and the scope of the totals below.',
+			value: formatCompactNumber(filteredAssets.length)
+		},
+		{
+			label: definitions.totalActiveMcap.label,
+			tooltip: definitions.totalActiveMcap.description,
+			value: formatUsd(totalActiveMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		},
+		{
+			label: definitions.totalOnChainMcap.label,
+			tooltip: definitions.totalOnChainMcap.description,
+			value: formatUsd(totalOnChainMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		},
+		{
+			label: definitions.totalDefiActiveTvl.label,
+			tooltip: definitions.totalDefiActiveTvl.description,
+			value: formatUsd(totalOnChainDeFiActiveTvl, {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})
+		},
+		...(includeRwaPerps
+			? [
+					{
+						label: 'RWA Perps OI',
+						tooltip: perpsDefinitions.totalOpenInterest.description,
+						value: formatUsd(totalOpenInterest, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})
+					}
+				]
+			: []),
+		{
+			label: definitions.totalAssetIssuers.label,
+			tooltip: definitions.totalAssetIssuers.description,
+			value: formatCompactNumber(totalIssuersCount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		}
+	]
+
+	const chartSection = showCharts ? (
+		<>
+			{chartView === 'timeSeries' ? (
+				<ChartPanel>
+					<ChartPanelToolbar className="justify-end">
+						{chartTypeSwitchRow}
+						{isFlowMetric ? (
+							<SegmentedControl<RWAFlowGrouping>
+								value={flowGroupBy}
+								onValueChange={(nextFlowMode) => {
+									void pushShallowQuery(router, {
+										flowMode: nextFlowMode === 'daily' ? undefined : nextFlowMode
+									})
+								}}
+								options={RWA_FLOW_GROUPING_OPTIONS}
+								label="Flow period"
+								variant="default"
+								size="md"
+							/>
+						) : (
+							<>
+								{chartViewSwitch}
+								{timeSeriesChartBreakdownSwitch}
+							</>
+						)}
+						{isFlowMetric && !isFlowVsPrice ? flowOverlaySelect : null}
+						<ChartCsvExportButton
+							chartInstance={multiSeriesChart2Instance}
+							filename={timeSeriesChartFilename}
+							source={{
+								type: 'prepare-csv',
+								prepare: () => {
+									const exportDataset =
+										isFlowMetric && flowChart
+											? flowChart.dataset
+											: materializeRwaIndependentChartDataset(deferredSelectedTimeSeriesDataset)
+									return buildCsvFromDataset({
+										dimensions: exportDataset.dimensions,
+										source: exportDataset.source,
+										filenameBase: timeSeriesChartFilename
+									})
+								}
+							}}
+						/>
+						<ChartPngExportButton
+							chartInstance={multiSeriesChart2Instance}
+							filename={timeSeriesChartFilename}
+							title={exportChartTitle}
+						/>
+					</ChartPanelToolbar>
+					{isFlowVsPrice && flowVsPriceSummary ? (
+						<RWAFlowVsPriceStrip
+							summary={flowVsPriceSummary}
+							{...(flowVsPriceBreakdown ? { breakdown: flowVsPriceBreakdown } : {})}
+						/>
+					) : null}
+					{isFlowMetric ? (
+						isFlowLoading || (isFlowVsPrice && isFlowMcapLoading) ? (
+							<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
+								Loading
+								<LoadingDots />
+							</ChartPanelBodyFallback>
+						) : flowError || (isFlowVsPrice && flowMcapError) ? (
+							<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+								{flowError instanceof Error
+									? flowError.message
+									: isFlowVsPrice && flowMcapError
+										? flowMcapError
+										: 'Failed to load flow data.'}
+							</ChartPanelBodyFallback>
+						) : flowChart ? (
+							<Suspense fallback={<ChartPanelBodyFallback />}>
+								<RWAFlowsChart
+									chart={flowChart}
+									{...(flowDefaultStartTimestamp !== undefined
+										? { defaultStartTimestamp: flowDefaultStartTimestamp }
+										: {})}
+									onVisibleRangeChange={handleFlowVisibleRangeChange}
+									onReady={handleMultiSeriesChartReady}
+								/>
+							</Suspense>
+						) : (
+							<ChartPanelBodyFallback className="body-sm text-secondary">
+								No flow data available.
+							</ChartPanelBodyFallback>
+						)
+					) : chartError ? (
+						<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+							{chartError}
+						</ChartPanelBodyFallback>
+					) : isChartLoading ? (
+						<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
+							Loading
+							<LoadingDots />
+						</ChartPanelBodyFallback>
+					) : (
+						<Suspense fallback={<ChartPanelBodyFallback />}>
+							<MultiSeriesChart
+								dataset={deferredSelectedTimeSeriesDataset}
+								charts={timeSeriesCharts}
+								hideDefaultLegend={false}
+								showTotalInTooltip={!deferredSelectedTimeSeriesDataset.dimensions.includes('Total')}
+								onReady={handleMultiSeriesChartReady}
+							/>
+						</Suspense>
+					)}
+				</ChartPanel>
+			) : null}
+			{chartView === 'pie' || chartView === 'treemap' || chartView === 'hbar' ? (
+				<ChartPanel className={chartView === 'treemap' ? undefined : 'min-h-[420px]'}>
+					<ChartPanelToolbar className="justify-end">
+						{chartTypeSwitchRow}
+						{chartViewSwitch}
+						{pieChartBreakdownSwitch}
+						{chartView === 'treemap' ? treemapNestedBySwitch : null}
+						{chartView === 'treemap' ? <ChartRestoreButton chartInstance={treemapChartInstance} /> : null}
+						<ChartCsvExportButton
+							chartInstance={nonTimeSeriesChartInstance}
+							filename={nonTimeSeriesChartFilename}
+							source={
+								chartView === 'treemap'
+									? {
+											type: 'prepare-dataset',
+											prepare: () =>
+												buildTreemapCsvDataset(
+													buildCompleteRwaTreemapTreeData({
+														nestedTreeData: nestedTreemapTreeData,
+														completePieData: completePieChartData,
+														breakdownLabel: chartBreakdownLabel
+													})
+												)
+										}
+									: {
+											type: 'prepare-dataset',
+											prepare: () => ({
+												dimensions: ['Name', 'Value'],
+												source: completePieChartData.map(({ name, value }) => [name, value])
+											})
+										}
+							}
+						/>
+						<ChartPngExportButton
+							chartInstance={nonTimeSeriesChartInstance}
+							filename={nonTimeSeriesChartFilename}
+							title={exportChartTitle}
+						/>
+					</ChartPanelToolbar>
+					<Suspense fallback={chartView === 'treemap' ? <div className="min-h-[600px]" /> : <ChartPanelBodyFallback />}>
+						{chartView === 'pie' ? (
+							<PieChart
+								chartData={deferredSelectedPieChartData}
+								stackColors={valueSortedPieChartStackColors}
+								radius={pieChartRadius}
+								legendPosition={pieChartLegendPosition}
+								legendTextStyle={pieChartLegendTextStyle}
+								onReady={handlePieChartReady}
+							/>
+						) : chartView === 'hbar' ? (
+							<HBarChart
+								categories={selectedBarChartPresentation.categories}
+								values={selectedBarChartPresentation.values}
+								colors={selectedBarChartPresentation.colors}
+								valueSymbol="$"
+								onReady={handleBarChartReady}
+							/>
+						) : (
+							<TreemapChart
+								treeData={treemapTreeData}
+								variant="rwa"
+								height="600px"
+								onReady={handleTreemapChartReady}
+								valueLabel={chartMetricLabel}
+							/>
+						)}
+					</Suspense>
+				</ChartPanel>
+			) : null}
+		</>
+	) : null
+
 	return (
 		<>
 			{/* <Announcement>
 				Stablecoins, Governance are not included by default. To include them, toggle the corresponding filters.
 			</Announcement> */}
 			<RowLinksWithDropdown links={navLinks} activeLink={selectedModeLabel} />
-			{props.platformPage ? <RWAPlatformHeader data={props.platformPage} /> : null}
 			<RWAOverviewFilters
 				enabled={showFilters}
 				defaultInclusion={props.defaultInclusion}
@@ -960,250 +1261,17 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					setSelfCustodyStates
 				}}
 			/>
-			<div className="flex flex-col gap-2 md:flex-row md:items-center">
-				<Card padding="sm" className="flex-1">
-					<StatItem
-						className="gap-1"
-						label={definitions.totalActiveMcap.label}
-						tooltip={definitions.totalActiveMcap.description}
-						value={formatUsd(totalActiveMcap, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				</Card>
-				<Card padding="sm" className="flex-1">
-					<StatItem
-						className="gap-1"
-						label={definitions.totalOnChainMcap.label}
-						tooltip={definitions.totalOnChainMcap.description}
-						value={formatUsd(totalOnChainMcap, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				</Card>
-				<Card padding="sm" className="flex-1">
-					<StatItem
-						className="gap-1"
-						label={definitions.totalDefiActiveTvl.label}
-						tooltip={definitions.totalDefiActiveTvl.description}
-						value={formatUsd(totalOnChainDeFiActiveTvl, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				</Card>
-				{includeRwaPerps ? (
-					<Card padding="sm" className="flex-1">
-						<StatItem
-							className="gap-1"
-							label="RWA Perps OI"
-							tooltip={perpsDefinitions.totalOpenInterest.description}
-							value={formatUsd(totalOpenInterest, {
-								compact: true,
-								minimumCompactValue: 1_000_000,
-								compactSuffix: 'lowercase'
-							})}
-						/>
-					</Card>
-				) : null}
-				<Card padding="sm" className="flex-1">
-					<StatItem
-						className="gap-1"
-						label={definitions.totalAssetIssuers.label}
-						tooltip={definitions.totalAssetIssuers.description}
-						value={formatCompactNumber(totalIssuersCount, {
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				</Card>
-			</div>
-			{showCharts ? (
+			{props.platformPage ? (
+				<SummaryCardGrid>
+					<RWAPlatformHeader data={props.platformPage} listedTotals={platformListedTotals} />
+					{chartSection ? <div className="col-span-2 flex flex-col gap-2">{chartSection}</div> : null}
+				</SummaryCardGrid>
+			) : (
 				<>
-					{chartView === 'timeSeries' ? (
-						<ChartPanel>
-							<ChartPanelToolbar className="justify-end">
-								{chartTypeSwitch}
-								{isFlowMetric ? (
-									<SegmentedControl<RWAFlowGrouping>
-										value={flowGroupBy}
-										onValueChange={(nextFlowMode) => {
-											void pushShallowQuery(router, {
-												flowMode: nextFlowMode === 'daily' ? undefined : nextFlowMode
-											})
-										}}
-										options={RWA_FLOW_GROUPING_OPTIONS}
-										label="Flow period"
-										variant="default"
-										size="md"
-									/>
-								) : (
-									<>
-										{chartViewSwitch}
-										{timeSeriesChartBreakdownSwitch}
-									</>
-								)}
-								{isFlowMetric && !isFlowVsPrice ? flowOverlaySelect : null}
-								<ChartCsvExportButton
-									chartInstance={multiSeriesChart2Instance}
-									filename={timeSeriesChartFilename}
-									source={{
-										type: 'prepare-csv',
-										prepare: () => {
-											const exportDataset =
-												isFlowMetric && flowChart
-													? flowChart.dataset
-													: materializeRwaIndependentChartDataset(deferredSelectedTimeSeriesDataset)
-											return buildCsvFromDataset({
-												dimensions: exportDataset.dimensions,
-												source: exportDataset.source,
-												filenameBase: timeSeriesChartFilename
-											})
-										}
-									}}
-								/>
-								<ChartPngExportButton
-									chartInstance={multiSeriesChart2Instance}
-									filename={timeSeriesChartFilename}
-									title={exportChartTitle}
-								/>
-							</ChartPanelToolbar>
-							{isFlowVsPrice && flowVsPriceSummary ? (
-								<RWAFlowVsPriceStrip
-									summary={flowVsPriceSummary}
-									{...(flowVsPriceBreakdown ? { breakdown: flowVsPriceBreakdown } : {})}
-								/>
-							) : null}
-							{isFlowMetric ? (
-								isFlowLoading || (isFlowVsPrice && isFlowMcapLoading) ? (
-									<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
-										Loading
-										<LoadingDots />
-									</ChartPanelBodyFallback>
-								) : flowError || (isFlowVsPrice && flowMcapError) ? (
-									<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
-										{flowError instanceof Error
-											? flowError.message
-											: isFlowVsPrice && flowMcapError
-												? flowMcapError
-												: 'Failed to load flow data.'}
-									</ChartPanelBodyFallback>
-								) : flowChart ? (
-									<Suspense fallback={<ChartPanelBodyFallback />}>
-										<RWAFlowsChart
-											chart={flowChart}
-											{...(flowDefaultStartTimestamp !== undefined
-												? { defaultStartTimestamp: flowDefaultStartTimestamp }
-												: {})}
-											onVisibleRangeChange={handleFlowVisibleRangeChange}
-											onReady={handleMultiSeriesChartReady}
-										/>
-									</Suspense>
-								) : (
-									<ChartPanelBodyFallback className="body-sm text-secondary">
-										No flow data available.
-									</ChartPanelBodyFallback>
-								)
-							) : chartError ? (
-								<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
-									{chartError}
-								</ChartPanelBodyFallback>
-							) : isChartLoading ? (
-								<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
-									Loading
-									<LoadingDots />
-								</ChartPanelBodyFallback>
-							) : (
-								<Suspense fallback={<ChartPanelBodyFallback />}>
-									<MultiSeriesChart
-										dataset={deferredSelectedTimeSeriesDataset}
-										charts={timeSeriesCharts}
-										hideDefaultLegend={false}
-										showTotalInTooltip={!deferredSelectedTimeSeriesDataset.dimensions.includes('Total')}
-										onReady={handleMultiSeriesChartReady}
-									/>
-								</Suspense>
-							)}
-						</ChartPanel>
-					) : null}
-					{chartView === 'pie' || chartView === 'treemap' || chartView === 'hbar' ? (
-						<ChartPanel className={chartView === 'treemap' ? undefined : 'min-h-[420px]'}>
-							<ChartPanelToolbar className="justify-end">
-								{chartTypeSwitch}
-								{chartViewSwitch}
-								{pieChartBreakdownSwitch}
-								{chartView === 'treemap' ? treemapNestedBySwitch : null}
-								{chartView === 'treemap' ? <ChartRestoreButton chartInstance={treemapChartInstance} /> : null}
-								<ChartCsvExportButton
-									chartInstance={nonTimeSeriesChartInstance}
-									filename={nonTimeSeriesChartFilename}
-									source={
-										chartView === 'treemap'
-											? {
-													type: 'prepare-dataset',
-													prepare: () =>
-														buildTreemapCsvDataset(
-															buildCompleteRwaTreemapTreeData({
-																nestedTreeData: nestedTreemapTreeData,
-																completePieData: completePieChartData,
-																breakdownLabel: chartBreakdownLabel
-															})
-														)
-												}
-											: {
-													type: 'prepare-dataset',
-													prepare: () => ({
-														dimensions: ['Name', 'Value'],
-														source: completePieChartData.map(({ name, value }) => [name, value])
-													})
-												}
-									}
-								/>
-								<ChartPngExportButton
-									chartInstance={nonTimeSeriesChartInstance}
-									filename={nonTimeSeriesChartFilename}
-									title={exportChartTitle}
-								/>
-							</ChartPanelToolbar>
-							<Suspense
-								fallback={chartView === 'treemap' ? <div className="min-h-[600px]" /> : <ChartPanelBodyFallback />}
-							>
-								{chartView === 'pie' ? (
-									<PieChart
-										chartData={deferredSelectedPieChartData}
-										stackColors={valueSortedPieChartStackColors}
-										radius={pieChartRadius}
-										legendPosition={pieChartLegendPosition}
-										legendTextStyle={pieChartLegendTextStyle}
-										onReady={handlePieChartReady}
-									/>
-								) : chartView === 'hbar' ? (
-									<HBarChart
-										categories={selectedBarChartPresentation.categories}
-										values={selectedBarChartPresentation.values}
-										colors={selectedBarChartPresentation.colors}
-										valueSymbol="$"
-										onReady={handleBarChartReady}
-									/>
-								) : (
-									<TreemapChart
-										treeData={treemapTreeData}
-										variant="rwa"
-										height="600px"
-										onReady={handleTreemapChartReady}
-										valueLabel={chartMetricLabel}
-									/>
-								)}
-							</Suspense>
-						</ChartPanel>
-					) : null}
+					{summaryStatCards}
+					{chartSection}
 				</>
-			) : null}
+			)}
 			{showFlowRotation ? (
 				<ChartPanel>
 					<ChartPanelToolbar className="justify-end">
@@ -1343,8 +1411,21 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					)}
 				</ChartPanel>
 			) : null}
-			{props.platformPage ? <RWAPlatformDetails data={props.platformPage} /> : null}
-			<RWAAssetsTable assets={filteredAssets} selectedChain={props.selectedChain} includeRwaPerps={includeRwaPerps} />
+			{props.platformPage ? (
+				<RWAPlatformDataViews
+					data={props.platformPage}
+					renderAssetsTable={(viewSwitch) => (
+						<RWAAssetsTable
+							assets={filteredAssets}
+							selectedChain={props.selectedChain}
+							includeRwaPerps={includeRwaPerps}
+							headerSlot={viewSwitch}
+						/>
+					)}
+				/>
+			) : (
+				<RWAAssetsTable assets={filteredAssets} selectedChain={props.selectedChain} includeRwaPerps={includeRwaPerps} />
+			)}
 		</>
 	)
 }

@@ -36,11 +36,14 @@ import { rwaSlug } from './rwaSlug'
 export function RWAAssetsTable({
 	assets,
 	selectedChain,
-	includeRwaPerps
+	includeRwaPerps,
+	headerSlot
 }: {
 	assets: IRWAAssetsOverview['assets']
 	selectedChain: string
 	includeRwaPerps: boolean
+	/** Replaces the panel title when the table is one view of a tabbed panel. */
+	headerSlot?: React.ReactNode
 }) {
 	const { data: flowSummary, isLoading: isLoadingFlowSummary, isError: isFlowSummaryError } = useRWAFlowSummary()
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -118,7 +121,7 @@ export function RWAAssetsTable({
 	return (
 		<Panel padding="none">
 			<PanelHeader className="justify-end">
-				<PanelTitle as="h1">Assets Rankings</PanelTitle>
+				{headerSlot ?? <PanelTitle as="h1">Assets Rankings</PanelTitle>}
 				<TableToolbarControlGroup className="justify-end lg:flex-nowrap">
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search assets</span>

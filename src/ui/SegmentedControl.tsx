@@ -73,9 +73,26 @@ type SegmentedControlProps<T extends string> = Omit<React.ComponentProps<'div'>,
 	size: TagGroupSize
 	className?: string
 	buttonClassName?: string
+	/**
+	 * `radio` (default) is for choosing a *value* that reconfigures one region —
+	 * a period, a denomination, a grouping. `tabs` is for switching between
+	 * distinct content panels, and requires `panelIdPrefix`: each option is then
+	 * a tab that names and points at its own panel, so assistive tech can tell
+	 * that the region below changed and can jump straight to it.
+	 */
+	semantics?: 'radio' | 'tabs'
+	/** Required by `semantics="tabs"`. See {@link segmentedControlTabIds}. */
+	panelIdPrefix?: string
 }
 
-/** A single-choice control with radio semantics and a roving tab stop. */
+/** Wires a tabs-semantics control to its panel: the panel element must carry
+    `role="tabpanel"`, `id={panelId}` and `aria-labelledby={tabId}` for the
+    option it renders. Ids are derived, so caller and control cannot drift. */
+export function segmentedControlTabIds(panelIdPrefix: string, value: string) {
+	return { tabId: `${panelIdPrefix}-tab-${value}`, panelId: `${panelIdPrefix}-panel-${value}` }
+}
+
+/** A single-choice control with a roving tab stop, in radio or tab semantics. */
 export function SegmentedControl<T extends string>({
 	value,
 	onValueChange,
@@ -86,8 +103,14 @@ export function SegmentedControl<T extends string>({
 	size,
 	className,
 	buttonClassName,
+	semantics = 'radio',
+	panelIdPrefix,
 	...props
 }: SegmentedControlProps<T>) {
+	if (semantics === 'tabs' && panelIdPrefix == null) {
+		throw new Error('SegmentedControl: semantics="tabs" requires panelIdPrefix')
+	}
+	const isTabs = semantics === 'tabs'
 	const { container, button } = TAG_GROUP_VARIANTS[variant]
 	const refs = React.useRef<Array<HTMLButtonElement | null>>([])
 	const selectedIndex = options.findIndex((option) => option.value === value && !option.disabled)
@@ -117,22 +140,37 @@ export function SegmentedControl<T extends string>({
 	)
 
 	return (
-		<div role="radiogroup" aria-label={label} className={clsx(container, TAG_GROUP_SIZES[size], className)} {...props}>
+		<div
+			role={isTabs ? 'tablist' : 'radiogroup'}
+			aria-label={label}
+			className={clsx(container, TAG_GROUP_SIZES[size], className)}
+			{...props}
+		>
 			{leading ? <span className="pr-1 pl-3">{leading}</span> : null}
 			{options.map((option, index) => {
+				const isSelected = option.value === value
+				const ids = isTabs ? segmentedControlTabIds(panelIdPrefix as string, option.value) : null
 				const control = (
 					<button
 						ref={(element) => {
 							refs.current[index] = element
 						}}
 						type="button"
-						role="radio"
-						aria-checked={option.value === value}
+						role={isTabs ? 'tab' : 'radio'}
+						{...(isTabs
+							? {
+									id: ids?.tabId,
+									'aria-selected': isSelected,
+									// Only the selected tab's panel is in the document, so
+									// pointing at the others would dangle.
+									...(isSelected ? { 'aria-controls': ids?.panelId } : {})
+								}
+							: { 'aria-checked': isSelected })}
 						aria-label={option.ariaLabel}
 						tabIndex={index === tabStopIndex ? 0 : -1}
 						disabled={option.disabled}
 						className={clsx(button, buttonClassName)}
-						data-active={option.value === value}
+						data-active={isSelected}
 						onClick={() => onValueChange(option.value)}
 						onKeyDown={(event) => {
 							if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {

@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
-import { SegmentedControl } from '../SegmentedControl'
+import { SegmentedControl, segmentedControlTabIds } from '../SegmentedControl'
 
 const OPTIONS = [
 	{ value: 'previous', label: 'Previous' },
@@ -49,6 +49,53 @@ describe('SegmentedControl', () => {
 		const html = renderControl({ disabled: ['previous', 'next'] })
 
 		expect(html).not.toContain('tabindex="0"')
+	})
+
+	it('chooses radio semantics by default', () => {
+		const html = renderControl({ value: 'next' })
+
+		expect(html).toContain('role="radiogroup"')
+		expect(buttonMarkup(html, 'Next')).toContain('aria-checked="true"')
+	})
+
+	it('names and addresses the selected panel under tabs semantics', () => {
+		const html = renderToStaticMarkup(
+			<SegmentedControl
+				value="next"
+				onValueChange={vi.fn()}
+				options={OPTIONS}
+				label="Pagination"
+				variant="default"
+				size="md"
+				semantics="tabs"
+				panelIdPrefix="demo"
+			/>
+		)
+		const { tabId, panelId } = segmentedControlTabIds('demo', 'next')
+
+		expect(html).toContain('role="tablist"')
+		expect(buttonMarkup(html, 'Next')).toContain('role="tab"')
+		expect(buttonMarkup(html, 'Next')).toContain('aria-selected="true"')
+		expect(buttonMarkup(html, 'Next')).toContain(`id="${tabId}"`)
+		expect(buttonMarkup(html, 'Next')).toContain(`aria-controls="${panelId}"`)
+		// The unselected panel is not in the document, so its tab must not claim one.
+		expect(buttonMarkup(html, 'Previous')).not.toContain('aria-controls')
+	})
+
+	it('refuses tabs semantics without a panel id to point at', () => {
+		expect(() =>
+			renderToStaticMarkup(
+				<SegmentedControl
+					value="next"
+					onValueChange={vi.fn()}
+					options={OPTIONS}
+					label="Pagination"
+					variant="default"
+					size="md"
+					semantics="tabs"
+				/>
+			)
+		).toThrow(/panelIdPrefix/)
 	})
 
 	it('anchors optional tooltip content around the complete button', () => {

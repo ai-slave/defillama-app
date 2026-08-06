@@ -4,7 +4,7 @@ import type { Raise } from '~/containers/Raises/model'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/ui/SegmentedControl'
+import { SegmentedControl, segmentedControlTabIds } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
@@ -44,6 +44,12 @@ const TOOLTIPS = {
 const EMBEDDED_TOKEN_RIGHTS_SECTION_ID = 'token-rights-and-value-accrual'
 
 type TokenRightsView = 'overview' | 'details'
+
+const TOKEN_RIGHTS_PANEL_PREFIX = 'token-rights-view'
+const TOKEN_RIGHTS_VIEW_OPTIONS = [
+	{ value: 'overview' as const, label: 'Overview' },
+	{ value: 'details' as const, label: 'Details' }
+]
 
 interface TokenRightsByProtocolProps {
 	name: string
@@ -124,7 +130,16 @@ export function TokenRightsByProtocol({
 				)
 			) : null}
 
-			<div className={isEmbedded ? 'p-2' : undefined}>
+			<div
+				{...(showHeader
+					? {
+							role: 'tabpanel',
+							id: segmentedControlTabIds(TOKEN_RIGHTS_PANEL_PREFIX, activeView).panelId,
+							'aria-labelledby': segmentedControlTabIds(TOKEN_RIGHTS_PANEL_PREFIX, activeView).tabId
+						}
+					: {})}
+				className={isEmbedded ? 'p-2' : undefined}
+			>
 				{activeView === 'overview' ? (
 					<TokenRightsOverviewView name={name} tokenRightsData={tokenRightsData} showIdentity={showCardIdentity} />
 				) : (
@@ -358,24 +373,16 @@ function TokenRightsViewToggle({
 	onChange: (view: TokenRightsView) => void
 }) {
 	return (
-		<div role="tablist" aria-label="Token rights view" className={chartSegmentedControlGroupStyles}>
-			{(['overview', 'details'] as const).map((view) => {
-				const active = activeView === view
-				return (
-					<button
-						key={view}
-						type="button"
-						role="tab"
-						aria-selected={active}
-						data-active={active}
-						onClick={() => onChange(view)}
-						className={chartSegmentedControlButtonStyles}
-					>
-						{view === 'overview' ? 'Overview' : 'Details'}
-					</button>
-				)
-			})}
-		</div>
+		<SegmentedControl<TokenRightsView>
+			value={activeView}
+			onValueChange={onChange}
+			options={TOKEN_RIGHTS_VIEW_OPTIONS}
+			label="Token rights view"
+			variant="default"
+			size="md"
+			semantics="tabs"
+			panelIdPrefix={TOKEN_RIGHTS_PANEL_PREFIX}
+		/>
 	)
 }
 

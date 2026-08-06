@@ -1,13 +1,18 @@
+import { useRouter } from 'next/router'
+import { useState } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
 import { TokenLogo } from '~/components/TokenLogo'
 import { buttonStyles } from '~/ui/Button'
-import { Card } from '~/ui/Card'
-import { Icon } from '~/ui/Icon'
+import { Icon, type IIcon } from '~/ui/Icon'
 import { MetricRow } from '~/ui/MetricPrimitives'
-import { StatItem } from '~/ui/SummaryStats'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SegmentedControl, segmentedControlTabIds } from '~/ui/SegmentedControl'
+import { StatItem, SummaryStatsCard } from '~/ui/SummaryStats'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { RWAPlatformMeta } from './api.types'
 import { PeerRanking } from './PeerRanking'
 import type { RWAPlatformMixRow, RWAPlatformPageData } from './types'
@@ -19,200 +24,368 @@ const compactUsdOptions = {
 } as const
 
 const linkButtonStyles = buttonStyles({ variant: 'secondary', size: 'md' })
+const iconLinkStyles = buttonStyles({ variant: 'secondary', size: 'md', square: true })
 
-function SectionCard({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
-	return (
-		<Card as="section" padding="sm" className="flex flex-col gap-3">
-			<h2 className="heading-xs">{title}</h2>
-			{children}
-		</Card>
-	)
-}
+/** Prose longer than this gets a Show more/less toggle. Character-based on
+    purpose: measuring rendered overflow needs a layout effect per paragraph,
+    and that measure-then-setState loop is what we removed from FormattedName. */
+const PROSE_CLAMP_THRESHOLD = 320
 
 function formatBps(value: number): string {
 	return `${formatNumber(value)} bps`
 }
 
-/** Methodology-style run-in: secondary medium label, primary sentence body. */
-function RunInText({ label, value }: { label: string; value: React.ReactNode }) {
-	return (
-		<p className="body-md">
-			<span className="font-medium text-secondary">{label}:</span> {value}
-		</p>
-	)
-}
-
-/** Asset-Information-style stacked pair: secondary label over a medium value. */
-function ProfileField({ label, value }: { label: string; value: React.ReactNode }) {
-	return (
-		<p className="flex flex-col gap-1">
-			<span className="text-secondary">{label}</span>
-			<span className="font-medium">{value}</span>
-		</p>
-	)
-}
-
-function ProfileText({ title, value }: { title: string; value: string }) {
-	return (
-		<div className="flex flex-col gap-1">
-			<h3 className="font-semibold">{title}</h3>
-			<p className="body-md text-secondary">{value}</p>
-		</div>
-	)
-}
-
-export function RWAPlatformHeader({ data }: { data: RWAPlatformPageData }) {
-	const { meta } = data
-	const tags = [...(meta.platformType ?? []), ...(meta.category ?? []), ...(meta.accessModel ? [meta.accessModel] : [])]
-
-	const facts: Array<{ label: string; value: React.ReactNode }> = []
-	if (meta.foundedYear != null) facts.push({ label: 'Founded', value: meta.foundedYear })
-	if (meta.headquarters) facts.push({ label: 'Headquarters', value: meta.headquarters })
-	if (meta.primaryChain) facts.push({ label: 'Primary chain', value: meta.primaryChain })
-	if (meta.oracleProvider) facts.push({ label: 'Oracle', value: meta.oracleProvider })
-
-	const hasLinks =
-		(meta.website?.length ?? 0) > 0 ||
-		meta.twitter != null ||
-		meta.docs != null ||
-		meta.linkedin != null ||
-		meta.discord != null ||
-		meta.telegram != null ||
-		meta.rwaGithub != null ||
-		meta.protocolSlug != null
-
-	const uniqueTags = Array.from(new Set(tags))
-	const showProfile = meta.description != null || uniqueTags.length > 0 || facts.length > 0 || hasLinks
+/** Long prose at a readable measure, clamped until the reader asks for the rest. */
+function Prose({ children }: { children: string }) {
+	const [expanded, setExpanded] = useState(false)
+	const needsToggle = children.length > PROSE_CLAMP_THRESHOLD
 
 	return (
-		<div className="grid grid-cols-1 items-start gap-2 xl:grid-cols-3">
-			<Card padding="sm" className={`flex flex-col gap-6${showProfile ? '' : ' xl:col-span-3'}`}>
-				<div className="flex flex-col gap-2">
-					<h1 className="flex flex-wrap items-center gap-2 heading-sm">
-						{meta.logo ? <TokenLogo src={meta.logo} size={24} alt={`${meta.name} logo`} /> : null}
-						<span>{meta.name}</span>
-						{meta.suspicious === true ? (
-							<span className="flex items-center gap-1 rounded-full bg-surface-elevated-2 px-2 py-0.5 label-sm text-data-down">
-								<Icon name="alert-triangle" className="size-3.5" />
-								Suspicious
-							</span>
-						) : null}
-					</h1>
-					{meta.suspicious === true && meta.suspiciousReason ? (
-						<p className="flex items-start gap-1.5 body-sm text-data-down">
-							<Icon name="alert-triangle" className="mt-0.5 size-3.5 shrink-0" />
-							{meta.suspiciousReason}
-						</p>
-					) : null}
-				</div>
-				<StatItem label="On-chain AUM" value={formatUsd(meta.onchainAum, compactUsdOptions)} />
-				<div className="flex flex-col">
-					<h2 className="mb-2 font-semibold">Key Metrics</h2>
-					<MetricRow label="Live assets" value={formatCompactNumber(data.assetCount)} />
-					<MetricRow label="Chains" value={formatCompactNumber(data.chainCount)} />
-					{meta.estAnnualRevenueUsd != null ? (
-						<MetricRow label="Est. annual revenue" value={formatUsd(meta.estAnnualRevenueUsd, compactUsdOptions)} />
-					) : null}
-					<MetricRow label="DeFi TVL" value={formatUsd(data.defiActiveTvl, compactUsdOptions)} />
-					{data.defiActiveTvlToAumPct != null ? (
-						<MetricRow
-							label="DeFi TVL / AUM"
-							value={formatPercent(data.defiActiveTvlToAumPct, {
-								input: 'percent'
-							})}
-						/>
-					) : null}
-					{data.assetCount > 0 ? (
-						<MetricRow label="Confirmed attestations" value={`${data.attestedAssetCount} / ${data.assetCount}`} />
-					) : null}
-					{data.dominantAccessModel ? (
-						<MetricRow
-							label="Primary access"
-							value={`${data.dominantAccessModel.name} (${data.dominantAccessModel.count})`}
-							valueClassName="ml-auto label-md"
-						/>
-					) : null}
-				</div>
-			</Card>
-			{showProfile ? (
-				<Card padding="sm" className="flex flex-col gap-3 xl:col-span-2">
-					{meta.description ? <p className="body-md text-secondary">{meta.description}</p> : null}
-					{uniqueTags.length > 0 ? (
-						<div className="flex flex-wrap gap-1.5">
-							{uniqueTags.map((tag) => (
-								<span key={tag} className="rounded-full bg-surface-elevated-2 px-2 py-0.5 label-sm text-secondary">
-									{tag}
-								</span>
-							))}
-						</div>
-					) : null}
-					{facts.length > 0 ? (
-						<dl className="flex flex-wrap gap-x-6 gap-y-2">
-							{facts.map((fact) => (
-								<div key={fact.label} className="flex items-baseline gap-1.5">
-									<dt className="body-md text-secondary">{fact.label}</dt>
-									<dd className="label-md">{fact.value}</dd>
-								</div>
-							))}
-						</dl>
-					) : null}
-					{hasLinks ? (
-						<div className="flex flex-wrap gap-3">
-							{meta.website ? (
-								meta.website.length > 1 ? (
-									<Menu name="Website" options={meta.website} isExternal className={linkButtonStyles} />
-								) : (
-									<ExternalLinkButton key={meta.website[0]} href={meta.website[0]} icon="globe">
-										Website
-									</ExternalLinkButton>
-								)
-							) : null}
-							{meta.twitter ? (
-								<ExternalLinkButton href={meta.twitter} icon="twitter">
-									Twitter
-								</ExternalLinkButton>
-							) : null}
-							{meta.docs ? (
-								<ExternalLinkButton href={meta.docs} icon="file-text">
-									Docs
-								</ExternalLinkButton>
-							) : null}
-							{meta.linkedin ? (
-								<ExternalLinkButton href={meta.linkedin} icon="linkedin">
-									LinkedIn
-								</ExternalLinkButton>
-							) : null}
-							{meta.discord ? (
-								<ExternalLinkButton href={meta.discord} icon="discord">
-									Discord
-								</ExternalLinkButton>
-							) : null}
-							{meta.telegram ? (
-								<ExternalLinkButton href={meta.telegram} icon="telegram">
-									Telegram
-								</ExternalLinkButton>
-							) : null}
-							{meta.rwaGithub ? (
-								<ExternalLinkButton href={meta.rwaGithub} icon="github">
-									GitHub
-								</ExternalLinkButton>
-							) : null}
-							{meta.protocolSlug ? (
-								<BasicLink href={`/protocol/${meta.protocolSlug}`} className={linkButtonStyles}>
-									<span>Protocol page</span>
-								</BasicLink>
-							) : null}
-						</div>
-					) : null}
-				</Card>
+		<div className="flex max-w-[70ch] flex-col items-start gap-1">
+			<p className={`${expanded || !needsToggle ? '' : 'line-clamp-4 '}body-md text-secondary`}>{children}</p>
+			{needsToggle ? (
+				<button
+					type="button"
+					onClick={() => setExpanded((previous) => !previous)}
+					className="label-sm text-link hover:underline"
+				>
+					{expanded ? 'Show less' : 'Show more'}
+				</button>
 			) : null}
 		</div>
 	)
 }
 
+/** Collapsed-by-default detail group: keeps methodology prose out of the
+    resting layout without moving it off the page. */
+function Disclosure({ title, children }: { title: string; children: React.ReactNode }) {
+	return (
+		<details className="group/disclosure flex flex-col border-t border-subtle py-2">
+			<summary className="flex cursor-pointer items-center gap-1 label-md text-secondary hover:text-primary">
+				{title}
+				<Icon
+					name="chevron-down"
+					className="size-4 text-tertiary transition-transform duration-100 group-open/disclosure:rotate-180"
+				/>
+			</summary>
+			<div className="flex flex-col gap-4 pt-3">{children}</div>
+		</details>
+	)
+}
+
+/** Methodology-style run-in: secondary medium label, primary sentence body. */
+function RunInText({ label, value }: { label: string; value: React.ReactNode }) {
+	return (
+		<p className="max-w-[70ch] body-md">
+			<span className="font-medium text-secondary">{label}:</span> {value}
+		</p>
+	)
+}
+
+/** Stacked pair: tertiary label over a medium value. */
+function ProfileField({ label, value, wide }: { label: string; value: React.ReactNode; wide?: boolean }) {
+	return (
+		<div className={`flex flex-col gap-0.5${wide ? ' col-span-full' : ''}`}>
+			<dt className="body-sm text-tertiary">{label}</dt>
+			<dd className="label-md">{value}</dd>
+		</div>
+	)
+}
+
+function FactGrid({ children }: { children: React.ReactNode }) {
+	return <dl className="grid grid-cols-2 gap-x-4 gap-y-3">{children}</dl>
+}
+
+/** One column of the information view: a heading over its own content. */
+function InfoGroup({ title, children }: { title: string; children: React.ReactNode }) {
+	return (
+		<section className="flex flex-col gap-3">
+			<h2 className="heading-xs">{title}</h2>
+			{children}
+		</section>
+	)
+}
+
+const SOCIAL_LINKS: Array<{ key: keyof RWAPlatformMeta; label: string; icon: IIcon['name'] }> = [
+	{ key: 'twitter', label: 'Twitter', icon: 'twitter' },
+	{ key: 'linkedin', label: 'LinkedIn', icon: 'linkedin' },
+	{ key: 'discord', label: 'Discord', icon: 'discord' },
+	{ key: 'telegram', label: 'Telegram', icon: 'telegram' },
+	{ key: 'rwaGithub', label: 'GitHub', icon: 'github' }
+]
+
+function LinkRow({ meta }: { meta: RWAPlatformMeta }) {
+	const socials = SOCIAL_LINKS.flatMap((link) => {
+		const href = meta[link.key]
+		return typeof href === 'string' && href.length > 0 ? [{ ...link, href }] : []
+	})
+	const hasPrimary = (meta.website?.length ?? 0) > 0 || meta.docs != null || meta.protocolSlug != null
+	if (!hasPrimary && socials.length === 0) return null
+
+	return (
+		<div className="flex flex-wrap items-center gap-1.5">
+			{meta.website ? (
+				meta.website.length > 1 ? (
+					<Menu name="Website" options={meta.website} isExternal className={linkButtonStyles} />
+				) : (
+					<ExternalLinkButton href={meta.website[0]} icon="globe">
+						Website
+					</ExternalLinkButton>
+				)
+			) : null}
+			{meta.docs ? (
+				<ExternalLinkButton href={meta.docs} icon="file-text">
+					Docs
+				</ExternalLinkButton>
+			) : null}
+			{meta.protocolSlug ? (
+				<BasicLink href={`/protocol/${meta.protocolSlug}`} className={linkButtonStyles}>
+					<span>Protocol page</span>
+				</BasicLink>
+			) : null}
+			{socials.length > 0 ? <span className="mx-1 h-6 w-px bg-surface-elevated-2" aria-hidden="true" /> : null}
+			{socials.map((social) => (
+				<Tooltip
+					key={social.label}
+					content={social.label}
+					render={<a href={social.href} target="_blank" rel="noopener noreferrer" className={iconLinkStyles} />}
+				>
+					<Icon name={social.icon} className="size-3.5" />
+					<span className="sr-only">{social.label}</span>
+				</Tooltip>
+			))}
+		</div>
+	)
+}
+
+/** External document pills, grouped by kind (several prospectuses collapse into a menu). */
+function DocumentLinks({ groups }: { groups: Array<{ label: string; urls: string[] }> }) {
+	if (groups.length === 0) return null
+	return (
+		<div className="flex flex-wrap gap-1.5">
+			{groups.map((group) =>
+				group.urls.length > 1 ? (
+					<Menu key={group.label} name={group.label} options={group.urls} isExternal className={linkButtonStyles} />
+				) : (
+					<ExternalLinkButton key={group.label} href={group.urls[0]} icon="file-text">
+						{group.label}
+					</ExternalLinkButton>
+				)
+			)}
+		</div>
+	)
+}
+
+function collectLinkGroups(entries: ReadonlyArray<readonly [string, string[] | null]>) {
+	const groups: Array<{ label: string; urls: string[] }> = []
+	for (const [label, urls] of entries) {
+		if (urls && urls.length > 0) groups.push({ label, urls })
+	}
+	return groups
+}
+
+/* ---------------------------------------------------------------------------
+   Identity card — the platform's own numbers, sat next to the chart in the
+   summary grid (same shape as the protocol page's key-metrics card).
+--------------------------------------------------------------------------- */
+
+/** A total computed over the assets currently listed, not platform metadata. */
+export type RWAPlatformListedTotal = {
+	label: string
+	tooltip?: React.ReactNode
+	value: React.ReactNode
+}
+
+export function RWAPlatformHeader({
+	data,
+	listedTotals
+}: {
+	data: RWAPlatformPageData
+	/** Filter-dependent aggregates, shown as their own group under Key Metrics. */
+	listedTotals: RWAPlatformListedTotal[]
+}) {
+	const { meta } = data
+
+	return (
+		<SummaryStatsCard padding="sm">
+			<div className="flex flex-col gap-2">
+				<h1 className="flex flex-wrap items-center gap-2 heading-sm">
+					{meta.logo ? <TokenLogo src={meta.logo} size={24} alt={`${meta.name} logo`} /> : null}
+					<span>{meta.name}</span>
+					{meta.suspicious === true ? (
+						<span className="flex items-center gap-1 rounded-full bg-surface-elevated-2 px-2 py-0.5 label-sm text-data-down">
+							<Icon name="alert-triangle" className="size-3.5" />
+							Suspicious
+						</span>
+					) : null}
+				</h1>
+				{meta.suspicious === true && meta.suspiciousReason ? (
+					<p className="flex items-start gap-1.5 body-sm text-data-down">
+						<Icon name="alert-triangle" className="mt-0.5 size-3.5 shrink-0" />
+						{meta.suspiciousReason}
+					</p>
+				) : null}
+			</div>
+			<StatItem label="On-chain AUM" value={formatUsd(meta.onchainAum, compactUsdOptions)} />
+			{/* Two groups, two scopes: the platform's own numbers, then the same
+			    kinds of number recomputed over whatever the filters currently
+			    select. Naming both scopes is what keeps "DeFi TVL" and "DeFi
+			    Active TVL" from reading as two answers to one question. */}
+			<div className="flex flex-col">
+				<h2 className="mb-2 font-semibold">Platform totals</h2>
+				<MetricRow label="Live assets" value={formatCompactNumber(data.assetCount)} />
+				<MetricRow label="Chains" value={formatCompactNumber(data.chainCount)} />
+				{meta.estAnnualRevenueUsd != null ? (
+					<MetricRow label="Est. annual revenue" value={formatUsd(meta.estAnnualRevenueUsd, compactUsdOptions)} />
+				) : null}
+				<MetricRow label="DeFi TVL" value={formatUsd(data.defiActiveTvl, compactUsdOptions)} />
+				{data.defiActiveTvlToAumPct != null ? (
+					<MetricRow
+						label="DeFi TVL / AUM"
+						value={formatPercent(data.defiActiveTvlToAumPct, {
+							input: 'percent'
+						})}
+					/>
+				) : null}
+				{data.assetCount > 0 ? (
+					<MetricRow label="Confirmed attestations" value={`${data.attestedAssetCount} / ${data.assetCount}`} />
+				) : null}
+				{data.dominantAccessModel ? (
+					<MetricRow
+						label="Primary access"
+						value={`${data.dominantAccessModel.name} (${data.dominantAccessModel.count})`}
+						valueClassName="ml-auto label-md"
+					/>
+				) : null}
+			</div>
+			{listedTotals.length > 0 ? (
+				<div className="flex flex-col">
+					<h2 className="mb-2 font-semibold">Totals for filtered assets</h2>
+					{listedTotals.map((total) => (
+						<MetricRow
+							key={total.label}
+							label={total.label}
+							{...(total.tooltip != null ? { tooltip: total.tooltip } : {})}
+							value={total.value}
+						/>
+					))}
+				</div>
+			) : null}
+		</SummaryStatsCard>
+	)
+}
+
+/* ---------------------------------------------------------------------------
+   Asset mix view.
+--------------------------------------------------------------------------- */
+
+/* Every row is rendered: the mix owns a full panel now, and a truncated list
+   with a "+12 more" count the reader cannot open is a dead end. */
+function MixList({ rows }: { rows: RWAPlatformMixRow[] }) {
+	const maxCount = rows[0]?.count ?? 0
+	return (
+		<div className="flex flex-col gap-1.5">
+			{rows.map((row) => (
+				<div key={row.name} className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_auto] items-center gap-x-3">
+					<span className="truncate body-md" title={row.name}>
+						{row.name}
+					</span>
+					<span className="h-1.5 overflow-hidden rounded-full bg-surface-elevated-1">
+						<span
+							className="block h-full rounded-full bg-brand"
+							style={{
+								width: `${maxCount > 0 ? (row.count / maxCount) * 100 : 0}%`
+							}}
+						/>
+					</span>
+					<span className="mono-sm text-secondary">{formatCompactNumber(row.count)}</span>
+				</div>
+			))}
+		</div>
+	)
+}
+
+function AssetMix({ data, headerSlot }: { data: RWAPlatformPageData; headerSlot: React.ReactNode }) {
+	return (
+		<Panel padding="none">
+			<PanelHeader>{headerSlot}</PanelHeader>
+			<div className="grid grid-cols-1 gap-6 p-4 md:grid-cols-2 xl:grid-cols-3">
+				{data.categoryMix.length > 0 ? (
+					<InfoGroup title="Categories">
+						<MixList rows={data.categoryMix} />
+					</InfoGroup>
+				) : null}
+				{data.assetClassMix.length > 0 ? (
+					<InfoGroup title="Asset classes">
+						<MixList rows={data.assetClassMix} />
+					</InfoGroup>
+				) : null}
+				{data.chainMix.length > 0 ? (
+					<InfoGroup title="Chain deployments">
+						<MixList rows={data.chainMix} />
+					</InfoGroup>
+				) : null}
+			</div>
+		</Panel>
+	)
+}
+
+/* ---------------------------------------------------------------------------
+   Information view — the reading surface: what the platform is, how it earns,
+   who is behind it. Always mounted (see RWAPlatformDataViews) so the profile
+   copy stays in the served HTML.
+--------------------------------------------------------------------------- */
+
+function Overview({ meta }: { meta: RWAPlatformMeta }) {
+	const tags = Array.from(
+		new Set([...(meta.platformType ?? []), ...(meta.category ?? []), ...(meta.accessModel ? [meta.accessModel] : [])])
+	)
+	if (meta.description == null && tags.length === 0) return null
+
+	return (
+		<div className="flex flex-col gap-3">
+			{meta.description ? <Prose>{meta.description}</Prose> : null}
+			{tags.length > 0 ? (
+				<div className="flex flex-wrap gap-1.5">
+					{tags.map((tag) => (
+						<span key={tag} className="rounded-full bg-surface-elevated-2 px-2 py-0.5 label-sm text-secondary">
+							{tag}
+						</span>
+					))}
+				</div>
+			) : null}
+		</div>
+	)
+}
+
+function hasProfileFacts(meta: RWAPlatformMeta): boolean {
+	return (
+		meta.foundedYear != null ||
+		meta.headquarters != null ||
+		meta.primaryChain != null ||
+		meta.parentPlatform != null ||
+		meta.issuer != null ||
+		meta.oracleProvider != null
+	)
+}
+
+function ProfileFacts({ meta }: { meta: RWAPlatformMeta }) {
+	return (
+		<InfoGroup title="Profile">
+			<FactGrid>
+				{meta.foundedYear != null ? <ProfileField label="Founded" value={meta.foundedYear} /> : null}
+				{meta.headquarters ? <ProfileField label="Headquarters" value={meta.headquarters} /> : null}
+				{meta.primaryChain ? <ProfileField label="Primary chain" value={meta.primaryChain} /> : null}
+				{meta.parentPlatform ? <ProfileField label="Parent platform" value={meta.parentPlatform} /> : null}
+				{meta.issuer ? <ProfileField label="Issuer" value={meta.issuer} wide /> : null}
+				{meta.oracleProvider ? <ProfileField label="Oracle" value={meta.oracleProvider} wide /> : null}
+			</FactGrid>
+		</InfoGroup>
+	)
+}
+
 function hasEconomics(meta: RWAPlatformMeta): boolean {
 	return (
-		meta.revenueModel != null ||
 		meta.holderTotalFeeBps != null ||
 		meta.assetManagerTakeBps != null ||
 		meta.tokenizationPlatformTakeBps != null ||
@@ -230,35 +403,13 @@ function hasEconomics(meta: RWAPlatformMeta): boolean {
 		meta.revenueConfidence != null ||
 		meta.feeLastVerified != null ||
 		meta.feeWaiverEndDate != null ||
-		meta.revenueNotes != null ||
-		meta.revenueVerificationMethod != null ||
-		meta.chainShareClassFeeVariants != null ||
-		meta.subsidyRebateArrangements != null ||
-		meta.takeRateBasis != null ||
-		meta.revenueMix != null ||
-		(meta.marginSettlementAsset?.length ?? 0) > 0 ||
-		(meta.prospectusUrl?.length ?? 0) > 0 ||
-		(meta.feeScheduleUrl?.length ?? 0) > 0 ||
-		(meta.issuerDocsUrl?.length ?? 0) > 0 ||
-		(meta.tcsUrl?.length ?? 0) > 0 ||
-		(meta.governanceWhitepaperUrl?.length ?? 0) > 0
+		(meta.marginSettlementAsset?.length ?? 0) > 0
 	)
 }
 
 function Economics({ meta }: { meta: RWAPlatformMeta }) {
-	const documentGroups: Array<{ label: string; urls: string[] }> = []
-	for (const [label, urls] of [
-		['Prospectus', meta.prospectusUrl],
-		['Fee schedule', meta.feeScheduleUrl],
-		['Issuer document', meta.issuerDocsUrl],
-		['Terms and conditions', meta.tcsUrl],
-		['Governance whitepaper', meta.governanceWhitepaperUrl]
-	] as const) {
-		if (urls && urls.length > 0) documentGroups.push({ label, urls })
-	}
-
 	return (
-		<SectionCard title="Economics & revenue">
+		<InfoGroup title="Economics & revenue">
 			<div className="flex flex-col">
 				{meta.holderTotalFeeBps != null ? (
 					<MetricRow label="Holder total fee" value={formatBps(meta.holderTotalFeeBps)} />
@@ -325,6 +476,76 @@ function Economics({ meta }: { meta: RWAPlatformMeta }) {
 					<MetricRow label="Fee waiver ends" value={meta.feeWaiverEndDate} valueClassName="ml-auto label-md" />
 				) : null}
 			</div>
+		</InfoGroup>
+	)
+}
+
+function hasAttestations(meta: RWAPlatformMeta): boolean {
+	return (
+		meta.attestationFrequency != null ||
+		meta.dateOfLastAttestation != null ||
+		meta.llamaGradeAttestation != null ||
+		meta.milestones.length > 0 ||
+		meta.keyMilestones != null
+	)
+}
+
+function Attestations({ meta }: { meta: RWAPlatformMeta }) {
+	return (
+		<InfoGroup title="Attestations & milestones">
+			<FactGrid>
+				{meta.attestationFrequency ? (
+					<ProfileField label="Attestation frequency" value={meta.attestationFrequency} wide />
+				) : null}
+				{meta.dateOfLastAttestation ? (
+					<ProfileField label="Last attestation" value={meta.dateOfLastAttestation} />
+				) : null}
+				{meta.llamaGradeAttestation != null ? (
+					<ProfileField label="Llama-grade attestation" value={meta.llamaGradeAttestation ? 'Yes' : 'No'} />
+				) : null}
+			</FactGrid>
+			{meta.milestones.length > 0 ? (
+				<ol className="flex flex-col gap-3 border-l border-subtle pl-4">
+					{meta.milestones.map((milestone, index) => (
+						<li key={`${milestone.date ?? 'undated'}-${index}`} className="relative flex flex-col">
+							<span className="absolute top-1.5 -left-[1.2rem] size-2 rounded-full bg-brand" aria-hidden="true" />
+							{milestone.date ? <span className="body-sm text-tertiary">{milestone.date}</span> : null}
+							<span className="body-md">{milestone.event}</span>
+						</li>
+					))}
+				</ol>
+			) : meta.keyMilestones ? (
+				<Prose>{meta.keyMilestones}</Prose>
+			) : null}
+		</InfoGroup>
+	)
+}
+
+function SubHeading({ children }: { children: React.ReactNode }) {
+	return <h3 className="label-md text-secondary">{children}</h3>
+}
+
+function RevenueMethodology({ meta }: { meta: RWAPlatformMeta }) {
+	const documentGroups = collectLinkGroups([
+		['Prospectus', meta.prospectusUrl],
+		['Fee schedule', meta.feeScheduleUrl],
+		['Issuer document', meta.issuerDocsUrl],
+		['Terms and conditions', meta.tcsUrl],
+		['Governance whitepaper', meta.governanceWhitepaperUrl]
+	])
+	const hasContent =
+		meta.revenueModel != null ||
+		meta.takeRateBasis != null ||
+		meta.revenueMix != null ||
+		meta.revenueVerificationMethod != null ||
+		meta.chainShareClassFeeVariants != null ||
+		meta.subsidyRebateArrangements != null ||
+		meta.revenueNotes != null ||
+		documentGroups.length > 0
+	if (!hasContent) return null
+
+	return (
+		<Disclosure title="Revenue methodology & documents">
 			{meta.revenueModel ? <RunInText label="Revenue model" value={meta.revenueModel} /> : null}
 			{meta.takeRateBasis ? <RunInText label="Take-rate basis" value={meta.takeRateBasis} /> : null}
 			{meta.revenueMix ? <RunInText label="Revenue mix" value={meta.revenueMix} /> : null}
@@ -337,196 +558,185 @@ function Economics({ meta }: { meta: RWAPlatformMeta }) {
 			{meta.subsidyRebateArrangements ? (
 				<RunInText label="Subsidies or rebates" value={meta.subsidyRebateArrangements} />
 			) : null}
-			{meta.revenueNotes ? <p className="body-md text-secondary">{meta.revenueNotes}</p> : null}
-			{documentGroups.length > 0 ? (
-				<div className="flex flex-wrap gap-3">
-					{documentGroups.map((group) =>
-						group.urls.length > 1 ? (
-							<Menu key={group.label} name={group.label} options={group.urls} isExternal className={linkButtonStyles} />
-						) : (
-							<ExternalLinkButton key={group.label} href={group.urls[0]} icon="file-text">
-								{group.label}
-							</ExternalLinkButton>
-						)
-					)}
-				</div>
-			) : null}
-		</SectionCard>
+			{meta.revenueNotes ? <Prose>{meta.revenueNotes}</Prose> : null}
+			<DocumentLinks groups={documentGroups} />
+		</Disclosure>
 	)
 }
 
-function MixList({ rows }: { rows: RWAPlatformMixRow[] }) {
-	const visibleRows = rows.slice(0, 8)
-	const maxCount = visibleRows[0]?.count ?? 0
-	return (
-		<div className="flex flex-col gap-2">
-			{visibleRows.map((row) => (
-				<div key={row.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
-					<span className="truncate body-md">{row.name}</span>
-					<span className="label-md">{formatCompactNumber(row.count)}</span>
-					<span className="col-span-2 h-1.5 overflow-hidden rounded-full bg-surface-elevated-2">
-						<span
-							className="block h-full rounded-full bg-brand"
-							style={{
-								width: `${maxCount > 0 ? (row.count / maxCount) * 100 : 0}%`
-							}}
-						/>
-					</span>
-				</div>
-			))}
-			{rows.length > visibleRows.length ? (
-				<p className="body-sm text-tertiary">+{rows.length - visibleRows.length} more</p>
-			) : null}
-		</div>
-	)
-}
-
-function MixGroup({ title, rows }: { title: string; rows: RWAPlatformMixRow[] }) {
-	return (
-		<div className="flex flex-col gap-3">
-			<h3 className="label-md text-secondary">{title}</h3>
-			<MixList rows={rows} />
-		</div>
-	)
-}
-
-function AssetMix({ data }: { data: RWAPlatformPageData }) {
-	const hasMix = data.categoryMix.length > 0 || data.assetClassMix.length > 0 || data.chainMix.length > 0
-	if (!hasMix) return null
-	return (
-		<SectionCard title="Asset mix">
-			<div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-				{data.categoryMix.length > 0 ? <MixGroup title="Categories" rows={data.categoryMix} /> : null}
-				{data.assetClassMix.length > 0 ? <MixGroup title="Asset classes" rows={data.assetClassMix} /> : null}
-				{data.chainMix.length > 0 ? <MixGroup title="Chain deployments" rows={data.chainMix} /> : null}
-			</div>
-		</SectionCard>
-	)
-}
-
-function hasEntityProfile(meta: RWAPlatformMeta): boolean {
-	return (
-		meta.issuer != null ||
-		meta.foundersParsed.length > 0 ||
-		meta.founders != null ||
-		meta.regulatoryStatus != null ||
-		meta.entityStructureNotes != null ||
-		meta.milestones.length > 0 ||
-		meta.keyMilestones != null ||
-		meta.attestationFrequency != null ||
-		meta.dateOfLastAttestation != null ||
-		meta.llamaGradeAttestation != null ||
-		meta.issuerRegistryInfo != null ||
-		(meta.refLinks?.length ?? 0) > 0 ||
-		(meta.issuerSourceLink?.length ?? 0) > 0 ||
-		(meta.attestationLinks?.length ?? 0) > 0 ||
-		(meta.oracleProofLink?.length ?? 0) > 0
-	)
-}
-
-function EntityProfile({ meta }: { meta: RWAPlatformMeta }) {
-	const hasMilestones = meta.milestones.length > 0 || meta.keyMilestones != null
-	return (
-		<SectionCard title="Entity profile">
-			<div className={`grid grid-cols-1 gap-6 ${hasMilestones ? 'lg:grid-cols-2' : ''}`}>
-				<div className="flex flex-col gap-3">
-					{meta.issuer ? <ProfileField label="Issuer" value={meta.issuer} /> : null}
-					{meta.parentPlatform ? <ProfileField label="Parent platform" value={meta.parentPlatform} /> : null}
-					{meta.issuerRegistryInfo ? <ProfileField label="Issuer registry" value={meta.issuerRegistryInfo} /> : null}
-					{meta.attestationFrequency ? (
-						<ProfileField label="Attestation frequency" value={meta.attestationFrequency} />
-					) : null}
-					{meta.dateOfLastAttestation ? (
-						<ProfileField label="Last attestation" value={meta.dateOfLastAttestation} />
-					) : null}
-					{meta.llamaGradeAttestation != null ? (
-						<ProfileField label="Llama-grade attestation" value={meta.llamaGradeAttestation ? 'Yes' : 'No'} />
-					) : null}
-					{meta.foundersParsed.length > 0 ? (
-						<div className="flex flex-col gap-2">
-							<h3 className="font-semibold">Founders and leadership</h3>
-							<ul className="flex flex-col gap-1 body-md text-secondary">
-								{meta.foundersParsed.map((founder) => (
-									<li key={`${founder.name}-${founder.role ?? ''}`}>
-										{founder.name}
-										{founder.role ? ` — ${founder.role}` : ''}
-									</li>
-								))}
-							</ul>
-						</div>
-					) : meta.founders ? (
-						<ProfileText title="Founders and leadership" value={meta.founders} />
-					) : null}
-					{meta.regulatoryStatus ? <ProfileText title="Regulatory status" value={meta.regulatoryStatus} /> : null}
-					{meta.entityStructureNotes ? (
-						<ProfileText title="Entity structure" value={meta.entityStructureNotes} />
-					) : null}
-				</div>
-				{hasMilestones ? (
-					<div className="flex flex-col gap-3">
-						<h3 className="font-semibold">Milestones</h3>
-						{meta.milestones.length > 0 ? (
-							<ol className="flex flex-col gap-4 border-l border-subtle pl-4">
-								{meta.milestones.map((milestone, index) => (
-									<li key={`${milestone.date ?? 'undated'}-${index}`} className="relative flex flex-col gap-1">
-										<span className="absolute top-1.5 -left-[1.2rem] size-2 rounded-full bg-brand" aria-hidden="true" />
-										{milestone.date ? <p className="body-sm text-tertiary">{milestone.date}</p> : null}
-										<p className="body-md">{milestone.event}</p>
-									</li>
-								))}
-							</ol>
-						) : meta.keyMilestones ? (
-							<p className="body-md text-secondary">{meta.keyMilestones}</p>
-						) : null}
-					</div>
-				) : null}
-			</div>
-			<ProfileLinks meta={meta} />
-		</SectionCard>
-	)
-}
-
-function ProfileLinks({ meta }: { meta: RWAPlatformMeta }) {
-	const groups: Array<{ label: string; urls: string[] }> = []
-	for (const [label, urls] of [
+function EntityBackground({ meta }: { meta: RWAPlatformMeta }) {
+	const referenceGroups = collectLinkGroups([
 		['Reference', meta.refLinks],
 		['Issuer source', meta.issuerSourceLink],
 		['Attestation report', meta.attestationLinks],
 		['Oracle proof', meta.oracleProofLink]
-	] as const) {
-		if (urls && urls.length > 0) groups.push({ label, urls })
-	}
-	if (groups.length === 0) return null
+	])
+	const founders =
+		meta.foundersParsed.length > 0
+			? meta.foundersParsed.map((founder) => `${founder.name}${founder.role ? ` — ${founder.role}` : ''}`).join('\n')
+			: meta.founders
+	const hasContent =
+		founders != null ||
+		meta.issuerRegistryInfo != null ||
+		meta.regulatoryStatus != null ||
+		meta.entityStructureNotes != null ||
+		referenceGroups.length > 0
+	if (!hasContent) return null
+
 	return (
-		<div className="flex flex-wrap gap-3 border-t border-subtle pt-3">
-			{groups.map((group) =>
-				group.urls.length > 1 ? (
-					<Menu key={group.label} name={group.label} options={group.urls} isExternal className={linkButtonStyles} />
-				) : (
-					<ExternalLinkButton key={group.label} href={group.urls[0]}>
-						{group.label}
-					</ExternalLinkButton>
-				)
-			)}
+		<Disclosure title="Issuer registry, regulation & leadership">
+			{founders ? (
+				<div className="flex flex-col gap-1">
+					<SubHeading>Founders and leadership</SubHeading>
+					<p className="max-w-[70ch] body-md whitespace-pre-line text-secondary">{founders}</p>
+				</div>
+			) : null}
+			{meta.issuerRegistryInfo ? (
+				<div className="flex flex-col gap-1">
+					<SubHeading>Issuer registry</SubHeading>
+					<Prose>{meta.issuerRegistryInfo}</Prose>
+				</div>
+			) : null}
+			{meta.regulatoryStatus ? (
+				<div className="flex flex-col gap-1">
+					<SubHeading>Regulatory status</SubHeading>
+					<Prose>{meta.regulatoryStatus}</Prose>
+				</div>
+			) : null}
+			{meta.entityStructureNotes ? (
+				<div className="flex flex-col gap-1">
+					<SubHeading>Entity structure</SubHeading>
+					<Prose>{meta.entityStructureNotes}</Prose>
+				</div>
+			) : null}
+			<DocumentLinks groups={referenceGroups} />
+		</Disclosure>
+	)
+}
+
+function Information({ data, headerSlot }: { data: RWAPlatformPageData; headerSlot: React.ReactNode | null }) {
+	const { meta } = data
+	const columns = [
+		hasProfileFacts(meta) ? <ProfileFacts key="profile" meta={meta} /> : null,
+		hasEconomics(meta) ? <Economics key="economics" meta={meta} /> : null,
+		hasAttestations(meta) ? <Attestations key="attestations" meta={meta} /> : null
+	].filter(Boolean)
+
+	return (
+		<Panel padding="none">
+			<PanelHeader>{headerSlot ?? <PanelTitle>{`About ${meta.name}`}</PanelTitle>}</PanelHeader>
+			<div className="flex flex-col gap-6 p-4">
+				<Overview meta={meta} />
+				<LinkRow meta={meta} />
+				{columns.length > 0 ? (
+					<div className="grid grid-cols-1 gap-x-8 gap-y-6 border-t border-subtle pt-6 lg:grid-cols-3">{columns}</div>
+				) : null}
+				<div className="flex flex-col">
+					<RevenueMethodology meta={meta} />
+					<EntityBackground meta={meta} />
+				</div>
+			</div>
+		</Panel>
+	)
+}
+
+/* ---------------------------------------------------------------------------
+   Data views — one panel, four views of the same platform.
+
+   Assets / Peers / Asset mix mount only while selected, so the peer-ranking
+   query fires the first time a reader opens that view and never on load.
+   Information is the exception: it stays mounted and is only hidden with CSS,
+   so the platform's profile copy is always in the served HTML for crawlers.
+--------------------------------------------------------------------------- */
+
+export type RWAPlatformDataView = 'assets' | 'peers' | 'mix' | 'information'
+
+/* Information leads because it answers "what is this platform?" before the
+   rankings answer "how does it compare?" — but assets stays the landing view,
+   so the order is presentation only and never the default. */
+const DATA_VIEW_OPTIONS = [
+	{ value: 'information' as const, label: 'Information' },
+	{ value: 'assets' as const, label: 'Assets' },
+	{ value: 'peers' as const, label: 'Peers' },
+	{ value: 'mix' as const, label: 'Asset mix' }
+]
+
+const DEFAULT_DATA_VIEW: RWAPlatformDataView = 'assets'
+
+const DATA_VIEW_PANEL_PREFIX = 'rwa-platform-view'
+
+/** The panel half of the tab contract: named by its tab, addressable by it. */
+function TabPanel({
+	view,
+	hidden,
+	children
+}: {
+	view: RWAPlatformDataView
+	hidden?: boolean
+	children: React.ReactNode
+}) {
+	const { tabId, panelId } = segmentedControlTabIds(DATA_VIEW_PANEL_PREFIX, view)
+	return (
+		<div role="tabpanel" id={panelId} aria-labelledby={tabId} className={hidden ? 'hidden' : 'flex flex-col'}>
+			{children}
 		</div>
 	)
 }
 
-export function RWAPlatformDetails({ data }: { data: RWAPlatformPageData }) {
-	const showEconomics = hasEconomics(data.meta)
-	const showEntityProfile = hasEntityProfile(data.meta)
+/** `?view=` is the shareable name of the selected view; assets is the default
+    and stays out of the query string. */
+export function parseRWAPlatformDataView(value: string | undefined): RWAPlatformDataView {
+	for (const option of DATA_VIEW_OPTIONS) {
+		if (option.value === value) return option.value
+	}
+	return DEFAULT_DATA_VIEW
+}
+
+export function RWAPlatformDataViews({
+	data,
+	renderAssetsTable
+}: {
+	data: RWAPlatformPageData
+	renderAssetsTable: (viewSwitch: React.ReactNode) => React.ReactNode
+}) {
+	const router = useRouter()
+	const hasMix = data.categoryMix.length > 0 || data.assetClassMix.length > 0 || data.chainMix.length > 0
+	const options = hasMix ? DATA_VIEW_OPTIONS : DATA_VIEW_OPTIONS.filter((option) => option.value !== 'mix')
+	const view = parseRWAPlatformDataView(readSingleQueryValue(router.query.view))
+	const activeView = view === 'mix' && !hasMix ? DEFAULT_DATA_VIEW : view
+
+	const viewSwitch = (
+		<SegmentedControl<RWAPlatformDataView>
+			value={activeView}
+			onValueChange={(nextView) => {
+				void pushShallowQuery(router, { view: nextView === DEFAULT_DATA_VIEW ? undefined : nextView })
+			}}
+			options={options}
+			label="Platform data view"
+			variant="default"
+			size="md"
+			className="mr-auto"
+			semantics="tabs"
+			panelIdPrefix={DATA_VIEW_PANEL_PREFIX}
+		/>
+	)
+
 	return (
-		<div className="flex flex-col gap-2">
-			{showEconomics || showEntityProfile ? (
-				<div
-					className={`grid grid-cols-1 items-start gap-2 ${showEconomics && showEntityProfile ? 'lg:grid-cols-2' : ''}`}
-				>
-					{showEconomics ? <Economics meta={data.meta} /> : null}
-					{showEntityProfile ? <EntityProfile meta={data.meta} /> : null}
-				</div>
+		<>
+			{activeView === 'assets' ? <TabPanel view="assets">{renderAssetsTable(viewSwitch)}</TabPanel> : null}
+			{activeView === 'peers' ? (
+				<TabPanel view="peers">
+					<PeerRanking selectedSlug={data.meta.slug} headerSlot={viewSwitch} />
+				</TabPanel>
 			) : null}
-			<AssetMix data={data} />
-			<PeerRanking selectedSlug={data.meta.slug} />
-		</div>
+			{activeView === 'mix' ? (
+				<TabPanel view="mix">
+					<AssetMix data={data} headerSlot={viewSwitch} />
+				</TabPanel>
+			) : null}
+			<TabPanel view="information" hidden={activeView !== 'information'}>
+				<Information data={data} headerSlot={activeView === 'information' ? viewSwitch : null} />
+			</TabPanel>
+		</>
 	)
 }
