@@ -42,7 +42,7 @@ export function buildRWAPlatformPeerRows(
 	const metas: RWAPlatformMeta[] = []
 	for (const slug in platformsIndex.platforms) {
 		const meta = platformsIndex.platforms[slug]
-		if (meta) metas.push(meta)
+		if (meta && meta.onchainAum > 0) metas.push(meta)
 	}
 	metas.sort((a, b) => b.onchainAum - a.onchainAum || a.name.localeCompare(b.name))
 

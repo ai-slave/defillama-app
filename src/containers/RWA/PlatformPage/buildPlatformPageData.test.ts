@@ -217,6 +217,22 @@ describe('buildRWAPlatformPageData', () => {
 		expect(peers[1]?.holderTotalFeeBps).toBe(0)
 	})
 
+	it('excludes zero AUM platforms while retaining positive AUM peers', () => {
+		const positive = meta({ onchainAum: 0.01 })
+		const zero = meta({ pid: 2, name: 'Zero', slug: 'zero', onchainAum: 0 })
+		const platformsIndex: RWAPlatformsIndex = {
+			generatedAt: 1,
+			byPid: { '1': 'selected', '2': 'zero' },
+			platforms: { selected: positive, zero }
+		}
+
+		const peers = buildRWAPlatformPeerRows(platformsIndex, {
+			byPlatform: { Selected: segmented(1, 0), Zero: segmented(1, 0) }
+		})
+
+		expect(peers.map(({ rank, slug }) => ({ rank, slug }))).toEqual([{ rank: 1, slug: 'selected' }])
+	})
+
 	it('keeps zero AUM and returns no ratio instead of dividing by zero', () => {
 		const selected = meta({ onchainAum: 0, estAnnualRevenueUsd: 0 })
 		const result = buildRWAPlatformPageData({

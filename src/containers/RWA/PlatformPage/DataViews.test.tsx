@@ -135,6 +135,31 @@ describe('RWA platform data views', () => {
 		expect(container.textContent).toContain(PROFILE_COPY)
 	})
 
+	it('uses a referral link for Website when available instead of showing it as a reference', async () => {
+		await render({
+			...data,
+			meta: {
+				...meta,
+				website: ['https://official.example'],
+				refLinks: ['https://referral.example']
+			} as RWAPlatformMeta
+		})
+
+		const website = [...container.querySelectorAll('a')].find((link) => link.textContent === 'Website')
+		expect(website?.getAttribute('href')).toBe('https://referral.example')
+		expect(container.textContent).not.toContain('Reference')
+	})
+
+	it('keeps the official Website link when no referral is available', async () => {
+		await render({
+			...data,
+			meta: { ...meta, website: ['https://official.example'], refLinks: null } as RWAPlatformMeta
+		})
+
+		const website = [...container.querySelectorAll('a')].find((link) => link.textContent === 'Website')
+		expect(website?.getAttribute('href')).toBe('https://official.example')
+	})
+
 	it('publishes the selected view through ?view= and clears it for the default view', async () => {
 		await render()
 		await selectView('Information')

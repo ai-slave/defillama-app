@@ -119,16 +119,18 @@ function LinkRow({ meta }: { meta: RWAPlatformMeta }) {
 		const href = meta[link.key]
 		return typeof href === 'string' && href.length > 0 ? [{ ...link, href }] : []
 	})
-	const hasPrimary = (meta.website?.length ?? 0) > 0 || meta.docs != null || meta.protocolSlug != null
+	// The upstream Ref Links field contains referral destinations for the primary CTA.
+	const websiteLinks = meta.refLinks?.length ? meta.refLinks : meta.website
+	const hasPrimary = (websiteLinks?.length ?? 0) > 0 || meta.docs != null || meta.protocolSlug != null
 	if (!hasPrimary && socials.length === 0) return null
 
 	return (
 		<div className="flex flex-wrap items-center gap-1.5">
-			{meta.website ? (
-				meta.website.length > 1 ? (
-					<Menu name="Website" options={meta.website} isExternal className={linkButtonStyles} />
+			{websiteLinks ? (
+				websiteLinks.length > 1 ? (
+					<Menu name="Website" options={websiteLinks} isExternal className={linkButtonStyles} />
 				) : (
-					<ExternalLinkButton href={meta.website[0]} icon="globe">
+					<ExternalLinkButton href={websiteLinks[0]} icon="globe">
 						Website
 					</ExternalLinkButton>
 				)
@@ -566,7 +568,6 @@ function RevenueMethodology({ meta }: { meta: RWAPlatformMeta }) {
 
 function EntityBackground({ meta }: { meta: RWAPlatformMeta }) {
 	const referenceGroups = collectLinkGroups([
-		['Reference', meta.refLinks],
 		['Issuer source', meta.issuerSourceLink],
 		['Attestation report', meta.attestationLinks],
 		['Oracle proof', meta.oracleProofLink]
