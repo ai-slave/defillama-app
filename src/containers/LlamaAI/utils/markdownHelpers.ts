@@ -196,15 +196,38 @@ export function normalizeCitationMarkerWhitespace(text: string): string {
 	return text.replace(/[ \t]+([.,;:!?])/g, '$1').replace(/[ \t]{2,}/g, ' ')
 }
 
-export function processUnifiedCitations(text: string, refsOrUrls?: UnifiedCitationReference[] | string[]): string {
+/**
+ * Walk every citation marker — `[1]`, `[1,3]`, `[2-4]`, `[^1]`, or `【1†…】` — expand
+ * ranges/lists into individual ids, and substitute whatever `render` returns.
+ */
+export function replaceCitationMarkers(text: string, render: (ids: number[]) => string): string {
 	const citationSequencePattern = String.raw`\d+(?:(?:\s*-\s*\d+)|(?:\s*,\s*\d+))*`
 	const markerRegex = new RegExp(
 		String.raw`(?:\[(?:\^\s*)?(${citationSequencePattern})\s*\]|【\s*(${citationSequencePattern})(?:\s*†[^】]*)?\s*】)`,
 		'g'
 	)
 
+	return text.replace(markerRegex, (_full: string, bracketNums?: string, modelNums?: string) => {
+		const nums = bracketNums ?? modelNums ?? ''
+		const expanded: number[] = []
+		for (const part of nums.split(',').map((p) => p.trim())) {
+			if (part.includes('-')) {
+				const [start, end] = part.split('-').map((n) => parseInt(n.trim(), 10))
+				if (!Number.isNaN(start) && !Number.isNaN(end) && start <= end) {
+					for (let i = start; i <= end; i++) expanded.push(i)
+				}
+			} else {
+				const n = parseInt(part.trim(), 10)
+				if (!Number.isNaN(n)) expanded.push(n)
+			}
+		}
+		return render(expanded)
+	})
+}
+
+export function processUnifiedCitations(text: string, refsOrUrls?: UnifiedCitationReference[] | string[]): string {
 	if (refsOrUrls === undefined || refsOrUrls.length === 0) {
-		return normalizeCitationMarkerWhitespace(text.replace(markerRegex, ''))
+		return normalizeCitationMarkerWhitespace(replaceCitationMarkers(text, () => ''))
 	}
 
 	const refs: UnifiedCitationReference[] =
@@ -216,21 +239,8 @@ export function processUnifiedCitations(text: string, refsOrUrls?: UnifiedCitati
 	for (const r of refs) if (typeof r.id === 'number') idsAvailable.add(r.id)
 
 	return normalizeCitationMarkerWhitespace(
-		text.replace(markerRegex, (full: string, bracketNums?: string, modelNums?: string) => {
-			const nums = bracketNums ?? modelNums ?? ''
-			const expanded: number[] = []
-			for (const part of nums.split(',').map((p) => p.trim())) {
-				if (part.includes('-')) {
-					const [start, end] = part.split('-').map((n) => parseInt(n.trim(), 10))
-					if (!Number.isNaN(start) && !Number.isNaN(end) && start <= end) {
-						for (let i = start; i <= end; i++) expanded.push(i)
-					}
-				} else {
-					const n = parseInt(part.trim(), 10)
-					if (!Number.isNaN(n)) expanded.push(n)
-				}
-			}
-			const valid = expanded.filter((id) => idsAvailable.has(id))
+		replaceCitationMarkers(text, (ids) => {
+			const valid = ids.filter((id) => idsAvailable.has(id))
 			if (valid.length === 0) return ''
 			return valid.map((id) => `<fact-check-pill data-ref="${id}"></fact-check-pill>`).join('')
 		})

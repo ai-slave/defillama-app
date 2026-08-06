@@ -38,40 +38,6 @@ function cloneChartOptions(chartOptions: AdaptedLlamaAICartesianChart['props']['
 	return deepCloneValue(chartOptions)
 }
 
-function sortPrimarySeriesByTotalDesc(chart: AdaptedLlamaAICartesianChart): AdaptedLlamaAICartesianChart {
-	const primaryNames = new Set(chart.seriesMeta.filter((s) => (s.yAxisIndex ?? 0) === 0).map((s) => s.name))
-	if (primaryNames.size < 2) return chart
-
-	const totals = new Map<string, number>()
-	for (const row of chart.props.dataset.source) {
-		for (const series of chart.seriesMeta) {
-			if (!primaryNames.has(series.name)) continue
-			const v = row[series.seriesIndex + 1]
-			if (typeof v === 'number' && !Number.isNaN(v)) {
-				totals.set(series.name, (totals.get(series.name) ?? 0) + Math.abs(v))
-			}
-		}
-	}
-	const rank = (name: string) => totals.get(name) ?? 0
-
-	const cmp = (a: string, b: string, aPrimary: boolean, bPrimary: boolean) => {
-		if (!aPrimary && !bPrimary) return 0
-		if (!aPrimary) return 1
-		if (!bPrimary) return -1
-		return rank(b) - rank(a)
-	}
-
-	chart.props.charts = (chart.props.charts ?? [])
-		.slice()
-		.sort((a, b) => cmp(a.name, b.name, primaryNames.has(a.name), primaryNames.has(b.name)))
-
-	chart.seriesMeta = chart.seriesMeta
-		.slice()
-		.sort((a, b) => cmp(a.name, b.name, (a.yAxisIndex ?? 0) === 0, (b.yAxisIndex ?? 0) === 0))
-
-	return chart
-}
-
 function cloneCartesianChart(
 	chart: AdaptedLlamaAICartesianChart,
 	cloneDatasetRows: boolean
@@ -327,10 +293,11 @@ export class ChartDataTransformer {
 		return nextChart
 	}
 
+	// Series keep their config order when stacked — it is user- and model-controlled
+	// (saved reorders, series_sort/series_order at generation), never re-derived here.
 	private static toStacked(chart: AdaptedLlamaAICartesianChart): AdaptedLlamaAICartesianChart {
-		const nextChart = sortPrimarySeriesByTotalDesc(chart)
-		nextChart.props.charts =
-			nextChart.props.charts?.map((series) => {
+		chart.props.charts =
+			chart.props.charts?.map((series) => {
 				const isPrimaryAxis = (series.yAxisIndex ?? 0) === 0
 				if (!isPrimaryAxis) {
 					const { stack: _stack, ...rest } = series
@@ -338,14 +305,14 @@ export class ChartDataTransformer {
 				}
 				return { ...series, stack: 'total' }
 			}) ?? []
-		return nextChart
+		return chart
 	}
 
 	private static toPercentage(
 		chart: AdaptedLlamaAICartesianChart,
 		shouldStack: boolean = true
 	): AdaptedLlamaAICartesianChart {
-		const nextChart = shouldStack ? sortPrimarySeriesByTotalDesc(chart) : chart
+		const nextChart = chart
 		const primarySeries = nextChart.seriesMeta.filter((series) => (series.yAxisIndex ?? 0) === 0)
 		if (primarySeries.length === 0) return nextChart
 

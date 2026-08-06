@@ -217,6 +217,32 @@ describe('ChartDataTransformer', () => {
 		expect(transformed.props.charts).not.toBe(chart.props.charts)
 	})
 
+	it('keeps the configured series order when stacking instead of re-sorting by magnitude', () => {
+		const chart = makeMixedAxisChart('time')
+		const transformed = ChartDataTransformer.applyViewState(
+			chart,
+			{ ...viewState, percentage: false, stacked: true },
+			{ ...capabilities, allowStack: true }
+		)
+		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
+
+		expect(transformed.props.charts?.map((series) => series.name)).toEqual(['Primary A', 'Primary B', 'Secondary'])
+		expect(transformed.seriesMeta.map((series) => series.name)).toEqual(['Primary A', 'Primary B', 'Secondary'])
+	})
+
+	it('keeps the configured series order for the stacked percentage view', () => {
+		const chart = makeMixedAxisChart('time')
+		const transformed = ChartDataTransformer.applyViewState(
+			chart,
+			{ ...viewState, percentage: true, stacked: true },
+			{ ...capabilities, allowStack: true }
+		)
+		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
+
+		expect(transformed.props.charts?.map((series) => series.name)).toEqual(['Primary A', 'Primary B', 'Secondary'])
+		expect(transformed.seriesMeta.map((series) => series.name)).toEqual(['Primary A', 'Primary B', 'Secondary'])
+	})
+
 	it('delegates time tooltip formatting while preserving per-series symbols', () => {
 		const transformed = ChartDataTransformer.applyViewState(makeMixedAxisChart('time'), viewState, capabilities)
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')

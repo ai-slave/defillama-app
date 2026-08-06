@@ -3,10 +3,17 @@ import { memo, useCallback, useEffect, useReducer, useRef } from 'react'
 import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/useArticleExport'
 import { FeedbackForm } from '~/containers/LlamaAI/components/FeedbackForm'
 import { PDFExportButton } from '~/containers/LlamaAI/components/PDFExportButton'
-import type { MessageMetadata } from '~/containers/LlamaAI/types'
+import type { ArtifactRegistry } from '~/containers/LlamaAI/renderModel'
+import type { MessageMetadata, UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import type { ArticleExportRequest } from '~/containers/LlamaAI/utils/articleExport'
-import { convertLlamaLinksToDefillama } from '~/containers/LlamaAI/utils/entityLinks'
-import { removeReportStartMarkers } from '~/containers/LlamaAI/utils/reportMarkers'
+import { captureChartImage } from '~/containers/LlamaAI/utils/copyChartCapture'
+import {
+	buildCopyHtml,
+	buildCopyMarkdown,
+	withFetchCache,
+	type CopyMessageSource
+} from '~/containers/LlamaAI/utils/copyMessage'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -15,6 +22,7 @@ import { formatNumber, formatUsd, formatFixedNumber } from '~/utils/numberFormat
 interface ResponseControlsProps {
 	messageId?: string
 	content?: string
+	copyContext?: () => { artifacts: ArtifactRegistry; citations?: UnifiedCitationReference[] }
 	articleExportRequest?: () => ArticleExportRequest
 	initialRating?: 'good' | 'bad' | null
 	sessionId?: string | null
@@ -25,6 +33,8 @@ interface ResponseControlsProps {
 }
 
 type Rating = 'good' | 'bad' | null
+
+const ARTIFACT_FETCH_TIMEOUT_MS = 10_000
 
 interface ResponseControlsState {
 	copied: boolean
@@ -110,6 +120,7 @@ const FeedbackDialog = memo(function FeedbackDialog({
 export function ResponseControls({
 	messageId,
 	content,
+	copyContext,
 	initialRating,
 	sessionId,
 	readOnly = false,
@@ -119,6 +130,7 @@ export function ResponseControls({
 	articleExportRequest
 }: ResponseControlsProps) {
 	const openArticleExport = useArticleExport()
+	const [isDarkMode] = useDarkModeManager()
 	const [state, dispatch] = useReducer(responseControlsReducer, initialRating || null, createInitialState)
 	const { copied, showFeedback, selectedRating, submittedRating } = state
 	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -165,25 +177,52 @@ export function ResponseControls({
 	const handleCopy = useCallback(async () => {
 		if (!content) return
 		trackUmamiEvent('llamaai-copy-response')
-		try {
-			let convertedContent = convertLlamaLinksToDefillama(content)
-			convertedContent = convertedContent
-				.replace(/\[CHART:[^\]]+\]\n?/g, '')
-				.replace(/\[CSV:[^\]]+\]\n?/g, '')
-				.replace(/\[MD:[^\]]+\]\n?/g, '')
-				.replace(/\[ACTION:[^\]]+\]\n?/g, '')
-				.replace(/\[ALERT:[^\]]+\]\n?/g, '')
-				.replace(/\[DASHBOARD:[^\]]+\]\n?/g, '')
-				.trim()
-			convertedContent = removeReportStartMarkers(convertedContent).trim()
-			await navigator.clipboard.writeText(convertedContent)
+		const context = copyContext?.()
+		const source: CopyMessageSource = {
+			artifacts: context?.artifacts ?? new Map(),
+			citations: context?.citations,
+			// The cache lets both flavors (and the plain-text fallback) share one
+			// request per artifact; the timeout keeps a hung fetch from leaving the
+			// clipboard write pending forever — builders degrade to artifact links.
+			fetchText: withFetchCache(async (url: string) => {
+				const res = await fetch(url, { signal: AbortSignal.timeout(ARTIFACT_FETCH_TIMEOUT_MS) })
+				if (!res.ok) throw new Error(`fetch failed (${res.status})`)
+				return res.text()
+			}),
+			captureChart: (chartId: string) => captureChartImage(chartId, isDarkMode)
+		}
+		const markCopied = () => {
 			dispatch({ type: 'setCopied', value: true })
 			if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
 			copiedTimeoutRef.current = setTimeout(() => dispatch({ type: 'setCopied', value: false }), 2000)
-		} catch (error) {
-			console.log('Failed to copy content:', error)
 		}
-	}, [content])
+		try {
+			// Both flavors go up together: rich targets (Docs, Sheets, Notion) read text/html
+			// and get real tables and charts; plain targets keep the markdown text.
+			// ClipboardItem accepts promise values, so write() stays inside the user gesture
+			// while artifacts resolve (Safari requires this).
+			if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+				await navigator.clipboard.write([
+					new ClipboardItem({
+						'text/plain': buildCopyMarkdown(content, source).then(
+							(markdown) => new Blob([markdown], { type: 'text/plain' })
+						),
+						'text/html': buildCopyHtml(content, source).then((html) => new Blob([html], { type: 'text/html' }))
+					})
+				])
+			} else {
+				await navigator.clipboard.writeText(await buildCopyMarkdown(content, source))
+			}
+			markCopied()
+		} catch {
+			try {
+				await navigator.clipboard.writeText(await buildCopyMarkdown(content, source))
+				markCopied()
+			} catch (error) {
+				console.log('Failed to copy content:', error)
+			}
+		}
+	}, [content, copyContext, isDarkMode])
 
 	if (!messageId) return null
 

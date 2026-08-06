@@ -24,6 +24,7 @@ import {
 import type { DashboardArtifact } from '~/containers/LlamaAI/types'
 import type { Message, ToolExecution } from '~/containers/LlamaAI/types'
 import { buildMessageExportRequest } from '~/containers/LlamaAI/utils/articleExport'
+import { wrapLegacyUrlCitations } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 
@@ -646,6 +647,14 @@ export function MessageBubble({
 				<ResponseControls
 					messageId={message.id}
 					content={message.content}
+					copyContext={() => ({
+						artifacts: parseMessageToRenderModel(message).artifactsById,
+						citations: message.citations?.length
+							? message.citations
+							: message.legacyUrlCitations?.length
+								? wrapLegacyUrlCitations(message.legacyUrlCitations)
+								: undefined
+					})}
 					onShare={onShare}
 					sessionId={sessionId}
 					readOnly={readOnly}
